@@ -35,6 +35,9 @@ Parrot ops. The C<ParrotIO struct> is defined in F<io/io_private.h>.
 #include <stdarg.h>
 #include <assert.h>
 
+extern CHARSET *Parrot_iso_8859_1_charset_ptr;
+extern ENCODING *Parrot_fixed_8_encoding_ptr;
+
 /* This is list of valid layers */
 ParrotIOLayer **pio_registered_layers = NULL;
 
@@ -116,7 +119,8 @@ PIO_make_io_string(Interp *interpreter, STRING **buf, size_t default_len)
         PObj_buflen(s) = len;
         PObj_sysmem_SET(s);
         PObj_external_SET(s);
-        s->representation = enum_stringrep_one;
+        s->charset = Parrot_iso_8859_1_charset_ptr;
+        s->encoding = Parrot_fixed_8_encoding_ptr;
         /*
          * TODO encoding = raw
          */

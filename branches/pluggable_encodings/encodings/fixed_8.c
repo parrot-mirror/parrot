@@ -20,6 +20,8 @@ This file implements the encoding functions for fixed-width 8-bit codepoints
 /* Evil global variable. This is a short-term hack for now */
 ENCODING *Parrot_fixed_8_encoding_ptr;
 
+extern CHARSET *Parrot_binary_charset_ptr;
+
 /* This function needs to go through and get all the code points one
    by one and turn them into a byte */
 static void to_encoding(Interp *interpreter, STRING *source_string) {
@@ -32,7 +34,7 @@ static STRING *copy_to_encoding(Interp *interpreter, STRING *source_string) {
 }
 
 /* codepoints are bytes, so delegate */
-static UINTVAL get_codepoint(Interp *interpreter, STRING *source_string, UINTVAL offset) {
+static UINTVAL get_codepoint(Interp *interpreter, const STRING *source_string, UINTVAL offset) {
   return get_byte(interpreter, source_string, offset);
 }
 
@@ -41,25 +43,62 @@ static void set_codepoint(Interp *interpreter, STRING *source_string, UINTVAL of
   set_byte(interpreter, source_string, offset, codepoint);
 }
 
-static UINTVAL get_byte(Interp *interpreter, STRING *source_string, UINTVAL offset) {
+static UINTVAL get_byte(Interp *interpreter, const STRING *source_string, UINTVAL offset) {
   if (offset >= source_string->bufused) {
-    internal_exception(0, "get_byte past the end of the buffer");
+      assert(offset < source_string->bufused);
+      internal_exception(0, "get_byte past the end of the buffer (%i of %i)", offset, source_string->bufused);
   }
   char *contents = source_string->strstart;
   return contents[offset];
 }
 
-static void set_byte(Interp *interpreter, STRING *source_string, UINTVAL offset, UINTVAL byte) {
+static void set_byte(Interp *interpreter, const STRING *source_string, UINTVAL offset, UINTVAL byte) {
+      if (offset >= source_string->bufused) {
+    internal_exception(0, "set_byte past the end of the buffer");
+  }
+  char *contents = source_string->strstart;
+  contents[offset] = byte;
+
 }
 
 /* Delegate to get_bytes */
 static STRING *get_codepoints(Interp *interpreter, STRING *source_string, UINTVAL offset, UINTVAL count) {
- 
-  return get_bytes(interpreter, source_string, offset, count);
+    STRING *return_string = get_bytes(interpreter, source_string, offset, count);
+    return_string->charset = source_string->charset;
+    return return_string;
 }
 
 static STRING *get_bytes(Interp *interpreter, STRING *source_string, UINTVAL offset, UINTVAL count) {
-  STRING *return_string = NULL;
+    STRING *return_string = Parrot_make_COW_reference(interpreter, source_string);
+    return_string->encoding = source_string->encoding;
+    return_string->charset = source_string->charset;
+
+    return_string->strstart = (char *)return_string->strstart + offset ;
+    return_string->bufused = count;
+
+    return_string->strlen = count;
+    return_string->hashval = 0;  
+
+    return return_string;
+}
+
+
+/* Delegate to get_bytes */
+static STRING *get_codepoints_inplace(Interp *interpreter, STRING *source_string, STRING *dest_string, UINTVAL offset, UINTVAL count) {
+ 
+    return get_bytes_inplace(interpreter, source_string, offset, count, dest_string);
+}
+
+static STRING *get_bytes_inplace(Interp *interpreter, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *return_string) {
+    Parrot_reuse_COW_reference(interpreter, source_string, return_string);
+    return_string->encoding = source_string->encoding;
+    return_string->charset = source_string->charset;
+
+    return_string->strstart = (char *)return_string->strstart + offset ;
+    return_string->bufused = count;
+
+    return_string->strlen = count;
+    return_string->hashval = 0;  
  
   return return_string;
 }
@@ -70,6 +109,7 @@ static void set_codepoints(Interp *interpreter, STRING *source_string, UINTVAL o
 }
 
 static void set_bytes(Interp *interpreter, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *new_bytes) {
+    string_replace(interpreter, source_string, offset, count, new_bytes, NULL);
 }
 
 /* Unconditionally makes the string be in this encoding, if that's
@@ -91,6 +131,7 @@ ENCODING *Parrot_encoding_fixed_8_init(Interp *interpreter) {
 
   ENCODING base_encoding = {
       "fixed_8",
+      1, /* Max bytes per codepoint */
       to_encoding,
       copy_to_encoding,
       get_codepoint,
@@ -98,7 +139,9 @@ ENCODING *Parrot_encoding_fixed_8_init(Interp *interpreter) {
       get_byte,
       set_byte,
       get_codepoints,
+      get_codepoints_inplace,
       get_bytes,
+      get_bytes_inplace,
       set_codepoints,
       set_bytes,
       become_encoding,
