@@ -1,0 +1,101 @@
+/*
+Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/coroutine.pmc - Co-Routine PMC
+
+=head1 DESCRIPTION
+
+C<Coroutine> extends C<Continuation> to provide a subroutine that can
+stop in the middle, and start back up later at the point at which it
+stopped. See the L<Glossary|docs/glossary.pod> for more information.
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+#include "parrot/method_util.h"
+
+pmclass Coroutine extends Continuation {
+
+/*
+
+=item C<void init()>
+
+Initializes the co-routine.
+
+=cut
+
+*/
+
+    void init () {
+        PMC_sub(SELF) = new_coroutine(INTERP);
+        PMC_struct_val(SELF) = NULL;
+        PObj_custom_mark_destroy_SETALL(SELF);
+        PObj_get_FLAGS(SELF) &= ~PObj_private0_FLAG;
+    }
+
+/*
+
+=item C<void *invoke(void *next)>
+
+Swaps the "context".
+
+=cut
+
+*/
+
+    void* invoke (void* next) {
+        void * dest = PMC_struct_val(SELF);
+        PMC_struct_val(SELF) = next;
+        swap_context(interpreter, SELF);
+
+        return dest;
+    }
+
+/*
+
+=item C<void mark()>
+
+Marks the coroutine as live.
+
+=cut
+
+*/
+
+    void mark () {
+        struct Parrot_Coroutine *c = (struct Parrot_Coroutine *)PMC_sub(SELF);
+        mark_stack(INTERP, c->co_control_stack);
+        mark_stack(INTERP, c->co_pad_stack);
+        SUPER();    /* mark rest */
+    }
+}
+
+/*
+
+=back
+
+=head1 HISTORY
+
+Initial version by Melvin on 2002/06/6.
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

@@ -1,0 +1,364 @@
+/*
+** object.ops
+*/
+
+#include "parrot/method_util.h"
+
+VERSION = PARROT_VERSION;
+
+=head1 NAME
+
+object.ops
+
+=head1 DESCRIPTION
+
+Parrot's library of object ops
+
+=over 4
+
+=cut
+
+=item B<callmethod>()
+
+=item B<callmethod>(in STR)
+
+Call a method on an object. If a method name is provided, we find
+the PMC for the named method and put it into the sub/method slot.
+If no name is provided, then we assume that the method PMC and
+method name are already in their proper places. We assume that
+all other registers are correctly set up, as per the Parrot
+calling conventions.
+
+=cut
+
+=item B<callmethodcc>()
+
+=item B<callmethodcc>(in STR)
+
+Make a method call, automatically generating a return continuation. If
+a method name is passed in we look up the method PMC for the object
+and put it in the method slot. If a method name isn't provided then we
+assume that things are already properly set up. Note that the return
+continuation is placed in P1.
+
+=cut
+
+=item B<tailcallmethod>
+
+=item B<tailcallmethod>(in STR)
+
+Make a tailcall to method $1. If no method name is given, we assume
+everything is already set up properly.
+
+=cut
+
+op callmethod() {
+  PMC *method_pmc;
+  opcode_t *dest;
+  opcode_t *next = expr NEXT();
+  method_pmc = VTABLE_find_method(interpreter, REG_PMC(2), REG_STR(0));
+  if (NULL == method_pmc) {
+    real_exception(interpreter, next, METH_NOT_FOUND,
+        "Method '%Ss' not found", REG_STR(0));
+  }
+  REG_PMC(0) = method_pmc;
+  dest = (opcode_t *)VTABLE_invoke(interpreter, REG_PMC(0), next);
+  goto ADDRESS(dest);
+}
+
+op callmethodcc() {
+  opcode_t *dest;
+  PMC *method_pmc;
+  opcode_t *next = expr NEXT();
+
+  REG_PMC(1) = new_ret_continuation_pmc(interpreter, next);
+
+  method_pmc = VTABLE_find_method(interpreter, REG_PMC(2), REG_STR(0));
+  if (NULL == method_pmc) {
+    real_exception(interpreter, next, METH_NOT_FOUND,
+        "Method '%Ss' not found", REG_STR(0));
+  }
+  REG_PMC(0) = method_pmc;
+  dest = (opcode_t *)REG_PMC(0)->vtable->invoke(interpreter, REG_PMC(0), next);
+  goto ADDRESS(dest);
+}
+
+=item B<can>(out INT, in PMC, in STR)
+
+Sets $1 to true or false, depending on whether $2 ->can the method in $3.
+
+=cut
+
+inline op can(out INT, in PMC, in STR) {
+  $1 = $2->vtable->can(interpreter, $2, $3);
+  goto NEXT();
+}
+
+=item B<does>(out INT, in PMC, in STR)
+
+Sets $1 to true or false, depending on whether $2 ->does the interface in $3.
+
+=item B<isa>(out INT, in PMC, in STR)
+
+Sets $1 to true or false, depending on whether $2 isa $3.
+
+=cut
+
+inline op does(out INT, in PMC, in STR) {
+  $1 = $2->vtable->does(interpreter, $2, $3);
+  goto NEXT();
+}
+
+inline op isa(out INT, in PMC, in STR) {
+  $1 = $2->vtable->isa(interpreter, $2, $3);
+  goto NEXT();
+}
+
+###############################################################################
+
+=item B<newclass>(out PMC, in STR)
+
+Creates a new Parrot-style class, named $2, and puts the new PMC for it
+into $1. (This is a real out--the contents of $1 are ignored and the
+pointer for the new PMC is put in there).
+
+=cut
+
+inline op newclass(out PMC, in STR) {
+  PMC* class = $1 = pmc_new(interpreter, enum_class_ParrotClass);
+  Parrot_new_class(interpreter, class, $2);
+  goto NEXT();
+}
+
+=item B<subclass>(out PMC, in PMC)
+
+=item B<subclass>(out PMC, in PMC, in STR)
+
+=item B<subclass>(out PMC, in STR)
+
+=item B<subclass>(out PMC, in STR, in STR)
+
+Create a new class, put in $1, that is a subclass of $2. $3, if available,
+is the name of the new class--if not, the subclass is an anonymous subclass.
+
+$1 is replaced--a new PMC for the subclass is generated and put in it.
+
+=cut
+
+inline op subclass(out PMC, in PMC, in STR) {
+  $1 = Parrot_single_subclass(interpreter, $2, $3);
+  goto NEXT();
+}
+
+inline op subclass(out PMC, in PMC) {
+  $1 = Parrot_single_subclass(interpreter, $2, NULL);
+  goto NEXT();
+}
+
+op subclass(out PMC, in STR, in STR) {
+  PMC *class = VTABLE_get_pmc_keyed_str(interpreter,
+      interpreter->class_hash, $2);
+  if (!class) {
+    internal_exception(NO_CLASS, "Class doesn't exist");
+  }
+  $1 = Parrot_single_subclass(interpreter, class, $3);
+  goto NEXT();
+}
+
+op subclass(out PMC, in STR) {
+  PMC *class = VTABLE_get_pmc_keyed_str(interpreter,
+      interpreter->class_hash, $2);
+  if (!class) {
+    internal_exception(NO_CLASS, "Class doesn't exist");
+  }
+  $1 = Parrot_single_subclass(interpreter, class, NULL);
+  goto NEXT();
+}
+
+=item B<findclass>(out INT, in STR)
+
+Returns 1 if the class exists, 0 if it does not.
+
+=cut
+
+inline op findclass(out INT, in STR) {
+  $1 = VTABLE_exists_keyed_str(interpreter, interpreter->class_hash, $2);
+  goto NEXT();
+}
+
+=item B<getclass>(out PMC, in STR)
+
+Find the PMC for a class, by name. Note that this is a one-level hash, so for
+classes that have some structure you need to impose that structure externally.
+
+Parrot's conventions are that level separators are noted with the NULL
+character, so Perl's Foo::Bar would be Foo\0Bar.
+
+=cut
+
+inline op getclass(out PMC, in STR) {
+  if (VTABLE_exists_keyed_str(interpreter, interpreter->class_hash, $2)) {
+    $1 = VTABLE_get_pmc_keyed_str(interpreter, interpreter->class_hash,  $2);
+  } else {
+    internal_exception(NO_CLASS, "Class doesn't exist");
+  }
+  goto NEXT();
+}
+
+=item B<singleton>(in PMC)
+
+Take the object in $1 and put it into its own singleton class, which is
+an anonymous subclass of the object's current class.
+
+=cut
+
+inline op singleton(in PMC) {
+  goto NEXT();
+}
+
+=item B<class>(out PMC, in PMC)
+
+Get the class PMC for the object in $2 and put it in $1.
+
+=cut
+
+inline op class(out PMC, in PMC) {
+    if (PObj_is_object_TEST($2))
+	$1 = VTABLE_get_pmc_keyed_int(interpreter,
+		(PMC *)PMC_data($2), POD_CLASS);
+    else
+	$1 = $2;
+    goto NEXT();
+}
+
+=item B<classname>(out STR, in PMC)
+
+Get the class name for the class in $2 and put it in $1.
+
+=cut
+
+inline op classname(out STR, in PMC) {
+  PMC* classname_pmc;
+
+  classname_pmc = VTABLE_get_pmc_keyed_int(interpreter,
+                  (PMC *)PMC_data($2), PCD_CLASS_NAME);
+  if (classname_pmc) {
+      $1 = VTABLE_get_string(interpreter, classname_pmc);
+  }
+  else {
+      internal_exception(NO_CLASS, "Class doesn't exist");
+  }
+
+  goto NEXT();
+}
+
+
+##################################################
+
+
+=item B<addparent>(in PMC, in PMC)
+
+Add class $2 to the list of parent classes for $1.
+
+=cut
+
+inline op addparent(in PMC, in PMC) {
+    Parrot_add_parent(interpreter, $1, $2);
+    goto NEXT();
+}
+
+=item B<removeparent>(in PMC, in PMC)
+
+Remove class $2 from class $1's list of parents.
+
+=cut
+
+inline op removeparent(in PMC, in PMC) {
+    Parrot_remove_parent(interpreter, $2, $1);
+    goto NEXT();
+}
+
+=item B<addattribute>(in PMC, in STR)
+
+Add the attribute named $2 to the class $1.
+
+=cut
+
+inline op addattribute(in PMC, in STR) {
+    Parrot_add_attribute(interpreter, $1, $2);
+    goto NEXT();
+}
+
+=item B<removeattribute>(in PMC, in STR)
+
+=item B<removeattribute>(in PMC, in INT)
+
+Remove attribute $2 from class $1, specified either by name or offset.
+
+=cut
+
+=item B<getattribute>(out PMC, in PMC, in INT)
+
+Get attribute number $3 from object $2 and put the result in $1.
+
+=cut
+
+inline op getattribute(out PMC, in PMC, in INT) {
+    $1 = Parrot_get_attrib_by_num(interpreter, $2, $3);
+    goto NEXT();
+}
+
+=item B<setattribute>(in PMC, in INT, in PMC)
+
+Set attribute $2 of object $1 to $3
+
+=cut
+
+inline op setattribute(in PMC, in INT, in PMC) {
+    Parrot_set_attrib_by_num(interpreter, $1, $2, $3);
+    goto NEXT();
+}
+
+=item B<classoffset>(out INT, in PMC, in STR)
+
+Returns the offset of the first attribute for class $3 in object $2.
+Throws an exception if $3 isn't in $2's hierarchy.
+
+=cut
+
+op classoffset(out INT, in PMC, in STR) {
+    INTVAL offset;
+    offset = Parrot_class_offset(interpreter, $2, $3);
+    if (offset < 0) {
+        internal_exception(NO_CLASS, "Class not parent of object");
+    }
+    $1 = offset;
+    goto NEXT();
+}
+
+
+=item B<adddoes>(in PMC, in STR)
+
+Add $2 to the list of interfaces that this class claims to implement.
+
+=item B<removedoes>(in PMC, in STR)
+
+Remove $2 from the list of interfaces that this class claims to
+implement.
+
+
+=back
+
+
+###############################################################################
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2004 The Perl Foundation.  All rights reserved.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interpreter itself.
+
+=cut
