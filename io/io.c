@@ -35,9 +35,6 @@ Parrot ops. The C<ParrotIO struct> is defined in F<io/io_private.h>.
 #include <stdarg.h>
 #include <assert.h>
 
-extern CHARSET *Parrot_iso_8859_1_charset_ptr;
-extern ENCODING *Parrot_fixed_8_encoding_ptr;
-
 /* This is list of valid layers */
 ParrotIOLayer **pio_registered_layers = NULL;
 

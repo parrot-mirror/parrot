@@ -56,6 +56,7 @@ const char* string_primary_encoding_for_representation(Interp *,
 					parrot_string_representation_t representation);
 STRING *string_make(Interp *interpreter, const void *buffer,
             UINTVAL len, const char *encoding_name, UINTVAL flags);
+STRING *string_make_direct(Interp *interpreter, const void *buffer, UINTVAL len, ENCODING *encoding, CHARSET *charset, UINTVAL flags);
 STRING * string_make_empty(Interp *interpreter,
 					parrot_string_representation_t representation,
 					UINTVAL capacity);

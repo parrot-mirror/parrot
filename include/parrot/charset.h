@@ -13,10 +13,23 @@
 #if !defined(PARROT_CHARSET_H_GUARD)
 #define PARROT_CHARSET_H_GUARD
 
+
 #include "parrot/encoding.h"
 
-struct _struct;
+struct _charset;
 typedef struct _charset CHARSET;
+
+
+#if !defined PARROT_NO_EXTERN_CHARSET_PTRS
+extern CHARSET *Parrot_iso_8859_1_charset_ptr;
+extern CHARSET *Parrot_binary_charset_ptr;
+extern CHARSET *Parrot_default_charset_ptr;
+extern CHARSET *Parrot_unicode_charset_ptr;
+#endif
+
+#define PARROT_DEFAULT_CHARSET Parrot_iso_8859_1_charset_ptr
+#define PARROT_BINARY_CHARSET Parrot_binary_charset
+#define PARROT_UNICODE_CHARSET Parrot_unicode_charset_ptr
 
 typedef STRING *(*charset_get_graphemes_t)(Interp *interpreter, STRING *source_string, UINTVAL offset, UINTVAL count);
 typedef STRING *(*charset_get_graphemes_inplace_t)(Interp *interpreter, STRING *source_string, STRING *dest_string, UINTVAL offset, UINTVAL count);
@@ -24,6 +37,8 @@ typedef void (*charset_set_graphemes_t)(Interp *interpreter, STRING *source_stri
 typedef void (*charset_to_charset_t)(Interp *interpreter, STRING *source_string, CHARSET *new_charset);
 typedef STRING *(*charset_copy_to_charset_t)(Interp *interpreter, STRING *source_string, CHARSET *new_charset);
 typedef void (*charset_to_unicode_t)(Interp *interpreter, STRING *source_string);
+typedef void (*charset_from_charset_t)(Interp *interpreter, STRING *source_string);
+typedef void (*charset_from_unicode_t)(Interp *interpreter, STRING *source_string);
 typedef void (*charset_compose_t)(Interp *interpreter, STRING *source_string);
 typedef void (*charset_decompose_t)(Interp *interpreter, STRING *source_string);
 typedef void (*charset_upcase_t)(Interp *interpreter, STRING *source_string);
@@ -56,6 +71,13 @@ typedef STRING *(*charset_string_from_codepoint_t)(Interp *interpreter, UINTVAL 
 typedef size_t (*charset_compute_hash_t)(Interp *interpreter, STRING *source_string);
 
 CHARSET *Parrot_new_charset(Interp *interpreter);
+CHARSET *Parrot_load_charset(Interp *interpreter, const char *charsetname);
+CHARSET *Parrot_find_charset(Interp *interpreter, const char *charsetname);
+INTVAL Parrot_register_charset(Interp *interpreter, const char *charsetname, CHARSET *charset);
+INTVAL Parrot_make_default_charset(Interp *interpreter, const char *charsetname, CHARSET *charset);
+CHARSET *Parrot_default_charset(Interp *interpreter);
+typedef INTVAL (*charset_converter_t)(Interp *interpreter, CHARSET *lhs, CHARSET *rhs);
+charset_converter_t Parrot_find_charset_converter(Interp *interpreter, CHARSET *lhs, CHARSET *rhs);
 
 struct _charset {
     const char *name;
@@ -65,6 +87,8 @@ struct _charset {
     charset_to_charset_t to_charset;
     charset_copy_to_charset_t copy_to_charset;
     charset_to_unicode_t to_unicode;
+    charset_from_charset_t from_charset;
+    charset_from_unicode_t from_unicode;
     charset_compose_t compose;
     charset_decompose_t decompose;
     charset_upcase_t upcase;

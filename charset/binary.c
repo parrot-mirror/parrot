@@ -20,9 +20,6 @@ This file implements the charset functions for binary data
 /* The encoding we prefer, given a choice */
 static ENCODING *preferred_encoding;
 
-extern ENCODING *Parrot_fixed_8_encoding_ptr;
-CHARSET *Parrot_binary_charset_ptr;
-
 static STRING *get_graphemes(Interp *interpreter, STRING *source_string, UINTVAL offset, UINTVAL count) {
     return ENCODING_GET_BYTES(interpreter, source_string, offset, count);
 }
@@ -48,6 +45,14 @@ static STRING *copy_to_charset(Interp *interpreter, STRING *source_string, CHARS
 
 static void to_unicode(Interp *interpreter, STRING *source_string) {
     internal_exception(UNIMPLEMENTED, "to_unicode for binary not implemented");
+}
+
+static void from_charset(Interp *interpreter, STRING *source_string) {
+    internal_exception(UNIMPLEMENTED, "Can't do this yet");
+}
+
+static void from_unicode(Interp *interpreter, STRING *source_string) {
+    internal_exception(UNIMPLEMENTED, "Can't do this yet");
 }
 
 /* A noop. can't compose binary */
@@ -195,6 +200,8 @@ CHARSET *Parrot_charset_binary_init(Interp *interpreter) {
       to_charset,
       copy_to_charset,
       to_unicode,
+      from_charset,
+      from_unicode,
       compose,
       decompose,
       upcase,
@@ -233,7 +240,7 @@ CHARSET *Parrot_charset_binary_init(Interp *interpreter) {
   preferred_encoding = Parrot_fixed_8_encoding_ptr;
   
   memcpy(return_set, &base_set, sizeof(CHARSET));
-  Parrot_binary_charset_ptr = return_set;
+  Parrot_register_charset(interpreter, "binary", return_set);
   return return_set;
   
 }
