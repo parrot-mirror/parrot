@@ -62,7 +62,7 @@ init_world(Interp *interpreter)
     Parrot_encoding_fixed_8_init(interpreter);
     Parrot_charset_binary_init(interpreter);
     Parrot_charset_ascii_init(interpreter);
-
+    Parrot_charset_iso_8859_1_init(interpreter);
 
     /*
      * TODO allocate core vtable table only once - or per interpreter
