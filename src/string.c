@@ -45,7 +45,16 @@ static void _string_downscale(Interp *interpreter, STRING *s,
 static parrot_string_representation_t _string_smallest_representation(
     Interp *interpreter, STRING *s);
 
+/* Evil externs for globals which need fixing. Should be turned to
+static and loaded by an initialization routine at some point */
+extern CHARSET *Parrot_binary_charset_ptr;
+extern CHARSET *Parrot_ascii_charset_ptr;
+extern CHARSET *Parrot_iso_8859_1_charset_ptr;
+extern ENCODING *Parrot_fixed_8_encoding_ptr;
+
+
 /*
+
 
 =head2 String COW support
 

@@ -20,6 +20,9 @@ This file implements the charset functions for binary data
 /* The encoding we prefer, given a choice */
 static ENCODING *preferred_encoding;
 
+extern ENCODING *Parrot_fixed_8_encoding_ptr;
+CHARSET *Parrot_binary_charset_ptr;
+
 static STRING *get_graphemes(Interp *interpreter, STRING *source_string, UINTVAL offset, UINTVAL count) {
     return ENCODING_GET_BYTES(interpreter, source_string, offset, count);
 }
@@ -196,9 +199,12 @@ CHARSET *Parrot_charset_binary_init(Interp *interpreter) {
       find_word_boundary
   };
 
-  preferred_encoding = Parrot_load_encoding(interpreter, "fixed_8");
+  /* Snag the global. This is... bad. Should be properly fixed at some
+     point */
+  preferred_encoding = Parrot_fixed_8_encoding_ptr;
   
   memcpy(return_set, &base_set, sizeof(CHARSET));
+  Parrot_binary_charset_ptr = return_set;
   return return_set;
   
 }
