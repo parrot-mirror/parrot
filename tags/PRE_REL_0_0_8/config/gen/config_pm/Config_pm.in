@@ -1,0 +1,13 @@
+package Parrot::Config;
+
+use strict;
+use Exporter;
+
+use vars qw(@ISA @EXPORT %PConfig);
+@ISA=qw(Exporter);
+
+@EXPORT=qw(%PConfig);
+
+<<HERE>>
+
+1;
