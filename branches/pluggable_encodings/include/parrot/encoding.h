@@ -53,8 +53,23 @@ struct _encoding {
 
 typedef struct _encoding ENCODING;
 
+#if !defined PARROT_NO_EXTERN_ENCODING_PTRS
+extern ENCODING *Parrot_fixed_8_encoding_ptr;
+#endif
+
+#define PARROT_DEFAULT_ENCODING Parrot_fixed_8_encoding_ptr
+#define PARROT_FIXED_8_ENCODING Parrot_fixed_8_encoding_ptr
+#define PARROT_DEFAULT_FOR_UNICODE_ENCODING NULL
+
 ENCODING *Parrot_new_encoding(Interp* interpreter);
 ENCODING *Parrot_load_encoding(Interp* interpreter, const char *encoding_name);
+ENCODING *Parrot_find_encoding(Interp *interpreter, const char *encodingname);
+INTVAL Parrot_register_encoding(Interp *interpreter, const char *encodingname, ENCODING *encoding);
+INTVAL Parrot_make_default_encoding(Interp *interpreter, const char *encodingname, ENCODING *encoding);
+ENCODING *Parrot_default_encoding(Interp *interpreter);
+typedef INTVAL (*encoding_converter_t)(Interp *interpreter, ENCODING *lhs, ENCODING *rhs);
+encoding_converter_t Parrot_find_encoding_converter(Interp *interpreter, ENCODING *lhs, ENCODING *rhs);
+
 
 #define ENCODING_MAX_BYTES_PER_CODEPOINT(interp, source) ((ENCODING *)source->encoding)->max_bytes_per_codepoint
 #define ENCODING_TO_ENCODING(interp, source, offset, count) ((ENCODING *)source->encoding)->to_encoding(interp, source, offset, count)

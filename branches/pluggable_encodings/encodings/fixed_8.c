@@ -17,11 +17,6 @@ This file implements the encoding functions for fixed-width 8-bit codepoints
 #include "parrot/parrot.h"
 #include "fixed_8.h"
 
-/* Evil global variable. This is a short-term hack for now */
-ENCODING *Parrot_fixed_8_encoding_ptr;
-
-extern CHARSET *Parrot_binary_charset_ptr;
-
 /* This function needs to go through and get all the code points one
    by one and turn them into a byte */
 static void to_encoding(Interp *interpreter, STRING *source_string) {
@@ -119,11 +114,11 @@ static void become_encoding(Interp *interpreter, STRING *source_string) {
 
 
 static UINTVAL codepoints(Interp *interpreter, STRING *source_string) {
-  return source_string->bufused;
+    return bytes(interpreter, source_string);
 }
 
 static UINTVAL bytes(Interp *interpreter, STRING *source_string) {
-  return source_string->bufused;
+    return(source_string->bufused - (PObj_bufstart(source_string) - source_string->strstart));
 }
 
 ENCODING *Parrot_encoding_fixed_8_init(Interp *interpreter) {
@@ -149,7 +144,7 @@ ENCODING *Parrot_encoding_fixed_8_init(Interp *interpreter) {
       bytes
   };
   memcpy(return_encoding, &base_encoding, sizeof(ENCODING));
-  Parrot_fixed_8_encoding_ptr = return_encoding;
+  Parrot_register_encoding(interpreter, "fixed_8", return_encoding);
   return return_encoding;
 }
 

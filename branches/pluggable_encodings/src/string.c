@@ -37,20 +37,13 @@ strings.
 
 #define EXTRA_SIZE 256
 
-/* Evil externs for globals which need fixing. Should be turned to
-static and loaded by an initialization routine at some point */
-extern CHARSET *Parrot_binary_charset_ptr;
-extern CHARSET *Parrot_ascii_charset_ptr;
-extern CHARSET *Parrot_iso_8859_1_charset_ptr;
-extern ENCODING *Parrot_fixed_8_encoding_ptr;
-
 static void
 saneify_string(STRING *s) {
     if (!s->encoding) {
-        s->encoding = Parrot_fixed_8_encoding_ptr;
+        s->encoding = PARROT_DEFAULT_ENCODING;
     }
     if (!s->charset) {
-        s->charset = Parrot_iso_8859_1_charset_ptr;
+        s->charset = PARROT_DEFAULT_CHARSET;
     }
 }
 
@@ -395,8 +388,8 @@ string_make_empty(Interp *interpreter,
     s = new_string_header(interpreter, 0);
 
     if (representation == enum_stringrep_one) {
-        s->encoding = Parrot_fixed_8_encoding_ptr;
-        s->charset = Parrot_iso_8859_1_charset_ptr;
+        s->encoding = PARROT_DEFAULT_ENCODING;
+        s->charset = PARROT_DEFAULT_CHARSET;
     } else {
         internal_exception(INVALID_CHARTYPE, "Unsupported representation");
     }
@@ -499,9 +492,11 @@ STRING *
 string_from_cstring(Interp *interpreter,
     const void *buffer, UINTVAL len)
 {
-    return string_make(interpreter, buffer, len ? len :
-            buffer ? strlen(buffer) : 0,
-                       "iso-8859-1", 0); /* make this utf-8 eventually? */
+    return string_make_direct(interpreter, buffer, len ? len :
+                              buffer ? strlen(buffer) : 0,
+                              PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET, 
+                              0); /* Force an 8-bit encoding at some
+                                     point? */
 }
 
 /*
@@ -521,9 +516,9 @@ STRING *
 string_from_const_cstring(Interp *interpreter,
     const void *buffer, UINTVAL len)
 {
-    return string_make(interpreter, buffer, len ? len :
-            buffer ? strlen(buffer) : 0,
-                       "iso-8859-1", 0); /* make this utf-8 eventually? */
+    return string_make_direct(interpreter, buffer, len ? len :
+                              buffer ? strlen(buffer) : 0,
+                              PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET, 0); /* make this utf-8 eventually? */
 }
 
 /*
@@ -573,8 +568,9 @@ STRING *
 const_string(Interp *interpreter, const char *buffer)
 {
     /* TODO cache the strings */
-    return string_make(interpreter, buffer, strlen(buffer),
-        "iso-8859-1", PObj_external_FLAG|PObj_constant_FLAG);
+    return string_make_direct(interpreter, buffer, strlen(buffer),
+                       PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
+                       PObj_external_FLAG|PObj_constant_FLAG);
 }
 
 /*
@@ -607,6 +603,26 @@ STRING *
 string_make(Interp *interpreter, const void *buffer,
     UINTVAL len, const char *encoding_name, UINTVAL flags)
 {
+    ENCODING *encoding;
+    CHARSET *charset;
+    if (!encoding_name) {
+        internal_exception(MISSING_ENCODING_NAME,
+            "string_make: no encoding name specified");
+    }
+
+    if (strcmp(encoding_name, "iso-8859-1") == 0 ) {
+        encoding = Parrot_fixed_8_encoding_ptr;
+        charset = Parrot_iso_8859_1_charset_ptr;
+    }
+    else {
+        internal_exception(UNIMPLEMENTED, "Can't make non-iso-8859-1 strings");
+    }
+    return string_make_direct(interpreter, buffer, len, encoding, charset, flags);
+
+}
+
+STRING *
+string_make_direct(Interp *interpreter, const void *buffer, UINTVAL len, ENCODING *encoding, CHARSET *charset, UINTVAL flags) {
     STRING *s = NULL;
     union {
         const void * __c_ptr;
@@ -621,16 +637,12 @@ string_make(Interp *interpreter, const void *buffer,
             "string_make: buffer pointer NULL, but length nonzero");
     }
 
-    if (!encoding_name) {
-        internal_exception(MISSING_ENCODING_NAME,
-            "string_make: no encoding name specified");
-    }
 
     s = new_string_header(interpreter, flags);
+    s->encoding = encoding;
+    s->charset = charset;
 
-    if (strcmp(encoding_name, "iso-8859-1") == 0 ) {
-        s->encoding = Parrot_fixed_8_encoding_ptr;
-        s->charset = Parrot_iso_8859_1_charset_ptr;
+    if (encoding == Parrot_fixed_8_encoding_ptr && charset == Parrot_iso_8859_1_charset_ptr) {
         /*
          * fast path for external (constant) strings - don't allocate
          * and copy data
@@ -647,9 +659,6 @@ string_make(Interp *interpreter, const void *buffer,
             
             return s;
         }
-    }
-    else {
-        internal_exception(UNIMPLEMENTED, "Can't make non-iso-8859-1 strings");
     }
 
     Parrot_allocate_string(interpreter, s, len);

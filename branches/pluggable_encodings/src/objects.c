@@ -28,9 +28,6 @@ static void* instantiate_py_object(Interp*, PMC*, void*);
 extern void
 parrot_py_set_vtable(Parrot_Interp interpreter, PMC* class);
 
-extern CHARSET *Parrot_binary_charset_ptr;
-extern ENCODING *Parrot_fixed_8_encoding_ptr;
-
 static PMC *
 clone_array(Parrot_Interp interpreter, PMC *source_array)
 {
@@ -202,7 +199,7 @@ create_deleg_pmc_vtable(Interp *interpreter, PMC *class, STRING *class_name)
 
     memset(&meth_str, 0, sizeof(meth_str));
     meth_str.encoding = Parrot_fixed_8_encoding_ptr;
-    meth_str.charset = Parrot_binary_charset_ptr;
+    meth_str.charset = Parrot_iso_8859_1_charset_ptr;
     for (i = 0; (meth = Parrot_vtable_slot_names[i]); ++i) {
         if (!*meth)
             continue;

@@ -151,6 +151,7 @@ string_unescape_one(Interp *interpreter, UINTVAL *offset,
 {
     UINTVAL codepoint;
     UINTVAL workchar = 0;
+    UINTVAL charcount = 0;
     UINTVAL strlen = string_length(interpreter, string);
     /* Well, not right now */
     codepoint = CHARSET_GET_CODEPOINT(interpreter, string, *offset);
@@ -185,7 +186,6 @@ string_unescape_one(Interp *interpreter, UINTVAL *offset,
         }
         ++*offset;
         return workchar;
-    case 'o':
     case 'c':
         ++*offset;
         codepoint = CHARSET_GET_CODEPOINT(interpreter, string, *offset);
@@ -197,7 +197,69 @@ string_unescape_one(Interp *interpreter, UINTVAL *offset,
         ++*offset;
         return workchar;
     case 'u':
+        ++*offset;
+        codepoint = CHARSET_GET_CODEPOINT(interpreter, string, *offset);
+        if (codepoint >= '0' && codepoint <= '9') {
+            workchar = codepoint - '0';
+        } else if (codepoint >= 'a' && codepoint <= 'f') {
+            workchar = codepoint - 'a' + 10;
+        } else if (codepoint >= 'A' && codepoint <= 'F') {
+            workchar = codepoint - 'A' + 10;
+        } else {
+            internal_exception(UNIMPLEMENTED, "Illegal escape sequence in");
+        }
+        ++*offset;
+        for (charcount = 1; charcount < 4; charcount++) {
+            if (*offset < strlen) {
+                workchar *= 16;
+                codepoint = CHARSET_GET_CODEPOINT(interpreter, string, *offset);
+                if (codepoint >= '0' && codepoint <= '9') {
+                    workchar += codepoint - '0';
+                } else if (codepoint >= 'a' && codepoint <= 'f') {
+                    workchar += codepoint - 'a' + 10;
+                } else if (codepoint >= 'A' && codepoint <= 'F') {
+                    workchar += codepoint - 'A' + 10;
+                } else {
+                    return workchar;
+                }
+            } else {
+                return workchar;
+            }
+            ++*offset;
+        }
+        return workchar;        
     case 'U':
+        ++*offset;
+        codepoint = CHARSET_GET_CODEPOINT(interpreter, string, *offset);
+        if (codepoint >= '0' && codepoint <= '9') {
+            workchar = codepoint - '0';
+        } else if (codepoint >= 'a' && codepoint <= 'f') {
+            workchar = codepoint - 'a' + 10;
+        } else if (codepoint >= 'A' && codepoint <= 'F') {
+            workchar = codepoint - 'A' + 10;
+        } else {
+            internal_exception(UNIMPLEMENTED, "Illegal escape sequence in");
+        }
+        ++*offset;
+        for (charcount = 1; charcount < 8; charcount++) {
+            if (*offset < strlen) {
+                workchar *= 16;
+                codepoint = CHARSET_GET_CODEPOINT(interpreter, string, *offset);
+                if (codepoint >= '0' && codepoint <= '9') {
+                    workchar += codepoint - '0';
+                } else if (codepoint >= 'a' && codepoint <= 'f') {
+                    workchar += codepoint - 'a' + 10;
+                } else if (codepoint >= 'A' && codepoint <= 'F') {
+                    workchar += codepoint - 'A' + 10;
+                } else {
+                    return workchar;
+                }
+            } else {
+                return workchar;
+            }
+            ++*offset;
+        }
+        return workchar;        
     case 'b':
         internal_exception(UNIMPLEMENTED, "Illegal escape sequence in ");
     case '0':

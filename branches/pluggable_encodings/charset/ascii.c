@@ -20,8 +20,25 @@ This file implements the charset functions for ascii data
 /* The encoding we prefer, given a choice */
 static ENCODING *preferred_encoding;
 
-extern ENCODING *Parrot_fixed_8_encoding_ptr;
-CHARSET *Parrot_ascii_charset_ptr;
+static char typetable[256] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, /* 0-15 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 16-31 */
+    1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, /* 32-47 */
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, /* 48-63 */
+    3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /* 64-79 */
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, /* 80-95 */
+    3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /* 95-111 */
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 0, /* 112-127 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 128-143 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 144-159 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 160-175 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 176-191 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 192-207 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  /* 207-223 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  /* 224-239 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  /* 240-255 */
+};
+
 
 static STRING *get_graphemes(Interp *interpreter, STRING *source_string, UINTVAL offset, UINTVAL count) {
     return ENCODING_GET_BYTES(interpreter, source_string, offset, count);
@@ -48,6 +65,14 @@ static STRING *copy_to_charset(Interp *interpreter, STRING *source_string, CHARS
 
 static void to_unicode(Interp *interpreter, STRING *source_string) {
     internal_exception(UNIMPLEMENTED, "to_unicode for ascii not implemented");
+}
+
+static void from_charset(Interp *interpreter, STRING *source_string) {
+    internal_exception(UNIMPLEMENTED, "Can't do this yet");
+}
+
+static void from_unicode(Interp *interpreter, STRING *source_string) {
+    internal_exception(UNIMPLEMENTED, "Can't do this yet");
 }
 
 /* A noop. can't compose ascii */
@@ -242,6 +267,8 @@ CHARSET *Parrot_charset_ascii_init(Interp *interpreter) {
       to_charset,
       copy_to_charset,
       to_unicode,
+      from_charset,
+      from_unicode,
       compose,
       decompose,
       upcase,
@@ -280,7 +307,7 @@ CHARSET *Parrot_charset_ascii_init(Interp *interpreter) {
   preferred_encoding = Parrot_fixed_8_encoding_ptr;
   
   memcpy(return_set, &base_set, sizeof(CHARSET));
-  Parrot_ascii_charset_ptr = return_set;
+  Parrot_register_charset(interpreter, "ascii", return_set);
   return return_set;
   
 }

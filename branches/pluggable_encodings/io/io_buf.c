@@ -24,8 +24,6 @@ The "buf" layer of Parrot IO. Buffering and all the fun stuff.
 
 /* Defined at bottom */
 extern ParrotIOLayerAPI pio_buf_layer_api;
-extern CHARSET *Parrot_iso_8859_1_charset_ptr;
-extern ENCODING *Parrot_fixed_8_encoding_ptr;
 
 ParrotIOLayer pio_buf_layer = {
     NULL,
