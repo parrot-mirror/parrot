@@ -2648,7 +2648,7 @@ yyreduce:
 #line 793 "imcc/imcc.y"
     {
             current_call->r[0]->pcc_sub->sub = mk_sub_address(yyvsp[-3].s);
-            current_call->r[0]->pcc_sub->prototyped = 0;
+            current_call->r[0]->pcc_sub->prototyped = 1;
             if(cur_unit->type == IMC_PCCSUB)
                cur_unit->instructions->r[1]->pcc_sub->calls_a_sub = 1;
 
@@ -2668,7 +2668,7 @@ yyreduce:
            i->type = ITCALL | ITPCCSUB;
            yyval.i = i;
            current_call->r[0]->pcc_sub->sub = mk_sub_address(yyvsp[0].s);
-           current_call->r[0]->pcc_sub->prototyped = 0;
+           current_call->r[0]->pcc_sub->prototyped = 1;
            if(cur_unit->type == IMC_PCCSUB)
               cur_unit->instructions->r[1]->pcc_sub->calls_a_sub = 1;
         }
