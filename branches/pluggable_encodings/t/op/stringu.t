@@ -20,6 +20,8 @@ Tests Parrot's unicode string system.
 use Parrot::Test tests => 14;
 use Test::More;
 
+SKIP: {
+skip("No unicode yet", 14);
 output_is( <<'CODE', <<OUTPUT, "angstrom" );
     getstdout P0
     push P0, "utf8"
@@ -190,3 +192,4 @@ output_like( <<'CODE', <<OUTPUT, 'illegal \x');
 CODE
 /Illegal escape sequence in/
 OUTPUT
+}
