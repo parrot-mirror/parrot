@@ -1,0 +1,205 @@
+/*
+Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/parrotio.pmc - Parrot IO
+
+=head1 DESCRIPTION
+
+These are the vtable functions for Parrot IO.
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+/* This class is actually part of the io subsystem */
+#include "../io/io_private.h"
+
+
+pmclass ParrotIO need_ext {
+
+/*
+
+=item C<void class_init()>
+
+Class initialization.
+
+=cut
+
+*/
+
+    void class_init () {
+
+        if (pass) {
+            enter_nci_method(INTERP, enum_class_ParrotIO,
+                    F2DPTR(PIO_flush), "flush", "vIO");
+            enter_nci_method(INTERP, enum_class_ParrotIO,
+                    F2DPTR(PIO_setbuf), "setbuf", "iIOi");
+            enter_nci_method(INTERP, enum_class_ParrotIO,
+                    F2DPTR(PIO_setlinebuf), "setlinebuf", "iIO");
+            enter_nci_method(INTERP, enum_class_ParrotIO,
+                    F2DPTR(PIO_puts), "puts", "iIOt");
+            enter_nci_method(INTERP, enum_class_ParrotIO,
+                    F2DPTR(PIO_eof), "eof", "iIO");
+        }
+    }
+
+/*
+
+=item C<void init()>
+
+Initializes the IO PMC.
+
+=cut
+
+*/
+
+    void init () {
+        PObj_active_destroy_SET(SELF);
+    }
+
+/*
+
+=item C<void destroy()>
+
+Destroys the IO PMC, flushing and closing as necessary.
+
+=cut
+
+*/
+
+    void destroy () {
+        ParrotIO *io = PMC_data(SELF);
+        if (io) {
+            /* shared filehandles will only get flushed */
+            if (io->flags & PIO_F_SHARED) {
+                PIO_flush(interpreter, SELF);
+            }
+            else {
+                PIO_close(interpreter, SELF);
+            }
+        }
+    }
+
+/*
+
+=item C<PMC* clone()>
+
+Clones the IO PMC.
+
+For now both PMCs refer to the same C<ParrotIO> object. If we have
+different IO layers, we might copy C<data> and C<struct_val>.
+
+=cut
+
+*/
+
+    PMC* clone () {
+        PMC* dest = pmc_new(INTERP, SELF->vtable->base_type);
+        PMC_data(dest) = PMC_data(SELF);
+        PMC_struct_val(dest) = PMC_struct_val(SELF);
+        return dest;
+    }
+
+/*
+
+=item C<INTVAL get_bool()>
+
+Returns whether at C<EOF> or not.
+
+=cut
+
+*/
+
+    INTVAL get_bool() {
+        return !PIO_eof(INTERP, SELF);
+    }
+
+/*
+
+=item C<STRING* get_string_keyed_int(INTVAL n)>
+
+Return the name of the nth layer. B<n> >= 0 returns layer names up
+from the bottom.
+If B<n> is negative returns layer names from top down. For non-existing
+layers an empty string is returned.
+
+=cut
+
+*/
+
+    STRING* get_string_keyed_int(INTVAL n) {
+        ParrotIO *io = PMC_data(SELF);
+        ParrotIOLayer *layer;
+        if (!io)
+            return const_string(interpreter, "");
+        layer = io->stack;
+        if (n >= 0) {
+            ParrotIOLayer *last;
+            last = layer;
+            for (; layer; layer = layer->down)
+                last = layer;
+            for (; n && last; --n, last = last->up)
+                ;
+            if (last)
+                return string_from_cstring(interpreter, last->name, 0);
+            return const_string(interpreter, "");
+        }
+        for (++n; n && layer; layer = layer->down, ++n)
+            ;
+        if (layer)
+            return string_from_cstring(interpreter, layer->name, 0);
+        return const_string(interpreter, "");
+    }
+/*
+
+=item C<void push_string (STRING* value)>
+
+Push the layer name C<value> onto the PIO's layer stack.
+
+=item C<STRING* pop_string ()>
+
+Pop a layer off the PIO's layer stack. Returns the layer name.
+
+=cut
+
+*/
+
+    void push_string (STRING* value) {
+        PIO_push_layer_str(INTERP, SELF, value);
+    }
+
+    STRING* pop_string () {
+        return PIO_pop_layer_str(INTERP, SELF);
+    }
+}
+
+/*
+
+=back
+
+=head1 HISTORY
+
+Initial version by leo 2003/06/23.
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

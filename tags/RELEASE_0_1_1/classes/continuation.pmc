@@ -1,0 +1,194 @@
+/*
+Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/continuation.pmc - Continuation PMC
+
+=head1 DESCRIPTION
+
+C<Continuation> extends C<Closure> to provide a subroutine with
+associated "context". See the L<Glossary|docs/glossary.pod> for more
+information.
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+#include "parrot/method_util.h"
+#include <assert.h>
+
+pmclass Continuation {
+
+/*
+
+=item C<void init()>
+
+Initializes the continuation.
+
+=cut
+
+*/
+
+    void init () {
+        PMC_cont(SELF) = new_continuation(INTERP);
+        PMC_struct_val(SELF) = NULL;
+        PObj_custom_mark_destroy_SETALL(SELF);
+    }
+
+/*
+
+=item C<void mark()>
+
+Marks the continuation as live.
+
+=cut
+
+*/
+
+    void mark () {
+        struct Parrot_cont * cc = PMC_cont(SELF);
+        mark_context(INTERP, &cc->ctx);
+    }
+
+/*
+
+=item C<void destroy()>
+
+Destroys the continuation.
+
+=cut
+
+*/
+
+    void destroy () {
+        struct Parrot_cont * sub = PMC_cont(SELF);
+        mem_sys_free(sub);
+    }
+/*
+
+=item C<PMC *clone()>
+
+Creates and returns a clone of the continuation.
+
+=cut
+
+*/
+
+    PMC* clone() {
+        struct Parrot_cont * sub;
+        struct Parrot_cont *cc_self = PMC_cont(SELF);
+        PMC* ret = pmc_new_noinit(INTERP, SELF->vtable->base_type);
+        PObj_custom_mark_destroy_SETALL(ret);
+        sub = PMC_cont(ret) = mem_sys_allocate(sizeof(struct Parrot_cont));
+        memcpy(sub, cc_self, sizeof(struct Parrot_cont));
+
+        PMC_struct_val(ret) = PMC_struct_val(SELF);
+        return ret;
+    }
+
+/*
+
+=item C<PMC *set_pmc()>
+
+Assign context.
+
+=cut
+
+*/
+    void set_pmc(PMC* src) {
+        struct Parrot_cont *cc_self = PMC_cont(SELF);
+        struct Parrot_cont *cc_src  = PMC_cont(src);
+
+        memcpy(cc_self, cc_src, sizeof(struct Parrot_cont));
+        PMC_struct_val(SELF) = PMC_struct_val(src);
+    }
+/*
+
+=item C<void set_pointer(void *value)>
+
+Sets the pointer to the actual subroutine.
+
+=cut
+
+*/
+
+    void set_pointer (void* value) {
+        PObj_get_FLAGS(SELF) |= PObj_private1_FLAG;
+        PMC_struct_val(SELF) = value;
+    }
+
+/*
+
+=item C<void *get_pointer()>
+
+Returns the pointer to the actual subroutine.
+
+=cut
+
+*/
+
+    void* get_pointer () {
+        return PMC_struct_val(SELF);
+    }
+/*
+
+=item C<INTVAL defined()>
+
+Returns whether the subroutine is defined.
+
+=cut
+
+*/
+
+    INTVAL defined () {
+        return PMC_struct_val(SELF) != NULL;
+    }
+
+/*
+
+=item C<void *invoke(void *next)>
+
+Restores the "context" and calls the superclass's C<invoke()>.
+
+=cut
+
+*/
+
+    void* invoke (void* next) {
+        struct Parrot_cont * cc = PMC_cont(SELF);
+        restore_context(interpreter, &cc->ctx);
+        if (interpreter->code->cur_cs != cc->seg) {
+            Parrot_switch_to_cs(interpreter, cc->seg, 1);
+        }
+        return PMC_struct_val(SELF);
+    }
+}
+
+/*
+
+=back
+
+=head1 HISTORY
+
+Initial revision by sean 2002/08/04.
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

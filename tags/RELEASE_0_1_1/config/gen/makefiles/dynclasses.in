@@ -1,0 +1,29 @@
+PERL = ${perl}
+RM_F = ${rm_f}
+LOAD_EXT = ${load_ext}
+DESTDIR = ${build_dir}${slash}runtime${slash}parrot${slash}dynext
+
+# add your dynamic pmcs here
+
+PMCS = foo subproxy \
+tclobject tclstring tclint tclfloat \
+tcllist tclarray \
+match matchrange
+
+BUILD = ${perl} build.pl
+
+all :
+	$(BUILD) generate $(PMCS)
+	$(BUILD) compile $(PMCS)
+	$(BUILD) linklibs $(PMCS)
+	$(BUILD) copy --destination=$(DESTDIR) $(PMCS)
+
+clean :
+	$(RM_F) *.c *.h *$(LOAD_EXT) *.dump lib-*
+
+realclean: clean
+	$(RM_F) Makefile build.pl
+
+distclean: realclean
+
+cvsclean: realclean

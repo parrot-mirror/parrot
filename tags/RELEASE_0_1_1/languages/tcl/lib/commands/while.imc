@@ -1,0 +1,62 @@
+###
+# [while]
+
+.namespace [ "Tcl" ]
+
+.sub _while
+  .param pmc cond_p
+  .param pmc body_p
+
+  .local pmc retval
+  retval = new String
+
+  # XXX no bad arg handling...
+
+  .local string code
+
+  .local pmc parsed_code
+  .local int return_type
+
+  .local pmc parse
+  .local pmc interpret
+  .local pmc expression
+  .local pmc expr_boolean
+  parse = find_global "_Tcl", "__parse"
+  interpret = find_global "_Tcl", "__interpret"
+  expression = find_global "_Tcl", "__expression"
+  expr_boolean = find_global "_Tcl", "__expr_boolean"
+
+  code = body_p
+
+while_loop:
+  parsed_code = parse(code,0,0)
+  $P0 = expression(cond_p)
+  # XXX Happy case - expression could have failed.
+  $S0 = $P0[1]
+  $I0 = expr_boolean($S0)
+  if $I0 == 0 goto done
+  (return_type,retval) = interpret(parsed_code)
+  if return_type == TCL_BREAK goto done
+  if return_type == TCL_RETURN goto done
+
+  goto while_loop
+
+done:
+  if return_type == TCL_RETURN goto done_cleaned
+  if return_type == TCL_ERROR  goto done_cleaned
+  retval = ""
+  return_type = TCL_OK
+  goto done_done
+
+done_cleaned:
+  retval = $S0 
+
+done_done:
+  # while always returns "", regardless of the code it may have executed
+  # XXX - (unless there's an error)
+
+  .pcc_begin_return
+    .return return_type
+    .return retval
+  .pcc_end_return
+.end

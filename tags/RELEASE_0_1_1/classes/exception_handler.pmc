@@ -1,0 +1,73 @@
+/*
+Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/exception_handler.pmc - Exception Handler PMC
+
+=head1 DESCRIPTION
+
+When an exception handler is called, the exception object is passed as
+C<REG_PMC(5)>, the original contents of this register is in the
+exception object's C<_P5> attribute.
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+#include "parrot/method_util.h"
+
+pmclass Exception_Handler extends Continuation {
+
+/*
+
+=item C<void init()>
+
+Initializes the exception handler.
+
+=cut
+
+*/
+
+    void init() {
+        PMC_cont(SELF) = new_continuation(INTERP);
+        PMC_struct_val(SELF) = NULL;
+        /*
+         * an exception handler has no separate context, its
+         * only a snapshot of an "earlier" context, which is
+         * contained in the interpreter's context - the stacks
+         * can only be deeper in the interpreter - so no
+         * mark of context is needed
+         */
+        PObj_active_destroy_SET(SELF);
+    }
+
+}
+
+/*
+
+=back
+
+=head1 HISTORY
+
+Initial revision by leo 2003.07.10.
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

@@ -1,0 +1,354 @@
+/*
+Copyright: 2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/integer.pmc - Integer PMC class
+
+=head1 DESCRIPTION
+
+C<Integer> provides an integer for languages
+that want a value-restricted integer type without going to an I
+register.
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+static void
+overflow(Interp *interpreter, PMC *self, INTVAL b, PMC *dest, int mmd)
+{
+    PMC *temp;
+    INTVAL a = PMC_int_val(self);
+
+    if (PARROT_ERRORS_test(interpreter,PARROT_ERRORS_OVERFLOW_FLAG)) {
+        real_exception(interpreter, NULL, ERR_OVERFLOW,
+                "Integer overflow");
+    }
+    if (self == dest) {
+        VTABLE_morph(interpreter, self, enum_class_BigInt);
+        VTABLE_set_integer_native(interpreter, self, a);
+        mmd_dispatch_v_pip(interpreter, self, b, dest, mmd);
+    }
+    else {
+        temp = pmc_new(interpreter, enum_class_BigInt);
+        VTABLE_set_integer_native(interpreter, temp, a);
+        mmd_dispatch_v_pip(interpreter, temp, b, dest, mmd);
+    }
+}
+
+/*
+
+=item C<static void
+integer_divide(Parrot_Interp interp, PMC* self, PMC* value, PMC* destination)>
+
+Performs integer division of C<*self> by C<*value>, placing the result
+in C<*destination>.
+
+=cut
+
+*/
+
+static void
+integer_divide(Parrot_Interp interp, PMC* self, PMC* value, PMC* destination) {
+     INTVAL result;
+     result = PMC_int_val(self) / VTABLE_get_integer(interp, value);
+     VTABLE_set_integer_native(interp, destination, result);
+}
+
+
+pmclass Integer extends scalar {
+
+/*
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=item C<void class_init()>
+
+C<class_init()> code is run during C<<Parrot_<class>_class_init()>>.
+
+Replaces multi-method C<divide()> with C<integer_divide()>.
+
+=cut
+
+*/
+
+    void class_init() {
+        if (pass) {
+            mmd_register(INTERP, MMD_DIVIDE,
+                enum_class_Integer, enum_class_Integer,
+                (funcptr_t)integer_divide);
+        }
+    }
+
+/*
+
+=item C<void set_integer_native(INTVAL value)>
+
+=cut
+
+*/
+
+    void init () {
+        PMC_int_val(SELF) = 0;
+    }
+
+    void set_integer_native(INTVAL value) {
+        PMC_int_val(SELF) = value;
+    }
+
+/*
+
+=item C<void set_number_native(FLOATVAL value)>
+
+Sets the value of the integer to C<value>.
+
+=cut
+
+*/
+
+    void set_number_native(FLOATVAL value) {
+        PMC_int_val(SELF) = value;
+    }
+
+/*
+
+=item C<void set_string_native(STRING* value)>
+
+Sets the value of the integer to the result of converting C<*value> to a
+number.
+
+=cut
+
+*/
+
+    void set_string_native(STRING* value) {
+		PMC_int_val(SELF) = string_to_num(INTERP, value);
+    }
+
+/*
+
+=item C<void set_pmc(PMC *value)>
+
+Sets the value of the integer to the integer value of C<*value>.
+
+=cut
+
+*/
+
+    void set_pmc(PMC *value) {
+        PMC_int_val(SELF) = VTABLE_get_integer(INTERP, value);
+    }
+
+/*
+
+=item C<FLOATVAL get_number()>
+
+Returns the value of the integer as a floating point number.
+
+=cut
+
+*/
+
+    FLOATVAL get_number() {
+        return PMC_int_val(SELF);
+    }
+
+/*
+
+=item C<INTVAL get_integer()>
+
+Returns the value of the integer.
+
+=cut
+
+*/
+
+    INTVAL get_integer() {
+        return (INTVAL)PMC_int_val(SELF);
+    }
+
+/*
+
+=item C<INTVAL get_bool()>
+
+Returns the boolean value of the integer.
+
+=cut
+
+*/
+
+    INTVAL get_bool() {
+        return(PMC_int_val(SELF) != 0);
+    }
+
+/*
+
+=item C<STRING* get_string()>
+
+Returns the string representation of the integer.
+
+=cut
+
+*/
+
+    STRING* get_string() {
+        return string_from_num(INTERP, PMC_int_val(SELF));
+    }
+
+/*
+
+=item C<void add(PMC *value, PMC *dest)>
+
+Adds C<*value> to the integer and returns the result in C<*dest>.
+
+Please note: the label syntax I<MMD_type:> denote the behavior, if
+the right hand value is of that type. The part inside the braces is
+converted to a distinct function and gets I<mmd_register>ed for these
+two types.
+
+=cut
+
+*/
+    void add_int (INTVAL b, PMC* dest) {
+        INTVAL a = PMC_int_val(SELF);
+        INTVAL c = a + b;
+        if ((c^a) >= 0 || (c^b) >= 0)
+            VTABLE_set_integer_native(INTERP, dest, c);
+        else
+            overflow(INTERP, SELF, b, dest, MMD_ADD_INT);
+    }
+
+    void add (PMC* value, PMC* dest) {
+MMD_PerlInt: {
+        INTVAL a = PMC_int_val(SELF);
+        INTVAL b = PMC_int_val(value);
+        INTVAL c = a + b;
+        if ((c^a) >= 0 || (c^b) >= 0)
+            VTABLE_set_integer_native(INTERP, dest, c);
+        else
+            overflow(INTERP, SELF, b, dest, MMD_ADD_INT);
+        }
+MMD_Integer: {
+        VTABLE_set_integer_native(INTERP, dest,
+            PMC_int_val(SELF) + PMC_int_val(value));
+        }
+MMD_PerlUndef: {
+        Parrot_warn(INTERP, PARROT_WARNINGS_UNDEF_FLAG,
+            "Use of uninitialized value in integer context");
+        VTABLE_set_integer_native(INTERP, dest, PMC_int_val(SELF));
+        }
+MMD_PerlNum: {
+        VTABLE_set_number_native(INTERP, dest,
+            PMC_int_val(SELF) + PMC_num_val(value));
+        }
+MMD_DEFAULT: {
+        VTABLE_set_number_native(INTERP, dest,
+            PMC_int_val(SELF) + VTABLE_get_number(INTERP, value));
+        }
+    }
+/*
+
+=item C<void increment()>
+
+Increments the integer.
+
+=cut
+
+*/
+
+    void increment() {
+        PMC_int_val(SELF)++;
+    }
+
+/*
+
+=item C<void decrement()>
+
+Decrements the integer.
+
+=cut
+
+*/
+
+    void decrement() {
+        PMC_int_val(SELF)--;
+    }
+
+/*
+
+=item C<void absolute()>
+
+Sets C<dest> to the absolute value of SELF.
+
+=cut
+
+*/
+
+    void absolute(PMC *dest) {
+        VTABLE_set_integer_native(INTERP, dest, abs(PMC_int_val(SELF)));
+    }
+/*
+
+=item C<INTVAL cmp(PMC *value)>
+
+Returns the result of comparing the integer with C<*value>.
+
+=cut
+
+*/
+    INTVAL cmp(PMC* value) {
+MMD_PerlString: {
+            FLOATVAL fdiff = PMC_int_val(SELF)
+                - VTABLE_get_number(INTERP, value);
+            if (fdiff == 0) {
+                INTVAL idiff = PMC_int_val(SELF)
+                    - VTABLE_get_integer(INTERP, value);
+                return idiff > 0 ? 1 : idiff < 0 ? -1 : 0;
+            } else {
+                return fdiff > 0 ? 1 : -1;
+            }
+        }
+MMD_PerlNum: {
+            FLOATVAL diff;
+            diff = (FLOATVAL)PMC_int_val(SELF)
+                - VTABLE_get_number(INTERP, value);
+            return diff > 0 ? 1 : diff < 0 ? -1 : 0;
+        }
+MMD_DEFAULT: {
+            /* int or undef */
+            INTVAL diff = PMC_int_val(SELF)
+                - VTABLE_get_integer(INTERP, value);
+            return diff > 0 ? 1 : diff < 0 ? -1 : 0;
+        }
+    }
+}
+
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

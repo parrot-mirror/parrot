@@ -1,0 +1,210 @@
+/*
+Copyright: 2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/delegate.pmc - Delegate PMC
+
+=head1 DESCRIPTION
+
+Delegate each and every function to parrot bytecode.
+
+Almost all methods are auto-generated in lib/Parrot/Pmc2c.pm
+
+=head2 Register Save/Restore Functions
+
+The following bit is a fast register save/restore pair. They currently
+count on the registers in the interpreter structure being in the same
+order as in the C<regsave struct>, and that the registers are at the
+beginning of the interpreter structure.
+
+Yes, it's damned evil, but it's what we need, since we have to preserve
+the registers -- vtable methods can't change them.
+
+Also note that if the vtable method clobbers a register that contains a
+string or PMC not otherwise rooted it could be collected too early.
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
+
+#include "parrot/parrot.h"
+#include "delegate.str"
+#include <assert.h>
+
+
+/*
+
+=item C<static PMC *
+find_meth(Parrot_Interp interpreter, PMC *pmc, STRING *name)>
+
+Finds and returns the delegated method with string C<name>.
+
+=cut
+
+*/
+
+
+static PMC *
+find_meth(Parrot_Interp interpreter, PMC *pmc, STRING *meth) {
+    PMC *class = pmc;
+
+    if (Interp_flags_TEST(interpreter, PARROT_TRACE_FLAG)) {
+        char *name = string_to_cstring(interpreter, meth);
+        PIO_eprintf(interpreter, "# Calling meth '%s'\n#", name);
+        string_cstring_free(name);
+        print_pbc_location(interpreter);
+    }
+    if (PObj_is_object_TEST(pmc)) {
+        class = GET_CLASS((Buffer *)PMC_data(pmc), pmc);
+    }
+    return Parrot_find_method_with_cache(interpreter, class, meth);
+}
+
+/*
+
+=item C<static PMC *
+find_or_die(Parrot_Interp interpreter, PMC *pmc, STRING *name)>
+
+Returns the result of calling C<find_meth()> with the arguments, raising
+an exception if no method is found.
+
+=cut
+
+*/
+
+static PMC *
+find_or_die(Parrot_Interp interpreter, PMC *pmc, STRING *meth) {
+    PMC *returnPMC = find_meth(interpreter, pmc, meth);
+    if (PMC_IS_NULL(returnPMC)) {
+        PMC *class = pmc;
+        if (PObj_is_object_TEST(pmc)) {
+            class = GET_CLASS((Buffer *)PMC_data(pmc), pmc);
+            internal_exception(METH_NOT_FOUND,
+                "Can't find method '%s' for object '%s'\n",
+                string_to_cstring(interpreter, meth),
+                string_to_cstring(interpreter, PMC_str_val(
+                        get_attrib_num((SLOTTYPE *)PMC_data(class),
+                            PCD_CLASS_NAME)))
+                );
+        } else {
+            internal_exception(METH_NOT_FOUND,
+                "Can't find method '%s' - erroneous PMC\n",
+                string_to_cstring(interpreter, meth)
+                );
+	}
+    }
+    return returnPMC;
+}
+
+/*
+
+=back
+
+All these functions to run code can leak a full parrot register file, as
+well as potentially permanently unroot some PMCs or strings, if the
+vtable method throws an exception. It really ought be caught rather than
+let flow through.
+
+=over 4
+
+=item C<PARROT_INLINE static void
+noarg_noreturn(Parrot_Interp interpreter, PMC *obj, const char *meth, int die)>
+
+Calls the delegated method with no arguments or return value. If C<die>
+is true then an exception will be raised if the method is not found.
+
+=cut
+
+*/
+
+static void
+noarg_noreturn(Parrot_Interp interpreter, PMC *obj, PMC* class,
+        const char *name, int die)
+{
+    STRING *meth = const_string(interpreter, name);
+    PMC *method = die ? find_or_die(interpreter, class, meth) :
+        find_meth(interpreter, class, meth);
+    if (PMC_IS_NULL(method)) {
+        if (Interp_flags_TEST(interpreter, PARROT_TRACE_FLAG)) {
+            PIO_eprintf(interpreter, "# not found\n");
+        }
+        return;
+    }
+    Parrot_run_meth_fromc_save(interpreter, method, obj, meth);
+}
+
+pmclass delegate {
+
+/*
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=item C<void init()>
+
+Calls the delegated C<__init()> method if it exists.
+
+=item C<PMC* new_extended()>
+
+Calls the delegated C<__new_extended> method if it exists.
+
+XXX Actually the PMC compiler should emit different code, if a method is
+present in classes/default.pmc. Some defaulted methods like this one have
+useful defaults and don't throw exceptiions.
+
+=cut
+
+*/
+
+    void init () {
+        noarg_noreturn(INTERP, SELF, SELF, PARROT_VTABLE_INIT_METHNAME, 0);
+    }
+
+    void init_pmc (PMC* class) {
+        noarg_noreturn(INTERP, SELF, class, PARROT_VTABLE_INIT_METHNAME, 0);
+    }
+
+    void destroy() {
+        /* don't delegate destroy */
+    }
+
+    PMC* new_extended() {
+        STRING *meth = const_string(interpreter,
+                PARROT_VTABLE_NEW_EXTENDED_METHNAME );
+        PMC *sub = find_meth(interpreter, SELF, meth);
+        if (PMC_IS_NULL(sub)) {
+            /* run default fallback that constructs an empty object */
+            return SUPER();
+        }
+        return (PMC*) Parrot_run_meth_fromc_args_save(interpreter, sub,
+                pmc, meth, "P");
+    }
+}
+
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

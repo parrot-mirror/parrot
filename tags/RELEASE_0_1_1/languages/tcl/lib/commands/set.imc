@@ -1,0 +1,149 @@
+###
+# [set]
+
+.namespace [ "Tcl" ]
+
+.sub _set
+  .local pmc argv 
+  argv = foldup
+
+  .local pmc lexical
+  .local int len
+  .local int type
+  
+
+  .local pmc ignore
+  newsub ignore, .Exception_Handler, __default_handler
+
+  .local int argc 
+  argc = argv
+
+  .local string var
+  .local string key
+
+  .local pmc get_var
+  get_var = find_global "_Tcl", "__get_var"
+
+  .local pmc value
+  .local pmc retval
+  .local int return_type
+  return_type = TCL_OK
+  retval = new String
+ 
+  if argc == 0 goto error
+
+  .local string arg0
+  arg0 = argv[0] 
+  if argc == 2 goto setting
+  if argc == 1 goto getting
+  if argc > 2 goto error
+
+getting:
+  # Is this an array variable?
+  # ends with )
+  .local int char
+
+  ord char, arg0, -1
+  if char != 41 goto get_scalar
+  # contains a (
+  index char, arg0, "("
+  if char == -1 goto get_scalar
+
+get_array:
+  substr var, arg0, 0, char
+  length len, arg0
+
+  len = len - char
+  len = len - 2
+  inc char
+  substr key, arg0, char, len
+
+  $P1 = new PerlArray
+  $P1[0] = var
+  $P1[1] = key
+  (return_type,retval) = get_var($P1)
+  goto done
+
+get_scalar:
+   $P1 = new PerlArray
+   $P1[0] = arg0
+   (return_type,retval) = get_var($P1)
+  goto done
+
+setting:
+  value = argv[1]
+  # Is this an array variable?
+  # ends with )
+  ord char, arg0, -1
+  if char != 41 goto set_scalar
+  # contains a (
+  index char, arg0, "("
+  if char == -1 goto set_scalar
+set_array:
+  substr var, arg0, 0, char
+  length len, arg0
+
+  len = len - char
+  len = len - 2
+  inc char
+  substr key, arg0, char, len
+
+  # We need to check to see if this variable already
+  # exists, as we cannot switch between array and scalar.
+  set_eh ignore
+    find_lex lexical, -1, var
+  clear_eh
+  isnull lexical, set_array_new
+  
+  typeof type, lexical 
+  $S0 = typeof lexical
+  if type != .PerlHash goto set_array_bad
+  goto set_array_ok
+
+set_array_new:
+  lexical = new PerlHash
+  goto set_array_ok
+
+set_array_bad:
+  return_type = TCL_ERROR
+  $S0 =  "can't set \""
+  $S0 .= arg0
+  $S0 .= "\": variable isn't array"
+  retval = $S0
+  goto done
+
+set_array_ok:
+
+  lexical[key] =  value
+
+  store_lex -1, var, lexical
+
+ 
+  goto done
+
+set_scalar:
+  retval = value
+  store_lex -1, arg0, retval
+
+  goto done 
+
+  # fall through to a bad call.
+
+no_such_variable:
+  return_type = TCL_ERROR 
+  $S0 = "can't read \""
+  $S0 .= var
+  $S0 .= "\": no such variable"
+  retval = $S0
+  goto done
+
+error:
+  return_type =TCL_ERROR 
+  retval = "wrong # args: should be \"set varName ?newValue?\"\n"
+
+done:
+  .pcc_begin_return
+    .return return_type
+    .return retval
+  .pcc_end_return
+.end

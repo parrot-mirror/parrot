@@ -1,0 +1,548 @@
+/*
+Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/parrotinterpreter.pmc - Parrot Interpreter
+
+=head1 DESCRIPTION
+
+These are the vtable functions for the ParrotInterpreter base class
+
+   getinterp P0
+   set P1, P0[.IGLOBALS_*]  # access interpreter globals
+   set I0, P0[x]            # interpinfo I0, x
+   set I0, P0[-1]           # get interpreter flags
+   set P0[-1], x            # set flags on interpreter
+                            # NOTE: this doesn't restart
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+#include "parrot/embed.h"
+#include <assert.h>
+
+/*
+
+=item C<static void
+clone_regs_interp(Parrot_Interp d, Parrot_Interp s, PMC *dest)>
+
+Copy/clone all interpreter registers. All resources are created in the
+destination interpreter.
+
+=cut
+
+*/
+
+static void
+clone_regs_interp(Parrot_Interp d, Parrot_Interp s, PMC *dest)
+{
+    int i;
+    mem_sys_memcopy(d->int_reg.registers,
+        s->int_reg.registers, sizeof(struct IReg));
+    mem_sys_memcopy(d->num_reg.registers,
+        s->num_reg.registers, sizeof(struct NReg));
+    for (i = 0; i < NUM_REGISTERS; i++) {
+        if (s->string_reg.registers[i])
+            d->string_reg.registers[i] =
+            string_copy(d, s->string_reg.registers[i]);
+        /*
+         * clone PMCS and strings
+         */
+        if (!PMC_IS_NULL(s->pmc_reg.registers[i])) {
+            PMC *sp = s->pmc_reg.registers[i];
+            /* special case, dont clone SELF again - ugly */
+            if ((sp->vtable->base_type == enum_class_ParrotInterpreter ||
+                sp->vtable->base_type == enum_class_ParrotThread))
+                d->pmc_reg.registers[i] = dest;
+            else {
+                /*
+                 * XXX clone isn't quite right here, it can't
+                 * work on self-referential structures
+                 */
+                PMC* dp = VTABLE_clone(d, sp);
+                d->pmc_reg.registers[i] = dp;
+            }
+        }
+    }
+}
+
+/*
+
+=item C<static int
+need_reg(Parrot_Interp s, int i, int i3)>
+
+Called from C<clone_regs_thread()>. Currently commented out.
+
+=cut
+
+*/
+
+static int
+need_reg(Parrot_Interp s, int i, int i3)
+{
+    if (i >= 0 && i <= 2)       /* Sub, RetCont, object */
+        return 1;
+    if (i == 3 && i3 >= 11 && !PMC_IS_NULL(s->pmc_reg.registers[i]))
+        return 1;               /* overflow if present */
+    if (i >= 5 && i < 5 + i3)   /* i3 params */
+        return 1;
+    return 0;
+}
+
+/*
+
+=item C<static void
+clone_regs_thread(Parrot_Interp d, Parrot_Interp s, PMC *dest)>
+
+Copy/clone thread start paramaters. All resources are created in the
+destination interpreter.
+
+=cut
+
+*/
+
+static void
+clone_regs_thread(Parrot_Interp d, Parrot_Interp s, PMC *dest)
+{
+    int i;
+    /*
+     * I3 has the number of PMCs
+     */
+    int i3 = s->int_reg.registers[3];
+
+    for (i = 0; i < NUM_REGISTERS/2; i++) {
+        /*
+         * clone PMCS
+         * we have to know the thread function signature to
+         * clone only param registers
+         */
+#if 0
+        /* wait for imcc fixes - PMC count is still in I2
+         */
+        if (!need_reg(s, i, i3))
+            continue;
+#endif
+        if (!PMC_IS_NULL(s->pmc_reg.registers[i])) {
+            PMC *sp = s->pmc_reg.registers[i];
+            /* special case, dont clone SELF again - ugly */
+            if ((sp->vtable->base_type == enum_class_ParrotInterpreter ||
+                     sp->vtable->base_type == enum_class_ParrotThread))
+            d->pmc_reg.registers[i] = dest;
+            else if (PObj_is_PMC_shared_TEST(sp)) {
+                /*
+                 * if PMC is a shared PMC, don't clone it, just
+                 * pass it over
+                 */
+                d->pmc_reg.registers[i] = sp;
+            }
+            else {
+                /*
+                 * XXX clone isn't quite right here, it can't
+                 * work on self-referential structures
+                 */
+                PMC* dp = VTABLE_clone(d, sp);
+                d->pmc_reg.registers[i] = dp;
+            }
+        }
+    }
+}
+
+/*
+
+=item C<static void
+clone_regs(Parrot_Interp d, Parrot_Interp s, PMC *dest)>
+
+Clones the registers.
+
+=cut
+
+*/
+
+static void
+clone_regs(Parrot_Interp d, Parrot_Interp s, PMC *dest)
+{
+    if (dest->vtable->base_type == enum_class_ParrotThread)
+        clone_regs_thread(d, s, dest);
+    else
+        clone_regs_interp(d, s, dest);
+}
+
+/*
+
+=item C<void
+clone_interpreter(PMC* dest, PMC* self)>
+
+Clones the interpreter.
+
+=cut
+
+*/
+
+void
+clone_interpreter(PMC* dest, PMC* self)
+{
+
+    Parrot_Interp s = PMC_data(self);
+    Parrot_Interp d;
+
+    d = PMC_data(dest);
+
+    /*
+     * copy register files
+     */
+    clone_regs(d, s, dest);
+    /*
+     * copy over packfile - done currently in the runinterp opcode
+     * for multi-threading we have to generate separate
+     * profile, prederef, and JIT data
+     */
+#if 0
+    pt_clone_code(d, s);
+#endif
+    /*
+     * set flags and run core
+     */
+    d->run_core = s->run_core;
+    d->flags = s->flags;
+}
+
+
+/*
+
+=item C<static void
+create_interp(PMC *self, Parrot_Interp parent)>
+
+Creates a new child interpreter of C<parent>.
+
+=cut
+
+*/
+
+static void
+create_interp(PMC *self, Parrot_Interp parent)
+{
+    Interp_flags flag  = 0;
+    Parrot_Interp new_interp;
+
+    if (self->vtable->base_type == enum_class_ParrotThread)
+        flag = PARROT_IS_THREAD;
+
+    new_interp = make_interpreter(parent, flag);
+    PMC_data(self) = new_interp;
+    VTABLE_set_pmc_keyed_int(new_interp, new_interp->iglobals,
+        (INTVAL) IGLOBALS_INTERPRETER, self);
+}
+
+static int
+recursion_limit(Parrot_Interp interpreter, int l)
+{
+    int ret = interpreter->recursion_limit;
+    interpreter->recursion_limit = l;
+    return ret;
+}
+
+pmclass ParrotInterpreter need_ext {
+
+/*
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=item C<void class_init()>
+
+Class initialization.
+
+=cut
+
+*/
+
+    void class_init () {
+        int typ = enum_class_ParrotInterpreter;
+
+        if (pass) {
+
+            /*
+             * thread start methods for threads type 1..3
+             */
+            enter_nci_method(INTERP, typ,
+                    F2DPTR(pt_thread_run_1), "thread1", "vIOP");
+            enter_nci_method(INTERP, typ,
+                    F2DPTR(pt_thread_run_2), "thread2", "vIOP");
+            enter_nci_method(INTERP, typ,
+                    F2DPTR(pt_thread_run_3), "thread3", "vIOP");
+
+            /*
+             * TODO unify and fix signatures
+             */
+            enter_nci_method(INTERP, typ,
+                    F2DPTR(pt_thread_yield), "yield", "v");
+            enter_nci_method(INTERP, typ,
+                    F2DPTR(pt_thread_join), "join", "PIi");
+            enter_nci_method(INTERP, typ,
+                    F2DPTR(pt_thread_detach), "detach", "vi");
+            enter_nci_method(INTERP, typ,
+                    F2DPTR(pt_thread_kill), "kill", "vi");
+
+            /*
+             * misc functions
+             */
+            enter_nci_method(INTERP, typ,
+                    F2DPTR(recursion_limit), "recursion_limit", "iIi");
+        }
+
+    }
+
+/*
+
+=item C<void init()>
+
+Initializes the interpreter.
+
+=cut
+
+*/
+
+    void init () {
+        /*
+         * init/init_pmc may be called internally (from thread creation in
+         * ParrotThread::init_pmc() or stand-alone
+         * so we check, if the interpreter is already setup
+         */
+        if (!PMC_data(SELF)) {
+            create_interp(SELF, INTERP);
+        }
+        PMC_struct_val(SELF) = NULL;
+    }
+
+/*
+
+=item C<void init_pmc(PMC *parent)>
+
+Initializes a child interpreter with C<*parent>.
+
+=cut
+
+*/
+
+    void init_pmc (PMC *parent) {
+        Parrot_Interp p = PMC_data(parent);
+
+        if (!PMC_data(SELF)) {
+            create_interp(SELF, p);
+        }
+        PMC_struct_val(SELF) = NULL;
+    }
+
+/*
+
+=item C<void set_pointer(void *value)>
+
+Sets C<struct_val> to C<*value>.
+
+=cut
+
+*/
+
+    void set_pointer (void* value) {
+        PMC_struct_val(SELF) = value;
+    }
+
+/*
+
+=item C<void *get_pointer()>
+
+Returns C<struct_val>.
+
+=cut
+
+*/
+
+    void* get_pointer () {
+        return PMC_struct_val(SELF);
+    }
+
+/*
+
+=item C<INTVAL get_integer()>
+
+Returns the thread id of the interpreter.
+
+=cut
+
+*/
+
+    INTVAL get_integer () {
+        Parrot_Interp i = PMC_data(SELF);
+        return (INTVAL)i->thread_data->tid;
+    }
+
+/*
+
+=item C<void *invoke(void *next)>
+
+Runs the interpreter's byte code.
+
+=cut
+
+*/
+
+    void* invoke (void* next) {
+        Interp * new_interp =
+            (Interp *)PMC_data(SELF);
+        /*
+         * setup code
+         */
+        pt_thread_prepare_for_run(new_interp, interpreter);
+        /* calculate offset and run */
+        runops(new_interp, (opcode_t *)PMC_struct_val(SELF) -
+            (opcode_t *)interpreter->code->byte_code);
+        return next;
+    }
+
+/*
+
+=item C<PMC *get_pmc_keyed_int(INTVAL key)>
+
+Returns the PMC global value for C<key>.
+
+=cut
+
+*/
+
+    PMC* get_pmc_keyed_int(INTVAL key) {
+        Interp * new_interp =
+            (Interp *)PMC_data(SELF);
+        if (key >= 0 && key < IGLOBALS_SIZE)
+            return VTABLE_get_pmc_keyed_int(new_interp,
+                new_interp->iglobals, key);
+        /* quick hack to get the global stash */
+        if (key == -1)
+            return new_interp->globals->stash_hash;
+        return NULL;
+    }
+
+/*
+
+=item C<INTVAL get_integer_keyed_int(INTVAL key)>
+
+Returns the interpreter info for C<key>.
+
+=cut
+
+*/
+
+    INTVAL get_integer_keyed_int(INTVAL key) {
+        Interp * new_interp =
+            (Interp *)PMC_data(SELF);
+        switch (key) {
+            case -1:
+            return (INTVAL) new_interp->flags;
+            default:
+            return interpinfo(new_interp, key);
+        }
+    }
+
+/*
+
+=item C<void set_integer_keyed_int(INTVAL key, INTVAL val)>
+
+Sets the interpreter info for C<key> to C<val>.
+
+=cut
+
+*/
+
+    void set_integer_keyed_int(INTVAL key, INTVAL val) {
+        Interp * new_interp =
+            (Interp *)PMC_data(SELF);
+        INTVAL allowed;
+
+        switch (key) {
+            case -1:    /* set interpreter flags */
+            allowed =
+                PARROT_DEBUG_FLAG |
+                PARROT_TRACE_FLAG |
+                PARROT_BOUNDS_FLAG |
+                PARROT_PROFILE_FLAG |
+                PARROT_GC_DEBUG_FLAG;
+            Parrot_clear_flag(new_interp, allowed);
+            Parrot_set_flag(new_interp, val & allowed);
+            break;
+        }
+    }
+
+    /*
+     */
+/*
+
+=item C<PMC *clone()>
+
+First attempt to make things running, and to see, where problems may
+arise. Only minimal items are done yet.
+
+XXX this should of course call C<Parrot_clone()> and use freeze/thaw.
+
+=cut
+
+*/
+
+    PMC* clone() {
+        PMC* dest = pmc_new(INTERP, SELF->vtable->base_type);
+        clone_interpreter(dest, SELF);
+        return dest;
+    }
+
+/*
+
+=item C<INTVAL is_equal(PMC *val)>
+
+Returns whether the interpreter is equal to C<*val>.
+
+Two interpreters (threads) are equal if both are non-threaded or they
+have the same thread id.
+
+=cut
+
+*/
+
+    INTVAL is_equal(PMC* val) {
+        Parrot_Interp self, other;
+        self = PMC_data(SELF);
+        other = PMC_data(val);
+        if (!self->thread_data && !other->thread_data)
+            return 1;
+        if (self->thread_data && other->thread_data &&
+            self->thread_data->tid == other->thread_data->tid)
+            return 1;
+        return 0;
+    }
+}
+
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

@@ -1,0 +1,12 @@
+	new P0, .PerlHash
+	new P1, .PerlUndef
+	
+	<<HERE>>
+	
+	# XXX: this works only if parrot is run from its root directory
+	open P1, "runtime/parrot/include/config.fpmc", ">"
+	freeze S0, P0
+	print P1, S0
+	close P1
+	
+	end
