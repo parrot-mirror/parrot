@@ -1,0 +1,390 @@
+/* perlstring.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info
+ *     $Id$
+ *  Overview:
+ *     These are the vtable functions for the PerlString base class
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+#include "parrot/perltypes.h"
+
+#define const_cast(b) (__ptr_u.__c_ptr = (b), __ptr_u.__ptr)
+pmclass PerlString extends perlscalar {
+
+    void init () {
+        SELF->cache.string_val = string_make(INTERP,NULL,0,NULL,0,NULL);
+        PObj_custom_mark_SET(SELF);
+    }
+
+    void mark () {
+	if (SELF->cache.string_val)
+	    pobject_lives(INTERP, (PObj *)SELF->cache.string_val);
+    }
+
+    PMC* clone () {
+	PMC* dest = pmc_new_noinit(INTERP, SELF->vtable->base_type);
+        PObj_custom_mark_SET(dest);
+        dest->cache.string_val = string_copy(INTERP,SELF->cache.string_val);
+	return dest;
+    }
+
+    INTVAL get_integer () {
+        STRING* s = (STRING*) SELF->cache.string_val;
+        return string_to_int(s);
+    }
+
+    FLOATVAL get_number () {
+        STRING* s = (STRING*) SELF->cache.string_val;
+        return string_to_num(s);
+    }
+
+    BIGNUM* get_bignum () {
+        /* XXX */
+        return NULL;
+    }
+
+    INTVAL get_bool () {
+        return string_bool(SELF->cache.string_val);
+    }
+
+    INTVAL is_same (PMC* other) {
+        STRING* s1 = (STRING*)SELF->cache.string_val;
+        STRING* s2 = (STRING*)other->cache.string_val;
+        return (INTVAL)( other->vtable == SELF->vtable &&
+                          s1->bufused   == s2->bufused  &&
+            (memcmp(s1->strstart,s2->bufstart,(size_t)s1->bufused)==0));
+    }
+
+    void set_integer_native (INTVAL value) {
+	DYNSELF.morph(enum_class_PerlInt);
+        DYNSELF.set_integer_native(value);
+    }
+
+    void set_number_native (FLOATVAL value) {
+	DYNSELF.morph(enum_class_PerlNum);
+        DYNSELF.set_number_native(value);
+    }
+
+    void set_string_native (STRING * value) {
+        SELF->cache.string_val = string_set(INTERP, SELF->cache.string_val,
+		value);
+    }
+
+    void set_string_same (PMC * value) {
+        SELF->cache.string_val = string_set(INTERP, SELF->cache.string_val,
+		value->cache.string_val);
+    }
+
+    /* XXX -lt: only add done yet, others will follow, when
+     * vtable changes are carved in electrons
+     */
+    void add (PMC * value, PMC* dest) {
+	int vtype = VTABLE_type(INTERP, value);
+
+	INTVAL val_type;
+
+        if (vtype == enum_class_PerlNum) {
+            VTABLE_set_number_native(INTERP, dest,
+                VTABLE_get_number(INTERP, SELF) +
+                value->cache.num_val
+            );
+        }
+        else {
+	    FLOATVAL pmcf = VTABLE_get_number(INTERP, SELF);
+	    INTVAL pmci = VTABLE_get_integer(INTERP, SELF);
+	    FLOATVAL valf = VTABLE_get_number(INTERP, value);
+	    INTVAL vali = VTABLE_get_integer(INTERP, value);
+
+	    if (pmcf == pmci && valf == vali)
+		VTABLE_set_integer_native(INTERP, dest, pmci + vali);
+	    else
+		VTABLE_set_number_native(INTERP, dest, pmcf + valf);
+        }
+    }
+
+
+    void subtract (PMC* value, PMC* dest) {
+        if(value->vtable == Parrot_base_vtables[enum_class_PerlInt]) {
+            VTABLE_set_integer_native(INTERP, dest,
+                VTABLE_get_integer(INTERP, SELF) -
+                value->cache.int_val
+            );
+        }
+        else if(value->vtable == Parrot_base_vtables[enum_class_PerlNum]) {
+            VTABLE_set_number_native(INTERP, dest,
+                VTABLE_get_number(INTERP, SELF) -
+                value->cache.num_val
+            );
+        }
+        else {
+	   SUPER(value, dest);
+        }
+    }
+
+
+    void multiply (PMC* value, PMC* dest) {
+        if(value->vtable == Parrot_base_vtables[enum_class_PerlInt]) {
+            VTABLE_set_integer_native(INTERP, dest,
+                VTABLE_get_integer(INTERP, SELF) *
+                value->cache.int_val
+            );
+        }
+        else if(value->vtable == Parrot_base_vtables[enum_class_PerlNum]) {
+            VTABLE_set_number_native(INTERP, dest,
+                VTABLE_get_number(INTERP, SELF) *
+                value->cache.num_val
+            );
+        }
+        else {
+	   SUPER(value, dest);
+        }
+    }
+
+    void divide (PMC* value, PMC* dest) {
+        if(value->vtable == Parrot_base_vtables[enum_class_PerlInt]) {
+            VTABLE_set_integer_native(INTERP, dest,
+                VTABLE_get_integer(INTERP, SELF) /
+                value->cache.int_val
+            );
+        }
+        else if(value->vtable == Parrot_base_vtables[enum_class_PerlNum]) {
+            VTABLE_set_number_native(INTERP, dest,
+                VTABLE_get_number(INTERP, SELF) /
+                value->cache.num_val
+            );
+        }
+        else {
+	   SUPER(value, dest);
+        }
+    }
+
+
+    void modulus (PMC* value, PMC* dest) {
+        if(value->vtable == Parrot_base_vtables[enum_class_PerlInt]) {
+            VTABLE_set_integer_native(INTERP, dest,
+                VTABLE_get_integer(INTERP, SELF) %
+                value->cache.int_val
+            );
+        }
+        else {
+	    internal_exception(INVALID_OPERATION,
+		    "modulus() not implemented for PerlString\n");
+        }
+    }
+
+
+    /*
+     * string bitwise operations
+     */
+    void bitwise_ors (PMC* value, PMC* dest) {
+	STRING* result;
+
+	result = string_bitwise_or(interpreter, SELF->cache.string_val,
+		    VTABLE_get_string(INTERP, value), NULL);
+	VTABLE_set_string_native(INTERP, dest, result);
+    }
+
+    void bitwise_ors_str (STRING* value, PMC* dest) {
+	STRING* result;
+
+	result = string_bitwise_or(interpreter, SELF->cache.string_val,
+		    value, NULL);
+	VTABLE_set_string_native(INTERP, dest, result);
+    }
+
+    void bitwise_xors (PMC* value, PMC* dest) {
+	STRING* result;
+
+	result = string_bitwise_xor(interpreter, SELF->cache.string_val,
+		    VTABLE_get_string(INTERP, value), NULL);
+	VTABLE_set_string_native(INTERP, dest, result);
+    }
+
+    void bitwise_xors_str (STRING* value, PMC* dest) {
+	STRING* result;
+
+	result = string_bitwise_xor(interpreter, SELF->cache.string_val,
+		    value, NULL);
+	VTABLE_set_string_native(INTERP, dest, result);
+    }
+
+    void bitwise_ands (PMC* value, PMC* dest) {
+	STRING* result;
+
+	result = string_bitwise_and(interpreter, SELF->cache.string_val,
+		    VTABLE_get_string(INTERP, value), NULL);
+	VTABLE_set_string_native(INTERP, dest, result);
+    }
+
+    void bitwise_ands_str (STRING* value, PMC* dest) {
+	STRING* result;
+
+	result = string_bitwise_and(interpreter, SELF->cache.string_val,
+		    value, NULL);
+	VTABLE_set_string_native(INTERP, dest, result);
+    }
+
+    void concatenate (PMC* value, PMC* dest) {
+        STRING* s = SELF->cache.string_val;
+	VTABLE_morph(INTERP, dest, enum_class_PerlString);
+        dest->cache.string_val =
+            string_concat(INTERP, s, VTABLE_get_string(INTERP, value), 0);
+    }
+
+    void concatenate_native (STRING* value, PMC* dest) {
+        STRING* s = SELF->cache.string_val;
+	VTABLE_morph(INTERP, dest, enum_class_PerlString);
+        dest->cache.string_val = string_concat(INTERP, s, value, 0);
+    }
+
+    /* == operation */
+    INTVAL is_equal (PMC* value) {
+        return (INTVAL)( 0 == string_compare(INTERP,
+                                             SELF->cache.string_val,
+                                             VTABLE_get_string(INTERP, value)
+                                            ));
+    }
+
+    INTVAL cmp(PMC* value) {
+        return string_compare(INTERP, SELF->cache.string_val,
+			      VTABLE_get_string(INTERP, value));
+    }
+
+    void repeat (PMC* value, PMC* dest) {
+	DYNSELF.morph(enum_class_PerlString);
+	VTABLE_morph(INTERP, dest, enum_class_PerlString);
+        dest->cache.string_val =
+           string_repeat(INTERP, SELF->cache.string_val,
+                         (UINTVAL)VTABLE_get_integer(INTERP, value), NULL
+                        );
+    }
+
+    void repeat_int (INTVAL value, PMC* dest) {
+	DYNSELF.morph(enum_class_PerlString);
+	VTABLE_morph(INTERP, dest, enum_class_PerlString);
+        dest->cache.string_val = string_repeat(INTERP,
+		SELF->cache.string_val, (UINTVAL)value, NULL);
+    }
+
+    void increment () {
+    	/* XXX perl5 like= */
+    }
+
+    void decrement () {
+    	/* XXX perl5 like= */
+    }
+
+    void substr (INTVAL offset, INTVAL length, PMC* dest) {
+	DYNSELF.morph(enum_class_PerlString);
+	VTABLE_morph(INTERP, dest, enum_class_PerlString);
+        dest->cache.string_val = string_substr(INTERP,
+			SELF->cache.string_val, offset, length, NULL, 0);
+    }
+
+    STRING* substr_str (INTVAL offset, INTVAL length) {
+        return string_substr(INTERP, SELF->cache.string_val, offset,
+			length, NULL, 0);
+    }
+    /*
+     * iterator interface
+     */
+    PMC* nextkey_keyed (PMC* key, INTVAL what) {
+	PMC *ret = key;
+	STRING *s = SELF->cache.string_val;
+	INTVAL n = string_length(s);
+	union {
+	    const void * __c_ptr;
+	    void * __ptr;
+	} __ptr_u;
+
+	PObj_get_FLAGS(ret) &= ~KEY_type_FLAGS;
+	PObj_get_FLAGS(ret) |= KEY_integer_FLAG;
+	switch (what) {
+	    case ITERATE_FROM_START:	/* reset key */
+		ret->cache.int_val = 0;
+		if (!n)
+		    ret->cache.int_val = -1;
+		PMC_data(key) = s->strstart;
+		break;
+	    case ITERATE_GET_NEXT:
+		if (ret->cache.int_val < n - 1) {
+		    ++ret->cache.int_val;
+		    if ((char *)PMC_data(key) >= (char *)s->strstart &&
+			(char *)PMC_data(key) <= (char *)s->strstart +
+			    s->bufused)
+			PMC_data(key) = const_cast(
+			    s->encoding->skip_forward( PMC_data(key), 1));
+		    else
+			PMC_data(key) = const_cast(
+			    s->encoding->skip_forward(s->strstart,
+				ret->cache.int_val));
+		}
+		else
+		    ret->cache.int_val = -1;
+		break;
+	    case ITERATE_GET_PREV:
+		if (ret->cache.int_val >= 0) {
+		    --ret->cache.int_val;
+		    if (ret->cache.int_val >= 0) {
+			if ((char *)PMC_data(key) >= (char *)s->strstart &&
+				(char *)PMC_data(key) <= (char *)s->strstart +
+				s->bufused)
+			    PMC_data(key) = const_cast(
+				s->encoding->skip_backward( PMC_data(key), 1));
+			else
+			    PMC_data(key) = const_cast(
+				s->encoding->skip_forward(s->strstart,
+					ret->cache.int_val));
+		    }
+		}
+		break;
+	    case ITERATE_FROM_END:
+		ret->cache.int_val = n-1;
+		PMC_data(key) = (char *)s->strstart + s->bufused;
+		PMC_data(key) = const_cast(
+			    s->encoding->skip_backward( PMC_data(key), 1));
+		break;
+	}
+	return ret;
+    }
+
+    STRING* get_string_keyed(PMC* key) {
+	STRING *res;
+	STRING *s = SELF->cache.string_val;
+	union {
+	    const void * __c_ptr;
+	    void * __ptr;
+	} __ptr_u;
+	if ((char*)PMC_data(key) >= (char *)s->strstart &&
+		(char *)PMC_data(key) <= (char *)s->strstart + s->bufused)
+	    ;
+	else
+	    PMC_data(key) = const_cast(s->encoding->skip_forward(
+		 s->strstart, key->cache.int_val));
+	res = string_copy(interpreter, s);
+	res->strstart = PMC_data(key);
+	res->strlen = 1;
+	res->bufused = (const char *)res->encoding->skip_forward(
+		res->strstart, 1) - (const char *)res->strstart;
+	return res;
+
+    }
+    INTVAL get_integer_keyed(PMC* key) {
+	STRING *s = SELF->cache.string_val;
+	if ((char*)PMC_data(key) >= (char *)s->strstart &&
+		(char *)PMC_data(key) <= (char *)s->strstart + s->bufused) {
+	    if (s->encoding->index == enum_encoding_singlebyte)
+		return *(unsigned char*) PMC_data(key);
+	    else
+		return s->encoding->decode(PMC_data(key));
+	}
+	else
+	    return s->encoding->decode(s->encoding->skip_forward(s->strstart,
+			key->cache.int_val));
+    }
+}

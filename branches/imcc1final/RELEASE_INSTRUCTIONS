@@ -1,0 +1,65 @@
+To prepare a release:
+
+    0.  Announce to perl6-internals and #parrot at least a
+        couple days in advance, asking if there are any
+        showstopping bugs.
+
+    1.  cvs update -dP
+
+    2.  Update files with version-specific information:
+
+        a.  Increment the version number in VERSION,
+	    adjust IMCC_VERSION in imcc/main.c,
+            and update VERSION in languages/perl6/perl6,
+	    update parrot.spec.
+
+        b.  Change the information in DEVELOPING to reflect
+            this release's version number and date.
+
+        c.  Update README.
+
+        d.  Update ChangeLog and NEWS.
+
+        e.  Make sure nothing in TODO has been done.
+
+        f.  Make sure RESPONSIBLE_PARTIES is still
+            accurate.
+
+	g.  Update PBC_COMPAT
+
+	h.  run tools/dev/mk_native.pbc (on i386/linux)
+	    or disable t/native_pbc/number.t
+
+	i.  make fulltest
+
+    3.  cvs commit.
+
+    4.  make release VERSION=<version>
+
+    5.  untar parrot-<version>.tar.gz into another area
+
+    6.  Make sure everything works--Configure, make and
+        make fulltest.  Check the Tinderbox and make sure that
+        everything's green (or that any yellows and reds are
+        due to problems with the particular box, like a
+        botched compiler upgrade).
+
+    7.  cvs tag RELEASE_a_b_c
+        where a.b.c is the version number
+
+    8.  upload to CPAN.
+
+    9.  Compose and send out the announcements--perl6-internals,
+        -language, -announce, perl5-porters, use Perl, PerlMonks,
+        comp.lang.perl.misc, etc.
+
+    10. You're done!  Help yourself to a beer, cola or other
+        celebratory drink.
+
+ABOUT THIS DOCUMENT:
+
+This document was written after a couple of subtly incorrectly
+assembled releases--usually when someone forgot to delete
+DEVELOPING, but at least once where the MANIFEST check failed.
+The intent of this file is to document what must be done to
+release so that such mistakes don't happen again.

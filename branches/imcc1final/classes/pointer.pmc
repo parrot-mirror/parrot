@@ -1,0 +1,72 @@
+/* Pointer.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info
+ *     $Id$
+ *  Overview:
+ *     These are the vtable functions for the Pointer base class
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:  The actual pointer is in PMC_data
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+
+pmclass Pointer need_ext {
+
+    void init () {
+        PObj_custom_mark_SET(SELF);
+    }
+
+    void morph (INTVAL type) {
+    }
+
+    void mark () {
+        void (*mark_function)(struct Parrot_Interp*, void*) =
+            (void (*)(struct Parrot_Interp*, void*))
+	    	D2FPTR(SELF->cache.struct_val);
+        if (PMC_data(SELF) == NULL)
+		return;
+        if (SELF->cache.struct_val == NULL)
+		return;
+        (*mark_function)(INTERP, PMC_data(SELF));
+    }
+
+    PMC* clone () {
+	PMC* dest = pmc_new_noinit(INTERP, SELF->vtable->base_type);
+        PObj_custom_mark_SET(dest);
+        PMC_data(dest) = PMC_data(SELF);
+	return dest;
+    }
+
+    INTVAL get_integer () {
+        return (INTVAL)PMC_data(SELF);
+    }
+
+    FLOATVAL get_number () {
+        return (FLOATVAL)(INTVAL)PMC_data(SELF);
+    }
+
+    STRING* get_string () {
+        STRING* ret;
+        char *target=mem_sys_allocate(64);
+
+        /* XXX Dangerous if you have a 196-bit system or above
+        (and if you do, you have too comfortable a life and
+        deserve to be tormented by coredumps). */
+        sprintf(target, "Pointer=0x%p", PMC_data(SELF));
+        ret=string_make(interpreter, target, strlen(target), 0, 0, 0);
+
+        mem_sys_free(target);
+        return ret;
+    }
+
+    INTVAL get_bool () {
+        return (INTVAL)(PMC_data(SELF) != NULL);
+    }
+
+    INTVAL is_same (PMC* pmc2) {
+        return (INTVAL)(SELF->vtable == pmc2->vtable &&
+		PMC_data(SELF) == PMC_data(pmc2));
+    }
+}

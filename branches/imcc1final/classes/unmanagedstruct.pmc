@@ -1,0 +1,297 @@
+/*
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info
+ *     $Id$
+ *  Overview:
+ *     PMC class to hold structs that parrot's not responsible for
+ *     disposing of.
+ *
+ *     Buffer can be accessed using keyed assignments to PMC.  Out of
+ *     bounds access will very likely segfault.
+ *
+ *  Data Structure and Algorithms:
+ *  History:
+ *     Initial revision by sean 2002/08/04
+ *  Notes:
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+
+static char *
+char_offset_int(Parrot_Interp interpreter, PMC *pmc, INTVAL ix, int *type)
+{
+    size_t offs, n;
+
+    ix *= 3;
+    n = (size_t)VTABLE_elements(interpreter, PMC_ptr2p(pmc));
+    if ((size_t)ix >= n)
+	internal_exception(1, "Non existent elements in struct");
+    /* use structure init */
+    *type = (int) VTABLE_get_integer_keyed_int(interpreter, PMC_ptr2p(pmc), ix);
+    offs = (size_t) VTABLE_get_integer_keyed_int(interpreter, PMC_ptr2p(pmc), ix + 2);
+    return ((char *)PMC_data(pmc)) + offs;
+}
+
+static char *
+char_offset_key(Parrot_Interp interpreter, PMC *pmc, PMC *key, int *type)
+{
+    size_t offs, n, count, size, max;
+    PMC *next;
+    int ix = key_integer(interpreter, key);
+    char *p;
+
+    next = key_next(interpreter, key);
+    p = char_offset_int(interpreter, pmc, ix, type);
+    ix *= 3;
+    if (!next)
+	return p;
+    count = (size_t) key_integer(interpreter, next);
+    max = (size_t) VTABLE_get_integer_keyed_int(interpreter, PMC_ptr2p(pmc), ix + 1);
+    if (count >= max)
+	internal_exception(1, "Non existent array element in struct");
+    size = data_types[*type - enum_first_type].size;
+    return p + count * size;
+}
+
+static INTVAL
+ret_int(char *p, int type)
+{
+    switch (type) {
+	case enum_type_INTVAL:
+	case enum_type_int:
+	    return *(INTVAL*) p;
+	case enum_type_short:
+	    return *(short*) p;
+	case enum_type_char:
+	case enum_type_uchar:
+	    return *p;
+	default:
+	    internal_exception(1, "unhandled type in struct");
+    }
+    return -1;
+}
+
+static FLOATVAL
+ret_float(char *p, int type)
+{
+    switch (type) {
+	case enum_type_FLOATVAL:
+	    return (FLOATVAL) *(FLOATVAL*) p;
+	case enum_type_float:
+	    return (FLOATVAL) *(float*) p;
+	case enum_type_double:
+	    return (FLOATVAL) *(double*) p;
+	default:
+	    internal_exception(1, "unhandled type in struct");
+    }
+    return -1.0;
+}
+
+static void
+set_int(char *p, int type, INTVAL value)
+{
+    switch (type) {
+	case enum_type_char:
+	case enum_type_uchar:
+	    *(char*) p = value & 0xff;
+	    break;
+	case enum_type_INTVAL:
+	    *(INTVAL*) p = value;
+	    break;
+	case enum_type_int:
+	    *(int*) p = value;
+	    break;
+	case enum_type_short:
+	    *(short*)p = (short)value;
+	    break;
+	default:
+	    internal_exception(1, "unhandled type in struct");
+	    break;
+    }
+}
+
+static void
+set_float(char *p, int type, FLOATVAL value)
+{
+    switch (type) {
+	case enum_type_FLOATVAL:
+	    *(FLOATVAL*) p = (FLOATVAL) value;
+	    break;
+	case enum_type_float:
+	    *(float*) p = (float) value;
+	    break;
+	case enum_type_double:
+	    *(double*) p = (double) value;
+	    break;
+    }
+}
+
+pmclass UnManagedStruct extends default need_ext {
+
+    void init() {
+	PMC_ptr2p(SELF) = NULL;
+    }
+
+    /* Initialize the struct with some data. This should be an array
+     * of triples of
+     *   - datatype (enum from datatypes.h)
+     *   - count
+     *   - offset
+     */
+
+    void init_pmc (PMC* value) {
+	SELF.set_pmc(value);
+    }
+
+    void set_pmc (PMC* value) {
+	size_t i, n = (size_t)VTABLE_elements(interpreter, value);
+	size_t toff = 0;
+
+	if (n % 3)
+	    internal_exception(1, "Illegal initializer for struct");
+	PMC_ptr2p(SELF) = value;
+
+	for (i = 0; i < n; i += 3) {
+	    int type = (int) VTABLE_get_integer_keyed_int(interpreter, value, i);
+	    int count= (int) VTABLE_get_integer_keyed_int(interpreter, value, i+1);
+	    int offs = (int) VTABLE_get_integer_keyed_int(interpreter, value, i+2);
+
+	    if (type < enum_first_type || type >= enum_last_type)
+		internal_exception(1, "Illegal type in initializer for struct");
+	    if (count <= 0) {
+		count = 1;
+		VTABLE_set_integer_keyed_int(interpreter, value, i+1, count);
+	    }
+	    if (offs <= 0) {
+		offs = toff;
+		VTABLE_set_integer_keyed_int(interpreter, value, i+2, offs);
+	    }
+	    else
+		toff = offs;
+	    toff += count * (data_types[type - enum_first_type].size);
+	    if (i == n - 3 && pmc->vtable->base_type == enum_class_ManagedStruct)
+		DYNSELF.set_integer_native(toff);
+	}
+	PObj_custom_mark_SET(SELF);
+    }
+
+    void mark() {
+	if (PMC_ptr2p(SELF))
+	    pobject_lives(interpreter, (PObj *) PMC_ptr2p(SELF));
+    }
+
+    INTVAL is_equal (PMC* value) {
+	return (SELF->vtable == value->vtable && PMC_data(SELF) == PMC_data(value));
+    }
+
+    INTVAL defined () {
+	return PMC_data(SELF) != NULL;
+    }
+
+    INTVAL get_integer_keyed_int(INTVAL ix) {
+	int type;
+	char *p;
+
+	if (ix < 0)
+            return -1;
+	/* assume char array */
+	if (!PMC_ptr2p(SELF)) {
+	    type = enum_type_char;
+	    p = ((char *)PMC_data(SELF)) + ix;
+	}
+	else
+	    p = char_offset_int(interpreter, pmc, ix, &type);
+	return ret_int(p, type);
+    }
+
+
+
+    /* May cause segfaults if value is out of bounds */
+    INTVAL get_integer_keyed(PMC* key) {
+	INTVAL ix;
+	int type;
+	char *p;
+
+	/* assume char array */
+	if (!PMC_ptr2p(SELF)) {
+	    ix = key_integer(INTERP, key);
+	    if (ix < 0)
+		return -1;
+	    type = enum_type_char;
+	    p = ((char *)PMC_data(SELF)) + ix;
+	}
+	else
+	    p = char_offset_key(interpreter, pmc, key, &type);
+	return ret_int(p, type);
+    }
+
+    FLOATVAL get_number_keyed_int (INTVAL key) {
+	int type;
+	char *p = char_offset_int(interpreter, pmc, key, &type);
+	return ret_float(p, type);
+    }
+
+    FLOATVAL get_number_keyed (PMC* key) {
+	int type;
+	char *p = char_offset_key(interpreter, pmc, key, &type);
+	return ret_float(p, type);
+    }
+
+    INTVAL get_integer() {
+       return (INTVAL)*(INTVAL *)PMC_data(SELF);
+    }
+
+    void* get_pointer() {
+	return PMC_data(SELF);
+    }
+
+    void set_integer_native(INTVAL value) {
+       *(INTVAL *)PMC_data(SELF) = value;
+    }
+
+    void set_integer_keyed_int (INTVAL ix, INTVAL value) {
+	int type;
+	char *p;
+	if (!PMC_ptr2p(SELF)) {
+	    if (ix < 0)
+		return;
+	    type = enum_type_char;
+	    p = ((char *)PMC_data(SELF)) + ix;
+	}
+	else
+	    p = char_offset_int(interpreter, pmc, ix, &type);
+	set_int(p, type, value);
+    }
+
+    /* May cause segfaults if value is out of bounds */
+    void set_integer_keyed (PMC* key, INTVAL value) {
+	INTVAL ix;
+	int type;
+	char *p;
+
+	if (!PMC_ptr2p(SELF)) {
+	    ix = key_integer(INTERP, key);
+	    if (ix < 0)
+		return;
+	    type = enum_type_char;
+	    p = ((char *)PMC_data(SELF)) + ix;
+	}
+	else
+	    p = char_offset_key(interpreter, pmc, key, &type);
+	set_int(p, type, value);
+    }
+
+    void set_number_keyed_int (INTVAL key, FLOATVAL value) {
+	int type;
+	char *p = char_offset_int(interpreter, pmc, key, &type);
+	set_float(p, type, value);
+    }
+
+    void set_number_keyed (PMC *key, FLOATVAL value) {
+	int type;
+	char *p = char_offset_key(interpreter, pmc, key, &type);
+	set_float(p, type, value);
+    }
+
+}

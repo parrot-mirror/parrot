@@ -1,0 +1,97 @@
+Note: To add things to the web-visible TODO list, living at
+http://www.parrotcode.org/todo, send them in to
+bugs-parrot@bugs6.perl.org. They then need to be tagged as todo in the
+RT web interface.
+
+Tests
+-----
+
+    Run different run cores inside Test.pm.
+
+String subsystem
+----------------
+
+    Rework string iterators
+    Implement character class & properties testing (for regular expressions)
+    Automate string vtable generation
+    Fill in vtables for non-ASCII encodings: UTF-8, UTF-16, UTF-32, etc.
+
+    Find a decent way of including Unicode properties tables. (Not for
+    the faint of heart.)
+
+Vtables
+-------
+    PythonInteger/String/Object?
+
+JIT
+---
+    More instructions needed!
+    Make it work on more architectures
+
+Configure system
+----------------
+    Long term, should be replaced with a bootstrapping miniparrot system.
+    Short term, fix the dependencies (eg, more needs to depend on classes/*)
+    Platform-independent library creation for pbc2c.pl & extensions
+    Valgrind test target on supporting platforms
+
+IO
+--
+    Async IO
+    Full going-over to make sure it works
+    Socket IO
+    Docs!
+
+Regular expression engine
+-------------------------
+    Implement case folding
+    More speed!
+
+Interpreter
+-----------
+    Combine dynamic op lib cores.
+    Make the MMD tables shareable between interpreters for faster
+    startup. (Though there are issues with this)
+
+Opcodes
+-------
+
+Mark branch arguments in ops files, e.g. addr/constaddr INT instead of
+in/inconst INT.
+
+Assembler
+---------
+    Debugging and source line number info
+
+Bytecode
+--------
+    Metadata (source line number info, symbol table)
+
+pdump
+-----
+    Dumping constants shouldn't unpack the constants, but
+    just print out the segment.
+
+Stability
+---------
+    Purify, Valgrind, and other memory badness detectors
+
+Performance
+-----------
+    Mo' betta benchmarks
+    Add profiling build options
+    Add the above to tinderbox
+
+Documentation
+-------------
+    Update docs and pdds to reflect current state.
+    Parrotguts currently too difficult to approach
+
+Debugger
+--------
+    Add commands history and completion
+    Load the commands from a file
+    Make breakpoints at labels
+    Read core dumps
+    Attach to a running program
+    List breakpoints.

@@ -1,0 +1,230 @@
+/* perlnum.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info
+ *     $Id$
+ *  Overview:
+ *     These are the vtable functions for the PerlNum base class
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+#include "parrot/perltypes.h"
+
+pmclass PerlNum extends perlscalar {
+
+    void init () {
+        SELF->cache.num_val = 0.0;
+    }
+
+    INTVAL get_integer () {
+        return (INTVAL)SELF->cache.num_val;
+    }
+
+
+    BIGNUM* get_bignum () {
+        /* XXX */
+        return NULL;
+    }
+
+    STRING* get_string () {
+        char* buff = mem_sys_allocate(80);
+        STRING* s;
+#ifdef HAS_SNPRINTF
+        snprintf(buff,80,FLOATVAL_FMT,SELF->cache.num_val);
+#else
+        sprintf(buff,FLOATVAL_FMT,SELF->cache.num_val);  /* XXX buffer overflow! */
+#endif
+        s = string_make(INTERP,buff,strlen(buff),NULL,0,NULL);
+        mem_sys_free(buff);
+        return s;
+    }
+
+    INTVAL get_bool () {
+        return (INTVAL)(SELF->cache.num_val != 0.0);
+    }
+
+    void set_integer_native (INTVAL value) {
+	DYNSELF.morph(enum_class_PerlInt);
+        DYNSELF.set_integer_native(value);
+    }
+
+    void set_number_native (FLOATVAL value) {
+	INTVAL vali = (INTVAL) value;
+
+        SELF->cache.num_val = value;
+	if (value == vali)
+	    DYNSELF.set_integer_native(vali);
+    }
+
+    void set_number_same (PMC* value) {
+        SELF->cache.num_val = value->cache.num_val;
+    }
+
+    void set_bignum_native (BIGNUM* value) {
+    }
+
+    void set_bignum_same (PMC* value) {
+    }
+
+    void set_string_native (STRING * value) {
+	DYNSELF.morph(enum_class_PerlString);
+        DYNSELF.set_string_native(value);
+    }
+
+    void add (PMC* value, PMC* dest) {
+	VTABLE_set_number_native(INTERP, dest,
+	    SELF->cache.num_val +
+	    VTABLE_get_number(INTERP, value)
+	);
+    }
+
+    void add_int (INTVAL value, PMC* dest) {
+        VTABLE_set_number_native(INTERP, dest,
+	SELF->cache.num_val + value);
+    }
+
+    void add_bignum (BIGNUM* value, PMC* dest) {
+    }
+
+    void add_float (FLOATVAL value, PMC* dest) {
+        VTABLE_set_number_native(INTERP, dest,
+	SELF->cache.num_val + value);
+    }
+
+    void subtract (PMC* value, PMC* dest) {
+	VTABLE_set_number_native(INTERP, dest,
+	    SELF->cache.num_val -
+	    VTABLE_get_number(INTERP, value)
+	);
+    }
+
+    void subtract_int (INTVAL value, PMC* dest) {
+        VTABLE_set_number_native(INTERP, dest,
+            SELF->cache.num_val - (FLOATVAL)value
+        );
+    }
+
+    void subtract_bignum (BIGNUM* value, PMC* dest) {
+    }
+
+    void subtract_float (FLOATVAL value, PMC* dest) {
+        VTABLE_set_number_native(INTERP, dest,
+	SELF->cache.num_val - value);
+    }
+
+    void multiply (PMC* value, PMC* dest) {
+	VTABLE_set_number_native(INTERP, dest,
+	    SELF->cache.num_val *
+	    VTABLE_get_number(INTERP, value)
+	);
+    }
+
+    void multiply_int (INTVAL value, PMC* dest) {
+        VTABLE_set_number_native(INTERP, dest,
+            SELF->cache.num_val * value
+        );
+    }
+
+    void multiply_bignum (BIGNUM* value, PMC* dest) {
+    }
+
+    void multiply_float (FLOATVAL value, PMC* dest) {
+        VTABLE_set_number_native(INTERP, dest,
+	SELF->cache.num_val * value);
+    }
+
+    void divide (PMC* value, PMC* dest) {
+	VTABLE_set_number_native(INTERP, dest,
+	    SELF->cache.num_val /
+	    VTABLE_get_number(INTERP, value)
+	);
+    }
+
+    void divide_int (INTVAL value, PMC* dest) {
+        VTABLE_set_number_native(INTERP, dest,
+            SELF->cache.num_val / value
+        );
+    }
+
+    void divide_float (FLOATVAL value, PMC* dest) {
+        VTABLE_set_number_native(INTERP, dest,
+            SELF->cache.num_val / value
+        );
+    }
+
+    void cmodulus (PMC* value, PMC* dest) {
+	FLOATVAL f = VTABLE_get_number(INTERP, value);
+	VTABLE_set_number_native(INTERP, dest,
+		fmod(SELF->cache.num_val, f));
+    }
+
+    void cmodulus_float (FLOATVAL value, PMC* dest) {
+	VTABLE_set_number_native(INTERP, dest,
+		fmod(SELF->cache.num_val, value));
+    }
+    void cmodulus_int (INTVAL value, PMC* dest) {
+	VTABLE_set_number_native(INTERP, dest,
+		fmod(SELF->cache.num_val, value));
+    }
+
+    void modulus (PMC* value, PMC* dest) {
+	FLOATVAL f = VTABLE_get_number(INTERP, value);
+	VTABLE_set_number_native(INTERP, dest,
+		floatval_mod(SELF->cache.num_val, f));
+    }
+
+    void modulus_float (FLOATVAL value, PMC* dest) {
+	VTABLE_set_number_native(INTERP, dest,
+		floatval_mod(SELF->cache.num_val, value));
+    }
+    void modulus_int (INTVAL value, PMC* dest) {
+	VTABLE_set_number_native(INTERP, dest,
+		floatval_mod(SELF->cache.num_val, value));
+    }
+
+    void neg (PMC * dest) {
+	if (!dest)
+	    SELF->cache.num_val = -SELF->cache.num_val;
+	else
+	    VTABLE_set_number_native(INTERP, dest, -SELF->cache.num_val);
+    }
+
+    /* == operation */
+    INTVAL is_equal (PMC* value) {
+        return (INTVAL)(SELF->cache.num_val == VTABLE_get_number(INTERP, value));
+    }
+
+    INTVAL cmp(PMC* value) {
+        FLOATVAL diff;
+        diff = SELF->cache.num_val - VTABLE_get_number(INTERP, value);
+        return diff > 0 ? 1 : diff < 0 ? -1 : 0;
+    }
+
+    INTVAL cmp_num(PMC* value) {
+        FLOATVAL diff;
+        diff = SELF->cache.num_val - VTABLE_get_number(INTERP, value);
+        return diff > 0 ? 1 : diff < 0 ? -1 : 0;
+    }
+
+    void repeat (PMC* value, PMC* dest) {
+	internal_exception(INVALID_OPERATION,
+		"repeat() not implemented in class 'PerlNum'\n");
+    }
+
+    void repeat_int (INTVAL value, PMC* dest) {
+	internal_exception(INVALID_OPERATION,
+		"repeat() not implemented in class 'PerlNum'\n");
+    }
+
+    void increment () {
+        SELF->cache.num_val ++;
+    }
+
+    void decrement () {
+        SELF->cache.num_val --;
+    }
+
+}

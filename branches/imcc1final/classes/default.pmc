@@ -1,0 +1,330 @@
+/* default.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info $Id$
+ *  Overview:
+ *     These are the vtable functions for the default PMC class
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *    All methods which are not defined here get a default implementaion
+ *    generate  from vtable.tbl by classes/pmc2c.pl
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+
+#define INT2KEY(i,k) key_new_integer((i), (k))
+
+static const char * caller(Parrot_Interp interp, PMC * pmc);
+
+static const char * caller(Parrot_Interp interp, PMC * pmc)
+{
+    return pmc && pmc->vtable && pmc->vtable->whoami ?
+	VTABLE_name(interp, pmc)->strstart : "(null)";
+}
+
+static void
+check_set_std_props(Parrot_Interp interp, PMC *pmc, STRING *key, PMC *value)
+{
+    if (!string_compare(interp, key, string_from_cstring(interp, "_ro", 0))) {
+	/* pmc should set/clear readonly */
+	INTVAL on = VTABLE_get_bool(interp, value);
+	/* morph to Const/normal class */
+	if (on && (pmc->vtable->flags & VTABLE_HAS_CONST_TOO))
+	    pmc->vtable = Parrot_base_vtables[pmc->vtable->base_type + 1];
+	else if (!on && (pmc->vtable->flags & VTABLE_IS_CONST_FLAG))
+	    VTABLE_morph(interp, pmc, pmc->vtable->base_type - 1);
+    }
+}
+
+static INTVAL
+does_isa (Parrot_Interp interp, STRING *method, STRING *what)
+{
+    INTVAL len, pos = 0;
+
+    do {
+        pos = string_str_index(interp, what, method, pos);
+	if (pos < 0)
+	    return 0;
+	if (pos >= (INTVAL)string_length(what))
+	    return 0;
+	len = string_length(method);
+	if (pos && string_index(what, pos - 1) != 32) {
+	    pos += len;
+	    continue;
+	}
+
+	if (pos+len < (INTVAL)string_length(what) && string_index(what, pos + len) != 32) {
+	    pos += len;
+	    continue;
+	}
+	return 1;
+    } while(1);
+    return 0;
+}
+
+pmclass default abstract noinit {
+
+    void init () {
+    }
+
+    void init_pmc (PMC* value) {
+        DYNSELF.init();
+    }
+
+    void init_pmc_props (PMC* initializer, PMC* properties) {
+	if (!SELF->pmc_ext)
+	    add_pmc_ext(INTERP, SELF);
+	SELF->metadata = properties;
+	if (initializer)
+	    DYNSELF.init_pmc(initializer);
+	else
+	    DYNSELF.init();
+    }
+
+
+    void mark () {
+        PANIC("custom_mark flag set but no custom mark routine defined");
+    }
+
+    PMC* getprop(STRING* key) {
+        PMC* p_key;
+	if (SELF->pmc_ext && SELF->metadata) {
+          p_key = key_new_string(interpreter, key);
+	  return (VTABLE_get_pmc_keyed(interpreter, SELF->metadata, p_key));
+	}
+        else {
+	  PMC* undef = pmc_new(INTERP, enum_class_PerlUndef);
+	  return undef;
+	}
+    }
+
+    void setprop(STRING* key, PMC* value) {
+        PMC* p_key;
+
+	check_set_std_props(INTERP, SELF, key, value);
+	if (SELF->pmc_ext && SELF->metadata) {
+          p_key = key_new_string(interpreter, key);
+	  VTABLE_set_pmc_keyed(interpreter,
+			  SELF->metadata, p_key, value);
+	} else {
+          if (!SELF->pmc_ext)
+              add_pmc_ext(INTERP, SELF);
+          /* first make new hash */
+	  SELF->metadata = pmc_new_noinit(interpreter, enum_class_PerlHash);
+	  VTABLE_init(interpreter, SELF->metadata);
+	  /* then the key, else it vanishes with --gc-debug */
+          p_key = key_new_string(interpreter, key);
+	  VTABLE_set_pmc_keyed(interpreter,
+			  SELF->metadata, p_key, value);
+	}
+	return;
+    }
+
+    void delprop(STRING* key) {
+	if (SELF->pmc_ext && SELF->metadata) {
+          PMC* p_key = key_new_string(interpreter, key);
+	  VTABLE_delete_keyed(interpreter, SELF->metadata, p_key);
+	}
+        return;
+    }
+
+    PMC* getprops() {
+        if (!SELF->pmc_ext)
+             add_pmc_ext(INTERP, SELF);
+	if (!SELF->metadata) {
+	  SELF->metadata = pmc_new_noinit(interpreter, enum_class_PerlHash);
+	  VTABLE_init(interpreter, SELF->metadata);
+	}
+    	return SELF->metadata;
+    }
+
+    INTVAL type () {
+        return SELF->vtable->base_type;
+    }
+
+
+    INTVAL type_keyed_int (INTVAL key) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        return DYNSELF.type_keyed(r_key);
+    }
+
+    STRING* name () {
+        return SELF->vtable->whoami;
+    }
+
+    PMC* find_method(STRING* method_name) {
+	PMC *meth_hash;
+	int type = SELF->vtable->base_type;
+
+	if (type >= (int)INTERP->nci_method_table_size)
+	    return NULL;
+
+	meth_hash = INTERP->nci_method_table[type];
+	if (!meth_hash)
+	    return NULL;
+	return VTABLE_get_pmc_keyed_str(INTERP, meth_hash, method_name);
+    }
+
+    INTVAL get_integer_keyed_int (INTVAL key) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        return DYNSELF.get_integer_keyed(r_key);
+    }
+
+    FLOATVAL get_number_keyed_int (INTVAL key) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        return DYNSELF.get_number_keyed(r_key);
+    }
+
+
+    BIGNUM* get_bignum_keyed_int (INTVAL key) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        return DYNSELF.get_bignum_keyed(r_key);
+    }
+
+    STRING* get_string_keyed_int (INTVAL key) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        return DYNSELF.get_string_keyed(r_key);
+    }
+
+    INTVAL get_bool_keyed_int (INTVAL key) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        return DYNSELF.get_bool_keyed(r_key);
+    }
+
+    INTVAL elements_keyed_int (INTVAL key) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        return DYNSELF.elements_keyed(r_key);
+    }
+
+    PMC* get_pmc () {
+        return SELF;
+    }
+
+    PMC* get_pmc_keyed_int (INTVAL key) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        return DYNSELF.get_pmc_keyed(r_key);
+    }
+
+    INTVAL is_same (PMC* value) {
+        return SELF == value;
+    }
+
+    void set_integer_keyed_int (INTVAL key, INTVAL value) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        DYNSELF.set_integer_keyed(r_key, value);
+    }
+
+    void set_number_keyed_int (INTVAL key, FLOATVAL value) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        DYNSELF.set_number_keyed(r_key, value);
+    }
+
+    void set_bignum_keyed_int (INTVAL key, BIGNUM* value) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        DYNSELF.set_bignum_keyed(r_key, value);
+    }
+
+    void set_string_keyed_int (INTVAL key, STRING* string) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        DYNSELF.set_string_keyed(r_key, string);
+    }
+
+    void set_bool_keyed_int (INTVAL key, INTVAL value) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        DYNSELF.set_bool_keyed(r_key, value);
+    }
+
+    void set_pmc_keyed_int (INTVAL key, PMC* value) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        DYNSELF.set_pmc_keyed(r_key, value);
+    }
+
+    INTVAL is_equal (PMC* value) {
+        return (SELF->vtable == value->vtable
+                && SELF->cache.struct_val == value->cache.struct_val
+		&& PMC_data(SELF) == PMC_data(value));
+    }
+
+    INTVAL exists_keyed_int (INTVAL key) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        return DYNSELF.exists_keyed(r_key);
+    }
+
+    INTVAL defined () {
+        return 1;
+    }
+
+
+    INTVAL defined_keyed_int (INTVAL key) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        return DYNSELF.defined_keyed(r_key);
+    }
+
+    void delete_keyed_int(INTVAL key) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        DYNSELF.delete_keyed(r_key);
+    }
+
+
+    PMC* nextkey_keyed_int (INTVAL key, INTVAL w) {
+        PMC* r_key = INT2KEY(INTERP, key);
+        return DYNSELF.nextkey_keyed(r_key, w);
+    }
+
+    INTVAL can (STRING* method) {
+	PMC *meth_hash;
+	int type = SELF->vtable->base_type;
+
+	if (type >= (int)INTERP->nci_method_table_size)
+	    return 0;
+
+	meth_hash = INTERP->nci_method_table[type];
+	if (!meth_hash)
+	    return 0;
+        return VTABLE_exists_keyed_str(INTERP, meth_hash, method);
+    }
+
+
+    INTVAL does (STRING* method) {
+	return does_isa(INTERP, method, SELF->vtable->does_str);
+    }
+
+    INTVAL isa (STRING* method) {
+	return does_isa(INTERP, method, SELF->vtable->isa_str);
+    }
+
+    void visit(visit_info *info) {
+	/* default - mark prop hash */
+        if (SELF->pmc_ext && SELF->metadata &&
+		info->extra_flags != EXTRA_IS_PROP_HASH) {
+	    info->extra_flags = EXTRA_IS_PROP_HASH;
+	    info->extra = SELF->metadata;
+	    /* place escape mark */
+	    (info->visit_pmc_now)(interpreter, SELF, info);
+	    /* place and the prop hash */
+	    (info->visit_pmc_now)(interpreter, SELF->metadata, info);
+	}
+
+    }
+
+    void freeze(visit_info *info) {
+	/* default - no action */
+    }
+
+    void thaw(visit_info *info) {
+	/* default - initialize the PMC */
+	if (info->extra_flags == EXTRA_IS_PROP_HASH) {
+	    if (!SELF->pmc_ext)
+		add_pmc_ext(INTERP, SELF);
+	    info->thaw_ptr = &SELF->metadata;
+	    (info->visit_pmc_now)(interpreter, SELF->metadata, info);
+	}
+	else
+	    DYNSELF.init();
+    }
+
+    void thawfinish(visit_info *info) {
+	/* default - no action */
+    }
+}

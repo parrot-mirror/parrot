@@ -1,0 +1,84 @@
+/* ParrotIO.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info
+ *     $Id$
+ *  Overview:
+ *     These are the vtable functions for Parrot IO
+ *  Data Structure and Algorithms:
+ *  History:
+ *     Initial version by leo 2003/06/23
+ *  Notes:
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+
+/* This class is actually part of the io subsystem */
+#include "../io/io_private.h"
+
+
+void Parrot_NCI_class_init(Parrot_Interp, int);
+void Parrot_PerlHash_class_init(Parrot_Interp, int);
+void Parrot_PerlUndef_class_init(Parrot_Interp, int);
+
+pmclass ParrotIO need_ext {
+
+    void class_init () {
+
+        /* These classes are needed now so make sure they are inited */
+        Parrot_NCI_class_init(interp, enum_class_NCI);
+        Parrot_PerlHash_class_init(interp, enum_class_PerlHash);
+        Parrot_PerlUndef_class_init(interp, enum_class_PerlUndef);
+
+        enter_nci_method(INTERP, enum_class_ParrotIO,
+                         F2DPTR(PIO_close), "close", "iIP");
+        enter_nci_method(INTERP, enum_class_ParrotIO,
+                         F2DPTR(PIO_flush), "flush", "vIP");
+        enter_nci_method(INTERP, enum_class_ParrotIO,
+                         F2DPTR(PIO_read), "read", "iIPii");
+        enter_nci_method(INTERP, enum_class_ParrotIO,
+                         F2DPTR(PIO_write), "write", "iIPii");
+        enter_nci_method(INTERP, enum_class_ParrotIO,
+                         F2DPTR(PIO_setbuf), "setbuf", "iIPi");
+        enter_nci_method(INTERP, enum_class_ParrotIO,
+                         F2DPTR(PIO_setlinebuf), "setlinebuf", "iIP");
+        enter_nci_method(INTERP, enum_class_ParrotIO,
+                         F2DPTR(PIO_puts), "puts", "iIPt");
+        enter_nci_method(INTERP, enum_class_ParrotIO,
+                         F2DPTR(PIO_seek), "seek", "iIPiii");
+        enter_nci_method(INTERP, enum_class_ParrotIO,
+                         F2DPTR(PIO_eof), "eof", "iIP");
+    }
+
+    void init () {
+	PObj_active_destroy_SET(SELF);
+    }
+
+    void destroy () {
+	ParrotIO *io = PMC_data(SELF);
+        if (io) {
+            /* shared filehandles will only get flushed */
+            if (io->flags & PIO_F_SHARED) {
+                PIO_flush(interpreter, SELF);
+            }
+            else {
+                PIO_close(interpreter, SELF);
+            }
+        }
+    }
+
+    PMC* clone () {
+	PMC* dest = pmc_new(INTERP, SELF->vtable->base_type);
+	/* For now both PMCs refer to the same ParrotIO object.
+	 * If we have different IO layers, we might copy these structures
+	 */
+	PMC_data(dest) = PMC_data(SELF);
+	dest->cache.struct_val = SELF->cache.struct_val;
+	return dest;
+    }
+
+    INTVAL get_bool() {
+	return !PIO_eof(INTERP, SELF);
+    }
+
+}

@@ -1,0 +1,92 @@
+/* parrotclass.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info
+ *     $Id$
+ *  Overview:
+ *     These are the vtable functions for the ParrotClass base class
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *  References:
+ */
+
+/* The structure of a parrot class is reasonably straightforward. The
+   PMC's cached integer value is the number of attribute slots that
+   an object of this type requires. The data pointer holds a pointer
+   to an array of PMCs. That array has:
+
+   0: An array of immediate parents
+   1: The class name PMC
+   2: An array of all parents, in search order
+   3: A hash, keys are the class names, values are the offsets to
+      their attributes
+   4: A hash, the keys are the classname/attrib name pair (separated
+      by a NULL), while the value is the offset to the attribute
+
+*/
+
+#include "parrot/parrot.h"
+
+pmclass ParrotClass need_ext {
+
+    void init () {
+	/* No attributes to start with */
+	SELF->cache.int_val = 0;
+	/* But we are a class, really */
+	PObj_is_class_SET(SELF);
+	/* And, coincidentally, data points to a PMC. Fancy that... */
+	PObj_flag_SET(is_PMC_ptr, SELF);
+	/* s. Parrot_new_class() for more initialization */
+    }
+
+    INTVAL isa(STRING * classname) {
+	PMC *class;
+	if (SUPER(classname))
+            return 1;
+	class = Parrot_class_lookup(interpreter, classname);
+	return Parrot_object_isa(INTERP, SELF, class);
+    }
+
+    /* Figure out which method PMC we need. By default we just defer to the
+     * system method lookup code
+     */
+    PMC* find_method(STRING* name) {
+	return Parrot_find_method_with_cache(INTERP, SELF, name);
+    }
+
+    INTVAL can(STRING* method) {
+	return VTABLE_find_method(interpreter, SELF, method) != NULL;
+    }
+
+    /*
+     * attrib count
+     */
+    INTVAL elements() {
+	PMC* class_array = (PMC*) PMC_data(SELF);
+	PMC* attr_hash = VTABLE_get_pmc_keyed_int(interpreter,
+		class_array, PCD_ATTRIBUTES);
+	return VTABLE_elements(interpreter, attr_hash);
+    }
+
+    INTVAL get_integer() {
+	return SELF.elements();
+    }
+
+    /*
+     * attribute access meths
+     */
+
+    INTVAL get_integer_keyed_str (STRING* attr) {
+	PMC* class_array = (PMC*) PMC_data(SELF);
+	PMC* attr_hash = VTABLE_get_pmc_keyed_int(interpreter,
+		class_array, PCD_ATTRIBUTES);
+	if (VTABLE_exists_keyed_str(interpreter, attr_hash, attr))
+	    return VTABLE_get_integer_keyed_str(interpreter,
+		    attr_hash, attr);
+	return -1;
+    }
+
+    INTVAL get_integer_keyed (PMC* attr) {
+	return SELF.get_integer_keyed_str(key_string(interpreter, attr));
+    }
+}

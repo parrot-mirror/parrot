@@ -1,0 +1,47 @@
+/* Continuation.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info
+ *     $Id$
+ *  Overview:
+ *     These are the vtable functions for the Continuation base class
+ *  Data Structure and Algorithms:
+ *  History:
+ *     Initial revision by sean 2002/08/04
+ *  Notes:
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+#include "parrot/method_util.h"
+
+pmclass Continuation extends Closure {
+
+    void init () {
+        PMC_sub(SELF) = new_continuation(INTERP);
+	SELF->cache.struct_val = NULL;
+	PObj_custom_mark_destroy_SETALL(SELF);
+    }
+
+
+    void mark () {
+        struct Parrot_Sub * cc
+            = (struct Parrot_Sub*)PMC_sub(SELF);
+        mark_context(INTERP, &cc->ctx);
+	SUPER();	/* mark pad_stack, warns in closure */
+    }
+
+    PMC* clone() {
+	struct Parrot_Sub * sub;
+	PMC* ret = SUPER();
+	sub = PMC_sub(ret);
+	stack_mark_cow(sub->ctx.user_stack);
+	stack_mark_cow(sub->ctx.control_stack);
+	return ret;
+    }
+
+    void* invoke (void* next) {
+	struct Parrot_Sub * cc = (struct Parrot_Sub*)PMC_sub(SELF);
+	restore_context(interpreter, &cc->ctx);
+	return SUPER(next);
+    }
+}

@@ -1,0 +1,411 @@
+/* perlhash.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info
+ *     $Id$
+ *  Overview:
+ *     These are the vtable functions for the PerlHash base class
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *     PerlHash values should probably only be allowed to be PMCs.
+ *  References:
+ *     pdd08_keys.pod
+ */
+
+#include "parrot/parrot.h"
+
+
+static PMC* undef = NULL;
+STRING * hash_get_idx(Interp *interpreter, Hash *hash, PMC *key);
+
+static STRING* make_hash_key(Interp* interpreter, PMC * key)
+{
+    if (key == NULL) {
+        internal_exception(OUT_OF_BOUNDS,
+		"Cannot use NULL key for PerlHash!\n");
+        return NULL;
+    }
+    return key_string(interpreter, key);
+}
+
+/* Albeit PerlHash doesn't use PMC_data, it needs the next_fo_GC pointer
+ * We would get recursive marking of a deeply nested HoHoH...
+ */
+pmclass PerlHash need_ext does hash {
+
+    void class_init() {
+	/* class_init_code */
+	make_bufferlike_pool(INTERP, sizeof(struct _hash));
+    }
+    void init () {
+	if (undef == NULL) {
+	    undef = constant_pmc_new_noinit(INTERP, enum_class_PerlUndef);
+	    VTABLE_init(INTERP, undef);
+	}
+	PObj_custom_mark_SET(SELF);
+	new_hash(INTERP, (Hash**)&PMC_ptr1v(SELF));
+    }
+
+    void mark () {
+	if (PMC_ptr1v(SELF))
+	    mark_hash(INTERP, PMC_ptr1v(SELF));
+    }
+
+    INTVAL type_keyed_str (STRING* key) {
+	HashBucket* b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF), key);
+	if (!b)
+	    return enum_hash_undef;
+	return VTABLE_type(INTERP, (PMC*) b->value);
+    }
+
+    INTVAL type_keyed (PMC* key) {
+	PMC* valpmc;
+	PMC* nextkey;
+	STRING* keystr = make_hash_key(INTERP, key);
+	HashBucket* b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF),
+                                        keystr);
+	if (b == NULL) {
+	    return enum_hash_undef;
+	}
+	nextkey = key_next(INTERP, key);
+	valpmc = b->value;
+	if (!nextkey)
+	    return VTABLE_type(INTERP, valpmc);
+	return VTABLE_type_keyed(INTERP, valpmc, nextkey);
+    }
+
+    PMC* clone () {
+	PMC* dest = pmc_new_noinit(INTERP, SELF->vtable->base_type);
+	PObj_custom_mark_SET(dest);
+	hash_clone(INTERP, (Hash *)PMC_ptr1v(SELF), (Hash**)&PMC_ptr1v(dest));
+	return dest;
+    }
+
+    INTVAL get_integer () {
+	return hash_size(INTERP, PMC_ptr1v(SELF));
+    }
+
+    INTVAL get_integer_keyed_str (STRING* key) {
+	HashBucket *b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF), key);
+	if (b == NULL) {
+	    /* XXX Warning: use of uninitialized value */
+	    return VTABLE_get_integer(INTERP, undef);
+	}
+	return VTABLE_get_integer(INTERP, (PMC*) b->value);
+    }
+
+    INTVAL get_integer_keyed (PMC* key) {
+	PMC* valpmc;
+	STRING* keystr = make_hash_key(INTERP, key);
+	HashBucket *b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF),
+                                        keystr);
+	PMC* nextkey;
+	if (b == NULL) {
+	    /* XXX Warning: use of uninitialized value */
+	    return VTABLE_get_integer(INTERP, undef);
+	}
+	nextkey = key_next(INTERP, key);
+	valpmc = b->value;
+	if (!nextkey)
+	    return VTABLE_get_integer(INTERP, valpmc);
+	return VTABLE_get_integer_keyed(INTERP, valpmc, nextkey);
+
+    }
+
+    FLOATVAL get_number_keyed_str (STRING* key) {
+	HashBucket *b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF), key);
+	if (b == NULL) {
+	    /* XXX Warning: Use of uninitialized value */
+	    return VTABLE_get_number(INTERP, undef);
+	}
+	return VTABLE_get_number(INTERP, (PMC*) b->value);
+    }
+
+    FLOATVAL get_number_keyed (PMC* key) {
+	PMC* valpmc;
+	STRING* keystr = make_hash_key(INTERP, key);
+	HashBucket *b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF),
+                                        keystr);
+	PMC* nextkey;
+	if (b == NULL) {
+	    /* XXX Warning: Use of uninitialized value */
+	    return VTABLE_get_number(INTERP, undef);
+	}
+	nextkey = key_next(INTERP, key);
+	valpmc = b->value;
+	if (!nextkey)
+	    return VTABLE_get_number(INTERP, valpmc);
+	return VTABLE_get_number_keyed(INTERP, valpmc, nextkey);
+    }
+
+    BIGNUM* get_bignum_keyed_str (STRING* key) {
+	HashBucket *b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF), key);
+	if (b == NULL) {
+	    /* XXX Warning: Use of uninitialized value */
+	    return VTABLE_get_bignum(INTERP, undef);
+	}
+	return VTABLE_get_bignum(INTERP, (PMC*) b->value);
+    }
+
+    BIGNUM* get_bignum_keyed (PMC* key) {
+	PMC* valpmc;
+	STRING* keystr = make_hash_key(INTERP, key);
+	HashBucket *b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF),
+                                        keystr);
+	PMC* nextkey;
+	if (b == NULL) {
+	    /* XXX Warning: Use of uninitialized value */
+	    return VTABLE_get_bignum(INTERP, undef);
+	}
+	nextkey = key_next(INTERP, key);
+	valpmc = b->value;
+	if (!nextkey)
+	    return VTABLE_get_bignum(INTERP, valpmc);
+	return VTABLE_get_bignum_keyed(INTERP, valpmc, nextkey);
+    }
+
+    STRING* get_string () {
+	return Parrot_sprintf_c(INTERP, "PerlHash[0x%x]", SELF);
+    }
+
+    STRING* get_string_keyed_str (STRING* key) {
+	HashBucket *b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF), key);
+	if (b == NULL) {
+	    /* XXX Warning: use of uninitialized value */
+	    return VTABLE_get_string(INTERP, undef);
+	}
+	return VTABLE_get_string(INTERP, (PMC*) b->value);
+    }
+
+    STRING* get_string_keyed (PMC* key) {
+	PMC* valpmc;
+	STRING* keystr;
+	HashBucket *b;
+	PMC* nextkey;
+
+	switch (PObj_get_FLAGS(key) & KEY_type_FLAGS) {
+	    case KEY_integer_FLAG:
+		/* called from iterator with an integer idx in key */
+		return hash_get_idx(INTERP, (Hash*) PMC_ptr1v(SELF), key);
+	    default:
+		keystr = make_hash_key(INTERP, key);
+	}
+	b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF), keystr);
+	if (b == NULL) {
+	    /* XXX Warning: use of uninitialized value */
+	    return VTABLE_get_string(INTERP, undef);
+	}
+	nextkey = key_next(INTERP, key);
+	valpmc = b->value;
+	if (!nextkey)
+	    return VTABLE_get_string(INTERP, valpmc);
+	return VTABLE_get_string_keyed(INTERP, valpmc, nextkey);
+    }
+
+    INTVAL get_bool () {
+        return hash_size(INTERP, PMC_ptr1v(SELF)) != 0;
+    }
+
+    INTVAL elements () {
+        return hash_size(INTERP, PMC_ptr1v(SELF));
+    }
+
+    PMC* get_pmc_keyed_str (STRING* key) {
+	HashBucket *b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF), key);
+	if (b == NULL) {
+	    /* XXX should store the undef for consisteny */
+	    PMC *new_undef = pmc_new(INTERP, enum_class_PerlUndef);
+	    return new_undef;
+	}
+	return b->value;
+    }
+
+    PMC* get_pmc_keyed (PMC* key) {
+	STRING* keystr = make_hash_key(INTERP, key);
+	HashBucket *b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF),
+                                        keystr);
+	PMC* nextkey;
+	if (b == NULL) {
+	    /* XXX should store the undef for consisteny */
+	    PMC *new_undef = pmc_new(INTERP, enum_class_PerlUndef);
+	    return new_undef;
+	}
+	nextkey = key_next(INTERP, key);
+	if (!nextkey)
+	    return b->value;
+	return VTABLE_get_pmc_keyed(INTERP, (PMC*)b->value, nextkey);
+    }
+
+    INTVAL is_same (PMC* other) {
+        return (INTVAL)( other->vtable == SELF->vtable &&
+			PMC_ptr1v(other) == PMC_ptr1v(SELF));
+    }
+
+    void set_integer_keyed (PMC* key, INTVAL value) {
+        STRING* keystr = make_hash_key(INTERP, key);
+        PMC *val = pmc_new(interpreter, enum_class_PerlInt);
+        VTABLE_set_integer_native(INTERP, val, value);
+        hash_put(INTERP, PMC_ptr1v(SELF), keystr, val);
+    }
+
+    void set_integer_keyed_str (STRING* key, INTVAL value) {
+        PMC *val = pmc_new(interpreter, enum_class_PerlInt);
+        val->cache.int_val = value;
+        hash_put(INTERP, PMC_ptr1v(SELF), key, val);
+    }
+
+
+    void set_number_keyed (PMC* key, FLOATVAL value) {
+        STRING* keystr = make_hash_key(INTERP, key);
+        PMC *val = pmc_new(interpreter, enum_class_PerlNum);
+        val->cache.num_val = value;
+        hash_put(INTERP, PMC_ptr1v(SELF), keystr, val);
+    }
+
+    void set_number_keyed_str (STRING* key, FLOATVAL value) {
+        PMC *val = pmc_new(interpreter, enum_class_PerlNum);
+        val->cache.num_val = value;
+        hash_put(INTERP, PMC_ptr1v(SELF), key, val);
+    }
+
+
+    void set_bignum_keyed (PMC* key, BIGNUM* value) {
+        /* XXX */
+    }
+
+    void set_bignum_keyed_str (STRING* key, BIGNUM* value) {
+        /* XXX */
+    }
+
+    void set_string_keyed (PMC* key, STRING* value) {
+        STRING* keystr = make_hash_key(INTERP, key);
+        PMC *val = pmc_new(interpreter, enum_class_PerlString);
+        VTABLE_set_string_native(INTERP, val, value);
+        hash_put(INTERP, PMC_ptr1v(SELF), keystr, val);
+    }
+
+    void set_string_keyed_str (STRING* key, STRING* value) {
+        PMC *val = pmc_new(interpreter, enum_class_PerlString);
+        VTABLE_set_string_native(INTERP, val, value);
+        hash_put(INTERP, PMC_ptr1v(SELF), key, val);
+    }
+
+    void set_pmc_keyed (PMC* dest_key, PMC* value) {
+        STRING* keystr = make_hash_key(INTERP, dest_key);
+        hash_put(INTERP, PMC_ptr1v(SELF), keystr, value);
+    }
+
+    void set_pmc_keyed_str (STRING* key, PMC* value) {
+        hash_put(INTERP, PMC_ptr1v(SELF), key, value);
+    }
+
+
+    /* == operation */
+    INTVAL is_equal (PMC* value) {
+        return 0;
+    }
+
+    INTVAL exists_keyed_str(STRING* key) {
+	HashBucket *b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF), key);
+	return b != NULL;
+    }
+
+    INTVAL exists_keyed(PMC* key) {
+	STRING * sx;
+	Hash * h = (Hash *)PMC_ptr1v(SELF);
+	HashBucket *b;
+	sx = key_string(INTERP, key);
+	key = key_next(INTERP, key);
+	b = hash_get_bucket(INTERP, h, sx);
+	if (b == NULL)
+	    return 0;		/* no such key */
+	if (key == NULL)
+	    return 1;		/* lookup stops here */
+	return VTABLE_exists_keyed(INTERP, (PMC*)b->value, key);
+    }
+
+    INTVAL defined_keyed_str(STRING* key) {
+	HashBucket *b = hash_get_bucket(INTERP, (Hash*) PMC_ptr1v(SELF), key);
+	if (b == NULL)
+	    return 0;		/* no such key */
+	return VTABLE_defined(INTERP, (PMC*)b->value);
+    }
+
+    INTVAL defined_keyed(PMC* key) {
+	STRING * sx;
+	Hash * h = (Hash *)PMC_ptr1v(SELF);
+	HashBucket *b;
+	sx = key_string(INTERP, key);
+	key = key_next(INTERP, key);
+	b = hash_get_bucket(INTERP, h, sx);
+	if (b == NULL)
+	    return 0;		/* no such key */
+	if (key == NULL)
+	    return VTABLE_defined(INTERP, (PMC*)b->value);
+	else
+	    return VTABLE_defined_keyed( INTERP, (PMC*)b->value, key);
+    }
+
+    void delete_keyed_str(STRING* key) {
+	hash_delete(INTERP, (Hash *)PMC_ptr1v(SELF), key);
+    }
+
+    void delete_keyed(PMC* key) {
+	STRING * sx;
+	Hash * h = (Hash *)PMC_ptr1v(SELF);
+	HashBucket *b;
+	sx = key_string(INTERP, key);
+	key = key_next(INTERP, key);
+	b = hash_get_bucket(INTERP, h, sx);
+	if (b == NULL)
+            return;  /* no such key */
+	else if (key == NULL)
+	    hash_delete(INTERP, h, sx);
+	else
+	    VTABLE_delete_keyed(INTERP, (PMC*)b->value, key);
+    }
+
+    PMC* nextkey_keyed (PMC* key, INTVAL what) {
+	PMC *ret = key;
+
+	INTVAL n = SELF.elements();
+	PObj_get_FLAGS(ret) &= ~KEY_type_FLAGS;
+	PObj_get_FLAGS(ret) |= KEY_integer_FLAG;
+	switch (what) {
+	    case ITERATE_FROM_START:	/* reset key */
+            case ITERATE_FROM_START_KEYS:
+		ret->cache.int_val = 0;
+		if (!n)
+		    ret->cache.int_val = -1;
+		PMC_data(ret) = (void *)INITBucketIndex;
+		break;
+	    case ITERATE_GET_NEXT:
+		/* do nothing: hash_get_idx does increment the idx */
+		break;
+	    default:
+		internal_exception(1, "Can't iterate from end\n");
+		break;
+	}
+	return ret;
+    }
+
+    void visit(visit_info *info) {
+        hash_visit(INTERP, (Hash*)PMC_ptr1v(SELF), info);
+	SUPER(info);
+    }
+
+    void freeze(visit_info *info) {
+	IMAGE_IO *io = info->image_io;
+	SUPER(info);
+	io->vtable->push_integer(INTERP, io, VTABLE_elements(INTERP, SELF));
+    }
+
+    void thaw(visit_info *info) {
+	IMAGE_IO *io = info->image_io;
+	SUPER(info);
+	if (info->extra_flags == EXTRA_IS_NULL) {
+	    info->extra_flags = EXTRA_IS_COUNT;
+	    info->extra = (void *)io->vtable->shift_integer(INTERP, io);
+	}
+    }
+}

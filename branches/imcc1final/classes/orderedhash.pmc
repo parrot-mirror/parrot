@@ -1,0 +1,152 @@
+ /* orderedhash.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info
+ *     $Id$
+ *  Overview:
+ *     These are the vtable functions for the OrderedHash base class
+ *  Data Structure and Algorithms:
+ *  History:
+ *     Initial rev by leo 2003-08-21
+ *  Notes:
+ *     This class combines the functionality of PerlArray
+ *     (list in data) and a PerlHash (hash in struct_val).
+ *     The list holds the PMC values, the hash keys point to
+ *     the index of the value in the list.
+ *
+ *     There are 2 iterator interfaces:
+ *     - retrieve value (in creation order)
+ *     - retrieve key (no special order)
+ *     s. t/pmc/ordereredhash.t
+ *
+ *     If values are set by numeric index only, there is no hash
+ *     key. Iterating over the hash doesn't show these values.
+ *
+ *  References:
+ *     pdd08_keys.pod
+ */
+
+#include "parrot/parrot.h"
+#include "pmc_perlhash.h"
+
+pmclass OrderedHash extends PerlArray need_ext does array does hash {
+    void init () {
+        /* clear the Hash ptr - its not yet existing */
+        PMC_ptr1v(SELF) = NULL;
+	SUPER();
+	PerlHash.SUPER();
+    }
+
+    void mark () {
+        SUPER();
+        PerlHash.SUPER();
+    }
+
+    PMC* clone () {
+        PMC* dest = SUPER();
+	hash_clone(INTERP, (Hash *)PMC_ptr1v(SELF), (Hash**)&PMC_ptr1v(dest));
+        return dest;
+    }
+
+    PMC* get_pmc_keyed (PMC* key) {
+	if (PObj_get_FLAGS(key) & KEY_integer_FLAG) {
+	    return SUPER(key);
+	}
+	else {
+            INTVAL n = PerlHash.SELF.get_integer_keyed(key);
+            return DYNSELF.get_pmc_keyed_int(n);
+        }
+    }
+    PMC* get_pmc_keyed_str (STRING* key) {
+        INTVAL n = PerlHash.SELF.get_integer_keyed_str(key);
+        return DYNSELF.get_pmc_keyed_int(n);
+    }
+
+    INTVAL get_integer_keyed_str (STRING* key) {
+        INTVAL n = PerlHash.SELF.get_integer_keyed_str(key);
+        return DYNSELF.get_integer_keyed_int(n);
+    }
+
+    void set_pmc_keyed (PMC* key, PMC* value) {
+	INTVAL n = DYNSELF.elements();
+	DYNSELF.set_pmc_keyed_int(n, value);
+	PerlHash.SELF.set_integer_keyed(key, n);
+    }
+
+    void set_pmc_keyed_str (STRING* key, PMC* value) {
+	INTVAL n = DYNSELF.elements();
+	DYNSELF.set_pmc_keyed_int(n, value);
+	PerlHash.SELF.set_integer_keyed_str(key, n);
+    }
+
+    void set_integer_keyed_str (STRING* key, INTVAL value) {
+	INTVAL n = DYNSELF.elements();
+	DYNSELF.set_integer_keyed_int(n, value);
+	PerlHash.SELF.set_integer_keyed_str(key, n);
+    }
+
+    INTVAL exists_keyed(PMC* key) {
+	if (PObj_get_FLAGS(key) & KEY_integer_FLAG) {
+	    return SUPER(key);
+	}
+	else {
+            return PerlHash.SUPER(key);
+        }
+    }
+    INTVAL exists_keyed_str(STRING* key) {
+        return PerlHash.SUPER(key);
+    }
+
+    INTVAL defined_keyed(PMC* key) {
+	if (PObj_get_FLAGS(key) & KEY_integer_FLAG) {
+	    return SUPER(key);
+	}
+	else {
+            INTVAL n = PerlHash.SELF.get_integer_keyed(key);
+            return DYNSELF.defined_keyed_int(n);
+        }
+    }
+    INTVAL defined_keyed_str(STRING* key) {
+        INTVAL n = PerlHash.SELF.get_integer_keyed_str(key);
+        return DYNSELF.defined_keyed_int(n);
+    }
+
+    void delete_keyed(PMC* key) {
+        if (PObj_get_FLAGS(key) & KEY_integer_FLAG) {
+            SUPER(key);
+        }
+        else {
+            INTVAL n = PerlHash.SELF.get_integer_keyed(key);
+            PerlHash.SUPER(key);
+            DYNSELF.delete_keyed_int(n);
+        }
+    }
+
+    PMC* nextkey_keyed (PMC* key, INTVAL what) {
+        switch (what) {
+            case ITERATE_FROM_START_KEYS:
+                PObj_get_FLAGS(SELF) |= PObj_private0_FLAG;
+                break;
+            case ITERATE_FROM_START:
+                PObj_get_FLAGS(SELF) &= ~PObj_private0_FLAG;
+                break;
+        }
+        if ((PObj_get_FLAGS(SELF) & PObj_private0_FLAG))
+            return PerlHash.SUPER(key, what);
+        return SUPER(key, what);
+    }
+
+    STRING* get_string_keyed (PMC* key) {
+        return PerlHash.SUPER(key);
+    }
+}
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/
+

@@ -1,0 +1,61 @@
+/* boolean.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info
+ *     $Id$
+ *  Overview:
+ *     These are the vtable functions for the Boolean base class
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *     Albeit Boolean is derived from PerlInt, it doesn't morph
+ *     to other types, its value is changed only.
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+#include "parrot/perltypes.h"
+
+pmclass Boolean extends PerlInt {
+
+
+    void set_integer_native (INTVAL value) {
+        SELF->cache.int_val = (value != 0);
+    }
+
+    void set_number_native (FLOATVAL value) {
+	SELF->cache.int_val = (value!=0);
+    }
+
+    void set_string_native (STRING* value) {
+	SELF->cache.int_val = string_bool(value);
+    }
+
+    void neg (PMC* dest) {
+	if (!dest)
+	    SELF->cache.int_val = -SELF->cache.int_val;
+	else
+	    VTABLE_set_integer_native(INTERP, dest, -SELF->cache.int_val);
+    }
+
+    void logical_or (PMC* value, PMC* dest) {
+        VTABLE_set_integer_native(INTERP, dest,
+					 SELF->cache.int_val ||
+					 VTABLE_get_bool(INTERP, value)
+	    );
+    }
+
+    void logical_and (PMC* value, PMC* dest) {
+        VTABLE_set_integer_native(INTERP, dest,
+					 SELF->cache.int_val &&
+					 VTABLE_get_bool(INTERP, value)
+	    );
+    }
+
+    void logical_xor (PMC* value, PMC* dest) {
+        VTABLE_set_integer_native(INTERP, dest,
+            ( SELF->cache.int_val ? 1 : 0 ) ^
+					 VTABLE_get_bool(INTERP, value)
+	    );
+    }
+
+}

@@ -1,0 +1,463 @@
+/* scalar.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info:
+ *     $Id$
+ *  Overview:
+ *     These are the vtable functions for the scalar base PMC class
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+
+#define INT2KEY(i,k) ((k) ? key_new_integer((i), *(k)) : NULL)
+
+pmclass scalar abstract noinit {
+
+    PMC* clone () {
+	PMC* dest = pmc_new(INTERP, SELF->vtable->base_type);
+        memcpy(&dest->cache, &SELF->cache, sizeof(UnionVal));
+	return dest;
+    }
+
+    INTVAL get_integer () {
+        return SELF->cache.int_val;
+    }
+
+    FLOATVAL get_number () {
+        return SELF->cache.num_val;
+    }
+
+    BIGNUM* get_bignum () {
+        return (BIGNUM*)SELF->cache.struct_val;
+    }
+
+    STRING* get_string () {
+        return (STRING*)SELF->cache.string_val;
+    }
+
+    INTVAL get_bool () {
+        return SELF->cache.int_val != 0;
+    }
+
+
+    /* The set methods merely make the appropriate part of the cache
+      be what it should be, more complex behaviour is left as an
+      exercise for the inheriting class. */
+
+    void set_integer_native (INTVAL value) {
+        SELF->cache.int_val = value;
+    }
+
+    void set_number_native (FLOATVAL value) {
+        SELF->cache.num_val = value;
+    }
+
+    void set_bignum_native (BIGNUM* value) {
+        SELF->cache.struct_val = (DPOINTER*)value;
+    }
+
+    void set_string_native (STRING* value) {
+        SELF->cache.string_val = string_copy(INTERP, value);
+    }
+
+    void add_int (INTVAL value, PMC* dest) {
+        /* dest = SELF + value */
+
+        INTVAL result;
+
+        result = DYNSELF.get_integer() + value;
+        /* XXX: overflow detection, bigint promotion? */
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void add_bignum (BIGNUM* value, PMC* dest) {
+        /* XXX: bignum magic */
+    }
+
+    void add_float (FLOATVAL value, PMC* dest) {
+        /* dest = SELF + value */
+        /* XXX: overflow detection, bignum promotion? */
+
+        FLOATVAL result;
+
+        result = DYNSELF.get_number() + value;
+
+        VTABLE_set_number_native(INTERP, dest, result);
+    }
+
+    void subtract (PMC* value,  PMC* dest) {
+        /* XXX: overflow detection, bignum promotion? */
+
+        FLOATVAL result;
+
+        result = DYNSELF.get_number()
+            - VTABLE_get_number(INTERP, value);
+
+        VTABLE_set_number_native(INTERP, dest, result);
+    }
+
+    void subtract_int (INTVAL value,  PMC* dest) {
+        /* dest = SELF - value */
+        /* XXX: overflow detection, bignum promotion? */
+
+        FLOATVAL result;
+
+        result = DYNSELF.get_number()
+            - value;
+
+        VTABLE_set_number_native(INTERP, dest, result);
+    }
+
+    void subtract_bignum (BIGNUM* value,  PMC* dest) {
+        /* XXX: bignum magic */
+    }
+
+    void subtract_float (FLOATVAL value,  PMC* dest) {
+        /* dest = SELF - value */
+        /* XXX: overflow detection, bignum promotion? */
+
+        FLOATVAL result;
+
+        result = DYNSELF.get_number()
+            - value;
+
+        VTABLE_set_number_native(INTERP, dest, result);
+    }
+
+    void multiply (PMC* value,  PMC* dest) {
+        /* XXX: overflow detection, bignum promotion? */
+
+        FLOATVAL result;
+
+        result = DYNSELF.get_number()
+            * VTABLE_get_number(INTERP, value);
+
+        VTABLE_set_number_native(INTERP, dest, result);
+    }
+
+    void multiply_int (INTVAL value,  PMC* dest) {
+        /* XXX: overflow detection, bignum promotion? */
+
+        FLOATVAL result;
+
+        result = DYNSELF.get_number()
+            * value;
+
+        VTABLE_set_number_native(INTERP, dest, result);
+    }
+
+    void multiply_bignum (BIGNUM* value,  PMC* dest) {
+        /* XXX: bignum magic */
+    }
+
+    void multiply_float (FLOATVAL value,  PMC* dest) {
+        /* XXX: overflow detection, bignum promotion? */
+
+        FLOATVAL result;
+
+        result = DYNSELF.get_number()
+            * value;
+
+        VTABLE_set_number_native(INTERP, dest, result);
+    }
+
+
+    void divide (PMC* value,  PMC* dest) {
+        /* XXX: overflow detection, bignum promotion? */
+
+        FLOATVAL result;
+
+        result = DYNSELF.get_number()
+            / VTABLE_get_number(INTERP, value);
+
+        VTABLE_set_number_native(INTERP, dest, result);
+    }
+
+    void divide_int (INTVAL value,  PMC* dest) {
+        /* dest = SELF / value */
+
+        /* XXX: overflow detection, bignum promotion? */
+
+        FLOATVAL result;
+
+        result = DYNSELF.get_number()
+            / value;
+
+        VTABLE_set_number_native(INTERP, dest, result);
+    }
+
+    void divide_bignum (BIGNUM* value,  PMC* dest) {
+        /* XXX: bignum magic */
+    }
+
+    void divide_float (FLOATVAL value,  PMC* dest) {
+        /* dest = SELF / value */
+
+        /* XXX: overflow detection, bignum promotion? */
+
+        FLOATVAL result;
+
+        result = DYNSELF.get_number()
+            / value;
+
+        VTABLE_set_number_native(INTERP, dest, result);
+    }
+
+    void modulus (PMC* value,  PMC* dest) {
+        /* This does perl-like modulus */
+
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            % VTABLE_get_integer(INTERP, value);
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void modulus_int (INTVAL value,  PMC* dest) {
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            % value;
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void modulus_bignum (BIGNUM* value,  PMC* dest) {
+        SUPER(value, dest);
+    }
+
+    void modulus_float (FLOATVAL value,  PMC* dest) {
+        SUPER(value, dest);
+    }
+
+    void neg (PMC* dest) {
+	if (!dest)
+	    SELF->cache.int_val = -DYNSELF.get_integer();
+	else
+	    VTABLE_set_integer_native(INTERP, dest, -DYNSELF.get_integer());
+    }
+
+    void bitwise_or (PMC* value, PMC* dest) {
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            | VTABLE_get_integer(INTERP, value);
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void bitwise_or_int (INTVAL value, PMC* dest) {
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            | value;
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void bitwise_and (PMC* value, PMC* dest) {
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            & VTABLE_get_integer(INTERP, value);
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void bitwise_and_int (INTVAL value, PMC* dest) {
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            & value;
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void bitwise_xor (PMC* value, PMC* dest) {
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            ^ VTABLE_get_integer(INTERP, value);
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void bitwise_xor_int (INTVAL value, PMC* dest) {
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            ^ value;
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void bitwise_not (PMC* dest) {
+        VTABLE_set_integer_native(INTERP, dest, ~DYNSELF.get_integer());
+    }
+
+
+    void bitwise_shr (PMC* value, PMC* dest) {
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            >> VTABLE_get_integer(INTERP, value);
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void bitwise_shr_int (INTVAL value, PMC* dest) {
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            >> value;
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void bitwise_shl (PMC* value, PMC* dest) {
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            << VTABLE_get_integer(INTERP, value);
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void bitwise_shl_int (INTVAL value, PMC* dest) {
+        INTVAL result;
+
+        result = DYNSELF.get_integer()
+            << value;
+
+        VTABLE_set_integer_native(INTERP, dest, result);
+    }
+
+    void concatenate (PMC* value,  PMC* dest) {
+        STRING* s = string_concat(INTERP,
+            DYNSELF.get_string(),
+            VTABLE_get_string(INTERP, value), 0);
+
+        VTABLE_set_string_native(INTERP, dest, s);
+    }
+
+    void concatenate_native (STRING* value,  PMC* dest) {
+        /* dest = SELF (concat) value */
+        STRING* s = string_concat(INTERP,
+            DYNSELF.get_string(),
+            value, 0);
+
+        VTABLE_set_string_native(INTERP, dest, s);
+    }
+
+    INTVAL is_equal (PMC* value) {
+        /* I think we need to check everything, do the easiest first... */
+        if (DYNSELF.get_integer()
+                == VTABLE_get_integer(INTERP, value)
+            && DYNSELF.get_number()
+                == VTABLE_get_number(INTERP, value)
+            && 0 == string_compare(INTERP,
+                DYNSELF.get_string(),
+                VTABLE_get_string(INTERP, value))
+            )
+        {
+            return 1;
+        }
+        return 0;
+    }
+
+
+    INTVAL cmp_num (PMC* value) {
+        /* XXX - Floating-point precision errors possible? */
+        FLOATVAL diff = VTABLE_get_number(INTERP, value) -
+                        DYNSELF.get_number();
+
+        return diff == 0.0 ? 0 : diff < 0.0 ? -1 : 1;
+    }
+
+
+    INTVAL cmp_string (PMC* value) {
+        return string_compare(INTERP, DYNSELF.get_string(),
+            VTABLE_get_string(INTERP, value));
+    }
+
+    void logical_or (PMC* value,  PMC* dest) {
+        if (DYNSELF.get_bool()) {
+            VTABLE_set_pmc(INTERP, dest, SELF);
+        }
+        else {
+            VTABLE_set_pmc(INTERP, dest, value);
+        }
+    }
+
+    void logical_and (PMC* value,  PMC* dest) {
+        if (DYNSELF.get_bool()) {
+            VTABLE_set_pmc(INTERP, dest, value);
+        }
+        else {
+            VTABLE_set_pmc(INTERP, dest, SELF);
+        }
+    }
+
+    void logical_xor (PMC* value,  PMC* dest) {
+
+        INTVAL my_bool, value_bool;
+
+        my_bool = DYNSELF.get_bool();
+        value_bool = VTABLE_get_bool(INTERP, value);
+
+        if (my_bool && ! value_bool) {
+            VTABLE_set_pmc(INTERP, dest, SELF);
+        }
+        else if (value_bool && ! my_bool) {
+            VTABLE_set_pmc(INTERP, dest, value);
+        }
+        else {
+            /* XXX - Need a better way to set FALSE */
+            VTABLE_set_integer_native(INTERP, dest, 0);
+        }
+    }
+
+    void logical_not (PMC* dest) {
+        /* XXX - Need a better way to set boolean state */
+        VTABLE_set_integer_native(INTERP, dest,
+            ! DYNSELF.get_bool());
+    }
+
+    void repeat (PMC* value,  PMC* dest) {
+        VTABLE_set_string_native(INTERP, dest,
+            string_repeat(INTERP, VTABLE_get_string(INTERP,SELF),
+                (UINTVAL)VTABLE_get_integer(INTERP, value), NULL) );
+    }
+
+    void repeat_int (INTVAL value, PMC* dest) {
+        VTABLE_set_string_native(INTERP, dest,
+            string_repeat(INTERP, VTABLE_get_string(INTERP,SELF),
+                (UINTVAL)value, NULL) );
+    }
+
+
+    void increment () {
+        SELF->cache.int_val = DYNSELF.get_integer() + 1;
+    }
+
+
+    void decrement () {
+        SELF->cache.int_val = DYNSELF.get_integer() - 1;
+    }
+
+
+    INTVAL defined () {
+        return 1;
+    }
+
+
+    STRING* substr_str(INTVAL offset, INTVAL length) {
+        return string_substr(INTERP, VTABLE_get_string(INTERP,SELF),
+            offset, length, NULL, 0);
+    }
+
+}

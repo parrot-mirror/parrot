@@ -1,0 +1,76 @@
+/* integer.pmc
+ *  Copyright: 2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info $Id$
+ *  Overview:
+ *	Integer PMC class
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *      This class is for languages that want a value-restricted
+ *      integer type without going to an I register.
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+
+static void
+integer_divide(Parrot_Interp interp, PMC* self, PMC* value, PMC* destination) {
+     INTVAL result;
+     result = VTABLE_get_integer(interp, self) / VTABLE_get_integer(interp, value);
+     VTABLE_set_integer_native(interp, destination, result);
+}
+
+
+pmclass Integer extends mmd_default {
+
+    /*
+     * class_init() code is run during Parrot_<class>_class_init()
+     */
+    void class_init() {
+	/*
+	 * override divide to do integer division
+	 */
+	mmd_register(INTERP, MMD_DIVIDE,
+		enum_class_Integer, enum_class_Integer,
+		(funcptr_t)integer_divide);
+    }
+
+    void set_integer_native(INTVAL value) {
+      SELF->cache.int_val = value;
+    }
+
+    void set_number_native(FLOATVAL value) {
+      SELF->cache.int_val = value;
+    }
+
+    void set_string_native(STRING* value) {
+      SELF->cache.int_val = string_to_num(value);
+    }
+
+    void set_pmc(PMC *value) {
+      SELF->cache.int_val = VTABLE_get_integer(INTERP, value);
+    }
+
+    FLOATVAL get_number() {
+      return SELF->cache.int_val;
+    }
+
+    INTVAL get_integer() {
+      return (INTVAL)SELF->cache.int_val;
+    }
+
+    INTVAL get_bool() {
+      return(SELF->cache.int_val != 0);
+    }
+
+    STRING* get_string() {
+      return string_from_num(INTERP, SELF->cache.int_val);
+    }
+
+    void increment() {
+      SELF->cache.int_val++;
+    }
+    void decrement() {
+      SELF->cache.int_val--;
+    }
+}
