@@ -1,0 +1,108 @@
+/* mmd_default.pmc
+ *  Copyright: 2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info $Id$
+ *  Overview:
+ *	MMD dispatching base class
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *      This class provides MMD versions of all the binary operators
+ *      for PMC classes to inherit from.
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+
+pmclass mmd_default extends default {
+
+    void init() {
+	SELF->cache.num_val = 0.0;
+    }
+
+  void add(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_ADD);
+  }
+
+  void subtract(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_SUBTRACT);
+  }
+
+  void multiply(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_MULTIPLY);
+  }
+
+  void divide(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_DIVIDE);
+  }
+
+  void modulus(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_MOD);
+  }
+
+  void cmodulus(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_CMOD);
+  }
+
+  void bitwise_and(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_BAND);
+  }
+
+  void bitwise_or(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_BOR);
+  }
+
+  void bitwise_xor(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_BXOR);
+  }
+
+  void bitwise_shl(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_BSL);
+  }
+
+  void bitwise_shr(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_BSR);
+  }
+
+  void concatenate(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_CONCAT);
+  }
+
+  void logical_and(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_LAND);
+  }
+
+  void logical_or(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_LOR);
+  }
+
+  void logical_xor(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_LXOR);
+  }
+
+  void repeat(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_REPEAT);
+  }
+
+  INTVAL is_equal(PMC* value) {
+    return mmd_dispatch_intval(INTERP, SELF, value, MMD_NUMEQ);
+  }
+
+  INTVAL cmp(PMC* value) {
+    return mmd_dispatch_intval(INTERP, SELF, value, MMD_NUMCMP);
+  }
+
+  void bitwise_ors(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_SOR);
+  }
+
+  void bitwise_ands(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_SAND);
+  }
+
+  void bitwise_xors(PMC* value, PMC* dest) {
+    mmd_dispatch_pmc(INTERP, SELF, value, dest, MMD_SXOR);
+  }
+
+
+
+}
