@@ -1,0 +1,21 @@
+# [ filename | {regex} ] -{removed options} +{added options} s/// ...
+#
+# Avoid using non-configure controlled +{} directly in this file, as
+# it'll most likely break on other platforms.
+#
+# Note, empty regex/options are just ignored.
+#
+src/spf_render.c -{-Wformat-nonliteral}   # noisy
+src/tsq.c        -{${optimize}}           # never optimize tsq.c!
+ops/core_ops_cg.c   -{${optimize}}       # takes too long
+src/py_func.c     +{-Iclasses}           # include pmc_default.h
+
+# io should be -Wunsed clean
+{^io/}              s/-Wno-unused/-Wunused/
+
+# imcc file settings
+{^imcc/}            -{-Wwrite-strings -Wcast-qual} s/-Wno-unused/-Wunused/
+imcc/instructions.c -{-Wformat-nonliteral} # noisy
+imcc/debug.c        -{-Wformat-nonliteral} # noisy
+imcc/optimizer.c    -{-Wformat-nonliteral} # noisy
+imcc/parser_util.c  -{-Wformat-nonliteral} # noisy

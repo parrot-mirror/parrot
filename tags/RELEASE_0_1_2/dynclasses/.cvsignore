@@ -1,0 +1,7 @@
+Makefile
+build.pl
+*.dump
+*.c
+*.h
+*.dylib
+*.bundle
