@@ -1,0 +1,156 @@
+/* perlarray.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info
+ *     $Id$
+ *  Overview:
+ *     These are the vtable functions for the PerlArray base class
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *     TODO: Fix the arithmetic ops (right now they just corrupt the
+ *           array length and possibly seg fault)
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+
+
+static PMC* undef(struct Parrot_Interp* interpreter)
+{
+    return pmc_new(interpreter, enum_class_PerlUndef);
+}
+
+static PMC *
+Parrot_PerlArray_set_pmc_ptr(Interp *interp, List *list, INTVAL key)
+{
+    void * ret = list_get(interp, list, key, enum_type_PMC);
+    PMC *value;
+
+    /* assign into a sparse or past end */
+    if (ret == 0 || ret == (void*) -1 || *(PMC**)ret == 0) {
+	value = undef(interp);
+	list_assign(interp, list, key, value, enum_type_PMC);
+    }
+    else
+	value = *(PMC**) ret;
+    return value;
+}
+
+pmclass PerlArray extends Array need_ext does array {
+
+    void set_integer_keyed_int (INTVAL key, INTVAL value) {
+        PMC *src = pmc_new_noinit(INTERP, enum_class_PerlInt);
+	src->cache.int_val = value;
+	list_assign(INTERP, (List *) PMC_data(SELF), key, src, enum_type_PMC);
+    }
+
+    void set_integer_keyed (PMC* key, INTVAL value) {
+        INTVAL ix;
+
+        ix = key_integer(INTERP, key);
+        if (ix >= DYNSELF.elements() || ix < -DYNSELF.elements())
+		list_set_length(INTERP, (List *) PMC_data(SELF), ix+1);
+	SUPER(key, value);
+    }
+
+
+    void set_number_keyed_int (INTVAL key, FLOATVAL value) {
+	PMC * ptr = Parrot_PerlArray_set_pmc_ptr(INTERP,
+		(List *) PMC_data(SELF), key);
+        VTABLE_set_number_native(INTERP, ptr, value);
+    }
+
+    void set_number_keyed (PMC* key, FLOATVAL value) {
+        INTVAL ix;
+
+        ix = key_integer(INTERP, key);
+        if (ix >= DYNSELF.elements() || ix < -DYNSELF.elements())
+		list_set_length(INTERP, (List *) PMC_data(SELF), ix+1);
+	SUPER(key, value);
+    }
+
+    void set_string_keyed_int (INTVAL key, STRING* value) {
+	PMC * ptr = Parrot_PerlArray_set_pmc_ptr(INTERP,
+		(List *) PMC_data(SELF), key);
+        VTABLE_set_string_native(INTERP, ptr, value);
+    }
+
+    void set_string_keyed (PMC* key, STRING* value) {
+        INTVAL ix;
+
+        ix = key_integer(INTERP, key);
+        if (ix >= DYNSELF.elements() || ix < -DYNSELF.elements())
+		list_set_length(INTERP, (List *) PMC_data(SELF), ix+1);
+	SUPER(key, value);
+    }
+
+    void set_pmc_keyed_int (INTVAL key, PMC* src) {
+	list_assign(INTERP, (List *) PMC_data(SELF), key, src, enum_type_PMC);
+    }
+
+    void set_pmc_keyed (PMC* key, PMC* value) {
+        INTVAL ix;
+
+        ix = key_integer(INTERP, key);
+        if (ix >= DYNSELF.elements() || ix < -DYNSELF.elements())
+		list_set_length(INTERP, (List *) PMC_data(SELF), ix+1);
+	SUPER(key, value);
+    }
+
+    INTVAL get_integer_keyed_int (INTVAL key) {
+        if (key >= DYNSELF.elements() || key < -DYNSELF.elements()) {
+            if (PARROT_WARNINGS_test(interpreter,
+                                     PARROT_WARNINGS_UNDEF_FLAG)) {
+                Parrot_warn(INTERP, PARROT_WARNINGS_UNDEF_FLAG,
+                            "Use of uninitialized value");
+            }
+            return 0;
+        }
+        else
+            return SUPER(key);
+    }
+
+    FLOATVAL get_number_keyed_int (INTVAL key) {
+        if (key >= DYNSELF.elements() || key < -DYNSELF.elements()) {
+            if (PARROT_WARNINGS_test(interpreter,
+                                     PARROT_WARNINGS_UNDEF_FLAG)) {
+                Parrot_warn(INTERP, PARROT_WARNINGS_UNDEF_FLAG,
+                            "Use of uninitialized value");
+            }
+            return 0.0;
+        }
+        else
+            return SUPER(key);
+    }
+
+    STRING* get_string () {
+	return string_from_int(INTERP, DYNSELF.elements());
+    }
+
+    STRING* get_string_keyed_int (INTVAL key) {
+        if (key >= DYNSELF.elements() || key < -DYNSELF.elements()) {
+            if (PARROT_WARNINGS_test(interpreter,
+                                     PARROT_WARNINGS_UNDEF_FLAG)) {
+                Parrot_warn(INTERP, PARROT_WARNINGS_UNDEF_FLAG,
+                            "Use of uninitialized value");
+            }
+            return string_make(interpreter,  NULL, 0, NULL, 0, NULL);
+        }
+        else
+            return SUPER(key);
+    }
+
+    PMC* get_pmc_keyed_int (INTVAL key) {
+        if (key >= DYNSELF.elements() || key < -DYNSELF.elements()) {
+            if (PARROT_WARNINGS_test(interpreter,
+                                     PARROT_WARNINGS_UNDEF_FLAG)) {
+                Parrot_warn(INTERP, PARROT_WARNINGS_UNDEF_FLAG,
+                            "Use of uninitialized value");
+            }
+            return undef(INTERP);
+        }
+        else
+            return SUPER(key);
+    }
+
+}
