@@ -49,7 +49,7 @@
 #define REGSET_S 1
 #define REGSET_P 2
 #define REGSET_N 3
-#define REGSET_MAX 3
+#define REGSET_MAX 4
 
 static const char regsets[] = "ISPN";
 
@@ -291,7 +291,7 @@ expand_pcc_sub(Parrot_Interp interpreter, IMC_Unit * unit, Instruction *ins)
 
     }
     for (proto = ps; proto <= pe; ++proto) {
-	for (i = 0; i <= REGSET_MAX; i++)
+	for (i = 0; i < REGSET_MAX; i++)
 	    next[i] = FIRST_PARAM_REG;
 	/* insert params */
 	nargs = sub->pcc_sub->nargs;
@@ -299,7 +299,7 @@ expand_pcc_sub(Parrot_Interp interpreter, IMC_Unit * unit, Instruction *ins)
 	    arg = sub->pcc_sub->args[i];
 	    if (proto == 1 ||
 		    (arg->set == 'P' && next[REGSET_P] < 16)) {
-		for (set = 0; set <= REGSET_MAX; set++) {
+		for (set = 0; set < REGSET_MAX; set++) {
 		    if (arg->set == regsets[set]) {
 			if (next[set] > LAST_PARAM_REG) {
 #if IMC_TRACE
@@ -458,7 +458,7 @@ expand_pcc_sub_ret(Parrot_Interp interpreter, IMC_Unit * unit, Instruction *ins)
                     /* goon */
                 case VTCONST:
 lazy:
-                    for (set = 0; set <= REGSET_MAX; set++) {
+                    for (set = 0; set < REGSET_MAX; set++) {
                         if (arg->set == regsets[set]) {
                             if (next[set] > LAST_PARAM_REG)
                                 goto overflow;
@@ -478,7 +478,7 @@ lazy:
                     break;
                 default:
                     if (arg->type & VTREGISTER) {
-                        for (set = 0; set <= REGSET_MAX; set++)
+                        for (set = 0; set < REGSET_MAX; set++)
                             if (arg->set == regsets[set]) {
                                 arg->reg->want_regno = next[set];
                                 sub->pcc_sub->ret[i]->used = arg->reg;
@@ -518,7 +518,7 @@ overflow:
     ins = set_I_const(interpreter, unit, ins, 0, sub->pcc_sub->prototyped);
 
     /* Setup argument counts */
-    for (i = 0; i <= REGSET_MAX; i++)
+    for (i = 0; i < REGSET_MAX; i++)
         ins = set_I_const(interpreter, unit, ins, i + 1, next[i] - 5);
 
     /*
@@ -823,7 +823,7 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     tail_call = check_tail_call(interp, unit, ins);
     if (tail_call)
         debug(interp, DEBUG_OPT1, "found tail call %I \n", ins);
-    for (i = 0; i <= REGSET_MAX; i++)
+    for (i = 0; i < REGSET_MAX; i++)
         next[i] = FIRST_PARAM_REG;
     call_ins = ins;
     sub = ins->r[0];
@@ -880,7 +880,7 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
                 case VT_CONSTP:
                 case VTCONST:
 lazy:
-                    for (set = 0; set <= REGSET_MAX; set++) {
+                    for (set = 0; set < REGSET_MAX; set++) {
                         if (arg_reg->set == regsets[set]) {
                             if (arg_reg->type != VTCONST &&
                                     arg_reg->color == next[set]) {
@@ -904,7 +904,7 @@ lazy:
                 default:
                     if (arg->type & VTREGISTER) {
                         /* TODO for now just emit a register move */
-                        for (set = 0; set <= REGSET_MAX; set++)
+                        for (set = 0; set < REGSET_MAX; set++)
                             if (arg->set == regsets[set]) {
                                 if (set == 2 &&
                                         (flatten ||
