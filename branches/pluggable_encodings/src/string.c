@@ -357,6 +357,11 @@ string_make_empty(Interp *interpreter,
     s = new_string_header(interpreter, 0);
 
     s->representation = representation;
+    
+    if (representation == enum_stringrep_one) {
+        s->encoding = Parrot_fixed_8_encoding_ptr;
+        s->charset = Parrot_iso_8859_1_charset_ptr;
+    }
 
     Parrot_allocate_string(interpreter,
         s, string_max_bytes(interpreter, s, capacity));
@@ -802,6 +807,8 @@ string_make(Interp *interpreter, const void *buffer,
 
         if (strcmp(encoding_name, "iso-8859-1") == 0 ) {
             s->representation = enum_stringrep_one;
+            s->encoding = Parrot_fixed_8_encoding_ptr;
+            s->charset = Parrot_iso_8859_1_charset_ptr;
             /*
              * fast path for external (constant) strings - don't allocate
              * and copy data
@@ -3190,15 +3197,19 @@ string_upcase_inplace(Interp *interpreter, STRING *s)
 
     if (!s)
         return;
-    Parrot_unmake_COW(interpreter, s);
-    set_char_at = set_char_setter(s);
-    for (i = 0; i < s->strlen; ++i) {
-        o = string_ord(interpreter, s, i);
-        if (o >= 'a' && o <= 'z')
-            set_char_at(i, s, o - 32);
-        else if (o >= 0x80)
-            internal_exception(INTERNAL_NOT_IMPLEMENTED,
-                    "Case mangling for non-ASCII not yet implemented");
+    if (s->representation == enum_stringrep_one) {
+        CHARSET_UPCASE(interpreter, s);
+    } else {
+        Parrot_unmake_COW(interpreter, s);
+        set_char_at = set_char_setter(s);
+        for (i = 0; i < s->strlen; ++i) {
+            o = string_ord(interpreter, s, i);
+            if (o >= 'a' && o <= 'z')
+                set_char_at(i, s, o - 32);
+            else if (o >= 0x80)
+                internal_exception(INTERNAL_NOT_IMPLEMENTED,
+                                   "Case mangling for non-ASCII not yet implemented");
+        }
     }
 }
 
@@ -3250,15 +3261,19 @@ string_downcase_inplace(Interp *interpreter, STRING *s)
 
     if (!s)
         return;
-    Parrot_unmake_COW(interpreter, s);
-    set_char_at = set_char_setter(s);
-    for (i = 0; i < s->strlen; ++i) {
-        o = string_ord(interpreter, s, i);
-        if (o >= 'A' && o <= 'Z')
-            set_char_at(i, s, o + 32);
-        else if (o >= 0x80)
-            internal_exception(INTERNAL_NOT_IMPLEMENTED,
-                    "Case mangling for non-ASCII not yet implemented");
+    if (s->representation == enum_stringrep_one) {
+        CHARSET_DOWNCASE(interpreter, s);
+    } else {
+        Parrot_unmake_COW(interpreter, s);
+        set_char_at = set_char_setter(s);
+        for (i = 0; i < s->strlen; ++i) {
+            o = string_ord(interpreter, s, i);
+            if (o >= 'A' && o <= 'Z')
+                set_char_at(i, s, o + 32);
+            else if (o >= 0x80)
+                internal_exception(INTERNAL_NOT_IMPLEMENTED,
+                                   "Case mangling for non-ASCII not yet implemented");
+        }
     }
 }
 
@@ -3310,21 +3325,25 @@ string_titlecase_inplace(Interp *interpreter, STRING *s)
 
     if (!s)
         return;
-    Parrot_unmake_COW(interpreter, s);
-    set_char_at = set_char_setter(s);
-    o = string_ord(interpreter, s, 0);
-    if (o >= 'a' && o <= 'z')
-        set_char_at(0, s, o - 32);
-    else if (o >= 0x80)
-        internal_exception(INTERNAL_NOT_IMPLEMENTED,
-                "Case mangling for non-ASCII not yet implemented");
-    for (i = 1; i < s->strlen; ++i) {
-        o = string_ord(interpreter, s, i);
-        if (o >= 'A' && o <= 'Z')
-            set_char_at(i, s, o + 32);
+    if (s->representation == enum_stringrep_one) {
+        CHARSET_TITLECASE(interpreter, s);
+    } else {
+        Parrot_unmake_COW(interpreter, s);
+        set_char_at = set_char_setter(s);
+        o = string_ord(interpreter, s, 0);
+        if (o >= 'a' && o <= 'z')
+            set_char_at(0, s, o - 32);
         else if (o >= 0x80)
             internal_exception(INTERNAL_NOT_IMPLEMENTED,
-                    "Case mangling for non-ASCII not yet implemented");
+                               "Case mangling for non-ASCII not yet implemented");
+        for (i = 1; i < s->strlen; ++i) {
+            o = string_ord(interpreter, s, i);
+            if (o >= 'A' && o <= 'Z')
+                set_char_at(i, s, o + 32);
+            else if (o >= 0x80)
+                internal_exception(INTERNAL_NOT_IMPLEMENTED,
+                                   "Case mangling for non-ASCII not yet implemented");
+        }
     }
 }
 
