@@ -1,0 +1,36 @@
+=head1 ParTcl
+
+A from scratch implementation of Tcl on Parrot.
+
+To build the tcl interpreter, first build the required dynamic pmcs:
+From the top level parrot directory, run: C<(cd dynpmcs && make)>
+
+Then, type C<make> in this directory. This will
+generate the file C<tcl.pbc> which can then be used to run tcl programs.
+
+I<Note - due to a bug in the current parrot implementation, you must be
+in the root development directory.>
+
+ ./parrot languages/tcl/tcl.pbc foo.tcl
+
+=head2 Examples
+
+To run an example, change to the C<examples>, and type C<make>
+for instructions
+
+=head2 Test Suite
+
+To run the test suite, type "make test". Note - if any tests fail, try
+setting the environment variable C<TEST_PROG_ARGS> to C<-G> and retry.
+
+If the tests now pass, there's a GC bug that needs to be reported to
+the perl6-internals list.
+
+=head2 Documentation
+
+Various documentation (in various states of decay at the moment):
+
+ docs/*
+ TODO
+
+=cugt

@@ -1,0 +1,46 @@
+###
+# [eval]
+
+#
+# eval arg [... arg arg]
+
+.namespace [ "Tcl" ]
+
+.sub _eval
+  .local pmc argv
+  argv = foldup  
+ 
+  .local string expr
+  .local int argc
+  .local int looper
+ 
+  .local pmc parse
+  .local pmc interpret 
+  parse = find_global "_Tcl", "__parse"  
+  interpret = find_global "_Tcl", "__interpret"
+
+  expr = ""
+  looper = 0
+  argc = argv
+
+loop:
+  if looper == argc goto loop_done
+  $S0 = argv[looper]
+  concat expr, $S0
+  inc looper
+  if looper == argc goto loop_done
+  concat expr," "
+
+  goto loop
+
+loop_done:
+ 
+  $P1 = parse(expr,0,0)
+  ($I0,$P0) = interpret($P1) 
+
+done:
+  .pcc_begin_return
+    .return $I0
+    .return $P0
+  .pcc_end_return
+.end

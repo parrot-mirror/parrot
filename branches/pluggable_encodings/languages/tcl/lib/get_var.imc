@@ -1,0 +1,157 @@
+###
+# get_var - return the value of the variable specified
+# by the parameters - Param 1 is the name of the var.
+# param2, if it exists, is the index of the variable.
+# (as with the [procs], the args are passed in as a
+# perlarray
+
+.namespace [ "_Tcl" ]
+
+.sub __get_var
+  .param pmc argv
+
+  .local int argc
+  argc = argv
+
+  .local int TclArray
+  TclArray = find_type "TclArray"
+
+# with recent changes, argv2 is always set (sometimes to a PerlUndef)
+# This tweaks it act as if only one had been passed in. This will
+# eventually need a cleanup.
+
+  #print "ARGC: "
+  #print argc
+  #print "\n"
+
+  if argc == 1 goto continue
+  $P0 = argv[1]
+  isnull $P0, continue
+  #print "P0 is:"
+  #print $P0
+  #print "\n"
+  $I0 = typeof $P0
+  if $I0 != .PerlUndef goto continue
+  argc=1
+
+continue:
+  #print "!ARGC="
+  #print argc
+  #print "\n"
+
+  .local string name
+  .local pmc lexical
+
+  .local string windex
+  .local int type
+
+  .local pmc value
+  .local pmc retval
+
+  .local int return_type
+  return_type = TCL_OK
+
+  .local Exception_Handler ignore
+  newsub ignore, .Exception_Handler, __default_handler
+
+  #print "a\n"
+  name=argv[0] 
+  #print "b\n"
+  if argc == 1 goto get_scalar
+  #print "c\n"
+  #$I0 = argv
+  #print "$I0 is"
+  #print $I0
+  #print "\n"
+  #print "TYPE OF ARGV is"
+  #$S9 = typeof argv
+  #print $S9
+  #print "\n" 
+  $P9 = argv[1]
+  isnull $P9, get_scalar # mix of various calling types.
+  windex = $P9
+  #windex=argv[1] 
+  #print "d\n"
+
+get_indexed:
+  #print "get_indexed:\n"
+  set_eh ignore
+    find_lex lexical, -1, name
+  clear_eh
+  isnull lexical, no_such_variable
+  $I0 = typeof lexical
+  # get rid of PerlUndef when switch to Tcl*
+  if .PerlUndef == $I0 goto no_such_variable
+  isnull lexical, no_such_variable
+  typeof type, lexical
+  if type != TclArray goto get_indexed_bad
+
+get_indexed_ok:
+  retval = lexical[windex]
+  goto done
+
+get_indexed_bad:
+  #print "get_indexed_bad:\n"
+  return_type = TCL_ERROR
+  $S0 =  "can't read \""
+  $S0 .= name
+  $S0 .= "("
+  $S0 .= windex
+  $S0 .= ")\": variable isn't array\n"
+  retval = new String
+  retval = $S0
+  goto done
+
+get_scalar:
+  #print "name is"
+  #print name
+  #print "\n"
+  set_eh ignore
+    find_lex lexical, -1, name
+  clear_eh
+
+  isnull lexical, no_such_variable 
+  $I0 = typeof lexical
+  # Remove perlundef when we switch back to Tcl*
+  if .PerlUndef == $I0 goto no_such_variable
+
+  # XXX ideally, we shouldn't be so Tcl specific here.
+  if $I0 != TclArray goto get_scalar_ok
+
+get_scalar_bad:
+  return_type =TCL_ERROR
+  $S0 = "can't read \""
+  $S0 .= name
+  $S0 .= "\": variable is an array\n"
+  retval = new String
+  retval = $S0
+  goto done
+
+get_scalar_ok:
+  #print "HERE?\n"
+  #print "lexical is:"
+  #print lexical
+  #print "\n"
+  retval = lexical
+  goto done
+
+no_such_variable:
+  return_type =TCL_ERROR
+  $S0 = "can't read \""
+  $S0 .= name
+  $S0 .= "\": no such variable"
+  retval = new String
+  retval = $S0
+  # goto done            
+
+done:
+  #print "(get var) return_type is "
+  #print return_type
+  #print ",retval is "
+  #print retval
+  #print "\n"
+  .pcc_begin_return
+    .return return_type
+    .return retval
+  .pcc_end_return
+.end

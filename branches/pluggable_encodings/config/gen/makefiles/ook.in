@@ -1,0 +1,14 @@
+RM_F = ${rm_f}
+PERL = ${perl}
+PARROT = ../../parrot
+
+all: build
+
+test: build
+	$(PARROT) -r ook.pasm test.ook
+
+build: ook.pasm
+	$(PARROT) -o ook.pbc ook.pasm
+
+clean:
+	$(RM_F) core *.pbc *~ foo.p*

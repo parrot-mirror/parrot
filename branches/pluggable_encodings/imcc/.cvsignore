@@ -1,0 +1,9 @@
+imcc
+imclexer.c
+imcparser.c
+imcparser.h
+imcparser.output
+Makefile
+*.tmp
+*.flag
+CFLAGS

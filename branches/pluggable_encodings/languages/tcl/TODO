@@ -1,0 +1,483 @@
+=head1 In no particular order....
+
+=over 4
+
+=item REMOVE Perl*
+
+Mostly done. All that seems to be left is PerlUndef. Much was already
+converted to the internal types. PerlUndef removal will probably result
+(finally) in the use of null checks where it's being used for that, and
+TclObject where it's being used for shimmering.
+
+=item WRITE [list] !!!
+
+SYNOPSIS
+       list ?arg arg ...?
+_________________________________________________________________
+
+DESCRIPTION
+       This  command  returns  a  list  comprised of all the args, or an empty
+       string if no args are specified.  Braces and backslashes get  added  as
+       necessary,  so that the lindex command may be used on the result to re-
+       extract the original arguments, and also so that eval may  be  used  to
+       execute the resulting list, with arg1 comprising the command's name and
+       the other args comprising its arguments.  List produces  slightly  dif-
+       ferent  results  than  concat:   concat  removes  one level of grouping
+       before forming the list, while list works directly  from  the  original
+       arguments.  For example, the command
+              list a b {c d e} {f {g h}}
+       will return
+              a b {c d e} {f {g h}}
+       while concat with the same arguments will return
+              a b c d e f {g h}
+
+
+=item GC bug
+
+yet another GC bug has crept in. do a checkin/update to give leo something
+to track down.
+
+=item new .local syntax
+
+Clean up our .local declarations with the new syntax.
+
+=item function calls...
+
+I do a lot of function calls that should probably be inlined as macros
+(or removed as functions entirely) for speed. I had gotten rid of macros
+ages past, but there's a LOT that goes on when
+using the calling conventions...
+
+match_close is almost entirely macro-ized, modulo a bug in parse - 
+switch to macro... the app behaves differently, even if that code
+path is never executed. I suspect register stomping.
+
+possible macro get_var, also. and whatever's left in expression.imc
+(__expr_get_*)
+
+=item Why do we still have tcl.imc_template?
+
+if we keep it, should be generating lib/tcllib.imc anyway, not tcl.imc. 
+
+=item Freeze/Thaw of TclWord would ...
+
+allow us to build a braindead compile
+option - given a chunk of tcl, generate a chunk of PIR that we can 
+emit to be saved, compiled, and then run again.
+
+=item tail call optimizations
+
+tail call optimizations - there are several cases where I could use this
+and save myself a call. Possible to do right now with PASM - wait for
+PIR support before welding in.
+
+=item string manipulation
+
+Look around and see if we can avoid doing as many substr's, particularly
+in __parse. (every substring we don't actually need takes up more
+resources. better to just index things until we're sure we need
+the substring.
+
+=item provide a way to access existing library PIR from Tcl.
+
+=item add benchmarks?
+
+=item Dynamic Tcl PMCs, build, switch.
+
+We are currently using Perl* pmcs in a few more places. In some cases,
+we need Resizable PMCs, and the core versions are not fully implemented.
+
+When  converting to Tcl*, be sure to take advantage of morphing. Right now,
+we're kind of avoiding morphing. (like, having separate new PerlInt and 
+PerlString conditionally depending on the code path.) (fixed in string)
+
+Ok. First, we need to build the dyn pmcs using the new build "group" tag.
+
+Then, we need to go through and eliminate all references to Perl:
+(This is done for PerlInt, PerlString. Get rid of PerlHash, PerlArray)
+
+We need to also make sure that we /take/ any PMC and try to do the right
+thing. Don't /require/ that someone pass in a TclString when a PerlString
+will work fine, thanks. This is now a bigger issue when using the [list] ops.
+if someone passes in a fixed list and we need to resize it... what do we do?
+
+=item implement [list]
+
+This should be blindingly simple, given an actual TclList PMC. (which we don't
+quite have yet.
+
+=item given freeze/thaw for objects...
+
+Once freeze/thaw is working for tclwords (currently waiting on parrot
+support), rewrite proc to preparse
+once and cache the result in the generated sub rather than reparsing
+each time.
+
+(Though this seems evil, too. There must be a better way.)
+
+=item upvar, uplevel
+
+set a global lexical level - normally inc'd whenever a UDF proc is called,
+dec'd whenever a UDF is exited. 
+
+Then, anything that set/get's a lexical should do so from the global level
+that we're using.
+
+	uplevel ?level? arg ?arg ...?
+	upvar ?level? otherVar myVar ?otherVar myVar ...?
+
+How do we do this and play nice with other languages? I don't think we can.
+
+Language interoperability can presumably be dealt with after we've a language.
+
+=item TclWord
+
+implement C<is_const> to allow for some optimizations in the compiler.
+when adding words, default to true, but if at any point we add a variable
+or a command, invalidate that. (mostly done!)
+
+Move TclWord namespace into _Tcl::Word, less clutter?
+
+=item (LOW) PIR varnames
+
+Bitten by overuse of generic IMC vars like $I0 - should reduce their usage as
+much as possible to simplify upkeep.
+
+=item [[list]] proc
+
+doesn't handle varargs.
+
+support default values (e.g.: proc joe {{drink coffee}} { slurp $drink } )
+
+=item compiler vs. interpreter
+
+it should be possible to further extend our interpreter
+this to make an actual compiler,
+where the _compiler emits PIR. So, the resulting call from, say, [source]
+would be:
+
+	# Note this a change from _parse's current signature 
+	(parsed_data_structure,tcl_status,error) = _parse(tcl_code)
+	(pir_code,tcl_status,error) = _compile(parsed_data_structure)
+	
+And now that we have the pir_code, we can either emit the necessary
+PIR (ala parrot's -o option) or we can compile and run it.
+
+Caveat: how to support -o with user defined procs - right now, proc is defining
+the sub on the fly, where, with a compiler, we may want to defer compilation,
+and simply be able to extract the generated PIR.
+
+=item (LOW) speed
+
+Comparing examples/fact.tcl with parrot vs. tclsh (OSX)
+
+ ??/??/??: 8-12 x slower, single call
+ 05/14/04: 500 calls in a loop slows us down to 60x!
+
+=item Tests
+
+Any future tests, write more like t/tcl_var_subst.t. Eventually cleanup
+tests so they're consistent.
+
+=item Add tests for...
+
+tclword, [concat], [join]
+
+=item 
+
+update docs/* - with the parser/interpreter split, things are different.
+(And, hopefully, easier.)
+
+=item TCL Pmcs
+
+Then, we can simplify anything that is dealing with numbers to just pass
+around the Numbers.
+
+Then, we need to verify that things like [expr 2a + 2b] fail to produce 4.
+(That is, Tcl is pickier about numifying than Perl)
+
+=item Dynamic PMCs
+
+get new TCL pmcs to work dynamically, not just statically. This is actually
+a big PITA, because of the inter-related PMCs.
+
+(write tests for them)
+
+=item test suite patches
+
+need to patch testall so that it's not so cranky about people
+who don't play nice with the new tests...
+
+=item Tcl PMCs
+
+NB: All this code was backed out (of tcl.imc, the dynclasses are still 
+checked in) because of the issues with DYN Tcl PMCS!
+
+TclLists now correctly promote natives to their respective types.
+Now, fix TclArrays to do the same. (look for references to undef(),
+replace with pmc_new(interp,enum_class_TclString) - we'll use the
+TclString in the same way they use undef, to auto-morph to the right
+value. Lazy, but effective.
+
+Find the bits of code where we were specifically creating a TclString
+before inserting it into a TclList, and remove them - should be
+able to just add the string and have it JFW at this point.
+
+=item TCL_Object
+
+To simplfy the conversion code, We're going to pass around tcl_object
+pmc's instead of strings, both as return values from procedures and
+builtins, and pass them in to the strings as well. This will let us
+get rid of all the conversion code that's everywhere, and just DTRT.
+
+For now, get working with our current repetoire, strings, arrays, 
+and ints. Once we have arrays working in this method, adding in lists
+I<should> be a piece of cake. beg borrow and steal from the PerlScalar
+implementation, as that does much the same thing we need to.
+
+Ok. Strings, Ints and Floats should inter_convert without a problem.
+There are Arrays and Lists also, which are NOT part of the TclObject
+Hierarchy. Lists still don't autoconvert to strings, though they should
+not sure how to autoconvert a string to a list... perhaps it should
+happen automatically on keyed access (which right now does a substr)
+
+Ok. All references to any Perl types (other than PerlUndef, which bears
+investigation before we rip it out. - Probably used mainly on hash 
+lookups - should ditch it and go with "return NULL;" in the pmcdef, and
+then use isnull rather than our current PerlUndef check in IMC)
+
+Now, go through all the commands, ops, and functions to cleanup how
+we handle these objects - remember that TclList and TclArray are NOT
+currently descended from tclobject, and this may bollux some things up.
+
+=item SArray vs. PerlArray/TclList
+
+investigate using SArray vs. TclList for speed. (many times we don't
+know how many slots we're going to need ahead of time, though.) - looks like
+we might be able to use them for the expression stuff that we are passing
+around.... which, now that we have real Tcl PMCs, can probably go away
+
+(most uses of PerlArray are gone, now that we are using foldup)
+
+=item unfinished commands
+
+[array set] - written - write tests.
+
+[array statistics] - useless?
+
+[array anymore], [array donesearch] [array nextelement], [array startsearch]
+ { use iterators }
+
+[global]
+
+[string repeat], [string replace], [string tolower],
+[string totitle], [string toupper], [string trim], [string trimleft],
+[string trimright], [string compare], [string equal], [string last]
+
+[string bytelength], [string compare], [sring is], [string map],
+[string match], [string wordstart], [string wordend]
+
+=item channels
+
+keep track of channels, include stdin, stdout, stderr - keep in a
+global hash of name to ParrotIO pmcs. Tie in with "puts" and other
+chanel based commands. (some progress made here.)
+
+=item given [list]
+
+[foreach]
+
+=item given REs
+
+"string match" (it's glob-style, but easy to do given REs)
+
+=item given [string match]
+
+The following items require [string match] to be implemented: [array get],
+[array names], [array unset]
+
+=item given Unicode
+
+Need unicode support for \u escapes, and for "string wordend",
+"string wordstart", "string is", "string bytelength", 
+
+This now works in parrot, modulo support for actually, oh, printing things
+out.
+
+=item given arrays
+
+[string map]
+
+=item expr
+
+Clean up expr. MUUUUCH room for improvement there.
+
+expr - parse/interpret split - This is working for expr - change any other 
+thing that calls __expression to use the _p, _i variants, delete the original 
+proc. Once we've done that, determine a better structure to use as the inter
+mediate representation between the two.
+
+clean up expr so that it's not passing around
+type indicators. - just use PMCs everywhere. (Though we may still need
+to have CONST vs. VARIABLE types.
+
+The type indicator is also used to disambiguate operators and function calls
+from operands. We can easily remove it for operands, but how to cleanly
+remove this for operators? 
+
+TBD: big rethunk.
+
+TBD: octal, hex. (there's no way to convert programmatically from an
+octal or hex string in parrot to a int?)
+
+TBD: strings, floats as operaands - (many of the math funcs return floats
+but you can't specify them, and not everything takes them 
+(try, for example, [expr sin(1) + sin(1)] vs [expr sin(1) * sin(1)].)
+
+TBD: blocks, commands, and strings as operands
+
+TBD: logical binary ops & ternary op (need deferred evaluation) ; unary ops;
+ops that work on strings only.
+
+TBD: functions that take > 1 arg.
+
+TBD: Argument type requirements - Currently works ONLY on bitand - esp need
+to get any that require int-only args, as we can now /generate/ floats,
+even if we cannot specify them. {This probably requires switching to Tcl*
+PMCs and putting the logic in there hidden under MMD}
+
+(aside - expression needs better error handling support, and perhaps
+a rethunk on how we're passing data around - FYI, if we're going to be using
+PerlInt, PerlNum, etc, we need to make sure they stringify as tcl
+expects them to - a PerlNum of 5 -> "5" instead of "5.0", e.g.)
+
+cmd_expr.t should check prededence, parens, etc, as well as all the
+defined ops and functions.
+
+=item misc
+
+tclsh normally does some extra processing that we aren't doing, namely
+.tclshrc/tclshrc.tcl, setting of variables argc, argv, argv0, and
+tcl_interactive... see also "man n tclvars"
+
+=item misc
+
+interactive tclsh mode currently only waits for EOF and then runs all
+commands entered. should have sane defaults for tcl_prompt1, tcl_prompt2
+and respect them, and process intermediate input.
+
+=item misc
+
+octal, hex, and unicode escapes are not supported. (Not sure parrot is
+ready for this yet)
+
+=item tests 
+
+run a tcl test suite (7.6p2 ?) and pass one test.
+(then, pass most of them.) (then, retarget against tcl-latest)
+
+=item misc
+
+complete [error] (need global var support)
+
+If the return type of the outermost script is not OK, return the
+I<appropriate> code to the system.
+
+=item misc
+
+list variables - stringToList already exists (had to write it for "proc"s
+argument handling.) - need to write listToString, need to be able to save
+Lists as variables.  - This should now be possible, with the addition of the
+Tcl* PMCs.
+
+Expressions are a bit harder because we need an additional
+bit of information. (is this an op, an operand, or "a chunk that is yet to
+be evaluated)
+
+=item missing procs
+
+Here's a list of commands from the 7.3 Ousterhout book that have yet to be
+implemented. Just because something is implemented doesn't mean it's a full
+implementation, either. That's what the test suite is for. =-) I've tried
+to group them so that any procs that depend on another proc to really work
+are so listed, and that related procs are grouped together. Some are SMOPs
+at this point, others require me to add features, or refactor. Many already
+implemented procs will require updating after procs/features are added.
+
+  upvar, uplevel  should be pretty easy with the lexical pad
+    support in parrot. Well, upvar, anyway. implementing uplevel
+    may require a rethunk. 
+
+  foreach  {list}
+
+  switch  {regexp regsub "string match"}
+
+  list {llength, linsert, lreplace, lrange, lappend,
+          lsearch, lsort, split}
+
+  cd, file, pwd, pid, glob
+
+  seek, tell, open, close, eof, flush, read, gets
+
+  open close
+
+  scan {list}
+
+  info, exec {use exec/spawn opcodes.}
+
+  auto_mkindex*, trace*
+
+  unknown, history [ only in interactive mode ]
+
+  regexp, regsub
+ 
+  * isn't a recent distro of tcl
+  
+  And, here are more from a more recent tcl in no order.
+
+  after bgerror binary case clock dde
+  encoding fblocked fconfigure fcopy fileevent filename
+  http interp {setup our current single interp as an object?}
+  library lindex load lset memory
+  msgcat namespace package packagens
+  pkgMkIndex re_syntax registry resource
+  safe socket subst tcltest
+  update variable vwait
+ 
+  also see "man n tclvars"
+
+=item tests
+
+Long term goal: Run the tcl test suite. Will an  older one, be easier to pass?
+Yes, much easier. We still have a ways to go, however. To run all the tests,
+run tclsh, sourcing "<tcl distro>tests/all".
+
+The sooner we can do this, the better, as I only want to have tests for
+internals, not for any Tcl.
+
+=item 7.6 test suite
+
+missing quite a bit to be able to think about running this, notably:
+
+from all:
+
+[foreach], [lsort], [glob], [string match], [puts stdout], catch
+
+from incr, one of the (easier?) tests to pass:
+
+[string compare], list, source, info, trace {is this still in tcl 8?}, 
+concat
+
+which calls "def", which uses:
+
+$tcl_platform, [info exists] , [info commands], unset, array vars,
+open, global, uplevel (GAH), regsub (GAH), fconfigure (GAH), file (GAH)
+exec (GAH)
+
+=item test macros?
+
+	is_space
+
+=back 4
+
+=cut
