@@ -32,6 +32,10 @@ static void set_graphemes(Interp *interpreter, STRING *source_string, UINTVAL of
 
 }
 
+static STRING *get_graphemes_inplace(Interp *interpreter, STRING *source_string, STRING *dest_string, UINTVAL offset, UINTVAL count) {
+    return ENCODING_GET_BYTES_INPLACE(interpreter, source_string, offset, count, dest_string);
+}
+
 static void to_charset(Interp *interpreter, STRING *source_string, CHARSET *new_charset) {
     internal_exception(UNIMPLEMENTED, "to_charset for ascii not implemented");
 }
@@ -130,7 +134,7 @@ static INTVAL compare(Interp *interpreter, STRING *lhs, STRING *rhs) {
   return 0;
 }
 
-static INTVAL index(Interp *interpreter, STRING *source_string, STRING *search_string, UINTVAL offset) {
+static INTVAL index(Interp *interpreter, const STRING *source_string, const STRING *search_string, UINTVAL offset) {
   return -1;
 }
 
@@ -208,11 +212,32 @@ static INTVAL find_word_boundary(Interp *interpreter, STRING *source_string, UIN
   return -1;
 }
 
+static STRING *string_from_codepoint(Interp *interpreter, UINTVAL codepoint) {
+    STRING *return_string = NULL;
+    char real_codepoint = codepoint;
+    return_string = string_make(interpreter, &real_codepoint, 1, "ascii", 0);
+    return return_string;
+}
+
+static size_t compute_hash(Interp *interpreter, STRING *source_string) {
+    size_t hashval;
+
+    char *buffptr = (char *)source_string->strstart;
+    UINTVAL len = source_string->strlen; 
+
+    while (len--) { 
+        hashval += hashval << 5;
+        hashval += *buffptr++;
+    }
+    return hashval;
+}
+
 CHARSET *Parrot_charset_ascii_init(Interp *interpreter) {
   CHARSET *return_set = Parrot_new_charset(interpreter);
   CHARSET base_set = {
       "ascii",
       get_graphemes,
+      get_graphemes_inplace,
       set_graphemes,
       to_charset,
       copy_to_charset,
@@ -244,7 +269,10 @@ CHARSET *Parrot_charset_ascii_init(Interp *interpreter) {
       is_newline,
       find_newline,
       find_not_newline,
-      find_word_boundary
+      find_word_boundary,
+      string_from_codepoint,
+      compute_hash,
+      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
   };
 
   /* Snag the global. This is... bad. Should be properly fixed at some

@@ -24,6 +24,8 @@ The "buf" layer of Parrot IO. Buffering and all the fun stuff.
 
 /* Defined at bottom */
 extern ParrotIOLayerAPI pio_buf_layer_api;
+extern CHARSET *Parrot_iso_8859_1_charset_ptr;
+extern ENCODING *Parrot_fixed_8_encoding_ptr;
 
 ParrotIOLayer pio_buf_layer = {
     NULL,
@@ -577,7 +579,8 @@ PIO_buf_readline(theINTERP, ParrotIOLayer *layer, ParrotIO *io,
             len = b->endb - buf_start;
             if (s->bufused < l) {
                 if (may_realloc) {
-                    s->representation = enum_stringrep_one;
+                    s->charset = Parrot_iso_8859_1_charset_ptr;
+                    s->encoding = Parrot_fixed_8_encoding_ptr;
                     if (s->strstart) {
                         Parrot_reallocate_string(interpreter, s, l);
                     } else {
@@ -597,7 +600,8 @@ PIO_buf_readline(theINTERP, ParrotIOLayer *layer, ParrotIO *io,
     }
     if (s->bufused < l) {
         if (may_realloc) {
-            s->representation = enum_stringrep_one;
+            s->charset = Parrot_iso_8859_1_charset_ptr;
+            s->encoding = Parrot_fixed_8_encoding_ptr;
             if (s->strstart) {
                 Parrot_reallocate_string(interpreter, s, l);
             } else {

@@ -642,6 +642,32 @@ tm_to_array(Parrot_Interp interpreter, struct tm *tm)
   return Array;
 }
 
+INTVAL
+Parrot_byte_index(Interp *interpreter, STRING *base, STRING *search, UINTVAL start_offset) {
+    INTVAL pos = -1;
+    char *base_start, *search_start, *current_pos;
+    INTVAL current_offset;
+    INTVAL max_possible_offset;
+    INTVAL found = 0;
+    INTVAL searchlen = search->strlen;
+    search_start = search->strstart;
+    max_possible_offset = (base->strlen - search->strlen);
+
+ checkloop:
+    for (current_offset = start_offset; current_offset <= max_possible_offset; current_offset++) {
+        base_start = (char *)base->strstart + current_offset;
+        if (!memcmp(base_start, search_start, searchlen)) {
+            found = 1;
+            break;
+        }
+    }
+        
+    if (found) {
+        pos = current_offset;
+    }
+    return pos;
+}
+
 /*
 
 =back
