@@ -1,0 +1,42 @@
+# Copyright (C) 2001-2003 The Perl Foundation.  All rights reserved.
+# $Id$
+
+=head1 NAME
+
+examples/subs/sub3.imc - Subroutine Example
+
+=head1 SYNOPSIS
+
+    % ./parrot examples/subs/sub3.imc
+
+=head1 DESCRIPTION
+
+Call a sub with no return values.
+
+=cut
+
+.sub _main
+  _foo(7, 8, "nine")
+  end
+.end
+
+.sub _foo
+  .param int i
+  .param int j
+  .param string s
+  print i
+  print " "
+  print j
+  print " "
+  print s
+  print "\n"
+  .pcc_begin_return   # This syntax is going away soon
+  .pcc_end_return
+.end
+
+=head2 SEE ALSO
+
+F<examples/subs/sub1.imc>,
+F<examples/subs/sub2.imc>.
+
+=cut
