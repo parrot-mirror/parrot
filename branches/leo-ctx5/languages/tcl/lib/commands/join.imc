@@ -1,0 +1,52 @@
+###
+# [join]
+
+.namespace [ "Tcl" ]
+
+.sub "join"
+  .param pmc a_list
+  .param pmc joiner_pmc
+
+  if argcP == 0 goto bad_args
+  if argcP > 2 goto bad_args
+
+  if argcP ==2 goto continue
+  joiner_pmc = new String
+  joiner_pmc = " "
+continue:
+
+  .local pmc retval
+  .local int return_type
+
+  .local pmc a_list
+
+  # We expect a list here. We should take one if we get it,
+  # otherwise, convert it to a string value, and then convert that to a list.
+  # XXX evilly just using Tcl* variants here.
+  $I0 = typeof a_list
+  if $I0 == .TclList goto got_list  
+ 
+  .local pmc string2list
+  string2list = find_global "_Tcl", "__stringToList"
+  $S0 = a_list
+  (return_type, retval) = string2list($S0)
+  $S0 = retval
+  if return_type == TCL_ERROR goto done
+  a_list = retval
+
+got_list:
+  .local string joiner_str
+  joiner_str = joiner_pmc
+  .local string rv
+  rv = join joiner_str, a_list
+  retval = new String
+  retval = rv
+done:
+  .return(return_type,retval)
+
+bad_args:
+  $P1 = new String
+  $P1 = "wrong # args: should be \"join list ?joinString?\""
+  .return(TCL_ERROR, $P1)
+
+.end
