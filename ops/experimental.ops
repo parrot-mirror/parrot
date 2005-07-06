@@ -400,8 +400,11 @@ op set_returns(inconst PMC) {
 Get the count of I,S,P, or N parameters of this function call, or the
 count of call results of the recent function return.
 
+Please note that these opcodes only return the state of the previous
+function call or return, therefore you might emit these opcodes
+immediately thereafter, if needed.
 
-XXX currently only parameter counts are available.
+=cut
 
 op argcI(out INT) {
   $1 = Parrot_get_argc(interpreter, 0);
