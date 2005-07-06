@@ -352,7 +352,7 @@ op get_results(inconst PMC) {
     PMC *signature = $1;
     INTVAL argc;
 
-    interpreter->ctx.current_results = this;
+    CONTEXT(interpreter->ctx)->current_results = this;
     argc = VTABLE_elements(interpreter, signature);
     goto ADDRESS(this + 2 + argc);
 }
@@ -361,12 +361,12 @@ op get_params(inconst PMC) {
     opcode_t *this = CUR_OPCODE;
     PMC *signature = $1;
     INTVAL argc;
-    struct Parrot_sub * sub = PMC_sub(interpreter->ctx.current_sub);
+    struct Parrot_sub * sub = PMC_sub(CONTEXT(interpreter->ctx)->current_sub);
 
-    interpreter->ctx.current_params = this;
+    CONTEXT(interpreter->ctx)->current_params = this;
     if (sub->address != this) {
 	struct parrot_regs_t *caller_regs;
-	PMC *cont_pmc = interpreter->ctx.current_cont;
+	PMC *cont_pmc = CONTEXT(interpreter->ctx)->current_cont;
 	opcode_t *pc;
 
 	caller_regs = PMC_cont(cont_pmc)->ctx.bp;
@@ -387,6 +387,40 @@ op set_returns(inconst PMC) {
     interpreter->current_returns = this;
     argc = VTABLE_elements(interpreter, signature);
     goto ADDRESS(this + 2 + argc);
+}
+
+=item B<argcI(out INT)>
+
+=item B<argcS(out INT)>
+
+=item B<argcP(out INT)>
+
+=item B<argcN(out INT)>
+
+Get the count of I,S,P, or N parameters of this function call, or the
+count of call results of the recent function return.
+
+
+XXX currently only parameter counts are available.
+
+op argcI(out INT) {
+  $1 = Parrot_get_argc(interpreter, 0);
+  goto NEXT();
+}
+
+op argcS(out INT) {
+  $1 = Parrot_get_argc(interpreter, 1);
+  goto NEXT();
+}
+
+op argcP(out INT) {
+  $1 = Parrot_get_argc(interpreter, 2);
+  goto NEXT();
+}
+
+op argcN(out INT) {
+  $1 = Parrot_get_argc(interpreter, 3);
+  goto NEXT();
 }
 
 ########################################

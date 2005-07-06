@@ -1160,12 +1160,15 @@ compilers-clean :
 EXTRA_TEST_ARGS = --gc-debug --running-make-test
 SRC_TEST_FILES  = t/src/*.t
 PERL_TEST_FILES = t/perl/*.t
-TEST_FILES      = t/library/*.t \
+
+# note python tests disabled
+TEST_FILES      =  \
     t/op/*.t \
     t/pmc/*.t \
     t/native_pbc/*.t \
     $(IMCC_DIR)/t/*/*.t \
-    t/dynclass/*.t \
+    t/library/*.t \
+    t/dynclass/foo.t t/dynclass/g*.t \
     t/p6rules/*.t
 
 # Common prep for all test targets.

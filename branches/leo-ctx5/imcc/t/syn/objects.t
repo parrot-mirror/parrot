@@ -276,7 +276,7 @@ ok
 done
 OUT
 
-pir_output_is(<<'CODE', <<'OUT', "explicit meth call syntax, retcont");
+pir_output_is(<<'CODE', <<'OUT', "explicit meth call syntax");
 
 .sub test @MAIN
     .local pmc class
@@ -284,12 +284,9 @@ pir_output_is(<<'CODE', <<'OUT', "explicit meth call syntax, retcont");
     newclass class, "Foo"
     find_type $I0, "Foo"
     new obj, $I0
-    .local pmc retc
-    newsub retc, .RetContinuation, label
     .pcc_begin
     .invocant obj
-    .meth_call "_meth", retc
-label:
+    .meth_call "_meth"
     .pcc_end
     print "done\n"
     end

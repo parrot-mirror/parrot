@@ -200,7 +200,7 @@ Parrot_get_name(Interp* interpreter, STRING *name)
     pad = scratchpad_get_current(interpreter);
     g = scratchpad_find(interpreter, pad, name);
     if (!g) {
-        current_sub = interpreter->ctx.current_sub;
+        current_sub = CONTEXT(interpreter->ctx)->current_sub;
         if (current_sub &&
                 (name_space = PMC_sub(current_sub)->name_space))
 

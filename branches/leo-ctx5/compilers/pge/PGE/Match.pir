@@ -10,7 +10,7 @@ This file implements match objects returned by the Parrot Grammar Engine.
 
 .namespace [ "PGE::Match" ]
 
-.sub "__onload" 
+.sub "__onload"
     .local pmc base
     newclass base, "PGE::Match"
     addattribute base, "$:target"                  # target
@@ -48,12 +48,12 @@ C<pos>.
     setattribute me, "PGE::Match\x0$:pos", $P0
     .return (me)
 .end
-    
+
 =head2 Methods
 
 =item C<next()>
 
-Tell a Match object to continue the previous match from where 
+Tell a Match object to continue the previous match from where
 it left off.
 
 =cut
@@ -163,10 +163,10 @@ Returns the portion of the target string matched by this object.
 
 =item C<__get_pmc_keyed(PMC key)>
 
-Returns the subpattern or subrule capture associated with C<key>.  
+Returns the subpattern or subrule capture associated with C<key>.
 If the first character of C<key> is a digit then return the
-subpattern, otherwise return the subrule.  Note that this will 
-return either a single Match object or an array of match objects 
+subpattern, otherwise return the subrule.  Note that this will
+return either a single Match object or an array of match objects
 depending on the rule.
 
 =cut
@@ -219,18 +219,19 @@ Returns the array component of the match object.
 Produces a data dump of the match object and all of its subcaptures.
 
 =cut
-   
+
 .sub "dump" method
     .param string prefix
-    .param string b1
-    .param string b2
+    .param string b1    :optional
+    .param string b2    :optional
     .local pmc capt
-    .local int spi, spc
+    .local int spi, spc, argS
     .local pmc iter
     .local string prefix1, prefix2
-    unless argcS < 3 goto start
+    argS = argcS
+    unless argS < 3 goto start
     b2 = "]"
-    unless argcS < 2 goto start
+    unless argS < 2 goto start
     b1 = "["
   start:
     print prefix

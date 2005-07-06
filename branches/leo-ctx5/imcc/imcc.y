@@ -621,7 +621,8 @@ sub_params:
 
 sub_param:
      PARAM                             { is_def=1; }
-     type IDENTIFIER          { $$ = mk_ident(interp, $4, $3); is_def=0; }
+     type IDENTIFIER  paramtype_list   { $$ = mk_ident(interp, $4, $3);
+                                         is_def=0; $$->type |= $5; }
    ;
 
 sub_proto:

@@ -16,134 +16,8 @@ Tests Parrot calling conventions.
 
 =cut
 
-use Parrot::Test tests => 26;
+use Parrot::Test tests => 28;
 use Test::More;
-
-# Test calling convention operations
-output_is(<<'CODE', <<OUTPUT, "foldup");
-    new P19, .String
-    new P18, .String
-    new P17, .String
-    new P16, .String
-    new P21, .String
-    new P20, .String
-    new P22, .String
-    new P24, .String
-    new P28, .String
-    new P29, .String
-    new P30, .String
-    new P27, .String
-    new P26, .String
-    new P25, .String
-    new P23, .String
-    set P20,"Foobar!"
-    set P23,"Baxman!"
-    newsub P0, .Sub, _foo
-    set P5,P19
-    set P6,P18
-    set P7,P17
-    set P8,P16
-    set P9,P21
-    set P10,P20
-    set P11,P22
-    set P12,P24
-    set P13,P28
-    set P14,P29
-    set P15,P30
-    new P3, .SArray
-    set P3, 4
-    push P3,P27
-    push P3,P26
-    push P3,P25
-    push P3,P23
-    set I0,1
-    set I1,0
-    set I2,0
-    set I3,11
-    set I4,0
-    invokecc
-    end
-_foo:
-    foldup P17
-    set P16,P17[5]
-    print P16
-    print "\n"
-    set P16,P17[14]
-    print P16
-    print "\n"
-    set I0,1
-    set I1,0
-    set I2,0
-    set I3,0
-    set I4,0
-    returncc
-
-CODE
-Foobar!
-Baxman!
-OUTPUT
-
-output_is(<<'CODE', <<OUTPUT, "foldup_p_i w. skip");
-    new P19, .String
-    new P18, .String
-    new P17, .String
-    new P16, .String
-    new P21, .String
-    new P20, .String
-    new P22, .String
-    new P24, .String
-    new P28, .String
-    new P29, .String
-    new P30, .String
-    new P27, .String
-    new P26, .String
-    new P25, .String
-    new P23, .String
-    set P20,"Foobar!"
-    set P23,"Baxman!"
-    newsub P0, .Sub, _foo
-    set P5,P19
-    set P6,P18
-    set P7,P17
-    set P8,P16
-    set P9,P21
-    set P10,P20
-    set P11,P22
-    set P12,P24
-    set P13,P28
-    set P14,P29
-    set P15,P30
-    new P3, .SArray
-    set P3,15
-    push P3,P27
-    push P3,P26
-    push P3,P25
-    push P3,P23
-    set I0,1
-    set I1,4
-    set I2,0
-    set I3,11
-    invokecc
-    end
-_foo:
-    foldup P17, 2
-    set P16,P17[3]
-    print P16
-    print "\n"
-    set P16,P17[12]
-    print P16
-    print "\n"
-    set I0,1
-    set I1,0
-    set I2,0
-    set I3,0
-    set I4,0
-    returncc
-
-CODE
-Foobar!
-Baxman!
-OUTPUT
 
 output_is(<<'CODE', <<'OUTPUT', "set_args - parsing");
     noop
@@ -572,6 +446,8 @@ ok 6
 back
 OUTPUT
 
+SKIP: {
+  skip("arg count check disabled", 2);
 pir_output_like(<<'CODE', <<'OUTPUT', "argc mismatch, too few");
 .sub main @MAIN
     $P0 = new String
@@ -603,6 +479,7 @@ pir_output_like(<<'CODE', <<'OUTPUT', "argc mismatch, too many");
 CODE
 /too many arguments passed/
 OUTPUT
+}
 
 pir_output_is(<<'CODE', <<'OUTPUT', "argc mismatch, optional");
 .sub main @MAIN
@@ -816,4 +693,108 @@ ok:
 .end
 CODE
 ok
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "optional, argcX");
+.sub main @MAIN
+    $P0 = new String
+    $P0 = "hello\n"
+    find_name $P1, "foo"
+    set_args "(0,0)", $P0, 10
+    invokecc $P1
+.end
+.sub foo
+    get_params "(0,0,0x20,0x20,0x20,0x20)", $P0, $I0, $P1, $S1, $I1, $N1
+    print $P0
+    if_null $P1, ok
+    print "not "
+ok:
+    print "ok\n"
+    $I2 = argcI
+    print $I2
+    $I2 = argcS
+    print $I2
+    $I2 = argcP
+    print $I2
+    $I2 = argcN
+    print $I2
+    print "\n"
+.end
+CODE
+hello
+ok
+1010
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "pir uses no ops");
+.sub main @MAIN
+    $I0 = 77
+    foo(42, $I0)
+    print "back\n"
+.end
+
+.emit
+.pcc_sub foo:
+    get_params "(0, 0)", I16, I17
+    print I16
+    print "\n"
+    print I17
+    print "\n"
+    returncc
+.eom
+CODE
+42
+77
+back
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "pir call evaled code");
+.sub main @MAIN
+    .local string s
+    s  = ".sub foo\n"
+    s .= ".param int i\n"
+    s .= ".param int j\n"
+    s .= "print_item i\n"
+    s .= "print_item j\n"
+    s .= "print_newline\n"
+    s .= ".return(99)\n"
+    s .= ".end\n"
+    .local pmc comp
+    comp = compreg "PIR"
+    $P0 = comp(s)
+    $I0 = 77
+    $I0 = foo(42, $I0)
+    print $I0
+    print "\n"
+.end
+
+CODE
+42 77
+99
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "tailcall 4 - pir calls");
+.sub main @MAIN
+    .const .Sub f = "foo"
+    print "main\n"
+    $S0 = f()
+    print $S0
+.end
+.sub foo
+    .const .Sub b = "bar"
+    print "foo\n"
+    .return b("from_foo\n")
+.end
+.sub bar
+    .param string s
+    print "bar\n"
+    print s
+    .return ("bar_ret\n")
+.end
+CODE
+main
+foo
+bar
+from_foo
+bar_ret
 OUTPUT

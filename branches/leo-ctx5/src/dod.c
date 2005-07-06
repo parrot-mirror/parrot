@@ -302,12 +302,12 @@ Parrot_dod_trace_root(Interp *interpreter, int trace_stack)
     /*
      * mark current context stuff
      */
-    if (interpreter->ctx.current_sub)
-        pobject_lives(interpreter, (PObj*)interpreter->ctx.current_sub);
-    if (interpreter->ctx.current_cont)
-        pobject_lives(interpreter, (PObj*)interpreter->ctx.current_cont);
-    if (interpreter->ctx.current_object)
-        pobject_lives(interpreter, (PObj*)interpreter->ctx.current_object);
+    if (CONTEXT(interpreter->ctx)->current_sub)
+        pobject_lives(interpreter, (PObj*)CONTEXT(interpreter->ctx)->current_sub);
+    if (CONTEXT(interpreter->ctx)->current_cont)
+        pobject_lives(interpreter, (PObj*)CONTEXT(interpreter->ctx)->current_cont);
+    if (CONTEXT(interpreter->ctx)->current_object)
+        pobject_lives(interpreter, (PObj*)CONTEXT(interpreter->ctx)->current_object);
 
     /*
      * mark vtable->data
@@ -1264,6 +1264,7 @@ void
 Parrot_do_dod_run(Interp *interpreter, UINTVAL flags)
 {
     interpreter->arena_base->do_dod_run(interpreter, flags);
+    parrot_gc_context(interpreter);
 }
 
 /*

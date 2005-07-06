@@ -434,7 +434,7 @@ _sub:
     print "in coro\n"
     newsub P20, .Exception_Handler, _handler
     set_eh P20
-    invoke P1
+    returncc
 
 _handler:
     print "caught it\n"
@@ -465,7 +465,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "set recursion limit, method call ");
     .local pmc n
     new_pad 0
     $P0 = getinterp
-    $P0."recursion_limit"(100)
+    $P0."recursion_limit"(50)
     newclass $P0, "b"
     $I0 = find_type "b"
     $P0 = new $I0
@@ -495,7 +495,7 @@ catch:
 .end
 CODE
 ok 1
-99
+49
 OUTPUT
 
 output_is(<<'CODE', <<'OUTPUT', "push_eh - throw");

@@ -357,10 +357,8 @@ pir_output_is(<<'CODE', <<'OUT', "coroutine iterator");
   .pcc_end
     print $I2
     print "\n"
-    savetop
     invoke
     goto ret_addr
-    restoretop
  after_loop:
   print "done in main\n"
   end

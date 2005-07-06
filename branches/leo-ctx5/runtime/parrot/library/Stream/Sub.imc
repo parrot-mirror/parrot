@@ -99,7 +99,7 @@ END:
     .pcc_call _write, ret
 _sub_write_ret:
     .pcc_end
-    
+
 .end
 
 =item source."rawRead"() (B<internal>)

@@ -38,7 +38,7 @@ as class method
 */
 
     METHOD INTVAL say(STRING *s) {
-        PMC *p2  = INTERP->ctx.current_object;
+        PMC *p2  = CONTEXT(INTERP->ctx)->current_object;
         PMC *out = p2 == Parrot_base_vtables[enum_class_ParrotIO]->class ?
             PIO_STDOUT(INTERP) : p2;
         INTVAL r = PIO_putps(INTERP, out, s);

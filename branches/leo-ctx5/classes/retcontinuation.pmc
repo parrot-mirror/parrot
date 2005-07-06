@@ -38,11 +38,28 @@ Initializes the continuation.
 */
 
     void init () {
-        PMC_cont(SELF) = new_continuation(INTERP);
+        PMC_cont(SELF) = new_ret_continuation(INTERP);
         PMC_pmc_val(SELF) = NULL;
         PObj_custom_mark_destroy_SETALL(SELF);
     }
 
+/*
+
+=item C<void destroy()>
+
+Destroys the continuation.
+
+=cut
+
+*/
+
+    void destroy () {
+        struct Parrot_cont * sub = PMC_cont(SELF);
+        if (sub) {
+            mem_sys_free(sub);
+            PMC_cont(SELF) = NULL;
+        }
+    }
 /*
 
 =item C<PMC* clone>
@@ -75,13 +92,14 @@ the frame pointer in the stack frame cache.
 */
 
     void* invoke (void* next) {
-        Stack_Chunk_t *stack_p;
         Stack_Chunk_t *ctr_stack, *stack_now;
+        struct Parrot_cont * cc = PMC_cont(SELF);
+        parrot_context_t ctx;
         /*
          * unwind control stack
          */
-        stack_now = INTERP->ctx.control_stack;
-        ctr_stack = PMC_cont(SELF)->ctx.control_stack;
+        stack_now = CONTEXT(INTERP->ctx)->control_stack;
+        ctr_stack = CONTEXT(PMC_cont(SELF)->ctx)->control_stack;
         while (stack_now != ctr_stack) {
             if (!stack_now || !ctr_stack)
                 internal_exception(1, "Control stack damaged");
@@ -94,10 +112,17 @@ the frame pointer in the stack frame cache.
                             NULL, NO_STACK_ENTRY_TYPE);
         }
 
-        stack_p = INTERP->ctx.reg_stack;
+        /*
+         * Continuation.invoke resets the context pointer to
+         * it's own context - remember pointer and free the
+         * used context memory - that's safe as long as this
+         * is a plain return continuation
+         */
+        ctx = INTERP->ctx;
         next = SUPER(next);
-        add_to_fp_cache(INTERP, stack_p);
-        add_to_retc_cache(INTERP, SELF);
+        INTERP->ctx = ctx;
+        Parrot_free_context(INTERP, &ctx, 1);
+        INTERP->ctx = cc->ctx;
         return next;
     }
 
