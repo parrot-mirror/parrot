@@ -17,7 +17,7 @@ C<Continuation> PMCs.
 
 =cut
 
-use Parrot::Test tests => 51;
+use Parrot::Test tests => 48;
 use Test::More;
 use Parrot::Config;
 
@@ -63,61 +63,14 @@ output_is(<<'CODE', <<'OUTPUT', "PASM subs - invokecc");
     set_addr P0, func
 
     set I5, 3
-    set I0, 1
-    set I1, 1
-    null I2
-    null I3
-    null I4
-    save I5
-
-    invokecc
-
-    restore I5
-    print I5
-    print "\n"
-    end
-
-func:
-    print I5
-    print "\n"
-
-    eq I5, 0, endfunc
-    dec I5
-
-.include "interpinfo.pasm"
-    interpinfo P0, .INTERPINFO_CURRENT_SUB
-    invokecc   # recursive invoke
-
-endfunc:
-    returncc
-CODE
-3
-2
-1
-0
-3
-OUTPUT
-
-output_is(<<'CODE', <<'OUTPUT', "PASM subs - invokecc_p");
-    new P0, .Sub
-    set_addr P0, func
-
-    set I5, 3
-    set I0, 1
-    set I1, 1
-    null I2
-    null I3
-    null I4
-    save I5
-
+    set_args "(0)", I5
     invokecc P0
-
-    restore I5
     print I5
     print "\n"
     end
 
 func:
+    get_params "(0)", I5
     print I5
     print "\n"
 
@@ -126,7 +79,8 @@ func:
 
 .include "interpinfo.pasm"
     interpinfo P0, .INTERPINFO_CURRENT_SUB
-    invokecc P0  # recursive invoke
+    set_args "(0)", I5
+    invokecc   # recursive invoke
 
 endfunc:
     returncc
@@ -207,44 +161,27 @@ main:
     new P5, .Integer
     set P5, 5
 
-    set I0, 0	# non-proto
-    set I3, 1	# 1 arg
+    set_args "(0)", P5
+    get_results "(0)", P0
     invokecc
-    set P0, P5	# the closure
 
     new P5, .Integer
     set P5, 3
-
-    set I0, 0	# non-proto
-    set I3, 1	# 1 arg
-    pushbottomp	# preserve P regs
+    set_args "(0)", P5
+    get_results "(0)", P2
     invokecc
-    save P5	# result in P5
-    popbottomp
-    restore P2
-
     print P2
     print "\n"
 
-    set I0, 0	# non-proto
-    set I3, 1	# 1 arg
-    pushbottomp	# preserve P regs
+    set_args "(0)", P5
+    get_results "(0)", P2
     invokecc
-    save P5	# result in P5
-    popbottomp
-    restore P2
-
     print P2
     print "\n"
 
-    set I0, 0	# non-proto
-    set I3, 1	# 1 arg
-    pushbottomp	# preserve P regs
+    set_args "(0)", P5
+    get_results "(0)", P2
     invokecc
-    save P5	# result in P5
-    popbottomp
-    restore P2
-
     print P2
     print "\n"
 
@@ -253,23 +190,23 @@ main:
 # foo takes a number n (P5) and returns a sub (in P5) that takes
 # a number i (P5) and returns n incremented by i.
 foo:
+    get_params "(0)", P5
     new_pad 0
     store_lex 0, "n", P5
     new P5, .Closure	# P5 has now the lexical "n" in the pad
     set_addr P5, f
-    set I0, 0	# non-proto
-    set I3, 1	# 1 retval
+    set_returns "(0)", P5
     returncc		# ret
 
 # expects arg in P5, returns incremented result in P5
 f:
+    get_params "(0)", P5
     find_lex P2, "n"	# invoke-ing the Sub pushes the lexical pad
     			# of the closure on the pad stack
     add P2, P5		# n += shift, the lexical is incremented
     new P5, .Integer
-    set P5, P2
-    set I0, 0	# non-proto
-    set I3, 1	# 1 retval
+    assign P5, P2
+    set_returns "(0)", P5
     returncc		# ret
 
 CODE
@@ -708,40 +645,6 @@ f2:
 CODE
 ok 1
 ok 2
-OUTPUT
-
-output_is(<<'CODE', <<'OUTPUT', "continuation close over register stacks");
-    set S20, "ok\n"
-    savetop
-    newsub P0, .Continuation, next
-    restoretop
-    concat S20, "not ", S20
-    invoke
-    print "bad\n"
-next:
-    restoretop
-    print S20
-    end
-CODE
-ok
-OUTPUT
-
-output_is(<<'CODE', <<'OUTPUT', "DOD marks continuation's register stacks");
-    set S20, "ok\n"
-    savetop
-    newsub P0, .Continuation, next
-    restoretop
-    null S20
-    sweep 1
-    collect
-    invoke
-    print "bad\n"
-next:
-    restoretop
-    print S20
-    end
-CODE
-ok
 OUTPUT
 
 output_is(<<'CODE', <<'OUT', "MAIN pragma, syntax only");

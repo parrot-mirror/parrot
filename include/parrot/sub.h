@@ -39,6 +39,7 @@ typedef enum {
 
 } sub_flags_enum;
 
+union parrot_context_t;
 
 /*
  * Sub and Closure share a Parrot_sub structure, Closure has additionally
@@ -82,9 +83,7 @@ typedef struct Parrot_coro {
 
     /* - end common */
 
-    struct Parrot_Context ctx;          /* XXX 2 continuations */
-    struct Stack_Chunk *co_control_base;
-    struct Stack_Chunk *co_control_stack;  /* control stack top of the cor.*/
+    parrot_context_t ctx;          /* coroutine context */
     struct PackFile_ByteCode *caller_seg;  /* bytecode segment */
 } * parrot_coro_t;
 
@@ -93,7 +92,7 @@ typedef struct Parrot_coro {
 typedef struct Parrot_cont {
     struct PackFile_ByteCode *seg;      /* bytecode segment */
     opcode_t *address;          /* start of bytecode, addr to continue */
-    struct Parrot_Context ctx;  /* copy of interpreter context */
+    parrot_context_t ctx;  /* pointer to interpreter context */
 } * parrot_cont_t;
 
 #define PMC_cont(pmc) LVALUE_CAST(parrot_cont_t, PMC_struct_val(pmc))
@@ -116,23 +115,20 @@ struct Parrot_cont * new_ret_continuation(Interp * interp);
 
 PMC * new_ret_continuation_pmc(Interp *, opcode_t * address);
 
-void save_context(Interp *, struct Parrot_Context *);
 void swap_context(Interp *, PMC *);
-void restore_context(Interp *, struct Parrot_Context *);
-void mark_context(Interp *, struct Parrot_Context *);
+void mark_context(Interp *, parrot_context_t *);
 
 opcode_t * parrot_pass_args(Interp *, struct Parrot_sub * sub,
         struct parrot_regs_t *caller_regs, int what);
+INTVAL Parrot_get_argc(Interp *, int bits);
 
 void copy_regs(Interp *, struct parrot_regs_t *caller_regs);
 void mark_reg_stack(Interp *, Stack_Chunk_t *);
+void invalidate_retc_context(Interp *interpreter, parrot_context_t *ctx);
 
-void invalidate_retc_context(Interp *interpreter, struct Parrot_Context *);
-void add_to_retc_cache(Interp *interpreter, PMC *pmc);
-void mark_retc_cache(Interp *);
 STRING* Parrot_full_sub_name(Interp* interpreter, PMC* sub);
-int Parrot_Context_info(Interp *interpreter, struct Parrot_Context *, struct Parrot_Context_info *);
-STRING* Parrot_Context_infostr(Interp *interpreter, struct Parrot_Context *);
+int Parrot_Context_info(Interp *interpreter, parrot_context_t *, struct Parrot_Context_info *);
+STRING* Parrot_Context_infostr(Interp *interpreter, parrot_context_t *);
 
 #endif /* PARROT_SUB_H_GUARD */
 

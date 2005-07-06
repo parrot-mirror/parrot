@@ -94,7 +94,6 @@ Swaps the "context".
         struct Parrot_coro * sub = PMC_coro(SELF);
         struct PackFile_ByteCode *wanted_seg;
         void * dest = sub->address;
-        int argcP = REG_INT(3);
 
         sub->address = next;
         /* if calling the Coro we need the segment of the Coro */
@@ -126,10 +125,13 @@ Marks the coroutine as live.
 
     void mark () {
         struct Parrot_coro *c = PMC_coro(SELF);
+#if 0
         mark_stack(INTERP, c->co_control_stack);
         mark_stack(INTERP, c->co_control_base);
-        /* mark_stack(INTERP, c->co_pad_stack); */
-        mark_context(INTERP, &c->ctx);
+        mark_stack(INTERP, c->co_pad_stack);
+#endif
+        if (c && c->ctx.bp)
+            mark_context(INTERP, &c->ctx);
     }
 }
 

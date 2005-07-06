@@ -99,7 +99,11 @@ Destroys the continuation.
 
     void destroy () {
         struct Parrot_cont * sub = PMC_cont(SELF);
-        mem_sys_free(sub);
+        if (sub) {
+            Parrot_free_context(interpreter, &sub->ctx, 0);
+            mem_sys_free(sub);
+            PMC_cont(SELF) = NULL;
+        }
     }
 /*
 
@@ -205,23 +209,23 @@ destination to continue execution.
         opcode_t *pc;
 
         caller_regs = INTERP->ctx.bp;
-        restore_context(INTERP, &cc->ctx);
+        INTERP->ctx = cc->ctx;
         if (Interp_trace_TEST(INTERP, PARROT_TRACE_SUB_CALL_FLAG)) {
-            PMC *sub = INTERP->ctx.current_sub;
-            STRING *unk = CONST_STRING(INTERP, "(unknown");
+            PMC *sub = CONTEXT(INTERP->ctx)->current_sub;
+
             PIO_eprintf(INTERP, "# Back in sub '%Ss'\n",
                 Parrot_full_sub_name(INTERP, sub));
         }
         pc = cc->address;
         if (pc) {
-            if (INTERP->ctx.current_results) {
+            if (CONTEXT(INTERP->ctx)->current_results) {
                 /* possibly a true continuation that acts as a Sub */
                 if (*pc == PARROT_OP_get_params_pc)
                     pc = parrot_pass_args(INTERP, (struct Parrot_sub*)cc,
                             caller_regs,
                             PARROT_OP_get_params_pc);
                 else
-                    parrot_pass_args(INTERP, NULL, caller_regs,
+                    parrot_pass_args(INTERP, (struct Parrot_sub*)cc, caller_regs,
                             PARROT_OP_get_results_pc);
             }
             else {
@@ -264,7 +268,7 @@ Experimental: return caller PMC or Undef if none.
 
     METHOD PMC* caller() {
         struct Parrot_cont * cc = PMC_cont(SELF);
-        PMC *caller = cc->ctx.current_sub;
+        PMC *caller = CONTEXT(cc->ctx)->current_sub;
         if (!caller || !PMC_sub(caller)->address) {
             caller = pmc_new(INTERP, enum_class_Undef);
         }
@@ -283,7 +287,7 @@ Experimental: return continuation PMC of this Continuation or Undef if none.
 
     METHOD PMC* continuation() {
         struct Parrot_cont * cc = PMC_cont(SELF);
-        PMC *cont = cc->ctx.current_cont;
+        PMC *cont = CONTEXT(cc->ctx)->current_cont;
         if (cont)
             return cont;
         return pmc_new(INTERP, enum_class_Undef);

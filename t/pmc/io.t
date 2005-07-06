@@ -382,8 +382,7 @@ output_is(<<'CODE', <<'OUTPUT', 'puts method');
        if I0, ok1
        print "not "
 ok1:   print "ok 1\n"
-       find_method P0, P2, "puts"
-       invoke
+       callmethod "puts"
        end
 CODE
 ok 1

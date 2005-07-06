@@ -400,26 +400,6 @@ SP              [ ]
                         cur_unit->type |= IMC_HAS_SELF;
                         return VAR;
                     }
-                    if (!strcmp(yytext, "argcI")) {
-                        valp->s = str_dup("I1");
-                        return REG;
-                    }
-                    if (!strcmp(yytext, "argcS")) {
-                        valp->s = str_dup("I2");
-                        return REG;
-                    }
-                    if (!strcmp(yytext, "argcP")) {
-                        valp->s = str_dup("I3");
-                        return REG;
-                    }
-                    if (!strcmp(yytext, "argcN")) {
-                        valp->s = str_dup("I4");
-                        return REG;
-                    }
-                    if (!strcmp(yytext, "is_prototyped")) {
-                        valp->s = str_dup("I0");
-                        return REG;
-                    }
                 }
 	}
         valp->s = str_dup(yytext);

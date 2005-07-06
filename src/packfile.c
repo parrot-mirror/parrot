@@ -253,7 +253,7 @@ run_sub(Parrot_Interp interpreter, PMC* sub_pmc)
         interpreter->run_core != PARROT_SLOW_CORE  &&
         interpreter->run_core != PARROT_FAST_CORE)
         interpreter->run_core = PARROT_FAST_CORE;
-    Parrot_runops_fromc(interpreter, sub_pmc);
+    Parrot_runops_fromc_args(interpreter, sub_pmc, "v");
     interpreter->run_core = old;
 }
 
@@ -2925,7 +2925,7 @@ PackFile_Constant_unpack_pmc(Interp *interpreter,
      *                doesn't DOD mark the properties
      * for a constant PMC *all* contents have to be in the constant pools
      */
-    pmc = Parrot_thaw(interpreter, image);
+    pmc = Parrot_thaw_constants(interpreter, image);
     /*
      * place item in const_table
      */

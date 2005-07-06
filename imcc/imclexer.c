@@ -10,7 +10,7 @@
 #define YY_FLEX_MINOR_VERSION 5
 
 #include <stdio.h>
-#include <errno.h>
+
 
 /* cfront 1.2 defines "c_plusplus" instead of "__cplusplus" */
 #ifdef c_plusplus
@@ -23,9 +23,7 @@
 #ifdef __cplusplus
 
 #include <stdlib.h>
-#ifndef _WIN32
 #include <unistd.h>
-#endif
 
 /* Use prototypes in function declarations. */
 #define YY_USE_PROTOS
@@ -64,7 +62,6 @@
 #else
 #define YY_PROTO(proto) ()
 #endif
-
 
 /* Returned upon end-of-file. */
 #define YY_NULL 0
@@ -1887,7 +1884,7 @@ static int prev_state;
 
 #define cmt5 8
 
-#line 1891 "imcc/imclexer.c"
+#line 1888 "imcc/imclexer.c"
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -1987,20 +1984,9 @@ YY_MALLOC_DECL
 			YY_FATAL_ERROR( "input in flex scanner failed" ); \
 		result = n; \
 		} \
-	else \
-		{ \
-		errno=0; \
-		while ( (result = fread(buf, 1, max_size, yyin))==0 && ferror(yyin)) \
-			{ \
-			if( errno != EINTR) \
-				{ \
-				YY_FATAL_ERROR( "input in flex scanner failed" ); \
-				break; \
-				} \
-			errno=0; \
-			clearerr(yyin); \
-			} \
-		}
+	else if ( ((result = fread( buf, 1, max_size, yyin )) == 0) \
+		  && ferror( yyin ) ) \
+		YY_FATAL_ERROR( "input in flex scanner failed" );
 #endif
 
 /* No semi-colon after return; correct usage is to write "yyterminate();" -
@@ -2069,7 +2055,7 @@ YY_DECL
             return 0;
         }
 
-#line 2073 "imcc/imclexer.c"
+#line 2059 "imcc/imclexer.c"
 
 	if ( yy_init )
 		{
@@ -2870,26 +2856,6 @@ YY_RULE_SETUP
                         cur_unit->type |= IMC_HAS_SELF;
                         return VAR;
                     }
-                    if (!strcmp(yytext, "argcI")) {
-                        valp->s = str_dup("I1");
-                        return REG;
-                    }
-                    if (!strcmp(yytext, "argcS")) {
-                        valp->s = str_dup("I2");
-                        return REG;
-                    }
-                    if (!strcmp(yytext, "argcP")) {
-                        valp->s = str_dup("I3");
-                        return REG;
-                    }
-                    if (!strcmp(yytext, "argcN")) {
-                        valp->s = str_dup("I4");
-                        return REG;
-                    }
-                    if (!strcmp(yytext, "is_prototyped")) {
-                        valp->s = str_dup("I0");
-                        return REG;
-                    }
                 }
 	}
         valp->s = str_dup(yytext);
@@ -2898,27 +2864,27 @@ YY_RULE_SETUP
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 429 "imcc/imcc.l"
+#line 409 "imcc/imcc.l"
 DUP_AND_RET(valp, FLOATC);
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 430 "imcc/imcc.l"
+#line 410 "imcc/imcc.l"
 DUP_AND_RET(valp, INTC);
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 431 "imcc/imcc.l"
+#line 411 "imcc/imcc.l"
 DUP_AND_RET(valp, INTC);
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 432 "imcc/imcc.l"
+#line 412 "imcc/imcc.l"
 DUP_AND_RET(valp, INTC);
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 434 "imcc/imcc.l"
+#line 414 "imcc/imcc.l"
 {
 	valp->s = str_dup(yytext);
         valp->s[strlen(valp->s) - 1] = '\0'; /* trailing 'L' */
@@ -2927,7 +2893,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 440 "imcc/imcc.l"
+#line 420 "imcc/imcc.l"
 {
 	valp->s = str_dup(yytext);
         return(STRINGC); /* XXX delete quotes, -> emit, pbc */
@@ -2935,7 +2901,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 445 "imcc/imcc.l"
+#line 425 "imcc/imcc.l"
 {
 	valp->s = str_dup(yytext);    /* charset:"..." */
         /* this is actually not unicode but a string with a charset */
@@ -2944,7 +2910,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 450 "imcc/imcc.l"
+#line 430 "imcc/imcc.l"
 {
         valp->s = str_dup(yytext); /* XXX delete quotes, -> emit, pbc */
         return(STRINGC);
@@ -2952,39 +2918,39 @@ YY_RULE_SETUP
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 455 "imcc/imcc.l"
+#line 435 "imcc/imcc.l"
 DUP_AND_RET(valp, IREG);
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 456 "imcc/imcc.l"
+#line 436 "imcc/imcc.l"
 DUP_AND_RET(valp, NREG);
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 457 "imcc/imcc.l"
+#line 437 "imcc/imcc.l"
 DUP_AND_RET(valp, SREG);
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 458 "imcc/imcc.l"
+#line 438 "imcc/imcc.l"
 DUP_AND_RET(valp, PREG);
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 460 "imcc/imcc.l"
+#line 440 "imcc/imcc.l"
 /* skip */;
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 462 "imcc/imcc.l"
+#line 442 "imcc/imcc.l"
 {
         /* catch all except for state macro */
         return yytext[0];
     }
 	YY_BREAK
 case YY_STATE_EOF(emit):
-#line 467 "imcc/imcc.l"
+#line 447 "imcc/imcc.l"
 {
         BEGIN (INITIAL);
         if (frames->s.pasm_file) {
@@ -2995,17 +2961,17 @@ case YY_STATE_EOF(emit):
     }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 476 "imcc/imcc.l"
+#line 456 "imcc/imcc.l"
 yyterminate();
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 478 "imcc/imcc.l"
+#line 458 "imcc/imcc.l"
 DUP_AND_RET(valp, ENDM);
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 480 "imcc/imcc.l"
+#line 460 "imcc/imcc.l"
 {
         line++;
         DUP_AND_RET(valp, '\n');
@@ -3013,12 +2979,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 485 "imcc/imcc.l"
+#line 465 "imcc/imcc.l"
 return LABEL;
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 486 "imcc/imcc.l"
+#line 466 "imcc/imcc.l"
 {
         char *label;
 	char *name = macros[num_macros].name;
@@ -3040,7 +3006,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
-#line 505 "imcc/imcc.l"
+#line 485 "imcc/imcc.l"
 {
         char *label;
 	char *name = macros[num_macros].name;
@@ -3057,39 +3023,39 @@ YY_RULE_SETUP
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 519 "imcc/imcc.l"
+#line 499 "imcc/imcc.l"
 /* skip leading ws */;
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 520 "imcc/imcc.l"
+#line 500 "imcc/imcc.l"
 DUP_AND_RET(valp, ' ');
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 521 "imcc/imcc.l"
+#line 501 "imcc/imcc.l"
 DUP_AND_RET(valp, IDENTIFIER);
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 522 "imcc/imcc.l"
+#line 502 "imcc/imcc.l"
 DUP_AND_RET(valp, MACRO);
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 523 "imcc/imcc.l"
+#line 503 "imcc/imcc.l"
 DUP_AND_RET(valp, yytext[0]);
 	YY_BREAK
 case YY_STATE_EOF(macro):
-#line 524 "imcc/imcc.l"
+#line 504 "imcc/imcc.l"
 yyterminate();
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 526 "imcc/imcc.l"
+#line 506 "imcc/imcc.l"
 ECHO;
 	YY_BREAK
-#line 3093 "imcc/imclexer.c"
+#line 3059 "imcc/imclexer.c"
 case YY_STATE_EOF(pod):
 case YY_STATE_EOF(cmt1):
 case YY_STATE_EOF(cmt2):
@@ -3660,13 +3626,9 @@ YY_BUFFER_STATE b;
 	}
 
 
-#ifndef _WIN32
-#include <unistd.h>
-#else
 #ifndef YY_ALWAYS_INTERACTIVE
 #ifndef YY_NEVER_INTERACTIVE
 extern int isatty YY_PROTO(( int ));
-#endif
 #endif
 #endif
 
@@ -3986,7 +3948,7 @@ int main()
 	return 0;
 	}
 #endif
-#line 526 "imcc/imcc.l"
+#line 506 "imcc/imcc.l"
 
 
 #ifdef yywrap

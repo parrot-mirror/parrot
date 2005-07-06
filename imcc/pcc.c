@@ -53,13 +53,6 @@
 
 static const char regsets[] = "ISPN";
 
-/* forward def */
-static Instruction *
-pcc_emit_flatten(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
-        SymReg *arg, int i, int *flatten, SymReg **last);
-
-
-
 /*
  * Utility instruction routine. Creates and inserts an instruction
  * into the current block in one call.
@@ -96,271 +89,44 @@ get_const(Interp *interp, const char *name, int type)
     return mk_const(interp, str_dup(name), type);
 }
 
-static Instruction *
-set_I_const(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
-            int regno, int value)
-{
-    SymReg *ix, *regs[IMCC_MAX_REGS], *arg;
-    char buf[128];
-
-    sprintf(buf, "I%d", regno);
-    ix = get_pasm_reg(interp, buf);
-    sprintf(buf, "%d", value);
-    arg = get_const(interp, buf, 'I');
-    regs[0] = ix;
-    regs[1] = arg;
-    return insINS(interp, unit, ins, "set", regs, 2);
-}
-
 /*
- * get arguments or return results
+ * set arguments or return valurs
+ * get params or results
  * used by expand_pcc_sub_call and expand_pcc_sub
  */
 static Instruction*
 pcc_get_args(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
-        struct pcc_sub_t *pcc_sub, int n, int proto, SymReg **args)
+        char *op_name, int n, SymReg **args)
 {
-    int next[4], i, j, set;
-    SymReg *p3, *regs[IMCC_MAX_REGS], *arg;
-    char buf[128];
+    int i, l, flags;
+    char buf[1024], s[16];
+    SymReg **regs, *arg;
 
-    p3 = NULL;
-    UNUSED(pcc_sub);
-    for (i = 0; i < REGSET_MAX; i++)
-        next[i] = FIRST_PARAM_REG;
-    /* insert params */
+    regs = mem_sys_allocate((n + 1) * sizeof(SymReg *));
+    strcpy(buf, "\"(");
     for (i = 0; i < n; i++) {
         arg = args[i];
-        for (j = 0; j < REGSET_MAX; j++) {
-            set = j;
-            /*
-             * if this is non-prototyped, register set is always P
-             */
-            if (arg->set != regsets[set])
-                continue;
-            /*
-             * non-prototyped reg sets don't match
-             */
-            if (!proto && arg->set != 'P') {
-                /* we need a native type and get P
-                 *
-                 * set arg, $Pn
-                 */
-                set = REGSET_P;
-                if (next[REGSET_P] > LAST_PARAM_REG)
-                    goto overflow;
-                regs[0] = arg;
-                sprintf(buf, "P%d", next[set]++);
-                regs[1] = get_pasm_reg(interp, buf);
-                /* e.g. set $I0, I5 */
-                ins = insINS(interp, unit, ins, "set", regs, 2);
-                break;
-            }
-            if (next[set] > LAST_PARAM_REG) {
-                goto overflow;
-            }
-            /*
-             * if register number already matches - fine
-             */
-            if (arg->color == next[set]) {
-                next[set]++;
-                break;
-            }
-            /* assign register to that param
-             *
-             * if this subroutine calls another subroutine
-             * new registers are assigned so that
-             * they don't interfere with this sub's params
-             *
-             * And in a return sequence too, as the usage of
-             * returns and args might conflict.
-             */
-            regs[0] = arg;
-            sprintf(buf, "%c%d", arg->set, next[set]++);
-            regs[1] = get_pasm_reg(interp, buf);
-            arg->used = regs[1];
-            /* e.g. set $I0, I5 */
-            ins = insINS(interp, unit, ins, "set", regs, 2);
+        regs[i + 1] = arg;
+        flags = 0;
+        if (arg->type & VT_FLAT) {
+            flags |= PARROT_ARG_FLATTEN;
         }
-        continue;
-overflow:
-        if (!p3)
-            p3 = get_pasm_reg(interp, "P3");
-        /* this uses register numbers (if any)
-         * from the first prototyped pass
-         */
-        regs[0] = arg;
-        regs[1] = p3;
-        ins = insINS(interp, unit, ins, "shift", regs, 2);
+        if (arg->type & VT_OPTIONAL) {
+            flags |= PARROT_ARG_OPTIONAL;
+        }
+        sprintf(s, "%d", flags);
+        if (i < n - 1)
+            strcat(s, ",");
+        l = strlen(s);
+        strcat(buf, s);         /* XXX check avail len */
     } /* n params */
+    strcat(buf, ")\"");
+    regs[0] = mk_const(interp, str_dup(buf), 'S');
+    ins = insINS(interp, unit, ins, op_name, regs, n + 1);
+    mem_sys_free(regs);
     return ins;
 }
 
-/*
- * put arguments or return results
- */
-static Instruction*
-pcc_put_args(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
-        struct pcc_sub_t *pcc_sub, int n, int proto, SymReg **args)
-{
-    int next[4], i, j, set;
-    SymReg *p3, *regs[IMCC_MAX_REGS], *arg, *reg, *last;
-    char buf[128];
-    Instruction *tmp;
-    int flatten;
-
-    p3 = NULL;
-    UNUSED(pcc_sub);
-    flatten = 0;
-    for (i = 0; i < REGSET_MAX; i++)
-        next[i] = FIRST_PARAM_REG;
-    for (i = 0; i < n; i++) {
-        /*
-         * If prototyped, first 11 I,S,N arguments go into registers
-         */
-        arg = args[i];
-        for (j = 0; j < REGSET_MAX; j++) {
-            set = j;
-            /*
-             * If this is non-prototyped, register set is always P
-             */
-            if (arg->set != regsets[set])
-                continue;
-            /*
-             * Non-prototyped register sets don't match
-             */
-            if (!proto && arg->set != 'P') {
-                set = REGSET_P;
-                if (next[REGSET_P] > LAST_PARAM_REG)
-                    goto overflow;
-                /* Make a new P register and assign value */
-                sprintf(buf, "P%d", next[set]++);
-                reg = get_pasm_reg(interp, buf);
-                tmp = iNEW(interp, unit, reg, str_dup("Undef"), NULL, 0);
-                insert_ins(unit, ins, tmp);
-                ins = tmp;
-                regs[0] = reg;
-                regs[1] = arg;
-                ins = insINS(interp, unit, ins, "set", regs, 2);
-                break;
-            }
-            if (next[REGSET_P] == LAST_PARAM_REG) {
-                /* clear P3 */
-                regs[0] = get_pasm_reg(interp, "P3");
-                ins = insINS(interp, unit, ins, "null", regs, 1);
-            }
-            if (next[set] > LAST_PARAM_REG) {
-                goto overflow;
-            }
-            /*
-             * if register number already matches - fine
-             */
-            if (arg->color == next[set] && (arg->type & VTREGISTER)) {
-                next[set]++;
-                break;
-            }
-            if (arg->type & VTREGISTER) {
-                if (set == REGSET_P &&
-                        (flatten || (arg->type & VT_FLAT)))
-                    goto flatten;
-                /*
-                 * a remark WRT want_regno
-                 *
-                 * It should eventually designate the register
-                 * number used during calls and returns according
-                 * to parrot calling conventions.
-                 *
-                 * Currently these assigned colors are used if
-                 * allocate_wanted_regs() is turned on with -Oc.
-                 *
-                 * But with allocate regs a call that doesn't
-                 * want return results breaks:
-                 *
-                 * P5 = arg1          # P5 is pre-assigned
-                 * func1()
-                 * func2(P5)
-                 * ...
-                 * func1:
-                 *    .return(Px)     # P5
-                 *
-                 * The return sequence of func1 copies P5 and clobbers
-                 * the caller's P5, because the caller thinks P5 is save
-                 * to use over the call to func1()
-                 *
-                 * So currently want_regno isn't assigned at all.
-                 */
-
-                /* arg->want_regno = next[set]; */
-            }
-            sprintf(buf, "%c%d", arg->set, next[set]++);
-            reg = get_pasm_reg(interp, buf);
-            regs[0] = reg;
-            regs[1] = arg;
-            ins = insINS(interp, unit, ins, "set", regs, 2);
-            /* remember register for life analysis */
-            arg->used = reg;
-
-            continue;
-overflow:
-            if (!p3) {
-                p3 = get_pasm_reg(interp, "P3");
-                tmp = iNEW(interp, unit, p3, str_dup("PerlArray"), NULL, 0);
-                insert_ins(unit, ins, tmp);
-                ins = tmp;
-            }
-            if (flatten || (arg->type & VT_FLAT))
-                goto flatten;
-            regs[0] = p3;
-            regs[1] = arg;
-            ins = insINS(interp, unit, ins, "push", regs, 2);
-        }
-        continue;
-flatten:
-        /* if we had a flattening arg, we must continue emitting
-         * code to do all at runtime
-         */
-        ins = pcc_emit_flatten(interp, unit, ins, arg, i, &flatten,
-                &last);
-    } /* for i */
-
-    /* set prototyped: I0  (1=prototyped, 0=non-prototyped) */
-    ins = set_I_const(interp, unit, ins, REG_PROTO_FLAG, 1);
-
-    /* Ireg param count in: I1 */
-    ins = set_I_const(interp, unit, ins, REG_I_PARAM_COUNT,
-            next[REGSET_I] - FIRST_PARAM_REG);
-
-    /* Sreg param count in: I2 */
-    ins = set_I_const(interp, unit, ins, REG_S_PARAM_COUNT,
-            next[REGSET_S] - FIRST_PARAM_REG);
-
-    /* set items in PRegs: I3 */
-    if (flatten) {
-        SymReg *i3;
-        /* if I3 > 16 set it to 16 */
-        i3 = get_pasm_reg(interp, "I3");;
-        regs[0] = i3;
-        regs[1] = mk_const(interp, str_dup("16"), 'I');
-        regs[2] = last;
-        ins = insINS(interp, unit, ins, "lt", regs, 3);
-        ins = insINS(interp, unit, ins, "set", regs, 2);
-        tmp = INS_LABEL(unit, last, 0);
-        insert_ins(unit, ins, tmp);
-        ins = tmp;
-        /* finally subtract 5 */
-        regs[0] = i3;
-        regs[1] = mk_const(interp, str_dup("5"), 'I');
-        ins = insINS(interp, unit, ins, "sub", regs, 2);
-    }
-    else
-        ins = set_I_const(interp, unit, ins, REG_P_PARAM_COUNT,
-                next[REGSET_P] - FIRST_PARAM_REG);
-
-    /* Nreg param count in: I4 */
-    ins = set_I_const(interp, unit, ins, REG_N_PARAM_COUNT,
-            next[REGSET_N] - FIRST_PARAM_REG);
-    return ins;
-}
 
 /*
  * Expand a PCC (Parrot Calling Convention) subroutine
@@ -386,8 +152,8 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         label1 = label2 = NULL;
 
         nargs = sub->pcc_sub->nargs;
-        ins = pcc_get_args(interp, unit, ins, sub->pcc_sub, nargs,
-                           1, sub->pcc_sub->args);
+        ins = pcc_get_args(interp, unit, ins, "get_params", nargs,
+                           sub->pcc_sub->args);
     }
 
     /*
@@ -461,8 +227,8 @@ expand_pcc_sub_ret(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     /* TODO implement return conventions */
     sub = ins->r[0];
     n = sub->pcc_sub->nret;
-    ins = pcc_put_args(interp, unit, ins, sub->pcc_sub, n,
-                       1, sub->pcc_sub->ret);
+    ins = pcc_get_args(interp, unit, ins, "set_returns", n,
+                       sub->pcc_sub->ret);
 
     /*
      * we have a pcc_begin_yield
@@ -616,155 +382,6 @@ insert_tail_call(Parrot_Interp interp, IMC_Unit * unit,
 
 #endif
 
-static Instruction *
-pcc_emit_flatten(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
-        SymReg *arg, int i, int *flatten, SymReg **last)
-{
-
-    SymReg *regs[IMCC_MAX_REGS];
-    SymReg *i0, *i1, *i3, *py, *p3, *ic16;
-    SymReg *loop, *next, *over, *over1;
-    Instruction *tmp;
-    static int lin;
-    char buf[128];
-    char * s;
-    /*
-     * emitted code is
-     *   $I2 = i+5    # once
-     *   ============
-     *   $I0 = 0
-     *   $I1 = arg
-     * arg_loop_N:
-     *   if $I0 >= $I1 goto next_arg_N
-     *   PY = arg[$I0]
-     *   inc $I0
-     *   if $I2 == 16  goto over_flow_1_N
-     *   if $I2 > 16  goto over_flow_N
-     *   setp_ind $I2, Py
-     *   inc $I2
-     *   goto _arg_loop_N
-     * over_flow_1_N:
-     *   new P3, .PerlArray
-     * over_flow_N:
-     *   push P3, $P0
-     *   goto _arg_loop_N
-     * next_arg_N:
-     *
-     * if there was a flattening before, next regs are handled with:
-     *
-     *   if $I2 == 16  goto over_flow_1_N
-     *   if $I2 > 16  goto over_flow_N
-     *   setp_ind $I2, arg
-     *   inc $I2
-     *   goto next_arg_N
-     * over_flow_1_N:
-     *   new P3, .PerlArray
-     * over_flow_N:
-     *   push P3, arg
-     * next_arg_N:
-     *
-     */
-
-    s = str_dup("?i0");
-    s[0] = IMCC_INTERNAL_CHAR;
-    i0 = mk_symreg(interp, s, 'I');        /* TODO cache syms */
-
-    s = str_dup("?i1");
-    s[0] = IMCC_INTERNAL_CHAR;
-    i1 = mk_symreg(interp, s, 'I');
-
-    s = str_dup("?i0");
-    s[0] = IMCC_INTERNAL_CHAR;
-
-    i3 = get_pasm_reg(interp, "I3");
-    s = str_dup("?py");
-    s[0] = IMCC_INTERNAL_CHAR;
-    py = mk_symreg(interp, s, 'P');
-
-    p3 = get_pasm_reg(interp, "P3");
-    /* first time */
-    if (!(*flatten)++) {
-        regs[0] = i3;
-        sprintf(buf, "%d", i+5);
-        regs[1] = mk_const(interp, str_dup(buf), 'I');
-        ins = insINS(interp, unit, ins, "set", regs, 2);
-    }
-    ++lin;
-    sprintf(buf, "%carg_loop_%d_%d", IMCC_INTERNAL_CHAR, lin, i);
-    loop = mk_address(interp, str_dup(buf), U_add_uniq_label);
-    sprintf(buf, "%cnext_arg_%d_%d", IMCC_INTERNAL_CHAR, lin, i);
-    next = mk_address(interp, str_dup(buf), U_add_uniq_label);
-    sprintf(buf, "%cover_flow_%d_1_%d", IMCC_INTERNAL_CHAR, lin, i);
-    over1 = mk_address(interp, str_dup(buf), U_add_uniq_label);
-    sprintf(buf, "%cover_flow_%d_%d", IMCC_INTERNAL_CHAR, lin, i);
-    over = mk_address(interp, str_dup(buf), U_add_uniq_label);
-    sprintf(buf, "%carg_last_%d_%d", IMCC_INTERNAL_CHAR, lin, i);
-    *last = mk_address(interp, str_dup(buf), U_add_uniq_label);
-
-    if (arg->type & VT_FLAT) {
-        regs[0] = i0;
-        ins = insINS(interp, unit, ins, "null", regs, 1);
-        regs[0] = i1;
-        regs[1] = arg;
-        ins = insINS(interp, unit, ins, "set", regs, 2);
-        tmp = INS_LABEL(unit, loop, 0);
-        insert_ins(unit, ins, tmp);
-        ins = tmp;
-        regs[0] = i0;
-        regs[1] = i1;
-        regs[2] = next;
-        ins = insINS(interp, unit, ins, "ge", regs, 3);
-        regs[0] = py;
-        regs[1] = arg;
-        regs[2] = i0;
-        tmp = INS(interp, unit, "set", NULL, regs, 3, KEY_BIT(2), 0);
-        insert_ins(unit, ins, tmp);
-        ins = tmp;
-        regs[0] = i0;
-        ins = insINS(interp, unit, ins, "inc", regs, 1);
-    }
-    else
-        py = arg;
-    regs[0] = i3;
-    regs[1] = ic16 = mk_const(interp, str_dup("16"), 'I');
-    regs[2] = over1;
-    ins = insINS(interp, unit, ins, "eq", regs, 3);
-    regs[0] = ic16;
-    regs[1] = i3;
-    regs[2] = over;
-    ins = insINS(interp, unit, ins, "lt", regs, 3);
-    regs[0] = i3;
-    regs[1] = py;
-    ins = insINS(interp, unit, ins, "setp_ind", regs, 2);
-    regs[0] = i3;
-    ins = insINS(interp, unit, ins, "inc", regs, 1);
-
-    regs[0] = (arg->type & VT_FLAT) ? loop : next;
-    ins = insINS(interp, unit, ins, "branch", regs, 1);
-    tmp = INS_LABEL(unit, over1, 0);
-    insert_ins(unit, ins, tmp);
-    ins = tmp;
-    p3 = get_pasm_reg(interp, "P3");
-    tmp = iNEW(interp, unit, p3, str_dup("PerlArray"), NULL, 0);
-    insert_ins(unit, ins, tmp);
-    ins = tmp;
-    tmp = INS_LABEL(unit, over, 0);
-    insert_ins(unit, ins, tmp);
-    ins = tmp;
-    regs[0] = p3;
-    regs[1] = py;
-    ins = insINS(interp, unit, ins, "push", regs, 2);
-    regs[0] = i3;
-    ins = insINS(interp, unit, ins, "inc", regs, 1);
-    regs[0] = (arg->type & VT_FLAT) ? loop : next;
-    ins = insINS(interp, unit, ins, "branch", regs, 1);
-    tmp = INS_LABEL(unit, next, 0);
-    insert_ins(unit, ins, tmp);
-    ins = tmp;
-    return ins;
-}
-
-
 static Instruction*
 pcc_insert_signature(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
         struct pcc_sub_t *pcc_sub)
@@ -858,12 +475,6 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
 
 
     /*
-     * insert arguments
-     */
-    n = sub->pcc_sub->nargs;
-    ins = pcc_put_args(interp, unit, ins, sub->pcc_sub, n,
-                       1, sub->pcc_sub->args);
-    /*
      * insert get_name after args have been setup, so that
      * a possible MMD call can inspect the passed arguments
      */
@@ -930,6 +541,9 @@ move_sub:
      */
     if (tail_call) {
         if (!(meth_call && strcmp(s0->name, "\"instantiate\"") == 0)) {
+            n = sub->pcc_sub->nargs;
+            ins = pcc_get_args(interp, unit, ins, "set_args", n,
+                    sub->pcc_sub->args);
             insert_tail_call(interp, unit, ins, sub, meth_call, s0);
             return;
         }
@@ -950,11 +564,18 @@ move_sub:
     else if (!(sub->pcc_sub->flags & isNCI))
         need_cc = 1;
 
-#if 0
-    /* meth hash value: I4 */
-    ins = set_I_const(interp, unit, ins, 4, 0);
-#endif
-
+    /*
+     * insert arguments
+     */
+    n = sub->pcc_sub->nargs;
+    ins = pcc_get_args(interp, unit, ins, "set_args", n,
+                       sub->pcc_sub->args);
+    /*
+     * handle return results
+     */
+    n = sub->pcc_sub->nret;
+    ins = pcc_get_args(interp, unit, ins, "get_results", n,
+                       sub->pcc_sub->ret);
     /*
      * special case - instantiate looks like a method call
      * but is actually the instantiate object constructor opcode that
@@ -1002,12 +623,6 @@ move_sub:
             ins = ins->next;
         }
     }
-    /*
-     * handle return results
-     */
-    n = sub->pcc_sub->nret;
-    ins = pcc_get_args(interp, unit, ins, sub->pcc_sub, n,
-                       1, sub->pcc_sub->ret);
 }
 
 

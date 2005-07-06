@@ -667,8 +667,7 @@ IMCC_subst_constants(Interp *interpreter, IMC_Unit * unit, char *name,
     char b[128], fmt[64], op[20];
     const char *debug_fmt;
     int found, branched;
-    struct parrot_regs_t *bp;
-    Stack_Chunk_t *stack_p, *reg_stack;
+    parrot_context_t ctx;
 
 
     /* construct a FLOATVAL_FMT with needed precision */
@@ -751,10 +750,8 @@ IMCC_subst_constants(Interp *interpreter, IMC_Unit * unit, char *name,
         return NULL;
     }
     /* preserve registers */
-    bp = interpreter->ctx.bp;
-    reg_stack = interpreter->ctx.reg_stack;
-    interpreter->ctx.bp = new_register_frame(interpreter,
-            &interpreter->ctx.reg_stack);
+    ctx = interpreter->ctx;
+    Parrot_alloc_context(interpreter);
 
     IMCC_debug(interpreter, DEBUG_OPT1, debug_fmt, name);
     /* we construct a parrot instruction
@@ -795,7 +792,7 @@ IMCC_subst_constants(Interp *interpreter, IMC_Unit * unit, char *name,
         }
         r[1] = mk_const(interpreter, str_dup(b), r[0]->set);
         tmp = INS(interpreter, unit, "set", "", r,
-                    2, 0, 0);
+                2, 0, 0);
     }
     if (tmp) {
         IMCC_debug(interpreter, DEBUG_OPT1, "%I\n", tmp);
@@ -804,10 +801,8 @@ IMCC_subst_constants(Interp *interpreter, IMC_Unit * unit, char *name,
     /*
      * restore and recycle register frame
      */
-    stack_p = interpreter->ctx.reg_stack;
-    interpreter->ctx.bp = bp;
-    interpreter->ctx.reg_stack = reg_stack;
-    add_to_fp_cache(interpreter, stack_p);
+    Parrot_free_context(interpreter, &interpreter->ctx, 1);
+    interpreter->ctx = ctx;
     return tmp;
 }
 

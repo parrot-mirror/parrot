@@ -140,10 +140,6 @@ Returns the currently set source.
 .sub source method
     .local pmc ret
 
-    if argcP != 0 goto ERROR
-    if argcI != 0 goto ERROR
-    if argcS != 0 goto ERROR
-    if argcN != 0 goto ERROR
     classoffset $I0, self, "Stream::Base"
     add $I0, aSource
     getattribute ret, self, $I0
@@ -356,10 +352,11 @@ Returns or sets the byte buffer.
 .sub byte_buffer method
     .param pmc buf
 
+    $I1 = argcP
     classoffset $I0, self, "Stream::Base"
     add $I0, aBuffer
 
-    if argcP != 0 goto SET
+    if $I1 != 0 goto SET
 
     getattribute $P0, self, $I0
 
