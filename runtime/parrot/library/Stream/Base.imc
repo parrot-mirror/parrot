@@ -352,7 +352,7 @@ Returns or sets the byte buffer.
 .sub byte_buffer method
     .param pmc buf
 
-    $I1 = argcP
+    $I1 = get_argc
     classoffset $I0, self, "Stream::Base"
     add $I0, aBuffer
 

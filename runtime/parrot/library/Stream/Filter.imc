@@ -49,7 +49,7 @@ Sets or returns the filter sub.
     .param pmc _filter
     .local pmc ret
 
-    $I1 = argcP
+    $I1 = get_argc
     ret = _filter
     classoffset $I0, self, "Stream::Filter"
     if $I1 == 0 goto GET

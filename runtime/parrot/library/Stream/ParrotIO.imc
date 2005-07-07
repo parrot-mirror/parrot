@@ -69,7 +69,7 @@ Sets or returns the current block size.
     .local pmc temp
     .local int ret
 
-    $I1 = argcI
+    $I1 = get_argc
     classoffset $I0, self, "Stream::ParrotIO"
     if $I1 == 0 goto GET
 
