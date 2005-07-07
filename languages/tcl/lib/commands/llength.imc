@@ -5,8 +5,9 @@
 
 .sub "llength"
   .param pmc listval
-
-  if argcP != 1 goto bad_args
+  
+  $I1 = get_argc
+  if $I1 != 1 goto bad_args
 
   .local pmc retval
   .local int return_type

@@ -16,8 +16,9 @@
   call_level = $P0
 
   # Were we passed the right # of arguments? (2n+1)
-  if argcP == 0 goto error
-  $I0 = argcP % 2
+  $I1 = get_argc
+  if $I1 == 0 goto error
+  $I0 = $I1 % 2
   if $I0 != 1 goto error
 
   parser = find_global "_Tcl", "parser"
