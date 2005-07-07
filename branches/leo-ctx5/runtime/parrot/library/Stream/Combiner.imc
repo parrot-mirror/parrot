@@ -74,7 +74,7 @@ Sets (or just returns) the combiner sub.
     .param pmc _combiner
     .local pmc ret
 
-    $I1 = argcP
+    $I1 = get_argc
     classoffset $I0, self, "Stream::Combiner"
     if $I1 == 0 goto GET
     setattribute self, $I0, _combiner

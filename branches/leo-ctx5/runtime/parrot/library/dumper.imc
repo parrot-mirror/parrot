@@ -75,7 +75,7 @@ B<Note: #2> Hash keys are now sorted using C<_sort()> (library/sort.imc)
     .param string name
     .param pmc p
     .param string ident
-    $I2 = argcS
+    $I2 = get_argc
     _global_dumper()
     find_global $P2, "Data::Dumper", "global"
     if $I2 == 2 goto w_ident
