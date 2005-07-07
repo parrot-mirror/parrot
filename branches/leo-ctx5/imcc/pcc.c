@@ -180,12 +180,6 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
             tmp = INS(interp, unit, "end", NULL, regs, 0, 0, 0);
         }
         else {
-
-            ins = unit->last_ins;
-            regs[0] = get_pasm_reg(interp, "I0");  /* proto ret */
-            ins = insINS(interp, unit, ins, "null", regs, 1);
-            regs[0] = get_pasm_reg(interp, "I3");  /* no P regs */
-            ins = insINS(interp, unit, ins, "null", regs, 1);
             tmp = INS(interp, unit, "returncc", NULL, regs, 0, 0, 0);
         }
         IMCC_debug(interp, DEBUG_IMC, "add sub ret - %I\n", tmp);
