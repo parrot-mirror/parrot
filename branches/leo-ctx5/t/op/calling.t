@@ -710,20 +710,14 @@ pir_output_is(<<'CODE', <<'OUTPUT', "optional, argcX");
     print "not "
 ok:
     print "ok\n"
-    $I2 = argcI
-    print $I2
-    $I2 = argcS
-    print $I2
-    $I2 = argcP
-    print $I2
-    $I2 = argcN
+    $I2 = argcI		# XXX only one count for all
     print $I2
     print "\n"
 .end
 CODE
 hello
 ok
-1010
+2
 OUTPUT
 
 pir_output_is(<<'CODE', <<'OUTPUT', "pir uses no ops");
