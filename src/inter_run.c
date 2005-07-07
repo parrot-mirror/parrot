@@ -137,6 +137,12 @@ Parrot_runops_fromc(Parrot_Interp interpreter, PMC *sub)
     return bp;
 }
 
+/*
+ * argument call helper functions
+ *
+ * call_set_arg_X ... set passed value in slurp_array (if any) or into
+ *                    a registerwith proper argument conversion
+ */
 static void
 call_set_arg_I(Interp *interpreter, INTVAL i_arg, PMC *slurp_ar,
         int dst_typ, int d_reg)
@@ -281,6 +287,25 @@ call_set_arg_P(Interp *interpreter, PMC* p_arg, PMC *slurp_ar,
     }
 }
 
+/*
+
+=item C<opcode_t * parrot_pass_args(Interp *, struct Parrot_sub * sub,
+        struct parrot_regs_t *caller_regs, int what)>
+
+Main argument passing routine.
+
+Prelims: code segments aren't yet switched, so that the current
+constants are still that of the caller.  The destination context is
+already created and set, C<caller_regs> point to the caller's
+registers.
+
+C<what> is either C<PARROT_OP_get_params_pc> or C<PARROT_OP_get_results_pc>.
+With the former arguments are passed from the caller into a subroutine,
+the latte handles return values and yields.
+
+=cut
+
+*/
 /* XXX */
 #define CONST_STRING(i,s) const_string(i,s)
 opcode_t *
@@ -477,6 +502,9 @@ normal_pmc:
     return dst_pc + dst_n;
 }
 
+/*
+ * helper function to call a Sub from C
+ */
 
 static struct parrot_regs_t *
 runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
@@ -503,7 +531,7 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
     if (!dest)
         internal_exception(1, "Subroutine returned a NULL address");
     src_n = strlen(sig) - 1;
-    if (!src_n) {
+    if (src_n <= 0) {
         goto go;
     }
 
