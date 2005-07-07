@@ -311,16 +311,11 @@ Invokes the subroutine.
          * called from runops_fromc
          */
         if (next) {
-            /* XXX temporary hack during call syntax switch */
             if (INTERP->current_args) {
                 CONTEXT(INTERP->ctx)->current_sub = SELF;
                 CONTEXT(INTERP->ctx)->current_pc = pc;
                 pc = parrot_pass_args(INTERP, sub, caller_regs,
                         PARROT_OP_get_params_pc);
-            }
-            else {
-                /* copy function arguments */
-                copy_regs(INTERP, caller_regs);
             }
             /*
              * and copy set context variables

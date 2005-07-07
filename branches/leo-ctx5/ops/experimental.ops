@@ -389,40 +389,19 @@ op set_returns(inconst PMC) {
     goto ADDRESS(this + 2 + argc);
 }
 
-=item B<argcI(out INT)>
+=item B<get_argc(out INT)>
 
-=item B<argcS(out INT)>
-
-=item B<argcP(out INT)>
-
-=item B<argcN(out INT)>
-
-Get the count of I,S,P, or N parameters of this function call, or the
+Get the argument count of this function call, or the
 count of call results of the recent function return.
 
-Please note that these opcodes only return the state of the previous
-function call or return, therefore you might emit these opcodes
+Please note that this opcode only return the state of the previous
+function call or return, therefore you might emit this opcode
 immediately thereafter, if needed.
 
 =cut
 
-op argcI(out INT) {
-  $1 = Parrot_get_argc(interpreter, 0);
-  goto NEXT();
-}
-
-op argcS(out INT) {
-  $1 = Parrot_get_argc(interpreter, 1);
-  goto NEXT();
-}
-
-op argcP(out INT) {
-  $1 = Parrot_get_argc(interpreter, 2);
-  goto NEXT();
-}
-
-op argcN(out INT) {
-  $1 = Parrot_get_argc(interpreter, 3);
+op get_argc(out INT) {
+  $1 = interpreter->current_argc;
   goto NEXT();
 }
 

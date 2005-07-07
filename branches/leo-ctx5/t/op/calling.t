@@ -710,7 +710,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "optional, argcX");
     print "not "
 ok:
     print "ok\n"
-    $I2 = argcI		# XXX only one count for all
+    $I2 = get_argc
     print $I2
     print "\n"
 .end

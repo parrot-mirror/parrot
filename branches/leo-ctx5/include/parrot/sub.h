@@ -120,9 +120,7 @@ void mark_context(Interp *, parrot_context_t *);
 
 opcode_t * parrot_pass_args(Interp *, struct Parrot_sub * sub,
         struct parrot_regs_t *caller_regs, int what);
-INTVAL Parrot_get_argc(Interp *, int bits);
 
-void copy_regs(Interp *, struct parrot_regs_t *caller_regs);
 void mark_reg_stack(Interp *, Stack_Chunk_t *);
 void invalidate_retc_context(Interp *interpreter, parrot_context_t *ctx);
 

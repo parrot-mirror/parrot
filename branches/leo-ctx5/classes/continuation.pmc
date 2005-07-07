@@ -228,9 +228,6 @@ destination to continue execution.
                     parrot_pass_args(INTERP, (struct Parrot_sub*)cc, caller_regs,
                             PARROT_OP_get_results_pc);
             }
-            else {
-                copy_regs(INTERP, caller_regs);
-            }
         }
         else if (!cc->seg) {
             /* no address and no segment */
