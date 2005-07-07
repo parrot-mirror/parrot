@@ -6,8 +6,9 @@
 .sub "while"
   .param pmc cond_p
   .param pmc body_p
-
-  if argcP != 2 goto bad_args
+ 
+  $I1 = get_argc
+  if $I1 != 2 goto bad_args
 
   .local pmc retval, parsed_code
   .local int return_type

@@ -7,10 +7,11 @@
   .param pmc a_list
   .param pmc joiner_pmc
 
-  if argcP == 0 goto bad_args
-  if argcP > 2 goto bad_args
+  $I1 = get_argc
+  if $I1 == 0 goto bad_args
+  if $I1 > 2 goto bad_args
 
-  if argcP ==2 goto continue
+  if $I1 ==2 goto continue
   joiner_pmc = new String
   joiner_pmc = " "
 continue:
