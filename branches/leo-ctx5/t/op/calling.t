@@ -821,7 +821,7 @@ CODE
 42 42 42.2
 OUTPUT
 
-pir_output_is(<<'CODE', <<'OUTPUT', "type conversion - PMC const");
+pir_output_is(<<'CODE', <<'OUTPUT', "type conversion - PIR const");
 .const int MYCONST = -2
 .sub main @MAIN
     $P0 = new PerlString
