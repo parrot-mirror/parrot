@@ -482,10 +482,19 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
                     VTABLE_push_integer(interpreter, slurp_ar, i_arg);
                     break;
                 }
-again_i:
+
                 if (dst_typ == PARROT_ARG_INTVAL) {
                     REG_INT(dst_pc[dst_i]) = i_arg;
                     argcI++;
+                }
+                else if (dst_typ == PARROT_ARG_FLOATVAL) {
+                    REG_NUM(dst_pc[dst_i]) = (FLOATVAL)i_arg;
+                    argcN++;
+                }
+                else if (dst_typ == PARROT_ARG_STRING) {
+                    REG_STR(dst_pc[dst_i]) =
+                        string_from_int(interpreter, i_arg);
+                    argcS++;
                 }
                 else if (dst_typ == PARROT_ARG_PMC) {
                     PMC *d = pmc_new(interpreter,
@@ -494,18 +503,6 @@ again_i:
                     VTABLE_set_integer_native(interpreter, d, i_arg);
                     REG_PMC(dst_pc[dst_i]) = d;
                     argcP++;
-                }
-                else if ((dst_sig & PARROT_ARG_OPTIONAL) &&
-                        dst_i < dst_n - 1) {
-                    dst_i++;
-                    dst_sig = VTABLE_get_integer_keyed_int(interpreter,
-                            dst_signature, dst_i);
-                    dst_typ = dst_sig & PARROT_ARG_TYPE_MASK;
-                    goto again_i;
-                }
-                else {
-                    real_exception(interpreter, NULL, E_ValueError,
-                            "argument type mismatch");
                 }
                 break;
             case PARROT_ARG_STRING:
@@ -521,8 +518,18 @@ again_i:
                     VTABLE_push_string(interpreter, slurp_ar, s_arg);
                     break;
                 }
-again_s:
-                if (dst_typ == PARROT_ARG_STRING) {
+
+                if (dst_typ == PARROT_ARG_INTVAL) {
+                    REG_INT(dst_pc[dst_i]) =
+                        string_to_int(interpreter, s_arg);
+                    argcI++;
+                }
+                else if (dst_typ == PARROT_ARG_FLOATVAL) {
+                    REG_NUM(dst_pc[dst_i]) =
+                        string_to_num(interpreter, s_arg);
+                    argcN++;
+                }
+                else if (dst_typ == PARROT_ARG_STRING) {
                     REG_STR(dst_pc[dst_i]) = s_arg;
                     argcS++;
                 }
@@ -534,17 +541,6 @@ again_s:
                     REG_PMC(dst_pc[dst_i]) = d;
                     argcP++;
                 }
-                else if ((dst_sig & PARROT_ARG_OPTIONAL) &&
-                        dst_i < dst_n - 1) {
-                    dst_i++;
-                    dst_sig = VTABLE_get_integer_keyed_int(interpreter,
-                            dst_signature, dst_i);
-                    dst_typ = dst_sig & PARROT_ARG_TYPE_MASK;
-                    goto again_s;
-                }
-                else
-                    real_exception(interpreter, NULL, E_ValueError,
-                            "argument type mismatch");
                 break;
             case PARROT_ARG_FLOATVAL:
                 i_arg = src_pc[src_i];
@@ -556,10 +552,20 @@ again_s:
                 }
                 if (slurp_ar) {
                     VTABLE_push_float(interpreter, slurp_ar, f_arg);
+                    break;
+                }
+                if (dst_typ == PARROT_ARG_INTVAL) {
+                    REG_INT(dst_pc[dst_i]) = (INTVAL)f_arg;
+                    argcI++;
                 }
                 else if (dst_typ == PARROT_ARG_FLOATVAL) {
                     REG_NUM(dst_pc[dst_i]) = f_arg;
                     argcN++;
+                }
+                else if (dst_typ == PARROT_ARG_STRING) {
+                    REG_STR(dst_pc[dst_i]) =
+                        string_from_num(interpreter, f_arg);
+                    argcS++;
                 }
                 else if (dst_typ == PARROT_ARG_PMC) {
                     PMC *d = pmc_new(interpreter,
@@ -569,9 +575,6 @@ again_s:
                     REG_PMC(dst_pc[dst_i]) = d;
                     argcP++;
                 }
-                else
-                    real_exception(interpreter, NULL, E_ValueError,
-                            "argument type mismatch");
                 break;
             case PARROT_ARG_PMC:
                 i_arg = src_pc[src_i];
