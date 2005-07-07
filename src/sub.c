@@ -178,9 +178,10 @@ swap_context(Interp *interpreter, struct PMC *sub)
 
         PObj_get_FLAGS(sub) |= SUB_FLAG_CORO_FF;
         /* copy args from interpreter */
-        copy_regs(interpreter, ctx.bp);
-        /* some code still needs this */
-        REG_PMC(0) = BP_REG_PMC(ctx.bp, 0);
+        if (interpreter->current_args) {
+            parrot_pass_args(interpreter, (struct Parrot_sub*)co, ctx.bp,
+                    PARROT_OP_get_params_pc);
+        }
     }
     /* if calling the coroutine */
     else if (!(PObj_get_FLAGS(sub) & SUB_FLAG_CORO_FF)) {
@@ -192,7 +193,8 @@ swap_context(Interp *interpreter, struct PMC *sub)
         ctx.rctx = CONTEXT(ctx)->prev;
         interpreter->ctx = ctx;
         /* yield values */
-        copy_regs(interpreter, co->ctx.bp);
+        parrot_pass_args(interpreter, (struct Parrot_sub*)co, co->ctx.bp,
+                    PARROT_OP_get_results_pc);
     }
 }
 
@@ -331,60 +333,6 @@ new_ret_continuation_pmc(Interp * interpreter, opcode_t * address)
     continuation = pmc_new(interpreter, enum_class_RetContinuation);
     VTABLE_set_pointer(interpreter, continuation, address);
     return continuation;
-}
-#undef PREV_RETC
-
-/*
-
-=item C<void copy_regs(Interp *, struct parrot_regs_t *caller_regs)>
-
-Copy function arguments or return values from C<caller_regs> to interpreter.
-
-=cut
-
-*/
-
-void
-copy_regs(Interp *interpreter, struct parrot_regs_t *bp)
-{
-    int i, n, proto, overflow;
-
-    proto = BP_REG_INT(bp, 0);
-    overflow = 0;
-    if (proto) {
-        n = BP_REG_INT(bp, 1);
-        overflow = n == 11;
-        for (i = 0; i < 5 + n; ++i)
-            REG_INT(i) = BP_REG_INT(bp, i);
-        n = BP_REG_INT(bp, 2);
-        overflow |= n == 11;
-        for (i = 0; i < n; ++i)
-            REG_STR(i + 5) = BP_REG_STR(bp, i + 5);
-        n = BP_REG_INT(bp, 3);
-        overflow |= n == 11;
-        for (i = 0; i < n; ++i)
-            REG_PMC(i + 5) = BP_REG_PMC(bp,i + 5);
-        n = BP_REG_INT(bp, 4);
-        overflow |= n == 11;
-        for (i = 0; i < n; ++i)
-            REG_NUM(i + 5) = BP_REG_NUM(bp, i + 5);
-    }
-    else {
-        REG_INT(0) = 0;
-        REG_INT(3) = n = BP_REG_INT(bp, 3);
-        overflow = n == 11;
-        for (i = 0; i < n; ++i)
-            REG_PMC(i + 5) = BP_REG_PMC(bp,i + 5);
-    }
-    if (overflow)
-        REG_PMC(3) = BP_REG_PMC(bp,3);
-}
-
-INTVAL
-Parrot_get_argc(Interp *interpreter, int bits)
-{
-    INTVAL res = (interpreter->current_argc >> (bits * 8)) & 0xff;
-    return res;
 }
 
 /*
