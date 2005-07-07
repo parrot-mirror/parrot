@@ -16,7 +16,7 @@ Tests Parrot calling conventions.
 
 =cut
 
-use Parrot::Test tests => 29;
+use Parrot::Test tests => 30;
 use Test::More;
 
 output_is(<<'CODE', <<'OUTPUT', "set_args - parsing");
@@ -819,4 +819,19 @@ CODE
 42 42 42
 42.0 42.0 42.2
 42 42 42.2
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "type conversion - PMC const");
+.const int MYCONST = -2
+.sub main @MAIN
+    $P0 = new PerlString
+    "foo"(MYCONST)
+.end
+.sub "foo"
+    .param string str1 :optional
+    print str1
+    print "\n"
+.end
+CODE
+-2
 OUTPUT
