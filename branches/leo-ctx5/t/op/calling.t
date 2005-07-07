@@ -16,7 +16,7 @@ Tests Parrot calling conventions.
 
 =cut
 
-use Parrot::Test tests => 28;
+use Parrot::Test tests => 29;
 use Test::More;
 
 output_is(<<'CODE', <<'OUTPUT', "set_args - parsing");
@@ -797,4 +797,32 @@ foo
 bar
 from_foo
 bar_ret
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "type conversion - native");
+.sub main @MAIN
+    foo(42, "42", 42.20)
+.end
+.sub foo
+    get_params "(0,0,0)", $I0, $I1, $I2
+    print_item $I0
+    print_item $I1
+    print_item $I2
+    print_newline
+    # yeah fetch args again
+    get_params "(0,0,0)", $N0, $N1, $N2
+    print_item $N0
+    print_item $N1
+    print_item $N2
+    print_newline
+    get_params "(0,0,0)", $S0, $S1, $S2
+    print_item $S0
+    print_item $S1
+    print_item $S2
+    print_newline
+.end
+CODE
+42 42 42
+42.0 42.0 42.2
+42 42 42.2
 OUTPUT
