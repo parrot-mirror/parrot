@@ -16,7 +16,7 @@ Tests Parrot calling conventions.
 
 =cut
 
-use Parrot::Test tests => 30;
+use Parrot::Test tests => 32;
 use Test::More;
 
 output_is(<<'CODE', <<'OUTPUT', "set_args - parsing");
@@ -834,4 +834,64 @@ pir_output_is(<<'CODE', <<'OUTPUT', "type conversion - PIR const");
 .end
 CODE
 -2
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "optional args, :opt_count");
+.sub main @MAIN
+    $P0 = new String
+    $P0 = "hello\n"
+    foo($P0)
+    foo()
+.end
+.sub foo
+    .param pmc p1  :optional
+    .param int i1  :opt_count
+
+    if_null p1, skip
+    print p1
+skip:
+    print i1
+    print "\n"
+.end
+CODE
+hello
+1
+0
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "optional multiple :opt_count");
+.sub main @MAIN
+    $P0 = new String
+    $P0 = "ok 1\n"
+    foo($P0, "ok 2\n", "ok 3\n")
+.end
+.sub foo
+    .param pmc p1  :optional
+    .param pmc p2  :optional
+    .param int i12 :opt_count
+    .param pmc p3  :optional
+    .param int i3  :opt_count
+    .param pmc p4  :optional
+    .param int i4  :opt_count
+
+    print p1
+    print p2
+    print p3
+    if_null p4, ok
+    print "not "
+ok:
+    print "ok 4\n"
+    print_item i12
+    print_item i3
+    print_item i4
+    print_newline
+.end
+
+
+CODE
+ok 1
+ok 2
+ok 3
+ok 4
+2 1 0
 OUTPUT
