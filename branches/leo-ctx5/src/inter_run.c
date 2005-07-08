@@ -324,7 +324,7 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
     PMC *slurp_ar;
     const char *action;
     parrot_context_t old_ctx;
-    int opt_count_reg, opt_so_far;
+    int opt_so_far;
 
     _array = CONST_STRING(interpreter, "array");
     constants = interpreter->code->const_table->constants;
@@ -543,7 +543,7 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
     opcode_t offset, *dest;
     struct parrot_regs_t *bp;
     int i;
-    PMC *ret_c, *param_signature, *slurp_ar;
+    PMC *ret_c, *dst_signature, *slurp_ar;
     parrot_context_t old_ctx;
     struct PackFile_Constant **constants;
     INTVAL src_n, dst_i, dst_n, dst_typ, dst_sig;
@@ -552,6 +552,7 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
     FLOATVAL f_arg;
     PMC *p_arg;
     STRING *s_arg;
+    int opt_so_far;
 
     old_ctx = interpreter->ctx;
     ret_c = new_ret_continuation_pmc(interpreter, NULL);
@@ -572,12 +573,13 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
 
     constants = interpreter->code->const_table->constants;
     dst_pc = dest;
-    param_signature = constants[dst_pc[1]]->u.key;
-    assert(PObj_is_PMC_TEST(param_signature));
-    assert(param_signature->vtable->base_type == enum_class_FixedIntegerArray);
-    dst_n = VTABLE_elements(interpreter, param_signature);
+    dst_signature = constants[dst_pc[1]]->u.key;
+    assert(PObj_is_PMC_TEST(dst_signature));
+    assert(dst_signature->vtable->base_type == enum_class_FixedIntegerArray);
+    dst_n = VTABLE_elements(interpreter, dst_signature);
 
     slurp_ar = NULL;
+    opt_so_far = 0;
     dst_pc += 2;
 
     for (++sig, dst_i = 0; *sig && dst_i < dst_n; ++sig, ++dst_i) {
@@ -586,7 +588,7 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
              *      result array
              */
             dst_sig = VTABLE_get_integer_keyed_int(interpreter,
-                    param_signature, dst_i);
+                    dst_signature, dst_i);
             dst_typ = dst_sig & PARROT_ARG_TYPE_MASK;
             if (dst_sig & PARROT_ARG_SLURPY_ARRAY) {
                 /* create array */
@@ -595,6 +597,20 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
                             enum_class_ResizablePMCArray));
                 REG_PMC(dst_pc[dst_i]) = slurp_ar;
             }
+        }
+        if (dst_sig & PARROT_ARG_OPTIONAL) {
+            ++opt_so_far;
+        }
+        else if (dst_sig & PARROT_ARG_OPT_COUNT) {
+            --sig;    /* don't consume an argument */
+            if (dst_typ != PARROT_ARG_INTVAL)
+                real_exception(interpreter, NULL, E_ValueError,
+                        ":opt_count is not an int");
+            call_set_arg_I(interpreter, opt_so_far, NULL, dst_typ,
+                    dst_pc[dst_i]);
+            opt_so_far = 0;
+            continue;
+
         }
         switch (*sig) {
             case 'v':       /* void func, no params */
@@ -625,6 +641,19 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
                         *sig);
         }
     }
+    for (; dst_i < dst_n; ++dst_i) {
+        dst_sig = VTABLE_get_integer_keyed_int(interpreter,
+                dst_signature, dst_i);
+        dst_typ = dst_sig & PARROT_ARG_TYPE_MASK;
+        if (dst_sig & PARROT_ARG_OPT_COUNT) {
+            if (dst_typ != PARROT_ARG_INTVAL)
+                real_exception(interpreter, NULL, E_ValueError,
+                        ":opt_count is not an int");
+            call_set_arg_I(interpreter, opt_so_far, NULL, dst_typ,
+                    dst_pc[dst_i]);
+            opt_so_far = 0;
+        }
+    }
     /*
      * check for arg count mismatch
      */
@@ -635,7 +664,7 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
     }
     else if (dst_i != dst_n) {
         dst_sig = VTABLE_get_integer_keyed_int(interpreter,
-                param_signature, dst_i);
+                dst_signature, dst_i);
         if (!(dst_sig & (PARROT_ARG_OPTIONAL|PARROT_ARG_SLURPY_ARRAY))) {
             real_exception(interpreter, NULL, E_ValueError,
                     "too few arguments passed (%d) - %d params expected",
