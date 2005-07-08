@@ -106,6 +106,8 @@ pcc_get_args(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
     strcpy(buf, "\"(");
     for (i = 0; i < n; i++) {
         arg = args[i];
+        if (arg->type & VT_CONSTP)
+            arg = arg->reg;
         regs[i + 1] = arg;
         flags = 0;
         if (arg->type & VT_FLAT) {
