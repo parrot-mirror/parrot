@@ -252,6 +252,8 @@ init_context(Interp *interpreter, parrot_context_t *oldp)
     memcpy(CONTEXT(interpreter->ctx),
            CONTEXT(old), sizeof(struct Parrot_Context));
     CONTEXT(interpreter->ctx)->prev = old.rctx;
+    CONTEXT(interpreter->ctx)->current_results = NULL;
+    CONTEXT(interpreter->ctx)->current_params = NULL;
 
     /* NULL out registers
      *
