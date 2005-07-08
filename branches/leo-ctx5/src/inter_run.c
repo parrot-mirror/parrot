@@ -324,6 +324,7 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
     PMC *slurp_ar;
     const char *action;
     parrot_context_t old_ctx;
+    int opt_count_reg, opt_so_far;
 
     _array = CONST_STRING(interpreter, "array");
     constants = interpreter->code->const_table->constants;
@@ -369,6 +370,7 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
     dst_n = VTABLE_elements(interpreter, dst_signature);
 
     slurp_ar = NULL;
+    opt_so_far = 0;
     for (src_i = dst_i = 0, src_pc += 2, dst_pc += 2;
             src_i < src_n && dst_i < dst_n; ++src_i, ++dst_i) {
         src_sig = VTABLE_get_integer_keyed_int(interpreter,
@@ -387,6 +389,20 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
                             enum_class_ResizablePMCArray));
                 REG_PMC(dst_pc[dst_i]) = slurp_ar;
             }
+        }
+        if (dst_sig & PARROT_ARG_OPTIONAL) {
+            ++opt_so_far;
+        }
+        else if (dst_sig & PARROT_ARG_OPT_COUNT) {
+            --src_i;    /* don't consume an argument */
+            if (dst_typ != PARROT_ARG_INTVAL)
+                real_exception(interpreter, NULL, E_ValueError,
+                        ":opt_count is not an int");
+            call_set_arg_I(interpreter, opt_so_far, NULL, dst_typ,
+                    dst_pc[dst_i]);
+            opt_so_far = 0;
+            continue;
+
         }
         switch (src_sig & PARROT_ARG_TYPE_MASK) {
             /* TODO verify dst_signature */
@@ -476,6 +492,20 @@ normal_pmc:
         if (slurp_ar)
             --dst_i;
     }
+    interpreter->current_argc = dst_i; /* FIXME */
+    for (; dst_i < dst_n; ++dst_i) {
+        dst_sig = VTABLE_get_integer_keyed_int(interpreter,
+                dst_signature, dst_i);
+        dst_typ = dst_sig & PARROT_ARG_TYPE_MASK;
+        if (dst_sig & PARROT_ARG_OPT_COUNT) {
+            if (dst_typ != PARROT_ARG_INTVAL)
+                real_exception(interpreter, NULL, E_ValueError,
+                        ":opt_count is not an int");
+            call_set_arg_I(interpreter, opt_so_far, NULL, dst_typ,
+                    dst_pc[dst_i]);
+            opt_so_far = 0;
+        }
+    }
 #if 0
     /*
      * check for arg count mismatch
@@ -498,7 +528,6 @@ normal_pmc:
         }
     }
 #endif
-    interpreter->current_argc = dst_i; /* FIXME */
     /* skip the get_params opcode - all done here */
     return dst_pc + dst_n;
 }

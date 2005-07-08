@@ -334,7 +334,7 @@ begin_return_or_yield(Interp *interp, int yield)
 
 %token <t> PRAGMA FASTCALL N_OPERATORS HLL
 %token <t> CALL GOTO ARG IF UNLESS END SAVEALL RESTOREALL
-%token <t> ADV_FLAT ADV_SLURPY ADV_OPTIONAL
+%token <t> ADV_FLAT ADV_SLURPY ADV_OPTIONAL ADV_OPT_COUNT
 %token <t> NEW NEWSUB NEWCLOSURE NEWCOR NEWCONT
 %token <t> NAMESPACE ENDNAMESPACE CLASS ENDCLASS FIELD DOT_METHOD
 %token <t> SUB SYM LOCAL CONST
@@ -792,6 +792,7 @@ paramtype_list:
 paramtype:
      ADV_SLURPY                        {  $$ = VT_FLAT;   }
    | ADV_OPTIONAL                      {  $$ = VT_OPTIONAL; }
+   | ADV_OPT_COUNT                     {  $$ = VT_OPT_COUNT; }
    ;
 
 
