@@ -144,7 +144,7 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     SymReg *sub;
     int nargs;
     Instruction *tmp;
-    SymReg *i0, *regs[IMCC_MAX_REGS], *label1, *label2;
+    SymReg *regs[IMCC_MAX_REGS];
     char buf[128];
 
     sub = ins->r[1];
@@ -152,11 +152,8 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     /* Don't generate any parameter checking code if there
      * are no named arguments.
      */
-    if (sub->pcc_sub->nargs) {
-        i0 = NULL;
-        label1 = label2 = NULL;
-
-        nargs = sub->pcc_sub->nargs;
+    nargs = sub->pcc_sub->nargs;
+    if (nargs) {
         ins = pcc_get_args(interp, unit, ins, "get_params", nargs,
                            sub->pcc_sub->args);
     }

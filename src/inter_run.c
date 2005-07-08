@@ -349,8 +349,21 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
         CONTEXT(interpreter->ctx)->current_results = NULL;
         args_op = PARROT_OP_set_returns_pc;
         src_pc = interpreter->current_returns;
-        if (!src_pc)    /* no returns */
-            return NULL;
+        interpreter->current_returns = NULL;
+        if (!src_pc) {    /* no returns */
+            /* continuation call with args
+             *
+             * XXX move current_args into context the first time
+             *     and use the context var for further get_params
+             *     so that we can clean current_args and make this
+             *     less ambiguous
+             */
+            src_pc = interpreter->current_args;
+            if (!src_pc)
+                return NULL;
+            args_op = PARROT_OP_set_args_pc;
+        }
+        interpreter->current_args = NULL;
         action = "results";
     }
 
@@ -693,6 +706,7 @@ set_retval(Parrot_Interp interpreter, int sig_ret,
     if (!sig_ret || sig_ret == 'v')
         return NULL;
     src_pc = interpreter->current_returns;
+    interpreter->current_returns = NULL;
     if (src_pc[0] != PARROT_OP_set_returns_pc)
         real_exception(interpreter, NULL, E_ValueError,
                 "no set_returns in sub");
