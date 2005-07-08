@@ -65,13 +65,14 @@ Sets or returns the current block size.
 =cut
 
 .sub blockSize method
-    .param int bs
+    .param int bs :optional
+    .param int has_bs :opt_count
+
     .local pmc temp
     .local int ret
 
-    $I1 = get_argc
     classoffset $I0, self, "Stream::ParrotIO"
-    if $I1 == 0 goto GET
+    unless has_bs goto GET
 
     temp = new .PerlInt
     temp = bs

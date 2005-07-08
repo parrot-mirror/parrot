@@ -704,20 +704,20 @@ pir_output_is(<<'CODE', <<'OUTPUT', "optional, argcX");
     invokecc $P1
 .end
 .sub foo
-    get_params "(0,0,0x20,0x20,0x20,0x20)", $P0, $I0, $P1, $S1, $I1, $N1
+    .local int opt_argc
+    get_params "(0,0,0x20,0x20,0x20,0x20,0x40)", $P0, $I0, $P1, $S1, $I1, $N1, opt_argc
     print $P0
     if_null $P1, ok
     print "not "
 ok:
     print "ok\n"
-    $I2 = get_argc
-    print $I2
+    print opt_argc
     print "\n"
 .end
 CODE
 hello
 ok
-2
+0
 OUTPUT
 
 pir_output_is(<<'CODE', <<'OUTPUT', "pir uses no ops");
