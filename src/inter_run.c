@@ -328,8 +328,10 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
     _array = CONST_STRING(interpreter, "array");
     constants = interpreter->code->const_table->constants;
     if (what == PARROT_OP_get_params_pc) {
-        if (CONTEXT(interpreter->ctx)->current_params)
+        if (CONTEXT(interpreter->ctx)->current_params) {
             dst_pc = CONTEXT(interpreter->ctx)->current_params;
+            CONTEXT(interpreter->ctx)->current_params = NULL;
+        }
         else if (*sub->address != what)
             return sub->address;
         else
@@ -339,16 +341,15 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
             return sub->address;
         args_op = PARROT_OP_set_args_pc;
 
-        CONTEXT(interpreter->ctx)->current_params = dst_pc;
         action = "params";
     }
     else {
         dst_pc = CONTEXT(interpreter->ctx)->current_results;
+        CONTEXT(interpreter->ctx)->current_results = NULL;
         args_op = PARROT_OP_set_returns_pc;
         src_pc = interpreter->current_returns;
         if (!src_pc)    /* no returns */
             return NULL;
-        CONTEXT(interpreter->ctx)->current_results = NULL;
         action = "results";
     }
 

@@ -289,7 +289,7 @@ Invokes the subroutine.
                 CONTEXT(INTERP->ctx)->current_sub = SELF;
                 CONTEXT(INTERP->ctx)->current_pc = pc;
                 CONTEXT(INTERP->ctx)->current_params = NULL;
-                if (INTERP->current_args) {
+                if (*pc == PARROT_OP_get_params_pc) {
                     pc = parrot_pass_args(INTERP, sub, caller_regs,
                             PARROT_OP_get_params_pc);
                 }
@@ -311,7 +311,7 @@ Invokes the subroutine.
          * called from runops_fromc
          */
         if (next) {
-            if (INTERP->current_args) {
+            if (*pc == PARROT_OP_get_params_pc) {
                 CONTEXT(INTERP->ctx)->current_sub = SELF;
                 CONTEXT(INTERP->ctx)->current_pc = pc;
                 pc = parrot_pass_args(INTERP, sub, caller_regs,
