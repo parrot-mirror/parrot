@@ -71,12 +71,12 @@ Sets (or just returns) the combiner sub.
 =cut
 
 .sub combiner method
-    .param pmc _combiner
+    .param pmc _combiner :optional
+    .param int has_combiner :opt_count
     .local pmc ret
 
-    $I1 = get_argc
     classoffset $I0, self, "Stream::Combiner"
-    if $I1 == 0 goto GET
+    unless has_combiner goto GET
     setattribute self, $I0, _combiner
     ret = _combiner
     branch END

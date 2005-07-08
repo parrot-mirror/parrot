@@ -350,13 +350,13 @@ Returns or sets the byte buffer.
 =cut
 
 .sub byte_buffer method
-    .param pmc buf
+    .param pmc buf :optional
+    .param int has_buf :opt_count
 
-    $I1 = get_argc
     classoffset $I0, self, "Stream::Base"
     add $I0, aBuffer
 
-    if $I1 != 0 goto SET
+    if has_buf goto SET
 
     getattribute $P0, self, $I0
 
