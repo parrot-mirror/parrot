@@ -219,14 +219,9 @@ destination to continue execution.
         pc = cc->address;
         if (pc) {
             if (CONTEXT(INTERP->ctx)->current_results) {
-                /* possibly a true continuation that acts as a Sub */
-                if (*pc == PARROT_OP_get_params_pc)
-                    pc = parrot_pass_args(INTERP, (struct Parrot_sub*)cc,
-                            caller_regs,
-                            PARROT_OP_get_params_pc);
-                else
-                    parrot_pass_args(INTERP, (struct Parrot_sub*)cc, caller_regs,
-                            PARROT_OP_get_results_pc);
+                parrot_pass_args(INTERP, (struct Parrot_sub*)cc,
+                        caller_regs,
+                        PARROT_OP_get_results_pc);
             }
         }
         else if (!cc->seg) {
