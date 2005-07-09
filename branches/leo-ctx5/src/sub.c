@@ -20,7 +20,6 @@ Subroutines, continuations, co-routines and other fun stuff...
 
 #include "parrot/parrot.h"
 #include "parrot/method_util.h"
-#include "parrot/oplib/ops.h"
 
 /*
 
@@ -79,122 +78,6 @@ mark_context(Interp* interpreter, parrot_context_t* ctxp)
         obj = (PObj*) BP_REG_STR(regs, i);
         if (obj)
             pobject_lives(interpreter, obj);
-    }
-}
-
-/*
-
-=item C<static void
-prepend_stack( struct Stack_Chunk **interp_stack,
-                struct Stack_Chunk **ctx_stack,
-                struct Stack_Chunk *saved_stack,
-                struct Stack_Chunk *saved_base)>
-
-The final C<ctx_stack> = C<interp_stack> + C<saved_stack>.
-C<interp_stack> and C<ctx_stack> are already swapped here.
-
-=cut
-
-*/
-
-static void
-prepend_stack( struct Stack_Chunk **interp_stack,
-                struct Stack_Chunk **ctx_stack,
-                struct Stack_Chunk *saved_stack,
-                struct Stack_Chunk *saved_base)
-{
-    /*
-     * new interpreter stack is the saved coroutine stack top
-     * with the base pointing to the old top
-     */
-    saved_base->prev = *ctx_stack;
-
-    *interp_stack = saved_stack;
-}
-
-/*
-
-=item C<static void
-restore_stack( struct Stack_Chunk **interp_stack,
-                struct Stack_Chunk **ctx_stack,
-                struct Stack_Chunk **saved_stack,
-                struct Stack_Chunk *saved_base)>
-
-Undo C<prepend_stack()>.
-C<interp_stack> and C<ctx_stack> are already swapped here.
-
-=cut
-
-*/
-
-static void
-restore_stack( struct Stack_Chunk **interp_stack,
-                struct Stack_Chunk **ctx_stack,
-                struct Stack_Chunk **saved_stack,
-                struct Stack_Chunk *saved_base)
-{
-    *saved_stack = *ctx_stack;
-    /*
-     * the coroutine stack ends here
-     */
-    saved_base->prev = saved_base;
-}
-
-/*
-
-=item C<void
-swap_context(Interp *interp, struct PMC *sub)>
-
-Swaps the context.
-
-=cut
-
-*/
-
-void
-swap_context(Interp *interpreter, struct PMC *sub)
-{
-    struct Parrot_coro* co = PMC_coro(sub);
-    parrot_context_t ctx;
-
-    ctx = interpreter->ctx;
-
-    if (!co->ctx.bp) {
-        PMC *pad;
-        /*
-         * first time set current sub, cont, object
-         */
-        Parrot_alloc_context(interpreter);
-        co->ctx = interpreter->ctx;
-        pad = scratchpad_get_current(interpreter);
-        if (pad) {
-            stack_push(interpreter, &CONTEXT(co->ctx)->pad_stack, pad,
-                    STACK_ENTRY_PMC, STACK_CLEANUP_NULL);
-        }
-        CONTEXT(co->ctx)->current_sub = sub;
-        CONTEXT(co->ctx)->current_cont = interpreter->current_cont;
-        CONTEXT(co->ctx)->current_object = NULL;
-        interpreter->current_object = NULL;
-
-        PObj_get_FLAGS(sub) |= SUB_FLAG_CORO_FF;
-        /* copy args from interpreter */
-        if (interpreter->current_args) {
-            parrot_pass_args(interpreter, (struct Parrot_sub*)co, ctx.bp,
-                    PARROT_OP_get_params_pc);
-        }
-    }
-    /* if calling the coroutine */
-    else if (!(PObj_get_FLAGS(sub) & SUB_FLAG_CORO_FF)) {
-        PObj_get_FLAGS(sub) |= SUB_FLAG_CORO_FF;
-        interpreter->ctx = co->ctx;
-    }
-    else {
-        PObj_get_FLAGS(sub) &= ~SUB_FLAG_CORO_FF;
-        ctx.rctx = CONTEXT(ctx)->prev;
-        interpreter->ctx = ctx;
-        /* yield values */
-        parrot_pass_args(interpreter, (struct Parrot_sub*)co, co->ctx.bp,
-                    PARROT_OP_get_results_pc);
     }
 }
 

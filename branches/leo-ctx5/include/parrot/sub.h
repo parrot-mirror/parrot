@@ -115,7 +115,6 @@ struct Parrot_cont * new_ret_continuation(Interp * interp);
 
 PMC * new_ret_continuation_pmc(Interp *, opcode_t * address);
 
-void swap_context(Interp *, PMC *);
 void mark_context(Interp *, parrot_context_t *);
 
 opcode_t * parrot_pass_args(Interp *, struct Parrot_sub * sub,
