@@ -363,7 +363,7 @@ op get_params(inconst PMC) {
     INTVAL argc;
     struct Parrot_sub * sub = PMC_sub(CONTEXT(interpreter->ctx)->current_sub);
 
-    CONTEXT(interpreter->ctx)->current_params = this;
+    interpreter->current_params = this;
     if (sub->address != this) {
 	struct parrot_regs_t *caller_regs;
 	PMC *cont_pmc = CONTEXT(interpreter->ctx)->current_cont;

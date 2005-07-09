@@ -329,17 +329,19 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
     _array = CONST_STRING(interpreter, "array");
     constants = interpreter->code->const_table->constants;
     if (what == PARROT_OP_get_params_pc) {
-        if (CONTEXT(interpreter->ctx)->current_params) {
-            dst_pc = CONTEXT(interpreter->ctx)->current_params;
-            CONTEXT(interpreter->ctx)->current_params = NULL;
+        dst_pc = interpreter->current_params;
+        if (dst_pc) {
+            /* called from the get_params opcode */
+            src_pc = CONTEXT(interpreter->ctx)->current_args;
         }
-        else if (*sub->address != what)
-            return sub->address;
-        else
+        else {
+            /* first op of sub is a get_params */
             dst_pc = sub->address;
-        src_pc = interpreter->current_args;
-        if (!src_pc)    /* no args */
-            return sub->address;
+            src_pc = interpreter->current_args;
+            CONTEXT(interpreter->ctx)->current_args = src_pc;
+        }
+        interpreter->current_params = NULL;
+        interpreter->current_args = NULL;
         args_op = PARROT_OP_set_args_pc;
 
         action = "params";
@@ -351,6 +353,7 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
         src_pc = interpreter->current_returns;
         interpreter->current_returns = NULL;
         if (!src_pc) {    /* no returns */
+            return NULL;
             /* continuation call with args
              *
              * XXX move current_args into context the first time
@@ -361,9 +364,9 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
             src_pc = interpreter->current_args;
             if (!src_pc)
                 return NULL;
+            interpreter->current_args = NULL;
             args_op = PARROT_OP_set_args_pc;
         }
-        interpreter->current_args = NULL;
         action = "results";
     }
 
@@ -373,15 +376,19 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
     assert(dst_signature->vtable->base_type == enum_class_FixedIntegerArray);
 
     /* we point to the set_args opcode */
-    assert(*src_pc == args_op);
-    src_signature = constants[src_pc[1]]->u.key;
-    assert(PObj_is_PMC_TEST(src_signature));
-    assert(src_signature->vtable->base_type == enum_class_FixedIntegerArray);
+    if (!src_pc) {    /* no args process optionals */
+        src_n = 0;
+    }
+    else {
+        assert(*src_pc == args_op);
+        src_signature = constants[src_pc[1]]->u.key;
+        assert(PObj_is_PMC_TEST(src_signature));
+        assert(src_signature->vtable->base_type == enum_class_FixedIntegerArray);
 
-    src_n = VTABLE_elements(interpreter, src_signature);
+        src_n = VTABLE_elements(interpreter, src_signature);
+    }
     /* never get more then the caller expects */
     dst_n = VTABLE_elements(interpreter, dst_signature);
-
     slurp_ar = NULL;
     opt_so_far = 0;
     for (src_i = dst_i = 0, src_pc += 2, dst_pc += 2;
@@ -575,10 +582,9 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
     if (!dest)
         internal_exception(1, "Subroutine returned a NULL address");
     src_n = strlen(sig) - 1;
-    if (src_n <= 0) {
-        goto go;
-    }
 
+    if (src_n <= 0)
+        goto go;
     if (dest[0] != PARROT_OP_get_params_pc) {
         real_exception(interpreter, NULL, E_ValueError,
                 "no get_params in sub");
@@ -684,6 +690,8 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
                     src_n, dst_n);
         }
     }
+
+    dest += dst_n + 2;
 go:
     bp = interpreter->ctx.bp;
     offset = dest - interpreter->code->base.data;
