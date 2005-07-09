@@ -182,6 +182,7 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
             tmp = INS(interp, unit, "end", NULL, regs, 0, 0, 0);
         }
         else {
+            pcc_get_args(interp, unit, unit->last_ins, "set_returns", 0, NULL);
             tmp = INS(interp, unit, "returncc", NULL, regs, 0, 0, 0);
         }
         IMCC_debug(interp, DEBUG_IMC, "add sub ret - %I\n", tmp);

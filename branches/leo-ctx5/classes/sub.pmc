@@ -319,11 +319,11 @@ Invokes the subroutine.
             else
                 CONTEXT(INTERP->ctx)->current_args =
                     INTERP->current_args;
-            /*
-             * and copy set context variables
-             */
-            CONTEXT(INTERP->ctx)->current_cont = ccont;
         }
+        /*
+         * and copy set context variables
+         */
+        CONTEXT(INTERP->ctx)->current_cont = ccont;
 is_tail_call:
         CONTEXT(INTERP->ctx)->current_sub = SELF;
         if (!PMC_IS_NULL(INTERP->current_object)) {

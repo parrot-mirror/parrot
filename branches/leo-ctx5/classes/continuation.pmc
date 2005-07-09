@@ -223,9 +223,11 @@ destination to continue execution.
                         caller_regs,
                         PARROT_OP_get_results_pc);
             }
+            INTERP->current_returns = NULL;
         }
-        else if (!cc->seg) {
-            /* no address and no segment */
+        INTERP->current_args = NULL;
+        /* no address and no segment */
+        if (!cc->seg) {
             return NULL;
         }
         if (INTERP->code != cc->seg) {
