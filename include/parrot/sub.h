@@ -121,7 +121,7 @@ opcode_t * parrot_pass_args(Interp *, struct Parrot_sub * sub,
         struct parrot_regs_t *caller_regs, int what);
 
 void mark_reg_stack(Interp *, Stack_Chunk_t *);
-void invalidate_retc_context(Interp *interpreter, parrot_context_t *ctx);
+void invalidate_retc_context(Interp *interpreter, PMC *cont);
 
 STRING* Parrot_full_sub_name(Interp* interpreter, PMC* sub);
 int Parrot_Context_info(Interp *interpreter, parrot_context_t *, struct Parrot_Context_info *);

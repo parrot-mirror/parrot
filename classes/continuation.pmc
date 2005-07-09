@@ -69,7 +69,7 @@ Initializes the continuation.
          * continuation. To avoid that all return continuations are
          * converted to true continuations.
          */
-        invalidate_retc_context(INTERP, &INTERP->ctx);
+        invalidate_retc_context(INTERP, SELF);
     }
 
 /*

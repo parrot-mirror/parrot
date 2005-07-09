@@ -74,11 +74,8 @@ the GC gets at them.
 
 */
     PMC* clone() {
-        PMC *ret = SUPER();
-        ret->vtable = Parrot_base_vtables[enum_class_Continuation];
-        SELF->vtable = Parrot_base_vtables[enum_class_Continuation];
-        invalidate_retc_context(INTERP, &PMC_cont(ret)->ctx);
-        return ret;
+        invalidate_retc_context(INTERP, SELF);
+        return SUPER();
     }
 /*
 
