@@ -458,19 +458,17 @@ setup_argv(Interp *interpreter, int argc, char ** argv)
     STRING *signature;
     static opcode_t opcodes[3];
     int const_nr;
-    struct Parrot_sub * sub;
-
 
     if (Interp_debug_TEST(interpreter, PARROT_START_DEBUG_FLAG)) {
         PIO_eprintf(interpreter,
-                "*** Parrot VM: Setting up ARGV array in P5.  Current argc: %d ***\n",
+                "*** Parrot VM: Setting up ARGV array."
+                " Current argc: %d ***\n",
                 argc);
     }
 
     /* XXX @ARGS should propably be a ResizableStringArray */
-    userargv = pmc_new_noinit(interpreter, enum_class_SArray);
+    REG_PMC(5) = userargv = pmc_new_noinit(interpreter, enum_class_SArray);
     /* immediately anchor pmc to root set */
-    REG_PMC(5) = userargv;
     VTABLE_set_pmc_keyed_int(interpreter, interpreter->iglobals,
             (INTVAL)IGLOBALS_ARGV_LIST, userargv);
     VTABLE_init(interpreter, userargv);
@@ -492,8 +490,7 @@ setup_argv(Interp *interpreter, int argc, char ** argv)
      * will terminate the main run loop
      * XXX for now still place in P1 until return opcodes are everywhere
      */
-    REG_PMC(1) =
-        CONTEXT(interpreter->ctx)->current_cont =
+    CONTEXT(interpreter->ctx)->current_cont =
         new_ret_continuation_pmc(interpreter, NULL);
     /* clear segment to denote the end of chain */
     PMC_cont(CONTEXT(interpreter->ctx)->current_cont)->seg = NULL;
@@ -515,16 +512,7 @@ setup_argv(Interp *interpreter, int argc, char ** argv)
     opcodes[0] = PARROT_OP_set_args_pc;
     opcodes[1] = const_nr;
     opcodes[2] = 5;     /* REG_PMC(5) */
-    interpreter->current_args = opcodes;
-    if (!CONTEXT(interpreter->ctx)->current_sub)
-        return;
-    sub = PMC_sub(CONTEXT(interpreter->ctx)->current_sub);
-    if (!sub || !sub->address)
-        return;
-    if (sub->address[0] == PARROT_OP_get_params_pc) {
-        parrot_pass_args(interpreter, sub, interpreter->ctx.bp,
-                PARROT_OP_get_params_pc);
-    }
+    CONTEXT(interpreter->ctx)->current_args = opcodes;
 }
 
 /*
