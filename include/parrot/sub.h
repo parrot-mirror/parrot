@@ -93,6 +93,7 @@ typedef struct Parrot_cont {
     struct PackFile_ByteCode *seg;      /* bytecode segment */
     opcode_t *address;          /* start of bytecode, addr to continue */
     parrot_context_t ctx;  /* pointer to interpreter context */
+    struct Parrot_Context *ctx_copy;   /* full continuation only */
 } * parrot_cont_t;
 
 #define PMC_cont(pmc) LVALUE_CAST(parrot_cont_t, PMC_struct_val(pmc))

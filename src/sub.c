@@ -148,6 +148,8 @@ new_continuation(Interp *interp)
     cc->ctx = interp->ctx;
     cc->seg = interp->code;
     cc->address = NULL;
+    cc->ctx_copy = mem_sys_allocate(sizeof(struct Parrot_Context));
+    memcpy(cc->ctx_copy, CONTEXT(interp->ctx), sizeof(struct Parrot_Context));
     return cc;
 }
 
@@ -168,6 +170,7 @@ new_ret_continuation(Interp *interp)
     struct Parrot_cont *cc = mem_sys_allocate(sizeof(struct Parrot_cont));
     cc->ctx = interp->ctx;
     cc->seg = interp->code;
+    cc->ctx_copy = NULL;
     cc->address = NULL;
     return cc;
 }

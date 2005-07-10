@@ -99,10 +99,12 @@ Destroys the continuation.
 */
 
     void destroy () {
-        struct Parrot_cont * sub = PMC_cont(SELF);
-        if (sub) {
-            Parrot_free_context(interpreter, &sub->ctx, 0);
-            mem_sys_free(sub);
+        struct Parrot_cont * cc = PMC_cont(SELF);
+        if (cc) {
+            Parrot_free_context(interpreter, &cc->ctx, 0);
+            if (cc->ctx_copy)
+                mem_sys_free(cc->ctx_copy);
+            mem_sys_free(cc);
             PMC_cont(SELF) = NULL;
         }
     }
@@ -117,18 +119,22 @@ Creates and returns a clone of the continuation.
 */
 
     PMC* clone() {
-        struct Parrot_cont * sub;
+        struct Parrot_cont * cc;
         struct Parrot_cont *cc_self = PMC_cont(SELF);
         PMC* ret = pmc_new_noinit(INTERP, SELF->vtable->base_type);
 
         PObj_custom_mark_destroy_SETALL(ret);
-        sub = PMC_cont(ret) = mem_sys_allocate(sizeof(struct Parrot_cont));
-        memcpy(sub, cc_self, sizeof(struct Parrot_cont));
+        cc = PMC_cont(ret) = mem_sys_allocate(sizeof(struct Parrot_cont));
+        memcpy(cc, cc_self, sizeof(struct Parrot_cont));
         /*
          * the context is now referenced by both continuations
          */
-        CONTEXT(sub->ctx)->ref_count++;
+        CONTEXT(cc->ctx)->ref_count++;
         PMC_pmc_val(ret) = PMC_pmc_val(SELF);
+        cc->ctx_copy = mem_sys_allocate(sizeof(struct Parrot_Context));
+        memcpy(cc->ctx_copy, 
+                cc_self->ctx_copy ? cc_self->ctx_copy : CONTEXT(cc_self->ctx), 
+                sizeof(struct Parrot_Context));
         return ret;
     }
 
@@ -214,11 +220,14 @@ destination to continue execution.
 
         caller_regs = INTERP->ctx.bp;
         INTERP->ctx = cc->ctx;
+        if (cc->ctx_copy)
+            memcpy(CONTEXT(INTERP->ctx), cc->ctx_copy, 
+                    sizeof(struct Parrot_Context));
         if (Interp_trace_TEST(INTERP, PARROT_TRACE_SUB_CALL_FLAG)) {
             PMC *sub = CONTEXT(INTERP->ctx)->current_sub;
 
             PIO_eprintf(INTERP, "# Back in sub '%Ss'\n",
-                Parrot_full_sub_name(INTERP, sub));
+                    Parrot_full_sub_name(INTERP, sub));
         }
         pc = cc->address;
         if (pc) {
