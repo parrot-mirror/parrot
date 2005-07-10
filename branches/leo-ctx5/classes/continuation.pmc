@@ -62,6 +62,7 @@ Initializes the continuation.
     void init () {
         PMC_cont(SELF) = new_continuation(INTERP);
         PMC_pmc_val(SELF) = NULL;
+        CONTEXT(PMC_cont(SELF)->ctx)->ref_count++;
         PObj_custom_mark_destroy_SETALL(SELF);
         /*
          * Whenever we create a continuation, all return continuations
@@ -119,11 +120,14 @@ Creates and returns a clone of the continuation.
         struct Parrot_cont * sub;
         struct Parrot_cont *cc_self = PMC_cont(SELF);
         PMC* ret = pmc_new_noinit(INTERP, SELF->vtable->base_type);
+
         PObj_custom_mark_destroy_SETALL(ret);
         sub = PMC_cont(ret) = mem_sys_allocate(sizeof(struct Parrot_cont));
         memcpy(sub, cc_self, sizeof(struct Parrot_cont));
-
-        /* sub->ctx.current_params = sub->ctx.current_results = NULL; */
+        /*
+         * the context is now referenced by both continuations
+         */
+        CONTEXT(sub->ctx)->ref_count++;
         PMC_pmc_val(ret) = PMC_pmc_val(SELF);
         return ret;
     }

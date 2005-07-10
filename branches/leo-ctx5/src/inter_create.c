@@ -252,6 +252,7 @@ init_context(Interp *interpreter, parrot_context_t *oldp)
     memcpy(CONTEXT(interpreter->ctx),
            CONTEXT(old), sizeof(struct Parrot_Context));
     CONTEXT(interpreter->ctx)->prev = old.rctx;
+    CONTEXT(interpreter->ctx)->ref_count = 0;
     CONTEXT(interpreter->ctx)->current_results = NULL;
     CONTEXT(interpreter->ctx)->current_args = NULL;
 
@@ -402,6 +403,7 @@ Parrot_alloc_context(Interp *interpreter)
         p = mem_sys_allocate(sizeof(struct parrot_regs_t) + ALIGNED_CTX_SIZE);
         LVALUE_CAST(char *, p) += ALIGNED_CTX_SIZE;
     }
+    p[-1].prev = NULL;
     ctx = interpreter->ctx;
     interpreter->ctx.rctx = p;
     init_context(interpreter, &ctx);
@@ -412,10 +414,19 @@ Parrot_free_context(Interp *interpreter, parrot_context_t *ctxp, int re_use)
 {
     struct Parrot_Context *free_list;
 
-    free_list = (struct Parrot_Context *) interpreter->ctx_mem.free;
-    LVALUE_CAST(struct Parrot_Context *, interpreter->ctx_mem.free) =
-        ctxp->rctx;
-    CONTEXT(*ctxp)->prev = free_list;
+    /*
+     * The context structure has a reference count, initially 0
+     * it' incrementented when a (ret)continuation is created or
+     * a continuation is cloned (and when a coroutine refers to
+     * another sub)
+     * Therefore the ref_count := 0 in leaf subs
+     */
+    if (--CONTEXT(*ctxp)->ref_count <= 0) {
+        free_list = (struct Parrot_Context *) interpreter->ctx_mem.free;
+        LVALUE_CAST(struct Parrot_Context *, interpreter->ctx_mem.free) =
+            ctxp->rctx;
+        CONTEXT(*ctxp)->prev = free_list;
+    }
 }
 
 void
