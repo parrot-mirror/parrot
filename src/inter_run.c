@@ -348,7 +348,8 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
     }
     else {
         dst_pc = CONTEXT(interpreter->ctx)->current_results;
-        CONTEXT(interpreter->ctx)->current_results = NULL;
+        if (!dst_pc)
+            return NULL;
         args_op = PARROT_OP_set_returns_pc;
         src_pc = interpreter->current_returns;
         if (!src_pc) {    /* no returns */

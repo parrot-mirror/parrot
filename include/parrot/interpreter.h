@@ -182,6 +182,7 @@ struct parrot_regs_t {
 
 struct Parrot_Context {
     struct Parrot_Context *prev;
+    INTVAL ref_count;                   /* how often refered to */
     struct Stack_Chunk *int_reg_stack;  /* register frame stacks */
     struct Stack_Chunk *num_reg_stack;
     struct Stack_Chunk *string_reg_stack;
