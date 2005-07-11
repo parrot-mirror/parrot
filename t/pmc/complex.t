@@ -16,7 +16,7 @@ Tests the Complex PMC.
 
 =cut
 
-use Parrot::Test tests => 26;
+use Parrot::Test tests => 25;
 use Test::More;
 
 my $fp_equality_macro = <<'ENDOFMACRO';

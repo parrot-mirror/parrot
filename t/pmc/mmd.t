@@ -292,12 +292,13 @@ output_is(<<'CODE', <<'OUTPUT', "PASM INTVAL");
     print "\n"
     end
 .pcc_sub Integer_bxor_Intval:
+    get_params "(0,0)", P5, I5
     print "ok\n"
     set I10, P5
     bxor I11, I10, I5
     new P5, .Integer
     set P5, I11
-    set I3, 1
+    set_returns "(0)", P5
     returncc
 CODE
 ok
@@ -310,9 +311,9 @@ pir_output_is(<<'CODE', <<'OUT', "first dynamic MMD call");
 .sub main @MAIN
     .local pmc F, B, f, b, m, s
     newclass F, "Foo"
-    f = F."instantiate"()
+    f = new "Foo"
     newclass B, "Bar"
-    b = B."instantiate"()
+    b = new "Bar"
     # create a multi the hard way
     ## m = new MultiSub
     ## s = find_global "Foo", "foo"
