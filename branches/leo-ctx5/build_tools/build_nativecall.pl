@@ -173,6 +173,7 @@ while (<>) {
             push @arg, make_arg($_, $reg_num++, \$temp_cnt,
                                 \@extra_preamble, \@extra_postamble);
 	    $_ eq 'J' && $reg_num--;
+	    $_ eq 'O' && $reg_num--;
         }
     }
 
