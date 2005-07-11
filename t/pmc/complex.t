@@ -649,6 +649,8 @@ CODE
 10+20i
 OUTPUT
 
+SKIP: {
+  skip("instantiate n/y", 2);
 pir_output_is(<< 'CODE', << 'OUTPUT', "instantiate, PIR, N");
 
 .sub main
@@ -691,6 +693,7 @@ pir_output_is(<< 'CODE', << 'OUTPUT', "instantiate, PIR, S");
 CODE
 2+3i
 OUTPUT
+}
 
 output_is(<<"CODE", <<'OUTPUT', "neg");
 @{[ $fp_equality_macro ]}

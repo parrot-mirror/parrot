@@ -16,17 +16,18 @@ Tests the C<Coroutine> PMC.
 
 =cut
 
-use Parrot::Test tests => 13;
+use Parrot::Test tests => 12;
 use Test::More;
 
 output_is(<<'CODE', <<'OUTPUT', "Coroutine 1");
+.include "interpinfo.pasm"
 _main:
     newsub P0, .Coroutine, _coro
     new P10, .Integer
     set P10, 2
     store_global "i", P10
 lp:
-    invoke
+    invoke P0
     print "back "
     print P10
     print "\n"
@@ -36,6 +37,7 @@ lp:
 _coro:
     find_global P11, "i"
     dec P11
+    interpinfo P0, .INTERPINFO_CURRENT_SUB
     invoke P0
     branch _coro
 CODE
@@ -119,6 +121,7 @@ OUTPUT
 }
 
 output_is(<<'CODE', <<'OUTPUT', "Coroutines and lexicals 1");
+.include "interpinfo.pasm"
     new_pad 0
 
     new P20, .String
@@ -126,10 +129,10 @@ output_is(<<'CODE', <<'OUTPUT', "Coroutines and lexicals 1");
     store_lex -1, "a", P20
 
     newsub P0, .Coroutine, co1
-    invoke
+    invoke P0
     find_lex P21, "a"
     print P21
-    invoke
+    invoke P0
     print P21
     print "done\n"
     end
@@ -140,8 +143,8 @@ co1:
     set P22, "coro\n"
 
     store_lex -1, "a", P22
+    interpinfo P0, .INTERPINFO_CURRENT_SUB
     invoke P0
-
     print P22
     invoke P0
 CODE
@@ -152,6 +155,7 @@ done
 OUTPUT
 
 output_is(<<'CODE', <<'OUTPUT', "Coroutines and lexicals 2");
+.include "interpinfo.pasm"
     new_pad 0
     new_pad 1
 
@@ -172,8 +176,8 @@ output_is(<<'CODE', <<'OUTPUT', "Coroutines and lexicals 2");
 
     null I0
     set I3, 2
-    set P0, P5
-    invoke
+    set_args "(0,0)", P5, P6
+    invoke P5
 
     find_lex P10, "b"
     print P10
@@ -183,7 +187,7 @@ output_is(<<'CODE', <<'OUTPUT', "Coroutines and lexicals 2");
     print P10
     print "\n"
 
-    invoke # reenter co1
+    invoke P5
 
     find_lex P10, "b"
     print P10
@@ -193,12 +197,13 @@ output_is(<<'CODE', <<'OUTPUT', "Coroutines and lexicals 2");
     print P10
     print "\n"
 
-    invoke # reenter co1
+    invoke P5
 
     print "done\n"
     end
 
 co1:
+    get_params "(0,0)", P5, P6
     new_pad 2
 
     new P22, .Integer
@@ -208,12 +213,10 @@ co1:
     store_lex "a", P22      # replaces
 
     # invoke c02
-    set P0, P6
-    invoke
+    invoke P6
 
     # return
-    set P0, P5
-    invoke
+    invoke P5
 
     find_lex P10, "b"
     print P10
@@ -224,8 +227,7 @@ co1:
     print "\n"
 
     # return again
-    set P0, P5
-    invoke
+    invoke P5
 
     find_lex P10, "b"
     print P10
@@ -236,14 +238,14 @@ co1:
     print "\n"
 
     # return again
-    set P0, P5
-    invoke
+    invoke P5
 
 co2:
     new_pad 1
 
     # return
-    invoke
+    interpinfo P0, .INTERPINFO_CURRENT_SUB
+    invoke P0
 
 CODE
 21
@@ -257,115 +259,6 @@ CODE
 done
 OUTPUT
 
-SKIP: {
-    skip("bogus argument handling - not pdd03", 1);
-output_is(<<'CODE', <<'OUTPUT', "Coroutines and registers");
-    new P1, .Coroutine
-    set_addr P1, co1
-
-    new P2, .Coroutine
-    set_addr P2, co2
-
-    set P0, P1
-
-    set S0, "main registers"
-
-    saveall
-    invoke # call co1
-    restoreall
-    saveall
-    invoke # reenter co1
-    restoreall
-    saveall
-    invoke # reenter co1
-    restoreall
-
-    print S0
-    print "\ndone\n"
-    end
-
-co1:
-    set S0, "co1 registers"
-
-    # invoke c02
-    save S0
-    set P0, P2
-    invoke
-    restore S0
-
-    print S0
-    print "\n"
-
-    # return
-    save S0
-    set P0, P1
-    invoke
-    restore S0
-
-    print S0
-    print "\n"
-
-    # invoke c02
-    save S0
-    set P0, P2
-    invoke
-    restore S0
-
-    print S0
-    print "\n"
-
-    # return again
-    save S0
-    set P0, P1
-    invoke
-    restore S0
-
-    print S0
-    print "\n"
-
-    # invoke c02
-    save S0
-    set P0, P2
-    invoke
-    restore S0
-
-    print S0
-    print "\n"
-
-    # last return
-    set P0, P1
-    invoke
-
-co2:
-    set S0, "co2 registers"
-    save S0
-    invoke # return
-    restore S0
-
-    print S0
-    print "\n"
-
-    save S0
-    invoke # return
-    restore S0
-
-    print S0
-    print "\n"
-
-    invoke # return
-
-CODE
-co1 registers
-co1 registers
-co2 registers
-co1 registers
-co1 registers
-co2 registers
-co1 registers
-main registers
-done
-OUTPUT
-}
 
 pir_output_is(<<'CODE', <<'OUTPUT', "Coroutines - M. Wallace yield example");
 
@@ -424,6 +317,7 @@ CODE
 OUTPUT
 
 output_is(<<'CODE', <<'OUTPUT', "Coroutine - exception in main");
+.include "interpinfo.pasm"
 _main:
     newsub P0, .Coroutine, _coro
     newsub P16, .Exception_Handler, _catchm
@@ -432,9 +326,7 @@ _main:
     set P16, 2
     store_global "i", P16
 lp:
-    pushtopp
-    invoke
-    poptopp
+    invoke P0
     print "back "
     print P16
     print "\n"
@@ -448,9 +340,8 @@ _coro:
 corolp:
     find_global P17, "i"
     dec P17
-    pushtopp
+    interpinfo P0, .INTERPINFO_CURRENT_SUB
     invoke P0
-    poptopp
     branch corolp
 _catchc:
     print "catch coro\n"
@@ -464,6 +355,7 @@ catch main
 OUTPUT
 
 output_is(<<'CODE', <<'OUTPUT', "Coroutine - exception in coro");
+.include "interpinfo.pasm"
 _main:
     newsub P0, .Coroutine, _coro
     newsub P16, .Exception_Handler, _catchm
@@ -472,9 +364,7 @@ _main:
     set P16, 2
     store_global "i", P16
 lp:
-    pushtopp
-    invoke
-    poptopp
+    invoke P0
     print "back "
     print P16
     print "\n"
@@ -487,9 +377,8 @@ _coro:
 corolp:
     find_global P17, "i"
     dec P17
-    pushtopp
+    interpinfo P0, .INTERPINFO_CURRENT_SUB
     invoke P0
-    poptopp
     find_global P17, "no_such"
     branch corolp
 _catchc:
@@ -504,6 +393,7 @@ catch coro
 OUTPUT
 
 output_is(<<'CODE', <<'OUTPUT', "Coroutine - exception in coro no handler");
+.include "interpinfo.pasm"
 _main:
     newsub P0, .Coroutine, _coro
     newsub P16, .Exception_Handler, _catchm
@@ -512,9 +402,7 @@ _main:
     set P16, 2
     store_global "i", P16
 lp:
-    pushtopp
-    invoke
-    poptopp
+    invoke P0
     print "back "
     print P16
     print "\n"
@@ -525,9 +413,8 @@ _coro:
 corolp:
     find_global P17, "i"
     dec P17
-    pushtopp
+    interpinfo P0, .INTERPINFO_CURRENT_SUB
     invoke P0
-    poptopp
     find_global P17, "no_such"
     branch corolp
 _catchc:
@@ -542,6 +429,7 @@ catch main
 OUTPUT
 
 output_is(<<'CODE', <<'OUTPUT', "Coroutine - exception in coro rethrow");
+.include "interpinfo.pasm"
 _main:
     newsub P0, .Coroutine, _coro
     newsub P16, .Exception_Handler, _catchm
@@ -550,9 +438,7 @@ _main:
     set P16, 2
     store_global "i", P16
 lp:
-    pushtopp
-    invoke
-    poptopp
+    invoke P0
     print "back "
     print P16
     print "\n"
@@ -565,9 +451,8 @@ _coro:
 corolp:
     find_global P17, "i"
     dec P17
-    pushtopp
+    interpinfo P0, .INTERPINFO_CURRENT_SUB
     invoke P0
-    poptopp
     find_global P17, "no_such"
     branch corolp
 _catchc:
@@ -597,9 +482,7 @@ pir_output_is(<<'CODE', 'Coroutine', "Coro new - type");
     x = new Integer
     x = 0
     iloop:
-        .pcc_begin_yield
-        .return x
-        .pcc_end_yield
+        .yield (x)
         x = x + 1
     if x <= 4 goto iloop
 .end
@@ -611,8 +494,12 @@ pir_output_is(<<'CODE', '01234', "Coro new - yield");
     .local pmc c
     c = global "coro"
 loop:
-    $P0 = c()
-    unless argcP goto ex
+    .pcc_begin
+    .pcc_call c
+    .result   $P0 :optional
+    .result   $I0 :opt_count
+    .pcc_end
+    unless $I0,  ex
     print $P0
     goto loop
 ex:
@@ -622,9 +509,7 @@ ex:
     x = new Integer
     x = 0
     iloop:
-        .pcc_begin_yield
-        .return x
-        .pcc_end_yield
+        .yield (x)
         x = x + 1
     if x <= 4 goto iloop
 .end
