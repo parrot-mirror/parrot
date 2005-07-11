@@ -1045,8 +1045,7 @@ pir_2_pasm_like(<<'CODE', <<'OUT', "segv - last ins changed");
 CODE
 /func:
  inc I\d+
- null I0
- null I3
+ set_returns
  returncc
 /
 OUT
@@ -1060,8 +1059,7 @@ pir_2_pasm_like(<<'CODE', <<'OUT', "segv - last ins deleted");
 .end
 CODE
 /func:
- null I0
- null I3
+ set_returns
  returncc
 /
 OUT
