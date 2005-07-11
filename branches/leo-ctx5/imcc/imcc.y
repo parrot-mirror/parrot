@@ -59,10 +59,11 @@ SymReg *cur_namespace; /* ugly hack for mk_address */
 /*
  * these are used for constructing one INS
  */
-static SymReg *keys[IMCC_MAX_REGS];
+static SymReg *keys[IMCC_MAX_FIX_REGS]; /* TODO key overflow check */
 static int nkeys, in_slice;
 static int keyvec;
-static SymReg *regs[IMCC_MAX_REGS];
+#define IMCC_MAX_STATIC_REGS 100
+static SymReg *regs[IMCC_MAX_STATIC_REGS];
 static int nargs;
 static int cnr;
 
@@ -84,7 +85,7 @@ MK_I(Interp *interpreter, IMC_Unit * unit, const char * fmt, int n, ...)
     char *p;
     const char *q;
     va_list ap;
-    SymReg *r[IMCC_MAX_REGS];
+    SymReg *r[IMCC_MAX_FIX_REGS];
     int i;
 
     for (p = opname, q = fmt; *q && *q != ' '; )
@@ -99,12 +100,10 @@ MK_I(Interp *interpreter, IMC_Unit * unit, const char * fmt, int n, ...)
 #endif
     va_start(ap, n);
     i = 0;
-    while (i < n) {
-	r[i++] = va_arg(ap, SymReg *);
+    for (i = 0; i < n; ++i) {
+	r[i] = va_arg(ap, SymReg *);
     }
     va_end(ap);
-    while (i < IMCC_MAX_REGS)
-	r[i++] = NULL;
     return INS(interpreter, unit, opname, fmt, r, n, keyvec, 1);
 }
 
@@ -114,7 +113,7 @@ mk_pmc_const(Parrot_Interp interp, IMC_Unit *unit,
 {
     int type_enum = atoi(type);
     SymReg *rhs;
-    SymReg *r[IMCC_MAX_REGS];
+    SymReg *r[2];
     char *name;
     int len;
 
@@ -172,21 +171,14 @@ static void clear_state(void)
 {
     nargs = 0;
     keyvec = 0;
-    memset(regs, 0, sizeof(regs));
 }
 
 Instruction * INS_LABEL(IMC_Unit * unit, SymReg * r0, int emit)
 {
 
-    SymReg *r[IMCC_MAX_REGS];
     Instruction *ins;
-    int i;
 
-    r[0] = r0;
-    i = 1;
-    while (i < IMCC_MAX_REGS)
-	r[i++] = NULL;
-    ins = _mk_instruction("","%s:", r, 0);
+    ins = _mk_instruction("","%s:", 1, &r0, 0);
     ins->type = ITLABEL;
     r0->first_ins = ins;
     if (emit)

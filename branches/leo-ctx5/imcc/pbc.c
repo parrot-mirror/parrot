@@ -1,7 +1,6 @@
 #include "imc.h"
 #include "pbc.h"
 #include "parrot/packfile.h"
-#include "parrot/oplib/ops.h"
 
 /*
  * pbc.c
@@ -393,7 +392,7 @@ store_labels(Interp *interpreter, IMC_Unit * unit, int *src_lines, int oldsize)
         if (strcmp(ins->op, "bsr") && strcmp(ins->op, "set_addr") &&
                 strcmp(ins->op, "branch_cs") && strcmp(ins->op, "newsub")) {
             char buf[64];
-            SymReg *r[IMCC_MAX_REGS];
+            SymReg *r[1];
             char *glabel;
 
             IMCC_debug(interpreter, DEBUG_PBC_FIXUP,

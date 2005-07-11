@@ -290,7 +290,7 @@ mk_ident(Interp *interp, char * name, int t)
 static SymReg*
 mk_pmc_const_2(Parrot_Interp interp, IMC_Unit *unit, SymReg *left, SymReg *rhs)
 {
-    SymReg *r[IMCC_MAX_REGS];
+    SymReg *r[2];
     char *name;
     int len;
 
