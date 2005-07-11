@@ -299,7 +299,7 @@ Invokes the subroutine.
             }
         }
         Parrot_alloc_context(INTERP);
-        if (++CONTEXT(INTERP->ctx)->recursion_depth >=
+        if (++CONTEXT(INTERP->ctx)->recursion_depth >
                 INTERP->recursion_limit) {
             real_exception(INTERP, next, E_RuntimeError,
                     "maximum recursion depth exceeded");

@@ -256,6 +256,7 @@ OUTPUT
 # this is a stripped down version of imcc/t/syn/pcc_16
 # s. also classes/retcontinuation.pmc
 output_is(<<'CODE', <<OUTPUT, "coro context and invalid return continuations");
+.include "interpinfo.pasm"
     newsub P0, .Coroutine, co1
 l:
     invokecc
@@ -268,6 +269,7 @@ co1:
 col:
     print "coro\n"
     sweep 1
+    interpinfo P0, .INTERPINFO_CURRENT_SUB
     invoke P0
     branch col
 CODE
