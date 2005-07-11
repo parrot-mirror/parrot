@@ -144,7 +144,7 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     SymReg *sub;
     int nargs;
     Instruction *tmp;
-    SymReg *regs[IMCC_MAX_REGS];
+    SymReg *regs[2];
     char buf[128];
 
     sub = ins->r[1];
@@ -216,7 +216,7 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
 void
 expand_pcc_sub_ret(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
 {
-    SymReg *sub, *regs[IMCC_MAX_REGS];
+    SymReg *sub, *regs[2];
     int  n, is_yield;
 
     is_yield = ins->type & ITPCCYIELD;
@@ -361,7 +361,7 @@ static void
 insert_tail_call(Parrot_Interp interp, IMC_Unit * unit,
         Instruction *ins, SymReg *sub, int meth_call, SymReg *s0)
 {
-    SymReg *regs[IMCC_MAX_REGS];
+    SymReg *regs[2];
 
     if (meth_call) {
         s0 = s0 ? s0 : get_pasm_reg(interp, "S0");
@@ -384,7 +384,7 @@ pcc_insert_signature(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
         struct pcc_sub_t *pcc_sub)
 {
     int i, n, m;
-    SymReg *regs[IMCC_MAX_REGS];
+    SymReg *regs[2];
     char buffer[20];    /* TODO is there a limit? */
 
     n = pcc_sub->nargs;
@@ -414,7 +414,7 @@ pcc_insert_signature(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
 void
 expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
 {
-    SymReg *arg, *sub, *reg, *regs[IMCC_MAX_REGS];
+    SymReg *arg, *sub, *reg, *regs[2];
     int  n;
     int need_cc;
     int tail_call;
@@ -662,85 +662,6 @@ pcc_sub_optimize(Parrot_Interp interp, IMC_Unit * unit)
             }
         }
     }
-}
-
-/*
- * Check argument symbols of a sub and see which are used
- * Return 0 if none are used, 1 if at least 1 symbol is used.
- */
-static int
-pcc_args(Instruction* ins, SymReg* r)
-{
-    int i;
-    SymReg * sub;
-    struct pcc_sub_t * pcc;
-
-    sub = ins->r[0];
-    assert(sub && sub->pcc_sub);
-    pcc = sub->pcc_sub;
-    for (i = 0; i < pcc->nargs; i++)
-        if (r == pcc->args[i]->used)
-            return 1;
-    return 0;
-}
-
-/*
- * Check return symbols of a sub and see which are used
- * Return 0 if none are used, 1 if at least 1 symbol is used.
- *
- * TODO this is likely unneeded - all registers in the volatile
- *      range are possible return results and clobbered, so we
- *      can't assign registers in that range
- */
-static int
-pcc_ret(Instruction* ins, SymReg* r)
-{
-    int i;
-    SymReg * sub;
-    struct pcc_sub_t * pcc;
-
-    sub = ins->r[0];
-    assert(sub && sub->pcc_sub);
-    pcc = sub->pcc_sub;
-    for (i = 0; i < pcc->nret; i++)
-        if (r == pcc->ret[i]->used)
-            return 1;
-    return 0;
-}
-
-/*
- * See if the sub writes to the symbol, checks args and returns
- */
-int
-pcc_sub_writes(Instruction* ins, SymReg* r)
-{
-    if (ins->type & ITPCCRET)
-        return 0;
-    return pcc_ret(ins, r) || pcc_args(ins, r);
-}
-
-/*
- * See if the sub reads the symbol, checks args and returns
- */
-int
-pcc_sub_reads(Instruction* ins, SymReg* r)
-{
-    SymReg * sub, *arg;
-    struct pcc_sub_t * pcc;
-
-    sub = ins->r[0];
-    assert(sub && sub->pcc_sub);
-    pcc = sub->pcc_sub;
-    if ( (arg = pcc->cc) )
-        if (arg == r)
-            return 1;
-    if (r->set == 'I' && r->color <= 4 && r->color >= 0)
-        return 1;
-    if (r->set == 'P' && r->color <= 3 && r->color >= 0)
-        return 1;
-    if (ins->type & ITPCCRET)
-        return pcc_ret(ins, r);
-    return pcc_args(ins, r);
 }
 
 /*

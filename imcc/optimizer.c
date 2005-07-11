@@ -9,7 +9,6 @@
 #include <string.h>
 #include "imc.h"
 #include "optimizer.h"
-#include "parrot/oplib/ops.h"
 
 
 /*

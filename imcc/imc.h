@@ -16,6 +16,7 @@
 #endif  /* PARROT_HAS_HEADER_SYSEXITS */
 
 #include "parrot/parrot.h"
+#include "parrot/oplib/ops.h"
 
 /* For people without unistd.h to compile Flex lexer
  * unistd.h probably isn't required on most if any
@@ -25,8 +26,8 @@
 #  define YY_NO_UNISTD_H 1
 #endif
 
-#define IMCC_MAX_REGS PARROT_MAX_ARGS
-#if IMCC_MAX_REGS > 16
+#define IMCC_MAX_FIX_REGS PARROT_MAX_ARGS
+#if IMCC_MAX_FIX_REGS > 16
 #error: flags wont fit
 #endif
 
@@ -114,9 +115,6 @@ void expand_pcc_sub(Parrot_Interp interpreter, IMC_Unit *, Instruction *ins);
 void expand_pcc_sub_ret(Parrot_Interp interpreter, IMC_Unit *, Instruction *ins);
 void expand_pcc_sub_call(Parrot_Interp interpreter, IMC_Unit *, Instruction *ins);
 void pcc_sub_optimize(Parrot_Interp interpreter, IMC_Unit *);
-
-int pcc_sub_reads(Instruction* ins, SymReg* r);
-int pcc_sub_writes(Instruction* ins, SymReg* r);
 
 /*
  * fastcall.c
