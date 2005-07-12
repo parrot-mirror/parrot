@@ -357,7 +357,7 @@ pir_output_is(<<'CODE', <<'OUT', "coroutine iterator");
   .pcc_end
     print $I2
     print "\n"
-    invoke
+    invoke $P0
     goto ret_addr
  after_loop:
   print "done in main\n"
@@ -1342,7 +1342,7 @@ pir_output_is(<<'CODE', <<'OUT', "oneliner yield");
     print $I2
     print "\n"
     savetop
-    invoke
+    invoke $P0
     goto ret_addr
     restoretop
  after_loop:

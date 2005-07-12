@@ -240,7 +240,8 @@ expand_pcc_sub_ret(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         sprintf(buf, "%d", CURRENT_SUB);
         regs[1] = get_const(interp, buf, 'I');
         ins = insINS(interp, unit, ins, "interpinfo", regs, 2);
-        ins = insINS(interp, unit, ins, "invoke", regs, 0);
+        regs[0] = get_pasm_reg(interp, "P0");
+        ins = insINS(interp, unit, ins, "invoke", regs, 1);
     }
     else {
         /*
@@ -251,7 +252,6 @@ expand_pcc_sub_ret(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     /*
      * move the pcc_sub structure to the invoke
      */
-    ins->r[0] = sub;
 
     /*
      * mark the invoke instruction's PCC sub type
@@ -369,7 +369,7 @@ insert_tail_call(Parrot_Interp interp, IMC_Unit * unit,
         ins = insINS(interp, unit, ins, "tailcallmethod", regs, 1);
     }
     else {
-        regs[0] = get_pasm_reg(interp, "P0");
+        regs[0] = sub->pcc_sub->sub;
         ins = insINS(interp, unit, ins, "tailcall", regs, 1);
     }
     ins->type |= ITPCCSUB;
@@ -439,8 +439,6 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
 
             ins->type &= ~ITCALL;
         }
-        else
-            add_pcc_sub(sub, the_sub);
     }
 
     /*
@@ -488,21 +486,6 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
                 ins = insINS(interp, unit, ins, "getclass", regs, 2);
             else
                 ins = insINS(interp, unit, ins, "set", regs, 2);
-        }
-        if ((sub->pcc_sub->flags & isNCI) && (!meth_call || arg->set == 'P'))
-            goto move_sub;
-    }
-    else {
-move_sub:
-        /* plain sub call */
-        if (arg->color != 0) {
-            reg = get_pasm_reg(interp, "P0");
-            if (reg != arg) {
-                regs[0] = reg;
-                regs[1] = arg;
-                arg->want_regno = 0;
-                ins = insINS(interp, unit, ins, "set", regs, 2);
-            }
         }
     }
 
@@ -566,15 +549,12 @@ move_sub:
             ins = insINS(interp, unit, ins,
                     need_cc ? "callmethodcc" : "callmethod", regs, n);
         }
-        else
+        else {
+            regs[0] = sub->pcc_sub->sub;
             ins = insINS(interp, unit, ins,
-                    need_cc ? "invokecc" : "invoke", regs, 0);
+                    need_cc ? "invokecc" : "invoke", regs, 1);
+        }
         ins->type |= ITPCCSUB;
-        /*
-         * move the pcc_sub structure to the invoke
-         */
-        ins->r[0] = meth_call ? s0 ? s0 : get_pasm_reg(interp, "S0") :
-            get_pasm_reg(interp, "P0");
         ins->r[0]->pcc_sub = sub->pcc_sub;
         sub->pcc_sub = NULL;
         sub = ins->r[0];
