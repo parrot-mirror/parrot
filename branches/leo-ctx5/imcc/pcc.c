@@ -470,6 +470,12 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
             add_pcc_sub(sub, the_sub);
     }
 
+    /*
+     * insert arguments
+     */
+    n = sub->pcc_sub->nargs;
+    ins = pcc_get_args(interp, unit, ins, "set_args", n,
+                       sub->pcc_sub->args);
 
     /*
      * insert get_name after args have been setup, so that
@@ -538,9 +544,6 @@ move_sub:
      */
     if (tail_call) {
         if (!(meth_call && strcmp(s0->name, "\"instantiate\"") == 0)) {
-            n = sub->pcc_sub->nargs;
-            ins = pcc_get_args(interp, unit, ins, "set_args", n,
-                    sub->pcc_sub->args);
             insert_tail_call(interp, unit, ins, sub, meth_call, s0);
             return;
         }
@@ -561,12 +564,6 @@ move_sub:
     else if (!(sub->pcc_sub->flags & isNCI))
         need_cc = 1;
 
-    /*
-     * insert arguments
-     */
-    n = sub->pcc_sub->nargs;
-    ins = pcc_get_args(interp, unit, ins, "set_args", n,
-                       sub->pcc_sub->args);
     /*
      * handle return results
      */
