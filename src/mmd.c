@@ -833,7 +833,7 @@ mmd_dispatch_i_pp(Interp *interpreter,
 
 int
 Parrot_run_maybe_mmd_meth(Interp* interpreter, PMC *object,
-        STRING *meth, STRING *sig)
+        STRING *meth)
 {
 
 #if 1
@@ -1256,7 +1256,7 @@ static void mmd_sort_candidates(Interp *, PMC *arg_tuple, PMC *cl);
 Default implementation of MMD lookup. The signature contains the letters
 "INSP" for the argument types. B<PMC> arguments are given in the function call.
 
-=item C<PMC *Parrot_MMD_search_default_func(Interp *, STRING *meth, STRING *signature)>
+=item C<PMC *Parrot_MMD_search_default_func(Interp *, STRING *meth)>
 
 Default implementation of MMD lookup. The signature contains the letters
 "INSP" for the argument types. B<PMC> arguments are taken from registers
@@ -1269,10 +1269,6 @@ C<P5> and up according to calling conventions.
 /*
  * TODO move to header, when API is sane
  */
-
-PMC *Parrot_MMD_search_default_inline(Interp *, STRING *meth,
-        STRING *signature, ...);
-PMC *Parrot_MMD_search_default_func(Interp *, STRING *meth, STRING *signature);
 
 PMC *
 Parrot_MMD_search_default_inline(Interp *interpreter, STRING *meth,
@@ -1293,8 +1289,7 @@ Parrot_MMD_search_default_inline(Interp *interpreter, STRING *meth,
 }
 
 PMC *
-Parrot_MMD_search_default_func(Interp *interpreter, STRING *meth,
-        STRING *signature)
+Parrot_MMD_search_default_func(Interp *interpreter, STRING *meth)
 {
     PMC* arg_tuple;
     /*
@@ -1322,7 +1317,7 @@ Parrot_MMD_search_default_infix(Interp *interpreter, STRING *meth,
 
 /*
 
-=item C<PMC* Parrot_MMD_dispatch_func(Interp *, PMC *multi, STRING *signature)>
+=item C<PMC* Parrot_MMD_dispatch_func(Interp *, PMC *multi)>
 
 Given a multi sub PMC (usually the multi method of one class) return the
 best matching function for the call signature and call arguments according
@@ -1333,8 +1328,7 @@ to pdd03.
 */
 
 PMC *
-Parrot_MMD_dispatch_func(Interp *interpreter, PMC *multi, STRING *meth,
-        STRING *signature)
+Parrot_MMD_dispatch_func(Interp *interpreter, PMC *multi, STRING *meth)
 {
     PMC* arg_tuple, *pmc;
     PMC *candidate_list;
