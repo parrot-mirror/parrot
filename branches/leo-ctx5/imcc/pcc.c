@@ -379,33 +379,6 @@ insert_tail_call(Parrot_Interp interp, IMC_Unit * unit,
 
 #endif
 
-static Instruction*
-pcc_insert_signature(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
-        struct pcc_sub_t *pcc_sub)
-{
-    int i, n, m;
-    SymReg *regs[2];
-    char buffer[20];    /* TODO is there a limit? */
-
-    n = pcc_sub->nargs;
-    buffer[0] = '"';
-    if (pcc_sub->object) {
-        buffer[1] = 'O';
-        m = 2;
-    }
-    else
-        m = 1;
-    for (i = 0; i < n && i < 15; ++i) {
-        buffer[m++] = pcc_sub->args[i]->set;
-    }
-    buffer[m++] = '"';
-    buffer[m] = '\0';
-    regs[0] = get_pasm_reg(interp, "S1");
-    regs[1] = mk_const(interp, str_dup(buffer), 'S');
-    ins = insINS(interp, unit, ins, "set", regs, 2);
-    return ins;
-}
-
 /*
  * Expand a PCC subroutine call (IMC) into its PASM instructions
  * This is the nuts and bolts of pdd03 routine call style
@@ -482,14 +455,9 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
      * a possible MMD call can inspect the passed arguments
      */
     if (get_name) {
-        /* for now, put a call signature in S1 */
-        ins = pcc_insert_signature(interp, unit, ins, sub->pcc_sub);
         insert_ins(unit, ins, get_name);
         ins = get_name;
     }
-    else
-        ins = pcc_insert_signature(interp, unit, ins, sub->pcc_sub);
-
 
     /*
      * setup P0, and P2, S0 if method

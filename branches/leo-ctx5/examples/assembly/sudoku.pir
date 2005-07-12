@@ -1391,19 +1391,19 @@ out:
 
 .namespace ["Dummy"]
 
-.sub "print" @MULTI(_, int, int, string)
+.sub "print" @MULTI(int, int, string)
     .param int r
     .param int c
     .param string s
     print s
 .end
 
-.sub "print" @MULTI(_, string)
+.sub "print" @MULTI(string)
     .param string s
     print s
 .end
 
-.sub "print" @MULTI(_, int)
+.sub "print" @MULTI(int)
     .param int s
     print s
 .end
@@ -1416,7 +1416,7 @@ out:
 # TODO remember last position, parse newlines to increment row
 # this should better be all in a new library
 
-.sub "print" @MULTI(_, int, int, string), method
+.sub "print" @MULTI(int, int, string), method
     .param int r
     .param int c
     .param string s
@@ -1427,7 +1427,7 @@ out:
     f(win, r, c, s)
 .end
 
-.sub "print" @MULTI(_, string), method
+.sub "print" @MULTI(string), method
     .param string s
     .local pmc win, f
 
@@ -1436,7 +1436,7 @@ out:
     f(win, s)
 .end
 
-.sub "print" @MULTI(_, int), method
+.sub "print" @MULTI(int), method
     .param int i
     .local string s
     .local pmc win, f

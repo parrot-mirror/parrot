@@ -128,7 +128,7 @@ op callmethodcc(in STR) :object_base {
 
   meth = $1;
   object = REG_PMC(2);
-  if (Parrot_run_maybe_mmd_meth(interpreter, object, meth, REG_STR(1)))
+  if (Parrot_run_maybe_mmd_meth(interpreter, object, meth))
     goto NEXT();
 
   next = expr NEXT();
