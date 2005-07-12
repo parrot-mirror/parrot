@@ -41,6 +41,7 @@ not highest type in table.
 */
 
 #include "parrot/parrot.h"
+#include "parrot/oplib/ops.h"
 #include "mmd.str"
 #include <assert.h>
 
@@ -834,6 +835,10 @@ int
 Parrot_run_maybe_mmd_meth(Interp* interpreter, PMC *object,
         STRING *meth, STRING *sig)
 {
+
+#if 1
+    return 0;   /* TODO */
+#else
     INTVAL mmd_func;
     char *c_meth, *c_sig;
     int ret = 0, inplace, compare;
@@ -892,6 +897,7 @@ Parrot_run_maybe_mmd_meth(Interp* interpreter, PMC *object,
     string_cstring_free(c_meth);
     string_cstring_free(c_sig);
     return ret;
+#endif
 }
 
 
@@ -1231,7 +1237,7 @@ mmd_vtfind(Parrot_Interp interpreter, INTVAL func_nr, INTVAL left, INTVAL right)
 
 
 static PMC* mmd_arg_tuple_inline(Interp *, STRING *signature, va_list args);
-static PMC* mmd_arg_tuple_func(Interp *, STRING *signature);
+static PMC* mmd_arg_tuple_func(Interp *);
 static PMC* mmd_search_default(Interp *, STRING *meth, PMC *arg_tuple);
 static PMC* mmd_search_scopes(Interp *, STRING *meth, PMC *arg_tuple);
 static void mmd_search_classes(Interp *, STRING *meth, PMC *arg_tuple, PMC *,
@@ -1294,7 +1300,7 @@ Parrot_MMD_search_default_func(Interp *interpreter, STRING *meth,
     /*
      * 1) create argument tuple
      */
-    arg_tuple = mmd_arg_tuple_func(interpreter, signature);
+    arg_tuple = mmd_arg_tuple_func(interpreter);
     /*
      * default search policy
      */
@@ -1336,7 +1342,7 @@ Parrot_MMD_dispatch_func(Interp *interpreter, PMC *multi, STRING *meth,
     /*
      * 1) create argument tuple
      */
-    arg_tuple = mmd_arg_tuple_func(interpreter, signature);
+    arg_tuple = mmd_arg_tuple_func(interpreter);
 
     n = VTABLE_elements(interpreter, multi);
     if (!n)
@@ -1375,10 +1381,10 @@ Return a list of argument types. PMC arguments are specified as function
 arguments.
 
 =item C<
-static PMC* mmd_arg_tuple_func(Interp *, STRING *signature)>
+static PMC* mmd_arg_tuple_func(Interp *)>
 
 Return a list of argument types. PMC arguments are take from registers
-P5 ... according to calling conventions.
+according to calling conventions.
 
 =cut
 
@@ -1428,12 +1434,15 @@ mmd_arg_tuple_inline(Interp *interpreter, STRING *signature, va_list args)
 }
 
 static PMC*
-mmd_arg_tuple_func(Interp *interpreter, STRING *signature)
+mmd_arg_tuple_func(Interp *interpreter)
 {
-    INTVAL sig_len, i, type, next_p;
+    INTVAL sig_len, i, type, idx;
     PMC* arg_tuple, *arg;
+    PMC* args_array;    /* from recent set_args opcode */
+    opcode_t *args_op;
+    struct PackFile_Constant **constants;
 
-    /* TODO
+    /*
      * if there is no signature e.g. because of
      *      m = getattribute l, "__add"
      * - we have to return the MultiSub
@@ -1442,36 +1451,41 @@ mmd_arg_tuple_func(Interp *interpreter, STRING *signature)
      */
 
     arg_tuple = pmc_new(interpreter, enum_class_FixedIntegerArray);
-    sig_len = string_length(interpreter, signature);
+    args_op = interpreter->current_args;
+    if (!args_op)
+        return arg_tuple;
+    assert(*args_op == PARROT_OP_set_args_pc);
+    constants = interpreter->code->const_table->constants;
+    ++args_op;
+    args_array = constants[*args_op]->u.key;
+    assert(args_array->vtable->base_type == enum_class_FixedIntegerArray);
+    sig_len = VTABLE_elements(interpreter, args_array);
     if (!sig_len)
         return arg_tuple;
     VTABLE_set_integer_native(interpreter, arg_tuple, sig_len);
-    next_p = 5;
-    for (i = 0; i < sig_len; ++i) {
-        type = string_index(interpreter, signature, i);
-        switch (type) {
-            case 'I':
+    ++args_op;
+
+    for (i = 0; i < sig_len; ++i, ++args_op) {
+        type = VTABLE_get_integer_keyed_int(interpreter, args_array, i);
+        switch (type & PARROT_ARG_TYPE_MASK) {
+            case PARROT_ARG_INTVAL:
                 VTABLE_set_integer_keyed_int(interpreter, arg_tuple,
                         i, enum_type_INTVAL);
                 break;
-            case 'N':
+            case PARROT_ARG_FLOATVAL:
                 VTABLE_set_integer_keyed_int(interpreter, arg_tuple,
                         i, enum_type_FLOATVAL);
                 break;
-            case 'S':
+            case PARROT_ARG_STRING:
                 VTABLE_set_integer_keyed_int(interpreter, arg_tuple,
                         i, enum_type_STRING);
                 break;
-            case 'O':
-                arg = REG_PMC(2);
-                type = VTABLE_type(interpreter, arg);
-                VTABLE_set_integer_keyed_int(interpreter, arg_tuple,
-                        i, type);
-                break;
-            case 'P':
-                if (next_p == 16)
-                    internal_exception(1, "Unimp MMD too many args");
-                arg = REG_PMC(next_p++);
+            case PARROT_ARG_PMC:
+                idx = *args_op;
+                if ((type & PARROT_ARG_CONSTANT))
+                    arg = constants[idx]->u.key;
+                else
+                    arg = REG_PMC(idx);
                 type = VTABLE_type(interpreter, arg);
                 VTABLE_set_integer_keyed_int(interpreter, arg_tuple,
                         i, type);
@@ -1483,14 +1497,6 @@ mmd_arg_tuple_func(Interp *interpreter, STRING *signature)
         }
 
     }
-    /*
-     * XXX invalidate S1
-     * this is needed for this sequence:
-     * "__add"(l, r, d)             # multi sub call - create S1
-     * m = getattribute l, "__add"  # create bound method
-     * m(r, d)
-     */
-    REG_STR(1) = NULL;
     return arg_tuple;
 }
 
