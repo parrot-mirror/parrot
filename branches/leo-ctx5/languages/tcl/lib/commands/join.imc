@@ -6,12 +6,12 @@
 .sub "join"
   .param pmc a_list
   .param pmc joiner_pmc
+  .param int argc :opt_count
 
-  $I1 = get_argc
-  if $I1 == 0 goto bad_args
-  if $I1 > 2 goto bad_args
+  if argc == 0 goto bad_args
+  if argc > 2 goto bad_args
 
-  if $I1 ==2 goto continue
+  if argc ==2 goto continue
   joiner_pmc = new String
   joiner_pmc = " "
 continue:

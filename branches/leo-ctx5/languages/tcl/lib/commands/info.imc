@@ -7,10 +7,13 @@
 .namespace [ "Tcl" ]
 
 .sub "info"
-  .local pmc argv, retval
-  argv = foldup
+  .param pmc argv :slurpy
 
-  unless I3 goto bad_subcommand
+  .local pmc retval
+
+  .local int argc
+  argc = argv 
+  unless argc goto bad_subcommand
 
   .local string subcommand_name
   subcommand_name = shift argv

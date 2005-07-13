@@ -4,9 +4,7 @@
 .namespace [ "Tcl" ]
 
 .sub "lappend"
-
-  .local pmc argv
-  argv = foldup 
+  .param pmc argv :slurpy
 
   .local pmc value, retval
   .local int return_type

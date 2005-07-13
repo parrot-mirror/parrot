@@ -4,11 +4,13 @@
 .namespace [ "Tcl" ]
 
 .sub "break"
+  .param int argc :opt_count
+
   .local int return_type
 
   .local pmc retval
   retval = new String
-  if I3 == 0 goto noargs
+  if argc == 0 goto noargs
 
   return_type = TCL_ERROR
   retval = "wrong # args: should be \"break\""

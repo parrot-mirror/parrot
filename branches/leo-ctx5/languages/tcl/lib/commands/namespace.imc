@@ -12,8 +12,7 @@ real top level namespace.
 .namespace [ "Tcl" ]
 
 .sub "namespace"
-   .local pmc argv 
-  argv = foldup
+   .param pmc argv :slurpy
 
   unless argv goto failure
   .local pmc subcommand
