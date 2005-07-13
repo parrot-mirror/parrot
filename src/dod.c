@@ -835,7 +835,7 @@ Parrot_dod_sweep(Interp *interpreter,
                     /*
                      * invalidate the PMC
                      */
-                    PMC_struct_val(p) = (void*)0xdeadbeef;
+                    p->vtable = (void*)0xdeadbeef;
                     PMC_pmc_val(p) = (void*)0xdeadbeef;
                     p->pmc_ext = (void*)0xdeadbeef;
 #endif
