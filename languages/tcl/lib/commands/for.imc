@@ -8,8 +8,9 @@
   .param pmc test_p
   .param pmc next_p
   .param pmc body_p
+  .param int argc :opt_count
 
-  if I3 != 4 goto bad_args
+  if argc != 4 goto bad_args
 
   .local string start,        next,        body
   .local pmc    start_parsed, next_parsed, body_parsed, test_parsed

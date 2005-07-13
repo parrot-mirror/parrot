@@ -4,8 +4,7 @@
 .namespace [ "Tcl" ]
 
 .sub "lindex"
-  .local pmc argv 
-  argv = foldup
+  .param pmc argv :slurpy
   
   .local pmc retval
   .local int return_type

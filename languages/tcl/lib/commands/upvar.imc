@@ -4,8 +4,7 @@
 .namespace [ "Tcl" ]
 
 .sub "upvar"
-  .local pmc argv 
-  argv = foldup
+  .param pmc argv :slurpy
 
   .local pmc call_level,current_call_level,retval
   call_level = argv[0]

@@ -7,8 +7,7 @@
 .namespace [ "Tcl" ]
 
 .sub "expr"
-  .local pmc argv 
-  argv = foldup
+  .param pmc argv :slurpy
  
   .local string expr
   .local int argc

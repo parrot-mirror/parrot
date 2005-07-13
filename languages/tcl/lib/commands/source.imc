@@ -4,12 +4,10 @@
 .namespace [ "Tcl" ]
 
 .sub "source"
-  .local pmc argv 
-  argv = foldup
-
+  .param pmc argv :slurpy
+  
   .local int argc 
   argc = argv
-
   if argc != 1 goto fail
 
   .local string chunk, filename, contents
@@ -58,7 +56,7 @@ badfile:
 fail:
   code = TCL_ERROR
   retval = new String
-  retval =  "bad call to source\n"
+  retval =  "wrong # args: should be \"source fileName\""
 done:
   .return(code,retval)
 .end

@@ -10,8 +10,9 @@ Create a PIR sub on the fly for this user defined proc.
   .param pmc name_p
   .param pmc args_p
   .param pmc body_p
+  .param int argc :opt_count
 
-  if I3 != 3 goto error
+  if argc != 3 goto error
 
   .local int return_type
   .local pmc retval

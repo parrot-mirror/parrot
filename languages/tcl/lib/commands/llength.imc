@@ -5,9 +5,9 @@
 
 .sub "llength"
   .param pmc listval
-  
-  $I1 = get_argc
-  if $I1 != 1 goto bad_args
+  .param int argc :opt_count
+ 
+  if argc != 1 goto bad_args
 
   .local pmc retval
   .local int return_type

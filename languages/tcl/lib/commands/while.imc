@@ -6,9 +6,9 @@
 .sub "while"
   .param pmc cond_p
   .param pmc body_p
+  .param int argc :opt_count
  
-  $I1 = get_argc
-  if $I1 != 2 goto bad_args
+  if argc != 2 goto bad_args
 
   .local pmc retval, parsed_code
   .local int return_type
