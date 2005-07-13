@@ -1010,6 +1010,11 @@ PIO_putps(theINTERP, PMC *pmc, STRING *s)
     ParrotIO *io = PMC_data0(pmc);
     assert((unsigned int)l != 0xdeadbeefU);
     assert(io != 0);
+#if ! DISABLE_GC_DEBUG
+    /* trigger GC for debug - but not during tests */
+    if (0 && GC_DEBUG(interpreter))
+        Parrot_do_dod_run(interpreter, DOD_trace_stack_FLAG);
+#endif
     return PIO_write_down(interpreter, l, io, s);
 }
 

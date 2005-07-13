@@ -218,23 +218,33 @@ destination to continue execution.
         struct parrot_regs_t *caller_regs;
         opcode_t *pc;
 
+        /* debug print before context is switched */
+        if (Interp_trace_TEST(INTERP, PARROT_TRACE_SUB_CALL_FLAG)) {
+            PMC *sub = CONTEXT(cc->ctx)->current_sub;
+
+            PIO_eprintf(INTERP, "# Back in sub '%Ss'\n",
+                    Parrot_full_sub_name(INTERP, sub));
+        }
         caller_regs = INTERP->ctx.bp;
         INTERP->ctx = cc->ctx;
         if (cc->ctx_copy)
             memcpy(CONTEXT(INTERP->ctx), cc->ctx_copy,
                     sizeof(struct Parrot_Context));
-        if (Interp_trace_TEST(INTERP, PARROT_TRACE_SUB_CALL_FLAG)) {
-            PMC *sub = CONTEXT(INTERP->ctx)->current_sub;
-
-            PIO_eprintf(INTERP, "# Back in sub '%Ss'\n",
-                    Parrot_full_sub_name(INTERP, sub));
-        }
         pc = cc->address;
         if (pc) {
             if (CONTEXT(INTERP->ctx)->current_results) {
+                /*
+                 * the register pointer is already switched back
+                 * to the caller, therefore the registers of the
+                 * sub we are returning from isn't marked, if
+                 * inside argument passing a DOD run is triggered
+                 * therefore we have to block DOD
+                 */
+                Parrot_block_DOD(INTERP);
                 parrot_pass_args(INTERP, cc->seg,
                         caller_regs,
                         PARROT_OP_get_results_pc);
+                Parrot_unblock_DOD(INTERP);
             }
             INTERP->current_returns = NULL;
         }
