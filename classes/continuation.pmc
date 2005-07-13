@@ -132,8 +132,8 @@ Creates and returns a clone of the continuation.
         CONTEXT(cc->ctx)->ref_count++;
         PMC_pmc_val(ret) = PMC_pmc_val(SELF);
         cc->ctx_copy = mem_sys_allocate(sizeof(struct Parrot_Context));
-        memcpy(cc->ctx_copy, 
-                cc_self->ctx_copy ? cc_self->ctx_copy : CONTEXT(cc_self->ctx), 
+        memcpy(cc->ctx_copy,
+                cc_self->ctx_copy ? cc_self->ctx_copy : CONTEXT(cc_self->ctx),
                 sizeof(struct Parrot_Context));
         return ret;
     }
@@ -221,7 +221,7 @@ destination to continue execution.
         caller_regs = INTERP->ctx.bp;
         INTERP->ctx = cc->ctx;
         if (cc->ctx_copy)
-            memcpy(CONTEXT(INTERP->ctx), cc->ctx_copy, 
+            memcpy(CONTEXT(INTERP->ctx), cc->ctx_copy,
                     sizeof(struct Parrot_Context));
         if (Interp_trace_TEST(INTERP, PARROT_TRACE_SUB_CALL_FLAG)) {
             PMC *sub = CONTEXT(INTERP->ctx)->current_sub;
@@ -232,7 +232,7 @@ destination to continue execution.
         pc = cc->address;
         if (pc) {
             if (CONTEXT(INTERP->ctx)->current_results) {
-                parrot_pass_args(INTERP, (struct Parrot_sub*)cc,
+                parrot_pass_args(INTERP, cc->seg,
                         caller_regs,
                         PARROT_OP_get_results_pc);
             }

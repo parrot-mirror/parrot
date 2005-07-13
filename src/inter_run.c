@@ -289,19 +289,18 @@ call_set_arg_P(Interp *interpreter, PMC* p_arg, PMC *slurp_ar,
 
 /*
 
-=item C<opcode_t * parrot_pass_args(Interp *, struct Parrot_sub * sub,
-        struct parrot_regs_t *caller_regs, int what)>
+=item C<opcode_t * parrot_pass_args(Interp *, struct PackFile_ByteCode *dst_seg struct parrot_regs_t *caller_regs, int what)>
 
 Main argument passing routine.
 
 Prelims: code segments aren't yet switched, so that the current
 constants are still that of the caller.  The destination context is
 already created and set, C<caller_regs> point to the caller's
-registers.
+registers. C<dst_seg> has the constants of the destination.
 
 C<what> is either C<PARROT_OP_get_params_pc> or C<PARROT_OP_get_results_pc>.
 With the former arguments are passed from the caller into a subroutine,
-the latte handles return values and yields.
+the latter handles return values and yields.
 
 =cut
 
@@ -309,7 +308,7 @@ the latte handles return values and yields.
 /* XXX */
 #define CONST_STRING(i,s) const_string(i,s)
 opcode_t *
-parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
+parrot_pass_args(Interp *interpreter, struct PackFile_ByteCode *dst_seg,
         struct parrot_regs_t *caller_regs, int what)
 {
     PMC *src_signature, *dst_signature;
@@ -330,20 +329,10 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
     constants = interpreter->code->const_table->constants;
     if (what == PARROT_OP_get_params_pc) {
         dst_pc = interpreter->current_params;
-        if (dst_pc) {
-            /* called from the get_params opcode */
-            src_pc = CONTEXT(interpreter->ctx)->current_args;
-        }
-        else {
-            /* first op of sub is a get_params */
-            dst_pc = sub->address;
-            src_pc = interpreter->current_args;
-            CONTEXT(interpreter->ctx)->current_args = src_pc;
-        }
+        src_pc = CONTEXT(interpreter->ctx)->current_args;
         interpreter->current_params = NULL;
         interpreter->current_args = NULL;
         args_op = PARROT_OP_set_args_pc;
-
         action = "params";
     }
     else {
@@ -352,6 +341,7 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
             return NULL;
         args_op = PARROT_OP_set_returns_pc;
         src_pc = interpreter->current_returns;
+        action = "results";
         if (!src_pc) {    /* no returns */
             /* continuation call with args
              *
@@ -364,12 +354,12 @@ parrot_pass_args(Interp *interpreter, struct Parrot_sub * sub,
             if (!src_pc)
                 return NULL;
             args_op = PARROT_OP_set_args_pc;
+            action = "params";
         }
-        action = "results";
     }
 
     assert(*dst_pc == what);
-    dst_signature = sub->seg->const_table->constants[dst_pc[1]]->u.key;
+    dst_signature = dst_seg->const_table->constants[dst_pc[1]]->u.key;
     assert(PObj_is_PMC_TEST(dst_signature));
     assert(dst_signature->vtable->base_type == enum_class_FixedIntegerArray);
 
@@ -510,7 +500,6 @@ normal_pmc:
         if (slurp_ar)
             --dst_i;
     }
-    interpreter->current_argc = dst_i; /* FIXME */
     for (; dst_i < dst_n; ++dst_i) {
         dst_sig = VTABLE_get_integer_keyed_int(interpreter,
                 dst_signature, dst_i);

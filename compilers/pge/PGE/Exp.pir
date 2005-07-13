@@ -39,7 +39,7 @@ functionality and correctness at the moment.
 
 .namespace [ "PGE::Exp" ]
 
-.sub __onload 
+.sub __onload
     .local pmc hashclass
     .local pmc expclass
     .local pmc hash
@@ -77,7 +77,7 @@ functionality and correctness at the moment.
 
 =item C<new(STR class [, PMC exp1 [, PMC exp2]])>
 
-Creates and returns  a new C<Exp> object of C<class>, initializing 
+Creates and returns  a new C<Exp> object of C<class>, initializing
 min/max/greedy/etc.  values and C<exp1> and C<exp2> objects if provided.
 
 =cut
@@ -86,10 +86,9 @@ min/max/greedy/etc.  values and C<exp1> and C<exp2> objects if provided.
     .param string expclass     :optional           # class from find_type
     .param pmc exp1            :optional           # left expression
     .param pmc exp2            :optional           # right expression
+    .param int argc            :opt_count
     .local pmc me                                  # new expression object
-    .local int argc
 
-    argc = get_argc
     if argc > 0 goto buildme
     expclass = "PGE::Exp"
   buildme:
@@ -184,9 +183,8 @@ hint, then we have have no firstchars either.
 .sub "firstchars" method
     .param pmc exp1            :optional
     .param pmc exp2            :optional
-    .local int argc
+    .param int argc            :opt_count
 
-    argc = get_argc
     if argc < 1 goto exp_1
     $S0 = exp1["firstchars"]
     unless $S0 > "" goto exp_1
@@ -204,20 +202,19 @@ hint, then we have have no firstchars either.
 
 =item C<(STR, INT) = serno([STR prefix [, INT start]])>
 
-This method simply returns integers and labels usable for 
-serialization, e.g., for generating unique labels and identifiers 
+This method simply returns integers and labels usable for
+serialization, e.g., for generating unique labels and identifiers
 within generated code.  The C<start> parameter allows the serial
 number to be set to a given value.  XXX: I'm assuming overflow
-won't be a problem, but is the use of the start parameter thread-safe?  
+won't be a problem, but is the use of the start parameter thread-safe?
 
 =cut
 
 .sub "serno" method
     .param string prefix       :optional
     .param int start           :optional
-    .local int argc
+    .param int argc            :opt_count
 
-    argc = get_argc
     if argc > 0 goto serno_1
     prefix = "R"
   serno_1:
@@ -253,7 +250,7 @@ Adds to the current code string, replacing %s by str1/str2.
     if $I0 < 0 goto emit_1
     substr fmt, $I0, 2, str2
   emit_1:
-    concat code, fmt 
+    concat code, fmt
     .return ()
 .end
 
@@ -314,7 +311,7 @@ literal to be matched has already been placed in the C<str> string
 register.
 
 =cut
-    
+
 .sub "genliteral" method
     .param pmc code
     .param string label
@@ -396,8 +393,8 @@ register.
     emit(code, ".sub _pge_rule")
     emit(code, "    .param pmc mob")
     emit(code, "    .param pmc pos :optional")
+    emit(code, "    .param int has_pos :opt_count")
     emit(code, "    .local pmc yield")
-    emit(code, "    .local int argc")
     emit(code, "    $I0 = isa mob, \"PGE::Match\"")
     emit(code, "    if $I0 goto init_pos")
     emit(code, "  new_match:")
@@ -412,8 +409,7 @@ register.
     emit(code, "    $P0 = -1")
     emit(code, "    setattribute mob, \"PGE::Match\\x0$:pos\", $P0")
     emit(code, "  init_pos:")
-    emit(code, "    argc = get_argc")
-    emit(code, "    if argc > 1 goto start_match")
+    emit(code, "    if has_pos goto start_match")
     emit(code, "    $P0 = getattribute mob, \"PGE::Match\\x0$:pos\"")
     emit(code, "    pos = $P0")
     emit(code, "  start_match:")
@@ -462,7 +458,7 @@ register.
   gen_1:
     emit(code, "    from = pos")
     self.emitsub(code, label, "pos", "from", "lastpos", "NOCUT")
-    #emit(code, "    if cutting == %s goto fail_forever", PGE_CUT_RULE) 
+    #emit(code, "    if cutting == %s goto fail_forever", PGE_CUT_RULE)
     emit(code, "    if cutting == %s goto fail_forever", -2)  # XXX
     emit(code, "  try_again:")
     emit(code, "    inc pos")
@@ -499,7 +495,7 @@ register.
     emit(code, "    ret")
     .return ()
 .end
-    
+
 .namespace [ "PGE::Exp::Literal" ]
 
 .sub "analyze" method
@@ -749,7 +745,7 @@ register.
     emit(code, "    %s $I0 == -1 goto fail", charmatch)
     emit(code, "    inc rep")
     emit(code, "    inc pos")
-    emit(code, "    goto %s_0", label) 
+    emit(code, "    goto %s_0", label)
     .return ()
 .end
 
@@ -873,7 +869,7 @@ register.
     self.firstchars(exp1)
     .return ()
 .end
-   
+
 .sub "gen" method
     .param pmc code
     .param string label
@@ -962,7 +958,7 @@ register.
     exp2.gen(code, $S1, next)
     .return ()
 .end
-    
+
 
 .namespace [ "PGE::Exp::Group" ]
 
@@ -992,7 +988,7 @@ register.
   creps_2:
     $I0 = exists creps[cname]                      # have seen capture name?
     unless $I0 goto creps_3                        #
-    $P0 = creps[cname]                             # yes, so prev is now 
+    $P0 = creps[cname]                             # yes, so prev is now
     $P0["isarray"] = 1                             # an array capture
     self["isarray"] = 1                            # and so is self
   creps_3:
@@ -1001,7 +997,7 @@ register.
   isarray_0:
     psave = pad["isarray"]                         # get current isarray status
     isarray = self["isarray"]                      # combine with group's
-    isarray |= psave                               # 
+    isarray |= psave                               #
     self["isarray"] = isarray                      # and pass to nested
     pad["isarray"] = isarray
     $I0 = self["cscope"]                           # new scope resets
@@ -1027,7 +1023,7 @@ register.
     pad["creps"] = creps
     .return ()
 .end
- 
+
 .sub "gen" method
     .param pmc code
     .param string label
@@ -1251,7 +1247,7 @@ register.
   end:
     .return ()
 .end
-   
+
 =head1 AUTHOR
 
 Patrick Michaud (pmichaud@pobox.com) is the author and maintainer.
@@ -1259,4 +1255,4 @@ Patches and suggestions should be sent to the Perl 6 compiler list
 (perl6-compiler@perl.org).
 
 =cut
- 
+

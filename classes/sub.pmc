@@ -288,13 +288,12 @@ Invokes the subroutine.
                 PObj_get_FLAGS(ccont) &= ~SUB_FLAG_TAILCALL;
                 CONTEXT(INTERP->ctx)->current_sub = SELF;
                 CONTEXT(INTERP->ctx)->current_pc = pc;
+                CONTEXT(INTERP->ctx)->current_args = INTERP->current_args;
                 if (*pc == PARROT_OP_get_params_pc) {
-                    pc = parrot_pass_args(INTERP, sub, caller_regs,
+                    INTERP->current_params = pc;
+                    pc = parrot_pass_args(INTERP, sub->seg, caller_regs,
                             PARROT_OP_get_params_pc);
                 }
-                else
-                    CONTEXT(INTERP->ctx)->current_args =
-                        INTERP->current_args;
                 goto is_tail_call;
             }
         }
@@ -304,6 +303,7 @@ Invokes the subroutine.
             real_exception(INTERP, next, E_RuntimeError,
                     "maximum recursion depth exceeded");
         }
+        CONTEXT(INTERP->ctx)->current_args = INTERP->current_args;
         /*
          * when next == NULL the call creates args in the
          * new frame, e.g.
@@ -313,12 +313,10 @@ Invokes the subroutine.
             if (*pc == PARROT_OP_get_params_pc) {
                 CONTEXT(INTERP->ctx)->current_sub = SELF;
                 CONTEXT(INTERP->ctx)->current_pc = pc;
-                pc = parrot_pass_args(INTERP, sub, caller_regs,
+                INTERP->current_params = pc;
+                pc = parrot_pass_args(INTERP, sub->seg, caller_regs,
                         PARROT_OP_get_params_pc);
             }
-            else
-                CONTEXT(INTERP->ctx)->current_args =
-                    INTERP->current_args;
         }
         /*
          * and copy set context variables

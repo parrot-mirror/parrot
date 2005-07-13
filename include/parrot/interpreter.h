@@ -330,7 +330,6 @@ struct parrot_interp_t {
     opcode_t *current_args;      /* ptr into code with set_args opcode */
     opcode_t *current_params;   /* ptr into code with get_params opcode */
     opcode_t *current_returns;   /* ptr into code with get_returns opcode */
-    INTVAL current_argc;         /* args / rets of recent call/return */
     /* during a call sequencer the caller fills these objects
      * inside the invoke these get moved to the context structure
      */
