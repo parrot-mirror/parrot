@@ -369,7 +369,7 @@ op get_params(inconst PMC) {
     cont_pmc = CONTEXT(interpreter->ctx)->current_cont;
 
     caller_regs = PMC_cont(cont_pmc)->ctx.bp;
-    pc = parrot_pass_args(interpreter, sub, caller_regs,
+    pc = parrot_pass_args(interpreter, sub->seg, caller_regs,
 	    PARROT_OP_get_params_pc);
     goto ADDRESS(pc);
 }
@@ -382,22 +382,6 @@ op set_returns(inconst PMC) {
     interpreter->current_returns = this;
     argc = VTABLE_elements(interpreter, signature);
     goto ADDRESS(this + 2 + argc);
-}
-
-=item B<get_argc(out INT)>
-
-Get the argument count of this function call, or the
-count of call results of the recent function return.
-
-Please note that this opcode only return the state of the previous
-function call or return, therefore you might emit this opcode
-immediately thereafter, if needed.
-
-=cut
-
-op get_argc(out INT) {
-  $1 = interpreter->current_argc;
-  goto NEXT();
 }
 
 ########################################

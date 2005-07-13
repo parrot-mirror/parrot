@@ -118,7 +118,7 @@ PMC * new_ret_continuation_pmc(Interp *, opcode_t * address);
 
 void mark_context(Interp *, parrot_context_t *);
 
-opcode_t * parrot_pass_args(Interp *, struct Parrot_sub * sub,
+opcode_t * parrot_pass_args(Interp *, struct PackFile_ByteCode *seg,
         struct parrot_regs_t *caller_regs, int what);
 
 void mark_reg_stack(Interp *, Stack_Chunk_t *);
