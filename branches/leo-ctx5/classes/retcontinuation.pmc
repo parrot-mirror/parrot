@@ -40,7 +40,6 @@ Initializes the continuation.
     void init () {
         PMC_cont(SELF) = new_ret_continuation(INTERP);
         PMC_pmc_val(SELF) = NULL;
-        CONTEXT(PMC_cont(SELF)->ctx)->ref_count++;
         PObj_custom_mark_destroy_SETALL(SELF);
     }
 
