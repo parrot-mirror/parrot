@@ -63,6 +63,7 @@ Initializes the continuation.
         PMC_cont(SELF) = new_continuation(INTERP);
         PMC_pmc_val(SELF) = NULL;
         PObj_custom_mark_destroy_SETALL(SELF);
+        /* PANIC("don't do that"); */
         /*
          * Whenever we create a continuation, all return continuations
          * up the call chain maybe reused due to invoking the
@@ -120,19 +121,19 @@ Creates and returns a clone of the continuation.
     PMC* clone() {
         struct Parrot_cont * cc;
         struct Parrot_cont *cc_self = PMC_cont(SELF);
-        PMC* ret = pmc_new_noinit(INTERP, SELF->vtable->base_type);
+        PMC* ret = pmc_new_noinit(INTERP, enum_class_Continuation);
 
         PObj_custom_mark_destroy_SETALL(ret);
         cc = PMC_cont(ret) = mem_sys_allocate(sizeof(struct Parrot_cont));
-        memcpy(cc, cc_self, sizeof(struct Parrot_cont));
         /*
          * the context is now referenced by both continuations
          */
         CONTEXT(cc_self->ctx)->ref_count++;
-        PMC_pmc_val(ret) = PMC_pmc_val(SELF);
+        memcpy(cc, cc_self, sizeof(struct Parrot_cont));
         cc->ctx_copy = mem_sys_allocate(sizeof(struct Parrot_Context));
         memcpy(cc->ctx_copy, CONTEXT(cc_self->ctx),
                 sizeof(struct Parrot_Context));
+        PMC_pmc_val(ret) = PMC_pmc_val(SELF);
         return ret;
     }
 
@@ -224,17 +225,26 @@ destination to continue execution.
                     Parrot_full_sub_name(INTERP, sub));
         }
         caller_regs = INTERP->ctx.bp;
+        /*
+         * set context
+         */
         INTERP->ctx = cc->ctx;
-        if (cc->ctx_copy)
-            memcpy(CONTEXT(INTERP->ctx), cc->ctx_copy,
-                    sizeof(struct Parrot_Context));
+        if (cc->ctx_copy) {
+            /* copy only these parts that are different
+             * XXX what else?
+             */
+            CONTEXT(INTERP->ctx)->current_results =
+                cc->ctx_copy->current_results;
+            CONTEXT(INTERP->ctx)->current_args =
+                cc->ctx_copy->current_args;
+        }
         pc = cc->address;
         if (pc) {
             if (CONTEXT(INTERP->ctx)->current_results) {
                 /*
                  * the register pointer is already switched back
                  * to the caller, therefore the registers of the
-                 * sub we are returning from isn't marked, if
+                 * sub we are returning from aren't marked, if
                  * inside argument passing a DOD run is triggered
                  * therefore we have to block DOD
                  */

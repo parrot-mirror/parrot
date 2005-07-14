@@ -32,8 +32,9 @@ typedef struct _Instruction {
     int opsize;		   /* parrot op size   */
     int line;		   /* source code line number */
     int n_r;              /* count of regs in **r */
-    SymReg * r[1];         /* instruction is allocated variabled sized
+    SymReg * r[2];         /* instruction is allocated variabled sized
                               to hold more SymRegs */
+    /* XXX fix mk_pcc_sub first it uses r[1] */
 } Instruction;
 
 
