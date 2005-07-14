@@ -146,6 +146,7 @@ new_continuation(Interp *interp)
 {
     struct Parrot_cont *cc = mem_sys_allocate(sizeof(struct Parrot_cont));
     cc->ctx = interp->ctx;
+    CONTEXT(cc->ctx)->ref_count++;
     cc->seg = interp->code;
     cc->address = NULL;
     cc->ctx_copy = mem_sys_allocate(sizeof(struct Parrot_Context));
@@ -229,10 +230,11 @@ Make true Continuation from all RetContinuations up the call chain.
 =cut
 
 */
+
 void
 invalidate_retc_context(Interp *interpreter, PMC *cont)
 {
-    parrot_context_t ctx = interpreter->ctx;
+    parrot_context_t ctx = PMC_cont(cont)->ctx;
 
     Parrot_set_context_threshold(interpreter, &ctx);
     while (1) {
@@ -241,13 +243,12 @@ invalidate_retc_context(Interp *interpreter, PMC *cont)
          * if one were created, everything up the chain would have been
          * invalidated earlier.
          */
-        if (cont->vtable == Parrot_base_vtables[enum_class_Continuation])
+        if (cont->vtable != Parrot_base_vtables[enum_class_RetContinuation])
             break;
         cont->vtable = Parrot_base_vtables[enum_class_Continuation];
-        ctx.rctx = CONTEXT(ctx)->prev;
-        if (!ctx.rctx)
-            break;
+        CONTEXT(ctx)->ref_count++;
         cont = CONTEXT(ctx)->current_cont;
+        ctx = PMC_cont(cont)->ctx;
     }
 
 }

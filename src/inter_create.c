@@ -252,7 +252,7 @@ init_context(Interp *interpreter, parrot_context_t *oldp)
     memcpy(CONTEXT(interpreter->ctx),
            CONTEXT(old), sizeof(struct Parrot_Context));
     CONTEXT(interpreter->ctx)->prev = old.rctx;
-    CONTEXT(interpreter->ctx)->ref_count = 1;
+    CONTEXT(interpreter->ctx)->ref_count = 0;
     CONTEXT(interpreter->ctx)->current_results = NULL;
     CONTEXT(interpreter->ctx)->current_args = NULL;
 
@@ -387,6 +387,8 @@ Parrot_free_context(Interp *interpreter, parrot_context_t *ctxp, int re_use)
 
 #else
 
+#define CTX_LEAK_DEBUG 0
+
 void
 Parrot_alloc_context(Interp *interpreter)
 {
@@ -406,6 +408,9 @@ Parrot_alloc_context(Interp *interpreter)
     p[-1].prev = NULL;
     ctx = interpreter->ctx;
     interpreter->ctx.rctx = p;
+#if CTX_LEAK_DEBUG
+    fprintf(stderr, "alloc %p\n", p);
+#endif
     init_context(interpreter, &ctx);
 }
 
@@ -415,15 +420,21 @@ Parrot_free_context(Interp *interpreter, parrot_context_t *ctxp, int re_use)
     struct Parrot_Context *free_list;
 
     /*
-     * The context structure has a reference count, initially 1
-     * it' incrementented when a (ret)continuation is created or
-     * a continuation is cloned (and when a coroutine refers to
-     * another sub XXX)
+     * The context structure has a reference count, initially 0
+     * it' incrementented when a continuation is created either directly
+     * or a continuation is cloned or a retcontinuation is converted
+     * to a full continuation in invalidate_retc
+     * this *should* be ok, but obviously leaks memory
+     * (turn CTX_LEAK_DEBUG on)
+     *
      */
-    if (--CONTEXT(*ctxp)->ref_count <= 0) {
+    if (re_use || --CONTEXT(*ctxp)->ref_count <= 0) {
         free_list = (struct Parrot_Context *) interpreter->ctx_mem.free;
         LVALUE_CAST(struct Parrot_Context *, interpreter->ctx_mem.free) =
             ctxp->rctx;
+#if CTX_LEAK_DEBUG
+        fprintf(stderr, "free  %p\n", ctxp->rctx);
+#endif
         CONTEXT(*ctxp)->prev = free_list;
     }
 }
