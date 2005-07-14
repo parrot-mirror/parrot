@@ -4,9 +4,13 @@
 .namespace [ "Tcl" ]
 
 .sub "join"
-  .param pmc a_list
-  .param pmc joiner_pmc
-  .param int argc :opt_count
+  .param pmc argv :slurpy
+  .local int argc
+  argc = argv
+
+  .local pmc a_list,joiner_pmc
+  a_list     = argv[0]
+  joiner_pmc = argv[1]
 
   if argc == 0 goto bad_args
   if argc > 2 goto bad_args
