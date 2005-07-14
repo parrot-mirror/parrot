@@ -1,3 +1,9 @@
+- from leo's branch:
+
+Once we're passing all tests in this branch, we should go back and rip
+out :slurpy where possible, and look into using "overflow" to detect
+when we've been given too many arguments.
+
 From autrijus's talk:
 
 PIR Tree - can we use this instead of the current string-based compilation.
