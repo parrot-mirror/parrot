@@ -4,13 +4,18 @@
 .namespace [ "Tcl" ]
 
 .sub "for"
-  .param pmc start_p
-  .param pmc test_p
-  .param pmc next_p
-  .param pmc body_p
-  .param int argc :opt_count
+  .param pmc argv :slurpy
 
+  .local int argc
+  argc = argv
   if argc != 4 goto bad_args
+
+  .local pmc start_p, test_p, next_p, body_p
+
+  start_p = argv[0]
+  test_p  = argv[1]
+  next_p  = argv[2]
+  body_p  = argv[3]
 
   .local string start,        next,        body
   .local pmc    start_parsed, next_parsed, body_parsed, test_parsed

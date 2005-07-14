@@ -4,7 +4,10 @@
 .namespace [ "Tcl" ]
 
 .sub "break"
-  .param int argc :opt_count
+  .param pmc argv :slurpy
+
+  .local int argc
+  argc = argv
 
   .local int return_type
 

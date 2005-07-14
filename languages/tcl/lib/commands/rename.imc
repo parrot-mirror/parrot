@@ -4,11 +4,15 @@
 .namespace [ "Tcl" ]
 
 .sub "rename"
-  .param pmc old_p
-  .param pmc new_p
-  .param int argc :opt_count
+  .param pmc argv :slurpy
+  .local int argc
+  argc = argv
 
   if argc != 2 goto error
+  .local string oldName
+  oldName = argv[0]
+  .local string newName
+  newName = argv[1]
 
   .local int return_type
   .local pmc retval
@@ -17,14 +21,7 @@
   return_type = TCL_OK
   retval = ""
 
-  .local string oldName
-  .local string newName
-  .local pmc commands
- 
-  oldName = old_p
-  newName = new_p
-
-  .local pmc theSub
+  .local pmc commands,theSub
 
   # If newName is empty, then just delete
   if newName == "" goto delete

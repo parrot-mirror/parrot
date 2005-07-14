@@ -7,12 +7,18 @@ Create a PIR sub on the fly for this user defined proc.
 .namespace [ "Tcl" ]
 
 .sub "proc"
-  .param pmc name_p
-  .param pmc args_p
-  .param pmc body_p
-  .param int argc :opt_count
+  .param pmc argv :slurpy
+  .local int argc
+  argc = argv
 
   if argc != 3 goto error
+
+  .local string name
+  name   = argv[0]
+  .param pmc args_p
+  args_p = argv[1]
+  .param pmc body_p
+  body_p = argv[2]
 
   .local int return_type
   .local pmc retval
@@ -24,11 +30,10 @@ Create a PIR sub on the fly for this user defined proc.
   .local pmc __list
   __list = find_global "_Tcl", "__list"
 
-  .local string name, args
 
-  name = name_p
   (return_type, retval) = __list(args_p)
   if return_type == TCL_ERROR goto done
+  .local string args
   args_p = retval
   args = args_p
 

@@ -17,8 +17,8 @@ however, then we're returning the invokable PMC.
 .const int MAX_PRECEDENCE =  9
 
 .sub __expression_parse
+  .param string expr
 
-  .local string expr      # String containing our expression
   .local int return_type  # TCL return code
   return_type = TCL_OK
   .local pmc retval       # TCL return value
@@ -31,18 +31,6 @@ however, then we're returning the invokable PMC.
   .local pmc parser
   parser = find_global "_Tcl", "parser"
 
-  if I3 == 1 goto pmc_arg
-  # if I2 isn't one here, we should blow up. But who's counting.
-  expr = S5
-  goto got_arg
-
-pmc_arg:
-  expr = P5
-  #print "GOT AN EXPR OF:"
-  #print expr
-  #print "\n"
-
-got_arg:
   .local pmc undef
   undef = new Undef
 
