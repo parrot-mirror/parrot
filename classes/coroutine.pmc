@@ -104,7 +104,6 @@ Swaps the "context".
             /*
              * first time set current sub, cont, object
              */
-            CONTEXT(INTERP->ctx)->ref_count++;
             Parrot_alloc_context(INTERP);
             co->ctx = INTERP->ctx;
             wanted_seg = co->seg;
