@@ -857,6 +857,7 @@ exp_PCC_Sub(Interp* interpreter, nodeType *p)
 {
 /*
  * TODO
+ * nodeType *sub_name ...
  * nodeType *doc;
  */
     SymReg *sub;
@@ -865,10 +866,11 @@ exp_PCC_Sub(Interp* interpreter, nodeType *p)
 
     if (!cur_unit)
         IMCC_fatal(interpreter, 1, "exp_PCC_Sub: no cur_unit");
-    sub = mk_sub_address(interpreter, str_dup("pcc_sub"));
+    sub = mk_sub_label(interpreter, str_dup("pcc_sub"));
     ins = INS_LABEL(cur_unit, sub, 1);
 
-    ins->r[1] = mk_pcc_sub(interpreter, str_dup(ins->r[0]->name), 0);
+    ins->r[0]->type = VT_PCC_SUB;
+    ins->r[0]->pcc_sub = calloc(1, sizeof(struct pcc_sub_t));
     add_namespace(interpreter, cur_unit);
     regs[0] = get_const(interpreter, "0", 'I');
     insINS(interpreter, cur_unit, ins, "new_pad", regs, 1);
@@ -899,7 +901,7 @@ exp_Py_Module(Interp* interpreter, nodeType *p)
 
     if (!cur_unit)
         IMCC_fatal(interpreter, 1, "exp_Py_Module: no cur_unit");
-    sub = mk_sub_address(interpreter, str_dup("__main__"));
+    sub = mk_sub_label(interpreter, str_dup("__main__"));
     ins = INS_LABEL(cur_unit, sub, 1);
 
     ins->r[1] = mk_pcc_sub(interpreter, str_dup(ins->r[0]->name), 0);
