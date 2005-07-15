@@ -497,7 +497,7 @@ fixup_bsrs(Interp *interpreter)
                         if (s1->unit->type & IMC_PCCSUB) {
                             ins = s1->unit->instructions;
                             assert(ins);
-                            r1 = ins->r[1];
+                            r1 = ins->r[0];
                             assert(r1);
                             pcc_sub = r1->pcc_sub;
                             assert(pcc_sub);
@@ -1012,15 +1012,15 @@ e_pbc_end_sub(Interp *interpreter, void *param, IMC_Unit * unit)
      */
     ins = unit->instructions;
     /* we run only PCC subs */
-    if (!ins->r[1] || !ins->r[1]->pcc_sub)
+    if (!ins->r[0] || !ins->r[0]->pcc_sub)
         return 0;
     /* if we are compiling, we don't run it */
     if (IMCC_INFO(interpreter)->write_pbc)
         return 0;
-    pragma = ins->r[1]->pcc_sub->pragma;
+    pragma = ins->r[0]->pcc_sub->pragma;
     if (pragma & P_IMMEDIATE) {
         IMCC_debug(interpreter, DEBUG_PBC, "immediate sub '%s'",
-                ins->r[1]->name);
+                ins->r[0]->name);
         PackFile_fixup_subs(interpreter, PBC_IMMEDIATE);
     }
     return 0;
@@ -1140,20 +1140,20 @@ e_pbc_emit(Interp *interpreter, void *param, IMC_Unit * unit, Instruction * ins)
         else
             debug_seg = NULL;
         /* if item is a PCC_SUB entry then store it constants */
-        if (ins->r[1] && ins->r[1]->pcc_sub) {
+        if (ins->r[0] && ins->r[0]->pcc_sub) {
 #if IMC_TRACE
-            PIO_eprintf(NULL, "pbc.c: e_pbc_emit (pcc_sub=%s)\n", ins->r[1]->name);
+            PIO_eprintf(NULL, "pbc.c: e_pbc_emit (pcc_sub=%s)\n", ins->r[0]->name);
 #endif
-            add_const_pmc_sub(interpreter, ins->r[1], oldsize,
+            add_const_pmc_sub(interpreter, ins->r[0], oldsize,
                     oldsize+code_size);
         }
     }
     /*
      * if this is not the first sub then store the sub
      */
-    if (npc && unit->pasm_file && ins->r[1] && ins->r[1]->pcc_sub) {
+    if (npc && unit->pasm_file && ins->r[0] && ins->r[0]->pcc_sub) {
         /* we can only set the offset for PASM code */
-        add_const_pmc_sub(interpreter, ins->r[1], npc, npc);
+        add_const_pmc_sub(interpreter, ins->r[0], npc, npc);
     }
     if (ins->op && *ins->op) {
         /* fixup local jumps */

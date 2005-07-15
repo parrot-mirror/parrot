@@ -43,7 +43,7 @@ check_invoke_type(Interp *interp, IMC_Unit * unit, Instruction *ins)
      * inside another pcc_sub
      * 2) invoke = loop to begin
      */
-    if (unit->instructions->r[1] && unit->instructions->r[1]->pcc_sub)
+    if (unit->instructions->r[0] && unit->instructions->r[0]->pcc_sub)
         return INVOKE_SUB_LOOP;
     /* 3) invoke P1 returns */
     if (ins->opsize == 2)
@@ -76,9 +76,9 @@ find_basic_blocks (Parrot_Interp interpreter, IMC_Unit * unit, int first)
 
     /* XXX FIXME: Now the way to check for a sub is unit->type */
     ins = unit->instructions;
-    if (first && ins->type == ITLABEL && ins->r[1]) {
+    if (first && ins->type == ITLABEL && ins->r[0]->type == VT_PCC_SUB) {
         IMCC_debug(interpreter, DEBUG_CFG, "pcc_sub %s nparams %d\n",
-                ins->r[0]->name, ins->r[1]->pcc_sub->nargs);
+                ins->r[0]->name, ins->r[0]->pcc_sub->nargs);
         expand_sub(interpreter, unit, ins);
     }
     ins->index = i = 0;
