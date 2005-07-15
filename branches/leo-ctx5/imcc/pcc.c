@@ -147,7 +147,7 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     SymReg *regs[2];
     char buf[128];
 
-    sub = ins->r[1];
+    sub = ins->r[0];
 
     /* Don't generate any parameter checking code if there
      * are no named arguments.
@@ -555,56 +555,11 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
                     need_cc ? "invokecc" : "invoke", regs, 1);
         }
         ins->type |= ITPCCSUB;
-        ins->r[0]->pcc_sub = sub->pcc_sub;
-        sub->pcc_sub = NULL;
-        sub = ins->r[0];
         /*
          * locate return label, if there is one skip it
          */
         if (sub->pcc_sub->label && ins->next->type == ITLABEL) {
             ins = ins->next;
-        }
-    }
-}
-
-
-/*
- * special peephole optimizer for code generated mainly by
- * above functions
- */
-void
-pcc_sub_optimize(Parrot_Interp interp, IMC_Unit * unit)
-{
-    Instruction *ins, *tmp;
-    IMCC_info(interp, 2, "\tpcc_sub_optimize\n");
-    for (ins = unit->instructions; ins; ins = ins->next) {
-        if (ins->opsize == 3 &&
-                ins->r[1]->type == VTCONST &&
-                (ins->r[0]->set == 'I' || ins->r[0]->set == 'N') &&
-                ins->r[1]->name[1] != 'b' &&
-                ins->r[1]->name[1] != 'B' &&
-                ins->r[1]->name[1] != 'x' &&
-                ins->r[1]->name[1] != 'X' &&
-                atof(ins->r[1]->name) == 0.0 &&
-                !strcmp(ins->op, "set")) {
-            IMCC_debug(interp, DEBUG_OPT1, "opt1 %I => ", ins);
-            tmp = INS(interp, unit,"null", NULL, ins->r, 1, 0, 0);
-            IMCC_debug(interp, DEBUG_OPT1, "%I\n", tmp);
-            subst_ins(unit, ins, tmp, 1);
-            ins = tmp;
-        }
-        else if (ins->opsize == 3 &&
-                !strcmp(ins->op, "set")) {
-            SymReg *r0 = ins->r[0];
-            SymReg *r1 = ins->r[1];
-            if (r0->set == r1->set && r0->color == r1->color &&
-                    r0->type == r1->type) {
-                IMCC_debug(interp, DEBUG_OPT1, "opt1 %I => ", ins);
-                ins = delete_ins(unit, ins, 1);
-                ins = ins->prev ? ins->prev : unit->instructions;
-                IMCC_debug(interp, DEBUG_OPT1, "deleted\n");
-                ostat.deleted_ins++;
-            }
         }
     }
 }

@@ -221,8 +221,6 @@ imc_reg_alloc(Interp *interpreter, IMC_Unit * unit)
             todo = 0;
         }
     }
-    if (IMCC_INFO(interpreter)->optimizer_level & OPT_SUB)
-        sub_optimize(interpreter, unit);
     if (IMCC_INFO(interpreter)->debug & DEBUG_IMC)
         dump_instructions(interpreter, unit);
     if (IMCC_INFO(interpreter)->verbose  ||

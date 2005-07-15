@@ -104,7 +104,6 @@ int imcc_fprintf(Interp *, FILE *fd, const char *fmt, ...);
 void expand_sub(Parrot_Interp interpreter, IMC_Unit *, Instruction *ins);
 void expand_sub_ret(Parrot_Interp interpreter, IMC_Unit *, Instruction *ins);
 void expand_sub_call(Parrot_Interp interpreter, IMC_Unit *, Instruction *ins);
-void sub_optimize(Parrot_Interp interpreter, IMC_Unit *);
 
 /* Call convention specific implementations (currently 2, FASTSUB and PCCSUB)*/
 
@@ -114,7 +113,6 @@ void sub_optimize(Parrot_Interp interpreter, IMC_Unit *);
 void expand_pcc_sub(Parrot_Interp interpreter, IMC_Unit *, Instruction *ins);
 void expand_pcc_sub_ret(Parrot_Interp interpreter, IMC_Unit *, Instruction *ins);
 void expand_pcc_sub_call(Parrot_Interp interpreter, IMC_Unit *, Instruction *ins);
-void pcc_sub_optimize(Parrot_Interp interpreter, IMC_Unit *);
 
 /*
  * fastcall.c

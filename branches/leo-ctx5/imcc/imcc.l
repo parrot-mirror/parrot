@@ -393,7 +393,7 @@ SP              [ ]
 		    return VAR;
 		}
                 if (cur_unit && cur_unit->instructions &&
-                        (r = cur_unit->instructions->r[1]) &&
+                        (r = cur_unit->instructions->r[0]) &&
                         r->pcc_sub) {
                     if ((r->pcc_sub->pragma & P_METHOD) &&
                         !strcmp(yytext, "self")) {
