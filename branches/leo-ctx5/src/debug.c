@@ -2971,16 +2971,16 @@ PDB_backtrace(Interp *interpreter)
         if (!sub)
             break;
         str = Parrot_Context_infostr(interpreter,
-		    &PMC_cont(sub)->ctx);
+		    &PMC_cont(sub)->to_ctx);
         if (!str)
             break;
 
 	/* recursion detection */
 	if (!PMC_IS_NULL(old) && PMC_cont(old) &&
-	    CONTEXT(PMC_cont(old)->ctx)->current_pc ==
-            CONTEXT(PMC_cont(sub)->ctx)->current_pc &&
-	    CONTEXT(PMC_cont(old)->ctx)->current_sub ==
-            CONTEXT(PMC_cont(sub)->ctx)->current_sub) {
+	    CONTEXT(PMC_cont(old)->to_ctx)->current_pc ==
+            CONTEXT(PMC_cont(sub)->to_ctx)->current_pc &&
+	    CONTEXT(PMC_cont(old)->to_ctx)->current_sub ==
+            CONTEXT(PMC_cont(sub)->to_ctx)->current_sub) {
             ++rec_level;
 	} else if (rec_level != 0) {
 	    PIO_eprintf(interpreter, "... call repeated %d times\n", rec_level);
@@ -2992,8 +2992,8 @@ PDB_backtrace(Interp *interpreter)
 	    PIO_eprintf(interpreter, "%Ss", str);
 
 	/* get the next Continuation */
+        ctx = PMC_cont(sub)->to_ctx;
 	old = sub;
-        ctx.rctx = CONTEXT(ctx)->prev;
         if (!ctx.rctx || !CONTEXT(ctx)->prev)
             break;
     }

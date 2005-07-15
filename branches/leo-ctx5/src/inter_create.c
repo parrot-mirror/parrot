@@ -28,6 +28,8 @@ Create or destroy a Parrot interpreter.c
 Interp interpre;
 #endif
 
+#define CTX_LEAK_DEBUG 0
+
 #define ATEXIT_DESTROY
 
 /*
@@ -128,7 +130,7 @@ Allocate and initialize context memory chunk.
 
 Free allocated context memory
 
-=item C<static void create_context(Interp *)>
+=item C<static void create_initial_context(Interp *)>
 
 Create initial interpreter context.
 
@@ -161,7 +163,7 @@ destroy_context(Interp *interpreter)
 }
 
 static void
-create_context(Interp *interpreter)
+create_initial_context(Interp *interpreter)
 {
     size_t to_alloc = sizeof(struct parrot_regs_t) + ALIGNED_CTX_SIZE;
 
@@ -178,26 +180,19 @@ create_context(Interp *interpreter)
 static void
 destroy_context(Interp *interpreter)
 {
-    struct Parrot_Context *p, *prev;
-    void *mem;
-
-    p = (struct Parrot_Context *)interpreter->ctx_mem.free;
-    while (p) {
-        prev = p[-1].prev;
-        mem = (char*)p - ALIGNED_CTX_SIZE;
-        mem_sys_free(mem);
-        p = prev;
-    }
 }
 
 static void
-create_context(Interp *interpreter)
+create_initial_context(Interp *interpreter)
 {
     size_t to_alloc = sizeof(struct parrot_regs_t) + ALIGNED_CTX_SIZE;
     char *p;
 
     p = mem_sys_allocate(to_alloc);
     LVALUE_CAST(char *, interpreter->ctx.bp) = p + ALIGNED_CTX_SIZE;
+#if CTX_LEAK_DEBUG
+    fprintf(stderr, "alloc %p\n", interpreter->ctx.bp);
+#endif
     interpreter->ctx_mem.free = NULL;
     memset(CONTEXT(interpreter->ctx), 0, sizeof(struct Parrot_Context));
     CONTEXT(interpreter->ctx)->prev = NULL;
@@ -387,7 +382,6 @@ Parrot_free_context(Interp *interpreter, parrot_context_t *ctxp, int re_use)
 
 #else
 
-#define CTX_LEAK_DEBUG 0
 
 void
 Parrot_alloc_context(Interp *interpreter)
@@ -492,7 +486,7 @@ make_interpreter(Parrot_Interp parent, Interp_flags flags)
         MUTEX_INIT(interpreter_array_mutex);
         MUTEX_INIT(class_count_mutex);
     }
-    create_context(interpreter);
+    create_initial_context(interpreter);
     interpreter->resume_flag = RESUME_INITIAL;
     interpreter->recursion_limit = 1000;
 
@@ -763,7 +757,6 @@ Parrot_really_destroy(int exit_code, void *vinterp)
             Parrot_destroy_vtable(interpreter, Parrot_base_vtables[i]);
     mmd_destroy(interpreter);
 
-    destroy_context(interpreter);
 
     if (interpreter->profile) {
         mem_sys_free(interpreter->profile->data);
@@ -780,6 +773,8 @@ Parrot_really_destroy(int exit_code, void *vinterp)
     stack_destroy(CONTEXT(interpreter->ctx)->control_stack);
     /* intstack */
     intstack_free(interpreter, CONTEXT(interpreter->ctx)->intstack);
+
+    destroy_context(interpreter);
 
     /* predefined exceptions */
     mem_sys_free(interpreter->exception_list);

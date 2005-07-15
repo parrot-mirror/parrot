@@ -467,10 +467,6 @@ inline op tailcall(in PMC) {
 }
 
 inline op updatecc() {
-  struct Parrot_cont *cc =  PMC_cont(REG_PMC(1));
-  /* update context */
-  CONTEXT(cc->ctx)->warns = CONTEXT(interpreter->ctx)->warns;
-  CONTEXT(cc->ctx)->errors = CONTEXT(interpreter->ctx)->errors;
   goto NEXT();
 }
 

@@ -27,7 +27,7 @@ _main:
     set P10, 2
     store_global "i", P10
 lp:
-    invoke P0
+    invokecc P0
     print "back "
     print P10
     print "\n"
@@ -129,7 +129,7 @@ output_is(<<'CODE', <<'OUTPUT', "Coroutines and lexicals 1");
     store_lex -1, "a", P20
 
     newsub P0, .Coroutine, co1
-    invoke P0
+    invokecc P0
     find_lex P21, "a"
     print P21
     invoke P0
@@ -177,7 +177,7 @@ output_is(<<'CODE', <<'OUTPUT', "Coroutines and lexicals 2");
     null I0
     set I3, 2
     set_args "(0,0)", P5, P6
-    invoke P5
+    invokecc P5
 
     find_lex P10, "b"
     print P10
@@ -213,7 +213,7 @@ co1:
     store_lex "a", P22      # replaces
 
     # invoke c02
-    invoke P6
+    invokecc P6
 
     # return
     invoke P5
@@ -326,7 +326,7 @@ _main:
     set P16, 2
     store_global "i", P16
 lp:
-    invoke P0
+    invokecc P0
     print "back "
     print P16
     print "\n"
@@ -364,7 +364,7 @@ _main:
     set P16, 2
     store_global "i", P16
 lp:
-    invoke P0
+    invokecc P0
     print "back "
     print P16
     print "\n"
@@ -402,7 +402,7 @@ _main:
     set P16, 2
     store_global "i", P16
 lp:
-    invoke P0
+    invokecc P0
     print "back "
     print P16
     print "\n"
@@ -438,7 +438,7 @@ _main:
     set P16, 2
     store_global "i", P16
 lp:
-    invoke P0
+    invokecc P0
     print "back "
     print P16
     print "\n"

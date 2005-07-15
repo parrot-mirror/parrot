@@ -90,10 +90,13 @@ typedef struct Parrot_coro {
 #define PMC_coro(pmc) LVALUE_CAST(parrot_coro_t, PMC_struct_val(pmc))
 
 typedef struct Parrot_cont {
-    struct PackFile_ByteCode *seg;      /* bytecode segment */
-    opcode_t *address;          /* start of bytecode, addr to continue */
-    parrot_context_t ctx;  /* pointer to interpreter context */
-    struct Parrot_Context *ctx_copy;   /* full continuation only */
+    /* continuation destination */
+    struct PackFile_ByteCode *seg;   /* bytecode segment */
+    opcode_t *address;               /* start of bytecode, addr to continue */
+    parrot_context_t to_ctx;         /* pointer to dest context */
+    struct Parrot_Context *ctx_copy; /* full continuation only */
+    /* a Continuation keeps the from_ctx alive */
+    parrot_context_t from_ctx;       /* the sub, this cont is returning from */
 } * parrot_cont_t;
 
 #define PMC_cont(pmc) LVALUE_CAST(parrot_cont_t, PMC_struct_val(pmc))
@@ -111,7 +114,7 @@ struct Parrot_Context_info {
 struct Parrot_sub * new_sub(Interp * interp);
 struct Parrot_sub * new_closure(Interp * interp);
 struct Parrot_coro * new_coroutine(Interp * interp);
-struct Parrot_cont * new_continuation(Interp * interp);
+struct Parrot_cont * new_continuation(Interp * interp, struct Parrot_cont *to);
 struct Parrot_cont * new_ret_continuation(Interp * interp);
 
 PMC * new_ret_continuation_pmc(Interp *, opcode_t * address);

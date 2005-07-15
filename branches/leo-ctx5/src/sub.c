@@ -131,10 +131,10 @@ new_closure(Interp *interp)
 /*
 
 =item C<struct Parrot_cont *
-new_continuation(Interp *interp)>
+new_continuation(Interp *interp, struct Parrot_cont *to)>
 
-Returns a new C<Parrot_cont> with its own copy of the current
-context.
+Returns a new C<Parrot_cont> to the context of C<to> with its own copy of the
+current interpreter context.
 
 =cut
 
@@ -142,15 +142,24 @@ context.
 
 
 struct Parrot_cont *
-new_continuation(Interp *interp)
+new_continuation(Interp *interp, struct Parrot_cont *to)
 {
     struct Parrot_cont *cc = mem_sys_allocate(sizeof(struct Parrot_cont));
-    cc->ctx = interp->ctx;
-    CONTEXT(cc->ctx)->ref_count++;
-    cc->seg = interp->code;
-    cc->address = NULL;
+    parrot_context_t to_ctx = to ? to->to_ctx : interp->ctx;
+
+    cc->to_ctx = to_ctx;
+    cc->from_ctx = interp->ctx;
+    CONTEXT(cc->from_ctx)->ref_count++;
+    if (to) {
+        cc->seg = to->seg;
+        cc->address = to->address;
+    }
+    else {
+        cc->seg = interp->code;
+        cc->address = NULL;
+    }
     cc->ctx_copy = mem_sys_allocate(sizeof(struct Parrot_Context));
-    memcpy(cc->ctx_copy, CONTEXT(interp->ctx), sizeof(struct Parrot_Context));
+    memcpy(cc->ctx_copy, CONTEXT(to_ctx), sizeof(struct Parrot_Context));
     return cc;
 }
 
@@ -169,7 +178,9 @@ struct Parrot_cont *
 new_ret_continuation(Interp *interp)
 {
     struct Parrot_cont *cc = mem_sys_allocate(sizeof(struct Parrot_cont));
-    cc->ctx = interp->ctx;
+    cc->to_ctx = interp->ctx;
+    cc->from_ctx.bp = NULL;      /* ret continuations should be created later
+                                   in the subroutine if needed */
     cc->seg = interp->code;
     cc->ctx_copy = NULL;
     cc->address = NULL;
@@ -234,7 +245,7 @@ Make true Continuation from all RetContinuations up the call chain.
 void
 invalidate_retc_context(Interp *interpreter, PMC *cont)
 {
-    parrot_context_t ctx = PMC_cont(cont)->ctx;
+    parrot_context_t ctx = PMC_cont(cont)->from_ctx;
 
     Parrot_set_context_threshold(interpreter, &ctx);
     while (1) {
@@ -248,7 +259,7 @@ invalidate_retc_context(Interp *interpreter, PMC *cont)
         cont->vtable = Parrot_base_vtables[enum_class_Continuation];
         CONTEXT(ctx)->ref_count++;
         cont = CONTEXT(ctx)->current_cont;
-        ctx = PMC_cont(cont)->ctx;
+        ctx = PMC_cont(cont)->from_ctx;
     }
 
 }

@@ -264,9 +264,9 @@ pir_output_is(<<'CODE', <<'OUT', "coroutine");
     co = new Coroutine
     co = addr _routine
     print "Hello"
-    invoke co
+    invokecc co
     print "perl6"
-    invoke co
+    invokecc co
     print "\n"
     end
 .end

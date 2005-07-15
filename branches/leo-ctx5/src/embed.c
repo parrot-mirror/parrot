@@ -454,7 +454,7 @@ static void
 setup_argv(Interp *interpreter, int argc, char ** argv)
 {
     INTVAL i;
-    PMC *userargv, *sig_arr, *class;
+    PMC *userargv, *sig_arr, *class, *cont;
     STRING *signature;
     static opcode_t opcodes[3];
     int const_nr;
@@ -490,10 +490,13 @@ setup_argv(Interp *interpreter, int argc, char ** argv)
      * will terminate the main run loop
      * XXX for now still place in P1 until return opcodes are everywhere
      */
-    CONTEXT(interpreter->ctx)->current_cont =
+    CONTEXT(interpreter->ctx)->current_cont = cont =
         new_ret_continuation_pmc(interpreter, NULL);
     /* clear segment to denote the end of chain */
-    PMC_cont(CONTEXT(interpreter->ctx)->current_cont)->seg = NULL;
+    PMC_cont(cont)->seg = NULL;
+    /* the continuation keeps the initial context alive */
+    PMC_cont(cont)->from_ctx = interpreter->ctx;
+    PMC_cont(cont)->to_ctx = interpreter->ctx;
     /*
      * set current subroutine
      */

@@ -560,7 +560,7 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
     opcode_t offset, *dest;
     struct parrot_regs_t *bp;
     int i;
-    PMC *ret_c, *dst_signature, *slurp_ar;
+    PMC  *dst_signature, *slurp_ar;
     parrot_context_t old_ctx;
     struct PackFile_Constant **constants;
     INTVAL src_n, dst_i, dst_n, dst_typ, dst_sig;
@@ -572,10 +572,9 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
     int opt_so_far;
 
     old_ctx = interpreter->ctx;
-    ret_c = new_ret_continuation_pmc(interpreter, NULL);
+    interpreter->current_cont  = new_ret_continuation_pmc(interpreter, NULL);
     interpreter->current_object = obj;
     dest = VTABLE_invoke(interpreter, sub, NULL);
-    CONTEXT(interpreter->ctx)->current_cont = ret_c;
     if (!dest)
         internal_exception(1, "Subroutine returned a NULL address");
     src_n = strlen(sig) - 1;

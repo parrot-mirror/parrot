@@ -46,23 +46,6 @@ Initializes the continuation.
 
 /*
 
-=item C<void destroy()>
-
-Destroys the continuation.
-
-=cut
-
-*/
-
-    void destroy () {
-        struct Parrot_cont * sub = PMC_cont(SELF);
-        if (sub) {
-            mem_sys_free(sub);
-            PMC_cont(SELF) = NULL;
-        }
-    }
-/*
-
 =item C<PMC* clone>
 
 Return a new Continuation PMC with the context of SELF. Note: the
@@ -98,7 +81,7 @@ the frame pointer in the stack frame cache.
          * unwind control stack
          */
         stack_now = CONTEXT(INTERP->ctx)->control_stack;
-        ctr_stack = CONTEXT(PMC_cont(SELF)->ctx)->control_stack;
+        ctr_stack = CONTEXT(PMC_cont(SELF)->to_ctx)->control_stack;
         while (stack_now != ctr_stack) {
             if (!stack_now || !ctr_stack)
                 internal_exception(1, "Control stack damaged");
@@ -113,15 +96,16 @@ the frame pointer in the stack frame cache.
 
         /* debug print before context is switched */
         if (Interp_trace_TEST(INTERP, PARROT_TRACE_SUB_CALL_FLAG)) {
-            PMC *sub = CONTEXT(cc->ctx)->current_sub;
+            PMC *sub = CONTEXT(cc->to_ctx)->current_sub;
 
             PIO_eprintf(INTERP, "# Back in sub '%Ss'\n",
                     Parrot_full_sub_name(INTERP, sub));
         }
         caller_regs = INTERP->ctx.bp;
         /* if free_context destroys, we have to remember the ptr */
-        Parrot_free_context(INTERP, &INTERP->ctx, 1);
-        INTERP->ctx = cc->ctx;
+        Parrot_free_context(INTERP, &cc->from_ctx, 1);
+        cc->from_ctx.bp = NULL;
+        INTERP->ctx = cc->to_ctx;
         next = cc->address;
         if (next) {
             if (CONTEXT(INTERP->ctx)->current_results) {
