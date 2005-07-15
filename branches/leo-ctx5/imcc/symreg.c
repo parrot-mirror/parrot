@@ -483,7 +483,7 @@ SymReg *
 mk_sub_address(Interp *interp, char * name)
 {
     SymReg * s = _mk_address(interp, IMCC_INFO(interp)->ghash,
-            name, U_add_once);
+            name, U_add_all);
     s->usage |= U_FIXUP;
     return s;
 }
