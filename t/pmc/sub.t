@@ -460,7 +460,7 @@ output_is(<<'CODE', <<'OUTPUT', "load_bytecode call sub");
     print "not "
 ok1:
     print "found sub\n"
-    invoke
+    invokecc P0
     print "never\n"
     end
 CODE

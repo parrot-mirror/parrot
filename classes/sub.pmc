@@ -283,21 +283,26 @@ Invokes the subroutine.
          */
         pc = sub->address;
 
-        if (!PMC_IS_NULL(ccont)) {
-            if (PObj_get_FLAGS(ccont) & SUB_FLAG_TAILCALL) {
-                PObj_get_FLAGS(ccont) &= ~SUB_FLAG_TAILCALL;
-                CONTEXT(INTERP->ctx)->current_sub = SELF;
-                CONTEXT(INTERP->ctx)->current_pc = pc;
-                CONTEXT(INTERP->ctx)->current_args = INTERP->current_args;
-                if (*pc == PARROT_OP_get_params_pc) {
-                    INTERP->current_params = pc;
-                    pc = parrot_pass_args(INTERP, sub->seg, caller_regs,
-                            PARROT_OP_get_params_pc);
-                }
-                goto is_tail_call;
+        assert (!PMC_IS_NULL(ccont));
+
+        if (PObj_get_FLAGS(ccont) & SUB_FLAG_TAILCALL) {
+            PObj_get_FLAGS(ccont) &= ~SUB_FLAG_TAILCALL;
+            CONTEXT(INTERP->ctx)->current_sub = SELF;
+            CONTEXT(INTERP->ctx)->current_pc = pc;
+            CONTEXT(INTERP->ctx)->current_args = INTERP->current_args;
+            if (*pc == PARROT_OP_get_params_pc) {
+                INTERP->current_params = pc;
+                pc = parrot_pass_args(INTERP, sub->seg, caller_regs,
+                        PARROT_OP_get_params_pc);
             }
+            PMC_cont(ccont)->from_ctx = INTERP->ctx;
+            goto is_tail_call;
         }
+
+        /* create new context, place it in interpreter */
         Parrot_alloc_context(INTERP);
+        /* remember from where we return */
+        PMC_cont(ccont)->from_ctx = INTERP->ctx;
         if (++CONTEXT(INTERP->ctx)->recursion_depth >
                 INTERP->recursion_limit) {
             real_exception(INTERP, next, E_RuntimeError,

@@ -470,7 +470,7 @@ Introspection interface. C<key> can be:
             if (PMC_IS_NULL(cont) || !PMC_cont(cont)->seg)
                 real_exception(interpreter, NULL, E_ValueError,
                         "No such caller depth");
-            ctx = PMC_cont(cont)->ctx;
+            ctx = PMC_cont(cont)->to_ctx;
         }
         s = CONST_STRING(interpreter, "sub");
         if (string_equal(interpreter, item, s) == 0)

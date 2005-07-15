@@ -60,7 +60,7 @@ Initializes the continuation.
 */
 
     void init () {
-        PMC_cont(SELF) = new_continuation(INTERP);
+        PMC_cont(SELF) = new_continuation(INTERP, NULL);
         PMC_pmc_val(SELF) = NULL;
         PObj_custom_mark_destroy_SETALL(SELF);
         /* PANIC("don't do that"); */
@@ -85,7 +85,7 @@ Marks the continuation as live.
 
     void mark () {
         struct Parrot_cont * cc = PMC_cont(SELF);
-        mark_context(INTERP, &cc->ctx);
+        mark_context(INTERP, &cc->to_ctx);
     }
 
 /*
@@ -101,7 +101,8 @@ Destroys the continuation.
     void destroy () {
         struct Parrot_cont * cc = PMC_cont(SELF);
         if (cc) {
-            Parrot_free_context(interpreter, &cc->ctx, 0);
+            if (cc->from_ctx.bp)
+                Parrot_free_context(interpreter, &cc->from_ctx, 0);
             if (cc->ctx_copy)
                 mem_sys_free(cc->ctx_copy);
             mem_sys_free(cc);
@@ -124,15 +125,7 @@ Creates and returns a clone of the continuation.
         PMC* ret = pmc_new_noinit(INTERP, enum_class_Continuation);
 
         PObj_custom_mark_destroy_SETALL(ret);
-        cc = PMC_cont(ret) = mem_sys_allocate(sizeof(struct Parrot_cont));
-        /*
-         * the context is now referenced by both continuations
-         */
-        CONTEXT(cc_self->ctx)->ref_count++;
-        memcpy(cc, cc_self, sizeof(struct Parrot_cont));
-        cc->ctx_copy = mem_sys_allocate(sizeof(struct Parrot_Context));
-        memcpy(cc->ctx_copy, CONTEXT(cc_self->ctx),
-                sizeof(struct Parrot_Context));
+        cc = PMC_cont(ret) = new_continuation(INTERP, cc_self);
         PMC_pmc_val(ret) = PMC_pmc_val(SELF);
         return ret;
     }
@@ -219,7 +212,7 @@ destination to continue execution.
 
         /* debug print before context is switched */
         if (Interp_trace_TEST(INTERP, PARROT_TRACE_SUB_CALL_FLAG)) {
-            PMC *sub = CONTEXT(cc->ctx)->current_sub;
+            PMC *sub = CONTEXT(cc->to_ctx)->current_sub;
 
             PIO_eprintf(INTERP, "# Back in sub '%Ss'\n",
                     Parrot_full_sub_name(INTERP, sub));
@@ -228,7 +221,7 @@ destination to continue execution.
         /*
          * set context
          */
-        INTERP->ctx = cc->ctx;
+        INTERP->ctx = cc->to_ctx;
         if (cc->ctx_copy) {
             /* copy only these parts that are different
              * XXX what else?
@@ -278,7 +271,7 @@ Experimental: return caller info as a STRING.
 */
 
     STRING* get_string() {
-	return Parrot_Context_infostr(INTERP, &PMC_cont(SELF)->ctx);
+	return Parrot_Context_infostr(INTERP, &PMC_cont(SELF)->to_ctx);
     }
 
 /*
@@ -293,7 +286,7 @@ Experimental: return caller PMC or Undef if none.
 
     METHOD PMC* caller() {
         struct Parrot_cont * cc = PMC_cont(SELF);
-        PMC *caller = CONTEXT(cc->ctx)->current_sub;
+        PMC *caller = CONTEXT(cc->to_ctx)->current_sub;
         if (!caller || !PMC_sub(caller)->address) {
             caller = pmc_new(INTERP, enum_class_Undef);
         }
@@ -312,7 +305,7 @@ Experimental: return continuation PMC of this Continuation or Undef if none.
 
     METHOD PMC* continuation() {
         struct Parrot_cont * cc = PMC_cont(SELF);
-        PMC *cont = CONTEXT(cc->ctx)->current_cont;
+        PMC *cont = CONTEXT(cc->to_ctx)->current_cont;
         if (cont)
             return cont;
         return pmc_new(INTERP, enum_class_Undef);
