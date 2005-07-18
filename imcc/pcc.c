@@ -132,6 +132,21 @@ pcc_get_args(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
     return ins;
 }
 
+#ifdef OBJ_AS_PARAM
+static void
+unshift_self(Interp *interp, SymReg *sub, SymReg *obj)
+{
+    int i, n = sub->pcc_sub->nargs;
+
+    sub->pcc_sub->args = realloc(sub->pcc_sub->args,
+            (n + 1) * sizeof(SymReg *));
+    for (i = n; i; --i)
+        sub->pcc_sub->args[i] = sub->pcc_sub->args[i - 1];
+    sub->pcc_sub->args[0] = obj;
+    sub->pcc_sub->nargs++;
+}
+
+#endif /* OBJ_AS_PARAM */
 
 /*
  * Expand a PCC (Parrot Calling Convention) subroutine
@@ -145,10 +160,22 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     int nargs;
     Instruction *tmp;
     SymReg *regs[2];
+#ifndef OBJ_AS_PARAM
     char buf[128];
+#endif /* OBJ_AS_PARAM */
 
     sub = ins->r[0];
 
+#ifdef OBJ_AS_PARAM
+    /*
+     * if this sub references self, unshift it as first param
+     */
+    if (unit->type & IMC_HAS_SELF) {
+        SymReg *self = get_sym("self");
+        unshift_self(interp, sub, self);
+    }
+
+#endif /* OBJ_AS_PARAM */
     /* Don't generate any parameter checking code if there
      * are no named arguments.
      */
@@ -161,6 +188,7 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     /*
      * if this sub references self, fetch it
      */
+#ifndef OBJ_AS_PARAM
     if (unit->type & IMC_HAS_SELF) {
         regs[0] = get_sym("self");
         assert(regs[0]);
@@ -169,6 +197,7 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         regs[1] = get_const(interp, buf, 'I');
         ins = insINS(interp, unit, ins, "interpinfo", regs, 2);
     }
+#endif /* OBJ_AS_PARAM */
 
     /*
      * check if there is a return
@@ -441,6 +470,11 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         }
     }
 
+#ifdef OBJ_AS_PARAM
+    if (sub->pcc_sub->object) {
+        unshift_self(interp, sub, sub->pcc_sub->object);
+    }
+#endif /* OBJ_AS_PARAM */
     /*
      * insert arguments
      */
