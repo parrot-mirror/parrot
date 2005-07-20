@@ -714,6 +714,25 @@ Any    42
 Any    43
 OUT
 
+pir_output_is(<<'CODE', <<'OUTPUT', "__add as function - Int, Float");
+.sub main @MAIN
+    .local pmc d, l, r
+    d = new Integer
+    l = new Integer
+    r = new Float
+    l = 3
+    r = 39.42
+    "__add"(l, r, d)
+    print d
+    print "\n"
+    end
+.end
+CODE
+42.42
+OUTPUT
+
+SKIP: {
+	skip("MMD as method disabled", 5);
 pir_output_is(<<'CODE', <<'OUTPUT', "__add as method");
 .sub main @MAIN
     .local pmc d, l, r
@@ -753,23 +772,6 @@ pir_output_is(<<'CODE', <<'OUTPUT', "__add as method - Int, Float");
     l = 3
     r = 39.42
     d = l."__add"(r)
-    print d
-    print "\n"
-    end
-.end
-CODE
-42.42
-OUTPUT
-
-pir_output_is(<<'CODE', <<'OUTPUT', "__add as function - Int, Float");
-.sub main @MAIN
-    .local pmc d, l, r
-    d = new Integer
-    l = new Integer
-    r = new Float
-    l = 3
-    r = 39.42
-    "__add"(l, r, d)
     print d
     print "\n"
     end
@@ -836,6 +838,7 @@ CODE
 42
 42
 OUTPUT
+}
 
 pir_output_is(<<'CODE', <<'OUTPUT', "Integer subclasses, n_add");
 .sub main @MAIN
@@ -899,6 +902,8 @@ CODE
 2
 OUTPUT
 
+SKIP: {
+	skip("multi methods disabled - need pdd03 OO specs", 1);
 pir_output_is(<<'CODE', <<'OUTPUT', "mmd bug reported by Jeff");
 .namespace ['Foo']
 
@@ -935,6 +940,7 @@ string
 PMC
 nothing
 OUTPUT
+}
 
 pir_output_is(<<'CODE', <<'OUTPUT', "use a core func for an object");
 .sub main @MAIN

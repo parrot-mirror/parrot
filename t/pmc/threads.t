@@ -41,11 +41,12 @@ if ($^O eq "cygwin" ) {
 	exit;
     }
 }
-if ($platforms{$^O}) {
+if (0 && $platforms{$^O}) {
    plan tests => 11;
 }
 else {
-   plan skip_all => "No threading yet or test not enabled for '$^O'";
+   # plan skip_all => "No threading yet or test not enabled for '$^O'";
+   plan skip_all => "Needs COPY for argument passing";
 }
 
 

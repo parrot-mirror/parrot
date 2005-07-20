@@ -200,17 +200,13 @@ output_is(<<'CODE', <<'OUTPUT', "constructor - init attr");
     interpinfo P2, .INTERPINFO_CURRENT_OBJECT
     classoffset I0, P2, "Foo"
     setattribute P2, I0, P10
+    set_returns "()"
     returncc
 .pcc_sub __get_string:
     interpinfo P2, .INTERPINFO_CURRENT_OBJECT
     classoffset I0, P2, "Foo"
     getattribute P10, P2, I0
-    set S5, P10
-    set I0, 0
-    set I1, 0
-    set I2, 1
-    set I3, 0
-    set I4, 0
+    set_returns "(0)", P10
     returncc
 CODE
 ok 1
