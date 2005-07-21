@@ -341,7 +341,6 @@ parrot_pass_args(Interp *interpreter, struct PackFile_ByteCode *dst_seg,
         dst_pc = interpreter->current_params;
         src_pc = CONTEXT(interpreter->ctx)->current_args;
         interpreter->current_params = NULL;
-        interpreter->current_args = NULL;
         args_op = PARROT_OP_set_args_pc;
         action = "params";
     }

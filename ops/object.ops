@@ -109,7 +109,7 @@ op callmethodcc() :object_base {
   assert(!PMC_IS_NULL(object));
   assert(meth!=0);
   interpreter->current_object = object;
-  interpreter->current_cont = new_ret_continuation_pmc(interpreter, next);
+  interpreter->current_cont = NEED_CONTINUATION;
   interpreter->current_method = meth;
   method_pmc = VTABLE_find_method(interpreter, object, meth);
   if (!method_pmc) {
@@ -133,7 +133,7 @@ op callmethodcc(in STR) :object_base {
 
   next = expr NEXT();
   interpreter->current_object = object;
-  interpreter->current_cont = new_ret_continuation_pmc(interpreter, next);
+  interpreter->current_cont = NEED_CONTINUATION;
   interpreter->current_method = meth;
   method_pmc = VTABLE_find_method(interpreter, object, meth);
   if (!method_pmc) {

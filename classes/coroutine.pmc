@@ -101,6 +101,11 @@ Swaps the "context".
 
         if (!co->ctx.bp) {
             PMC *pad, *ccont;
+
+            ccont = INTERP->current_cont;
+            if (ccont == NEED_CONTINUATION) {
+                ccont = new_ret_continuation_pmc(interpreter, next);
+            }
             /*
              * first time set current sub, cont, object
              */
@@ -114,7 +119,7 @@ Swaps the "context".
                         STACK_ENTRY_PMC, STACK_CLEANUP_NULL);
             }
             CONTEXT(co->ctx)->current_sub = SELF;
-            CONTEXT(co->ctx)->current_cont = ccont = INTERP->current_cont;
+            CONTEXT(co->ctx)->current_cont = ccont;
             PMC_cont(ccont)->from_ctx = INTERP->ctx;
             CONTEXT(co->ctx)->current_object = NULL;
             INTERP->current_object = NULL;
@@ -122,6 +127,7 @@ Swaps the "context".
 
             PObj_get_FLAGS(SELF) |= SUB_FLAG_CORO_FF;
             CONTEXT(INTERP->ctx)->current_args = INTERP->current_args;
+            INTERP->current_args = NULL;
             /* copy args from interpreter */
             if (*dest == PARROT_OP_get_params_pc) {
                 INTERP->current_params = dest;

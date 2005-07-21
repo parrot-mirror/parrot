@@ -126,6 +126,7 @@ shifted down.
         Parrot_csub_t func = (Parrot_csub_t)D2FPTR(PMC_data(SELF));
         UINTVAL flags;
 
+        INTERP->current_cont = NULL;
         if (!func)
             real_exception(INTERP, NULL, INVALID_OPERATION,
                 "attempt to call NULL function");

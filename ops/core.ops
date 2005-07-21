@@ -441,7 +441,7 @@ inline op invokecc() {
   PMC * p = REG_PMC(0);
   dest = expr NEXT();
   interpreter->current_object = NULL;
-  interpreter->current_cont = new_ret_continuation_pmc(interpreter, dest);
+  interpreter->current_cont = NEED_CONTINUATION;
   dest = (opcode_t *)p->vtable->invoke(interpreter, p, dest);
   goto ADDRESS(dest);
 }
@@ -451,7 +451,7 @@ inline op invokecc(in PMC) {
   PMC * p = $1;
   dest = expr NEXT();
   interpreter->current_object = NULL;
-  interpreter->current_cont = new_ret_continuation_pmc(interpreter, dest);
+  interpreter->current_cont = NEED_CONTINUATION;
   dest = (opcode_t *)p->vtable->invoke(interpreter, p, dest);
   goto ADDRESS(dest);
 }

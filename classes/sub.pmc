@@ -228,25 +228,16 @@ Invokes the subroutine.
     void* invoke (void* next) {
         struct Parrot_sub * sub = PMC_sub(SELF);
         struct parrot_regs_t *caller_regs;
+        struct Parrot_Context *context;
         PMC *ccont;
-        struct PackFile_ByteCode * old_seg;
         opcode_t *pc;
 
         if (Interp_trace_TEST(INTERP, PARROT_TRACE_SUB_CALL_FLAG)) {
             print_sub_name(INTERP, SELF);
         }
         /*
-         * if that's really according to pdd03, we now should have
-         * P0 ... sub
-         * P1 ... continuation
-         * P2 ... object, if it's a method call
+         * A remark WRT tail calls
          *
-         * create new register frame, remember old
-         */
-        caller_regs = INTERP->ctx.bp;
-        ccont = INTERP->current_cont;
-        INTERP->current_cont = NULL;
-        /*
          * we have:
          * sub A:
          *    ...
@@ -254,19 +245,18 @@ Invokes the subroutine.
          *    ...
          * sub B:
          *    ...
-         *    return C(...)
-         *    # end of B
+         *    .return C(...)
          *
-         * that is the sub B() returns in its last statement whatever
-         * C() returns.
+         * that is the sub B() returns whatever C() returns.
          *
          * We are just calling the sub C().
-         * If the private2 flagi is set, this code is called by a
+         * If the private2 flag is set, this code is called by a
          * tailcall opcode.
          *
          * We don't allocate a new register frame, we execute the sub
-         * C() in this frame. Therefore we don't have to copy function
-         * arguments to the new frame.
+         * C() in this frame. This also implies that we loose the
+         * full caller chain A -> B -> C, inside C it looks like A -> C.
+         *
          * As no new frame is allocated, we don't check the recursion limit.
          *
          * Running in this frame is always safe:
@@ -282,62 +272,70 @@ Invokes the subroutine.
          *
          */
         pc = sub->address;
+        caller_regs = INTERP->ctx.bp;
+        ccont = INTERP->current_cont;
+        INTERP->current_cont = NULL;
+        if (ccont == NEED_CONTINUATION) {
+            ccont = new_ret_continuation_pmc(interpreter, next);
+            goto create_ctx;
+        }
 
         assert (!PMC_IS_NULL(ccont));
-
         if (PObj_get_FLAGS(ccont) & SUB_FLAG_TAILCALL) {
+            /* clear tail call flag - it has to be set again
+             * by the tailcall opcode
+             */
             PObj_get_FLAGS(ccont) &= ~SUB_FLAG_TAILCALL;
-            CONTEXT(INTERP->ctx)->current_sub = SELF;
-            CONTEXT(INTERP->ctx)->current_pc = pc;
-            CONTEXT(INTERP->ctx)->current_args = INTERP->current_args;
-            if (*pc == PARROT_OP_get_params_pc) {
-                INTERP->current_params = pc;
-                pc = parrot_pass_args(INTERP, sub->seg, caller_regs,
-                        PARROT_OP_get_params_pc);
+            context = CONTEXT(INTERP->ctx);
+        }
+        else {
+create_ctx:
+            /*
+             * plain subroutine call
+             * create new context, place it in interpreter
+             */
+            Parrot_alloc_context(INTERP);
+            context = CONTEXT(INTERP->ctx);
+            /* check recursion/call depth */
+            if (++context->recursion_depth >
+                    INTERP->recursion_limit) {
+                real_exception(INTERP, next, E_RuntimeError,
+                        "maximum recursion depth exceeded");
             }
-            PMC_cont(ccont)->from_ctx = INTERP->ctx;
-            goto is_tail_call;
+            /*
+             * and copy set context variables
+             */
+            context->current_cont = ccont;
         }
-
-        /* create new context, place it in interpreter */
-        Parrot_alloc_context(INTERP);
-        /* remember from where we return */
-        PMC_cont(ccont)->from_ctx = INTERP->ctx;
-        if (++CONTEXT(INTERP->ctx)->recursion_depth >
-                INTERP->recursion_limit) {
-            real_exception(INTERP, next, E_RuntimeError,
-                    "maximum recursion depth exceeded");
-        }
-        CONTEXT(INTERP->ctx)->current_args = INTERP->current_args;
+        context->current_sub = SELF;
+        context->current_pc = pc;
+        context->current_args = INTERP->current_args;
+        INTERP->current_args = NULL;
         /*
          * when next == NULL the call creates args in the
-         * new frame, e.g.
-         * called from runops_fromc
+         * new frame, e.g. called from runops_fromc
+         * else if the sub starts with get_params, pass arguments now
          */
-        if (next) {
-            if (*pc == PARROT_OP_get_params_pc) {
-                CONTEXT(INTERP->ctx)->current_sub = SELF;
-                CONTEXT(INTERP->ctx)->current_pc = pc;
-                INTERP->current_params = pc;
-                pc = parrot_pass_args(INTERP, sub->seg, caller_regs,
-                        PARROT_OP_get_params_pc);
-            }
+        if (next && *pc == PARROT_OP_get_params_pc) {
+            INTERP->current_params = pc;
+            /* argument passing code returns the address beyond
+             * get_params, so that we can skip this opcode, we
+             * start executing in the sub after this opcode
+             */
+            pc = parrot_pass_args(INTERP, sub->seg, caller_regs,
+                    PARROT_OP_get_params_pc);
         }
-        /*
-         * and copy set context variables
-         */
-        CONTEXT(INTERP->ctx)->current_cont = ccont;
-is_tail_call:
-        CONTEXT(INTERP->ctx)->current_sub = SELF;
+
+        PMC_cont(ccont)->from_ctx = INTERP->ctx;
         if (!PMC_IS_NULL(INTERP->current_object)) {
-            CONTEXT(INTERP->ctx)->current_object = INTERP->current_object;
+            context->current_object = INTERP->current_object;
             INTERP->current_object = NULL;
-            CONTEXT(INTERP->ctx)->current_method = INTERP->current_method;
+            context->current_method = INTERP->current_method;
             INTERP->current_method = NULL;
         }
-        CONTEXT(INTERP->ctx)->current_HLL = sub->HLL_id;
-        old_seg = INTERP->code;
-        if (old_seg != sub->seg) {
+        context->current_HLL = sub->HLL_id;
+        /* switch code segment if needed */
+        if (INTERP->code != sub->seg) {
             Parrot_switch_to_cs(INTERP, sub->seg, 1);
         }
         return pc;
