@@ -547,6 +547,8 @@ make_interpreter(Parrot_Interp parent, Interp_flags flags)
 
     Parrot_clear_s(interpreter);
     Parrot_clear_p(interpreter);
+    Parrot_clear_i(interpreter);
+    Parrot_clear_n(interpreter);
 
     /* Stack for lexical pads */
     CONTEXT(interpreter->ctx)->pad_stack = new_stack(interpreter, "Pad");
@@ -582,11 +584,6 @@ make_interpreter(Parrot_Interp parent, Interp_flags flags)
 
     SET_NULL_P(interpreter->code, struct PackFile *);
     SET_NULL_P(interpreter->profile, ProfData *);
-
-    /* next two are pointers to the real thing in the current code seg */
-    SET_NULL_P(interpreter->prederef.code, void **);
-    SET_NULL_P(interpreter->prederef.branches, Prederef_btanch*);
-    SET_NULL(interpreter->jit_info);
 
     /* null out the root set registry */
     SET_NULL_P(interpreter->DOD_registry, PMC *);
