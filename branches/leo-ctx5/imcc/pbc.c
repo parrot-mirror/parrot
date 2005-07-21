@@ -1026,6 +1026,11 @@ e_pbc_end_sub(Interp *interpreter, void *param, IMC_Unit * unit)
     return 0;
 }
 
+/*
+ * - check if any get_ argument contains constants
+ * - fill in type bits for argument types and constants, if missing
+ */
+
 static void
 verify_signature(Interp *interpreter, Instruction *ins, opcode_t *pc)
 {
