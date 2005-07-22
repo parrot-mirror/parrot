@@ -109,24 +109,24 @@ my %ret_type_decl =
      );
 
 my %ret_assign =
-     ( p => "PMC_data(final_destination) = return_data;\n    set_nci_P(interpreter, final_destination);",
-       i => "set_nci_I(interpreter, return_data);",
-       I => "set_nci_I(interpreter, return_data);",
-       l => "set_nci_I(interpreter, return_data);",
-       s => "set_nci_I(interpreter, return_data);",
-       c => "set_nci_I(interpreter, return_data);",
-       4 => "set_nci_I(interpreter, *return_data);",
-       3 => "set_nci_I(interpreter, *return_data);",
-       2 => "set_nci_I(interpreter, *return_data);",
-       f => "set_nci_N(interpreter, return_data);",
-       d => "set_nci_N(interpreter, return_data);",
-       N => "set_nci_N(interpreter, return_data);",
-       P => "set_nci_P(interpreter, return_data);",
-       S => "set_nci_S(interpreter, return_data);",
+     ( p => "PMC_data(final_destination) = return_data;\n    set_nci_P(interpreter, &st, final_destination);",
+       i => "set_nci_I(interpreter, &st, return_data);",
+       I => "set_nci_I(interpreter, &st, return_data);",
+       l => "set_nci_I(interpreter, &st, return_data);",
+       s => "set_nci_I(interpreter, &st, return_data);",
+       c => "set_nci_I(interpreter, &st, return_data);",
+       4 => "set_nci_I(interpreter, &st, *return_data);",
+       3 => "set_nci_I(interpreter, &st, *return_data);",
+       2 => "set_nci_I(interpreter, &st, *return_data);",
+       f => "set_nci_N(interpreter, &st, return_data);",
+       d => "set_nci_N(interpreter, &st, return_data);",
+       N => "set_nci_N(interpreter, &st, return_data);",
+       P => "set_nci_P(interpreter, &st, return_data);",
+       S => "set_nci_S(interpreter, &st, return_data);",
        v => "",
-       t => "final_destination = string_from_cstring(interpreter, return_data, 0);\n    set_nci_S(interpreter, final_destination);",
-#      b => "PObj_bufstart(final_destination) = return_data;\n    set_nci_S(interpreter, final_destination);",
-#      B => "PObj_bufstart(final_destination) = *return_data;\n    set_nci_S(interpreter, final_destination);",
+       t => "final_destination = string_from_cstring(interpreter, return_data, 0);\n    set_nci_S(interpreter, &st, final_destination);",
+#      b => "PObj_bufstart(final_destination) = return_data;\n    set_nci_S(interpreter, &st, final_destination);",
+#      B => "PObj_bufstart(final_destination) = *return_data;\n    set_nci_S(interpreter, &st, final_destination);",
      );
 
 my %func_call_assign =
@@ -150,6 +150,29 @@ my %func_call_assign =
        v => "",
      );
 
+my %sig_char =
+     ( p => "P",
+       i => "I",
+       3 => "P",
+       2 => "P",
+       4 => "P",
+       l => "I",
+       c => "I",
+       s => "I",
+       f => "N",
+       d => "N",
+       b => "S",
+       t => "S",
+       P => "P",
+       O => "",	      # XXX pdd03 P
+       S => "S",
+       I => "I",
+       N => "N",
+       B => "S",
+       v => "v",
+       J => "",
+     );
+
 my $temp_cnt = 0;
 my @put_pointer;
 my %seen;
@@ -163,23 +186,27 @@ while (<>) {
 
     my @extra_preamble;
     my @extra_postamble;
+    my @temps;
     my ($ret, $args) = split /\s+/, $_;
     ## next if $seen{"$ret$;$args"}++;
     my @arg;
     my $reg_num = 0;
+    my $sig = '';
 
     if (defined $args and not $args =~ m/^\s*$/ ) {
         foreach (split //, $args) {
-            push @arg, make_arg($_, $reg_num++, \$temp_cnt,
+            push @arg, make_arg($_, $reg_num++, \$temp_cnt, \@temps,
                                 \@extra_preamble, \@extra_postamble);
+	    $sig .= $sig_char{$_};
 	    $_ eq 'J' && $reg_num--;
 	    $_ eq 'O' && $reg_num--;
         }
     }
 
-    print_function($ret, $args, [@arg], $ret_type{$ret},
+    print_function($sig, $ret, $args, [@arg], $ret_type{$ret},
                  $ret_type_decl{$ret}, $func_call_assign{$ret},
                  $other_decl{$ret}, $ret_assign{$ret},
+		 \@temps,
                  \@extra_preamble, \@extra_postamble,
                  \@put_pointer,
                  \%proto_type);
@@ -234,112 +261,83 @@ sub print_head {
  * helper funcs - get argument n
  */
 static INTVAL
-get_nci_I(Interp *interpreter, PMC *sig, opcode_t *pc, int n)
+get_nci_I(Interp *interpreter, struct call_state *st, int n)
 {
-    int type_sig = VTABLE_get_integer_keyed_int(interpreter, sig, n);
-    INTVAL i_arg = pc[2 + n];
-    if (!(type_sig & PARROT_ARG_CONSTANT))
-	i_arg = REG_INT(i_arg);
-    return i_arg;
+    assert(n < st->src.n);
+    Parrot_fetch_arg_nci(interpreter, st);
+
+    return UVal_int(st->val);
 }
 
 static FLOATVAL
-get_nci_N(Interp *interpreter, PMC *sig, opcode_t *pc, int n)
+get_nci_N(Interp *interpreter, struct call_state *st, int n)
 {
-    int type_sig = VTABLE_get_integer_keyed_int(interpreter, sig, n);
-    INTVAL i = pc[2 + n];
-    FLOATVAL f_arg;
-    if (type_sig & PARROT_ARG_CONSTANT)
-	f_arg = interpreter->code->const_table->constants[i]->u.number;
-    else
-	f_arg = REG_NUM(i);
-    return f_arg;
+    assert(n < st->src.n);
+    Parrot_fetch_arg_nci(interpreter, st);
+
+    return UVal_num(st->val);
 }
 
 static STRING*
-get_nci_S(Interp *interpreter, PMC *sig, opcode_t *pc, int n)
+get_nci_S(Interp *interpreter, struct call_state *st, int n)
 {
-    int type_sig = VTABLE_get_integer_keyed_int(interpreter, sig, n);
-    INTVAL i = pc[2 + n];
-    STRING* s_arg;
-    if (type_sig & PARROT_ARG_CONSTANT)
-	s_arg = interpreter->code->const_table->constants[i]->u.string;
-    else
-	s_arg = REG_STR(i);
-    return s_arg;
+    assert(n < st->src.n);
+    Parrot_fetch_arg_nci(interpreter, st);
+
+    return UVal_str(st->val);
 }
 
 static PMC*
-get_nci_P(Interp *interpreter, PMC *sig, opcode_t *pc, int n)
+get_nci_P(Interp *interpreter, struct call_state *st, int n)
 {
-    int type_sig = VTABLE_get_integer_keyed_int(interpreter, sig, n);
-    INTVAL i = pc[2 + n];
-    PMC* p_arg;
-    if (type_sig & PARROT_ARG_CONSTANT)
-	p_arg = interpreter->code->const_table->constants[i]->u.key;
-    else
-	p_arg = REG_PMC(i);
-    return p_arg;
+    assert(n < st->src.n);
+    Parrot_fetch_arg_nci(interpreter, st);
+
+    return UVal_pmc(st->val);
 }
 
-#define GET_NCI_I(n) get_nci_I(interpreter, signature, pc, n)
-#define GET_NCI_S(n) get_nci_S(interpreter, signature, pc, n)
-#define GET_NCI_N(n) get_nci_N(interpreter, signature, pc, n)
-#define GET_NCI_P(n) get_nci_P(interpreter, signature, pc, n)
+#define GET_NCI_I(n) get_nci_I(interpreter, &st, n)
+#define GET_NCI_S(n) get_nci_S(interpreter, &st, n)
+#define GET_NCI_N(n) get_nci_N(interpreter, &st, n)
+#define GET_NCI_P(n) get_nci_P(interpreter, &st, n)
 
 /*
  * set return value
  */
 static void
-set_nci_I(Interp *interpreter, INTVAL val)
+set_nci_I(Interp *interpreter, struct call_state *st, INTVAL val)
 {
-    opcode_t *pc = CONTEXT(interpreter->ctx)->current_results;
-    if (pc && *pc == PARROT_OP_get_results_pc) {
-	PMC *sig = interpreter->code->const_table->constants[pc[1]]->u.key;
-	if (VTABLE_elements(interpreter, sig)) {
-	    int reg = pc[2];
-	    REG_INT(reg) = val;
-	}
-    }
+    Parrot_init_ret_nci(interpreter, "I", st);
+    UVal_int(st->val) = val;
+    Parrot_convert_arg(interpreter, st);
+    Parrot_store_arg(interpreter, st);
 }
 
 static void
-set_nci_N(Interp *interpreter, FLOATVAL val)
+set_nci_N(Interp *interpreter, struct call_state *st, FLOATVAL val)
 {
-    opcode_t *pc = CONTEXT(interpreter->ctx)->current_results;
-    if (pc && *pc == PARROT_OP_get_results_pc) {
-	PMC *sig = interpreter->code->const_table->constants[pc[1]]->u.key;
-	if (VTABLE_elements(interpreter, sig)) {
-	    int reg = pc[2];
-	    REG_NUM(reg) = val;
-	}
-    }
+    Parrot_init_ret_nci(interpreter, "N", st);
+    UVal_num(st->val) = val;
+    Parrot_convert_arg(interpreter, st);
+    Parrot_store_arg(interpreter, st);
 }
 
 static void
-set_nci_S(Interp *interpreter, STRING *val)
+set_nci_S(Interp *interpreter, struct call_state *st, STRING *val)
 {
-    opcode_t *pc = CONTEXT(interpreter->ctx)->current_results;
-    if (pc && *pc == PARROT_OP_get_results_pc) {
-	PMC *sig = interpreter->code->const_table->constants[pc[1]]->u.key;
-	if (VTABLE_elements(interpreter, sig)) {
-	    int reg = pc[2];
-	    REG_STR(reg) = val;
-	}
-    }
+    Parrot_init_ret_nci(interpreter, "S", st);
+    UVal_str(st->val) = val;
+    Parrot_convert_arg(interpreter, st);
+    Parrot_store_arg(interpreter, st);
 }
 
 static void
-set_nci_P(Interp *interpreter, PMC* val)
+set_nci_P(Interp *interpreter, struct call_state *st, PMC* val)
 {
-    opcode_t *pc = CONTEXT(interpreter->ctx)->current_results;
-    if (pc && *pc == PARROT_OP_get_results_pc) {
-	PMC *sig = interpreter->code->const_table->constants[pc[1]]->u.key;
-	if (VTABLE_elements(interpreter, sig)) {
-	    int reg = pc[2];
-	    REG_PMC(reg) = val;
-	}
-    }
+    Parrot_init_ret_nci(interpreter, "P", st);
+    UVal_pmc(st->val) = val;
+    Parrot_convert_arg(interpreter, st);
+    Parrot_store_arg(interpreter, st);
 }
 
 /* All our static functions that call in various ways. Yes, terribly
@@ -349,63 +347,104 @@ HEAD
 }
 
 sub make_arg {
-    my ($argtype, $reg_num, $temp_cnt_ref,
+    #
+    # we have to fetch all to temps, so that the call code
+    # can operate in sequence
+    #
+    my ($argtype, $reg_num, $temp_cnt_ref, $temps_ref,
 	$extra_preamble_ref, $extra_postamble_ref) = @_;
 
+    my $temp_num = ${$temp_cnt_ref}++;
     /p/ && do {
-	my $temp_num = ${$temp_cnt_ref}++;
+	push @{$temps_ref}, "PMC *t_$temp_num;";
 	push @{$extra_preamble_ref},
-	    "void *tempvar$temp_num = PMC_data(GET_NCI_P($reg_num));\n";
-	return "tempvar$temp_num";
+	    "t_$temp_num = GET_NCI_P($reg_num);";
+	return "PMC_data(t_$temp_num)";
     };
     /i/ && do {
-	my $temp_num = ${$temp_cnt_ref}++;
+	push @{$temps_ref}, "int t_$temp_num;";
 	push @{$extra_preamble_ref},
-	    "int tempvar$temp_num = (int)GET_NCI_I($reg_num);\n";
-	return "tempvar$temp_num";
+	    "t_$temp_num = (int)GET_NCI_I($reg_num);";
+	return "t_$temp_num";
     };
     /3/ && do {
-	return "(int*)&PMC_int_val(GET_NCI_P($reg_num))";
+	push @{$temps_ref}, "PMC *t_$temp_num;";
+	push @{$extra_preamble_ref},
+	    "t_$temp_num = GET_NCI_P($reg_num);";
+	return "(int*)&PMC_int_val(t_$temp_num)";
     };
     /l/ && do {
-	return "(long)GET_NCI_I($reg_num)";
+	push @{$temps_ref}, "long t_$temp_num;";
+	push @{$extra_preamble_ref},
+	    "t_$temp_num = (long)GET_NCI_I($reg_num);";
+	return "t_$temp_num";
     };
     /I/ && do {
-	return "GET_NCI_I($reg_num)";
+	push @{$temps_ref}, "INTVAL t_$temp_num;";
+	push @{$extra_preamble_ref},
+	     "t_$temp_num = GET_NCI_I($reg_num);";
+	return "t_$temp_num";
     };
     /4/ && do {
-	return "(long*)&PMC_int_val(GET_NCI_P($reg_num))";
+	push @{$temps_ref}, "PMC *t_$temp_num;";
+	push @{$extra_preamble_ref},
+	     "t_$temp_num = GET_NCI_P($reg_num);";
+	return "(long*)&PMC_int_val(t_$temp_num)";
     };
     /s/ && do {
-	return "(short)GET_NCI_I($reg_num)";
+	push @{$temps_ref}, "short t_$temp_num;";
+	push @{$extra_preamble_ref},
+	    "t_$temp_num = (short)GET_NCI_I($reg_num);";
+	return "t_$temp_num";
     };
     /c/ && do {
-	return "(char)GET_NCI_I($reg_num)";
+	push @{$temps_ref}, "char t_$temp_num;";
+	push @{$extra_preamble_ref},
+	    "t_$temp_num = (char)GET_NCI_I($reg_num);";
+	return "t_$temp_num";
     };
     /2/ && do {
-	return "(short*)&PMC_int_val(GET_NCI_P($reg_num))";
+	push @{$temps_ref}, "PMC* t_$temp_num;";
+	push @{$extra_preamble_ref},
+	    "t_$temp_num = GET_NCI_P($reg_num);";
+	return "(short*)&PMC_int_val(t_$temp_num)";
     };
     /f/ && do {
-	return "(float)GET_NCI_N($reg_num)";
+	push @{$temps_ref}, "float t_$temp_num;";
+	push @{$extra_preamble_ref},
+	    "t_$temp_num = (float)GET_NCI_N($reg_num);";
+	return "t_$temp_num";
     };
     /d/ && do {
-	return "(double)GET_NCI_N($reg_num)";
+	push @{$temps_ref}, "double t_$temp_num;";
+	push @{$extra_preamble_ref},
+	    "t_$temp_num = (double)GET_NCI_N($reg_num);";
+	return "t_$temp_num";
     };
     /N/ && do {
-	return "GET_NCI_N($reg_num)";
+	push @{$temps_ref}, "FLOATVAL t_$temp_num;";
+	push @{$extra_preamble_ref},
+	    "t_$temp_num = GET_NCI_N($reg_num);";
+	return "t_$temp_num";
     };
     /t/ && do {
-	my $temp_num = ${$temp_cnt_ref}++;
+	push @{$temps_ref}, "char *t_$temp_num;";
 	push @{$extra_preamble_ref},
-	"char *tempvar$temp_num = string_to_cstring(interpreter, GET_NCI_S($reg_num));\n";
-	push @{$extra_postamble_ref}, "string_cstring_free(tempvar$temp_num);\n";
-	return "tempvar$temp_num";
+	"t_$temp_num = string_to_cstring(interpreter, GET_NCI_S($reg_num));";
+	push @{$extra_postamble_ref}, "string_cstring_free(t_$temp_num);";
+	return "t_$temp_num";
     };
     /b/ && do {
-	return "PObj_bufstart(GET_NCI_S($reg_num))";
+	push @{$temps_ref}, "STRING *t_$temp_num;";
+	push @{$extra_preamble_ref},
+	    "t_$temp_num = GET_NCI_S($reg_num);";
+	return "PObj_bufstart(t_$temp_num)";
     };
     /B/ && do {
-	return "(&PObj_bufstart(GET_NCI_S($reg_num)))";
+	push @{$temps_ref}, "STRING *t_$temp_num;";
+	push @{$extra_preamble_ref},
+	    "t_$temp_num = GET_NCI_S($reg_num);";
+	return "&PObj_bufstart(t_$temp_num)";
     };
     /J/ && do {
 	return "interpreter";
@@ -414,27 +453,32 @@ sub make_arg {
 	return "REG_PMC(2)";         # XXX
     };
     /P/ && do {
-	my $temp_num = ${$temp_cnt_ref}++;
+	push @{$temps_ref}, "PMC *t_$temp_num;";
 	push @{$extra_preamble_ref},
-	    "PMC *temp_$temp_num = GET_NCI_P($reg_num);\n";
-	return "temp_$temp_num == PMCNULL ? NULL : temp_$temp_num";
+	    "t_$temp_num = GET_NCI_P($reg_num);";
+	return "t_$temp_num == PMCNULL ? NULL : t_$temp_num";
     };
     /S/ && do {
-	return "GET_NCI_S($reg_num)";
+	push @{$temps_ref}, "STRING *t_$temp_num;";
+	push @{$extra_preamble_ref},
+	    "t_$temp_num = GET_NCI_S($reg_num);";
+	return "t_$temp_num";
     };
 }
 
 sub print_function {
-    my ($return, $params, $args, $ret_type, $ret_type_decl,
+    my ($sig, $return, $params, $args, $ret_type, $ret_type_decl,
         $return_assign, $other_decl, $final_assign,
+	$temps_ref,
         $extra_preamble_ref, $extra_postamble_ref,
         $put_pointer_ref,
         $proto_type_ref) = @_;
 
     $other_decl ||= "";
 
-    my $extra_preamble  = join("", @{$extra_preamble_ref});
-    my $extra_postamble = join("", @{$extra_postamble_ref});
+    $other_decl .= join("\n    ", @{$temps_ref});
+    my $extra_preamble  = join("\n    ", @{$extra_preamble_ref});
+    my $extra_postamble = join("\n    ", @{$extra_postamble_ref});
     my $return_data     = "$return_assign $final_assign" =~ /return_data/ ?
                               qq{$ret_type_decl return_data;} :
                               q{};
@@ -464,11 +508,11 @@ pcf_${return}_$params(Interp *interpreter, PMC *self)
 {
     typedef $ret_type (*func_t)($proto);
     func_t pointer;
-    opcode_t *pc = interpreter->current_args;
-    PMC *signature = interpreter->code->const_table->constants[pc[1]]->u.key;
+    struct call_state st;
     $return_data
     $temp_decl
     $other_decl
+    Parrot_init_arg_nci(interpreter, \"$sig\", &st);
     $extra_preamble
 
     pointer =  (func_t)D2FPTR(PMC_struct_val(self));
@@ -489,6 +533,7 @@ pcf_${return}(Interp *interpreter, PMC *self)
     $ret_type (*pointer)(void);
     $return_data
     $other_decl
+    struct call_state st;
     $extra_preamble
 
     pointer =  ($ret_type (*)(void))D2FPTR(PMC_struct_val(self));

@@ -16,7 +16,7 @@ Tests Parrot calling conventions.
 
 =cut
 
-use Parrot::Test tests => 32;
+use Parrot::Test tests => 33;
 use Test::More;
 
 output_is(<<'CODE', <<'OUTPUT', "set_args - parsing");
@@ -894,4 +894,25 @@ ok 2
 ok 3
 ok 4
 2 1 0
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "optional returns, void ret");
+.sub main @MAIN
+    .local pmc f
+    $I0 = 99
+    f = global "foo"
+    .pcc_begin
+    .pcc_call f
+    .result   $P0 :optional
+    .result   $I0 :opt_count
+    .pcc_end
+    unless $I0,  ex
+    print "not "
+ex:
+    print "ok 1\n"
+.end
+.sub foo
+.end
+CODE
+ok 1
 OUTPUT
