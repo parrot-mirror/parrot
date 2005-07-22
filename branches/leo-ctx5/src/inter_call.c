@@ -25,56 +25,6 @@ subroutines.
 #include "parrot/oplib/ops.h"
 #include "inter_call.str"
 
-enum call_state_mode {
-    CALL_STATE_SIG        =  0x001,     /* runops, nci */
-    CALL_STATE_OP         =  0x002,     /* get_, set_ ops */
-    CALL_STATE_MASK       =  0x003,
-
-    CALL_STATE_FLATTEN    =  0x010,
-
-    CALL_STATE_NEXT_ARG   =  0x100
-};
-
-struct call_state_1 {
-    int mode;       /* from_sig, from_set_ops, flatten ...*/
-    union {
-        struct {
-            va_list ap;
-            const char *sig;
-        } sig;
-        struct {
-            opcode_t *pc;
-            PMC *signature;
-        } op;
-    } u;
-    struct PackFile_Constant **constants;
-    struct parrot_regs_t *regs;
-    INTVAL i;
-    INTVAL n;
-    INTVAL sig;
-    PMC *slurp;
-    INTVAL slurp_i;
-    INTVAL slurp_n;
-};
-
-struct call_state {
-    struct call_state_1 src;
-    struct call_state_1 dest;
-    UnionVal val;
-    int opt_so_far;
-};
-
-int Parrot_init_arg_sig(Interp *, struct PackFile_ByteCode *seg,
-        struct parrot_regs_t *regs,
-        const char *sig, va_list ap, struct call_state_1 *st);
-
-int Parrot_init_arg_op(Interp *, struct PackFile_ByteCode *seg,
-        struct parrot_regs_t *regs,
-        opcode_t *pc, struct call_state_1 *st);
-
-int Parrot_fetch_arg(Interp *, struct call_state *st);
-int Parrot_convert_arg(Interp *, struct call_state *st);
-int Parrot_store_arg(Interp *, struct call_state *st);
 
 /*
 
@@ -102,6 +52,32 @@ These functions return 0, if no arguments are present, or 1 on success.
 
 */
 
+static int next_arg(Interp *, struct call_state_1 *st);
+
+int
+Parrot_init_arg_nci(Interp *interpreter, const char *sig,
+        struct call_state *st)
+{
+    Parrot_init_arg_op(interpreter, interpreter->code, interpreter->ctx.bp,
+            interpreter->current_args, &st->src);
+    Parrot_init_arg_sig(interpreter, interpreter->code, interpreter->ctx.bp,
+            sig, NULL, &st->dest);
+    return 1;
+}
+
+int
+Parrot_init_ret_nci(Interp *interpreter, const char *sig,
+        struct call_state *st)
+{
+    /* TODO simplify all */
+    Parrot_init_arg_sig(interpreter, interpreter->code, interpreter->ctx.bp,
+            sig, NULL, &st->src);
+    Parrot_init_arg_op(interpreter, interpreter->code, interpreter->ctx.bp,
+            CONTEXT(interpreter->ctx)->current_results, &st->dest);
+    next_arg(interpreter, &st->src);
+    next_arg(interpreter, &st->dest);
+    return 1;
+}
 int
 Parrot_init_arg_op(Interp *interpreter, struct PackFile_ByteCode *seg,
         struct parrot_regs_t *regs,
@@ -354,6 +330,15 @@ Parrot_fetch_arg(Interp *interpreter, struct call_state *st)
     return fetch_arg(interpreter, st);
 }
 
+
+int
+Parrot_fetch_arg_nci(Interp *interpreter, struct call_state *st)
+{
+    Parrot_fetch_arg(interpreter, st);
+    Parrot_convert_arg(interpreter, st);
+    st->dest.mode |= CALL_STATE_NEXT_ARG;
+    return 1;
+}
 
 static int
 convert_arg_from_int(Interp *interpreter, struct call_state *st)
