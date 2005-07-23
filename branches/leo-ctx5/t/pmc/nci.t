@@ -23,7 +23,7 @@ Most tests are skipped when the F<libnci_test.so> shared library is not found.
 
 =cut
 
-use Parrot::Test    tests => 56;
+use Parrot::Test    tests => 59;
 use Parrot::Config;
 
 SKIP: {
@@ -2391,4 +2391,60 @@ CODE
 0
 1
 0
+OUTPUT
+
+pir_output_is(<< 'CODE', << 'OUTPUT', "conversion d <-> P");
+.sub test @MAIN
+    .local string library_name
+    library_name = 'libnci_test'
+    .local pmc libnci_test
+    libnci_test = loadlib  library_name
+    .local pmc twice
+    twice = dlfunc libnci_test, "nci_dd", "dd"
+    .local pmc f, g
+    f = new Integer
+    f = 21
+    g = twice( f )
+    print g
+    print "\n"
+.end
+CODE
+42
+OUTPUT
+
+pir_output_is(<< 'CODE', << 'OUTPUT', "conversion S <-> P");
+.sub test @MAIN
+    .local string library_name
+    library_name = 'libnci_test'
+    .local pmc libnci_test
+    libnci_test = loadlib  library_name
+    .local pmc reverse
+    reverse = dlfunc libnci_test, "nci_tt", "tt"
+    .local pmc s, t
+    s = new String
+    s = "ko"
+    t = reverse( s )
+    print t
+.end
+CODE
+ok worked
+OUTPUT
+
+pir_output_is(<< 'CODE', << 'OUTPUT', "conversion I <-> P");
+.sub test @MAIN
+    .local string library_name
+    library_name = 'libnci_test'
+    .local pmc libnci_test
+    libnci_test = loadlib  library_name
+    .local pmc mult
+    mult = dlfunc libnci_test, "nci_i4i", "i4i"
+    .local pmc i, j
+    i = new Integer
+    i = 2
+    j = mult( 21, i )       # call signature is PI
+    print j
+    print "\n"
+.end
+CODE
+42
 OUTPUT
