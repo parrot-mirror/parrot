@@ -319,6 +319,9 @@ invok:
 
         last = bb;
     }
+
+    if (IMCC_INFO(interpreter)->debug & DEBUG_CFG)
+        dump_cfg(unit);
 }
 
 
