@@ -26,14 +26,14 @@ opendir(CMDDIR,$macro_dir);
 my @macro_files = readdir(CMDDIR);
 closedir(CMDDIR);
 
-my @cmd_includes = map {"$command_dir/$_"} grep {m/\.(imc|pir)$/} @cmd_files;
-my @macro_includes = map {"$macro_dir/$_"} grep {m/\.(imc|pir)$/} @macro_files;
+my @cmd_includes = map {"$command_dir/$_"} grep {m/\.pir$/} @cmd_files;
+my @macro_includes = map {"$macro_dir/$_"} grep {m/\.pir$/} @macro_files;
 
-my @commands = grep {s/\.(imc|pir)$//} @cmd_files;
+my @commands = grep {s/\.pir$//} @cmd_files;
 
 my $lib_dir = "lib";
 opendir(LIBDIR,$lib_dir) or die;
-my @libs = map {"$lib_dir/$_"} grep {m/\.(imc|pir)$/} grep {! m/^tcl(lib|word).imc$/} readdir(LIBDIR);
+my @libs = map {"$lib_dir/$_"} grep {m/\.pir$/} grep {! m/^tcl(lib|word).pir$/} readdir(LIBDIR);
 closedir(LIBDIR);
 
 my $includes;
@@ -65,6 +65,8 @@ EOH
 
 my $rule = join("",<RULES>);
 $rule =~ s/\n//g;
+
+$rule =~ s/\#rule\s+(\w+)\s*{(.*?)};//g;
 
 while ($rule =~ m/rule\s+(\w+)\s*{(.*?)};/g) {
   my $rule_name = $1;
