@@ -19,7 +19,7 @@ use __stringToList.
 
   $S0 = value
   (return_type, value) = __stringToList($S0)
-  
+
 done:
   .return(return_type, value)
 .end
