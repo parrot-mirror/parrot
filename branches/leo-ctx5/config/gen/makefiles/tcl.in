@@ -46,7 +46,6 @@ lib${slash}commands${slash}lrange.pir \
 lib${slash}commands${slash}lrepeat.pir \
 lib${slash}commands${slash}namespace.pir \
 lib${slash}commands${slash}open.pir \
-lib${slash}commands${slash}package.pir \
 lib${slash}commands${slash}proc.pir \
 lib${slash}commands${slash}puts.pir \
 lib${slash}commands${slash}rename.pir \
@@ -80,6 +79,9 @@ pmcs:
 	@cd $(CLASSDIR) && $(BUILD) compile $(PMCS)
 	@cd $(CLASSDIR) && $(BUILD) linklibs $(PMCS)
 	@cd $(CLASSDIR) && $(BUILD) copy "--destination=$(DESTDIR)" $(PMCS)
+
+$(DEPS) : 
+
 
 lib${slash}tcllib.pir: $(DEPS)
 	$(PERL) tcl.pl > lib${slash}tcllib.pir
