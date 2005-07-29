@@ -149,6 +149,13 @@ void parrot_gc_gms_wb_key(Interp *, PMC *agg,
 
 #endif
 
+/* TODO: add a real write_barrier, this one is just used for not getting an
+ * error at compilation */
+#if PARROT_GC_GMC
+#  define DOD_WRITE_BARRIER(interp, agg, old, new)
+#  define DOD_WRITE_BARRIER_KEY(interp, agg, old, old_key, new, new_key)
+#endif
+
 #endif /* PARROT_DOD_H_GUARD */
 
 /*

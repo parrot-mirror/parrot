@@ -99,6 +99,69 @@ typedef struct _gc_gms_gen {
 
 #endif
 
+
+#if PARROT_GC_GMC
+
+/* Arbitrary values, tune them later. */
+
+/* Size of a generation. */
+#define GMC_GEN_SIZE (128*32);
+
+/* Number of generations at init time. */
+#define GMC_GEN_INIT_NUMBER 16;
+
+
+/* This header is appended to all gc objects. */
+typedef struct _gc_gmc_hdr {
+  UINTVAL gmc_flags; /* Various GC flags for internal use. */
+  PMC* pmc;      /* Corresponding PMC header. */
+} Gc_gmc_hdr;
+
+
+/* Same structure than in GMS for header lists. */
+#define GC_GMC_STORE_SIZE (64-2)
+
+typedef struct _gc_gmc_hdr_store {
+    struct _gc_gmc_hdr_store *next;
+    Gc_gmc_hdr **ptr;                           /* insert location */
+    Gc_gmc_hdr * (store[GC_GMC_STORE_SIZE]);    /* array of hdr pointers */
+} Gc_gmc_hdr_store;
+
+
+typedef struct _gc_gmc_hdr_list {
+  struct gc_gmc_hdr_store *first;
+  struct gc_gmc_hdr_store *last;
+} Gc_gmc_hdr_list;
+
+
+/* A generation for GMC. */
+typedef struct _gc_gmc_gen {
+  struct _gc_gmc_gen *next;  /* Next generation in the linked list. */
+  struct _gc_gmc_gen *prev;  /* Previous generation. */
+  Gc_gmc_hdr *first;         /* Array of objects. */
+  Gc_gmc_hdr *fst_free;      /* First free place. */
+  Gc_gmc_hdr *last;          /* Last allocated object */
+  Gc_gmc_hdr_list *IGP;      /* Inter Generational pointers set. */
+} Gc_gmc_gen;
+
+
+/* The whole GC structure */
+typedef struct _gc_gmc {
+  UINTVAL nb_gen;       /* Total number of generations. */
+  UINTVAL nb_empty_gen; /* Number of empty generations. */
+  UINTVAL alloc_obj;    /* Number of allocated objects. */
+  Gc_gmc_gen *first;    /* First generation (aggregate, young objects). */
+  Gc_gmc_gen *fst_free; /* End of aggregate objects. */
+  Gc_gmc_gen *lst_free; /* Beginning of non-aggregate, old objects. */
+  Gc_gmc_gen *last;     /* Very last generation. */
+  Gc_gmc_gen *timely;   /* Objects needing timely destruction. */
+  Gc_gmc_gen *constant; /* Objects that will never be collected. */
+} Gc_gmc;
+
+#endif
+
+
+
 /* Tracked resource pool */
 struct Small_Object_Pool {
     struct Small_Object_Arena *last_Arena;
@@ -136,6 +199,10 @@ struct Small_Object_Pool {
     struct _gc_gms_gen *first_gen;      /* linked list of generations */
     struct _gc_gms_gen *last_gen;
 
+#endif
+
+#if PARROT_GC_GMC
+    Gc_gmc *gc;
 #endif
 };
 
