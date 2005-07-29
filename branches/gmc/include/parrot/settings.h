@@ -39,24 +39,34 @@
  * 0 ... MS  stop-the-world mark & sweep
  * 1 ... IMS incremental mark & sweep
  * 2 ... GMS generational mark & sweep
+ * 3 ... GMC generational mark & compact
  */
 
-#define PARROT_GC_SUBSYSTEM 0
+#define PARROT_GC_SUBSYSTEM 3
 
 #if PARROT_GC_SUBSYSTEM == 0
 #  define PARROT_GC_MS      1
 #  define PARROT_GC_IMS     0
 #  define PARROT_GC_GMS     0
+#  define PARROT_GC_GMC     0
 #endif
 #if PARROT_GC_SUBSYSTEM == 1
 #  define PARROT_GC_MS      0
 #  define PARROT_GC_IMS     1
 #  define PARROT_GC_GMS     0
+#  define PARROT_GC_GMC     0
 #endif
 #if PARROT_GC_SUBSYSTEM == 2
 #  define PARROT_GC_MS      0
 #  define PARROT_GC_IMS     0
 #  define PARROT_GC_GMS     1
+#  define PARROT_GC_GMC     0
+#endif
+#if PARROT_GC_SUBSYSTEM == 3
+#  define PARROT_GC_MS      0
+#  define PARROT_GC_IMS     0
+#  define PARROT_GC_GMS     0
+#  define PARROT_GC_GMC     1
 #endif
 
 
