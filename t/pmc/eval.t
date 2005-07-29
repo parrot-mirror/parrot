@@ -436,7 +436,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "eval.freeze");
   code .= "\\n\"\n"
   code .= ".end\n"
 
-  retval = compile pir_compiler, code
+  retval = pir_compiler(code)
   .return (retval)
 .end
 CODE
