@@ -93,8 +93,8 @@ You can run the full test suite with
 
     make fulltest
 
-Note: due to string code changes some of the string tests fail with
-"make testr", which is part of "make fulltest".
+Note: PLATFORMS contains notes about whether test failures are expected
+on your system.
 
 On some systems you can install parrot:
 
@@ -147,7 +147,7 @@ The following web sites have all the Parrot information you need:
     http://dev.perl.org/perl6/
     http://bugs6.perl.org/
     http://pugscode.org/
-
+    http://www.poniecode.org/
 
 Have fun,
    The Parrot Team.
