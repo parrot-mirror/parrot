@@ -7,30 +7,32 @@
   .param pmc argv :slurpy
   .local int argc
   argc = argv
- 
+
   if argc != 2 goto bad_args
 
   .param pmc    cond_p
   cond_p = argv[0]
-  .param string body
-  cond_p = argv[1]
+  .param string body_p
+  body_p = argv[1]
 
   .local pmc retval, parsed_code
   .local int return_type
 
-  .local pmc parser
+  .local pmc parse
   .local pmc interpret
   .local pmc expression_p
   .local pmc expression_i
 
-  parser = find_global "_Tcl", "parser"
+  parse = find_global "_Tcl", "parse"
   interpret = find_global "_Tcl", "__interpret"
   expression_p = find_global "_Tcl", "__expression_parse"
   expression_i = find_global "_Tcl", "__expression_interpret"
 
-while_loop:
-  parsed_code = parser."parse"(body,0,0)
+  $S0 = body_p
+  parsed_code = parse($S0)
   register parsed_code
+
+while_loop:
   (return_type,retval) = expression_p(cond_p)
   if return_type == TCL_ERROR goto done_done
   (return_type,retval) = expression_i(retval)

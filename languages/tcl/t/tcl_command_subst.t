@@ -3,7 +3,6 @@
 use strict;
 use lib qw(tcl/t t . ../lib ../../lib ../../../lib);
 use Parrot::Test tests => 10;
-use vars qw($TODO);
 
 language_output_is("tcl",<<'TCL', <<'OUT',"all");
  set a 5
@@ -67,13 +66,9 @@ TCL
 2
 OUT
 
-TODO: {
-$TODO = "bugs";
-
 language_output_is("tcl",<<'TCL',<<'OUT',"] in \"\"s");
  puts [set a "]"]
 TCL
 ]
 OUT
 
-}
