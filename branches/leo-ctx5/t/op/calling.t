@@ -16,7 +16,7 @@ Tests Parrot calling conventions.
 
 =cut
 
-use Parrot::Test tests => 33;
+use Parrot::Test tests => 34;
 use Test::More;
 
 output_is(<<'CODE', <<'OUTPUT', "set_args - parsing");
@@ -915,4 +915,42 @@ ex:
 .end
 CODE
 ok 1
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "tailcall 5 - arg/param conflict");
+.sub main @MAIN
+    .local pmc a, b
+    a = new Integer
+    a = 1
+    b = new Integer
+    b = 2
+    .local pmc c, d
+    (c, d) = foo(a, b)
+    eq_addr a, c, ok1
+    print "not "
+ok1:
+    print "ok 1\n"
+    eq_addr b, d, ok2
+    print "not "
+ok2:
+    print "ok 2\n"
+.end
+
+.sub foo
+    .param pmc a
+    .param pmc b
+    $P0 = new Integer
+    $P0 = 3
+    .return bar($P0, a, b)
+.end
+
+.sub bar
+    .param pmc x
+    .param pmc a
+    .param pmc b
+    .return (a, b)
+.end
+CODE
+ok 1
+ok 2
 OUTPUT

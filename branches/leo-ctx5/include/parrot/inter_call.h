@@ -69,6 +69,8 @@ int Parrot_fetch_arg_nci(Interp *, struct call_state *st);
 int Parrot_convert_arg(Interp *, struct call_state *st);
 int Parrot_store_arg(Interp *, struct call_state *st);
 
+int parrot_check_tail_call(Interp*, struct PackFile_ByteCode *, opcode_t *);
+
 opcode_t * parrot_pass_args(Interp *, struct PackFile_ByteCode *seg,
         struct parrot_regs_t *caller_regs, int what);
 opcode_t * parrot_pass_args_fromc(Interp *, const char *sig, INTVAL src_n,
