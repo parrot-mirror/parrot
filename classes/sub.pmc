@@ -290,7 +290,12 @@ Invokes the subroutine.
         }
 
         assert (!PMC_IS_NULL(ccont));
-        if (PObj_get_FLAGS(ccont) & SUB_FLAG_TAILCALL) {
+        /*
+         * if we do a taicall, we have to check that registers
+         * don't overlap
+         */
+        if ((PObj_get_FLAGS(ccont) & SUB_FLAG_TAILCALL)
+            && parrot_check_tail_call(INTERP, sub->seg, pc)) {
             /* clear tail call flag - it has to be set again
              * by the tailcall opcode
              */

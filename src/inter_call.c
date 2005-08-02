@@ -578,6 +578,68 @@ the latter handles return values and yields.
 
 #endif
 
+/*
+
+=item C<int parrot_check_tail_call(Interp*, struct PackFile_ByteCode *, opcode_t *)>
+
+Check register usage of arguments and params for a conflict that would
+prevent proper argument passing. E.g.
+
+  args     P30   P14    P15
+  params   P14   P30    P15
+
+As in a tailcall we are working in the same register store, passing
+the first argument (P30 -> P14) would overwrite the next source (P14)
+and the second param would get a wrong value.
+
+TODO instead of disabling tailcalls in such a case, we could create an
+intermediate storage for conflicting registers and use this information
+in the subsequent argument passing.
+
+=cut
+
+*/
+
+int
+parrot_check_tail_call(Interp* interpreter,
+        struct PackFile_ByteCode *dst_seg, opcode_t *pc)
+{
+    struct call_state st;
+    int todo, i;
+
+    if (*pc != PARROT_OP_get_params_pc)
+        return 1;
+    todo = Parrot_init_arg_op(interpreter, dst_seg,
+            interpreter->ctx.bp, pc, &st.dest);
+    if (!todo)
+        return 1;
+    todo = Parrot_init_arg_op(interpreter, interpreter->code,
+            interpreter->ctx.bp,
+            interpreter->current_args, &st.src);
+    if (!todo)
+        return 1;
+    for (;;) {
+        if (!next_arg(interpreter, &st.src))
+            return 1;
+        if (!next_arg(interpreter, &st.dest))
+            return 1;
+        pc = st.src.u.op.pc;
+        i  = st.src.i;
+        for (;;) {
+            if (!next_arg(interpreter, &st.src))
+                break;
+            if ( (st.src.sig & PARROT_ARG_TYPE_MASK) ==
+                    (st.dest.sig & PARROT_ARG_TYPE_MASK) &&
+                    *st.src.u.op.pc  == *st.dest.u.op.pc) {
+                return 0;
+            }
+        }
+        st.src.u.op.pc = pc;
+        st.src.i = i;
+    }
+    return 1;
+}
+
 opcode_t *
 parrot_pass_args(Interp *interpreter, struct PackFile_ByteCode *dst_seg,
         struct parrot_regs_t *caller_regs, int what)
