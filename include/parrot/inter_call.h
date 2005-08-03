@@ -28,7 +28,7 @@ struct call_state_1 {
     int mode;       /* from_sig, from_set_ops, flatten ...*/
     union {
         struct {
-            va_list ap;
+            void *ap;   /* a ptr to va_list */
             const char *sig;
         } sig;
         struct {
@@ -55,7 +55,7 @@ struct call_state {
 
 int Parrot_init_arg_sig(Interp *, struct PackFile_ByteCode *seg,
         struct parrot_regs_t *regs,
-        const char *sig, va_list ap, struct call_state_1 *st);
+        const char *sig, void *ap, struct call_state_1 *st);
 
 int Parrot_init_arg_op(Interp *, struct PackFile_ByteCode *seg,
         struct parrot_regs_t *regs,
@@ -74,7 +74,7 @@ int parrot_check_tail_call(Interp*, struct PackFile_ByteCode *, opcode_t *);
 opcode_t * parrot_pass_args(Interp *, struct PackFile_ByteCode *seg,
         struct parrot_regs_t *caller_regs, int what);
 opcode_t * parrot_pass_args_fromc(Interp *, const char *sig, INTVAL src_n,
-        opcode_t *dest, parrot_context_t * ctxp, va_list ap);
+        opcode_t *dest, parrot_context_t * ctxp, void *ap);
 FLOATVAL set_retval_f(Interp*, int sig_ret,
         struct PackFile_ByteCode *seg, struct parrot_regs_t *bp);
 void* set_retval(Interp*, int sig_ret,

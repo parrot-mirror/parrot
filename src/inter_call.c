@@ -30,7 +30,7 @@ subroutines.
 
 =item C<int Parrot_init_arg_sig(Interp *, struct PackFile_ByteCode *seg,
         struct parrot_regs_t *regs,
-        const char *sig, va_list ap, struct call_state_1 *st)>
+        const char *sig, void *ap, struct call_state_1 *st)>
 
 Initialize argument transfer with given code segment (holding the
 const_table), registers, function signature, and arguments.
@@ -105,7 +105,7 @@ Parrot_init_arg_op(Interp *interpreter, struct PackFile_ByteCode *seg,
 int
 Parrot_init_arg_sig(Interp *interpreter, struct PackFile_ByteCode *seg,
         struct parrot_regs_t *regs,
-        const char *sig, va_list ap, struct call_state_1 *st)
+        const char *sig, void *ap, struct call_state_1 *st)
 
 {
     st->i = -1;
@@ -114,7 +114,10 @@ Parrot_init_arg_sig(Interp *interpreter, struct PackFile_ByteCode *seg,
     st->regs = regs;
     if (*sig) {
         st->u.sig.sig = sig - 1;
-        st->u.sig.ap = ap;
+        if (ap)
+            st->u.sig.ap = ap;
+        else
+            st->u.sig.ap = NULL;
         st->n = strlen(sig);
     }
     return st->n > 0;
@@ -213,7 +216,8 @@ flatten:
 static int
 fetch_arg_int_sig(Interp *interpreter, struct call_state *st)
 {
-    UVal_int(st->val) = va_arg(st->src.u.sig.ap, INTVAL);
+    va_list *ap = (va_list*)(st->src.u.sig.ap);
+    UVal_int(st->val) = va_arg(*ap, INTVAL);
     st->src.mode |= CALL_STATE_NEXT_ARG;
     return 1;
 }
@@ -221,7 +225,8 @@ fetch_arg_int_sig(Interp *interpreter, struct call_state *st)
 static int
 fetch_arg_num_sig(Interp *interpreter, struct call_state *st)
 {
-    UVal_num(st->val) = va_arg(st->src.u.sig.ap, FLOATVAL);
+    va_list *ap = (va_list*)(st->src.u.sig.ap);
+    UVal_num(st->val) = va_arg(*ap, FLOATVAL);
     st->src.mode |= CALL_STATE_NEXT_ARG;
     return 1;
 }
@@ -229,7 +234,8 @@ fetch_arg_num_sig(Interp *interpreter, struct call_state *st)
 static int
 fetch_arg_str_sig(Interp *interpreter, struct call_state *st)
 {
-    UVal_str(st->val) = va_arg(st->src.u.sig.ap, STRING*);
+    va_list *ap = (va_list*)(st->src.u.sig.ap);
+    UVal_str(st->val) = va_arg(*ap, STRING*);
     st->src.mode |= CALL_STATE_NEXT_ARG;
     return 1;
 }
@@ -237,7 +243,8 @@ fetch_arg_str_sig(Interp *interpreter, struct call_state *st)
 static int
 fetch_arg_pmc_sig(Interp *interpreter, struct call_state *st)
 {
-    UVal_pmc(st->val) = va_arg(st->src.u.sig.ap, PMC*);
+    va_list *ap = (va_list*)(st->src.u.sig.ap);
+    UVal_pmc(st->val) = va_arg(*ap, PMC*);
     st->src.mode |= CALL_STATE_NEXT_ARG;
     return 1;
 }
@@ -747,7 +754,7 @@ parrot_pass_args_fromc(Interp *interpreter, const char *sig, INTVAL src_n,
     Parrot_init_arg_op(interpreter, interpreter->code,
             interpreter->ctx.bp, dest, &st.dest);
     todo = Parrot_init_arg_sig(interpreter, interpreter->code,
-            old_ctxp->bp, sig, ap, &st.src);
+            old_ctxp->bp, sig, PARROT_VA_TO_VAPTR(ap), &st.src);
     st.opt_so_far = 0;  /* XXX */
 
     while (todo) {
