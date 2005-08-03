@@ -1,10 +1,10 @@
 #!/usr/bin/perl
 
-#XXX need TODO tests for hex, unicode
+#XXX need TODO tests for unicode
 
 use strict;
 use lib qw(tcl/t t . ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 16;
+use Parrot::Test tests => 24;
 use vars qw($TODO);
 
 my($tcl,$expected);
@@ -71,14 +71,11 @@ $expected = "a b\n";
 language_output_is("tcl",$tcl,$expected,"backslash newline substitution");
 
 language_output_is("tcl",<<'TCL',<<OUT,"octal single char");
-  set a \a
+  set a \7
   puts $a
 TCL
 \cG
 OUT
-
-TODO: {
-local $TODO = "this octal don't seem to work.";
 
 language_output_is("tcl",<<'TCL',<<OUT,"octal single char, extra");
   set a \79
@@ -86,7 +83,6 @@ language_output_is("tcl",<<'TCL',<<OUT,"octal single char, extra");
 TCL
 \cG9
 OUT
-}
 
 language_output_is("tcl",<<'TCL',<<OUT,"octal double char");
   set a \12
@@ -95,15 +91,12 @@ TCL
 \cJ
 OUT
 
-TODO: {
-local $TODO = "this octal escape doesn't work.";
 language_output_is("tcl",<<'TCL',<<OUT,"octal double char, extra");
   set a \129
   puts $a
 TCL
 \cJ9
 OUT
-}
 
 language_output_is("tcl",<<'TCL',<<OUT,"octal triple char");
   set a \123
@@ -118,3 +111,63 @@ language_output_is("tcl",<<'TCL',<<OUT,"octal triple char, extra");
 TCL
 S4
 OUT
+
+TODO: {
+local $TODO = "hex escapes recently un-implemented. Fix soon.";
+
+language_output_is("tcl",<<'TCL',<<OUT,"hex single char");
+  set a \x7
+  puts $a
+TCL
+\cG
+OUT
+
+language_output_is("tcl",<<'TCL',<<OUT,"hex single char, extra");
+  set a \x7q
+  puts $a
+TCL
+\cGq
+OUT
+
+language_output_is("tcl",<<'TCL',<<OUT,"hex double char");
+  set a \x6a
+  puts $a
+TCL
+j
+OUT
+
+language_output_is("tcl",<<'TCL',<<OUT,"hex double char, extra");
+  set a \x6aq
+  puts $a
+TCL
+jq
+OUT
+
+language_output_is("tcl",<<'TCL',<<OUT,"hex triple char, skip ok?");
+  set a \xb6a
+  puts $a
+TCL
+j
+OUT
+
+language_output_is("tcl",<<'TCL',<<OUT,"hex triple char, extra");
+  set a \xb6aq
+  puts $a
+TCL
+jq
+OUT
+
+language_output_is("tcl",<<'TCL',<<OUT,"hex many char");
+  set a \xaaaaaaaaaaab6a
+  puts $a
+TCL
+j
+OUT
+
+language_output_is("tcl",<<'TCL',<<OUT,"hex many char, extra");
+  set a \xaaaaaaaaaaab6aq
+  puts $a
+TCL
+jq
+OUT
+}
