@@ -74,7 +74,7 @@ int parrot_check_tail_call(Interp*, struct PackFile_ByteCode *, opcode_t *);
 opcode_t * parrot_pass_args(Interp *, struct PackFile_ByteCode *seg,
         struct parrot_regs_t *caller_regs, int what);
 opcode_t * parrot_pass_args_fromc(Interp *, const char *sig, INTVAL src_n,
-        opcode_t *dest, parrot_context_t * ctxp, void *ap);
+        opcode_t *dest, parrot_context_t * ctxp, va_list ap);
 FLOATVAL set_retval_f(Interp*, int sig_ret,
         struct PackFile_ByteCode *seg, struct parrot_regs_t *bp);
 void* set_retval(Interp*, int sig_ret,
