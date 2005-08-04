@@ -2,8 +2,7 @@
 
 use strict;
 use lib qw(tcl/t t . ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 32;
-use vars qw($TODO);
+use Parrot::Test tests => 34;
 
 my($tcl,$expected);
 
@@ -110,10 +109,12 @@ TCL
 S4
 OUT
 
-TODO: {
-local $TODO = "hex & unicode escapes recently un-implemented. Fix soon.";
-
-# XXX Should suppress warnings about wide characters in Test::*... how?
+language_output_is("tcl",<<'TCL',<<OUT,"hex single char, invalid");
+  set a \xq
+  puts $a
+TCL
+xq
+OUT
 
 language_output_is("tcl",<<'TCL',<<OUT,"hex single char");
   set a \x7
@@ -171,6 +172,14 @@ TCL
 jq
 OUT
 
+
+language_output_is("tcl",<<'TCL',<<OUT,"unicode single char, invalid");
+  set a \uq
+  puts $a
+TCL
+uq
+OUT
+
 language_output_is("tcl",<<'TCL',<<OUT,"unicode one char");
   set a \u7
   puts $a
@@ -198,6 +207,10 @@ language_output_is("tcl",<<'TCL',<<OUT,"unicode two chars, extra");
 TCL
 jq
 OUT
+
+TODO: {
+
+local $TODO = "These four tests tickle a seg-fault in parrot: [#36794]";
 
 language_output_is("tcl",<<'TCL',<<OUT,"unicode three chars");
   set a \u666

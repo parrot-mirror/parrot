@@ -2,7 +2,8 @@
 
 use strict;
 use lib qw(tcl/t t . ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 12;
+use Parrot::Test tests => 16;
+use Test::More;
 use vars qw($TODO);
 
 my($tcl,$expected);
@@ -73,20 +74,49 @@ TCL
 ;
 OUT
 
-TODO: {
-$TODO = "bug(s)";
-
-language_output_is("tcl",<<'TCL',<<'OUT',"bad argument error");
-puts 4 # comment
-TCL
-bad argument "comment": should be "nonewline"
-OUT
-
 language_output_is("tcl",<<'TCL',<<'OUT',"variables and procs with same name");
 set a 2
 a
 TCL
 invalid command name "a"
+OUT
+
+language_output_is("tcl",<<'TCL',<<'OUT',"comments must *start* commands (doesn't)");
+puts 4 # comment
+TCL
+bad argument "comment": should be "nonewline"
+OUT
+
+language_output_is("tcl",<<'TCL',<<'OUT',"comments must *start* commands (does)");
+# comment
+puts 1
+TCL
+1
+OUT
+
+language_output_is("tcl",<<'TCL',<<'OUT',"comments must *start* commands (does), with whitespace");
+ # comment
+ puts 1
+TCL
+1
+OUT
+
+language_output_is("tcl",<<'TCL',<<'OUT',"comments end on newline, not ;");
+ # comment ; puts 1
+ puts 2
+TCL
+2
+OUT
+
+TODO: {
+local $TODO = "unimplemented";
+
+language_output_is("tcl",<<'TCL',<<'OUT',"no extra characters after close quote")
+set a 2
+puts [set "a"a]
+puts 1
+TCL
+extra characters after close quote
 OUT
 
 }
