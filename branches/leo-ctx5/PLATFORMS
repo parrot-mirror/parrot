@@ -7,8 +7,10 @@ Platform                B8    Runloops      Feature Comp Test Inst YYYYMMDD
 ---------------------------------------------------------------------------
 aix-pwr-xlc6            B    -    Y    -     Y   -   Y    Y
 aix-pwr64-xlc6          B8   -    -    -     Y   -   Y    Y/20
-darwin                  B    Y    Y    Y     Y   Y   Y    Y     Y  20050701
+darwin_7.9.0 (10.3)     B    Y    Y    -     Y   Y   Y    Y     Y  20050804
+darwin_8.2.0-gcc4.0.0   B                            Y    Y        20050804
 freebsd5.2-i386              Y    Y/4  Y     Y   -   Y*6  Y
+freebsd6.0b-amd64       8    Y    -    -     Y   Y   Y    Y/12     20050804
 hpux-pa_risc2.0-gcc2.9  B         -    -     Y   Y   Y*2  Y
 ?-ia64
 irix6.5                                      Y       Y    Y/2
@@ -17,8 +19,8 @@ linux-ppc-gcc2.95.3     B    Y    Y    Y     Y   Y   Y    Y
 linux-ppc-gcc3.2.3      B    Y    Y/9  Y     Y   Y   Y    Y
 linux-sparc-gcc3.3.3    B    Y    -    -     Y   Y   Y    Y
 linux-sparc64-gcc3.3.3  B8   Y    -    -     -   -   Y    -
-linux-x86-gcc2.95.2          Y    Y    Y     Y   Y   Y    Y     Y  20050702
-linux-x86-gcc3.3.3           Y    Y    Y     Y   Y   Y    Y     Y  20050702
+linux-x86-gcc2.95.2          Y    Y    Y     Y   Y   Y    Y     Y  20050804
+linux-x86-gcc3.3.3           Y    Y    Y     Y   Y   Y    Y     Y  20050804
 linux-x86-gcc3.3.3 *3        Y    Y    Y     Y   Y   Y    Y*3
 linux-x86-icc8               Y    Y    Y     Y   Y   Y    Y
 linux-x86_64-gcc3.3.3    8   Y    -    -     Y   Y   Y    Y
@@ -27,7 +29,8 @@ netbsd                                 Y             Y    Y*1
 openbsd                      Y    Y/5  Y     Y   -   Y    Y
 openbsd_beta_3.5-vax                                 Y*4  Y/26
 os2
-solaris8-sparc-cc       B    -    Y/389 -    -   -   Y    Y/15     20050701
+solaris8-sparc-cc       B    -    Y/425 -    -   -   Y    Y/15     20050804
+solaris10-sparc-gcc3.4.3 B                           Y*7  Y/1      20050804
 tru64-alpha-gcc          8                   Y       Y    Y
 tru64-alpha-dec_c_v6.5   8                   Y       Y    Y        20040816
 vms
@@ -35,6 +38,7 @@ win32-bcc
 win32-cygwin_1.5.11_1        Y    Y    -     Y*5 Y   Y    Y        20041006
 win32-icl_8.0.48             -    Y    -     -   -   Y    Y/2
 win32-mingw-gcc3.2.3         Y    Y    Y     -   -   Y    Y/81  Y  20050603
+win32-msvc_6.0               -    Y    -     -   -   Y    Y        20050804
 win32-msvc_7.1               -    Y    -     -   -   Y    Y        20050802
 
 -   ... no
@@ -67,6 +71,7 @@ Remarks:
 *5 by enabling cygwin in t/pmc/threads.t, some tests fail due to a bug in
    that release. 1.5.10-3 and latest snapshots are ok.
 *6 needs "gmake"
+*7 needs perl Configure.pl --cc=gcc --link=gcc --ld=gcc --cxx=gcc
 
 The following configurations are also working on x86/linux (and likely
 other platforms):
