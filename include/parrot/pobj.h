@@ -93,6 +93,19 @@ typedef struct Buffer {
 
 typedef Buffer PObj;
 
+#if PARROT_GC_GMC
+
+#define PObj_bufstart(pmc)    (pmc)->obj.u._b._bufstart
+#define PObj_buflen(pmc)      (pmc)->obj.u._b._buflen
+#define PMC_struct_val(pmc)   (pmc)->body->_ptrs._struct_val
+#define PMC_pmc_val(pmc)      (pmc)->body->_ptrs._pmc_val
+#define PMC_int_val(pmc)      (pmc)->body->_i._int_val
+#define PMC_int_val2(pmc)     (pmc)->body->_i._int_val2
+#define PMC_num_val(pmc)      (pmc)->body->_num_val
+#define PMC_str_val(pmc)      (pmc)->body->_string_val
+
+#else
+
 #define PObj_bufstart(pmc)    (pmc)->obj.u._b._bufstart
 #define PObj_buflen(pmc)      (pmc)->obj.u._b._buflen
 #define PMC_struct_val(pmc)   (pmc)->obj.u._ptrs._struct_val
@@ -101,6 +114,8 @@ typedef Buffer PObj;
 #define PMC_int_val2(pmc)     (pmc)->obj.u._i._int_val2
 #define PMC_num_val(pmc)      (pmc)->obj.u._num_val
 #define PMC_str_val(pmc)      (pmc)->obj.u._string_val
+
+#endif
 
 /* BEGIN DEPRECATED BUFFER ACCESSORS */
 /* macros for accessing old buffer members
@@ -144,8 +159,24 @@ struct parrot_string_t {
 /* put data into the PMC_EXT structure */
 #define PMC_DATA_IN_EXT 1
 
+
+/* TODO: Change to a real pmc_body type. */
+#if PARROT_GC_GMC
+typedef UnionVal pmc_body;
+
+/* Hack for the get_FLAGS macro to be happy. */
+typedef struct flags_holder {
+    Parrot_UInt flags;
+} flags_holder;
+#endif
+
 struct PMC {
+#if PARROT_GC_GMC
+    pmc_body *body;
+    flags_holder obj;
+#else
     pobj_t obj;
+#endif
     VTABLE *vtable;
 #if ! PMC_DATA_IN_EXT
     DPOINTER *data;
@@ -203,7 +234,11 @@ typedef struct PMC_EXT PMC_EXT;
 #define PMC_metadata(pmc)     PMC_ext_checked(pmc)->_metadata
 #define PMC_next_for_GC(pmc)  PMC_ext_checked(pmc)->_next_for_GC
 #define PMC_sync(pmc)         PMC_ext_checked(pmc)->_synchronize
-#define PMC_union(pmc)        (pmc)->obj.u
+#if PARROT_GC_GMC
+#define PMC_union(pmc)        (pmc)->body
+#else
+#define PMC_union(pmc)	      (pmc)->obj.u
+#endif
 
 /* macro for accessing union data */
 #define next_for_GC pmc_ext->_next_for_GC
@@ -404,6 +439,7 @@ typedef enum PObj_enum {
 #endif /* ARENA_DOD_FLAGS */
 
 #define PObj_get_FLAGS(o) ((o)->obj.flags)
+
 
 #define PObj_flag_TEST(flag, o) (PObj_get_FLAGS(o) & PObj_ ## flag ## _FLAG)
 #define PObj_flag_SET(flag, o) (PObj_get_FLAGS(o) |= PObj_ ## flag ## _FLAG)

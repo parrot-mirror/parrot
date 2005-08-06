@@ -406,6 +406,7 @@ INTERP_O_FILES = \
     $(SRC_DIR)/dod$(O) \
     $(SRC_DIR)/gc_ims$(O) \
     $(SRC_DIR)/gc_gms$(O) \
+    $(SRC_DIR)/gc_gmc$(O) \
     $(SRC_DIR)/method_util$(O) \
     $(SRC_DIR)/exit$(O) \
     $(SRC_DIR)/misc$(O) \
