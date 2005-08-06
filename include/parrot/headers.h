@@ -47,6 +47,7 @@ int is_buffer_ptr(Interp *, void *);
 int is_pmc_ptr(Interp *, void *);
 
 void gc_pmc_ext_pool_init(Interp *, struct Small_Object_Pool *pool);
+void gc_pmc_body_pool_init(Interp *, struct Small_Object_Pool *pool);
 
 /* pool iteration */
 typedef enum {
