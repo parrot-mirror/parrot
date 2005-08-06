@@ -227,7 +227,6 @@ get_bufferlike_pool(Interp *interpreter, size_t buffer_size)
     return sized_pools[ (buffer_size - sizeof(Buffer)) / sizeof(void *) ];
 }
 
-
 /*
 
 =item C<PMC *
@@ -238,6 +237,10 @@ Get a header.
 =cut
 
 */
+
+#if PARROT_GC_GMC
+static pmc_body * new_pmc_body(Parrot_Interp);
+#endif
 
 static PMC_EXT * new_pmc_ext(Parrot_Interp);
 
@@ -276,8 +279,45 @@ new_pmc_header(Interp *interpreter, UINTVAL flags)
 #if ! PMC_DATA_IN_EXT
     PMC_data(pmc) = NULL;
 #endif
+#if PARROT_GC_GMC
+    pmc->body = new_pmc_body(interpreter);
+#endif
     return pmc;
 }
+
+
+
+#if PARROT_GC_GMC
+
+/* 
+
+=item C<void *
+new_pmc_body(Interp *interpreter)>
+
+Allocates a pmc_body.
+Basically same as new_pmc_ext.
+
+=cut
+
+*/
+
+static pmc_body *
+new_pmc_body(Interp *interpreter)
+{
+    struct Small_Object_Pool *pool = interpreter->arena_base->pmc_ext_pool;
+    void *ptr;
+
+    if (!pool->free_list)
+        (*pool->more_objects) (interpreter, pool);
+    ptr = pool->free_list;
+    pool->free_list = *(void **)ptr;
+    memset(ptr, 0, sizeof(pmc_body));
+    return ptr;
+}
+
+#endif /* PARROT_GC_GMC */
+
+
 
 /*
 
@@ -591,6 +631,14 @@ Parrot_initialize_header_pools(Interp *interpreter)
      */
     gc_pmc_ext_pool_init(interpreter, arena_base->pmc_ext_pool);
     arena_base->pmc_ext_pool->name = "pmc_ext";
+
+#if PARROT_GC_GMC
+    /*
+     * pmc_body is gmc specific, so use functions of src/gmc.c.
+     */
+    gc_pmc_body_pool_init(interpreter, arena_base->pmc_body_pool);
+    arena_base->pmc_body_pool->name = "pmc_body";
+#endif
 
     /* constant PMCs */
     arena_base->constant_pmc_pool = new_pmc_pool(interpreter);
