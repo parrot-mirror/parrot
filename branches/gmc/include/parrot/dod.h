@@ -94,6 +94,7 @@ void Parrot_dod_profile_end(Parrot_Interp interpreter, int what);
 void Parrot_gc_ms_init(Interp* interpreter);
 void Parrot_gc_ims_init(Interp* interpreter);
 void Parrot_gc_gms_init(Interp* interpreter);
+void Parrot_gc_gmc_init(Interp* interpreter);
 /* do_dod_run function for MS */
 void Parrot_dod_ms_run(Interp *interpreter, int flags);
 
