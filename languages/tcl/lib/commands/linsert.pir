@@ -9,8 +9,12 @@
 
   # XXX need error handling.
 
+  .local pmc __list
+  __list = find_global "_Tcl", "__list"
+  
   .local pmc the_list
   the_list = shift argv
+  the_list = __list(the_list)
  
   .local pmc position
   position = shift argv
@@ -20,8 +24,9 @@
 
   ($I0,$P0,$I2) = list_index(the_list,position)
   if $I0 != TCL_OK goto error
-  if $I2 ==0 goto next
-  inc $P0 #linsert treats "end" differently 
+  #linsert treats "end" differently
+  if $I2 == 0 goto next
+  inc $P0
 
 next: 
   .local int the_index
