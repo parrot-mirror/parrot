@@ -51,6 +51,8 @@
 #define REGSET_N 3
 #define REGSET_MAX 4
 
+#define OBJ_AS_PARAM
+
 static const char regsets[] = "ISPN";
 
 /*
@@ -138,6 +140,7 @@ unshift_self(Interp *interp, SymReg *sub, SymReg *obj)
 {
     int i, n = sub->pcc_sub->nargs;
 
+    UNUSED(interp);
     sub->pcc_sub->args = realloc(sub->pcc_sub->args,
             (n + 1) * sizeof(SymReg *));
     for (i = n; i; --i)

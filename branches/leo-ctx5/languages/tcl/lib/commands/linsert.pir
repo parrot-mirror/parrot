@@ -7,14 +7,18 @@
 .sub "linsert"
   .param pmc argv :slurpy  
 
-  # XXX need error handling.
+  # make sure we have the right # of args
+  $I0 = argv
+  if $I0 < 3 goto wrong_args
 
   .local pmc __list
   __list = find_global "_Tcl", "__list"
   
   .local pmc the_list
   the_list = shift argv
-  the_list = __list(the_list)
+  ($I0, $P0) = __list(the_list)
+  if $I0 == TCL_ERROR goto error
+  the_list = $P0 
  
   .local pmc position
   position = shift argv
@@ -66,10 +70,13 @@ LOOP2:
   inc cnt
   goto LOOP2
 DONE2:
-
   .return (TCL_OK,retval)
+
+wrong_args:
+  $I0 = TCL_ERROR
+  $P0 = new TclString
+  $P0 = "wrong # args: should be \"linsert list index element ?element ...?\""
 
 error:
   .return($I0,$P0)
-
 .end
