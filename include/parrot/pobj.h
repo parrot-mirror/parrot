@@ -97,6 +97,7 @@ typedef Buffer PObj;
 
 #define PObj_bufstart(pmc)    (pmc)->obj.u._b._bufstart
 #define PObj_buflen(pmc)      (pmc)->obj.u._b._buflen
+#define PMC_body(pmc)         (pmc)->body
 #define PMC_struct_val(pmc)   (pmc)->body->_ptrs._struct_val
 #define PMC_pmc_val(pmc)      (pmc)->body->_ptrs._pmc_val
 #define PMC_int_val(pmc)      (pmc)->body->_i._int_val
