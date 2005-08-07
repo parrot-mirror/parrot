@@ -304,13 +304,10 @@ Basically same as new_pmc_ext.
 static pmc_body *
 new_pmc_body(Interp *interpreter)
 {
-    struct Small_Object_Pool *pool = interpreter->arena_base->pmc_ext_pool;
+    struct Small_Object_Pool *pool = interpreter->arena_base->pmc_body_pool;
     void *ptr;
 
-    if (!pool->free_list)
-        (*pool->more_objects) (interpreter, pool);
-    ptr = pool->free_list;
-    pool->free_list = *(void **)ptr;
+    ptr = pool->get_free_object (interpreter, pool);
     memset(ptr, 0, sizeof(pmc_body));
     return ptr;
 }
@@ -633,9 +630,8 @@ Parrot_initialize_header_pools(Interp *interpreter)
     arena_base->pmc_ext_pool->name = "pmc_ext";
 
 #if PARROT_GC_GMC
-    /*
-     * pmc_body is gmc specific, so use functions of src/gmc.c.
-     */
+    arena_base->pmc_body_pool = 
+      new_small_object_pool(interpreter, sizeof(pmc_body), 1024);
     gc_pmc_body_pool_init(interpreter, arena_base->pmc_body_pool);
     arena_base->pmc_body_pool->name = "pmc_body";
 #endif

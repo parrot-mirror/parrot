@@ -211,7 +211,7 @@ Adds the memory between C<start> and C<end> to the free list.
 
 */
 
- void
+  void
 Parrot_add_to_free_list(Interp *interpreter,
         struct Small_Object_Pool *pool,
         struct Small_Object_Arena *arena,
@@ -481,6 +481,47 @@ gc_ms_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
         pool->get_free_object = get_free_object_df;
 #endif
 }
+
+#if PARROT_GC_GMC
+
+void* gc_gmc_get_free_object(Interp*, struct Small_Object_Pool*);
+
+void
+gc_pmc_body_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
+{
+    pool->add_free_object = gc_ms_add_free_object;
+    pool->get_free_object = gc_gmc_get_free_object;
+    pool->alloc_objects   = gc_ms_alloc_objects;
+    pool->more_objects    = gc_ms_alloc_objects;
+}
+
+/* Workaround before the corresponding gmc functions are implemented.
+ * TODO: get our real functions ! */
+
+void gc_gmc_deinit(Interp*);
+void gc_gmc_run(Interp*, int);
+
+static void
+gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
+{
+    pool->add_free_object = gc_ms_add_free_object;
+    pool->get_free_object = gc_ms_get_free_object;
+    pool->alloc_objects   = gc_ms_alloc_objects;
+    pool->more_objects = more_traceable_objects;
+}
+
+
+void Parrot_gc_gmc_init(Interp *interpreter)
+{
+  struct Arenas *arena_base;
+
+  arena_base = interpreter->arena_base;
+  arena_base->do_dod_run = gc_gmc_run;
+  arena_base->de_init_gc_system = gc_gmc_deinit;
+  arena_base->init_pool = gc_gmc_pool_init;
+}
+
+#endif
 
 /*
 
