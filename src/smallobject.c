@@ -518,6 +518,7 @@ void Parrot_gc_gmc_init(Interp *interpreter)
   arena_base = interpreter->arena_base;
   arena_base->do_dod_run = gc_gmc_run;
   arena_base->de_init_gc_system = gc_gmc_deinit;
+
   arena_base->init_pool = gc_gmc_pool_init;
 }
 

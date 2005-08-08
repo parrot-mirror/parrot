@@ -114,8 +114,59 @@ typedef struct _gc_gms_gen {
 /* This header is appended to all gc objects. */
 typedef struct _gc_gmc_hdr {
   UINTVAL gmc_flags; /* Various GC flags for internal use. */
-  PMC* pmc;      /* Corresponding PMC header. */
+  PMC* pmc;          /* Corresponding PMC header. */
 } Gc_gmc_hdr;
+
+
+/* FIXME: the flags definition isn't really in the good file.
+ * smallobject.h ? pobj.h ? gc_gmc.h ? */
+typedef enum gmc_flags {
+    /* Private GC flags, for internal use. */
+    Gmc_private_0_FLAG = 1 << 0,
+    Gmc_private_1_FLAG = 1 << 1,
+    Gmc_private_2_FLAG = 1 << 2,
+    Gmc_private_3_FLAG = 1 << 3,
+    Gmc_private_4_FLAG = 1 << 4,
+    Gmc_private_5_FLAG = 1 << 5,
+    Gmc_private_6_FLAG = 1 << 6,
+    Gmc_private_7_FLAG = 1 << 7,
+
+    /* Type flags for most common PMCs */
+    Gmc_PMC_is_int_FLAG      = 1 << 8,
+    Gmc_PMC_is_float_FLAG    = 1 << 9,
+    Gmc_PMC_is_array_FLAG    = 1 << 10,
+    Gmc_PMC_is_hash_FLAG     = 1 << 11,
+    Gmc_PMC_is_object_FLAG   = 1 << 12,
+    Gmc_PMC_is_class_FLAG    = 1 << 13,
+    Gmc_PMC_is_function_FLAG = 1 << 14,
+
+    /* Type that is not in the previous values. Check for size in the vtable. */
+    Gmc_PMC_is_anything_else = 1 << 15,
+} Gmc_flags;
+
+
+/* Macros for access from header. */
+#define Gmc_PMC_hdr_get_FLAGS(pmc_hdr)		    ((pmc_hdr)->gmc_flags)
+#define Gmc_PMC_hdr_get_PMC(pmc_hdr)		    ((pmc_hdr)->pmc)
+#define Gmc_PMC_hdr_flag_TEST(flag, pmc_hdr)	    (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) & (Gmc_ ## flag ## _FLAG))
+#define Gmc_PMC_hdr_flag_SET(flag, pmc_hdr)	    (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) |= (Gmc_ ## flag ## _FLAG))
+#define Gmc_PMC_hdr_flag_CLEAR(flag, pmc_hdr)	    (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) &= \
+							  ~(UINTVAL)(Gmc_ ## flag ## _FLAG))
+
+/* Macros for access from body. */
+#define Gmc_PMC_body_get_HDR(pmc_body)		    ((Gc_gmc_hdr*)((pmc_body) - sizeof(Gc_gmc_hdr)))
+#define Gmc_PMC_body_get_FLAGS(pmc_body)	    Gmc_PMC_hdr_get_FLAGS(Gmc_PMC_body_get_hdr(pmc_body))
+#define Gmc_PMC_body_get_PMC(pmc_body)  	    Gmc_PMC_hdr_get_PMC(Gmc_PMC_body_get_hdr(pmc_body))
+#define Gmc_PMC_body_flag_TEST(flag, pmc_body)	    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_body_get_hdr(pmc_body))
+#define Gmc_PMC_body_flag_SET(flag, pmc_body)	    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_body_get_hdr(pmc_body))
+#define Gmc_PMC_body_flag_CLEAR(flag, pmc_body)	    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_body_get_hdr(pmc_body))
+
+/* Macros for access from PMC*. */
+#define Gmc_PMC_get_HDR(pmc)			    Gmc_PMC_body_get_hdr(PMC_body(pmc))
+#define Gmc_PMC_get_FLAGS(pmc)			    Gmc_PMC_hdr_get_FLAGS(Gmc_PMC_get_HDR(pmc))
+#define Gmc_PMC_flag_TEST(flag, pmc)		    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_get_HDR(pmc))
+#define Gmc_PMC_flag_SET(flag, pmc)		    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_get_HDR(pmc))
+#define Gmc_PMC_flag_CLEAR(flag, pmc)		    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_get_HDR(pmc))
 
 
 /* Same structure than in GMS for header lists. */
@@ -194,7 +245,7 @@ struct Small_Object_Pool {
     struct _gc_gms_hdr *black_fin;      /* alive, needs destruction */
     struct _gc_gms_hdr *gray;           /* to be scanned */
     struct _gc_gms_hdr *white;          /* unprocessed */
-    struct _gc_gms_hdr *white_fin;      /* unprocesse, needs destruction */
+    struct _gc_gms_hdr *white_fin;      /* unprocessed, needs destruction */
 
     struct _gc_gms_gen *first_gen;      /* linked list of generations */
     struct _gc_gms_gen *last_gen;
