@@ -238,9 +238,9 @@ Get a header.
 
 */
 
-#if PARROT_GC_GMC
+/*#if PARROT_GC_GMC
 static pmc_body * new_pmc_body(Parrot_Interp);
-#endif
+#endif*/
 
 static PMC_EXT * new_pmc_ext(Parrot_Interp);
 
@@ -279,9 +279,9 @@ new_pmc_header(Interp *interpreter, UINTVAL flags)
 #if ! PMC_DATA_IN_EXT
     PMC_data(pmc) = NULL;
 #endif
-#if PARROT_GC_GMC
+/*#if PARROT_GC_GMC
     pmc->body = new_pmc_body(interpreter);
-#endif
+#endif*/
     return pmc;
 }
 
@@ -299,7 +299,6 @@ Basically same as new_pmc_ext.
 
 =cut
 
-*/
 
 static pmc_body *
 new_pmc_body(Interp *interpreter)
@@ -310,7 +309,7 @@ new_pmc_body(Interp *interpreter)
     ptr = pool->get_free_object (interpreter, pool);
     memset(ptr, 0, sizeof(pmc_body));
     return ptr;
-}
+}*/
 
 #endif /* PARROT_GC_GMC */
 
@@ -629,12 +628,12 @@ Parrot_initialize_header_pools(Interp *interpreter)
     gc_pmc_ext_pool_init(interpreter, arena_base->pmc_ext_pool);
     arena_base->pmc_ext_pool->name = "pmc_ext";
 
-#if PARROT_GC_GMC
+/*#if PARROT_GC_GMC
     arena_base->pmc_body_pool = 
       new_small_object_pool(interpreter, sizeof(pmc_body), 1024);
     gc_pmc_body_pool_init(interpreter, arena_base->pmc_body_pool);
     arena_base->pmc_body_pool->name = "pmc_body";
-#endif
+#endif*/
 
     /* constant PMCs */
     arena_base->constant_pmc_pool = new_pmc_pool(interpreter);

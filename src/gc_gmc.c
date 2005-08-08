@@ -59,7 +59,6 @@ gc_gmc_real_get_free_object(Interp *interpreter,
     struct Small_Object_Pool *pool)
 {
   void *ptr;
-  struct Small_Object_Pool *body_pool = interpreter->arena_base->pmc_body_pool;
   Gc_gmc *gc = pool->gc;
 
   /* Is this the real test we want ? */
