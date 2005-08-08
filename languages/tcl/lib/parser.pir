@@ -48,8 +48,15 @@ get_commands:
 next_command:
   # Do we have a comment? If so, skip to the next position where
   # We might have a command.
-  pos = skip_comment(tcl_code, pos)
+  .local int check_pos
+  check_pos = skip_comment(tcl_code, pos)
+  if check_pos == pos goto done_comment
 
+found_comment:
+  pos = check_pos
+  goto next_command
+
+done_comment:
   .local pmc command
   (command, pos) = get_command(tcl_code, chars, pos)
   isnull command, done
@@ -68,24 +75,27 @@ done:
   .local pmc chars
   chars = new Hash
   chars[10] = 1 # \n
-  .local int peek_pos
-get:
-  .local pmc command
-  null command
+  
+  .local pmc word   
+  .local int orig, len
+  orig = pos
+  len  = length tcl_code
 
+get:
   # try to get a command name
-  .local pmc word
-  (word, peek_pos) = get_word(tcl_code, chars, pos)
-  isnull word, check
+  if pos >= len goto check
+  (word, pos) = get_word(tcl_code, chars, pos)
+  inc pos
+  isnull word, get
   $S0 = word
   $I0 = ord $S0, 0
   if $I0 == 35 goto got_comment
 check:
-  .return(pos)
+  .return(orig)
 got_comment:
+  dec pos
   .local int new_pos
   new_pos = index tcl_code, "\n", pos
-  inc new_pos
   .return (new_pos)
 .end
 
