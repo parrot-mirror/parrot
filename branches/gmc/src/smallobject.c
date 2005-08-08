@@ -486,15 +486,6 @@ gc_ms_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
 
 void* gc_gmc_get_free_object(Interp*, struct Small_Object_Pool*);
 
-void
-gc_pmc_body_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
-{
-    pool->add_free_object = gc_ms_add_free_object;
-    pool->get_free_object = gc_gmc_get_free_object;
-    pool->alloc_objects   = gc_ms_alloc_objects;
-    pool->more_objects    = gc_ms_alloc_objects;
-}
-
 /* Workaround before the corresponding gmc functions are implemented.
  * TODO: get our real functions ! */
 
