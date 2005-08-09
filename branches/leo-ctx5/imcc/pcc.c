@@ -27,34 +27,6 @@
 #include "imc.h"
 #include "parser.h"
 
-
-/* Local definitions and static data for PCC code emitter.
- * This is more for making the code self-documenting than
- * making it easily configurable.
- */
-
-/* For PCC prototyped subs, the params go in registers
- * 5-15 for each set (P,I,N,S)
- */
-#define FIRST_PARAM_REG 5
-#define LAST_PARAM_REG 15
-
-#define REG_PROTO_FLAG    0
-#define REG_I_PARAM_COUNT 1
-#define REG_S_PARAM_COUNT 2
-#define REG_P_PARAM_COUNT 3
-#define REG_N_PARAM_COUNT 4
-
-#define REGSET_I 0
-#define REGSET_S 1
-#define REGSET_P 2
-#define REGSET_N 3
-#define REGSET_MAX 4
-
-#define OBJ_AS_PARAM
-
-static const char regsets[] = "ISPN";
-
 /*
  * Utility instruction routine. Creates and inserts an instruction
  * into the current block in one call.
@@ -81,6 +53,9 @@ get_pasm_reg(Interp* interp, char *name)
     return mk_pasm_reg(interp, str_dup(name));
 }
 
+/*
+ * get or create a constant
+ */
 SymReg*
 get_const(Interp *interp, const char *name, int type)
 {
@@ -92,7 +67,7 @@ get_const(Interp *interp, const char *name, int type)
 }
 
 /*
- * set arguments or return valurs
+ * set arguments or return values
  * get params or results
  * used by expand_pcc_sub_call and expand_pcc_sub
  */
@@ -134,7 +109,9 @@ pcc_get_args(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
     return ins;
 }
 
-#ifdef OBJ_AS_PARAM
+/*
+ * prepend the object to args or self to params
+ */
 static void
 unshift_self(Interp *interp, SymReg *sub, SymReg *obj)
 {
@@ -149,7 +126,6 @@ unshift_self(Interp *interp, SymReg *sub, SymReg *obj)
     sub->pcc_sub->nargs++;
 }
 
-#endif /* OBJ_AS_PARAM */
 
 /*
  * Expand a PCC (Parrot Calling Convention) subroutine
@@ -163,13 +139,9 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     int nargs;
     Instruction *tmp;
     SymReg *regs[2];
-#ifndef OBJ_AS_PARAM
-    char buf[128];
-#endif /* OBJ_AS_PARAM */
 
     sub = ins->r[0];
 
-#ifdef OBJ_AS_PARAM
     /*
      * if this sub isa method, unshift 'self' as first param
      */
@@ -182,7 +154,6 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         unshift_self(interp, sub, self);
     }
 
-#endif /* OBJ_AS_PARAM */
     /* Don't generate any parameter checking code if there
      * are no named arguments.
      */
@@ -191,20 +162,6 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         ins = pcc_get_args(interp, unit, ins, "get_params", nargs,
                            sub->pcc_sub->args);
     }
-
-    /*
-     * if this sub references self, fetch it
-     */
-#ifndef OBJ_AS_PARAM
-    if (unit->type & IMC_HAS_SELF) {
-        regs[0] = get_sym("self");
-        assert(regs[0]);
-
-        sprintf(buf, "%d", CURRENT_OBJECT);
-        regs[1] = get_const(interp, buf, 'I');
-        ins = insINS(interp, unit, ins, "interpinfo", regs, 2);
-    }
-#endif /* OBJ_AS_PARAM */
 
     /*
      * check if there is a return
@@ -225,6 +182,7 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         insert_ins(unit, unit->last_ins, tmp);
     }
 
+#if 0
     /*
      * a coroutine (generator) needs a small hook that gets called
      * from the shift_pmc() vtable
@@ -242,7 +200,7 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         ins = insINS(interp, unit, ins, "invokecc", regs, 0);
         ins = insINS(interp, unit, ins, "end", regs, 0);
     }
-
+#endif
 }
 
 
@@ -286,111 +244,9 @@ expand_pcc_sub_ret(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         ins = insINS(interp, unit, ins, "returncc", regs, 0);
     }
     /*
-     * move the pcc_sub structure to the invoke
-     */
-
-    /*
      * mark the invoke instruction's PCC sub type
      */
     ins->type |= is_yield ? ITPCCYIELD : (ITPCCRET|ITPCCSUB);
-}
-
-#define CREATE_TAIL_CALLS
-
-#ifdef CREATE_TAIL_CALLS
-/*
- * check for a sequence of
- *   .pcc_begin
- *   ... [1]
- *   .pcc_end
- *   .pcc_begin_return
- *   ... [2]
- *   .pcc_end_return
- *   <end>
- * with the results in [1] matching return values in [2]
- */
-static int
-check_tail_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
-{
-    Instruction *tmp, *ret_ins;
-    int i, j, matching, nrets;
-    struct pcc_sub_t *call, *ret;
-    UNUSED(unit);
-    /*
-     * currently only with -Oc
-     */
-    if (!(IMCC_INFO(interp)->optimizer_level & OPT_SUB))
-        return 0;
-    if (!ins->type & ITPCCSUB)
-        return 0;
-    ret_ins = NULL;
-    tmp = ins->next;
-    if (!tmp)
-        return 0;
-    if (tmp->opnum == -1 && (tmp->type & ITPCCSUB) &&
-            (tmp->type & ITLABEL)) {
-        ret_ins = tmp;
-        IMCC_debug(interp, DEBUG_OPT1, "check tail call %I \n", ins);
-    }
-    /*
-     * when a sub ends w/o any return sequence, the code
-     * null I0 / null I3 / invoke Px
-     * is already inserted, check for this sequence
-     */
-    else if (!strcmp(tmp->op, "null") &&
-            tmp->r[0]->set == 'I' &&
-            tmp->r[0]->color == 0) {
-        tmp = tmp->next;
-        if (!tmp)
-            return 0;
-
-        if (!strcmp(tmp->op, "null") &&
-                tmp->r[0]->set == 'I' &&
-                tmp->r[0]->color == 3) {
-            tmp = tmp->next;
-            if (!tmp)
-                return 0;
-        }
-        else
-            return 0;
-        if (strcmp(tmp->op, "returncc"))
-            return 0;
-        IMCC_debug(interp, DEBUG_OPT1, "check tail call %I \n", tmp);
-        nrets = 0;
-        goto ok;
-    }
-    else
-        return 0;
-    /*
-     * now check results vs returns
-     */
-    ret = ret_ins->r[0]->pcc_sub;
-    nrets = ret->nret;
-ok:
-
-    call = ins->r[0]->pcc_sub;
-    IMCC_debug(interp, DEBUG_OPT1, "\tcall call retvals %d retvals %d\n",
-            call->nret, nrets);
-    if (call->nret != nrets)
-        return 0;
-    for (matching = i = 0; i < call->nret; i++) {
-        SymReg *c, *r;
-        c = call->ret[i];
-        for (j = 0; j < nrets; j++) {
-            r = ret->ret[i];
-            if (!strcmp(c->name, r->name) &&
-                    c->set == r->set)
-                ++matching;
-        }
-    }
-    if (matching != call->nret)
-        return 0;
-    /*
-     * suppress code generation for return sequence
-     */
-    if (ret_ins)
-        ret_ins->type = 0;
-    return 1;
 }
 
 static void
@@ -413,8 +269,6 @@ insert_tail_call(Parrot_Interp interp, IMC_Unit * unit,
     sub->pcc_sub = NULL;
 }
 
-#endif
-
 /*
  * Expand a PCC subroutine call (IMC) into its PASM instructions
  * This is the nuts and bolts of pdd03 routine call style
@@ -433,13 +287,6 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
 
     sub = ins->r[0];
     tail_call = (sub->pcc_sub->flags & isTAIL_CALL);
-#ifdef CREATE_TAIL_CALLS
-    if (!tail_call) {
-        tail_call = check_tail_call(interp, unit, ins);
-        if (tail_call)
-            IMCC_debug(interp, DEBUG_OPT1, "found tail call %I \n", ins);
-    }
-#endif
 
     if (sub->pcc_sub->object)
         meth_call = 1;
@@ -477,11 +324,9 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         }
     }
 
-#ifdef OBJ_AS_PARAM
     if (sub->pcc_sub->object) {
         unshift_self(interp, sub, sub->pcc_sub->object);
     }
-#endif /* OBJ_AS_PARAM */
     /*
      * insert arguments
      */
