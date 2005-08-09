@@ -238,9 +238,6 @@ Get a header.
 
 */
 
-/*#if PARROT_GC_GMC
-static pmc_body * new_pmc_body(Parrot_Interp);
-#endif*/
 
 static PMC_EXT * new_pmc_ext(Parrot_Interp);
 
@@ -291,25 +288,52 @@ new_pmc_header(Interp *interpreter, UINTVAL flags)
 
 /* 
 
-=item C<void *
-new_pmc_body(Interp *interpreter)>
+=item C<PMC *
+new_pmc_typed_header(Interp *interpreter, UINTVAL flags, INTVAL base_type)>
 
-Allocates a pmc_body.
-Basically same as new_pmc_ext.
+Get a header for a pmc of type base_type.
 
 =cut
 
+*/
 
-static pmc_body *
-new_pmc_body(Interp *interpreter)
+PMC *
+new_pmc_typed_header(Interp *interpreter, UINTVAL flags, INTVAL base_type)
 {
-    struct Small_Object_Pool *pool = interpreter->arena_base->pmc_body_pool;
-    void *ptr;
+    struct Small_Object_Pool *pool;
+    PMC *pmc;
 
-    ptr = pool->get_free_object (interpreter, pool);
-    memset(ptr, 0, sizeof(pmc_body));
-    return ptr;
-}*/
+    pool = flags & PObj_constant_FLAG ?
+        interpreter->arena_base->constant_pmc_pool :
+        interpreter->arena_base->pmc_pool;
+#if ARENA_DOD_FLAGS
+    assert(sizeof(Dead_PObj) <= sizeof(PMC));
+#endif
+    pmc = pool->get_free_typed_object(interpreter, pool, base_type);
+    /* clear flags, set is_PMC_FLAG */
+    if (flags & PObj_is_PMC_EXT_FLAG) {
+#if ARENA_DOD_FLAGS
+        *((Dead_PObj*)pmc)->arena_dod_flag_ptr |=
+            (PObj_is_special_PMC_FLAG << ((Dead_PObj*)pmc)->flag_shift);
+#else
+        flags |= PObj_is_special_PMC_FLAG;
+#endif
+        pmc->pmc_ext = new_pmc_ext(interpreter);
+        if (flags & PObj_is_PMC_shared_FLAG) {
+            PMC_sync(pmc) = mem_internal_allocate(sizeof(*PMC_sync(pmc)));
+            PMC_sync(pmc)->owner = interpreter;
+            MUTEX_INIT(PMC_sync(pmc)->pmc_lock);
+        }
+    }
+    else
+        pmc->pmc_ext = NULL;
+    PObj_get_FLAGS(pmc) |= PObj_is_PMC_FLAG|flags;
+    pmc->vtable = NULL;
+#if ! PMC_DATA_IN_EXT
+    PMC_data(pmc) = NULL;
+#endif
+    return pmc;
+}
 
 #endif /* PARROT_GC_GMC */
 

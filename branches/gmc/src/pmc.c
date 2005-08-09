@@ -211,7 +211,11 @@ get_new_pmc_header(Interp *interpreter, INTVAL base_type,
             flags |= PObj_is_PMC_shared_FLAG;
     }
 
+#if PARROT_GC_GMC
+    pmc = new_pmc_typed_header(interpreter, flags, base_type);
+#else
     pmc = new_pmc_header(interpreter, flags);
+#endif
     if (!pmc) {
         internal_exception(ALLOCATION_ERROR,
                 "Parrot VM: PMC allocation failed!\n");

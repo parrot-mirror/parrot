@@ -39,6 +39,10 @@ struct Small_Object_Pool;
 
 typedef void (*add_free_object_fn_type)(Interp *,
                              struct Small_Object_Pool *, void *);
+#if PARROT_GC_GMC
+typedef void * (*get_free_typed_object_fn_type)(Interp *,
+                             struct Small_Object_Pool *, INTVAL);
+#endif
 typedef void * (*get_free_object_fn_type)(Interp *,
                              struct Small_Object_Pool *);
 typedef void  (*alloc_objects_fn_type)(Interp *,
@@ -230,6 +234,9 @@ struct Small_Object_Pool {
     UINTVAL align_1;    /* alignment (must be power of 2) minus one */
     /* adds a free object to the pool's free list  */
     add_free_object_fn_type     add_free_object;
+#if PARROT_GC_GMC
+    get_free_typed_object_fn_type get_free_typed_object;
+#endif
     get_free_object_fn_type     get_free_object;
     alloc_objects_fn_type       alloc_objects;
     alloc_objects_fn_type       more_objects;
