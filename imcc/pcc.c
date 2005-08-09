@@ -171,10 +171,14 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
 
 #ifdef OBJ_AS_PARAM
     /*
-     * if this sub references self, unshift it as first param
+     * if this sub isa method, unshift 'self' as first param
      */
-    if (unit->type & IMC_HAS_SELF) {
+    if (sub->pcc_sub->pragma & P_METHOD) {
         SymReg *self = get_sym("self");
+        if (!self) {
+            self = mk_symreg(interp, str_dup("self"), 'P');
+            self->type = VTIDENTIFIER;
+        }
         unshift_self(interp, sub, self);
     }
 

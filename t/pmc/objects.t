@@ -941,9 +941,7 @@ output_is(<<'CODE', <<'OUTPUT', "overridden vtables");
     end
 
 .pcc_sub set_i:
-.include "interpinfo.pasm"
-    get_params "(0)", I5
-    interpinfo P2, .INTERPINFO_CURRENT_OBJECT
+    get_params "(0,0)", P2, I5
     print "in set_integer\n"
     classoffset I0, P2, "Foo"
     new P6, .Integer
@@ -963,7 +961,7 @@ output_is(<<'CODE', <<'OUTPUT', "overridden vtables");
     set_returns "(0)", P7
     returncc
 .pcc_sub get_s:
-    interpinfo P2, .INTERPINFO_CURRENT_OBJECT
+    get_params "(0)", P2
     print "in get_string\n"
     classoffset I0, P2, "Foo"
     getattribute P10, P2, I0
@@ -1797,7 +1795,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "namespace vs name");
     print "ok 2\n"
 .end
 .namespace [ "Foo" ]
-.sub __get_string
+.sub __get_string method
     .return("ok 1\n")
 .end
 .sub Foo

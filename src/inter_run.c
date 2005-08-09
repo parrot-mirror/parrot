@@ -145,7 +145,8 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
     struct parrot_regs_t *bp;
     parrot_context_t old_ctx;
     int i;
-    INTVAL src_n;
+    char new_sig[10];
+    const char *sig_p;
 
     old_ctx = interpreter->ctx;
     interpreter->current_cont  = new_ret_continuation_pmc(interpreter, NULL);
@@ -153,10 +154,22 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
     dest = VTABLE_invoke(interpreter, sub, NULL);
     if (!dest)
         internal_exception(1, "Subroutine returned a NULL address");
-    src_n = strlen(sig) - 1;
-
-    if (src_n > 0) {
-        dest = parrot_pass_args_fromc(interpreter, sig + 1, src_n, dest,
+    if (PMC_IS_NULL(obj)) {
+        sig_p = sig + 1;
+    }
+    else if (sig[1] == 'O') {
+        sig_p = sig + 1;
+    }
+    else  {
+        size_t len = strlen(sig);
+        if (len > 8)
+            internal_exception(1, "too many arguments in runops_args");
+        new_sig[0] = 'O';
+        strcpy(new_sig + 1, sig + 1);
+        sig_p = new_sig;
+    }
+    if (*sig_p) {
+        dest = parrot_pass_args_fromc(interpreter, sig_p, 0, dest,
                 &old_ctx, ap);
     }
 

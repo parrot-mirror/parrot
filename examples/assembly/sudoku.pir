@@ -797,7 +797,7 @@ ret_0:
 .end
 
 # count seen in one
-.sub check_seen method
+.sub check_seen
     .param pmc seen
     .local pmc it
     new it, .Iterator, seen
@@ -1391,19 +1391,19 @@ out:
 
 .namespace ["Dummy"]
 
-.sub "print" @MULTI(int, int, string)
+.sub "print" @MULTI(_, int, int, string), method
     .param int r
     .param int c
     .param string s
     print s
 .end
 
-.sub "print" @MULTI(string)
+.sub "print" @MULTI(_, string), method
     .param string s
     print s
 .end
 
-.sub "print" @MULTI(int)
+.sub "print" @MULTI(_, int), method
     .param int s
     print s
 .end
@@ -1416,7 +1416,7 @@ out:
 # TODO remember last position, parse newlines to increment row
 # this should better be all in a new library
 
-.sub "print" @MULTI(int, int, string), method
+.sub "print" @MULTI(_, int, int, string), method
     .param int r
     .param int c
     .param string s
@@ -1427,7 +1427,7 @@ out:
     f(win, r, c, s)
 .end
 
-.sub "print" @MULTI(string), method
+.sub "print" @MULTI(_, string), method
     .param string s
     .local pmc win, f
 
@@ -1436,7 +1436,7 @@ out:
     f(win, s)
 .end
 
-.sub "print" @MULTI(int), method
+.sub "print" @MULTI(_, int), method
     .param int i
     .local string s
     .local pmc win, f

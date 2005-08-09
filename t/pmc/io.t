@@ -381,7 +381,7 @@ output_is(<<'CODE', <<'OUTPUT', 'puts method');
        if I0, ok1
        print "not "
 ok1:   print "ok 1\n"
-       set_args "(0)", "ok 2\n"
+       set_args "(0,0)", P2, "ok 2\n"
        callmethod "puts"
        end
 CODE
@@ -413,10 +413,10 @@ output_is(<<'CODE', <<'OUTPUT', 'callmethod puts');
        set S0, "puts"	# method
        set P5, P2	# first param
        set S5, "ok 1\n"	# 2nd param
-       set_args "(0)", S5
+       set_args "(0,0)", P2, S5
        callmethod
        set S5, "ok 2\n"
-       set_args "(0)", S5
+       set_args "(0,0)", P2, S5
        callmethod
        end
 CODE

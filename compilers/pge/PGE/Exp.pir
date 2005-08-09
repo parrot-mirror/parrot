@@ -236,7 +236,7 @@ Adds to the current code string, replacing %s by str1/str2.
 
 =cut
 
-.sub "emit" method
+.sub "emit"
     .param pmc code                                # append to code
     .param string fmt                              # string to output
     .param string str1         :optional           # first %s substitution

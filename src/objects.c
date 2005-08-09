@@ -558,8 +558,8 @@ do_initcall(Interp* interpreter, PMC* class, PMC *object, PMC *init)
             Parrot_run_meth_fromc_args(interpreter, meth,
                     object, meth_str, "vP", init);
         else
-            Parrot_run_meth_fromc(interpreter, meth,
-                    object, meth_str);
+            Parrot_run_meth_fromc_args(interpreter, meth,
+                    object, meth_str, "v");
     }
     /*
      * 2. if class has a BUILD property call it for all classes
@@ -612,8 +612,8 @@ do_initcall(Interp* interpreter, PMC* class, PMC *object, PMC *init)
                 Parrot_run_meth_fromc_args(interpreter, meth,
                         object, meth_str, "vP", init);
             else
-                Parrot_run_meth_fromc(interpreter, meth,
-                        object, meth_str);
+                Parrot_run_meth_fromc_args(interpreter, meth,
+                        object, meth_str, "v");
         }
         else if (meth_str != NULL &&
                 string_length(interpreter, meth_str) != 0 && !default_meth) {
