@@ -42,12 +42,20 @@ static void
 gc_gmc_insert_gen(Interp *interpreter, struct Small_Object_Pool *pool, Gc_gmc_gen *gen)
 {
     Gc_gmc_gen *cur_gen;
+    void *ptr;
 
     cur_gen = pool->gc->last;
+    if (cur_gen)
+	ptr = (void*)cur_gen->first;
+    else
+	ptr = NULL;
 
     /* Find the right place for the address malloc gave us. */
-    while ((UINTVAL)cur_gen->first > (UINTVAL)gen->first)
+    while ((UINTVAL)ptr > (UINTVAL)gen->first)
+    {
       cur_gen = cur_gen->prev;
+      ptr = cur_gen->first;
+    }
     
     /* Insert the generation. */
     if (cur_gen)
