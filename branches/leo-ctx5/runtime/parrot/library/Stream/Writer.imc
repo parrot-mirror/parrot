@@ -194,7 +194,7 @@ END_OF_STREAM:
     .param pmc writer
     .local pmc cont
     .local string str
-    
+
     cont = interpinfo .INTERPINFO_CURRENT_CONT
     self."setSource"( cont )
     str = writer()

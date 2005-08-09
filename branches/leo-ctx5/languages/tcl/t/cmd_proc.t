@@ -2,8 +2,19 @@
 
 use strict;
 use lib qw(tcl/t t . ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 4;
+use Parrot::Test tests => 5;
 use vars qw($SKIP $TODO);
+
+language_output_is("tcl",<<'TCL',<<OUT,"return value");
+ set a [proc me {} {
+  puts 2
+ }]
+ me
+ puts $a
+TCL
+2
+
+OUT
 
 language_output_is("tcl",<<'TCL',<<OUT,"noarg");
  proc me {} {

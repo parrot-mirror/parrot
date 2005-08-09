@@ -164,7 +164,7 @@ my %sig_char =
        b => "S",
        t => "S",
        P => "P",
-       O => "",	      # XXX pdd03 P
+       O => "P",
        S => "S",
        I => "I",
        N => "N",
@@ -199,7 +199,6 @@ while (<>) {
                                 \@extra_preamble, \@extra_postamble);
 	    $sig .= $sig_char{$_};
 	    $_ eq 'J' && $reg_num--;
-	    $_ eq 'O' && $reg_num--;
         }
     }
 
@@ -449,10 +448,7 @@ sub make_arg {
     /J/ && do {
 	return "interpreter";
     };
-    /O/ && do {
-	return "REG_PMC(2)";         # XXX
-    };
-    /P/ && do {
+    /[OP]/ && do {
 	push @{$temps_ref}, "PMC *t_$temp_num;";
 	push @{$extra_preamble_ref},
 	    "t_$temp_num = GET_NCI_P($reg_num);";

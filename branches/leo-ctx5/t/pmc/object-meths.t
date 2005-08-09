@@ -129,6 +129,7 @@ output_is(<<'CODE', <<'OUTPUT', "constructor");
     end
 .namespace ["Foo"]
 .pcc_sub __init:
+    get_params "(0)", P2
     print "ok 1\n"
     returncc
 CODE
@@ -193,17 +194,16 @@ output_is(<<'CODE', <<'OUTPUT', "constructor - init attr");
     end
 .namespace ["Foo"]
 .pcc_sub __init:
+    get_params "(0)", P2
     print "ok 1\n"
     new P10, .Integer
     set P10, 42
-.include "interpinfo.pasm"
-    interpinfo P2, .INTERPINFO_CURRENT_OBJECT
     classoffset I0, P2, "Foo"
     setattribute P2, I0, P10
     set_returns "()"
     returncc
 .pcc_sub __get_string:
-    interpinfo P2, .INTERPINFO_CURRENT_OBJECT
+    get_params "(0)", P2
     classoffset I0, P2, "Foo"
     getattribute P10, P2, I0
     set_returns "(0)", P10
@@ -229,9 +229,8 @@ output_is(<<'CODE', <<'OUTPUT', "constructor - parents");
 
     .namespace ["Foo"]
 .pcc_sub __init:
+    get_params "(0)", P2
     print "foo_init\n"
-.include "interpinfo.pasm"
-    interpinfo P2, .INTERPINFO_CURRENT_OBJECT
     classname S0, P2
     print S0
     print "\n"
@@ -239,16 +238,19 @@ output_is(<<'CODE', <<'OUTPUT', "constructor - parents");
 
     .namespace ["Bar"]
 .pcc_sub __init:
+    get_params "(0)", P2
     print "bar_init\n"
     returncc
 
     .namespace ["Baz"]
 .pcc_sub __init:
+    get_params "(0)", P2
     print "baz_init\n"
     returncc
 
     .namespace [""]	# main again
 .pcc_sub _sub:
+    get_params "(0)", P2
     print "in sub\n"
     returncc
 
@@ -599,26 +601,32 @@ _check_isa:
 
 .namespace ["A"]
 .pcc_sub __init:
+    get_params "(0)", P2
     print "A init\n"
     returncc
 .namespace ["B"]
 .pcc_sub __init:
+    get_params "(0)", P2
     print "B init\n"
     returncc
 .namespace ["C"]
 .pcc_sub __init:
+    get_params "(0)", P2
     print "C init\n"
     returncc
 .namespace ["D"]
 .pcc_sub __init:
+    get_params "(0)", P2
     print "D init\n"
     returncc
 .namespace ["E"]
 .pcc_sub __init:
+    get_params "(0)", P2
     print "E init\n"
     returncc
 .namespace ["F"]
 .pcc_sub __init:
+    get_params "(0)", P2
     print "F init\n"
     returncc
 CODE
@@ -667,9 +675,8 @@ output_is(<<'CODE', <<'OUTPUT', "constructor - parents BUILD");
 
     .namespace ["Foo"]
 .pcc_sub _new:
+    get_params "(0)", P2
     print "foo_init\n"
-.include "interpinfo.pasm"
-    interpinfo P2, .INTERPINFO_CURRENT_OBJECT
     classname S0, P2
     print S0
     print "\n"
@@ -677,11 +684,13 @@ output_is(<<'CODE', <<'OUTPUT', "constructor - parents BUILD");
 
     .namespace ["Bar"]
 .pcc_sub _new:
+    get_params "(0)", P2
     print "bar_init\n"
     returncc
 
     .namespace ["Baz"]
 .pcc_sub _new:
+    get_params "(0)", P2
     print "baz_init\n"
     returncc
 
@@ -772,7 +781,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "Bug in method calling with nonconst keys");
 
 .namespace ["Foo"]
 
-.sub __get_integer_keyed
+.sub __get_integer_keyed method
     .param pmc key
     print "Key = "
     print key
@@ -802,7 +811,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "Bug in method calling with nonconst keys - 
 
 .namespace ["Foo"]
 
-.sub __get_integer_keyed
+.sub __get_integer_keyed method
     .param pmc key
     $S0 = "bar"
     print "Key = "
@@ -831,11 +840,11 @@ pir_output_is(<<'CODE', <<'OUTPUT', "method cache invalidation");
     store_global "Bar", "__get_string", $P0
     print o
 .end
-.sub ok2
+.sub ok2 method
     .return("ok 2\n")
 .end
 .namespace [ "Foo" ]
-.sub __get_string
+.sub __get_string method
     .return("ok 1\n")
 .end
 CODE
@@ -867,6 +876,8 @@ meth
 back
 OUTPUT
 
+SKIP: {
+    skip("no bound NCI method", 1);
 pir_output_is(<<'CODE', <<'OUTPUT', "bound NCI method");
 .sub main @MAIN
     .local pmc s, l, f
@@ -883,6 +894,7 @@ CODE
 Bound_NCI
 abc
 OUTPUT
+}
 
 pir_output_is(<<'CODE', <<'OUTPUT', "tailcallmeth");
 .sub main @MAIN

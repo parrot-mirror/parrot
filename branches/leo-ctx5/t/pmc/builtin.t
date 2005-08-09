@@ -18,7 +18,7 @@ Tests builtin opcode-like methods.
 
 use Parrot::Test tests => 4;
 
-pir_output_is(<<'CODE', <<'OUT', "four ways to call a method");
+pir_output_is(<<'CODE', <<'OUT', "three ways to call a method");
 .sub main @MAIN
     .local pmc x, y, cl, m
     x = new Float
@@ -38,18 +38,11 @@ pir_output_is(<<'CODE', <<'OUT', "four ways to call a method");
     y = x."cos"()
     print y
     print "\n"
-    # bound object nethod
-    m = getattribute x, "cos"	# m = x.cos
-    print "bound obj met "
-    y = m()
-    print y
-    print "\n"
 .end
 CODE
 opcode        0.540302
 function      0.540302
 method        0.540302
-bound obj met 0.540302
 OUT
 
 SKIP: {
@@ -59,6 +52,12 @@ pir_output_is(<<'CODE', <<'OUT', "class methods");
     .local pmc x, y, cl, m
     x = new Float
     x = 1.0
+    # bound object nethod
+    m = getattribute x, "cos"	# m = x.cos
+    print "bound obj met "
+    y = m()
+    print y
+    print "\n"
     # same as class method
     cl = getclass "Float"
     print "class method  "
@@ -73,6 +72,7 @@ pir_output_is(<<'CODE', <<'OUT', "class methods");
     print "\n"
 .end
 CODE
+bound obj met 0.540302
 class method  0.540302
 bound class m 0.540302
 OUT

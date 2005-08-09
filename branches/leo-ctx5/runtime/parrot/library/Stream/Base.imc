@@ -44,7 +44,7 @@ END:
 
     # call our own close
     close = find_global "Stream::Base", "close"
-    close()
+    close(self)
 .end
 
 =item assign stream, source

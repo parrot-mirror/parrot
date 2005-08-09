@@ -243,8 +243,12 @@ fetch_arg_str_sig(Interp *interpreter, struct call_state *st)
 static int
 fetch_arg_pmc_sig(Interp *interpreter, struct call_state *st)
 {
-    va_list *ap = (va_list*)(st->src.u.sig.ap);
-    UVal_pmc(st->val) = va_arg(*ap, PMC*);
+    if (*st->src.u.sig.sig == 'O')
+        UVal_pmc(st->val) = CONTEXT(interpreter->ctx)->current_object;
+    else {
+        va_list *ap = (va_list*)(st->src.u.sig.ap);
+        UVal_pmc(st->val) = va_arg(*ap, PMC*);
+    }
     st->src.mode |= CALL_STATE_NEXT_ARG;
     return 1;
 }
@@ -270,6 +274,7 @@ next_arg(Interp *interpreter, struct call_state_1 *st)
                     st->sig = PARROT_ARG_FLOATVAL; break;
                 case 'S':
                     st->sig = PARROT_ARG_STRING; break;
+                case 'O':
                 case 'P':
                     st->sig = PARROT_ARG_PMC; break;
             }
