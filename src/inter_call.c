@@ -745,7 +745,7 @@ Prerequsits are like above.
 
 */
 opcode_t *
-parrot_pass_args_fromc(Interp *interpreter, const char *sig, INTVAL src_n,
+parrot_pass_args_fromc(Interp *interpreter, const char *sig,
         opcode_t *dest, parrot_context_t * old_ctxp, va_list ap)
 {
     int todo;
