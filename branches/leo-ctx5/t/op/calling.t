@@ -16,7 +16,7 @@ Tests Parrot calling conventions.
 
 =cut
 
-use Parrot::Test tests => 34;
+use Parrot::Test tests => 35;
 use Test::More;
 
 output_is(<<'CODE', <<'OUTPUT', "set_args - parsing");
@@ -953,4 +953,41 @@ ok2:
 CODE
 ok 1
 ok 2
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "OO argument passig");
+.sub main @MAIN
+    .local pmc cl, o, f
+    cl = newclass "Foo"
+    o = new "Foo"
+    o."bar"("ok 1\n")
+    f = find_global "Foo", "bar"
+    f(o, "ok 2\n")
+    o."baz"("ok 3\n")
+    f = find_global "Foo", "baz"
+    f(o, "ok 4\n")
+.end
+.namespace ["Foo"]
+.sub bar method
+    .param string s
+    print self
+    print " "
+    print s
+.end
+.sub baz
+    .param pmc self
+    .param string s
+    print self
+    print " "
+    print s
+.end
+.sub __get_string method
+    $S0 = typeof self
+    .return ($S0)
+.end
+CODE
+Foo ok 1
+Foo ok 2
+Foo ok 3
+Foo ok 4
 OUTPUT

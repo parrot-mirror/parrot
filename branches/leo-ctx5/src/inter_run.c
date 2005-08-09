@@ -169,7 +169,7 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
         sig_p = new_sig;
     }
     if (*sig_p) {
-        dest = parrot_pass_args_fromc(interpreter, sig_p, 0, dest,
+        dest = parrot_pass_args_fromc(interpreter, sig_p, dest,
                 &old_ctx, ap);
     }
 
