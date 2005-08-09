@@ -4,9 +4,21 @@
 
 
 static void gc_gmc_add_free_object(Interp*, struct Small_Object_Pool*, void*);
+static void *gc_gmc_get_free_typed_object(Interp*, struct Small_Object_Pool*, INTVAL);
 static void *gc_gmc_get_free_object(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_alloc_objects(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_more_objects(Interp*, struct Small_Object_Pool*);
+
+
+/* Determines the size of a PMC according to its base_type. */
+UINTVAL
+gc_gmc_get_PMC_size(Interp *interpreter, INTVAL base_type)
+{
+    VTABLE *vtable = Parrot_base_vtables[base_type];
+    if (!vtable)
+	return (UINTVAL)0;
+    return vtable->size(interpreter, NULL);
+}
 
 
 /* Allocates and initializes a generation, but does not plug it to the pool yet. */
@@ -87,6 +99,7 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     
     pool->add_free_object = gc_gmc_add_free_object;
     pool->get_free_object = gc_gmc_get_free_object;
+    pool->get_free_typed_object = gc_gmc_get_free_typed_object;
     pool->alloc_objects   = gc_gmc_alloc_objects;
     pool->more_objects    = gc_gmc_more_objects;
 
@@ -144,6 +157,14 @@ gc_gmc_get_free_object(Interp *interpreter,
     return NULL;
 }
 
+
+void *
+gc_gmc_get_free_typed_object(Interp *interpreter,
+	struct Small_Object_Pool *pool, INTVAL base_type)
+{
+    return NULL;
+}
+
 void 
 gc_gmc_add_free_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, void *to_add)
@@ -195,6 +216,14 @@ gc_gmc_real_get_free_object(Interp *interpreter,
   
   return ptr;
 }
+
+void
+gc_gmc_real_add_free_object(Interp *interpreter,
+	struct Small_Object_Pool *pool, void *to_add)
+{
+    Gc_gmc *gc = pool->gc;
+}
+
 
 
 #endif /* PARROT_GC_GMC */
