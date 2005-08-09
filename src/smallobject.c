@@ -489,30 +489,6 @@ void* gc_gmc_get_free_object(Interp*, struct Small_Object_Pool*);
 /* Workaround before the corresponding gmc functions are implemented.
  * TODO: get our real functions ! */
 
-void gc_gmc_deinit(Interp*);
-void gc_gmc_run(Interp*, int);
-
-static void
-gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
-{
-    pool->add_free_object = gc_ms_add_free_object;
-    pool->get_free_object = gc_ms_get_free_object;
-    pool->alloc_objects   = gc_ms_alloc_objects;
-    pool->more_objects = more_traceable_objects;
-}
-
-
-void Parrot_gc_gmc_init(Interp *interpreter)
-{
-  struct Arenas *arena_base;
-
-  arena_base = interpreter->arena_base;
-  arena_base->do_dod_run = gc_gmc_run;
-  arena_base->de_init_gc_system = gc_gmc_deinit;
-
-  arena_base->init_pool = gc_gmc_pool_init;
-}
-
 #endif
 
 /*

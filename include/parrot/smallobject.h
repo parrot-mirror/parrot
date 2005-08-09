@@ -105,10 +105,10 @@ typedef struct _gc_gms_gen {
 /* Arbitrary values, tune them later. */
 
 /* Size of a generation. */
-#define GMC_GEN_SIZE (128*32);
+#define GMC_GEN_SIZE (128*32)
 
 /* Number of generations at init time. */
-#define GMC_GEN_INIT_NUMBER 16;
+#define GMC_GEN_INIT_NUMBER 16
 
 
 /* This header is appended to all gc objects. */
@@ -180,8 +180,8 @@ typedef struct _gc_gmc_hdr_store {
 
 
 typedef struct _gc_gmc_hdr_list {
-  struct gc_gmc_hdr_store *first;
-  struct gc_gmc_hdr_store *last;
+  Gc_gmc_hdr_store *first;
+  Gc_gmc_hdr_store *last;
 } Gc_gmc_hdr_list;
 
 
