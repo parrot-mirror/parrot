@@ -2,7 +2,7 @@
 
 use strict;
 use lib qw(tcl/t t . ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 18;
+use Parrot::Test tests => 25;
 use vars qw($TODO);
 
 language_output_is("tcl",<<'TCL',<<OUT,"array, no args");
@@ -135,3 +135,53 @@ language_output_is("tcl",<<'TCL',<<'OUT',"array set return value");
 TCL
 
 OUT
+
+language_output_is("tcl",<<'TCL',<<'OUT',"array set not array");
+  set a 44
+  array set a {1 2 3 4}
+TCL
+can't set "a(1)": variable isn't array
+OUT
+
+TODO: {
+ local $TODO = "unimplemented";
+
+language_output_is("tcl",<<'TCL',<<'OUT',"array get");
+  array set a [list a b]
+  puts [array get a]
+TCL
+a b
+OUT
+
+language_output_is("tcl",<<'TCL',<<'OUT',"array get, with pattern");
+  array set a [list a b c d]
+  puts [array get a a]
+TCL
+a b
+OUT
+
+language_output_is("tcl",<<'TCL',<<'OUT',"array get, with pattern");
+  array set a [list apple 1 orange 2 aardvark 3]
+  puts [array get a a*]
+TCL
+apple 1 aardvark 3
+OUT
+
+language_output_is("tcl",<<'TCL',<<'OUT',"array get, bad array");
+  puts [array get a]
+TCL
+
+OUT
+
+language_output_is("tcl",<<'TCL',<<'OUT',"array get, bad array with pattern");
+  puts [array get a a]
+TCL
+
+OUT
+
+language_output_is("tcl",<<'TCL',<<'OUT',"array get, too many args");
+  array get a b c
+TCL
+wrong # args: should be "array get arrayName ?pattern?"
+OUT
+}
