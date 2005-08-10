@@ -11,13 +11,13 @@ static void gc_gmc_more_objects(Interp*, struct Small_Object_Pool*);
 
 
 /* Determines the size of a PMC according to its base_type. */
-UINTVAL
+size_t
 gc_gmc_get_PMC_size(Interp *interpreter, INTVAL base_type)
 {
     VTABLE *vtable = Parrot_base_vtables[base_type];
     if (!vtable)
 	return (UINTVAL)0;
-    return vtable->size(interpreter, NULL);
+    return vtable->size;
 }
 
 
