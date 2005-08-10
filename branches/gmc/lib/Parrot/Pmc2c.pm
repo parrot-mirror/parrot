@@ -845,6 +845,7 @@ Parrot_${classname}_class_init(Parrot_Interp interp, int entry, int pass)
         $enum_name,	/* base_type */
         NULL,	/* whoami */
         $vtbl_flag, /* flags */
+	0,	/* size */
         NULL,   /* does_str */
         NULL,   /* isa_str */
         NULL,   /* class */

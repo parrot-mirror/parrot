@@ -140,6 +140,7 @@ struct _vtable {
     INTVAL base_type;        /* 'type' value for MMD */
     STRING* whoami;          /* Name of class this vtable is for */
     UINTVAL flags;           /* Flags. Duh */
+    size_t size;	     /* Size of the pmc_body. */
     STRING* does_str;	     /* space separated list of interfaces */
     STRING* isa_str;	     /* space separated list of classes */
     PMC *class;              /* for PMCs: a PMC of that type
@@ -217,6 +218,7 @@ static const char * const Parrot_vtable_slot_names[] = {
     "",     /* 'type' value for MMD */
     "",     /* Name of class this vtable is for */
     "",     /* Flags. Duh */
+    "",	    /* Size of the pmc_body. */
     "",	    /* space separated list of interfaces */
     "",	    /* space separated list of classes */
     "",     /* class */
