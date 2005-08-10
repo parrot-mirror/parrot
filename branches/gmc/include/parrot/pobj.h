@@ -98,12 +98,13 @@ typedef Buffer PObj;
 #define PObj_bufstart(pmc)    (pmc)->obj.u._b._bufstart
 #define PObj_buflen(pmc)      (pmc)->obj.u._b._buflen
 #define PMC_body(pmc)         (pmc)->body
-#define PMC_struct_val(pmc)   (pmc)->body->_ptrs._struct_val
-#define PMC_pmc_val(pmc)      (pmc)->body->_ptrs._pmc_val
-#define PMC_int_val(pmc)      (pmc)->body->_i._int_val
-#define PMC_int_val2(pmc)     (pmc)->body->_i._int_val2
-#define PMC_num_val(pmc)      (pmc)->body->_num_val
-#define PMC_str_val(pmc)      (pmc)->body->_string_val
+#define PMC_struct_val(pmc)   LVALUE_CAST(DPOINTER*,PMC_body(pmc))
+#define PMC_pmc_val(pmc)      LVALUE_CAST(PMC*,PMC_body(pmc))
+#define PMC_int_val(pmc)      LVALUE_CAST(INTVAL,PMC_body(pmc))
+/* TODO: real int_val2 */
+#define PMC_int_val2(pmc)     LVALUE_CAST(INTVAL,PMC_body(pmc))
+#define PMC_num_val(pmc)      LVALUE_CAST(FLOATVAL,PMC_body(pmc))
+#define PMC_str_val(pmc)      LVALUE_CAST(struct parrot_string_t *,PMC_body(pmc))
 
 #else
 
@@ -163,7 +164,8 @@ struct parrot_string_t {
 
 /* TODO: Change to a real pmc_body type. */
 #if PARROT_GC_GMC
-typedef UnionVal pmc_body;
+/* typedef UnionVal pmc_body;*/
+typedef void pmc_body;
 
 /* Hack for the get_FLAGS macro to be happy. */
 typedef struct flags_holder {
