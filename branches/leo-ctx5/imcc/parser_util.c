@@ -296,6 +296,7 @@ maybe_builtin(Interp *interpreter, IMC_Unit *unit, char *name,
         sub = ins->r[0];
         IMCC_itcall_sub(interpreter, meth);
         sub->pcc_sub->object = ns_sym;
+
         first_arg = 1;
     }
     else {    /* method y = x."cos"() */
