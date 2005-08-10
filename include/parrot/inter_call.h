@@ -61,8 +61,8 @@ int Parrot_init_arg_op(Interp *, struct PackFile_ByteCode *seg,
         struct parrot_regs_t *regs,
         opcode_t *pc, struct call_state_1 *st);
 
-int Parrot_init_arg_nci(Interp *, const char *sig, struct call_state *st);
-int Parrot_init_ret_nci(Interp *, const char *sig, struct call_state *st);
+int Parrot_init_arg_nci(Interp *, struct call_state *st, const char *sig);
+int Parrot_init_ret_nci(Interp *, struct call_state *st, const char *sig);
 
 int Parrot_fetch_arg(Interp *, struct call_state *st);
 int Parrot_fetch_arg_nci(Interp *, struct call_state *st);
