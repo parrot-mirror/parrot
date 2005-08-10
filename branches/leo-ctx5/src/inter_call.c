@@ -55,8 +55,8 @@ These functions return 0, if no arguments are present, or 1 on success.
 static int next_arg(Interp *, struct call_state_1 *st);
 
 int
-Parrot_init_arg_nci(Interp *interpreter, const char *sig,
-        struct call_state *st)
+Parrot_init_arg_nci(Interp *interpreter, struct call_state *st,
+        const char *sig)
 {
     Parrot_init_arg_op(interpreter, interpreter->code, interpreter->ctx.bp,
             interpreter->current_args, &st->src);
@@ -66,8 +66,8 @@ Parrot_init_arg_nci(Interp *interpreter, const char *sig,
 }
 
 int
-Parrot_init_ret_nci(Interp *interpreter, const char *sig,
-        struct call_state *st)
+Parrot_init_ret_nci(Interp *interpreter, struct call_state *st,
+        const char *sig)
 {
     /* TODO simplify all */
     Parrot_init_arg_sig(interpreter, interpreter->code, interpreter->ctx.bp,

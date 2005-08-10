@@ -306,7 +306,7 @@ get_nci_P(Interp *interpreter, struct call_state *st, int n)
 static void
 set_nci_I(Interp *interpreter, struct call_state *st, INTVAL val)
 {
-    Parrot_init_ret_nci(interpreter, "I", st);
+    Parrot_init_ret_nci(interpreter, st, "I");
     UVal_int(st->val) = val;
     Parrot_convert_arg(interpreter, st);
     Parrot_store_arg(interpreter, st);
@@ -315,7 +315,7 @@ set_nci_I(Interp *interpreter, struct call_state *st, INTVAL val)
 static void
 set_nci_N(Interp *interpreter, struct call_state *st, FLOATVAL val)
 {
-    Parrot_init_ret_nci(interpreter, "N", st);
+    Parrot_init_ret_nci(interpreter, st, "N");
     UVal_num(st->val) = val;
     Parrot_convert_arg(interpreter, st);
     Parrot_store_arg(interpreter, st);
@@ -324,7 +324,7 @@ set_nci_N(Interp *interpreter, struct call_state *st, FLOATVAL val)
 static void
 set_nci_S(Interp *interpreter, struct call_state *st, STRING *val)
 {
-    Parrot_init_ret_nci(interpreter, "S", st);
+    Parrot_init_ret_nci(interpreter, st, "S");
     UVal_str(st->val) = val;
     Parrot_convert_arg(interpreter, st);
     Parrot_store_arg(interpreter, st);
@@ -333,7 +333,7 @@ set_nci_S(Interp *interpreter, struct call_state *st, STRING *val)
 static void
 set_nci_P(Interp *interpreter, struct call_state *st, PMC* val)
 {
-    Parrot_init_ret_nci(interpreter, "P", st);
+    Parrot_init_ret_nci(interpreter, st, "P");
     UVal_pmc(st->val) = val;
     Parrot_convert_arg(interpreter, st);
     Parrot_store_arg(interpreter, st);
@@ -508,7 +508,7 @@ pcf_${return}_$params(Interp *interpreter, PMC *self)
     $return_data
     $temp_decl
     $other_decl
-    Parrot_init_arg_nci(interpreter, \"$sig\", &st);
+    Parrot_init_arg_nci(interpreter, &st, \"$sig\");
     $extra_preamble
 
     pointer =  (func_t)D2FPTR(PMC_struct_val(self));
