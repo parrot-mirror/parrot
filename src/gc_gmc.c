@@ -34,7 +34,7 @@ gc_gmc_gen_init(Interp *interpreter)
     
     /* And fill the blanks. */
     gen->fst_free = gen->first;
-    gen->last = NULL;
+    gen->remaining = GMC_GEN_SIZE;
 
     /* We have an IGP basis : only one store. */
     IGP_store = mem_sys_allocate(sizeof(Gc_gmc_hdr_store));
@@ -56,7 +56,7 @@ gc_gmc_insert_gen(Interp *interpreter, struct Small_Object_Pool *pool, Gc_gmc_ge
     Gc_gmc_gen *cur_gen;
     void *ptr;
 
-    cur_gen = pool->gc->last;
+    cur_gen = pool->gc->old_lst;
     if (cur_gen)
 	ptr = (void*)cur_gen->first;
     else
@@ -80,14 +80,15 @@ gc_gmc_insert_gen(Interp *interpreter, struct Small_Object_Pool *pool, Gc_gmc_ge
       gen->next = cur_gen->next;
     } else {
       gen->next = NULL;
-      pool->gc->first = gen;
-      pool->gc->last = gen;
+      pool->gc->yng_fst = gen;
+      pool->gc->old_lst = gen;
     }
     gen->prev = cur_gen;
-    if (pool->gc->last == cur_gen)
-      pool->gc->last = gen;
+    if (pool->gc->old_lst == cur_gen)
+      pool->gc->old_lst = gen;
 }
 
+static void gc_gmc_pool_deinit(Interp *, struct Small_Object_Pool *);
 
 static void 
 gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool) 
@@ -108,10 +109,10 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     gc->nb_gen = GMC_GEN_INIT_NUMBER;
     gc->nb_empty_gen = GMC_GEN_INIT_NUMBER;
     gc->alloc_obj = 0;
-    gc->first = NULL;
-    gc->fst_free = NULL;
-    gc->lst_free = NULL;
-    gc->last = NULL;
+    gc->yng_fst = NULL;
+    gc->yng_lst = NULL;
+    gc->old_fst = NULL;
+    gc->old_lst = NULL;
     gc->timely = gc_gmc_gen_init(interpreter);
     gc->constant = gc_gmc_gen_init(interpreter);
     pool->gc = gc;
@@ -121,11 +122,51 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
 	gen = gc_gmc_gen_init(interpreter);
 	gc_gmc_insert_gen(interpreter, pool, gen);
     }
+
+    /* Separate the generations in two halves : one is young (= aggregate
+     * objects), the other is old (non-aggregate objects). */
+    for (i = 0, gen = gc->yng_fst; i < (GMC_GEN_INIT_NUMBER/2); i++, gen = gen->next);
+    gc->old_fst = gen;
+    gc->old_lst = gen;
+    /* Now cut the bridges between these two parts. */
+    gen->prev->next = NULL;
+    gen->prev = NULL;
+    gc->yng_lst = gc->yng_fst;
+}
+
+static void
+gc_gmc_pool_deinit(Interp *interpreter, struct Small_Object_Pool *pool)
+{
+    Gc_gmc *gc;
+    Gc_gmc_gen *gen;
+    Gc_gmc_hdr_store *store, *st2;
+    
+    gc = pool->gc;
+    for (gen = gc->yng_fst; gen; gen = gen->next)
+    {
+	if (gen->prev)
+	    mem_sys_free(gen->prev);
+	mem_sys_free(gen->first);
+	for (store = gen->IGP->first; store; st2 = store->next,mem_sys_free(store),
+		store = st2);
+    }
+
+    for (gen = gc->old_fst; gen; gen = gen->next)
+    {
+	if (gen->prev)
+	    mem_sys_free(gen->prev);
+	mem_sys_free(gen->first);
+	for (store = gen->IGP->first; store; st2 = store->next,mem_sys_free(store),
+		store = st2);
+    }
 }
 
 
 void gc_gmc_deinit(Interp *interpreter)
 {
+    struct Arenas *arena_base = interpreter->arena_base;
+    
+    gc_gmc_pool_deinit(interpreter, arena_base->pmc_pool);
 
 }
 
@@ -151,7 +192,7 @@ void Parrot_gc_gmc_init(Interp *interpreter)
 /******************************* FAKE THINGS ********************************/
 
 void *
-gc_gmc_get_free_object(Interp *interpreter,
+gc_gmc_fake_get_free_object(Interp *interpreter,
 	struct Small_Object_Pool *pool)
 {
     return NULL;
@@ -200,20 +241,33 @@ gc_gmc_more_objects(Interp *interpreter,
 
 
 /* The real thing, but not plugged yet */
+/* Here we allocate a PMC with NULL pmc_body, as it is non-typed. */
+/* This function should not be called anywhere if possible. */
 void *
-gc_gmc_real_get_free_object(Interp *interpreter,
+gc_gmc_get_free_object(Interp *interpreter,
     struct Small_Object_Pool *pool)
 {
   void *ptr;
   Gc_gmc *gc = pool->gc;
 
-  /* Is this the real test we want ? */
-  if (gc->fst_free == gc->lst_free)
+  /* This is a non-aggregate object. */
+  Gc_gmc_gen *gen = gc->old_lst;
+  size_t size = sizeof(Gc_gmc_hdr);
+
+  /* Should we use the next generation ? */
+  if (size > gen->remaining)
+      gen = gen->next;
+
+  /* Do we need more generations ? */
+  if (!gen)
     (*pool->more_objects) (interpreter, pool);
 
-  /* TODO: find a way to know if we want an aggregate allocation or not.
-   * For now, let's say that everything is non-aggregate. */
-  
+  gc->old_lst = gen;
+
+  ptr = gen->fst_free;
+  gen->fst_free = (INTVAL)ptr + size;
+  gen->remaining -= size;
+
   return ptr;
 }
 
@@ -221,8 +275,17 @@ void
 gc_gmc_real_add_free_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, void *to_add)
 {
-    Gc_gmc *gc = pool->gc;
+   Gmc_PMC_flag_SET(marking,(PMC*)to_add); 
 }
+
+
+void *
+gc_gmc_real_get_free_typed_object(Interp *interpreter,
+	struct Small_Object_Pool *pool, INTVAL base_type)
+{
+    return NULL;
+}
+
 
 
 

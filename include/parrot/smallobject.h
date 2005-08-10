@@ -126,7 +126,7 @@ typedef struct _gc_gmc_hdr {
  * smallobject.h ? pobj.h ? gc_gmc.h ? */
 typedef enum gmc_flags {
     /* Private GC flags, for internal use. */
-    Gmc_private_0_FLAG = 1 << 0,
+    Gmc_marking_FLAG = 1 << 0,
     Gmc_private_1_FLAG = 1 << 1,
     Gmc_private_2_FLAG = 1 << 2,
     Gmc_private_3_FLAG = 1 << 3,
@@ -166,7 +166,7 @@ typedef enum gmc_flags {
 #define Gmc_PMC_body_flag_CLEAR(flag, pmc_body)	    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_body_get_hdr(pmc_body))
 
 /* Macros for access from PMC*. */
-#define Gmc_PMC_get_HDR(pmc)			    Gmc_PMC_body_get_hdr(PMC_body(pmc))
+#define Gmc_PMC_get_HDR(pmc)			    Gmc_PMC_body_get_HDR(PMC_body(pmc))
 #define Gmc_PMC_get_FLAGS(pmc)			    Gmc_PMC_hdr_get_FLAGS(Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_flag_TEST(flag, pmc)		    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_flag_SET(flag, pmc)		    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_get_HDR(pmc))
@@ -193,9 +193,9 @@ typedef struct _gc_gmc_hdr_list {
 typedef struct _gc_gmc_gen {
   struct _gc_gmc_gen *next;  /* Next generation in the linked list. */
   struct _gc_gmc_gen *prev;  /* Previous generation. */
-  Gc_gmc_hdr *first;         /* Array of objects. */
-  Gc_gmc_hdr *fst_free;      /* First free place. */
-  Gc_gmc_hdr *last;          /* Last allocated object */
+  void *first;         /* Array of objects. */
+  void *fst_free;      /* First free place. */
+  size_t remaining;          /* Remaining size. */
   Gc_gmc_hdr_list *IGP;      /* Inter Generational pointers set. */
 } Gc_gmc_gen;
 
@@ -205,10 +205,10 @@ typedef struct _gc_gmc {
   UINTVAL nb_gen;       /* Total number of generations. */
   UINTVAL nb_empty_gen; /* Number of empty generations. */
   UINTVAL alloc_obj;    /* Number of allocated objects. */
-  Gc_gmc_gen *first;    /* First generation (aggregate, young objects). */
-  Gc_gmc_gen *fst_free; /* End of aggregate objects. */
-  Gc_gmc_gen *lst_free; /* Beginning of non-aggregate, old objects. */
-  Gc_gmc_gen *last;     /* Very last generation. */
+  Gc_gmc_gen *yng_fst;  /* First generation (aggregate, young objects). */
+  Gc_gmc_gen *yng_lst;  /* End of aggregate objects. */
+  Gc_gmc_gen *old_fst;  /* Beginning of non-aggregate, old objects. */
+  Gc_gmc_gen *old_lst;  /* Very last generation. */
   Gc_gmc_gen *timely;   /* Objects needing timely destruction. */
   Gc_gmc_gen *constant; /* Objects that will never be collected. */
 } Gc_gmc;
