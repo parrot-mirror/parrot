@@ -288,8 +288,20 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     sub = ins->r[0];
     tail_call = (sub->pcc_sub->flags & isTAIL_CALL);
 
-    if (sub->pcc_sub->object)
+    if (sub->pcc_sub->object) {
         meth_call = 1;
+        /* set P2, obj */
+        if (sub->pcc_sub->object->color != 2) {
+            regs[0] = get_pasm_reg(interp, "P2");
+            regs[1] = sub->pcc_sub->object;
+            if (regs[1]->set == 'S') {
+                ins = insINS(interp, unit, ins, "getclass", regs, 2);
+                sub->pcc_sub->object = regs[0];
+            }
+            else
+                ins = insINS(interp, unit, ins, "set", regs, 2);
+        }
+    }
 
     /*
      * See if we need to create a temporary sub object for the short
@@ -364,15 +376,6 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
                 s0 = mk_const(interp, str_dup(arg->name), 'S');
         }
 
-        /* set P2, obj */
-        if (sub->pcc_sub->object->color != 2) {
-            regs[0] = get_pasm_reg(interp, "P2");
-            regs[1] = sub->pcc_sub->object;
-            if (regs[1]->set == 'S')
-                ins = insINS(interp, unit, ins, "getclass", regs, 2);
-            else
-                ins = insINS(interp, unit, ins, "set", regs, 2);
-        }
     }
 
     /*
