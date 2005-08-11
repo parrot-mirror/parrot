@@ -22,7 +22,7 @@ use Test::More;
 output_like(<<'CODE', <<'OUTPUT', "callmethod - unknown method");
     newclass P2, "Foo"
     set S0, "nada"
-    callmethod
+    callmethodcc P2, S0
     print "nope\n"
     end
 CODE
@@ -32,7 +32,7 @@ OUTPUT
 output_like(<<'CODE', <<'OUTPUT', "callmethod (STR) - unknown method");
     newclass P2, "Foo"
     set S1, "nada"
-    callmethod S1
+    callmethod P2, S1, P1
     print "nope\n"
     end
 CODE
@@ -42,7 +42,7 @@ OUTPUT
 output_like(<<'CODE', <<'OUTPUT', "callmethodcc - unknown method");
     newclass P2, "Foo"
     set S0, "nada"
-    callmethodcc
+    callmethodcc P2, S0
     print "nope\n"
     end
 CODE
@@ -52,7 +52,7 @@ OUTPUT
 output_like(<<'CODE', <<'OUTPUT', "callmethodcc (STR) - unknown method");
     newclass P2, "Foo"
     set S1, "nada"
-    callmethodcc S1
+    callmethodcc P2, S1
     print "nope\n"
     end
 CODE
@@ -64,7 +64,7 @@ output_is(<<'CODE', <<'OUTPUT', "callmethod 1");
     set S0, "meth"
 
     print "main\n"
-    callmethodcc
+    callmethodcc P2, S0
     print "back\n"
     end
 
@@ -459,8 +459,7 @@ eh:
     print "in __init\n"
 
     # raise an exception
-    set S0, "qux"
-    callmethodcc
+    callmethodcc self, "qux"
 
     print "never\n"
     returncc
@@ -479,13 +478,11 @@ output_is(<<'CODE', <<'OUTPUT', "fetchmethod");
     set S0, "meth"
     fetchmethod P0, P2, S0
     print "main\n"
-    # P2, S0 are as in callmethod
-    invokecc P0
+    callmethodcc P2, P0
     print "back\n"
     # check class
     fetchmethod P0, P3, S0
-    set P2, P3
-    invokecc P0
+    callmethodcc P3, P0
     print "back\n"
     end
 
@@ -857,7 +854,7 @@ output_is(<<'CODE', <<'OUTPUT', "callmethod - method name");
     set S0, "meth"
 
     print "main\n"
-    callmethodcc
+    callmethodcc P2, S0
     print "back\n"
     end
 
@@ -917,9 +914,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "tailcallmeth");
     n = getattribute self, "Foo\0n"
     dec n
     unless n goto done
-    # XXX this is ugly
-    P2 = self
-    tailcallmethod "go"
+    tailcallmethod self, "go"
 done:
 .end
 CODE

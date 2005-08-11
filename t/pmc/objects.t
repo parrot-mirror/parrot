@@ -685,51 +685,49 @@ output_is(<<'CODE', <<'OUTPUT', "attribute values, subclassing access meths ");
     new P13, I1
 
     # Foo and Bar have attribute accessor methods
-    set S0, "Foo::set"		# the meth   s. pdd03
-    set P2, P13			# the object s. pdd03
     new P5, .String		# set attribute values
     set P5, "i\n"		# attribute slots have reference semantics
     set_args "(0,0)", P5, 0
     get_results "()"
-    callmethodcc "Foo::set"
+    callmethodcc P13, "Foo::set"
 
     new P5, .String
     set P5, "j\n"
     set_args "(0,0)", P5, 1
     get_results "()"
-    callmethodcc "Foo::set"
+    callmethodcc  P13,"Foo::set"
 
     new P5, .String
     set P5, "k\n"
     set_args "(0,0)", P5, 0
     get_results "()"
-    callmethodcc "Bar::set"
+    callmethodcc  P13,"Bar::set"
 
     new P5, .String
     set P5, "l\n"
     set_args "(0,0)", P5, 1
     get_results "()"
-    callmethodcc "Bar::set"
+    callmethodcc  P13,"Bar::set"
 
     # now retrieve attributes
     set_args "(0)",  0
     get_results "(0)", P5
-    callmethodcc "Foo::get"
+    callmethodcc  P13,"Foo::get"
     print P5			# return result
 
     set_args "(0)",  1
     get_results "(0)", P5
-    callmethodcc "Foo::get"
+    callmethodcc  P13,"Foo::get"
     print P5
 
     set_args "(0)",  0
     get_results "(0)", P5
-    callmethodcc "Bar::get"
+    callmethodcc  P13,"Bar::get"
     print P5			# return result
 
     set_args "(0)",  1
     get_results "(0)", P5
-    callmethodcc "Bar::get"
+    callmethodcc  P13,"Bar::get"
     print P5
     end
 
@@ -821,57 +819,57 @@ output_is(<<'CODE', <<'OUTPUT', "attribute values, inherited access meths");
     set P5, "i\n"		# attribute slots have reference semantics
     set_args "(0,0,0)", P5, "Foo", 0
     get_results "()"
-    callmethodcc "set"
+    callmethodcc P2, "set"
 
     new P5, .String
     set P5, "j\n"
     set_args "(0,0,0)", P5, "Foo", 1
     get_results "()"
-    callmethodcc "set"
+    callmethodcc P2, "set"
 
     new P5, .String
     set P5, "k\n"
     set_args "(0,0,0)", P5, "Bar", 0
     get_results "()"
-    callmethodcc "set"
+    callmethodcc P2, "set"
 
     new P5, .String
     set P5, "l\n"
     set_args "(0,0,0)", P5, "Bar", 1
     get_results "()"
-    callmethodcc "set"
+    callmethodcc P2, "set"
 
     new P5, .String
     set P5, "m\n"
     set_args "(0,0,0)", P5, "Bar", 2
     get_results "()"
-    callmethodcc "set"
+    callmethodcc P2, "set"
 
     # now retrieve attributes
     set_args "(0,0)", "Foo", 0
     get_results "(0)", P5
-    callmethodcc "get"
+    callmethodcc P2, "get"
     print P5			# return result
 
     set_args "(0,0)", "Foo", 1
     get_results "(0)", P5
-    callmethodcc "get"
+    callmethodcc P2, "get"
     print P5
 
 
     set_args "(0,0)", "Bar", 0
     get_results "(0)", P5
-    callmethodcc "get"
+    callmethodcc P2, "get"
     print P5
 
     set_args "(0,0)", "Bar", 1
     get_results "(0)", P5
-    callmethodcc "get"
+    callmethodcc P2, "get"
     print P5
 
     set_args "(0,0)", "Bar", 2
     get_results "(0)", P5
-    callmethodcc "get"
+    callmethodcc P2, "get"
     print P5
     end
 
