@@ -126,7 +126,7 @@ pir_output_is(<<'CODE', <<'OUT', "initializer");
     find_type I1, "Baz"
     new P3, I1
     find_global P0, "_sub"
-    invokecc
+    invokecc P0
     print "done\n"
     end
 .end

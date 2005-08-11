@@ -30,7 +30,7 @@ END {
 output_is(<<'CODE', <<'OUTPUT', "PASM subs - newsub");
     print "main\n"
     newsub .Sub, .RetContinuation, _func, _ret
-    invoke
+    invoke P0, P1
 _ret:
     print "back\n"
     end
@@ -46,7 +46,7 @@ OUTPUT
 output_is(<<'CODE', <<'OUTPUT', "PASM subs - newsub 2");
     print "main\n"
     newsub P0, .Sub, _func
-    invokecc
+    invokecc P0
     print "back\n"
     end
 _func:
@@ -80,7 +80,7 @@ func:
 .include "interpinfo.pasm"
     interpinfo P0, .INTERPINFO_CURRENT_SUB
     set_args "(0)", I5
-    invokecc   # recursive invoke
+    invokecc P0  # recursive invoke
 
 endfunc:
     returncc
@@ -108,7 +108,7 @@ endcont:
     store_global "foo", P4
     print "going to cont\n"
     clone P0, P1
-    invoke
+    invokecc P0
 done:
     print "done\n"
     end
@@ -163,25 +163,25 @@ main:
 
     set_args "(0)", P5
     get_results "(0)", P0
-    invokecc
+    invokecc P0
 
     new P5, .Integer
     set P5, 3
     set_args "(0)", P5
     get_results "(0)", P2
-    invokecc
+    invokecc P0
     print P2
     print "\n"
 
     set_args "(0)", P5
     get_results "(0)", P2
-    invokecc
+    invokecc P0
     print P2
     print "\n"
 
     set_args "(0)", P5
     get_results "(0)", P2
-    invokecc
+    invokecc P0
     print P2
     print "\n"
 
@@ -219,7 +219,7 @@ output_is(<<'CODE', <<'OUTPUT', "PASM subs - tail invoke");
     new P0, .Sub
     set_addr P0, func1
 
-    invokecc
+    invokecc P0
     print "done\n"
     end
 
@@ -246,7 +246,7 @@ OUTPUT
 output_is(<<'CODE', <<'OUTPUT', "PASM subs - tail invoke with newsub");
     newsub P0, .Sub, func1
 
-    invokecc
+    invokecc P0
     print "done\n"
     end
 
@@ -271,18 +271,16 @@ OUTPUT
 output_is(<<'CODE', <<'OUTPUT', "sub calling a sub");
     print "main\n"
     newsub .Sub, .RetContinuation, _func1, ret1
-    invoke
+    invoke P0, P1
 ret1:
     print "back\n"
     end
 
 _func1:
     print "func1\n"
-    pushbottomp
     newsub .Sub, .RetContinuation, _func2, ret2
-    invoke
+    invoke P0, P1
 ret2:
-    popbottomp
     print "func1\n"
     returncc
 
@@ -303,7 +301,7 @@ output_like(<<'CODE', <<'OUTPUT', "interp - warnings");
     set I0, P0
     printerr "main:"
     newsub .Sub, .RetContinuation, _func, _ret
-    invoke
+    invoke P0, P1
 _ret:
     printerr ":back"
     new P0, .PerlUndef
@@ -326,7 +324,7 @@ output_like(<<'CODE', <<'OUTPUT', "interp - warnings 2");
     new P10, .PerlUndef
     set I0, P10
     printerr ":main"
-    invoke
+    invoke P0, P1
 ret:
     printerr ":back:"
     new P10, .PerlUndef
@@ -352,9 +350,7 @@ output_like(<<'CODE', <<'OUTPUT', "interp - warnings 2 - updatecc");
     new P10, .PerlUndef
     set I0, P10
     printerr ":main"
-    # update the state of the return continuation
-    updatecc
-    invoke
+    invokecc P0
 ret:
     printerr ":back:"
     new P10, .PerlUndef
@@ -380,7 +376,7 @@ output_is(<<'CODE', <<'OUTPUT', "pcc sub");
     print "not "
 ok:
     print "ok 1\n"
-    invokecc
+    invokecc P0
     print "back\n"
     end
 .pcc_sub _the_sub:
@@ -399,7 +395,7 @@ output_is(<<'CODE', <<'OUTPUT', "pcc sub, tail call");
     print "not "
 ok:
     print "ok 1\n"
-    invokecc
+    invokecc P0
     print "back\n"
     end
 
@@ -429,7 +425,7 @@ output_is(<<'CODE', <<'OUTPUT', "pcc sub perl::syn::tax");
     print "not "
 ok:
     print "ok 1\n"
-    invokecc
+    invokecc P0
     print "back\n"
     end
 .pcc_sub _the::sub::some::where:
@@ -489,7 +485,7 @@ output_is(<<'CODE', <<'OUTPUT', "load_bytecode call sub, ret");
     print "not "
 ok1:
     print "found sub\n"
-    invokecc
+    invokecc P0
     print "back\n"
     end
 CODE
@@ -523,7 +519,7 @@ output_is(<<'CODE', <<'OUTPUT', "load_bytecode call different subs, ret");
 ok1:
     print "found sub1\n"
     set P10, P0
-    invokecc
+    invokecc P0
     print "back\n"
     find_global P0, "_sub2"
     defined I0, P0
@@ -531,10 +527,10 @@ ok1:
     print "not "
 ok2:
     print "found sub2\n"
-    invokecc
+    invokecc P0
     print "back\n"
     set P0, P10
-    invokecc
+    invokecc P0
     print "back\n"
     end
 CODE
@@ -564,7 +560,7 @@ output_is(<<'CODE', <<'OUTPUT', "load_bytecode PBC call different subs, ret");
 ok1:
     print "found sub1\n"
     set P10, P0
-    invokecc
+    invokecc P0
     print "back\n"
     find_global P0, "_sub2"
     defined I0, P0
@@ -572,10 +568,10 @@ ok1:
     print "not "
 ok2:
     print "found sub2\n"
-    invokecc
+    invokecc P0
     print "back\n"
     set P0, P10
-    invokecc
+    invokecc P0
     print "back\n"
     end
 CODE
@@ -728,7 +724,7 @@ output_is(<<'CODE', <<'OUTPUT', "load_bytecode autorun first");
     load_bytecode "temp.pasm"
     print "loaded\n"
     find_global P0, "_sub2"
-    invokecc
+    invokecc P0
     print "back\n"
     end
 CODE
@@ -747,7 +743,7 @@ output_is(<<'CODE', <<'OUTPUT', "load_bytecode autorun first in pbc");
     load_bytecode "temp.pbc"
     print "loaded\n"
     find_global P0, "_sub2"
-    invokecc
+    invokecc P0
     print "back\n"
     end
 CODE
@@ -775,7 +771,7 @@ output_is(<<'CODE', <<'OUTPUT', "load_bytecode autorun second");
     load_bytecode "temp.pasm"
     print "loaded\n"
     find_global P0, "_sub1"
-    invokecc
+    invokecc P0
     print "back\n"
     end
 CODE
@@ -794,7 +790,7 @@ output_is(<<'CODE', <<'OUTPUT', "load_bytecode autorun second in pbc");
     load_bytecode "temp.pbc"
     print "loaded\n"
     find_global P0, "_sub1"
-    invokecc
+    invokecc P0
     print "back\n"
     end
 CODE
@@ -822,7 +818,7 @@ output_is(<<'CODE', <<'OUTPUT', "load_bytecode autorun both");
     load_bytecode "temp.pasm"
     print "loaded\n"
     find_global P0, "_sub1"
-    invokecc
+    invokecc P0
     print "back\n"
     end
 CODE
@@ -842,7 +838,7 @@ output_is(<<'CODE', <<'OUTPUT', "load_bytecode autorun both in pbc");
     load_bytecode "temp.pbc"
     print "loaded\n"
     find_global P0, "_sub1"
-    invokecc
+    invokecc P0
     print "back\n"
     end
 CODE
@@ -889,9 +885,9 @@ output_is(<<'CODE', <<'OUTPUT', '@MAIN pragma call subs');
 .pcc_sub @MAIN _main:
     print "main\n"
     find_global P0, "_first"
-    invokecc
+    invokecc P0
     find_global P0, "_second"
-    invokecc
+    invokecc P0
     end
 CODE
 main
@@ -1033,7 +1029,7 @@ output_is(<<'CODE', <<'OUTPUT', "sub names");
     print P20
     print "\n"
     find_global P0, "the_sub"
-    invokecc
+    invokecc P0
     interpinfo P20, .INTERPINFO_CURRENT_SUB
     print P20
     print "\n"
@@ -1060,7 +1056,7 @@ output_is(<<'CODE', <<'OUTPUT', "sub names w MAIN");
     print P20
     print "\n"
     find_global P0, "the_sub"
-    invokecc
+    invokecc P0
     interpinfo P20, .INTERPINFO_CURRENT_SUB
     print P20
     print "\n"
