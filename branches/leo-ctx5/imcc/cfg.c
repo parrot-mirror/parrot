@@ -528,7 +528,7 @@ analyse_life_symbol(Parrot_Interp interpreter, IMC_Unit * unit, SymReg* r)
                 prev = ins->prev;
                 if (prev->type & (ITPCCSUB|ITPCCYIELD))
                     r->usage |= U_NON_VOLATILE;
-                else if (prev->opnum == PARROT_OP_invokecc ||
+                else if (prev->opnum == PARROT_OP_invoke_p_p ||
                          prev->opnum == PARROT_OP_invokecc_p)
                     r->usage |= U_NON_VOLATILE;
                 else if (ins->type & ITADDR)

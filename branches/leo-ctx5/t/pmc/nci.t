@@ -359,7 +359,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_dd - PASM");
   print "dlfunced\n"
   set_args "(0)", 4.0
   get_results "(0)", N5
-  invoke P0
+  invokecc P0
   ne N5, 8.0, nok_1
   print "ok 1\n"
   end
@@ -433,7 +433,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_fff");
   set N6, 3.0
   set_args "(0,0)", N5, N6
   get_results "(0)", N5
-  invoke P0
+  invokecc P0
   ne N5, 4.0, nok_1
   print "ok 1\n"
   end
@@ -457,7 +457,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_isc");
   set I6, 3
   set_args "(0,0)", I5, I6
   get_results "(0)", I5
-  invoke P0
+  invokecc P0
   ne I5, 6, nok_1
   print "ok 1\n"
   end
@@ -481,7 +481,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_ssc");
   set I6, 3
   set_args "(0,0)", I5, I6
   get_results "(0)", I5
-  invoke P0
+  invokecc P0
   ne I5, 6, nok_1
   print "ok 1\n"
   end
@@ -505,7 +505,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_csc");
   set I6, 7
   set_args "(0,0)", I5, I6
   get_results "(0)", I5
-  invoke P0
+  invokecc P0
   ne I5, 42, nok_1
   print "ok 1\n"
   end
@@ -528,7 +528,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_it");
   set S5, "ko\n"
   set_args "(0)", S5
   get_results "(0)", I5
-  invoke P0
+  invokecc P0
   ne I5, 2, nok_1
   printerr "ok 2\n"
   end
@@ -554,7 +554,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_tt");
   set S5, "ko\n"
   set_args "(0)", S5
   get_results "(0)", S5
-  invoke P0
+  invokecc P0
   print S5
   end
 nok_1: print "nok 1\n"
@@ -580,7 +580,7 @@ loop:
   set N5, 77.0
   set_args "(0)", 4.0
   get_results "(0)", N5
-  invoke P0
+  invokecc P0
   ne N5, 8.0, nok_1
   dec I10
   gt I10, 0, loop
@@ -608,12 +608,12 @@ output_is(<<'CODE', <<'OUTPUT', "nci_dd - clone");
   print "ok 1\n"
   set_args "(0)", 4.0
   get_results "(0)", N5
-  invoke P0
+  invokecc P0
   ne N5, 8.0, nok_1
   print "ok 2\n"
   set_args "(0)", 4.0
   get_results "(0)", N5
-  invoke P2
+  invokecc P2
   ne N5, 8.0, nok_1
   end
 nok_1: print "nok 1\n"
@@ -636,7 +636,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_iiii");
   set I7, 30
   set_args "(0,0,0)", I5,I6,I7
   get_results "(0)", I5
-  invoke P0
+  invokecc P0
   print I5
   print "\n"
   end
@@ -654,7 +654,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_i4i");
   set I5, -7
   set_args "(0,0)", P5,I5
   get_results "(0)", I5
-  invoke P0
+  invokecc P0
   print I5
   print "\n"
   end
@@ -674,7 +674,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_ii3");
 
   set_args "(0,0)", I5,P5
   get_results "(0)", I5
-  invoke P0
+  invokecc P0
 
   print I5
   print "\n"
@@ -692,7 +692,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_tb");
   set S5, "ko\n"
   set_args "(0)", S5
   get_results "(0)", S5
-  invoke P0
+  invokecc P0
   print S5
   end
 CODE
@@ -705,7 +705,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_tB");
   set S5, "ko\n"
   set_args "(0)", S5
   get_results "(0)", S5
-  invoke P0
+  invokecc P0
   print S5
   end
 CODE
@@ -720,7 +720,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_pi - struct with ints");
   set I5, 0
   set_args "(0)", I5
   get_results "(0)", P5
-  invoke P0
+  invokecc P0
   new P2, .ResizablePMCArray
 .include "datatypes.pasm"
   push P2, .DATATYPE_INT
@@ -753,7 +753,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_pi - struct with floats");
   # this test function returns a struct { float[2]; double }
   set_args "(0)", 1
   get_results "(0)", P5
-  invoke P0
+  invokecc P0
   new P2, .ResizablePMCArray
 .include "datatypes.pasm"
   push P2, .DATATYPE_FLOAT
@@ -786,7 +786,7 @@ output_like(<<'CODE', <<'OUTPUT', "nci_pi - align");
   # this test function returns a struct { char; int }
   set_args "(0)", 2
   get_results "(0)", P5
-  invoke P0
+  invokecc P0
   new P2, .ResizablePMCArray
 .include "datatypes.pasm"
   push P2, .DATATYPE_CHAR
@@ -821,7 +821,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_pi - char*");
   # this test function returns a struct { char*; int }
   set_args "(0)", 3
   get_results "(0)", P5
-  invoke P0
+  invokecc P0
   new P2, .ResizablePMCArray
 .include "datatypes.pasm"
   push P2, .DATATYPE_CSTR
@@ -850,7 +850,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_pi - nested struct *");
   # this test function returns a struct { char; x->{int, double} }
   set_args "(0)", 4
   get_results "(0)", P5
-  invoke P0
+  invokecc P0
 .include "datatypes.pasm"
   # the contained structure
   new P3, .ResizablePMCArray
@@ -905,7 +905,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_pi - nested struct * w named access");
   dlfunc P0, P1, "nci_pi", "pi"
   set_args "(0)", 8
   get_results "(0)", P5
-  invoke P0
+  invokecc P0
 .include "datatypes.pasm"
   # the contained structure pointer
   new  P6, .OrderedHash
@@ -977,7 +977,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_pi - func_ptr* with signature");
   # this test function returns a struct { int (*f)(char *) }
   set_args "(0)", 5
   get_results "(0)", P5
-  invoke P0
+  invokecc P0
   new P2, .ResizablePMCArray
 .include "datatypes.pasm"
   push P2, .DATATYPE_FUNC_PTR
@@ -993,7 +993,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_pi - func_ptr* with signature");
   set P0, P5[0]
   set_args "(0)", "hello call_back"
   get_results "(0)", I5
-  invoke P0
+  invokecc P0
   print I5
   print "\n"
   end
@@ -1009,7 +1009,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_pi - nested struct aligned");
   # this test function returns a struct { int; {int; int} int }
   set_args "(0)", 6
   get_results "(0)", P5
-  invoke P0
+  invokecc P0
 .include "datatypes.pasm"
   # the nested structure
   new P3, .ResizablePMCArray
@@ -1065,7 +1065,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_pi - nested struct unaligned");
   # this test function returns a struct { char; {char; int} char }
   set_args "(0)", 7
   get_results "(0)", P5
-  invoke P0
+  invokecc P0
 .include "datatypes.pasm"
   # the nested structure
   new P3, .ResizablePMCArray
@@ -1121,7 +1121,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_pi - nested, unaligned, named");
   # this test function returns a struct { char; {char; int} char }
   set_args "(0)", 7
   get_results "(0)", P5
-  invoke P0
+  invokecc P0
 .include "datatypes.pasm"
   # the nested structure
   new P3, .OrderedHash
@@ -1248,7 +1248,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_ip");
   set I5, 1
   set_args "(0)", P5
   get_results "(0)", I5
-  invoke P0
+  invokecc P0
   print I5
   print "\n"
   end
@@ -1264,10 +1264,10 @@ output_is(<<'CODE', <<'OUTPUT', "nci_vP");
   new P5, .String
   set P5, "ok\n"
   set_args "(0)", P5
-  invoke P0
+  invokecc P0
   null P5
   set_args "(0)", P5
-  invoke P0
+  invokecc P0
   end
 CODE
 ok
@@ -1296,7 +1296,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_cb_C1 - PASM");
   # P5 is the cb
   # P7 is user_data
   set_args "(0,0)", P5, P7
-  invoke P0
+  invokecc P0
   # call_back will be called at any time
   # so spin a bit
   set I20, 0
@@ -1431,7 +1431,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_cb_C2 - PASM");
   # P5 is the cb
   # P7 is user_data
   set_args "(0,0)", P5, P7
-  invoke P0
+  invokecc P0
   # call_back will be called at any time
   # so spin a bit
   set I20, 0
@@ -1580,7 +1580,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_cb_D1 - PASM");
   # P5 is the cb
   # P7 is user_data
   set_args "(0,0)", P5, P7
-  invoke P0
+  invokecc P0
   # call_back will be called at any time
   # so spin a bit
   set I20, 0
@@ -1639,7 +1639,7 @@ output_is(<<'CODE', <<'OUTPUT', "nci_cb_D2 - PASM");
   # P5 is the cb
   # P7 is user_data
   set_args "(0,0)", P5, P7
-  invoke P0
+  invokecc P0
   # call_back will be called at any time
   # so spin a bit
   set I20, 0
@@ -1995,7 +1995,7 @@ output_is(<<'CODE', <<'OUTPUT', 'nci_pip - array of structs');
   loadlib P1, "libnci_test"
   set_args "(0,0)", 4, P5
   dlfunc P0, P1, "nci_pip", "pip"
-  invoke
+  invokecc P0
   end
 
 CODE
@@ -2031,7 +2031,7 @@ output_is(<<'CODE', <<'OUTPUT', 'nci_i33 - out parameters and return values');
   set_args "(0,0)", P2, P3
   get_results "(0)", I5
   dlfunc P0, P1, "nci_i33", "i33"
-  invoke P0
+  invokecc P0
 
   print "Double: "
   print P2
@@ -2085,7 +2085,7 @@ output_is(<<'CODE', <<'OUTPUT', 'nci_vpii - nested structs');
   set_args "(0,0,0)", P5, 1, 2
   loadlib P1, "libnci_test"
   dlfunc P0, P1, "nci_vpii", "vpii"
-  invoke P0
+  invokecc P0
 
   set I0, P5[ 'x' ]
   set P6, P5[ 'nested' ]
@@ -2117,7 +2117,7 @@ output_is(<<'CODE', <<'OUTPUT', 'nci_piiii - nested array in a struct');
   dlfunc P0, P1, "nci_piiii", "piiii"
   set_args "(0,0,0,0)", 100,200,400,800
   get_results "(0)", P5
-  invoke P0
+  invokecc P0
 
   new  P6, .OrderedHash
   set  P6[ 'count' ], .DATATYPE_INT

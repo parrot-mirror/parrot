@@ -37,8 +37,7 @@ lp:
 _coro:
     find_global P11, "i"
     dec P11
-    interpinfo P0, .INTERPINFO_CURRENT_SUB
-    invoke P0
+    yield
     branch _coro
 CODE
 back 1
@@ -57,7 +56,7 @@ co1:
     set I10, 4
     print "start 1\n"
 co1_loop:
-    invoke
+    invokecc P0
     print "back  1\n"
     dec I10
     ne I10, 0, co1_loop
@@ -72,11 +71,10 @@ co2:
     set_addr P5, co3
     set P6, P0
 co2_loop:
-    invoke
+    invokecc P0
     print "back  2\n"
     set I3, I3
-    set P0, P5
-    invoke
+    invokecc P5
     print "back  2b\n"
     set P0, P6
     branch co2_loop
@@ -89,11 +87,11 @@ co3:
     set_addr P7, co2_loop
     set P8, P0
 co3_loop:
-    invoke
+    invokecc P0
     print "back  3\n"
     set I3, I3
     set P0, P7
-    invoke
+    invokecc P7
     print "back  3b\n"
     set P0, P8
     branch co3_loop
@@ -132,7 +130,7 @@ output_is(<<'CODE', <<'OUTPUT', "Coroutines and lexicals 1");
     invokecc P0
     find_lex P21, "a"
     print P21
-    invoke P0
+    invokecc P0
     print P21
     print "done\n"
     end
@@ -143,10 +141,9 @@ co1:
     set P22, "coro\n"
 
     store_lex -1, "a", P22
-    interpinfo P0, .INTERPINFO_CURRENT_SUB
-    invoke P0
+    yield
     print P22
-    invoke P0
+    yield
 CODE
 main
 coro
@@ -187,7 +184,7 @@ output_is(<<'CODE', <<'OUTPUT', "Coroutines and lexicals 2");
     print P10
     print "\n"
 
-    invoke P5
+    invokecc P5
 
     find_lex P10, "b"
     print P10
@@ -197,7 +194,7 @@ output_is(<<'CODE', <<'OUTPUT', "Coroutines and lexicals 2");
     print P10
     print "\n"
 
-    invoke P5
+    invokecc P5
 
     print "done\n"
     end
@@ -216,7 +213,7 @@ co1:
     invokecc P6
 
     # return
-    invoke P5
+    yield
 
     find_lex P10, "b"
     print P10
@@ -227,7 +224,7 @@ co1:
     print "\n"
 
     # return again
-    invoke P5
+    yield
 
     find_lex P10, "b"
     print P10
@@ -238,14 +235,13 @@ co1:
     print "\n"
 
     # return again
-    invoke P5
+    yield
 
 co2:
     new_pad 1
 
     # return
-    interpinfo P0, .INTERPINFO_CURRENT_SUB
-    invoke P0
+    yield
 
 CODE
 21
@@ -340,8 +336,7 @@ _coro:
 corolp:
     find_global P17, "i"
     dec P17
-    interpinfo P0, .INTERPINFO_CURRENT_SUB
-    invoke P0
+    yield
     branch corolp
 _catchc:
     print "catch coro\n"
@@ -377,8 +372,7 @@ _coro:
 corolp:
     find_global P17, "i"
     dec P17
-    interpinfo P0, .INTERPINFO_CURRENT_SUB
-    invoke P0
+    yield
     find_global P17, "no_such"
     branch corolp
 _catchc:
@@ -413,8 +407,7 @@ _coro:
 corolp:
     find_global P17, "i"
     dec P17
-    interpinfo P0, .INTERPINFO_CURRENT_SUB
-    invoke P0
+    yield
     find_global P17, "no_such"
     branch corolp
 _catchc:
@@ -451,8 +444,7 @@ _coro:
 corolp:
     find_global P17, "i"
     dec P17
-    interpinfo P0, .INTERPINFO_CURRENT_SUB
-    invoke P0
+    yield
     find_global P17, "no_such"
     branch corolp
 _catchc:

@@ -147,7 +147,7 @@ _main:
     set I17, 0
 loop:
     sweep 1
-    invokecc
+    invokecc P0
     inc I17
     lt I17, I16, loop
     print "ok\n"
@@ -257,7 +257,7 @@ output_is(<<'CODE', <<OUTPUT, "coro context and invalid return continuations");
 .include "interpinfo.pasm"
     newsub P0, .Coroutine, co1
 l:
-    invokecc
+    invokecc P0
     inc I20
     lt I20, 3, l
     print "done\n"
@@ -267,8 +267,7 @@ co1:
 col:
     print "coro\n"
     sweep 1
-    interpinfo P0, .INTERPINFO_CURRENT_SUB
-    invoke P0
+    yield
     branch col
 CODE
 coro

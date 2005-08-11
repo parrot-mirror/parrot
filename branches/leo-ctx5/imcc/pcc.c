@@ -225,17 +225,7 @@ expand_pcc_sub_ret(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
      * we have a pcc_begin_yield
      */
     if (is_yield) {
-        char buf[16];
-        /*
-         * get current sub
-         *
-         */
-        regs[0] = get_pasm_reg(interp, "P0");
-        sprintf(buf, "%d", CURRENT_SUB);
-        regs[1] = get_const(interp, buf, 'I');
-        ins = insINS(interp, unit, ins, "interpinfo", regs, 2);
-        regs[0] = get_pasm_reg(interp, "P0");
-        ins = insINS(interp, unit, ins, "invoke", regs, 1);
+        ins = insINS(interp, unit, ins, "yield", regs, 0);
     }
     else {
         /*
@@ -279,7 +269,6 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
 {
     SymReg *arg, *sub, *reg, *regs[2];
     int  n;
-    int need_cc;
     int tail_call;
     int meth_call = 0;
     SymReg *s0 = NULL;
@@ -388,21 +377,6 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
             return;
         }
     }
-    /*
-     * if an explicit return continuation is passed, set it to P1
-     */
-    arg = sub->pcc_sub->cc;
-    need_cc = 0;
-    if (arg) {
-        if (arg->color != 1) {
-            reg = get_pasm_reg(interp, "P1");
-            regs[0] = reg;
-            regs[1] = arg;
-            ins = insINS(interp, unit, ins, "set", regs, 2);
-        }
-    }
-    else if (!(sub->pcc_sub->flags & isNCI))
-        need_cc = 1;
 
     /*
      * handle return results
@@ -416,6 +390,7 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
      * takes method-like arguments according to pdd03
      *
      * so convert to opcode and await the returned PMC as P5
+     * XXX FIXME
      */
     if (meth_call && s0 && strcmp(s0->name, "\"instantiate\"") == 0) {
         SymReg *p5 = get_pasm_reg(interp, "P5");
@@ -423,25 +398,24 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         ins = insINS(interp, unit, ins, "instantiate", regs, 1);
     }
     else {
-        /*
-         * if we reuse the continuation, update it
-         */
-        if (!(sub->pcc_sub->flags & isNCI))
-            if (!need_cc)
-                ins = insINS(interp, unit, ins, "updatecc", regs, 0);
         /* insert the call */
         if (meth_call && sub->pcc_sub->sub->set != 'P') {
             regs[0] = s0;
             n = 0;
             if (s0)
                 n = 1;
-            ins = insINS(interp, unit, ins,
-                    need_cc ? "callmethodcc" : "callmethod", regs, n);
+            ins = insINS(interp, unit, ins, "callmethodcc" , regs, n);
         }
         else {
             regs[0] = sub->pcc_sub->sub;
-            ins = insINS(interp, unit, ins,
-                    need_cc ? "invokecc" : "invoke", regs, 1);
+            arg = sub->pcc_sub->cc;
+            if (arg) {
+                regs[1] = arg;
+                ins = insINS(interp, unit, ins, "invoke" ,regs, 2);
+            }
+            else {
+                ins = insINS(interp, unit, ins, "invokecc" ,regs, 1);
+            }
         }
         ins->type |= ITPCCSUB;
         /*

@@ -223,7 +223,7 @@ output_is(<<'CODE', <<'OUTPUT', "constructor - parents");
     find_type I1, "Bar"
     new P3, I1
     find_global P0, "_sub"
-    invokecc
+    invokecc P0
     print "done\n"
     end
 
@@ -480,12 +480,12 @@ output_is(<<'CODE', <<'OUTPUT', "fetchmethod");
     fetchmethod P0, P2, S0
     print "main\n"
     # P2, S0 are as in callmethod
-    invokecc
+    invokecc P0
     print "back\n"
     # check class
     fetchmethod P0, P3, S0
     set P2, P3
-    invokecc
+    invokecc P0
     print "back\n"
     end
 
@@ -669,7 +669,7 @@ output_is(<<'CODE', <<'OUTPUT', "constructor - parents BUILD");
     find_type I1, "Bar"
     new P3, I1
     find_global P0, "_sub"
-    invokecc
+    invokecc P0
     print "done\n"
     end
 

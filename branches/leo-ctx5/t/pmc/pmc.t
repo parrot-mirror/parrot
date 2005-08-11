@@ -448,7 +448,7 @@ output_is(<<'CODE', <<'OUT', ".const - Sub constant");
 .pcc_sub @MAIN main:
     print "ok 1\n"
     .const .Sub P0 = "foo"
-    invokecc
+    invokecc P0
     print "ok 3\n"
     end
 .pcc_sub foo:

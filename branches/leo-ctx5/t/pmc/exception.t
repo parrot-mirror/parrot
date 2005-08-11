@@ -489,7 +489,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "pushaction, sub exit - capture CC, ret");
     .local pmc cc
     cc = interpinfo .INTERPINFO_CURRENT_CONT
     print "foo\n"
-    invoke cc
+    invokecc cc
 .end
 
 .sub action

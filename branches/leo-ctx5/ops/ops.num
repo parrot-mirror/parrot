@@ -469,9 +469,9 @@ interpinfo_p_ic                 438
 intrestore_i                    439
 intsave_i                       440
 intsave_ic                      441
-invoke                          442
-invoke_p                        443
-invokecc                        444
+DELETED_invoke                          442
+invoke_p_p                      443
+yield                           444
 invokecc_p                      445
 isa_i_p_s                       446
 isa_i_p_sc                      447
@@ -1241,7 +1241,7 @@ unshift_p_sc                   1210
 upcase_s                       1211
 upcase_s_s                     1212
 upcase_s_sc                    1213
-updatecc                       1214
+DELETED_updatecc                       1214
 valid_type_i_i                 1215
 valid_type_i_ic                1216
 warningsoff_i                  1217

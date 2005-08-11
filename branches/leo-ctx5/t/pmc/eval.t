@@ -215,7 +215,7 @@ output_is(<<'CODE', <<'OUTPUT', "compile PAST in PASM");
     compreg P1, "PAST"	# get compiler
     set_args "(0)", 'Parrot_AST( PCC_Sub( Stmts( Py_Print( Const(8) ) Py_Print_nl() ) ) )'
     get_results "(0)", P6
-    invoke P1
+    invokecc P1
     print "before\n"
     invokecc P6
     invokecc P6
@@ -248,7 +248,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "compile PAST in PASM in PIR");
             pasm_source .= "set S1, 'Parrot_AST( PCC_Sub( Stmts( Py_Print( Const(8) ) Py_Print_nl() ) ) )'\n"
 	    pasm_source .= "set_args \"(0)\", S1\n"
             pasm_source .= "get_results \"(0)\", P6\n"
-            pasm_source .= "invoke P1\n"
+            pasm_source .= "invokecc P1\n"
         # PASM
         pasm_source .= "print \"PASM: before\\n\"\n"
         pasm_source .= "invokecc P6\n"
