@@ -11,13 +11,22 @@ static void gc_gmc_more_objects(Interp*, struct Small_Object_Pool*);
 
 
 /* Determines the size of a PMC according to its base_type. */
-size_t
+static size_t
 gc_gmc_get_PMC_size(Interp *interpreter, INTVAL base_type)
 {
     VTABLE *vtable = Parrot_base_vtables[base_type];
     if (!vtable)
 	return (UINTVAL)0;
     return vtable->size;
+}
+
+
+/* Determines if a PMC is an aggregate or not. */
+static INTVAL
+gc_gmc_is_aggreg_PMC(Interp *interpreter, INTVAL base_type)
+{
+    /* TODO: find it with the base_type. */
+    return 0;
 }
 
 
@@ -162,7 +171,7 @@ gc_gmc_pool_deinit(Interp *interpreter, struct Small_Object_Pool *pool)
 }
 
 
-void gc_gmc_deinit(Interp *interpreter)
+static void gc_gmc_deinit(Interp *interpreter)
 {
     struct Arenas *arena_base = interpreter->arena_base;
     
@@ -170,7 +179,7 @@ void gc_gmc_deinit(Interp *interpreter)
 
 }
 
-void gc_gmc_run(Interp *interpreter, int flags)
+static void gc_gmc_run(Interp *interpreter, int flags)
 {
 #ifdef GMC_DEBUG
   fprintf (stderr, "GMC: Trying to run dod_run\n");
@@ -191,7 +200,7 @@ void Parrot_gc_gmc_init(Interp *interpreter)
 
 /******************************* FAKE THINGS ********************************/
 
-void *
+static void *
 gc_gmc_fake_get_free_object(Interp *interpreter,
 	struct Small_Object_Pool *pool)
 {
@@ -199,14 +208,14 @@ gc_gmc_fake_get_free_object(Interp *interpreter,
 }
 
 
-void *
-gc_gmc_get_free_typed_object(Interp *interpreter,
+static void *
+gc_gmc_fake_get_free_typed_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, INTVAL base_type)
 {
     return NULL;
 }
 
-void 
+static void 
 gc_gmc_add_free_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, void *to_add)
 {
@@ -239,20 +248,15 @@ gc_gmc_more_objects(Interp *interpreter,
 /******************************* REAL THINGS ********************************/
 
 
-
-/* The real thing, but not plugged yet */
-/* Here we allocate a PMC with NULL pmc_body, as it is non-typed. */
-/* This function should not be called anywhere if possible. */
-void *
-gc_gmc_get_free_object(Interp *interpreter,
-    struct Small_Object_Pool *pool)
+static void *
+gc_gmc_get_free_object_of_size(Interp *interpreter,
+	struct Small_Object_Pool *pool, size_t size, INTVAL aggreg)
 {
   void *ptr;
   Gc_gmc *gc = pool->gc;
+  Gc_gmc_gen *gen;
 
-  /* This is a non-aggregate object. */
-  Gc_gmc_gen *gen = gc->old_lst;
-  size_t size = sizeof(Gc_gmc_hdr);
+  gen = (aggreg) ? gc->yng_lst : gc->old_lst;
 
   /* Should we use the next generation ? */
   if (size > gen->remaining)
@@ -265,13 +269,29 @@ gc_gmc_get_free_object(Interp *interpreter,
   gc->old_lst = gen;
 
   ptr = gen->fst_free;
-  gen->fst_free = (INTVAL)ptr + size;
+  gen->fst_free = (void*)((INTVAL)ptr + size);
   gen->remaining -= size;
+
+#ifdef GMC_DEBUG
+  fprintf (stderr, "Allocating %s PMC of size %d\n", (aggreg) ? "aggregate" : "non-aggregate", size);
+#endif
 
   return ptr;
 }
 
-void
+
+/* Here we allocate a PObj, as it is non-typed. */
+/* This function should not be called anywhere if possible. */
+void *
+gc_gmc_get_free_object(Interp *interpreter,
+    struct Small_Object_Pool *pool)
+{
+    size_t size = sizeof(Gc_gmc_hdr) + sizeof(PObj);
+    return gc_gmc_get_free_object_of_size(interpreter, pool, size, 0);
+}
+
+
+static void
 gc_gmc_real_add_free_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, void *to_add)
 {
@@ -279,11 +299,15 @@ gc_gmc_real_add_free_object(Interp *interpreter,
 }
 
 
-void *
-gc_gmc_real_get_free_typed_object(Interp *interpreter,
+static void *
+gc_gmc_get_free_typed_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, INTVAL base_type)
 {
-    return NULL;
+    Gc_gmc *gc = pool->gc;
+    size_t size = sizeof(Gc_gmc_hdr) + gc_gmc_get_PMC_size(interpreter, base_type);
+    INTVAL aggreg = gc_gmc_is_aggreg_PMC(interpreter, base_type);
+    
+    return gc_gmc_get_free_object_of_size (interpreter, pool, size, aggreg);
 }
 
 
