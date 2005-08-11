@@ -247,16 +247,15 @@ insert_tail_call(Parrot_Interp interp, IMC_Unit * unit,
 
     if (meth_call) {
         s0 = s0 ? s0 : get_pasm_reg(interp, "S0");
-        regs[0] = s0;
-        ins = insINS(interp, unit, ins, "tailcallmethod", regs, 1);
+        regs[0] = sub->pcc_sub->object;
+        regs[1] = s0;
+        ins = insINS(interp, unit, ins, "tailcallmethod", regs, 2);
     }
     else {
         regs[0] = sub->pcc_sub->sub;
         ins = insINS(interp, unit, ins, "tailcall", regs, 1);
     }
     ins->type |= ITPCCSUB;
-    ins->r[0]->pcc_sub = sub->pcc_sub;
-    sub->pcc_sub = NULL;
 }
 
 /*
@@ -279,16 +278,12 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
 
     if (sub->pcc_sub->object) {
         meth_call = 1;
-        /* set P2, obj */
-        if (sub->pcc_sub->object->color != 2) {
+        if (sub->pcc_sub->object->set == 'S') {
+            /* XXX make a temp */
             regs[0] = get_pasm_reg(interp, "P2");
             regs[1] = sub->pcc_sub->object;
-            if (regs[1]->set == 'S') {
-                ins = insINS(interp, unit, ins, "getclass", regs, 2);
-                sub->pcc_sub->object = regs[0];
-            }
-            else
-                ins = insINS(interp, unit, ins, "set", regs, 2);
+            ins = insINS(interp, unit, ins, "getclass", regs, 2);
+            sub->pcc_sub->object = regs[0];
         }
     }
 
@@ -344,24 +339,12 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
         ins = get_name;
     }
 
-    /*
-     * setup P0, and P2, S0 if method
-     *
-     * Due to implicit call arguments (call opcodes that
-     * either take a Sub/P0, method/S2, return continuation/P1,
-     * object/P2 or not)
-     * this is really a mess
-     */
-    arg = sub->pcc_sub->sub;
+    s0 = arg = sub->pcc_sub->sub;
     if (meth_call) {
-        /* set S0, meth */
-        regs[0] = get_pasm_reg(interp, "S0");;
         if (arg->set != 'P') {
-            if ( (arg->type == VTIDENTIFIER ||
+            if ( !(arg->type == VTIDENTIFIER ||
                         arg->type == VTPASM ||
                         arg->type == VTREG))
-                s0 = arg;
-            else
                 s0 = mk_const(interp, str_dup(arg->name), 'S');
         }
 
@@ -399,12 +382,17 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     }
     else {
         /* insert the call */
-        if (meth_call && sub->pcc_sub->sub->set != 'P') {
-            regs[0] = s0;
-            n = 0;
-            if (s0)
-                n = 1;
-            ins = insINS(interp, unit, ins, "callmethodcc" , regs, n);
+        if (meth_call) {
+            regs[0] = sub->pcc_sub->object;
+            regs[1] = s0;
+            arg = sub->pcc_sub->cc;
+            if (arg) {
+                regs[2] = arg;
+                ins = insINS(interp, unit, ins, "callmethod" , regs, 3);
+            }
+            else {
+                ins = insINS(interp, unit, ins, "callmethodcc" , regs, 2);
+            }
         }
         else {
             regs[0] = sub->pcc_sub->sub;
