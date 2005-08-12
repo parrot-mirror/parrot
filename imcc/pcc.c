@@ -226,17 +226,15 @@ expand_pcc_sub_ret(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
      */
     if (is_yield) {
         ins = insINS(interp, unit, ins, "yield", regs, 0);
+        ins->type |= ITPCCYIELD;
     }
     else {
         /*
          * insert return invoke
          */
         ins = insINS(interp, unit, ins, "returncc", regs, 0);
+        ins->type |= ITPCCRET;
     }
-    /*
-     * mark the invoke instruction's PCC sub type
-     */
-    ins->type |= is_yield ? ITPCCYIELD : (ITPCCRET|ITPCCSUB);
 }
 
 static void
@@ -255,6 +253,8 @@ insert_tail_call(Parrot_Interp interp, IMC_Unit * unit,
         regs[0] = sub->pcc_sub->sub;
         ins = insINS(interp, unit, ins, "tailcall", regs, 1);
     }
+    regs[0]->pcc_sub = sub->pcc_sub;
+    sub->pcc_sub = NULL;
     ins->type |= ITPCCSUB;
 }
 
@@ -279,8 +279,7 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     if (sub->pcc_sub->object) {
         meth_call = 1;
         if (sub->pcc_sub->object->set == 'S') {
-            /* XXX make a temp */
-            regs[0] = get_pasm_reg(interp, "P2");
+            regs[0] = mk_temp_reg(interp, 'P');
             regs[1] = sub->pcc_sub->object;
             ins = insINS(interp, unit, ins, "getclass", regs, 2);
             sub->pcc_sub->object = regs[0];
@@ -299,7 +298,7 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
              * sub->pcc_sub->sub is an actual subroutine name,
              * not a variable.
              */
-            reg = get_pasm_reg(interp, "P0");
+            reg = mk_temp_reg(interp, 'P');
             add_pcc_sub(sub, reg);
             /*
              * insert set_p_pc with the sub as constant
@@ -328,7 +327,7 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
      */
     n = sub->pcc_sub->nargs;
     ins = pcc_get_args(interp, unit, ins, "set_args", n,
-                       sub->pcc_sub->args);
+            sub->pcc_sub->args);
 
     /*
      * insert get_name after args have been setup, so that
@@ -355,10 +354,8 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
      * insert a tailcall opcode
      */
     if (tail_call) {
-        if (!(meth_call && strcmp(s0->name, "\"instantiate\"") == 0)) {
-            insert_tail_call(interp, unit, ins, sub, meth_call, s0);
-            return;
-        }
+        insert_tail_call(interp, unit, ins, sub, meth_call, s0);
+        return;
     }
 
     /*
@@ -366,52 +363,43 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
      */
     n = sub->pcc_sub->nret;
     ins = pcc_get_args(interp, unit, ins, "get_results", n,
-                       sub->pcc_sub->ret);
-    /*
-     * special case - instantiate looks like a method call
-     * but is actually the instantiate object constructor opcode that
-     * takes method-like arguments according to pdd03
-     *
-     * so convert to opcode and await the returned PMC as P5
-     * XXX FIXME
-     */
-    if (meth_call && s0 && strcmp(s0->name, "\"instantiate\"") == 0) {
-        SymReg *p5 = get_pasm_reg(interp, "P5");
-        regs[0] = p5;
-        ins = insINS(interp, unit, ins, "instantiate", regs, 1);
-    }
-    else {
-        /* insert the call */
-        if (meth_call) {
-            regs[0] = sub->pcc_sub->object;
-            regs[1] = s0;
-            arg = sub->pcc_sub->cc;
-            if (arg) {
-                regs[2] = arg;
-                ins = insINS(interp, unit, ins, "callmethod" , regs, 3);
-            }
-            else {
-                ins = insINS(interp, unit, ins, "callmethodcc" , regs, 2);
-            }
+            sub->pcc_sub->ret);
+    /* insert the call */
+    if (meth_call) {
+        regs[0] = sub->pcc_sub->object;
+        regs[1] = s0;
+        arg = sub->pcc_sub->cc;
+        if (arg) {
+            regs[2] = arg;
+            ins = insINS(interp, unit, ins, "callmethod" , regs, 3);
         }
         else {
-            regs[0] = sub->pcc_sub->sub;
-            arg = sub->pcc_sub->cc;
-            if (arg) {
-                regs[1] = arg;
-                ins = insINS(interp, unit, ins, "invoke" ,regs, 2);
-            }
-            else {
-                ins = insINS(interp, unit, ins, "invokecc" ,regs, 1);
-            }
+            ins = insINS(interp, unit, ins, "callmethodcc" , regs, 2);
         }
-        ins->type |= ITPCCSUB;
-        /*
-         * locate return label, if there is one skip it
-         */
-        if (sub->pcc_sub->label && ins->next->type == ITLABEL) {
-            ins = ins->next;
+    }
+    else {
+        regs[0] = sub->pcc_sub->sub;
+        arg = sub->pcc_sub->cc;
+        if (arg) {
+            regs[1] = arg;
+            ins = insINS(interp, unit, ins, "invoke" ,regs, 2);
         }
+        else {
+            ins = insINS(interp, unit, ins, "invokecc" ,regs, 1);
+        }
+    }
+    /*
+     * move the pcc_sub structure from the dummy call label to the
+     * invoke statement
+     */
+    regs[0]->pcc_sub = sub->pcc_sub;
+    sub->pcc_sub = NULL;
+    ins->type |= ITPCCSUB;
+    /*
+     * locate return label, if there is one skip it
+     */
+    if (regs[0]->pcc_sub->label && ins->next->type == ITLABEL) {
+        ins = ins->next;
     }
 }
 
