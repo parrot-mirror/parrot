@@ -343,9 +343,14 @@ sort_reglist(IMC_Unit *unit)
  *
  * Registers 28-30 are reserved for short range temps, which
  * get allocated immediately
+ *
+ * TODO remove ALLOCATE_HACK
+ * The code doesn't check collisions against pre-allocated PASM in
+ * e.g. set_args. And due to upcoming variable sized register frames
+ * it's unneeded anyway.
  */
 
-#define ALLOCATE_HACK
+/* #define ALLOCATE_HACK */
 
 #ifdef ALLOCATE_HACK
 

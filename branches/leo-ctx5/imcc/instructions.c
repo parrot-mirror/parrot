@@ -207,6 +207,16 @@ instruction_reads(Instruction* ins, SymReg* r) {
             }
         }
     }
+    /* a sub call reads the previous args */
+    if (ins->type & ITPCCSUB) {
+        assert(ins->r[0]->pcc_sub);
+        for (i = 0; i < ins->r[0]->pcc_sub->nargs; ++i) {
+            if (r == ins->r[0]->pcc_sub->args[i])
+                return 1;
+        }
+
+
+    }
     return 0;
 }
 
