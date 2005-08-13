@@ -935,7 +935,7 @@ OUTPUT
 # no. 27
 pir_output_is(<<'CODE', <<'OUTPUT', "custom dumper");
 .sub main @MAIN
-    .local pmc o, ds, cl
+    .local pmc o, cl
     cl = subclass 'ResizablePMCArray', 'bar'
     .local int id
     id = typeof cl
