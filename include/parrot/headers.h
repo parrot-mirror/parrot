@@ -34,6 +34,7 @@ struct Small_Object_Pool *get_bufferlike_pool(Interp *interpreter, size_t unit_s
 struct Small_Object_Pool *make_bufferlike_pool(Interp *interpreter, size_t unit_size);
 /* header creation functions */
 PMC *new_pmc_header(Interp *interpreter, UINTVAL flags);
+PMC *new_pmc_typed_header(Interp *interpreter, UINTVAL flags, INTVAL base_type);
 void add_pmc_ext(Interp *interpreter, PMC *pmc);
 STRING *new_string_header(Interp *interpreter, UINTVAL flags);
 Buffer *new_buffer_header(Interp *interpreter);

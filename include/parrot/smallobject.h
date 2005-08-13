@@ -150,6 +150,7 @@ typedef enum gmc_flags {
 
 
 /* Macros for access from header. */
+#define Gmc_PMC_hdr_get_BODY(pmc_hdr)		    ((PMC_BODY*)((char*)(pmc_hdr) + sizeof(Gc_gmc_hdr)))
 #define Gmc_PMC_hdr_get_FLAGS(pmc_hdr)		    ((pmc_hdr)->gmc_flags)
 #define Gmc_PMC_hdr_get_PMC(pmc_hdr)		    ((pmc_hdr)->pmc)
 #define Gmc_PMC_hdr_flag_TEST(flag, pmc_hdr)	    (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) & (Gmc_ ## flag ## _FLAG))
@@ -158,7 +159,7 @@ typedef enum gmc_flags {
 							  ~(UINTVAL)(Gmc_ ## flag ## _FLAG))
 
 /* Macros for access from body. */
-#define Gmc_PMC_body_get_HDR(pmc_body)		    ((Gc_gmc_hdr*)((pmc_body) - sizeof(Gc_gmc_hdr)))
+#define Gmc_PMC_body_get_HDR(pmc_body)		    ((Gc_gmc_hdr*)((char*)(pmc_body) - sizeof(Gc_gmc_hdr)))
 #define Gmc_PMC_body_get_FLAGS(pmc_body)	    Gmc_PMC_hdr_get_FLAGS(Gmc_PMC_body_get_hdr(pmc_body))
 #define Gmc_PMC_body_get_PMC(pmc_body)  	    Gmc_PMC_hdr_get_PMC(Gmc_PMC_body_get_hdr(pmc_body))
 #define Gmc_PMC_body_flag_TEST(flag, pmc_body)	    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_body_get_hdr(pmc_body))

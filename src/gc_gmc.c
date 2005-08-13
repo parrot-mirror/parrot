@@ -8,6 +8,7 @@ static void *gc_gmc_get_free_typed_object(Interp*, struct Small_Object_Pool*, IN
 static void *gc_gmc_get_free_object(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_alloc_objects(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_more_objects(Interp*, struct Small_Object_Pool*);
+static void gc_gmc_more_pmc_bodies(Interp *, struct Small_Object_Pool*);
 
 
 /* Determines the size of a PMC according to its base_type. */
@@ -18,15 +19,6 @@ gc_gmc_get_PMC_size(Interp *interpreter, INTVAL base_type)
     if (!vtable)
 	return (UINTVAL)0;
     return vtable->size;
-}
-
-
-/* Determines if a PMC is an aggregate or not. */
-static INTVAL
-gc_gmc_is_aggreg_PMC(Interp *interpreter, INTVAL base_type)
-{
-    /* TODO: find it with the base_type. */
-    return 0;
 }
 
 
@@ -233,11 +225,11 @@ gc_gmc_alloc_objects(Interp *interpreter,
 #endif
 }
 
-void
-gc_gmc_more_objects(Interp *interpreter,
+static void
+gc_gmc_fake_more_objects(Interp *interpreter,
 	struct Small_Object_Pool *pool)
 {
-#ifdef GMC_DEBUG
+#ifndef GMC_DEBUG
     fprintf (stderr, "GMC: I want more objects !\n");
 #endif
 }
@@ -252,10 +244,12 @@ static void *
 gc_gmc_get_free_object_of_size(Interp *interpreter,
 	struct Small_Object_Pool *pool, size_t size, INTVAL aggreg)
 {
-  void *ptr;
+  void *pmc_body;
+  void *pmc;
   Gc_gmc *gc = pool->gc;
   Gc_gmc_gen *gen;
 
+  /* Allocate the pmc_body */
   gen = (aggreg) ? gc->yng_lst : gc->old_lst;
 
   /* Should we use the next generation ? */
@@ -264,20 +258,41 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
 
   /* Do we need more generations ? */
   if (!gen)
-    (*pool->more_objects) (interpreter, pool);
+    gc_gmc_more_pmc_bodies (interpreter, pool);
 
   gc->old_lst = gen;
 
-  ptr = gen->fst_free;
-  gen->fst_free = (void*)((INTVAL)ptr + size);
+  pmc_body = gen->fst_free;
+  gen->fst_free = (void*)((INTVAL)pmc_body + size);
   gen->remaining -= size;
 
 #ifdef GMC_DEBUG
   fprintf (stderr, "Allocating %s PMC of size %d\n", (aggreg) ? "aggregate" : "non-aggregate", size);
 #endif
 
-  return ptr;
+  /* Allocate the PMC* */
+
+  /* if we don't have any objects */
+  if (!pool->free_list)
+      (*pool->more_objects) (interpreter, pool);
+  
+  pmc = pool->free_list;
+  fprintf (stderr, "===============\n");
+  fprintf (stderr, "PMC found at %p\n", pmc);
+  fprintf (stderr, "Next PMC at %p\n", *(void**)pmc);
+  fprintf (stderr, "Next Next PMC at %p\n", **(void***)pmc);
+  fprintf (stderr, "---------------\n");
+  pool->free_list = *(void **)pmc;
+  --pool->num_free_objects;
+  PMC_body((PMC*)pmc) = Gmc_PMC_hdr_get_BODY(pmc_body);
+
+  Gmc_PMC_hdr_get_PMC((Gc_gmc_hdr*)pmc_body) = pmc;
+
+  fprintf (stderr, "Next PMC at %p\n", pool->free_list);
+  fprintf (stderr, "Next Next PMC at %p\n", *(void**)pool->free_list);
+  return pmc;
 }
+
 
 
 /* Here we allocate a PObj, as it is non-typed. */
@@ -305,12 +320,39 @@ gc_gmc_get_free_typed_object(Interp *interpreter,
 {
     Gc_gmc *gc = pool->gc;
     size_t size = sizeof(Gc_gmc_hdr) + gc_gmc_get_PMC_size(interpreter, base_type);
-    INTVAL aggreg = gc_gmc_is_aggreg_PMC(interpreter, base_type);
+    VTABLE *vtable = Parrot_base_vtables[base_type];
+    INTVAL aggreg = vtable->flags & VTABLE_PMC_NEEDS_EXT;
     
     return gc_gmc_get_free_object_of_size (interpreter, pool, size, aggreg);
 }
 
 
+static void
+gc_gmc_more_pmc_bodies (Interp *interpreter,
+	struct Small_Object_Pool *pool)
+{
+}
+
+
+/* Quick and dirty for now, no GC run at all. */
+/* XXX: structures must change, because no free is possible with what's here */
+static void
+gc_gmc_more_objects(Interp *interpreter,
+	struct Small_Object_Pool *pool)
+{
+#define NUM_NEW_OBJ 512
+        void *fst = mem_sys_allocate(NUM_NEW_OBJ * pool->object_size);
+	int i;
+	char *obj;
+	for (i = 0, obj = (char*)fst; i < NUM_NEW_OBJ; i++, obj += pool->object_size)
+	    *(void**)obj = obj + pool->object_size;
+	*(void**)obj = NULL;
+	pool->free_list = fst;
+	pool->num_free_objects += NUM_NEW_OBJ;
+#ifndef GMC_DEBUG
+	fprintf(stderr, "Allocating %d more objects of size %d beginning at %p\n", NUM_NEW_OBJ, pool->object_size, fst);
+#endif
+}
 
 
 #endif /* PARROT_GC_GMC */
