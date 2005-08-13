@@ -52,12 +52,12 @@ gc_gmc_gen_init(Interp *interpreter)
 /* Inserts the given generation to the right place, keeping all generation 
  * sorted (by insertion sort). */
 static void
-gc_gmc_insert_gen(Interp *interpreter, struct Small_Object_Pool *pool, Gc_gmc_gen *gen)
+gc_gmc_insert_gen(Interp *interpreter, Gc_gmc *gc, Gc_gmc_gen *gen)
 {
     Gc_gmc_gen *cur_gen;
     void *ptr;
 
-    cur_gen = pool->gc->old_lst;
+    cur_gen = gc->old_lst;
     if (cur_gen)
 	ptr = (void*)cur_gen->first;
     else
@@ -81,12 +81,12 @@ gc_gmc_insert_gen(Interp *interpreter, struct Small_Object_Pool *pool, Gc_gmc_ge
       gen->next = cur_gen->next;
     } else {
       gen->next = NULL;
-      pool->gc->yng_fst = gen;
-      pool->gc->old_lst = gen;
+      gc->yng_fst = gen;
+      gc->old_lst = gen;
     }
     gen->prev = cur_gen;
-    if (pool->gc->old_lst == cur_gen)
-      pool->gc->old_lst = gen;
+    if (gc->old_lst == cur_gen)
+      gc->old_lst = gen;
 }
 
 static void gc_gmc_pool_deinit(Interp *, struct Small_Object_Pool *);
@@ -121,14 +121,14 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     for (i = 0; i < GMC_GEN_INIT_NUMBER; i++)
     {
 	gen = gc_gmc_gen_init(interpreter);
-	gc_gmc_insert_gen(interpreter, pool, gen);
+	gc_gmc_insert_gen(interpreter, gc, gen);
     }
 
     /* Separate the generations in two halves : one is young (= aggregate
      * objects), the other is old (non-aggregate objects). */
     for (i = 0, gen = gc->yng_fst; i < (GMC_GEN_INIT_NUMBER/2); i++, gen = gen->next);
-    gc->old_fst = gen;
-    gc->old_lst = gen;
+    gc->old_fst = gen->next;
+    gc->old_lst = gen->next;
     /* Now cut the bridges between these two parts. */
     gen->prev->next = NULL;
     gen->prev = NULL;
@@ -249,6 +249,7 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
   Gc_gmc *gc = pool->gc;
   Gc_gmc_gen *gen;
 
+
   /* Allocate the pmc_body */
   gen = (aggreg) ? gc->yng_lst : gc->old_lst;
 
@@ -259,6 +260,12 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
   /* Do we need more generations ? */
   if (!gen)
     gc_gmc_more_pmc_bodies (interpreter, pool);
+
+  gen = (aggreg) ? gc->yng_lst : gc->old_lst;
+
+  /* Should we use the next generation ? */
+  if (size > gen->remaining)
+      gen = gen->next;
 
   gc->old_lst = gen;
 
@@ -277,19 +284,20 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
       (*pool->more_objects) (interpreter, pool);
   
   pmc = pool->free_list;
+#ifdef GMC_DEBUG
   fprintf (stderr, "===============\n");
   fprintf (stderr, "PMC found at %p\n", pmc);
   fprintf (stderr, "Next PMC at %p\n", *(void**)pmc);
   fprintf (stderr, "Next Next PMC at %p\n", **(void***)pmc);
   fprintf (stderr, "---------------\n");
+#endif
   pool->free_list = *(void **)pmc;
   --pool->num_free_objects;
   PMC_body((PMC*)pmc) = Gmc_PMC_hdr_get_BODY(pmc_body);
 
   Gmc_PMC_hdr_get_PMC((Gc_gmc_hdr*)pmc_body) = pmc;
 
-  fprintf (stderr, "Next PMC at %p\n", pool->free_list);
-  fprintf (stderr, "Next Next PMC at %p\n", *(void**)pool->free_list);
+
   return pmc;
 }
 
@@ -326,11 +334,94 @@ gc_gmc_get_free_typed_object(Interp *interpreter,
     return gc_gmc_get_free_object_of_size (interpreter, pool, size, aggreg);
 }
 
+static void
+gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
+{
+    INTVAL offset = (char*)from->fst_free - (char*)from->first;
+    dest->fst_free = (void*)((char*)dest->first + offset);
+    dest->remaining = from->remaining;
+    dest->IGP = from->IGP;
+    memcpy(dest->first, from->first, GMC_GEN_SIZE);
+}
 
+static void
+gc_gmc_gen_free(Gc_gmc_gen *gen)
+{
+    fprintf (stderr, "Freeing gen %p\n", gen);
+    fprintf (stderr, "Freeing gen->data %p\n", gen->first);
+    mem_sys_free(gen->first);
+    mem_sys_free(gen);
+    fprintf (stderr, "Done freeing\n");
+}
+
+
+/* Allocates twice as much generations as before, copies everything */
+/* TODO: double only the half that needs it. */
 static void
 gc_gmc_more_pmc_bodies (Interp *interpreter,
 	struct Small_Object_Pool *pool)
 {
+    Gc_gmc *gc = pool->gc;
+    Gc_gmc *dummy_gc = mem_sys_allocate (sizeof(Gc_gmc));
+    Gc_gmc_gen *gen, *ogen, *ogen_nxt;
+    INTVAL nb_gen = 2 * gc->nb_gen;
+    int i;
+
+#ifndef GMC_DEBUG
+    fprintf(stderr, "Allocating more pmc_bodies\n");
+#endif
+
+    /* We use a dummy_gc before copying all the data. */
+    dummy_gc->yng_fst = NULL;
+    dummy_gc->yng_lst = NULL;
+    dummy_gc->old_fst = NULL;
+    dummy_gc->old_lst = NULL;
+    
+    for (i = 0; i < nb_gen; i++)
+    {
+	gen = gc_gmc_gen_init (interpreter);
+	gc_gmc_insert_gen (interpreter, dummy_gc, gen);
+    }
+    fprintf(stderr, "Done with insertion\n");
+
+    for (gen = dummy_gc->yng_fst, ogen = gc->yng_fst; ogen->next; gen = gen->next)
+    {
+	ogen_nxt = ogen->next;
+	gc_gmc_copy_gen(ogen,gen);
+	gc_gmc_gen_free(ogen);
+	ogen = ogen_nxt;
+    }
+    dummy_gc->yng_lst = gen;
+    fprintf(stderr, "Done with young copy\n");
+
+    for (gen = dummy_gc->yng_fst, i = 0; i < (nb_gen/2); i++, gen = gen->next);
+    dummy_gc->old_fst = gen->next;
+    gen->next->prev = NULL;
+    gen->next = NULL;
+    fprintf(stderr, "Done with cutting in a half, old_fst: %p\n", gc->old_fst);
+
+    for (gen = dummy_gc->old_fst, ogen = gc->old_fst; ogen; gen = gen->next)
+    {
+	ogen_nxt = ogen->next;
+	gc_gmc_copy_gen(ogen,gen);
+	gc_gmc_gen_free(ogen);
+	ogen = ogen_nxt;
+    }
+    fprintf(stderr,"Done with old copy\n");
+    dummy_gc->old_lst = gen;
+
+    gc->yng_fst = dummy_gc->yng_fst;
+    gc->yng_lst = dummy_gc->yng_lst;
+    gc->old_fst = dummy_gc->old_fst;
+    gc->old_lst = dummy_gc->old_lst;
+
+    fprintf(stderr, "gc->old_fst: %p\n", gc->old_fst);
+
+    mem_sys_free(dummy_gc);
+    
+#ifndef GMC_DEBUG
+    fprintf(stderr, "Done with allocation\n");
+#endif
 }
 
 
