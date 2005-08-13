@@ -58,6 +58,7 @@ get_free_buffer(Interp *interpreter,
     /* don't mess around with flags */
     PObj_bufstart(buffer) = NULL;
     PObj_buflen(buffer) = 0;
+    fprintf (stderr, "Allocated buffer at %p, bufstart at %p, buflen at %p\n", buffer, &PObj_bufstart(buffer), &PObj_buflen(buffer));
 
     if (pool->object_size  - GC_HEADER_SIZE > sizeof(PObj))
         memset(buffer + 1, 0,
@@ -415,6 +416,7 @@ new_string_header(Interp *interpreter, UINTVAL flags)
             interpreter->arena_base->string_header_pool);
     PObj_get_FLAGS(string) |= flags | PObj_is_string_FLAG;
     SET_NULL(string->strstart);
+    fprintf (stderr, "Allocated new string header at %p, strstart at %p\n", string, &string->strstart);
     return string;
 }
 

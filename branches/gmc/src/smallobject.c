@@ -463,10 +463,20 @@ new_small_object_pool(Interp *interpreter,
 void
 gc_pmc_ext_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
 {
+#if PARROT_GC_GMC
+    /* PMC_ext are scheduled for removal anyway, so use these functions
+     * in the meantime. */
+    struct Small_Object_Pool *pmc_pool = interpreter->arena_base->pmc_pool;
+    pool->add_free_object = pmc_pool->add_free_object;
+    pool->get_free_object = pmc_pool->get_free_object;
+    pool->alloc_objects   = pmc_pool->alloc_objects;
+    pool->more_objects    = pmc_pool->more_objects;
+#else
     pool->add_free_object = gc_ms_add_free_object;
     pool->get_free_object = gc_ms_get_free_object;
     pool->alloc_objects   = gc_ms_alloc_objects;
     pool->more_objects    = gc_ms_alloc_objects;
+#endif
 }
 
 static void

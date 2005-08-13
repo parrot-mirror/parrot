@@ -24,7 +24,11 @@ typedef struct Stack_Entry {
 } Stack_Entry_t;
 
 typedef struct Stack_Chunk {
+#if PARROT_GC_GMC
+    PMC_BODY *body;
+#else
     pobj_t obj;
+#endif
     int size;
     const char * name;
     struct Stack_Chunk *prev;

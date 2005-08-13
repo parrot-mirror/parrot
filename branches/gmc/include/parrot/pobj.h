@@ -87,17 +87,43 @@ typedef struct pobj_t {
 } pobj_t;
 
 /* plain Buffer is the smallest Parrot Obj */
+#if PARROT_GC_GMC
+
+
+/* TODO: Change to a real pmc_body type. */
+#define DEFAULT_BODY UnionVal
+#define PMC_BODY DEFAULT_BODY
+
+
+/* Hack for the get_FLAGS macro to be happy. */
+typedef struct flags_holder {
+    Parrot_UInt flags;
+#if ! DISABLE_GC_DEBUG
+    UINTVAL _pobj_version;
+#endif
+} flags_holder;
+
+
+typedef struct Buffer {
+    PMC_BODY *body;
+    flags_holder obj;
+} Buffer;
+
+#else
+
 typedef struct Buffer {
     pobj_t obj;
 } Buffer;
+
+#endif
 
 typedef Buffer PObj;
 
 #if PARROT_GC_GMC
 
-#define PObj_bufstart(pmc)    (pmc)->obj.u._b._bufstart
-#define PObj_buflen(pmc)      (pmc)->obj.u._b._buflen
 #define PMC_body(pmc)         (pmc)->body
+#define PObj_bufstart(pmc)    PMC_body(pmc)->_b._bufstart
+#define PObj_buflen(pmc)      PMC_body(pmc)->_b._buflen
 #define PMC_struct_val(pmc)   PMC_body(pmc)->_ptrs._struct_val
 #define PMC_pmc_val(pmc)      PMC_body(pmc)->_ptrs._pmc_val
 #define PMC_int_val(pmc)      PMC_body(pmc)->_i._int_val
@@ -140,7 +166,12 @@ typedef enum {
 } parrot_string_representation_t;
 
 struct parrot_string_t {
+#if PARROT_GC_GMC
+    PMC_BODY *body;
+    flags_holder obj;
+#else
     pobj_t obj;
+#endif
     UINTVAL bufused;
     void *strstart;
     UINTVAL strlen;
@@ -161,15 +192,8 @@ struct parrot_string_t {
 #define PMC_DATA_IN_EXT 1
 
 
-/* TODO: Change to a real pmc_body type. */
-#if PARROT_GC_GMC
-#define DEFAULT_BODY UnionVal
-#define PMC_BODY DEFAULT_BODY
 
-/* Hack for the get_FLAGS macro to be happy. */
-typedef struct flags_holder {
-    Parrot_UInt flags;
-} flags_holder;
+#if PARROT_GC_GMC
 #endif
 
 struct PMC {

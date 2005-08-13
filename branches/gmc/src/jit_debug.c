@@ -155,8 +155,13 @@ write_types(FILE *stabs)
                 "strstart:(0,15),%d,%d;"        /* fake a char* */
                 ";\""
                 "," N_LSYM ",0,0,0\n", i++, BYTE_SIZE(STRING),
+#if PARROT_GC_GMC
+                BIT_OFFSET(STRING, body->_b._bufstart), BIT_SIZE(void*),
+                BIT_OFFSET(STRING, body->_b._buflen), BIT_SIZE(size_t),
+#else
                 BIT_OFFSET(STRING, obj.u._b._bufstart), BIT_SIZE(void*),
                 BIT_OFFSET(STRING, obj.u._b._buflen), BIT_SIZE(size_t),
+#endif
                 BIT_OFFSET(STRING, obj.flags), BIT_SIZE(UINTVAL),
                 BIT_OFFSET(STRING, bufused), BIT_SIZE(UINTVAL),
                 BIT_OFFSET(STRING, strstart), BIT_SIZE(void*)
