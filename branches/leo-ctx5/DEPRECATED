@@ -54,3 +54,25 @@ die, die(in INT), die_hard(int INT, in INT)
   die is a special case of die_hard, but the name of the latter isn't
   really nice. Therefore die_hard with be renamed to die, the 2 argument
   form of die survives.
+
+Deprecated PIR directives and shortcuts.
+
+
+Stack calling convention PIR directives
+
+.param, .result, .arg, .return
+
+  All have a different functionality, if stack calling conventions are used.
+  This leads to unneeded complexity in the parser and to nasty workarounds
+  (.param works only directly after a .sub statement, .return var is always
+  'save' and so on.
+
+  use save or restore instead
+
+call xxx
+
+  This is one char longer then it's translation 'bsr' - it's just not needed.
+
+
+
+
