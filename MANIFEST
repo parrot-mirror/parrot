@@ -5,6 +5,7 @@ ABI_CHANGES                                       []
 CREDITS                                           []
 ChangeLog                                         []
 Configure.pl                                      []
+DEPRECATED                                        []
 DEVELOPING                                        []
 LICENSES/Artistic                                 [main]doc
 LICENSES/gpl.txt                                  [main]doc
