@@ -18,7 +18,6 @@ however, then we're returning the invokable PMC.
 
 .sub __expression_parse
   .param string expr
-  .param pmc foo
   
   .local pmc retval
   .local int return_type
@@ -30,7 +29,6 @@ however, then we're returning the invokable PMC.
   .local pmc precedences  # Global list of operator precedence
   precedences = find_global "_Tcl", "precedence"
 
-got_arg:
   .local pmc undef
   undef = new Undef
 
@@ -40,46 +38,40 @@ got_arg:
   program_stack = new TclList
 
   .local int chunk_start
-  chunk_start = 0
-  .local int chunk_end
-  chunk_end = 0
+  chunk_start = -1 # we inc before we use it
+
   .local int char
   .local int expr_length
   expr_length = length expr
-
-  #print "CALLED WITH "
-  #print expr
-
-# Split the string into an array of chunks
-# right now we're just handling integer operands. that's it.
-
   .local int op_length
 
 chunk_loop:
-  #print "CHUNK_LOOP\n"
+  inc chunk_start
   if chunk_start >= expr_length goto chunks_done
   
-  # Is this a space? skip it and try again, otherwise, fall through.
   $I0 = is_whitespace expr, chunk_start
-  if $I0 == 0 goto get_parenthetical
-
-  inc chunk_start
-  inc chunk_end
-  goto chunk_loop
+  if $I0 == 1 goto chunk_loop
+  
+  $I0 = is_digit expr, chunk_start
+  if $I0 == 1 goto get_number
+  
+  $I0 = ord expr, chunk_start
+  if $I0 == 40 goto get_parenthetical # (
+  if $I0 == 36 goto get_variable      # $
+  if $I0 == 46 goto get_number        # .
+  
+  $I0 = is_wordchar expr, chunk_start
+  if $I0 == 1 goto get_function
+  
+  goto get_operator
 
 get_parenthetical:
-  # are we on an open paren? then figure out what's inside the
-  # string and call ourselves recursively.
-  # (XXX should unroll this recursion.)
-
-  char = ord expr, chunk_start
-  if char != 40 goto get_variable # (
   .local int depth
   depth = 1
   $I1   = chunk_start
 get_paren_loop:
   inc $I1
-  if $I1 >= expr_length goto die_horribly
+  if $I1 >= expr_length goto premature_end
   $I0 = ord expr, $I1
   if $I0 == 41 goto get_paren_loop_right
   if $I0 == 40 goto get_paren_loop_left
@@ -114,7 +106,6 @@ get_paren_done:
 
   push chunks, chunk
   chunk_start += $I0
-  inc chunk_start
   goto chunk_loop
  
 get_variable:
@@ -156,7 +147,7 @@ get_variable_continue:
   push chunks, chunk
  
   chunk_start = chunk_start + op_length
-
+  dec chunk_start
   goto chunk_loop
 
 get_function:
@@ -174,7 +165,8 @@ get_function:
   chunk[2] = -1 # functions trump operands, for now.
   push chunks, chunk
   push chunks, result
-  chunk_start = chunk_start + op_length
+  chunk_start += op_length
+  dec chunk_start
   goto chunk_loop
 
 get_number:
@@ -187,8 +179,12 @@ get_number:
   if op_length == 0 goto get_operator
   # XXX otherwise, pull that number off
   # stuff the chunk onto the chunk_list
-  push chunks, value
-  chunk_start = chunk_start + op_length
+  chunk = new TclList
+  chunk[0] = INTEGER
+  chunk[1] = value
+  push chunks, chunk
+  chunk_start += op_length
+  dec chunk_start
   goto chunk_loop
  
 get_operator:
@@ -243,8 +239,8 @@ op_done:
 
   push chunks, chunk
 
-  chunk_start = chunk_start + op_len
-
+  chunk_start += op_len
+  dec chunk_start
   goto chunk_loop
 
   # if we don't match any of the possible cases so far, then we must
@@ -353,6 +349,14 @@ die_horribly:
   return_type = TCL_ERROR 
   program_stack = new String
   program_stack = "An error occurred in EXPR"
+  goto converter_done
+
+premature_end:
+  return_type = TCL_ERROR
+  program_stack = new String
+  program_stack = "syntax error in expression \""
+  program_stack .= expr
+  program_stack .= "\": premature end of expression"
 
 converter_done: 
   #print "converter done\n"
@@ -735,9 +739,8 @@ failure:
 finish_up:
    $S0 = substr expr, start, pos
    $I0 = $S0
-   value = new TclList
-   value[0] = INTEGER
-   value[1] = $I0 
+   value = new TclInt
+   value = $I0 
 
 real_done:
   .return(pos,INTEGER,value)
@@ -950,7 +953,6 @@ was this a valid tcl-style level, or did we get this value as a default?
 .sub __get_call_level
   .param pmc tcl_level
   .local pmc parrot_level, defaulted, orig_level
-  parrot_level = new Integer
   defaulted = new Integer
   defaulted = 0
 
@@ -959,7 +961,6 @@ was this a valid tcl-style level, or did we get this value as a default?
   orig_level = current_call_level
  
   .local int num_length, num_type
-  .local pmc num_result
 
 get_absolute:
   # Is this an absolute? 
@@ -967,25 +968,23 @@ get_absolute:
   $S1 = substr $S0, 0, 1
   if $S1 != "#" goto get_integer
   $S0 = tcl_level
-  (num_length,num_type,num_result) = __expr_get_number($S0,1)
+  (num_length,num_type,parrot_level) = __expr_get_number($S0,1)
   if num_type != INTEGER goto default 
   $S0 = tcl_level
   $I0 = length $S0
 
   dec $I0
   if $I0 != num_length goto default
-  parrot_level = num_result[1]
   goto bounds_check
  
 get_integer:
   # Is this an integer? 
   $S0 = tcl_level
-  (num_length,num_type,num_result) = __expr_get_number($S0,0)
+  (num_length,num_type,parrot_level) = __expr_get_number($S0,0)
   if num_type != INTEGER goto default 
   $S0 = tcl_level
   $I0 = length $S0
   if $I0 != num_length goto default
-  parrot_level = num_result[1]
   parrot_level = orig_level - parrot_level
   goto bounds_check
  
