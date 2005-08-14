@@ -845,7 +845,7 @@ Parrot_${classname}_class_init(Parrot_Interp interp, int entry, int pass)
         $enum_name,	/* base_type */
         NULL,	/* whoami */
         $vtbl_flag, /* flags */
-	8,	/* size of pmc_body (sizeof(UnionVal) for now) */
+	24,	/* size of pmc_body */
         NULL,   /* does_str */
         NULL,   /* isa_str */
         NULL,   /* class */

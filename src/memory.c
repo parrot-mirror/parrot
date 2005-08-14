@@ -114,13 +114,6 @@ mem__sys_realloc(void *from, size_t size)
 #ifdef DETAIL_MEMORY_DEBUG
     printf("Freed %p (realloc -- %i bytes)\n", from, size);
 #endif
-    /* XXX: DON'T LOOK !!! */
-    if (from == 0x0832b8c8)
-    {
-	fprintf (stderr, "PROUT!\n");
-	from = NULL;
-	*(int*)from = 54;
-    }
     ptr = realloc(from, size);
     if (!ptr)
          PANIC("Out of mem");
