@@ -91,7 +91,12 @@ mark_special(Parrot_Interp interpreter, PMC* obj)
     else
         hi_prio = 0;
 
-    if (obj->pmc_ext) {
+#if PARROT_GC_GMC
+    if (PMC_data(obj))
+#else
+    if (obj->pmc_ext)
+#endif
+    {
         PMC* tptr = arena_base->dod_trace_ptr;
 
         ++arena_base->num_extended_PMCs;
@@ -219,7 +224,12 @@ void pobject_lives(Interp *interpreter, PObj *obj)
     else {
         if (PObj_is_PMC_TEST(obj)) {
             PMC *p = (PMC*)obj;
-            if (p->pmc_ext && PMC_metadata(p)) {
+#if PARROT_GC_GMC
+	    if (PMC_metadata(p))
+#else
+            if (p->pmc_ext && PMC_metadata(p))
+#endif
+	    {
                 fprintf(stderr, "GC: error obj %p (%s) has properties\n",
                         p, (char*)p->vtable->whoami->strstart);
             }
@@ -822,6 +832,11 @@ Parrot_dod_sweep(Interp *interpreter,
                     if (PObj_active_destroy_TEST(p))
                         VTABLE_destroy(interpreter, p);
 
+#if PARROT_GC_GMC
+                    if (PObj_is_PMC_EXT_TEST(p) && PMC_data(p) != NULL) {
+			mem_sys_free(PMC_data(p));
+		    }
+#else
                     if (PObj_is_PMC_EXT_TEST(p) && p->pmc_ext != NULL) {
                         /* if the PMC has a PMC_EXT structure,
                          * return it to the pool/arena
@@ -831,13 +846,18 @@ Parrot_dod_sweep(Interp *interpreter,
                         ext_pool->add_free_object(interpreter, ext_pool,
                                 p->pmc_ext);
                     }
+#endif
 #ifndef NDEBUG
                     /*
                      * invalidate the PMC
                      */
                     PMC_struct_val(p) = (void*)0xdeadbeef;
                     PMC_pmc_val(p) = (void*)0xdeadbeef;
+#if PARROT_GC_GMC
+		    PMC_data(p) = (void*)0xdeadbeef;
+#else
                     p->pmc_ext = (void*)0xdeadbeef;
+#endif /* PARROT_GC_GMC */
 #endif
                 }
                 /* else object is a buffer(like) */

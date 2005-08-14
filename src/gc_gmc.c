@@ -347,11 +347,8 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
 static void
 gc_gmc_gen_free(Gc_gmc_gen *gen)
 {
-    fprintf (stderr, "Freeing gen %p\n", gen);
-    fprintf (stderr, "Freeing gen->data %p\n", gen->first);
     mem_sys_free(gen->first);
     mem_sys_free(gen);
-    fprintf (stderr, "Done freeing\n");
 }
 
 
@@ -382,7 +379,6 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 	gen = gc_gmc_gen_init (interpreter);
 	gc_gmc_insert_gen (interpreter, dummy_gc, gen);
     }
-    fprintf(stderr, "Done with insertion\n");
 
     for (gen = dummy_gc->yng_fst, ogen = gc->yng_fst; ogen->next; gen = gen->next)
     {
@@ -392,13 +388,11 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 	ogen = ogen_nxt;
     }
     dummy_gc->yng_lst = gen;
-    fprintf(stderr, "Done with young copy\n");
 
     for (gen = dummy_gc->yng_fst, i = 0; i < (nb_gen/2); i++, gen = gen->next);
     dummy_gc->old_fst = gen->next;
     gen->next->prev = NULL;
     gen->next = NULL;
-    fprintf(stderr, "Done with cutting in a half, old_fst: %p\n", gc->old_fst);
 
     for (gen = dummy_gc->old_fst, ogen = gc->old_fst; ogen; gen = gen->next)
     {
@@ -407,7 +401,6 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 	gc_gmc_gen_free(ogen);
 	ogen = ogen_nxt;
     }
-    fprintf(stderr,"Done with old copy\n");
     dummy_gc->old_lst = gen;
 
     gc->yng_fst = dummy_gc->yng_fst;
@@ -415,11 +408,10 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
     gc->old_fst = dummy_gc->old_fst;
     gc->old_lst = dummy_gc->old_lst;
 
-    fprintf(stderr, "gc->old_fst: %p\n", gc->old_fst);
 
     mem_sys_free(dummy_gc);
     
-#ifndef GMC_DEBUG
+#ifdef GMC_DEBUG
     fprintf(stderr, "Done with allocation\n");
 #endif
 }

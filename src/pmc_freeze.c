@@ -570,7 +570,11 @@ static void
 pmc_add_ext(Parrot_Interp interpreter, PMC *pmc)
 {
     if (pmc->vtable->flags & VTABLE_PMC_NEEDS_EXT)
+#if PARROT_GC_GMC
+	Gmc_PMC_flag_SET(has_ext,pmc);
+#else
         add_pmc_ext(interpreter, pmc);
+#endif
 }
 
 /*
@@ -613,11 +617,19 @@ cleanup_next_for_GC_pool(Parrot_Interp interpreter,
             else
                 nm += 4;
             if (!(*dod_flags & (PObj_on_free_list_FLAG << nm)))
+#if PARROT_GC_GMC
+		if (Gmc_has_PMC_EXT_TEST(p))
+#else
                 if (p->pmc_ext)
+#endif
                     PMC_next_for_GC(p) = NULL;
 #else
             if (!PObj_on_free_list_TEST(p)) {
+#if PARROT_GC_GMC
+		if (Gmc_has_PMC_EXT_TEST(p))
+#else
                 if (p->pmc_ext)
+#endif
                     PMC_next_for_GC(p) = NULL;
             }
 #endif
@@ -1007,7 +1019,11 @@ do_thaw(Parrot_Interp interpreter, PMC* pmc, visit_info *info)
     }
     list_assign(interpreter, PMC_data(info->id_list), id, pmc, enum_type_PMC);
     /* remember nested aggregates depth first */
+#if PARROT_GC_GMC
+    if (Gmc_has_PMC_EXT_TEST(pmc))
+#else
     if (pmc->pmc_ext)
+#endif
         list_unshift(interpreter, PMC_data(info->todo), pmc, enum_type_PMC);
 }
 
@@ -1109,7 +1125,12 @@ Remembers the PMC for later processing.
 static void
 add_pmc_next_for_GC(Parrot_Interp interpreter, PMC *pmc, visit_info *info)
 {
-    if (pmc->pmc_ext) {
+#if PARROT_GC_GMC
+    if (Gmc_has_PMC_EXT_TEST(pmc))
+#else
+    if (pmc->pmc_ext)
+#endif
+    {
         PMC_next_for_GC(info->mark_ptr) = pmc;
         info->mark_ptr = PMC_next_for_GC(pmc) = pmc;
     }
@@ -1144,7 +1165,12 @@ next_for_GC_seen(Parrot_Interp interpreter, PMC *pmc, visit_info *info,
      * we can only remember PMCs with a next_for_GC pointer
      * which is located in pmc_ext
      */
-    if (pmc->pmc_ext) {
+#if PARROT_GC_GMC
+    if (Gmc_has_PMC_EXT_TEST(pmc))
+#else
+    if (pmc->pmc_ext)
+#endif
+    {
         /* already seen? */
         if (PMC_next_for_GC(pmc)) {
             seen = 1;
@@ -1207,7 +1233,11 @@ todo_list_seen(Parrot_Interp interpreter, PMC *pmc, visit_info *info,
     *id = info->id;
     hash_put(interpreter, PMC_struct_val(info->seen), pmc, (void*)*id);
     /* remember containers */
+#if PARROT_GC_GMC
+    if (Gmc_has_PMC_EXT_TEST(pmc))
+#else
     if (pmc->pmc_ext)
+#endif
         list_unshift(interpreter, PMC_data(info->todo), pmc, enum_type_PMC);
     return 0;
 }
@@ -1310,7 +1340,12 @@ visit_loop_next_for_GC(Parrot_Interp interpreter, PMC *current,
     PMC *prev = NULL;
 
     visit_next_for_GC(interpreter, current, info);
-    if (current->pmc_ext) {
+#if PARROT_GC_GMC
+    if (Gmc_has_PMC_EXT_TEST(current))
+#else
+    if (current->pmc_ext)
+#endif
+    {
         for ( ; current != prev; current = PMC_next_for_GC(current)) {
             VTABLE_visit(interpreter, current, info);
             prev = current;

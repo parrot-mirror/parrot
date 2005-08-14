@@ -103,7 +103,12 @@ pmc_reuse(Interp *interpreter, PMC *pmc, INTVAL new_type,
     }
 
     /* Do we have an extension area? */
-    if (PObj_is_PMC_EXT_TEST(pmc) && pmc->pmc_ext) {
+#if ! PARROT_GC_GMC
+    if (PObj_is_PMC_EXT_TEST(pmc) && pmc->pmc_ext)
+#else
+    if (PObj_is_PMC_EXT_TEST(pmc) && Gmc_has_PMC_EXT_TEST(pmc))
+#endif
+    {
         has_ext = 1;
     }
 
@@ -112,20 +117,36 @@ pmc_reuse(Interp *interpreter, PMC *pmc, INTVAL new_type,
 
         if (!has_ext) {
             /* If we need an ext area, go allocate one */
+#if PARROT_GC_GMC
+	    Gmc_PMC_flag_SET(has_ext,pmc);
+#else
             add_pmc_ext(interpreter, pmc);
+#endif
         }
         new_flags = PObj_is_PMC_EXT_FLAG;
     }
     else {
         if (has_ext) {
+#if PARROT_GC_GMC
+	    mem_sys_free(PMC_data(pmc));
+#else
             /* if the PMC has a PMC_EXT structure,
              * return it to the pool/arena
              */
             struct Small_Object_Pool *ext_pool =
                 interpreter->arena_base->pmc_ext_pool;
             ext_pool->add_free_object(interpreter, ext_pool, pmc->pmc_ext);
+#endif
         }
+#if PARROT_GC_GMC
+	Gmc_PMC_flag_CLEAR(has_ext,pmc);
+	PMC_metadata(pmc) = NULL;
+	PMC_sync(pmc) = NULL;
+	PMC_next_for_GC(pmc) = NULL;
+	PMC_data(pmc) = NULL;
+#else
         pmc->pmc_ext = NULL;
+#endif
 #if ! PMC_DATA_IN_EXT
         PMC_data(pmc) = NULL;
 #endif
@@ -437,6 +458,10 @@ create_class_pmc(Interp *interpreter, INTVAL type)
      */
     class = get_new_pmc_header(interpreter, type, PObj_constant_FLAG);
     if (PObj_is_PMC_EXT_TEST(class)) {
+#if PARROT_GC_GMC
+	if (Gmc_has_PMC_EXT_TEST(class))
+	    mem_sys_free(PMC_data(class));
+#else
         /* if the PMC has a PMC_EXT structure,
          * return it to the pool/arena
          * we don't need it - basically only the vtable is important
@@ -445,8 +470,18 @@ create_class_pmc(Interp *interpreter, INTVAL type)
             interpreter->arena_base->pmc_ext_pool;
         ext_pool->add_free_object(interpreter, ext_pool,
                 class->pmc_ext);
+#endif
     }
+#if PARROT_GC_GMC
+    Gmc_PMC_flag_CLEAR(has_ext,class);
+    PMC_metadata(class) = NULL;
+    PMC_sync(class) = NULL;
+    PMC_next_for_GC(class) = NULL;
+    PMC_data(class) = NULL;
+#else
     class->pmc_ext = NULL;
+#endif
+    
     DOD_flag_CLEAR(is_special_PMC, class);
     PMC_pmc_val(class)   = (void*)0xdeadbeef;
     PMC_struct_val(class)= (void*)0xdeadbeef;
