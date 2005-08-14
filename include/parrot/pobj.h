@@ -93,6 +93,10 @@ typedef struct pobj_t {
 /* TODO: Change to a real pmc_body type. */
 typedef struct default_body {
     UnionVal u;
+    Parrot_UInt flags;
+#if ! DISABLE_GC_DEBUG
+    UINTVAL _pobj_version;
+#endif
     PMC *_metadata;
     struct _Sync *_synchronize;
     PMC *_next_for_GC;
@@ -101,19 +105,17 @@ typedef struct default_body {
 
 #define PMC_BODY default_body
 
-
-/* Hack for the get_FLAGS macro to be happy. */
-typedef struct flags_holder {
+typedef struct pobj_body {
+    UnionVal u;
     Parrot_UInt flags;
 #if ! DISABLE_GC_DEBUG
     UINTVAL _pobj_version;
 #endif
-} flags_holder;
+} pobj_body;
 
 
 typedef struct Buffer {
-    PMC_BODY *body;
-    flags_holder obj;
+    pobj_body *body;
 } Buffer;
 
 #else
@@ -158,12 +160,25 @@ typedef Buffer PObj;
  * END DEPRECATED BUFFER ACCESSORS
  */
 
+#if PARROT_GC_GMC
+
+#if ! DISABLE_GC_DEBUG
+/* BEGIN DEPRECATED POBJ ACCESSOR */
+#  define pobj_version body->_pobj_version
+/* END DEPRECATED POBJ ACCESSOR */
+#  define PObj_version(pobj)  (pobj)->body->_pobj_version
+#endif /* ! DISABLE_GC_DEBUG */
+
+#else 
+
 #if ! DISABLE_GC_DEBUG
 /* BEGIN DEPRECATED POBJ ACCESSOR */
 #  define pobj_version obj._pobj_version
 /* END DEPRECATED POBJ ACCESSOR */
 #  define PObj_version(pobj)  (pobj)->obj._pobj_version
 #endif /* ! DISABLE_GC_DEBUG */
+
+#endif /* PARROT_GC_GMC */
 
 typedef enum {
     enum_stringrep_unknown = 0,
@@ -175,7 +190,6 @@ typedef enum {
 struct parrot_string_t {
 #if PARROT_GC_GMC
     PMC_BODY *body;
-    flags_holder obj;
 #else
     pobj_t obj;
 #endif
@@ -201,7 +215,6 @@ struct parrot_string_t {
 struct PMC {
 #if PARROT_GC_GMC
     PMC_BODY *body;
-    flags_holder obj;
 #else
     pobj_t obj;
 #endif
@@ -477,7 +490,11 @@ typedef enum PObj_enum {
 
 #endif /* ARENA_DOD_FLAGS */
 
+#if PARROT_GC_GMC
+#define PObj_get_FLAGS(o) ((o)->body->flags)
+#else
 #define PObj_get_FLAGS(o) ((o)->obj.flags)
+#endif
 
 
 #define PObj_flag_TEST(flag, o) (PObj_get_FLAGS(o) & PObj_ ## flag ## _FLAG)

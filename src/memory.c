@@ -154,6 +154,11 @@ mem_sys_free(void *from)
 #ifdef DETAIL_MEMORY_DEBUG
     printf("Freed %p\n", from);
 #endif
+    if (from == 0x082a91d0)
+    {
+	from = NULL;
+	*(int*)NULL = 54;
+    }
     free(from);
 }
 

@@ -188,11 +188,10 @@ C<initializer> if it is supplied, otherwise C<init()> is called.
     void init_pmc_props (PMC* initializer, PMC* properties) {
     #if PARROT_GC_GMC
 	if (!Gmc_has_PMC_EXT_TEST(SELF))
-	    Gmc_PMC_flag_SET(has_ext,SELF);
     #else
         if (!SELF->pmc_ext)
-            add_pmc_ext(INTERP, SELF);
     #endif
+            add_pmc_ext(INTERP, SELF);
         DOD_WRITE_BARRIER(INTERP, SELF, NULL, properties);
         PMC_metadata(SELF) = properties;
         if (initializer)
@@ -283,11 +282,10 @@ Sets the property for C<*key> to C<*value>.
             PMC *prop;
     #if PARROT_GC_GMC
 	    if (!Gmc_has_PMC_EXT_TEST(SELF))
-		Gmc_PMC_flag_SET(has_ext,SELF);
     #else
             if (!SELF->pmc_ext)
-                add_pmc_ext(INTERP, SELF);
     #endif
+                add_pmc_ext(INTERP, SELF);
             /* first make new hash */
             PMC_metadata(SELF) = prop =
                 pmc_new_noinit(INTERP, enum_class_PerlHash);
@@ -337,11 +335,10 @@ Returns the PMC's properties.
     PMC* getprops() {
     #if PARROT_GC_GMC
 	if (!Gmc_has_PMC_EXT_TEST(SELF))
-	    Gmc_PMC_flag_SET(has_ext,SELF);
     #else
         if (!SELF->pmc_ext)
-            add_pmc_ext(INTERP, SELF);
     #endif
+            add_pmc_ext(INTERP, SELF);
         if (!PMC_metadata(SELF)) {
             PMC *prop;
             PMC_metadata(SELF) = prop =
@@ -955,11 +952,10 @@ Initializes the PMC during unarchiving.
         if (info->extra_flags == EXTRA_IS_PROP_HASH) {
     #if PARROT_GC_GMC
 	    if (!Gmc_has_PMC_EXT_TEST(SELF))
-		Gmc_PMC_flag_SET(has_ext,SELF);
     #else
             if (!SELF->pmc_ext)
-                add_pmc_ext(INTERP, SELF);
     #endif
+                add_pmc_ext(INTERP, SELF);
             info->thaw_ptr = &PMC_metadata(SELF);
             info->container = SELF;
             (info->visit_pmc_now)(INTERP, PMC_metadata(SELF), info);

@@ -117,11 +117,7 @@ pmc_reuse(Interp *interpreter, PMC *pmc, INTVAL new_type,
 
         if (!has_ext) {
             /* If we need an ext area, go allocate one */
-#if PARROT_GC_GMC
-	    Gmc_PMC_flag_SET(has_ext,pmc);
-#else
             add_pmc_ext(interpreter, pmc);
-#endif
         }
         new_flags = PObj_is_PMC_EXT_FLAG;
     }

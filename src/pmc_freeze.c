@@ -570,11 +570,7 @@ static void
 pmc_add_ext(Parrot_Interp interpreter, PMC *pmc)
 {
     if (pmc->vtable->flags & VTABLE_PMC_NEEDS_EXT)
-#if PARROT_GC_GMC
-	Gmc_PMC_flag_SET(has_ext,pmc);
-#else
         add_pmc_ext(interpreter, pmc);
-#endif
 }
 
 /*

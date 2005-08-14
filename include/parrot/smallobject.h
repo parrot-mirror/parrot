@@ -42,6 +42,8 @@ typedef void (*add_free_object_fn_type)(Interp *,
 #if PARROT_GC_GMC
 typedef void * (*get_free_typed_object_fn_type)(Interp *,
                              struct Small_Object_Pool *, INTVAL);
+typedef void * (*get_free_sized_object_fn_type)(Interp *,
+                             struct Small_Object_Pool *, size_t);
 #endif
 typedef void * (*get_free_object_fn_type)(Interp *,
                              struct Small_Object_Pool *);
@@ -239,6 +241,7 @@ struct Small_Object_Pool {
     add_free_object_fn_type     add_free_object;
 #if PARROT_GC_GMC
     get_free_typed_object_fn_type get_free_typed_object;
+    get_free_sized_object_fn_type get_free_sized_object;
 #endif
     get_free_object_fn_type     get_free_object;
     alloc_objects_fn_type       alloc_objects;

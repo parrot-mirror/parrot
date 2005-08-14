@@ -162,7 +162,11 @@ write_types(FILE *stabs)
                 BIT_OFFSET(STRING, obj.u._b._bufstart), BIT_SIZE(void*),
                 BIT_OFFSET(STRING, obj.u._b._buflen), BIT_SIZE(size_t),
 #endif
+#if PARROT_GC_GMC
+                BIT_OFFSET(STRING, body->flags), BIT_SIZE(UINTVAL),
+#else
                 BIT_OFFSET(STRING, obj.flags), BIT_SIZE(UINTVAL),
+#endif
                 BIT_OFFSET(STRING, bufused), BIT_SIZE(UINTVAL),
                 BIT_OFFSET(STRING, strstart), BIT_SIZE(void*)
                 );
@@ -180,7 +184,11 @@ write_types(FILE *stabs)
     /* PMC type */
     fprintf(stabs, ".stabs \"PMC:T(0,%d)=s%d", i, BYTE_SIZE(PMC));
     fprintf(stabs, "obj:(0,%d),%d,%d;",
+#if PARROT_GC_GMC
+            i + 1, BIT_OFFSET(PMC, body), BIT_SIZE(pobj_t));
+#else
             i + 1, BIT_OFFSET(PMC, obj), BIT_SIZE(pobj_t));
+#endif
     fprintf(stabs, "vtable:*(0,%d),%d,%d;",
             i + 3, BIT_OFFSET(PMC, vtable), BIT_SIZE(void*));
 #if ! PMC_DATA_IN_EXT
