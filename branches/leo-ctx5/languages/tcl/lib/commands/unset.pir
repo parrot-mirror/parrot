@@ -25,7 +25,6 @@
   call_level = $P0
 
   .local pmc search_variable
-  # XXX Should use get_var?
   push_eh catch
     if call_level goto get_lexical
     search_variable = find_global "Tcl", varname
@@ -35,7 +34,7 @@ get_lexical:
 resume:
   clear_eh
 
-  isnull search_variable, error
+  if_null search_variable, error
 
   null search_variable
 

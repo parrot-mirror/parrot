@@ -24,7 +24,7 @@
     subcommand_proc = find_global "_Tcl\0builtins\0info", subcommand_name
 resume:
   clear_eh 
-  isnull subcommand_proc, bad_args
+  if_null subcommand_proc, bad_args
   .return subcommand_proc(argv)
 
 catch:
@@ -55,7 +55,7 @@ bad_args:
   procname = shift argv
   $P1 = find_global "_Tcl", "proc_args"
   $P2 = $P1[procname]
-  isnull $P2, no_args
+  if_null $P2, no_args
   .return(TCL_OK,$P2)
 
 no_args:
@@ -85,7 +85,7 @@ bad_args:
   procname = shift argv
   $P1 = find_global "_Tcl", "proc_body"
   $P2 = $P1[procname]
-  isnull $P2, no_body
+  if_null $P2, no_body
   .return(TCL_OK,$P2)
 
 no_body:
@@ -144,7 +144,7 @@ bad_args:
     $P1 = find_global "Tcl", varname
 global_resume:
   clear_eh 
-  isnull $P1, lex
+  if_null $P1, lex
   retval = 1
   .return(TCL_OK,retval)
 
@@ -158,7 +158,7 @@ lex:
     $P1 = find_lex $I1, varname
 lex_resume:
   clear_eh 
-  isnull $P1, nope
+  if_null $P1, nope
   retval = 1
   .return(TCL_OK,retval)
 
