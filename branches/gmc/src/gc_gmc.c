@@ -68,7 +68,10 @@ gc_gmc_insert_gen(Interp *interpreter, Gc_gmc *gc, Gc_gmc_gen *gen)
     while ((UINTVAL)ptr > (UINTVAL)gen->first)
     {
       cur_gen = cur_gen->prev;
-      ptr = cur_gen->first;
+      if (cur_gen)
+	  ptr = cur_gen->first;
+      else
+	  ptr = NULL;
     }
     
     /* Insert the generation. */
@@ -78,16 +81,40 @@ gc_gmc_insert_gen(Interp *interpreter, Gc_gmc *gc, Gc_gmc_gen *gen)
       {
 	cur_gen->next->prev = gen;
       }
-      cur_gen->next = gen;
       gen->next = cur_gen->next;
+      cur_gen->next = gen;
     } else {
-      gen->next = NULL;
-      gc->yng_fst = gen;
-      gc->old_lst = gen;
+	if (gc->yng_fst)
+	{
+	    gen->next = gc->yng_fst;
+	    gc->yng_fst->prev = gen;
+	    gc->yng_fst = gen;
+	} else {
+	    gen->next = NULL;
+	    gc->yng_fst = gen;
+	    gc->old_lst = gen;
+	}
     }
     gen->prev = cur_gen;
     if (gc->old_lst == cur_gen)
       gc->old_lst = gen;
+}
+
+static void
+gc_gmc_test_linked_list_gen(Interp *interpreter, Gc_gmc *gc)
+{
+    Gc_gmc_gen *gen;
+    UINTVAL i,j;
+    for (i = 0, gen = gc->yng_fst; gen; i++, gen = gen->next);
+    for (j = 0, gen = gc->old_lst; gen; j++, gen = gen->prev);
+    if (i != gc->nb_gen || j != gc->nb_gen)
+    {
+	fprintf(stderr, "Invalid linked list : %d elem instead of %d\n", i, gc->nb_gen);
+	fprintf(stderr, "Invalid linked list : %d elem instead of %d\n", j, gc->nb_gen);
+	gen = NULL;
+	*(int*)gen = 54;
+    } else
+	fprintf(stderr, "Linked list is OK !\n");
 }
 
 static void gc_gmc_pool_deinit(Interp *, struct Small_Object_Pool *);
@@ -125,6 +152,8 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
 	gen = gc_gmc_gen_init(interpreter);
 	gc_gmc_insert_gen(interpreter, gc, gen);
     }
+
+    gc_gmc_test_linked_list_gen(interpreter, gc);
 
     /* Separate the generations in two halves : one is young (= aggregate
      * objects), the other is old (non-aggregate objects). */
@@ -255,7 +284,7 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
   gen = (aggreg) ? gc->yng_lst : gc->old_lst;
 
   /* Should we use the next generation ? */
-  if (size > gen->remaining)
+  if (size >= gen->remaining)
   {
       if (aggreg)
 	  gc->yng_lst = gen->next;
@@ -271,7 +300,7 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
   gen = (aggreg) ? gc->yng_lst : gc->old_lst;
 
   /* Should we use the next generation ? */
-  if (size > gen->remaining)
+  if (size >= gen->remaining)
   {
       if (aggreg)
 	  gc->yng_lst = gen->next;
@@ -285,6 +314,9 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
   pmc_body = gen->fst_free;
   gen->fst_free = (void*)((char*)pmc_body + size);
   gen->remaining -= size;
+#ifdef GMC_DEBUG
+  fprintf (stderr,"Allocated size %d in gen %p, first: %p, remaining %d, next_gen: %p, fst_free: %p\n", size, gen, gen->first, gen->remaining, gen->next, gen->fst_free);
+#endif
 
 #ifdef GMC_DEBUG
   fprintf (stderr, "Allocating %s PMC of size %d\n", (aggreg) ? "aggregate" : "non-aggregate", size);
@@ -367,15 +399,15 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
     dest->fst_free = (void*)((char*)dest->first + offset);
     dest->remaining = from->remaining;
     dest->IGP = from->IGP;
+    fprintf (stderr, "Copying gen %p to gen %p\n", from, dest);
+    fprintf (stderr, "Copying %p to %p\n", from->first, dest->first);
     memcpy(dest->first, from->first, GMC_GEN_SIZE);
 }
 
 static void
 gc_gmc_gen_free(Gc_gmc_gen *gen)
 {
-    fprintf(stderr, "Freeing gen->first %p\n", gen->first);
     mem_sys_free(gen->first);
-    fprintf(stderr, "Freeing gen %p\n", gen);
     mem_sys_free(gen);
 }
 
@@ -401,6 +433,7 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
     dummy_gc->yng_lst = NULL;
     dummy_gc->old_fst = NULL;
     dummy_gc->old_lst = NULL;
+    dummy_gc->nb_gen = nb_gen;
     
     for (i = 0; i < nb_gen; i++)
     {
@@ -408,22 +441,23 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 	gc_gmc_insert_gen (interpreter, dummy_gc, gen);
     }
 
+    gc_gmc_test_linked_list_gen(interpreter, dummy_gc);
+
     for (gen = dummy_gc->yng_fst, ogen = gc->yng_fst; ogen; gen = gen->next)
     {
-	fprintf (stderr, "Old_gen: %p, old_gen->next: %p\n", ogen, ogen->next);
 	ogen_nxt = ogen->next;
 	gc_gmc_copy_gen(ogen,gen);
 	gc_gmc_gen_free(ogen);
 	ogen = ogen_nxt;
     }
     dummy_gc->yng_lst = gen;
-    fprintf(stderr, "First half\n");
 
     for (gen = dummy_gc->yng_fst, i = 0; i < (nb_gen/2); i++, gen = gen->next);
     dummy_gc->old_fst = gen;
     gen->prev->next = NULL;
     gen->prev = NULL;
 
+    fprintf (stderr, "ogen: %p\n", gc->old_fst);
     for (gen = dummy_gc->old_fst, ogen = gc->old_fst; ogen; gen = gen->next)
     {
 	ogen_nxt = ogen->next;
