@@ -374,8 +374,6 @@ expand_hash(Interp *interpreter, Hash *hash)
     void *new_mem;
     size_t offset, i, new_loc;
 
-    fprintf(stderr, "Trying to expand hash at %p\n", hash);
-
     /*
        allocate some less buckets
        e.g. 3 buckets, 4 pointers:

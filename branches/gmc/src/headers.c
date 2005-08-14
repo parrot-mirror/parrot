@@ -268,7 +268,10 @@ new_pmc_header(Interp *interpreter, UINTVAL flags)
 #else
         flags |= PObj_is_special_PMC_FLAG;
 #endif
-#if ! PARROT_GC_GMC
+#if PARROT_GC_GMC
+	Gmc_PMC_flag_SET(has_ext,pmc);
+	PObj_is_PMC_EXT_SET(pmc);
+#else
         pmc->pmc_ext = new_pmc_ext(interpreter);
 #endif /* PARROT_GC_GMC */
         if (flags & PObj_is_PMC_shared_FLAG) {
@@ -279,9 +282,16 @@ new_pmc_header(Interp *interpreter, UINTVAL flags)
     }
     else
 #if PARROT_GC_GMC
-	PMC_data(pmc) = NULL;
+	Gmc_PMC_flag_CLEAR(has_ext,pmc);
 #else
         pmc->pmc_ext = NULL;
+#endif
+
+#if PARROT_GC_GMC
+    PMC_next_for_GC(pmc) = NULL;
+    PMC_metadata(pmc) = NULL;
+    PMC_sync(pmc) = NULL;
+    PMC_data(pmc) = NULL;
 #endif
     PObj_get_FLAGS(pmc) |= PObj_is_PMC_FLAG|flags;
     pmc->vtable = NULL;
@@ -327,7 +337,10 @@ new_pmc_typed_header(Interp *interpreter, UINTVAL flags, INTVAL base_type)
 #else
         flags |= PObj_is_special_PMC_FLAG;
 #endif
-#if ! PARROT_GC_GMC
+#if PARROT_GC_GMC
+	Gmc_PMC_flag_SET(has_ext,pmc);
+	PObj_is_PMC_EXT_SET(pmc);
+#else
         pmc->pmc_ext = new_pmc_ext(interpreter);
 #endif
         if (flags & PObj_is_PMC_shared_FLAG) {
@@ -338,10 +351,17 @@ new_pmc_typed_header(Interp *interpreter, UINTVAL flags, INTVAL base_type)
     }
     else
 #if PARROT_GC_GMC
-	PMC_data(pmc) = NULL;
+	Gmc_PMC_flag_CLEAR(has_ext,pmc);
 #else
         pmc->pmc_ext = NULL;
 #endif
+
+#if PARROT_GC_GMC
+    PMC_next_for_GC(pmc) = NULL;
+    PMC_metadata(pmc) = NULL;
+    PMC_sync(pmc) = NULL;
+    PMC_data(pmc) = NULL;
+#endif 
     PObj_get_FLAGS(pmc) |= PObj_is_PMC_FLAG|flags;
     pmc->vtable = NULL;
 #if ! PMC_DATA_IN_EXT
