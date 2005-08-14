@@ -101,7 +101,7 @@ get_paren_done:
   if return_type == TCL_ERROR goto die_horribly
 
   chunk = new TclList
-  chunk[0] = INTEGER
+  chunk[0] = OPERAND
   chunk[1] = retval
 
   push chunks, chunk
@@ -109,44 +109,16 @@ get_paren_done:
   goto chunk_loop
  
 get_variable:
-  .local pmc varname
-
-  # XXX expr_get_variable should just call __get_var for us, 
-  # so we don't have to jump through these hoops.
-
-  (op_length,retval) = __expr_get_variable(expr,chunk_start) 
-  if op_length == 0 goto get_function
- 
-  $I0 = retval
-  if $I0 == 2 goto got_array
-  $S0 = retval[0]
-  ($I0,retval) = __get_var($S0)
-  goto get_variable_continue
-got_array:
-  $S0 = retval[0]
-  $S1 = retval[1]
-  ($I0,retval) = __get_var($S0,$S1)
-
-get_variable_continue:
-  # XXX This is a hack until we deal with types better in 
-  $N1 = retval
-  retval = new TclFloat
-  retval = $N1
-  #print "__get_var returned something of type:"
-  $S0 = typeof retval
-  #print $S0
-  #print "\n"
-  # XXX ignoring $I0 at the minute.
-  #(return_type,retval) = __expression($P0)
-  #error_S = retval
-  #if return_type == TCL_ERROR goto die_horribly
-  # Temporarily pump this out to the array.
+  (retval, chunk_start) = parse_variable(expr, chunk_start)
+  $P0 = retval."interpret"()
+  $I0 = $P0
+  retval = new TclInt
+  retval = $I0
+  
   chunk = new TclList
-  chunk[0] = INTEGER
+  chunk[0] = OPERAND
   chunk[1] = retval
   push chunks, chunk
- 
-  chunk_start = chunk_start + op_length
   dec chunk_start
   goto chunk_loop
 
@@ -158,7 +130,7 @@ get_function:
   .local pmc result
 
   (op_length,func,result) = __expr_get_function(expr,chunk_start)
-  if op_length == 0 goto get_number
+  if op_length == 0 goto get_operator
   chunk = new TclList
   chunk[0] = FUNC
   chunk[1] = func
@@ -172,15 +144,14 @@ get_function:
 get_number:
   #print "GET_NUMBER\n"
   # If we got here, then char and chunk_start are already set properly
-  .local int num_type
   .local pmc value
-  (op_length,num_type,value) = __expr_get_number(expr,chunk_start)
+  (op_length,value) = __expr_get_number(expr,chunk_start)
   #print "GOT_NUMBER\n"
   if op_length == 0 goto get_operator
   # XXX otherwise, pull that number off
   # stuff the chunk onto the chunk_list
   chunk = new TclList
-  chunk[0] = INTEGER
+  chunk[0] = OPERAND
   chunk[1] = value
   push chunks, chunk
   chunk_start += op_length
@@ -206,7 +177,7 @@ two_char:
   op_len = 2
   test_op = substr expr, chunk_start, op_len
   $P11 = ops[test_op]
-  isnull $P11, one_char
+  if_null $P11, one_char
   $I1 = typeof $P11
   if $I1 == .Undef goto one_char
   goto op_done
@@ -216,7 +187,7 @@ one_char:
   op_len = 1
   test_op = substr expr, chunk_start, op_len
   $P11 = ops[test_op]
-  isnull $P11, op_fail
+  if_null $P11, op_fail
   $I1 = typeof $P11
   if $I1 == .Undef goto op_fail
   goto op_done
@@ -286,11 +257,11 @@ converter_loop:
   if precedence_level > MAX_PRECEDENCE goto converter_done
   if stack_index >= input_len goto precedence_done
   our_op = chunks[stack_index]
-  isnull our_op, converter_next
+  if_null our_op, converter_next
   $I0 = typeof our_op
   if $I0 == .Undef goto converter_next
   $I2 = our_op[0]
-  if $I2 == INTEGER goto converter_next
+  if $I2 == OPERAND goto converter_next
   if $I2 == CHUNK   goto converter_next
   if $I2 == OP   goto is_opfunc
   if $I2 == FUNC goto is_opfunc # XXX should eventually go away as we make functions part of "CHUNK", above.
@@ -308,7 +279,7 @@ right_arg:
   $I2 = stack_index + 1
   if $I2 >= input_len goto left_arg
   retval = chunks[$I2]
-  isnull retval, left_arg
+  if_null retval, left_arg
   chunks[$I2] = undef
   inc $I4
   program_stack = unshift retval
@@ -323,7 +294,7 @@ left_arg:
   $I2 = stack_index - 1
   if $I2 < 0 goto shift_op
   retval = chunks[$I2]
-  isnull retval, shift_op
+  if_null retval, shift_op
   chunks[$I2] = undef
   inc $I4
   program_stack = unshift retval
@@ -370,29 +341,24 @@ converter_done:
   
    # is this dup neeeded?
   .local pmc program_stack
-  # _dumper(args,"ARGS")
    program_stack = args
   .local pmc result_stack
   result_stack = new TclList
   .local pmc retval
   .local int return_type
-# evaluate the stack.
+  
 stack_evaluator:
-  #print "STACK_EVALUATOR\n"
  # while the prog stack exists:
  .local int size
  size = program_stack
  if size == 0 goto stack_done
- #print "stack_eval2?\n"
  
  .local int type
  .local pmc chunk
- pop chunk, program_stack
- #print "stack_eval3?\n"
+ chunk = pop program_stack
  $I10 = typeof chunk
  if $I10 == .Undef goto stack_evaluator
- type = chunk[0] 
- #print "stack_eval4?\n"
+ type = chunk[0]
 
  # move all non op non funcs to the value stack
  if type == OP goto do_op
@@ -459,6 +425,8 @@ do_op:
   if func == OPERATOR_BITAND goto op_bitand
   if func == OPERATOR_BITXOR goto op_bitxor
   if func == OPERATOR_BITOR goto op_bitor
+  if func == OPERATOR_NE goto op_ne
+  if func == OPERATOR_EQ goto op_eq
 func_list: 
   if func == FUNCTION_ABS goto func_abs
   if func == FUNCTION_ACOS goto func_acos
@@ -537,6 +505,20 @@ op_bitxor:
   goto done_op 
 op_bitor:
   op_result = bor l_arg, r_arg
+  goto done_op
+op_ne:
+  op_result = 1
+  $S0 = l_arg
+  $S1 = r_arg
+  if $S0 != $S1 goto done_op
+  op_result = 0
+  goto done_op
+op_eq:
+  op_result = 1
+  $S0 = l_arg
+  $S1 = r_arg
+  if $S0 == $S1 goto done_op
+  op_result = 0
   goto done_op
 func_abs:
   # XXX This isn't int only, izzit?
@@ -620,7 +602,7 @@ done_op:
   #print "\n"
   $P5 = new FixedPMCArray
   $P5 = 2
-  $P5[0] = INTEGER
+  $P5[0] = OPERAND
   $P5[1] = op_result
   push result_stack, $P5
 
@@ -632,30 +614,23 @@ done_op:
   #goto evaluation_done
 
 stack_done:
-  #print "STACK_DONE\n"
   $I0 = result_stack
-  #error_S = "no stack left."
   if $I0 == 0 goto die_horribly
-  pop retval, result_stack
+  retval = pop result_stack
   goto evaluation_done
 
 die_horribly:
-  #print "dying horribly\n"
   return_type = TCL_ERROR 
   retval = new String
   retval = "An error occurred in EXPR"
   goto evaluation_return
 
 evaluation_done:
-  #print "EVALUATION_DONE:\n"
   return_type = TCL_OK 
-  #retval = retval[1] # skip the extra PMC here.
-  $P1 = retval[1]
+  retval = retval[1]
 
 evaluation_return:
-  .return(return_type,$P1)
-  #.return(return_type,retval)
-   
+  .return(return_type,retval)
 .end
 
 # given a string, starting at position, return the length
@@ -664,194 +639,55 @@ evaluation_return:
 
 .sub __expr_get_number
   .param string expr
-  .param int start
+  .param int pos
 
   .local int len
   len = length expr
-  .local int pos 
-  .local int char 
-  .local int flag
+  .local int char, start
   .local pmc value
-  value = new Integer
+  null value
 
-  pos = start
+  start = pos
   if pos >= len goto failure
+
+integer:
+  if pos >= len goto integer_done
+  char = ord expr, pos
+  if char > 57 goto integer_done # > "9"
+  if char < 48 goto integer_done # < "0"
+  inc pos
+  goto integer 
+integer_done:
+  if char == 46 goto floating
+  pos -= start
+  if pos == 0 goto done # failure
   
-  goto decimal
-
-first_digit:
-  # Is the first digit a 0? if so, this is octal or hex.
-  $I0 = ord expr, pos
-  if $I0 != 48 goto decimal
-  #inc pos
-  #ord $I0, expr, pos
-  #if $I0 == 120 goto hexadecimal
-
-  # XXX The octal code path doesn't work.
-
-octal:
-  inc pos
-octal_loop:
-  if pos>=len goto octal_loop_done
-  $I0 = ord expr,pos
-  if $I0 > 55 goto octal_loop_done # ">8"
-  if $I0 < 48 goto octal_loop_done # "<0
-  flag = 1
-  inc pos
-  goto octal_loop
-octal_loop_done:
-  pos = pos - start
-  if flag == 1 goto octal_finish_up
-  goto failure
-octal_finish_up:
-  # get the string containing the octal digits.
-  inc start
-  dec pos
-
   $S0 = substr expr, start, pos
-  $P1 = new TclList
-  $P1[0] = $S0
-
-  sprintf $S0, "%o", $P1
   $I0 = $S0
+  value = new TclInt
   value = $I0
-  goto real_done
+  goto done
 
-decimal:
-  flag = 0 
-loop: 
-  # cheat
-  if pos >= len goto loop_done
-  $I0 = ord expr, pos
-  if $I0 > 57 goto loop_done # > "9"
-  if $I0 < 48 goto loop_done # < "0"
-  flag = 1
+floating:
   inc pos
-  goto loop 
-loop_done:
-   pos = pos - start
-   if flag == 1 goto finish_up
-
-failure:
-   pos = 0
-   goto real_done
-
-finish_up:
-   $S0 = substr expr, start, pos
-   $I0 = $S0
-   value = new TclInt
-   value = $I0 
-
-real_done:
-  .return(pos,INTEGER,value)
-.end
-
-# given a string, starting at position, return the length
-# of the variable name found at that position. return 0
-# if this doesn't look like a variable. If the return value
-# is non zero, also return a array-ish PMC that either has a
-# single element ($name or ${name}), or two elements
-# $name{index}
-
-.sub __expr_get_variable
-  .param string expr
-  .param int start
-
-  .local int pos
-  pos = 0 
-
-  .local pmc varname
-  varname = new FixedPMCArray
-
-  .local int expr_length
-  expr_length = length expr
-
-  # is this even a variable?
-  $I0 = ord expr, start
-  if $I0 != 36 goto real_done
- 
-  inc start 
-  $I0 = ord expr, start
-  if $I0 == 123 goto braced  
-
-  pos = start
-var_loop:
-  # a regular variable, "letter, digit, underscore, two or more colons"
-  # (XXX not really handling multiple colons right now)
-  
-  # paren - 40  
-  # digit  48-57
-  # colon 58 
-  # LETTER 65-90
-  # underscore 95
-  # letter  97-122
-
-  if pos >= expr_length goto var_loop_done 
-
-  $I0 = ord expr, pos
-  if $I0 == 40 goto indexed_var 
-  if $I0 <  48 goto var_loop_done
-  if $I0 <= 58 goto var_loop_next
-  if $I0 <  65 goto var_loop_done
-  if $I0 <= 90 goto var_loop_next   
-  if $I0 == 95 goto var_loop_next
-  if $I0 <  97 goto var_loop_done
-  if $I0 > 122 goto var_loop_done
-  #  (only thing left is a letter, so fall through) 
-
-var_loop_next:
+float_loop:
+  if pos >= len goto float_done
+  char = ord expr, pos
+  if char > 57 goto float_done # > "9"
+  if char < 48 goto float_done # < "0"
   inc pos
-  goto var_loop
-
-var_loop_done:
-
-  $I0 = pos - start
+  goto float_loop
+float_done:
+  pos -= start
   
-  $S0 = substr expr, start, $I0
-  varname = 1
-  varname[0] = $S0
-  goto real_done
+  $S0 = substr expr, start, pos
+  $N0 = $S0
+  value = new TclFloat
+  value = $N0
+  # goto done
 
-indexed_var:
-  # just like var_loop_done, mark the name of the var
-  dec pos
-  $I0 = pos - start
-  $S0 = substr expr, start, $I0
-  varname = 2 
-  varname[0] = $S0
-  
-  # now, move to the beginning of the index, find the closing paren
-  pos = pos + 2
-  index $I1, ")", expr, pos
- 
-  $I2 = $I1 - pos
-  $S0 = substr expr, pos, $I2
-  varname[1] = $S0
-  goto real_done 
- 
-braced:   
-  inc start # now at the character right after the {
-  # "may contain any characters whatsoever except for close braces"
-  # (so, next close brace closes us.) - 125
-  index $I0, expr, "}", start
-  if $I0 == -1 goto real_done # XXX need to somehow error here.
-  pos = $I0 
- 
-  $I1 = $I0 - start
-  $S0 = substr expr, start, $I1
-  varname[0] = $S0
-
-  
-real_done:
-
-dd:
-  #print "pos is"
-  #print pos
-  #print "\n&&varname is"
-  #print $S0
-  #print "\n"
-
-  .return(pos,varname)
+done:
+  .return(pos,value)
 .end
 
 .sub __expr_get_function
@@ -905,7 +741,7 @@ loop_done:
   $P1 = find_global "_Tcl", "functions"
   
   func = $P1[$S0]
-  isnull func, fail 
+  if_null func, fail 
   $I0 = typeof func
   if $I0 == .Undef goto fail
 
@@ -925,7 +761,7 @@ loop_done:
   ($I9,operand) = __expression_interpret(operand)  
   $P10 = new FixedPMCArray
   $P10 = 2
-  $P10[0] = INTEGER
+  $P10[0] = OPERAND
   $P10[1] = operand
   operand = $P10
   if $I9 == TCL_ERROR goto fail
@@ -960,7 +796,7 @@ was this a valid tcl-style level, or did we get this value as a default?
   current_call_level = find_global "_Tcl", "call_level"
   orig_level = current_call_level
  
-  .local int num_length, num_type
+  .local int num_length
 
 get_absolute:
   # Is this an absolute? 
@@ -968,8 +804,9 @@ get_absolute:
   $S1 = substr $S0, 0, 1
   if $S1 != "#" goto get_integer
   $S0 = tcl_level
-  (num_length,num_type,parrot_level) = __expr_get_number($S0,1)
-  if num_type != INTEGER goto default 
+  (num_length,parrot_level) = __expr_get_number($S0,1)
+  $I0 = isa parrot_level, "Integer"
+  if $I0 == 0 goto default
   $S0 = tcl_level
   $I0 = length $S0
 
@@ -980,8 +817,9 @@ get_absolute:
 get_integer:
   # Is this an integer? 
   $S0 = tcl_level
-  (num_length,num_type,parrot_level) = __expr_get_number($S0,0)
-  if num_type != INTEGER goto default 
+  (num_length,parrot_level) = __expr_get_number($S0,0)
+  $I0 = isa parrot_level, "Integer"
+  if $I0 == 0 goto default
   $S0 = tcl_level
   $I0 = length $S0
   if $I0 != num_length goto default
