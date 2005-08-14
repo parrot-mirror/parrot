@@ -5,6 +5,7 @@
 
 static void gc_gmc_add_free_object(Interp*, struct Small_Object_Pool*, void*);
 static void *gc_gmc_get_free_typed_object(Interp*, struct Small_Object_Pool*, INTVAL);
+static void *gc_gmc_get_free_sized_object(Interp*, struct Small_Object_Pool*, size_t);
 static void *gc_gmc_get_free_object(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_alloc_objects(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_more_objects(Interp*, struct Small_Object_Pool*);
@@ -102,6 +103,7 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     pool->add_free_object = gc_gmc_add_free_object;
     pool->get_free_object = gc_gmc_get_free_object;
     pool->get_free_typed_object = gc_gmc_get_free_typed_object;
+    pool->get_free_sized_object = gc_gmc_get_free_sized_object;
     pool->alloc_objects   = gc_gmc_alloc_objects;
     pool->more_objects    = gc_gmc_more_objects;
 
@@ -127,8 +129,8 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     /* Separate the generations in two halves : one is young (= aggregate
      * objects), the other is old (non-aggregate objects). */
     for (i = 0, gen = gc->yng_fst; i < (GMC_GEN_INIT_NUMBER/2); i++, gen = gen->next);
-    gc->old_fst = gen->next;
-    gc->old_lst = gen->next;
+    gc->old_fst = gen;
+    gc->old_lst = gen;
     /* Now cut the bridges between these two parts. */
     gen->prev->next = NULL;
     gen->prev = NULL;
@@ -247,15 +249,20 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
   void *pmc_body;
   void *pmc;
   Gc_gmc *gc = pool->gc;
-  Gc_gmc_gen *gen;
-
+  Gc_gmc_gen *gen, *gen_ref;
 
   /* Allocate the pmc_body */
   gen = (aggreg) ? gc->yng_lst : gc->old_lst;
 
   /* Should we use the next generation ? */
   if (size > gen->remaining)
+  {
+      if (aggreg)
+	  gc->yng_lst = gen->next;
+      else
+	  gc->old_lst = gen->next;
       gen = gen->next;
+  }
 
   /* Do we need more generations ? */
   if (!gen)
@@ -265,12 +272,18 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
 
   /* Should we use the next generation ? */
   if (size > gen->remaining)
+  {
+      if (aggreg)
+	  gc->yng_lst = gen->next;
+      else
+	  gc->old_lst = gen->next;
       gen = gen->next;
+  }
 
   gc->old_lst = gen;
 
   pmc_body = gen->fst_free;
-  gen->fst_free = (void*)((INTVAL)pmc_body + size);
+  gen->fst_free = (void*)((char*)pmc_body + size);
   gen->remaining -= size;
 
 #ifdef GMC_DEBUG
@@ -283,12 +296,17 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
   if (!pool->free_list)
       (*pool->more_objects) (interpreter, pool);
   
-  pmc = pool->free_list;
+  pmc = (PMC*)pool->free_list;
 #ifdef GMC_DEBUG
   fprintf (stderr, "===============\n");
   fprintf (stderr, "PMC found at %p\n", pmc);
-  fprintf (stderr, "Next PMC at %p\n", *(void**)pmc);
-  fprintf (stderr, "Next Next PMC at %p\n", **(void***)pmc);
+  if (pmc)
+  {
+      fprintf (stderr, "Next PMC at %p\n", *(void**)pmc);
+      if (*(void**)pmc)
+	  fprintf (stderr, "Next Next PMC at %p\n", **(void***)pmc);
+  }
+  fprintf (stderr, "pool->free_list = %p\n", pool->free_list);
   fprintf (stderr, "---------------\n");
 #endif
   pool->free_list = *(void **)pmc;
@@ -296,20 +314,20 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
   PMC_body((PMC*)pmc) = Gmc_PMC_hdr_get_BODY(pmc_body);
 
   Gmc_PMC_hdr_get_PMC((Gc_gmc_hdr*)pmc_body) = pmc;
-
+  PObj_get_FLAGS((PObj*)pmc) = 0;
 
   return pmc;
 }
 
 
 
-/* Here we allocate a PObj, as it is non-typed. */
+/* Here we allocate a default PMC, as it is non-typed. */
 /* This function should not be called anywhere if possible. */
 void *
 gc_gmc_get_free_object(Interp *interpreter,
     struct Small_Object_Pool *pool)
 {
-    size_t size = sizeof(Gc_gmc_hdr) + sizeof(PObj);
+    size_t size = sizeof(Gc_gmc_hdr) + sizeof(default_body);
     return gc_gmc_get_free_object_of_size(interpreter, pool, size, 0);
 }
 
@@ -334,6 +352,14 @@ gc_gmc_get_free_typed_object(Interp *interpreter,
     return gc_gmc_get_free_object_of_size (interpreter, pool, size, aggreg);
 }
 
+static void *
+gc_gmc_get_free_sized_object(Interp *interpreter,
+	struct Small_Object_Pool *pool, size_t size)
+{
+    return gc_gmc_get_free_object_of_size (interpreter, pool, size, 0);
+}
+    
+
 static void
 gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
 {
@@ -347,7 +373,9 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
 static void
 gc_gmc_gen_free(Gc_gmc_gen *gen)
 {
+    fprintf(stderr, "Freeing gen->first %p\n", gen->first);
     mem_sys_free(gen->first);
+    fprintf(stderr, "Freeing gen %p\n", gen);
     mem_sys_free(gen);
 }
 
@@ -380,19 +408,21 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 	gc_gmc_insert_gen (interpreter, dummy_gc, gen);
     }
 
-    for (gen = dummy_gc->yng_fst, ogen = gc->yng_fst; ogen->next; gen = gen->next)
+    for (gen = dummy_gc->yng_fst, ogen = gc->yng_fst; ogen; gen = gen->next)
     {
+	fprintf (stderr, "Old_gen: %p, old_gen->next: %p\n", ogen, ogen->next);
 	ogen_nxt = ogen->next;
 	gc_gmc_copy_gen(ogen,gen);
 	gc_gmc_gen_free(ogen);
 	ogen = ogen_nxt;
     }
     dummy_gc->yng_lst = gen;
+    fprintf(stderr, "First half\n");
 
     for (gen = dummy_gc->yng_fst, i = 0; i < (nb_gen/2); i++, gen = gen->next);
-    dummy_gc->old_fst = gen->next;
-    gen->next->prev = NULL;
-    gen->next = NULL;
+    dummy_gc->old_fst = gen;
+    gen->prev->next = NULL;
+    gen->prev = NULL;
 
     for (gen = dummy_gc->old_fst, ogen = gc->old_fst; ogen; gen = gen->next)
     {
@@ -411,7 +441,7 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 
     mem_sys_free(dummy_gc);
     
-#ifdef GMC_DEBUG
+#ifndef GMC_DEBUG
     fprintf(stderr, "Done with allocation\n");
 #endif
 }
@@ -429,7 +459,7 @@ gc_gmc_more_objects(Interp *interpreter,
 	char *obj;
 	for (i = 0, obj = (char*)fst; i < NUM_NEW_OBJ; i++, obj += pool->object_size)
 	    *(void**)obj = obj + pool->object_size;
-	*(void**)obj = NULL;
+	*(void**)(obj - pool->object_size) = NULL;
 	pool->free_list = fst;
 	pool->num_free_objects += NUM_NEW_OBJ;
 #ifndef GMC_DEBUG
