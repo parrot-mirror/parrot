@@ -156,8 +156,8 @@ write_types(FILE *stabs)
                 ";\""
                 "," N_LSYM ",0,0,0\n", i++, BYTE_SIZE(STRING),
 #if PARROT_GC_GMC
-                BIT_OFFSET(STRING, body->_b._bufstart), BIT_SIZE(void*),
-                BIT_OFFSET(STRING, body->_b._buflen), BIT_SIZE(size_t),
+                BIT_OFFSET(STRING, body->u._b._bufstart), BIT_SIZE(void*),
+                BIT_OFFSET(STRING, body->u._b._buflen), BIT_SIZE(size_t),
 #else
                 BIT_OFFSET(STRING, obj.u._b._bufstart), BIT_SIZE(void*),
                 BIT_OFFSET(STRING, obj.u._b._buflen), BIT_SIZE(size_t),
@@ -187,8 +187,10 @@ write_types(FILE *stabs)
     fprintf(stabs, "data:(0,14),%d,%d;",
             BIT_OFFSET(PMC, data), BIT_SIZE(void*));
 #endif
+#if ! PARROT_GC_GMC
     fprintf(stabs, "pmc_ext:*(0,%d),%d,%d;",
             i, BIT_OFFSET(PMC, pmc_ext), BIT_SIZE(void*));
+#endif 
     fprintf(stabs, ";\"");
     fprintf(stabs, "," N_LSYM ",0,0,0\n");
 

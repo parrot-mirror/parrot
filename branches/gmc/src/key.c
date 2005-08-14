@@ -405,7 +405,11 @@ Returns the next key if C<key> is in a sequence of linked keys.
 PMC *
 key_next(Interp *interpreter, PMC *key)
 {
+#if PARROT_GC_GMC
+    if (!PMC_data(key))
+#else
     if (!key->pmc_ext)
+#endif
         return NULL;
     return PMC_data(key);
 }

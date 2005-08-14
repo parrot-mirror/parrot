@@ -133,7 +133,7 @@ typedef enum gmc_flags {
     Gmc_private_4_FLAG = 1 << 4,
     Gmc_private_5_FLAG = 1 << 5,
     Gmc_private_6_FLAG = 1 << 6,
-    Gmc_private_7_FLAG = 1 << 7,
+    Gmc_has_ext_FLAG = 1 << 7, /*  flag */
 
     /* Type flags for most common PMCs */
     Gmc_PMC_is_int_FLAG      = 1 << 8,
@@ -172,6 +172,8 @@ typedef enum gmc_flags {
 #define Gmc_PMC_flag_TEST(flag, pmc)		    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_flag_SET(flag, pmc)		    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_flag_CLEAR(flag, pmc)		    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_get_HDR(pmc))
+
+#define Gmc_has_PMC_EXT_TEST(pmc)		    Gmc_PMC_flag_TEST(has_ext, pmc)
 
 
 /* Same structure than in GMS for header lists. */

@@ -243,6 +243,9 @@ Get a header.
 
 
 static PMC_EXT * new_pmc_ext(Parrot_Interp);
+#if PARROT_GC_GMC
+void gc_gmc_tmp_ext_init(Parrot_Interp *, PMC *);
+#endif
 
 PMC *
 new_pmc_header(Interp *interpreter, UINTVAL flags)
@@ -265,7 +268,9 @@ new_pmc_header(Interp *interpreter, UINTVAL flags)
 #else
         flags |= PObj_is_special_PMC_FLAG;
 #endif
+#if ! PARROT_GC_GMC
         pmc->pmc_ext = new_pmc_ext(interpreter);
+#endif /* PARROT_GC_GMC */
         if (flags & PObj_is_PMC_shared_FLAG) {
             PMC_sync(pmc) = mem_internal_allocate(sizeof(*PMC_sync(pmc)));
             PMC_sync(pmc)->owner = interpreter;
@@ -273,15 +278,16 @@ new_pmc_header(Interp *interpreter, UINTVAL flags)
         }
     }
     else
+#if PARROT_GC_GMC
+	PMC_data(pmc) = NULL;
+#else
         pmc->pmc_ext = NULL;
+#endif
     PObj_get_FLAGS(pmc) |= PObj_is_PMC_FLAG|flags;
     pmc->vtable = NULL;
 #if ! PMC_DATA_IN_EXT
     PMC_data(pmc) = NULL;
 #endif
-/*#if PARROT_GC_GMC
-    pmc->body = new_pmc_body(interpreter);
-#endif*/
     return pmc;
 }
 
@@ -321,7 +327,9 @@ new_pmc_typed_header(Interp *interpreter, UINTVAL flags, INTVAL base_type)
 #else
         flags |= PObj_is_special_PMC_FLAG;
 #endif
+#if ! PARROT_GC_GMC
         pmc->pmc_ext = new_pmc_ext(interpreter);
+#endif
         if (flags & PObj_is_PMC_shared_FLAG) {
             PMC_sync(pmc) = mem_internal_allocate(sizeof(*PMC_sync(pmc)));
             PMC_sync(pmc)->owner = interpreter;
@@ -329,7 +337,11 @@ new_pmc_typed_header(Interp *interpreter, UINTVAL flags, INTVAL base_type)
         }
     }
     else
+#if PARROT_GC_GMC
+	PMC_data(pmc) = NULL;
+#else
         pmc->pmc_ext = NULL;
+#endif
     PObj_get_FLAGS(pmc) |= PObj_is_PMC_FLAG|flags;
     pmc->vtable = NULL;
 #if ! PMC_DATA_IN_EXT
@@ -370,6 +382,8 @@ new_pmc_ext(Interp *interpreter)
     return ptr;
 }
 
+# if ! PARROT_GC_GMC
+
 /*
 
 =item C<void
@@ -396,6 +410,8 @@ add_pmc_ext(Interp *interpreter, PMC *pmc)
         PObj_get_FLAGS(pmc) |= PObj_custom_GC_FLAG;
 #endif
 }
+
+#endif /* ! PARROT_GC_GMC */
 
 /*
 

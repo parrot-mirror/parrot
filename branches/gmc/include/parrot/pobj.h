@@ -91,8 +91,15 @@ typedef struct pobj_t {
 
 
 /* TODO: Change to a real pmc_body type. */
-#define DEFAULT_BODY UnionVal
-#define PMC_BODY DEFAULT_BODY
+typedef struct default_body {
+    UnionVal u;
+    PMC *_metadata;
+    struct _Sync *_synchronize;
+    PMC *_next_for_GC;
+    DPOINTER *data;
+} default_body;
+
+#define PMC_BODY default_body
 
 
 /* Hack for the get_FLAGS macro to be happy. */
@@ -122,14 +129,14 @@ typedef Buffer PObj;
 #if PARROT_GC_GMC
 
 #define PMC_body(pmc)         (pmc)->body
-#define PObj_bufstart(pmc)    PMC_body(pmc)->_b._bufstart
-#define PObj_buflen(pmc)      PMC_body(pmc)->_b._buflen
-#define PMC_struct_val(pmc)   PMC_body(pmc)->_ptrs._struct_val
-#define PMC_pmc_val(pmc)      PMC_body(pmc)->_ptrs._pmc_val
-#define PMC_int_val(pmc)      PMC_body(pmc)->_i._int_val
-#define PMC_int_val2(pmc)     PMC_body(pmc)->_i._int_val2
-#define PMC_num_val(pmc)      PMC_body(pmc)->_num_val
-#define PMC_str_val(pmc)      PMC_body(pmc)->_string_val
+#define PObj_bufstart(pmc)    PMC_body(pmc)->u._b._bufstart
+#define PObj_buflen(pmc)      PMC_body(pmc)->u._b._buflen
+#define PMC_struct_val(pmc)   PMC_body(pmc)->u._ptrs._struct_val
+#define PMC_pmc_val(pmc)      PMC_body(pmc)->u._ptrs._pmc_val
+#define PMC_int_val(pmc)      PMC_body(pmc)->u._i._int_val
+#define PMC_int_val2(pmc)     PMC_body(pmc)->u._i._int_val2
+#define PMC_num_val(pmc)      PMC_body(pmc)->u._num_val
+#define PMC_str_val(pmc)      PMC_body(pmc)->u._string_val
 
 #else
 
@@ -191,11 +198,6 @@ struct parrot_string_t {
 /* put data into the PMC_EXT structure */
 #define PMC_DATA_IN_EXT 1
 
-
-
-#if PARROT_GC_GMC
-#endif
-
 struct PMC {
 #if PARROT_GC_GMC
     PMC_BODY *body;
@@ -204,10 +206,12 @@ struct PMC {
     pobj_t obj;
 #endif
     VTABLE *vtable;
+#if ! PARROT_GC_GMC
 #if ! PMC_DATA_IN_EXT
     DPOINTER *data;
 #endif /* ! PMC_DATA_IN_EXT */
     struct PMC_EXT *pmc_ext;
+#endif /* ! PARROT_GC_GMC */
 };
 
 struct _Sync;   /* forward decl */
@@ -244,6 +248,17 @@ struct PMC_EXT {
 
 typedef struct PMC_EXT PMC_EXT;
 
+#if PARROT_GC_GMC
+
+#define PMC_data(pmc)         PMC_body(pmc)->data
+#define PMC_data0(pmc)        PMC_data(pmc)
+#define PMC_metadata(pmc)     PMC_body(pmc)->_metadata
+#define PMC_next_for_GC(pmc)  PMC_body(pmc)->_next_for_GC
+#define PMC_sync(pmc)         PMC_body(pmc)->_synchronize
+#define PMC_union(pmc)	      PMC_body(pmc)->u
+
+#else
+
 #ifdef NDEBUG
 #  define PMC_ext_checked(pmc)             (pmc)->pmc_ext
 #else
@@ -260,11 +275,9 @@ typedef struct PMC_EXT PMC_EXT;
 #define PMC_metadata(pmc)     PMC_ext_checked(pmc)->_metadata
 #define PMC_next_for_GC(pmc)  PMC_ext_checked(pmc)->_next_for_GC
 #define PMC_sync(pmc)         PMC_ext_checked(pmc)->_synchronize
-#if PARROT_GC_GMC
-#define PMC_union(pmc)        (pmc)->body
-#else
 #define PMC_union(pmc)	      (pmc)->obj.u
-#endif
+
+#endif /* PARROT_GC_GMC */
 
 /* macro for accessing union data */
 #define next_for_GC pmc_ext->_next_for_GC
