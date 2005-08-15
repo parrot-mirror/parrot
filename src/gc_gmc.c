@@ -112,12 +112,17 @@ gc_gmc_test_linked_list_gen(Interp *interpreter, Gc_gmc *gc)
     for (j = 0, gen = gc->old_lst; gen; j++, gen = gen->prev);
     if (i != gc->nb_gen || j != gc->nb_gen)
     {
+#ifdef GMC_DEBUG
 	fprintf(stderr, "Invalid linked list\n");
 	fprintf(stderr, "Invalid linked list\n");
+#endif
 	gen = NULL;
 	*(int*)gen = 54;
-    } else
+    } 
+#ifdef GMC_DEBUG
+    else
 	fprintf(stderr, "Linked list is OK !\n");
+#endif
 }
 
 static void gc_gmc_pool_deinit(Interp *, struct Small_Object_Pool *);
@@ -421,7 +426,6 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
 static void
 gc_gmc_gen_free(Gc_gmc_gen *gen)
 {
-    fprintf (stderr,"Freeing %p\n", gen->first);
     mem_sys_free(gen->first);
     mem_sys_free(gen);
 }
@@ -439,7 +443,7 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
     INTVAL nb_gen = 2 * gc->nb_gen;
     int i;
 
-#ifndef GMC_DEBUG
+#ifdef GMC_DEBUG
     fprintf(stderr, "Allocating more pmc_bodies\n");
 #endif
 
@@ -465,7 +469,6 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 	gc_gmc_gen_free(ogen);
 	ogen = ogen_nxt;
     }
-    fprintf (stderr, "new yng_lst: %p\n", gen);
     dummy_gc->yng_lst = gen;
 
     for (gen = dummy_gc->yng_fst, i = 0; i < (nb_gen/2); i++, gen = gen->next);
@@ -473,7 +476,6 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
     gen->prev->next = NULL;
     gen->prev = NULL;
 
-    fprintf (stderr, "ogen: %p\n", gc->old_fst);
     for (gen = dummy_gc->old_fst, ogen = gc->old_fst; ogen; gen = gen->next)
     {
 	ogen_nxt = ogen->next;
@@ -481,7 +483,6 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 	gc_gmc_gen_free(ogen);
 	ogen = ogen_nxt;
     }
-    fprintf(stderr, "new old_lst: %p\n", gen);
     dummy_gc->old_lst = gen;
 
     gc->yng_fst = dummy_gc->yng_fst;
@@ -492,7 +493,7 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 
     mem_sys_free(dummy_gc);
     
-#ifndef GMC_DEBUG
+#ifdef GMC_DEBUG
     fprintf(stderr, "Done with allocation\n");
 #endif
 }
@@ -513,7 +514,7 @@ gc_gmc_more_objects(Interp *interpreter,
 	*(void**)(obj - pool->object_size) = NULL;
 	pool->free_list = fst;
 	pool->num_free_objects += NUM_NEW_OBJ;
-#ifndef GMC_DEBUG
+#ifdef GMC_DEBUG
 	fprintf(stderr, "Allocating %d more objects of size %d beginning at %p\n", NUM_NEW_OBJ, pool->object_size, fst);
 #endif
 }
