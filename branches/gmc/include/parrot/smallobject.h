@@ -136,18 +136,7 @@ typedef enum gmc_flags {
     Gmc_private_5_FLAG = 1 << 5,
     Gmc_private_6_FLAG = 1 << 6,
     Gmc_has_ext_FLAG = 1 << 7, /*  flag */
-
-    /* Type flags for most common PMCs */
-    Gmc_PMC_is_int_FLAG      = 1 << 8,
-    Gmc_PMC_is_float_FLAG    = 1 << 9,
-    Gmc_PMC_is_array_FLAG    = 1 << 10,
-    Gmc_PMC_is_hash_FLAG     = 1 << 11,
-    Gmc_PMC_is_object_FLAG   = 1 << 12,
-    Gmc_PMC_is_class_FLAG    = 1 << 13,
-    Gmc_PMC_is_function_FLAG = 1 << 14,
-
-    /* Type that is not in the previous values. Check for size in the vtable. */
-    Gmc_PMC_is_anything_else = 1 << 15,
+    Gmc_is_pmc_FLAG = 1 << 8, /* True if the object is a PMC, is a PObj if not. */
 } Gmc_flags;
 
 

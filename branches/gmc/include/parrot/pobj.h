@@ -290,12 +290,13 @@ typedef struct PMC_EXT PMC_EXT;
 #define PMC_sync(pmc)         PMC_ext_checked(pmc)->_synchronize
 #define PMC_union(pmc)	      (pmc)->obj.u
 
-#endif /* PARROT_GC_GMC */
 
 /* macro for accessing union data */
 #define next_for_GC pmc_ext->_next_for_GC
 #define metadata pmc_ext->_metadata
 #define synchronize pmc_ext->_synchronize
+
+#endif /* PARROT_GC_GMC */
 
 /* PObj flags */
 typedef enum PObj_enum {

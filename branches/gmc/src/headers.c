@@ -54,7 +54,7 @@ get_free_buffer(Interp *interpreter,
         struct Small_Object_Pool *pool)
 {
 #if PARROT_GC_GMC
-    PObj *buffer = pool->get_free_sized_object(interpreter, pool, sizeof(pobj_body));
+    PObj *buffer = pool->get_free_object(interpreter, pool);
 #else
     PObj *buffer = pool->get_free_object(interpreter, pool);
 #endif
