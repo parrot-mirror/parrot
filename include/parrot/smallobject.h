@@ -198,9 +198,10 @@ typedef struct _gc_gmc_hdr_list {
 typedef struct _gc_gmc_gen {
   struct _gc_gmc_gen *next;  /* Next generation in the linked list. */
   struct _gc_gmc_gen *prev;  /* Previous generation. */
-  void *first;         /* Array of objects. */
-  void *fst_free;      /* First free place. */
+  void *first;               /* Array of objects. */
+  void *fst_free;            /* First free place. */
   size_t remaining;          /* Remaining size. */
+  UINTVAL alloc_obj;         /* Number of allocated objects. */
   Gc_gmc_hdr_list *IGP;      /* Inter Generational pointers set. */
 } Gc_gmc_gen;
 
