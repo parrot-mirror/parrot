@@ -22,6 +22,9 @@ gc_gmc_get_PMC_size(Interp *interpreter, INTVAL base_type)
     return vtable->size;
 }
 
+void gdb_dummy_func(void) {
+    fprintf(stderr, "Called dummy_gdb_func\n");
+}
 
 /* Allocates and initializes a generation, but does not plug it to the pool yet. */
 static Gc_gmc_gen *
@@ -37,6 +40,9 @@ gc_gmc_gen_init(Interp *interpreter)
     /* And fill the blanks. */
     gen->fst_free = gen->first;
     gen->remaining = GMC_GEN_SIZE;
+    gen->alloc_obj = 0;
+
+    /*fprintf (stderr, "Allocated gen from %p,%p to %p\n", gen, gen->first, (char*)gen->first + gen->remaining);*/
 
     /* We have an IGP basis : only one store. */
     IGP_store = mem_sys_allocate(sizeof(Gc_gmc_hdr_store));
@@ -314,8 +320,9 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
   pmc_body = gen->fst_free;
   gen->fst_free = (void*)((char*)pmc_body + size);
   gen->remaining -= size;
+  gen->alloc_obj++;
 #ifdef GMC_DEBUG
-  fprintf (stderr,"Allocated size %d in gen %p, first: %p, remaining %d, next_gen: %p, fst_free: %p\n", size, gen, gen->first, gen->remaining, gen->next, gen->fst_free);
+  fprintf (stderr,"Allocated size %d in gen %p, first: %p, remaining %d, next_gen: %p, fst_free: %p, lim: %p\n", size, gen, gen->first, gen->remaining, gen->next, gen->fst_free, (char*)gen->fst_free + gen->remaining);
 #endif
 
 #ifdef GMC_DEBUG
@@ -388,7 +395,7 @@ static void *
 gc_gmc_get_free_sized_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, size_t size)
 {
-    return gc_gmc_get_free_object_of_size (interpreter, pool, size, 0);
+    return gc_gmc_get_free_object_of_size (interpreter, pool, sizeof(Gc_gmc_hdr) + size, 0);
 }
     
 
@@ -399,14 +406,17 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
     dest->fst_free = (void*)((char*)dest->first + offset);
     dest->remaining = from->remaining;
     dest->IGP = from->IGP;
+#ifdef GMC_DEBUG
     fprintf (stderr, "Copying gen %p to gen %p\n", from, dest);
     fprintf (stderr, "Copying %p to %p\n", from->first, dest->first);
+#endif
     memcpy(dest->first, from->first, GMC_GEN_SIZE);
 }
 
 static void
 gc_gmc_gen_free(Gc_gmc_gen *gen)
 {
+    fprintf (stderr,"Freeing %p\n", gen->first);
     mem_sys_free(gen->first);
     mem_sys_free(gen);
 }
@@ -450,6 +460,7 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 	gc_gmc_gen_free(ogen);
 	ogen = ogen_nxt;
     }
+    fprintf (stderr, "new yng_lst: %p\n", gen);
     dummy_gc->yng_lst = gen;
 
     for (gen = dummy_gc->yng_fst, i = 0; i < (nb_gen/2); i++, gen = gen->next);
@@ -465,13 +476,14 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 	gc_gmc_gen_free(ogen);
 	ogen = ogen_nxt;
     }
+    fprintf(stderr, "new old_lst: %p\n", gen);
     dummy_gc->old_lst = gen;
 
     gc->yng_fst = dummy_gc->yng_fst;
     gc->yng_lst = dummy_gc->yng_lst;
     gc->old_fst = dummy_gc->old_fst;
     gc->old_lst = dummy_gc->old_lst;
-
+    gc->nb_gen = nb_gen;
 
     mem_sys_free(dummy_gc);
     
