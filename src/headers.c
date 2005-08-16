@@ -54,7 +54,7 @@ get_free_buffer(Interp *interpreter,
         struct Small_Object_Pool *pool)
 {
 #if PARROT_GC_GMC
-    PObj *buffer = pool->get_free_object(interpreter, pool);
+    PObj *buffer = pool->get_free_sized_object(interpreter, pool, sizeof(pobj_body));
 #else
     PObj *buffer = pool->get_free_object(interpreter, pool);
 #endif
@@ -263,10 +263,14 @@ new_pmc_alloc_header(Interp *interpreter, UINTVAL flags, INTVAL is_typed, INTVAL
 #if ARENA_DOD_FLAGS
     assert(sizeof(Dead_PObj) <= sizeof(PMC));
 #endif
+#if PARROT_GC_GMC
     if (is_typed)
 	pmc = pool->get_free_typed_object(interpreter, pool, base_type);
     else
-	pmc = pool->get_free_object(interpreter, pool);
+	pmc = pool->get_free_sized_object(interpreter, pool, sizeof(default_body));
+#else
+    pmc = pool->get_free_object(interpreter, pool);
+#endif
     /* clear flags, set is_PMC_FLAG */
     if (flags & PObj_is_PMC_EXT_FLAG) {
 #if ARENA_DOD_FLAGS

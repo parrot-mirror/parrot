@@ -39,8 +39,6 @@ gc_gmc_gen_init(Interp *interpreter)
     gen->remaining = GMC_GEN_SIZE;
     gen->alloc_obj = 0;
 
-    /*fprintf (stderr, "Allocated gen from %p,%p to %p\n", gen, gen->first, (char*)gen->first + gen->remaining);*/
-
     /* We have an IGP basis : only one store. */
     IGP_store = mem_sys_allocate(sizeof(Gc_gmc_hdr_store));
     IGP_store->ptr = &(IGP_store->store[0]);
@@ -49,6 +47,10 @@ gc_gmc_gen_init(Interp *interpreter)
     IGP->first = IGP_store;
     IGP->last = IGP_store;
     gen->IGP = IGP;
+
+#ifdef GMC_DEBUG
+    fprintf(stderr, "Allocating gen at %p, first at %p, limit at %p\n", gen, gen->first, (char*)gen->first + gen->remaining);
+#endif
     
     return gen;
 }
@@ -309,6 +311,11 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
 
   gen = (aggreg) ? gc->yng_lst : gc->old_lst;
 
+
+#ifdef GMC_DEBUG
+  fprintf(stderr, "Considering to use gen (%p,%p) --> %p\n", gen, gen->first, (char*)gen->fst_free + gen->remaining);
+#endif
+
   /* Should we use the next generation ? */
   if (size >= gen->remaining)
   {
@@ -319,8 +326,12 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
       gen = gen->next;
   }
 
+#ifdef GMC_DEBUG
+  fprintf(stderr, "Using gen (%p,%p) --> %p\n", gen, gen->first, (char*)gen->fst_free + gen->remaining);
+#endif
+
   pmc_body = gen->fst_free;
-  gen->fst_free = (void*)((char*)pmc_body + size);
+  gen->fst_free = (void*)((char*)gen->fst_free + size);
   gen->remaining -= size;
   gen->alloc_obj++;
   memset(pmc_body, 0, size);
@@ -408,8 +419,7 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
     dest->remaining = from->remaining;
     dest->IGP = from->IGP;
 #ifdef GMC_DEBUG
-    fprintf (stderr, "Copying gen %p to gen %p\n", from, dest);
-    fprintf (stderr, "Copying %p to %p\n", from->first, dest->first);
+    fprintf (stderr, "Copying gen (%p,%p) to gen (%p,%p)\n", from, from->first, dest, dest->first);
 #endif
     memcpy(dest->first, from->first, GMC_GEN_SIZE);
     ptr = dest->first;
