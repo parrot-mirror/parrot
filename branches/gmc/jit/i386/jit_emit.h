@@ -2154,6 +2154,7 @@ jit_set_i_p_ki(Parrot_jit_info_t *jit_info, Interp* interpreter, size_t offset)
      * mov (%eax, %ecx, 4), %eax
      * jmp L4
      */
+#if ! PARROT_GC_GMC
 #  if ! PMC_DATA_IN_EXT
 #error "todo"
 #else
@@ -2161,6 +2162,7 @@ jit_set_i_p_ki(Parrot_jit_info_t *jit_info, Interp* interpreter, size_t offset)
             offsetof(struct PMC, pmc_ext));
     emitm_movl_m_r(NATIVECODE, emit_EAX, emit_EAX, 0, 1,
             offsetof(struct PMC_EXT, data));
+#endif
 #endif
     emitm_movl_m_r(NATIVECODE, emit_EAX, emit_EAX, emit_ECX, 4, 0);
 
@@ -2224,6 +2226,7 @@ jit_set_p_ki_i(Parrot_jit_info_t *jit_info, Interp* interpreter, size_t offset)
      * mov $edx, (%eax, %ecx, 4)
      * jmp L4
      */
+#if ! PARROT_GC_GMC
 #  if ! PMC_DATA_IN_EXT
 #error "todo"
 #else
@@ -2231,6 +2234,7 @@ jit_set_p_ki_i(Parrot_jit_info_t *jit_info, Interp* interpreter, size_t offset)
             offsetof(struct PMC, pmc_ext));
     emitm_movl_m_r(NATIVECODE, emit_EAX, emit_EAX, 0, 1,
             offsetof(struct PMC_EXT, data));
+#endif
 #endif
     if (MAP(3)) {
         jit_emit_mov_rr_i(NATIVECODE, emit_EDX, MAP(3));
@@ -3180,10 +3184,12 @@ Parrot_jit_build_call_func(Interp *interpreter, PMC *pmc_nci,
                  */
                 jit_emit_mov_RM_i(pc, emit_EDX,
                         REG_OFFS_PMC(count_regs(sig, signature->strstart)));
+#if ! PARROT_GC_GMC
                 emitm_movl_m_r(pc, emit_EAX, emit_EDX, 0, 1,
                         offsetof(struct PMC, pmc_ext));
                 emitm_movl_m_r(pc, emit_EAX, emit_EAX, 0, 1,
                         offsetof(struct PMC_EXT, data));
+#endif
 #  endif
                 emitm_pushl_r(pc, emit_EAX);
                 break;
@@ -3312,6 +3318,7 @@ preg:
             jit_emit_mov_MR_i(pc, REG_OFFS_PMC(next_p++), emit_EAX);
             emitm_popl_r(pc, emit_EDX);
             /* stuff return value into pmc->data */
+#if ! PARROT_GC_GMC
 #  if ! PMC_DATA_IN_EXT
             /* mov %edx, (data) %eax */
             emitm_movl_r_m(pc, emit_EDX, emit_EAX, 0, 1,
@@ -3324,6 +3331,7 @@ preg:
             emitm_movl_r_m(pc, emit_EDX, emit_EAX, 0, 1,
                     offsetof(struct PMC_EXT, data));
 #  endif
+#endif
             break;
         case 'b':   /* (void *) = PObj_bufstart(new_buffer_header) */
             /* preserve return value */
