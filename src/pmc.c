@@ -125,6 +125,7 @@ pmc_reuse(Interp *interpreter, PMC *pmc, INTVAL new_type,
         if (has_ext) {
 #if PARROT_GC_GMC
 	    mem_sys_free(PMC_data(pmc));
+	    PMC_data(pmc) = NULL;
 #else
             /* if the PMC has a PMC_EXT structure,
              * return it to the pool/arena

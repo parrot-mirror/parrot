@@ -55,6 +55,7 @@ get_free_buffer(Interp *interpreter,
 {
 #if PARROT_GC_GMC
     PObj *buffer = pool->get_free_sized_object(interpreter, pool, sizeof(pobj_body));
+    PObj_get_FLAGS(buffer) = 0;
 #else
     PObj *buffer = pool->get_free_object(interpreter, pool);
 #endif
@@ -66,9 +67,11 @@ get_free_buffer(Interp *interpreter,
     fprintf (stderr, "Allocated buffer at %p, bufstart at %p, buflen at %p\n", buffer, &PObj_bufstart(buffer), &PObj_buflen(buffer));
 #endif
 
+#if ! PARROT_GC_GMC
     if (pool->object_size  - GC_HEADER_SIZE > sizeof(PObj))
         memset(buffer + 1, 0,
                 pool->object_size - sizeof(PObj) - GC_HEADER_SIZE);
+#endif
     return buffer;
 }
 
@@ -271,6 +274,15 @@ new_pmc_alloc_header(Interp *interpreter, UINTVAL flags, INTVAL is_typed, INTVAL
 #else
     pmc = pool->get_free_object(interpreter, pool);
 #endif
+
+#if PARROT_GC_GMC
+    PObj_get_FLAGS(pmc) = 0;
+    PMC_next_for_GC(pmc) = NULL;
+    PMC_metadata(pmc) = NULL;
+    PMC_sync(pmc) = NULL;
+    PMC_data(pmc) = NULL;
+#endif
+    
     /* clear flags, set is_PMC_FLAG */
     if (flags & PObj_is_PMC_EXT_FLAG) {
 #if ARENA_DOD_FLAGS
@@ -297,13 +309,6 @@ new_pmc_alloc_header(Interp *interpreter, UINTVAL flags, INTVAL is_typed, INTVAL
         pmc->pmc_ext = NULL;
 #endif
 
-#if PARROT_GC_GMC
-    PObj_get_FLAGS(pmc) = 0;
-    PMC_next_for_GC(pmc) = NULL;
-    PMC_metadata(pmc) = NULL;
-    PMC_sync(pmc) = NULL;
-    PMC_data(pmc) = NULL;
-#endif
     PObj_get_FLAGS(pmc) |= PObj_is_PMC_FLAG|flags;
     pmc->vtable = NULL;
 #if ! PMC_DATA_IN_EXT

@@ -214,9 +214,17 @@ static void gc_gmc_deinit(Interp *interpreter)
 
 static void gc_gmc_run(Interp *interpreter, int flags)
 {
+  if (flags & DOD_finish_FLAG) {
 #ifdef GMC_DEBUG
-  fprintf (stderr, "GMC: Trying to run dod_run\n");
+  fprintf (stderr, "GMC: Trying to run dod_run for final sweeping\n");
 #endif /* GMC_DEBUG */
+  return;
+  } else {
+#ifdef GMC_DEBUG
+  fprintf (stderr, "GMC: Trying to run dod_run for normal allocation\n");
+#endif /* GMC_DEBUG */
+  }
+
 }
 
 void Parrot_gc_gmc_init(Interp *interpreter)
