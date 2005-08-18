@@ -135,7 +135,15 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     struct Arenas *arena_base;
     Gc_gmc *gc;
     Gc_gmc_gen *gen;
+    Gc_gmc_area_store *store;
     int i;
+
+    store = mem_sys_allocate_zeroed(sizeof(Gc_gmc_area_store));
+    store->ptr = &(store->store[0]);
+    store->next = NULL;
+    pool->areas = mem_sys_allocate(sizeof(Gc_gmc_area_list));
+    pool->areas->first = store;
+    pool->areas->last = store;
     
     pool->add_free_object = gc_gmc_add_free_object;
     pool->get_free_object = gc_gmc_get_free_object;
@@ -180,26 +188,28 @@ static void
 gc_gmc_pool_deinit(Interp *interpreter, struct Small_Object_Pool *pool)
 {
     Gc_gmc *gc;
-    Gc_gmc_gen *gen;
+    Gc_gmc_gen *gen, *gen_nxt;
     Gc_gmc_hdr_store *store, *st2;
     
     gc = pool->gc;
-    for (gen = gc->yng_fst; gen; gen = gen->next)
+    for (gen = gc->yng_fst; gen;)
     {
-	if (gen->prev)
-	    mem_sys_free(gen->prev);
+	gen_nxt = gen->next;
 	mem_sys_free(gen->first);
+	mem_sys_free(gen);
 	for (store = gen->IGP->first; store; st2 = store->next,mem_sys_free(store),
 		store = st2);
+	gen = gen_nxt;
     }
 
-    for (gen = gc->old_fst; gen; gen = gen->next)
+    for (gen = gc->old_fst; gen;)
     {
-	if (gen->prev)
-	    mem_sys_free(gen->prev);
+	gen_nxt = gen->next;
 	mem_sys_free(gen->first);
+	mem_sys_free(gen);
 	for (store = gen->IGP->first; store; st2 = store->next,mem_sys_free(store),
 		store = st2);
+	gen = gen_nxt;
     }
 }
 
@@ -208,22 +218,73 @@ static void gc_gmc_deinit(Interp *interpreter)
 {
     struct Arenas *arena_base = interpreter->arena_base;
     
-    gc_gmc_pool_deinit(interpreter, arena_base->pmc_pool);
+    /* This is done in gc_gmc_do_dod_run when given the right flag. */
+    /*gc_gmc_pool_deinit(interpreter, arena_base->pmc_pool);*/
 
+}
+
+static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
+	int flag, void *arg)
+{
+    struct Arenas *arena_base = interpreter->arena_base;
+    PMC *ptr;
+    Gc_gmc_area_store *store;
+    Gc_gmc_header_area *area;
+    for (store = pool->areas->first; store; store = store->next)
+    {
+	for (area = store->store[0]; (UINTVAL)area < (UINTVAL)store->ptr; area++)
+	{
+	    for (ptr = (PMC*)area->fst; (UINTVAL)ptr < (UINTVAL)area->lst;
+		    ptr = (PMC*)((char*)ptr + pool->object_size))
+	    {
+		if (PObj_live_TEST(ptr))
+		{
+		    /* This shouldn't be necessary. */
+		    if (PObj_needs_early_DOD_TEST(ptr))
+			--arena_base->num_early_DOD_PMCs;
+		    if (PObj_active_destroy_TEST(ptr))
+			VTABLE_destroy(interpreter, ptr);
+		    if (Gmc_has_PMC_EXT_TEST(ptr) && PMC_data(ptr))
+		    {
+			mem_sys_free(PMC_data(ptr));
+			PMC_data(ptr) = NULL;
+		    }
+		    PObj_live_CLEAR(ptr);
+		}
+	    }
+	}
+    }
+    return 0;
 }
 
 static void gc_gmc_run(Interp *interpreter, int flags)
 {
-  if (flags & DOD_finish_FLAG) {
+    struct Arenas *arena_base = interpreter->arena_base;
+    
+    if (arena_base->DOD_block_level)
+	return;
+    ++arena_base->DOD_block_level;
+    
+    /* This interpreter will be destroyed, free everything. */
+    if (flags & DOD_finish_FLAG) {
+	/* First the pmc headers */
+	Parrot_forall_header_pools(interpreter, POOL_PMC, 0, sweep_pmc);
+
+	/* Then the pmc_bodies. */
+	/* TODO: free the PMC_data too. */
+	gc_gmc_pool_deinit(interpreter, arena_base->pmc_pool);
+	
 #ifdef GMC_DEBUG
-  fprintf (stderr, "GMC: Trying to run dod_run for final sweeping\n");
+	fprintf (stderr, "GMC: Trying to run dod_run for final sweeping\n");
 #endif /* GMC_DEBUG */
-  return;
-  } else {
+	--arena_base->DOD_block_level;
+	return;
+    } else {
 #ifdef GMC_DEBUG
-  fprintf (stderr, "GMC: Trying to run dod_run for normal allocation\n");
+	fprintf (stderr, "GMC: Trying to run dod_run for normal allocation\n");
 #endif /* GMC_DEBUG */
-  }
+	--arena_base->DOD_block_level;
+    }
 
 }
 
@@ -527,6 +588,25 @@ gc_gmc_more_objects(Interp *interpreter,
         void *fst = mem_sys_allocate_zeroed(NUM_NEW_OBJ * pool->object_size);
 	int i;
 	char *obj;
+	Gc_gmc_area_store *store = pool->areas->last;
+
+	/* If we have no more space in the store, expand it. */
+	if ((UINTVAL)(*(store->ptr)) >= (UINTVAL)&(store->store[GC_GMC_STORE_SIZE-1]))
+	{
+	    store = mem_sys_allocate_zeroed(sizeof(Gc_gmc_area_store));
+	    store->ptr = &(store->store[0]);
+	    store->next = NULL;
+	    pool->areas->last->next = store;
+	    pool->areas->last = store;
+	}
+	
+	/* Record the new area. */
+	*store->ptr = mem_sys_allocate(sizeof(Gc_gmc_header_area));
+	(*store->ptr)->fst = fst;
+	(*store->ptr)->lst = (void *)((char*)fst + NUM_NEW_OBJ * pool->object_size);
+	store->ptr++;
+
+	/* Set the internal state correctly. */
 	for (i = 0, obj = (char*)fst; i < NUM_NEW_OBJ; i++, obj += pool->object_size)
 	    *(void**)obj = obj + pool->object_size;
 	*(void**)(obj - pool->object_size) = NULL;
