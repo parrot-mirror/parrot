@@ -183,6 +183,23 @@ typedef struct _gc_gmc_hdr_list {
 } Gc_gmc_hdr_list;
 
 
+typedef struct _gc_gmc_header_area {
+    void *fst;
+    void *lst;
+} Gc_gmc_header_area;
+
+typedef struct _gc_gmc_area_store {
+    struct _gc_gmc_area_store *next;
+    Gc_gmc_header_area **ptr;
+    Gc_gmc_header_area * (store[GC_GMC_STORE_SIZE]);
+} Gc_gmc_area_store;
+
+typedef struct _gc_gmc_area_list {
+    Gc_gmc_area_store *first;
+    Gc_gmc_area_store *last;
+} Gc_gmc_area_list;
+
+
 /* A generation for GMC. */
 typedef struct _gc_gmc_gen {
   struct _gc_gmc_gen *next;  /* Next generation in the linked list. */
@@ -257,6 +274,7 @@ struct Small_Object_Pool {
 
 #if PARROT_GC_GMC
     Gc_gmc *gc;
+    Gc_gmc_area_list *areas; /* pointers to the headers areas */
 #endif
 };
 

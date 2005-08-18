@@ -690,6 +690,7 @@ Parrot_initialize_header_pools(Interp *interpreter)
     arena_base->constant_pmc_pool->name = "constant_pmc";
     arena_base->constant_pmc_pool->objects_per_alloc =
        CONSTANT_PMC_HEADERS_PER_ALLOC;
+
 }
 
 /*
