@@ -56,6 +56,7 @@ chunk_loop:
   if $I0 == 1 goto get_number
   
   $I0 = ord expr, chunk_start
+  if $I0 == 91 goto subcommand        # [
   if $I0 == 40 goto get_parenthetical # (
   if $I0 == 36 goto get_variable      # $
   if $I0 == 46 goto get_number        # .
@@ -110,10 +111,6 @@ get_paren_done:
  
 get_variable:
   (retval, chunk_start) = parse_variable(expr, chunk_start)
-  $P0 = retval."interpret"()
-  $I0 = $P0
-  retval = new TclInt
-  retval = $I0
   
   chunk = new TclList
   chunk[0] = OPERAND
@@ -122,8 +119,17 @@ get_variable:
   dec chunk_start
   goto chunk_loop
 
+subcommand:
+  (retval, chunk_start) = get_subcommand(expr, chunk_start)
+
+  chunk = new TclList
+  chunk[0] = OPERAND
+  chunk[1] = retval
+  push chunks, chunk
+  dec chunk_start
+  goto chunk_loop
+
 get_function:
-  #print "GET_FUNC\n"
   # Does the string of characters here match one of our pre-defined
   # functions? If so, put that function on the stack.
   .local pmc func
@@ -142,11 +148,9 @@ get_function:
   goto chunk_loop
 
 get_number:
-  #print "GET_NUMBER\n"
   # If we got here, then char and chunk_start are already set properly
   .local pmc value
   (op_length,value) = __expr_get_number(expr,chunk_start)
-  #print "GOT_NUMBER\n"
   if op_length == 0 goto get_operator
   # XXX otherwise, pull that number off
   # stuff the chunk onto the chunk_list
@@ -159,7 +163,6 @@ get_number:
   goto chunk_loop
  
 get_operator:
-  #print "GET_OPERATOR\n"
   # If we got here, then char and chunk_start are already set properly
   .local int op_len
   .local int expr_len
@@ -250,7 +253,6 @@ chunks_done:
   .return(TCL_OK,chunks)
 
 pre_converter_loop:
-  #print "pre_converter_loop\n"
   .local int precedence_level
   precedence_level = -1 # start with functions
 converter_loop:
@@ -275,7 +277,6 @@ is_opfunc:
   if $I3 != precedence_level goto converter_next
 
 right_arg:
-  #print "right_arg\n"
   $I2 = stack_index + 1
   if $I2 >= input_len goto left_arg
   retval = chunks[$I2]
@@ -290,7 +291,6 @@ right_arg:
 
   # XXX we just deal with binary args at the moment.
 left_arg:
-  #print "left_arg\n"
   $I2 = stack_index - 1
   if $I2 < 0 goto shift_op
   retval = chunks[$I2]
@@ -300,23 +300,19 @@ left_arg:
   program_stack = unshift retval
 
 shift_op:
-  #print "shift_op\n"
   program_stack = unshift our_op
   chunks[stack_index] = undef
 
 converter_next:
- #print "conveter_next\n"
   inc stack_index
   goto converter_loop
 
 precedence_done:
- #print "precedence done\n"
   inc precedence_level
   stack_index = 0
   goto converter_loop
 
 die_horribly:
-  #print "dying horribly\n"
   return_type = TCL_ERROR 
   program_stack = new String
   program_stack = "An error occurred in EXPR"
@@ -329,9 +325,7 @@ premature_end:
   program_stack .= expr
   program_stack .= "\": premature end of expression"
 
-converter_done: 
-  #print "converter done\n"
-  #_dumper(program_stack,"PROG_STACK")
+converter_done:
   .return(return_type,program_stack)
 
 .end
@@ -363,24 +357,18 @@ stack_evaluator:
  # move all non op non funcs to the value stack
  if type == OP goto do_op
  if type == FUNC goto do_op
+ $P0 = chunk[1]
+ $P0 = $P0."interpret"()
+ chunk[1] = $P0
  push result_stack, chunk
  goto stack_evaluator
 
 do_op:
-  #print "it's an op?\n"
   # right now, we assume binary ops. Later, each op will define the
   # number of and type of ops it takes, and we will respect it.
 
   .local int func
   func = chunk[1]
-
-  #print "DO_OP: "
-  #print func
-  #print "\n"
-
-  # XXX protect against unknown operands... 
-  #typeof $I0, func
-  #if $I0 == .Undef goto die_horribly  
 
   # XXX assume all operands take two args.
   .local pmc r_arg
@@ -389,24 +377,10 @@ do_op:
   op_result = new TclInt
   l_arg = pop result_stack
   l_arg = l_arg[1]
-  $S0 = typeof l_arg
-  #print "l-arG (type):"
-  #print $S0
-  #print "\n"
-  #print "l-arG:"
-  #print l_arg
-  #print "\n"
 
   if func >= FUNCTION_ABS goto func_list
   r_arg = pop result_stack
   r_arg = r_arg[1]
-  $S0 = typeof r_arg
-  #print "r-arG (type):"
-  #print $S0
-  #print "\n"
-  #print "r-arG:"
-  #print r_arg
-  #print "\n"
 
   # Is there a more efficient way to do this dispatch?
   if func == OPERATOR_MUL goto op_mul
@@ -593,25 +567,14 @@ func_tanh:
   # fallthrough to done_op
 
 done_op:
-  $S0 = typeof op_result
-  #print $S0
-  #print "\n"
-  #print "-<\n"
-  #print "DID OP:"
-  #print func
-  #print "\n"
   $P5 = new FixedPMCArray
   $P5 = 2
   $P5[0] = OPERAND
   $P5[1] = op_result
   push result_stack, $P5
 
-  #if $I0 != TCL_ERROR goto stack_evaluator
   # Ignoring exceptions for now.
   goto stack_evaluator
- 
-  #pop retval, result_stack 
-  #goto evaluation_done
 
 stack_done:
   $I0 = result_stack
