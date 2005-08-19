@@ -1014,9 +1014,6 @@ e_pbc_end_sub(Interp *interpreter, void *param, IMC_Unit * unit)
     /* we run only PCC subs */
     if (!ins->r[0] || !ins->r[0]->pcc_sub)
         return 0;
-    /* if we are compiling, we don't run it */
-    if (IMCC_INFO(interpreter)->write_pbc)
-        return 0;
     pragma = ins->r[0]->pcc_sub->pragma;
     if (pragma & P_IMMEDIATE) {
         IMCC_debug(interpreter, DEBUG_PBC, "immediate sub '%s'",

@@ -232,18 +232,19 @@ sub_pragma(Parrot_Interp interpreter, int action, PMC *sub_pmc)
 
 /*
 
-=item C<static void run_sub(Parrot_Interp interpreter, PMC* sub_pmc)>
+=item C<static PMC* run_sub(Parrot_Interp interpreter, PMC* sub_pmc)>
 
-Run the B<sub_pmc> due its B<@LOAD> pragma
+Run the B<sub_pmc> due its B<@LOAD>, B<@IMMEDIATE>, ... pragma
 
 =cut
 
 */
 
-static void
+static PMC*
 run_sub(Parrot_Interp interpreter, PMC* sub_pmc)
 {
     Parrot_Run_core_t old = interpreter->run_core;
+    PMC *retval;
 
     /*
      * turn off JIT and prederef - both would act on the whole
@@ -253,13 +254,14 @@ run_sub(Parrot_Interp interpreter, PMC* sub_pmc)
         interpreter->run_core != PARROT_SLOW_CORE  &&
         interpreter->run_core != PARROT_FAST_CORE)
         interpreter->run_core = PARROT_FAST_CORE;
-    Parrot_runops_fromc_args(interpreter, sub_pmc, "v");
+    retval = Parrot_runops_fromc_args(interpreter, sub_pmc, "P");
     interpreter->run_core = old;
+    return retval;
 }
 
 /*
 
-=item <static void
+=item <static PMC*
 do_sub_pragmas(Parrot_Interp interpreter, struct PackFile *self, int action)>
 
 Run autoloaded bytecode, mark MAIN subroutine entry
@@ -268,12 +270,14 @@ Run autoloaded bytecode, mark MAIN subroutine entry
 
 */
 
-static void
+static PMC*
 do_1_sub_pragma(Parrot_Interp interpreter, PMC* sub_pmc, int action)
 {
 
     size_t start_offs;
     struct Parrot_sub * sub = PMC_sub(sub_pmc);
+    PMC *result;
+
     switch (action) {
         case PBC_IMMEDIATE:
             /*
@@ -281,12 +285,12 @@ do_1_sub_pragma(Parrot_Interp interpreter, PMC* sub_pmc, int action)
              */
             if (PObj_get_FLAGS(sub_pmc) & SUB_FLAG_PF_IMMEDIATE) {
                 PObj_get_FLAGS(sub_pmc) &= ~SUB_FLAG_PF_IMMEDIATE;
-                run_sub(interpreter, sub_pmc);
+                result = run_sub(interpreter, sub_pmc);
                 /*
                  * reset initial flag so MAIN detection works
                  */
                 interpreter->resume_flag = RESUME_INITIAL;
-                return;
+                return result;
             }
         case PBC_POSTCOMP:
             /*
@@ -299,7 +303,7 @@ do_1_sub_pragma(Parrot_Interp interpreter, PMC* sub_pmc, int action)
                  * reset initial flag so MAIN detection works
                  */
                 interpreter->resume_flag = RESUME_INITIAL;
-                return;
+                return NULL;
             }
 
         case PBC_LOADED:
@@ -326,6 +330,7 @@ do_1_sub_pragma(Parrot_Interp interpreter, PMC* sub_pmc, int action)
                 }
             }
     }
+    return NULL;
 }
 
 static void
@@ -334,7 +339,7 @@ do_sub_pragmas(Interp* interpreter, struct PackFile_ByteCode *self, int action)
     opcode_t i, ci;
     struct PackFile_FixupTable *ft;
     struct PackFile_ConstTable *ct;
-    PMC *sub_pmc;
+    PMC *sub_pmc, *result;
 
     ft = self->fixups;
     ct = self->const_table;
@@ -351,7 +356,15 @@ do_sub_pragmas(Interp* interpreter, struct PackFile_ByteCode *self, int action)
                     case enum_class_Sub:
                     case enum_class_Closure:
                     case enum_class_Coroutine:
-                        do_1_sub_pragma(interpreter, sub_pmc, action);
+                        result = do_1_sub_pragma(interpreter, sub_pmc, action);
+                        /*
+                         * replace the Sub PMC with the result of the
+                         * computation
+                         */
+                        if (action == PBC_IMMEDIATE && !PMC_IS_NULL(result)) {
+                            ft->fixups[i]->type = enum_fixup_none;
+                            ct->constants[ci]->u.key = result;
+                        }
                 }
         }
     }
@@ -2281,6 +2294,8 @@ fixup_packed_size (Interp* interpreter, struct PackFile_Segment *self)
                 size += PF_size_cstring(ft->fixups[i]->name);
                 size ++; /* offset */
                 break;
+            case enum_fixup_none:
+                break;
             default:
                 internal_exception(1, "Unknown fixup type\n");
                 return 0;
@@ -2314,6 +2329,8 @@ fixup_pack(Interp* interpreter, struct PackFile_Segment *self, opcode_t *cursor)
             case enum_fixup_sub:
                 cursor = PF_store_cstring(cursor, ft->fixups[i]->name);
                 *cursor++ = ft->fixups[i]->offset;
+                break;
+            case enum_fixup_none:
                 break;
             default:
                 internal_exception(1, "Unknown fixup type\n");
@@ -2399,6 +2416,8 @@ fixup_unpack(Interp *interpreter,
             case enum_fixup_sub:
                 self->fixups[i]->name = PF_fetch_cstring(pf, &cursor);
                 self->fixups[i]->offset = PF_fetch_opcode(pf, &cursor);
+                break;
+            case enum_fixup_none:
                 break;
             default:
                 PIO_eprintf(interpreter,
