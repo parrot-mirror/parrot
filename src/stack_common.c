@@ -89,7 +89,7 @@ cst_new_stack_chunk(Parrot_Interp interpreter, Stack_Chunk_t *chunk)
     struct Small_Object_Pool *pool;
 
     pool = get_bufferlike_pool(interpreter, chunk->size);
-    new_chunk = pool->get_free_object(interpreter, pool);
+    new_chunk = pool->get_free_sized_object(interpreter, pool, sizeof(pobj_body));
     PObj_bufstart(new_chunk) = NULL;
     PObj_buflen  (new_chunk) = 0;
 

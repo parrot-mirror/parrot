@@ -275,6 +275,7 @@ struct Small_Object_Pool {
 #if PARROT_GC_GMC
     Gc_gmc *gc;
     Gc_gmc_area_list *areas; /* pointers to the headers areas */
+    void *limit; /* Last object to be allocated in the current area */
 #endif
 };
 

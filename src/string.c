@@ -66,8 +66,8 @@ Parrot_unmake_COW(Interp *interpreter, STRING *s)
     /* COW_FLAG | constant_FLAG | external_FLAG) */
     if (PObj_is_cowed_TESTALL(s)) {
 #if PARROT_GC_GMC
-	STRING *for_alloc_ptr = new_string_header(interpreter, 0);
-	STRING for_alloc = *for_alloc_ptr;
+	STRING for_alloc;
+	PMC_body((PMC*)(&for_alloc)) = mem_sys_allocate_zeroed(sizeof(pobj_body));
 #else
         STRING for_alloc;
 #endif
@@ -94,6 +94,9 @@ Parrot_unmake_COW(Interp *interpreter, STRING *s)
         PObj_buflen(s)   = PObj_buflen(&for_alloc);
         /* COW_FLAG | external_FLAG | bufstart_external_FLAG immobile_FLAG */
         PObj_is_external_CLEARALL(s);
+#if PARROT_GC_GMC
+	mem_sys_free(PMC_body((PMC*)(&for_alloc)));
+#endif
     }
 
     s->hashval = 0;
