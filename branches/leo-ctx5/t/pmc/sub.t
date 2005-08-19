@@ -17,7 +17,7 @@ C<Continuation> PMCs.
 
 =cut
 
-use Parrot::Test tests => 49;
+use Parrot::Test tests => 50;
 use Test::More;
 use Parrot::Config;
 
@@ -1295,4 +1295,26 @@ pir_output_is(<<'CODE', <<'OUTPUT', "immediate code as const");
 .end
 CODE
 3.14159
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "immediate code as const - obj");
+.sub make_obj @IMMEDIATE, @ANON
+    .local pmc cl, o
+    cl = newclass "Foo"
+    addattribute cl, 'x'
+    o = new 'Foo'
+    $P0 = new String
+    $P0 = "ok 1\n"
+    setattribute o, 'x', $P0
+    .return (o)
+.end
+
+.sub main @MAIN
+    .const .Sub o = "make_obj"
+    $P0 = getattribute o, 'x'
+    print $P0
+.end
+
+CODE
+ok 1
 OUTPUT
