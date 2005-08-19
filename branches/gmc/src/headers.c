@@ -212,6 +212,9 @@ make_bufferlike_pool(Interp *interpreter, size_t buffer_size)
 
     if (sized_pools[idx] == NULL) {
         sized_pools[idx] = new_bufferlike_pool(interpreter, buffer_size);
+	char *s = mem_sys_allocate(strlen("sized_pool()") + 6);
+	sprintf (s, "sized_pool(%d)", buffer_size);
+	sized_pools[idx]->name = s;
     }
 
     return sized_pools[idx];
@@ -458,6 +461,7 @@ Creates and returns a new C<Buffer>.
 Buffer *
 new_buffer_header(Interp *interpreter)
 {
+    fprintf (stderr, "Getting buffer from buffer_header_pool\n");
     return get_free_buffer(interpreter,
             interpreter->arena_base->buffer_header_pool);
 }

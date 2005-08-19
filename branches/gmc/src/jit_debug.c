@@ -163,7 +163,7 @@ write_types(FILE *stabs)
                 BIT_OFFSET(STRING, obj.u._b._buflen), BIT_SIZE(size_t),
 #endif
 #if PARROT_GC_GMC
-                BIT_OFFSET(STRING, body->flags), BIT_SIZE(UINTVAL),
+                BIT_OFFSET(STRING, flags), BIT_SIZE(UINTVAL),
 #else
                 BIT_OFFSET(STRING, obj.flags), BIT_SIZE(UINTVAL),
 #endif

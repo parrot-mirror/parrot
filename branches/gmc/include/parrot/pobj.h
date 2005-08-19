@@ -93,7 +93,6 @@ typedef struct pobj_t {
 /* TODO: Change to a real pmc_body type. */
 typedef struct default_body {
     UnionVal u;
-    Parrot_UInt flags;
 #if ! DISABLE_GC_DEBUG
     UINTVAL _pobj_version;
 #endif
@@ -107,7 +106,6 @@ typedef struct default_body {
 
 typedef struct pobj_body {
     UnionVal u;
-    Parrot_UInt flags;
 #if ! DISABLE_GC_DEBUG
     UINTVAL _pobj_version;
 #endif
@@ -115,6 +113,11 @@ typedef struct pobj_body {
 
 
 typedef struct Buffer {
+    /* Having the flags in the fixed size header makes life more simple
+     * as it allows us to test easily if there is an object or not, whereas if
+     * we have it in the body, we need it to be allocated if we want to access
+     * it. */
+    Parrot_UInt flags;
     pobj_body *body;
 } Buffer;
 
@@ -189,6 +192,7 @@ typedef enum {
 
 struct parrot_string_t {
 #if PARROT_GC_GMC
+    Parrot_UInt flags;
     PMC_BODY *body;
 #else
     pobj_t obj;
@@ -214,6 +218,7 @@ struct parrot_string_t {
 
 struct PMC {
 #if PARROT_GC_GMC
+    Parrot_UInt flags;
     PMC_BODY *body;
 #else
     pobj_t obj;
@@ -381,7 +386,10 @@ typedef enum PObj_enum {
     /* True if the PMC is a class */
     PObj_is_class_FLAG = 1 << 29,
     /* True if the PMC is a parrot object */
-    PObj_is_object_FLAG = 1 << 30
+    PObj_is_object_FLAG = 1 << 30,
+
+    /* True if there is a pobj at this position. */
+    PObj_exists_FLAG = 1 << 31,
 
 } PObj_flags;
 
@@ -492,7 +500,7 @@ typedef enum PObj_enum {
 #endif /* ARENA_DOD_FLAGS */
 
 #if PARROT_GC_GMC
-#define PObj_get_FLAGS(o) ((o)->body->flags)
+#define PObj_get_FLAGS(o) ((o)->flags)
 #else
 #define PObj_get_FLAGS(o) ((o)->obj.flags)
 #endif
@@ -545,6 +553,10 @@ typedef enum PObj_enum {
 #define PObj_sysmem_TEST(o) PObj_flag_TEST(sysmem, o)
 #define PObj_sysmem_SET(o) PObj_flag_SET(sysmem, o)
 #define PObj_sysmem_CLEAR(o) PObj_flag_CLEAR(sysmem, o)
+
+#define PObj_exists_TEST(o) PObj_flag_TEST(exists, o)
+#define PObj_exists_SET(o) PObj_flag_SET(exists,o)
+#define PObj_exists_CLEAR(o) PObj_flag_CLEAR(exists, o)
 
 
 #define PObj_special_SET(flag, o) do { \
