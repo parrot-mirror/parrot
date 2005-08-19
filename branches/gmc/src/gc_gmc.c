@@ -230,6 +230,7 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
     PMC *ptr;
     Gc_gmc_area_store *store;
     Gc_gmc_header_area *area;
+    /* Go through all the headers of the pool. */
     for (store = pool->areas->first; store; store = store->next)
     {
 	for (area = store->store[0]; (UINTVAL)area < (UINTVAL)store->ptr; area++)
@@ -244,7 +245,7 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 			--arena_base->num_early_DOD_PMCs;
 		    if (PObj_active_destroy_TEST(ptr))
 			VTABLE_destroy(interpreter, ptr);
-		    if (Gmc_has_PMC_EXT_TEST(ptr) && PMC_data(ptr))
+		    if ((Gmc_has_PMC_EXT_TEST(ptr) || PObj_is_PMC_EXT_TEST(ptr)) && PMC_data(ptr))
 		    {
 			mem_sys_free(PMC_data(ptr));
 			PMC_data(ptr) = NULL;

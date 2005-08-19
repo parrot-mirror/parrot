@@ -65,7 +65,12 @@ Parrot_unmake_COW(Interp *interpreter, STRING *s)
 {
     /* COW_FLAG | constant_FLAG | external_FLAG) */
     if (PObj_is_cowed_TESTALL(s)) {
+#if PARROT_GC_GMC
+	STRING *for_alloc_ptr = new_string_header(interpreter, 0);
+	STRING for_alloc = *for_alloc_ptr;
+#else
         STRING for_alloc;
+#endif
 
         /* Create new pool data for this header to use,
          * independent of the original COW data */
@@ -500,6 +505,7 @@ string_append(Interp *interpreter,
     if ( (cs = string_rep_compatible(interpreter, a, b, NULL))) {
         a->charset = cs;
         /* Tack B on the end of A */
+
         mem_sys_memcopy((void *)((ptrcast_t)a->strstart + a->bufused),
                 b->strstart, b->bufused);
 
