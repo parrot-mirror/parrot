@@ -17,7 +17,7 @@ C<Continuation> PMCs.
 
 =cut
 
-use Parrot::Test tests => 48;
+use Parrot::Test tests => 49;
 use Test::More;
 use Parrot::Config;
 
@@ -1277,4 +1277,22 @@ l12
 l21
 l22
 main 3
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "immediate code as const");
+.sub make_pi @IMMEDIATE, @ANON
+    $N0 = atan 1.0, 1.0
+    $N0 *= 4
+    $P0 = new .Float
+    $P0 = $N0
+    .return ($P0)
+.end
+
+.sub main @MAIN
+    .const .Sub pi = "make_pi"
+    print pi
+    print "\n"
+.end
+CODE
+3.14159
 OUTPUT
