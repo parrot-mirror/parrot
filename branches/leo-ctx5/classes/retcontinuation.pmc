@@ -10,8 +10,8 @@ classes/retcontinuation.pmc - Return Continuation
 
 C<RetContinuation> extends C<Continuation>.
 
-A return continuation is like a Continuation, only its context isn't marked,
-because that's just some previous state of the interpreter.
+A return continuation is a one shot Continuation, it gets recycled
+immediately after invocation.
 
 =head2 Methods
 
@@ -81,7 +81,7 @@ the frame pointer in the stack frame cache.
          * unwind control stack
          */
         stack_now = CONTEXT(INTERP->ctx)->control_stack;
-        ctr_stack = CONTEXT(PMC_cont(SELF)->to_ctx)->control_stack;
+        ctr_stack = CONTEXT(cc->to_ctx)->control_stack;
         while (stack_now != ctr_stack) {
             if (!stack_now || !ctr_stack)
                 internal_exception(1, "Control stack damaged");
@@ -102,9 +102,6 @@ the frame pointer in the stack frame cache.
                     Parrot_full_sub_name(INTERP, sub));
         }
         caller_regs = INTERP->ctx.bp;
-        /* if free_context destroys, we have to remember the ptr */
-        Parrot_free_context(INTERP, &cc->from_ctx, 1);
-        cc->from_ctx.bp = NULL;
         INTERP->ctx = cc->to_ctx;
         next = cc->address;
         if (next) {
@@ -124,6 +121,8 @@ the frame pointer in the stack frame cache.
             }
             INTERP->current_returns = NULL;
         }
+        Parrot_free_context(INTERP, &cc->from_ctx, 1);
+        cc->from_ctx.bp = NULL;
         INTERP->current_args = NULL;
         /* no address and no segment */
         if (!cc->seg) {
