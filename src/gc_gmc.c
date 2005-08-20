@@ -230,6 +230,7 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
     PMC *ptr;
     Gc_gmc_area_store *store;
     Gc_gmc_header_area **area;
+    int sweep = 0;
 
     /* Go through all the headers of the pool. */
     for (store = pool->areas->first; store; store = store->next)
@@ -239,7 +240,7 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 	    for (ptr = (PMC*)(*area)->fst; (UINTVAL)ptr < (UINTVAL)(*area)->lst;
 		    ptr = (PMC*)((char*)ptr + pool->object_size))
 	    {
-		if (PObj_exists_TEST(ptr) && !PObj_live_TEST(ptr))
+		if (!PObj_live_TEST(ptr))
 		{
 		    /* This shouldn't be necessary. */
 		    if (PObj_needs_early_DOD_TEST(ptr))
@@ -248,6 +249,7 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 			VTABLE_destroy(interpreter, ptr);
 		    }
 		    PObj_exists_CLEAR(ptr);
+		    sweep++;
 		    /* This is the work of the VTABLE_destroy function. */
 		    /*
 		    if ((Gmc_has_PMC_EXT_TEST(ptr) || PObj_is_PMC_EXT_TEST(ptr)) && PMC_data(ptr))
@@ -259,6 +261,9 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 	    }
 	}
     }
+#ifdef GMC_DEBUG
+    fprintf (stderr, "Sweeped %d PMC in pool %s (%d/%d)\n", sweep, pool->name, pool->total_objects - pool->num_free_objects, pool->total_objects);
+#endif
     return 0;
 }
 
@@ -661,6 +666,7 @@ gc_gmc_more_objects(Interp *interpreter,
     pool->free_list = fst;
     pool->limit = (void*)((char*)fst + NUM_NEW_OBJ * pool->object_size);
     pool->num_free_objects += NUM_NEW_OBJ;
+    pool->total_objects += NUM_NEW_OBJ;
 #ifdef GMC_DEBUG
     fprintf(stderr, "Allocating %d more objects of size %d beginning at %p\n", NUM_NEW_OBJ, pool->object_size, fst);
 #endif
