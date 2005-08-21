@@ -496,7 +496,7 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
 	    arena = (arena->prev) ? arena->prev : pool->last_Arena);
 
     /* Now find this object. */
-    for (pmc = arena->start_objects;
+    for (pmc = arena->start_looking;
 	    PObj_exists_TEST((PObj*)pmc);
 	    pmc = ((UINTVAL)pmc < (UINTVAL)((char*)arena->start_objects + 
 		    pool->object_size * (arena->total_objects - 1))) ?
@@ -504,7 +504,7 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
 	    arena->start_objects);
 
     pool->free_list = arena;
-    arena->start_looking = pmc;
+    arena->start_looking = (char*)pmc + pool->object_size;
     ++arena->used;
     --pool->num_free_objects;
     PMC_body((PMC*)pmc) = Gmc_PMC_hdr_get_BODY(pmc_body);
