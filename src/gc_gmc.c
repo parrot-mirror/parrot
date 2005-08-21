@@ -3,6 +3,9 @@
 #if PARROT_GC_GMC
 
 
+#define UNITS_PER_ALLOC_GROWTH_FACTOR 1.75
+#define POOL_MAX_BYTES 65536*128
+
 static void gc_gmc_add_free_object(Interp*, struct Small_Object_Pool*, void*);
 static void *gc_gmc_get_free_typed_object(Interp*, struct Small_Object_Pool*, INTVAL);
 static void *gc_gmc_get_free_sized_object(Interp*, struct Small_Object_Pool*, size_t);
@@ -13,7 +16,7 @@ static void gc_gmc_more_pmc_bodies(Interp *, struct Small_Object_Pool*);
 
 
 /* Determines the size of a PMC according to its base_type. */
-static size_t
+    static size_t
 gc_gmc_get_PMC_size(Interp *interpreter, INTVAL base_type)
 {
     VTABLE *vtable = Parrot_base_vtables[base_type];
@@ -24,7 +27,7 @@ gc_gmc_get_PMC_size(Interp *interpreter, INTVAL base_type)
 
 
 /* Allocates and initializes a generation, but does not plug it to the pool yet. */
-static Gc_gmc_gen *
+    static Gc_gmc_gen *
 gc_gmc_gen_init(Interp *interpreter)
 {
     Gc_gmc_gen *gen;
@@ -33,7 +36,7 @@ gc_gmc_gen_init(Interp *interpreter)
 
     gen = mem_sys_allocate(sizeof(Gc_gmc_gen));
     gen->first = mem_sys_allocate(GMC_GEN_SIZE);
-    
+
     /* And fill the blanks. */
     gen->fst_free = gen->first;
     gen->remaining = GMC_GEN_SIZE;
@@ -51,13 +54,13 @@ gc_gmc_gen_init(Interp *interpreter)
 #ifdef GMC_DEBUG
     fprintf(stderr, "Allocating gen at %p, first at %p, limit at %p\n", gen, gen->first, (char*)gen->first + gen->remaining);
 #endif
-    
+
     return gen;
 }
 
 /* Inserts the given generation to the right place, keeping all generation 
  * sorted (by insertion sort). */
-static void
+    static void
 gc_gmc_insert_gen(Interp *interpreter, Gc_gmc *gc, Gc_gmc_gen *gen)
 {
     Gc_gmc_gen *cur_gen;
@@ -72,22 +75,22 @@ gc_gmc_insert_gen(Interp *interpreter, Gc_gmc *gc, Gc_gmc_gen *gen)
     /* Find the right place for the address malloc gave us. */
     while ((UINTVAL)ptr > (UINTVAL)gen->first)
     {
-      cur_gen = cur_gen->prev;
-      if (cur_gen)
-	  ptr = cur_gen->first;
-      else
-	  ptr = NULL;
+	cur_gen = cur_gen->prev;
+	if (cur_gen)
+	    ptr = cur_gen->first;
+	else
+	    ptr = NULL;
     }
-    
+
     /* Insert the generation. */
     if (cur_gen)
     {
-      if (cur_gen->next)
-      {
-	cur_gen->next->prev = gen;
-      }
-      gen->next = cur_gen->next;
-      cur_gen->next = gen;
+	if (cur_gen->next)
+	{
+	    cur_gen->next->prev = gen;
+	}
+	gen->next = cur_gen->next;
+	cur_gen->next = gen;
     } else {
 	if (gc->yng_fst)
 	{
@@ -102,10 +105,10 @@ gc_gmc_insert_gen(Interp *interpreter, Gc_gmc *gc, Gc_gmc_gen *gen)
     }
     gen->prev = cur_gen;
     if (gc->old_lst == cur_gen)
-      gc->old_lst = gen;
+	gc->old_lst = gen;
 }
 
-static void
+    static void
 gc_gmc_test_linked_list_gen(Interp *interpreter, Gc_gmc *gc)
 {
     Gc_gmc_gen *gen;
@@ -129,22 +132,14 @@ gc_gmc_test_linked_list_gen(Interp *interpreter, Gc_gmc *gc)
 
 static void gc_gmc_pool_deinit(Interp *, struct Small_Object_Pool *);
 
-static void 
+    static void 
 gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool) 
 {
     struct Arenas *arena_base;
     Gc_gmc *gc;
     Gc_gmc_gen *gen;
-    Gc_gmc_area_store *store;
     int i;
 
-    store = mem_sys_allocate_zeroed(sizeof(Gc_gmc_area_store));
-    store->ptr = &(store->store[0]);
-    store->next = NULL;
-    pool->areas = mem_sys_allocate(sizeof(Gc_gmc_area_list));
-    pool->areas->first = store;
-    pool->areas->last = store;
-    
     pool->add_free_object = gc_gmc_add_free_object;
     pool->get_free_object = gc_gmc_get_free_object;
     pool->get_free_typed_object = gc_gmc_get_free_typed_object;
@@ -153,7 +148,7 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     pool->more_objects    = gc_gmc_more_objects;
 
     gc = mem_sys_allocate(sizeof(Gc_gmc));
-    
+
     gc->nb_gen = GMC_GEN_INIT_NUMBER;
     gc->nb_empty_gen = GMC_GEN_INIT_NUMBER;
     gc->alloc_obj = 0;
@@ -164,7 +159,7 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     gc->timely = gc_gmc_gen_init(interpreter);
     gc->constant = gc_gmc_gen_init(interpreter);
     pool->gc = gc;
-    
+
     for (i = 0; i < GMC_GEN_INIT_NUMBER; i++)
     {
 	gen = gc_gmc_gen_init(interpreter);
@@ -184,31 +179,31 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     gc->yng_lst = gc->yng_fst;
 }
 
-static void
+    static void
 gc_gmc_pool_deinit(Interp *interpreter, struct Small_Object_Pool *pool)
 {
     Gc_gmc *gc;
     Gc_gmc_gen *gen, *gen_nxt;
     Gc_gmc_hdr_store *store, *st2;
-    
+
     gc = pool->gc;
     for (gen = gc->yng_fst; gen;)
     {
 	gen_nxt = gen->next;
-	mem_sys_free(gen->first);
-	mem_sys_free(gen);
 	for (store = gen->IGP->first; store; st2 = store->next,mem_sys_free(store),
 		store = st2);
+	mem_sys_free(gen->first);
+	mem_sys_free(gen);
 	gen = gen_nxt;
     }
 
     for (gen = gc->old_fst; gen;)
     {
 	gen_nxt = gen->next;
-	mem_sys_free(gen->first);
-	mem_sys_free(gen);
 	for (store = gen->IGP->first; store; st2 = store->next,mem_sys_free(store),
 		store = st2);
+	mem_sys_free(gen->first);
+	mem_sys_free(gen);
 	gen = gen_nxt;
     }
 }
@@ -217,7 +212,7 @@ gc_gmc_pool_deinit(Interp *interpreter, struct Small_Object_Pool *pool)
 static void gc_gmc_deinit(Interp *interpreter)
 {
     struct Arenas *arena_base = interpreter->arena_base;
-    
+
     /* This is done in gc_gmc_do_dod_run when given the right flag. */
     /*gc_gmc_pool_deinit(interpreter, arena_base->pmc_pool);*/
 
@@ -228,36 +223,33 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 {
     struct Arenas *arena_base = interpreter->arena_base;
     PMC *ptr;
-    Gc_gmc_area_store *store;
-    Gc_gmc_header_area **area;
+    struct Small_Object_Arena *arena;
     int sweep = 0;
 
     /* Go through all the headers of the pool. */
-    for (store = pool->areas->first; store; store = store->next)
+    for (arena = pool->last_Arena; arena; arena = arena->prev)
     {
-	for (area = &store->store[0]; (UINTVAL)area < (UINTVAL)store->ptr; area++)
+	for (ptr = (PMC*)arena->start_objects; (UINTVAL)ptr < 
+		(UINTVAL)((char*)arena->start_objects + pool->object_size * arena->total_objects);
+		ptr = (PMC*)((char*)ptr + pool->object_size))
 	{
-	    for (ptr = (PMC*)(*area)->fst; (UINTVAL)ptr < (UINTVAL)(*area)->lst;
-		    ptr = (PMC*)((char*)ptr + pool->object_size))
+	    if (PObj_exists_TEST(ptr) && !PObj_live_TEST(ptr))
 	    {
-		if (!PObj_live_TEST(ptr))
-		{
-		    /* This shouldn't be necessary. */
-		    if (PObj_needs_early_DOD_TEST(ptr))
-			--arena_base->num_early_DOD_PMCs;
-		    if (PObj_active_destroy_TEST(ptr)) {
-			VTABLE_destroy(interpreter, ptr);
-		    }
-		    PObj_exists_CLEAR(ptr);
-		    sweep++;
-		    /* This is the work of the VTABLE_destroy function. */
-		    /*
-		    if ((Gmc_has_PMC_EXT_TEST(ptr) || PObj_is_PMC_EXT_TEST(ptr)) && PMC_data(ptr))
-		    {
-			mem_sys_free(PMC_data(ptr));
-			PMC_data(ptr) = NULL;
-		    } */
+		/* This shouldn't be necessary. */
+		if (PObj_needs_early_DOD_TEST(ptr))
+		    --arena_base->num_early_DOD_PMCs;
+		if (PObj_active_destroy_TEST(ptr)) {
+		    VTABLE_destroy(interpreter, ptr);
 		}
+		PObj_exists_CLEAR(ptr);
+		sweep++;
+		/* This is the work of the VTABLE_destroy function. */
+		/*
+		   if ((Gmc_has_PMC_EXT_TEST(ptr) || PObj_is_PMC_EXT_TEST(ptr)) && PMC_data(ptr))
+		   {
+		   mem_sys_free(PMC_data(ptr));
+		   PMC_data(ptr) = NULL;
+		   } */
 	    }
 	}
     }
@@ -273,61 +265,59 @@ static int sweep_buf (Interp *interpreter, struct Small_Object_Pool *pool,
 {
     struct Arenas *arena_base = interpreter->arena_base;
     PObj *obj;
-    Gc_gmc_area_store *store;
-    Gc_gmc_header_area **area;
+    struct Small_Object_Arena *arena;
+
     /* Go through all the headers of the pool. */
-    for (store = pool->areas->first; store; store = store->next)
+    for (arena = pool->last_Arena; arena; arena = arena->prev)
     {
-	for (area = &store->store[0]; (UINTVAL)area < (UINTVAL)store->ptr; area++)
+	for (obj = (PObj*)arena->start_objects; (UINTVAL)obj < 
+		(UINTVAL)((char*)arena->start_objects + pool->object_size * arena->total_objects);
+		obj = (PObj*)((char*)obj + pool->object_size))
 	{
-	    for (obj = (PObj*)(*area)->fst; (UINTVAL)obj < (UINTVAL)(*area)->lst;
-		    obj = (PObj*)((char*)obj + pool->object_size))
+
+	    if (PObj_exists_TEST(obj))
 	    {
-
-		if (PObj_exists_TEST(obj))
-		{
-		    if (PObj_sysmem_TEST(obj) && PObj_bufstart(obj)) {
-			/* has sysmem allocated, e.g. string_pin */
-			mem_sys_free(PObj_bufstart(obj));
-			PObj_bufstart(obj) = NULL;
-			PObj_buflen(obj) = 0;
-		    }
-		    else {
+		if (PObj_sysmem_TEST(obj) && PObj_bufstart(obj)) {
+		    /* has sysmem allocated, e.g. string_pin */
+		    mem_sys_free(PObj_bufstart(obj));
+		    PObj_bufstart(obj) = NULL;
+		    PObj_buflen(obj) = 0;
+		}
+		else {
 #ifdef GC_IS_MALLOC
-			/* free allocated space at (int*)bufstart - 1,
-			 * but not if it is used COW or external
-			 */
-			if (PObj_bufstart(obj) &&
-				!PObj_is_external_or_free_TESTALL(obj)) {
-			    if (PObj_COW_TEST(obj)) {
-				INTVAL *refcount = ((INTVAL *)PObj_bufstart(obj) - 1);
+		    /* free allocated space at (int*)bufstart - 1,
+		     * but not if it is used COW or external
+		     */
+		    if (PObj_bufstart(obj) &&
+			    !PObj_is_external_or_free_TESTALL(obj)) {
+			if (PObj_COW_TEST(obj)) {
+			    INTVAL *refcount = ((INTVAL *)PObj_bufstart(obj) - 1);
 
-				if (!--(*refcount))
-				    free(refcount); /* the actual bufstart */
-			    }
-			    else
-				free((INTVAL*)PObj_bufstart(obj) - 1);
+			    if (!--(*refcount))
+				free(refcount); /* the actual bufstart */
 			}
+			else
+			    free((INTVAL*)PObj_bufstart(obj) - 1);
+		    }
 #else
-			/*
-			 * XXX Jarkko did report that on irix pool->mem_pool
-			 *     was NULL, which really shouldn't happen
-			 */
-			if (pool->mem_pool) {
-			    if (!PObj_COW_TEST(obj)) {
-				((struct Memory_Pool *)
-				 pool->mem_pool)->guaranteed_reclaimable +=
-				    PObj_buflen(obj);
-			    }
+		    /*
+		     * XXX Jarkko did report that on irix pool->mem_pool
+		     *     was NULL, which really shouldn't happen
+		     */
+		    if (pool->mem_pool) {
+			if (!PObj_COW_TEST(obj)) {
 			    ((struct Memory_Pool *)
-			     pool->mem_pool)->possibly_reclaimable +=
+			     pool->mem_pool)->guaranteed_reclaimable +=
 				PObj_buflen(obj);
 			}
-#endif
-			PObj_buflen(obj) = 0;
+			((struct Memory_Pool *)
+			 pool->mem_pool)->possibly_reclaimable +=
+			    PObj_buflen(obj);
 		    }
-		    PObj_exists_CLEAR(obj);
+#endif
+		    PObj_buflen(obj) = 0;
 		}
+		PObj_exists_CLEAR(obj);
 	    }
 	}
     }
@@ -341,42 +331,40 @@ gc_gmc_clear_live(Interp *interpreter, struct Small_Object_Pool *pool,
 	int flags, void *arg)
 {
     PObj *obj;
-    Gc_gmc_area_store *store;
-    Gc_gmc_header_area **area;
+    struct Small_Object_Arena *arena;
 
-    for (store = pool->areas->first; store; store = store->next)
+    for (arena = pool->last_Arena; arena; arena = arena->prev)
     {
-	for (area = &store->store[0]; (UINTVAL)area < (UINTVAL)store->ptr; area++)
+	for (obj = (PObj*)arena->start_objects; (UINTVAL)obj < 
+		(UINTVAL)((char*)arena->start_objects + pool->object_size * arena->total_objects);
+		obj = (PObj*)((char*)obj + pool->object_size))
 	{
-	    for (obj = (PObj*)(*area)->fst; (UINTVAL)obj < (UINTVAL)(*area)->lst;
-		    obj = (PObj*)((char*)obj + pool->object_size))
-	    {
-		if (PObj_exists_TEST(obj))
-		    PObj_live_CLEAR(obj);
-	    }
+	    if (PObj_exists_TEST(obj))
+		PObj_live_CLEAR(obj);
 	}
     }
     return 0;
 }
 
-static void gc_gmc_run(Interp *interpreter, int flags)
+static 
+void gc_gmc_run(Interp *interpreter, int flags)
 {
     struct Arenas *arena_base = interpreter->arena_base;
-    
+
     if (arena_base->DOD_block_level)
 	return;
     ++arena_base->DOD_block_level;
-    
+
     /* This interpreter will be destroyed, free everything. */
     if (flags & DOD_finish_FLAG) {
 	/* First the pmc headers */
 	Parrot_forall_header_pools(interpreter, POOL_ALL, 0, gc_gmc_clear_live);
 	Parrot_forall_header_pools(interpreter, POOL_PMC, 0, sweep_pmc);
-	Parrot_forall_header_pools(interpreter, POOL_BUFFER, 0, sweep_buf);
+	/*Parrot_forall_header_pools(interpreter, POOL_BUFFER, 0, sweep_buf);*/
 
 	/* Then the pmc_bodies. */
 	gc_gmc_pool_deinit(interpreter, arena_base->pmc_pool);
-	
+
 #ifdef GMC_DEBUG
 	fprintf (stderr, "GMC: Trying to run dod_run for final sweeping\n");
 #endif /* GMC_DEBUG */
@@ -393,13 +381,13 @@ static void gc_gmc_run(Interp *interpreter, int flags)
 
 void Parrot_gc_gmc_init(Interp *interpreter)
 {
-  struct Arenas *arena_base;
+    struct Arenas *arena_base;
 
-  arena_base = interpreter->arena_base;
+    arena_base = interpreter->arena_base;
 
-  arena_base->do_dod_run = gc_gmc_run;
-  arena_base->de_init_gc_system = gc_gmc_deinit;
-  arena_base->init_pool = gc_gmc_pool_init;
+    arena_base->do_dod_run = gc_gmc_run;
+    arena_base->de_init_gc_system = gc_gmc_deinit;
+    arena_base->init_pool = gc_gmc_pool_init;
 }
 
 
@@ -407,90 +395,134 @@ void Parrot_gc_gmc_init(Interp *interpreter)
 /******************************* REAL THINGS ********************************/
 
 
-static void 
+/* Allocates a new Small_Object_Arena and links it to the current pool. */
+    static void 
 gc_gmc_alloc_objects(Interp *interpreter, struct Small_Object_Pool *pool)
 {
+    struct Small_Object_Arena *new_arena;
+    char *ptr;
+    void *lim;
+    new_arena = mem_sys_allocate(sizeof(struct Small_Object_Arena));
+
+    new_arena->start_objects = mem_sys_allocate_zeroed(pool->objects_per_alloc * pool->object_size);
+    new_arena->total_objects = pool->objects_per_alloc;
+    new_arena->used = 0;
+    new_arena->start_looking = new_arena->start_objects;
+    pool->num_free_objects += pool->objects_per_alloc;
+    pool->total_objects += pool->objects_per_alloc;
+    new_arena->next = NULL;
+    new_arena->prev = pool->last_Arena;
+    lim = (void*)((char*)new_arena->start_objects + pool->objects_per_alloc * pool->object_size);
+
+    if (pool->last_Arena)
+	pool->last_Arena->next = new_arena;
+    pool->last_Arena = new_arena;
+
+    /* Mark all of its initial content to be inexistant. */
+    for (ptr = new_arena->start_objects; (UINTVAL)ptr < (UINTVAL)lim; ptr += pool->object_size)
+	PObj_exists_CLEAR((PObj*)ptr);
+
+    /* Allocate more next time. */
+    pool->objects_per_alloc = (UINTVAL) pool->objects_per_alloc * UNITS_PER_ALLOC_GROWTH_FACTOR;
+    if (pool->object_size * pool->objects_per_alloc > POOL_MAX_BYTES)
+	pool->objects_per_alloc = POOL_MAX_BYTES / pool->object_size;
+
+    /* Tell alloc to begin looking in this arena */
+    pool->free_list = new_arena;
+
+#ifdef GMC_DEBUG
+    fprintf(stderr, "Allocated new objects at arena %p, %p\n", new_arena, new_arena->start_objects);
+#endif
 }
 
-static void *
+    static void *
 gc_gmc_get_free_object_of_size(Interp *interpreter,
 	struct Small_Object_Pool *pool, size_t size, INTVAL aggreg)
 {
-  void *pmc_body;
-  void *pmc;
-  void *ptr;
-  UINTVAL i;
-  Gc_gmc *gc = pool->gc;
-  Gc_gmc_gen *gen, *gen_ref;
+    void *pmc_body;
+    void *pmc;
+    void *ptr;
+    UINTVAL i;
+    Gc_gmc *gc = pool->gc;
+    Gc_gmc_gen *gen, *gen_ref;
+    struct Small_Object_Arena *arena;
 
-  /* Allocate the pmc_body */
-  gen = (aggreg) ? gc->yng_lst : gc->old_lst;
+    /* Allocate the pmc_body */
+    gen = (aggreg) ? gc->yng_lst : gc->old_lst;
 
-  /* Should we use the next generation ? */
-  if (size >= gen->remaining)
-  {
-      if (aggreg)
-	  gc->yng_lst = gen->next;
-      else
-	  gc->old_lst = gen->next;
-      gen = gen->next;
-  }
+    /* Should we use the next generation ? */
+    if (size >= gen->remaining)
+    {
+	if (aggreg)
+	    gc->yng_lst = gen->next;
+	else
+	    gc->old_lst = gen->next;
+	gen = gen->next;
+    }
 
-  /* Do we need more generations ? */
-  if (!gen)
-    gc_gmc_more_pmc_bodies (interpreter, pool);
+    /* Do we need more generations ? */
+    if (!gen)
+	gc_gmc_more_pmc_bodies (interpreter, pool);
 
-  gen = (aggreg) ? gc->yng_lst : gc->old_lst;
+    gen = (aggreg) ? gc->yng_lst : gc->old_lst;
 
-  /* Should we use the next generation ? */
-  if (size >= gen->remaining)
-  {
-      if (aggreg)
-	  gc->yng_lst = gen->next;
-      else
-	  gc->old_lst = gen->next;
-      gen = gen->next;
-  }
+    /* Should we use the next generation ? */
+    if (size >= gen->remaining)
+    {
+	if (aggreg)
+	    gc->yng_lst = gen->next;
+	else
+	    gc->old_lst = gen->next;
+	gen = gen->next;
+    }
 
-  pmc_body = gen->fst_free;
-  gen->fst_free = (void*)((char*)gen->fst_free + size);
-  gen->remaining -= size;
-  gen->alloc_obj++;
-  memset(pmc_body, 0, size);
+    pmc_body = gen->fst_free;
+    gen->fst_free = (void*)((char*)gen->fst_free + size);
+    gen->remaining -= size;
+    gen->alloc_obj++;
+    memset(pmc_body, 0, size);
 #ifdef GMC_DEBUG
-  fprintf (stderr,"Allocated size %d in gen %p, first: %p, remaining %d, next_gen: %p, fst_free: %p, lim: %p\n", size, gen, gen->first, gen->remaining, gen->next, gen->fst_free, (char*)gen->fst_free + gen->remaining);
+    fprintf (stderr,"Allocated size %d in gen %p, first: %p, remaining %d, next_gen: %p, fst_free: %p, lim: %p\n", size, gen, gen->first, gen->remaining, gen->next, gen->fst_free, (char*)gen->fst_free + gen->remaining);
 #endif
 
-#ifdef GMC_DEBUG
-  fprintf (stderr, "Allocating %s PMC of size %d\n", (aggreg) ? "aggregate" : "non-aggregate", size);
-#endif
+    /* Allocate the PMC* */
 
-  /* Allocate the PMC* */
+    /* If we don't have any objects left, find more. */
+    if (!pool->num_free_objects)
+	(*pool->more_objects) (interpreter, pool);
 
-  /* if we don't have any objects */
-  if ((UINTVAL)pool->free_list >= (UINTVAL)pool->limit)
-      (*pool->more_objects) (interpreter, pool);
-  
-  pmc = (PMC*)pool->free_list;
-  PObj_exists_SET((PMC*)pmc);
-  pool->free_list = (void*)((char*)pmc + pool->object_size);
-  --pool->num_free_objects;
-  PMC_body((PMC*)pmc) = Gmc_PMC_hdr_get_BODY(pmc_body);
+    /* Find an arena with a free object. */
+    for (arena = pool->free_list; arena->total_objects == arena->used;
+	    arena = (arena->prev) ? arena->prev : pool->last_Arena);
 
-  Gmc_PMC_hdr_get_PMC((Gc_gmc_hdr*)pmc_body) = pmc;
-  PObj_get_FLAGS((PObj*)pmc) = 0;
+    /* Now find this object. */
+    for (pmc = arena->start_objects;
+	    PObj_exists_TEST((PObj*)pmc);
+	    pmc = ((UINTVAL)pmc < (UINTVAL)((char*)arena->start_objects + 
+		    pool->object_size * (arena->total_objects - 1))) ?
+	    (PMC*)((char*)pmc + pool->object_size) :
+	    arena->start_objects);
 
+    pool->free_list = arena;
+    arena->start_looking = pmc;
+    ++arena->used;
+    --pool->num_free_objects;
+    PMC_body((PMC*)pmc) = Gmc_PMC_hdr_get_BODY(pmc_body);
 
-  return pmc;
+    Gmc_PMC_hdr_get_PMC((Gc_gmc_hdr*)pmc_body) = pmc;
+    PObj_get_FLAGS((PObj*)pmc) = 0;
+    PObj_exists_SET((PObj*)pmc);
+
+    return pmc;
 }
 
 
 
 /* Here we allocate a default PMC, as it is non-typed. */
 /* This function should not be called anywhere if possible. */
-void *
+    void *
 gc_gmc_get_free_object(Interp *interpreter,
-    struct Small_Object_Pool *pool)
+	struct Small_Object_Pool *pool)
 {
     size_t size = sizeof(Gc_gmc_hdr) + sizeof(pobj_body);
     PMC *pmc = gc_gmc_get_free_object_of_size(interpreter, pool, size, 0);
@@ -499,15 +531,15 @@ gc_gmc_get_free_object(Interp *interpreter,
 }
 
 
-static void
+    static void
 gc_gmc_add_free_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, void *to_add)
 {
-   Gmc_PMC_flag_SET(marking,(PMC*)to_add); 
+    Gmc_PMC_flag_SET(marking,(PMC*)to_add); 
 }
 
 
-static void *
+    static void *
 gc_gmc_get_free_typed_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, INTVAL base_type)
 {
@@ -520,7 +552,7 @@ gc_gmc_get_free_typed_object(Interp *interpreter,
     return pmc;
 }
 
-static void *
+    static void *
 gc_gmc_get_free_sized_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, size_t size)
 {
@@ -531,9 +563,9 @@ gc_gmc_get_free_sized_object(Interp *interpreter,
 	Gmc_PMC_flag_SET(is_pmc, pmc);
     return pmc;
 }
-    
 
-static void
+
+    static void
 gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
 {
     INTVAL offset = (char*)from->fst_free - (char*)from->first;
@@ -556,7 +588,7 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
     }
 }
 
-static void
+    static void
 gc_gmc_gen_free(Gc_gmc_gen *gen)
 {
     mem_sys_free(gen->first);
@@ -566,7 +598,7 @@ gc_gmc_gen_free(Gc_gmc_gen *gen)
 
 /* Allocates twice as much generations as before, copies everything */
 /* TODO: double only the half that needs it. */
-static void
+    static void
 gc_gmc_more_pmc_bodies (Interp *interpreter,
 	struct Small_Object_Pool *pool)
 {
@@ -586,7 +618,7 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
     dummy_gc->old_fst = NULL;
     dummy_gc->old_lst = NULL;
     dummy_gc->nb_gen = nb_gen;
-    
+
     for (i = 0; i < nb_gen; i++)
     {
 	gen = gc_gmc_gen_init (interpreter);
@@ -625,7 +657,7 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
     gc->nb_gen = nb_gen;
 
     mem_sys_free(dummy_gc);
-    
+
 #ifdef GMC_DEBUG
     fprintf(stderr, "Done with allocation\n");
 #endif
@@ -634,42 +666,12 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 
 /* Quick and dirty for now, no GC run at all. */
 /* XXX: structures must change, because no free is possible with what's here */
-static void
+    static void
 gc_gmc_more_objects(Interp *interpreter,
 	struct Small_Object_Pool *pool)
 {
-#define NUM_NEW_OBJ 512
-    void *fst = mem_sys_allocate_zeroed(NUM_NEW_OBJ * pool->object_size);
-    int i;
-    char *obj;
-    Gc_gmc_area_store *store = pool->areas->last;
-
-    /* If we have no more space in the store, expand it. */
-    if ((UINTVAL)store->ptr >= (UINTVAL)&(store->store[GC_GMC_STORE_SIZE-1]))
-    {
-	store = mem_sys_allocate_zeroed(sizeof(Gc_gmc_area_store));
-	store->ptr = &(store->store[0]);
-	store->next = NULL;
-	pool->areas->last->next = store;
-	pool->areas->last = store;
-    }
-
-    /* Record the new area. */
-    *store->ptr = mem_sys_allocate(sizeof(Gc_gmc_header_area));
-    (*store->ptr)->fst = fst;
-    (*store->ptr)->lst = (void *)((char*)fst + NUM_NEW_OBJ * pool->object_size);
-    store->ptr++;
-
-    /* Set the flags correctly. */
-    for (i = 0, obj = (char*)fst; i < NUM_NEW_OBJ; i++, obj += pool->object_size)
-	PObj_exists_CLEAR((PObj*)obj);
-    pool->free_list = fst;
-    pool->limit = (void*)((char*)fst + NUM_NEW_OBJ * pool->object_size);
-    pool->num_free_objects += NUM_NEW_OBJ;
-    pool->total_objects += NUM_NEW_OBJ;
-#ifdef GMC_DEBUG
-    fprintf(stderr, "Allocating %d more objects of size %d beginning at %p\n", NUM_NEW_OBJ, pool->object_size, fst);
-#endif
+    /* For now only alloc more objects. There will be a GC run in the future. */
+    (*pool->alloc_objects) (interpreter, pool);
 }
 
 
