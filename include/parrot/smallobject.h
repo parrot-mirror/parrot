@@ -127,10 +127,46 @@ typedef struct _gc_gms_gen {
 #define GMC_GEN_INIT_NUMBER 16
 
 
+/* Same structure than in GMS for header lists. */
+#define GC_GMC_STORE_SIZE (64-2)
+
+struct _gc_gmc_hdr;
+
+typedef struct _gc_gmc_hdr_store {
+    struct _gc_gmc_hdr_store *next;
+    struct _gc_gmc_hdr **ptr;                           /* insert location */
+    struct _gc_gmc_hdr * (store[GC_GMC_STORE_SIZE]);    /* array of hdr pointers */
+} Gc_gmc_hdr_store;
+
+
+typedef struct _gc_gmc_hdr_list {
+  Gc_gmc_hdr_store *first;
+  Gc_gmc_hdr_store *last;
+} Gc_gmc_hdr_list;
+
+
+typedef struct _gc_gmc_header_area {
+    void *fst;
+    void *lst;
+} Gc_gmc_header_area;
+
+
+/* A generation for GMC. */
+typedef struct _gc_gmc_gen {
+  struct _gc_gmc_gen *next;  /* Next generation in the linked list. */
+  struct _gc_gmc_gen *prev;  /* Previous generation. */
+  void *first;               /* Array of objects. */
+  void *fst_free;            /* First free place. */
+  size_t remaining;          /* Remaining size. */
+  UINTVAL alloc_obj;         /* Number of allocated objects. */
+  Gc_gmc_hdr_list *IGP;      /* Inter Generational pointers set. */
+} Gc_gmc_gen;
+
 /* This header is appended to all gc objects. */
 typedef struct _gc_gmc_hdr {
   UINTVAL gmc_flags; /* Various GC flags for internal use. */
   PMC* pmc;          /* Corresponding PMC header. */
+  Gc_gmc_gen *gen;   /* Generation it belongs to. */
 } Gc_gmc_hdr;
 
 
@@ -154,6 +190,7 @@ typedef enum gmc_flags {
 #define Gmc_PMC_hdr_get_BODY(pmc_hdr)		    ((PMC_BODY*)((char*)(pmc_hdr) + sizeof(Gc_gmc_hdr)))
 #define Gmc_PMC_hdr_get_FLAGS(pmc_hdr)		    ((pmc_hdr)->gmc_flags)
 #define Gmc_PMC_hdr_get_PMC(pmc_hdr)		    ((pmc_hdr)->pmc)
+#define Gmc_PMC_hdr_get_GEN(pmc_hdr)		    ((pmc_hdr)->gen)
 #define Gmc_PMC_hdr_flag_TEST(flag, pmc_hdr)	    (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) & (Gmc_ ## flag ## _FLAG))
 #define Gmc_PMC_hdr_flag_SET(flag, pmc_hdr)	    (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) |= (Gmc_ ## flag ## _FLAG))
 #define Gmc_PMC_hdr_flag_CLEAR(flag, pmc_hdr)	    (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) &= \
@@ -163,6 +200,7 @@ typedef enum gmc_flags {
 #define Gmc_PMC_body_get_HDR(pmc_body)		    ((Gc_gmc_hdr*)((char*)(pmc_body) - sizeof(Gc_gmc_hdr)))
 #define Gmc_PMC_body_get_FLAGS(pmc_body)	    Gmc_PMC_hdr_get_FLAGS(Gmc_PMC_body_get_hdr(pmc_body))
 #define Gmc_PMC_body_get_PMC(pmc_body)  	    Gmc_PMC_hdr_get_PMC(Gmc_PMC_body_get_hdr(pmc_body))
+#define Gmc_PMC_body_get_GEN(pmc_body)		    Gmc_PMC_hdr_get_GEN(Gmc_PMC_body_get_hdr(pmc_body))
 #define Gmc_PMC_body_flag_TEST(flag, pmc_body)	    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_body_get_hdr(pmc_body))
 #define Gmc_PMC_body_flag_SET(flag, pmc_body)	    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_body_get_hdr(pmc_body))
 #define Gmc_PMC_body_flag_CLEAR(flag, pmc_body)	    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_body_get_hdr(pmc_body))
@@ -170,6 +208,7 @@ typedef enum gmc_flags {
 /* Macros for access from PMC*. */
 #define Gmc_PMC_get_HDR(pmc)			    Gmc_PMC_body_get_HDR(PMC_body(pmc))
 #define Gmc_PMC_get_FLAGS(pmc)			    Gmc_PMC_hdr_get_FLAGS(Gmc_PMC_get_HDR(pmc))
+#define Gmc_PMC_get_GEN(pmc)			    Gmc_PMC_hdr_getGEN(Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_flag_TEST(flag, pmc)		    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_flag_SET(flag, pmc)		    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_flag_CLEAR(flag, pmc)		    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_get_HDR(pmc))
@@ -177,42 +216,12 @@ typedef enum gmc_flags {
 #define Gmc_has_PMC_EXT_TEST(pmc)		    Gmc_PMC_flag_TEST(has_ext, pmc)
 
 
-/* Same structure than in GMS for header lists. */
-#define GC_GMC_STORE_SIZE (64-2)
-
-typedef struct _gc_gmc_hdr_store {
-    struct _gc_gmc_hdr_store *next;
-    Gc_gmc_hdr **ptr;                           /* insert location */
-    Gc_gmc_hdr * (store[GC_GMC_STORE_SIZE]);    /* array of hdr pointers */
-} Gc_gmc_hdr_store;
-
-
-typedef struct _gc_gmc_hdr_list {
-  Gc_gmc_hdr_store *first;
-  Gc_gmc_hdr_store *last;
-} Gc_gmc_hdr_list;
-
-
-typedef struct _gc_gmc_header_area {
-    void *fst;
-    void *lst;
-} Gc_gmc_header_area;
 
 UINTVAL gc_gmc_bitmap_test(gmc_bitmap, UINTVAL);
 void gc_gmc_bitmap_set(gmc_bitmap, UINTVAL);
 void gc_gmc_bitmap_clear(gmc_bitmap, UINTVAL);
 
 
-/* A generation for GMC. */
-typedef struct _gc_gmc_gen {
-  struct _gc_gmc_gen *next;  /* Next generation in the linked list. */
-  struct _gc_gmc_gen *prev;  /* Previous generation. */
-  void *first;               /* Array of objects. */
-  void *fst_free;            /* First free place. */
-  size_t remaining;          /* Remaining size. */
-  UINTVAL alloc_obj;         /* Number of allocated objects. */
-  Gc_gmc_hdr_list *IGP;      /* Inter Generational pointers set. */
-} Gc_gmc_gen;
 
 
 /* The whole GC structure */

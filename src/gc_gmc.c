@@ -449,6 +449,45 @@ void Parrot_gc_gmc_init(Interp *interpreter)
 }
 
 
+/* Write Barrier Functions */
+
+static void
+gc_gmc_store_hdr_list(Interp *interpreter, Gc_gmc_hdr_list *l, Gc_gmc_hdr *h)
+{
+    Gc_gmc_hdr_store *s = l->last;
+
+    /* if it's not created or if it's full allocate new store */
+    if (!s || s->ptr == &s->store[GC_GMC_STORE_SIZE]) {
+        s = mem_sys_allocate(sizeof(Gc_gmc_hdr_store));
+        s->ptr = &s->store[0];
+        s->next = NULL;
+        /* chain new store to old one */
+        if (l->first) {
+            assert(l->last);
+            l->last->next = s;
+        }
+        else {
+            l->first = s;
+        }
+        l->last = s;
+    }
+    *(s->ptr)++ = h;
+}
+
+
+
+void gc_gmc_wb(Interp *interpreter, PMC *agg, void *old, void *new)
+{
+
+}
+
+void gc_gmc_wb_key(Interp *interpreter, PMC *agg,
+	void *old, void *old_key, void *new, void *new_key)
+{
+    }
+
+
+
 
 /******************************* REAL THINGS ********************************/
 
@@ -562,7 +601,8 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
     gc_gmc_bitmap_set(arena->bitmap, i);
     ++arena->used;
     --pool->num_free_objects;
-    PMC_body((PMC*)pmc) = Gmc_PMC_hdr_get_BODY(pmc_body);
+    PMC_body((PMC*)pmc) = Gmc_PMC_hdr_get_BODY((Gc_gmc_hdr*)pmc_body);
+    Gmc_PMC_hdr_get_GEN((Gc_gmc_hdr*)pmc_body) = gen;
 
     Gmc_PMC_hdr_get_PMC((Gc_gmc_hdr*)pmc_body) = pmc;
     PObj_get_FLAGS((PObj*)pmc) = 0;
@@ -642,6 +682,7 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
     while ((UINTVAL)ptr < (UINTVAL)dest->fst_free)
     {
 	PMC_body(Gmc_PMC_hdr_get_PMC(ptr)) = Gmc_PMC_hdr_get_BODY(ptr);
+	Gmc_PMC_hdr_get_GEN(ptr) = dest;
 	if (PObj_is_PMC_TEST(Gmc_PMC_hdr_get_PMC(ptr)))
 	    ptr = (Gc_gmc_hdr*)((char*)ptr + Gmc_PMC_hdr_get_PMC(ptr)->vtable->size + sizeof(Gc_gmc_hdr));
 	else
