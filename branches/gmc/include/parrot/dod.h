@@ -144,6 +144,7 @@ void Parrot_dod_ims_wb(Interp*, PMC *, PMC *);
         parrot_gc_gms_wb_key(interp, agg, old, old_key, new, new_key); \
 } while (0)
 
+
 void parrot_gc_gms_wb(Interp *, PMC *agg, void *old, void *new);
 void parrot_gc_gms_wb_key(Interp *, PMC *agg,
         void *old, void *old_key, void *new, void *new_key);
@@ -153,8 +154,30 @@ void parrot_gc_gms_wb_key(Interp *, PMC *agg,
 /* TODO: add a real write_barrier, this one is just used for not getting an
  * error at compilation */
 #if PARROT_GC_GMC
-#  define DOD_WRITE_BARRIER(interp, agg, old, new)
-#  define DOD_WRITE_BARRIER_KEY(interp, agg, old, old_key, new, new_key)
+#  define DOD_WRITE_BARRIER(interp, agg, old, new) do { \
+    UINTVAL agg_body, new_body; \
+    if (!(new) || (new) == (void*)PMCNULL) \
+	break; \
+    agg_body = (UINTVAL)PMC_body(agg); \
+    new_body = (UINTVAL)PMC_body((PObj*)new); \
+    if (agg_body < new_body) \
+	gc_gmc_wb(interp, agg, old, new); \
+} while (0)
+#  define DOD_WRITE_BARRIER_KEY(interp, agg, old, old_key, new, new_key) do { \
+    UINTVAL agg_body, new_body, key_body; \
+    if (!(new) || (new) == (void*)PMCNULL) \
+	break; \
+    agg_body = (UINTVAL)PMC_body(agg); \
+    new_body = (UINTVAL)PMC_body((PObj*)new); \
+    key_body = (UINTVAL)PMC_body((PObj*)new_key); \
+    if (agg_body < new_body || agg_body < key_body) \
+	gc_gmc_wb_key(interp, agg, old, old_key, new, new_key); \
+} while (0)
+
+void gc_gmc_wb(Interp *, PMC *agg, void *old, void *new);
+void gc_gmc_wb_key(Interp *, PMC *agg,
+        void *old, void *old_key, void *new, void *new_key);
+
 #endif
 
 #endif /* PARROT_DOD_H_GUARD */
