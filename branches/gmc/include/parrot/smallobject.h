@@ -3,6 +3,12 @@
 
 #include "parrot/parrot.h"
 
+
+#if PARROT_GC_GMC
+typedef char gmc_bmp_elem;
+typedef gmc_bmp_elem* gmc_bitmap;
+#endif
+
 struct Small_Object_Arena {
     size_t used;
     size_t total_objects;
@@ -16,6 +22,7 @@ struct Small_Object_Arena {
     struct Small_Object_Arena *next;
     void *start_objects;
 #if PARROT_GC_GMC
+    gmc_bitmap bitmap; /* Tells which objects are allocated. */
     void *start_looking; /* Start looking for free objects from here. */
 #endif
 };
@@ -119,9 +126,6 @@ typedef struct _gc_gms_gen {
 /* Number of generations at init time. */
 #define GMC_GEN_INIT_NUMBER 16
 
-/* Number of new object headers added when pool->alloc_objects is called */
-#define GMC_NUM_NEW_OBJ 512
-
 
 /* This header is appended to all gc objects. */
 typedef struct _gc_gmc_hdr {
@@ -193,6 +197,10 @@ typedef struct _gc_gmc_header_area {
     void *fst;
     void *lst;
 } Gc_gmc_header_area;
+
+UINTVAL gc_gmc_bitmap_test(gmc_bitmap, UINTVAL);
+void gc_gmc_bitmap_set(gmc_bitmap, UINTVAL);
+void gc_gmc_bitmap_clear(gmc_bitmap, UINTVAL);
 
 
 /* A generation for GMC. */
