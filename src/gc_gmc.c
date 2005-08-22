@@ -7,8 +7,10 @@
 #define POOL_MAX_BYTES 65536*128
 
 static void gc_gmc_add_free_object(Interp*, struct Small_Object_Pool*, void*);
-static void *gc_gmc_get_free_typed_object(Interp*, struct Small_Object_Pool*, INTVAL);
-static void *gc_gmc_get_free_sized_object(Interp*, struct Small_Object_Pool*, size_t);
+static void *gc_gmc_get_free_typed_object(Interp*, struct Small_Object_Pool*,
+	INTVAL);
+static void *gc_gmc_get_free_sized_object(Interp*, struct Small_Object_Pool*,
+	size_t);
 static void *gc_gmc_get_free_object(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_alloc_objects(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_more_objects(Interp*, struct Small_Object_Pool*);
@@ -66,7 +68,8 @@ gc_gmc_bitmap_clear(gmc_bitmap bitmap, UINTVAL bit)
 
 
 
-/* Allocates and initializes a generation, but does not plug it to the pool yet. */
+/* Allocates and initializes a generation, but does not plug it 
+ * to the pool yet. */
     static Gc_gmc_gen *
 gc_gmc_gen_init(Interp *interpreter)
 {
@@ -92,7 +95,8 @@ gc_gmc_gen_init(Interp *interpreter)
     gen->IGP = IGP;
 
 #ifdef GMC_DEBUG
-    fprintf(stderr, "Allocating gen at %p, first at %p, limit at %p\n", gen, gen->first, (char*)gen->first + gen->remaining);
+    fprintf(stderr, "Allocating gen at %p, first at %p, limit at %p\n",
+	    gen, gen->first, (char*)gen->first + gen->remaining);
 #endif
 
     return gen;
@@ -215,7 +219,8 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
 
     /* Separate the generations in two halves : one is young (= aggregate
      * objects), the other is old (non-aggregate objects). */
-    for (i = 0, gen = gc->yng_fst; i < (GMC_GEN_INIT_NUMBER/2); i++, gen = gen->next);
+    for (i = 0, gen = gc->yng_fst; i < (GMC_GEN_INIT_NUMBER/2);
+	    i++, gen = gen->next);
     gc->old_fst = gen;
     gc->old_lst = gen;
     /* Now cut the bridges between these two parts. */
@@ -237,7 +242,8 @@ gc_gmc_pool_deinit(Interp *interpreter, struct Small_Object_Pool *pool)
     for (gen = gc->yng_fst; gen;)
     {
 	gen_nxt = gen->next;
-	for (store = gen->IGP->first; store; st2 = store->next,mem_sys_free(store),
+	for (store = gen->IGP->first; store;
+		st2 = store->next,mem_sys_free(store),
 		store = st2);
 	mem_sys_free(gen->first);
 	mem_sys_free(gen);
@@ -247,7 +253,8 @@ gc_gmc_pool_deinit(Interp *interpreter, struct Small_Object_Pool *pool)
     for (gen = gc->old_fst; gen;)
     {
 	gen_nxt = gen->next;
-	for (store = gen->IGP->first; store; st2 = store->next,mem_sys_free(store),
+	for (store = gen->IGP->first; store;
+		st2 = store->next,mem_sys_free(store),
 		store = st2);
 	mem_sys_free(gen->first);
 	mem_sys_free(gen);
@@ -280,7 +287,8 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
     for (arena = pool->last_Arena; arena; arena = arena->prev)
     {
 	for (i = 0, ptr = (PMC*)arena->start_objects; (UINTVAL)ptr < 
-		(UINTVAL)((char*)arena->start_objects + pool->object_size * arena->total_objects);
+		(UINTVAL)((char*)arena->start_objects +
+			  pool->object_size * arena->total_objects);
 		ptr = (PMC*)((char*)ptr + pool->object_size), i++)
 	{
 	    if (gc_gmc_bitmap_test(arena->bitmap,i) && !PObj_live_TEST(ptr))
@@ -295,7 +303,8 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 		sweep++;
 		/* This is the work of the VTABLE_destroy function. */
 		/*
-		   if ((Gmc_has_PMC_EXT_TEST(ptr) || PObj_is_PMC_EXT_TEST(ptr)) && PMC_data(ptr))
+		   if ((Gmc_has_PMC_EXT_TEST(ptr) ||
+		   PObj_is_PMC_EXT_TEST(ptr)) && PMC_data(ptr))
 		   {
 		   mem_sys_free(PMC_data(ptr));
 		   PMC_data(ptr) = NULL;
@@ -304,7 +313,9 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 	}
     }
 #ifdef GMC_DEBUG
-    fprintf (stderr, "Sweeped %d PMC in pool %s (%d/%d)\n", sweep, pool->name, pool->total_objects - pool->num_free_objects, pool->total_objects);
+    fprintf (stderr, "Sweeped %d PMC in pool %s (%d/%d)\n",
+	    sweep, pool->name, pool->total_objects - pool->num_free_objects,
+	    pool->total_objects);
 #endif
     return 0;
 }
@@ -324,7 +335,8 @@ static int sweep_buf (Interp *interpreter, struct Small_Object_Pool *pool,
     for (arena = pool->last_Arena; arena; arena = arena->prev)
     {
 	for (i = 0, obj = (PObj*)arena->start_objects; (UINTVAL)obj < 
-		(UINTVAL)((char*)arena->start_objects + pool->object_size * arena->total_objects);
+		(UINTVAL)((char*)arena->start_objects +
+			  pool->object_size * arena->total_objects);
 		obj = (PObj*)((char*)obj + pool->object_size), i++)
 	{
 
@@ -344,7 +356,8 @@ static int sweep_buf (Interp *interpreter, struct Small_Object_Pool *pool,
 		    if (PObj_bufstart(obj) &&
 			    !PObj_is_external_or_free_TESTALL(obj)) {
 			if (PObj_COW_TEST(obj)) {
-			    INTVAL *refcount = ((INTVAL *)PObj_bufstart(obj) - 1);
+			    INTVAL *refcount = 
+				((INTVAL *)PObj_bufstart(obj) - 1);
 
 			    if (!--(*refcount))
 				free(refcount); /* the actual bufstart */
@@ -390,7 +403,8 @@ gc_gmc_clear_live(Interp *interpreter, struct Small_Object_Pool *pool,
     for (arena = pool->last_Arena; arena; arena = arena->prev)
     {
 	for (i = 0, obj = (PObj*)arena->start_objects; (UINTVAL)obj < 
-		(UINTVAL)((char*)arena->start_objects + pool->object_size * arena->total_objects);
+		(UINTVAL)((char*)arena->start_objects +
+			  pool->object_size * arena->total_objects);
 		obj = (PObj*)((char*)obj + pool->object_size), i++)
 	{
 	    if (gc_gmc_bitmap_test(arena->bitmap, i))
@@ -478,13 +492,19 @@ gc_gmc_store_hdr_list(Interp *interpreter, Gc_gmc_hdr_list *l, Gc_gmc_hdr *h)
 
 void gc_gmc_wb(Interp *interpreter, PMC *agg, void *old, void *new)
 {
-
+    if (PObj_is_PMC_TEST((PObj*)new) && Gmc_has_PMC_EXT_TEST((PMC*)new))
+	gc_gmc_store_hdr_list(interpreter, Gmc_PMC_get_GEN((PMC*)new)->IGP,
+		Gmc_PMC_get_HDR((PMC*)new));
+    /* XXX: Do we need to move it one way or another for invariant ? */
 }
 
 void gc_gmc_wb_key(Interp *interpreter, PMC *agg,
 	void *old, void *old_key, void *new, void *new_key)
 {
-    }
+    gc_gmc_wb(interpreter, agg, old, new);
+    
+    /* TODO: Deal with key too. */
+}
 
 
 
@@ -501,7 +521,8 @@ gc_gmc_alloc_objects(Interp *interpreter, struct Small_Object_Pool *pool)
     void *lim;
     new_arena = mem_sys_allocate(sizeof(struct Small_Object_Arena));
 
-    new_arena->start_objects = mem_sys_allocate_zeroed(pool->objects_per_alloc * pool->object_size);
+    new_arena->start_objects =
+	mem_sys_allocate_zeroed(pool->objects_per_alloc * pool->object_size);
     new_arena->total_objects = pool->objects_per_alloc;
     new_arena->used = 0;
     new_arena->start_looking = new_arena->start_objects;
@@ -510,14 +531,16 @@ gc_gmc_alloc_objects(Interp *interpreter, struct Small_Object_Pool *pool)
     pool->total_objects += pool->objects_per_alloc;
     new_arena->next = NULL;
     new_arena->prev = pool->last_Arena;
-    lim = (void*)((char*)new_arena->start_objects + pool->objects_per_alloc * pool->object_size);
+    lim = (void*)((char*)new_arena->start_objects +
+	    pool->objects_per_alloc * pool->object_size);
 
     if (pool->last_Arena)
 	pool->last_Arena->next = new_arena;
     pool->last_Arena = new_arena;
 
     /* Allocate more next time. */
-    pool->objects_per_alloc = (UINTVAL) pool->objects_per_alloc * UNITS_PER_ALLOC_GROWTH_FACTOR;
+    pool->objects_per_alloc = 
+	(UINTVAL) pool->objects_per_alloc * UNITS_PER_ALLOC_GROWTH_FACTOR;
     if (pool->object_size * pool->objects_per_alloc > POOL_MAX_BYTES)
 	pool->objects_per_alloc = POOL_MAX_BYTES / pool->object_size;
 
@@ -525,7 +548,8 @@ gc_gmc_alloc_objects(Interp *interpreter, struct Small_Object_Pool *pool)
     pool->free_list = new_arena;
 
 #ifdef GMC_DEBUG
-    fprintf(stderr, "Allocated new objects at arena %p, %p\n", new_arena, new_arena->start_objects);
+    fprintf(stderr, "Allocated new objects at arena %p, %p\n",
+	    new_arena, new_arena->start_objects);
 #endif
 }
 
@@ -579,7 +603,10 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
     gen->alloc_obj++;
     memset(pmc_body, 0, size);
 #ifdef GMC_DEBUG
-    fprintf (stderr,"Allocated size %d in gen %p, first: %p, remaining %d, next_gen: %p, fst_free: %p, lim: %p\n", size, gen, gen->first, gen->remaining, gen->next, gen->fst_free, (char*)gen->fst_free + gen->remaining);
+    fprintf (stderr,"Allocated size %d in gen %p, first: %p,"
+	    "remaining %d, next_gen: %p, fst_free: %p, lim: %p\n", 
+	    size, gen, gen->first, gen->remaining, gen->next, gen->fst_free, 
+	    (char*)gen->fst_free + gen->remaining);
 #endif
 
     /* Allocate the PMC* */
@@ -635,13 +662,15 @@ gc_gmc_add_free_object(Interp *interpreter,
 
 
 
-/* Returns a PMC of type base_type (which is an index into Parrot_base_vtables). */
+/* Returns a PMC of type base_type (which is an index into 
+ * Parrot_base_vtables). */
     static void *
 gc_gmc_get_free_typed_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, INTVAL base_type)
 {
     Gc_gmc *gc = pool->gc;
-    size_t size = sizeof(Gc_gmc_hdr) + gc_gmc_get_PMC_size(interpreter, base_type);
+    size_t size = sizeof(Gc_gmc_hdr) + gc_gmc_get_PMC_size(interpreter, 
+	    base_type);
     VTABLE *vtable = Parrot_base_vtables[base_type];
     INTVAL aggreg = vtable->flags & VTABLE_PMC_NEEDS_EXT;
     PMC *pmc = gc_gmc_get_free_object_of_size (interpreter, pool, size, aggreg);
@@ -655,7 +684,8 @@ gc_gmc_get_free_typed_object(Interp *interpreter,
 gc_gmc_get_free_sized_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, size_t size)
 {
-    PMC *pmc = gc_gmc_get_free_object_of_size (interpreter, pool, sizeof(Gc_gmc_hdr) + size, 0);
+    PMC *pmc = gc_gmc_get_free_object_of_size (interpreter, pool,
+	    sizeof(Gc_gmc_hdr) + size, 0);
     if (size == sizeof(pobj_body))
 	Gmc_PMC_flag_CLEAR(is_pmc, pmc);
     else
@@ -675,7 +705,8 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
     dest->remaining = from->remaining;
     dest->IGP = from->IGP;
 #ifdef GMC_DEBUG
-    fprintf (stderr, "Copying gen (%p,%p) to gen (%p,%p)\n", from, from->first, dest, dest->first);
+    fprintf (stderr, "Copying gen (%p,%p) to gen (%p,%p)\n",
+	    from, from->first, dest, dest->first);
 #endif
     memcpy(dest->first, from->first, GMC_GEN_SIZE);
     ptr = dest->first;
@@ -684,9 +715,12 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
 	PMC_body(Gmc_PMC_hdr_get_PMC(ptr)) = Gmc_PMC_hdr_get_BODY(ptr);
 	Gmc_PMC_hdr_get_GEN(ptr) = dest;
 	if (PObj_is_PMC_TEST(Gmc_PMC_hdr_get_PMC(ptr)))
-	    ptr = (Gc_gmc_hdr*)((char*)ptr + Gmc_PMC_hdr_get_PMC(ptr)->vtable->size + sizeof(Gc_gmc_hdr));
+	    ptr = (Gc_gmc_hdr*)((char*)ptr + 
+		    Gmc_PMC_hdr_get_PMC(ptr)->vtable->size 
+		    + sizeof(Gc_gmc_hdr));
 	else
-	    ptr = (Gc_gmc_hdr*)((char*)ptr + sizeof(Gc_gmc_hdr) + sizeof(pobj_body));
+	    ptr = (Gc_gmc_hdr*)((char*)ptr 
+		    + sizeof(Gc_gmc_hdr) + sizeof(pobj_body));
     }
 }
 
