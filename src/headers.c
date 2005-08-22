@@ -55,8 +55,6 @@ get_free_buffer(Interp *interpreter,
 {
 #if PARROT_GC_GMC
     PObj *buffer = pool->get_free_sized_object(interpreter, pool, sizeof(pobj_body));
-    /*PObj_get_FLAGS(buffer) = 0;*/
-    /*PObj_exists_SET(buffer);*/
 #else
     PObj *buffer = pool->get_free_object(interpreter, pool);
 #endif
@@ -318,7 +316,6 @@ new_pmc_alloc_header(Interp *interpreter, UINTVAL flags, INTVAL is_typed, INTVAL
 #if ! PMC_DATA_IN_EXT
     PMC_data(pmc) = NULL;
 #endif
-    PObj_exists_SET(pmc);
     return pmc;
 }
 
