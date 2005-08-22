@@ -208,7 +208,7 @@ typedef enum gmc_flags {
 /* Macros for access from PMC*. */
 #define Gmc_PMC_get_HDR(pmc)			    Gmc_PMC_body_get_HDR(PMC_body(pmc))
 #define Gmc_PMC_get_FLAGS(pmc)			    Gmc_PMC_hdr_get_FLAGS(Gmc_PMC_get_HDR(pmc))
-#define Gmc_PMC_get_GEN(pmc)			    Gmc_PMC_hdr_getGEN(Gmc_PMC_get_HDR(pmc))
+#define Gmc_PMC_get_GEN(pmc)			    Gmc_PMC_hdr_get_GEN(Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_flag_TEST(flag, pmc)		    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_flag_SET(flag, pmc)		    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_flag_CLEAR(flag, pmc)		    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_get_HDR(pmc))
