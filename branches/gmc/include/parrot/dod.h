@@ -71,6 +71,11 @@ void clear_cow(Interp *interpreter,
   } while (0)
 
 void parrot_gc_gms_pobject_lives(Interp* interpreter, PObj *obj);
+#elif PARROT_GC_GMC
+
+#define pobject_lives(i, o) parrot_gc_gmc_pobject_lives(i, o)
+
+void parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *obj);
 
 #else
 void pobject_lives(Interp *interpreter, PObj *buffer);
@@ -151,8 +156,6 @@ void parrot_gc_gms_wb_key(Interp *, PMC *agg,
 
 #endif
 
-/* TODO: add a real write_barrier, this one is just used for not getting an
- * error at compilation */
 #if PARROT_GC_GMC
 #  define DOD_WRITE_BARRIER(interp, agg, old, new) do { \
     UINTVAL agg_body, new_body; \

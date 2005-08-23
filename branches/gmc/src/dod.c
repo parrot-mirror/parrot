@@ -135,6 +135,7 @@ mark_special(Parrot_Interp interpreter, PMC* obj)
     }
 }
 
+#if !PARROT_GC_GMC
 #if !PARROT_GC_GMS
 #  if ARENA_DOD_FLAGS
 
@@ -250,6 +251,7 @@ void pobject_lives(Interp *interpreter, PObj *obj)
 
 #  endif
 #endif  /* PARROT_GC_GMS */
+#endif /* PARROT_GC_GMC */
 
 /*
 
