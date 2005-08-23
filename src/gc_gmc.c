@@ -15,6 +15,7 @@ static void *gc_gmc_get_free_object(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_alloc_objects(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_more_objects(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_more_pmc_bodies(Interp *, struct Small_Object_Pool*);
+static void gc_gmc_mark(Interp *, struct Small_Object_Pool *, int);
 
 
 /* Determines the size of a PMC according to its base_type. */
@@ -443,6 +444,9 @@ gc_gmc_run(Interp *interpreter, int flags)
 	--arena_base->DOD_block_level;
 	return;
     } else {
+	arena_base->dod_runs++;
+	arena_base->lazy_dod = (flags & DOD_lazy_FLAG);
+	gc_gmc_mark(interpreter, arena_base->pmc_pool, !arena_base->lazy_dod);
 #ifdef GMC_DEBUG
 	fprintf (stderr, "GMC: Trying to run dod_run for normal allocation\n");
 #endif /* GMC_DEBUG */
@@ -811,6 +815,129 @@ gc_gmc_more_objects(Interp *interpreter,
 {
     /* For now only alloc more objects. There will be a GC run in the future. */
     (*pool->alloc_objects) (interpreter, pool);
+}
+
+
+
+
+/**************** MARK AND SWEEP ****************/
+
+
+/* Returns the next header in the area, assuming that we have not gone further
+ * than gen->fst_free. */
+static Gc_gmc_hdr *
+gc_gmc_next_hdr(Gc_gmc_hdr *hdr)
+{
+    if (PObj_is_PMC_TEST(Gmc_PMC_hdr_get_PMC(hdr)))
+	return (Gc_gmc_hdr*)((char*)hdr + 
+		Gmc_PMC_hdr_get_PMC(hdr)->vtable->size 
+		+ sizeof(Gc_gmc_hdr));
+    else
+	return (Gc_gmc_hdr*)((char*)hdr 
+		+ sizeof(Gc_gmc_hdr) + sizeof(pobj_body));
+}
+
+/* Initializes the pool for M&S. Basically, mark everyone dead. */
+static void
+gc_gmc_init_pool(Interp *interpreter, struct Small_Object_Pool *pool)
+{
+    Gc_gmc_gen *gen;
+    Gc_gmc_hdr *hdr, *h2;
+    int pass;
+    for (gen = pool->gc->yng_fst, pass = 0; gen; gen = gen->next)
+    {
+	hdr = gen->first;
+	while ((UINTVAL)hdr < (UINTVAL)gen->fst_free)
+	{
+	    PObj_live_CLEAR(Gmc_PMC_hdr_get_PMC(hdr));
+	    hdr = gc_gmc_next_hdr(hdr);
+	}
+	if (!gen && !pass) {
+	    gen = pool->gc->old_fst;
+	    pass++;
+	}
+    }
+    /* Find the most recent object ever allocated and prepare for M&S. */
+    hdr = pool->gc->yng_lst->first;
+    while (1) {
+	h2 = gc_gmc_next_hdr(hdr);
+	if ((UINTVAL)h2 >= (UINTVAL)pool->gc->yng_lst->fst_free)
+	    break;
+	hdr = h2;
+    }
+    pool->gc->gray = hdr;
+}
+
+
+/* Marks the contents of the root set as alive. */
+static int
+gc_gmc_trace_root(Interp *interpreter, int trace_stack)
+{
+    return Parrot_dod_trace_root (interpreter, trace_stack);
+}
+
+
+/* Marks the object whose body is at h as alive. */
+void
+parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
+{
+    PObj_live_SET(o);
+}
+
+
+/* If the object is alive and has pointers to older PMC, mark them alive. */
+static void
+gc_gmc_trace_children(Interp *interpreter, Gc_gmc_hdr *h)
+{
+    UINTVAL mask = PObj_data_is_PMC_array_FLAG | PObj_custom_mark_FLAG;
+    UINTVAL bits;
+    PMC *pmc;
+    INTVAL i;
+
+    pmc = Gmc_PMC_hdr_get_PMC(h);
+
+    bits = PObj_get_FLAGS(pmc) & mask;
+    if (bits)
+    {
+	if (bits == PObj_data_is_PMC_array_FLAG) {
+	    PMC** data = PMC_data(pmc);
+	    if (data)
+	    {
+		for (i = 0; i < PMC_int_val(pmc); i++)
+		{
+		    if (data[i])
+			pobject_lives(interpreter, (PObj*)data[i]);
+		}
+	    }
+	} else {
+	    VTABLE_mark(interpreter, pmc);
+	}
+    }
+}
+
+
+
+/* Implement NLDGC (Night of the Living-Dead GC). When all a generation is
+ * scanned, follow IGP pointers that *start* from that generation and trace its
+ * children, but only if they were marked dead before (if not, they were already
+ * traced). */
+static void
+gc_gmc_trace_igp(Interp *interpreter, Gc_gmc_hdr *h)
+{
+}
+
+static void
+gc_gmc_son_of_igp(Interp *interpreter, Gc_gmc_hdr *h)
+{
+}
+
+
+/* Wraps everything nicely. */
+static void
+gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
+{
+    gc_gmc_init_pool(interpreter, pool);
+    gc_gmc_trace_root(interpreter, flags);
 }
 
 

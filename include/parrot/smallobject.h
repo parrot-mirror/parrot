@@ -235,6 +235,7 @@ typedef struct _gc_gmc {
   Gc_gmc_gen *old_lst;  /* Very last generation. */
   Gc_gmc_gen *timely;   /* Objects needing timely destruction. */
   Gc_gmc_gen *constant; /* Objects that will never be collected. */
+  void *gray;           /* Current object being examined during M&S. */
 } Gc_gmc;
 
 #endif
