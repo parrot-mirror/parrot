@@ -2,13 +2,8 @@
 
 .HLL "Tcl", "tcl_group"
 
-# return codes
- .const int TCL_OK = 0
- .const int TCL_ERROR = 1
- .const int TCL_RETURN = 2
- .const int TCL_BREAK = 3
- .const int TCL_CONTINUE = 4
- 
+.include "languages/tcl/lib/returncodes.pir"
+
 =head2 __class_init
 
 Define the attributes required for the class.
@@ -48,7 +43,9 @@ Execute the command.
   (return_type, retval) = $P0.interpret()
   if return_type != TCL_OK goto done
   name = retval
-
+  
+  .local pmc args
+  args = new TclList
   .local int elems, i
   elems = self
   i     = 0
@@ -64,8 +61,6 @@ Execute the command.
   if_null cmd, no_command
 
 execute:
-  .local pmc args
-  args = new TclList
   .local pmc word
 loop:
   if i == elems goto loop_done
@@ -92,8 +87,7 @@ no_command:
   cmd = find_global "Tcl", "&unknown"
   
   # Add the command into the unknown handler, and fix our bookkeeping
-  unshift self, name
-  inc elems
+  unshift args, name
   goto execute
 
 no_command_non_interactive:
