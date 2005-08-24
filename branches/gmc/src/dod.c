@@ -1033,9 +1033,6 @@ trace_mem_block(Interp *interpreter,
             cur_var_ptr = (size_t)((ptrdiff_t)cur_var_ptr + sizeof(void *))
             ) {
         size_t ptr = *(size_t *)cur_var_ptr;
-#ifdef GMC_DEBUG
-	fprintf (stderr, "cur_var_ptr: %p, ptr: %d\n", (size_t *)cur_var_ptr, ptr);
-#endif
 
         /* Do a quick approximate range check by bit-masking */
         if ((ptr & mask) == prefix || !prefix) {
