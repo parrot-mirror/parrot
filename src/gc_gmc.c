@@ -430,7 +430,7 @@ gc_gmc_run(Interp *interpreter, int flags)
 	/* Then the pmc_bodies. */
 	gc_gmc_pool_deinit(interpreter, arena_base->pmc_pool);
 
-#ifndef GMC_DEBUG
+#ifdef GMC_DEBUG
 	fprintf (stderr, "GMC: Trying to run dod_run for final sweeping\n");
 #endif /* GMC_DEBUG */
 	--arena_base->DOD_block_level;
@@ -439,7 +439,7 @@ gc_gmc_run(Interp *interpreter, int flags)
 	arena_base->dod_runs++;
 	arena_base->lazy_dod = (flags & DOD_lazy_FLAG);
 	gc_gmc_mark(interpreter, arena_base->pmc_pool, !arena_base->lazy_dod);
-#ifndef GMC_DEBUG
+#ifdef GMC_DEBUG
 	fprintf (stderr, "\nGMC: Trying to run dod_run for normal allocation\n\n");
 #endif /* GMC_DEBUG */
 	--arena_base->DOD_block_level;
@@ -974,7 +974,7 @@ gc_gmc_max_objects_per_gen(Interp *interpreter, struct Small_Object_Pool *pool)
     UINTVAL max = 0;
     Gc_gmc_gen *gen;
     INTVAL pass = 0;
-    for (gen = pool->gc->old_fst; gen; gen = gen->next)
+    for (gen = pool->gc->old_fst; gen || !pass; gen = gen->next)
     {
 	if (!gen && !pass)
 	{
@@ -982,7 +982,9 @@ gc_gmc_max_objects_per_gen(Interp *interpreter, struct Small_Object_Pool *pool)
 	    pass++;
 	}
 	if (gen->alloc_obj > max)
+	{
 	    max = gen->alloc_obj;
+	}
     }
     return max;
 }
@@ -1004,7 +1006,7 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
      * everyone alive. */
     INTVAL state = 0;
 
-    rev = mem_sys_allocate(gc_gmc_max_objects_per_gen(interpreter, pool) * sizeof(Gc_gmc_hdr*));
+    rev = mem_sys_allocate_zeroed(gc_gmc_max_objects_per_gen(interpreter, pool) * sizeof(Gc_gmc_hdr*));
 
 #ifdef GMC_DEBUG
     fprintf (stderr, "\nMarking pass\n\n");
@@ -1027,9 +1029,10 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 	}
 	
 	/* Build the reverse pointers structure. */
-	max_obj = gen->alloc_obj;
-	for (hdr = gen->first, index = 1; (UINTVAL)(h2 = gc_gmc_next_hdr(hdr)) < (UINTVAL)gen->fst_free; hdr = h2, index++)
+	max_obj = gen->alloc_obj - 1;
+	for (hdr = gen->first, index = 1; (UINTVAL)(h2 = gc_gmc_next_hdr(hdr)) < (UINTVAL)gen->fst_free && index <= max_obj; hdr = h2, index++)
 	    rev[max_obj-index] = hdr; 
+
 
 	/* And go through it. */	
 	for (index = 0; index < max_obj; index++)
@@ -1046,6 +1049,7 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 	    /* PObj is alive, trace its children */
 	    if (!state)
 	    {
+		/*fprintf (stderr, "%d/%d\n", index,max_obj);*/
 		if (PObj_live_TEST((PObj*)Gmc_PMC_hdr_get_PMC(hdr)))
 		{
 		    gc_gmc_trace_children(interpreter, hdr, 0);
