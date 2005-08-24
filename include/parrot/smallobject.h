@@ -247,7 +247,7 @@ typedef struct _gc_gmc {
     Gc_gmc_hdr *igp_ref;  /* Current IGP start. */
 } Gc_gmc;
 
-#endif
+#endif /* PARROT_GC_GMC */
 
 
 

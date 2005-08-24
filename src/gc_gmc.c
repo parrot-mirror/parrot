@@ -513,25 +513,16 @@ gc_gmc_alloc_objects(Interp *interpreter, struct Small_Object_Pool *pool)
 {
     struct Small_Object_Arena *new_arena;
     char *ptr;
-    void *lim;
     new_arena = mem_sys_allocate(sizeof(struct Small_Object_Arena));
 
     new_arena->start_objects =
 	mem_sys_allocate_zeroed(pool->objects_per_alloc * pool->object_size);
-    new_arena->total_objects = pool->objects_per_alloc;
+    Parrot_append_arena_in_pool(interpreter, pool, new_arena, pool->object_size * pool->objects_per_alloc);
     new_arena->used = 0;
     new_arena->start_looking = new_arena->start_objects;
     new_arena->bitmap = gc_gmc_new_bitmap(pool->objects_per_alloc);
     pool->num_free_objects += pool->objects_per_alloc;
     pool->total_objects += pool->objects_per_alloc;
-    new_arena->next = NULL;
-    new_arena->prev = pool->last_Arena;
-    lim = (void*)((char*)new_arena->start_objects +
-	    pool->objects_per_alloc * pool->object_size);
-
-    if (pool->last_Arena)
-	pool->last_Arena->next = new_arena;
-    pool->last_Arena = new_arena;
 
     /* Allocate more next time. */
     pool->objects_per_alloc = 
@@ -936,7 +927,7 @@ parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
     Gc_gmc_hdr *h;
 
     h = Gmc_PMC_get_HDR(o);
-#ifndef GMC_DEBUG
+#ifdef GMC_DEBUG
     fprintf (stderr, "PObject %p, body at %p lives !\n", o, h);
 #endif
     gc = Gmc_PMC_body_get_GEN(PMC_body(o))->pool->gc;
@@ -1015,6 +1006,11 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 
     rev = mem_sys_allocate(gc_gmc_max_objects_per_gen(interpreter, pool) * sizeof(Gc_gmc_hdr*));
 
+#ifdef GMC_DEBUG
+    fprintf (stderr, "\nMarking pass\n\n");
+    fprintf (stderr, "max objects: %d\n", gc_gmc_max_objects_per_gen(interpreter, pool));
+#endif
+
     gc_gmc_init_pool(interpreter, pool);
     gc_gmc_trace_root(interpreter, flags);
 
@@ -1032,7 +1028,7 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 	
 	/* Build the reverse pointers structure. */
 	max_obj = gen->alloc_obj;
-	for (hdr = gen->first, index = 1; (UINTVAL)(h2 = gc_gmc_next_hdr(hdr)) < (UINTVAL)gen->fst_free; hdr = h2)
+	for (hdr = gen->first, index = 1; (UINTVAL)(h2 = gc_gmc_next_hdr(hdr)) < (UINTVAL)gen->fst_free; hdr = h2, index++)
 	    rev[max_obj-index] = hdr; 
 
 	/* And go through it. */	
@@ -1054,6 +1050,9 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 		{
 		    gc_gmc_trace_children(interpreter, hdr, 0);
 		} else {
+#ifdef GMC_DEBUG
+		    fprintf (stderr, "%p scheduled for removal, %d remaining\n", hdr, dopr);
+#endif
 		    dopr--;
 		}
 	    } else {
