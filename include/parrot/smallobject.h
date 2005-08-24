@@ -126,9 +126,11 @@ typedef struct _gc_gms_gen {
 /* Number of generations at init time. */
 #define GMC_GEN_INIT_NUMBER 16
 
-
 /* Same structure than in GMS for header lists. */
 #define GC_GMC_STORE_SIZE (64-2)
+
+/* Number of dead objects to find in a run. */
+#define DEAD_OBJECTS_PER_RUN 512
 
 struct _gc_gmc_hdr;
 
@@ -153,13 +155,14 @@ typedef struct _gc_gmc_header_area {
 
 /* A generation for GMC. */
 typedef struct _gc_gmc_gen {
-  struct _gc_gmc_gen *next;  /* Next generation in the linked list. */
-  struct _gc_gmc_gen *prev;  /* Previous generation. */
-  void *first;               /* Array of objects. */
-  void *fst_free;            /* First free place. */
-  size_t remaining;          /* Remaining size. */
-  UINTVAL alloc_obj;         /* Number of allocated objects. */
-  Gc_gmc_hdr_list *IGP;      /* Inter Generational pointers set. */
+  struct _gc_gmc_gen *next;       /* Next generation in the linked list. */
+  struct _gc_gmc_gen *prev;	  /* Previous generation. */
+  struct Small_Object_Pool *pool; /* Refering pool. */
+  void *first;                    /* Array of objects. */
+  void *fst_free;                 /* First free place. */
+  size_t remaining;               /* Remaining size. */
+  UINTVAL alloc_obj;              /* Number of allocated objects. */
+  Gc_gmc_hdr_list *IGP;           /* Inter Generational pointers set. */
 } Gc_gmc_gen;
 
 /* This header is appended to all gc objects. */
@@ -183,6 +186,7 @@ typedef enum gmc_flags {
     Gmc_private_6_FLAG = 1 << 6,
     Gmc_has_ext_FLAG = 1 << 7, /*  flag */
     Gmc_is_pmc_FLAG = 1 << 8, /* True if the object is a PMC, is a PObj if not. */
+    Gmc_is_igp_FLAG = 1 << 9, /* True if the object is the start of an IGP. */
 } Gmc_flags;
 
 
@@ -198,12 +202,12 @@ typedef enum gmc_flags {
 
 /* Macros for access from body. */
 #define Gmc_PMC_body_get_HDR(pmc_body)		    ((Gc_gmc_hdr*)((char*)(pmc_body) - sizeof(Gc_gmc_hdr)))
-#define Gmc_PMC_body_get_FLAGS(pmc_body)	    Gmc_PMC_hdr_get_FLAGS(Gmc_PMC_body_get_hdr(pmc_body))
-#define Gmc_PMC_body_get_PMC(pmc_body)  	    Gmc_PMC_hdr_get_PMC(Gmc_PMC_body_get_hdr(pmc_body))
-#define Gmc_PMC_body_get_GEN(pmc_body)		    Gmc_PMC_hdr_get_GEN(Gmc_PMC_body_get_hdr(pmc_body))
-#define Gmc_PMC_body_flag_TEST(flag, pmc_body)	    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_body_get_hdr(pmc_body))
-#define Gmc_PMC_body_flag_SET(flag, pmc_body)	    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_body_get_hdr(pmc_body))
-#define Gmc_PMC_body_flag_CLEAR(flag, pmc_body)	    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_body_get_hdr(pmc_body))
+#define Gmc_PMC_body_get_FLAGS(pmc_body)	    Gmc_PMC_hdr_get_FLAGS(Gmc_PMC_body_get_HDR(pmc_body))
+#define Gmc_PMC_body_get_PMC(pmc_body)  	    Gmc_PMC_hdr_get_PMC(Gmc_PMC_body_get_HDR(pmc_body))
+#define Gmc_PMC_body_get_GEN(pmc_body)		    Gmc_PMC_hdr_get_GEN(Gmc_PMC_body_get_HDR(pmc_body))
+#define Gmc_PMC_body_flag_TEST(flag, pmc_body)	    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_body_get_HDR(pmc_body))
+#define Gmc_PMC_body_flag_SET(flag, pmc_body)	    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_body_get_HDR(pmc_body))
+#define Gmc_PMC_body_flag_CLEAR(flag, pmc_body)	    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_body_get_HDR(pmc_body))
 
 /* Macros for access from PMC*. */
 #define Gmc_PMC_get_HDR(pmc)			    Gmc_PMC_body_get_HDR(PMC_body(pmc))
@@ -221,21 +225,26 @@ UINTVAL gc_gmc_bitmap_test(gmc_bitmap, UINTVAL);
 void gc_gmc_bitmap_set(gmc_bitmap, UINTVAL);
 void gc_gmc_bitmap_clear(gmc_bitmap, UINTVAL);
 
-
+#define GMC_NORMAL_STATE     0
+#define GMC_IGP_STATE	     1
+#define GMC_SON_OF_IGP_STATE 2
 
 
 /* The whole GC structure */
 typedef struct _gc_gmc {
-  UINTVAL nb_gen;       /* Total number of generations. */
-  UINTVAL nb_empty_gen; /* Number of empty generations. */
-  UINTVAL alloc_obj;    /* Number of allocated objects. */
-  Gc_gmc_gen *yng_fst;  /* First generation (aggregate, young objects). */
-  Gc_gmc_gen *yng_lst;  /* End of aggregate objects. */
-  Gc_gmc_gen *old_fst;  /* Beginning of non-aggregate, old objects. */
-  Gc_gmc_gen *old_lst;  /* Very last generation. */
-  Gc_gmc_gen *timely;   /* Objects needing timely destruction. */
-  Gc_gmc_gen *constant; /* Objects that will never be collected. */
-  void *gray;           /* Current object being examined during M&S. */
+    INTVAL state;         /* Are we marking normal objects or IGP ? */
+    UINTVAL nb_gen;       /* Total number of generations. */
+    UINTVAL nb_empty_gen; /* Number of empty generations. */
+    UINTVAL alloc_obj;    /* Number of allocated objects. */
+    Gc_gmc_gen *yng_fst;  /* First generation (aggregate, young objects). */
+    Gc_gmc_gen *yng_lst;  /* End of aggregate objects. */
+    Gc_gmc_gen *old_fst;  /* Beginning of non-aggregate, old objects. */
+    Gc_gmc_gen *old_lst;  /* Very last generation. */
+    Gc_gmc_gen *timely;   /* Objects needing timely destruction. */
+    Gc_gmc_gen *constant; /* Objects that will never be collected. */
+    void *gray;           /* Current object being examined during M&S. */
+    void *white;          /* Point at which we stopped m&s phase. */
+    Gc_gmc_hdr *igp_ref;  /* Current IGP start. */
 } Gc_gmc;
 
 #endif
