@@ -231,7 +231,7 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     /* Now cut the bridges between these two parts. */
     gen->prev->next = NULL;
     gen->prev = NULL;
-    gc->old_lst = gc->yng_fst;
+    gc->old_lst = gc->old_fst;
     gc->white = gc->old_fst->first;
 }
 
@@ -248,9 +248,6 @@ gc_gmc_pool_deinit(Interp *interpreter, struct Small_Object_Pool *pool)
     for (gen = gc->yng_fst; gen;)
     {
 	gen_nxt = gen->next;
-	for (store = gen->IGP->first; store;
-		st2 = store->next,mem_sys_free(store),
-		store = st2);
 	mem_sys_free(gen->first);
 	mem_sys_free(gen);
 	gen = gen_nxt;
@@ -259,9 +256,6 @@ gc_gmc_pool_deinit(Interp *interpreter, struct Small_Object_Pool *pool)
     for (gen = gc->old_fst; gen;)
     {
 	gen_nxt = gen->next;
-	for (store = gen->IGP->first; store;
-		st2 = store->next,mem_sys_free(store),
-		store = st2);
 	mem_sys_free(gen->first);
 	mem_sys_free(gen);
 	gen = gen_nxt;
@@ -575,7 +569,6 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
     /* Should we use the next generation ? */
     if (size >= gen->remaining)
     {
-	fprintf (stderr, "switching to next gen, old_lst = %p -> %p\n", gc->old_lst, gc->old_lst->next);
 	if (aggreg)
 	    gc->yng_lst = gen->next;
 	else
@@ -602,6 +595,8 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
     pmc_body = gen->fst_free;
     gen->fst_free = (void*)((char*)gen->fst_free + size);
     gen->remaining -= size;
+    if ((INTVAL)gen->remaining < 0)
+	fprintf (stderr, "gen: %p, gen->first: %p, gen->fst_free: %p, gen->remaining: %d\n", gen, gen->first, gen->fst_free, gen->remaining);
     gen->alloc_obj++;
     memset(pmc_body, 0, size);
 #ifdef GMC_DEBUG
