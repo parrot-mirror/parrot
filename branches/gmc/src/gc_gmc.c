@@ -15,7 +15,7 @@ static void *gc_gmc_get_free_object(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_alloc_objects(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_more_objects(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_more_pmc_bodies(Interp *, struct Small_Object_Pool*);
-static void gc_gmc_mark(Interp *, struct Small_Object_Pool *, int);
+static INTVAL gc_gmc_mark(Interp *, struct Small_Object_Pool *, int);
 
 
 /* Determines the size of a PMC according to its base_type. */
@@ -72,7 +72,7 @@ gc_gmc_bitmap_clear(gmc_bitmap bitmap, UINTVAL bit)
 /* Allocates and initializes a generation, but does not plug it 
  * to the pool yet. */
     static Gc_gmc_gen *
-gc_gmc_gen_init(Interp *interpreter)
+gc_gmc_gen_init(Interp *interpreter, struct Small_Object_Pool *pool)
 {
     Gc_gmc_gen *gen;
     Gc_gmc_hdr_list *IGP;
@@ -85,15 +85,17 @@ gc_gmc_gen_init(Interp *interpreter)
     gen->fst_free = gen->first;
     gen->remaining = GMC_GEN_SIZE;
     gen->alloc_obj = 0;
+    gen->pool = pool;
 
     /* We have an IGP basis : only one store. */
-    IGP_store = mem_sys_allocate(sizeof(Gc_gmc_hdr_store));
-    IGP_store->ptr = &(IGP_store->store[0]);
-    IGP_store->next = NULL;
-    IGP = mem_sys_allocate(sizeof(Gc_gmc_hdr_list));
-    IGP->first = IGP_store;
-    IGP->last = IGP_store;
-    gen->IGP = IGP;
+    /*IGP_store = mem_sys_allocate(sizeof(Gc_gmc_hdr_store));*/
+    /*IGP_store->ptr = &(IGP_store->store[0]);*/
+    /*IGP_store->next = NULL;*/
+    /*IGP = mem_sys_allocate(sizeof(Gc_gmc_hdr_list));*/
+    /*IGP->first = IGP_store;*/
+    /*IGP->last = IGP_store;*/
+    /*gen->IGP = IGP;*/
+    gen->IGP=NULL;
 
 #ifdef GMC_DEBUG
     fprintf(stderr, "Allocating gen at %p, first at %p, limit at %p\n",
@@ -111,7 +113,7 @@ gc_gmc_insert_gen(Interp *interpreter, Gc_gmc *gc, Gc_gmc_gen *gen)
     Gc_gmc_gen *cur_gen;
     void *ptr;
 
-    cur_gen = gc->old_lst;
+    cur_gen = gc->yng_lst;
     if (cur_gen)
 	ptr = (void*)cur_gen->first;
     else
@@ -137,20 +139,20 @@ gc_gmc_insert_gen(Interp *interpreter, Gc_gmc *gc, Gc_gmc_gen *gen)
 	gen->next = cur_gen->next;
 	cur_gen->next = gen;
     } else {
-	if (gc->yng_fst)
+	if (gc->old_fst)
 	{
-	    gen->next = gc->yng_fst;
-	    gc->yng_fst->prev = gen;
-	    gc->yng_fst = gen;
+	    gen->next = gc->old_fst;
+	    gc->old_fst->prev = gen;
+	    gc->old_fst = gen;
 	} else {
 	    gen->next = NULL;
-	    gc->yng_fst = gen;
-	    gc->old_lst = gen;
+	    gc->old_fst = gen;
+	    gc->yng_lst = gen;
 	}
     }
     gen->prev = cur_gen;
-    if (gc->old_lst == cur_gen)
-	gc->old_lst = gen;
+    if (gc->yng_lst == cur_gen)
+	gc->yng_lst = gen;
 }
 
 
@@ -161,12 +163,11 @@ gc_gmc_test_linked_list_gen(Interp *interpreter, Gc_gmc *gc)
 {
     Gc_gmc_gen *gen;
     UINTVAL i,j;
-    for (i = 0, gen = gc->yng_fst; gen; i++, gen = gen->next);
-    for (j = 0, gen = gc->old_lst; gen; j++, gen = gen->prev);
+    for (i = 0, gen = gc->old_fst; gen; i++, gen = gen->next);
+    for (j = 0, gen = gc->yng_lst; gen; j++, gen = gen->prev);
     if (i != gc->nb_gen || j != gc->nb_gen)
     {
 #ifdef GMC_DEBUG
-	fprintf(stderr, "Invalid linked list\n");
 	fprintf(stderr, "Invalid linked list\n");
 #endif
 	gen = NULL;
@@ -206,13 +207,16 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     gc->yng_lst = NULL;
     gc->old_fst = NULL;
     gc->old_lst = NULL;
-    gc->timely = gc_gmc_gen_init(interpreter);
-    gc->constant = gc_gmc_gen_init(interpreter);
+    gc->igp_ref = NULL;
+    gc->gray = NULL;
+    gc->state = GMC_NORMAL_STATE;
+    gc->timely = gc_gmc_gen_init(interpreter, pool);
+    gc->constant = gc_gmc_gen_init(interpreter, pool);
     pool->gc = gc;
 
     for (i = 0; i < GMC_GEN_INIT_NUMBER; i++)
     {
-	gen = gc_gmc_gen_init(interpreter);
+	gen = gc_gmc_gen_init(interpreter, pool);
 	gc_gmc_insert_gen(interpreter, gc, gen);
     }
 
@@ -220,14 +224,15 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
 
     /* Separate the generations in two halves : one is young (= aggregate
      * objects), the other is old (non-aggregate objects). */
-    for (i = 0, gen = gc->yng_fst; i < (GMC_GEN_INIT_NUMBER/2);
+    for (i = 0, gen = gc->old_fst; i < (GMC_GEN_INIT_NUMBER/2);
 	    i++, gen = gen->next);
-    gc->old_fst = gen;
-    gc->old_lst = gen;
+    gc->yng_fst = gen;
+    gc->yng_lst = gen;
     /* Now cut the bridges between these two parts. */
     gen->prev->next = NULL;
     gen->prev = NULL;
-    gc->yng_lst = gc->yng_fst;
+    gc->old_lst = gc->yng_fst;
+    gc->white = gc->old_fst->first;
 }
 
 
@@ -302,14 +307,7 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 		}
 		gc_gmc_bitmap_clear(arena->bitmap, i);
 		sweep++;
-		/* This is the work of the VTABLE_destroy function. */
-		/*
-		   if ((Gmc_has_PMC_EXT_TEST(ptr) ||
-		   PObj_is_PMC_EXT_TEST(ptr)) && PMC_data(ptr))
-		   {
-		   mem_sys_free(PMC_data(ptr));
-		   PMC_data(ptr) = NULL;
-		   } */
+		(Gmc_PMC_body_get_GEN(PMC_body(ptr)))->alloc_obj--;
 	    }
 	}
     }
@@ -438,7 +436,7 @@ gc_gmc_run(Interp *interpreter, int flags)
 	/* Then the pmc_bodies. */
 	gc_gmc_pool_deinit(interpreter, arena_base->pmc_pool);
 
-#ifdef GMC_DEBUG
+#ifndef GMC_DEBUG
 	fprintf (stderr, "GMC: Trying to run dod_run for final sweeping\n");
 #endif /* GMC_DEBUG */
 	--arena_base->DOD_block_level;
@@ -447,8 +445,8 @@ gc_gmc_run(Interp *interpreter, int flags)
 	arena_base->dod_runs++;
 	arena_base->lazy_dod = (flags & DOD_lazy_FLAG);
 	gc_gmc_mark(interpreter, arena_base->pmc_pool, !arena_base->lazy_dod);
-#ifdef GMC_DEBUG
-	fprintf (stderr, "GMC: Trying to run dod_run for normal allocation\n");
+#ifndef GMC_DEBUG
+	fprintf (stderr, "\nGMC: Trying to run dod_run for normal allocation\n\n");
 #endif /* GMC_DEBUG */
 	--arena_base->DOD_block_level;
     }
@@ -497,8 +495,7 @@ gc_gmc_store_hdr_list(Interp *interpreter, Gc_gmc_hdr_list *l, Gc_gmc_hdr *h)
 void gc_gmc_wb(Interp *interpreter, PMC *agg, void *old, void *new)
 {
     if (PObj_is_PMC_TEST((PObj*)new) && Gmc_has_PMC_EXT_TEST((PMC*)new))
-	gc_gmc_store_hdr_list(interpreter, Gmc_PMC_get_GEN((PMC*)new)->IGP,
-		Gmc_PMC_get_HDR((PMC*)new));
+	Gmc_PMC_flag_SET(is_igp, agg);
     /* XXX: Do we need to move it one way or another for invariant ? */
 }
 
@@ -578,6 +575,7 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
     /* Should we use the next generation ? */
     if (size >= gen->remaining)
     {
+	fprintf (stderr, "switching to next gen, old_lst = %p -> %p\n", gc->old_lst, gc->old_lst->next);
 	if (aggreg)
 	    gc->yng_lst = gen->next;
 	else
@@ -626,7 +624,7 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
     /* Now find this object. */
     for (pmc = arena->start_objects, i = 0;
 	    gc_gmc_bitmap_test(arena->bitmap, i);
-	    pmc = (PMC*)((char*)pmc + pool->object_size), i++)
+	    pmc = (PMC*)((char*)pmc + pool->object_size), i++);
 
     pool->free_list = arena;
     gc_gmc_bitmap_set(arena->bitmap, i);
@@ -708,6 +706,7 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
     dest->fst_free = (void*)((char*)dest->first + offset);
     dest->remaining = from->remaining;
     dest->IGP = from->IGP;
+    dest->alloc_obj = from->alloc_obj;
 #ifdef GMC_DEBUG
     fprintf (stderr, "Copying gen (%p,%p) to gen (%p,%p)\n",
 	    from, from->first, dest, dest->first);
@@ -716,8 +715,12 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
     ptr = dest->first;
     while ((UINTVAL)ptr < (UINTVAL)dest->fst_free)
     {
-	PMC_body(Gmc_PMC_hdr_get_PMC(ptr)) = Gmc_PMC_hdr_get_BODY(ptr);
+	if (!Gmc_PMC_hdr_get_PMC(ptr)) {
+	    fprintf (stderr, "hdr: %p\n", ptr);
+	    fprintf (stderr, "gen: %p,gen->first: %p, gen->fst_free: %p, gmc_hdr->gen: %p\n", from, dest->first, dest->fst_free, Gmc_PMC_hdr_get_GEN(ptr));
+	}
 	Gmc_PMC_hdr_get_GEN(ptr) = dest;
+	PMC_body(Gmc_PMC_hdr_get_PMC(ptr)) = Gmc_PMC_hdr_get_BODY(ptr);
 	if (PObj_is_PMC_TEST(Gmc_PMC_hdr_get_PMC(ptr)))
 	    ptr = (Gc_gmc_hdr*)((char*)ptr + 
 		    Gmc_PMC_hdr_get_PMC(ptr)->vtable->size 
@@ -764,25 +767,11 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 
     for (i = 0; i < nb_gen; i++)
     {
-	gen = gc_gmc_gen_init (interpreter);
+	gen = gc_gmc_gen_init (interpreter, pool);
 	gc_gmc_insert_gen (interpreter, dummy_gc, gen);
     }
 
     gc_gmc_test_linked_list_gen(interpreter, dummy_gc);
-
-    for (gen = dummy_gc->yng_fst, ogen = gc->yng_fst; ogen; gen = gen->next)
-    {
-	ogen_nxt = ogen->next;
-	gc_gmc_copy_gen(ogen,gen);
-	gc_gmc_gen_free(ogen);
-	ogen = ogen_nxt;
-    }
-    dummy_gc->yng_lst = gen;
-
-    for (gen = dummy_gc->yng_fst, i = 0; i < (nb_gen/2); i++, gen = gen->next);
-    dummy_gc->old_fst = gen;
-    gen->prev->next = NULL;
-    gen->prev = NULL;
 
     for (gen = dummy_gc->old_fst, ogen = gc->old_fst; ogen; gen = gen->next)
     {
@@ -792,6 +781,20 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
 	ogen = ogen_nxt;
     }
     dummy_gc->old_lst = gen;
+
+    for (gen = dummy_gc->old_fst, i = 0; i < (nb_gen/2); i++, gen = gen->next);
+    dummy_gc->yng_fst = gen;
+    gen->prev->next = NULL;
+    gen->prev = NULL;
+
+    for (gen = dummy_gc->yng_fst, ogen = gc->yng_fst; ogen; gen = gen->next)
+    {
+	ogen_nxt = ogen->next;
+	gc_gmc_copy_gen(ogen,gen);
+	gc_gmc_gen_free(ogen);
+	ogen = ogen_nxt;
+    }
+    dummy_gc->yng_lst = gen;
 
     gc->yng_fst = dummy_gc->yng_fst;
     gc->yng_lst = dummy_gc->yng_lst;
@@ -844,7 +847,7 @@ gc_gmc_init_pool(Interp *interpreter, struct Small_Object_Pool *pool)
     Gc_gmc_gen *gen;
     Gc_gmc_hdr *hdr, *h2;
     int pass;
-    for (gen = pool->gc->yng_fst, pass = 0; gen; gen = gen->next)
+    for (gen = pool->gc->old_fst, pass = 0; gen; gen = gen->next)
     {
 	hdr = gen->first;
 	while ((UINTVAL)hdr < (UINTVAL)gen->fst_free)
@@ -853,7 +856,7 @@ gc_gmc_init_pool(Interp *interpreter, struct Small_Object_Pool *pool)
 	    hdr = gc_gmc_next_hdr(hdr);
 	}
 	if (!gen && !pass) {
-	    gen = pool->gc->old_fst;
+	    gen = pool->gc->yng_fst;
 	    pass++;
 	}
     }
@@ -877,41 +880,97 @@ gc_gmc_trace_root(Interp *interpreter, int trace_stack)
 }
 
 
-/* Marks the object whose body is at h as alive. */
-void
-parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
-{
-    PObj_live_SET(o);
-}
-
-
 /* If the object is alive and has pointers to older PMC, mark them alive. */
+/* pass can have the following values:
+ * - 0 : make normal marking of children and test for IGP.
+ * - 1 : make normal marking of children but don't test IGP.
+ * - 2 : no marking of children but test of IGP. */
 static void
-gc_gmc_trace_children(Interp *interpreter, Gc_gmc_hdr *h)
+gc_gmc_trace_children(Interp *interpreter, Gc_gmc_hdr *h, INTVAL pass)
 {
     UINTVAL mask = PObj_data_is_PMC_array_FLAG | PObj_custom_mark_FLAG;
     UINTVAL bits;
     PMC *pmc;
+    Gc_gmc *gc;
+    INTVAL sav_state;
+    Gc_gmc_hdr *sav_igp_ref;
     INTVAL i;
 
     pmc = Gmc_PMC_hdr_get_PMC(h);
 
-    bits = PObj_get_FLAGS(pmc) & mask;
-    if (bits)
+    if (pass != 2)
     {
-	if (bits == PObj_data_is_PMC_array_FLAG) {
-	    PMC** data = PMC_data(pmc);
-	    if (data)
-	    {
-		for (i = 0; i < PMC_int_val(pmc); i++)
+	bits = PObj_get_FLAGS(pmc) & mask;
+	if (bits)
+	{
+	    if (bits == PObj_data_is_PMC_array_FLAG) {
+		PMC** data = PMC_data(pmc);
+		if (data)
 		{
-		    if (data[i])
-			pobject_lives(interpreter, (PObj*)data[i]);
+		    for (i = 0; i < PMC_int_val(pmc); i++)
+		    {
+			if (data[i])
+			    pobject_lives(interpreter, (PObj*)data[i]);
+		    }
 		}
+	    } else {
+		VTABLE_mark(interpreter, pmc);
 	    }
-	} else {
-	    VTABLE_mark(interpreter, pmc);
 	}
+    }
+    /* Trick to avoid code duplication. */
+    if (pass && Gmc_PMC_hdr_flag_TEST(is_igp, h))
+    {
+	gc = Gmc_PMC_hdr_get_GEN(h)->pool->gc;
+	sav_state = gc->state;
+	sav_igp_ref = gc->igp_ref;
+	gc->state = GMC_IGP_STATE;
+	gc->igp_ref = h;
+	gc_gmc_trace_children(interpreter, h, 1);
+	gc->igp_ref = sav_igp_ref;
+	gc->state = sav_state;
+    }
+}
+
+
+/* Marks the object whose body is at h as alive. */
+void
+parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
+{
+    Gc_gmc *gc;
+    Gc_gmc_hdr *h;
+
+    h = Gmc_PMC_get_HDR(o);
+#ifndef GMC_DEBUG
+    fprintf (stderr, "PObject %p, body at %p lives !\n", o, h);
+#endif
+    gc = Gmc_PMC_body_get_GEN(PMC_body(o))->pool->gc;
+    switch (gc->state)
+    {
+	/* This just comes from an IGP. */
+	case GMC_IGP_STATE:
+	    if ((UINTVAL)h > (UINTVAL)gc->igp_ref && !PObj_live_TEST(o))
+	    {
+		PObj_live_SET(o);
+		gc->state = GMC_SON_OF_IGP_STATE;
+		gc_gmc_trace_children(interpreter, h, 0);
+		gc->state = GMC_IGP_STATE;
+	    }
+	    break;
+	/* This object was precedently dead and has been marked alive as a
+	 * consequence from IGP. */
+	case GMC_SON_OF_IGP_STATE:
+	    if (!PObj_live_TEST(o) && (UINTVAL)h > (UINTVAL)gc->white)
+	    {
+		PObj_live_SET(o);
+		gc_gmc_trace_children(interpreter, h, 0);
+	    }
+	    break;
+	case GMC_NORMAL_STATE:
+	    PObj_live_SET(o);
+	    break;
+	default:
+	    internal_exception(1, "GMC: undefined state");
     }
 }
 
@@ -921,23 +980,95 @@ gc_gmc_trace_children(Interp *interpreter, Gc_gmc_hdr *h)
  * scanned, follow IGP pointers that *start* from that generation and trace its
  * children, but only if they were marked dead before (if not, they were already
  * traced). */
-static void
-gc_gmc_trace_igp(Interp *interpreter, Gc_gmc_hdr *h)
-{
-}
 
-static void
-gc_gmc_son_of_igp(Interp *interpreter, Gc_gmc_hdr *h)
+/* Find the max number of objects allocated in a single gen. */
+static INTVAL
+gc_gmc_max_objects_per_gen(Interp *interpreter, struct Small_Object_Pool *pool)
 {
+    UINTVAL max = 0;
+    Gc_gmc_gen *gen;
+    INTVAL pass = 0;
+    for (gen = pool->gc->old_fst; gen; gen = gen->next)
+    {
+	if (!gen && !pass)
+	{
+	    gen = pool->gc->yng_fst;
+	    pass++;
+	}
+	if (gen->alloc_obj > max)
+	    max = gen->alloc_obj;
+    }
+    return max;
 }
 
 
 /* Wraps everything nicely. */
-static void
+static INTVAL
 gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 {
+    INTVAL dopr = DEAD_OBJECTS_PER_RUN; /* Number of objects we want to find in a run. */
+    Gc_gmc_hdr *hdr, *h2;
+    Gc_gmc_gen *gen;
+    Gc_gmc_hdr **rev;
+    INTVAL index;
+    INTVAL max_obj;
+    INTVAL pass = 0;
+    /* State 0 : normal run, we free every dead object.
+     * State 1 : we've found enough objects, simply consider IGP and mark
+     * everyone alive. */
+    INTVAL state = 0;
+
+    rev = mem_sys_allocate(gc_gmc_max_objects_per_gen(interpreter, pool) * sizeof(Gc_gmc_hdr*));
+
     gc_gmc_init_pool(interpreter, pool);
     gc_gmc_trace_root(interpreter, flags);
+
+    hdr = pool->gc->gray; 
+    gen = pool->gc->yng_lst;
+    pool->gc->state = GMC_NORMAL_STATE;
+    for (gen = pool->gc->yng_lst; gen; gen = gen->prev)
+    {
+	/* We've run through all the young objects, jump to the old ones. */
+	if (!gen && !pass)
+	{
+	    gen = pool->gc->old_lst;
+	    pass++;
+	}
+	
+	/* Build the reverse pointers structure. */
+	max_obj = gen->alloc_obj;
+	for (hdr = gen->first, index = 1; (UINTVAL)(h2 = gc_gmc_next_hdr(hdr)) < (UINTVAL)gen->fst_free; hdr = h2)
+	    rev[max_obj-index] = hdr; 
+
+	/* And go through it. */	
+	for (index = 0; index < max_obj; index++)
+	{
+	    hdr =rev[index]; 
+	    pool->gc->gray = hdr;
+		
+	    if (!dopr)
+	    {
+		pool->gc->white = hdr;
+		state++;
+	    }
+
+	    /* PObj is alive, trace its children */
+	    if (!state)
+	    {
+		if (PObj_live_TEST((PObj*)Gmc_PMC_hdr_get_PMC(hdr)))
+		{
+		    gc_gmc_trace_children(interpreter, hdr, 0);
+		} else {
+		    dopr--;
+		}
+	    } else {
+		gc_gmc_trace_children(interpreter, hdr, 2);
+		pobject_lives(interpreter, (PObj*)Gmc_PMC_hdr_get_PMC(hdr));
+	    }
+	}
+    }
+    mem_sys_free(rev);
+    return (DEAD_OBJECTS_PER_RUN - dopr);
 }
 
 
