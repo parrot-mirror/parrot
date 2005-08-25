@@ -16,16 +16,18 @@ static void gc_gmc_alloc_objects(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_more_objects(Interp*, struct Small_Object_Pool*);
 static void gc_gmc_more_pmc_bodies(Interp *, struct Small_Object_Pool*);
 static INTVAL gc_gmc_mark(Interp *, struct Small_Object_Pool *, int);
+static void gc_gmc_compact(Interp *, struct Small_Object_Pool *);
 
 
 /* Determines the size of a PMC according to its base_type. */
     static size_t
-gc_gmc_get_PMC_size(Interp *interpreter, INTVAL base_type)
+gc_gmc_get_size(Interp *interpreter, Gc_gmc_hdr *hdr)
 {
-    VTABLE *vtable = Parrot_base_vtables[base_type];
-    if (!vtable)
-	return (UINTVAL)0;
-    return vtable->size;
+    if (PObj_is_PMC_TEST(Gmc_PMC_hdr_get_PMC(hdr)))
+	return (Gmc_PMC_hdr_get_PMC(hdr)->vtable->size 
+		+ sizeof(Gc_gmc_hdr));
+    else
+	return (sizeof(Gc_gmc_hdr) + sizeof(pobj_body));
 }
 
 /* Allocates a new empty bitmap of the requested size. */
@@ -439,6 +441,7 @@ gc_gmc_run(Interp *interpreter, int flags)
 	arena_base->dod_runs++;
 	arena_base->lazy_dod = (flags & DOD_lazy_FLAG);
 	gc_gmc_mark(interpreter, arena_base->pmc_pool, !arena_base->lazy_dod);
+	gc_gmc_compact(interpreter, arena_base->pmc_pool);
 #ifdef GMC_DEBUG
 	fprintf (stderr, "\nGMC: Trying to run dod_run for normal allocation\n\n");
 #endif /* GMC_DEBUG */
@@ -657,10 +660,9 @@ gc_gmc_get_free_typed_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, INTVAL base_type)
 {
     Gc_gmc *gc = pool->gc;
-    size_t size = sizeof(Gc_gmc_hdr) + gc_gmc_get_PMC_size(interpreter, 
-	    base_type);
     VTABLE *vtable = Parrot_base_vtables[base_type];
     INTVAL aggreg = vtable->flags & VTABLE_PMC_NEEDS_EXT;
+    size_t size = sizeof(Gc_gmc_hdr) + vtable->size;
     PMC *pmc = gc_gmc_get_free_object_of_size (interpreter, pool, size, aggreg);
     Gmc_PMC_flag_SET(is_pmc, pmc);
     return pmc;
@@ -739,6 +741,8 @@ gc_gmc_more_pmc_bodies (Interp *interpreter,
     Gc_gmc_gen *gen, *ogen, *ogen_nxt;
     INTVAL nb_gen = 2 * gc->nb_gen;
     int i;
+
+
 
 #ifdef GMC_DEBUG
     fprintf(stderr, "Allocating more pmc_bodies\n");
@@ -833,17 +837,17 @@ gc_gmc_init_pool(Interp *interpreter, struct Small_Object_Pool *pool)
     Gc_gmc_gen *gen;
     Gc_gmc_hdr *hdr, *h2;
     int pass;
-    for (gen = pool->gc->old_fst, pass = 0; gen; gen = gen->next)
+    for (gen = pool->gc->old_fst, pass = 0; gen || !pass; gen = gen->next)
     {
+	if (!gen && !pass) {
+	    gen = pool->gc->yng_fst;
+	    pass++;
+	}
 	hdr = gen->first;
 	while ((UINTVAL)hdr < (UINTVAL)gen->fst_free)
 	{
 	    PObj_live_CLEAR(Gmc_PMC_hdr_get_PMC(hdr));
 	    hdr = gc_gmc_next_hdr(hdr);
-	}
-	if (!gen && !pass) {
-	    gen = pool->gc->yng_fst;
-	    pass++;
 	}
     }
     /* Find the most recent object ever allocated and prepare for M&S. */
@@ -990,6 +994,97 @@ gc_gmc_max_objects_per_gen(Interp *interpreter, struct Small_Object_Pool *pool)
 }
 
 
+/* Copies a header and its pmc_body, then updates the pointers. */
+/* We are sure that there is enough room in to. from and to may overlap. */
+static Gc_gmc_hdr *
+gc_gmc_copy_hdr(Interp *interpreter, Gc_gmc_hdr *from, Gc_gmc_hdr *to)
+{
+    Gc_gmc_gen *gen;
+    size_t size;
+
+    if (from == to)
+	return gc_gmc_next_hdr(to);
+    size = gc_gmc_get_size(interpreter, from);
+    gen = Gmc_PMC_hdr_get_GEN(from);
+    memmove(to, from, size);
+    Gmc_PMC_hdr_get_GEN(to) = gen;
+    PMC_body(Gmc_PMC_hdr_get_PMC(to)) = Gmc_PMC_hdr_get_BODY(to);
+    return gc_gmc_next_hdr(to);
+}
+
+/* Compacts every gen so they are all filled, except the last one. */
+static void
+gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
+{
+    /* The generation that we are currently filling. */
+    Gc_gmc_gen *filled_gen;
+    /* The generation of origin of the objects being moved. */
+    Gc_gmc_gen *filling_gen;
+    /* Place where the next object will be moved. */
+    Gc_gmc_hdr *gray;
+    /* Origin of the current object being moved. */
+    Gc_gmc_hdr *white;
+
+    INTVAL pass = 0;
+    INTVAL copying = 0;
+    size_t size;
+    size_t remaining;
+    
+    filled_gen = filling_gen = pool->gc->old_fst;
+    gray = white = filling_gen->first;
+    remaining = (UINTVAL)filled_gen->fst_free - (UINTVAL)filled_gen->first + filled_gen->remaining;
+    
+    while (1)
+    {
+	while ((UINTVAL)gray < (UINTVAL)filling_gen->fst_free)
+	{
+	    /* Jump over any dead object. */
+	    while (!PObj_live_TEST(Gmc_PMC_hdr_get_PMC(gray)))
+	    {
+		/*fprintf (stderr, "Deleting %p\n", gray);*/
+		if (PObj_active_destroy_TEST(Gmc_PMC_hdr_get_PMC(gray)))
+		    VTABLE_destroy(interpreter, Gmc_PMC_hdr_get_PMC(gray));
+		/* XXX: find a way to mark the header dead as well! */
+		gray = gc_gmc_next_hdr(gray);
+		filling_gen->alloc_obj--;
+		if ((UINTVAL)gray >= (UINTVAL)filling_gen->fst_free)
+		    goto switch_gen;
+	    }
+	    /* If we are done with the current filled generation. */
+	    if ((size = gc_gmc_get_size(interpreter, gray)) >= remaining)
+	    {
+		filled_gen->remaining = remaining;
+		filled_gen->fst_free = white;
+		assert(filled_gen->next);
+		filled_gen = filled_gen->next;
+		white = filled_gen->first;
+		remaining = (UINTVAL)filled_gen->fst_free - (UINTVAL)filled_gen->first + filled_gen->remaining;
+	    }
+	    /* Then copy data and move both pointers. */
+	    /*fprintf (stderr, "Copying %p to %p\n", gray, white);*/
+	    remaining -= size;
+	    white = gc_gmc_copy_hdr (interpreter, gray, white);
+	    gray = (Gc_gmc_hdr*)((char*)gray + size);
+	    filling_gen->alloc_obj--;
+	    filled_gen->alloc_obj++;
+	}
+switch_gen:
+	filling_gen = filling_gen->next;
+	if (!filling_gen)
+	{
+	    if (pass)
+		return;
+	    filling_gen = pool->gc->yng_fst;
+	    filled_gen = pool->gc->yng_fst;
+	    white = filled_gen->first;
+	    remaining = (UINTVAL)filled_gen->fst_free - (UINTVAL)filled_gen->first + filled_gen->remaining;
+	    pass++;
+	}
+	gray = filling_gen->first;	
+    }
+}
+
+
 /* Wraps everything nicely. */
 static INTVAL
 gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
@@ -1019,7 +1114,7 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
     hdr = pool->gc->gray; 
     gen = pool->gc->yng_lst;
     pool->gc->state = GMC_NORMAL_STATE;
-    for (gen = pool->gc->yng_lst; gen; gen = gen->prev)
+    for (gen = pool->gc->yng_lst; gen || !pass; gen = gen->prev)
     {
 	/* We've run through all the young objects, jump to the old ones. */
 	if (!gen && !pass)
