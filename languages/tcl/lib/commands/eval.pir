@@ -16,10 +16,8 @@
  
   .local int looper
  
-  .local pmc parse
-  .local pmc interpret 
+  .local pmc parse 
   parse = find_global "_Tcl", "parse"
-  interpret = find_global "_Tcl", "__interpret"
 
   expr = ""
   looper = 0
@@ -38,7 +36,7 @@ loop_done:
   $P1 = parse(expr)
   register $P1
 
-  .return interpret($P1) 
+  .return $P1."interpret"() 
 
 no_args:
   $P1 = new String
