@@ -335,32 +335,14 @@ static int sweep_buf (Interp *interpreter, struct Small_Object_Pool *pool,
 		obj = (PObj*)((char*)obj + pool->object_size), i++)
 	{
 
-	    if (gc_gmc_bitmap_test(arena->bitmap, i))
+	    if (gc_gmc_bitmap_test(arena->bitmap, i) && !PObj_live_TEST(obj) && PMC_body(obj))
 	    {
 		if (PObj_sysmem_TEST(obj) && PObj_bufstart(obj)) {
 		    /* has sysmem allocated, e.g. string_pin */
 		    mem_sys_free(PObj_bufstart(obj));
 		    PObj_bufstart(obj) = NULL;
 		    PObj_buflen(obj) = 0;
-		}
-		else {
-#ifdef GC_IS_MALLOC
-		    /* free allocated space at (int*)bufstart - 1,
-		     * but not if it is used COW or external
-		     */
-		    if (PObj_bufstart(obj) &&
-			    !PObj_is_external_or_free_TESTALL(obj)) {
-			if (PObj_COW_TEST(obj)) {
-			    INTVAL *refcount = 
-				((INTVAL *)PObj_bufstart(obj) - 1);
-
-			    if (!--(*refcount))
-				free(refcount); /* the actual bufstart */
-			}
-			else
-			    free((INTVAL*)PObj_bufstart(obj) - 1);
-		    }
-#else
+		} else {
 		    /*
 		     * XXX Jarkko did report that on irix pool->mem_pool
 		     *     was NULL, which really shouldn't happen
@@ -375,7 +357,6 @@ static int sweep_buf (Interp *interpreter, struct Small_Object_Pool *pool,
 			 pool->mem_pool)->possibly_reclaimable +=
 			    PObj_buflen(obj);
 		    }
-#endif
 		    PObj_buflen(obj) = 0;
 		}
 		gc_gmc_bitmap_clear(arena->bitmap, i);
@@ -403,7 +384,7 @@ gc_gmc_clear_live(Interp *interpreter, struct Small_Object_Pool *pool,
 		obj = (PObj*)((char*)obj + pool->object_size), i++)
 	{
 	    if (gc_gmc_bitmap_test(arena->bitmap, i))
-		gc_gmc_bitmap_clear(arena->bitmap, i);
+		PObj_live_CLEAR(obj);
 	}
     }
     return 0;
@@ -427,7 +408,7 @@ gc_gmc_run(Interp *interpreter, int flags)
 	/* First the pmc headers */
 	Parrot_forall_header_pools(interpreter, POOL_ALL, 0, gc_gmc_clear_live);
 	Parrot_forall_header_pools(interpreter, POOL_PMC, 0, sweep_pmc);
-	/*Parrot_forall_header_pools(interpreter, POOL_BUFFER, 0, sweep_buf);*/
+	Parrot_forall_header_pools(interpreter, POOL_BUFFER, 0, sweep_buf);
 
 	/* Then the pmc_bodies. */
 	gc_gmc_pool_deinit(interpreter, arena_base->pmc_pool);
