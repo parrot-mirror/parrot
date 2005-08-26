@@ -7,7 +7,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "incr"
+.sub "&incr"
   .param pmc argv :slurpy
 
   .local int value

@@ -6,7 +6,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "append"
+.sub "&append"
   .param pmc argv :slurpy
 
   .local int argc 

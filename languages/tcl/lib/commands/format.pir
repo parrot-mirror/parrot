@@ -6,7 +6,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "format"
+.sub "&format"
   .param pmc argv :slurpy
   
   .local string format

@@ -6,7 +6,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "eval"
+.sub "&eval"
   .param pmc argv :slurpy
  
   .local string expr

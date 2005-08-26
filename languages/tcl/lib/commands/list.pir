@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "list"
+.sub "&list"
   .param pmc argv :slurpy
 
   # convert the Array returned by foldup into a TclList.

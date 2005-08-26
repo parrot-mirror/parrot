@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "lindex"
+.sub "&lindex"
   .param pmc argv :slurpy
   
   .local pmc retval

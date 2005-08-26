@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "catch"
+.sub "&catch"
   .param pmc argv :slurpy
  
   .local int argc 

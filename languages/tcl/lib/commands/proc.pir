@@ -6,7 +6,7 @@ Create a PIR sub on the fly for this user defined proc.
 
 .namespace [ "Tcl" ]
 
-.sub "proc"
+.sub "&proc"
   .param pmc argv :slurpy
   .local int argc
   argc = argv

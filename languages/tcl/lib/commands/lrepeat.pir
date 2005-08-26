@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "lrepeat"
+.sub "&lrepeat"
   .param pmc argv :slurpy
 
   # XXX Need error handling

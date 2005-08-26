@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "parray"
+.sub "&parray"
   .param pmc argv :slurpy
 .include "iterator.pasm"
 

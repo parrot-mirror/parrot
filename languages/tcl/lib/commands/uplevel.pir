@@ -6,7 +6,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "uplevel"
+.sub "&uplevel"
   .param pmc argv :slurpy
  
   .local string expr
