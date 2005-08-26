@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "unknown"
+.sub "&unknown"
   .param pmc argv :slurpy
 
   $S0 = join " ", argv

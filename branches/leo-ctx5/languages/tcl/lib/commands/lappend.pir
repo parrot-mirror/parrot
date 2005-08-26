@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "lappend"
+.sub "&lappend"
   .param pmc argv :slurpy
 
   .local pmc value, retval

@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "set"
+.sub "&set"
   .param pmc argv :slurpy
 
   .local int len, argc  

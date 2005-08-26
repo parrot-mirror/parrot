@@ -6,7 +6,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "info"
+.sub "&info"
   .param pmc argv :slurpy
 
   .local pmc retval

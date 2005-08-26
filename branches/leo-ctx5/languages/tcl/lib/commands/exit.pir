@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "exit"
+.sub "&exit"
   .param pmc argv :slurpy
 
   .local int argc

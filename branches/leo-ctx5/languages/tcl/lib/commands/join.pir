@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "join"
+.sub "&join"
   .param pmc argv :slurpy
   .local int argc
   argc = argv

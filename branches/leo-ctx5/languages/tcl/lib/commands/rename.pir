@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "rename"
+.sub "&rename"
   .param pmc argv :slurpy
 
   .local int argc

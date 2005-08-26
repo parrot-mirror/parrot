@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "break"
+.sub "&break"
   .param pmc argv :slurpy
 
   .local int argc

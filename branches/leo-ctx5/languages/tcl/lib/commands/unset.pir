@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "unset"
+.sub "&unset"
   .param pmc argv :slurpy
 
   # For now, pretend the usage is "unset <foo>"

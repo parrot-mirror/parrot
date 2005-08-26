@@ -1,6 +1,6 @@
 .namespace [ "Tcl" ]
 
-.sub "open"
+.sub "&open"
   .param pmc argv :slurpy
 
   .local int return_type

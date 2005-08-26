@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "while"
+.sub "&while"
   .param pmc argv :slurpy
   .local int argc
   argc = argv

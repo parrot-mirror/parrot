@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "upvar"
+.sub "&upvar"
   .param pmc argv :slurpy
 
   .local pmc call_level,current_call_level,retval

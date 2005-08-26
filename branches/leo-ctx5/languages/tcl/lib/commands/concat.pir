@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "concat"
+.sub "&concat"
   .param pmc argv :slurpy
  
   .local int argc 

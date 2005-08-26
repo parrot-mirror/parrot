@@ -4,7 +4,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "linsert"
+.sub "&linsert"
   .param pmc argv :slurpy  
 
   # make sure we have the right # of args

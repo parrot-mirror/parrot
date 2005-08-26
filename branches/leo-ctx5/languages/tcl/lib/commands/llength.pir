@@ -3,7 +3,7 @@
 
 .namespace [ "Tcl" ]
 
-.sub "llength"
+.sub "&llength"
   .param pmc argv :slurpy
   .local int argc
    argc = argv
