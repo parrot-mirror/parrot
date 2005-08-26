@@ -259,7 +259,7 @@ compact_pool(Interp *interpreter, struct Memory_Pool *pool)
             UINTVAL i;
 
             b = ARENA_to_PObj(cur_buffer_arena->start_objects);
-	    lim = b + header_pool->object_size * cur_buffer_arena->total_objects;
+	    lim = (void*)((char*)b + object_size * cur_buffer_arena->total_objects);
 #if PARROT_GC_GMC
 	    for (i = 0;(UINTVAL)b < (UINTVAL)lim; i++) {
 		if (gc_gmc_bitmap_test(cur_buffer_arena->bitmap, i)) {
@@ -327,10 +327,10 @@ compact_pool(Interp *interpreter, struct Memory_Pool *pool)
                         cur_spot += cur_size;
                     }
                 }
-                b = (Buffer *)((char *)b + object_size);
 #if PARROT_GC_GMC
-	    }
+		}
 #endif
+                b = (Buffer *)((char *)b + object_size);
             }
         }
     }
