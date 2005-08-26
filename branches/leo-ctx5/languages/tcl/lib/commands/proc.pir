@@ -69,7 +69,7 @@ got_args:
   esc_name = escaper(name)
 
   .local string proc_body
-  proc_body  = ".namespace [\"Tcl\"]\n.sub \""
+  proc_body  = ".namespace [\"Tcl\"]\n.sub \"&"
   proc_body .= name
   proc_body .= "\"\n  .local pmc args\n  args = foldup\n  new_pad 1\n  "
   proc_body .= ".local pmc call_level\n  call_level = find_global \"_Tcl\", \"call_level\"\n  inc call_level\n  "
