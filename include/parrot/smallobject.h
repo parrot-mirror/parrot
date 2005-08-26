@@ -162,6 +162,7 @@ typedef struct _gc_gmc_gen {
   void *fst_free;                 /* First free place. */
   size_t remaining;               /* Remaining size. */
   UINTVAL alloc_obj;              /* Number of allocated objects. */
+  INTVAL marked;		  /* Have we run through this generation in the last M&S pass ? */
   Gc_gmc_hdr_list *IGP;           /* Inter Generational pointers set. */
 } Gc_gmc_gen;
 
@@ -187,8 +188,11 @@ typedef enum gmc_flags {
     Gmc_has_ext_FLAG = 1 << 7, /*  flag */
     Gmc_is_pmc_FLAG = 1 << 8, /* True if the object is a PMC, is a PObj if not. */
     Gmc_is_igp_FLAG = 1 << 9, /* True if the object is the start of an IGP. */
+    Gmc_marked_FLAG = 1 << 10, /* True if the object has been marked by a  */
 } Gmc_flags;
 
+/*#define DUMP_FLAG(flag,hdr)   fprintf(stderr, "modifying" #flag " in %p: is_igp: %s\n", hdr, (Gmc_PMC_hdr_get_FLAGS(hdr) & (Gmc_is_igp_FLAG)) ? "set" : "clear")*/
+#define DUMP_FLAG(flag,hdr) {} 
 
 /* Macros for access from header. */
 #define Gmc_PMC_hdr_get_BODY(pmc_hdr)		    ((PMC_BODY*)((char*)(pmc_hdr) + sizeof(Gc_gmc_hdr)))
@@ -196,9 +200,9 @@ typedef enum gmc_flags {
 #define Gmc_PMC_hdr_get_PMC(pmc_hdr)		    ((pmc_hdr)->pmc)
 #define Gmc_PMC_hdr_get_GEN(pmc_hdr)		    ((pmc_hdr)->gen)
 #define Gmc_PMC_hdr_flag_TEST(flag, pmc_hdr)	    (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) & (Gmc_ ## flag ## _FLAG))
-#define Gmc_PMC_hdr_flag_SET(flag, pmc_hdr)	    (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) |= (Gmc_ ## flag ## _FLAG))
-#define Gmc_PMC_hdr_flag_CLEAR(flag, pmc_hdr)	    (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) &= \
-							  ~(UINTVAL)(Gmc_ ## flag ## _FLAG))
+#define Gmc_PMC_hdr_flag_SET(flag, pmc_hdr)	    do { DUMP_FLAG(flag,pmc_hdr); (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) |= (Gmc_ ## flag ## _FLAG)); } while(0)
+#define Gmc_PMC_hdr_flag_CLEAR(flag, pmc_hdr)	    do { DUMP_FLAG(flag,pmc_hdr); (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) &= \
+							  ~(UINTVAL)(Gmc_ ## flag ## _FLAG));} while(0)
 
 /* Macros for access from body. */
 #define Gmc_PMC_body_get_HDR(pmc_body)		    ((Gc_gmc_hdr*)((char*)(pmc_body) - sizeof(Gc_gmc_hdr)))
@@ -228,6 +232,7 @@ void gc_gmc_bitmap_clear(gmc_bitmap, UINTVAL);
 #define GMC_NORMAL_STATE     0
 #define GMC_IGP_STATE	     1
 #define GMC_SON_OF_IGP_STATE 2
+
 
 
 /* The whole GC structure */
