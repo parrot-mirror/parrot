@@ -206,123 +206,6 @@ done:
 
 
 ##########
-# CALL
-##########
-# call addr [args..] store
-
-.sub zop_call method
-  .param pmc im
-  .param int pc
-  .param pmc args
-  .param int pass
-  .local int locals
-
-  .local int var
-
-  ##unless pass goto no1
-  ##trace 1
-  ##no1:
-  # get variable for result storage
-  (args, pc) = self."decode_args"(im, pc, args, "v")
-  # remember sub at args[0] for decoding
-  .local int adr, start, n, i
-  adr = args[0]
-  adr = self."packed_addr"(adr)
-  start = adr
-  args[0] = adr
-  locals = im[adr]
-  adr += 1
-  locals *= 2	# 1 word per local
-  adr += locals
-  self."remember_sub"(adr, start)
-  unless pass goto done
-    $I0 = 0
-    .local string result
-    result = self."temp"()
-    $S0 = "\t"
-    $S0 .= result
-    $S0 .= " = R"
-    $S1 = to_hex(adr)
-    $S0 .= $S1
-    $S0 .= "("
-    n = elements args
-    dec n
-    i = 1
-arg_loop:
-    if i >= n goto end_args
-      $S1 = args[i]
-      $S0 .= $S1
-      $I1 = n - 1
-      if i >= $I1 goto no_comm
-      $S0 .= ", "
-  no_comm:
-      inc i
-      goto arg_loop
-end_args:
-    $S0 .= ")\n"
-    self."code"($S0)
-    .local string var
-    $I0 = n
-    #dec $I0
-    var = args[$I0]
-    self."emit_store"(var, result)
-done:
-  .return (args, pc, 0, 0)
-.end
-
-##########
-# INC/DEC
-##########
-.sub zop_dec method
-  .param pmc im
-  .param int pc
-  .param pmc args
-  .param int pass
-  # args[0] is a small constant meaning var
-  # parse again as variable, dec pc, clear args
-  dec pc
-  args = 0
-  (args, pc) = self."decode_args"(im, pc, args, "v")
-  unless pass goto done
-    .local string var
-    $S1 = args[0]
-    var = self."emit_get"($S1, 0)
-    $S0 = "\tdec "
-    $S0 .= var
-    $S0 .= "\n"
-    self."code"($S0)
-    # 15."dec": "This is signed, so 0 decrements to -1"
-    # Does that only matter for dec_chk? Stack & vars are unsigned?
-    # emit_store will conv_u2
-    self."emit_store"($S1, var)
-done:
-  .return (args, pc, 0, 0)
-.end
-
-.sub zop_inc method
-  .param pmc im
-  .param int pc
-  .param pmc args
-  .param int pass
-  # args[0] is a small constant meaning var
-  # parse again as variable, dec pc, clear args
-  dec pc
-  args = 0
-  (args, pc) = self."decode_args"(im, pc, args, "v")
-  unless pass goto done
-    .local string var
-    $S1 = args[0]
-    var = self."emit_get"($S1, 0)
-    $S0 = "\tinc "
-    $S0 .= var
-    $S0 .= "\n"
-    self."code"($S0)
-    self."emit_store"($S1, var)
-done:
-  .return (args, pc, 0, 0)
-.end
-
-##########
 # JUMP
 ##########
 .sub zop_jump method
@@ -711,8 +594,64 @@ done:
 .end
 
 ##########
-# STORE/GET
+# VARIABLES
+# Warning: indirect variables live here!
 ##########
+
+# pop (takes no args)
+.sub zop_pop method
+  .param pmc im
+  .param int pc
+  .param pmc args
+  .param int pass
+  unless pass goto done
+    $S0 = "\trestore $I0\n" # restore to I0 and throw away
+    self."code"($S0)
+done:
+  .return (args, pc, 0, 0)
+.end
+
+# pull (variable)
+# variable is indirect
+.sub zop_pull method
+  .param pmc im
+  .param int pc
+  .param pmc args
+  .param int pass
+  .local string store_var, tvar
+  $I0 = args[0]
+  store_var = to_var($I0)
+  args[0] = store_var
+  unless pass goto done
+    tvar = self."temp"()
+    $S0 = "\trestore "
+    $S0 .= tvar
+    $S0 .= "\n"
+    self."code"($S0)
+    self."emit_store"(store_var, tvar)
+done:
+  .return (args, pc, 0, 0)
+.end
+
+# push value
+.sub zop_push method
+  .param pmc im
+  .param int pc
+  .param pmc args
+  .param int pass
+  .local string store_var, valget
+  unless pass goto done
+    store_var = args[0]
+    valget = self."emit_get"(store_var, 0)
+    $S0 = "\tsave "
+    $S0 .= valget
+    $S0 .= "\n"
+    self."code"($S0)
+done:
+  .return (args, pc, 0, 0)
+.end
+
+
 # store (var) value
 # var is indirect constant
 .sub zop_store method
@@ -727,8 +666,57 @@ done:
   unless pass goto done
     var = args[0]
     val = args[1]
-    valget  = self."emit_get"(val, 0)
+    valget = self."emit_get"(val, 0)
     self."emit_store"(var, valget)
+done:
+  .return (args, pc, 0, 0)
+.end
+
+.sub zop_dec method
+  .param pmc im
+  .param int pc
+  .param pmc args
+  .param int pass
+  # args[0] is a small constant meaning var
+  # parse again as variable, dec pc, clear args
+  dec pc
+  args = 0
+  (args, pc) = self."decode_args"(im, pc, args, "v")
+  unless pass goto done
+    .local string var
+    $S1 = args[0]
+    var = self."emit_get"($S1, 0)
+    $S0 = "\tdec "
+    $S0 .= var
+    $S0 .= "\n"
+    self."code"($S0)
+    # 15."dec": "This is signed, so 0 decrements to -1"
+    # Does that only matter for dec_chk? Stack & vars are unsigned?
+    # emit_store will conv_u2
+    self."emit_store"($S1, var)
+done:
+  .return (args, pc, 0, 0)
+.end
+
+.sub zop_inc method
+  .param pmc im
+  .param int pc
+  .param pmc args
+  .param int pass
+  # args[0] is a small constant meaning var
+  # parse again as variable, dec pc, clear args
+  dec pc
+  args = 0
+  (args, pc) = self."decode_args"(im, pc, args, "v")
+  unless pass goto done
+    .local string var
+    $S1 = args[0]
+    var = self."emit_get"($S1, 0)
+    $S0 = "\tinc "
+    $S0 .= var
+    $S0 .= "\n"
+    self."code"($S0)
+    self."emit_store"($S1, var)
 done:
   .return (args, pc, 0, 0)
 .end
@@ -747,7 +735,73 @@ done:
 .end
 
 ##########
-# RETURN
+# CALL / RETURN
+##########
+# call addr [args..] store
+
+.sub zop_call method
+  .param pmc im
+  .param int pc
+  .param pmc args
+  .param int pass
+  .local int locals
+
+  .local int var
+
+  ##unless pass goto no1
+  ##trace 1
+  ##no1:
+  # get variable for result storage
+  (args, pc) = self."decode_args"(im, pc, args, "v")
+  # remember sub at args[0] for decoding
+  .local int adr, start, n, i
+  adr = args[0]
+  adr = self."packed_addr"(adr)
+  start = adr
+  args[0] = adr
+  locals = im[adr]
+  adr += 1
+  locals *= 2	# 1 word per local
+  adr += locals
+  self."remember_sub"(adr, start)
+  unless pass goto done
+    $I0 = 0
+    .local string result
+    result = self."temp"()
+    $S0 = "\t"
+    $S0 .= result
+    $S0 .= " = R"
+    $S1 = to_hex(adr)
+    $S0 .= $S1
+    $S0 .= "("
+    n = elements args
+    dec n
+    i = 1
+arg_loop:
+    # TODO BUG somewhere in here: calling @call R54a G5, 1, 3 breaks
+    # The G5 arg doesn't get switched to be a variable.
+    # Do we need to do an emit_get on everything?
+    if i >= n goto end_args
+      $S1 = args[i]
+      $S0 .= $S1
+      $I1 = n - 1
+      if i >= $I1 goto no_comm
+      $S0 .= ", "
+  no_comm:
+      inc i
+      goto arg_loop
+end_args:
+    $S0 .= ")\n"
+    self."code"($S0)
+    .local string var
+    $I0 = n
+    #dec $I0
+    var = args[$I0]
+    self."emit_store"(var, result)
+done:
+  .return (args, pc, 0, 0)
+.end
+
 ##########
 .sub zop_ret method
   .param pmc im
