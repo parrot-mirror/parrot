@@ -9,9 +9,8 @@
    argc = argv
 
   .local pmc listval
-  listval = argv[0]
-
   if argc != 1 goto bad_args
+  listval = argv[0]
 
   .local pmc retval
   .local int return_type

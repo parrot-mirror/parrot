@@ -10,7 +10,7 @@
 .sub "&inline"
   .param pmc argv :slurpy
 
-  .local int argc 
+  .local int argc
   argc = argv
 
   .local string language,code
@@ -21,7 +21,7 @@
   $P1 = compreg language
   $I1 = typeof $P1
   if $I1 == .None goto fail
-  $P0 = compile $P1, code
+  $P0 = $P1(code)
   $P0()
 
   # XXX Should catch exceptions in the code and return the error message

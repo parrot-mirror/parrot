@@ -174,7 +174,7 @@ done_args:
 
   .local pmc pir_compiler
   pir_compiler = compreg "PIR"
-  $P0 = compile pir_compiler, proc_body
+  $P0 = pir_compiler(proc_body)
 
   # XXX because of the current implementation of the PIR compiler, we must save a reference
   # to our newly compiled function or run the risk of having it garbage collected
