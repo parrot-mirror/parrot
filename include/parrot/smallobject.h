@@ -132,12 +132,10 @@ typedef struct _gc_gms_gen {
 /* Number of dead objects to find in a run. */
 #define DEAD_OBJECTS_PER_RUN 512
 
-struct _gc_gmc_hdr;
-
 typedef struct _gc_gmc_hdr_store {
     struct _gc_gmc_hdr_store *next;
-    struct _gc_gmc_hdr **ptr;                           /* insert location */
-    struct _gc_gmc_hdr * (store[GC_GMC_STORE_SIZE]);    /* array of hdr pointers */
+    PMC **ptr;                           /* insert location */
+    PMC * (store[GC_GMC_STORE_SIZE]);    /* array of hdr pointers */
 } Gc_gmc_hdr_store;
 
 

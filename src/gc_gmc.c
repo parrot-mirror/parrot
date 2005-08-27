@@ -143,6 +143,24 @@ gc_gmc_bitmap_clear(gmc_bitmap bitmap, UINTVAL bit)
     bitmap[cell] &= ~(1 << offs);
 }
 
+/* Find the header in the arenas and clear its bit. */
+static void
+gc_gmc_bitmap_clear_from_hdr(PObj *obj, struct Small_Object_Pool *pool)
+{
+    struct Small_Object_Arena *arena;
+    INTVAL index;
+
+    for (arena = pool->last_Arena; arena && ((UINTVAL)obj < (UINTVAL)arena->start_objects || (UINTVAL)obj >= (UINTVAL)arena->start_objects + arena->total_objects * pool->object_size); arena = arena->prev);
+    if (!arena)
+    {
+	*(int*)NULL = 54;
+	internal_exception(1, "PObj not found in any arena\n");
+	return;
+    }
+    index = ((UINTVAL)obj - (UINTVAL)arena->start_objects) / pool->object_size;
+    gc_gmc_bitmap_clear(arena->bitmap, index);
+}
+
 
 
 /* Allocates and initializes a generation, but does not plug it 
@@ -493,8 +511,6 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
     pmc_body = gen->fst_free;
     gen->fst_free = (void*)((char*)gen->fst_free + size);
     gen->remaining -= size;
-    if ((INTVAL)gen->remaining < 0)
-	fprintf (stderr, "gen: %p, gen->first: %p, gen->fst_free: %p, gen->remaining: %d\n", gen, gen->first, gen->fst_free, gen->remaining);
     gen->alloc_obj++;
     memset(pmc_body, 0, size);
 #ifdef GMC_DEBUG
@@ -530,6 +546,9 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
     PObj_get_FLAGS((PObj*)pmc) = 0;
     Gmc_PMC_hdr_get_FLAGS((Gc_gmc_hdr*)pmc_body) = 0;
 
+#ifdef BIG_DUMP
+    fprintf(stderr, "Allocated ptr %p with body at %p from gen %p\n", pmc, Gmc_PMC_hdr_get_BODY(pmc_body), gen);
+#endif
     return pmc;
 }
 
@@ -644,6 +663,9 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
     ptr = dest->first;
     while ((UINTVAL)ptr < (UINTVAL)dest->fst_free)
     {
+#ifdef BIG_DUMP
+	fprintf(stderr, "copy_gen: ptr %p, old_body %p, new_body %p\n", Gmc_PMC_hdr_get_PMC(ptr), PMC_body(Gmc_PMC_hdr_get_PMC(ptr)), Gmc_PMC_hdr_get_BODY(ptr));
+#endif
 	Gmc_PMC_hdr_get_GEN(ptr) = dest;
 	PMC_body(Gmc_PMC_hdr_get_PMC(ptr)) = Gmc_PMC_hdr_get_BODY(ptr);
 	ptr = gc_gmc_next_hdr(ptr);
@@ -771,9 +793,9 @@ gc_gmc_store_hdr_list(Interp *interpreter, Gc_gmc_hdr_list *l, Gc_gmc_hdr *h)
         }
         l->last = s;
     }
-    *(s->ptr)++ = h;
+    *(s->ptr)++ = Gmc_PMC_hdr_get_PMC(h);
 #ifdef GMC_DEBUG
-    fprintf(stderr, "Adding IGP %p to store %p\n", h, s);
+    fprintf(stderr, "Adding IGP %p to store %p\n", Gmc_PMC_hdr_get_BODY(h), s);
 #endif
 }
 
@@ -793,7 +815,7 @@ gc_gmc_find_igp(Interp *interpreter, Gc_gmc_hdr *h)
     {
 	for (i = 0; &store->store[i] < store->ptr; i++)
 	{
-	    if (store->store[i] == h)
+	    if (Gmc_PMC_get_HDR(store->store[i]) == h)
 		return 1;
 	}
     }
@@ -824,7 +846,7 @@ gc_gmc_sweep_from_hdr_list(Interp *interpreter, Gc_gmc_hdr *h)
 #ifdef GMC_DEBUG
 	    fprintf (stderr, "looking for %p, got %p\n", h, store->store[i]);
 #endif
-	    if (store->store[i] == h)
+	    if (Gmc_PMC_get_HDR(store->store[i]) == h)
 	    {
 		for (i++; &store->store[i] < store->ptr; i++)
 		{
@@ -987,6 +1009,9 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 	{
 	    if (gc_gmc_bitmap_test(arena->bitmap,i) && !PObj_live_TEST(ptr))
 	    {
+#ifdef BIG_DUMP
+		fprintf(stderr, "ptr: %p, body at %p\n", ptr, PMC_body(ptr));
+#endif
 		/* This shouldn't be necessary. */
 		if (PObj_needs_early_DOD_TEST(ptr))
 		    --arena_base->num_early_DOD_PMCs;
@@ -1003,7 +1028,7 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 		}
 		gc_gmc_bitmap_clear(arena->bitmap, i);
 		sweep++;
-		(Gmc_PMC_body_get_GEN(PMC_body(ptr)))->alloc_obj--;
+		(Gmc_PMC_get_GEN(ptr))->alloc_obj--;
 	    }
 	}
     }
@@ -1184,7 +1209,6 @@ gc_gmc_trace_igp_sons(Interp *interpreter, Gc_gmc_hdr *h)
 		{
 		    if (data[i] && !PObj_live_TEST((PObj*)data[i]))
 			pobject_lives(interpreter, (PObj*)data[i]);
-		    gc_gmc_trace_igp_sons(interpreter, Gmc_PMC_get_HDR(data[i]));
 		}
 	    }
 	} else {
@@ -1209,7 +1233,7 @@ gc_gmc_trace_igp(Interp *interpreter, Gc_gmc_gen *gen)
     {
 	for (i = 0; &s->store[i] < s->ptr; i++)
 	{
-	    gc_gmc_trace_igp_sons(interpreter, s->store[i]);
+	    gc_gmc_trace_igp_sons(interpreter, Gmc_PMC_get_HDR(s->store[i]));
 	}
     }
 }
@@ -1381,6 +1405,9 @@ gc_gmc_copy_hdr(Interp *interpreter, Gc_gmc_hdr *from, Gc_gmc_hdr *to)
     size = gc_gmc_get_size(interpreter, from);
     gen = Gmc_PMC_hdr_get_GEN(from);
     memmove(to, from, size);
+#ifdef BIG_DUMP
+    fprintf(stderr, "copy_hdr: ptr %p, old_body %p, new_body %p\n", Gmc_PMC_hdr_get_PMC(from), PMC_body(Gmc_PMC_hdr_get_PMC(from)), Gmc_PMC_hdr_get_BODY(to));
+#endif
     Gmc_PMC_hdr_get_GEN(to) = gen;
     PMC_body(Gmc_PMC_hdr_get_PMC(to)) = Gmc_PMC_hdr_get_BODY(to);
     PObj_live_CLEAR(Gmc_PMC_hdr_get_PMC(to));
@@ -1398,6 +1425,7 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
     size_t remaining;
     size_t size;
     INTVAL leave = 0;
+    INTVAL destroyed = 0;
 
     orig = dest = gen->first;
     remaining = (char*)gen->fst_free - (char*)gen->first + gen->remaining;
@@ -1412,9 +1440,10 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
 		VTABLE_destroy(interpreter, Gmc_PMC_hdr_get_PMC(orig));
 	    if (Gmc_PMC_hdr_flag_TEST(is_igp, orig))
 		gc_gmc_sweep_from_hdr_list(interpreter, orig);
-	    /* XXX: find a way to mark the header dead as well! */
+	    gc_gmc_bitmap_clear_from_hdr((PObj*)Gmc_PMC_hdr_get_PMC(orig), gen->pool);
 	    orig = gc_gmc_next_hdr(orig);
 	    gen->alloc_obj--;
+	    destroyed++;
 	}
 	if (!leave)
 	{
@@ -1427,6 +1456,9 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
     }
     gen->fst_free = dest;
     gen->remaining = remaining;
+#ifdef GMC_DEBUG
+    fprintf(stderr, "gen %p, destroyed %d, remaining %d\n", gen, destroyed, gen->alloc_obj);
+#endif
 }
 
 
@@ -1437,8 +1469,12 @@ gc_gmc_merge_gen(Interp *interpreter, Gc_gmc_gen *old, Gc_gmc_gen *yng)
 {
     size_t size;
     Gc_gmc_hdr *h;
+    struct Small_Object_Pool *pool;
 
+
+    pool = yng->pool;
     size = (UINTVAL)yng->fst_free - (UINTVAL)yng->first;
+
     /* Check we have enough space for this. */
     if (size >= (UINTVAL)old->remaining)
 	return;
@@ -1451,12 +1487,20 @@ gc_gmc_merge_gen(Interp *interpreter, Gc_gmc_gen *old, Gc_gmc_gen *yng)
     /* And update all pointers. */
     for (; (UINTVAL)h < (UINTVAL)old->fst_free; h = gc_gmc_next_hdr(h))
     {
+#ifdef BIG_DUMP
+	fprintf(stderr, "merge_gen: h %p, ptr %p, old_body at %p, new body at %p\n", h, Gmc_PMC_hdr_get_PMC(h), PMC_body(Gmc_PMC_hdr_get_PMC(h)), Gmc_PMC_hdr_get_BODY(h));
+#endif
 	Gmc_PMC_hdr_get_GEN(h) = old;
 	PMC_body(Gmc_PMC_hdr_get_PMC(h)) = Gmc_PMC_hdr_get_BODY(h);
     }
     old->next = yng->next;
     if (old->next)
 	old->next->prev = old;
+    if (pool->gc->yng_lst == yng)
+	pool->gc->yng_lst = old;
+    if (pool->gc->old_lst == yng)
+	pool->gc->old_lst = old;
+    
     gc_gmc_gen_free(yng);
 }
 
@@ -1473,7 +1517,7 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
     gen = pool->gc->yng_lst;
     ogen = NULL;
     /* Compact only the gen that were examined. */
-    while ((UINTVAL)gen > (UINTVAL)pool->gc->gray || !last_gen++)
+    while ((UINTVAL)gen > (UINTVAL)pool->gc->white || !last_gen++)
     {
 	gc_gmc_compact_gen(interpreter, gen);
 	if (ogen)
@@ -1481,7 +1525,10 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
 	ogen = gen;
 	gen = gen->prev;
 	if (!gen)
+	{
+	    ogen = NULL;
 	    gen = pool->gc->old_lst;
+	}
     }
 }
 
