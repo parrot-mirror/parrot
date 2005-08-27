@@ -1335,6 +1335,7 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 
 /* Copies a header and its pmc_body, then updates the pointers. */
 /* We are sure that there is enough room in to. from and to may overlap. */
+/* Also clear the live bit of the new object. */
 static Gc_gmc_hdr *
 gc_gmc_copy_hdr(Interp *interpreter, Gc_gmc_hdr *from, Gc_gmc_hdr *to)
 {
@@ -1348,9 +1349,108 @@ gc_gmc_copy_hdr(Interp *interpreter, Gc_gmc_hdr *from, Gc_gmc_hdr *to)
     memmove(to, from, size);
     Gmc_PMC_hdr_get_GEN(to) = gen;
     PMC_body(Gmc_PMC_hdr_get_PMC(to)) = Gmc_PMC_hdr_get_BODY(to);
+    PObj_live_CLEAR(Gmc_PMC_hdr_get_PMC(to));
     return gc_gmc_next_hdr(to);
 }
 
+
+
+/* Compacts a generation. */
+static void
+gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
+{
+    Gc_gmc_hdr *orig;
+    Gc_gmc_hdr *dest;
+    size_t remaining;
+    size_t size;
+    INTVAL leave = 0;
+
+    orig = dest = gen->first;
+    remaining = (char*)gen->fst_free - (char*)gen->first + gen->remaining;
+
+    /* We are sure that orig will be the first to hit the barrier. */
+    while ((UINTVAL)orig < (UINTVAL)gen->fst_free)
+    {
+	/* Free any object that has the live flag clear. */
+	while (((UINTVAL)orig < (UINTVAL)gen->fst_free || !(leave = 1)) && !PObj_live_TEST(Gmc_PMC_hdr_get_PMC(orig)))
+	{
+	    if (PObj_active_destroy_TEST(Gmc_PMC_hdr_get_PMC(orig)))
+		VTABLE_destroy(interpreter, Gmc_PMC_hdr_get_PMC(orig));
+	    if (Gmc_PMC_hdr_flag_TEST(is_igp, orig))
+		gc_gmc_sweep_from_hdr_list(interpreter, orig);
+	    /* XXX: find a way to mark the header dead as well! */
+	    orig = gc_gmc_next_hdr(orig);
+	    gen->alloc_obj--;
+	}
+	if (!leave)
+	{
+	    /* Copy from orig to dest and update pointers. */	
+	    size = gc_gmc_get_size(interpreter, orig);
+	    remaining -= size;
+	    dest = gc_gmc_copy_hdr(interpreter, orig, dest);
+	    orig = (Gc_gmc_hdr*)((char*)orig + size);
+	}
+    }
+    gen->fst_free = dest;
+    gen->remaining = remaining;
+}
+
+
+
+/* Appends all objects of yng just after those of old. */
+static void
+gc_gmc_merge_gen(Interp *interpreter, Gc_gmc_gen *old, Gc_gmc_gen *yng)
+{
+    size_t size;
+    Gc_gmc_hdr *h;
+
+    size = (UINTVAL)yng->fst_free - (UINTVAL)yng->first;
+    /* Check we have enough space for this. */
+    if (size >= (UINTVAL)old->remaining)
+	return;
+
+    /* Copy the data. */
+    memcpy(old->fst_free, yng->first, size);
+    h = old->fst_free;
+    old->fst_free = (void*)((char*)old->fst_free + size);
+    old->remaining -= size;
+    /* And update all pointers. */
+    for (; (UINTVAL)h < (UINTVAL)old->fst_free; h = gc_gmc_next_hdr(h))
+    {
+	Gmc_PMC_hdr_get_GEN(h) = old;
+	PMC_body(Gmc_PMC_hdr_get_PMC(h)) = Gmc_PMC_hdr_get_BODY(h);
+    }
+    old->next = yng->next;
+}
+
+
+
+static void
+gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
+{
+    Gc_gmc_gen *gen;
+    Gc_gmc_gen *ogen;
+    /* We want to treat the last_gen */
+    INTVAL last_gen = 0;
+    
+    gen = pool->gc->yng_lst;
+    ogen = NULL;
+    /* Compact only the gen that were examined. */
+    while ((UINTVAL)gen > (UINTVAL)pool->gc->gray || !last_gen++)
+    {
+	gc_gmc_compact_gen(interpreter, gen);
+	if (ogen)
+	    gc_gmc_merge_gen(interpreter, gen, ogen);
+	ogen = gen;
+	gen = gen->prev;
+	if (!gen)
+	    gen = pool->gc->old_lst;
+    }
+}
+
+
+/* Old code. */
+#if 0
 /* Compacts every gen so they are all filled, except the last one. */
 static void
 gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
@@ -1424,8 +1524,15 @@ switch_gen:
 	    pass++;
 	}
 	gray = filling_gen->first;	
+	if (gray > pool->gc->gray)
+	{
+	    filled_gen->fst_free = white;
+	    filled_gen->remaining = remaining;
+	    return;
+	}
     }
 }
+#endif
 
 
 
