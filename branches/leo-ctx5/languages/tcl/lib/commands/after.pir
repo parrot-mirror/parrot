@@ -3,8 +3,7 @@
 # XXX very simplistic.
 
 .sub "&after"
-  .local pmc argv 
-  argv = foldup
+  .param pmc argv :slurpy
 
   $I0 = argv[0]
   $N0 = $I0 / 1000

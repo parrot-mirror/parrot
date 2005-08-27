@@ -10,7 +10,7 @@
 
   .local pmc listval
   listval = argv[0]
- 
+
   if argc != 1 goto bad_args
 
   .local pmc retval
@@ -22,7 +22,7 @@
   (return_type, retval) = __list(listval)
   if return_type == TCL_ERROR goto done
   listval = retval
- 
+
 list_like:
   $I0 = listval
   retval = new TclInt

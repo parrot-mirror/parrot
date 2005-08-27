@@ -10,9 +10,9 @@
 
   if argc != 2 goto bad_args
 
-  .param pmc    cond_p
+  .local pmc    cond_p
   cond_p = argv[0]
-  .param string body_p
+  .local string body_p
   body_p = argv[1]
 
   .local pmc retval, parsed_code

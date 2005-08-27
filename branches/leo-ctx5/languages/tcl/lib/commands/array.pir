@@ -9,8 +9,8 @@
 #   - we know we need an array name for *all* args, so we test for it here.
 
 .sub "&array"
-  .local pmc argv, retval
-  argv = foldup
+  .param pmc argv :slurpy
+  .local pmc retval
 
   .local int argc
   argc = argv
@@ -110,7 +110,7 @@ bad_args:
   .param pmc the_array
   .param string array_name
   .param pmc argv
-  
+
   .local int argc
   argc = argv
   if argc goto bad_args
@@ -137,7 +137,7 @@ bad_args:
   .param pmc the_array
   .param string array_name
   .param pmc argv
-  
+
   .local int argc
   argc = argv
   if argc != 1 goto bad_args
@@ -165,7 +165,7 @@ pre_loop:
   loop = 0
   .local string key
   .local pmc    val
-  
+
   .local pmc set
   set = find_global  "_Tcl", "__set"
 
@@ -180,7 +180,7 @@ set_loop:
   inc loop
   val = elems[loop]
   inc loop
-  
+
   # = makes an alias :-(
   assign $S0, array_name
   $S0 .= "("
@@ -188,7 +188,7 @@ set_loop:
   $S0 .= ")"
   (return_type, retval) = set($S0, val)
   if return_type == TCL_ERROR goto done
-  
+
   if loop < count goto set_loop
 
   retval = new String
@@ -261,7 +261,7 @@ push_loop:
   # check for match
   $P2 = rule(str)
   unless $P2 goto push_loop
-  
+
   # if it's the first, we don't want to print a separating space
   unless count goto skip_space
   retval .= " "

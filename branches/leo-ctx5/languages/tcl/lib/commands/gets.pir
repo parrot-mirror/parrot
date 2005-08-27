@@ -7,8 +7,7 @@ read a line from a channel
 .namespace [ "Tcl" ]
 
 .sub "&gets"
-  .local pmc argv 
-  argv = foldup
+  .param pmc argv :slurpy
 
   $S1 = shift argv
 
