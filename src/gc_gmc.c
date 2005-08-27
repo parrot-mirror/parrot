@@ -835,6 +835,7 @@ gc_gmc_sweep_from_hdr_list(Interp *interpreter, Gc_gmc_hdr *h)
 	    }
 	}
     }
+    /*fprintf (stderr, "bad igp: %p\n", h);*/
     /*internal_exception(1, "IGP pointer not found for removal!\n");*/
 }
 
@@ -1128,60 +1129,89 @@ gc_gmc_trace_root(Interp *interpreter, int trace_stack)
 
 
 /* If the object is alive and has pointers to older PMC, mark them alive. */
-/* pass can have the following values:
- * - 0 : make normal marking of children and test for IGP.
- * - 1 : make normal marking of children but don't test IGP.
- * - 2 : no marking of children but test of IGP. */
 static void
-gc_gmc_trace_children(Interp *interpreter, Gc_gmc_hdr *h, INTVAL pass)
+gc_gmc_trace_children(Interp *interpreter, Gc_gmc_hdr *h)
 {
     UINTVAL mask = PObj_data_is_PMC_array_FLAG | PObj_custom_mark_FLAG;
     UINTVAL bits;
     PMC *pmc;
-    Gc_gmc *gc;
-    INTVAL sav_state;
-    Gc_gmc_hdr *sav_igp_ref;
     INTVAL i;
 
     pmc = Gmc_PMC_hdr_get_PMC(h);
 
-    if (pass != 2)
+    bits = PObj_get_FLAGS(pmc) & mask;
+    if (bits)
     {
-	bits = PObj_get_FLAGS(pmc) & mask;
-	if (bits)
-	{
-	    if (bits == PObj_data_is_PMC_array_FLAG) {
-		PMC** data = PMC_data(pmc);
-		if (data)
+	if (bits == PObj_data_is_PMC_array_FLAG) {
+	    PMC** data = PMC_data(pmc);
+	    if (data)
+	    {
+		for (i = 0; i < PMC_int_val(pmc); i++)
 		{
-		    for (i = 0; i < PMC_int_val(pmc); i++)
-		    {
-			if (data[i])
-			    pobject_lives(interpreter, (PObj*)data[i]);
-		    }
+		    if (data[i] && Gmc_PMC_get_HDR(data[i]) < h)
+			pobject_lives(interpreter, (PObj*)data[i]);
 		}
-	    } else {
-		VTABLE_mark(interpreter, pmc);
 	    }
+	} else {
+	    VTABLE_mark(interpreter, pmc);
 	}
     }
-    /* Trick to avoid code duplication. */
-    if (pass != 1 && Gmc_PMC_hdr_flag_TEST(is_igp, h))
+}
+
+static void
+gc_gmc_trace_igp_sons(Interp *interpreter, Gc_gmc_hdr *h)
+{
+    UINTVAL mask = PObj_data_is_PMC_array_FLAG | PObj_custom_mark_FLAG;
+    UINTVAL bits;
+    PMC *pmc;
+    INTVAL i;
+    INTVAL sav_state;
+    struct Small_Object_Pool *pool;
+
+    pmc = Gmc_PMC_hdr_get_PMC(h);
+
+    if (!Gmc_PMC_hdr_flag_TEST(is_igp, h))
+	return;
+
+    bits = PObj_get_FLAGS(pmc) & mask;
+    if (bits)
     {
-	gc = Gmc_PMC_hdr_get_GEN(h)->pool->gc;
-	sav_state = gc->state;
-	sav_igp_ref = gc->igp_ref;
-	gc->state = GMC_IGP_STATE;
-	gc->igp_ref = h;
-	gc_gmc_trace_children(interpreter, h, 1);
-	gc->igp_ref = sav_igp_ref;
-	gc->state = sav_state;
+	if (bits == PObj_data_is_PMC_array_FLAG) {
+	    PMC** data = PMC_data(pmc);
+	    if (data)
+	    {
+		for (i = 0; i < PMC_int_val(pmc); i++)
+		{
+		    if (data[i] && !PObj_live_TEST((PObj*)data[i]))
+			pobject_lives(interpreter, (PObj*)data[i]);
+		    gc_gmc_trace_igp_sons(interpreter, Gmc_PMC_get_HDR(data[i]));
+		}
+	    }
+	} else {
+	    pool = Gmc_PMC_hdr_get_GEN(h)->pool;
+	    sav_state = pool->gc->state;
+	    pool->gc->state = GMC_SON_OF_IGP_STATE;
+	    VTABLE_mark(interpreter, pmc);
+	    pool->gc->state = sav_state;
+	}
     }
 }
 
 static void 
 gc_gmc_trace_igp(Interp *interpreter, Gc_gmc_gen *gen)
 {
+    Gc_gmc_hdr_list *l;
+    Gc_gmc_hdr_store *s;
+    INTVAL i;
+
+    l = gen->IGP;
+    for (s = l->first; s; s = s->next)
+    {
+	for (i = 0; &s->store[i] < s->ptr; i++)
+	{
+	    gc_gmc_trace_igp_sons(interpreter, s->store[i]);
+	}
+    }
 }
 
 
@@ -1206,17 +1236,17 @@ parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
 	    {
 		PObj_live_SET(o);
 		gc->state = GMC_SON_OF_IGP_STATE;
-		gc_gmc_trace_children(interpreter, h, 0);
+		gc_gmc_trace_igp_sons(interpreter, h);
 		gc->state = GMC_IGP_STATE;
 	    }
 	    break;
 	/* This object was precedently dead and has been marked alive as a
-	 * consequence from IGP. */
+	 * consequence of IGP. */
 	case GMC_SON_OF_IGP_STATE:
 	    if (!PObj_live_TEST(o) && (UINTVAL)h > (UINTVAL)gc->white)
 	    {
 		PObj_live_SET(o);
-		gc_gmc_trace_children(interpreter, h, 0);
+		gc_gmc_trace_igp_sons(interpreter, h);
 	    }
 	    break;
 	case GMC_NORMAL_STATE:
@@ -1321,7 +1351,11 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 
 		/* PObj is alive, trace its children */
 		if (PObj_live_TEST((PObj*)Gmc_PMC_hdr_get_PMC(hdr)))
-		    gc_gmc_trace_children(interpreter, hdr, 0);
+		{
+		    gc_gmc_trace_children(interpreter, hdr);
+		    if (Gmc_PMC_hdr_flag_TEST(is_igp, hdr))
+			gc_gmc_trace_igp_sons(interpreter, hdr);
+		}
 		else
 		    dopr--;
 	    }
@@ -1421,6 +1455,9 @@ gc_gmc_merge_gen(Interp *interpreter, Gc_gmc_gen *old, Gc_gmc_gen *yng)
 	PMC_body(Gmc_PMC_hdr_get_PMC(h)) = Gmc_PMC_hdr_get_BODY(h);
     }
     old->next = yng->next;
+    if (old->next)
+	old->next->prev = old;
+    gc_gmc_gen_free(yng);
 }
 
 
