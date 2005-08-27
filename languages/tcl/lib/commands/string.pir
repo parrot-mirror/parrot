@@ -15,15 +15,10 @@
   .local pmc subcommand_proc
   null subcommand_proc
 
-  push_eh catch
+  push_eh bad_args
     subcommand_proc = find_global "_Tcl\0builtins\0string", subcommand_name
-resume:
   clear_eh
-  if_null subcommand_proc, bad_args
   .return subcommand_proc(argv)
-
-catch:
-  goto resume
 
 bad_args:
   retval = new String
@@ -53,8 +48,8 @@ no_args:
   return_type = TCL_OK
 
   argc = argv
-  if argv > 3 goto bad_args
-  if argv < 2 goto bad_args
+  if argc > 3 goto bad_args
+  if argc < 2 goto bad_args
   $S1 = argv[0]
   $S2 = argv[1]
   $I0 = 0
