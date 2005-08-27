@@ -185,8 +185,7 @@ Gets the actual variable from memory and returns it.
   name = "$" . name
   
   .local pmc value
-  null value
- 
+
   push_eh done
   $S0 = substr name, 1, 2
   if $S0 == "::"     goto coloned
@@ -196,12 +195,14 @@ Gets the actual variable from memory and returns it.
   call_level = $P1
   if call_level == 0 goto global_var
 lexical_var:
+  null value
   value = find_lex call_level, name
   goto found
 
 coloned:
   substr name, 1, 2, ""
 global_var:
+  null value
   value = find_global "Tcl", name
   # goto found
 
