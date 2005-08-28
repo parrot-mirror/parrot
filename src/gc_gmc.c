@@ -18,7 +18,183 @@ Keywords:
 
 =head1 DESCRIPTION
 
-TODO
+=head2 Object structure
+
+In GMC, we add a new indirection level to objects, which will allow us to move objects without invalidating external references.
+In the old scheme, a PMC is basically :
+
+    ...[ Flags ][ UnionVal ][ VTABLE* ][ PMC_Ext* ]...
+
+The data of the PMC is stored in UnionVal. To be more flexible, it can have a pointer to a PMC_Ext structure where anything can be stored (including pointers to other PMCs, which is of great interest to us). The various flags used by the PMC itself, DOD system and other bits of parrot are in the header.
+
+In GMC, a PMC will become the following :
+
+    ...[ Flags ][ PMC_Body* ][ VTABLE* ]...								      <---- Fixed Header
+       ^           |
+       |	   +---> [ Gmc_Flags ][ PMC* ][ Gen* ][ UnionVal ][ PMC_Ext header ][ Additional_Data* ]...   <---- Moveable body
+       |	                         |
+       +---------------------------------+
+
+The PObj_Flags are still in the header, as well as the pointer to the VTable,
+but everything else is moved in the pmc_body. We have there special Gmc_flags
+(because there is no room left in the PObj_flags...), a pointer to the fixed
+header, a pointer to the generation it belongs to (more on generations later),
+the header that was previously in the PMC_Ext structure and the pointer to
+additional data.
+
+This scheme can be changed, as long as the Gc_gmc_hdr (Gmc_Flags + PMC* + Gen*)
+remains in front of the body. To do this, the PMC must undef PMC_BODY and redefine
+it to its conveniance. The size field of the VTable must be updated too.
+
+Thus, we can move the body anywhere as long as we update the PMC_body* pointer of
+the fixed header. The wild world will only see the PMC*, and adding the indirection
+is handled in the macros of include/parrot/pobj.h
+
+
+PObj (buffers) are handled in the same way except that they have less fields (no VTABLE,
+no PMC_Ext related structure).
+
+
+=head2 Object Allocation
+
+We have to separate the allocation in two phases : one for fixed header, the other
+for the body.
+
+Fixed headers are allocated from Small_Object_Arenas which are organized in a linked
+list (from pool->last_Arena). As we can have "holes" in these arenas, when objects are
+destroyed, we need to keep track of who is allocated and who isn't. We currently use
+a bitmap for this but it is non-optimal as finding the bitmap from the mere address of
+an object is in O(#{Arenas}). Another solution would be to use a PObj flag for that
+(it would then become O(1)) but the flag seemed to get corrupted somehow, so this is not
+implemented yet.
+
+As headers have all the same size (pool->object_size), finding a new place to allocate
+a header is just a matter of finding a hole in any arena. Alternatively, if none is
+available, we can just allocate a new arena and append it to the list.
+
+
+On the other hand, bodies are variable-sized. To be able to run the GC, we need them to
+be allocated with an invariant : an object A is older than an object B if and only if
+the address of the body of A is lower than the one of B. And we add another rule :
+an aggregate object (i.e. contains pointers to other objects) is always younger than
+a non-aggregate one.
+
+We store bodies in structures called generations. A generation looks like :
+
+    ...[ Stats ][ Gen *prev ][ Gen *next ][ first ][ fst_free ][ remaining ]...
+					     |          |            |
+       +-------------------------------------+        +-+____________|__________________________________
+       v					      v{					        }
+    ...[ XXXXX Memory already used for bodies XXXXXX ][ 000000 Memory allocated but not used yet 000000 ]...
+
+    
+The area between C<first> and C<fst_free + remaining> has been allocated at the
+time of the generation initialization and is fixed. We allocate objects at
+fst_free, moving accordingly the fst_free pointer and the remaining indicator.
+When remaining is not high enough for allocating the object, we switch to gen->next
+which, by construction, has a memory address higher than the current gen.
+
+Generations are organized in the following way :
+
+                allocated bodies                       free bodies                           allocated bodies                        free bodies
+        ____________________________________  _________________________________      ___________________________________  __________________________________
+       {				    }{				       }    {                                   }{                                  }
+       
+    ...[ old_fst ] --> [ ... ] --...--> [ old_lst ] --> [ ... ] --...--> [ ... ]    [ yng_fst ] --> [ ... ] --...--> [ yng_lst ] --> [ ... ] --...--> [ ... ]...
+
+       {_______________________________________________________________________}    {_______________________________________________________________________}
+                            old, non-aggregate objects                                                       young, aggregate objects
+
+
+Thus the allocation is pretty straightforward : start at old_lst or yng_lst
+depending on whether you are an aggregate or not, return fst_free if there
+is enough space or switch to the next gen.
+
+When no more generations are available, we have to reallocate a whole new set
+of generations, copy the whole content of the current set to the new one,
+update pointers and free the now unused set.
+
+
+=head2 GC run
+
+The main idea behind the GC is that we are using a functional language. And, as
+such, once created, objects can't be modified. This means that they can have
+pointers only to objects that already existed when they were created, thus older.
+(see src/gc_gms.c for a more detailed description of this).
+
+We can then mark all the objects in a single pass by walking the memory from
+higher addresses (youngest objects) to lower memory (oldest objects). If an 
+object has not been marked alive by younger objects or the root set, then it
+is dead and can be safely removed.
+
+Another important thing is that we can stop the marking pass at any point and
+still be sure about the status of all the objects we have examined. This leads
+the way to our generational GC.
+
+But of course, things are not so simple, as imperative instructions (modification
+of an already existing object) can set pointers in the other way (from old
+objects to young ones). We need to track these I<inter-generational pointers>
+(IGP). For this, we use a write barrier that is called each time such an
+imperative instruction is executed.
+
+An IGP is a pointer from a PMC p0 to a PMC p1. It is marked as such in two ways :
+p0 has a Gmc_flag (is_igp) that is set, and p0 is added to the list of igp headers
+in its generation.
+
+We adopt the following convention in our pseudo code : a children of an object is
+an older object pointed by this object, while a son is a younger object pointed by
+the object. Thus p0 -> p1 is an IGP iff p1 is a son of p0.
+
+Then the marking pass is :
+
+    mark root set;
+    start from yng_lst;
+    while (objects_scavenged < dead_objects_wanted) {
+	if (current_object is alive) {
+	    mark its children as alive;
+	    if (current_object has Gmc_is_igp_flag) {
+		mark_igp_sons(current_object);
+	    }
+	} else {
+	    objects_scavenged++;
+	}
+    }
+    forall(igp of non-examined_gen) {
+	mark_igp_sons(igp);
+    }
+
+
+where the function mark_igp_sons is the following :
+    
+    forall(children(object)) {
+	if (child is *not* alive) {
+	    mark_alive(child);
+	    mark_igp_sons(child);
+	    if (child has Gmc_is_igp_flag) {
+		forall(sons(child)) {
+		    mark_igp_sons(grandson);
+		}
+	    }
+	}
+
+
+This allows us to collect dead cycles and to be generational, as once we have found 
+enough dead objects, only igp related will be examined.
+
+
+The second phase of the gc run is compaction. As running the marking pass will find
+dead objects, simply removing them will result in a waste of memory due to our
+allocation scheme. We thus have to recompact every generation that suffered losses,
+in order to be able to reuse this memory without violating our invariant.
+
+Compacting is done separately for each generation, destroying dead objects when
+encountered and moving live objects to cover each gap so created. Live objects are
+then marked as dead in prevision of the next GC run.
+
+Generations will then be half (or less)-filled. If there is enough space in a
+generation to copy the contents of the one just younger, then we merge the two
+of them. If not, we don't touch anything.
+
 
 =cut
 
@@ -26,6 +202,8 @@ TODO
 #include <parrot/parrot.h>
 
 #if PARROT_GC_GMC
+
+#define BIG_DUMP
 
 
 /* How many more objects do we want allocated next time ? */
@@ -341,6 +519,7 @@ gc_gmc_pool_deinit(Interp *interpreter, struct Small_Object_Pool *pool)
     for (gen = gc->yng_fst; gen;)
     {
 	gen_nxt = gen->next;
+	for (store = gen->IGP->first; store; st2 = store->next, mem_sys_free(store), store = st2);
 	mem_sys_free(gen->first);
 	mem_sys_free(gen);
 	gen = gen_nxt;
@@ -349,6 +528,7 @@ gc_gmc_pool_deinit(Interp *interpreter, struct Small_Object_Pool *pool)
     for (gen = gc->old_fst; gen;)
     {
 	gen_nxt = gen->next;
+	for (store = gen->IGP->first; store; st2 = store->next, mem_sys_free(store), store = st2);
 	mem_sys_free(gen->first);
 	mem_sys_free(gen);
 	gen = gen_nxt;
@@ -986,12 +1166,15 @@ gc_gmc_run(Interp *interpreter, int flags)
 	return;
     } else {
 	arena_base->dod_runs++;
+	fprintf(stderr, "GMC RUN !\n");
 	arena_base->lazy_dod = (flags & DOD_lazy_FLAG);
 	gc_gmc_mark(interpreter, arena_base->pmc_pool, !arena_base->lazy_dod);
+	fprintf(stderr, "Marking pass complete\n");
 	gc_gmc_compact(interpreter, arena_base->pmc_pool);
 #ifdef GMC_DEBUG
 	fprintf (stderr, "\nGMC: Trying to run dod_run for normal allocation\n\n");
 #endif /* GMC_DEBUG */
+	fprintf(stderr, "GMC RUN done\n");
 	--arena_base->DOD_block_level;
     }
 
@@ -1410,6 +1593,7 @@ gc_gmc_copy_hdr(Interp *interpreter, Gc_gmc_hdr *from, Gc_gmc_hdr *to)
     Gc_gmc_gen *gen;
     size_t size;
 
+    PObj_live_CLEAR(Gmc_PMC_hdr_get_PMC(to));
     if (from == to)
 	return gc_gmc_next_hdr(to);
     size = gc_gmc_get_size(interpreter, from);
@@ -1420,7 +1604,6 @@ gc_gmc_copy_hdr(Interp *interpreter, Gc_gmc_hdr *from, Gc_gmc_hdr *to)
 #endif
     Gmc_PMC_hdr_get_GEN(to) = gen;
     PMC_body(Gmc_PMC_hdr_get_PMC(to)) = Gmc_PMC_hdr_get_BODY(to);
-    PObj_live_CLEAR(Gmc_PMC_hdr_get_PMC(to));
     return gc_gmc_next_hdr(to);
 }
 
@@ -1499,7 +1682,7 @@ gc_gmc_merge_gen(Interp *interpreter, Gc_gmc_gen *old, Gc_gmc_gen *yng)
     /* And update all pointers. */
     for (; (UINTVAL)h < (UINTVAL)old->fst_free; h = gc_gmc_next_hdr(h))
     {
-#ifdef BIG_DUMP
+#ifndef BIG_DUMP
 	fprintf(stderr, "merge_gen: h %p, ptr %p, old_body at %p, new body at %p\n", h, Gmc_PMC_hdr_get_PMC(h), PMC_body(Gmc_PMC_hdr_get_PMC(h)), Gmc_PMC_hdr_get_BODY(h));
 #endif
 	Gmc_PMC_hdr_get_GEN(h) = old;
