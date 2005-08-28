@@ -189,8 +189,8 @@ typedef enum gmc_flags {
     Gmc_marked_FLAG = 1 << 10, /* True if the object has been marked by a  */
 } Gmc_flags;
 
-#define DUMP_FLAG(flag,hdr)   fprintf(stderr, "modifying " #flag " in %p -> (%p,%p): is_igp: %s\n", hdr->pmc, hdr, (char*)hdr + sizeof(Gc_gmc_hdr), (Gmc_PMC_hdr_get_FLAGS(hdr) & (Gmc_is_igp_FLAG)) ? "set" : "clear")
-/*#define DUMP_FLAG(flag,hdr) {} */
+/*#define DUMP_FLAG(flag,hdr)   fprintf(stderr, "modifying " #flag " in %p -> (%p,%p): is_igp: %s\n", hdr->pmc, hdr, (char*)hdr + sizeof(Gc_gmc_hdr), (Gmc_PMC_hdr_get_FLAGS(hdr) & (Gmc_is_igp_FLAG)) ? "set" : "clear")*/
+#define DUMP_FLAG(flag,hdr) {} 
 
 /* Macros for access from header. */
 #define Gmc_PMC_hdr_get_BODY(pmc_hdr)		    ((PMC_BODY*)((char*)(pmc_hdr) + sizeof(Gc_gmc_hdr)))
