@@ -1525,6 +1525,7 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
     Gc_gmc_gen *ogen;
     /* We want to treat the last_gen */
     INTVAL last_gen = 0;
+    INTVAL pass = 0;
     
     gen = pool->gc->yng_lst;
     ogen = NULL;
@@ -1538,97 +1539,14 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
 	gen = gen->prev;
 	if (!gen)
 	{
+	    if (pass++)
+		return;
 	    ogen = NULL;
 	    gen = pool->gc->old_lst;
 	}
     }
 }
 
-
-/* Old code. */
-#if 0
-/* Compacts every gen so they are all filled, except the last one. */
-static void
-gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
-{
-    /* The generation that we are currently filling. */
-    Gc_gmc_gen *filled_gen;
-    /* The generation of origin of the objects being moved. */
-    Gc_gmc_gen *filling_gen;
-    /* Place where the next object will be moved. */
-    Gc_gmc_hdr *gray;
-    /* Origin of the current object being moved. */
-    Gc_gmc_hdr *white;
-
-    INTVAL pass = 0;
-    INTVAL copying = 0;
-    size_t size;
-    size_t remaining;
-    
-    filled_gen = filling_gen = pool->gc->old_fst;
-    gray = white = filling_gen->first;
-    remaining = (UINTVAL)filled_gen->fst_free - (UINTVAL)filled_gen->first + filled_gen->remaining;
-    
-    while (1)
-    {
-	while ((UINTVAL)gray < (UINTVAL)filling_gen->fst_free)
-	{
-	    /* Jump over any dead object. */
-	    while (!PObj_live_TEST(Gmc_PMC_hdr_get_PMC(gray)) && filling_gen->marked)
-	    {
-		if (PObj_active_destroy_TEST(Gmc_PMC_hdr_get_PMC(gray)))
-		    VTABLE_destroy(interpreter, Gmc_PMC_hdr_get_PMC(gray));
-		if (Gmc_PMC_hdr_flag_TEST(is_igp, gray))
-		{
-		    /*fprintf(stderr, "Sweeping from mark\n");*/
-		    gc_gmc_sweep_from_hdr_list(interpreter, gray);
-		}
-		/* XXX: find a way to mark the header dead as well! */
-		gray = gc_gmc_next_hdr(gray);
-		filling_gen->alloc_obj--;
-		if ((UINTVAL)gray >= (UINTVAL)filling_gen->fst_free)
-		    goto switch_gen;
-	    }
-	    /* If we are done with the current filled generation. */
-	    if ((size = gc_gmc_get_size(interpreter, gray)) >= remaining)
-	    {
-		filled_gen->remaining = remaining;
-		filled_gen->fst_free = white;
-		assert(filled_gen->next);
-		filled_gen = filled_gen->next;
-		white = filled_gen->first;
-		remaining = (UINTVAL)filled_gen->fst_free - (UINTVAL)filled_gen->first + filled_gen->remaining;
-	    }
-	    /* Then copy data and move both pointers. */
-	    /*fprintf (stderr, "Copying %p to %p\n", gray, white);*/
-	    remaining -= size;
-	    white = gc_gmc_copy_hdr (interpreter, gray, white);
-	    gray = (Gc_gmc_hdr*)((char*)gray + size);
-	    filling_gen->alloc_obj--;
-	    filled_gen->alloc_obj++;
-	}
-switch_gen:
-	filling_gen = filling_gen->next;
-	if (!filling_gen)
-	{
-	    if (pass)
-		return;
-	    filling_gen = pool->gc->yng_fst;
-	    filled_gen = pool->gc->yng_fst;
-	    white = filled_gen->first;
-	    remaining = (UINTVAL)filled_gen->fst_free - (UINTVAL)filled_gen->first + filled_gen->remaining;
-	    pass++;
-	}
-	gray = filling_gen->first;	
-	if (gray > pool->gc->gray)
-	{
-	    filled_gen->fst_free = white;
-	    filled_gen->remaining = remaining;
-	    return;
-	}
-    }
-}
-#endif
 
 
 
