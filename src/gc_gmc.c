@@ -461,7 +461,7 @@ gc_gmc_next_hdr(Gc_gmc_hdr *hdr)
 gc_gmc_add_free_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, void *to_add)
 {
-    internal_exception(1, "add_free should not be called in GMC!\n");
+    PObj_live_CLEAR((PObj*)to_add);
 }
 
 
@@ -751,6 +751,16 @@ gc_gmc_more_bodies (Interp *interpreter,
 }
 
 
+/* If there are any objects needing timely destruction, change state accordingly
+ * and trigger a GC run. */
+void
+Parrot_exit_scope(Interp *interpreter)
+{
+    if (interpreter->arena_base->num_early_DOD_PMCs)
+	gc_gmc_run(interpreter, 0);
+}
+
+
 /*
 
 =head2 Write Barrier functions
@@ -1012,7 +1022,6 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 #ifdef BIG_DUMP
 		fprintf(stderr, "ptr: %p, body at %p\n", ptr, PMC_body(ptr));
 #endif
-		/* This shouldn't be necessary. */
 		if (PObj_needs_early_DOD_TEST(ptr))
 		    --arena_base->num_early_DOD_PMCs;
 		if (PObj_active_destroy_TEST(ptr)) {
@@ -1214,7 +1223,7 @@ gc_gmc_trace_igp_sons(Interp *interpreter, Gc_gmc_hdr *h)
 	} else {
 	    pool = Gmc_PMC_hdr_get_GEN(h)->pool;
 	    sav_state = pool->gc->state;
-	    pool->gc->state = GMC_SON_OF_IGP_STATE;
+	    pool->gc->state = (sav_state < GMC_TIMELY_NORMAL_STATE) ? GMC_SON_OF_IGP_STATE : GMC_TIMELY_SON_OF_IGP_STATE;
 	    VTABLE_mark(interpreter, pmc);
 	    pool->gc->state = sav_state;
 	}
@@ -1254,19 +1263,10 @@ parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
     gc = Gmc_PMC_body_get_GEN(PMC_body(o))->pool->gc;
     switch (gc->state)
     {
-	/* This just comes from an IGP. */
-	case GMC_IGP_STATE:
-	    if ((UINTVAL)h > (UINTVAL)gc->igp_ref && !PObj_live_TEST(o))
-	    {
-		PObj_live_SET(o);
-		gc->state = GMC_SON_OF_IGP_STATE;
-		gc_gmc_trace_igp_sons(interpreter, h);
-		gc->state = GMC_IGP_STATE;
-	    }
-	    break;
 	/* This object was precedently dead and has been marked alive as a
 	 * consequence of IGP. */
 	case GMC_SON_OF_IGP_STATE:
+	case GMC_TIMELY_SON_OF_IGP_STATE:
 	    if (!PObj_live_TEST(o) && (UINTVAL)h > (UINTVAL)gc->white)
 	    {
 		PObj_live_SET(o);
@@ -1274,9 +1274,11 @@ parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
 	    }
 	    break;
 	case GMC_NORMAL_STATE:
+	case GMC_TIMELY_NORMAL_STATE:
 	    PObj_live_SET(o);
 	    break;
 	default:
+	    *(int*)NULL = 0;
 	    internal_exception(1, "GMC: undefined state");
     }
 }
@@ -1339,7 +1341,10 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 
     hdr = pool->gc->gray; 
     gen = pool->gc->yng_lst;
-    pool->gc->state = GMC_NORMAL_STATE;
+    if (interpreter->arena_base->num_early_DOD_PMCs)
+	pool->gc->state = GMC_TIMELY_NORMAL_STATE;
+    else
+	pool->gc->state = GMC_NORMAL_STATE;
     for (gen = pool->gc->yng_lst; gen || !pass; gen = gen->prev)
     {
 	/* We've run through all the young objects, jump to the old ones. */
@@ -1367,7 +1372,9 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 
 		/* If we have found enough objects, change our state and
 		 * consider only IGP from now on. */
-		if (dopr <= 0)
+		/* If this is a timely destruction triggered run, make a full
+		 * run. */
+		if (!state && dopr <= 0 && pool->gc->state < GMC_TIMELY_NORMAL_STATE)
 		{
 		    pool->gc->white = hdr;
 		    state = 1;
@@ -1386,6 +1393,9 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 	} else
 	    gc_gmc_trace_igp(interpreter, gen);
     }
+    if (!gen)
+	pool->gc->white = hdr;
+
     mem_sys_free(rev);
     return (DEAD_OBJECTS_PER_RUN - dopr);
 }
@@ -1436,6 +1446,8 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
 	/* Free any object that has the live flag clear. */
 	while (((UINTVAL)orig < (UINTVAL)gen->fst_free || !(leave = 1)) && !PObj_live_TEST(Gmc_PMC_hdr_get_PMC(orig)))
 	{
+	    if (PObj_needs_early_DOD_TEST(Gmc_PMC_hdr_get_PMC(orig)))
+		--interpreter->arena_base->num_early_DOD_PMCs;
 	    if (PObj_active_destroy_TEST(Gmc_PMC_hdr_get_PMC(orig)))
 		VTABLE_destroy(interpreter, Gmc_PMC_hdr_get_PMC(orig));
 	    if (Gmc_PMC_hdr_flag_TEST(is_igp, orig))

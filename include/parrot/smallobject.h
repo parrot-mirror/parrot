@@ -226,16 +226,18 @@ typedef enum gmc_flags {
 UINTVAL gc_gmc_bitmap_test(gmc_bitmap, UINTVAL);
 void gc_gmc_bitmap_set(gmc_bitmap, UINTVAL);
 void gc_gmc_bitmap_clear(gmc_bitmap, UINTVAL);
+void Parrot_exit_scope(Interp*);
 
-#define GMC_NORMAL_STATE     0
-#define GMC_IGP_STATE	     1
-#define GMC_SON_OF_IGP_STATE 2
+#define GMC_NORMAL_STATE	    0
+#define GMC_SON_OF_IGP_STATE	    1
+#define GMC_TIMELY_NORMAL_STATE     2
+#define GMC_TIMELY_SON_OF_IGP_STATE 3
 
 
 
 /* The whole GC structure */
 typedef struct _gc_gmc {
-    INTVAL state;         /* Are we marking normal objects or IGP ? */
+    INTVAL state;         /* Are we marking normal objects or IGP ? Do we care about timely destruction ? */
     UINTVAL nb_gen;       /* Total number of generations. */
     UINTVAL nb_empty_gen; /* Number of empty generations. */
     UINTVAL alloc_obj;    /* Number of allocated objects. */
