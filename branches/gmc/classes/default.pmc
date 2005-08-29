@@ -187,7 +187,7 @@ C<initializer> if it is supplied, otherwise C<init()> is called.
 
     void init_pmc_props (PMC* initializer, PMC* properties) {
     #if PARROT_GC_GMC
-	if (!Gmc_has_PMC_EXT_TEST(SELF))
+	if (!PObj_exists_PMC_EXT_TEST(SELF))
     #else
         if (!SELF->pmc_ext)
     #endif
@@ -245,7 +245,7 @@ Returns the property for C<*key>. If no property is defined then an
 
     PMC* getprop(STRING* key) {
     #if PARROT_GC_GMC
-	if (Gmc_has_PMC_EXT_TEST(SELF) && PMC_metadata(SELF))
+	if (PObj_exists_PMC_EXT_TEST(SELF) && PMC_metadata(SELF))
     #else
         if (SELF->pmc_ext && PMC_metadata(SELF))
     #endif
@@ -271,7 +271,7 @@ Sets the property for C<*key> to C<*value>.
     void setprop(STRING* key, PMC* value) {
         check_set_std_props(INTERP, SELF, key, value);
     #if PARROT_GC_GMC
-	if (Gmc_has_PMC_EXT_TEST(SELF) && PMC_metadata(SELF))
+	if (PObj_exists_PMC_EXT_TEST(SELF) && PMC_metadata(SELF))
     #else
         if (SELF->pmc_ext && PMC_metadata(SELF))
     #endif
@@ -281,7 +281,7 @@ Sets the property for C<*key> to C<*value>.
         } else {
             PMC *prop;
     #if PARROT_GC_GMC
-	    if (!Gmc_has_PMC_EXT_TEST(SELF))
+	    if (!PObj_exists_PMC_EXT_TEST(SELF))
     #else
             if (!SELF->pmc_ext)
     #endif
@@ -312,7 +312,7 @@ Deletes the property for C<*key>.
 
     void delprop(STRING* key) {
     #if PARROT_GC_GMC
-	if (Gmc_has_PMC_EXT_TEST(SELF) && PMC_metadata(SELF))
+	if (PObj_exists_PMC_EXT_TEST(SELF) && PMC_metadata(SELF))
     #else
         if (SELF->pmc_ext && PMC_metadata(SELF))
     #endif
@@ -334,7 +334,7 @@ Returns the PMC's properties.
 
     PMC* getprops() {
     #if PARROT_GC_GMC
-	if (!Gmc_has_PMC_EXT_TEST(SELF))
+	if (!PObj_exists_PMC_EXT_TEST(SELF))
     #else
         if (!SELF->pmc_ext)
     #endif
@@ -849,7 +849,7 @@ Look for NCI methods and properties.
          * XXX do we need that in the default object system?
          */
     #if PARROT_GC_GMC
-	if (Gmc_has_PMC_EXT_TEST(SELF) && PMC_metadata(SELF))
+	if (PObj_exists_PMC_EXT_TEST(SELF) && PMC_metadata(SELF))
     #else
         if (SELF->pmc_ext && PMC_metadata(SELF))
     #endif
@@ -909,7 +909,7 @@ Used by DOD to mark the PMC.
     void visit(visit_info *info) {
         /* default - mark prop hash */
     #if PARROT_GC_GMC
-	if (Gmc_has_PMC_EXT_TEST(SELF) && PMC_metadata(SELF) &&
+	if (PObj_exists_PMC_EXT_TEST(SELF) && PMC_metadata(SELF) &&
     #else
         if (SELF->pmc_ext && PMC_metadata(SELF) &&
     #endif
@@ -951,7 +951,7 @@ Initializes the PMC during unarchiving.
         /* default - initialize the PMC */
         if (info->extra_flags == EXTRA_IS_PROP_HASH) {
     #if PARROT_GC_GMC
-	    if (!Gmc_has_PMC_EXT_TEST(SELF))
+	    if (!PObj_exists_PMC_EXT_TEST(SELF))
     #else
             if (!SELF->pmc_ext)
     #endif

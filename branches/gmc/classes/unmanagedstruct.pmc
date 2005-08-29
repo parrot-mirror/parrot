@@ -335,7 +335,7 @@ ret_pmc(Interp* interpreter, PMC* pmc, char *p, int type, INTVAL idx)
             init = PMC_pmc_val(pmc);
             ptr = VTABLE_get_pmc_keyed_int(interpreter, init, idx*3);
     #if PARROT_GC_GMC
-	    if (Gmc_has_PMC_EXT_TEST(ptr) && PMC_metadata(ptr))
+	    if (PObj_exists_PMC_EXT_TEST(ptr) && PMC_metadata(ptr))
     #else
             if (ptr->pmc_ext && PMC_metadata(ptr))
     #endif
@@ -358,7 +358,7 @@ ret_pmc(Interp* interpreter, PMC* pmc, char *p, int type, INTVAL idx)
 
             /* grab the struct from the metadata */
     #if PARROT_GC_GMC
-	    if (Gmc_has_PMC_EXT_TEST(ptr) && PMC_metadata(ptr))
+	    if (PObj_exists_PMC_EXT_TEST(ptr) && PMC_metadata(ptr))
     #else
             if (ptr->pmc_ext && PMC_metadata(ptr))
     #endif

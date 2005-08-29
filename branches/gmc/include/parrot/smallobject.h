@@ -176,7 +176,6 @@ typedef struct _gc_gmc_hdr {
  * smallobject.h ? pobj.h ? gc_gmc.h ? */
 typedef enum gmc_flags {
     /* Private GC flags, for internal use. */
-    Gmc_marking_FLAG = 1 << 0,
     Gmc_private_1_FLAG = 1 << 1,
     Gmc_private_2_FLAG = 1 << 2,
     Gmc_private_3_FLAG = 1 << 3,
@@ -186,7 +185,6 @@ typedef enum gmc_flags {
     Gmc_has_ext_FLAG = 1 << 7, /*  flag */
     Gmc_is_pmc_FLAG = 1 << 8, /* True if the object is a PMC, is a PObj if not. */
     Gmc_is_igp_FLAG = 1 << 9, /* True if the object is the start of an IGP. */
-    Gmc_marked_FLAG = 1 << 10, /* True if the object has been marked by a  */
 } Gmc_flags;
 
 /*#define DUMP_FLAG(flag,hdr)   fprintf(stderr, "modifying " #flag " in %p -> (%p,%p): is_igp: %s\n", hdr->pmc, hdr, (char*)hdr + sizeof(Gc_gmc_hdr), (Gmc_PMC_hdr_get_FLAGS(hdr) & (Gmc_is_igp_FLAG)) ? "set" : "clear")*/
@@ -219,7 +217,12 @@ typedef enum gmc_flags {
 #define Gmc_PMC_flag_SET(flag, pmc)		    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_flag_CLEAR(flag, pmc)		    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_get_HDR(pmc))
 
-#define Gmc_has_PMC_EXT_TEST(pmc)		    Gmc_PMC_flag_TEST(has_ext, pmc)
+#define PObj_exists_PMC_EXT_TEST(pmc)		    (PObj_is_PMC_EXT_TEST(pmc) && (UINTVAL)PMC_data(pmc) != 0xdeadbeef)
+#define PObj_exists_PMC_EXT_SET(pmc)		    do { \
+							PObj_is_PMC_EXT_SET(pmc); \
+							PMC_data(pmc) = NULL; \
+						    } while (0)
+#define PObj_exists_PMC_EXT_CLEAR(pmc)		    PMC_data(pmc) = (void*)0xdeadbeef
 
 
 

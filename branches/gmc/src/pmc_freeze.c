@@ -614,7 +614,7 @@ cleanup_next_for_GC_pool(Parrot_Interp interpreter,
                 nm += 4;
             if (!(*dod_flags & (PObj_on_free_list_FLAG << nm)))
 #if PARROT_GC_GMC
-		if (Gmc_has_PMC_EXT_TEST(p))
+		if (PObj_exists_PMC_EXT_TEST(p))
 #else
                 if (p->pmc_ext)
 #endif
@@ -622,7 +622,7 @@ cleanup_next_for_GC_pool(Parrot_Interp interpreter,
 #else
             if (!PObj_on_free_list_TEST(p)) {
 #if PARROT_GC_GMC
-		if (Gmc_has_PMC_EXT_TEST(p))
+		if (PObj_is_PMC_EXT_TEST(p))
 #else
                 if (p->pmc_ext)
 #endif
@@ -1016,7 +1016,7 @@ do_thaw(Parrot_Interp interpreter, PMC* pmc, visit_info *info)
     list_assign(interpreter, PMC_data(info->id_list), id, pmc, enum_type_PMC);
     /* remember nested aggregates depth first */
 #if PARROT_GC_GMC
-    if (Gmc_has_PMC_EXT_TEST(pmc))
+    if (PObj_exists_PMC_EXT_TEST(pmc))
 #else
     if (pmc->pmc_ext)
 #endif
@@ -1122,7 +1122,7 @@ static void
 add_pmc_next_for_GC(Parrot_Interp interpreter, PMC *pmc, visit_info *info)
 {
 #if PARROT_GC_GMC
-    if (Gmc_has_PMC_EXT_TEST(pmc))
+    if (PObj_exists_PMC_EXT_TEST(pmc))
 #else
     if (pmc->pmc_ext)
 #endif
@@ -1162,7 +1162,7 @@ next_for_GC_seen(Parrot_Interp interpreter, PMC *pmc, visit_info *info,
      * which is located in pmc_ext
      */
 #if PARROT_GC_GMC
-    if (Gmc_has_PMC_EXT_TEST(pmc))
+    if (PObj_exists_PMC_EXT_TEST(pmc))
 #else
     if (pmc->pmc_ext)
 #endif
@@ -1230,7 +1230,7 @@ todo_list_seen(Parrot_Interp interpreter, PMC *pmc, visit_info *info,
     hash_put(interpreter, PMC_struct_val(info->seen), pmc, (void*)*id);
     /* remember containers */
 #if PARROT_GC_GMC
-    if (Gmc_has_PMC_EXT_TEST(pmc))
+    if (PObj_exists_PMC_EXT_TEST(pmc))
 #else
     if (pmc->pmc_ext)
 #endif
@@ -1337,7 +1337,7 @@ visit_loop_next_for_GC(Parrot_Interp interpreter, PMC *current,
 
     visit_next_for_GC(interpreter, current, info);
 #if PARROT_GC_GMC
-    if (Gmc_has_PMC_EXT_TEST(current))
+    if (PObj_exists_PMC_EXT_TEST(current))
 #else
     if (current->pmc_ext)
 #endif
