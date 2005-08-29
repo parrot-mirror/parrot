@@ -1178,11 +1178,6 @@ gc_gmc_run(Interp *interpreter, int flags)
     /* This interpreter will be destroyed, free everything. */
     if (flags & DOD_finish_FLAG) {
 
-	struct Small_Object_Pool *pool = arena_base->pmc_pool;
-	Gc_gmc_gen *gen;
-	INTVAL pass = 0;
-	Gc_gmc_hdr *h;
-	
 	/* First the pmc headers */
 	Parrot_forall_header_pools(interpreter, POOL_ALL, 0, gc_gmc_clear_live);
 	Parrot_forall_header_pools(interpreter, POOL_PMC, 0, sweep_pmc);
@@ -1226,10 +1221,13 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
     int sweep = 0;
 
     old_pmc = NULL;
-    for (gen = pool->gc->old_fst; gen; gen = gen->next)
+    for (gen = pool->gc->old_fst; gen || !pass; gen = gen->next)
     {
-	if (!gen && !pass++)
+	if (!gen && !pass)
+	{
+	    pass++;
 	    gen = pool->gc->yng_fst;
+	}
 	for (hdr = gen->fst_free; (UINTVAL)hdr < (UINTVAL)gen->first; hdr = gc_gmc_next_hdr(hdr))
 	{
 	    pmc = Gmc_PMC_hdr_get_PMC(hdr);
@@ -1285,10 +1283,13 @@ static int sweep_buf (Interp *interpreter, struct Small_Object_Pool *pool,
     
     old_obj = NULL;
 
-    for (gen = pool->gc->old_fst; gen; gen = gen->next)
+    for (gen = pool->gc->old_fst; gen || !pass; gen = gen->next)
     {
-	if (!gen && !pass++)
+	if (!gen && !pass)
+	{
+	    pass++;
 	    gen = pool->gc->yng_fst;
+	}
 	for (hdr = gen->fst_free; (UINTVAL)hdr < (UINTVAL)gen->first; hdr = gc_gmc_next_hdr(hdr))
 	{
 	    obj = (PObj*)Gmc_PMC_hdr_get_PMC(hdr);
