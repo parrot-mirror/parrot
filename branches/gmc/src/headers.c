@@ -830,6 +830,7 @@ void
 Parrot_destroy_header_pools(Interp *interpreter)
 {
     int pass, start;
+    INTVAL pmc_pool, buf_pool;
 
     /* const/non const COW strings life in different pools
      * so in first pass
@@ -841,11 +842,19 @@ Parrot_destroy_header_pools(Interp *interpreter)
 #else
     start = 2;
 #endif
-    Parrot_forall_header_pools(interpreter, POOL_PMC | POOL_CONST, 0,
+#if PARROT_GC_GMC
+    pmc_pool = POOL_CONST;
+    buf_pool = POOL_CONST;
+#else
+    pmc_pool = POOL_PMC | POOL_CONST;
+    buf_pool = POOL_BUFFER | POOL_CONST;
+#endif
+    
+    Parrot_forall_header_pools(interpreter, pmc_pool, 0,
             sweep_cb_pmc);
 
     for (pass = start; pass <= 2; pass++) {
-        Parrot_forall_header_pools(interpreter, POOL_BUFFER | POOL_CONST,
+        Parrot_forall_header_pools(interpreter, buf_pool,
                 (void *)pass, sweep_cb_buf);
 
     }

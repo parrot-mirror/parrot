@@ -1187,6 +1187,9 @@ gc_gmc_run(Interp *interpreter, int flags)
 	--arena_base->DOD_block_level;
 	return;
     } else {
+#ifdef GMC_DEBUG
+	fprintf(stderr, "GMC RUN !\n");
+#endif
 	arena_base->dod_runs++;
 	arena_base->lazy_dod = (flags & DOD_lazy_FLAG);
 	gc_gmc_mark(interpreter, arena_base->pmc_pool, !arena_base->lazy_dod);
@@ -1749,6 +1752,23 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
     gen = pool->gc->yng_lst;
     ogen = NULL;
 
+#ifdef GMC_DEBUG
+    for (pass = 0, gen = pool->gc->old_fst; ; gen = gen->next)
+    {
+	if (!gen)
+	{
+	    if (pass++)
+		goto prout;
+	    gen = pool->gc->yng_fst;
+	}
+	fprintf(stderr, "Before compaction: gen: %p : %p -> %p\n", gen, (char*)gen->fst_free - gen->remaining, gen->first);
+    }
+prout:
+    fprintf(stderr, "Compacting...\n");
+    
+    pass = 0;
+    gen = pool->gc->yng_lst;
+#endif
     /* Compact only the gen that were examined. */
     while ((UINTVAL)gen > (UINTVAL)pool->gc->white || !last_gen++)
     {
@@ -1765,6 +1785,19 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
 	    gen = pool->gc->old_lst;
 	}
     }
+
+#ifdef GMC_DEBUG
+    for (pass = 0, gen = pool->gc->old_fst; ; gen = gen->next)
+    {
+	if (!gen)
+	{
+	    if (pass++)
+		return;
+	    gen = pool->gc->yng_fst;
+	}
+	fprintf(stderr, "compaction: gen: %p : %p -> %p\n", gen, (char*)gen->fst_free - gen->remaining, gen->first);
+    }
+#endif
 }
 
 
