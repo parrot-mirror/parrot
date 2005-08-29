@@ -522,6 +522,18 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     gen->prev = NULL;
     gc->old_lst = gc->old_fst;
     gc->white = gc->old_fst->first;
+#ifdef GMC_DEBUG
+    for (i = 0, gen = gc->old_fst; ; gen = gen->next)
+    {
+	if (!gen)
+	{
+	    if (i++)
+		return;
+	    gen = gc->yng_fst;
+	}
+	fprintf(stderr, "pool_init: gen: %p : %p -> %p\n", gen, (char*)gen->fst_free - gen->remaining, gen->first);
+    }
+#endif
 }
 
 
@@ -1058,7 +1070,7 @@ gc_gmc_sweep_from_hdr_list(Interp *interpreter, Gc_gmc_hdr *h)
 	}
     }
     fprintf (stderr, "bad igp: %p\n", h);
-    /*internal_exception(1, "IGP pointer not found for removal!\n");*/
+    internal_exception(1, "IGP pointer not found for removal!\n");
 }
 
 
@@ -1176,15 +1188,12 @@ gc_gmc_run(Interp *interpreter, int flags)
 	return;
     } else {
 	arena_base->dod_runs++;
-	fprintf(stderr, "GMC RUN !\n");
 	arena_base->lazy_dod = (flags & DOD_lazy_FLAG);
 	gc_gmc_mark(interpreter, arena_base->pmc_pool, !arena_base->lazy_dod);
-	fprintf(stderr, "Marking pass complete\n");
 	gc_gmc_compact(interpreter, arena_base->pmc_pool);
 #ifdef GMC_DEBUG
 	fprintf (stderr, "\nGMC: Trying to run dod_run for normal allocation\n\n");
 #endif /* GMC_DEBUG */
-	fprintf(stderr, "GMC RUN done\n");
 	--arena_base->DOD_block_level;
     }
 
@@ -1657,8 +1666,10 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
     }
 
     /* Shift everything to align them to the higher memory */
-    size = (char*)gen->first - (char*)gen->fst_free;
+    size = (char*)dest - (char*)gen->fst_free;
     memmove((char*)gen->first - size, gen->fst_free, size);
+    for (orig = gen->fst_free; (UINTVAL)orig < (UINTVAL)gen->first; orig = gc_gmc_next_hdr(orig))
+	PMC_body(Gmc_PMC_hdr_get_PMC(orig)) = Gmc_PMC_hdr_get_BODY(orig);
     
     gen->fst_free = (char*)gen->first - size;
     gen->remaining = remaining;
@@ -1682,6 +1693,7 @@ gc_gmc_merge_gen(Interp *interpreter, Gc_gmc_gen *old, Gc_gmc_gen *yng)
     pool = yng->pool;
     size = (UINTVAL)yng->first - (UINTVAL)yng->fst_free;
 
+    fprintf(stderr, "Before merging: gen: %p : %p -> %p\n", old, (char*)old->fst_free - old->remaining, old->first);
     /* Check we have enough space for this. */
     if (size >= (UINTVAL)old->remaining)
 	return;
@@ -1720,6 +1732,7 @@ gc_gmc_merge_gen(Interp *interpreter, Gc_gmc_gen *old, Gc_gmc_gen *yng)
     
     for (store = yng->IGP->first; store; st2 = store->next, mem_sys_free(store), store = st2);
     gc_gmc_gen_free(yng);
+    fprintf(stderr, "merging: gen: %p : %p -> %p\n", old, (char*)old->fst_free - old->remaining, old->first);
 }
 
 
@@ -1735,6 +1748,7 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
     
     gen = pool->gc->yng_lst;
     ogen = NULL;
+
     /* Compact only the gen that were examined. */
     while ((UINTVAL)gen > (UINTVAL)pool->gc->white || !last_gen++)
     {
