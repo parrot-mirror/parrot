@@ -1399,7 +1399,8 @@ gc_gmc_trace_children(Interp *interpreter, Gc_gmc_hdr *h)
 	    {
 		for (i = 0; i < PMC_int_val(pmc); i++)
 		{
-		    if (data[i] && Gmc_PMC_get_HDR(data[i]) < h)
+		    /*if (data[i] && Gmc_PMC_get_HDR(data[i]) < h)*/
+		    if (data[i])
 			pobject_lives(interpreter, (PObj*)data[i]);
 		}
 	    }
@@ -1421,8 +1422,12 @@ gc_gmc_trace_igp_sons(Interp *interpreter, Gc_gmc_hdr *h)
 
     pmc = Gmc_PMC_hdr_get_PMC(h);
 
-    if (!Gmc_PMC_hdr_flag_TEST(is_igp, h))
-	return;
+    /*if (!Gmc_PMC_hdr_flag_TEST(is_igp, h))*/
+	/*return;*/
+
+    pool = Gmc_PMC_hdr_get_GEN(h)->pool;
+    sav_state = pool->gc->state;
+    pool->gc->state = (sav_state < GMC_TIMELY_NORMAL_STATE) ? GMC_SON_OF_IGP_STATE : GMC_TIMELY_SON_OF_IGP_STATE;
 
     bits = PObj_get_FLAGS(pmc) & mask;
     if (bits)
@@ -1438,13 +1443,10 @@ gc_gmc_trace_igp_sons(Interp *interpreter, Gc_gmc_hdr *h)
 		}
 	    }
 	} else {
-	    pool = Gmc_PMC_hdr_get_GEN(h)->pool;
-	    sav_state = pool->gc->state;
-	    pool->gc->state = (sav_state < GMC_TIMELY_NORMAL_STATE) ? GMC_SON_OF_IGP_STATE : GMC_TIMELY_SON_OF_IGP_STATE;
 	    VTABLE_mark(interpreter, pmc);
-	    pool->gc->state = sav_state;
 	}
     }
+    pool->gc->state = sav_state;
 }
 
 static void 
@@ -1484,7 +1486,7 @@ parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
 	 * consequence of IGP. */
 	case GMC_SON_OF_IGP_STATE:
 	case GMC_TIMELY_SON_OF_IGP_STATE:
-	    if (!PObj_live_TEST(o) && (UINTVAL)h > (UINTVAL)gc->white)
+	    if (!PObj_live_TEST(o) && Gmc_PMC_get_GEN(o)->marked)
 	    {
 		PObj_live_SET(o);
 		gc_gmc_trace_igp_sons(interpreter, h);
@@ -1550,7 +1552,6 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 
 #ifdef GMC_DEBUG
     fprintf (stderr, "\nMarking pass\n\n");
-    fprintf (stderr, "max objects: %d\n", gc_gmc_max_objects_per_gen(interpreter, pool));
 #endif
 
     gc_gmc_init_pool_for_ms(interpreter, pool);
@@ -1562,13 +1563,14 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 	pool->gc->state = GMC_TIMELY_NORMAL_STATE;
     else
 	pool->gc->state = GMC_NORMAL_STATE;
-    for (gen = pool->gc->yng_lst; gen || !pass; gen = gen->prev)
+    for (gen = pool->gc->yng_lst; ; gen = gen->prev)
     {
 	/* We've run through all the young objects, jump to the old ones. */
-	if (!gen && !pass)
+	if (!gen)
 	{
-	    gen = pool->gc->old_lst;
-	    pass++;
+	    if (pass++)
+		break;
+	    gen = pool->gc->yng_lst;
 	}
 	
 
@@ -1768,7 +1770,7 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
     {
 #ifdef BIG_DUMP
 	for (h = gen->fst_free; (UINTVAL)h < (UINTVAL)gen->first; h = gc_gmc_next_hdr(h))
-	    fprintf(stderr, "Before compacting, yng_lst: %p -> (%p, %p) - %ld\n", Gmc_PMC_hdr_get_PMC(h), h, Gmc_PMC_hdr_get_BODY(h), Gmc_PMC_hdr_get_FLAGS(h));
+	    fprintf(stderr, "Before compacting, yng_lst: %p -> (%p, %p) - %ld - %p\n", Gmc_PMC_hdr_get_PMC(h), h, Gmc_PMC_hdr_get_BODY(h), Gmc_PMC_hdr_get_FLAGS(h), Gmc_PMC_hdr_get_BODY(h)->data);
 #endif
 	gc_gmc_compact_gen(interpreter, gen);
 #ifdef BIG_DUMP
@@ -1791,6 +1793,19 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
 	    gen = pool->gc->old_lst;
 	}
     }
+#ifdef BIG_DUMP
+    for (gen = pool->gc->old_fst; gen; gen = gen->next)
+    {
+	if (!gen)
+	{
+	    if (pass++)
+		return;
+	    gen = pool->gc->yng_fst;
+	}
+	for (h = gen->fst_free; (UINTVAL)h < (UINTVAL)gen->first; h = gc_gmc_next_hdr(h))
+	    fprintf(stderr, "After GMC run: %p -> (%p,%p) - %ld - %p\n", Gmc_PMC_hdr_get_PMC(h), h, Gmc_PMC_hdr_get_BODY(h), Gmc_PMC_hdr_get_FLAGS(h), Gmc_PMC_hdr_get_BODY(h)->data);
+    }
+#endif
 }
 
 
