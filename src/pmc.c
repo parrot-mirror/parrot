@@ -106,7 +106,7 @@ pmc_reuse(Interp *interpreter, PMC *pmc, INTVAL new_type,
 #if ! PARROT_GC_GMC
     if (PObj_is_PMC_EXT_TEST(pmc) && pmc->pmc_ext)
 #else
-    if (PObj_is_PMC_EXT_TEST(pmc) && Gmc_has_PMC_EXT_TEST(pmc))
+    if (PObj_exists_PMC_EXT_TEST(pmc))
 #endif
     {
         has_ext = 1;
@@ -124,8 +124,8 @@ pmc_reuse(Interp *interpreter, PMC *pmc, INTVAL new_type,
     else {
         if (has_ext) {
 #if PARROT_GC_GMC
-	    mem_sys_free(PMC_data(pmc));
-	    PMC_data(pmc) = NULL;
+	    /*mem_sys_free(PMC_data(pmc));*/
+	    PObj_exists_PMC_EXT_CLEAR(pmc);
 #else
             /* if the PMC has a PMC_EXT structure,
              * return it to the pool/arena
@@ -136,16 +136,14 @@ pmc_reuse(Interp *interpreter, PMC *pmc, INTVAL new_type,
 #endif
         }
 #if PARROT_GC_GMC
-	Gmc_PMC_flag_CLEAR(has_ext,pmc);
 	PMC_metadata(pmc) = NULL;
 	PMC_sync(pmc) = NULL;
 	PMC_next_for_GC(pmc) = NULL;
-	PMC_data(pmc) = NULL;
 #else
         pmc->pmc_ext = NULL;
-#endif
 #if ! PMC_DATA_IN_EXT
         PMC_data(pmc) = NULL;
+#endif
 #endif
     }
 
@@ -455,10 +453,7 @@ create_class_pmc(Interp *interpreter, INTVAL type)
      */
     class = get_new_pmc_header(interpreter, type, PObj_constant_FLAG);
     if (PObj_is_PMC_EXT_TEST(class)) {
-#if PARROT_GC_GMC
-	if (Gmc_has_PMC_EXT_TEST(class))
-	    mem_sys_free(PMC_data(class));
-#else
+#if ! PARROT_GC_GMC
         /* if the PMC has a PMC_EXT structure,
          * return it to the pool/arena
          * we don't need it - basically only the vtable is important
@@ -470,11 +465,10 @@ create_class_pmc(Interp *interpreter, INTVAL type)
 #endif
     }
 #if PARROT_GC_GMC
-    Gmc_PMC_flag_CLEAR(has_ext,class);
+    PObj_exists_PMC_EXT_CLEAR(class);
     PMC_metadata(class) = NULL;
     PMC_sync(class) = NULL;
     PMC_next_for_GC(class) = NULL;
-    PMC_data(class) = NULL;
 #else
     class->pmc_ext = NULL;
 #endif

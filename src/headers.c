@@ -303,7 +303,7 @@ new_pmc_alloc_header(Interp *interpreter, UINTVAL flags, INTVAL is_typed, INTVAL
     }
     else
 #if PARROT_GC_GMC
-	Gmc_PMC_flag_CLEAR(has_ext,pmc);
+	PObj_exists_PMC_EXT_CLEAR(pmc);
 #else
         pmc->pmc_ext = NULL;
 #endif
@@ -392,8 +392,7 @@ Adds a new C<PMC_EXT> to C<pmc>.
 void
 add_pmc_ext(Interp *interpreter, PMC *pmc)
 {
-    Gmc_PMC_flag_SET(has_ext,pmc);
-    PObj_is_PMC_EXT_SET(pmc);
+    PObj_exists_PMC_EXT_SET(pmc);
 }
 
 #else 

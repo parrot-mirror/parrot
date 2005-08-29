@@ -780,7 +780,6 @@ gc_gmc_get_free_object(Interp *interpreter,
 {
     size_t size = sizeof(Gc_gmc_hdr) + sizeof(pobj_body);
     PMC *pmc = gc_gmc_get_free_object_of_size(interpreter, pool, size, 0);
-    Gmc_PMC_flag_CLEAR(is_pmc,pmc);
     return pmc;
 }
 
@@ -793,10 +792,6 @@ gc_gmc_get_free_sized_object(Interp *interpreter,
 {
     PMC *pmc = gc_gmc_get_free_object_of_size (interpreter, pool,
 	    sizeof(Gc_gmc_hdr) + size, 0);
-    if (size == sizeof(pobj_body))
-	Gmc_PMC_flag_CLEAR(is_pmc, pmc);
-    else
-	Gmc_PMC_flag_SET(is_pmc, pmc);
     return pmc;
 }
 
@@ -811,7 +806,6 @@ gc_gmc_get_free_typed_object(Interp *interpreter,
     INTVAL aggreg = vtable->flags & VTABLE_PMC_NEEDS_EXT;
     size_t size = sizeof(Gc_gmc_hdr) + vtable->size;
     PMC *pmc = gc_gmc_get_free_object_of_size (interpreter, pool, size, aggreg);
-    Gmc_PMC_flag_SET(is_pmc, pmc);
     return pmc;
 }
 
@@ -1094,7 +1088,7 @@ gc_gmc_sweep_from_hdr_list(Interp *interpreter, Gc_gmc_hdr *h)
 void gc_gmc_wb(Interp *interpreter, PMC *agg, void *old, void *new)
 {
     Gc_gmc_gen *gen;
-    if (PObj_is_PMC_TEST((PObj*)new) && Gmc_has_PMC_EXT_TEST((PMC*)new))
+    if (PObj_is_PMC_TEST((PObj*)new) && PObj_exists_PMC_EXT_TEST((PMC*)new))
     {
 	gen = Gmc_PMC_get_GEN((PMC*)agg);
 	if (!Gmc_PMC_flag_TEST(is_igp, agg))

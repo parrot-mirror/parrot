@@ -141,6 +141,7 @@ mem_allocate(Interp *interpreter, size_t *req_size,
          */
         Parrot_do_dod_run(interpreter, DOD_trace_stack_FLAG);
 #if !PARROT_GC_IMS
+#if !PARROT_GC_GMC
         /* Compact the pool if allowed and worthwhile */
         if (pool->compact) {
             /* don't bother reclaiming if it's just chicken feed */
@@ -153,6 +154,7 @@ mem_allocate(Interp *interpreter, size_t *req_size,
             }
 
         }
+#endif
 #endif
         if (pool->top_block->free < size) {
             if (pool->minimum_block_size < 65536*16)
