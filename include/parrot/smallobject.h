@@ -21,10 +21,6 @@ struct Small_Object_Arena {
     struct Small_Object_Arena *prev;
     struct Small_Object_Arena *next;
     void *start_objects;
-#if PARROT_GC_GMC
-    INTVAL start_looking;/* Start looking for free objects from here. */
-    gmc_bitmap bitmap;   /* Tells which objects are allocated. */
-#endif
 };
 
 #if ARENA_DOD_FLAGS

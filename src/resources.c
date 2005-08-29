@@ -262,12 +262,7 @@ compact_pool(Interp *interpreter, struct Memory_Pool *pool)
 
             b = ARENA_to_PObj(cur_buffer_arena->start_objects);
 	    lim = (void*)((char*)b + object_size * cur_buffer_arena->total_objects);
-#if PARROT_GC_GMC
-	    for (i = 0;(UINTVAL)b < (UINTVAL)lim; i++) {
-		if (gc_gmc_bitmap_test(cur_buffer_arena->bitmap, i)) {
-#else
             for (i = 0; i < cur_buffer_arena->used; i++) {
-#endif
                 /* ! (immobile | on_free_list | constant | external | sysmem) */
                 if (PObj_buflen(b) && PObj_is_movable_TESTALL(b)) {
                     struct Buffer_Tail *tail =
@@ -329,9 +324,6 @@ compact_pool(Interp *interpreter, struct Memory_Pool *pool)
                         cur_spot += cur_size;
                     }
                 }
-#if PARROT_GC_GMC
-		}
-#endif
                 b = (Buffer *)((char *)b + object_size);
             }
         }

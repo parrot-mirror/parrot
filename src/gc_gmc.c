@@ -220,6 +220,7 @@ of them. If not, we don't touch anything.
 #if PARROT_GC_GMC
 
 
+
 /* How many more objects do we want allocated next time ? */
 #define UNITS_PER_ALLOC_GROWTH_FACTOR 1.75
 /* Hard limit for a single header allocation. */
@@ -294,7 +295,7 @@ Initialize the whole GC system.
 
 */
 
-
+#if 0
 
 /* Allocates a new empty bitmap of the requested size. */
 static gmc_bitmap
@@ -353,6 +354,7 @@ gc_gmc_bitmap_clear_from_hdr(PObj *obj, struct Small_Object_Pool *pool)
     gc_gmc_bitmap_clear(arena->bitmap, index);
 }
 
+#endif
 
 
 /* Allocates and initializes a generation, but does not plug it 
@@ -671,23 +673,21 @@ gc_gmc_next_hdr(Gc_gmc_hdr *hdr)
 gc_gmc_add_free_object(Interp *interpreter,
 	struct Small_Object_Pool *pool, void *to_add)
 {
-    PObj_live_CLEAR((PObj*)to_add);
+    *(void**)to_add = pool->free_list;
+    pool->free_list = to_add;
 }
 
 
-
-/* Returns a new object with a body of the required size. */
-    static void *
-gc_gmc_get_free_object_of_size(Interp *interpreter,
+/* Allocate a body of the required size. */
+static Gc_gmc_hdr *
+gc_gmc_new_body(Interp *interpreter,
 	struct Small_Object_Pool *pool, size_t size, INTVAL aggreg)
 {
-    void *pmc_body;
-    void *pmc;
+    Gc_gmc_hdr *hdr;
     void *ptr;
     UINTVAL i;
     Gc_gmc *gc = pool->gc;
     Gc_gmc_gen *gen, *gen_ref;
-    struct Small_Object_Arena *arena;
 
     /* Allocate the pmc_body */
     gen = (aggreg) ? gc->yng_lst : gc->old_lst;
@@ -719,56 +719,46 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
     }
 
     gen->fst_free = (void*)((char*)gen->fst_free - size);
-    pmc_body = gen->fst_free;
+    hdr = gen->fst_free;
     gen->remaining -= size;
     gen->alloc_obj++;
-    memset(pmc_body, 0, size);
-#ifdef GMC_DEBUG
-    fprintf (stderr,"Allocated size %d in gen %p, first: %p,"
-	    "remaining %d, next_gen: %p, fst_free: %p, lim: %p\n", 
-	    size, gen, gen->first, gen->remaining, gen->next, gen->fst_free, 
-	    (char*)gen->fst_free + gen->remaining);
-#endif
+    memset(hdr, 0, size);
+    Gmc_PMC_hdr_get_GEN(hdr) = gen;
+	
+    return hdr;
+}
 
-    /* Allocate the PMC* */
 
-    /* If we don't have any objects left, find more. */
-    if (!pool->num_free_objects)
-	(*pool->more_objects) (interpreter, pool);
 
-    /* Find an arena with a free object. */
-    for (arena = pool->free_list; arena->total_objects == arena->used;
-	    arena = (arena->prev) ? arena->prev : pool->last_Arena);
+/* Returns a new object with a body of the required size. */
+    static void *
+gc_gmc_get_free_object_of_size(Interp *interpreter,
+	struct Small_Object_Pool *pool, size_t size, INTVAL aggreg)
+{
+    Gc_gmc_hdr *hdr;
+    void *obj;
+    void *ptr;
+    struct Small_Object_Arena *arena;
+    
+    hdr = gc_gmc_new_body(interpreter, pool, size, aggreg);
+    
+    if (!pool->free_list)
+	(*pool->more_objects)(interpreter, pool);
 
-    /* Now find this object. */
-    i = arena->start_looking;
-    pmc = (char*)arena->start_objects + i * pool->object_size;
-    while (gc_gmc_bitmap_test(arena->bitmap, i))
-    {
-	if (i++ < arena->total_objects)
-	    pmc = (PMC*)((char*)pmc + pool->object_size);
-	else {
-	    i = 0;
-	    pmc = arena->start_objects;
-	}
-    }
+    obj = pool->free_list;
+    pool->free_list = *(void**)pool->free_list;
 
-    pool->free_list = arena;
-    gc_gmc_bitmap_set(arena->bitmap, i);
-    arena->start_looking = (i + 1) % arena->total_objects;
-    ++arena->used;
-    --pool->num_free_objects;
-    PMC_body((PMC*)pmc) = Gmc_PMC_hdr_get_BODY((Gc_gmc_hdr*)pmc_body);
-    Gmc_PMC_hdr_get_GEN((Gc_gmc_hdr*)pmc_body) = gen;
-
-    Gmc_PMC_hdr_get_PMC((Gc_gmc_hdr*)pmc_body) = pmc;
-    PObj_get_FLAGS((PObj*)pmc) = 0;
-    Gmc_PMC_hdr_get_FLAGS((Gc_gmc_hdr*)pmc_body) = 0;
+    PObj_flags_SETTO((PObj*)obj, 0);
+    
+    pool->num_free_objects--;
+    PMC_body((PMC*)obj) = Gmc_PMC_hdr_get_BODY(hdr);
+    Gmc_PMC_hdr_get_PMC(hdr) = obj;
+    assert(obj);
 
 #ifdef BIG_DUMP
-    fprintf(stderr, "Allocated ptr %p with body at %p from gen %p\n", pmc, Gmc_PMC_hdr_get_BODY(pmc_body), gen);
+    fprintf(stderr, "Allocated obj %p -> (%p, %p) (pool %p, new free_list: %p)\n", obj, hdr, Gmc_PMC_hdr_get_BODY(hdr), pool, pool->free_list);
 #endif
-    return pmc;
+    return obj;
 }
 
 
@@ -823,19 +813,23 @@ gc_gmc_alloc_objects(Interp *interpreter, struct Small_Object_Pool *pool)
 	mem_sys_allocate_zeroed(pool->objects_per_alloc * pool->object_size);
     Parrot_append_arena_in_pool(interpreter, pool, new_arena, pool->object_size * pool->objects_per_alloc);
     new_arena->used = 0;
-    new_arena->start_looking = 0;
-    new_arena->bitmap = gc_gmc_new_bitmap(pool->objects_per_alloc);
     pool->num_free_objects += pool->objects_per_alloc;
     pool->total_objects += pool->objects_per_alloc;
+
+    /* Update linked list */
+    for (ptr = new_arena->start_objects;
+	    (UINTVAL)ptr < (UINTVAL)new_arena->start_objects + 
+	    pool->object_size * pool->objects_per_alloc;
+	    ptr += pool->object_size)
+    {
+	(*pool->add_free_object)(interpreter,pool,ptr);
+    }
 
     /* Allocate more next time. */
     pool->objects_per_alloc = 
 	(UINTVAL) pool->objects_per_alloc * UNITS_PER_ALLOC_GROWTH_FACTOR;
     if (pool->object_size * pool->objects_per_alloc > POOL_MAX_BYTES)
 	pool->objects_per_alloc = POOL_MAX_BYTES / pool->object_size;
-
-    /* Tell alloc to begin looking in this arena */
-    pool->free_list = new_arena;
 
 #ifdef GMC_DEBUG
     fprintf(stderr, "Allocated new objects at arena %p, %p\n",
@@ -1183,6 +1177,12 @@ gc_gmc_run(Interp *interpreter, int flags)
 
     /* This interpreter will be destroyed, free everything. */
     if (flags & DOD_finish_FLAG) {
+
+	struct Small_Object_Pool *pool = arena_base->pmc_pool;
+	Gc_gmc_gen *gen;
+	INTVAL pass = 0;
+	Gc_gmc_hdr *h;
+	
 	/* First the pmc headers */
 	Parrot_forall_header_pools(interpreter, POOL_ALL, 0, gc_gmc_clear_live);
 	Parrot_forall_header_pools(interpreter, POOL_PMC, 0, sweep_pmc);
@@ -1218,41 +1218,47 @@ gc_gmc_run(Interp *interpreter, int flags)
 static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 	int flag, void *arg)
 {
-    struct Arenas *arena_base = interpreter->arena_base;
-    PMC *ptr;
-    struct Small_Object_Arena *arena;
-    int sweep = 0;
-    UINTVAL i;
 
-    /* Go through all the headers of the pool. */
-    for (arena = pool->last_Arena; arena; arena = arena->prev)
+    Gc_gmc_hdr *hdr;
+    Gc_gmc_gen *gen;
+    INTVAL pass = 0;
+    PMC *pmc, *old_pmc;
+    int sweep = 0;
+
+    old_pmc = NULL;
+    for (gen = pool->gc->old_fst; gen; gen = gen->next)
     {
-	for (i = 0, ptr = (PMC*)arena->start_objects; (UINTVAL)ptr < 
-		(UINTVAL)((char*)arena->start_objects +
-			  pool->object_size * arena->total_objects);
-		ptr = (PMC*)((char*)ptr + pool->object_size), i++)
+	if (!gen && !pass++)
+	    gen = pool->gc->yng_fst;
+	for (hdr = gen->fst_free; (UINTVAL)hdr < (UINTVAL)gen->first; hdr = gc_gmc_next_hdr(hdr))
 	{
-	    if (gc_gmc_bitmap_test(arena->bitmap,i) && !PObj_live_TEST(ptr))
+	    pmc = Gmc_PMC_hdr_get_PMC(hdr);
+	    /* We can do it only now, or we don't know how to go to the next
+	     * body. */
+	    if (old_pmc)
+		(*pool->add_free_object)(interpreter, pool, old_pmc);
+	    old_pmc = NULL;
+
+	    if (!PObj_live_TEST(pmc))
 	    {
 #ifdef BIG_DUMP
-		fprintf(stderr, "sweep_pmc: %p, body at %p\n", ptr, PMC_body(ptr));
+		fprintf(stderr, "sweep_pmc: %p -> (%p, %p)\n", pmc, hdr, Gmc_PMC_hdr_get_BODY(hdr));
 #endif
-		if (PObj_needs_early_DOD_TEST(ptr))
-		    --arena_base->num_early_DOD_PMCs;
-		if (PObj_active_destroy_TEST(ptr)) {
-		    VTABLE_destroy(interpreter, ptr);
+		if (PObj_needs_early_DOD_TEST(pmc))
+		    --interpreter->arena_base->num_early_DOD_PMCs;
+		if (PObj_active_destroy_TEST(pmc)) {
+		    VTABLE_destroy(interpreter, pmc);
 		}
-		/*fprintf (stderr, "Testing for igp: %p\n", Gmc_PMC_get_HDR(ptr));*/
-		if (Gmc_PMC_flag_TEST(is_igp, ptr))
+		if (Gmc_PMC_flag_TEST(is_igp, pmc))
 		{
 #ifdef GMC_DEBUG
 		    fprintf(stderr, "%p: is_igp: %s\n", Gmc_PMC_get_HDR(ptr), (Gmc_PMC_hdr_flag_TEST(is_igp,Gmc_PMC_get_HDR(ptr))) ? "set" : "clear");
 #endif
-		    gc_gmc_sweep_from_hdr_list(interpreter, Gmc_PMC_get_HDR(ptr));
+		    gc_gmc_sweep_from_hdr_list(interpreter, hdr);
 		}
-		gc_gmc_bitmap_clear(arena->bitmap, i);
+		old_pmc = pmc;
 		sweep++;
-		(Gmc_PMC_get_GEN(ptr))->alloc_obj--;
+		(Gmc_PMC_hdr_get_GEN(hdr))->alloc_obj--;
 	    }
 	}
     }
@@ -1272,21 +1278,26 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 static int sweep_buf (Interp *interpreter, struct Small_Object_Pool *pool,
 	int flag, void *arg)
 {
-    struct Arenas *arena_base = interpreter->arena_base;
-    PObj *obj;
-    struct Small_Object_Arena *arena;
-    UINTVAL i;
+    Gc_gmc_hdr *hdr;
+    Gc_gmc_gen *gen;
+    INTVAL pass = 0;
+    PObj *obj, *old_obj;
+    
+    old_obj = NULL;
 
-    /* Go through all the headers of the pool. */
-    for (arena = pool->last_Arena; arena; arena = arena->prev)
+    for (gen = pool->gc->old_fst; gen; gen = gen->next)
     {
-	for (i = 0, obj = (PObj*)arena->start_objects; (UINTVAL)obj < 
-		(UINTVAL)((char*)arena->start_objects +
-			  pool->object_size * arena->total_objects);
-		obj = (PObj*)((char*)obj + pool->object_size), i++)
+	if (!gen && !pass++)
+	    gen = pool->gc->yng_fst;
+	for (hdr = gen->fst_free; (UINTVAL)hdr < (UINTVAL)gen->first; hdr = gc_gmc_next_hdr(hdr))
 	{
+	    obj = (PObj*)Gmc_PMC_hdr_get_PMC(hdr);
+	    if (old_obj)
+		(*pool->add_free_object)(interpreter, pool, old_obj);
+	    old_obj = NULL;
 
-	    if (gc_gmc_bitmap_test(arena->bitmap, i) && !PObj_live_TEST(obj) && PMC_body(obj))
+	    /* Go through all the headers of the pool. */
+	    if (!PObj_live_TEST(obj))
 	    {
 		if (PObj_sysmem_TEST(obj) && PObj_bufstart(obj)) {
 		    /* has sysmem allocated, e.g. string_pin */
@@ -1310,7 +1321,7 @@ static int sweep_buf (Interp *interpreter, struct Small_Object_Pool *pool,
 		    }
 		    PObj_buflen(obj) = 0;
 		}
-		gc_gmc_bitmap_clear(arena->bitmap, i);
+		old_obj = obj;
 	    }
 	}
     }
@@ -1323,20 +1334,16 @@ static int sweep_buf (Interp *interpreter, struct Small_Object_Pool *pool,
 gc_gmc_clear_live(Interp *interpreter, struct Small_Object_Pool *pool,
 	int flags, void *arg)
 {
-    PObj *obj;
-    struct Small_Object_Arena *arena;
-    UINTVAL i;
+    Gc_gmc_hdr *hdr;
+    Gc_gmc_gen *gen;
+    INTVAL pass = 0;
 
-    for (arena = pool->last_Arena; arena; arena = arena->prev)
+    for (gen = pool->gc->old_fst; gen; gen = gen->next)
     {
-	for (i = 0, obj = (PObj*)arena->start_objects; (UINTVAL)obj < 
-		(UINTVAL)((char*)arena->start_objects +
-			  pool->object_size * arena->total_objects);
-		obj = (PObj*)((char*)obj + pool->object_size), i++)
-	{
-	    if (gc_gmc_bitmap_test(arena->bitmap, i))
-		PObj_live_CLEAR(obj);
-	}
+	if (!gen && !pass++)
+	    gen = pool->gc->yng_fst;
+	for (hdr = gen->fst_free; (UINTVAL)hdr < (UINTVAL)gen->first; hdr = gc_gmc_next_hdr(hdr))
+	    PObj_live_CLEAR(Gmc_PMC_hdr_get_PMC(hdr));
     }
     return 0;
 }
@@ -1357,17 +1364,6 @@ gc_gmc_init_pool_for_ms(Interp *interpreter, struct Small_Object_Pool *pool)
 	}
 	gen->marked = 0;
     }
-#if 0
-    /* Find the most recent object ever allocated and prepare for M&S. */
-    hdr = pool->gc->yng_lst->first;
-    while (1) {
-	h2 = gc_gmc_next_hdr(hdr);
-	if ((UINTVAL)h2 >= (UINTVAL)pool->gc->yng_lst->fst_free)
-	    break;
-	hdr = h2;
-    }
-    pool->gc->gray = hdr;
-#endif
 }
 
 
@@ -1639,7 +1635,7 @@ gc_gmc_copy_hdr(Interp *interpreter, Gc_gmc_hdr *from, Gc_gmc_hdr *to)
 static void
 gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
 {
-    Gc_gmc_hdr *orig;
+    Gc_gmc_hdr *orig, *old_orig;
     Gc_gmc_hdr *dest;
     size_t remaining;
     size_t size;
@@ -1650,19 +1646,26 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
     orig = dest = gen->fst_free;
     remaining = (char*)gen->first - (char*)gen->fst_free + gen->remaining;
 
+    old_orig = NULL;
     /* We are sure that orig will be the first to hit the barrier. */
     while ((UINTVAL)orig < (UINTVAL)gen->first)
     {
+	if (old_orig)
+	    (*gen->pool->add_free_object)(interpreter, gen->pool, Gmc_PMC_hdr_get_PMC(old_orig));
+	old_orig = NULL;
 	/* Free any object that has the live flag clear. */
 	while (((UINTVAL)orig < (UINTVAL)gen->first || !(leave = 1)) && !PObj_live_TEST(Gmc_PMC_hdr_get_PMC(orig)))
 	{
+	    if (old_orig)
+		(*gen->pool->add_free_object)(interpreter, gen->pool, Gmc_PMC_hdr_get_PMC(old_orig));
+
 	    if (PObj_needs_early_DOD_TEST(Gmc_PMC_hdr_get_PMC(orig)))
 		--interpreter->arena_base->num_early_DOD_PMCs;
 	    if (PObj_active_destroy_TEST(Gmc_PMC_hdr_get_PMC(orig)))
 		VTABLE_destroy(interpreter, Gmc_PMC_hdr_get_PMC(orig));
 	    if (Gmc_PMC_hdr_flag_TEST(is_igp, orig))
 		gc_gmc_sweep_from_hdr_list(interpreter, orig);
-	    gc_gmc_bitmap_clear_from_hdr((PObj*)Gmc_PMC_hdr_get_PMC(orig), gen->pool);
+	    old_orig = orig;
 	    orig = gc_gmc_next_hdr(orig);
 	    gen->alloc_obj--;
 	    destroyed++;
