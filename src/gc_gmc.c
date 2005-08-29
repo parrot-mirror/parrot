@@ -220,7 +220,6 @@ of them. If not, we don't touch anything.
 #if PARROT_GC_GMC
 
 
-
 /* How many more objects do we want allocated next time ? */
 #define UNITS_PER_ALLOC_GROWTH_FACTOR 1.75
 /* Hard limit for a single header allocation. */
@@ -1031,8 +1030,16 @@ gc_gmc_store_hdr_list(Interp *interpreter, Gc_gmc_hdr_list *l, Gc_gmc_hdr *h)
 static INTVAL
 gc_gmc_find_igp(Gc_gmc_hdr_list *list, PMC *p)
 {
-    return Gmc_PMC_flag_TEST(is_igp, p);
+    Gc_gmc_hdr_store *store;
+    INTVAL i;
+
+    for (store = list->first; store; store = store->next)
+	for (i = 0; (UINTVAL)&store->store[i] < (UINTVAL)store->ptr; i++)
+	    if (store->store[i] == p)
+		return 1;
+    return 0;
 }
+
 
 
 
@@ -1069,7 +1076,7 @@ gc_gmc_sweep_from_hdr_list(Interp *interpreter, Gc_gmc_hdr *h)
 	    }
 	}
     }
-    fprintf (stderr, "bad igp: %p\n", h);
+    fprintf (stderr, "bad igp: %p -> %p %p\n", Gmc_PMC_hdr_get_PMC(h), h, Gmc_PMC_hdr_get_BODY(h));
     internal_exception(1, "IGP pointer not found for removal!\n");
 }
 
@@ -1081,7 +1088,7 @@ void gc_gmc_wb(Interp *interpreter, PMC *agg, void *old, void *new)
     if (PObj_is_PMC_TEST((PObj*)new) && Gmc_has_PMC_EXT_TEST((PMC*)new))
     {
 	gen = Gmc_PMC_get_GEN((PMC*)agg);
-	if (!gc_gmc_find_igp(gen->IGP, agg))
+	if (!Gmc_PMC_flag_TEST(is_igp, agg))
 	    gc_gmc_store_hdr_list(interpreter, gen->IGP, Gmc_PMC_get_HDR(agg));
 	Gmc_PMC_flag_SET(is_igp, agg);
     }
@@ -1616,9 +1623,6 @@ gc_gmc_copy_hdr(Interp *interpreter, Gc_gmc_hdr *from, Gc_gmc_hdr *to)
     size = gc_gmc_get_size(interpreter, from);
     gen = Gmc_PMC_hdr_get_GEN(from);
     memmove(to, from, size);
-#ifdef BIG_DUMP
-    fprintf(stderr, "copy_hdr: ptr %p, old_body %p, new_body %p\n", Gmc_PMC_hdr_get_PMC(from), PMC_body(Gmc_PMC_hdr_get_PMC(from)), Gmc_PMC_hdr_get_BODY(to));
-#endif
     Gmc_PMC_hdr_get_GEN(to) = gen;
     PMC_body(Gmc_PMC_hdr_get_PMC(to)) = Gmc_PMC_hdr_get_BODY(to);
     return gc_gmc_next_hdr(to);
@@ -1671,10 +1675,15 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
     /* Shift everything to align them to the higher memory */
     size = (char*)dest - (char*)gen->fst_free;
     memmove((char*)gen->first - size, gen->fst_free, size);
-    for (orig = gen->fst_free; (UINTVAL)orig < (UINTVAL)gen->first; orig = gc_gmc_next_hdr(orig))
-	PMC_body(Gmc_PMC_hdr_get_PMC(orig)) = Gmc_PMC_hdr_get_BODY(orig);
-    
     gen->fst_free = (char*)gen->first - size;
+    for (orig = gen->fst_free; (UINTVAL)orig < (UINTVAL)gen->first; orig = gc_gmc_next_hdr(orig))
+    {
+#ifdef BIG_DUMP
+	fprintf(stderr, "copy_hdr: ptr %p, old_body %p, new_body %p\n", Gmc_PMC_hdr_get_PMC(orig), PMC_body(Gmc_PMC_hdr_get_PMC(orig)), Gmc_PMC_hdr_get_BODY(orig));
+#endif
+	PMC_body(Gmc_PMC_hdr_get_PMC(orig)) = Gmc_PMC_hdr_get_BODY(orig);
+    }
+    
     gen->remaining = remaining;
 #ifdef GMC_DEBUG
     fprintf(stderr, "gen %p, destroyed %d, remaining %d\n", gen, destroyed, gen->alloc_obj);
@@ -1696,7 +1705,6 @@ gc_gmc_merge_gen(Interp *interpreter, Gc_gmc_gen *old, Gc_gmc_gen *yng)
     pool = yng->pool;
     size = (UINTVAL)yng->first - (UINTVAL)yng->fst_free;
 
-    fprintf(stderr, "Before merging: gen: %p : %p -> %p\n", old, (char*)old->fst_free - old->remaining, old->first);
     /* Check we have enough space for this. */
     if (size >= (UINTVAL)old->remaining)
 	return;
@@ -1708,13 +1716,14 @@ gc_gmc_merge_gen(Interp *interpreter, Gc_gmc_gen *old, Gc_gmc_gen *yng)
     /* And update all pointers. */
     for (; (UINTVAL)h < (UINTVAL)old->fst_free; h = gc_gmc_next_hdr(h))
     {
-#ifndef BIG_DUMP
+#ifdef BIG_DUMP
 	fprintf(stderr, "merge_gen: h %p, ptr %p, old_body at %p, new body at %p\n", h, Gmc_PMC_hdr_get_PMC(h), PMC_body(Gmc_PMC_hdr_get_PMC(h)), Gmc_PMC_hdr_get_BODY(h));
 #endif
 	Gmc_PMC_hdr_get_GEN(h) = old;
 	PMC_body(Gmc_PMC_hdr_get_PMC(h)) = Gmc_PMC_hdr_get_BODY(h);
     }
     old->fst_free = (void*)((char*)old->fst_free - size);
+
 
     for (store = yng->IGP->first; store; store = store->next)
     {
@@ -1735,7 +1744,6 @@ gc_gmc_merge_gen(Interp *interpreter, Gc_gmc_gen *old, Gc_gmc_gen *yng)
     
     for (store = yng->IGP->first; store; st2 = store->next, mem_sys_free(store), store = st2);
     gc_gmc_gen_free(yng);
-    fprintf(stderr, "merging: gen: %p : %p -> %p\n", old, (char*)old->fst_free - old->remaining, old->first);
 }
 
 
@@ -1745,36 +1753,31 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
 {
     Gc_gmc_gen *gen;
     Gc_gmc_gen *ogen;
-    /* We want to treat the last_gen */
-    INTVAL last_gen = 0;
     INTVAL pass = 0;
+    Gc_gmc_hdr *h;
     
     gen = pool->gc->yng_lst;
     ogen = NULL;
 
-#ifdef GMC_DEBUG
-    for (pass = 0, gen = pool->gc->old_fst; ; gen = gen->next)
-    {
-	if (!gen)
-	{
-	    if (pass++)
-		goto prout;
-	    gen = pool->gc->yng_fst;
-	}
-	fprintf(stderr, "Before compaction: gen: %p : %p -> %p\n", gen, (char*)gen->fst_free - gen->remaining, gen->first);
-    }
-prout:
-    fprintf(stderr, "Compacting...\n");
-    
-    pass = 0;
-    gen = pool->gc->yng_lst;
-#endif
+
     /* Compact only the gen that were examined. */
-    while ((UINTVAL)gen > (UINTVAL)pool->gc->white || !last_gen++)
+    while (gen->marked)
     {
+#ifdef BIG_DUMP
+	for (h = gen->fst_free; (UINTVAL)h < (UINTVAL)gen->first; h = gc_gmc_next_hdr(h))
+	    fprintf(stderr, "Before compacting, yng_lst: %p -> (%p, %p) - %ld\n", Gmc_PMC_hdr_get_PMC(h), h, Gmc_PMC_hdr_get_BODY(h), Gmc_PMC_hdr_get_FLAGS(h));
+#endif
 	gc_gmc_compact_gen(interpreter, gen);
+#ifdef BIG_DUMP
+	for (h = gen->fst_free; (UINTVAL)h < (UINTVAL)gen->first; h = gc_gmc_next_hdr(h))
+	    fprintf(stderr, "Before merging, yng_lst: %p -> (%p, %p) - %ld\n", Gmc_PMC_hdr_get_PMC(h), h, Gmc_PMC_hdr_get_BODY(h), Gmc_PMC_hdr_get_FLAGS(h));
+#endif
 	if (ogen)
 	    gc_gmc_merge_gen(interpreter, gen, ogen);
+#ifdef BIG_DUMP
+	for (h = gen->fst_free; (UINTVAL)h < (UINTVAL)gen->first; h = gc_gmc_next_hdr(h))
+	    fprintf(stderr, "After merging, yng_lst: %p -> (%p, %p) - %ld\n", Gmc_PMC_hdr_get_PMC(h), h, Gmc_PMC_hdr_get_BODY(h), Gmc_PMC_hdr_get_FLAGS(h));
+#endif
 	ogen = gen;
 	gen = gen->prev;
 	if (!gen)
@@ -1785,19 +1788,6 @@ prout:
 	    gen = pool->gc->old_lst;
 	}
     }
-
-#ifdef GMC_DEBUG
-    for (pass = 0, gen = pool->gc->old_fst; ; gen = gen->next)
-    {
-	if (!gen)
-	{
-	    if (pass++)
-		return;
-	    gen = pool->gc->yng_fst;
-	}
-	fprintf(stderr, "compaction: gen: %p : %p -> %p\n", gen, (char*)gen->fst_free - gen->remaining, gen->first);
-    }
-#endif
 }
 
 
