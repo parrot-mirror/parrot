@@ -741,12 +741,21 @@ gc_gmc_get_free_object_of_size(Interp *interpreter,
 	    arena = (arena->prev) ? arena->prev : pool->last_Arena);
 
     /* Now find this object. */
-    for (pmc = arena->start_objects, i = 0;
-	    gc_gmc_bitmap_test(arena->bitmap, i);
-	    pmc = (PMC*)((char*)pmc + pool->object_size), i++);
+    i = arena->start_looking;
+    pmc = (char*)arena->start_objects + i * pool->object_size;
+    while (gc_gmc_bitmap_test(arena->bitmap, i))
+    {
+	if (i++ < arena->total_objects)
+	    pmc = (PMC*)((char*)pmc + pool->object_size);
+	else {
+	    i = 0;
+	    pmc = arena->start_objects;
+	}
+    }
 
     pool->free_list = arena;
     gc_gmc_bitmap_set(arena->bitmap, i);
+    arena->start_looking = (i + 1) % arena->total_objects;
     ++arena->used;
     --pool->num_free_objects;
     PMC_body((PMC*)pmc) = Gmc_PMC_hdr_get_BODY((Gc_gmc_hdr*)pmc_body);
@@ -820,7 +829,7 @@ gc_gmc_alloc_objects(Interp *interpreter, struct Small_Object_Pool *pool)
 	mem_sys_allocate_zeroed(pool->objects_per_alloc * pool->object_size);
     Parrot_append_arena_in_pool(interpreter, pool, new_arena, pool->object_size * pool->objects_per_alloc);
     new_arena->used = 0;
-    new_arena->start_looking = new_arena->start_objects;
+    new_arena->start_looking = 0;
     new_arena->bitmap = gc_gmc_new_bitmap(pool->objects_per_alloc);
     pool->num_free_objects += pool->objects_per_alloc;
     pool->total_objects += pool->objects_per_alloc;
