@@ -250,6 +250,7 @@ typedef struct _gc_gmc {
     void *gray;           /* Current object being examined during M&S. */
     void *white;          /* Point at which we stopped m&s phase. */
     Gc_gmc_hdr *igp_ref;  /* Current IGP start. */
+    struct _gc_gmc *dummy_gc; /* For use in gc_gmc_more_bodies */
 } Gc_gmc;
 
 #endif /* PARROT_GC_GMC */

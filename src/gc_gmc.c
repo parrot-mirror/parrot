@@ -83,7 +83,7 @@ list.
 
 On the other hand, bodies are variable-sized. To be able to run the GC, we need 
 them to be allocated with an invariant : an object A is older than an object B 
-if and only if the address of the body of A is lower than the one of B. And we 
+if and only if the address of the body of A is higher than the one of B. And we 
 add another rule : an aggregate object (i.e. contains pointers to other objects)
 is always younger than a non-aggregate one.
 
@@ -95,8 +95,14 @@ We store bodies in structures called generations. A generation looks like :
        v			   +--------------------+{             }
     ...[ XXXXX Used memory XXXXXX ][ 000000 Not used yet memory 000000 ]...
 
+    ...[ Stats ][ Gen *prev ][ Gen *next ][ remaining ][ fst_free ][ first ]...
+                      +-------------------------+           |          |
+        ______________|__________________ +-----------------+          +---+
+       {                                 }v                                v
+    ...[ 0000000 Unused memory 000000000 ][ XXXXXXXXX Used memory XXXXXXXXX]...
+
     
-The area between C<first> and C<fst_free + remaining> has been allocated at the
+The area between C<fst_free - remaining> and C<first> has been allocated at the
 time of the generation initialization and is fixed. We allocate objects at
 fst_free, moving accordingly the fst_free pointer and the remaining indicator.
 When remaining is not high enough for allocating the object, we switch to gen->next
@@ -104,19 +110,19 @@ which, by construction, has a memory address higher than the current gen.
 
 Generations are organized in the following way :
       
-           allocated            free             allocated           free
-        ____________________  __________     ___________________  ___________
-       {                    }{          }   {                   }{           }
+          free            allocated            free          allocated
+        _________  _____________________     ________  ______________________
+       {         }{                     }   {        }{                      }
 
-    ...[old_fst]->[...]->[old_lst]->[...] | [yng_fst]->[...]->[yng_lst]->[...]..
+    ...[...]<-[yng_lst]<-[...]<-[yng_fst] | [...]<-[old_lst]<-[...]<-[old_fst]..
     
        {________________________________}   {________________________________}
-              non-aggregate objects                 aggregate objects
+              aggregate objects                   non- aggregate objects
 
 
 Thus the allocation is pretty straightforward : start at old_lst or yng_lst
-depending on whether you are an aggregate or not, return fst_free if there
-is enough space or switch to the next gen.
+depending on whether you are an aggregate or not, return fst_free - size if
+there is enough space or switch to the next gen.
 
 When no more generations are available, we have to reallocate a whole new set
 of generations, copy the whole content of the current set to the new one,
@@ -468,7 +474,7 @@ gc_gmc_insert_gen(Interp *interpreter, Gc_gmc *gc, Gc_gmc_gen *gen)
 gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool) 
 {
     struct Arenas *arena_base;
-    Gc_gmc *gc;
+    Gc_gmc *gc, *dummy_gc;
     Gc_gmc_gen *gen;
     int i;
 
@@ -480,6 +486,7 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     pool->more_objects    = gc_gmc_more_objects;
 
     gc = mem_sys_allocate(sizeof(Gc_gmc));
+    dummy_gc = mem_sys_allocate_zeroed(sizeof(Gc_gmc));
 
     gc->nb_gen = GMC_GEN_INIT_NUMBER;
     gc->nb_empty_gen = GMC_GEN_INIT_NUMBER;
@@ -490,6 +497,7 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     gc->old_lst = NULL;
     gc->igp_ref = NULL;
     gc->gray = NULL;
+    gc->dummy_gc = dummy_gc;
     gc->state = GMC_NORMAL_STATE;
     gc->timely = gc_gmc_gen_init(interpreter, pool);
     gc->constant = gc_gmc_gen_init(interpreter, pool);
@@ -890,7 +898,7 @@ gc_gmc_more_bodies (Interp *interpreter,
 {
     Gc_gmc *gc = pool->gc;
     /* XXX: allocate dummy_gc at init time as a field of Gc_gmc */
-    Gc_gmc *dummy_gc = mem_sys_allocate (sizeof(Gc_gmc));
+    Gc_gmc *dummy_gc = pool->gc->dummy_gc;
     Gc_gmc_gen *gen, *ogen, *ogen_nxt;
     INTVAL nb_gen = 2 * gc->nb_gen;
     int i;
@@ -941,8 +949,6 @@ gc_gmc_more_bodies (Interp *interpreter,
     gc->old_fst = dummy_gc->old_fst;
     gc->old_lst = dummy_gc->old_lst;
     gc->nb_gen = nb_gen;
-
-    mem_sys_free(dummy_gc);
 
 #ifdef GMC_DEBUG
     fprintf(stderr, "Done with allocation\n");
