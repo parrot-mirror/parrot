@@ -311,7 +311,7 @@ new_pmc_alloc_header(Interp *interpreter, UINTVAL flags, INTVAL is_typed, INTVAL
     PObj_get_FLAGS(pmc) |= PObj_is_PMC_FLAG|flags;
     pmc->vtable = NULL;
 #if ! PMC_DATA_IN_EXT
-    PMC_data(pmc) = NULL;
+    PMC_data(pmc) = (void*)0x1;
 #endif
     return pmc;
 }

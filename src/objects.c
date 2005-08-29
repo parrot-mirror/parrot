@@ -361,7 +361,7 @@ Parrot_new_class(Interp* interpreter, PMC *class, STRING *class_name)
     /* Hang an array off the data pointer, empty of course */
     set_attrib_array_size(class, PCD_MAX);
     class_array = PMC_data(class);
-    /* set_attrib_flags(class); init does it */
+    /*set_attrib_flags(class); init does it */
 
     /* Our parent class array has nothing in it */
     set_attrib_num(class, class_array, PCD_PARENTS,
