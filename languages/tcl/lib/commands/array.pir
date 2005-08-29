@@ -9,7 +9,10 @@
 #   - we know we need an array name for *all* args, so we test for it here.
 
 .sub "&array"
-  .param pmc argv :slurpy
+  .param pmc argv_slurpy :slurpy
+  .local pmc argv
+  argv = argv_slurpy
+
   .local pmc retval
 
   .local int argc
@@ -95,14 +98,11 @@ few_args:
   argc = argv
   if argc goto bad_args
 
-  $P1 = new Integer
-  $P1 = is_array
-  .return (TCL_OK, $P1)
+  .return (TCL_OK, is_array) 
 
 bad_args:
-  $P1 = new String
-  $P1 = "wrong # args: should be \"array exists arrayName\""
-  .return (TCL_ERROR, $P1)
+  $S1 = "wrong # args: should be \"array exists arrayName\""
+  .return (TCL_ERROR, $S1)
 .end
 
 .sub "size"

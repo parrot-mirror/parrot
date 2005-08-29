@@ -7,7 +7,9 @@
 .namespace [ "Tcl" ]
 
 .sub "&info"
-  .param pmc argv :slurpy
+  .param pmc argv_slurpy :slurpy
+  .local pmc argv
+  argv = argv_slurpy
 
   .local pmc retval
 
