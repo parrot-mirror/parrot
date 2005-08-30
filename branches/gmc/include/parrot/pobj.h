@@ -388,6 +388,7 @@ typedef enum PObj_enum {
     /* True if the PMC is a parrot object */
     PObj_is_object_FLAG = 1 << 30,
 
+
 } PObj_flags;
 
 /*
@@ -550,6 +551,10 @@ typedef enum PObj_enum {
 #define PObj_sysmem_TEST(o) PObj_flag_TEST(sysmem, o)
 #define PObj_sysmem_SET(o) PObj_flag_SET(sysmem, o)
 #define PObj_sysmem_CLEAR(o) PObj_flag_CLEAR(sysmem, o)
+
+/*#define PObj_igp_TEST(o) PObj_flag_TEST(is_igp, o)
+#define PObj_igp_SET(o) PObj_flag_SET(is_igp, o)
+#define PObj_igp_CLEAR(o) PObj_flag_CLEAR(is_igp, o)*/
 
 #define PObj_special_SET(flag, o) do { \
     PObj_flag_SET(flag, o); \

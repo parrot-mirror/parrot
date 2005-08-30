@@ -162,56 +162,29 @@ typedef struct _gc_gmc_gen {
 
 /* This header is appended to all gc objects. */
 typedef struct _gc_gmc_hdr {
-  UINTVAL gmc_flags; /* Various GC flags for internal use. */
-  PMC* pmc;          /* Corresponding PMC header. */
-  Gc_gmc_gen *gen;   /* Generation it belongs to. */
+    UINTVAL flags;
+    PMC* pmc;          /* Corresponding PMC header. */
+    Gc_gmc_gen *gen;   /* Generation it belongs to. */
 } Gc_gmc_hdr;
 
 
-/* FIXME: the flags definition isn't really in the good file.
- * smallobject.h ? pobj.h ? gc_gmc.h ? */
-typedef enum gmc_flags {
-    /* Private GC flags, for internal use. */
-    Gmc_private_1_FLAG = 1 << 1,
-    Gmc_private_2_FLAG = 1 << 2,
-    Gmc_private_3_FLAG = 1 << 3,
-    Gmc_private_4_FLAG = 1 << 4,
-    Gmc_private_5_FLAG = 1 << 5,
-    Gmc_private_6_FLAG = 1 << 6,
-    Gmc_has_ext_FLAG = 1 << 7, /*  flag */
-    Gmc_is_pmc_FLAG = 1 << 8, /* True if the object is a PMC, is a PObj if not. */
-    Gmc_is_igp_FLAG = 1 << 9, /* True if the object is the start of an IGP. */
-} Gmc_flags;
-
-/*#define DUMP_FLAG(flag,hdr)   fprintf(stderr, "modifying " #flag " in %p -> (%p,%p): is_igp: %s\n", hdr->pmc, hdr, (char*)hdr + sizeof(Gc_gmc_hdr), (Gmc_PMC_hdr_get_FLAGS(hdr) & (Gmc_is_igp_FLAG)) ? "set" : "clear")*/
-#define DUMP_FLAG(flag,hdr) {} 
-
 /* Macros for access from header. */
 #define Gmc_PMC_hdr_get_BODY(pmc_hdr)		    ((PMC_BODY*)((char*)(pmc_hdr) + sizeof(Gc_gmc_hdr)))
-#define Gmc_PMC_hdr_get_FLAGS(pmc_hdr)		    ((pmc_hdr)->gmc_flags)
-#define Gmc_PMC_hdr_get_PMC(pmc_hdr)		    ((pmc_hdr)->pmc)
-#define Gmc_PMC_hdr_get_GEN(pmc_hdr)		    ((pmc_hdr)->gen)
-#define Gmc_PMC_hdr_flag_TEST(flag, pmc_hdr)	    (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) & (Gmc_ ## flag ## _FLAG))
-#define Gmc_PMC_hdr_flag_SET(flag, pmc_hdr)	    do { DUMP_FLAG(flag,pmc_hdr); (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) |= (Gmc_ ## flag ## _FLAG)); } while(0)
-#define Gmc_PMC_hdr_flag_CLEAR(flag, pmc_hdr)	    do { DUMP_FLAG(flag,pmc_hdr); (Gmc_PMC_hdr_get_FLAGS(pmc_hdr) &= \
-							  ~(UINTVAL)(Gmc_ ## flag ## _FLAG));} while(0)
+#define Gmc_PMC_hdr_get_PMC(pmc_hdr)		    (pmc_hdr)->pmc
+#define Gmc_PMC_hdr_get_GEN(pmc_hdr)		    ((Gc_gmc_gen*)((UINTVAL)((pmc_hdr)->gen) & ~1))
+#define Gmc_PMC_hdr_set_GEN(pmc_hdr,prout)	    ((pmc_hdr)->gen = (Gc_gmc_gen*)((UINTVAL)prout | \
+							    ((UINTVAL)(pmc_hdr)->gen & 1)))
 
 /* Macros for access from body. */
 #define Gmc_PMC_body_get_HDR(pmc_body)		    ((Gc_gmc_hdr*)((char*)(pmc_body) - sizeof(Gc_gmc_hdr)))
-#define Gmc_PMC_body_get_FLAGS(pmc_body)	    Gmc_PMC_hdr_get_FLAGS(Gmc_PMC_body_get_HDR(pmc_body))
 #define Gmc_PMC_body_get_PMC(pmc_body)  	    Gmc_PMC_hdr_get_PMC(Gmc_PMC_body_get_HDR(pmc_body))
 #define Gmc_PMC_body_get_GEN(pmc_body)		    Gmc_PMC_hdr_get_GEN(Gmc_PMC_body_get_HDR(pmc_body))
-#define Gmc_PMC_body_flag_TEST(flag, pmc_body)	    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_body_get_HDR(pmc_body))
-#define Gmc_PMC_body_flag_SET(flag, pmc_body)	    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_body_get_HDR(pmc_body))
-#define Gmc_PMC_body_flag_CLEAR(flag, pmc_body)	    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_body_get_HDR(pmc_body))
+#define Gmc_PMC_body_set_GEN(pmc_body, gen)	    Gmc_PMC_hdr_set_GEN(Gmc_PMC_body_get_HDR(pmc_body),gen)
 
 /* Macros for access from PMC*. */
 #define Gmc_PMC_get_HDR(pmc)			    Gmc_PMC_body_get_HDR(PMC_body(pmc))
-#define Gmc_PMC_get_FLAGS(pmc)			    Gmc_PMC_hdr_get_FLAGS(Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_get_GEN(pmc)			    Gmc_PMC_hdr_get_GEN(Gmc_PMC_get_HDR(pmc))
-#define Gmc_PMC_flag_TEST(flag, pmc)		    Gmc_PMC_hdr_flag_TEST(flag, Gmc_PMC_get_HDR(pmc))
-#define Gmc_PMC_flag_SET(flag, pmc)		    Gmc_PMC_hdr_flag_SET(flag, Gmc_PMC_get_HDR(pmc))
-#define Gmc_PMC_flag_CLEAR(flag, pmc)		    Gmc_PMC_hdr_flag_CLEAR(flag, Gmc_PMC_get_HDR(pmc))
+#define Gmc_PMC_set_GEN(pmc,gen)		    Gmc_PMC_hdr_get_GEN(Gmc_PMC_get_HDR(pmc),gen)
 
 #define PObj_exists_PMC_EXT_TEST(pmc)		    (PObj_is_PMC_EXT_TEST(pmc) && (UINTVAL)PMC_data(pmc) != 0xdeadbeef)
 #define PObj_exists_PMC_EXT_SET(pmc)		    do { \
@@ -219,6 +192,12 @@ typedef enum gmc_flags {
 							PMC_data(pmc) = NULL; \
 						    } while (0)
 #define PObj_exists_PMC_EXT_CLEAR(pmc)		    PMC_data(pmc) = (void*)0xdeadbeef
+
+#define PObj_igp_TEST(pmc)			    ((UINTVAL)Gmc_PMC_get_GEN(pmc) & 1) 
+#define PObj_igp_SET(pmc)			    Gmc_PMC_get_HDR(pmc)->gen = \
+							(Gc_gmc_gen*)((UINTVAL)Gmc_PMC_get_GEN(pmc) | 1)
+#define PObj_igp_CLEAR(pmc)			    Gmc_PMC_get_HDR(pmc)->gen = \
+						       (Gc_gmc_gen*)((UINTVAL)Gmc_PMC_get_GEN(pmc) & ~1)
 
 
 
