@@ -723,7 +723,7 @@ gc_gmc_new_body(Interp *interpreter,
     gen->remaining -= size;
     gen->alloc_obj++;
     memset(hdr, 0, size);
-    Gmc_PMC_hdr_get_GEN(hdr) = gen;
+    Gmc_PMC_hdr_set_GEN(hdr, gen);
 	
     return hdr;
 }
@@ -877,7 +877,7 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
 #ifdef BIG_DUMP
 	fprintf(stderr, "copy_gen: ptr %p, old_body %p, new_body %p\n", Gmc_PMC_hdr_get_PMC(ptr), PMC_body(Gmc_PMC_hdr_get_PMC(ptr)), Gmc_PMC_hdr_get_BODY(ptr));
 #endif
-	Gmc_PMC_hdr_get_GEN(ptr) = dest;
+	Gmc_PMC_hdr_set_GEN(ptr, dest);
 	PMC_body(Gmc_PMC_hdr_get_PMC(ptr)) = Gmc_PMC_hdr_get_BODY(ptr);
 	ptr = gc_gmc_next_hdr(ptr);
     }
@@ -1085,9 +1085,9 @@ void gc_gmc_wb(Interp *interpreter, PMC *agg, void *old, void *new)
     if (PObj_is_PMC_TEST((PObj*)new) && PObj_exists_PMC_EXT_TEST((PMC*)new))
     {
 	gen = Gmc_PMC_get_GEN((PMC*)agg);
-	if (!Gmc_PMC_flag_TEST(is_igp, agg))
+	if (!PObj_igp_TEST(agg))
 	    gc_gmc_store_hdr_list(interpreter, gen->IGP, Gmc_PMC_get_HDR(agg));
-	Gmc_PMC_flag_SET(is_igp, agg);
+	PObj_igp_SET(agg);
     }
     /* XXX: Do we need to move it one way or another for invariant ? */
 }
@@ -1247,11 +1247,8 @@ static int sweep_pmc (Interp *interpreter, struct Small_Object_Pool *pool,
 		if (PObj_active_destroy_TEST(pmc)) {
 		    VTABLE_destroy(interpreter, pmc);
 		}
-		if (Gmc_PMC_flag_TEST(is_igp, pmc))
+		if (PObj_igp_TEST(pmc))
 		{
-#ifdef GMC_DEBUG
-		    fprintf(stderr, "%p: is_igp: %s\n", Gmc_PMC_get_HDR(ptr), (Gmc_PMC_hdr_flag_TEST(is_igp,Gmc_PMC_get_HDR(ptr))) ? "set" : "clear");
-#endif
 		    gc_gmc_sweep_from_hdr_list(interpreter, hdr);
 		}
 		old_pmc = pmc;
@@ -1422,9 +1419,6 @@ gc_gmc_trace_igp_sons(Interp *interpreter, Gc_gmc_hdr *h)
 
     pmc = Gmc_PMC_hdr_get_PMC(h);
 
-    /*if (!Gmc_PMC_hdr_flag_TEST(is_igp, h))*/
-	/*return;*/
-
     pool = Gmc_PMC_hdr_get_GEN(h)->pool;
     sav_state = pool->gc->state;
     pool->gc->state = (sav_state < GMC_TIMELY_NORMAL_STATE) ? GMC_SON_OF_IGP_STATE : GMC_TIMELY_SON_OF_IGP_STATE;
@@ -1509,28 +1503,6 @@ parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
  * children, but only if they were marked dead before (if not, they were already
  * traced). */
 
-/* Find the max number of objects allocated in a single gen. */
-static INTVAL
-gc_gmc_max_objects_per_gen(Interp *interpreter, struct Small_Object_Pool *pool)
-{
-    UINTVAL max = 0;
-    Gc_gmc_gen *gen;
-    INTVAL pass = 0;
-    for (gen = pool->gc->old_fst; gen || !pass; gen = gen->next)
-    {
-	if (!gen && !pass)
-	{
-	    gen = pool->gc->yng_fst;
-	    pass++;
-	}
-	if (gen->alloc_obj > max)
-	{
-	    max = gen->alloc_obj;
-	}
-    }
-    return max;
-}
-
 
 /* Wraps everything nicely. */
 static INTVAL
@@ -1539,16 +1511,13 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
     INTVAL dopr = DEAD_OBJECTS_PER_RUN; /* Number of objects we want to find in a run. */
     Gc_gmc_hdr *hdr, *h2;
     Gc_gmc_gen *gen;
-    Gc_gmc_hdr **rev;
     INTVAL index;
-    INTVAL max_obj;
     INTVAL pass = 0;
     /* State 0 : normal run, we free every dead object.
      * State 1 : we've found enough objects, simply consider IGP and mark
      * everyone alive. */
     INTVAL state = 0;
 
-    /*rev = mem_sys_allocate_zeroed(gc_gmc_max_objects_per_gen(interpreter, pool) * sizeof(Gc_gmc_hdr*));*/
 
 #ifdef GMC_DEBUG
     fprintf (stderr, "\nMarking pass\n\n");
@@ -1587,7 +1556,7 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 		 * consider only IGP from now on. */
 		/* If this is a timely destruction triggered run, make a full
 		 * run. */
-		if (!state && dopr <= 0 && pool->gc->state < GMC_TIMELY_NORMAL_STATE)
+		if (!state && dopr <= 0 && !interpreter->arena_base->lazy_dod)
 		{
 		    pool->gc->white = hdr;
 		    state = 1;
@@ -1597,7 +1566,7 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 		if (PObj_live_TEST((PObj*)Gmc_PMC_hdr_get_PMC(hdr)))
 		{
 		    gc_gmc_trace_children(interpreter, hdr);
-		    if (Gmc_PMC_hdr_flag_TEST(is_igp, hdr))
+		    if (PObj_igp_TEST(Gmc_PMC_hdr_get_PMC(hdr)))
 			gc_gmc_trace_igp_sons(interpreter, hdr);
 		}
 		else
@@ -1628,7 +1597,7 @@ gc_gmc_copy_hdr(Interp *interpreter, Gc_gmc_hdr *from, Gc_gmc_hdr *to)
     size = gc_gmc_get_size(interpreter, from);
     gen = Gmc_PMC_hdr_get_GEN(from);
     memmove(to, from, size);
-    Gmc_PMC_hdr_get_GEN(to) = gen;
+    Gmc_PMC_hdr_set_GEN(to, gen);
     PMC_body(Gmc_PMC_hdr_get_PMC(to)) = Gmc_PMC_hdr_get_BODY(to);
     return gc_gmc_next_hdr(to);
 }
@@ -1666,7 +1635,7 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
 		--interpreter->arena_base->num_early_DOD_PMCs;
 	    if (PObj_active_destroy_TEST(Gmc_PMC_hdr_get_PMC(orig)))
 		VTABLE_destroy(interpreter, Gmc_PMC_hdr_get_PMC(orig));
-	    if (Gmc_PMC_hdr_flag_TEST(is_igp, orig))
+	    if (PObj_igp_TEST(Gmc_PMC_hdr_get_PMC(orig)))
 		gc_gmc_sweep_from_hdr_list(interpreter, orig);
 	    old_orig = orig;
 	    orig = gc_gmc_next_hdr(orig);
@@ -1733,7 +1702,7 @@ gc_gmc_merge_gen(Interp *interpreter, Gc_gmc_gen *old, Gc_gmc_gen *yng)
 #ifdef BIG_DUMP
 	fprintf(stderr, "merge_gen: h %p, ptr %p, old_body at %p, new body at %p\n", h, Gmc_PMC_hdr_get_PMC(h), PMC_body(Gmc_PMC_hdr_get_PMC(h)), Gmc_PMC_hdr_get_BODY(h));
 #endif
-	Gmc_PMC_hdr_get_GEN(h) = old;
+	Gmc_PMC_hdr_set_GEN(h,old);
 	PMC_body(Gmc_PMC_hdr_get_PMC(h)) = Gmc_PMC_hdr_get_BODY(h);
     }
     old->fst_free = (void*)((char*)old->fst_free - size);
