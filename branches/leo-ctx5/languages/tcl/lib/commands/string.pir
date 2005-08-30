@@ -24,18 +24,14 @@
   .return subcommand_proc(argv)
 
 bad_args:
-  retval = new String
+  $S0 = "bad option \""
+  $S0 .= subcommand_name
+  $S0 .= "\": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, tolower, toupper, totitle, trim, trimleft, trimright, wordend, or wordstart"
 
-  retval = "bad option \""
-  retval .= subcommand_name
-  retval .= "\": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, tolower, toupper, totitle, trim, trimleft, trimright, wordend, or wordstart"
-
-  .return(TCL_ERROR,retval)
+  .return(TCL_ERROR,$S0)
 
 no_args:
-  retval = new String
-  retval = "wrong # args: should be \"string option arg ?arg ...?\""
-  .return (TCL_ERROR, retval)
+  .return (TCL_ERROR, "wrong # args: should be \"string option arg ?arg ...?\"")
 
 .end
 
@@ -71,14 +67,10 @@ first_all:
 first_do:
   .local int index_1
   index_1 = index $S2, $S1, $I0
-  retval = new Integer
-  retval = index_1
-  .return(TCL_OK,retval)
+  .return(TCL_OK,index_1)
 
 bad_args:
-  retval = new String
-  retval = "wrong # args: should be \"string first subString string ?startIndex?\""
-  .return(TCL_ERROR,retval)
+  .return(TCL_ERROR, "wrong # args: should be \"string first subString string ?startIndex?\"")
 
 .end
 
@@ -100,19 +92,13 @@ bad_args:
   if $I0 > index_1 goto index_null
   if $I0 < 0 goto index_null
   $S0 = substr $S1, $I0, 1
-  retval = new String
-  retval = $S0
-  .return (TCL_OK,retval)
+  .return (TCL_OK,$S0)
 
 index_null:
-  retval = new String
-  retval = ""
-  .return (TCL_OK, retval)
+  .return (TCL_OK, "")
 
 bad_index:
-  retval = new String
-  retval = "wrong # args: should be \"string index string charIndex\""
-  .return(TCL_ERROR, retval)
+  .return(TCL_ERROR, "wrong # args: should be \"string index string charIndex\"")
 
 done:
   .return (return_type, retval)
@@ -127,14 +113,10 @@ done:
   if argc != 1 goto bad_length
   $S0 = argv[0]
   $I0 = bytelength $S0
-  retval = new Integer
-  retval = $I0
-  .return(TCL_OK, retval)
+  .return(TCL_OK, $I0)
 
 bad_length:
-  retval = new String
-  retval = "wrong # args: should be \"string bytelength string\""
-  .return (TCL_ERROR,retval)
+  .return (TCL_ERROR, "wrong # args: should be \"string bytelength string\"")
 .end
 
 .sub "length"
@@ -147,14 +129,10 @@ bad_length:
 
   $S1 = argv[0]
   $I0 = length $S1
-  retval = new Integer
-  retval = $I0
-  .return(TCL_OK, retval)
+  .return(TCL_OK, $I0)
 
 bad_length:
-  retval = new String
-  retval = "wrong # args: should be \"string length string\""
-  .return (TCL_ERROR,retval)
+  .return (TCL_ERROR,"wrong # args: should be \"string length string\"")
 .end
 
 .sub "range"
@@ -193,14 +171,10 @@ range_doo:
   $I3 = $I2 - index_1
   inc $I3
   $S9 = substr $S1, index_1, $I3
-  retval = new String
-  retval = $S9
-  .return(TCL_OK, retval)
+  .return(TCL_OK, $S9)
 
 bad_range:
-  retval = new String
-  retval = "wrong # args: should be \"string range string first last\""
-  .return(TCL_ERROR,retval)
+  .return(TCL_ERROR, "wrong # args: should be \"string range string first last\"")
 .end
 
 .sub "match"
@@ -241,21 +215,16 @@ match_continue:
   match = rule(the_string)
 
   $I0 = match.__get_bool()
-  retval = new TclInt
-  retval = $I0
-  .return (TCL_OK, retval)
+  .return (TCL_OK, $I0)
 
 bad_option:
-  retval = new TclString
-  retval = "bad option \""
-  retval .= $S0
-  retval = "\": must be -nocase"
-  .return (TCL_ERROR,retval)
+  $S1 = "bad option \""
+  $S1 .= $S0
+  $S1 = "\": must be -nocase"
+  .return (TCL_ERROR,$S1)
 
 bad_match:
-  retval = new TclString
-  retval = "wrong # args: should be \"string match ?-nocase? pattern string\""
-  .return (TCL_ERROR,retval)
+  .return (TCL_ERROR, "wrong # args: should be \"string match ?-nocase? pattern string\"")
 .end
 
 .sub "repeat"
@@ -279,14 +248,10 @@ bad_match:
   #if index_1 != $I0 goto bad_arg
   $I3 = the_repeat
   $S0 = repeat the_string, $I3
-  retval = new String
-  retval = $S0
-  .return(TCL_OK, retval)
+  .return(TCL_OK, $S0)
 
 bad_repeat:
-  retval = new String
-  retval = "wrong # args: should be \"string repeat string count\""
-  .return (TCL_ERROR, retval)
+  .return (TCL_ERROR, "wrong # args: should be \"string repeat string count\"")
 .end
 
 # XXX stub
@@ -357,27 +322,19 @@ outer_next:
   goto outer_loop
 
 outer_done:
-  $P1 = new String
-  $P1 = the_string
-  .return (TCL_OK, $P1)
+  .return (TCL_OK, the_string)
 
 
 oddly_enough:
-  $P1 = new String
-  $P1 = "char map list unbalanced"
-  .return (TCL_ERROR, $P1)
-
+  .return (TCL_ERROR, "char map list unbalanced")
 
 bad_option:
-  $P1 = new String
-  $P1 = "bad option \""
-  $P1 .= $S0
-  $P1 .= "\": must be -nocase"
-  .return (TCL_ERROR, $P1)
+  $S1 = "bad option \""
+  $S1 .= $S0
+  $S1 .= "\": must be -nocase"
+  .return (TCL_ERROR, $S1)
 
 no_args:
 bad_args:
-  $P1 = new String
-  $P1 = "wrong # args: should be \"string map ?-nocase? charMap string\""
-  .return (TCL_ERROR, $P1)
+  .return (TCL_ERROR, "wrong # args: should be \"string map ?-nocase? charMap string\"")
 .end

@@ -15,12 +15,6 @@
   varname = argv[0]
   sigil_varname = "$" . varname
 
-  .local pmc retval
-  .local int return_type
-
-  retval = new String
-  retval = ""
-
   .local int call_level
   $P0 = find_global "_Tcl", "call_level"
   call_level = $P0
@@ -46,18 +40,13 @@ set_lexical:
   store_lex call_level, sigil_varname, search_variable
 set_done:
 
-  return_type=TCL_OK
-  goto done
+  .return (TCL_OK, "")
 
 error:
-  return_type = TCL_ERROR 
   $S0 = "can't unset \""
   $S0 .= varname
   $S0 .= "\": no such variable"
-  retval = $S0
-
-done:
-  .return(return_type,retval) 
+  .return (TCL_ERROR, $S0)
 
 catch:
   goto resume

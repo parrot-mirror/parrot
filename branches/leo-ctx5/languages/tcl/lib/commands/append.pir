@@ -58,10 +58,7 @@ getter:
   goto done
 
 error:
-  return_type = TCL_ERROR
-  value = new TclString
-  value = "wrong # args: should be \"append varName ?value value ...?\""
-
+  .return(TCL_ERROR, "wrong # args: should be \"append varName ?value value ...?\"")
 done:
   .return(return_type, value)
 .end

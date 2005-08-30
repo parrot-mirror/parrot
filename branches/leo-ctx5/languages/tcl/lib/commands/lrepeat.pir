@@ -11,7 +11,6 @@
   .local int repeater # I hardly know 'er.
   repeater = argv[0] 
    
-
   # convert the Array ireturned by foldup into a TclList.
 
   .local int argc
@@ -38,5 +37,5 @@ INNER_DONE:
   goto OUTER_LOOP
 OUTER_DONE:
 
-  .return(0,retval)
+  .return(TCL_OK,retval)
 .end

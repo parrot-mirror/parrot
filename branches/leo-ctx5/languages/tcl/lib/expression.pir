@@ -150,10 +150,7 @@ precedence_done:
   goto converter_loop
 
 die_horribly:
-  return_type = TCL_ERROR 
-  program_stack = new String
-  program_stack = "An error occurred in EXPR"
-  goto converter_done
+  .return (TCL_ERROR, "XXX: An error occurred in [expr]")
 
 converter_done:
   .return(return_type,program_stack)
@@ -197,34 +194,26 @@ eat_space:
 
 fail:
   null retval
-  goto done
+  .return(retval, pos)
 
 subexpr:
-  (retval, pos) = get_subexpr(expr, pos)
-  goto done
+  .return get_subexpr(expr, pos)
  
 variable:
-  (retval, pos) = get_variable(expr, pos)
-  goto done
+  .return get_variable(expr, pos)
 
 subcommand:
-  (retval, pos) = get_subcommand(expr, pos)
-  goto done
+  .return get_subcommand(expr, pos)
 
 function:
-  (retval, pos) = get_function(expr, pos)
-  goto done
+  .return get_function(expr, pos)
 
 number:
-  (retval, pos) = get_number(expr, pos)
-  goto done
+  .return get_number(expr, pos)
 
 unary:
-  (retval, pos) = get_unary(expr, pos)
-  # goto done
+  .return get_unary(expr, pos)
 
-done:
-  .return(retval, pos)
 .end
 
 .sub get_operator
@@ -469,10 +458,7 @@ stack_done:
   goto evaluation_done
 
 die_horribly:
-  return_type = TCL_ERROR 
-  retval = new String
-  retval = "An error occurred in EXPR"
-  goto evaluation_return
+  .return (TCL_ERROR, "XXX: an error occurred in [expr]")
 
 evaluation_done:
   return_type = TCL_OK 

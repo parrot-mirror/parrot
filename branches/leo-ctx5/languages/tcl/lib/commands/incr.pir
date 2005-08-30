@@ -56,11 +56,10 @@ done:
   .return(return_type,retval)
 
 bad_variable:
-  $P1 = new String
-  $P1 = "can't read \""
-  $S0 = argv[0]
-  $P1 .= $S0
-  $P1 .= "\": no such variable"
-  .return(TCL_ERROR,$P1)
+  $S0 = "can't read \""
+  $S1 = argv[0]
+  $S0 .= $S1
+  $S0 .= "\": no such variable"
+  .return(TCL_ERROR,$S0)
 
 .end

@@ -42,9 +42,7 @@ resume:
   goto loop
   
 badargs:
-  print "badargs\n"
-  return_type = TCL_ERROR
-  retval = "wrong # args: should be \"global varName ?varName ...?\""
+  .return(TCL_ERROR,"wrong # args: should be \"global varName ?varName ...?\"")
 
 done:
   .return(return_type,retval)

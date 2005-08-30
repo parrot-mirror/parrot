@@ -11,7 +11,7 @@
   if argc != 1 goto fail
 
   .local string chunk, filename, contents
-  .local int code,type
+  .local int return_type,type
   .local pmc retval, handle, parse
 
   parse = find_global "_Tcl", "parse"
@@ -38,22 +38,16 @@ loop:
 
 gotfile:
   $P1 = parse(contents)
-  register $P1
-  (code,retval) = $P1."interpret"()
-  goto done
+  register $P1 #XXX Can we remove this?
+  .return  $P1."interpret"()
  
 badfile:
-  code = TCL_ERROR
-  retval = new String
-  retval = "couldn't read file \""
-  retval = retval . filename
-  retval = retval . "\": no such file or directory"
-  goto done
+  $S0 = "couldn't read file \""
+  $S0 = $S0 . filename
+  $S0 = $S0 . "\": no such file or directory"
+  .return (TCL_ERROR, $S0)
 
 fail:
-  code = TCL_ERROR
-  retval = new String
-  retval =  "wrong # args: should be \"source fileName\""
-done:
-  .return(code,retval)
+  .return (TCL_ERROR,"wrong # args: should be \"source fileName\"")
+
 .end

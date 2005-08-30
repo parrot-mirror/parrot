@@ -35,10 +35,7 @@ setting:
   .return set(name,value)
 
 error:
-  return_type = TCL_ERROR 
-  retval = new String
-  retval = "wrong # args: should be \"set varName ?newValue?\""
-  .return(return_type,retval)
+  .return (TCL_ERROR, "wrong # args: should be \"set varName ?newValue?\"")
 
 catch:
   goto resume

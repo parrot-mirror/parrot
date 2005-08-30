@@ -113,12 +113,11 @@ done:
   .return(TCL_OK,retval)
 
 bad_args:
-  retval = "wrong # args: should be \"parray arrayName ?pattern?\""
-  .return(TCL_ERROR, retval)
+  .return(TCL_ERROR, "wrong # args: should be \"parray arrayName ?pattern?\"")
 
 not_array:
-  retval = "\""
-  retval .= name
-  retval .= "\" isn't an array"
-  .return(TCL_ERROR, retval)
+  $S0 = "\""
+  $S0 .= name
+  $S0 .= "\" isn't an array"
+  .return(TCL_ERROR, $S0)
 .end

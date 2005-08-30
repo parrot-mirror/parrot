@@ -18,7 +18,7 @@ use __stringToList.
   if $S0 == "TclList" goto done
 
   $S0 = value
-  (return_type, value) = __stringToList($S0)
+  .return __stringToList($S0)
 
 done:
   .return(return_type, value)

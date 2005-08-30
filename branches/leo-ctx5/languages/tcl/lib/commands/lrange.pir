@@ -35,6 +35,8 @@
   .local int the_index
   the_index = $P0
 
+  # XXX: Cargo culted comment? There's no splice in this code...
+
   # XXX workaround, splice doesn't work on TclList <-> TclList.
   # Until that's fixed, manually lrange the list elements
   # This is a hideous hack.

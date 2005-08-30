@@ -60,19 +60,14 @@ loop_done:
   $I0 = argv[i]
   $P0 = argv[-1]
   list[$I0] = $P0
-  (return_type, retval) = set(name, retval)
-  goto done
+  .return set(name, retval)
 
 wrong_args:
-  return_type = TCL_ERROR
-  retval = new TclString
-  retval = "wrong # args: should be \"lset listVar index ?index...? value\""
-  goto done
+  .return(TCL_ERROR,"wrong # args: should be \"lset listVar index ?index...? value\"")
 
 replace:
   $P0 = argv[-1]
-  (return_type, retval) = set(name, $P0)
-  # goto done
+  .return set(name, $P0)
 
 done:
   .return(return_type, retval)

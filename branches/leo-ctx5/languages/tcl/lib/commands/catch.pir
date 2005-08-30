@@ -54,9 +54,7 @@ save_lex:
   goto done
 
 badargs:
-  return_type = TCL_ERROR
-  retval = new String
-  retval = "wrong # args: should be \"catch script ?resultVarName? ?optionVarName?\""
+  .return (TCL_ERROR, "wrong # args: should be \"catch script ?resultVarName? ?optionVarName?\"")
 
 done:
   .return(return_type,retval)

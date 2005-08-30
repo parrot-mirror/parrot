@@ -8,7 +8,6 @@
 
   .local pmc value, retval
   .local int return_type
-
   .local int argc
   argc = argv
   if argc == 0 goto error
@@ -24,8 +23,8 @@
   if return_type == TCL_ERROR goto new_variable
   
   .local pmc __list
+
   __list = find_global "_Tcl", "__list"
-  
   (return_type, retval) = __list(value)
   if return_type == TCL_ERROR goto done
   value = retval
@@ -44,13 +43,10 @@ loop:
 loop_done:
   .local pmc set
   set = find_global "_Tcl", "__set"
-  (return_type, retval) = set($S1, value)
-  goto done
+  .return set(listname, value)
 
 error:
-  return_type = TCL_ERROR
-  retval = new TclString
-  retval = "wrong # args: should be \"lappend varName ?value value ...?\""
+  .return (TCL_ERROR,"wrong # args: should be \"lappend varName ?value value ...?\"")
 
 done:
   .return(return_type,retval)

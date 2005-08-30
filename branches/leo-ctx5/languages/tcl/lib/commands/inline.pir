@@ -28,9 +28,8 @@
   .return (TCL_OK,"")
 
 fail:
-  $P1 = new String
-  $P1 = "invalid language \""
-  $P1 .= $S1
-  $P1 .= "\" specified"
-  .return (TCL_ERROR, $P1)
+  $S0 = "invalid language \""
+  $S0 .= language
+  $S0 .= "\" specified"
+  .return (TCL_ERROR, $S0)
 .end

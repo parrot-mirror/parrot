@@ -9,8 +9,5 @@
   $N0 = $I0 / 1000
   sleep $N0
 
-  .local pmc retval
-  retval = new String
-  retval = ""
-  .return(TCL_OK,retval)
+  .return(TCL_OK,"")
 .end

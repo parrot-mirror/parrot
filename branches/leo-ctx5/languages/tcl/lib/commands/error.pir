@@ -14,21 +14,12 @@
   .local int argc 
   argc = argv
 
-  .local pmc retval
-  retval = new String
-
   if argc != 1 goto badargs
 
-  retval = argv[0]
-  goto done
+  $P0 = argv[0]
+  .return (TCL_ERROR, $P0)
 
 badargs:
-  retval = "wrong # args: should be \"error message ?errorInfo? ?errorCode?\""
+  .return (TCL_ERROR, "wrong # args: should be \"error message ?errorInfo? ?errorCode?\"")
  
- # The sole purpose of this command (and break, and continue) is to 
- # generate a specific return code. Normally, when a proc finishes TCL_OK
- # control passes to the next item in the queue.
-
-done:
-  .return(TCL_ERROR,retval)
 .end

@@ -153,12 +153,12 @@ body:
   proc_body .= "\"]\n  "
 
 done_args:
-  proc_body .= "  goto ARGS_OK\n\nBAD_ARGS:\n  $P1=new String\n  "
-  proc_body .= "$P1=\"wrong # args: should be \\\""
+  proc_body .= "  goto ARGS_OK\n\nBAD_ARGS:\n   "
+  proc_body .= "$S0=\"wrong # args: should be \\\""
   proc_body .= name
   proc_body .= " "
   proc_body .= args
-  proc_body .= "\\\"\"\n  .return(1,$P1)\n\nARGS_OK:\n  "
+  proc_body .= "\\\"\"\n  .return(1,$S1)\n\nARGS_OK:\n  "
 
   # XXX Is the pop_pad necessary, or would it be  handled as a side
   #  effect of the .return?
@@ -186,9 +186,7 @@ done_args:
   goto done
 
 error:
-  return_type = TCL_ERROR
-  retval = new String
-  retval = "wrong # args: should be \"proc name args body\"\n"
+  .return (TCL_ERROR, "wrong # args: should be \"proc name args body\"\n")
 
 done:
   .return(return_type,retval)

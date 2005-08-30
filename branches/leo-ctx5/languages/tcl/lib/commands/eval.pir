@@ -39,8 +39,6 @@ loop_done:
   .return $P1."interpret"() 
 
 no_args:
-  $P1 = new String
-  $P1 = "wrong # args: should be \"eval arg ?arg ...?\""
-  .return(TCL_ERROR, $P1)
+  .return(TCL_ERROR, "wrong # args: should be \"eval arg ?arg ...?\"")
 
 .end

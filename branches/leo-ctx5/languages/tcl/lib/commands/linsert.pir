@@ -7,18 +7,21 @@
 .sub "&linsert"
   .param pmc argv :slurpy  
 
+    
   # make sure we have the right # of args
-  $I0 = argv
-  if $I0 < 3 goto wrong_args
+  .local int argc
+  argc = argv
+  if argc < 3 goto wrong_args
 
-  .local pmc __list
+  .local int return_type
+  .local pmc __list,retval
   __list = find_global "_Tcl", "__list"
   
   .local pmc the_list
   the_list = shift argv
-  ($I0, $P0) = __list(the_list)
-  if $I0 == TCL_ERROR goto error
-  the_list = $P0 
+  (return_type, retval) = __list(the_list)
+  if return_type == TCL_ERROR goto error
+  the_list = retval 
  
   .local pmc position
   position = shift argv
@@ -26,15 +29,15 @@
   .local pmc list_index
   list_index = find_global "_Tcl", "_list_index"
 
-  ($I0,$P0,$I2) = list_index(the_list,position)
-  if $I0 != TCL_OK goto error
+  (return_type,retval,$I2) = list_index(the_list,position)
+  if return_type != TCL_OK goto error
   #linsert treats "end" differently
   if $I2 == 0 goto next
-  inc $P0
+  inc retval
 
 next: 
   .local int the_index
-  the_index = $P0
+  the_index = retval
 
   # XXX workaround, splice doesn't work on TclList <-> TclList.
   # Until that's fixed, splice Arrays, then post-covert to a TclList
@@ -53,7 +56,7 @@ LOOP:
   inc cnt
   goto LOOP
 DONE:
-  argv_list = splice argv, the_index, 0
+  argv_list = splice argv_list, the_index, 0
 
   .local pmc retval
   retval = new TclList
@@ -65,18 +68,16 @@ DONE:
   argc = argv_list
 LOOP2:
   if cnt >= argc goto DONE2
-  $P0 = argv_list[cnt]
-  retval[cnt] = $P0
+  retval = argv_list[cnt]
+  retval[cnt] = retval
   inc cnt
   goto LOOP2
 DONE2:
   .return (TCL_OK,retval)
 
 wrong_args:
-  $I0 = TCL_ERROR
-  $P0 = new TclString
-  $P0 = "wrong # args: should be \"linsert list index element ?element ...?\""
+  .return (TCL_ERROR, "wrong # args: should be \"linsert list index element ?element ...?\"")
 
 error:
-  .return($I0,$P0)
+  .return(return_type,retval)
 .end
