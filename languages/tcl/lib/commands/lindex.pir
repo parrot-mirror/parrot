@@ -53,9 +53,7 @@ select_loop:
   goto select_loop
 
 bad_args:
-  retval = new String
-  retval = "wrong # args: should be \"lindex list ?index...?\""
-  .return (TCL_ERROR, retval)
+  .return (TCL_ERROR, "wrong # args: should be \"lindex list ?index...?\"")
 
 have_elem:
   retval = list

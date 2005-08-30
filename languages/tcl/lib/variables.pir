@@ -59,17 +59,13 @@ bad_index:
   $S0 = "can't read \""
   $S0 .= name
   $S0 .= "\": no such element in array"
-  variable = new String
-  variable = $S0
-  .return (TCL_ERROR, variable)
+  .return (TCL_ERROR, $S0)
 
 cant_read_not_array:
   $S0 =  "can't read \""
   $S0 .= name
   $S0 .= "\": variable isn't array"
-  variable = new String
-  variable = $S0
-  .return (TCL_ERROR, variable)
+  .return (TCL_ERROR, $S0)
 
 scalar:
   variable = __find_var(name)
@@ -83,17 +79,13 @@ cant_read_array:
   $S0 = "can't read \""
   $S0 .= name
   $S0 .= "\": variable is array"
-  variable = new String
-  variable = $S0
-  .return (TCL_ERROR, variable)
+  .return (TCL_ERROR, $S0)
 
 no_such_variable:
   $S0 = "can't read \""
   $S0 .= name
   $S0 .= "\": no such variable"
-  variable = new String
-  variable = $S0
-  .return (TCL_ERROR, variable)
+  .return (TCL_ERROR, $S0)
 .end
 
 =head2 _Tcl::__set
@@ -161,9 +153,7 @@ cant_set_not_array:
   $S0 =  "can't set \""
   $S0 .= name
   $S0 .= "\": variable isn't array"
-  variable = new String
-  variable = $S0
-  .return(TCL_ERROR,variable)
+  .return(TCL_ERROR,$S0)
 
 scalar:
   __store_var(name, value)

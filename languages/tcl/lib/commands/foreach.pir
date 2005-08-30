@@ -150,9 +150,7 @@ loop_outer_done:
   goto done
 
 error:
-  return_type = TCL_ERROR
-  retval = "wrong # args: should be \"foreach varList list ?varList list ...? command\""
-  goto done
+  .return(TCL_ERROR, "wrong # args: should be \"foreach varList list ?varList list ...? command\"")
 
 done:
   .return(return_type,retval)

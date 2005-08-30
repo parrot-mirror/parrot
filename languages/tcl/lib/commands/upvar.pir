@@ -6,11 +6,9 @@
 .sub "&upvar"
   .param pmc argv :slurpy
 
-  .local pmc call_level,current_call_level,retval
+  .local pmc call_level,current_call_level
   call_level = argv[0]
   current_call_level = find_global "_Tcl", "call_level"
-  retval = new TclString
-  retval = ""
 
   .local int defaulted
   (call_level,defaulted) = __get_call_level(call_level)
@@ -45,7 +43,7 @@ resume:
   goto loop
  
 done:
-  .return(TCL_OK,retval)
+  .return(TCL_OK,"")
 
 catch:
   goto resume

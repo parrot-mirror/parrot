@@ -60,8 +60,6 @@ done_done:
   .return(return_type,retval)
 
 bad_args:
-  $P1 = new String
-  $P1 = "wrong # args: should be \"while test command\""
-  .return (TCL_ERROR, $P1)
+  .return (TCL_ERROR, "wrong # args: should be \"while test command\"")
 
 .end

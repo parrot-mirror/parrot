@@ -11,14 +11,6 @@
   if argc == 0 goto error
   if argc > 3 goto error
 
-  .local int return_type  
-  .local pmc retval
-
-  retval = new String
-  retval = ""
-
-  return_type = TCL_OK
- 
   if argc == 1 goto one_arg
   if argc == 2 goto two_arg
 
@@ -62,28 +54,21 @@ one_arg:
   goto done  
 
 bad_channel:
-  return_type = TCL_ERROR
   $S0 = "can not find channel named \""
   $S0 .= $S2
   $S0 .= "\""
-  retval = $S0
-  goto done
+  .return (TCL_ERROR, $S0)
 
 bad_option:
-  return_type = TCL_ERROR
   $S0 = "bad argument \""
   $S3 = argv[2]
   $S0 .= $S3
   $S0 .= "\": should be \"nonewline\""
-  retval = $S0
-  goto done
+  .return (TCL_ERROR, $S0)
  
 error:
-  return_type = TCL_ERROR
-  retval = new String
-  retval = "wrong # args: should be \"puts ?-nonewline? ?channelId? string\""
-  goto done
+  .return (TCL_ERROR,"wrong # args: should be \"puts ?-nonewline? ?channelId? string\"")
 
 done:
-  .return(return_type,retval)
+  .return(TCL_OK, "")
 .end

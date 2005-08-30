@@ -33,12 +33,8 @@ file_error:
   .return(TCL_ERROR,retval)
  
 error:
-  retval = new String
-  retval = "bad call to open"
-  .return(TCL_ERROR,retval)
+  .return(TCL_ERROR,"XXX: bad call to open")
 
 done:
-  retval = new String
-  retval = channel_id
-  .return(return_type,retval)
+  .return(return_type,channel_id)
 .end

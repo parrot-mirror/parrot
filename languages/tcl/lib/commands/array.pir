@@ -13,8 +13,6 @@
   .local pmc argv
   argv = argv_slurpy
 
-  .local pmc retval
-
   .local int argc
   argc = argv
 
@@ -71,18 +69,14 @@ catch:
   goto resume
 
 bad_args:
-  retval = new String
+  $S0  = "bad option \""
+  $S0 .= subcommand_name
+  $S0 .= "\": must be anymore, donesearch, exists, get, names, nextelement, set, size, startsearch, statistics, or unset"
 
-  retval = "bad option \""
-  retval .= subcommand_name
-  retval .= "\": must be anymore, donesearch, exists, get, names, nextelement, set, size, startsearch, statistics, or unset"
-
-  .return(TCL_ERROR,retval)
+  .return(TCL_ERROR,$S0)
 
 few_args:
-  retval = new String
-  retval = "wrong # args: should be \"array option arrayName ?arg ...?\""
-  .return (TCL_ERROR, retval)
+  .return (TCL_ERROR, "wrong # args: should be \"array option arrayName ?arg ...?\"")
 
 .end
 
@@ -101,8 +95,7 @@ few_args:
   .return (TCL_OK, is_array) 
 
 bad_args:
-  $S1 = "wrong # args: should be \"array exists arrayName\""
-  .return (TCL_ERROR, $S1)
+  .return (TCL_ERROR, "wrong # args: should be \"array exists arrayName\"")
 .end
 
 .sub "size"
@@ -117,19 +110,13 @@ bad_args:
 
   if is_array == 0 goto size_none
   $I0 = the_array
-  $P1 = new Integer
-  $P1 = $I0
-  .return (TCL_OK, $P1)
+  .return (TCL_OK, $I0)
 
 size_none:
-  $P1 = new Integer
-  $P1 = 0
-  .return (TCL_OK, $P1)
+  .return (TCL_OK, 0)
 
 bad_args:
-  $P1 = new String
-  $P1 = "wrong # args: should be \"array size arrayName\""
-  .return (TCL_ERROR, $P1)
+  .return (TCL_ERROR,"wrong # args: should be \"array size arrayName\"")
 .end
 
 .sub "set"
@@ -191,19 +178,13 @@ set_loop:
 
   if loop < count goto set_loop
 
-  retval = new String
-  retval = ""
-  .return (TCL_OK, retval)
+  .return (TCL_OK, "")
 
 bad_args:
- retval = new String
- retval = "wrong # args: should be array set arrayName list"
- .return (TCL_ERROR, retval)
+ .return (TCL_ERROR, "wrong # args: should be array set arrayName list")
 
 odd_args:
- retval = new String
- retval = "list must have an even number of elements"
- .return (TCL_ERROR, retval)
+ .return (TCL_ERROR, "list must have an even number of elements")
 
 done:
   .return (return_type,retval)
@@ -277,17 +258,11 @@ skip_space:
 push_end:
   .return (TCL_OK, retval)
 
-
 bad_args:
-  retval = new String
-  retval = "wrong # args: should be \"array get arrayName ?pattern?\""
-  .return(TCL_ERROR, retval)
+  .return(TCL_ERROR, "wrong # args: should be \"array get arrayName ?pattern?\"")
 
 not_array:
-  retval = new String
-  retval = ""
-  # is there a better way to do this?
-  .return(TCL_ERROR, retval)
+  .return(TCL_ERROR, "")
 .end
 
 .sub "unset"
@@ -296,6 +271,7 @@ not_array:
   .param string array_name
   .param pmc argv
 
+  trace 1
   .local int argc
   argc = argv
   if argc > 1 goto bad_args
@@ -338,20 +314,12 @@ push_loop:
 
   branch push_loop
 push_end:
-
-  retval = new String
-  retval = ""
-  .return (TCL_OK, retval)
+  .return (TCL_OK, "")
 
 
 bad_args:
-  retval = new String
-  retval = "wrong # args: should be \"array unset arrayName ?pattern?\""
-  .return(TCL_ERROR, retval)
+  .return(TCL_ERROR, "wrong # args: should be \"array unset arrayName ?pattern?\"")
 
 not_array:
-  retval = new String
-  retval = ""
-  # is there a better way to do this?
-  .return(TCL_ERROR, retval)
+  .return(TCL_ERROR, "")
 .end

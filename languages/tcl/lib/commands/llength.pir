@@ -20,18 +20,14 @@
 
   (return_type, retval) = __list(listval)
   if return_type == TCL_ERROR goto done
-  listval = retval
 
 list_like:
-  $I0 = listval
-  retval = new TclInt
-  retval = $I0
+  $I0 = retval
+  .return (TCL_OK, $I0)
 
 done:
   .return(return_type,retval)
 
 bad_args:
-  $P1 = new String
-  $P1 = "wrong # args: should be \"llength list\""
-  .return(TCL_ERROR,$P1)
+  .return(TCL_ERROR, "wrong # args: should be \"llength list\"")
 .end

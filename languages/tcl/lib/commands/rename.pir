@@ -15,13 +15,6 @@
   .local string new_s
   new_s = argv[1]
 
-  .local int return_type
-  .local pmc retval
-  retval = new String
-
-  return_type = TCL_OK
-  retval = ""
-
   .local string old_proc,new_proc
   old_proc = "&" . old_s
   new_proc = "&" . new_s
@@ -41,20 +34,17 @@ add:
 delete:
   null theSub
   store_global "Tcl", old_proc, theSub
-  goto done
+  .return(TCL_OK, "")
 
 doesnt_exist:
-  return_type = TCL_ERROR
-  retval = "can't rename \""
-  retval .= old_s
-  retval .= "\": command doesn't exist"
-  goto done
+  $S0 = "can't rename \""
+  $S0 .= old_s
+  $S0 .= "\": command doesn't exist"
+  .return (TCL_ERROR, $S0)
 
 error:
-  return_type = TCL_ERROR
-  retval = "wrong # args: should be \"rename oldName newName\""
+  .return (TCL_ERROR, "wrong # args: should be \"rename oldName newName\"")
 
 done:
-  .return(return_type,retval)
 
 .end

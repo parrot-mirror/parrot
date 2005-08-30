@@ -9,8 +9,7 @@
   .local int argc 
   argc = argv
 
-  .local pmc retval
-  retval = new TclString
+  .local string retval
   retval = ""
 
   .local int arg_num

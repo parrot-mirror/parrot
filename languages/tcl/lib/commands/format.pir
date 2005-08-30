@@ -16,9 +16,5 @@
 
   sprintf $S0, format, argv 
 
-  $P0 = new String
-  $P0 = $S0
-
-done:
-  .return(TCL_OK,$P0)
+  .return(TCL_OK,$S0)
 .end

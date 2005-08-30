@@ -37,17 +37,13 @@ catch:
   goto resume
 
 bad_args:
-  retval = new String
-
-  retval = "bad option \""
-  retval .= subcommand_name
-  retval .= "\": must be children, code, current, delete, eval, exists, export, forget, import, inscope, origin, parent, qualifiers, tail, or which"
-  .return(TCL_ERROR,retval)
+  $S0 = "bad option \""
+  $S0 .= subcommand_name
+  $S0 .= "\": must be children, code, current, delete, eval, exists, export, forget, import, inscope, origin, parent, qualifiers, tail, or which"
+  .return(TCL_ERROR,$S0)
 
 no_args:
-  retval = new String
-  retval = "wrong # args: should be \"namespace subcommand ?arg ...?\""
-  .return (TCL_ERROR, retval)
+  .return (TCL_ERROR, "wrong # args: should be \"namespace subcommand ?arg ...?\"")
 
 .end
 
@@ -61,14 +57,10 @@ no_args:
   argc = argv
   if argc goto bad_args
 
-  $P1 = new TclString
-  $P1 = "::"
-  .return(TCL_OK,$P1)
+  .return(TCL_OK,"::")
 
 bad_args:
-  $P1 = new TclString
-  $P1 = "wrong # args: should be \"namespace current\""
-  .return(TCL_ERROR, $P1)
+  .return(TCL_ERROR, "wrong # args: should be \"namespace current\"")
 
 .end
 
@@ -80,14 +72,10 @@ bad_args:
   if argc !=0  goto not_done
 
   # No arg delete does nothing.
-  $P1 = new String
-  $P1 = ""
-  .return(TCL_OK,$P1)
+  .return(TCL_OK,"")
 
 not_done:
-  $P1 = new String
-  $P1 = "XXX: eek"
-  .return (TCL_ERROR,$P1)
+  .return (TCL_ERROR,"XXX")
 .end
 
 .sub "exists" # XXX
@@ -97,14 +85,10 @@ not_done:
   argc = argv
   if argc != 1 goto bad_args
   # canonicalize namespace.
-  $P1 = new TclInt
-  $P1 = 0
-  .return(TCL_OK,$P1)
+  .return(TCL_OK,0)
 
 bad_args:
-  $P1 = new TclString
-  $P1 = "wrong # args: should be \"namespace exists name\"" 
-  .return(TCL_ERROR, $P1)
+  .return(TCL_ERROR, "wrong # args: should be \"namespace exists name\"" )
 .end
 
 .sub "qualifiers"
@@ -129,18 +113,14 @@ bad_args:
   $P2 = $P0."__get_pmc_keyed"($P1)
   
   $S1 = $P2
-  $P3 = new String
-  $P3 = $S1
-  .return (TCL_OK,$P3)
+  .return (TCL_OK,$S1)
 
 WHOLE:
   $P0 = argv[0]
   .return(TCL_OK,$P0)
 
   bad_args:
-  $P1 = new String
-  $P1 = "wrong # args: should be \"namespace qualifiers string\""
-  .return (TCL_ERROR,$P1)
+  .return (TCL_ERROR, "wrong # args: should be \"namespace qualifiers string\"")
 
 .end
 
@@ -166,17 +146,13 @@ WHOLE:
   $P2 = $P0."__get_pmc_keyed"($P1)
   
   $S1 = $P2
-  $P3 = new String
-  $P3 = $S1
-  .return (TCL_OK,$P3)
+  .return (TCL_OK,$S1)
 
 WHOLE:
   $P0 = argv[0]
   .return(TCL_OK,$P0)
 
   bad_args:
-  $P1 = new String
-  $P1 = "wrong # args: should be \"namespace tail string\""
-  .return (TCL_ERROR,$P1)
+  .return (TCL_ERROR, "wrong # args: should be \"namespace tail string\"")
 
 .end

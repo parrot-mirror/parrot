@@ -19,7 +19,5 @@ read a line from a channel
   .local string line
   line = readline io
 
-  $P1 = new TclString
-  $P1 = line
-  .return (TCL_OK,$P1)
+  .return (TCL_OK,line)
 .end

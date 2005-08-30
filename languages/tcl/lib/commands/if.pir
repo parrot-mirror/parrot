@@ -110,34 +110,27 @@ done:
   $P1 = parse(code)
   register $P1
 
-  .return $P1."interpret"() #tailcall
+  .return $P1."interpret"() 
 
 done_error:
   .return(return_type,retval)
 
 no_args:
-  retval = new TclString
-  retval = "wrong # args: no expression after \"if\" argument"
-  .return(TCL_ERROR,retval)
+  .return(TCL_ERROR,"wrong # args: no expression after \"if\" argument")
 
 missing_script:
-  retval = new TclString
-  retval = "wrong # args: no script following \"" 
+  $S0 = "wrong # args: no script following \"" 
   $I0 = counter
   dec $I0
-  $S0 = argv[$I0]
-  retval .= $S0
-  retval .= "\" argument"
-  .return(TCL_ERROR,retval)
+  $S1  = argv[$I0]
+  $S0 .= $S1
+  $S0 .=  "\" argument"
+  .return(TCL_ERROR,$S0)
 
 more_than_else:
-  retval = new TclString
-  retval = "wrong # args: extra words after \"else\" clause in \"if\" command"
-  .return(TCL_ERROR,retval)
+  .return(TCL_ERROR,"wrong # args: extra words after \"else\" clause in \"if\" command")
 
 missing_elseif:
-  retval = new TclString
-  retval = "wrong # args: no expression after \"elseif\" argument"
-  .return(TCL_ERROR,retval)
+  .return(TCL_ERROR,"wrong # args: no expression after \"elseif\" argument")
 
 .end

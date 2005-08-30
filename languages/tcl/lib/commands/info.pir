@@ -11,8 +11,6 @@
   .local pmc argv
   argv = argv_slurpy
 
-  .local pmc retval
-
   .local int argc
   argc = argv
   unless argc goto bad_args
@@ -33,18 +31,14 @@ catch:
   goto resume
 
 bad_subcommand:
-  retval = new String
+  $S0  = "bad option \""
+  $S0 .= subcommand_name
+  $S0 .= "\": must be args, body, cmdcount, commands, complete, default, exists, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars"
 
-  retval = "bad option \""
-  retval .= subcommand_name
-  retval .= "\": must be args, body, cmdcount, commands, complete, default, exists, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars"
-
-  .return(TCL_ERROR,retval)
+  .return(TCL_ERROR,$S0)
 
 bad_args:
-  retval = new String
-  retval = "wrong # args: should be \"info option ?arg arg ...?\""
-  .return(TCL_ERROR,retval)
+  .return(TCL_ERROR, "wrong # args: should be \"info option ?arg arg ...?\"")
 .end
 
 .namespace [ "_Tcl\0builtins\0info" ]
@@ -66,16 +60,13 @@ bad_args:
   .return(TCL_OK,$P2)
 
 no_args:
-  retval = new String
-  retval = "\""
-  retval .= procname
-  retval .= "\" isn't a procedure"
-  .return (TCL_OK,retval)
+  $S0 = "\""
+  $S0 .= procname
+  $S0 .= "\" isn't a procedure"
+  .return (TCL_OK,$S0)
 
 bad_args:
-  retval = new String
-  retval = "wrong # args: should be \"info args procname\""
-  .return (TCL_ERROR,retval)
+  .return (TCL_ERROR,"wrong # args: should be \"info args procname\"")
 .end
 
 .sub "body"
@@ -95,16 +86,13 @@ bad_args:
   .return(TCL_OK,$P2)
 
 no_body:
-  retval = new String
-  retval = "\""
-  retval .= procname
-  retval .= "\" isn't a procedure"
-  .return (TCL_ERROR,retval)
+  $S0 = "\""
+  $S0 .= procname
+  $S0 .= "\" isn't a procedure"
+  .return (TCL_ERROR,$S0)
 
 bad_args:
-  retval = new String
-  retval = "wrong # args: should be \"info body procname\""
-  .return (TCL_ERROR,retval)
+  .return (TCL_ERROR,"wrong # args: should be \"info body procname\"")
 .end
 
 .sub "functions"
@@ -146,9 +134,7 @@ loop:
   .return(TCL_OK,retval)
 
 bad_args:
-  retval = new String
-  retval = "wrong # args: should be \"info functions ?pattern?\""
-  .return (TCL_ERROR,retval)
+  .return (TCL_ERROR,"wrong # args: should be \"info functions ?pattern?\"")
 .end
 
 .sub "exists"
@@ -170,9 +156,7 @@ global_resume:
   clear_eh
   if_null value, lex
 found_global:
-  retval = new TclInt
-  retval = 1
-  .return(TCL_OK,retval)
+  .return(TCL_OK,1)
 
 global_catch:
   goto global_resume
@@ -186,22 +170,16 @@ lex_resume:
   clear_eh
   if_null value, nope
 found_lex:
-  retval = new TclInt
-  retval = 1
-  .return(TCL_OK,retval)
+  .return(TCL_OK,1)
 
 lex_catch:
   goto lex_resume
 
 nope:
-  retval = new TclInt
-  retval = 0
-  .return(TCL_OK,retval)
+  .return(TCL_OK,0)
 
 bad_args:
-  retval = new String
-  retval = "wrong # args: should be \"info exists varName\""
-  .return (TCL_ERROR,retval)
+  .return (TCL_ERROR,"wrong # args: should be \"info exists varName\"")
 .end
 
 .sub "tclversion"
@@ -216,8 +194,6 @@ bad_args:
   .return(TCL_OK,$P1)
 
 bad_args:
-  $P1 = new String
-  $P1 = "wrong # args: should be \"info tclversion\""
-  .return (TCL_ERROR, $P1)
+  .return (TCL_ERROR, "wrong # args: should be \"info tclversion\"")
 
 .end

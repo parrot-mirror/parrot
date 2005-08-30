@@ -44,7 +44,5 @@ done:
   .return(return_type,retval)
 
 no_args:
-  retval = new String
-  retval = "wrong # args: should be \"expr arg ?arg ...?\""
-  .return(TCL_ERROR,retval)
+  .return(TCL_ERROR,"wrong # args: should be \"expr arg ?arg ...?\"")
 .end

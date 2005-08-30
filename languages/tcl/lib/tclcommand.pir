@@ -74,7 +74,7 @@ loop:
   goto loop
   
 loop_done:
-  (return_type, retval) = cmd(args :flat)
+  .return cmd(args :flat)
 
 done: 
   .return(return_type, retval)
@@ -91,10 +91,8 @@ no_command:
   goto execute
 
 no_command_non_interactive:
-  return_type = TCL_ERROR
   $S0 = "invalid command name \""
   $S0 .= name
   $S0 .= "\""
-  retval = $S0
-  goto done
+  .return (TCL_ERROR, $S0)
 .end

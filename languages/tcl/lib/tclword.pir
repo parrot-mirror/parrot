@@ -33,7 +33,6 @@ the string values of the elements.
 .sub interpret method
   .local pmc retval
   .local int return_type
-  return_type = TCL_OK
   
   .local int i, len
   i   = 0
@@ -55,8 +54,7 @@ loop:
   goto loop
 
 loop_done:
-  retval = new TclString
-  retval = word
+  .return (TCL_OK, word)
 
 done:
   .return(return_type, retval)
