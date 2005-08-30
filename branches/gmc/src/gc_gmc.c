@@ -1339,10 +1339,13 @@ gc_gmc_clear_live(Interp *interpreter, struct Small_Object_Pool *pool,
     Gc_gmc_gen *gen;
     INTVAL pass = 0;
 
-    for (gen = pool->gc->old_fst; gen; gen = gen->next)
+    for (gen = pool->gc->old_fst; gen || !pass; gen = gen->next)
     {
-	if (!gen && !pass++)
+	if (!gen && !pass)
+	{
+	    pass++;
 	    gen = pool->gc->yng_fst;
+	}
 	for (hdr = gen->fst_free; (UINTVAL)hdr < (UINTVAL)gen->first; hdr = gc_gmc_next_hdr(hdr))
 	    PObj_live_CLEAR(Gmc_PMC_hdr_get_PMC(hdr));
     }
@@ -1651,14 +1654,13 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
     /* We are sure that orig will be the first to hit the barrier. */
     while ((UINTVAL)orig < (UINTVAL)gen->first)
     {
-	if (old_orig)
-	    (*gen->pool->add_free_object)(interpreter, gen->pool, Gmc_PMC_hdr_get_PMC(old_orig));
-	old_orig = NULL;
+	/*old_orig = NULL;*/
 	/* Free any object that has the live flag clear. */
 	while (((UINTVAL)orig < (UINTVAL)gen->first || !(leave = 1)) && !PObj_live_TEST(Gmc_PMC_hdr_get_PMC(orig)))
 	{
 	    if (old_orig)
 		(*gen->pool->add_free_object)(interpreter, gen->pool, Gmc_PMC_hdr_get_PMC(old_orig));
+	    old_orig = NULL;
 
 	    if (PObj_needs_early_DOD_TEST(Gmc_PMC_hdr_get_PMC(orig)))
 		--interpreter->arena_base->num_early_DOD_PMCs;
@@ -1673,6 +1675,9 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
 	}
 	if (!leave)
 	{
+	    if (old_orig)
+		(*gen->pool->add_free_object)(interpreter, gen->pool, Gmc_PMC_hdr_get_PMC(old_orig));
+	    old_orig = NULL;
 	    /* Copy from orig to dest and update pointers. */	
 	    size = gc_gmc_get_size(interpreter, orig);
 	    remaining -= size;
