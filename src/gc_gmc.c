@@ -1396,8 +1396,8 @@ gc_gmc_trace_children(Interp *interpreter, Gc_gmc_hdr *h)
 	    {
 		for (i = 0; i < PMC_int_val(pmc); i++)
 		{
-		    /*if (data[i] && Gmc_PMC_get_HDR(data[i]) < h)*/
-		    if (data[i])
+		    if (data[i] && Gmc_PMC_get_HDR(data[i]) > h)
+		    /*if (data[i])*/
 			pobject_lives(interpreter, (PObj*)data[i]);
 		}
 	    }
@@ -1491,7 +1491,6 @@ parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
 	    PObj_live_SET(o);
 	    break;
 	default:
-	    *(int*)NULL = 0;
 	    internal_exception(1, "GMC: undefined state");
     }
 }
@@ -1568,9 +1567,9 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 		/* PObj is alive, trace its children */
 		if (PObj_live_TEST((PObj*)Gmc_PMC_hdr_get_PMC(hdr)))
 		{
-		    gc_gmc_trace_children(interpreter, hdr);
 		    if (PObj_igp_TEST(Gmc_PMC_hdr_get_PMC(hdr)))
 			gc_gmc_trace_igp_sons(interpreter, hdr);
+		    gc_gmc_trace_children(interpreter, hdr);
 		}
 		else
 		    dopr--;
