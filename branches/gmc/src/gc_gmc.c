@@ -501,8 +501,6 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     gc->gray = NULL;
     gc->dummy_gc = dummy_gc;
     gc->state = GMC_NORMAL_STATE;
-    gc->timely = gc_gmc_gen_init(interpreter, pool);
-    gc->constant = gc_gmc_gen_init(interpreter, pool);
     pool->gc = gc;
 
     for (i = 0; i < GMC_GEN_INIT_NUMBER; i++)
