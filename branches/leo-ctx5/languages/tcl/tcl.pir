@@ -46,7 +46,9 @@ input_loop:
   unless STDIN goto done
   $P1 = parse(input_line)
   register $P1
-  (retcode,retval) = $P1."interpret"()
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  (retcode,retval) = interpret($P1)
   # print out the result of the evaluation.
   if_null retval, input_loop
   if retval == "" goto input_loop

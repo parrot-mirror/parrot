@@ -32,19 +32,19 @@ Given a PMC, get a number from it.
 
 .sub __number
   .param pmc value
-  
+ 
   $I0 = typeof value
   if $I0 == .TclInt goto done
   if $I0 == .TclFloat goto done
   
   $S0 = value
-  $I0 = length $S0
+  $I0 = length $S1
   (value, $I1) = get_number($S0, 0)
   if $I0 != $I1 goto NaN
   goto done
 
 done:
-  .return(TCL_OK, value)
+  .return(value)
 
 NaN:
   $P0 = new Exception

@@ -18,7 +18,7 @@ however, then we're returning the invokable PMC.
 
 .sub __expression_parse
   .param string expr
-  
+ 
   .local pmc retval
   .local int return_type
   return_type = TCL_OK
@@ -41,7 +41,7 @@ operand:
   chunk[0] = OPERAND
   chunk[1] = retval
   push chunks, chunk
-  
+
   goto operator
 
 no_operand:
@@ -109,7 +109,6 @@ converter_loop:
   goto converter_next 
 
 is_opfunc:
-  #print "is_opfunc\n"
   $I3 = our_op[2] 
   if $I3 != precedence_level goto converter_next
 
@@ -209,7 +208,7 @@ function:
   .return get_function(expr, pos)
 
 number:
-  .return get_number(expr, pos)
+  .return get_number(expr, pos) 
 
 unary:
   .return get_unary(expr, pos)
@@ -241,7 +240,7 @@ eat_space:
   .local int op_len
   .local string test_op
 
-  # cheat - right now there are only 2 and 1 character ops
+  # XXX cheat - right now there are only 2 and 1 character ops
   # 2 char trump one char.
 
   $I0 = pos + 1
@@ -286,7 +285,6 @@ done:
   result_stack = new TclList
   .local pmc retval
   .local int return_type
-  
 stack_evaluator:
  # while the prog stack exists:
  .local int size
@@ -303,7 +301,9 @@ stack_evaluator:
  # move all non op non funcs to the value stack
  if type == OP goto do_op
  $P0 = chunk[1]
- (return_type, retval) = $P0."interpret"()
+ .local pmc interpret  
+ interpret = find_global "_Tcl", "interpret"
+ (return_type, retval) = interpret($P0)
  if return_type != TCL_OK goto evaluation_return
  chunk[1] = retval
  push result_stack, chunk
@@ -317,17 +317,20 @@ do_op:
   op = chunk[1]
 
   # XXX assume all operands take two args.
+  # XXX looks like there is code to convert everything to numbers.
+  #     - this will have to be changed for string ops.
+
   .local pmc r_arg
   .local pmc l_arg
   .local pmc op_result
   op_result = new TclInt
   l_arg = pop result_stack
   l_arg = l_arg[1]
-  l_arg = __number(l_arg)
+  l_arg = __number(l_arg)  # XXX unnecessary ?
 
   r_arg = pop result_stack
   r_arg = r_arg[1]
-  r_arg = __number(r_arg)
+  r_arg = __number(r_arg) # XXX unnecessary ?
 
   # Is there a more efficient way to do this dispatch?
   if op == OPERATOR_MUL goto op_mul
@@ -351,8 +354,7 @@ do_op:
   if op == OPERATOR_AND goto op_and
   if op == OPERATOR_OR goto op_or
 
-  #error_S = "invalid function lookup returned"
-  goto die_horribly
+  goto die_horribly # XXX should never happen, of course.
 
 op_mul:
   op_result = mul l_arg, r_arg
@@ -442,8 +444,7 @@ op_or:
   # goto done_op
 
 done_op:
-  $P5 = new FixedPMCArray
-  $P5 = 2
+  $P5 = new TclList
   $P5[0] = OPERAND
   $P5[1] = op_result
   push result_stack, $P5
@@ -550,7 +551,7 @@ integer:
   inc pos
   goto integer 
 integer_done:
-  if char == 46 goto floating
+  if char == 46 goto floating    # "."
   if pos == 0 goto done # failure
   
   $S0 = substr expr, start, pos
@@ -571,6 +572,7 @@ float_loop:
 float_done:
   
   $S0 = substr expr, start, pos
+  # XXX Can't we just assign this string directly to the the TclFloat - WJC
   $N0 = $S0
   value = new TclFloat
   value = $N0

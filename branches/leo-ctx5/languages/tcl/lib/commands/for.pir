@@ -41,20 +41,22 @@
 
 
   # first, execute start.
-  (return_type,$P0) = start_parsed."interpret"()
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  (return_type,$P0) = interpret(start_parsed)
   if return_type != TCL_OK goto done
 
 for_loop:
   #print "FOR_LOOP:\n"
   # then execute body
-  (return_type,$P0) = body_parsed."interpret"()
+  (return_type,$P0) = interpret(body_parsed)
   if return_type == TCL_CONTINUE goto continue
   if return_type != TCL_OK goto done
 
 continue:
   # then execute next
   #print "FOR_CONTINUE:\n"
-  (return_type,$P0) = next_parsed."interpret"()
+  (return_type,$P0) = interpret(next_parsed)
   if return_type != TCL_OK goto done
   #print "RETURN_TYPE ="
   #print return_type

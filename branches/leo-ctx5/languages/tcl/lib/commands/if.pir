@@ -110,7 +110,9 @@ done:
   $P1 = parse(code)
   register $P1
 
-  .return $P1."interpret"() 
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  .return interpret($P1) 
 
 done_error:
   .return(return_type,retval)

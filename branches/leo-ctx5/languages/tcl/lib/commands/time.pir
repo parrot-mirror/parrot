@@ -36,7 +36,9 @@ run:
   $I1 = count
 loop:
   if $I1 == 0 goto done
-  ($I0,$P0) = $P1."interpret"()
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  ($I0,$P0) = interpret($P1)
   if $I0 != TCL_OK goto done
   dec $I1
   goto loop

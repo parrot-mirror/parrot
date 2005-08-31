@@ -39,7 +39,9 @@ loop:
 gotfile:
   $P1 = parse(contents)
   register $P1 #XXX Can we remove this?
-  .return  $P1."interpret"()
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  .return  interpret($P1)
  
 badfile:
   $S0 = "couldn't read file \""

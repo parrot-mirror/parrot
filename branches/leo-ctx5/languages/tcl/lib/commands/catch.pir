@@ -27,7 +27,9 @@
   $P1 = parse(code)
   register $P1
   # ignoring $P0 here.
-  ($I0,$P0) = $P1."interpret"()
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  ($I0,$P0) = interpret($P1)
   retval = new Integer
   retval = $I0
 

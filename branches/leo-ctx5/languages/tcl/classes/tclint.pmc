@@ -44,9 +44,12 @@ pmclass TclInt extends TclObject extends Integer dynpmc group tcl_group {
       }
     }
 
+    /* XXX Temporarily disable until we can use exceptions 
     METHOD PMC* interpret() {
         return SELF;
     }
+    */
+    
 }
 
 

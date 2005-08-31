@@ -45,7 +45,9 @@ loop:
   if i == len goto loop_done
   
   $P0 = self[i]
-  (return_type, retval) = $P0.interpret()
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  (return_type, retval) = interpret($P0)
   if return_type != TCL_OK goto done
   $S0 = retval
   word .= $S0

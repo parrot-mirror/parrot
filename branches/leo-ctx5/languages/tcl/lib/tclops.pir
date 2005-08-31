@@ -38,7 +38,9 @@ Initialize the attributes for an instance of the class
   .local pmc name, operand
   name    = getattribute self, "TclUnaryOp\x00name"
   operand = getattribute self, "TclUnaryOp\x00operand"
-  (return_type, retval) = operand."interpret"()
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  (return_type, retval) = interpret(operand)
   if return_type == TCL_ERROR goto done
   operand = retval
   
