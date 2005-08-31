@@ -37,7 +37,9 @@ while_loop:
   (return_type,retval) = expression_i(retval)
   if return_type == TCL_ERROR goto done_done
   unless retval goto done
-  (return_type,retval) = parsed_code."interpret"()
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  (return_type,retval) = interpret(parsed_code)
   if return_type == TCL_BREAK goto done
   if return_type == TCL_RETURN goto done
 

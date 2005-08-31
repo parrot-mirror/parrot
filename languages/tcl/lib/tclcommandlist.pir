@@ -18,7 +18,9 @@
 loop:
   if i == elems goto done
   $P0 = self[i]
-  (return_type, retval) = $P0."interpret"()
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  (return_type, retval) = interpret($P0)
   inc i
   if return_type != TCL_OK goto done
   goto loop

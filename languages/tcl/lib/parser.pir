@@ -621,6 +621,32 @@ done:
   .return($P0, pos)
 .end
 
+
+=head2 XXX: (int return_type, pmc retval)  = interpret(pmc thing)
+
+A temporary reversion to a centralized interpret method. With the new
+calling conventions, we can't rely on *every* PMC correctly being
+able to return two values (some are returning from C). In the past,
+the PMC value went in the right slot: Now, it is autoconverted to
+a returntype.
+
+This will go away when we move to using exceptions for non TCL_OK
+return codes.
+
+=cut
+
+.sub interpret
+  .param pmc thing
+
+  $I0 = can thing, "interpret" 
+  if $I0 goto object_like
+  .return (TCL_OK, thing)
+
+object_like:
+  .return thing."interpret"()
+
+.end
+
 =back
 
 =cut

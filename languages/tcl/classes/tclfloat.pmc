@@ -54,9 +54,12 @@ pmclass TclFloat extends TclObject extends Float dynpmc group tcl_group {
         return buff;
     }
 
+    /* XXX Temporarily disable until we can use exceptions 
     METHOD PMC* interpret() {
         return SELF;
     }
+    */
+
 }
 
 

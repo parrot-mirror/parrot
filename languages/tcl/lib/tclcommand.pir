@@ -40,7 +40,9 @@ Execute the command.
   
   .local string name
   $P0 = getattribute self, "TclCommand\x00name"
-  (return_type, retval) = $P0.interpret()
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  (return_type, retval) = interpret($P0)
   if return_type != TCL_OK goto done
   name = retval
   
@@ -66,7 +68,7 @@ loop:
   if i == elems goto loop_done
   
   word   = self[i]
-  (return_type, retval) = word.interpret()
+  (return_type, retval) = interpret(word)
   if return_type != TCL_OK goto done
   
   push args, retval

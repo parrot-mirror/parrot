@@ -137,7 +137,9 @@ loop_inner_done:
   # XXX This should probably not create a new pad, exactly
   # Handle [break] and [continue]
 loop_outer_continue:
-  (return_type,retval) = parsed."interpret"()
+  .local pmc interpret
+  interpret = find_global "_Tcl", "interpret"
+  (return_type,retval) = interpret(parsed)
   pop_pad 
   if return_type == TCL_BREAK goto done
   if return_type == TCL_ERROR goto done
