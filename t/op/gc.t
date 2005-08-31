@@ -52,7 +52,7 @@ CODE
 output_is( <<'CODE', '10', "sweep 0, with object that need destroy/destroy");
       interpinfo I1, 2   # How many DOD runs have we done already?
       new P0, .Undef
-      needs_destroy P0
+      # needs_destroy P0
       new P0, .Undef # kill object
       sweep 0
       interpinfo I2, 2   # Should be one more now
@@ -505,7 +505,7 @@ lp1:
     set P2[0], P0
     set P1[I0], P2
     if I0, not_0
-    needs_destroy P0
+    # needs_destroy P0
     # force marking past P2[0]
     sweep 0
 not_0:
@@ -559,7 +559,7 @@ lp1:
     set P1[S0], P2
     if I0, not_0
     new P0, .Integer
-    needs_destroy P0
+    # needs_destroy P0
     null P0
     # force full sweep
     sweep 0
@@ -607,7 +607,7 @@ lp3:
     set I1, 100
     new P5, .Ref
     new P0, .Integer
-    needs_destroy P0
+    # needs_destroy P0
     # force partial sweep
     # ref should now be black
     sweep 0
@@ -616,7 +616,7 @@ lp3:
     setref P5, P1
     null P1
     new P0, .Integer
-    needs_destroy P0
+    # needs_destroy P0
     null P0
     # force full sweep
     sweep 0

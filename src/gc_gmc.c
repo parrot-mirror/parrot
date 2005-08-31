@@ -1352,7 +1352,7 @@ static void
 gc_gmc_init_pool_for_ms(Interp *interpreter, struct Small_Object_Pool *pool)
 {
     Gc_gmc_gen *gen;
-    Gc_gmc_hdr *hdr, *h2;
+    Gc_gmc_hdr *hdr;
     int pass;
     for (gen = pool->gc->old_fst, pass = 0; gen || !pass; gen = gen->next)
     {
@@ -1361,6 +1361,15 @@ gc_gmc_init_pool_for_ms(Interp *interpreter, struct Small_Object_Pool *pool)
 	    pass++;
 	}
 	gen->marked = 0;
+	/* If we are searching timely destruction objects, we are going
+	 * to make a full run anyway, so we can afford to mark everyone
+	 * as dead first (this will remove false negatives and thus avoid
+	 * us to have to run two times the GC). */
+	if (interpreter->arena_base->lazy_dod)
+	{
+	    for (hdr = gen->fst_free; (UINTVAL)hdr < (UINTVAL)gen->first; hdr = gc_gmc_next_hdr(hdr))
+		PObj_live_CLEAR(hdr);
+	}
     }
 }
 
@@ -1383,6 +1392,7 @@ gc_gmc_trace_children(Interp *interpreter, Gc_gmc_hdr *h)
     INTVAL i;
 
     pmc = Gmc_PMC_hdr_get_PMC(h);
+    Gmc_PMC_hdr_get_GEN(h)->pool->gc->hdr_ref = h;
 
     bits = PObj_get_FLAGS(pmc) & mask;
     if (bits)
@@ -1393,7 +1403,8 @@ gc_gmc_trace_children(Interp *interpreter, Gc_gmc_hdr *h)
 	    {
 		for (i = 0; i < PMC_int_val(pmc); i++)
 		{
-		    if (data[i] && Gmc_PMC_get_HDR(data[i]) > h)
+		    if (data[i])
+		    /*if (data[i] && Gmc_PMC_get_HDR(data[i]) > h)*/
 			pobject_lives(interpreter, (PObj*)data[i]);
 		}
 	    }
@@ -1433,7 +1444,6 @@ gc_gmc_trace_igp_sons(Interp *interpreter, Gc_gmc_hdr *h)
 		}
 	    }
 	} else {
-	    pool->gc->hdr_ref = h;
 	    VTABLE_mark(interpreter, pmc);
 	}
     }
@@ -1485,7 +1495,7 @@ parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
 	    break;
 	case GMC_NORMAL_STATE:
 	case GMC_TIMELY_NORMAL_STATE:
-	    if ((UINTVAL)h > (UINTVAL)Gmc_PMC_hdr_get_GEN(h)->pool->gc->hdr_ref)
+	    /*if ((UINTVAL)h > (UINTVAL)gc->hdr_ref)*/
 		PObj_live_SET(o);
 	    break;
 	default:
