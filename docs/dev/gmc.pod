@@ -201,4 +201,3 @@ Generations will then be half (or less)-filled. If there is enough space in a
 generation to copy the contents of the one just younger, then we merge the two
 of them. If not, we don't touch anything.
 
-
