@@ -1546,6 +1546,9 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 	if (!state)
 	{
 	    gen->marked = 1;
+#ifdef GMC_DEBUG
+	    fprintf(stderr, "GC state: %ld, dopr: %ld, gen %p\n",pool->gc->state, dopr, gen);
+#endif
 
 	    /* And go through it. */	
 	    for (hdr = gen->fst_free; (UINTVAL)hdr < (UINTVAL)gen->first; hdr = gc_gmc_next_hdr(hdr))
@@ -1556,7 +1559,7 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 		 * consider only IGP from now on. */
 		/* If this is a timely destruction triggered run, make a full
 		 * run. */
-		if (!state && dopr <= 0 && !interpreter->arena_base->lazy_dod)
+		if (!state && dopr <= 0 && pool->gc->state < GMC_TIMELY_NORMAL_STATE)
 		{
 		    pool->gc->white = hdr;
 		    state = 1;
@@ -1572,8 +1575,12 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 		else
 		    dopr--;
 	    }
-	} else
+	} else {
 	    gc_gmc_trace_igp(interpreter, gen);
+#ifdef GMC_DEBUG
+	    fprintf(stderr, "Finishing run\n");
+#endif
+	}
     }
     if (!gen)
 	pool->gc->white = hdr;
@@ -1605,7 +1612,7 @@ gc_gmc_copy_hdr(Interp *interpreter, Gc_gmc_hdr *from, Gc_gmc_hdr *to)
 
 
 /* Compacts a generation. */
-static void
+static INTVAL
 gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
 {
     Gc_gmc_hdr *orig, *old_orig;
@@ -1671,6 +1678,7 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
 #ifdef GMC_DEBUG
     fprintf(stderr, "gen %p, destroyed %d, remaining %d\n", gen, destroyed, gen->alloc_obj);
 #endif
+    return destroyed;
 }
 
 
@@ -1737,6 +1745,7 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
     Gc_gmc_gen *gen;
     Gc_gmc_gen *ogen;
     INTVAL pass = 0;
+    INTVAL destroyed = 0;
     Gc_gmc_hdr *h;
     
     gen = pool->gc->yng_lst;
@@ -1746,43 +1755,21 @@ gc_gmc_compact(Interp *interpreter, struct Small_Object_Pool *pool)
     /* Compact only the gen that were examined. */
     while (gen->marked)
     {
-#ifdef BIG_DUMP
-	for (h = gen->fst_free; (UINTVAL)h < (UINTVAL)gen->first; h = gc_gmc_next_hdr(h))
-	    fprintf(stderr, "Before compacting, yng_lst: %p -> (%p, %p) - %ld - %p\n", Gmc_PMC_hdr_get_PMC(h), h, Gmc_PMC_hdr_get_BODY(h), Gmc_PMC_hdr_get_FLAGS(h), Gmc_PMC_hdr_get_BODY(h)->data);
-#endif
-	gc_gmc_compact_gen(interpreter, gen);
-#ifdef BIG_DUMP
-	for (h = gen->fst_free; (UINTVAL)h < (UINTVAL)gen->first; h = gc_gmc_next_hdr(h))
-	    fprintf(stderr, "Before merging, yng_lst: %p -> (%p, %p) - %ld\n", Gmc_PMC_hdr_get_PMC(h), h, Gmc_PMC_hdr_get_BODY(h), Gmc_PMC_hdr_get_FLAGS(h));
-#endif
+	destroyed += gc_gmc_compact_gen(interpreter, gen);
 	if (ogen)
 	    gc_gmc_merge_gen(interpreter, gen, ogen);
-#ifdef BIG_DUMP
-	for (h = gen->fst_free; (UINTVAL)h < (UINTVAL)gen->first; h = gc_gmc_next_hdr(h))
-	    fprintf(stderr, "After merging, yng_lst: %p -> (%p, %p) - %ld\n", Gmc_PMC_hdr_get_PMC(h), h, Gmc_PMC_hdr_get_BODY(h), Gmc_PMC_hdr_get_FLAGS(h));
-#endif
 	ogen = gen;
 	gen = gen->prev;
 	if (!gen)
 	{
 	    if (pass++)
-		return;
+		break;
 	    ogen = NULL;
 	    gen = pool->gc->old_lst;
 	}
     }
-#ifdef BIG_DUMP
-    for (gen = pool->gc->old_fst; gen; gen = gen->next)
-    {
-	if (!gen)
-	{
-	    if (pass++)
-		return;
-	    gen = pool->gc->yng_fst;
-	}
-	for (h = gen->fst_free; (UINTVAL)h < (UINTVAL)gen->first; h = gc_gmc_next_hdr(h))
-	    fprintf(stderr, "After GMC run: %p -> (%p,%p) - %ld - %p\n", Gmc_PMC_hdr_get_PMC(h), h, Gmc_PMC_hdr_get_BODY(h), Gmc_PMC_hdr_get_FLAGS(h), Gmc_PMC_hdr_get_BODY(h)->data);
-    }
+#ifdef GMC_DEBUG
+    fprintf(stderr, "Sweeped %ld objects\n", destroyed);
 #endif
 }
 
