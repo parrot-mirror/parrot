@@ -173,7 +173,7 @@ void parrot_gc_gms_wb_key(Interp *, PMC *agg,
     agg_body = (UINTVAL)PMC_body(agg); \
     new_body = (UINTVAL)PMC_body((PObj*)new); \
     key_body = (UINTVAL)PMC_body((PObj*)new_key); \
-    if (agg_body > new_body || agg_body < key_body) \
+    if (agg_body > new_body || agg_body > key_body) \
 	gc_gmc_wb_key(interp, agg, old, old_key, new, new_key); \
 } while (0)
 
