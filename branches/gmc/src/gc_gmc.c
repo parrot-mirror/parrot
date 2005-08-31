@@ -219,6 +219,7 @@ of them. If not, we don't touch anything.
 
 #if PARROT_GC_GMC
 
+/*#define BIG_DUMP*/
 
 
 /* How many more objects do we want allocated next time ? */
@@ -496,7 +497,7 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     gc->yng_lst = NULL;
     gc->old_fst = NULL;
     gc->old_lst = NULL;
-    gc->igp_ref = NULL;
+    gc->hdr_ref = NULL;
     gc->gray = NULL;
     gc->dummy_gc = dummy_gc;
     gc->state = GMC_NORMAL_STATE;
@@ -522,7 +523,6 @@ gc_gmc_pool_init(Interp *interpreter, struct Small_Object_Pool *pool)
     gen->prev->next = NULL;
     gen->prev = NULL;
     gc->old_lst = gc->old_fst;
-    gc->white = gc->old_fst->first;
 #ifdef GMC_DEBUG
     for (i = 0, gen = gc->old_fst; ; gen = gen->next)
     {
@@ -875,7 +875,7 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
     while ((UINTVAL)ptr < (UINTVAL)dest->first)
     {
 #ifdef BIG_DUMP
-	fprintf(stderr, "copy_gen: ptr %p, old_body %p, new_body %p\n", Gmc_PMC_hdr_get_PMC(ptr), PMC_body(Gmc_PMC_hdr_get_PMC(ptr)), Gmc_PMC_hdr_get_BODY(ptr));
+	fprintf(stderr, "copy_gen: ptr %p, old_body %p, new_body %p, struct_val: %p\n", Gmc_PMC_hdr_get_PMC(ptr), PMC_body(Gmc_PMC_hdr_get_PMC(ptr)), Gmc_PMC_hdr_get_BODY(ptr), PMC_struct_val(Gmc_PMC_hdr_get_PMC(ptr)));
 #endif
 	Gmc_PMC_hdr_set_GEN(ptr, dest);
 	PMC_body(Gmc_PMC_hdr_get_PMC(ptr)) = Gmc_PMC_hdr_get_BODY(ptr);
@@ -1082,14 +1082,10 @@ gc_gmc_sweep_from_hdr_list(Interp *interpreter, Gc_gmc_hdr *h)
 void gc_gmc_wb(Interp *interpreter, PMC *agg, void *old, void *new)
 {
     Gc_gmc_gen *gen;
-    if (PObj_is_PMC_TEST((PObj*)new) && PObj_exists_PMC_EXT_TEST((PMC*)new))
-    {
-	gen = Gmc_PMC_get_GEN((PMC*)agg);
-	if (!PObj_igp_TEST(agg))
-	    gc_gmc_store_hdr_list(interpreter, gen->IGP, Gmc_PMC_get_HDR(agg));
-	PObj_igp_SET(agg);
-    }
-    /* XXX: Do we need to move it one way or another for invariant ? */
+    gen = Gmc_PMC_get_GEN((PMC*)agg);
+    if (!PObj_igp_TEST(agg))
+	gc_gmc_store_hdr_list(interpreter, gen->IGP, Gmc_PMC_get_HDR(agg));
+    PObj_igp_SET(agg);
 }
 
 void gc_gmc_wb_key(Interp *interpreter, PMC *agg,
@@ -1199,6 +1195,7 @@ gc_gmc_run(Interp *interpreter, int flags)
 	arena_base->lazy_dod = (flags & DOD_lazy_FLAG);
 	gc_gmc_mark(interpreter, arena_base->pmc_pool, !arena_base->lazy_dod);
 	gc_gmc_compact(interpreter, arena_base->pmc_pool);
+
 #ifdef GMC_DEBUG
 	fprintf (stderr, "\nGMC: Trying to run dod_run for normal allocation\n\n");
 #endif /* GMC_DEBUG */
@@ -1397,7 +1394,6 @@ gc_gmc_trace_children(Interp *interpreter, Gc_gmc_hdr *h)
 		for (i = 0; i < PMC_int_val(pmc); i++)
 		{
 		    if (data[i] && Gmc_PMC_get_HDR(data[i]) > h)
-		    /*if (data[i])*/
 			pobject_lives(interpreter, (PObj*)data[i]);
 		}
 	    }
@@ -1437,6 +1433,7 @@ gc_gmc_trace_igp_sons(Interp *interpreter, Gc_gmc_hdr *h)
 		}
 	    }
 	} else {
+	    pool->gc->hdr_ref = h;
 	    VTABLE_mark(interpreter, pmc);
 	}
     }
@@ -1488,7 +1485,8 @@ parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
 	    break;
 	case GMC_NORMAL_STATE:
 	case GMC_TIMELY_NORMAL_STATE:
-	    PObj_live_SET(o);
+	    if ((UINTVAL)h > (UINTVAL)Gmc_PMC_hdr_get_GEN(h)->pool->gc->hdr_ref)
+		PObj_live_SET(o);
 	    break;
 	default:
 	    internal_exception(1, "GMC: undefined state");
@@ -1527,6 +1525,7 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 
     hdr = pool->gc->gray; 
     gen = pool->gc->yng_lst;
+    pool->gc->hdr_ref = NULL;
     if (interpreter->arena_base->num_early_DOD_PMCs)
 	pool->gc->state = GMC_TIMELY_NORMAL_STATE;
     else
@@ -1558,11 +1557,8 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 		 * consider only IGP from now on. */
 		/* If this is a timely destruction triggered run, make a full
 		 * run. */
-		if (!state && dopr <= 0 && pool->gc->state < GMC_TIMELY_NORMAL_STATE)
-		{
-		    pool->gc->white = hdr;
+		if (!state && dopr <= 0 && !interpreter->arena_base->lazy_dod && pool->gc->state < GMC_TIMELY_NORMAL_STATE)
 		    state = 1;
-		}
 
 		/* PObj is alive, trace its children */
 		if (PObj_live_TEST((PObj*)Gmc_PMC_hdr_get_PMC(hdr)))
@@ -1581,8 +1577,6 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 #endif
 	}
     }
-    if (!gen)
-	pool->gc->white = hdr;
 
     return (DEAD_OBJECTS_PER_RUN - dopr);
 }
@@ -1605,12 +1599,60 @@ gc_gmc_copy_hdr(Interp *interpreter, Gc_gmc_hdr *from, Gc_gmc_hdr *to)
     memmove(to, from, size);
     Gmc_PMC_hdr_set_GEN(to, gen);
     PMC_body(Gmc_PMC_hdr_get_PMC(to)) = Gmc_PMC_hdr_get_BODY(to);
+#ifdef BIG_DUMP
+    fprintf(stderr, "Copying header: %p -> (%p,%p) to (%p,%p), struct val : %p\n", Gmc_PMC_hdr_get_PMC(from), from, Gmc_PMC_hdr_get_BODY(from), to, Gmc_PMC_hdr_get_BODY(to), PMC_struct_val(Gmc_PMC_hdr_get_PMC(to)));
+#endif
     return gc_gmc_next_hdr(to);
 }
 
 
 
 /* Compacts a generation. */
+
+/*
+
+Our generation looks like :
+    
+    [ ________OOXOXXOOXXXXOOOXXXOO ]
+	      ^                    ^
+	      |                    |
+           fst_free              first
+
+where C<_> is unused memory, C<O> is a live object and C<X> is a dead object.
+
+We use two pointers, C<orig> and C<dest>. C<orig> represents the object that we
+are currently examining while dest is the place where the next object will be
+copied. So C<orig> is always >= to C<dest> and there are only live objects to
+the left of C<dest>.
+
+During the compacting, a gen looks like :
+
+    [ _________OOOOOOOXOXOOXOXXXXOO ]
+                      ^       ^    
+		      |       |
+		    dest     orig
+
+If the object at C<orig> is alive, then copy it to dest, clear its live flag
+(for next run) and move both pointers forward. If not, call finalizers methods
+on him and move only orig.
+
+When C<orig> has walked all the objects, we are done with the first phase of
+compaction and memory looks like :
+
+    [ _________0000000000000XX00X0 ]
+               ^          ^        ^
+               |          |        |
+	    fst_free	dest     orig
+	                         first
+
+The area between dest and orig is junk (live objects have already been copied).
+As we need the generation to be aligned to the right, we'll simply shift
+the area between fst_free and dest to first - dest + fst_free.
+
+			
+=cut
+
+*/
 static INTVAL
 gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
 {
@@ -1629,7 +1671,6 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
     /* We are sure that orig will be the first to hit the barrier. */
     while ((UINTVAL)orig < (UINTVAL)gen->first)
     {
-	/*old_orig = NULL;*/
 	/* Free any object that has the live flag clear. */
 	while (((UINTVAL)orig < (UINTVAL)gen->first || !(leave = 1)) && !PObj_live_TEST(Gmc_PMC_hdr_get_PMC(orig)))
 	{
@@ -1647,6 +1688,9 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
 	    orig = gc_gmc_next_hdr(orig);
 	    gen->alloc_obj--;
 	    destroyed++;
+#ifdef BIG_DUMP
+	    fprintf(stderr, "%p -> %p, %p has been legally declared dead and will be overwritten\n", Gmc_PMC_hdr_get_PMC(orig), orig, Gmc_PMC_hdr_get_BODY(orig));
+#endif
 	}
 	if (!leave)
 	{
@@ -1663,12 +1707,15 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
 
     /* Shift everything to align them to the higher memory */
     size = (char*)dest - (char*)gen->fst_free;
+#ifdef BIG_dump
+    fprintf(stderr, "Moving %p - %p to %p - %p in gen %p (%p - %p)\n", gen->fst_free, dest, (char*)gen->first - size, (char*)gen->first, gen, (char*)gen->fst_free - gen->remaining, gen->first);
+#endif
     memmove((char*)gen->first - size, gen->fst_free, size);
     gen->fst_free = (char*)gen->first - size;
     for (orig = gen->fst_free; (UINTVAL)orig < (UINTVAL)gen->first; orig = gc_gmc_next_hdr(orig))
     {
 #ifdef BIG_DUMP
-	fprintf(stderr, "copy_hdr: ptr %p, old_body %p, new_body %p\n", Gmc_PMC_hdr_get_PMC(orig), PMC_body(Gmc_PMC_hdr_get_PMC(orig)), Gmc_PMC_hdr_get_BODY(orig));
+	fprintf(stderr, "copy_hdr: ptr %p, old_body %p, new_body %p, struct val: %p\n", Gmc_PMC_hdr_get_PMC(orig), PMC_body(Gmc_PMC_hdr_get_PMC(orig)), Gmc_PMC_hdr_get_BODY(orig), PMC_struct_val(Gmc_PMC_hdr_get_PMC(orig)));
 #endif
 	PMC_body(Gmc_PMC_hdr_get_PMC(orig)) = Gmc_PMC_hdr_get_BODY(orig);
     }
