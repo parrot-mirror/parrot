@@ -208,8 +208,6 @@ void Parrot_exit_scope(Interp*);
 
 #define GMC_NORMAL_STATE	    0
 #define GMC_SON_OF_IGP_STATE	    1
-#define GMC_TIMELY_NORMAL_STATE     2
-#define GMC_TIMELY_SON_OF_IGP_STATE 3
 
 
 

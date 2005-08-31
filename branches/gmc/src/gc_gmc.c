@@ -1092,8 +1092,6 @@ void gc_gmc_wb_key(Interp *interpreter, PMC *agg,
 	void *old, void *old_key, void *new, void *new_key)
 {
     gc_gmc_wb(interpreter, agg, old, new);
-    
-    /* TODO: Deal with key too. */
 }
 
 
@@ -1195,6 +1193,8 @@ gc_gmc_run(Interp *interpreter, int flags)
 	arena_base->lazy_dod = (flags & DOD_lazy_FLAG);
 	gc_gmc_mark(interpreter, arena_base->pmc_pool, !arena_base->lazy_dod);
 	gc_gmc_compact(interpreter, arena_base->pmc_pool);
+	if (arena_base->lazy_dod)
+	    arena_base->lazy_dod_runs++;
 
 #ifdef GMC_DEBUG
 	fprintf (stderr, "\nGMC: Trying to run dod_run for normal allocation\n\n");
@@ -1428,7 +1428,7 @@ gc_gmc_trace_igp_sons(Interp *interpreter, Gc_gmc_hdr *h)
 
     pool = Gmc_PMC_hdr_get_GEN(h)->pool;
     sav_state = pool->gc->state;
-    pool->gc->state = (sav_state < GMC_TIMELY_NORMAL_STATE) ? GMC_SON_OF_IGP_STATE : GMC_TIMELY_SON_OF_IGP_STATE;
+    pool->gc->state =  GMC_SON_OF_IGP_STATE;
 
     bits = PObj_get_FLAGS(pmc) & mask;
     if (bits)
@@ -1486,7 +1486,6 @@ parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
 	/* This object was precedently dead and has been marked alive as a
 	 * consequence of IGP. */
 	case GMC_SON_OF_IGP_STATE:
-	case GMC_TIMELY_SON_OF_IGP_STATE:
 	    if (!PObj_live_TEST(o) && Gmc_PMC_get_GEN(o)->marked)
 	    {
 		PObj_live_SET(o);
@@ -1494,7 +1493,6 @@ parrot_gc_gmc_pobject_lives(Interp *interpreter, PObj *o)
 	    }
 	    break;
 	case GMC_NORMAL_STATE:
-	case GMC_TIMELY_NORMAL_STATE:
 	    /*if ((UINTVAL)h > (UINTVAL)gc->hdr_ref)*/
 		PObj_live_SET(o);
 	    break;
@@ -1536,10 +1534,7 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
     hdr = pool->gc->gray; 
     gen = pool->gc->yng_lst;
     pool->gc->hdr_ref = NULL;
-    if (interpreter->arena_base->num_early_DOD_PMCs)
-	pool->gc->state = GMC_TIMELY_NORMAL_STATE;
-    else
-	pool->gc->state = GMC_NORMAL_STATE;
+    pool->gc->state = GMC_NORMAL_STATE;
     for (gen = pool->gc->yng_lst; ; gen = gen->prev)
     {
 	/* We've run through all the young objects, jump to the old ones. */
@@ -1567,7 +1562,7 @@ gc_gmc_mark(Interp *interpreter, struct Small_Object_Pool *pool, int flags)
 		 * consider only IGP from now on. */
 		/* If this is a timely destruction triggered run, make a full
 		 * run. */
-		if (!state && dopr <= 0 && !interpreter->arena_base->lazy_dod && pool->gc->state < GMC_TIMELY_NORMAL_STATE)
+		if (!state && dopr <= 0 && !interpreter->arena_base->lazy_dod)
 		    state = 1;
 
 		/* PObj is alive, trace its children */
