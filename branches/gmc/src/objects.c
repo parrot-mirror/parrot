@@ -502,6 +502,7 @@ parrot_class_register(Interp* interpreter, STRING *class_name,
     new_vtable->base_type = new_type;
     new_vtable->mro = mro;
     new_vtable->class =  new_class;
+
     set_attrib_num(new_class, (SLOTTYPE*)PMC_data(new_class), PCD_OBJECT_VTABLE,
             vtable_pmc = constant_pmc_new(interpreter, enum_class_VtableCache));
     PMC_struct_val(vtable_pmc) = new_vtable;
