@@ -158,7 +158,7 @@ done_args:
   proc_body .= name
   proc_body .= " "
   proc_body .= args
-  proc_body .= "\\\"\"\n  .return(1,$S1)\n\nARGS_OK:\n  "
+  proc_body .= "\\\"\"\n  .return(1,$S0)\n\nARGS_OK:\n  "
 
   # XXX Is the pop_pad necessary, or would it be  handled as a side
   #  effect of the .return?
