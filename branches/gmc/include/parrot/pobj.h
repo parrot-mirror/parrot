@@ -268,7 +268,7 @@ typedef struct PMC_EXT PMC_EXT;
 
 #if PARROT_GC_GMC
 
-#define PMC_data(pmc)         PMC_body(pmc)->data
+#define PMC_data(pmc)         (PMC_body(pmc)->data)
 #define PMC_data0(pmc)        PMC_data(pmc)
 #define PMC_metadata(pmc)     PMC_body(pmc)->_metadata
 #define PMC_next_for_GC(pmc)  PMC_body(pmc)->_next_for_GC
