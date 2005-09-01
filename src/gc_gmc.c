@@ -1184,6 +1184,9 @@ gc_gmc_run(Interp *interpreter, int flags)
 	--arena_base->DOD_block_level;
 	return;
     } else {
+#ifdef GMC_NO_GC_RUN
+	fprintf(stderr, "Skipping GC run\n");
+#else
 #ifdef GMC_DEBUG
 	fprintf(stderr, "GMC RUN !\n");
 #endif
@@ -1197,6 +1200,7 @@ gc_gmc_run(Interp *interpreter, int flags)
 #ifdef GMC_DEBUG
 	fprintf (stderr, "\nGMC: Trying to run dod_run for normal allocation\n\n");
 #endif /* GMC_DEBUG */
+#endif /* GMC_NO_GC_RUN */
 	--arena_base->DOD_block_level;
     }
 
