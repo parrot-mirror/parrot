@@ -156,14 +156,17 @@ write_types(FILE *stabs)
                 ";\""
                 "," N_LSYM ",0,0,0\n", i++, BYTE_SIZE(STRING),
 #if PARROT_GC_GMC
-                BIT_OFFSET(STRING, body->u._b._bufstart), BIT_SIZE(void*),
-                BIT_OFFSET(STRING, body->u._b._buflen), BIT_SIZE(size_t),
+		/* Does not compile on PPC... */
+		-1, -1,
+                /*BIT_OFFSET(STRING, body->u._b._bufstart), BIT_SIZE(void*),*/
+                /*BIT_OFFSET(STRING, body->u._b._buflen), BIT_SIZE(size_t),*/
 #else
                 BIT_OFFSET(STRING, obj.u._b._bufstart), BIT_SIZE(void*),
                 BIT_OFFSET(STRING, obj.u._b._buflen), BIT_SIZE(size_t),
 #endif
 #if PARROT_GC_GMC
-                BIT_OFFSET(STRING, flags), BIT_SIZE(UINTVAL),
+		-1,
+                /*BIT_OFFSET(STRING, flags), BIT_SIZE(UINTVAL),*/
 #else
                 BIT_OFFSET(STRING, obj.flags), BIT_SIZE(UINTVAL),
 #endif
