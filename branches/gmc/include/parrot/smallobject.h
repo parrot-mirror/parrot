@@ -128,6 +128,11 @@ typedef struct _gc_gms_gen {
 /* Number of dead objects to find in a run. */
 #define DEAD_OBJECTS_PER_RUN 512
 
+
+/* Temporary Hack (?) */
+#define GMC_ALIGN 8
+#define Gmc_align(size)				    ((size % GMC_ALIGN) ? (((size/GMC_ALIGN)+1)*GMC_ALIGN) : size)
+
 typedef struct _gc_gmc_hdr_store {
     struct _gc_gmc_hdr_store *next;
     PMC **ptr;                           /* insert location */
@@ -169,14 +174,14 @@ typedef struct _gc_gmc_hdr {
 
 
 /* Macros for access from header. */
-#define Gmc_PMC_hdr_get_BODY(pmc_hdr)		    ((PMC_BODY*)((char*)(pmc_hdr) + sizeof(Gc_gmc_hdr)))
+#define Gmc_PMC_hdr_get_BODY(pmc_hdr)		    ((PMC_BODY*)((char*)(pmc_hdr) + Gmc_align(sizeof(Gc_gmc_hdr))))
 #define Gmc_PMC_hdr_get_PMC(pmc_hdr)		    (pmc_hdr)->pmc
 #define Gmc_PMC_hdr_get_GEN(pmc_hdr)		    ((Gc_gmc_gen*)((UINTVAL)((pmc_hdr)->gen) & ~1))
 #define Gmc_PMC_hdr_set_GEN(pmc_hdr,prout)	    ((pmc_hdr)->gen = (Gc_gmc_gen*)((UINTVAL)prout | \
 							    ((UINTVAL)(pmc_hdr)->gen & 1)))
 
 /* Macros for access from body. */
-#define Gmc_PMC_body_get_HDR(pmc_body)		    ((Gc_gmc_hdr*)((char*)(pmc_body) - sizeof(Gc_gmc_hdr)))
+#define Gmc_PMC_body_get_HDR(pmc_body)		    ((Gc_gmc_hdr*)((char*)(pmc_body) - Gmc_align(sizeof(Gc_gmc_hdr))))
 #define Gmc_PMC_body_get_PMC(pmc_body)  	    Gmc_PMC_hdr_get_PMC(Gmc_PMC_body_get_HDR(pmc_body))
 #define Gmc_PMC_body_get_GEN(pmc_body)		    Gmc_PMC_hdr_get_GEN(Gmc_PMC_body_get_HDR(pmc_body))
 #define Gmc_PMC_body_set_GEN(pmc_body, gen)	    Gmc_PMC_hdr_set_GEN(Gmc_PMC_body_get_HDR(pmc_body),gen)
@@ -198,6 +203,7 @@ typedef struct _gc_gmc_hdr {
 							(Gc_gmc_gen*)((UINTVAL)Gmc_PMC_get_GEN(pmc) | 1)
 #define PObj_igp_CLEAR(pmc)			    Gmc_PMC_get_HDR(pmc)->gen = \
 						       (Gc_gmc_gen*)((UINTVAL)Gmc_PMC_get_GEN(pmc) & ~1)
+
 
 
 
