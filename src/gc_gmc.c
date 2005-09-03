@@ -220,6 +220,7 @@ of them. If not, we don't touch anything.
 #if PARROT_GC_GMC
 
 /*#define BIG_DUMP*/
+/*#define GMC_DEBUG*/
 
 /*#define GMC_NO_GC_RUN*/
 
@@ -827,7 +828,10 @@ gc_gmc_copy_gen (Gc_gmc_gen *from, Gc_gmc_gen *dest)
     while ((UINTVAL)ptr < (UINTVAL)dest->first)
     {
 #ifdef BIG_DUMP
-	fprintf(stderr, "copy_gen: ptr %p, old_body %p, new_body %p, struct_val: %p\n", Gmc_PMC_hdr_get_PMC(ptr), PMC_body(Gmc_PMC_hdr_get_PMC(ptr)), Gmc_PMC_hdr_get_BODY(ptr), PMC_struct_val(Gmc_PMC_hdr_get_PMC(ptr)));
+	fprintf(stderr, "copy_gen: ptr %p, ", Gmc_PMC_hdr_get_PMC(ptr));
+	fprintf(stderr, "old_body: %p, ", PMC_body(Gmc_PMC_hdr_get_PMC(ptr)));
+	fprintf(stderr, "new body: %p, ", Gmc_PMC_hdr_get_BODY(ptr));
+	fprintf(stderr, "int_val: %ld\n", PMC_int_val(Gmc_PMC_hdr_get_PMC(ptr)));
 #endif
 	Gmc_PMC_hdr_set_GEN(ptr, dest);
 	PMC_body(Gmc_PMC_hdr_get_PMC(ptr)) = Gmc_PMC_hdr_get_BODY(ptr);
@@ -1667,7 +1671,7 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
 	    orig = gc_gmc_next_hdr(orig);
 	    gen->alloc_obj--;
 	    destroyed++;
-	    assert(!Gmc_PMC_hdr_get_PMC(orig));
+	    assert(Gmc_PMC_hdr_get_PMC(orig));
 #ifdef BIG_DUMP
 	    fprintf(stderr, "%p -> %p, %p has been legally declared dead and will be overwritten\n", Gmc_PMC_hdr_get_PMC(orig), orig, Gmc_PMC_hdr_get_BODY(orig));
 #endif
@@ -1700,14 +1704,14 @@ gc_gmc_compact_gen(Interp *interpreter, Gc_gmc_gen *gen)
     for (orig = gen->fst_free; (UINTVAL)orig < (UINTVAL)gen->first; orig = gc_gmc_next_hdr(orig))
     {
 #ifdef BIG_DUMP
-	fprintf(stderr, "copy_hdr: ptr %p, old_body %p, new_body %p, struct val: %p\n", Gmc_PMC_hdr_get_PMC(orig), PMC_body(Gmc_PMC_hdr_get_PMC(orig)), Gmc_PMC_hdr_get_BODY(orig), PMC_struct_val(Gmc_PMC_hdr_get_PMC(orig)));
+	fprintf(stderr, "copy_hdr: ptr %p, old_body %p, new_body %p, int val: %ld\n", Gmc_PMC_hdr_get_PMC(orig), PMC_body(Gmc_PMC_hdr_get_PMC(orig)), Gmc_PMC_hdr_get_BODY(orig), PMC_int_val(Gmc_PMC_hdr_get_PMC(orig)));
 #endif
 	PMC_body(Gmc_PMC_hdr_get_PMC(orig)) = Gmc_PMC_hdr_get_BODY(orig);
     }
     
     gen->remaining = remaining;
 #ifdef GMC_DEBUG
-    fprintf(stderr, "gen %p, destroyed %d, remaining %d\n", gen, destroyed, gen->alloc_obj);
+    fprintf(stderr, "gen %p, destroyed %ld, remaining %ld\n", gen, destroyed, gen->alloc_obj);
 #endif
     return destroyed;
 }
