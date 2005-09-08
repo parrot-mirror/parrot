@@ -1,9 +1,9 @@
 .namespace [ "Tcl" ]
 
 .sub "&lassign"
-  .local pmc argv
+  .param pmc argv :slurpy
+
   .local int argc
-  argv = foldup
   argc = argv
   if argc < 2 goto bad_args
 
