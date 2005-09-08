@@ -119,14 +119,14 @@ found_close_bracket:
   inc pos
   $S0 = substr str, pos, $I0
   pos += $I0
-  pos += 2
+  pos += 1
   
   $I0 = find_type "TclConst"
   $P0 = new $I0
   $P0 = $S0
   push retval, $P0
   
-  goto loop
+  goto eat_space
 
 unmatched_open_brace:
   .return (TCL_ERROR,"unmatched open brace in list")

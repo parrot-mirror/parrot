@@ -197,3 +197,9 @@ bad_args:
   .return (TCL_ERROR, "wrong # args: should be \"info tclversion\"")
 
 .end
+
+#XXX sharedlibextension - should be able to pull this from parrot config.
+#XXX level - just return call level. (optional level is hard.)
+#XXX globals - should be doable. - just walk the "Tcl" namespace.
+#XXX default - watch out for return value and default value.
+#XXX cmdcount - not being tracked. :(
