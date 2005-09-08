@@ -1186,10 +1186,12 @@ PERL_TEST_FILES = t/perl/*.t
 TEST_FILES      =  \
     t/op/*.t \
     t/pmc/*.t \
+    t/run/*.t \
     t/native_pbc/*.t \
     $(IMCC_DIR)/t/*/*.t \
     t/library/*.t \
     t/dynclass/foo.t t/dynclass/g*.t \
+    t/examples/*.t \
     t/p6rules/*.t
 
 # Common prep for all test targets.
