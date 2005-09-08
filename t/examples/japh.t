@@ -17,43 +17,41 @@ t/examples/japh.t - Test some JAPHs
 Test the JAPHs in 'examples/japh'.
 For now there are only JAPHs in PASM.
 
+Some JAPH are not really suitable for inclusion in automated tests.
+
+=head1 TODO
+
+Get the TODO JAPHs working or decide that they are not suitable for testing.
+
+=head1 SEE ALSO
+
+[perl #37082] in the Parrot RT
+
 =cut
 
 use strict;
 use Parrot::Test tests => 15;
 use Test::More;
 
-{
-  # these JAPHs should work
-  foreach my $japh_num ( 3, 8, 12 ) {
-    test_japh($japh_num);
-  }
-}
+# be pessimistic initially
+my %todo = map { $_ => 'various reasons' } ( 1 .. 15 );
 
-# See [perl #37082] in the Parrot RT
-SKIP: {
-  skip 'japh13.pasm has problems under MacOS', 1;
+# known reasons for failure
+$todo{8}  = 'works only on little endian';
+$todo{13} = 'unreliable, but often succeeds';
 
-  foreach my $japh_num ( 13 ) {
-    test_japh($japh_num);
-  }
-};
+# working tests
+undef $todo{$_} foreach ( 3, 12 );
 
-TODO:
-{
-  # these JAPHs are known to fail
-  local $TODO = 'various reasons';
-  foreach my $japh_num ( 1, 2, 4, 5, 6, 7, 9, 10, 11, 14, 15 ) {
-    test_japh($japh_num);
-  }
-};
+# run all tests and tell about todoness
+foreach ( 1 .. 15 ) {
+    my $pasm_fn   = "examples/japh/japh$_.pasm";
+    my $pasm_code = Parrot::Test::slurp_file($pasm_fn);
 
-sub test_japh
-{
-  my ( $japh_num ) = @_;
-
-  my $pasm_fn   = "examples/japh/japh${japh_num}.pasm";
-  my $pasm_code = Parrot::Test::slurp_file($pasm_fn);
-
-  pasm_output_is($pasm_code, "Just another Parrot Hacker\n", $pasm_fn);
+    if ( defined $todo{$_} ) {
+       pasm_output_is($pasm_code, "Just another Parrot Hacker\n", $pasm_fn,
+                      todo => $todo{$_});
+    } else {
+       pasm_output_is($pasm_code, "Just another Parrot Hacker\n", $pasm_fn);
+    }
 }

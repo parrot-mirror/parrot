@@ -84,7 +84,7 @@ RM_RF      = ${rm_rf}
 AR_CR      = ${ar} ${ar_flags}
 RANLIB     = ${ranlib}
 PERL       = ${perl}
-TOUCH      = $(PERL) -e ${PQ}open(A,qq{>>$$_}) or die foreach @ARGV${PQ}
+TOUCH      = $(PERL) -MExtUtils::Command -e touch
 YACC       = ${yacc}
 LEX        = ${lex}
 # do not die when dir already exits
@@ -454,7 +454,7 @@ OPS_FILES = ${ops} $(GEN_OPSFILES)
 
 # Executables
 PARROT            = $(CUR_DIR)/${test_prog}$(EXE)
-MINIPARROT        = $(CUR_DIR)${slash_exec}miniparrot$(EXE)
+MINIPARROT        = $(CUR_DIR)/miniparrot$(EXE)
 INSTALLABLEPARROT = $(CUR_DIR)/installable_parrot$(EXE)
 PARROT_SO         = $(CUR_DIR)/${test_prog}_so$(EXE)
 DIS               = $(CUR_DIR)/disassemble$(EXE)
@@ -513,15 +513,16 @@ MAKE_C = ${make_c}
 #
 ###############################################################################
 
-all :   flags_dummy \
-	$(PARROT) \
-	runtime/parrot/include/parrotlib.pbc \
-	runtime/parrot/include/config.fpmc \
-	docs \
-	$(LIBNCI_TEST_SO) \
-	$(GEN_LIBRARY) \
-	dynclasses \
-	compilers
+all : \
+    flags_dummy \
+    $(PARROT) \
+    runtime/parrot/include/parrotlib.pbc \
+    runtime/parrot/include/config.fpmc \
+    docs \
+    $(LIBNCI_TEST_SO) \
+    $(GEN_LIBRARY) \
+    dynclasses \
+    compilers
 
 # constant string support
 .c.str :
@@ -546,9 +547,9 @@ $(INC_DIR)/string_private_cstring.h : $(STR_FILES) build_tools/c2str.pl
 	$(PERL) build_tools/c2str.pl --all
 
 # classes PMC build utils and rules
-PMC2CD=$(PERL) build_tools/pmc2c.pl --dump
-PMC2CC=$(PERL) build_tools/pmc2c.pl --c
-PMC2CV=$(PERL) build_tools/pmc2c.pl --vt
+PMC2CD = $(PERL) build_tools/pmc2c.pl --dump
+PMC2CC = $(PERL) build_tools/pmc2c.pl --c
+PMC2CV = $(PERL) build_tools/pmc2c.pl --vt
 
 .pmc.dump :
 	$(PMC2CD) $<
@@ -1178,12 +1179,14 @@ compilers-clean :
 
 # The --running-make-test argument is currently used by long-running tests
 # to disable GC_DEBUG.
-EXTRA_TEST_ARGS = --gc-debug --running-make-test
-SRC_TEST_FILES  = t/src/*.t
-PERL_TEST_FILES = t/perl/*.t
-
-# note python tests disabled
-TEST_FILES      =  \
+EXTRA_TEST_ARGS    = --gc-debug --running-make-test
+RUN_TEST_FILES = \
+    t/run/*.t
+SRC_TEST_FILES = \
+    t/src/*.t
+PERL_TEST_FILES = \
+    t/perl/*.t
+RUNCORE_TEST_FILES = \
     t/op/*.t \
     t/pmc/*.t \
     t/run/*.t \
@@ -1202,7 +1205,7 @@ test_prep : all
 # Users have to look at only one report.
 # Normal core
 test : test_prep
-	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) $(TEST_FILES) $(SRC_TEST_FILES) $(PERL_TEST_FILES)
+	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) $(RUNCORE_TEST_FILES) $(RUN_TEST_FILES) $(SRC_TEST_FILES) $(PERL_TEST_FILES)
 
 # Test various run cores and other stuff
 # 'testC', 'testg' and 'testj' are tested only
@@ -1221,39 +1224,44 @@ fulltest : \
 
 # bounds checking, slow core
 testb : test_prep
-	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -b $(TEST_FILES)
+	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -b $(RUNCORE_TEST_FILES)
 
 # CGP core
 testC : test_prep
-	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -C $(TEST_FILES)
+	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -C $(RUNCORE_TEST_FILES)
 
 # fast core
 testf : test_prep
-	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -f $(TEST_FILES)
+	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -f $(RUNCORE_TEST_FILES)
 
 # Computed goto
 testg : test_prep
-	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -g $(TEST_FILES)
+	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -g $(RUNCORE_TEST_FILES)
 
 # JIT core
 testj : test_prep
-	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -j $(TEST_FILES)
+	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -j $(RUNCORE_TEST_FILES)
 
 # normal core, write and run Parrot Byte Code
 testr : test_prep
-	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -r $(TEST_FILES)
+	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -r $(RUNCORE_TEST_FILES)
 
 # switched core
 testS : test_prep
-	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -S $(TEST_FILES)
+	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) -S $(RUNCORE_TEST_FILES)
 
 # test the EXEC stuff
 testexec: test_prep
-	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) --run-exec $(TEST_FILES)
+	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) --run-exec $(RUNCORE_TEST_FILES)
 
 # Test that need to be compiled by the C-compiler
 src_tests :
 	$(PERL) t/harness $(SRC_TEST_FILES)
+
+# Command line and varous environments
+run_tests :
+	$(PERL) t/harness $(RUN_TEST_FILES)
+
 
 # Test the Perl5 Modules in the Parrot distribution
 perl_tests :
