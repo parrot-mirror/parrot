@@ -5,23 +5,20 @@
 .namespace [ "Tcl" ]
 
 .sub "&linsert"
-  .param pmc argv :slurpy  
+  .param pmc argv :slurpy
 
-    
   # make sure we have the right # of args
-  .local int argc
-  argc = argv
-  if argc < 3 goto wrong_args
+  $I0 = argv
+  if $I0 < 3 goto wrong_args
 
-  .local int return_type
-  .local pmc __list,retval
+  .local pmc __list
   __list = find_global "_Tcl", "__list"
   
   .local pmc the_list
   the_list = shift argv
-  (return_type, retval) = __list(the_list)
-  if return_type == TCL_ERROR goto error
-  the_list = retval 
+  ($I0, $P0) = __list(the_list)
+  if $I0 == TCL_ERROR goto error
+  the_list = $P0 
  
   .local pmc position
   position = shift argv
@@ -29,34 +26,51 @@
   .local pmc list_index
   list_index = find_global "_Tcl", "_list_index"
 
-  (return_type,retval,$I2) = list_index(the_list,position)
-  if return_type != TCL_OK goto error
+  ($I0,$P0,$I2) = list_index(the_list,position)
+  if $I0 != TCL_OK goto error
   #linsert treats "end" differently
   if $I2 == 0 goto next
-  inc retval
+  inc $P0
 
 next: 
   .local int the_index
-  the_index = retval
+  the_index = $P0
 
   # XXX workaround, splice doesn't work on TclList <-> TclList.
   # Until that's fixed, splice Arrays, then post-covert to a TclList
   # This is a hideous hack.
 
+convert_the_list:
   .local int cnt
   cnt = 0
   $I1 = the_list
   .local pmc argv_list
   argv_list = new Array
   argv_list = $I1
-LOOP:
-  if cnt >= $I1 goto DONE
+LOOP_the_list:
+  if cnt >= $I1 goto DONE_the_list
   $P1 = the_list[cnt]
   argv_list[cnt] = $P1
   inc cnt
-  goto LOOP
-DONE:
-  argv_list = splice argv_list, the_index, 0
+  goto LOOP_the_list
+DONE_the_list:
+
+convert_the_args:
+  .local int cnt
+  cnt = 0
+  $I1 = argv
+  .local pmc argv_copy
+  argv_copy = new Array
+  argv_copy = $I1
+LOOP_the_args:
+  if cnt >= $I1 goto DONE_the_args
+  $P1 = argv[cnt]
+  argv_copy[cnt] = $P1
+  inc cnt
+  goto LOOP_the_args
+DONE_the_args:
+
+  argv_list = splice argv_copy, the_index, 0
 
   .local pmc retval
   retval = new TclList
@@ -68,8 +82,8 @@ DONE:
   argc = argv_list
 LOOP2:
   if cnt >= argc goto DONE2
-  retval = argv_list[cnt]
-  retval[cnt] = retval
+  $P0 = argv_list[cnt]
+  retval[cnt] = $P0
   inc cnt
   goto LOOP2
 DONE2:
@@ -79,5 +93,5 @@ wrong_args:
   .return (TCL_ERROR, "wrong # args: should be \"linsert list index element ?element ...?\"")
 
 error:
-  .return(return_type,retval)
+  .return($I0,$P0)
 .end
