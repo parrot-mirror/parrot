@@ -678,8 +678,6 @@ parrot_pass_args(Interp *interpreter, struct PackFile_ByteCode *dst_seg,
         dst_pc = CONTEXT(interpreter->ctx)->current_results;
         if (!dst_pc)
             return NULL;
-        todo = Parrot_init_arg_op(interpreter, dst_seg,
-                interpreter->ctx.bp, dst_pc, &st.dest);
         src_pc = interpreter->current_returns;
         action = "results";
         if (!src_pc) {    /* no returns */
@@ -695,6 +693,8 @@ parrot_pass_args(Interp *interpreter, struct PackFile_ByteCode *dst_seg,
                 return NULL;
             action = "params";
         }
+        todo = Parrot_init_arg_op(interpreter, dst_seg,
+                interpreter->ctx.bp, dst_pc, &st.dest);
         Parrot_init_arg_op(interpreter, interpreter->code,
                 caller_regs, src_pc, &st.src);
     }
