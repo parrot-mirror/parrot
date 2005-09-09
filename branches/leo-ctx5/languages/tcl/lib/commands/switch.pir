@@ -1,18 +1,17 @@
 .namespace [ "Tcl" ]
 
 .sub "&switch"
-  .local pmc argv
+  .param pmc argv :slurpy
   .local int argc
-  argv = foldup
   argc = argv
-  
+
   .local pmc retval
   .local string mode
   mode = "-exact"
 
   if argc < 2 goto bad_args
 flag_loop:
-  unless argv goto bad_args
+  unless argc goto bad_args
   $S0 = shift argv
   $S1 = substr $S0, 0, 1
   if $S0 == "--" goto get_subj
@@ -48,7 +47,7 @@ skip_subj:
 body_from_list:
   .local pmc __list
   __list = find_global "_Tcl", "__list"
-  
+
   $P0 = shift argv
   ($I0, retval) = __list($P0)
   if $I0 == TCL_ERROR goto bad_list
