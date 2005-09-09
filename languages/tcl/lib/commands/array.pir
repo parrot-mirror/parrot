@@ -23,9 +23,8 @@
   .local pmc subcommand_proc
   null subcommand_proc
 
-  push_eh catch
+  push_eh bad_args
     subcommand_proc = find_global "_Tcl\0builtins\0array", subcommand_name
-resume:
   clear_eh
   if_null subcommand_proc, bad_args
 
@@ -65,9 +64,6 @@ array_no:
 scommand:
   .return subcommand_proc(is_array,the_array,array_name,argv)
 
-catch:
-  goto resume
-
 bad_args:
   $S0  = "bad option \""
   $S0 .= subcommand_name
@@ -92,7 +88,7 @@ few_args:
   argc = argv
   if argc goto bad_args
 
-  .return (TCL_OK, is_array) 
+  .return (TCL_OK, is_array)
 
 bad_args:
   .return (TCL_ERROR, "wrong # args: should be \"array exists arrayName\"")
@@ -331,7 +327,7 @@ not_array:
   .param pmc argv
 
   .local pmc retval
-  
+
   .local int argc
   argc = argv
   if argc > 2 goto bad_args
@@ -341,7 +337,7 @@ not_array:
   pattern = "*"
   if argc == 0 goto skip_args
   if argc == 1 goto skip_mode
-  
+
   mode = shift argv
 skip_mode:
   pattern = shift argv
@@ -405,7 +401,7 @@ check_loop:
   name = shift iter
   $P0 = rule(name)
   unless $P0 goto check_loop
-  
+
   unless count goto skip_space
   retval .= " "
 skip_space:
