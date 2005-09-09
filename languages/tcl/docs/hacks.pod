@@ -105,6 +105,13 @@ to interoperate.
 
 =back
 
+=item list splicing
+
+There are several cases where we convert TclLists or ResizablePMCArrays to
+Arrays so that we can use the splice opcode. Need to have better splice
+support in parrot array classes, as well as our own. 
+L<lib/commands/linsert.pir>
+
 =cut
 
 
