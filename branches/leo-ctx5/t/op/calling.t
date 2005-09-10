@@ -992,9 +992,7 @@ Foo ok 3
 Foo ok 4
 OUTPUT
 
-TODO: {
-  local $TODO = "bug - :slurpy promotes to :flatten";
-  # see also tcl in leo-ctx5 by Coke; Date 28.08.2005
+# see also tcl in leo-ctx5 by Coke; Date 28.08.2005
 pir_output_is(<<'CODE', <<'OUTPUT', "bug - :slurpy promotes to :flatten");
 .sub main @MAIN
     $P0 = new String
@@ -1020,4 +1018,4 @@ CODE
 ok 1
 ok 2
 OUTPUT
-}
+
