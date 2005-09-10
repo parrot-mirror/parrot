@@ -153,10 +153,12 @@ typedef enum {
 
 struct pcc_sub_t {
     SymReg ** args;
+    int *arg_flags;	/* :slurpy, :optional, ... */
     int nargs;
     SymReg *sub;
     SymReg *cc;
     SymReg ** ret;
+    int *ret_flags;	/* :slurpy, :optional, ... */
     int nret;
     SymReg ** multi;
     int nmulti;

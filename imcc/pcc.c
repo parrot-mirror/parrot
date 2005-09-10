@@ -73,7 +73,7 @@ get_const(Interp *interp, const char *name, int type)
  */
 static Instruction*
 pcc_get_args(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
-        char *op_name, int n, SymReg **args)
+        char *op_name, int n, SymReg **args, int *arg_flags)
 {
     int i, l, flags;
     char buf[1024], s[16];
@@ -87,13 +87,13 @@ pcc_get_args(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
             arg = arg->reg;
         regs[i + 1] = arg;
         flags = 0;
-        if (arg->type & VT_FLAT) {
+        if (arg_flags[i] & VT_FLAT) {
             flags |= PARROT_ARG_FLATTEN;
         }
-        if (arg->type & VT_OPTIONAL) {
+        if (arg_flags[i] & VT_OPTIONAL) {
             flags |= PARROT_ARG_OPTIONAL;
         }
-        else if (arg->type & VT_OPT_COUNT) {
+        else if (arg_flags[i] & VT_OPT_COUNT) {
             flags |= PARROT_ARG_OPT_COUNT;
         }
         sprintf(s, "%d", flags);
@@ -120,9 +120,14 @@ unshift_self(Interp *interp, SymReg *sub, SymReg *obj)
     UNUSED(interp);
     sub->pcc_sub->args = realloc(sub->pcc_sub->args,
             (n + 1) * sizeof(SymReg *));
-    for (i = n; i; --i)
+    sub->pcc_sub->arg_flags = realloc(sub->pcc_sub->arg_flags,
+            (n + 1) * sizeof(int));
+    for (i = n; i; --i) {
         sub->pcc_sub->args[i] = sub->pcc_sub->args[i - 1];
+        sub->pcc_sub->arg_flags[i] = sub->pcc_sub->arg_flags[i - 1];
+    }
     sub->pcc_sub->args[0] = obj;
+    sub->pcc_sub->arg_flags[0] = 0;
     sub->pcc_sub->nargs++;
 }
 
@@ -160,7 +165,7 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     nargs = sub->pcc_sub->nargs;
     if (nargs) {
         ins = pcc_get_args(interp, unit, ins, "get_params", nargs,
-                           sub->pcc_sub->args);
+                           sub->pcc_sub->args, sub->pcc_sub->arg_flags);
     }
 
     /*
@@ -175,7 +180,8 @@ expand_pcc_sub(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
             tmp = INS(interp, unit, "end", NULL, regs, 0, 0, 0);
         }
         else {
-            pcc_get_args(interp, unit, unit->last_ins, "set_returns", 0, NULL);
+            pcc_get_args(interp, unit, unit->last_ins, "set_returns",
+                    0, NULL, NULL);
             tmp = INS(interp, unit, "returncc", NULL, regs, 0, 0, 0);
         }
         IMCC_debug(interp, DEBUG_IMC, "add sub ret - %I\n", tmp);
@@ -219,7 +225,7 @@ expand_pcc_sub_ret(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
     sub = ins->r[0];
     n = sub->pcc_sub->nret;
     ins = pcc_get_args(interp, unit, ins, "set_returns", n,
-                       sub->pcc_sub->ret);
+                       sub->pcc_sub->ret, sub->pcc_sub->ret_flags);
 
     /*
      * we have a pcc_begin_yield
@@ -327,7 +333,7 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
      */
     n = sub->pcc_sub->nargs;
     ins = pcc_get_args(interp, unit, ins, "set_args", n,
-            sub->pcc_sub->args);
+            sub->pcc_sub->args, sub->pcc_sub->arg_flags);
 
     /*
      * insert get_name after args have been setup, so that
@@ -363,7 +369,7 @@ expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins)
      */
     n = sub->pcc_sub->nret;
     ins = pcc_get_args(interp, unit, ins, "get_results", n,
-            sub->pcc_sub->ret);
+            sub->pcc_sub->ret, sub->pcc_sub->ret_flags);
     /* insert the call */
     if (meth_call) {
         regs[0] = sub->pcc_sub->object;
