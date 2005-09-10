@@ -16,7 +16,7 @@ Tests Parrot calling conventions.
 
 =cut
 
-use Parrot::Test tests => 35;
+use Parrot::Test tests => 36;
 use Test::More;
 
 output_is(<<'CODE', <<'OUTPUT', "set_args - parsing");
@@ -991,3 +991,33 @@ Foo ok 2
 Foo ok 3
 Foo ok 4
 OUTPUT
+
+TODO: {
+  local $TODO = "bug - :slurpy promotes to :flatten";
+  # see also tcl in leo-ctx5 by Coke; Date 28.08.2005
+pir_output_is(<<'CODE', <<'OUTPUT', "bug - :slurpy promotes to :flatten");
+.sub main @MAIN
+    $P0 = new String
+    $P0 = "ok 1\n"
+    $P1 = new String
+    $P1 = "ok 2\n"
+    $P0 = foo($P0, $P1)
+    print $P0
+.end
+.sub foo
+    .param pmc p :slurpy
+    .return bar(p)
+.end
+.sub bar
+    .param pmc p
+    .local pmc q
+    q = p[0]
+    print q
+    q = p[1]
+    .return (q)
+.end
+CODE
+ok 1
+ok 2
+OUTPUT
+}
