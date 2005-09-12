@@ -36,8 +36,8 @@ loop:
   push_eh catch 
     find_lex $P1, $I0, $S0
     store_lex $I1, $S1, $P1
-resume:
   clear_eh
+resume:
 
   inc counter
   goto loop

@@ -26,8 +26,8 @@
     goto resume
 get_lexical:
     search_variable = find_lex call_level, sigil_varname
-resume:
   clear_eh
+resume:
 
   if_null search_variable, error
 
