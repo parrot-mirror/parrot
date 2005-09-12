@@ -9,9 +9,7 @@
 #   - we know we need an array name for *all* args, so we test for it here.
 
 .sub "&array"
-  .param pmc argv_slurpy :slurpy
-  .local pmc argv
-  argv = argv_slurpy
+  .param pmc argv :slurpy
 
   .local int argc
   argc = argv
