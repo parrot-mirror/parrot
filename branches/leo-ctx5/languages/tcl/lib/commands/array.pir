@@ -267,7 +267,6 @@ not_array:
   .param string array_name
   .param pmc argv
 
-  trace 1
   .local int argc
   argc = argv
   if argc > 1 goto bad_args
