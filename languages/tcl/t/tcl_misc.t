@@ -2,7 +2,7 @@
 
 use strict;
 use lib qw(tcl/t t . ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 20;
+use Parrot::Test tests => 21;
 use Test::More;
 
 language_output_is("tcl",<<'TCL',<<OUT,"leading spacex2 should be ok");
@@ -140,4 +140,15 @@ language_output_is("tcl",<<'TCL',<<'OUT',"subcommands with semicolons");
 TCL
 2
 OUT
+
+TODO: {
+  local $TODO = "GC (?) bug introduced in leo-ctx5: works fine if you s/100/10/";
+language_output_is("tcl",<<'TCL',<<'OUT',"GC bug?");
+  for {set i 1} {$i < 100} {incr i} {}
+TCL
+OUT
+}
+
+
+
 
