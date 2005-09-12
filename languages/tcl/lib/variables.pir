@@ -14,7 +14,7 @@ other than the default, and multiple interpreters.
 
 .sub __read
   .param string name
-  
+
   .local pmc variable
   .local int return_type
   return_type = TCL_OK
@@ -172,34 +172,36 @@ Gets the actual variable from memory and returns it.
 
 .sub __find_var
   .param string name
+
   name = "$" . name
   
   .local pmc value
 
-  push_eh done
-  $S0 = substr name, 1, 2
-  if $S0 == "::"     goto coloned
+  push_eh notfound
+    $S0 = substr name, 1, 2
+    if $S0 == "::"     goto coloned
   
-  .local int call_level
-  $P1 = find_global "_Tcl", "call_level"
-  call_level = $P1
-  if call_level == 0 goto global_var
+    .local int call_level
+    $P1 = find_global "_Tcl", "call_level"
+    call_level = $P1
+    if call_level == 0 goto global_var
 lexical_var:
-  null value
-  value = find_lex call_level, name
-  goto found
+    value = find_lex call_level, name
+    goto clear_found
 
 coloned:
-  substr name, 1, 2, ""
+    substr name, 1, 2, ""
 global_var:
-  null value
-  value = find_global "Tcl", name
-  # goto found
+    value = find_global "Tcl", name
+    # goto clear_found
 
-  clear_eh
+clear_found:
+    clear_eh
 found:
+  .return(value)
 
-done:
+notfound:
+  null value
   .return(value)
 .end
 

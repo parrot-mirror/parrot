@@ -145,36 +145,15 @@ bad_args:
   .local string varname
   varname = argv[0]
 
-  .local pmc value,retval
-  null value
+  .local pmc find_var
+  find_var = find_global "_Tcl", "__find_var"
+  .local pmc found_var
+  found_var = find_var(varname)
+  if_null found_var, not_found
 
-  push_eh global_catch
-    value = find_global "Tcl", varname
-global_resume:
-  clear_eh
-  if_null value, lex
-found_global:
-  .return(TCL_OK,1)
-
-global_catch:
-  goto global_resume
-
-lex:
-  $P1 = find_global "_Tcl", "call_level"
-  $I1 = $P1
-  push_eh lex_catch
-    value = find_lex $I1, varname
-  clear_eh
-lex_resume:
-  if_null value, nope
-found_lex:
-  .return(TCL_OK,1)
-
-lex_catch:
-  goto lex_resume
-
-nope:
-  .return(TCL_OK,0)
+  .return (TCL_OK, 1)
+not_found:
+  .return (TCL_OK, 0)
 
 bad_args:
   .return (TCL_ERROR,"wrong # args: should be \"info exists varName\"")
