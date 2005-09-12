@@ -26,8 +26,8 @@ real top level namespace.
 
   push_eh catch
     subcommand_proc = find_global "_Tcl\0builtins\0namespace", subcommand_name
-resume:
   clear_eh
+resume:
   if_null subcommand_proc, bad_args
   .return subcommand_proc(argv)
 

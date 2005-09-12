@@ -196,8 +196,8 @@ global_var:
   value = find_global "Tcl", name
   # goto found
 
-found:
   clear_eh
+found:
 
 done:
   .return(value)

@@ -44,8 +44,8 @@
     goto resume_var
 find_lexical:
     the_array = find_lex call_level, sigil_array_name
-resume_var:
   clear_eh
+resume_var:
 
   catch_var:
 

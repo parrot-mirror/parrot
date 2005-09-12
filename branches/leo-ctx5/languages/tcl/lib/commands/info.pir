@@ -20,8 +20,8 @@
 
   push_eh catch
     subcommand_proc = find_global "_Tcl\0builtins\0info", subcommand_name
-resume:
   clear_eh
+resume:
   if_null subcommand_proc, bad_subcommand
   .return subcommand_proc(argv)
 
@@ -164,8 +164,8 @@ lex:
   $I1 = $P1
   push_eh lex_catch
     value = find_lex $I1, varname
-lex_resume:
   clear_eh
+lex_resume:
   if_null value, nope
 found_lex:
   .return(TCL_OK,1)
