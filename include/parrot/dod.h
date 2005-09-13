@@ -161,8 +161,8 @@ void parrot_gc_gms_wb_key(Interp *, PMC *agg,
     UINTVAL agg_body, new_body; \
     if (!(new) || (new) == (void*)PMCNULL) \
 	break; \
-    agg_body = (UINTVAL)PMC_body(agg); \
-    new_body = (UINTVAL)PMC_body((PMC*)new); \
+    agg_body = (UINTVAL)Gmc_POBJ_get_OBJ(agg); \
+    new_body = (UINTVAL)Gmc_POBJ_get_OBJ((PMC*)new); \
     if (agg_body > new_body) \
 	gc_gmc_wb(interp, agg, old, new); \
 } while (0)
@@ -170,9 +170,9 @@ void parrot_gc_gms_wb_key(Interp *, PMC *agg,
     UINTVAL agg_body, new_body, key_body; \
     if (!(new) || (new) == (void*)PMCNULL) \
 	break; \
-    agg_body = (UINTVAL)PMC_body(agg); \
-    new_body = (UINTVAL)PMC_body((PObj*)new); \
-    key_body = (UINTVAL)PMC_body((PObj*)new_key); \
+    agg_body = (UINTVAL)Gmc_POBJ_get_OBJ(agg); \
+    new_body = (UINTVAL)Gmc_POBJ_get_OBJ((PObj*)new); \
+    key_body = (UINTVAL)Gmc_POBJ_get_OBJ((PObj*)new_key); \
     if (agg_body > new_body || agg_body > key_body) \
 	gc_gmc_wb_key(interp, agg, old, old_key, new, new_key); \
 } while (0)

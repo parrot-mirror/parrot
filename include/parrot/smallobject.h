@@ -146,12 +146,6 @@ typedef struct _gc_gmc_hdr_list {
 } Gc_gmc_hdr_list;
 
 
-typedef struct _gc_gmc_header_area {
-    void *fst;
-    void *lst;
-} Gc_gmc_header_area;
-
-
 /* A generation for GMC. */
 typedef struct _gc_gmc_gen {
   struct _gc_gmc_gen *next;       /* Next generation in the linked list. */
@@ -165,14 +159,48 @@ typedef struct _gc_gmc_gen {
   Gc_gmc_hdr_list *IGP;           /* Inter Generational pointers set. */
 } Gc_gmc_gen;
 
+
 /* This header is appended to all gc objects. */
-typedef struct _gc_gmc_hdr {
+typedef struct _gc_gmc_obj_hdr {
     UINTVAL flags;
-    PMC* pmc;          /* Corresponding PMC header. */
+    /* We use the PMC* type because PObj* is included in it, so that avoids us
+     * some casts and is safe as a PObj should never access the fields of a PMC. */
+    PMC* pobj;          /* Corresponding PMC header. */
     Gc_gmc_gen *gen;   /* Generation it belongs to. */
-} Gc_gmc_hdr;
+} Gc_gmc_obj_hdr;
 
 
+/* This is a 'complete' PMC body (obj_header + data). We will call it an object. */
+/* Body (the data) is declared as a char to be as general as possible. */
+typedef struct _gc_gmc_obj {
+    Gc_gmc_obj_hdr hdr;
+    char body[];
+} Gc_gmc_obj;
+
+/* Macros for access from Obj */
+#define Gmc_OBJ_get_HDR(o)			    (o)->hdr
+/* Semantically, this is the same as (type)((o)->body) but if we state it like
+ * this, gcc (and possibly other compilers) complains about lvalue cast.
+ * However, we can't use LVALUE_CAST here, as body is a char[] and thus,
+ * accessing &(o)->body does not work as expected (see the definitions of
+ * LVALUE_CAST. */
+#define Gmc_OBJ_get_BODY(o,type)		    ((type)((char*)o + offsetof(Gc_gmc_obj,body)))
+#define Gmc_OBJ_get_POBJ(o)			    Gmc_OBJ_get_HDR(o).pobj
+#define Gmc_OBJ_get_GEN(o)			    ((Gc_gmc_gen *)((UINTVAL)(Gmc_OBJ_get_HDR(o).gen) & ~1))
+#define Gmc_OBJ_set_GEN(o,speck)		    Gmc_OBJ_get_HDR(o).gen = (Gc_gmc_gen *) \
+							    ((UINTVAL)speck | \
+							    ((UINTVAL)Gmc_OBJ_get_HDR(o).gen & 1))
+
+/*((PMC_BODY*)((Gc_gmc_obj*)(buffer)->obj)->body)*/
+
+/* Macros for access from PObj* */
+#define Gmc_POBJ_get_OBJ(p)			    LVALUE_CAST(Gc_gmc_obj*,(p)->obj)
+#define Gmc_POBJ_get_HDR(p)			    Gmc_OBJ_get_HDR(Gmc_POBJ_get_OBJ(p))
+#define Gmc_POBJ_get_BODY(p,type)		    Gmc_OBJ_get_BODY(Gmc_POBJ_get_OBJ(p), type)
+#define Gmc_POBJ_get_GEN(p)			    Gmc_OBJ_get_GEN(Gmc_POBJ_get_OBJ(p))
+#define Gmc_POBJ_set_GEN(p,speck)		    Gmc_OBJ_set_GEN(Gmc_POBJ_get_OBJ(p), speck)
+
+#if 0
 /* Macros for access from header. */
 #define Gmc_PMC_hdr_get_BODY(pmc_hdr)		    ((PMC_BODY*)((char*)(pmc_hdr) + Gmc_align(sizeof(Gc_gmc_hdr))))
 #define Gmc_PMC_hdr_get_PMC(pmc_hdr)		    (pmc_hdr)->pmc
@@ -190,6 +218,7 @@ typedef struct _gc_gmc_hdr {
 #define Gmc_PMC_get_HDR(pmc)			    Gmc_PMC_body_get_HDR(PMC_body(pmc))
 #define Gmc_PMC_get_GEN(pmc)			    Gmc_PMC_hdr_get_GEN(Gmc_PMC_get_HDR(pmc))
 #define Gmc_PMC_set_GEN(pmc,gen)		    Gmc_PMC_hdr_get_GEN(Gmc_PMC_get_HDR(pmc),gen)
+#endif
 
 #define PObj_exists_PMC_EXT_TEST(pmc)		    (PObj_is_PMC_EXT_TEST(pmc) && (UINTVAL)PMC_data(pmc) != 0xdeadbeef)
 #define PObj_exists_PMC_EXT_SET(pmc)		    do { \
@@ -198,18 +227,12 @@ typedef struct _gc_gmc_hdr {
 						    } while (0)
 #define PObj_exists_PMC_EXT_CLEAR(pmc)		    PMC_data(pmc) = (void*)0xdeadbeef
 
-#define PObj_igp_TEST(pmc)			    ((UINTVAL)Gmc_PMC_get_GEN(pmc) & 1) 
-#define PObj_igp_SET(pmc)			    Gmc_PMC_get_HDR(pmc)->gen = \
-							(Gc_gmc_gen*)((UINTVAL)Gmc_PMC_get_GEN(pmc) | 1)
-#define PObj_igp_CLEAR(pmc)			    Gmc_PMC_get_HDR(pmc)->gen = \
-						       (Gc_gmc_gen*)((UINTVAL)Gmc_PMC_get_GEN(pmc) & ~1)
+#define PObj_igp_TEST(pmc)			    ((UINTVAL)Gmc_POBJ_get_GEN(pmc) & 1) 
+#define PObj_igp_SET(pmc)			    Gmc_POBJ_get_HDR(pmc).gen = \
+							(Gc_gmc_gen*)((UINTVAL)Gmc_POBJ_get_GEN(pmc) | 1)
+#define PObj_igp_CLEAR(pmc)			    Gmc_POBJ_get_HDR(pmc).gen = \
+						       (Gc_gmc_gen*)((UINTVAL)Gmc_POBJ_get_GEN(pmc) & ~1)
 
-
-
-
-UINTVAL gc_gmc_bitmap_test(gmc_bitmap, UINTVAL);
-void gc_gmc_bitmap_set(gmc_bitmap, UINTVAL);
-void gc_gmc_bitmap_clear(gmc_bitmap, UINTVAL);
 void Parrot_exit_scope(Interp*);
 
 #define GMC_NORMAL_STATE	    0
@@ -228,7 +251,7 @@ typedef struct _gc_gmc {
     Gc_gmc_gen *old_fst;  /* Beginning of non-aggregate, old objects. */
     Gc_gmc_gen *old_lst;  /* Very last generation. */
     void *gray;           /* Current object being examined during M&S. */
-    Gc_gmc_hdr *hdr_ref;  /* Current IGP start. */
+    Gc_gmc_obj *hdr_ref;  /* Current IGP start. */
     struct _gc_gmc *dummy_gc; /* For use in gc_gmc_more_bodies */
 } Gc_gmc;
 
