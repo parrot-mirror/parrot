@@ -187,11 +187,7 @@ write_types(FILE *stabs)
     /* PMC type */
     fprintf(stabs, ".stabs \"PMC:T(0,%d)=s%d", i, BYTE_SIZE(PMC));
     fprintf(stabs, "obj:(0,%d),%d,%d;",
-#if PARROT_GC_GMC
-            i + 1, BIT_OFFSET(PMC, body), BIT_SIZE(pobj_t));
-#else
             i + 1, BIT_OFFSET(PMC, obj), BIT_SIZE(pobj_t));
-#endif
     fprintf(stabs, "vtable:*(0,%d),%d,%d;",
             i + 3, BIT_OFFSET(PMC, vtable), BIT_SIZE(void*));
 #if ! PMC_DATA_IN_EXT

@@ -67,7 +67,7 @@ Parrot_unmake_COW(Interp *interpreter, STRING *s)
     if (PObj_is_cowed_TESTALL(s)) {
 #if PARROT_GC_GMC
 	STRING for_alloc;
-	PMC_body((PMC*)(&for_alloc)) = mem_sys_allocate_zeroed(sizeof(pobj_body));
+	Gmc_POBJ_get_OBJ((PMC*)(&for_alloc)) = mem_sys_allocate_zeroed(sizeof(pobj_body) + sizeof(Gc_gmc_obj));
 #else
         STRING for_alloc;
 #endif
@@ -95,7 +95,7 @@ Parrot_unmake_COW(Interp *interpreter, STRING *s)
         /* COW_FLAG | external_FLAG | bufstart_external_FLAG immobile_FLAG */
         PObj_is_external_CLEARALL(s);
 #if PARROT_GC_GMC
-	mem_sys_free(PMC_body((PMC*)(&for_alloc)));
+	mem_sys_free(Gmc_POBJ_get_OBJ((PMC*)(&for_alloc)));
 #endif
     }
 

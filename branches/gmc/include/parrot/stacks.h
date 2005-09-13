@@ -26,7 +26,7 @@ typedef struct Stack_Entry {
 typedef struct Stack_Chunk {
 #if PARROT_GC_GMC
     Parrot_UInt flags;
-    pobj_body *body;
+    void *obj;
 #else
     pobj_t obj;
 #endif

@@ -118,7 +118,11 @@ typedef struct Buffer {
      * we have it in the body, we need it to be allocated if we want to access
      * it. */
     Parrot_UInt flags;
-    pobj_body *body;
+    /* We declare bodw as a void * for now. It's a Gc_gmc_obj * in reality but
+     * the order of inclusion of headers did not make this declaration possible
+     * (or at least not simply). The cast is done in Gmc_POBJ_get_OBJ,
+     * include/parrot/smallobject.h */
+    void *obj;
 } Buffer;
 
 #else
@@ -133,15 +137,14 @@ typedef Buffer PObj;
 
 #if PARROT_GC_GMC
 
-#define PMC_body(pmc)         (pmc)->body
-#define PObj_bufstart(pmc)    PMC_body(pmc)->u._b._bufstart
-#define PObj_buflen(pmc)      PMC_body(pmc)->u._b._buflen
-#define PMC_struct_val(pmc)   PMC_body(pmc)->u._ptrs._struct_val
-#define PMC_pmc_val(pmc)      PMC_body(pmc)->u._ptrs._pmc_val
-#define PMC_int_val(pmc)      PMC_body(pmc)->u._i._int_val
-#define PMC_int_val2(pmc)     PMC_body(pmc)->u._i._int_val2
-#define PMC_num_val(pmc)      PMC_body(pmc)->u._num_val
-#define PMC_str_val(pmc)      PMC_body(pmc)->u._string_val
+#define PObj_bufstart(pmc)    Gmc_POBJ_get_BODY(pmc, pobj_body*)->u._b._bufstart
+#define PObj_buflen(pmc)      Gmc_POBJ_get_BODY(pmc,pobj_body*)->u._b._buflen
+#define PMC_struct_val(pmc)   Gmc_POBJ_get_BODY(pmc,PMC_BODY*)->u._ptrs._struct_val
+#define PMC_pmc_val(pmc)      Gmc_POBJ_get_BODY(pmc,PMC_BODY*)->u._ptrs._pmc_val
+#define PMC_int_val(pmc)      Gmc_POBJ_get_BODY(pmc,PMC_BODY*)->u._i._int_val
+#define PMC_int_val2(pmc)     Gmc_POBJ_get_BODY(pmc,PMC_BODY*)->u._i._int_val2
+#define PMC_num_val(pmc)      Gmc_POBJ_get_BODY(pmc,PMC_BODY*)->u._num_val
+#define PMC_str_val(pmc)      Gmc_POBJ_get_BODY(pmc,PMC_BODY*)->u._string_val
 
 #else
 
@@ -167,9 +170,9 @@ typedef Buffer PObj;
 
 #if ! DISABLE_GC_DEBUG
 /* BEGIN DEPRECATED POBJ ACCESSOR */
-#  define pobj_version body->_pobj_version
+#  define pobj_version ((Gc_gmc_obj*)obj)->body->_pobj_version
 /* END DEPRECATED POBJ ACCESSOR */
-#  define PObj_version(pobj)  (pobj)->body->_pobj_version
+#  define PObj_version(pobj)  Gmc_POBJ_get_BODY(pobj,pobj_body*)->_pobj_version
 #endif /* ! DISABLE_GC_DEBUG */
 
 #else 
@@ -193,7 +196,7 @@ typedef enum {
 struct parrot_string_t {
 #if PARROT_GC_GMC
     Parrot_UInt flags;
-    PMC_BODY *body;
+    void *obj;
 #else
     pobj_t obj;
 #endif
@@ -219,7 +222,7 @@ struct parrot_string_t {
 struct PMC {
 #if PARROT_GC_GMC
     Parrot_UInt flags;
-    PMC_BODY *body;
+    void *obj;
 #else
     pobj_t obj;
 #endif
@@ -268,12 +271,12 @@ typedef struct PMC_EXT PMC_EXT;
 
 #if PARROT_GC_GMC
 
-#define PMC_data(pmc)         (PMC_body(pmc)->data)
+#define PMC_data(pmc)         ((PMC_BODY*)Gmc_POBJ_get_BODY(pmc,PMC_BODY*))->data
 #define PMC_data0(pmc)        PMC_data(pmc)
-#define PMC_metadata(pmc)     PMC_body(pmc)->_metadata
-#define PMC_next_for_GC(pmc)  PMC_body(pmc)->_next_for_GC
-#define PMC_sync(pmc)         PMC_body(pmc)->_synchronize
-#define PMC_union(pmc)	      PMC_body(pmc)->u
+#define PMC_metadata(pmc)     ((PMC_BODY*)Gmc_POBJ_get_BODY(pmc,PMC_BODY*))->_metadata
+#define PMC_next_for_GC(pmc)  ((PMC_BODY*)Gmc_POBJ_get_BODY(pmc,PMC_BODY*))->_next_for_GC
+#define PMC_sync(pmc)         ((PMC_BODY*)Gmc_POBJ_get_BODY(pmc,PMC_BODY*))->_synchronize
+#define PMC_union(pmc)	      ((PMC_BODY*)Gmc_POBJ_get_BODY(pmc,PMC_BODY*))->u
 
 #else
 
