@@ -66,6 +66,9 @@ Any information attached by the HL. This shouldn't start with an
 underscore (that is reserved for Parrot's internal usage. These are
 stored as properties.
 
+Note: currently, HLL information must be indexed by number. Slots 3 and
+4 are available. This is subject to change.
+
 =back
 
 When an exception handler is called, the exception object is passed as
