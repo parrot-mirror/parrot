@@ -422,7 +422,7 @@ Parrot_free_context(Interp *interpreter, parrot_context_t *ctxp, int re_use)
      * (turn CTX_LEAK_DEBUG on)
      *
      */
-    if (re_use || --CONTEXT(*ctxp)->ref_count <= 0) {
+    if (re_use || --CONTEXT(*ctxp)->ref_count == 0) {
         free_list = (struct Parrot_Context *) interpreter->ctx_mem.free;
         LVALUE_CAST(struct Parrot_Context *, interpreter->ctx_mem.free) =
             ctxp->rctx;
