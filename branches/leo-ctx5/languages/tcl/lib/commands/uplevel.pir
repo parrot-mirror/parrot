@@ -52,13 +52,11 @@ loop_done:
 
   $P1 = parse(expr,0,0)
   # can't quite tailcall this at the moment due to the hackish call_level
-  .local pmc interpret
-  interpret = find_global "_Tcl", "interpret"
-  ($I0,$P0) = interpret($P1)
+  $P0 = $P1."interpret"()
 
   #restore the old level
   store_global "_Tcl", "call_level", old_call_level
 
 done:
-  .return($I0,$P0) 
+  .return($P0) 
 .end

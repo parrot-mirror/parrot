@@ -16,8 +16,6 @@ other than the default, and multiple interpreters.
   .param string name
 
   .local pmc variable
-  .local int return_type
-  return_type = TCL_OK
 
   # is this an array?
   # ends with )
@@ -46,26 +44,21 @@ array:
   $I0 = does variable, "hash"
   unless $I0 goto cant_read_not_array
 
-  #$P1 = new String
-  #$P1 = key
-  #$I0 = exists $I0variable, $P1
-  #unless $I0 goto bad_index
-
   variable = variable[key]
   if_null variable, bad_index 
-  .return(TCL_OK, variable)
+  .return(variable)
 
 bad_index:
   $S0 = "can't read \""
   $S0 .= name
   $S0 .= "\": no such element in array"
-  .return (TCL_ERROR, $S0)
+  .throw($S0)
 
 cant_read_not_array:
   $S0 =  "can't read \""
   $S0 .= name
   $S0 .= "\": variable isn't array"
-  .return (TCL_ERROR, $S0)
+  .throw($S0)
 
 scalar:
   variable = __find_var(name)
@@ -73,19 +66,19 @@ scalar:
   
   $I0 = does variable, "hash"
   if $I0 goto cant_read_array
-  .return(TCL_OK,variable)
+  .return(variable)
 
 cant_read_array:
   $S0 = "can't read \""
   $S0 .= name
   $S0 .= "\": variable is array"
-  .return (TCL_ERROR, $S0)
+  .throw($S0)
 
 no_such_variable:
   $S0 = "can't read \""
   $S0 .= name
   $S0 .= "\": no such variable"
-  .return (TCL_ERROR, $S0)
+  .throw($S0)
 .end
 
 =head2 _Tcl::__set
@@ -104,8 +97,6 @@ other than the default, and multiple interpreters.
   .param pmc value
 
   .local pmc variable
-  .local int return_type
-  return_type = TCL_OK
 
   # is this an array?
   # ends with )
@@ -140,25 +131,25 @@ find_array:
 set_array:
   array[key] = value
   variable = clone value
-  .return(TCL_OK,variable)
+  .return(variable)
 
 create_array:
   array = new TclArray
   array[key] = value
   __store_var(var, array)
   variable = clone value
-  .return(TCL_OK,variable)
+  .return(variable)
 
 cant_set_not_array:
   $S0 =  "can't set \""
   $S0 .= name
   $S0 .= "\": variable isn't array"
-  .return(TCL_ERROR,$S0)
+  .throw($S0)
 
 scalar:
   __store_var(name, value)
   variable = clone value
-  .return(return_type, variable)
+  .return(variable)
 
 .end
 

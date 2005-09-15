@@ -43,7 +43,7 @@ resume:
   goto loop
  
 done:
-  .return(TCL_OK,"")
+  .return("")
 
 catch:
   goto resume

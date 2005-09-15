@@ -110,14 +110,14 @@ print_loop:
 print_end:
 
 done:
-  .return(TCL_OK,retval)
+  .return(retval)
 
 bad_args:
-  .return(TCL_ERROR, "wrong # args: should be \"parray arrayName ?pattern?\"")
+  .throw ("wrong # args: should be \"parray arrayName ?pattern?\"")
 
 not_array:
   $S0 = "\""
   $S0 .= name
   $S0 .= "\" isn't an array"
-  .return(TCL_ERROR, $S0)
+  .throw ($S0)
 .end

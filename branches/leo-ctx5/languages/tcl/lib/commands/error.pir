@@ -17,9 +17,8 @@
   if argc != 1 goto badargs
 
   $P0 = argv[0]
-  .return (TCL_ERROR, $P0)
+  .throw($P0)
 
 badargs:
-  .return (TCL_ERROR, "wrong # args: should be \"error message ?errorInfo? ?errorCode?\"")
- 
+  .throw("wrong # args: should be \"error message ?errorInfo? ?errorCode?\"")
 .end

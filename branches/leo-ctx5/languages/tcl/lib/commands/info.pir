@@ -33,10 +33,10 @@ bad_subcommand:
   $S0 .= subcommand_name
   $S0 .= "\": must be args, body, cmdcount, commands, complete, default, exists, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars"
 
-  .return(TCL_ERROR,$S0)
+  .throw ($S0)
 
 bad_args:
-  .return(TCL_ERROR, "wrong # args: should be \"info option ?arg arg ...?\"")
+  .throw("wrong # args: should be \"info option ?arg arg ...?\"")
 .end
 
 .namespace [ "_Tcl\0builtins\0info" ]
@@ -55,16 +55,16 @@ bad_args:
   $P1 = find_global "_Tcl", "proc_args"
   $P2 = $P1[procname]
   if_null $P2, no_args
-  .return(TCL_OK,$P2)
+  .return($P2)
 
 no_args:
   $S0 = "\""
   $S0 .= procname
   $S0 .= "\" isn't a procedure"
-  .return (TCL_OK,$S0)
+  .throw ($S0)
 
 bad_args:
-  .return (TCL_ERROR,"wrong # args: should be \"info args procname\"")
+  .throw ("wrong # args: should be \"info args procname\"")
 .end
 
 .sub "body"
@@ -81,16 +81,16 @@ bad_args:
   $P1 = find_global "_Tcl", "proc_body"
   $P2 = $P1[procname]
   if_null $P2, no_body
-  .return(TCL_OK,$P2)
+  .return($P2)
 
 no_body:
   $S0 = "\""
   $S0 .= procname
   $S0 .= "\" isn't a procedure"
-  .return (TCL_ERROR,$S0)
+  .throw ($S0)
 
 bad_args:
-  .return (TCL_ERROR,"wrong # args: should be \"info body procname\"")
+  .throw ("wrong # args: should be \"info body procname\"")
 .end
 
 .sub "functions"
@@ -121,7 +121,7 @@ pattern_loop:
   push retval, $P0
 pattern_next:
   if iterator goto pattern_loop
-  .return(TCL_OK,retval)
+  .return(retval)
 
 loop:
   $S0 = shift iterator
@@ -129,10 +129,10 @@ loop:
   $P0 = $S0
   push retval, $P0
   if iterator goto loop
-  .return(TCL_OK,retval)
+  .return(retval)
 
 bad_args:
-  .return (TCL_ERROR,"wrong # args: should be \"info functions ?pattern?\"")
+  .throw ("wrong # args: should be \"info functions ?pattern?\"")
 .end
 
 .sub "exists"
@@ -151,12 +151,12 @@ bad_args:
   found_var = find_var(varname)
   if_null found_var, not_found
 
-  .return (TCL_OK, 1)
+  .return (1)
 not_found:
-  .return (TCL_OK, 0)
+  .return (0)
 
 bad_args:
-  .return (TCL_ERROR,"wrong # args: should be \"info exists varName\"")
+  .throw ("wrong # args: should be \"info exists varName\"")
 .end
 
 .sub "tclversion"
@@ -168,10 +168,10 @@ bad_args:
   if argc != 0 goto bad_args
 
   $P1 = find_global "Tcl", "$tcl_version"
-  .return(TCL_OK,$P1)
+  .return($P1)
 
 bad_args:
-  .return (TCL_ERROR, "wrong # args: should be \"info tclversion\"")
+  .throw ("wrong # args: should be \"info tclversion\"")
 
 .end
 

@@ -9,19 +9,13 @@
   .local int argc 
   argc = argv
 
-  .local pmc retval
-  .local int return_type
-
-  retval = new TclString
-  retval = ""
-  return_type = TCL_OK
-
   if argc == 0 goto badargs
 
   .local int call_level
   $P0 = find_global "_Tcl", "call_level"
   call_level = $P0
-  
+  unless call_level goto done # global doesn't work when already global.
+
   .local int ii
   ii = 0
   .local string varname
@@ -32,22 +26,25 @@ loop:
   varname = argv[ii]
   sigil_varname = "$" . varname
 
-  push_eh catch
+  push_eh no_such_var
     $P1 = find_global "Tcl", sigil_varname
-    store_lex call_level, sigil_varname, $P1
   clear_eh
-resume:
+
+  store_lex call_level, sigil_varname, $P1
 
   inc ii
   goto loop
   
-badargs:
-  .return(TCL_ERROR,"wrong # args: should be \"global varName ?varName ...?\"")
-
 done:
-  .return(return_type,retval)
+  .return("")
 
-catch:
-  goto resume
+no_such_var:
+  $S0 = "can't read \""
+  $S0 .= varname
+  $S0 .= "\": no such variable"
+  .throw($S0)
+
+badargs:
+  .throw("wrong # args: should be \"global varName ?varName ...?\"")
 
 .end

@@ -16,9 +16,7 @@
   
   .local pmc the_list
   the_list = shift argv
-  ($I0, $P0) = __list(the_list)
-  if $I0 == TCL_ERROR goto error
-  the_list = $P0 
+  the_list = __list(the_list)
  
   .local pmc position
   position = shift argv
@@ -26,8 +24,7 @@
   .local pmc list_index
   list_index = find_global "_Tcl", "_list_index"
 
-  ($I0,$P0,$I2) = list_index(the_list,position)
-  if $I0 != TCL_OK goto error
+  ($P0,$I2) = list_index(the_list,position)
   #linsert treats "end" differently
   if $I2 == 0 goto next
   inc $P0
@@ -87,11 +84,9 @@ LOOP2:
   inc cnt
   goto LOOP2
 DONE2:
-  .return (TCL_OK,retval)
+  .return (retval)
 
 wrong_args:
-  .return (TCL_ERROR, "wrong # args: should be \"linsert list index element ?element ...?\"")
+  .throw ("wrong # args: should be \"linsert list index element ?element ...?\"")
 
-error:
-  .return($I0,$P0)
 .end

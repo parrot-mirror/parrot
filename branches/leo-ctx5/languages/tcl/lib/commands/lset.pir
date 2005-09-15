@@ -21,8 +21,7 @@
   read = find_global "_Tcl", "__read"
   set  = find_global "_Tcl", "__set"
 
-  (return_type, retval) = read(name)
-  if return_type == TCL_ERROR goto done
+  retval = read(name)
 
   .local int count
   count = argv
@@ -34,8 +33,7 @@
 lset:
   .local pmc __list
   __list = find_global "_Tcl", "__list"
-  (return_type, retval) = __list(retval)
-  if return_type == TCL_ERROR goto done
+  retval = __list(retval)
 
   .local int i, end
   i   = 1
@@ -48,8 +46,7 @@ loop:
 
   $I0 = argv[i]
   $P0 = list[$I0]
-  (return_type, $P0) = __list($P0)
-  if return_type == TCL_ERROR goto done
+  $P0 = __list($P0)
   list[$I0] = $P0
   list      = $P0
 
@@ -63,12 +60,10 @@ loop_done:
   .return set(name, retval)
 
 wrong_args:
-  .return(TCL_ERROR,"wrong # args: should be \"lset listVar index ?index...? value\"")
+  .throw ("wrong # args: should be \"lset listVar index ?index...? value\"")
 
 replace:
   $P0 = argv[-1]
   .return set(name, $P0)
 
-done:
-  .return(return_type, retval)
 .end

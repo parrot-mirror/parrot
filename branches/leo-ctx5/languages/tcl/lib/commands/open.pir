@@ -3,11 +3,8 @@
 .sub "&open"
   .param pmc argv :slurpy
 
-  .local int return_type
-  .local pmc retval,channel,next_channel_id,channels
+  .local pmc channel,next_channel_id,channels
   .local string channel_id
-
-  retval = new String
 
   .local int argc
   argc = argv
@@ -25,16 +22,12 @@
   channel_id .= $S0
   next_channel_id += 1
   channels[channel_id] = channel
-  goto done
+  .return(channel_id)
  
 file_error:
-  retval = new String
-  retval = "unable to open specified file"
-  .return(TCL_ERROR,retval)
+  .throw ("unable to open specified file")
  
 error:
-  .return(TCL_ERROR,"XXX: bad call to open")
+  .throw ("XXX: bad call to open")
 
-done:
-  .return(return_type,channel_id)
 .end

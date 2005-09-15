@@ -18,7 +18,6 @@
   .local string condition
   .local string body
   .local string else
-  .local int return_type
   .local int handling_else
   handling_else = 0
   .local int counter
@@ -74,10 +73,8 @@ get_final:
   if counter != argc goto more_than_else
 
 begin_parsing:
-  (return_type,retval) = expression_p(condition)
-  if return_type == TCL_ERROR goto done_error
-  (return_type,retval) = expression_i(retval)
-  if return_type == TCL_ERROR goto done_error
+  retval = expression_p(condition)
+  retval = expression_i(retval)
 
   unless retval goto do_elseifs
   code = body 
@@ -91,10 +88,8 @@ elseif_loop:
   if $I2 == $I1 goto do_else
   $P1 = elseifs[$I2]
   condition = $P1[0]
-  (return_type,retval) = expression_p(condition)
-  if return_type == TCL_ERROR goto done_error
-  (return_type,retval) = expression_i(retval)
-  if return_type == TCL_ERROR goto done_error
+  retval = expression_p(condition)
+  retval = expression_i(retval)
   if retval goto done_elseifs
   inc $I2
   goto elseif_loop  
@@ -110,15 +105,10 @@ done:
   $P1 = parse(code)
   register $P1
 
-  .local pmc interpret
-  interpret = find_global "_Tcl", "interpret"
-  .return interpret($P1) 
-
-done_error:
-  .return(return_type,retval)
+  .return $P1."interpret"()
 
 no_args:
-  .return(TCL_ERROR,"wrong # args: no expression after \"if\" argument")
+  .throw("wrong # args: no expression after \"if\" argument")
 
 missing_script:
   $S0 = "wrong # args: no script following \"" 
@@ -127,12 +117,12 @@ missing_script:
   $S1  = argv[$I0]
   $S0 .= $S1
   $S0 .=  "\" argument"
-  .return(TCL_ERROR,$S0)
+  .throw ($S0)
 
 more_than_else:
-  .return(TCL_ERROR,"wrong # args: extra words after \"else\" clause in \"if\" command")
+  .throw ("wrong # args: extra words after \"else\" clause in \"if\" command")
 
 missing_elseif:
-  .return(TCL_ERROR,"wrong # args: no expression after \"elseif\" argument")
+  .throw ("wrong # args: no expression after \"elseif\" argument")
 
 .end

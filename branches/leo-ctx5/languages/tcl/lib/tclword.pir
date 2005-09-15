@@ -32,7 +32,6 @@ the string values of the elements.
 
 .sub interpret method
   .local pmc retval
-  .local int return_type
   
   .local int i, len
   i   = 0
@@ -45,10 +44,8 @@ loop:
   if i == len goto loop_done
   
   $P0 = self[i]
-  .local pmc interpret
-  interpret = find_global "_Tcl", "interpret"
-  (return_type, retval) = interpret($P0)
-  if return_type != TCL_OK goto done
+  retval = $P0."interpret"()
+  
   $S0 = retval
   word .= $S0
   
@@ -56,8 +53,6 @@ loop:
   goto loop
 
 loop_done:
-  .return (TCL_OK, word)
+  .return(word)
 
-done:
-  .return(return_type, retval)
 .end

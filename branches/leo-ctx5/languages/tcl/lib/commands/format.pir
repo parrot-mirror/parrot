@@ -16,5 +16,5 @@
 
   sprintf $S0, format, argv 
 
-  .return(TCL_OK,$S0)
+  .return($S0)
 .end

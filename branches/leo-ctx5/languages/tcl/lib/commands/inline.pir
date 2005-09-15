@@ -25,11 +25,11 @@
   $P0()
 
   # XXX Should catch exceptions in the code and return the error message
-  .return (TCL_OK,"")
+  .return ("")
 
 fail:
   $S0 = "invalid language \""
   $S0 .= language
   $S0 .= "\" specified"
-  .return (TCL_ERROR, $S0)
+  .throw ($S0)
 .end

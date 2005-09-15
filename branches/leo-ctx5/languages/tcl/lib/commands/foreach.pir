@@ -4,10 +4,7 @@
   .param pmc argv :slurpy
   # Requires multiple of 3 args.
 
-  .local int return_type
   .local pmc parse,retval
-  retval = new TclString
-  retval = ""
 
   .local int call_level
   $P0 = find_global "_Tcl", "call_level"
@@ -23,7 +20,6 @@
   __list = find_global "_Tcl", "__list"
 
   parse = find_global "_Tcl", "parse"
-  return_type = TCL_OK
 
   .local int argc
   argc = argv
@@ -56,9 +52,7 @@ arg_loop:
   varnames[index_num] = $P0
   inc arg_num
   $P0 = argv[arg_num]
-  (return_type, retval) = __list($P0)
-  if return_type == TCL_ERROR goto done
-  $P0 = retval
+  $P0 = __list($P0)
 
 got_list:
   arglists[index_num] = $P0
@@ -82,7 +76,7 @@ arg_done:
   iterator = new Integer
   iterator = 0
 loop_outer:
-  if iterator >= max_size goto loop_outer_done
+  if iterator >= max_size goto done
   new_pad 0
   
   .local int counter,end_counter
@@ -128,7 +122,7 @@ loop_inner_done_good:
 loop_inner_done:
   if got_one == 1 goto loop_outer_continue
   # there was nothing in this set of iterators. 
-  pop_pad
+  pop_pad  #XXX NEEDED?
   goto loop_outer_done 
  
   # Loop until all elements are consumed. If any of the lists that were
@@ -137,23 +131,25 @@ loop_inner_done:
   # XXX This should probably not create a new pad, exactly
   # Handle [break] and [continue]
 loop_outer_continue:
-  .local pmc interpret
-  interpret = find_global "_Tcl", "interpret"
-  (return_type,retval) = interpret(parsed)
-  pop_pad 
-  if return_type == TCL_BREAK goto done
-  if return_type == TCL_ERROR goto done
+  push_eh handle_continue
+    retval = parsed."interpret"()
+  clear_eh
 
+  pop_pad  #XXX NEEDED?
+do_next:
   inc iterator
   goto loop_outer
+
+handle_continue:
+  .local int return_type
+  .get_return_code(P5,return_type)
+  if return_type == TCL_BREAK goto done
+  if return_type == TCL_CONTINUE goto do_next
  
-loop_outer_done:
-  
-  goto done
+done:
+  .return(retval)
 
 error:
-  .return(TCL_ERROR, "wrong # args: should be \"foreach varList list ?varList list ...? command\"")
+  .throw("wrong # args: should be \"foreach varList list ?varList list ...? command\"")
 
-done:
-  .return(return_type,retval)
 .end

@@ -74,5 +74,5 @@ arg_loop_next:
 arg_loop_done:
  
 done:
-  .return(TCL_OK,retval)
+  .return(retval)
 .end

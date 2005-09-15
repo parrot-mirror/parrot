@@ -41,15 +41,17 @@
   push_eh catch_var
     if call_level goto find_lexical
     the_array = find_global "Tcl", sigil_array_name
-    goto resume_var
+    goto done_find
 find_lexical:
     the_array = find_lex call_level, sigil_array_name
+done_find:
   clear_eh
 resume_var:
 
-  catch_var:
+  catch_var: #XXX [array set bug: sometimes this exception handler is called on the return from subcommand_proc()]
 
   if_null the_array, array_no
+
   $I99 = does the_array, "hash"
   if $I99==0 goto array_no
 
@@ -66,11 +68,10 @@ bad_args:
   $S0  = "bad option \""
   $S0 .= subcommand_name
   $S0 .= "\": must be anymore, donesearch, exists, get, names, nextelement, set, size, startsearch, statistics, or unset"
-
-  .return(TCL_ERROR,$S0)
+  .throw($S0)
 
 few_args:
-  .return (TCL_ERROR, "wrong # args: should be \"array option arrayName ?arg ...?\"")
+  .throw("wrong # args: should be \"array option arrayName ?arg ...?\"")
 
 .end
 
@@ -86,10 +87,10 @@ few_args:
   argc = argv
   if argc goto bad_args
 
-  .return (TCL_OK, is_array)
+  .return (is_array)
 
 bad_args:
-  .return (TCL_ERROR, "wrong # args: should be \"array exists arrayName\"")
+  .throw ("wrong # args: should be \"array exists arrayName\"")
 .end
 
 .sub "size"
@@ -104,13 +105,13 @@ bad_args:
 
   if is_array == 0 goto size_none
   $I0 = the_array
-  .return (TCL_OK, $I0)
+  .return ($I0)
 
 size_none:
-  .return (TCL_OK, 0)
+  .return (0)
 
 bad_args:
-  .return (TCL_ERROR,"wrong # args: should be \"array size arrayName\"")
+  .throw ("wrong # args: should be \"array size arrayName\"")
 .end
 
 .sub "set"
@@ -123,17 +124,12 @@ bad_args:
   argc = argv
   if argc != 1 goto bad_args
 
-  .local int return_type
-  .local pmc retval
-
   .local pmc elems
   elems = argv[0]
 
   .local pmc __list
   __list = find_global "_Tcl", "__list"
-  (return_type, retval) = __list(elems)
-  if return_type == TCL_ERROR goto done
-  elems = retval
+  elems = __list(elems)
 
 pre_loop:
   .local int count
@@ -150,39 +146,40 @@ pre_loop:
   .local pmc set
   set = find_global  "_Tcl", "__set"
 
-  if_null the_array, new_array
+  if_null the_array, new_array # create a new array if no var
   goto set_loop
 
 new_array:
   the_array = new .TclArray
+  set(array_name,the_array) # create an empty named array...
 
 set_loop:
   key = elems[loop]
   inc loop
   val = elems[loop]
   inc loop
+  
+  # Do this just as if were were calling each set manually, as tcl's
+  # error messages indicate it seems to.
 
-  # = makes an alias :-(
-  assign $S0, array_name
-  $S0 .= "("
-  $S0 .= key
-  $S0 .= ")"
-  (return_type, retval) = set($S0, val)
-  if return_type == TCL_ERROR goto done
+  # equals creates an alias, so use assign.
+  .local string subvar
+  subvar = "" # why is this necessary, if we're doing an assign ???
+  assign subvar, array_name
+  subvar .= "("
+  subvar .= key
+  subvar .= ")"
+  set(subvar, val) 
 
   if loop < count goto set_loop
 
-  .return (TCL_OK, "")
+  .return ("")
 
 bad_args:
- .return (TCL_ERROR, "wrong # args: should be array set arrayName list")
+ .throw ("wrong # args: should be array set arrayName list")
 
 odd_args:
- .return (TCL_ERROR, "list must have an even number of elements")
-
-done:
-  .return (return_type,retval)
-
+ .throw ("list must have an even number of elements")
 .end
 
 
@@ -250,13 +247,13 @@ skip_space:
   branch push_loop
 
 push_end:
-  .return (TCL_OK, retval)
+  .return (retval)
 
 bad_args:
-  .return(TCL_ERROR, "wrong # args: should be \"array get arrayName ?pattern?\"")
+  .throw("wrong # args: should be \"array get arrayName ?pattern?\"")
 
 not_array:
-  .return(TCL_ERROR, "")
+  .throw("")
 .end
 
 .sub "unset"
@@ -307,14 +304,14 @@ push_loop:
 
   branch push_loop
 push_end:
-  .return (TCL_OK, "")
+  .return ("")
 
 
 bad_args:
-  .return(TCL_ERROR, "wrong # args: should be \"array unset arrayName ?pattern?\"")
+  .throw("wrong # args: should be \"array unset arrayName ?pattern?\"")
 
 not_array:
-  .return(TCL_ERROR, "")
+  .throw("")
 .end
 
 .sub "names"
@@ -350,24 +347,19 @@ skip_args:
 
   if is_array == 0 goto not_array
 
-  .return match_proc(the_array,  pattern)
+  .return match_proc(the_array, pattern)
 
 bad_args:
-  retval = new String
-  retval = "wrong # args: should be \"array names arrayName ?mode? ?pattern?\""
-  .return(TCL_ERROR, retval)
+  .throw ("wrong # args: should be \"array names arrayName ?mode? ?pattern?\"")
 
 bad_mode:
-  retval = new String
-  retval = "bad option \""
-  retval .= mode
-  retval .= "\": must be -exact, -glob, or -regexp"
-  .return(TCL_ERROR, retval)
+  $S0 = "bad option \""
+  $S0 .= mode
+  $S0 .= "\": must be -exact, -glob, or -regexp"
+  .throw ($S0)
 
 not_array:
-  retval = new String
-  retval = ""
-  .return(TCL_ERROR, retval)
+  .throw("")
 .end
 
 .namespace [ "_Tcl\0builtins\0array\0names_helper" ]
@@ -408,7 +400,7 @@ skip_space:
   branch check_loop
 check_end:
 
-  .return (TCL_OK, retval)
+  .return (retval)
 .end
 
 .sub "-exact"
@@ -431,11 +423,11 @@ check_loop:
   if name == match goto found_match
   branch check_loop
 check_end:
-  .return (TCL_OK, retval)
+  .return (retval)
 
 found_match:
   retval = name
-  .return (TCL_OK, retval)
+  .return (retval)
 .end
 
 .sub "-regexp"

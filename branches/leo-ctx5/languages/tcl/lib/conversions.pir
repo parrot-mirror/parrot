@@ -11,17 +11,14 @@ use __stringToList.
 .sub __list
   .param pmc value
 
-  .local int return_type
-  return_type = TCL_OK
-
-  $S0 = typeof value
-  if $S0 == "TclList" goto done
+  $I0 = typeof value
+  if $I0 == .TclList goto done
 
   $S0 = value
   .return __stringToList($S0)
 
 done:
-  .return(return_type, value)
+  .return(value)
 .end
 
 =head2 _Tcl::__number
@@ -48,7 +45,5 @@ done:
   .return(value)
 
 NaN:
-  $P0 = new Exception
-  $P0["_message"] = "Not a number!"
-  throw $P0
+  .throw("Not a number!")
 .end

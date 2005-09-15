@@ -383,9 +383,7 @@ subcommand2:
   goto loop
 
 missing_quote:
-  $P0 = new Exception
-  $P0["_message"] = "missing quote"
-  throw $P0
+  .throw("missing quote")
 
 check_chars:
   $I0 = pos + 1
@@ -395,10 +393,8 @@ check_chars:
   $I1 = ord tcl_code, $I0
   $I1 = exists chars[$I1]
   if $I1 == 1 goto done
-  
-  $P0 = new Exception
-  $P0["_message"] = "extra characters after close-quote"
-  throw $P0
+ 
+  .throw("extra characters after close-quote")
 
 done:
   $I0 = pos - start
@@ -454,9 +450,7 @@ right:
   goto loop
 
 missing_close_brace:
-  $P0 = new Exception
-  $P0["_message"] = "missing close-brace"
-  throw $P0
+  .throw ("missing close-brace")
 
 check_chars:
   $I0 = pos + 1
@@ -466,10 +460,8 @@ check_chars:
   $I1 = ord tcl_code, $I0
   $I1 = exists chars[$I1]
   if $I1 == 1 goto done
-  
-  $P0 = new Exception
-  $P0["_message"] = "extra characters after close-brace"
-  throw $P0
+ 
+  .throw ("extra characters after close-brace")
 
 done:
   $I0 = pos - start
@@ -595,14 +587,10 @@ failed:
   .return($P0, start)
 
 missing_paren:
-  $P0 = new Exception
-  $P0["_message"] = "missing paren"
-  throw $P0
+  .throw("missing paren")
 
 missing_close_brace:
-  $P0 = new Exception
-  $P0["_message"] = "missing close-brace for variable name"
-  throw $P0
+  .throw("missing close-brace for variable name")
   
 braces:
   inc pos
@@ -619,32 +607,6 @@ done:
   $P0 = new $I0
   $P0 = $S0
   .return($P0, pos)
-.end
-
-
-=head2 XXX: (int return_type, pmc retval)  = interpret(pmc thing)
-
-A temporary reversion to a centralized interpret method. With the new
-calling conventions, we can't rely on *every* PMC correctly being
-able to return two values (some are returning from C). In the past,
-the PMC value went in the right slot: Now, it is autoconverted to
-a returntype.
-
-This will go away when we move to using exceptions for non TCL_OK
-return codes.
-
-=cut
-
-.sub interpret
-  .param pmc thing
-
-  $I0 = can thing, "interpret" 
-  if $I0 goto object_like
-  .return (TCL_OK, thing)
-
-object_like:
-  .return thing."interpret"()
-
 .end
 
 =back

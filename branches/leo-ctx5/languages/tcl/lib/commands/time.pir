@@ -20,7 +20,7 @@
   if argc == 1 goto run
   if argc == 2 goto twoargs
 
-  .return (TCL_ERROR, "wrong # args: should be \"time command ?count?\"")
+  .throw ("wrong # args: should be \"time command ?count?\"")
 
 twoargs:
   # verify this is a number?
@@ -30,16 +30,11 @@ run:
   script = argv[0]
  
   $P1 = parse(script)
-  register $P1
-
   time $N1 
   $I1 = count
 loop:
   if $I1 == 0 goto done
-  .local pmc interpret
-  interpret = find_global "_Tcl", "interpret"
-  ($I0,$P0) = interpret($P1)
-  if $I0 != TCL_OK goto done
+  $P0 = $P1."interpret"()
   dec $I1
   goto loop
 
@@ -53,5 +48,5 @@ done:
   $S0 = $I2
   $S0 = $S0 . " microseconds per iteration"
 
-  .return(TCL_OK, $S0)
+  .return($S0)
 .end

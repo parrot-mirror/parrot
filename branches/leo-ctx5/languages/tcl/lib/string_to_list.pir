@@ -129,8 +129,8 @@ found_close_bracket:
   goto eat_space
 
 unmatched_open_brace:
-  .return (TCL_ERROR,"unmatched open brace in list")
+  .throw("unmatched open brace in list")
 
 done:
-  .return(TCL_OK, retval)
+  .return(retval)
 .end

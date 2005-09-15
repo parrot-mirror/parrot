@@ -37,5 +37,5 @@ INNER_DONE:
   goto OUTER_LOOP
 OUTER_DONE:
 
-  .return(TCL_OK,retval)
+  .return(retval)
 .end
