@@ -26,17 +26,17 @@
   null found_var
   if call_level == 0 goto remove_global
   store_lex call_level, sigil_varname, found_var
-  .return (TCL_OK,"") 
+  .return ("") 
 
 remove_global:
   store_global "Tcl", sigil_varname, found_var
-  .return (TCL_OK,"") 
+  .return ("") 
 
 error:
   $S0 = "can't unset \""
   $S0 .= varname
   $S0 .= "\": no such variable"
-  .return (TCL_ERROR, $S0)
+  .throw ($S0)
 
 catch:
   goto resume

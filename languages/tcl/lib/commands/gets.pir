@@ -19,5 +19,5 @@ read a line from a channel
   .local string line
   line = readline io
 
-  .return (TCL_OK,line)
+  .return (line)
 .end

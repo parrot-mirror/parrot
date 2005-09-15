@@ -38,10 +38,10 @@ bad_args:
   $S0 = "bad option \""
   $S0 .= subcommand_name
   $S0 .= "\": must be children, code, current, delete, eval, exists, export, forget, import, inscope, origin, parent, qualifiers, tail, or which"
-  .return(TCL_ERROR,$S0)
+  .throw ($S0)
 
 no_args:
-  .return (TCL_ERROR, "wrong # args: should be \"namespace subcommand ?arg ...?\"")
+  .throw ("wrong # args: should be \"namespace subcommand ?arg ...?\"")
 
 .end
 
@@ -55,10 +55,10 @@ no_args:
   argc = argv
   if argc goto bad_args
 
-  .return(TCL_OK,"::")
+  .return("::")
 
 bad_args:
-  .return(TCL_ERROR, "wrong # args: should be \"namespace current\"")
+  .throw ("wrong # args: should be \"namespace current\"")
 
 .end
 
@@ -70,10 +70,10 @@ bad_args:
   if argc !=0  goto not_done
 
   # No arg delete does nothing.
-  .return(TCL_OK,"")
+  .return("")
 
 not_done:
-  .return (TCL_ERROR,"XXX")
+  .throw ("XXX")
 .end
 
 .sub "exists" # XXX
@@ -83,10 +83,10 @@ not_done:
   argc = argv
   if argc != 1 goto bad_args
   # canonicalize namespace.
-  .return(TCL_OK,0)
+  .return(0)
 
 bad_args:
-  .return(TCL_ERROR, "wrong # args: should be \"namespace exists name\"" )
+  .throw("wrong # args: should be \"namespace exists name\"" )
 .end
 
 .sub "qualifiers"
@@ -111,14 +111,14 @@ bad_args:
   $P2 = $P0."__get_pmc_keyed"($P1)
   
   $S1 = $P2
-  .return (TCL_OK,$S1)
+  .return ($S1)
 
 WHOLE:
   $P0 = argv[0]
-  .return(TCL_OK,$P0)
+  .return($P0)
 
   bad_args:
-  .return (TCL_ERROR, "wrong # args: should be \"namespace qualifiers string\"")
+  .throw ("wrong # args: should be \"namespace qualifiers string\"")
 
 .end
 
@@ -144,13 +144,13 @@ WHOLE:
   $P2 = $P0."__get_pmc_keyed"($P1)
   
   $S1 = $P2
-  .return (TCL_OK,$S1)
+  .return ($S1)
 
 WHOLE:
   $P0 = argv[0]
-  .return(TCL_OK,$P0)
+  .return($P0)
 
   bad_args:
-  .return (TCL_ERROR, "wrong # args: should be \"namespace tail string\"")
+  .throw ("wrong # args: should be \"namespace tail string\"")
 
 .end

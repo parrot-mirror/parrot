@@ -9,11 +9,9 @@
   .local int argc
   argc = argv
 
-  if argc == 0 goto noargs
+  if argc != 0 goto badargs
+  .tcl_break()
 
-  .return(TCL_ERROR,"wrong # args: should be \"break\"")
-
-noargs:
-  .return (TCL_BREAK, "")
-
+badargs:
+  .throw("wrong # args: should be \"break\"")
 .end

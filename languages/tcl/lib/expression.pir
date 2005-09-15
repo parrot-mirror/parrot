@@ -8,10 +8,6 @@ Given a string (or String), return a single stack that contains the work to be
 done. This stack can then be passed to C<__expression_interpret> to actually
 invoke the items on the stack.
 
-Uses the standard two arg return - if C<TCL_ERROR> is returned, then 
-we return our error information back up the chain. If we return C<TCL_OK>,
-however, then we're returning the invokable PMC.
-
 =cut
 
 .const int MAX_PRECEDENCE =  11
@@ -20,8 +16,6 @@ however, then we're returning the invokable PMC.
   .param string expr
  
   .local pmc retval
-  .local int return_type
-  return_type = TCL_OK
 
   .local pmc undef
   undef = new Undef
@@ -45,9 +39,7 @@ operand:
   goto operator
 
 no_operand:
-  $P0 = new Exception
-  $P0["_message"] = "no operand!"
-  throw $P0
+  .throw ("no operand!")
  
 operator:
   (chunk, pos) = get_operator(expr, pos)
@@ -88,7 +80,7 @@ chunks_done:
   # a single value, return now.
   if input_len != 1 goto pre_converter_loop
   # XXX (That's value, not an operator)
-  .return(TCL_OK,chunks)
+  .return(chunks)
 
 pre_converter_loop:
   .local int precedence_level
@@ -149,10 +141,10 @@ precedence_done:
   goto converter_loop
 
 die_horribly:
-  .return (TCL_ERROR, "XXX: An error occurred in [expr]")
+  .throw ("XXX: An error occurred in [expr]")
 
 converter_done:
-  .return(return_type,program_stack)
+  .return(program_stack)
 
 .end
 
@@ -161,7 +153,6 @@ converter_done:
   .param int pos
 
   .local pmc retval
-  .local int return_type
 
   .local int start, len
   start = pos
@@ -284,7 +275,6 @@ done:
   .local pmc result_stack
   result_stack = new TclList
   .local pmc retval
-  .local int return_type
 stack_evaluator:
  # while the prog stack exists:
  .local int size
@@ -301,10 +291,7 @@ stack_evaluator:
  # move all non op non funcs to the value stack
  if type == OP goto do_op
  $P0 = chunk[1]
- .local pmc interpret  
- interpret = find_global "_Tcl", "interpret"
- (return_type, retval) = interpret($P0)
- if return_type != TCL_OK goto evaluation_return
+ retval = $P0."interpret"()
  chunk[1] = retval
  push result_stack, chunk
  goto stack_evaluator
@@ -459,14 +446,12 @@ stack_done:
   goto evaluation_done
 
 die_horribly:
-  .return (TCL_ERROR, "XXX: an error occurred in [expr]")
+  .throw ("XXX: an error occurred in [expr]")
 
 evaluation_done:
-  return_type = TCL_OK 
   retval = retval[1]
+  .return (retval)
 
-evaluation_return:
-  .return(return_type,retval)
 .end
 
 .sub get_subexpr
@@ -474,7 +459,6 @@ evaluation_return:
   .param int pos
   
   .local pmc chunk, retval
-  .local int return_type
   
   .local int len, depth, start
   len   = length expr
@@ -505,26 +489,19 @@ paren_done:
   $S1 = substr expr, start, $I0
   
   # XXX this is now officially braindead. Fissit.
-  (return_type,retval) = __expression_parse($S1)
-  if return_type == TCL_ERROR goto die_horribly
-  (return_type,retval) = __expression_interpret(retval)
-  if return_type == TCL_ERROR goto die_horribly
+  retval = __expression_parse($S1)
+  retval = __expression_interpret(retval)
   
   .return(retval, pos)
 
 die_horribly:
-  $P0 = new Exception 
-  $P0["_message"] = "An error occurred in EXPR"
-  throw $P0
+  .throw("XXX: An error occurred in EXPR")
 
 premature_end:
-  $P0 = new Exception
-  $S0 = new String
   $S0 = "syntax error in expression \""
   $S0 .= expr
   $S0 .= "\": premature end of expression"
-  $P0["_message"] = $S0
-  throw $P0
+  .throw($S0)
 .end
 
 # given a string, starting at position, return a PMC
@@ -642,8 +619,7 @@ loop_done:
   inc paren_pos
   $I0 = pos - paren_pos
   $S1 = substr expr, paren_pos, $I0
-  ($I0,operand) = __expression_parse($S1) 
-  if $I0 == TCL_ERROR goto fail
+  operand = __expression_parse($S1) 
   
   setattribute func, "TclFunc\x00argument", operand
 
@@ -652,25 +628,19 @@ done:
   .return(func, pos)
 
 fail:
-  $P0 = new Exception
-  $P0["_message"] = "error parsing function arguments!"
-  throw $P0
+  .throw("error parsing function arguments!")
 
 missing_paren:
-  $P0 = new Exception
   $S0 = "syntax error in expression \""
   $S0 .= expr
   $S0 .= "\": missing close parenthesis at end of function call"
-  $P0["_message"] = $S0
-  throw $P0
+  .throw($S0)
 
 unknown_func:
-  $P0 = new Exception
   $S1 = "unknown math function \""
   $S1 .= $S0
   $S1 .= "\""
-  $P0["_message"] = $S0
-  throw $P0
+  .throw($S0)
 .end
 
 .sub get_unary

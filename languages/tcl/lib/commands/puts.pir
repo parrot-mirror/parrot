@@ -57,18 +57,18 @@ bad_channel:
   $S0 = "can not find channel named \""
   $S0 .= $S2
   $S0 .= "\""
-  .return (TCL_ERROR, $S0)
+  .throw ($S0)
 
 bad_option:
   $S0 = "bad argument \""
   $S3 = argv[2]
   $S0 .= $S3
   $S0 .= "\": should be \"nonewline\""
-  .return (TCL_ERROR, $S0)
+  .throw($S0)
  
 error:
-  .return (TCL_ERROR,"wrong # args: should be \"puts ?-nonewline? ?channelId? string\"")
+  .throw("wrong # args: should be \"puts ?-nonewline? ?channelId? string\"")
 
 done:
-  .return(TCL_OK, "")
+  .return("")
 .end

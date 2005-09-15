@@ -12,22 +12,15 @@
   if argc != 1 goto bad_args
   listval = argv[0]
 
-  .local pmc retval
-  .local int return_type
-
   .local pmc __list
   __list = find_global "_Tcl", "__list"
 
-  (return_type, retval) = __list(listval)
-  if return_type == TCL_ERROR goto done
+  listval = __list(listval)
 
 list_like:
-  $I0 = retval
-  .return (TCL_OK, $I0)
-
-done:
-  .return(return_type,retval)
+  $I0 = listval
+  .return ($I0)
 
 bad_args:
-  .return(TCL_ERROR, "wrong # args: should be \"llength list\"")
+  .throw ("wrong # args: should be \"llength list\"")
 .end

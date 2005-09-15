@@ -26,10 +26,10 @@ bad_args:
   $S0 .= subcommand_name
   $S0 .= "\": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, tolower, toupper, totitle, trim, trimleft, trimright, wordend, or wordstart"
 
-  .return(TCL_ERROR,$S0)
+  .throw ($S0)
 
 no_args:
-  .return (TCL_ERROR, "wrong # args: should be \"string option arg ?arg ...?\"")
+  .throw ("wrong # args: should be \"string option arg ?arg ...?\"")
 
 .end
 
@@ -39,10 +39,7 @@ no_args:
   .param pmc argv
 
   .local int argc
-  .local int return_type
   .local pmc retval
-
-  return_type = TCL_OK
 
   argc = argv
   if argc > 3 goto bad_args
@@ -54,90 +51,79 @@ no_args:
   $S3 = argv[2]
   .local pmc string_index
   string_index = find_global "_Tcl", "__string_index"
-  (return_type,retval) = string_index($S3,$S2)
-  if return_type != TCL_ERROR goto first_all
-
-  .return(return_type,retval)
-
-first_all:
-  $I0 = retval
+  $I0 = string_index($S3,$S2)
 
 first_do:
   .local int index_1
   index_1 = index $S2, $S1, $I0
-  .return(TCL_OK,index_1)
+  .return(index_1)
 
 bad_args:
-  .return(TCL_ERROR, "wrong # args: should be \"string first subString string ?startIndex?\"")
+  .throw ("wrong # args: should be \"string first subString string ?startIndex?\"")
 
 .end
 
 .sub "index"
   .param pmc argv
 
-  .local int return_type, index_1
+  .local int index_1
   .local pmc retval
   if argv != 2 goto bad_index
   $S1 = argv[0]
   $S2 = argv[1]
   .local pmc string_index
   string_index = find_global "_Tcl", "__string_index"
-  (return_type,retval) = string_index($S2,$S1)
-  if return_type == TCL_ERROR goto done
-  $I0 = retval
+  $I0 = string_index($S2,$S1)
   index_1 = length $S1
   inc index_1
   if $I0 > index_1 goto index_null
   if $I0 < 0 goto index_null
   $S0 = substr $S1, $I0, 1
-  .return (TCL_OK,$S0)
+  .return ($S0)
 
 index_null:
-  .return (TCL_OK, "")
+  .return ("")
 
 bad_index:
-  .return(TCL_ERROR, "wrong # args: should be \"string index string charIndex\"")
+  .throw ("wrong # args: should be \"string index string charIndex\"")
 
 done:
-  .return (return_type, retval)
+  .return (retval)
 .end
 
 .sub "bytelength"
   .param pmc argv
 
-  .local pmc retval
   .local int argc
   argc = argv
   if argc != 1 goto bad_length
   $S0 = argv[0]
   $I0 = bytelength $S0
-  .return(TCL_OK, $I0)
+  .return($I0)
 
 bad_length:
-  .return (TCL_ERROR, "wrong # args: should be \"string bytelength string\"")
+  .throw ("wrong # args: should be \"string bytelength string\"")
 .end
 
 .sub "length"
   .param pmc argv
 
-  .local pmc retval
   .local int argc
   argc = argv
   if argc != 1 goto bad_length
 
   $S1 = argv[0]
   $I0 = length $S1
-  .return(TCL_OK, $I0)
+  .return($I0)
 
 bad_length:
-  .return (TCL_ERROR,"wrong # args: should be \"string length string\"")
+  .throw ("wrong # args: should be \"string length string\"")
 .end
 
 .sub "range"
   .param pmc argv
 
-  .local int return_type, index_1
-  .local pmc retval
+  .local int index_1
 
   if argv != 3 goto bad_range
   $S1 = argv[0]
@@ -150,13 +136,9 @@ bad_length:
   .local pmc string_index
   string_index = find_global "_Tcl", "__string_index"
 
-  (return_type,retval) = string_index($S2,$S1)
-  if return_type == TCL_ERROR goto done
-  index_1 = retval
+  index_1 = string_index($S2,$S1)
 
-  (return_type,retval) = string_index($S3,$S1)
-  if return_type == TCL_ERROR goto done
-  $I2 = retval
+  $I2 = string_index($S3,$S1)
 
 range_do:
   if index_1 > $I2 goto done
@@ -169,10 +151,10 @@ range_doo:
   $I3 = $I2 - index_1
   inc $I3
   $S9 = substr $S1, index_1, $I3
-  .return(TCL_OK, $S9)
+  .return($S9)
 
 bad_range:
-  .return(TCL_ERROR, "wrong # args: should be \"string range string first last\"")
+  .throw ("wrong # args: should be \"string range string first last\"")
 .end
 
 .sub "match"
@@ -180,8 +162,6 @@ bad_range:
 
   .local int argc
   argc = argv
-
-  .local pmc retval
 
   .local int nocase
   nocase = 0
@@ -212,17 +192,16 @@ match_continue:
   .local pmc match
   match = rule(the_string)
 
-  $I0 = match.__get_bool()
-  .return (TCL_OK, $I0)
+  .return match.__get_bool()
 
 bad_option:
   $S1 = "bad option \""
   $S1 .= $S0
   $S1 = "\": must be -nocase"
-  .return (TCL_ERROR,$S1)
+  .throw ($S1)
 
 bad_match:
-  .return (TCL_ERROR, "wrong # args: should be \"string match ?-nocase? pattern string\"")
+  .throw ("wrong # args: should be \"string match ?-nocase? pattern string\"")
 .end
 
 .sub "repeat"
@@ -231,25 +210,17 @@ bad_match:
   .local int argc
   argc = argv
 
-  .local pmc retval
-
   if argc != 2 goto bad_repeat
   .local string the_string
   .local int    the_repeat
   the_string = argv[0]
   the_repeat = argv[1]
 
-  #$I0 = length $S2
-  # XXX - uncomment this, need to setup the sub call
-  #(index_1,$I2,$P1) = __expr_get_number(the_repeat,0)
-  #if $I2 != INTEGER goto bad_arg
-  #if index_1 != $I0 goto bad_arg
-  $I3 = the_repeat
-  $S0 = repeat the_string, $I3
-  .return(TCL_OK, $S0)
+  $S0 = repeat the_string, the_repeat
+  .return($S0)
 
 bad_repeat:
-  .return (TCL_ERROR, "wrong # args: should be \"string repeat string count\"")
+  .throw ("wrong # args: should be \"string repeat string count\"")
 .end
 
 # XXX stub
@@ -258,7 +229,7 @@ bad_repeat:
 
   .local int argc
   argc = argv
-  if argc == 0 goto no_args
+  if argc == 0 goto bad_args
   if argc > 3 goto bad_args
   .local int nocase
   nocase = 0
@@ -320,27 +291,24 @@ outer_next:
   goto outer_loop
 
 outer_done:
-  .return (TCL_OK, the_string)
-
+  .return (the_string)
 
 oddly_enough:
-  .return (TCL_ERROR, "char map list unbalanced")
+  .throw ("char map list unbalanced")
 
 bad_option:
   $S1 = "bad option \""
   $S1 .= $S0
   $S1 .= "\": must be -nocase"
-  .return (TCL_ERROR, $S1)
+  .throw ($S1)
 
-no_args:
 bad_args:
-  .return (TCL_ERROR, "wrong # args: should be \"string map ?-nocase? charMap string\"")
+  .throw ("wrong # args: should be \"string map ?-nocase? charMap string\"")
 .end
 
 .sub "equal"
   .param pmc argv
   .local int argc
-  .local pmc retval
   argc = argv
   
   .local string a, b
@@ -348,7 +316,6 @@ bad_args:
   nocase = 0
   length = -1
 
-  retval = new String
   if argc < 2 goto bad_args
   if argc == 2 goto flags_done
 
@@ -388,13 +355,11 @@ skip_shorten:
 
 check:
   if a == b goto ret_one
-  retval = "0"
-  .return (TCL_OK, retval)
+  .return (0)
 ret_one:
-  retval = "1"
-  .return (TCL_OK, retval)
+  .return (1)
 
 bad_args:
-  retval = "wrong # args: should be \"string equal ?-nocase? ?-length int? string1 string2\""
-  .return (TCL_ERROR, retval)
+  .throw("wrong # args: should be \"string equal ?-nocase? ?-length int? string1 string2\"")
+
 .end

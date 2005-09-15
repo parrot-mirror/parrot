@@ -9,10 +9,9 @@
   .local int argc
   argc = argv
 
-  if argc == 0 goto noargs
+  if argc != 0 goto badargs
+  .tcl_continue()
 
-  .return(TCL_ERROR, "wrong # args: should be \"continue\"\n")
-
-noargs:
-  .return(TCL_CONTINUE, "")
+badargs:
+  .throw ("wrong # args: should be \"continue\"\n")
 .end

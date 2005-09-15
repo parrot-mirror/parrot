@@ -9,5 +9,5 @@
   $N0 = $I0 / 1000
   sleep $N0
 
-  .return(TCL_OK,"")
+  .return("")
 .end

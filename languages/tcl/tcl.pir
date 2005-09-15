@@ -6,13 +6,15 @@
 
 .HLL "Tcl", "tcl_group"
 
+.include "languages/tcl/lib/returncodes.pir"
+
 .sub _main @MAIN
   .param pmc argv
 
   load_bytecode "languages/tcl/lib/tcllib.pbc"
 
-  .local pmc filename,retval,source
-  .local string mode,chunk,contents
+  .local pmc retval,source
+  .local string mode,chunk,contents,filename
   .local int argc,retcode
 
   # start with a new pad...
@@ -45,10 +47,9 @@ input_loop:
   input_line = readline STDIN
   unless STDIN goto done
   $P1 = parse(input_line)
-  register $P1
-  .local pmc interpret
-  interpret = find_global "_Tcl", "interpret"
-  (retcode,retval) = interpret($P1)
+  push_eh loop_error
+    retval = $P1."interpret"()
+  clear_eh
   # print out the result of the evaluation.
   if_null retval, input_loop
   if retval == "" goto input_loop
@@ -56,21 +57,30 @@ input_loop:
   print "\n"
   goto input_loop
 
-open_file:
+loop_error:
+  .get_stacktrace(P5,$S0)
+  print $S0
+  print "\n"
+  goto input_loop
+
+open_file: 
   tcl_interactive = 0
-  filename = new String
   filename = argv[1]
-  (retcode,retval) = source(filename)
+  push_eh file_error
+    source(filename)
+  clear_eh
 
 done:
-  # XXX 1 == TCL_ERROR
-  if retcode != 1 goto realdone
-  print retval
-  print "\n"
-  exit 1
-
-realdone:
-  # don't fall off the end of main, it's rude.
   end
 
+file_error:
+  .include "except_severity.pasm"
+  $I0 = P5[2]  # _severity
+  if $I0 == .EXCEPT_EXIT goto exit_exception
+  .get_stacktrace(P5,$S0)
+  print $S0
+  end 
+
+exit_exception:
+  .rethrow() 
 .end

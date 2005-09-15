@@ -34,13 +34,9 @@ loop:
 
 loop_done:
   $P1 = parse(expr)
-  register $P1
-
-  .local pmc interpret
-  interpret = find_global "_Tcl", "interpret"
-  .return interpret($P1)
+  .return $P1."interpret"()
 
 no_args:
-  .return(TCL_ERROR, "wrong # args: should be \"eval arg ?arg ...?\"")
+  .throw("wrong # args: should be \"eval arg ?arg ...?\"")
 
 .end

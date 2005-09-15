@@ -10,8 +10,6 @@
   argc = argv
 
   .local pmc retval
-  .local int return_type
-  return_type = TCL_OK
  
   if argc == 0 goto error
   if argc > 2 goto error
@@ -35,8 +33,6 @@ setting:
   .return set(name,value)
 
 error:
-  .return (TCL_ERROR, "wrong # args: should be \"set varName ?newValue?\"")
+  .throw ("wrong # args: should be \"set varName ?newValue?\"")
 
-catch:
-  goto resume
 .end

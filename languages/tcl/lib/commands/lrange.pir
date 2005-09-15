@@ -21,16 +21,14 @@
   .local pmc list_index
   list_index = find_global "_Tcl", "_list_index"
 
-  ($I0,$P0,$I2) = list_index(the_list,first)
+  ($P0,$I2) = list_index(the_list,first)
   first = $P0
-  if $I0 != TCL_OK goto error
 
   .local pmc last
   last = argv[2]
 
-  ($I0,$P0,$I2) = _list_index(the_list,last)
+  ($P0,$I2) = _list_index(the_list,last)
   last = $P0
-  if $I0 != TCL_OK goto error
  
   .local int the_index
   the_index = $P0
@@ -57,10 +55,7 @@ LOOP:
   inc cnt_out
   goto LOOP
 DONE:
+  .return (retval)
 
-  .return (TCL_OK,retval)
-
-error:
-  .return($I0,$P0)
 
 .end

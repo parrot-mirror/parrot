@@ -26,5 +26,5 @@ LOOP:
   goto LOOP
 DONE: 
 
-  .return(TCL_OK,retval)
+  .return(retval)
 .end

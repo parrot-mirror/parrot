@@ -9,5 +9,5 @@
   $S0 = join " ", argv
   $I1 = spawnw $S0
 
-  .return(TCL_OK,"")
+  .return("")
 .end

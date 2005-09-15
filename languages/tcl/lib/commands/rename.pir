@@ -34,17 +34,15 @@ add:
 delete:
   null theSub
   store_global "Tcl", old_proc, theSub
-  .return(TCL_OK, "")
+  .return("")
 
 doesnt_exist:
   $S0 = "can't rename \""
   $S0 .= old_s
   $S0 .= "\": command doesn't exist"
-  .return (TCL_ERROR, $S0)
+  .throw ($S0)
 
 error:
-  .return (TCL_ERROR, "wrong # args: should be \"rename oldName newName\"")
-
-done:
+  .throw ("wrong # args: should be \"rename oldName newName\"")
 
 .end
