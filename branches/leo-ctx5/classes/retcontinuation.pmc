@@ -44,6 +44,18 @@ Initializes the continuation.
         PObj_custom_mark_destroy_SETALL(SELF);
     }
 
+    /*
+     * XXX when reusing SUPER.destroy() RetContinuations
+     *     have to set ref_count initially to 1
+     */
+
+    void destroy () {
+        struct Parrot_cont * cc = PMC_cont(SELF);
+        if (cc) {
+            mem_sys_free(cc);
+            PMC_cont(SELF) = NULL;
+        }
+    }
 /*
 
 =item C<PMC* clone>
@@ -96,10 +108,12 @@ the frame pointer in the stack frame cache.
 
         /* debug print before context is switched */
         if (Interp_trace_TEST(INTERP, PARROT_TRACE_SUB_CALL_FLAG)) {
-            PMC *sub = CONTEXT(cc->to_ctx)->current_sub;
+            PMC *to_sub = CONTEXT(cc->to_ctx)->current_sub;
+            PMC *from_sub = CONTEXT(cc->from_ctx)->current_sub;
 
-            PIO_eprintf(INTERP, "# Back in sub '%Ss'\n",
-                    Parrot_full_sub_name(INTERP, sub));
+            PIO_eprintf(INTERP, "# Back in sub '%Ss' from '%Ss\n",
+                    Parrot_full_sub_name(INTERP, to_sub),
+                    Parrot_full_sub_name(INTERP, from_sub));
         }
         caller_regs = INTERP->ctx.bp;
         INTERP->ctx = cc->to_ctx;

@@ -1,7 +1,7 @@
 #
 # _main
 #
-# Setup the information the interpreter needs to run, 
+# Setup the information the interpreter needs to run,
 # then parse and interpret the tcl code we were passed.
 
 .HLL "Tcl", "tcl_group"
@@ -31,7 +31,7 @@
 
   # If no file was specified, read from stdin.
 
-  .local string input_line 
+  .local string input_line
   .local pmc STDIN,STDOUT
   STDIN = getstdin
   STDOUT = getstdout
@@ -56,7 +56,7 @@ input_loop:
   print "\n"
   goto input_loop
 
-open_file: 
+open_file:
   tcl_interactive = 0
   filename = new String
   filename = argv[1]
@@ -72,5 +72,5 @@ done:
 realdone:
   # don't fall off the end of main, it's rude.
   end
- 
+
 .end
