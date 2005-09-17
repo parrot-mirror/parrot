@@ -26,23 +26,18 @@ loop:
   varname = argv[ii]
   sigil_varname = "$" . varname
 
-  push_eh no_such_var
+  push_eh next
     $P1 = find_global "Tcl", sigil_varname
   clear_eh
 
   store_lex call_level, sigil_varname, $P1
 
+next:
   inc ii
   goto loop
   
 done:
   .return("")
-
-no_such_var:
-  $S0 = "can't read \""
-  $S0 .= varname
-  $S0 .= "\": no such variable"
-  .throw($S0)
 
 badargs:
   .throw("wrong # args: should be \"global varName ?varName ...?\"")
