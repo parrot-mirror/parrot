@@ -174,6 +174,7 @@ eat_space:
   if $I0 == 40 goto subexpr     # (
   if $I0 == 36 goto variable    # $
   if $I0 == 46 goto number      # .
+  if $I0 == 34 goto quote       # "
   if $I0 == 45 goto unary       # -
   if $I0 == 43 goto unary       # +
   if $I0 == 47 goto unary       # ~
@@ -200,6 +201,9 @@ function:
 
 number:
   .return get_number(expr, pos) 
+
+quote:
+  .return get_quote(expr, pos)
 
 unary:
   .return get_unary(expr, pos)
