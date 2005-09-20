@@ -35,8 +35,8 @@ $SIG{PIPE} = "IGNORE";
 
 my $t = do { local $/; <DATA> };
 
-sub handle_request {
-	my ($self, $CGI) = @_;
+#sub handle_request {
+	#my ($self, $CGI) = @_;
 
 	#HSS if ($CGI->url(-path => 1) =~ /html$/) {
 		#HSS $self->serve_static($CGI, BASEDIR);
