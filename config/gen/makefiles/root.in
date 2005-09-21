@@ -1573,10 +1573,8 @@ tags.dummy:
 #
 ###############################################################################
 
-smoke.html : all
+smoke : all
 	$(PERL) t/harness --html
-
-smoke-submit : smoke.html
 	$(PERL) util/smokeserv-client.pl smoke.html
 
 smoke-clean :
