@@ -13,7 +13,7 @@ our $compress = sub { return };
 
 GetOptions(
   "smokeserv=s" =>
-    \(my $smokeserv = "http://www.woobling.org:8080/"),
+    \(my $smokeserv = "http://smoke.parrotcode.org/smoke/"),
   "help"        => \&usage,
   "compress|c!" => \(my $compression_wanted = 1),
   "version"     => sub { print "smokeserv-client.pl v" . VERSION . "\n"; exit },
