@@ -1348,6 +1348,7 @@ clean : \
     examples-clean \
     imcc-clean \
     compilers-clean \
+    smoke-clean \
     editor-clean
 	${TEMP_cg_r}
 	$(RM_F) chartypes *.s *~ $(FLUID_FILES)
@@ -1564,3 +1565,19 @@ tags:	tags.dummy
 	$(PERL) editor/addtags ops/*.ops
 
 tags.dummy:
+
+
+###############################################################################
+#
+# smoke:
+#
+###############################################################################
+
+smoke.html : $(PARROT)
+	$(PERL) t/harness --html
+
+smoke-submit : smoke.html
+	$(PERL) util/smokeserv-client.pl smoke.html
+
+smoke-clean :
+	$(RM_F) smoke.html
