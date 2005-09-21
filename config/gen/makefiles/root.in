@@ -1573,7 +1573,7 @@ tags.dummy:
 #
 ###############################################################################
 
-smoke.html : $(PARROT)
+smoke.html : all
 	$(PERL) t/harness --html
 
 smoke-submit : smoke.html
