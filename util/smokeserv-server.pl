@@ -411,8 +411,8 @@ __DATA__
     Submitting your own smoke is easy,
   </p>
     
-  <pre class="indent2">$ make smoke.html
-$ make smoke-submit</pre>
+  <pre class="indent2">$ make smoke
+</pre>
     
   <p>
     should suffice. If a language distributed with parrot supports smoking, you
