@@ -1,4 +1,9 @@
-.include "runtime/parrot/library/dumper.imc"
+.macro __pop_value_from_expr_stack(STACK,VALUE)
+  .VALUE = pop .STACK
+  .VALUE = .VALUE[1]
+  .VALUE = .VALUE."interpret"()
+  .VALUE = __number(.VALUE)  # XXX unnecessary ?
+.endm
 
 .namespace [ "_Tcl" ]
 
@@ -30,7 +35,7 @@ invoke the items on the stack.
 operand:
   (retval, pos) = get_operand(expr, pos)
   if_null retval, no_operand
-  
+
   chunk = new TclList
   chunk[0] = OPERAND
   chunk[1] = retval
@@ -216,7 +221,7 @@ unary:
   
   .local pmc chunk
   null chunk
-  
+ 
   .local pmc ops, precedences
   # Global list of available ops.
   ops = find_global "_Tcl", "operators"
@@ -294,9 +299,6 @@ stack_evaluator:
 
  # move all non op non funcs to the value stack
  if type == OP goto do_op
- $P0 = chunk[1]
- retval = $P0."interpret"()
- chunk[1] = retval
  push result_stack, chunk
  goto stack_evaluator
 
@@ -311,17 +313,8 @@ do_op:
   # XXX looks like there is code to convert everything to numbers.
   #     - this will have to be changed for string ops.
 
-  .local pmc r_arg
-  .local pmc l_arg
-  .local pmc op_result
+  .local pmc r_arg,l_arg,op_result
   op_result = new TclInt
-  l_arg = pop result_stack
-  l_arg = l_arg[1]
-  l_arg = __number(l_arg)  # XXX unnecessary ?
-
-  r_arg = pop result_stack
-  r_arg = r_arg[1]
-  r_arg = __number(r_arg) # XXX unnecessary ?
 
   # Is there a more efficient way to do this dispatch?
   if op == OPERATOR_MUL goto op_mul
@@ -348,66 +341,100 @@ do_op:
   goto die_horribly # XXX should never happen, of course.
 
 op_mul:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = mul l_arg, r_arg
   goto done_op 
 op_div:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = div l_arg, r_arg
   goto done_op 
 op_mod:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = mod l_arg, r_arg
   goto done_op 
 op_plus:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = l_arg + r_arg
   goto done_op 
 op_minus:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = l_arg - r_arg
   goto done_op 
 op_shl:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = shl l_arg, r_arg
   goto done_op 
 op_shr:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = shr l_arg, r_arg
   goto done_op 
 op_lt:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg < r_arg goto done_op
   op_result = 0
   goto done_op 
 op_gt:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg > r_arg goto done_op
   op_result = 0
   goto done_op 
 op_lte:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg <= r_arg goto done_op
   op_result = 0
   goto done_op 
 op_gte:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg >= r_arg goto done_op
   op_result = 0
   goto done_op 
 op_equal:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg == r_arg goto done_op
   op_result = 0
   goto done_op 
 op_unequal:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg != r_arg goto done_op
   op_result = 0
   goto done_op 
 op_bitand:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = band l_arg, r_arg
   goto done_op 
 op_bitxor:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = bxor l_arg, r_arg
   goto done_op 
 op_bitor:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = bor l_arg, r_arg
   goto done_op
 op_ne:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   $S0 = l_arg
   $S1 = r_arg
@@ -415,6 +442,8 @@ op_ne:
   op_result = 0
   goto done_op
 op_eq:
+  .__pop_value_from_expr_stack(result_stack,l_arg)
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   $S0 = l_arg
   $S1 = r_arg
@@ -423,13 +452,17 @@ op_eq:
   goto done_op
 op_and:
   op_result = 0
+  .__pop_value_from_expr_stack(result_stack,l_arg)
   unless l_arg goto done_op
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   unless r_arg goto done_op
   op_result = 1
   goto done_op
 op_or:
   op_result = 1
+  .__pop_value_from_expr_stack(result_stack,l_arg)
   if l_arg goto done_op
+  .__pop_value_from_expr_stack(result_stack,r_arg)
   if r_arg goto done_op
   op_result = 0
   # goto done_op
@@ -454,6 +487,17 @@ die_horribly:
 
 evaluation_done:
   retval = retval[1]
+
+  # XXX This is a bit of a hack. We should insure that everything we get at this
+  # point is either interpret-able or not.
+
+  $I0 = can retval, "interpret"
+  if $I0 goto done_interp
+  .return (retval)
+
+done_interp:
+  # XXX Oddly, we can't combine this into a tailcall.
+  retval = retval."interpret"()
   .return (retval)
 
 .end
@@ -623,8 +667,8 @@ loop_done:
   inc paren_pos
   $I0 = pos - paren_pos
   $S1 = substr expr, paren_pos, $I0
+
   operand = __expression_parse($S1) 
-  
   setattribute func, "TclFunc\x00argument", operand
 
 done:
@@ -668,3 +712,4 @@ unknown_func:
   
   .return(unary, pos)
 .end
+

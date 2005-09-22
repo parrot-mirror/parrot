@@ -50,8 +50,9 @@ Initialize the attributes for an instance of the class
 .sub interpret method
   .local pmc retval
   # assigning a $Nx will change this to a TclFloat
+
   retval      = new TclInt
-  
+
   .local pmc funcs, expr_interpret, __number
   funcs = find_global "_Tcl", "functions"
   expr_interpret = find_global "_Tcl", "__expression_interpret"
