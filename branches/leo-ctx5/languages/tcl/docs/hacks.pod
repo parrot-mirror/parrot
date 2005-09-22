@@ -18,9 +18,9 @@ hard.
 =back 
 
 It is, of course, quite likely that said feature already exists with
-a nice interface, and
-was just not found by the partcl developers - If you find something
-along these lines, let them know.
+a nice interface, and was just not found by the partcl developers - 
+If you find something along these lines, let them know on the internals
+list.
 
 =head1 WORKAROUNDS
 
