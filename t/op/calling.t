@@ -16,7 +16,7 @@ Tests Parrot calling conventions.
 
 =cut
 
-use Parrot::Test tests => 36;
+use Parrot::Test tests => 37;
 use Test::More;
 
 output_is(<<'CODE', <<'OUTPUT', "set_args - parsing");
@@ -1019,3 +1019,26 @@ ok 1
 ok 2
 OUTPUT
 
+# tailcall to NCI doesn't work
+TODO:
+{ local $TODO = "tailcall to NCI doesn't work";
+pir_output_is(<<'CODE', <<'OUTPUT', "taicall to NCI");
+.sub main @MAIN
+    .local pmc s
+    s = new .String
+    s = "OK 1\n"
+    $S0 = s."lower"()
+    print $S0
+    s = "OK 2\n"
+    $S1 = foo(s)
+    print $S1
+.end
+.sub foo
+    .param pmc s
+    .return s."lower"()
+.end
+CODE
+ok 1
+ok 2
+OUTPUT
+}
