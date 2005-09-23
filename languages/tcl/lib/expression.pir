@@ -19,7 +19,7 @@ invoke the items on the stack.
 
 .sub __expression_parse
   .param string expr
- 
+
   .local pmc retval
 
   .local pmc undef
@@ -45,7 +45,7 @@ operand:
 
 no_operand:
   .throw ("no operand!")
- 
+
 operator:
   (chunk, pos) = get_operator(expr, pos)
   if_null chunk, chunks_done
@@ -57,7 +57,7 @@ operator:
 
 chunks_done:
 # convert the chunks into a stack.
- 
+
   # to do this, we scan for our Operators in precedence order.
   # as we find each one, put it on the program_stack with the appropriate
   # args. Leave a "NOOP" placeholder when pulling things. If our target
@@ -66,19 +66,19 @@ chunks_done:
 
   # XXX cheat for now , assume no precedence. means we can just
   # walk through, grabbing ops. (hope nothing is orphaned?)
- 
-  .local int stack_index 
+
+  .local int stack_index
   .local int input_len
 
   stack_index = 0
 
  # we're looping over this once - to handle precedence, I suggest
  # looping multiple times, leaving the NOOPS when we remove something
- # to faciliate processing on further runs. If we try to pull a 
+ # to faciliate processing on further runs. If we try to pull a
  # left or right arg and see a NO-OP, we know it's safe to skip because
  # walking the stack will convert it to a number by the time we get to it.
 
-  .local pmc our_op 
+  .local pmc our_op
   input_len  = chunks
   if input_len == 0 goto die_horribly
 
@@ -103,10 +103,10 @@ converter_loop:
   if $I2 == OP   goto is_opfunc
 
   # Should never be reached (XXX then shouldn't we die horribly?)
-  goto converter_next 
+  goto converter_next
 
 is_opfunc:
-  $I3 = our_op[2] 
+  $I3 = our_op[2]
   if $I3 != precedence_level goto converter_next
 
 right_arg:
@@ -117,7 +117,7 @@ right_arg:
   chunks[$I2] = undef
   inc $I4
   program_stack = unshift retval
-  
+
   # If we're a function, (XXX) assume a single arg (which
   # we've now pulled - so, go to the, skip the left arg.
   if precedence_level == -1 goto shift_op
@@ -167,13 +167,13 @@ converter_done:
 eat_space:
   inc pos
   if pos >= len goto fail
-  
+
   $I0 = is_whitespace expr, pos
   if $I0 == 1 goto eat_space
-  
+
   $I0 = is_digit expr, pos
   if $I0 == 1 goto number
-  
+
   $I0 = ord expr, pos
   if $I0 == 91 goto subcommand  # [
   if $I0 == 40 goto subexpr     # (
@@ -184,7 +184,7 @@ eat_space:
   if $I0 == 43 goto unary       # +
   if $I0 == 47 goto unary       # ~
   if $I0 == 33 goto unary       # !
-  
+
   $I0 = is_wordchar expr, pos
   if $I0 == 1 goto function
 
@@ -194,7 +194,7 @@ fail:
 
 subexpr:
   .return get_subexpr(expr, pos)
- 
+
 variable:
   .return get_variable(expr, pos)
 
@@ -205,7 +205,7 @@ function:
   .return get_function(expr, pos)
 
 number:
-  .return get_number(expr, pos) 
+  .return get_number(expr, pos)
 
 quote:
   .return get_quote(expr, pos)
@@ -218,16 +218,16 @@ unary:
 .sub get_operator
   .param string expr
   .param int pos
-  
+
   .local pmc chunk
   null chunk
- 
+
   .local pmc ops, precedences
   # Global list of available ops.
   ops = find_global "_Tcl", "operators"
   # Global list of operator precedence
   precedences = find_global "_Tcl", "precedence"
-  
+
   .local int len
   len = length expr
   dec pos
@@ -274,7 +274,7 @@ op_done:
 
   pos += op_len
 
-done:  
+done:
   .return(chunk, pos)
 .end
 
@@ -289,7 +289,7 @@ stack_evaluator:
  .local int size
  size = program_stack
  if size == 0 goto stack_done
- 
+
  .local int type
  .local pmc chunk
  chunk = pop program_stack
@@ -344,89 +344,89 @@ op_mul:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = mul l_arg, r_arg
-  goto done_op 
+  goto done_op
 op_div:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = div l_arg, r_arg
-  goto done_op 
+  goto done_op
 op_mod:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = mod l_arg, r_arg
-  goto done_op 
+  goto done_op
 op_plus:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = l_arg + r_arg
-  goto done_op 
+  goto done_op
 op_minus:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = l_arg - r_arg
-  goto done_op 
+  goto done_op
 op_shl:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = shl l_arg, r_arg
-  goto done_op 
+  goto done_op
 op_shr:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = shr l_arg, r_arg
-  goto done_op 
+  goto done_op
 op_lt:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg < r_arg goto done_op
   op_result = 0
-  goto done_op 
+  goto done_op
 op_gt:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg > r_arg goto done_op
   op_result = 0
-  goto done_op 
+  goto done_op
 op_lte:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg <= r_arg goto done_op
   op_result = 0
-  goto done_op 
+  goto done_op
 op_gte:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg >= r_arg goto done_op
   op_result = 0
-  goto done_op 
+  goto done_op
 op_equal:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg == r_arg goto done_op
   op_result = 0
-  goto done_op 
+  goto done_op
 op_unequal:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = 1
   if l_arg != r_arg goto done_op
   op_result = 0
-  goto done_op 
+  goto done_op
 op_bitand:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = band l_arg, r_arg
-  goto done_op 
+  goto done_op
 op_bitxor:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
   op_result = bxor l_arg, r_arg
-  goto done_op 
+  goto done_op
 op_bitor:
   .__pop_value_from_expr_stack(result_stack,l_arg)
   .__pop_value_from_expr_stack(result_stack,r_arg)
@@ -496,18 +496,16 @@ evaluation_done:
   .return (retval)
 
 done_interp:
-  # XXX Oddly, we can't combine this into a tailcall.
-  retval = retval."interpret"()
-  .return (retval)
+  .return retval."interpret"()
 
 .end
 
 .sub get_subexpr
   .param string expr
   .param int pos
-  
+
   .local pmc chunk, retval
-  
+
   .local int len, depth, start
   len   = length expr
   depth = 1
@@ -535,11 +533,11 @@ paren_done:
   $I0 = pos - start
   inc pos
   $S1 = substr expr, start, $I0
-  
+
   # XXX this is now officially braindead. Fissit.
   retval = __expression_parse($S1)
   retval = __expression_interpret(retval)
-  
+
   .return(retval, pos)
 
 die_horribly:
@@ -574,11 +572,11 @@ integer:
   if char > 57 goto integer_done # > "9"
   if char < 48 goto integer_done # < "0"
   inc pos
-  goto integer 
+  goto integer
 integer_done:
   if char == 46 goto floating    # "."
   if pos == 0 goto done # failure
-  
+
   $S0 = substr expr, start, pos
   $I0 = $S0
   value = new TclInt
@@ -595,7 +593,7 @@ float_loop:
   inc pos
   goto float_loop
 float_done:
-  
+
   $S0 = substr expr, start, pos
   # XXX Can't we just assign this string directly to the the TclFloat - WJC
   $N0 = $S0
@@ -614,10 +612,10 @@ done:
   .local int len, start
   len   = length expr
   start = pos
-   
+
   .local pmc func,operand
 
-  # functions *must* have ()s 
+  # functions *must* have ()s
   pos = index expr, "(", start
   if pos == -1 goto fail
 
@@ -648,10 +646,10 @@ loop_done:
   $I0 = paren_pos - start
   $S0 = substr expr, start, $I0
   $P1 = find_global "_Tcl", "functions"
-  
+
   func = $P1[$S0]
   if_null func, unknown_func
-  
+
   $I0 = find_type "TclFunc"
   func = new $I0
   $P0 = new String
@@ -663,12 +661,12 @@ loop_done:
   # XXX - If there are commas in the op, then split the operand
   #   and parse each one as an operand. needed for:
   #   atan2,pow,fmod,hypot
-  
+
   inc paren_pos
   $I0 = pos - paren_pos
   $S1 = substr expr, paren_pos, $I0
 
-  operand = __expression_parse($S1) 
+  operand = __expression_parse($S1)
   setattribute func, "TclFunc\x00argument", operand
 
 done:
@@ -694,22 +692,22 @@ unknown_func:
 .sub get_unary
   .param string expr
   .param int pos
-  
+
   .local pmc name, operand
-  
+
   $S0 = substr expr, pos, 1
   name = new String
   name = $S0
-  
+
   inc pos
   (operand, pos) = get_operand(expr, pos)
-  
+
   .local pmc unary
   $I0   = find_type "TclUnaryOp"
   unary = new $I0
   setattribute unary, "TclUnaryOp\x00name", name
   setattribute unary, "TclUnaryOp\x00operand", operand
-  
+
   .return(unary, pos)
 .end
 

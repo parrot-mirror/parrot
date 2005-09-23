@@ -1019,9 +1019,6 @@ ok 1
 ok 2
 OUTPUT
 
-# tailcall to NCI doesn't work
-TODO:
-{ local $TODO = "tailcall to NCI doesn't work";
 pir_output_is(<<'CODE', <<'OUTPUT', "taicall to NCI");
 .sub main @MAIN
     .local pmc s
@@ -1041,4 +1038,4 @@ CODE
 ok 1
 ok 2
 OUTPUT
-}
+
