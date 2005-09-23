@@ -26,6 +26,65 @@ subroutines.
 #include "inter_call.str"
 
 
+static int next_arg(Interp *, struct call_state_1 *st);
+
+/*
+
+=item C<int Parrot_init_arg_nci(Interp *, struct call_state *st, const char *sig)>
+
+Initialize the argument passing state C<call_state> for the given NCI signature.
+
+=item C<int Parrot_init_ret_nci(Interp *, struct call_state *st, const char *sig)>
+
+Initialize the return value passing state C<call_state> for the given
+NCI signature.
+
+=cut
+
+*/
+
+int
+Parrot_init_arg_nci(Interp *interpreter, struct call_state *st,
+        const char *sig)
+{
+    Parrot_init_arg_op(interpreter, interpreter->code, interpreter->ctx.bp,
+            interpreter->current_args, &st->src);
+    Parrot_init_arg_sig(interpreter, interpreter->code, interpreter->ctx.bp,
+            sig, NULL, &st->dest);
+    return 1;
+}
+
+int
+Parrot_init_ret_nci(Interp *interpreter, struct call_state *st,
+        const char *sig)
+{
+    PMC *current_cont;
+    parrot_context_t ctx;
+    struct PackFile_ByteCode *seg;
+    /*
+     * if this NCI call was a taicall, return results to caller's get_results
+     * this also means that we pass the caller's register base pointer
+     * and code segment
+     */
+    current_cont = CONTEXT(interpreter->ctx)->current_cont;
+    if ((PObj_get_FLAGS(current_cont) & SUB_FLAG_TAILCALL)) {
+        ctx = PMC_cont(current_cont)->to_ctx;
+        seg = PMC_cont(current_cont)->seg;
+    }
+    else {
+        ctx = interpreter->ctx;
+        seg = interpreter->code;
+    }
+    /* TODO simplify all */
+    Parrot_init_arg_sig(interpreter, interpreter->code, interpreter->ctx.bp,
+            sig, NULL, &st->src);
+    Parrot_init_arg_op(interpreter, seg, ctx.bp,
+            CONTEXT(ctx)->current_results, &st->dest);
+    next_arg(interpreter, &st->src);
+    next_arg(interpreter, &st->dest);
+    return 1;
+}
+
 /*
 
 =item C<int Parrot_init_arg_sig(Interp *, struct PackFile_ByteCode *seg,
@@ -52,32 +111,6 @@ These functions return 0, if no arguments are present, or 1 on success.
 
 */
 
-static int next_arg(Interp *, struct call_state_1 *st);
-
-int
-Parrot_init_arg_nci(Interp *interpreter, struct call_state *st,
-        const char *sig)
-{
-    Parrot_init_arg_op(interpreter, interpreter->code, interpreter->ctx.bp,
-            interpreter->current_args, &st->src);
-    Parrot_init_arg_sig(interpreter, interpreter->code, interpreter->ctx.bp,
-            sig, NULL, &st->dest);
-    return 1;
-}
-
-int
-Parrot_init_ret_nci(Interp *interpreter, struct call_state *st,
-        const char *sig)
-{
-    /* TODO simplify all */
-    Parrot_init_arg_sig(interpreter, interpreter->code, interpreter->ctx.bp,
-            sig, NULL, &st->src);
-    Parrot_init_arg_op(interpreter, interpreter->code, interpreter->ctx.bp,
-            CONTEXT(interpreter->ctx)->current_results, &st->dest);
-    next_arg(interpreter, &st->src);
-    next_arg(interpreter, &st->dest);
-    return 1;
-}
 int
 Parrot_init_arg_op(Interp *interpreter, struct PackFile_ByteCode *seg,
         struct parrot_regs_t *regs,
