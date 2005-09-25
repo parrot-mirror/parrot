@@ -35,10 +35,6 @@ is causing things to get rebuilt unecessarily each time "make tclsh" is run.
 tcl is not using Keys when getting from aggregates. It probably should,
 at least for language interoperability.
 
-=item interactive tclsh
-
- o respect tcl_prompt1, tcl_prompt2
-
 =item implement default globals, etc.
 
 global variables provided by tcl libary. L<tclvars>.
