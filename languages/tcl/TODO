@@ -37,10 +37,7 @@ at least for language interoperability.
 
 =item interactive tclsh
 
- o catch any real_exceptions thrown.
  o respect tcl_prompt1, tcl_prompt2
- o deal with incomplete input (needs better error handling)
- o add back in support for dispatch to shell.
 
 =item implement default globals, etc.
 
@@ -66,7 +63,7 @@ Perhaps via [namespace import]? Can fake it right now with [inline]
 
 =over 4
 
-=item [expr] mdiep is currently working on this.
+=item [expr]
 
 the expr AST could use a rework. Be nice if it just passed around something
 invokable.
