@@ -40,27 +40,42 @@
 
   .local pmc parse
   parse = find_global "_Tcl", "parse"
+  input_line = ""
 
-input_loop:
   print "% " # XXX Doesn't respect a set tcl_prompt1
   STDOUT."flush"()
-  input_line = readline STDIN
+input_loop:
+  $S0 = readline STDIN
+  input_line .= $S0
   unless STDIN goto done
-  $P1 = parse(input_line)
   push_eh loop_error
+    $P1 = parse(input_line)
     retval = $P1."interpret"()
   clear_eh
   # print out the result of the evaluation.
-  if_null retval, input_loop
-  if retval == "" goto input_loop
+  if_null retval, input_loop_continue
+  if retval == "" goto input_loop_continue
   print retval
   print "\n"
-  goto input_loop
+  goto input_loop_continue
 
 loop_error:
+  # Are we just missing a close-foo? XXX probably not the best way to check.
+  $P0 = P5[0] # message
+  $S0 = $P0
+  if $S0 == "missing close-brace" goto input_loop
+  if $S0 == "missing quote"       goto input_loop
+  
+loop_error_real:
   .get_stacktrace(P5,$S0)
   print $S0
   print "\n"
+  goto input_loop_continue
+
+input_loop_continue:
+  print "% " # XXX Doesn't respect a set tcl_prompt1
+  STDOUT."flush"()
+  input_line = ""
   goto input_loop
 
 open_file: 
