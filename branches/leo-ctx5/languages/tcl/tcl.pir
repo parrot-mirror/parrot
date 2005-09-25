@@ -34,16 +34,14 @@
   # If no file was specified, read from stdin.
 
   .local string input_line
-  .local pmc STDIN,STDOUT
+  .local pmc STDIN
   STDIN = getstdin
-  STDOUT = getstdout
 
   .local pmc parse
   parse = find_global "_Tcl", "parse"
   input_line = ""
 
-  print "% " # XXX Doesn't respect a set tcl_prompt1
-  STDOUT."flush"()
+  __prompt(1)
 input_loop:
   $S0 = readline STDIN
   input_line .= $S0
@@ -63,19 +61,22 @@ loop_error:
   # Are we just missing a close-foo? XXX probably not the best way to check.
   $P0 = P5[0] # message
   $S0 = $P0
-  if $S0 == "missing close-brace" goto input_loop
-  if $S0 == "missing quote"       goto input_loop
+  if $S0 == "missing close-brace" goto input_loop_continue2
+  if $S0 == "missing quote"       goto input_loop_continue2
   
 loop_error_real:
   .get_stacktrace(P5,$S0)
   print $S0
   print "\n"
-  goto input_loop_continue
+  #goto input_loop_continue
 
 input_loop_continue:
-  print "% " # XXX Doesn't respect a set tcl_prompt1
-  STDOUT."flush"()
+  __prompt(1)
   input_line = ""
+  goto input_loop
+
+input_loop_continue2:
+  __prompt(2)
   goto input_loop
 
 open_file: 
@@ -98,4 +99,40 @@ file_error:
 
 exit_exception:
   .rethrow() 
+.end
+
+.sub __prompt
+  .param int level
+  
+  .local pmc STDOUT
+  STDOUT = getstdout
+
+  .local string default_prompt
+  default_prompt = ""
+  if level == 2 goto got_prompt
+  default_prompt = "% "
+
+got_prompt:
+
+  .local string varname
+  varname = "$tcl_prompt"
+  $S0 = level
+  varname .= $S0
+
+  .local pmc parse
+  parse = find_global "_Tcl", "parse"
+
+  push_eh no_prompt
+    $P0 = find_global "Tcl", varname
+    $P1 = parse($P0)
+    $P1."interpret"()
+  clear_eh
+
+  STDOUT."flush"()
+  .return()
+
+no_prompt:
+  print default_prompt
+  STDOUT."flush"()
+  .return()
 .end
