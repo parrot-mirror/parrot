@@ -145,6 +145,9 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
     struct parrot_regs_t *bp;
     parrot_context_t old_ctx;
     int i;
+    /*
+     * FIXME argument count limited - check strlen of sig
+     */
     char new_sig[10];
     const char *sig_p;
 
