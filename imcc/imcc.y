@@ -363,7 +363,7 @@ begin_return_or_yield(Interp *interp, int yield)
 %type <sr> pcc_returns pcc_return pcc_call arg the_sub multi_type
 %type <t> argtype_list argtype paramtype_list paramtype
 %type <t> pcc_return_many
-%type <t> pcc_sub_proto proto sub_proto multi multi_types
+%type <t> proto sub_proto sub_proto_list multi multi_types opt_comma
 %type <i> instruction assignment if_statement labeled_inst opt_label op_assign
 %type <i> func_assign
 %type <i> opt_invocant
@@ -483,7 +483,7 @@ pasm_inst:         { clear_state(); }
      PARROT_OP pasm_args
                    { $$ = INS(interp, cur_unit, $2,0,regs,nargs,keyvec,1);
                      free($2); }
-   | PCC_SUB pcc_sub_proto LABEL
+   | PCC_SUB sub_proto LABEL
                    {
                      $$ = iSUBROUTINE(interp, cur_unit,
                                 mk_sub_label(interp, $3));
@@ -618,13 +618,11 @@ sub_param:
                                          is_def=0; $$->type |= $5; }
    ;
 
-sub_proto:
+opt_comma:
      /* empty */              { $$ = 0;  }
-   | sub_proto COMMA proto    { $$ = $1 | $3; }
-   | sub_proto COMMA multi    { $$ = $1 | $3; }
-   | proto                    { $$ = $1; }
-   | multi                    { $$ = $1; }
+   | COMMA
    ;
+
 
 multi: MULTI '(' multi_types ')'  { $$ = 0; }
    ;
@@ -712,10 +710,14 @@ opt_invocant:
                    { $$ = NULL;  cur_call->pcc_sub->object = $2; }
    ;
 
-pcc_sub_proto:
+sub_proto:
      /* empty */                { $$ = 0; }
-   | proto                      { $$ = $1; }
-   | pcc_sub_proto COMMA proto  { $$ = $1 | $3; }
+   | sub_proto_list
+   ;
+
+sub_proto_list:
+     proto                           { $$ = $1; }
+   | sub_proto_list opt_comma proto  { $$ = $1 | $3; }
    ;
 
 proto:
@@ -725,6 +727,7 @@ proto:
    | POSTCOMP       {  $$ = P_POSTCOMP; }
    | ANON           {  $$ = P_ANON; }
    | METHOD         {  $$ = P_METHOD; }
+   | multi
    ;
 
 pcc_call:
