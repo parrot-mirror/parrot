@@ -3,7 +3,7 @@
 # $Id$
 
 use strict;
-use Parrot::Test tests => 44;
+use Parrot::Test tests => 45;
 
 ##############################
 # Parrot Calling Conventions
@@ -1489,5 +1489,20 @@ pir_output_like(<<'CODE', <<'OUT', "multiple \@ANON subs with same name");
 .end
 CODE
 /.*'anon'.*not found/
+OUT
+
+pir_output_is(<<'CODE', <<'OUT', "multi - colon syntax");
+# just parser test - these flags are meaningless
+.sub foo :multi() :main
+    print "ok 1\n"
+.end
+.sub f1 :multi(int) :load :postcomp
+.end
+.sub f2 :multi(int, float)
+.end
+.sub f3 :multi(Integer, Any, _)
+.end
+CODE
+ok 1
 OUT
 

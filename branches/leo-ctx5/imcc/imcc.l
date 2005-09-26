@@ -203,13 +203,22 @@ SP              [ ]
 ".pcc_begin_yield"    return(PCC_BEGIN_YIELD);
 ".pcc_end_yield"      return(PCC_END_YIELD);
 
-"method"        return(METHOD);
+"method"        return(METHOD); /* old compat cruft -
+                                  the canonical colon names are below */
 <emit,INITIAL>"@MULTI"   return(MULTI);
 <emit,INITIAL>"@MAIN"    return(MAIN);
 <emit,INITIAL>"@LOAD"    return(LOAD);
 <emit,INITIAL>"@IMMEDIATE"    return(IMMEDIATE);
 <emit,INITIAL>"@POSTCOMP"    return(POSTCOMP);
 <emit,INITIAL>"@ANON"    return(ANON);
+
+":method"        return(METHOD);
+<emit,INITIAL>":multi"   return(MULTI);
+<emit,INITIAL>":main"    return(MAIN);
+<emit,INITIAL>":load"    return(LOAD);
+<emit,INITIAL>":immediate"    return(IMMEDIATE);
+<emit,INITIAL>":postcomp"    return(POSTCOMP);
+<emit,INITIAL>":anon"    return(ANON);
 
 ".result"       return(RESULT);
 ".yield"        return(YIELDT);
