@@ -836,7 +836,7 @@ CODE
 -2
 OUTPUT
 
-pir_output_is(<<'CODE', <<'OUTPUT', "optional args, :opt_count");
+pir_output_is(<<'CODE', <<'OUTPUT', "optional args, :opt_flag");
 .sub main @MAIN
     $P0 = new String
     $P0 = "hello\n"
@@ -845,7 +845,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "optional args, :opt_count");
 .end
 .sub foo
     .param pmc p1  :optional
-    .param int i1  :opt_count
+    .param int i1  :opt_flag
 
     if_null p1, skip
     print p1
@@ -859,7 +859,7 @@ hello
 0
 OUTPUT
 
-pir_output_is(<<'CODE', <<'OUTPUT', "optional multiple :opt_count");
+pir_output_is(<<'CODE', <<'OUTPUT', "optional multiple :opt_flag");
 .sub main @MAIN
     $P0 = new String
     $P0 = "ok 1\n"
@@ -867,12 +867,13 @@ pir_output_is(<<'CODE', <<'OUTPUT', "optional multiple :opt_count");
 .end
 .sub foo
     .param pmc p1  :optional
+    .param int i1  :opt_flag
     .param pmc p2  :optional
-    .param int i12 :opt_count
+    .param int i2  :opt_flag
     .param pmc p3  :optional
-    .param int i3  :opt_count
+    .param int i3  :opt_flag
     .param pmc p4  :optional
-    .param int i4  :opt_count
+    .param int i4  :opt_flag
 
     print p1
     print p2
@@ -881,7 +882,8 @@ pir_output_is(<<'CODE', <<'OUTPUT', "optional multiple :opt_count");
     print "not "
 ok:
     print "ok 4\n"
-    print_item i12
+    print_item i1
+    print_item i2
     print_item i3
     print_item i4
     print_newline
@@ -893,7 +895,7 @@ ok 1
 ok 2
 ok 3
 ok 4
-2 1 0
+1 1 1 0
 OUTPUT
 
 pir_output_is(<<'CODE', <<'OUTPUT', "optional returns, void ret");
@@ -904,7 +906,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "optional returns, void ret");
     .pcc_begin
     .pcc_call f
     .result   $P0 :optional
-    .result   $I0 :opt_count
+    .result   $I0 :opt_flag
     .pcc_end
     unless $I0,  ex
     print "not "

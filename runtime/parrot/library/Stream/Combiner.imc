@@ -72,7 +72,7 @@ Sets (or just returns) the combiner sub.
 
 .sub combiner method
     .param pmc _combiner :optional
-    .param int has_combiner :opt_count
+    .param int has_combiner :opt_flag
     .local pmc ret
 
     classoffset $I0, self, "Stream::Combiner"

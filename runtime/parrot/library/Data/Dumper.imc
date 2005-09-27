@@ -12,9 +12,9 @@ END:
 .sub dumper method
     .param pmc dump
     .param string name           :optional
-    .param int has_name          :opt_count
+    .param int has_name          :opt_flag
     .param string indent         :optional
-    .param int has_indent        :opt_count
+    .param int has_indent        :opt_flag
     .local pmc style
 
     if has_indent goto no_def_indent

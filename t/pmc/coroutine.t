@@ -489,7 +489,7 @@ loop:
     .pcc_begin
     .pcc_call c
     .result   $P0 :optional
-    .result   $I0 :opt_count
+    .result   $I0 :opt_flag
     .pcc_end
     unless $I0,  ex
     print $P0

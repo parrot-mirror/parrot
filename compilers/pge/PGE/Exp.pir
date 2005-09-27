@@ -84,12 +84,14 @@ min/max/greedy/etc.  values and C<exp1> and C<exp2> objects if provided.
 
 .sub "new"
     .param string expclass     :optional           # class from find_type
+    .param int has_class       :opt_flag
     .param pmc exp1            :optional           # left expression
+    .param int has_exp1        :opt_flag
     .param pmc exp2            :optional           # right expression
-    .param int argc            :opt_count
+    .param int has_exp2        :opt_flag
     .local pmc me                                  # new expression object
 
-    if argc > 0 goto buildme
+    if has_class goto buildme
     expclass = "PGE::Exp"
   buildme:
     $I0 = find_type expclass
@@ -99,9 +101,9 @@ min/max/greedy/etc.  values and C<exp1> and C<exp2> objects if provided.
     me["isgreedy"] = 1
     me["iscut"] = 0
 
-    if argc < 2 goto end
+    unless has_exp1 goto end
     me["exp1"] = exp1
-    if argc < 3 goto end
+    unless has_exp2 goto end
     me["exp2"] = exp2
   end:
     .return (me)
@@ -182,13 +184,14 @@ hint, then we have have no firstchars either.
 
 .sub "firstchars" method
     .param pmc exp1            :optional
+    .param int has_exp1        :opt_flag
     .param pmc exp2            :optional
-    .param int argc            :opt_count
+    .param int has_exp2        :opt_flag
 
-    if argc < 1 goto exp_1
+    unless has_exp1 goto exp_1
     $S0 = exp1["firstchars"]
     unless $S0 > "" goto exp_1
-    if argc < 2 goto end
+    unless has_exp2 goto exp_1
     $S1 = exp2["firstchars"]
     unless $S1 > "" goto exp_1
     concat $S0, $S1
@@ -212,15 +215,16 @@ won't be a problem, but is the use of the start parameter thread-safe?
 
 .sub "serno" method
     .param string prefix       :optional
+    .param int has_prefix      :opt_flag
     .param int start           :optional
-    .param int argc            :opt_count
+    .param int has_start       :opt_flag
 
-    if argc > 0 goto serno_1
+    if has_prefix goto serno_1
     prefix = "R"
   serno_1:
     $P0 = find_global "PGE::Exp", "$_serno"
     inc $P0
-    if argc < 2 goto serno_2
+    unless has_start goto serno_2
     $P0 = start
   serno_2:
     $I0 = $P0
@@ -393,7 +397,7 @@ register.
     emit(code, ".sub _pge_rule")
     emit(code, "    .param pmc mob")
     emit(code, "    .param pmc pos :optional")
-    emit(code, "    .param int has_pos :opt_count")
+    emit(code, "    .param int has_pos :opt_flag")
     emit(code, "    .local pmc yield")
     emit(code, "    $I0 = isa mob, \"PGE::Match\"")
     emit(code, "    if $I0 goto init_pos")

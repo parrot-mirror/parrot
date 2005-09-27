@@ -54,7 +54,7 @@ This function returns nothing.
 .sub simple
     .param pmc array
     .param int start         :optional
-    .param int has_start     :opt_count
+    .param int has_start     :opt_flag
     .local int i
     .local int size
     .local pmc tmp

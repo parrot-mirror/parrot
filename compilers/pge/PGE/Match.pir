@@ -224,17 +224,20 @@ Produces a data dump of the match object and all of its subcaptures.
 
 .sub "dump" method
     .param string prefix       :optional           # name of match variable
+    .param int has_prefix      :opt_flag
     .param string b1           :optional           # bracket open
+    .param int has_b1          :opt_flag
     .param string b2           :optional           # bracket close
-    .param int argc            :opt_count
+    .param int has_b2          :opt_flag
+
     .local pmc capt
     .local int spi, spc
     .local pmc iter
     .local string prefix1, prefix2
 
-    if argc > 2 goto start
+    if has_b2 goto start
     b2 = "]"
-    if argc > 1 goto start
+    if has_b1 goto start
     b1 = "["
   start:
     print prefix

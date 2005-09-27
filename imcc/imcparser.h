@@ -49,7 +49,7 @@
      ADV_FLAT = 272,
      ADV_SLURPY = 273,
      ADV_OPTIONAL = 274,
-     ADV_OPT_COUNT = 275,
+     ADV_OPT_FLAG = 275,
      NEW = 276,
      NEWSUB = 277,
      NEWCLOSURE = 278,
@@ -168,7 +168,7 @@
 #define ADV_FLAT 272
 #define ADV_SLURPY 273
 #define ADV_OPTIONAL 274
-#define ADV_OPT_COUNT 275
+#define ADV_OPT_FLAG 275
 #define NEW 276
 #define NEWSUB 277
 #define NEWCLOSURE 278

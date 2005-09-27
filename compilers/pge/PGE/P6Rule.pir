@@ -866,8 +866,9 @@ needed).
 .sub "p6rule"
     .param string pattern                          # pattern to compile
     .param string grammar      :optional           # grammar to store in
+    .param int    has_gram     :opt_flag
     .param string name         :optional           # name of rule
-    .param int    opt_argc     :opt_count
+    .param int    has_name     :opt_flag
     .local pmc lex
     .local pmc exp
     .local pmc code
@@ -897,7 +898,7 @@ needed).
     compreg $P0, "PIR"
     $S0 = code
     rule = $P0($S0)
-    if opt_argc < 2 goto p6rule_3
+    unless has_name goto p6rule_3
     $I0 = findclass grammar
     if $I0 goto p6rule_2
     $P0 = getclass "PGE::Rule"
