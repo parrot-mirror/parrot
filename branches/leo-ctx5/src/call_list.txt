@@ -316,3 +316,6 @@ p       Jipp
 p       Jbip
 v       Jp
 v       JS
+
+# crypt
+t       tt
