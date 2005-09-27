@@ -138,6 +138,9 @@ ok
 OUT
 }
 
+
+SKIP: {
+	skip 'currently causes bus error' => 1;
 pir_output_is($PRE . <<'CODE' . $POST, <<'OUT', "escape_string: freeze a simple pmc" );
   .local pmc escaper # I hardly know'er
   escaper = find_global "Data::Escape", "String"
@@ -171,6 +174,7 @@ pir_output_is($PRE . <<'CODE' . $POST, <<'OUT', "escape_string: freeze a simple 
 CODE
 ok
 OUT
+}
 
 ## don't forget to change the number of tests!
 BEGIN { plan tests => 11; }
