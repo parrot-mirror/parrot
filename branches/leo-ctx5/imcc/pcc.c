@@ -93,8 +93,8 @@ pcc_get_args(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
         if (arg_flags[i] & VT_OPTIONAL) {
             flags |= PARROT_ARG_OPTIONAL;
         }
-        else if (arg_flags[i] & VT_OPT_COUNT) {
-            flags |= PARROT_ARG_OPT_COUNT;
+        else if (arg_flags[i] & VT_OPT_FLAG) {
+            flags |= PARROT_ARG_OPT_FLAG;
         }
         sprintf(s, "%d", flags);
         if (i < n - 1)

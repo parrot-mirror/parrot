@@ -26,7 +26,7 @@ enum VARTYPE {		/* variable type can be */
     VT_END_INF     = PF_VT_END_INF     ,   /* x..  start..inf */
     VT_SLICE_BITS  = PF_VT_SLICE_BITS,
     VT_ENCODED  = 1 << 16,       /* unicode string constant */
-    VT_OPT_COUNT = 1 << 17	/* var :opt_count */
+    VT_OPT_FLAG  = 1 << 17	/* var :opt_flag */
 };
 
 /* this VARTYPE needs register allocation and such */

@@ -518,10 +518,13 @@ again:
         if (st->src.i < st->src.n)
             ++st->opt_so_far;
     }
-    else if (st->dest.sig & PARROT_ARG_OPT_COUNT) {
+    else if (st->dest.sig & PARROT_ARG_OPT_FLAG) {
         if ((st->dest.sig & PARROT_ARG_TYPE_MASK) != PARROT_ARG_INTVAL)
             real_exception(interpreter, NULL, E_ValueError,
-                    ":opt_count is not an int");
+                    ":opt_flag is not an int");
+        if (st->opt_so_far > 1)
+            real_exception(interpreter, NULL, E_ValueError,
+                    ":opt_flag preceeded by more then one :optional");
         BP_REG_INT(st->dest.regs, *st->dest.u.op.pc) = st->opt_so_far;
         st->opt_so_far = 0;
         if (!next_arg(interpreter, &st->dest))

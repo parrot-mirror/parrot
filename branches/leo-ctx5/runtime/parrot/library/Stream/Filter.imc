@@ -47,7 +47,7 @@ Sets or returns the filter sub.
 
 .sub filter method
     .param pmc _filter :optional
-    .param int has_filter :opt_count
+    .param int has_filter :opt_flag
     .local pmc ret
 
     classoffset $I0, self, "Stream::Filter"

@@ -227,7 +227,7 @@ SP              [ ]
 ":flat"         return(ADV_FLAT);
 ":slurpy"       return(ADV_SLURPY);
 ":optional"     return(ADV_OPTIONAL);
-":opt_count"    return(ADV_OPT_COUNT);
+":opt_flag"     return(ADV_OPT_FLAG);
 
 ".class"        return(CLASS);
 ".endclass"     return(ENDCLASS);

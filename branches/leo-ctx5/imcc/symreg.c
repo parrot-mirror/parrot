@@ -183,7 +183,7 @@ add_pcc_arg(SymReg *r, SymReg * arg)
     r->pcc_sub->args[n] = arg;
     r->pcc_sub->arg_flags = realloc(r->pcc_sub->arg_flags, (n + 1) * sizeof(int));
     r->pcc_sub->arg_flags[n] = arg->type;
-    arg->type &= ~(VT_FLAT|VT_OPTIONAL|VT_OPT_COUNT );
+    arg->type &= ~(VT_FLAT|VT_OPTIONAL|VT_OPT_FLAG );
     r->pcc_sub->nargs++;
 }
 
@@ -204,7 +204,7 @@ add_pcc_result(SymReg *r, SymReg * arg)
      */
     r->pcc_sub->ret_flags = realloc(r->pcc_sub->ret_flags, (n + 1) * sizeof(int));
     r->pcc_sub->ret_flags[n] = arg->type;
-    arg->type &= ~(VT_FLAT|VT_OPTIONAL|VT_OPT_COUNT );
+    arg->type &= ~(VT_FLAT|VT_OPTIONAL|VT_OPT_FLAG );
     r->pcc_sub->nret++;
 }
 

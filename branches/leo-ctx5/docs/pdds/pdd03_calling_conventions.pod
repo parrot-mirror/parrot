@@ -123,13 +123,9 @@ C<set_args> and C<set_returns>:
                 Optional arguments are not considered in an
 		argument count mismatch.
 
-    0b1000000 OPT_COUNT
-                A INT argument with this bit set receives the count
-		of optional arguments found so far. The optional
-		argument count is reset then, so that another argument
-		with OPT_COUNT can be used to check for more optional
-		arguments.
-
+    0b1000000 OPT_FLAG
+                A INT argument with this bit set receives a bit 1/0,
+		if the preceeding I<OPTIONAL> was passed or not.
 
     0b000000000
             INVOCANT

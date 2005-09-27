@@ -351,7 +351,7 @@ Returns or sets the byte buffer.
 
 .sub byte_buffer method
     .param pmc buf :optional
-    .param int has_buf :opt_count
+    .param int has_buf :opt_flag
 
     classoffset $I0, self, "Stream::Base"
     add $I0, aBuffer

@@ -67,7 +67,7 @@
      ADV_FLAT = 272,
      ADV_SLURPY = 273,
      ADV_OPTIONAL = 274,
-     ADV_OPT_COUNT = 275,
+     ADV_OPT_FLAG = 275,
      NEW = 276,
      NEWSUB = 277,
      NEWCLOSURE = 278,
@@ -186,7 +186,7 @@
 #define ADV_FLAT 272
 #define ADV_SLURPY 273
 #define ADV_OPTIONAL 274
-#define ADV_OPT_COUNT 275
+#define ADV_OPT_FLAG 275
 #define NEW 276
 #define NEWSUB 277
 #define NEWCLOSURE 278
@@ -1003,9 +1003,9 @@ static const char *const yytname[] =
   "$end", "error", "$undefined", "LOW_PREC", "'\\n'", "PARAM", "PRAGMA", 
   "FASTCALL", "N_OPERATORS", "HLL", "CALL", "GOTO", "ARG", "IF", "UNLESS", 
   "END", "SAVEALL", "RESTOREALL", "ADV_FLAT", "ADV_SLURPY", 
-  "ADV_OPTIONAL", "ADV_OPT_COUNT", "NEW", "NEWSUB", "NEWCLOSURE", 
-  "NEWCOR", "NEWCONT", "NAMESPACE", "ENDNAMESPACE", "CLASS", "ENDCLASS", 
-  "FIELD", "DOT_METHOD", "SUB", "SYM", "LOCAL", "CONST", "INC", "DEC", 
+  "ADV_OPTIONAL", "ADV_OPT_FLAG", "NEW", "NEWSUB", "NEWCLOSURE", "NEWCOR", 
+  "NEWCONT", "NAMESPACE", "ENDNAMESPACE", "CLASS", "ENDCLASS", "FIELD", 
+  "DOT_METHOD", "SUB", "SYM", "LOCAL", "CONST", "INC", "DEC", 
   "GLOBAL_CONST", "PLUS_ASSIGN", "MINUS_ASSIGN", "MUL_ASSIGN", 
   "DIV_ASSIGN", "CONCAT_ASSIGN", "BAND_ASSIGN", "BOR_ASSIGN", 
   "BXOR_ASSIGN", "FDIV", "FDIV_ASSIGN", "MOD_ASSIGN", "SHR_ASSIGN", 
@@ -2641,7 +2641,7 @@ yyreduce:
 
   case 117:
 #line 790 "imcc/imcc.y"
-    {  yyval.t = VT_OPT_COUNT; }
+    {  yyval.t = VT_OPT_FLAG; }
     break;
 
   case 118:

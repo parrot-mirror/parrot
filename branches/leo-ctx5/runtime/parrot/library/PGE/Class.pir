@@ -71,7 +71,7 @@ where to start looking.
 .sub find_forward method
     .param string source
     .param int offset           :optional
-    .param int has_offset       :opt_count
+    .param int has_offset       :opt_flag
 
     if has_offset goto dontzero
     offset = 0
@@ -101,7 +101,7 @@ fail:
     .param string source
     .param int offset
     .param int offset           :optional
-    .param int has_offset       :opt_count
+    .param int has_offset       :opt_flag
 
     if has_offset goto dontzero
     offset = 0

@@ -39,7 +39,7 @@ loop:
 
 .pcc_sub i method
     .param pmc v     :optional
-    .param int has_v :opt_count
+    .param int has_v :opt_flag
     .local int ofs
     ofs = classoffset self, "Foo"
     .local pmc r
@@ -54,7 +54,7 @@ get:
 
 .pcc_sub j method
     .param pmc v     :optional
-    .param int has_v :opt_count
+    .param int has_v :opt_flag
     .local int ofs
     ofs = classoffset self, "Foo"
     inc ofs

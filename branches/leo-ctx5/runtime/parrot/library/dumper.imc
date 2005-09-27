@@ -75,9 +75,9 @@ B<Note: #2> Hash keys are now sorted using C<_sort()> (library/sort.imc)
 .sub _dumper
     .param pmc p
     .param string name    :optional
-    .param int has_name   :opt_count
+    .param int has_name   :opt_flag
     .param string ident   :optional
-    .param int has_ident  :opt_count
+    .param int has_ident  :opt_flag
     $P2 = _global_dumper()
     if has_ident goto w_ident
     unless has_name goto wo_name        # XXX argument order, opt 1st
