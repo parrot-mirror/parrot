@@ -1,0 +1,78 @@
+PERL = ${perl}
+RM_F = ${rm_f}
+LOAD_EXT = ${load_ext}
+DESTDIR = ${build_dir}${slash}runtime${slash}parrot${slash}dynext
+O = ${o}
+
+# add your dynamic pmcs here
+# gdbmhash is only built when 'libgdbm.so' is available
+PMCS = \
+#CONDITIONED_LINE(has_gdbm):gdbmhash \
+  match \
+  matchrange \
+  subproxy \
+  foo
+
+DISABLED_PMCS = \
+  pybuiltin \
+  pyclass \
+  pyobject \
+  pyboolean \
+  pycomplex \
+  pydict \
+  pyexception \
+  pyfloat \
+  pyfunc \
+  pyboundmeth \
+  pyboundcall \
+  pynci \
+  pystaticmeth \
+  pygen \
+  pyint \
+  pylist \
+  pylong \
+  pymodule \
+  pynone \
+  pytype \
+  pyslice \
+  pystring \
+  pytuple \
+  pyproxytype \
+  pyproxyclass \
+  pyiter
+
+BUILD = $(PERL) "${build_dir}${slash}build_tools${slash}build_dynclasses.pl"
+
+all :
+	@$(BUILD) generate $(PMCS)
+	@$(BUILD) compile $(PMCS)
+	@$(BUILD) linklibs $(PMCS)
+	@$(BUILD) copy "--destination=$(DESTDIR)" $(PMCS)
+
+test : all
+	cd .. ; perl -Ilib t/harness t/dynclass/*.t
+
+testclean :
+	$(RM_F) ../t/dynclass/*.pir ../t/dynclass/*.pbc
+
+dynext-clean :
+# win32 import library
+	$(RM_F) *.lib
+# win32 program data base - contains debugging info
+	$(RM_F) *.pdb
+# win32 incremental link status files
+	$(RM_F)	*.ilk
+# win32 exported functions and data items
+	$(RM_F) *.exp
+# win32 export definition files
+	$(RM_F) *.def
+
+clean : testclean dynext-clean
+	$(RM_F) *.c pmc_*.h *_group.h *$(LOAD_EXT) *.dump lib-* *$(O)
+
+realclean: clean
+	$(RM_F) Makefile build.pl
+
+distclean: realclean
+
+cvsclean: realclean
