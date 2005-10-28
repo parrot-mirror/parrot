@@ -1,5 +1,4 @@
 ./usr/bin/parrot
-./usr/parrot-config.imc	usr/bin/parrot-config.imc
 ./usr/runtime/parrot/library/SDL/App.imc	usr/lib/parrot/runtime/library/SDL/
 ./usr/runtime/parrot/library/SDL/Button.imc	usr/lib/parrot/runtime/library/SDL/
 ./usr/runtime/parrot/library/SDL/Color.imc	usr/lib/parrot/runtime/library/SDL/
