@@ -1,0 +1,114 @@
+=head1 contributing to tcl/parrot
+
+a brief overview on how to help out, if you're interested. In general, 
+it's ok to send patches for tcl to the RT system for anything that isn't
+"BIG STUFF" - those, please bounce off me first. I'd prefer C<diff -u>
+patches, but am happy to take complete files as well.
+
+Most of this is mentioned in the TODO - in fact, this document probably
+should merge with the TODO to avoid redundancy.
+
+=head1 BIG STUFF
+
+=over 4
+
+=item compiler bits
+
+Partcl is now a compiler. Given a section of tcl code, it generates PIR
+instead of an AST, then compiles and invokes the sub.
+
+When writing a new builtin, preferentially put it in
+C<< lib/builtins/<builtin>.pir >> , and write a wrapper in
+C<< lib/commands/<builtin>.pir >> which calls the inlined version.
+
+Inlined builtins must take a register num to begin with, along with a single
+PMC with the various args. (As opposed to the interpreted-style, which takes
+a vararg list.). They must return the register in which the result of the
+command is stored, along with the generated PIR. The results of calling
+the inlined code will be used by C<lib/tclcommand.pir>. The inlined code
+is further wrapped in a protective conditional which will (eventually) skip
+the inlined version if it can no longer be trusted, and will fall back to
+the interpreted version as necessary. (And throw an exception if the command
+is not found at runtime.)
+
+=item speed
+
+We're currently quite slow, compared to tclsh. Switching over to a compiler
+instead of an interpreter might help here, though I'm having a hard time
+envisioning a compiler that doesn't have to do all the things we already do
+as an interpreter. 
+
+We could rewrite parse/interpret/compile in C, either as an NCI or behind
+a PMC object - this would I<possibly> give us an improvement in speed also.
+
+=item features
+
+We're currently missing some things that require support from parrot
+before we can continue, like [info nameofexecutable]. In general, though,
+a lot of what we need to do is possible with parrot.
+
+If you're looking for something to todo, check one of: TODO tests in 
+C<t/>; RT
+https://rt.perl.org/rt3/NoAuth/parrot/List.html?Field=Lang&Value=tcl
+or by their absence: every actual builtin at 
+http://www.tcl.tk/man/tcl8.5/TclCmd/contents.htm
+should have a corresponding file in C<lib/commands/>
+
+=back
+
+=head1 DOCUMENTATION
+
+=over 4
+
+=item pod
+
+Every PIR .sub that's defined should probably have some POD to go along
+with it to document the arguments and return values. Only exceptions to
+this should be subs which correspond directly to Tcl builtins -- those
+are already documented elsewhere.
+
+=item big picture docs.
+
+Are the docs in C<docs/> useful? Could use someone to proof them, and
+verify that there are no missing chunks (if missing, write them, or 
+get them added to the C<TODO>), and that they are coherent.
+
+=back
+
+=head1 PIR
+
+=over 4
+
+=item Missing Commands
+
+Every builtin command corresponds to a file with an appropriately named
+sub in C<lib/commands> - Each of these subs takes some number of PMCs
+as arguments. For those commands that take a fixed number of parameters,
+we declare them with C<.param>. For those that take a variable number,
+we use the C<foldup> opcode.
+
+If the return value would be TCL_OK, then simply C<.return> the value
+from the sub. For any other return type, use one of the macros in 
+C<lib/returncodes.pir>: C<.throw>, etc. the value can be any simple
+register or a PMC, the calling conventions will autobox as necessary.
+
+Before adding new functionality, add a test (or a test in an existing) file 
+in C<t/> - tests for C<puts>, for example,
+go in C<t/cmd_puts.t> - we use the C<Test::Harness> framework, via 
+C<Parrot::Test>. 
+
+Our final goal will be to pass (most of) the tcl test suite: run 
+C<make tcl-test> to checkout the latest version of of the tcl test suite
+and run it. Warning: slow...
+
+Long term goal is remove any tests in C<t/> that are testing things
+that are already tested in the official tcl suite.
+Partcl's checked in test suite should just
+be checking partcl-specific functionaliity.
+
+=back
+
+
+
+=cut
+
