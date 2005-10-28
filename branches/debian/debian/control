@@ -11,29 +11,29 @@ Depends: ${shlibs:Depends}
 Suggests: parrot-doc
 Recommends: perl
 Description: virtual machine to execute bytecode for interpreted languages
-  Parrot is a virtual machine designed to execute bytecode for interpreted
-  languages efficiently. Parrot will be the target for the Perl 6 compiler.
-  There is already a partial Perl 6 compiler as well as compilers in various
-  stages of completion for a wide range of other languages.
+ Parrot is a virtual machine designed to execute bytecode for interpreted
+ languages efficiently. Parrot will be the target for the Perl 6 compiler.
+ There is already a partial Perl 6 compiler as well as compilers in various
+ stages of completion for a wide range of other languages.
 
 Package: parrot-dev
 Architecture: all
 Depends: parrot (= ${Source-Version})
 Description: virtual machine to execute bytecode for interpreted languages
-  Parrot is a virtual machine designed to execute bytecode for interpreted
-  languages efficiently. Parrot will be the target for the Perl 6 compiler.
-  There is already a partial Perl 6 compiler as well as compilers in various
-  stages of completion for a wide range of other languages.
-  .
-  This package contains files needed to compile software against parrot.
+ Parrot is a virtual machine designed to execute bytecode for interpreted
+ languages efficiently. Parrot will be the target for the Perl 6 compiler.
+ There is already a partial Perl 6 compiler as well as compilers in various
+ stages of completion for a wide range of other languages.
+ .
+ This package contains files needed to compile software against parrot.
 
 Package: parrot-doc
 Architecture: all
 Depends: 
 Description: virtual machine to execute bytecode for interpreted languages
-  Parrot is a virtual machine designed to execute bytecode for interpreted
-  languages efficiently. Parrot will be the target for the Perl 6 compiler.
-  There is already a partial Perl 6 compiler as well as compilers in various
-  stages of completion for a wide range of other languages.
-  .
-  This package contains various documentation for parrot.
+ Parrot is a virtual machine designed to execute bytecode for interpreted
+ languages efficiently. Parrot will be the target for the Perl 6 compiler.
+ There is already a partial Perl 6 compiler as well as compilers in various
+ stages of completion for a wide range of other languages.
+ .
+ This package contains various documentation for parrot.
