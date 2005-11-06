@@ -1,0 +1,70 @@
+=head1 Deprecated opcodes
+
+=over 4
+
+All are gone. Please read the history of this file for more.
+
+=back
+
+=head1 Deprecated APIs
+
+=over 4
+
+All Parrot_char_is_* functions from src/string_primitives.c will
+be removed. Please use Parrot_string_is_cclass() instead.
+
+=back
+
+=head1 Deprecated methods
+
+=over 4
+
+=item Sub.get_name_space()
+
+The Sub PMC method get_name_space is being replaced with get_namespace to
+reflect the internal change from name_space to the one-word namespace.
+
+=back
+
+=head1 FUTURE changes
+
+Not yet deprecated, but it's recommended to use the new syxtax and
+gradually change the old.
+
+=over
+
+=item Chip's colon
+
+Subroutine attributes will use the colon syntax:
+
+  .sub foo method, @MULTI(x,y)    => .sub foo :method :multi(x,y)
+  .sub foo @ANON, @LOAD           => .sub foo :anon :load
+
+The new syntax uses no comma separators and all sub attributes are lower
+case and prefixed by a colon.
+
+=item Class name IDs
+
+... will require a dot in front
+
+  $P0 = new Integer               => $P0 = new .Integer
+
+=item Assignment syntax with opcodes [#36283]
+
+When the first argument of an opcode is C<OUT>, then the assignment syntax
+will be allowed, as it is today.
+
+In any other case (i.e. C<INOUT>, C<IN>), this will become
+a syntax error. For example:
+
+	$S0 = print
+	$P0 = substr 1, 2, "x"
+
+Will have to be:
+
+	print $S0
+	substr $P0, 1, 2, "x"
+
+
+
+=back
