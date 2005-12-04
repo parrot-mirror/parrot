@@ -1,0 +1,8 @@
+use sys;
+
+var pmc foo, bar;
+bar = new PerlUndef;
+foo = new PerlString;
+foo = "Hello, world!\n";
+sys::print(foo);
+
