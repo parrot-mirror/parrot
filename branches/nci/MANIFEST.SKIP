@@ -867,8 +867,8 @@
 ^src/install_config\.c/
 ^src/jit_cpu\.c$
 ^src/jit_cpu\.c/
-^src/nci\.c$
-^src/nci\.c/
+^src/nci_builtin\.c$
+^src/nci_builtin\.c/
 ^src/null_config\.c$
 ^src/null_config\.c/
 ^src/platform\.c$
