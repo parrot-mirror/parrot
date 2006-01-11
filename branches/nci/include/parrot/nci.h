@@ -14,8 +14,29 @@
 #define PARROT_NCI_H_GUARD
 
 #include "parrot/parrot.h"
+#include "parrot/method_util.h"
 
-void *build_call_func(Interp *, PMC *, String *);
+typedef void* (*nci_new_method_t)(Interp* interpreter, 
+                                  PMC* pmc, STRING* signature);
+typedef void* (*nci_clone_method_t)(void *context);
+typedef void  (*nci_invoke_method_t)(Interp* interpreter,
+                                     Parrot_csub_t func,
+                                     PMC* pmc);
+typedef void  (*nci_free_method_t)(void * context);
+
+
+struct nci_vtable {
+
+    // Used to initialise a new NCI PMC
+    nci_new_method_t    nci_new;
+    // Used to clone an NCI PMC
+    nci_clone_method_t  nci_clone;
+    // Used to invoke the NCI call
+    nci_invoke_method_t nci_invoke;
+    // Cleans up the NCI data structures
+    nci_free_method_t   nci_free;
+
+};
 
 #endif /* PARROT_NCI_H_GUARD */
 

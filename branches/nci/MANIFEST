@@ -1778,6 +1778,7 @@ src/method_util.c                                 []
 src/misc.c                                        []
 src/mmd.c                                         []
 src/nci_builtin_sigs.txt                          [devel]doc
+src/nci_ffcall.c                                  []
 src/nci_test.c                                    []
 src/objects.c                                     []
 src/ops/bit.ops                                   []
