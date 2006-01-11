@@ -449,7 +449,7 @@ sub full_arguments {
 =item C<proto($type,$parameters)>
 
 Determines the prototype (argument signature) for a method body
-(see F<src/call_list>).
+(see F<src/nci_builtin_sigs.txt>).
 
 =cut
 
@@ -487,7 +487,7 @@ sub proto ($$) {
     $ret .= "JO";
     $ret .= join('', map {$calltype{$_} or "?"} split(/,/, $parameters));
     # TODO
-    # scan src/call_list.txt if the generated signature is available
+    # scan src/nci_builtin_sigs.txt if the generated signature is available
     # TODO report errors for "?"
     # --leo
 

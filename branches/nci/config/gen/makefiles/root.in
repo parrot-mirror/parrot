@@ -1073,8 +1073,8 @@ $(SRC_DIR)/vtables$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/vtables.c
 
 $(SRC_DIR)/cpu_dep$(O) : $(GENERAL_H_FILES)
 
-$(SRC_DIR)/nci_builtin.c : $(SRC_DIR)/call_list.txt $(BUILD_TOOLS_DIR)/nativecall.pl
-	$(PERL) $(BUILD_TOOLS_DIR)/nativecall.pl $(SRC_DIR)/call_list.txt
+$(SRC_DIR)/nci_builtin.c : $(SRC_DIR)/nci_builtin_sigs.txt $(BUILD_TOOLS_DIR)/nativecall.pl
+	$(PERL) $(BUILD_TOOLS_DIR)/nativecall.pl $(SRC_DIR)/nci_builtin_sigs.txt
 
 $(SRC_DIR)/warnings$(O) : $(GENERAL_H_FILES)
 

@@ -53,7 +53,7 @@ typedef struct {
 /* Function declarations.
 
 *** If you add a new test function here,
-*** please update src/libnci_test.def and src/call_list.txt too. ***
+*** please update src/libnci_test.def and src/nci_builtin_sigs.txt too. ***
 
 */
 
