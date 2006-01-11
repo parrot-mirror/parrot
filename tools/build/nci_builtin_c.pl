@@ -581,9 +581,9 @@ sub print_tail {
 /* This function serves a single purpose. It takes the function
    signature for a C function we want to call and returns a pointer
    to a function that can call it. */
-void *
-build_call_func(Interp *interpreter, PMC *pmc_nci,
-                STRING *signature)
+static void *
+nci_builtin_new (Interp *interpreter, PMC *pmc_nci,
+		 STRING *signature)
 {
     char       *c;
     STRING     *ns, *message;
@@ -615,7 +615,7 @@ build_call_func(Interp *interpreter, PMC *pmc_nci,
     iglobals = interpreter->iglobals;
 
     if (PMC_IS_NULL(iglobals))
-	PANIC("iglobals isnÄt created yet");
+	PANIC("iglobals isn't created yet");
     HashPointer = VTABLE_get_pmc_keyed_int(interpreter, iglobals,
             IGLOBALS_NCI_FUNCS);
 
@@ -656,6 +656,40 @@ $put_pointer
     PANIC(c);
     return NULL;
 }
+
+
+static void* nci_builtin_clone (void* context)
+{
+    return context;
+}
+
+
+static void nci_builtin_invoke (Interp *interpreter,
+				Parrot_csub_t func,
+				PMC * pmc)
+{
+    func (interpreter, pmc);
+}
+
+
+static void nci_builtin_free (void * context)
+{
+#if 0
+    /* Doesn't actually look like this memory needs to be freed */
+    if (context)
+	mem_free_executable(context);
+#endif
+}
+
+
+struct nci_vtable nci_builtin_vtable =
+{
+    nci_builtin_new,
+    nci_builtin_clone,
+    nci_builtin_invoke,
+    nci_builtin_free
+};
+
 
 TAIL
 }
