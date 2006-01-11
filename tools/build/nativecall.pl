@@ -8,7 +8,7 @@ tools/build/nativecall.pl - Build up the native call routines
 
 =head1 SYNOPSIS
 
-	% perl tools/build/nativecall.pl src/call_list.txt
+	% perl tools/build/nativecall.pl src/nci_builtin_sigs.txt
 
 =head1 DESCRIPTION
 
@@ -18,11 +18,11 @@ parses a file of function signatures of the form:
     <return-type-specifier><whitespace><parameter-type-specifiers>[<whitespace>][#<comment>]
     ...
 Empty lines and lines containing only whitespace or comment are ignored.
-The types specifiers are documented in F<src/call_list.txt>.
+The types specifiers are documented in F<src/nci_builtin_sigs.txt>.
 
 =head1 SEE ALSO
 
-F<src/call_list.txt>.
+F<src/nci_builtin_sigs.txt>.
 F<docs/pdds/pdd16_native_call.pod>.
 
 =cut
@@ -644,7 +644,7 @@ $put_pointer
 #if defined(CAN_BUILD_CALL_FRAMES)
     ns = string_make(interpreter, ".\\nCAN_BUILD_CALL_FRAMES is enabled, this should not happen", 58, "ascii", 0);
 #else
-    ns = string_make(interpreter, ".\\nCAN_BUILD_CALL_FRAMES is disabled, add the signature to src/call_list.txt", 75, "ascii", 0);
+    ns = string_make(interpreter, ".\\nCAN_BUILD_CALL_FRAMES is disabled, add the signature to src/nci_builtin_sigs.txt", 75, "ascii", 0);
 #endif
     message = string_concat(interpreter, message, ns, 0);
 
