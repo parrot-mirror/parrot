@@ -16,13 +16,11 @@
 #include "parrot/parrot.h"
 #include "parrot/method_util.h"
 
-typedef void* (*nci_new_method_t)(Interp* interpreter, 
-                                  PMC* pmc, STRING* signature);
-typedef void* (*nci_clone_method_t)(void *context);
-typedef void  (*nci_invoke_method_t)(Interp* interpreter,
-                                     Parrot_csub_t func,
-                                     PMC* pmc);
-typedef void  (*nci_free_method_t)(void * context);
+typedef void (*nci_new_method_t)(Interp* interpreter, PMC* pmc,
+                                 STRING* signature, Parrot_csub_t func);
+typedef void (*nci_clone_method_t)(Interp* interpreter,  PMC* pmc1, PMC* pmc2);
+typedef void (*nci_invoke_method_t)(Interp* interpreter, PMC* pmc);
+typedef void (*nci_free_method_t)(Interp* interpreter, PMC *pmc);
 
 
 struct nci_vtable {

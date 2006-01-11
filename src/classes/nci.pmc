@@ -26,8 +26,8 @@ The caller has to preserve registers if needed.
 #include "parrot/method_util.h"
 
 
-extern struct nci_vtable nci_builtin_vtable;
-struct nci_vtable *nci_vtable_ptr = &nci_builtin_vtable;
+extern struct nci_vtable nci_builtin_vtable, nci_ffcall_vtable;
+struct nci_vtable *nci_vtable_ptr = &nci_ffcall_vtable;
 
 pmclass NCI need_ext {
 
@@ -58,11 +58,10 @@ Sets the specified function pointer and signature (C<*key>).
 
     void set_pointer_keyed_str(STRING *key, void *func) {
         /* key = signature */
-        PMC_struct_val(SELF) = func;
 
-	nci_vtable_ptr->nci_free (PMC_data(SELF));
+	nci_vtable_ptr->nci_free (INTERP, SELF);
 
-        PMC_data(SELF) = nci_vtable_ptr->nci_new (INTERP, SELF, key);
+        nci_vtable_ptr->nci_new (INTERP, SELF, key, func);
     }
 
 /*
@@ -76,7 +75,7 @@ Destroys the NCI, freeing any allocated memory.
 */
 
     void destroy() {
-      nci_vtable_ptr->nci_free (PMC_data(SELF));
+      nci_vtable_ptr->nci_free (INTERP, SELF);
     }
 
 /*
@@ -91,14 +90,9 @@ Creates and returns a clone of the NCI.
 
     PMC* clone () {
         PMC* ret = pmc_new_noinit(INTERP, SELF->vtable->base_type);
-        PMC_struct_val(ret) = PMC_struct_val(SELF);
-        PMC_pmc_val(ret) = NULL;
-        /* FIXME if data is malloced (JIT/i386!) then we need
-         * the length of data here, to memcpy it
-         * ManagedStruct or Buffer?
-         */
-        PMC_data(ret) = nci_vtable_ptr->nci_clone (PMC_data(SELF));
+        nci_vtable_ptr->nci_clone (INTERP, ret, SELF);        
         PObj_get_FLAGS(ret) |= (PObj_get_FLAGS(SELF) & 0x3);
+
         return ret;
     }
 
@@ -113,7 +107,7 @@ Returns whether the NCI is defined.
 */
 
     INTVAL defined () {
-        return PMC_data(SELF) != NULL;
+        return PMC_struct_val(SELF) != NULL;
     }
 
 /*
@@ -129,13 +123,9 @@ shifted down.
 */
 
     void* invoke (void * next) {
-        Parrot_csub_t func = (Parrot_csub_t)D2FPTR(PMC_data(SELF));
 
         INTERP->current_cont = NULL;
 
-        if (!func)
-            real_exception(INTERP, NULL, INVALID_OPERATION,
-                "attempt to call NULL function");
         /*
          * If the invocant is a class or there is no invocant
          * shift down arguments.
@@ -148,7 +138,7 @@ shifted down.
          *
          */
 
-        nci_vtable_ptr->nci_invoke (INTERP, func, SELF);
+        nci_vtable_ptr->nci_invoke (INTERP, SELF);
 
         return next;
     }

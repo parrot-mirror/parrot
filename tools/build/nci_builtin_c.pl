@@ -581,9 +581,9 @@ sub print_tail {
 /* This function serves a single purpose. It takes the function
    signature for a C function we want to call and returns a pointer
    to a function that can call it. */
-static void *
-nci_builtin_new (Interp *interpreter, PMC *pmc_nci,
-		 STRING *signature)
+static void
+nci_builtin_new (Interp *interpreter, PMC *pmc,
+		 STRING *signature, Parrot_csub_t func)
 {
     char       *c;
     STRING     *ns, *message;
@@ -595,22 +595,31 @@ nci_builtin_new (Interp *interpreter, PMC *pmc_nci,
     Hash       *known_frames  = NULL;
     PMC        *HashPointer   = NULL;
 
+    PMC_struct_val(pmc) = func;
+
 #if defined(CAN_BUILD_CALL_FRAMES)
 
     /* Try if JIT code can build that signature,
      * if yes, we are done
      */
 
-     result = Parrot_jit_build_call_func(interpreter, pmc_nci, signature);
+     result = Parrot_jit_build_call_func(interpreter, pmc, signature);
 
 #endif
     if (result)
-        return result;
+    {
+	PMC_data(pmc) = result;
+        return;
+    }
 
     /* And in here is the platform-independent way. Which is to say
        "here there be hacks" */
-    UNUSED(pmc_nci);
-    if (0 == string_length(interpreter, signature)) return F2DPTR(pcf_v_v);
+    UNUSED(pmc);
+    if (0 == string_length(interpreter, signature))
+    {
+	PMC_data(pmc) = F2DPTR(pcf_v_v);
+	return;
+    }
 
     iglobals = interpreter->iglobals;
 
@@ -631,7 +640,10 @@ $put_pointer
     b = VTABLE_get_pmc_keyed_str(interpreter, HashPointer, signature);
 
     if (b && b->vtable->base_type == enum_class_UnManagedStruct)
-        return F2DPTR(PMC_data(b));
+    {
+        PMC_data(pmc) = F2DPTR(PMC_data(b));
+	return;
+    }
 
     /*
       These three lines have been added to aid debugging. I want to be able to
@@ -654,31 +666,39 @@ $put_pointer
      */
     c = string_to_cstring(interpreter, message);
     PANIC(c);
-    return NULL;
+    PMC_data(pmc) = NULL;
+    return;
 }
 
 
-static void* nci_builtin_clone (void* context)
+static void nci_builtin_clone (Interp* interpreter, PMC* pmc1, PMC* pmc2)
 {
-    return context;
+    PMC_struct_val(pmc1) = PMC_struct_val(pmc2);
+    PMC_pmc_val(pmc1) = NULL;
+    /* FIXME if data is malloced (JIT/i386!) then we need
+     * the length of data here, to memcpy it
+     * ManagedStruct or Buffer?
+     */
+    PMC_data(pmc1) = PMC_data(pmc2);
 }
 
 
 static void nci_builtin_invoke (Interp *interpreter,
-				Parrot_csub_t func,
 				PMC * pmc)
 {
+    Parrot_csub_t func = (Parrot_csub_t)D2FPTR(PMC_data(pmc));
+
+    if (!func)
+	real_exception(interpreter, NULL, INVALID_OPERATION,
+		       "attempt to call NULL function");
+
     func (interpreter, pmc);
 }
 
 
-static void nci_builtin_free (void * context)
+static void nci_builtin_free (Interp *interpreter, PMC *pmc)
 {
-#if 0
     /* Doesn't actually look like this memory needs to be freed */
-    if (context)
-	mem_free_executable(context);
-#endif
 }
 
 
