@@ -418,6 +418,7 @@ INTERP_O_FILES = \
 	$(SRC_DIR)/spf_vtable$(O) \
 	$(SRC_DIR)/datatypes$(O) \
 	$(SRC_DIR)/fingerprint$(O) \
+	$(SRC_DIR)/nci$(O) \
 	$(SRC_DIR)/nci_builtin$(O) \
 	$(SRC_DIR)/nci_ffcall$(O) \
 	$(SRC_DIR)/cpu_dep$(O) \
@@ -1068,6 +1069,8 @@ $(SRC_DIR)/embed$(O) : $(GENERAL_H_FILES) $(INC_DIR)/debug.h
 $(SRC_DIR)/dataypes$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/dataypes.c
 
 $(SRC_DIR)/exit$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/exit.c
+
+$(SRC_DIR)/nci$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/nci.c
 
 $(SRC_DIR)/nci_builtin$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/nci_builtin.c
 
