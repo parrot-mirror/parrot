@@ -1777,6 +1777,7 @@ src/memory.c                                      []
 src/method_util.c                                 []
 src/misc.c                                        []
 src/mmd.c                                         []
+src/nci.c                                         []
 src/nci_builtin_sigs.txt                          [devel]doc
 src/nci_ffcall.c                                  []
 src/nci_test.c                                    []

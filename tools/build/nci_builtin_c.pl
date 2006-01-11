@@ -112,24 +112,24 @@ my %ret_type_decl =
      );
 
 my %ret_assign =
-     ( p => "PMC_data(final_destination) = return_data;\n    set_nci_P(interpreter, &st, final_destination);",
-       i => "set_nci_I(interpreter, &st, return_data);",
-       I => "set_nci_I(interpreter, &st, return_data);",
-       l => "set_nci_I(interpreter, &st, return_data);",
-       s => "set_nci_I(interpreter, &st, return_data);",
-       c => "set_nci_I(interpreter, &st, return_data);",
-       4 => "set_nci_I(interpreter, &st, *return_data);",
-       3 => "set_nci_I(interpreter, &st, *return_data);",
-       2 => "set_nci_I(interpreter, &st, *return_data);",
-       f => "set_nci_N(interpreter, &st, return_data);",
-       d => "set_nci_N(interpreter, &st, return_data);",
-       N => "set_nci_N(interpreter, &st, return_data);",
-       P => "set_nci_P(interpreter, &st, return_data);",
-       S => "set_nci_S(interpreter, &st, return_data);",
+     ( p => "PMC_data(final_destination) = return_data;\n    Parrot_set_nci_P(interpreter, &st, final_destination);",
+       i => "Parrot_set_nci_I(interpreter, &st, return_data);",
+       I => "Parrot_set_nci_I(interpreter, &st, return_data);",
+       l => "Parrot_set_nci_I(interpreter, &st, return_data);",
+       s => "Parrot_set_nci_I(interpreter, &st, return_data);",
+       c => "Parrot_set_nci_I(interpreter, &st, return_data);",
+       4 => "Parrot_set_nci_I(interpreter, &st, *return_data);",
+       3 => "Parrot_set_nci_I(interpreter, &st, *return_data);",
+       2 => "Parrot_set_nci_I(interpreter, &st, *return_data);",
+       f => "Parrot_set_nci_N(interpreter, &st, return_data);",
+       d => "Parrot_set_nci_N(interpreter, &st, return_data);",
+       N => "Parrot_set_nci_N(interpreter, &st, return_data);",
+       P => "Parrot_set_nci_P(interpreter, &st, return_data);",
+       S => "Parrot_set_nci_S(interpreter, &st, return_data);",
        v => "",
-       t => "final_destination = string_from_cstring(interpreter, return_data, 0);\n    set_nci_S(interpreter, &st, final_destination);",
-#      b => "PObj_bufstart(final_destination) = return_data;\n    set_nci_S(interpreter, &st, final_destination);",
-#      B => "PObj_bufstart(final_destination) = *return_data;\n    set_nci_S(interpreter, &st, final_destination);",
+       t => "final_destination = string_from_cstring(interpreter, return_data, 0);\n    Parrot_set_nci_S(interpreter, &st, final_destination);",
+#      b => "PObj_bufstart(final_destination) = return_data;\n    Parrot_set_nci_S(interpreter, &st, final_destination);",
+#      B => "PObj_bufstart(final_destination) = *return_data;\n    Parrot_set_nci_S(interpreter, &st, final_destination);",
      );
 
 my %func_call_assign =
@@ -258,95 +258,6 @@ sub print_head {
 #  include "parrot/jit.h"
 /*#  define CAN_BUILD_CALL_FRAMES*/
 #endif
-
-/*
- * helper funcs - get argument n
- */
-static INTVAL
-get_nci_I(Interp *interpreter, struct call_state *st, int n)
-{
-    assert(n < st->src.n);
-    Parrot_fetch_arg_nci(interpreter, st);
-
-    return UVal_int(st->val);
-}
-
-static FLOATVAL
-get_nci_N(Interp *interpreter, struct call_state *st, int n)
-{
-    assert(n < st->src.n);
-    Parrot_fetch_arg_nci(interpreter, st);
-
-    return UVal_num(st->val);
-}
-
-static STRING*
-get_nci_S(Interp *interpreter, struct call_state *st, int n)
-{
-    assert(n < st->src.n);
-    Parrot_fetch_arg_nci(interpreter, st);
-
-    return UVal_str(st->val);
-}
-
-static PMC*
-get_nci_P(Interp *interpreter, struct call_state *st, int n)
-{
-    /*
-     * exessive args are passed as NULL
-     * used by e.g. MMD infix like __add
-     */
-    if (n < st->src.n)
-        Parrot_fetch_arg_nci(interpreter, st);
-    else
-        UVal_pmc(st->val) = NULL;
-
-    return UVal_pmc(st->val);
-}
-
-#define GET_NCI_I(n) get_nci_I(interpreter, &st, n)
-#define GET_NCI_S(n) get_nci_S(interpreter, &st, n)
-#define GET_NCI_N(n) get_nci_N(interpreter, &st, n)
-#define GET_NCI_P(n) get_nci_P(interpreter, &st, n)
-
-/*
- * set return value
- */
-static void
-set_nci_I(Interp *interpreter, struct call_state *st, INTVAL val)
-{
-    Parrot_init_ret_nci(interpreter, st, "I");
-    UVal_int(st->val) = val;
-    Parrot_convert_arg(interpreter, st);
-    Parrot_store_arg(interpreter, st);
-}
-
-static void
-set_nci_N(Interp *interpreter, struct call_state *st, FLOATVAL val)
-{
-    Parrot_init_ret_nci(interpreter, st, "N");
-    UVal_num(st->val) = val;
-    Parrot_convert_arg(interpreter, st);
-    Parrot_store_arg(interpreter, st);
-}
-
-static void
-set_nci_S(Interp *interpreter, struct call_state *st, STRING *val)
-{
-    Parrot_init_ret_nci(interpreter, st, "S");
-    UVal_str(st->val) = val;
-    Parrot_convert_arg(interpreter, st);
-    Parrot_store_arg(interpreter, st);
-}
-
-static void
-set_nci_P(Interp *interpreter, struct call_state *st, PMC* val)
-{
-    Parrot_init_ret_nci(interpreter, st, "P");
-    UVal_pmc(st->val) = val;
-    Parrot_convert_arg(interpreter, st);
-    Parrot_store_arg(interpreter, st);
-}
 
 /* All our static functions that call in various ways. Yes, terribly
    hackish, but that is just fine */

@@ -75,150 +75,10 @@ typedef struct NCIArgs
 } NCIArgs;
 
 
-/* Convenience routines for fetching values */
-
-static INTVAL
-get_nci_I(Interp *interpreter, struct call_state *st, int n)
-{
-    assert(n < st->src.n);
-    Parrot_fetch_arg_nci(interpreter, st);
-    
-    return UVal_int(st->val);
-}
-
-static FLOATVAL
-get_nci_N(Interp *interpreter, struct call_state *st, int n)
-{
-    assert(n < st->src.n);
-    Parrot_fetch_arg_nci(interpreter, st);
-
-    return UVal_num(st->val);
-}
-
-static STRING*
-get_nci_S(Interp *interpreter, struct call_state *st, int n)
-{
-    assert(n < st->src.n);
-    Parrot_fetch_arg_nci(interpreter, st);
-
-    return UVal_str(st->val);
-}
-
-static PMC*
-get_nci_P(Interp *interpreter, struct call_state *st, int n)
-{
-    /*
-     * exessive args are passed as NULL
-     * used by e.g. MMD infix like __add
-     */
-    if (n < st->src.n)
-        Parrot_fetch_arg_nci(interpreter, st);
-    else
-        UVal_pmc(st->val) = NULL;
-
-    return UVal_pmc(st->val);
-}
-
-#define GET_NCI_I(n) get_nci_I(interpreter, &st, n)
-#define GET_NCI_S(n) get_nci_S(interpreter, &st, n)
-#define GET_NCI_N(n) get_nci_N(interpreter, &st, n)
-#define GET_NCI_P(n) get_nci_P(interpreter, &st, n)
-
-
-/* Convenience routines for setting values */
-
-static void
-set_nci_I(Interp *interpreter, struct call_state *st, INTVAL val)
-{
-    Parrot_init_ret_nci(interpreter, st, "I");
-    UVal_int(st->val) = val;
-    Parrot_convert_arg(interpreter, st);
-    Parrot_store_arg(interpreter, st);
-}
-
-static void
-set_nci_N(Interp *interpreter, struct call_state *st, FLOATVAL val)
-{
-    Parrot_init_ret_nci(interpreter, st, "N");
-    UVal_num(st->val) = val;
-    Parrot_convert_arg(interpreter, st);
-    Parrot_store_arg(interpreter, st);
-}
-
-static void
-set_nci_S(Interp *interpreter, struct call_state *st, STRING *val)
-{
-    Parrot_init_ret_nci(interpreter, st, "S");
-    UVal_str(st->val) = val;
-    Parrot_convert_arg(interpreter, st);
-    Parrot_store_arg(interpreter, st);
-}
-
-static void
-set_nci_P(Interp *interpreter, struct call_state *st, PMC* val)
-{
-    Parrot_init_ret_nci(interpreter, st, "P");
-    UVal_pmc(st->val) = val;
-    Parrot_convert_arg(interpreter, st);
-    Parrot_store_arg(interpreter, st);
-}
-
-
-/* Convert NCI signatures to parrot ones */
-
-static char *convert_signature (const char *signature)
-{
-    int i, length = strlen (signature);
-
-    char *signature_parrot = (char *) malloc (length);
-
-    for (i = 0 ; i < length+1 ; i++)
-        {
-            char map = '\0';
-
-            switch (signature[i])
-                {
-                case 'p': map = 'P'; break;
-                case 'i': map = 'I'; break;
-                case '3': map = 'P'; break;
-                case '2': map = 'P'; break;
-                case '4': map = 'P'; break;
-                case 'l': map = 'I'; break;
-                case 'c': map = 'I'; break;
-                case 's': map = 'I'; break;
-                case 'f': map = 'N'; break;
-                case 'd': map = 'N'; break;
-                case 'b': map = 'S'; break;
-                case 't': map = 'S'; break;
-                case 'P': map = 'P'; break;
-                case '0': map = 'P'; break;
-                case 'S': map = 'S'; break;
-                case 'I': map = 'I'; break;
-                case 'N': map = 'N'; break;
-                case 'B': map = 'S'; break;
-                case 'v': map = 'v'; break;
-                case 'J': map = ' '; break;
-
-                }
-
-            signature_parrot[i] = map;
-        }
-
-
-#if 0
-    printf ("Map '%s' to '%s'\n", 
-            signature, 
-            signature_parrot); 
-#endif
-
-    return signature_parrot;
-}
-
-
 /* =========== Main NCI call code =========== */
 
 
-extern void nci_ffcall_invoke (Interp * interpreter, PMC *function);
+static void nci_ffcall_invoke (Interp * interpreter, PMC *function);
 
 static void
 nci_ffcall_new (Interp *interpreter, PMC *pmc,
@@ -228,7 +88,7 @@ nci_ffcall_new (Interp *interpreter, PMC *pmc,
 
     nci_args->func = func;
     nci_args->signature = string_to_cstring (interpreter, signature);
-    nci_args->signature_parrot = convert_signature (nci_args->signature);
+    nci_args->signature_parrot= Parrot_convert_signature (nci_args->signature);
 
     PMC_data(pmc) = nci_args;
 
@@ -275,7 +135,7 @@ static void nci_ffcall_invoke (Interp *interpreter, PMC * pmc)
     NCIArgs* nci_args = (NCIArgs *) PMC_data(pmc);
 
     signature = nci_args->signature;
-    pointer = nci_args->func;
+    pointer = (__VA_function) nci_args->func;
 
     /* Set up return type for function */
     switch (signature[0])
@@ -435,10 +295,10 @@ static void nci_ffcall_invoke (Interp *interpreter, PMC * pmc)
 
         }
 
-    // Make the actual call to C function
+    /* Make the actual call to C function */
     av_call (alist);
 
-    // Reinitialise interating arguments
+    /* Reinitialise interating arguments */
     Parrot_init_arg_nci(interpreter, &st, nci_args->signature_parrot+1);
   
     /* Write backs to variables and cleanup */
@@ -470,7 +330,7 @@ static void nci_ffcall_invoke (Interp *interpreter, PMC * pmc)
                     break;
 
                 default:
-                    // This is required to synchronise the arguments
+                    /* This is required to synchronise the arguments */
                     temp = GET_NCI_P (i);
                     break;
                 }
@@ -485,31 +345,31 @@ static void nci_ffcall_invoke (Interp *interpreter, PMC * pmc)
         case 'P':
             temp = pmc_new(interpreter, enum_class_UnManagedStruct);
             PMC_data (temp) = nci_args->result._pointer;
-            set_nci_P (interpreter, &st, temp);
+            SET_NCI_P (temp);
             break;
 
         case 'c':
-            set_nci_I(interpreter, &st,  nci_args->result._char);
+            SET_NCI_I(nci_args->result._char);
             break;
 
         case 's':
-            set_nci_I(interpreter, &st,  nci_args->result._short);
+            SET_NCI_I(nci_args->result._short);
             break;
 
         case 'i':
-            set_nci_I(interpreter, &st,  nci_args->result._int);
+            SET_NCI_I(nci_args->result._int);
             break;
 
         case 'l':
-            set_nci_I(interpreter, &st,  nci_args->result._long);
+            SET_NCI_I(nci_args->result._long);
             break;
 
         case 'f':
-            set_nci_N(interpreter, &st,  nci_args->result._float);
+            SET_NCI_N(nci_args->result._float);
             break;
 
         case 'd':
-            set_nci_N(interpreter, &st,  nci_args->result._double);
+            SET_NCI_N(nci_args->result._double);
             break;
 
         case 't':
@@ -517,7 +377,7 @@ static void nci_ffcall_invoke (Interp *interpreter, PMC * pmc)
                 STRING *string =
                     string_from_cstring(interpreter,
                                         nci_args->result._string, 0);
-                set_nci_S (interpreter, &st, string);
+                SET_NCI_S (string);
             }
             break;
         }

@@ -25,16 +25,38 @@ typedef void (*nci_free_method_t)(Interp* interpreter, PMC *pmc);
 
 struct nci_vtable {
 
-    // Used to initialise a new NCI PMC
+    /* Used to initialise a new NCI PMC */
     nci_new_method_t    nci_new;
-    // Used to clone an NCI PMC
+    /* Used to clone an NCI PMC */
     nci_clone_method_t  nci_clone;
-    // Used to invoke the NCI call
+    /* Used to invoke the NCI call */
     nci_invoke_method_t nci_invoke;
-    // Cleans up the NCI data structures
+    /* Cleans up the NCI data structures */
     nci_free_method_t   nci_free;
 
 };
+
+INTVAL Parrot_get_nci_I(Interp *interpreter, struct call_state *st, int n);
+FLOATVAL Parrot_get_nci_N(Interp *interpreter, struct call_state *st, int n);
+STRING* Parrot_get_nci_S(Interp *interpreter, struct call_state *st, int n);
+PMC* Parrot_get_nci_P(Interp *interpreter, struct call_state *st, int n);
+
+void Parrot_set_nci_I(Interp *interpreter, struct call_state *st, INTVAL val);
+void Parrot_set_nci_N(Interp *interpreter, struct call_state *st, FLOATVAL val);
+void Parrot_set_nci_S(Interp *interpreter, struct call_state *st, STRING *val);
+void Parrot_set_nci_P(Interp *interpreter, struct call_state *st, PMC* val);
+
+char *Parrot_convert_signature (const char *signature);
+
+#define GET_NCI_I(n) Parrot_get_nci_I(interpreter, &st, n)
+#define GET_NCI_S(n) Parrot_get_nci_S(interpreter, &st, n)
+#define GET_NCI_N(n) Parrot_get_nci_N(interpreter, &st, n)
+#define GET_NCI_P(n) Parrot_get_nci_P(interpreter, &st, n)
+
+#define SET_NCI_I(v) Parrot_set_nci_I(interpreter, &st, v)
+#define SET_NCI_S(v) Parrot_set_nci_S(interpreter, &st, v)
+#define SET_NCI_N(v) Parrot_set_nci_N(interpreter, &st, v)
+#define SET_NCI_P(v) Parrot_set_nci_P(interpreter, &st, v)
 
 #endif /* PARROT_NCI_H_GUARD */
 
