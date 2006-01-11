@@ -404,6 +404,7 @@ my @steps = qw(
     inter::ops
     inter::exp
     inter::pmc
+    inter::nci
     auto::alignptrs
     auto::headers
     auto::sizes
