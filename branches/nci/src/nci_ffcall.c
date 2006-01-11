@@ -25,6 +25,9 @@ src/nci_ffcall.c - NCI Implementation using ffcall
 #include "parrot/method_util.h"
 #include "parrot/oplib/ops.h"
 
+#include "parrot/nci.h"
+#include "nci_ffcall.str"
+
 #if defined(HAS_JIT) && defined(I386)
 #  include "parrot/exec.h"
 #  include "parrot/jit.h"
@@ -61,6 +64,8 @@ typedef union UnionArg
 
 typedef struct NCIArgs
 {
+    Parrot_csub_t func;
+
     char *signature;
     char *signature_parrot;
 
@@ -213,55 +218,53 @@ static char *convert_signature (const char *signature)
 /* =========== Main NCI call code =========== */
 
 
-extern void nci_invoke (Interp * interpreter, PMC *function);
+extern void nci_ffcall_invoke (Interp * interpreter, PMC *function);
 
-
-void *
-build_call_func(Interp *interpreter, PMC *pmc_nci,
-		STRING *signature)
+static void
+nci_ffcall_new (Interp *interpreter, PMC *pmc,
+                 STRING *signature, Parrot_csub_t func)
 {
-    NCIArgs* nci_args = (NCIArgs *) malloc (sizeof (NCIArgs));
+    NCIArgs* nci_args = (NCIArgs *) mem_sys_allocate (sizeof (NCIArgs));
 
+    nci_args->func = func;
     nci_args->signature = string_to_cstring (interpreter, signature);
-
     nci_args->signature_parrot = convert_signature (nci_args->signature);
 
-    PMC_pmc_val (pmc_nci) = nci_args;
+    PMC_data(pmc) = nci_args;
 
-    return nci_invoke;
+    PMC_struct_val(pmc) = nci_ffcall_invoke;
 }
 
-void *
-clone_call_func(Interp *interpreter, PMC *pmc_nci, void *args)
+static void nci_ffcall_clone (Interp * interpreter, PMC* pmc1, PMC* pmc2)
 {
-    NCIArgs* nci_args = args;
+     NCIArgs* nci_args = PMC_data(pmc2);
 
-    if (!nci_args) return NULL;
-
-    // XXX Can't clone yet
-    return NULL;
-
-    return build_call_func (interpreter, pmc_nci, nci_args->signature);
+     /* XXX: Fix signature passed */
+     nci_ffcall_new (interpreter, pmc1,
+		     0,
+		     nci_args->func);
 }
 
 
-void release_call_func(void *args)
+static void nci_ffcall_free (Interp *interpreter, PMC *pmc)
 {
+#if 0
   NCIArgs* nci_args = args;
   
   if (nci_args)
     {
-      free (nci_args->signature);
-      free (nci_args->signature_parrot);
+      mem_sys_free (nci_args->signature);
+      mem_sys_free (nci_args->signature_parrot);
 
-      free (nci_args);
+      mem_sys_free (nci_args);
     }
+#endif
 }
 
 
-void nci_invoke (Interp * interpreter, PMC *function)
+static void nci_ffcall_invoke (Interp *interpreter, PMC * pmc)
 {
-    PMC *pmc;
+    PMC *temp;
     unsigned int i, length;
     struct call_state st;
     char *signature;
@@ -269,17 +272,17 @@ void nci_invoke (Interp * interpreter, PMC *function)
 
     av_alist alist;
 
-    NCIArgs* nci_args = (NCIArgs *) PMC_pmc_val(function);
+    NCIArgs* nci_args = (NCIArgs *) PMC_data(pmc);
 
     signature = nci_args->signature;
-    pointer = PMC_struct_val(function);
+    pointer = nci_args->func;
 
     /* Set up return type for function */
     switch (signature[0])
         {
 
         case 'p':
-	case 'P':
+        case 'P':
             av_start_ptr (alist, pointer, void *, &nci_args->result._pointer);
             break;
 
@@ -332,22 +335,22 @@ void nci_invoke (Interp * interpreter, PMC *function)
             switch (signature[i+1])
                 {
                 case 'J':
-                    pmc = GET_NCI_P (i);
+                    temp = GET_NCI_P (i);
                     av_ptr (alist, void *, interpreter);
                     break;
 
                 case 'p':
-                    pmc = GET_NCI_P (i);
-                    nci_args->args[i]._pointer = PMC_data (pmc);
+                    temp = GET_NCI_P (i);
+                    nci_args->args[i]._pointer = PMC_data (temp);
                     av_ptr (alist, void *, nci_args->args[i]._pointer);
                     break;
 
                 case 'P':
-                    pmc = GET_NCI_P (i);                    
+                    temp = GET_NCI_P (i);                    
                     nci_args->args[i]._pointer =
-                        pmc == PMCNULL
+                        temp == PMCNULL
                         ? NULL
-                        : pmc;
+                        : temp;
                     av_ptr (alist, void *, nci_args->args[i]._pointer);
                     break;
 
@@ -398,23 +401,23 @@ void nci_invoke (Interp * interpreter, PMC *function)
                     break;
 
                 case '2':
-                    pmc = GET_NCI_P (i);
-                    nci_args->args[i]._short_p = malloc (sizeof (short));
-                    *nci_args->args[i]._long_p = PMC_int_val (pmc);
+                    temp = GET_NCI_P (i);
+                    nci_args->args[i]._short_p = mem_sys_allocate (sizeof (short));
+                    *nci_args->args[i]._long_p = PMC_int_val (temp);
                     av_ptr (alist, short *, nci_args->args[i]._short_p);
                     break;
 
                 case '4':
-                    pmc = GET_NCI_P (i);
-                    nci_args->args[i]._long_p = malloc (sizeof (long));
-                    *nci_args->args[i]._long_p = PMC_int_val (pmc);
+                    temp = GET_NCI_P (i);
+                    nci_args->args[i]._long_p = mem_sys_allocate (sizeof (long));
+                    *nci_args->args[i]._long_p = PMC_int_val (temp);
                     av_ptr (alist, long *, nci_args->args[i]._long_p);
                     break;
 
                 case '3':
-                    pmc = GET_NCI_P (i);
-                    nci_args->args[i]._int_p = malloc (sizeof (int));
-                    *nci_args->args[i]._long_p = PMC_int_val (pmc);
+                    temp = GET_NCI_P (i);
+                    nci_args->args[i]._int_p = mem_sys_allocate (sizeof (int));
+                    *nci_args->args[i]._long_p = PMC_int_val (temp);
                     av_ptr (alist, int *, nci_args->args[i]._int_p);
                     break;
 
@@ -423,7 +426,7 @@ void nci_invoke (Interp * interpreter, PMC *function)
                     break;
 
                 default:
-                    pmc = GET_NCI_P (i);
+                    temp = GET_NCI_P (i);
                     PIO_eprintf(interpreter, "Bad nci argument type '%c'\n",
                                 signature[i+1]);
                     break;
@@ -444,31 +447,31 @@ void nci_invoke (Interp * interpreter, PMC *function)
             switch (signature[i+1])
                 {
                 case '2':
-                    pmc = GET_NCI_P (i);
-                    PMC_int_val (pmc) = *nci_args->args[i]._short_p;
-                    free (nci_args->args[i]._short_p);
+                    temp = GET_NCI_P (i);
+                    PMC_int_val (temp) = *nci_args->args[i]._short_p;
+                    mem_sys_free (nci_args->args[i]._short_p);
                     break;
 
 
                 case '3':
-                    pmc = GET_NCI_P (i);
-                    PMC_int_val (pmc) = *nci_args->args[i]._int_p;
-                    free (nci_args->args[i]._int_p);
+                    temp = GET_NCI_P (i);
+                    PMC_int_val (temp) = *nci_args->args[i]._int_p;
+                    mem_sys_free (nci_args->args[i]._int_p);
                     break;
 
                 case '4':
-                    pmc = GET_NCI_P (i);
-                    PMC_int_val (pmc) = *nci_args->args[i]._long_p;
-                    free (nci_args->args[i]._long_p);
+                    temp = GET_NCI_P (i);
+                    PMC_int_val (temp) = *nci_args->args[i]._long_p;
+                    mem_sys_free (nci_args->args[i]._long_p);
                     break;
 
                 case 't':
-                    free (nci_args->args[i]._string);
+                    mem_sys_free (nci_args->args[i]._string);
                     break;
 
                 default:
                     // This is required to synchronise the arguments
-                    pmc = GET_NCI_P (i);
+                    temp = GET_NCI_P (i);
                     break;
                 }
         }
@@ -480,9 +483,9 @@ void nci_invoke (Interp * interpreter, PMC *function)
         {
         case 'p':
         case 'P':
-            pmc = pmc_new(interpreter, enum_class_UnManagedStruct);
-            PMC_data (pmc) = nci_args->result._pointer;
-            set_nci_P (interpreter, &st, pmc);
+            temp = pmc_new(interpreter, enum_class_UnManagedStruct);
+            PMC_data (temp) = nci_args->result._pointer;
+            set_nci_P (interpreter, &st, temp);
             break;
 
         case 'c':
@@ -704,62 +707,62 @@ static void Parrot_callback_trampoline (void *data,
 
     for (i = 0 ; i < length ; i++)
         {
-	  signature_parrot[i] = (p[i] == 'v') ? 'v' : 'P';
+          signature_parrot[i] = (p[i] == 'v') ? 'v' : 'P';
         }
     
     /* Make actual call to parrot callback */
     pmc = Parrot_runops_fromc_args (interpreter, sub,
-				    signature_parrot, 
-				    pmc_args[0],
-				    pmc_args[1],
-				    pmc_args[2],
-				    pmc_args[3],
-				    pmc_args[4],
-				    pmc_args[5],
-				    pmc_args[6],
-				    pmc_args[7],
-				    pmc_args[8],
-				    pmc_args[9]);
+                                    signature_parrot, 
+                                    pmc_args[0],
+                                    pmc_args[1],
+                                    pmc_args[2],
+                                    pmc_args[3],
+                                    pmc_args[4],
+                                    pmc_args[5],
+                                    pmc_args[6],
+                                    pmc_args[7],
+                                    pmc_args[8],
+                                    pmc_args[9]);
 
     /* Retrieve returned value */
 
     switch (p[0])
         {
         case 'p':
-	    va_return_ptr (alist, void *, PMC_data (pmc));
-	    break;
+            va_return_ptr (alist, void *, PMC_data (pmc));
+            break;
 
         case 'c':
-	    va_return_char (alist, VTABLE_get_integer (interpreter, pmc));
+            va_return_char (alist, VTABLE_get_integer (interpreter, pmc));
             break;
 
         case 's':
-	    va_return_short (alist, VTABLE_get_integer (interpreter, pmc));
+            va_return_short (alist, VTABLE_get_integer (interpreter, pmc));
             break;
 
         case 'i':
-	    va_return_int (alist, VTABLE_get_integer (interpreter, pmc));
+            va_return_int (alist, VTABLE_get_integer (interpreter, pmc));
             break;
 
         case 'l':
-	    va_return_long (alist, VTABLE_get_integer (interpreter, pmc));
+            va_return_long (alist, VTABLE_get_integer (interpreter, pmc));
             break;
 
         case 'f':
-	    va_return_float (alist, VTABLE_get_number (interpreter, pmc));
+            va_return_float (alist, VTABLE_get_number (interpreter, pmc));
             break;
 
         case 'd':
-	    va_return_double (alist, VTABLE_get_number (interpreter, pmc));
+            va_return_double (alist, VTABLE_get_number (interpreter, pmc));
             break;
 
         case 't':
-	    /* This will leak memory */
-	    va_return_ptr (alist,
-			   char *,
-			   string_to_cstring(interpreter,
-					     VTABLE_get_string (interpreter,
-								pmc)));
+            /* This will leak memory */
+            va_return_ptr (alist,
+                           char *,
+                           string_to_cstring(interpreter,
+                                             VTABLE_get_string (interpreter,
+                                                                pmc)));
             break;
 
         case 'v':
@@ -770,10 +773,10 @@ static void Parrot_callback_trampoline (void *data,
 }
 
 
-
+#if 0
 PMC*
-Parrot_make_cb (Parrot_Interp interpreter, PMC* sub, PMC* user_data,
-		STRING *cb_signature)
+Parrot_make_cb (Parrot_Interp interpreter, PMC* sub,
+                PMC* user_data, STRING *cb_signature)
 {
 
     PMC* interp_pmc, *cb, *cb_sig;
@@ -802,7 +805,7 @@ Parrot_make_cb (Parrot_Interp interpreter, PMC* sub, PMC* user_data,
     dod_register_pmc(interpreter, cb);
 
     callback = alloc_callback (Parrot_callback_trampoline,
-			       user_data);
+                               user_data);
 
     PMC_data(cb) = callback;
 
@@ -814,10 +817,20 @@ Parrot_make_cb (Parrot_Interp interpreter, PMC* sub, PMC* user_data,
 
 void
 Parrot_run_callback(Parrot_Interp interpreter,
-		    PMC* user_data, void* external_data)
+                    PMC* user_data, void* external_data)
 {
     internal_exception(1, "Parrot_run_callback needs implementing for ffcall");
 }
+#endif
+
+
+struct nci_vtable nci_ffcall_vtable =
+{
+    nci_ffcall_new,
+    nci_ffcall_clone,
+    nci_ffcall_invoke,
+    nci_ffcall_free
+};
 
 
 /*

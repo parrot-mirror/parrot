@@ -38,7 +38,8 @@ signatures.
 When the invoke method is called, the main nci ffcall invoke routine
 is called mostly makes ffcall calls based on the two signatures.
 
-
+PMC must store: address of library function, and two signatures
+Will probably also get it to store the ffcall NCI layer function
 
 
 Suggested unification:
