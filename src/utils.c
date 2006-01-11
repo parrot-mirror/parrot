@@ -441,7 +441,7 @@ Creates a C array of C<long>s with one more element than the number of
 elements in C<*array>. The elements are then copied from C<*array> to
 the new array, and the last (extra) element is set to 0.
 
-Used in C<src/nci.c>.
+Used in C<src/nci_builtin.c>.
 
 =cut
 

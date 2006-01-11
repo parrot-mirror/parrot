@@ -3148,7 +3148,7 @@ count_regs(char *sig, char *sig_start)
  * pmc         ... 12(%ebp)
  *
  * The generate function for a specific signature looks quite similar to
- * an optimized compile of src/nci.c:pcf_x_yy(). In case of any troubles
+ * an optimized compile of src/nci_builtin.c:pcf_x_yy(). In case of any troubles
  * just compare the disassembly.
  */
 void *
@@ -3311,7 +3311,7 @@ preg:
             default:
                 /*
                  * oops unknown signature:
-                 * cleanup and try nci.c
+                 * cleanup and try nci_builtin.c
                  */
                 mem_free_executable(jit_info.native_ptr);
                 return NULL;

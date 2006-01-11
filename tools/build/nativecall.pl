@@ -12,7 +12,7 @@ tools/build/nativecall.pl - Build up the native call routines
 
 =head1 DESCRIPTION
 
-This script creates the Native Call Interface file F<src/nci.c>. It
+This script creates the Native Call Interface file F<src/nci_builtin.c>. It
 parses a file of function signatures of the form:
 
     <return-type-specifier><whitespace><parameter-type-specifiers>[<whitespace>][#<comment>]
@@ -33,7 +33,7 @@ use warnings;
 
 
 # This file will eventually be compiled
-open NCI, ">", "src/nci.c" or die "Can't open nci.c!";
+open NCI, ">", "src/nci_builtin.c" or die "Can't open nci_builtin.c!";
 
 print_head();
 
@@ -230,7 +230,7 @@ sub print_head {
  *
  */
 
-/* nci.c
+/* nci_builtin.c
  *  Copyright: 2001-2005 The Perl Foundation.  All Rights Reserved.
  *  SVN Info
  *     \$Id\$

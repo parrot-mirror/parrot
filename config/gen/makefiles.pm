@@ -50,8 +50,8 @@ sub cflags
 
         # CFLAGS entries must be left-aligned.
         print CFLAGS <<"EOF";
-src/jit_cpu.c -{-Wcast-align}        # lots of noise!
-src/nci.c     -{-Wstrict-prototypes} # lots of noise!
+src/jit_cpu.c       -{-Wcast-align}        # lots of noise!
+src/nci_builtin.c   -{-Wstrict-prototypes} # lots of noise!
 EOF
     }
 
