@@ -8,7 +8,9 @@ config/inter/nci.pm - Determine which NCI implementation to use
 =head1 DESCRIPTION
 
 Determines whether to use the builtin NCI implementation, or one provided
-by ffcall.
+by ffcall or libffi.
+
+The favoured order is ffcall, liffi, builtin.
 
 =cut
 
@@ -33,6 +35,19 @@ sub runstep
 
     my @nci_implementations = ('builtin');
 
+
+    cc_gen('config/inter/nci/nci_libffi.in');
+
+    eval { cc_build('', '-lffi'); };
+
+    if (! $@) {
+        my $test = cc_run ();
+
+        unshift @nci_implementations, 'libffi'
+            if $test eq "Received: It worked!\nGot back -24\n";
+    }
+
+
     cc_gen('config/inter/nci/nci_ffcall.in');
 
     eval { cc_build('', '-lavcall -lcallback'); };
@@ -41,7 +56,7 @@ sub runstep
         my $test = cc_run ();
 
         unshift @nci_implementations, 'ffcall'
-            if $test eq 'Received: It worked!';
+            if $test eq "Received: It worked!\nGot back -24\n";
     }
 
     my $nci_implementation = $nci_implementations[0];
@@ -60,6 +75,8 @@ sub runstep
         additional libraries
 
       * ffcall: Requires the ffcall library, and is more functional
+
+      * libffi: Requires the libffi library, and is more functional
 
 END
         $nci_implementation = 
