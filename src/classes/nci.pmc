@@ -25,10 +25,6 @@ The caller has to preserve registers if needed.
 #include "parrot/parrot.h"
 #include "parrot/method_util.h"
 
-
-extern struct nci_vtable nci_builtin_vtable, nci_ffcall_vtable;
-struct nci_vtable *nci_vtable_ptr = &nci_builtin_vtable;
-
 pmclass NCI need_ext {
 
 /*

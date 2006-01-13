@@ -2,6 +2,9 @@
 
 #include "parrot/nci.h"
 
+/* For now, this selects the active backend */
+struct nci_vtable *nci_vtable_ptr = &nci_ffcall_vtable;
+
 INTVAL
 Parrot_get_nci_I(Interp *interpreter, struct call_state *st, int n)
 {

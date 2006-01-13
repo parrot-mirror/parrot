@@ -47,6 +47,10 @@ Set the bound object live.
 */
 
     void set_pmc(PMC *obj) {
+
+        /* Need to understand and ensure that this class works */
+        assert (0);
+
         PMC_pmc_val(SELF) = obj;
         if (!PMC_IS_NULL(obj))
             PObj_custom_mark_SET(SELF);
