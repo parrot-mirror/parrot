@@ -36,6 +36,9 @@ struct nci_vtable {
 
 };
 
+extern struct nci_vtable nci_builtin_vtable, nci_ffcall_vtable;
+extern struct nci_vtable *nci_vtable_ptr;
+
 INTVAL Parrot_get_nci_I(Interp *interpreter, struct call_state *st, int n);
 FLOATVAL Parrot_get_nci_N(Interp *interpreter, struct call_state *st, int n);
 STRING* Parrot_get_nci_S(Interp *interpreter, struct call_state *st, int n);
