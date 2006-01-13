@@ -1,22 +1,25 @@
 /* Test to determine if ffcall is available for NCI */
 
+#include <stdio.h>
 #include <avcall.h>
 
-void function (char * str)
+int function (char * str)
 {
-  printf ("Received: %s", str);
-
+  printf ("Received: %s\n", str);
+  return -24;
 }
 
 int main ()
 {
+  int rc;
   av_alist alist;
 
   char* message = "It worked!";
 
-  av_start_void (alist, &function);
+  av_start_int (alist, &function, &rc);
   av_ptr (alist, char *, message);
 
   av_call (alist);
 
+  printf ("Got back %d\n", rc);
 }
