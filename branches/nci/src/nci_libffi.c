@@ -31,10 +31,11 @@ src/nci_libffi.c - NCI Implementation using libffi
 static void nci_libffi_invoke (Interp * interpreter, PMC *function);
 
 static void
-nci_libffi_new (Interp *interpreter, PMC *pmc,
+nci_libffi_new (Interp *interpreter,
+                PMC *pmc,
                  STRING *signature, Parrot_csub_t func)
 {
-
+    
 }
 
 static void nci_libffi_clone (Interp * interpreter, PMC* pmc1, PMC* pmc2)
@@ -53,12 +54,23 @@ static void nci_libffi_invoke (Interp *interpreter, PMC * pmc)
 {
 }
 
+
+static void nci_libffi_new_callback (Interp* interpreter,
+                                     PMC* pmc,
+                                     PMC* sub,
+                                     STRING *cb_signature,
+                                     PMC* user_data)
+{
+}
+
+
 struct nci_vtable nci_libffi_vtable =
 {
     nci_libffi_new,
     nci_libffi_clone,
     nci_libffi_invoke,
-    nci_libffi_free
+    nci_libffi_free,
+    nci_libffi_new_callback
 };
 
 

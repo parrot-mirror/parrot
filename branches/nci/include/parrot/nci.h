@@ -21,6 +21,11 @@ typedef void (*nci_new_method_t)(Interp* interpreter, PMC* pmc,
 typedef void (*nci_clone_method_t)(Interp* interpreter,  PMC* pmc1, PMC* pmc2);
 typedef void (*nci_invoke_method_t)(Interp* interpreter, PMC* pmc);
 typedef void (*nci_free_method_t)(Interp* interpreter, PMC *pmc);
+typedef void (*nci_new_callback_method_t)(Interp* interpreter,
+                                          PMC* pmc,
+                                          PMC* sub,
+                                          STRING *cb_signature,
+                                          PMC* user_data);
 
 
 struct nci_vtable {
@@ -33,6 +38,8 @@ struct nci_vtable {
     nci_invoke_method_t nci_invoke;
     /* Cleans up the NCI data structures */
     nci_free_method_t   nci_free;
+    /* Turn an unmanagedstruct into a callback */
+    nci_new_callback_method_t nci_new_callback;
 
 };
 

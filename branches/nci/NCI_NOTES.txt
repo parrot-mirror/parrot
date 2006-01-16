@@ -52,3 +52,16 @@ Implement an NCI abstraction which will use vtables. The entries will be:
    nci_free
 
 
+
+Current 'Builtin' Callbacks:
+
+The 'new_callback ' opcode is used to create a callback, and actually
+returns a C pointer wrapped in an unmanaged struct. Behind the op
+parrot calls Parrot_make_cb in inter_cb.c. The returned pointer is
+actually a pointer to either Parrot_callback_C or Parrot_callback_D,
+which expect two arguments [Note: this logic is flawed in my opinion]
+
+When the callback code is called at some point later, the types of the
+arguments are verified. One of the arguments must be a PMC which has
+various attributes hanging off it. The arguments for the real callback
+are prepared, and is called using Parrot_runops_from_args.
