@@ -1,4 +1,12 @@
-/* Convenience routines for fetching values */
+/*
+Copyright: 2006 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+src/nci.c - Convenience routines for handling arguments in NCI implementations
+
+*/
 
 #include "parrot/nci.h"
 
@@ -95,7 +103,7 @@ char *Parrot_convert_signature (const char *signature)
 {
     int i, length = strlen (signature);
 
-    char *signature_parrot = (char *) malloc (length);
+    char *signature_parrot = (char *) mem_sys_allocate (length);
 
     for (i = 0 ; i < length+1 ; i++)
         {

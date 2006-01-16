@@ -99,43 +99,38 @@ static void nci_ffcall_clone (Interp * interpreter, PMC* pmc1, PMC* pmc2)
 {
      NCIArgs* nci_args = PMC_data(pmc2);
 
-     /* XXX: Fix signature passed */
      nci_ffcall_new (interpreter, pmc1,
-		     0,
+		     string_from_cstring (interpreter,
+                                          nci_args->signature, 0),
 		     nci_args->func);
 }
 
 
 static void nci_ffcall_free (Interp *interpreter, PMC *pmc)
 {
-#if 0
-  NCIArgs* nci_args = args;
+    NCIArgs* nci_args = (NCIArgs *) PMC_data(pmc);
   
-  if (nci_args)
-    {
-      mem_sys_free (nci_args->signature);
-      mem_sys_free (nci_args->signature_parrot);
-
-      mem_sys_free (nci_args);
-    }
-#endif
+    if (nci_args)
+        {
+            mem_sys_free (nci_args->signature);
+            mem_sys_free (nci_args->signature_parrot);
+            
+            mem_sys_free (nci_args);
+        }
 }
 
 
 static void nci_ffcall_invoke (Interp *interpreter, PMC * pmc)
 {
     PMC *temp;
+    av_alist alist;
     unsigned int i, length;
     struct call_state st;
-    char *signature;
-    __VA_function pointer;
-
-    av_alist alist;
 
     NCIArgs* nci_args = (NCIArgs *) PMC_data(pmc);
 
-    signature = nci_args->signature;
-    pointer = (__VA_function) nci_args->func;
+    char* signature = nci_args->signature;
+    __VA_function pointer = (__VA_function) nci_args->func;
 
     /* Set up return type for function */
     switch (signature[0])
