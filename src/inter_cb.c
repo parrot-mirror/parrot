@@ -42,7 +42,7 @@ Create a callback function according to pdd16.
 
 PMC*
 Parrot_make_cb(Parrot_Interp interpreter, PMC* sub, PMC* user_data,
-        STRING *cb_signature)
+               STRING *cb_signature)
 {
     PMC* interp_pmc, *cb, *cb_sig;
     int type = '?';     /* avoid -Ox warning */

@@ -613,12 +613,24 @@ static void nci_builtin_free (Interp *interpreter, PMC *pmc)
 }
 
 
+static void nci_builtin_new_callback (Interp* interpreter,
+				      PMC* pmc,
+				      PMC* sub,
+				      STRING *cb_signature,
+				      PMC* user_data)
+{
+    /* This needs to be glued to Parrot_make_cb */
+
+}
+
+
 struct nci_vtable nci_builtin_vtable =
 {
     nci_builtin_new,
     nci_builtin_clone,
     nci_builtin_invoke,
-    nci_builtin_free
+    nci_builtin_free,
+    nci_builtin_new_callback
 };
 
 

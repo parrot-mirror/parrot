@@ -390,8 +390,8 @@ static void nci_ffcall_invoke (Interp *interpreter, PMC * pmc)
 /* TODO: Synchronous/Assynchronous */
 
 
-static void Parrot_callback_trampoline (void *data,
-                                        va_alist alist)
+static void nci_ffcall_callback_trampoline (void *data,
+                                            va_alist alist)
 {
     PMC *    passed_interp;
     PMC *    signature;
@@ -633,10 +633,11 @@ static void Parrot_callback_trampoline (void *data,
 }
 
 
-#if 0
-PMC*
-Parrot_make_cb (Parrot_Interp interpreter, PMC* sub,
-                PMC* user_data, STRING *cb_signature)
+static void nci_ffcall_new_callback (Interp* interpreter,
+                                     PMC* pmc,
+                                     PMC* sub,
+                                     STRING *cb_signature,
+                                     PMC* user_data)
 {
 
     PMC* interp_pmc, *cb, *cb_sig;
@@ -660,21 +661,15 @@ Parrot_make_cb (Parrot_Interp interpreter, PMC* sub,
 
     dod_register_pmc(interpreter, user_data);
 
-    cb = pmc_new(interpreter, enum_class_UnManagedStruct);
-
-    dod_register_pmc(interpreter, cb);
-
-    callback = alloc_callback (Parrot_callback_trampoline,
+    callback = alloc_callback (nci_ffcall_callback_trampoline,
                                user_data);
 
-    PMC_data(cb) = callback;
-
-    return cb;
+    PMC_data(pmc) = callback;
 }
 
 
 
-
+#if 0
 void
 Parrot_run_callback(Parrot_Interp interpreter,
                     PMC* user_data, void* external_data)
@@ -689,7 +684,8 @@ struct nci_vtable nci_ffcall_vtable =
     nci_ffcall_new,
     nci_ffcall_clone,
     nci_ffcall_invoke,
-    nci_ffcall_free
+    nci_ffcall_free,
+    nci_ffcall_new_callback
 };
 
 
