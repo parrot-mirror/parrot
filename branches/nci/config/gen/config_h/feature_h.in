@@ -134,5 +134,13 @@ else {
 #define PARROT_INLINE
 EOP
 }
-#endif guard
+
+my $nci_impl = ${nci_impl};
+print OUT <<EOP;
+
+/* from config/inter/nci */
+#define PARROT_NCI_IMPL $nci_impl
+EOP
+
+# endif guard
 print OUT "\n\n#endif\n"
