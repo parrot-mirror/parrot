@@ -420,7 +420,8 @@ INTERP_O_FILES = \
 	$(SRC_DIR)/fingerprint$(O) \
 	$(SRC_DIR)/nci$(O) \
 	$(SRC_DIR)/nci_builtin$(O) \
-	$(SRC_DIR)/nci_ffcall$(O) \
+#CONDITIONED_LINE(ffcall):	$(SRC_DIR)/nci_ffcall$(O) \
+#CONDITIONED_LINE(libffi):	$(SRC_DIR)/nci_libffi$(O) \
 	$(SRC_DIR)/cpu_dep$(O) \
 	$(SRC_DIR)/tsq$(O) \
 	$(SRC_DIR)/longopt$(O) \
@@ -561,6 +562,7 @@ STR_FILES = \
 	$(SRC_DIR)/inter_call.str \
 	$(SRC_DIR)/inter_cb.str \
 	$(SRC_DIR)/nci_ffcall.str \
+	$(SRC_DIR)/nci_libffi.str \
 	$(SRC_DIR)/inter_misc.str \
 	$(SRC_DIR)/global.str \
 	$(SRC_DIR)/global_setup.str \
@@ -1076,6 +1078,9 @@ $(SRC_DIR)/nci_builtin$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/nci_builtin.c
 
 $(SRC_DIR)/nci_ffcall$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/nci_ffcall.c \
 	$(SRC_DIR)/nci_ffcall.str
+
+$(SRC_DIR)/nci_libffi$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/nci_libffi.c \
+	$(SRC_DIR)/nci_libffi.str
 
 $(SRC_DIR)/vtables$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/vtables.c
 

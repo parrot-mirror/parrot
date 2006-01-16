@@ -27,7 +27,7 @@ struct nci_vtable {
 
     /* Used to initialise a new NCI PMC */
     nci_new_method_t    nci_new;
-    /* Used to clone an NCI PMC */
+    /* Used to clone an NCI PMC's data */
     nci_clone_method_t  nci_clone;
     /* Used to invoke the NCI call */
     nci_invoke_method_t nci_invoke;
@@ -36,8 +36,14 @@ struct nci_vtable {
 
 };
 
-extern struct nci_vtable nci_builtin_vtable, nci_ffcall_vtable;
+
+/* Pointer to the NCI implementation which is in effect */
 extern struct nci_vtable *nci_vtable_ptr;
+
+/* Alternate NCI implementations */
+extern struct nci_vtable nci_builtin_vtable;
+extern struct nci_vtable nci_ffcall_vtable;
+extern struct nci_vtable nci_libffi_vtable;
 
 INTVAL Parrot_get_nci_I(Interp *interpreter, struct call_state *st, int n);
 FLOATVAL Parrot_get_nci_N(Interp *interpreter, struct call_state *st, int n);

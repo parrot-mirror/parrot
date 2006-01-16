@@ -89,17 +89,31 @@ END
         
     }
 
-    $result = $nci_implementation;
 
-    # This makes conditionals in the root makefile possible
-    $nci_implementation = "" if $nci_implementation eq 'builtin';
+    # XXX Override the probed value and use the builtin one
+    $nci_implementation = "builtin";
+    $result = $nci_implementation . " (overridden)";
 
     $config->data->set( nci_impl => $nci_implementation );
 
-    $config->data->add(' ', 'libs', '-lavcall -lcallback')
-        if $nci_implementation eq 'ffcall';
+    # For now add all the flags for supported backends
+    foreach (@nci_implementations)
+    {
+        if ($_ eq 'ffcall')
+        {
+            $config->data->add(' ', 'libs', '-lavcall -lcallback');
 
+            $config->data->set( 'ffcall' => 1 );
+        }
 
+        if ($_ eq 'libffi')
+        {
+            $config->data->add(' ', 'libs', '-lffi');
+
+            $config->data->set( 'libffi' => 1 );
+        }
+
+    }
 
 }
 
