@@ -16,6 +16,8 @@
 #include "parrot/parrot.h"
 #include "parrot/method_util.h"
 
+/* Declare types for the vtable entries */
+
 typedef void (*nci_new_method_t)(Interp* interpreter, PMC* pmc,
                                  STRING* signature, Parrot_csub_t func);
 typedef void (*nci_clone_method_t)(Interp* interpreter,  PMC* pmc1, PMC* pmc2);
@@ -27,6 +29,7 @@ typedef void (*nci_new_callback_method_t)(Interp* interpreter,
                                           STRING *cb_signature,
                                           PMC* user_data);
 
+/* Declare the NCI vtable structure */
 
 struct nci_vtable {
 
@@ -52,6 +55,7 @@ extern struct nci_vtable nci_builtin_vtable;
 extern struct nci_vtable nci_ffcall_vtable;
 extern struct nci_vtable nci_libffi_vtable;
 
+/* Declare routines for getting and setting arguments */
 INTVAL Parrot_get_nci_I(Interp *interpreter, struct call_state *st, int n);
 FLOATVAL Parrot_get_nci_N(Interp *interpreter, struct call_state *st, int n);
 STRING* Parrot_get_nci_S(Interp *interpreter, struct call_state *st, int n);
