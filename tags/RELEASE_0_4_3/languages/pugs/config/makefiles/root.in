@@ -1,0 +1,57 @@
+RM_F    = @rm_f@
+PERL    = @perl@
+PARROT  = ..@slash@..@slash@parrot@exe@
+PBC_MERGE = ..@slash@..@slash@pbc_merge@exe@
+
+LIBPATH  = lib
+BUILD   = $(PERL) @build_dir@@slash@tools@slash@build@slash@dynpmc.pl
+DESTDIR = @build_dir@@slash@runtime@slash@parrot@slash@dynext
+O       = @o@
+CLASSDIR = pmc
+LOAD_EXT = @load_ext@
+
+PMCS = \
+    pugsany \
+    pugsbit \
+    pugsbool \
+    pugscode \
+    pugsint \
+    pugsmapping \
+    pugsnum \
+    pugsmodule \
+    pugsstr \
+    pugstuple \
+    pugsundef
+
+PBCS =
+
+all: pmcs $(PBCS)
+
+pmcs:
+	@cd $(CLASSDIR) && $(BUILD) generate $(PMCS)
+	@cd $(CLASSDIR) && $(BUILD) compile $(PMCS)
+	@cd $(CLASSDIR) && $(BUILD) linklibs $(PMCS)
+	@cd $(CLASSDIR) && $(BUILD) copy "--destination=$(DESTDIR)" $(PMCS)
+
+test:   all
+	cd .. && $(PERL) -I../lib -Ipugs/t pugs/t/harness
+
+CLEANERS = \
+"t/lib/*.pir" \
+"t/pmc/*.pir" \
+"t/*.pir" \
+"t/*.p6" \
+"t/*.orig_out" \
+"t/*.parrot_out" \
+"$(CLASSDIR)/*.dump" \
+"$(CLASSDIR)/*.c" \
+"$(CLASSDIR)/*.h" \
+"$(CLASSDIR)/*$(LOAD_EXT)" \
+"$(CLASSDIR)/*$(O)" \
+"$(LIBPATH)/*.pbc"
+
+clean:
+	$(RM_F) $(CLEANERS)
+
+distclean: clean
+	$(RM_F) Makefile
