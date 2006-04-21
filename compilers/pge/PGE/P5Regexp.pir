@@ -26,7 +26,7 @@
     optable.addtok("term:\\W", "term:", "nows", "PGE::Exp::CCShortcut")
 
     $P0 = find_global "PGE::P5Regexp", "parse_group"
-    optable.addtok("circumfix:( )", "term:", "nows", $P0)
+    optable.addtok("circumfix:( )", "term:", "nows,nullterm", $P0)
 
     $P0 = find_global "PGE::P5Regexp", "parse_enumclass"
     optable.addtok("term:[", "", "nows", $P0)
@@ -57,12 +57,11 @@
     .local int litstart, litlen
     .local string initchar
     newfrom = find_global "PGE::Match", "newfrom"
-    $P0 = getattribute mob, "PGE::Match\x0$.target"
-    target = $P0
-    $P0 = getattribute mob, "PGE::Match\x0$.pos"
+    (mob, target, $P0, $P1) = newfrom(mob, 0, "PGE::Exp::Literal")
     pos = $P0
     lastpos = length target
     initchar = substr target, pos, 1
+    if initchar == ')' goto end
     inc pos
     if initchar != "\\" goto term_literal
 
@@ -74,7 +73,6 @@
     initchar = substr "\n\r\t\e\a\b", $I0, 1
     
   term_literal:
-    mob = newfrom(mob, 0, "PGE::Exp::Literal")
     litstart = pos
     litlen = 0
   term_literal_loop:
