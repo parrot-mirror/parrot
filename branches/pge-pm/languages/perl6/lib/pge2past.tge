@@ -1,0 +1,317 @@
+## $Id$
+
+ROOT: past(.) = {
+    .local pmc past
+    past = new 'Perl6::PAST::Sub'
+    past.set_node(node)
+    $P0 = node['statement_list']
+    $P1 = tree.'get'('past', $P0, 'Perl6::Grammar::statement_list')
+    past['statement_list'] = $P1
+    .return (past)
+}
+
+
+Perl6::Grammar::statement_list:  past(.) = {
+    .local pmc past
+    .local pmc children
+    .local pmc iter
+
+    past = new 'Perl6::PAST::Stmts'
+    past.'set_node'(node)
+
+    children = new .ResizablePMCArray
+    $P0 = node['statement']
+    iter = new .Iterator, $P0
+    iter = 0
+  iter_loop:
+    unless iter goto iter_end
+    $P1 = shift iter
+    $P2 = tree.'get'('past', $P1, 'Perl6::Grammar::statement')
+    if null $P2 goto iter_loop
+    push children, $P2
+    goto iter_loop
+  iter_end:
+    past['children'] = children
+    .return (past)
+}
+
+
+Perl6::Grammar::statement: past(.) = {
+    .local pmc past
+    past = new 'Perl6::PAST::Stmt'
+    past.'set_node'(node)
+
+    $P0 = node['expression']
+    if $P0 goto expression
+    $P0 = node['statement_control']
+    if $P0 goto statement_control
+    .return (past)
+
+  expression:
+    .local pmc stmt
+    stmt = tree.'get'('past', $P0, 'Perl6::Grammar::expression')
+    $P0 = node['statement_modifier']
+    unless $P0 goto expression_1
+  stmt_modifier:
+    # handle if/unless modifier
+    .local pmc modifier, exprpast, thenpast, elsepast
+    modifier = $P0[0]
+    thenpast = stmt
+    null elsepast
+    $S0 = modifier[0]
+    if $S0 != 'unless' goto stmt_modifier_1
+    exchange thenpast, elsepast
+  stmt_modifier_1:
+    stmt = new "Perl6::PAST::Op"
+    $P0 = modifier['expression']
+    exprpast = tree.'get'('past', $P0, 'Perl6::Grammar::expression')
+    stmt['opname'] = 'statement_control:if'
+    stmt['pasttype'] = 'cond'
+    $P0 = new .ResizablePMCArray
+    $P0[0] = exprpast
+    $P0[1] = thenpast
+    $P0[2] = elsepast
+    stmt['children'] = $P0
+  expression_1:
+    past['statement'] = stmt
+    .return (past)
+
+  statement_control:
+    $P1 = tree.'get'('past', $P0, 'Perl6::Grammar::statement_control')
+    past['statement'] = $P1
+    .return (past)
+}
+
+
+Perl6::Grammar::expression: past(.) = {
+    .local pmc past
+
+    past = new 'Perl6::PAST::Exp'
+    past.set_node(node)
+
+    $P0 = node['expr']
+    $P1 = tree.'get'('past', $P0, 'Perl6::Grammar::expr')
+    past['expression'] = $P1
+    .return (past)
+}
+
+
+Perl6::Grammar::expr: past(.) = {
+    .local string type
+    .local pmc optable
+    .local pmc op
+    type = node['type']
+    if type != "" goto pastrule
+    null $P0
+    .return ($P0)
+
+  pastrule:
+    optable = find_global "Perl6::Grammar", "$optable"
+    op = optable[type]
+    $S0 = op['pastrule']
+    unless $S0 goto op_standard
+    .return tree.'get'($S0, node, 'Perl6::Grammar::expr')
+
+  op_standard:
+    .local pmc past, children, iter
+    past = new 'Perl6::PAST::Op'
+    past.set_node(node)
+    children = new .ResizablePMCArray
+    $P0 = node.'get_array'()
+    if null $P0 goto iter_end
+    iter = new .Iterator, $P0
+    iter = 0
+  iter_loop:
+    unless iter goto iter_end
+    $P0 = shift iter
+    $S0 = $P0
+    if $S0 == "" goto iter_loop
+    $P1 = tree.'get'('past', $P0, 'Perl6::Grammar::expr')
+    if null $P1 goto iter_loop
+    push children, $P1
+    goto iter_loop
+  iter_end:
+    past['opname'] = type
+    past['children'] = children
+    $S0 = op['pasttype']
+    past['pasttype'] = $S0
+    if type == 'infix:or' goto op_or
+    if type != 'infix:||' goto subname
+  op_or:
+    children = 3
+    $P0 = children[1]
+    children[2] = $P0
+    null $P0
+    children[1] = $P0
+
+  subname:
+    $I0 = exists node['ident']
+    if $I0 goto node_ident
+    past['subname'] = type
+    goto end
+
+  node_ident:
+    $S0 = node['ident']
+    past['subname'] = $S0
+
+  end:
+    .return (past)
+}
+
+
+Perl6::Grammar::expr: past_term(.) = {
+    .local pmc iter
+    $P0 = node.'get_hash'()
+    iter = new .Iterator, $P0
+    iter = 0
+  iter_loop:
+    unless iter goto term_error
+    $S0 = shift iter
+    $P0 = iter[$S0]
+    $S1 = concat 'Perl6::Grammar::', $S0
+    $P1 = tree.'get'('past', $P0, $S1)
+    if null $P1 goto iter_loop
+    .return ($P1)
+
+  term_error:
+    print "error: 'term' node has incorrect structure.\n"
+    end
+}
+
+
+Perl6::Grammar::type: past(.) = {
+    null $P0
+    .return ($P0)
+}
+
+
+Perl6::Grammar::variable: past(.) = {
+    .local pmc past
+    .local string scope
+
+    past = new 'Perl6::PAST::Var'
+    past.set_node(node)
+    past['returns'] = 'var'
+    $S0 = node
+    past['variable'] = $S0
+    .return (past)
+}
+
+
+Perl6::Grammar::integer: past(.) = {
+    .local pmc past
+    past = new 'Perl6::PAST::Val'
+    past.set_node(node)
+    past['returns'] = 'int'
+    $I0 = node
+    past['value'] = $I0
+    .return (past)
+}
+
+
+Perl6::Grammar::number: past(.) = {
+    .local pmc past
+    past = new 'Perl6::PAST::Val'
+    past.set_node(node)
+    past['returns'] = 'num'
+    $N0 = node.value()
+    past['value'] = $N0
+    .return (past)
+}
+
+
+Perl6::Grammar::string_literal: past(.) = {
+    .local pmc past
+    past = new 'Perl6::PAST::Val'
+    past.set_node(node)
+    past['returns'] = 'str'
+    $S0 = node
+    past['value'] = $S0
+    .return (past)
+}
+
+
+Perl6::Grammar::version: past(.) = {
+    .local pmc past
+    past = new 'Perl6::PAST::Val'
+    past.set_node(node)
+    past['returns'] = 'str'
+    $S0 = node
+    $S0 = concat "'", $S0
+    concat $S0, "'"
+    past['value'] = $S0
+    .return (past)
+}
+
+
+Perl6::Grammar::statement_control: past(.) = {
+    .local pmc key, exprlist, blocklist
+    .local int exprc, blockc
+    .local pmc exprpast, thenpast, elsepast
+    key = node[0]
+    exprlist = node['expression']
+    blocklist = node['block']
+
+  # do we have an else clause?
+    null elsepast
+  else_block:
+    exprc = elements exprlist
+    blockc = elements blocklist
+    if blockc <= exprc goto expr_block_pair
+    dec blockc
+    $P0 = blocklist[blockc]
+    elsepast = tree.'get'('past', $P0, 'Perl6::Grammar::block')
+
+  ## each remaining block is paired with an "if" (or "elsif")
+  ## expression, except the first which could be an "unless".
+  expr_block_pair:
+    dec exprc
+    dec blockc
+    $P0 = exprlist[exprc]
+    exprpast = tree.'get'('past', $P0, 'Perl6::Grammar::expression')
+    $P0 = blocklist[blockc]
+    thenpast = tree.'get'('past', $P0, 'Perl6::Grammar::block')
+    if exprc > 0 goto if_op
+    if key != 'unless' goto if_op
+    exchange thenpast, elsepast
+
+  if_op:
+    .local pmc past
+    past = new "Perl6::PAST::Op"
+    past['opname'] = 'statement_control:if'
+    past['pasttype'] = 'cond'
+    $P0 = new .ResizablePMCArray
+    $P0[0] = exprpast
+    $P0[1] = thenpast
+    $P0[2] = elsepast
+    past['children'] = $P0
+    elsepast = past
+    if exprc > 0 goto expr_block_pair
+
+    .return (past)
+}
+
+
+Perl6::Grammar::block: past(.) = {
+    $P0 = node['simple_block']
+    .return tree.'get'('past', $P0, 'Perl6::Grammar::simple_block')
+}
+
+
+Perl6::Grammar::simple_block: past(.) = {
+    $P0 = node['statement_list']
+    .return tree.'get'('past', $P0, 'Perl6::Grammar::statement_list')
+}
+
+
+Perl6::Grammar::scoped_variables: past(.) = {
+    .local pmc past
+    past = new "Perl6::PAST::Lex"
+    past.set_node(node)
+    $P0 = node['variable']
+    $S0 = $P0
+    past['variable'] = $S0
+    .return (past)
+}
+
+## vim: expandtab sw=4
