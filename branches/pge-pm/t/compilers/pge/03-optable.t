@@ -53,10 +53,8 @@ optable_output_is('a=b,c,d+e',
     'list associativity');
 
 optable_output_is('a b', 'term:a (pos=1)', 'two terms in sequence');
-optable_output_is('a = = b', 'term:a (pos=1)', 'two opers in sequence',
-    todo => 'fix end position');
-optable_output_is('a +', 'term:a (pos=1)', 'infix missing rhs',
-    todo => 'fix end position');
+optable_output_is('a = = b', 'term:a (pos=1)', 'two opers in sequence');
+optable_output_is('a +', 'term:a (pos=1)', 'infix missing rhs');
 
 optable_output_is('a++', 'postfix:++(term:a)', 'postfix');
 optable_output_is('a--', 'postfix:--(term:a)', 'postfix');
@@ -70,10 +68,8 @@ optable_output_is('a*b+c)+4',
   'infix:+(infix:*(term:a, term:b), term:c) (pos=5)',
   'extra close paren');
 optable_output_is('  )a*b+c)+4', 'failed', 'only close paren');
-optable_output_is('(a*b+c', 'failed', 'missing close paren',
-  todo => 'fix close tokens');
-optable_output_is('(a*b+c]', 'failed', 'mismatch close paren',
-  todo => 'fix close tokens');
+optable_output_is('(a*b+c', 'failed', 'missing close paren');
+optable_output_is('(a*b+c]', 'failed', 'mismatch close paren');
 
 
 optable_output_is('a+++--b',
