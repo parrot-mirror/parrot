@@ -571,6 +571,12 @@ PGE::OPTable - PGE operator precedence table and parser
 .end
 
 
+### Miscellaneous Notes
+#
+# Here's the shift-reduce table used by the C<parse> method.
+# The digits in the table map each state to the corresponding
+# statement in the C<parse> method above.
+#
 #  stack                               Current token
 #  -------    -----------------------------------------------------------------
 #             postfix  close  prefix  prelist  infix  ternary  postcir  circfix
@@ -583,4 +589,29 @@ PGE::OPTable - PGE operator precedence table and parser
 #  ternary      P/E     C5      S1      P/E     P/E     P/A      P/E      S2
 #  postcir      S6      C5      S1      S6      S6      S6       S6       S2
 #  circfix      S6      C5      S1      S6      S6      S6       S6       S2
-
+#
+#    Legend:
+#       S# = shift  -- push operator onto token stack
+#       R# = reduce -- pop operator from token stack, and fill it with
+#           the appropriate number of arguments (arity) from the term stack.
+#           Then put the operator token onto the term stack.  Reducing a
+#           close token requires popping two operators from the token
+#           stack.  Reducing a lone ternary operator is a parse error
+#           (its close token must be present).
+#       P = precedence -- compare the relative precedence of the top
+#           token in the token stack with the current token.
+#           If current is tighter than top, shift.
+#           If current is looser than top, reduce.
+#       P/A = precedence with associativity -- for tokens with equal
+#           precedence, use the associativity of the top token in the
+#           token stack, shift if it's right associative, reduce otherwise.
+#       P/E = higher precedence only -- shift if the current token has
+#           higher precedence than the top token on the stack, otherwise
+#           it's a parse error.
+#       C = close -- If the current token is an appropriate closing
+#           token for the top operator on the token stack, then shift.
+#           Otherwise, it's an unbalanced closing token.
+#       X = unreachable combination
+#       E = either the end of the parse, or a parse error (probably
+#           to be determined by the caller)
+#
