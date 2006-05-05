@@ -904,7 +904,7 @@ sub main {
     }
 
     if ( $action{tree} ) {
-        print_tree(\@include, 0, @ARGV) and exit if $action{tree};
+        print_tree(\@include, 0, @ARGV);
     }
 
     if ( $action{gen_c} ) {
