@@ -21,3 +21,9 @@ An example of this format would be:
 '[TODO] IMCC - remove globals'
 
 See also docs/ROADMAP
+
+== Andy's todo ==
+
+This should be removed before I merge back to the trunk
+
+* Add GCC attributes for real_exception() since it can't return.
