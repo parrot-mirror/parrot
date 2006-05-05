@@ -27,3 +27,5 @@ See also docs/ROADMAP
 This should be removed before I merge back to the trunk
 
 * Add GCC attributes for real_exception() since it can't return.
+
+* Checks on GetOptions() for all CLI utilities.
