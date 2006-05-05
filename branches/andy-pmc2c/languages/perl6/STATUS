@@ -1,0 +1,50 @@
+This is a laundry list of things completed and items on the "to do" list:
+
+Compiler implemented
+--------------------
+* basic expressions and operators
+* listop parsing and execution
+* simplified quoted strings
+* if, unless statements
+* if, unless statement modifiers
+* chained operators: infix:and, infix:or, infix:&&, infix:||, ternary:?? !!
+
+Compiler to-do
+--------------
+* simple scalar variables (but not lexically scoped yet)
+* blocks
+* subs
+* true lexicals
+* arrays, hashes
+* resolve handling of unicode-encoded source on systems w/o ICU
+
+Parser implemented
+------------------
+* Common while, unless statements
+* Basic blocks
+* Perl 6 comments (including POD, long dot)
+* List associative operators
+* statement modifier operators
+* POD comments
+
+Parser to-do
+------------
+* real pointy subs
+* subroutine definitions
+* subroutine calling syntax
+* variables
+* "use" statement
+* statement labels
+* real quoted strings
+
+Small patches are preferred over large ones.  Send
+patches to the <perl6-compiler@perl.org> mailing list.
+
+
+PIR notes:
+
+* Currently basic blocks are being inlined into code,
+  in order to properly support lexicals each block will need
+  to become its own .sub (or at least have the capability to
+  do so).
+

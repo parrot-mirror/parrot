@@ -1,0 +1,19 @@
+Current status:
+
+Work in progress.
+
+Things to do:
+
+- Need more tests! Add more tests to t/dyadic.t. Int * Float is alright, but
+  need Int * Int and Float * Float.
+
+- Any todo'd tests.
+
+- Add function declarations.
+
+- Add vectors (May involve re-doing how we handle strings, as from APL's
+  point of view, strings are just vectors of characters)
+
+- Add DOMAIN ERROR exceptions when trying to use certain operators on
+  strings - Probably by using MMD with everything, and having Strings throw
+  errors most of the time.
