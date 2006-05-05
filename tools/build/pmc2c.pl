@@ -867,24 +867,49 @@ sub main {
     # initialization to prevent warnings
     %opt = map { $_ => 0 } qw(nobody nolines debug verbose);
 
-    my $result = GetOptions(
-        "vtable"        => \$default,
-        "dump"          => \$dump,
-        "c|gen-c"       => \$gen_c,
-        "tree"          => \$tree,
+    my %action;
+
+    GetOptions(
         "include=s"     => \@include,
+
+        "vtable"        => \$action{default},
+        "dump"          => \$action{dump},
+        "c|gen-c"       => \$action{gen_c},
+        "tree"          => \$action{tree},
+
         "no-body"       => \$opt{nobody},
         "no-lines"      => \$opt{nolines},
         "debug+"        => \$opt{debug},
         "verbose+"      => \$opt{verbose},
         "library=s"     => \$opt{library},
-    );
+    ) or exit(1);
     unshift @include, ".", "$FindBin::Bin/../..", "$FindBin::Bin/../../src/pmc/";
 
-    dump_default()                  and exit if $default;
-    dump_pmc(\@include, @ARGV)      and exit if $dump;
-    print_tree(\@include, 0, @ARGV) and exit if $tree;
-    gen_c(\@include, @ARGV)         and exit if $gen_c;
+    if ( 0 == grep { $action{$_} } keys %action ) {
+        die "No action specified!\n";
+    }
+
+    if ($action{default}) {
+        dump_default();
+        exit;
+    }
+
+    # All other actions require files
+    if ( !@ARGV ) {
+        die "No files specified.\n";
+    }
+
+    if ( $action{dump} ) {
+        dump_pmc(\@include, @ARGV);
+    }
+
+    if ( $action{tree} ) {
+        print_tree(\@include, 0, @ARGV) and exit if $action{tree};
+    }
+
+    if ( $action{gen_c} ) {
+        gen_c(\@include, @ARGV);
+    }
 }
 
 # vim: expandtab shiftwidth=4:
