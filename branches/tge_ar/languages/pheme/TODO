@@ -1,0 +1,54 @@
+http://schemers.org/Documents/Standards/R5RS/HTML/
+
+Create cons object
+	- head (the data)
+	- tail (another cons)
+
+Port car/cdr/cons to work on cons cells
+	- car: return head
+	- cdr: return tail
+	- cons: create new cons cell, assign l to head and r to tail
+
+Compiler:
+	- extract and merge POST improvements with Punie
+	- publish them under compilers/
+	- share those nodes somehow
+
+Fix namespace:
+	- lowercase
+	- directly under Parrot root
+	- use nested namespaces properly
+
+Grammar:
+	- tighten identifiers
+		- allow ! $ % & * + - . / : < = > ? @ ^ _ ~ 
+		- start with any non-number-beginning character
+		- . + - not allowed at the start of an identifier
+		- + - themselves can be an identifier
+		- ... can be an identifier
+	- fix whitespace
+		- space, newline (also tab, carriage return)
+	- allow comments
+		- semicolon to end of line
+		- can be at start of line
+	- parse numbers
+		- . + - allowed at the start of a number
+	- add more rules
+		- ` indicates almost constant data
+		- ' indicates literal data
+		- " delimits strings
+		- \ is an escape character
+
+Predicates:
+	- boolean?
+		- everything but #f is true (conditionals, not true here)
+	- symbol?
+	- char?
+	- vector?
+	- procedure?
+	- pair?
+	- number?
+	- string?
+	- port?
+	- predicates are disjoint
+	- empty list satisfies none
