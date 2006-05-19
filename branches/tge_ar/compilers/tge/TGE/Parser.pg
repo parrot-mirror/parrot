@@ -1,14 +1,11 @@
 grammar TGE::Parser;
 
-rule input {
-    [ <TGE::Parser::skip>
-    | <TGE::Parser::rule>
-    ]*
-    $
-}
+token start { ^ <TGE::Parser::statements> $ }
 
-rule rule {
-    <TGE::Parser::type> \: <TGE::Parser::attrdef> \s*
+rule statements { <TGE::Parser::transrule>* }
+
+rule transrule {
+    <TGE::Parser::type> \: <TGE::Parser::attrdef>
 }
     
 rule attrdef {
@@ -16,21 +13,21 @@ rule attrdef {
 }
 
 rule parenlist {
-    \( \s* (.*?) \s* \)\s*
+    \( (<-[)]>*) \)
 }
 
 rule codeblock {
-    \s* \{ \s* (.*?) \s* \}
+    \{ (<-[}]>*) \}
 }
 
-rule type {
+token type {
     [ \:\: ]? \w+ [ \:\: \w+ ]*
 }
 
-rule name {
-    \s*(\w+)\s*
-}
+token name { (\w+) }
 
-rule skip {
-    \s* \# \N*? $$\s*
+token ws {
+    [ \s+
+    | \# \N*
+    ]*
 }
