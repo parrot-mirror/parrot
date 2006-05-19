@@ -12,28 +12,6 @@ TGE::Parser - parser for the grammar syntax of TGE
 
 .include "compilers/tge/TGE/Parser_gen.pir"
 
-#.sub _load :load
-#    load_bytecode 'PGE.pbc'
-#
-#    .local string classname
-#    classname = 'TGE::Parser'
-#    $P1 = subclass 'PGE::Grammar', classname
-#
-#    # Construct the grammar
-#    .local pmc p6rule
-#    p6rule = compreg 'PGE::P6Regex'
-#
-#    p6rule('[<TGE::Parser::skip>|<TGE::Parser::rule>]*$', classname, 'input')
-#    p6rule('<TGE::Parser::type> \: <TGE::Parser::attrdef> \s*', classname, 'rule')
-#    p6rule('<TGE::Parser::name> <TGE::Parser::parenlist> \= <TGE::Parser::codeblock>', classname, 'attrdef')
-#    p6rule('\( \s* (.*?) \s* \)\s*', classname, 'parenlist')
-#    p6rule('\s* \{ \s* (.*?) \s* \}', classname, 'codeblock')
-#    p6rule('[ \:\: ]? \w+ [ \:\: \w+ ]*', classname, 'type')
-#    p6rule('\s*(\w+)\s*', classname, 'name')
-#    p6rule('\s* \# \N*? $$\s*', classname, 'skip')
-#.end
-
-
 =head2 agparse
 
 Take the source string for a tree grammar, and return a sensible data
@@ -47,11 +25,16 @@ structure.
     # Parse the source string and build a match tree
     .local pmc match
     .local pmc start_rule
-    start_rule = find_global "TGE::Parser", "input"
+    start_rule = find_global "TGE::Parser", "start"
     match = start_rule(source)
     # Verify the parse
     $I0 = match.__get_bool()
     unless $I0 goto err_parse    # if parse fails, stop
+#        print "parse succeeded\n"
+#        print "Match tree dump:\n"
+#        load_bytecode "dumper.pbc"
+#        load_bytecode "PGE/Dumper.pbc"
+#        '_dumper'(match, "match")
 
     .local pmc grammar
     grammar = _load_grammar()
@@ -73,8 +56,10 @@ structure.
     grammar = new "TGE"
     $P3 = find_global "TGE::Parser", "ROOT_result"
     grammar.agrule("ROOT", "result", ".", $P3)
-    $P3 = find_global "TGE::Parser", "rule_result"
-    grammar.agrule("rule", "result", ".", $P3)
+    $P3 = find_global "TGE::Parser", "statements_result"
+    grammar.agrule("statements", "result", ".", $P3)
+    $P3 = find_global "TGE::Parser", "transrule_result"
+    grammar.agrule("transrule", "result", ".", $P3)
     $P3 = find_global "TGE::Parser", "type_value"
     grammar.agrule("type", "value", ".", $P3)
     $P3 = find_global "TGE::Parser", "attrdef_name"
@@ -90,32 +75,46 @@ structure.
 .sub ROOT_result
     .param pmc tree
     .param pmc node
-    .local pmc rules
-    $I0 = exists node["TGE::Parser::rule"]
+    $I0 = exists node["TGE::Parser::statements"]
     unless $I0 goto err_no_tree
-    $P0 = node["TGE::Parser::rule"]
+    $P0 = node["TGE::Parser::statements"]
+    $P2 = tree.get('result', $P0, 'statements')
+    .return ($P2)
+
+err_no_tree:
+   print "Top-level rule did not match.\n"
+   .return ()
+.end
+
+.sub statements_result
+    .param pmc tree
+    .param pmc node
+    .local pmc rules
+    rules = new .ResizablePMCArray
+    $I0 = defined node["TGE::Parser::transrule"]
+    unless $I0 goto err_no_tree
+    $P0 = node["TGE::Parser::transrule"]
 
     # Iterate over the list of rules, and generate a processed tree for
     # each rule.  Return an array of all the processed rules.
     .local pmc iter
-    rules = new .ResizablePMCArray
     iter = new .Iterator, $P0 # loop over the array
     iter = 0 # start at the beginning
 loop_start:
     unless iter goto loop_end
     $P1 = shift iter
-    $P2 = tree.get('result', $P1, 'rule')
+    $P2 = tree.get('result', $P1, 'transrule')
     push rules, $P2
     goto loop_start
 loop_end:
     .return (rules)
 
 err_no_tree:
-   print "This grammar contained no rules.\n"
-   .return ()
+    print "This grammar contained no rules.\n"
+    .return (rules)
 .end
 
-.sub rule_result
+.sub transrule_result
     .param pmc tree
     .param pmc node
     .local pmc rule

@@ -42,7 +42,7 @@ GRAMMAR
     # Match against the source
     .local pmc match
     .local pmc start_rule
-    start_rule = find_global "TGE::Parser", "input"
+    start_rule = find_global "TGE::Parser", "start"
     print "loaded start rule\n"
     match = start_rule(source)
     print "matched start rule\n"
