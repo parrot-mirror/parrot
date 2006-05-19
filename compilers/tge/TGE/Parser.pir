@@ -10,26 +10,29 @@ TGE::Parser - parser for the grammar syntax of TGE
 
 .namespace [ 'TGE::Parser' ]
 
-.sub _load :load
-    load_bytecode 'PGE.pbc'
+.include "compilers/tge/TGE/Parser_gen.pir"
 
-    .local string classname
-    classname = 'TGE::Parser'
-    $P1 = subclass 'PGE::Grammar', classname
+#.sub _load :load
+#    load_bytecode 'PGE.pbc'
+#
+#    .local string classname
+#    classname = 'TGE::Parser'
+#    $P1 = subclass 'PGE::Grammar', classname
+#
+#    # Construct the grammar
+#    .local pmc p6rule
+#    p6rule = compreg 'PGE::P6Regex'
+#
+#    p6rule('[<TGE::Parser::skip>|<TGE::Parser::rule>]*$', classname, 'input')
+#    p6rule('<TGE::Parser::type> \: <TGE::Parser::attrdef> \s*', classname, 'rule')
+#    p6rule('<TGE::Parser::name> <TGE::Parser::parenlist> \= <TGE::Parser::codeblock>', classname, 'attrdef')
+#    p6rule('\( \s* (.*?) \s* \)\s*', classname, 'parenlist')
+#    p6rule('\s* \{ \s* (.*?) \s* \}', classname, 'codeblock')
+#    p6rule('[ \:\: ]? \w+ [ \:\: \w+ ]*', classname, 'type')
+#    p6rule('\s*(\w+)\s*', classname, 'name')
+#    p6rule('\s* \# \N*? $$\s*', classname, 'skip')
+#.end
 
-    # Construct the grammar
-    .local pmc p6rule
-    p6rule = compreg 'PGE::P6Regex'
-
-    p6rule('[<TGE::Parser::skip>|<TGE::Parser::rule>]*$', classname, 'input')
-    p6rule('<TGE::Parser::type> \: <TGE::Parser::attrdef> \s*', classname, 'rule')
-    p6rule('<TGE::Parser::name> <TGE::Parser::parenlist> \= <TGE::Parser::codeblock>', classname, 'attrdef')
-    p6rule('\( \s* (.*?) \s* \)\s*', classname, 'parenlist')
-    p6rule('\s* \{ \s* (.*?) \s* \}', classname, 'codeblock')
-    p6rule('[ \:\: ]? \w+ [ \:\: \w+ ]*', classname, 'type')
-    p6rule('\s*(\w+)\s*', classname, 'name')
-    p6rule('\s* \# \N*? $$\s*', classname, 'skip')
-.end
 
 =head2 agparse
 
