@@ -1,0 +1,36 @@
+grammar TGE::Parser;
+
+rule input {
+    [ <TGE::Parser::skip>
+    | <TGE::Parser::rule>
+    ]*
+    $
+}
+
+rule rule {
+    <TGE::Parser::type> \: <TGE::Parser::attrdef> \s*
+}
+    
+rule attrdef {
+    <TGE::Parser::name> <TGE::Parser::parenlist> \= <TGE::Parser::codeblock>
+}
+
+rule parenlist {
+    \( \s* (.*?) \s* \)\s*
+}
+
+rule codeblock {
+    \s* \{ \s* (.*?) \s* \}
+}
+
+rule type {
+    [ \:\: ]? \w+ [ \:\: \w+ ]*
+}
+
+rule name {
+    \s*(\w+)\s*
+}
+
+rule skip {
+    \s* \# \N*? $$\s*
+}

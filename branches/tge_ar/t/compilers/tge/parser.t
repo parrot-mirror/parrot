@@ -23,7 +23,7 @@ t/parser.t - TGE::Parser tests
 pir_output_is(<<'CODE', <<'OUT', "parse a basic attribute grammar");
 
 .sub _main :main
-    load_bytecode "compilers/tge/TGE/Parser.pir"
+    load_bytecode "compilers/tge/TGE.pir"
 
     .local string source
     source = <<'GRAMMAR'
