@@ -68,6 +68,8 @@ structure.
     grammar.agrule("parent", "value", ".", $P3)
     $P3 = find_global "TGE::Parser", "action_value"
     grammar.agrule("action", "value", ".", $P3)
+    $P3 = find_global "TGE::Parser", "language_value"
+    grammar.agrule("language", "value", ".", $P3)
 
     .return (grammar)
 .end
@@ -184,6 +186,19 @@ err_no_rule:
 
 # The attribute 'value' on nodes of type 'action'.
 .sub action_value
+    .param pmc tree
+    .param pmc node
+    .local pmc value
+    value = new .String
+    $P2 = node[0]
+    $S1 = $P2
+    value = $S1
+    .return (value)
+.end
+
+# The attribute 'value' on nodes of type 'language'.
+# (This will be refactored out to a general syntax for modifiers.)
+.sub language_value
     .param pmc tree
     .param pmc node
     .local pmc value
