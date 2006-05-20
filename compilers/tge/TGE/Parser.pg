@@ -8,11 +8,16 @@ rule transrule {
     transform <TGE::Parser::name> 
     \( <TGE::Parser::type> \)
     <TGE::Parser::parent>?
+    <TGE::Parser::language>?
     <TGE::Parser::action>
 }
     
 rule parent {
     \:applyto \( \'(<-[']>*)\' \)
+}
+
+rule language {
+    \:language \( \'(\w+)\' \)
 }
 
 rule action {

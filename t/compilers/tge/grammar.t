@@ -36,12 +36,12 @@ pir_output_is(<<'CODE', <<'OUT', 'complete example: Branch/Leaf tree grammar');
     # Load the grammar in a string
     .local string source
     source = <<'GRAMMAR'
-    transform min (Leaf) { 
+    transform min (Leaf) :language('PIR') { 
         $P1 = getattribute node, "value"
-        .return ($P1)
+       .return ($P1)
     }
 
-    transform min (Branch) {
+    transform min (Branch) :language('PIR') {
         .local pmc left
         .local pmc right
         .local pmc min
@@ -61,20 +61,20 @@ pir_output_is(<<'CODE', <<'OUT', 'complete example: Branch/Leaf tree grammar');
     }
 
     # find the global minimum and propagate it back down the tree
-    transform gmin (ROOT) { 
+    transform gmin (ROOT) :language('PIR') { 
         .local pmc gmin
         gmin = new Integer
         gmin = tree.get('min', node)
         .return (gmin)
     }
 
-    transform gmin (Branch) :applyto('left') { 
+    transform gmin (Branch) :applyto('left') :language('PIR') { 
         .local pmc gmin
         gmin = tree.get('gmin', node)
         .return (gmin)
     }
 
-    transform gmin (Branch) :applyto('right') {
+    transform gmin (Branch) :applyto('right') :language('PIR') {
         .local pmc gmin
         gmin = tree.get('gmin', node)
         .return (gmin)
@@ -82,7 +82,7 @@ pir_output_is(<<'CODE', <<'OUT', 'complete example: Branch/Leaf tree grammar');
 
     # reconstruct the tree with every leaf replaced with the minimum
     # value
-    transform result (Leaf) {
+    transform result (Leaf) :language('PIR') {
         .local pmc newnode
 
         newnode = new 'Leaf'
@@ -91,7 +91,7 @@ pir_output_is(<<'CODE', <<'OUT', 'complete example: Branch/Leaf tree grammar');
         .return(newnode)
     }
 
-    transform result (Branch) {
+    transform result (Branch) :language('PIR') {
         .local pmc newnode
         .local pmc left_child
         .local pmc right_child
