@@ -27,12 +27,12 @@ pir_output_is(<<'CODE', <<'OUT', "parse a basic attribute grammar");
 
     .local string source
     source = <<'GRAMMAR'
-    Leaf:   min(.) = {
+    transform min (Leaf) {
         $P1 = getattribute node, "value"
         .return ($P1)
     }
     # A test comment
-    Branch: gmin(.left)  = {
+    transform gmin (Branch) :applyto('left') {
         .local pmc gmin
         gmin = tree.get('gmin', node)
         .return (gmin)

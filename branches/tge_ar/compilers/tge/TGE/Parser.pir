@@ -62,12 +62,12 @@ structure.
     grammar.agrule("transrule", "result", ".", $P3)
     $P3 = find_global "TGE::Parser", "type_value"
     grammar.agrule("type", "value", ".", $P3)
-    $P3 = find_global "TGE::Parser", "attrdef_name"
-    grammar.agrule("attrdef", "name", ".", $P3)
-    $P3 = find_global "TGE::Parser", "attrdef_parent"
-    grammar.agrule("attrdef", "parent", ".", $P3)
-    $P3 = find_global "TGE::Parser", "attrdef_action"
-    grammar.agrule("attrdef", "action", ".", $P3)
+    $P3 = find_global "TGE::Parser", "name_value"
+    grammar.agrule("name", "value", ".", $P3)
+    $P3 = find_global "TGE::Parser", "parent_value"
+    grammar.agrule("parent", "value", ".", $P3)
+    $P3 = find_global "TGE::Parser", "action_value"
+    grammar.agrule("action", "value", ".", $P3)
 
     .return (grammar)
 .end
@@ -120,28 +120,30 @@ err_no_tree:
     .local pmc rule
     rule = new .Hash
 
-    # Get the type name
-    $I0 = exists node["TGE::Parser::type"]
-    unless $I0 goto err_no_rule
-    $P1 = node["TGE::Parser::type"]
-    $P2 = tree.get('value', $P1, 'type')
-    rule["type"] = $P2
+    .local pmc iter
+    iter = new Iterator, node    # setup iterator for node
+    iter = 0
+  iter_loop:
+    unless iter, iter_end         # while (entries) ...
+      shift $S1, iter           # get the key of the iterator
+      $P2 = iter[$S1]
+      $S2 = substr $S1, 13
 
-    $I0 = exists node["TGE::Parser::attrdef"]
-    unless $I0 goto err_no_rule
-    $P3 = node["TGE::Parser::attrdef"]
-    $P4  = tree.get('name', $P3, 'attrdef')
-    rule["name"] = $P4
-    $P4 = tree.get('parent', $P3, 'attrdef')
-    rule["parent"] = $P4
-    $P4 = tree.get('action', $P3, 'attrdef')
-    rule["action"] = $P4
-    $S0 = typeof $P1
+      $P2 = tree.get('value', $P2, $S2)
+
+      rule[$S2] = $P2
+      goto iter_loop
+  iter_end:
+
+    $I0 = defined rule["parent"]
+    if $I0 goto parent_defined
+    rule["parent"] = "."
+  parent_defined:
     .return (rule)
    
 err_no_rule:
     print "Unable to find all the components of a rule definition\n"
-    return ()
+    .return ()
 .end
 
 # The attribute 'value' on nodes of type 'type'.
@@ -155,43 +157,41 @@ err_no_rule:
     .return (value)
 .end
 
-# The attribute 'name' on nodes of type 'attrdef'.
-.sub attrdef_name
+# The attribute 'value' on nodes of type 'name'.
+.sub name_value
     .param pmc tree
     .param pmc node
     .local pmc name
     name = new .String
-    $P2 = node["TGE::Parser::name"]
-    $P3 = $P2[0]
-    $S1 = $P3
+    $P2 = node
+    $S1 = $P2
     name = $S1
     .return (name)
 .end
 
-# The attribute 'parent' on nodes of type 'attrdef'.
-.sub attrdef_parent
+# The attribute 'value' on nodes of type 'parent'.
+.sub parent_value
     .param pmc tree
     .param pmc node
-    .local pmc name
-    name = new .String
-    $P2 = node["TGE::Parser::parenlist"]
+    .local pmc value
+    value = new .String
+    $P2 = node[0]
     $P3 = $P2[0]
     $S1 = $P3
-    name = $S1
-    .return (name)
+    value = $S1
+    .return (value)
 .end
 
-# The attribute 'action' on nodes of type 'attrdef'.
-.sub attrdef_action
+# The attribute 'value' on nodes of type 'action'.
+.sub action_value
     .param pmc tree
     .param pmc node
-    .local pmc name
-    name = new .String
-    $P2 = node["TGE::Parser::codeblock"]
-    $P3 = $P2[0]
-    $S1 = $P3
-    name = $S1
-    .return (name)
+    .local pmc value
+    value = new .String
+    $P2 = node[0]
+    $S1 = $P2
+    value = $S1
+    .return (value)
 .end
 
 =head1 AUTHOR
