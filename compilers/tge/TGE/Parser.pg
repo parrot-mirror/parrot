@@ -5,18 +5,17 @@ token start { ^ <TGE::Parser::statements> $ }
 rule statements { <TGE::Parser::transrule>* }
 
 rule transrule {
-    <TGE::Parser::type> \: <TGE::Parser::attrdef>
+    transform <TGE::Parser::name> 
+    \( <TGE::Parser::type> \)
+    <TGE::Parser::parent>?
+    <TGE::Parser::action>
 }
     
-rule attrdef {
-    <TGE::Parser::name> <TGE::Parser::parenlist> \= <TGE::Parser::codeblock>
+rule parent {
+    \:applyto \( \'(<-[']>*)\' \)
 }
 
-rule parenlist {
-    \( (<-[)]>*) \)
-}
-
-rule codeblock {
+rule action {
     \{ (<-[}]>*) \}
 }
 
@@ -24,7 +23,7 @@ token type {
     [ \:\: ]? \w+ [ \:\: \w+ ]*
 }
 
-token name { (\w+) }
+token name { \w+ }
 
 token ws {
     [ \s+
