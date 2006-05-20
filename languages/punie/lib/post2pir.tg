@@ -1,7 +1,7 @@
 # This is just a stub to allow Punie to execute code. It will be
 # replaced.
 
-ROOT: result(.) = {
+transform result (ROOT) {
     .local string output
     output = ".sub _main :main\n"
     .local pmc iter
@@ -18,7 +18,7 @@ ROOT: result(.) = {
 }
 
 # Flatten out the ops into a simple sequence.
-POST::Ops: result(.) = {
+transform result (POST::Ops) {
     .local string output
     .local pmc iter
     iter = node.'child_iter'()
@@ -32,7 +32,7 @@ POST::Ops: result(.) = {
     .return (output)
 }
 
-POST::Op: result(.) = {
+transform result (POST::Op) {
     .local string output
     .local int counter
     counter = 0
@@ -57,12 +57,12 @@ POST::Op: result(.) = {
     .return (output)
 }
 
-POST::Var: result(.) = {
+transform result (POST::Var) {
     $S1 = node.varname()
     .return ($S1)
 }
 
-POST::Label: result(.) = {
+transform result (POST::Label) {
     $S1 = node.name()
     $I1 = node.dest()
     unless $I1 goto not_dest
@@ -71,7 +71,7 @@ POST::Label: result(.) = {
     .return ($S1)
 }
 
-POST::Val: result(.) = {
+transform result (POST::Val) {
     $S1 = node.value()
     $S2 = node.valtype()
     if $S2 == 'strq' goto wrap_string_single
