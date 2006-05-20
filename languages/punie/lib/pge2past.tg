@@ -1,4 +1,4 @@
-transform result (ROOT) {
+transform result (ROOT) :language('PIR') {
     # Ask the child node for its result
     .local pmc child
     $I0 = defined node["PunieGrammar::lineseq"]
@@ -13,7 +13,7 @@ transform result (ROOT) {
     end
 }
 
-transform result (PunieGrammar::block) {
+transform result (PunieGrammar::block) :language('PIR') {
     # Ask the child node for its result
     .local pmc child
     $I0 = defined node["PunieGrammar::lineseq"]
@@ -28,7 +28,7 @@ transform result (PunieGrammar::block) {
     end
 }
 
-transform result (PunieGrammar::lineseq) {
+transform result (PunieGrammar::lineseq) :language('PIR') {
     .local pmc result
     result = new 'PAST::Stmts'
     result.'clone'(node)
@@ -56,7 +56,7 @@ transform result (PunieGrammar::lineseq) {
     end
 }
 
-transform result (PunieGrammar::line) {
+transform result (PunieGrammar::line) :language('PIR') {
     .local pmc result
     result = new 'PAST::Stmt'
     result.'clone'(node)
@@ -77,7 +77,7 @@ transform result (PunieGrammar::line) {
     .return (result)
 }
 
-transform result (PunieGrammar::expr) {
+transform result (PunieGrammar::expr) :language('PIR') {
     .local pmc result
     result = new 'PAST::Exp'
     result.'clone'(node)
@@ -98,7 +98,7 @@ transform result (PunieGrammar::expr) {
     .return (result)
 }
 
-transform result (PunieGrammar::gprint) {
+transform result (PunieGrammar::gprint) :language('PIR') {
     .local pmc result
     result = new 'PAST::Op'
     result.'clone'(node)
@@ -121,7 +121,7 @@ transform result (PunieGrammar::gprint) {
     .return (result)
 }
 
-transform result (PunieGrammar::cond) {
+transform result (PunieGrammar::cond) :language('PIR') {
     .local pmc result
     result = new 'PAST::Op'
     result.'clone'(node)
@@ -145,7 +145,7 @@ transform result (PunieGrammar::cond) {
     .return (result)
 }
 
-transform result (PunieGrammar::else) {
+transform result (PunieGrammar::else) :language('PIR') {
     .local pmc onechild
     onechild = node[0]
     unless onechild goto no_child
@@ -174,11 +174,11 @@ transform result (PunieGrammar::else) {
     .return ()
 }
 
-transform result (PunieGrammar::label) {
+transform result (PunieGrammar::label) :language('PIR') {
     .return ()
 }
 
-transform result (PunieGrammar::cexpr) {
+transform result (PunieGrammar::cexpr) :language('PIR') {
     .local pmc result
     $I0 = defined node["PunieGrammar::oexpr"]
     unless $I0 goto err_no_oexpr
@@ -214,7 +214,7 @@ transform result (PunieGrammar::cexpr) {
     end
 }
 
-transform result (PunieGrammar::oexpr) {
+transform result (PunieGrammar::oexpr) :language('PIR') {
     .local pmc result
     result = new 'PAST::Exp'
     result.'clone'(node)
@@ -237,7 +237,7 @@ transform result (PunieGrammar::oexpr) {
 }
 
 
-transform result (PunieGrammar::number) {
+transform result (PunieGrammar::number) :language('PIR') {
     .local pmc result
     result = new 'PAST::Val'
     result.'clone'(node)
@@ -248,7 +248,7 @@ transform result (PunieGrammar::number) {
     .return (result)
 }
 
-transform result (PunieGrammar::integer) {
+transform result (PunieGrammar::integer) :language('PIR') {
     .local pmc result
     result = new 'PAST::Val'
     result.'clone'(node)
@@ -258,7 +258,7 @@ transform result (PunieGrammar::integer) {
     .return (result)
 }
 
-transform result (PunieGrammar::stringdouble) {
+transform result (PunieGrammar::stringdouble) :language('PIR') {
     .local pmc result
     result = new 'PAST::Val'
     result.'clone'(node)
@@ -280,7 +280,7 @@ transform result (PunieGrammar::stringdouble) {
     .return (result)
 }
 
-transform result (PunieGrammar::stringsingle) {
+transform result (PunieGrammar::stringsingle) :language('PIR') {
     .local pmc result
     result = new 'PAST::Val'
     result.'clone'(node)
@@ -308,7 +308,7 @@ transform result (PunieGrammar::stringsingle) {
 # node, instead of storing the node as the value of a hash key that
 # is their type.
 
-transform result (expr) {
+transform result (expr) :language('PIR') {
     .local string type
     type = node["type"]
     unless node goto error_no_node
@@ -324,7 +324,7 @@ transform result (expr) {
       end
 }
 
-transform op (expr) {
+transform op (expr) :language('PIR') {
     .local pmc result
     result = new 'PAST::Op'
     result.'clone'(node)
@@ -347,7 +347,7 @@ transform op (expr) {
     .return (result)
 }
 
-transform term (expr) {
+transform term (expr) :language('PIR') {
     .local pmc result
     .local pmc children
     children = new .ResizablePMCArray
