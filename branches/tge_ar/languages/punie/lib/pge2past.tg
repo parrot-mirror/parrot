@@ -1,3 +1,5 @@
+grammar ASTGrammar is TGE::Grammar;
+
 transform result (ROOT) :language('PIR') {
     # Ask the child node for its result
     .local pmc child

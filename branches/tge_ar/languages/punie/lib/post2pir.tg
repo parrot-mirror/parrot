@@ -1,5 +1,6 @@
 # This is just a stub to allow Punie to execute code. It will be
 # replaced.
+grammar PIRGrammar is TGE::Grammar;
 
 transform result (ROOT) :language('PIR') {
     .local string output

@@ -2,7 +2,16 @@ grammar TGE::Parser;
 
 token start { ^ <TGE::Parser::statements> $ }
 
-rule statements { <TGE::Parser::transrule>* }
+rule statements { 
+    [ <TGE::Parser::transrule>
+    | <TGE::Parser::grammardec>
+    ]* 
+}
+
+rule grammardec {
+    grammar <TGE::Parser::type>
+    [is <TGE::Parser::type>]?;
+}
 
 rule transrule {
     transform <TGE::Parser::name> 
