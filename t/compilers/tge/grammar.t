@@ -36,6 +36,8 @@ pir_output_is(<<'CODE', <<'OUT', 'complete example: Branch/Leaf tree grammar');
     # Load the grammar in a string
     .local string source
     source = <<'GRAMMAR'
+    grammar TreeMin is TGE::Grammar;
+
     transform min (Leaf) :language('PIR') { 
         $P1 = getattribute node, "value"
        .return ($P1)
