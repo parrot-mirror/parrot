@@ -1,0 +1,33 @@
+Things to do:
+
+o Update APLVector to handle at least 2-dimensional arrays. See core 
+  "multiarray" for potentially reuse / subclassing. This now also
+  includes character arrays.
+  o properly print/display N dimensional arrays. 
+
+o Need more tests! More tests for each type of operand per operator.
+
+o Add function declarations.
+
+o Add selective specification {in perl: lvalues}
+
+o Add bracket indexing. { in perl: $a[1] } { implement index operator first }
+
+o clean up the tools/ script so non-generated code is moved into a .pir file.
+
+o More type issues: Given the APL code:
+
+  FOO ← 2 4⍴⍳8
+1 2 3 4
+5 6 7 8
+  ≡ FOO
+1
+  ⍴⊂FOO
+
+  ⍴⍴⊂FOO
+0
+  ≡⊂FOO
+2
+
+... How do we store ⊂FOO? It's a scalar (shape), but contains a matrix (depth). Perhaps a ref type of some kind? Or should we try to make APLVector deal with this?
+
