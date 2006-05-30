@@ -1,0 +1,102 @@
+=head1 NAME
+
+Software transactional memory frontend
+
+=head1 ABSTRACT
+
+Defines the PASM/PIR visible interfaces to STM.
+
+=head1 DESCRIPTION
+
+=head2 Opcodes
+
+Opcodes that require a transaction to be open will throw an exception
+if there is no transaction in progress. The type of the exception will
+be 
+
+=over 4
+
+=item stm_start
+
+Opens a transaction.
+
+=item stm_validate INVALID
+
+Jumps to the label INVALID if the current transaction is not valid.
+
+=item stm_commit RETRY
+
+Commits the most recently opened transaction. Jumps to RETRY if the
+commit failed. (If the outer transaction is invalid, this should succeed
+always.)
+
+=item stm_commit RETRY, INVALID
+
+Like stm_commit, but jumps to INVALID if the current transaction cannot
+commit because the outer transaction became invalid.
+
+=item stm_wait 
+
+Aborts the most recently opened transaction, then waits for something
+it was dependent upon to change. Usually one will then restart the
+transaction.
+
+=item stm_wait INVALID_OUTER
+
+Does what stm_wait does, but if the outer transaction is invalid after
+waiting or after the inner transaction is aborted, jumps to INVALID_OUTER.
+If nested transactions are allowed, then either this variant should be used
+or the simplier stm_wait should be followed by an explicit stm_validate.
+
+(The jump is needed because otherwise the inner transaction may never suceed because
+the outer transaction constrains it to not see new values.) 
+
+=item stm_abort
+
+Aborts the most recently opened transaction. Always suceeds (if there is such
+a transaction).
+
+=back
+
+=head2 STMRef PMC
+
+The STMRef type is like Ref (that is, its default implementation of everything
+delegates) but it provides transactional access to whatever it wraps.
+
+=head3 Constructors
+
+=over 4
+
+=item new Px, .STMRef
+
+Creates a new STMRef which contains the NULL PMC.
+
+=item new Px, .STMRef, Py
+
+Creates a new STMRef which contains a clone of Py
+
+=back
+
+=head3 Methods
+
+=over 4
+
+=item __STMRef_get_read
+
+Returns a version of the enclosed PMC suitable for reading B<only>.
+
+=item __STMRef_get_update
+
+Returns a copy of the closed PMC suitable for updating. Changes made to this PMC
+will be reflected after the current transaction completes. Even if no changes are
+made the underlying PMC, this will be considered an update for the purposes of
+transaction conflicts, etc.
+
+=item __STMRef_set(PMC)
+
+Sets the internal PMC to the supplied PMC. This is not equivalent to using the 'set'
+opcode, which will call the underlying PMC's set VTABLE method. (XXX do we really
+want to support this PMC-is-variable semantic)
+
+=back
+
