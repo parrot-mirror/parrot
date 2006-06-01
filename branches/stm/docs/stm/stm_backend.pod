@@ -26,7 +26,7 @@ not, then starting a nested transaction will always fail.
 
 =over 4
 
-=item STM_pmc_handle
+=item STM_PMC_handle
 
 An opaque pointer type which will point to some sort PObj*.
 
@@ -49,7 +49,7 @@ calls to the global functions will go as if through the vtable. The vtable
 should not be changed after calling the function.  Should only be called
 once. Below functions are not safe to use until it has been called.
 
-=item STM_pmc_handle STM_alloc(Interp *interp, PMC *pmc)
+=item STM_PMC_handle STM_alloc(Interp *interp, PMC *pmc)
 
 Creates a handle through which a PMC may be accessed. C<pmc> is copied as
 the starting value if it is non-null. Otherwise PMCNULL will be assumed.
@@ -59,24 +59,24 @@ Has no effect on current transactions.
 
 Start a new (possibly nested) transaction. Returns true on success, false otherwise.
 
-=item PMC *STM_read(Interp *, STM_pmc_handle handle)
+=item PMC *STM_read(Interp *, STM_PMC_handle handle)
 
 Read a PMC. The STM implementation trusts that you will not modify the
 returned PMC.
 
-=item PMC *STM_begin_update(Interp *, STM_pmc_handle handle)
+=item PMC *STM_begin_update(Interp *, STM_PMC_handle handle)
 
 Obtain some copy of the PMC for writing. Writes will not commit
 immediately.  If this function is called while no transaction is active it
 will return NULL and will not do anything else.
 
-=item void STM_finish_update(Interp *, STM_pmc_handle handle, PMC *)
+=item void STM_finish_update(Interp *, STM_PMC_handle handle, PMC *)
 
 Finish writing a PMC obtained with C<STM_begin_update>. If the supplied C<PMC *> is
 different from the copy given, it should still be used. It is an error to
 call this function while no transaction is active.
 
-=item void STM_write(Interp *, STM_pmc_handle handle, PMC *)
+=item void STM_write(Interp *, STM_PMC_handle handle, PMC *)
 
 Replace the stored PMC with the provided version without reading or copying the current value.
 
@@ -85,7 +85,7 @@ Replace the stored PMC with the provided version without reading or copying the 
 Commits a transaction. Returns a true value if the transaction was successful. If it
 returns false, the transaction was aborted.
 
-=item int STM_abort(Interp *)
+=item void STM_abort(Interp *)
 
 Abort a transaction, leaving the original values unchanged.
 
@@ -102,7 +102,7 @@ Returns true if the current transaction is still valid (a commit would succeed),
 
 Mark everything referenced by the current transaction as living.
 
-=item void STM_mark_pmc_handle(Interp *, STM_pmc_handle handle)
+=item void STM_mark_pmc_handle(Interp *, STM_PMC_handle handle)
 
 Mark everything referenced by the PMC handle as living.
 
