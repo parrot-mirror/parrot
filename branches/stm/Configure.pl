@@ -421,6 +421,7 @@ my @steps = qw(
     auto::python
     auto::bc
     auto::m4
+    auto::cpu
     gen::icu
     gen::revision
     gen::config_h
