@@ -19,9 +19,6 @@ If these functions are called when there is no active transaction, then they
 will be equivalent to creating a transaction, calling the function in
 question, and then ending the transaction (except when otherwise noted).
 
-An implementation may or may not support nested transactions. If it does
-not, then starting a nested transaction will always fail.
-
 =head2 Types
 
 =over 4
@@ -55,9 +52,9 @@ Creates a handle through which a PMC may be accessed. C<pmc> is copied as
 the starting value if it is non-null. Otherwise PMCNULL will be assumed.
 Has no effect on current transactions.
 
-=item int STM_start_transaction(Interp *interp)
+=item void STM_start_transaction(Interp *interp)
 
-Start a new (possibly nested) transaction. Returns true on success, false otherwise.
+Start a new (possibly nested) transaction.
 
 =item PMC *STM_read(Interp *, STM_PMC_handle handle)
 
@@ -83,7 +80,8 @@ Replace the stored PMC with the provided version without reading or copying the 
 =item int STM_commit(Interp *)
 
 Commits a transaction. Returns a true value if the transaction was successful. If it
-returns false, the transaction was aborted.
+returns false, the transaction was aborted. Inner transactions are always
+successful if the outer transaction is invalid.
 
 =item void STM_abort(Interp *)
 
@@ -96,7 +94,9 @@ Abort the transaction and wait for one of the values it is dependent on to chang
 
 =item int STM_validate(Interp *)
 
-Returns true if the current transaction is still valid (a commit would succeed), false otherwise.
+Returns true if the current transaction is still valid (a commit 
+would succeed), false otherwise. Always return true when there is
+no active transaction.
 
 =item void STM_mark_transaction(Interp *)
 
