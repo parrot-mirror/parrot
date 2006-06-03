@@ -19,7 +19,9 @@ $Revision: 11771 $
 
 Software transactional memory provides a transaction-like interface to
 shared data. This document describes an interface through which Parrot's
-STM implementation can be used from PIR and PASM.
+STM implementation can be used from PIR and PASM. Functionality necessary
+to start, commit, abort, and retry transactions and to wrap PMCs for
+transactional access is supplied.
 
 B<TODO>: Deal with issues like exceptions in the middle of transactions.
 (Presumably can be dealt with on top of what's already here)
@@ -42,7 +44,7 @@ transaction will commit in the absence of activity in other threads.)
 
 Transactions can be nested. Nested transactions may be called inner 
 transactions below and the transactions enclosing them outer transactions.
-If a inner transaction commits, its effects are still not seen until
+If an inner transaction commits, its effects are still not seen globally until
 the corresponding outer transaction commits.
 
 =head1 IMPLEMENTATION
@@ -75,7 +77,8 @@ commit because the outer transaction became invalid.
 
 =item stm_wait INVALID_OUTER
 
-Does what stm_wait does, but if the outer transaction is invalid after
+Aborts the current transaction, then waits for some value it read
+to have changed.  If the outer transaction is invalid after
 waiting or after the inner transaction is aborted, jumps to INVALID_OUTER.
 If nested transactions are allowed, then either this variant should be used
 or the simpler stm_wait should be followed by an explicit stm_validate.
@@ -87,6 +90,12 @@ the outer transaction constrains it to not see new values.)
 
 Aborts the most recently opened transaction. Always succeeds (if there is such
 a transaction).
+
+=item stm_depth I<INT>
+
+Returns how deeply nested in transactions the current thread is. The number
+of transactions active in the current thread is assigned to the integer
+register (0 if the current thread is outside any transaction).
 
 =back
 
