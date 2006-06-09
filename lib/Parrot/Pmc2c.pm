@@ -116,7 +116,7 @@ C<new()>, and C<$class> is C<Parrot::Pmc2c>.
 =cut
 
 my %special_class_name = map {($_,1)}
-    qw( Ref default Null delegate SharedRef deleg_pmc );
+    qw( STMRef Ref default Null delegate SharedRef deleg_pmc );
 
 sub class_name {
     my ($self, $class) = @_;
@@ -1338,9 +1338,35 @@ EOC
 
 =back
 
-=head2 Parrot::Pmc2c::SharedRef Instance Methods
+=cut
 
-C<SharedRef> is like C<Ref> but with locking. Inherits from Parrot::Pmc2c::Ref.
+package Parrot::Pmc2c::STMRef;
+use base 'Parrot::Pmc2c::Ref';
+
+=head2 Parrot::Pmc2c::STMRef Instance Methods
+
+=over 4
+
+=cut
+
+sub prederef {
+    # TODO: handle read-only case
+    return <<EOC;
+    PMC *real_pmc;
+    Parrot_STM_PMC_handle handle;
+
+    handle = PMC_struct_val(pmc);
+    real_pmc = Parrot_STM_begin_update(interpreter, handle);
+EOC
+}
+
+sub raw_deref {
+    return 'real_pmc';
+}
+
+=back
+
+=head2 Parrot::Pmc2c::SharedRef Instance Methods
 
 =over 4
 

@@ -338,6 +338,10 @@ Parrot_dod_trace_root(Interp *interpreter, int trace_stack)
     if (interpreter->DOD_registry)
         pobject_lives(interpreter, (PObj *)interpreter->DOD_registry);
 
+    /* Mark the transaction log */
+    /* XXX do this more generically? */
+    if (interpreter->thread_data && interpreter->thread_data->stm_log)
+        Parrot_STM_mark_transaction(interpreter);
 
     /* Walk the iodata */
     Parrot_IOData_mark(interpreter, interpreter->piodata);
@@ -760,7 +764,7 @@ Parrot_dod_sweep(Interp *interpreter,
                      * XXX
                      * for now don't mess around with shared objects
                      */
-                    if (p->vtable->flags & VTABLE_IS_SHARED_FLAG)
+                    if (PObj_is_PMC_shared_TEST(p))
                         goto next;
 
                     /* then destroy it here

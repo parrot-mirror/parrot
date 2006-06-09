@@ -1186,3 +1186,16 @@ find_name_p_s                  1155
 find_name_p_sc                 1156
 addmethod_p_s_p                1157
 addmethod_p_sc_p               1158
+stm_start                      1159
+stm_validate_i                 1160
+stm_validate_ic                1161
+stm_commit_i                   1162
+stm_commit_ic                  1163
+stm_commit_ic_ic               1164
+stm_commit_ic_i                1165
+stm_commit_i_ic                1166
+stm_wait_i                     1167
+stm_wait_ic                    1168
+stm_abort                      1169
+stm_depth_i                    1170
+

@@ -86,6 +86,9 @@ typedef struct _Thread_data {
      * for the non-threaded case
      */
     Parrot_mutex interp_lock;
+
+    /* STM transaction log */
+    void               *stm_log;
 } Thread_data;
 
 #define LOCK_INTERPRETER(interp) \

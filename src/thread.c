@@ -536,20 +536,18 @@ pt_add_to_interpreters(Parrot_Interp interpreter, Parrot_Interp new_interp)
         interpreter_array = mem_sys_allocate(sizeof(Interp*));
         interpreter_array[0] = interpreter;
         n_interpreters = 1;
-        return;
-    }
-
-    if (n_interpreters == 1) {
-        /*
-         * First time a thread is started, make the first interpreter
-         * a threaded one by attaching thread_data
-         */
+        
+        /* XXX try to defer this until later */
         assert(interpreter == interpreter_array[0]);
         interpreter->thread_data =
             mem_sys_allocate_zeroed(sizeof(Thread_data));
         INTERPRETER_LOCK_INIT(interpreter);
         interpreter->thread_data->tid = 0;
+
+        return;
     }
+    
+    
     new_interp->thread_data = mem_sys_allocate_zeroed(sizeof(Thread_data));
     INTERPRETER_LOCK_INIT(new_interp);
     running_threads++;
