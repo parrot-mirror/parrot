@@ -466,6 +466,7 @@ INTERP_O_FILES = \
     $(SRC_DIR)/extend_vtable$(O) \
     $(SRC_DIR)/revision$(O) \
     $(PF_DIR)/pf_items$(O) \
+    $(SRC_DIR)/stm/backend$(O) \
     @TEMP_gc_o@
 
 O_FILES = \
