@@ -122,7 +122,8 @@ thread_func(void *arg)
         /* caught exception */
         ret_val = PMCNULL;
         except = interpreter->exceptions;
-        PIO_eprintf(interpreter, /* PARROT_WARNINGS_THREAD_FLAG,  */
+        /* XXX what should we really do here */
+        PIO_eprintf(interpreter,
             "Unhandled exception in thread with tid %d (message=%Ss, number=%d)\n",
             interpreter->thread_data->tid,
             except->msg,
