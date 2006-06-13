@@ -44,7 +44,7 @@ if ($^O eq "cygwin" ) {
 	exit;
     }
 }
-if (0 && $platforms{$^O}) {
+if ($platforms{$^O}) {
    plan tests => 11;
 }
 else {
@@ -71,26 +71,26 @@ ok 1
 ok 2
 OUTPUT
 
-pasm_output_is(<<'CODE', <<'OUTPUT', "thread type 1");
-    set I5, 10
-    #
-    # set regs P2 = thread-interp, P5 = sub
-    find_global P5, "_foo"
-    new P2, .ParrotThread
-    set I3, 1
-    callmethod "thread1"
+pir_output_is(<<'CODE', <<'OUTPUT', "thread type 1");
+.sub main :main
+    .local pmc threadfunc
+    .local pmc thread
+    I5 = 10
+    threadfunc = global "foo"
+    thread = new .ParrotThread
+    thread.'thread1'(threadfunc)
 
     sleep 1
     print "main "
     print I5
     print "\n"
     # get tid of thread
-    set I5, P2
+    $I0 = thread 
     # wait for it
-    callmethod "join"
-    end
+    thread.'join'()
+.end
 
-.pcc_sub _foo:
+.sub foo 
     # check if vars are fresh
     inc I5
     print "thread "
@@ -98,105 +98,96 @@ pasm_output_is(<<'CODE', <<'OUTPUT', "thread type 1");
     print "\n"
     set I3, 0   # no retval
     returncc	# ret and be done with thread
-
+.end
 # output from threads could be reversed
 CODE
 thread 1
 main 10
 OUTPUT
 
-
-pasm_output_is(<<'CODE', <<'OUTPUT', "thread type 2");
+pir_output_is(<<'CODE', <<'OUTPUT', "thread type 2");
+.sub main :main
     set I5, 10
-    set S5, " interp\n"
-    new P6, .String
-    set P6, "from "
+    .local pmc thread
+    .local pmc threadsub
+    S5 = " interp\n"
+    P6 = new .String
+    P6 = 'from '
 
-    #
-    # set regs P2 = thread-interp, P5 = sub
     print "ok 1\n"
-    find_global P5, "_foo"
-    print "ok 2\n"
-    new P2, .ParrotThread
-    set I3, 2   # 2 args
-    callmethod "thread2"
-
-    sleep 1	# now the thread should run
+    threadsub = global "foo"
+    thread = new .ParrotThread
+    thread.'thread2'(threadsub, P6)
+    sleep 1 # to let the thread run
     print P6
     print I5
     print S5
-    # get tid of thread
-    set I5, P2
-    # wait for it
-    callmethod "join"
-    end
+    thread.'join'()
+.end
 
-.pcc_sub _foo:
-    # check if vars a really separate
+.sub foo
+    .param pmc passed
     inc I5
-    set S5, " thread\n"
-    set P6, "hello from "
-    print P6
+    S5 = " thread\n"
+    passed = 'hello from '
+    print passed
     print I5
     print S5
-    getinterp P2
-    typeof S0, P2
-    print S0
-    print " tid "
-    set I0, P2
-    print I0
+    $P0 = getinterp
+    $S0 = typeof $P0
+    print $S0
+    print ' tid '
+    $I0 = $P0
+    print $I0
     print "\n"
-    set I3, 0
-    returncc	# ret and be done with thread
-
+.end
 CODE
 ok 1
-ok 2
 hello from 1 thread
 ParrotThread tid 1
 from 10 interp
 OUTPUT
 
-pasm_output_is(<<'CODE', <<'OUTPUT', "thread - kill");
+pir_output_is(<<'CODE', <<'OUTPUT', 'thread - kill');
+.sub main :main
+    .local pmc threadsub
+    .local pmc thread
     bounds 1	# assert slow core -S and -g are fine too
-    find_global P5, "_foo"
-    new P2, .ParrotThread
-    set I10, P2
-    print "start "
-    print I10
+    threadsub = global "foo"
+    thread = new .ParrotThread
+    $I0 = thread
+    print 'start '
+    print $I0
     print "\n"
-    set I3, 1
-    callmethod "thread3"
-    sleep 1
+    thread.'thread3'(threadsub)
 
-    set I5, I10
-    getinterp P2
-    callmethod "kill"
+    sleep 1 # to let the thread run
+
+    thread.'kill'()
 
     print "done\n"
-    end
+.end
 
-.pcc_sub _foo:
+.sub foo
     print "in thread\n"
-    # run a endless loop
+    # run an endles loop
 lp:
     noop
     branch lp
-    print "never\n"
-    returncc
+.end
 CODE
 start 1
 in thread
 done
 OUTPUT
+    
 
 pir_output_is(<<'CODE', <<'OUTPUT', "join, get retval");
-
 .sub _main
     .const int MAX = 1000
     .sym pmc kid
     .sym pmc Adder
-    Adder = global "_add"
+    Adder = global '_add'
     kid = new ParrotThread
     .sym pmc from
     from = new Integer
@@ -204,13 +195,10 @@ pir_output_is(<<'CODE', <<'OUTPUT', "join, get retval");
     .sym pmc to
     to = new Integer
     to = MAX
-    kid."thread3"(Adder, from, to)
+    kid.'thread3'(Adder, Adder, from, to)
 
-    .local int tid
-    tid = kid
-    .local pmc me, result
-    me = getinterp
-    result = me."join"(tid)
+    .local pmc result
+    result = kid.'join'()
     print result
     print "\n"
     # sum = n * (n + 1)/2
@@ -247,58 +235,64 @@ OUTPUT
 
 SKIP: {
 	skip("detatch broken on $^O", 1) if ($^O =~ /MSWin32/);
-pasm_output_like(<<'CODE', <<'OUTPUT', "detach");
-    find_global P5, "_foo"
-    new P2, .ParrotThread
-    new P6, .TQueue	# need a flag that thread is done
-    set I3, 2
-    callmethod "thread3"
-
-    set I5, P2
-    getinterp P2
-    callmethod "detach"
+pir_output_like(<<'CODE', <<'OUTPUT', "detach");
+.sub main :main
+    .local pmc foo
+    .local pmc queue
+    .local pmc thread
+    foo = global '_foo'
+    queue = new .TQueue # flag for when the thread is done
+    thread = new .ParrotThread
+    thread.'thread3'(foo, queue)
+    
+    thread.'detach'()
 wait:
-    defined I0, P6
-    unless I0, wait
+    defined $I0, queue
+    if $I0 == 0 goto wait
     print "done\n"
-    end
+.end
 
-.pcc_sub _foo:
+.sub _foo
+    .param pmc queue
     print "thread\n"
     sleep 0.1
-    new P2, .Integer
-    push P6, P2		# push item on queue
-    returncc
+    $P1 = new .Integer
+    push queue, $P1
+.end
 CODE
 /(done\nthread\n)|(thread\ndone\n)/
 OUTPUT
 }
 
-pasm_output_is(<<'CODE', <<'OUTPUT', "share a PMC");
-    find_global P5, "_foo"
-    new P2, .ParrotThread
-    new P20, .Integer
-    new P6, .SharedRef, P20
-    set P6, 20
-    set I3, 2   # P5..P6
-    callmethod "thread3"
-    # now sleep a bit, so that the thread runs
-    sleep 0.1
+pir_output_is(<<'CODE', <<'OUTPUT', "share a PMC");
+.sub main :main
+    .local pmc foo
+    foo = global "_foo"
+    .local pmc to_share
+    to_share = new Integer
+    .local pmc shared_ref
+    shared_ref = new SharedRef, to_share
+    shared_ref = 20
+    .local pmc thread
+    thread = new ParrotThread
+    thread.'thread3'(foo, shared_ref)
 
-    set I5, P2
-    getinterp P2
-    callmethod "join"
+    sleep 0.1 # to let the thread run
+    
+    .local pmc result
+    thread.'join'()
     print "done\n"
-    print P6
+    print shared_ref
     print "\n"
-    end
+.end
 
-.pcc_sub _foo:
+.sub _foo
+    .param pmc shared_ref
     print "thread\n"
-    print P6
+    print shared_ref
     print "\n"
-    inc P6
-    returncc
+    inc shared_ref
+.end
 CODE
 thread
 20
@@ -306,44 +300,45 @@ done
 21
 OUTPUT
 
-
-pasm_output_is(<<'CODE', <<'OUT', "multi-threaded");
-    new P10, .TQueue
-    new P6, .Integer
-    set P6, 1
-    push P10, P6
-    new P6, .Integer
-    set P6, 2
-    push P10, P6
-    new P6, .Integer
-    set P6, 3
-    push P10, P6
-    set P6, P10
-
-    new P2, .ParrotThread
-    find_global P5, "_foo"
-    set I3, 2
-    callmethod "thread3"
-    set I5, P2
-    getinterp P2
-    callmethod "join"
+pir_output_is(<<'CODE', <<'OUT', "multi-threaded");
+.sub main :main
+    .local pmc queue
+    queue = new TQueue
+    .local pmc tmpInt
+    tmpInt = new Integer
+    tmpInt = 1
+    push queue, tmpInt
+    tmpInt = new Integer
+    tmpInt = 2
+    push queue, tmpInt
+    tmpInt = new Integer
+    tmpInt = 3
+    push queue, tmpInt
+    
+    .local pmc thread
+    thread = new ParrotThread
+    .local pmc foo
+    foo = global '_foo'
+    thread.'thread3'(foo, queue)
+    thread.'join'()
     print "done main\n"
-    end
+.end
 
-.pcc_sub _foo:
-    set I0, P6
-    print I0
+.sub _foo
+    .param pmc queue
+    $I0 = queue
+    print $I0
     print "\n"
 loop:
-    set I0, P6
-    unless I0, ex
-    shift P8, P6
-    print P8
+    $I0 = queue
+    if $I0 == 0 goto done 
+    shift $P0, queue
+    print $P0
     print "\n"
     branch loop
-ex:
+done:
     print "done thread\n"
-    returncc
+.end
 CODE
 3
 1
@@ -353,45 +348,50 @@ done thread
 done main
 OUT
 
-pasm_output_is(<<'CODE', <<'OUT', "multi-threaded strings via SharedRef");
-    new P10, .TQueue
-    new P7, .String
-    set P7, "ok 1\n"
-    new P8, .SharedRef, P7
-    push P10, P8
-    new P7, .String
-    new P8, .SharedRef, P7
-    set P7, "ok 2\n"
-    push P10, P8
-    new P7, .String
-    set P7, "ok 3\n"
-    new P8, .SharedRef, P7
-    push P10, P8
-    set P6, P10
+pir_output_is(<<'CODE', <<'OUT', 'multi-threaded strings via SharedRef');
+.sub main :main
+    .local pmc queue
+    .local pmc tmp_string
+    .local pmc shared_ref
 
-    new P2, .ParrotThread
-    find_global P5, "_foo"
-    set I3, 2
-    callmethod "thread3"
-    set I5, P2
-    getinterp P2
-    callmethod "join"
+    queue = new TQueue
+    tmp_string = new String
+    tmp_string = "ok 1\n"
+    shared_ref = new SharedRef, tmp_string
+    push queue, shared_ref
+    tmp_string = new String
+    tmp_string = "ok 2\n"
+    shared_ref = new SharedRef, tmp_string
+    push queue, shared_ref
+    tmp_string = new String
+    tmp_string = "ok 3\n"
+    shared_ref = new SharedRef, tmp_string
+    push queue, shared_ref
+
+    .local pmc thread
+    .local pmc foo
+
+    thread = new ParrotThread
+    foo = global '_foo'
+    thread.'thread3'(foo, queue)
+    thread.'join'()
     print "done main\n"
-    end
+.end
 
-.pcc_sub _foo:
-    set I0, P6
-    print I0
+.sub _foo
+    .param pmc queue
+    $I0 = queue
+    print $I0
     print "\n"
 loop:
-    set I0, P6
-    unless I0, ex
-    shift P8, P6
-    print P8
+    $I0 = queue
+    if $I0 == 0 goto done
+    shift $P0, queue
+    print $P0
     branch loop
-ex:
+done:
     print "done thread\n"
-    returncc
+.end
 CODE
 3
 ok 1
