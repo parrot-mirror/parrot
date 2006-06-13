@@ -27,6 +27,70 @@ void Parrot_really_destroy(int exit_code, void *interpreter);
 
 /*
 
+=item C<static PMC*
+make_local_copy(Parrot_Interp interpreter, PMC *original)>
+
+Create a local copy of the PMC if necessary. (No copy is made if it
+is marked shared.)
+
+=cut
+
+*/
+
+static PMC *
+make_local_copy(Parrot_Interp interpreter, PMC *arg)
+{
+    PMC *ret_val;
+    if (PMC_IS_NULL(arg)) {
+        ret_val = PMCNULL;
+    } else if (PObj_is_PMC_shared_TEST(arg)) { 
+        ret_val = arg;
+    } else {
+        ret_val = VTABLE_clone(interpreter, arg);
+    }
+    return ret_val;
+}
+
+
+/*
+=item C<static PMC *
+make_local_args_copy(Parrot_Interp interpreter, PMC *args)>
+
+Make a local copy of the corresponding array of arguments.
+
+=cut
+*/
+
+static PMC *
+make_local_args_copy(Parrot_Interp interpreter, Parrot_Interp old_interp, PMC *args)
+{
+    PMC *ret_val;
+    INTVAL old_size;
+    INTVAL i;
+
+    if (PMC_IS_NULL(args)) {
+        return PMCNULL;
+    }
+
+    old_size = VTABLE_get_integer(old_interp, args);
+    
+    /* XXX should this be a different type? */
+    ret_val = pmc_new(interpreter, enum_class_FixedPMCArray);
+    VTABLE_set_integer_native(interpreter, ret_val, old_size);
+    
+    for (i = 0; i < old_size; ++i) {
+        PMC *copy;
+
+        copy = make_local_copy(interpreter, 
+                VTABLE_get_pmc_keyed_int(old_interp, args, i));
+
+        VTABLE_set_pmc_keyed_int(interpreter, ret_val, i, copy); 
+    }
+    return ret_val;
+}
+
+/*
+
 =item C<static void*
 thread_func(void *arg)>
 
@@ -42,10 +106,32 @@ thread_func(void *arg)
     PMC * const self = (PMC*) arg;
     UINTVAL tid;
     PMC *ret_val = NULL;
+    PMC *sub;
+    PMC *sub_arg;
+    Parrot_exception exp;
+    PMC *except_handler;
+
 
     Parrot_Interp interpreter = PMC_data(self);
-    runops(interpreter, (opcode_t *) PMC_struct_val(self) -
-            (opcode_t *)interpreter->code->base.data);
+    sub = PMC_struct_val(self);
+    sub_arg = PMC_pmc_val(self);
+
+
+    if (setjmp(exp.destination)) {
+        Parrot_exception *except;
+        /* caught exception */
+        ret_val = PMCNULL;
+        except = interpreter->exceptions;
+        PIO_eprintf(interpreter, /* PARROT_WARNINGS_THREAD_FLAG,  */
+            "Unhandled exception in thread with tid %d (message=%Ss, number=%d)\n",
+            interpreter->thread_data->tid,
+            except->msg,
+            except->error);
+    } else {
+        /* run normally */
+        push_new_c_exception_handler(interpreter, &exp);
+        ret_val = Parrot_runops_fromc_args(interpreter, sub, "P@", sub_arg);
+    }
     /*
      * thread is finito
      */
@@ -59,13 +145,6 @@ thread_func(void *arg)
     if (interpreter->thread_data->state & THREAD_STATE_DETACHED) {
         interpreter_array[tid] = NULL;
         Parrot_really_destroy(0, interpreter);
-    }
-    else {
-        /*
-         * TODO check signature
-         */
-        if (REG_INT(3))
-            ret_val = REG_PMC(5);
     }
     UNLOCK(interpreter_array_mutex);
 
@@ -95,6 +174,10 @@ pt_clone_code(Parrot_Interp d, const Parrot_Interp s)
 {
     Interp_flags_SET(d, PARROT_EXTERN_CODE_FLAG);
     d->code = s->code;
+    /* XXX FIXME should this be here or elsewhere? */
+    CONTEXT(d->ctx)->constants = 
+        d->code->const_table->constants; 
+
 }
 
 /*
@@ -123,18 +206,21 @@ pt_thread_prepare_for_run(Parrot_Interp d, Parrot_Interp s)
 =over 4
 
 =item C<int
-pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub)>
+pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)>
 
 Run the C<*sub> PMC in a separate thread using interpreter in
 C<*dest_interp>.
+
+C<arg> should be an array of arguments for the subroutine.
 
 =cut
 
 */
 
 int
-pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub)
+pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)
 {
+    assert(dest_interp);
     Parrot_Interp interpreter = PMC_data(dest_interp);
 
     PMC * const parent = VTABLE_get_pmc_keyed_int(interp, interp->iglobals,
@@ -149,7 +235,9 @@ pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub)
      * TODO thread pools
      */
 
-    PMC_struct_val(dest_interp) = VTABLE_get_pointer(interp, sub);
+    PMC_struct_val(dest_interp) = sub;
+    PMC_pmc_val(dest_interp) = make_local_args_copy(interpreter, interp, arg);
+
     pt_thread_prepare_for_run(interpreter, interp);
     /*
      * set regs according to pdd03
@@ -167,7 +255,7 @@ pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub)
 /*
 
 =item C<int
-pt_thread_run_1(Parrot_Interp interp, PMC* dest_interp, PMC* sub)>
+pt_thread_run_1(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)>
 
 Runs a type 1 thread. Nothing is shared, both interpreters are free
 running without any communication.
@@ -177,16 +265,16 @@ running without any communication.
 */
 
 int
-pt_thread_run_1(Parrot_Interp interp, PMC* dest_interp, PMC* sub)
+pt_thread_run_1(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)
 {
     interp->flags |= PARROT_THR_TYPE_1;
-    return pt_thread_run(interp, dest_interp, sub);
+    return pt_thread_run(interp, dest_interp, sub, arg);
 }
 
 /*
 
 =item C<int
-pt_thread_run_2(Parrot_Interp interp, PMC* dest_interp, PMC* sub)>
+pt_thread_run_2(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)>
 
 Runs a type 2 thread. No shared variables, threads are communicating by
 sending messages.
@@ -196,16 +284,16 @@ sending messages.
 */
 
 int
-pt_thread_run_2(Parrot_Interp interp, PMC* dest_interp, PMC* sub)
+pt_thread_run_2(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)
 {
     interp->flags |= PARROT_THR_TYPE_2;
-    return pt_thread_run(interp, dest_interp, sub);
+    return pt_thread_run(interp, dest_interp, sub, arg);
 }
 
 /*
 
 =item C<int
-pt_thread_run_3(Parrot_Interp interp, PMC* dest_interp, PMC* sub)>
+pt_thread_run_3(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)>
 
 Run a type 3 thread. Threads may have shared variables and are managed
 in a thread pool.
@@ -215,10 +303,10 @@ in a thread pool.
 */
 
 int
-pt_thread_run_3(Parrot_Interp interp, PMC* dest_interp, PMC* sub)
+pt_thread_run_3(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)
 {
     interp->flags |= PARROT_THR_TYPE_3;
-    return pt_thread_run(interp, dest_interp, sub);
+    return pt_thread_run(interp, dest_interp, sub, arg);
 }
 
 /*
@@ -288,7 +376,7 @@ mutex_unlock(void *arg)
 
 /*
 
-=item C<void*
+=item C<PMC*
 pt_thread_join(Parrot_Interp parent, UINTVAL tid)>
 
 Join (wait for) a joinable thread.
@@ -297,11 +385,11 @@ Join (wait for) a joinable thread.
 
 */
 
-void*
+PMC*
 pt_thread_join(Parrot_Interp parent, UINTVAL tid)
 {
-    Parrot_Interp interpreter;
     int state;
+    Parrot_Interp interpreter;
 
     LOCK(interpreter_array_mutex);
     interpreter = pt_check_tid(tid, "join");
@@ -309,7 +397,7 @@ pt_thread_join(Parrot_Interp parent, UINTVAL tid)
         do_panic(parent, "Can't join self", __FILE__, __LINE__);
     if (interpreter->thread_data->state == THREAD_STATE_JOINABLE ||
             interpreter->thread_data->state == THREAD_STATE_FINISHED) {
-        void *retval = NULL;
+        PMC *retval = NULL;
         interpreter->thread_data->state |= THREAD_STATE_JOINED;
         UNLOCK(interpreter_array_mutex);
         JOIN(interpreter->thread_data->thread, retval);
@@ -338,16 +426,15 @@ pt_thread_join(Parrot_Interp parent, UINTVAL tid)
              * XXX should probably acquire the parent's interpreter mutex
              */
             Parrot_block_DOD(parent);
-            if (PObj_is_PMC_shared_TEST((PObj*)retval))
-                parent_ret = retval;
-            else
-                parent_ret = VTABLE_clone(parent, (PMC*)retval);
+            parent_ret = make_local_copy(parent, retval);
             /* this PMC is living only in the stack of this currently
              * dying interpreter, so register it in parents DOD registry
              */
             dod_register_pmc(parent, parent_ret);
             Parrot_unblock_DOD(parent);
             retval = parent_ret;
+        } else {
+            retval = PMCNULL;
         }
         interpreter_array[tid] = NULL;
         running_threads--;

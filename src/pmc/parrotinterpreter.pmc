@@ -126,19 +126,19 @@ Class initialization.
              * thread start methods for threads type 1..3
              */
             enter_nci_method(INTERP, typ,
-                    F2DPTR(pt_thread_run_1), "thread1", "vJOP");
+                    F2DPTR(pt_thread_run_1), "thread1", "iJOP@"); 
             enter_nci_method(INTERP, typ,
-                    F2DPTR(pt_thread_run_2), "thread2", "vJOP");
+                    F2DPTR(pt_thread_run_2), "thread2", "iJOP@");
             enter_nci_method(INTERP, typ,
-                    F2DPTR(pt_thread_run_3), "thread3", "vJOP");
+                    F2DPTR(pt_thread_run_3), "thread3", "iJOP@"); 
 
             /*
              * TODO unify and fix signatures
              */
             enter_nci_method(INTERP, typ,
                     F2DPTR(pt_thread_yield), "yield", "v");
-            enter_nci_method(INTERP, typ,
-                    F2DPTR(pt_thread_join), "join", "PJi");
+            /* enter_nci_method(INTERP, typ,
+                    F2DPTR(pt_thread_join), "join", "PJi"); */
             enter_nci_method(INTERP, typ,
                     F2DPTR(pt_thread_detach), "detach", "vi");
             enter_nci_method(INTERP, typ,
@@ -152,6 +152,21 @@ Class initialization.
         }
 
     }
+
+/*
+
+=item C<PMC* join()>
+
+Join the thread.
+
+=cut
+
+*/
+    METHOD PMC* join() {
+        Parrot_Interp the_interp = PMC_data(SELF);
+        return pt_thread_join(INTERP, the_interp->thread_data->tid);
+    }
+
 
 /*
 
@@ -171,6 +186,7 @@ Initializes the interpreter.
          */
         if (!PMC_data(SELF)) {
             create_interp(SELF, INTERP);
+            assert(PMC_data(SELF));
         }
         PMC_struct_val(SELF) = NULL;
         PMC_pmc_val(SELF) = NULL;
