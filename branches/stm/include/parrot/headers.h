@@ -45,6 +45,7 @@ struct Small_Object_Pool *make_bufferlike_pool(Interp *interpreter, size_t unit_
 /* header creation functions */
 PMC *new_pmc_header(Interp *interpreter, UINTVAL flags);
 void add_pmc_ext(Interp *interpreter, PMC *pmc);
+void add_pmc_sync(Interp *interpreter, PMC *pmc);
 STRING *new_string_header(Interp *interpreter, UINTVAL flags);
 Buffer *new_buffer_header(Interp *interpreter);
 void *new_bufferlike_header(Interp *interpreter, size_t size);

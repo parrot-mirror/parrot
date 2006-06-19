@@ -129,6 +129,11 @@ pmc_reuse(Interp *interpreter, PMC *pmc, INTVAL new_type,
              */
             struct Small_Object_Pool * const ext_pool =
                 interpreter->arena_base->pmc_ext_pool;
+            if (PObj_is_PMC_shared_test(pmc) && PMC_sync(pmc)) {
+                MUTEX_DESTROY(PMC_sync(pmc)->pmc_lock);
+                mem_sys_free(PMC_sync(pmc));
+                PMC_sync(pmc) = NULL;
+            }
             ext_pool->add_free_object(interpreter, ext_pool, pmc->pmc_ext);
         }
         pmc->pmc_ext = NULL;

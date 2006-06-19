@@ -210,20 +210,8 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
     }
 }
 
-/* This function is currently a hack. What we really need is some way to
- * make a PMC and everything it references (consider, e.g, arrays) to be
- * marked as shared, recursively, but without locks being added unless such
- * locks are required for read-only access.
- */
-/* XXX This probably needs fixing to deal with, e.g., GC, thread death better */
-/* XXX Needs to be recursive for aggregate PMCs */
 static void force_sharing(Interp *interp, PMC *pmc) {
-    if (!PObj_is_PMC_EXT_TEST(pmc)) {
-        /* give it one */
-        add_pmc_ext(interp, pmc);
-        PObj_is_PMC_EXT_SET(pmc);
-    }
-    PObj_is_PMC_shared_SET(pmc);
+    VTABLE_share_ro(interp, pmc);
 }
 
 /* Does a top-level commit. Returns true if successful.

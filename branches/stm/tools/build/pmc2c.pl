@@ -337,7 +337,8 @@ sub dump_default {
                 meth        => $entry->[1],
                 type        => $entry->[0],
                 section     => $entry->[3],
-                mmd         => $entry->[4]
+                mmd         => $entry->[4],
+                attr        => $entry->[5]
             };
     }
     $vtable{'has_method'} = \%meth_hash;

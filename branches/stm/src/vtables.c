@@ -64,6 +64,9 @@ Parrot_clone_vtable(Parrot_Interp interpreter, const VTABLE *base_vtable)
 void
 Parrot_destroy_vtable(Parrot_Interp interpreter, VTABLE *vtable)
 {
+    if (vtable->ro_variant) {
+        mem_sys_free(vtable->ro_variant);
+    }
     mem_sys_free(vtable);
 }
 
