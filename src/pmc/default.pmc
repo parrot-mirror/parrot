@@ -98,11 +98,17 @@ check_set_std_props(Interp* interpreter, PMC *pmc, STRING *key, PMC *value)
 #endif
         /* pmc should set/clear readonly */
         INTVAL on = VTABLE_get_bool(interpreter, value);
-        /* morph to Const/normal class */
+        /* morph to Const/normal class or readonly class */
+        /* XXX warn when this fails? */
         if (on && (pmc->vtable->flags & VTABLE_HAS_CONST_TOO))
             pmc->vtable = interpreter->vtables[pmc->vtable->base_type + 1];
-        else if (!on && (pmc->vtable->flags & VTABLE_IS_CONST_FLAG))
+        else if (!on && (pmc->vtable->flags & (VTABLE_IS_CONST_FLAG)))
             VTABLE_morph(interpreter, pmc, pmc->vtable->base_type - 1);
+        else if (on && (pmc->vtable->flags & VTABLE_HAS_READONLY_FLAG))
+            pmc->vtable = pmc->vtable->ro_variant;
+        else if (!on && (pmc->vtable->flags & VTABLE_IS_READONLY_FLAG)
+                && pmc->vtable->ro_variant)
+            pmc->vtable = pmc->vtable->ro_variant;
     }
 }
 

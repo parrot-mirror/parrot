@@ -99,7 +99,7 @@ recursion_limit(Parrot_Interp interpreter, PMC *self, int l)
     return ret;
 }
 
-pmclass ParrotInterpreter need_ext {
+pmclass ParrotInterpreter need_ext no_ro {
 
 /*
 
@@ -196,7 +196,9 @@ Initializes the interpreter.
 
 =item C<void init_pmc(PMC *parent)>
 
-Initializes a child interpreter with C<*parent>.
+Initializes a child interpreter with C<*parent> if C<parent> is
+a ParrotInterpreter instance. Otherwise takes the thread ID from
+C<parent> and uses that thread.
 
 =cut
 
@@ -204,7 +206,6 @@ Initializes a child interpreter with C<*parent>.
 
     void init_pmc (PMC *parent) {
         Parrot_Interp p = PMC_data(parent);
-
         if (!PMC_data(SELF)) {
             create_interp(SELF, p);
         }

@@ -54,7 +54,7 @@ stop_GC(Interp* parent, Interp *thread)
 }
 
 
-pmclass ParrotThread extends ParrotInterpreter need_ext {
+pmclass ParrotThread extends ParrotInterpreter need_ext no_ro {
 
 /*
 

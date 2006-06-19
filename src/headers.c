@@ -225,7 +225,6 @@ get_bufferlike_pool(Interp *interpreter, size_t buffer_size)
     return sized_pools[ (buffer_size - sizeof(Buffer)) / sizeof(void *) ];
 }
 
-
 /*
 
 =item C<PMC *
@@ -262,9 +261,7 @@ new_pmc_header(Interp *interpreter, UINTVAL flags)
 #endif
         pmc->pmc_ext = new_pmc_ext(interpreter);
         if (flags & PObj_is_PMC_shared_FLAG) {
-            PMC_sync(pmc) = mem_internal_allocate(sizeof(*PMC_sync(pmc)));
-            PMC_sync(pmc)->owner = interpreter;
-            MUTEX_INIT(PMC_sync(pmc)->pmc_lock);
+            add_pmc_sync(interpreter, pmc);
         }
     }
     else
@@ -330,6 +327,28 @@ add_pmc_ext(Interp *interpreter, PMC *pmc)
     if (PObj_live_TEST(pmc))
         PObj_get_FLAGS(pmc) |= PObj_custom_GC_FLAG;
 #endif
+}
+
+/*
+
+=item C<PMC *
+add_pmc_sync(Interp *interpreter, PMC *pmc)>
+
+Adds a PMC_sync field to C<pmc>.
+
+=cut
+
+*/
+
+void
+add_pmc_sync(Interp *interpreter, PMC *pmc)
+{
+    if (!PObj_is_PMC_EXT_TEST(pmc)) {
+        add_pmc_ext(interpreter, pmc);
+    }
+    PMC_sync(pmc) = mem_internal_allocate(sizeof(*PMC_sync(pmc)));
+    PMC_sync(pmc)->owner = interpreter;
+    MUTEX_INIT(PMC_sync(pmc)->pmc_lock);
 }
 
 /*
