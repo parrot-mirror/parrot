@@ -236,10 +236,11 @@ pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)
      * TODO thread pools
      */
 
+    pt_thread_prepare_for_run(interpreter, interp);
+
     PMC_struct_val(dest_interp) = sub;
     PMC_pmc_val(dest_interp) = make_local_args_copy(interpreter, interp, arg);
 
-    pt_thread_prepare_for_run(interpreter, interp);
     /*
      * set regs according to pdd03
      */
