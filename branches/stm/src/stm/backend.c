@@ -68,6 +68,9 @@ static STM_tx_log *Parrot_STM_tx_log_get(Interp *interp) {
     if (!log) {
         log = Parrot_STM_tx_log_alloc(interp, sizeof(STM_tx_log));
     }
+
+    assert(log->depth >= 0);
+
     return log;
 }
 
@@ -95,10 +98,14 @@ Parrot_STM_PMC_handle Parrot_STM_alloc(Interp *interp, PMC *pmc) {
 
 
 static STM_write_record *get_write(Interp *interp, STM_tx_log *log, int i) {
+    assert(i >= 0);
+    assert(i <= log->last_write);
     return &log->writes[i];
 }
 
 static STM_read_record *get_read(Interp *interp, STM_tx_log *log, int i) {
+    assert(i >= 0);
+    assert(i <= log->last_read);
     return &log->reads[i];
 }
 
@@ -132,6 +139,8 @@ static int is_version(void *maybe_version) {
 }
 
 static STM_tx_log_sub *get_sublog(STM_tx_log *log, int i) {
+    assert(i > 0);
+    assert(i <= log->depth);
     return &log->inner[i - 1];
 }
 
@@ -153,6 +162,10 @@ void Parrot_STM_start_transaction(Interp *interp) {
     newsub = get_sublog(log, log->depth);
     newsub->first_read = log->last_read + 1;
     newsub->first_write = log->last_write + 1;
+    if (log->depth == 1) {
+        assert(newsub->first_read == 0);
+        assert(newsub->first_write == 0);
+    }
     ATOMIC_INT_SET(newsub->status, STM_STATUS_ACTIVE);
     STM_TRACE("starting transaction, depth=%d", log->depth);
 }
@@ -211,7 +224,9 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
 }
 
 static void force_sharing(Interp *interp, PMC *pmc) {
-    VTABLE_share_ro(interp, pmc);
+    if (!PMC_IS_NULL(pmc)) {
+        VTABLE_share_ro(interp, pmc);
+    }
 }
 
 /* Does a top-level commit. Returns true if successful.
@@ -224,8 +239,9 @@ do_real_commit(Interp *interp, STM_tx_log *log) {
     int can_update = 1;
     STM_tx_log_sub *inner;
 
+    assert(log->depth == 1);
+
     inner = get_sublog(log, 1);
-    
 
     ATOMIC_INT_CAS(successp, inner->status, STM_STATUS_ACTIVE, STM_STATUS_COMMITTED);
     if (!successp) {
@@ -294,10 +310,13 @@ int Parrot_STM_commit(Interp *interp) {
     int successp;
     STM_TRACE("commit");
 
+
     if (log->depth == 0) {
         internal_exception(1, "stm_commit without transaction\n");
         return 0;
     }
+
+    assert(log->depth > 0);
 
     cursub = get_sublog(log, log->depth);
 
@@ -339,6 +358,8 @@ void Parrot_STM_abort(Interp *interp) {
         return;
     }
 
+    assert(log->depth > 0);
+
     cursub = get_sublog(log, log->depth);
 
     do_real_abort(interp, log, cursub);
@@ -371,7 +392,8 @@ void Parrot_STM_wait(Interp *interp) {
 =item C<int Parrot_STM_validate(Interp *interp)>
 
 Return true if the currently active transaction might commit;
-false otherwise.
+false otherwise. Always returns true in the special case of no
+active transaction.
 
 =cut
 */
@@ -384,7 +406,7 @@ int Parrot_STM_validate(Interp *interp) {
     log = Parrot_STM_tx_log_get(interp);
 
     if (log->depth == 0) {
-        internal_exception(1, "stm_validate without transaction\n");
+        return 1;
     }
 
     inner = get_sublog(log, log->depth);
@@ -485,9 +507,19 @@ PMC *Parrot_STM_read(Interp *interp, Parrot_STM_PMC_handle handle) {
     void *check_version;
     int i;
 
-    /* XXX no transaction case */
-
     log = Parrot_STM_tx_log_get(interp);
+    if (log->depth == 0) {
+        /* special case outside of transaction */
+        int committedp = 0;
+        PMC *ret;
+        do {
+            Parrot_STM_start_transaction(interp);
+            ret = Parrot_STM_read(interp, handle);
+            committedp = Parrot_STM_commit(interp);
+        } while (!committedp);
+        return ret;
+    }
+
     read = NULL;
     write = NULL;
 
@@ -556,10 +588,10 @@ static STM_write_record *find_write_record(Interp *interp, STM_tx_log *log,
 
     STM_TRACE("finding write record for %p", handle);
 
-
     old_value = NULL;
 
     log = Parrot_STM_tx_log_get(interp);
+    assert(log->depth > 0);
     cursub = get_sublog(log, log->depth);
     outersub = NULL;
 
@@ -687,6 +719,12 @@ void Parrot_STM_write(Interp *interp, Parrot_STM_PMC_handle handle, PMC* new_val
     /* XXX no transaction case */
     STM_write_record *write;
     STM_tx_log *log;
+
+    if (log->depth == 0) {
+        /* error for now */
+        internal_exception(1, "STM_write outside transaction");
+        return;
+    }
 
     write = find_write_record(interp, log, handle);
 

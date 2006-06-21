@@ -67,7 +67,7 @@ loop:
     .local int length
 tx:
     stm_start
-    used = self['used']
+    used = getattribute self, 'used'
     used = used.'get_read'()
     if used != 0 goto have_items
     
@@ -75,6 +75,7 @@ tx:
     # FIXME: probably should throw exception instead
     # of going to no_block
     stm_wait no_block 
+    branch tx
 have_items:
     tmp = getattribute self, 'head'
     i = tmp.'get_read'()
@@ -86,10 +87,12 @@ have_items:
     tmp = getattribute self, 'head'
     $P0 = getattribute self, 'array'
     length = $P0
+    i = clone i
     inc i
     i = i % length
     tmp.'set'(i)
     tmp = getattribute self, 'used'
+    used = clone used
     used = used - 1
     tmp.'set'(used)
 skip_remove:
@@ -133,6 +136,7 @@ tx:
     tmp = getattribute self, 'array'
     tmp = tmp[i]
     tmp.'set'(what)
+    i = clone i
     inc i
     i = i % length
 
@@ -140,6 +144,7 @@ tx:
     tmp.'set'(i)
 
     stm_commit tx
+    branch do_ret
 
 is_full:
     unless blockp goto no_block
@@ -150,6 +155,7 @@ no_block:
     stm_abort
 error:
     ret = 0
+do_ret:
     .return (ret)
 .end
 
