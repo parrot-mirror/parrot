@@ -234,20 +234,21 @@ pir_output_is(<<'CODE', <<'OUTPUT', "GC isn't too eager");
     $P1 = new .STMRef, $P0
 tx_a:
     stm_start
+    sweep 1
     $P1 = 1
     stm_start
+    sweep 1
     $P1 = 2
     stm_start
-    $P1 = 3
     sweep 1
+    $P1 = 3
     stm_abort
     sweep 1
     $P1 = 4
     stm_abort
-    # ./parrot t/stm/basic_8.pir
-sweep 1
+    sweep 1
     stm_commit tx_a
-
+    sweep 1
     stm_start
     if $P1 == 1 goto okay
     print "not "
