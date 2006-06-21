@@ -1422,7 +1422,7 @@ sub body
     my $cout = <<"EOC";
 $decl {
     internal_exception(WRITE_TO_CONSTCLASS,
-            "$meth() in $classname");
+            "$meth() in read-only instance of $classname");
     $ret
 }
 

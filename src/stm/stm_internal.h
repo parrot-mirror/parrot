@@ -55,7 +55,7 @@ struct STM_tx_log {
 
     STM_tx_log_sub inner[STM_MAX_TX_DEPTH];
 
-int last_write;
+    int last_write;
     int last_read;
     /* TODO: probably better to make these a list of hashes (one for each tx) */
     STM_write_record *writes;
