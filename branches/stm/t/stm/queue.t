@@ -18,14 +18,17 @@ my $library = <<'CODE';
 
 .namespace ['STMQueue']
 
-.sub __onload :immediate 
+.sub __onload :immediate
     .local pmc class
+    $I0 = find_type 'STMQueue'
+    if $I0 goto done
     class = newclass 'STMQueue'
     addattribute class, 'head'
     addattribute class, 'tail'
     addattribute class, 'used'
     addattribute class, 'array'
     .return()
+done:
 .end
 
 .sub __init :method
@@ -163,12 +166,13 @@ do_ret:
     .local pmc result
     .local pmc length
 
-    __onload() # XXX FIXME workaround?
+    __onload() # FIXME XXX workaround
+
     $P0 = getattribute self, 'array'
     $I0 = $P0
     length = new Integer
     length = $I0
-    $I1 = typeof self
+    $I1 = find_type 'STMQueue'
     result = new $I1, length
     
     $P0 = getattribute self, 'array'
@@ -184,7 +188,7 @@ do_ret:
 .end
 CODE
 
-pir_output_is(<<'CODE' . $library, <<'OUTPUT', "Single-threaded case");
+pir_output_is($library . <<'CODE', <<'OUTPUT', "Single-threaded case");
 .sub main :main
     .local pmc queue
 
@@ -215,7 +219,7 @@ CODE
 OUTPUT
 
 
-pir_output_is(<<'CODE' . $library, <<'OUTPUT', "Add in one thread, remove in the other");
+pir_output_is($library . <<'CODE', <<'OUTPUT', "Add in one thread, remove in the other");
 
 .sub adder
     .param pmc queue
@@ -232,6 +236,7 @@ loop:
     .local int i
     .local int failed
     .local pmc got
+
     failed = 0 
     i = 1
 loop:

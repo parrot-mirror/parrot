@@ -152,6 +152,7 @@ thread_func(void *arg)
     return ret_val;
 }
 
+
 /*
 
 =back
@@ -178,7 +179,7 @@ pt_clone_code(Parrot_Interp d, const Parrot_Interp s)
     /* XXX FIXME should this be here or elsewhere? */
     CONTEXT(d->ctx)->constants = 
         d->code->const_table->constants; 
-
+    Parrot_prepare_cs_for_interp(d);
 }
 
 /*

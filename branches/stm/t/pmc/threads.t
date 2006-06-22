@@ -45,11 +45,11 @@ if ($^O eq "cygwin" ) {
     }
 }
 if ($platforms{$^O}) {
-   plan tests => 11;
+   plan tests => 12;
 }
 else {
-   # plan skip_all => "No threading yet or test not enabled for '$^O'";
-   plan skip_all => "Needs COPY for argument passing";
+   plan skip_all => "No threading yet or test not enabled for '$^O'";
+   # plan skip_all => "Needs COPY for argument passing";
 }
 
 
@@ -347,6 +347,41 @@ CODE
 done thread
 done main
 OUT
+
+pir_output_is(<<'CODE', <<'OUT', "sub name lookup in new thread");
+.sub check
+    $P0 = find_global 'Foo', 'foo'
+    $I0 = isa $P0, 'Sub'
+    if $I0 goto okay
+    print "not "
+okay:
+    print "ok\n"
+.end
+
+.sub main :main
+    check()
+    $P0 = new ParrotThread
+    .local pmc thread_main
+    thread_main = find_global 'thread_main'
+    $I0 = $P0
+    $P0.'thread3'(thread_main)
+    $P0.'join'() # XXX
+.end
+
+.sub thread_main
+    check()
+.end
+
+.namespace [ 'Foo' ]
+
+.sub foo
+    print "not reached\n"
+.end
+CODE
+ok
+ok
+OUT
+
 
 pir_output_is(<<'CODE', <<'OUT', 'multi-threaded strings via SharedRef');
 .sub main :main
