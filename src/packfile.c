@@ -431,7 +431,7 @@ do_sub_pragmas(Interp *interpreter, struct PackFile_ByteCode *self,
     struct PackFile_ConstTable *ct = self->const_table;
 
 #if TRACE_PACKFILE
-    PIO_eprintf(NULL, "PackFile: do_sub_pragmas\n");
+    PIO_eprintf(NULL, "PackFile: do_sub_pragmas (action=%d)\n", action);
 #endif
 
     for (i = 0; i < ft->fixup_count; i++) {
@@ -2432,6 +2432,56 @@ Parrot_pop_cs(Interp *interpreter)
             cur_cs->base.dir, cur_cs->base.name);
     /* FIXME delete returned segment */
 }
+
+/*
+
+=item C<void
+Parrot_prepare_cs_for_interp(Interp *interpreter)>
+
+Interpreter's byte code segment is set to another's for example because we have
+spawned a new thread. Copy relevant data to make this code segment runnable --
+for example, add subroutines to the global stash.
+
+=cut
+
+*/
+
+/*
+XXX This duplicates what PackFile_Constant_unpack_pmc() does and probably shouldn't.
+XXX Are there issues in sharing the constant PMCs implicitly -- esp. for subroutines
+XXX Do we have anonymous subroutines in the constant table?
+*/
+static void
+prepare_one_cs_for_interp(Interp *interpreter, struct PackFile_ByteCode *cs) {
+    struct PackFile_ConstTable *ct;
+    INTVAL i;
+    STRING *_sub;
+
+    _sub = const_string(interpreter, "Sub");
+
+    ct = cs->const_table;
+
+    for (i = 0; i < ct->const_count; ++i) {
+        if (ct->constants[i]->type == PFC_PMC) {
+            PMC *pmc = ct->constants[i]->u.key;
+            if (VTABLE_isa(interpreter, pmc, _sub)) {
+                Parrot_store_sub_in_namespace(interpreter, pmc);
+            }
+        }
+    }
+}
+
+void
+Parrot_prepare_cs_for_interp(Interp *interpreter)
+{
+    struct PackFile_ByteCode *cur_cs = interpreter->code;
+
+    while (cur_cs) {
+        prepare_one_cs_for_interp(interpreter, cur_cs);
+        cur_cs = cur_cs->prev;
+    }
+}
+
 
 /*
 
