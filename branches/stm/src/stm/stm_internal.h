@@ -46,6 +46,8 @@ typedef struct STM_tx_log_sub STM_tx_log_sub;
 /* log for a sub transaction */
 struct STM_tx_log_sub {
     Parrot_atomic_int status;
+    /* for poor man's deadlock detection; based on Ennals' implementation */
+    Parrot_atomic_int wait_length;
     int first_write;
     int first_read;
 };
@@ -61,6 +63,5 @@ struct STM_tx_log {
     STM_write_record *writes;
     STM_read_record *reads;
 };
-
 
 #endif
