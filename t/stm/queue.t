@@ -4,7 +4,7 @@
 use warnings;
 use strict;
 use lib qw( . lib ../lib ../../lib );
-use Parrot::Test tests => 2;
+use Parrot::Test tests => 3;
 
 
 my $library = <<'CODE';
@@ -220,6 +220,76 @@ OUTPUT
 
 
 pir_output_is($library . <<'CODE', <<'OUTPUT', "Add in one thread, remove in the other");
+.const int MAX = 50000
+.const int SIZE = 10
+
+.sub adder
+    .param pmc queue
+    .local int i
+    i = 0
+loop:
+    queue.'addTail'(i, 1)
+    inc i
+    if i < MAX goto loop
+.end
+
+.sub remover
+    .param pmc queue
+    .local int i
+    .local int failed
+    .local pmc got
+
+    failed = 0 
+    i = 0
+loop:
+    got = queue.'fetchHead'(1, 1)
+    if got != i goto not_okay
+    inc i
+    if i < MAX goto loop
+    print "ok\n"
+    .return ()
+not_okay:
+    print "not ok\n"
+.end
+
+.sub main :main
+    .local pmc addThread
+    .local pmc removeThread
+    .local pmc queue
+    .local pmc me
+
+    .local pmc _add
+    .local pmc _remove
+
+    .local pmc copy
+     
+    .local int addThreadId
+    .local int removeThreadId
+
+    _add = global "adder"
+    _remove = global "remover"
+
+    addThread = new ParrotThread
+    removeThread = new ParrotThread
+    $I0 = find_type 'STMQueue'
+    $P0 = new Integer
+    $P0 = SIZE 
+    queue = new $I0, $P0
+
+    addThreadId = addThread
+    removeThreadId = removeThread
+
+    addThread.'thread3'(_add, queue)
+    removeThread.'thread3'(_remove, queue)
+    removeThread.'join'()
+    addThread.'join'()
+.end
+
+CODE
+ok
+OUTPUT
+
+pir_output_is($library . <<'CODE', <<'OUTPUT', "Test 2 + attempt to trigger thread death bugs");
 
 .sub adder
     .param pmc queue
@@ -241,6 +311,9 @@ loop:
     i = 1
 loop:
     got = queue.'fetchHead'(1, 1)
+    if i < 9 goto no_sleep
+    sleep 1 # sleep so other thread will die to trigger bug
+no_sleep:
     print "got "
     print got
     print "\n"
@@ -277,6 +350,7 @@ loop:
 
     addThread.'thread3'(_add, queue)
     removeThread.'thread3'(_remove, queue)
+    # This order is different.
     addThread.'join'()
     removeThread.'join'()
 .end
