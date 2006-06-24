@@ -71,6 +71,8 @@ ok 1
 ok 2
 OUTPUT
 
+# XXX FIXME rework tests since we don't really have thread types?
+
 pir_output_is(<<'CODE', <<'OUTPUT', "thread type 1");
 .sub main :main
     .local pmc threadfunc
@@ -78,7 +80,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "thread type 1");
     I5 = 10
     threadfunc = global "foo"
     thread = new .ParrotThread
-    thread.'thread1'(threadfunc)
+    thread.'run_clone'(threadfunc)
 
     sleep 1
     print "main "
@@ -117,7 +119,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "thread type 2");
     print "ok 1\n"
     threadsub = global "foo"
     thread = new .ParrotThread
-    thread.'thread2'(threadsub, P6)
+    thread.'run_clone'(threadsub, P6)
     sleep 1 # to let the thread run
     print P6
     print I5
@@ -159,7 +161,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', 'thread - kill');
     print 'start '
     print $I0
     print "\n"
-    thread.'thread3'(threadsub)
+    thread.'run_clone'(threadsub)
 
     sleep 1 # to let the thread run
 
@@ -195,7 +197,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "join, get retval");
     .sym pmc to
     to = new Integer
     to = MAX
-    kid.'thread3'(Adder, Adder, from, to)
+    kid.'run_clone'(Adder, Adder, from, to)
 
     .local pmc result
     result = kid.'join'()
@@ -275,7 +277,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "share a PMC");
     shared_ref = 20
     .local pmc thread
     thread = new ParrotThread
-    thread.'thread3'(foo, shared_ref)
+    thread.'run_clone'(foo, shared_ref)
 
     sleep 0.1 # to let the thread run
     
@@ -319,7 +321,7 @@ pir_output_is(<<'CODE', <<'OUT', "multi-threaded");
     thread = new ParrotThread
     .local pmc foo
     foo = global '_foo'
-    thread.'thread3'(foo, queue)
+    thread.'run_clone'(foo, queue)
     thread.'join'()
     print "done main\n"
 .end
@@ -363,8 +365,7 @@ okay:
     $P0 = new ParrotThread
     .local pmc thread_main
     thread_main = find_global 'thread_main'
-    $I0 = $P0
-    $P0.'thread3'(thread_main)
+    $P0.'run_clone'(thread_main)
     $P0.'join'() # XXX
 .end
 
@@ -408,7 +409,7 @@ pir_output_is(<<'CODE', <<'OUT', 'multi-threaded strings via SharedRef');
 
     thread = new ParrotThread
     foo = global '_foo'
-    thread.'thread3'(foo, queue)
+    thread.'run_clone'(foo, queue)
     thread.'join'()
     print "done main\n"
 .end

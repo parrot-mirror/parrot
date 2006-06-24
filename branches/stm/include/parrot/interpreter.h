@@ -76,8 +76,32 @@ typedef enum {
     PARROT_SWITCH_JIT_CORE  = 0x12,           /* J P                */
     PARROT_EXEC_CORE      = 0x20          /* TODO Parrot_exec_run variants */
 } Parrot_Run_core_t;
-
 /* &end_gen */
+
+/* &gen_from_enum(cloneflags.pasm) */
+typedef enum {
+    PARROT_CLONE_CODE = 0x1,        /* active code segments 
+                                       XXX interaction with lexicals 
+                                     */
+    PARROT_CLONE_GLOBALS = 0x2,     /* global stash */
+    PARROT_CLONE_RUNOPS = 0x4,      /* runops choice */
+    PARROT_CLONE_INTERP_FLAGS = 0x8,/* bounds checking and 
+                                       debugging flags */
+    PARROT_CLONE_HLL = 0x10,        /* clone HLL setting */
+    PARROT_CLONE_CLASSES = 0x20,    /* clone usermade classes */
+    PARROT_CLONE_LIBRARIES = 0x40,  /* clone loaded library set */
+    /* flags that won't be initially implemented */
+    PARROT_CLONE_CC = 0x80,         /* clone current continuation --
+                                       fork()-like cloning (requires
+                                       cloned code segments); probably
+                                       would only work if runloop_level == 1
+                                     */
+
+    /* combinations of flags */
+    PARROT_CLONE_DEFAULT = 0x7d /* everything but CC, GLOBALS */
+} Parrot_clone_flags;
+/* &end_gen */
+
 struct parrot_interp_t;
 
 typedef struct parrot_interp_t *Parrot_Interp;
@@ -276,8 +300,6 @@ struct parrot_interp_t {
     struct Interp_Context ctx;
     context_mem ctx_mem;                      /* ctx memory managment */
 
-    struct PMC *stash_hash;                   /* namespace hash */
-
     struct Arenas *arena_base;                /* Pointer to this interpreter's
                                                * arena */
 
@@ -350,6 +372,8 @@ struct parrot_interp_t {
 
     PMC* HLL_info;                            /* storage for HLL names and types */
     PMC* HLL_namespace;                       /* cache of HLL toplevel ns */
+
+    PMC *root_namespace;                      /* namespace hash */
 
     MMD_table *binop_mmd_funcs;               /* Table of MMD functions */
     UINTVAL n_binop_mmd_funcs;                /* function count */
@@ -499,7 +523,7 @@ void *init_jit(Interp * interpreter, opcode_t *pc);
 PARROT_API void dynop_register(Interp * interpreter, PMC* op_lib);
 void do_prederef(void **pc_prederef, Interp * interpreter, int type);
 
-void clone_interpreter(PMC* dest, PMC* self);
+void clone_interpreter(Parrot_Interp dest, const Parrot_Interp self, Parrot_clone_flags flags);
 
 PARROT_API void enter_nci_method(Interp *, int type,
 		 void *func, const char *name, const char *proto);

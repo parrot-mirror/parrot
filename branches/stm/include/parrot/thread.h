@@ -72,6 +72,7 @@ typedef enum {
     THREAD_STATE_NOT_STARTED = 0x08      /* the thread wasn't started */
 } thread_state_enum;
 
+
 /*
  * per interpreter thread data structure
  */
@@ -126,6 +127,7 @@ int  pt_thread_run_3(Parrot_Interp, PMC* dest_interp, PMC* sub, PMC *arg);
 
 void pt_thread_prepare_for_run(Parrot_Interp d, Parrot_Interp s);
 void pt_clone_code(Parrot_Interp d, const Parrot_Interp s);
+void pt_clone_globals(Parrot_Interp d, const Parrot_Interp s);
 void pt_add_to_interpreters(Parrot_Interp first, Parrot_Interp new_interp);
 void pt_thread_yield(void);
 PMC* pt_thread_join(Parrot_Interp, UINTVAL);
