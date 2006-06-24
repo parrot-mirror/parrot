@@ -185,6 +185,27 @@ pt_clone_code(Parrot_Interp d, const Parrot_Interp s)
 /*
 
 =item C<void
+pt_clone_globals(Parrot_Interp d, const Parrot_Interp s)>
+
+Clone all globals from C<s> to C<d>.
+
+=cut
+
+*/
+
+void
+pt_clone_globals(Parrot_Interp d, const Parrot_Interp s)
+{
+    /* XXX FIXME recursive enough? What about things that can't
+     * be copied this way? Seperate op for cloning into new
+     * interpreter?
+     */
+    d->root_namespace = VTABLE_clone(d, s->root_namespace);
+}
+
+/*
+
+=item C<void
 pt_thread_prepare_for_run(Parrot_Interp d, Parrot_Interp s)>
 
 Setup code, and TODO ...
@@ -196,7 +217,7 @@ Setup code, and TODO ...
 void
 pt_thread_prepare_for_run(Parrot_Interp d, Parrot_Interp s)
 {
-    pt_clone_code(d, s);
+    pt_clone_code(d, s); /* XXX */
 }
 
 /*
@@ -225,6 +246,19 @@ pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)
     assert(dest_interp);
     Parrot_Interp interpreter = PMC_data(dest_interp);
 
+    /* make a copy of the ParrotThread PMC so we can use it
+     * to hold parameters to the new thread without it being
+     * garbage collected or otherwise changed by the parent thread.
+     * Also so the new thread's getinterp doesn't return an object
+     * owned by the wrong interpreter -- which would be very bad
+     * if the parent is destroyed before the child.
+     * XXX FIXME move this elsewhere? at least the set_pmc_keyed_int
+     */
+    dest_interp = pmc_new_noinit(interpreter, enum_class_ParrotThread);
+    PMC_data(dest_interp) = interpreter;
+    VTABLE_set_pmc_keyed_int(interpreter, interpreter->iglobals,
+        (INTVAL) IGLOBALS_INTERPRETER, dest_interp);
+
     PMC * const parent = VTABLE_get_pmc_keyed_int(interp, interp->iglobals,
                 IGLOBALS_INTERPRETER);
 
@@ -232,13 +266,14 @@ pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)
      * TODO check if thread flags are consistent
      */
     if (interp->flags & PARROT_THR_COPY_INTERP)
-        clone_interpreter(dest_interp, parent);
+        clone_interpreter(interpreter, PMC_data(parent), PARROT_CLONE_DEFAULT);
     /*
      * TODO thread pools
      */
 
     pt_thread_prepare_for_run(interpreter, interp);
 
+    /* FIXME XXX copy sub for other interp as needed */
     PMC_struct_val(dest_interp) = sub;
     PMC_pmc_val(dest_interp) = make_local_args_copy(interpreter, interp, arg);
 

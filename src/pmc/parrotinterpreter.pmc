@@ -32,36 +32,42 @@ These are the vtable functions for the ParrotInterpreter base class
 /*
 
 =item C<void
-clone_interpreter(PMC* dest, PMC* self)>
+clone_interpreter(Parrot_Interp dest, const Parrot_Interp source, 
+    Parrot_clone_flags)>
 
-Clones the interpreter.
+Clones the interpreter as specified by the flags.
 
 =cut
 
 */
 
 void
-clone_interpreter(PMC* dest, PMC* self)
+clone_interpreter(Parrot_Interp d, const Parrot_Interp s, Parrot_clone_flags flags)
 {
+    if (flags & PARROT_CLONE_RUNOPS) {
+        d->run_core = s->run_core;
+    }
 
-    Parrot_Interp s = PMC_data(self);
-    Parrot_Interp d;
+    if (flags & PARROT_CLONE_INTERP_FLAGS) {
+        d->flags = s->flags; /* XXX setting of IS_THREAD? */
+        d->debug_flags = s->debug_flags;
+    }
 
-    d = PMC_data(dest);
+    if (flags & PARROT_CLONE_CODE) {
+        pt_clone_code(d, s);
+    }
 
-    /*
-     * copy over packfile - done currently in the runinterp opcode
-     * for multi-threading we have to generate separate
-     * profile data
-     */
-#if 0
-    pt_clone_code(d, s);
-#endif
-    /*
-     * set flags and run core
-     */
-    d->run_core = s->run_core;
-    d->flags = s->flags;
+    if (flags & PARROT_CLONE_LIBRARIES) {
+        /* XXX FIXME */
+    }
+
+    if (flags & PARROT_CLONE_CLASSES) {
+        /* XXX FIXME */
+    }
+
+    if (flags & PARROT_CLONE_GLOBALS) {
+        pt_clone_globals(d, s);
+    }
 }
 
 
@@ -121,29 +127,11 @@ Class initialization.
         int typ = enum_class_ParrotInterpreter;
 
         if (pass) {
-
-            /*
-             * thread start methods for threads type 1..3
-             */
-            enter_nci_method(INTERP, typ,
-                    F2DPTR(pt_thread_run_1), "thread1", "iJOP@"); 
-            enter_nci_method(INTERP, typ,
-                    F2DPTR(pt_thread_run_2), "thread2", "iJOP@");
-            enter_nci_method(INTERP, typ,
-                    F2DPTR(pt_thread_run_3), "thread3", "iJOP@"); 
-
             /*
              * TODO unify and fix signatures
              */
             enter_nci_method(INTERP, typ,
                     F2DPTR(pt_thread_yield), "yield", "v");
-            /* enter_nci_method(INTERP, typ,
-                    F2DPTR(pt_thread_join), "join", "PJi"); */
-            enter_nci_method(INTERP, typ,
-                    F2DPTR(pt_thread_detach), "detach", "vi");
-            enter_nci_method(INTERP, typ,
-                    F2DPTR(pt_thread_kill), "kill", "vi");
-
             /*
              * misc functions
              */
@@ -152,21 +140,6 @@ Class initialization.
         }
 
     }
-
-/*
-
-=item C<PMC* join()>
-
-Join the thread.
-
-=cut
-
-*/
-    METHOD PMC* join() {
-        Parrot_Interp the_interp = PMC_data(SELF);
-        return pt_thread_join(INTERP, the_interp->thread_data->tid);
-    }
-
 
 /*
 
@@ -303,7 +276,7 @@ Returns the PMC global value for C<key>.
                 new_interp->iglobals, key);
         /* quick hack to get the global stash */
         if (key == -1)
-            return new_interp->stash_hash;
+            return new_interp->root_namespace;
         return NULL;
     }
 
@@ -337,7 +310,7 @@ Introspection interface. C<key> can be:
         item =  key_string(interpreter, key);
         s = CONST_STRING(interpreter, "globals");
         if (string_equal(interpreter, item, s) == 0)
-            return interpreter->stash_hash;
+            return interpreter->root_namespace;
         outer = NULL;
         s = CONST_STRING(interpreter, "outer");
         if (string_equal(interpreter, item, s) == 0) {
@@ -458,7 +431,7 @@ XXX this should of course call C<Parrot_clone()> and use freeze/thaw.
 
     PMC* clone() {
         PMC* dest = pmc_new(INTERP, SELF->vtable->base_type);
-        clone_interpreter(dest, SELF);
+        clone_interpreter(PMC_data(dest), PMC_data(SELF), PARROT_CLONE_DEFAULT);
         return dest;
     }
 
@@ -601,7 +574,7 @@ Finish thawing.
              * XXX always try to fetch namespace first?
              */
 
-            ns_hash = Parrot_global_namespace(INTERP, INTERP->stash_hash,
+            ns_hash = Parrot_global_namespace(INTERP, INTERP->root_namespace,
                     hll_name);
             /* cache HLLs toplevel namespace */
             VTABLE_set_pmc_keyed_int(INTERP, INTERP->HLL_namespace, 

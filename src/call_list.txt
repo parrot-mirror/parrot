@@ -338,6 +338,8 @@ P      JOI
 
 # ParrotThread creation
 i      JOP@
+I      JOP@
+I      JOIP@
 # other ParrotThread
 P      JO 
 

@@ -279,8 +279,8 @@ not_okay:
     addThreadId = addThread
     removeThreadId = removeThread
 
-    addThread.'thread3'(_add, queue)
-    removeThread.'thread3'(_remove, queue)
+    addThread.'run_clone'(_add, queue)
+    removeThread.'run_clone'(_remove, queue)
     removeThread.'join'()
     addThread.'join'()
 .end
@@ -348,8 +348,8 @@ no_sleep:
     addThreadId = addThread
     removeThreadId = removeThread
 
-    addThread.'thread3'(_add, queue)
-    removeThread.'thread3'(_remove, queue)
+    addThread.'run_clone'(_add, queue)
+    removeThread.'run_clone'(_remove, queue)
     # This order is different.
     addThread.'join'()
     removeThread.'join'()
