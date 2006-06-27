@@ -131,7 +131,7 @@ Terminate a running thread.
 */
 
     METHOD void kill() {
-        return pt_thread_kill(PMC_int_val(SELF));
+        pt_thread_kill(PMC_int_val(SELF));
     }
     
 }
