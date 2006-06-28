@@ -53,6 +53,20 @@ typedef struct {
         UNLOCK((a).lock); \
     } while (0)
 
+#define ATOMIC_INT_INC(result, a) \
+    do {
+        LOCK((a).lock);
+        result = ++(a).val;
+        UNLOCK((a).lock);
+    } while (0)
+
+#define ATOMIC_INT_DEC(result, a) \
+    do {
+        LOCK((a).lock);
+        result = --(a).val;
+        UNLOCK((a).lock);
+    } while (0)
+
 #define ATOMIC_PTR_CAS(result, a, expect, update) \
     do { \
         LOCK((a).lock); \
