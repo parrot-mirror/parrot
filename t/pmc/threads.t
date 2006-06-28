@@ -245,7 +245,7 @@ pir_output_like(<<'CODE', <<'OUTPUT', "detach");
     foo = global '_foo'
     queue = new .TQueue # flag for when the thread is done
     thread = new .ParrotThread
-    thread.'thread3'(foo, queue)
+    thread.'run_clone'(foo, queue)
     
     thread.'detach'()
 wait:

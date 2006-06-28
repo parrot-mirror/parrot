@@ -26,8 +26,11 @@ the low-level synchornization.
 
 #if STM_DEBUG
 #  define STM_TRACE(x...) PIO_fprintf(interp, PIO_STDERR(interp), x); PIO_fprintf(interp, PIO_STDERR(interp), "\n")
+#  define STM_TRACE_SAFE(x...) fprintf(stderr, x); fprintf(stderr, "\n");
 #else
 static void STM_TRACE(const char *x, ...) {
+}
+static void STM_TRACE_SAFE(const char *x, ...) {
 }
 #endif
 
@@ -110,21 +113,33 @@ static STM_read_record *get_read(Interp *interp, STM_tx_log *log, int i) {
     return &log->reads[i];
 }
 
+/* alloc_write and alloc_read zero out the records so that if a GC run
+ * occurs in the middle of them -- e.g. because a debugging function
+ * triggered a string allocation -- then the transaction log may be
+ * marked with the value uninitialized.
+ */
+
 static STM_write_record *alloc_write(Interp *interp, STM_tx_log *log) {
+    STM_write_record *write;
     int i = ++log->last_write;
     if (i >= STM_MAX_RECORDS) {
         /* XXX FIXME resize instead */
         abort();
     }
-    return get_write(interp, log, i);
+    write = get_write(interp, log, i);
+    write->value = NULL;
+    return write;
 }
 
 static STM_read_record *alloc_read(Interp *interp, STM_tx_log *log) {
+    STM_read_record *read;
     int i = ++log->last_read;
     if (i >= STM_MAX_RECORDS) {
         abort();
     }
-    return get_read(interp, log, i);
+    read = get_read(interp, log, i);
+    read->value = NULL;
+    return read;
 }
 
 
@@ -455,11 +470,15 @@ void Parrot_STM_mark_transaction(Interp *interp) {
     log = Parrot_STM_tx_log_get(interp);
 
     for (i = 0; i <= log->last_write; ++i) {
-        pobject_lives(interp, get_write(interp, log, i)->value);
+        PMC *value = get_write(interp, log, i)->value;
+        if (value) 
+            pobject_lives(interp, value);
     }
 
     for (i = 0; i <= log->last_read; ++i) {
-        pobject_lives(interp, get_read(interp, log, i)->value);
+        PMC *value = get_read(interp, log, i)->value;
+        if (value)
+            pobject_lives(interp, value);
     }
 }
 
@@ -473,7 +492,7 @@ doesn't collect the handle or objects it refers to as reachable.
 */
 
 void Parrot_STM_mark_pmc_handle(Interp *interp, Parrot_STM_PMC_handle handle) {
-    STM_TRACE("mark handle");
+    STM_TRACE_SAFE("mark handle %p", handle);
     /* XXX FIXME is this enough? What about shared status? */
     pobject_lives(interp, &handle->obj);
     pobject_lives(interp, &handle->value->obj);
@@ -499,7 +518,8 @@ int Parrot_STM_transaction_depth(Interp *interp) {
  *
  * This may mark us as aborted and return NULL.
  */
-static void *wait_for_version(STM_tx_log *log, Parrot_atomic_pointer *in_what) {
+static void *wait_for_version(Interp *interp, 
+        STM_tx_log *log, Parrot_atomic_pointer *in_what) {
     UINTVAL wait_count = 0;
     STM_tx_log_sub *curlog;
     void *version;
@@ -516,6 +536,7 @@ static void *wait_for_version(STM_tx_log *log, Parrot_atomic_pointer *in_what) {
         }
 
         ++wait_count;
+
         /* poor man's deadlock detection:
          * wait_len = (whoever we are waiting on's wait_len) + 1
          * this means that if wait_len > num_threads, we have a deadlock
@@ -549,10 +570,16 @@ static void *wait_for_version(STM_tx_log *log, Parrot_atomic_pointer *in_what) {
             ATOMIC_INT_SET(curlog->wait_length, 0);
             return NULL; 
         }
+
+        if (wait_count > 50) {
+            fprintf(stderr, "waited too long, aborting...\n");
+            ATOMIC_INT_SET(curlog->status, STM_STATUS_ABORTED);
+            ATOMIC_INT_SET(curlog->wait_length, 0);
+            return NULL;
+        }
         
         YIELD;
-        /* XXX better spinning */
-        /* YIELD */
+        /* XXX better spinning -- esp. detect or block DOD request */
     }
 }
 
@@ -587,7 +614,7 @@ PMC *Parrot_STM_read(Interp *interp, Parrot_STM_PMC_handle handle) {
     read = NULL;
     write = NULL;
 
-    STM_TRACE("STM_read");
+    STM_TRACE("STM_read %p", handle);
 
     /* search for previous write record */
     for (i = 0; i <= log->last_write; ++i) {
@@ -622,7 +649,7 @@ PMC *Parrot_STM_read(Interp *interp, Parrot_STM_PMC_handle handle) {
     /* XXX loop needed? */
     do {
         STM_TRACE("trying read");
-        read->saw_version = wait_for_version(log, &handle->owner_or_version);
+        read->saw_version = wait_for_version(interp, log, &handle->owner_or_version);
         STM_TRACE("read: saw version %p", read->saw_version);
         read->value = handle->value;
         ATOMIC_PTR_GET(check_version, handle->owner_or_version);
@@ -743,7 +770,7 @@ static STM_write_record *find_write_record(Interp *interp, STM_tx_log *log,
             if (!is_aborted(log)) {
                 do {
                     STM_TRACE("trying write");
-                    write->saw_version = wait_for_version(log, &handle->owner_or_version);
+                    write->saw_version = wait_for_version(interp, log, &handle->owner_or_version);
                     STM_TRACE("write saw version %p", write->saw_version);
                     ATOMIC_PTR_CAS(successp, handle->owner_or_version, write->saw_version,
                                     cursub);

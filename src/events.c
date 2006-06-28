@@ -51,7 +51,8 @@ static const char *ev_names[] = {
     "EVENT_TYPE_TERMINATE",
     "EVENT_TYPE_EVENT_TERMINATE",
     "EVENT_TYPE_CLASS_CHANGED",
-    "EVENT_TYPE_SIGNAL"
+    "EVENT_TYPE_SIGNAL",
+    "EVENT_TYPE_SUSPEND_FOR_GC"
 };
 static const char*
 et(parrot_event* e)
@@ -476,6 +477,25 @@ Parrot_new_terminate_event(Parrot_Interp interpreter)
 {
     parrot_event* ev = mem_sys_allocate(sizeof(parrot_event));
     ev->type = EVENT_TYPE_TERMINATE;
+    ev->data = NULL;
+    Parrot_schedule_event(interpreter, ev);
+}
+
+/*
+
+=item C<void Parrot_new_suspend_for_gc_event(Parrot_Interp interpreter)>
+
+Create a suspend-for-GC event, interpreter will wait on a condition
+variable for GC to finish when the event arrives.
+
+=cut
+
+*/
+
+void
+Parrot_new_suspend_for_gc_event(Parrot_Interp interpreter) {
+    parrot_event* ev = mem_sys_allocate(sizeof(parrot_event));
+    ev->type = EVENT_TYPE_SUSPEND_FOR_GC;
     ev->data = NULL;
     Parrot_schedule_event(interpreter, ev);
 }
@@ -1119,6 +1139,10 @@ do_event(Parrot_Interp interpreter, parrot_event* event, void *next)
             break;
         case EVENT_TYPE_SLEEP:
             interpreter->sleeping = 0;
+            break;
+        case EVENT_TYPE_SUSPEND_FOR_GC:
+            edebug((stderr, "suspend for gc\n"));
+            pt_suspend_self_for_gc(interpreter);
             break;
         default:
             fprintf(stderr, "Unhandled event type %d\n", event->type);

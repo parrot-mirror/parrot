@@ -76,6 +76,10 @@ mark_special(Parrot_Interp interpreter, PMC* obj)
     if (PObj_is_PMC_shared_TEST(obj)) {
         interpreter = PMC_sync(obj)->owner;
         assert(interpreter);
+        /* XXX FIXME hack */
+        if (!interpreter->arena_base->dod_mark_ptr) {
+            interpreter->arena_base->dod_mark_ptr = obj;
+        }
     }
     arena_base = interpreter->arena_base;
 
@@ -760,12 +764,18 @@ Parrot_dod_sweep(Interp *interpreter,
                 /* if object is a PMC and needs destroying */
                 if (PObj_is_PMC_TEST(b)) {
                     PMC *p = (PMC*)b;
-                    /*
-                     * XXX
-                     * for now don't mess around with shared objects
-                     */
-                    if (PObj_is_PMC_shared_TEST(p))
-                        goto next;
+                    if (PObj_is_PMC_shared_TEST(p)) {
+                        /* only mess with shared objects if we
+                         * (and thus everyone) is suspended for
+                         * a GC run.
+                         * XXX wrong thing to do with "other" GCs
+                         */
+                        if (!(interpreter->thread_data &&
+                                (interpreter->thread_data->state &
+                                THREAD_STATE_SUSPENDED_GC))) {
+                            goto next;
+                        }
+                    }
 
                     /* then destroy it here
                     */
@@ -1089,7 +1099,7 @@ Parrot_do_dod_run(Interp *interpreter, UINTVAL flags)>
 Call the configured garbage collector to reclaim unused headers.
 
 =item C<void
-parrot_dod_ms_run(Interp *interpreter, UINTVAL flags)>
+Parrot_dod_ms_run(Interp *interpreter, UINTVAL flags)>
 
 Run the stop-the-world mark & sweep collector.
 
@@ -1192,7 +1202,7 @@ Parrot_dod_ms_run(Interp *interpreter, int flags)
         /*
          * mark is now finished
          */
-        /* pt_DOD_stop_mark(interpreter); */
+        pt_DOD_stop_mark(interpreter);
 
         /* Now put unused PMCs and Buffers on the free list */
         Parrot_forall_header_pools(interpreter, POOL_BUFFER | POOL_PMC,
@@ -1201,6 +1211,7 @@ Parrot_dod_ms_run(Interp *interpreter, int flags)
             Parrot_dod_profile_end(interpreter, PARROT_PROF_DOD_cb);
     }
     else {
+        pt_DOD_stop_mark(interpreter); /* XXX */
         /*
          * successful lazy DOD count
          */
@@ -1214,7 +1225,6 @@ Parrot_dod_ms_run(Interp *interpreter, int flags)
         if (interpreter->profile)
             Parrot_dod_profile_end(interpreter, PARROT_PROF_DOD_p2);
     }
-    pt_DOD_stop_mark(interpreter);
     /* Note it */
     arena_base->dod_runs++;
     --arena_base->DOD_block_level;
