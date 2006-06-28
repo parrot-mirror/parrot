@@ -48,7 +48,7 @@ typedef struct {
  * result will be 1 if the value was as expected (and thus
  * the update was performed) and 0 otherwise
  */
-#   define ATOMIC_PTR_COMPARE_AND_SET(result, a, expect, update) \
+#   define ATOMIC_PTR_CAS(result, a, expect, update) \
         do { \
             void * orig; \
             ATOMIC_PTR_GET(a, orig); \
@@ -63,7 +63,8 @@ typedef struct {
 #   define ATOMIC_INT_INIT(a)
 #   define ATOMIC_INT_DESTROY(a)
 #   define ATOMIC_INT_GET(result, a) result = (a).val
-#   define ATOMIC_INT_COMPARE_AND_SET(result, a, expect, update) \
+#   define ATOMIC_INT_SET(a, value)  (a).val = value
+#   define ATOMIC_INT_CAS(result, a, expect, update) \
         do { \
             INTVAL orig; \
             ATOMIC_PTR_GET(a, orig); \
