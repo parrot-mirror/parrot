@@ -50,7 +50,7 @@ have the same number of elements since there is a one-to-one mapping.
 #include "parrot/dynext.h"
 
 
-static void setup_event_func_ptrs(Parrot_Interp interpreter);
+void Parrot_setup_event_func_ptrs(Parrot_Interp interpreter);
 
 /*
 
@@ -421,7 +421,7 @@ stop_prederef(Interp *interpreter)
         mem_sys_free(interpreter->evc_func_table);
         interpreter->evc_func_table = NULL;
     }
-    setup_event_func_ptrs(interpreter);
+    Parrot_setup_event_func_ptrs(interpreter);
 }
 
 #if EXEC_CAPABLE
@@ -698,7 +698,7 @@ runops_int(Interp *interpreter, size_t offset)
      * setup event function ptrs
      */
     if (!interpreter->save_func_table) {
-        setup_event_func_ptrs(interpreter);
+        Parrot_setup_event_func_ptrs(interpreter);
     }
 
     interpreter->resume_offset = offset;
@@ -790,7 +790,7 @@ runops_int(Interp *interpreter, size_t offset)
 /*
 
 =item C<static void
-setup_event_func_ptrs(Parrot_Interp interpreter)>
+Parrot_setup_event_func_ptrs(Parrot_Interp interpreter)>
 
 Setup a C<func_table> containing pointers (or addresses) of the
 C<check_event__> opcode.
@@ -801,8 +801,8 @@ TODO: Free it at destroy. Handle run-core changes.
 
 */
 
-static void
-setup_event_func_ptrs(Parrot_Interp interpreter)
+void
+Parrot_setup_event_func_ptrs(Parrot_Interp interpreter)
 {
     size_t i, n = interpreter->op_count;
     oplib_init_f init_func = get_op_lib_init(1, interpreter->run_core, NULL);
@@ -883,7 +883,7 @@ dynop_register(Parrot_Interp interpreter, PMC* lib_pmc)
     /*
      * when called from yyparse, we have to set up the evc_func_table
      */
-    setup_event_func_ptrs(interpreter);
+    Parrot_setup_event_func_ptrs(interpreter);
 
     n_old = interpreter->op_count;
     n_new = lib->op_count;
@@ -1086,6 +1086,7 @@ notify_func_table(Parrot_Interp interpreter, void* table, int on)
         case PARROT_SLOW_CORE:      /* normal func core */
         case PARROT_FAST_CORE:      /* normal func core */
         case PARROT_CGOTO_CORE:      /* cgoto address list  */
+            assert(table);
             interpreter->op_func_table = table;
             break;
         case PARROT_CGP_CORE:
@@ -1115,6 +1116,7 @@ disable_event_checking(Parrot_Interp interpreter)
     /*
      * restore func table
      */
+    assert(interpreter->save_func_table);
     notify_func_table(interpreter, interpreter->save_func_table, 0);
 }
 
@@ -1140,6 +1142,7 @@ enable_event_checking(Parrot_Interp interpreter)
     /*
      * put table in place
      */
+    assert(interpreter->evc_func_table);
     notify_func_table(interpreter, interpreter->evc_func_table, 1);
 }
 

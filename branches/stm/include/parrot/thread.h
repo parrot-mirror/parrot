@@ -69,7 +69,14 @@ typedef enum {
     THREAD_STATE_DETACHED = 0x01,       /* i.e. non-joinable */
     THREAD_STATE_JOINED   = 0x02,       /* JOIN was issued */
     THREAD_STATE_FINISHED = 0x04,        /* the thread function has ended */
-    THREAD_STATE_NOT_STARTED = 0x08      /* the thread wasn't started */
+    THREAD_STATE_NOT_STARTED = 0x08,     /* the thread wasn't started */
+    THREAD_STATE_SUSPENDED_GC = 0x10,     /* suspended for GC on request */
+    THREAD_STATE_GC_WAKEUP = 0x20,      /* the thread is waiting on its condition
+                                           variable, and will do a GC run if
+                                           it is woken up and marked as suspended
+                                           for GC */
+    THREAD_STATE_SUSPEND_GC_REQUESTED = 0x40, /* the thread's event queue
+                                                 contains a suspend-for-GC event */
 } thread_state_enum;
 
 
@@ -79,7 +86,11 @@ typedef enum {
 typedef struct _Thread_data {
     Parrot_thread       thread;         /* pthread_t or such */
     thread_state_enum   state;
+    int                 wants_shared_gc; /* therad is trying to
+                                            do a shared GC run */
     UINTVAL             tid;            /* 0.. n-1 idx in interp array */
+
+    Parrot_Interp       joiner;         /* thread that is trying to join this */
 
     /* for wr access to interpreter e.g. for DOD/GC
      * if only used for DOD/GC the lock could be in the arena
@@ -87,6 +98,11 @@ typedef struct _Thread_data {
      * for the non-threaded case
      */
     Parrot_mutex interp_lock;
+
+    /* for waking up the interpreter from various sorts
+     * of sleeping 
+     */
+    Parrot_cond  interp_cond;
 
     /* STM transaction log */
     void               *stm_log;
@@ -100,9 +116,17 @@ typedef struct _Thread_data {
         UNLOCK((interp)->thread_data->interp_lock)
 
 #define INTERPRETER_LOCK_INIT(interp) \
-        MUTEX_INIT((interp)->thread_data->interp_lock)
+        do { \
+            MUTEX_INIT((interp)->thread_data->interp_lock); \
+            COND_INIT((interp)->thread_data->interp_cond); \
+        } while (0)
 #define INTERPRETER_LOCK_DESTROY(interp) \
-        MUTEX_DESTROY((interp)->thread_data->interp_lock)
+        do { \
+            MUTEX_DESTROY((interp)->thread_data->interp_lock); \
+            COND_DESTROY((interp)->thread_data->interp_cond); \
+        } while (0)
+
+
 /*
  * this global mutex protects the list of interpreters
  */
@@ -110,6 +134,20 @@ VAR_SCOPE Parrot_mutex                  interpreter_array_mutex;
 VAR_SCOPE Interp          ** interpreter_array;
 VAR_SCOPE size_t                        n_interpreters;
 
+typedef enum {
+    THREAD_GC_STAGE_NONE,
+    THREAD_GC_STAGE_MARK,
+    THREAD_GC_STAGE_SWEEP = THREAD_GC_STAGE_NONE
+} thread_gc_stage_enum;
+
+typedef struct _Shared_gc_info {
+    thread_gc_stage_enum gc_stage;
+    Parrot_cond gc_cond;
+    int num_reached;
+} Shared_gc_info;
+
+/* TODO use thread pools instead */
+VAR_SCOPE Shared_gc_info shared_gc_info;
 
 typedef struct _Sync {
     Parrot_Interp owner;                /* that interpreter, that owns
@@ -134,6 +172,7 @@ PMC* pt_thread_join(Parrot_Interp, UINTVAL);
 void pt_thread_detach(UINTVAL);
 void pt_thread_kill(UINTVAL);
 void pt_join_threads(Parrot_Interp);
+void pt_suspend_self_for_gc(Parrot_Interp);
 
 /*
  * DOD interface

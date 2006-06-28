@@ -47,6 +47,7 @@ pmclass STMVar is_shared {
         } else {
             PMC_struct_val(SELF) = Parrot_STM_alloc(INTERP, value);
         }
+        PObj_custom_mark_SET(SELF);
     }
 /*
 
