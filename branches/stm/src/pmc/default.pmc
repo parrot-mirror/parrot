@@ -78,7 +78,9 @@ Called from C<setprop()>.
 static void
 check_set_std_props(Interp* interpreter, PMC *pmc, STRING *key, PMC *value)
 {
-#if  1
+    /* the quick hack below cannot be used because the string could
+       be constructed in an interpreter that is later destroyed */
+#if  0
     /* XXX
      * a quick hack, to prevent freeing that string during DOD
      * triggered in t/pmc/pmc_62.t when configured with --gc=libc
