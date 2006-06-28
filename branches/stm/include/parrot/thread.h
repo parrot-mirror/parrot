@@ -140,14 +140,11 @@ typedef enum {
     THREAD_GC_STAGE_SWEEP = THREAD_GC_STAGE_NONE
 } thread_gc_stage_enum;
 
-typedef struct _Shared_gc_info {
-    thread_gc_stage_enum gc_stage;
-    Parrot_cond gc_cond;
-    int num_reached;
-} Shared_gc_info;
+typedef struct _Shared_gc_info Shared_gc_info;
+
 
 /* TODO use thread pools instead */
-VAR_SCOPE Shared_gc_info shared_gc_info;
+VAR_SCOPE Shared_gc_info *shared_gc_info;
 
 typedef struct _Sync {
     Parrot_Interp owner;                /* that interpreter, that owns
@@ -180,6 +177,10 @@ void pt_suspend_self_for_gc(Parrot_Interp);
 void pt_DOD_start_mark(Parrot_Interp);
 void pt_DOD_mark_root_finished(Parrot_Interp);
 void pt_DOD_stop_mark(Parrot_Interp);
+
+
+PARROT_API void Parrot_shared_DOD_block(Parrot_Interp);
+PARROT_API void Parrot_shared_DOD_unblock(Parrot_Interp);
 
 #endif /* PARROT_THREAD_H_GUARD */
 

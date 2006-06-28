@@ -19,6 +19,7 @@ Threads are created by creating new C<ParrotInterpreter> objects.
 */
 
 #include "parrot/parrot.h"
+#include "parrot/atomic.h"
 #include <assert.h>
 
 #define THREAD_DEBUG 0
@@ -36,6 +37,14 @@ static void TRACE_THREAD(const char *x, ...) {}
 static int running_threads;
 
 void Parrot_really_destroy(int exit_code, void *interpreter);
+
+struct _Shared_gc_info {
+    thread_gc_stage_enum gc_stage;
+    Parrot_cond gc_cond;
+    int num_reached;
+
+    Parrot_atomic_int gc_block_level;
+};
 
 /*
 
@@ -65,7 +74,7 @@ make_local_copy(Parrot_Interp interpreter, PMC *arg)
 
 
 static Shared_gc_info *get_pool(Parrot_Interp interpreter) {
-    return &shared_gc_info;
+    return shared_gc_info;
 }
 
 
@@ -600,7 +609,7 @@ pt_gc_count_threads(Parrot_Interp interp) {
 static void
 pt_gc_wait_for_stage(Parrot_Interp interp, thread_gc_stage_enum from_stage,
             thread_gc_stage_enum to_stage) {
-    Shared_gc_info *info = &shared_gc_info;
+    Shared_gc_info *info = shared_gc_info;
     int thread_count;
     TRACE_THREAD("%p: gc_wait_for_stage: %d->%d", interp, from_stage, to_stage);
    
@@ -1013,7 +1022,10 @@ pt_add_to_interpreters(Parrot_Interp interpreter, Parrot_Interp new_interp)
         interpreter_array[0] = interpreter;
         n_interpreters = 1;
 
-        COND_INIT(shared_gc_info.gc_cond);
+        shared_gc_info = mem_sys_allocate(sizeof(*shared_gc_info));
+        COND_INIT(shared_gc_info->gc_cond);
+        ATOMIC_INT_INIT(shared_gc_info->gc_block_level);
+        ATOMIC_INT_SET(shared_gc_info->gc_block_level, 0);
         
         /* XXX try to defer this until later */
         assert(interpreter == interpreter_array[0]);
@@ -1083,9 +1095,17 @@ is updated.
 void
 pt_DOD_start_mark(Parrot_Interp interpreter)
 {
+    Shared_gc_info *info;
+    int block_level;
+
     TRACE_THREAD("pt_DOD_start_mark");
     /* if no other threads are running, we are safe */
     if (!running_threads)
+        return;
+
+    info = get_pool(interpreter);
+    ATOMIC_INT_GET(block_level, info->gc_block_level);
+    if (block_level) 
         return;
 
     TRACE_THREAD("start threaded mark");
@@ -1183,6 +1203,51 @@ pt_DOD_stop_mark(Parrot_Interp interpreter)
     TRACE_THREAD("wait to sweep");
     pt_gc_wait_for_stage(interpreter, THREAD_GC_STAGE_MARK, THREAD_GC_STAGE_SWEEP);
 
+}
+
+/*
+
+=item C<void
+Parrot_shared_DOD_block(Parrot_Interp interpreter)>
+
+Block stop-the-world DOD runs.
+
+=cut
+
+*/
+
+void
+Parrot_shared_DOD_block(Parrot_Interp interpreter) {
+    Shared_gc_info *info;
+    int level;
+
+    info = get_pool(interpreter);
+    if (info) {
+        ATOMIC_INT_INC(level, info->gc_block_level);
+        assert(level > 0);
+    }
+}
+
+/*
+
+=item C<void
+Parrot_shared_DOD_unblock(Parrot_Interp interpreter)>
+
+Unblock stop-the-world DOD runs.
+
+=cut
+
+*/
+
+void Parrot_shared_DOD_unblock(Parrot_Interp interpreter) {
+    Shared_gc_info *info;
+    int level;
+
+    info = get_pool(interpreter);
+    if (info) {
+        ATOMIC_INT_DEC(level, info->gc_block_level);
+        assert(level >= 0);
+    }
 }
 
 /*
