@@ -75,6 +75,19 @@ Marks the referenced PMC as live.
 
 /*
 
+=item C<PMC* clone()>
+
+Return ourself.
+
+=cut
+
+*/
+    PMC* clone() {
+        return SELF;
+    }
+
+/*
+
 =back
 
 This method must be implemented because they are not delegated.
