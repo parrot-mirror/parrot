@@ -171,6 +171,8 @@ void pt_thread_kill(UINTVAL);
 void pt_join_threads(Parrot_Interp);
 void pt_suspend_self_for_gc(Parrot_Interp);
 
+PMC *pt_shared_fixup(Parrot_Interp, PMC*);
+
 /*
  * DOD interface
  */

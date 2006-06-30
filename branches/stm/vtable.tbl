@@ -364,4 +364,4 @@ void visit (visit_info* info)
 
 void share()
 
-void share_ro()
+PMC* share_ro()

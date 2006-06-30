@@ -308,7 +308,7 @@ loop:
     .local pmc got
 
     failed = 0 
-    i = 1
+    i = 0
 loop:
     got = queue.'fetchHead'(1, 1)
     if i < 9 goto no_sleep
@@ -352,6 +352,86 @@ no_sleep:
     removeThread.'run_clone'(_remove, queue)
     # This order is different.
     addThread.'join'()
+    removeThread.'join'()
+.end
+
+CODE
+got 0
+got 1
+got 2
+got 3
+got 4
+got 5
+got 6
+got 7
+got 8
+got 9
+OUTPUT
+
+pir_output_is($library . <<'CODE', <<'OUTPUT', "Test 2 + detach + attempt to trigger thread death bugs");
+
+.sub adder
+    .param pmc queue
+    .local int i
+    i = 0
+loop:
+    queue.'addTail'(i, 1)
+    inc i
+    if i < 10 goto loop
+.end
+
+.sub remover
+    .param pmc queue
+    .local int i
+    .local int failed
+    .local pmc got
+
+    failed = 0 
+    i = 1
+loop:
+    got = queue.'fetchHead'(1, 1)
+    if i < 9 goto no_sleep
+    sleep 1 # sleep so other thread will die to trigger bug
+no_sleep:
+    print "got "
+    print got
+    print "\n"
+    inc i
+    if i < 10 goto loop
+.end
+
+.sub main :main
+    .local pmc addThread
+    .local pmc removeThread
+    .local pmc queue
+    .local pmc me
+
+    .local pmc _add
+    .local pmc _remove
+
+    .local pmc copy
+     
+    .local int addThreadId
+    .local int removeThreadId
+
+    _add = global "adder"
+    _remove = global "remover"
+
+    addThread = new ParrotThread
+    removeThread = new ParrotThread
+    $I0 = find_type 'STMQueue'
+    $P0 = new Integer
+    $P0 = 2 
+    queue = new $I0, $P0
+
+    addThreadId = addThread
+    removeThreadId = removeThread
+
+    addThread.'run_clone'(_add, queue)
+    removeThread.'run_clone'(_remove, queue)
+    # Detach here, as of this writing preventing cleanup of
+    # the thread's shared PMCs.
+    addThread.'detach'()
     removeThread.'join'()
 .end
 

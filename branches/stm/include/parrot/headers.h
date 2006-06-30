@@ -74,6 +74,8 @@ int Parrot_forall_header_pools(Interp *, int, void *arg, pool_iter_fn func);
 void Parrot_initialize_header_pools(Interp *);
 void Parrot_destroy_header_pools(Interp *interpreter);
 
+void Parrot_merge_header_pools(Interp *dest, Interp *source);
+
 #endif /* PARROT_HEADERS_H_GUARD */
 
 /*

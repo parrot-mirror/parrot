@@ -117,6 +117,56 @@ make_local_args_copy(Parrot_Interp interpreter, Parrot_Interp old_interp, PMC *a
 
 /*
 
+=item C<PMC *
+pt_shared_fixup(Parrot_Interp interpreter, PMC *pmc)
+
+Fixup a PMC to be sharable. Right now, reassigns the vtable to one
+owned by some master interpreter, so the PMC can be safely reused
+after thread death.
+
+In the future the PMC returned might be different than the one
+passed, e.g., if we need to reallocate the PMC in a different
+interpreter.
+
+=cut
+
+*/
+
+PMC *pt_shared_fixup(Parrot_Interp interpreter, PMC *pmc) {
+    /* TODO this will need to change for thread pools
+     * XXX should we have a seperate interpreter for this?
+     */
+    Parrot_Interp master = interpreter_array[0];
+    INTVAL type_num;
+    int is_ro;
+
+    is_ro = pmc->vtable->flags & VTABLE_IS_READONLY_FLAG;
+
+    /* This lock is paired with one in objects.c. It is necessary to protect
+     * against the master interpreter adding classes and consequently
+     * resizing its classname->type_id hashtable and/or expanding its vtable
+     * array.
+     * TODO investigate if a read-write lock results in substantially
+     * better performance.
+     */
+    LOCK_INTERPRETER(master);
+    type_num = pmc_type(master, pmc->vtable->whoami);
+    pmc->vtable = master->vtables[type_num];
+    UNLOCK_INTERPRETER(master);
+
+    if (type_num == enum_type_undef) {
+        internal_exception(1, "pt_shared_fixup: unsharable type");
+    }
+
+    if (is_ro) {
+        pmc->vtable = pmc->vtable->ro_variant;
+    }
+
+    return pmc;
+}
+
+/*
+
 =item C<static void
 pt_thread_signal(Parrot_Interp self, Parrot_Interp interp)>
 
@@ -836,6 +886,9 @@ pt_thread_join(Parrot_Interp parent, UINTVAL tid)
         TRACE_THREAD("destroying an interpreter [join]");
         if (Interp_debug_TEST(parent, PARROT_THREAD_DEBUG_FLAG))
             fprintf(stderr, "running threads %d\n", running_threads);
+        
+        /* reparent it so memory pool merging works */
+        interpreter->parent_interpreter = parent;
         Parrot_really_destroy(0, interpreter);
         CLEANUP_POP(1);
         /*

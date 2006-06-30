@@ -773,8 +773,9 @@ Parrot_dod_sweep(Interp *interpreter,
                         if (!(interpreter->thread_data &&
                                 (interpreter->thread_data->state &
                                 THREAD_STATE_SUSPENDED_GC))) {
+                            ++total_used;
                             goto next;
-                        }
+                        } 
                     }
 
                     /* then destroy it here

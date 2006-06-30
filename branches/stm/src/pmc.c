@@ -409,7 +409,6 @@ pmc_type(Interp* interpreter, STRING *name)
     if (!PMC_IS_NULL(item))
         return PMC_int_val((PMC*) item);
     return Parrot_get_datatype_enum(interpreter, name);
-
 }
 
 INTVAL
