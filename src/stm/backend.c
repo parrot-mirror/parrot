@@ -256,9 +256,11 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
     }
 }
 
-static void force_sharing(Interp *interp, PMC *pmc) {
+static PMC *force_sharing(Interp *interp, PMC *pmc) {
     if (!PMC_IS_NULL(pmc)) {
-        VTABLE_share_ro(interp, pmc);
+        return VTABLE_share_ro(interp, pmc);
+    } else {
+        return PMCNULL;
     }
 }
 
@@ -289,7 +291,7 @@ do_real_commit(Interp *interp, STM_tx_log *log) {
         write = get_write(interp, log, i);
 
         new_version = next_version(write->saw_version);
-        force_sharing(interp, write->handle->value);
+        write->value = force_sharing(interp, write->value);
         write->handle->value = write->value; /* actually update */
         ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, inner,
             new_version);
@@ -564,15 +566,15 @@ static void *wait_for_version(Interp *interp,
         }
 
         if (our_wait_len > n_interpreters) {
-            fprintf(stderr, "deadlock detected, avoiding...\n");
-            /* abort thyself to evade deadlock*/
+            /* fprintf(stderr, "deadlock detected, avoiding...\n"); */
+            /* abort thyself to evade deadlock */
             ATOMIC_INT_SET(curlog->status, STM_STATUS_ABORTED);
             ATOMIC_INT_SET(curlog->wait_length, 0);
             return NULL; 
         }
 
         if (wait_count > 50) {
-            fprintf(stderr, "waited too long, aborting...\n");
+            /* fprintf(stderr, "waited too long, aborting...\n"); */
             ATOMIC_INT_SET(curlog->status, STM_STATUS_ABORTED);
             ATOMIC_INT_SET(curlog->wait_length, 0);
             return NULL;

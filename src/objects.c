@@ -498,6 +498,8 @@ register_type(Interp *interpreter, PMC *name)
     INTVAL type;
     PMC * classname_hash, *item;
 
+    /* so pt_shared_fixup() can safely do a type lookup */
+    LOCK_INTERPRETER(interpreter);
     classname_hash = interpreter->class_hash;
 
     type = interpreter->n_vtable_max++;
@@ -509,6 +511,8 @@ register_type(Interp *interpreter, PMC *name)
     item = pmc_new(interpreter, enum_class_Integer);
     PMC_int_val(item) = type;
     VTABLE_set_pmc_keyed(interpreter, classname_hash, name, item);
+    UNLOCK_INTERPRETER(interpreter);
+
     return type;
 }
 

@@ -768,6 +768,67 @@ Parrot_destroy_header_pools(Interp *interpreter)
     mem_internal_free(interpreter->arena_base->sized_header_pools);
 }
 
+/*
+=item C<void
+Parrot_merge_header_pools(Interp *dest_interp, Interp *source_interp)>
+
+Merge the header pools of C<source_interp> into those of C<dest_interp>.
+(Used to deal with shared objects left after interpreter destruction.
+
+=cut
+*/
+
+
+#define MDEBUG(x...) /* fprintf(stderr, "DEBUG: " x); fprintf(stderr, "\n") */
+void
+Parrot_merge_header_pools(Interp *dest_interp, Interp *source_interp) {
+    struct Arenas *dest_arena;
+    struct Arenas *source_arena;
+    UINTVAL i;
+
+    dest_arena = dest_interp->arena_base;
+    source_arena = source_interp->arena_base;
+
+    /* heavily borrowed from forall_header_pools */
+
+    MDEBUG("merge constant PMCs");
+    Parrot_small_object_pool_merge(dest_interp, dest_arena->constant_pmc_pool,
+            source_arena->constant_pmc_pool);
+    MDEBUG("merge PMCs");
+    Parrot_small_object_pool_merge(dest_interp, dest_arena->pmc_pool,
+            source_arena->pmc_pool);
+    MDEBUG("merge string headers");
+    Parrot_small_object_pool_merge(dest_interp, 
+            dest_arena->constant_string_header_pool,
+            source_arena->constant_string_header_pool);
+    MDEBUG("merge PMC_EXTs");
+    Parrot_small_object_pool_merge(dest_interp,
+            dest_arena->pmc_ext_pool,
+            source_arena->pmc_ext_pool);
+
+    for (i = 0; i < source_arena->num_sized; ++i) {
+        if (!source_arena->sized_header_pools[i]) {
+            continue;
+        }
+
+        /* XXX FIXME -- move buffers */
+
+        if (i >= dest_arena->num_sized ||
+            !dest_arena->sized_header_pools[i]) {
+            make_bufferlike_pool(dest_interp, i * sizeof(void *) 
+                + sizeof(Buffer));
+            assert(dest_arena->sized_header_pools[i]);
+        }
+
+        MDEBUG("merge %d-sized header pools", i);
+
+        Parrot_small_object_pool_merge(dest_interp,
+            dest_arena->sized_header_pools[i],
+            source_arena->sized_header_pools[i]);
+    }
+    MDEBUG("done the merging");
+}
+
 #if 0
 
 /*

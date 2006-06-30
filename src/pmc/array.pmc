@@ -1274,8 +1274,9 @@ Recursively make the array read-only and shared.
 =cut
 
 */
-    void share_ro() {
+    PMC* share_ro() {
         PMC *true;
+        PMC *ret;
 
         /* prevent infinite recursion */
         if (PObj_is_PMC_shared_TEST(SELF)) {
@@ -1285,25 +1286,32 @@ Recursively make the array read-only and shared.
 
         true = pmc_new(INTERP, enum_class_Integer);
         VTABLE_set_integer_native(INTERP, true, 1);
-        /* first set readonly */
-        VTABLE_setprop(INTERP, SELF, const_string(INTERP, "_ro"), true);
 
+        ret = pt_shared_fixup(INTERP, SELF);
+
+        /* first set readonly */
+        VTABLE_setprop(INTERP, ret, const_string(INTERP, "_ro"), true);
 
         /* now share */
-        add_pmc_sync(INTERP, SELF);
-        PObj_is_PMC_shared_SET(SELF);
+        add_pmc_sync(INTERP, ret);
+        PObj_is_PMC_shared_SET(ret);
         
         /* XXX do something that deals better with sparse lists */
         INTVAL i;
         INTVAL max;
-        max = VTABLE_elements(INTERP, SELF);
+        max = VTABLE_elements(INTERP, ret);
         for (i = 0; i < max; ++i) {
             PMC *value;
 
-            value = list_get(INTERP, PMC_data(SELF), i, enum_type_PMC);
+            value = list_get(INTERP, PMC_data(ret), i, enum_type_PMC);
             if (!PMC_IS_NULL(value)) {
+                PMC *new_value;
                 /* XXX do we need to clone first? */
-                VTABLE_share_ro(INTERP, value);
+                new_value = VTABLE_share_ro(INTERP, value);
+                if (new_value != value) {
+                    list_assign(INTERP, PMC_data(ret), 
+                        i, new_value, enum_type_PMC);
+                }
             }
         }
     }

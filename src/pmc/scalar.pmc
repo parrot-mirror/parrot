@@ -1399,17 +1399,23 @@ Sets this PMC as shared and read-only.
 =cut
 
 */
-    void share_ro() {
+    PMC* share_ro() {
         PMC *true;
+        PMC *ret;
 
         true = pmc_new(INTERP, enum_class_Integer);
         VTABLE_set_integer_native(INTERP, true, 1);
+
+        ret = pt_shared_fixup(INTERP, SELF); 
+
         /* first set readonly */
-        VTABLE_setprop(INTERP, SELF, const_string(INTERP, "_ro"), true);
+        VTABLE_setprop(INTERP, ret, const_string(INTERP, "_ro"), true);
+
 
         /* now share; we add a PMC_EXT so we can identify the owning interp */
-        add_pmc_sync(INTERP, SELF);
-        PObj_is_PMC_shared_SET(SELF);
+        add_pmc_sync(INTERP, ret);
+        PObj_is_PMC_shared_SET(ret);
+        return ret;
     }
 
 }
