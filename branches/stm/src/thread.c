@@ -162,6 +162,8 @@ PMC *pt_shared_fixup(Parrot_Interp interpreter, PMC *pmc) {
         pmc->vtable = pmc->vtable->ro_variant;
     }
 
+    add_pmc_sync(interpreter, pmc);
+
     return pmc;
 }
 
@@ -1075,7 +1077,7 @@ pt_add_to_interpreters(Parrot_Interp interpreter, Parrot_Interp new_interp)
         interpreter_array[0] = interpreter;
         n_interpreters = 1;
 
-        shared_gc_info = mem_sys_allocate(sizeof(*shared_gc_info));
+        shared_gc_info = mem_sys_allocate_zeroed(sizeof(*shared_gc_info));
         COND_INIT(shared_gc_info->gc_cond);
         ATOMIC_INT_INIT(shared_gc_info->gc_block_level);
         ATOMIC_INT_SET(shared_gc_info->gc_block_level, 0);

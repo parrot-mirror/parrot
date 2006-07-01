@@ -440,12 +440,17 @@ create_class_pmc(Interp *interpreter, INTVAL type)
          */
         struct Small_Object_Pool * const ext_pool =
             interpreter->arena_base->pmc_ext_pool;
+        if (PMC_sync(class)) {
+            mem_internal_free(PMC_sync(class));
+        }
         ext_pool->add_free_object(interpreter, ext_pool, class->pmc_ext);
     }
     class->pmc_ext = NULL;
     DOD_flag_CLEAR(is_special_PMC, class);
     PMC_pmc_val(class)   = (void*)0xdeadbeef;
     PMC_struct_val(class)= (void*)0xdeadbeef;
+
+    PObj_is_PMC_shared_CLEAR(class);
 
     interpreter->vtables[type]->class = class;
 

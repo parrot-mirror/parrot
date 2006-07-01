@@ -778,8 +778,61 @@ Merge the header pools of C<source_interp> into those of C<dest_interp>.
 =cut
 */
 
+static void fix_pmc_syncs(Interp *dest_interp, 
+        struct Small_Object_Pool *pool) {
+    /* XXX largely copied from dod_sweep */
+    struct Small_Object_Arena *cur_arena;
+    UINTVAL object_size = pool->object_size;
+    size_t i;
+    size_t nm;
+    for (cur_arena = pool->last_Arena;
+            NULL != cur_arena; cur_arena = cur_arena->prev) {
+        Buffer *b = cur_arena->start_objects;
 
-#define MDEBUG(x...) /* fprintf(stderr, "DEBUG: " x); fprintf(stderr, "\n") */
+#if ARENA_DOD_FLAGS
+        UINTVAL * dod_flags = cur_arena->dod_flags - 1;
+#endif
+        for (i = nm = 0; i < cur_arena->used; i++) {
+#if ARENA_DOD_FLAGS
+            if (! (i & ARENA_FLAG_MASK)) {
+                ++dod_flags;
+                /* if all are on free list, skip one bunch */
+                if (*dod_flags == ALL_FREE_MASK) {  /* all on free list */
+                    i += ARENA_FLAG_MASK;       /* + 1 in loop */
+                    b = (Buffer *)((char *)b + object_size*(ARENA_FLAG_MASK+1));
+                    continue;
+                }
+                nm = 0;
+            }
+            else
+                nm += 4;
+
+            if ((*dod_flags & (PObj_on_free_list_FLAG << nm)))
+                ; /* if its on free list, do nothing */
+            else
+#else
+            if (PObj_on_free_list_TEST(b))
+                ; /* if its on free list, do nothing */
+            else
+#endif
+            {
+                if (PObj_is_PMC_TEST(b)) {
+                    PMC *p = (PMC *)b;
+                    if (PObj_is_PMC_shared_TEST(p)) {
+                        PMC_sync(p)->owner = dest_interp;
+                    } else {
+                        /* fprintf(stderr, "BAD PMC: address=%p, base_type=%d\n",
+                                p, p->vtable->base_type); */
+                        assert(0);
+                    }
+                }
+            }
+
+            b = (Buffer *)((char *)b + object_size);
+        }
+    }
+}
+
 void
 Parrot_merge_header_pools(Interp *dest_interp, Interp *source_interp) {
     struct Arenas *dest_arena;
@@ -791,17 +844,15 @@ Parrot_merge_header_pools(Interp *dest_interp, Interp *source_interp) {
 
     /* heavily borrowed from forall_header_pools */
 
-    MDEBUG("merge constant PMCs");
+    fix_pmc_syncs(dest_interp, source_arena->constant_pmc_pool);
     Parrot_small_object_pool_merge(dest_interp, dest_arena->constant_pmc_pool,
             source_arena->constant_pmc_pool);
-    MDEBUG("merge PMCs");
+    fix_pmc_syncs(dest_interp, source_arena->pmc_pool);
     Parrot_small_object_pool_merge(dest_interp, dest_arena->pmc_pool,
             source_arena->pmc_pool);
-    MDEBUG("merge string headers");
     Parrot_small_object_pool_merge(dest_interp, 
             dest_arena->constant_string_header_pool,
             source_arena->constant_string_header_pool);
-    MDEBUG("merge PMC_EXTs");
     Parrot_small_object_pool_merge(dest_interp,
             dest_arena->pmc_ext_pool,
             source_arena->pmc_ext_pool);
@@ -811,8 +862,6 @@ Parrot_merge_header_pools(Interp *dest_interp, Interp *source_interp) {
             continue;
         }
 
-        /* XXX FIXME -- move buffers */
-
         if (i >= dest_arena->num_sized ||
             !dest_arena->sized_header_pools[i]) {
             make_bufferlike_pool(dest_interp, i * sizeof(void *) 
@@ -820,13 +869,10 @@ Parrot_merge_header_pools(Interp *dest_interp, Interp *source_interp) {
             assert(dest_arena->sized_header_pools[i]);
         }
 
-        MDEBUG("merge %d-sized header pools", i);
-
         Parrot_small_object_pool_merge(dest_interp,
             dest_arena->sized_header_pools[i],
             source_arena->sized_header_pools[i]);
     }
-    MDEBUG("done the merging");
 }
 
 #if 0

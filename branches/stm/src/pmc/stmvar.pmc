@@ -36,11 +36,13 @@ pmclass STMVar is_shared {
 
 */
     void init() {
+        PMC_struct_val(SELF) = NULL;
         PMC_struct_val(SELF) = Parrot_STM_alloc(INTERP, PMCNULL);
         PObj_custom_mark_SET(SELF);
     }
 
     void init_pmc(PMC* value) {
+        PMC_struct_val(SELF) = NULL;
         if (   value->vtable->base_type == enum_class_STMRef
             || value->vtable->base_type == enum_class_STMVar) {
             PMC_struct_val(SELF) = PMC_struct_val(value);
@@ -89,7 +91,7 @@ pmclass STMVar is_shared {
 */
 
     void destroy () {
-        /* XXX */
+        PObj_custom_mark_CLEAR(SELF);
     }
 
     METHOD PMC* get_read() {

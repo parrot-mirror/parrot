@@ -502,7 +502,7 @@ typedef enum PObj_enum {
 
 #define PObj_is_PMC_shared_TEST(o) PObj_flag_TEST(is_PMC_shared, o)
 #define PObj_is_PMC_shared_SET(o)  PObj_flag_SET(is_PMC_shared, o)
-
+#define PObj_is_PMC_shared_CLEAR(o) PObj_flag_CLEAR(is_PMC_shared, o)
 
 /* some combinations */
 #define PObj_is_cowed_TESTALL(o) (PObj_get_FLAGS(o) & \
