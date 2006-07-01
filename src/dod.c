@@ -1012,10 +1012,9 @@ Run through all PMC arenas and clear live bits.
 
 */
 
-void
-Parrot_dod_clear_live_bits(Parrot_Interp interpreter)
-{
-    struct Small_Object_Pool * const pool = interpreter->arena_base->pmc_pool;
+static void
+clear_live_bits(Parrot_Interp interpreter,
+        struct Small_Object_Pool * const pool) {
     struct Small_Object_Arena *arena;
     UINTVAL i;
 #if !ARENA_DOD_FLAGS
@@ -1038,6 +1037,14 @@ Parrot_dod_clear_live_bits(Parrot_Interp interpreter)
         }
 #endif
     }
+
+}
+
+void
+Parrot_dod_clear_live_bits(Parrot_Interp interpreter)
+{
+    struct Small_Object_Pool * const pool = interpreter->arena_base->pmc_pool;
+    clear_live_bits(interpreter, pool);
 }
 
 /*
@@ -1182,6 +1189,11 @@ Parrot_dod_ms_run(Interp *interpreter, int flags)
      * the live bits are cleared
      */
     if (flags & DOD_finish_FLAG) {
+        /* XXX */
+        Parrot_dod_clear_live_bits(interpreter);
+        clear_live_bits(interpreter, 
+            interpreter->arena_base->constant_pmc_pool);
+
         Parrot_dod_sweep(interpreter, interpreter->arena_base->pmc_pool);
         Parrot_dod_sweep(interpreter, 
 		interpreter->arena_base->constant_pmc_pool);

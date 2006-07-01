@@ -264,6 +264,48 @@ static PMC *force_sharing(Interp *interp, PMC *pmc) {
     }
 }
 
+/* Returns the depth of the innermost transactions whose reads 
+ * are all valid.
+ */
+static int
+get_read_valid_depth(Interp *interp, STM_tx_log *log) {
+    int i;
+    int validp = 1;
+    int cur_depth = 1;
+
+    if (log->depth == 0) {
+        return 0;
+    }
+
+    while (validp && cur_depth <= log->depth) {
+        STM_tx_log_sub *current;
+        int last_read;
+
+        current = get_sublog(log, cur_depth);
+        if (cur_depth == log->depth) {
+            last_read = log->last_read;
+        } else {
+            last_read = get_sublog(log, cur_depth + 1)->first_read - 1;
+        }
+
+        for (i = current->first_read; i <= log->last_read; ++i) {
+            STM_read_record *read;
+            void *found_version;
+
+            read = get_read(interp, log, i);
+
+            ATOMIC_PTR_GET(found_version, read->handle->owner_or_version);
+            if (found_version != read->saw_version) {
+                validp = 0;
+                break;
+            }
+        }
+        ++cur_depth;
+    }
+    --cur_depth;
+    return validp ? cur_depth : cur_depth - 1;
+}
+
 /* Does a top-level commit. Returns true if successful.
  * Inner transactions are committed by merge_transaction().
  */
@@ -280,6 +322,12 @@ do_real_commit(Interp *interp, STM_tx_log *log) {
 
     ATOMIC_INT_CAS(successp, inner->status, STM_STATUS_ACTIVE, STM_STATUS_COMMITTED);
     if (!successp) {
+        return 0;
+    }
+
+    if (get_read_valid_depth(interp, log) == 0) {
+        /* read contention; can't actually commit */
+        ATOMIC_INT_SET(inner->status, STM_STATUS_ABORTED);
         return 0;
     }
 
@@ -304,12 +352,18 @@ do_real_commit(Interp *interp, STM_tx_log *log) {
     return 1;
 }
 
-/* Does an abort. This is also used for inner transactions. */
+
+/* Set the specified transaction as aborted and unreserve
+ * all the write records of it, but don't actually reset our
+ * transaction log.
+ */
 static void
-do_real_abort(Interp *interp, STM_tx_log *log, STM_tx_log_sub *inner) {
+do_partial_abort(Interp *interp, STM_tx_log *log, STM_tx_log_sub *inner) {
     int i;
 
-    STM_TRACE("really aborting");
+    STM_TRACE("partial abort");
+    ATOMIC_INT_SET(inner->status, STM_STATUS_ABORTED);
+    
     for (i = log->last_write; i >= inner->first_write; --i) {
         STM_write_record *write;
         int successp;
@@ -323,9 +377,68 @@ do_real_abort(Interp *interp, STM_tx_log *log, STM_tx_log_sub *inner) {
         STM_TRACE("unreserving write record %d [saw_version=%p]; successp=%d",
             i, write->saw_version, successp);
     }
+}
+
+/* Does an abort. This is also used for inner transactions. */
+static void
+do_real_abort(Interp *interp, STM_tx_log *log, STM_tx_log_sub *inner) {
+    int i;
+
+    STM_TRACE("really aborting");
+    do_partial_abort(interp, log, inner);
 
     log->last_read = inner->first_read - 1;
     log->last_write = inner->first_write - 1;
+}
+
+/* Replay writes of a partial_abort'd transaction. 
+ * 'from' is the depth of the outermost transaction to replay.
+ * 'to' is the depth of the innermost transaction to replay.
+ * Replays from outermost to innermost.
+ * If replaying fails in the middle, the subtransaction in
+ * question is re-partial-aborted.
+ */
+static void
+replay_writes(Interp *interp, STM_tx_log *log, int from, int to) {
+    int i;
+    int validp = 1;
+    int cur_depth = from;
+
+    while (validp && cur_depth <= to) {
+        STM_tx_log_sub *current;
+        int last_write;
+        current = get_sublog(log, cur_depth);
+        if (cur_depth == log->depth) {
+            last_write = log->last_write;
+        } else {
+            last_write = get_sublog(log, cur_depth + 1)->first_write - 1;
+        }
+
+        ATOMIC_INT_SET(current->status, STM_STATUS_ACTIVE);
+
+        for (i = current->first_write; i <= last_write; ++i) {
+            STM_write_record *write;
+            int successp;
+
+            write = get_write(interp, log, i);
+
+            ATOMIC_PTR_CAS(successp, write->handle->owner_or_version,
+                write->saw_version, current);
+            
+            if (!successp) {
+                validp = 0;
+                break;
+            }
+        }
+
+        ++cur_depth;
+    }
+
+    --cur_depth;
+
+    if (!validp) {
+        do_partial_abort(interp, log, get_sublog(log, cur_depth));
+    }
 }
 
 /*
@@ -416,11 +529,31 @@ for verifying that any outer transaction is invalid after calling this.
 */
 
 void Parrot_STM_wait(Interp *interp) {
+    int i;
+    STM_tx_log *log;
+
     STM_TRACE("wait");
+
+    log = Parrot_STM_tx_log_get(interp);
     
-    /* FIXME not really implemented */
-    Parrot_STM_abort(interp); 
+    /* abort the most inner transaction completely, for now */
+    Parrot_STM_abort(interp);
+
+    /* softly abort the rest so write reservations do not
+     * impede progress
+     */
+    if (log->depth) {
+        do_partial_abort(interp, log, get_sublog(log, 1));
+    }
+
+    /* TODO do waiting here */
+    
     YIELD;
+
+    /* replay as much of the rest as we can get away */
+    if (log->depth) {
+        replay_writes(interp, log, 1, get_read_valid_depth(interp, log));
+    }
 }
 
 /*
@@ -494,10 +627,17 @@ doesn't collect the handle or objects it refers to as reachable.
 */
 
 void Parrot_STM_mark_pmc_handle(Interp *interp, Parrot_STM_PMC_handle handle) {
+    PMC *value;
+    if (!handle) {
+        return;
+    }
     STM_TRACE_SAFE("mark handle %p", handle);
     /* XXX FIXME is this enough? What about shared status? */
     pobject_lives(interp, &handle->obj);
-    pobject_lives(interp, &handle->value->obj);
+    value = handle->value;
+    if (!PMC_IS_NULL(value)) {
+        pobject_lives(interp, value);
+    }
 }
 
 /*
@@ -566,15 +706,16 @@ static void *wait_for_version(Interp *interp,
         }
 
         if (our_wait_len > n_interpreters) {
-            /* fprintf(stderr, "deadlock detected, avoiding...\n"); */
+            STM_TRACE("deadlock detected, avoiding...\n");
             /* abort thyself to evade deadlock */
             ATOMIC_INT_SET(curlog->status, STM_STATUS_ABORTED);
             ATOMIC_INT_SET(curlog->wait_length, 0);
+            YIELD;
             return NULL; 
         }
 
         if (wait_count > 50) {
-            /* fprintf(stderr, "waited too long, aborting...\n"); */
+            STM_TRACE("waited too long, aborting...\n");
             ATOMIC_INT_SET(curlog->status, STM_STATUS_ABORTED);
             ATOMIC_INT_SET(curlog->wait_length, 0);
             return NULL;
@@ -749,8 +890,8 @@ static STM_write_record *find_write_record(Interp *interp, STM_tx_log *log,
             if (read) {
                 STM_TRACE("... from a read record");
                 write->saw_version = read->saw_version;
-                ATOMIC_PTR_CAS(successp, handle->owner_or_version, read->saw_version,
-                    cursub);
+                ATOMIC_PTR_CAS(successp, handle->owner_or_version, 
+                    read->saw_version, cursub);
             } else  {
                 assert(outersub);
                 STM_TRACE("... from outer transaction's write record");

@@ -4,7 +4,7 @@
 use warnings;
 use strict;
 use lib qw( . lib ../lib ../../lib );
-use Parrot::Test tests => 3;
+use Parrot::Test tests => 4;
 
 
 my $library = <<'CODE';

@@ -521,9 +521,14 @@ Parrot_small_object_pool_merge(Interp *interpreter,
     struct Small_Object_Arena *next_arena;
     void **free_list_end;
 
+    /* XXX num_free_objects doesn't seem to be accounted correctly in, e.g.,
+     * the PMC_EXT pool.
+     */
+#if 0
     if (source->num_free_objects == source->total_objects) {
         return;
     }
+#endif
 
     /* assert(source->total_objects); */
     assert(dest->object_size == source->object_size);
