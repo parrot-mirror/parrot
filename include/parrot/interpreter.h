@@ -81,20 +81,20 @@ typedef enum {
 /* &gen_from_enum(cloneflags.pasm) */
 typedef enum {
     PARROT_CLONE_CODE = 0x1,        /* active code segments 
-                                       XXX interaction with lexicals 
+                                     * XXX interaction with lexicals 
                                      */
     PARROT_CLONE_GLOBALS = 0x2,     /* global stash */
     PARROT_CLONE_RUNOPS = 0x4,      /* runops choice */
     PARROT_CLONE_INTERP_FLAGS = 0x8,/* bounds checking and 
-                                       debugging flags */
+                                     * debugging flags */
     PARROT_CLONE_HLL = 0x10,        /* clone HLL setting */
     PARROT_CLONE_CLASSES = 0x20,    /* clone usermade classes */
     PARROT_CLONE_LIBRARIES = 0x40,  /* clone loaded library set */
     /* flags that won't be initially implemented */
     PARROT_CLONE_CC = 0x80,         /* clone current continuation --
-                                       fork()-like cloning (requires
-                                       cloned code segments); probably
-                                       would only work if runloop_level == 1
+                                     * fork()-like cloning (requires
+                                     * cloned code segments); probably
+                                     * would only work if runloop_level is 1
                                      */
 
     /* combinations of flags */

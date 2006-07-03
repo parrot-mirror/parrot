@@ -45,7 +45,7 @@ if ($^O eq "cygwin" ) {
     }
 }
 if ($platforms{$^O}) {
-   plan tests => 12;
+   plan tests => 14;
 }
 else {
    plan skip_all => "No threading yet or test not enabled for '$^O'";
@@ -382,6 +382,147 @@ CODE
 ok
 ok
 OUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "CLONE_CODE only");
+
+.namespace [ 'Test2' ]
+.sub test2
+    print "ok 2\n"
+.end
+
+.namespace [ 'Test3' ]
+.sub test3
+    print "ok 3\n"
+.end
+
+.namespace [ 'main' ]
+
+.include 'errors.pasm'
+.sub thread_func
+    .param pmc test2
+    print "ok 1\n"
+    test2()
+    .local pmc test3
+    test3 = find_global 'Test3', 'test3'
+    test3()
+    .local pmc test4
+    errorsoff .PARROT_ERRORS_GLOBALS_FLAG
+    test4 = global 'test4'
+    if null test4 goto okay
+    print "not "
+okay:
+    print "ok 4\n"
+.end
+
+.include 'cloneflags.pasm'
+.sub main :main
+    .local pmc test4
+    .local pmc test2
+
+    test2 = find_global 'Test2', 'test2'
+
+    test4 = new Integer
+    test4 = 42
+    store_global 'test4', test4
+
+    .local pmc thread
+    thread = new ParrotThread
+    .local pmc thread_func
+    thread_func = global 'thread_func'
+    $I0 = .PARROT_CLONE_CODE 
+    thread.'run'($I0, thread_func, test2)
+    thread.'join'()
+    print "ok 5\n"
+.end
+CODE
+ok 1
+ok 2
+ok 3
+ok 4
+ok 5
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_GLOBALS");
+
+.namespace [ 'Foo' ]
+.sub 'is'
+    .param pmc what
+    .param pmc expect
+    .param pmc label
+    .param pmc shortlabel
+    if what == expect goto okay
+    print "# "
+    print label
+    print "\n"
+    print "# got:      "
+    print what
+    print "\n"
+    print "# expected: "
+    print expect
+    print "\nnot "
+okay:
+    print "ok "
+    print shortlabel
+    print "\n"
+.end
+
+.sub thread_test_func 
+    $P0 = find_global 'Bar', 'alpha'
+    'is'($P0, 1, 'Bar::alpha == 1', 'alpha')
+    $P0 = 43
+    sleep 0.1 # give enough time that the main thread might modify
+              # any shared Foo::beta dn cause phantom errors
+    $P0 = find_global 'beta'
+    'is'($P0, 2, 'Foo::beta == 2 [accessed locally]', 'beta1')
+    $P0 = 5
+    $P0 = find_global 'beta'
+    'is'($P0, 5, 'Foo::beta == 5 [accessed locally after assignment]', 'beta2')
+    $P0 = find_global 'Foo', 'beta'
+    'is'($P0, 5, 'Foo::beta == 5 [after assign; absolute]', 'beta3')
+.end
+
+.namespace [ 'main' ]
+
+.sub test_setup 
+    $P0 = new Integer
+    $P0 = 1
+    store_global 'Bar', 'alpha', $P0
+    $P0 = new Integer
+    $P0 = 2
+    store_global 'Foo', 'beta', $P0
+.end
+
+.include 'cloneflags.pasm'
+.sub main :main
+    'test_setup'()
+
+    .local pmc thread
+    thread = new ParrotThread
+    .local pmc _thread_func
+    _thread_func = find_global 'Foo', 'thread_test_func'
+    $I0 = .PARROT_CLONE_CODE
+    bor $I0, $I0, .PARROT_CLONE_GLOBALS
+    print "in thread:\n"
+    thread.'run'($I0, _thread_func)
+    $P0 = find_global 'Foo', 'beta'
+    $P0 = 42
+    thread.'join'()
+    print "in main:\n"
+    $P0 = 2
+    _thread_func()
+.end
+CODE
+in thread:
+ok alpha
+ok beta1
+ok beta2
+ok beta3
+in main:
+ok alpha
+ok beta1
+ok beta2
+ok beta3
+OUTPUT
 
 
 pir_output_is(<<'CODE', <<'OUT', 'multi-threaded strings via SharedRef');
