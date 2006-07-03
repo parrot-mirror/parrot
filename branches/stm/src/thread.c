@@ -328,14 +328,39 @@ Clone all globals from C<s> to C<d>.
 
 */
 
+static void
+pt_ns_clone(Parrot_Interp d, PMC *dest_ns, Parrot_Interp s, PMC *source_ns) {
+    PMC * const iter = VTABLE_get_iter(s, source_ns);
+    const INTVAL n = VTABLE_elements(s, source_ns);
+    INTVAL i;
+    for (i = 0; i < n; ++i) {
+        STRING * const key = VTABLE_shift_string(s, iter);
+        PMC *val;
+        val = VTABLE_get_pmc_keyed_str(s, source_ns, key);
+        if (val->vtable->base_type == enum_class_NameSpace) {
+            PMC *sub_ns;
+            sub_ns = VTABLE_get_pmc_keyed_str(d, dest_ns, key);
+            if (PMC_IS_NULL(sub_ns) || sub_ns->vtable->base_type !=
+                    enum_class_NameSpace) {
+                sub_ns = pmc_new(d, enum_class_NameSpace);
+                VTABLE_set_pmc_keyed_str(d, dest_ns, key, sub_ns);
+            }
+            pt_ns_clone(d, sub_ns, s, val);
+        } else {
+            PMC *dval;
+            dval = VTABLE_get_pmc_keyed_str(d, dest_ns, key);
+            if (PMC_IS_NULL(dval)) {
+                VTABLE_set_pmc_keyed_str(d, dest_ns, key,
+                    VTABLE_clone(d, val));
+            }
+        }
+    }
+}
+
 void
 pt_clone_globals(Parrot_Interp d, const Parrot_Interp s)
 {
-    /* XXX FIXME recursive enough? What about things that can't
-     * be copied this way? Seperate op for cloning into new
-     * interpreter?
-     */
-    d->root_namespace = VTABLE_clone(d, s->root_namespace);
+    pt_ns_clone(d, d->root_namespace, s, s->root_namespace);
 }
 
 /*
@@ -376,6 +401,34 @@ C<arg> should be an array of arguments for the subroutine.
 */
 static void
 pt_suspend_one_for_gc(Parrot_Interp interp);
+
+/* create a clone of the sub suitable for the other interpreter;
+ * right now this involves cloning the sub and adjusting namespace
+ * pointers
+ * XXX FIXME handle multisubs
+ */
+static PMC *
+pt_transfer_sub(Parrot_Interp d, Parrot_Interp s, PMC *sub) {
+    /* determine if it is a named subroutine */
+    if (PObj_get_FLAGS(sub) & SUB_FLAG_PF_ANON) {
+        /* anonymous subroutine, copy, store in namespace */
+        PMC *ret;
+        ret = VTABLE_clone(d, sub);
+        Parrot_store_sub_in_namespace(d, ret);
+        return ret;
+    } else {
+        /* non-anonymous, just lookup in the global */
+        STRING *name = Parrot_full_sub_name(s, sub);
+        PMC *ret = Parrot_find_global(d, NULL, name);
+        if (PMC_IS_NULL(ret)) {
+            /* wasn't in globals; clone it, place it */
+            ret = VTABLE_clone(s, sub);
+            Parrot_store_sub_in_namespace(d, ret);
+        }
+        assert(PMC_sub(ret)->namespace_stash != PMC_sub(sub)->namespace_stash);
+        return ret;
+    }
+}
 
 int
 pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)
@@ -418,8 +471,7 @@ pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)
 
     pt_thread_prepare_for_run(interpreter, interp);
 
-    /* FIXME XXX copy sub for other interp as needed */
-    PMC_struct_val(dest_interp) = sub;
+    PMC_struct_val(dest_interp) = pt_transfer_sub(interpreter, interp, sub);
     PMC_pmc_val(dest_interp) = make_local_args_copy(interpreter, interp, arg);
 
     /*
