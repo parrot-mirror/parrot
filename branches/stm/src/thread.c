@@ -52,7 +52,7 @@ struct _Shared_gc_info {
 make_local_copy(Parrot_Interp interpreter, PMC *original)>
 
 Create a local copy of the PMC if necessary. (No copy is made if it
-is marked shared.)
+is marked shared.
 
 =cut
 
@@ -181,6 +181,55 @@ Wakeup a C<interp> which should have called pt_thread_wait().
 static void
 pt_thread_signal(Parrot_Interp self, Parrot_Interp interp) {
     COND_SIGNAL(interp->thread_data->interp_cond);
+}
+
+/*
+
+=item C<void
+pt_thread_wait_with(Parrot_Interp interp, Parrot_mutex *mutex)>
+
+Wait for this interpreter to be signalled through its condition variable,
+dealing properly with GC issues. C<*mutex> is assumed locked on entry and
+will be locked on exit from this function. If a GC run occurs in the middle of
+this function, then a spurious wakeup may occur.
+
+=cut
+
+*/
+
+void
+pt_thread_wait_with(Parrot_Interp interp, Parrot_mutex *mutex) {
+    LOCK(interpreter_array_mutex);
+    if (interp->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED) {
+        interp->thread_data->state |= THREAD_STATE_SUSPENDED_GC;
+        /* fprintf(stderr, "%p: pt_thread_wait, before sleep, doing GC run\n",
+         *  interp); */
+        UNLOCK(interpreter_array_mutex);
+        UNLOCK(*mutex);
+        pt_suspend_self_for_gc(interp);
+        LOCK(*mutex);
+        /* since we unlocked the mutex something bad may have occured */
+        return;
+    }
+    interp->thread_data->state |= THREAD_STATE_GC_WAKEUP;
+    UNLOCK(interpreter_array_mutex);
+    COND_WAIT(interp->thread_data->interp_cond, *mutex);
+    LOCK(interpreter_array_mutex);
+    interp->thread_data->state &= ~THREAD_STATE_GC_WAKEUP;
+    if (interp->thread_data->state & THREAD_STATE_SUSPENDED_GC) {
+        UNLOCK(*mutex);
+        /* XXX loop needed? */
+        do {
+            UNLOCK(interpreter_array_mutex);
+            /* fprintf(stderr, "%p: woken up, doing GC run\n", interp); */
+            pt_suspend_self_for_gc(interp);
+            LOCK(interpreter_array_mutex);
+        } while (interp->thread_data->state & THREAD_STATE_SUSPENDED_GC);
+        UNLOCK(interpreter_array_mutex);
+        LOCK(*mutex);
+    } else {
+        UNLOCK(interpreter_array_mutex);
+    }
 }
 
 /*
@@ -334,6 +383,7 @@ pt_ns_clone(Parrot_Interp d, PMC *dest_ns, Parrot_Interp s, PMC *source_ns) {
     const INTVAL n = VTABLE_elements(s, source_ns);
     INTVAL i;
     for (i = 0; i < n; ++i) {
+        /* XXX what if 'key' is a non-constant-pool string? */
         STRING * const key = VTABLE_shift_string(s, iter);
         PMC *val;
         val = VTABLE_get_pmc_keyed_str(s, source_ns, key);
@@ -426,6 +476,13 @@ pt_transfer_sub(Parrot_Interp d, Parrot_Interp s, PMC *sub) {
             Parrot_store_sub_in_namespace(d, ret);
         }
         assert(PMC_sub(ret)->namespace_stash != PMC_sub(sub)->namespace_stash);
+        
+        /* XXX FIXME this should be replaced with proper cloning or proper 
+         * COW + threading interaction 
+         */
+        if (PMC_sub(ret)->name && PObj_constant_TEST(PMC_sub(ret)->name)) {
+            Parrot_unmake_COW(d, PMC_sub(ret)->name);
+        }
         return ret;
     }
 }

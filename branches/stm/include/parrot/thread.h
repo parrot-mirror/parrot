@@ -173,6 +173,8 @@ void pt_suspend_self_for_gc(Parrot_Interp);
 
 PMC *pt_shared_fixup(Parrot_Interp, PMC*);
 
+void pt_thread_wait_with(Parrot_Interp, Parrot_mutex *);
+
 /*
  * DOD interface
  */

@@ -9,7 +9,7 @@ use Test::More;
 use Parrot::Test tests => 3;
 
 pir_output_is(<<'CODE', <<'OUTPUT', "wait (simple)");
-.const int N = 50
+.const int N = 1000
 .sub waiter
     .param pmc a
 

@@ -761,22 +761,22 @@ Parrot_dod_sweep(Interp *interpreter,
                     }
                 }
 #endif
+                if (PObj_is_shared_TEST(b)) {
+                    /* only mess with shared objects if we
+                     * (and thus everyone) is suspended for
+                     * a GC run.
+                     * XXX wrong thing to do with "other" GCs
+                     */
+                    if (!(interpreter->thread_data &&
+                            (interpreter->thread_data->state &
+                            THREAD_STATE_SUSPENDED_GC))) {
+                        ++total_used;
+                        goto next;
+                    } 
+                }
                 /* if object is a PMC and needs destroying */
                 if (PObj_is_PMC_TEST(b)) {
                     PMC *p = (PMC*)b;
-                    if (PObj_is_PMC_shared_TEST(p)) {
-                        /* only mess with shared objects if we
-                         * (and thus everyone) is suspended for
-                         * a GC run.
-                         * XXX wrong thing to do with "other" GCs
-                         */
-                        if (!(interpreter->thread_data &&
-                                (interpreter->thread_data->state &
-                                THREAD_STATE_SUSPENDED_GC))) {
-                            ++total_used;
-                            goto next;
-                        } 
-                    }
 
                     /* then destroy it here
                     */

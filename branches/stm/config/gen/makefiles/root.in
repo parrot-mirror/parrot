@@ -467,6 +467,7 @@ INTERP_O_FILES = \
     $(SRC_DIR)/revision$(O) \
     $(PF_DIR)/pf_items$(O) \
     $(SRC_DIR)/stm/backend$(O) \
+    $(SRC_DIR)/stm/waitlist$(O) \
     @TEMP_gc_o@
 
 O_FILES = \

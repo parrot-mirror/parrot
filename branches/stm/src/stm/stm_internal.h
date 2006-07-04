@@ -1,12 +1,14 @@
 #if !defined(PARROT_STM_INTERNAL_H_GAURD)
 #define PARROT_STM_INTERNAL_H_GAURD
 
-#include "parrot/atomic.h"
+#include <parrot/parrot.h>
+#include "stm_waitlist.h"
 
 struct Parrot_STM_PMC_handle_data {
-    pobj_t obj;
+    Buffer buf;
     Parrot_atomic_pointer owner_or_version;
     PMC *value;
+    STM_waitlist change_waitlist;
 };
 
 struct STM_tx_log;
@@ -62,6 +64,10 @@ struct STM_tx_log {
     /* TODO: probably better to make these a list of hashes (one for each tx) */
     STM_write_record *writes;
     STM_read_record *reads;
+    
+    struct waitlist_thread_data *waitlist_data;
 };
+
+STM_tx_log *Parrot_STM_tx_log_get(Interp *interp);
 
 #endif
