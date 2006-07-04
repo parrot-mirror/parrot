@@ -486,6 +486,22 @@ aligned_string_size(STRING *buffer, size_t len)
     return len;
 }
 
+/* XXX FIXME used for hack in string.c*/
+int
+Parrot_in_memory_pool(Interp *interpreter, void *bufstart) {
+    struct Memory_Pool * const pool = interpreter->arena_base->memory_pool;
+    struct Memory_Block *cur_block;
+    cur_block = pool->top_block;
+    while (cur_block) {
+        if (bufstart >= cur_block->start && bufstart < cur_block->start 
+                + cur_block->size) {
+            return 1;
+        }
+        cur_block = cur_block->prev;
+    }
+    return 0;
+}
+
 
 /*
 

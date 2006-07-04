@@ -387,7 +387,7 @@ loop:
     .local pmc got
 
     failed = 0 
-    i = 1
+    i = 0
 loop:
     got = queue.'fetchHead'(1, 1)
     if i < 9 goto no_sleep
