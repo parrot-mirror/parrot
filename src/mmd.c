@@ -393,7 +393,7 @@ mmd_dispatch_v_ps(Interp *interpreter,
     int is_pmc;
     UINTVAL left_type;
 
-    left_type = left->vtable->base_type;
+    left_type = VTABLE_type(interpreter, left);
     real_function = (mmd_f_v_ps)get_mmd_dispatch_type(interpreter,
             func_nr, left_type, enum_type_STRING, &is_pmc);
     if (is_pmc) {

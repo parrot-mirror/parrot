@@ -52,7 +52,7 @@ struct _Shared_gc_info {
 make_local_copy(Parrot_Interp interpreter, PMC *original)>
 
 Create a local copy of the PMC if necessary. (No copy is made if it
-is marked shared.
+is marked shared.)
 
 =cut
 
@@ -67,7 +67,14 @@ make_local_copy(Parrot_Interp interpreter, PMC *arg)
     } else if (PObj_is_PMC_shared_TEST(arg)) { 
         ret_val = arg;
     } else {
+        /* XXX FIXME for some reason Parrot_clone breaks things
+         * here.
+         */
+#if 0
+        ret_val = Parrot_clone(interpreter, arg);
+#else
         ret_val = VTABLE_clone(interpreter, arg);
+#endif
     }
     return ret_val;
 }
@@ -358,12 +365,14 @@ resources are created in C<d>.
 void
 pt_clone_code(Parrot_Interp d, const Parrot_Interp s)
 {
+    Parrot_block_DOD(d);
     Interp_flags_SET(d, PARROT_EXTERN_CODE_FLAG);
     d->code = s->code;
     /* XXX FIXME should this be here or elsewhere? */
     CONTEXT(d->ctx)->constants = 
         d->code->const_table->constants; 
     Parrot_prepare_cs_for_interp(d);
+    Parrot_unblock_DOD(d);
 }
 
 /*
@@ -401,7 +410,7 @@ pt_ns_clone(Parrot_Interp d, PMC *dest_ns, Parrot_Interp s, PMC *source_ns) {
             dval = VTABLE_get_pmc_keyed_str(d, dest_ns, key);
             if (PMC_IS_NULL(dval)) {
                 VTABLE_set_pmc_keyed_str(d, dest_ns, key,
-                    VTABLE_clone(d, val));
+                    Parrot_clone(d, val));
             }
         }
     }
@@ -410,7 +419,9 @@ pt_ns_clone(Parrot_Interp d, PMC *dest_ns, Parrot_Interp s, PMC *source_ns) {
 void
 pt_clone_globals(Parrot_Interp d, const Parrot_Interp s)
 {
+    Parrot_block_DOD(d);
     pt_ns_clone(d, d->root_namespace, s, s->root_namespace);
+    Parrot_unblock_DOD(d);
 }
 
 /*
@@ -457,34 +468,29 @@ pt_suspend_one_for_gc(Parrot_Interp interp);
  * pointers
  * XXX FIXME handle multisubs
  */
-static PMC *
+PMC *
 pt_transfer_sub(Parrot_Interp d, Parrot_Interp s, PMC *sub) {
+    Parrot_block_DOD(d);
     /* determine if it is a named subroutine */
     if (PObj_get_FLAGS(sub) & SUB_FLAG_PF_ANON) {
         /* anonymous subroutine, copy, store in namespace */
         PMC *ret;
-        ret = VTABLE_clone(d, sub);
+        ret = Parrot_clone(d, sub);
         Parrot_store_sub_in_namespace(d, ret);
         return ret;
     } else {
         /* non-anonymous, just lookup in the global */
-        STRING *name = Parrot_full_sub_name(s, sub);
-        PMC *ret = Parrot_find_global(d, NULL, name);
+        PMC *ret = Parrot_find_global(d, PMC_sub(sub)->namespace, PMC_sub(sub)->name);
         if (PMC_IS_NULL(ret)) {
             /* wasn't in globals; clone it, place it */
-            ret = VTABLE_clone(s, sub);
+            ret = Parrot_clone(d, sub);
             Parrot_store_sub_in_namespace(d, ret);
         }
         assert(PMC_sub(ret)->namespace_stash != PMC_sub(sub)->namespace_stash);
         
-        /* XXX FIXME this should be replaced with proper cloning or proper 
-         * COW + threading interaction 
-         */
-        if (PMC_sub(ret)->name && PObj_constant_TEST(PMC_sub(ret)->name)) {
-            Parrot_unmake_COW(d, PMC_sub(ret)->name);
-        }
         return ret;
     }
+    Parrot_unblock_DOD(d);
 }
 
 int
@@ -741,6 +747,7 @@ remove_queued_suspend_gc(Parrot_Interp interpreter) {
         }
         mem_sys_free(ev);
         mem_sys_free(cur);
+        TRACE_THREAD("%p: remove_queued_suspend_gc: got one", interpreter);
     }
     queue_unlock(queue);
     return cur;
@@ -850,8 +857,17 @@ pt_suspend_all_for_gc(Parrot_Interp interp)
     TRACE_THREAD("suspend_all_for_gc [interp=%p]", interp);
 
     LOCK(interpreter_array_mutex);
-    /* in case someone else had the same idea */
     interp->thread_data->state |= THREAD_STATE_SUSPENDED_GC;
+
+    if (interp->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED) {
+        TRACE_THREAD("found while suspending all\n");
+        remove_queued_suspend_gc(interp);
+        interp->thread_data->state &= ~THREAD_STATE_SUSPEND_GC_REQUESTED;
+        UNLOCK(interpreter_array_mutex);
+        return;
+    }
+
+#if 0
     for (i = 0; i < n_interpreters; ++i) {
         Parrot_Interp other_interp;
         other_interp = interpreter_array[i];
@@ -861,16 +877,20 @@ pt_suspend_all_for_gc(Parrot_Interp interp)
         if (is_suspended_for_gc(other_interp) &&
                     other_interp != interp && 
                     (other_interp->thread_data->state & THREAD_STATE_SUSPENDED_GC)) {
+            int successp;
             /* this means that someone else already got this far,
              * so we have a suspend event in our queue to ignore
              */
             /* XXX still reachable? */
             TRACE_THREAD("apparently someone else is doing it [%p]", other_interp);
-            remove_queued_suspend_gc(interp);
+            fprintf(stderr, "??? found later (%p)\n", other_interp);
+            successp = remove_queued_suspend_gc(interp);
+            assert(successp);
             UNLOCK(interpreter_array_mutex);
             return;
         }
     }
+#endif
 
     /* now send all the non-suspended threads to suspend for GC */
     for (i = 0; i < n_interpreters; ++i) {
@@ -909,12 +929,17 @@ pt_suspend_self_for_gc(Parrot_Interp interp)
      */
     LOCK(interpreter_array_mutex);
     TRACE_THREAD("%p: got lock", interp);
-    interp->thread_data->state &= ~THREAD_STATE_SUSPEND_GC_REQUESTED;
-    if (interp->thread_data->state & THREAD_STATE_SUSPENDED_GC) {
+    assert(interp->thread_data->state & 
+            (THREAD_STATE_SUSPEND_GC_REQUESTED | THREAD_STATE_SUSPENDED_GC));
+    if (interp->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED) {
         TRACE_THREAD("remove queued request");
-        remove_queued_suspend_gc(interp);
-    } else {
+        while (remove_queued_suspend_gc(interp));
+        interp->thread_data->state &= ~THREAD_STATE_SUSPEND_GC_REQUESTED;
+    }
+    if (!(interp->thread_data->state & THREAD_STATE_SUSPENDED_GC)) {
         interp->thread_data->state |= THREAD_STATE_SUSPENDED_GC;
+    } else {
+        TRACE_THREAD("no need to set suspended\n");
     }
     UNLOCK(interpreter_array_mutex);
 
@@ -922,6 +947,8 @@ pt_suspend_self_for_gc(Parrot_Interp interp)
      * it sync'd
      */
     Parrot_dod_ms_run(interp, DOD_trace_stack_FLAG);
+
+    assert(!(interp->thread_data->state & THREAD_STATE_SUSPENDED_GC));
 }
 /*
 
@@ -1262,15 +1289,13 @@ pt_DOD_start_mark(Parrot_Interp interpreter)
     Shared_gc_info *info;
     int block_level;
 
-    TRACE_THREAD("pt_DOD_start_mark");
+    TRACE_THREAD("%p: pt_DOD_start_mark", interpreter);
     /* if no other threads are running, we are safe */
     if (!running_threads)
         return;
 
     info = get_pool(interpreter);
     ATOMIC_INT_GET(block_level, info->gc_block_level);
-    if (block_level) 
-        return;
 
     TRACE_THREAD("start threaded mark");
     /*
@@ -1282,21 +1307,26 @@ pt_DOD_start_mark(Parrot_Interp interpreter)
      * - then s. comments below
      */
     LOCK(interpreter_array_mutex);
-    if (interpreter->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED) {
+    if (interpreter->thread_data->state & THREAD_STATE_SUSPENDED_GC) {
+        assert(!(interpreter->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED));
+        TRACE_THREAD("already suspended...");
+        UNLOCK(interpreter_array_mutex);
+    } else if (block_level) {
+        /* unthreaded collection */
+        TRACE_THREAD("... but blocked");
+        return; /* holding the lock */
+    } else if (interpreter->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED) {
+        while (remove_queued_suspend_gc(interpreter));
         interpreter->thread_data->state &= ~THREAD_STATE_SUSPEND_GC_REQUESTED;
         interpreter->thread_data->state |= THREAD_STATE_SUSPENDED_GC;
         TRACE_THREAD("%p: detected request", interpreter);
-        remove_queued_suspend_gc(interpreter);
         UNLOCK(interpreter_array_mutex);
-    } else if (!(interpreter->thread_data->state & THREAD_STATE_SUSPENDED_GC)) {
+    } else { 
         /* we need to stop the world */
         TRACE_THREAD("stop the world");
         UNLOCK(interpreter_array_mutex);
         pt_suspend_all_for_gc(interpreter);
-    } else {
-        UNLOCK(interpreter_array_mutex);
     }
-
     
     TRACE_THREAD("%p: wait for stage", interpreter);
     pt_gc_wait_for_stage(interpreter, THREAD_GC_STAGE_NONE,
@@ -1357,12 +1387,17 @@ pt_DOD_stop_mark(Parrot_Interp interpreter)
      *   - other threads may or not free unused objects then,
      *     depending on their resource statistics
      */
+    if (!(interpreter->thread_data->state & THREAD_STATE_SUSPENDED_GC)) {
+        UNLOCK(interpreter_array_mutex);
+        return;
+    }
+    assert(!(interpreter->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED));
     interpreter->thread_data->state &= ~THREAD_STATE_SUSPENDED_GC;
-    TRACE_THREAD("%p: unlock", interpreter);
     while (remove_queued_suspend_gc(interpreter)) {
         /* XXX FIXME make this message never trigger */
         fprintf(stderr, "%p: extraneous suspend_gc event\n", interpreter);
     }
+    TRACE_THREAD("%p: unlock", interpreter);
     UNLOCK(interpreter_array_mutex);
     TRACE_THREAD("wait to sweep");
     pt_gc_wait_for_stage(interpreter, THREAD_GC_STAGE_MARK, THREAD_GC_STAGE_SWEEP);

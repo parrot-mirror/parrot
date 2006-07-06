@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 3;
+use Parrot::Test tests => 4;
 
 pir_output_is(<<'CODE', <<'OUTPUT', "wait (simple)");
 .const int N = 1000
@@ -70,9 +70,72 @@ CODE
 okay
 OUTPUT
 
+pir_output_is(<<'CODE', <<'OUTPUT', "wait (simple, strings)");
+.const int N = 1000
+.sub waiter
+    .param pmc a
+
+tx:
+    stm_start
+    $I0 = elements a
+    if $I0 < N goto retry
+    a = "done" 
+    stm_commit tx
+    print "okay\n"
+    .return ()
+retry:
+    stm_wait invalid
+    goto tx
+invalid:
+    print "invalid (not okay)\n"
+.end
+
+.sub incr
+    .param pmc a
+    .local int i
+    
+    i = 0
+loop:
+    stm_start
+    concat a, a, "x"
+    stm_commit loop
+    inc i
+    if i < N goto loop
+.end
+
+.sub main :main
+    .local pmc _incr
+    .local pmc _waiter
+
+    .local pmc iThr
+    .local pmc wThr
+
+    .local pmc a
+
+    a = new String 
+    a = ""
+    a = new STMRef, a
+
+    _incr = global "incr"
+    _waiter = global "waiter"
+
+    wThr = new ParrotThread
+    wThr.'run_clone'(_waiter, a)
+
+    sleep 1 # let it really wait
+    iThr = new ParrotThread
+    iThr.'run_clone'(_incr, a)
+
+    iThr.'join'()
+    wThr.'join'()
+.end
+CODE
+okay
+OUTPUT
+
 
 pir_output_like(<<'CODE', <<'OUTPUT', "get deadlock");
-.const int N = 1000
+.const int N = 10
 .sub thread_task
     .param pmc a
     .param pmc b
@@ -90,7 +153,6 @@ loop:
     # print "\n"
     inc i
     if i < N goto loop
-    sleep 1 # workaround for thread death bug
 .end
 
 .sub main :main

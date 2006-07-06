@@ -2465,7 +2465,8 @@ prepare_one_cs_for_interp(Interp *interpreter, struct PackFile_ByteCode *cs) {
         if (ct->constants[i]->type == PFC_PMC) {
             PMC *pmc = ct->constants[i]->u.key;
             if (VTABLE_isa(interpreter, pmc, _sub)) {
-                Parrot_store_sub_in_namespace(interpreter, VTABLE_clone(interpreter, pmc));
+                Parrot_store_sub_in_namespace(interpreter,
+                    Parrot_clone(interpreter, pmc));
             }
         }
     }

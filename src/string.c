@@ -132,7 +132,7 @@ Parrot_make_COW_reference(Interp *interpreter, STRING *s)
         PObj_COW_SET(s);
         copy_string_header(d, s);
         PObj_sysmem_CLEAR(d);
-
+#if 0
         /* XXX FIXME hack to avoid cross-interpreter issue until it
          * is fixed correctly. */
         if (n_interpreters > 1 && PObj_is_movable_TESTALL(s) &&
@@ -142,6 +142,7 @@ Parrot_make_COW_reference(Interp *interpreter, STRING *s)
                                      "relocatable string '%Ss' into tid %d\n", d,
                                      interpreter->thread_data->tid);
         }
+#endif
     }
     return d;
 }
