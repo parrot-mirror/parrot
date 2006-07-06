@@ -67,14 +67,7 @@ make_local_copy(Parrot_Interp interpreter, PMC *arg)
     } else if (PObj_is_PMC_shared_TEST(arg)) { 
         ret_val = arg;
     } else {
-        /* XXX FIXME for some reason Parrot_clone breaks things
-         * here.
-         */
-#if 0
         ret_val = Parrot_clone(interpreter, arg);
-#else
-        ret_val = VTABLE_clone(interpreter, arg);
-#endif
     }
     return ret_val;
 }

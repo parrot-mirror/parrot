@@ -31,5 +31,8 @@ void Parrot_STM_mark_pmc_handle(Interp *, Parrot_STM_PMC_handle);
 
 int Parrot_STM_transaction_depth(Interp *);
 
+Parrot_STM_PMC_handle Parrot_thaw_STM_PMC_handle(Interp *interp, IMAGE_IO *io);
+
+void Parrot_freeze_STM_PMC_handle(Interp *interp, IMAGE_IO *io, Parrot_STM_PMC_handle handle);
 
 #endif

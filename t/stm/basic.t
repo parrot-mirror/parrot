@@ -168,6 +168,8 @@ test_fail:
     print "reason = "
     print reason
     print "\n"
+    print $P1
+    print "\n"
 .end
 CODE
 ok

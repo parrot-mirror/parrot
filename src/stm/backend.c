@@ -104,6 +104,22 @@ Parrot_STM_PMC_handle Parrot_STM_alloc(Interp *interp, PMC *pmc) {
     return handle;
 }
 
+/* XXX FIXME these are just to make Parrot_clone work.
+ * Real solution will require knowing when we are cloning
+ * and when it is a normal freeze/thaw -- or implementing
+ * cloning seperately.
+ */
+void Parrot_freeze_STM_PMC_handle(Interp *interp, IMAGE_IO *io, 
+            Parrot_STM_PMC_handle handle) {
+    io->vtable->push_pmc(interp, io, (PMC*) handle);
+}
+
+Parrot_STM_PMC_handle Parrot_thaw_STM_PMC_handle(Interp *interp, IMAGE_IO *io) {
+    Parrot_STM_PMC_handle handle;
+    handle = (Parrot_STM_PMC_handle) io->vtable->shift_pmc(interp, io);
+    return handle;
+}
+
 
 static STM_write_record *get_write(Interp *interp, STM_tx_log *log, int i) {
     assert(i >= 0);
