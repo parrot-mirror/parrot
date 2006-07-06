@@ -7,6 +7,7 @@
 struct Parrot_STM_PMC_handle_data {
     Buffer buf;
     Parrot_atomic_pointer owner_or_version;
+    void *last_version;
     PMC *value;
     STM_waitlist change_waitlist;
 };
