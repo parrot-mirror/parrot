@@ -773,9 +773,6 @@ Parrot_dod_sweep(Interp *interpreter,
                         ++total_used;
                         goto next;
                     } 
-                    if (!PObj_is_PMC_TEST(b)) {
-                        fprintf(stderr, "XXX: non-PMC shared object death\n");
-                    }
                 }
                 /* if object is a PMC and needs destroying */
                 if (PObj_is_PMC_TEST(b)) {

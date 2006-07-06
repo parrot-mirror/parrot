@@ -106,6 +106,31 @@ Returns the name of the PMC, not the name of the referenced PMC.
         PMC *value = Parrot_STM_read(INTERP, handle);
         return !PMC_IS_NULL(value);
     }
+
+    void visit (visit_info *info) {
+        /* so it's not delegated */
+    }
+
+    void freeze (visit_info *info) {
+        IMAGE_IO * const io = info->image_io;
+
+        SUPER(info);
+
+        Parrot_freeze_STM_PMC_handle(INTERP, io, PMC_struct_val(SELF)); 
+    }
+
+    void thaw (visit_info *info) {
+        IMAGE_IO * const io = info->image_io;
+
+        SUPER(info);
+
+        PMC_struct_val(SELF) = 
+            Parrot_thaw_STM_PMC_handle(INTERP, io);
+    }
+
+    void thawfinish (visit_info *info) {
+        /* so it's not delegated */
+    }
 }
 
 /*

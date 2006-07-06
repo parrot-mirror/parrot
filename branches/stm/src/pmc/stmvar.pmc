@@ -80,20 +80,6 @@ pmclass STMVar is_shared {
         Parrot_STM_mark_pmc_handle(INTERP, PMC_struct_val(SELF));
     }
 
-/*
-
-=item C<void destroy()>
-
-...
-
-=cut
-
-*/
-
-    void destroy () {
-        PObj_custom_mark_CLEAR(SELF);
-    }
-
     METHOD PMC* get_read() {
         return Parrot_STM_read(INTERP, PMC_struct_val(SELF));
     }
@@ -105,6 +91,24 @@ pmclass STMVar is_shared {
     METHOD void set(PMC* new_value) {
         Parrot_STM_write(INTERP, PMC_struct_val(SELF), new_value);
     }
+
+    void freeze (visit_info *info) {
+        IMAGE_IO * const io = info->image_io;
+
+        SUPER(info);
+
+        Parrot_freeze_STM_PMC_handle(INTERP, io, PMC_struct_val(SELF)); 
+    }
+
+    void thaw (visit_info *info) {
+        IMAGE_IO * const io = info->image_io;
+
+        SUPER(info);
+
+        PMC_struct_val(SELF) = 
+            Parrot_thaw_STM_PMC_handle(INTERP, io);
+    }
+
 }
 
 /*
