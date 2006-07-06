@@ -98,6 +98,7 @@ Parrot_STM_PMC_handle Parrot_STM_alloc(Interp *interp, PMC *pmc) {
     PObj_external_SET(&handle->buf);
     PObj_is_shared_SET(&handle->buf);
     ATOMIC_PTR_SET(handle->owner_or_version, UINTVAL2PTR(void *, 1)); /* XXX */
+    handle->last_version = UINTVAL2PTR(void *, 1);
     handle->value = pmc; /* XXX make shared, make copy, with NULL handling */
     Parrot_STM_waitlist_init(interp, &handle->change_waitlist);
     return handle;
@@ -353,6 +354,7 @@ do_real_commit(Interp *interp, STM_tx_log *log) {
 
         new_version = next_version(write->saw_version);
         write->value = force_sharing(interp, write->value);
+        write->handle->last_version = new_version;
         write->handle->value = write->value; /* actually update */
         ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, inner,
             new_version);
@@ -725,11 +727,13 @@ int Parrot_STM_transaction_depth(Interp *interp) {
  * This may mark us as aborted and return NULL.
  */
 static void *wait_for_version(Interp *interp, 
-        STM_tx_log *log, Parrot_atomic_pointer *in_what) {
+        STM_tx_log *log, Parrot_STM_PMC_handle handle) {
     UINTVAL wait_count = 0;
     STM_tx_log_sub *curlog;
+    Parrot_atomic_pointer *in_what = &handle->owner_or_version;
     void *version;
     STM_TRACE("%p: wait for version");
+    Parrot_block_DOD(interp);
     for (;;) {
         unsigned other_wait_len;
         unsigned our_wait_len;
@@ -739,7 +743,7 @@ static void *wait_for_version(Interp *interp,
             if (wait_count) {
                 ATOMIC_INT_SET(curlog->wait_length, 0);
             }
-            return version;
+            break;
         }
 
         ++wait_count;
@@ -771,25 +775,30 @@ static void *wait_for_version(Interp *interp,
         }
 
         if (our_wait_len > n_interpreters) {
+            int successp;
             STM_TRACE("deadlock detected, avoiding...\n");
-            /* abort thyself to evade deadlock */
-            ATOMIC_INT_SET(curlog->status, STM_STATUS_ABORTED);
-            ATOMIC_INT_SET(curlog->wait_length, 0);
-            YIELD;
-            return NULL; 
+            /* forcibly evict the other */
+            ATOMIC_INT_CAS(successp, other->status, STM_STATUS_ACTIVE,
+                STM_STATUS_ABORTED);
+            if (successp) {
+                ATOMIC_INT_SET(curlog->wait_length, 0);
+                ATOMIC_PTR_CAS(successp, *in_what, other, handle->last_version);
+            }
         }
 
         if (wait_count > 50) {
             STM_TRACE("waited too long, aborting...\n");
             ATOMIC_INT_SET(curlog->status, STM_STATUS_ABORTED);
             ATOMIC_INT_SET(curlog->wait_length, 0);
-            return NULL;
+            version = NULL;
+            break;
         }
         
         YIELD;
         /* XXX better spinning -- esp. detect or block DOD request */
     }
-    STM_TRACE("%p: done waiting for version normally", interp);
+    Parrot_unblock_DOD(interp);
+    return version;
 }
 
 /*
@@ -858,7 +867,7 @@ PMC *Parrot_STM_read(Interp *interp, Parrot_STM_PMC_handle handle) {
     /* XXX loop needed? */
     do {
         STM_TRACE("trying read");
-        read->saw_version = wait_for_version(interp, log, &handle->owner_or_version);
+        read->saw_version = wait_for_version(interp, log, handle);
         STM_TRACE("read: saw version %p", read->saw_version);
         read->value = handle->value;
         ATOMIC_PTR_GET(check_version, handle->owner_or_version);
@@ -872,7 +881,7 @@ static PMC *local_pmc_copy(Interp *interp, PMC *original) {
     if (PMC_IS_NULL(original)) {
         return PMCNULL;
     } else {
-        return VTABLE_clone(interp, original);
+        return Parrot_clone(interp, original);
     }
 }
 
@@ -979,7 +988,7 @@ static STM_write_record *find_write_record(Interp *interp, STM_tx_log *log,
             if (!is_aborted(log)) {
                 do {
                     STM_TRACE("trying write");
-                    write->saw_version = wait_for_version(interp, log, &handle->owner_or_version);
+                    write->saw_version = wait_for_version(interp, log, handle);
                     STM_TRACE("write saw version %p", write->saw_version);
                     ATOMIC_PTR_CAS(successp, handle->owner_or_version, write->saw_version,
                                     cursub);
