@@ -24,7 +24,7 @@ C<Parrot::Pmc2c>.
 #include "parrot/parrot.h"
 #include "parrot/stm/backend.h"
 
-pmclass STMRef does ref {
+pmclass STMRef does ref is_shared {
 
 /*
 
@@ -38,11 +38,6 @@ Sets the referenced PMC to C<PMCNULL>.
 
     void init () {
         SELF.init_pmc(PMCNULL);
-    }
-
-    void destroy() {
-        SELF.init_pmc(NULL);
-        /* don't pass it on */
     }
 
 /*

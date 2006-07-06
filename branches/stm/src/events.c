@@ -494,10 +494,18 @@ variable for GC to finish when the event arrives.
 
 void
 Parrot_new_suspend_for_gc_event(Parrot_Interp interpreter) {
+    QUEUE_ENTRY *qe;
     parrot_event* ev = mem_sys_allocate(sizeof(parrot_event));
     ev->type = EVENT_TYPE_SUSPEND_FOR_GC;
     ev->data = NULL;
-    Parrot_schedule_event(interpreter, ev);
+    qe = mem_sys_allocate(sizeof(QUEUE_ENTRY));
+    qe->next = NULL;
+    qe->data = ev;
+    qe->type = QUEUE_ENTRY_TYPE_EVENT;
+    /* we don't use schedule_event because we must modify its 
+     * task queue immediately 
+     */
+    Parrot_schedule_interp_qentry(interpreter, qe);
 }
 
 /*

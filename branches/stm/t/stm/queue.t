@@ -220,7 +220,7 @@ OUTPUT
 
 
 pir_output_is($library . <<'CODE', <<'OUTPUT', "Add in one thread, remove in the other");
-.const int MAX = 50000
+.const int MAX = 1000
 .const int SIZE = 10
 
 .sub adder
