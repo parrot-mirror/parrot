@@ -1,0 +1,58 @@
+#include "parrot/stm/backend.h"
+
+=pod
+
+=head1 NAME
+
+stm.ops -- Software transactional memory related ops
+
+=cut
+
+VERSION = PARROT_VERSION;
+
+inline op stm_start() {
+    Parrot_STM_start_transaction(interpreter);
+    goto NEXT();
+}
+
+inline op stm_validate(label INT) {
+    if (!Parrot_STM_validate(interpreter)) {
+        goto OFFSET($1);
+    }
+    goto NEXT();
+}
+
+inline op stm_commit(label INT) {
+    if (!Parrot_STM_commit(interpreter)) {
+        goto OFFSET($1); /* retry */
+    } 
+    goto NEXT();
+}
+
+inline op stm_commit(label INT, label INT) {
+    if (!Parrot_STM_commit(interpreter)) {
+        goto OFFSET($1); /* retry */
+    } else if (!Parrot_STM_validate(interpreter)) {
+        goto OFFSET($2); /* abort outer */
+    } else {
+        goto NEXT();
+    }
+}
+
+inline op stm_wait(label INT) {
+    Parrot_STM_wait(interpreter);
+    if (!Parrot_STM_validate(interpreter)) {
+        goto OFFSET($1);
+    }
+    goto NEXT();
+}
+
+inline op stm_abort() {
+    Parrot_STM_abort(interpreter);
+    goto NEXT();
+}
+
+inline op stm_depth(out INT) {
+    $1 = Parrot_STM_transaction_depth(interpreter);
+    goto NEXT();
+}
