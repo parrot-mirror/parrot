@@ -292,6 +292,8 @@ thread_func(void *arg)
 
 
     Parrot_Interp interpreter = PMC_data(self);
+    Parrot_block_DOD(interpreter);
+    Parrot_block_GC(interpreter);
     interpreter->lo_var_ptr = 0;
     sub = PMC_struct_val(self);
     sub_arg = PMC_pmc_val(self);
@@ -311,6 +313,8 @@ thread_func(void *arg)
     } else {
         /* run normally */
         push_new_c_exception_handler(interpreter, &exp);
+        Parrot_unblock_DOD(interpreter);
+        Parrot_unblock_GC(interpreter);
         ret_val = Parrot_runops_fromc_args(interpreter, sub, "P@", sub_arg);
     }
     /*
@@ -463,27 +467,33 @@ pt_suspend_one_for_gc(Parrot_Interp interp);
  */
 PMC *
 pt_transfer_sub(Parrot_Interp d, Parrot_Interp s, PMC *sub) {
+    PMC *ret;
     Parrot_block_DOD(d);
+    Parrot_block_GC(d);
+    Parrot_block_DOD(s);
+    Parrot_block_GC(s);
     /* determine if it is a named subroutine */
     if (PObj_get_FLAGS(sub) & SUB_FLAG_PF_ANON) {
         /* anonymous subroutine, copy, store in namespace */
-        PMC *ret;
         ret = Parrot_clone(d, sub);
         Parrot_store_sub_in_namespace(d, ret);
-        return ret;
     } else {
         /* non-anonymous, just lookup in the global */
-        PMC *ret = Parrot_find_global(d, PMC_sub(sub)->namespace, PMC_sub(sub)->name);
+        ret = Parrot_find_global(d, PMC_sub(sub)->namespace ?
+            VTABLE_get_string(s, PMC_sub(sub)->namespace) : NULL,
+            PMC_sub(sub)->name);
         if (PMC_IS_NULL(ret)) {
             /* wasn't in globals; clone it, place it */
             ret = Parrot_clone(d, sub);
             Parrot_store_sub_in_namespace(d, ret);
         }
         assert(PMC_sub(ret)->namespace_stash != PMC_sub(sub)->namespace_stash);
-        
-        return ret;
     }
+    Parrot_unblock_DOD(s);
+    Parrot_unblock_GC(s);
+    Parrot_unblock_GC(d);
     Parrot_unblock_DOD(d);
+    return ret;
 }
 
 int
