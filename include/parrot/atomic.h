@@ -24,6 +24,8 @@
 #    include "parrot/atomic/gcc_x86.h"
 #  elif defined(PARROT_HAS_PPC_GCC_CMPSET)
 #    include "parrot/atomic/gcc_pcc.h"
+#  elif defined(PARROT_HAS_SPARC_ATOMIC)
+#    include "parrot/atomic/sparc.h"
 #  else
 #    undef PARROT_HAS_NATIVE_ATOMIC
 #    define PARROT_HAS_NATIVE_ATOMIC 0

@@ -399,6 +399,7 @@ INTERP_O_FILES = \
     @asmfun_o@ \
     @TEMP_cg_o@ \
     @TEMP_exec_o@ \
+    @TEMP_atomic_o@ \
     $(SRC_DIR)/charset$(O) \
     $(SRC_DIR)/encoding$(O) \
     $(SRC_DIR)/exceptions$(O) \
@@ -542,6 +543,11 @@ MAKE = @make_c@
 # arguments (etc) injected in the middle.
 # There is probably a better way to do this, but I can't work it out right now.
 .c$(O) :
+	@$(PERL) tools/dev/cc_flags.pl $(CUR_DIR)/CFLAGS $(CC) "" $(CFLAGS) -I$(@D) @cc_o_out@$@ -c $<
+
+# XXX probably should detect assembler, but right now this is only used on Sparc
+
+.s$(O) :
 	@$(PERL) tools/dev/cc_flags.pl $(CUR_DIR)/CFLAGS $(CC) "" $(CFLAGS) -I$(@D) @cc_o_out@$@ -c $<
 
 # XXX These obviously require parrot: had trouble adding parrot as a dependency
