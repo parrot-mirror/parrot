@@ -43,7 +43,7 @@ static UINTVAL handle_is_version(Parrot_STM_PMC_handle data) {
 static STM_tx_log *Parrot_STM_tx_log_alloc(Interp *interp, size_t size) {
     int i;
     STM_tx_log *log;
-    log = mem_sys_allocate(size);
+    log = mem_sys_allocate_zeroed(size);
 
     interp->thread_data->stm_log = (void *) log;
 
