@@ -1,4 +1,4 @@
-# Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -10,11 +10,11 @@ use Parrot::Test tests => 13;
 
 =head1 NAME
 
-t/pmc/perlundef.t - testing the PerlUndef PMC
+t/dynpmc/perlundef.t - testing the PerlUndef PMC
 
 =head1 SYNOPSIS
 
-    % prove t/pmc/perlundef.t
+    % prove t/dynpmc/perlundef.t
 
 =head1 DESCRIPTION
 

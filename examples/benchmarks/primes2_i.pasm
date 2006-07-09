@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2003 The Perl Foundation.  All rights reserved.
+# Copyright (C) 2001-2003, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -19,6 +19,7 @@ of primes and the last one found.
 set I1, 0
 set I3, 0
 set I4, 10000
+set I6, 0
 
 LOOP:
   save I1

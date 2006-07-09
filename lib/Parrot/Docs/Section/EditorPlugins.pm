@@ -1,4 +1,4 @@
-# Copyright: 2004 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -22,9 +22,9 @@ A documentation section describing Parrot-related editor plugins.
 package Parrot::Docs::Section::EditorPlugins;
 
 use strict;
+use warnings;
 
-use Parrot::Docs::Section;
-@Parrot::Docs::Section::EditorPlugins::ISA = qw(Parrot::Docs::Section);
+use base qw( Parrot::Docs::Section );
 
 =item C<new()>
 

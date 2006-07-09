@@ -1,4 +1,4 @@
-# Copyright: 2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2006, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -10,11 +10,11 @@ use Parrot::Test tests => 3;
 
 =head1 NAME
 
-t/pmc/perlscalar.t - test Perl non-container PMCs
+t/dynpmc/perlscalar.t - test Perl non-container PMCs
 
 =head1 SYNOPSIS
 
-    % prove t/pmc/perlscalar.t
+    % prove t/dynpmc/perlscalar.t
 
 =head1 DESCRIPTION
 

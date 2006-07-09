@@ -1,5 +1,5 @@
 #! perl
-# Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 45;
+use Parrot::Test tests => 53;
 use Parrot::Config;
 
 =head1 NAME
@@ -649,6 +649,23 @@ first
 second
 OUTPUT
 
+pir_output_like(<<'CODE', <<'OUTPUT', "implicit :main with wrong # args.");
+.sub a
+  .param int op1
+  .param int op2
+.end
+CODE
+/argument count mismatch in main \(more than 1 param\)/
+OUTPUT
+
+pir_output_like(<<'CODE', <<'OUTPUT', "explicit :main with wrong # args.");
+.sub a :main
+  .param int op1
+  .param int op2
+.end
+CODE
+/argument count mismatch in main \(more than 1 param\)/
+OUTPUT
 
 $temp = "temp.pir";
 open S, ">$temp" or die "Can't write $temp";
@@ -1166,3 +1183,72 @@ pc2
 main
 OUTPUT
 
+# see also #38964
+pir_output_is(<<'CODE', <<'OUTPUT', 'unicode sub names, compilation');
+.sub unicode:"\u7777"
+   print "ok\n"
+.end
+CODE
+ok
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', 'unicode sub names, invocation');
+.sub unicode:"\u7777"
+    print "ok\n"
+.end
+
+.sub test :main
+    unicode:"\u7777"()
+.end
+CODE
+ok
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', 'unicode sub names, dynamic');
+.sub unicode:"\u7777"
+    print "ok\n"
+.end
+
+.sub test :main
+    $P1 = find_name unicode:"\u7777"
+    $P1()
+.end
+CODE
+ok
+OUTPUT
+
+pir_output_like(<<'CODE', <<'OUTPUT', 'unicode sub names');
+.sub unicode:"\u7777"
+    print "ok\n"
+.end
+
+.sub test :main
+    # unicode:"\u7777" ends up as a string nicode:"\u7777
+    # (or it did, in r12860)
+    $P1 = find_name 'nicode:"\u7777'
+    $P1()
+.end
+CODE
+/Name 'nicode:"\\u7777' not found\n.*\n/
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', 'unicode sub constant');
+.sub main :main
+    .const .Sub s = unicode:"\u7777"
+    s()
+.end
+
+.sub unicode:"\u7777"
+   print "ok\n"
+.end
+CODE
+ok
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', 'literal \u in sub name (not unicode)');
+.sub '\u2193'
+    say 'ok'
+.end
+CODE
+ok
+OUTPUT

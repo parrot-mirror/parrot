@@ -1,5 +1,5 @@
 /* interpreter.h
- *  Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+ *  Copyright (C) 2001-2006, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -323,11 +323,6 @@ struct parrot_interp_t {
     int         n_libs;                       /* count of libs below */
     op_lib_t  **all_op_libs;                  /* all loaded opcode libraries */
 
-/* XXX kwoo:  Is this for future, or is it safe to remove? */
-#if 0
-    str_func_t *string_funcs;
-#endif
-
     Interp_flags flags;                       /* Various interpreter flags that */
 
     UINTVAL debug_flags;                      /* debug settings */
@@ -437,15 +432,15 @@ typedef enum {
 #define PCONST(i) PF_CONST(interpreter->code, (i))
 #define PNCONST   PF_NCONST(interpreter->code)
 
-/* Make this a config option */
+/* TODO - Make this a config option */
 #define PARROT_CATCH_NULL 1
 
 #if PARROT_CATCH_NULL
 PARROT_API extern PMC * PMCNULL;   /* Holds single Null PMC */
-#  define PMC_IS_NULL(p) (!(p) || (p) == PMCNULL)
+#  define PMC_IS_NULL(p)  ((p) == PMCNULL || (p) == NULL)
 #else
-#  define PMCNULL NULL
-#  define PMC_IS_NULL(p) (!(p))
+#  define PMCNULL         ((PMC *)NULL)
+#  define PMC_IS_NULL(p)  ((p) == PMCNULL)
 #endif /* PARROT_CATCH_NULL */
 
 /* &gen_from_def(sysinfo.pasm) prefix(SYSINFO_) */

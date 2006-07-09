@@ -1,5 +1,5 @@
 #! perl -w
-# Copyright: 2001-2005 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2005, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -62,9 +62,11 @@ Op Type:
 
 =cut
 
-use strict;
-
 package Parrot::Op;
+
+use strict;
+use warnings;
+
 
 =item C<new($code, $type, $name, $args, $argdirs, $labels, $flags)>
 
@@ -469,7 +471,7 @@ license as Parrot itself.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001-2005 The Perl Foundation. All rights reserved.
+Copyright (C) 2001-2005, The Perl Foundation.
 
 =end TODO
 

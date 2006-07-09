@@ -39,7 +39,7 @@ Run from another Parrot program:
 =head1 Description
 
 APL.pbc is an interpreter for the APL language.  Its
-parser is implemented using a PGE grammar (lib/APLGrammar.lib),
+parser is implemented using a PGE grammar (lib/APLGrammar.pg),
 and compilation is performed as a TGE tree transformation from 
 the match object returned by the grammar into an abstract syntax tree.
 Then the abstract syntax tree is converted to PIR code, and the
@@ -78,7 +78,7 @@ Initializes the compiling subsystem.
 
     # tge transformer classes
     .local pmc tge
-    tge = getclass 'TGE'
+    tge = getclass 'TGE::Grammar'
     $P1 = subclass tge, 'ASTGrammar'
     $P1 = subclass tge, 'EvalGrammar'
     $P1 = subclass tge, 'PIRGrammar'
@@ -251,8 +251,7 @@ pmcs_ok:
 
   err_no_file:
     print 'Cannot open file '
-    print filename
-    print "\n"
+    say filename
     end
 
   trap:
@@ -289,7 +288,7 @@ pmcs_ok:
 
 =head1 LICENSE
 
-Copyright (c) 2006 The Perl Foundation
+Copyright (C) 2006, The Perl Foundation.
 
 This is free software; you may redistribute it and/or modify
 it under the same terms as Parrot.

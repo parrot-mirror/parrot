@@ -1,5 +1,5 @@
 /*
-Copyright: 2006 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -40,7 +40,7 @@ TODO:
 
 #if HAS_JIT
 #include "parrot/exec.h"
-#include "parrot/jit.h"
+#include "jit.h"
 
 #if PIC_TEST
 /*

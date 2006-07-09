@@ -3,9 +3,9 @@
 #
 
 .HLL 'Tcl', 'tcl_group'
-.namespace [ '' ]
+.namespace
 
-.sub "&lrange"
+.sub '&lrange'
   .param pmc argv :slurpy  
 
   # XXX need error handling.

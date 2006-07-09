@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2003, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -393,8 +393,10 @@ Store the method as a global in the namespace of this class.
     }
 
     void add_method(STRING *method_name, PMC *sub_pmc) {
-        STRING *names = DYNSELF.name();
-        Parrot_store_global(INTERP, names, method_name, sub_pmc);
+        /* XXX - multi-level namespaces not supported? */
+        /* Why aren't we using SELF->vtable->_namespace? */
+        STRING *ns_name = DYNSELF.name();
+        Parrot_store_global_s(INTERP, ns_name, method_name, sub_pmc);
     }
 /*
 
@@ -814,7 +816,7 @@ Look for NCI methods and properties.
          * XXX do we need that in the default object system?
          */
         if (SELF->pmc_ext && PMC_metadata(SELF)) {
-             b = hash_get_bucket(INTERP, (Hash*) PMC_metadata(SELF), name);
+             b = parrot_hash_get_bucket(INTERP, (Hash*) PMC_metadata(SELF), name);
              if (b)
                  p = b->value;
         }

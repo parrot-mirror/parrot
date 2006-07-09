@@ -49,15 +49,9 @@ The SDL::Event object has the following methods:
 
 	newclass     event_class, 'SDL::Event'
 	addattribute event_class, 'event'
-
-	.local pmc initializer
-	new initializer, .String
-	set initializer, 'BUILD'
-	setprop event_class, 'BUILD', initializer
-
 .end
 
-=item BUILD()
+=item init()
 
 Initializes the internal attributes of this object.  Trust me, you need to do
 this, at least for now.
@@ -67,8 +61,7 @@ away.
 
 =cut
 
-.sub BUILD method
-
+.sub 'init' :method
 	.local pmc  fetch_layout
 	find_global fetch_layout, 'SDL::NCI', 'fetch_layout'
 
@@ -78,10 +71,9 @@ away.
 	.local pmc event
 	new event, .ManagedStruct, layout
 
-	.local int offset
-	classoffset offset, self, 'SDL::Event'
-	setattribute self, offset, event
+	setattribute self, 'event', event
 
+	.return()
 .end
 
 =item event()
@@ -91,18 +83,17 @@ this directly, unless you're working with raw SDL calls.
 
 =cut
 
-.sub event method
-	.param string name :optional
-	.param int argcS   :opt_flag 
+.sub event :method
+	.param string name      :optional
+	.param int    have_name :opt_flag 
 	
-        .local int offset
-        classoffset offset, self, 'SDL::Event'
+	.local pmc event
+	getattribute event, self, 'event'
 
-        .local pmc event
-        getattribute event, self, offset
+	if have_name == 1 goto assign_event
+	.return( event )
 
-	if argcS == 0 goto END
-
+  assign_event:
 	.local pmc  fetch_layout
 	find_global fetch_layout, 'SDL::NCI', 'fetch_layout'
 
@@ -116,15 +107,9 @@ this directly, unless you're working with raw SDL calls.
 	#new event, .ManagedStruct, layout
 	assign event, layout
 
-	.local int offset
-	classoffset offset, self, 'SDL::Event'
-	setattribute self, offset, event
+	setattribute self, 'event', event
 
-END:
-	.pcc_begin_return
-		.return event
-	.pcc_end_return
-
+	.return( event )
 .end
 
 =item event_type( event_type )
@@ -142,7 +127,7 @@ requiring an argument.  This may change in the future.
 
 =cut
 
-.sub event_type method
+.sub event_type :method
 	.param int incoming_type
 
 	.local pmc event_types
@@ -183,11 +168,7 @@ requiring an argument.  This may change in the future.
 	type_name         = event_types[ incoming_type ]
 
 return:
-
-	.pcc_begin_return
-		.return type_name
-	.pcc_end_return
-
+	.return( type_name )
 .end
 
 =item event_keyname()
@@ -204,7 +185,7 @@ C<unknown> instead.
 
 =cut
 
-.sub event_keyname method
+.sub event_keyname :method
 
 	.local pmc event
 	event = self.'event'( 'Keyboard' )
@@ -221,12 +202,9 @@ C<unknown> instead.
 	length $I0, key_name
 	if $I0 > 0 goto return
 	key_name = 'unknown'
+
 return:
-
-	.pcc_begin_return
-		.return key_name
-	.pcc_end_return
-
+	.return( key_name )
 .end
 
 =item process_events( event_handler, handler_args, [ check_interval ] )
@@ -251,7 +229,7 @@ should, somehow.
 
 =cut
 
-.sub process_events method
+.sub process_events :method
 	.param pmc event_handler
 	.param pmc handler_args
 	.param num check_interval :optional
@@ -306,7 +284,7 @@ Use this method inside your own loop structure.
 
 =cut
 
-.sub handle_event method
+.sub handle_event :method
 	.param pmc event_handler
 	.param pmc handler_args
 
@@ -322,9 +300,8 @@ Use this method inside your own loop structure.
 	eq event_waiting, 0, return
 
 	self.'dispatch_event'( event, event_handler, handler_args )
-
 return:
-
+	.return()
 .end
 
 =item dispatch_event( event, event_handler, handler_args )
@@ -334,7 +311,7 @@ C<handle_event()> or C<process_events()>.
 
 =cut
 
-.sub dispatch_event method
+.sub dispatch_event :method
 	.param pmc event
 	.param pmc event_handler
 	.param pmc handler_args
@@ -360,10 +337,7 @@ C<handle_event()> or C<process_events()>.
 	event_handler.event_type( self, handler_args )
 
 return:
-
-	.pcc_begin_return
-		.return continue
-	.pcc_end_return
+	.return( continue )
 .end
 
 =back
@@ -376,6 +350,6 @@ suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004-2006, The Perl Foundation.
+Copyright (C) 2004-2006, The Perl Foundation.
 
 =cut

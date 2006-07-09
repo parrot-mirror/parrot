@@ -1,4 +1,4 @@
-# Copyright: 2001-2004 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2004, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -17,14 +17,13 @@ run loop.
 
 =cut
 
-use strict;
-#use warnings;
 
 package Parrot::OpTrans::Compiled;
 
-use Parrot::OpTrans;
-use vars qw(@ISA);
-@ISA = qw(Parrot::OpTrans);
+use strict;
+use warnings;
+
+use base qw( Parrot::OpTrans );
 
 =item C<defines()>
 

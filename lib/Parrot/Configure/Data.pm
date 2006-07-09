@@ -1,4 +1,4 @@
-# Copyright: 2001-2005 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2005, The Perl Foundation.
 # $Id$
 
 =pod
@@ -40,6 +40,7 @@ I<symbols>.
 package Parrot::Configure::Data;
 
 use strict;
+use warnings;
 
 use Data::Dumper;
 

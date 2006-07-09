@@ -1,4 +1,4 @@
-# Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -24,8 +24,10 @@ configuration steps.
 package Parrot::Configure::Step;
 
 use strict;
+use warnings;
 
-use Exporter;
+use base qw( Exporter );
+
 use Carp;
 use File::Basename qw( basename );
 use File::Copy ();
@@ -33,23 +35,18 @@ use File::Spec;
 use File::Which;
 
 # XXX $conf is a temporary hack
-use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $conf);
+our $conf;
 
-@ISA = qw(Exporter);
-
-@EXPORT = ();
-
-@EXPORT_OK = qw(prompt genfile copy_if_diff move_if_diff integrate
-    cc_gen cc_build cc_run cc_clean cc_run_capture capture_output
-    check_progs);
-
-%EXPORT_TAGS = (
-    inter => [qw(prompt integrate)],
-    auto  => [
-        qw(cc_gen cc_build cc_run cc_clean cc_run_capture
-            capture_output check_progs)
-    ],
-    gen => [qw(genfile copy_if_diff move_if_diff)]
+our @EXPORT = ();
+our @EXPORT_OK = qw(prompt genfile copy_if_diff move_if_diff integrate
+                    cc_gen cc_build cc_run cc_clean cc_run_capture capture_output
+                    check_progs);
+our %EXPORT_TAGS = (
+    inter => [ qw(prompt integrate) ],
+    auto  => [ qw(cc_gen cc_build cc_run cc_clean cc_run_capture
+                  capture_output check_progs)
+             ],
+    gen =>   [qw(genfile copy_if_diff move_if_diff)]
 );
 
 =item C<integrate($orig, $new)>

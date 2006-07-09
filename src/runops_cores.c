@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -23,8 +23,8 @@ the faster dispatch of operations.
 
 #include "runops_cores.h"
 #include "parrot/embed.h"
-#include "parrot/trace.h"
-#include "parrot/interp_guts.h"
+#include "trace.h"
+#include "interp_guts.h"
 
 #ifdef HAVE_COMPUTED_GOTO
 #  include "parrot/oplib/core_ops_cg.h"

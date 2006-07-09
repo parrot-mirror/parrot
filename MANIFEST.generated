@@ -2,11 +2,11 @@
 # See tools/dev/install_files.pl for documentation on the
 # format of this file.
 # Please re-sort this file after *EVERY* modification
-blib/lib/libparrot.0.4.4.dylib                    [main]lib
+blib/lib/libparrot.0.4.5.dylib                    [main]lib
 blib/lib/libparrot.a                              [main]lib
 blib/lib/libparrot.dylib                          [main]lib
 blib/lib/libparrot.so                             [main]lib
-blib/lib/libparrot.so.0.4.4                       [main]lib
+blib/lib/libparrot.so.0.4.5                       [main]lib
 disassemble                                       [main]bin
 disassemble.exe                                   [main]bin
 docs/ops/bit.pod                                  [main]doc
@@ -33,7 +33,6 @@ include/parrot/exec_dep.h                         [main]include
 include/parrot/extend_vtable.h                    [main]include
 include/parrot/feature.h                          [main]include
 include/parrot/has_header.h                       [main]include
-include/parrot/jit_emit.h                         [main]include
 include/parrot/oplib/core_ops.h                   [main]include
 include/parrot/oplib/core_ops_cg.h                [main]include
 include/parrot/oplib/core_ops_cgp.h               [main]include
@@ -41,7 +40,6 @@ include/parrot/oplib/core_ops_switch.h            [main]include
 include/parrot/oplib/ops.h                        [main]include
 include/parrot/platform.h                         [main]include
 include/parrot/platform_interface.h               [main]include
-include/parrot/string_private_cstring.h           [main]include
 include/parrot/vtable.h                           [main]include
 installable_disassemble                           [main]bin
 installable_disassemble.exe                       [main]bin
@@ -69,6 +67,34 @@ runtime/parrot/dynext/amber_kernel.bundle         [library]
 runtime/parrot/dynext/amber_kernel.dll            [library]
 runtime/parrot/dynext/amber_kernel.dylib          [library]
 runtime/parrot/dynext/amber_kernel.so             [library]
+runtime/parrot/dynext/apl_group.bundle            [library]
+runtime/parrot/dynext/apl_group.dll               [library]
+runtime/parrot/dynext/apl_group.dylib             [library]
+runtime/parrot/dynext/apl_group.so                [library]
+runtime/parrot/dynext/dotnet.bundle               [library]
+runtime/parrot/dynext/dotnet.dll                  [library]
+runtime/parrot/dynext/dotnet.dylib                [library]
+runtime/parrot/dynext/dotnet.so                   [library]
+runtime/parrot/dynext/dotnet_ops.bundle           [library]
+runtime/parrot/dynext/dotnet_ops.dll              [library]
+runtime/parrot/dynext/dotnet_ops.dylib            [library]
+runtime/parrot/dynext/dotnet_ops.so               [library]
+runtime/parrot/dynext/dotnet_ops_cg.bundle        [library]
+runtime/parrot/dynext/dotnet_ops_cg.dll           [library]
+runtime/parrot/dynext/dotnet_ops_cg.dylib         [library]
+runtime/parrot/dynext/dotnet_ops_cg.so            [library]
+runtime/parrot/dynext/dotnet_ops_cgp.bundle       [library]
+runtime/parrot/dynext/dotnet_ops_cgp.dll          [library]
+runtime/parrot/dynext/dotnet_ops_cgp.dylib        [library]
+runtime/parrot/dynext/dotnet_ops_cgp.so           [library]
+runtime/parrot/dynext/dotnet_ops_switch.bundle    [library]
+runtime/parrot/dynext/dotnet_ops_switch.dll       [library]
+runtime/parrot/dynext/dotnet_ops_switch.dylib     [library]
+runtime/parrot/dynext/dotnet_ops_switch.so        [library]
+runtime/parrot/dynext/dotnet_runtime.bundle       [library]
+runtime/parrot/dynext/dotnet_runtime.dll          [library]
+runtime/parrot/dynext/dotnet_runtime.dylib        [library]
+runtime/parrot/dynext/dotnet_runtime.so           [library]
 runtime/parrot/dynext/dynlexpad.bundle            [library]
 runtime/parrot/dynext/dynlexpad.dll               [library]
 runtime/parrot/dynext/dynlexpad.dylib             [library]
@@ -93,6 +119,10 @@ runtime/parrot/dynext/match_group.bundle          [library]
 runtime/parrot/dynext/match_group.dll             [library]
 runtime/parrot/dynext/match_group.dylib           [library]
 runtime/parrot/dynext/match_group.so              [library]
+runtime/parrot/dynext/perl_group.bundle           [library]
+runtime/parrot/dynext/perl_group.dll              [library]
+runtime/parrot/dynext/perl_group.dylib            [library]
+runtime/parrot/dynext/perl_group.so               [library]
 runtime/parrot/dynext/subproxy.bundle             [library]
 runtime/parrot/dynext/subproxy.dll                [library]
 runtime/parrot/dynext/subproxy.dylib              [library]
@@ -150,4 +180,6 @@ runtime/parrot/library/dumper.pbc                 [main]
 runtime/parrot/library/ncurses.pbc                [main]
 runtime/parrot/library/parrotlib.pbc              [main]
 runtime/parrot/library/pcre.pbc                   [main]
+src/jit_emit.h                                    [main]include
+src/string_private_cstring.h                      [main]include
 tools/build/dynpmc.pl                             [devel]

@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -26,9 +26,9 @@ executables.
 #include "parrot/parrot.h"
 #include "parrot/string.h"
 #include "parrot/exec.h"
-#include "parrot/jit.h"
+#include "jit.h"
 #define JIT_EMIT 1
-#include "parrot/jit_emit.h"
+#include "jit_emit.h"
 #include "parrot/embed.h"
 
 opcode_t* run_compiled(Interp *interpreter,

@@ -2,9 +2,9 @@
 # [catch]
 
 .HLL 'Tcl', 'tcl_group'
-.namespace [ '' ]
+.namespace
 
-.sub "&catch"
+.sub '&catch'
   .param pmc argv :slurpy
  
   .local int argc 
@@ -52,6 +52,6 @@ done:
   .return(retval)
 
 badargs:
-  .throw ("wrong # args: should be \"catch script ?resultVarName? ?optionVarName?\"")
+  .throw ('wrong # args: should be "catch script ?resultVarName? ?optionVarName?"')
 
 .end

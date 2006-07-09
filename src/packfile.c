@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006 The Perl Foundation. All rights reserved.
+Copyright (C) 2001-2006, The Perl Foundation.
 This program is free software. It is subject to the same license as
 Parrot itself.
 $Id$
@@ -923,7 +923,8 @@ Register the C<pack>/C<unpack>/... functions for a packfile type.
 
 */
 
-INTVAL PackFile_funcs_register(Interp* interpreter,
+INTVAL
+PackFile_funcs_register(Interp* interpreter,
         struct PackFile *pf, UINTVAL type, struct PackFile_funcs funcs)
 {
     /* TODO dynamic registering */
@@ -942,7 +943,8 @@ The default unpack function.
 
 */
 
-static opcode_t * default_unpack (Interp *interpreter,
+static opcode_t *
+default_unpack (Interp *interpreter,
         struct PackFile_Segment *self, opcode_t *cursor)
 {
     if (self->pf->header->dir_format) {
@@ -2724,7 +2726,8 @@ I<What does this do?>
 
 */
 
-void PackFile_FixupTable_new_entry(Interp *interpreter,
+void
+PackFile_FixupTable_new_entry(Interp *interpreter,
         char *label, enum_fixup_t type, opcode_t offs)
 {
     struct PackFile_FixupTable *self = interpreter->code->fixups;

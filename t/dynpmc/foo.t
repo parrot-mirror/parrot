@@ -1,5 +1,5 @@
 #! perl
-# Copyright: 2005 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2005, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -12,7 +12,7 @@ use Parrot::Config;
 
 =head1 NAME
 
-t/pmc/foo.t - Test for a very simple dynamic PMC
+t/dynpmc/foo.t - Test for a very simple dynamic PMC
 
 =head1 SYNOPSIS
 

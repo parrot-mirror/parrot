@@ -29,8 +29,6 @@ Throws an exception at the current point in the match.  If message
 doesn't end with a newline, also produces the line number and offset
 of the match.
 
-=back
-
 =cut
 
 .sub 'die'
@@ -93,3 +91,67 @@ of the match.
     .return (mob)
 .end
    
+=item C<split(PMC regex, STR string [, INT count]>
+
+Split the string where the regex matches, returning an array. Optionally limit
+the number of splits.
+
+=back
+
+=cut
+
+.sub 'split'
+    .param pmc    regex
+    .param string str
+    .param int    count     :optional
+    .param int    has_count :opt_flag
+    
+    .local pmc result, match
+    .local int pos, n
+    
+    result = new .ResizablePMCArray
+    pos    = 0
+    n      = 1
+    
+split_loop:
+    match = regex(str, 'continue'=>pos)
+    ##  if regex not found in target, we're done
+    unless match goto split_end
+    
+    ##  save substring up to current match
+    $I0 = match.from()
+    $I0 -= pos
+    $S0 = substr str, pos, $I0
+    push result, $S0
+    pos = match.to()
+
+    .local pmc captures
+    captures = match.get_array()
+    if null captures goto capture_end
+    $I0 = elements captures
+    $I1 = 0
+capture_loop:
+    if $I1 == $I0 goto capture_end
+    $P0 = captures[$I1]
+    $S0 = $P0
+    push result, $S0
+    inc $I1
+    goto capture_loop
+capture_end:
+    
+    ##  are we counting matches?
+    unless has_count goto split_loop
+    ##  check if we've already split enough
+    inc n
+    if n < count goto split_loop
+    # goto split_end
+
+split_end:
+    ##   save string from end of last match to end of string
+    $S0 = substr str, pos
+    if $S0 == "" goto end
+    push result, $S0
+
+end:
+   .return (result)
+.end

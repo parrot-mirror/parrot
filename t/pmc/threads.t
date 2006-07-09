@@ -1,5 +1,5 @@
 #! perl
-# Copyright: 2001-2005 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2005, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -95,15 +95,16 @@ pir_output_is(<<'CODE', <<'OUTPUT', "thread type 1");
 .sub foo 
     # check if vars are fresh
     inc I5
-    print "thread "
-    print I5
+    print "thread"
+    # print I5 # not done because registers aren't guaranteed to be
+               # initialized to anything in particular
     print "\n"
     set I3, 0   # no retval
     returncc	# ret and be done with thread
 .end
 # output from threads could be reversed
 CODE
-thread 1
+thread
 main 10
 OUTPUT
 
@@ -131,9 +132,9 @@ pir_output_is(<<'CODE', <<'OUTPUT', "thread type 2");
     .param pmc passed
     inc I5
     S5 = " thread\n"
-    passed = 'hello from '
+    passed = 'hello from'
     print passed
-    print I5
+    # print I5 # not done because register initialization is not guaranteed
     print S5
     $P0 = getinterp
     $S0 = typeof $P0
@@ -145,7 +146,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "thread type 2");
 .end
 CODE
 ok 1
-hello from 1 thread
+hello from thread
 ParrotThread tid 1
 from 10 interp
 OUTPUT

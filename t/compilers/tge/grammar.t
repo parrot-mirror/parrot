@@ -1,4 +1,4 @@
-# Copyright 2005-2006, The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2005-2006, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -8,6 +8,7 @@ use lib qw(t . lib ../lib ../../lib ../../../lib);
 use Test::More;
 use Parrot::Test;
 
+BEGIN { plan tests => 2; };
 
 =head1 NAME
 
@@ -25,13 +26,51 @@ tree of the specified type.
 
 =cut
 
+pir_output_is(<<'CODE', <<'OUT', 'test compiling anonymous and named grammars');
+
+.sub _main :main
+    load_bytecode 'TGE.pbc'
+
+    # Load the grammar in a string
+    .local string source
+    source = <<'GRAMMAR'
+    transform min (Leaf) :language('PIR') { 
+        $P1 = getattribute node, "value"
+       .return ($P1)
+    }
+GRAMMAR
+
+    # Compile a grammar from the source 
+    .local pmc grammar
+    $P1 = new 'TGE::Compiler'
+    grammar = $P1.'compile'(source)
+    $S1 = typeof grammar
+    say $S1
+
+    # Add the grammar keyword and recompile
+    source = "grammar TreeMin is TGE::Grammar;\n\n" . source
+    grammar = $P1.'compile'(source)
+    $S1 = typeof grammar
+    say $S1
+
+    # Add a POD comment and recompile
+    source = "=head NAME\n\n  TreeMin\n\n=cut\n\n" . source
+    grammar = $P1.'compile'(source)
+    $S1 = typeof grammar
+    say $S1
+.end
+CODE
+AnonGrammar
+TreeMin
+TreeMin
+OUT
 
 pir_output_is(<<'CODE', <<'OUT', 'complete example: Branch/Leaf tree grammar');
 
 .sub _main :main
     .param pmc argv
 
-    load_bytecode "compilers/tge/TGE.pir"
+    load_bytecode 'TGE.pbc'
 
     # Load the grammar in a string
     .local string source
@@ -111,8 +150,8 @@ GRAMMAR
 
     # Compile a grammar from the source 
     .local pmc grammar
-    grammar = new 'TGE'
-    grammar.agcompile(source)
+    $P1 = new 'TGE::Compiler'
+    grammar = $P1.'compile'(source)
 
     # Build up the tree for testing
     .local pmc tree
@@ -233,6 +272,4 @@ Allison Randal <allison@perl.org>
 =cut
 
 
-## remember to change the number of tests :-)
-BEGIN { plan tests => 1; }
 

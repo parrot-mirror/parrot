@@ -22,9 +22,12 @@ token target { <variable_identifier> [ \[ <list> \] ]? }
 
 token list { $0:=(<expression>?) $0:=( ; <expression>? )* }
 
-token dyadic_identifier  { <[|⍟*⌈⌊○!+−×÷~∧∨⍲⍱<≤=≥>≠⍳⊖↑↓⍕]> }
+token dyadic_identifier  { <[|⍟*⌈⌊○!+−×÷~∧∨⍲⍱<≤=≥>≠⍳⊖↑↓⍴⍕]> }
 
-token monadic_identifier { <[|⍟*⌈⌊○!+−×÷~⍳⌽↑⍴⍕]> }
+token monadic_identifier {
+    ⎕← |
+    <[|⍟*⌈⌊○!+−×÷~⍳⌽↑⍴⍕]>
+}
 
 token array_identifier {
       <constant>

@@ -6,9 +6,9 @@
 # Like eval, except that you must specify a registered compiler.
 
 .HLL 'Tcl', 'tcl_group'
-.namespace [ '' ]
+.namespace
 
-.sub "&inline"
+.sub '&inline'
   .param pmc argv :slurpy
 
   .local int argc
@@ -26,11 +26,11 @@
   $P0()
 
   # XXX Should catch exceptions in the code and return the error message
-  .return ("")
+  .return ('')
 
 fail:
-  $S0 = "invalid language \""
+  $S0 = 'invalid language "'
   $S0 .= language
-  $S0 .= "\" specified"
+  $S0 .= '" specified'
   .throw ($S0)
 .end

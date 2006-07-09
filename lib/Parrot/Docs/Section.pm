@@ -1,4 +1,4 @@
-# Copyright: 2004 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -25,9 +25,9 @@ C<Parrot::Docs::Section> is a subclass of C<Parrot::Docs::Group>.
 package Parrot::Docs::Section;
 
 use strict;
+use warnings;
 
-use Parrot::Docs::Group;
-@Parrot::Docs::Section::ISA = qw(Parrot::Docs::Group);
+use base qw( Parrot::Docs::Group );
 
 use Parrot::Docs::Item;
 use Parrot::Docs::Directory;

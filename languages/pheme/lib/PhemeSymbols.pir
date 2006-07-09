@@ -9,78 +9,18 @@
 	symbols['cons']              = 1
 	symbols['include_file']      = 1
 	symbols['write']             = 1
-	symbols['__make_empty_cons'] = 1
+	symbols['+']                 = 1
+	symbols['-']                 = 1
+	symbols['*']                 = 1
+	symbols['/']                 = 1
 
 	store_global 'PhemeCompiler', 'symbols', symbols
 	.return()
 .end
 
-.namespace [ 'Pheme::Cons' ]
-
-.sub _initialize :load
-	.local pmc cons_class
-	newclass cons_class, 'Pheme::Cons'
-
-	addattribute cons_class, 'head'
-	addattribute cons_class, 'tail'
-.end
-
-.sub 'head' :method
-	.param pmc new_head  :optional
-	.param int have_head :opt_flag
-
-	unless have_head goto return_head
-	setattribute self, 'head', new_head
-	.return( new_head )
-
-  return_head:
-	.local pmc head
-	head = getattribute self, 'head'
-	.return( head )
-.end
-
-.sub __get_integer :method
-	.local pmc elem
-	elem  = self.'head'()
-
-	.local int elem_defined
-	elem_defined = defined elem
-
-	if elem_defined goto count_tail
-	.return( 0 )
-
-  count_tail:
-	.local int count
-	count = 0
-	elem  = self
-
-  loop_start:
-	inc count
-	elem         = elem.'tail'()
-	elem_defined = defined elem
-	if elem_defined goto loop_start
-
-  loop_end:
-	.return( count )
-.end
-
-.sub 'tail' :method
-	.param pmc new_tail  :optional
-	.param int have_tail :opt_flag
-
-	unless have_tail goto return_tail
-	setattribute self, 'tail', new_tail
-	.return( new_tail )
-
-  return_tail:
-	.local pmc tail
-	tail = getattribute self, 'tail'
-	.return( tail )
-.end
-
 .namespace [ 'Pheme' ]
 
-.sub __resolve_at_runtime :multi( Pheme::Cons )
+.sub __resolve_at_runtime :multi( [ 'Pheme'; 'Cons' ] )
 	.param pmc args :slurpy
 
 	.local pmc result
@@ -113,7 +53,7 @@
 	.param pmc args :slurpy
 
 	.local int cons_type
-	cons_type = find_type 'Pheme::Cons'
+	cons_type = find_type [ 'Pheme'; 'Cons' ]
 
 	.local pmc result
 	result = new cons_type
@@ -172,7 +112,7 @@
 	.param pmc r
 
 	.local int cons_type
-	cons_type = find_type 'Pheme::Cons'
+	cons_type = find_type [ 'Pheme'; 'Cons' ]
 
 	.local pmc result
 	result = new cons_type
@@ -254,13 +194,132 @@
 	.return( 1 )
 .end
 
-.sub 'eq?' :multi( Pheme::Cons, Pheme::Cons )
+.sub 'eq?' :multi( [ 'Pheme'; 'Cons' ], [ 'Pheme'; 'Cons' ] )
 	.param pmc l_cons
 	.param pmc r_cons
 
 	.local int result
 	result = 'eqlist?'( l_cons, r_cons )
 	.return( result )
+.end
+
+# XXX - return #t
+.sub 'atom?' :multi( [ 'Pheme'; 'Atom' ] )
+	.param pmc atom
+
+	.return( 1 )
+.end
+
+# XXX - return #f
+.sub 'atom?' :multi( [ 'Pheme'; 'Cons' ] )
+	.param pmc cons
+
+	.return( 0 )
+.end
+
+# XXX - a cheat for now
+.sub 'atom?' :multi( String )
+	.param pmc val
+	.return( 1 )
+.end
+
+.sub 'null?' :multi( [ 'Pheme'; 'Cons' ] )
+	.param pmc cons
+	.local int count
+	count = cons
+
+	eq count, 0, indeed_empty
+	.return( 0 )
+
+  indeed_empty:
+	.return( 1 )
+.end
+
+.sub '+' :multi( float, float )
+	.param float first
+	.param pmc   rest   :slurpy
+
+	.local float result
+	result   = first
+
+	.local pmc iter
+	iter = new .Iterator, rest
+
+	.local pmc   next
+	.local float next_val
+
+  loop:
+ 	unless iter goto end_loop
+	next     = shift iter
+	next_val = next
+	result  += next_val
+	goto loop
+
+  end_loop:
+	.return( result )
+.end
+
+.sub '*' :multi( float, float )
+	.param float first
+	.param pmc   rest   :slurpy
+
+	.local float result
+	result   = first
+
+	.local pmc iter
+	iter = new .Iterator, rest
+
+	.local pmc   next
+	.local float next_val
+
+  loop:
+ 	unless iter goto end_loop
+	next     = shift iter
+	next_val = next
+	result  *= next_val
+	goto loop
+
+  end_loop:
+	.return( result )
+.end
+
+.sub '-' :multi( float, float )
+	.param float first
+	.param pmc   rest :slurpy
+
+	.local float result
+	result   = first
+
+	.local pmc iter
+	iter = new .Iterator, rest
+
+	.local pmc   next
+	.local float next_val
+
+  loop:
+ 	unless iter goto end_loop
+	next     = shift iter
+	next_val = next
+	result  -= next_val
+	goto loop
+
+  end_loop:
+	.return( result )
+.end
+
+.sub '/' :multi( float, float )
+	.param float l
+	.param float r
+
+	.local float result
+	result = l / r
+
+	.return( result )
+.end
+
+.sub 'null?' :multi( _ )
+	.param pmc dummy
+	.return( 0 )
 .end
 
 .sub 'write' :multi( string )
@@ -274,7 +333,7 @@
 	.local pmc result
 
 	.local int cons_type
-	cons_type = find_type 'Pheme::Cons'
+	cons_type = find_type [ 'Pheme'; 'Cons' ]
 
 	.local pmc result
 	result = new cons_type

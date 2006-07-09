@@ -1,4 +1,4 @@
-# Copyright: 2004 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -23,6 +23,7 @@ C<Parrot::Docs::Section>.
 package Parrot::Docs::HTMLPage;
 
 use strict;
+use warnings;
 
 =item C<header($title, $navigation, $resources)>
 

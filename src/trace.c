@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2003, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -23,7 +23,7 @@ src/test_main.c
 
 */
 
-#include "parrot/trace.h"
+#include "trace.h"
 #include "parrot/oplib/ops.h"
 
 /*
@@ -443,7 +443,7 @@ trace_op(Interp *interpreter, opcode_t *code_start,
 
 =head1 SEE ALSO
 
-F<include/parrot/trace.h>
+F<src/trace.h>
 
 =cut
 

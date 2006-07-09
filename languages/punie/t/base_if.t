@@ -2,7 +2,7 @@
 
 use strict;
 use lib qw(t . lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 4;
+use Parrot::Test tests => 5;
 use Test::More;
 
 language_output_is('punie', <<'CODE', <<'OUT', 'simple conditionals');
@@ -57,10 +57,14 @@ CODE
 ok 1
 OUT
 
-TODO: {
-local $TODO = 'unimplemented feature';
+language_output_is('punie', <<'CODE', <<'OUT', 'conditional with variable');
+$x = 'test';
+if ($x) { print "ok 1\n"; } else { print "not ok 1\n";}
+CODE
+ok 1
+OUT
 
-language_output_is('punie', <<'EOC', <<'OUT', 'base_cond.t');
+language_output_is('punie', <<'EOC', <<'OUT', 'base.if');
 #!./perl
 
 # $Header: base.if,v 1.0 87/12/18 13:11:45 root Exp $
@@ -79,4 +83,3 @@ ok 1
 ok 2
 OUT
 
-}

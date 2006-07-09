@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2003, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -425,7 +425,7 @@ Parrot_fetch_arg(Interp *interpreter, struct call_state *st)
             PMC *elem;
             if (st->key) {
                 st->src.slurp_i++;
-                st->name = hash_get_idx(interpreter, 
+                st->name = parrot_hash_get_idx(interpreter, 
                         PMC_struct_val(st->src.slurp), st->key);
                 assert(st->name);
                 elem = VTABLE_get_pmc_keyed_str(interpreter, st->src.slurp,

@@ -49,6 +49,8 @@ data file, possibly in YAML.
     _add_entry(lookuptable, 'infix:|', 'bor')
     _add_entry(lookuptable, 'infix:^', 'bxor')
 
+    _add_entry(lookuptable, 'infix:=', 'assign')
+
     # These look odd, I know, but the logic is actually cleaner when
     # it's reversed.
     _add_entry(lookuptable, 'if', 'unless')
@@ -78,7 +80,7 @@ data file, possibly in YAML.
 
 =head1 LICENSE
 
-Copyright (c) 2006 The Perl Foundation
+Copyright (C) 2006, The Perl Foundation.
 
 This is free software; you may redistribute it and/or modify
 it under the same terms as Parrot.

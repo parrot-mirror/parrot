@@ -1,4 +1,4 @@
-# Copyright: 2004 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004-2006, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -22,10 +22,11 @@ A documentation section describing all the PMCs.
 package Parrot::Docs::Section::PMCs;
 
 use strict;
+use warnings;
+
 use Parrot::Distribution;
 
-use Parrot::Docs::Section;
-@Parrot::Docs::Section::PMCs::ISA = qw(Parrot::Docs::Section);
+use base qw( Parrot::Docs::Section );
 
 =item C<new()>
 

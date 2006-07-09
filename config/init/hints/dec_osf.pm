@@ -1,4 +1,4 @@
-# Copyright: 2005 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2005, The Perl Foundation.
 # $Id$
 
 package init::hints::dec_osf;
@@ -45,6 +45,9 @@ sub runstep
 
     # Required because of ICU using c++.
     $conf->data->set(link => "cxx");
+
+    # Perl 5 hasn't been compiled with this visible.
+    $conf->data->set( has_socklen_t => 1 );
 }
 
 1;

@@ -36,7 +36,9 @@ N: Alex Gough
 D: bignum
 
 N: Allison Randal
+D: Lead Designer
 D: TGE, Punie (Perl 1), P6C
+E: allison@perl.org
 
 N: Amir Karger
 D: editor bugfixes
@@ -56,6 +58,10 @@ D: vim syntax files and editor doc
 
 N: Andy Dougherty
 D: Config and building.
+
+N: Andy Lester
+D: consting, cleanups, and Chief Cage Cleaner
+E: andy@petdance.com
 
 N: Angel Faus
 D: CFG and live analysis.
@@ -84,7 +90,7 @@ N: Bob Diertens
 D: patch regarding macro argument expansion
 
 N: Bob Rogers
-D: Updates to pmc2c.pl
+D: Random small bug fixes, including one for the linguine bug.
 E: rogers-perl6@rgrjr.dyndns.org
 
 N: Brent Royal-Gordon
@@ -105,11 +111,17 @@ D: And, yes, {sigh}, *that* Warnock.
 E: bwarnock@raba.com
 
 N: Chip Salzenberg
-D: Designer and demagogue
+D: Pumpking (0.4.6 - ... ) and demagogue
 E: chip@pobox.com
+
+N: Chris Dolan
+D: Bug fixes
+E: cdolan@cpan.org
 
 N: chromatic
 D: SDL library and examples; Test::Builder; test suite cleanup; Pheme
+D: lead philosopher -- "Why doesn't this work?"
+E: chromatic@wgz.org
 
 N: Clayton O'Neill
 D: Fix for parrot linking issue on Solaris 8
@@ -226,8 +238,12 @@ S: Lyon, France
 
 N: Jerry Gay a.k.a. particle
 E: Jerry.Gay@gmail.com
-D: Test Suite, general tidiness
+D: test suite, compiler tools, perl6, entropy reduction
 S: Seattle, WA
+
+N: John J. Trammell
+E: trammell@el-swifto.com
+D: coding standard tests
 
 N: John Paul Wallington
 D: pir-mode.el: fix for xemacs plus bugfixes and cleanups
@@ -238,8 +254,8 @@ D: Lexical pads, CPS.
 N: Jonathan Stowe
 
 N: Jonathan Worthington
-D: Win32 dynpmc support, Win32 fixes, PBC utilities, debug segment work
-D: and various patches
+D: Bits of Win32 support, PBC utilities, debug segment work, .Net 
+D: to PIR translator and various patches
 E: jonathan@jwcs.net
 W: http://www.jwcs.net/~jonathan/
 
@@ -284,7 +300,7 @@ D: FreeBSD and other build fixes
 N: Leon Brocard
 
 N: Leopold Toetsch
-D: Patchmonster & pumpking
+D: Patchmonster & pumpking emeritus (0.0.13 - 0.4.5)
 E: lt@toetsch.at
 S: Herrnbaumgarten, Austria
 
@@ -470,3 +486,7 @@ N: Zach Lipton
 N: Norman Nunley
 D: Shaving a Ponie
 E: nnunley@gmail.com
+
+N: Vishal Soni
+E: vishalrsoni@gmail.com
+D: Bug fixes in IMCC

@@ -2,9 +2,9 @@
 # [set]
 
 .HLL 'Tcl', 'tcl_group'
-.namespace [ '' ]
+.namespace
 
-.sub "&set"
+.sub '&set'
   .param pmc argv :slurpy
 
   .local int len, argc  
@@ -34,6 +34,6 @@ setting:
   .return set(name,value)
 
 error:
-  .throw ("wrong # args: should be \"set varName ?newValue?\"")
+  .throw ('wrong # args: should be "set varName ?newValue?"')
 
 .end

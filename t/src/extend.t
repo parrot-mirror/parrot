@@ -1,4 +1,4 @@
-# Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -9,7 +9,7 @@ use Test::More;
 use Parrot::Test;
 use Parrot::Config;
 
-plan $^O =~ m/MSWin32/ ? (skip_all => 'broken on win32') : (tests => 13);
+plan $^O =~ m/MSWin32/ ? (skip_all => 'broken on win32') : (tests => 14);
 
 =head1 NAME
 
@@ -435,7 +435,7 @@ the_test(Parrot_Interp interpreter, opcode_t *cur_op, opcode_t *start)
     pf = Parrot_readbc(interpreter, "temp.pbc");
     Parrot_loadbc(interpreter, pf);
     name = const_string(interpreter, "_sub1");
-    sub = Parrot_find_global(interpreter, NULL, name);
+    sub = Parrot_find_global_cur(interpreter, name);
     Parrot_call_sub(interpreter, sub, "v");
     PIO_eprintf(interpreter, "back\n");
 
@@ -443,10 +443,10 @@ the_test(Parrot_Interp interpreter, opcode_t *cur_op, opcode_t *start)
     PIO_flush(interpreter, PIO_STDERR(interpreter));
 
     name = const_string(interpreter, "_sub2");
-    sub = Parrot_find_global(interpreter, NULL, name);
+    sub = Parrot_find_global_cur(interpreter, name);
     arg = pmc_new(interpreter, enum_class_String);
     VTABLE_set_string_native(interpreter, arg,
-			     string_from_cstring(interpreter, "hello ", 0));
+                 string_from_cstring(interpreter, "hello ", 0));
     Parrot_call_sub(interpreter, sub, "vP", arg);
     PIO_eprintf(interpreter, "back\n");
 
@@ -507,14 +507,14 @@ the_test(Parrot_Interp interpreter, opcode_t *cur_op, opcode_t *start)
     pf = Parrot_readbc(interpreter, "temp.pbc");
     Parrot_loadbc(interpreter, pf);
     name = const_string(interpreter, "_sub1");
-    sub = Parrot_find_global(interpreter, NULL, name);
+    sub = Parrot_find_global_cur(interpreter, name);
 
     if (setjmp(jb.destination)) {
-	PIO_eprintf(interpreter, "caught\n");
+    PIO_eprintf(interpreter, "caught\n");
     }
     else {
-	push_new_c_exception_handler(interpreter, &jb);
-	Parrot_call_sub(interpreter, sub, "v");
+    push_new_c_exception_handler(interpreter, &jb);
+    Parrot_call_sub(interpreter, sub, "v");
     }
     PIO_eprintf(interpreter, "back\n");
 
@@ -526,7 +526,64 @@ caught
 back
 OUTPUT
 
-unlink "$temp.pasm", "$temp.pbc" unless $ENV{POSTMORTEM};
+open S, ">$temp.pir" or die "Can't write $temp.pir";
+print S <<'EOF';
+.sub main :main
+    .param pmc argv
+
+    .local pmc compiler
+    compreg compiler, 'PIR'
+
+    .local string code
+    code = argv[0]
+
+    .local pmc compiled_sub
+    compiled_sub = compiler( code )
+
+    compiled_sub()
+    end
+.end
+EOF
+close S;
+# compile to pbc
+system(".$PConfig{slash}parrot$PConfig{exe} -o $temp.pbc $temp.pir");
+
+c_output_is(<<'CODE', <<'OUTPUT', "eval code through a parrot sub - #39669");
+
+#include <parrot/parrot.h>
+#include <parrot/embed.h>
+
+int main(int argc, char* argv[])
+{
+    Parrot_PackFile packfile;
+	char * code[] = { ".sub foo\nprint\"Hello from foo!\\n\"\n.end\n" };
+
+    Parrot_Interp interpreter = Parrot_new(NULL);
+    if (!interpreter) {
+		printf( "Hiss\n" );
+        return 1;
+    }
+
+    packfile = Parrot_readbc( interpreter, "temp.pbc" );
+
+    if (!packfile) {
+		printf( "Boo\n" );
+        return 1;
+    }
+
+    Parrot_loadbc( interpreter, packfile );
+    Parrot_runcode( interpreter, 1, code );
+
+    Parrot_destroy( interpreter );
+
+    Parrot_exit(0);
+    return 0;
+}
+CODE
+Hello from foo!
+OUTPUT
+
+unlink "$temp.pasm", "$temp.pir", "$temp.pbc" unless $ENV{POSTMORTEM};
 
 
 1;

@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2003, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -182,7 +182,7 @@ handle_flags(Interp *interpreter,
             if (info->flags & FLAG_ZERO
                 && (string_ord(interpreter, str,0) == '-' ||
                     string_ord(interpreter, str,0) == '+')) {
-                STRING *temp = 0;
+                STRING *temp = NULL;
                 string_substr(interpreter, str, 1, len-1, &temp, 0);
                 string_chopn(interpreter, str, -1, 1);
                 string_append(interpreter, str, fill, 0);

@@ -1,4 +1,4 @@
-# Copyright: 2002-2005 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2002-2005, The Perl Foundation.
 # $Id$
 
 # Function signature declarations for Parrot Native Call Interface.
@@ -270,6 +270,8 @@ i	tpiibi
 p	iiil
 i	ppl
 v	pip
+p	pti
+i	ppp
 
 # Used by SDL::Font
 p	ti

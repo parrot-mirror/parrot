@@ -240,6 +240,8 @@ store_fixup(Interp *interpreter, SymReg * r, int pc, int offset)
             str_dup(r->name), U_add_all);
     if (r->set == 'p')
         fixup->set = 'p';
+    if (r->type & VT_ENCODED)
+        fixup->type |= VT_ENCODED;
     fixup->color = pc;
     fixup->offset = offset;        /* set_p_pc  = 2  */
 }
@@ -375,7 +377,8 @@ fixup_globals(Interp *interpreter)
                     op = interpreter->op_lib->op_code("find_name_p_sc", 1);
                     assert(op);
                     interpreter->code->base.data[addr] = op;
-                    nam = mk_const(interpreter, str_dup(fixup->name), 'S');
+                    nam = mk_const(interpreter, str_dup(fixup->name), 
+                            fixup->type & VT_ENCODED ? 'U' : 'S');
                     if (nam->color >= 0)
                         col = nam->color;
                     else {
@@ -438,8 +441,9 @@ IMCC_string_from_reg(Interp *interpreter, SymReg *r)
                 PObj_constant_FLAG);
     }
     else {
-        /* unquoted bare name - ascii only for now */
-        s = string_unescape_cstring(interpreter, buf, 0, NULL);
+        /* unquoted bare name - ascii only dont't unescape it */
+        s = string_make(interpreter, buf, strlen(buf), "ascii",
+                PObj_constant_FLAG);
     }
     return s;
 }
@@ -480,28 +484,39 @@ mk_multi_sig(Interp* interpreter, SymReg *r)
 {
     INTVAL i, n;
     STRING *sig;
-    PMC *multi_sig;
+    PMC *multi_sig, *sig_pmc;
     struct pcc_sub_t *pcc_sub;
+    struct PackFile_ConstTable *ct;
 
     pcc_sub = r->pcc_sub;
-    multi_sig = pmc_new(interpreter, enum_class_FixedStringArray);
+    multi_sig = pmc_new(interpreter, enum_class_FixedPMCArray);
 
     n = pcc_sub->nmulti;
     VTABLE_set_integer_native(interpreter, multi_sig, n);
     /* :multi() n = 1, reg = NULL */
     if (!pcc_sub->multi[0]) {
         sig = string_from_cstring(interpreter, "__VOID", 0);
-        VTABLE_set_string_keyed_int(interpreter, multi_sig, 0, sig);
+        sig_pmc = pmc_new(interpreter, enum_class_String);
+        VTABLE_set_string_native(interpreter, sig_pmc, sig);
+        VTABLE_set_pmc_keyed_int(interpreter, multi_sig, 0, sig_pmc);
         return multi_sig;
     }
+    ct = interpreter->code->const_table;
     for (i = 0; i < n; ++i) {
-        if (pcc_sub->multi[i]->name[0] == '"')
-            sig = string_unescape_cstring(interpreter, 
-                                          pcc_sub->multi[i]->name + 1, '"',
-                                          NULL);
-        else
-            sig = string_from_cstring(interpreter, pcc_sub->multi[i]->name, 0);
-        VTABLE_set_string_keyed_int(interpreter, multi_sig, i, sig);
+        /* multi[i] can be a Key too - 
+         * store PMC constants instead of bare strings 
+         */
+        const SymReg *r = pcc_sub->multi[i];
+        if (r->set == 'S') {
+            sig_pmc = pmc_new(interpreter, enum_class_String);
+            VTABLE_set_string_native(interpreter, sig_pmc, 
+                    ct->constants[r->color]->u.string);
+        }
+        else {
+            assert(r->set == 'K');
+            sig_pmc = ct->constants[r->color]->u.key;
+        }
+        VTABLE_set_pmc_keyed_int(interpreter, multi_sig, i, sig_pmc);
     }
     return multi_sig;
 }
@@ -639,21 +654,20 @@ add_const_pmc_sub(Interp *interpreter, SymReg *r,
 
     if (unit->namespace) {
         ns = unit->namespace->reg;
-        if (ns->set == 'K')
-            ns->color = build_key(interpreter, ns);
         IMCC_debug(interpreter, DEBUG_PBC_CONST,
                 "name space const = %d ns name '%s'\n",
                 ns->color, ns->name);
         ns_const = ns->color;
         /* strip namespace off from front */
         real_name = strrchr(r->name, '@');
-        if (!real_name)
-            real_name = r->name;
-        else
+        if (real_name) {
+            char *p;
             ++real_name;
+            p = str_dup(real_name); 
+            free(r->name);
+            r->name = p;
+        }
     }
-    else
-        real_name = r->name;
 
     ct = interpreter->code->const_table;
     k = PDB_extend_const_table(interpreter);
@@ -673,7 +687,9 @@ add_const_pmc_sub(Interp *interpreter, SymReg *r,
     sub_pmc = pmc_new(interpreter, type);
     PObj_get_FLAGS(sub_pmc) |= (r->pcc_sub->pragma & SUB_FLAG_PF_MASK);
     sub = PMC_sub(sub_pmc);
-    sub->name = string_from_cstring(interpreter, real_name, 0);
+
+    r->color = add_const_str(interpreter, r);
+    sub->name = ct->constants[r->color]->u.string;
 
     ns_pmc = NULL;
     if (ns_const >= 0 && ns_const < ct->const_count) {
@@ -712,9 +728,9 @@ add_const_pmc_sub(Interp *interpreter, SymReg *r,
     pfc->u.key = sub_pmc;
     unit->sub_pmc = sub_pmc;
     IMCC_debug(interpreter, DEBUG_PBC_CONST,
-            "add_const_pmc_sub '%s' -> '%s' flags %d color %d (%s) "
+            "add_const_pmc_sub '%s' flags %d color %d (%s) "
             "lex_info %s :outer(%s)\n",
-            r->name, real_name, r->pcc_sub->pragma, k,
+            r->name, r->pcc_sub->pragma, k,
             (char*) sub_pmc->vtable->whoami->strstart,
             sub->lex_info ? "yes" : "no",
             sub->outer_sub ?
@@ -725,7 +741,7 @@ add_const_pmc_sub(Interp *interpreter, SymReg *r,
      * create entry in our fixup (=symbol) table
      * the offset is the index in the constant table of this Sub
      */
-    PackFile_FixupTable_new_entry(interpreter, real_name, enum_fixup_sub, k);
+    PackFile_FixupTable_new_entry(interpreter, r->name, enum_fixup_sub, k);
     return k;
 }
 
@@ -783,7 +799,7 @@ slice_deb(int bits) {
  */
 
 static opcode_t
-build_key(Interp *interpreter, SymReg *reg)
+build_key(Interp *interpreter, SymReg *key_reg)
 {
 #define KEYLEN 21
     opcode_t key[KEYLEN], *pc, size;
@@ -791,14 +807,13 @@ build_key(Interp *interpreter, SymReg *reg)
     int key_length;     /* P0["hi;there"; S0; 2] has length 3 */
     char *s;
     int k;
-    SymReg * r;
+    SymReg *r, *reg;
     int var_type, slice_bits, type;
 
     pc = key + 1;       /* 0 is length */
     s = s_key;          /* stringified key */
     *s = 0;
-    if (reg->set == 'K')
-        reg = reg->nextkey;
+    reg = key_reg->set == 'K' ? key_reg->nextkey : key_reg;
 
     for (key_length = 0; reg ; reg = reg->nextkey, key_length++) {
         if ((pc - key - 2) >= KEYLEN)
@@ -835,6 +850,7 @@ build_key(Interp *interpreter, SymReg *reg)
                 break;
             case VT_CONSTP:
             case VTCONST:
+            case VTCONST|VT_ENCODED:
                 switch (r->set) {
                     case 'S':                       /* P["key"] */
                         *pc++ = PARROT_ARG_SC | slice_bits;  /* str constant */
@@ -869,6 +885,9 @@ build_key(Interp *interpreter, SymReg *reg)
     /* XXX endianess? probably no, we pack/unpack on the very
      * same computer */
     k =  add_const_key(interpreter, key, size, s_key);
+    /* single 'S' keys already have their color assigned */
+    if (key_reg->set == 'K')
+        key_reg->color = k;
     return k;
 }
 
@@ -927,6 +946,7 @@ make_pmc_const(Interp *interpreter, SymReg *r)
 static void
 add_1_const(Interp *interpreter, SymReg *r)
 {
+    SymReg *key;
     if (r->color >= 0)
         return;
     if (r->use_count <= 0)
@@ -944,9 +964,11 @@ add_1_const(Interp *interpreter, SymReg *r)
             r->color = add_const_num(interpreter, r->name);
             break;
         case 'K':
+            key = r;
             for (r = r->nextkey; r; r = r->nextkey)
                 if (r->type & VTCONST)
                     add_1_const(interpreter, r);
+            build_key(interpreter, key);
             break;
         case 'P':
             make_pmc_const(interpreter, r);
@@ -1267,7 +1289,14 @@ e_pbc_emit(Interp *interpreter, void *param, IMC_Unit * unit, Instruction * ins)
                     IMCC_debug(interpreter, DEBUG_PBC," %d", r->color);
                     break;
                 case PARROT_ARG_KC:
-                    *pc++ = build_key(interpreter, ins->r[i]);
+                    r = ins->r[i];
+                    if (r->set == 'K') {
+                        assert(r->color >= 0);
+                        *pc++ = r->color;
+                    }
+                    else {
+                        *pc++ = build_key(interpreter, r);
+                    }
                     IMCC_debug(interpreter, DEBUG_PBC," %d", pc[-1]);
                     break;
                 default:

@@ -38,19 +38,19 @@
 	parse_tree = self.get_parse_tree( source )
 	unless parse_tree goto err_parse_fail
 
-	# dump_parse_tree( parse_tree )
+	# self.dump_parse_tree( parse_tree )
 
 	.local pmc past_tree
 	past_tree = self.get_past_tree( parse_tree )
 	unless past_tree goto err_past_fail
 
-	# dump_it( past_tree )
+	# self.dump_it( past_tree )
 
 	.local pmc post_tree
 	post_tree = self.get_post_tree( past_tree )
 	unless post_tree goto err_post_fail
 
- 	# dump_it( post_tree )
+ 	# self.dump_it( post_tree )
 
 	.local pmc pir
 	pir = self.get_pir( post_tree )
@@ -112,9 +112,11 @@
 	.local pmc tg_source
 	tg_source = getattribute self, 'pge2past'
 
+	.local pmc compiler
+	compiler = new 'TGE::Compiler'
+
 	.local pmc tree_grammar
-	tree_grammar = new 'TGE'
-	tree_grammar.agcompile( tg_source )
+	tree_grammar = compiler.'compile'( tg_source )
 
 	.local pmc ast_builder
 	ast_builder = tree_grammar.apply( parse_tree )
@@ -132,9 +134,11 @@
 	.local pmc tg_source
 	tg_source = getattribute self, 'past2post'
 
+	.local pmc compiler
+	compiler = new 'TGE::Compiler'
+
 	.local pmc post_grammar
-	post_grammar = new 'TGE'
-	post_grammar.agcompile( tg_source )
+	post_grammar = compiler.'compile'( tg_source )
 
 	.local pmc post_builder
 	post_builder = post_grammar.apply( past_tree )
@@ -150,9 +154,11 @@
 	.local pmc tg_source
 	tg_source = getattribute self, 'post2pir'
 
+	.local pmc compiler
+	compiler = new 'TGE::Compiler'
+
 	.local pmc pir_grammar
-	pir_grammar = new 'TGE'
-	pir_grammar.agcompile( tg_source )
+	pir_grammar = compiler.'compile'( tg_source )
 
 	.local pmc pir_builder
 	pir_builder = pir_grammar.apply( post_tree )

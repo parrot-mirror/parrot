@@ -1,4 +1,4 @@
-# Copyright: 2004 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -24,9 +24,9 @@ It's used by the documentation tools in F<tools/docs>.
 package Parrot::Docs::Directory;
 
 use strict;
+use warnings;
 
-use Parrot::IO::Directory;
-@Parrot::Docs::Directory::ISA = qw(Parrot::IO::Directory);
+use base qw( Parrot::IO::Directory );
 
 use Parrot::Docs::File;
 

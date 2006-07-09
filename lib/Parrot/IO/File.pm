@@ -1,4 +1,4 @@
-# Copyright: 2004-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004-2006, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -24,8 +24,7 @@ package Parrot::IO::File;
 use strict;
 use warnings;
 
-use Parrot::IO::Path;
-our @ISA = qw(Parrot::IO::Path);
+use base qw( Parrot::IO::Path );
 
 use FileHandle;
 use Parrot::IO::Directory;

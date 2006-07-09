@@ -17,14 +17,7 @@ SDL::Color - Parrot class representing colors in Parrot SDL
 	color = new color_type
 
 	# set the color values; this one's blue
-	.local pmc color_args
-	color_args = new .Hash
-
-	color_args[ 'r' ] =   0
-	color_args[ 'g' ] =   0
-	color_args[ 'b' ] = 255
-
-	color.'_new'( color_args )
+	color.'init'( 'r' => 0, 'g' => 0, 'b' => 255 )
 
 	# fetch the color value to pass directly to SDL functions
 	# (you should never need to do this if the rest of the library works right)
@@ -63,18 +56,11 @@ SDL::Color objects have the following methods:
 	addattribute color_class, 'r'
 	addattribute color_class, 'g'
 	addattribute color_class, 'b'
-
-	.local pmc initializer
-	new initializer, .String
-	initializer = '_new'
-	setprop      color_class, 'BUILD', initializer
-
 .end
 
-=item _new( color_args )
+=item _new( 'r' => xxx, 'g' => xxx, 'b' => xxx )
 
-Initialize the new object with the necessary arguments,  The single argument,
-C<color_args>, should be a C<Hash> PMC containing the following keys:
+Initialize the new object with the necessary arguments, key-value pairs where:
 
 =over 4
 
@@ -95,75 +81,76 @@ is none and 255 is the maximum possible.
 
 =back
 
-The name of this method I<may> change, pending better ideas as discussed on
-p6i.
-
 =cut
 
-.sub _new method
-	.param pmc args
+.sub 'init' :method
+	.param int red   :named( 'r' )
+	.param int green :named( 'g' )
+	.param int blue  :named( 'b' )
 
-	.local int arg_color
+	.local pmc fetch_layout
+	find_global fetch_layout, 'SDL::NCI', 'fetch_layout'
+
+	.local pmc layout
+	layout = fetch_layout( 'Color' )
+
 	.local pmc color
-	.local pmc red
-	.local pmc green
-	.local pmc blue
+	color     = new .ManagedStruct, layout
 
-	.local int offset
+	set color['r'], red
+	set color['g'], green
+	set color['b'], blue
 
-	color     = new .Integer
-	red       = new .Integer
-	green     = new .Integer
-	blue      = new .Integer
+	setattribute self, 'color', color
 
-	arg_color = args['r']
-	red       = arg_color
-	arg_color = arg_color << 16
-	add color, arg_color
+	color = new .Integer
+	color = red
+	setattribute self, 'r', color
 
-	arg_color = args['g']
-	green     = arg_color
-	arg_color = arg_color <<  8
-	add color, arg_color
+	color = new .Integer
+	color = green
+	setattribute self, 'g', color
 
-	arg_color = args['b']
-	blue      = arg_color
-	add color, arg_color
+	color = new .Integer
+	color = blue
+	setattribute self, 'b', color
 
-	classoffset offset, self, 'SDL::Color'
-	setattribute self, offset, color
+	.return()
+.end
 
-	inc offset
-	setattribute self, offset, red
-	inc offset
-	setattribute self, offset, green
-	inc offset
-	setattribute self, offset, blue
+.sub __get_integer :method
+	.local pmc color
+	color = self.'color'()
 
+	.local int color_int
+	.local int component
+
+	component = color['r']
+	color_int = component << 16
+
+	component = color['g']
+	component <<= 8
+	color_int += component
+
+	component = color['b']
+	color_int += component
+	
+	.return( color_int )
 .end
 
 =item color()
 
-Returns an integer representing the actual color value passed to the underlying
-SDL functions.  You should never need to use this directly, unless you need to
-call those functions directly.
+Returns a PMC representing the actual color value passed to the underlying SDL
+functions.  You should never need to use this directly, unless you need to call
+those functions directly.
 
 =cut
 
-.sub color method
+.sub color :method
+	.local pmc color
+	getattribute color, self, 'color'
 
-	.local int color
-	.local int offset
-	.local pmc color_value
-
-	classoffset offset, self, 'SDL::Color'
-	getattribute color_value, self, offset
-
-	set color, color_value
-
-	.pcc_begin_return
-		.return color
-	.pcc_end_return
+	.return( color )
 .end
 
 =item color_for_surface( surface )
@@ -179,7 +166,7 @@ The name of this method may change.
 
 =cut
 
-.sub color_for_surface method
+.sub color_for_surface :method
 	.param pmc surface
 
 	.local pmc component
@@ -229,9 +216,7 @@ The name of this method may change.
 	shl blue,  shift_bits
 	add color, blue
 
-	.pcc_begin_return
-		.return color
-	.pcc_end_return
+	.return( color )
 .end
 
 =back
@@ -244,6 +229,6 @@ the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004-2006, The Perl Foundation.
+Copyright (C) 2004-2006, The Perl Foundation.
 
 =cut

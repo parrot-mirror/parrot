@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -290,8 +290,6 @@ Parrot_full_sub_name(Interp* interpreter, PMC* sub)
             VTABLE_push_string(interpreter, ns_array, s->name);
         }
         j = const_string(interpreter, ";");
-        /* shift toplevel - it doesn't have a name */
-        (void)VTABLE_shift_string(interpreter, ns_array);
 
         res =  string_join(interpreter, j, ns_array);
         Parrot_unblock_DOD(interpreter);

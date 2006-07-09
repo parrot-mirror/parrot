@@ -1,5 +1,5 @@
 /*
-Copyright: 2003-2006 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2003-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -1258,19 +1258,25 @@ static PMC*
 mmd_cvt_to_types(Interp* interpreter, PMC *multi_sig)
 {
     INTVAL i, n, type;
-    PMC *ar;
+    PMC *ar, *sig_elem;
     STRING *sig;
 
     n = VTABLE_elements(interpreter, multi_sig);
     ar = pmc_new(interpreter, enum_class_FixedIntegerArray);
     VTABLE_set_integer_native(interpreter, ar, n);
     for (i = 0; i < n; ++i) {
-        sig = VTABLE_get_string_keyed_int(interpreter, multi_sig, i);
-        if (memcmp(sig->strstart, "__VOID", 6) == 0) {
-            PMC_int_val(ar)--;  /* XXX */
-            break;
+        sig_elem = VTABLE_get_pmc_keyed_int(interpreter, multi_sig, i);
+        if (sig_elem->vtable->base_type == enum_class_String) {
+            sig = VTABLE_get_string(interpreter, sig_elem);
+            if (memcmp(sig->strstart, "__VOID", 6) == 0) {
+                PMC_int_val(ar)--;  /* XXX */
+                break;
+            }
+            type = pmc_type(interpreter, sig);
         }
-        type = pmc_type(interpreter, sig);
+        else {
+            type = pmc_type_p(interpreter, sig_elem);
+        }
         VTABLE_set_integer_keyed_int(interpreter, ar, i, type);
     }
     return ar;
@@ -1295,7 +1301,7 @@ mmd_distance(Interp *interpreter, PMC *pmc, PMC *arg_tuple)
             /* some method */
             return 0;
         }
-        if (multi_sig->vtable->base_type == enum_class_FixedStringArray) {
+        if (multi_sig->vtable->base_type == enum_class_FixedPMCArray) {
             multi_sig = PMC_sub(pmc)->multi_signature =
                 mmd_cvt_to_types(interpreter, multi_sig);
         }
@@ -1576,7 +1582,7 @@ mmd_search_package(Interp *interpreter, STRING *meth, PMC *arg_tuple, PMC *cl)
 {
     PMC *pmc;
 
-    pmc = Parrot_find_global(interpreter, NULL, meth);
+    pmc = Parrot_find_global_cur(interpreter, meth);
     if (pmc) {
         if (mmd_maybe_candidate(interpreter, pmc, arg_tuple, cl))
             return 1;
@@ -1600,7 +1606,7 @@ mmd_search_global(Interp *interpreter, STRING *meth, PMC *arg_tuple, PMC *cl)
 {
     PMC *pmc;
 
-    pmc = Parrot_find_global_p(interpreter, interpreter->root_namespace, meth);
+    pmc = Parrot_find_global_n(interpreter, interpreter->root_namespace, meth);
     if (pmc) {
         if (mmd_maybe_candidate(interpreter, pmc, arg_tuple, cl))
             return 1;
@@ -1626,8 +1632,9 @@ mmd_get_ns(Interp *interpreter)
     PMC *ns;
 
     ns_name = CONST_STRING(interpreter, "__parrot_core");
-    ns = VTABLE_get_pmc_keyed_str(interpreter, 
-            interpreter->root_namespace, ns_name);
+    ns = Parrot_find_namespace_gen(interpreter,
+                                   PARROT_HLL_NONE, /* from global root */
+                                   PMCNULL, ns_name);
     return ns;
 }
 
@@ -1638,13 +1645,9 @@ mmd_create_ns(Interp *interpreter)
     PMC *ns;
 
     ns_name = CONST_STRING(interpreter, "__parrot_core");
-    ns = VTABLE_get_pmc_keyed_str(interpreter, 
-            interpreter->root_namespace, ns_name);
-    if (PMC_IS_NULL(ns)) {
-        ns = pmc_new(interpreter, enum_class_NameSpace);
-        VTABLE_set_pmc_keyed_str(interpreter, 
-                interpreter->root_namespace, ns_name, ns);
-    }
+    ns = Parrot_make_namespace_gen(interpreter,
+                                   PARROT_HLL_NONE, /* from global root */
+                                   PMCNULL, ns_name);
     return ns;
 }
 
@@ -1653,7 +1656,7 @@ mmd_search_builtin(Interp *interpreter, STRING *meth, PMC *arg_tuple, PMC *cl)
 {
     PMC *pmc, *ns;
     ns = mmd_get_ns(interpreter);
-    pmc = Parrot_find_global_p(interpreter, ns, meth);
+    pmc = Parrot_find_global_n(interpreter, ns, meth);
     if (pmc)
         mmd_maybe_candidate(interpreter, pmc, arg_tuple, cl);
 }
@@ -1757,11 +1760,10 @@ mmd_create_builtin_multi_meth_2(Interp *interpreter, PMC *ns,
      * push method onto core multi_sub
      * TODO cache the namespace
      */
-    multi = Parrot_find_global_p(interpreter, ns,
-            const_string(interpreter, short_name));
+    multi = Parrot_find_global_n(interpreter, ns,
+                                 const_string(interpreter, short_name));
     assert(multi);
     VTABLE_push_pmc(interpreter, multi, method);
-
 }
 
 static void

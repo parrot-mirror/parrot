@@ -1,5 +1,5 @@
 /*
-Copyright: 2004 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2004-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -85,7 +85,7 @@ lookup of the cache has to be done in the opcode itself.
 
 #if HAS_JIT
 #include "parrot/exec.h"
-#include "parrot/jit.h"
+#include "jit.h"
 #endif
 
 #define PIC_TEST 1
@@ -195,7 +195,7 @@ bytecode segement.
 */
 
 Parrot_MIC*
-parrot_PIC_alloc_mic(Interp*interpreter, size_t n)
+parrot_PIC_alloc_mic(Interp* interpreter, size_t n)
 {
     Parrot_PIC_store * const store = interpreter->code->pic_store;
     assert(n < store->n_mics);

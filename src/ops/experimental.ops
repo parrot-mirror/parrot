@@ -2,6 +2,8 @@
 ** experimental.ops
 */
 
+extern PMC* Parrot_NameSpace_name(Interp* interpreter, PMC* pmc);
+
 VERSION = PARROT_VERSION;
 
 =head1 NAME
@@ -222,61 +224,41 @@ inline op exec(in STR) {
   goto NEXT();
 }
 
-=back
 
-=head2 Namespace opcodes
+=item B<classname>(out PMC, in PMC)
 
-These will be moved to F<var.ops> soon.
-
-=over 4
-
-=item B<get_namespace>(out PMC)
-
-Get currrent namespace.
-
-=item B<get_namespace>(out PMC, in PMC)
-
-=item B<get_namespace>(out PMC, in KEY)
-
-=item B<get_namespace>(out PMC, in STR)
-
-Get the specified namespace. $2 is either an array of names or a key.
-If the namespace doesn't exist, $1 is set to PMCNULL.
-
-=item B<find_global>(out PMC, in KEY, in STR)
-
-Find the variable $3 in $2.
+Get the class name for the class in $2 and put it in $1. Note that $1 will be
+a Key PMC that you can use with "new", for example.
 
 =cut
 
-op get_namespace(out PMC) {
-    $1 = CONTEXT(interpreter->ctx)->current_namespace;
-    goto NEXT();
-}
+op classname(out PMC, in PMC) :object_base {
+    PMC *ns = Parrot_NameSpace_name(interpreter, 
+                                    VTABLE_namespace(interpreter, $2));
+    if (PMC_IS_NULL(ns) || VTABLE_elements(interpreter, ns) < 2)
+    {
+        real_exception(interpreter, NULL, NO_CLASS, 
+            "Attempt to get class name of a non-class.");
+    }
+    else
+    {
+        PMC *key_tail, *key;
+        STRING *tmp;
+        int i, max;
 
-op get_namespace(out PMC, in PMC) {
-    PMC *ns_root = interpreter->root_namespace, *ns;
-    ns = VTABLE_get_pmc_keyed(interpreter, ns_root, $2);
-    $1 = ns ? ns : PMCNULL;
-    goto NEXT();
-}
-
-op get_namespace(out PMC, in KEY) {
-    PMC *ns_root = interpreter->root_namespace, *ns;
-    ns = VTABLE_get_pmc_keyed(interpreter, ns_root, $2);
-    $1 = ns ? ns : PMCNULL;
-    goto NEXT();
-}
-
-op get_namespace(out PMC, in STR) {
-    PMC *ns_root = interpreter->root_namespace, *ns;
-    ns = VTABLE_get_pmc_keyed_str(interpreter, ns_root, $2);
-    $1 = ns ? ns : PMCNULL;
-    goto NEXT();
-}
-
-op find_global(out PMC, in KEY, in STR) {
-    $1 = Parrot_find_global_p(interpreter, $2, $3);
+        /* Need to turn list of strings into a key. Note that we are not
+           including the first item in the array, since that is the HLL. */
+        tmp = VTABLE_get_string_keyed_int(interpreter, ns, 1);
+        $1 = key_tail = key_new_string(interpreter, tmp);
+        max = VTABLE_elements(interpreter, ns);
+        for (i = 2; i < max; i++)
+        {
+            tmp = VTABLE_get_string_keyed_int(interpreter, ns, i);
+            key = key_new_string(interpreter, tmp);
+            key_append(interpreter, key_tail, key);
+            key_tail = key;
+        }
+    }    
     goto NEXT();
 }
 
@@ -375,65 +357,28 @@ op getclass(out PMC, in INT) {
     goto NEXT();
 }
 
-inline op newclass(out PMC, in KEY) :object_classes {
-  $1 = pmc_new_init(interpreter, enum_class_ParrotClass, $2);
-  goto NEXT();
-}
-
-inline op new(out PMC, in KEY) :object_classes {
-  PMC *class = $2;
-    INTVAL type = pmc_type_p(interpreter, class);
-    if (type <= 0)
-        real_exception(interpreter, NULL, NO_CLASS,
-            "Class '%Ss' not found", class);
-  $1 = pmc_new(interpreter, type);
-  goto NEXT();
-}
-
-op subclass(out PMC, in STR, in KEY) :object_classes {
-  PMC *class = Parrot_class_lookup(interpreter, $2);
-  opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(class)) {
-    real_exception(interpreter, next, NO_CLASS, "Class '%s' doesn't exist",
-		string_to_cstring( interpreter, $2 ));
-  }
-  $1 = VTABLE_subclass(interpreter, class, $3);
-  goto ADDRESS(next);
-}
-
-op subclass(out PMC, in KEY, in KEY) :object_classes {
-  PMC *class = Parrot_class_lookup_p(interpreter, $2);
-  opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(class)) {
-    STRING *name = readable_name(interpreter, $2);
-    real_exception(interpreter, next, NO_CLASS, 
-		"Class '%Ss' doesn't exist", name);
-  }
-  $1 = VTABLE_subclass(interpreter, class, $3);
-  goto ADDRESS(next);
-}
-
-inline op subclass(out PMC, in PMC, in KEY) :object_base {
-  $1 = VTABLE_subclass(interpreter, $2, $3);
-  goto NEXT();
-}
-
-inline op getclass(out PMC, in KEY) :object_classes {
-  PMC *class = Parrot_class_lookup_p(interpreter, $2);
-  opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(class)) {
-    STRING *name = readable_name(interpreter, $2);
-    real_exception(interpreter, next, NO_CLASS, 
-         "Class '%Ss' doesn't exist", name);
-  }
-  else
-    $1 = class;
-  goto ADDRESS(next);
-}
-
-inline op isa(out INT, in PMC, in KEY) :object_base {
-    PMC *class = Parrot_class_lookup_p(interpreter, $3);
-    $1 = Parrot_object_isa(interpreter, $2, class);
+inline op new(out PMC, in PMC) :object_classes {
+    INTVAL type;
+    switch ($2->vtable->base_type)
+    {
+        case enum_class_String:
+	        type = pmc_type(interpreter, PMC_str_val($2));
+            if (type <= 0)
+                real_exception(interpreter, NULL, NO_CLASS,
+                    "Class '%Ss' not found", PMC_str_val($2));
+            $1 = pmc_new(interpreter, type);
+            break;
+        case enum_class_Key:
+            type = pmc_type_p(interpreter, $2);
+            if (type <= 0)
+                real_exception(interpreter, NULL, NO_CLASS,
+                    "Class '%Ss' not found", readable_name(interpreter, $2));
+            $1 = pmc_new(interpreter, type);
+            break;
+        default:
+            real_exception(interpreter, NULL, NO_CLASS,
+                "Can only use a Key or String PMC with new");
+    }
     goto NEXT();
 }
 
@@ -441,7 +386,7 @@ inline op isa(out INT, in PMC, in KEY) :object_base {
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001-2004 The Perl Foundation.  All rights reserved.
+Copyright (C) 2001-2004, The Perl Foundation.
 
 =head1 LICENSE
 
