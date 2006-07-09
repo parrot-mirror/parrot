@@ -1,11 +1,13 @@
-# Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
 ###############################################################################
-# NOTES:
+#
+# NOTE:
 #
 # This makefile makes use of specific .dummy targets (rather than .PHONY
 # or .VIRTUAL targets) in an effort to work with various flavors of make.
+#
 ###############################################################################
 
 ###############################################################################
@@ -313,7 +315,7 @@ GEN_LIBRARY = \
 #    runtime/parrot/library/Data/Replace.pbc \
 #    runtime/parrot/library/postgres.pbc \
 
-# the dependencies of jit_emit.h are done explicitely
+# the dependencies of $(SRC_DIR)/jit_emit.h are done explicitely
 # including this file in GEN_HEADERS causes unnecessary recompile of all
 FLUID_FILES = \
     $(GEN_OPSFILES) \
@@ -321,7 +323,7 @@ FLUID_FILES = \
     $(GEN_SOURCES) \
     $(GEN_MODULES) \
     $(GEN_LIBRARY) \
-    $(INC_DIR)/jit_emit.h \
+    $(SRC_DIR)/jit_emit.h \
     runtime/parrot/include/parrotlib.pbc
 
 
@@ -603,13 +605,13 @@ STR_FILES = \
     $(SRC_DIR)/spf_vtable.str \
     $(CLASS_STR_FILES)
 
-$(INC_DIR)/string_private_cstring.h : $(STR_FILES) $(BUILD_TOOLS_DIR)/c2str.pl
+$(SRC_DIR)/string_private_cstring.h : $(STR_FILES) $(BUILD_TOOLS_DIR)/c2str.pl
 	$(PERL) $(BUILD_TOOLS_DIR)/c2str.pl --all
 
 # classes PMC build utils and rules
 PMC2CD = $(PERL) $(BUILD_TOOLS_DIR)/pmc2c.pl --dump
 PMC2CC = $(PERL) $(BUILD_TOOLS_DIR)/pmc2c.pl --c
-PMC2CV = $(PERL) $(BUILD_TOOLS_DIR)/pmc2c.pl --vt
+PMC2CV = $(PERL) $(BUILD_TOOLS_DIR)/pmc2c.pl --vtable
 
 .pmc.dump :
 	$(PMC2CD) $<
@@ -645,7 +647,10 @@ help :
 	@echo "  $(PBCMERGE):         Merge bytecode files"
 	@echo ""
 	@echo "Installation:"
-	@echo "  install:           Install under '/usr/local/parrot' on Unix systems"
+	@echo "  install:           Install under '$(PREFIX)' on Unix systems"
+	@echo "                      WARNING: Installing Parrot may interfere with"
+	@echo "                               developing Parrot on the same machine."
+	@echo "                               This flaw will be fixed eventually."
 	@echo ""
 	@echo "Documentation:"
 	@echo "  help:              Print this help message."
@@ -962,17 +967,17 @@ $(SRC_DIR)/list$(O) : $(GENERAL_H_FILES)
 
 $(SRC_DIR)/library$(O) : $(GENERAL_H_FILES)
 
-$(SRC_DIR)/jit$(O) : $(GENERAL_H_FILES) @TEMP_jit_h@ $(INC_DIR)/jit_emit.h
+$(SRC_DIR)/jit$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/jit_emit.h
 
-$(SRC_DIR)/jit_debug$(O) : $(GENERAL_H_FILES) @TEMP_jit_h@
+$(SRC_DIR)/jit_debug$(O) : $(GENERAL_H_FILES) 
 
-$(SRC_DIR)/jit_debug_xcoff$(O) : $(GENERAL_H_FILES) @TEMP_jit_h@
+$(SRC_DIR)/jit_debug_xcoff$(O) : $(GENERAL_H_FILES)
 
-$(SRC_DIR)/jit_cpu$(O) : $(GENERAL_H_FILES) @TEMP_jit_h@ $(INC_DIR)/jit_emit.h
+$(SRC_DIR)/jit_cpu$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/jit_emit.h
 
-$(SRC_DIR)/exec$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ @TEMP_jit_h@ $(INC_DIR)/jit_emit.h
+$(SRC_DIR)/exec$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
 
-$(SRC_DIR)/exec_cpu$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ @TEMP_jit_h@ $(INC_DIR)/jit_emit.h
+$(SRC_DIR)/exec_cpu$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
 
 $(INC_DIR)/extend_vtable.h $(SRC_DIR)/extend_vtable.c $(SRC_DIR)/vtable.h : vtable.tbl $(BUILD_TOOLS_DIR)/vtable_extend.pl lib/Parrot/Vtable.pm
 	$(PERL) $(BUILD_TOOLS_DIR)/vtable_extend.pl
@@ -1009,7 +1014,7 @@ $(SRC_DIR)/debug$(O) : $(GENERAL_H_FILES) $(INC_DIR)/debug.h
 
 $(SRC_DIR)/sub$(O) : $(GENERAL_H_FILES)
 
-$(SRC_DIR)/string$(O) : $(GENERAL_H_FILES) $(INC_DIR)/string_private_cstring.h
+$(SRC_DIR)/string$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/string_private_cstring.h
 
 $(SRC_DIR)/string_primitives$(O) : $(GENERAL_H_FILES) 
 
@@ -1025,8 +1030,7 @@ $(SRC_DIR)/thread$(O) : $(GENERAL_H_FILES)
 
 $(SRC_DIR)/extend$(O) : $(GENERAL_H_FILES) $(INC_DIR)/extend.h
 
-$(SRC_DIR)/interpreter$(O) : $(SRC_DIR)/interpreter.c $(GENERAL_H_FILES) \
-    @TEMP_jit_h@
+$(SRC_DIR)/interpreter$(O) : $(SRC_DIR)/interpreter.c $(GENERAL_H_FILES)
 
 $(SRC_DIR)/inter_call$(O) : $(SRC_DIR)/inter_call.c $(GENERAL_H_FILES) \
     $(SRC_DIR)/inter_call.str
@@ -1154,14 +1158,14 @@ $(OPS_DIR)/core_ops_switch.c : $(OPS_FILES) $(BUILD_TOOLS_DIR)/ops2c.pl lib/Parr
 $(INC_DIR)/vtable.h : vtable.tbl $(BUILD_TOOLS_DIR)/vtable_h.pl lib/Parrot/Vtable.pm
 	$(PERL) $(BUILD_TOOLS_DIR)/vtable_h.pl
 
-$(INC_DIR)/jit_emit.h : $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h
-	$(CP) $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h $(INC_DIR)/jit_emit.h
+$(SRC_DIR)/jit_emit.h : $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h
+	$(CP) $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h $(SRC_DIR)/jit_emit.h
 $(SRC_DIR)/exec_dep.h : $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.h
 	$(CP) $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.h $(SRC_DIR)/exec_dep.h
-$(SRC_DIR)/jit_cpu.c : lib/Parrot/OpLib/core.pm $(INC_DIR)/jit_emit.h \
+$(SRC_DIR)/jit_cpu.c : lib/Parrot/OpLib/core.pm $(SRC_DIR)/jit_emit.h \
     $(SRC_DIR)/jit/@jitcpuarch@/core.jit $(JIT_BUILD_TOOL)
 	$(PERL) $(JIT_BUILD_TOOL) @jitcpuarch@ $(SRC_DIR)/jit_cpu.c
-$(SRC_DIR)/exec_cpu.c : lib/Parrot/OpLib/core.pm $(INC_DIR)/jit_emit.h \
+$(SRC_DIR)/exec_cpu.c : lib/Parrot/OpLib/core.pm $(SRC_DIR)/jit_emit.h \
     $(SRC_DIR)/jit/@jitcpuarch@/core.jit @TEMP_exec_h@ $(SRC_DIR)/exec_dep.h $(JIT_BUILD_TOOL)
 	$(PERL) $(JIT_BUILD_TOOL) @jitcpuarch@ $(SRC_DIR)/exec_cpu.c
 
@@ -1511,7 +1515,7 @@ prog-clean :
     install_config.fpmc
 	$(PERL) $(BUILD_TOOLS_DIR)/c2str.pl --init
 	$(RM_F) \
-    $(INC_DIR)/string_private_cstring.h \
+    $(SRC_DIR)/string_private_cstring.h \
     "$(SRC_DIR)/*.str" "src/pmc/*.str" \
     "src/pmc/*.c" "src/pmc/*.h" "src/pmc/*.dump" \
     vtable.dump "*.def" "*.lib" "*.exp"
@@ -1539,7 +1543,7 @@ archclean: dynoplibs-clean dynpmc-clean dynext-clean
     $(SRC_DIR)/parrot_config$(O) \
     $(SRC_DIR)/install_config$(O) \
     $(SRC_DIR)/asmfun.s \
-    $(INC_DIR)/jit_emit.h \
+    $(SRC_DIR)/jit_emit.h \
     $(SRC_DIR)/jit_cpu.c \
     $(SRC_DIR)/exec_cpu.c \
     $(SRC_DIR)/exec_start$(O) \
@@ -1666,6 +1670,12 @@ splint2 : $(PARROT)
 ###############################################################################
 
 install : installable
+	@echo "WARNING:"
+	@echo "  Installing Parrot may interfere with developing Parrot"
+	@echo "  on the same machine.  This is a temporary flaw in the"
+	@echo "  Parrot build system.  If you are not sure this is OK,"
+	@echo "  press ^C (or your interrupt key) in the next ten seconds."
+	$(PERL) -e "sleep(10)"
 	$(PERL) tools/dev/install_files.pl \
     --buildprefix=$(BUILDPREFIX) \
     --prefix=$(PREFIX) \

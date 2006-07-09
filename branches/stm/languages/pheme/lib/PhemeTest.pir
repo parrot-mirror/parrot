@@ -1,6 +1,6 @@
 .namespace[ 'Test::More' ]
 
-.sub is :multi( Pheme::Cons, Pheme::Cons )
+.sub is :multi( [ 'Pheme'; 'Cons' ], [ 'Pheme'; 'Cons' ] )
 	.param pmc    l_cons
 	.param pmc    r_cons
 	.param string description :optional
@@ -18,7 +18,7 @@
 	.return( equal )
 .end
 
-.sub is_deeply :multi( Pheme::Cons, Pheme::Cons )
+.sub is_deeply :multi( [ 'Pheme'; 'Cons' ], [ 'Pheme'; 'Cons' ] )
 	.param pmc    l_cons
 	.param pmc    r_cons
 	.param string description :optional
@@ -47,6 +47,7 @@
 	.local pmc plan
 	.local pmc is
 	.local pmc ok
+	.local pmc nok
 	.local pmc diag
 	.local pmc is_deeply
 	.local pmc pheme_is
@@ -55,12 +56,14 @@
 	plan      = find_global 'Test::More', 'plan'
 	is        = find_global 'Test::More', 'is'
 	ok        = find_global 'Test::More', 'ok'
+	nok       = find_global 'Test::More', 'nok'
 	diag      = find_global 'Test::More', 'diag'
 	is_deeply = find_global 'Test::More', 'is_deeply'
 
 	store_global 'Pheme', 'plan',      plan
 	store_global 'Pheme', 'is',        is
 	store_global 'Pheme', 'ok',        ok
+	store_global 'Pheme', 'nok',       nok
 	store_global 'Pheme', 'diag',      diag
 	store_global 'Pheme', 'is_deeply', is_deeply
 .end

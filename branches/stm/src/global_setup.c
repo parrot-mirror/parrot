@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -65,7 +65,8 @@ using the last registered config data.
 
 */
 
-static void parrot_set_config_hash_interpreter (Interp* interpreter)
+static void
+parrot_set_config_hash_interpreter (Interp* interpreter)
 {
     PMC *iglobals = interpreter->iglobals;
 
@@ -161,26 +162,18 @@ parrot_global_setup_2(Interp *interpreter)
     PMC *classname_hash, *iglobals;
     int i;
     PMC *parrot_ns;
-    
 
     /* create the namespace root stash */
-    interpreter->root_namespace =
-        pmc_new(interpreter, enum_class_NameSpace);
+    interpreter->root_namespace = pmc_new(interpreter, enum_class_NameSpace);
 
-    interpreter->HLL_info = constant_pmc_new(interpreter,
-            enum_class_ResizablePMCArray);
-    interpreter->HLL_namespace = constant_pmc_new(interpreter,
-            enum_class_ResizablePMCArray);
-    Parrot_register_HLL(interpreter,
-            const_string(interpreter, "parrot"),
-            NULL);
+    interpreter->HLL_info = constant_pmc_new(interpreter, enum_class_ResizablePMCArray);
+    interpreter->HLL_namespace = constant_pmc_new(interpreter, enum_class_ResizablePMCArray);
 
-    parrot_ns = 
-        VTABLE_get_pmc_keyed_int(interpreter, interpreter->HLL_namespace, 0); 	
+    Parrot_register_HLL(interpreter, const_string(interpreter, "parrot"), NULL);
+
+    parrot_ns = VTABLE_get_pmc_keyed_int(interpreter, interpreter->HLL_namespace, 0);
     CONTEXT(interpreter->ctx)->current_namespace = parrot_ns; 
-    VTABLE_set_pmc_keyed_str(interpreter, interpreter->root_namespace, 	
-            const_string(interpreter, "parrot"),
-            parrot_ns);
+
     /* We need a class hash */
     interpreter->class_hash = classname_hash =
         pmc_new(interpreter, enum_class_NameSpace);

@@ -1,4 +1,4 @@
-# Copyright: 2002 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2002, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -32,10 +32,10 @@ The subclass hierarchy is as follows:
 
 =cut
 
-use strict;
-#use warnings;
-
 package Parrot::OpTrans;
+
+use strict;
+use warnings;
 
 =item C<new()>
 

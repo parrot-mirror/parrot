@@ -2,9 +2,9 @@
 # [puts]
 
 .HLL 'Tcl', 'tcl_group'
-.namespace [ '' ]
+.namespace
 
-.sub "&puts"
+.sub '&puts'
   .param pmc argv :slurpy
  
   .local int argc 
@@ -23,7 +23,7 @@
 
 three_arg: 
   $S1 = argv[0]
-  if $S1 != "-nonewline" goto bad_option
+  if $S1 != '-nonewline' goto bad_option
 
   $S2 = argv[1]
   io = __channel($S2)
@@ -40,16 +40,15 @@ two_arg:
   # The first arg could be the option, or it could be a channel
   # figure out which.
   $S2 = argv[0]
-  if $S2 != "-nonewline" goto two_arg_channel
+  if $S2 != '-nonewline' goto two_arg_channel
 two_arg_nonewline:
   print $S3
   goto done
 
 two_arg_channel:  
-  io = channels($S2)
+  io = __channel($S2)
 
-  print io, $S3
-  print io, "\n"
+  io.'say'($S3)
   goto done
 
 one_arg:
@@ -61,15 +60,15 @@ one_arg:
   goto done  
 
 bad_option:
-  $S0 = "bad argument \""
+  $S0 = 'bad argument "'
   $S3 = argv[2]
   $S0 .= $S3
-  $S0 .= "\": should be \"nonewline\""
+  $S0 .= '": should be "nonewline"'
   .throw($S0)
  
 error:
-  .throw("wrong # args: should be \"puts ?-nonewline? ?channelId? string\"")
+  .throw('wrong # args: should be "puts ?-nonewline? ?channelId? string"')
 
 done:
-  .return("")
+  .return('')
 .end

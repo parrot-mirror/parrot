@@ -6,6 +6,7 @@
 	errorson .PARROT_ERRORS_PARAM_COUNT_FLAG
 
 	load_bytecode 'languages/pheme/lib/PhemeCompiler.pbc'
+	load_bytecode 'languages/pheme/lib/PhemeObjects.pir'
 	load_bytecode 'languages/pheme/lib/PhemeSymbols.pbc'
 	load_bytecode 'languages/pheme/lib/pheme_grammar_gen.pir'
 
@@ -83,7 +84,7 @@
 
 =head1 LICENSE
 
-Copyright (c) 2006 The Perl Foundation
+Copyright (C) 2006, The Perl Foundation.
 
 This is free software; you may redistribute it and/or modify it under the same
 terms as Parrot.

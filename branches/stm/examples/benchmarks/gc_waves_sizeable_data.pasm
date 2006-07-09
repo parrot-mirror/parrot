@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2003 The Perl Foundation.  All rights reserved.
+# Copyright (C) 2001-2003, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -35,6 +35,7 @@ statistics indicating:
 =cut
 
 	set I0, 11
+	set I3, 0
 	set I2, 200
 	set S0,  "                         "
 	set S1, S0

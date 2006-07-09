@@ -2,7 +2,7 @@
 
 use strict;
 use lib qw(tcl/lib ./lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 18;
+use Parrot::Test tests => 27;
 use Test::More;
 use vars qw($TODO);
 
@@ -66,20 +66,6 @@ TCL
 c
 OUT
 
-language_output_is("tcl",<<'TCL',<<OUT,"namespace current: too many args");
-   namespace current current
-TCL
-wrong # args: should be "namespace current"
-OUT
-
-# TODO : more tests once we can *change* the namespace
-
-language_output_is("tcl",<<'TCL',<<OUT,"namespace current: too many args");
-   puts [namespace current]
-TCL
-::
-OUT
-
 language_output_is("tcl",<<'TCL',<<OUT,"namespace exists: no args");
    namespace exists
 TCL
@@ -98,8 +84,6 @@ TCL
 0
 OUT
 
-TODO: {
-  local $TODO = "unimplemented";
 language_output_is("tcl",<<'TCL',<<OUT,"namespace exists: global implicit");
    puts [namespace exists {}]
 TCL
@@ -112,9 +96,92 @@ TCL
 1
 OUT
 
-language_output_is("tcl",<<'TCL',<<'OUT',"command: global explicit");
-  ::puts ok
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace eval - bad args");
+  namespace eval foo
+TCL
+wrong # args: should be "namespace eval name arg ?arg...?"
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace eval foo {}");
+  namespace eval foo {}
+  puts [namespace exists foo]
+TCL
+1
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace eval foo {}");
+  namespace eval foo { proc bar {} {puts ok} }
+  foo::bar
 TCL
 ok
 OUT
-}
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace eval foo { namespace eval bar {} }");
+  namespace eval foo {
+    namespace eval bar {
+      proc baz {} {puts ok}
+    }
+  }
+  foo::bar::baz
+TCL
+ok
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace delete foo bar");
+  namespace eval foo {}
+  namespace eval bar {}
+  puts [namespace exists foo]
+  puts [namespace exists bar]
+  namespace delete foo bar
+  puts [namespace exists foo]
+  puts [namespace exists bar]
+TCL
+1
+1
+0
+0
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace current - too many args");
+namespace current foo
+TCL
+wrong # args: should be "namespace current"
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace current - global");
+  puts [namespace current]
+TCL
+::
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace current - ::foo");
+  namespace eval foo { proc test {} {puts [namespace current]} }
+  foo::test
+TCL
+::foo
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace parent ::");
+  puts [namespace parent ""]
+TCL
+
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace parent ::foo");
+  namespace eval foo {}
+  puts [namespace parent foo]
+TCL
+::
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace parent - ::foo");
+namespace eval foo {puts [namespace parent]}
+TCL
+::
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace parent - too many args");
+  namespace parent foo bar
+TCL
+wrong # args: should be "namespace parent ?name?"
+OUT

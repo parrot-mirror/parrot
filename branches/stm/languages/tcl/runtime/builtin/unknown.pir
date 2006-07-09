@@ -2,13 +2,13 @@
 # [unknown]
 
 .HLL 'Tcl', 'tcl_group'
-.namespace [ '' ]
+.namespace
 
-.sub "&unknown"
+.sub '&unknown'
   .param pmc argv :slurpy
 
-  $S0 = join " ", argv
+  $S0 = join ' ', argv
   $I1 = spawnw $S0
 
-  .return("")
+  .return('')
 .end

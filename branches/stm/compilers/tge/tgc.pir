@@ -81,8 +81,11 @@ Send the output to OUTFILE. By default, output is directed to STDOUT.
     close infh
 
     .local pmc grammar
-    grammar = new 'TGE'
-    grammar.agcompile(source, outfh)
+    grammar = new 'TGE::Compiler'
+
+    .local string compiled_source
+    compiled_source = grammar.'precompile'(source)
+    print outfh, compiled_source
 
   goto END
 

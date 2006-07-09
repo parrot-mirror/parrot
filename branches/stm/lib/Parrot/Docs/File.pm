@@ -1,4 +1,4 @@
-# Copyright: 2004 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -26,9 +26,9 @@ It's used by the documentation tools in F<tools/docs>.
 package Parrot::Docs::File;
 
 use strict;
+use warnings;
 
-use Parrot::IO::File;
-@Parrot::Docs::File::ISA = qw(Parrot::IO::File);
+use base qw( Parrot::IO::File );
 
 use Pod::Simple::Checker;
 use Parrot::Docs::POD2HTML;

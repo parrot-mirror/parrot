@@ -1,5 +1,5 @@
 #!perl
-# Copyright 2005, The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2005-2006, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -11,7 +11,7 @@ use Parrot::Test;
 
 =head1 NAME
 
-t/basic.t - testing a few basic components of TGE and TGE::Instance
+t/basic.t - testing a few basic components of TGE::Grammar and TGE::Tree
 
 =head1 SYNOPSIS
 
@@ -23,11 +23,11 @@ t/basic.t - testing a few basic components of TGE and TGE::Instance
 pir_output_is(<<'CODE', <<'OUT', 'build up a basic rule in a grammar');
 
 .sub _main :main
-    load_bytecode 'compilers/tge/TGE.pir'
+    load_bytecode 'TGE.pbc'
 
     .local pmc AG
-    AG = new 'TGE'
-    AG.agrule('Leaf', 'min', '.', '.return(1)')
+    AG = new 'TGE::Grammar'
+    AG.add_rule('Leaf', 'min', '.', '.return(1)')
 
     $P1 = getattribute AG, 'rules'
     .local pmc rule_obj
@@ -50,26 +50,45 @@ min
 .
 OUT
 
-pir_output_is(<<'CODE', <<'OUT', 'autoincrementing id generator');
+pir_output_is(<<'CODE', <<'OUT', 'agid hash');
 .sub _main :main
-    load_bytecode 'compilers/tge/TGE/Instance.pir'
-    
-    .local pmc new_id
-    new_id = find_global 'TGE::Instance', '_new_id'
+    load_bytecode 'compilers/tge/TGE/Tree.pir'
+    .local pmc tree
+    tree = new 'TGE::Tree'
     .local int id
-    id = new_id()
+    
+    $P0 = new .Integer
+    id = tree.'_lookup_id'($P0)
     print id
     print "\n"
-    id = new_id()
+    $P1 = new .Integer
+    id = tree.'_lookup_id'($P1)
     print id
     print "\n"
-    id = new_id()
+    id = tree.'_lookup_id'($P0)
+    print id
+    print "\n"
+    $P2 = new .Integer
+    id = tree.'_lookup_id'($P2)
+    print id
+    print "\n"
+    id = tree.'_lookup_id'($P0)
+    print id
+    print "\n"
+    id = tree.'_lookup_id'($P1)
+    print id
+    print "\n"
+    id = tree.'_lookup_id'($P2)
     print id
     print "\n"
     end
 .end
 
 CODE
+1
+2
+1
+3
 1
 2
 3

@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2003, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -22,6 +22,7 @@ Create or destroy a Parrot interpreter.c
 #include <assert.h>
 #include "parrot/parrot.h"
 #include "parrot/oplib/core_ops.h"
+#include "../compilers/imcc/imc.h"
 
 #if EXEC_CAPABLE
 Interp interpre;
@@ -65,7 +66,8 @@ Setup default compiler for PASM.
 
 */
 
-static void setup_default_compreg(Parrot_Interp interpreter)
+static void
+setup_default_compreg(Parrot_Interp interpreter)
 {
     STRING *pasm1 = string_from_cstring(interpreter, "PASM1", 0);
 
@@ -220,6 +222,8 @@ make_interpreter(Parrot_Interp parent, Interp_flags flags)
     PIO_init(interpreter);
     /* init builtin function struct */
     Parrot_init_builtins(interpreter);
+    /* init IMCC compiler */
+    imcc_init(interpreter);
 
     /* Done. Return and be done with it */
 

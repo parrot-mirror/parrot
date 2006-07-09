@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -34,14 +34,14 @@ have the same number of elements since there is a one-to-one mapping.
 
 #include <assert.h>
 #include "parrot/parrot.h"
-#include "parrot/interp_guts.h"
+#include "interp_guts.h"
 #include "parrot/oplib/core_ops.h"
 #include "parrot/oplib/core_ops_switch.h"
 #include "parrot/oplib/ops.h"
 #include "runops_cores.h"
 #if JIT_CAPABLE
 #  include "parrot/exec.h"
-#  include "parrot/jit.h"
+#  include "jit.h"
 #endif
 #ifdef HAVE_COMPUTED_GOTO
 #  include "parrot/oplib/core_ops_cg.h"

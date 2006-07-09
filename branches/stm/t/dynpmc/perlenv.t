@@ -1,5 +1,5 @@
 #!perl
-# Copyright: 2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2006, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -11,12 +11,12 @@ use Parrot::Test;
 
 =head1 NAME
 
-t/pmc/perlenv.t - test the PerlEnv PMC
+t/dynpmc/perlenv.t - test the PerlEnv PMC
 
 
 =head1 SYNOPSIS
 
-    % prove t/pmc/perlenv.t
+    % prove t/dynpmc/perlenv.t
 
 =head1 DESCRIPTION
 

@@ -1,4 +1,4 @@
-# Copyright: 2004-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004-2006, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -22,9 +22,9 @@ A documentation section describing all the C source code in Parrot.
 package Parrot::Docs::Section::C;
 
 use strict;
+use warnings;
 
-use Parrot::Docs::Section;
-@Parrot::Docs::Section::C::ISA = qw(Parrot::Docs::Section);
+use base qw( Parrot::Docs::Section );
 
 use Parrot::Distribution;
 

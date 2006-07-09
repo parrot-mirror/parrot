@@ -1,4 +1,4 @@
-# Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
 =pod
@@ -37,6 +37,7 @@ I<symbols>.
 package Parrot::Configure;
 
 use strict;
+use warnings;
 
 use lib qw(config);
 use Carp qw(carp);

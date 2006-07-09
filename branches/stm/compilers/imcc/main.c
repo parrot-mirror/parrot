@@ -22,7 +22,7 @@
 #include "pbc.h"
 #include "parser.h"
 
-#define IMCC_VERSION "0.4.4"
+#define IMCC_VERSION "0.4.5"
 
 static int load_pbc, run_pbc, write_pbc, pre_process, pasm_file;
 static char optimizer_opt[20];
@@ -125,7 +125,7 @@ imcc_version(void)
     if (PARROT_REVISION != rev) {
 	printf( "Warning: used Configure.pl revision %d!\n", rev );
     }
-    printf("Copyright (C) 2001-2006 The Perl Foundation.  All Rights Reserved.\n\
+    printf("Copyright (C) 2001-2006, The Perl Foundation.\n\
 \n\
 Parrot may be copied only under the terms of either the Artistic License or the\n\
 GNU General Public License, which may be found in the Parrot source kit.\n\

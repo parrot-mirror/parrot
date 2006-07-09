@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2005 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -23,9 +23,9 @@ debugger, and the C<debug> ops.
 #include <stdio.h>
 #include <stdlib.h>
 #include "parrot/parrot.h"
-#include "parrot/interp_guts.h"
+#include "interp_guts.h"
 #include "parrot/oplib.h"
-#include "parrot/trace.h"
+#include "trace.h"
 #include "parrot/debug.h"
 #include "parrot/oplib/ops.h"
 

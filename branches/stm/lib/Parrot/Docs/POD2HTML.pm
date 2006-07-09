@@ -1,4 +1,4 @@
-# Copyright: 2004-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004-2006, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -27,8 +27,7 @@ package Parrot::Docs::POD2HTML;
 use strict;
 use warnings;
 
-use Pod::Simple::HTML;
-our @ISA = qw(Pod::Simple::HTML);
+use base qw( Pod::Simple::HTML );
 
 # This is just here to keep Pod::Simple::HTML's version_tag_comment() happy.
 our $VERSION = '1.0';

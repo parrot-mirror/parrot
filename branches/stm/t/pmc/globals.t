@@ -1,12 +1,12 @@
 #! perl
-# Copyright: 2001-2005 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2005, The Perl Foundation.
 # $Id$
 
 use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 3;
+use Parrot::Test tests => 4;
 
 =head1 NAME
 
@@ -26,7 +26,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "get namespace");
 .sub main
    .local pmc ns, o
    ns = find_global "Foo"
-   o =  find_global ns, "f"
+   o = ns["f"]
    o()
 .end
 
@@ -57,14 +57,37 @@ OUTPUT
 pir_output_is(<<'CODE', <<'OUTPUT', "get namespace - nested");
 .sub main
    .local pmc ns, o
-   ns = get_namespace ["parrot"; "Foo"; "Bar"]
-   o =  find_global ns, "f"
+   ns = get_namespace ["Foo"; "Bar"]
+   o = ns["f"]
    o()
 .end
 
 .namespace ["Foo" ; "Bar"]
 .sub f
     print "ok\n"
+.end
+CODE
+ok
+OUTPUT
+
+# this is pretty much taken from PDD 21
+pir_output_is(<<'CODE', <<'OUTPUT', "get namespace - array");
+.namespace ['Foo'; 'Bar']
+.sub test
+  print "ok\n"
+  .return()
+.end
+
+.namespace
+.sub main :main
+  $P0 = split "::", "Foo::Bar::test"
+  $S0 = pop $P0
+
+  $P0 = get_namespace $P0
+  $P1 = $P0[$S0]
+
+  $P1()
+  end
 .end
 CODE
 ok

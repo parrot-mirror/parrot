@@ -1,5 +1,5 @@
 #! perl
-# Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -11,11 +11,11 @@ use Parrot::Test tests => 69;
 
 =head1 NAME
 
-t/pmc/perlstring.t - Perl Strings
+t/dynpmc/perlstring.t - Perl Strings
 
 =head1 SYNOPSIS
 
-    % prove t/pmc/perlstring.t
+    % prove t/dynpmc/perlstring.t
 
 =head1 DESCRIPTION
 

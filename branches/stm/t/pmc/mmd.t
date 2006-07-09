@@ -1,5 +1,5 @@
 #! perl
-# Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 35;
+use Parrot::Test tests => 39;
 
 =head1 NAME
 
@@ -747,7 +747,7 @@ pir_output_is(<<'CODE', <<'OUT', "MMD on PMC types - Any");
     q($P0)
 .end
 
-.namespace [""]
+.namespace
 
 .sub p :multi(String)
     .param pmc p
@@ -790,8 +790,9 @@ pir_output_is(<<'CODE', <<'OUTPUT', "__add as function - Int, Float");
     r = new Float
     l = 3
     r = 39.42
-    ns = get_namespace ["__parrot_core"]
-    a = ns["__add"]
+    .include "interpinfo.pasm"
+    ns = interpinfo .INTERPINFO_NAMESPACE_ROOT
+    a = ns["__parrot_core"; "__add"]
     a(l, r, d)
     print d
     print "\n"
@@ -997,7 +998,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "mmd bug reported by Jeff");
     print "nothing\n"
 .end
 
-.namespace ['']
+.namespace
 
 .sub main :main
     newclass $P0, 'Foo'
@@ -1169,7 +1170,7 @@ foo(ResizablePMCArray,_)
 OUTPUT
 
 pir_output_is(<<'CODE', <<'OUTPUT', "multisub w/ flatten");
-# seel also 'rt #39173
+# see also 'rt #39173
 .sub main :main
     .local pmc int_pmc
     int_pmc = new .Integer
@@ -1200,4 +1201,101 @@ pir_output_is(<<'CODE', <<'OUTPUT', "multisub w/ flatten");
 CODE
 foo(Integer)
 foo(String)
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "keyed class name and multi");
+.sub main :main
+	.local pmc class
+	newclass class, [ 'Some'; 'Class' ]
+
+	.local int class_type
+	class_type = find_type [ 'Some'; 'Class' ]
+
+    .local pmc instance
+	instance = new class_type
+
+	.local string name
+	name = typeof instance
+
+	print "Type: "
+	print name
+	print "\n"
+    end
+.end
+CODE
+Type: Some;Class
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "keyed class name and multi");
+.sub main :main
+	.local pmc class
+	newclass class, [ 'Some'; 'Class' ]
+
+	.local int class_type
+	class_type = find_type [ 'Some'; 'Class' ]
+
+    .local pmc instance
+	instance = new class_type
+
+	foo( instance )
+    end
+.end
+
+.sub 'foo' :multi( [ 'Some'; 'Class' ])
+    print "Called multi for class\n"
+.end
+
+.sub 'foo' :multi(_)
+    print "Called wrong multi\n"
+.end
+CODE
+Called multi for class
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "unicode sub names and multi (RT#39254)");
+.sub unicode:"\u7777" :multi(string)
+  .param pmc arg
+  print 'String:'
+  say arg
+.end
+.sub unicode:"\u7777" :multi(int)
+  .param pmc arg
+  print 'Int:'
+  say arg
+.end
+
+.sub main :main
+  unicode:"\u7777"('what')
+  unicode:"\u7777"(23)
+.end
+CODE
+String:what
+Int:23
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "autoboxing on multis");
+.sub box_me_up :multi(string)
+	.param string first
+	.param pmc    second
+
+	.local string promoted_type
+	promoted_type = typeof second
+	print "BMU autobox type: "
+	print promoted_type
+	print "\n"
+.end
+
+.sub box_me_up :multi()
+	print "BMU no autobox, so sad\n"
+.end
+
+.sub box_me_up :multi(int, int)
+	print "BMU inty, so bad\n"
+.end
+
+.sub main :main
+	box_me_up( 'foo', 'bar' )
+.end
+CODE
+BMU autobox type: String
 OUTPUT

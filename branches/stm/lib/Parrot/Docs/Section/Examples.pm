@@ -1,4 +1,4 @@
-# Copyright: 2004 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -22,9 +22,9 @@ A documentation section describing all the Parrot examples.
 package Parrot::Docs::Section::Examples;
 
 use strict;
+use warnings;
 
-use Parrot::Docs::Section;
-@Parrot::Docs::Section::Examples::ISA = qw(Parrot::Docs::Section);
+use base qw( Parrot::Docs::Section );
 
 use Parrot::Docs::Item;
 use Parrot::Docs::Group;

@@ -1,16 +1,19 @@
 grammar TGE::Parser;
 
-token start { ^ <TGE::Parser::statements> $ }
+token start { ^ <TGE::Parser::statements>* $ }
 
 rule statements { 
-    [ <TGE::Parser::transrule>
+     <TGE::Parser::transrule>
     | <TGE::Parser::grammardec>
-    ]* 
 }
 
 rule grammardec {
     grammar <TGE::Parser::type>
-    [is <TGE::Parser::type>]?;
+    <TGE::Parser::inherit>?;
+}
+
+rule inherit {
+    is <TGE::Parser::type>
 }
 
 rule transrule {
@@ -29,7 +32,7 @@ rule language {
     \:language \( \'(\w+)\' \)
 }
 
-rule action {
+token action {
     \{ (<-[}]>*) \}
 }
 
@@ -42,5 +45,15 @@ token name { \w+ }
 token ws {
     [ \s+
     | \# \N*
+    | <?pod_comment>
     ]*
+}
+
+
+regex pod_comment {
+    ^^ = [ [ cut \h*: | end [\h\N*]? ]
+         | for [ \h\N+: ] \n [ \N+\n ]*:
+         | \w\N*: \n .*? \n = [ cut \h*: | end [\h\N*:]? ]
+         ]
+         [\n|$]
 }

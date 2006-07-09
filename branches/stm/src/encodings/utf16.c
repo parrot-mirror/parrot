@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2003, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -19,7 +19,7 @@ UTF-16 encoding with the help of the ICU library.
 */
 
 #include "parrot/parrot.h"
-#include "parrot/unicode.h"
+#include "../unicode.h"
 
 #include "utf16.h"
 

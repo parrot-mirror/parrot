@@ -5,7 +5,7 @@
  * Intermediate Code Compiler for Parrot.
  *
  * Copyright (C) 2002 Melvin Smith <melvin.smith@mindspring.com>
- * Copyright 2002-2006 The Perl Foundation. All Righs Reserved
+ * Copyright (C) 2002-2006, The Perl Foundation.
  *
  * Grammar for the parser.
  *
@@ -111,7 +111,7 @@ mk_pmc_const(Parrot_Interp interp, IMC_Unit *unit,
     SymReg *rhs;
     SymReg *r[2];
     char *name;
-    int len;
+    int len, ascii;
 
     if (left->type == VTADDRESS) {      /* IDENTIFIER */
         if (IMCC_INFO(interp)->state->pasm_file) {
@@ -123,16 +123,23 @@ mk_pmc_const(Parrot_Interp interp, IMC_Unit *unit,
         left->set = 'P';
     }
     r[0] = left;
-    /* strip delimiters */
-    len = strlen(constant);
-    name = mem_sys_allocate(len);
-    constant[len - 1] = '\0';
-    strcpy(name, constant + 1);
-    free(constant);
+    ascii = (*constant == '\'' || *constant == '"' );
+    if (ascii) {
+        /* strip delimiters */
+        len = strlen(constant);
+        name = mem_sys_allocate(len);
+        constant[len - 1] = '\0';
+        strcpy(name, constant + 1);
+        free(constant);
+    }
+    else
+        name = constant;
     switch (type_enum) {
         case enum_class_Sub:
         case enum_class_Coroutine:
             rhs = mk_const(interp, name, 'p');
+            if (!ascii)
+                rhs->type |= VT_ENCODED;  
             r[1] = rhs;
             rhs->pmc_type = type_enum;
             rhs->usage = U_FIXUP;
@@ -192,10 +199,10 @@ static Instruction * iLABEL(IMC_Unit * unit, SymReg * r0) {
 static Instruction * iSUBROUTINE(Interp *interp, IMC_Unit * unit, SymReg * r) {
     Instruction *i;
     i =  iLABEL(unit, r);
-    r->type = VT_PCC_SUB;
+    r->type = (r->type & VT_ENCODED) ? VT_PCC_SUB|VT_ENCODED : VT_PCC_SUB;
     r->pcc_sub = calloc(1, sizeof(struct pcc_sub_t));
     cur_call = r;
-    i->line = line - 1;
+    i->line = line;
     add_namespace(interp, unit);
     return i;
 }
@@ -271,6 +278,14 @@ mk_sub_address_fromc(Interp *interp, char * name)
     return r;
 }
 
+static SymReg *
+mk_sub_address_u(Interp *interp, char * name)
+{
+    SymReg *r = mk_sub_address(interp, name);
+    r->type |= VT_ENCODED;
+    return r;
+}
+
 void
 IMCC_itcall_sub(Interp* interp, SymReg* sub)
 {
@@ -293,7 +308,7 @@ begin_return_or_yield(Interp *interp, int yield)
     Instruction *i, *ins;
     char name[128];
     ins = cur_unit->instructions;
-    if(!ins || !ins->r[0] || ins->r[0]->type != VT_PCC_SUB)
+    if(!ins || !ins->r[0] || !(ins->r[0]->type & VT_PCC_SUB))
         IMCC_fataly(interp, E_SyntaxError,
               "yield or return directive outside pcc subroutine\n");
     if(yield)
@@ -414,7 +429,7 @@ adv_named_set(Interp *interp, char *name) {
 %type <i> class_namespace
 %type <i> global constdef sub emit pcc_sub  pcc_ret
 %type <i> compilation_units compilation_unit pmc_const pragma
-%type <s> classname relop
+%type <s> classname relop any_string
 %type <i> labels _labels label  statement sub_call
 %type <i> pcc_sub_call
 %type <sr> sub_param sub_params pcc_arg pcc_result pcc_args pcc_results sub_param_type_def
@@ -426,7 +441,7 @@ adv_named_set(Interp *interp, char *name) {
 %type <i> func_assign get_results
 %type <i> opt_invocant
 %type <sr> target targetlist reg const var string result
-%type <sr> key keylist _keylist
+%type <sr> keylist _keylist maybe_keylist key
 %type <sr> vars _vars var_or_i _var_or_i label_op sub_label_op sub_label_op_c
 %type <i> pasmcode pasmline pasm_inst
 %type <sr> pasm_args
@@ -524,9 +539,14 @@ constdef:
    ;
 
 pmc_const:
-     CONST { is_def=1; } INTC var_or_i '=' STRINGC
+     CONST { is_def=1; } INTC var_or_i '=' any_string
                 { $$ = mk_pmc_const(interp, cur_unit, $3, $4, $6);is_def=0; }
    ;
+any_string: 
+     STRINGC 
+   | USTRINGC
+   ;
+
 pasmcode:
      pasmline
    | pasmcode pasmline
@@ -587,19 +607,24 @@ opt_pasmcode:
   ;
 
 class_namespace:
-    NAMESPACE '[' keylist ']'
+    NAMESPACE maybe_keylist '\n'
                 {
                     int re_open = 0;
-                    $$=0;
+                    $$ = 0;
                     if (IMCC_INFO(interp)->state->pasm_file && cur_namespace) {
                         imc_close_unit(interp, cur_unit);
                         re_open = 1;
                     }
-                    IMCC_INFO(interp)->cur_namespace = $3;
-                    cur_namespace = $3;
+                    IMCC_INFO(interp)->cur_namespace = $2;
+                    cur_namespace = $2;
                     if (re_open)
                         cur_unit = imc_open_unit(interp, IMC_PASM);
                 }
+   ;
+
+maybe_keylist:
+     '[' keylist ']'	{ $$ = $2; }
+   |			{ $$ = NULL; }
    ;
 
 sub:
@@ -694,6 +719,7 @@ multi_type:
                            }
                            $$ = r;
                       }
+   | '[' keylist ']'  { $$ = $2; }
    ;
 
 sub_body:
@@ -1205,6 +1231,7 @@ func_assign:
 
 the_sub: IDENTIFIER  { $$ = mk_sub_address(interp, $1); }
        | STRINGC  { $$ = mk_sub_address_fromc(interp, $1); }
+       | USTRINGC  { $$ = mk_sub_address_u(interp, $1); }
        | target   { $$ = $1;
                        if ($1->set != 'P')
                             IMCC_fataly(interp, E_SyntaxError,
@@ -1345,6 +1372,7 @@ _var_or_i:
 sub_label_op_c:
      sub_label_op
    | STRINGC       { $$ = mk_sub_address_fromc(interp, $1); }
+   | USTRINGC      { $$ = mk_sub_address_u(interp, $1); }
    ;
 
 sub_label_op:

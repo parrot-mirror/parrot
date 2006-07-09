@@ -1,7 +1,7 @@
 This is Pheme, version 0.0.1
 ----------------------------
 
-Copyright (c) 2006, The Perl Foundation.
+Copyright (C) 2006, The Perl Foundation.
 
 Pheme is a Parrot-based implementation of Scheme, in the sense that it has the
 same syntax (what syntax it has) and shares the name of some built-ins.  Please
@@ -10,7 +10,7 @@ note the version number.
 PREREQUISITES
 -------------
 
-Punie depends on Parrot 0.4.3 or higher, PGE, and TGE.
+Pheme depends on Parrot 0.4.3 or higher, PGE, and TGE.
 
 INSTRUCTIONS
 ------------

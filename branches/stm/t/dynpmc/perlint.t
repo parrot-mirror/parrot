@@ -1,4 +1,4 @@
-# Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -12,11 +12,11 @@ use Parrot::Config;
 
 =head1 NAME
 
-t/pmc/perlint.t - Perl Integers
+t/dynpmc/perlint.t - Perl Integers
 
 =head1 SYNOPSIS
 
-    % prove t/pmc/perlint.t
+    % prove t/dynpmc/perlint.t
 
 =head1 DESCRIPTION
 

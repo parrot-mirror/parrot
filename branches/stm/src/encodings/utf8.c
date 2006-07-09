@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2003, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -19,7 +19,7 @@ UTF-8 (L<http://www.utf-8.com/>).
 */
 
 #include "parrot/parrot.h"
-#include "parrot/unicode.h"
+#include "../unicode.h"
 #include "utf8.h"
 
 #define UNIMPL internal_exception(UNIMPLEMENTED, "unimpl utf8")

@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -69,7 +69,8 @@ Exit, calling any registered exit handlers.
 
 */
 
-void Parrot_exit(int status) {
+void
+Parrot_exit(int status) {
     /* call all the exit handlers */
 
     /* Must write the loop this way to protect against an exit handler calling

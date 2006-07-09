@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use lib qw( APL . lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 9;
+use Parrot::Test tests => 11;
 use Test::More;
 
 diag("don't forget to write tests for slices");
@@ -162,6 +162,7 @@ pir_output_is(<<'CODE', <<'OUT', 'index 2D');
      say $P3
      $P3 = $P1[2;2]
      say $P3
+  .end
 CODE
 1
 2
@@ -197,6 +198,7 @@ pir_output_is(<<'CODE', <<'OUT', 'reshape with fewer elements');
      say $P3
      $P3 = $P1[2;2]
      say $P3
+  .end
 CODE
 1
 2
@@ -234,6 +236,7 @@ pir_output_is(<<'CODE', <<'OUT', 'reshape with more elements');
      say $P3
      $P3 = $P1[2;2]
      say $P3
+   .end
 CODE
 1
 2
@@ -282,7 +285,8 @@ pir_output_is(<<'CODE', <<'OUT', '3-dimensional');
      $P3 = $P1[2;2;1]
      say $P3
      $P3 = $P1[2;2;2]
-     say $P3
+     say $P4
+  .end
 CODE
 1
 2
@@ -295,3 +299,70 @@ CODE
 OUT
 
 }
+
+pir_output_is(<<'CODE', <<'OUT', 'Iterator: 1d');
+  .sub test :main
+     $P0 = loadlib 'apl_group'
+     if $P0 goto ok
+     say 'urk'
+     end
+  ok:
+     $P1 = new 'APLVector'
+     push $P1, 1
+     push $P1, 2
+     push $P1, 3
+     push $P1, 4
+     #  Vector is now a 1x4 vector
+
+     $P2 = new 'Iterator', $P1
+     
+  loop:
+     unless $P2 goto end_loop
+     $P3 = shift $P2
+     say $P3
+     goto loop
+  end_loop:
+  .end
+CODE
+1
+2
+3
+4
+OUT
+
+pir_output_is(<<'CODE', <<'OUT', 'Iterator: 2d');
+  .sub test :main
+     $P0 = loadlib 'apl_group'
+     if $P0 goto ok
+     say 'urk'
+     end
+  ok:
+     $P1 = new 'APLVector'
+     push $P1, 1
+     push $P1, 2
+     push $P1, 3
+     push $P1, 4
+     #  Vector is now a 1x4 vector
+
+     $P2 = new 'APLVector'
+     push $P2, 2
+     push $P2, 2
+
+     $P1.'set_shape'($P2)
+     #  Vector is now a 2x2 vector
+
+     $P3 = new 'Iterator', $P1
+
+  loop:
+     unless $P3 goto end_loop
+     $P4 = shift $P3
+     say $P4
+     goto loop
+  end_loop:
+  .end
+CODE
+1
+2
+3
+4
+OUT

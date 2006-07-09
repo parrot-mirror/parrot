@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -27,9 +27,9 @@ used and not per subroutine or even opcode, it works per bytecode segment.
 #if PARROT_EXEC_CAPABLE
 #  include "parrot/exec.h"
 #endif
-#include "parrot/jit.h"
+#include "jit.h"
 #define JIT_EMIT 0
-#include "parrot/jit_emit.h"
+#include "jit_emit.h"
 #include "parrot/packfile.h"
 #include "parrot/oplib/ops.h"
 
@@ -1077,7 +1077,7 @@ reg_offs(Interp * interpreter, int typ, int i)>
 
 Returns the offset of register C<typ[i]>.
 
-F<jit/arch/jit_emit.h> has to define C<Parrot_jit_emit_get_base_reg_no(pc)>
+F<src/jit/arch/jit_emit.h> has to define C<Parrot_jit_emit_get_base_reg_no(pc)>
 
 =cut
 
@@ -1745,8 +1745,8 @@ Parrot_jit_newfixup(Parrot_jit_info_t *jit_info)
 
 =head1 SEE ALSO
 
-F<include/parrot/jit.h>, F<docs/jit.pod>,d F<src/jit_debug.c>,
-F<jit/$jitcpuarch/jit_emit.h>, F<jit/$jitcpuarch/core.jit>.
+F<src/jit.h>, F<docs/jit.pod>,d F<src/jit_debug.c>,
+F<src/jit/$jitcpuarch/jit_emit.h>, F<jit/$jitcpuarch/core.jit>.
 
 =cut
 

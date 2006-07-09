@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -479,9 +479,7 @@ pt_transfer_sub(Parrot_Interp d, Parrot_Interp s, PMC *sub) {
         Parrot_store_sub_in_namespace(d, ret);
     } else {
         /* non-anonymous, just lookup in the global */
-        ret = Parrot_find_global(d, PMC_sub(sub)->namespace ?
-            VTABLE_get_string(s, PMC_sub(sub)->namespace) : NULL,
-            PMC_sub(sub)->name);
+        ret = Parrot_find_global_k(d, PMC_sub(sub)->namespace, PMC_sub(sub)->name);
         if (PMC_IS_NULL(ret)) {
             /* wasn't in globals; clone it, place it */
             ret = Parrot_clone(d, sub);

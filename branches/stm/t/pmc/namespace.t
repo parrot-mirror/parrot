@@ -1,12 +1,12 @@
 #! perl
-# Copyright: 2001-2005 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2005, The Perl Foundation.
 # $Id$
 
 use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 27;
+use Parrot::Test tests => 35;
 use Parrot::Config;
 
 =head1 NAME
@@ -153,6 +153,27 @@ pir_output_is(<<'CODE', <<'OUTPUT', "find_global Foo::Bar::baz");
 CODE
 ok
 baz
+OUTPUT
+
+pir_output_like(<<'CODE', <<'OUTPUT', "find_global Foo::bazz not found");
+.sub 'main' :main
+    $P2 = find_global ["Foo"], "bazz"
+    $P2()
+    print "ok\n"
+.end
+CODE
+/Global 'bazz' not found/
+OUTPUT
+
+# [this used to behave differently from the previous case.]
+pir_output_like(<<'CODE', <<'OUTPUT', "find_global Foo::Bar::bazz not found");
+.sub 'main' :main
+    $P2 = find_global ["Foo";"Bar"], "bazz"
+    $P2()
+    print "ok\n"
+.end
+CODE
+/Global 'bazz' not found/
 OUTPUT
 
 pir_output_is(<<'CODE', <<'OUTPUT', "find_global Foo::Bar::baz hash");
@@ -303,8 +324,8 @@ OUTPUT
 pir_output_is(<<'CODE', <<'OUTPUT', "get namespace in Foo::Bar::baz");
 .sub 'main' :main
     $P0 = find_global "Foo"
-    $P1 = find_global $P0, "Bar"
-    $P2 = find_global $P1, "baz"
+    $P1 = $P0["Bar"]
+    $P2 = $P1["baz"]
     print "ok\n"
     $P2()
 .end
@@ -324,7 +345,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "get namespace in Foo::Bar::baz");
 CODE
 ok
 baz
-::parrot::Foo::Bar
+parrot::Foo::Bar
 OUTPUT
 
 pir_output_is(<<'CODE', <<'OUTPUT', "segv in get_name");
@@ -347,7 +368,7 @@ pir_output_is(<<'CODE', <<'OUT', "latin1 namespace, global");
 	print "latin1 namespaces are fun\n"
 .end
 
-.namespace [ "" ]
+.namespace
 
 .sub 'main' :main
 	$P0 = find_global iso-8859-1:"François", '__init'
@@ -364,7 +385,7 @@ pir_output_is(<<'CODE', <<'OUT', "unicode namespace, global");
 	print "unicode namespaces are fun\n"
 .end
 
-.namespace [ "" ]
+.namespace
 
 .sub 'main' :main
 	$P0 = find_global unicode:"Fran\xe7ois", '__init'
@@ -415,11 +436,9 @@ pir_output_is(<<'CODE', <<'OUTPUT', "ns.name()");
     print $S0
     print "\n"
 .end
-# namespace root doesnt have a name
-# XXX should the root namespace be included?
 CODE
-3
-::parrot::Foo
+2
+parrot::Foo
 OUTPUT
 
 pir_output_is(<<'CODE', <<'OUTPUT', "get_namespace_p_p, getnamespace_p_kc");
@@ -431,9 +450,8 @@ pir_output_is(<<'CODE', <<'OUTPUT', "get_namespace_p_p, getnamespace_p_kc");
     $P1["Foo"] = $P3
     # fetch w array
     $P1 = new .FixedStringArray
-    $P1 = 2
-    $P1[0] = 'parrot'
-    $P1[1] = 'Foo'
+    $P1 = 1
+    $P1[0] = 'Foo'
     $P2 = get_namespace $P1
     $P2 = $P2.'name'()
     $I2 = elements $P2
@@ -443,7 +461,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "get_namespace_p_p, getnamespace_p_kc");
     print $S0
     print "\n"
     # fetch w key
-    $P2 = get_namespace ["parrot";"Foo"]
+    $P2 = get_namespace ["Foo"]
     $P2 = $P2.'name'()
     $I2 = elements $P2
     print $I2
@@ -452,13 +470,11 @@ pir_output_is(<<'CODE', <<'OUTPUT', "get_namespace_p_p, getnamespace_p_kc");
     print $S0
     print "\n"
 .end
-# namespace root doesnt have a name
-# XXX should the root namespace be included?
 CODE
-3
-::parrot::Foo
-3
-::parrot::Foo
+2
+parrot::Foo
+2
+parrot::Foo
 OUTPUT
 
 pir_output_is(<<'CODE', <<'OUTPUT', "Sub.get_namespace, get_namespace");
@@ -481,15 +497,14 @@ pir_output_is(<<'CODE', <<'OUTPUT', "Sub.get_namespace, get_namespace");
 .end
 CODE
 ok
-::parrot::Foo
+parrot::Foo
 Foo
 OUTPUT
 
 pir_output_is(<<'CODE', <<'OUTPUT', "check parrot ns");
 .sub 'main' :main
-    $P0 = get_namespace ["parrot"; "String"]
-    $P1 = find_global $P0, "lower"
-    $S0 = $P1("OK\n")
+    $P0 = find_global ["String"], "lower"
+    $S0 = $P0("OK\n")
     print $S0
 .end
 CODE
@@ -616,16 +631,25 @@ CODE
 OUTPUT
 }
 
-SKIP: {
-  skip('not implemented', 1);
-pir_output_is(<<'CODE', <<'OUTPUT', "find_global should find from .HLL namespace, not current .namespace");
+
+# the test was skipped, the description says:
+# find_global should find from .HLL namespace, not current .namespace
+# but according to pdd21, {find,store}_global are relative to current
+
+SKIP:
+{
+    skip("immediate test, doesn't with -r (from .pbc)", 1)
+	if ( exists $ENV{TEST_PROG_ARGS} and $ENV{TEST_PROG_ARGS} =~ m/-r/ );
+
+pir_output_is(<<'CODE', <<'OUTPUT', "find_global in current");
 .HLL 'bork', ''
-.namespace [ '' ]
+.namespace
 
 .sub a :immediate
   $P1 = new .String
   $P1 = "ok\n"
-  store_global "eek", $P1
+  store_global 'sub_namespace', "eek", $P1
+## store_global "eek", $P1
 .end
 
 .namespace [ 'sub_namespace' ]
@@ -635,8 +659,137 @@ pir_output_is(<<'CODE', <<'OUTPUT', "find_global should find from .HLL namespace
 $P1 = find_global 'eek'
 print $P1
 .end
-
 CODE
 ok
 OUTPUT
 }
+
+open S, ">$temp_b.pir" or die "Can't write $temp_b.pir";
+print S <<'EOF';
+.HLL 'B', ''
+.sub b_foo
+    print "b_foo\n"
+.end
+EOF
+close S;
+
+pir_output_is(<<"CODE", <<'OUTPUT', "export_to");
+.HLL 'A', ''
+.sub main :main
+    a_foo()
+    load_bytecode "$temp_b.pir"
+    .local pmc nsr, nsa, nsb, ar
+    ar = new .ResizableStringArray
+    push ar, "b_foo"
+    .include "interpinfo.pasm"
+    nsr = interpinfo .INTERPINFO_NAMESPACE_ROOT
+    nsa = nsr['a']
+    nsb = nsr['b']
+    nsb."export_to"(nsa, ar)
+    b_foo()
+.end
+
+.sub a_foo
+    print "a_foo\\n"
+.end
+CODE
+a_foo
+b_foo
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "get_parent");
+.sub main :main
+    .local pmc ns
+    ns = get_namespace ['Foo']
+    ns = ns.'get_parent'()
+    print ns
+    print "\n"
+.end
+.namespace ['Foo']
+.sub dummy
+.end
+CODE
+parrot
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "find_global [''], \"print_ok\"");
+.namespace ['']
+
+.sub print_ok
+  print "ok\n"
+  .return()
+.end
+
+.namespace ['foo']
+
+.sub main :main
+  $P0 = find_global [''], 'print_ok'
+  $P0()
+  end
+.end
+CODE
+ok
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "find_global with array ('')");
+.namespace ['']
+
+.sub print_ok
+  print "ok\n"
+  .return()
+.end
+
+.namespace ['foo']
+
+.sub main :main
+  $P0 = new .ResizableStringArray
+  $P0[0] = ''
+  $P0 = find_global $P0, 'print_ok'
+  $P0()
+  end
+.end
+CODE
+ok
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "find_global with empty array");
+.namespace
+
+.sub print_ok
+  print "ok\n"
+  .return()
+.end
+
+.namespace ['foo']
+
+.sub main :main
+  $P0 = new .ResizablePMCArray
+  $P0 = find_global $P0, 'print_ok'
+  $P0()
+  end
+.end
+CODE
+ok
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "get_namespace with array ('')");
+.namespace ['']
+
+.sub print_ok
+  print "ok\n"
+  .return()
+.end
+
+.namespace ['foo']
+
+.sub main :main
+  $P0 = new .ResizableStringArray
+  $P0[0] = ''
+  $P0 = get_namespace $P0
+  $P0 = find_global $P0, 'print_ok'
+  $P0()
+  end
+.end
+CODE
+ok
+OUTPUT

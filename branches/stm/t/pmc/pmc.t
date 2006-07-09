@@ -1,4 +1,4 @@
-# Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -78,18 +78,18 @@ starting
 ending
 OUTPUT
 
-pasm_output_is(<<'CODE', <<'OUTPUT', "illegal min newpmc");
+pasm_output_like(<<'CODE', <<'OUTPUT', "illegal min newpmc");
 	new P0, 0
 	end
 CODE
-Illegal PMC enum (0) in new
+/Illegal PMC enum \(0\) in new/
 OUTPUT
 
-pasm_output_is(<<"CODE", <<"OUTPUT", "illegal max newpmc");
+pasm_output_like(<<"CODE", <<'OUTPUT', "illegal max newpmc");
 	new P0, $max_pmc
 	end
 CODE
-Illegal PMC enum ($max_pmc) in new
+/Illegal PMC enum \(\d+\) in new/
 OUTPUT
 
 pasm_output_is(<<'CODE', <<'OUTPUT', 'typeof');

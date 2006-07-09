@@ -1,5 +1,5 @@
 /*
-Copyright: 2005 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2005, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -114,7 +114,7 @@ a NameSpace or a var, the NameSpace is returned.
 
     void set_pmc_keyed_str(STRING *key, PMC *value) {
         PMC *tuple = NULL;
-        HashBucket *b = hash_get_bucket(INTERP, 
+        HashBucket *b = parrot_hash_get_bucket(INTERP, 
                 (Hash*) PMC_struct_val(SELF), key);
         int val_is_NS = value->vtable->base_type == enum_class_NameSpace;
         if (!b)
@@ -215,7 +215,7 @@ a NameSpace or a var, the NameSpace is returned.
     }
 
     PMC* get_pmc_keyed_str (STRING* key) {
-        PMC *ns = hash_get(INTERP, 
+        PMC *ns = parrot_hash_get(INTERP, 
                 (Hash*) PMC_struct_val(SELF), key);
         if (!ns)
             return PMCNULL;
@@ -244,8 +244,6 @@ a NameSpace or a var, the NameSpace is returned.
             return ns;
         }
         n = VTABLE_elements(INTERP, key);
-        if (!n)
-            return PMCNULL;
         for (i = 0; i < n; ++i) {
             part = VTABLE_get_string_keyed_int(INTERP, key, i);
             ns = VTABLE_get_pmc_keyed_str(INTERP, ns, part);
@@ -269,7 +267,7 @@ a NameSpace or a var, the var is returned.
 */
 
     void* get_pointer_keyed_str (STRING* key) {
-        PMC *ns = hash_get(INTERP, 
+        PMC *ns = parrot_hash_get(INTERP, 
                 (Hash*) PMC_struct_val(SELF), key);
         if (!ns)
             return PMCNULL;
@@ -349,9 +347,6 @@ Return the name of this namespace part.
 
 Returns the name of the namespace as an array of strings.
 
-XXX Should the NULL String of namespace root be included?
-    See also t/pmc/namespace_20.pir.  
-
   $P2 = $P3.'name'()
   $S0 = join '::', $P2            # '::Foo::Bar'
 
@@ -368,6 +363,10 @@ XXX Should the NULL String of namespace root be included?
             VTABLE_unshift_string(INTERP, ar, PMC_data(ns));
             ns = PMC_pmc_val(ns);
         }
+        
+        /* remove the NULL string of the namespace root */
+        VTABLE_shift_string(INTERP, ar);
+        
         return ar;
     }
 
@@ -397,6 +396,21 @@ is an array of (string) names to be exported.
             VTABLE_set_pmc_keyed_str(INTERP, dest, name, el);
         }
     }
+
+/*
+
+=item C<METHOD PMC* get_parent()>
+
+Return the parent NameSpace or PMCNULL, if none.
+
+=cut
+
+*/
+
+    METHOD PMC* get_parent() {
+        return PMC_pmc_val(SELF) ? PMC_pmc_val(SELF) : PMCNULL;
+    }
+
 }
 /*
 

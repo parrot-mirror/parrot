@@ -1,5 +1,5 @@
 /*
-Copyright: 2001-2006 The Perl Foundation.  All Rights Reserved.
+Copyright (C) 2001-2006, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -21,9 +21,9 @@ src/exec.c - Generate an object file
 #  include <parrot/oplib/core_ops_cgp.h>
 #endif /* HAVE_COMPUTED_GOTO */
 #include "parrot/exec.h"
-#include "parrot/jit.h"
+#include "jit.h"
 #define JIT_EMIT 1
-#include "parrot/jit_emit.h"
+#include "jit_emit.h"
 #include "exec_dep.h"
 #include "exec_save.h"
 #include "parrot/compiler.h"

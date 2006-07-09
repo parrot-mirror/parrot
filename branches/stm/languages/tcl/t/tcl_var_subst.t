@@ -2,7 +2,7 @@
 
 use strict;
 use lib qw(tcl/lib ./lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 10;
+use Parrot::Test tests => 17;
 use Test::More;
 
 language_output_is("tcl",<<'TCL',<<OUT,"middle");
@@ -73,5 +73,60 @@ language_output_is("tcl",<<'TCL',<<'OUT',"write global");
   puts $x
 TCL
 foo
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', 'puts $array($key)');
+array set array {test ok}
+set key test
+puts $array($key)
+TCL
+ok
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', 'puts $foo($bar) - can\'t read');
+  puts $foo($bar)
+TCL
+can't read "bar": no such variable
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', 'puts $foo($)');
+  array set foo {$ ok}
+  puts $foo($)
+TCL
+ok
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', 'puts $foo([set key])');
+  array set foo {) ok}
+  set key )
+  puts $foo([set key])
+TCL
+ok
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', 'puts $foo([set key) - syntax error');
+  array set array {a 1 b 2 c 3}
+  set foo b
+  puts ok
+  puts $array([set foo)
+TCL
+ok
+missing close-bracket
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', 'puts $foo([set key]a)');
+  array set array {a 1 b 2 c 3}
+  set foo b
+  puts $array([set foo]a)
+TCL
+can't read "array(ba)": no such element in array
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', 'puts $array([set )])');
+  array set array {a 1 b 2 c 3}
+  set ) b
+  puts $array([set )])
+TCL
+2
 OUT
 

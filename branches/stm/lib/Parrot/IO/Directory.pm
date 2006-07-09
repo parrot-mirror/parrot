@@ -1,4 +1,4 @@
-# Copyright: 2004-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004-2006, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -22,9 +22,9 @@ Use this to query and manipulate directories and their contents.
 package Parrot::IO::Directory;
 
 use strict;
+use warnings;
 
-use Parrot::IO::Path;
-@Parrot::IO::Directory::ISA = qw(Parrot::IO::Path);
+use base qw( Parrot::IO::Path );
 
 use DirHandle;
 use File::Path;

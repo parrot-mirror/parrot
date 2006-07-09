@@ -1,4 +1,4 @@
-# Copyright: 2004-2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2004-2006, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -7,7 +7,7 @@ Parrot::Pmc2c - PMC to C Code Generation
 
 =head1 SYNOPSIS
 
-	use Parrot::Pmc2c;
+    use Parrot::Pmc2c;
 
 =head1 DESCRIPTION
 
@@ -25,10 +25,10 @@ package Parrot::Pmc2c;
 use strict;
 use warnings;
 
-use vars qw( @writes %writes );
 use Parrot::PMC qw(%pmc_types);
 
 use base qw( Exporter );
+
 our @EXPORT_OK = qw(count_newlines gen_ret dont_edit dynext_load_code);
 
 use Text::Balanced 'extract_bracketed';

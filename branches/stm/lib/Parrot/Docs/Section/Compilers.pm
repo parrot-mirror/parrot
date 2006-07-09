@@ -1,4 +1,4 @@
-# Copyright: 2006 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2006, The Perl Foundation.
 # $Id: Compilers.pm 11501 2006-02-10 18:27:13Z particle $
 
 =head1 NAME
@@ -22,9 +22,9 @@ A documentation section describing all compilers in Parrot.
 package Parrot::Docs::Section::Compilers;
 
 use strict;
+use warnings;
 
-use Parrot::Docs::Section;
-@Parrot::Docs::Section::Compilers::ISA = qw(Parrot::Docs::Section);
+use base qw( Parrot::Docs::Section );
 
 use Parrot::Distribution;
 

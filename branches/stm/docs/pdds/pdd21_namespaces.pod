@@ -1,4 +1,4 @@
-# Copyright 2005 The Perl Foundation.  All Rights Reserved.
+# Copyright (C) 2005, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -18,8 +18,8 @@ to the HLL language name
 
 =item - Namespaces should be hierarchical
 
-=item - Add a get_namespace opcode (that takes an array or a multidimensional
-hash index)
+=item - The get_namespace opcode takes a multidimensional hash key or an array
+of name strings
 
 =item - Namespaces follow the semantics of the HLL in which they're defined
 
@@ -236,8 +236,8 @@ current language is Perl 5 and the current Perl 5 namespace is "Some::Module"
 (that's Perl 5 syntax), then get_name() on that namespace returns an array of
 "perl5", "Some", "Module".
 
-NOTE: Due to aliasing, this value may be wrong, even if nobody's been playing
-around with it.
+NOTE: Due to aliasing, this value may be wrong -- i.e. it may disagree with
+the namespace name with which you found the namespace in the first place.
 
 =back
 
@@ -247,11 +247,20 @@ around with it.
 
 =over 4
 
+=item $P0 = parse_name($S0)
+
+Parse the name in $S0 using the rules specific to the given compiler, and
+return an array of individual name elements.
+
+For example, a Java compiler would turn 'a.b.c' to ['a','b','c'], while a Perl
+compiler would turn 'a::b::c' into the same result.  Meanwhile, due to Perl's
+sigil rules, '$a::b::c' would become ['a','b','$c'].
+
 =item get_namespace($P0)
 
-Ask this compiler to find its namespace named by the elements of the array in
-$P0.  Returns namespace PMC on success and null PMC on failure.  Note that a
-null PMC or an empty array requests the HLL's base namespace.
+Ask this compiler to find its namespace which is named by the elements of the
+array in $P0.  Returns namespace PMC on success and null PMC on failure.  Note
+that a null PMC or an empty array requests the HLL's base namespace.
 
 This method allows other HLLs to know one name (the HLL) and then work with
 that HLL's modules without having to know the name it chose for its namespace
@@ -307,40 +316,56 @@ Navigating outside one's own HLL namespace requires either the C<interpinfo
 
 =item add_namespace $P0, $P1
 
-Add the namespace PMC $P1 as the namespace $P0 (an array of names or a 
-multidimensional hash index).
+Add the namespace PMC $P1 under the name denoted by $P0 (an array of names or
+a multidimensional hash index).
 
 =item del_namespace $P0
 
 Delete the namespace $P0 (an array of names or a multidimensional hash index).
 
-=item $P0 = find_global $P1, $S0
+=item $P0 = get_namespace
 
-=item $P0 = find_global $S0
-
-Find $P0 as the variable $S0 in the current namespace. or in $P1, relative
-to the HLL root namespace.
+Set $P0 to the current namespace (i.e. the namespace of the currently
+executing subroutine).
 
 =item $P0 = get_namespace $P1
 
-=item $P0 = get_namespace
+Get the namespace denoted by C<$P1> (an array of names or a multidimensional
+hash index) and store it in C<$P0>.
 
-Get the namespace $P1 (an array of names or a multidimensional hash index) or
-the current namespace.  To get the "Foo::Bar" namespace, one would use this:
+Thus, to get the "Foo::Bar" namespace, if the name is known at compile time,
+one could use this opcode:
 
-  $P0 = split "::", "Foo::Bar"
-  $P1 = get_namespace $P0
+  $P0 = get_namespace ["Foo"; "Bar"]
 
-or this:
+or, if the name is not known at compile time, this idiom:
 
-  $P1 = get_namespace ["Foo"; "Bar"]
+  $P1 = split "::", "Foo::Bar"
+  $P0 = get_namespace $P1
 
-=item store_global $P1, $S0, $P0
+=item $P0 = find_global $S0
+
+Find $P0 as the variable named $S0 in the current namespace.
+
+=item $P0 = find_global $S1, $S0
+
+=item $P0 = find_global $P1, $S0
+
+Find $P0 as the variable named $S0 in $S1 (a first-level namespace) or $P1 (an
+array of names or a multidimensional hash index), relative to the HLL root
+namespace.
 
 =item store_global $S0, $P0
 
-Store $P0 as the variable $S0 in the current namespace, or in $P1, relative
-to the HLL root namespace.
+Store $P0 as the variable $S0 in the current namespace.
+
+=item store_global $S1, $S0, $P0
+
+=item store_global $P1, $S0, $P0
+
+Store $P0 as the variable $S0 in $S1 (a first-level namespace) or $P1 (an
+array of names or a multidimensional hash index), relative to the HLL root
+namespace.  If the given namespace does not exist it is created.
 
 =back
 

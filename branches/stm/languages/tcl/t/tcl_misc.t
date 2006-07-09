@@ -2,7 +2,7 @@
 
 use strict;
 use lib qw(tcl/lib ./lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 23;
+use Parrot::Test tests => 24;
 use Test::More;
 
 language_output_is("tcl",<<'TCL',<<OUT,"leading spacex2 should be ok");
@@ -155,15 +155,27 @@ TCL
 1 {unmatched open brace in list}
 OUT
 
-{
-  local undef %ENV;
-  $ENV{cow}    = "moo";
-  $ENV{pig}    = "oink";
-  $ENV{cowpig} = "moink";
+language_output_is("tcl",<<'TCL',<<'OUT',"{} command");
+  proc {} {} {puts ok}
+  {}
+TCL
+ok
+OUT
 
-language_output_is("tcl",<<'TCL',<<'OUT',"reading environment variables");
+{
+
+  # Note - we need to keep the path around for windows
+  my $path = $ENV{PATH};
+  local undef %ENV;
+  $ENV{PATH}   = $path; 
+  $ENV{cow}    = 'moo';
+  $ENV{pig}    = 'oink';
+  $ENV{cowpig} = 'moink';
+
+language_output_is("tcl",<<'TCL',<<"OUT","reading environment variables");
   parray env
 TCL
+env(PATH)   = $path
 env(cow)    = moo
 env(cowpig) = moink
 env(pig)    = oink

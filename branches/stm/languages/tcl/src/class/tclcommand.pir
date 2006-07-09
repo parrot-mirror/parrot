@@ -30,19 +30,20 @@ Define the attributes required for the class.
    .local pmc compile
   .get_from_HLL(compile,'_tcl','compile_dispatch')
 
-
-   .local string pir_code, args, inlined, dynamic, invalid, error
-   pir_code = "# src/class/tclcommand.pir :: compile\n"
+   .local string args, arg_code
+   .local pmc pir_code, dynamic, error, inlined, invalid
    args     = ""
-   inlined  = ""
-   dynamic  = ""
-   invalid  = ""
-   error    = ""
+   arg_code = ""
+   pir_code = new 'TclCodeString'
+   inlined  = new 'TclCodeString'
+   dynamic  = new 'TclCodeString'
+   invalid  = new 'TclCodeString'
+   error    = new 'TclCodeString'
 
    .local string retval
    # Generate partial code for each of our arguments
    .local int ii, num_args, result_reg
-   num_args = self 
+   num_args = elements self 
    ii = 0
    .local pmc compiled_args
    compiled_args = new "TclList"
@@ -61,7 +62,7 @@ arg_loop:
    $P0 = $S0
    push compiled_args, $P0
    register_num = result_reg + 1 # Otherwise we can overlap results.
-   args .= retval 
+   arg_code .= retval 
    inc ii 
    goto arg_loop
 
@@ -81,6 +82,7 @@ arg_const:
    goto arg_loop
 
 arg_loop_done:
+   args = join ", ", compiled_args
    inc register_num
    .local int result_num
    result_num = register_num
@@ -104,128 +106,70 @@ arg_loop_done:
 
    .local pmc epoch
    .get_from_HLL(epoch, '_tcl', 'epoch')
-   $S0 = epoch
-   inlined .= "if epoch != "
-   inlined .= $S0
-   inlined .= " goto dynamic_"
-   inlined .= label_num
-   inlined .= "\n"
+   inlined.emit("  if epoch != %0 goto dynamic_%1", epoch, label_num)
    inlined .= retval
+   $S0 = "  goto end_%0"
+   inlined.emit($S0, label_num)
 
-   inlined .= "goto end_"
-   inlined .= label_num
-   inlined .= "\n"
    inlineable = 1
 dynamic_command:
-   dynamic .= ".local pmc command\n"
+   dynamic.emit("  .local pmc command")
    .local int name_register
    name_register = register_num + 1
    (name_register,retval) = compile(name_register,name)
 
    dynamic .= retval
-   $S0 = name_register
-   $S1 = "$P"
-   $S1 .= $S0
 
-   $S2 = "$S"
-   $S2 .= $S0
+   dynamic.emit(<<'END_PIR', label_num, name_register)
+    .local pmc namespace_%0
+    namespace_%0 = split(colons, $P%1)
+    $S0 = ""
+    if $P%1 == "" goto find_%0
+    $S0 = pop namespace_%0
+    $I0 = elements namespace_%0
+    if $I0 != 1 goto find_%0
+    $S1 = namespace_%0[0]
+    if $S1 != "" goto find_%0
+    $S1 = shift namespace_%0
+find_%0:
+    $S0 = '&' . $S0
+    push_eh invalid_%0
+    command = find_global namespace_%0, $S0
+    clear_eh
+END_PIR
+   dynamic.emit("  if_null command, invalid_%0", label_num)
+   dynamic.emit("  $P%0 = command(%1)", result_num, args)
+   dynamic.emit("  goto end_%0", label_num)
 
-   # Get a string version of the name
-   dynamic .= $S2
-   dynamic .= "="
-   dynamic .= $S1
-   dynamic .= "\n"
-   
-   # Prepend a "&"
-   dynamic .= $S2
-   dynamic .= " = \"&\" . "
-   dynamic .= $S2
-   dynamic .= "\n"
-
-   dynamic .= ".get_from_HLL(command,'tcl',"
-   dynamic .= $S2
-   dynamic .= ")\nif_null command, invalid_"
-   dynamic .= label_num
-   dynamic .= "\n$P"
-   $S0 = result_num
-   dynamic .= $S0
-   dynamic .= " = command("
-
-   ii = 0
-elem_loop:
-   if ii == num_args goto elem_loop_done   
-   $S0 = compiled_args[ii]
-   dynamic .= $S0
-   inc ii 
-   if ii == num_args goto elem_loop_done
-   dynamic .= ","
-   goto elem_loop 
-elem_loop_done:
-   dynamic .= ")\ngoto end_"
-   dynamic .= label_num
-   dynamic .= "\n"
-
-   invalid .= ".local pmc interactive\n"
-   invalid .= ".get_from_HLL(interactive,'tcl','$tcl_interactive')\n"
-   invalid .= "unless interactive goto err_command"
-   invalid .= label_num
-   invalid .= "\n"
-   invalid .= ".local pmc unk\nunk=find_global '&unknown'\n"
-   invalid .= "unk($P"
+   invalid.emit("  .local pmc interactive")
+   invalid.emit("  .get_from_HLL(interactive,'tcl','$tcl_interactive')")
+   invalid.emit("  unless interactive goto err_command%0", label_num)
+   invalid.emit("  .local pmc unk")
+   invalid.emit("  unk=find_global '&unknown'")
    $S1 = name_register
-   invalid .= $S1
-   
-   ii = 0
-unk_elem_loop:
-   if ii == num_args goto unk_elem_loop_done   
-   $S1 = compiled_args[ii]
-   invalid .= ","
-   invalid .= $S1
-   inc ii 
-   goto unk_elem_loop 
-unk_elem_loop_done:
-   invalid .= ")\n"
-   invalid .= "goto end_"
-   invalid .= label_num
-   invalid .= "\n"
+   $S1 = "$P" . $S1
+   unshift compiled_args, $S1
+   $S0 = join ", ", compiled_args
+   invalid.emit("  unk(%0)", $S0)
+   invalid.emit("  goto end_%0", label_num)
 
-   error .= "err_command"
-   error .= label_num
-   error .= ":\n$S"
-   $S0 = register_num
-   error .= $S0
-   error .= "=$P"
-   $S1 = name_register
-   error .= $S1
-   error .= "\n$S"
-   error .= $S0
-   error .= "=concat \"invalid command name \\\"\" ,"
-   error .= "$S"
-   error .= $S0
-   error .= "\n$S"
-   error .= $S0
-   error .= ".=\"\\\"\"\n.throw($S"
-   error .= $S0
-   error .= ")\n"  
+   error.emit("err_command%0:", label_num)
+   error.emit("  $S0 = $P%0", name_register)
+   error.emit("  $S0 = concat \"invalid command name \\\"\", $S0")
+   error.emit("  $S0 .= \"\\\"\"")
+   error.emit("  .throw($S0)")
 
-   pir_code .= args
-   pir_code .= "start_"
-   pir_code .= label_num
-   pir_code .= ":\n"
+   pir_code = ""
+   pir_code .= arg_code
+   pir_code.emit("start_%0:", label_num)
    pir_code .= inlined
-   pir_code .= "dynamic_"
-   pir_code .= label_num
-   pir_code .= ":\n"
+   pir_code.emit("dynamic_%0:", label_num)
    pir_code .= dynamic
-   pir_code .= "invalid_"
-   pir_code .= label_num
-   pir_code .= ":\n"
+   pir_code.emit("invalid_%0:", label_num)
    pir_code .= invalid
    pir_code .= error
    # return the code and the new register_num 
-   pir_code .= "end_"
-   pir_code .= label_num
-   pir_code .= ":\n"
+   pir_code.emit("end_%0:", label_num)
 
 done:
   .return (register_num,pir_code)
