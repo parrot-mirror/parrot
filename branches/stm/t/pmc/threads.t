@@ -45,7 +45,7 @@ if ($^O eq "cygwin" ) {
     }
 }
 if ($platforms{$^O}) {
-   plan tests => 14;
+   plan tests => 16;
 }
 else {
    plan skip_all => "No threading yet or test not enabled for '$^O'";
@@ -525,6 +525,177 @@ ok beta2
 ok beta3
 OUTPUT
 
+
+pir_output_is(<<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass not built-in");
+.namespace [ 'Foo' ]
+
+.sub foometh :method
+    print "called Foo's foometh\n"
+.end
+
+.sub barmeth :method
+    print "called Foo's barmeth\n"
+.end
+
+.namespace [ 'Bar' ]
+
+.sub barmeth :method
+    print "called Bar's barmeth\n"
+.end
+
+.sub __get_string :method
+    .return ("A Bar")
+.end
+
+.namespace [ 'main' ]
+
+.sub init 
+    $P1 = newclass 'Foo'
+    addattribute $P1, 'foo1'
+    addattribute $P1, 'foo2'
+    $P2 = subclass $P1, 'Bar'
+    addattribute $P2, 'bar1'
+.end
+
+.sub thread_test_func
+    $I0 = find_type 'Bar'
+    $P0 = new $I0
+    print $P0
+    print "\n"
+    $P0.'barmeth'()
+    $P0.'foometh'()
+    $I0 = isa $P0, 'Integer'
+    print "Integer? "
+    print $I0
+    print "\n"
+    $I0 = isa $P0, 'Foo'
+    print "Foo? "
+    print $I0
+    print "\n"
+    $I0 = isa $P0, 'Bar'
+    print "Bar? "
+    print $I0
+    print "\n"
+.end
+
+.include 'cloneflags.pasm'
+.sub main :main
+    init()
+
+    .local pmc thread
+    thread = new ParrotThread
+    .local pmc _thread_func
+    _thread_func = find_global 'main', 'thread_test_func'
+    $I0 = .PARROT_CLONE_CODE
+    bor $I0, $I0, .PARROT_CLONE_CLASSES
+    print "in thread:\n"
+    thread.'run'($I0, _thread_func)
+    thread.'join'()
+    print "in main:\n"
+    _thread_func()
+.end
+CODE
+in thread:
+A Bar
+called Bar's barmeth
+called Foo's foometh
+Integer? 0
+Foo? 1
+Bar? 1
+in main:
+A Bar
+called Bar's barmeth
+called Foo's foometh
+Integer? 0
+Foo? 1
+Bar? 1
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass built-in");
+.namespace [ 'Foo' ]
+
+.sub foometh :method
+    print "called Foo's foometh\n"
+.end
+
+.sub barmeth :method
+    print "called Foo's barmeth\n"
+.end
+
+.namespace [ 'Bar' ]
+
+.sub barmeth :method
+    print "called Bar's barmeth\n"
+.end
+
+.sub __get_string :method
+    .return ("A Bar")
+.end
+
+.namespace [ 'main' ]
+
+.sub init 
+    $P0 = getclass .Integer
+    $P1 = subclass $P0, 'Foo'
+    addattribute $P1, 'foo1'
+    addattribute $P1, 'foo2'
+    $P2 = subclass $P1, 'Bar'
+    addattribute $P2, 'bar1'
+.end
+
+.sub thread_test_func
+    $I0 = find_type 'Bar'
+    $P0 = new $I0
+    print $P0
+    print "\n"
+    $P0.'barmeth'()
+    $P0.'foometh'()
+    $I0 = isa $P0, 'Integer'
+    print "Integer? "
+    print $I0
+    print "\n"
+    $I0 = isa $P0, 'Foo'
+    print "Foo? "
+    print $I0
+    print "\n"
+    $I0 = isa $P0, 'Bar'
+    print "Bar? "
+    print $I0
+    print "\n"
+.end
+
+.include 'cloneflags.pasm'
+.sub main :main
+    init()
+
+    .local pmc thread
+    thread = new ParrotThread
+    .local pmc _thread_func
+    _thread_func = find_global 'main', 'thread_test_func'
+    $I0 = .PARROT_CLONE_CODE
+    bor $I0, $I0, .PARROT_CLONE_CLASSES
+    print "in thread:\n"
+    thread.'run'($I0, _thread_func)
+    thread.'join'()
+    print "in main:\n"
+    _thread_func()
+.end
+CODE
+in thread:
+A Bar
+called Bar's barmeth
+called Foo's foometh
+Integer? 1
+Foo? 1
+Bar? 1
+in main:
+A Bar
+called Bar's barmeth
+called Foo's foometh
+Integer? 1
+Foo? 1
+Bar? 1
+OUTPUT
 
 pir_output_is(<<'CODE', <<'OUT', 'multi-threaded strings via SharedRef');
 .sub main :main

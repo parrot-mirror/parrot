@@ -44,6 +44,8 @@ Clones the interpreter as specified by the flags.
 void
 clone_interpreter(Parrot_Interp d, const Parrot_Interp s, Parrot_clone_flags flags)
 {
+    /* we block DOD runs while cloning since C<d> is not yet running */
+    Parrot_block_DOD(d);
     if (flags & PARROT_CLONE_RUNOPS) {
         d->run_core = s->run_core;
     }
@@ -62,12 +64,22 @@ clone_interpreter(Parrot_Interp d, const Parrot_Interp s, Parrot_clone_flags fla
     }
 
     if (flags & PARROT_CLONE_CLASSES) {
-        /* XXX FIXME */
+        INTVAL i;
+        for (i = 0; i < s->n_vtable_max; ++i) {
+            if (s->vtables[i] && s->vtables[i]->class &&
+                    PObj_is_class_TEST(s->vtables[i]->class)) {
+                /* Cloning the class into the new interpreter ought
+                 * to be sufficient to instantiate the class.
+                 */
+                (void) Parrot_clone(d, s->vtables[i]->class);
+            }
+        }
     }
 
     if (flags & PARROT_CLONE_GLOBALS) {
         pt_clone_globals(d, s);
     }
+    Parrot_unblock_DOD(d);
 }
 
 
