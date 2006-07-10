@@ -18,7 +18,7 @@ my $library = <<'CODE';
 
 .namespace ['STMQueue']
 
-.sub __onload :immediate
+.sub __onload 
     .local pmc class
     $I0 = find_type 'STMQueue'
     if $I0 goto done
@@ -166,8 +166,6 @@ do_ret:
     .local pmc result
     .local pmc length
 
-    __onload() # FIXME XXX workaround
-
     $P0 = getattribute self, 'array'
     $I0 = $P0
     length = new Integer
@@ -191,6 +189,9 @@ CODE
 pir_output_is($library . <<'CODE', <<'OUTPUT', "Single-threaded case");
 .sub main :main
     .local pmc queue
+
+    $P0 = find_global 'STMQueue', '__onload'
+    $P0()
 
     $I0 = find_type 'STMQueue'
     $P0 = new Integer
@@ -266,6 +267,9 @@ not_okay:
     .local int addThreadId
     .local int removeThreadId
 
+    $P0 = find_global 'STMQueue', '__onload'
+    $P0()
+
     _add = global "adder"
     _remove = global "remover"
 
@@ -334,6 +338,9 @@ no_sleep:
      
     .local int addThreadId
     .local int removeThreadId
+
+    $P0 = find_global 'STMQueue', '__onload'
+    $P0()
 
     _add = global "adder"
     _remove = global "remover"
@@ -413,6 +420,9 @@ no_sleep:
      
     .local int addThreadId
     .local int removeThreadId
+
+    $P0 = find_global 'STMQueue', '__onload'
+    $P0()
 
     _add = global "adder"
     _remove = global "remover"
