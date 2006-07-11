@@ -260,6 +260,7 @@ Create the class from the thawed parents and attributes array.
         PMC * class;
         PMC *parents, *attribs, *old;
         PMC **class_data;
+        int parent_not_class = 0;
 
         class = SELF;
         class_data = (PMC**)(PMC_data(class));
@@ -277,8 +278,12 @@ Create the class from the thawed parents and attributes array.
         /* TODO compare elements */
         if (!nold) {
             for (i = 0; i < n; ++i) {
-                Parrot_add_parent(INTERP, class,
-                        VTABLE_get_pmc_keyed_int(INTERP, parents, i));
+                PMC *parent_class = VTABLE_get_pmc_keyed_int(INTERP, parents, i);
+                if (!PObj_is_class_TEST(parent_class)) {
+                    parent_not_class++;
+                    parent_class = parent_class->vtable->class;
+                }
+                Parrot_add_parent(INTERP, class, parent_class);
             }
         }
         /*
@@ -297,7 +302,11 @@ Create the class from the thawed parents and attributes array.
         /* TODO compare attribs */
 
         if (!nold) {
-            for (i = 0; i < n; ++i) {
+            /* non-class parents already have an extra attribute for
+             * delegating, which will have already been created by 
+             * Parrot_add_parent() and must be first
+             */
+            for (i = parent_not_class ? 1 : 0; i < n; ++i) {
                 Parrot_add_attribute(INTERP, class,
                         VTABLE_get_string_keyed_int(INTERP, attribs, i));
             }
