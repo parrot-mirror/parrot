@@ -30,7 +30,7 @@ sub runstep
         my ( $suffix ) = $f =~ /test_(\w+)/;
         $f = "config/auto/cpu/ppc/$f";
         cc_gen($f);
-        eval(cc_build("-DPARROT_CONFIG_TEST"));
+        eval { cc_build("-DPARROT_CONFIG_TEST") };
         if ($@) {
             print " $@ " if $verbose;
         } else {
