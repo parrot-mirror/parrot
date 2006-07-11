@@ -188,7 +188,8 @@ rebuild_attrib_stuff(Interp* interpreter, PMC *class)
 
 /*
 
-=item C<static void create_deleg_pmc_vtable(Interp *, PMC *class, STRING *name)>
+=item C<static void create_deleg_pmc_vtable(Interp *, PMC *class, PMC *class_name, 
+    int full)>
 
 Create a vtable that dispatches either to the contained PMC in the first
 attribute (deleg_pmc) or to an overridden method (delegate), depending
@@ -852,7 +853,7 @@ class_mro_merge(Interp* interpreter, PMC *seqs)
     PMC *res, *seq, *cand, *nseqs, *s;
     INTVAL i, j, k;
     cand = NULL; /* silence compiler uninit warning */
-
+    
     res = pmc_new(interpreter, enum_class_ResizablePMCArray);
     while (1) {
         nseqs = not_empty(interpreter, seqs);
@@ -908,7 +909,8 @@ create_class_mro(Interp* interpreter, PMC *class)
     bases = get_attrib_num(PMC_data(class), PCD_PARENTS);
     for (i = 0; i < VTABLE_elements(interpreter, bases); ++i) {
         PMC * const base = VTABLE_get_pmc_keyed_int(interpreter, bases, i);
-        PMC * const lmap = create_class_mro(interpreter, base);
+        PMC * const lmap = PObj_is_class_TEST(base) ?
+            create_class_mro(interpreter, base) : base->vtable->mro;
         VTABLE_push_pmc(interpreter, lall, lmap);
     }
     lparents = VTABLE_clone(interpreter, bases);
@@ -923,8 +925,26 @@ Parrot_add_parent(Interp* interpreter, PMC *class, PMC *parent)
 
     if (!PObj_is_class_TEST(class))
         internal_exception(1, "Class isn't a ParrotClass");
-    if (!PObj_is_class_TEST(parent))
+    if (!PObj_is_class_TEST(parent) && parent == parent->vtable->class) {
+        /* Permit inserting non-classes so at least thaw'ing classes
+         * is easy. Adding these parents after classes have been 
+         * subclassed is dangerous, however.
+         */
+        PMC *class_name;
+
+        if (ATTRIB_COUNT(class) != 0) {
+            internal_exception(1, "Subclassing built-in type too late");
+        }
+        Parrot_add_attribute(interpreter, class,
+            CONST_STRING(interpreter, "__value"));
+        class_name = pmc_new(interpreter, enum_class_String);
+        VTABLE_set_string_native(interpreter, class_name,
+            VTABLE_name(interpreter, class)); 
+        create_deleg_pmc_vtable(interpreter, class, class_name, 1);
+    } else if (!PObj_is_class_TEST(parent)) {
         internal_exception(1, "Parent isn't a ParrotClass");
+    }
+
 
     current_parent_array = get_attrib_num(PMC_data(class), PCD_PARENTS);
     VTABLE_push_pmc(interpreter, current_parent_array, parent);
