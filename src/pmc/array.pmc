@@ -1317,6 +1317,8 @@ Recursively make the array read-only and shared.
 
         /* XXX FIXME workaround lack of metadata sharing */
         PMC_metadata(SELF) = NULL;
+
+        return ret;
     }
 }
 

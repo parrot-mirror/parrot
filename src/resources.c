@@ -493,7 +493,7 @@ Parrot_in_memory_pool(Interp *interpreter, void *bufstart) {
     struct Memory_Block *cur_block;
     cur_block = pool->top_block;
     while (cur_block) {
-        if (bufstart >= cur_block->start && bufstart < cur_block->start 
+        if ((char *)bufstart >= cur_block->start && (char *) bufstart < cur_block->start 
                 + cur_block->size) {
             return 1;
         }

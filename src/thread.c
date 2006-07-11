@@ -288,8 +288,6 @@ thread_func(void *arg)
     PMC *sub;
     PMC *sub_arg;
     Parrot_exception exp;
-    PMC *except_handler;
-
 
     Parrot_Interp interpreter = PMC_data(self);
     Parrot_block_DOD(interpreter);
@@ -424,7 +422,7 @@ pt_clone_globals(Parrot_Interp d, const Parrot_Interp s)
 /*
 
 =item C<void
-pt_thread_prepare_for_run(Parrot_Interp d, Parrot_Interp s)>
+pt_thread_prepare_for_run(Parrot_Interp d, const Parrot_Interp s)>
 
 Setup code, and TODO ...
 
@@ -434,7 +432,6 @@ Setup code, and TODO ...
 void
 pt_thread_prepare_for_run(Parrot_Interp d, const Parrot_Interp s)
 {
-    /* pt_clone_code(d, s); */ /* XXX */
     Parrot_setup_event_func_ptrs(d);
 }
 
@@ -498,7 +495,6 @@ int
 pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)
 {
     PMC *old_dest_interp;
-    assert(dest_interp);
     Parrot_Interp interpreter = PMC_data(dest_interp);
 
     Parrot_block_GC(interpreter);
@@ -976,14 +972,16 @@ pt_thread_join(Parrot_Interp parent, UINTVAL tid)
             | THREAD_STATE_JOINED)) &&
          !(interpreter->thread_data->state & THREAD_STATE_NOT_STARTED)) ||
             interpreter->thread_data->state == THREAD_STATE_FINISHED) {
-        PMC *retval = NULL;
+        void *raw_retval = NULL;
+        PMC *retval;
         interpreter->thread_data->state |= THREAD_STATE_JOINED;
         while (!(interpreter->thread_data->state & THREAD_STATE_FINISHED)) {
             interpreter->thread_data->joiner = parent;
             pt_thread_wait(parent);
         }
         UNLOCK(interpreter_array_mutex);
-        JOIN(interpreter->thread_data->thread, retval);
+        JOIN(interpreter->thread_data->thread, raw_retval);
+        retval = raw_retval;
         /*
          * we need to push a cleanup handler here: if cloning
          * of the retval fails (e.g. it's a NULLPMC) this lock
