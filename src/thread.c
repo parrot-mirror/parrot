@@ -495,7 +495,7 @@ int
 pt_thread_run(Parrot_Interp interp, PMC* dest_interp, PMC* sub, PMC *arg)
 {
     PMC *old_dest_interp;
-    PMC * const parent;
+    PMC *parent;
     Parrot_Interp interpreter = PMC_data(dest_interp);
 
     Parrot_block_GC(interpreter);
