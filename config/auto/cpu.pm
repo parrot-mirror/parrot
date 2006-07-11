@@ -19,7 +19,7 @@ use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
-use Parrot::Configure::Step qw(copy_if_diff);
+use Parrot::Configure::Step;
 use Carp;
 
 $description = 'Running CPU specific stuff';
@@ -36,6 +36,8 @@ sub runstep
     }
 
     my $verbose = $conf->options->get('verbose');
+
+    $conf->data->add(' ', TEMP_atomic_o => ''); # assure a default
 
     my $hints = "auto::cpu::" . $conf->data->get('cpuarch') . "::auto";
 
