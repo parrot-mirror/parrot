@@ -16,14 +16,14 @@
 #define ATOMIC_GCC_PCC_H_GAURD
 
 typedef struct {
-    volatile void *val;
+    void * volatile val;
 } Parrot_atomic_pointer;
 
-#define ATOMIC_PTR_GET(result, a) result = (a).val
+#define ATOMIC_PTR_GET(result, a) result = (void *) (a).val
 
-#define ATOMIC_PTR_SET(a, b) (a).val = b
+#define ATOMIC_PTR_SET(a, b) (a).val = (void *) (b)
 
-inline static void *parrot_ppc_cmpset(volatile void **ptr,
+inline static void *parrot_ppc_cmpset(void * volatile *ptr,
                                       void *expect, void *update)
 {
     void *tmp;
@@ -88,14 +88,14 @@ typedef struct {
 
 #define ATOMIC_INT_DESTROY(a)
 
-#define ATOMIC_INT_GET(reuslt, a) result = (a).val
+#define ATOMIC_INT_GET(result, a) result = (a).val
 
 #define ATOMIC_INT_SET(a, b) (a).val = b
 
 #define ATOMIC_INT_CAS(result, a, expect, update) \
     do { \
         if (parrot_ppc_cmpset( \
-                (void **) &(a).val, (void *) expect, \
+                (void * volatile *) &(a).val, (void *) expect, \
                 (void *) update) == (void *) expect) { \
             result = 1; \
         } else { \

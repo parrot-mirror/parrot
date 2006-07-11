@@ -689,13 +689,13 @@ void Parrot_STM_mark_transaction(Interp *interp) {
     for (i = 0; i <= log->last_write; ++i) {
         PMC *value = get_write(interp, log, i)->value;
         if (value) 
-            pobject_lives(interp, value);
+            pobject_lives(interp, (PObj*) value);
     }
 
     for (i = 0; i <= log->last_read; ++i) {
         PMC *value = get_read(interp, log, i)->value;
         if (value)
-            pobject_lives(interp, value);
+            pobject_lives(interp, (PObj*) value);
     }
 }
 
@@ -715,10 +715,10 @@ void Parrot_STM_mark_pmc_handle(Interp *interp, Parrot_STM_PMC_handle handle) {
     }
     STM_TRACE_SAFE("mark handle %p", handle);
     /* XXX FIXME is this enough? What about shared status? */
-    pobject_lives(interp, handle);
+    pobject_lives(interp, (PObj*) handle);
     value = handle->value;
     if (!PMC_IS_NULL(value)) {
-        pobject_lives(interp, value);
+        pobject_lives(interp, (PObj*) value);
     }
 }
 
