@@ -118,7 +118,7 @@ make_local_args_copy(Parrot_Interp interpreter, Parrot_Interp old_interp, PMC *a
 /*
 
 =item C<PMC *
-pt_shared_fixup(Parrot_Interp interpreter, PMC *pmc)
+pt_shared_fixup(Parrot_Interp interpreter, PMC *pmc)>
 
 Fixup a PMC to be sharable. Right now, reassigns the vtable to one
 owned by some master interpreter, so the PMC can be safely reused

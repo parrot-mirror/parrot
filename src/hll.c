@@ -66,6 +66,22 @@ enum {
     e_HLL_MAX
 } HLL_enum_t;
 
+/* for shared HLL data, do COW stuff */
+#define START_READ_HLL(interpreter, hll_info)
+#define END_READ_HLL(interpreter, hll_info)
+#define START_WRITE_HLL(interpreter, hll_info) \
+    do { \
+        if (PMC_sync(interpreter->HLL_info)) { \
+            hll_info = interpreter->HLL_info = \
+                Parrot_clone(interpreter, interpreter->HLL_info); \
+            if (PMC_sync(interpreter->HLL_info)) { \
+                mem_internal_free(PMC_sync(interpreter->HLL_info)); \
+            } \
+        } \
+    } while (0)
+#define END_WRITE_HLL(interpreter, hll_info)
+
+
 static STRING*
 string_as_const_string(Interp* interpreter, STRING *src)
 {
@@ -85,8 +101,10 @@ Parrot_register_HLL(Interp *interpreter,
     idx = Parrot_get_HLL_id(interpreter, hll_name);
     if (idx >= 0)
         return idx;
-    /* TODO LOCK or disallow in threads */
     hll_info = interpreter->HLL_info;
+
+    START_WRITE_HLL(interpreter, hll_info);
+
     idx = VTABLE_elements(interpreter, hll_info);
     /*
      * ATT: all items that are owned by the HLL_info structure
@@ -134,6 +152,7 @@ Parrot_register_HLL(Interp *interpreter,
     }
 
     /* UNLOCK */
+    END_WRITE_HLL(interpreter, hll_info);
 
     return idx;
 }
@@ -144,16 +163,46 @@ Parrot_get_HLL_id(Interp* interpreter, STRING *hll_name)
     INTVAL i;
 
     PMC * const hll_info = interpreter->HLL_info;
-    const INTVAL nelements = VTABLE_elements(interpreter, hll_info);
+    INTVAL nelements;
+
+    START_READ_HLL(interpreter, hll_info);
+
+    nelements = VTABLE_elements(interpreter, hll_info);
 
     for (i = 0; i < nelements; ++i) {
         PMC * const entry = VTABLE_get_pmc_keyed_int(interpreter, hll_info, i);
         PMC * const name_pmc = VTABLE_get_pmc_keyed_int(interpreter, entry, e_HLL_name);
         STRING * const name = VTABLE_get_string(interpreter, name_pmc);
         if (!string_equal(interpreter, name, hll_name))
-            return i;
+            break;
     }
-    return -1;
+    END_READ_HLL(interpreter, hll_info);
+
+    return i < nelements ? i : -1;
+}
+
+STRING *
+Parrot_get_HLL_name(Interp *interpreter, INTVAL id)
+{
+    INTVAL i;
+    PMC * const hll_info = interpreter->HLL_info;
+    INTVAL nelements;
+    STRING *ret;
+
+    nelements = VTABLE_elements(interpreter, hll_info);
+    if (id < 0 || id >= nelements) {
+        ret = NULL;
+    } else {
+        PMC *entry;
+        PMC *name_pmc;
+        START_READ_HLL(interpreter, hll_info);
+        entry = VTABLE_get_pmc_keyed_int(interpreter, hll_info, id);
+        name_pmc = VTABLE_get_pmc_keyed_int(interpreter, entry, e_HLL_name);
+        ret = VTABLE_get_string(interpreter, name_pmc);
+        END_READ_HLL(interpreter, hll_info);
+    }
+
+    return ret;
 }
 
 void
@@ -163,18 +212,29 @@ Parrot_register_HLL_type(Interp *interpreter, INTVAL hll_id,
     PMC *entry, *type_hash;
     Hash *hash;
 
-    PMC * const hll_info = interpreter->HLL_info;
+    PMC * hll_info = interpreter->HLL_info;
     const INTVAL n = VTABLE_elements(interpreter, hll_info);
     if (hll_id >= n) {
         real_exception(interpreter, NULL, E_ValueError,
                 "no such HLL id (%vd)", hll_id);
     }
+
+    if (PMC_sync(hll_info)) {
+        /* the type might already be registered in a non-conflicting way,
+         * in which case we can avoid copying
+         */
+        if (hll_type == Parrot_get_HLL_type(interpreter, hll_id, core_type)) {
+            return;
+        }
+    }
+    START_WRITE_HLL(interpreter, hll_info);
     entry = VTABLE_get_pmc_keyed_int(interpreter, hll_info, hll_id);
     assert(!PMC_IS_NULL(entry));
     type_hash = VTABLE_get_pmc_keyed_int(interpreter, entry, e_HLL_typemap);
     assert(!PMC_IS_NULL(type_hash));
     hash = PMC_struct_val(type_hash);
     parrot_hash_put(interpreter, hash, (void*)core_type, (void*)hll_type);
+    END_WRITE_HLL(interpreter, hll_info);
 }
 
 INTVAL
@@ -197,13 +257,17 @@ Parrot_get_HLL_type(Interp *interpreter, INTVAL hll_id, INTVAL core_type)
         real_exception(interpreter, NULL, E_ValueError,
                 "no such HLL id (%vd)", hll_id);
     }
+    START_READ_HLL(interpreter, hll_info);
     entry = VTABLE_get_pmc_keyed_int(interpreter, hll_info, hll_id);
+    END_READ_HLL(interpreter, hll_info);
     type_hash = VTABLE_get_pmc_keyed_int(interpreter, entry, e_HLL_typemap);
-    if (PMC_IS_NULL(type_hash))
+    if (PMC_IS_NULL(type_hash)) {
         return core_type;
+    }
     hash = PMC_struct_val(type_hash);
-    if (!hash->entries)
+    if (!hash->entries) {
         return core_type;
+    }
     b = parrot_hash_get_bucket(interpreter, hash, (void*)core_type);
     if (b)
         return (INTVAL) b->value;
@@ -239,20 +303,36 @@ Parrot_get_ctx_HLL_namespace(Interp *interpreter)
 {
     parrot_context_t *ctx = CONTEXT(interpreter->ctx);
 
-    return VTABLE_get_pmc_keyed_int(interpreter,
-                                    interpreter->HLL_namespace,
-                                    ctx->current_HLL);
+    return Parrot_get_HLL_namespace(interpreter, ctx->current_HLL);
 }
 
 PMC*
 Parrot_get_HLL_namespace(Interp *interpreter, int hll_id)
 {
+    PMC *ns_hash;
+
     if (hll_id == PARROT_HLL_NONE)
         return interpreter->root_namespace;
 
-    return VTABLE_get_pmc_keyed_int(interpreter,
-                                    interpreter->HLL_namespace,
-                                    hll_id);
+    ns_hash = PMCNULL;
+    if (PMC_int_val(interpreter->HLL_namespace) >= hll_id) {
+        ns_hash = VTABLE_get_pmc_keyed_int(interpreter,
+                                interpreter->HLL_namespace,
+                                hll_id);
+    }
+    if (PMC_IS_NULL(ns_hash) || ns_hash->vtable->base_type == enum_class_Undef) {
+        /* generate the namespace on demand; needed for children interpreters
+         * sharing the HLL_info
+         */
+        STRING *hll_name;
+        hll_name = Parrot_get_HLL_name(interpreter, hll_id);
+        hll_name = string_downcase(interpreter, hll_name);
+        /* XXX wrong type of namespace object, as in register function */
+        ns_hash = Parrot_make_namespace_gen(interpreter, 
+            PARROT_HLL_NONE, PMCNULL, hll_name);
+        VTABLE_set_pmc_keyed_int(interpreter, interpreter->HLL_namespace, hll_id, ns_hash);
+    }
+    return ns_hash;
 }
 
 /*

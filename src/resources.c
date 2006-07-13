@@ -821,7 +821,7 @@ Parrot_destroy_memory_pools(Interp *interpreter)
 /*
 
 =item C<void
-Parrot_merge_memory_pools(Interp *dest_interp, Interp *source_interp)
+Parrot_merge_memory_pools(Interp *dest_interp, Interp *source_interp)>
 
 Merge the memory pools of C<source_interp> into C<dest_interp>.
 
