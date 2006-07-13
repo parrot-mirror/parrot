@@ -116,8 +116,6 @@ These two methods must be implemented because they are not delegated.
 
 =over 4
 
-/*
-
 =item C<STRING *name()>
 
 Returns the name of the PMC, not the name of the referenced PMC.

@@ -41,6 +41,32 @@ Clones the interpreter as specified by the flags.
 
 */
 
+static 
+void clone_vtable(Parrot_Interp d, const Parrot_Interp s, VTABLE *source, INTVAL entry) {
+    VTABLE *vt_clone;
+    VTABLE *vt_ro_clone;
+    INTVAL type_num;
+
+    /* XXX copy string headers 
+     */
+
+    vt_clone = Parrot_clone_vtable(d, source);
+    vt_clone->mro = NULL;
+    if (source->ro_variant) {
+        vt_ro_clone = Parrot_clone_vtable(d, source->ro_variant);
+        vt_clone->ro_variant = vt_ro_clone;
+        vt_ro_clone->ro_variant = vt_clone;
+        vt_ro_clone->mro = NULL;
+    }
+
+
+    type_num = pmc_register(d, vt_clone->whoami);
+    assert(type_num == entry);
+    d->vtables[entry] = vt_clone;
+    Parrot_create_mro(d, entry);
+}
+
+
 void
 clone_interpreter(Parrot_Interp d, const Parrot_Interp s, Parrot_clone_flags flags)
 {
@@ -55,27 +81,39 @@ clone_interpreter(Parrot_Interp d, const Parrot_Interp s, Parrot_clone_flags fla
         d->debug_flags = s->debug_flags;
     }
 
-    if (flags & PARROT_CLONE_CODE) {
-        pt_clone_code(d, s);
+    if (flags & PARROT_CLONE_HLL) {
+        /* we'd like to share the HLL data. Give it a PMC_sync structure
+           if it doesn't have one already */
+        add_pmc_sync(s, s->HLL_info);
+        d->HLL_info = s->HLL_info;
     }
-
-    if (flags & PARROT_CLONE_LIBRARIES) {
-        /* XXX FIXME */
-    }
-
-    if (flags & PARROT_CLONE_CLASSES) {
+ 
+    if (flags & (PARROT_CLONE_CLASSES | PARROT_CLONE_LIBRARIES)) {
         INTVAL i;
         for (i = 0; i < s->n_vtable_max; ++i) {
             if (s->vtables[i] && s->vtables[i]->class &&
                     PObj_is_class_TEST(s->vtables[i]->class)) {
+                if (!(flags & PARROT_CLONE_CLASSES)) {
+                    continue;
+                }
                 /* Cloning the class into the new interpreter ought
                  * to be sufficient to instantiate the class.
                  */
                 (void) Parrot_clone(d, s->vtables[i]->class);
+            } else if (s->vtables[i] && i >= d->n_vtable_max) {
+                if (!(flags & PARROT_CLONE_LIBRARIES)) {
+                    continue;
+                }
+                /* clone vtable */
+                clone_vtable(d, s, s->vtables[i], i);
             }
         }
     }
 
+    if (flags & PARROT_CLONE_CODE) {
+        pt_clone_code(d, s);
+    }
+   
     if (flags & PARROT_CLONE_GLOBALS) {
         pt_clone_globals(d, s);
     }

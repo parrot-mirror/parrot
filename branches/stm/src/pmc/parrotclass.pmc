@@ -280,6 +280,7 @@ Create the class from the thawed parents and attributes array.
             for (i = 0; i < n; ++i) {
                 PMC *parent_class = VTABLE_get_pmc_keyed_int(INTERP, parents, i);
                 if (!PObj_is_class_TEST(parent_class)) {
+                    assert(!parent_not_class);
                     parent_not_class++;
                     parent_class = parent_class->vtable->class;
                 }
@@ -296,12 +297,12 @@ Create the class from the thawed parents and attributes array.
             n = 0;
         else
             n = VTABLE_elements(INTERP, attribs);
-        if (nold && n != nold)
+        if (nold != parent_not_class && n != nold)
             real_exception(INTERP, NULL, E_AssertionError,
                     "thawed class differs");
         /* TODO compare attribs */
 
-        if (!nold) {
+        if (nold == parent_not_class) {
             /* non-class parents already have an extra attribute for
              * delegating, which will have already been created by 
              * Parrot_add_parent() and must be first

@@ -45,7 +45,7 @@ if ($^O eq "cygwin" ) {
     }
 }
 if ($platforms{$^O}) {
-   plan tests => 16;
+   plan tests => 17;
 }
 else {
    plan skip_all => "No threading yet or test not enabled for '$^O'";
@@ -695,6 +695,65 @@ called Foo's foometh
 Integer? 1
 Foo? 1
 Bar? 1
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_GLOBALS| CLONE_HLL");
+.HLL 'Test', ''
+.sub setup 
+    $P0 = new .Integer
+    $P0 = 42
+    store_global 'x', $P0
+.end
+
+.include 'interpinfo.pasm'
+.sub test
+    $P0 = find_global 'x'
+    if $P0 == 42 goto okay1
+    print "not "
+okay1:
+    print "ok 1\n"
+    $P1 = interpinfo .INTERPINFO_NAMESPACE_ROOT
+    $P1 = $P1['test']
+    $P1 = $P1['x']
+    $P1 = 43
+    if $P0 == 43 goto okay2
+    print "not "
+okay2:
+    print "ok 2\n"
+.end
+
+.HLL '', ''
+
+.include 'cloneflags.pasm'
+
+.sub main :main
+    .local pmc setup
+    .local pmc test
+    setup = interpinfo .INTERPINFO_NAMESPACE_ROOT
+    setup = setup['test']
+    test = setup['test']
+    setup = setup['setup']
+    setup()
+
+    .local pmc thread
+    .local int flags
+    thread = new ParrotThread
+    flags = .PARROT_CLONE_CODE
+    bor flags, flags, .PARROT_CLONE_GLOBALS
+    bor flags, flags, .PARROT_CLONE_HLL
+    print "in thread:\n"
+    thread.'run'(flags, test)
+    thread.'join'()
+    print "in main:\n"
+    test()
+.end
+CODE
+in thread:
+ok 1
+ok 2
+in main:
+ok 1
+ok 2
 OUTPUT
 
 pir_output_is(<<'CODE', <<'OUT', 'multi-threaded strings via SharedRef');

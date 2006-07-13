@@ -467,7 +467,7 @@ store_sub(Interp *interpreter, PMC *ns_key, STRING *ns_name, STRING *sub_name, P
         hll_id = PMC_sub(sub_pmc)->HLL_id;
 
     ns = Parrot_make_namespace_gen(interpreter, hll_id, ns_key, ns_name);
-
+    
     Parrot_store_global_n(interpreter, ns, sub_name, sub_pmc);
 
     if (! PMC_IS_NULL(ns_key))
