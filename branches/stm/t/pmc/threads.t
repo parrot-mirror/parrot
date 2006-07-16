@@ -45,7 +45,7 @@ if ($^O eq "cygwin" ) {
     }
 }
 if ($platforms{$^O}) {
-   plan tests => 17;
+   plan tests => 18;
 }
 else {
    plan skip_all => "No threading yet or test not enabled for '$^O'";
@@ -754,6 +754,80 @@ ok 2
 in main:
 ok 1
 ok 2
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "CLONE_CODE|CLONE_GLOBALS|CLONE_HLL|CLONE_LIBRARIES");
+.HLL 'Perl', 'perl_group'
+
+.include 'interpinfo.pasm'
+
+.sub __unused
+    $P0 = loadlib 'myops_ops'
+.end
+
+.sub test
+    .param pmc passed_value
+    .local int PerlIntType
+    .local pmc the_value
+    PerlIntType = find_type 'PerlInt'
+    the_value = new PerlIntType
+    the_value = 42
+    store_global 'Foo', 'x', the_value
+    $I0 = typeof passed_value
+    $I1 = typeof the_value
+    $I0 = $I0 - $I1
+    print $I0
+    print "\n"
+    .local pmc ns
+    ns = get_namespace ['Foo']
+    $P0 = interpinfo .INTERPINFO_CURRENT_SUB
+    ns = $P0.'get_namespace'()
+    ns = ns['Foo']
+    $P0 = ns['x']
+    if $P0 == the_value goto okay
+    print "not "
+okay:
+    print "ok (equal)\n"
+
+    $I0 = fortytwo
+    print $I0
+    print "\n"
+.end
+
+.include 'cloneflags.pasm'
+
+.sub main :main
+    .local pmc thread
+    .local int flags
+    thread = new ParrotThread
+    flags = .PARROT_CLONE_CODE
+    bor flags, flags, .PARROT_CLONE_GLOBALS
+    bor flags, flags, .PARROT_CLONE_HLL
+    bor flags, flags, .PARROT_CLONE_LIBRARIES
+
+    .local pmc passed
+    .local int PerlIntType
+    PerlIntType = find_type 'PerlInt'
+    passed = new PerlIntType
+    passed = 15
+    
+    .local pmc thread_func
+    thread_func = global 'test'
+    print "in thread:\n"
+    thread.'run'(flags, thread_func, passed)
+    thread.'join'()
+    print "in main:\n"
+    thread_func(passed)
+.end
+CODE
+in thread:
+0
+ok (equal)
+42
+in main:
+0
+ok (equal)
+42
 OUTPUT
 
 pir_output_is(<<'CODE', <<'OUT', 'multi-threaded strings via SharedRef');

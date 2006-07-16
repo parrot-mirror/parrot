@@ -27,6 +27,7 @@ These are the vtable functions for the ParrotInterpreter base class
 
 #include "parrot/parrot.h"
 #include "parrot/embed.h"
+#include "parrot/dynext.h"
 #include <assert.h>
 
 /*
@@ -40,32 +41,6 @@ Clones the interpreter as specified by the flags.
 =cut
 
 */
-
-static 
-void clone_vtable(Parrot_Interp d, const Parrot_Interp s, VTABLE *source, INTVAL entry) {
-    VTABLE *vt_clone;
-    VTABLE *vt_ro_clone;
-    INTVAL type_num;
-
-    /* XXX copy string headers 
-     */
-
-    vt_clone = Parrot_clone_vtable(d, source);
-    vt_clone->mro = NULL;
-    if (source->ro_variant) {
-        vt_ro_clone = Parrot_clone_vtable(d, source->ro_variant);
-        vt_clone->ro_variant = vt_ro_clone;
-        vt_ro_clone->ro_variant = vt_clone;
-        vt_ro_clone->mro = NULL;
-    }
-
-
-    type_num = pmc_register(d, vt_clone->whoami);
-    assert(type_num == entry);
-    d->vtables[entry] = vt_clone;
-    Parrot_create_mro(d, entry);
-}
-
 
 void
 clone_interpreter(Parrot_Interp d, const Parrot_Interp s, Parrot_clone_flags flags)
@@ -87,26 +62,62 @@ clone_interpreter(Parrot_Interp d, const Parrot_Interp s, Parrot_clone_flags fla
         add_pmc_sync(s, s->HLL_info);
         d->HLL_info = s->HLL_info;
     }
- 
-    if (flags & (PARROT_CLONE_CLASSES | PARROT_CLONE_LIBRARIES)) {
+
+    if (flags & (PARROT_CLONE_LIBRARIES | PARROT_CLONE_CLASSES)) {
         INTVAL i;
-        for (i = 0; i < s->n_vtable_max; ++i) {
+        INTVAL start;
+        INTVAL last_remove;
+
+        start = d->n_vtable_max;
+
+        /* copy type registrations to keep type numbers the same */
+        d->class_hash = Parrot_clone(d, s->class_hash);
+        d->n_vtable_max = s->n_vtable_max;
+        if (d->n_vtable_max > d->n_vtable_alloced) {
+            parrot_realloc_vtables(d);
+        }
+
+        last_remove = s->n_vtable_max;
+        for (i = s->n_vtable_max - 1; i >= start; --i) {
+            if (s->vtables[i] && s->vtables[i]->class &&
+                PObj_is_class_TEST(s->vtables[i]->class)) {
+                STRING *class_name;
+                class_name = VTABLE_name(s, s->vtables[i]->class);
+                assert(VTABLE_exists_keyed_str(d, d->class_hash, class_name));
+                VTABLE_delete_keyed_str(d, d->class_hash, class_name);
+                if (last_remove == i + 1) {
+                    --d->n_vtable_max;
+                    last_remove = i;
+                }
+            }
+        }
+    }
+
+    if (flags & PARROT_CLONE_LIBRARIES) {
+        PMC *libs;
+        PMC *lib_iter;
+        INTVAL n, i;
+        libs = VTABLE_get_pmc_keyed_int(s, s->iglobals, IGLOBALS_DYN_LIBS);
+        lib_iter = VTABLE_get_iter(s, libs);
+
+        n = VTABLE_elements(s, libs);
+        for (i = 0; i < n; ++i) {
+            STRING * const key = VTABLE_shift_string(s, lib_iter);
+            PMC * const lib_pmc = VTABLE_get_pmc_keyed_str(s, libs, key);
+
+            (void) Parrot_clone_lib_into(d, s, lib_pmc); 
+        }
+    }
+ 
+    if (flags & PARROT_CLONE_CLASSES) {
+        INTVAL i;        for (i = 0; i < s->n_vtable_max; ++i) {
             if (s->vtables[i] && s->vtables[i]->class &&
                     PObj_is_class_TEST(s->vtables[i]->class)) {
-                if (!(flags & PARROT_CLONE_CLASSES)) {
-                    continue;
-                }
                 /* Cloning the class into the new interpreter ought
                  * to be sufficient to instantiate the class.
                  */
                 (void) Parrot_clone(d, s->vtables[i]->class);
-            } else if (s->vtables[i] && i >= d->n_vtable_max) {
-                if (!(flags & PARROT_CLONE_LIBRARIES)) {
-                    continue;
-                }
-                /* clone vtable */
-                clone_vtable(d, s, s->vtables[i], i);
-            }
+            }  
         }
     }
 
@@ -117,6 +128,7 @@ clone_interpreter(Parrot_Interp d, const Parrot_Interp s, Parrot_clone_flags fla
     if (flags & PARROT_CLONE_GLOBALS) {
         pt_clone_globals(d, s);
     }
+   
     Parrot_unblock_DOD(d);
 }
 
