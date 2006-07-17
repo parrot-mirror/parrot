@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
         int cur;
         ATOMIC_INT_DEC(cur, a_int);
         if (cur != 0x7fff - i - 1) {
-            printf("DEC: error at i=%d\n", i);
+            printf("DEC: error at i=%d / cur=%d\n", i, cur);
             return EXIT_FAILURE;
         }
     }

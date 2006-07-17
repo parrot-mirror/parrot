@@ -893,9 +893,24 @@ PMC *Parrot_STM_read(Interp *interp, Parrot_STM_PMC_handle handle) {
     return read->value;
 }
 
+static int safe_to_clone(Interp *interp, PMC *original) {
+    if (    original->vtable->base_type == enum_class_Integer
+        ||  original->vtable->base_type == enum_class_Undef
+        ||  original->vtable->base_type == enum_class_Float
+        ||  original->vtable->base_type == enum_class_BigInt
+        ||  original->vtable->base_type == enum_class_IntList
+        ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 static PMC *local_pmc_copy(Interp *interp, PMC *original) {
     if (PMC_IS_NULL(original)) {
         return PMCNULL;
+    } else if (safe_to_clone(interp, original)) {
+        return VTABLE_clone(interp, original);
     } else {
         return Parrot_clone(interp, original);
     }
@@ -903,9 +918,12 @@ static PMC *local_pmc_copy(Interp *interp, PMC *original) {
 
 /* Find a write record corresponding to C<handle> in our log or create
  * one if needed.
+ *
+ * If C<overwrite_p> is true, assume we are going to overwrite this record,
+ * so initialize it to PMCNULL.
  */
 static STM_write_record *find_write_record(Interp *interp, STM_tx_log *log,
-        Parrot_STM_PMC_handle handle) {
+        Parrot_STM_PMC_handle handle, int overwrite_p) {
     /* FIXME check for read log or previous tx's write log */
     STM_tx_log_sub *cursub;
     int have_old_value = 0;
@@ -1014,8 +1032,11 @@ static STM_write_record *find_write_record(Interp *interp, STM_tx_log *log,
                 STM_TRACE("... but already aborted anyways");
                 write->saw_version = NULL;
             }
-            /* XXX don't clone when we'll just overwrite anyways (STM_write) */
-            write->value = local_pmc_copy(interp, handle->value);
+            if (overwrite_p) {
+                write->value = PMCNULL;
+            } else {
+                write->value = local_pmc_copy(interp, handle->value);
+            }
         }
     }
 
@@ -1044,7 +1065,7 @@ PMC *Parrot_STM_begin_update(Interp *interp, Parrot_STM_PMC_handle handle) {
         return PMCNULL;
     }
 
-    write = find_write_record(interp, log, handle);
+    write = find_write_record(interp, log, handle, 0);
 
     return write->value;
 }
@@ -1069,7 +1090,7 @@ void Parrot_STM_write(Interp *interp, Parrot_STM_PMC_handle handle, PMC* new_val
         return;
     }
 
-    write = find_write_record(interp, log, handle);
+    write = find_write_record(interp, log, handle, 1);
 
     write->value = new_value;
 }
