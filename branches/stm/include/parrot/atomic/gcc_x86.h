@@ -72,7 +72,8 @@ inline static void *parrot_i386_cmpxchg(void *volatile *ptr, void *expect,
 inline static long parrot_i386_xadd(volatile long *l, long amount)
 {
     long result = amount;
-    __asm__ __volatile__("lock\n" "xaddl %0, %1":"=r"(result), "=m"(*l)
+    __asm__ __volatile__("lock\n" "xaddl %0, %1" : "=r"(result), "=m"(*l) : 
+            "0"(result), "1"(*l)
         );
     return result + amount;
 }
