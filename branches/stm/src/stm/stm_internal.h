@@ -38,8 +38,8 @@ enum {
     STM_STATUS_INVALID = 3
 };
 
-#define STM_MAX_RECORDS 128 /* TODO: remove limitation */
- 
+#define STM_START_RECORDS 32
+
 #define STM_MAX_TX_DEPTH 32 /* TODO: remove limitation */
 
 struct STM_tx_log_sub;
@@ -64,7 +64,9 @@ struct STM_tx_log {
     int last_read;
     /* TODO: probably better to make these a list of hashes (one for each tx) */
     STM_write_record *writes;
+    int writes_alloced;
     STM_read_record *reads;
+    int reads_alloced;
     
     struct waitlist_thread_data *waitlist_data;
 };

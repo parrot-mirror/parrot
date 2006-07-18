@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 8;
+use Parrot::Test tests => 9;
 
 pasm_output_is(<<'CODE', <<'OUTPUT', "empty transactions");
         stm_depth I0
@@ -259,4 +259,85 @@ okay:
 .end
 CODE
 ok
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "Push limits (write and read records)");
+.const int NUM_VALS = 10000
+.sub main :main
+    .local pmc arr
+    .local int i
+    .local pmc sv
+    arr = new FixedPMCArray
+    arr = NUM_VALS
+
+    i = 0
+loop1:
+    sv = new Integer
+    sv = i
+    sv = new STMVar, sv
+    arr[i] = sv
+    inc i
+    if i < NUM_VALS goto loop1
+
+tx_read:
+    stm_start
+    i = 0
+loop_read:
+    sv = arr[i]
+    sv = sv.'get_read'()
+    if sv == i goto okay_rd
+    print "(read) not okay at "
+    print i
+    print "\n"
+okay_rd:
+    inc i
+    if i < NUM_VALS goto loop_read
+    stm_commit tx_read
+
+tx_update:
+    stm_start
+    i = 0
+loop_update:
+    sv = arr[i]
+    sv = sv.'get_update'()
+    if sv == i goto okay_up
+    print "(update) NOT OKAY AT "
+    print i
+    print "\n"
+okay_up:
+    inc i
+    if i < NUM_VALS goto loop_update
+    stm_commit tx_update
+
+tx_write:
+    stm_start
+    i = 0
+loop_write:
+    sv = arr[i]
+    .local pmc tmp
+    tmp = new Integer
+    tmp = -1
+    sv.'set'(tmp)
+    inc i
+    if i < NUM_VALS goto loop_write
+    stm_commit tx_write
+
+tx_read_final:
+    stm_start
+    i = 0
+loop_read_final:
+    sv = arr[i]
+    sv = sv.'get_read'()
+    if sv == -1 goto okay_rf
+    print "(read final) not okay at "
+    print i
+    print "\n"
+okay_rf:
+    inc i
+    if i < NUM_VALS goto loop_read_final
+    stm_commit tx_read_final
+    print "done\n"
+.end
+CODE
+done
 OUTPUT

@@ -296,7 +296,6 @@ thread_func(void *arg)
     sub = PMC_struct_val(self);
     sub_arg = PMC_pmc_val(self);
 
-
     if (setjmp(exp.destination)) {
         Parrot_exception *except;
         /* caught exception */
