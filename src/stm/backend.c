@@ -57,9 +57,10 @@ static STM_tx_log *Parrot_STM_tx_log_alloc(Interp *interp, size_t size) {
     }
     log->inner[0].first_read = log->inner[0].first_write = 0;
 
-    log->writes = mem_sys_allocate(sizeof(STM_write_record) * STM_MAX_RECORDS);
-
-    log->reads = mem_sys_allocate(sizeof(STM_read_record) * STM_MAX_RECORDS);
+    log->writes = mem_sys_allocate(sizeof(STM_write_record) * STM_START_RECORDS);
+    log->writes_alloced = STM_START_RECORDS;
+    log->reads = mem_sys_allocate(sizeof(STM_read_record) * STM_START_RECORDS);
+    log->reads_alloced = STM_START_RECORDS;
 
     log->last_read = log->last_write = -1;
 
@@ -142,9 +143,10 @@ static STM_read_record *get_read(Interp *interp, STM_tx_log *log, int i) {
 static STM_write_record *alloc_write(Interp *interp, STM_tx_log *log) {
     STM_write_record *write;
     int i = ++log->last_write;
-    if (i >= STM_MAX_RECORDS) {
-        /* XXX FIXME resize instead */
-        abort();
+    if (i >= log->writes_alloced) {
+        log->writes_alloced *= 2;
+        log->writes = mem_sys_realloc(log->writes, 
+            sizeof(*log->writes) * log->writes_alloced);
     }
     write = get_write(interp, log, i);
     write->value = NULL;
@@ -154,8 +156,10 @@ static STM_write_record *alloc_write(Interp *interp, STM_tx_log *log) {
 static STM_read_record *alloc_read(Interp *interp, STM_tx_log *log) {
     STM_read_record *read;
     int i = ++log->last_read;
-    if (i >= STM_MAX_RECORDS) {
-        abort();
+    if (i >= log->reads_alloced) {
+        log->reads_alloced *= 2;
+        log->reads = mem_sys_realloc(log->reads,
+            sizeof(*log->reads) * log->reads_alloced);
     }
     read = get_read(interp, log, i);
     read->value = NULL;
