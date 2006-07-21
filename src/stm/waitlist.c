@@ -109,18 +109,12 @@ waitlist_signal_one(struct waitlist_entry *who) {
     struct waitlist_thread_data *thread;
 
     thread = who->thread;
-#if WAITLIST_DEBUG
-    fprintf(stderr, "about to signal %p\n", who);
-#endif
     LOCK(thread->signal_mutex);
-#if WAITLIST_DEBUG
-    fprintf(stderr, "acquired their lock\n");
-#endif
     thread->signaled_p = 1;
     UNLOCK(thread->signal_mutex);
     COND_SIGNAL(*thread->signal_cond);
 #if WAITLIST_DEBUG
-    fprintf(stderr, "signalled them\n");
+    fprintf(stderr, "signalled %p\n", thread);
 #endif
 }
 
@@ -160,6 +154,10 @@ void
 Parrot_STM_waitlist_add_self(Parrot_Interp interp, STM_waitlist *waitlist) {
     struct waitlist_entry *entry;
 
+#if WAITLIST_DEBUG
+    fprintf(stderr, "%p: add to %p\n", interp, waitlist);
+#endif
+
     entry = alloc_entry(interp);
     entry->head = waitlist;
     add_entry(waitlist, entry);
@@ -167,6 +165,9 @@ Parrot_STM_waitlist_add_self(Parrot_Interp interp, STM_waitlist *waitlist) {
 
 void
 Parrot_STM_waitlist_signal(Parrot_Interp interp, STM_waitlist *waitlist) {
+#if WAITLIST_DEBUG
+    fprintf(stderr, "%p: signal %p\n", interp, waitlist);
+#endif
     waitlist_signal_all(waitlist);
 }
 
@@ -174,6 +175,9 @@ void
 Parrot_STM_waitlist_remove_all(Parrot_Interp interp) {
     struct waitlist_thread_data *thr;
     size_t i;
+#if WAITLIST_DEBUG
+    fprintf(stderr, "%p: remove all\n", interp);
+#endif
     thr = get_thread(interp);
     for (i = 0; i < thr->used_entries; ++i) {
         struct waitlist_entry *entry;
@@ -192,10 +196,19 @@ Parrot_STM_waitlist_wait(Parrot_Interp interp) {
     struct waitlist_thread_data *thr;
     thr = get_thread(interp);
     LOCK(thr->signal_mutex);
+#if WAITLIST_DEBUG
+    fprintf(stderr, "%p: got lock, waiting...\n", interp);
+#endif
     while (!thr->signaled_p) {
         pt_thread_wait_with(interp, &thr->signal_mutex);
+#if WAITLIST_DEBUG
+	fprintf(stderr, "%p: woke up\n", interp);
+#endif
     }
     UNLOCK(thr->signal_mutex);
+#if WAITLIST_DEBUG
+    fprintf(stderr, "%p: done waiting.\n", interp);
+#endif
 }
 
 void
