@@ -45,11 +45,10 @@ struct _Shared_gc_info {
 
     Parrot_atomic_int gc_block_level;
 };
-
 /*
 
 =item C<static PMC*
-make_local_copy(Parrot_Interp interpreter, PMC *original)>
+make_local_copy(Parrot_Interp interpreter, Parrot_Interp from, PMC *original)>
 
 Create a local copy of the PMC if necessary. (No copy is made if it
 is marked shared.)
@@ -59,13 +58,22 @@ is marked shared.)
 */
 
 static PMC *
-make_local_copy(Parrot_Interp interpreter, PMC *arg)
+make_local_copy(Parrot_Interp interpreter, Parrot_Interp from, PMC *arg)
 {
     PMC *ret_val;
+    STRING *const _sub = interpreter->vtables[enum_class_Sub]->whoami;
     if (PMC_IS_NULL(arg)) {
         ret_val = PMCNULL;
     } else if (PObj_is_PMC_shared_TEST(arg)) { 
         ret_val = arg;
+    } else if (VTABLE_isa(interpreter, arg, _sub)) {
+        /* this is a workaround for cloning subroutines not actually 
+         * working as one might expect mainly because the segment is
+         * not correctly copied
+         */
+        ret_val = Parrot_clone(interpreter, arg);
+        PMC_sub(ret_val)->seg = PMC_sub(arg)->seg;
+        Parrot_store_sub_in_namespace(interpreter, ret_val);
     } else {
         ret_val = Parrot_clone(interpreter, arg);
     }
@@ -107,7 +115,7 @@ make_local_args_copy(Parrot_Interp interpreter, Parrot_Interp old_interp, PMC *a
     for (i = 0; i < old_size; ++i) {
         PMC *copy;
 
-        copy = make_local_copy(interpreter, 
+        copy = make_local_copy(interpreter, old_interp, 
                 VTABLE_get_pmc_keyed_int(old_interp, args, i));
 
         VTABLE_set_pmc_keyed_int(interpreter, ret_val, i, copy); 
@@ -403,8 +411,9 @@ pt_ns_clone(Parrot_Interp d, PMC *dest_ns, Parrot_Interp s, PMC *source_ns) {
             PMC *dval;
             dval = VTABLE_get_pmc_keyed_str(d, dest_ns, key);
             if (PMC_IS_NULL(dval)) {
-                VTABLE_set_pmc_keyed_str(d, dest_ns, key,
-                    Parrot_clone(d, val));
+                PMC *copy;
+                copy = make_local_copy(d, s, val);
+                VTABLE_set_pmc_keyed_str(d, dest_ns, key, copy);
             }
         }
     }
@@ -1007,7 +1016,7 @@ pt_thread_join(Parrot_Interp parent, UINTVAL tid)
              * XXX should probably acquire the parent's interpreter mutex
              */
             Parrot_block_DOD(parent);
-            parent_ret = make_local_copy(parent, retval);
+            parent_ret = make_local_copy(parent, interpreter, retval);
             /* this PMC is living only in the stack of this currently
              * dying interpreter, so register it in parents DOD registry
              * XXX is this still needed?
