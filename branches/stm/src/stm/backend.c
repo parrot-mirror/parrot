@@ -582,15 +582,30 @@ static int setup_wait(Interp *interp, STM_tx_log *log) {
         read = get_read(interp, log, i);
         Parrot_STM_waitlist_add_self(interp, &read->handle->change_waitlist);
         ATOMIC_PTR_GET(version, read->handle->owner_or_version);
-        if (version != read->saw_version && is_version(version)) {
+	/* the last_version check is in case a conflicting change has
+	 * already been committed. The transaction in progress that holds
+	 * a lock on the current version might abort and thus
+	 * never signal us -- and then be waiting for us causing a deadlock
+	 */
+        if ((version != read->saw_version && is_version(version)) ||
+	    (read->handle->last_version != read->saw_version)) {
             need_wait = 0;
         }
     }
 
     for (i = 0; need_wait && i <= log->last_write; ++i) {
         STM_write_record *write;
+	void *version;
         write = get_write(interp, log, i);
         Parrot_STM_waitlist_add_self(interp, &write->handle->change_waitlist);
+	ATOMIC_PTR_GET(version, write->handle->owner_or_version);
+	/* our lock on the write record may have been revoked and then a parallel
+	 * change committed already.
+	 */
+	if ((version != write->saw_version && is_version(version)) ||
+	    (write->handle->last_version != write->saw_version)) {
+	    need_wait = 0;
+	}
     }
     
     if (!need_wait) {
