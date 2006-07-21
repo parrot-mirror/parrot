@@ -261,20 +261,6 @@ CODE
 ok
 OUTPUT
 
-pir_output_is(<<'CODE', <<'OUTPUT', "stm_commit LABEL, LABEL parses, etc.");
-.sub main :main
-retry:
-    stm_start
-    stm_commit retry, fail_outer
-    print "ok\n"
-    end
-fail_outer:
-    print "should never happen\n"
-.end
-CODE
-ok
-OUTPUT
-
 pir_output_is(<<'CODE', <<'OUTPUT', "Push limits (write and read records)");
 .const int NUM_VALS = 400
 .sub main :main

@@ -40,14 +40,14 @@ If there is no active transaction, execution continues normally.
 
 =cut
 
-inline op stm_validate(label INT) {
+inline op stm_validate(labelconst INT) {
     if (!Parrot_STM_validate(interpreter)) {
         goto OFFSET($1);
     }
     goto NEXT();
 }
 
-=item B<stm_commit>(label INT)
+=item B<stm_commit>(labelconst INT)
 
 Commits the most recently opened transaction. Jumps to $1 if the
 commit fails. (If the outer transaction is invalid, this should succeed
@@ -57,28 +57,11 @@ If stm_commit jumps to $1, then the transaction will have been aborted.
 
 =cut
 
-inline op stm_commit(label INT) {
+inline op stm_commit(labelconst INT) {
     if (!Parrot_STM_commit(interpreter)) {
         goto OFFSET($1); /* retry */
     } 
     goto NEXT();
-}
-
-=item B<stm_commit>(label INT, label INT)
-
-Like the one-argument form, but jumps to $2 if the current transaction cannot
-commit because the outer transaction became invalid.
-
-=cut
-
-inline op stm_commit(label INT, label INT) {
-    if (!Parrot_STM_commit(interpreter)) {
-        goto OFFSET($1); /* retry */
-    } else if (!Parrot_STM_validate(interpreter)) {
-        goto OFFSET($2); /* abort outer */
-    } else {
-        goto NEXT();
-    }
 }
 
 =item B<stm_wait>(label INT)
@@ -91,7 +74,7 @@ because the outer transaction constrains it to not see new values.)
 
 =cut
 
-inline op stm_wait(label INT) {
+inline op stm_wait(labelconst INT) {
     Parrot_STM_wait(interpreter);
     if (!Parrot_STM_validate(interpreter)) {
         goto OFFSET($1);

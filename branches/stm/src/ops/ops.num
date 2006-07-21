@@ -1219,15 +1219,8 @@ get_namespace_p_kc             1188
 get_namespace_p_s              1189
 get_namespace_p_sc             1190
 stm_start                      1191
-stm_validate_i                 1192
-stm_validate_ic                1193
-stm_commit_i                   1194
-stm_commit_ic                  1195
-stm_commit_ic_i                1196
-stm_commit_i_ic                1197
-stm_commit_ic_ic               1198
-stm_wait_i                     1199
-stm_wait_ic                    1200
-stm_abort                      1201
-stm_depth_i                    1202
-
+stm_validate_ic                1192
+stm_commit_ic                  1193
+stm_wait_ic                    1194
+stm_abort                      1195
+stm_depth_i                    1196
