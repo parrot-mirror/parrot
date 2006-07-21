@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 9;
+use Parrot::Test tests => 10;
 
 pasm_output_is(<<'CODE', <<'OUTPUT', "empty transactions");
         stm_depth I0
@@ -261,8 +261,22 @@ CODE
 ok
 OUTPUT
 
+pir_output_is(<<'CODE', <<'OUTPUT', "stm_commit LABEL, LABEL parses, etc.");
+.sub main :main
+retry:
+    stm_start
+    stm_commit retry, fail_outer
+    print "ok\n"
+    end
+fail_outer:
+    print "should never happen\n"
+.end
+CODE
+ok
+OUTPUT
+
 pir_output_is(<<'CODE', <<'OUTPUT', "Push limits (write and read records)");
-.const int NUM_VALS = 10000
+.const int NUM_VALS = 400
 .sub main :main
     .local pmc arr
     .local int i
