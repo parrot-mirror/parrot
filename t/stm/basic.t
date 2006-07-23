@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 10;
+use Parrot::Test tests => 9;
 
 pasm_output_is(<<'CODE', <<'OUTPUT', "empty transactions");
         stm_depth I0
