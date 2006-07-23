@@ -230,23 +230,22 @@ void Parrot_STM_start_transaction(Interp *interp) {
 /*
  * To 'commit' an inner transaction, we merge it into the outer transaction.
  * In the process of doing this, we may detect that the inner transaction should
- * abort despite the outer transaction being safe. In that case, we can abort
- * the inner transaction by itself so long as the outer transaction reamins valid.
- *
- * FIXME "the outer transaction remains valid" logic is not yet handled
+ * abort despite the outer transaction being safe. If C<always> is true, we
+ * merge regardless. Otherwise, we leave the inner transactions unmerged
+ * so we can abort.
  */
 static int merge_transactions(Interp *interp, STM_tx_log *log,
-        STM_tx_log_sub *outer, STM_tx_log_sub *inner) {
+        STM_tx_log_sub *outer, STM_tx_log_sub *inner, int always) {
     int i;
     int status;
     int need_abort = 0;
 
     ATOMIC_INT_GET(status, inner->status);
-    if (status == STM_STATUS_ABORTED) {
+    if (!always && status == STM_STATUS_ABORTED) {
         return 0;
     }
 
-    for (i = inner->first_write; !need_abort && i <= log->last_write; ++i) {
+    for (i = inner->first_write; i <= log->last_write; ++i) {
         STM_write_record *write;
         int successp;
 
@@ -255,6 +254,9 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
 
         if (!successp) {
             need_abort = 1;
+            if (!always) {
+                break;
+            }
         }
     }
 
@@ -263,8 +265,8 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
         need_abort = 1;
     }
 
-    if (need_abort) {
-        /* unmerge, mark as aborted the outer transaction */
+    if (!always && need_abort) {
+        /* unmerge, mark as aborted the inner transaction */
         for (i = inner->first_write; i <= log->last_write; ++i) {
             STM_write_record *write;
             int successp;
@@ -273,8 +275,12 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
             ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, outer, inner);
             /* doesn't matter if it fails */
         }
-        ATOMIC_INT_SET(outer->status, STM_STATUS_ABORTED);
+        ATOMIC_INT_SET(inner->status, STM_STATUS_ABORTED);
         return 0;
+    } else if (need_abort) {
+        /* leave as merged, abort the outer transaction since it is now invalid */
+        ATOMIC_INT_SET(outer->status, STM_STATUS_ABORTED);
+        return 1;
     } else {
         return 1;
     }
@@ -510,7 +516,9 @@ int Parrot_STM_commit(Interp *interp) {
 
     if (log->depth > 1) {
         successp = merge_transactions(interp, log,
-            get_sublog(log, log->depth - 1), cursub);
+            get_sublog(log, log->depth - 1), cursub, 1);
+        assert(successp); /* should always return true, since we pass 1 for the always
+                             argument */
     } else {
         successp = do_real_commit(interp, log);
     }
@@ -698,6 +706,20 @@ collect them from us.
 =cut
 */
 
+static void mark_write_record(Interp *interp, STM_write_record *write) {
+    if (!PMC_IS_NULL(write->value)) {
+        pobject_lives(interp, (PObj *) write->value);
+    }
+    Parrot_STM_mark_pmc_handle(interp, write->handle);
+}
+
+static void mark_read_record(Interp *interp, STM_read_record *read) {
+    if (!PMC_IS_NULL(read->value)) {
+        pobject_lives(interp, (PObj *) read->value);
+    }
+    Parrot_STM_mark_pmc_handle(interp, read->handle);
+}
+
 void Parrot_STM_mark_transaction(Interp *interp) {
     int i;
     STM_tx_log *log;
@@ -706,15 +728,11 @@ void Parrot_STM_mark_transaction(Interp *interp) {
     log = Parrot_STM_tx_log_get(interp);
 
     for (i = 0; i <= log->last_write; ++i) {
-        PMC *value = get_write(interp, log, i)->value;
-        if (value) 
-            pobject_lives(interp, (PObj*) value);
+        mark_write_record(interp, get_write(interp, log, i));
     }
 
     for (i = 0; i <= log->last_read; ++i) {
-        PMC *value = get_read(interp, log, i)->value;
-        if (value)
-            pobject_lives(interp, (PObj*) value);
+        mark_read_record(interp, get_read(interp, log, i));
     }
 }
 
@@ -1115,3 +1133,130 @@ void Parrot_STM_write(Interp *interp, Parrot_STM_PMC_handle handle, PMC* new_val
 }
 
 
+/*
+=item C<void* Parrot_STM_extract(Interp *interp)>
+
+Return an opaque pointer representing enough information to replay a transaction
+enough to wait() for it to become valid. User access through STMLog PMC class.
+
+=cut
+*/
+
+void* Parrot_STM_extract(Interp *interp) {
+    STM_tx_log *log;
+    STM_saved_tx_log *saved;
+    STM_tx_log_sub *cursub;
+
+    log = Parrot_STM_tx_log_get(interp);
+
+    if (log->depth == 0) {
+        return NULL;
+    }
+
+    cursub = get_sublog(log, log->depth);
+
+    saved = mem_sys_allocate(sizeof(*saved));
+    saved->num_reads = log->last_read - cursub->first_read + 1;
+    saved->num_writes = log->last_write - cursub->first_write + 1;
+    saved->reads = mem_sys_allocate(sizeof(*saved->reads) * saved->num_reads);
+    saved->writes = mem_sys_allocate(sizeof(*saved->writes) * saved->num_writes);
+    memcpy(saved->reads, &log->reads[cursub->first_read],
+        sizeof(*saved->reads) * saved->num_reads);
+    memcpy(saved->writes, &log->writes[cursub->first_write],
+        sizeof(*saved->writes) * saved->num_writes);
+
+    return saved; 
+}
+
+/*
+=item C<void Parrot_STM_replay_extracted(Interp *interp, void *saved_log_data)>
+
+Replay a transaction log extracted with C<Parrot_STM_extract>. At the moment
+this is only gaurenteed to work well enough to use STM_wait(). If one
+attempts to use it to replay transactions to commit them, it is likely to
+produce wrong results if the recorded transaction had dependencies on its outer
+transactions and it is not replayed inside the same transactions it was recorded
+in.
+
+=cut
+*/
+
+void Parrot_STM_replay_extracted(Interp *interp, void *saved_log_data) {
+    STM_tx_log *log;
+    STM_saved_tx_log *saved;
+    int start;
+    int i;
+    STM_tx_log_sub *sublog;
+
+    saved = saved_log_data;
+
+    log = Parrot_STM_tx_log_get(interp);
+
+    if (log->depth == 0) {
+        internal_exception(1, "replay_extracted outside of transaction");
+    }
+
+    if (saved == NULL) {
+        return;
+    }
+
+    sublog = get_sublog(log, log->depth);
+
+    start = log->last_read;
+    for (i = 0; i < saved->num_reads; ++i) {
+        *(alloc_read(interp, log)) = saved->reads[i];
+    }
+
+    start =  log->last_write;
+    for (i = 0; i < saved->num_writes; ++i) {
+        STM_write_record *write;
+        int successp;
+        write = alloc_write(interp, log);
+        *write = saved->writes[i];
+        ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, write->saw_version, sublog);
+        if (!successp) {
+            /* failed! */
+            ATOMIC_INT_SET(sublog->status, STM_STATUS_ABORTED);
+        }
+    }
+}
+
+/*
+=item C<void Parrot_STM_mark_extracted(Interp *interp, void *saved_log_data)>
+
+Mark GC-managed objects reachable through an extracted transaction log.
+
+=cut
+*/
+
+void Parrot_STM_mark_extracted(Interp *interp, void *saved_log_data) {
+    STM_saved_tx_log *saved;
+    int i;
+
+    saved = saved_log_data;
+    
+    for (i = 0; i < saved->num_reads; ++i) {
+        mark_read_record(interp, &saved->reads[i]);
+    }
+
+    for (i = 0; i < saved->num_writes; ++i) {
+        mark_write_record(interp, &saved->writes[i]);
+    }
+}
+
+/*
+=item C<void Parrot_STM_destory_extracted(Interp *interp, void *saved_log_data)>
+
+Free memory associated with an extracted transaction log.
+
+=cut
+*/
+
+void Parrot_STM_destroy_extracted(Interp *interp, void *saved_log_data) {
+    STM_saved_tx_log *saved;
+
+    saved = saved_log_data;
+    mem_sys_free(saved->reads);
+    mem_sys_free(saved->writes);
+    mem_sys_free(saved);
+}

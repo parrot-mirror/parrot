@@ -71,6 +71,14 @@ struct STM_tx_log {
     struct waitlist_thread_data *waitlist_data;
 };
 
+struct STM_saved_tx_log {
+    int num_reads;
+    int num_writes;
+    STM_read_record *reads;
+    STM_write_record *writes;
+};
+typedef struct STM_saved_tx_log STM_saved_tx_log;
+
 STM_tx_log *Parrot_STM_tx_log_get(Interp *interp);
 
 #endif

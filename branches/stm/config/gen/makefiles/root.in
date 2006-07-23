@@ -309,7 +309,8 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/Stream/Replay.pbc \
     $(LIBRARY_DIR)/Stream/Sub.pbc \
     $(LIBRARY_DIR)/Stream/Writer.pbc \
-    $(LIBRARY_DIR)/YAML/Parser/Syck.pbc
+    $(LIBRARY_DIR)/YAML/Parser/Syck.pbc \
+    $(LIBRARY_DIR)/STM.pbc
 # XXX Why don't these build?
 #    runtime/parrot/library/libpcre.pbc \
 #    runtime/parrot/library/Data/Replace.pbc \
