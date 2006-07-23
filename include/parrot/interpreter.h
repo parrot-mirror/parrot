@@ -98,7 +98,7 @@ typedef enum {
                                      */
 
     /* combinations of flags */
-    PARROT_CLONE_DEFAULT = 0x7d /* everything but CC, GLOBALS */
+    PARROT_CLONE_DEFAULT = 0x7f /* everything but CC */
 } Parrot_clone_flags;
 /* &end_gen */
 

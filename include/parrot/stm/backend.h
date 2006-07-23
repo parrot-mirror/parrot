@@ -35,4 +35,12 @@ Parrot_STM_PMC_handle Parrot_thaw_STM_PMC_handle(Interp *interp, IMAGE_IO *io);
 
 void Parrot_freeze_STM_PMC_handle(Interp *interp, IMAGE_IO *io, Parrot_STM_PMC_handle handle);
 
+void *Parrot_STM_extract(Interp *interp);
+
+void Parrot_STM_replay_extracted(Interp *interp, void *);
+
+void Parrot_STM_mark_extracted(Interp *interp, void *);
+
+void Parrot_STM_destroy_extracted(Interp *interp, void *);
+
 #endif
