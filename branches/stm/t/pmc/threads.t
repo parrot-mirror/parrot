@@ -45,7 +45,7 @@ if ($^O eq "cygwin" ) {
     }
 }
 if ($platforms{$^O}) {
-   plan tests => 18;
+   plan tests => 19;
 }
 else {
    plan skip_all => "No threading yet or test not enabled for '$^O'";
@@ -755,6 +755,137 @@ in main:
 ok 1
 ok 2
 OUTPUT
+
+pir_output_unlike(<<'CODE', qr/not/, "globals + constant table subs issue");
+.namespace [ 'Foo' ]
+
+.include 'interpinfo.pasm'
+.sub 'is'
+    .param pmc what
+    .param pmc expect
+    .local pmc number
+    number = global 'test_num'
+    if what == expect goto okay
+    print "# got:      "
+    print what
+    print "\n"
+    print "# expected: "
+    print expect
+    print "\nnot ok "
+    print number
+    print "\n"
+    $P0 = interpinfo .INTERPINFO_CURRENT_CONT
+loop:
+    $I0 = defined $P0
+    if $I0 == 0 goto done
+    print "    "
+    print $P0
+    print "\n"
+    $P0 = $P0.'continuation'()
+    branch loop
+done:
+    .return ()
+okay:
+    print "ok "
+    print number
+    inc number
+    print "\n"
+.end
+
+.sub setup
+    $P0 = new Integer
+    $P0 = 1
+    store_global 'foo', $P0
+.end
+
+.sub _check_sanity
+    $P0 = global 'foo'
+    $P1 = find_global 'Foo', 'foo'
+    is($P0, $P1)
+.end
+
+.sub mutate
+    $P0 = new Integer
+    $P0 = 2
+    store_global 'foo', $P0
+.end
+
+.sub check_sanity
+    _check_sanity()
+    $P0 = global '_check_sanity'
+    $P0()
+    $P0 = find_global 'Foo', '_check_sanity'
+    $P0()
+.end
+
+.sub _check_value
+    .param int value
+    $P0 = global 'foo'
+    is($P0, value)
+.end
+
+.sub check_value
+    .param int value
+    _check_value(value)
+    $P0 = global '_check_value'
+    $P0(value)
+    $P0 = find_global 'Foo', '_check_value'
+    $P0(value)
+.end
+
+.sub full_check
+    .const .Sub c_setup = 'setup'
+    .const .Sub c_sanity = 'check_sanity'
+    .const .Sub c_mutate = 'mutate'
+    .const .Sub c_value = 'check_value'
+
+    .local pmc g_setup
+    g_setup = find_global 'Foo', 'setup'
+    .local pmc g_sanity
+    g_sanity = find_global 'Foo', 'check_sanity'
+    .local pmc g_mutate
+    g_mutate = find_global 'Foo', 'mutate'
+    .local pmc g_value
+    g_value = find_global 'Foo', 'check_value'
+
+    c_setup()
+    c_sanity()
+    g_sanity()
+    c_value(1)
+    g_value(1)
+    c_mutate()
+    c_value(2)
+    g_value(2)
+    c_sanity()
+    g_sanity()
+
+    g_setup()
+    c_sanity()
+    g_sanity()
+    c_value(1)
+    g_value(1)
+    g_mutate()
+    c_value(2)
+    g_value(2)
+    c_sanity()
+    g_sanity()
+.end
+
+
+
+.sub main :main
+    $P0 = new Integer 
+    $P0 = 1
+    store_global 'test_num', $P0
+    
+    .const .Sub _check = 'full_check'
+    _check()
+
+    $P0 = new ParrotThread
+    $P0.'run_clone'(_check)
+    $P0.'join'()
+.end
+CODE
 
 pir_output_is(<<'CODE', <<'OUTPUT', "CLONE_CODE|CLONE_GLOBALS|CLONE_HLL|CLONE_LIBRARIES");
 .HLL 'Perl', 'perl_group'

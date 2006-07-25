@@ -365,6 +365,9 @@ Parrot_really_destroy(int exit_code, void *vinterp)
     if (interpreter->arena_base->de_init_gc_system)
         interpreter->arena_base->de_init_gc_system(interpreter);
 
+    /* copies of constant tables */
+    Parrot_destroy_constants(interpreter);
+
     /* buffer headers, PMCs */
     Parrot_destroy_header_pools(interpreter);
     /* memory pools in resources */

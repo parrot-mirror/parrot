@@ -369,11 +369,8 @@ pt_clone_code(Parrot_Interp d, const Parrot_Interp s)
 {
     Parrot_block_DOD(d);
     Interp_flags_SET(d, PARROT_EXTERN_CODE_FLAG);
-    d->code = s->code;
-    /* XXX FIXME should this be here or elsewhere? */
-    CONTEXT(d->ctx)->constants = 
-        d->code->const_table->constants; 
-    Parrot_prepare_cs_for_interp(d);
+    d->code = NULL;
+    Parrot_switch_to_cs(d, s->code, 1);
     Parrot_unblock_DOD(d);
 }
 
@@ -466,37 +463,10 @@ static void
 pt_suspend_one_for_gc(Parrot_Interp interp);
 
 /* create a clone of the sub suitable for the other interpreter;
- * right now this involves cloning the sub and adjusting namespace
- * pointers
- * XXX FIXME handle multisubs
  */
 PMC *
 pt_transfer_sub(Parrot_Interp d, Parrot_Interp s, PMC *sub) {
-    PMC *ret;
-    Parrot_block_DOD(d);
-    Parrot_block_GC(d);
-    Parrot_block_DOD(s);
-    Parrot_block_GC(s);
-    /* determine if it is a named subroutine */
-    if (PObj_get_FLAGS(sub) & SUB_FLAG_PF_ANON) {
-        /* anonymous subroutine, copy, store in namespace */
-        ret = Parrot_clone(d, sub);
-        Parrot_store_sub_in_namespace(d, ret);
-    } else {
-        /* non-anonymous, just lookup in the global */
-        ret = Parrot_find_global_k(d, PMC_sub(sub)->namespace, PMC_sub(sub)->name);
-        if (PMC_IS_NULL(ret)) {
-            /* wasn't in globals; clone it, place it */
-            ret = Parrot_clone(d, sub);
-            Parrot_store_sub_in_namespace(d, ret);
-        }
-        assert(PMC_sub(ret)->namespace_stash != PMC_sub(sub)->namespace_stash);
-    }
-    Parrot_unblock_DOD(s);
-    Parrot_unblock_GC(s);
-    Parrot_unblock_GC(d);
-    Parrot_unblock_DOD(d);
-    return ret;
+    return make_local_copy(d, s, sub);
 }
 
 int
