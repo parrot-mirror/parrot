@@ -70,11 +70,6 @@ Commits the most recently opened transaction. Jumps to RETRY if the
 commit fails. (If the outer transaction is invalid, this should succeed
 always.)
 
-=item stm_commit RETRY, INVALID
-
-Like stm_commit, but jumps to INVALID if the current transaction cannot
-commit because the outer transaction became invalid.
-
 =item stm_wait INVALID_OUTER
 
 Aborts the current transaction, then waits for some value it read
@@ -187,6 +182,33 @@ of transaction will be reflected when the transaction commits. This copy
 should not be used after the transaction commits.
 
 =back
+
+=head1 STMLog PMC
+
+The STMLog PMC allows a transaction log to be saved in memory and then replayed
+later. Currently, only replaying for the purpose of then using C<stm_wait> is
+supported.
+
+=head3 Constructors
+
+=over 4
+
+=item new Px, .STMLog
+
+Copies the current transaction into C<Px>. If there is no active transaction, 
+C<Px> holds an empty transaction.
+
+=back
+
+=head3 Methods
+
+=over 4
+
+=item C<replay()>
+
+Replays the saved transaction log into the current transaction. It is an error
+to use this outside of a transaction. Replaying may invalidate the current
+transaction.
 
 =cut
 
