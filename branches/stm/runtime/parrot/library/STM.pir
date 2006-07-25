@@ -4,9 +4,9 @@
     # print "loaded STM runtime library\n"
     # Create globals
     $P0 = new ResizablePMCArray
-    store_global 'ends', $P0
+    store_global 'STM', 'ends', $P0
     $P0 = new ResizableIntegerArray
-    store_global 'statuses', $P0
+    store_global 'STM', 'statuses', $P0
 .end
 
 .const int STATUS_COMMIT = 0
@@ -38,12 +38,17 @@
 
 restart_tx:
     .local pmc statuses
-    statuses = global 'statuses'
+    statuses = find_global 'STM', 'statuses'
     tx_flags = bor tx_flags, STATUS_COMMIT
     push statuses, tx_flags 
 
+    #print "ENTER TX\n"
+
     the_result = new Undef
-    .const .Sub _thelper = '_transaction_helper'
+    
+    .local pmc _thelper
+    _thelper = global '_transaction_helper'
+
     $P0 = newclosure _thelper
     stm_start
     .pcc_begin
@@ -51,11 +56,15 @@ restart_tx:
     .result the_result :slurpy
     .pcc_end
 done_tx:
+    #stm_depth $I0
+    #print "at depth "
+    #print $I0
+    #print "\n"
     .local pmc ends
-    ends = global 'ends'
+    ends = find_global 'STM', 'ends'
     $P0 = pop ends
     .local int status
-    statuses = global 'statuses'
+    statuses = find_global 'STM', 'statuses'
     status = pop statuses
     status = band status, STATUS_MASK
     if status == STATUS_COMMIT goto do_commit
@@ -98,6 +107,10 @@ kill_outer:
     _end_tx()
 
 do_return:
+    #stm_depth $I0
+    #print "at depth "
+    #print $I0
+    #print "\n"
     $P0 = new Undef
     .return (status, $P0, the_result)
 .end
@@ -111,14 +124,14 @@ do_return:
     closure = find_lex 'closure'
     args = find_lex 'args'
     the_cont = interpinfo .INTERPINFO_CURRENT_CONT
-    ends = global 'ends'
+    ends = find_global 'STM', 'ends'
     push ends, the_cont
     .return closure(args :flat)
 .end
 
 .sub _end_tx
     .local pmc ends
-    ends = global 'ends'
+    ends = find_global 'STM', 'ends'
     .local pmc end 
     end = ends[-1]
     $P0 = end() # workaround?
@@ -127,7 +140,7 @@ do_return:
 
 .sub _cur_status
     .local pmc statuses
-    statuses = global 'statuses'
+    statuses = find_global 'STM', 'statuses'
     $I0 = statuses 
     if $I0 == 0 goto none_such
     $I0 = $I0 - 1
@@ -141,7 +154,7 @@ none_such:
 .sub _set_status
     .param int new_status
     .local pmc statuses
-    statuses = global 'statuses'
+    statuses = find_global 'STM', 'statuses'
     $I0 = pop statuses
     push statuses, new_status
 .end
@@ -160,12 +173,10 @@ none_such:
     # choice part transaction and capture the whole thing
 inner_choice_part:
     .local pmc statuses
-    .local pmc ends
     .local int this_status
     .local pmc this_end
     .local int i
-    ends = global 'ends'
-    statuses = global 'statuses'
+    statuses = find_global 'STM', 'statuses'
     
     i = statuses 
     dec i
@@ -185,40 +196,58 @@ choice_part:
 .end
 
 .sub choice 
-    .param pmc first
-    .param pmc second
+    .param pmc choices :slurpy
     
     .const .Sub _choice_internal = "_choice_internal"
 
     .local pmc result 
-    result = transaction(_choice_internal, first, second)
+    result = transaction(_choice_internal, choices)
     .return (result)
 .end
 
 .sub _choice_internal 
-    .param pmc first
-    .param pmc second
-    .local pmc save_first
-    .local pmc save_second
+    .param pmc choices
+    .local pmc save
+    .local pmc save_one
     .local pmc the_result
     .local int status 
-    (status, save_first, the_result) = _transaction(first, STATUS_FLAG_CHOICE_PART)
+    .local int i
+
+    save = new FixedPMCArray
+    $I0 = choices
+    save = $I0
+    i = 0
+loop:
+    if choices <= i goto done
+    $P0 = choices[i]
+    (status, save_one, the_result) = _transaction($P0, STATUS_FLAG_CHOICE_PART)
     if status == STATUS_COMMIT goto finished
     if status != STATUS_EXTRACT goto unexpected
-    (status, save_second, the_result) = _transaction(second, STATUS_FLAG_CHOICE_PART)
-    if status == STATUS_COMMIT goto finished
-    if status != STATUS_EXTRACT goto unexpected
-    save_first.'replay'()
-    save_second.'replay'()
+    save[i] = save_one
+    inc i
+    branch loop
+done:
+    
+    i = 0
+replay_loop:
+    if save <= i goto done_replay
+    $P0 = save[i]
+    $P0.'replay'()
+    inc i
+    branch replay_loop
+done_replay:
     retry()
+
+
+unexpected:
+    if status == STATUS_ABORT goto do_abort
+    print "choice got unexpected status ("
+    print status
+    print ")\n"
     end
-unexpected: 
-    # XXX
-    print "UNEXPECTED STATUS ENCOUNTERED\nstatus = "
-    $I0 = _cur_status()
-    print $I0
-    print "\n"
-    end
+do_abort:
+    _set_status(STATUS_ABORT)
+    .return ()
 finished:
     _set_status(STATUS_COMMIT)
     .return (the_result :flat)
@@ -227,7 +256,7 @@ finished:
 .sub validate
     # print "STM::validate()\n"
     stm_validate is_invalid
-    end
+    .return ()
 is_invalid:
     _set_status(STATUS_REDO)
     _end_tx()
@@ -248,6 +277,8 @@ is_invalid:
     .param pmc closure
     .param pmc args :slurpy
     .local int status
+
+    $P0 = find_global 'STM', '_transaction'
     # print "STM::transaction("
     # print closure
     # print ", ...)\n"
@@ -264,7 +295,7 @@ is_invalid:
 choice_part:
     status = STATUS_FLAG_CHOICE_PART_INNER
 run:
-    (status, $P0, $P1) = _transaction(closure, status, args :flat)
+    (status, $P0, $P1) = $P0(closure, status, args :flat)
     .return ($P1 :flat)
 .end
 
