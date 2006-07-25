@@ -106,6 +106,9 @@ typedef struct _Thread_data {
 
     /* STM transaction log */
     void               *stm_log;
+
+    /* COW'd constant tables */
+    Hash             *const_tables;
 } Thread_data;
 
 #define LOCK_INTERPRETER(interp) \
