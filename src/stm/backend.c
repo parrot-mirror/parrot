@@ -261,7 +261,7 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
         /* if the previous version came from the outer transaction,
          * invalidate the outer write record
          */
-        if (!is_version(write->saw_version)) {
+        if (write->saw_version == outer) {
             int j;
             for (j = outer->first_write; j < inner->first_write; ++j) {
                 STM_write_record *old_write;
@@ -272,7 +272,7 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
                     break;
                 }
             }
-            assert(is_version(write->saw_version));
+            assert(write->saw_version != outer);
         }
 
         if (!successp) {
