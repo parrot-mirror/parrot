@@ -33,7 +33,7 @@ alloc_entry(Parrot_Interp interp) {
         size_t i;
         thr->entries = mem_sys_realloc(thr->entries,
             sizeof(*thr->entries) * thr->entry_count * 2);
-        for (i = thr->entry_count; i <= thr->entry_count * 2; ++i) {
+        for (i = thr->entry_count; i < thr->entry_count * 2; ++i) {
             thr->entries[i] = NULL;
         }
         thr->entry_count *= 2;

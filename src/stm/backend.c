@@ -26,6 +26,7 @@ the low-level synchornization.
 
 #if STM_DEBUG
 #  define STM_TRACE(x...) PIO_fprintf(interp, PIO_STDERR(interp), x); PIO_fprintf(interp, PIO_STDERR(interp), "\n")
+#undef fprintf
 #  define STM_TRACE_SAFE(x...) fprintf(stderr, x); fprintf(stderr, "\n");
 #else
 static void STM_TRACE(const char *x, ...) {
@@ -250,7 +251,29 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
         int successp;
 
         write = get_write(interp, log, i);
+
+        if (!write->handle) {
+            continue;
+        }
+
         ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, inner, outer);
+
+        /* if the previous version came from the outer transaction,
+         * invalidate the outer write record
+         */
+        if (!is_version(write->saw_version)) {
+            int j;
+            for (j = 0; j < inner->first_write; ++j) {
+                STM_write_record *old_write;
+                old_write = get_write(interp, log, j);
+                if (old_write->handle == write->handle) {
+                    old_write->handle = NULL;
+                    write->saw_version = old_write->saw_version;
+                    break;
+                }
+            }
+            assert(is_version(write->saw_version));
+        }
 
         if (!successp) {
             need_abort = 1;
@@ -272,6 +295,9 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
             int successp;
 
             write = get_write(interp, log, i);
+            if (!write->handle) {
+                continue;
+            }
             ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, outer, inner);
             /* doesn't matter if it fails */
         }
@@ -326,7 +352,7 @@ get_read_valid_depth(Interp *interp, STM_tx_log *log) {
 
             ATOMIC_PTR_GET(found_version, read->handle->owner_or_version);
             if (found_version != read->saw_version) {
-                STM_TRACE("verifying reads: got %p, expected %p", 
+                STM_TRACE_SAFE("verifying reads: got %p, expected %p", 
                     found_version, read->saw_version);
                 if (is_version(found_version) 
                         || (STM_tx_log_sub*) found_version < log->inner 
@@ -359,18 +385,18 @@ do_real_commit(Interp *interp, STM_tx_log *log) {
 
     ATOMIC_INT_CAS(successp, inner->status, STM_STATUS_ACTIVE, STM_STATUS_COMMITTED);
     if (!successp) {
-        STM_TRACE("already aborted");
+        STM_TRACE_SAFE("already aborted");
         return 0;
     }
 
     if (get_read_valid_depth(interp, log) == 0) {
-        STM_TRACE("reads failed to verify");
+        STM_TRACE_SAFE("reads failed to verify");
         /* read contention; can't actually commit */
         ATOMIC_INT_SET(inner->status, STM_STATUS_ABORTED);
         return 0;
     }
 
-    STM_TRACE("reads verified");
+    STM_TRACE_SAFE("reads verified");
     for (i = inner->first_write; i <= log->last_write; ++i) {
         STM_write_record *write;
         int successp;
@@ -378,19 +404,23 @@ do_real_commit(Interp *interp, STM_tx_log *log) {
 
         write = get_write(interp, log, i);
 
+        if (!write->handle) {
+            continue;
+        }
+
         new_version = next_version(write->saw_version);
         write->value = force_sharing(interp, write->value);
         write->handle->last_version = new_version;
         write->handle->value = write->value; /* actually update */
         ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, inner,
             new_version);
-        STM_TRACE("wrote version %p into handle %p", new_version, write->handle);
+        STM_TRACE_SAFE("wrote version %p into handle %p", new_version, write->handle);
         assert(successp); /* no one should steal our ownership when we are committed */
 
         Parrot_STM_waitlist_signal(interp, &write->handle->change_waitlist);
-        STM_TRACE("done waitlist_signal");
+        STM_TRACE_SAFE("done waitlist_signal");
     }
-    STM_TRACE("%p: done committing", interp);
+    STM_TRACE_SAFE("%p: done committing", interp);
 
     log->last_write = -1;
     log->last_read = -1;
@@ -407,7 +437,7 @@ static void
 do_partial_abort(Interp *interp, STM_tx_log *log, STM_tx_log_sub *inner) {
     int i;
 
-    STM_TRACE("partial abort");
+    STM_TRACE_SAFE("partial abort");
     ATOMIC_INT_SET(inner->status, STM_STATUS_ABORTED);
     
     for (i = log->last_write; i >= inner->first_write; --i) {
@@ -416,11 +446,15 @@ do_partial_abort(Interp *interp, STM_tx_log *log, STM_tx_log_sub *inner) {
 
         write = get_write(interp, log, i);
 
+        if (!write->handle) {
+            continue;
+        }
+
         /* if it's not a version, an outer transaction has the 'real version' of this */
         ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, inner,
             write->saw_version);
         /* it doesn't matter if this fails */
-        STM_TRACE("unreserving write record %d [saw_version=%p]; successp=%d",
+        STM_TRACE_SAFE("unreserving write record %d [saw_version=%p]; successp=%d",
             i, write->saw_version, successp);
     }
 }
@@ -430,7 +464,7 @@ static void
 do_real_abort(Interp *interp, STM_tx_log *log, STM_tx_log_sub *inner) {
     int i;
 
-    STM_TRACE("really aborting");
+    STM_TRACE_SAFE("really aborting");
     do_partial_abort(interp, log, inner);
 
     log->last_read = inner->first_read - 1;
@@ -467,6 +501,10 @@ replay_writes(Interp *interp, STM_tx_log *log, int from, int to) {
             int successp;
 
             write = get_write(interp, log, i);
+
+            if (!write->handle) {
+                continue;
+            }
 
             ATOMIC_PTR_CAS(successp, write->handle->owner_or_version,
                 write->saw_version, current);
@@ -547,7 +585,7 @@ Throws an exception if there is no active transaction.
 void Parrot_STM_abort(Interp *interp) {
     STM_tx_log *log = Parrot_STM_tx_log_get(interp);
     STM_tx_log_sub *cursub;
-    STM_TRACE("abort");
+    STM_TRACE_SAFE("abort");
 
     if (log->depth == 0) {
         internal_exception(1, "stm_abort without transaction\n");
@@ -605,6 +643,9 @@ static int setup_wait(Interp *interp, STM_tx_log *log) {
         STM_write_record *write;
 	void *version;
         write = get_write(interp, log, i);
+        if (!write->handle) {
+            continue;
+        }
         Parrot_STM_waitlist_add_self(interp, &write->handle->change_waitlist);
 	ATOMIC_PTR_GET(version, write->handle->owner_or_version);
 	/* our lock on the write record may have been revoked and then a parallel

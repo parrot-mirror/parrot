@@ -1,105 +1,27 @@
 #! perl
 # Copyright (C) 2006 The Perl Foundation.
-# $Id: ref.t 12842 2006-05-30 16:52:42Z creiss $
+# $Id$
 
 use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 3;
+use Parrot::Test tests => 5;
 
-pir_output_is(<<'CODE', <<'OUTPUT', "choice (one thread)");
-.sub do_choice
-    .param pmc values
-    .lex 'values', values
+=pod
 
-    .local pmc _choice_one
-    .local pmc _choice_two
-    .const .Sub choice_one = 'choice_one'
-    .const .Sub choice_two = 'choice_two'
-    _choice_one = newclosure choice_one
-    _choice_two = newclosure choice_two
-    .local pmc _choice
-    _choice = find_global 'STM', 'choice'
-    .return _choice(_choice_one, _choice_two)
-.end
+=head1 NAME
 
-.sub choice_one :outer(do_choice)
-    .local pmc values
-    values = find_lex 'values'
-    .local pmc what
-    what = values[0]
-    what = what.'get_update'()
-    if what == 1 goto need_retry
-    what = 1
-    .return (1)
-need_retry:
-    .local pmc retry
-    retry = find_global 'STM', 'retry'
-    retry()
-.end
+t/stm/runtime.t -- STM Runtime library tests
 
-.sub choice_two :outer(do_choice)
-    .local pmc values
-    values = find_lex 'values'
-    .local pmc what
-    .local pmc the_value
-    what = values[1]
-    the_value = what.'get_read'()
-    if the_value == 1 goto need_retry
-    the_value = new Integer
-    the_value = 1
-    what.'set'(the_value)
-    .return (2)
-need_retry:
-    .local pmc retry
-    retry = find_global 'STM', 'retry'
-    retry()
-.end
+=head1 DESCRIPTION
 
-.sub main :main
-    .local pmc thread_one
-    .local pmc thread_two
-    thread_one = new ParrotThread
-    thread_two = new ParrotThread
+Tests STM.pir (and, as a side effect, the underlying STM implementation).
 
-    load_bytecode 'STM.pbc'
+=cut
 
-    .local pmc values
-    values = new FixedPMCArray
-    values = 2
-    $P0 = new Integer
-    $P0 = 0
-    $P0 = new STMVar, $P0
-    values[0] = $P0
-    $P0 = new Integer
-    $P0 = 0
-    $P0 = new STMVar, $P0
-    values[1] = $P0
-    .local pmc _thread_main
-    _thread_main = global 'do_choice'
 
-    $I0 = _thread_main(values)
-    $I1 = _thread_main(values)
-    $I2 = $I0 + $I1
-    if $I2 != 3 goto fail
-    if $I0 == 1 goto okay
-    if $I1 == 1 goto okay
-fail:
-    print 'not ok '
-    print $I1
-    print ', '
-    print $I2
-    print "\n"
-    end
-okay:
-    print "ok\n"
-.end
-CODE
-ok
-OUTPUT
-
-pir_output_is(<<'CODE', <<'OUTPUT', "choice (multiple threads)\n");
+my $choice_test = <<'CODE';
 .sub do_choice
     .param pmc values
     .lex 'values', values
@@ -149,6 +71,54 @@ need_retry:
     retry()
 .end
 
+CODE
+
+# test 1
+pir_output_is($choice_test . <<'CODE', <<'OUTPUT', "choice (one thread)");
+.sub main :main
+    .local pmc thread_one
+    .local pmc thread_two
+    thread_one = new ParrotThread
+    thread_two = new ParrotThread
+
+    load_bytecode 'STM.pbc'
+
+    .local pmc values
+    values = new FixedPMCArray
+    values = 2
+    $P0 = new Integer
+    $P0 = 0
+    $P0 = new STMVar, $P0
+    values[0] = $P0
+    $P0 = new Integer
+    $P0 = 0
+    $P0 = new STMVar, $P0
+    values[1] = $P0
+    .local pmc _thread_main
+    _thread_main = global 'do_choice'
+
+    $I0 = _thread_main(values)
+    $I1 = _thread_main(values)
+    $I2 = $I0 + $I1
+    if $I2 != 3 goto fail
+    if $I0 == 1 goto okay
+    if $I1 == 1 goto okay
+fail:
+    print 'not ok '
+    print $I1
+    print ', '
+    print $I2
+    print "\n"
+    end
+okay:
+    print "ok\n"
+.end
+CODE
+ok
+OUTPUT
+
+# test 2
+pir_output_is($choice_test . <<'CODE', <<'OUTPUT', "choice (multiple threads)");
 .sub _wakeup_func
     .param pmc values
     .local pmc what
@@ -237,11 +207,119 @@ CODE
 ok
 OUTPUT
 
-pir_output_is(<<'CODE', <<'OUTPUT', "queue adapted for the runtime");
-.const int MAX = 5000
-.const int SIZE = 100
+# test 3
+pir_output_is(<<'CODE', <<'OUTPUT', "choice doesn't clobber");
+.sub make_clobber
+    .param pmc value
+    .param pmc setting
+    .lex 'value', value
+    .lex 'set_to', setting
+    .const .Sub _clobber = '_clobber'
+    $P0 = newclosure _clobber
+    .return ($P0)
+.end
+
+.sub _clobber :outer(make_clobber)
+    .local pmc value
+    .local pmc setting
+    value = find_lex 'value'
+    setting = find_lex 'set_to'
+    value.'set'(setting)
+    .local pmc retry
+    retry = find_global 'STM', 'retry'
+    retry()
+.end
+
+.sub make_normal
+    .param pmc value
+    .lex 'value', value
+    .const .Sub _normal = '_normal'
+    $P0 = newclosure _normal
+    .return ($P0)
+.end
+
+.sub _normal :outer(make_normal)
+    .local pmc value
+    value = find_lex 'value'
+    $P0 = value.'get_read'()
+    if $P0 < 0 goto do_retry
+    .return ()
+do_retry:
+    .local pmc retry
+    retry = find_global 'STM', 'retry'
+    retry()
+.end
+
+.sub _get
+    .param pmc value
+    .local pmc result
+    result = value.'get_read'()
+    .return (result)
+.end
+
+.sub choice_thread
+    .param pmc value
+    $P0 = make_clobber(value, 10)
+    $P1 = make_clobber(value, 20)
+    $P2 = make_clobber(value, 30)
+    $P3 = make_normal(value)
+    $P4 = make_clobber(value, 40)
+    .local pmc choice
+    choice = find_global 'STM', 'choice'
+    choice($P0, $P1, $P2, $P3, $P4)
+.end 
+
+.sub _wakeup_func
+    .param pmc what
+    what.'set'(0)
+.end
+
+.sub wakeup_func
+    .param pmc what 
+    .local pmc transaction
+    .local pmc real_sub
+    transaction = find_global 'STM', 'transaction'
+    real_sub = global '_wakeup_func'
+    transaction(real_sub, what)
+    .return (0)
+.end
+
+.sub main :main
+    .local pmc tx
+    .local pmc value
+
+    load_bytecode 'STM.pbc'
+
+    value = new Integer
+    value = -1
+    value = new STMVar, value
+
+    .const .Sub wakeup = 'wakeup_func'
+    .const .Sub choice = 'choice_thread'
+    $P0 = new ParrotThread
+    $P1 = new ParrotThread
+    $P0.'run_clone'(choice, value)
+    sleep 0.5
+    $P1.'run_clone'(wakeup, value)
+    $P0.'join'()
+    $P1.'join'()
+
+    tx = find_global 'STM', 'transaction'
+    .const .Sub _get = '_get'
+    $P0 = tx(_get, value)
+    if $P0 != 0 goto failed
+    print "ok\n"
+    end
+failed:
+    print "NOT OKAY\n"
+.end
+
+CODE
+ok
+OUTPUT
 
 
+my $queue_test = <<'CODE';
 # attributes:
 #   head: index of next element to read
 #   tail: index of next element to add
@@ -405,6 +483,13 @@ error:
 do_ret:
     .return (ret)
 .end
+CODE
+
+# test 4
+pir_output_is($queue_test . <<'CODE', <<'OUTPUT', "queue adapted for the library");
+.const int MAX = 5000
+.const int SIZE = 100
+
 .sub adder
     .param pmc queue
     .local int i
@@ -439,15 +524,9 @@ not_okay:
     .local pmc addThread
     .local pmc removeThread
     .local pmc queue
-    .local pmc me
 
     .local pmc _add
     .local pmc _remove
-
-    .local pmc copy
-     
-    .local int addThreadId
-    .local int removeThreadId
 
     load_bytecode 'STM.pbc'
 
@@ -475,3 +554,54 @@ not_okay:
 CODE
 ok
 OUTPUT
+
+# test 5
+pir_output_is($queue_test . <<'CODE', <<'OUTPUT', "queue (non-blocking; nested)");
+.const int SIZE = 20 
+
+.sub _test
+    .param pmc queue
+   
+    $P0 = queue.'fetchHead'(1, 0)
+    $I0 = defined $P0
+    if $I0 == 1 goto fail
+    queue.'addTail'(42, 1)
+    $P0 = queue.'fetchHead'(0, 0)
+    if $P0 != 42 goto fail
+    $P0 = queue.'fetchHead'(1, 0)
+    if $P0 != 42 goto fail
+    $P0 = queue.'fetchHead'(1, 0)
+    $I0 = defined $P0
+    if $I0 == 1 goto fail
+    .return (1)
+fail:
+    .return (0)
+.end
+
+.sub main :main
+    .local pmc queue
+
+    load_bytecode 'STM.pbc'
+
+    $P0 = find_global 'STMQueue', '__onload'
+    $P0()
+
+    $I0 = find_type 'STMQueue'
+    $P0 = new Integer
+    $P0 = SIZE 
+    queue = new $I0, $P0
+
+    $P0 = find_global 'STM', 'transaction'
+    $P1 = global '_test'
+    $P0($P1, queue)
+
+    print "ok\n"
+    end
+fail:
+    print "NOT OK\n"
+.end
+CODE
+ok
+OUTPUT
+
+
