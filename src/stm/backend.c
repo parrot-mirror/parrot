@@ -263,7 +263,7 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
          */
         if (!is_version(write->saw_version)) {
             int j;
-            for (j = 0; j < inner->first_write; ++j) {
+            for (j = outer->first_write; j < inner->first_write; ++j) {
                 STM_write_record *old_write;
                 old_write = get_write(interp, log, j);
                 if (old_write->handle == write->handle) {
