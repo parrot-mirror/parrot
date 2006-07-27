@@ -11,7 +11,33 @@ void
 IMCC_fatal(Interp *interp, int code, const char *fmt, ...)
 {
     va_list ap;
+    UNUSED(code);
+    
+    va_start(ap, fmt);
+    IMCC_INFO(interp)->error_message = Parrot_vsprintf_c(interp, fmt, ap);
+    va_end(ap);
+    IMCC_THROW(IMCC_INFO(interp)->jump_buf,IMCC_FATAL_EXCEPTION);
+}
 
+
+void
+IMCC_fataly(Interp *interp, int code, const char *fmt, ...)
+{
+    va_list ap;
+    UNUSED(code);
+
+    va_start(ap, fmt);
+    IMCC_INFO(interp)->error_message = Parrot_vsprintf_c(interp, fmt, ap);
+    va_end(ap);
+    IMCC_THROW(IMCC_INFO(interp)->jump_buf,IMCC_FATALY_EXCEPTION);
+}
+
+
+void
+IMCC_fatal_standalone(Interp *interp, int code, const char *fmt, ...)
+{
+    va_list ap;
+    
     va_start(ap, fmt);
     imcc_vfprintf(interp, stderr, fmt, ap);
     va_end(ap);
@@ -20,8 +46,9 @@ IMCC_fatal(Interp *interp, int code, const char *fmt, ...)
 
 
 void
-IMCC_fataly(Interp *interp, int code, const char *fmt, ...)
+IMCC_fataly_standalone(Interp *interp, int code, const char *fmt, ...)
 {
+
     va_list ap;
 
     va_start(ap, fmt);
@@ -29,7 +56,6 @@ IMCC_fataly(Interp *interp, int code, const char *fmt, ...)
     imcc_vfprintf(interp, stderr, fmt, ap);
     va_end(ap);
     IMCC_print_inc(interp);
-    /* TODO through compiler exception */
     Parrot_exit(code);
 }
 

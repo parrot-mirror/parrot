@@ -301,6 +301,87 @@ T\x{d6}TSCH
 OUTPUT
 }
 
+# Tests for .CCLASS_WHITESPACE
+pir_output_is( <<'CODE', <<'OUTPUT', "CCLASS_WHITESPACE in unicode");
+.sub main
+    .include 'cclass.pasm'
+    .local string s
+    s = unicode:" \t\u207babc\n\u2000\u2009"
+    $I9 = length s
+    $I0 = is_cclass .CCLASS_WHITESPACE, s, 0
+    print $I0
+    $I0 = is_cclass .CCLASS_WHITESPACE, s, 1
+    print $I0
+    $I0 = is_cclass .CCLASS_WHITESPACE, s, 2
+    print $I0
+    $I0 = find_not_cclass .CCLASS_WHITESPACE, s, 0, $I9
+    print $I0
+    $I0 = find_not_cclass .CCLASS_WHITESPACE, s, $I0, $I9
+    print $I0
+    $I0 = find_cclass .CCLASS_WHITESPACE, s, $I0, $I9
+    print $I0
+    $I0 = find_not_cclass .CCLASS_WHITESPACE, s, $I0, $I9
+    print $I0
+    print "\n"
+.end
+CODE
+1102269
+OUTPUT
+
+# Tests for .CCLASS_NUMERIC
+pir_output_is( <<'CODE', <<'OUTPUT', "CCLASS_NUMERIC in unicode");
+.sub main
+    .include 'cclass.pasm'
+    .local string s
+    s = unicode:"01\u207bxyz\u0660\u17e1\u19d9"
+    $I9 = length s
+    $I0 = is_cclass .CCLASS_NUMERIC, s, 0
+    print $I0
+    $I0 = is_cclass .CCLASS_NUMERIC, s, 1
+    print $I0
+    $I0 = is_cclass .CCLASS_NUMERIC, s, 2
+    print $I0
+    $I0 = find_not_cclass .CCLASS_NUMERIC, s, 0, $I9
+    print $I0
+    $I0 = find_not_cclass .CCLASS_NUMERIC, s, $I0, $I9
+    print $I0
+    $I0 = find_cclass .CCLASS_NUMERIC, s, $I0, $I9
+    print $I0
+    $I0 = find_not_cclass .CCLASS_NUMERIC, s, $I0, $I9
+    print $I0
+    print "\n"
+.end
+CODE
+1102269
+OUTPUT
+
+# Concatenate unicode: with iso-8859-1; RT #39930 if no icu
+pir_output_is( <<'CODE', <<"OUTPUT", "Concat unicode with iso-8859-1", $PConfig{has_icu} ? () : (todo => 'RT #39930'));
+.sub main
+    $S0 = unicode:"A"
+    $S1 = ascii:"B"
+    $S2 = concat $S0, $S1
+    print $S2
+    print "\n"
+
+    $S0 = unicode:"A"
+    $S1 = unicode:"B"
+    $S2 = concat $S0, $S1
+    print $S2
+    print "\n"
+
+    $S0 = unicode:"A"
+    $S1 = iso-8859-1:"B"
+    $S2 = concat $S0, $S1
+    print $S2
+    print "\n"
+.end
+CODE
+AB
+AB
+A\x00B\x00
+OUTPUT
+
 ## remember to change the number of tests :-)
-BEGIN { plan tests => 22; }
+BEGIN { plan tests => 25; }
 

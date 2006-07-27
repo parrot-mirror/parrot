@@ -115,15 +115,15 @@ imcc_version(void)
     int rev = PARROT_REVISION;
     printf("This is parrot version " PARROT_VERSION);
     if (rev != 0)
-	printf(" (r%d)", rev);
+        printf(" (r%d)", rev);
     printf(" built for " PARROT_ARCHNAME ".\n");
     rev = Parrot_revision();
     if (PARROT_REVISION != rev) {
-	printf( "Warning: runtime has revision %d!\n", rev );
+        printf( "Warning: runtime has revision %d!\n", rev );
     }
     rev = Parrot_config_revision();
     if (PARROT_REVISION != rev) {
-	printf( "Warning: used Configure.pl revision %d!\n", rev );
+        printf( "Warning: used Configure.pl revision %d!\n", rev );
     }
     printf("Copyright (C) 2001-2006, The Perl Foundation.\n\
 \n\
@@ -198,8 +198,8 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
     struct longopt_opt_info opt = LONGOPT_OPT_INFO_INIT;
     int status;
     if (*argc == 1) {
-	usage(stderr);
-	exit(1);
+        usage(stderr);
+        exit(1);
     }
     run_pbc = 1;
 
@@ -359,12 +359,24 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
                 SET_FLAG(PARROT_DESTROY_FLAG);
                 break;
             default:
-                IMCC_fatal(interp, 1, "main: Invalid flag '%s' used."
+                IMCC_fatal_standalone(interp, 1, "main: Invalid flag '%s' used."
                         "\n\nhelp: parrot -h\n", (*argv)[0]);
         }
     }
     if (status == -1) {
         fprintf(stderr, "%s\n", opt.opt_error);
+        usage(stderr);
+        exit(EX_USAGE);
+    }
+    /* reached the end of the option list and consumed all of argv */
+    if (*argc == opt.opt_index ) {
+        if (interp->output_file) {
+            fprintf(stderr, "Missing program name or argument for -o\n");
+        }
+        else {
+            /* We are not looking at an option, so it must be a program name */
+            fprintf(stderr, "Missing program name\n");
+        }
         usage(stderr);
         exit(EX_USAGE);
     }
@@ -379,9 +391,12 @@ do_pre_process(Parrot_Interp interp)
 {
     int c;
     YYSTYPE val;
+    void *yyscanner;
+
+    do_yylex_init ( &yyscanner );
 
     IMCC_push_parser_state(interp);
-    while ( (c = yylex(&val, interp)) ) {
+    while ( (c = yylex(&val, interp, yyscanner)) ) {
         switch (c) {
             case EMIT:          printf(".emit\n"); break;
             case EOM:           printf(".eom\n"); break;
@@ -395,7 +410,7 @@ do_pre_process(Parrot_Interp interp)
             case ENDNAMESPACE:  printf(".endnamespace"); break;
             case CONST:         printf(".const "); break;
             case PARAM:         printf(".param "); break;
-            case MACRO:         yylex(&val, interp);
+            case MACRO:         yylex(&val, interp, yyscanner);
                                 break; /* swallow nl */
 
             case GOTO:          printf("goto ");break;
@@ -477,8 +492,6 @@ do_pre_process(Parrot_Interp interp)
     }
 }
 
-extern void imcc_init(Parrot_Interp interp);
-
 int
 main(int argc, char * argv[])
 {
@@ -487,6 +500,9 @@ main(int argc, char * argv[])
     char *sourcefile;
     const char *output_file;
     Interp *interp;
+    void *yyscanner;
+
+    do_yylex_init ( &yyscanner );
 
     Parrot_set_config_hash();
 
@@ -517,10 +533,10 @@ main(int argc, char * argv[])
        PASM or a Parrot abstract syntax tree (PAST) file. If it isn't
        any of these, then we assume that it is PIR. */
     if (!sourcefile || !*sourcefile) {
-        IMCC_fatal(interp, 1, "main: No source file specified.\n" );
+        IMCC_fatal_standalone(interp, 1, "main: No source file specified.\n" );
     }
     else if (!strcmp(sourcefile, "-")) {
-        imc_yyin_set(stdin);
+        imc_yyin_set(stdin, yyscanner);
     }
     else {
         char *ext;
@@ -530,8 +546,8 @@ main(int argc, char * argv[])
             write_pbc = 0;
         }
         else if (!load_pbc) {
-            if (!(imc_yyin_set(fopen(sourcefile, "r"))))    {
-                IMCC_fatal(interp, E_IOError,
+            if (!(imc_yyin_set(fopen(sourcefile, "r"), yyscanner)))    {
+                IMCC_fatal_standalone(interp, E_IOError,
                     "Error reading source file %s.\n",
                         sourcefile);
             }
@@ -546,6 +562,7 @@ main(int argc, char * argv[])
     if (pre_process) {
         do_pre_process(interp);
         Parrot_destroy(interp);
+        yylex_destroy(yyscanner);
         Parrot_exit(0);
     }
 
@@ -565,11 +582,11 @@ main(int argc, char * argv[])
             obj_file = 1;
             Parrot_set_run_core(interp, PARROT_EXEC_CORE);
 #else
-            IMCC_fatal(interp, 1, "main: can't produce object file");
+            IMCC_fatal_standalone(interp, 1, "main: can't produce object file");
 #endif
         }
         if (!strcmp(sourcefile, output_file) && strcmp(sourcefile, "-"))
-            IMCC_fatal(interp, 1,
+            IMCC_fatal_standalone(interp, 1,
                 "main: outputfile is sourcefile\n");
     }
 
@@ -578,7 +595,7 @@ main(int argc, char * argv[])
     if (IMCC_INFO(interp)->verbose) {
         IMCC_info(interp, 1,"debug = 0x%x\n", IMCC_INFO(interp)->debug);
         IMCC_info(interp, 1,"Reading %s\n", 
-                  imc_yyin_get() == stdin ? "stdin":sourcefile);
+                  imc_yyin_get(yyscanner) == stdin ? "stdin":sourcefile);
     }
 
     /* If the input file is Parrot bytecode, then we simply read it
@@ -586,7 +603,7 @@ main(int argc, char * argv[])
     if (load_pbc) {
         pf = Parrot_readbc(interp, sourcefile);
         if (!pf)
-            IMCC_fatal(interp, 1,
+            IMCC_fatal_standalone(interp, 1,
                 "main: Packfile loading failed\n");
         Parrot_loadbc(interp, pf);
     }
@@ -606,18 +623,39 @@ main(int argc, char * argv[])
         IMCC_info(interp, 1, "Starting parse...\n");
 
         if (ast_file) {
-            IMCC_ast_compile(interp, imc_yyin_get());
+            IMCC_ast_compile(interp, imc_yyin_get(yyscanner));
+            imc_compile_all_units(interp);
             imc_compile_all_units_for_ast(interp);
         }
         else {
             IMCC_INFO(interp)->state->pasm_file = pasm_file;
-            yyparse((void *) interp);
+            IMCC_TRY(IMCC_INFO(interp)->jump_buf, 
+                     IMCC_INFO(interp)->error_code) {
+                yyparse(yyscanner, (void *) interp);
+                imc_compile_all_units(interp);
+            }
+            IMCC_CATCH(IMCC_FATAL_EXCEPTION) {
+                IMCC_INFO(interp)->error_code=IMCC_FATAL_EXCEPTION;
+                fprintf(stderr,"error:imcc:%s",
+                        string_to_cstring(interp, 
+                        IMCC_INFO(interp)->error_message));
+                IMCC_print_inc(interp);
+                Parrot_exit(IMCC_FATAL_EXCEPTION);
+            }
+            IMCC_CATCH(IMCC_FATALY_EXCEPTION) {
+                IMCC_INFO(interp)->error_code=IMCC_FATALY_EXCEPTION;
+                fprintf(stderr,"error:imcc:%s",
+                        string_to_cstring(interp, 
+                        IMCC_INFO(interp)->error_message));
+                IMCC_print_inc(interp);
+                Parrot_exit(IMCC_FATALY_EXCEPTION);
+            }
+            IMCC_END_TRY;
         }
-        imc_compile_all_units(interp);
 
         imc_cleanup(interp);
 
-        fclose(imc_yyin_get());
+        fclose(imc_yyin_get(yyscanner));
 
         IMCC_info(interp, 1, "%ld lines compiled.\n", line);
         if (per_pbc)
@@ -639,11 +677,11 @@ main(int argc, char * argv[])
         if (strcmp (output_file, "-") == 0)
             fp = stdout;
         else if ((fp = fopen(output_file, "wb")) == 0)
-            IMCC_fatal(interp, E_IOError,
+            IMCC_fatal_standalone(interp, E_IOError,
                 "Couldn't open %s\n", output_file);
 
         if ((1 != fwrite(packed, size, 1, fp)) )
-            IMCC_fatal(interp, E_IOError,
+            IMCC_fatal_standalone(interp, E_IOError,
                 "Couldn't write %s\n", output_file);
         fclose(fp);
         IMCC_info(interp, 1, "%s written.\n", output_file);
@@ -655,7 +693,7 @@ main(int argc, char * argv[])
         IMCC_info(interp, 1, "Loading %s\n", output_file);
         pf = Parrot_readbc(interp, output_file);
         if (!pf)
-            IMCC_fatal(interp, 1,
+            IMCC_fatal_standalone(interp, 1,
             "Packfile loading failed\n");
         Parrot_loadbc(interp, pf);
         load_pbc = 1;
@@ -684,6 +722,7 @@ main(int argc, char * argv[])
 
     /* Clean-up after ourselves */
     Parrot_destroy(interp);
+    yylex_destroy(yyscanner);
     mem_sys_free(IMCC_INFO(interp));
     Parrot_exit(0);
 

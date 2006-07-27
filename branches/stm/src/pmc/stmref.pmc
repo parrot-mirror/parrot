@@ -131,6 +131,12 @@ Returns the name of the PMC, not the name of the referenced PMC.
     void thawfinish (visit_info *info) {
         /* so it's not delegated */
     }
+
+    PMC* get_pmc() {
+        Parrot_STM_PMC_handle handle = PMC_struct_val(SELF);
+        PMC *value = Parrot_STM_begin_update(INTERP, handle);
+        return value;
+    }
 }
 
 /*

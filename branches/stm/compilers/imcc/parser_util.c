@@ -23,16 +23,10 @@
 #include "pbc.h"
 #include "parser.h"
 
-/*
- * FIXME create an official interface
- *       this is needed for the debugger pdb and called from imcc/main.c
- */
-PMC * imcc_compile_pir(Parrot_Interp interp, const char *s);
-PMC * imcc_compile_pasm(Parrot_Interp interp, const char *s);
-
-static PMC * imcc_compile(Parrot_Interp interp, const char *s, int pasm);
-static const char * try_rev_cmp(Parrot_Interp, IMC_Unit * unit, char *name,
-        SymReg ** r);
+PMC * imcc_compile(Parrot_Interp interp, const char *s, int pasm_file,
+                   STRING **error_message);
+static const char *try_rev_cmp(Parrot_Interp, IMC_Unit *unit, char *name,
+                               SymReg **r);
 
 /*
  * P = new type, [init]
@@ -137,20 +131,6 @@ op_fullname(char * dest, const char * name, SymReg * args[],
 #if IMC_TRACE_HIGH
     PIO_eprintf(NULL, " -> %s\n", full);
 #endif
-}
-
-int
-get_keyvec(Parrot_Interp interpreter, int op)
-{
-    int i, k;
-    op_info_t * op_info = &interpreter->op_info_table[op];
-    for (i = k = 0; i < op_info->op_count - 1; i++)
-        if (op_info->types[i] == PARROT_ARG_K ||
-            op_info->types[i] == PARROT_ARG_KC ||
-            op_info->types[i] == PARROT_ARG_KI ||
-            op_info->types[i] == PARROT_ARG_KIC)
-            k |= KEY_BIT(i);
-    return k;
 }
 
 /*
@@ -418,10 +398,7 @@ INS(Interp *interpreter, IMC_Unit * unit, char *name,
     if (op < 0) {         /* still wrong, try reverse compare */
         const char *n_name = try_rev_cmp(interpreter, unit, name, r);
         if (n_name) {
-            union {
-                const void * __c_ptr;
-                void * __ptr;
-            } __ptr_u;
+            DECL_CONST_CAST;
             name = const_cast(n_name);
             op_fullname(fullname, name, r, n, keyvec);
             op = interpreter->op_lib->op_code(fullname, 1);
@@ -515,22 +492,6 @@ INS(Interp *interpreter, IMC_Unit * unit, char *name,
         /* emit a debug seg, if this op is seen */
         PARROT_WARNINGS_on(interpreter, PARROT_WARNINGS_ALL_FLAG);
     }
-#if 1
-    else if (!strcmp(name, "loadlib")) {
-        SymReg *r1 = r[1];   /* lib name */
-        STRING *lib;
-        if ((r1->type & VTCONST) && strstr(r1->name, "ops")) {
-            /*
-             * XXX we should not read in dynamic PMC classes
-             *     OTOH we have to load dynamic opcodes
-             *     to get at the opcode information
-             */
-            lib = string_from_cstring(interpreter, r1->name + 1,
-                    strlen(r1->name) - 2);
-            Parrot_load_lib(interpreter, lib, NULL);
-        }
-    }
-#endif
     else if (!strcmp(name, "yield")) {
         cur_unit->instructions->r[0]->pcc_sub->calls_a_sub |= 1 |ITPCCYIELD;
     }
@@ -591,23 +552,30 @@ extern void* yy_scan_string(const char *);
 extern SymReg *cur_namespace; /* s. imcc.y */
 
 
+int
+do_yylex_init (yyscan_t* yyscanner)
+{
+    return yylex_init(yyscanner);
+}
+
 PMC *
-imcc_compile(Parrot_Interp interp, const char *s, int pasm_file)
+imcc_compile(Parrot_Interp interp, const char *s, int pasm_file, 
+             STRING **error_message)
 {
     /* imcc always compiles to interp->code
      * save old cs, make new
      */
     char name[64];
     struct PackFile_ByteCode *old_cs, *new_cs;
-    PMC *sub;
+    PMC *sub=NULL;
     parrot_sub_t sub_data;
     struct _imc_info_t *imc_info = NULL;
     struct parser_state_t *next;
-    union {
-        const void * __c_ptr;
-        void * __ptr;
-    } __ptr_u;
+    DECL_CONST_CAST;
     INTVAL regs_used[4] = {3,3,3,3};
+    void *yyscanner;
+
+    do_yylex_init ( &yyscanner );
 
     /*
      * we create not yet anchored PMCs - e.g. Subs: turn off DOD
@@ -643,7 +611,7 @@ imcc_compile(Parrot_Interp interp, const char *s, int pasm_file)
     expect_pasm = 0;
     Parrot_push_context(interp, regs_used);
 
-    compile_string(interp, const_cast(s));
+    compile_string(interp, const_cast(s), yyscanner);
 
     Parrot_pop_context(interp);
     /*
@@ -654,25 +622,30 @@ imcc_compile(Parrot_Interp interp, const char *s, int pasm_file)
      * set next here and pop
      */
     IMCC_INFO(interp)->state->next = next;
-    IMCC_pop_parser_state(interp);
+    IMCC_pop_parser_state(interp, yyscanner);
 
-    sub = pmc_new(interp, enum_class_Eval);
-    PackFile_fixup_subs(interp, PBC_MAIN, sub);
-    if (old_cs) {
-        /* restore old byte_code, */
-        (void)Parrot_switch_to_cs(interp, old_cs, 0);
+    if (!IMCC_INFO(interp)->error_code) {
+        sub = pmc_new(interp, enum_class_Eval);
+        PackFile_fixup_subs(interp, PBC_MAIN, sub);
+        if (old_cs) {
+            /* restore old byte_code, */
+            (void)Parrot_switch_to_cs(interp, old_cs, 0);
+        }
+
+        /*
+         * create sub PMC
+         *
+         * TODO if a sub was denoted :main return that instead
+         */
+        sub_data = PMC_sub(sub);
+        sub_data->seg = new_cs;
+        sub_data->start_offs = 0;
+        sub_data->end_offs = new_cs->base.size;
+        sub_data->name = string_from_cstring(interp, name, 0);
     }
-
-    /*
-     * create sub PMC
-     *
-     * TODO if a sub was denoted :main return that instead
-     */
-    sub_data = PMC_sub(sub);
-    sub_data->seg = new_cs;
-    sub_data->start_offs = 0;
-    sub_data->end_offs = new_cs->base.size;
-    sub_data->name = string_from_cstring(interp, name, 0);
+    else {
+        *error_message = IMCC_INFO(interp)->error_message;
+    }
 
     if (imc_info) {
         IMCC_INFO(interp) = imc_info->prev;
@@ -684,29 +657,55 @@ imcc_compile(Parrot_Interp interp, const char *s, int pasm_file)
     else
         imc_cleanup(interp);
     Parrot_unblock_DOD(interp);
+
+    yylex_destroy ( yyscanner );
     return sub;
 }
 
+/*
+ * Note: This function is provided for backward compatibility. This
+ * function can go away in future.
+ */
 PMC *
 imcc_compile_pasm(Parrot_Interp interp, const char *s)
 {
-    return imcc_compile(interp, s, 1);
+    STRING *error_message;
+    return imcc_compile(interp, s, 1, &error_message);
 }
 
+/*
+ * Note: This function is provided for backward compatibility. This
+ * function can go away in future.
+ */
 PMC *
 imcc_compile_pir (Parrot_Interp interp, const char *s)
 {
-    return imcc_compile(interp, s, 0);
+    STRING *error_message;
+    return imcc_compile(interp, s, 0, &error_message);
 }
 
+PMC *
+IMCC_compile_pir_s(Parrot_Interp interp, const char *s,
+                   STRING **error_message)
+{
+    return imcc_compile(interp, s, 0, error_message);
+}
+
+PMC *
+IMCC_compile_pasm_s(Parrot_Interp interp, const char *s,
+                    STRING **error_message)
+{
+    return imcc_compile(interp, s, 1, error_message);
+}
 
 /*
  * Compile a file by filename (can be either PASM or IMCC code)
  */
 static void *
-imcc_compile_file (Parrot_Interp interp, const char *fullname)
+imcc_compile_file (Parrot_Interp interp, const char *fullname, 
+                   STRING **error_message)
 {
-    struct PackFile_ByteCode *cs_save = interp->code, *cs;
+    struct PackFile_ByteCode *cs_save = interp->code, *cs=NULL;
     char *ext;
     FILE *fp;
     struct _imc_info_t *imc_info = NULL;
@@ -749,23 +748,39 @@ imcc_compile_file (Parrot_Interp interp, const char *fullname)
     Parrot_push_context(interp, regs_used);
 
     if (ext && strcmp (ext, ".pasm") == 0) {
+        void *yyscanner;
+        do_yylex_init ( &yyscanner );
+
         IMCC_INFO(interp)->state->pasm_file = 1;
         /* see imcc.l */
-        compile_file(interp, fp);
+        compile_file(interp, fp, yyscanner);
+
+        yylex_destroy ( yyscanner );
     }
     else if (ext && strcmp (ext, ".past") == 0) {
         IMCC_ast_compile(interp, fp);
     }
     else {
+        void *yyscanner;
+        do_yylex_init ( &yyscanner );
+
         IMCC_INFO(interp)->state->pasm_file = 0;
-        compile_file(interp, fp);
+        compile_file(interp, fp, yyscanner);
+
+        yylex_destroy ( yyscanner );
     }
     Parrot_unblock_DOD(interp);
     Parrot_pop_context(interp);
 
     imc_cleanup(interp);
     fclose(fp);
-    cs = interp->code;
+
+    if (!IMCC_INFO(interp)->error_code) {
+        cs = interp->code;
+    }
+    else {
+        *error_message = IMCC_INFO(interp)->error_message;    
+    }
 
     if (cs_save)
         (void)Parrot_switch_to_cs(interp, cs_save, 0);
@@ -777,12 +792,23 @@ imcc_compile_file (Parrot_Interp interp, const char *fullname)
     return cs;
 }
 
+/*
+ * Note: This function is provided for backward compatibility. This
+ * function can go away in future.
+ */
 void *
-IMCC_compile_file (Parrot_Interp interp, const char *s)
+IMCC_compile_file(Parrot_Interp interp, const char *s) 
 {
-    return imcc_compile_file(interp, s);
+    STRING *error_message;
+    return imcc_compile_file(interp, s, &error_message);
 }
 
+void *
+IMCC_compile_file_s(Parrot_Interp interp, const char *s, 
+                   STRING **error_message)
+{
+        return imcc_compile_file(interp, s , error_message);
+}
 
 /* Register additional compilers with the interpreter */
 void

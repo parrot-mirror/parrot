@@ -7,16 +7,34 @@
 .sub '&unset'
   .param pmc argv :slurpy
 
-  # For now, pretend the usage is 'unset <foo>'
-
   .local int argc
-  argc = argv
+  argc = elements argv
+  if argc == 0 goto loop_end
+  
+  .local int i
+  i = 0
+  
+  .local int nocomplain
+  nocomplain = 0
+  
+  $S0 = argv[0]
+  if $S0 != "-nocomplain" goto flags_done
+  nocomplain = 1
+  i = 1
+  
+  if argc < 2 goto flags_done
+  $S0 = argv[1]
+  if $S0 != "--" goto flags_done
+  i = 2
 
-  .local string name
-  name = argv[0]
+flags_done:
   .local pmc find_var, var
   .get_from_HLL(find_var, '_tcl', '__find_var')
-  
+
+  .local string name
+loop:
+  if i == argc goto loop_end
+  name = argv[i]
   # is this an array?
   # ends with )
   .local int char
@@ -27,8 +45,8 @@
   if char == -1 goto scalar
 
 array:
-  .local string array
-  array = substr name, 0, char
+  .local string array_name
+  array_name = substr name, 0, char
   
   .local string key
   .local int len
@@ -37,38 +55,44 @@ array:
   len -= 2
   inc char
   key = substr name, char, len
-  
-  push_eh no_such_var
-    var = find_var(array)
-  clear_eh
+ 
+  var = find_var(array_name)
   if null var goto no_such_var
   
   $I0 = exists var[key]
   if $I0 == 0 goto no_such_element
   delete var[key]
-  .return('')
+  goto next
 
 no_such_element:
+  if nocomplain goto next
   $S0 = "can't unset \""
   $S0 .= name
   $S0 .= '": no such element in array'
   .throw($S0)
 
 scalar:
-  push_eh no_such_var
-    var = find_var(name)
-  clear_eh
+  var = find_var(name)
   if null var goto no_such_var
 
   null var
   .local pmc store_var
   .get_from_HLL(store_var, '_tcl', '__store_var')
   store_var(name, var)
+  # goto next
+
+next:
+  inc i
+  goto loop
+
+loop_end:
   .return('')
 
 no_such_var:
+  if nocomplain goto next
   $S0 = "can't unset \""
   $S0 .= name
   $S0 .= '": no such variable'
   .throw($S0)
 .end
+

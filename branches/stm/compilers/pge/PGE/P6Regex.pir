@@ -56,23 +56,23 @@ or the resulting PIR code (target='PIR').
     $I0 = adverbs['i']
     adverbs['ignorecase'] = $I0
   with_ignorecase:
-    $I0 = exists adverbs['words']
-    if $I0 goto with_words
-    $I0 = exists adverbs['w']
-    if $I0 goto with_w
     $I0 = exists adverbs['sigspace']
     if $I0 goto with_sigspace
-    $I0 = adverbs['s']
-    adverbs['words'] = $I0
-    goto with_words
-  with_sigspace:
-    $I0 = adverbs['sigspace']
-    adverbs['words'] = $I0
-    goto with_words
-  with_w:
+    $I0 = exists adverbs['s']
+    if $I0 goto with_s
+    $I0 = exists adverbs['words']
+    if $I0 goto with_words
     $I0 = adverbs['w']
-    adverbs['words'] = $I0
+    adverbs['sigspace'] = $I0
+    goto with_sigspace
+  with_s:
+    $I0 = adverbs['s']
+    adverbs['sigspace'] = $I0
+    goto with_sigspace
   with_words:
+    $I0 = adverbs['words']
+    adverbs['sigspace'] = $I0
+  with_sigspace:
 
     .local string target
     target = adverbs['target']
@@ -90,7 +90,7 @@ or the resulting PIR code (target='PIR').
 
   parse:
     ##   Let's parse the source as a regex
-    $P0 = find_global 'PGE::Grammar', 'regex'
+    $P0 = get_hll_global ['PGE::Grammar'], 'regex'
     match = $P0(source, adverbs :flat :named)
     if target != 'parse' goto check
     .return (match)
@@ -160,8 +160,8 @@ parse valid Perl 6 regular expressions.
     .local string stop
     .local pmc stopstack, optable, match
 
-    stopstack = find_global 'PGE::P6Regex', '@!stopstack'
-    optable = find_global 'PGE::P6Regex', '$optable'
+    stopstack = get_hll_global ['PGE::P6Regex'], '@!stopstack'
+    optable = get_hll_global ['PGE::P6Regex'], '$optable'
 
     stop = adverbs['stop']
     push stopstack, stop
@@ -189,9 +189,9 @@ needed for compiling regexes.
     $P0 = subclass 'PGE::Exp', 'PGE::Exp::Alias'
 
     optable = new 'PGE::OPTable'
-    store_global '$optable', optable
+    set_global '$optable', optable
 
-    $P0 = find_global 'parse_term'
+    $P0 = get_global 'parse_term'
     optable.newtok('term:', 'precedence'=>'=', 'nows'=>1, 'parsed'=>$P0)
 
     optable.newtok('term:^', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
@@ -199,6 +199,10 @@ needed for compiling regexes.
     optable.newtok('term:$$', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
     optable.newtok('term:\b', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
     optable.newtok('term:\B', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok('term:<<', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok('term:>>', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok(unicode:"term:\xab", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok(unicode:"term:\xbb", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
 
     optable.newtok('term:.', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
     optable.newtok('term:\d', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
@@ -210,39 +214,39 @@ needed for compiling regexes.
     optable.newtok('term:\N', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
     optable.newtok('term:\n', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Newline')
 
-    $P0 = find_global 'parse_dollar'
+    $P0 = get_global 'parse_dollar'
     optable.newtok('term:$', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
-    $P0 = find_global 'parse_subrule'
+    $P0 = get_global 'parse_subrule'
     optable.newtok('term:<', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
     optable.newtok('term:<?', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
     optable.newtok('term:<!', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
-    $P0 = find_global 'parse_enumcharlist'
+    $P0 = get_global 'parse_enumcharlist'
     optable.newtok('term:<[', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
     optable.newtok('term:<-[', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
     optable.newtok('term:<+[', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
-    $P0 = find_global 'parse_quoted_literal'
+    $P0 = get_global 'parse_quoted_literal'
     optable.newtok("term:<'", 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     optable.newtok('term:::', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
+    optable.newtok('term::::', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
     optable.newtok('term:<commit>', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
 
-    $P0 = find_global 'parse_closure'
+    $P0 = get_global 'parse_closure'
     optable.newtok("term:{{", 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     optable.newtok('circumfix:[ ]', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Group')
     optable.newtok('circumfix:( )', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CGroup')
 
-    $P0 = find_global 'parse_quant'
+    $P0 = get_global 'parse_quant'
     optable.newtok('postfix:*', 'looser'=>'term:', 'parsed'=>$P0)
     optable.newtok('postfix:+', 'equiv'=>'postfix:*', 'parsed'=>$P0)
     optable.newtok('postfix:?', 'equiv'=>'postfix:*', 'parsed'=>$P0)
     optable.newtok('postfix::', 'equiv'=>'postfix:*', 'parsed'=>$P0)
     optable.newtok('postfix:**', 'equiv'=>'postfix:*', 'parsed'=>$P0)
 
-    optable.newtok('term::::', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
 
     optable.newtok('infix:', 'looser'=>'postfix:*', 'assoc'=>'list', 'nows'=>1, 'match'=>'PGE::Exp::Concat')
     optable.newtok('infix:&', 'looser'=>'infix:', 'nows'=>1, 'match'=>'PGE::Exp::Conj')
@@ -251,15 +255,14 @@ needed for compiling regexes.
 
     optable.newtok('infix::=', 'tighter'=>'infix:', 'assoc'=>'right', 'match'=>'PGE::Exp::Alias')
 
-    $P0 = find_global 'parse_modifier'
+    $P0 = get_global 'parse_modifier'
     optable.newtok('prefix::', 'looser'=>'infix:|', 'nows'=>1, 'parsed'=>$P0)
 
-    optable.newtok('close:>', 'precedence'=>'<', 'nows'=>1)
     optable.newtok('close:}', 'precedence'=>'<', 'nows'=>1)
 
     .local pmc esclist
     esclist = new .Hash
-    store_global '%esclist', esclist
+    set_global '%esclist', esclist
     esclist['e'] = "\e"
     esclist['f'] = "\f"
     esclist['r'] = "\r"
@@ -271,15 +274,15 @@ needed for compiling regexes.
 
     # Create and store closure preprocessors in %closure_pp
     $P0 = new .Hash
-    store_global 'PGE::P6Regex', '%closure_pp', $P0
-    $P1 = find_global 'PGE::P6Regex', 'PIR_closure'
+    set_hll_global ['PGE::P6Regex'], '%closure_pp', $P0
+    $P1 = get_hll_global ['PGE::P6Regex'], 'PIR_closure'
     $P0["PIR"] = $P1
 
     # Create an array for holding stop tokens
     $P0 = new .ResizablePMCArray
-    store_global 'PGE::P6Regex', '@!stopstack', $P0
+    set_hll_global ['PGE::P6Regex'], '@!stopstack', $P0
 
-    $P0 = find_global 'compile_p6regex'
+    $P0 = get_global 'compile_p6regex'
     compreg 'PGE::P6Regex', $P0
     .return ()
 .end
@@ -305,7 +308,7 @@ Return a failed match if the stoptoken is found.
     lastpos = length target
 
     .local string stop
-    $P0 = find_global 'PGE::P6Regex', '@!stopstack'
+    $P0 = get_hll_global ['PGE::P6Regex'], '@!stopstack'
     stop = $P0[-1]
 
     .local string initchar
@@ -330,10 +333,14 @@ Return a failed match if the stoptoken is found.
     .local int isnegated
     isnegated = is_cclass .CCLASS_UPPERCASE, target, pos
     inc pos
-    $S0 = downcase initchar
+    $S0 = initchar
+    $I0 = index "ABCDEFGHIJKLMNOPQRSTUVWXYZ", $S0
+    if $I0 < 0 goto term_backslash_1
+    $S0 = substr "abcdefghijklmnopqrstuvwxyz", $I0, 1
+  term_backslash_1:  
     if $S0 == 'x' goto term_backslash_x            # \x.. \X..
     if $S0 == 'o' goto term_backslash_o            # \o.. \O..
-    $P0 = find_global '%esclist'
+    $P0 = get_global '%esclist'
     $I0 = exists $P0[$S0]
     if $I0 == 0 goto term_literal
     initchar = $P0[$S0]
@@ -362,9 +369,9 @@ Return a failed match if the stoptoken is found.
     inc pos
   term_bx1:
     $S0 = substr target, pos, 1
-    downcase $S0
-    $I1 = index "0123456789abcdef", $S0
+    $I1 = index "0123456789abcdef0123456789ABCDEF", $S0
     if $I1 < 0 goto term_bx2
+    $I1 = $I1 % 16
     if $I1 >= base goto term_bx2
     $I0 *= base
     $I0 += $I1
@@ -581,7 +588,7 @@ anchors, and match subscripts.
     .local int pos, lastpos
     .local pmc newfrom, mfrom, mpos
     .local string cname
-    newfrom = find_global 'PGE::Match', 'newfrom'
+    newfrom = get_hll_global ['PGE::Match'], 'newfrom'
     $P0 = getattribute mob, '$.target'
     target = $P0
     $P0 = getattribute mob, '$.pos'
@@ -686,8 +693,8 @@ Parses a subrule token.
     inc pos
     mpos = pos
     .local pmc regex
-    regex = find_global 'PGE::Grammar', 'regex'
-    $P1 = regex(mob)
+    regex = get_hll_global ['PGE::Grammar'], 'regex'
+    $P1 = regex(mob, 'stop'=>'>')
     unless $P1 goto end
     $S0 = $P1
     mob['arg'] = $S0
@@ -767,6 +774,7 @@ Extract an enumerated character list.
     inc $I2
     if $I2 > $I0 goto scan
     $S1 = chr $I2
+    $I99 = $I2
     charlist .= $S1
     goto addrange_1
   dotrange:
@@ -884,7 +892,7 @@ Parse a modifier.
     .local string target
     .local pmc mfrom, mpos
     .local int pos, len
-    $P0 = find_global "PGE::Match", "newfrom"
+    $P0 = get_hll_global ["PGE::Match"], "newfrom"
     (mob, target, mfrom, mpos) = $P0(mob, 0, "PGE::Exp::Closure")
     pos = mfrom
     len = 2
@@ -1157,7 +1165,7 @@ Parse a modifier.
 .sub 'p6exp' :method 
     .param pmc pad
 
-    $I0 = pad['words']
+    $I0 = pad['sigspace']
     if $I0 goto end
     null $P0
     .return ($P0)
@@ -1278,13 +1286,13 @@ Parse a modifier.
     .local string value
     key = self['key']
     value = self
-    if key == 's' goto words
-    if key == 'sigspace' goto words
-    if key == 'w' goto words
+    if key == 'words' goto sigspace
+    if key == 's' goto sigspace
+    if key == 'w' goto sigspace
     if key == 'i' goto ignorecase
     goto setpad
-  words:
-    key = 'words'
+  sigspace:
+    key = 'sigspace'
     goto setpad
   ignorecase:
     key = 'ignorecase'
@@ -1323,7 +1331,7 @@ Parse a modifier.
     lang = pad['lang']
     self['lang'] = lang
     # see if we need to do any pre-processing of the closure
-    closure_pp = find_global 'PGE::P6Regex', '%closure_pp'
+    closure_pp = get_hll_global ['PGE::P6Regex'], '%closure_pp'
     $I0 = defined closure_pp[lang]
     if $I0 == 0 goto end
     closure_fn = closure_pp[lang]
@@ -1347,7 +1355,6 @@ by adding a ".sub" wrapper around the code if one isn't
 already present.
 
 =back
-
 =cut
 
 .namespace [ 'PGE::P6Regex' ]

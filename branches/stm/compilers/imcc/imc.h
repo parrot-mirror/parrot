@@ -51,6 +51,15 @@
 #include "unit.h"
 #include "debug.h"
 
+#define IMCC_TRY(a,e)     do{ e=0; switch(setjmp(a)){ case 0:
+#define IMCC_CATCH(x)     break; case x:
+#define IMCC_END_TRY      } }while(0)
+
+#define IMCC_THROW(a,x)  longjmp(a,x)
+
+#define IMCC_FATAL_EXCEPTION      1
+#define IMCC_FATALY_EXCEPTION     2
+
 /*
  * imc.c
  */
@@ -59,8 +68,8 @@ PARROT_API void imc_compile_all_units_for_ast(Interp *);
 PARROT_API void imc_compile_unit(Interp *, IMC_Unit * unit);
 PARROT_API void imc_cleanup(Interp *);
 PARROT_API void imc_pragma(char * str);
-PARROT_API FILE* imc_yyin_set(FILE*);
-PARROT_API FILE* imc_yyin_get(void);
+PARROT_API FILE* imc_yyin_set(FILE*, void*);
+PARROT_API FILE* imc_yyin_get(void*);
 
 /*
  * instructions.c
@@ -82,7 +91,6 @@ void free_reglist(IMC_Unit *);
  * parser_util.c
  */
 PARROT_API void imcc_init(Parrot_Interp interpreter);
-int get_keyvec(Parrot_Interp, int opnum);
 int check_op(Interp *, char * fullname, char *op, SymReg *r[],
     int narg, int keyvec);
 int is_op(Interp *, char *);
@@ -91,6 +99,20 @@ char *str_cat(const char *, const char *);
 int imcc_vfprintf(Interp *, FILE *fd, const char *format, va_list ap);
 int imcc_fprintf(Interp *, FILE *fd, const char *fmt, ...);
 
+/*
+ * FIXME create an official interface
+ * imcc compile interface
+ *       this is needed for the debugger pdb and called from imcc/main.c
+ */
+PMC *imcc_compile_pir(Parrot_Interp interp, const char *s);
+PMC *imcc_compile_pasm(Parrot_Interp interp, const char *s);
+void *IMCC_compile_file(Parrot_Interp interp, const char *s);
+void *IMCC_compile_file_s(Parrot_Interp interp, const char *s,
+      STRING **error_message);
+PMC * IMCC_compile_pir_s(Parrot_Interp interp, const char *s, 
+      STRING **error_message);
+PMC * IMCC_compile_pasm_s(Parrot_Interp interp, const char *s, 
+      STRING **error_message);
 
 /* Call convention independant API */
 
@@ -159,7 +181,7 @@ typedef enum _AsmState {
 } AsmState;
 
 PARROT_API void IMCC_push_parser_state(Interp*);
-PARROT_API void IMCC_pop_parser_state(Interp*);
+PARROT_API void IMCC_pop_parser_state(Interp*, void *yyscanner);
 
 typedef struct _imc_info_t {
     struct _imc_info_t *prev;
@@ -181,9 +203,10 @@ typedef struct _imc_info_t {
     SymHash ghash;
     SymReg  *  cur_namespace;
     struct nodeType_t *top_node;
-
     struct parser_state_t *state;
-
+    jmp_buf jump_buf;               /* The jump for error  handling */
+    int error_code;                 /* The Error code. */
+    STRING * error_message;         /* The Error message */
 } imc_info_t;
 
 #define IMCC_INFO(i) (((Parrot_Interp)(i))->imc_info)

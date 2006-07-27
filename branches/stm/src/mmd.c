@@ -104,6 +104,11 @@ get_mmd_dispatch_type(Interp *interpreter, INTVAL func_nr, INTVAL left_type,
     x_funcs = table->x;
     y_funcs = table->y;
 
+#if MMD_DEBUG
+    fprintf(stderr, "running function %d with left type=%u, right type=%u\n",
+        (int) func_nr, (unsigned) left_type, (unsigned) right_type);
+#endif
+
     func = NULL;
     assert(left_type >= 0);
     assert(right_type >=0 ||
@@ -168,6 +173,29 @@ get_mmd_dispatcher(Interp *interpreter, PMC *left, PMC * right,
 
 /*
 
+=item C<static PMC*
+mmd_deref(Interp *interpreter, INTVAL function, PMC *value)>
+
+If C<value> is a reference-like PMC, dereference it so we can make an MMD
+call on the 'real' value.
+
+=cut
+
+*/
+
+static PMC *
+mmd_deref(Interp *interpreter, INTVAL function, PMC *value)
+{
+    if (VTABLE_type(interpreter, value) != value->vtable->base_type) {
+        return VTABLE_get_pmc(interpreter, value);
+    } else {
+        return value;
+    }
+}
+
+
+/*
+
 =item C<PMC*
 mmd_dispatch_p_ppp(Interp *,
 		 PMC *left, PMC *right, PMC *dest, INTVAL function)>
@@ -226,6 +254,9 @@ mmd_dispatch_p_ppp(Interp *interpreter,
     PMC *sub;
     int is_pmc;
 
+    left = mmd_deref(interpreter, func_nr, left);
+    right = mmd_deref(interpreter, func_nr, right);
+
     real_function = (mmd_f_p_ppp)get_mmd_dispatcher(interpreter,
             left, right, func_nr, &is_pmc);
 
@@ -249,8 +280,14 @@ mmd_dispatch_p_pip(Interp *interpreter,
 {
     int is_pmc;
 
-    const UINTVAL left_type = left->vtable->base_type;
-    const mmd_f_p_pip real_function =
+    UINTVAL left_type;
+    mmd_f_p_pip real_function;
+
+    left = mmd_deref(interpreter, func_nr, left);
+
+    left_type = left->vtable->base_type;
+    
+    real_function =
         (mmd_f_p_pip)get_mmd_dispatch_type(interpreter, func_nr, left_type, enum_type_INTVAL, &is_pmc);
 
     if (is_pmc) {
@@ -275,6 +312,8 @@ mmd_dispatch_p_pnp(Interp *interpreter,
     PMC *sub;
     int is_pmc;
     UINTVAL left_type;
+
+    left = mmd_deref(interpreter, func_nr, left);
 
     left_type = left->vtable->base_type;
     real_function = (mmd_f_p_pnp)get_mmd_dispatch_type(interpreter,
@@ -330,6 +369,9 @@ mmd_dispatch_v_pp(Interp *interpreter,
     PMC *sub;
     int is_pmc;
 
+    left = mmd_deref(interpreter, func_nr, left);
+    right = mmd_deref(interpreter, func_nr, right);
+
     real_function = (mmd_f_v_pp)get_mmd_dispatcher(interpreter,
             left, right, func_nr, &is_pmc);
 
@@ -350,6 +392,8 @@ mmd_dispatch_v_pi(Interp *interpreter,
     PMC *sub;
     int is_pmc;
     UINTVAL left_type;
+
+    left = mmd_deref(interpreter, func_nr, left);
 
     left_type = left->vtable->base_type;
     real_function = (mmd_f_v_pi)get_mmd_dispatch_type(interpreter,
@@ -393,6 +437,8 @@ mmd_dispatch_v_ps(Interp *interpreter,
     int is_pmc;
     UINTVAL left_type;
 
+    left = mmd_deref(interpreter, func_nr, left);
+
     left_type = VTABLE_type(interpreter, left);
     real_function = (mmd_f_v_ps)get_mmd_dispatch_type(interpreter,
             func_nr, left_type, enum_type_STRING, &is_pmc);
@@ -426,6 +472,9 @@ mmd_dispatch_i_pp(Interp *interpreter,
     PMC *sub;
     int is_pmc;
     INTVAL ret;
+
+    left = mmd_deref(interpreter, func_nr, left);
+    right = mmd_deref(interpreter, func_nr, right);
 
     real_function = (mmd_f_i_pp)get_mmd_dispatcher(interpreter,
             left, right, func_nr, &is_pmc);
@@ -1632,22 +1681,18 @@ mmd_get_ns(Interp *interpreter)
     PMC *ns;
 
     ns_name = CONST_STRING(interpreter, "__parrot_core");
-    ns = Parrot_find_namespace_gen(interpreter,
-                                   PARROT_HLL_NONE, /* from global root */
-                                   PMCNULL, ns_name);
+    ns = Parrot_get_namespace_keyed_str(interpreter, interpreter->root_namespace, ns_name);
     return ns;
 }
 
 static PMC*
-mmd_create_ns(Interp *interpreter) 
+mmd_make_ns(Interp *interpreter) 
 {
     STRING *ns_name;
     PMC *ns;
 
     ns_name = CONST_STRING(interpreter, "__parrot_core");
-    ns = Parrot_make_namespace_gen(interpreter,
-                                   PARROT_HLL_NONE, /* from global root */
-                                   PMCNULL, ns_name);
+    ns = Parrot_make_namespace_keyed_str(interpreter, interpreter->root_namespace, ns_name);
     return ns;
 }
 
@@ -1795,7 +1840,7 @@ Parrot_mmd_register_table(Interp* interpreter, INTVAL type,
     PMC *ns;
 
     table = interpreter->binop_mmd_funcs;
-    ns = mmd_create_ns(interpreter);
+    ns = mmd_make_ns(interpreter);
     if ((INTVAL)table->x < type && type < enum_class_core_max) {
         /*
          * pre-allocate the function table

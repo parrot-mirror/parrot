@@ -892,9 +892,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "CLONE_CODE|CLONE_GLOBALS|CLONE_HLL|CLONE_LI
 
 .include 'interpinfo.pasm'
 
-.sub __unused
-    $P0 = loadlib 'myops_ops'
-.end
+.loadlib 'myops_ops'
 
 .sub test
     .param pmc passed_value
