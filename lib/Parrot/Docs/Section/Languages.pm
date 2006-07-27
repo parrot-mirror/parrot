@@ -46,6 +46,7 @@ sub new
         $self->new_section('bc', 'bc.html', '', 'languages/bc'),
         $self->new_section('Befunge', 'befunge.html', '', 'languages/befunge'),
         $self->new_section('BF', 'bf.html', '', 'languages/bf'),
+        $self->new_section('Cardinal', 'cardinal.html', '', 'languages/cardinal'),
         $self->new_section('Cola', 'cola.html', '', 'languages/cola'),
         $self->new_section('Commun Lisp', 'lisp.html', '', 'languages/lisp'),
         $self->new_section('.Net', 'dotnet.html', '', 'languages/dotnet'),
@@ -63,9 +64,11 @@ sub new
         $self->new_section('Python', 'python.html', '', 'languages/python'),
         $self->new_section('Regex', 'regex.html', '', 'languages/regex'),
         $self->new_section('Scheme', 'scheme.html', '', 'languages/scheme'),
+        $self->new_section('TAP', 'tap.html', '', 'languages/tap'),
         $self->new_section('TCL', 'tcl.html', '', 'languages/tcl'),
         $self->new_section('unlambda', 'unlambda.html', '', 'languages/unlambda'),
         $self->new_section('URM', 'urm.html', '', 'languages/urm'),
+        $self->new_section('WMLScript', 'wmlscript.html', '', 'languages/WMLScript'),
         $self->new_section('Zcode', 'zcode.html', '', 'languages/Zcode'),
     );
 }

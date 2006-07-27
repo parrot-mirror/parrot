@@ -218,7 +218,7 @@ choice_part:
     save = $I0
     i = 0
 loop:
-    if choices <= i goto done
+    if $I0 <= i goto done
     $P0 = choices[i]
     (status, save_one, the_result) = _transaction($P0, STATUS_FLAG_CHOICE_PART)
     if status == STATUS_COMMIT goto finished
@@ -230,7 +230,7 @@ done:
     
     i = 0
 replay_loop:
-    if save <= i goto done_replay
+    if $I0 <= i goto done_replay
     $P0 = save[i]
     $P0.'replay'()
     inc i

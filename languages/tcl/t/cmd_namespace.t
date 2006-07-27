@@ -2,7 +2,7 @@
 
 use strict;
 use lib qw(tcl/lib ./lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 27;
+use Parrot::Test tests => 35;
 use Test::More;
 use vars qw($TODO);
 
@@ -185,3 +185,60 @@ language_output_is("tcl", <<'TCL', <<'OUT', "namespace parent - too many args");
 TCL
 wrong # args: should be "namespace parent ?name?"
 OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace children - too many args");
+  namespace children a b c
+TCL
+wrong # args: should be "namespace children ?name? ?pattern?"
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace children, no args");
+  puts [namespace children]
+TCL
+::tcl
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace children, ::");
+  puts [namespace children ::]
+TCL
+::tcl
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace children after eval, ordering");
+  namespace eval Bob {}
+  namespace eval audreyt {}
+  puts [namespace children ::]
+TCL
+::audreyt ::Bob ::tcl
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace children, multiple levels ");
+  namespace eval audreyt { namespace eval Bob {} }
+  puts [namespace children]
+  puts [namespace children ::audreyt]
+TCL
+::audreyt ::tcl
+::audreyt::Bob
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace children, bad namespace");
+  namespace children what?
+TCL
+unknown namespace "what?" in namespace children command
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace children, pattern");
+  puts [namespace children :: *t*]
+TCL
+::tcl
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "namespace children, missed pattern");
+  puts [namespace children :: a]
+TCL
+
+OUT
+
+
+
+

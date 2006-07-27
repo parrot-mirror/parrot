@@ -21,6 +21,7 @@
 #define _PARSER
 #define PARSER_MAIN
 #include "imc.h"
+#include "parrot/dynext.h"
 #include "pbc.h"
 #include "parser.h"
 
@@ -35,8 +36,6 @@
  * attached to the interpreter
  */
 
-#define YYPARSE_PARAM interp
-#define YYLEX_PARAM interp
 /*
  * Choosing instructions for Parrot is pretty easy since
  * many are polymorphic.
@@ -383,6 +382,13 @@ adv_named_set(Interp *interp, char *name) {
     adv_named_id = name;
 }
 
+static void 
+do_loadlib(Interp *interp, char *lib) 
+{
+    STRING *s = string_unescape_cstring(interp, lib + 1, '"', NULL);
+    Parrot_load_lib(interp, s, NULL);
+    Parrot_register_HLL(interp, NULL, s);
+}
 
 %}
 
@@ -417,7 +423,7 @@ adv_named_set(Interp *interp, char *name) {
 %token <t> PCC_BEGIN PCC_END PCC_CALL PCC_SUB PCC_BEGIN_RETURN PCC_END_RETURN
 %token <t> PCC_BEGIN_YIELD PCC_END_YIELD NCI_CALL METH_CALL INVOCANT
 %token <t> MAIN LOAD IMMEDIATE POSTCOMP METHOD ANON OUTER NEED_LEX
-%token <t> MULTI
+%token <t> MULTI LOADLIB
 %token <t> UNIQUE_REG
 %token <s> LABEL
 %token <t> EMIT EOM
@@ -457,7 +463,13 @@ adv_named_set(Interp *interp, char *name) {
 
 %pure_parser
 
+/* Note that we pass interp last, because Bison only passes
+   the last param to yyerror().  (Tested on bison <= 2.3)
+*/
+%parse-param {void *yyscanner}
+%lex-param   {void *yyscanner}
 %parse-param {Interp *interp}
+%lex-param   {Interp *interp}
 
 %start program
 
@@ -491,6 +503,7 @@ compilation_unit:
 
 pragma: PRAGMA pragma_1 '\n'   { $$ = 0; }
    | hll_def            '\n'   { $$ = 0; }
+   | LOADLIB STRINGC    '\n'   { $$ = 0; do_loadlib(interp, $2); }
    ;
 
 pragma_1:  N_OPERATORS INTC
@@ -559,6 +572,7 @@ pasmline:
    | LINECOMMENT                       { $$ = 0; }
    | class_namespace  { $$ = $1; }
    | pmc_const
+   | pragma
    ;
 
 pasm_inst:         { clear_state(); }
@@ -1361,10 +1375,12 @@ _var_or_i:
                    {
                       regs[nargs++] = $1;
                       keyvec |= KEY_BIT(nargs);
-                      regs[nargs++] = $3; $$ = $1;
+                      regs[nargs++] = $3;
+                      $$ = $1;
                    }
    | '[' keylist ']'
                    {
+                      keyvec |= KEY_BIT(nargs);
                       regs[nargs++] = $2;
                       $$ = $2;
                    }
@@ -1445,7 +1461,7 @@ string:
 %%
 
 
-int yyerror(Interp *interp, char * s)
+int yyerror(void *yyscanner, Interp *interp, char * s)
 {
     /* support bison 1.75, convert 'parse error to syntax error' */
     if (!memcmp(s, "parse", 5))

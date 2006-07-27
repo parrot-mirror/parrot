@@ -29,8 +29,8 @@ before configuring Parrot.
 
 Get it from http://www-306.ibm.com/software/globalization/icu/downloads.jsp
 
-You'll also need Perl 5.6 or above to run various configure and
-build scripts.
+You'll also need Perl 5.6.1 or above to run various configure and build
+scripts.
 
 For most of the platforms that we are supporting initially,
 Parrot should build out of the box.
@@ -62,10 +62,6 @@ See "perl Configure.pl --help" for more options.
 For systems like HPUX that don't have inet_pton please run
 
     perl Configure.pl --define=inet_aton
-
-If you want to install Parrot into a non-standard location use
-
-    perl Configure.pl --prefix=/Users/foo/parrot-0.4.5
 
 Running Configure.pl will generate a config.h header, a Parrot::Config
 module, platform files and some Makefiles.
@@ -110,11 +106,12 @@ On some systems you can install parrot:
     make install
 
 This installs a bunch of files in /usr/local. The parrot executable is in
-/usr/local/bin.   Please note that this feature is currently experimental.  
+/usr/local/bin.   Please note that this feature is currently experimental.
 
-You can install into a different location with:
+If you want to install Parrot into a non-standard location use:
 
-    make install --prefix=/home/foo/bar
+    perl Configure.pl --prefix=/Users/foo/parrot-0.4.5
+    make install
 
 But please note that dynamic libs will not be found for non-standard
 locations unless you set LD_LIBRARY_PATH or similar.
@@ -138,12 +135,6 @@ CHANGES
 
 For documentation on the user-visible changes between this version and
 previous versions, please see NEWS.
-
-KNOWN ISSUES
-------------
-
-The docs/BROKEN file lists other major subsystems and regressions that block
-progress.
 
 MAILING LISTS
 -------------

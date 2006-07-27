@@ -2,7 +2,7 @@
 
 use strict;
 use lib qw(tcl/lib ./lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 7;
+use Parrot::Test tests => 10;
 use Test::More;
 
 language_output_is("tcl", <<'TCL', <<'OUT', 'upvar $var n');
@@ -29,6 +29,19 @@ language_output_is("tcl", <<'TCL', <<'OUT', "upvar - bad level");
   upvar a b
 TCL
 bad level "a"
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "upvar - bad level");
+  proc test {} {upvar 2 a b}
+  test
+TCL
+bad level "2"
+OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "upvar - bad level -1");
+  upvar -1 a b
+TCL
+bad level "-1"
 OUT
 
 language_output_is("tcl", <<'TCL', <<'OUT', "upvar 0 a b");
@@ -61,3 +74,12 @@ language_output_is("tcl", <<'TCL', <<'OUT', "upvar with array");
 TCL
 1 2
 OUT
+
+language_output_is("tcl", <<'TCL', <<'OUT', "upvar from one lexpad to another");
+  proc add2 {varName} {upvar $varName var; set var [expr {$var+2}]}
+  proc test {} { set a 1; add2 a; puts $a }
+  test
+TCL
+3
+OUT
+

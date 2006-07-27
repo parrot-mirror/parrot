@@ -20,7 +20,7 @@ use strict;
 use warnings;
 use lib qw( lib . ../lib ../../lib );
 use Test::More;
-use Parrot::Test;
+use Parrot::Test tests => 10;
 use Parrot::Config;
 use File::Temp 0.13 qw/tempfile/;
 use File::Spec;
@@ -64,9 +64,6 @@ is( `"$PARROT" --trace "$first" "$second" $redir`, "second\n",
 
 unlink $first;
 unlink $second;
-
-# remember to change the number of tests :-)
-BEGIN { plan tests => 10; }
 
 
 exit;

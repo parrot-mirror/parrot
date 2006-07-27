@@ -123,7 +123,11 @@ get:
   (word, pos) = get_word(tcl_code, chars, pos)
   inc pos
   if_null word, get
-  $S0 = word
+  # TclWord throws an exception if you try to stringify it
+  # but a TclWord isn't a comment, so we know it's not a comment
+  push_eh check
+    $S0 = word
+  clear_eh
   if $S0 == "" goto check # this is special
   $I0 = ord $S0, 0
   if $I0 == 35 goto got_comment
@@ -513,7 +517,11 @@ Parses a subcommand and returns a TclCommand or TclCommandList object.
   chars[93] = 1 # ]
   chars[59] = 1 # ;
  
+  .local int len
+  len = length tcl_code
+ 
   (command, pos) = get_command(tcl_code, chars, pos)
+  if pos > len goto missing_bracket
   dec pos
   $I0 = ord tcl_code, pos
   if $I0 == 59 goto list # ;
@@ -535,6 +543,9 @@ loop:
   
   inc pos
   .return(commands, pos)
+
+missing_bracket:
+  .throw("missing close-bracket")
 .end
 
 =item C<(pmc var, int pos) = get_variable(string tcl_code, int pos)>
@@ -588,10 +599,22 @@ colon:
   goto check_length
 
 index:
-  pos = index tcl_code, ")", pos
-  if pos == -1 goto missing_paren
+  .local pmc var
+  len = pos - start
+  $S0 = substr tcl_code, start, len
+  $I0 = find_type "TclVar"
+  var = new $I0
+  var = $S0
+  
+  .local pmc chars
+  chars = new Hash
+  chars[41] = 1 # )
+  
   inc pos
-  goto check_length
+  ($P0, pos) = get_word(tcl_code, chars, pos)
+  setattribute var, "index", $P0
+  inc pos
+  .return(var, pos)
 
 failed:
   $I0 = find_type "TclConst"

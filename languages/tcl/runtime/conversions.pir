@@ -29,36 +29,58 @@ Given a PMC, get a number from it.
 =cut
 
 .sub __number
-  .param pmc value
+  .param pmc number
 
-  $I0 = typeof value
+  $I0 = typeof number
   if $I0 == .TclInt goto done
   if $I0 == .TclFloat goto done
+
+  .local string str
+  .local int    len
+  str = number
+  len = length str
+  .include 'cclass.pasm'
+
+  .local pmc parse
+  .local pmc match
+
+  .get_from_HLL($P0, '_tcl', 'TclExpr::Grammar')
+  parse = $P0['number']
+  .get_from_HLL($P0, 'parrot'; 'PGE::Match', 'newfrom')
+  match = $P0(number, 0, 'TclExpr::Grammar')
+  $I0 = find_not_cclass .CCLASS_WHITESPACE, str, 0, len
+  match.from($I0)
+  match.to($I0)
+  match = parse(match)
   
-  $S0 = value
-  $I0 = length $S0
+  $I0 = match.to()
+  $I1 = len - $I0
+  $I0 = find_not_cclass .CCLASS_WHITESPACE, str, $I0, $I1
+  if $I0 < len goto NaN
+    
+  # the following will dump out the match object
+  #load_bytecode 'dumper.pbc'
+  #load_bytecode 'PGE/Dumper.pbc'
+  #.get_from_HLL($P0, 'parrot', '_dumper')
+  #$P0(match)
+ 
+  unless match goto NaN
 
-  .local int multiplier
-  multiplier = 1
+  .local pmc astgrammar, astbuilder, ast
+  astgrammar = new 'TclExpr::PAST::Grammar'
+  astbuilder = astgrammar.apply(match)
+  ast = astbuilder.get('result')
 
-  $S1 = substr $S0, 0, 1
-  if $S1 == '+' goto positive
-  # If the first character is -, assume a negative number.
-  unless $S1 == '-' goto get_value
-  multiplier = -1
-positive:
-  $S0 = substr $S0, 1
-  # we check for the length below
-  dec $I0
-
-get_value:
-  (value, $I1) = get_number($S0, 0)
-  if null value goto NaN
-  if $I0 != $I1 goto NaN
-  value *= multiplier
-
+  .local string class
+  .local pmc    value
+  class = ast['class']
+  value = ast['value']
+  
+  $I0    = find_type class
+  number = new $I0
+  assign number, value
 done:
-  .return(value)
+  .return(number)
 
 NaN:
   .throw('Not a number!')
@@ -72,12 +94,16 @@ Given a PMC, get an integer from it.
 
 .sub __integer
   .param pmc value
+  
+  .local pmc integer
 
   push_eh not_integer
-    value = __number(value)
+    integer = __number(value)
   clear_eh
-  $I0 = typeof value
+  $I0 = typeof integer
   if $I0 != .TclInt goto not_integer
+
+  assign value, integer
 
   .return(value)
 
@@ -118,18 +144,58 @@ bad_channel:
 
 =head2 _Tcl::__expr
 
-Given an expression, return a subroutine.
+Given an expression, return a subroutine, or optionally, the raw PIR
 
 =cut
 
 .sub __expr
-  .param string expr
-  
-  .get_from_HLL($P0, '_tcl', '__expression_compile')
-  ($I0,$S0) = $P0(0,expr)
-  $P2 = pir_compiler($I0,$S0)
-  
-  .return($P2)
+    .param string expression
+    .param int     pir_only :named('pir_only') :optional
+    .param int has_pir_only :opt_flag
+
+    .local pmc parse
+    .local pmc match
+
+    .get_from_HLL($P0, '_tcl', 'TclExpr::Grammar')
+    parse = $P0['expression']
+    .get_from_HLL($P0, 'parrot'; 'PGE::Match', 'newfrom')
+    match = $P0(expression, 0, 'TclExpr::Grammar')
+    match.to(0)
+    match = parse(match)
+    
+    # the following will dump out the match object
+    #load_bytecode 'dumper.pbc'
+    #load_bytecode 'PGE/Dumper.pbc'
+    #.get_from_HLL($P0, 'parrot', '_dumper')
+    #$P0(match)
+ 
+    unless match goto bad_expression
+
+    .local pmc astgrammar, astbuilder, ast
+    astgrammar = new 'TclExpr::PAST::Grammar'
+    astbuilder = astgrammar.apply(match)
+    ast = astbuilder.get('result')
+
+  build_pir:
+    .local pmc pirgrammar, pirbuilder
+    .local string pir
+    pirgrammar = new 'TclExpr::PIR::Grammar'
+    pirbuilder = pirgrammar.'apply'(ast)
+    pir = pirbuilder.get('result')
+
+    if has_pir_only goto only_pir
+
+    $P1 = compreg 'PIR'
+    $P2 = $P1(pir)
+    .return ($P2)
+
+  only_pir:
+    .return (pir)
+
+  bad_expression:
+    # XXX either shouldn't happen, or need better message
+    .throw ('unparsable expression') 
+
 .end
 
 =head2 _Tcl::__script
@@ -219,36 +285,27 @@ was this a valid tcl-style level, or did we get this value as a default?
   defaulted = new Integer
   defaulted = 0
 
-  .local pmc current_call_level, get_number
+  .local pmc current_call_level, __number
   .get_from_HLL(current_call_level, '_tcl', 'call_level')
-  .get_from_HLL(get_number, '_tcl', 'get_number')
+  .get_from_HLL(__number, '_tcl', '__number')
   orig_level = current_call_level
  
   .local int num_length
 
 get_absolute:
-  # Is this an absolute? 
+  # Is this an absolute?
   $S0 = tcl_level
-  $S1 = substr $S0, 0, 1
+  $S1 = substr $S0, 0, 1, ""
   if $S1 != "#" goto get_integer
-  $S0 = tcl_level
-  (parrot_level, num_length) = get_number($S0,1)
-  if null parrot_level goto default
-  $S0 = tcl_level
-  $I0 = length $S0
-
-  dec $I0
-  if $I0 != num_length goto default
+  push_eh default
+    parrot_level = __number($S0)
+  clear_eh
   goto bounds_check
  
 get_integer:
-  # Is this an integer? 
-  $S0 = tcl_level
-  (parrot_level, num_length) = get_number($S0,0)
-  if null parrot_level goto default
-  $S0 = tcl_level
-  $I0 = length $S0
-  if $I0 != num_length goto default
+  push_eh default
+    parrot_level = __number(tcl_level)
+  clear_eh
   parrot_level = orig_level - parrot_level
   goto bounds_check
  
@@ -259,17 +316,16 @@ default:
   # fallthrough.
 
 bounds_check:
-  # Are we < 0 ? 
-  if parrot_level >= 0 goto bounds_pos
-  parrot_level = 0
-  goto done
+  # Are we < 0 ?
+  if parrot_level < 0          goto bad_level
+  if parrot_level > orig_level goto bad_level
 
-bounds_pos:
-  # Are we > the current max level?
-  if parrot_level <= orig_level goto done
-  parrot_level = orig_level
-
-done: 
   $I1 = defaulted 
   .return(parrot_level,$I1)
+
+bad_level:
+  $S0 = tcl_level
+  $S0 = "bad level \"" . $S0
+  $S0 = $S0 . "\""
+  .throw($S0)
 .end

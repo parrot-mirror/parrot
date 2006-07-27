@@ -214,6 +214,33 @@ C<languages/bf>
 
 =item Author
 
+Kevin Tew
+
+=item Description
+
+Implementation of Ruby CVS Head 1.9
+
+=item Status
+
+Parser is pretty complete.
+Only generates PIR for hello world at the moment
+
+=item Last verified with parrot version
+
+0.4.5
+
+=item Location
+
+C<languages/cardinal>
+
+=back
+
+=head2 Cardinal OLD DEAD
+
+=over 4
+
+=item Author
+
 Mark Spashett
 
 =item Description
@@ -226,7 +253,7 @@ Not active.
 
 =item Last verified with parrot version
 
-Unknown
+unknown
 
 =item Location
 
@@ -483,7 +510,9 @@ Lua 5.1 Standard Libraries implemented in PIR (still incomplete).
 
 =item Status
 
-Early stage - Part of languages smoke testing.
+Part of languages smoke testing.
+
+See details in F<languages/lua/doc/status.pod>.
 
 =item Last verified with parrot version
 
@@ -1020,6 +1049,33 @@ C<languages/tcl>
 =back
 
 
+=head2 TAP (Test Anything Protocol)
+
+=over 4
+
+=item Author
+
+Chris Dolan and Jerry Gay
+
+=item Description
+
+A parser for the Test Anything Protocol
+
+=item Status
+
+See Parrot RT for details. Search for [TAP]
+
+=item Last verified with parrot version
+
+0.4.6
+
+=item Location
+
+C<languages/tap>
+
+=back
+
+
 =head2 unlambda
 
 =over 4
@@ -1074,6 +1130,38 @@ expected to change soon.
 =item Location
 
 C<languages/urm>
+
+=back
+
+
+=head2 WMLScript Translator
+
+=over 4
+
+=item Author
+
+Francois Perrad
+
+=item Description
+
+Translates WMLScript bytecode to PIR.
+
+The language WMLScript is a subset of ECMAScript (ie JavaScript).
+WMLScript defines also an bytecode interpreter (stack based), a binary format.
+
+=item Status
+
+Part of languages smoke testing.
+
+See details in F<languages/WMLScript/doc/status.pod>.
+
+=item Last verified with parrot version
+
+0.4.5
+
+=item Location
+
+C<languages/WMLScript>
 
 =back
 

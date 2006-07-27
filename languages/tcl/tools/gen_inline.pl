@@ -1,6 +1,6 @@
-#!/usr/bin/perl -w
-
+#! perl
 use strict;
+use warnings;
 
 =head1 NAME
 
@@ -26,10 +26,34 @@ Currently supports the following types of arguments:
 variable name, integer, channel, list, string, script, and expressions.
 
 =cut
+    
+# helper conversion subroutines
+our %conversions = (
+    # type     subroutine
+    channel => '__channel',
+    expr    => '__expr',
+    int     => '__integer',
+    list    => '__list',
+    script  => '__script',
+    var     => '__read',
+);
+    
 
 my $file = open_tmt(shift @ARGV);
 my ($cmd, @args) = extract_info($file);
 
+print ".HLL '_Tcl', ''\n";
+print ".namespace [ 'builtins' ]\n";
+print    inlined_header($cmd, @args);
+print         arg_check(@args);
+print   inlined_helpers(@args);
+print inlined_arguments(@args);
+print      inlined_body($file, @args);
+print   inlined_badargs($cmd, @args);
+print            footer();
+
+print ".HLL 'Tcl', 'tcl_group'\n";
+print ".namespace\n";
 print    header($cmd, @args);
 print arg_check(@args);
 print   helpers(@args);
@@ -41,17 +65,18 @@ print    footer();
 sub open_tmt {
     my ($filename) = @_;
 
-    local $/ = undef;
-    open my $file, '<', $filename
+    open my $fh, '<', $filename
         or die "can't open '$filename' for reading";
 
-    return $file;
+    my @file = <$fh>;
+    
+    return \@file;
 }
 
 sub extract_info {
     my ($file) = @_;
     
-    my $spec = <$file>;
+    my $spec = shift @$file;
     die "Invalid args: '$spec'\n"
         unless $spec =~ /\[ (\w+) (?: \s+ (.+?) )? \]/x;
 
@@ -73,8 +98,8 @@ sub parse_usage {
 
         (\w+)             # name
 
-        (?: : ($types) )? # optional type
-        (?: = ([^?]*)  )? # optional default value
+        ( (?: : (?:$types))* ) # optional types
+        (?: = ([^?]*)  )?      # optional default value
 
         (\+?)             # is this repeating?
 
@@ -92,9 +117,12 @@ sub parse_usage {
         $arg->{optional}    = !!$1;
         $arg->{option}      = !!$2;
         $arg->{name}        = $3;
-        $arg->{type}        = $4 || ( $arg->{option} ? undef: "string" );
+        $arg->{type}        = [ grep length, split(':', $4) ];
         $arg->{default}     = $5;
         $arg->{repeating}   = $6 eq '+';
+
+        $arg->{type} = [ 'string' ]
+            if not @{ $arg->{type} };
 
         die "Optionals need to be optional.\n"
             if $arg->{option} and not $arg->{optional};
@@ -105,23 +133,36 @@ sub parse_usage {
     return @results;
 }
 
+sub inlined_header {
+    my ($cmd, @args) = @_;
+    
+    my $code = <<"END_PIR";
+    
+.sub '$cmd'
+  .param int register
+  .param pmc argv
+    
+  .local pmc compiler
+  .get_from_HLL(compiler, '_tcl', 'compile_dispatch')
+  
+  .local int argc
+  .local string pir
+  pir = ''
+  argc = elements argv
+END_PIR
+        
+    return $code;
+}
+
 sub header {
     my ($cmd, @args) = @_;
     
     my $code = <<"END_PIR";
-.HLL '_Tcl', ''
-.namespace [ 'builtins' ]
         
-.sub '$cmd'
-  .param int register
-  .param pmc argv
-
-  .local pmc compiler
-  .get_from_HLL(compiler, '_tcl', 'compile_dispatch')
+.sub '&$cmd'
+  .param pmc argv :slurpy
         
   .local int argc
-  .local string pir
-  pir = ''
   argc = elements argv
 END_PIR
     
@@ -147,35 +188,45 @@ sub arg_check {
     return $code;
 }
 
+sub inlined_helpers {
+    my (@args) = @_;
+    
+    # types present in this command
+    my %types = ();
+    for my $arg (@args) {
+        $types{$_} = 1
+            for @{ $arg->{type} };
+    }
+    
+    # add code to get subs for needed conversions
+    my $code = "  # get necessary conversion subs\n";
+    for my $type (keys %types) {
+        next unless my $help = $conversions{$type};
+        
+        $code .= emit("  .local pmc $help");
+        $code .= emit("  .get_from_HLL($help, '_tcl', '$help')");
+    }
+    
+    return $code;
+}
+
 sub helpers {
     my (@args) = @_;
     
     # types present in this command
     my %types = ();
     for my $arg (@args) {
-        next unless $arg->{type};
-        
-        $types{ $arg->{type} } = 1;
+        $types{$_} = 1
+            for @{ $arg->{type} };
     }
-    
-    # helper conversion subroutines
-    my %helpers = (
-        # type     subroutine
-        channel => '__channel',
-        expr    => '__expr',
-        int     => '__integer',
-        list    => '__list',
-        script  => '__script',
-        var     => '__read',
-    );
     
     # add code to get subs for needed conversions
     my $code = "  # get necessary conversion subs\n";
     for my $type (keys %types) {
-        next unless my $help = $helpers{$type};
+        next unless my $help = $conversions{$type};
         
-        $code .= emit("  .local pmc $help");
-        $code .= emit("  .get_from_HLL($help, '_tcl', '$help')");
+        $code .= "  .local pmc $help \n";
+        $code .= "  .get_from_HLL($help, '_tcl', '$help') \n";
     }
     
     return $code;
@@ -186,18 +237,8 @@ sub inline {
     return "  pir .= \"$line\"\n";
 }
 
-sub arguments {
+sub inlined_arguments {
     my (@args) = @_;
-    
-    my %conversions =
-    (
-        channel => '__channel',
-        expr    => '__expr',
-        int     => '__integer',
-        list    => '__list',
-        script  => '__script',
-        var     => '__read',
-    );
     
     my $code = '';
     for my $i (0..$#args)
@@ -220,20 +261,69 @@ sub arguments {
         $code .= emit("a_$name = \$P%0", "r_$name");
         
         # convert the argument, if necessary
-        my $convert = $conversions{ $arg->{type} };
-        $code .= emit("a_$name = $convert(a_$name)")
-            if $convert;
+        for my $type (@{ $arg->{type} })
+        {
+            my $convert = $conversions{$type};
+            
+            $code .= emit("a_$name = $convert(a_$name)")
+                if $convert;
+        }
         
         # default value, if necessary
         if (defined $arg->{default}) {
-            my $type    = $arg->{type} eq 'int' ? 'TclInt' : 'TclString';
-            my $quote   = $arg->{type} eq 'int' ? ''       : "'";
+            my $is_int  = $arg->{type}[-1] eq 'int';
+            my $type    = $is_int ? 'TclInt' : 'TclString';
+            my $quote   = $is_int ? ''       : "'";
             my $default = $arg->{default};
             
             $code .= "  goto done_$name \n";
             $code .= "default_$name: \n";
             $code .= emit("a_$name = new .$type");
             $code .= emit("a_$name = $quote$default$quote");
+            $code .= "done_$name: \n";
+        }
+    }
+    
+    return $code;
+}
+
+sub arguments {
+    my (@args) = @_;
+    
+    my $code = '';
+    for my $i (0..$#args)
+    {
+        my $arg  = $args[$i];
+        my $name = $arg->{name};
+        
+        $code .= "  .local pmc a_$name \n";
+        # do we need to use a default?
+        $code .= "  if argc < ".($i+1)." goto default_$name \n"
+            if $arg->{optional};
+        
+        # the actual thing to be compiled
+        $code .= "  a_$name = argv[$i] \n";
+        
+        # convert the argument, if necessary
+        for my $type (@{ $arg->{type} })
+        {
+            my $convert = $conversions{ $type };
+
+            $code .= "  a_$name = $convert(a_$name) \n"
+                if $convert;
+        }
+                
+        # default value, if necessary
+        if (defined $arg->{default}) {
+            my $is_int  = $arg->{type}[-1] eq 'int';
+            my $type    = $is_int ? 'TclInt' : 'TclString';
+            my $quote   = $is_int ? ''       : "'";
+            my $default = $arg->{default};
+                        
+            $code .= "  goto done_$name \n";
+            $code .= "default_$name: \n";
+            $code .= "  a_$name = new .$type \n";
+            $code .= "  a_$name = $quote$default$quote \n";
             $code .= "done_$name: \n";
         }
     }
@@ -260,7 +350,7 @@ sub emit {
     return $pir;
 }
 
-sub body {
+sub inlined_body {
     my ($file, @args) = @_;
     
     my %args = map { $_->{name} => $_ } @args;
@@ -271,8 +361,10 @@ sub body {
     $code .= emit('.local pmc temp');
     # locals inside this code
     my %locals;
-    while (my $line = <$file>)
+    for my $orig (@$file)
     {
+        my $line = $orig;
+        
         # rename labels
         if ($line =~ /^\s* (\w+) \s* : \s*$/mx) {
             $code .= emit($1."_%0:", 'loop_num');
@@ -309,7 +401,7 @@ sub body {
             my $name = $1;
             my $arg  = $args{$name};
             
-            if ($arg->{type} eq 'script' or $arg->{type} eq 'expr') {
+            if ($arg->{type}[-1] eq 'script' or $arg->{type}[-1] eq 'expr') {
                 $code .= emit("temp = a_$name()");
                 
                 # if that's all there is, remove it
@@ -328,12 +420,60 @@ sub body {
     return $code;
 }
 
+sub body {
+    my ($file, @args) = @_;
+    
+    my %args = map { $_->{name} => $_ } @args;
+    
+    # the number for the loops
+    my $code = "  .local pmc R \n"
+             . "  .local pmc temp \n";
+
+    for my $orig (@$file)
+    {
+        my $line = $orig;
+        
+        # args
+        while ($line =~ s/\$(?!(?:P|S|N|I)\d+|R\b)(\w+)/a_$1/)
+        {
+            my $name = $1;
+            my $arg  = $args{$name};
+    
+            if ($arg->{type}[-1] eq 'script' or $arg->{type}[-1] eq 'expr') {
+                $code .= "temp = a_$name() \n";
+        
+                # if that's all there is, remove it
+                $line =~ s/^\s*a_$name\s*$//m or $line =~ s/a_$name/temp/;
+            }
+        }
+
+        # $R
+        $line =~ s/\$R\b/R/g;
+        
+        $code .= $line
+    }
+
+    $code .= "  .return(R) \n";
+
+    return $code;
+}
+
+sub inlined_badargs {
+    my ($cmd, @args) = @_;
+    
+    my $usage = create_usage(@args);
+    my $code  = "bad_args: \n"
+              . "  .return(register, \"  .throw('wrong # args: should be \\\"$cmd$usage\\\"')\\n\") \n";
+    
+    return $code;
+}
+
 sub badargs {
     my ($cmd, @args) = @_;
     
     my $usage = create_usage(@args);
     my $code  = "bad_args: \n"
-              . ".throw('wrong # args: should be \"$cmd$usage\"') \n";
+              . "  .throw('wrong # args: should be \"$cmd$usage\"')\n";
     
     return $code;
 }
@@ -345,13 +485,6 @@ sub create_usage {
 
     foreach my $arg (@args) {
         my $usage = $arg->{name};
-        
-        if ( $arg->{option} ) {
-            $usage = "-$usage";
-            if ( defined $arg->{type} ) {
-                $usage = "$usage $arg->{type}";
-            }
-        }
         
         if ($arg->{repeating}) {
             if ($arg->{optional}) {
@@ -394,8 +527,6 @@ sub num_args {
     foreach my $arg (@args) {
         $min-- if $arg->{optional};
 
-        # XXX this isn't quite right. Need to be more clever with options.
-        $max++ if $arg->{option} && $arg->{type};
         $is_repeating = $arg->{repeating};
     }
 

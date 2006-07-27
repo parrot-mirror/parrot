@@ -267,6 +267,79 @@ bad_args:
 .end
 
 .sub 'children'
+  .param pmc argv
+
+  .local int argc
+  argc = elements argv
+  if argc > 2  goto bad_args
+
+  .local pmc list
+  list = new .TclList
+  
+  .local pmc __namespace, ns
+  ns = get_root_global 'tcl'
+  if argc == 0 goto namespace_end
+  __namespace = get_root_global ['_tcl'], '__namespace'
+  
+  .local pmc ns_name
+  $S0 = argv[0]
+  $S0 .= ":: "
+  ns_name  = __namespace($S0)
+  $S1      = pop ns_name
+
+  $I0 = 0
+  $I1 = elements ns_name
+namespace_loop:
+  if $I0 == $I1 goto namespace_end
+  $S0 = ns_name[$I0]
+  ns  = ns[$S0]
+  inc $I0
+  goto namespace_loop
+namespace_end:
+  
+  if null ns goto unknown_namespace
+  .local pmc iter
+  iter = new .Iterator, ns
+
+loop:
+  unless iter goto end
+  $S0 = shift iter
+  $P0 = ns[$S0]
+  $I0 = isa $P0, "NameSpace"
+  unless $I0 goto loop
+  $P0 = $P0.'name'()
+  $S0 = shift $P0 # get rid of 'tcl'
+  $S0 = join "::", $P0
+  $S0 = "::" . $S0
+  $P0 = new .TclString
+  $P0 = $S0
+  push list, $P0
+  goto loop
+end:
+
+  $P0 = find_name 'lc_cmp'
+  list.sort($P0)
+  .return(list)
+
+bad_args:
+  .throw('wrong # args: should be "namespace children ?name? ?pattern?"')
+
+unknown_namespace:
+  $S0 = argv[0]
+  $S0 = 'unknown namespace "' . $S0
+  $S0 = $S0 . '" in namespace children command'
+  .throw($S0)
+.end
+
+.sub 'lc_cmp'
+    .param string a
+    .param string b
+
+    a = downcase a
+    b = downcase b
+
+    $I0 = cmp a, b
+    .return($I0)
 .end
 
 .sub 'code'

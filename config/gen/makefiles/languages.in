@@ -12,10 +12,12 @@ LANGUAGES = \
     APL \
     BASIC \
     HQ9plus \
+    WMLScript \
     Zcode \
     bc \
     befunge \
     bf \
+    cardinal \
     cola \
     dotnet \
     jako \
@@ -27,6 +29,7 @@ LANGUAGES = \
     punie \
     regex \
     scheme \
+    tap \
     tcl \
     urm
 
@@ -75,10 +78,12 @@ clean: \
     APL.clean \
     BASIC.clean \
     HQ9plus.clean \
+    WMLScript.clean \
     Zcode.clean \
     bc.clean \
     befunge.clean \
     bf.clean \
+    cardinal.clean \
     cola.clean \
     dotnet.clean \
     jako.clean \
@@ -90,6 +95,7 @@ clean: \
     punie.clean \
     regex.clean \
     scheme.clean \
+    tap.clean \
     tcl.clean \
     urm.clean \
     smoke-clean
@@ -116,6 +122,14 @@ BASIC.test:
 # Don't know how to test BASIC
 BASIC.clean:
 # Don't know how to clean BASIC
+
+WMLScript: WMLScript.dummy
+WMLScript.dummy:
+	- $(MAKE) WMLScript
+WMLScript.test:
+	- $(MAKE) WMLScript test
+WMLScript.clean:
+	- $(MAKE) WMLScript clean
 
 Zcode : Zcode.dummy
 Zcode.dummy:
@@ -148,6 +162,14 @@ bf.test:
 	- $(MAKE) bf test
 bf.clean:
 	- $(MAKE) bf clean
+
+cardinal : cardinal.dummy
+cardinal.dummy:
+	- $(MAKE) cardinal
+cardinal.test:
+	- $(MAKE) cardinal test
+cardinal.clean:
+	- $(MAKE) cardinal clean
 
 cola : cola.dummy
 cola.dummy:
@@ -245,6 +267,14 @@ scheme.test :
 	- $(MAKE) scheme test
 scheme.clean :
 	- $(MAKE) scheme clean
+
+tap: tap.dummy
+tap.dummy:
+	- $(MAKE) tap
+tap.test:
+	$(MAKE) tap test
+tap.clean:
+	$(MAKE) tap clean
 
 tcl: tcl.dummy
 tcl.dummy:
