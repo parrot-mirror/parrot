@@ -470,10 +470,11 @@ Parrot_fetch_arg_nci(Interp *interpreter, struct call_state *st)
     Parrot_fetch_arg(interpreter, st);
     if (st->dest.sig & PARROT_ARG_SLURPY_ARRAY) {
         PMC *slurped;
+        assert((st->dest.sig & PARROT_ARG_TYPE_MASK) == PARROT_ARG_PMC);
         slurped = pmc_new(interpreter, enum_class_ResizablePMCArray);
         while (!(st->dest.mode & CALL_STATE_END_x)) {
             Parrot_convert_arg(interpreter, st);
-            st->dest.mode |= CALL_STATE_SLURP | CALL_STATE_NEXT_ARG;
+            st->dest.mode |= CALL_STATE_SLURP;
             VTABLE_push_pmc(interpreter, slurped, UVal_pmc(st->val));
             Parrot_fetch_arg(interpreter, st);
         }

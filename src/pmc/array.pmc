@@ -1292,10 +1292,6 @@ Recursively make the array read-only and shared.
         /* first set readonly */
         VTABLE_setprop(INTERP, ret, const_string(INTERP, "_ro"), true);
 
-        /* now share */
-        add_pmc_sync(INTERP, ret);
-        PObj_is_PMC_shared_SET(ret);
-        
         /* XXX do something that deals better with sparse lists */
         INTVAL i;
         INTVAL max;

@@ -24,7 +24,7 @@ C<Parrot::Pmc2c>.
 #include "parrot/parrot.h"
 #include "parrot/stm/backend.h"
 
-pmclass STMRef does ref is_shared {
+pmclass STMRef does ref is_shared need_ext {
 
 /*
 
