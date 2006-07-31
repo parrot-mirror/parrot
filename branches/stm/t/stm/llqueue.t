@@ -6,6 +6,21 @@ use strict;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::Test tests => 2;
 
+=head1 NAME
+
+t/stm/llqueue.t -- Linked-List Queue STM tests
+
+=head1 SYNOPSIS
+
+    % prove t/stm/llqueue.t 
+
+=head1 DESCRIPTION
+
+Uses a linked-list based queue implemented using STM to test the STM
+implementation.
+
+=cut
+
 # die "Cowardly refusing to overwrite existing file.\n" if -e 'STMLLQueue.pir';
 open my $llqueuelib, '>', 'STMLLQueue.pir' 
     or die "opening to write STMLLQueue.pir: $!\n";

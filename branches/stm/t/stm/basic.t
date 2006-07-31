@@ -8,6 +8,21 @@ use lib qw( . lib ../lib ../../lib );
 use Test::More;
 use Parrot::Test tests => 9;
 
+=head1 NAME
+
+t/stm/basic.t -- Single-threaded tests of the STM opcodes and PMC types.
+
+=head1 SYNOPSIS
+
+    % prove t/stm/basic.t
+
+=head1 DESCRIPTION
+
+Makes sure the STM opcodes and the STMVar and STMRef PMC types work as expected
+in easy, single-threaded cases.
+
+=cut
+
 pasm_output_is(<<'CODE', <<'OUTPUT', "empty transactions");
         stm_depth I0
         ne I0, 0, test_fail

@@ -8,6 +8,21 @@ use lib qw( . lib ../lib ../../lib );
 use Test::More;
 use Parrot::Test tests => 4;
 
+=head1 NAME
+
+t/stm/basic_mt.t -- Multithreaded tests of STM ops and PMCs.
+
+=head1 SYNOPSIS
+    
+    % prove t/stm/basic_mt.t
+
+=head1 DESCRIPTION
+
+This file contains tests of the STM opcodes that require running
+multiple threads at once.
+
+=cut
+
 pir_output_is(<<'CODE', <<'OUTPUT', "wait (simple)");
 .const int N = 1000
 .sub waiter
@@ -133,9 +148,14 @@ CODE
 okay
 OUTPUT
 
-
+# This test is designed to trigger the internal deadlock detection.
+# Occassionally both thread 1 and thread 2 should grab 
+# main's 'a' and main's 'b', respectively, and then try to acquire
+# the other. Because of deadlock detection, exactly one of the two
+# threads should quickly be aborted and the other should succeed.
+# Without deadlock detection, the test will not complete quickly.
 pir_output_like(<<'CODE', <<'OUTPUT', "get deadlock");
-.const int N = 10
+.const int N = 10000
 .sub thread_task
     .param pmc a
     .param pmc b
@@ -183,12 +203,6 @@ CODE
 /okay/
 OUTPUT
 
-# This currently fails because we never actually invalidate the other
-# transaction, we just let it keep ownership indefinitely
-# The probable fix is that STM_wait should abort any outer transactions
-# and do its waitlist magic (hopefully), then either (easier) consider all the outer
-# transactions invalid unconditionally or (harder) replay as many of the 
-# outer transaction write reservations as possible
 pir_output_is(<<'CODE', <<'OUTPUT', "wait + invalidate outer transcation");
 .const int N = 50
 .sub waiter
