@@ -114,6 +114,9 @@ make_local_args_copy(Parrot_Interp interpreter, Parrot_Interp old_interp, PMC *a
     
     for (i = 0; i < old_size; ++i) {
         PMC *copy;
+        PMC *orig;
+
+        orig = VTABLE_get_pmc_keyed_int(old_interp, args, i);
 
         copy = make_local_copy(interpreter, old_interp, 
                 VTABLE_get_pmc_keyed_int(old_interp, args, i));
@@ -139,38 +142,62 @@ interpreter.
 =cut
 
 */
-
 PMC *pt_shared_fixup(Parrot_Interp interpreter, PMC *pmc) {
-    /* TODO this will need to change for thread pools
-     * XXX should we have a seperate interpreter for this?
-     */
-    Parrot_Interp master = interpreter_array[0];
-    INTVAL type_num;
-    int is_ro;
+    if (PObj_is_object_TEST(pmc)) {
+        Parrot_Interp master = interpreter_array[0];
+        INTVAL type_num;
+        PMC *vtable_cache;
 
-    is_ro = pmc->vtable->flags & VTABLE_IS_READONLY_FLAG;
+        /* keep the original vtable from going away... */
+        vtable_cache = ((PMC**) PMC_data(pmc->vtable->class))[PCD_OBJECT_VTABLE];
+        assert(vtable_cache->vtable->base_type == enum_class_VtableCache);
+        add_pmc_sync(interpreter, vtable_cache);
+        PObj_is_PMC_shared_SET(vtable_cache);
+        
+        /* don't want the referenced class disappearing on us */
+        LOCK_INTERPRETER(master);
+        type_num = pmc->vtable->base_type;
+        SET_CLASS((SLOTTYPE*) PMC_data(pmc), pmc, master->vtables[type_num]->class);
+        UNLOCK_INTERPRETER(master);
+    } else {
+        /* TODO this will need to change for thread pools
+         * XXX should we have a seperate interpreter for this?
+         */
+        Parrot_Interp master = interpreter_array[0];
+        INTVAL type_num;
+        int is_ro;
 
-    /* This lock is paired with one in objects.c. It is necessary to protect
-     * against the master interpreter adding classes and consequently
-     * resizing its classname->type_id hashtable and/or expanding its vtable
-     * array.
-     * TODO investigate if a read-write lock results in substantially
-     * better performance.
-     */
-    LOCK_INTERPRETER(master);
-    type_num = pmc_type(master, pmc->vtable->whoami);
-    pmc->vtable = master->vtables[type_num];
-    UNLOCK_INTERPRETER(master);
+        is_ro = pmc->vtable->flags & VTABLE_IS_READONLY_FLAG;
 
-    if (type_num == enum_type_undef) {
-        internal_exception(1, "pt_shared_fixup: unsharable type");
-    }
-
-    if (is_ro) {
-        pmc->vtable = pmc->vtable->ro_variant;
-    }
+        /* This lock is paired with one in objects.c. It is necessary to protect
+         * against the master interpreter adding classes and consequently
+         * resizing its classname->type_id hashtable and/or expanding its vtable
+         * array.
+         * TODO investigate if a read-write lock results in substantially
+         * better performance.
+         */
+        LOCK_INTERPRETER(master);
+        type_num = pmc->vtable->base_type; 
+        if (type_num == enum_type_undef) {
+            UNLOCK_INTERPRETER(master);
+            internal_exception(1, "pt_shared_fixup: unsharable type");
+            return PMCNULL;
+        }
+        pmc->vtable = master->vtables[type_num];
+        UNLOCK_INTERPRETER(master);
+        if (is_ro) {
+            pmc->vtable = pmc->vtable->ro_variant;
+        }
+    } 
 
     add_pmc_sync(interpreter, pmc);
+
+    PObj_is_PMC_shared_SET(pmc);
+
+    if (PMC_metadata(pmc)) {
+        /* make sure metadata doesn't go away unexpectedly */
+        PMC_metadata(pmc) = pt_shared_fixup(interpreter, PMC_metadata(pmc));
+    }
 
     return pmc;
 }
@@ -255,14 +282,15 @@ may occur.
 
 static void
 pt_thread_wait(Parrot_Interp interp) {
-    while (interp->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED) {
+    if (interp->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED) {
         interp->thread_data->state |= THREAD_STATE_SUSPENDED_GC;
         /* fprintf(stderr, "%p: pt_thread_wait, before sleep, doing GC run\n",
-         *  interp); */
+         * interp); */
         UNLOCK(interpreter_array_mutex);
         pt_suspend_self_for_gc(interp);
         LOCK(interpreter_array_mutex);
-        assert(!(interp->thread_data->state & THREAD_STATE_SUSPENDED_GC));
+        /* while we were GCing, whatever we were waiting on might have changed */
+        return;
     }
     interp->thread_data->state |= THREAD_STATE_GC_WAKEUP;
     COND_WAIT(interp->thread_data->interp_cond, interpreter_array_mutex);
@@ -287,6 +315,8 @@ The actual thread function.
 
 */
 
+static void pt_gc_wakeup_check(Interp *);
+
 static void*
 thread_func(void *arg)
 {
@@ -296,11 +326,13 @@ thread_func(void *arg)
     PMC *sub;
     PMC *sub_arg;
     Parrot_exception exp;
+    int lo_var_ptr;
 
     Parrot_Interp interpreter = PMC_data(self);
     Parrot_block_DOD(interpreter);
     Parrot_block_GC(interpreter);
-    interpreter->lo_var_ptr = 0;
+    /* need to set it here because argument passing can trigger GC */
+    interpreter->lo_var_ptr = &lo_var_ptr;
     sub = PMC_struct_val(self);
     sub_arg = PMC_pmc_val(self);
 
@@ -340,6 +372,11 @@ thread_func(void *arg)
     } else if (interpreter->thread_data->state & THREAD_STATE_JOINED) {
         pt_thread_signal(interpreter, interpreter->thread_data->joiner);
     }
+
+    /* make sure we don't block a GC run */
+    pt_gc_wakeup_check(interpreter);
+    assert(interpreter->thread_data->state & THREAD_STATE_FINISHED);
+
     UNLOCK(interpreter_array_mutex);
 
     return ret_val;
@@ -466,6 +503,10 @@ pt_suspend_one_for_gc(Parrot_Interp interp);
  */
 PMC *
 pt_transfer_sub(Parrot_Interp d, Parrot_Interp s, PMC *sub) {
+#if THREAD_DEBUG
+    PIO_eprintf(s, "copying over subroutine [%Ss]\n",
+        Parrot_full_sub_name(s, sub));
+#endif
     return make_local_copy(d, s, sub);
 }
 
@@ -781,6 +822,25 @@ pt_gc_wait_for_stage(Parrot_Interp interp, thread_gc_stage_enum from_stage,
         } while (info->gc_stage != to_stage);
     }
     UNLOCK(interpreter_array_mutex);
+}
+
+/* Check if we need to wakeup threads to perform garbage collection.
+ * This is called after thread death.
+ * interpreter_array_mutex is assumed held.
+ */
+static void
+pt_gc_wakeup_check(Parrot_Interp interp) {
+    Shared_gc_info *info = shared_gc_info;
+    int thread_count;
+
+    thread_count = pt_gc_count_threads(interp);
+    if (info->num_reached == thread_count) {
+        fprintf(stderr, "%p: started GC run during thread death\n", interp);
+        assert(info->gc_stage == THREAD_GC_STAGE_NONE);
+        info->gc_stage = THREAD_GC_STAGE_MARK;
+        info->num_reached = 0;
+        COND_BROADCAST(info->gc_cond);
+    }
 }
 
 /*

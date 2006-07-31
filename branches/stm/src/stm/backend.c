@@ -35,6 +35,8 @@ static void STM_TRACE_SAFE(const char *x, ...) {
 }
 #endif
 
+static PMC *force_sharing(Interp *, PMC *);
+
 static UINTVAL handle_is_version(Parrot_STM_PMC_handle data) {
     void *ptr;
     ATOMIC_PTR_GET(ptr, data->owner_or_version);
@@ -101,7 +103,7 @@ Parrot_STM_PMC_handle Parrot_STM_alloc(Interp *interp, PMC *pmc) {
     PObj_is_shared_SET(&handle->buf);
     ATOMIC_PTR_SET(handle->owner_or_version, UINTVAL2PTR(void *, 1)); /* XXX */
     handle->last_version = UINTVAL2PTR(void *, 1);
-    handle->value = pmc; /* XXX make shared, make copy, with NULL handling */
+    handle->value = force_sharing(interp, pmc);
     Parrot_STM_waitlist_init(interp, &handle->change_waitlist);
     return handle;
 }
@@ -314,7 +316,10 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
 
 static PMC *force_sharing(Interp *interp, PMC *pmc) {
     if (!PMC_IS_NULL(pmc)) {
-        return VTABLE_share_ro(interp, pmc);
+        PMC *ret;
+        ret = VTABLE_share_ro(interp, pmc);
+        assert(PObj_is_PMC_shared_TEST(ret));
+        return ret;
     } else {
         return PMCNULL;
     }
@@ -796,6 +801,7 @@ void Parrot_STM_mark_pmc_handle(Interp *interp, Parrot_STM_PMC_handle handle) {
     pobject_lives(interp, (PObj*) handle);
     value = handle->value;
     if (!PMC_IS_NULL(value)) {
+        assert(PObj_is_PMC_shared_TEST(value));
         pobject_lives(interp, (PObj*) value);
     }
 }
@@ -973,7 +979,6 @@ PMC *Parrot_STM_read(Interp *interp, Parrot_STM_PMC_handle handle) {
 
 static int safe_to_clone(Interp *interp, PMC *original) {
     if (    original->vtable->base_type == enum_class_Integer
-        ||  original->vtable->base_type == enum_class_Undef
         ||  original->vtable->base_type == enum_class_Float
         ||  original->vtable->base_type == enum_class_BigInt
         ||  original->vtable->base_type == enum_class_IntList
@@ -987,6 +992,8 @@ static int safe_to_clone(Interp *interp, PMC *original) {
 static PMC *local_pmc_copy(Interp *interp, PMC *original) {
     if (PMC_IS_NULL(original)) {
         return PMCNULL;
+    } else if (original->vtable->base_type == enum_class_Undef) {
+        return pmc_new(interp, enum_class_Undef);
     } else if (safe_to_clone(interp, original)) {
         return VTABLE_clone(interp, original);
     } else {
@@ -1090,7 +1097,11 @@ static STM_write_record *find_write_record(Interp *interp, STM_tx_log *log,
                 STM_TRACE("... but the old value is out-of-date");
                 ATOMIC_INT_SET(cursub->status, STM_STATUS_ABORTED);
             }
-            write->value = local_pmc_copy(interp, old_value);
+            if (overwrite_p) {
+                write->value = PMCNULL;
+            } else {
+                write->value = local_pmc_copy(interp, old_value);
+            }
         } else {
             STM_TRACE("don't have old value");
             /* avoiding creating write records when we are actually aborted

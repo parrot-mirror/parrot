@@ -1425,6 +1425,13 @@ attr_str_2_num(Interp* interpreter, PMC *object, STRING *attr)
                 "Can't set non-core object attribs yet");
 
     class = GET_CLASS((SLOTTYPE *)PMC_data(object), object);
+    if (PObj_is_PMC_shared_TEST(object)) {
+        /* XXX Shared objects have the 'wrong' class stored in them
+         * (because of the reference to the namespace and because it
+         * references PMCs that may go away),
+         * since we actually want one from the current interpreter. */
+        class = VTABLE_get_class(interpreter, object);
+    }
     class_array = (SLOTTYPE *)PMC_data(class);
     attr_hash = get_attrib_num(class_array, PCD_ATTRIBUTES);
     b = parrot_hash_get_bucket(interpreter,

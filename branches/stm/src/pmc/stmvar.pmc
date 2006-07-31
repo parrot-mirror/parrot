@@ -24,8 +24,12 @@ XXX
 
 #include <assert.h>
 
-pmclass STMVar is_shared {
-
+/* we set need_ext here because we really want to have PMC sync structure;
+ * we set no_ro because we are logically read-only; one can't change which
+ * transactional object this references (though one can change that
+ * object)
+ */
+pmclass STMVar is_shared need_ext no_ro {
 /*
 
 =item C<void init()>
@@ -55,14 +59,13 @@ pmclass STMVar is_shared {
 
 =item C<PMC *clone()>
 
-...
+Return the STMVar PMC.
 
 =cut
 
 */
 
     PMC* clone() {
-        /* XXX fake a shared PMC */
         return SELF;
     }
 
@@ -70,13 +73,15 @@ pmclass STMVar is_shared {
 
 =item C<void mark()>
 
-...
+Mark data associated with this transactional variable.
 
 =cut
 
 */
 
     void mark () {
+        assert(PObj_is_PMC_shared_TEST(SELF));
+        assert(PMC_sync(SELF)->owner == INTERP);
         Parrot_STM_mark_pmc_handle(INTERP, PMC_struct_val(SELF));
     }
 
@@ -107,8 +112,18 @@ pmclass STMVar is_shared {
 
         PMC_struct_val(SELF) = 
             Parrot_thaw_STM_PMC_handle(INTERP, io);
+
+        assert(PObj_is_PMC_shared_TEST(SELF));
+        assert(PMC_sync(SELF));
     }
 
+    /* we can do this because we don't modify ourself in dangerous ways -- we are
+       always a reference to the same transactional variable.
+     */
+    PMC* share_ro () {
+        PMC *ret = pt_shared_fixup(INTERP, SELF);
+        return ret;
+    }
 }
 
 /*
