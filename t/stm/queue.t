@@ -6,6 +6,20 @@ use strict;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::Test tests => 4;
 
+=head1 NAME
+
+t/stm/queue.t -- STM tests using a fixed-sized shared queue implementation
+
+=head1 SYNOPSIS
+
+    % prove t/stm/queue.t
+
+=head1 DESCRIPTION
+
+Uses a queue implemented using STM and a fixed-sized array to test the STM
+implementation.
+
+=cut
 
 my $library = <<'CODE';
 

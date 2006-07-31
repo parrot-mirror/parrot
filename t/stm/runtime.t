@@ -16,7 +16,10 @@ t/stm/runtime.t -- STM Runtime library tests
 
 =head1 DESCRIPTION
 
-Tests STM.pir (and, as a side effect, the underlying STM implementation).
+Tests STM.pir and, as a side effect, the underlying STM implementation.
+This tests its general functionality using an array-based queue implemtation
+modified to use it, and includes several tests designed to trigger all
+cases for choice() (which in turn requires STMLog work correctly).
 
 =cut
 
