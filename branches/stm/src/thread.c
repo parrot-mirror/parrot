@@ -835,7 +835,6 @@ pt_gc_wakeup_check(Parrot_Interp interp) {
 
     thread_count = pt_gc_count_threads(interp);
     if (info->num_reached == thread_count) {
-        fprintf(stderr, "%p: started GC run during thread death\n", interp);
         assert(info->gc_stage == THREAD_GC_STAGE_NONE);
         info->gc_stage = THREAD_GC_STAGE_MARK;
         info->num_reached = 0;

@@ -859,6 +859,20 @@ dynop_register(Parrot_Interp interpreter, PMC* lib_pmc)
     op_info_t *new_info_table;
     size_t i, n_old, n_new, n_tot;
 
+    if (n_interpreters > 1) {
+        /* This is not supported because oplibs are always shared.
+         * If we mem_sys_reallocate() the op_func_table while another
+         * interpreter is running using that exact op_func_table,
+         * this will cause problems
+         * Also, the mapping from op name to op number is global even for
+         * dynops (!). The mapping is done by get_op in core_ops.c (even for
+         * dynops) and uses a global hash as a cache and relies on modifications
+         * to the static-scoped core_op_lib data structure to see dynops.
+         */
+        internal_exception(1, "loading a new dynoplib while more than "
+            "one thread is running is not supported.");
+    }
+
     if (!interpreter->all_op_libs)
         interpreter->all_op_libs = mem_sys_allocate(
                 sizeof(op_lib_t *) * (interpreter->n_libs + 1));

@@ -33,6 +33,7 @@ my %platforms = map {$_=>1} qw/
     irix
     linux
     openbsd
+    solaris
     MSWin32
 /;
 
