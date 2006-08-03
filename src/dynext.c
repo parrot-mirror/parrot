@@ -306,10 +306,19 @@ STRING *clone_string_into(Interp *d, Interp *s, PMC *value) {
     return ret;
 }
 
+static PMC *make_string_pmc(Interp *interp, STRING *string) {
+    PMC *ret;
+    ret = VTABLE_new_from_string(interp, 
+        interp->vtables[enum_class_String]->class,
+        string, PObj_constant_FLAG);
+    return ret;
+}
+
 PMC *
 Parrot_clone_lib_into(Interp *d, Interp *s, PMC *lib_pmc) {
     STRING *wo_ext;
     STRING *lib_name;
+    STRING *type;
     void *handle;
 
     wo_ext = clone_string_into(d, s, VTABLE_getprop(s, lib_pmc, 
@@ -318,7 +327,42 @@ Parrot_clone_lib_into(Interp *d, Interp *s, PMC *lib_pmc) {
         const_string(s, "_lib_name")));
     handle = PMC_data(lib_pmc);
 
-    return run_init_lib(d, handle, lib_name, wo_ext);
+    type = VTABLE_get_string(s, 
+        VTABLE_getprop(s, lib_pmc, const_string(s, "_type")));
+    if (0 == string_equal(s, type, const_string(s, "Ops"))) {
+        PMC *new_lib_pmc;
+        INTVAL i;
+
+        /* we can't clone oplibs in the normal way, since they're actually
+         * shared between interpreters dynop_register modifies the (statically
+         * allocated) op_lib_t structure from core_ops.c, for example.
+         * Anyways, if we hope to share bytecode at runtime, we need to have 
+         * them have identical opcodes anyways.
+         */
+        new_lib_pmc = constant_pmc_new(d, enum_class_ParrotLibrary);
+        PMC_data(new_lib_pmc) = handle;
+        VTABLE_setprop(d, new_lib_pmc, const_string(d, "_filename"), 
+            make_string_pmc(d, wo_ext));
+        VTABLE_setprop(d, new_lib_pmc, const_string(d, "_lib_name"), 
+            make_string_pmc(d, lib_name));
+        VTABLE_setprop(d, new_lib_pmc, const_string(d, "_type"), 
+            make_string_pmc(d, const_string(d, "Ops")));
+
+        /* fixup d->all_op_libs, if necessary */
+        if (d->n_libs != s->n_libs) {
+            INTVAL i;
+            d->all_op_libs = mem_sys_realloc(d->all_op_libs,
+                sizeof(op_lib_t *) * s->n_libs);
+            for (i = d->n_libs ; i < s->n_libs; ++i) {
+                d->all_op_libs[i] = s->all_op_libs[i];
+            }
+            d->n_libs = s->n_libs;
+        }
+
+        return new_lib_pmc;
+    } else {
+        return run_init_lib(d, handle, lib_name, wo_ext);
+    }
 }
 
 PMC *
