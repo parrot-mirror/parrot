@@ -21,7 +21,7 @@ extern int parrot_sparc_cas64(Parrot_UInt8 *value, Parrot_UInt8 old, Parrot_UInt
 #endif
 
 typedef struct {
-    volatile void *val;
+    void * volatile val;
 } Parrot_atomic_pointer;
 
 #define ATOMIC_PTR_GET(result, a) result = (a).val

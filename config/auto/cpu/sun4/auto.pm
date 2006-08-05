@@ -29,7 +29,7 @@ sub build_asm {
     
     
     $successp = Parrot::Configure::Step::_run_command(
-	    "$cc $ccflags -I./include -o sparcasm$o $file", 'test.cco', 'test.cco', 
+	    "$cc -c $ccflags -I./include -o sparcasm$o $file", 'test.cco', 'test.cco', 
 		    $conf->options->get('verbose'));
 		    
     return $successp;

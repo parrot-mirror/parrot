@@ -2,7 +2,7 @@
 #include "stm_internal.h"
 #include "stm_waitlist.h"
 
-#define WAITLIST_DEBUG 0
+#define WAITLIST_REMOVE_CHECK 0 /* if set, make sure removes really remove -- for debugging */
 
 static struct waitlist_thread_data *
 get_thread(Parrot_Interp interp) {
@@ -13,6 +13,9 @@ get_thread(Parrot_Interp interp) {
             mem_sys_allocate_zeroed(sizeof(*txlog->waitlist_data));
         MUTEX_INIT(txlog->waitlist_data->signal_mutex);
         txlog->waitlist_data->signal_cond = &interp->thread_data->interp_cond;
+#if WAITLIST_DEBUG
+	txlog->waitlist_data->interp = interp;
+#endif
     }
     return txlog->waitlist_data;
 }
@@ -42,21 +45,28 @@ alloc_entry(Parrot_Interp interp) {
     i = thr->used_entries++;
     if (!thr->entries[i]) {
         thr->entries[i] = mem_sys_allocate_zeroed(sizeof(**thr->entries));
-        thr->entries[i]->thread = thr;
     }
+
+    assert(thr->entries[i]->head == NULL);
+    assert(thr->entries[i]->next == NULL);
+    memset(thr->entries[i], 0, sizeof(*thr->entries[i]));
+    thr->entries[i]->thread = thr;
 
     return thr->entries[i];
 }
 
 static void
 add_entry(STM_waitlist *waitlist, struct waitlist_entry *entry) {
-    int successp;
+    int successp = -1;
+    assert(entry->next == NULL);
     do {
         ATOMIC_PTR_GET(entry->next, waitlist->first);
+	assert(successp != -1 || entry->next != entry);
+	assert(entry->next != entry);
         ATOMIC_PTR_CAS(successp, waitlist->first, entry->next, entry);
     } while (!successp);
 #if WAITLIST_DEBUG
-    fprintf(stderr, "added %p to waitlist %p\n", waitlist, entry);
+    fprintf(stderr, "added %p(%p) to waitlist %p\n", entry, entry->thread->interp, waitlist);
 #endif
 }
 
@@ -66,8 +76,8 @@ remove_first(STM_waitlist *waitlist, struct waitlist_entry *expect_first) {
     ATOMIC_PTR_CAS(successp, waitlist->first, expect_first,
                         expect_first->next);
 #if WAITLIST_DEBUG
-    fprintf(stderr, "tried removing %p from beginning of waitlist %p, successp=%d\n",
-                expect_first, waitlist, successp);
+    fprintf(stderr, "tried removing %p(%p) from beginning of waitlist %p, successp=%d\n",
+                expect_first, expect_first->thread->interp, waitlist, successp);
 #endif
     return successp;
 }
@@ -76,33 +86,66 @@ static void
 waitlist_remove(STM_waitlist *waitlist, struct waitlist_entry *what) {
     struct waitlist_entry *cur;
 
-    ATOMIC_PTR_GET(cur, waitlist->first);
-    if (cur == what && remove_first(waitlist, what)) {
-        return;
-    }
-
-    if (!cur) {
-        return;
+    if (!waitlist) {
+	return;
     }
 
     LOCK(waitlist->remove_mutex);
     ATOMIC_PTR_GET(cur, waitlist->first);
+
+    /* if we became the first entry while we were acquiring the mutex */ 
+    while (cur == what) {
+	if (remove_first(waitlist, what)) {
+	    UNLOCK(waitlist->remove_mutex);
+	    what->head = NULL;
+	    what->next = NULL;
+	    return;
+	}
+	ATOMIC_PTR_GET(cur, waitlist->first);
+    }
+
     if (!cur) {
+	/* removal occured before we acquired the lock */
         UNLOCK(waitlist->remove_mutex);
+	assert(!what->head);
         return;
     }
     while (cur->next && cur->next != what) { 
+	assert(cur != cur->next);
         cur = cur->next;
     }
 
     if (cur->next == what) {
         cur->next = what->next;
-    } 
+    } else {
+	assert(!what->head);
+    }
     UNLOCK(waitlist->remove_mutex);
 
     what->next = NULL;
     what->head = NULL;
 }
+
+#if WAITLIST_REMOVE_CHECK 
+/* this function is here to facilitate debugging */
+static void
+waitlist_remove_check(STM_waitlist *waitlist, struct waitlist_entry *what) {
+    struct waitlist_entry *cur;
+
+    if (!waitlist) {
+	return;
+    }
+
+    ATOMIC_PTR_GET(cur, waitlist->first);
+    while (cur) {
+	if (cur == what) {
+	    break;
+	}
+	cur = cur->next;
+    }
+    assert(!cur);
+}
+#endif
 
 static void
 waitlist_signal_one(struct waitlist_entry *who) {
@@ -114,33 +157,34 @@ waitlist_signal_one(struct waitlist_entry *who) {
     UNLOCK(thread->signal_mutex);
     COND_SIGNAL(*thread->signal_cond);
 #if WAITLIST_DEBUG
-    fprintf(stderr, "signalled %p\n", thread);
+    fprintf(stderr, "signalled entry %p: %p(%p)\n", who, thread, thread->interp);
 #endif
+    who->next = NULL;
+    who->head = NULL;
 }
 
 static void
 waitlist_signal_all(STM_waitlist *list) {
     int successp;
     struct waitlist_entry *cur;
+
+    /* make sure we are not interrupted by a concurrent removal */
+    LOCK(list->remove_mutex);
     do {
         ATOMIC_PTR_GET(cur, list->first);
         ATOMIC_PTR_CAS(successp, list->first, cur, NULL);
     } while (!successp);
     
     if (!cur) {
+	UNLOCK(list->remove_mutex);
         return;
     }
 
     if (!cur->next) {
         waitlist_signal_one(cur);
+	UNLOCK(list->remove_mutex);
         return;
     }
-
-    /* assure that any removals pending on the list are finished;
-     * none can start after we replace the head pointer.
-     */
-    LOCK(list->remove_mutex);
-    UNLOCK(list->remove_mutex);
 
     while (cur) {
         struct waitlist_entry *next;
@@ -148,18 +192,21 @@ waitlist_signal_all(STM_waitlist *list) {
         waitlist_signal_one(cur);
         cur = next;
     }
+
+    UNLOCK(list->remove_mutex);
 }
 
 void
 Parrot_STM_waitlist_add_self(Parrot_Interp interp, STM_waitlist *waitlist) {
     struct waitlist_entry *entry;
 
-#if WAITLIST_DEBUG
-    fprintf(stderr, "%p: add to %p\n", interp, waitlist);
-#endif
 
     entry = alloc_entry(interp);
     entry->head = waitlist;
+    
+#if WAITLIST_DEBUG
+    fprintf(stderr, "%p: add %p to %p\n", interp, entry, waitlist);
+#endif
     add_entry(waitlist, entry);
 }
 
@@ -181,8 +228,16 @@ Parrot_STM_waitlist_remove_all(Parrot_Interp interp) {
     thr = get_thread(interp);
     for (i = 0; i < thr->used_entries; ++i) {
         struct waitlist_entry *entry;
+	STM_waitlist *list;
         entry = thr->entries[i];
-        waitlist_remove(entry->head, entry);
+	list = entry->head;
+        waitlist_remove(list, entry);
+#if WAITLIST_REMOVE_CHECK
+	waitlist_remove_check(list, entry);
+#endif
+#if WAITLIST_DEBUG
+	fprintf(stderr, "%p: removing entry %p\n", interp, entry);
+#endif
     }
     thr->used_entries = 0;
     LOCK(thr->signal_mutex);
