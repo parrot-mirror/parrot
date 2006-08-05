@@ -829,14 +829,15 @@ int Parrot_STM_transaction_depth(Interp *interp) {
 static void *wait_for_version(Interp *interp, 
         STM_tx_log *log, Parrot_STM_PMC_handle handle) {
     UINTVAL wait_count = 0;
+    FLOATVAL start_wait = 0.0;
     STM_tx_log_sub *curlog;
     Parrot_atomic_pointer *in_what = &handle->owner_or_version;
     void *version;
     STM_TRACE("%p: wait for version");
-    Parrot_block_DOD(interp);
     for (;;) {
         unsigned other_wait_len;
         unsigned our_wait_len;
+	unsigned other_status;
         STM_tx_log_sub *other;
         ATOMIC_PTR_GET(version, *in_what);
         if (is_version(version)) {
@@ -845,6 +846,10 @@ static void *wait_for_version(Interp *interp,
             }
             break;
         }
+
+	if (start_wait == 0.0) {
+	    start_wait = Parrot_floatval_time();
+	}
 
         ++wait_count;
 
@@ -860,9 +865,11 @@ static void *wait_for_version(Interp *interp,
          */
         assert(n_interpreters > 1);
         other = version;
+	assert(other < &log->inner[0] || other > &log->inner[STM_MAX_TX_DEPTH]);
         curlog = get_sublog(log, log->depth);
         ATOMIC_INT_GET(other_wait_len, other->wait_length);
         ATOMIC_INT_GET(our_wait_len, curlog->wait_length);
+	ATOMIC_INT_GET(other_status, other->status);
         STM_TRACE("wait_lens: ours = %d /other = %d\n", 
                 our_wait_len, other_wait_len);
         if (our_wait_len < other_wait_len + 1) {
@@ -881,23 +888,34 @@ static void *wait_for_version(Interp *interp,
             ATOMIC_INT_CAS(successp, other->status, STM_STATUS_ACTIVE,
                 STM_STATUS_ABORTED);
             if (successp) {
-                ATOMIC_INT_SET(curlog->wait_length, 0);
-                ATOMIC_PTR_CAS(successp, *in_what, other, handle->last_version);
+		other_status = STM_STATUS_ABORTED;
             }
         }
 
-        if (wait_count > 50) {
+	if (other_status == STM_STATUS_ABORTED) {
+	    int successp;
+	    ATOMIC_INT_SET(curlog->wait_length, 0);
+	    ATOMIC_PTR_CAS(successp, *in_what, other, handle->last_version);
+	    continue;
+	}
+
+	/* simple heuristic, try to avoid waiting more then ten milliseconds */
+	/* TODO implement a real contention-manager interface for this instead */
+        if (wait_count > 2000 || Parrot_floatval_time() > start_wait + 0.01) {
             STM_TRACE("waited too long, aborting...\n");
             ATOMIC_INT_SET(curlog->status, STM_STATUS_ABORTED);
             ATOMIC_INT_SET(curlog->wait_length, 0);
             version = NULL;
             break;
         }
+
+	if (interp->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED) {
+	    pt_suspend_self_for_gc(interp);
+	}
         
         YIELD;
-        /* XXX better spinning -- esp. detect or block DOD request */
+        /* XXX better spinning */
     }
-    Parrot_unblock_DOD(interp);
     return version;
 }
 

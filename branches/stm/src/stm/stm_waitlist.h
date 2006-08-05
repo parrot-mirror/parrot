@@ -3,6 +3,8 @@
 
 #include <parrot/atomic.h>
 
+#define WAITLIST_DEBUG 0
+
 struct waitlist_entry {
     /* next entry in the waitlist */
     struct waitlist_entry *next;
@@ -35,6 +37,9 @@ struct waitlist_thread_data {
     struct waitlist_entry **entries;
     size_t entry_count;
     size_t used_entries;
+#if WAITLIST_DEBUG
+    Interp *interp;
+#endif
 };
 
 typedef struct waitlist_head STM_waitlist;
