@@ -20,6 +20,13 @@ get_thread(Parrot_Interp interp) {
     return txlog->waitlist_data;
 }
 
+static struct waitlist_thread_data *
+get_thread_noalloc(Parrot_Interp interp) {
+    STM_tx_log *txlog;
+    txlog = Parrot_STM_tx_log_get(interp);
+    return txlog->waitlist_data;
+}
+
 static struct waitlist_entry *
 alloc_entry(Parrot_Interp interp) {
     struct waitlist_thread_data *thr;
@@ -271,4 +278,25 @@ Parrot_STM_waitlist_init(Parrot_Interp interp, STM_waitlist *waitlist) {
     ATOMIC_PTR_INIT(waitlist->first);
     ATOMIC_PTR_SET(waitlist->first, NULL);
     MUTEX_INIT(waitlist->remove_mutex);
+}
+
+void
+Parrot_STM_waitlist_destroy_thread(Parrot_Interp interp) {
+    struct waitlist_thread_data *thr;
+    size_t i;
+    
+    thr = get_thread_noalloc(interp);
+    if (!thr) {
+        return;
+    }
+
+    for (i = 0; i < thr->used_entries; ++i) {
+        if (thr->entries[i]) {
+            mem_sys_free(thr->entries[i]);
+        }
+    }
+
+    mem_sys_free(thr->entries);
+    MUTEX_DESTROY(thr->signal_mutex);
+    mem_sys_free(thr);
 }

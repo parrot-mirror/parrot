@@ -9,6 +9,8 @@ typedef struct Parrot_STM_PMC_handle_data *Parrot_STM_PMC_handle;
 
 Parrot_STM_PMC_handle Parrot_STM_alloc(Interp *, PMC *);
 
+void Parrot_STM_destroy(Interp *);
+
 void Parrot_STM_start_transaction(Interp *);
 
 PMC *Parrot_STM_read(Interp *, Parrot_STM_PMC_handle);
