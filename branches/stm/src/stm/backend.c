@@ -72,6 +72,31 @@ static STM_tx_log *Parrot_STM_tx_log_alloc(Interp *interp, size_t size) {
     return log;
 }
 
+/*
+
+=head1 C<void Parrot_STM_destroy(Interp *interp)>
+
+Free all resources associated with STM in the interpreter C<interp>.
+
+=cut
+
+*/
+
+void Parrot_STM_destroy(Interp *interp) {
+    STM_tx_log *log;
+    if (!interp->thread_data || !interp->thread_data->stm_log) {
+        return;
+    }
+
+    log = interp->thread_data->stm_log;
+    mem_sys_free(log->writes);
+    mem_sys_free(log->reads);
+    Parrot_STM_waitlist_destroy_thread(interp);
+    mem_sys_free(log);
+    interp->thread_data->stm_log = NULL;
+}
+
+
 STM_tx_log *Parrot_STM_tx_log_get(Interp *interp) {
     STM_tx_log *log = interp->thread_data->stm_log; /* FIXME */
     if (!log) {
@@ -202,9 +227,8 @@ static int is_aborted(STM_tx_log *log) {
     }
     return 0;
 }
-
 /* 
-=head1 C<Parrot_STM_start_transaction(Interp *interp)>
+=head1 C<void Parrot_STM_start_transaction(Interp *interp)>
 
 Start a new transaction for the interpreter C<interp>. If there is
 already a transaction in progress, starts a nested transaction.

@@ -21,13 +21,13 @@ implementation.
 
 =cut
 
-# die "Cowardly refusing to overwrite existing file.\n" if -e 'STMLLQueue.pir';
+die "Cowardly refusing to overwrite existing file.\n" if -e 'STMLLQueue.pir';
 open my $llqueuelib, '>', 'STMLLQueue.pir' 
     or die "opening to write STMLLQueue.pir: $!\n";
 print $llqueuelib $_ while <DATA>;
 close $llqueuelib or warn "close: $!\n";
 END {
-    # unlink 'STMLLQueue.pir';
+    unlink 'STMLLQueue.pir';
 }
 
 pir_output_is(<<'CODE', <<'OUTPUT', "single-threaded case");

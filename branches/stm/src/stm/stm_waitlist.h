@@ -50,5 +50,6 @@ void Parrot_STM_waitlist_add_self(Parrot_Interp, STM_waitlist *waitlist);
 void Parrot_STM_waitlist_signal(Parrot_Interp, STM_waitlist *waitlist);
 void Parrot_STM_waitlist_remove_all(Parrot_Interp);
 void Parrot_STM_waitlist_wait(Parrot_Interp);
+void Parrot_STM_waitlist_destroy_thread(Parrot_Interp);
 
 #endif

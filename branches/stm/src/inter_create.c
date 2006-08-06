@@ -353,6 +353,7 @@ Parrot_really_destroy(int exit_code, void *vinterp)
                     interpreter);
             Parrot_STM_abort(interpreter);
         }
+        Parrot_STM_destroy(interpreter);
     }
 
     if (interpreter->parent_interpreter &&
