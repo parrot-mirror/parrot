@@ -936,8 +936,12 @@ static void *wait_for_version(Interp *interp,
 	if (interp->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED) {
 	    pt_suspend_self_for_gc(interp);
 	}
-        
-        YIELD;
+       
+	if (wait_count > 25) {
+	    /* we only do this when we've waited for a while so we don't make expensive
+	       yield() calls when we only need to wait for a short while. */
+	    YIELD;
+	}
         /* XXX better spinning */
     }
     return version;

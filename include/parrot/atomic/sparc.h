@@ -17,7 +17,10 @@
 extern int parrot_sparc_cas32(Parrot_UInt4 *value, Parrot_UInt4 old, Parrot_UInt4 new);
 /* NB cas64 _will_ be broken when PTR_SIZE == 4 */
 #if PTR_SIZE == 8
-extern int parrot_sparc_cas64(Parrot_UInt8 *value, Parrot_UInt8 old, Parrot_UInt8 new);
+#  if INTVAL_SIZE != 8
+#    error Expected 8-byte wide INTVAL.
+#  endif
+extern int parrot_sparc_cas64(INTVAL *value, INTVAL old, INTVAL new);
 #endif
 
 typedef struct {
@@ -31,8 +34,8 @@ typedef struct {
 #if PTR_SIZE == 8
 #  define ATOMIC_PTR_CAS(result, a, expect, update) \
     do { \
-        result = parrot_sparc_cas64((Parrot_UInt8 *) &(a).val, \
-            (Parrot_UInt8) expect, (Parrot_UInt8) update); \
+        result = parrot_sparc_cas64((INTVAL *) &(a).val, \
+            (INTVAL) expect, (INTVAL) update); \
     } while (0)
 #else
 #  define ATOMIC_PTR_CAS(result, a, expect, update) \
