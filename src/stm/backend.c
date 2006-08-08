@@ -88,6 +88,7 @@ void Parrot_STM_destroy(Interp *interp) {
         return;
     }
 
+
     log = interp->thread_data->stm_log;
     mem_sys_free(log->writes);
     mem_sys_free(log->reads);
@@ -571,13 +572,14 @@ int Parrot_STM_commit(Interp *interp) {
     int successp;
     STM_TRACE("commit");
 
-
     if (log->depth == 0) {
         internal_exception(1, "stm_commit without transaction\n");
         return 0;
     }
 
     assert(log->depth > 0);
+
+    PROFILE_TRIED_COMMIT(log);
 
     cursub = get_sublog(log, log->depth);
 
@@ -591,10 +593,7 @@ int Parrot_STM_commit(Interp *interp) {
     }
 
     if (!successp) {
-        /* XXX FIXME check if outer transaction needs to abort;
-         * if so, we need to pretend to commit the inner transaction
-         * instead.
-         */
+        PROFILE_FAILED_COMMIT(log);
         do_real_abort(interp, log, cursub);
     }
     --log->depth;
@@ -622,6 +621,8 @@ void Parrot_STM_abort(Interp *interp) {
     }
 
     assert(log->depth > 0);
+
+    PROFILE_ABORTED(log);
 
     cursub = get_sublog(log, log->depth);
 
@@ -937,13 +938,14 @@ static void *wait_for_version(Interp *interp,
 	    pt_suspend_self_for_gc(interp);
 	}
        
-	if (wait_count > 25) {
+	if (wait_count > 10) {
 	    /* we only do this when we've waited for a while so we don't make expensive
 	       yield() calls when we only need to wait for a short while. */
 	    YIELD;
 	}
         /* XXX better spinning */
     }
+    PROFILE_WAIT(log, Parrot_floatval_time() - start_wait, wait_count);
     return version;
 }
 
@@ -1358,3 +1360,78 @@ void Parrot_STM_destroy_extracted(Interp *interp, void *saved_log_data) {
     mem_sys_free(saved->writes);
     mem_sys_free(saved);
 }
+
+
+#if STM_PROFILE
+/*
+=item C<void Parrot_STM_dump_profile(Interp *)>
+
+Dump profiling information (num failed commits, time spent waiting
+for a lock, etc.)
+
+=cut
+*/
+
+void Parrot_STM_dump_profile(Interp *interp) {
+    STM_tx_log *log;
+    struct STM_profile_data *profile;
+    INTVAL i;
+    Parrot_block_DOD(interp);
+    log = Parrot_STM_tx_log_get(interp);
+    profile = &PROFILE(log);
+    fprintf(stderr,
+        "STM profile dump\n"
+        "%ld/%ld commits needed retry\n"
+        "%ld aborts\n"
+        "waited for %ld/%ld\n",
+        profile->failed_commits, profile->attempted_commits,
+        profile->num_aborts,
+        profile->num_waits,
+        profile->num_waits + profile->num_non_waits);
+    fprintf(stderr, 
+        "Histogram of wait times (5ms groupings):\n");
+    for (i = 0; i < TIME_BUCKETS; ++i) {
+        fprintf(stderr, "%5ld ", profile->wait_time[i]);
+    }
+    fprintf(stderr, "\nAverage time: %f\n", 
+        profile->total_wait_time / (double) profile->num_waits);
+    fprintf(stderr,
+        "Histogram of wait cycles (1 cycle groupings):\n");
+    for (i = 0; i < CYCLE_BUCKETS; ++i) {
+        fprintf(stderr, "%5ld ", profile->wait_cycles[i]);
+    }
+    fprintf(stderr, "\nAverage cycles: %f\n",
+        (double) profile->total_wait_cycles / (double) profile->num_waits);
+    Parrot_unblock_DOD(interp);
+}
+
+/*
+=item C<void Parrot_STM_merge_profile(Interp *dest, Interp *source)>
+
+
+=cut
+*/
+
+void Parrot_STM_merge_profile(Interp *d, Interp *s) {
+    struct STM_profile_data *from, *to;
+    INTVAL i;
+
+    from = &PROFILE(Parrot_STM_tx_log_get(s));
+    to = &PROFILE(Parrot_STM_tx_log_get(d));
+
+    to->attempted_commits += from->attempted_commits;
+    to->failed_commits += from->failed_commits;
+    to->num_aborts += from->num_aborts;
+    to->num_non_waits += from->num_non_waits;
+    to->num_waits += from->num_waits;
+    for (i = 0; i < CYCLE_BUCKETS; ++i) {
+        to->wait_cycles[i] += from->wait_cycles[i];
+    }
+    for (i = 0; i < TIME_BUCKETS; ++i) {
+        to->wait_time[i] += from->wait_time[i];
+    }
+    to->total_wait_time += from->total_wait_time;
+    to->total_wait_cycles += from->total_wait_cycles;
+}
+
+#endif

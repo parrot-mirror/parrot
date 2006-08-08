@@ -319,6 +319,14 @@ Parrot_really_destroy(int exit_code, void *vinterp)
         interpreter->arena_base->GC_block_level = 0;
     Parrot_do_dod_run(interpreter, DOD_finish_FLAG);
 
+#if STM_PROFILE
+    if (interpreter->thread_data && interpreter->thread_data->stm_log &&
+            !interpreter->parent_interpreter &&
+                Interp_debug_TEST(interpreter, PARROT_THREAD_DEBUG_FLAG)) {
+        Parrot_STM_dump_profile(interpreter);
+    }
+#endif
+
     /*
      * that doesn't get rid of constant PMCs like these in vtable->data
      * so if such a PMC needs destroy, we got a memory leak, like for
@@ -353,6 +361,12 @@ Parrot_really_destroy(int exit_code, void *vinterp)
                     interpreter);
             Parrot_STM_abort(interpreter);
         }
+#if STM_PROFILE
+        if (interpreter->parent_interpreter 
+            && interpreter->thread_data->state & THREAD_STATE_JOINED) {
+            Parrot_STM_merge_profile(interpreter->parent_interpreter, interpreter);
+        }
+#endif
         Parrot_STM_destroy(interpreter);
     }
 
