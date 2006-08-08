@@ -106,6 +106,21 @@ for this or just copy the vtables themselves. They would also support sharing dy
 library information between running threads, including loading a new dynamic PMC library
 while another thread is running.
 
+=head1 Dynamic Op libraries
+
+Dynamic oplibs are presently always shared. A file-global structure in core_ops.c
+is modified at runtime when oplibs are loaded and this structure is used for
+opname -> opnumber lookups exclusively. Also, interpreters always use the function
+pointer table placed in this structure. Consequently, new oplibs cannot be loaded
+when more than one thread is running. This last problem could be fixed by just making
+sure that function pointer tables are not free'd when they may be in use. Note
+that to support sharing of bytecode between threads it is important that all threads
+have the same set of op numbers.
+
+To support cloning dynamic oplibs into new threads, the current code just clones the
+library objects and gets the ops for 'free'. Note that this means that cloning
+of the dynamic ops cannot be disabled.
+
 =head2 HLL type numbers
 
 The HLL type number mapping is currently cloned in a copy-on-write-like manner
