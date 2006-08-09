@@ -36,7 +36,7 @@ static void TRACE_THREAD(const char *x, ...) {}
 
 static int running_threads;
 
-void Parrot_really_destroy(int exit_code, void *interpreter);
+void Parrot_really_destroy(Interp *interpreter, int exit_code, void *arg);
 
 struct _Shared_gc_info {
     thread_gc_stage_enum gc_stage;
@@ -382,7 +382,7 @@ thread_func(void *arg)
     if (interpreter->thread_data->state & THREAD_STATE_DETACHED) {
         interpreter_array[tid] = NULL;
         TRACE_THREAD("really destroying an interpreter [exit while detached]");
-        Parrot_really_destroy(0, interpreter);
+        Parrot_really_destroy(interpreter, 0, NULL);
     } else if (interpreter->thread_data->state & THREAD_STATE_JOINED) {
         pt_thread_signal(interpreter, interpreter->thread_data->joiner);
     }
@@ -1078,7 +1078,7 @@ pt_thread_join(Parrot_Interp parent, UINTVAL tid)
         
         /* reparent it so memory pool merging works */
         interpreter->parent_interpreter = parent;
-        Parrot_really_destroy(0, interpreter);
+        Parrot_really_destroy(interpreter, 0, NULL);
         CLEANUP_POP(1);
         /*
          * interpreter destruction is done - unregister the return
@@ -1179,7 +1179,7 @@ detach(UINTVAL tid)
         if (interpreter->thread_data->state & THREAD_STATE_FINISHED) {
             interpreter_array[tid] = NULL;
             TRACE_THREAD("destroying an interpreter [detach]");
-            Parrot_really_destroy(0, interpreter);
+            Parrot_really_destroy(interpreter, 0, NULL);
             interpreter = NULL;
         }
     }

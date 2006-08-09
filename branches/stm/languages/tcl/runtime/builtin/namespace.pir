@@ -25,8 +25,10 @@ real top level namespace.
   .local pmc subcommand_proc
   null subcommand_proc
 
-  .get_from_HLL(subcommand_proc, '_tcl';'helpers';'namespace', subcommand_name)
-  if_null subcommand_proc, bad_args
+  push_eh bad_args
+    subcommand_proc = get_root_global ['_tcl';'helpers';'namespace'], subcommand_name
+  clear_eh
+
   .return subcommand_proc(argv)
 
 bad_args:
@@ -51,7 +53,7 @@ no_args:
   if argc goto bad_args
 
   .local pmc ns, __namespace
-  .get_from_HLL(__namespace, '_tcl', '__namespace')
+  __namespace = get_root_global ['_tcl'], '__namespace'
   ns  = __namespace('')
   $P0 = pop ns
   $S0 = join "::", ns
@@ -71,10 +73,8 @@ bad_args:
   if argc == 0 goto return
   
   .local pmc __namespace, ns_root
-  .get_from_HLL(__namespace, '_tcl', '__namespace')
-  .include 'interpinfo.pasm'
-  ns_root = interpinfo .INTERPINFO_NAMESPACE_ROOT
-  ns_root = ns_root['tcl']
+  __namespace = get_root_global ['_tcl'], '__namespace'
+  ns_root = get_root_namespace ['tcl']
   
   $I0 = 0
 delete_loop:
@@ -107,10 +107,9 @@ return:
   argc = argv
   if argc != 1 goto bad_args
 
-  .local pmc p6rule, colons, split, name
-  p6rule = compreg "PGE::P6Regex"
-  colons = p6rule('\:\:+')
-  .get_from_HLL(split, 'parrot'; 'PGE::Util', 'split')
+  .local pmc colons, split, name
+  colons = get_root_global ['_tcl'], 'colons'
+  split  = get_root_global ['parrot'; 'PGE::Util'], 'split'
   name = argv[0]
 
   $P0 = split(colons, name)
@@ -128,9 +127,7 @@ get:
   .local pmc ns
   $I0 = 0
   $I1 = elements $P0
-  .include 'interpinfo.pasm'
-  ns = interpinfo .INTERPINFO_NAMESPACE_ROOT
-  ns = ns['tcl']
+  ns = get_root_namespace ['tcl']
 get_loop:
   if $I0 == $I1 goto get_end
   $P1 = $P0[$I0]
@@ -155,7 +152,6 @@ bad_args:
   argc = argv
   if argc != 1 goto bad_args
 
-  load_bytecode 'PGE.pbc'
   .local pmc p6r,match
   p6r = compreg 'PGE::P6Regex'
   match = p6r("(.*)\\:\\:+<-[:]>*$$")
@@ -183,7 +179,6 @@ WHOLE:
   argc = argv
   if argc != 1 goto bad_args
 
-  load_bytecode 'PGE.pbc'
   .local pmc p6r,match
   p6r= compreg 'PGE::P6Regex'
   match = p6r("\\:\\:+(<-[:]>)$$")
@@ -214,7 +209,7 @@ bad_args:
   if argc < 2 goto bad_args
   
   .local pmc ns, __namespace
-  .get_from_HLL(__namespace, '_tcl', '__namespace')
+  __namespace = get_root_global ['_tcl'], '__namespace'
   
   ns = shift argv
   ns = __namespace(ns, 1)
@@ -230,8 +225,8 @@ bad_args:
 
 global_ns:
   .local pmc compile, code
-  .get_from_HLL(compile, '_tcl', 'compile')
-  code = new 'TclCodeString'
+  compile = get_root_global ['_tcl'], 'compile'
+  code = new 'PGE::CodeString'
   $S0 = join " ", argv
   ($I0, $S0) = compile(1, $S0)
   $I0 = code.unique()
@@ -242,11 +237,10 @@ global_ns:
 .pragma n_operators 1
 .sub compiled_tcl_sub_%2 
   .include "languages/tcl/src/returncodes.pir"
-  .local pmc epoch, p6rule, colons, split
-  .get_from_HLL(epoch,'_tcl','epoch')
-  p6rule = compreg "PGE::P6Regex"
-  colons = p6rule('\:\:+')
-  .get_from_HLL(split, 'parrot'; 'PGE::Util', 'split')
+  .local pmc epoch, colons, split
+  epoch  = get_root_global ['_tcl'], 'epoch'
+  colons = get_root_global ['_tcl'], 'colons'
+  split  = get_root_global ['parrot'; 'PGE::Util'], 'split'
   %1
   .return()
 .end
@@ -269,10 +263,21 @@ bad_args:
 .sub 'children'
   .param pmc argv
 
+  .local int has_pattern
+  has_pattern = 0
+
   .local int argc
   argc = elements argv
   if argc > 2  goto bad_args
+  if argc != 2 goto iterate
 
+  .local pmc glob, pattern
+  glob        = compreg 'PGE::Glob'
+  pattern     = argv[1]
+  pattern     = glob(pattern)
+  has_pattern = 1
+
+iterate:
   .local pmc list
   list = new .TclList
   
@@ -313,6 +318,10 @@ loop:
   $S0 = "::" . $S0
   $P0 = new .TclString
   $P0 = $S0
+  unless has_pattern goto is_namespace
+  $P1 = pattern($P0)
+  unless $P1 goto loop
+is_namespace:
   push list, $P0
   goto loop
 end:
@@ -376,7 +385,7 @@ unknown_namespace:
   
 get_parent:
   .local pmc ns, __namespace
-  .get_from_HLL(__namespace, '_tcl', '__namespace')
+  __namespace = get_root_global ['_tcl'], '__namespace'
   ns  = __namespace(name)
   $S0 = pop ns
   if $S0 != "" goto no_pop

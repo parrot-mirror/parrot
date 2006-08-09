@@ -3,6 +3,7 @@
 
 .sub 'flush'
   .param int register_num
+  .param pmc raw_args
   .param pmc argv
 
   .local string pir_code, temp_code
@@ -19,18 +20,13 @@
   # generate code that checks for the specified channel:
   # get the channel specified to be flushed
 
-  .local pmc compiler, value
-  .get_from_HLL(compiler, '_tcl', 'compile_dispatch')
-  .local int value_num
-  value = argv[0]
-  (value_num, temp_code) = compiler(register_num, value)
-  pir_code .= temp_code
-  register_num = value_num + 1
+  .local pmc compiler
+  compiler = get_root_global ['_tcl'], 'compile_dispatch'
   $S0 = register_num
   pir_code .= '$P'
   pir_code .= $S0
-  pir_code .= '=$P'
-  $S0 = value_num
+  pir_code .= ' = '
+  $S0 = argv[0]
   pir_code .= $S0
   pir_code .= "\n"
   temp_code = ".local string channel_id\n"
@@ -44,7 +40,7 @@
   # keep this comment, we need a newline!
   # generate code for accessing the "channels" variable in ParTcl 
   .local pmc channels, channel
-  channels = find_global 'channels'
+  channels = get_root_global ['_tcl'], 'channels'
 
   # find the specified channel
   channel = channels[channel_id]
@@ -94,8 +90,6 @@ END_PIR
 .return(register_num, pir_code)
 
 args_miscount:
-  pir_code = ".throw(\"wrong # args: should be flush \\\"channelId\\\"\")\n"
+  pir_code = ".throw(\"wrong # args: should be \\\"flush channelId\\\"\")\n"
   .return(register_num, pir_code)
-
 .end
-

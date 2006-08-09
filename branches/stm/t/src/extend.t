@@ -9,7 +9,7 @@ use Test::More;
 use Parrot::Test;
 use Parrot::Config;
 
-plan $^O =~ m/MSWin32/ ? (skip_all => 'broken on win32') : (tests => 14);
+plan $^O =~ m/MSWin32/ ? (skip_all => 'broken on win32') : (tests => 15);
 
 =head1 NAME
 
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 
     printf("%d\n", (int)new_value);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 
@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
 
     printf("%.1f\n", (double)new_value);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 
@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
     output = Parrot_new_string(interpreter, "Test", 4, "iso-8859-1", 0);
     PIO_eprintf(interpreter, "%S\n", output);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 
@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
     new_value = Parrot_get_strreg(interpreter, parrot_reg);
     PIO_eprintf(interpreter, "%S\n", new_value);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 
@@ -165,7 +165,7 @@ int main(int argc, char* argv[]) {
 
     printf("%ld\n", (long)new_value);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 CODE
@@ -205,7 +205,7 @@ int main(int argc, char* argv[]) {
     interpreter = Parrot_new(NULL);
     if ( interpreter == NULL ) return 1;
     Parrot_run_native(interpreter, the_test);
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 CODE
@@ -240,7 +240,7 @@ int main(int argc, char* argv[]) {
     new_value = Parrot_PMC_get_intval(interpreter, newpmc);
     printf("%d\n", (int)new_value);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 CODE
@@ -272,7 +272,7 @@ int main(int argc, char* argv[]) {
 
     printf("%.7f\n", (double)new_value);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 CODE
@@ -304,7 +304,7 @@ int main(int argc, char* argv[]) {
 
     PIO_eprintf(interpreter, "%S\n", new_value);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 CODE
@@ -337,7 +337,7 @@ int main(int argc, char* argv[]) {
 
     Parrot_free_cstring(new_value);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 CODE
@@ -374,7 +374,7 @@ int main(int argc, char* argv[]) {
 
     Parrot_free_cstring(new_value);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 CODE
@@ -417,7 +417,7 @@ int main(int argc, char* argv[])
 
     Parrot_run_native(interpreter, the_test);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 
@@ -488,7 +488,7 @@ int main(int argc, char* argv[])
 
     Parrot_run_native(interpreter, the_test);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 
@@ -510,11 +510,13 @@ the_test(Parrot_Interp interpreter, opcode_t *cur_op, opcode_t *start)
     sub = Parrot_find_global_cur(interpreter, name);
 
     if (setjmp(jb.destination)) {
-    PIO_eprintf(interpreter, "caught\n");
+	PIO_eprintf(interpreter, "caught\n");
     }
     else {
-    push_new_c_exception_handler(interpreter, &jb);
-    Parrot_call_sub(interpreter, sub, "v");
+	interpreter->current_runloop_id++;	/* pretend the EH was pushed
+						   by the sub call. */
+	push_new_c_exception_handler(interpreter, &jb);
+	Parrot_call_sub(interpreter, sub, "v");
     }
     PIO_eprintf(interpreter, "back\n");
 
@@ -576,7 +578,51 @@ int main(int argc, char* argv[])
 
     Parrot_destroy( interpreter );
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
+    return 0;
+}
+CODE
+Hello from foo!
+OUTPUT
+
+c_output_is(<<'CODE', <<'OUTPUT', "compile string in a fresh interp - #39986");
+
+#include <parrot/parrot.h>
+#include <parrot/embed.h>
+#include <parrot/extend.h>
+
+int main(int argc, char* argv[])
+{
+    Parrot_PMC    retval;
+    Parrot_PMC    sub;
+    Parrot_Interp interp = Parrot_new(NULL);
+    char   * code      = ".sub foo\nprint\"Hello from foo!\\n\"\n.end\n";
+    STRING * code_type;
+    STRING * error;
+    STRING * foo_name;
+    Parrot_PackFile packfile;
+
+    if (!interp) {
+        printf( "Hiss\n" );
+        return 1;
+    }
+
+    packfile = PackFile_new_dummy(interp, "dummy");
+
+    code_type = const_string( interp, "PIR" );
+    retval    = Parrot_compile_string( interp, code_type, code, &error );
+
+    if (!retval) {
+        printf( "Boo\n" );
+        return 1;
+    }
+
+    foo_name = const_string( interp, "foo" );
+    sub      = Parrot_find_global_cur( interp, foo_name );
+
+    retval   = Parrot_call_sub( interp, sub, "V", "" );
+
+    Parrot_exit(interp, 0);
     return 0;
 }
 CODE

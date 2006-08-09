@@ -30,9 +30,7 @@ providing a compreg-compatible method.
 
 # library files (HLL: _Tcl)
 .include 'languages/tcl/runtime/conversions.pir'
-.include 'languages/tcl/runtime/list.pir'
 .include 'languages/tcl/runtime/list_to_string.pir'
-.include 'languages/tcl/runtime/string.pir'
 .include 'languages/tcl/runtime/string_to_list.pir'
 .include 'languages/tcl/runtime/variables.pir'
 .include 'languages/tcl/src/compiler.pir'
@@ -61,6 +59,7 @@ providing a compreg-compatible method.
   # Load any dependant libraries.
   load_bytecode 'Getopt/Obj.pbc'
   load_bytecode 'PGE.pbc'
+  load_bytecode 'PGE/Glob.pbc'
   load_bytecode 'PGE/Util.pbc'
   load_bytecode 'TGE.pbc'
 
@@ -82,7 +81,7 @@ env_loop:
   goto env_loop
 
 env_loop_done:
-  .set_in_HLL('tcl', '$env', tcl_env)
+  set_root_global ['tcl'], '$env', tcl_env
 
   # keep track of names of file types.
   .local pmc filetypes
@@ -120,30 +119,6 @@ env_loop_done:
 
    store_global 'binary_types', binary_types
 
-  # XXX - this is a holdover. We should incorporate this list into the
-  # appropriate grammar so we don't have two lists sitting around.
-
-  # Keep track of math functions
-  .local pmc math_funcs
-  math_funcs = new .TclArray
-
-  math_funcs['abs']   = 1
-  math_funcs['acos']  = 1
-  math_funcs['asin']  = 1
-  math_funcs['atan']  = 1
-  math_funcs['cos']   = 1
-  math_funcs['cosh']  = 1
-  math_funcs['exp']   = 1
-  math_funcs['log']   = 1
-  math_funcs['log10'] = 1
-  math_funcs['sin']   = 1
-  math_funcs['sinh']  = 1
-  math_funcs['sqrt']  = 1
-  math_funcs['tan']   = 1
-  math_funcs['tanh']  = 1
-
-  store_global 'functions', math_funcs
-
   # Eventually, we'll need to register MMD for the various Tcl PMCs
   # (Presuming we don't do this from the .pmc definitions.)
 
@@ -158,18 +133,18 @@ env_loop_done:
    #version info
   $P0 = new .String
   $P0 = '0.1'
-  .set_in_HLL('tcl', '$tcl_patchLevel', $P0)
+  set_root_global ['tcl'], '$tcl_patchLevel', $P0
   $P0 = new .String
   $P0 = '0.1'
-  .set_in_HLL('tcl', '$tcl_version', $P0)
+  set_root_global ['tcl'], '$tcl_version', $P0
    
   #error information
   $P0 = new .TclString
   $P0 = 'NONE'
-  .set_in_HLL('tcl', '$errorCode', $P0)
+  set_root_global ['tcl'], '$errorCode', $P0
   $P0 = new .TclString
   $P0 = ''
-  .set_in_HLL('tcl', '$errorInfo', $P0)
+  set_root_global ['tcl'], '$errorInfo', $P0
 
   # Setup the default channelIds
   $P1 = new .TclArray
@@ -202,6 +177,12 @@ env_loop_done:
   $P1 = new .Integer
   $P1 = 0
   store_global 'epoch', $P1
+
+  # the regex used for namespaces
+  .local pmc p6rule, colons
+  p6rule = compreg "PGE::P6Regex"
+  colons = p6rule('\:\:+')
+  set_hll_global 'colons', colons
 
   # register the TCL compiler.
   $P1 = find_global '_tcl_compile'

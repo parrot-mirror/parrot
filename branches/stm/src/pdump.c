@@ -273,12 +273,12 @@ main(int argc, char **argv)
         }
         fclose(fp);
         mem_sys_free(pack);
-        Parrot_exit(0);
+        Parrot_exit(interpreter, 0);
     }
 
     PackFile_header_dump(interpreter, pf);
     if (header) {
-        Parrot_exit(0);
+        Parrot_exit(interpreter, 0);
     }
     /* install a dumper function */
     if (!terse) {
@@ -290,7 +290,7 @@ main(int argc, char **argv)
     /* do a directory dump, which dumps segs then */
     PackFile_Segment_dump(interpreter, &pf->directory.base);
 
-    Parrot_exit(0);
+    Parrot_exit(interpreter, 0);
     return 0;
 }
 

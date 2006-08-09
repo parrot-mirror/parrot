@@ -10,16 +10,17 @@ Functions are very similar to ops, so handle them similarly here.
 
 =cut
 
-.namespace
+.HLL 'Tcl', ''
+.namespace ['tcl'; 'mathfunc']
 
-.sub 'function:rand'
+.sub '&rand'
 .end
 
 =head2 Unary Functions
 
 =cut
 
-.sub 'function:abs'
+.sub '&abs'
     .param pmc a
     
     .local pmc __number
@@ -38,7 +39,7 @@ is_string:
     .throw("argument to math function didn't have numeric value")
 .end
 
-.sub 'function:acos'
+.sub '&acos'
     .param pmc a
     
     .local pmc __number
@@ -56,10 +57,13 @@ is_string:
     .return (ret)
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:asin'
+.sub '&asin'
     .param pmc a
     
     .local pmc __number
@@ -77,10 +81,13 @@ is_string:
     .return (ret)
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:atan'
+.sub '&atan'
     .param pmc a
     
     .local pmc __number
@@ -98,10 +105,16 @@ is_string:
     .return (ret)
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:ceil'
+.sub '&bool'
+.end
+
+.sub '&ceil'
     .param pmc a
     
     .local pmc __number
@@ -122,7 +135,7 @@ is_string:
     .throw("argument to math function didn't have numeric value")
 .end
 
-.sub 'function:cos'
+.sub '&cos'
     .param pmc a
     
     .local pmc __number
@@ -140,10 +153,13 @@ is_string:
     .return (ret)
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:cosh'
+.sub '&cosh'
     .param pmc a
     
     .local pmc __number
@@ -161,10 +177,13 @@ is_string:
     .return (ret)
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:double'
+.sub '&double'
     .param pmc a
     
     .local pmc __number
@@ -184,7 +203,7 @@ is_string:
     .throw("argument to math function didn't have numeric value")
 .end
 
-.sub 'function:exp'
+.sub '&exp'
     .param pmc a
     
     .local pmc __number
@@ -202,13 +221,16 @@ is_string:
     .return (ret)
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:floor' 
+.sub '&floor' 
 .end
 
-.sub 'function:int'
+.sub '&int'
     .param pmc a
     
     .local pmc __number
@@ -228,7 +250,7 @@ is_string:
     .throw("argument to math function didn't have numeric value")
 .end
 
-.sub 'function:log'
+.sub '&log'
     .param pmc a
     
     .local pmc __number
@@ -251,10 +273,13 @@ domain_error:
     .throw('domain error: argument not in valid range')
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:log10'
+.sub '&log10'
     .param pmc a
     
     .local pmc __number
@@ -277,10 +302,13 @@ domain_error:
     .throw('domain error: argument not in valid range')
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:round'
+.sub '&round'
     .param pmc a
     
     .local pmc __number
@@ -306,7 +334,7 @@ is_string:
     .throw("argument to math function didn't have numeric value")
 .end
 
-.sub 'function:sin'
+.sub '&sin'
     .param pmc a
     
     .local pmc __number
@@ -324,10 +352,13 @@ is_string:
     .return (ret)
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:sinh'
+.sub '&sinh'
     .param pmc a
     
     .local pmc __number
@@ -345,10 +376,13 @@ is_string:
     .return (ret)
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:sqrt'
+.sub '&sqrt'
     .param pmc a
     
     .local pmc __number
@@ -370,13 +404,16 @@ domain_error:
     .throw('domain error: argument not in valid range')
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:srand'
+.sub '&srand'
 .end
 
-.sub 'function:tan'
+.sub '&tan'
     .param pmc a
     
     .local pmc __number
@@ -394,10 +431,13 @@ is_string:
     .return (ret)
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:tanh'
+.sub '&tanh'
     .param pmc a
     
     .local pmc __number
@@ -415,17 +455,20 @@ is_string:
     .return (ret)
 
 is_string:
-    .throw("argument to math function didn't have numeric value")
+    $S0 = a
+    $S0 = 'expected floating-point number but got "' . $S0
+    $S0 = $S0 . '"'
+    .throw($S0)
 .end
 
-.sub 'function:wide'
+.sub '&wide'
 .end
 
 =head2 Binary Functions
 
 =cut
 
-.sub 'function:atan2'
+.sub '&atan2'
     .param pmc a
     .param pmc b
     
@@ -449,7 +492,7 @@ is_string:
     .throw("argument to math function didn't have numeric value")
 .end
 
-.sub 'function:fmod'
+.sub '&fmod'
     .param pmc a
     .param pmc b
     
@@ -477,7 +520,7 @@ is_string:
     .throw("argument to math function didn't have numeric value")
 .end
 
-.sub 'function:hypot'
+.sub '&hypot'
     .param pmc a
     .param pmc b
     
@@ -506,7 +549,7 @@ is_string:
     .throw("argument to math function didn't have numeric value")
 .end
 
-.sub 'function:pow'
+.sub '&pow'
     .param pmc a
     .param pmc b
     

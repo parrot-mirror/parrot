@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 29;
+use Parrot::Test tests => 35;
 
 =head1 NAME
 
@@ -486,11 +486,8 @@ CODE
 1 2
 OUTPUT
 
-{
-local $TODO = 'bug';
-
 ## this is broken; continuation calling does not execute actions when unwinding.
-pir_output_is(<<'CODE', <<'OUTPUT', 'cleanup global:  continuation');
+pir_output_is(<<'CODE', <<'OUTPUT', 'cleanup global:  continuation', todo => 'bug');
 .sub main :main
 	.local pmc outer, cont
 	outer = new String
@@ -546,9 +543,6 @@ Innerer value
 [in test1_cleanup]
 Outer value
 OUTPUT
-
-$TODO++;	# suppress warning.
-}
 
 pir_output_is(<<'CODE', <<'OUTPUT', 'cleanup global:  throw');
 .sub main :main
@@ -653,3 +647,151 @@ Error: No exception to pop.
 done.
 OUTPUT
 
+# stringification is handled by a vtable method, which runs in a second
+# runloop. when an error in the method tries to go to a Error_Handler defined
+# outside it, it winds up going to the inner runloop, giving strange results.
+pir_output_is(<<'CODE', <<'OUTPUT', 'clear_eh out of context (2)', todo => 'runloop shenanigans');
+.sub main :main
+        $P0 = get_hll_global ['Foo'], 'load'
+        $P0()
+        $P0 = new 'Foo'
+        push_eh catch
+        $S0 = $P0
+        clear_eh
+        say "huh?"
+        .return()
+
+catch:
+        say "caught"
+        .return()
+.end
+
+.namespace ['Foo']
+
+.sub load
+        $P0 = newclass 'Foo'
+.end
+
+.sub __get_string :method
+        $P0 = new .Exception
+        throw $P0
+.end
+CODE
+caught
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "pushaction - return from main");
+.sub main :main
+    print "main\n"
+    .const .Sub at_exit = "exit_handler"
+    pushaction at_exit
+    .return()
+.end
+
+.sub exit_handler
+    .param int flag
+    print_item "at_exit, flag ="
+    print_item flag
+    print_newline
+.end
+CODE
+main
+at_exit, flag = 0
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "pushaction - end in main");
+.sub main :main
+    print "main\n"
+    .const .Sub at_exit = "exit_handler"
+    pushaction at_exit
+    # IMCC inserts end here, because it is :main
+.end
+
+.sub exit_handler
+    .param int flag
+    print_item "at_exit, flag ="
+    print_item flag
+    print_newline
+.end
+CODE
+main
+OUTPUT
+
+pir_output_like(<<'CODE', <<'OUTPUT', "pushaction - throw in main");
+.sub main :main
+    print "main\n"
+    .const .Sub at_exit = "exit_handler"
+    pushaction at_exit
+    $P0 = new .Exception
+    throw $P0
+    .return()
+.end
+
+.sub exit_handler
+    .param int flag
+    print_item "at_exit, flag ="
+    print_item flag
+    print_newline
+.end
+CODE
+/^main
+at_exit, flag = 1
+No exception handler/
+OUTPUT
+
+# creating the Closure converts RetContinuation to Continuations
+# which dont trigger acction handlers
+pir_output_is(<<'CODE', <<'OUTPUT', "pushaction as closure", todo => 'Continuation');
+.sub main :main
+    .local pmc a
+    .lex 'a', a
+    a = new .Integer
+    a = 42
+    print "main\n"
+    .const .Sub at_exit = "exit_handler"
+    pushaction at_exit
+    .return()
+.end
+
+.sub exit_handler :outer(main)
+    .param int flag
+    print_item "at_exit, flag ="
+    print_item flag
+    print_newline
+    .local pmc a
+    a = find_lex 'a'
+    print_item 'a ='
+    print_item a
+    print_newline
+.end
+CODE
+main
+at_exit, flag = 0
+a = 42
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "exit_handler via exit exception");
+.sub main :main
+    .local pmc a
+    .lex 'a', a
+    a = new .Integer
+    a = 42
+    push_eh handler
+    exit 0
+handler:
+    .return exit_handler()
+.end
+
+.sub exit_handler :outer(main)
+    print_item "at_exit"
+    print_newline
+    .local pmc a
+    a = find_lex 'a'
+    print_item 'a ='
+    print_item a
+    print_newline
+.end
+CODE
+at_exit
+a = 42
+OUTPUT

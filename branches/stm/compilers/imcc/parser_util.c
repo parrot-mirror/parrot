@@ -29,6 +29,17 @@ static const char *try_rev_cmp(Parrot_Interp, IMC_Unit *unit, char *name,
                                SymReg **r);
 
 /*
+ * used in -D20 to print files with the output of every PIR compilation
+ * this can't be attached to the interpreter or packfile because it has to be
+ * absolutely global to prevent the files from being overwritten.
+ *
+ * This is not thread safe as is. A mutex needs to be added.
+ * 
+ * See RT#40010 for more discussion.
+ */
+static INTVAL eval_nr = 0;
+
+/*
  * P = new type, [init]
  * PASM like:
  *   new P, .SomeThing
@@ -95,7 +106,7 @@ op_fullname(char * dest, const char * name, SymReg * args[],
         *dest++ = '_';
         if (args[i]->type == VTADDRESS) {
 #if IMC_TRACE_HIGH
-        PIO_eprintf(NULL, " (address)%s", args[i]->name);
+            PIO_eprintf(NULL, " (address)%s", args[i]->name);
 #endif
             *dest++ = 'i';
             *dest++ = 'c';
@@ -104,18 +115,21 @@ op_fullname(char * dest, const char * name, SymReg * args[],
         /* if one ever wants num keys, they go with 'S' */
         if (keyvec & KEY_BIT(i)) {
 #if IMC_TRACE_HIGH
-        PIO_eprintf(NULL, " (key)%s", args[i]->name);
+            PIO_eprintf(NULL, " (key)%s", args[i]->name);
 #endif
             *dest++ = 'k';
-            if (args[i]->set == 'S' || args[i]->set == 'N' ||
-                    args[i]->set == 'K') {
+            if (args[i]->set == 'S' || args[i]->set == 'N' || args[i]->set == 'K') {
                 *dest++ = 'c';
                 continue;
             }
             else if (args[i]->set == 'P')
                 continue;
         }
-        *dest++ = tolower(args[i]->set);
+        if (args[i]->set == 'K')
+            *dest++ = 'p';
+        else
+            *dest++ = tolower(args[i]->set);
+
         if (args[i]->type & (VTCONST|VT_CONSTP)) {
 #if IMC_TRACE_HIGH
             PIO_eprintf(NULL, " (%cc)%s", tolower(args[i]->set), args[i]->name);
@@ -465,6 +479,8 @@ INS(Interp *interpreter, IMC_Unit * unit, char *name,
             format[len] = '\0';
             strcat(format, "[%s], ");
         }
+        else if (r[i]->set == 'K')
+            strcat(format, "[%s], ");
         else
             strcat(format, "%s, ");
     }
@@ -589,7 +605,7 @@ imcc_compile(Parrot_Interp interp, const char *s, int pasm_file,
         IMCC_INFO(interp) = imc_info;
     }
 
-    sprintf(name, "EVAL_" INTVAL_FMT, ++interp->code->base.pf->eval_nr);
+    sprintf(name, "EVAL_" INTVAL_FMT, ++eval_nr);
     new_cs = PF_create_default_segs(interp, name, 0);
     old_cs = Parrot_switch_to_cs(interp, new_cs, 0);
     cur_namespace = NULL;
@@ -696,6 +712,34 @@ IMCC_compile_pasm_s(Parrot_Interp interp, const char *s,
                     STRING **error_message)
 {
     return imcc_compile(interp, s, 1, error_message);
+}
+
+PMC *
+imcc_compile_pasm_ex(Parrot_Interp interp, const char *s)
+{
+    STRING *error_message;
+    PMC *sub;
+    
+    sub = imcc_compile(interp, s, 1, &error_message);
+    if (sub == NULL ) {
+        real_exception(interp, NULL, E_Exception,
+              string_to_cstring(interp, error_message));
+    }
+    return sub;
+}
+
+PMC *
+imcc_compile_pir_ex(Parrot_Interp interp, const char *s)
+{
+    STRING *error_message;
+    PMC *sub;
+    
+    sub = imcc_compile(interp, s, 0, &error_message);
+    if (sub == NULL) {
+        real_exception(interp, NULL, E_Exception,
+              string_to_cstring(interp, error_message));
+    }
+    return sub;
 }
 
 /*
@@ -814,8 +858,8 @@ IMCC_compile_file_s(Parrot_Interp interp, const char *s,
 void
 register_compilers(Parrot_Interp interp)
 {
-    Parrot_compreg(interp, const_string(interp, "PASM"), imcc_compile_pasm);
-    Parrot_compreg(interp, const_string(interp, "PIR"), imcc_compile_pir);
+    Parrot_compreg(interp, const_string(interp, "PASM"), imcc_compile_pasm_ex);
+    Parrot_compreg(interp, const_string(interp, "PIR"), imcc_compile_pir_ex);
     /* It looks like this isn't used anywhere yet */
     /* TODO: return a Eval PMc, instead of a packfile */
     /* Parrot_compreg(interp, const_string(interp, "FILE"), imcc_compile_file ); */

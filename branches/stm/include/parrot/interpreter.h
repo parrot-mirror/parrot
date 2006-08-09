@@ -219,8 +219,7 @@ typedef struct Parrot_Context {
                                  * have been activated */
     UINTVAL errors;            /* fatals that can be turned off */
     UINTVAL trace_flags;
-    UINTVAL recursion_depth;    /* Sub call resursion depth */
-    int runloop_level;                  /* for reentering run loop */
+    UINTVAL recursion_depth;    /* Sub call recursion depth */
     /*
      * new call scheme and introspective variables
      */
@@ -293,6 +292,8 @@ typedef struct _context_mem {
 #endif
 
 } context_mem;
+
+struct _handler_node_t; /* forward def - exit.h */
 /*
  * The actual interpreter structure
  */
@@ -378,12 +379,15 @@ struct parrot_interp_t {
     STRING **const_cstring_table;             /* CONST_STRING(x) items */
 
     struct QUEUE* task_queue;                 /* per interpreter queue */
-
+    struct _handler_node_t *exit_handler_list;   /* exit.c */ 
     int sleeping;                             /* used during sleep in events */
 
     struct parrot_exception_t *exceptions;    /* internal exception stack */
     struct parrot_exception_t *exc_free_list; /* and free list */
     PMC ** exception_list;                    /* precreated exception objects */
+
+    int current_runloop_level;                /* for reentering run loop */
+    int current_runloop_id;
 
     struct _Thread_data *thread_data;         /* thread specific items */
 

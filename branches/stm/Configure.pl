@@ -70,6 +70,13 @@ Debugging is turned on by default. Use this to disable it.
 
 Link parrot dynamically.
 
+=item C<--m=32>
+
+Create a 32-bit executable on 64-architectures like x86_64. This option
+appends -m32 to compiler and linker programs and does s/lib64/lib/g on link flags.
+
+This option is experimental. See F<config/init/defaults.pm> for more.
+
 =item C<--profile>
 
 Turn on profiled compile (gcc only for now)
@@ -294,6 +301,7 @@ Compile Options:
    --optimize           Optimized compile
    --optimize=flags     Add given optimizer flags
    --parrot_is_shared   Link parrot dynamically
+   --m=32               Build 32bit executable on 64-bit architecture.
    --profile            Turn on profiled compile (gcc only for now)
 
    --cc=(compiler)      Use the given compiler
@@ -382,8 +390,8 @@ my @steps = qw(
     init::headers
     inter::progs
     inter::make
-    inter::lex
-    inter::yacc
+);
+my @steps2 = qw(
     auto::gcc
     auto::msvc
     init::optimize
@@ -440,6 +448,9 @@ my $conf = Parrot::Configure->new;
     $Parrot::Configure::Step::conf = $conf;
 }
 $conf->add_steps(@steps);
+$conf->add_step('inter::lex', require => '2.5.33');
+$conf->add_step('inter::yacc', require => '2.1');
+$conf->add_steps(@steps2);
 $conf->options->set(%args);
 # Run the actual steps
 $conf->runsteps or exit(1);

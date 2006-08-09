@@ -74,6 +74,7 @@ C<Parrot_clone> is equivalent to C<Parrot_thaw(..., Parrot_freeze(...))>. This m
 consistently a deep clone. It, however, has issues:
 
 =over 4
+
 =item *
 
 Shared PMCs should B<not> be copied and should continue to reference the same data structures;
@@ -183,5 +184,12 @@ To share ParrotObject-derived objects, the get_class() method of ParrotObject
 looks up the instance of the class in the current interpreter on a shared object.
 This is necessary because the class object contains a namespace pointer that is
 different in each interpreter.
+
+=head2 Singletons
+
+To support singleton PMCs, their C<namespace> method uses
+C<< interpreter->vtables[type]->_namespace >> so that we don't accidentally
+access the wrong subroutines. Because the mro is still shared, singleton
+PMC types can't safely inherit from classes which may have non-native methods.
 
 =cut

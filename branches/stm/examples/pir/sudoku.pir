@@ -39,6 +39,10 @@ Print debug output and game progress to stdout.
 
 Print additionally invalid state of given number(s).
 
+=item --pairs
+
+Print additionally fields with uniqe pairs of numbers.
+
 =item --builtin=name
 
 Run builtin game. If no name is given a list of builtins is printed.
@@ -188,7 +192,7 @@ done_input:
     self = new "Sudoku"
     setattribute self, "opt", opt
     disp = self."new_display"()
-    push_eh nc_stop
+    ##push_eh nc_stop
 
     self."create"(ar)
     self."display"()
@@ -200,6 +204,7 @@ ok:
     disp."print"("init ok\n")
     $I0 = self."solve"()
     if $I0 == 1 goto nok
+    if $I0 == 0 goto nc_stop
 fin:
     self."display"()
     disp."print"("solved\n")
@@ -278,8 +283,9 @@ err:
     getopts = new "Getopt::Obj"
     push getopts, "version"
     push getopts, "debug"
+    push getopts, "pairs"
     push getopts, "inv=s"
-    push getopts, "builtin=s"
+    push getopts, "builtin:s"	# optional
     push getopts, "nc"
     push getopts, "help"
 
@@ -408,7 +414,19 @@ ok:
     raw_given .= "8....61.9"
     b["san_a0626"] = raw_given
 
-    # wikipedia - the smallest (17 given) known sudoku
+    # sudoku-san 4th aug 2006 - atrocious  - Y-WING 
+    raw_given  = ".....1..."
+    raw_given .= "6..7....5"
+    raw_given .= ".82..49.."
+    raw_given .= ".734...8."
+    raw_given .= "........."
+    raw_given .= ".5...736."
+    raw_given .= "..16..23."
+    raw_given .= "9....5..1"
+    raw_given .= "...8....."
+    b["san_a0804"] = raw_given
+
+    # wikipedia - (one of ) the smallest (17 clues) known sudoku
     raw_given  = "1........"
     raw_given .= "..274...."
     raw_given .= "...5....4"
@@ -612,18 +630,13 @@ lx2:
     i_row[x] = inv
 
     # set col
-    $I0 = p % 9
-    col = cols[$I0]
-    i_col = i_cols[$I0]
-    $I1 = p / 9
-    col[$I1] = e
-    i_col[$I1] = inv
+    col = cols[x]
+    i_col = i_cols[x]
+    col[y] = e
+    i_col[y] = inv
 
     # set square
-    $I0 = x / 3
-    $I1 = y / 3
-    $I1 *= 3
-    $I2 = $I0 + $I1
+    $I2 = square_of(x, y)
     sqr = sqrs[$I2]
     i_sqr = i_sqrs[$I2]
     $I0 = x % 3
@@ -644,7 +657,7 @@ lx2:
 .sub display :method
     .local pmc ar, rows, row, opt, disp
     .local string s, c
-    .local int i, x, y, c1, c2, r
+    .local int i, x, y, c1, c2, r, deb_pairs
     .local string deb_n
     deb_n = ""  # print inv for that
     self."create_inv"()
@@ -654,6 +667,7 @@ lx2:
     unless $I0 goto no_deb
 	deb_n = opt["inv"]
 no_deb:
+    deb_pairs = defined opt["pairs"]
     i = 0
     y = 0
     s = ""
@@ -700,9 +714,12 @@ sp2:
     if x < 9 goto loop_x
     s .= '|'
     disp."print"(r,0, s)
-    unless deb_n goto not_deb
+    unless deb_n goto not_deb_n
     self."deb_inv"(y, deb_n)
-not_deb:
+not_deb_n:
+    unless deb_pairs goto not_deb_pairs
+    self."deb_pairs"(y)
+not_deb_pairs:
     disp."print"("\n")
     inc r
     s = ""
@@ -753,6 +770,44 @@ nxt:
     if i < len goto lp_inv
 .end
 
+# print pairs for given row
+.sub deb_pairs :method
+    .param int y
+
+    .local pmc invs, inv
+    .local int x
+    print "   "
+    invs = getattribute self, "i_rows"
+    inv = invs[y]
+    x = 0
+loop:
+    $I0 = x % 3
+    if $I0 goto nosp
+    print "   "
+nosp:
+    .local int el, bits, i, b
+    el = inv[x]
+    bits = bits0(el)
+    if bits == 2 goto isa_pair
+    print ".."
+    goto nxt_x
+isa_pair:    
+    i = 1
+bit_loop:
+    el >>= 1        # bits start at 1
+    b = el & 1
+    if b goto is_set
+    $I0 = i + 0x30
+    $S0 = chr $I0
+    print $S0
+is_set:
+    inc i
+    if i <= 9 goto bit_loop
+nxt_x:
+    inc x
+    print " "
+    if x < 9 goto loop
+.end
 
 # verify numbers
 # returns:
@@ -1042,6 +1097,12 @@ loop:
 done:
     #self."sanity_check"()
     $I0 = self."verify"()
+    # if yet unfished, try advanced methods before back_tracking starts
+    unless $I0 == 1 goto no_adv
+    r = self."adv_scan"()
+    # if changes, start over with "normal" stuff
+    if r == 1 goto loop
+no_adv:
     .return ($I0)
 err:
     print "mismatch\n"
@@ -1092,6 +1153,313 @@ not_uniq:
     .return (any)
 err:
     .return (-1)
+.end
+
+# scan for advanced methods
+# returns
+# -1 ... err
+# 0  ... no change
+# 1  ... changes
+.sub adv_scan :method
+    $I0 = self."y-wing"()
+    # TODO try more stuff
+    .return ($I0)
+.end
+
+.sub "y-wing" :method
+    # scan for pairs all over
+    .local int x, y, bits, el, res
+    .local pmc i_rows, i_row
+    res = 0
+    y = 0
+    i_rows = getattribute self, "i_rows"
+loop_y:
+    x = 0
+    i_row = i_rows[y]
+loop_x:
+    el = i_row[x]
+    bits = bits0(el)
+    if bits != 2 goto nxt_x
+    $I0 = self."check_y-wing"(x, y, el)
+    res |= $I0
+nxt_x:
+    inc x
+    if x < 9 goto loop_x
+    inc y
+    if y < 9 goto loop_y
+    .return (res)
+.end
+
+.sub pair_vals
+    .param int el
+    .local int i, b, A, B
+    A = 0
+    i = 1	    # A, B are 1-based
+loop:
+    el >>= 1        # bits start at 1
+    b = el & 1
+    if b goto next
+    if A goto A_is_set
+    A = i
+    goto next
+A_is_set:
+    B = i
+    .return (A, B)
+next:
+    inc i
+    if i <= 9 goto loop
+    printerr "failed to fined pair"
+    exit 1
+.end
+
+# get the square # of coors (x,y) TODO reuse
+.sub square_of
+    .param int x
+    .param int y
+    x /= 3
+    y /= 3
+    y *= 3
+    $I0 = x + y
+    .return ($I0)
+.end
+
+# given the square # and idx inside, return coors (x,y) TODO reuse
+.sub square_to_xy
+    .param int sq
+    .param int idx
+    .local int x, y
+    x = sq % 3
+    x *= 3
+    $I0 = idx % 3
+    x += $I0
+    y = sq / 3
+    y *= 3
+    $I1 = idx / 3
+    y += $I1
+    .return (x, y)
+.end
+
+# look for another pair AC (A,C != B)
+# return C and the position in i_rcs
+.sub "y-wing-pair" :method
+    .param pmc i_rcs
+    .param int A
+    .param int not_B
+    .local int x, el, bits, p1, p2
+    x = 0
+loop:
+    el = i_rcs[x]
+    bits = bits0(el)
+    if bits != 2 goto next
+    (p1, p2) = pair_vals(el)
+    if p1 == not_B goto next
+    if p2 == not_B goto next
+    if p1 != A goto check_p2
+	.return (p2, x)
+check_p2:
+    if p2 != A goto next
+	.return (p1, x)
+next:
+    inc x
+    if x < 9 goto loop
+    .return (0,0)
+.end
+    
+# look for another pair BC 
+# return 0/1 and the position in i_rcs
+.sub "y-wing-pair_BC" :method
+    .param pmc i_rcs
+    .param int B
+    .param int C
+    .local int x, el, bits, p1, p2
+    x = 0
+loop:
+    el = i_rcs[x]
+    bits = bits0(el)
+    if bits != 2 goto next
+    (p1, p2) = pair_vals(el)
+    if p1 == B goto ok1
+    if p2 == B goto ok2
+    goto next
+ok1:
+    if p2 != C goto next
+	.return (1, x)
+ok2:
+    if p1 != C goto next
+	.return (1, x)
+next:
+    inc x
+    if x < 9 goto loop
+    .return (0,0)
+.end
+
+# invalidate C from the given [start,end] range#
+# return 1 if something changed
+.sub "y-wing_inv" :method
+    .param pmc i_rcs
+    .param int C
+    .param int start
+    .param int end
+
+    .local int changed, b
+    .local pmc el
+    changed = 0
+    b = 1 << C
+loop:
+    el = i_rcs[start]
+    $I0 = el
+    $I1 = $I0 & b
+    if $I1 goto next
+    el |= b
+    changed = 1
+next:
+    inc start
+    if start <= end goto loop
+    .return (changed)
+.end
+
+# find C for A B
+# and invalidate C if found
+.sub "find_C_y-wing_1" :method
+    .param int x
+    .param int y
+    .param int A
+    .param int B
+    # check same row, col, or sqr for a pair with A and not B
+    .local pmc i_rcss, i_rcs
+    i_rcss = getattribute self, "i_sqrs"
+    .local int sq, changed
+    changed = 0
+    sq = square_of(x, y)	# TODO reuse this func
+    .local int C, c
+    i_rcs = i_rcss[sq]
+    (C, c) = self."y-wing-pair"(i_rcs, A, B)
+    unless C goto check_row	# TODO row, col
+	# convert the square coordinate to (x, y)
+	.local int cx, cy, bx, by, has_bc
+	(cx, cy) = square_to_xy(sq, c)	# AC
+	if x == cx goto try_row
+	# check col and row at AB for a BC pair
+	i_rcss = getattribute self, "i_cols"
+	i_rcs  = i_rcss[x]
+	(has_bc, c) = self."y-wing-pair_BC"(i_rcs, B, C)
+	unless has_bc goto try_row
+	bx = x
+	by = c
+	.local int start, end
+	# invalidate col x in sqr(x,y)
+	sq = square_of(x, y)
+	($I0, start) = square_to_xy(sq, 0)
+	end = start + 2
+	changed = self."y-wing_inv"(i_rcs, C, start, end)
+	# invalidate col x at BC
+	i_rcs  = i_rcss[cx]
+	sq = square_of(bx, by)
+	($I0, start) = square_to_xy(sq, 0)
+	end = start + 2
+	$I0 = self."y-wing_inv"(i_rcs, C, start, end)
+	changed |= $I0
+	goto show_debug
+    try_row:
+	if y == cy goto nope
+	i_rcss = getattribute self, "i_rows"
+	i_rcs  = i_rcss[y]
+	(has_bc, c) = self."y-wing-pair_BC"(i_rcs, B, C)
+	unless has_bc goto nope
+	bx = c
+	by = y
+	.local int start, end
+	# TODO invalidate row y too
+	i_rcs  = i_rcss[cx]
+	sq = square_of(bx, by)
+	($I0, start) = square_to_xy(sq, 0)
+	end = start + 2
+	changed = self."y-wing_inv"(i_rcs, C, start, end)
+    show_debug:
+	$I0 = self."debug"()
+	unless $I0 goto ex
+	    $S0 = "CHG"
+	    if changed goto chg_ok
+	    $S0 = "noC"
+	chg_ok:
+	    print_item $S0
+	    print_item " Y-WING A "
+	    print_item A
+	    print_item " B "
+	    print_item B
+	    print_item " C "
+	    print_item C
+	    print_item " at x "
+	    print_item x
+	    print_item " y "
+	    print_item y
+	    print_item " cx "
+	    print_item cx
+	    print_item " cy "
+	    print_item cy
+	    print_item " bx "
+	    print_item bx
+	    print_item " by "
+	    print_item by
+	    print_newline
+	    self."display"()
+	    goto ex
+
+check_row:
+    i_rcss = getattribute self, "i_rows"
+    i_rcs = i_rcss[y]
+    # XXX TODO check that A is in a forced pair
+    (C, c) = self."y-wing-pair"(i_rcs, A, B)
+    cx = c
+    cy = y
+    unless C goto check_col
+	i_rcss = getattribute self, "i_cols"
+	i_rcs  = i_rcss[x]
+	# XXX TODO check that B is in a forced pair
+	(has_bc, by) = self."y-wing-pair_BC"(i_rcs, B, C)
+	bx = cx
+	unless has_bc goto check_col
+	i_rcs  = i_rcss[cx]
+	changed = self."y-wing_inv"(i_rcs, C, by, by)
+	if changed goto show_debug
+
+check_col:
+    # TODO
+nope:
+ex:
+    .return (changed)
+.end
+
+# find C for A, or B
+.sub "find_C_y-wing" :method
+    .param int x
+    .param int y
+    .param int A
+    .param int B
+
+    .local int changed
+    changed = self."find_C_y-wing_1"(x, y, A, B)
+    unless changed goto not_A
+    .return (changed)
+not_A:
+    .return self."find_C_y-wing_1"(x, y, B, A)
+.end
+
+# check, if we find another pair with 1 digit in common with el
+.sub "check_y-wing" :method
+    .param int x
+    .param int y
+    .param int el
+    # ok - we have a pair at col/row (x,y) with inv_bits el
+    # assume, we are at the corner of the Y
+    # let one number be A, the other B
+    .local int A, B, C
+    #trace 1
+    (A, B) = pair_vals(el)
+    # now find another pair in
+    # - another *this* row, col, or square
+    # - AC or BC giving another unique element C
+    .return self."find_C_y-wing"(x, y, A, B)
 .end
 
 # the quare y has a uniq digit at x - set it
@@ -1907,6 +2275,63 @@ that in square 2 we have a unique '7' at row 0, col 7:
 Now the tests in "create_inv_n" invalidate illegal positions
 due to multiple-blocking and other tests are likely to proceed.  
 
+=head2 Y-WING
+
+(This is partially still TODO)
+
+Given this suduku:
+
+# "unsolvable" 3 - Y-Wing
+  . . . 8 . . . . 6
+  . . 1 6 2 . 4 3 . 
+  4 . . . 7 1 . . 2 
+  . . 7 2 . . . 8 . 
+  . . . . 1 . . . . 
+  . 1 . . . 6 2 . . 
+  1 . . 7 3 . . . 4 
+  . 2 6 . 4 8 1 . . 
+  3 . . . . 5 . . .
+
+It started backtracking at:
+
+  +---------+---------+---------+
+  | .  3  . | 8  5  4 | .  1  6 |      .. .. 29    .. .. ..    79 .. ..
+  | .  .  1 | 6  2  9 | 4  3  . |      .. .. ..    .. .. ..    .. .. ..
+  | 4  6  . | 3  7  1 | .  .  2 |      .. .. ..    .. .. ..    .. 59 ..
+  +---------+---------+---------+
+  | .  4  7 | 2  9  3 | .  8  1 |      56 .. ..    .. .. ..    56 .. ..
+  | .  .  . | .  1  7 | 3  .  . |      .. .. ..    45 .. ..    .. .. 59
+  | .  1  3 | .  8  6 | 2  .  . |      59 .. ..    45 .. ..    .. .. ..
+  +---------+---------+---------+
+  | 1  .  . | 7  3  2 | .  .  4 |      .. .. ..    .. .. ..    .. .. ..
+  | .  2  6 | 9  4  8 | 1  .  3 |      57 .. ..    .. .. ..    .. 57 ..
+  | 3  .  4 | 1  6  5 | .  2  . |      .. .. ..    .. .. ..    .. .. ..
+  +---------+---------+---------+
+
+The numbers on the right side are showing squares with unique pairs.
+Having a look at the columns 7 and 8, we see these pairs (79, 59, and 57)
+
+Let's label these numbers as A, B, and C:
+
+  +---------+---------+---------+
+  | .  3  . | 8  5  4 | AC 1  6 |
+  | .  .  1 | 6  2  9 | 4  3  . |
+  | 4  6  . | 3  7  1 | .  AB 2 |
+  +---------+---------+---------+
+  | .  4  7 | 2  9  3 | .  8  1 |
+  | .  .  . | .  1  7 | 3  .  . |
+  | .  1  3 | .  8  6 | 2  .  . |
+  +---------+---------+---------+
+  | 1  .  . | 7  3  2 | X  .  4 |
+  | .  2  6 | 9  4  8 | 1  BC 3 |
+  | 3  .  4 | 1  6  5 | X  2  . |
+  +---------+---------+---------+
+
+When we now try to fill row 2, column 7 with A or B, we see that at
+positions X, a C can't be valid. Either it's blocked via the column
+or directly via the last square. Thus we can eliminate digit 7 from
+positions X.
+
 =head2 TODO
 
   # daily sudoku wed 28-dec-2005, very hard
@@ -1944,6 +2369,10 @@ Here is starts backtracking. A possible improvement would be:
 
   - detect such digit configuration
   - only backtrack try this digit ('6') above
+
+=head2 TODO deadly square
+
+See also std331.sud
 
 =cut
 
