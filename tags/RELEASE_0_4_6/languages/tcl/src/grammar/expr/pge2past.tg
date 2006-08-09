@@ -1,0 +1,541 @@
+grammar TclExpr::PAST::Grammar is TGE::Grammar;
+
+transform past (ROOT) {
+    $P0 = node['expr']
+    if $P0 goto expression
+    .return tree.get('dispatch', node, 'TclExpr::Grammar')
+
+expression:
+    .return tree.get('expression', node)
+} 
+
+transform expression (TclExpr::Grammar) {
+    node = node['expr']
+    .return tree.get('dispatch', node, 'TclExpr::Grammar')
+}
+
+# Handle generic dispatch (needed at ROOT, and for things with kids.)
+
+transform dispatch (TclExpr::Grammar) {
+    .local pmc child
+
+    # Ask the child node for its past.
+
+    $P0 = node['boolean']
+    if $P0 goto boolean
+    $P0 = node['constant']
+    if $P0 goto constant
+    $P0 = node['braced']
+    if $P0 goto braced
+    $P0 = node['integer']
+    if $P0 goto integer
+    $P0 = node['float']
+    if $P0 goto has_float
+    $P0 = node['scientific']
+    if $P0 goto scientific
+    $P0 = node['number']
+    if $P0 goto number
+    $P0 = node['quoted']
+    if $P0 goto quoted
+    $P0 = node['function']
+    if $P0 goto function
+    $P0 = node['subcommand']
+    if $P0 goto subcommand
+    $P0 = node['variable']
+    if $P0 goto variable
+    $P0 = node['nested']
+    if $P0 goto nested
+    $P0 = node['type']
+    if $P0 goto operator
+  
+  .return(node)
+ 
+operator:
+    .return tree.get('past', node, 'operator')
+
+function:
+    .return tree.get('past', $P0, 'function')
+
+subcommand:
+    .return tree.get('past', $P0, 'subcommand')
+
+quoted:
+    .return tree.get('past', $P0, 'quoted')
+
+braced:
+    .return tree.get('past', $P0, 'braced')
+
+number:
+    .return tree.get('past', $P0, 'number')
+
+boolean:
+    .return tree.get('past', $P0, 'boolean')
+
+constant:
+    .return tree.get('past', $P0, 'constant')
+
+integer:
+    .return tree.get('past', $P0, 'integer')
+
+has_float:
+    .return tree.get('past', $P0, 'float')
+
+scientific:
+    .return tree.get('past', $P0, 'scientific')
+
+variable:
+    .return tree.get('past', $P0, 'variable')
+
+nested:
+    .return tree.get('past', $P0, 'nested')
+}
+
+# Go through all the children of an operator and transform them.
+
+transform past (operator) {
+    # for each child of this operator, dispatch to get the past,
+    # use those as our children.
+    .local pmc children, iter, past
+    .local string name
+
+    name = node['type']
+    if name == 'ternary:? :' goto is_ternary
+    if name == 'infix:&&' goto is_and
+    if name == 'infix:||' goto is_or
+
+    past = new 'PAST::Op'
+
+    past['opfunc'] = name
+    $P0 = node.'get_array'()
+    if null $P0 goto iter_end
+    iter = new .Iterator, $P0
+  iter_loop:
+    unless iter goto iter_end
+    $P0 = shift iter
+    $S0 = $P0
+    if $S0 == '' goto iter_loop # XXX needed?
+    $P1 = tree.'get'('dispatch', $P0, 'TclExpr::Grammar')
+    past.'add_child'($P1)
+    goto iter_loop
+  iter_end:
+    past['children'] = 1
+    .return (past)
+
+  is_ternary:
+    .return tree.get('ternary', node, 'PAST::Op')
+  is_and:
+    .return tree.get('logical_and', node, 'PAST::Op')
+  is_or:
+    .return tree.get('logical_or', node, 'PAST::Op')
+}
+
+transform past (function) {
+    .local string function_name
+    .local pmc args
+    .local int argc
+    args = node['expression']
+    argc = 0
+    unless args goto has_argc
+    argc = elements args
+
+has_argc:
+    .local pmc past
+    past = new 'PAST::MathFunc'
+    $P0  = node['unary_function']
+    if $P0 goto unary
+    $P0  = node['nullary_function']
+    if $P0 goto nullary
+    $P0  = node['binary_function']
+    if $P0 goto binary
+ 
+  # never get here
+
+  nullary:
+    if argc > 0 goto too_many
+    function_name = node['nullary_function']
+    goto arguments
+
+  unary:
+    if argc == 0 goto too_few
+    if argc > 1  goto too_many
+    function_name = node['unary_function']
+    $P0 = args[0]
+    $P1 = tree.'get'('expression', $P0)
+    past.'add_child'($P1)
+    goto arguments
+
+  binary:
+    if argc < 2 goto too_few
+    if argc > 2 goto too_many
+    function_name = node['binary_function']
+
+    $P1 = args[0]
+    $P2 = tree.'get'('expression', $P1)
+    past.'add_child'($P2)
+
+    $P1 = args[1]
+    $P2 = tree.'get'('expression', $P1)
+    past.'add_child'($P2)
+
+  arguments:
+    past['mathfunc'] = function_name
+    past['children'] = 1
+    .return (past)
+
+too_few:
+    .throw('too few arguments for math function')
+
+too_many:
+    .throw('too many arguments for math function')
+}
+
+transform past (boolean) {
+    .local pmc past
+    past = new 'PAST::Val'
+    past.set_node(node)
+    
+    $S0 = node
+    past['value'] = $S0
+    past['class'] = "TclConst"
+    .return(past)
+}
+
+transform past (constant) {
+    .local pmc past
+    past = new 'PAST::Val'
+    past.set_node(node)
+    
+    $S0 = node
+    past['value'] = $S0
+    past['class'] = "TclConst"
+    .return(past)
+}
+
+transform past (braced) {
+    .local pmc past
+    past = new 'PAST::Val'
+    past.set_node(node)
+    
+    $S0 = node[0]
+    past['value'] = $S0
+    past['class'] = "TclConst"
+    .return(past)
+}
+
+transform past (number) {
+    $P0 = node['integer']
+    if $P0 goto integer
+    $P0 = node['float']
+    if $P0 goto have_float
+    $P0 = node['scientific']
+    if $P0 goto scientific
+    .throw("invalid number type")
+
+integer:
+    .return tree.get('past', $P0, 'integer')
+
+have_float:
+    .return tree.get('past', $P0, 'float')
+
+scientific:
+    .return tree.get('past', $P0, 'scientific')
+}
+
+
+transform past (nested) :language('PIR') {
+    .local pmc past
+    $P0  = node['expression'; 'expr']
+    past = tree.'get'('dispatch', $P0, 'TclExpr::Grammar')
+    .return(past)
+}
+
+
+transform past (scientific) {
+    .local pmc past
+    past = new 'PAST::Val'
+    past.set_node(node)
+    
+    $S0 = node[0]
+    $N0 = $S0
+    $S0 = node[1]
+    $N1 = $S0
+    $N1 = 10**$N1
+    $N0 *= $N1
+    
+    $S0 = $N0
+    past['value'] = $S0
+    past['class'] = "TclFloat"
+
+    .return(past)
+}
+
+transform past (integer) {
+    .local pmc past
+    past = new 'PAST::Val'
+    past.set_node(node)
+
+    $P0 = node['octal']
+    if $P0 goto octal
+    $P0 = node['hex']
+    if $P0 goto hex
+
+  decimal:
+    $S0 = node
+    past['value'] = $S0
+    past['class'] = "TclInt"
+    .return (past)
+ 
+  octal: 
+     $S0 = node
+
+    .local int octal_value
+    .local int octal_digit
+    .local int octal_counter
+    .local int octal_length
+    octal_length = length $S0
+    octal_counter = 1 #skip the first 0
+    dec octal_counter
+    octal_value = 0
+    # at this point, string should consist only of digits 0-7
+  octal_loop:
+    if octal_counter == octal_length goto octal_done # skip first 0
+    octal_digit = ord $S0, octal_counter
+    octal_digit -= 48 # ascii value of 0
+    octal_value *= 8
+    octal_value += octal_digit
+    inc octal_counter
+    goto octal_loop
+  
+  octal_done:
+    past['value'] = octal_value
+    past['class'] = "TclInt"
+    .return (past)
+
+  hex:
+    $S0 = node
+    .local int len, digit, hex_value
+    len = length $S0
+    $I0 = 2 # skip 0x
+    hex_value = 0
+  hex_loop:
+    if $I0 == len goto hex_done
+    digit = ord $S0, $I0
+    # higher than Z - must be lowercase letter
+    if digit > 90 goto hex_lower
+    # higher than 9 - must be uppercase letter
+    if digit > 57 goto hex_upper
+    digit -= 48 # value of 0
+    goto hex_next
+  hex_lower:
+    digit -= 97 # value of a
+    digit += 10
+    goto hex_next
+  hex_upper:
+    digit -= 65 # value of A
+    digit += 10
+    # goto hex_next
+  hex_next:
+    hex_value *= 16
+    hex_value += digit
+    inc $I0
+    goto hex_loop
+
+  hex_done:
+    past['value'] = hex_value
+    past['class'] = "TclInt"
+    .return(past)
+
+}
+
+transform past (float) {
+    .local pmc past
+    past = new 'PAST::Val'
+    past.set_node(node)
+
+    $S0 = node
+    past['value'] = $S0
+    past['class'] = "TclFloat"
+    .return (past)
+}
+
+transform past (quoted) {
+    .local pmc past
+    $P0 = node['quoted_literal']
+    $P0 = $P0.'get_array'()
+    if null $P0 goto empty_string
+    
+    .local pmc iter
+    iter = new .Iterator, $P0
+    null past
+  iter_loop:
+    unless iter goto iter_end
+    .local pmc cnode, cpast
+    cnode = shift iter
+    $S0 = cnode['type']
+    if $S0 == 'str' goto cpast_str
+    cpast = tree.'get'('past', cnode, $S0)
+    goto cpast_add
+  cpast_str:
+    $S0 = cnode
+    cpast = new 'PAST::Val'
+    cpast['node'] = node
+    cpast['class'] = 'TclConst'
+    cpast['value'] = $S0
+  cpast_add:
+    unless null past goto cpast_concat
+    past = cpast
+    goto iter_loop
+  cpast_concat:
+    $P0 = new 'PAST::Op'
+    $P0.add_child(past)
+    $P0.add_child(cpast)
+    $P0['node'] = node
+    $P0['opfunc'] = 'infix:concat'
+    past = $P0
+    goto iter_loop
+  iter_end:
+    .return(past)
+
+empty_string:
+    past = new 'PAST::Val'
+    past['node']  = node
+    past['class'] = 'TclConst'
+    past['value'] = ''
+
+    .return(past)
+}
+
+transform past (subcommand) {
+    .local pmc past
+    past = new 'PAST::Command'
+    past.set_node(node)
+    
+    .local pmc words, iter
+    words = node['command'; 0; 'word']
+    iter  = new .Iterator, words
+loop:
+    unless iter goto end
+    $P0 = shift iter
+    $P1 = tree.'get'('dispatch', $P0, 'TclExpr::Grammar')
+    past.'add_child'($P1)
+    goto loop
+end:
+    .return (past)
+}
+
+transform past (variable) {
+    .local pmc past
+    past = new 'PAST::Var'
+    past.set_node(node)
+    
+    $S0 = node[0]
+    past['name'] = $S0
+    .return(past)
+}
+
+transform ternary (PAST::Op) {
+    .local pmc past
+
+    past = new 'PAST::Cond'
+    past.set_node(node)
+
+    $P1 = node[0]
+    $P2 = tree.'get'('dispatch', $P1, 'TclExpr::Grammar')
+    past.'add_child'($P2)
+    $P1 = node[1]
+    $P2 = tree.'get'('dispatch', $P1, 'TclExpr::Grammar')
+    past.'add_child'($P2)
+    $P1 = node[2]
+    $P2 = tree.'get'('dispatch', $P1, 'TclExpr::Grammar')
+    past.'add_child'($P2)
+ 
+    past['conditional'] = 1
+ 
+    .return(past)
+}
+
+transform logical_and (PAST::Op) {
+    .local pmc past, true, false, A, B
+    .local pmc inner
+
+    # Transform A && B into:
+    # A ? ( B ? 1 : 0) : 0
+
+    true = new 'PAST::Val'
+    true['value'] = 1
+    true['class'] = "TclInt"
+
+    false = new 'PAST::Val'
+    false['value'] = 0
+    false['class'] = "TclInt"
+
+    # Get our A & B trees..
+    $P1 = node[0]
+    A = tree.'get'('dispatch', $P1, 'TclExpr::Grammar')
+    $P1 = node[1]
+    B = tree.'get'('dispatch', $P1, 'TclExpr::Grammar')
+
+    # Generate (B ? 1 : 0)
+    inner = new 'PAST::Cond'
+    inner.'add_child'(B)
+
+    inner.'add_child'(true)
+    inner.'add_child'(false)
+    inner['conditional'] = 1
+
+    # Generate (A ? (...) : 0)
+    past = new 'PAST::Cond'
+    past.set_node(node)
+
+    past.'add_child' (A)
+
+    past.'add_child' (inner)
+    past.'add_child' (false)
+ 
+    past['conditional'] = 1
+ 
+    .return(past)
+}
+
+transform logical_or (PAST::Op) {
+    .local pmc past, true, false, A, B
+    .local pmc inner
+
+    # Transform A || B into:
+    # A ? 1 : ( B ? 1 : 0)
+
+    true = new 'PAST::Val'
+    true['value'] = 1
+    true['class'] = "TclInt"
+
+    false = new 'PAST::Val'
+    false['value'] = 0
+    false['class'] = "TclInt"
+
+    # Get our A & B trees..
+    $P1 = node[0]
+    A = tree.'get'('dispatch', $P1, 'TclExpr::Grammar')
+    $P1 = node[1]
+    B = tree.'get'('dispatch', $P1, 'TclExpr::Grammar')
+
+    # Generate (B ? 1 : 0)
+    inner = new 'PAST::Cond'
+    inner.'add_child'(B)
+
+    inner.'add_child'(true)
+    inner.'add_child'(false)
+    inner['conditional'] = 1
+
+    # Generate (A ? 1 : (...))
+    past = new 'PAST::Cond'
+    past.set_node(node)
+
+    past.'add_child' (A)
+
+    past.'add_child' (true)
+    past.'add_child' (inner)
+ 
+    past['conditional'] = 1
+ 
+    .return(past)
+}

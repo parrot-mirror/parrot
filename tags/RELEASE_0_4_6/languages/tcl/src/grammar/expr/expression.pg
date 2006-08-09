@@ -1,0 +1,138 @@
+grammar TclExpr::Grammar;
+
+# The expression token is the top level expression - it is defined in 
+# XXX-NAME-OF-SUB in XXX-NAME-OF-FILE, which in turn invokes the
+# opcode parser from src/tcl_expr_optok.pg.
+
+# XXX Some of the items here actually belong in the language grammar. 
+# (like command, quoted, etc.) Move them there when we use PGE for everything.
+
+token term {
+      <subcommand>
+    | <quoted>
+    | <braced>
+    | <number>
+    | <variable>
+    | <function>
+    | <nested>
+    | <boolean>
+    | <[a..zA..Z]> <syntax_error: variable references require preceding $>
+}
+
+## used by term
+
+rule boolean { ( true | false ) <?wb> }
+
+rule nested { \( <expression> \) }
+
+# XXX EXTREMELY naive
+rule subcommand  { \[ [<command> ;?]+ \] }
+
+token command {
+      <comment>
+    | <word> [<?ws>? <word>]*
+}
+
+token comment {
+  \# \N* \n?
+}
+
+token word {
+    <subcommand>
+  | <quoted>
+  | <braced>
+  | <variable>
+  | <constant>
+}
+
+token constant {
+    (\w+)
+}
+
+token quoted { " <quoted_literal> " }
+
+# this is defined as a pir sub in src/grammar/expr/parse.pir
+# token quoted_literal { ... }
+
+token braced   { \{ ([ \\. | <braced> | <-[}]> ]*) \} }
+
+# XXX naive
+token variable { \$ (<[a..zA..Z]>+) }
+
+token number { <scientific> | <float> | <integer> }
+
+token float  { (<[+\-]>)? [ <[0..9]>+\.<[0..9]>* | \.<[0..9]>+ ] }
+
+token scientific { (<float> | <integer>) e (<[+\-]>? <[0..9]>+) }
+
+token decimal { [<[1..9]><[0..9]>*] }
+
+# XXX squawk about invalid looking octal.
+
+token octal   { 0 [ <[0..7]> | <[89]><[0..9]>* <invalid_octal> ]* }
+token hex     { 0<[xX]> ( <[0..9A..Fa..f]>) + }
+token integer { (<[+\-]>)? [ <decimal> | <hex> | <octal> ] }
+
+token nullary_function { rand }
+
+token unary_function { 
+ abs    | acos   | asin      | atan   | ceil   | cosh?  | double | exp    |
+ floor  | int    | log[10]?  | round  | sinh?  | sqrt   | srand  | tanh?  |
+ wide
+}
+
+token binary_function { atan2 | fmod | hypot | pow }
+
+token function {
+  [ <binary_function> | <unary_function> | <nullary_function> 
+  | ( <[a..zA..Z]>\w* )  \(  <unknown_math_function>  ]
+        \( [<expression> [, <expression>]*]? \)
+}
+
+rule 'expression' is optable {...}
+
+proto 'term:' is precedence('16=')
+    is parsed(&term) {...}
+ 
+proto 'prefix:-' is precedence('15=') {...}
+proto 'prefix:+' is precedence('15=') {...}
+proto 'prefix:~' is precedence('15=') {...}
+proto 'prefix:!' is precedence('15=') {...}
+
+proto 'infix:**' is precedence('14=') {...}
+
+proto 'infix:*'  is precedence('13=') {...}
+proto 'infix:/'  is precedence('13=') {...}
+proto 'infix:%'  is precedence('13=') {...}
+
+proto 'infix:+'  is precedence('12=') {...}
+proto 'infix:-'  is precedence('12=') {...}
+
+proto 'infix:<<' is precedence('11=') {...}
+proto 'infix:>>' is precedence('11=') {...}
+
+proto 'infix:<'  is precedence('10=') {...}
+proto 'infix:>'  is precedence('10=') {...}
+proto 'infix:<=' is precedence('10=') {...}
+proto 'infix:>=' is precedence('10=') {...}
+
+proto 'infix:==' is precedence('9=') {...}
+proto 'infix:!=' is precedence('9=') {...}
+
+proto 'infix:eq' is precedence('8=') {...}
+proto 'infix:ne' is precedence('8=') {...}
+
+proto 'infix:in' is precedence('7=') {...}
+proto 'infix:ni' is precedence('7=') {...}
+
+proto 'infix:&'  is precedence('6=') {...}
+
+proto 'infix:^'  is precedence('5=') {...}
+
+proto 'infix:|'  is precedence('4=') {...}
+
+proto 'infix:&&' is precedence('3=') {...}
+
+proto 'infix:||' is precedence('2=') {...}
+
+proto 'ternary:? :' is precedence('1=') {...}
