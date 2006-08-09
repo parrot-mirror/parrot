@@ -22,16 +22,16 @@ Create a PIR sub on the fly for this user defined proc.
   body      = argv[2]
 
   .local pmc compiler, pir_compiler, __list, __namespace
-  .get_from_HLL(compiler,     '_tcl', 'compile')
-  .get_from_HLL(pir_compiler, '_tcl', 'pir_compiler')
-  .get_from_HLL(__list,       '_tcl', '__list')
-  .get_from_HLL(__namespace,  '_tcl', '__namespace')
+  compiler     = get_root_global ['_tcl'], 'compile'
+  pir_compiler = get_root_global ['_tcl'], 'pir_compiler'
+  __list       = get_root_global ['_tcl'], '__list'
+  __namespace  = get_root_global ['_tcl'], '__namespace'
  
   .local pmc code, args_code, defaults
   .local string namespace
-  code      = new 'TclCodeString'
-  args_code = new 'TclCodeString'
-  defaults  = new 'TclCodeString'
+  code      = new 'PGE::CodeString'
+  args_code = new 'PGE::CodeString'
+  defaults  = new 'PGE::CodeString'
   namespace = ""
   if full_name == "" goto create
   
@@ -41,8 +41,7 @@ Create a PIR sub on the fly for this user defined proc.
   
   $I0 = elements ns
   if $I0 == 0 goto root
-  $P0 = get_hll_namespace
-  $P0 = $P0.get_namespace(ns)
+  $P0 = get_hll_namespace ns
   if null $P0 goto unknown_namespace
   
   namespace = join "'; '", ns
@@ -54,18 +53,17 @@ root:
   # check to see if this is inlinable
   # if it is, we need to update the epoch
   $S0 = name
-  .get_from_HLL($P1, '_tcl'; 'builtins', $S0)
-  if null $P1 goto create
+  push_eh create
+    $P1 = get_root_global ['_tcl'; 'builtins'], $S0
+  clear_eh
   
   .local pmc epoch
-  .get_from_HLL(epoch, '_tcl', 'epoch')
+  epoch = get_root_global ['_tcl'], 'epoch'
   inc epoch
 
   # now we need to delete the helper sub
   # so we don't try to inline anything else
-  .include 'interpinfo.pasm'
-  $P1 = interpinfo .INTERPINFO_NAMESPACE_ROOT
-  $P1 = $P1['_tcl'; 'builtins']
+  $P1 = get_root_namespace ['_tcl'; 'builtins']
   delete $P1[$S0]
 
 create:
@@ -79,14 +77,13 @@ create:
 .sub '&%1' :lex
   .param pmc args :slurpy
   .include 'languages/tcl/src/returncodes.pir'
-  .local pmc epoch, p6rule, colons, split
-  .get_from_HLL(epoch,'_tcl','epoch')
-  p6rule = compreg "PGE::P6Regex"
-  colons = p6rule('\:\:+')
-  .get_from_HLL(split, 'parrot'; 'PGE::Util', 'split')
+  .local pmc epoch, colons, split
+  epoch  = get_root_global ['_tcl'], 'epoch'
+  colons = get_root_global ['_tcl'], 'colons'
+  split  = get_root_global ['parrot'; 'PGE::Util'], 'split'
 
   .local pmc call_level
-  .get_from_HLL(call_level,'_tcl','call_level')
+  call_level = get_root_global ['_tcl'], 'call_level'
   inc call_level
 END_PIR
 
@@ -121,7 +118,7 @@ args_loop:
   if $I0 == 2 goto default_arg
   
   min = i + 1
-  args_code.emit("  $P1 = shift args", i)
+  args_code.emit("  $P1 = shift args")
   args_code.emit("  store_lex '$%0', $P1", $S0)
   
   args_usage .= $S0
@@ -129,15 +126,19 @@ args_loop:
   goto args_next
 
 default_arg:
-  args_code.emit("  unless args goto default_%0", i)
-  args_code.emit("  $P1 = shift args", i)
-  args_code.emit("  store_lex '$%0', $P1", $S0)
-  
-  defaults.emit("default_%0:", i)
-  defaults.emit("  $P1 = new TclString")
-  $S1 = arg[1]
-  defaults.emit("  $P1 = '%0'", $S1)
-  defaults.emit("  store_lex '$%0', $P1", $S0)
+    args_code.emit(<<'END_PIR', i, $S0, $S1)
+  unless args goto default_%0
+  $P1 = shift args
+  store_lex '$%1', $P1
+END_PIR
+
+    $S1 = arg[1]
+    defaults.emit(<<'END_PIR', i, $S0, $S1)
+default_%0:
+  $P1 = new TclString
+  $P1 = '%2'
+  store_lex '$%1', $P1
+END_PIR
 
   args_usage .= "?"
   args_usage .= $S0
@@ -158,11 +159,13 @@ args_loop_done:
 store_info:
   # Save the args for the proc for [info args]
   # XXX When dealing with defaults, this will have to be updated.
-  .get_from_HLL($P1, '_tcl', 'proc_args')
+  $P1 = get_root_global ['_tcl'], 'proc_args'
   $P1[full_name] = args_info
 
-  code.emit("  .local int argc")
-  code.emit("  argc = elements args")
+    code .= <<'END_PIR'
+  .local int argc
+  argc = elements args
+END_PIR
 
   code.emit("  if argc < %0 goto BAD_ARGS", min)
   if is_slurpy goto emit_args
@@ -206,7 +209,7 @@ END_PIR
   (body_reg,parsed_body) = compiler(0,body)
 
   # Save the code for the proc for [info body]
-  .get_from_HLL($P1, '_tcl', 'proc_body')
+  $P1 = get_root_global ['_tcl'], 'proc_body'
   $P1[full_name] = body
 
   code .= parsed_body

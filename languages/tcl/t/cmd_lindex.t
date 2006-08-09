@@ -1,33 +1,20 @@
-#!/usr/bin/perl
+#!../../parrot tcl.pbc
 
-use strict;
-use lib qw(tcl/lib ./lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 4;
-use Test::More;
+source lib/test_more.tcl
+plan 9
 
-language_output_is("tcl",<<'TCL',<<OUT,"lindex with list");
- set a {a b c}
- puts [lindex $a 1]
-TCL
-b
-OUT
+is [lindex {}] {} {no list, no indices}
+is [lindex {a b c}] {a b c} {list, no indices}
+is [lindex [list a b c] 1] b {lindex with list}
+is [lindex "a b c" 1] b {lindex with string}
+is [lindex {{a b} {b c}} 1] {b c} {multi-level, single index}
+is [lindex "a {a b} c" {1 1}] b {multi-level, single 2-d index}
+is [lindex "a {a b} c" 1 1] b {multi-level, multi index}
 
-language_output_is("tcl",<<'TCL',<<OUT,"lindex with string");
- set a "a b c"
- puts [lindex $a 1]
-TCL
-b
-OUT
+eval_is {lindex} \
+  {wrong # args: should be "lindex list ?index...?"} \
+  {lindex too few args}
 
-language_output_is("tcl",<<'TCL',<<OUT,"lindex with multiple indices");
- set a "a {a b} c"
- puts [lindex $a {1 1}]
-TCL
-b
-OUT
-
-language_output_is("tcl",<<'TCL',<<'OUT',"bogus index")
- lindex a bogus
-TCL
-bad index "bogus": must be integer?[+-]integer? or end?[+-]integer?
-OUT
+eval_is {lindex a bogus} \
+  {bad index "bogus": must be integer?[+-]integer? or end?[+-]integer?} \
+  {non numeric index}

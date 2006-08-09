@@ -1,36 +1,9 @@
 grammar TclExpr::PIR::Grammar is TGE::Grammar;
 
 transform result (ROOT)  {
-    .local pmc pir
-    .local pmc return_register
-
-    pir = new 'PGE::CodeString'
-    pir.emit(".namespace [ 'Tcl' ]")
-    pir.emit(".sub '_anon' :anon")
-   
-    $P0 = node['children']
-    if $P0 goto has_children
-    $P0 = node['conditional']
-    if $P0 goto is_conditional
-
     $S0 = typeof node
     $P0 = tree.get('pir', node, $S0)
-    goto end
-
-  has_children:
-    $P0 = tree.get('pir', node, 'PAST::Op')
-    goto end
-
-  is_conditional:
-    $P0 = tree.get('pir', node, 'PAST::Cond')
-    goto end
-
-  end:
-    return_register = node['ret']
-    pir .= $P0
-    pir.emit('  .return(%0)', return_register)
-    pir .= ".end\n"
-    .return(pir)
+    .return($P0)
 }
 
 transform pir (PAST::Val) {
@@ -76,7 +49,7 @@ transform pir (PAST::Var) {
     $S0 = node['name']
     pir.emit(<<'END_PIR', ret, $S0)
   .local pmc __read
-  .get_from_HLL(__read, '_tcl', '__read')
+  __read = get_root_global ['_tcl'], '__read'
   %0 = __read('%1')
 END_PIR
     
@@ -87,7 +60,6 @@ transform pir (PAST::Op) {
     .local pmc args,iter,pir
     .local pmc return_register
  
-
     pir = new 'PGE::CodeString'
     args = new .ResizablePMCArray
     iter = node.'child_iter'()
@@ -108,16 +80,40 @@ transform pir (PAST::Op) {
     $S0 = node['opfunc']
     pir .= $S0
     pir .= "'("
-    iter = new .Iterator, args
-  arg_loop:
-    unless iter goto arg_done 
-    $P0 = shift iter
-    $S0 = $P0
+    $S0 = join ", ", args
     pir .= $S0
-    unless iter goto arg_done 
-    pir .= ","
-    goto arg_loop
-  arg_done:
+    pir .= ")\n" 
+    node['ret'] = retval
+    .return (pir)
+}
+
+transform pir (PAST::MathFunc) {
+    .local pmc args,iter,pir
+    .local pmc return_register
+ 
+    pir  = new 'PGE::CodeString'
+    args = new .ResizablePMCArray
+    iter = node.'child_iter'()
+  iter_loop: 
+    unless iter goto iter_done
+    $P1 = shift iter
+    $P0 = tree.get('pir', $P1)
+    return_register = $P1['ret']
+    push args, return_register
+    pir .= $P0
+    goto iter_loop
+  iter_done:
+    # get a result PMC
+    .local pmc retval
+    retval = pir.unique('$P')
+    $S0    = node['mathfunc']
+    pir.emit("%0 = get_hll_global ['tcl'; 'mathfunc'], '&%1'", retval, $S0)
+    pir .= retval
+    pir .= " = "
+    pir .= retval
+    pir .= "("
+    $S0 = join ", ", args
+    pir .= $S0
     pir .= ")\n" 
     node['ret'] = retval
     .return (pir)

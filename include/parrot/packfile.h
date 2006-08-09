@@ -224,7 +224,6 @@ struct PackFile {
 
     struct PackFile_ByteCode  * cur_cs;   /* used during PF loading */
 
-    INTVAL                       eval_nr;   /* nr. of eval cs */
     INTVAL                       need_wordsize;
     INTVAL                       need_endianize;
     opcode_t                     (*fetch_op)(unsigned char *);
@@ -238,6 +237,7 @@ struct PackFile {
 */
 
 PARROT_API struct PackFile *PackFile_new(Interp *, INTVAL is_mapped);
+PARROT_API struct PackFile *PackFile_new_dummy(Interp *, const char* name);
 
 PARROT_API void PackFile_destroy(Interp *, struct PackFile * self);
 

@@ -17,34 +17,45 @@ compiler, see:
 
 =cut
 .HLL 'Ruby', 'ruby_group'
-.include "errors.pasm"
-.include "library/dumper.pir"
+.include 'errors.pasm'
+.include 'library/dumper.pir'
 
 .sub _main :main
     .param pmc args
     
     errorson .PARROT_ERRORS_PARAM_COUNT_FLAG
     
-    load_bytecode "languages/cardinal/src/CardinalGrammar.pbc"
+    load_bytecode 'PGE.pbc'
     load_bytecode 'dumper.pbc'
     load_bytecode 'PGE/Dumper.pbc'
     load_bytecode 'PGE/Text.pbc'
     load_bytecode 'Getopt/Obj.pbc'
 
-    .local pmc _dumper
-    _dumper = get_root_global [ 'parrot' ], '_dumper'
+    load_bytecode 'languages/cardinal/src/PAST.pir'
+    load_bytecode 'languages/cardinal/src/POST.pir'
+    #load_bytecode 'languages/cardinal/src/CardinalGrammar.pir'
+    load_bytecode 'languages/cardinal/src/CardinalGrammar.pbc'
+    load_bytecode 'languages/cardinal/src/PGE2AST.pir'
+    load_bytecode 'languages/cardinal/src/AST2OST.pir'
+    load_bytecode 'languages/cardinal/src/OST2PIR.pir'
+    load_bytecode 'languages/cardinal/src/builtins_gen.pir'
 
-    .local pmc getopts, opts
+    .local pmc _dumper
+    .local pmc getopts
+    .local pmc opts
     .local string arg0
+    _dumper = get_root_global [ 'parrot' ], '_dumper'
     arg0 = shift args
     getopts = new 'Getopt::Obj'
     getopts.'notOptStop'(1)
     push getopts, 'target=s'
     push getopts, 'dump-optable'
+    push getopts, 'dump-source|s'
     push getopts, 'dump-pge-parse|p'
     push getopts, 'dump-tge-AST|a'
     push getopts, 'dump-tge-OST|o'
     push getopts, 'dump-tge-PIR|i'
+    push getopts, 'execute|e'
     push getopts, 'dump-all|x'
     push getopts, 'dump|d'
     push getopts, 'help|h'
@@ -57,12 +68,13 @@ compiler, see:
     if $S0 goto usage
 
     .local int stopafter
-    stopafter = 0
     .local string dump
-    dump = opts['dump']
     .local string target
-    target = opts['target']
     .local int istrace
+
+    stopafter = 0
+    dump = opts['dump']
+    target = opts['target']
     $S0 = opts['trace']
     istrace = isne $S0, ''
 
@@ -94,6 +106,19 @@ compiler, see:
     stopafter = 4
   a4:
 
+    .local int dump_src
+    .local int dump_src_early
+    .local int execute_debug
+    $S0 = opts['dump-source']
+    dump_src = isne $S0, ''
+    dump_src_early = dump_src
+
+    $S0 = opts['execute']
+    execute_debug = isne $S0, ''
+    unless execute_debug goto a5
+    stopafter = 0
+  a5:
+
     .local int istrace
     $S0 = opts['dump-all']
     if $S0 goto dump_all
@@ -104,6 +129,8 @@ compiler, see:
     dump_ast = 1
     dump_ost = 1
     dump_pir = 1
+    dump_src_early = 1
+    dump_src = 1
     stopafter = 0
   after_dump_all:
     
@@ -154,6 +181,7 @@ compiler, see:
     ret
 
   dump_optable:
+    #$P0 = get_hll_global [ 'Cardinal'; 'Grammar'], '$optable'
     $P0 = get_root_global [ 'parrot'; 'Cardinal::Grammar'], '$optable'
     _dumper($P0, "Cardinal::Grammar::optable")
     goto end
@@ -166,6 +194,12 @@ compiler, see:
     # Match against the source
     .local pmc match
     .local pmc start_rule
+    
+    unless dump_src_early goto after_src_dump_early
+    print "\n\nSource dump:\n"
+    print source
+  after_src_dump_early:
+
     start_rule = get_root_global [ 'parrot'; 'Cardinal::Grammar'], 'program'
     match = start_rule(source, 'grammar'=> 'Cardinal::Grammar')
 
@@ -181,12 +215,10 @@ compiler, see:
     eq stopafter, 1, end
 
     # "Traverse" the parse tree
-    load_bytecode "languages/cardinal/src/ASTGrammar.pbc"
     .local pmc grammar
-     grammar = new 'ASTGrammar'
+    grammar = new 'Cardinal::ASTGrammar'
 
     # Construct the "AST"
-    load_bytecode "PAST.pbc"
     .local pmc astbuilder
     astbuilder = grammar.apply(match)
     .local pmc ast
@@ -196,50 +228,56 @@ compiler, see:
 
     unless dump_ast goto after_ast_dump
     print "\n\nAST tree dump:\n"
-    ast.'dump'()
+    '_dumper'(ast)
+    #ast.'dump'()
   after_ast_dump:
     eq stopafter, 2, end
 
     # Compile the abstract syntax tree down to an opcode syntax tree
-    load_bytecode "languages/cardinal/src/POST.pir"
-    load_bytecode 'languages/cardinal/src/CardinalOpLookup.pir'
-    load_bytecode "languages/cardinal/src/OSTGrammar.pbc"
     .local pmc ostgrammar
-    ostgrammar = new 'OSTGrammar'
     .local pmc ostbuilder
-    ostbuilder = ostgrammar.apply(ast)
     .local pmc ost
-    ost = ostbuilder.get('result')
+    ostgrammar = new 'Cardinal::OSTGrammar'
+    ostbuilder = ostgrammar.apply(ast)
+    ost = ostbuilder.get('root')
     $I0 = defined ost
     unless $I0 goto err_no_ost # if OST fails stop
 
     unless dump_ost goto after_ost_dump
     print "\n\nOST tree dump:\n"
-    ost.'dump'()
+    '_dumper'(ost)
+    #ost.'dump'()
   after_ost_dump:
     eq stopafter, 3, end
 
     # Compile the OST down to PIR
-    load_bytecode "languages/cardinal/src/PIRGrammar.pbc"
     .local pmc pirgrammar
-    pirgrammar = new 'PIRGrammar'
     .local pmc pirbuilder
-    pirbuilder = pirgrammar.apply(ost)
     .local pmc pir
-    pir = pirbuilder.get('result')
+    pirgrammar = new 'Cardinal::PIRGrammar'
+    pirbuilder = pirgrammar.apply(ost)
+    pir = pirbuilder.get('root')
     unless pir goto err_no_pir # if PIR not generated, stop
 
-    unless dump_ast goto after_pir_dump
+    unless dump_src goto after_src_dump
+    print "\n\nSource dump:\n"
+    print source
+    after_src_dump:
+
+    unless dump_pir goto after_pir_dump
     print "\n\nPIR dump:\n"
     print pir
-  after_pir_dump:
+    after_pir_dump:
     eq stopafter, 4, end
 
     # Execute
+    unless execute_debug goto execute_only
+    print "\n\nExecution Result:\n"
+  execute_only:
     .local pmc pir_compiler
     .local pmc pir_compiled
     pir_compiler = compreg "PIR"
-    pir_compiled = pir_compiler( pir )
+    pir_compiled = pir_compiler(pir)
     pir_compiled()
     end
 

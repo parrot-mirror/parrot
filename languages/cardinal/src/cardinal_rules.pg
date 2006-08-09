@@ -1,29 +1,37 @@
 grammar Cardinal::Grammar
 
 ##Ruby Whitespace rule
-token ws {<[\ \t]>*}
+token ws {
+    [ <[\ \t]>
+    | ^^ \# \N*\n*
+    ]*
+}
 
-token program { ^<compound_statement>$ }
+regex pod_comment {
+    ^^ = [ [ pod \h*: ]
+         | for [ \h\N+: ] \n [ \N+\n ]*:
+         | \w\N*: \n .*? \n = [ cut \h*: ]
+         ]
+         [\n|$]
+}
 
-rule body_statement {<compound_statement> <rescue_clause>? <else_clause>? <ensure_clause>?}
 
-rule compound_statement {<statements>? <?terminators>?}
-#added [ <statement> |   
-#for    
-#if x then <compound_statement> end
-#style statements
-#rule statements {<?terminators>? [[ <statement> <?terminators>]* | <statement> ]}
-rule statements {<?terminators>? [<statement> <?terminators>]* <statement>? }
-#rule statements {<?terminators>? <statement> [<?terminators> [<statements> <?terminators>]*]? <statement>? }
+rule program { <compound_statement> }
+
+rule body_statement { <compound_statement> <rescue_clause>? <else_clause>? <ensure_clause>? }
+
+rule compound_statement { <statements>? <?terminators>? }
+
+rule statements {<?terminators>? [<statement> <?terminators>* ]* <statement>? }
 
 rule statement {
-          <'alias'> [ <function_item> <function_item>
+          $<ALIAS>:=<'alias'> [ <function_item> <function_item>
                     |<GLOBAL_VARIABLE> [<GLOBAL_VARIABLE>|<back_reference>]]
-          |<'undef'> <undef_list>
-          |<'begin'> \{ <compound_statement> \}
-          |<'end'> \{ <compound_statement> \}
-          |<expression> [(<'if'>|<'unless'>|<'while'>|<'until'>) <expression>
-                        |<'rescue'> <statement>]?
+          |$<UNDEF>:=<'undef'> <undef_list>
+          |$<BEGIN>:=<'BEGIN'> \{ <compound_statement> \}
+          |$<END>:=<'END'> \{ <compound_statement> \}
+          |<expression> [$<MODIFIER>:=[<'if'>|<'unless'>|<'while'>|<'until'>] <expression>
+                        |$<rescue>:=<'rescue'> <statement>]?
 }
 
 ## We enter the operator precedance expression parser HERE
@@ -36,21 +44,9 @@ rule assignment {
           <left_hand_side> (<'='>) [<command_call>|<expression>|<multiple_right_hand_side>|<expression> <'rescue'> <expression>]
           |<multiple_left_hand_side> (<'='>) [<command_call>|<expression>|<multiple_right_hand_side>]
 
-
           #|<left_hand_side <ASSIGN_OP> [<command_call>|<expression>]
 
           |<variable> <ASSIGN_OP> [<command_call>|<expression>]
-#          |<primary_value> \[ <call_args>? \] <ASSIGN_OP> [<command_call>|<expression>]
-#          |<primary_value> \. [<IDENTIFIER>|<CONSTANT>] <ASSIGN_OP> [<command_call>|<expression>]
-          
-#          |<primary_value> \:\: <IDENTIFIER> <ASSIGN_OP> <command_call>
-#          |<primary_value> \:\: [<IDENTIFIER>|<CONSTANT>] <ASSIGN_OP> <expression>
-
-#          |<atom> \[ <call_args>? \] <ASSIGN_OP> [<command_call>|<expression>]
-#          |<atom> \. [<IDENTIFIER>|<CONSTANT>] <ASSIGN_OP> [<command_call>|<expression>]
-          
-#          |<atom> \:\: <IDENTIFIER> <ASSIGN_OP> <command_call>
-#          |<atom> \:\: [<IDENTIFIER>|<CONSTANT>] <ASSIGN_OP> <expression>
 
           |<atom> [
                     [\[ <call_args>? \] |\. [<IDENTIFIER>|<CONSTANT>]] <ASSIGN_OP> [<command_call>|<expression>]
@@ -69,11 +65,6 @@ token ASSIGN_OP { [\=|\%\=|\~\=|\/\=|\-\=|\+\=|\|\=|\&\=|\>\>\=|\<\<\=|\*\=|\&\&
           
 rule method_call { 
           <operation> [<paren_args> <brace_block>?|<brace_block>]
-#          | <primary_value> [\.|\:\:] <operation2> <paren_args>?  <brace_block>?
-#          | <primary_value> \:\: <operation3><brace_block>?
-#          | <primary_value> [\.|\:\:] <paren_args><brace_block>?
-#          | <primary_value> \[ <call_args>? <rbracket> <brace_block>?
-#          | <'super'> <paren_args><brace_block>?
 
           | <atom>[[\.|\:\:][<operation2> <paren_args>?  <brace_block>?
                               |<paren_args><brace_block>? ]
@@ -98,9 +89,8 @@ rule command_call_block { <command> <do_block> [[\.|\:\:] <operation2> <paren_ar
 
 rule command { 
           <operation> <command_args> [ \{ <block_param>? <compound_statement> \} ]?
-#          |<primary_value> [\.|\:\:] <operation2> <command_args> [ \{ <block_param>? <compound_statement> \} ]?
           |<atom> [\.|\:\:] <operation2> <command_args> [ \{ <block_param>? <compound_statement> \} ]?
-          |[<'super'>|<'yield'>] <command_args>
+          |$<special_command_type>:=[<'raise'>|<'throw'>|<'super'>|<'yield'>] <command_args>
 }
 rule command_args {<paren_args>|<call_args>}
 rule paren_args {\( <call_args>? \)}
@@ -168,7 +158,7 @@ rule left_hand_side {
 
 
 rule class_name {<IDENTIFIER>|<CONSTANT>}
-rule class_path {[\:\:]? [<atom> \:\:]* <class_name>}
+rule class_path {$<start_colons>:=[\:\:]? [<atom> \:\:]* <class_name>}
 
 #OLD_CLASS_NAME/PATH
 #rule class_name {<IDENTIFIER>|<CONSTANT>}
@@ -245,6 +235,7 @@ token reserved_words {
           |nil
           |not
           |of
+          |raise
           |redo
           |rescue
           |retry
@@ -252,6 +243,7 @@ token reserved_words {
           |self
           |super
           |then
+          |throw
           |true
           |undef
           |when
@@ -310,27 +302,23 @@ rule atom { <literal>
 #          |<method_call> <brace_block>?
           |\-\> <lambda>
           
-          |<'begin'> <body_statement> <'end'>
+          |$<begin>:=<'begin'> <body_statement> <'end'>
           |<if_clause>
           |<'unless'> <expression> <then_clause> <compound_statement> <else_clause>? <'end'>
           |<'while'> <expression> <'do'>? <compound_statement> <'end'>
           |<'until'> <expression> <'do'>? <compound_statement> <'end'>
           |<'case'> <?terminators>? <expression> <?terminator>? [<WHEN> <expression> <then_clause> <compound_statement>]+ <else_clause>? <'end'>
           |<'for'> <for_variable> <'in'> <expression> <compound_statement> <'end'>
-          |<'class'> <class_path> <superclass> <'do'>? <body_statement> <'end'>
-          |<'class'> \<\< <expression> <term> <body_statement> <'end'>
-          |<'moldule'> <class_path> <body_statement> <'end'>
-          |<'def'> [singleton [\.|\:]]? <function_name> <function_prototype_arg_list> <body_statement> <'end'>
+          |$<class>:=<'class'> <class_path> <superclass> <'do'>? <body_statement> <'end'>
+          |$<class2>:=<'class'> \<\< <expression> <term> <body_statement> <'end'>
+          |$<module>:=<'module'> <class_path> <body_statement> <'end'>
+          |$<def>:=<'def'> [singleton [\.|\:\:]]? <function_name> <function_prototype_arg_list> <body_statement> <'end'>
           |<variable>
 }
 
-rule if_clause
-{
-          ##<'if'> <expression> {{print "h1\n"}} <then_clause> {{print "h2\n"}} <compound_statement> {{print "h3\n"}} <elsif_clause>* <else_clause>? {{print "h4\n"}} {{match.dump()}} <?end_clause> {{print "h5\n"}} {{match.dump()}}
-          <'if'> <expression> <then_clause> <compound_statement> <elsif_clause>* <else_clause>? <?end_clause> 
-}
-
-
+rule if_clause {
+          $<if>:=<'if'> <expression> <then_clause> <compound_statement> <elsif_clause>* <else_clause>? <?end_clause> 
+          }
 #rule end_clause { {{print "e1\n"}} <?terminator>? {{print "e2\n"}} {{match.dump()}} <'end'> {{print "e3\n"}} <?terminator>? {{print "e4\n"}} }
 rule end_clause { <?terminator>? <'end'> <?terminator>? }
 rule elsif_clause {<'elsif'> <expression> <then_clause> <compound_statement>}
@@ -378,8 +366,8 @@ rule function_lambda_arg_list { \( <function_prototype_arg_list> <bv_decls>? <rp
 
 rule lambda_body { \{ <compound_statement> \} }
 
-rule rescue_clause { [<'rescue'> [<expression> | <multiple_right_hand_side>]? [<ASSOC> <left_hand_side>]?  <then_clause> <compound_statement>]* } 
-rule ensure_clause { <ENSURE> <compound_statement> }
+rule rescue_clause { [<'rescue'> [<expression> | <multiple_right_hand_side>]? [<ASSOC> <left_hand_side>]?  <then_clause> <compound_statement>]+ } 
+rule ensure_clause { <'ensure'> <compound_statement> }
 token literal { <numeric> | <symbol> | <dsymbol> }
 #rule string { <character> | <string1>+ }
 rule string { <SINGLE_STRING> | <DOUBLE_STRING> }
@@ -401,7 +389,7 @@ rule superclass {
 }
 
 rule function_prototype_arg_list {
-          \( <function_prototype_args>? <rparen> #\)
+          \( <function_prototype_args>? <?rparen> #\)
           | <function_prototype_args>? <?terminator>
 }
 
@@ -409,7 +397,7 @@ rule function_prototype_args {
           [<function_prototype_arg> \,]* [<function_prototype_optinal_arg> \,]* [<function_prototype_rest_args>[\, <function_prototype_arg>]* \,]? <function_prototype_block_arg>?
 }
 
-token funtion_prototype_arg {
+token function_prototype_arg {
           <CONSTANT>
           |<INSTANCE_VARIABLE>
           |<GLOBAL_VARIABLE>

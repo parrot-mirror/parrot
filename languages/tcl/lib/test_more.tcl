@@ -31,7 +31,7 @@ proc is {value expected {description ""} {special {}}}  {
     set num $very_bad_global_variable_test_num
  
     if {[llength $special] == 2} {
-        set description " # $special"
+        set description " - $description # $special"
     } else {
         if  {$description ne ""} {
             set description " - $description"
@@ -44,25 +44,29 @@ proc is {value expected {description ""} {special {}}}  {
     } {
         puts "not ok $num$description"
 
-        set value [join [split $value "\n"] "\n# "]
-        set expected [join [split $expected "\n"] "\n# "]
-        puts "#      got : '$value'"
-        puts "# expected : '$expected'"
+        set formatted_value [join [split $value "\n"] "\n# "]
+        set formatted_expected [join [split $expected "\n"] "\n# "]
+        diag "\n#     Failed test #$very_bad_global_variable_test_num\n#      got : '$formatted_value'\n# expected : '$formatted_expected'"
         return 0
     }
 }
 
 # XXX Need to handle the case where we expect an exception.
 proc eval_is {code expected {description ""} {special {}}}  {
+    global very_bad_global_variable_test_num
     # The one case where skip actually means "don't do that"
     if {[llength $special] == 2} {
-        set special_type [lindex $special 1]
-        if {$special_type eq "SKIP"} {
-            puts "ok $very_bad_global_variable_test_num $special"
+        set boolean [string compare -nocase [lindex $special 0] skip]
+        if {! $boolean} {
+            puts "ok $very_bad_global_variable_test_num # $special"
             return 1
         }
     }
     # Ignore exceptions for the moment
+    # XXX This probably wants to be [uplevel #0 $code] for the tcl tests.
+    # XXX in the meantime, cheat and give them the global variables they
+    # want.
+    global errorCode errorInfo
     catch {eval $code} actual
     is $actual $expected $description $special
 }
@@ -76,6 +80,17 @@ proc not_ok {value {description ""} {special {}}} {
     ok $value $description $special
 }
 
+proc pass {{description ""} {special ""}} {
+  ok 1 $description $special
+}
+
+proc like {value regexp {description ""}} {
+   if ([regexp $regexp $value]) {
+     pass $description
+   } else {
+     is "STRING: $value" "REGEXP: $regexp" $description
+   }
+}
 
 # NOTE: This doesn't work in tcl-current, because we can't parse:
 # XXX : expr {"[eval {set a "aok"}]" ne "bork"}
@@ -90,14 +105,38 @@ proc cmp_ok {left op right {description ""} {special {}}} {
     ok "expr {$left $op $right}" $description $special
 }
 
+proc fail {{description ""} {special ""}} {
+  is "something else: $description" {something} $description $special
+}
+
 proc diag {diagnostic} {
-  puts "# $diagnostic"
+  puts stderr "# $diagnostic"
 }
 
 # XXX hacks to help avoid translating the actual tcl tests, until we actuall
 # support tcltest.
 
 # A placeholder that simulates the real tcltest's exported test proc.
-proc test {num description code output} {
-    eval_is $code $output "$num: $description"
+proc test {num description code args} {
+    set excuse "can't deal with this version of test yet."
+    if {[llength $args] == 0} {
+        pass $excuse [list SKIP $excuse]
+    } elseif {[llength $args] == 1} {
+        eval_is $code [lindex $args 0] "$num $description"
+    } else {
+        pass $excuse [list SKIP $excuse]
+    }
 }
+
+# XXX hacks to allow compilation of tests.
+
+# Constraints are like skip conditions that
+# can be specified by a particular invocation to test. Since we're ingoring
+# all the option params to test, we'll ignore this one two, and execute tests
+# when we shouldn't.
+
+proc testConstraint     {args} {}
+proc temporaryDirectory {args} {}
+proc makeFile           {args} {}
+proc removeFile         {args} {}
+proc bytestring         {args} {}

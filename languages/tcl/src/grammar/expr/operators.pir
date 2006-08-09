@@ -8,32 +8,103 @@ src/grammar/expr/operators.pir - [expr] operator definitions.
 
 =cut
 
+.HLL 'Tcl', ''
 .namespace
 
-# XXX No strings.
-.sub 'prefix:+' # unary plus
+# unary plus
+.sub 'prefix:+' :multi(String)
+    .param pmc a
+
+    .local pmc __number
+    __number = get_root_global ['_tcl'], '__number'
+
+    push_eh is_string
+      a = __number(a)
+    clear_eh
+
+    .return(a)
+
+is_string:
+    .throw("can't use non-numeric string as operand of \"+\"")
+.end
+
+.sub 'prefix:+' :multi(pmc)
     .param pmc a
     $N0 = a
     .return ($N0)
 .end
 
-# XXX No strings.
-.sub 'prefix:-'     # unary minus
+# unary minus
+.sub 'prefix:-' :multi(String)
+    .param pmc a
+
+    .local pmc __number
+    __number = get_root_global ['_tcl'], '__number'
+
+    push_eh is_string
+      a = __number(a)
+    clear_eh
+
+    $N0 = a
+    $N0 = neg $N0
+    .return($N0)
+
+is_string:
+    .throw("can't use non-numeric string as operand of \"-\"")
+.end
+
+.sub 'prefix:-' :multi(pmc)
     .param pmc a
     $N0 = a
     $N0 = neg $N0
     .return ($N0)
 .end
 
-# XXX Integer Only
-.sub 'prefix:~'     # bit-wise NOT
+# bit-wise NOT
+.sub 'prefix:~' :multi(String)
+    .param pmc a
+
+    .local pmc __number
+    __number = get_root_global ['_tcl'], '__number'
+
+    push_eh is_string
+      a = __number(a)
+    clear_eh
+
+    $I0 = a
+    $I0 = bnot $I0
+    .return($I0)
+
+is_string:
+    .throw("can't use non-numeric string as operand of \"~\"")
+.end
+
+.sub 'prefix:~' :multi(pmc)
     .param int a
     $I0 = bnot a
     .return ($I0)
 .end
 
-# XXX No strings.
-.sub 'prefix:!'     # logical NOT
+# logical NOT
+.sub 'prefix:!' :multi(String)
+    .param pmc a
+
+    .local pmc __number
+    __number = get_root_global ['_tcl'], '__number'
+
+    push_eh is_string
+      a = __number(a)
+    clear_eh
+
+    $I0 = a
+    $I0 = not $I0
+    .return($I0)
+
+is_string:
+    .throw("can't use non-numeric string as operand of \"!\"")
+.end
+
+.sub 'prefix:!' :multi(pmc)
     .param int a
     $I0 = not a
     .return ($I0)
@@ -44,6 +115,21 @@ src/grammar/expr/operators.pir - [expr] operator definitions.
 &&, || (and ?:) are handled during the PGE transformation stage.
 
 =cut
+
+# this is used to make double-quoted strings work
+# (they're a series of captures that need to be concatenated)
+.sub 'infix:concat'
+    .param pmc a
+    .param pmc b
+
+    $S0 = a
+    $S1 = b
+    $S0 = $S0 . $S1
+
+    $P0 = new 'TclString'
+    $P0 = $S0
+    .return($P0)
+.end
 
 .sub 'infix:*'  
     .param pmc a
@@ -83,29 +169,32 @@ is_string:
     .throw("can't use non-numeric string as operand of \"/\"")
 .end
 
+.sub 'infix:%'
+    .param pmc a
+    .param pmc b
 
-# remainder
-.sub 'infix:%'     :multi(String, pmc)
-  .throw ("can't use non-numeric string as operand of \"%\"")
-.end
+    .local pmc __number
+    __number = get_root_global ['_tcl'], '__number'
 
-.sub 'infix:%'     :multi(pmc, String)
-  .throw ("can't use non-numeric string as operand of \"%\"")
-.end
+    push_eh is_string
+      a = __number(a)
+      b = __number(b)
+    clear_eh
+    
+    $I0 = isa a, 'TclFloat'
+    if $I0 goto is_float
+    $I0 = isa b, 'TclFloat'
+    if $I0 goto is_float
 
-.sub 'infix:%'     :multi(Float, pmc)
-  .throw ("can't use floating-point value as operand of \"%\"")
-.end
+    $P0 = new 'TclInt'
+    $P0 = mod a, b
+    .return($P0)
 
-.sub 'infix:%'     :multi(pmc, Float)
-  .throw ("can't use floating-point value as operand of \"%\"")
-.end
+is_string:
+    .throw("can't use non-numeric string as operand of \"%\"")
 
-.sub 'infix:%'     :multi(Integer, Integer)
-    .param int a
-    .param int b
-    $I0 = mod a, b
-    .return ($I0)
+is_float:
+    .throw("can't use floating-point value as operand of \"%\"")
 .end
 
 .sub 'infix:+'
@@ -147,14 +236,6 @@ is_string:
 .end
 
 # left shift
-.sub 'infix:<<'     :multi(String, pmc)
-  .throw ("can't use non-numeric string as operand of \"<<\"")
-.end
-
-.sub 'infix:<<'     :multi(pmc, String)
-  .throw ("can't use non-numeric string as operand of \"<<\"")
-.end
-
 .sub 'infix:<<'     :multi(Float, pmc)
   .throw ("can't use floating-point value as operand of \"<<\"")
 .end
@@ -166,19 +247,41 @@ is_string:
 .sub 'infix:<<'     :multi(Integer, Integer)
     .param int a
     .param int b
+
     $I0 = shl a, b
+    .return($I0)
+.end
+
+.sub 'infix:<<'     :multi(pmc, pmc)
+    .param pmc a
+    .param pmc b
+
+    .local pmc __number
+    __number = get_root_global ['_tcl'], '__number'
+
+    push_eh is_string
+      a = __number(a)
+      b = __number(b)
+    clear_eh
+
+    $I0 = isa a, 'Float'
+    if $I0 goto is_float
+    $I0 = isa b, 'Float'
+    if $I0 goto is_float
+
+    $I0 = a
+    $I1 = b
+    $I0 = shl $I0, $I1
     .return ($I0)
+
+is_string:
+  .throw ("can't use non-numeric string as operand of \"<<\"")
+
+is_float:
+  .throw ("can't use floating-point value as operand of \"<<\"")
 .end
 
 # right shift
-.sub 'infix:>>'     :multi(String, pmc)
-  .throw ("can't use non-numeric string as operand of \">>\"")
-.end
-
-.sub 'infix:>>'     :multi(pmc, String)
-  .throw ("can't use non-numeric string as operand of \">>\"")
-.end
-
 .sub 'infix:>>'     :multi(Float, pmc)
   .throw ("can't use floating-point value as operand of \">>\"")
 .end
@@ -192,6 +295,35 @@ is_string:
     .param int b
     $I0 = shr a, b
     .return ($I0)
+.end
+
+.sub 'infix:>>'     :multi(pmc, pmc)
+    .param pmc a
+    .param pmc b
+
+    .local pmc __number
+    __number = get_root_global ['_tcl'], '__number'
+
+    push_eh is_string
+      a = __number(a)
+      b = __number(b)
+    clear_eh
+
+    $I0 = isa a, 'Float'
+    if $I0 goto is_float
+    $I0 = isa b, 'Float'
+    if $I0 goto is_float
+
+    $I0 = a
+    $I1 = b
+    $I0 = shr $I0, $I1
+    .return ($I0)
+
+is_string:
+  .throw ("can't use non-numeric string as operand of \">>\"")
+
+is_float:
+  .throw ("can't use floating-point value as operand of \">>\"")
 .end
 
 # *ALL* operands
@@ -329,13 +461,97 @@ is_string:
     .return ($I0)
 .end
 
+
 # bitwise AND
-.sub 'infix:&'     :multi(String, pmc)
+.sub 'infix:&'     :multi(String, String)
+  .param pmc a
+  .param pmc b
+
+  .local pmc __integer
+  __integer = get_root_global ['_tcl'], '__integer'
+
+  push_eh is_string
+    a = __integer(a)
+    b = __integer(b)
+  clear_eh
+
+  $I0 = a
+  $I1 = b
+  $I0 = band $I0, $I1
+  .return($I0)
+
+is_string:
   .throw ("can't use non-numeric string as operand of \"&\"")
 .end
 
-.sub 'infix:&'     :multi(pmc, String)
+.sub 'infix:&'     :multi(String, Integer)
+  .param pmc a
+  .param int b
+
+  .local pmc __integer
+  __integer = get_root_global ['_tcl'], '__integer'
+
+  push_eh is_string
+    a = __integer(a)
+  clear_eh
+
+  $I0 = a
+  $I0 = band $I0, b
+  .return($I0)
+
+is_string:
   .throw ("can't use non-numeric string as operand of \"&\"")
+.end
+
+.sub 'infix:&'     :multi(Integer, String)
+  .param int a
+  .param pmc b
+
+  .local pmc __integer
+  __integer = get_root_global ['_tcl'], '__integer'
+
+  push_eh is_string
+    b = __integer(b)
+  clear_eh
+
+  $I0 = b
+  $I0 = band a, $I0
+  .return($I0)
+
+is_string:
+  .throw ("can't use non-numeric string as operand of \"&\"")
+.end
+
+.sub 'infix:&'     :multi(Float, String)
+    .param pmc a
+    .param pmc b
+
+    .local pmc __integer
+    __integer = get_root_global ['_tcl'], '__integer'
+
+    push_eh is_string
+        b = __integer(b)
+    clear_eh
+    .throw("can't use floating-point value as operand of \"&\"")
+
+is_string:
+    .throw("can't use non-numeric string as operand of \"&\"")
+.end
+
+.sub 'infix:&'     :multi(String, Float)
+    .param pmc a
+    .param pmc b
+
+    .local pmc __integer
+    __integer = get_root_global ['_tcl'], '__integer'
+
+    push_eh is_string
+        a = __integer(a)
+    clear_eh
+    .throw("can't use floating-point value as operand of \"&\"")
+
+is_string:
+    .throw("can't use non-numeric string as operand of \"&\"")
 .end
 
 .sub 'infix:&'     :multi(Float, pmc)
@@ -353,13 +569,97 @@ is_string:
     .return ($I0)
 .end
 
+
 # bitwise exclusive OR 
-.sub 'infix:^'     :multi(String, pmc)
+.sub 'infix:^'     :multi(String, String)
+  .param pmc a
+  .param pmc b
+
+  .local pmc __integer
+  __integer = get_root_global ['_tcl'], '__integer'
+
+  push_eh is_string
+    a = __integer(a)
+    b = __integer(b)
+  clear_eh
+
+  $I0 = a
+  $I1 = b
+  $I0 = bxor $I0, $I1
+  .return($I0)
+
+is_string:
   .throw ("can't use non-numeric string as operand of \"^\"")
 .end
 
-.sub 'infix:^'     :multi(pmc, String)
+.sub 'infix:^'     :multi(String, Integer)
+  .param pmc a
+  .param int b
+
+  .local pmc __integer
+  __integer = get_root_global ['_tcl'], '__integer'
+
+  push_eh is_string
+    a = __integer(a)
+  clear_eh
+
+  $I0 = a
+  $I0 = bxor $I0, b
+  .return($I0)
+
+is_string:
   .throw ("can't use non-numeric string as operand of \"^\"")
+.end
+
+.sub 'infix:^'     :multi(Integer, String)
+  .param int a
+  .param pmc b
+
+  .local pmc __integer
+  __integer = get_root_global ['_tcl'], '__integer'
+
+  push_eh is_string
+    b = __integer(b)
+  clear_eh
+
+  $I0 = b
+  $I0 = bxor a, $I0
+  .return($I0)
+
+is_string:
+  .throw ("can't use non-numeric string as operand of \"^\"")
+.end
+
+.sub 'infix:^'     :multi(Float, String)
+    .param pmc a
+    .param pmc b
+
+    .local pmc __integer
+    __integer = get_root_global ['_tcl'], '__integer'
+
+    push_eh is_string
+        b = __integer(b)
+    clear_eh
+    .throw("can't use floating-point value as operand of \"^\"")
+
+is_string:
+    .throw("can't use non-numeric string as operand of \"^\"")
+.end
+
+.sub 'infix:^'     :multi(String, Float)
+    .param pmc a
+    .param pmc b
+
+    .local pmc __integer
+    __integer = get_root_global ['_tcl'], '__integer'
+
+    push_eh is_string
+        a = __integer(a)
+    clear_eh
+    .throw("can't use floating-point value as operand of \"^\"")
+
+is_string:
+    .throw("can't use non-numeric string as operand of \"^\"")
 .end
 
 .sub 'infix:^'     :multi(Float, pmc)
@@ -377,13 +677,97 @@ is_string:
     .return ($I0)
 .end
 
+
 # bitwise OR
-.sub 'infix:|'     :multi(String, pmc)
+.sub 'infix:|'     :multi(String, String)
+  .param pmc a
+  .param pmc b
+
+  .local pmc __integer
+  __integer = get_root_global ['_tcl'], '__integer'
+
+  push_eh is_string
+    a = __integer(a)
+    b = __integer(b)
+  clear_eh
+
+  $I0 = a
+  $I1 = b
+  $I0 = bor $I0, $I1
+  .return($I0)
+
+is_string:
   .throw ("can't use non-numeric string as operand of \"|\"")
 .end
 
-.sub 'infix:|'     :multi(pmc, String)
+.sub 'infix:|'     :multi(String, Integer)
+  .param pmc a
+  .param int b
+
+  .local pmc __integer
+  __integer = get_root_global ['_tcl'], '__integer'
+
+  push_eh is_string
+    a = __integer(a)
+  clear_eh
+
+  $I0 = a
+  $I0 = bor $I0, b
+  .return($I0)
+
+is_string:
   .throw ("can't use non-numeric string as operand of \"|\"")
+.end
+
+.sub 'infix:|'     :multi(Integer, String)
+  .param int a
+  .param pmc b
+
+  .local pmc __integer
+  __integer = get_root_global ['_tcl'], '__integer'
+
+  push_eh is_string
+    b = __integer(b)
+  clear_eh
+
+  $I0 = b
+  $I0 = bor a, $I0
+  .return($I0)
+
+is_string:
+  .throw ("can't use non-numeric string as operand of \"|\"")
+.end
+
+.sub 'infix:|'     :multi(Float, String)
+    .param pmc a
+    .param pmc b
+
+    .local pmc __integer
+    __integer = get_root_global ['_tcl'], '__integer'
+
+    push_eh is_string
+        b = __integer(b)
+    clear_eh
+    .throw("can't use floating-point value as operand of \"|\"")
+
+is_string:
+    .throw("can't use non-numeric string as operand of \"|\"")
+.end
+
+.sub 'infix:|'     :multi(String, Float)
+    .param pmc a
+    .param pmc b
+
+    .local pmc __integer
+    __integer = get_root_global ['_tcl'], '__integer'
+
+    push_eh is_string
+        a = __integer(a)
+    clear_eh
+    .throw("can't use floating-point value as operand of \"|\"")
+
+is_string:
+    .throw("can't use non-numeric string as operand of \"|\"")
 .end
 
 .sub 'infix:|'     :multi(Float, pmc)
@@ -400,6 +784,7 @@ is_string:
     $I0 = bor a, b
     .return ($I0)
 .end
+
 
 .sub 'infix:in'
     .param pmc elem

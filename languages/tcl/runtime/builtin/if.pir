@@ -5,124 +5,149 @@
 .namespace
 
 .sub '&if'
-  .param pmc argv :slurpy
+    .param pmc argv :slurpy
 
-  .local int argc 
-  argc = argv
+    .local int argc
+    argc = elements argv
 
-  unless argc goto no_args
+    .local pmc __expr
+    __expr = get_root_global ['_tcl'], '__expr'
 
-  .local pmc elseifs
-  elseifs = new .TclList
-  .local pmc retval,condition
-  .local string code
-  .local string condition
-  .local string body
-  .local string else
-  .local int handling_else
-  handling_else = 0
-  .local int counter
+    if argc == 0 goto no_args
 
-  .local pmc compiler, pir_compiler, __expr
-  .get_from_HLL(compiler,'_tcl','compile')
-  .get_from_HLL(pir_compiler,'_tcl','pir_compiler')
-  .get_from_HLL(__expr, '_tcl', '__expr')
- 
-  .local string temp_str
-  temp_str ='' 
+    # we have to do arg checking first, to make sure we got the proper type of
+    # exception. but [expr] checking has to happen before that. so replace each
+    # string expression with a Sub that represents it. and while we're at it,
+    # strip out the "then"s.
 
-  counter = 0
-  condition = argv[counter]
-  inc counter
-  if counter >= argc goto missing_script
-  body = argv[counter]
-  inc counter
-  if body != 'then' goto get_elseifs 
-  if counter >= argc goto missing_script
-  body = argv[counter]
-  inc counter
-  if counter >= argc goto get_final
-get_elseifs:
-  if counter >= argc goto get_final
-  temp_str = argv[counter]
-  if temp_str != 'elseif' goto get_else
-  $P1 = new .TclList
-  inc counter
-  if counter >= argc goto missing_elseif
-  $P2 = argv[counter]
-  $P1[0] = $P2
-  inc counter
-  if counter > argc goto missing_script
-  $P2 = argv[counter]
-  $P1[1] = $P2
-  push elseifs, $P1
-  inc counter
-  goto get_elseifs
-get_else:
-  handling_else = 1
-  temp_str = argv[counter]
-  if temp_str != 'else' goto get_final
-  inc counter
-  if counter >= argc goto missing_script
-  temp_str = argv[counter]
-get_final:
-  else = temp_str
+    # convert to the expression to a Sub
+    $S0 = argv[0]
+    $P0 = __expr($S0)
 
-  unless handling_else goto begin_parsing
-  inc counter
-  if counter != argc goto more_than_else
+    $I0 = 1
+    if $I0 == argc goto no_script
 
-begin_parsing:
-  $P2 = __expr(condition)
-  retval = $P2()
+    argv[0] = $P0
 
-  unless retval goto do_elseifs
-  code = body 
-  goto done
- 
-do_elseifs:
-  $I1 = elseifs
-  if $I1 == 0 goto do_else
-  $I2 = 0
-elseif_loop:
-  if $I2 == $I1 goto do_else
-  $P1 = elseifs[$I2]
-  condition = $P1[0]
-  $P3 = __expr(condition)
-  retval = $P3()
-  if retval goto done_elseifs
-  inc $I2
-  goto elseif_loop  
+    $S0 = argv[$I0]
+    unless $S0 == 'then' goto arg_next
 
-done_elseifs:
-  code = $P1[1]
-  goto done
+    # we have to do this check first so that "then" shows up in the error
+    inc $I0
+    if $I0 == argc goto no_script
 
-do_else:
-  code = else
+    dec $I0
+    delete argv[$I0]
+    dec argc
+arg_next:
+    inc $I0
+    if $I0 == argc goto arg_end
 
-done:
-  ($I0,$P1) = compiler(0,code)
-  $P2 = pir_compiler($I0,$P1)
+    $S0 = argv[$I0]
+    if $S0 == 'elseif' goto arg_elseif
+    if $S0 == 'else'   goto arg_else
 
-  .return $P2()
+    # 'else' is optional
+    dec $I0
+    goto arg_else
+
+arg_elseif:
+    inc $I0
+    if $I0 == argc goto no_expression
+
+    # convert to the expression to a Sub
+    $S0 = argv[$I0]
+    $P0 = __expr($S0)
+
+    inc $I0
+    if $I0 == argc goto no_script
+
+    $I1 = $I0 - 1
+    argv[$I1] = $P0
+
+    $S0 = argv[$I0]
+    unless $S0 == 'then' goto arg_next
+
+    # we have to do this check first so that "then" shows up in the error
+    inc $I0
+    if $I0 == argc goto no_script
+
+    dec $I0
+    delete argv[$I0]
+    dec argc
+    goto arg_next
+
+arg_else:
+    inc $I0
+    if $I0 == argc goto no_script
+
+    inc $I0
+    if $I0 != argc goto extra_words_after_else
+arg_end:
+
+    # now we can do the actual evaluation
+    .local pmc __script, __boolean
+    __script  = get_root_global ['_tcl'], '__script'
+    __boolean = get_root_global ['_tcl'], '__boolean'
+
+    .local pmc    cond
+    .local string code
+    cond = argv[0]
+    code = argv[1]
+    $I0  = 1
+
+loop:
+    $P1 = cond()
+    $I1 = __boolean($P1)
+    unless $I1 goto next
+    $P0 = __script(code)
+    .return $P0()
+
+next:
+    inc $I0
+    if $I0 == argc goto nothing
+
+    $S0 = argv[$I0]
+    if $S0 == 'elseif' goto elseif
+    if $S0 == 'else'   goto else
+
+    # 'else' is optional
+    dec $I0
+    goto else
+
+elseif:
+    inc $I0
+    cond = argv[$I0]
+    inc $I0
+    code = argv[$I0]
+    goto loop
+
+else:
+    inc $I0
+    code = argv[$I0]
+    $P0  = __script(code)
+    .return $P0()
+
+extra_words_after_else:
+    .throw('wrong # args: extra words after "else" clause in "if" command')
+
+nothing:
+    .return('')
 
 no_args:
-  .throw('wrong # args: no expression after "if" argument')
+    .throw('wrong # args: no expression after "if" argument')
 
-missing_script:
-  $S0 = 'wrong # args: no script following "' 
-  $I0 = counter
-  dec $I0
-  $S1  = argv[$I0]
-  $S0 .= $S1
-  $S0 .=  '" argument'
-  .throw ($S0)
+no_script:
+    dec $I0
+    $S0 = argv[$I0]
+    $S0 = 'wrong # args: no script following "' . $S0
+    $S0 = $S0 . '" argument'
+    .throw($S0)
 
-more_than_else:
-  .throw ('wrong # args: extra words after "else" clause in "if" command')
-
-missing_elseif:
-  .throw ('wrong # args: no expression after "elseif" argument')
-
+no_expression:
+    dec $I0
+    $S0 = argv[$I0]
+    $S0 = 'wrong # args: no expression after "' . $S0
+    $S0 = $S0 . '" argument'
+    .throw($S0)
 .end

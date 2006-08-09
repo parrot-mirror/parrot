@@ -32,6 +32,7 @@ GENERATED_INLINES = \
  $(C_BUILTIN)/join.pir \
  $(C_BUILTIN)/llength.pir \
  $(C_BUILTIN)/pwd.pir \
+ $(C_BUILTIN)/set.pir \
  $(C_BUILTIN)/time.pir \
  $(C_BUILTIN)/while.pir
 
@@ -50,6 +51,7 @@ $(C_BUILTIN)/continue.pir \
 $(R_BUILTIN)/error.pir \
 $(R_BUILTIN)/eval.pir \
 $(C_BUILTIN)/exec.pir \
+$(C_BUILTIN)/expr.pir \
 $(R_BUILTIN)/expr.pir \
 $(C_BUILTIN)/fconfigure.pir \
 $(R_BUILTIN)/file.pir \
@@ -67,9 +69,10 @@ $(R_BUILTIN)/lappend.pir \
 $(R_BUILTIN)/lassign.pir \
 $(R_BUILTIN)/lindex.pir \
 $(R_BUILTIN)/linsert.pir \
-$(R_BUILTIN)/list.pir \
+$(C_BUILTIN)/list.pir \
 $(R_BUILTIN)/lrange.pir \
 $(R_BUILTIN)/lrepeat.pir \
+$(R_BUILTIN)/lreplace.pir \
 $(C_BUILTIN)/lsearch.pir \
 $(R_BUILTIN)/lset.pir \
 $(R_BUILTIN)/lsort.pir \
@@ -83,22 +86,21 @@ $(R_BUILTIN)/regexp.pir \
 $(C_BUILTIN)/regsub.pir \
 $(R_BUILTIN)/rename.pir \
 $(C_BUILTIN)/return.pir \
-$(R_BUILTIN)/set.pir \
 $(R_BUILTIN)/source.pir \
 $(R_BUILTIN)/split.pir \
 $(R_BUILTIN)/string.pir \
+$(C_BUILTIN)/subst.pir \
 $(R_BUILTIN)/switch.pir \
 $(C_BUILTIN)/trace.pir \
 $(R_BUILTIN)/unknown.pir \
 $(R_BUILTIN)/unset.pir \
+$(C_BUILTIN)/update.pir \
 $(R_BUILTIN)/uplevel.pir \
 $(R_BUILTIN)/upvar.pir \
 $(C_BUILTIN)/variable.pir \
 runtime/conversions.pir \
-runtime/list.pir \
 runtime/list_to_string.pir \
 runtime/string_to_list.pir \
-runtime/string.pir \
 runtime/variables.pir \
 src/compiler.pir \
 src/macros.pir \
@@ -123,7 +125,7 @@ $(GENERATED_INLINES) : tools/gen_inline.pl
 .tmt.pir :
 	$(PERL) tools/gen_inline.pl $< > $@
 
-.tg.pir : 
+.tg.pir :
 	$(PARROT) $(TGE_DIR)/tgc.pir --output=$@ $<
 
 .pg.pir :
@@ -131,7 +133,6 @@ $(GENERATED_INLINES) : tools/gen_inline.pl
 
 PBCS = \
 runtime/tcllib_temp.pbc \
-$(CLASSDIR)/tclcodestring.pbc \
 $(CLASSDIR)/tclcommand.pbc \
 $(CLASSDIR)/tclcommandlist.pbc \
 $(CLASSDIR)/tclconst.pbc \
@@ -155,9 +156,6 @@ runtime/tcllib_temp.pbc: $(PARROT) runtime/tcllib.pir runtime/builtins.pir
 
 $(CLASSDIR)/tclbinaryops.pbc: $(PARROT) $(CLASSDIR)/tclbinaryops.pir
 	$(PARROT) --output=$(CLASSDIR)/tclbinaryops.pbc $(CLASSDIR)/tclbinaryops.pir
-
-$(CLASSDIR)/tclcodestring.pbc: $(PARROT) $(CLASSDIR)/tclcodestring.pir
-	$(PARROT) --output=$(CLASSDIR)/tclcodestring.pbc $(CLASSDIR)/tclcodestring.pir
 
 $(CLASSDIR)/tclcommand.pbc: $(PARROT) $(CLASSDIR)/tclcommand.pir
 	$(PARROT) --output=$(CLASSDIR)/tclcommand.pbc $(CLASSDIR)/tclcommand.pir
@@ -184,17 +182,149 @@ tclsh: $(PARROT) tcl.pbc
 	$(PARROT) --gc-debug tcl.pbc
 
 test:	tcl.pbc
-	prove t/*.t
+	prove t
 
+# Can only run a few of these cleanly with test_more at the moment.
+# eventually, as the list of commented out tests is smaller, just
+# run them all. For now - only run the ones that will report properly
+# to the harness.
 RUNNABLE_TCL_TESTS = \
+  t_tcl/append.t \
+  t_tcl/appendComp.t \
+  t_tcl/assocd.t \
+  t_tcl/case.t \
+  t_tcl/chan.t \
+  t_tcl/cmdInfo.t \
+  t_tcl/cmdIL.t  \
   t_tcl/concat.t \
   t_tcl/config.t \
+  t_tcl/dcall.t \
+  t_tcl/env.t \
   t_tcl/eval.t \
+  t_tcl/event.t \
+  t_tcl/foreach.t \
   t_tcl/for_old.t \
+  t_tcl/if_old.t \
+  t_tcl/incr_old.t \
+  t_tcl/indexObj.t \
   t_tcl/join.t \
+  t_tcl/lindex.t \
+  t_tcl/link.t \
+  t_tcl/linsert.t \
   t_tcl/llength.t \
-  t_tcl/package.t
-  
+  t_tcl/lrange.t \
+  t_tcl/lrepeat.t \
+  t_tcl/lreplace.t \
+  t_tcl/lset.t \
+  t_tcl/notify.t \
+  t_tcl/package.t \
+  t_tcl/pid.t \
+  t_tcl/platform.t \
+  t_tcl/pwd.t \
+  t_tcl/result.t \
+  t_tcl/security.t \
+  t_tcl/split.t \
+  t_tcl/stringComp.t \
+  t_tcl/upvar.t \
+  t_tcl/winConsole.t \
+  t_tcl/winNotify.t \
+  t_tcl/winTime.t
+
+# These test files die for various reasons.
+#
+# too slow:
+#
+#t_tcl/incr.t            t_tcl/regexp.t          t_tcl/regexp.t
+#t_tcl/set.t             t_tcl/tcltest.t         t_tcl/trace.t
+#t_tcl/interp.t          t_tcl/io.t              t_tcl/scan.t
+#t_tcl/set_old.t         t_tcl/ioCmd.t           t_tcl/dict.t
+#t_tcl/clock.t           t_tcl/exec.t            t_tcl/compExpr_old.t
+#t_tcl/execute.t         t_tcl/expr.t            t_tcl/fCmd.t
+#t_tcl/fileName.t        t_tcl/util.t            t_tcl/format.t
+#t_tcl/parseExpr.t       t_tcl/pkgMkIndex.t      t_tcl/winFCmd.t
+#t_tcl/fileSystem.t      t_tcl/parse.t           t_tcl/winPipe.t
+#t_tcl/expr_old.t        t_tcl/reg.t             t_tcl/obj.t
+#t_tcl/lsetComp.t
+#
+# invalid command name "list" | can't rename "list": command doesn't exist
+#t_tcl/regexpComp.t      t_tcl/rename.t          t_tcl/basic.t
+#
+#add_1_const:Integer overflow '2'
+#t_tcl/get.t
+#
+# [expr issues]
+#t_tcl/if.t - can't use non-numeric string as operand of "!"
+#t_tcl/apply.t  - syntax error in expression "[info commands ::apply] eq {}": premature end of expression
+#t_tcl/async.t  - syntax error in expression "[info exists ::tcl_platform(threaded)] && $::tcl_platform(threaded)": premature end of expression
+#t_tcl/stack.t - expected boolean value but got "unix"
+#t_tcl/compile.t - can't use non-numeric string as operand of "!"
+#t_tcl/load.t - syntax error in expression "![string match *pkga* $alreadyLoaded]": premature end of expression
+#t_tcl/registry.t - expected boolean value but got "win"
+#t_tcl/unixInit - syntax error in expression " ($tcl_platform(os) eq "Darwin") ? "^utf-8$" : "^iso8859-15?$"": premature end of expression
+#t_tcl/cmdAH.t - syntax error in expression " ![testConstraint win] || ([string index $tcl_platform(osVersion) 0] >= 5 && [lindex [file system [temporaryDirectory]] 1] eq "NTFS") ": extra tokens at end of expression
+#t_tcl/thread.t - expected boolean value but got "testthread"
+#t_tcl/binary.t -syntax error in expression "$tcl_platform(byteOrder) eq "bigEndian"": extra tokens at end of expression
+#t_tcl/socket.t - syntax error in expression "[info exists env(remoteServerIP)]": premature end of expression
+#t_tcl/dstring.t - expected boolean value but got "testdstring"
+#t_tcl/unixNotfy.t - syntax error in expression " (![info exist tcl_platform(threaded)] || !$tcl_platform(threaded)) && $tcl_platform(os) ne "Darwin" ": premature end of expression
+#t_tcl/main.t - syntax error in expression " [llength [package provide Tcltest]] && [package vsatisfies [package provide Tcltest] 8.4]": extra tokens at end of expression
+#t_tcl/unload.t - syntax error in expression "![string match *pkgua* $alreadyLoaded]": premature end of expression
+#t_tcl/compExpr.t - can't use non-numeric string as operand of "!"
+#t_tcl/for.t - can't use non-numeric string as operand of "!"
+t_tcl/winDde.t - syntax error in expression "[lsearch [namespace children] ::tcltest] == -1": premature end of expression
+#t_tcl/while.t -can't use non-numeric string as operand of "!"
+#t_tcl/var.t - syntax error in expression "[lsearch [namespace children] ::tcltest] == -1": premature end of expression
+#t_tcl/history.t         -expected boolean value but got "history"
+#t_tcl/winFile.t          -expected boolean value but got "testvolumetype"
+#t_tcl/autoMkindex.t - syntax error in expression "[info exists auto_mkindex_parser::initCommands]": premature end of expression
+#
+# Null PMC access in name()
+#t_tcl/info.t            t_tcl/switch.t          t_tcl/lsearch.t
+#t_tcl/namespace_old.t   t_tcl/proc.t            t_tcl/http.t
+#t_tcl/while_old.t       t_tcl/proc_old.t        t_tcl/utf.t
+#
+# Null PMC access in clone()
+#t_tcl/init.t            t_tcl/safe.t            t_tcl/source.t
+#t_tcl/pkg.t             t_tcl/ioUtil.t          t_tcl/macOSXFCmd.t
+#t_tcl/unixFCmd          t_tcl/unixFile.t        t_tcl/misc.t
+# 
+# clone() not implemented in class 'Undef'
+#t_tcl/listObj.t
+# push_pmc() not implemented in class 'RetContinuation'
+#t_tcl/unknown.t
+#
+# Malformed string (http://rt.perl.org/rt3/Ticket/Display.html?id=40135)
+#t_tcl/subst.t
+#
+# extra characters after close-brace (These tests require {expand}[list])
+# t_tcl/encoding.t       t_tcl/namespace.t       t_tcl/iogt.t
+#
+# can't read "major": no such variable {{ [foreach] bug }}
+#t_tcl/tm.t
+#
+# Cannot get character of empty string -
+#   {test 5.11? something cumulative, as the test runs fine by itself}
+#t_tcl/parseOld.t
+#
+# invalid command name "x"
+#t_tcl/timer.t
+#
+# can't read "envVars": no such variable {{ [variable] bug }}
+#t_tcl/msgcat.t
+#
+# can't read "expected": no such variable {{ probably due to the fact
+# that tests expect to be run at the top level }}
+#t_tcl/error.t           t_tcl/uplevel.t
+#
+# can't read "::tcl::OptDescN": no such variable
+#t_tcl/opt.t
+#
+# syntax error, unexpected LABEL
+#t_tcl/stringObj.t
+#
+# bad option "script": must be args, body, cmdcount, commands, complete, default, exists, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars
+#t_tcl/httpold.t
+
 tcl-test: t_tcl tcl.pbc
     # For now, just test the ones that ``work'' with test_more
 	prove $(RUNNABLE_TCL_TESTS)

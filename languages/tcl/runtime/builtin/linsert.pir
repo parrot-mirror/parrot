@@ -13,7 +13,7 @@
   if $I0 < 3 goto wrong_args
 
   .local pmc __list
-  .get_from_HLL(__list, '_tcl', '__list')
+  __list = get_root_global ['_tcl'], '__list'
   
   .local pmc the_list
   the_list = shift argv
@@ -22,17 +22,23 @@
   .local pmc position
   position = shift argv
 
-  .local pmc list_index
-  .get_from_HLL(list_index, '_tcl', '_list_index')
+  .local pmc __index
+  __index = get_root_global ['_tcl'], '__index'
 
-  ($P0,$I2) = list_index(the_list,position)
-  #linsert treats 'end' differently
-  if $I2 == 0 goto next
-  inc $P0
-
-next: 
   .local int the_index
-  the_index = $P0
+  the_index = __index(position, the_list)
+
+  #linsert treats 'end' differently
+  $S0 = substr position, 0, 3
+  unless $S0 == 'end' goto next
+
+  inc the_index
+  
+next:
+  $I0 = elements the_list
+  if the_index <= $I0 goto convert_the_list
+
+  the_index = $I0
 
   # XXX workaround, splice doesn't work on TclList <-> TclList.
   # Until that's fixed, splice Arrays, then post-covert to a TclList
@@ -68,7 +74,7 @@ LOOP_the_args:
   goto LOOP_the_args
 DONE_the_args:
 
-  argv_list = splice argv_copy, the_index, 0
+   splice argv_list, argv_copy, the_index, 0
 
   .local pmc retval
   retval = new .TclList

@@ -74,7 +74,7 @@ static STM_tx_log *Parrot_STM_tx_log_alloc(Interp *interp, size_t size) {
 
 /*
 
-=head1 C<void Parrot_STM_destroy(Interp *interp)>
+=item C<void Parrot_STM_destroy(Interp *interp)>
 
 Free all resources associated with STM in the interpreter C<interp>.
 
@@ -229,7 +229,7 @@ static int is_aborted(STM_tx_log *log) {
     return 0;
 }
 /* 
-=head1 C<void Parrot_STM_start_transaction(Interp *interp)>
+=item C<void Parrot_STM_start_transaction(Interp *interp)>
 
 Start a new transaction for the interpreter C<interp>. If there is
 already a transaction in progress, starts a nested transaction.

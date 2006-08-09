@@ -47,7 +47,7 @@ skip_subj:
 
 body_from_list:
   .local pmc __list
-  .get_from_HLL(__list,'_tcl','__list')
+  __list = get_root_global ['_tcl'], '__list'
 
   $P0 = shift argv
   body = __list($P0)
@@ -72,8 +72,6 @@ exact_loop:
   branch exact_loop
 
 glob_mode:
-  load_bytecode 'PGE.pbc'
-  load_bytecode 'PGE/Glob.pbc'
   .local pmc globber, rule
   globber = compreg 'PGE::Glob'
 glob_loop:
@@ -87,7 +85,6 @@ glob_loop:
   branch glob_loop
 
 regex_mode:
-  load_bytecode 'PGE.pbc'
   .local pmc tclARE,rule,match
   tclARE = compreg 'PGE::P5Regex'
 regex_loop:
@@ -106,8 +103,8 @@ body_end:
 
 body_match:
   .local pmc compiler,pir_compiler
-  .get_from_HLL(compiler, '_tcl', 'compile') 
-  .get_from_HLL(pir_compiler, '_tcl', 'pir_compiler') 
+  compiler     = get_root_global ['_tcl'], 'compile'
+  pir_compiler = get_root_global ['_tcl'], 'pir_compiler'
   ($I0,$S0) = compiler(0,code)
   $P1 = pir_compiler($I0,$S0)
   .return $P1()
@@ -118,6 +115,6 @@ bad_args:
 bad_flag:
   $S1 = 'bad option "'
   $S1 .= $S0
-  $S1 .= '": must be -exact, -glob, -regexp, -matchvar, -indexvar, or --'
+  $S1 .= '": must be -exact, -glob, -indexvar, -matchvar, -nocase, -regexp, or --'
   .throw ($S1)
 .end

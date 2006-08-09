@@ -10,7 +10,7 @@ use Test::More;
 use Parrot::Test;
 use Parrot::Config;
 
-=head NAME
+=head1 NAME
 
 t/src/atomic.t - Parrot Atomic operations
 

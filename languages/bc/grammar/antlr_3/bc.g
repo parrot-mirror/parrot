@@ -2,7 +2,11 @@
 // $Id$ 
  
 // Parse bc with ANTLR3
-// This grammar is derived from <http://www.funet.fi/pub/doc/posix/p1003.2/d11.2/4.3>
+
+// This grammar is derived from 
+// http://www.opengroup.org/onlinepubs/000095399/utilities/bc.html
+
+// The starting rule is 'program'
 
 grammar BcParser;
 
@@ -12,33 +16,76 @@ options
   ASTLabelType = CommonTree;
 }
 
+
 tokens 
 {
   PROGRAM;
+  VAR;
 } 
 
+
 program 
-  : input_item quit -> ^( PROGRAM input_item )
+  : input_item+ quit -> ^( PROGRAM input_item+)
   ;
 
-input_item
-  : expression +
+
+input_item 
+  : semicolon_list
+  ;
+
+semicolon_list 
+  : statement ( ';'! statement )*
+  ;
+
+
+statement
+  : expression
+    |
+    STRING
   ;
 
 expression
-  : adding_expression
+  : named_expression
+    |
+    adding_expression
   ;
+
+named_expression
+  : LETTER -> ^( VAR LETTER ) 
+  ;
+
 
 adding_expression
-  : multiplying_expression ( (PLUS^^ | MINUS^^) multiplying_expression)* 
+  : multiplying_expression ( ( PLUS^^ | MINUS^^ ) multiplying_expression)* 
   ;
+
 
 multiplying_expression
-  : INT
+  : unary_expression ( MUL_OP^^ unary_expression )*
   ;
 
-INT
-  : ('0'..'9')+
+
+unary_expression
+  : postfix_expression
+    |
+    ( INCR^^ | DECR^^ ) postfix_expression
+  ;
+
+postfix_expression
+  : NUMBER
+    |
+    '(' expression ')' -> expression
+  ;
+
+NUMBER
+  : INTEGER ('.' INTEGER)?
+    |
+    '.' INTEGER
+  ;
+
+fragment
+INTEGER
+  : ('0'..'9' | 'A' .. 'F' )+
   ;
 
 MINUS
@@ -49,15 +96,25 @@ PLUS
   : '+'
   ;
 
+MUL_OP
+  : '*' | '/' | '%'
+  ;
 
+INCR
+  : '++'
+  ;
+
+DECR
+  : '--'
+  ;
+
+// quit is required, make testing easier
 // quit is required, make testing easier
 quit
   : 'quit'
   ;    
 
 // ignore multiple-line comments
-
-
 ML_COMMENT
   : '/*' ( options {greedy=false;} : . )* '*/'
     {
@@ -65,13 +122,27 @@ ML_COMMENT
     }
   ;
 
+// ignore whitespace
 WS
-  : (   ' '
-      | '\t'
-      | '\r'
-      | '\n'
-    )+
+  : ( ' ' | '\t' | '\r' | '\n')+
     {
       channel = 99;       // send into nirwana 
     }
   ;    
+
+// Windows and Unix style newlines
+fragment
+NEWLINE
+  : ('\r')? '\n'+
+  ;
+
+
+// String literals are everything in double quotes, no escaping
+STRING
+  : '\"' ( ~'\"' )*  '\"'
+  ;
+
+LETTER
+  : 'a'..'z'
+  ;
+  

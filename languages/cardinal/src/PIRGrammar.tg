@@ -23,155 +23,200 @@ PIRGrammar -- A grammar for transforming an opcode syntax tree to PIR.
 
 =cut
 
-# This is just a stub to allow Punie to execute code. It will be
-# replaced.
-grammar PIRGrammar is TGE::Grammar;
+grammar Cardinal::PIRGrammar is TGE::Grammar;
 
-transform result (ROOT) :language('PIR') {
-    .local string output
+transform root (Cardinal::POST::Ops) :language('PIR') {
+    .local pmc code
+    $P0 = tree.get('pir', node)
+    $S0 = self.'gen_subs'()
+    $P0 .= $S0
+    .return ($P0)
+}
+
+transform pir (Cardinal::POST::Op) :language('PIR') {
+    $P0 = node.'pir'(self)
+    .return ($P0)
+}
+
+transform pir (Cardinal::POST::Label) :language('PIR') {
+    .local string code
+    .local string value
+    value = node.'value'()
+    code = '  '
+    code .= value
+    code .= ":\n"
+    .return (code)
+}
+
+transform pir (Cardinal::POST::Var) :language('PIR') {
+    .local string name
+    .local string scope
+    .local string value
+    .local pmc code
+    .local pmc block
+    .local int islvalue
+    name = node.'name'()
+    scope = node.'scope'()
+    value = node.'value'()
+    islvalue = node.'islvalue'()
+    block = self.'top_scope_stack'()
+    code = new 'PGE::CodeString'
+
+    if scope == 'lexical' goto generate_lexical
+    if scope == 'parameter' goto generate_parameter
+    if scope == 'global' goto generate_global
+    goto generate_find
+
+  generate_parameter:
+    .local pmc prologue
+    .local string pname
+    pname = node.'paramname'()
+    prologue = block.'prologue'()
+    prologue.'emit'("    .param pmc %0", pname)
+    code.'emit'("    .lex '%0', %1", name, value)
+    code.'emit'("    %0 = %1", value, pname)
+    goto end
+
+  generate_lexical:
+    code.'emit'("    .lex '%0', %1", name, value)
+    goto end
+  generate_global:
+    if islvalue goto end
+    code.'emit'("    %0 = get_hll_global '%1'", value, name)
+    goto end
+  generate_find:
+    if islvalue goto end
+    code.'emit'("    %0 = find_name '%1'", value, name)
+  end:
+    .return (code)
+}
+
+transform pir (Cardinal::POST::Ops) :language('PIR') {
+    .local pmc code
     .local pmc iter
+
+    code = new 'PGE::CodeString'
     iter = node.'child_iter'()
   iter_loop:
-    unless iter, iter_end         # while (entries) ...
-      shift $P2, iter
-      $S3 = tree.get('result', $P2)
-      output .= $S3
-      goto iter_loop
+    unless iter goto iter_end
+    $P0 = shift iter
+    $P1 = tree.'get'('pir', $P0)
+    code .= $P1
+    goto iter_loop
   iter_end:
-    .return (output)
+    .return (code)
 }
 
-transform result (POST::Sub) :language('PIR') {
-    .local string output
-    output = ".sub "
-    $S1 = node.'name'()
-    output .= $S1
-    $S2 = node.'attribute'()
-    unless $S2 goto no_attribute
-      output .= " :"
-      output .= $S2
-  no_attribute:
-    output .= "\n"
+transform pir (Cardinal::POST::Assign) :language('PIR') {
+    .local pmc lnode
+    .local pmc rnode
+    .local pmc rvalue
+    lnode = node[0]
+    rnode = node[1]
+    
+    .local pmc name, value, scope, xvalue, code, varhash, block
+    name = lnode.'name'()
+    value = lnode.'value'()
+    scope = lnode.'scope'()
+    rvalue = rnode.'value'()
+    code = new 'PGE::CodeString'
+    block = self.'top_scope_stack'()
+    varhash = block.'varhash'()
+    $I0 = exists varhash[name]
+    if $I0 goto with_varhash_name
+    varhash[name] = lnode
+  with_varhash_name:
+    if scope == 'outerpackage' goto store_package
+    if scope == 'package' goto store_package
+    if scope == 'global' goto store_package
+  store_lexical:
+    code.'emit'("    store_lex '%0', %1", name, rvalue)
+    .return (code)
+  store_package:
+    code.'emit'("    set_hll_global '%0', %1", name, rvalue)
+    .return (code)
+}
 
-    .local pmc iter
+transform pir (Cardinal::POST::Call) :language('PIR') {
+    .local pmc code
+    .local string sub_name
+    .local string args
+    sub_name = node.'name'()
+    args = ""
+    code = new 'PGE::CodeString'
+    code.'emit'("    '%0'(%1)", sub_name, args)
+    .return (code)
+}
+
+transform pir (Cardinal::POST::Raw) :language('PIR') {
+    .local pmc code
+    $P1 = node.'raw'()
+    code = new 'PGE::CodeString'
+    code.'emit'("%0", $P1)
+    .return (code)
+    }
+
+transform pir (Cardinal::POST::Sub) :language('PIR') {
+    
+    ##   create a new (empty) variable hash and prologue for this sub
+    .local pmc varhash
+    .local pmc prologue
+    .local string subtype
+    
+    subtype = node.'subtype'()
+    varhash = new .Hash
+    node.'varhash'(varhash)
+    prologue = new 'PGE::CodeString'
+    node.'prologue'(prologue)
+
+    .local string name
+    .local string outerattr
+    .local pmc outer
+    name = node.'name'()
+    outer = node.'outer'()
+    outerattr = ''
+    $I0 = defined outer
+    if $I0 == 0 goto with_outerattr
+    outerattr = outer.'name'()
+    outerattr = concat ":outer('", outerattr
+    outerattr = concat outerattr, "')"
+  with_outerattr:
+    .local pmc code, iter, subcode
+    .local pmc subcode_parts
+    ## build the code for this sub
+    .local string adverbs
+    adverbs = node.'adverbs'()
+    prologue.'emit'("\n.sub '%0' %1 %2", name, outerattr, adverbs)
+    subcode = new 'PGE::CodeString'
+    subcode_parts = new 'PGE::CodeString'
+    self.'add_sub'(subcode)
+
+    $P2 = self.'scope_stack'()
+    push $P2, node
     iter = node.'child_iter'()
   iter_loop:
-    unless iter, iter_end         # while (entries) ...
-      shift $P2, iter
-      $S3 = tree.get('result', $P2)
-      output .= $S3
-      goto iter_loop
+    unless iter goto iter_end
+    $P0 = shift iter
+    $P1 = tree.'get'('pir', $P0)
+    subcode_parts .= $P1
+    goto iter_loop
   iter_end:
-    output .= ".end\n\n"
-    .return (output)
-}
-
-# Flatten out the ops into a simple sequence.
-transform result (POST::Ops) :language('PIR') {
-    .local string output
-    .local pmc iter
-    iter = node.'child_iter'()
-  iter_loop:
-    unless iter, iter_end         # while (entries) ...
-      shift $P2, iter
-      $S3 = tree.get('result', $P2)
-      output .= $S3
-      goto iter_loop
-  iter_end:
-    .return (output)
-}
-
-transform result (POST::Op) :language('PIR') {
-    .local string output
-    .local int counter
-    counter = 0
-    .local string opname
-    opname = node.op()
-    output = "    " . opname
-    output .= " "
-    .local pmc iter
-    iter = node.'child_iter'()
-  iter_loop:
-    unless iter goto iter_end         # while (entries) ...
-      shift $P2, iter
-      inc counter
-      $S3 = tree.get('result', $P2)
-      if counter <= 1 goto no_comma_out
-      output .= ", "
-    no_comma_out:
-      output .= $S3
-      goto iter_loop
-  iter_end:
-    output .= "\n"
-    .return (output)
-}
-
-transform result (POST::Call) :language('PIR') {
-    .local string output
-    .local int counter
-    counter = 0
-
-    output = "    " # initial indentation
-    .local pmc iter
-    iter = node.'child_iter'()
-    unless iter goto no_first         # first entry
-      shift $P1, iter
-      $S1 = tree.get('result', $P1)
-      output .= $S1
-      output .= " = "
-  no_first:
-
-    .local string subname
-    subname = node.'name'()
-    output .= "'"
-    output .= subname
-    output .= "'("
-  iter_loop:
-    unless iter goto iter_end         # while (entries) ...
-      shift $P2, iter
-      inc counter
-      $S3 = tree.get('result', $P2)
-      if counter <= 1 goto no_comma_out
-      output .= ", "
-    no_comma_out:
-      output .= $S3
-      goto iter_loop
-  iter_end:
-    output .= ")\n"
-    .return (output)
-}
-
-transform result (POST::Var) :language('PIR') {
-    $S1 = node.varname()
-    .return ($S1)
-}
-
-transform result (POST::Label) :language('PIR') {
-    $S1 = node.name()
-    $I1 = node.dest()
-    unless $I1 goto not_dest
-       $S1 .= ":\n"
-    not_dest:
-    .return ($S1)
-}
-
-transform result (POST::Val) :language('PIR') {
-    $S1 = node.value()
-    $S2 = node.valtype()
-    if $S2 == 'strq' goto wrap_string_single
-    if $S2 == 'strqq' goto wrap_string_double
-    # Otherwise, it's not a string value, so return it straight.
-    .return ($S1)
-  wrap_string_double:
-    # Wrap double quoted strings in double quotes
-    $S3 = '"' . $S1
-    $S3 .= '"'
-    .return ($S3)
-  wrap_string_single:
-    # Wrap single quoted strings in single quotes
-    $S3 = "'" . $S1
-    $S3 .= "'"
-    .return ($S3)
+    pop $P0, $P2
+    
+    .local string value
+    prologue = node.'prologue'()
+    subcode .= prologue
+    subcode .= subcode_parts
+    value = node.'value'()
+    subcode.'emit'("    .return (%0)\n.end\n", value)
+    
+    ne subtype, 'begin', return
+    ##  generate the pir to locate this sub and return it
+    code = new 'PGE::CodeString'
+    code.'emit'("    '%0'()",  name)
+    .return (code)
+    return:
+    .return ("")
 }
 
 =head1 LICENSE
@@ -183,6 +228,6 @@ it under the same terms as Parrot.
 
 =head1 AUTHOR
 
-Allison Randal <allison@perl.org>
+Kevin Tew <tewk@tewk.com>
 
 =cut

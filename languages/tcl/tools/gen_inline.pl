@@ -140,15 +140,20 @@ sub inlined_header {
     
 .sub '$cmd'
   .param int register
+  .param pmc raw_argv
   .param pmc argv
     
   .local pmc compiler
-  .get_from_HLL(compiler, '_tcl', 'compile_dispatch')
+  compiler = get_root_global ['_tcl'], 'compile_dispatch'
   
   .local int argc
   .local string pir
   pir = ''
   argc = elements argv
+  # the number for the loops
+  .local int loop_num
+  loop_num = register
+
 END_PIR
         
     return $code;
@@ -204,7 +209,7 @@ sub inlined_helpers {
         next unless my $help = $conversions{$type};
         
         $code .= emit("  .local pmc $help");
-        $code .= emit("  .get_from_HLL($help, '_tcl', '$help')");
+        $code .= emit("  $help = get_root_global ['_tcl'], '$help'");
     }
     
     return $code;
@@ -226,7 +231,7 @@ sub helpers {
         next unless my $help = $conversions{$type};
         
         $code .= "  .local pmc $help \n";
-        $code .= "  .get_from_HLL($help, '_tcl', '$help') \n";
+        $code .= "  $help = get_root_global ['_tcl'], '$help' \n";
     }
     
     return $code;
@@ -246,26 +251,22 @@ sub inlined_arguments {
         my $arg  = $args[$i];
         my $name = $arg->{name};
         
-        $code .= emit("  .local pmc a_$name");
+        $code .= emit("  .local pmc a_${name}_%0", 'loop_num');
         # do we need to use a default?
         $code .= "  if argc < ".($i+1)." goto default_$name \n"
             if $arg->{optional};
         
         # the actual thing to be compiled
-        $code .= "  \$P0 = argv[$i] \n";
-        # the register behind this argument
-        $code .= "  .local int    r_$name \n";
-        $code .= "  (r_$name, \$S0) = compiler(register, \$P0) \n";
-        $code .= "  register = r_$name + 1 \n";
-        $code .= "  pir .= \$S0 \n";
-        $code .= emit("a_$name = \$P%0", "r_$name");
+        $code .= " .local string r_$name \n";
+        $code .= " r_$name = argv[$i] \n";
+        $code .= emit("a_${name}_%0 = %1", 'loop_num', "r_$name");
         
         # convert the argument, if necessary
         for my $type (@{ $arg->{type} })
         {
             my $convert = $conversions{$type};
             
-            $code .= emit("a_$name = $convert(a_$name)")
+            $code .= emit("a_${name}_%0 = $convert(a_${name}_%0)", 'loop_num')
                 if $convert;
         }
         
@@ -278,10 +279,17 @@ sub inlined_arguments {
             
             $code .= "  goto done_$name \n";
             $code .= "default_$name: \n";
-            $code .= emit("a_$name = new .$type");
-            $code .= emit("a_$name = $quote$default$quote");
+            $code .= emit("a_${name}_%0 = new .$type", 'loop_num');
+            $code .= emit("a_${name}_%0 = $quote$default$quote", 'loop_num');
             $code .= "done_$name: \n";
         }
+        elsif ($arg->{optional}) {
+            $code .= "  goto done_$name \n";
+            $code .= "default_$name: \n";
+            $code .= emit("null a_${name}_%0", 'loop_num');
+            $code .= "done_$name: \n";
+        }
+            
     }
     
     return $code;
@@ -326,6 +334,12 @@ sub arguments {
             $code .= "  a_$name = $quote$default$quote \n";
             $code .= "done_$name: \n";
         }
+        elsif ($arg->{optional}) {
+            $code .= "  goto done_$name \n";
+            $code .= "default_$name: \n";
+            $code .= "  null a_$name \n";
+            $code .= "done_$name: \n";
+        }
     }
     
     return $code;
@@ -354,11 +368,7 @@ sub inlined_body {
     my ($file, @args) = @_;
     
     my %args = map { $_->{name} => $_ } @args;
-    
-    # the number for the loops
-    my $code = "  .local int loop_num \n"
-             . "  loop_num = register \n";
-    $code .= emit('.local pmc temp');
+    my $code = emit('.local pmc temp');
     # locals inside this code
     my %locals;
     for my $orig (@$file)
@@ -396,16 +406,16 @@ sub inlined_body {
         }
 
         # args
-        while ($line =~ s/\$(?!(?:P|S|N|I)\d+|R\b)(\w+)/a_$1/)
+        while ($line =~ s/\$(?!(?:P|S|N|I)\d+|R\b)(\w+)/a_${1}_%0/)
         {
             my $name = $1;
             my $arg  = $args{$name};
             
             if ($arg->{type}[-1] eq 'script' or $arg->{type}[-1] eq 'expr') {
-                $code .= emit("temp = a_$name()");
+                $code .= emit("temp = a_${name}_%0()", 'loop_num');
                 
                 # if that's all there is, remove it
-                $line =~ s/^\s*a_$name\s*$//m or $line =~ s/a_$name/temp/;
+                $line =~ s/^\s*a_${name}_%0\s*$//m or $line =~ s/a_${name}_%0/temp/;
             }
         }
         

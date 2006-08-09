@@ -222,7 +222,7 @@ GEN_CONFIGS = \
     $(INC_DIR)/feature.h \
     $(INC_DIR)/core_pmcs.h \
     $(SRC_DIR)/exec_dep.h \
-    lib/Parrot/Config.pm \
+    lib/Parrot/Config/Generated.pm \
     lib/Parrot/PMC.pm \
     runtime/parrot/include/config.fpmc \
     $(SRC_DIR)/platform.c \
@@ -395,6 +395,7 @@ IO_O_FILES = \
     $(IO_DIR)/io_mmap$(O) \
     $(IO_DIR)/io_win32$(O) \
     $(IO_DIR)/io_stdio$(O) \
+    $(IO_DIR)/io_string$(O) \
     $(IO_DIR)/io_passdown$(O)
 
 INTERP_O_FILES = \
@@ -1062,6 +1063,8 @@ $(IO_DIR)/io_win32$(O) : $(GENERAL_H_FILES) $(IO_DIR)/io_private.h
 
 $(IO_DIR)/io_stdio$(O) : $(GENERAL_H_FILES) $(IO_DIR)/io_private.h
 
+$(IO_DIR)/io_string$(O) : $(GENERAL_H_FILES) $(IO_DIR)/io_private.h
+
 $(IO_DIR)/io_passdown$(O) : $(GENERAL_H_FILES) $(IO_DIR)/io_private.h
 
 $(SRC_DIR)/memory$(O) : $(GENERAL_H_FILES)
@@ -1278,7 +1281,6 @@ compilers.dummy : $(PARROT)
 	$(MAKE) compilers/past
 	$(MAKE) compilers/pge
 	$(MAKE) compilers/tge
-	$(MAKE) compilers/bcg
 
 languages : languages.dummy
 
@@ -1304,7 +1306,6 @@ compilers-clean :
 	$(MAKE) compilers/past clean
 	$(MAKE) compilers/pge clean
 	$(MAKE) compilers/tge clean
-	$(MAKE) compilers/bcg clean
 	
 ###############################################################################
 #
@@ -1698,7 +1699,8 @@ install : installable
 
 release : MANIFEST MANIFEST.generated
 	[ -d parrot-$(VERSION) ] || ln -s $(CUR_DIR) parrot-$(VERSION)
-	cp MANIFEST MANIFEST.real
+	@$(RM_F) MANIFEST.real
+	mv MANIFEST MANIFEST.real
 	grep -v DEVELOPING MANIFEST.real > MANIFEST
 	tar zcvf parrot-$(VERSION).tar.gz $$(perl -lane 'print"parrot-$(VERSION)/$$F[0]"unless!length||/#/' MANIFEST)
 	mv MANIFEST.real MANIFEST

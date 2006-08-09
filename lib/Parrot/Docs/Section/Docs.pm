@@ -55,7 +55,6 @@ sub new
 			$self->new_item('', 'docs/strings.pod'),
 			$self->new_item('', 'docs/memory_internals.pod'),
 			$self->new_item('', 'docs/parrotbyte.pod'),
-			$self->new_item('', 'docs/parrotbyte.pod'),
 			$self->new_item('', 'docs/jit.pod'),
 			$self->new_item('', 'docs/native_exec.pod'),
 			$self->new_item('', 'docs/running.pod'),
@@ -68,6 +67,7 @@ sub new
 		$self->new_group('Development Documentation', '', 'docs/dev'),
 		$self->new_group('PMC Documentation', '', 'docs/pmc'),
 		$self->new_group('Parrot Design Documents (PDD)', '', 'docs/pdds'),
+		$self->new_group('Articles', '', 'docs/art'),
 	);
 }
 
