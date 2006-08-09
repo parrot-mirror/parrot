@@ -351,8 +351,13 @@ Parrot_clone_lib_into(Interp *d, Interp *s, PMC *lib_pmc) {
         /* fixup d->all_op_libs, if necessary */
         if (d->n_libs != s->n_libs) {
             INTVAL i;
-            d->all_op_libs = mem_sys_realloc(d->all_op_libs,
-                sizeof(op_lib_t *) * s->n_libs);
+            if (d->all_op_libs) {
+                d->all_op_libs = mem_sys_realloc(d->all_op_libs,
+                    sizeof(op_lib_t *) * s->n_libs);
+            } else {
+                d->all_op_libs = mem_sys_allocate(sizeof(op_lib_t *) * 
+                    s->n_libs);
+            } 
             for (i = d->n_libs ; i < s->n_libs; ++i) {
                 d->all_op_libs[i] = s->all_op_libs[i];
             }
