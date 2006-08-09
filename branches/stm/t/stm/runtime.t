@@ -36,7 +36,7 @@ my $choice_test = <<'CODE';
     _choice_one = newclosure choice_one
     _choice_two = newclosure choice_two
     .local pmc _choice
-    _choice = find_global 'STM', 'choice'
+    _choice = get_hll_global ['STM'], 'choice'
     $I0 = _choice(_choice_one, _choice_two)
     .return ($I0)
 .end
@@ -52,7 +52,7 @@ my $choice_test = <<'CODE';
     .return (1)
 need_retry:
     .local pmc retry
-    retry = find_global 'STM', 'retry'
+    retry = get_hll_global ['STM'], 'retry'
     retry()
 .end
 
@@ -70,7 +70,7 @@ need_retry:
     .return (2)
 need_retry:
     .local pmc retry
-    retry = find_global 'STM', 'retry'
+    retry = get_hll_global ['STM'], 'retry'
     retry()
 .end
 
@@ -134,7 +134,7 @@ pir_output_is($choice_test . <<'CODE', <<'OUTPUT', "choice (multiple threads)");
     .param pmc values
     .local pmc transaction
     .local pmc real_sub
-    transaction = find_global 'STM', 'transaction'
+    transaction = get_hll_global ['STM'], 'transaction'
     real_sub = global '_wakeup_func'
     transaction(real_sub, values)
     .return (0)
@@ -229,7 +229,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "choice doesn't clobber");
     setting = find_lex 'set_to'
     value.'set'(setting)
     .local pmc retry
-    retry = find_global 'STM', 'retry'
+    retry = get_hll_global ['STM'], 'retry'
     retry()
 .end
 
@@ -249,7 +249,7 @@ pir_output_is(<<'CODE', <<'OUTPUT', "choice doesn't clobber");
     .return ()
 do_retry:
     .local pmc retry
-    retry = find_global 'STM', 'retry'
+    retry = get_hll_global ['STM'], 'retry'
     retry()
 .end
 
@@ -268,7 +268,7 @@ do_retry:
     $P3 = make_normal(value)
     $P4 = make_clobber(value, 40)
     .local pmc choice
-    choice = find_global 'STM', 'choice'
+    choice = get_hll_global ['STM'], 'choice'
     choice($P0, $P1, $P2, $P3, $P4)
 .end 
 
@@ -281,7 +281,7 @@ do_retry:
     .param pmc what 
     .local pmc transaction
     .local pmc real_sub
-    transaction = find_global 'STM', 'transaction'
+    transaction = get_hll_global ['STM'], 'transaction'
     real_sub = global '_wakeup_func'
     transaction(real_sub, what)
     .return (0)
@@ -307,7 +307,7 @@ do_retry:
     $P0.'join'()
     $P1.'join'()
 
-    tx = find_global 'STM', 'transaction'
+    tx = get_hll_global ['STM'], 'transaction'
     .const .Sub _get = '_get'
     $P0 = tx(_get, value)
     if $P0 != 0 goto failed
@@ -377,7 +377,7 @@ loop:
     .param int removep
     .param int blockp
 
-    $P0 = find_global 'STM', 'transaction'
+    $P0 = get_hll_global ['STM'], 'transaction'
     $P1 = global '_fetchHead'
     .return $P0($P1, self, removep, blockp)
 .end
@@ -395,7 +395,7 @@ loop:
     if used != 0 goto have_items
     
     unless blockp goto no_block
-    $P0 = find_global 'STM', 'retry'
+    $P0 = get_hll_global ['STM'], 'retry'
     $P0()
 
 have_items:
@@ -422,7 +422,7 @@ skip_remove:
 
 no_block:
     ret = new Undef
-    $P0 = find_global 'STM', 'give_up'
+    $P0 = get_hll_global ['STM'], 'give_up'
     $P0()
 normal_return:
     .return (ret) 
@@ -432,7 +432,7 @@ normal_return:
     .param pmc what
     .param int blockp
 
-    $P0 = find_global 'STM', 'transaction'
+    $P0 = get_hll_global ['STM'], 'transaction'
     $P1 = global '_addTail'
     $P2 = $P0($P1, self, what, blockp)
     .return ($P2)
@@ -475,11 +475,11 @@ normal_return:
 
 is_full:
     unless blockp goto no_block
-    $P0 = find_global 'STM', 'retry'
+    $P0 = get_hll_global ['STM'], 'retry'
     $P0()
 
 no_block:
-    $P0 = find_global 'STM', 'give_up'
+    $P0 = get_hll_global ['STM'], 'give_up'
     $P0()
 error:
     ret = 0
@@ -533,7 +533,7 @@ not_okay:
 
     load_bytecode 'STM.pbc'
 
-    $P0 = find_global 'STMQueue', '__onload'
+    $P0 = get_hll_global ['STMQueue'], '__onload'
     $P0()
 
     _add = global "adder"
@@ -586,7 +586,7 @@ fail:
 
     load_bytecode 'STM.pbc'
 
-    $P0 = find_global 'STMQueue', '__onload'
+    $P0 = get_hll_global ['STMQueue'], '__onload'
     $P0()
 
     $I0 = find_type 'STMQueue'
@@ -594,7 +594,7 @@ fail:
     $P0 = SIZE 
     queue = new $I0, $P0
 
-    $P0 = find_global 'STM', 'transaction'
+    $P0 = get_hll_global ['STM'], 'transaction'
     $P1 = global '_test'
     $P0($P1, queue)
 

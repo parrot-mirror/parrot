@@ -198,13 +198,14 @@ do_ret:
     setattribute result, 'used', $P0
     .return (result)
 .end
+
 CODE
 
 pir_output_is($library . <<'CODE', <<'OUTPUT', "Single-threaded case");
 .sub main :main
     .local pmc queue
 
-    $P0 = find_global 'STMQueue', '__onload'
+    $P0 = get_hll_global ['STMQueue'], '__onload'
     $P0()
 
     $I0 = find_type 'STMQueue'
@@ -282,7 +283,7 @@ not_okay:
     .local int addThreadId
     .local int removeThreadId
 
-    $P0 = find_global 'STMQueue', '__onload'
+    $P0 = get_hll_global ['STMQueue'], '__onload'
     $P0()
 
     _add = global "adder"
@@ -354,7 +355,7 @@ no_sleep:
     .local int addThreadId
     .local int removeThreadId
 
-    $P0 = find_global 'STMQueue', '__onload'
+    $P0 = get_hll_global ['STMQueue'], '__onload'
     $P0()
 
     _add = global "adder"
@@ -436,7 +437,7 @@ no_sleep:
     .local int addThreadId
     .local int removeThreadId
 
-    $P0 = find_global 'STMQueue', '__onload'
+    $P0 = get_hll_global ['STMQueue'], '__onload'
     $P0()
 
     _add = global "adder"

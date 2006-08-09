@@ -262,7 +262,7 @@ got_head:
 .sub add_head :method
     .param pmc value
     .const .Sub _add_head = '_add_head'
-    $P1 = find_global 'STM', 'transaction'
+    $P1 = get_hll_global ['STM'], 'transaction'
     $P1(_add_head, self, value)
 .end
 
@@ -290,13 +290,13 @@ skip_head:
 do_return:
     .return tail_node.'get_value'()
 no_tail:
-    $P0 = find_global 'STM', 'retry'
+    $P0 = get_hll_global ['STM'], 'retry'
     $P0()
 .end
 
 .sub remove_tail :method
     .const .Sub _remove_tail = '_remove_tail'
-    $P1 = find_global 'STM', 'transaction'
+    $P1 = get_hll_global ['STM'], 'transaction'
     $P2 = $P1(_remove_tail, self)
     .return ($P2)
 .end
