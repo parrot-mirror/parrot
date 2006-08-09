@@ -45,13 +45,17 @@ struct _Shared_gc_info {
 
     Parrot_atomic_int gc_block_level;
 };
+
 /*
 
 =item C<static PMC*
 make_local_copy(Parrot_Interp interpreter, Parrot_Interp from, PMC *original)>
 
 Create a local copy of the PMC if necessary. (No copy is made if it
-is marked shared.)
+is marked shared.) This includes workarounds for Parrot_clone() not
+doing the Right Thign with subroutines (specifically, code segments
+aren't preserved and it is difficult to do so so long as 
+Parrot_clone() depends on freezing).
 
 =cut
 
@@ -62,11 +66,21 @@ make_local_copy(Parrot_Interp interpreter, Parrot_Interp from, PMC *arg)
 {
     PMC *ret_val;
     STRING *const _sub = interpreter->vtables[enum_class_Sub]->whoami;
+    STRING *const _multi_sub = interpreter->vtables[enum_class_MultiSub]->whoami;
     if (PMC_IS_NULL(arg)) {
         ret_val = PMCNULL;
     } else if (PObj_is_PMC_shared_TEST(arg)) { 
         ret_val = arg;
-    } else if (VTABLE_isa(interpreter, arg, _sub)) {
+    } else if (VTABLE_isa(from, arg, _multi_sub)) {
+        INTVAL i = 0;
+        INTVAL n = VTABLE_elements(from, arg);
+        ret_val = pmc_new(interpreter, enum_class_MultiSub);
+        for (i = 0; i < n; ++i) {
+            PMC *const orig = VTABLE_get_pmc_keyed_int(from, arg, i);
+            PMC *const copy = make_local_copy(interpreter, from, orig);
+            VTABLE_push_pmc(interpreter, ret_val, copy);
+        }
+    } else if (VTABLE_isa(from, arg, _sub)) {
         /* this is a workaround for cloning subroutines not actually 
          * working as one might expect mainly because the segment is
          * not correctly copied

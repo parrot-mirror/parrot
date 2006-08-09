@@ -46,7 +46,7 @@ if ($^O eq "cygwin" ) {
     }
 }
 if ($platforms{$^O}) {
-   plan tests => 19;
+   plan tests => 20;
 }
 else {
    plan skip_all => "No threading yet or test not enabled for '$^O'";
@@ -105,6 +105,51 @@ pir_output_is(<<'CODE', <<'OUTPUT', "thread type 1");
 .end
 # output from threads could be reversed
 CODE
+thread
+main 10
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', "thread type 1 -- repeated");
+.sub real_main :main
+    $I0 = 0
+loop:
+    main()
+    inc $I0
+    if $I0 < 2 goto loop
+.end
+
+.sub main
+    .local pmc threadfunc
+    .local pmc thread
+    I5 = 10
+    threadfunc = global "foo"
+    thread = new .ParrotThread
+    thread.'run_clone'(threadfunc)
+
+    sleep 1
+    print "main "
+    print I5
+    print "\n"
+    # get tid of thread
+    $I0 = thread 
+    # wait for it
+    thread.'join'()
+.end
+
+.sub foo 
+    # check if vars are fresh
+    inc I5
+    print "thread"
+    # print I5 # not done because registers aren't guaranteed to be
+               # initialized to anything in particular
+    print "\n"
+    set I3, 0   # no retval
+    returncc	# ret and be done with thread
+.end
+# output from threads could be reversed
+CODE
+thread
+main 10
 thread
 main 10
 OUTPUT

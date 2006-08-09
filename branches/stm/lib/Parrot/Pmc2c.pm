@@ -423,6 +423,29 @@ sub init {
     if (!$self->{flags}{no_ro}) {
         $self->make_ro;
     }
+
+    if ($self->{flags}{singleton}) {
+        # Since singletons are shared between interpreters, we need
+        # to make special effort to use the right namespace for 
+        # method lookups. Note that this trick won't work if the
+        # singleton inherits from something else (because the
+        # MRO will still be shared).
+        unless ($self->implements('namespace') or 
+                    $self->{super}{'namespace'} ne 'default') {
+            push @{$self->{methods}}, {
+                meth => 'namespace',
+                parameters => '',
+                body => '{
+                    return INTERP->vtables[SELF->vtable->base_type]->_namespace;
+                }',
+                'loc' => 'vtable',
+                'mmds' => [],
+                'type' => 'PMC*',
+                'line' => 1
+            };
+            $self->{has_method}{namespace} = $#{$self->{methods}};
+        }
+    }
 }
 
 =item C<decl($classname, $method, $for_header)>
