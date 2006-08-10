@@ -2535,7 +2535,7 @@ find_constants(Interp *interpreter, struct PackFile_ConstTable *ct) {
             old_consts = ct->constants;
             new_consts = mem_sys_allocate(sizeof(struct PackFile_Constant*) * num_consts);
 
-            for (i = 0; i < ct->const_count; ++i) {
+            for (i = 0; i < num_consts; ++i) {
                 new_consts[i] = clone_constant(interpreter, old_consts[i]);
             }
 
@@ -2550,7 +2550,6 @@ void
 Parrot_destroy_constants(Interp *interpreter) {
     UINTVAL i;
     Hash *hash;
-    
     if (!interpreter->thread_data) {
         return;
     }
@@ -2564,7 +2563,17 @@ Parrot_destroy_constants(Interp *interpreter) {
     for (i = 0; i <= hash->mask; ++i) {
         HashBucket *bucket = hash->bi[i];
         while (bucket) {
-            mem_sys_free(bucket->value);
+            struct PackFile_ConstTable *const table = bucket->key;
+            struct PackFile_Constant **const orig_consts = table->constants;
+            struct PackFile_Constant **const consts = bucket->value;
+            INTVAL const const_count = table->const_count;
+            INTVAL i;
+            for (i = 0; i < const_count; ++i) {
+                if (consts[i] != orig_consts[i]) {
+                    mem_sys_free(consts[i]);
+                }
+            }
+            mem_sys_free(consts);
             bucket = bucket->next;
         }
     }
