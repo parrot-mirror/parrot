@@ -77,9 +77,8 @@ enum {
         if (PMC_sync(interpreter->HLL_info)) { \
             hll_info = (interpreter)->HLL_info = \
                 Parrot_clone((interpreter), (interpreter)->HLL_info); \
-            if (PMC_sync((interpreter)->HLL_info)) { \
+            if (PMC_sync((interpreter)->HLL_info)) \
                 mem_internal_free(PMC_sync((interpreter)->HLL_info)); \
-            } \
         } \
     } while (0)
 #define END_WRITE_HLL_INFO(interpreter, hll_info)
@@ -258,9 +257,8 @@ Parrot_register_HLL_type(Interp *interpreter, INTVAL hll_id,
         /* the type might already be registered in a non-conflicting way,
          * in which case we can avoid copying
          */
-        if (hll_type == Parrot_get_HLL_type(interpreter, hll_id, core_type)) {
+        if (hll_type == Parrot_get_HLL_type(interpreter, hll_id, core_type))
             return;
-        }
     }
     START_WRITE_HLL_INFO(interpreter, hll_info);
     entry = VTABLE_get_pmc_keyed_int(interpreter, hll_info, hll_id);
@@ -296,13 +294,11 @@ Parrot_get_HLL_type(Interp *interpreter, INTVAL hll_id, INTVAL core_type)
     entry = VTABLE_get_pmc_keyed_int(interpreter, hll_info, hll_id);
     END_READ_HLL_INFO(interpreter, hll_info);
     type_hash = VTABLE_get_pmc_keyed_int(interpreter, entry, e_HLL_typemap);
-    if (PMC_IS_NULL(type_hash)) {
+    if (PMC_IS_NULL(type_hash))
         return core_type;
-    }
     hash = PMC_struct_val(type_hash);
-    if (!hash->entries) {
+    if (!hash->entries)
         return core_type;
-    }
     b = parrot_hash_get_bucket(interpreter, hash, (void*)core_type);
     if (b)
         return (INTVAL) b->value;

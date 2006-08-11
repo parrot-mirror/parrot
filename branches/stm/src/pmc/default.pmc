@@ -158,11 +158,10 @@ Returns true if propagate_std_props() would create a non-empty prophash.
 
 static INTVAL
 has_pending_std_props(Interp *interpreter, PMC *self) {
-    if (self->vtable->flags & (VTABLE_IS_CONST_FLAG | VTABLE_IS_READONLY_FLAG)) {
+    if (self->vtable->flags & (VTABLE_IS_CONST_FLAG | VTABLE_IS_READONLY_FLAG))
         return 1;
-    } else {
+    else
         return 0;
-    }
 }
 
 
@@ -186,9 +185,8 @@ check_get_std_props(Interp *interpreter, PMC *self, STRING *key) {
         ret_val = pmc_new(interpreter, enum_class_Integer);
         PMC_int_val(ret_val) = 1;
         return ret_val;
-    } else {
+    } else
         return PMCNULL;
-    }
 }
 
 /*
@@ -208,9 +206,8 @@ static PMC*
 make_prop_hash(Interp *interpreter, PMC *self) {
     PMC *prop;
 
-    if (!self->pmc_ext) {
+    if (!self->pmc_ext)
         add_pmc_ext(interpreter, self);
-    }
 
     PMC_metadata(self) = prop = pmc_new_noinit(interpreter, enum_class_Hash);
     DOD_WRITE_BARRIER(interpreter, self, NULL, prop);
@@ -410,12 +407,10 @@ Returns the PMC's properties or the NULL PMC if no properties exist.
         if (!SELF->pmc_ext)
             add_pmc_ext(INTERP, SELF);
         if (!PMC_metadata(SELF)) {
-            if (has_pending_std_props(INTERP, SELF)) {
+            if (has_pending_std_props(INTERP, SELF))
                 return make_prop_hash(INTERP, SELF);
-            }
-            else {
+            else
                 return PMCNULL;
-            }
         }
         return PMC_metadata(SELF);
     }

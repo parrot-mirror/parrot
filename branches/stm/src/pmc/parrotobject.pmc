@@ -320,9 +320,8 @@ use fallback.
         PMC **data;
         INTVAL i, n;
 
-        if (PObj_is_PMC_shared_TEST(SELF)) {
+        if (PObj_is_PMC_shared_TEST(SELF))
             return SELF;
-        }
 
         ret = pt_shared_fixup(INTERP, SELF);
         true = pmc_new(INTERP, enum_class_Integer);
@@ -334,9 +333,8 @@ use fallback.
 
         data = (PMC **) PMC_data(ret);
 
-        for (i = POD_FIRST_ATTRIB; i < n; ++i) {
+        for (i = POD_FIRST_ATTRIB; i < n; ++i)
             data[i] = VTABLE_share_ro(INTERP, data[i]);
-        }
 
         /* XXX This is perhaps not the best way to fix this up, but we
          * need to ensure that the class object won't go away when this interpreter

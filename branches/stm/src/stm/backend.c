@@ -84,10 +84,8 @@ Free all resources associated with STM in the interpreter C<interp>.
 
 void Parrot_STM_destroy(Interp *interp) {
     STM_tx_log *log;
-    if (!interp->thread_data || !interp->thread_data->stm_log) {
+    if (!interp->thread_data || !interp->thread_data->stm_log)
         return;
-    }
-
 
     log = interp->thread_data->stm_log;
     mem_sys_free(log->writes);
@@ -100,12 +98,10 @@ void Parrot_STM_destroy(Interp *interp) {
 
 STM_tx_log *Parrot_STM_tx_log_get(Interp *interp) {
     STM_tx_log *log = interp->thread_data->stm_log; /* FIXME */
-    if (!log) {
+    if (!log)
         log = Parrot_STM_tx_log_alloc(interp, sizeof(STM_tx_log));
-    }
 
     assert(log->depth >= 0);
-
     return log;
 }
 
@@ -222,9 +218,8 @@ static int is_aborted(STM_tx_log *log) {
 
         sublog = get_sublog(log, i);
         PARROT_ATOMIC_INT_GET(status, sublog->status);
-        if (status == STM_STATUS_ABORTED) {
+        if (status == STM_STATUS_ABORTED)
             return 1;
-        }
     }
     return 0;
 }
@@ -279,9 +274,8 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
 
         write = get_write(interp, log, i);
 
-        if (!write->handle) {
+        if (!write->handle)
             continue;
-        }
 
         PARROT_ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, inner, outer);
 
@@ -304,9 +298,8 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
 
         if (!successp) {
             need_abort = 1;
-            if (!always) {
+            if (!always)
                 break;
-            }
         }
     }
 
@@ -322,9 +315,8 @@ static int merge_transactions(Interp *interp, STM_tx_log *log,
             int successp;
 
             write = get_write(interp, log, i);
-            if (!write->handle) {
+            if (!write->handle)
                 continue;
-            }
             PARROT_ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, outer, inner);
             /* doesn't matter if it fails */
         }
@@ -368,11 +360,10 @@ get_read_valid_depth(Interp *interp, STM_tx_log *log) {
         int last_read;
 
         current = get_sublog(log, cur_depth);
-        if (cur_depth == log->depth) {
+        if (cur_depth == log->depth)
             last_read = log->last_read;
-        } else {
+        else
             last_read = get_sublog(log, cur_depth + 1)->first_read - 1;
-        }
 
         for (i = current->first_read; i <= log->last_read; ++i) {
             STM_read_record *read;
@@ -434,9 +425,8 @@ do_real_commit(Interp *interp, STM_tx_log *log) {
 
         write = get_write(interp, log, i);
 
-        if (!write->handle) {
+        if (!write->handle)
             continue;
-        }
 
         new_version = next_version(write->saw_version);
         write->value = force_sharing(interp, write->value);
@@ -476,9 +466,8 @@ do_partial_abort(Interp *interp, STM_tx_log *log, STM_tx_log_sub *inner) {
 
         write = get_write(interp, log, i);
 
-        if (!write->handle) {
+        if (!write->handle)
             continue;
-        }
 
         /* if it's not a version, an outer transaction has the 'real version' of this */
         PARROT_ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, inner,
@@ -518,11 +507,10 @@ replay_writes(Interp *interp, STM_tx_log *log, int from, int to) {
         STM_tx_log_sub *current;
         int last_write;
         current = get_sublog(log, cur_depth);
-        if (cur_depth == log->depth) {
+        if (cur_depth == log->depth)
             last_write = log->last_write;
-        } else {
+        else
             last_write = get_sublog(log, cur_depth + 1)->first_write - 1;
-        }
 
         PARROT_ATOMIC_INT_SET(current->status, STM_STATUS_ACTIVE);
 
@@ -532,9 +520,8 @@ replay_writes(Interp *interp, STM_tx_log *log, int from, int to) {
 
             write = get_write(interp, log, i);
 
-            if (!write->handle) {
+            if (!write->handle)
                 continue;
-            }
 
             PARROT_ATOMIC_PTR_CAS(successp, write->handle->owner_or_version,
                 write->saw_version, current);
@@ -550,9 +537,8 @@ replay_writes(Interp *interp, STM_tx_log *log, int from, int to) {
 
     --cur_depth;
 
-    if (!validp) {
+    if (!validp)
         do_partial_abort(interp, log, get_sublog(log, cur_depth));
-    }
 }
 
 /*
@@ -588,9 +574,8 @@ int Parrot_STM_commit(Interp *interp) {
             get_sublog(log, log->depth - 1), cursub, 1);
         assert(successp); /* should always return true, since we pass 1 for the always
                              argument */
-    } else {
+    } else
         successp = do_real_commit(interp, log);
-    }
 
     if (!successp) {
         PROFILE_FAILED_COMMIT(log);
@@ -716,9 +701,8 @@ void Parrot_STM_wait(Interp *interp) {
         /* softly abort the rest so write reservations do not
          * impede progress
          */
-        if (log->depth) {
+        if (log->depth)
             do_partial_abort(interp, log, get_sublog(log, 1));
-        }
 
         STM_TRACE("%p: now entering waitlist wait", interp);
 
@@ -730,9 +714,8 @@ void Parrot_STM_wait(Interp *interp) {
         STM_TRACE("%p: done waitlist wait", interp);
 
         /* replay as much of the rest as we can get away */
-        if (log->depth) {
+        if (log->depth)
             replay_writes(interp, log, 1, get_read_valid_depth(interp, log));
-        }
     }
 }
 
@@ -753,9 +736,8 @@ int Parrot_STM_validate(Interp *interp) {
 
     log = Parrot_STM_tx_log_get(interp);
 
-    if (log->depth == 0) {
+    if (log->depth == 0)
         return 1;
-    }
 
     inner = get_sublog(log, log->depth);
 
@@ -778,16 +760,14 @@ collect them from us.
 */
 
 static void mark_write_record(Interp *interp, STM_write_record *write) {
-    if (!PMC_IS_NULL(write->value)) {
+    if (!PMC_IS_NULL(write->value))
         pobject_lives(interp, (PObj *) write->value);
-    }
     Parrot_STM_mark_pmc_handle(interp, write->handle);
 }
 
 static void mark_read_record(Interp *interp, STM_read_record *read) {
-    if (!PMC_IS_NULL(read->value)) {
+    if (!PMC_IS_NULL(read->value))
         pobject_lives(interp, (PObj *) read->value);
-    }
     Parrot_STM_mark_pmc_handle(interp, read->handle);
 }
 
@@ -798,13 +778,11 @@ void Parrot_STM_mark_transaction(Interp *interp) {
 
     log = Parrot_STM_tx_log_get(interp);
 
-    for (i = 0; i <= log->last_write; ++i) {
+    for (i = 0; i <= log->last_write; ++i)
         mark_write_record(interp, get_write(interp, log, i));
-    }
 
-    for (i = 0; i <= log->last_read; ++i) {
+    for (i = 0; i <= log->last_read; ++i)
         mark_read_record(interp, get_read(interp, log, i));
-    }
 }
 
 /*
@@ -818,9 +796,8 @@ doesn't collect the handle or objects it refers to as reachable.
 
 void Parrot_STM_mark_pmc_handle(Interp *interp, Parrot_STM_PMC_handle handle) {
     PMC *value;
-    if (!handle) {
+    if (!handle)
         return;
-    }
     STM_TRACE_SAFE("mark handle %p", handle);
     /* XXX FIXME is this enough? What about shared status? */
     pobject_lives(interp, (PObj*) handle);
@@ -866,15 +843,13 @@ static void *wait_for_version(Interp *interp,
         STM_tx_log_sub *other;
         PARROT_ATOMIC_PTR_GET(version, *in_what);
         if (is_version(version)) {
-            if (wait_count) {
+            if (wait_count)
                 PARROT_ATOMIC_INT_SET(curlog->wait_length, 0);
-            }
             break;
         }
 
-	if (start_wait == 0.0) {
+	if (start_wait == 0.0)
 	    start_wait = Parrot_floatval_time();
-	}
 
         ++wait_count;
 
@@ -912,9 +887,8 @@ static void *wait_for_version(Interp *interp,
             /* forcibly evict the other */
             PARROT_ATOMIC_INT_CAS(successp, other->status, STM_STATUS_ACTIVE,
                 STM_STATUS_ABORTED);
-            if (successp) {
+            if (successp)
 		other_status = STM_STATUS_ABORTED;
-            }
         }
 
 	if (other_status == STM_STATUS_ABORTED) {
@@ -984,9 +958,8 @@ PMC *Parrot_STM_read(Interp *interp, Parrot_STM_PMC_handle handle) {
 
     /* search for previous write record */
     for (i = 0; i <= log->last_write; ++i) {
-        if (handle == get_write(interp, log, i)->handle) {
+        if (handle == get_write(interp, log, i)->handle)
             write = get_write(interp, log, i);
-        }
     }
 
 
@@ -997,9 +970,8 @@ PMC *Parrot_STM_read(Interp *interp, Parrot_STM_PMC_handle handle) {
 
     /* search for previous read record */
     for (i = 0; i <= log->last_read; ++i) {
-        if (handle == get_read(interp, log, i)->handle) {
+        if (handle == get_read(interp, log, i)->handle)
             read = get_read(interp, log, i);
-        }
     }
 
     if (read) {
@@ -1030,23 +1002,21 @@ static int safe_to_clone(Interp *interp, PMC *original) {
         ||  original->vtable->base_type == enum_class_Float
         ||  original->vtable->base_type == enum_class_BigInt
         ||  original->vtable->base_type == enum_class_IntList
-        ) {
+        )
         return 1;
-    } else {
+    else
         return 0;
-    }
 }
 
 static PMC *local_pmc_copy(Interp *interp, PMC *original) {
-    if (PMC_IS_NULL(original)) {
+    if (PMC_IS_NULL(original))
         return PMCNULL;
-    } else if (original->vtable->base_type == enum_class_Undef) {
+    else if (original->vtable->base_type == enum_class_Undef)
         return pmc_new(interp, enum_class_Undef);
-    } else if (safe_to_clone(interp, original)) {
+    else if (safe_to_clone(interp, original))
         return VTABLE_clone(interp, original);
-    } else {
+    else
         return Parrot_clone(interp, original);
-    }
 }
 
 /* Find a write record corresponding to C<handle> in our log or create
@@ -1101,9 +1071,8 @@ static STM_write_record *find_write_record(Interp *interp, STM_tx_log *log,
                 have_old_value = 1;
                 break;
             }
-            while (j > 0 && get_sublog(log, j)->first_write == i) {
+            while (j > 0 && get_sublog(log, j)->first_write == i)
                 --j;
-            }
         }
         if (j > 0) {
             outersub = get_sublog(log, j);
@@ -1145,11 +1114,10 @@ static STM_write_record *find_write_record(Interp *interp, STM_tx_log *log,
                 STM_TRACE("... but the old value is out-of-date");
                 PARROT_ATOMIC_INT_SET(cursub->status, STM_STATUS_ABORTED);
             }
-            if (overwrite_p) {
+            if (overwrite_p)
                 write->value = PMCNULL;
-            } else {
+            else
                 write->value = local_pmc_copy(interp, old_value);
-            }
         } else {
             STM_TRACE("don't have old value");
             /* avoiding creating write records when we are actually aborted
@@ -1169,11 +1137,10 @@ static STM_write_record *find_write_record(Interp *interp, STM_tx_log *log,
                 STM_TRACE("... but already aborted anyways");
                 write->saw_version = NULL;
             }
-            if (overwrite_p) {
+            if (overwrite_p)
                 write->value = PMCNULL;
-            } else {
+            else
                 write->value = local_pmc_copy(interp, handle->value);
-            }
         }
     }
 
@@ -1249,9 +1216,8 @@ void* Parrot_STM_extract(Interp *interp) {
 
     log = Parrot_STM_tx_log_get(interp);
 
-    if (log->depth == 0) {
+    if (log->depth == 0)
         return NULL;
-    }
 
     cursub = get_sublog(log, log->depth);
 
@@ -1292,20 +1258,17 @@ void Parrot_STM_replay_extracted(Interp *interp, void *saved_log_data) {
 
     log = Parrot_STM_tx_log_get(interp);
 
-    if (log->depth == 0) {
+    if (log->depth == 0)
         internal_exception(1, "replay_extracted outside of transaction");
-    }
-
-    if (saved == NULL) {
+    
+    if (saved == NULL)
         return;
-    }
 
     sublog = get_sublog(log, log->depth);
 
     start = log->last_read;
-    for (i = 0; i < saved->num_reads; ++i) {
+    for (i = 0; i < saved->num_reads; ++i)
         *(alloc_read(interp, log)) = saved->reads[i];
-    }
 
     start =  log->last_write;
     for (i = 0; i < saved->num_writes; ++i) {
@@ -1314,10 +1277,8 @@ void Parrot_STM_replay_extracted(Interp *interp, void *saved_log_data) {
         write = alloc_write(interp, log);
         *write = saved->writes[i];
         PARROT_ATOMIC_PTR_CAS(successp, write->handle->owner_or_version, write->saw_version, sublog);
-        if (!successp) {
-            /* failed! */
+        if (!successp) /* failed! */
             PARROT_ATOMIC_INT_SET(sublog->status, STM_STATUS_ABORTED);
-        }
     }
 }
 
@@ -1335,13 +1296,11 @@ void Parrot_STM_mark_extracted(Interp *interp, void *saved_log_data) {
 
     saved = saved_log_data;
     
-    for (i = 0; i < saved->num_reads; ++i) {
+    for (i = 0; i < saved->num_reads; ++i)
         mark_read_record(interp, &saved->reads[i]);
-    }
 
-    for (i = 0; i < saved->num_writes; ++i) {
+    for (i = 0; i < saved->num_writes; ++i)
         mark_write_record(interp, &saved->writes[i]);
-    }
 }
 
 /*
@@ -1390,16 +1349,14 @@ void Parrot_STM_dump_profile(Interp *interp) {
         profile->num_waits + profile->num_non_waits);
     fprintf(stderr, 
         "Histogram of wait times (5ms groupings):\n");
-    for (i = 0; i < TIME_BUCKETS; ++i) {
+    for (i = 0; i < TIME_BUCKETS; ++i)
         fprintf(stderr, "%5ld ", profile->wait_time[i]);
-    }
     fprintf(stderr, "\nAverage time: %f\n", 
         profile->total_wait_time / (double) profile->num_waits);
     fprintf(stderr,
         "Histogram of wait cycles (1 cycle groupings):\n");
-    for (i = 0; i < CYCLE_BUCKETS; ++i) {
+    for (i = 0; i < CYCLE_BUCKETS; ++i)
         fprintf(stderr, "%5ld ", profile->wait_cycles[i]);
-    }
     fprintf(stderr, "\nAverage cycles: %f\n",
         (double) profile->total_wait_cycles / (double) profile->num_waits);
     Parrot_unblock_DOD(interp);
@@ -1424,12 +1381,10 @@ void Parrot_STM_merge_profile(Interp *d, Interp *s) {
     to->num_aborts += from->num_aborts;
     to->num_non_waits += from->num_non_waits;
     to->num_waits += from->num_waits;
-    for (i = 0; i < CYCLE_BUCKETS; ++i) {
+    for (i = 0; i < CYCLE_BUCKETS; ++i)
         to->wait_cycles[i] += from->wait_cycles[i];
-    }
-    for (i = 0; i < TIME_BUCKETS; ++i) {
+    for (i = 0; i < TIME_BUCKETS; ++i)
         to->wait_time[i] += from->wait_time[i];
-    }
     to->total_wait_time += from->total_wait_time;
     to->total_wait_cycles += from->total_wait_cycles;
 }

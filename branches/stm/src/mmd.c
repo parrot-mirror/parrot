@@ -185,11 +185,10 @@ call on the 'real' value.
 static PMC *
 mmd_deref(Interp *interpreter, INTVAL function, PMC *value)
 {
-    if (VTABLE_type(interpreter, value) != value->vtable->base_type) {
+    if (VTABLE_type(interpreter, value) != value->vtable->base_type)
         return VTABLE_get_pmc(interpreter, value);
-    } else {
+    else
         return value;
-    }
 }
 
 

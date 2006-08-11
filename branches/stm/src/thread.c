@@ -199,19 +199,17 @@ PMC *pt_shared_fixup(Parrot_Interp interpreter, PMC *pmc) {
         }
         pmc->vtable = master->vtables[type_num];
         UNLOCK_INTERPRETER(master);
-        if (is_ro) {
+        if (is_ro)
             pmc->vtable = pmc->vtable->ro_variant_vtable;
-        }
     } 
 
     add_pmc_sync(interpreter, pmc);
 
     PObj_is_PMC_shared_SET(pmc);
 
-    if (PMC_metadata(pmc)) {
+    if (PMC_metadata(pmc))
         /* make sure metadata doesn't go away unexpectedly */
         PMC_metadata(pmc) = pt_shared_fixup(interpreter, PMC_metadata(pmc));
-    }
 
     return pmc;
 }
@@ -730,18 +728,18 @@ be performed. interpreter_array_mutex must be held.
 
 static int
 is_suspended_for_gc(Parrot_Interp interp) {
-    if (!interp) {
+    if (!interp)
         return 1;
-    } else if (interp->thread_data->wants_shared_gc) {
+    else if (interp->thread_data->wants_shared_gc)
         return 1;
-    } else if (interp->thread_data->state & THREAD_STATE_SUSPENDED_GC) {
+    else if (interp->thread_data->state & THREAD_STATE_SUSPENDED_GC)
         return 1;
-    } else if ((interp->thread_data->state & THREAD_STATE_FINISHED) ||
-               (interp->thread_data->state & THREAD_STATE_NOT_STARTED)) {
+    else if ((interp->thread_data->state & THREAD_STATE_FINISHED) ||
+               (interp->thread_data->state & THREAD_STATE_NOT_STARTED))
         return 1;
-    } else {
+    else
         return 0;
-    }
+   
 }
 
 /* XXX should this function be in a different file? */
@@ -763,19 +761,17 @@ remove_queued_suspend_gc(Parrot_Interp interpreter) {
         cur = cur->next;
     }
     if (cur) {
-        if (prev) {
+        if (prev)
             prev->next = cur->next;
-        } else {
+        else
             queue->head = cur->next;
-        }
 
-        if (cur == queue->tail) {
+        if (cur == queue->tail)
             queue->tail = prev;
-        }
 
-        if (cur == queue->head) {
+        if (cur == queue->head)
             queue->head = cur->next;
-        }
+
         mem_sys_free(ev);
         mem_sys_free(cur);
         TRACE_THREAD("%p: remove_queued_suspend_gc: got one", interpreter);
@@ -792,13 +788,11 @@ pt_gc_count_threads(Parrot_Interp interp) {
     for (i = 0; i < n_interpreters; ++i) {
         Parrot_Interp cur;
         cur = interpreter_array[i];
-        if (!cur) {
+        if (!cur)
             continue;
-        }
         if (cur->thread_data->state & (THREAD_STATE_NOT_STARTED |
-                                       THREAD_STATE_FINISHED)) {
+                                       THREAD_STATE_FINISHED)) 
             continue;
-        }
         ++count;
     }
     TRACE_THREAD("found %d threads", count);
@@ -819,11 +813,10 @@ pt_gc_wait_for_stage(Parrot_Interp interp, thread_gc_stage_enum from_stage,
     assert(info->gc_stage == from_stage);
     assert(!(interp->thread_data->state & THREAD_STATE_NOT_STARTED));
     assert(!(interp->thread_data->state & THREAD_STATE_FINISHED));
-    if (from_stage == 0) {
+    if (from_stage == 0)
         assert(interp->thread_data->state & THREAD_STATE_SUSPENDED_GC);
-    } else {
+    else
         assert(!(interp->thread_data->state & THREAD_STATE_SUSPENDED_GC));
-    }
     ++info->num_reached;
     TRACE_THREAD("%p: gc_wait_for_stage: got %d", interp, info->num_reached);
     if (info->num_reached == thread_count) {

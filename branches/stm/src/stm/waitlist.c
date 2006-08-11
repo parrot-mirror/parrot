@@ -50,9 +50,8 @@ alloc_entry(Parrot_Interp interp) {
     }
     
     i = thr->used_entries++;
-    if (!thr->entries[i]) {
+    if (!thr->entries[i])
         thr->entries[i] = mem_sys_allocate_zeroed(sizeof(**thr->entries));
-    }
 
     assert(thr->entries[i]->head == NULL);
     assert(thr->entries[i]->next == NULL);
@@ -93,9 +92,8 @@ static void
 waitlist_remove(STM_waitlist *waitlist, struct waitlist_entry *what) {
     struct waitlist_entry *cur;
 
-    if (!waitlist) {
+    if (!waitlist)
 	return;
-    }
 
     LOCK(waitlist->remove_mutex);
     PARROT_ATOMIC_PTR_GET(cur, waitlist->first);
@@ -122,11 +120,10 @@ waitlist_remove(STM_waitlist *waitlist, struct waitlist_entry *what) {
         cur = cur->next;
     }
 
-    if (cur->next == what) {
+    if (cur->next == what)
         cur->next = what->next;
-    } else {
+    else
 	assert(!what->head);
-    }
     UNLOCK(waitlist->remove_mutex);
 
     what->next = NULL;
@@ -139,15 +136,13 @@ static void
 waitlist_remove_check(STM_waitlist *waitlist, struct waitlist_entry *what) {
     struct waitlist_entry *cur;
 
-    if (!waitlist) {
+    if (!waitlist)
 	return;
-    }
 
     PARROT_ATOMIC_PTR_GET(cur, waitlist->first);
     while (cur) {
-	if (cur == what) {
+	if (cur == what)
 	    break;
-	}
 	cur = cur->next;
     }
     assert(!cur);
@@ -286,9 +281,8 @@ Parrot_STM_waitlist_destroy_thread(Parrot_Interp interp) {
     size_t i;
     
     thr = get_thread_noalloc(interp);
-    if (!thr) {
+    if (!thr)
         return;
-    }
 
     for (i = 0; i < thr->used_entries; ++i) {
         if (thr->entries[i]) {
