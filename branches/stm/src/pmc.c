@@ -491,8 +491,8 @@ Parrot_create_mro(Interp *interpreter, INTVAL type)
         return;
     mro = pmc_new(interpreter, enum_class_ResizablePMCArray);
     vtable->mro = mro;
-    if (vtable->ro_variant) {
-        vtable->ro_variant->mro = mro;
+    if (vtable->ro_variant_vtable) {
+        vtable->ro_variant_vtable->mro = mro;
     }
     class_name = vtable->whoami;
     isa = vtable->isa_str;

@@ -70,19 +70,19 @@ enum {
 } HLL_enum_t;
 
 /* for shared HLL data, do COW stuff */
-#define START_READ_HLL(interpreter, hll_info)
-#define END_READ_HLL(interpreter, hll_info)
-#define START_WRITE_HLL(interpreter, hll_info) \
+#define START_READ_HLL_INFO(interpreter, hll_info)
+#define END_READ_HLL_INFO(interpreter, hll_info)
+#define START_WRITE_HLL_INFO(interpreter, hll_info) \
     do { \
         if (PMC_sync(interpreter->HLL_info)) { \
-            hll_info = interpreter->HLL_info = \
-                Parrot_clone(interpreter, interpreter->HLL_info); \
-            if (PMC_sync(interpreter->HLL_info)) { \
-                mem_internal_free(PMC_sync(interpreter->HLL_info)); \
+            hll_info = (interpreter)->HLL_info = \
+                Parrot_clone((interpreter), (interpreter)->HLL_info); \
+            if (PMC_sync((interpreter)->HLL_info)) { \
+                mem_internal_free(PMC_sync((interpreter)->HLL_info)); \
             } \
         } \
     } while (0)
-#define END_WRITE_HLL(interpreter, hll_info)
+#define END_WRITE_HLL_INFO(interpreter, hll_info)
 
 
 static STRING*
@@ -116,7 +116,7 @@ INTVAL
 Parrot_register_HLL(Interp *interpreter,
 	STRING *hll_name, STRING *hll_lib)
 {
-    PMC *entry, *name, *type_hash, *ns_hash;
+    PMC *entry, *name, *type_hash, *ns_hash, *hll_info;
     INTVAL idx;
 
     /* TODO LOCK or disallow in threads */
@@ -136,7 +136,8 @@ Parrot_register_HLL(Interp *interpreter,
     if (idx >= 0)
         return idx;
 
-    START_WRITE_HLL(interpreter, interpreter->HLL_info);
+    hll_info = interpreter->HLL_info;
+    START_WRITE_HLL_INFO(interpreter, hll_info);
     idx = VTABLE_elements(interpreter, interpreter->HLL_info);
     entry = new_hll_entry(interpreter);
     /* register HLL name */
@@ -175,7 +176,7 @@ Parrot_register_HLL(Interp *interpreter,
     }
 
     /* UNLOCK */
-    END_WRITE_HLL(interpreter, hll_info);
+    END_WRITE_HLL_INFO(interpreter, hll_info);
 
     return idx;
 }
@@ -188,7 +189,7 @@ Parrot_get_HLL_id(Interp* interpreter, STRING *hll_name)
     PMC * const hll_info = interpreter->HLL_info;
     INTVAL nelements;
 
-    START_READ_HLL(interpreter, hll_info);
+    START_READ_HLL_INFO(interpreter, hll_info);
 
     nelements = VTABLE_elements(interpreter, hll_info);
 
@@ -204,7 +205,7 @@ Parrot_get_HLL_id(Interp* interpreter, STRING *hll_name)
         if (!string_equal(interpreter, name, hll_name))
             break;
     }
-    END_READ_HLL(interpreter, hll_info);
+    END_READ_HLL_INFO(interpreter, hll_info);
 
     return i < nelements ? i : -1;
 }
@@ -223,11 +224,11 @@ Parrot_get_HLL_name(Interp *interpreter, INTVAL id)
     } else {
         PMC *entry;
         PMC *name_pmc;
-        START_READ_HLL(interpreter, hll_info);
+        START_READ_HLL_INFO(interpreter, hll_info);
         entry = VTABLE_get_pmc_keyed_int(interpreter, hll_info, id);
         name_pmc = VTABLE_get_pmc_keyed_int(interpreter, entry, e_HLL_name);
         ret = VTABLE_get_string(interpreter, name_pmc);
-        END_READ_HLL(interpreter, hll_info);
+        END_READ_HLL_INFO(interpreter, hll_info);
     }
 
     return ret;
@@ -255,14 +256,14 @@ Parrot_register_HLL_type(Interp *interpreter, INTVAL hll_id,
             return;
         }
     }
-    START_WRITE_HLL(interpreter, hll_info);
+    START_WRITE_HLL_INFO(interpreter, hll_info);
     entry = VTABLE_get_pmc_keyed_int(interpreter, hll_info, hll_id);
     assert(!PMC_IS_NULL(entry));
     type_hash = VTABLE_get_pmc_keyed_int(interpreter, entry, e_HLL_typemap);
     assert(!PMC_IS_NULL(type_hash));
     hash = PMC_struct_val(type_hash);
     parrot_hash_put(interpreter, hash, (void*)core_type, (void*)hll_type);
-    END_WRITE_HLL(interpreter, hll_info);
+    END_WRITE_HLL_INFO(interpreter, hll_info);
 }
 
 INTVAL
@@ -285,9 +286,9 @@ Parrot_get_HLL_type(Interp *interpreter, INTVAL hll_id, INTVAL core_type)
         real_exception(interpreter, NULL, E_ValueError,
                 "no such HLL id (%vd)", hll_id);
     }
-    START_READ_HLL(interpreter, hll_info);
+    START_READ_HLL_INFO(interpreter, hll_info);
     entry = VTABLE_get_pmc_keyed_int(interpreter, hll_info, hll_id);
-    END_READ_HLL(interpreter, hll_info);
+    END_READ_HLL_INFO(interpreter, hll_info);
     type_hash = VTABLE_get_pmc_keyed_int(interpreter, entry, e_HLL_typemap);
     if (PMC_IS_NULL(type_hash)) {
         return core_type;

@@ -75,7 +75,7 @@ typedef enum {
                                            variable, and will do a GC run if
                                            it is woken up and marked as suspended
                                            for GC */
-    THREAD_STATE_SUSPEND_GC_REQUESTED = 0x40, /* the thread's event queue
+    THREAD_STATE_SUSPEND_GC_REQUESTED = 0x40 /* the thread's event queue
                                                  contains a suspend-for-GC event */
 } thread_state_enum;
 

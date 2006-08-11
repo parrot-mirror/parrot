@@ -109,9 +109,9 @@ typedef struct STM_tx_log_sub STM_tx_log_sub;
 
 /* log for a sub transaction */
 struct STM_tx_log_sub {
-    Parrot_atomic_int status;
+    Parrot_atomic_integer status;
     /* for poor man's deadlock detection; based on Ennals' implementation */
-    Parrot_atomic_int wait_length;
+    Parrot_atomic_integer wait_length;
     int first_write;
     int first_read;
 };

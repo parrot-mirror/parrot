@@ -164,7 +164,7 @@ struct _vtable {
     PMC *class;              /* for PMCs: a PMC of that type
                                 for objects: the class PMC */
     PMC *mro;                /* array PMC of [class, parents ... ] */
-    struct _vtable *ro_variant; /* A varient of this vtable with the
+    struct _vtable *ro_variant_vtable; /* A varient of this vtable with the
                                    opposite IS_READONLY flag */
     /* Vtable Functions */
 
@@ -243,7 +243,7 @@ static const char * const Parrot_vtable_slot_names[] = {
     "",     /* space-separated list of classes */
     "",     /* class */
     "",     /* mro */
-    "",     /* ro_variant */
+    "",     /* ro_variant_vtable */
 
     /* Vtable Functions */
 EOM

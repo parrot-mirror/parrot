@@ -557,7 +557,7 @@ parrot_class_register(Interp* interpreter, PMC *name,
     new_vtable->mro = mro;
 
     /* XXX FIXME for now, we don't autogen. read-only variant */
-    new_vtable->ro_variant = NULL;
+    new_vtable->ro_variant_vtable = NULL;
     new_vtable->flags &= ~VTABLE_HAS_READONLY_FLAG;
     
     /* Reset the init method to our instantiation method */
@@ -602,7 +602,7 @@ parrot_class_register(Interp* interpreter, PMC *name,
     new_vtable->class =  new_class;
 
     /* XXX FIXME for now, we don't autogen. read-only variant */
-    new_vtable->ro_variant = NULL;
+    new_vtable->ro_variant_vtable = NULL;
     new_vtable->flags &= ~VTABLE_HAS_READONLY_FLAG;
     
     set_attrib_num(new_class, (SLOTTYPE*)PMC_data(new_class), PCD_OBJECT_VTABLE,

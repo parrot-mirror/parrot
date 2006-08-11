@@ -70,8 +70,8 @@ Parrot_destroy_vtable(Parrot_Interp interpreter, VTABLE *vtable)
          */
         return;
     }
-    if (vtable->ro_variant) {
-        mem_sys_free(vtable->ro_variant);
+    if (vtable->ro_variant_vtable) {
+        mem_sys_free(vtable->ro_variant_vtable);
     }
     mem_sys_free(vtable);
 }

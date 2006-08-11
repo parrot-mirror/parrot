@@ -43,7 +43,7 @@ struct _Shared_gc_info {
     Parrot_cond gc_cond;
     int num_reached;
 
-    Parrot_atomic_int gc_block_level;
+    Parrot_atomic_integer gc_block_level;
 };
 
 /*
@@ -200,7 +200,7 @@ PMC *pt_shared_fixup(Parrot_Interp interpreter, PMC *pmc) {
         pmc->vtable = master->vtables[type_num];
         UNLOCK_INTERPRETER(master);
         if (is_ro) {
-            pmc->vtable = pmc->vtable->ro_variant;
+            pmc->vtable = pmc->vtable->ro_variant_vtable;
         }
     } 
 
@@ -416,7 +416,7 @@ resources are created in C<d>.
 */
 
 void
-pt_clone_code(Parrot_Interp d, const Parrot_Interp s)
+pt_clone_code(Parrot_Interp d, Parrot_Interp s)
 {
     Parrot_block_DOD(d);
     Interp_flags_SET(d, PARROT_EXTERN_CODE_FLAG);
@@ -428,7 +428,7 @@ pt_clone_code(Parrot_Interp d, const Parrot_Interp s)
 /*
 
 =item C<void
-pt_clone_globals(Parrot_Interp d, const Parrot_Interp s)>
+pt_clone_globals(Parrot_Interp d, Parrot_Interp s)>
 
 Clone all globals from C<s> to C<d>.
 
@@ -468,7 +468,7 @@ pt_ns_clone(Parrot_Interp d, PMC *dest_ns, Parrot_Interp s, PMC *source_ns) {
 }
 
 void
-pt_clone_globals(Parrot_Interp d, const Parrot_Interp s)
+pt_clone_globals(Parrot_Interp d, Parrot_Interp s)
 {
     Parrot_block_DOD(d);
     pt_ns_clone(d, d->root_namespace, s, s->root_namespace);
@@ -478,7 +478,7 @@ pt_clone_globals(Parrot_Interp d, const Parrot_Interp s)
 /*
 
 =item C<void
-pt_thread_prepare_for_run(Parrot_Interp d, const Parrot_Interp s)>
+pt_thread_prepare_for_run(Parrot_Interp d, Parrot_Interp s)>
 
 Setup code, and TODO ...
 
@@ -486,7 +486,7 @@ Setup code, and TODO ...
 
 */
 void
-pt_thread_prepare_for_run(Parrot_Interp d, const Parrot_Interp s)
+pt_thread_prepare_for_run(Parrot_Interp d, Parrot_Interp s)
 {
     Parrot_setup_event_func_ptrs(d);
 }
@@ -1266,8 +1266,8 @@ pt_add_to_interpreters(Parrot_Interp interpreter, Parrot_Interp new_interp)
 
         shared_gc_info = mem_sys_allocate_zeroed(sizeof(*shared_gc_info));
         COND_INIT(shared_gc_info->gc_cond);
-        ATOMIC_INT_INIT(shared_gc_info->gc_block_level);
-        ATOMIC_INT_SET(shared_gc_info->gc_block_level, 0);
+        PARROT_ATOMIC_INT_INIT(shared_gc_info->gc_block_level);
+        PARROT_ATOMIC_INT_SET(shared_gc_info->gc_block_level, 0);
         
         /* XXX try to defer this until later */
         assert(interpreter == interpreter_array[0]);
@@ -1346,7 +1346,7 @@ pt_DOD_start_mark(Parrot_Interp interpreter)
         return;
 
     info = get_pool(interpreter);
-    ATOMIC_INT_GET(block_level, info->gc_block_level);
+    PARROT_ATOMIC_INT_GET(block_level, info->gc_block_level);
 
     TRACE_THREAD("start threaded mark");
     /*
@@ -1473,7 +1473,7 @@ Parrot_shared_DOD_block(Parrot_Interp interpreter) {
 
     info = get_pool(interpreter);
     if (info) {
-        ATOMIC_INT_INC(level, info->gc_block_level);
+        PARROT_ATOMIC_INT_INC(level, info->gc_block_level);
         assert(level > 0);
     }
 }
@@ -1495,7 +1495,7 @@ void Parrot_shared_DOD_unblock(Parrot_Interp interpreter) {
 
     info = get_pool(interpreter);
     if (info) {
-        ATOMIC_INT_DEC(level, info->gc_block_level);
+        PARROT_ATOMIC_INT_DEC(level, info->gc_block_level);
         assert(level >= 0);
     }
 }
