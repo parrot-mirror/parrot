@@ -123,6 +123,8 @@ Parrot_register_HLL(Interp *interpreter,
 
     if (!hll_name) {
         /* .loadlib pragma */
+        hll_info = interpreter->HLL_info;
+        START_WRITE_HLL_INFO(interpreter, hll_info);
         entry = new_hll_entry(interpreter);
         VTABLE_set_pmc_keyed_int(interpreter, entry, e_HLL_name, PMCNULL);
         /* register  dynlib */
@@ -130,6 +132,7 @@ Parrot_register_HLL(Interp *interpreter,
         hll_lib = string_as_const_string(interpreter, hll_lib);
         VTABLE_set_string_native(interpreter, name, hll_lib);
         VTABLE_set_pmc_keyed_int(interpreter, entry, e_HLL_lib, name);
+        END_WRITE_HLL_INFO(interpreter, hll_info);
         return 0;
     }
     idx = Parrot_get_HLL_id(interpreter, hll_name);
@@ -138,7 +141,7 @@ Parrot_register_HLL(Interp *interpreter,
 
     hll_info = interpreter->HLL_info;
     START_WRITE_HLL_INFO(interpreter, hll_info);
-    idx = VTABLE_elements(interpreter, interpreter->HLL_info);
+    idx = VTABLE_elements(interpreter, hll_info);
     entry = new_hll_entry(interpreter);
     /* register HLL name */
     name = constant_pmc_new_noinit(interpreter, enum_class_String);
@@ -227,7 +230,10 @@ Parrot_get_HLL_name(Interp *interpreter, INTVAL id)
         START_READ_HLL_INFO(interpreter, hll_info);
         entry = VTABLE_get_pmc_keyed_int(interpreter, hll_info, id);
         name_pmc = VTABLE_get_pmc_keyed_int(interpreter, entry, e_HLL_name);
-        ret = VTABLE_get_string(interpreter, name_pmc);
+        if (PMC_IS_NULL(name_pmc)) /* loadlib-created 'HLL's are nameless */
+            ret = NULL;
+        else
+            ret = VTABLE_get_string(interpreter, name_pmc);
         END_READ_HLL_INFO(interpreter, hll_info);
     }
 
@@ -349,20 +355,50 @@ Parrot_get_HLL_namespace(Interp *interpreter, int hll_id)
                                 interpreter->HLL_namespace,
                                 hll_id);
     }
-    if (PMC_IS_NULL(ns_hash) || ns_hash->vtable->base_type == enum_class_Undef) {
-        /* generate the namespace on demand; needed for children interpreters
-         * sharing the HLL_info
-         */
-        STRING *hll_name;
-        hll_name = Parrot_get_HLL_name(interpreter, hll_id);
-        hll_name = string_downcase(interpreter, hll_name);
-        ns_hash = Parrot_make_namespace_keyed_str(interpreter, 
-            interpreter->root_namespace, hll_name);
-        VTABLE_set_pmc_keyed_int(interpreter, interpreter->HLL_namespace, hll_id, ns_hash);
-    }
     return ns_hash;
 }
 
+/*
+
+=item C<void
+Parrot_regenerate_HLL_namespaces(Interp *interpreter)>
+
+Create all HLL namespaces that don't already exist. This is necessary when creating
+a new interpreter which is sharing an old interpreter's HLL_info.
+
+=cut
+
+*/
+
+void
+Parrot_regenerate_HLL_namespaces(Interp *interpreter)
+{
+    INTVAL hll_id;
+    INTVAL const n = VTABLE_elements(interpreter, interpreter->HLL_info);
+
+    /* start at one since the 'parrot' namespace should already have been created */
+    for (hll_id = 1; hll_id < n; ++hll_id) {
+        PMC *ns_hash;
+        ns_hash = VTABLE_get_pmc_keyed_int(interpreter,
+                                interpreter->HLL_namespace,
+                                hll_id);
+        if (PMC_IS_NULL(ns_hash) || ns_hash->vtable->base_type == enum_class_Undef) {
+            STRING *hll_name;
+            hll_name = Parrot_get_HLL_name(interpreter, hll_id);
+            if (!hll_name)
+                continue;
+            hll_name = string_downcase(interpreter, hll_name);
+            /* XXX as in Parrot_register_HLL() this needs to be fixed to use the correct
+             * type of namespace. Its relatively easy to do that here since the typemap
+             * already exists, but it is not currently done for consistency.
+             */
+            ns_hash = Parrot_make_namespace_keyed_str(interpreter, 
+                interpreter->root_namespace, hll_name);
+            VTABLE_set_pmc_keyed_int(interpreter, interpreter->HLL_namespace, hll_id,
+                ns_hash);
+        }
+    }
+}
 /*
 
 =back

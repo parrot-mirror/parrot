@@ -31,6 +31,8 @@ PARROT_API INTVAL Parrot_get_ctx_HLL_type(Interp *, INTVAL core_type);
 PARROT_API PMC *Parrot_get_HLL_namespace(Interp *, int hll_id);
 PARROT_API PMC *Parrot_get_ctx_HLL_namespace(Interp *);
 
+PARROT_API void Parrot_regenerate_HLL_namespaces(Interp *);
+
 #endif /* PARROT_HLL_H_GUARD */
 
 /*
