@@ -970,7 +970,7 @@ sub vtable_decl {
         NULL,   /* isa_str */
         NULL,   /* class */
         NULL,   /* mro */
-        NULL,   /* ro_variant */
+        NULL,   /* ro_variant_vtable */
         $methlist
     };
 ENDOFCODE
@@ -1086,8 +1086,8 @@ EOC
 
     if ($extra_vt{ro}) {
         $cout .= <<"EOC";
-        vt_clone->ro_variant = vt_ro_clone;
-        vt_ro_clone->ro_variant = vt_clone;
+        vt_clone->ro_variant_vtable = vt_ro_clone;
+        vt_ro_clone->ro_variant_vtable = vt_clone;
 EOC
     }
         

@@ -111,10 +111,10 @@ check_set_std_props(Interp* interpreter, PMC *pmc, STRING *key, PMC *value)
         else if (!on && (pmc->vtable->flags & (VTABLE_IS_CONST_FLAG)))
             VTABLE_morph(interpreter, pmc, pmc->vtable->base_type - 1);
         else if (on && (pmc->vtable->flags & VTABLE_HAS_READONLY_FLAG))
-            pmc->vtable = pmc->vtable->ro_variant;
+            pmc->vtable = pmc->vtable->ro_variant_vtable;
         else if (!on && (pmc->vtable->flags & VTABLE_IS_READONLY_FLAG)
-                && pmc->vtable->ro_variant)
-            pmc->vtable = pmc->vtable->ro_variant;
+                && pmc->vtable->ro_variant_vtable)
+            pmc->vtable = pmc->vtable->ro_variant_vtable;
         else 
             return 0;
 

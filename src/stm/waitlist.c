@@ -67,10 +67,10 @@ add_entry(STM_waitlist *waitlist, struct waitlist_entry *entry) {
     int successp = -1;
     assert(entry->next == NULL);
     do {
-        ATOMIC_PTR_GET(entry->next, waitlist->first);
+        PARROT_ATOMIC_PTR_GET(entry->next, waitlist->first);
 	assert(successp != -1 || entry->next != entry);
 	assert(entry->next != entry);
-        ATOMIC_PTR_CAS(successp, waitlist->first, entry->next, entry);
+        PARROT_ATOMIC_PTR_CAS(successp, waitlist->first, entry->next, entry);
     } while (!successp);
 #if WAITLIST_DEBUG
     fprintf(stderr, "added %p(%p) to waitlist %p\n", entry, entry->thread->interp, waitlist);
@@ -80,7 +80,7 @@ add_entry(STM_waitlist *waitlist, struct waitlist_entry *entry) {
 static int
 remove_first(STM_waitlist *waitlist, struct waitlist_entry *expect_first) {
     int successp;
-    ATOMIC_PTR_CAS(successp, waitlist->first, expect_first,
+    PARROT_ATOMIC_PTR_CAS(successp, waitlist->first, expect_first,
                         expect_first->next);
 #if WAITLIST_DEBUG
     fprintf(stderr, "tried removing %p(%p) from beginning of waitlist %p, successp=%d\n",
@@ -98,7 +98,7 @@ waitlist_remove(STM_waitlist *waitlist, struct waitlist_entry *what) {
     }
 
     LOCK(waitlist->remove_mutex);
-    ATOMIC_PTR_GET(cur, waitlist->first);
+    PARROT_ATOMIC_PTR_GET(cur, waitlist->first);
 
     /* if we became the first entry while we were acquiring the mutex */ 
     while (cur == what) {
@@ -108,7 +108,7 @@ waitlist_remove(STM_waitlist *waitlist, struct waitlist_entry *what) {
 	    what->next = NULL;
 	    return;
 	}
-	ATOMIC_PTR_GET(cur, waitlist->first);
+	PARROT_ATOMIC_PTR_GET(cur, waitlist->first);
     }
 
     if (!cur) {
@@ -143,7 +143,7 @@ waitlist_remove_check(STM_waitlist *waitlist, struct waitlist_entry *what) {
 	return;
     }
 
-    ATOMIC_PTR_GET(cur, waitlist->first);
+    PARROT_ATOMIC_PTR_GET(cur, waitlist->first);
     while (cur) {
 	if (cur == what) {
 	    break;
@@ -178,8 +178,8 @@ waitlist_signal_all(STM_waitlist *list) {
     /* make sure we are not interrupted by a concurrent removal */
     LOCK(list->remove_mutex);
     do {
-        ATOMIC_PTR_GET(cur, list->first);
-        ATOMIC_PTR_CAS(successp, list->first, cur, NULL);
+        PARROT_ATOMIC_PTR_GET(cur, list->first);
+        PARROT_ATOMIC_PTR_CAS(successp, list->first, cur, NULL);
     } while (!successp);
     
     if (!cur) {
@@ -275,8 +275,8 @@ Parrot_STM_waitlist_wait(Parrot_Interp interp) {
 
 void
 Parrot_STM_waitlist_init(Parrot_Interp interp, STM_waitlist *waitlist) {
-    ATOMIC_PTR_INIT(waitlist->first);
-    ATOMIC_PTR_SET(waitlist->first, NULL);
+    PARROT_ATOMIC_PTR_INIT(waitlist->first);
+    PARROT_ATOMIC_PTR_SET(waitlist->first, NULL);
     MUTEX_INIT(waitlist->remove_mutex);
 }
 

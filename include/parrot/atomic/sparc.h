@@ -13,6 +13,7 @@
  */
 
 #if !defined(ATOMIC_SPARC_H_GAURD)
+#define ATOMIC_SPARC_H_GAURD
 
 extern int parrot_sparc_cas32(Parrot_UInt4 *value, Parrot_UInt4 old, Parrot_UInt4 new);
 /* NB cas64 _will_ be broken when PTR_SIZE == 4 */
@@ -27,41 +28,41 @@ typedef struct {
     void * volatile val;
 } Parrot_atomic_pointer;
 
-#define ATOMIC_PTR_GET(result, a) result = (a).val
+#define PARROT_ATOMIC_PTR_GET(result, a) (result = (a).val)
 
-#define ATOMIC_PTR_SET(a, b) (a).val = b
+#define PARROT_ATOMIC_PTR_SET(a, b) ((a).val = b)
 
 #if PTR_SIZE == 8
-#  define ATOMIC_PTR_CAS(result, a, expect, update) \
+#  define PARROT_ATOMIC_PTR_CAS(result, a, expect, update) \
     do { \
         result = parrot_sparc_cas64((INTVAL *) &(a).val, \
             (INTVAL) expect, (INTVAL) update); \
     } while (0)
 #else
-#  define ATOMIC_PTR_CAS(result, a, expect, update) \
+#  define PARROT_ATOMIC_PTR_CAS(result, a, expect, update) \
     do { \
         result = parrot_sparc_cas32((Parrot_UInt4 *) &(a).val, \
             (Parrot_UInt4) expect, (Parrot_UInt4) update); \
     } while (0)
 #endif
 
-#define ATOMIC_PTR_INIT(a)
+#define PARROT_ATOMIC_PTR_INIT(a)
 
-#define ATOMIC_PTR_DESTROY(a)
+#define PARROT_ATOMIC_PTR_DESTROY(a)
 
 typedef struct {
     volatile Parrot_Int4 val;
-} Parrot_atomic_int;
+} Parrot_atomic_integer;
 
-#define ATOMIC_INT_INIT(a)
+#define PARROT_ATOMIC_INT_INIT(a)
 
-#define ATOMIC_INT_DESTROY(a)
+#define PARROT_ATOMIC_INT_DESTROY(a)
 
-#define ATOMIC_INT_GET(result, a) result = (a).val
+#define PARROT_ATOMIC_INT_GET(result, a) (result = (a).val)
 
-#define ATOMIC_INT_SET(a, b) (a).val = b
+#define PARROT_ATOMIC_INT_SET(a, b) ((a).val = b)
 
-#define ATOMIC_INT_CAS(result, a, expect, update) \
+#define PARROT_ATOMIC_INT_CAS(result, a, expect, update) \
     do { \
         result = parrot_sparc_cas32((Parrot_UInt4*) &(a).val, \
             (Parrot_UInt4) (expect), (Parrot_UInt4) (update)); \
@@ -73,14 +74,14 @@ typedef struct {
         Parrot_Int4 old; \
         do { \
             old = (a).val; \
-            ATOMIC_INT_CAS(successp, a, old, old + what); \
+            PARROT_ATOMIC_INT_CAS(successp, a, old, old + what); \
         } while (!successp); \
         result = old + what; \
     } while (0)
 
 
-#define ATOMIC_INT_DEC(result, a) parrot_sparc_atomic_int_add(result, a, -1)
-#define ATOMIC_INT_INC(result, a) parrot_sparc_atomic_int_add(result, a,  1)
+#define PARROT_ATOMIC_INT_DEC(result, a) parrot_sparc_atomic_int_add(result, a, -1)
+#define PARROT_ATOMIC_INT_INC(result, a) parrot_sparc_atomic_int_add(result, a,  1)
 
 #endif
 /*
