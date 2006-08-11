@@ -41,9 +41,8 @@ If there is no active transaction, execution continues normally.
 =cut
 
 inline op stm_validate(labelconst INT) {
-    if (!Parrot_STM_validate(interpreter)) {
+    if (!Parrot_STM_validate(interpreter))
         goto OFFSET($1);
-    }
     goto NEXT();
 }
 
@@ -58,9 +57,8 @@ If stm_commit jumps to $1, then the transaction will have been aborted.
 =cut
 
 inline op stm_commit(labelconst INT) {
-    if (!Parrot_STM_commit(interpreter)) {
+    if (!Parrot_STM_commit(interpreter))
         goto OFFSET($1); /* retry */
-    } 
     goto NEXT();
 }
 
@@ -76,9 +74,8 @@ because the outer transaction constrains it to not see new values.)
 
 inline op stm_wait(labelconst INT) {
     Parrot_STM_wait(interpreter);
-    if (!Parrot_STM_validate(interpreter)) {
+    if (!Parrot_STM_validate(interpreter))
         goto OFFSET($1);
-    }
     goto NEXT();
 }
 

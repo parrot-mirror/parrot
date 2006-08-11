@@ -77,9 +77,8 @@ mark_special(Parrot_Interp interpreter, PMC* obj)
         interpreter = PMC_sync(obj)->owner;
         assert(interpreter);
         /* XXX FIXME hack */
-        if (!interpreter->arena_base->dod_mark_ptr) {
+        if (!interpreter->arena_base->dod_mark_ptr)
             interpreter->arena_base->dod_mark_ptr = obj;
-        }
     }
     arena_base = interpreter->arena_base;
 
@@ -789,9 +788,8 @@ Parrot_dod_sweep(Interp *interpreter,
                          */
                         struct Small_Object_Pool *ext_pool =
                             arena_base->pmc_ext_pool;
-                        if (PObj_is_PMC_shared_TEST(p) && PMC_sync(p) != NULL) {
+                        if (PObj_is_PMC_shared_TEST(p) && PMC_sync(p) != NULL)
                             mem_sys_free(PMC_sync(p));
-                        }
                         ext_pool->add_free_object(interpreter, ext_pool,
                                 p->pmc_ext);
                     }

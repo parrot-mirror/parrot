@@ -323,9 +323,8 @@ Parrot_really_destroy(Interp *interpreter, int exit_code, void *arg)
 #if STM_PROFILE
     if (interpreter->thread_data && interpreter->thread_data->stm_log &&
             !interpreter->parent_interpreter &&
-                Interp_debug_TEST(interpreter, PARROT_THREAD_DEBUG_FLAG)) {
+                Interp_debug_TEST(interpreter, PARROT_THREAD_DEBUG_FLAG))
         Parrot_STM_dump_profile(interpreter);
-    }
 #endif
 
     /*
@@ -364,9 +363,8 @@ Parrot_really_destroy(Interp *interpreter, int exit_code, void *arg)
         }
 #if STM_PROFILE
         if (interpreter->parent_interpreter 
-            && interpreter->thread_data->state & THREAD_STATE_JOINED) {
+            && interpreter->thread_data->state & THREAD_STATE_JOINED)
             Parrot_STM_merge_profile(interpreter->parent_interpreter, interpreter);
-        }
 #endif
         Parrot_STM_destroy(interpreter);
     }
