@@ -43,7 +43,7 @@ Clones the interpreter as specified by the flags.
 */
 
 void
-clone_interpreter(Parrot_Interp d, const Parrot_Interp s, Parrot_clone_flags flags)
+clone_interpreter(Parrot_Interp d, Parrot_Interp s, Parrot_clone_flags flags)
 {
     /* we block DOD runs while cloning since C<d> is not yet running */
     Parrot_block_DOD(d);
@@ -61,6 +61,7 @@ clone_interpreter(Parrot_Interp d, const Parrot_Interp s, Parrot_clone_flags fla
            if it doesn't have one already */
         add_pmc_sync(s, s->HLL_info);
         d->HLL_info = s->HLL_info;
+        Parrot_regenerate_HLL_namespaces(d);
     }
 
     if (flags & (PARROT_CLONE_LIBRARIES | PARROT_CLONE_CLASSES)) {
