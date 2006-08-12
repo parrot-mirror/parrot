@@ -156,9 +156,9 @@ Parrot_init_arg_sig(Interp *interpreter, parrot_context_t *ctx,
                 case 'P':
                     st->sig = PARROT_ARG_PMC; break;
                 case '@':
-                    /* XXX FIXME -- both flatten and slurpy here? */
-                    st->sig = PARROT_ARG_PMC | PARROT_ARG_FLATTEN
-                            | PARROT_ARG_SLURPY_ARRAY; break;
+                    st->sig = PARROT_ARG_PMC | PARROT_ARG_SLURPY_ARRAY; break;
+                case 'F':
+                    st->sig = PARROT_ARG_PMC | PARROT_ARG_FLATTEN; break;
             }
         }
     }
@@ -343,11 +343,10 @@ next_arg(Interp *interpreter, struct call_state_1 *st)
                 case 'O':
                 case 'P':
                     st->sig = PARROT_ARG_PMC; break;
-                /* XXX is it okay to combine flatten/slurpy into one flag? */
                 case '@':
-                    st->sig = PARROT_ARG_PMC | PARROT_ARG_FLATTEN
-                            | PARROT_ARG_SLURPY_ARRAY ; 
-                    break;
+                    st->sig = PARROT_ARG_PMC | PARROT_ARG_SLURPY_ARRAY; break;
+                case 'F':
+                    st->sig = PARROT_ARG_PMC | PARROT_ARG_FLATTEN; break;
             }
             break;
     }
