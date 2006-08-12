@@ -191,6 +191,24 @@ mmd_deref(Interp *interpreter, INTVAL function, PMC *value)
         return value;
 }
 
+/*
+
+=item C<static void
+mmd_ensure_writable(Interp *, INTVAL function, PMC *pmc)>
+
+Make sure C<pmc> is writable enough for C<function>.
+
+=cut
+
+*/
+
+static void
+mmd_ensure_writable(Interp *interpreter, INTVAL function, PMC *pmc) {
+    if (!PMC_IS_NULL(pmc) && (pmc->vtable->flags & VTABLE_IS_READONLY_FLAG))
+        real_exception(interpreter, 0, 1, "%s applied to read-only argument",
+            Parrot_MMD_method_name(interpreter, function));
+}
+
 
 /*
 
@@ -367,8 +385,11 @@ mmd_dispatch_v_pp(Interp *interpreter,
     PMC *sub;
     int is_pmc;
 
+
     left = mmd_deref(interpreter, func_nr, left);
     right = mmd_deref(interpreter, func_nr, right);
+
+    mmd_ensure_writable(interpreter, func_nr, left);
 
     real_function = (mmd_f_v_pp)get_mmd_dispatcher(interpreter,
             left, right, func_nr, &is_pmc);
@@ -392,6 +413,7 @@ mmd_dispatch_v_pi(Interp *interpreter,
     UINTVAL left_type;
 
     left = mmd_deref(interpreter, func_nr, left);
+    mmd_ensure_writable(interpreter, func_nr, left);
 
     left_type = left->vtable->base_type;
     real_function = (mmd_f_v_pi)get_mmd_dispatch_type(interpreter,
@@ -413,6 +435,9 @@ mmd_dispatch_v_pn(Interp *interpreter,
     PMC *sub;
     int is_pmc;
     UINTVAL left_type;
+
+    left = mmd_deref(interpreter, func_nr, left);
+    mmd_ensure_writable(interpreter, func_nr, left);
 
     left_type = left->vtable->base_type;
     real_function = (mmd_f_v_pn)get_mmd_dispatch_type(interpreter,
@@ -436,6 +461,7 @@ mmd_dispatch_v_ps(Interp *interpreter,
     UINTVAL left_type;
 
     left = mmd_deref(interpreter, func_nr, left);
+    mmd_ensure_writable(interpreter, func_nr, left);
 
     left_type = VTABLE_type(interpreter, left);
     real_function = (mmd_f_v_ps)get_mmd_dispatch_type(interpreter,

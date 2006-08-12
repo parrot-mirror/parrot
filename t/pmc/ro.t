@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 7;
+use Parrot::Test tests => 8;
 
 =head1 NAME
 
@@ -128,8 +128,7 @@ Integer
 OUTPUT
 
 
-pir_output_unlike(<<"CODE", <<'OUTPUT', "Integer add");
-$library
+pir_output_unlike($library . <<'CODE', <<'OUTPUT', "Integer add");
 .sub main :main
     .local pmc foo
 
@@ -138,6 +137,21 @@ $library
 
     make_readonly(foo)
     add foo, 16, foo
+    print "NOT OKAY\n"
+.end
+CODE
+/NOT OKAY/
+OUTPUT
+
+pir_output_unlike($library .<<'CODE', <<'OUTPUT', "Complex i_add");
+.sub main :main
+    .local pmc foo
+    
+    foo = new Complex
+    foo[0] = 1.0
+    foo[1] = 1.0
+    make_readonly(foo)
+    add foo, foo, 4
     print "NOT OKAY\n"
 .end
 CODE
