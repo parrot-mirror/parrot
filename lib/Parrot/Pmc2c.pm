@@ -233,13 +233,13 @@ sub new {
 
 =item C<does_write($method)>
 
-Returns true if the vtable method $method writes our value.
+Returns true if the vtable method C<$method> writes our value.
 
 =cut
 
 sub does_write {
     my ($self, $method) = @_;
-
+    
     return $self->{attrs}{$method}{write};
 }
 
@@ -441,7 +441,8 @@ sub init {
                 'loc' => 'vtable',
                 'mmds' => [],
                 'type' => 'PMC*',
-                'line' => 1
+                'line' => 1,
+                attrs => {},
             };
             $self->{has_method}{namespace} = $#{$self->{methods}};
         }
@@ -1125,13 +1126,18 @@ EOC
 EOC
     # declare each nci method for this class
     foreach my $method (@{ $self->{methods} }) {
-      next unless $method->{loc} eq 'nci';
-      my $proto = proto($method->{type}, $method->{parameters});
-      $cout .= <<"EOC";
+        next unless $method->{loc} eq 'nci';
+        my $proto = proto($method->{type}, $method->{parameters});
+        $cout .= <<"EOC";
         enter_nci_method(interp, entry,
                 F2DPTR(Parrot_${classname}_$method->{meth}),
                 "$method->{meth}", "$proto");
 EOC
+        if ($method->{attrs}{write}) {
+            $cout .= <<"EOC";
+        Parrot_mark_method_writes(interp, entry, "$method->{meth}");
+EOC
+        }
     }
 
     # include any class specific init code from the .pmc file
@@ -1429,6 +1435,19 @@ package Parrot::Pmc2c::Standard::RO;
 use base 'Parrot::Pmc2c::Standard';
 import Parrot::Pmc2c qw( gen_ret );
 
+=item C<implements($method)>
+
+Returns true if we implement C<$method>. This is true in the special
+case of C<find_method> and for all read-only methods.
+
+=cut
+
+sub implements {
+    my ($self, $method) = @_;
+    return 1 if $method eq 'find_method';
+    return $self->SUPER::implements($method);
+}
+
 =item C<body($method, $line, $out_name)>
 
 Returns the C code for the method body. C<$line> is used to accumulate
@@ -1442,19 +1461,33 @@ sub body
     my ($self, $method, $line, $out_name) = @_;
 
     my $meth = $method->{meth};
-
     my $decl = $self->decl($self->{class}, $method, 0);
     my $classname = $self->{class};
     my $parentname = $self->{parentname};
     my $ret = gen_ret($method);
-    my $cout = <<"EOC";
+    my $cout;
+
+    if ($meth eq 'find_method') {
+        my $real_findmethod = 'Parrot_' 
+            . $self->{super}{find_method} . '_find_method';
+        $cout = <<"EOC";
+$decl {
+    PMC *const method = $real_findmethod(interpreter, pmc, method_name);
+    if (!PMC_IS_NULL(VTABLE_getprop(interpreter, method, const_string(interpreter, "write"))))
+        return PMCNULL;
+    else
+        return method;
+}
+EOC
+    } else {
+        $cout = <<"EOC";
 $decl {
     internal_exception(WRITE_TO_CONSTCLASS,
             "$meth() in read-only instance of $classname");
     $ret
 }
-
 EOC
+    }
     $cout;
 }
 

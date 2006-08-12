@@ -431,6 +431,19 @@ sub parse_flags {
     return $pre, $classname, \%flags;
 }
 
+=head2 my ($attrs) = parse_method_attrs($attr_string)
+
+Parse a list of method attribute and return an hash ref of them
+
+=cut
+
+sub parse_method_attrs {
+    my $flags = shift;
+    my %result;
+    ++$result{$1} while $flags =~ /:(\w+)/g;
+    return \%result;
+}
+
 =head2 my ($name, $attributes) = parse_pmc($code);
 
 Parse PMC code and return the class name and a hash ref of attributes.
@@ -454,6 +467,8 @@ sub parse_pmc {
         (\w+)           #method name
       \s*
         \( ([^\(]*) \)  #parameters
+    \s*
+    ((?::(\w+)\s*)*)    #method attrs
     }sx;
 
     my ($pre, $classname, $flags)   = parse_flags(\$code);
@@ -467,6 +482,7 @@ sub parse_pmc {
     while ($classblock =~ s/($signature_re)//) {
         $lineno += count_newlines($1);
         my ($flag, $type, $methodname, $parameters) = ($2,$3,$4,$5);
+        my $attrs                                   = parse_method_attrs($6);
         my ($methodblock, $rema)                    = extract_balanced($classblock);
 
         $methodblock = "" if $opt{nobody};
@@ -477,7 +493,8 @@ sub parse_pmc {
                 line        => $lineno,
                 type        => $type,
                 parameters  => $parameters,
-                loc         => "vtable"
+                loc         => "vtable",
+                attrs       => $attrs,
             };
         }
         else {
@@ -493,6 +510,7 @@ sub parse_pmc {
                     parameters  => $parameters,
                     loc         => $flag ? "nci" : "vtable",
                     mmds        => [ @mmds ],
+                    attrs       => $attrs,
                 };
         }
         $classblock = $rema;

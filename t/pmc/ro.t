@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 8;
+use Parrot::Test tests => 16;
 
 =head1 NAME
 
@@ -157,6 +157,52 @@ pir_output_unlike($library .<<'CODE', <<'OUTPUT', "Complex i_add");
 CODE
 /NOT OKAY/
 OUTPUT
+
+{
+    # The ROTest dynpmc has opposite of normal logic for set/get integer
+    # and 'reader' and 'writer' NCI methods.
+    # The values are [should work with read-only, is todo test].
+    my %tests = (
+        # these first two tests would test overriding of the default
+        # read-onlyness notion of vtable methods; supporting this well
+        # requires dealing with inheritence of them correctly, so they
+        # are currently unimplemented
+        q{value = 42} => [1, 1],
+        q{$I0 = value} => [0, 1],
+        # these make sure NCI methods check does-write flags
+        # 'writer' is marked as writing; 'reader' is not.
+        q{$I0 = value.'reader'(42)} => [1, 0],
+        q{$I0 = value.'writer'(42)} => [0, 0],
+    );
+    for my $test (keys %tests) {
+        my $code = $library . <<"CODE";
+.loadlib 'rotest'
+.sub main :main
+    .local int type
+    .local pmc value
+    type = find_type 'ROTest'
+    value = new type
+    #READONLYTEST
+    $test
+    print "reached end\\n"
+.end
+CODE
+        {
+            my ($readonly, $todo) = @{$tests{$test}};
+            # first make sure it works without the make_readonly
+            pir_output_is($code, "reached end\n", "ROTest (dry run) ($test)");
+            local $TODO = $todo;
+            $code =~ s/#READONLYTEST/make_readonly(value)/;
+            if ($readonly) {
+                pir_output_is($code, "reached end\n",
+                    "ROTest (read-only/okay) ($test)");
+            } else {
+                pir_output_isnt($code, "reached end\n", 
+                    "ROTest (read-only/fail) ($test)");
+            }
+        }
+    }
+}
 
 pir_output_unlike($library . <<'CODE', <<'OUTPUT', "ResizablePMCArray (non-recursive part)");
 .sub main :main
