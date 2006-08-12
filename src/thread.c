@@ -364,7 +364,7 @@ thread_func(void *arg)
         push_new_c_exception_handler(interpreter, &exp);
         Parrot_unblock_DOD(interpreter);
         Parrot_unblock_GC(interpreter);
-        ret_val = Parrot_runops_fromc_args(interpreter, sub, "P@", sub_arg);
+        ret_val = Parrot_runops_fromc_args(interpreter, sub, "PF", sub_arg);
     }
     /*
      * thread is finito
