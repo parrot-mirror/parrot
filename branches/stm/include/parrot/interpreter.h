@@ -532,6 +532,7 @@ void clone_interpreter(Parrot_Interp dest, const Parrot_Interp self, Parrot_clon
 
 PARROT_API void enter_nci_method(Interp *, int type,
 		 void *func, const char *name, const char *proto);
+PARROT_API void Parrot_mark_method_writes(Interp *, int type, const char *name);
 
 void Parrot_setup_event_func_ptrs(Parrot_Interp interpreter);
 
