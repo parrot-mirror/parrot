@@ -164,11 +164,9 @@ OUTPUT
     # The values are [should work with read-only, is todo test].
     my %tests = (
         # these first two tests would test overriding of the default
-        # read-onlyness notion of vtable methods; supporting this well
-        # requires dealing with inheritence of them correctly, so they
-        # are currently unimplemented
-        q{value = 42} => [1, 1],
-        q{$I0 = value} => [0, 1],
+        # read-onlyness notion of vtable methods
+        q{value = 42} => [1, 0],
+        q{$I0 = value} => [0, 0],
         # these make sure NCI methods check does-write flags
         # 'writer' is marked as writing; 'reader' is not.
         q{$I0 = value.'reader'(42)} => [1, 0],

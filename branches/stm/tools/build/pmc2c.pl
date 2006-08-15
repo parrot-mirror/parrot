@@ -444,6 +444,23 @@ sub parse_method_attrs {
     return \%result;
 }
 
+=head2 inherit_attrs($super_attrs, $attrs)
+
+Modify $attrs to inherit attrs from $super_attrs as appropriate.
+
+=cut
+
+sub inherit_attrs {
+    my ($super_attrs, $attrs) = @_;
+    if (($super_attrs->{read} or $super_attrs->{write})
+            and not ($attrs->{read} or $attrs->{write})) {
+        $attrs->{read} = $super_attrs->{read}
+            if exists $super_attrs->{read};
+        $attrs->{write} = $super_attrs->{write}
+            if exists $super_attrs->{write};
+    }
+}
+
 =head2 my ($name, $attributes) = parse_pmc($code);
 
 Parse PMC code and return the class name and a hash ref of attributes.
@@ -603,6 +620,14 @@ sub gen_super_meths {
             if (exists ($self->{has_parent}{$pname}{$meth} )) {
                 $self->{super}{$meth} = $pname;
                 my $n = $self->{has_parent}{$pname}{$meth};
+                $self->{super_attrs}{$meth} = 
+                    $all->{$pname}{methods}[$n]{attrs};
+                if (exists $self->{has_method}{$meth}) {
+                    inherit_attrs(
+                        $self->{methods}[$self->{has_method}{$meth}]->{attrs},
+                        $self->{super_attrs}{$meth}
+                    );
+                }
                 my $super_mmd = $all->{$pname}{methods}[$n]{mmds};
                 if ($super_mmd && scalar @{ $super_mmd }) {
                     ##print "** @{ $super_mmd } **\n";
