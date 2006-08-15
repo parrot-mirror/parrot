@@ -239,6 +239,16 @@ Returns true if the vtable method C<$method> writes our value.
 
 sub does_write {
     my ($self, $method) = @_;
+
+    my $attrs;
+    if ($self->{has_method}{$method}) {
+        $attrs = $self->{methods}[$self->{has_method}{$method}]->{attrs};
+    } elsif ($self->{super}{$method}) {
+        $attrs = $self->{super_attrs}{$method};
+    }
+
+    return 1 if $attrs->{write};
+    return 0 if $attrs->{read};
     
     return $self->{attrs}{$method}{write};
 }
