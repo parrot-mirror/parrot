@@ -788,8 +788,11 @@ Parrot_dod_sweep(Interp *interpreter,
                          */
                         struct Small_Object_Pool *ext_pool =
                             arena_base->pmc_ext_pool;
-                        if (PObj_is_PMC_shared_TEST(p) && PMC_sync(p) != NULL)
-                            mem_sys_free(PMC_sync(p));
+                        if (PObj_is_PMC_shared_TEST(p) && PMC_sync(p)) {
+                            MUTEX_DESTROY(PMC_sync(p)->pmc_lock);
+                            mem_internal_free(PMC_sync(p));
+                            PMC_sync(p) = NULL;
+                        }
                         ext_pool->add_free_object(interpreter, ext_pool,
                                 p->pmc_ext);
                     }
