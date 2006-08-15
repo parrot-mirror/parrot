@@ -80,11 +80,29 @@ argument is not a PMC* but the C<classname> STRING.
         PObj_is_class_SET(SELF);
         /* turn on marking of the class_data array */
         PObj_data_is_PMC_array_SET(SELF);
+        /* turn on custom destruction since our PMC* array is
+           dynamically allocated */
+        PObj_active_destroy_SET(SELF);
     }
 
     void init_pmc (PMC* name) {
         SELF.init();
         Parrot_new_class(INTERP, SELF, name);
+    }
+
+/*
+
+=item C<void destroy()>
+
+Free the class's attribute array, if any. Also used by ParrotObjects.
+
+=cut
+
+*/
+    void destroy() {
+        if (ATTRIB_COUNT(SELF)) {
+            mem_sys_free(PMC_data(SELF));
+        }
     }
 
 /*

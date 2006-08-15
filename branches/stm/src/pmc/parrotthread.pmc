@@ -69,6 +69,8 @@ do_thread_run(Interp *interpreter, PMC *thread, INTVAL clone_flags, PMC *sub, PM
     pt_thread_run(interpreter, thread, sub, args);
     
     pmc_reuse(interpreter, thread, enum_class_ParrotRunningThread, 0);
+    PObj_active_destroy_CLEAR(thread);
+    PObj_custom_mark_CLEAR(thread);
     PMC_int_val(thread) = tid;
     return tid;
 }
