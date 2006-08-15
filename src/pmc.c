@@ -131,7 +131,7 @@ pmc_reuse(Interp *interpreter, PMC *pmc, INTVAL new_type,
                 interpreter->arena_base->pmc_ext_pool;
             if (PObj_is_PMC_shared_TEST(pmc) && PMC_sync(pmc)) {
                 MUTEX_DESTROY(PMC_sync(pmc)->pmc_lock);
-                mem_sys_free(PMC_sync(pmc));
+                mem_internal_free(PMC_sync(pmc));
                 PMC_sync(pmc) = NULL;
             }
             ext_pool->add_free_object(interpreter, ext_pool, pmc->pmc_ext);
