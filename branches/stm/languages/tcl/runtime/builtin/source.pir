@@ -8,21 +8,17 @@
   .param pmc argv :slurpy
   
   .local int argc 
-  argc = argv
-  if argc != 1 goto fail
+  argc = elements argv
+  if argc != 1 goto bad_args
 
   .local string chunk, filename, contents
   .local int type
-  .local pmc retval, handle, compiler, pir_compiler
+  .local pmc retval, handle
 
-  compiler     = get_root_global ['_tcl'], 'compile'
-  pir_compiler = get_root_global ['_tcl'], 'pir_compiler'
+  .local pmc __script
+  __script = get_root_global ['_tcl'], '__script'
 
   $P1 = argv[0] 
-  typeof type, $P1
-  if type != .ParrotIO goto file
-  handle = $P1
-  goto loop
 
 file:
   filename = $P1
@@ -32,14 +28,13 @@ file:
   contents = ''
  
 loop:
-  read chunk, handle, 1024
+  read chunk, handle, 2048
   if chunk == '' goto gotfile
   contents = contents . chunk
   goto loop
 
 gotfile:
-  ($I0,$P1) = compiler(0,contents)
-  $P2       = pir_compiler($I0,$P1)
+  $P2 = __script(contents)
   .return $P2()
 
 badfile:
@@ -48,7 +43,6 @@ badfile:
   $S0 .= '": no such file or directory'
   .throw($S0)
 
-fail:
+bad_args:
   .throw('wrong # args: should be "source fileName"')
-
 .end

@@ -1,7 +1,7 @@
 #!../../parrot tcl.pbc
 
 source lib/test_more.tcl
-plan 13
+plan 19
 
 eval_is {unset a} \
   {can't unset "a": no such variable} \
@@ -72,3 +72,57 @@ eval_is {
   unset foo bar
   list [catch {puts $foo}] [catch {puts $bar}]
 } {1 1} {unset multiple variables}
+
+eval_is {
+  catch {unset a}
+  set a [list 1 2 3 4]
+  unset a
+  set a
+} {can't read "a": no such variable} \
+  {unset list}
+
+eval_is {
+  catch {unset a}
+  set a 1
+  upvar 0 a b
+  unset b
+  set a
+} {can't read "a": no such variable} \
+  {unset upvar}
+
+eval_is {
+  catch {unset a}
+  proc test {} {global a; unset a}
+  set a 1
+  test
+  set a
+} {can't read "a": no such variable} \
+  {unset global}
+
+eval_is {
+  catch {unset a}
+  set a 1
+  upvar 0 a b
+  unset b
+  set b 2
+  set a
+} 2 {reset an unset upvar}
+
+eval_is {
+  catch {unset array}
+  array set array {a 1 b 2}
+  upvar 0 array(a) elem
+  unset elem
+  set elem 7
+  set array(a)
+} 7 {reset an unset array elem upvar}
+
+eval_is {
+  catch {unset array}
+  array set array {a 1 b 2}
+  upvar 0 array(a) elem
+  unset elem
+  set array(a)
+} {can't read "array(a)": no such element in array} \
+  {unset array elem upvar} \
+  {TODO "broken unset array upvar"}

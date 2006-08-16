@@ -12,10 +12,12 @@
 
   if argc == 0 goto badargs
 
+  .local pmc call_chain, lexpad
   .local int call_level
-  $P0 = get_root_global ['_tcl'], 'call_level'
-  call_level = $P0
+  call_chain = get_root_global ['_tcl'], 'call_chain'
+  call_level = elements call_chain
   unless call_level goto done # global doesn't work when already global.
+  lexpad = call_chain[-1]
 
   .local int ii
   ii = 0
@@ -27,17 +29,18 @@ loop:
   varname = argv[ii]
   sigil_varname = '$' . varname
 
-  push_eh next
-    $P1 = find_global sigil_varname
+  push_eh create_global
+    $P1 = get_hll_global sigil_varname
   clear_eh
-
-  .local pmc store_lex_pdd20
-  store_lex_pdd20 = get_root_global ['_tcl'], 'store_lex_pdd20'
-  store_lex_pdd20 (sigil_varname, $P1)
-
-next:
+has_global:
+  lexpad[sigil_varname] = $P1
   inc ii
   goto loop
+
+create_global:
+  $P1 = new .Undef
+  set_hll_global sigil_varname, $P1
+  goto has_global
   
 done:
   .return('')

@@ -1,7 +1,7 @@
 #!../../parrot tcl.pbc
 
 source lib/test_more.tcl
-plan 25
+plan 32
 
 eval_is {info} \
   {wrong # args: should be "info option ?arg arg ...?"} \
@@ -103,3 +103,30 @@ eval_is {info commands a b} \
 
 is [info commands info] info {info commands exact}
 is [info commands inf?] info {info commands glob}
+
+eval_is { info vars foo bar } \
+  {wrong # args: should be "info vars ?pattern?"} \
+  {info vars, bad args}
+
+eval_is {
+  proc test {a b} {
+    set c 1
+    set d 2
+    lsort [info vars]
+  }
+  test 3 4
+} {a b c d} {info vars} \
+  {TODO "can't iterate DynLexPads atm"}
+
+eval_is {info level a b} \
+  {wrong # args: should be "info level ?number?"} \
+  {info level - bad args}
+
+eval_is {info level} 0 {info level - global}
+eval_is {
+  proc test {} { info level }
+  test
+} 1 {info level - 1}
+
+eval_is {info level -1} {bad level "-1"} {info level - bad level}
+eval_is {info level a} {expected integer but got "a"} {info level - not integer}

@@ -16,7 +16,7 @@ token term {
     | <function>
     | <nested>
     | <boolean>
-    | <[a..zA..Z]> <syntax_error: variable references require preceding $>
+    | <[a..zA..Z]> <syntax_error_variable_or_function>
 }
 
 ## used by term
@@ -26,7 +26,7 @@ rule boolean { ( true | false ) <?wb> }
 rule nested { \( <expression> \) }
 
 # XXX EXTREMELY naive
-rule subcommand  { \[ [<command> ;?]+ \] }
+rule subcommand  { \[ [<command> ;?]* \] }
 
 token command {
       <comment>
@@ -46,7 +46,7 @@ token word {
 }
 
 token constant {
-    (\w+)
+    (<[a..zA..Z0..9\:()\.%*+]>+)
 }
 
 token quoted { " <quoted_literal> " }
@@ -57,7 +57,12 @@ token quoted { " <quoted_literal> " }
 token braced   { \{ ([ \\. | <braced> | <-[}]> ]*) \} }
 
 # XXX naive
-token variable { \$ (<[a..zA..Z]>+) }
+token name { <[a..zA..Z0..9_:]>+ }
+token variable { \$ [
+| (<?name> \( <?name> \) )
+| (<?name>)
+| \{ (<-[\}]>) \}
+]}
 
 token number { <scientific> | <float> | <integer> }
 
@@ -116,23 +121,23 @@ proto 'infix:>'  is precedence('10=') {...}
 proto 'infix:<=' is precedence('10=') {...}
 proto 'infix:>=' is precedence('10=') {...}
 
-proto 'infix:==' is precedence('9=') {...}
-proto 'infix:!=' is precedence('9=') {...}
+proto 'infix:==' is precedence('09=') {...}
+proto 'infix:!=' is precedence('09=') {...}
 
-proto 'infix:eq' is precedence('8=') {...}
-proto 'infix:ne' is precedence('8=') {...}
+proto 'infix:eq' is precedence('08=') {...}
+proto 'infix:ne' is precedence('08=') {...}
 
-proto 'infix:in' is precedence('7=') {...}
-proto 'infix:ni' is precedence('7=') {...}
+proto 'infix:in' is precedence('07=') {...}
+proto 'infix:ni' is precedence('07=') {...}
 
-proto 'infix:&'  is precedence('6=') {...}
+proto 'infix:&'  is precedence('06=') {...}
 
-proto 'infix:^'  is precedence('5=') {...}
+proto 'infix:^'  is precedence('05=') {...}
 
-proto 'infix:|'  is precedence('4=') {...}
+proto 'infix:|'  is precedence('04=') {...}
 
-proto 'infix:&&' is precedence('3=') {...}
+proto 'infix:&&' is precedence('03=') {...}
 
-proto 'infix:||' is precedence('2=') {...}
+proto 'infix:||' is precedence('02=') {...}
 
-proto 'ternary:? :' is precedence('1=') {...}
+proto 'ternary:? :' is precedence('01=') {...}

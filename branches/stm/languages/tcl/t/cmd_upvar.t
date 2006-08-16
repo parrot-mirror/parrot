@@ -20,12 +20,16 @@ eval_is {
 } 1 {upvar as alias in global scope}
 
 eval_is {
-  set b 1
-  upvar 0 a b
+  proc test {} {
+    set b 1
+    upvar 0 a b
+  }
+  test
 } {variable "b" already exists} \
   {variable already exists}
 
 eval_is {
+  catch {unset a}
   upvar 0 a(b) c
   array set a [list b 3]
   set c
@@ -62,5 +66,5 @@ eval_is {
 
 eval_is {
   upvar -1 a b
-} {wrong # args: should be "upvar ?level? otherVar localVar ?otherVar localVar ...?"} \
+} {bad level "-1"} \
   {no negative level}

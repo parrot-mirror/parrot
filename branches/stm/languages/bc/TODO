@@ -4,11 +4,13 @@
 # Some tidbits on what is to do for Parrot bc.
 # See docs/parrot_bc.pod for visions.
 
+- Semicolon is statement delimiter, not statement seperator
+
+- Find out how to construct trees with values ( UNARY_MINUS expression ) -> ( MUL -1 expression )
+
 - Keep track of named variables and initialize them during execution
 
-- Get rid of ANTLR 2
-
-- Switch to C# backend, run with languages/dotnet
+- Switch to Ruby backend, run with languages/cardinal
 
 - Custom PMCs for Parrot bc
   - Decimal BigNum libraries

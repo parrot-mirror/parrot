@@ -238,7 +238,8 @@ Given an expression, return a subroutine, or optionally, the raw PIR
     pirbuilder = pirgrammar.'apply'(ast)
     result = pirbuilder.get('result')
 
-    $S0 = ast['ret']
+    .local string ret
+    ret = ast['ret']
     if pir_only goto only_pir
 
     .local pmc pir
@@ -248,7 +249,7 @@ Given an expression, return a subroutine, or optionally, the raw PIR
     pir.emit(".namespace")
     pir.emit(".sub '_anon' :anon")
     pir .= result
-    pir.emit("  .return(%0)", $S0)
+    pir.emit("  .return(%0)", ret)
     pir.emit(".end")
 
     $P1 = compreg 'PIR'
@@ -256,7 +257,7 @@ Given an expression, return a subroutine, or optionally, the raw PIR
     .return ($P2)
 
   only_pir:
-    .return(result, $S0)
+    .return(result, ret)
 
   premature_end:
     $S0 = expression
@@ -394,13 +395,16 @@ was this a valid tcl-style level, or did we get this value as a default?
 .sub __call_level
   .param pmc tcl_level
   .local pmc parrot_level, defaulted, orig_level
-  defaulted = new Integer
+  defaulted = new .Integer
   defaulted = 0
 
-  .local pmc current_call_level, __number
-  current_call_level = get_root_global ['_tcl'], 'call_level'
+  .local pmc call_chain, __number
+  .local int call_level
+  call_chain = get_root_global ['_tcl'], 'call_chain'
+  call_level = elements call_chain
   __number   = get_root_global ['_tcl'], '__number'
-  orig_level = current_call_level
+  orig_level = new .Integer
+  orig_level = call_level
  
   .local int num_length
 

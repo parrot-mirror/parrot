@@ -73,6 +73,20 @@ Returns the list as a string
 
 /*
 
+=item C<void set_pmc(PMC *other)>
+
+An alias to assign_pmc to make other things happy before set_pmc is removed.
+
+=cut
+
+*/
+
+    void set_pmc (PMC *other) {
+        VTABLE_assign_pmc(INTERP, SELF, other);
+    }
+
+/*
+
 =item C<void assign_pmc(PMC *other)>
 
 Copy the contents of other to self.
@@ -86,6 +100,7 @@ Copy the contents of other to self.
     void assign_pmc (PMC *other) {
         STRING *array  = string_from_const_cstring(INTERP, "array", 5);
         STRING *string = string_from_const_cstring(INTERP, "String", 6);
+        STRING *undef  = string_from_const_cstring(INTERP, "Undef", 5);
 
         if (VTABLE_does(INTERP, other, array))
         {
@@ -105,9 +120,14 @@ Copy the contents of other to self.
             pmc_reuse(INTERP, SELF, other->vtable->base_type, 0);
             DYNSELF.set_string_native(v);
         }
+        else if (VTABLE_isa(INTERP, other, undef))
+        {
+            pmc_reuse(INTERP, SELF, other->vtable->base_type, 0);
+        }
         else
         {
-            /* throw an error here */
+            real_exception(INTERP, NULL, E_TypeError,
+                           "unable to assign self to this type");
         }
     }
 

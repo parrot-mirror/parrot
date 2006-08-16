@@ -124,7 +124,7 @@ array:
   unless null variable goto check_is_hash
 
   variable = new .TclArray
-  __store_var(var, variable)
+  variable = __store_var(var, variable)
   
 check_is_hash:
   $I0 = does variable, 'hash'
@@ -152,7 +152,7 @@ scalar:
 
 make_variable:
     variable = new .Undef
-    __store_var(name, variable)
+    variable = __store_var(name, variable)
     .return(variable)
 .end
 
@@ -173,14 +173,21 @@ other than the default, and multiple interpreters.
 
   .local pmc variable
 
+  # Some cases in the code allow a NULL pmc to show up here.
+  # This defensively converts them to an empty string.
+  unless_null value, got_value
+  value = new TclString
+  value = ''
+
+ got_value:
   # is this an array?
   # ends with )
   .local int char
   char = ord name, -1
-  if char != 41 goto find_scalar
+  if char != 41 goto create_scalar
   # contains a (
   char = index name, '('
-  if char == -1 goto find_scalar
+  if char == -1 goto create_scalar
 
 find_array:
   .local string var
@@ -205,7 +212,7 @@ find_array:
 
 create_array:
   array = new .TclArray
-  __store_var(var, array)
+  array = __store_var(var, array)
 
 set_array:
   variable = array[key]
@@ -222,20 +229,11 @@ cant_set_not_array:
   $S0 .= name
   $S0 .= "\": variable isn't array"
   .throw($S0)
-
-find_scalar:
-  .local pmc scalar
-  null scalar
-  scalar = __find_var(name)
-  if_null scalar, create_scalar
-  assign scalar, value
-  goto return_scalar
   
 create_scalar:
   __store_var(name, value)
 
 return_scalar:
-  $S0 = typeof value
   .return(value)
 .end
 
@@ -256,15 +254,22 @@ Gets the actual variable from memory and returns it.
 
   $S0 = substr name, 1, 2
   if $S0 == '::'     goto coloned
-  
+
+  .local pmc call_chain
   .local int call_level
-  $P1 = find_global 'call_level'
-  call_level = $P1
+  call_chain = get_root_global ['_tcl'], 'call_chain'
+  call_level = elements call_chain
   if call_level == 0 goto global_var
 
+  .local pmc lexpad, variable
   push_eh notfound
-    value = find_lex_pdd20( name )
+    lexpad     = call_chain[-1]
+    value      = lexpad[name]
   clear_eh
+  $I0 = isa value, 'None'
+  if $I0 goto notfound
+  $I0 = isa value, 'Undef'
+  if $I0 goto notfound
   goto found
 
 coloned:
@@ -274,6 +279,9 @@ global_var:
   push_eh notfound
     value = get_root_global ['tcl'], name
   clear_eh
+  if null value goto found
+  $I0 = isa value, 'Undef'
+  if $I0 goto notfound
   goto found
 
 notfound:
@@ -299,73 +307,39 @@ Sets the actual variable from memory.
   $S0 = substr name, 1, 2
   if $S0 == '::'     goto coloned
 
+  .local pmc call_chain
   .local int call_level
-  $P1 = find_global 'call_level'
-  call_level = $P1
+  call_chain = get_root_global ['_tcl'], 'call_chain'
+  call_level = elements call_chain
   if call_level == 0 goto global_var
+
 lexical_var:
-  store_lex_pdd20 ( name, value )
-  .return()
+  .local pmc lexpad
+  lexpad       = call_chain[-1]
+
+  $P0 = lexpad[name]
+  $I0 = isa $P0, 'None'
+  if $I0 goto lexical_is_null
+
+  assign $P0, value
+  .return($P0)
+
+lexical_is_null:
+  lexpad[name] = value
+  .return(value)
 
 coloned:
   substr name, 1, 2, ''
 global_var:
+  push_eh global_not_undef
+    $P0 = get_root_global ['tcl'], name
+  clear_eh
+  if null $P0 goto global_not_undef
+
+  assign $P0, value
+  .return($P0)
+
+global_not_undef:
   set_root_global ['tcl'], name, value
-
-  .return()
-.end
-
-.sub find_lex_pdd20
-  .param string variable_name
-
-  $P1 = get_root_global ['_tcl'], 'call_level_diff'
-  .local int pad_depth
-  pad_depth = $P1
-
-  .local pmc interp, lexpad, variable
-  .local int depth
-  interp = getinterp
-  depth = 2 # we know it's not us or our direct caller.
-
-get_lexpad:
-  # Is there a lexpad at this depth?
-  lexpad = interp['lexpad';depth]
-  unless_null lexpad, got_lexpad
-
-try_again:
-  inc depth
-  goto get_lexpad
-got_lexpad:
-  dec pad_depth
-  unless pad_depth < 0 goto try_again
-  variable = lexpad[variable_name]
-  .return(variable)
-.end
-
-.sub store_lex_pdd20
-  .param string variable_name
-  .param pmc variable
-
-  $P1 = get_root_global ['_tcl'], 'call_level_diff'
-  .local int pad_depth
-  pad_depth = $P1
-
-  .local pmc interp, lexpad, variable
-  .local int depth
-  interp = getinterp
-  depth = 2 # we know it's not us or our direct caller.
-
-get_lexpad:
-  # Is there a lexpad at this depth?
-  lexpad = interp['lexpad';depth]
-  unless_null lexpad, got_lexpad
-
-try_again:
-  inc depth
-  goto get_lexpad
-got_lexpad:
-  dec pad_depth
-  unless pad_depth < 0 goto try_again
-  lexpad[variable_name] = variable
-  .return()
+  .return(value)
 .end

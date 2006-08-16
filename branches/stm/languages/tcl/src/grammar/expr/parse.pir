@@ -24,6 +24,7 @@ outer_loop:
     char = substr target, pos, 1
     if char == '"' goto end
     if char == '[' goto command
+    if char == '$' goto variable
 
 literal:
     litfrom = pos
@@ -33,6 +34,7 @@ literal_loop:
     char = substr target, pos, 1
     if char == '"' goto literal_end
     if char == '[' goto literal_end
+    if char == '$' goto literal_end
     if char == '\' goto backspace
     inc pos
     goto literal_loop
@@ -58,7 +60,21 @@ command:
     inc pos
     $P0 = 'subcommand'(mob)
     $P0['type'] = 'subcommand'
-    mob[capt] = $P0
+    mob[capt]   = $P0
+    inc capt
+    pos = $P0.to()
+    goto outer_loop
+
+variable:
+    mpos = pos
+    inc pos
+    $P0 = 'variable'(mob)
+    dec pos
+    # if the $ isn't followed by a legal name char, it's just a $
+    unless $P0 goto literal
+    inc pos
+    $P0['type'] = 'variable'
+    mob[capt]   = $P0
     inc capt
     pos = $P0.to()
     goto outer_loop
@@ -109,4 +125,21 @@ fail:
     $P0 .= msg
 
     .throw($P0)
+.end
+
+.sub 'syntax_error_variable_or_function'
+    .param pmc    mob
+    .param pmc    adverbs :named :slurpy
+    
+    .local string target
+    $P0 = getattribute mob, '$.target'
+    target = $P0
+    
+    .local string msg
+    msg = 'the word "'
+    msg .= target
+    msg .= '" requires a preceding $ if '
+    msg .= "it's a variable or function arguments if it's a function"
+
+    .return syntax_error(mob, msg, adverbs)
 .end

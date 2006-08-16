@@ -13,7 +13,7 @@ providing a compreg-compatible method.
 
 .HLL 'parrot', ''
 
-.loadlib 'dynlexpad'
+.loadlib 'tcl_ops'
 .include 'languages/tcl/src/macros.pir'
 .include 'cclass.pasm'
 
@@ -161,14 +161,9 @@ env_loop_done:
   $P1 = 1
   store_global 'next_channel_id', $P1
 
-  # calling level (for upvar, uplevel, globals vs. lex)
-  $P1 = new .Integer
-  $P1 = 0
-  store_global 'call_level', $P1
-  # call level diff (for skipping lex pads in upvar and uplevel)
-  $P1 = new .Integer
-  $P1 = 0
-  store_global 'call_level_diff', $P1
+  # call chain of lex pads (for upvar and uplevel)
+  $P1 = new .ResizablePMCArray
+  store_global 'call_chain', $P1
 
   # Change counter: when something is compiled, it is compared to
   # This counter: if the counter hasn't changed since it was compiled,

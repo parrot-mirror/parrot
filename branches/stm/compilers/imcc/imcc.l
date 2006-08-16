@@ -445,18 +445,24 @@ SP              [ ]
     }
 
 <emit,INITIAL>{DOT}{LETTER}{LETTERDIGIT}* {
-        int type = pmc_type(interp, string_from_cstring(interp, yytext+1, 0));
+        char *macro_name = str_dup(yytext+1);
+        int type = pmc_type(interp, string_from_cstring(interp, macro_name, 0));
 
         if (type > 0) {
             char *buf = malloc(16);
-        sprintf(buf, "%d", type);
-        valp->s = buf;
-        return INTC;
-    }
-    if (!expand_macro(valp, interp, yytext+1, yyscanner)) {
+            sprintf(buf, "%d", type);
+            valp->s = buf;
+            free(macro_name);
+            return INTC;
+        }
+
+        if (!expand_macro(valp, interp, macro_name, yyscanner)) {
             yyless(1);
+            free(macro_name);
             return DOT;
         }
+
+        free(macro_name);
     }
 
 <emit,INITIAL>{ID} {
@@ -907,7 +913,6 @@ expand_macro (YYSTYPE *valp, void *interp, const char *name, void *yyscanner)
     char *current;
     char *s;
     int len;
-    DECL_CONST_CAST;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
     UNUSED(valp);
@@ -928,8 +933,9 @@ expand_macro (YYSTYPE *valp, void *interp, const char *name, void *yyscanner)
         /* When an error occurs, then report it as being in a macro */
         frame->is_macro = 1;
         /* remember macro name for error reporting
+        TODO check that all the .file text is malloced / freed
         */
-        frame->s.file = const_cast(name);
+        frame->s.file = str_dup(name);
         /* whitespace can be savely ignored */
         do {
             c = input(yyscanner);

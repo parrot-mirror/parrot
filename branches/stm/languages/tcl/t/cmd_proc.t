@@ -2,7 +2,7 @@
 
 use strict;
 use lib qw(tcl/lib ./lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 16;
+use Parrot::Test tests => 18;
 use Test::More;
 
 language_output_is("tcl",<<'TCL',<<OUT,"return value");
@@ -74,6 +74,13 @@ TCL
 wrong # args: should be "me a b"
 OUT
 
+language_output_is('tcl', <<'TCL', <<'OUT', 'bad args - expected none');
+  proc test {} {}
+  test foo bar
+TCL
+wrong # args: should be "test"
+OUT
+
 language_output_is("tcl",<<'TCL',<<OUT,"bad varargs");
  proc me {a b args} {
   puts $a
@@ -81,7 +88,7 @@ language_output_is("tcl",<<'TCL',<<OUT,"bad varargs");
  }
  me 2
 TCL
-wrong # args: should be "me a b args"
+wrong # args: should be "me a b ..."
 OUT
 
 language_output_is("tcl",<<'TCL',<<OUT,"vararg");
@@ -153,3 +160,13 @@ language_output_is("tcl", <<'TCL', <<'OUT', "proc default - too many args");
 TCL
 wrong # args: should be "test ?a?"
 OUT
+
+language_output_is('tcl', <<'TCL', <<'OUT', 'proc - reset call_level on bad args');
+  proc test {} {}
+  set a 4
+  catch {test foo}
+  puts $a
+TCL
+4
+OUT
+
