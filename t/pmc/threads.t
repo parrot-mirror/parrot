@@ -57,7 +57,7 @@ else {
 pasm_output_is(<<'CODE', <<'OUTPUT', "interp identity");
     getinterp P2
     clone P3, P2
-    eq P3, P2, ok1
+    ne P3, P2, ok1
     print "not"
 ok1:
     print "ok 1\n"

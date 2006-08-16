@@ -32,9 +32,6 @@
   
   array_name = shift argv
 
-  .local int call_level
-  $P0 = get_root_global ['_tcl'], 'call_level'
-  call_level = $P0
   null the_array
 
   .local pmc __find_var
@@ -211,7 +208,7 @@ no_args:
   iter = new .Iterator, the_array
   iter = .ITERATE_FROM_START
 
-  retval = new .String
+  retval = new .TclList
 
   .local int count
   count = 0
@@ -224,20 +221,16 @@ push_loop:
   $P2 = rule(str)
   unless $P2 goto push_loop
 
-  # if it's the first, we don't want to print a separating space
-  unless count goto skip_space
-  retval .= ' '
-skip_space:
   inc count
-  retval .= str
-  retval .= ' '
+  push retval, str
   val = the_array[str]
-  retval .= val
+  val = clone val
+  push retval, val
 
   branch push_loop
 
 push_end:
-  .return (retval)
+  .return(retval)
 
 bad_args:
   .throw('wrong # args: should be "array get arrayName ?pattern?"')
@@ -368,7 +361,7 @@ not_array:
   iter = new .Iterator, the_array
   iter = .ITERATE_FROM_START
 
-  retval = new .String
+  retval = new .TclList
 
   .local int count
   count = 0
@@ -379,11 +372,8 @@ check_loop:
   $P0 = rule(name)
   unless $P0 goto check_loop
 
-  unless count goto skip_space
-  retval .= ' '
-skip_space:
   inc count
-  retval .= name
+  push retval, name
 
   branch check_loop
 check_end:
@@ -433,7 +423,7 @@ found_match:
   iter = new .Iterator, the_array
   iter = .ITERATE_FROM_START
 
-  retval = new .String
+  retval = new .TclList
 
   .local int count
   count = 0
@@ -444,11 +434,8 @@ check_loop:
   $P0 = rule(name)
   unless $P0 goto check_loop
 
-  unless count goto skip_space
-  retval .= ' '
-skip_space:
   inc count
-  retval .= name
+  push retval, name
 
   branch check_loop
 check_end:

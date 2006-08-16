@@ -1,9 +1,27 @@
 grammar TclExpr::PIR::Grammar is TGE::Grammar;
 
 transform result (ROOT)  {
+    .local pmc pir
+    pir = new 'PGE::CodeString'
+
     $S0 = typeof node
     $P0 = tree.get('pir', node, $S0)
-    .return($P0)
+    pir .= $P0
+
+    .local pmc ret, label
+    ret   = node['ret']
+    label = pir.unique('expr_is_string')
+
+    pir.emit(<<'END_PIR', ret, label)
+  .local pmc __number
+  __number = get_root_global ['_tcl'], '__number'
+  push_eh %1
+    %0 = __number(%0)
+  clear_eh
+%1:
+END_PIR
+
+    .return(pir)
 }
 
 transform pir (PAST::Val) {
@@ -24,6 +42,8 @@ transform pir (PAST::Val) {
     $I0 = index $S0, '.'                           # XXX: '.' hack due to
     if $I0 >= 0 goto assign_val                    # parrotbug #38896
     $I0 = index $S0, 'E'
+    if $I0 >= 0 goto assign_val
+    $I0 = index $S0, 'e'
     if $I0 >= 0 goto assign_val
     concat $S0, '.'
     goto assign_val
@@ -156,6 +176,8 @@ transform pir (PAST::Cond) {
     .local string cond_result, then_result, else_result
 
     pir = new 'PGE::CodeString'
+    pir.emit('  .local pmc __boolean')
+    pir.emit('  __boolean = get_root_global ["_tcl"], "__boolean"')
 
     # This node has 3 children. generate PIR so that:
     # if node1 then node2 else node3
@@ -173,6 +195,7 @@ transform pir (PAST::Cond) {
     pir .= $S0
     cond_result = cond['ret']
 
+    pir.emit("  %0 = __boolean(%0)",    cond_result)
     pir.emit("  unless %0 goto else_%1", cond_result, label)
 
     then = children[1] 

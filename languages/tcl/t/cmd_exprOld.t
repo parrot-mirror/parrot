@@ -2,7 +2,7 @@
 
 use strict;
 use lib qw(tcl/lib ./lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 81;
+use Parrot::Test tests => 80;
 use Test::More;
 
 language_output_is("tcl",<<'TCL',<<OUT,"lt, numeric, not alpha, with vars");
@@ -78,7 +78,7 @@ OUT
 language_output_is("tcl", <<'TCL', <<'OUT', "ceil(a)");
   expr ceil(a)
 TCL
-syntax error in expression "ceil(a)": variable references require preceding $
+syntax error in expression "ceil(a)": the word "ceil(a)" requires a preceding $ if it's a variable or function arguments if it's a function
 OUT
 
 language_output_is('tcl', <<'TCL', <<'OUT', 'ceil("a")');
@@ -91,12 +91,6 @@ language_output_is('tcl', <<'TCL', <<'OUT', 'double("a")');
   expr double("a")
 TCL
 argument to math function didn't have numeric value
-OUT
-
-language_output_is("tcl", <<'TCL', <<'OUT', "exp(exp(50)) - overflow");
-  expr exp(exp(50))
-TCL
-floating-point value too large to represent
 OUT
 
 language_output_is("tcl", <<'TCL', <<'OUT', "fmod(3,0) - domain error");

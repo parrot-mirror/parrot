@@ -42,6 +42,17 @@ delete_sub:
 add_sub:
   # Create the new sub
   $S0 = '&' . newName
+  # first check to make sure it doesn't already exist
+  push_eh set_new_sub
+    $P0 = get_root_global ['tcl'], $S0
+  clear_eh
+
+  $S0 = "can't rename to \""
+  $S0 .= newName
+  $S0 .= '": command already exists'
+  .throw($S0)
+
+set_new_sub:
   set_root_global ['tcl'], $S0, sub
 
 
@@ -77,7 +88,15 @@ return:
   .return('')
 
 doesnt_exist:
+  if newName == '' goto cant_delete
+
   $S0 = "can't rename \""
+  $S0 .= oldName
+  $S0 .= "\": command doesn't exist"
+  .throw ($S0)
+
+cant_delete:
+  $S0 = "can't delete \""
   $S0 .= oldName
   $S0 .= "\": command doesn't exist"
   .throw ($S0)

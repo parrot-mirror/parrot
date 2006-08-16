@@ -12,6 +12,12 @@ options
   tokenVocab   = BcParser;      // Token file is found because of '-lib' option
 }
 
+
+@header 
+{
+  import java.util.regex.*;
+}
+
 @members
 {
   // used for generating unique register names
@@ -35,23 +41,28 @@ gen_pir_past
         + "  load_bytecode 'languages/punie/lib/POST.pir'                    \n"
         + "  load_bytecode 'languages/punie/lib/OSTGrammar.pir'              \n"
         + "                                                                  \n"
-        + "  # set up named registers                                        \n"
+        + "  # initialize the 26 up named vars                               \n"
         + "  .sym pmc stmts                                                  \n"
         + "  stmts = new 'PAST::Stmts'                                       \n"
         + "                                                                  \n"
         + "  .sym pmc reg_expression_stmt                                    \n"
         + "  .sym pmc reg_expression_topexp                                  \n"
-        + "  .sym pmc reg_expression_op                                      \n"
+        + "  .sym pmc reg_print_op                                           \n"
         + "  .sym pmc reg_expression_exp                                     \n"
         + "  .sym pmc reg_expression_stmt                                    \n"
         + "  .sym pmc reg_expression_newline                                 \n"
         + "                                                                  \n"
         + "  .sym pmc reg_temp                                               \n"
         + "                                                                  \n"
+        + "  .sym pmc reg_assign_lhs                                         \n"
+        + "                                                                  \n"
+        + "  .sym pmc reg_unary_val                                          \n"
+        + "  .sym pmc reg_unary_op                                           \n"
+        + "                                                                  \n"
         + "  .sym pmc reg_adding_expression_op                               \n"
       );
     }
-    ^(PROGRAM expression["stmts"]+ )
+    ^(PROGRAM expression["stmts"]* )
     {
       System.out.print( 
           "                                                                  \n"
@@ -116,6 +127,7 @@ gen_pir_past
         + "    end                                                           \n"
         + "                                                                  \n"
         + ".end                                                              \n"
+        + "                                                                  \n"
         + "# leaving 'gen_pir_past'                                          \n"
       );
     }
@@ -128,36 +140,55 @@ expression[String reg_mother]
         + "  # entering 'expression'                                         \n"
         + "    reg_expression_stmt = new 'PAST::Stmt'                        \n"
         + "      reg_expression_topexp = new 'PAST::Exp'                     \n"
-        + "        reg_expression_op = new 'PAST::Op'                        \n"
-        + "        reg_expression_op.'op'( 'print' )                         \n"
+        + "        reg_print_op = new 'PAST::Op'                             \n"
+        + "        reg_print_op.'op'( 'print' )                              \n"
         + "          reg_expression_exp = new 'PAST::Exp'                    \n"
       );
     }
-    (
-      adding_expression["reg_expression_exp"]
-      |
-      named_expression["reg_expression_exp"]
+    ^( SAY ( adding["reg_expression_exp"]
+             { 
+               System.out.print( 
+                   "                                                                \n"
+                 + "      reg_print_op.'add_child'( reg_expression_exp )            \n"
+               );
+             }
+             |
+             ^( UNARY_MINUS adding["reg_expression_exp"] )
+             { 
+               System.out.print( 
+                   "                                                                \n"
+                 + "   # multiply by -1                                             \n"
+                 + "   reg_unary_op = new 'PAST::Op'                                \n"
+                 + "   reg_unary_op.'op'( 'infix:*' )                               \n"
+                 + "     reg_unary_val = new 'PAST::Val'                            \n"
+                 + "     reg_unary_val.value( -1 )                                  \n"
+                 + "     reg_unary_val.valtype( 'num' )                             \n"
+                 + "   reg_unary_op.'add_child'( reg_unary_val )                    \n"
+                 + "   reg_unary_op.'add_child'( reg_expression_exp )               \n"
+                 + "      reg_print_op.'add_child'( reg_unary_op )                  \n"
+               );
+             }
+           )
     )
     {
       System.out.print( 
           "                                                                  \n"
-        + "        reg_expression_op.'add_child'( reg_expression_exp )       \n"
-        + "      reg_expression_topexp.'add_child'( reg_expression_op )      \n"
+        + "      reg_expression_topexp.'add_child'( reg_print_op      )      \n"
         + "    reg_expression_stmt.'add_child'( reg_expression_topexp )      \n"
         + "  " + $expression.reg_mother + ".'add_child'( reg_expression_stmt ) \n"
         + "                                                                  \n"
         + "  # Now print a newline                                           \n"
         + "    reg_expression_stmt = new 'PAST::Stmt'                        \n"
         + "      reg_expression_topexp = new 'PAST::Exp'                     \n"
-        + "        reg_expression_op = new 'PAST::Op'                        \n"
+        + "        reg_print_op = new 'PAST::Op'                        \n"
         + "          reg_expression_exp = new 'PAST::Exp'                    \n"
         + "            reg_expression_newline = new 'PAST::Val'              \n"
         + "            reg_expression_newline.value( '\\n' )                 \n"
         + "            reg_expression_newline.valtype( 'strqq' )             \n"
         + "          reg_expression_exp.'add_child'( reg_expression_newline )\n"
-        + "        reg_expression_op.'add_child'( reg_expression_exp )       \n"
-        + "        reg_expression_op.'op'( 'print' )                         \n"
-        + "      reg_expression_topexp.'add_child'( reg_expression_op )      \n"
+        + "        reg_print_op.'add_child'( reg_expression_exp )       \n"
+        + "        reg_print_op.'op'( 'print' )                         \n"
+        + "      reg_expression_topexp.'add_child'( reg_print_op )      \n"
         + "    reg_expression_stmt.'add_child'( reg_expression_topexp )      \n"
         + "  " + $expression.reg_mother + ".'add_child'( reg_expression_stmt )\n"
         + "  # leaving 'expression'                                          \n"
@@ -167,36 +198,68 @@ expression[String reg_mother]
     {
       String mother_for_string = $expression.reg_mother;
     }
-    string[ mother_for_string ]
+    (
+      ^( PRINT string[ mother_for_string ] )
+      |
+      ^( ASSIGN_OP assign[ mother_for_string ] )
+    )
   ;
 
 string [ String reg_mother ]
   : STRING
     {
-      // TODO: strip String
+      String escaped = $STRING.text.replaceAll( "\\n", "\\\\n" ).replaceAll( "\"", "'" );
       System.out.print(     
           "                                                                \n"
         + "# entering 'string'                                             \n"
-        + "# " + $STRING.text + "                                          \n"
         + "    reg_expression_stmt = new 'PAST::Stmt'                      \n"
         + "      reg_expression_topexp = new 'PAST::Exp'                   \n"
-        + "        reg_expression_op = new 'PAST::Op'                      \n"
-        + "        reg_expression_op.'op'( 'print' )                       \n"
+        + "        reg_print_op = new 'PAST::Op'                           \n"
+        + "        reg_print_op.'op'( 'print' )                            \n"
         + "          reg_expression_exp = new 'PAST::Exp'                  \n"
         + "            reg_temp = new 'PAST::Val'                          \n"
-        + "            reg_temp.value( " + $STRING.text + " )              \n"
-        + "            reg_temp.valtype( 'strqq' )                           \n"
+        + "            reg_temp.value( " + escaped + " )                 \n"
+        + "            reg_temp.valtype( 'strqq' )                         \n"
         + "          reg_expression_exp.'add_child'( reg_temp )            \n"
         + "          null reg_temp                                         \n"
-        + "        reg_expression_op.'add_child'( reg_expression_exp )     \n"
-        + "      reg_expression_topexp.'add_child'( reg_expression_op )    \n"
+        + "        reg_print_op.'add_child'( reg_expression_exp )          \n"
+        + "      reg_expression_topexp.'add_child'( reg_print_op )         \n"
         + "    reg_expression_stmt.'add_child'( reg_expression_topexp )    \n"
         + "  " + $string.reg_mother + ".'add_child'( reg_expression_stmt ) \n"
         + "# leaving 'string'                                              \n"
       );
     }
   ;
-  
+
+assign [ String reg_mother ]
+  : {
+      System.out.print( 
+          "                                                                  \n"
+        + "  # entering 'assign'                                             \n"
+        + "    reg_assign_lhs = new 'PAST::Exp'                              \n"
+      );
+    }
+    ^(VAR LETTER) adding["reg_assign_lhs"]
+    {
+      // TODO: strip String
+      System.out.print(     
+          "                                                                  \n"
+        + "    # entering 'ASSIGN_OP ^(VAR LETTER) adding'        \n"
+        + "      .sym pmc past_op                                            \n"
+        + "      past_op = new 'PAST::Op'                                    \n"
+        + "      past_op.'op'( 'infix:=' )                                   \n"
+        + "        .sym pmc past_var                                         \n"
+        + "        past_var = new 'PAST::Var'                                \n"
+        + "        past_var.'varname'( '" + $LETTER.text + "' )              \n"
+        + "        past_var.'vartype'( 'scalar' )                            \n"
+        + "        past_var.'scope'( 'global' )                              \n"
+        + "      past_op.'add_child'( past_var )                             \n"
+        + "      past_op.'add_child'( reg_assign_lhs )                       \n"
+        + "    " + $assign.reg_mother + ".'add_child'( past_op )             \n"
+        + "    # leaving  'ASSIGN_OP named_expression NUMBER'                \n"
+      );
+    }
+  ;
 
 
 integer[ String reg_mother ]
@@ -215,14 +278,14 @@ integer[ String reg_mother ]
     }
   ;
 
-adding_expression[String reg_mother]
+adding[String reg_mother]
   : {
       System.out.print( 
           "                                                                  \n"
-        + "  # entering 'adding_expression'                                  \n"
+        + "  # entering 'adding'                                  \n"
       );
-      // Why can't I say:   integer[ $adding_expression.reg_mother ] ???
-      String mother_for_int = $adding_expression.reg_mother;
+      // Why can't I say:   integer[ $adding.reg_mother ] ???
+      String mother_for_int = $adding.reg_mother;
     }
     ( integer[ mother_for_int ]
       |
@@ -231,27 +294,29 @@ adding_expression[String reg_mother]
         String reg = "reg_" + reg_num;
         System.out.print( 
             "                                                                \n"
-          + "    # entering '( PLUS | MINUS | MUL | DIV ) adding_expression adding_expression'       \n"
+          + "    # entering '( PLUS | MINUS | MUL | DIV ) adding adding'       \n"
           + "      .sym pmc " + reg + "                                      \n"
           + "      " + reg + " = new 'PAST::Op'                              \n"
         );
       }
-      ^( infix=( PLUS | MINUS | MUL_OP ) adding_expression[reg] adding_expression[reg] )
+      ^( infix=( PLUS | MINUS | MUL_OP ) adding[reg] adding[reg] )
       {
         System.out.print( 
             "      " + reg + ".'op'( 'infix:" + $infix.text + "' )   \n"
           + "    reg_temp = new 'PAST::Exp'                                  \n"
           + "    reg_temp.'add_child'( " + reg + " )                         \n"
           + "      null " + reg + "                                          \n"
-          + "  " + $adding_expression.reg_mother + ".'add_child'( reg_temp ) \n"
+          + "  " + $adding.reg_mother + ".'add_child'( reg_temp ) \n"
           + "    null reg_temp                                               \n"
-          + "    # leaving '( PLUS | MINUS | MUL | DIV ) adding_expression adding_expression'        \n"
+          + "    # leaving '( PLUS | MINUS | MUL | DIV ) adding adding'        \n"
         );
       }
+      |
+      named_expression[ mother_for_int ]
     )
     {
       System.out.print( 
-          "  # leaving 'adding_expression'                                   \n"
+          "  # leaving 'adding'                                   \n"
       );
     }
   ;
@@ -265,31 +330,16 @@ named_expression[String reg_mother]
     }
     ^( VAR LETTER )
     {
-      reg_num++;
       System.out.print( 
           "                                                                     \n"
-        + "    # entering '( VAR LETTER )                                       \n"
-        + "    .sym pmc reg_exp_" + reg_num + "                                 \n"
-        + "    reg_exp_" + reg_num + " = new 'PAST::Exp'                        \n"
-        + "      .sym pmc reg_op_" + reg_num + "                                \n"
-        + "      reg_op_" + reg_num + " = new 'PAST::Op'                        \n"
-        + "      reg_op_" + reg_num + ".'op'( 'infix:=' )                       \n"
-        + "        .sym pmc reg_var_" + reg_num + "                             \n"
-        + "        reg_var_" + reg_num + " = new 'PAST::Var'                    \n"
-        + "        reg_var_" + reg_num + ".'varname'( '" + $LETTER.text + "' )   \n"
-        + "        reg_var_" + reg_num + ".'vartype'( 'scalar' )                \n"
-        + "        reg_var_" + reg_num + ".'scope'( 'global' )                  \n"
-        + "      reg_op_" + reg_num + ".'add_child'( reg_var_" + reg_num + " )  \n"
-        + "        .sym pmc reg_val_" + reg_num + "                             \n"
-        + "        reg_val_" + reg_num + " = new 'PAST::Val'                    \n"
-        + "        reg_val_" + reg_num + ".'value'( 0 )                         \n"
-        + "        reg_val_" + reg_num + ".'valtype'( 'int' )                   \n"
-        + "      reg_op_" + reg_num + ".'add_child'( reg_val_" + reg_num + " )  \n"
-        + "    reg_exp_" + reg_num + ".'add_child'( reg_op_" + reg_num + " )    \n"
-        + "# a quick hack to initialize 'a'                                     \n"
-        + "stmts.'add_child'( reg_exp_" + reg_num + " )                         \n"
-        + "  " + $named_expression.reg_mother + ".'add_child'( reg_var_" + reg_num + " ) \n"
-        + "    # leaving '(VAR LETTER)'                                         \n"
+        + " # entering '( VAR LETTER )                                    \n"
+        + "    reg_temp = new 'PAST::Var'                                 \n"
+        + "    reg_temp.'varname'( '" + $LETTER.text + "' )               \n"
+        + "    reg_temp.'vartype'( 'scalar' )                             \n"
+        + "    reg_temp.'scope'( 'global' )                               \n"
+        + "  " + $named_expression.reg_mother + ".'add_child'( reg_temp ) \n"
+        + "    null reg_temp                                              \n"
+        + "  # leaving '(VAR LETTER)'                                     \n"
       );
     }
   ;
