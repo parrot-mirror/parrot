@@ -1,0 +1,72 @@
+/*
+Copyright (C) 2006, The Perl Foundation.
+$Id: sub.pmc 15165 2006-11-07 16:09:06Z tewk $
+
+=head1 NAME
+
+src/pmc/packfilesegment.pmc - Packfile Segment
+
+=head1 DESCRIPTION
+
+This is an abstract PMC that all Packfile Segment PMCs will inherit from.
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+/* Data used:
+ *   PMC_struct_val ... PackFile
+ */
+pmclass PackfileSegment abstract noinit {
+    
+/*
+
+=item C<STRING* pack()>
+
+Packs this segment into a binary representation. Returns NULL on failure.
+
+=cut
+
+*/
+    METHOD STRING* pack()
+    {
+        return NULL;
+    }
+
+/*
+
+=item C<int unpack(STRING* image)>
+
+Unpacks the given binary representation of the segment and sets this PMC to
+hold it. Returns a non-zero value on success.
+
+=cut
+
+*/
+    METHOD int unpack(STRING* image)
+    {
+        return 0;
+    }
+
+}
+
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */

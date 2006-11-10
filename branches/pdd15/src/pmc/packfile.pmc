@@ -1,0 +1,80 @@
+/*
+Copyright (C) 2006, The Perl Foundation.
+$Id: sub.pmc 15165 2006-11-07 16:09:06Z tewk $
+
+=head1 NAME
+
+src/pmc/packfile.pmc - Packfile
+
+=head1 DESCRIPTION
+
+This PMC represents a pack file.
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+/* Data used:
+ *   PMC_struct_val ... PackFile
+ */
+pmclass Packfile need_ext {
+
+/*
+
+=item C<void init()>
+
+Initializes the packfile
+
+=cut
+
+*/
+    void init () {
+        PObj_custom_mark_destroy_SETALL(SELF);
+    }
+
+/*
+
+=item C<void destroy()>
+
+Destroys the packfile.
+
+=cut
+
+*/
+    void destroy () {
+        
+    }
+
+/*
+=item C<void mark()>
+
+Marks the packfile for GC purposes.
+
+=cut
+
+*/
+    void mark () {
+        
+    }
+}
+
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
