@@ -622,9 +622,6 @@ PackFile_Header_Unpack(Interp* interpreter, opcode_t* packed,
     struct Parrot_PackFile_Header *header;
     INTVAL header_length;
 
-    /* Check we have stuff to read. */
-    assert(packed_size > PACKFILE_HEADER_BYTES);
-
     /* Read the fixed length chunk of the header in. */
     header = self->header;
     memcpy(header, packed, PACKFILE_HEADER_BYTES);
