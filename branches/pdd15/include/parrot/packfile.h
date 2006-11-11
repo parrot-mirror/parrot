@@ -149,6 +149,14 @@ struct PackFile_FixupTable {
 #define PFC_KEY     '\153'
 #define PFC_PMC     '\160'
 
+/* Duplicates with PARROT_ prefix */
+#define PARROT_PFC_NONE    '\0'
+/* no ascii chars use numbers: for n,s,k,p */
+#define PARROT_PFC_NUMBER  '\156'
+#define PARROT_PFC_STRING  '\163'
+#define PARROT_PFC_KEY     '\153'
+#define PARROT_PFC_PMC     '\160'
+
 enum PF_VARTYPE {                  /* s. also imcc/symreg.h */
     PF_VT_START_SLICE = 1 << 10,   /* x .. y slice range */
     PF_VT_END_SLICE   = 1 << 11,
@@ -172,6 +180,23 @@ struct PackFile_ConstTable {
     struct PackFile_Segment     base;
     opcode_t const_count;
     struct PackFile_Constant ** constants;
+    struct PackFile_ByteCode  * code;   /* where this segment belongs to */
+};
+
+struct Parrot_PackFile_Constant {
+    opcode_t type;
+    union {
+        opcode_t integer;
+        FLOATVAL number;
+        STRING *string;
+        PMC *key;
+    } u;
+};
+
+struct Parrot_PackFile_ConstTable {
+    struct PackFile_Segment     base;
+    opcode_t const_count;
+    struct Parrot_PackFile_Constant ** constants;
     struct PackFile_ByteCode  * code;   /* where this segment belongs to */
 };
 

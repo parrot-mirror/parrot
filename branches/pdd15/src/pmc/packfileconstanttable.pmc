@@ -1,3 +1,4 @@
+
 /*
 Copyright (C) 2006, The Perl Foundation.
 $Id: $
@@ -20,6 +21,23 @@ Holds and allows manipulatin of a Packfile constant table.
 
 #include "parrot/parrot.h"
 
+/* 
+
+Allocate memory to extend table to correct size for setting values outside of table's current size.
+
+*/
+
+static void extend_const_table(struct Parrot_PackFile_ConstTable *pfct, INTVAL index){
+    /* Trust that index is >0 and > current const_count. */
+
+    pfct->const_count = index;
+    pfct->constants = mem_sys_realloc(pfct->constants, index * sizeof(struct Parrot_PackFile_Constant *));
+
+}
+
+
+
+
 /* Data used:
  *   PMC_struct_val ... Packfile_ConstTable
  */
@@ -41,7 +59,7 @@ Packs this segment into a binary representation. Returns NULL on failure.
 
 /*
 
-=item C<int unpack(STRING* image)>
+=item C<INTVAL unpack(STRING* image)>
 
 Unpacks the given binary representation of the segment and sets this PMC to
 hold it. Returns a non-zero value on success.
@@ -49,13 +67,256 @@ hold it. Returns a non-zero value on success.
 =cut
 
 */
-    METHOD int unpack(STRING* image)
+    METHOD INTVAL unpack(STRING* image)
     {
         return 0;
     }
 
-}
 
+
+/*
+
+=item C<INTVAL elements()>
+
+Returns the number of constants contained in the table.
+
+=cut
+
+*/
+
+    INTVAL elements() {
+        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        
+        if (pfct->const_count)
+            return (INTVAL)pfct->const_count;
+        else
+            return 0;
+    }
+
+
+/*
+
+=item C<FLOATVAL get_number_keyed_int(INTVAL index)>
+
+Gets the value of the number constant at the specified index in the constants table.  If
+the constant in that position in the table is not a number, an exception will be thrown.
+
+=cut
+
+*/
+
+    FLOATVAL get_number_keyed_int(INTVAL index) {
+        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        
+        if (pfct->const_count) {
+            if (index >= 0 && index < (INTVAL)pfct->const_count) {
+                if (pfct->constants[index]->type == PARROT_PFC_NUMBER)
+                    return pfct->constants[index]->u.number;
+                else {
+                    real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a number");
+                    return 0;
+                }
+            }
+            else {
+                real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not in range");
+                return 0;
+            }
+        }
+        else {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No items in list");
+            return 0;
+        }
+    }
+
+/*
+
+=item C<STRING* get_string_keyed_int(INTVAL index)>
+
+Gets the value of the string constant at the specified index in the constants table.  If
+the constant in that position in the table is not a string, an exception will be thrown.
+
+=cut
+
+*/
+
+    STRING* get_string_keyed_int(INTVAL index) {
+        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        
+        if (pfct->const_count) {
+            if (index >= 0 && index < (INTVAL)pfct->const_count) {
+                if (pfct->constants[index]->type == PARROT_PFC_STRING)
+                    return pfct->constants[index]->u.string;
+                else {
+                    real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a string");
+                    return 0;
+                }
+            }
+            else {
+                real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not in range");
+                return 0;
+            }
+        }
+        else {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No items in list");
+            return 0;
+        }
+    }
+
+/*
+
+=item C<PMC* get_pmc_keyed_int(INTVAL index)>
+
+Gets the value of the PMC or key constant at the specified index in the constants table.  If
+the constant in that position in the table is not a PMC or key, an exception will be thrown.
+
+=cut
+
+*/
+
+    PMC* get_pmc_keyed_int(INTVAL index) {
+        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        
+        if (pfct->const_count) {
+            if (index >= 0 && index < (INTVAL)pfct->const_count) {
+                if (pfct->constants[index]->type == PARROT_PFC_PMC || pfct->constants[index]->type == PARROT_PFC_KEY)
+                    return pfct->constants[index]->u.key;
+                else {
+                    real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a PMC or key");
+                    return 0;
+                }
+            }
+            else {
+                real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not in range");
+                return 0;
+            }
+        }
+        else {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No items in list");
+            return 0;
+        }
+    }
+
+
+/*
+
+=item C<void set_number_keyed_int(INTVAL index, FLOATVAL value)>
+
+Sets the value of the number constant at the specified index in the constants table.  If
+the constant in that position in the table is not a number, an exception will be thrown.
+If it does not exist, the table will be extended.
+
+=cut
+
+*/
+
+    void set_number_keyed_int(INTVAL index, FLOATVAL value) {
+        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+
+        if (index < 0) { 
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Index less than zero");
+            return;
+        }
+        if (!pfct->const_count || (INTVAL)pfct->const_count < index) {
+            extend_const_table(pfct, index);
+        }
+        else if (pfct->constants[index]->type != PARROT_PFC_NUMBER && pfct->constants[index]->type !=PARROT_PFC_NONE) {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a number");
+            return;
+        }
+        pfct->constants[index]->type = PARROT_PFC_NUMBER;
+        pfct->constants[index]->u.number = value;
+        
+    }
+
+/*
+
+=item C<void set_string_keyed_int(INTVAL index, STRING* value)>
+
+Sets the value of the string constant at the specified index in the constants table.  If
+the constant in that position in the table is not a string, an exception will be thrown.
+If it does not exist, the table will be extended.
+
+=cut
+
+*/
+
+    set_string_keyed_int(INTVAL index) {
+        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        
+        if (index < 0) { 
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Index less than zero");
+            return;
+        }
+        if (!pfct->const_count || (INTVAL)pfct->const_count < index) {
+            extend_const_table(pfct, index);
+        }
+        else if (pfct->constants[index]->type != PARROT_PFC_STRING && pfct->constants[index]->type !=PARROT_PFC_NONE) {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a string");
+            return;
+        }
+        pfct->constants[index]->type = PARROT_PFC_STRING;
+        pfct->constants[index]->u.string = value;
+    }
+
+/*
+
+=item C<void set_pmc_keyed_int(INTVAL index, PMC* value)>
+
+Sets the value of the PMC or key constant at the specified index in the constants table.  If
+the constant in that position in the table is not a PMC or key, an exception will be thrown.
+If it does not exist, the table will be extended.
+
+=cut
+
+*/
+
+    void set_pmc_keyed_int(INTVAL index, PMC* value) {
+        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        
+        if (index < 0) { 
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Index less than zero");
+            return;
+        }
+        if (!pfct->const_count || (INTVAL)pfct->const_count < index) {
+            extend_const_table(pfct, index);
+        }
+        else if (pfct->constants[index]->type != PARROT_PFC_PMC && pfct->constants[index]->type !=PARROT_PFC_NONE) {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a PMC key");
+            return;
+        }
+        pfct->constants[index]->type = PARROT_PFC_PMC;
+        pfct->constants[index]->u.key = value;
+
+    }
+
+/*
+=item C<INTVAL get_type(INTVAL index)>
+
+Returns an integer value denoting the type of the constant at the specified index.
+
+=cut
+
+*/
+
+    METHOD INTVAL get_type(INTVAL index) {
+        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+
+        if (pfct->const_count) {
+            if (index >= 0 && index < (INTVAL)pfct->const_count) 
+                return pfct->constants[index]->type;
+            else {
+                real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not in range");
+                return 0;
+            }
+        }
+        else {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No items in list");
+            return 0;
+        }
+
+    }
+
+}
 /*
 
 =back
@@ -63,6 +324,7 @@ hold it. Returns a non-zero value on success.
 =cut
 
 */
+
 
 /*
  * Local variables:
