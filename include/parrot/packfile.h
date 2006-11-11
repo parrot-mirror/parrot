@@ -118,6 +118,22 @@ struct PackFile_Segment {
     opcode_t            * data;         /* oparray e.g. bytecode */
 };
 
+struct Parrot_PackFile_Segment {
+    struct PackFile     * pf;
+    struct PackFile_Directory * dir;
+    /* directory information */
+    UINTVAL             type;           /* one of above defined types */
+    char                * name;
+    size_t              op_count;       /* external size in ops */
+    size_t              file_offset;    /* offset in ops */
+    /* common payload of all bytecode chunks
+     * with the size above these four items are aligned to 16 byte */
+    opcode_t            itype;          /* internal type/version */
+    opcode_t            id;             /* internal id */
+    size_t              size;           /* internal oparray size */
+    opcode_t            * data;         /* oparray e.g. bytecode */
+};
+
 /*
 ** PackFile_FixupTable:
 */
