@@ -166,6 +166,11 @@ the string, ready for writing to a file.
         dir_packed = (STRING*)Parrot_call_method(INTERP, dir_meth, pf->directory,
             dir_method_name, "IJO");
 
+        /* If we didn't get a packed result, return NULL (exception will have
+         * been thrown inside directory pack. */
+         if (!dir_packed)
+            return NULL;
+
         /* Append. */
         result = string_append(INTERP, result, dir_packed);
         
@@ -182,8 +187,89 @@ into the current PMC. If it fails, the state of the PMC will be invalidated.
 =cut
 
 */
-    void set_string_native(STRING* packed) {
+    void set_string_native(STRING* image) {
+        struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
+        opcode_t* packed;
+        struct Parrot_PackFile_Header *header;
+        opcode_t *cursor;
+        int header_length;
+        int directory_version;
+        STRING* method_name = CONST_STRING(INTERP, "unpack");
+        STRING code;
+        PMC* meth;
+        INTVAL success;
 
+        /* Stash the source and packed size. */
+        packed = image->strstart;
+        pf->src = packed;
+        pf->size = string_length(INTERP, image);
+        
+        /* Read in the header. */
+        header_length = PackFile_Header_Unpack(interpreter, packed, pf);
+        if (header_length == 0)
+            return 0;
+        cursor = (opcode_t*)((char*)packed + header_length);
+        header = pf->header;
+    
+        /* Validate stuff. */
+        if (memcmp(header->magic, "\xfe\x50\x42\x43\x0d\x0a\x1a\x0a", 8)) {
+            PIO_eprintf(NULL, "PackFile_unpack: Invalid magic %s\n", header->magic);
+            return;
+        }
+        if (header->wordsize != 4 && header->wordsize != 8) {
+            PIO_eprintf(NULL, "PackFile_unpack: Invalid wordsize %d\n",
+                        header->wordsize);
+            return;
+        }
+        if (header->floattype != 0 && header->floattype != 1) {
+            PIO_eprintf(NULL, "PackFile_unpack: Invalid floattype %d\n",
+                        header->floattype);
+            return;
+        }
+        
+        /* Transform the rest of the file. */
+        PackFile_assign_transforms(pf);
+
+#if TRACE_PACKFILE
+        PIO_eprintf(NULL, "PackFile_unpack: Wordsize %d.\n", header->wordsize);
+        PIO_eprintf(NULL, "PackFile_unpack: Floattype %d (%s).\n",
+                    header->floattype,
+                    header->floattype ?
+                      "x86 little endian 12 byte long double" :
+                      "IEEE-754 8 byte double");
+        PIO_eprintf(NULL, "PackFile_unpack: Byteorder %d (%sendian).\n",
+                    header->byteorder, header->byteorder ? "big " : "little-");
+#endif
+
+        /* Check the directory version (plus read in padding). */
+        directory_version = PF_fetch_opcode(pf, &cursor);
+        PF_fetch_opcode(pf, &cursor);
+        PF_fetch_opcode(pf, &cursor);
+        PF_fetch_opcode(pf, &cursor);
+        if (directory_version != PARROT_PF_DIR_FORMAT) {
+            PIO_eprintf(NULL, "PackFile_unpack: Unable to read directory format %d\n",
+                directory_version);
+            return;
+        }
+
+        /* Now unpack dir, which unpacks its contents... */
+        memcpy(&code, image, sizeof(STRING));
+        code.strstart = cursor;
+        meth = VTABLE_find_method(INTERP, pf->directory, method_name);
+        success = Parrot_call_method_ret_int(INTERP, meth, pf->directory,
+            method_name, "vJOS", &code);
+
+#ifdef PARROT_HAS_HEADER_SYSMMAN
+        if (self->is_mmap_ped && (
+                    self->need_endianize || self->need_wordsize)) {
+            munmap((void *)self->src, self->size);
+            self->is_mmap_ped = 0;
+        }
+#endif
+
+#if TRACE_PACKFILE
+        PIO_eprintf(NULL, "PackFile_unpack: Unpack done.\n");
+#endif
     }
 
  /*
