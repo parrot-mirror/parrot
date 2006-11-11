@@ -627,7 +627,6 @@ PackFile_Header_Unpack(Interp* interpreter, opcode_t* packed,
     memcpy(header, packed, PACKFILE_HEADER_BYTES);
 
     /* Now read in the UUID. */
-    assert(packed_size > PACKFILE_HEADER_BYTES + header->uuid_length);
     if (header->uuid_length) {
         header->uuid_value = mem_sys_allocate(header->uuid_length);
         memcpy(header->uuid_value, packed + PACKFILE_HEADER_BYTES,
