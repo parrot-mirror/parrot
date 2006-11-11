@@ -1,6 +1,6 @@
 /*
 Copyright (C) 2006, The Perl Foundation.
-$Id: sub.pmc 15165 2006-11-07 16:09:06Z tewk $
+$Id: $
 
 =head1 NAME
 
@@ -21,7 +21,7 @@ This PMC represents a pack file.
 #include "parrot/parrot.h"
 
 /* Data used:
- *   PMC_struct_val ... PackFile
+ *   PMC_struct_val ... Parrot_PackFile
  */
 pmclass Packfile need_ext {
 
@@ -34,7 +34,53 @@ Initializes the packfile
 =cut
 
 */
-    void init () {
+    void init() {
+        /* Create and set up the packfile structure. */
+        struct Parrot_PackFile* pf =
+            mem_sys_allocate_zeroed(sizeof(struct Parrot_PackFile*));
+        if (!pf) {
+            PIO_eprintf(NULL, "PackFile_new: Unable to allocate!\n");
+            return;
+        }
+        PMC_struct_val(SELF) = pf;
+        
+        /* Allocate the header. */
+        pf->header = mem_sys_allocate_zeroed(sizeof(struct Parrot_PackFile_Header*));
+        if (!pf->header) {
+            PIO_eprintf(NULL, "PackFile_new: Unable to allocate header!\n");
+            SELF.destroy();
+            return;
+        }
+
+        /* Set magic in header. */
+        memcpy(pf->header->magic, "\xfe\x50\x42\x43\x0d\x0a\x1a\x0a", 8);
+        
+        /* Set sizes. */
+        pf->header->wordsize = sizeof(opcode_t);
+        pf->header->byteorder = PARROT_BIGENDIAN;
+        if (NUMVAL_SIZE == 8)
+            pf->header->floattype = 0;
+        else /* if XXX */
+            pf->header->floattype = 1;
+        
+        /* Set Parrot version. */
+        pf->header->parrot_major = PARROT_MAJOR_VERSION;
+        pf->header->parrot_minor = PARROT_MINOR_VERSION;
+        pf->header->parrot_patch = PARROT_PATCH_VERSION;
+
+        /* XXX Bytecode version to do. */
+        pf->header->bytecode_major = 0;
+        pf->header->bytecode_minor = 1;
+
+        /* UUID - default to none. */
+        pf->header->uuid_type = PARROT_UUID_TYPE_NONE;
+        pf->header->uuid_length = 0;
+        pf->header->uuid_value = NULL;
+        
+        /* Create a directory PMC. */
+        pf->directory = pmc_new(interpreter, enum_class_PackfileDirectory);
+
+        /* Need custom mark/destroy. */
         PObj_custom_mark_destroy_SETALL(SELF);
     }
 
@@ -48,7 +94,17 @@ Destroys the packfile.
 
 */
     void destroy () {
-        
+        struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
+        if (pf) {
+#ifdef PARROT_HAS_HEADER_SYSMMAN
+            if (pf->is_mmap_ped)
+                munmap((void*)pf->src, pf->size);
+#endif
+            if (pf->header)
+                mem_sys_free(pf->header);
+            mem_sys_free(pf);
+            return;
+        }
     }
 
 /*
@@ -60,8 +116,39 @@ Marks the packfile for GC purposes.
 
 */
     void mark () {
-        
+        struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
+        if (pf) {
+            if (pf->directory)
+                pobject_lives(interpreter, (PObj*)pf->directory);
+        }
     }
+
+/*
+=item C<STRING* get_string()>
+
+Packs the PackFile structure into a binary representatoin and returns
+the string, ready for writing to a file.
+
+=cut
+
+*/
+    STRING* get_string() {
+        return NULL;
+    }
+
+/*
+=item C<set_string_native(STRING* packed)>
+
+Takes a string that contains a serialized PackFile and tries to unpack it
+into the current PMC. If it fails, the state of the PMC will be invalidated.
+
+=cut
+
+*/
+    void set_string_native(STRING* packed) {
+
+    }
+
 }
 
 /*

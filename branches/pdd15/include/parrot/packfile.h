@@ -209,12 +209,14 @@ struct PackFile_Debug {
     struct PackFile_ByteCode  * code;   /* where this segment belongs to */
 };
 
+/* XXX This is going to die once the new PackFileDirectory PMC is done. :-) */
 struct PackFile_Directory {
     struct PackFile_Segment      base;
     size_t                       num_segments;
     struct PackFile_Segment   ** segments;
 };
 
+/* XXX This is going to die once the new PackFile PMC is done. :-) */
 struct PackFile {
     /* the packfile is its own directory */
     struct PackFile_Directory   directory;
@@ -238,6 +240,30 @@ struct PackFile {
     void                         (*fetch_nv)(unsigned char *, unsigned char *);
 };
 
+/* This structure describes a Packfile directory. */
+struct Parrot_PackFile_Directory {
+    /* The PackFile that this is a directory for. */
+    Parrot_PackFile* parent;
+
+    /* ResizablePMCArray holding segments. */
+    PMC* segments;
+};
+
+/* This structure describes a PackFile. */
+struct Parrot_PackFile {
+    /* The PackFile header. */
+    struct Parrot_PackFile_Header *header;
+
+    /* Packfile directory. */
+    PMC *directory;
+
+    /* Word size and endian-change related stuff. */
+    INTVAL   need_wordsize;
+    INTVAL   need_endianize;
+    opcode_t (*fetch_op)(unsigned char *);
+    INTVAL   (*fetch_iv)(unsigned char *);
+    void     (*fetch_nv)(unsigned char *, unsigned char *);
+};
 
 /*
 ** PackFile Functions:
