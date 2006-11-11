@@ -393,7 +393,8 @@ hold it. Returns a non-zero value on success.
 
                 /* Make a STRING* that starts at the required offset. */
                 memcpy(&code, image, sizeof(STRING));
-                ((opcode_t*)code.strstart) += offset - header_length;
+                code.strstart = (opcode_t*)code.strstart + 
+                    (offset - header_length);
 
                 /* Find the unpack method that we need to call and call it. */
                 meth = VTABLE_find_method(INTERP, segment, method_name);
