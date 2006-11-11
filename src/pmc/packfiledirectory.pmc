@@ -44,10 +44,11 @@ Initializes the packfile
         }
         PMC_struct_val(SELF) = dir;
         
-        /* Parent is NULL to start off with and allocate a new array of
-         * segments. */
+        /* Parent is NULL to start off with and allocate new arrays of
+         * segments and segment names. */
         dir->parent = NULL;
         dir->segments = pmc_new(interpreter, enum_class_ResizablePMCArray);
+        dir->segment_names = pmc_new(interpreter, enum_class_ResizableStringArray);
 
         /* Need custom mark/destroy. */
         PObj_custom_mark_destroy_SETALL(SELF);
@@ -71,6 +72,7 @@ Destroys the packfile.
     }
 
 /*
+
 =item C<void mark()>
 
 Marks the packfile for GC purposes.
@@ -86,10 +88,13 @@ Marks the packfile for GC purposes.
                 pobject_lives(interpreter, (PObj*)dir->parent);
             if (dir->segments)
                 pobject_lives(interpreter, (PObj*)dir->segments);
+            if (dir->segment_names)
+                pobject_lives(interpreter, (PObj*)dir->segment_names);
         }
     }
 
 /*
+
 =item C<INTVAL elements()>
 
 Gets the number of segments that the directory knows about.
@@ -101,6 +106,88 @@ Gets the number of segments that the directory knows about.
         struct Parrot_PackFile_Directory *dir = 
             (struct Parrot_PackFile_Directory*)PMC_struct_val(SELF);
         return VTABLE_elements(INTERP, dir->segments);
+    }
+
+/*
+
+=item C<PMC* get_pmc_keyed_int(INTVAL i)>
+
+Get the segment at the given index.
+
+=cut
+
+*/
+    PMC* get_pmc_keyed_int(INTVAL i) {
+        struct Parrot_PackFile_Directory *dir = 
+            (struct Parrot_PackFile_Directory*)PMC_struct_val(SELF);
+        if (i < SELF.elements()) {
+            return VTABLE_get_pmc_keyed_int(INTERP, dir->segments, i);
+        }
+        else {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No such segment");
+            return NULL;
+        }
+    }
+
+/*
+
+=item C<STRING* get_string_keyed_int(INTVAL i)>
+
+Get the name of the segment at the given index.
+
+=cut
+
+*/
+    STRING* get_string_keyed_int(INTVAL i) {
+        struct Parrot_PackFile_Directory *dir = 
+            (struct Parrot_PackFile_Directory*)PMC_struct_val(SELF);
+        if (i < SELF.elements()) {
+            return VTABLE_get_string_keyed_int(INTERP, dir->segment_names, i);
+        }
+        else {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No such segment");
+            return NULL;
+        }
+    }
+
+/*
+
+=item C<PMC* get_pmc_keyed_str(STRING *name)>
+
+Gets the segment with the given name.
+
+=cut
+
+*/
+    PMC* get_pmc_keyed_str(STRING *name) {
+        struct Parrot_PackFile_Directory *dir = 
+            (struct Parrot_PackFile_Directory*)PMC_struct_val(SELF);
+        int i;
+        PMC* found = NULL;
+        for (i = 0; i < SELF.elements(); i++) {
+            STRING* test = SELF.get_string_keyed_int(i);
+            if (string_equal(INTERP, test, name)) {
+                found = SELF.get_pmc_keyed_int(i);
+                break;
+            }
+        }
+        if (found) {
+            return found;
+        }
+        else {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No such segment");
+            return NULL;
+        }
+    }
+
+
+    void set_pmc_keyed_string(STRING *key, PMC *segment) {
+        struct Parrot_PackFile_Directory *dir = 
+            (struct Parrot_PackFile_Directory*)PMC_struct_val(SELF);
+
+        /* Add to the segments array and names array. */
+        VTABLE_push_pmc(INTERP, dir->segments, segment);
+        VTABLE_push_string(INTERP, dir->segment_names, key);
     }
 
 /*

@@ -247,6 +247,9 @@ struct Parrot_PackFile_Directory {
 
     /* ResizablePMCArray holding segments. */
     PMC* segments;
+    
+    /* ResizableStringArray holding segment names. */
+    PMC* segment_names;
 };
 
 /* This structure describes a PackFile. */
