@@ -140,8 +140,9 @@ Packs this segment into a binary representation. Returns NULL on failure.
         length = PackFile_ConstTable_pack_size(INTERP, ct);
 
         /* Make a string of the right length and pack into it. */
-        result = string_make_empty(INTERP, enum_stringrep_one, length * sizeof(opcode_t));
+        result = string_make_empty(INTERP, enum_stringrep_one, 1 + length * sizeof(opcode_t));
         image = result->strstart;
+        image = PF_store_opcode(image, 1 + length); /* Segment length. */
         PackFile_ConstTable_pack(INTERP, ct, image);
 
         /* Return resultant string. */
@@ -161,7 +162,16 @@ hold it. Returns a non-zero value on success.
     METHOD INTVAL unpack(STRING* image)
     {
         struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
-        
+        opcode_t* packed;
+
+        /* Get at the underlying string data. */
+        packed = (opcode_t*)image->strstart;
+
+        /* Skip over the length. XXX check */
+        packed++;
+
+        /* Do the unpack. */
+        return PackFile_ConstTable_unpack(INTERP, ct, packed);
     }
 
 /*
