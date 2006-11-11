@@ -180,7 +180,15 @@ Gets the segment with the given name.
         }
     }
 
+/*
 
+=item C<void set_pmc_keyed_string(STRING *key, PMC *segment)>
+
+Add a segment with the given name.
+
+=cut
+
+*/
     void set_pmc_keyed_string(STRING *key, PMC *segment) {
         struct Parrot_PackFile_Directory *dir = 
             (struct Parrot_PackFile_Directory*)PMC_struct_val(SELF);
