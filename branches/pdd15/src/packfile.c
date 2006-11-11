@@ -524,7 +524,7 @@ PackFile_unpack(Interp *interpreter, struct PackFile *self,
     assert(self != NULL);
     assert(packed != NULL);
     assert(packed_size > PACKFILE_HEADER_BYTES);
-    
+
     /* Stash the source. */
     self->src = packed;
     self->size = packed_size;
@@ -535,7 +535,7 @@ PackFile_unpack(Interp *interpreter, struct PackFile *self,
         return 0;
     cursor = (opcode_t*)((char*)packed + header_length);
     header = self->header;
-    
+
     /* Validate stuff. */
     if (memcmp(header->magic, "\xfe\x50\x42\x43\x0d\x0a\x1a\x0a", 8)) {
         PIO_eprintf(NULL, "PackFile_unpack: Invalid magic %s\n", header->magic);

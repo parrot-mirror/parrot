@@ -186,6 +186,8 @@ hold it. Returns a non-zero value on success.
                 case enum_fixup_sub:
                     entry->name_const_offset = PF_fetch_opcode(pf, &cursor);
                     entry->offset = PF_fetch_opcode(pf, &cursor);
+                    entry->name_const_offset = INTERP->code->const_table->constants
+                      [entry->name_const_offset]->u.string;
                     break;
                 case enum_fixup_none:
                     break;
