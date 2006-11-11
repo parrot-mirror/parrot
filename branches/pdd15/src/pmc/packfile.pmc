@@ -96,10 +96,10 @@ Destroys the packfile.
     void destroy () {
         struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
         if (pf) {
-/*#ifdef PARROT_HAS_HEADER_SYSMMAN
+#ifdef PARROT_HAS_HEADER_SYSMMAN
             if (pf->is_mmap_ped)
                 munmap((void*)pf->src, pf->size);
-#endif*/
+#endif
             if (pf->header)
                 mem_sys_free(pf->header);
             mem_sys_free(pf);
@@ -240,6 +240,25 @@ are determined by the VM when serializing the packfile for storage on disk.
             real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No such field");
             return;
         }
+    }
+
+/*
+=item C<PMC* get_directory()>
+
+Returns the Packfile Directory PMC that represents the directory segment
+at the start of the packfile.
+
+=cut
+
+*/
+    METHOD PMC* get_directory() {
+        struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
+
+        if (pf->directory)
+            return pf->directory;
+
+        real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No directory available");
+        return NULL;
     }
 }
 
