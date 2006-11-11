@@ -97,7 +97,7 @@ typedef enum {
     PF_MAX_SEG
 } pack_file_types;
 
-#define PF_DIR_FORMAT 1
+#define PARROT_PF_DIR_FORMAT 1
 
 typedef INTVAL (*PackFile_map_segments_func_t) (Interp *,
         struct PackFile_Segment *seg, void *user_data);
@@ -223,7 +223,7 @@ struct PackFile {
     size_t   size;              /* size in bytes */
     INTVAL is_mmap_ped;         /* don't free it, munmap it at destroy */
 
-    struct Parrot_PackFile_Header     * header;
+    struct Parrot_PackFile_Header     *header;
 
     /* directory hold all Segments */
     /* TODO make this reallocatable */

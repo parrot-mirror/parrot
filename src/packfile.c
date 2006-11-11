@@ -518,6 +518,7 @@ PackFile_unpack(Interp *interpreter, struct PackFile *self,
     struct Parrot_PackFile_Header *header;
     opcode_t *cursor;
     int header_length;
+    int directory_version;
 
     /* Check what we've been passed ain't NULL. */
     assert(self != NULL);
@@ -564,6 +565,17 @@ PackFile_unpack(Interp *interpreter, struct PackFile *self,
     PIO_eprintf(NULL, "PackFile_unpack: Byteorder %d (%sendian).\n",
                 header->byteorder, header->byteorder ? "big " : "little-");
 #endif
+
+    /* Check the directory version (plus read in padding). */
+    directory_version = PF_fetch_opcode(self, &cursor);
+    PF_fetch_opcode(self, &cursor);
+    PF_fetch_opcode(self, &cursor);
+    PF_fetch_opcode(self, &cursor);
+    if (directory_version != PARROT_PF_DIR_FORMAT) {
+        PIO_eprintf(NULL, "PackFile_unpack: Unable to read directory format %d\n",
+            directory_version);
+        return 0;
+    }
 
     /*
      * now unpack dir, which unpacks its contents ...

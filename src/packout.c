@@ -50,11 +50,16 @@ PackFile_pack_size(Interp* interpreter, struct PackFile *self)
     int header_length;
     struct PackFile_Directory * const dir = &self->directory;
 
+    /* Header length. */
     header_length = PACKFILE_HEADER_BYTES + self->header->uuid_length;
     header_length = header_length % 16 == 0 ? header_length :
         header_length + (16 - (header_length % 16));
     size = header_length / sizeof(opcode_t);
 
+    /* Directory header. */
+    size += 4;
+
+    /* Size of what's packed. */
     dir->base.file_offset = size;
     size += PackFile_Segment_packed_size(interpreter,
             (struct PackFile_Segment *) dir);
@@ -90,13 +95,21 @@ PackFile_pack(Interp* interpreter, struct PackFile *self, opcode_t *cursor)
     struct PackFile_Directory * const dir = &self->directory;
     struct PackFile_Segment *seg;
     int header_length;
-
+    
+    /* Pack the header. */
     self->src = cursor;
     header_length = PackFile_Header_Pack(interpreter, cursor, self);
     cursor = (opcode_t*)((char*)cursor + header_length);
 
-    /* pack the directory */
+    /* Store the directory format. */
+    *cursor++ = PARROT_PF_DIR_FORMAT;
+    *cursor++ = 0;
+    *cursor++ = 0;
+    *cursor++ = 0;
+
+    /* Pack the directory itself, which also packs other stuff. */
     seg = (struct PackFile_Segment *) dir;
+
     /* dir size */
     size = seg->op_count;
     ret = PackFile_Segment_pack (interpreter, seg, cursor);
