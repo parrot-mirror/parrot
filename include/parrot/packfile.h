@@ -243,7 +243,7 @@ struct PackFile {
 /* This structure describes a Packfile directory. */
 struct Parrot_PackFile_Directory {
     /* The PackFile that this is a directory for. */
-    Parrot_PackFile* parent;
+    struct Parrot_PackFile* parent;
 
     /* ResizablePMCArray holding segments. */
     PMC* segments;
@@ -251,6 +251,17 @@ struct Parrot_PackFile_Directory {
     /* ResizableStringArray holding segment names. */
     PMC* segment_names;
 };
+
+/* Types of segment that we can have. */
+typedef enum {
+    PARROT_PACKFILE_SEG_DEFAULT = 1,
+    PARROT_PACKFILE_SEG_FIXUP = 2,
+    PARROT_PACKFILE_SEG_CONSTANTTABLE = 3,
+    PARROT_PACKFILE_SEG_BYTECODE = 4,
+    PARROT_PACKFILE_SEG_ANNOTATIONS = 5,
+    PARROT_PACKFILE_SEG_PIC = 6,
+    PARROT_PACKFILE_SEG_DEPENDENCIES = 7
+} Parrot_PackFile_Segment_Types;
 
 /* This structure describes a PackFile. */
 struct Parrot_PackFile {
@@ -266,6 +277,11 @@ struct Parrot_PackFile {
     opcode_t (*fetch_op)(unsigned char *);
     INTVAL   (*fetch_iv)(unsigned char *);
     void     (*fetch_nv)(unsigned char *, unsigned char *);
+
+    /* Source. */
+    opcode_t *src;       /* the (possibly mmap()ed) start of the PF */
+    size_t   size;       /* size in bytes */
+    INTVAL is_mmap_ped;  /* 0 if it's not mmap()ed */
 };
 
 /*
