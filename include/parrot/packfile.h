@@ -166,6 +166,7 @@ typedef struct Parrot_PackFile_FixupEntry {
     opcode_t type;              /* who knows, what fixups we need */
     opcode_t name_const_offset; /* name of the label */
     opcode_t offset;            /* location of the item */
+    STRING *name;
     struct PackFile_ByteCode *seg;
 } Parrot_PackFile_FixupEntry;
 
