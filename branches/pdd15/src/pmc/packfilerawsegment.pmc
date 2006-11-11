@@ -36,7 +36,22 @@ Packs this segment into a binary representation. Returns NULL on failure.
 */
     METHOD STRING* pack()
     {
-        return NULL;
+        struct Parrot_PackFile_Segment *seg = (struct Parrot_PackFile_Segment*)PMC_struct_val(SELF);
+        size_t length;
+        STRING* result;
+        opcode_t* image;
+        
+        /* Compute the length. */
+        length = seg->size;
+
+        /* Make a string of the right length and pack into it. */
+        result = string_make_empty(INTERP, enum_stringrep_one, 1 + length * sizeof(opcode_t));
+        image = result->strstart;
+        image = PF_store_opcode(image, 1 + length); /* Segment length. */
+        memcpy(image, seg->data, seg->size * sizeof(opcode_t));
+
+        /* Return resultant string. */
+        return result;
     }
 
 /*
@@ -51,7 +66,24 @@ hold it. Returns a non-zero value on success.
 */
     METHOD int unpack(STRING* image)
     {
-        return 0;
+        struct Parrot_PackFile_Segment *seg = (struct Parrot_PackFile_Segment*)PMC_struct_val(SELF);
+        opcode_t* packed;
+        int length;
+
+        /* Get at the underlying string data. */
+        packed = (opcode_t*)image->strstart;
+
+        /* Skip over the length. XXX check */
+        packed++;
+
+        /* Do the unpack. */
+        if (seg->data)
+            free(seg->data);
+        length = string_length(INTERP, image) - sizeof(opcode_t);
+        seg->data = mem_sys_allocate(length);
+        memcpy(seg->data, packed, length);
+        
+        return 1;
     }
 
 }

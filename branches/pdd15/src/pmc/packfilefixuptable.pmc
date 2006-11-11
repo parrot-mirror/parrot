@@ -60,10 +60,9 @@ Destroys the packfile.
     void destroy () {
         struct Parrot_PackFile_FixupTable *table =
             (struct Parrot_PackFile_FixupTable*)PMC_struct_val(SELF);
-    if (table) {
-        mem_sys_free(table);
+        if (table)
+            mem_sys_free(table);
     }
-}
 
 /*
 
@@ -172,8 +171,6 @@ hold it. Returns a non-zero value on success.
             return 0;
         }
 
-        //PackFile_FixupTable_clear(interpreter, table);
-
         entries = table->entries;
         pf = table->base.pf;
         size = PF_fetch_opcode(pf, &cursor);
@@ -181,8 +178,8 @@ hold it. Returns a non-zero value on success.
 
         for (i = 0; i < size; i++) {
             PMC *entry_pmc = pmc_new(interpreter, enum_class_PackfileFixupEntry);
-            VTABLE_set_pmc_keyed_int(interpreter, entries, i, entry_pmc);
             struct Parrot_PackFile_FixupEntry * const entry = PMC_struct_val(entry_pmc);
+            VTABLE_set_pmc_keyed_int(interpreter, entries, i, entry_pmc);
             entry->type = PF_fetch_opcode(pf, &cursor);
             switch (entry->type) {
                 case enum_fixup_label:
