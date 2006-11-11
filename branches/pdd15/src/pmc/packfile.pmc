@@ -96,10 +96,10 @@ Destroys the packfile.
     void destroy () {
         struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
         if (pf) {
-#ifdef PARROT_HAS_HEADER_SYSMMAN
+/*#ifdef PARROT_HAS_HEADER_SYSMMAN
             if (pf->is_mmap_ped)
                 munmap((void*)pf->src, pf->size);
-#endif
+#endif*/
             if (pf->header)
                 mem_sys_free(pf->header);
             mem_sys_free(pf);
