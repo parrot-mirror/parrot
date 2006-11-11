@@ -133,7 +133,44 @@ the string, ready for writing to a file.
 
 */
     STRING* get_string() {
-        return NULL;
+        struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
+        STRING* result = NULL;
+        opcode_t* cursor;
+        int header_length;
+        STRING* dir_method_name;
+        PMC* dir_meth;
+        STRING *dir_packed;
+
+        /* Allocate space for header. */
+        header_length = PACKFILE_HEADER_BYTES + pf->header->uuid_length;
+        header_length = header_length % 16 == 0 ? header_length :
+            header_length + (16 - (header_length % 16));
+        result = string_make_empty(INTERP, enum_stringrep_one, 
+            header_length + 4 * sizeof(opcode_t));
+        cursor = result->strstart;
+        
+        /* Pack the header. */
+        pf->src = cursor;
+        PackFile_Header_Pack(interpreter, cursor, pf);
+        cursor = (opcode_t*)((char*)cursor + header_length);
+        
+        /* Store the directory format. */
+        *cursor++ = PARROT_PF_DIR_FORMAT;
+        *cursor++ = 0;
+        *cursor++ = 0;
+        *cursor++ = 0;
+
+        /* Pack the directory itself, which also packs other stuff. */
+        dir_method_name = CONST_STRING(INTERP, "pack");
+        dir_meth = VTABLE_find_method(INTERP, pf->directory, dir_method_name);
+        dir_packed = (STRING*)Parrot_call_method(INTERP, dir_meth, pf->directory,
+            dir_method_name, "IJO");
+
+        /* Append. */
+        result = string_append(INTERP, result, dir_packed);
+        
+        /* Return packed data. */
+        return result;
     }
 
 /*
@@ -148,6 +185,7 @@ into the current PMC. If it fails, the state of the PMC will be invalidated.
     void set_string_native(STRING* packed) {
 
     }
+
  /*
 =item C<intval get_integer_keyed_str(STRING* field)>
 
