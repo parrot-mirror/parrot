@@ -24,7 +24,80 @@ Holds and allows manipulatin of a Packfile fixup table.
  *   PMC_struct_val ... Packfile_FixupTable
  */
 pmclass PackfileFixupTable inherits PackfileSegment {
-    
+/*
+
+=item C<void init()>
+
+Initializes the packfile
+
+=cut
+
+*/
+    void init () {
+       /* Create and set up the FixupTable structure. */
+        struct Parrot_PackFile_FixupTable * const fixup =
+          mem_sys_allocate(sizeof(struct Parrot_PackFile_FixupTable));
+        if (!fixup) {
+            PIO_eprintf(NULL, "PackFileFixupTable_new: Unable to allocate!\n");
+            return;
+        }
+        PMC_struct_val(SELF) = fixup;
+        fixup->entries = pmc_new(interpreter, enum_class_ResizablePMCArray);
+
+        /* Need custom mark/destroy. */
+        PObj_custom_mark_destroy_SETALL(SELF);
+    }
+
+/*
+
+=item C<void destroy()>
+
+Destroys the packfile.
+
+=cut
+
+*/
+    void destroy () {
+        struct Parrot_PackFile_FixupTable *table =
+            (struct Parrot_PackFile_FixupTable*)PMC_struct_val(SELF);
+    if (table) {
+        mem_sys_free(table);
+    }
+}
+
+/*
+
+=item C<void mark()>
+
+Marks the packfile for GC purposes.
+
+=cut
+
+*/
+    void mark () {
+        struct Parrot_PackFile_FixupTable *table =
+            (struct Parrot_PackFile_FixupTable*)PMC_struct_val(SELF);
+        if (table) {
+            if (table->entries)
+                pobject_lives(interpreter, (PObj*)table->entries);
+        }
+    }
+
+/*
+
+=item C<INTVAL elements()>
+
+Gets the number of segments that the directory knows about.
+
+=cut
+
+*/
+    INTVAL elements() {
+        struct Parrot_PackFile_FixupTable *table =
+            (struct Parrot_PackFile_FixupTable*)PMC_struct_val(SELF);
+        return VTABLE_elements(INTERP, table->entries);
+    }
+
 /*
 
 =item C<STRING* pack()>
@@ -36,7 +109,43 @@ Packs this segment into a binary representation. Returns NULL on failure.
 */
     METHOD STRING* pack()
     {
-        return NULL;
+        STRING* result;
+        opcode_t *cursor;
+        struct Parrot_PackFile_FixupTable *table =
+            (struct Parrot_PackFile_FixupTable*)PMC_struct_val(SELF);
+        opcode_t i;
+        int size;
+        PMC *entries;
+        if (!table) {
+            PIO_eprintf(interpreter, "PackFile_FixupTable_unpack: table == NULL!\n");
+            return 0;
+        }
+        entries = table->entries;
+        size = VTABLE_elements(interpreter, table->entries);
+
+        result = string_make_empty(INTERP, enum_stringrep_one, (size * 3 + 1) * sizeof(opcode_t));
+        cursor = result->strstart;
+
+
+        *cursor++ = (opcode_t) size;
+        for (i = 0; i < size; i++) {
+            Parrot_PackFile_FixupEntry *entry =
+              PMC_struct_val(VTABLE_get_pmc_keyed_int(interpreter, entries, i));
+            *cursor++ = (opcode_t) entry->type;
+            switch (entry->type) {
+                case enum_fixup_label:
+                case enum_fixup_sub:
+                    *cursor++ = (opcode_t) entry->name_const_offset;
+                    *cursor++ = (opcode_t) entry->offset;
+                    break;
+                case enum_fixup_none:
+                    break;
+                default:
+                    internal_exception(1, "Unknown fixup type\n");
+                    return 0;
+            }
+        }
+        return result;
     }
 
 /*
@@ -51,9 +160,48 @@ hold it. Returns a non-zero value on success.
 */
     METHOD int unpack(STRING* image)
     {
-        return 0;
-    }
+        int size;
+        opcode_t i;
+        PMC *entries;
+        opcode_t *cursor = image->strstart;
+        struct PackFile * pf;
+        struct Parrot_PackFile_FixupTable *table =
+            (struct Parrot_PackFile_FixupTable*)PMC_struct_val(SELF);
+        if (!table) {
+            PIO_eprintf(interpreter, "PackFile_FixupTable_unpack: table == NULL!\n");
+            return 0;
+        }
 
+        //PackFile_FixupTable_clear(interpreter, table);
+
+        entries = table->entries;
+        pf = table->base.pf;
+        size = PF_fetch_opcode(pf, &cursor);
+        VTABLE_set_integer_native(interpreter, SELF, size);
+
+        for (i = 0; i < size; i++) {
+            PMC *entry_pmc = pmc_new(interpreter, enum_class_PackfileFixupEntry);
+            VTABLE_set_pmc_keyed_int(interpreter, entries, i, entry_pmc);
+            struct Parrot_PackFile_FixupEntry * const entry = PMC_struct_val(entry_pmc);
+            entry->type = PF_fetch_opcode(pf, &cursor);
+            switch (entry->type) {
+                case enum_fixup_label:
+                case enum_fixup_sub:
+                    entry->name_const_offset = PF_fetch_opcode(pf, &cursor);
+                    entry->offset = PF_fetch_opcode(pf, &cursor);
+                    break;
+                case enum_fixup_none:
+                    break;
+                default:
+                    PIO_eprintf(interpreter,
+                            "PackFile_FixupTable_unpack: Unknown fixup type %d!\n",
+                            entry->type);
+                    return 0;
+            }
+        }
+
+        return size*3 + 1;
+    }
 }
 
 /*

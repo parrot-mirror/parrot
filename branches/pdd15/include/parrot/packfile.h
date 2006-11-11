@@ -121,26 +121,45 @@ struct PackFile_Segment {
 /*
 ** PackFile_FixupTable:
 */
+/* XXX This is going to die once the new PackFileDirectory PMC is done. :-) */
 struct PackFile_FixupEntry {
     opcode_t type;     /* who knows, what fixups we need */
     char *name;        /* name of the label */
     opcode_t offset;    /* location of the item */
     struct PackFile_ByteCode *seg;
 };
-
-
-typedef enum {
-    enum_fixup_none,
-    enum_fixup_label,
-    enum_fixup_sub
-} enum_fixup_t;
-
+/* XXX This is going to die once the new PackFileDirectory PMC is done. :-) */
 struct PackFile_FixupTable {
     struct PackFile_Segment base;
     opcode_t fixup_count;
     struct PackFile_FixupEntry ** fixups;
     struct PackFile_ByteCode  * code;   /* where this segment belongs to */
 };
+
+
+/*
+** PackFile_FixupTable:
+*/
+typedef enum {
+    enum_fixup_none,
+    enum_fixup_label,
+    enum_fixup_sub
+} enum_fixup_t;
+
+typedef struct Parrot_PackFile_FixupEntry {
+    opcode_t type;              /* who knows, what fixups we need */
+    opcode_t name_const_offset; /* name of the label */
+    opcode_t offset;            /* location of the item */
+    struct PackFile_ByteCode *seg;
+} Parrot_PackFile_FixupEntry;
+
+typedef struct Parrot_PackFile_FixupTable {
+    struct PackFile_Segment base;
+    /* ResizablePMCArray holding entries. */
+    PMC* entries;
+    struct PackFile_ByteCode *seg; /* where this segment belongs to */
+} Parrot_PackFile_FixupTable;
+
 
 #define PFC_NONE    '\0'
 /* no ascii chars use numbers: for n,s,k,p */
