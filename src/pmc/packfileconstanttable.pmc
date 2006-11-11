@@ -1,6 +1,6 @@
 /*
 Copyright (C) 2006, The Perl Foundation.
-$Id: sub.pmc 15165 2006-11-07 16:09:06Z tewk $
+$Id: $
 
 =head1 NAME
 
@@ -21,7 +21,7 @@ Holds and allows manipulatin of a Packfile constant table.
 #include "parrot/parrot.h"
 
 /* Data used:
- *   PMC_struct_val ... PackFile_ConstTable
+ *   PMC_struct_val ... Packfile_ConstTable
  */
 pmclass PackfileConstantTable inherits PackfileSegment {
     

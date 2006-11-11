@@ -21,7 +21,7 @@ Holds and allows manipulatin of a Packfile fixup table.
 #include "parrot/parrot.h"
 
 /* Data used:
- *   PMC_struct_val ... PackFile_FixupTable
+ *   PMC_struct_val ... Packfile_FixupTable
  */
 pmclass PackfileFixupTable inherits PackfileSegment {
     

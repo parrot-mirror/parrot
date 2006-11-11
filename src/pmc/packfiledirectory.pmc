@@ -19,6 +19,7 @@ Holds and allows manipulation of a Packfile directory.
 */
 
 #include "parrot/parrot.h"
+#include "parrot/extend.h"
 
 /* Data used:
  *   PMC_struct_val ... Parrot_PackFile_Directory
@@ -209,7 +210,94 @@ Packs this segment into a binary representation. Returns NULL on failure.
 */
     METHOD STRING* pack()
     {
-        return NULL;
+        struct Parrot_PackFile_Directory *dir = 
+            (struct Parrot_PackFile_Directory*)PMC_struct_val(SELF);
+        PMC* segments = pmc_new(INTERP, enum_class_ResizableStringArray);
+        int segments_count = VTABLE_elements(INTERP, dir->segments);
+        int i;
+        int header_length, seg_length, offset, segment_length;
+        char** c_names;
+        STRING* result = NULL;
+        opcode_t* image;
+
+        /* We need to pack the directory segment. However, to have the
+         * offsets we need to first know the lengths of each of the
+         * packed segments. So we build a string array of those and
+         * then concatenate them onto the end of the constructed
+         * directory table. */
+        for (i = 0; i < segments_count; i++) {
+            /* Get the segment and the unpack method. */
+            STRING* method_name = CONST_STRING(INTERP, "pack");
+            PMC* segment = VTABLE_get_pmc_keyed_int(INTERP, dir->segments, i);
+            PMC* meth = VTABLE_find_method(INTERP, segment, method_name);
+            
+            /* Call pack to get the string. */
+            STRING* packed = (STRING*)Parrot_call_method(INTERP, meth, segment,
+                method_name, "IJO");
+            if (packed) {
+                VTABLE_push_string(INTERP, segments, packed);
+            }
+            else {
+                /* Exception will be thrown by packing code. */
+                return NULL;
+            }
+        }
+
+        /* Compute header length to get starting point for this segment. */
+        header_length = PACKFILE_HEADER_BYTES + dir->parent->header->uuid_length;
+        header_length = header_length % 16 == 0 ? header_length :
+            header_length + (16 - (header_length % 16));
+        
+        /* Get C strings for the segments. */
+        c_names = mem_sys_allocate(segments_count * sizeof(char*));
+        for (i = 0; i < segments_count; i++)
+            c_names[i] = string_to_cstring(INTERP, 
+                VTABLE_get_string_keyed_int(INTERP, SELF, i));
+
+        /* Work out length of this segment and make empty string to store it in. */
+        seg_length = 1; /* For count. */
+        for (i = 0; i < segments_count; i++) {
+            seg_length += 3; /* Type, offset, length */
+            seg_length += PF_size_cstring(c_names[i]);
+        }
+        seg_length = seg_length % 16 == 0 ? seg_length :
+            seg_length + (16 - (seg_length % 16));
+        result = string_make_empty(INTERP, enum_stringrep_one, seg_length * sizeof(opcode_t));
+        image = result->strstart;
+
+        /* Write the count. */
+        image = PF_store_opcode(image, segments_count);
+
+        /* Write each segment. */
+        offset = header_length + seg_length;
+        for (i = 0; i < segments_count; i++) {
+            /* Write type. */
+            int type = PARROT_PACKFILE_SEG_DEFAULT;
+
+            image = PF_store_opcode(image, segments_count);
+
+            /* Write name. */
+            image = PF_store_cstring(image, c_names[i]);
+
+            /* Write offset and length, then update offset. */
+            image = PF_store_opcode(image, offset);
+            segment_length = string_length(INTERP,
+                VTABLE_get_string_keyed_int(INTERP, segments, i));
+            image = PF_store_opcode(image, segment_length);
+            offset += segment_length;
+        }
+
+        /* Concatenate on each of the segments. */
+        for (i = 0; i < segments_count; i++)
+            result = string_append(INTERP, result,
+                VTABLE_get_string_keyed_int(INTERP, segments, i));
+
+        /* Free the load of C-strings we made. */
+        for (i = 0; i < segments_count; i++)
+            mem_sys_free(c_names[i]);
+
+        /* Done, return result. */
+        return result;
     }
 
 /*
@@ -222,11 +310,99 @@ hold it. Returns a non-zero value on success.
 =cut
 
 */
-    METHOD int unpack(STRING* image)
+    METHOD INTVAL unpack(STRING* image)
     {
-        return 0;
-    }
+        int entries, i;
+        int header_length;
+        opcode_t *packed;
+        struct Parrot_PackFile_Directory *dir = 
+            (struct Parrot_PackFile_Directory*)PMC_struct_val(SELF);
+        PMC *segment;
+        
+        /* Get at the underlying string data. */
+        packed = (opcode_t*)image->strstart;
+        
+        /* Extract the number of entries in the segments table. */
+        entries = PF_fetch_opcode(dir->parent, &packed);
+        
+        /* Clear the current data. */
+        dir->segments = pmc_new(interpreter, enum_class_ResizablePMCArray);
+        dir->segment_names = pmc_new(interpreter, enum_class_ResizableStringArray);
 
+        /* We need the header length. */
+        header_length = PACKFILE_HEADER_BYTES + dir->parent->header->uuid_length;
+        header_length = header_length % 16 == 0 ? header_length :
+            header_length + (16 - (header_length % 16));
+
+        /* Get each of the entries. */
+        for (i = 0; i < entries; i++) {
+            /* Read in the values. */
+            int type = PF_fetch_opcode(dir->parent, &packed);
+            char* name = PF_fetch_cstring(dir->parent, &packed);
+            int offset = PF_fetch_opcode(dir->parent, &packed);
+            int length = PF_fetch_opcode(dir->parent, &packed);
+
+            /* Instantiate a PMC for the segment. */
+            segment = NULL;
+            switch (type) {
+                case PARROT_PACKFILE_SEG_DEFAULT:
+                    segment = pmc_new(INTERP, enum_class_PackfileRawSegment);
+                    break;
+                case PARROT_PACKFILE_SEG_FIXUP:
+                    segment = pmc_new(INTERP, enum_class_PackfileFixupTable);
+                    break;
+                case PARROT_PACKFILE_SEG_CONSTANTTABLE:
+                    segment = pmc_new(INTERP, enum_class_PackfileConstantTable);
+                    break;
+                case PARROT_PACKFILE_SEG_BYTECODE:
+                    segment = pmc_new(INTERP, enum_class_PackfileRawSegment);
+                    break;
+                case PARROT_PACKFILE_SEG_ANNOTATIONS:
+                    segment = pmc_new(INTERP, enum_class_PackfileAnnotations);
+                    break;
+                case PARROT_PACKFILE_SEG_PIC:
+                    segment = pmc_new(INTERP, enum_class_PackfileRawSegment);
+                    break;
+                case PARROT_PACKFILE_SEG_DEPENDENCIES: /* XXX Need something other than Raw. */
+                    segment = pmc_new(INTERP, enum_class_PackfileRawSegment);
+                    break;
+            }
+
+            /* Now do the unpack. */
+            if (segment) {
+                STRING* method_name = CONST_STRING(INTERP, "unpack");
+                STRING code;
+                PMC* meth;
+                INTVAL success;
+
+                /* Make a STRING* that starts at the required offset. */
+                memcpy(&code, image, sizeof(STRING));
+                ((opcode_t*)code.strstart) += offset - header_length;
+
+                /* Find the unpack method that we need to call and call it. */
+                meth = VTABLE_find_method(INTERP, segment, method_name);
+                success = Parrot_call_method_ret_int(INTERP, meth, segment,
+                    method_name, "vJOS", &code);
+                if (success) {
+                    /* Add it to the list. */
+                    VTABLE_set_pmc_keyed_str(INTERP, SELF,
+                        string_from_cstring(INTERP, name, strlen(name)),
+                        segment);
+                }
+                else {
+                    /* Exception will be thrown by unpacking code. */
+                    return 0;
+                }
+            }
+            else {
+                real_exception(INTERP, NULL, 0, "Unknown segment type");
+                return 0;
+            }
+        }
+        
+        /* Done. Yay! */
+        return 1;
+    }
 }
 
 /*
