@@ -21,28 +21,105 @@ Holds and allows manipulatin of a Packfile constant table.
 
 #include "parrot/parrot.h"
 
+
 /* 
-
 Allocate memory to extend table to correct size for setting values outside of table's current size.
-
 */
-
-static void extend_const_table(struct Parrot_PackFile_ConstTable *pfct, INTVAL index){
+static void extend_const_table(struct Parrot_PackFile_ConstTable *ct, INTVAL index){
     /* Trust that index is >0 and > current const_count. */
-
-    pfct->const_count = index;
-    pfct->constants = mem_sys_realloc(pfct->constants, index * sizeof(struct Parrot_PackFile_Constant *));
-
+    ct->const_count = index;
+    ct->constants = mem_sys_realloc(ct->constants, index * sizeof(struct Parrot_PackFile_Constant *));
 }
 
 
-
-
 /* Data used:
- *   PMC_struct_val ... Packfile_ConstTable
+ *   PMC_struct_val ... Parrot_Packfile_ConstTable
  */
 pmclass PackfileConstantTable inherits PackfileSegment {
-    
+
+/*
+
+=item C<void init()>
+
+Initializes the constant table.
+
+=cut
+
+*/
+    void init() {
+        /* Create and set up the constants table structure. */
+        struct Parrot_PackFile_ConstTable* ct =
+            mem_sys_allocate_zeroed(sizeof(struct Parrot_PackFile_ConstTable));
+        if (!ct) {
+            PIO_eprintf(NULL, "Parrot_PackFile_ConstTable init: Unable to allocate!\n");
+            return;
+        }
+        PMC_struct_val(SELF) = ct;
+
+        /* Set up the constants array to hold the one pointer. */
+        ct->constants = mem_sys_allocate_zeroed(sizeof(void*));
+        if (!ct->constants) {
+            PIO_eprintf(NULL, "Parrot_PackFile_ConstTable init: Unable to allocate!\n");
+            return;
+        }
+
+        /* Need custom mark/destroy. */
+        PObj_custom_mark_destroy_SETALL(SELF);
+    }
+
+/*
+
+=item C<void destroy()>
+
+Destroys the constant table.
+
+=cut
+
+*/
+    void destroy() {
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        int i;
+        if (!ct)
+            return;
+
+        /* Need to free all referenced constant structures. */
+        for (i = 0; i < ct->const_count; i++)
+            if (ct->constants[i])
+                mem_sys_free(ct->constants[i]);
+        
+        /* Now free the list of constants pointers and the table itself. */
+        free(ct->constants);
+        free(ct);
+    }
+
+/*
+
+=item C<void mark()>
+
+Marks any constants that are being held.
+
+=cut
+
+*/
+    void mark() {
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        int i;
+        if (!ct)
+            return;
+
+        /* Need to mark any referenced PMCs and STRINGs. */
+        for (i = 0; i < ct->const_count; i++) {
+            if (ct->constants[i]) {
+                if (ct->constants[i]->type == PARROT_PFC_PMC ||
+                    ct->constants[i]->type == PARROT_PFC_KEY ||
+                    ct->constants[i]->type == PARROT_PFC_STRING) {
+                    if (ct->constants[i]->u.key)
+                        pobject_lives(INTERP, (PObj*)ct->constants[i]->u.key);
+                }    
+            }
+        }
+    }
+
 /*
 
 =item C<STRING* pack()>
@@ -54,7 +131,21 @@ Packs this segment into a binary representation. Returns NULL on failure.
 */
     METHOD STRING* pack()
     {
-        return NULL;
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        size_t length;
+        STRING* result;
+        opcode_t* image;
+        
+        /* Compute the length. */
+        length = PackFile_ConstTable_pack_size(INTERP, ct);
+
+        /* Make a string of the right length and pack into it. */
+        result = string_make_empty(INTERP, enum_stringrep_one, length * sizeof(opcode_t));
+        image = result->strstart;
+        PackFile_ConstTable_pack(INTERP, ct, image);
+
+        /* Return resultant string. */
+        return result;
     }
 
 /*
@@ -69,10 +160,9 @@ hold it. Returns a non-zero value on success.
 */
     METHOD INTVAL unpack(STRING* image)
     {
-        return 0;
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        
     }
-
-
 
 /*
 
@@ -85,10 +175,10 @@ Returns the number of constants contained in the table.
 */
 
     INTVAL elements() {
-        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
         
-        if (pfct->const_count)
-            return (INTVAL)pfct->const_count;
+        if (ct->const_count)
+            return (INTVAL)ct->const_count;
         else
             return 0;
     }
@@ -106,12 +196,12 @@ the constant in that position in the table is not a number, an exception will be
 */
 
     FLOATVAL get_number_keyed_int(INTVAL index) {
-        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
         
-        if (pfct->const_count) {
-            if (index >= 0 && index < (INTVAL)pfct->const_count) {
-                if (pfct->constants[index]->type == PARROT_PFC_NUMBER)
-                    return pfct->constants[index]->u.number;
+        if (ct->const_count) {
+            if (index >= 0 && index < (INTVAL)ct->const_count) {
+                if (ct->constants[index]->type == PARROT_PFC_NUMBER)
+                    return ct->constants[index]->u.number;
                 else {
                     real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a number");
                     return 0;
@@ -140,12 +230,12 @@ the constant in that position in the table is not a string, an exception will be
 */
 
     STRING* get_string_keyed_int(INTVAL index) {
-        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
         
-        if (pfct->const_count) {
-            if (index >= 0 && index < (INTVAL)pfct->const_count) {
-                if (pfct->constants[index]->type == PARROT_PFC_STRING)
-                    return pfct->constants[index]->u.string;
+        if (ct->const_count) {
+            if (index >= 0 && index < (INTVAL)ct->const_count) {
+                if (ct->constants[index]->type == PARROT_PFC_STRING)
+                    return ct->constants[index]->u.string;
                 else {
                     real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a string");
                     return 0;
@@ -174,12 +264,12 @@ the constant in that position in the table is not a PMC or key, an exception wil
 */
 
     PMC* get_pmc_keyed_int(INTVAL index) {
-        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
         
-        if (pfct->const_count) {
-            if (index >= 0 && index < (INTVAL)pfct->const_count) {
-                if (pfct->constants[index]->type == PARROT_PFC_PMC || pfct->constants[index]->type == PARROT_PFC_KEY)
-                    return pfct->constants[index]->u.key;
+        if (ct->const_count) {
+            if (index >= 0 && index < (INTVAL)ct->const_count) {
+                if (ct->constants[index]->type == PARROT_PFC_PMC || ct->constants[index]->type == PARROT_PFC_KEY)
+                    return ct->constants[index]->u.key;
                 else {
                     real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a PMC or key");
                     return 0;
@@ -210,21 +300,21 @@ If it does not exist, the table will be extended.
 */
 
     void set_number_keyed_int(INTVAL index, FLOATVAL value) {
-        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
 
         if (index < 0) { 
             real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Index less than zero");
             return;
         }
-        if (!pfct->const_count || (INTVAL)pfct->const_count < index) {
-            extend_const_table(pfct, index);
+        if (!ct->const_count || (INTVAL)ct->const_count < index) {
+            extend_const_table(ct, index);
         }
-        else if (pfct->constants[index]->type != PARROT_PFC_NUMBER && pfct->constants[index]->type !=PARROT_PFC_NONE) {
+        else if (ct->constants[index]->type != PARROT_PFC_NUMBER && ct->constants[index]->type !=PARROT_PFC_NONE) {
             real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a number");
             return;
         }
-        pfct->constants[index]->type = PARROT_PFC_NUMBER;
-        pfct->constants[index]->u.number = value;
+        ct->constants[index]->type = PARROT_PFC_NUMBER;
+        ct->constants[index]->u.number = value;
         
     }
 
@@ -241,21 +331,21 @@ If it does not exist, the table will be extended.
 */
 
     set_string_keyed_int(INTVAL index) {
-        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
         
         if (index < 0) { 
             real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Index less than zero");
             return;
         }
-        if (!pfct->const_count || (INTVAL)pfct->const_count < index) {
-            extend_const_table(pfct, index);
+        if (!ct->const_count || (INTVAL)ct->const_count < index) {
+            extend_const_table(ct, index);
         }
-        else if (pfct->constants[index]->type != PARROT_PFC_STRING && pfct->constants[index]->type !=PARROT_PFC_NONE) {
+        else if (ct->constants[index]->type != PARROT_PFC_STRING && ct->constants[index]->type !=PARROT_PFC_NONE) {
             real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a string");
             return;
         }
-        pfct->constants[index]->type = PARROT_PFC_STRING;
-        pfct->constants[index]->u.string = value;
+        ct->constants[index]->type = PARROT_PFC_STRING;
+        ct->constants[index]->u.string = value;
     }
 
 /*
@@ -271,21 +361,21 @@ If it does not exist, the table will be extended.
 */
 
     void set_pmc_keyed_int(INTVAL index, PMC* value) {
-        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
         
         if (index < 0) { 
             real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Index less than zero");
             return;
         }
-        if (!pfct->const_count || (INTVAL)pfct->const_count < index) {
-            extend_const_table(pfct, index);
+        if (!ct->const_count || (INTVAL)ct->const_count < index) {
+            extend_const_table(ct, index);
         }
-        else if (pfct->constants[index]->type != PARROT_PFC_PMC && pfct->constants[index]->type !=PARROT_PFC_NONE) {
+        else if (ct->constants[index]->type != PARROT_PFC_PMC && ct->constants[index]->type !=PARROT_PFC_NONE) {
             real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not a PMC key");
             return;
         }
-        pfct->constants[index]->type = PARROT_PFC_PMC;
-        pfct->constants[index]->u.key = value;
+        ct->constants[index]->type = PARROT_PFC_PMC;
+        ct->constants[index]->u.key = value;
 
     }
 
@@ -299,11 +389,11 @@ Returns an integer value denoting the type of the constant at the specified inde
 */
 
     METHOD INTVAL get_type(INTVAL index) {
-        struct Parrot_PackFile_ConstTable *pfct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
+        struct Parrot_PackFile_ConstTable *ct = (struct Parrot_PackFile_ConstTable*)PMC_struct_val(SELF);
 
-        if (pfct->const_count) {
-            if (index >= 0 && index < (INTVAL)pfct->const_count) 
-                return pfct->constants[index]->type;
+        if (ct->const_count) {
+            if (index >= 0 && index < (INTVAL)ct->const_count) 
+                return ct->constants[index]->type;
             else {
                 real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Not in range");
                 return 0;

@@ -38,7 +38,7 @@ Initializes the packfile
     void init() {
         /* Create and set up the directory structure. */
         struct Parrot_PackFile_Directory* dir =
-            mem_sys_allocate_zeroed(sizeof(struct Parrot_PackFile_Directory*));
+            mem_sys_allocate_zeroed(sizeof(struct Parrot_PackFile_Directory));
         if (!dir) {
             PIO_eprintf(NULL, "PackFileDirectory_new: Unable to allocate!\n");
             return;

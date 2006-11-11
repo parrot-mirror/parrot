@@ -37,7 +37,7 @@ Initializes the packfile
     void init() {
         /* Create and set up the packfile structure. */
         struct Parrot_PackFile* pf =
-            mem_sys_allocate_zeroed(sizeof(struct Parrot_PackFile*));
+            mem_sys_allocate_zeroed(sizeof(struct Parrot_PackFile));
         if (!pf) {
             PIO_eprintf(NULL, "PackFile_new: Unable to allocate!\n");
             return;
@@ -45,7 +45,7 @@ Initializes the packfile
         PMC_struct_val(SELF) = pf;
         
         /* Allocate the header. */
-        pf->header = mem_sys_allocate_zeroed(sizeof(struct Parrot_PackFile_Header*));
+        pf->header = mem_sys_allocate_zeroed(sizeof(struct Parrot_PackFile_Header));
         if (!pf->header) {
             PIO_eprintf(NULL, "PackFile_new: Unable to allocate header!\n");
             SELF.destroy();
