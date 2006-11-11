@@ -1,0 +1,40 @@
+/*
+Copyright (C) 2006, The Perl Foundation.
+$Id: $
+
+=head1 NAME
+
+src/pmc/packfilepic.pmc - Packfile Polymorphic Inline Cache Segment
+
+=head1 DESCRIPTION
+
+Represents a PIC segment. Just inherits from PackfileRawSegment.
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+pmclass PackfilePIC inherits PackfileRawSegment {
+
+}
+
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */

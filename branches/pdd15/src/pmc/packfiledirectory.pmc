@@ -273,7 +273,23 @@ Packs this segment into a binary representation. Returns NULL on failure.
         for (i = 0; i < segments_count; i++) {
             /* Write type. */
             int type = PARROT_PACKFILE_SEG_DEFAULT;
-
+            switch (VTABLE_get_pmc_keyed_int(INTERP, dir->segments, i)->vtable->base_type) {
+                case enum_class_PackfileBytecode:
+                    type = PARROT_PACKFILE_SEG_BYTECODE;
+                    break;
+                case enum_class_PackfileConstantTable:
+                    type = PARROT_PACKFILE_SEG_CONSTANTTABLE;
+                    break;
+                case enum_class_PackfileFixupTable:
+                    type = PARROT_PACKFILE_SEG_FIXUP;
+                    break;
+                case enum_class_PackfileAnnotations:
+                    type = PARROT_PACKFILE_SEG_ANNOTATIONS;
+                    break;
+                case enum_class_PackfilePIC:
+                    type = PARROT_PACKFILE_SEG_PIC;
+                    break;
+            }
             image = PF_store_opcode(image, segments_count);
 
             /* Write name. */
@@ -355,13 +371,13 @@ hold it. Returns a non-zero value on success.
                     segment = pmc_new(INTERP, enum_class_PackfileConstantTable);
                     break;
                 case PARROT_PACKFILE_SEG_BYTECODE:
-                    segment = pmc_new(INTERP, enum_class_PackfileRawSegment);
+                    segment = pmc_new(INTERP, enum_class_PackfileBytecode);
                     break;
                 case PARROT_PACKFILE_SEG_ANNOTATIONS:
                     segment = pmc_new(INTERP, enum_class_PackfileAnnotations);
                     break;
                 case PARROT_PACKFILE_SEG_PIC:
-                    segment = pmc_new(INTERP, enum_class_PackfileRawSegment);
+                    segment = pmc_new(INTERP, enum_class_PackfilePIC);
                     break;
                 case PARROT_PACKFILE_SEG_DEPENDENCIES: /* XXX Need something other than Raw. */
                     segment = pmc_new(INTERP, enum_class_PackfileRawSegment);
