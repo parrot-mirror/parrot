@@ -1,10 +1,6 @@
 /* packfile.h
 *
 * $Id$
-*
-* History:
-*  Rework by Melvin; new bytecode format, make bytecode portable.
-*   (Do endian conversion and wordsize transforms on the fly.)
 */
 
 #if !defined(PARROT_PACKFILE_H_GUARD)
@@ -24,26 +20,37 @@
 ** Structure Definitions:
 */
 
+/* UUID types. */
+#define PARROT_UUID_TYPE_NONE 0
+#define PARROT_UUID_TYPE_MD5 1
 
 /*
-** Bytes that we don't have to reorder
-*  PACKFILE_HEADER_BYTES must be an integer times sizeof(opcode_t).
-*/
-#define PACKFILE_HEADER_BYTES 16
-
-struct PackFile_Header {
+ * The header of a packfile. PACKFILE_HEADER_BYTES stores the number of bytes
+ * that can be read directly from the file or written directly to it.
+ */
+#define PACKFILE_HEADER_BYTES 18
+struct Parrot_PackFile_Header {
+    /* Magic string. */
+    unsigned char magic[8];
+    
+    /* Format of integers, floats, etc. */
     unsigned char wordsize;
     unsigned char byteorder;
-    unsigned char major;
-    unsigned char minor;
-    unsigned char intvalsize;   /* was flags */
     unsigned char floattype;
-    unsigned char pad[10];      /* fingerprint */
-    /* Start words/opcodes on 16-byte boundary */
-    opcode_t magic;
-    opcode_t opcodetype;
-    opcode_t dir_format;        /* was fixup_ss */
-    opcode_t _unused_padding;
+    
+    /* Parrot versoin that wrote the file. */
+    unsigned char parrot_major;
+    unsigned char parrot_minor;
+    unsigned char parrot_patch;
+    
+    /* Version of the bytecode format. */
+    unsigned char bytecode_major;
+    unsigned char bytecode_minor;
+    
+    /* UUID related. */
+    unsigned char uuid_type;
+    unsigned char uuid_length;
+    unsigned char* uuid_value;
 };
 
 /*
@@ -216,7 +223,7 @@ struct PackFile {
     size_t   size;              /* size in bytes */
     INTVAL is_mmap_ped;         /* don't free it, munmap it at destroy */
 
-    struct PackFile_Header     * header;
+    struct Parrot_PackFile_Header     * header;
 
     /* directory hold all Segments */
     /* TODO make this reallocatable */
@@ -248,6 +255,14 @@ PARROT_API void PackFile_pack(Interp *, struct PackFile * self, opcode_t * packe
 PARROT_API opcode_t PackFile_unpack(Interp *interpreter,
                          struct PackFile *self, opcode_t *packed,
                          size_t packed_size);
+
+PARROT_API INTVAL
+PackFile_Header_Unpack(Interp* interpreter, opcode_t* packed, 
+                       struct PackFile *self);
+
+PARROT_API INTVAL
+PackFile_Header_Pack(Interp* interpreter, opcode_t* packed, 
+                     struct PackFile *self);
 
 typedef enum {
     PBC_MAIN   = 1,

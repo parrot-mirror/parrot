@@ -681,21 +681,24 @@ ft_init(Parrot_Interp interpreter, visit_info *info)
     pf = info->image_io->pf = PackFile_new(interpreter, 0);
     if (info->what == VISIT_FREEZE_NORMAL ||
         info->what == VISIT_FREEZE_AT_DESTRUCT) {
+        int header_length;
 
-        op_check_size(interpreter, s, PACKFILE_HEADER_BYTES);
-        mem_sys_memcopy(s->strstart, pf->header, PACKFILE_HEADER_BYTES);
-        s->bufused += PACKFILE_HEADER_BYTES;
-        s->strlen += PACKFILE_HEADER_BYTES;
+        /* op_check_size is a bit approximate here. :-) */
+        op_check_size(interpreter, s, PACKFILE_HEADER_BYTES + pf->header->uuid_length + 16);
+        header_length = PackFile_Header_Pack(interpreter, s->strstart, pf);
+        s->bufused += header_length;
+        s->strlen += header_length;
     }
     else {
+        int header_length;
         if (string_length(interpreter, s) < PACKFILE_HEADER_BYTES) {
             real_exception(interpreter, NULL, E_IOError,
                     "bad string to thaw");
         }
-        mem_sys_memcopy(pf->header, s->strstart, PACKFILE_HEADER_BYTES);
+        header_length = PackFile_Header_Unpack(interpreter, s->strstart, pf);
         PackFile_assign_transforms(pf);
-        s->bufused -= PACKFILE_HEADER_BYTES;
-        LVALUE_CAST(char *, s->strstart) += 16;
+        s->bufused -= header_length;
+        LVALUE_CAST(char *, s->strstart) += header_length;
     }
 
     info->last_type = -1;
