@@ -260,10 +260,10 @@ into the current PMC. If it fails, the state of the PMC will be invalidated.
             method_name, "vJOS", &code);
 
 #ifdef PARROT_HAS_HEADER_SYSMMAN
-        if (self->is_mmap_ped && (
-                    self->need_endianize || self->need_wordsize)) {
-            munmap((void *)self->src, self->size);
-            self->is_mmap_ped = 0;
+        if (pf->is_mmap_ped && (
+                    pf->need_endianize || pf->need_wordsize)) {
+            munmap((void *)pf->src, pf->size);
+            pf->is_mmap_ped = 0;
         }
 #endif
 
