@@ -43,7 +43,7 @@ Initializes the packfile
             return;
         }
         PMC_struct_val(SELF) = pf;
-        
+
         /* Allocate the header. */
         pf->header = mem_sys_allocate_zeroed(sizeof(struct Parrot_PackFile_Header));
         if (!pf->header) {
@@ -54,7 +54,7 @@ Initializes the packfile
 
         /* Set magic in header. */
         memcpy(pf->header->magic, "\xfe\x50\x42\x43\x0d\x0a\x1a\x0a", 8);
-        
+
         /* Set sizes. */
         pf->header->wordsize = sizeof(opcode_t);
         pf->header->byteorder = PARROT_BIGENDIAN;
@@ -62,7 +62,7 @@ Initializes the packfile
             pf->header->floattype = 0;
         else /* if XXX */
             pf->header->floattype = 1;
-        
+
         /* Set Parrot version. */
         pf->header->parrot_major = PARROT_MAJOR_VERSION;
         pf->header->parrot_minor = PARROT_MINOR_VERSION;
@@ -76,7 +76,7 @@ Initializes the packfile
         pf->header->uuid_type = PARROT_UUID_TYPE_NONE;
         pf->header->uuid_length = 0;
         pf->header->uuid_value = NULL;
-        
+
         /* Create a directory PMC. */
         pf->directory = pmc_new(interpreter, enum_class_PackfileDirectory);
 
