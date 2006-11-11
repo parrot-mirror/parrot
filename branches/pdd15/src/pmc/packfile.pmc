@@ -148,7 +148,99 @@ into the current PMC. If it fails, the state of the PMC will be invalidated.
     void set_string_native(STRING* packed) {
 
     }
+ /*
+=item C<intval get_integer_keyed_str(STRING* field)>
 
+Used to get data about fields in the header that have an integer value.
+
+=cut
+
+*/
+
+    INTVAL get_integer_keyed_str(STRING* field) {
+        struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
+
+        if (string_equal(INTERP, field, CONST_STRING(INTERP, "wordsize")))
+            return pf->header->wordsize;
+        if (string_equal(INTERP, field, CONST_STRING(INTERP, "byteorder")))
+            return pf->header->byteorder;
+        if (string_equal(INTERP, field, CONST_STRING(INTERP, "floattype")))
+            return pf->header->floattype;
+        if (string_equal(INTERP, field, CONST_STRING(INTERP, "parrot_major")))
+            return pf->header->parrot_major;
+        if (string_equal(INTERP, field, CONST_STRING(INTERP, "parrot_minor")))
+            return pf->header->parrot_minor;
+        if (string_equal(INTERP, field, CONST_STRING(INTERP, "parrot_patch")))
+            return pf->header->parrot_patch;
+        if (string_equal(INTERP, field, CONST_STRING(INTERP, "bytecode_major")))
+            return pf->header->bytecode_major;
+        if (string_equal(INTERP, field, CONST_STRING(INTERP, "bytecode_minor")))
+            return pf->header->bytecode_minor;
+        if (string_equal(INTERP, field, CONST_STRING(INTERP, "uuid_type")))
+            return pf->header->uuid_type;
+        if (string_equal(INTERP, field, CONST_STRING(INTERP, "uuid_length")))
+            return pf->header->uuid_length;
+        else {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No such field");
+            return 0;
+        }
+    }   
+
+/*
+=item C<STRING* get_string_keyed_str(STRING* key)>
+
+Used to get data about fields in the header that have a string value.
+
+=cut
+*/
+    STRING* get_string_keyed_str(STRING* key) {
+        struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
+
+        if (string_equal(INTERP, key, CONST_STRING(INTERP, "")))
+            return CONST_STRING(INTERP, "");
+        else
+            return string_from_cstring(INTERP, key, strlen(key));
+    }
+        
+/*
+=item C<void set_integer_keyed_str(STRING* key, INTVAL value)>
+
+Used to set fields in the packfile header.  Some fields are not allowed to be written since they
+are determined by the VM when serializing the packfile for storage on disk.
+
+=cut
+*/  
+
+    void set_integer_keyed_str(STRING* key, INTVAL value) {
+        struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
+
+        if (string_equal(INTERP, key, CONST_STRING(INTERP, "uuid_type"))) {
+            pf->header->uuid_type = value;
+            return;
+        }
+
+        if (value < 0 || value >= 256) {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Version number out of bounds");
+            return;
+        }
+
+        if (string_equal(INTERP, key, CONST_STRING(INTERP, "parrot_major"))) {
+            pf->header->parrot_major = value;
+            return;
+        }
+        if (string_equal(INTERP, key, CONST_STRING(INTERP, "parrot_minor"))) {
+            pf->header->parrot_minor = value;
+            return;
+        }
+        if (string_equal(INTERP, key, CONST_STRING(INTERP, "parrot_patch"))) {
+            pf->header->parrot_patch = value;
+            return;
+        }
+        else {
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No such field");
+            return;
+        }
+    }
 }
 
 /*

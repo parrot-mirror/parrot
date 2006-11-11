@@ -287,6 +287,9 @@ D: Parrot I/O; macro stuff in assembler.
 
 N: Kay-Uwe 'kiwi' Hüll
 
+N: Kelli Ireland
+D: Packfile PMC introspection code
+
 N: Kenneth A Graves
 D: yield and other PIR improvements
 
