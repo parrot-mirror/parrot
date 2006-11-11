@@ -1,0 +1,43 @@
+/*
+Copyright (C) 2006, The Perl Foundation.
+$Id: $
+
+=head1 NAME
+
+src/pmc/packfilebytecode.pmc - Packfile Bytecode Segment
+
+=head1 DESCRIPTION
+
+Represents a bytecode segment. Just inherits from PackfileRawSegment.
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+/* Data used:
+ *   PMC_struct_val ... PackFile_Bytecode
+ */
+pmclass PackfileBytecode inherits PackfileRawSegment {
+
+}
+
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
