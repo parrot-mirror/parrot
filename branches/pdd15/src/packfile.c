@@ -503,37 +503,7 @@ do_sub_pragmas(Interp *interpreter, struct PackFile_ByteCode *self,
 PackFile_unpack(Interp *interpreter, struct PackFile *self,
                 opcode_t *packed, size_t packed_size)>
 
-Unpack a C<PackFile> from a block of memory. The format is:
-
-  byte     wordsize
-  byte     byteorder
-  byte     major
-  byte     minor
-  byte     intvalsize
-  byte     floattype
-  byte     pad[10] = fingerprint
-
-  opcode_t magic
-  opcode_t language type
-
-  opcode_t dir_format
-  opcode_t padding
-
-  directory segment
-    * segment
-    ...
-
-All segments have this common header:
-
-  - op_count    ... total segment size incl. this count
-  - itype       ... internal type of data
-  - id          ... id of data e.g. byte code nr.
-  - size        ... size of data oparray
-  - data[size]  ... data array e.g. bytecode
-  segment specific data follows here ...
-
-Checks to see if the magic matches the Parrot magic number for
-Parrot C<PackFiles>.
+Unpack a C<PackFile> from a block of memory.
 
 Returns size of unpacked if everything is OK, else zero (0).
 
@@ -545,23 +515,31 @@ opcode_t
 PackFile_unpack(Interp *interpreter, struct PackFile *self,
                 opcode_t *packed, size_t packed_size)
 {
-    struct PackFile_Header *header = self->header;
+    struct Parrot_PackFile_Header *header;
     opcode_t *cursor;
+    int header_length;
 
-    if (!self) {
-        PIO_eprintf(NULL, "PackFile_unpack: self == NULL!\n");
-        return 0;
-    }
+    /* Check what we've been passed ain't NULL. */
+    assert(self != NULL);
+    assert(packed != NULL);
+    assert(packed_size > PACKFILE_HEADER_BYTES);
+    
+    /* Stash the source. */
     self->src = packed;
     self->size = packed_size;
 
-    /*
-     * Map the header on top of the buffer later when we are sure
-     * we have alignment done right.
-     */
-    cursor = (opcode_t*)((char*)packed + PACKFILE_HEADER_BYTES);
-    memcpy(header, packed, PACKFILE_HEADER_BYTES);
-
+    /* Read in the header. */
+    header_length = PackFile_Header_Unpack(interpreter, packed, self);
+    if (header_length == 0)
+        return 0;
+    cursor = (opcode_t*)((char*)packed + header_length);
+    header = self->header;
+    
+    /* Validate stuff. */
+    if (memcmp(header->magic, "\xfe\x50\x42\x43\x0d\x0a\x1a\x0a", 8)) {
+        PIO_eprintf(NULL, "PackFile_unpack: Invalid magic %s\n", header->magic);
+        return 0;
+    }
     if (header->wordsize != 4 && header->wordsize != 8) {
         PIO_eprintf(NULL, "PackFile_unpack: Invalid wordsize %d\n",
                     header->wordsize);
@@ -573,6 +551,7 @@ PackFile_unpack(Interp *interpreter, struct PackFile *self,
         return 0;
     }
 
+    /* Transform the rest of the file. */
     PackFile_assign_transforms(self);
 
 #if TRACE_PACKFILE
@@ -586,77 +565,10 @@ PackFile_unpack(Interp *interpreter, struct PackFile *self,
                 header->byteorder, header->byteorder ? "big " : "little-");
 #endif
 
-    if (header->major != PARROT_MAJOR_VERSION ||
-            header->minor != PARROT_MINOR_VERSION) {
-        PIO_eprintf(NULL, "PackFile_unpack: Bytecode not valid for this "
-                "interpreter: version mismatch\n");
-        return 0;
-    }
-
-    /* check the fingerprint */
-    if (!PackFile_check_fingerprint (header->pad)) {
-        PIO_eprintf(NULL, "PackFile_unpack: Bytecode not valid for this "
-                    "interpreter: fingerprint mismatch\n");
-        return 0;
-    }
-    /*
-     * Unpack and verify the magic which is stored byteorder of the file:
-     */
-    header->magic = PF_fetch_opcode(self, &cursor);
-
-    /*
-     * The magic and opcodetype fields are in native byteorder.
-     */
-    if (header->magic != PARROT_MAGIC) {
-        PIO_eprintf(NULL, "PackFile_unpack: Not a Parrot PackFile!\n");
-        PIO_eprintf(NULL, "Magic number was 0x%08x not 0x%08x\n",
-                    header->magic, PARROT_MAGIC);
-        return 0;
-    }
-
-#if TRACE_PACKFILE
-    PIO_eprintf(NULL, "PackFile_unpack: Magic 0x%08x.\n",
-                header->magic);
-#endif
-
-    header->opcodetype = PF_fetch_opcode(self, &cursor);
-
-#if TRACE_PACKFILE
-    PIO_eprintf(NULL, "PackFile_unpack: Opcodetype 0x%x.\n",
-                header->opcodetype);
-#endif
-
-    /*
-     * Unpack the dir_format
-     */
-
-#if TRACE_PACKFILE
-    PIO_eprintf(NULL, "PackFile_unpack: Directory, offset %d.\n",
-                (INTVAL)cursor - (INTVAL)packed);
-#endif
-    header->dir_format = PF_fetch_opcode(self, &cursor);
-
-    /* dir_format 1 use directory */
-    if (header->dir_format != PF_DIR_FORMAT) {
-        PIO_eprintf(NULL,
-                "PackFile_unpack: Dir format was %d not %d\n",
-                    header->dir_format, PF_DIR_FORMAT);
-        return 0;
-    }
-#if TRACE_PACKFILE
-    PIO_eprintf(NULL, "PackFile_unpack: Dirformat %d.\n", header->dir_format);
-#endif
-
-    (void)PF_fetch_opcode(self, &cursor); /* padding */
-#if TRACE_PACKFILE
-    PIO_eprintf(NULL, "PackFile_unpack: Directory read, offset %d.\n",
-                (INTVAL)cursor - (INTVAL)packed);
-#endif
-
-    self->directory.base.file_offset = (INTVAL)cursor - (INTVAL)self->src;
     /*
      * now unpack dir, which unpacks its contents ...
      */
+    self->directory.base.file_offset = (INTVAL)cursor - (INTVAL)self->src;
     Parrot_block_DOD(interpreter);
     cursor = PackFile_Segment_unpack(interpreter,
                                      &self->directory.base, cursor);
@@ -675,6 +587,87 @@ PackFile_unpack(Interp *interpreter, struct PackFile *self,
 #endif
 
     return cursor - packed;
+}
+
+
+/*
+
+=item C<INTVAL
+PackFile_Header_Unpack(Interp* interpreter, opcode_t* packed, 
+                       struct PackFile *self)
+
+Unpack a packfile header. Returns the length of the unpacked header or, if an
+error occurs, 0.
+
+=cut
+
+*/
+
+INTVAL
+PackFile_Header_Unpack(Interp* interpreter, opcode_t* packed, 
+                       struct PackFile *self)
+{
+    struct Parrot_PackFile_Header *header;
+    INTVAL header_length;
+
+    /* Check we have stuff to read. */
+    assert(packed_size > PACKFILE_HEADER_BYTES);
+
+    /* Read the fixed length chunk of the header in. */
+    header = self->header;
+    memcpy(header, packed, PACKFILE_HEADER_BYTES);
+
+    /* Now read in the UUID. */
+    assert(packed_size > PACKFILE_HEADER_BYTES + header->uuid_length);
+    if (header->uuid_length) {
+        header->uuid_value = mem_sys_allocate(header->uuid_length);
+        memcpy(header->uuid_value, packed + PACKFILE_HEADER_BYTES,
+            header->uuid_length);
+    }
+    else {
+        header->uuid_value = NULL;
+    }
+
+    /* Sort out the length, including padding, and return it. */
+    header_length = PACKFILE_HEADER_BYTES + header->uuid_length;
+    header_length = header_length % 16 == 0 ? header_length :
+        header_length + (16 - (header_length % 16));
+    return header_length;
+}
+
+/*
+
+=item C<INTVAL
+PackFile_Header_Pack(Interp* interpreter, opcode_t* packed, 
+                     struct PackFile *self)
+
+Packs a packfile header. Returns the length of the packed header or, if an
+error occurs, 0.
+
+=cut
+
+*/
+
+INTVAL
+PackFile_Header_Pack(Interp* interpreter, opcode_t* packed, 
+                     struct PackFile *self)
+{
+    int header_length;
+
+    /* Pack the fixed bit of the header. */
+    mem_sys_memcopy(packed, self->header, PACKFILE_HEADER_BYTES);
+    
+    /* Pack the UUID. */
+    if (self->header->uuid_length) {
+        memcpy((char*)packed + PACKFILE_HEADER_BYTES, self->header->uuid_value,
+            self->header->uuid_length);
+    }
+
+    /* Sort out the cursor position for padding. */
+    header_length = PACKFILE_HEADER_BYTES + self->header->uuid_length;
+    header_length = header_length % 16 == 0 ? header_length :
+        header_length + (16 - (header_length % 16));
+    return header_length;
 }
 
 /*
@@ -832,7 +825,7 @@ PackFile_remove_segment_by_name (Interp* interpreter,
 =item C<static void
 PackFile_set_header(struct PackFile *self)>
 
-Fill a C<PackFile> header with system specific data.
+Fill a C<PackFile> header with system specific data, magic and so on.
 
 =cut
 
@@ -841,17 +834,30 @@ Fill a C<PackFile> header with system specific data.
 static void
 PackFile_set_header(struct PackFile *self)
 {
+    /* Set magic. */
+    memcpy(self->header->magic, "\xfe\x50\x42\x43\x0d\x0a\x1a\x0a", 8);
+
+    /* Set sizes. */
     self->header->wordsize = sizeof(opcode_t);
     self->header->byteorder = PARROT_BIGENDIAN;
-    self->header->major = PARROT_MAJOR_VERSION;
-    self->header->minor = PARROT_MINOR_VERSION;
-    self->header->intvalsize = sizeof(INTVAL);
     if (NUMVAL_SIZE == 8)
         self->header->floattype = 0;
     else /* if XXX */
         self->header->floattype = 1;
-    /* write the fingerprint */
-    PackFile_write_fingerprint(self->header->pad);
+    
+    /* Set Parrot version. */
+    self->header->parrot_major = PARROT_MAJOR_VERSION;
+    self->header->parrot_minor = PARROT_MINOR_VERSION;
+    self->header->parrot_patch = PARROT_PATCH_VERSION;
+
+    /* XXX Bytecode version to do. */
+    self->header->bytecode_major = 0;
+    self->header->bytecode_minor = 1;
+
+    /* UUID - default to none. */
+    self->header->uuid_type = PARROT_UUID_TYPE_NONE;
+    self->header->uuid_length = 0;
+    self->header->uuid_value = NULL;
 }
 
 /*
@@ -916,7 +922,7 @@ PackFile_new(Interp* interpreter, INTVAL is_mapped)
     pf->is_mmap_ped = is_mapped;
 
     pf->header =
-        mem_sys_allocate_zeroed(sizeof(struct PackFile_Header));
+        mem_sys_allocate_zeroed(sizeof(struct Parrot_PackFile_Header));
     if(!pf->header) {
         PIO_eprintf(NULL, "PackFile_new: Unable to allocate header!\n");
         PackFile_destroy(interpreter, pf);
@@ -1001,12 +1007,11 @@ static opcode_t *
 default_unpack (Interp *interpreter,
         struct PackFile_Segment *self, opcode_t *cursor)
 {
-    if (self->pf->header->dir_format) {
-        self->op_count = PF_fetch_opcode(self->pf, &cursor);
-        self->itype = PF_fetch_opcode(self->pf, &cursor);
-        self->id = PF_fetch_opcode(self->pf, &cursor);
-        self->size = PF_fetch_opcode(self->pf, &cursor);
-    }
+    
+    self->op_count = PF_fetch_opcode(self->pf, &cursor);
+    self->itype = PF_fetch_opcode(self->pf, &cursor);
+    self->id = PF_fetch_opcode(self->pf, &cursor);
+    self->size = PF_fetch_opcode(self->pf, &cursor);
     if (self->size == 0)
         return cursor;
     /* if the packfile is mmap()ed just point to it if we don't

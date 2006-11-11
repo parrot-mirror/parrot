@@ -47,11 +47,13 @@ opcode_t
 PackFile_pack_size(Interp* interpreter, struct PackFile *self)
 {
     opcode_t size;
+    int header_length;
     struct PackFile_Directory * const dir = &self->directory;
 
-    size = PACKFILE_HEADER_BYTES / sizeof(opcode_t);
-
-    size += 4; /* magic + opcode type + directory type + pad */
+    header_length = PACKFILE_HEADER_BYTES + self->header->uuid_length;
+    header_length = header_length % 16 == 0 ? header_length :
+        header_length + (16 - (header_length % 16));
+    size = header_length / sizeof(opcode_t);
 
     dir->base.file_offset = size;
     size += PackFile_Segment_packed_size(interpreter,
@@ -87,16 +89,11 @@ PackFile_pack(Interp* interpreter, struct PackFile *self, opcode_t *cursor)
     size_t size;
     struct PackFile_Directory * const dir = &self->directory;
     struct PackFile_Segment *seg;
+    int header_length;
 
     self->src = cursor;
-
-    /* Pack the header */
-    mem_sys_memcopy(cursor, self->header, PACKFILE_HEADER_BYTES);
-    cursor += PACKFILE_HEADER_BYTES / sizeof(opcode_t);
-    *cursor++ = PARROT_MAGIC;           /* Pack the magic */
-    *cursor++ = OPCODE_TYPE_PERL;       /* Pack opcode type */
-    *cursor++ = PF_DIR_FORMAT;          /* dir format */
-    *cursor++ = 0;                      /* pad */
+    header_length = PackFile_Header_Pack(interpreter, cursor, self);
+    cursor = (opcode_t*)((char*)cursor + header_length);
 
     /* pack the directory */
     seg = (struct PackFile_Segment *) dir;
