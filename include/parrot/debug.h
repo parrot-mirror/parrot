@@ -198,7 +198,7 @@ void PDB_next(Interp *interpreter, const char *command);
 void PDB_trace(Interp *interpreter, const char *command);
 
 void PDB_eval(Interp *interpreter, const char *command);
-struct PackFile * PDB_compile(Interp *, const char *);
+PMC* PDB_compile(Interp *, const char *);
 
 int PDB_extend_const_table(Interp *interpreter);
 

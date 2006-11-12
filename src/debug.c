@@ -1970,14 +1970,14 @@ void
 PDB_eval(Interp *interpreter, const char *command)
 {
     opcode_t *run;
-    struct PackFile *eval_pf;
+    PMC *eval_pf;
     struct PackFile_ByteCode *old_cs;
 
     eval_pf = PDB_compile(interpreter, command);
 
     if (eval_pf) {
-        old_cs = Parrot_switch_to_cs(interpreter, eval_pf->cur_cs, 1);
-        run = eval_pf->cur_cs->base.data;
+        old_cs = Parrot_switch_to_cs(interpreter, PMC_PackFile(eval_pf)->cur_cs, 1);
+        run = PMC_PackFile(eval_pf)->cur_cs->base.data;
         DO_OP(run,interpreter);
         Parrot_switch_to_cs(interpreter, old_cs, 1);
        /* TODO destroy packfile */
@@ -1986,7 +1986,7 @@ PDB_eval(Interp *interpreter, const char *command)
 
 /*
 
-=item C<struct PackFile *
+=item C<PMC *
 PDB_compile(Interp *interpreter, const char *command)>
 
 Compiles instructions with the PASM compiler.
@@ -2000,7 +2000,7 @@ which generates a malloced string.
 
 */
 
-struct PackFile *
+PMC*
 PDB_compile(Interp *interpreter, const char *command)
 {
     STRING *buf;

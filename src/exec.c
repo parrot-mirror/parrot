@@ -67,6 +67,7 @@ Parrot_exec(Interp *interpreter, opcode_t *pc,
     Parrot_jit_info_t *jit_info;
     extern PARROT_API char **Parrot_exec_rel_addr;
     extern PARROT_API int Parrot_exec_rel_count;
+    struct Parrot_PackFile *pf = PMC_PackFile(interpreter->code->base.pf);
 
     Parrot_exec_objfile_t * const obj =
         mem_sys_allocate_zeroed(sizeof(Parrot_exec_objfile_t));
@@ -80,8 +81,7 @@ Parrot_exec(Interp *interpreter, opcode_t *pc,
     /* TODO Go zero the calls to jited opcodes. */
     /* Place the program code in the data section. */
     /* program_code */
-    add_data_member(obj, interpreter->code->base.pf->src,
-            interpreter->code->base.pf->size);
+    add_data_member(obj, pf->src, pf->size);
     /* opcode_map */
     add_data_member(obj, jit_info->arena.op_map, (jit_info->arena.map_size+1) *
         sizeof(opcode_t *));

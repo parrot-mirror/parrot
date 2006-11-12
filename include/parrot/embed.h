@@ -44,9 +44,9 @@ PARROT_API void Parrot_set_run_core( Parrot_Interp, Parrot_Run_core_t core);
 
 PARROT_API void Parrot_setwarnings(Parrot_Interp, Parrot_warnclass);
 
-PARROT_API Parrot_PackFile Parrot_readbc(Parrot_Interp, const char *);
+PARROT_API PMC* Parrot_readbc(Parrot_Interp, const char *);
 
-PARROT_API void Parrot_loadbc(Parrot_Interp, Parrot_PackFile);
+PARROT_API void Parrot_loadbc(Parrot_Interp, PMC*);
 
 PARROT_API void Parrot_setup_argv(Parrot_Interp, int argc, char ** argv);
 

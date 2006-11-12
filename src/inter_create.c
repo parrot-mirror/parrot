@@ -394,12 +394,6 @@ Parrot_really_destroy(Interp *interpreter, int exit_code, void *arg)
     mem_sys_free(interpreter->caches);
     /* packfile */
 
-    if (!Interp_flags_TEST(interpreter, PARROT_EXTERN_CODE_FLAG))  {
-        struct PackFile *pf = interpreter->initial_pf;
-        if (pf)
-            PackFile_destroy(interpreter, pf);
-    }
-
     /* free vtables */
     parrot_free_vtables(interpreter);
     mmd_destroy(interpreter);

@@ -261,12 +261,12 @@ Read in a bytecode, unpack it into a C<PackFile> structure, and do fixups.
 
 */
 
-struct PackFile *
+PMC*
 Parrot_readbc(Interp *interpreter, const char *fullname)
 {
     INTVAL program_size, wanted;
     char *program_code;
-    struct PackFile *pf;
+    PMC *pf;
     FILE * io = NULL;
     INTVAL is_mapped = 0;
 #ifdef PARROT_HAS_HEADER_SYSMMAN
@@ -400,7 +400,7 @@ again:
     /*
      * Set :main routine
      */
-    do_sub_pragmas(interpreter, pf->cur_cs, PBC_PBC, NULL);
+    do_sub_pragmas(interpreter, PMC_PackFile(pf)->cur_cs, PBC_PBC, NULL);
     /*
      * JITting and/or prederefing the sub/the bytecode is done
      * in switch_to_cs before actual usage of the segment
@@ -431,14 +431,14 @@ Loads the C<PackFile> returned by C<Parrot_readbc()>.
 */
 
 void
-Parrot_loadbc(Interp *interpreter, struct PackFile *pf)
+Parrot_loadbc(Interp *interpreter, PMC *pf)
 {
     if (pf == NULL) {
         PIO_eprintf(interpreter, "Invalid packfile\n" );
         return;
     }
     interpreter->initial_pf = pf;
-    interpreter->code = pf->cur_cs;
+    interpreter->code = PMC_PackFile(pf)->cur_cs;
 }
 
 /*
@@ -906,16 +906,18 @@ void
 Parrot_run_native(Parrot_Interp interpreter, native_func_t func)
 {
     static opcode_t program_code[2];
-    struct PackFile *          pf;
+    PMC* pf_pmc;
+    struct Parrot_PackFile *pf;
 
     program_code[0] = interpreter->op_lib->op_code("enternative", 0);
     program_code[1] = 0; /* end */
-    pf = PackFile_new(interpreter, 0);
+    pf_pmc = PackFile_new(interpreter, 0);
+    pf = PMC_PackFile(pf_pmc);
     pf->cur_cs = (struct PackFile_ByteCode *)
-        (pf->PackFuncs[PF_BYTEC_SEG].new_seg)(interpreter, pf, "code", 1);
+        (pf->PackFuncs[PF_BYTEC_SEG].new_seg)(interpreter, pf_pmc, "code", 1);
     pf->cur_cs->base.data = program_code;
     pf->cur_cs->base.size = 2;
-    Parrot_loadbc(interpreter, pf);
+    Parrot_loadbc(interpreter, pf_pmc);
     run_native = func;
     if (interpreter->code && interpreter->code->const_table) {
         CONTEXT(interpreter->ctx)->constants =

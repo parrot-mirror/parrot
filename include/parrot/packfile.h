@@ -8,21 +8,32 @@
 
 #include <parrot/parrot.h>
 
+/* Macros for getting at underlying structures from the Packfile PMCs. */
+#define PMC_PackFile(p) ((struct Parrot_PackFile*)PMC_struct_val(p))
+#define PMC_PackFileDirectory(p) \
+    ((struct Parrot_PackFile_Directory*)PMC_struct_val(p))
+#define PMC_PackFileConstTable(p) \
+    ((struct Parrot_PackFile_ConstTable*)PMC_struct_val(p))
+#define PMC_PackFileFixupTable(p) \
+    ((struct Parrot_PackFile_FixupTable*)PMC_struct_val(p))
+
+/* Getting at the constants. */
 #define PF_NCONST(pf)  ((pf)->const_table->const_count)
 #define PF_CONST(pf,i) ((pf)->const_table->constants[(i)])
 
+/* Segment names. */
 #define DIRECTORY_SEGMENT_NAME   "DIRECTORY"
 #define FIXUP_TABLE_SEGMENT_NAME "FIXUP"
 #define CONSTANT_SEGMENT_NAME    "CONSTANT"
 #define BYTE_CODE_SEGMENT_NAME   "BYTECODE"
 
-/*
-** Structure Definitions:
-*/
-
 /* UUID types. */
 #define PARROT_UUID_TYPE_NONE 0
 #define PARROT_UUID_TYPE_MD5 1
+
+/*
+** Structure Definitions:
+*/
 
 /*
  * The header of a packfile. PACKFILE_HEADER_BYTES stores the number of bytes
@@ -62,7 +73,7 @@ struct Parrot_PackFile_Header {
 struct PackFile_Segment;
 
 typedef struct PackFile_Segment * (*PackFile_Segment_new_func_t)
-    (Interp *, struct PackFile *, const char *, int add);
+    (Interp *, PMC*, const char *, int add);
 typedef void   (*PackFile_Segment_destroy_func_t) (Interp *,
         struct PackFile_Segment *);
 typedef size_t (*PackFile_Segment_packed_size_func_t)(Interp *,
@@ -83,7 +94,7 @@ struct PackFile_funcs {
     PackFile_Segment_dump_func_t dump;
 };
 
-PARROT_API INTVAL PackFile_funcs_register(Interp*, struct PackFile *, UINTVAL type,
+PARROT_API INTVAL PackFile_funcs_register(Interp*, PMC*, UINTVAL type,
         struct PackFile_funcs);
 
 typedef enum {
@@ -103,7 +114,7 @@ typedef INTVAL (*PackFile_map_segments_func_t) (Interp *,
         struct PackFile_Segment *seg, void *user_data);
 
 struct PackFile_Segment {
-    struct PackFile     * pf;
+    PMC                 *pf;
     struct PackFile_Directory * dir;
     /* directory information */
     UINTVAL             type;           /* one of above defined types */
@@ -119,7 +130,7 @@ struct PackFile_Segment {
 };
 
 struct Parrot_PackFile_Segment {
-    struct PackFile     * pf;
+    PMC                 *pf;
     struct PackFile_Directory * dir;
     /* directory information */
     UINTVAL             type;           /* one of above defined types */
@@ -278,7 +289,7 @@ struct PackFile_Directory {
 };
 
 /* XXX This is going to die once the new PackFile PMC is done. :-) */
-struct PackFile {
+struct DELETED_PackFile {
     /* the packfile is its own directory */
     struct PackFile_Directory   directory;
     struct PackFile_Directory   *dirp;  /* for freeing */
@@ -330,7 +341,9 @@ struct Parrot_PackFile {
     struct Parrot_PackFile_Header *header;
 
     /* Packfile directory. */
-    PMC *directory;
+    struct PMC *DIRECTORY; /* Lowercase when following 2 are deleted. */
+    struct PackFile_Directory *directory; /* To kill later */
+    struct PackFile_Directory *dirp; /* To kill later */
 
     /* Word size and endian-change related stuff. */
     INTVAL   need_wordsize;
@@ -343,32 +356,38 @@ struct Parrot_PackFile {
     opcode_t *src;       /* the (possibly mmap()ed) start of the PF */
     size_t   size;       /* size in bytes */
     INTVAL is_mmap_ped;  /* 0 if it's not mmap()ed */
+
+    /* Runtime. */
+    struct PackFile_ByteCode *cur_cs;   /* used during PF loading */
+    
+    /* Packing functions. */
+    struct PackFile_funcs PackFuncs[PF_MAX_SEG];
 };
 
 /*
 ** PackFile Functions:
 */
 
-PARROT_API struct PackFile *PackFile_new(Interp *, INTVAL is_mapped);
-PARROT_API struct PackFile *PackFile_new_dummy(Interp *, const char* name);
+PARROT_API PMC *PackFile_new(Interp *, INTVAL is_mapped);
+PARROT_API PMC *PackFile_new_dummy(Interp *, const char* name);
 
-PARROT_API void PackFile_destroy(Interp *, struct PackFile * self);
+PARROT_API void PackFile_destroy(Interp *, PMC *self);
 
-PARROT_API opcode_t PackFile_pack_size(Interp *, struct PackFile *self);
+PARROT_API opcode_t PackFile_pack_size(Interp *, PMC *self);
 
-PARROT_API void PackFile_pack(Interp *, struct PackFile * self, opcode_t * packed);
+PARROT_API void PackFile_pack(Interp *, struct PMC* self, opcode_t * packed);
 
 PARROT_API opcode_t PackFile_unpack(Interp *interpreter,
-                         struct PackFile *self, opcode_t *packed,
+                         PMC *self, opcode_t *packed,
                          size_t packed_size);
 
 PARROT_API INTVAL
 PackFile_Header_Unpack(Interp* interpreter, opcode_t* packed, 
-                       struct PackFile *self);
+                       PMC *self);
 
 PARROT_API INTVAL
 PackFile_Header_Pack(Interp* interpreter, opcode_t* packed, 
-                     struct PackFile *self);
+                     PMC *self);
 
 typedef enum {
     PBC_MAIN   = 1,
@@ -416,7 +435,7 @@ PARROT_API opcode_t * PackFile_Segment_unpack(Interp *interpreter,
 PARROT_API void PackFile_Segment_dump(Interp *, struct PackFile_Segment *);
 void default_dump_header (Interp *, struct PackFile_Segment *);
 
-PARROT_API struct PackFile_Segment *PackFile_Segment_new(Interp *, struct PackFile *pf, const char*,
+PARROT_API struct PackFile_Segment *PackFile_Segment_new(Interp *, PMC *pf, const char*,
         int);
 
 /* fingerprint functions */
@@ -512,11 +531,11 @@ PARROT_API opcode_t * PackFile_Constant_unpack_pmc(Interp *interpreter,
 /*
  * pf_items low level Parrot items fetch routines
  */
-opcode_t PF_fetch_opcode(struct PackFile *pf, opcode_t **stream);
-INTVAL   PF_fetch_integer(struct PackFile *pf, opcode_t **stream);
-FLOATVAL PF_fetch_number(struct PackFile *pf, opcode_t **stream);
-STRING*  PF_fetch_string(Interp*, struct PackFile *pf, opcode_t **stream);
-char *   PF_fetch_cstring(struct PackFile *pf, opcode_t **stream);
+opcode_t PF_fetch_opcode(struct Parrot_PackFile *pf, opcode_t **stream);
+INTVAL   PF_fetch_integer(struct Parrot_PackFile *pf, opcode_t **stream);
+FLOATVAL PF_fetch_number(struct Parrot_PackFile *pf, opcode_t **stream);
+STRING*  PF_fetch_string(Interp*, struct Parrot_PackFile *pf, opcode_t **stream);
+char *   PF_fetch_cstring(struct Parrot_PackFile *pf, opcode_t **stream);
 
 size_t   PF_size_opcode(void);
 size_t   PF_size_integer(void);
@@ -530,7 +549,7 @@ opcode_t* PF_store_number (opcode_t *, FLOATVAL *);
 opcode_t* PF_store_string (opcode_t *, STRING *);
 opcode_t* PF_store_cstring(opcode_t *, const char *);
 
-void PackFile_assign_transforms(struct PackFile *pf);
+void PackFile_assign_transforms(struct Parrot_PackFile *pf);
 
 /*
 ** Byte Ordering Functions (byteorder.c)
