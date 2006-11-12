@@ -254,11 +254,9 @@ for writing to disc and later loading via C<load_bytecode>.
         Parrot_block_DOD(INTERP);
         PackFile_pack(INTERP, pf, res->strstart);
         Parrot_unblock_DOD(INTERP);
-        /* now remove all segments from directory again and destroy
-         * the packfile
+        /* now remove all segments from directory again
          */
         PMC_PackFile(pf)->directory->num_segments = 0;
-        PackFile_destroy(INTERP, pf);
         return res;
     }
 

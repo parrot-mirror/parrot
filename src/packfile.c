@@ -103,23 +103,6 @@ static struct PackFile_Constant **find_constants(Interp*,
 
 /*
 
-=item C<void
-PackFile_destroy(Interp *interpreter, PMC *pf)>
-
-Delete a C<PackFile>.
-
-=cut
-
-*/
-
-void
-PackFile_destroy(Interp *interpreter, PMC *pf)
-{
-    /* No-op, it gets garbage collected now. */
-}
-
-/*
-
 =item C<static INTVAL
 PackFile_check_segment_size(opcode_t segment_size, const char *debug)>
 
