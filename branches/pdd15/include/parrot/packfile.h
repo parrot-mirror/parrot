@@ -371,8 +371,6 @@ struct Parrot_PackFile {
 PARROT_API PMC *PackFile_new(Interp *, INTVAL is_mapped);
 PARROT_API PMC *PackFile_new_dummy(Interp *, const char* name);
 
-PARROT_API void PackFile_destroy(Interp *, PMC *self);
-
 PARROT_API opcode_t PackFile_pack_size(Interp *, PMC *self);
 
 PARROT_API void PackFile_pack(Interp *, struct PMC* self, opcode_t * packed);
