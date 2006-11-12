@@ -208,25 +208,25 @@ for writing to disc and later loading via C<load_bytecode>.
 
     STRING* get_string() {
         STRING *res;
-        struct PackFile *pf;
+        PMC *pf;
         size_t size, aligned_size;
         struct PackFile_ByteCode *seg;
 
         pf = PackFile_new(INTERP, 0);
         seg = PMC_sub(SELF)->seg;
-        PackFile_add_segment(INTERP, &pf->directory,
+        PackFile_add_segment(INTERP, PMC_PackFile(pf)->directory,
                 (struct PackFile_Segment *)seg);
         if (seg->const_table)
-            PackFile_add_segment(INTERP, &pf->directory,
+            PackFile_add_segment(INTERP, PMC_PackFile(pf)->directory,
                     (struct PackFile_Segment *)seg->const_table);
         if (seg->debugs)
-            PackFile_add_segment(INTERP, &pf->directory,
+            PackFile_add_segment(INTERP, PMC_PackFile(pf)->directory,
                     (struct PackFile_Segment *)seg->debugs);
         if (seg->fixups)
-            PackFile_add_segment(INTERP, &pf->directory,
+            PackFile_add_segment(INTERP, PMC_PackFile(pf)->directory,
                     (struct PackFile_Segment *)seg->fixups);
         if (seg->pic_index)
-            PackFile_add_segment(INTERP, &pf->directory,
+            PackFile_add_segment(INTERP, PMC_PackFile(pf)->directory,
                     (struct PackFile_Segment *)seg->pic_index);
         size = PackFile_pack_size(INTERP, pf) * sizeof(opcode_t);
         /*
@@ -257,7 +257,7 @@ for writing to disc and later loading via C<load_bytecode>.
         /* now remove all segments from directory again and destroy
          * the packfile
          */
-        pf->directory.num_segments = 0;
+        PMC_PackFile(pf)->directory->num_segments = 0;
         PackFile_destroy(INTERP, pf);
         return res;
     }
@@ -299,7 +299,7 @@ Unarchives the code.
 
     void thaw(visit_info *info) {
         IMAGE_IO *io = info->image_io;
-        struct PackFile *pf;
+        PMC *pf;
         STRING *packed;
         size_t i;
         struct PackFile_Segment *seg;
@@ -312,15 +312,15 @@ Unarchives the code.
         if (!PackFile_unpack(INTERP, pf, packed->strstart, packed->strlen))
             real_exception(INTERP, NULL, E_IOError,
                     "couldn't unpack packfile");
-        do_sub_pragmas(INTERP, pf->cur_cs, PBC_PBC, SELF);
-        for (i = 0; i < pf->directory.num_segments; ++i) {
-            seg = pf->directory.segments[i];
+        do_sub_pragmas(INTERP, PMC_PackFile(pf)->cur_cs, PBC_PBC, SELF);
+        for (i = 0; i < PMC_PackFile(pf)->directory->num_segments; ++i) {
+            seg = PMC_PackFile(pf)->directory->segments[i];
             if (seg->type == PF_BYTEC_SEG) {
                 PMC_sub(SELF)->seg = (struct PackFile_ByteCode *)seg;
                 break;
             }
         }
-        pf->directory.num_segments = 0;
+        PMC_PackFile(pf)->directory->num_segments = 0;
         /*
          * XXX this isn't ok - it seems that the packfile
          *     gets attached to interpreter->code and is

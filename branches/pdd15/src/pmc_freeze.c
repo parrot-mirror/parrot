@@ -470,7 +470,7 @@ shift_opcode_integer(Parrot_Interp interpreter, IMAGE_IO *io)
 {
     const char * const start = (char*)io->image->strstart;
     const INTVAL i =
-        PF_fetch_integer(io->pf, (opcode_t**) &io->image->strstart);
+        PF_fetch_integer(PMC_PackFile(io->pf), (opcode_t**) &io->image->strstart);
 
     io->image->bufused -= ((char*)io->image->strstart - start);
     assert((int)io->image->bufused >= 0);
@@ -512,7 +512,7 @@ shift_opcode_number(Parrot_Interp interpreter, IMAGE_IO *io)
 {
     const char * const start = (char*)io->image->strstart;
     const FLOATVAL f =
-        PF_fetch_number(io->pf, (opcode_t**) &io->image->strstart);
+        PF_fetch_number(PMC_PackFile(io->pf), (opcode_t**) &io->image->strstart);
 
     io->image->bufused -= ((char*)io->image->strstart - start);
     assert((int)io->image->bufused >= 0);
@@ -535,7 +535,7 @@ shift_opcode_string(Parrot_Interp interpreter, IMAGE_IO *io)
 {
     char * const start = (char*)io->image->strstart;
     STRING * const s =
-        PF_fetch_string(interpreter, io->pf, (opcode_t**) &io->image->strstart);
+        PF_fetch_string(interpreter, PMC_PackFile(io->pf), (opcode_t**) &io->image->strstart);
 
     io->image->bufused -= ((char*)io->image->strstart - start);
     assert((int)io->image->bufused >= 0);
@@ -669,7 +669,7 @@ static void
 ft_init(Parrot_Interp interpreter, visit_info *info)
 {
     STRING *s = info->image;
-    struct PackFile *pf;
+    PMC *pf;
 
     info->image_io = mem_sys_allocate(sizeof(IMAGE_IO));
     info->image_io->image = s = info->image;
@@ -684,7 +684,8 @@ ft_init(Parrot_Interp interpreter, visit_info *info)
         int header_length;
 
         /* op_check_size is a bit approximate here. :-) */
-        op_check_size(interpreter, s, PACKFILE_HEADER_BYTES + pf->header->uuid_length + 16);
+        op_check_size(interpreter, s, PACKFILE_HEADER_BYTES + 
+            PMC_PackFile(pf)->header->uuid_length + 16);
         header_length = PackFile_Header_Pack(interpreter, s->strstart, pf);
         s->bufused += header_length;
         s->strlen += header_length;
@@ -696,7 +697,7 @@ ft_init(Parrot_Interp interpreter, visit_info *info)
                     "bad string to thaw");
         }
         header_length = PackFile_Header_Unpack(interpreter, s->strstart, pf);
-        PackFile_assign_transforms(pf);
+        PackFile_assign_transforms(PMC_PackFile(pf));
         s->bufused -= header_length;
         LVALUE_CAST(char *, s->strstart) += header_length;
     }

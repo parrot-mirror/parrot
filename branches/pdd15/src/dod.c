@@ -295,6 +295,10 @@ Parrot_dod_trace_root(Interp *interpreter, int trace_stack)
     /* Walk the iodata */
     Parrot_IOData_mark(interpreter, interpreter->piodata);
 
+    /* Mark the currnet PackFile, if there is one. */
+    if (interpreter->initial_pf)
+        pobject_lives(interpreter, (PObj*)interpreter->initial_pf);
+
     /* quick check, if we can already bail out */
     if (arena_base->lazy_dod && arena_base->num_early_PMCs_seen >=
             arena_base->num_early_DOD_PMCs) {

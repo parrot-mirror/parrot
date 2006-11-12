@@ -50,7 +50,7 @@ typedef struct _image_funcs {
 
 typedef struct _image_io {
     STRING *image;
-    struct PackFile *pf;
+    PMC *pf;
     image_funcs *vtable;
 } image_io;
 

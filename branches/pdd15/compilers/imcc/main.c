@@ -502,7 +502,7 @@ do_pre_process(Parrot_Interp interp)
 int
 main(int argc, char * argv[])
 {
-    struct PackFile *pf;
+    PMC *pf;
     int obj_file, ast_file = 0;
     char *sourcefile;
     const char *output_file;

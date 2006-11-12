@@ -30,7 +30,7 @@ contiguous region of memory.
 #define TRACE_PACKFILE_PMC 0
 
 /* XXX This should be in an external file */
-extern struct PackFile_Directory *directory_new (Interp*, struct PackFile *pf);
+extern struct PackFile_Directory *directory_new (Interp*, PMC* pf);
 
 /*
 
@@ -44,11 +44,12 @@ Description.
 */
 
 opcode_t
-PackFile_pack_size(Interp* interpreter, struct PackFile *self)
+PackFile_pack_size(Interp* interpreter, PMC *pf)
 {
     opcode_t size;
     int header_length;
-    struct PackFile_Directory * const dir = &self->directory;
+    struct Parrot_PackFile *self = PMC_PackFile(pf);
+    struct PackFile_Directory * const dir = self->directory;
 
     /* Header length. */
     header_length = PACKFILE_HEADER_BYTES + self->header->uuid_length;
@@ -87,18 +88,19 @@ Other pack routines are in F<src/packfile.c>.
 */
 
 void
-PackFile_pack(Interp* interpreter, struct PackFile *self, opcode_t *cursor)
+PackFile_pack(Interp* interpreter, PMC *pf, opcode_t *cursor)
 {
     opcode_t *ret;
+    struct Parrot_PackFile *self = PMC_PackFile(pf);
 
     size_t size;
-    struct PackFile_Directory * const dir = &self->directory;
+    struct PackFile_Directory * const dir = self->directory;
     struct PackFile_Segment *seg;
     int header_length;
     
     /* Pack the header. */
     self->src = cursor;
-    header_length = PackFile_Header_Pack(interpreter, cursor, self);
+    header_length = PackFile_Header_Pack(interpreter, cursor, pf);
     cursor = (opcode_t*)((char*)cursor + header_length);
 
     /* Store the directory format. */
