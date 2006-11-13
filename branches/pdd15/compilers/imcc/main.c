@@ -678,22 +678,19 @@ main(int argc, char * argv[])
     /* Produce a PBC output file, if one was requested */
     if (write_pbc) {
         size_t size;
-        opcode_t *packed;
+        STRING *packed;
         FILE *fp;
         IMCC_info(interp, 1, "Writing %s\n", output_file);
 
-        size = PackFile_pack_size(interp, interp->code->base.pf) *
-            sizeof(opcode_t);
         IMCC_info(interp, 1, "packed code %d bytes\n", size);
-        packed = (opcode_t*) mem_sys_allocate(size);
-        PackFile_pack(interp, interp->code->base.pf, packed);
+        packed = PackFile_pack(interp, interp->code->base.pf);
         if (strcmp (output_file, "-") == 0)
             fp = stdout;
         else if ((fp = fopen(output_file, "wb")) == 0)
             IMCC_fatal_standalone(interp, E_IOError,
                 "Couldn't open %s\n", output_file);
 
-        if ((1 != fwrite(packed, size, 1, fp)) )
+        if ((1 != fwrite(packed->strstart, string_length(interp, packed), 1, fp)))
             IMCC_fatal_standalone(interp, E_IOError,
                 "Couldn't write %s\n", output_file);
         fclose(fp);

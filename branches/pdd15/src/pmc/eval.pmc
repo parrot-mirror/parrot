@@ -209,7 +209,6 @@ for writing to disc and later loading via C<load_bytecode>.
     STRING* get_string() {
         STRING *res;
         PMC *pf;
-        size_t size, aligned_size;
         struct PackFile_ByteCode *seg;
 
         pf = PackFile_new(INTERP, 0);
@@ -228,35 +227,13 @@ for writing to disc and later loading via C<load_bytecode>.
         if (seg->pic_index)
             PackFile_add_segment(INTERP, PMC_PackFile(pf)->directory,
                     (struct PackFile_Segment *)seg->pic_index);
-        size = PackFile_pack_size(INTERP, pf) * sizeof(opcode_t);
-        /*
-         * work around packfile bug:
-         * as far as I have checked it the story is:
-         * - PackFile_pack_size() assumes 16 byte alignment but doesn't
-         *   have the actual start of the code (packed)
-         * - PackFile_pack() uses 16 bye alignment relative to the start
-         *   of the code, which isn't really the same
-         * Therefore align code at 16, which should give the desired
-         * effect
-         */
-        aligned_size = size + 15;
-        res = string_make_empty(INTERP, enum_stringrep_one, aligned_size);
-        res->strlen = res->bufused = size;
-        if ((size_t)(res->strstart) & 0xf) {
-            char *adr = res->strstart;
-            adr += 16 - ((size_t)adr & 0xf);
-            res->strstart = adr;
-        }
         /* We block DOD while doing the packing, since GC run during a pack
            has been observed to cause problems. There may be a Better Fix.
            See RT #40410 for example of the problem (note on line that
            segfaults, it is *cursor that is pointing to dealloced memory). */
         Parrot_block_DOD(INTERP);
-        PackFile_pack(INTERP, pf, res->strstart);
+        res = PackFile_pack(INTERP, pf);
         Parrot_unblock_DOD(INTERP);
-        /* now remove all segments from directory again
-         */
-        PMC_PackFile(pf)->directory->num_segments = 0;
         return res;
     }
 
@@ -299,7 +276,7 @@ Unarchives the code.
         IMAGE_IO *io = info->image_io;
         PMC *pf;
         STRING *packed;
-        size_t i;
+        INTVAL i;
         struct PackFile_Segment *seg;
         struct Parrot_sub * sub;
 
@@ -311,20 +288,14 @@ Unarchives the code.
             real_exception(INTERP, NULL, E_IOError,
                     "couldn't unpack packfile");
         do_sub_pragmas(INTERP, PMC_PackFile(pf)->cur_cs, PBC_PBC, SELF);
-        for (i = 0; i < PMC_PackFile(pf)->directory->num_segments; ++i) {
-            seg = PMC_PackFile(pf)->directory->segments[i];
+        for (i = 0; i < VTABLE_elements(interpreter, PMC_PackFile(pf)->directory); ++i) {
+            seg = VTABLE_get_pmc_keyed_int(interpreter, 
+                PMC_PackFile(pf)->directory, i);
             if (seg->type == PF_BYTEC_SEG) {
                 PMC_sub(SELF)->seg = (struct PackFile_ByteCode *)seg;
                 break;
             }
         }
-        PMC_PackFile(pf)->directory->num_segments = 0;
-        /*
-         * XXX this isn't ok - it seems that the packfile
-         *     gets attached to interpreter->code and is
-         *     destroyed again during interpreter destruction
-         */
-        /* PackFile_destroy(INTERP, pf); */
     }
 
 }

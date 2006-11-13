@@ -51,9 +51,6 @@ static opcode_t * default_unpack (Interp *,
 static void default_dump (Interp *,
                           struct PackFile_Segment *self);
 
-static struct PackFile_Segment *directory_new (Interp*, PMC *,
-                                               const char *, int);
-static void directory_destroy (Interp*, struct PackFile_Segment *self);
 static size_t directory_packed_size (Interp*, struct PackFile_Segment *self);
 static opcode_t * directory_pack (Interp*, struct PackFile_Segment *,
                                   opcode_t *dest);
@@ -374,7 +371,7 @@ find_const_iter(Interp* interpreter,
         struct PackFile_Segment *seg, void *user_data)
 {
     if (seg->type == PF_DIR_SEG) {
-        PackFile_map_segments(interpreter, (struct PackFile_Directory*)seg,
+        PackFile_map_segments(interpreter, (PMC*)seg,
                 find_const_iter, user_data);
     }
     else if (seg->type == PF_CONST_SEG) {
@@ -386,7 +383,7 @@ find_const_iter(Interp* interpreter,
 void
 mark_const_subs(Parrot_Interp interpreter)
 {
-    struct PackFile_Directory *dir;
+    PMC *dir;
 
     struct Parrot_PackFile* const self = PMC_PackFile(interpreter->initial_pf);
     if (!self)
@@ -485,91 +482,9 @@ opcode_t
 PackFile_unpack(Interp *interpreter, PMC *pf,
                 opcode_t *packed, size_t packed_size)
 {
-    struct Parrot_PackFile *self = PMC_PackFile(pf);
-    struct Parrot_PackFile_Header *header;
-    opcode_t *cursor;
-    int header_length;
-    int directory_version;
-
-    /* Check what we've been passed ain't NULL. */
-    assert(self != NULL);
-    assert(packed != NULL);
-    assert(packed_size > PACKFILE_HEADER_BYTES);
-
-    /* Stash the source. */
-    self->src = packed;
-    self->size = packed_size;
-
-    /* Read in the header. */
-    header_length = PackFile_Header_Unpack(interpreter, packed, pf);
-    if (header_length == 0)
-        return 0;
-    cursor = (opcode_t*)((char*)packed + header_length);
-    header = self->header;
-
-    /* Validate stuff. */
-    if (memcmp(header->magic, "\xfe\x50\x42\x43\x0d\x0a\x1a\x0a", 8)) {
-        PIO_eprintf(NULL, "PackFile_unpack: Invalid magic %s\n", header->magic);
-        return 0;
-    }
-    if (header->wordsize != 4 && header->wordsize != 8) {
-        PIO_eprintf(NULL, "PackFile_unpack: Invalid wordsize %d\n",
-                    header->wordsize);
-        return 0;
-    }
-    if (header->floattype != 0 && header->floattype != 1) {
-        PIO_eprintf(NULL, "PackFile_unpack: Invalid floattype %d\n",
-                    header->floattype);
-        return 0;
-    }
-
-    /* Transform the rest of the file. */
-    PackFile_assign_transforms(self);
-
-#if TRACE_PACKFILE
-    PIO_eprintf(NULL, "PackFile_unpack: Wordsize %d.\n", header->wordsize);
-    PIO_eprintf(NULL, "PackFile_unpack: Floattype %d (%s).\n",
-                header->floattype,
-                header->floattype ?
-                  "x86 little endian 12 byte long double" :
-                  "IEEE-754 8 byte double");
-    PIO_eprintf(NULL, "PackFile_unpack: Byteorder %d (%sendian).\n",
-                header->byteorder, header->byteorder ? "big " : "little-");
-#endif
-
-    /* Check the directory version (plus read in padding). */
-    directory_version = PF_fetch_opcode(self, &cursor);
-    PF_fetch_opcode(self, &cursor);
-    PF_fetch_opcode(self, &cursor);
-    PF_fetch_opcode(self, &cursor);
-    if (directory_version != PARROT_PF_DIR_FORMAT) {
-        PIO_eprintf(NULL, "PackFile_unpack: Unable to read directory format %d\n",
-            directory_version);
-        return 0;
-    }
-
-    /*
-     * now unpack dir, which unpacks its contents ...
-     */
-    self->directory->base.file_offset = (INTVAL)cursor - (INTVAL)self->src;
-    Parrot_block_DOD(interpreter);
-    cursor = PackFile_Segment_unpack(interpreter,
-                                     &self->directory->base, cursor);
-    Parrot_unblock_DOD(interpreter);
-
-#ifdef PARROT_HAS_HEADER_SYSMMAN
-    if (self->is_mmap_ped && (
-                self->need_endianize || self->need_wordsize)) {
-        munmap((void *)self->src, self->size);
-        self->is_mmap_ped = 0;
-    }
-#endif
-
-#if TRACE_PACKFILE
-    PIO_eprintf(NULL, "PackFile_unpack: Unpack done.\n");
-#endif
-
-    return cursor - packed;
+    STRING *s = string_from_cstring(interpreter, packed, packed_size);
+    VTABLE_set_string_native(interpreter, pf, s);
+    return packed_size;
 }
 
 
@@ -653,7 +568,7 @@ PackFile_Header_Pack(Interp* interpreter, opcode_t* packed,
 /*
 
 =item C<INTVAL
-PackFile_map_segments (Interp*, struct PackFile_Directory *dir,
+PackFile_map_segments (Interp*, PMC *dir,
                        PackFile_map_segments_func_t callback,
                        void *user_data)>
 
@@ -668,14 +583,16 @@ and this value is returned.
 */
 
 INTVAL
-PackFile_map_segments (Interp* interpreter, struct PackFile_Directory *dir,
+PackFile_map_segments (Interp* interpreter, PMC *dir,
                        PackFile_map_segments_func_t callback,
                        void *user_data)
 {
-    size_t i;
+    INTVAL i;
 
-    for (i = 0; i < dir->num_segments; i++) {
-        const INTVAL ret = callback (interpreter, dir->segments[i], user_data);
+    for (i = 0; i < VTABLE_elements(interpreter, dir); i++) {
+        const INTVAL ret = callback (interpreter, 
+            VTABLE_get_pmc_keyed_int(interpreter, dir, i),
+            user_data);
         if (ret)
             return ret;
     }
@@ -686,7 +603,7 @@ PackFile_map_segments (Interp* interpreter, struct PackFile_Directory *dir,
 /*
 
 =item C<INTVAL
-PackFile_add_segment (struct PackFile_Directory *dir,
+PackFile_add_segment (PMC *dir,
         struct PackFile_Segment *seg)>
 
 Adds the Segment C<seg> to the directory C<dir> The PackFile becomes the
@@ -698,22 +615,15 @@ packfile gets destroyed.
 */
 
 INTVAL
-PackFile_add_segment (Interp* interpreter, struct PackFile_Directory *dir,
+PackFile_add_segment (Interp* interpreter, PMC *dir,
         struct PackFile_Segment *seg)
 {
+    /* Add to the directory. */
+    VTABLE_set_pmc_keyed_str(interpreter, dir,
+        string_from_cstring(interpreter, seg->name, strlen(seg->name)),
+        seg);
 
-    if (dir->segments) {
-        dir->segments =
-            mem_sys_realloc(dir->segments,
-                    sizeof (struct PackFile_Segment *) *
-                    (dir->num_segments+1));
-    }
-    else {
-        dir->segments = mem_sys_allocate(sizeof (struct PackFile_Segment *) *
-                (dir->num_segments+1));
-    }
-    dir->segments[dir->num_segments] = seg;
-    dir->num_segments++;
+    /* Set the segment's directory. */
     seg->dir = dir;
 
     return 0;
@@ -722,7 +632,7 @@ PackFile_add_segment (Interp* interpreter, struct PackFile_Directory *dir,
 /*
 
 =item C<struct PackFile_Segment *
-PackFile_find_segment (Interp *, struct PackFile_Directory *dir,
+PackFile_find_segment (Interp *, PMC *dir,
                        const char *name, int sub_dir)>
 
 Finds the segment with the name C<name> in the C<PackFile_Directory> if
@@ -735,20 +645,20 @@ returned, but its still owned by the C<PackFile>.
 
 struct PackFile_Segment *
 PackFile_find_segment (Interp *interpreter,
-        struct PackFile_Directory *dir, const char *name, int sub_dir)
+        PMC *dir, const char *name, int sub_dir)
 {
-    size_t i;
+    INTVAL i;
 
     if (!dir)
         return NULL;
-    for (i=0; i < dir->num_segments; i++) {
-        struct PackFile_Segment *seg = dir->segments[i];
+    for (i=0; i < VTABLE_elements(interpreter, dir); i++) {
+        struct PackFile_Segment *seg = VTABLE_get_pmc_keyed_int(interpreter, dir, i);
         if (seg && strcmp (seg->name, name) == 0) {
             return seg;
         }
         if (sub_dir && seg->type == PF_DIR_SEG) {
             seg = PackFile_find_segment(interpreter,
-                    (struct PackFile_Directory *)seg, name, sub_dir);
+                    (PMC *)seg, name, sub_dir);
             if (seg)
                 return seg;
         }
@@ -760,7 +670,7 @@ PackFile_find_segment (Interp *interpreter,
 /*
 
 =item C<struct PackFile_Segment *
-PackFile_remove_segment_by_name (Interp *, struct PackFile_Directory *dir,
+PackFile_remove_segment_by_name (Interp *, PMC *dir,
                                  const char *name)>
 
 Finds and removes the segment with name C<name> in the
@@ -773,22 +683,14 @@ the user.
 
 struct PackFile_Segment *
 PackFile_remove_segment_by_name (Interp* interpreter,
-        struct PackFile_Directory *dir, const char *name)
+        PMC *dir, const char *name)
 {
-    size_t i;
+    INTVAL i;
 
-    for (i=0; i < dir->num_segments; i++) {
-        struct PackFile_Segment * const seg = dir->segments[i];
-        if (strcmp (seg->name, name) == 0) {
-            dir->num_segments--;
-            if (i != dir->num_segments) {
-                /* We're not the last segment, so we need to move things */
-                memmove(&dir->segments[i], &dir->segments[i+1],
-                       (dir->num_segments - i) *
-                       sizeof (struct PackFile_Segment *));
-            }
-            return seg;
-        }
+    for (i=0; i < VTABLE_elements(interpreter, dir); i++) {
+        struct PackFile_Segment * const seg = VTABLE_get_pmc_keyed_int(interpreter, dir, i);
+        if (strcmp (seg->name, name) == 0)
+            VTABLE_delete_keyed_int(interpreter, dir, i);
     }
 
     return NULL;
@@ -849,44 +751,6 @@ PackFile_new(Interp*, INTVAL is_mapped)>
 
 Allocate a new empty C<PackFile> and setup the directory.
 
-Directory segment:
-
-  +----------+----------+----------+----------+
-  |    Segment Header                         |
-  |    ..............                         |
-  +----------+----------+----------+----------+
-
-  +----------+----------+----------+----------+
-  |    number of directory items              |
-  +----------+----------+----------+----------+
-
-followed by a sequence of items
-
-  +----------+----------+----------+----------+
-  |    Segment type                           |
-  +----------+----------+----------+----------+
-  |    "name"                                 |
-  |    ...     '\0'       padding bytes       |
-  +----------+----------+----------+----------+
-  |    Offset in the file                     |
-  +----------+----------+----------+----------+
-  |    Size of the segment                    |
-  +----------+----------+----------+----------+
-
-"name" is a NUL-terminated c-string encoded in plain ASCII.
-
-Segment types are defined in F<include/parrot/packfile.h>.
-
-Offset and size are in C<opcode_t>.
-
-A Segment Header has these entries:
-
- - op_count     total ops of segment incl. this count
- - itype        internal type of segment
- - id           internal id e.g code seg nr
- - size         size of following op array, 0 if none
- * data         possibly empty data, or e.g. byte code
-
 =cut
 
 */
@@ -907,13 +771,8 @@ PackFile_new(Interp* interpreter, INTVAL is_mapped)
     /* Other fields empty for now */
     pf->cur_cs = NULL;
     pf_register_standard_funcs(interpreter, pf_pmc);
-    /* create the master directory, all subirs go there */
-    pf->directory = mem_sys_allocate(sizeof(struct PackFile_Directory));
-    pf->directory->base.pf = pf_pmc;
-    pf->dirp = (struct PackFile_Directory *)
-        PackFile_Segment_new_seg(interpreter, pf->directory,
-            PF_DIR_SEG, DIRECTORY_SEGMENT_NAME, 0);
-    pf->directory = pf->dirp;
+    
+    /* Set the op fetch functions to null for now. */
     pf->fetch_op = (opcode_t (*)(unsigned char*)) NULLfunc;
     pf->fetch_iv = (INTVAL (*)(unsigned char*)) NULLfunc;
     pf->fetch_nv = (void (*)(unsigned char *, unsigned char *)) NULLfunc;
@@ -1091,8 +950,8 @@ static INTVAL
 pf_register_standard_funcs(Interp* interpreter, PMC *pf)
 {
     struct PackFile_funcs dirf = {
-        directory_new,
-        directory_destroy,
+        PackFile_Segment_new,
+        (PackFile_Segment_destroy_func_t) NULLfunc,
         directory_packed_size,
         directory_pack,
         directory_unpack,
@@ -1150,7 +1009,7 @@ pf_register_standard_funcs(Interp* interpreter, PMC *pf)
 /*
 
 =item C<struct PackFile_Segment *
-PackFile_Segment_new_seg(Interp*, struct PackFile_Directory *dir, UINTVAL type,
+PackFile_Segment_new_seg(Interp*, PMC *dir, UINTVAL type,
         const char *name, int add)>
 
 Create a new segment.
@@ -1161,10 +1020,10 @@ Create a new segment.
 
 struct PackFile_Segment *
 PackFile_Segment_new_seg(Interp* interpreter,
-        struct PackFile_Directory *dir, UINTVAL type,
+        PMC *dir, UINTVAL type,
         const char *name, int add)
 {
-    PMC* const pf_pmc = dir->base.pf;
+    PMC* const pf_pmc = PMC_PackFileDirectory(dir)->base.pf;
     struct Parrot_PackFile* pf = PMC_PackFile(pf_pmc);
     PackFile_Segment_new_func_t f = pf->PackFuncs[type].new_seg;
     struct PackFile_Segment * const seg = (f)(interpreter, pf_pmc, name, add);
@@ -1176,7 +1035,7 @@ PackFile_Segment_new_seg(Interp* interpreter,
 }
 
 static struct PackFile_Segment *
-create_seg(Interp *interpreter, struct PackFile_Directory *dir,
+create_seg(Interp *interpreter, PMC *dir,
         pack_file_types t, const char *name, const char *file_name, int add)
 {
     struct PackFile_Segment *seg;
@@ -1361,30 +1220,6 @@ PackFile_Segment_dump(Interp *interpreter,
 
 =over 4
 
-=item C<static struct PackFile_Segment *
-directory_new(Interp*, PMC *pf, const char *name, int add)>
-
-Returns a new C<PackFile_Directory> cast as a C<PackFile_Segment>.
-
-=cut
-
-*/
-
-static struct PackFile_Segment *
-directory_new (Interp* interpreter, PMC *pf,
-        const char *name, int add)
-{
-    struct PackFile_Directory * const dir =
-        mem_sys_allocate(sizeof(struct PackFile_Directory));
-
-    dir->num_segments = 0;
-    dir->segments = NULL;
-
-    return (struct PackFile_Segment *)dir;
-}
-
-/*
-
 =item C<static void
 directory_dump(Interp *interpreter,
                 struct PackFile_Segment *self)>
@@ -1398,13 +1233,13 @@ Dumps the directory C<self>.
 static void
 directory_dump (Interp *interpreter, struct PackFile_Segment *self)
 {
-    struct PackFile_Directory * const dir = (struct PackFile_Directory *) self;
-    size_t i;
+    PMC * const dir = (PMC *) self;
+    INTVAL i;
 
     default_dump_header(interpreter, self);
-    PIO_printf(interpreter, "\n\t# %d segments\n", dir->num_segments);
-    for (i=0; i < dir->num_segments; i++) {
-        struct PackFile_Segment *seg = dir->segments[i];
+    PIO_printf(interpreter, "\n\t# %d segments\n", VTABLE_elements(interpreter, dir));
+    for (i=0; i < VTABLE_elements(interpreter, dir); i++) {
+        struct PackFile_Segment *seg = VTABLE_get_pmc_keyed_int(interpreter, dir, i);
         PIO_printf(interpreter,
                 "\ttype %d\t%s\t", (int)seg->type, seg->name);
         PIO_printf(interpreter,
@@ -1414,8 +1249,8 @@ directory_dump (Interp *interpreter, struct PackFile_Segment *self)
                 (int)seg->op_count);
     }
     PIO_printf(interpreter, "]\n");
-    for (i=0; i < dir->num_segments; i++) {
-        struct PackFile_Segment * const seg = dir->segments[i];
+    for (i=0; i < VTABLE_elements(interpreter, dir); i++) {
+        struct PackFile_Segment * const seg = VTABLE_get_pmc_keyed_int(interpreter, dir, i);
         PackFile_Segment_dump(interpreter, seg);
     }
 }
@@ -1424,7 +1259,7 @@ directory_dump (Interp *interpreter, struct PackFile_Segment *self)
 
 =item C<static opcode_t *
 directory_unpack(Interp *interpreter,
-        struct PackFile_Segment *segp, opcode_t * cursor)>
+        PMC *dir, opcode_t * cursor)>
 
 Unpacks the directory.
 
@@ -1434,27 +1269,14 @@ Unpacks the directory.
 
 static opcode_t *
 directory_unpack (Interp *interpreter,
-        struct PackFile_Segment *segp, opcode_t * cursor)
+        PMC *dir, opcode_t * cursor)
 {
-    size_t i;
-    struct PackFile_Directory * const dir = (struct PackFile_Directory *) segp;
-    struct Parrot_PackFile* const pf = PMC_PackFile(dir->base.pf);
+    INTVAL i;
+    struct Parrot_PackFile* const pf = PMC_PackFile(PMC_PackFileDirectory(dir)->base.pf);
     opcode_t *pos;
+    opcode_t num_segs = PF_fetch_opcode(pf, &cursor);
 
-    dir->num_segments = PF_fetch_opcode(pf, &cursor);
-    if (dir->segments) {
-        dir->segments =
-            mem_sys_realloc (dir->segments,
-                             sizeof(struct PackFile_Segment *) *
-                             dir->num_segments);
-    }
-    else {
-        dir->segments =
-            mem_sys_allocate(sizeof(struct PackFile_Segment *) *
-                             dir->num_segments);
-    }
-
-    for (i=0; i < dir->num_segments; i++) {
+    for (i=0; i < num_segs; i++) {
         struct PackFile_Segment *seg;
         size_t tmp;
         UINTVAL type;
@@ -1498,7 +1320,8 @@ directory_unpack (Interp *interpreter,
                      (int)tmp, (int)seg->file_offset);
         }
         if (i) {
-            struct PackFile_Segment *last = dir->segments[i-1];
+            struct PackFile_Segment *last =
+                VTABLE_get_pmc_keyed_int(interpreter, dir, i-1);
             if (last->file_offset + last->op_count != seg->file_offset) {
                 fprintf (stderr, "%s: sections are not back to back\n",
                         "section");
@@ -1507,23 +1330,25 @@ directory_unpack (Interp *interpreter,
         make_code_pointers(seg);
 
         /* store the segment */
-        dir->segments[i] = seg;
+        VTABLE_set_pmc_keyed_str(interpreter, dir, 
+            string_from_cstring(interpreter, seg->name, strlen(seg->name)),
+            seg);
         seg->dir = dir;
     }
 
     ALIGN_16(pf->src, cursor);
     /* and now unpack contents of dir */
-    for (i = 0; cursor && i < dir->num_segments; i++) {
+    for (i = 0; cursor && i < VTABLE_elements(interpreter, dir); i++) {
         opcode_t *csave = cursor;
         size_t tmp = PF_fetch_opcode(pf, &cursor); /* check len again */
         size_t delta = 0;       /* keep gcc -O silent */
 
         cursor = csave;
-        pos = PackFile_Segment_unpack (interpreter, dir->segments[i],
-                                       cursor);
+        pos = PackFile_Segment_unpack(interpreter, 
+            VTABLE_get_pmc_keyed_int(interpreter, dir, i), cursor);
         if (!pos) {
-            fprintf (stderr, "PackFile_unpack segment '%s' failed\n",
-                    dir->segments[i]->name);
+            fprintf (stderr, "PackFile_unpack segment '%S' failed\n",
+                    VTABLE_get_string_keyed_int(interpreter, dir, i));
             return 0;
         }
         if (pf->need_wordsize) {
@@ -1536,12 +1361,12 @@ directory_unpack (Interp *interpreter,
 #endif
         } else
             delta = pos - cursor;
-        if ((size_t)delta != tmp || dir->segments[i]->op_count != tmp)
-            fprintf(stderr, "PackFile_unpack segment '%s' directory length %d "
+        if ((size_t)delta != tmp)
+            fprintf(stderr, "PackFile_unpack segment '%s' "
                     "length in file %d needed %d for unpack\n",
-                    dir->segments[i]->name,
-                    (int)dir->segments[i]->op_count, (int)tmp,
-                    (int)delta);
+                    string_to_cstring(interpreter,
+                        VTABLE_get_string_keyed_int(interpreter, dir, i)),
+                    (int)tmp, (int)delta);
         cursor = pos;
     }
     return cursor;
@@ -1550,50 +1375,24 @@ directory_unpack (Interp *interpreter,
 /*
 
 =item C<static void
-directory_destroy(Interp*, struct PackFile_Segment *self)>
-
-Destroys the directory.
-
-=cut
-
-*/
-
-static void
-directory_destroy (Interp* interpreter, struct PackFile_Segment *self)
-{
-    struct PackFile_Directory *dir = (struct PackFile_Directory *)self;
-    size_t i;
-
-    for (i = 0; i < dir->num_segments; i++) {
-        PackFile_Segment_destroy (interpreter, dir->segments[i]);
-    }
-    if (dir->segments) {
-        mem_sys_free (dir->segments);
-        dir->segments = NULL;
-    }
-}
-
-/*
-
-=item C<static void
-sort_segs(Interp*, struct PackFile_Directory *dir)>
+sort_segs(Interp*, PMC *dir)>
 
 Sorts the segments in C<dir>.
 
 =cut
 
 */
-
+/* XXX kill this...
 static void
-sort_segs(Interp* interpreter, struct PackFile_Directory *dir)
+sort_segs(Interp* interpreter, PMC *dir)
 {
-    const size_t num_segs = dir->num_segments;
+    const size_t num_segs = VTABLE_elements(interpreter, dir);
 
     struct PackFile_Segment *seg = dir->segments[0];
     if (seg->type != PF_BYTEC_SEG) {
         size_t i;
         for (i = 1; i < num_segs; i++) {
-            struct PackFile_Segment * const s2 = dir->segments[i];
+            struct PackFile_Segment * const s2 = VTABLE_get_pmc_keyed_int(interpreter, dir, i);
             if (s2->type == PF_BYTEC_SEG) {
                 dir->segments[0] = s2;
                 dir->segments[i] = seg;
@@ -1605,7 +1404,7 @@ sort_segs(Interp* interpreter, struct PackFile_Directory *dir)
     if (seg->type != PF_FIXUP_SEG) {
         size_t i;
         for (i = 2; i < num_segs; i++) {
-            struct PackFile_Segment * const s2 = dir->segments[i];
+            struct PackFile_Segment * const s2 = VTABLE_get_pmc_keyed_int(interpreter, dir, i);
             if (s2->type == PF_FIXUP_SEG) {
                 dir->segments[1] = s2;
                 dir->segments[i] = seg;
@@ -1613,7 +1412,7 @@ sort_segs(Interp* interpreter, struct PackFile_Directory *dir)
             }
         }
     }
-}
+}*/
 
 /*
 
@@ -1630,24 +1429,27 @@ C<default_packed_size()>.
 static size_t
 directory_packed_size(Interp* interpreter, struct PackFile_Segment *self)
 {
-    struct PackFile_Directory * const dir = (struct PackFile_Directory *)self;
+    PMC * const dir = (PMC *)self;
     const size_t align = 16/sizeof(opcode_t);
-    size_t size, i, seg_size;
+    size_t size, seg_size;
+    INTVAL i;
 
     /* need bytecode, fixup, other segs ... */
-    sort_segs(interpreter, dir);
+    /* sort_segs(interpreter, dir); */ /* XXX Why the heck'd we do this? */
     /* number of segments + default, we need it for the offsets */
     size = 1 + default_packed_size(interpreter, self);
-    for (i = 0; i < dir->num_segments; i++) {
+    for (i = 0; i < VTABLE_elements(interpreter, dir); i++) {
         size += 3;        /* type, offset, size */
-        size += PF_size_cstring(dir->segments[i]->name);
+        size += PF_size_cstring(string_to_cstring(interpreter,
+            VTABLE_get_string_keyed_int(interpreter, dir, i)));
     }
     if (align && size % align)
         size += (align - size % align);   /* pad/align it */
-    for (i=0; i < dir->num_segments; i++) {
-        dir->segments[i]->file_offset = size + self->file_offset;
-        seg_size = PackFile_Segment_packed_size (interpreter, dir->segments[i]);
-        dir->segments[i]->op_count = seg_size;
+    for (i=0; i < VTABLE_elements(interpreter, dir); i++) {
+        struct PackFile_Segment* seg = VTABLE_get_pmc_keyed_int(interpreter, dir, i);
+        seg->file_offset = size + self->file_offset;
+        seg_size = PackFile_Segment_packed_size(interpreter, seg);
+        seg->op_count = seg_size;
         size += seg_size;
     }
     self->op_count = size;
@@ -1671,15 +1473,15 @@ directory_pack (Interp* interpreter, struct PackFile_Segment *self,
         opcode_t *cursor)
 {
     struct Parrot_PackFile* pf = PMC_PackFile(self->pf);
-    struct PackFile_Directory *dir = (struct PackFile_Directory *)self;
-    size_t i;
+    PMC *dir = (PMC *)self;
+    INTVAL i;
     size_t align;
-    const size_t num_segs = dir->num_segments;
+    const INTVAL num_segs = VTABLE_elements(interpreter, dir);
 
     *cursor++ = num_segs;
 
     for (i = 0; i < num_segs; i++) {
-        const struct PackFile_Segment * const seg = dir->segments[i];
+        const struct PackFile_Segment * const seg = VTABLE_get_pmc_keyed_int(interpreter, dir, i);
         *cursor++ = seg->type;
         cursor = PF_store_cstring(cursor, seg->name);
         *cursor++ = seg->file_offset;
@@ -1689,8 +1491,8 @@ directory_pack (Interp* interpreter, struct PackFile_Segment *self,
     if (align && (cursor - pf->src) % align)
         cursor += align - (cursor - pf->src) % align;
     /* now pack all segments into new format */
-    for (i = 0; i < dir->num_segments; i++) {
-        struct PackFile_Segment * const seg = dir->segments[i];
+    for (i = 0; i < VTABLE_elements(interpreter, dir); i++) {
+        struct PackFile_Segment * const seg = VTABLE_get_pmc_keyed_int(interpreter, dir, i);
         const size_t size = seg->op_count;
         opcode_t * const ret = PackFile_Segment_pack(interpreter, seg, cursor);
 
@@ -2399,17 +2201,18 @@ Switch to byte code segment number C<seg>.
 void
 Parrot_switch_to_cs_by_nr(Interp *interpreter, opcode_t seg)
 {
-    struct PackFile_Directory * const dir = interpreter->code->base.dir;
-    const size_t num_segs = dir->num_segments;
+    PMC * const dir = interpreter->code->base.dir;
+    const size_t num_segs = VTABLE_elements(interpreter, dir);
     size_t i;
     opcode_t n;
 
     /* TODO make an index of code segments for faster look up */
     for (i = n = 0; i < num_segs; i++) {
-        if (dir->segments[i]->type == PF_BYTEC_SEG) {
+        struct PackFile_Segment *cur_seg = VTABLE_get_pmc_keyed_int(interpreter, dir, i);
+        if (cur_seg->type == PF_BYTEC_SEG) {
             if (n == seg) {
                 Parrot_switch_to_cs(interpreter, (struct PackFile_ByteCode *)
-                        dir->segments[i], 1);
+                        cur_seg, 1);
                 return;
             }
             n++;
@@ -2922,7 +2725,7 @@ find_fixup_iter(Interp* interpreter, struct PackFile_Segment *seg,
         void *user_data)
 {
     if (seg->type == PF_DIR_SEG) {
-        if (PackFile_map_segments(interpreter, (struct PackFile_Directory*)seg,
+        if (PackFile_map_segments(interpreter, (PMC*)seg,
                 find_fixup_iter, user_data))
             return 1;
     }
@@ -2955,7 +2758,7 @@ PackFile_find_fixup_entry(Interp *interpreter, enum_fixup_t type,
         char * name)
 {
     /* TODO make a hash of all fixups */
-    struct PackFile_Directory *dir = interpreter->code->base.dir;
+    PMC *dir = interpreter->code->base.dir;
     struct PackFile_FixupEntry *ep, e;
     int found;
 

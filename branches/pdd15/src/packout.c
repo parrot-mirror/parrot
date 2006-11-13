@@ -34,42 +34,6 @@ extern struct PackFile_Directory *directory_new (Interp*, PMC* pf);
 
 /*
 
-=item C<opcode_t
-PackFile_pack_size(Interp*, struct PackFile *self)>
-
-Description.
-
-=cut
-
-*/
-
-opcode_t
-PackFile_pack_size(Interp* interpreter, PMC *pf)
-{
-    opcode_t size;
-    int header_length;
-    struct Parrot_PackFile *self = PMC_PackFile(pf);
-    struct PackFile_Directory * const dir = self->directory;
-
-    /* Header length. */
-    header_length = PACKFILE_HEADER_BYTES + self->header->uuid_length;
-    header_length = header_length % 16 == 0 ? header_length :
-        header_length + (16 - (header_length % 16));
-    size = header_length / sizeof(opcode_t);
-
-    /* Directory header. */
-    size += 4;
-
-    /* Size of what's packed. */
-    dir->base.file_offset = size;
-    size += PackFile_Segment_packed_size(interpreter,
-            (struct PackFile_Segment *) dir);
-
-    return size;
-}
-
-/*
-
 =item C<void
 PackFile_pack(Interp*, struct PackFile *self, opcode_t *cursor)>
 
@@ -87,38 +51,10 @@ Other pack routines are in F<src/packfile.c>.
 
 */
 
-void
-PackFile_pack(Interp* interpreter, PMC *pf, opcode_t *cursor)
+STRING*
+PackFile_pack(Interp* interpreter, PMC *pf)
 {
-    opcode_t *ret;
-    struct Parrot_PackFile *self = PMC_PackFile(pf);
-
-    size_t size;
-    struct PackFile_Directory * const dir = self->directory;
-    struct PackFile_Segment *seg;
-    int header_length;
-    
-    /* Pack the header. */
-    self->src = cursor;
-    header_length = PackFile_Header_Pack(interpreter, cursor, pf);
-    cursor = (opcode_t*)((char*)cursor + header_length);
-
-    /* Store the directory format. */
-    *cursor++ = PARROT_PF_DIR_FORMAT;
-    *cursor++ = 0;
-    *cursor++ = 0;
-    *cursor++ = 0;
-
-    /* Pack the directory itself, which also packs other stuff. */
-    seg = (struct PackFile_Segment *) dir;
-
-    /* dir size */
-    size = seg->op_count;
-    ret = PackFile_Segment_pack (interpreter, seg, cursor);
-    if ((size_t)(ret - cursor) != size) {
-        fprintf(stderr, "PackFile_pack segment '%s' used size %d "
-                "but reported %d\n", seg->name, (int)(ret-cursor), (int)size);
-    }
+    return VTABLE_get_string(interpreter, pf);
 }
 
 /*
