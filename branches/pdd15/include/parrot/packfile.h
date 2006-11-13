@@ -16,12 +16,12 @@
     ((struct Parrot_PackFile_ConstTable*)PMC_struct_val(p))
 #define PMC_PackFileFixupTable(p) \
     ((struct Parrot_PackFile_FixupTable*)PMC_struct_val(p))
-#define PMC_PackFileBytecode(p) \
-    ((struct Parrot_PackFile_Bytecode*)PMC_struct_val(p))
+#define PMC_PackFileByteCode(p) \
+    ((struct Parrot_PackFile_ByteCode*)PMC_struct_val(p))
 
 /* Getting at the constants. */
-#define PF_NCONST(pf)  ((pf)->const_table->const_count)
-#define PF_CONST(pf,i) ((pf)->const_table->constants[(i)])
+#define PF_NCONST(pf)  (VTABLE_elements(interpreter, PMC_PackFileByteCode(pf)->const_table))
+#define PF_CONST(pf,i) (PMC_PackFileConstTable(PMC_PackFileByteCode(pf)->const_table)->constants[(i)])
 
 /* Segment names. */
 #define DIRECTORY_SEGMENT_NAME   "DIRECTORY"
@@ -302,15 +302,15 @@ PARROT_API void PackFile_Fixup_dump(Interp *, PMC *ft);
 PARROT_API void PackFile_FixupTable_new_entry(Interp *, char *label,
                 enum_fixup_t, opcode_t offs);
 /* find entry */
-PARROT_API struct PackFile_FixupEntry * PackFile_find_fixup_entry(Interp *,
+PARROT_API struct Parrot_PackFile_FixupEntry * PackFile_find_fixup_entry(Interp *,
         enum_fixup_t type, char *);
 
 /*
 ** PackFile_ByteCode Functions:
 */
 
-PARROT_API struct PackFile_ByteCode * Parrot_switch_to_cs(Interp *,
-    struct PackFile_ByteCode *, int really);
+PARROT_API PMC* Parrot_switch_to_cs(Interp *,
+    PMC *bc, int really);
 PARROT_API void Parrot_switch_to_cs_by_nr(Interp *, opcode_t seg);
 PARROT_API void Parrot_pop_cs(Interp *);
 
