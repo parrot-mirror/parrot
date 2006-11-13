@@ -77,8 +77,10 @@ Initializes the packfile
         pf->header->uuid_length = 0;
         pf->header->uuid_value = NULL;
 
-        /* Create a directory PMC. */
-        pf->DIRECTORY = pmc_new(interpreter, enum_class_PackfileDirectory);
+        /* Create a directory PMC and set us as the parent. */
+        pf->directory = pmc_new(interpreter, enum_class_PackfileDirectory);
+        PMC_PackFileDirectory(pf->directory)->base.pf = SELF;
+        PMC_PackFileDirectory(pf->directory)->parent = SELF;
 
         /* Need custom mark/destroy. */
         PObj_custom_mark_destroy_SETALL(SELF);
@@ -118,8 +120,8 @@ Marks the packfile for GC purposes.
     void mark () {
         struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
         if (pf) {
-            if (pf->DIRECTORY)
-                pobject_lives(interpreter, (PObj*)pf->DIRECTORY);
+            if (pf->directory)
+                pobject_lives(interpreter, (PObj*)pf->directory);
         }
     }
 
@@ -162,8 +164,8 @@ the string, ready for writing to a file.
 
         /* Pack the directory itself, which also packs other stuff. */
         dir_method_name = CONST_STRING(INTERP, "pack");
-        dir_meth = VTABLE_find_method(INTERP, pf->DIRECTORY, dir_method_name);
-        dir_packed = (STRING*)Parrot_call_method(INTERP, dir_meth, pf->DIRECTORY,
+        dir_meth = VTABLE_find_method(INTERP, pf->directory, dir_method_name);
+        dir_packed = (STRING*)Parrot_call_method(INTERP, dir_meth, pf->directory,
             dir_method_name, "IJO");
 
         /* If we didn't get a packed result, return NULL (exception will have
@@ -255,8 +257,8 @@ into the current PMC. If it fails, the state of the PMC will be invalidated.
         /* Now unpack dir, which unpacks its contents... */
         memcpy(&code, image, sizeof(STRING));
         code.strstart = cursor;
-        meth = VTABLE_find_method(INTERP, pf->DIRECTORY, method_name);
-        success = Parrot_call_method_ret_int(INTERP, meth, pf->DIRECTORY,
+        meth = VTABLE_find_method(INTERP, pf->directory, method_name);
+        success = Parrot_call_method_ret_int(INTERP, meth, pf->directory,
             method_name, "vJOS", &code);
 
 #ifdef PARROT_HAS_HEADER_SYSMMAN
@@ -378,8 +380,8 @@ at the start of the packfile.
     METHOD PMC* get_directory() {
         struct Parrot_PackFile *pf = (struct Parrot_PackFile*)PMC_struct_val(SELF);
 
-        if (pf->DIRECTORY)
-            return pf->DIRECTORY;
+        if (pf->directory)
+            return pf->directory;
 
         real_exception(INTERP, NULL, OUT_OF_BOUNDS, "No directory available");
         return NULL;

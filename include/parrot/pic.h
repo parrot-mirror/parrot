@@ -67,8 +67,8 @@ typedef struct Parrot_pic_store_t {
 
 /* more or less private interfaces */
 void parrot_PIC_prederef(Interp *, opcode_t op, void **pc_pred, int type);
-void parrot_PIC_alloc_store(Interp *, struct PackFile_ByteCode *, size_t n);
-void parrot_PIC_destroy(Interp *, struct PackFile_ByteCode *);
+void parrot_PIC_alloc_store(Interp *, struct Parrot_PackFile_ByteCode *, size_t n);
+void parrot_PIC_destroy(Interp *, struct Parrot_PackFile_ByteCode *);
 int  parrot_PIC_op_is_cached(Interp *, int op_code);
 Parrot_MIC* parrot_PIC_alloc_mic(Interp*, size_t n);
 Parrot_PIC* parrot_PIC_alloc_pic(Interp*);

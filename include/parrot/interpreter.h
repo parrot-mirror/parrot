@@ -233,8 +233,10 @@ typedef struct Parrot_Context {
     PMC *current_namespace;     /* The namespace we're currently in */
     INTVAL current_HLL;         /* see also src/hll.c */
     opcode_t *current_results;  /* ptr into code with get_results opcode */
-    /* deref the constants - we need it all the time */
-    struct PackFile_Constant ** constants;
+    /* constants PMC, so we can mark it */
+    PMC *constants_pmc;
+    /* constants de-referenced, for faster access */
+    struct Parrot_PackFile_Constant **constants;
     /* code->prederefed.code - code->base.data in opcodes
      * to simplify conversio between code ptrs in e.g. invoke
      */
@@ -336,7 +338,7 @@ struct parrot_interp_t {
     INTVAL resume_flag;
     size_t resume_offset;
 
-    struct PackFile_ByteCode *code;           /* The code we are executing */
+    PMC *code;                                /* The code we are executing */
     PMC *initial_pf;                          /* first created PF  */
 
     struct _imc_info_t *imc_info;             /* imcc data */

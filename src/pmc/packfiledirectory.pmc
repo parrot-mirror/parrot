@@ -190,13 +190,29 @@ Add a segment with the given name.
 =cut
 
 */
-    void set_pmc_keyed_string(STRING *key, PMC *segment) {
+    void set_pmc_keyed_str(STRING *key, PMC *segment) {
         struct Parrot_PackFile_Directory *dir = 
             (struct Parrot_PackFile_Directory*)PMC_struct_val(SELF);
 
         /* Add to the segments array and names array. */
         VTABLE_push_pmc(INTERP, dir->segments, segment);
         VTABLE_push_string(INTERP, dir->segment_names, key);
+    }
+
+/*
+
+=item C<void delete_keyed_int(INTVAL key)>
+
+Deletes the segment with the given ID.
+
+=cut
+
+*/
+    void delete_keyed_int(INTVAL key) {
+        struct Parrot_PackFile_Directory *dir = 
+            (struct Parrot_PackFile_Directory*)PMC_struct_val(SELF);
+        VTABLE_delete_keyed_int(INTERP, dir->segments, key);
+        VTABLE_delete_keyed_int(INTERP, dir->segment_names, key);
     }
 
 /*
@@ -244,7 +260,8 @@ Packs this segment into a binary representation. Returns NULL on failure.
         }
 
         /* Compute header length to get starting point for this segment. */
-        header_length = PACKFILE_HEADER_BYTES + dir->parent->header->uuid_length;
+        header_length = PACKFILE_HEADER_BYTES +
+            PMC_PackFile(dir->parent)->header->uuid_length;
         header_length = header_length % 16 == 0 ? header_length :
             header_length + (16 - (header_length % 16));
         
@@ -339,24 +356,25 @@ hold it. Returns a non-zero value on success.
         packed = (opcode_t*)image->strstart;
         
         /* Extract the number of entries in the segments table. */
-        entries = PF_fetch_opcode(dir->parent, &packed);
+        entries = PF_fetch_opcode(PMC_PackFile(dir->parent), &packed);
         
         /* Clear the current data. */
         dir->segments = pmc_new(interpreter, enum_class_ResizablePMCArray);
         dir->segment_names = pmc_new(interpreter, enum_class_ResizableStringArray);
 
         /* We need the header length. */
-        header_length = PACKFILE_HEADER_BYTES + dir->parent->header->uuid_length;
+        header_length = PACKFILE_HEADER_BYTES +
+            PMC_PackFile(dir->parent)->header->uuid_length;
         header_length = header_length % 16 == 0 ? header_length :
             header_length + (16 - (header_length % 16));
 
         /* Get each of the entries. */
         for (i = 0; i < entries; i++) {
             /* Read in the values. */
-            int type = PF_fetch_opcode(dir->parent, &packed);
-            char* name = PF_fetch_cstring(dir->parent, &packed);
-            int offset = PF_fetch_opcode(dir->parent, &packed);
-            int length = PF_fetch_opcode(dir->parent, &packed);
+            int type = PF_fetch_opcode(PMC_PackFile(dir->parent), &packed);
+            char* name = PF_fetch_cstring(PMC_PackFile(dir->parent), &packed);
+            int offset = PF_fetch_opcode(PMC_PackFile(dir->parent), &packed);
+            int length = PF_fetch_opcode(PMC_PackFile(dir->parent), &packed);
 
             /* Instantiate a PMC for the segment. */
             segment = NULL;

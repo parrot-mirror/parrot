@@ -16,6 +16,8 @@
     ((struct Parrot_PackFile_ConstTable*)PMC_struct_val(p))
 #define PMC_PackFileFixupTable(p) \
     ((struct Parrot_PackFile_FixupTable*)PMC_struct_val(p))
+#define PMC_PackFileBytecode(p) \
+    ((struct Parrot_PackFile_Bytecode*)PMC_struct_val(p))
 
 /* Getting at the constants. */
 #define PF_NCONST(pf)  ((pf)->const_table->const_count)
@@ -26,6 +28,9 @@
 #define FIXUP_TABLE_SEGMENT_NAME "FIXUP"
 #define CONSTANT_SEGMENT_NAME    "CONSTANT"
 #define BYTE_CODE_SEGMENT_NAME   "BYTECODE"
+
+/* Directory version. */
+#define PARROT_PF_DIR_FORMAT 1
 
 /* UUID types. */
 #define PARROT_UUID_TYPE_NONE 0
@@ -65,106 +70,6 @@ struct Parrot_PackFile_Header {
 };
 
 /*
-** PackFile Segment:
-*    The base type of every section
-*    include it as first element of every derivated Segment
-*/
-
-struct PackFile_Segment;
-
-typedef struct PackFile_Segment * (*PackFile_Segment_new_func_t)
-    (Interp *, PMC*, const char *, int add);
-typedef void   (*PackFile_Segment_destroy_func_t) (Interp *,
-        struct PackFile_Segment *);
-typedef size_t (*PackFile_Segment_packed_size_func_t)(Interp *,
-        struct PackFile_Segment *);
-typedef opcode_t * (*PackFile_Segment_pack_func_t) (Interp *,
-        struct PackFile_Segment *, opcode_t *dest);
-typedef opcode_t * (*PackFile_Segment_unpack_func_t) (Interp *,
-        struct PackFile_Segment *, opcode_t *packed);
-typedef void  (*PackFile_Segment_dump_func_t) (Interp *,
-        struct PackFile_Segment *);
-
-struct PackFile_funcs {
-    PackFile_Segment_new_func_t new_seg;
-    PackFile_Segment_destroy_func_t destroy;
-    PackFile_Segment_packed_size_func_t packed_size;
-    PackFile_Segment_pack_func_t pack;
-    PackFile_Segment_unpack_func_t unpack;
-    PackFile_Segment_dump_func_t dump;
-};
-
-PARROT_API INTVAL PackFile_funcs_register(Interp*, PMC*, UINTVAL type,
-        struct PackFile_funcs);
-
-typedef enum {
-    PF_DIR_SEG,
-    PF_UNKNOWN_SEG,
-    PF_FIXUP_SEG,
-    PF_CONST_SEG,
-    PF_BYTEC_SEG,
-    PF_DEBUG_SEG,
-
-    PF_MAX_SEG
-} pack_file_types;
-
-#define PARROT_PF_DIR_FORMAT 1
-
-typedef INTVAL (*PackFile_map_segments_func_t) (Interp *,
-        struct PackFile_Segment *seg, void *user_data);
-
-struct PackFile_Segment {
-    PMC                 *pf;
-    struct PackFile_Directory * dir;
-    /* directory information */
-    UINTVAL             type;           /* one of above defined types */
-    char                * name;
-    size_t              op_count;       /* external size in ops */
-    size_t              file_offset;    /* offset in ops */
-    /* common payload of all bytecode chunks
-     * with the size above these four items are aligned to 16 byte */
-    opcode_t            itype;          /* internal type/version */
-    opcode_t            id;             /* internal id */
-    size_t              size;           /* internal oparray size */
-    opcode_t            * data;         /* oparray e.g. bytecode */
-};
-
-struct Parrot_PackFile_Segment {
-    PMC                 *pf;
-    struct PackFile_Directory * dir;
-    /* directory information */
-    UINTVAL             type;           /* one of above defined types */
-    char                * name;
-    size_t              op_count;       /* external size in ops */
-    size_t              file_offset;    /* offset in ops */
-    /* common payload of all bytecode chunks
-     * with the size above these four items are aligned to 16 byte */
-    opcode_t            itype;          /* internal type/version */
-    opcode_t            id;             /* internal id */
-    size_t              size;           /* internal oparray size */
-    opcode_t            * data;         /* oparray e.g. bytecode */
-};
-
-/*
-** PackFile_FixupTable:
-*/
-/* XXX This is going to die once the new PackFileDirectory PMC is done. :-) */
-struct PackFile_FixupEntry {
-    opcode_t type;     /* who knows, what fixups we need */
-    char *name;        /* name of the label */
-    opcode_t offset;    /* location of the item */
-    struct PackFile_ByteCode *seg;
-};
-/* XXX This is going to die once the new PackFileDirectory PMC is done. :-) */
-struct PackFile_FixupTable {
-    struct PackFile_Segment base;
-    opcode_t fixup_count;
-    struct PackFile_FixupEntry ** fixups;
-    struct PackFile_ByteCode  * code;   /* where this segment belongs to */
-};
-
-
-/*
 ** PackFile_FixupTable:
 */
 typedef enum {
@@ -178,14 +83,15 @@ typedef struct Parrot_PackFile_FixupEntry {
     opcode_t name_const_offset; /* name of the label */
     opcode_t offset;            /* location of the item */
     STRING *name;
-    struct PackFile_ByteCode *seg;
+    PMC *seg;
 } Parrot_PackFile_FixupEntry;
 
 typedef struct Parrot_PackFile_FixupTable {
-    struct PackFile_Segment base;
+    PMC *pf;
+    PMC *directory;
     /* ResizablePMCArray holding entries. */
     PMC* entries;
-    struct PackFile_ByteCode *seg; /* where this segment belongs to */
+    PMC *seg; /* where this segment belongs to */
 } Parrot_PackFile_FixupTable;
 
 
@@ -213,23 +119,6 @@ enum PF_VARTYPE {                  /* s. also imcc/symreg.h */
                         PF_VT_START_ZERO | PF_VT_END_INF
 };
 
-struct PackFile_Constant {
-    opcode_t type;
-    union {
-        opcode_t integer;
-        FLOATVAL number;
-        STRING *string;
-        PMC *key;
-    } u;
-};
-
-struct PackFile_ConstTable {
-    struct PackFile_Segment     base;
-    opcode_t const_count;
-    struct PackFile_Constant ** constants;
-    struct PackFile_ByteCode  * code;   /* where this segment belongs to */
-};
-
 struct Parrot_PackFile_Constant {
     opcode_t type;
     union {
@@ -241,22 +130,26 @@ struct Parrot_PackFile_Constant {
 };
 
 struct Parrot_PackFile_ConstTable {
-    struct PackFile_Segment     base;
+    PMC *pf;
+    PMC *directory;
     opcode_t const_count;
     struct Parrot_PackFile_Constant ** constants;
-    struct PackFile_ByteCode  * code;   /* where this segment belongs to */
+    struct PMC *code;   /* where this segment belongs to */
 };
 
-struct PackFile_ByteCode {
-    struct PackFile_Segment     base;
+struct Parrot_PackFile_ByteCode {
+    PMC *pf;
+    PMC *directory;
+    opcode_t length;
+    opcode_t *data;
     Prederef prederef;          /* The predereferenced code and info */
     void *jit_info;             /* JITs data */
-    Parrot_PIC_store * pic_store;      /* PIC storage */
-    struct PackFile_Segment   * pic_index; /* segment of indices into store */
-    struct PackFile_ByteCode  * prev;   /* was executed previous */
-    struct PackFile_Debug     * debugs;
-    struct PackFile_ConstTable *const_table;
-    struct PackFile_FixupTable *fixups;
+    Parrot_PIC_store *pic_store;      /* PIC storage */
+    PMC *pic_index; /* segment of indices into store */
+    PMC *prev;   /* was executed previous */
+    PMC *debugs;
+    PMC *const_table;
+    PMC *fixups;
 };
 
 enum PF_DEBUGMAPPINGTYPE {
@@ -265,6 +158,7 @@ enum PF_DEBUGMAPPINGTYPE {
     PF_DEBUGMAPPINGTYPE_SOURCESEG
 };
 
+/* XXX Debug info to be replaced by annotations table. */
 struct PackFile_DebugMapping {
     opcode_t offset;
     opcode_t mapping_type;
@@ -273,49 +167,17 @@ struct PackFile_DebugMapping {
         opcode_t source_seg; /* XXX Source segments currently unimplemented. */
     } u;
 };
-
+/* XXX Debug info to be replaced by annotations table. */
 struct PackFile_Debug {
-    struct PackFile_Segment base;
     opcode_t num_mappings;
     struct PackFile_DebugMapping ** mappings;
     struct PackFile_ByteCode  * code;   /* where this segment belongs to */
 };
 
-/* XXX This is going to die once the new PackFileDirectory PMC is done. :-) */
-struct PackFile_Directory {
-    struct PackFile_Segment      base;
-    size_t                       num_segments;
-    struct PackFile_Segment   ** segments;
-};
-
-/* XXX This is going to die once the new PackFile PMC is done. :-) */
-struct DELETED_PackFile {
-    /* the packfile is its own directory */
-    struct PackFile_Directory   directory;
-    struct PackFile_Directory   *dirp;  /* for freeing */
-    opcode_t *src;              /* the possible mmap()ed start of the PF */
-    size_t   size;              /* size in bytes */
-    INTVAL is_mmap_ped;         /* don't free it, munmap it at destroy */
-
-    struct Parrot_PackFile_Header     *header;
-
-    /* directory hold all Segments */
-    /* TODO make this reallocatable */
-    struct PackFile_funcs      PackFuncs[PF_MAX_SEG];
-
-    struct PackFile_ByteCode  * cur_cs;   /* used during PF loading */
-
-    INTVAL                       need_wordsize;
-    INTVAL                       need_endianize;
-    opcode_t                     (*fetch_op)(unsigned char *);
-    INTVAL                       (*fetch_iv)(unsigned char *);
-    void                         (*fetch_nv)(unsigned char *, unsigned char *);
-};
-
 /* This structure describes a Packfile directory. */
 struct Parrot_PackFile_Directory {
     /* The PackFile that this is a directory for. */
-    struct Parrot_PackFile* parent;
+    PMC* parent;
 
     /* ResizablePMCArray holding segments. */
     PMC* segments;
@@ -341,9 +203,7 @@ struct Parrot_PackFile {
     struct Parrot_PackFile_Header *header;
 
     /* Packfile directory. */
-    struct PMC *DIRECTORY; /* Lowercase when following 2 are deleted. */
-    struct PackFile_Directory *directory; /* To kill later */
-    struct PackFile_Directory *dirp; /* To kill later */
+    struct PMC *directory;
 
     /* Word size and endian-change related stuff. */
     INTVAL   need_wordsize;
@@ -354,14 +214,11 @@ struct Parrot_PackFile {
 
     /* Source. */
     opcode_t *src;       /* the (possibly mmap()ed) start of the PF */
-    size_t   size;       /* size in bytes */
+    size_t size;         /* size in bytes */
     INTVAL is_mmap_ped;  /* 0 if it's not mmap()ed */
 
     /* Runtime. */
-    struct PackFile_ByteCode *cur_cs;   /* used during PF loading */
-    
-    /* Packing functions. */
-    struct PackFile_funcs PackFuncs[PF_MAX_SEG];
+    PMC *cur_cs;         /* used during PF loading */
 };
 
 /*
@@ -371,9 +228,7 @@ struct Parrot_PackFile {
 PARROT_API PMC *PackFile_new(Interp *, INTVAL is_mapped);
 PARROT_API PMC *PackFile_new_dummy(Interp *, const char* name);
 
-PARROT_API opcode_t PackFile_pack_size(Interp *, PMC *self);
-
-PARROT_API void PackFile_pack(Interp *, struct PMC* self, opcode_t * packed);
+PARROT_API STRING* PackFile_pack(Interp *, struct PMC* self);
 
 PARROT_API opcode_t PackFile_unpack(Interp *interpreter,
                          PMC *self, opcode_t *packed,
@@ -397,25 +252,29 @@ typedef enum {
 
 PARROT_API void PackFile_fixup_subs(Interp *, pbc_action_enum_t, PMC *eval_pmc);
 void do_sub_pragmas(Interp *, struct PackFile_ByteCode *, int, PMC *eval_pmc);
+
 /*
  * directory functions
  */
 
-PARROT_API INTVAL PackFile_add_segment (Interp *, struct PackFile_Directory *,
-        struct PackFile_Segment *);
+PARROT_API INTVAL PackFile_add_segment (Interp *, PMC *dir,
+        PMC *);
 
-PARROT_API struct PackFile_Segment * PackFile_find_segment (Interp *,
-        struct PackFile_Directory *, const char *name, int recurse);
+PARROT_API PMC * PackFile_find_segment (Interp *,
+        PMC *dir, const char *name, int recurse);
 
-PARROT_API struct PackFile_Segment *
-PackFile_remove_segment_by_name (Interp *, struct PackFile_Directory *, const char *);
+PARROT_API PMC *
+PackFile_remove_segment_by_name (Interp *, PMC *dir, const char *);
 
-PARROT_API INTVAL PackFile_map_segments (Interp *, struct PackFile_Directory *dir,
+typedef INTVAL (*PackFile_map_segments_func_t) (Interp *,
+        PMC *seg, void *user_data);
+
+PARROT_API INTVAL PackFile_map_segments (Interp *, PMC *dir,
                               PackFile_map_segments_func_t callback,
                               void* usr_data);
 
-PARROT_API struct PackFile_Segment * PackFile_Segment_new_seg(Interp *,
-        struct PackFile_Directory *, UINTVAL type, const char *name, int add);
+PARROT_API PMC * PackFile_Segment_new_seg(Interp *,
+        PMC *dir, UINTVAL type, const char *name, int add);
 
 PARROT_API struct PackFile_ByteCode * PF_create_default_segs(Interp*,
         const char *file_name, int add);
@@ -425,38 +284,19 @@ PARROT_API void Parrot_load_bytecode(Interp *, STRING *filename);
 ** PackFile_Segment Functions:
 */
 
-PARROT_API void PackFile_Segment_destroy(Interp *, struct PackFile_Segment * self);
-PARROT_API size_t PackFile_Segment_packed_size(Interp *, struct PackFile_Segment * self);
-PARROT_API opcode_t * PackFile_Segment_pack(Interp *, struct PackFile_Segment *, opcode_t *);
-PARROT_API opcode_t * PackFile_Segment_unpack(Interp *interpreter,
-        struct PackFile_Segment * self, opcode_t *cursor);
-PARROT_API void PackFile_Segment_dump(Interp *, struct PackFile_Segment *);
-void default_dump_header (Interp *, struct PackFile_Segment *);
+PARROT_API void PackFile_Segment_dump(Interp *, PMC *);
+void default_dump_header (Interp *, PMC *);
 
-PARROT_API struct PackFile_Segment *PackFile_Segment_new(Interp *, PMC *pf, const char*,
+PARROT_API PMC *PackFile_Segment_new(Interp *, PMC *pf, const char*,
         int);
-
-/* fingerprint functions */
-PARROT_API int PackFile_check_fingerprint (void *cursor);
-PARROT_API size_t PackFile_write_fingerprint (void *cursor);
 
 /*
 ** PackFile_FixupTable Functions:
 */
 
-PARROT_API void PackFile_FixupTable_clear(Interp *,struct PackFile_FixupTable * self);
+PARROT_API void PackFile_FixupTable_clear(Interp *, PMC *self);
 
-PARROT_API INTVAL PackFile_FixupTable_unpack(Interp *,
-        struct PackFile_FixupTable * self, opcode_t * , opcode_t );
-
-PARROT_API opcode_t PackFile_FixupTable_pack_size(Interp
-        *,struct PackFile_FixupTable * self);
-
-PARROT_API void PackFile_FixupTable_pack(Interp *, struct PackFile_FixupTable * self,
-                              opcode_t * packed);
-
-PARROT_API void PackFile_Fixup_dump(Interp *,
-                         struct PackFile_FixupTable *ft);
+PARROT_API void PackFile_Fixup_dump(Interp *, PMC *ft);
 
 /* create new fixup entry */
 PARROT_API void PackFile_FixupTable_new_entry(Interp *, char *label,
@@ -497,34 +337,27 @@ PARROT_API void PackFile_ConstTable_clear(Interp *, struct PackFile_ConstTable *
 
 PARROT_API void PackFile_ConstTable_dump(Interp *,
                               struct PackFile_ConstTable *);
-PARROT_API size_t PackFile_ConstTable_pack_size(Interp *, struct PackFile_Segment * self);
-
-PARROT_API opcode_t * PackFile_ConstTable_pack(Interp *, struct PackFile_Segment *, opcode_t *);
-
-PARROT_API opcode_t * PackFile_ConstTable_unpack(Interp *interpreter,
-                                   struct PackFile_Segment * self,
-                                   opcode_t * packed);
 
 /*
 ** PackFile_Constant Functions:
 */
 
-PARROT_API struct PackFile_Constant *PackFile_Constant_new(Interp *);
+PARROT_API struct Parrot_PackFile_Constant *PackFile_Constant_new(Interp *);
 
-PARROT_API size_t PackFile_Constant_pack_size(Interp *, struct PackFile_Constant * self);
+PARROT_API size_t PackFile_Constant_pack_size(Interp *, struct Parrot_PackFile_Constant * self);
 
-PARROT_API opcode_t * PackFile_Constant_pack(Interp *, struct PackFile_Constant *, opcode_t *);
+PARROT_API opcode_t * PackFile_Constant_pack(Interp *, struct Parrot_PackFile_Constant *, opcode_t *);
 
-PARROT_API void PackFile_Constant_destroy(Interp *, struct PackFile_Constant * self);
+PARROT_API void PackFile_Constant_destroy(Interp *, struct Parrot_PackFile_Constant * self);
 
 PARROT_API opcode_t * PackFile_Constant_unpack(Interp *interpreter,
-        struct PackFile_ConstTable *, struct PackFile_Constant *, opcode_t *);
+        PMC *ct, struct Parrot_PackFile_Constant *, opcode_t *);
 
 PARROT_API opcode_t * PackFile_Constant_unpack_key(Interp *interpreter,
-        struct PackFile_ConstTable *, struct PackFile_Constant *, opcode_t *);
+        PMC *ct, struct Parrot_PackFile_Constant *, opcode_t *);
 
 PARROT_API opcode_t * PackFile_Constant_unpack_pmc(Interp *interpreter,
-        struct PackFile_ConstTable *, struct PackFile_Constant *, opcode_t *);
+        PMC *ct, struct Parrot_PackFile_Constant *, opcode_t *);
 
 /*
  * pf_items low level Parrot items fetch routines
@@ -565,8 +398,6 @@ void fetch_buf_le_12(unsigned char * rb, unsigned char * b);
 void fetch_buf_be_12(unsigned char * rb, unsigned char * b);
 void fetch_buf_le_16(unsigned char * rb, unsigned char * b);
 void fetch_buf_be_16(unsigned char * rb, unsigned char * b);
-
-
 
 #endif /* PARROT_PACKFILE_H_GUARD */
 

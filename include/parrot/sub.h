@@ -101,7 +101,7 @@ union parrot_context_t;
  * Closures have additionally an 'outer_ctx'
  */
 typedef struct Parrot_sub {
-    struct PackFile_ByteCode *seg;      /* bytecode segment */
+    PMC *seg;                   /* bytecode segment */
     size_t   start_offs;        /* sub entry in ops from seg->base.data */
     size_t   end_offs;
 
@@ -131,7 +131,7 @@ typedef struct Parrot_sub {
  * these two to the other type
  */
 typedef struct Parrot_coro {
-    struct PackFile_ByteCode *seg;      /* bytecode segment */
+    PMC *seg;                    /* bytecode segment */
     size_t   start_offs;         /* sub entry in ops from seg->base.data */
     size_t   end_offs;
 
@@ -153,7 +153,7 @@ typedef struct Parrot_coro {
 
     /* - end common */
 
-    struct PackFile_ByteCode *caller_seg;  /* bytecode segment */
+    PMC *caller_seg;  /* bytecode segment */
     opcode_t *address;           /* next address to run - toggled each time */
     struct Stack_Chunk *dynamic_state; /* next dynamic state */
 } * parrot_coro_t;
@@ -162,7 +162,7 @@ typedef struct Parrot_coro {
 
 typedef struct Parrot_cont {
     /* continuation destination */
-    struct PackFile_ByteCode *seg;   /* bytecode segment */
+    PMC *seg;                        /* bytecode segment */
     opcode_t *address;               /* start of bytecode, addr to continue */
     struct Parrot_Context *to_ctx;   /* pointer to dest context */
     struct Stack_Chunk *dynamic_state; /* dest dynamic state */
