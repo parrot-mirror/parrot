@@ -185,7 +185,7 @@ Intersegment branch to location in fixup table named $1.
 
 inline op branch_cs (in STR) :base_loop,check_event {
     char * const label = string_to_cstring(interpreter, $1);
-    struct PackFile_FixupEntry *fe = PackFile_find_fixup_entry(interpreter,
+    struct Parrot_PackFile_FixupEntry *fe = PackFile_find_fixup_entry(interpreter,
             enum_fixup_label, label);
     if (!fe)
         internal_exception(1, "branch_cs: fixup for '%s' not found", label);
@@ -265,7 +265,7 @@ Internal opcode used to jump from normal bytecode into a JITted version.
 
 op enternative() {
     opcode_t *addr = run_native(interpreter, CUR_OPCODE,
-            interpreter->code->base.data);
+            PMC_PackFileByteCode(interpreter->code)->data);
     goto ADDRESS(addr);
 }
 

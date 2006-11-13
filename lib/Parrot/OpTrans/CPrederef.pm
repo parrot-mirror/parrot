@@ -37,7 +37,7 @@ sub defines
     my $type = __PACKAGE__;
     return <<END;
 /* defines - $0 -> $type */
-#define REL_PC ((size_t)(cur_opcode - interpreter->code->prederef.code))
+#define REL_PC ((size_t)(cur_opcode - PMC_PackFileByteCode(interpreter->code)->prederef.code))
 #define CUR_OPCODE \\
     ((opcode_t*)cur_opcode + CONTEXT(interpreter->ctx)->pred_offset)
 #define OP_AS_OFFS(o) (_reg_base + ((opcode_t*)cur_opcode)[o])
