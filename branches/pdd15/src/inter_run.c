@@ -142,7 +142,7 @@ Parrot_runops_fromc(Parrot_Interp interpreter, PMC *sub)
     if (!dest)
         internal_exception(1, "Subroutine returned a NULL address");
     ctx = CONTEXT(interpreter->ctx);
-    offset = dest - interpreter->code->base.data;
+    offset = dest - PMC_PackFileByteCode(interpreter->code)->data;
     runops(interpreter, offset);
     return ctx;
 }
@@ -189,7 +189,7 @@ runops_args(Parrot_Interp interpreter, PMC *sub, PMC *obj,
     }
 
     ctx = CONTEXT(interpreter->ctx);
-    offset = dest - interpreter->code->base.data;
+    offset = dest - PMC_PackFileByteCode(interpreter->code)->data;
     runops(interpreter, offset);
     return ctx;
 }
@@ -279,7 +279,7 @@ Parrot_run_meth_fromc(Parrot_Interp interpreter,
     if (!dest)
         internal_exception(1, "Subroutine returned a NULL address");
     ctx = CONTEXT(interpreter->ctx);
-    offset = dest - interpreter->code->base.data;
+    offset = dest - PMC_PackFileByteCode(interpreter->code)->data;
     runops(interpreter, offset);
     return set_retval(interpreter, 0, ctx);
 }

@@ -70,8 +70,8 @@ static void
 prederef_args(void **pc_prederef, Interp *interpreter,
         opcode_t *pc, op_info_t *opinfo)
 {
-    struct PackFile_ConstTable * const_table
-        = interpreter->code->const_table;
+    struct Parrot_PackFile_ConstTable * const_table
+        = PMC_CurrentConstTable(interpreter);
     int i, n, m, regs_n, regs_i, regs_p, regs_s;
     PMC *sig = NULL;
 
@@ -81,7 +81,7 @@ prederef_args(void **pc_prederef, Interp *interpreter,
     regs_s = CONTEXT(interpreter->ctx)->n_regs_used[REGNO_STR];
     /* prederef var part too */
     n = m = opinfo->op_count;
-    ADD_OP_VAR_PART(interpreter, interpreter->code, pc, n);
+    ADD_OP_VAR_PART(interpreter, PMC_PackFileByteCode(interpreter->code), pc, n);
     for (i = 1; i < n; i++) {
         opcode_t arg = pc[i];
         int type;
@@ -169,8 +169,8 @@ C<pc_prederef> is the current opcode, and C<type> is the run core type.
 void
 do_prederef(void **pc_prederef, Parrot_Interp interpreter, int type)
 {
-    size_t offset = pc_prederef - interpreter->code->prederef.code;
-    opcode_t *pc = ((opcode_t *)interpreter->code->base.data) + offset;
+    size_t offset = pc_prederef - PMC_PackFileByteCode(interpreter->code)->prederef.code;
+    opcode_t *pc = ((opcode_t *)PMC_PackFileByteCode(interpreter->code)->data) + offset;
     op_func_t *prederef_op_func = interpreter->op_lib->op_func_table;
     op_info_t *opinfo;
     size_t n;
@@ -199,13 +199,13 @@ do_prederef(void **pc_prederef, Parrot_Interp interpreter, int type)
             opinfo->types[n - 2] == PARROT_ARG_IC &&
             pc[n - 1] < 0) ||   /* relative backward branch */
             (opinfo->jump & PARROT_JUMP_ADDRESS)) {
-        Prederef *pi = &interpreter->code->prederef;
+        Prederef *pi = &PMC_PackFileByteCode(interpreter->code)->prederef;
         /*
          * first time prederef.branches == NULL:
          * estimate size to 1/16th of opcodes
          */
         if (!pi->branches) {
-            size_t nb = interpreter->code->base.size / 16;
+            size_t nb = PMC_PackFileByteCode(interpreter->code)->length / 16;
             if (nb < 8)
                 nb = (size_t)8;
             pi->branches = mem_sys_allocate( sizeof(Prederef_branch) * nb);
@@ -243,7 +243,7 @@ handler thread.
 static void
 turn_ev_check(Parrot_Interp interpreter, int on)
 {
-    Prederef *pi = &interpreter->code->prederef;
+    Prederef *pi = &PMC_PackFileByteCode(interpreter->code)->prederef;
     size_t i, offs;
 
     if (!pi->branches)
@@ -251,12 +251,12 @@ turn_ev_check(Parrot_Interp interpreter, int on)
     for (i = 0; i < pi->n_branches; ++i) {
         offs = pi->branches[i].offs;
         if (on) {
-            interpreter->code->prederef.code[offs] =
+            PMC_PackFileByteCode(interpreter->code)->prederef.code[offs] =
                 ((void **)interpreter->op_lib->op_func_table)
                             [CORE_OPS_check_events__];
         }
         else
-            interpreter->code->prederef.code[offs] = pi->branches[i].op;
+            PMC_PackFileByteCode(interpreter->code)->prederef.code[offs] = pi->branches[i].op;
     }
 }
 
@@ -353,9 +353,9 @@ static void
 init_prederef(Interp *interpreter, int which)
 {
     load_prederef(interpreter, which);
-    if (!interpreter->code->prederef.code) {
-        size_t N = interpreter->code->base.size;
-        opcode_t *pc = interpreter->code->base.data;
+    if (!PMC_PackFileByteCode(interpreter->code)->prederef.code) {
+        size_t N = PMC_PackFileByteCode(interpreter->code)->length;
+        opcode_t *pc = PMC_PackFileByteCode(interpreter->code)->data;
         size_t i, n, n_pics;
         void *pred_func;
         op_info_t *opinfo;
@@ -383,7 +383,7 @@ init_prederef(Interp *interpreter, int which)
             opinfo = &interpreter->op_info_table[*pc];
             temp[i] = pred_func;
             n = opinfo->op_count;
-            ADD_OP_VAR_PART(interpreter, interpreter->code, pc, n);
+            ADD_OP_VAR_PART(interpreter, PMC_PackFileByteCode(interpreter->code), pc, n);
             /* count ops that need a PIC */
             if (parrot_PIC_op_is_cached(interpreter, *pc))
                 n_pics++;
@@ -391,11 +391,12 @@ init_prederef(Interp *interpreter, int which)
             i += n;
         }
 
-        interpreter->code->prederef.code = temp;
+        PMC_PackFileByteCode(interpreter->code)->prederef.code = temp;
         /* allocate pic store */
         if (n_pics) {
             /* pic_index is starting from 1 */
-            parrot_PIC_alloc_store(interpreter, interpreter->code, n_pics + 1);
+            parrot_PIC_alloc_store(interpreter, PMC_PackFileByteCode(interpreter->code),
+                n_pics + 1);
         }
     }
 }
@@ -446,12 +447,12 @@ exec_init_prederef(Interp *interpreter, void *prederef_arena)
 {
     load_prederef(interpreter, PARROT_CGP_CORE);
 
-    if (!interpreter->code->prederef.code) {
+    if (!PMC_PackFileByteCode(interpreter->code)->prederef.code) {
         size_t N = interpreter->code->base.size;
         void **temp = prederef_arena;
-        opcode_t *pc = interpreter->code->base.data;
+        opcode_t *pc = PMC_PackFileByteCode(interpreter->code)->data;
 
-        interpreter->code->prederef.code = temp;
+        PMC_PackFileByteCode(interpreter->code)->prederef.code = temp;
         /* TODO */
     }
 }
@@ -480,7 +481,7 @@ init_jit(Interp *interpreter, opcode_t *pc)
     if (interpreter->code->jit_info)
         return ((Parrot_jit_info_t *)interpreter->code->jit_info)->arena.start;
 
-    code_start = interpreter->code->base.data;
+    code_start = PMC_PackFileByteCode(interpreter->code)->data;
     code_size = interpreter->code->base.size;
     code_end = code_start + code_size;
 #  if defined HAVE_COMPUTED_GOTO && PARROT_I386_JIT_CGP
@@ -516,7 +517,7 @@ prepare_for_run(Parrot_Interp interpreter)
 {
     switch (interpreter->run_core) {
         case PARROT_JIT_CORE:
-            (void) init_jit(interpreter, interpreter->code->base.data);
+            (void) init_jit(interpreter, PMC_PackFileByteCode(interpreter->code)->data);
             break;
         case PARROT_SWITCH_CORE:
         case PARROT_SWITCH_JIT_CORE:
@@ -588,7 +589,7 @@ runops_exec(Interp *interpreter, opcode_t *pc)
     opcode_t *code_end;
     extern int Parrot_exec_run;
 
-    code_start = interpreter->code->base.data;
+    code_start = PMC_PackFileByteCode(interpreter->code)->data;
     code_size = interpreter->code->base.size;
     code_end = code_start + code_size;
 #  if defined HAVE_COMPUTED_GOTO && defined USE_CGP
@@ -630,10 +631,10 @@ static opcode_t *
 runops_cgp(Interp *interpreter, opcode_t *pc)
 {
 #ifdef HAVE_COMPUTED_GOTO
-    opcode_t *code_start = (opcode_t *)interpreter->code->base.data;
+    opcode_t *code_start = (opcode_t *)PMC_PackFileByteCode(interpreter->code)->data;
     void **pc_prederef;
     init_prederef(interpreter, PARROT_CGP_CORE);
-    pc_prederef = interpreter->code->prederef.code + (pc - code_start);
+    pc_prederef = PMC_PackFileByteCode(interpreter->code)->prederef.code + (pc - code_start);
     pc = (opcode_t*) cgp_core(pc_prederef, interpreter);
     return pc;
 #else
@@ -658,10 +659,10 @@ Runs the C<switch> core.
 static opcode_t *
 runops_switch(Interp *interpreter, opcode_t *pc)
 {
-    opcode_t *code_start = (opcode_t *)interpreter->code->base.data;
+    opcode_t *code_start = (opcode_t *)PMC_PackFileByteCode(interpreter->code)->data;
     void **pc_prederef;
     init_prederef(interpreter, PARROT_SWITCH_CORE);
-    pc_prederef = interpreter->code->prederef.code + (pc - code_start);
+    pc_prederef = PMC_PackFileByteCode(interpreter->code)->prederef.code + (pc - code_start);
     pc = (opcode_t*) switch_core(pc_prederef, interpreter);
     return pc;
 }
@@ -706,7 +707,7 @@ runops_int(Interp *interpreter, size_t offset)
 
     while (interpreter->resume_flag & RESUME_RESTART) {
         opcode_t *pc = (opcode_t *)
-            interpreter->code->base.data + interpreter->resume_offset;
+            PMC_PackFileByteCode(interpreter->code)->data + interpreter->resume_offset;
 
         interpreter->resume_offset = 0;
         interpreter->resume_flag &= ~(RESUME_RESTART | RESUME_INITIAL);

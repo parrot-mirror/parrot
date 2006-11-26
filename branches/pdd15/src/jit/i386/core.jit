@@ -1467,7 +1467,7 @@ extern Parrot_returncc {
 
 Parrot_pic_callr___pc {
     int offset, here, op_i;
-    struct PackFile_Constant ** constants;
+    struct Parrot_PackFile_Constant ** constants;
     PMC *sig_params, *sig_result;
     opcode_t *params;
     int skip;
@@ -1511,7 +1511,7 @@ Parrot_get_results_pc {
                 offsetof(parrot_context_t, current_results));
     }
     else {
-        struct PackFile_Constant ** constants;
+        struct Parrot_PackFile_Constant ** constants;
         PMC *sig_result;
 
         constants = CONTEXT(interpreter->ctx)->constants;

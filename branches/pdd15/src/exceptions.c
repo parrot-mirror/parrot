@@ -489,9 +489,10 @@ dest2offset(Interp * interpreter, const opcode_t *dest)
         case PARROT_SWITCH_JIT_CORE:
         case PARROT_CGP_CORE:
         case PARROT_CGP_JIT_CORE:
-            offset = dest - (const opcode_t *)interpreter->code->prederef.code;
+            offset = dest - (const opcode_t *)PMC_PackFileByteCode(interpreter->code)
+                ->prederef.code;
         default:
-            offset = dest - interpreter->code->base.data;
+            offset = dest - PMC_PackFileByteCode(interpreter->code)->data;
     }
     return offset;
 }
