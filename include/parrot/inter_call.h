@@ -124,7 +124,7 @@ INTVAL set_retval_i(Interp*, int sig_ret, parrot_context_t *ctx);
             *pc == PARROT_OP_get_params_pc || \
             *pc == PARROT_OP_set_returns_pc) { \
         PMC *sig; \
-        sig = seg->const_table->constants[pc[1]]->u.key; \
+        sig = PMC_PackFileConstTable(seg->const_table)->constants[pc[1]]->u.key; \
         n += SIG_ELEMS(sig); \
     } \
 } while (0)

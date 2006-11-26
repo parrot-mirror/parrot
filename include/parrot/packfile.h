@@ -19,6 +19,15 @@
 #define PMC_PackFileByteCode(p) \
     ((struct Parrot_PackFile_ByteCode*)PMC_struct_val(p))
 
+/* These define some common shortcuts for getting at the current fixups
+ * and constants table via interp->code. */
+#define PMC_CurrentConstTable(interp) \
+    PMC_PackFileConstTable(PMC_PackFileByteCode((interp)->code)->const_table)
+#define PMC_CurrentFixupTable(interp) \
+    PMC_PackFileFixupTable(PMC_PackFileByteCode((interp)->code)->fixups)
+#define PMC_CurrentPackFile(interp) \
+    PMC_PackFile(PMC_PackFileByteCode((interp)->code)->pf)
+
 /* Getting at the constants. */
 #define PF_NCONST(pf)  (VTABLE_elements(interpreter, PMC_PackFileByteCode(pf)->const_table))
 #define PF_CONST(pf,i) (PMC_PackFileConstTable(PMC_PackFileByteCode(pf)->const_table)->constants[(i)])
@@ -150,6 +159,9 @@ struct Parrot_PackFile_ByteCode {
     PMC *debugs;
     PMC *const_table;
     PMC *fixups;
+
+    /* XXX This here to make exec compile, for now. */
+    int file_offset;
 };
 
 enum PF_DEBUGMAPPINGTYPE {

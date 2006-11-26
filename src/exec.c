@@ -67,14 +67,15 @@ Parrot_exec(Interp *interpreter, opcode_t *pc,
     Parrot_jit_info_t *jit_info;
     extern PARROT_API char **Parrot_exec_rel_addr;
     extern PARROT_API int Parrot_exec_rel_count;
-    struct Parrot_PackFile *pf = PMC_PackFile(interpreter->code->base.pf);
+    struct Parrot_PackFile *pf = PMC_CurrentPackFile(interpreter);
 
     Parrot_exec_objfile_t * const obj =
         mem_sys_allocate_zeroed(sizeof(Parrot_exec_objfile_t));
     exec_init(obj);
     Parrot_exec_rel_addr = (char **)mem_sys_allocate_zeroed(4 * sizeof(char *));
-    obj->bytecode_header_size =
-        (interpreter->code->base.file_offset + 4) * sizeof(opcode_t);
+    obj->bytecode_header_size = 
+        (PMC_PackFileByteCode(interpreter->code)->file_offset + 4) *
+        sizeof(opcode_t);
     jit_info = parrot_build_asm(interpreter, code_start, code_end,
             obj, JIT_CODE_FILE);
 
@@ -86,8 +87,8 @@ Parrot_exec(Interp *interpreter, opcode_t *pc,
     add_data_member(obj, jit_info->arena.op_map, (jit_info->arena.map_size+1) *
         sizeof(opcode_t *));
     /* const_table */
-    add_data_member(obj, NULL, interpreter->code->const_table->const_count *
-        sizeof(struct PackFile_Constant));
+    add_data_member(obj, NULL, PMC_CurrentConstTable(interpreter)->const_count *
+        sizeof(struct Parrot_PackFile_Constant));
 #ifdef JIT_CGP
     /* prederef_code */
     j = (int)cgp_core;
