@@ -3,11 +3,13 @@
 # $Id$
 # 10-print_module.t
 
+use strict;
+use warnings;
 BEGIN {
     use FindBin qw($Bin);
     use Cwd qw(cwd realpath);
     realpath($Bin) =~ m{^(.*\/parrot)\/[^/]*\/[^/]*\/[^/]*$};
-    $topdir = $1;
+    our $topdir = $1;
     if (defined $topdir) {
         print "\nOK:  Parrot top directory located\n";
     } else {
@@ -15,13 +17,12 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use strict;
-use warnings;
-use Test::More tests => 21;
+use Test::More tests => 42;
 use Cwd;
 use Data::Dumper;
 use File::Copy;
 use File::Temp (qw| tempdir |);
+use IO::File;
 
 use_ok( 'Parrot::Ops2pm::Utils' );
 
@@ -79,6 +80,74 @@ ok(chdir $main::topdir, "Positioned at top-level Parrot directory");
             "core.pm file written");
 
         # Todo:  test characteristics of .pm file written
+        
+        ok(chdir $cwd, 'changed back to starting directory after testing');
+    }
+}
+
+# --no-lines command-line option
+{
+    local @ARGV = qw(
+        src/ops/core.ops 
+        src/ops/bit.ops 
+    );
+    my $cwd = cwd();
+    {
+        my $tdir = tempdir( CLEANUP => 1);
+        ok(chdir $tdir, 'changed to temp directory for testing');
+        ok((mkdir qq{$tdir/src}), "able to make tempdir/src");
+        ok((mkdir qq{$tdir/src/ops}), "able to make tempdir/src");
+        foreach my $f (@ARGV) {
+            ok(copy(qq{$cwd/$f}, qq{$tdir/$f}), "copied .ops file");
+        }
+        my $num = NUM_FILE;
+        my $skip = SKIP_FILE;
+        ok(copy(qq{$cwd/$num}, qq{$tdir/$num}), "copied ops.num file");
+        ok(copy(qq{$cwd/$skip}, qq{$tdir/$skip}), "copied ops.skip file");
+        my @opsfiles = glob("./src/ops/*.ops");
+
+        my $self = Parrot::Ops2pm::Utils->new( {
+            argv            => [ @opsfiles ],
+            script          => "tools/build/ops2pm.pl",
+            nolines         => 1,
+            renum           => undef,
+            moddir          => "lib/Parrot/OpLib",
+            module          => "core.pm",
+#            inc_dir         => "include/parrot/oplib",
+#            inc_f           => "ops.h",
+        } );
+        isa_ok($self, q{Parrot::Ops2pm::Utils});
+    
+        ok($self->prepare_ops, "prepare_ops() returned successfully");
+        ok(defined($self->{ops}), "'ops' key has been defined");
+
+        ok($self->load_op_map_files(),
+            "load_op_map_files() completed successfully");
+        ok(-f $num, "ops.num located after renumbering");
+        ok(-f $skip, "ops.skip located after renumbering");
+
+        ok($self->sort_ops(), "sort_ops returned successfully");
+        
+        ok($self->prepare_real_ops(),
+            "prepare_real_ops() returned successfully");
+
+        ok($self->print_module(), "print_module() returned true");
+        ok(-f qq{$tdir/$self->{moddir}/$self->{module}},
+            "core.pm file written");
+       
+        my $fhin  = IO::File->new();
+        ok(($fhin->open("<$tdir/$self->{moddir}/$self->{module}")),
+            "Able to open file for reading");
+        my $corepm;
+        {
+            local $/;
+            $corepm = <$fhin>;
+        }
+        ok($fhin->close(), "Able to close file after reading");
+        unlike($corepm, qr/#line/,
+            "No '#line' directives found in generated C code");
+
+        # Todo:  more tests of characteristics of .pm file written
         
         ok(chdir $cwd, 'changed back to starting directory after testing');
     }
