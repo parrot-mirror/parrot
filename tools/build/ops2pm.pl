@@ -3,29 +3,22 @@
 # $Id$
 use warnings;
 use strict;
-use Data::Dumper;
-$Data::Dumper::Useqq = 1;
 use Getopt::Long;
 use lib 'lib';
 use Parrot::Ops2pm::Utils;
-use Parrot::Ops2pm::Auxiliary qw( Usage );
+use Parrot::Ops2pm::Auxiliary qw( Usage getoptions );
 
-my ( $nolines_flag, $help_flag, $renum_flag );
-GetOptions(
-    "no-lines" => \$nolines_flag,
-    "help"     => \$help_flag,
-    "renum"    => \$renum_flag,
-);
+my $flagref = getoptions();
 
-if ($help_flag or ! @ARGV) {
+if ($flagref->{help} or ! @ARGV) {
     Usage();
     exit;
 }
 
 my $self = Parrot::Ops2pm::Utils->new( {
     argv            => [ @ARGV ],
-    nolines         => $nolines_flag,
-    renum           => $renum_flag,
+    nolines         => $flagref->{nolines},
+    renum           => $flagref->{renum},
     moddir          => "lib/Parrot/OpLib",
     module          => "core.pm",
     inc_dir         => "include/parrot/oplib",
@@ -35,7 +28,7 @@ my $self = Parrot::Ops2pm::Utils->new( {
 
 $self->prepare_ops();
     
-if ($renum_flag) {
+if ($flagref->{renum}) {
     $self->renum_op_map_file();
     exit 0;
 }
