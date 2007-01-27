@@ -41,6 +41,13 @@ DOUBLEQUOTE_STRING  : { codeMode }?=> '\"' ( ~'\"' )*  '\"' ;
 SINGLEQUOTE_STRING  : { codeMode }?=> '\'' ( ~'\'' )*  '\'' ;
 ECHO                : { codeMode }?=> 'echo' ;
 
+
+fragment
+IDENT   : { codeMode }?=> ( 'a'..'z' | 'A'..'Z' )( 'a'..'z' | 'A'..'Z' )*;
+
+SCALAR  : { codeMode }?=> '$' IDENT ;
+ARRAY   : { codeMode }?=> '@' IDENT ;
+
 fragment
 INTEGER : { codeMode }?=> ('0'..'9' )+ ;
 
@@ -52,9 +59,12 @@ NUMBER
 MINUS      :{ codeMode }?=>  '-' ;
 PLUS       :{ codeMode }?=>  '+' ;
 MUL_OP     :{ codeMode }?=>  '*'  | '/'  | '%' ;
+ASSIGN_OP  :{ codeMode }?=>  '=' ;
 REL_OP     :{ codeMode }?=>  '==' | '<=' | '>=' | '!=' | '<'  | '>' ;
 
 IF         :{ codeMode }?=>  'if' ;
+ELSE       :{ codeMode }?=>  'else' ;
+
 
 // productions
 
@@ -84,17 +94,19 @@ statements
 
 statement
   : ECHO^^ expression ';'! 
-  | IF '(' relational_expression ')' '{' s1=statement '}'
-    ( 'else' '{' s2=statement '}' -> ^( IF relational_expression ^( STMTS $s1 ) ^( STMTS $s2 ) )
-    |                             -> ^( IF relational_expression ^( STMTS $s1 ) )
+  | IF '(' relational_expression ')' '{' s1=statements '}'
+    ( ELSE '{' s2=statements '}' -> ^( IF relational_expression ^( STMTS $s1 ) ^( STMTS $s2 ) )
+    |                           -> ^( IF relational_expression ^( STMTS $s1 ) )
     ) 
   | CODE_END SEA CODE_START -> ^( ECHO NOQUOTE_STRING[$SEA] )
+  | SCALAR ASSIGN_OP^^ expression ';'!
   ;
 
 expression
   : DOUBLEQUOTE_STRING
   | SINGLEQUOTE_STRING
   | adding_expression
+  | SCALAR
   ;
 
 adding_expression
