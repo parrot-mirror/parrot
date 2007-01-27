@@ -3,11 +3,13 @@
 # $Id$
 # 01-ops2pmutils.t
 
+use strict;
+use warnings;
 BEGIN {
     use FindBin qw($Bin);
     use Cwd qw(cwd realpath);
     realpath($Bin) =~ m{^(.*\/parrot)\/[^/]*\/[^/]*\/[^/]*$};
-    $topdir = $1;
+    our $topdir = $1;
     if (defined $topdir) {
         print "\nOK:  Parrot top directory located\n";
     } else {
@@ -15,8 +17,6 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use strict;
-use warnings;
 use Test::More tests =>  3;
 
 use_ok( 'Parrot::Ops2pm::Utils' );

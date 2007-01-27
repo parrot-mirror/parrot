@@ -3,11 +3,13 @@
 # $Id$
 # 06-load_op_map_files.t
 
+use strict;
+use warnings;
 BEGIN {
     use FindBin qw($Bin);
     use Cwd qw(cwd realpath);
     realpath($Bin) =~ m{^(.*\/parrot)\/[^/]*\/[^/]*\/[^/]*$};
-    $topdir = $1;
+    our $topdir = $1;
     if (defined $topdir) {
         print "\nOK:  Parrot top directory located\n";
     } else {
@@ -15,8 +17,6 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use strict;
-use warnings;
 use Test::More tests => 76;
 use Cwd;
 use Data::Dumper;
