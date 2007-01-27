@@ -7,16 +7,6 @@ use Data::Dumper;
 $Data::Dumper::Useqq = 1;
 use Getopt::Long;
 use lib 'lib';
-#use Parrot::Ops2pm::Utils qw(
-#    process_ARGV
-#    prepare_ops
-#    renum_op_map_file
-#    load_op_map_files
-#    sort_ops
-#    prepare_real_ops
-#    print_module
-#    print_h
-#);
 use Parrot::Ops2pm::Utils;
 use Parrot::Ops2pm::Auxiliary qw( Usage );
 
@@ -31,43 +21,6 @@ if ($help_flag or ! @ARGV) {
     Usage();
     exit;
 }
-
-#my ($file, $argvref) = process_ARGV(@ARGV);
-#my $ops = prepare_ops($file, $nolines_flag, $argvref);
-#    
-#if ($renum_flag) {
-#    renum_op_map_file($ops);
-#    exit 0;
-#}
-#load_op_map_files();
-#$ops = sort_ops($ops);
-#
-#my $real_ops = prepare_real_ops( {
-#    ops             => $ops,
-#    nolines_flag    => $nolines_flag,
-#} );
-#
-#my $moddir  = "lib/Parrot/OpLib";
-#my $module  = "core.pm";
-#
-#print_module( {
-#    moddir      => $moddir,
-#    ops_file    => $file,
-#    real_ops    => $real_ops,
-#    script      => $0,
-#    module      => $module,
-#    package     => 'core',
-#} );
-#
-#my $inc_dir = "include/parrot/oplib";
-#my $inc_f   = "ops.h";
-#print_h( {
-#    inc_dir     => $inc_dir,
-#    inc_f       => $inc_f,
-#    ops_file    => $file,
-#    script      => $0,
-#    real_ops    => $real_ops,
-#} );
 
 my $self = Parrot::Ops2pm::Utils->new( {
     argv            => [ @ARGV ],
