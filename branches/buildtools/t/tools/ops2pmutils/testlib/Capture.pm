@@ -1,3 +1,5 @@
+# Copyright (C) 2006, The Perl Foundation.
+# $Id$
 package Capture;
 use strict;
 # Adapted from IO::Capture::Tie_STDx.
