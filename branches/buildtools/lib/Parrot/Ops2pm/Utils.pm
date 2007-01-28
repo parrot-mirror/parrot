@@ -122,7 +122,9 @@ C<script> elements were provided to the constructor.)
 B<Return Value:>  None.  Internally, sets the C<ops> key in the object's data
 structure.
 
-B<Comment:>
+B<Comment:>  This method calls C<Parrot::OpsFile->new()> on the first F<.ops>
+file found in C<@ARGV>, then copies the ops from the remaining F<.ops> files 
+to the object just created.  Experimental ops are marked as such.
 
 =cut
 
@@ -166,10 +168,12 @@ sub prepare_ops {
 =head2 C<renum_op_map_file()>
 
 B<Purpose:>  Triggered when F<tools/build/ops2pm.pl> is called with the
-C<--renum> flag, this method ...
+C<--renum> flag, this method renumbers F<src/ops/ops.num> based on the already
+existing file of that name and additional F<.ops> files.
 
 B<Arguments:>  String holding name of an F<.ops> file; defaults to
-F<src/ops/ops.num>.
+F<src/ops/ops.num>.  (Implicitly requires that the C<argv>, 
+C<script> and C<renum> elements were provided to the constructor.)
 
 B<Return Value:>  Returns true value upon success. 
 
@@ -225,15 +229,23 @@ sub renum_op_map_file {
 
 =head2 C<load_op_map_files()>
 
-B<Purpose:>  
+B<Purpose:>  When F<tools/build/ops2pm.pl> is called by F<make>, this method 
+checks [## what? ] strictly against F<src/ops/ops.num> and renumbers as
+needed.
 
-B<Arguments:>  None.
+B<Arguments:>  None.  (Implicitly requires that the C<argv> and C<script> keys
+have been provided to the constructor and that the C<renum> key not have a
+true value -- which will be the case when the C<--renum> option is I<not>
+provided to F<tools/build/ops2pm.pl>.)
 
 B<Return Value:>   Returns true value upon success.  Internally, sets these
-keys in the object's data structure:  C<max_op_num>, C<skiptable> and
-C<optable>.
+values in these elements in the object's data structure:  C<max_op_num>, 
+C<skiptable> and C<optable>.
 
-B<Comment:>
+B<Comments:>  This is the default case, I<i.e.,> the case that prevails when
+F<tools/build/ops2pm.pl> is I<not> called with the C<--renum> flag.  In
+addition to F<src/ops/ops.num>, this method also draws upon information in
+F<src/ops/ops.skip>.
 
 =cut
 
@@ -290,14 +302,16 @@ sub load_op_map_files {
 
 =head2 C<sort_ops()>
 
-B<Purpose:>  
+B<Purpose:>  Internal manipulation of the Parrot::Ops2pm::Utils object:
+sorting by number of the list of op codes found in the object's
+C<{ops}->{OPS}> element.
 
 B<Arguments:>  None.
 
 B<Return Value:>  None.  Internally, sets the C<ops> key of the object's data
 structure.
 
-B<Comment:>
+B<Comment:>  Will emit warnings under these circumstances:
 
 =cut
 
@@ -326,7 +340,8 @@ sub sort_ops {
             $el->{CODE} = -1;
         }
     }
-    @{ $self->{ops}->{OPS} } = sort { $a->{CODE} <=> $b->{CODE} } ( @{ $self->{ops}->{OPS} } );
+    @{ $self->{ops}->{OPS} } = 
+        sort { $a->{CODE} <=> $b->{CODE} } ( @{ $self->{ops}->{OPS} } );
 }
 
 =head2 C<prepare_real_ops()>
