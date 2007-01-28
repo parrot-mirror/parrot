@@ -10,12 +10,94 @@ use File::Spec;
 use lib ("lib/");
 use Parrot::OpsFile;
 
+=head1 NAME
+
+Parrot::Ops2pm::Utils - Methods holding functionality for F<tools/build/ops2pm.pl>.
+
+=head1 SYNOPSIS
+
+    use Parrot::Ops2pm::Utils;
+    
+    $self = Parrot::Ops2pm::Utils->new( {
+        argv            => [ @ARGV ],
+        nolines         => $nolines_flag,
+        renum           => $renum_flag,
+        moddir          => "lib/Parrot/OpLib",
+        module          => "core.pm",
+        inc_dir         => "include/parrot/oplib",
+        inc_f           => "ops.h",
+        script          => "tools/build/ops2pm.pl",
+    } );
+    
+    $self->prepare_ops();
+        
+    if ($renum_flag) {
+        $self->renum_op_map_file();
+        exit 0;
+    }
+    
+    $self->load_op_map_files();
+    $self->sort_ops();
+    $self->prepare_real_ops();
+    $self->print_module();
+    $self->print_h();
+    exit 0;
+
+=cut
+
+=head1 DESCRIPTION
+
+Parrot::Ops2pm::Utils provides methods called by F<tools/build/ops2pm.pl>, a
+program which is called at the very beginning of the Parrot F<make> process.
+The program's function is to build two files:
+
+The functionality originally found in F<tools/build/ops2pm.pl> has been
+extracted into this package's methods in order to support component-focused
+testing and future refactoring.
+
+=cut
+
 ############### Package-scoped Lexical Variables ###############
 
 my $NUM_FILE   = "src/ops/ops.num";
 my $SKIP_FILE  = "src/ops/ops.skip";
 
 ############### Subroutines ###############
+
+=head1 METHODS
+
+=head2 C<new()>
+
+B<Purpose:>  Process files provided as command-line arguments to
+F<tools/build/ops2pm.pl> and construct a Parrot::Ops2pm::Utils object.
+
+B<Arguments:>  Hash reference with the following elements:
+
+    argv        :   reference to @ARGV
+    nolines     :   set to true value to eliminate #line
+                    directives in output
+    renum       :   set to true value if
+    moddir      :   directory where output module is created
+                    (generally, lib/Parrot/OpLib)
+    module      :   name of output module
+                    (generally, core.pm)
+    inc_dir     :   directory where C-header file is created
+                    (generally, include/parrot/oplib)
+    inc_f       :   name of output C-header file
+                    (generally, ops.h)
+    script      :   name of the script to be executed by 'make'
+                    (generally, tools/build/ops2pm.pl)
+
+B<Return Value:>  Parrot::Ops2pm::Utils object.
+
+B<Comment:>  Arguments for the constructor have been selected so as to provide
+subsequent methods with all information needed to execute properly and to be
+testable.  A Parrot::Ops2pm::Utils object I<can> be constructed lacking some
+of these arguments and still suffice for the execution of particular methods
+-- this is done during the test suite -- but such an object would not suffice
+for F<make>'s call to F<tools/build/ops2pm.pl>.
+
+=cut
 
 sub new {
     my ($class, $argsref) = @_;
@@ -27,6 +109,22 @@ sub new {
     $argsref->{argv} = \@argv;
     return bless $argsref, $class;
 }
+
+=head2 C<prepare_ops()>
+
+B<Purpose:>  Call C<Parrot::OpsFile->new()>, then populate the resulting
+C<$opts> hash reference with information from  each of the F<.ops> files
+provided as command-line arguments to F<tools/build/ops2pm.pl>.
+
+B<Arguments:>  None.  (Implicitly requires that at least the C<argv> and
+C<script> elements were provided to the constructor.)
+
+B<Return Value:>  None.  Internally, sets the C<ops> key in the object's data
+structure.
+
+B<Comment:>
+
+=cut
 
 sub prepare_ops {
     my $self = shift;
@@ -65,6 +163,21 @@ sub prepare_ops {
     $self->{ops} = $ops;
 }
 
+=head2 C<renum_op_map_file()>
+
+B<Purpose:>  Triggered when F<tools/build/ops2pm.pl> is called with the
+C<--renum> flag, this method ...
+
+B<Arguments:>  String holding name of an F<.ops> file; defaults to
+F<src/ops/ops.num>.
+
+B<Return Value:>  Returns true value upon success. 
+
+B<Comment:>  After being called by F<tools/build/ops2pm.pl>, that script
+exits, making this the only Parrot::Ops2pm::Utils method which is I<not> a
+stepping stone on the path to building F<lib/Parrot/OpLib/core.pm>.
+
+=cut
 
 sub renum_op_map_file {
     my $self = shift;
@@ -110,6 +223,20 @@ sub renum_op_map_file {
     return 1;
 }
 
+=head2 C<load_op_map_files()>
+
+B<Purpose:>  
+
+B<Arguments:>  None.
+
+B<Return Value:>   Returns true value upon success.  Internally, sets these
+keys in the object's data structure:  C<max_op_num>, C<skiptable> and
+C<optable>.
+
+B<Comment:>
+
+=cut
+
 sub load_op_map_files {
     my $self = shift;
     my $num_file  = $NUM_FILE;
@@ -118,9 +245,6 @@ sub load_op_map_files {
     my ( $op, $name, $number, $prev );
 
     $self->{max_op_num} ||= 0;
-#    unless ($self->{max_op_num}) {
-#        $self->{max_op_num} = 0;
-#    }
 
     open $op, '<', $num_file
         or die "Can't open $num_file: $!";
@@ -164,6 +288,19 @@ sub load_op_map_files {
     return 1;
 }
 
+=head2 C<sort_ops()>
+
+B<Purpose:>  
+
+B<Arguments:>  None.
+
+B<Return Value:>  None.  Internally, sets the C<ops> key of the object's data
+structure.
+
+B<Comment:>
+
+=cut
+
 sub sort_ops {
     my $self = shift;
     for my $el ( @{ $self->{ops}->{OPS} } ) {
@@ -192,6 +329,19 @@ sub sort_ops {
     @{ $self->{ops}->{OPS} } = sort { $a->{CODE} <=> $b->{CODE} } ( @{ $self->{ops}->{OPS} } );
 }
 
+=head2 C<prepare_real_ops()>
+
+B<Purpose:>  
+
+B<Arguments:>  None.
+
+B<Return Value:>  None.  Internally, sets the C<real_ops> key of the object's data
+structure.
+
+B<Comment:>
+
+=cut
+
 sub prepare_real_ops {
     my $self = shift;
 
@@ -216,6 +366,19 @@ sub prepare_real_ops {
     }
     $self->{real_ops} = $real_ops;
 }
+
+=head2 C<print_module()>
+
+B<Purpose:>  Uses information in the object's data structure to create 
+F<lib/Parrot/OpLib/core.pm>.
+
+B<Arguments:>  None.
+
+B<Return Value:>  Returns true value upon success.
+
+B<Comment:>
+
+=cut
 
 sub print_module {
     my $self = shift;
@@ -278,6 +441,19 @@ END_C
     close $MODULE;
     return 1;
 }
+
+=head2 C<print_h()>
+
+B<Purpose:>  Uses information in the object's data structure to create 
+F<include/parrot/oplib/ops.h>.
+
+B<Arguments:>  None.
+
+B<Return Value:>  Returns true value upon success.
+
+B<Comment:>
+
+=cut
 
 sub print_h {
     my $self = shift;
