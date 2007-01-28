@@ -43,7 +43,7 @@ ok(chdir $main::topdir, "Positioned at top-level Parrot directory");
             ok(copy(qq{$cwd/$f}, qq{$tdir/$f}), "copied .ops file");
         }
         my $num = qq{src/ops/ops.num};
-        ok(copy(qq{$cwd/$num}, qq{$tdir/$num}), "copied .ops file");
+        ok(copy(qq{$cwd/$num}, qq{$tdir/$num}), "copied ops.num file");
         my @opsfiles = glob("./src/ops/*.ops");
 
         my $self = Parrot::Ops2pm::Utils->new( {
@@ -81,7 +81,7 @@ ok(chdir $main::topdir, "Positioned at top-level Parrot directory");
             ok(copy(qq{$cwd/$f}, qq{$tdir/$f}), "copied .ops file");
         }
         my $num = qq{src/ops/ops.num};
-        ok(copy(qq{$cwd/$num}, qq{$tdir/$num}), "copied .ops file");
+        ok(copy(qq{$cwd/$num}, qq{$tdir/$num}), "copied ops.num file");
         my @opsfiles = glob("./src/ops/*.ops");
 
         my $self = Parrot::Ops2pm::Utils->new( {
