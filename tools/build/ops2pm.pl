@@ -55,9 +55,13 @@ tools/build/ops2pm.pl - Generate Perl module from operation definitions
 =head1 DESCRIPTION
 
 Reads the ops files listed on the command line and outputs a
-C<Parrot::OpLib::core> module containing information about the ops.
+F<Parrot::OpLib::core> module containing information about the ops.  
+Also outputs F<include/parrot/oplib/ops.h>.  This program is called by Parrot's
+F<make>.
 
-=head2 Options
+If called with the C<--renum> flag, ...
+
+=head1 OPTIONS
 
 =over 4
 
@@ -76,7 +80,13 @@ order in the given ops files. See also F<tools/dev/ops_renum.mak>.
 
 =back
 
-=head2 WARNING
+Most of the functionality in this program is now held in Parrot::Ops2pm::Util 
+methods and a small number of Parrot::Ops2pm::Auxiliary subroutines.  
+See those modules' documentation for discussion of those functions.
+Revisions to the functionality should be made in those packages and tested 
+against tests found in F<t/tools/ops2pmutils/>.
+
+=head1 WARNING
 
 Generating a C<Parrot::OpLib::core> module for a set of ops files that
 you do not later turn into C code (see F<tools/build/ops2c.pl>) with the
@@ -111,7 +121,13 @@ modified so that it doesn't need to concatenate separate ops files.
 
 =item F<tools/build/ops2c.pl>.
 
+=item F<lib/Parrot/Ops2pm/Utils.pm>.
+
+=item F<lib/Parrot/Ops2pm/Auxiliary.pm>.
+
 =back
+
+=head1 AUTHOR
 
 =cut
 

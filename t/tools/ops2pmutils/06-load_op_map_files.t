@@ -30,9 +30,6 @@ use constant NUM_FILE   => "src/ops/ops.num";
 use constant SKIP_FILE  => "src/ops/ops.skip";
 
 ok(chdir $main::topdir, "Positioned at top-level Parrot directory");
-my ( $nolines_flag, $help_flag, $renum_flag );
-my ($file, $argvref);
-my ($ops, %temp);
 {
     local @ARGV = qw(
         src/ops/core.ops 
