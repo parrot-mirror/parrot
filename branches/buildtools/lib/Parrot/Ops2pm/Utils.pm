@@ -68,10 +68,16 @@ my $SKIP_FILE  = "src/ops/ops.skip";
 
 =head2 C<new()>
 
-B<Purpose:>  Process files provided as command-line arguments to
+=over 4
+
+=item Purpose
+
+Process files provided as command-line arguments to
 F<tools/build/ops2pm.pl> and construct a Parrot::Ops2pm::Utils object.
 
-B<Arguments:>  Hash reference with the following elements:
+=item Arguments
+
+Hash reference with the following elements:
 
     argv        :   reference to @ARGV
     nolines     :   set to true value to eliminate #line
@@ -88,14 +94,20 @@ B<Arguments:>  Hash reference with the following elements:
     script      :   name of the script to be executed by 'make'
                     (generally, tools/build/ops2pm.pl)
 
-B<Return Value:>  Parrot::Ops2pm::Utils object.
+=item Return Value
 
-B<Comment:>  Arguments for the constructor have been selected so as to provide
+Parrot::Ops2pm::Utils object.
+
+=item Comment
+
+Arguments for the constructor have been selected so as to provide
 subsequent methods with all information needed to execute properly and to be
 testable.  A Parrot::Ops2pm::Utils object I<can> be constructed lacking some
 of these arguments and still suffice for the execution of particular methods
 -- this is done during the test suite -- but such an object would not suffice
 for F<make>'s call to F<tools/build/ops2pm.pl>.
+
+=back
 
 =cut
 
@@ -112,19 +124,31 @@ sub new {
 
 =head2 C<prepare_ops()>
 
-B<Purpose:>  Call C<Parrot::OpsFile->new()>, then populate the resulting
+=over 4
+
+=item Purpose
+
+Call C<Parrot::OpsFile->new()>, then populate the resulting
 C<$opts> hash reference with information from  each of the F<.ops> files
 provided as command-line arguments to F<tools/build/ops2pm.pl>.
 
-B<Arguments:>  None.  (Implicitly requires that at least the C<argv> and
+=item Arguments
+
+None.  (Implicitly requires that at least the C<argv> and
 C<script> elements were provided to the constructor.)
 
-B<Return Value:>  None.  Internally, sets the C<ops> key in the object's data
+=item Return Value
+
+None.  Internally, sets the C<ops> key in the object's data
 structure.
 
-B<Comment:>  This method calls C<Parrot::OpsFile->new()> on the first F<.ops>
+=item Comment
+
+This method calls C<Parrot::OpsFile->new()> on the first F<.ops>
 file found in C<@ARGV>, then copies the ops from the remaining F<.ops> files 
 to the object just created.  Experimental ops are marked as such.
+
+=back
 
 =cut
 
@@ -167,19 +191,31 @@ sub prepare_ops {
 
 =head2 C<renum_op_map_file()>
 
-B<Purpose:>  Triggered when F<tools/build/ops2pm.pl> is called with the
+=over 4
+
+=item Purpose
+
+Triggered when F<tools/build/ops2pm.pl> is called with the
 C<--renum> flag, this method renumbers F<src/ops/ops.num> based on the already
 existing file of that name and additional F<.ops> files.
 
-B<Arguments:>  String holding name of an F<.ops> file; defaults to
+=item Arguments
+
+String holding name of an F<.ops> file; defaults to
 F<src/ops/ops.num>.  (Implicitly requires that the C<argv>, 
 C<script> and C<renum> elements were provided to the constructor.)
 
-B<Return Value:>  Returns true value upon success. 
+=item Return Value
 
-B<Comment:>  After being called by F<tools/build/ops2pm.pl>, that script
+Returns true value upon success. 
+
+=item Comment
+
+After being called by F<tools/build/ops2pm.pl>, that script
 exits, making this the only Parrot::Ops2pm::Utils method which is I<not> a
 stepping stone on the path to building F<lib/Parrot/OpLib/core.pm>.
+
+=back
 
 =cut
 
@@ -229,23 +265,35 @@ sub renum_op_map_file {
 
 =head2 C<load_op_map_files()>
 
-B<Purpose:>  When F<tools/build/ops2pm.pl> is called by F<make>, this method 
+=over 4
+
+=item Purpose
+
+When F<tools/build/ops2pm.pl> is called by F<make>, this method 
 checks [## what? ] strictly against F<src/ops/ops.num> and renumbers as
 needed.
 
-B<Arguments:>  None.  (Implicitly requires that the C<argv> and C<script> keys
+=item Arguments
+
+None.  (Implicitly requires that the C<argv> and C<script> keys
 have been provided to the constructor and that the C<renum> key not have a
 true value -- which will be the case when the C<--renum> option is I<not>
 provided to F<tools/build/ops2pm.pl>.)
 
-B<Return Value:>   Returns true value upon success.  Internally, sets these
+=item Return Value
+
+ Returns true value upon success.  Internally, sets these
 values in these elements in the object's data structure:  C<max_op_num>, 
 C<skiptable> and C<optable>.
 
-B<Comments:>  This is the default case, I<i.e.,> the case that prevails when
+=item Comments
+
+This is the default case, I<i.e.,> the case that prevails when
 F<tools/build/ops2pm.pl> is I<not> called with the C<--renum> flag.  In
 addition to F<src/ops/ops.num>, this method also draws upon information in
 F<src/ops/ops.skip>.
+
+=back
 
 =cut
 
@@ -302,16 +350,28 @@ sub load_op_map_files {
 
 =head2 C<sort_ops()>
 
-B<Purpose:>  Internal manipulation of the Parrot::Ops2pm::Utils object:
+=over 4
+
+=item Purpose
+
+Internal manipulation of the Parrot::Ops2pm::Utils object:
 sorting by number of the list of op codes found in the object's
 C<{ops}->{OPS}> element.
 
-B<Arguments:>  None.
+=item Arguments
 
-B<Return Value:>  None.  Internally, sets the C<ops> key of the object's data
+None.
+
+=item Return Value
+
+None.  Internally, sets the C<ops> key of the object's data
 structure.
 
-B<Comment:>  Will emit warnings under these circumstances:
+=item Comment
+
+Will emit warnings under these circumstances:
+
+=back
 
 =cut
 
@@ -346,14 +406,23 @@ sub sort_ops {
 
 =head2 C<prepare_real_ops()>
 
-B<Purpose:>  
+=over 4
 
-B<Arguments:>  None.
+=item Purpose
 
-B<Return Value:>  None.  Internally, sets the C<real_ops> key of the object's data
-structure.
+=item Arguments
 
-B<Comment:>
+None.  (Same implicit requirements for the constructor as
+C<load_op_map_files()> above.)
+
+=item Return Value
+
+None.  Internally, sets the C<real_ops> key of the object's 
+data structure.
+
+=item Comment
+
+=back
 
 =cut
 
@@ -384,14 +453,23 @@ sub prepare_real_ops {
 
 =head2 C<print_module()>
 
-B<Purpose:>  Uses information in the object's data structure to create 
-F<lib/Parrot/OpLib/core.pm>.
+=over 4
 
-B<Arguments:>  None.
+=item Purpose
 
-B<Return Value:>  Returns true value upon success.
+Uses information in the object's data structure -- principally
+the C<real_ops> element -- to create F<lib/Parrot/OpLib/core.pm>.
 
-B<Comment:>
+=item Arguments
+
+None.  (Implicitly requires that the constructor have the
+following keys defined:  C<argv>, C<script>, C<moddir> and C<module>.)
+
+=item Return Value
+
+Returns true value upon success.
+
+=item Comment
 
 =cut
 
@@ -409,18 +487,18 @@ sub print_module {
 
     my $version = $self->{real_ops}->version();
     ( my $pod = <<"END_POD") =~ s/^    //osmg;
-=head1 NAME
-
-Parrot::OpLib::core - Parrot Op Info
-
-=head1 DESCRIPTION
-
-This is an autogenerated file, created by F<$self->{script}>.
-
-It contains Parrot version info, a preamble for inclusion in C code,
-and an array of C<Parrot::Op> instances representing the Parrot ops.
-
-=cut
+    =head1 NAME
+    
+    Parrot::OpLib::core - Parrot Op Info
+    
+    =head1 DESCRIPTION
+    
+    This is an autogenerated file, created by F<$self->{script}>.
+    
+    It contains Parrot version info, a preamble for inclusion in C code,
+    and an array of C<Parrot::Op> instances representing the Parrot ops.
+    
+    =cut
 END_POD
 
     my $preamble = <<END_C;
@@ -445,8 +523,13 @@ use vars qw(\$VERSION \$ops \$preamble);
 END_C
 
     print $MODULE $preamble;
-    print $MODULE Data::Dumper->Dump( [ $self->{real_ops}->preamble, [ $self->{real_ops}->ops ] ],
-        [qw($preamble $ops)] );
+    print $MODULE Data::Dumper->Dump(
+        [
+            $self->{real_ops}->preamble,
+            [ $self->{real_ops}->ops ]
+        ],
+        [qw($preamble $ops)]
+    );
 
     print $MODULE <<END_C;
 
@@ -459,14 +542,25 @@ END_C
 
 =head2 C<print_h()>
 
-B<Purpose:>  Uses information in the object's data structure to create 
-F<include/parrot/oplib/ops.h>.
+=over 4
 
-B<Arguments:>  None.
+=item Purpose
 
-B<Return Value:>  Returns true value upon success.
+Uses information in the object's data structure -- principally
+the C<real_ops> key -- to create F<include/parrot/oplib/ops.h>.
 
-B<Comment:>
+=item Arguments
+
+None.  (Implicitly requires that the constructor have the
+following keys defined:  C<argv>, C<script>, C<inc_dir> and C<inc_f>.)
+
+=item Return Value
+
+Returns true value upon success.
+
+=item Comment
+
+=back
 
 =cut
 
