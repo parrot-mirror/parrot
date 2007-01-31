@@ -12,6 +12,7 @@ LANGUAGES = \
     APL \
     BASIC \
     HQ9plus \
+    PIR \
     WMLScript \
     Zcode \
     abc \
@@ -29,6 +30,7 @@ LANGUAGES = \
     m4 \
     ook \
     parrot_compiler \
+    perl5 \
     perl6 \
     pheme \
     punie \
@@ -83,6 +85,7 @@ clean: \
     APL.clean \
     BASIC.clean \
     HQ9plus.clean \
+    PIR.clean \
     WMLScript.clean \
     Zcode.clean \
     abc.clean \
@@ -100,6 +103,7 @@ clean: \
     m4.clean \
     ook.clean \
     parrot_compiler.clean \
+    perl5.clean \
     perl6.clean \
     pheme.clean \
     punie.clean \
@@ -132,6 +136,14 @@ BASIC.test:
 # Don't know how to test BASIC
 BASIC.clean:
 # Don't know how to clean BASIC
+
+PIR: PIR.dummy
+PIR.dummy:
+	- $(MAKE) PIR
+PIR.test:
+	- $(MAKE) PIR test
+PIR.clean:
+	- $(MAKE) PIR clean
 
 WMLScript: WMLScript.dummy
 WMLScript.dummy:
@@ -277,6 +289,14 @@ parrot_compiler.test:
 	- $(MAKE) parrot_compiler test
 parrot_compiler.clean:
 	- $(MAKE) parrot_compiler clean
+
+perl5 : perl5.dummy
+perl5.dummy:
+	- $(MAKE) perl5
+perl5.test:
+	- $(MAKE) perl5 test
+perl5.clean:
+	- $(MAKE) perl5 clean
 
 perl6 : perl6.dummy
 perl6.dummy:
