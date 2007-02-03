@@ -1,6 +1,6 @@
 /*
 Copyright (C) 2001-2006, The Perl Foundation.
-$Id: hash.pmc 15414 2006-11-12 02:47:59Z chip $
+$Id$
 
 =head1 NAME
 
@@ -19,7 +19,6 @@ src/pmc/pmethod_test.pmc - PMETHOD_Test PMC
 
 #include "parrot/parrot.h"
 #include <assert.h>
-#include "pmc_fixedintegerarray.h"
 
 
 /* Albeit the Hash PMC doesn't use PMC_data, it needs the next_for_GC pointer
