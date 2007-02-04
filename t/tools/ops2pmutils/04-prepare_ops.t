@@ -231,11 +231,12 @@ pass("Completed all tests in $0");
 =head1 DESCRIPTION
 
 The files in this directory test the publicly callable methods of 
-F<lib/Parrot/Ops2pm/Utils.pm>.  By doing so, they test the functionality 
-of the F<ops2pm.pl> utility.  That functionality has largely been extracted 
+F<lib/Parrot/Ops2pm/Utils.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.   
+By doing so, they test the functionality of the F<ops2pm.pl> utility.  
+That functionality has largely been extracted 
 into the methods of F<Utils.pm>.
 
-F<04-prepare_ops.t> tests whether Parrot::Ops2pm::Utils::prepare_ops() 
+F<04-prepare_ops.t> tests whether C<Parrot::Ops2pm::Utils::prepare_ops()> 
 works properly.
 
 =head1 TODO

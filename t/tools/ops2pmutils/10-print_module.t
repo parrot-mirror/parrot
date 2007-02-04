@@ -168,12 +168,13 @@ pass("Completed all tests in $0");
 =head1 DESCRIPTION
 
 The files in this directory test the publicly callable methods of 
-F<lib/Parrot/Ops2pm/Utils.pm>.  By doing so, they test the functionality 
-of the F<ops2pm.pl> utility.  That functionality has largely been extracted 
+F<lib/Parrot/Ops2pm/Utils.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.   
+By doing so, they test the functionality of the F<ops2pm.pl> utility.  
+That functionality has largely been extracted 
 into the methods of F<Utils.pm>.
 
 F<10-print_module.t> tests whether 
-Parrot::Ops2pm::Utils::print_module() works properly.
+C<Parrot::Ops2pm::Utils::print_module()> works properly.
 
 =head1 TODO
 
@@ -186,10 +187,10 @@ are as yet uncovered:
 
 Directory failure:  can it be provoked?
 
-    if ( !-d $fulldir ) {
-        File::Path::mkpath( $fulldir, 0, 0755 )
-            or die "$self->{script}: Could not mkdir $fulldir: $!!\n";
-    }
+  if ( !-d $fulldir ) {
+    File::Path::mkpath( $fulldir, 0, 0755 )
+      or die "$self->{script}: Could not mkdir $fulldir: $!!\n";
+  }
 
 =back
 
