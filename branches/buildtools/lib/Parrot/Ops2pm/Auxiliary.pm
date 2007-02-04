@@ -60,18 +60,18 @@ tests in F<t/tools/ops2pmutils/*.t>.
 
 =over 4
 
-=item Purpose
+=item * Purpose
 
 Display a short description of how to use F<tools/build/ops2pm.pl> on
 standard output.
 
     usage: tools/build/ops2pm.pl [--help] [--no-lines] input.ops [input2.ops ...]
 
-=item Arguments
+=item * Arguments
 
 None.
 
-=item Return Value
+=item * Return Value
 
 Implicitly returns true upon successful printing.
 
@@ -81,15 +81,15 @@ Implicitly returns true upon successful printing.
 
 =over 4
 
-=item Purpose
+=item * Purpose
 
 Process arguments provided on command-line to F<tools/build/ops2pm.pl>.
 
-=item Arguments
+=item * Arguments
 
 None.
 
-=item Return Value
+=item * Return Value
 
 Hash reference where any of the following keys may or may not be defined.
 
@@ -97,13 +97,15 @@ Hash reference where any of the following keys may or may not be defined.
    help
    renum
 
-=item Comment
+=item * Comment
 
 A wrapper around Getopt::Long::GetOptions() designed to assure testability.
 
 =back
 
 =head1 AUTHOR
+
+Jim Keenan (refactoring code originally found in F<tools/build/ops2pm.pl>).
 
 =head1 SEE ALSO
 

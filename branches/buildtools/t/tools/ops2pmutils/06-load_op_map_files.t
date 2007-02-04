@@ -318,12 +318,13 @@ pass("Completed all tests in $0");
 =head1 DESCRIPTION
 
 The files in this directory test the publicly callable methods of 
-F<lib/Parrot/Ops2pm/Utils.pm>.  By doing so, they test the functionality 
-of the F<ops2pm.pl> utility.  That functionality has largely been extracted 
+F<lib/Parrot/Ops2pm/Utils.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.   
+By doing so, they test the functionality of the F<ops2pm.pl> utility.  
+That functionality has largely been extracted 
 into the methods of F<Utils.pm>.
 
 F<06-load_op_map_files.t> tests whether 
-Parrot::Ops2pm::Utils::load_op_map_files() works properly.
+C<Parrot::Ops2pm::Utils::load_op_map_files()> works properly.
 
 =head1 TODO
 
@@ -368,9 +369,3 @@ James E Keenan
 Parrot::Ops2pm::Utils, F<ops2pm.pl>.
 
 =cut
-
-__END__
-
-(defined $ParrotOps::max_op_num)
-    ? print STDERR "m.o.n.: $ParrotOps::max_op_num\n"
-    : print STDERR "m.o.n. undefined\n";

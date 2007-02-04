@@ -51,6 +51,14 @@ Parrot::Ops2pm::Utils provides methods called by F<tools/build/ops2pm.pl>, a
 program which is called at the very beginning of the Parrot F<make> process.
 The program's function is to build two files:
 
+=over 4
+
+=item * F<lib/Parrot/OpLib/core.pm>
+
+=item * F<include/parrot/oplib/ops.h>
+
+=back
+
 The functionality originally found in F<tools/build/ops2pm.pl> has been
 extracted into this package's methods in order to support component-focused
 testing and future refactoring.
@@ -70,12 +78,12 @@ my $SKIP_FILE  = "src/ops/ops.skip";
 
 =over 4
 
-=item Purpose
+=item * Purpose
 
 Process files provided as command-line arguments to
 F<tools/build/ops2pm.pl> and construct a Parrot::Ops2pm::Utils object.
 
-=item Arguments
+=item * Arguments
 
 Hash reference with the following elements:
 
@@ -94,11 +102,11 @@ Hash reference with the following elements:
     script      :   name of the script to be executed by 'make'
                     (generally, tools/build/ops2pm.pl)
 
-=item Return Value
+=item * Return Value
 
 Parrot::Ops2pm::Utils object.
 
-=item Comment
+=item * Comment
 
 Arguments for the constructor have been selected so as to provide
 subsequent methods with all information needed to execute properly and to be
@@ -126,25 +134,25 @@ sub new {
 
 =over 4
 
-=item Purpose
+=item * Purpose
 
-Call C<Parrot::OpsFile->new()>, then populate the resulting
+Call C<Parrot::OpsFile::new()>, then populate the resulting
 C<$opts> hash reference with information from  each of the F<.ops> files
 provided as command-line arguments to F<tools/build/ops2pm.pl>.
 
-=item Arguments
+=item * Arguments
 
 None.  (Implicitly requires that at least the C<argv> and
 C<script> elements were provided to the constructor.)
 
-=item Return Value
+=item * Return Value
 
 None.  Internally, sets the C<ops> key in the object's data
 structure.
 
-=item Comment
+=item * Comment
 
-This method calls C<Parrot::OpsFile->new()> on the first F<.ops>
+This method calls C<Parrot::OpsFile::new()> on the first F<.ops>
 file found in C<@ARGV>, then copies the ops from the remaining F<.ops> files 
 to the object just created.  Experimental ops are marked as such.
 
@@ -193,26 +201,27 @@ sub prepare_ops {
 
 =over 4
 
-=item Purpose
+=item * Purpose
 
 Triggered when F<tools/build/ops2pm.pl> is called with the
 C<--renum> flag, this method renumbers F<src/ops/ops.num> based on the already
 existing file of that name and additional F<.ops> files.
 
-=item Arguments
+=item * Arguments
 
 String holding name of an F<.ops> file; defaults to
 F<src/ops/ops.num>.  (Implicitly requires that the C<argv>, 
 C<script> and C<renum> elements were provided to the constructor.)
 
-=item Return Value
+=item * Return Value
 
 Returns true value upon success. 
 
-=item Comment
+=item * Comment
 
-After being called by F<tools/build/ops2pm.pl>, that script
-exits, making this the only Parrot::Ops2pm::Utils method which is I<not> a
+When F<tools/build/ops2pm.pl> is called with the C<--renum> option, this
+method is triggered, after which F<ops2pm.pl> exits.  Consequently, this is
+the only Parrot::Ops2pm::Utils method which is I<not> a
 stepping stone on the path to building F<lib/Parrot/OpLib/core.pm>.
 
 =back
@@ -267,26 +276,26 @@ sub renum_op_map_file {
 
 =over 4
 
-=item Purpose
+=item * Purpose
 
 When F<tools/build/ops2pm.pl> is called by F<make>, this method 
-checks [## what? ] strictly against F<src/ops/ops.num> and renumbers as
+checks the number of ops strictly against F<src/ops/ops.num> and renumbers as
 needed.
 
-=item Arguments
+=item * Arguments
 
 None.  (Implicitly requires that the C<argv> and C<script> keys
 have been provided to the constructor and that the C<renum> key not have a
 true value -- which will be the case when the C<--renum> option is I<not>
 provided to F<tools/build/ops2pm.pl>.)
 
-=item Return Value
+=item * Return Value
 
- Returns true value upon success.  Internally, sets these
+Returns true value upon success.  Internally, sets these
 values in these elements in the object's data structure:  C<max_op_num>, 
 C<skiptable> and C<optable>.
 
-=item Comments
+=item * Comments
 
 This is the default case, I<i.e.,> the case that prevails when
 F<tools/build/ops2pm.pl> is I<not> called with the C<--renum> flag.  In
@@ -352,22 +361,22 @@ sub load_op_map_files {
 
 =over 4
 
-=item Purpose
+=item * Purpose
 
 Internal manipulation of the Parrot::Ops2pm::Utils object:
 sorting by number of the list of op codes found in the object's
-C<{ops}->{OPS}> element.
+C<{ops}-E<gt>{OPS}> element.
 
-=item Arguments
+=item * Arguments
 
 None.
 
-=item Return Value
+=item * Return Value
 
 None.  Internally, sets the C<ops> key of the object's data
 structure.
 
-=item Comment
+=item * Comment
 
 Will emit warnings under these circumstances:
 
@@ -408,19 +417,21 @@ sub sort_ops {
 
 =over 4
 
-=item Purpose
+=item * Purpose
 
-=item Arguments
+Final stage of preparation of ops.
+
+=item * Arguments
 
 None.  (Same implicit requirements for the constructor as
 C<load_op_map_files()> above.)
 
-=item Return Value
+=item * Return Value
 
 None.  Internally, sets the C<real_ops> key of the object's 
 data structure.
 
-=item Comment
+=item * Comment
 
 =back
 
@@ -455,21 +466,23 @@ sub prepare_real_ops {
 
 =over 4
 
-=item Purpose
+=item * Purpose
 
 Uses information in the object's data structure -- principally
 the C<real_ops> element -- to create F<lib/Parrot/OpLib/core.pm>.
 
-=item Arguments
+=item * Arguments
 
 None.  (Implicitly requires that the constructor have the
 following keys defined:  C<argv>, C<script>, C<moddir> and C<module>.)
 
-=item Return Value
+=item * Return Value
 
 Returns true value upon success.
 
-=item Comment
+=item * Comment
+
+=back
 
 =cut
 
@@ -544,21 +557,21 @@ END_C
 
 =over 4
 
-=item Purpose
+=item * Purpose
 
 Uses information in the object's data structure -- principally
 the C<real_ops> key -- to create F<include/parrot/oplib/ops.h>.
 
-=item Arguments
+=item * Arguments
 
 None.  (Implicitly requires that the constructor have the
 following keys defined:  C<argv>, C<script>, C<inc_dir> and C<inc_f>.)
 
-=item Return Value
+=item * Return Value
 
 Returns true value upon success.
 
-=item Comment
+=item * Comment
 
 =back
 
@@ -622,6 +635,65 @@ END_C
     close $OUT;
     return 1;
 }
+
+=head1 NOTE ON TESTING
+
+A suite of test files to accompany this package is found in
+F<t/tools/ops2pmutils>.  This suite has been developed to maximize its
+coverage of the code of Parrot::Ops2pm::Utils (as measured by Perl module
+Devel::Cover).  Should you wish to refactor this package, it is recommended
+that you do so in a B<test-driven> manner:
+
+=over 4
+
+=item 1
+
+Write the specification for any additions or modifications to
+Parrot::Ops2pm::Utils' interface.
+
+=item 2
+
+Write tests that reflect any such modifications.
+
+=item 3
+
+Write the additional or modified code that reflects the new specification.
+
+=item 4
+
+Test the new code and debug.  The tests in the suite should be run B<after>
+Parrot's F<Configure.pl> has run but B<before> F<make> has run.  Example:
+
+    $> perl Configure.pl
+    $> prove -v t/tools/ops2pmutils/*.t
+    $> make
+
+=item 5
+
+Use Devel::Cover to measure the extent to which the existing and new tests
+cover the existing and revised code.
+
+=item 6
+
+Refactor and retest to ensure high test coverage.
+
+=back
+
+This package's methods are called by F<tools/build/ops2pm.pl>, which in turn
+is invoked by F<make> in the Parrot build process.  Successful execution of
+F<make> proves that the functionality in this package achieved its overall
+objective but does not necessarily invoke many of the individual code
+statements in the package.  That is the rationale for the component-focused
+testing provided by the test suite.
+
+=head1 AUTHOR
+
+See F<tools/build/ops2pm.pl> for a list of the Parrot hackers who, over a
+period of several years, developed the functionality now found in the methods
+of Parrot::Ops2pm::Utils.  Jim Keenan extracted that functionality and placed
+it in this package's methods.
+
+=cut
 
 1;
 

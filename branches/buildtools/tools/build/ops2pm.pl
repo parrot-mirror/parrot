@@ -59,7 +59,8 @@ F<Parrot::OpLib::core> module containing information about the ops.
 Also outputs F<include/parrot/oplib/ops.h>.  This program is called by Parrot's
 F<make>.
 
-If called with the C<--renum> flag, ...
+If called with the C<--renum> flag, checks the numbering of ops against
+F<src/opts/opts.num>.
 
 =head1 OPTIONS
 
@@ -125,10 +126,37 @@ modified so that it doesn't need to concatenate separate ops files.
 
 =item F<lib/Parrot/Ops2pm/Auxiliary.pm>.
 
+=item F<tools/dev/ops_renum.mak>.
+
 =back
 
 =head1 AUTHOR
 
+Over the years, F<tools/build/ops2pm.pl> has been worked on by the following Parrot hackers:
+
+  bernhard
+  brentdax
+  chip
+  chromatic
+  coke
+  dan
+  gregor
+  jkeenan
+  leo
+  mikescott
+  particle
+  paultcochrane
+  petdance
+  robert
+  simon
+  tewk
+
+Others who provided code cited in the version control logs include:
+
+  Andy Dougherty
+  Jeff Gof
+  Steve Fink
+  
 =cut
 
 # Local Variables:
