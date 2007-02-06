@@ -63,8 +63,16 @@ Parse successful!
 OUT
 
 language_output_is( 'PIR_PGE', <<'CODE', <<'OUT', 'outer flag' );
+
+.sub outer_sub
+.end
+
+.sub bar :outer(outer_sub)
+.end
+
 .sub main :outer('outer_sub')
 .end
+
 CODE
 "parse" => PMC 'PIRGrammar' { ... }
 Parse successful!
@@ -176,7 +184,12 @@ CODE
 Parse successful!
 OUT
 
-
+	.param int i                    # positional parameter
+  .param pmc argv :slurpy         # slurpy array
+  .param pmc value :named('key')  # named parameter
+  .param int x :optional          # optional parameter
+  .param int has_x :opt_flag      # flag 0/1 x was passed
+  .param pmc kw :slurpy :named    # slurpy hash
 language_output_is( 'PIR_PGE', <<'CODE', <<'OUT', 'wrap flag -- new!' );
 
 # This test makes sure pir.pbc is running, not IMCC, as :wrap is still unimplemented and undecided.
