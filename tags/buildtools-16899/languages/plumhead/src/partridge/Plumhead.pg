@@ -1,0 +1,40 @@
+# $Id$
+
+grammar Plumhead::Grammar;
+
+# a PHP grammar
+# derived from on languages/abc/abc.pg
+
+token TOP         { <program> }
+
+regex SEA                     { .* <?before: \<> }
+token CODE_START              { \< \? p h p }
+token CODE_END                { \? \> }
+token DOUBLEQUOTE_STRING      { " <-["]>* " }
+token SINGLEQUOTE_STRING      { ' <-[']>* ' }
+token ECHO                    { e c h o }
+
+token NUMBER                  { \d+ }
+
+token MINUS                   { \- }
+token PLUS                    { \+ }
+token MUL_OP                  { \* | / | % }
+
+token program     { ^ <SEA> <code> }
+
+rule  code        { <?CODE_START> <statement>* <?CODE_END> }
+
+rule statement    { <ECHO> <expression> ; }
+
+token expression  { <DOUBLEQUOTE_STRING> | <SINGLEQUOTE_STRING> | <adding_expression> }
+
+rule adding_expression { <multiplying_expression> <summand>? }
+
+rule summand           { <?PLUS> <adding_expression> }
+
+rule multiplying_expression  { <unary_expression> ( <MUL_OP> <unary_expression> )* }
+
+rule unary_expression { <MINUS>? <postfix_expression> }
+
+rule postfix_expression { <NUMBER> }
+
