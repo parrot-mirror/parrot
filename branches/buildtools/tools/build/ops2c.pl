@@ -1,121 +1,18 @@
 #! perl
 # Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
-
-=head1 NAME
-
-tools/build/ops2c.pl - Parser for .ops files
-
-=head1 SYNOPSIS
-
-    % perl tools/build/ops2c.pl trans [--help] [--no-lines] [--dynamic]
-                                      [--core | input.ops [input2.ops ...]]
-       trans := C | CGoto | CGP | CSwitch | CPrederef
-
-For example:
-
-    % perl tools/build/ops2c.pl C --core
-
-    % perl tools/build/ops2c.pl C --dynamic myops.ops
-
-=head1 DESCRIPTION
-
-This script uses a supplied transform to create a pair of C header and
-implementation files from the operation definitions found in one or more
-F<*.ops> files.
-
-=head2 Transforms
-
-The first command-line argument is the last package name component of a
-subclass of C<Parrot::OpTrans>. These subclasses all have full names of
-the form C<Parrot::OpTrans::*>. An instance of the class is created and
-later consulted for various bits of information needed to generate the C
-code. Each creates a different type of run loop.
-
-=over
-
-=item C<C>
-
-Create the function-based (slow or fast core) run loop.
-
-=item C<CGoto>
-
-Create the C<goto> run loop.
-
-=item C<CGP>
-
-Create the C<goto> and predereferenced run loop.
-
-=item C<CSwitch>
-
-Create the C<switch>ed and predereferenced run loop.
-
-=item C<CPrederef>
-
-Create the predereferenced run loop.
-
-=back
-
-=head2 Options
-
-=over 4
-
-=item C<--help>
-
-Print synopsis.
-
-=item C<--dynamic>
-
-Indicate that the opcode library is dynamic.
-
-=item C<--core>
-
-Build the Parrot core opcode library.
-
-=item C<--no-lines>
-
-Do not generate C<#line> directives in the generated C code.
-
-=back
-
-=head1 SEE ALSO
-
-=over 4
-
-=item F<tools/build/ops2pm.pl>
-
-=item C<Parrot::OpsFile>
-
-=item C<Parrot::Op>
-
-=item C<Parrot::OpTrans>
-
-=item C<Parrot::OpTrans::C>
-
-=item C<Parrot::OpTrans::CGoto>
-
-=item C<Parrot::OpTrans::Compiled>
-
-=item C<Parrot::OpTrans::CGP>
-
-=item C<Parrot::OpTrans::CSwitch>
-
-=item C<Parrot::OpTrans::CPrederef>
-
-=back
-
-=cut
-
 use warnings;
 use strict;
 use lib 'lib';
 
-use Pod::Usage;
+# use Pod::Usage;
 use Getopt::Long qw(:config permute);
+use Data::Dumper;
 
 use Parrot::OpsFile;
 use Parrot::OpLib::core;
 use Parrot::Config;
+use Parrot::Ops2c::Auxiliary qw( Usage getoptions );
 
 my %arg_dir_mapping = (
     ''   => 'PARROT_ARGDIR_IGNORED',
@@ -127,41 +24,37 @@ my %arg_dir_mapping = (
 #
 # Look at the command line options
 #
-sub Usage {
-    return pod2usage( -exitval => 1, -verbose => 0, -output => \*STDERR );
-}
+#sub Usage {
+#    return pod2usage( -exitval => 1, -verbose => 0, -output => \*STDERR );
+#}
 
-my ( $nolines_flag, $help_flag, $dynamic_flag, $core_flag );
-GetOptions(
-    "no-lines"  => \$nolines_flag,
-    "help"      => \$help_flag,
-    "dynamic|d" => \$dynamic_flag,
-    "core"      => \$core_flag,
-) || Usage();
+#my ( $nolines_flag, $help_flag, $dynamic_flag, $core_flag );
+#GetOptions(
+#    "no-lines"  => \$nolines_flag,
+#    "help"      => \$help_flag,
+#    "dynamic|d" => \$dynamic_flag,
+#    "core"      => \$core_flag,
+#) || Usage();
 
-Usage() if $help_flag;
+my $flagref = getoptions() || Usage();
+
+#Usage() if $help_flag;
+Usage() if $flagref->{help};
 Usage() unless @ARGV;
 
 my $class_name = shift @ARGV;
 my %is_allowed = map { $_ => 1 } qw(C CGoto CGP CSwitch CPrederef);
 Usage() unless $is_allowed{$class_name};
+
 my $trans_class = "Parrot::OpTrans::" . $class_name;
-
 eval "require $trans_class";
+my $trans           = $trans_class->new();
+my $suffix          = $trans->suffix();     # Invoked (sometimes) as ${suffix}
+#my $defines         = $trans->defines();    # Invoked as:  ${defines}
+#my $opsarraytype    = $trans->opsarraytype();
+#my $core_type       = $trans->core_type();
 
-my $trans = $trans_class->new();
-
-# Not used
-my $prefix = $trans->prefix();
-my $suffix = $trans->suffix();
-
-# Used as ${defines}
-my $defines      = $trans->defines();
-my $opsarraytype = $trans->opsarraytype();
-my $core_type    = $trans->core_type();
-
-my $file = $core_flag ? 'core.ops' : shift @ARGV;
-
+my $file = $flagref->{core} ? 'core.ops' : shift @ARGV;
 my $base = $file;
 $base =~ s/\.ops$//;
 
@@ -173,25 +66,20 @@ my $header  = "include/$include";
 # create a temp file and rename it
 my $source = "src/ops/${base}_ops${suffix}.c.temp";
 
-if ( $base =~ m!^src/dynoplibs/! || $dynamic_flag ) {
-    $source =~ s!src/ops/!!;
-    $header = "${base}_ops${suffix}.h";
-    $base =~ s!^.*[/\\]!!;
-    $include      = "${base}_ops${suffix}.h";
-    $dynamic_flag = 1;
+if ( $base =~ m!^src/dynoplibs/! || $flagref->{dynamic} ) {
+    $source             =~ s!src/ops/!!;
+    $header             = "${base}_ops${suffix}.h";
+    $base               =~ s!^.*[/\\]!!;
+    $include            = "${base}_ops${suffix}.h";
+    $flagref->{dynamic} = 1;
 }
 
-my $sym_export = $dynamic_flag ? 'PARROT_DYNEXT_EXPORT' : 'PARROT_API';
+my $sym_export = $flagref->{dynamic} ? 'PARROT_DYNEXT_EXPORT' : 'PARROT_API';
 
-my %hashed_ops;
-
-#
 # Read the input files:
-#
-
 my $ops;
-if ($core_flag) {
-    $ops = Parrot::OpsFile->new( ["src/ops/$file"], $nolines_flag );
+if ($flagref->{core}) {
+    $ops = Parrot::OpsFile->new( ["src/ops/$file"], $flagref->{nolines} );
     $ops->{OPS}      = $Parrot::OpLib::core::ops;
     $ops->{PREAMBLE} = $Parrot::OpLib::core::preamble;
 }
@@ -211,7 +99,7 @@ else {
         die "$0: Could not read ops file '$opsfile'!\n" unless -r $opsfile;
     }
 
-    $ops = Parrot::OpsFile->new( \@opsfiles, $nolines_flag );
+    $ops = Parrot::OpsFile->new( \@opsfiles, $flagref->{nolines} );
 
     my $cur_code = 0;
     for ( @{ $ops->{OPS} } ) {
@@ -219,7 +107,7 @@ else {
     }
 }
 
-my $version       = $ops->version;
+# my $version       = $ops->version;
 my $major_version = $ops->major_version;
 my $minor_version = $ops->minor_version;
 my $patch_version = $ops->patch_version;
@@ -230,38 +118,41 @@ my $num_entries   = $num_ops + 1;          # For trailing NULL
 # Open the output files:
 #
 
-if ( !$dynamic_flag && !-d $incdir ) {
+if ( !$flagref->{dynamic} && !-d $incdir ) {
     mkdir( $incdir, 0755 ) or die "ops2c.pl: Could not mkdir $incdir $!!\n";
 }
 
-open my $HEADER, '>', $header
-    or die "ops2c.pl: Cannot open header file '$header' for writing: $!!\n";
+#open my $HEADER, '>', $header
+#    or die "ops2c.pl: Cannot open header file '$header' for writing: $!!\n";
 
-open my $SOURCE, '>', $source
-    or die "ops2c.pl: Cannot open source file '$source' for writing: $!!\n";
+#open my $SOURCE, '>', $source
+#    or die "ops2c.pl: Cannot open source file '$source' for writing: $!!\n";
 
+
+#my $preamble = <<END_C;
+#/* ex: set ro:
+# * !!!!!!!   DO NOT EDIT THIS FILE   !!!!!!!
+# *
+# * This file is generated automatically from '$file' (and possibly other
+# * .ops files). by $0.
+# *
+# * Any changes made here will be lost!
+# *
+# */
 #
-# Print the preamble for the HEADER and SOURCE files:
-#
+#END_C
 
-my $preamble = <<END_C;
-/* ex: set ro:
- * !!!!!!!   DO NOT EDIT THIS FILE   !!!!!!!
- *
- * This file is generated automatically from '$file' (and possibly other
- * .ops files). by $0.
- *
- * Any changes made here will be lost!
- *
- */
-
-END_C
+my $preamble = _compose_preamble($file, $0);
 
 my $mmp_v     = "${major_version}_${minor_version}_${patch_version}";
 my $init_func = "Parrot_DynOp_${base}${suffix}_$mmp_v";
 
+open my $HEADER, '>', $header
+    or die "ops2c.pl: Cannot open header file '$header' for writing: $!!\n";
+
+# Print the preamble for the HEADER file:
 print $HEADER $preamble;
-if ($dynamic_flag) {
+if ($flagref->{dynamic}) {
     print $HEADER "#define PARROT_IN_EXTENSION\n";
 }
 print $HEADER <<END_C;
@@ -280,16 +171,30 @@ if ( $trans->can("run_core_func_decl") ) {
 my $bs = "${base}${suffix}_";
 
 # append the C code coda
-print $HEADER <<END_C;
+#print $HEADER <<END_C;
+#
+#/*
+# * Local variables:
+# *   c-file-style: "parrot"
+# * End:
+# * vim: expandtab shiftwidth=4:
+# */
+#END_C
 
-/*
- * Local variables:
- *   c-file-style: "parrot"
- * End:
- * vim: expandtab shiftwidth=4:
- */
-END_C
+_print_coda($HEADER);
 
+close $HEADER or die "Unable to close handle to $header: $!";
+##### END printing to $HEADER #####
+
+my $defines         = $trans->defines();    # Invoked as:  ${defines}
+my $opsarraytype    = $trans->opsarraytype();
+my $core_type       = $trans->core_type();
+
+##### BEGIN printing to $SOURCE #####
+open my $SOURCE, '>', $source
+    or die "ops2c.pl: Cannot open source file '$source' for writing: $!!\n";
+
+# Print the preamble for the SOURCE file:
 print $SOURCE $preamble;
 print $SOURCE <<END_C;
 #include "$include"
@@ -433,7 +338,7 @@ while (<$SOURCE>) { $line++; }
 $line += 2;
 close($SOURCE);
 open( $SOURCE, '>>', $source ) || die "Error appending to $source: $!\n";
-unless ($nolines_flag) {
+unless ($flagref->{nolines}) {
     my $source_escaped = $source;
     $source_escaped =~ s|\.temp||;
     $source_escaped =~ s|(\\)|$1$1|g;    # escape backslashes
@@ -544,7 +449,7 @@ END_C
 END_C
 }
 
-if ( $suffix eq '' && !$dynamic_flag ) {
+if ( $suffix eq '' && !$flagref->{dynamic} ) {
     $getop = 'get_op';
     my $hash_size = 3041;
     $tot = $index + scalar keys(%names);
@@ -718,7 +623,7 @@ $init_set_dispatch
 
 END_C
 
-if ($dynamic_flag) {
+if ($flagref->{dynamic}) {
     my $load_func = "Parrot_lib_${base}_ops${suffix}_load";
     print $SOURCE <<END_C;
 /*
@@ -738,7 +643,50 @@ END_C
 }
 
 # append the C code coda
-print $SOURCE <<END_C;
+#print $SOURCE <<END_C;
+#
+#/*
+# * Local variables:
+# *   c-file-style: "parrot"
+# * End:
+# * vim: expandtab shiftwidth=4:
+# */
+#END_C
+
+_print_coda($SOURCE);
+
+close $SOURCE or die "Unable to close handle to $source: $!";
+##### END printing to $SOURCE #####
+
+my $final = $source;
+$final =~ s/\.temp//;
+rename $source, $final;
+
+exit 0;
+
+
+#################### SUBROUTINES ####################
+
+sub _compose_preamble {
+    my ($file, $script) = @_;
+    my $preamble = <<END_C;
+/* ex: set ro:
+ * !!!!!!!   DO NOT EDIT THIS FILE   !!!!!!!
+ *
+ * This file is generated automatically from '$file' (and possibly other
+ * .ops files). by $script.
+ *
+ * Any changes made here will be lost!
+ *
+ */
+
+END_C
+    return $preamble;
+}
+
+sub _print_coda {
+    my $fh = shift;
+    print $fh <<END_C;
 
 /*
  * Local variables:
@@ -747,13 +695,113 @@ print $SOURCE <<END_C;
  * vim: expandtab shiftwidth=4:
  */
 END_C
+}
 
-close $SOURCE;
-my $final = $source;
-$final =~ s/\.temp//;
-rename $source, $final;
+#################### DOCUMENTATION ####################
 
-exit 0;
+=head1 NAME
+
+tools/build/ops2c.pl - Parser for .ops files
+
+=head1 SYNOPSIS
+
+    % perl tools/build/ops2c.pl trans [--help] [--no-lines] [--dynamic]
+                                      [--core | input.ops [input2.ops ...]]
+       trans := C | CGoto | CGP | CSwitch | CPrederef
+
+For example:
+
+    % perl tools/build/ops2c.pl C --core
+
+    % perl tools/build/ops2c.pl C --dynamic myops.ops
+
+=head1 DESCRIPTION
+
+This script uses a supplied transform to create a pair of C header and
+implementation files from the operation definitions found in one or more
+F<*.ops> files.
+
+=head2 Transforms
+
+The first command-line argument is the last package name component of a
+subclass of C<Parrot::OpTrans>. These subclasses all have full names of
+the form C<Parrot::OpTrans::*>. An instance of the class is created and
+later consulted for various bits of information needed to generate the C
+code. Each creates a different type of run loop.
+
+=over
+
+=item C<C>
+
+Create the function-based (slow or fast core) run loop.
+
+=item C<CGoto>
+
+Create the C<goto> run loop.
+
+=item C<CGP>
+
+Create the C<goto> and predereferenced run loop.
+
+=item C<CSwitch>
+
+Create the C<switch>ed and predereferenced run loop.
+
+=item C<CPrederef>
+
+Create the predereferenced run loop.
+
+=back
+
+=head2 Options
+
+=over 4
+
+=item C<--help>
+
+Print synopsis.
+
+=item C<--dynamic>
+
+Indicate that the opcode library is dynamic.
+
+=item C<--core>
+
+Build the Parrot core opcode library.
+
+=item C<--no-lines>
+
+Do not generate C<#line> directives in the generated C code.
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item F<tools/build/ops2pm.pl>
+
+=item C<Parrot::OpsFile>
+
+=item C<Parrot::Op>
+
+=item C<Parrot::OpTrans>
+
+=item C<Parrot::OpTrans::C>
+
+=item C<Parrot::OpTrans::CGoto>
+
+=item C<Parrot::OpTrans::Compiled>
+
+=item C<Parrot::OpTrans::CGP>
+
+=item C<Parrot::OpTrans::CSwitch>
+
+=item C<Parrot::OpTrans::CPrederef>
+
+=back
+
+=cut
 
 # Local Variables:
 #   mode: cperl
