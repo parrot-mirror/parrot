@@ -5,7 +5,6 @@ use warnings;
 use strict;
 use lib 'lib';
 
-# use Pod::Usage;
 use Getopt::Long qw(:config permute);
 use Data::Dumper;
 
@@ -24,27 +23,23 @@ my %arg_dir_mapping = (
 #
 # Look at the command line options
 #
-#sub Usage {
-#    return pod2usage( -exitval => 1, -verbose => 0, -output => \*STDERR );
-#}
+my $flagref = getoptions();
 
-#my ( $nolines_flag, $help_flag, $dynamic_flag, $core_flag );
-#GetOptions(
-#    "no-lines"  => \$nolines_flag,
-#    "help"      => \$help_flag,
-#    "dynamic|d" => \$dynamic_flag,
-#    "core"      => \$core_flag,
-#) || Usage();
-
-my $flagref = getoptions() || Usage();
-
-#Usage() if $help_flag;
-Usage() if $flagref->{help};
-Usage() unless @ARGV;
+if (
+        (not defined $flagref) or 
+        $flagref->{help} or
+        (not @ARGV)
+    ) {
+        Usage();
+        exit 1;
+}
 
 my $class_name = shift @ARGV;
 my %is_allowed = map { $_ => 1 } qw(C CGoto CGP CSwitch CPrederef);
-Usage() unless $is_allowed{$class_name};
+unless ($is_allowed{$class_name}) {
+    Usage();
+    exit 1;
+}
 
 my $trans_class = "Parrot::OpTrans::" . $class_name;
 eval "require $trans_class";

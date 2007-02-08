@@ -7,17 +7,22 @@ use vars qw(@ISA @EXPORT_OK);
 @ISA = qw( Exporter );
 @EXPORT_OK = qw( Usage getoptions );
 use Getopt::Long qw(:config permute);
-use Pod::Usage;
-
-#sub Usage {
-#    print STDERR <<_EOF_;
-#usage: tools/build/ops2pm.pl [--help] [--no-lines] input.ops [input2.ops ...]
-#_EOF_
-#    return 1;
-#}
 
 sub Usage {
-    return pod2usage( -exitval => 1, -verbose => 0, -output => \*STDERR );
+    my $usage_msg = <<USAGE;
+    % perl tools/build/ops2c.pl trans [--help] [--no-lines] [--dynamic]
+                                      [--core | input.ops [input2.ops ...]]
+       trans := C | CGoto | CGP | CSwitch | CPrederef
+
+For example:
+
+    % perl tools/build/ops2c.pl C --core
+
+    % perl tools/build/ops2c.pl C --dynamic myops.ops
+
+USAGE
+    print STDERR $usage_msg;
+    return 1;
 }
 
 sub getoptions {
