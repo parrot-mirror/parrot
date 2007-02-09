@@ -13,13 +13,6 @@ use Parrot::OpLib::core;
 use Parrot::Config;
 use Parrot::Ops2c::Auxiliary qw( Usage getoptions );
 
-my %arg_dir_mapping = (
-    ''   => 'PARROT_ARGDIR_IGNORED',
-    'i'  => 'PARROT_ARGDIR_IN',
-    'o'  => 'PARROT_ARGDIR_OUT',
-    'io' => 'PARROT_ARGDIR_INOUT'
-);
-
 #
 # Look at the command line options
 #
@@ -45,9 +38,6 @@ my $trans_class = "Parrot::OpTrans::" . $class_name;
 eval "require $trans_class";
 my $trans           = $trans_class->new();
 my $suffix          = $trans->suffix();     # Invoked (sometimes) as ${suffix}
-#my $defines         = $trans->defines();    # Invoked as:  ${defines}
-#my $opsarraytype    = $trans->opsarraytype();
-#my $core_type       = $trans->core_type();
 
 my $file = $flagref->{core} ? 'core.ops' : shift @ARGV;
 my $base = $file;
@@ -102,7 +92,6 @@ else {
     }
 }
 
-# my $version       = $ops->version;
 my $major_version = $ops->major_version;
 my $minor_version = $ops->minor_version;
 my $patch_version = $ops->patch_version;
@@ -119,8 +108,6 @@ if ( !$flagref->{dynamic} && !-d $incdir ) {
 
 my $preamble = _compose_preamble($file, $0);
 
-#my $mmp_v     = "${major_version}_${minor_version}_${patch_version}";
-#my $init_func = "Parrot_DynOp_${base}${suffix}_$mmp_v";
 my $init_func = join q{_}, (
     q{Parrot},
     q{DynOp},
@@ -162,6 +149,12 @@ close $HEADER or die "Unable to close handle to $header: $!";
 my $defines         = $trans->defines();    # Invoked as:  ${defines}
 my $opsarraytype    = $trans->opsarraytype();
 my $core_type       = $trans->core_type();
+my %arg_dir_mapping = (
+    ''   => 'PARROT_ARGDIR_IGNORED',
+    'i'  => 'PARROT_ARGDIR_IN',
+    'o'  => 'PARROT_ARGDIR_OUT',
+    'io' => 'PARROT_ARGDIR_INOUT'
+);
 
 ##### BEGIN printing to $SOURCE #####
 open my $SOURCE, '>', $source
@@ -596,38 +589,55 @@ $init_set_dispatch
 
 END_C
 
-if ($flagref->{dynamic}) {
-    my $load_func = "Parrot_lib_${base}_ops${suffix}_load";
-    print $SOURCE <<END_C;
-/*
- * dynamic lib load function - called once
- */
-
-$sym_export PMC*
-$load_func(Parrot_Interp interp)
-{
-    PMC *lib = pmc_new(interp, enum_class_ParrotLibrary);
-    PMC_struct_val(lib) = (void *) $init_func;
-    dynop_register(interp, lib);
-    return lib;
-}
-END_C
-
-}
+_print_dynamic_lib_load( {
+    flag            => $flagref,
+    base            => $base,
+    suffix          => $suffix,
+    source          => $SOURCE,
+    sym_export      => $sym_export,
+    init_func       => $init_func,
+} );
 
 _print_coda($SOURCE);
 
 close $SOURCE or die "Unable to close handle to $source: $!";
 ##### END printing to $SOURCE #####
 
-my $final = $source;
-$final =~ s/\.temp//;
-rename $source, $final;
+
+_rename_source($source);
 
 exit 0;
 
 
 #################### SUBROUTINES ####################
+
+sub _print_dynamic_lib_load {
+    my $argsref = shift;
+    my $fh = $argsref->{source};
+    if ($argsref->{flag}->{dynamic}) {
+        my $load_func = join q{_}, (
+            q{Parrot},
+            q{lib},
+            $argsref->{base},
+            (q{ops} . $argsref->{suffix}),
+            q{load},
+        );
+        print $fh <<END_C;
+/*
+ * dynamic lib load function - called once
+ */
+
+$argsref->{sym_export} PMC*
+$load_func(Parrot_Interp interp)
+{
+    PMC *lib = pmc_new(interp, enum_class_ParrotLibrary);
+    PMC_struct_val(lib) = (void *) $argsref->{init_func};
+    dynop_register(interp, lib);
+    return lib;
+}
+END_C
+    }
+}
 
 sub _compose_preamble {
     my ($file, $script) = @_;
@@ -657,6 +667,13 @@ sub _print_coda {
  * vim: expandtab shiftwidth=4:
  */
 END_C
+}
+
+sub _rename_source {
+    my $source = shift;
+    my $final = $source;
+    $final =~ s/\.temp//;
+    rename $source, $final or die "Unable to rename $source to $final: $!";
 }
 
 #################### DOCUMENTATION ####################
