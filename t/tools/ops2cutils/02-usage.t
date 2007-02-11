@@ -105,7 +105,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-02-usage.t - test C<Parrot::Ops2c::Utils::Usage()>
+02-usage.t - test C<Parrot::Ops2c::Auxiliary::Usage()> and <getoptions()>
 
 =head1 SYNOPSIS
 
