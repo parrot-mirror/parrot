@@ -129,12 +129,6 @@ close $HEADER or die "Unable to close handle to $header: $!";
 my $defines         = $trans->defines();    # Invoked as:  ${defines}
 my $bs = "${base}${suffix}_";   # Also invoked as ${bs}
 my $opsarraytype    = $trans->opsarraytype();
-my %arg_dir_mapping = (
-    ''   => 'PARROT_ARGDIR_IGNORED',
-    'i'  => 'PARROT_ARGDIR_IN',
-    'o'  => 'PARROT_ARGDIR_OUT',
-    'io' => 'PARROT_ARGDIR_INOUT'
-);
 
 ##### BEGIN printing to $SOURCE #####
 open my $SOURCE, '>', $source
@@ -602,6 +596,12 @@ sub _op_info_table {
     my $argsref = shift;
     my $fh = $argsref->{fh};
     my %names = %{$argsref->{names}};
+    my %arg_dir_mapping = (
+        ''   => 'PARROT_ARGDIR_IGNORED',
+        'i'  => 'PARROT_ARGDIR_IN',
+        'o'  => 'PARROT_ARGDIR_OUT',
+        'io' => 'PARROT_ARGDIR_INOUT'
+    );
 
     if ( $argsref->{suffix} eq '' ) {
         $argsref->{op_info} = "$argsref->{bs}op_info_table";
