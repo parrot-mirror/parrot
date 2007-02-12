@@ -77,7 +77,6 @@ sub new {
     else {
         $ops = _prepare_non_core( {
             file        => $file,
-#            argv        => [ @ARGV ],
             argv        => [ @argv ],
             flag        => $flagref,
         } );
