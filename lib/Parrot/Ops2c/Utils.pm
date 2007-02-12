@@ -2,11 +2,6 @@
 # $Id: Utils.pm 16894 2007-02-04 22:54:29Z jkeenan $
 package Parrot::Ops2c::Utils;
 use strict;
-#use warnings;
-#use Cwd;
-#use Data::Dumper;
-#use File::Path ();
-#use File::Spec;
 use lib ("lib/");
 use Parrot::OpLib::core;
 use Parrot::OpsFile;
