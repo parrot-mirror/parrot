@@ -187,13 +187,9 @@ sub print_c_header_file {
 
     $self->_print_preamble_header($HEADER);
 
-    _print_run_core_func_decl_header( {
-        trans   => $self->{trans},
-        fh      => $HEADER,
-        base    => $self->{base},
-    } );
+    $self->_print_run_core_func_decl_header($HEADER);
 
-    _print_coda($HEADER);
+    $self->_print_coda($HEADER);
 
     close $HEADER or die "Unable to close handle to $self->{header}: $!";
     (-e $self->{header}) or die "$self->{header} not created: $!";
@@ -218,11 +214,10 @@ END_C
 }
 
 sub _print_run_core_func_decl_header {
-    my $argsref = shift;
-    if ( $argsref->{trans}->can("run_core_func_decl") ) {
+    my ($self, $fh) = @_;
+    if ( $self->{trans}->can("run_core_func_decl") ) {
         my $run_core_func = 
-            $argsref->{trans}->run_core_func_decl($argsref->{base});
-        my $fh = $argsref->{fh};
+            $self->{trans}->run_core_func_decl($self->{base});
         print $fh "$run_core_func;\n";
     } else {
         return;
@@ -230,7 +225,7 @@ sub _print_run_core_func_decl_header {
 }
 
 sub _print_coda {
-    my $fh = shift;
+    my ($self, $fh) = @_;
     print $fh <<END_C;
 
 /*
