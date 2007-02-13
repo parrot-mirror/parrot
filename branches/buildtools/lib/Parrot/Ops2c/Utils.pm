@@ -185,13 +185,7 @@ sub print_c_header_file {
     open my $HEADER, '>', $self->{header}
         or die "ops2c.pl: Cannot open header file '$self->{header}' for writing: $!!\n";
 
-    _print_preamble_header( {
-        fh          => $HEADER,
-        preamble    => $self->{preamble},
-        flag        => $self->{flag},
-        sym_export  => $self->{sym_export},
-        init_func   => $self->{init_func},
-    } );
+    $self->_print_preamble_header($HEADER);
 
     _print_run_core_func_decl_header( {
         trans   => $self->{trans},
@@ -208,18 +202,17 @@ sub print_c_header_file {
 }
 
 sub _print_preamble_header {
-    my $argsref = shift;
-    my $fh = $argsref->{fh};
+    my ($self, $fh) = @_;
 
-    print $fh $argsref->{preamble};
-    if ($argsref->{flag}->{dynamic}) {
+    print $fh $self->{preamble};
+    if ($self->{flag}->{dynamic}) {
         print $fh "#define PARROT_IN_EXTENSION\n";
     }
     print $fh <<END_C;
 #include "parrot/parrot.h"
 #include "parrot/oplib.h"
 
-$argsref->{sym_export} extern op_lib_t *$argsref->{init_func}(long init);
+$self->{sym_export} extern op_lib_t *$self->{init_func}(long init);
 
 END_C
 }
