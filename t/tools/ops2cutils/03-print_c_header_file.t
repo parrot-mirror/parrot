@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2006, The Perl Foundation.
-# $Id$
-# 01-new.t
+# $Id: 03-print_c_header_file.t 16948 2007-02-12 03:58:24Z jkeenan $
+# 03-print_c_header_file.t
 
 use strict;
 use warnings;
@@ -17,7 +17,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests =>  20;
+use Test::More tests =>  26;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -50,43 +50,12 @@ my ($msg, $tie);
     unshift @INC, $tlib;
     require Parrot::Ops2c::Utils;
 
-    {
-        local @ARGV = qw();
-        $tie = tie *STDERR, "Capture" or croak "Unable to tie";
-        my $self = Parrot::Ops2c::Utils->new( {
-            argv            => [ @ARGV ],
-            flag            => {},
-        } );
-        $msg = $tie->READLINE;
-        untie *STDERR or croak "Unable to untie";
-        ok(! defined $self, 
-            "Constructor correctly returned undef due to lack of command-line arguments");
-        like($msg,
-            qr/^Parrot::Ops2c::Utils::new\(\) requires 'trans' options/,
-            "Error message is correct");
-    }
     
-    {
-        local @ARGV = qw( gobbledygook );
-        $tie = tie *STDERR, "Capture" or croak "Unable to tie";
-        my $self = Parrot::Ops2c::Utils->new( {
-            argv            => [ @ARGV ],
-            flag            => {},
-        } );
-        $msg = $tie->READLINE;
-        untie *STDERR or croak "Unable to untie";
-        ok(! defined $self, 
-            "Constructor correctly returned undef due to bad class name command-line argument");
-        like($msg,
-            qr/Parrot::Ops2c::Utils::new\(\) requires C, CGoto, CGP, CSwitch and\/or  CPrederef/,
-            "Got correct error message");
-    }
-    
-    test_single_trans(q{C});
-    test_single_trans(q{CGoto});
-    test_single_trans(q{CGP});
-    test_single_trans(q{CSwitch});
-    test_single_trans(q{CPrederef});
+    test_single_trans_and_header(q{C});
+    test_single_trans_and_header(q{CGoto});
+    test_single_trans_and_header(q{CGP});
+    test_single_trans_and_header(q{CSwitch});
+    test_single_trans_and_header(q{CPrederef});
 
     {
         local @ARGV = qw( C CGoto CGP CSwitch CPrederef );
@@ -96,30 +65,18 @@ my ($msg, $tie);
         } );
         ok(defined $self, 
             "Constructor correctly returned when provided >= 1 arguments");
+        my $c_header_file = $self->print_c_header_file();
+        ok(-e $c_header_file, "$c_header_file created");
+        ok(-s $c_header_file, "$c_header_file has non-zero size");
     }
 
-    {
-        local @ARGV = qw( C );
-        $tie = tie *STDERR, "Capture" or croak "Unable to tie";
-        my $self = Parrot::Ops2c::Utils->new( {
-            argv            => [ @ARGV ],
-        } );
-        $msg = $tie->READLINE;
-        untie *STDERR or croak "Unable to untie";
-        ok(! defined $self, 
-            "Constructor correctly returned undef when lacking reference to options");
-        like($msg,
-            qr/^Parrot::Ops2c::Utils::new\(\) requires reference to hash of command-line options/,
-            "Error message correctly returned");
-    }
-    
     ok(chdir($cwd), "returned to starting directory");
 }
 
 
 pass("Completed all tests in $0");
 
-sub test_single_trans {
+sub test_single_trans_and_header {
     my $trans = shift;
     my %available = map {$_, 1} qw( C CGoto CGP CSwitch CPrederef );
     croak "Bad argument $trans to test_single_trans()"
@@ -131,17 +88,20 @@ sub test_single_trans {
         } );
     ok(defined $self, 
         "Constructor correct when provided with single argument $trans");
+    my $c_header_file = $self->print_c_header_file();
+    ok(-e $c_header_file, "$c_header_file created");
+    ok(-s $c_header_file, "$c_header_file has non-zero size");
 }
 
 ################### DOCUMENTATION ###################
 
 =head1 NAME
 
-01-new.t - test C<Parrot::Ops2c::Utils::new()>
+03-print_c_header_file.t - test C<Parrot::Ops2c::Utils::new()>
 
 =head1 SYNOPSIS
 
-    % prove t/tools/ops2cutils/01-new.t
+    % prove t/tools/ops2cutils/03-print_c_header_file.t
 
 =head1 DESCRIPTION
 
@@ -151,7 +111,7 @@ By doing so, they test the functionality of the F<ops2c.pl> utility.
 That functionality has largely been extracted 
 into the methods of F<Utils.pm>.
 
-F<01-new.t> tests whether C<Parrot::Ops2c::Auxiliary::Usage()> 
+F<03-print_c_header_file.t> tests whether C<Parrot::Ops2c::Auxiliary::Usage()> 
 and F<getoptions()> work properly.
 
 =head1 AUTHOR
