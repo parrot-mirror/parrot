@@ -1,5 +1,5 @@
 # Copyright (C) 2006, The Perl Foundation.
-# $Id: Capture.pm 16816 2007-01-27 06:16:23Z jkeenan $
+# $Id$
 package Capture;
 use strict;
 # Adapted from IO::Capture::Tie_STDx.
