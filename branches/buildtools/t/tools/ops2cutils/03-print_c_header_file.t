@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2006, The Perl Foundation.
-# $Id: 03-print_c_header_file.t 16948 2007-02-12 03:58:24Z jkeenan $
+# $Id$
 # 03-print_c_header_file.t
 
 use strict;
@@ -88,6 +88,7 @@ sub test_single_trans_and_header {
         } );
     ok(defined $self, 
         "Constructor correct when provided with single argument $trans");
+
     my $c_header_file = $self->print_c_header_file();
     ok(-e $c_header_file, "$c_header_file created");
     ok(-s $c_header_file, "$c_header_file has non-zero size");
@@ -111,8 +112,8 @@ By doing so, they test the functionality of the F<ops2c.pl> utility.
 That functionality has largely been extracted 
 into the methods of F<Utils.pm>.
 
-F<03-print_c_header_file.t> tests whether C<Parrot::Ops2c::Auxiliary::Usage()> 
-and F<getoptions()> work properly.
+F<04-print_c_header_file.t> tests whether 
+C<Parrot::Ops2c::Utils::print_c_header_file()> work properly.
 
 =head1 AUTHOR
 

@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2006, The Perl Foundation.
-# $Id: 04-print_c_source_top.t 16962 2007-02-13 03:38:24Z jkeenan $
+# $Id$
 # 04-print_c_source_top.t
 
 use strict;
@@ -63,12 +63,13 @@ my ($msg, $tie);
         ok(-e $c_header_file, "$c_header_file created");
         ok(-s $c_header_file, "$c_header_file has non-zero size");
 
-        my ($SOURCE, $op_func_table_ref, $bs, $index) =
+#        my ($SOURCE, $op_func_table_ref, $bs, $index) =
+        my ($SOURCE) =
             $self->print_c_source_top();
         is(ref($SOURCE), q{GLOB}, "Argument type is filehandle (typeglob)");
-        is(ref($op_func_table_ref), q{ARRAY}, "Array reference noted");
-        is($bs, q{core_}, "'core_' identified");
-        like($index, qr/^\d+$/, "\$index is numeric");
+#        is(ref($op_func_table_ref), q{ARRAY}, "Array reference noted");
+#        is($bs, q{core_}, "'core_' identified");
+#        like($index, qr/^\d+$/, "\$index is numeric");
     }
 
     ok(chdir($cwd), "returned to starting directory");
