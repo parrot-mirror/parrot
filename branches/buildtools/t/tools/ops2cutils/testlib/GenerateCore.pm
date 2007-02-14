@@ -1,5 +1,5 @@
 # Copyright (C) 2006, The Perl Foundation.
-# $Id: GenerateCore.pm 16816 2007-01-27 06:16:23Z jkeenan $
+# $Id$
 package GenerateCore;
 use strict;
 our (@ISA, @EXPORT_OK);
