@@ -53,9 +53,12 @@ my $init_func = $self->{init_func};
 $self->print_c_header_file();
 ##### END printing to $HEADER #####
 
-my ($SOURCE, $op_func_table_ref, $bs, $index) = $self->print_c_source_top();
+# my ($SOURCE, $op_func_table_ref, $bs, $index) = $self->print_c_source_top();
+my $SOURCE = $self->print_c_source_top();
 
-my @op_func_table = @{$op_func_table_ref};
+my @op_func_table = @{$self->{op_func_table}};
+my $bs = $self->{bs};
+my $index = $self->{index};
 
 # reset #line in the SOURCE file.
 $SOURCE = _reset_line_number( {

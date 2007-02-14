@@ -239,123 +239,73 @@ END_C
 
 sub print_c_source_top {
     my $self = shift;
-    my $defines = $self->{trans}->defines();    # Invoked as:  ${defines}
-    my $bs = "$self->{base}$self->{suffix}_";   # Also invoked as ${bs}
-    my $opsarraytype    = $self->{trans}->opsarraytype();
+    $self->{defines} = $self->{trans}->defines();    # Invoked as:  ${defines}
+    $self->{bs} = "$self->{base}$self->{suffix}_";   # Also invoked as ${bs}
+    $self->{opsarraytype} = $self->{trans}->opsarraytype();
 
     ##### BEGIN printing to $SOURCE #####
     open my $SOURCE, '>', $self->{source}
         or die "ops2c.pl: Cannot open source file '$self->{source}' for writing: $!!\n";
 
-    _print_preamble_source( {
-        fh          => $SOURCE,
-        preamble    => $self->{preamble},
-        include     => $self->{include},
-        defines     => $defines,
-        bs          => $bs,
-        ops         => $self->{ops},
-        trans       => $self->{trans},
-    } );
+    $self->_print_preamble_source($SOURCE);
 
-    _print_ops_addr_decl( {
-        trans   => $self->{trans},
-        fh      => $SOURCE,
-        bs      => $bs,
-    } );
+    $self->_print_ops_addr_decl($SOURCE);
 
-    _print_run_core_func_decl_source( {
-        trans   => $self->{trans},
-        fh      => $SOURCE,
-        base    => $self->{base},
-    } );
+    $self->_print_run_core_func_decl_source($SOURCE);
 
     # Iterate over the ops, appending HEADER and SOURCE fragments:
-    my $op_funcs_ref;
-    my $op_func_table_ref;
-    my $cg_jump_table_ref;
-    my $index;
+    $self->_iterate_over_ops();
 
-    ($index, $op_funcs_ref, $op_func_table_ref, $cg_jump_table_ref) = 
-        _iterate_over_ops( {
-            ops             => $self->{ops},
-            trans           => $self->{trans},
-            opsarraytype    => $opsarraytype,
-            suffix          => $self->{suffix},
-            bs              => $bs,
-            sym_export      => $self->{sym_export},
-        } );
+    $self->_print_cg_jump_table($SOURCE);
 
-    my @op_funcs        = @{$op_funcs_ref};
-    my @op_func_table   = @{$op_func_table_ref};
-    my @cg_jump_table   = @{$cg_jump_table_ref};
+    $self->_print_goto_opcode($SOURCE);
 
-    _print_cg_jump_table( {
-        fh              => $SOURCE,
-        cg_jump_table   => \@cg_jump_table,
-        suffix          => $self->{suffix},
-        trans           => $self->{trans},
-        bs              => $bs,
-    } );
+    $self->_print_op_function_definitions($SOURCE);
 
-    _print_goto_opcode( {
-        fh      => $SOURCE,
-        suffix  => $self->{suffix},
-        bs      => $bs,
-    } );
-
-    _print_op_function_definitions( {
-        fh          => $SOURCE,
-        op_funcs    => \@op_funcs,
-        trans       => $self->{trans},
-        base        => $self->{base},
-    } );
-    return ($SOURCE, \@op_func_table, $bs, $index);
+    return $SOURCE;
 }
 
 ###################
 
 sub _print_preamble_source {
-    my $argsref = shift;
-    my $fh = $argsref->{fh};
+    my ($self, $fh) = @_;
 
-    print $fh $argsref->{preamble};
+    print $fh $self->{preamble};
     print $fh <<END_C;
-#include "$argsref->{include}"
+#include "$self->{include}"
 
-$argsref->{defines}
-static op_lib_t $argsref->{bs}op_lib;
+$self->{defines}
+static op_lib_t $self->{bs}op_lib;
 
 END_C
 
-    my $text = $argsref->{ops}->preamble($argsref->{trans});
-    $text =~ s/\bops_addr\b/$argsref->{bs}ops_addr/g;
+    my $text = $self->{ops}->preamble($self->{trans});
+    $text =~ s/\bops_addr\b/$self->{bs}ops_addr/g;
     print $fh $text;
 }
 
 sub _print_ops_addr_decl {
-    my $argsref = shift;
-    if ( $argsref->{trans}->can("ops_addr_decl") ) {
-        my $fh = $argsref->{fh};
-        print $fh $argsref->{trans}->ops_addr_decl($argsref->{bs});
+    my ($self, $fh) = @_;
+    if ( $self->{trans}->can("ops_addr_decl") ) {
+        print $fh $self->{trans}->ops_addr_decl($self->{bs});
     } else {
         return;
     }
 }
 
 sub _print_run_core_func_decl_source {
-    my $argsref = shift;
-    if ( $argsref->{trans}->can("run_core_func_decl") ) {
-        my $fh = $argsref->{fh};
-        print $fh $argsref->{trans}->run_core_func_decl($argsref->{base});
+    my ($self, $fh) = @_;
+    if ( $self->{trans}->can("run_core_func_decl") ) {
+        print $fh $self->{trans}->run_core_func_decl($self->{base});
         print $fh "\n{\n";
-        print $fh $argsref->{trans}->run_core_func_start;
+        print $fh $self->{trans}->run_core_func_start;
     } else {
         return;
     }
 }
 
 sub _iterate_over_ops {
-    my $argsref = shift;
+    my $self = shift;
     my @op_funcs;
     my @op_func_table;
     my @cg_jump_table;
@@ -363,32 +313,32 @@ sub _iterate_over_ops {
     my ( $prev_src, $prev_index );
 
     $prev_src = '';
-    foreach my $op ( $argsref->{ops}->ops ) {
-        my $func_name = $op->func_name($argsref->{trans});
-        my $arg_types = "$argsref->{opsarraytype} *, Interp *";
-        my $prototype = "$argsref->{sym_export} $argsref->{opsarraytype} * $func_name ($arg_types)";
-        my $args      = "$argsref->{opsarraytype} *cur_opcode, Interp *interp";
+    foreach my $op ( $self->{ops}->ops ) {
+        my $func_name = $op->func_name($self->{trans});
+        my $arg_types = "$self->{opsarraytype} *, Interp *";
+        my $prototype = "$self->{sym_export} $self->{opsarraytype} * $func_name ($arg_types)";
+        my $args      = "$self->{opsarraytype} *cur_opcode, Interp *interp";
         my $definition;
         my $comment = '';
         my $one_op  = "";
 
-        if ( $argsref->{suffix} =~ /cg/ ) {
+        if ( $self->{suffix} =~ /cg/ ) {
             $definition = "PC_$index:";
             $comment    = "/* " . $op->full_name() . " */";
         }
-        elsif ( $argsref->{suffix} =~ /switch/ ) {
+        elsif ( $self->{suffix} =~ /switch/ ) {
             $definition = "case $index:";
             $comment    = "/* " . $op->full_name() . " */";
         }
         else {
-            $definition = "$prototype;\n$argsref->{opsarraytype} *\n$func_name ($args)";
+            $definition = "$prototype;\n$self->{opsarraytype} *\n$func_name ($args)";
         }
 
-        my $src = $op->source($argsref->{trans});
-        $src =~ s/\bop_lib\b/$argsref->{bs}op_lib/g;
-        $src =~ s/\bops_addr\b/$argsref->{bs}ops_addr/g;
+        my $src = $op->source($self->{trans});
+        $src =~ s/\bop_lib\b/$self->{bs}op_lib/g;
+        $src =~ s/\bops_addr\b/$self->{bs}ops_addr/g;
 
-        if ( $argsref->{suffix} =~ /cg/ ) {
+        if ( $self->{suffix} =~ /cg/ ) {
             if ( $prev_src eq $src ) {
                 push @cg_jump_table, "        &&PC_$prev_index,\n";
             }
@@ -396,7 +346,7 @@ sub _iterate_over_ops {
                 push @cg_jump_table, "        &&PC_$index,\n";
             }
         }
-        elsif ( $argsref->{suffix} eq '' ) {
+        elsif ( $self->{suffix} eq '' ) {
             push @op_func_table, sprintf( "  %-50s /* %6ld */\n", "$func_name,", $index );
         }
         if ( $prev_src eq $src ) {
@@ -405,34 +355,35 @@ sub _iterate_over_ops {
         else {
             $one_op .= "$definition $comment {\n$src}\n\n";
             push @op_funcs, $one_op;
-            $prev_src = $src if ( $argsref->{suffix} eq '_cgp' || $argsref->{suffix} eq '_switch' );
+            $prev_src = $src if ( $self->{suffix} eq '_cgp' || $self->{suffix} eq '_switch' );
             $prev_index = $index;
         }
         $index++;
     }
-    return ($index, \@op_funcs, \@op_func_table, \@cg_jump_table);
+    $self->{index} =  $index;
+    $self->{op_funcs} = \@op_funcs;
+    $self->{op_func_table} = \@op_func_table;
+    $self->{cg_jump_table} = \@cg_jump_table;
 }
 
 sub _print_cg_jump_table {
-    my $argsref = shift;
-    my $fh = $argsref->{fh};
-    my @cg_jump_table = @{$argsref->{cg_jump_table}};
+    my ($self, $fh) = @_;
+    my @cg_jump_table = @{$self->{cg_jump_table}};
 
-    if ( $argsref->{suffix} =~ /cg/ ) {
+    if ( $self->{suffix} =~ /cg/ ) {
         print $fh @cg_jump_table;
         print $fh <<END_C;
         NULL
     };
 END_C
-        print $fh $argsref->{trans}->run_core_after_addr_table($argsref->{bs});
+        print $fh $self->{trans}->run_core_after_addr_table($self->{bs});
     }
 }
 
 sub _print_goto_opcode {
-    my $argsref = shift;
-    my $fh = $argsref->{fh};
+    my ($self, $fh) = @_;
 
-    if ( $argsref->{suffix} =~ /cgp/ ) {
+    if ( $self->{suffix} =~ /cgp/ ) {
         print $fh <<END_C;
 #ifdef __GNUC__
 # ifdef I386
@@ -445,9 +396,9 @@ sub _print_goto_opcode {
 
 END_C
     }
-    elsif ( $argsref->{suffix} =~ /cg/ ) {
+    elsif ( $self->{suffix} =~ /cg/ ) {
         print $fh <<END_C;
-goto *$argsref->{bs}ops_addr[*cur_opcode];
+goto *$self->{bs}ops_addr[*cur_opcode];
 
 END_C
     }
@@ -455,9 +406,8 @@ END_C
 }
 
 sub _print_op_function_definitions {
-    my $argsref = shift;
-    my $fh = $argsref->{fh};
-    my @op_funcs = @{$argsref->{op_funcs}};
+    my ($self, $fh) = @_;
+    my @op_funcs = @{$self->{op_funcs}};
     print $fh <<END_C;
 /*
 ** Op Function Definitions:
@@ -470,15 +420,15 @@ END_C
     for ( my $i = 0 ; $i < @op_funcs ; $i++ ) {
         if ( $i && 
             $i % $CORE_SPLIT == 0 && 
-            $argsref->{trans}->can("run_core_split") )
+            $self->{trans}->can("run_core_split") )
         {
-            print $fh $argsref->{trans}->run_core_split($argsref->{base});
+            print $fh $self->{trans}->run_core_split($self->{base});
         }
         print $fh $op_funcs[$i];
     }
 
-    if ( $argsref->{trans}->can("run_core_finish") ) {
-        print $fh $argsref->{trans}->run_core_finish($argsref->{base});
+    if ( $self->{trans}->can("run_core_finish") ) {
+        print $fh $self->{trans}->run_core_finish($self->{base});
     }
     close($fh) || die "Unable to close after writing: $!";
 }
