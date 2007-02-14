@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2006, The Perl Foundation.
-# $Id: 02-usage.t 16894 2007-02-04 22:54:29Z jkeenan $
+# $Id$
 # 02-usage.t
 
 use strict;
