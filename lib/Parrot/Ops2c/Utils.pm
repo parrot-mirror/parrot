@@ -237,4 +237,250 @@ sub _print_coda {
 END_C
 }
 
+sub print_c_source_top {
+    my $self = shift;
+    my $defines = $self->{trans}->defines();    # Invoked as:  ${defines}
+    my $bs = "$self->{base}$self->{suffix}_";   # Also invoked as ${bs}
+    my $opsarraytype    = $self->{trans}->opsarraytype();
+
+    ##### BEGIN printing to $SOURCE #####
+    open my $SOURCE, '>', $self->{source}
+        or die "ops2c.pl: Cannot open source file '$self->{source}' for writing: $!!\n";
+
+    _print_preamble_source( {
+        fh          => $SOURCE,
+        preamble    => $self->{preamble},
+        include     => $self->{include},
+        defines     => $defines,
+        bs          => $bs,
+        ops         => $self->{ops},
+        trans       => $self->{trans},
+    } );
+
+    _print_ops_addr_decl( {
+        trans   => $self->{trans},
+        fh      => $SOURCE,
+        bs      => $bs,
+    } );
+
+    _print_run_core_func_decl_source( {
+        trans   => $self->{trans},
+        fh      => $SOURCE,
+        base    => $self->{base},
+    } );
+
+    # Iterate over the ops, appending HEADER and SOURCE fragments:
+    my $op_funcs_ref;
+    my $op_func_table_ref;
+    my $cg_jump_table_ref;
+    my $index;
+
+    ($index, $op_funcs_ref, $op_func_table_ref, $cg_jump_table_ref) = 
+        _iterate_over_ops( {
+            ops             => $self->{ops},
+            trans           => $self->{trans},
+            opsarraytype    => $opsarraytype,
+            suffix          => $self->{suffix},
+            bs              => $bs,
+            sym_export      => $self->{sym_export},
+        } );
+
+    my @op_funcs        = @{$op_funcs_ref};
+    my @op_func_table   = @{$op_func_table_ref};
+    my @cg_jump_table   = @{$cg_jump_table_ref};
+
+    _print_cg_jump_table( {
+        fh              => $SOURCE,
+        cg_jump_table   => \@cg_jump_table,
+        suffix          => $self->{suffix},
+        trans           => $self->{trans},
+        bs              => $bs,
+    } );
+
+    _print_goto_opcode( {
+        fh      => $SOURCE,
+        suffix  => $self->{suffix},
+        bs      => $bs,
+    } );
+
+    _print_op_function_definitions( {
+        fh          => $SOURCE,
+        op_funcs    => \@op_funcs,
+        trans       => $self->{trans},
+        base        => $self->{base},
+    } );
+    return ($SOURCE, \@op_func_table, $bs, $index);
+}
+
+###################
+
+sub _print_preamble_source {
+    my $argsref = shift;
+    my $fh = $argsref->{fh};
+
+    print $fh $argsref->{preamble};
+    print $fh <<END_C;
+#include "$argsref->{include}"
+
+$argsref->{defines}
+static op_lib_t $argsref->{bs}op_lib;
+
+END_C
+
+    my $text = $argsref->{ops}->preamble($argsref->{trans});
+    $text =~ s/\bops_addr\b/$argsref->{bs}ops_addr/g;
+    print $fh $text;
+}
+
+sub _print_ops_addr_decl {
+    my $argsref = shift;
+    if ( $argsref->{trans}->can("ops_addr_decl") ) {
+        my $fh = $argsref->{fh};
+        print $fh $argsref->{trans}->ops_addr_decl($argsref->{bs});
+    } else {
+        return;
+    }
+}
+
+sub _print_run_core_func_decl_source {
+    my $argsref = shift;
+    if ( $argsref->{trans}->can("run_core_func_decl") ) {
+        my $fh = $argsref->{fh};
+        print $fh $argsref->{trans}->run_core_func_decl($argsref->{base});
+        print $fh "\n{\n";
+        print $fh $argsref->{trans}->run_core_func_start;
+    } else {
+        return;
+    }
+}
+
+sub _iterate_over_ops {
+    my $argsref = shift;
+    my @op_funcs;
+    my @op_func_table;
+    my @cg_jump_table;
+    my $index = 0;
+    my ( $prev_src, $prev_index );
+
+    $prev_src = '';
+    foreach my $op ( $argsref->{ops}->ops ) {
+        my $func_name = $op->func_name($argsref->{trans});
+        my $arg_types = "$argsref->{opsarraytype} *, Interp *";
+        my $prototype = "$argsref->{sym_export} $argsref->{opsarraytype} * $func_name ($arg_types)";
+        my $args      = "$argsref->{opsarraytype} *cur_opcode, Interp *interp";
+        my $definition;
+        my $comment = '';
+        my $one_op  = "";
+
+        if ( $argsref->{suffix} =~ /cg/ ) {
+            $definition = "PC_$index:";
+            $comment    = "/* " . $op->full_name() . " */";
+        }
+        elsif ( $argsref->{suffix} =~ /switch/ ) {
+            $definition = "case $index:";
+            $comment    = "/* " . $op->full_name() . " */";
+        }
+        else {
+            $definition = "$prototype;\n$argsref->{opsarraytype} *\n$func_name ($args)";
+        }
+
+        my $src = $op->source($argsref->{trans});
+        $src =~ s/\bop_lib\b/$argsref->{bs}op_lib/g;
+        $src =~ s/\bops_addr\b/$argsref->{bs}ops_addr/g;
+
+        if ( $argsref->{suffix} =~ /cg/ ) {
+            if ( $prev_src eq $src ) {
+                push @cg_jump_table, "        &&PC_$prev_index,\n";
+            }
+            else {
+                push @cg_jump_table, "        &&PC_$index,\n";
+            }
+        }
+        elsif ( $argsref->{suffix} eq '' ) {
+            push @op_func_table, sprintf( "  %-50s /* %6ld */\n", "$func_name,", $index );
+        }
+        if ( $prev_src eq $src ) {
+            push @op_funcs, "$comment\n";
+        }
+        else {
+            $one_op .= "$definition $comment {\n$src}\n\n";
+            push @op_funcs, $one_op;
+            $prev_src = $src if ( $argsref->{suffix} eq '_cgp' || $argsref->{suffix} eq '_switch' );
+            $prev_index = $index;
+        }
+        $index++;
+    }
+    return ($index, \@op_funcs, \@op_func_table, \@cg_jump_table);
+}
+
+sub _print_cg_jump_table {
+    my $argsref = shift;
+    my $fh = $argsref->{fh};
+    my @cg_jump_table = @{$argsref->{cg_jump_table}};
+
+    if ( $argsref->{suffix} =~ /cg/ ) {
+        print $fh @cg_jump_table;
+        print $fh <<END_C;
+        NULL
+    };
+END_C
+        print $fh $argsref->{trans}->run_core_after_addr_table($argsref->{bs});
+    }
+}
+
+sub _print_goto_opcode {
+    my $argsref = shift;
+    my $fh = $argsref->{fh};
+
+    if ( $argsref->{suffix} =~ /cgp/ ) {
+        print $fh <<END_C;
+#ifdef __GNUC__
+# ifdef I386
+    else if (cur_opcode == (void **) 1)
+    asm ("jmp *4(%ebp)");  /* jump to ret addr, used by JIT */
+# endif
+#endif
+    _reg_base = (char*)interp->ctx.bp.regs_i;
+    goto **cur_opcode;
+
+END_C
+    }
+    elsif ( $argsref->{suffix} =~ /cg/ ) {
+        print $fh <<END_C;
+goto *$argsref->{bs}ops_addr[*cur_opcode];
+
+END_C
+    }
+    return 1;
+}
+
+sub _print_op_function_definitions {
+    my $argsref = shift;
+    my $fh = $argsref->{fh};
+    my @op_funcs = @{$argsref->{op_funcs}};
+    print $fh <<END_C;
+/*
+** Op Function Definitions:
+*/
+
+END_C
+
+    # Finish the SOURCE file's array initializer:
+    my $CORE_SPLIT = 300;
+    for ( my $i = 0 ; $i < @op_funcs ; $i++ ) {
+        if ( $i && 
+            $i % $CORE_SPLIT == 0 && 
+            $argsref->{trans}->can("run_core_split") )
+        {
+            print $fh $argsref->{trans}->run_core_split($argsref->{base});
+        }
+        print $fh $op_funcs[$i];
+    }
+
+    if ( $argsref->{trans}->can("run_core_finish") ) {
+        print $fh $argsref->{trans}->run_core_finish($argsref->{base});
+    }
+    close($fh) || die "Unable to close after writing: $!";
+}
+
 1;
