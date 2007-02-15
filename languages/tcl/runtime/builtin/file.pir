@@ -85,7 +85,8 @@ few_args:
   if argc == 0 goto bad_args
 
   .local string dirsep
-  dirsep = '/' # RT#40730: should pull from parrot config.
+  $P1 = get_root_global ['_tcl'], 'slash'
+  dirsep = $P1
 
   .local string result
   result = ''
@@ -377,10 +378,54 @@ bad_args:
   tcl_error 'wrong # args: should be "file mtime name ?time?"'
 .end
 
-# RT#40722: Stub for test parsing
+# RT#40722: needs windows OS testing
 .sub 'dirname'
-  .param pmc argv
-  .return(0)
+    .param pmc argv
+
+    .local int argc
+    argc = elements argv
+    if argc != 1 goto bad_args
+
+    .local string filename
+    filename = argv[0]
+
+    .local string separator
+    $P0 = get_root_global ['_tcl'], 'slash'
+    separator = $P0
+
+    $S0 = substr filename, -1, 1
+    if $S0 != separator goto continue
+    chopn filename, 1
+
+  continue:
+    .local pmc array
+    array = split separator, filename
+    $S0 = pop array
+    unless $S0 == '' goto skip
+    push array, $S0
+
+  skip:
+    $I0 = elements array
+    if $I0 == 0 goto empty
+
+    $P1 = new .ResizableStringArray
+  loop:
+    unless array goto done
+    $S0 = shift array
+    if $S0 == '' goto loop
+    push $P1, $S0
+    goto loop
+
+  done:
+    $S0 = join separator, $P1
+    $S1 = concat separator, $S0 # guessing that this won't be needed in win
+    .return($S1)
+
+  empty:
+    .return('.')
+
+  bad_args:
+    tcl_error 'wrong # args: should be "file dirname name"'
 .end
 
 # RT#40723: Stub (unixy)
@@ -463,10 +508,36 @@ badargs:
   .return(0)
 .end
 
-# RT#40728: Stub for test parsing
 .sub 'rootname'
-  .param pmc argv
-  .return(0)
+    .param pmc argv
+    .local int argc
+
+    argc = elements argv
+    if argc != 1 goto bad_args
+
+    .local string filename
+    filename = argv[0]
+
+    $P0 = split '.', filename
+    $I0 = elements $P0
+    if $I0 == 1 goto done
+    $S0 = pop $P0
+
+    .local string separator
+    $P1 = get_root_global ['_tcl'], 'slash'
+    separator = $P1
+
+    $I0 = index $S0, separator
+    if $I0 != -1 goto done
+
+    join $S0, '.', $P0
+    .return($S0)
+
+done:
+    .return(filename)
+
+  bad_args:
+    tcl_error 'wrong # args: should be "file rootname name"'
 .end
 
 .sub 'extension'
