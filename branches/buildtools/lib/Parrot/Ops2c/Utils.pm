@@ -100,7 +100,7 @@ sub new {
         @versions{ qw(major minor patch) },
     );
 
-###############################
+    ##### Populate the object #####
     $argsref->{argv} = \@argv;
     $argsref->{trans} = $trans;
     $argsref->{suffix} = $suffix;
@@ -189,7 +189,7 @@ sub print_c_header_file {
 
     $self->_print_run_core_func_decl_header($HEADER);
 
-    $self->_print_coda($HEADER);
+    _print_coda($HEADER);
 
     close $HEADER or die "Unable to close handle to $self->{header}: $!";
     (-e $self->{header}) or die "$self->{header} not created: $!";
@@ -215,6 +215,7 @@ END_C
 
 sub _print_run_core_func_decl_header {
     my ($self, $fh) = @_;
+
     if ( $self->{trans}->can("run_core_func_decl") ) {
         my $run_core_func = 
             $self->{trans}->run_core_func_decl($self->{base});
@@ -225,7 +226,8 @@ sub _print_run_core_func_decl_header {
 }
 
 sub _print_coda {
-    my ($self, $fh) = @_;
+    my $fh = shift;
+
     print $fh <<END_C;
 
 /*
@@ -265,8 +267,6 @@ sub print_c_source_top {
     return $SOURCE;
 }
 
-###################
-
 sub _print_preamble_source {
     my ($self, $fh) = @_;
 
@@ -286,6 +286,7 @@ END_C
 
 sub _print_ops_addr_decl {
     my ($self, $fh) = @_;
+
     if ( $self->{trans}->can("ops_addr_decl") ) {
         print $fh $self->{trans}->ops_addr_decl($self->{bs});
     } else {
@@ -295,6 +296,7 @@ sub _print_ops_addr_decl {
 
 sub _print_run_core_func_decl_source {
     my ($self, $fh) = @_;
+
     if ( $self->{trans}->can("run_core_func_decl") ) {
         print $fh $self->{trans}->run_core_func_decl($self->{base});
         print $fh "\n{\n";
@@ -368,6 +370,7 @@ sub _iterate_over_ops {
 
 sub _print_cg_jump_table {
     my ($self, $fh) = @_;
+
     my @cg_jump_table = @{$self->{cg_jump_table}};
 
     if ( $self->{suffix} =~ /cg/ ) {
@@ -407,6 +410,7 @@ END_C
 
 sub _print_op_function_definitions {
     my ($self, $fh) = @_;
+
     my @op_funcs = @{$self->{op_funcs}};
     print $fh <<END_C;
 /*
@@ -431,6 +435,412 @@ END_C
         print $fh $self->{trans}->run_core_finish($self->{base});
     }
     close($fh) || die "Unable to close after writing: $!";
+}
+
+sub print_c_source_bottom {
+    my ($self, $SOURCE) = @_;
+    my @op_func_table = @{$self->{op_func_table}};
+    my $bs = $self->{bs};
+    my $index = $self->{index};
+
+    $SOURCE = $self->_reset_line_number($SOURCE);
+    
+    $self->_op_func_table($SOURCE);
+    
+    $self->{names} = {};
+    $self->_op_info_table($SOURCE);
+
+    $self->_op_lookup($SOURCE);
+    
+    $self->_print_op_lib_descriptor($SOURCE);
+    
+    $self->_generate_init_func($SOURCE);
+    
+    $self->_print_dynamic_lib_load($SOURCE);
+    
+    _print_coda($SOURCE);
+    
+    close $SOURCE or die "Unable to close handle to $self->{source}: $!";
+    
+    my $c_source_final = $self->_rename_source();
+    return $c_source_final;
+}
+    
+
+
+#################### SUBROUTINES ####################
+
+sub _print_coda {
+    my $fh = shift;
+    print $fh <<END_C;
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
+END_C
+}
+
+sub _reset_line_number {
+    my ($self, $fh) = @_;
+
+    my $source = $self->{source};
+    my $line = 0;
+    open( $fh, '<', $source ) || die "Error re-reading $source: $!\n";
+    while (<$fh>) { $line++; }
+    $line += 2;
+    close($fh) || die "Error closing $source:  $!";
+    open( $fh, '>>', $source ) || die "Error appending to $source: $!\n";
+    unless ($self->{flag}->{nolines}) {
+        my $source_escaped = $source;
+        $source_escaped =~ s|\.temp||;
+        $source_escaped =~ s|(\\)|$1$1|g;    # escape backslashes
+        print $fh qq{#line $line "$source_escaped"\n};
+    }
+    return $fh;  # filehandle remains open
+}
+
+sub _op_func_table {
+    my ($self, $fh) = @_;
+
+    my ( $op_info, $op_func, $getop );
+    $op_info = $op_func = 'NULL';
+    $getop = '( int (*)(const char *, int) )NULL';
+    
+    if ( $self->{suffix} eq '' ) {
+        $op_func = $self->{bs} . q{op_func_table};
+        print $fh <<END_C;
+
+INTVAL $self->{bs}numops$self->{suffix} = $self->{num_ops};
+
+/*
+** Op Function Table:
+*/
+
+static op_func$self->{suffix}_t ${op_func}\[$self->{num_entries}] = {
+END_C
+
+        print $fh @{$self->{op_func_table}};
+
+        print $fh <<END_C;
+  (op_func$self->{suffix}_t)0  /* NULL function pointer */
+};
+
+
+END_C
+    }
+    $self->{op_info} = $op_info;
+    $self->{op_func} = $op_func;
+    $self->{getop} = $getop;
+}
+
+sub _op_info_table {
+    my ($self, $fh) = @_;
+
+    my %names = %{$self->{names}};
+    my %arg_dir_mapping = (
+        ''   => 'PARROT_ARGDIR_IGNORED',
+        'i'  => 'PARROT_ARGDIR_IN',
+        'o'  => 'PARROT_ARGDIR_OUT',
+        'io' => 'PARROT_ARGDIR_INOUT'
+    );
+
+    if ( $self->{suffix} eq '' ) {
+        $self->{op_info} = "$self->{bs}op_info_table";
+    
+        #
+        # Op Info Table:
+        #
+        print $fh <<END_C;
+
+/*
+** Op Info Table:
+*/
+
+static op_info_t $self->{op_info}\[$self->{num_entries}] = {
+END_C
+
+        $self->{index} = 0;
+    
+        foreach my $op ( $self->{ops}->ops ) {
+            my $type = sprintf( "PARROT_%s_OP", uc $op->type );
+            my $name = $op->name;
+            $names{$name} = 1;
+            my $full_name = $op->full_name;
+            my $func_name = $op->func_name($self->{trans});
+            my $body      = $op->body;
+            my $jump      = $op->jump || 0;
+            my $arg_count = $op->size;
+    
+            ## 0 inserted if arrays are empty to prevent msvc compiler errors
+            my $arg_types = "{ "
+                . join( ", ",
+                scalar $op->arg_types
+                ? map { sprintf( "PARROT_ARG_%s", uc $_ ) } $op->arg_types
+                : 0 )
+                . " }";
+            my $arg_dirs = "{ "
+                . join(
+                ", ", scalar $op->arg_dirs
+                ? map { $arg_dir_mapping{$_} } $op->arg_dirs
+                : 0
+                ) . " }";
+            my $labels = "{ "
+                . join(
+                ", ", scalar $op->labels
+                ? $op->labels
+                : 0
+                ) . " }";
+            my $flags = 0;
+    
+            print $fh <<END_C;
+  { /* $self->{index} */
+    /* type $type, */
+    "$name",
+    "$full_name",
+    "$func_name",
+    /* "",  body */
+    $jump,
+    $arg_count,
+    $arg_types,
+    $arg_dirs,
+    $labels,
+    $flags
+  },
+END_C
+
+            $self->{index}++;
+        }
+        print $fh <<END_C;
+};
+
+END_C
+    }
+}
+
+sub _op_lookup {
+    my ($self, $fh) = @_;
+
+    if ( $self->{suffix} eq '' && !$self->{flag}->{dynamic} ) {
+        $self->{getop} = 'get_op';
+        my $hash_size = 3041;
+        my $tot = $self->{index} + scalar keys(%{$self->{names}});
+        if ( $hash_size < $tot * 1.2 ) {
+            print STDERR "please increase hash_size ($hash_size) in tools/build/ops2c.pl "
+                . "to a prime number > ", $tot * 1.2, "\n";
+        }
+        print $fh <<END_C;
+
+/*
+** Op lookup function:
+*/
+
+#define NUM_OPS $self->{num_ops}
+
+#define OP_HASH_SIZE $hash_size
+
+/* we could calculate a prime somewhat bigger than
+ * n of fullnames + n of names
+ * for now this should be ok
+ *
+ * look up an op_code: at first call to op_code() a hash
+ * of short and full opcode names is created
+ * hash functions are from imcc, thanks to Melvin.
+ */
+
+
+typedef struct hop {
+    op_info_t * info;
+    struct hop *next;
+} HOP;
+static HOP **hop;
+
+static void hop_init(void);
+static size_t hash_str(const char * str);
+static void store_op(op_info_t *info, int full);
+
+/* XXX on changing interpreters, this should be called,
+   through a hook */
+
+static void hop_deinit(void);
+
+/*
+ * find a short or full opcode
+ * usage:
+ *
+ * interp->op_lib->op_code("set", 0)
+ * interp->op_lib->op_code("set_i_i", 1)
+ *
+ * returns >= 0 (found idx into info_table), -1 if not
+ */
+
+static int get_op(const char * name, int full);
+
+static size_t hash_str(const char * str) {
+    size_t key = 0;
+    const char * s;
+    for(s=str; *s; s++)
+        key = key * 65599 + *s;
+    return key;
+}
+
+static void store_op(op_info_t *info, int full) {
+    HOP * const p = mem_sys_allocate(sizeof(HOP));
+    const size_t hidx =
+        hash_str(full ? info->full_name : info->name) % OP_HASH_SIZE;
+    p->info = info;
+    p->next = hop[hidx];
+    hop[hidx] = p;
+}
+static int get_op(const char * name, int full) {
+    HOP * p;
+    const size_t hidx = hash_str(name) % OP_HASH_SIZE;
+    if (!hop) {
+        hop = mem_sys_allocate_zeroed(OP_HASH_SIZE * sizeof(HOP*));
+        hop_init();
+    }
+    for (p = hop[hidx]; p; p = p->next) {
+        if(!strcmp(name, full ? p->info->full_name : p->info->name))
+            return p->info - $self->{bs}op_lib.op_info_table;
+    }
+    return -1;
+}
+static void hop_init() {
+    size_t i;
+    op_info_t * info = $self->{bs}op_lib.op_info_table;
+    /* store full names */
+    for (i = 0; i < $self->{bs}op_lib.op_count; i++)
+        store_op(info + i, 1);
+    /* plus one short name */
+    for (i = 0; i < $self->{bs}op_lib.op_count; i++)
+        if (get_op(info[i].name, 0) == -1)
+            store_op(info + i, 0);
+}
+static void hop_deinit(void)
+{
+    HOP *p, *next;
+    if (hop) {
+        size_t i;
+        for (i = 0; i < OP_HASH_SIZE; i++)
+            for (p = hop[i]; p; ) {
+                next = p->next;
+                free(p);
+                p = next;
+        }
+        free(hop);
+    }
+    hop = 0;
+}
+
+END_C
+    } else {
+        print $fh <<END_C;
+static void hop_deinit(void) {}
+END_C
+    }
+}
+
+sub _print_op_lib_descriptor {
+    my ($self, $fh) = @_;
+
+    my $core_type = $self->{trans}->core_type();
+    print $fh <<END_C;
+
+/*
+** op lib descriptor:
+*/
+
+static op_lib_t $self->{bs}op_lib = {
+  "$self->{base}",               /* name */
+  "$self->{suffix}",             /* suffix */
+  $core_type,                       /* core_type = PARROT_XX_CORE */
+  0,                                /* flags */
+  $self->{versions}->{major},    /* major_version */
+  $self->{versions}->{minor},    /* minor_version */
+  $self->{versions}->{patch},    /* patch_version */
+  $self->{num_ops},              /* op_count */
+  $self->{op_info},              /* op_info_table */
+  $self->{op_func},              /* op_func_table */
+  $self->{getop}                 /* op_code() */
+};
+
+END_C
+}
+
+sub _generate_init_func {
+    my ($self, $fh) = @_;
+
+    my $init1_code = "";
+    if ( $self->{trans}->can("init_func_init1") ) {
+        $init1_code = $self->{trans}->init_func_init1($self->{base});
+    }
+    
+    my $init_set_dispatch = "";
+    if ( $self->{trans}->can("init_set_dispatch") ) {
+        $init_set_dispatch 
+            = $self->{trans}->init_set_dispatch($self->{bs});
+    }
+    
+    print $fh <<END_C;
+op_lib_t *
+$self->{init_func}(long init) {
+    /* initialize and return op_lib ptr */
+    if (init == 1) {
+$init1_code
+    return &$self->{bs}op_lib;
+    }
+    /* set op_lib to the passed ptr (in init) */
+    else if (init) {
+$init_set_dispatch
+    }
+    /* deinit - free resources */
+    else {
+    hop_deinit();
+    }
+    return NULL;
+}
+
+END_C
+}
+
+sub _print_dynamic_lib_load {
+    my ($self, $fh) = @_;
+
+    if ($self->{flag}->{dynamic}) {
+        my $load_func = join q{_}, (
+            q{Parrot},
+            q{lib},
+            $self->{base},
+            (q{ops} . $self->{suffix}),
+            q{load},
+        );
+        print $fh <<END_C;
+/*
+ * dynamic lib load function - called once
+ */
+
+$self->{sym_export} PMC*
+$load_func(Parrot_Interp interp)
+{
+    PMC *lib = pmc_new(interp, enum_class_ParrotLibrary);
+    PMC_struct_val(lib) = (void *) $self->{init_func};
+    dynop_register(interp, lib);
+    return lib;
+}
+END_C
+    }
+}
+
+sub _rename_source {
+    my $self = shift;
+
+    my $final = $self->{source};
+    $final =~ s/\.temp//;
+    rename $self->{source}, $final
+        or die "Unable to rename $self->{source} to $final: $!";
+    return $final;
 }
 
 1;
