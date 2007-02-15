@@ -63,13 +63,8 @@ my ($msg, $tie);
         ok(-e $c_header_file, "$c_header_file created");
         ok(-s $c_header_file, "$c_header_file has non-zero size");
 
-#        my ($SOURCE, $op_func_table_ref, $bs, $index) =
-        my ($SOURCE) =
-            $self->print_c_source_top();
+        my $SOURCE = $self->print_c_source_top();
         is(ref($SOURCE), q{GLOB}, "Argument type is filehandle (typeglob)");
-#        is(ref($op_func_table_ref), q{ARRAY}, "Array reference noted");
-#        is($bs, q{core_}, "'core_' identified");
-#        like($index, qr/^\d+$/, "\$index is numeric");
     }
 
     ok(chdir($cwd), "returned to starting directory");
@@ -99,7 +94,7 @@ sub test_single_trans_and_header {
 
 =head1 NAME
 
-04-print_c_source_top.t - test C<Parrot::Ops2c::Utils::new()>
+04-print_c_source_top.t - test C<Parrot::Ops2c::Utils::print_c_source_top()>
 
 =head1 SYNOPSIS
 
