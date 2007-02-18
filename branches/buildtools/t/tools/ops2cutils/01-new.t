@@ -17,7 +17,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests =>  20;
+use Test::More tests =>  21;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -99,6 +99,17 @@ my ($msg, $tie);
     }
 
     {
+        local @ARGV = qw( C CGoto CGP CSwitch CPrederef );
+        my $self = Parrot::Ops2c::Utils->new( {
+            argv            => [ @ARGV ],
+            flag            => { core => 1 },
+            script          => "tools/build/ops2c.pl",
+        } );
+        ok(defined $self, 
+            "Constructor correctly returned when provided with explicit 'script' argument");
+    }
+
+    {
         local @ARGV = qw( C );
         $tie = tie *STDERR, "Capture" or croak "Unable to tie";
         my $self = Parrot::Ops2c::Utils->new( {
@@ -115,7 +126,6 @@ my ($msg, $tie);
     
     ok(chdir($cwd), "returned to starting directory");
 }
-
 
 pass("Completed all tests in $0");
 
@@ -151,8 +161,8 @@ By doing so, they test the functionality of the F<ops2c.pl> utility.
 That functionality has largely been extracted 
 into the methods of F<Utils.pm>.
 
-F<01-new.t> tests whether C<Parrot::Ops2c::Auxiliary::Usage()> 
-and F<getoptions()> work properly.
+F<01-new.t> tests whether C<Parrot::Ops2c::Utils::new()> 
+works properly.
 
 =head1 AUTHOR
 
