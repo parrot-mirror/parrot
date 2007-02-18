@@ -17,7 +17,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More qw(no_plan); # tests =>  26;
+use Test::More tests =>  12;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -121,19 +121,3 @@ Parrot::Ops2c::Auxiliary, F<ops2c.pl>.
 
 =cut
 
-__END__
-
-#$VAR1 = [];
-#$VAR2 = bless( {
-#                 'split_count' => 0
-#               }, 'Parrot::OpTrans::CSwitch' );
-#$VAR3 = '_switch';
-#/usr/local/bin/perl tools/build/vtable_extend.pl
-#/usr/local/bin/perl tools/build/ops2c.pl CGoto --core
-#$VAR1 = [];
-#$VAR2 = bless( {}, 'Parrot::OpTrans::CGoto' );
-#$VAR3 = '_cg';
-#/usr/local/bin/perl tools/build/ops2c.pl CGP --core
-#$VAR1 = [];
-#$VAR2 = bless( {}, 'Parrot::OpTrans::CGP' );
-#$VAR3 = '_cgp';
