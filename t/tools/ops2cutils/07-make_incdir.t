@@ -17,7 +17,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More qw(no_plan); # tests =>  21;
+use Test::More tests =>   9;
 use Carp;
 use Cwd;
 use File::Copy;
