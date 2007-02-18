@@ -423,12 +423,12 @@ END_C
     # Finish the SOURCE file's array initializer:
     my $CORE_SPLIT = 300;
     for ( my $i = 0 ; $i < @op_funcs ; $i++ ) {
-        if ( $i && 
-            $i % $CORE_SPLIT == 0 && 
-            $self->{trans}->can("run_core_split") )
-        {
-            print $fh $self->{trans}->run_core_split($self->{base});
-        }
+#        if ( $i && 
+#            $i % $CORE_SPLIT == 0 && 
+#            $self->{trans}->can("run_core_split") )
+#        {
+#            print $fh $self->{trans}->run_core_split($self->{base});
+#        }
         print $fh $op_funcs[$i];
     }
 
