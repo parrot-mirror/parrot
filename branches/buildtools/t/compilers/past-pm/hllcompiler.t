@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw(t . lib ../lib ../../lib ../../../lib);
 use Test::More;
-use Parrot::Test tests => 2;
+use Parrot::Test tests => 3;
 
 =head1 NAME
 
@@ -84,6 +84,29 @@ pir_output_is( <<'CODE', <<'OUT', 'one complete start-to-end compiler' );
 
 CODE
 thingy
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'inserting and removing stages' );
+.sub _main :main
+    load_bytecode 'Parrot/HLLCompiler.pbc'
+
+    .local pmc hllcompiler
+    hllcompiler = new [ 'HLLCompiler' ]
+
+    hllcompiler.removestage('parse')
+    hllcompiler.addstage('foo')
+    hllcompiler.addstage('bar', 'before' => 'run')
+    hllcompiler.addstage('optimize', 'after' => 'past')
+    hllcompiler.addstage('optimize', 'after' => 'post')
+    hllcompiler.addstage('peel', 'after' => 'optimize')
+    $P0 = getattribute hllcompiler, "@stages"
+    $S0 = join " ", $P0
+    say $S0
+    .return()
+.end
+
+CODE
+past optimize peel post optimize peel pir bar run foo
 OUT
 
 

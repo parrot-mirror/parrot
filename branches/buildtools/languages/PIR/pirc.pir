@@ -16,7 +16,7 @@
 
     $P0 = new [ 'HLLCompiler' ]
     $P0.'language'('languages-PIR')
-    $P0.'parsegrammar'('PIRGrammar')
+    $P0.'parsegrammar'('PIR::Grammar')
     $P0.'astgrammar'('ASTGrammar')
 
 .end
@@ -40,6 +40,9 @@
     errs = new .Integer
     set_root_global 'errors', errs
 
+		.local pmc labels
+		labels = new .ResizablePMCArray		
+		set_root_global 'heredoc', labels
 		
 		# Process command line options				
 		load_bytecode "Getopt/Obj.pir"
@@ -100,7 +103,7 @@
 
   ERR_MSG: 		
     if errs == 1 goto ONE_ERROR    
-    printerr "There were"           
+    printerr "There were "           
     printerr errs
     printerr " errors.\n"    
     end
@@ -136,14 +139,14 @@ OPTIONS
 .end
 
 
-.namespace [ 'PIRGrammar' ]
+.namespace [ 'PIR::Grammar' ]
 
 .sub _load :load :init
     load_bytecode 'PGE.pbc'
     load_bytecode 'PGE/Text.pbc'
 
     $P0 = getclass 'PGE::Grammar'
-    $P1 = subclass $P0, 'PIRGrammar'
+    $P1 = subclass $P0, 'PIR::Grammar'
 
     # The parser is split up into several files
     # for faster edit-compile-test cycles.
@@ -157,6 +160,85 @@ OPTIONS
     load_bytecode 'languages/PIR/lib/pasm_pmc_gen.pbc'
     load_bytecode 'languages/PIR/lib/pasm_core_gen.pbc'
 .end
+
+
+
+
+.sub process_heredocs
+		.param pmc mob
+		
+	
+		.local pmc labels
+		labels = get_root_global "heredoc"
+		.local pmc id
+		.local int count, i
+		
+		count = labels
+		i = 0
+	
+	loop:	
+		if i >= count goto endloop
+		id = shift labels		
+		i += 1
+		
+		printerr id
+		#mob = heredoc_label(mob)
+		#heredoc_label()
+								
+		goto loop
+	endloop:
+
+.end
+
+
+
+.sub store_heredoc_label
+	.param pmc mob
+	.param pmc heredocid
+	
+	printerr heredocid
+	printerr "\n"
+		
+	.local pmc labels
+	labels = get_root_global "heredoc"
+	push labels, heredocid
+	
+#	.local pmc iter, obj
+#	iter = new .Iterator, labels
+#	printerr "\n===============\n"
+#loop:
+#	unless iter goto endloop
+#	obj = shift iter
+#	printerr "Obj: "
+#	printerr obj
+#	printerr "\n"
+#	goto loop
+#endloop:
+#	printerr "\n===============\n"
+#	.return (mob, adverbs :flat :named)	
+.end
+
+#
+# Clear all heredoc labels
+#
+.sub clear_heredocs
+		.local pmc labels
+		.local int count, i
+		labels = get_root_global 'heredoc'
+		count = labels
+		i = 0
+	loop:
+		if i >= count goto endloop
+		delete labels[i]
+		i += 1
+		goto loop
+	endloop:	
+		#printerr "=============\n"
+.end
+
+
+
+
 
 
 .sub warning
@@ -211,6 +293,58 @@ OPTIONS
 	  printerr "can't find PGE::Util::line_number"
 	  exit 1
 .end
+
+
+
+=head2 Custom parse methods
+
+The rules C<target> and C<label> need to be redefined when parsing 
+macros. These wrapper rules invoke the appropiate rules in pir.pg
+depending on the context.
+
+=cut
+
+.sub target
+		.param pmc mob
+		.param pmc adverbs :slurpy :named
+		$P0 = get_global 'macro_context'
+		if null $P0 goto do_normal
+		if $P0 > 0 goto do_macro
+	do_normal:				
+		.return normal_target(mob, adverbs :flat :named)
+	do_macro:			
+		.return macro_target(mob, adverbs :flat :named)
+.end
+
+
+.sub label
+		.param pmc mob
+		.param pmc adverbs :slurpy :named
+		$P0 = get_global 'macro_context'
+		if null $P0 goto do_normal
+		if $P0 > 0 goto do_macro
+	do_normal:				
+		.return normal_label(mob, adverbs :flat :named)
+	do_macro:			
+		.return macro_label_decl(mob, adverbs :flat :named)
+.end
+
+.sub init_macro_rules        	
+		.local pmc macro_context
+		macro_context = new .Integer
+		macro_context = 1
+		set_global 'macro_context', macro_context
+.end
+
+.sub close_macro_rules	
+		$P0 = get_global 'macro_context'
+		$P0 = 0
+.end
+
+
+
+
+
 
 
 =head1 LICENSE
