@@ -51,7 +51,7 @@ sub new {
     # create a temp file and rename it
     my $source = "src/ops/$base_ops_stub.c.temp";
 
-    if ( $base =~ m!^src/dynoplibs/! || $flagref->{dynamic} ) {
+    if ( $flagref->{dynamic} ) {
         $source             =~ s!src/ops/!!;
         $header             = $base_ops_h;
         $base               =~ s!^.*[/\\]!!;
@@ -75,6 +75,7 @@ sub new {
             file        => $file,
             argv        => [ @argv ],
             flag        => $flagref,
+            script      => $argsref->{script},
         } );
     }
 
