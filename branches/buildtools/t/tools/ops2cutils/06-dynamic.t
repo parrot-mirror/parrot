@@ -17,7 +17,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests =>  64;
+use Test::More tests =>  72;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -65,6 +65,34 @@ my ($msg, $tie);
     test_dynops( [ qw( CGP      dan.ops ) ] );
     test_dynops( [ qw( C        dan.ops ) ] );
     test_dynops( [ qw( CSwitch  dan.ops ) ] );
+
+    {
+        $tie = tie *STDERR, "Capture" or croak "Unable to tie";
+        my $self = Parrot::Ops2c::Utils->new( {
+            argv            => [ qw( CSwitch  dan.ops dan.ops ) ],
+            flag            => { dynamic => 1 },
+        } );
+        $msg = $tie->READLINE;
+        untie *STDERR or croak "Unable to untie";
+        ok(defined $self, 
+            "Constructor correctly returned when provided >= 1 arguments");
+        like($msg,
+            qr/Ops file 'dan\.ops' mentioned more than once!/,
+            "Error message is correct");
+
+        my $c_header_file = $self->print_c_header_file();
+        ok(-e $c_header_file, "$c_header_file created");
+        ok(-s $c_header_file, "$c_header_file has non-zero size");
+
+        my $SOURCE = $self->print_c_source_top();
+        is(ref($SOURCE), q{GLOB}, "Argument type is filehandle (typeglob)");
+
+        my $c_source_final;
+        ok($c_source_final = $self->print_c_source_bottom($SOURCE),
+            "print_c_source_bottom() returned successfully");
+        ok(-e $c_source_final, "$c_source_final created");
+        ok(-s $c_source_final, "$c_source_final has non-zero size");
+    }
 
     ok(chdir($cwd), "returned to starting directory");
 }
