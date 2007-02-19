@@ -42,7 +42,8 @@ sub getoptions {
 
 =head1 NAME
 
-Parrot::Ops2c::Auxiliary - Non-method subroutines holding functionality for F<tools/build/ops2c.pl>.
+Parrot::Ops2c::Auxiliary - Non-method subroutines holding functionality for 
+F<tools/build/ops2c.pl>.
 
 =head1 SYNOPSIS
 
@@ -57,7 +58,7 @@ Parrot::Ops2c::Auxiliary - Non-method subroutines holding functionality for F<to
 =head1 DESCRIPTION
 
 Parrot::Ops2c::Auxiliary provides subroutines called by F<tools/build/ops2c.pl>, a
-program which is called at the very beginning of the Parrot F<make> process.
+program which is called at various points in the Parrot F<make> process.
 This package is intended to hold subroutines used by that program I<other
 than> the object-oriented methods provided by Parrot::Ops2c::Utils.
 
@@ -120,7 +121,13 @@ Jim Keenan (refactoring code originally found in F<tools/build/ops2c.pl>).
 
 =head1 SEE ALSO
 
-Parrot::Ops2c::Utils.  F<tools/build/ops2c.pl>.
+=over 4
+
+=item * Parrot::Ops2c::Utils.
+
+=item * F<tools/build/ops2c.pl>.
+
+=back
 
 =cut
 

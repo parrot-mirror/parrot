@@ -6,6 +6,73 @@ use lib ("lib/");
 use Parrot::OpLib::core;
 use Parrot::OpsFile;
 
+=head1 NAME
+
+Parrot::Ops2c::Utils - Methods holding functionality for F<tools/build/ops2c.pl>.
+
+=head1 SYNOPSIS
+
+    $self = Parrot::Ops2c::Utils->new( {
+        argv    => [ @ARGV ],
+        flag    => Parrot::Ops2c::Auxiliary::getoptions(),
+        script  => $0,
+    } );
+
+    $c_header = $self->print_c_header_file();
+
+    $SOURCE = $self->print_c_source_top();
+
+    $c_source = $self->print_c_source_bottom($SOURCE);
+
+=head1 DESCRIPTION
+
+Parrot::Ops2c::Utils provides methods called by F<tools/build/ops2c.pl>, a
+program which is called at various points in the Parrot F<make> process.
+The program's function is to create a pair of C header (F<*.h>) and
+implementation (F<*.c>) files from the operation definitions found in 
+one or more F<*.ops> files.
+
+The functionality originally found in F<tools/build/ops2c.pl> has been
+extracted into this package's methods in order to support component-focused
+testing and future refactoring.
+
+=head1 METHODS
+
+=head2 C<new()>
+
+=over 4
+
+=item * Purpose
+
+Process command-line arguments provided to F<tools/build/ops2c.pl>; construct
+and initialize a Parrot::Ops2c::Utils object.
+
+=item * Arguments
+
+Hash reference with the following elements:
+
+    argv        :   reference to @ARGV
+    flag        :   hash reference which is the return value of 
+                    Parrot::Ops2c::Utils::getoptions();
+                    hash will have keys such as 'core', 'dynamic' or 'nolines'
+    script      :   name of the script to be executed by 'make'
+                    (generally, $0 or tools/build/ops2c.pl)
+
+=item * Return Value
+
+Parrot::Ops2c::Utils object.  At this point, the caller is ready to open a
+handle to the C-header file and write to it.
+
+=item * Comment
+
+Arguments for the constructor have been selected so as to provide
+subsequent methods with all information needed to execute properly and to be
+testable.
+
+=back
+
+=cut
+
 sub new {
     my ($class, $argsref) = @_;
     unless (defined $argsref->{flag}) {
@@ -180,6 +247,34 @@ END_C
     return $preamble;
 }
 
+=head2 C<print_header_file()>
+
+=over 4
+
+=item * Purpose
+
+Creates a C-header file corresponding to a particular op.  Such files will
+have names like these:
+
+    include/parrot/oplib/core_ops.h
+    include/parrot/oplib/myops_ops_switch.h
+
+=item * Arguments
+
+None.  (All data needed is already in the object.)
+
+=item * Return Value
+
+Returns the name of the C-header file created.  You do not need to capture or
+make use of this return value during production, but it has proven useful in
+testing.
+
+=item * Comment
+
+=back
+
+=cut
+
 sub print_c_header_file {
     my $self = shift;
 
@@ -239,6 +334,48 @@ sub _print_coda {
  */
 END_C
 }
+
+=head2 C<print_c_source_top()>
+
+=over 4
+
+=item * Purpose
+
+Writes the top half of a C-source file corresponding to a particular op.  
+Such files will have names like these:
+
+    src/ops/core_ops.c
+    src/ops/myops_ops_switch.c
+
+=item * Arguments
+
+None.  (All data needed is already in the object.)
+
+=item * Return Value
+
+Returns a still-open filehandle to the C-source file.
+
+=item * Comment
+
+B<Q:>  Why does this method write only the top-half of the C-source file 
+rather than the whole thing?
+
+B<A:>  Mainly for convenience in maintenance and testing.
+Internally, a handle is opened to the file, the file is written to, and the
+handle is closed and returned.  That same handle is then re-opened, a line
+count on the file so far is taken, the handle is closed, then opened again for
+writing the bottom half of the source file.  There are quite a few private
+methods implementing the first and last of these steps.  It made sense to
+group these private methods into two public methods corresponding to the two
+points where the filehandle is opened and the C-source file is written to.
+
+B<Q:>  Why return a filehandle?
+
+B<A:>  It is re-used as an argument to the next method.
+
+=back
+
+=cut
 
 sub print_c_source_top {
     my $self = shift;
@@ -437,6 +574,30 @@ END_C
     }
     close($fh) || die "Unable to close after writing: $!";
 }
+
+=head2 C<print_c_source_bottom()>
+
+=over 4
+
+=item * Purpose
+
+Writes the bottom half of a C-source file corresponding to a particular op.  
+
+=item * Arguments
+
+One argument:  the filehandle returned by C<print_c_source_top()>.
+
+=item * Return Value
+
+Returns the name of the C-source file created.  You do not need to capture or
+make use of this return value during production, but it has proven useful in
+testing.
+
+=item * Comment
+
+=back
+
+=cut
 
 sub print_c_source_bottom {
     my ($self, $SOURCE) = @_;
@@ -845,3 +1006,35 @@ sub _rename_source {
 }
 
 1;
+
+=head1 DEPENDENCIES
+
+=over 4
+
+=item * Parrot::OpsFile
+
+=item * Parrot::OpLib::core
+
+This package is not part of the Parrot distribution.  It is created during 
+Parrot's F<make> process before the first invocation of F<tools/build/ops2c.pl>.
+
+=back
+
+=head1 AUTHOR
+
+See F<tools/build/ops2c.pl> for a list of the Parrot hackers who, over a
+period of several years, developed the functionality now found in the methods
+of Parrot::Ops2c::Utils.  Jim Keenan extracted that functionality and placed
+it in this package's methods.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item * F<tools/build/ops2c.pl>
+
+=item * Parrot::OpsFile
+
+=back
+
+=cut
