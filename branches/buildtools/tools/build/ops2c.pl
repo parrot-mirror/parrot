@@ -3,9 +3,8 @@
 # $Id$
 use warnings;
 use strict;
-use Data::Dumper;
 use lib 'lib';
-use Parrot::Config;
+# use Parrot::Config;
 use Parrot::Ops2c::Auxiliary qw( Usage getoptions );
 use Parrot::Ops2c::Utils;
 
@@ -139,6 +138,10 @@ Do not generate C<#line> directives in the generated C code.
 
 =item C<Parrot::OpTrans::CPrederef>
 
+=item C<Parrot::Ops2c::Utils>
+
+=item C<Parrot::Ops2c::Auxiliary>
+
 =back
 
 =cut
@@ -150,22 +153,3 @@ Do not generate C<#line> directives in the generated C code.
 # End:
 # vim: expandtab shiftwidth=4:
 
-
-__END__
-
-#print STDERR Dumper (
-#    \@ARGV,
-#    $trans,
-#    $suffix,
-#    $file,
-#    $base,
-#    $incdir,
-#    $include,
-#    $header,
-#    $source,
-#    $sym_export,
-#    $ops,
-#    \%versions,
-#    $num_ops,
-#    $num_entries,
-#);
