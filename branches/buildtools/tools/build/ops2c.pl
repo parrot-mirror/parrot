@@ -114,6 +114,30 @@ Do not generate C<#line> directives in the generated C code.
 
 =back
 
+=head1 NOTE
+
+Most of the functionality in F<tools/build/ops2c.pl> has been extracted into
+methods and subroutines found in Parrot::Ops2c::Utils and
+Parrot::Ops2c::Auxiliary.  This refactoring facilitates unit testing and
+coverage analysis of that functionality.  A test suite has been provided in
+F<t/tools/ops2cutils/>.  It is recommended that future refactoring of this
+functionality proceed in a test-driven manner, I<i.e.,> tests should be
+written reflecting any changes to interface or functionality; the code should
+be written which implements the revisions; the code should be tested; and
+coverage analysis should be performed with Devel::Cover to measure the extent
+to which the tests exercise the code.
+
+=head1 AUTHORS
+
+Based on the commit logs, the following members of the Parrot project have
+contributed to this program:
+
+    ambs bernhard boemmels brentdax chip 
+    coke dan gregor grunblatt jgoff 
+    jkeenan jonathan josh jrieks leo 
+    mikescott mrjoltcola nicholas particle paultcochrane 
+    petdance rgrjr robert simon 
+
 =head1 SEE ALSO
 
 =over 4
