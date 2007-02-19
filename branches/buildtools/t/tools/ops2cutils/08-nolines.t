@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2006, The Perl Foundation.
-# $Id$
-# 06-dynamic.t
+# $Id: 08-nolines.t 17036 2007-02-18 04:46:00Z jkeenan $
+# 08-nolines.t
 
 use strict;
 use warnings;
@@ -17,7 +17,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests =>  64;
+use Test::More tests =>  15;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -34,8 +34,6 @@ src/ops/stack.ops src/ops/stm.ops src/ops/string.ops src/ops/sys.ops
 src/ops/var.ops );
 my $num = "src/ops/ops.num";
 my $skip = "src/ops/ops.skip";
-my @dynopsfiles = qw( src/dynoplibs/dan.ops src/dynoplibs/myops.ops );
-
 
 ok(chdir $main::topdir, "Positioned at top-level Parrot directory");
 my $cwd = cwd();
@@ -52,29 +50,11 @@ my ($msg, $tie);
     unshift @INC, $tlib;
     require Parrot::Ops2c::Utils;
 
-    foreach my $f (@dynopsfiles) {
-        copy (qq{$cwd/$f}, qq{$tdir/$f});
-    }
-    chdir "src/dynoplibs" or croak "Unable to change to src/dynoplibs: $!";
-
-    test_dynops( [ qw( CGoto    myops.ops ) ] );
-    test_dynops( [ qw( CGP      myops.ops ) ] );
-    test_dynops( [ qw( C        myops.ops ) ] );
-    test_dynops( [ qw( CSwitch  myops.ops ) ] );
-    test_dynops( [ qw( CGoto    dan.ops ) ] );
-    test_dynops( [ qw( CGP      dan.ops ) ] );
-    test_dynops( [ qw( C        dan.ops ) ] );
-    test_dynops( [ qw( CSwitch  dan.ops ) ] );
-
-    ok(chdir($cwd), "returned to starting directory");
-}
-
-sub test_dynops {
-    my $local_argv_ref = shift;
     {
+        local @ARGV = qw( C CGoto CGP CSwitch CPrederef );
         my $self = Parrot::Ops2c::Utils->new( {
-            argv            => $local_argv_ref,
-            flag            => { dynamic => 1 },
+            argv            => [ @ARGV ],
+            flag            => { core => 1, nolines => 1 },
         } );
         ok(defined $self, 
             "Constructor correctly returned when provided >= 1 arguments");
@@ -92,20 +72,21 @@ sub test_dynops {
         ok(-e $c_source_final, "$c_source_final created");
         ok(-s $c_source_final, "$c_source_final has non-zero size");
     }
+
+    ok(chdir($cwd), "returned to starting directory");
 }
 
 pass("Completed all tests in $0");
-
 
 ################### DOCUMENTATION ###################
 
 =head1 NAME
 
-06-dynamic.t - test C<--dynamic> flag to F<tools/build/ops2c.pl>
+08-nolines.t - test C<--nolines> option to F<tools/build/ops2c.pl>.
 
 =head1 SYNOPSIS
 
-    % prove t/tools/ops2cutils/06-dynamic.t
+    % prove t/tools/ops2cutils/08-nolines.t
 
 =head1 DESCRIPTION
 
@@ -115,9 +96,9 @@ By doing so, they test the functionality of the F<ops2c.pl> utility.
 That functionality has largely been extracted 
 into the methods of F<Utils.pm>.
 
-F<06-dynamic.t> tests how well 
-C<Parrot::Ops2c::Utils()> works when the C<--dynamic> flag is passed to
-F<tools/build/ops2c.pl>.
+F<08-nolines.t> tests whether 
+C<Parrot::Ops2c::Utils::new()> work properly when C<--nolines> option 
+is passed to F<tools/build/ops2c.pl>.
 
 =head1 AUTHOR
 
@@ -128,3 +109,4 @@ James E Keenan
 Parrot::Ops2c::Auxiliary, F<ops2c.pl>.
 
 =cut
+

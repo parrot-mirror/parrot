@@ -73,23 +73,6 @@ my ($msg, $tie);
 
 pass("Completed all tests in $0");
 
-sub test_single_trans_and_header {
-    my $trans = shift;
-    my %available = map {$_, 1} qw( C CGoto CGP CSwitch CPrederef );
-    croak "Bad argument $trans to test_single_trans()"
-        unless $available{$trans};
-
-    my $self = Parrot::Ops2c::Utils->new( {
-            argv            => [ $trans ],
-            flag            => { core => 1 },
-        } );
-    ok(defined $self, 
-        "Constructor correct when provided with single argument $trans");
-    my $c_header_file = $self->print_c_header_file();
-    ok(-e $c_header_file, "$c_header_file created");
-    ok(-s $c_header_file, "$c_header_file has non-zero size");
-}
-
 ################### DOCUMENTATION ###################
 
 =head1 NAME

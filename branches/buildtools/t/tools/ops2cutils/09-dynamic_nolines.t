@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2006, The Perl Foundation.
-# $Id$
-# 06-dynamic.t
+# $Id: 09-dynamic_nolines.t 17036 2007-02-18 04:46:00Z jkeenan $
+# 09-dynamic_nolines.t
 
 use strict;
 use warnings;
@@ -57,24 +57,26 @@ my ($msg, $tie);
     }
     chdir "src/dynoplibs" or croak "Unable to change to src/dynoplibs: $!";
 
-    test_dynops( [ qw( CGoto    myops.ops ) ] );
-    test_dynops( [ qw( CGP      myops.ops ) ] );
-    test_dynops( [ qw( C        myops.ops ) ] );
-    test_dynops( [ qw( CSwitch  myops.ops ) ] );
-    test_dynops( [ qw( CGoto    dan.ops ) ] );
-    test_dynops( [ qw( CGP      dan.ops ) ] );
-    test_dynops( [ qw( C        dan.ops ) ] );
-    test_dynops( [ qw( CSwitch  dan.ops ) ] );
+    test_dynops_nolines( [ qw( CGoto    myops.ops ) ] );
+    test_dynops_nolines( [ qw( CGP      myops.ops ) ] );
+    test_dynops_nolines( [ qw( C        myops.ops ) ] );
+    test_dynops_nolines( [ qw( CSwitch  myops.ops ) ] );
+    test_dynops_nolines( [ qw( CGoto    dan.ops ) ] );
+    test_dynops_nolines( [ qw( CGP      dan.ops ) ] );
+    test_dynops_nolines( [ qw( C        dan.ops ) ] );
+    test_dynops_nolines( [ qw( CSwitch  dan.ops ) ] );
 
     ok(chdir($cwd), "returned to starting directory");
 }
 
-sub test_dynops {
+pass("Completed all tests in $0");
+
+sub test_dynops_nolines {
     my $local_argv_ref = shift;
     {
         my $self = Parrot::Ops2c::Utils->new( {
             argv            => $local_argv_ref,
-            flag            => { dynamic => 1 },
+            flag            => { dynamic => 1, nolines => 1 },
         } );
         ok(defined $self, 
             "Constructor correctly returned when provided >= 1 arguments");
@@ -94,18 +96,15 @@ sub test_dynops {
     }
 }
 
-pass("Completed all tests in $0");
-
-
 ################### DOCUMENTATION ###################
 
 =head1 NAME
 
-06-dynamic.t - test C<--dynamic> flag to F<tools/build/ops2c.pl>
+09-dynamic_nolines.t - test C<--nolines> option to F<tools/build/ops2c.pl>.
 
 =head1 SYNOPSIS
 
-    % prove t/tools/ops2cutils/06-dynamic.t
+    % prove t/tools/ops2cutils/09-dynamic_nolines.t
 
 =head1 DESCRIPTION
 
@@ -115,9 +114,9 @@ By doing so, they test the functionality of the F<ops2c.pl> utility.
 That functionality has largely been extracted 
 into the methods of F<Utils.pm>.
 
-F<06-dynamic.t> tests how well 
-C<Parrot::Ops2c::Utils()> works when the C<--dynamic> flag is passed to
-F<tools/build/ops2c.pl>.
+F<09-dynamic_nolines.t> tests whether 
+C<Parrot::Ops2c::Utils::new()> work properly when the C<--nolines> and
+C<--dynamic> options are passed to F<tools/build/ops2c.pl>.
 
 =head1 AUTHOR
 
@@ -128,3 +127,4 @@ James E Keenan
 Parrot::Ops2c::Auxiliary, F<ops2c.pl>.
 
 =cut
+
