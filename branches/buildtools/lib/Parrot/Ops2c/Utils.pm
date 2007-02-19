@@ -423,12 +423,12 @@ END_C
     # Finish the SOURCE file's array initializer:
     my $CORE_SPLIT = 300;
     for ( my $i = 0 ; $i < @op_funcs ; $i++ ) {
-#        if ( $i && 
-#            $i % $CORE_SPLIT == 0 && 
-#            $self->{trans}->can("run_core_split") )
-#        {
-#            print $fh $self->{trans}->run_core_split($self->{base});
-#        }
+        if ( $i && 
+            $i % $CORE_SPLIT == 0 && 
+            $self->{trans}->can("run_core_split") )
+        {
+            print $fh $self->{trans}->run_core_split($self->{base});
+        }
         print $fh $op_funcs[$i];
     }
 
@@ -629,7 +629,7 @@ sub _op_lookup {
         my $hash_size = 3041;
         my $tot = $self->{index} + scalar keys(%{$self->{names}});
         if ( $hash_size < $tot * 1.2 ) {
-            print STDERR "please increase hash_size ($hash_size) in tools/build/ops2c.pl "
+            print STDERR "please increase hash_size ($hash_size) in lib/Parrot/Ops2c/Utils.pm "
                 . "to a prime number > ", $tot * 1.2, "\n";
         }
         print $fh <<END_C;
