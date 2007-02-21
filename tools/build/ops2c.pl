@@ -4,7 +4,6 @@
 use warnings;
 use strict;
 use lib 'lib';
-# use Parrot::Config;
 use Parrot::Ops2c::Auxiliary qw( Usage getoptions );
 use Parrot::Ops2c::Utils;
 
