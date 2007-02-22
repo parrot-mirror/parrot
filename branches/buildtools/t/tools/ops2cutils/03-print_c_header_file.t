@@ -17,14 +17,13 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests =>  26;
+use Test::More tests =>  25;
 use Carp;
 use Cwd;
 use File::Copy;
 use File::Temp (qw| tempdir |);
 use_ok( 'Parrot::Ops2pm::Utils' );
 use lib ("$main::topdir/t/tools/ops2cutils/testlib");
-use_ok( "Capture" );
 use_ok( "GenerateCore", qw| generate_core | );
 
 my @srcopsfiles = qw( src/ops/core.ops src/ops/bit.ops src/ops/cmp.ops
@@ -37,7 +36,6 @@ my $skip = "src/ops/ops.skip";
 
 ok(chdir $main::topdir, "Positioned at top-level Parrot directory");
 my $cwd = cwd();
-my ($msg, $tie);
 
 {
     my $tdir = tempdir( CLEANUP => 1 );
@@ -112,8 +110,14 @@ By doing so, they test the functionality of the F<ops2c.pl> utility.
 That functionality has largely been extracted 
 into the methods of F<Utils.pm>.
 
-F<04-print_c_header_file.t> tests whether 
-C<Parrot::Ops2c::Utils::print_c_header_file()> work properly.
+All the files in this directory are intended to be run B<after>
+F<Configure.pl> has been run but before F<make> has been called.  Hence, they
+are B<not> part of the test suite run by F<make test>.   Once you have run
+F<Configure.pl>, however, you may run these tests as part of F<make
+buildtools_tests>.
+
+F<03-print_c_header_file.t> tests whether 
+C<Parrot::Ops2c::Utils::print_c_header_file()> works properly.
 
 =head1 AUTHOR
 
@@ -124,20 +128,3 @@ James E Keenan
 Parrot::Ops2c::Auxiliary, F<ops2c.pl>.
 
 =cut
-
-__END__
-
-#$VAR1 = [];
-#$VAR2 = bless( {
-#                 'split_count' => 0
-#               }, 'Parrot::OpTrans::CSwitch' );
-#$VAR3 = '_switch';
-#/usr/local/bin/perl tools/build/vtable_extend.pl
-#/usr/local/bin/perl tools/build/ops2c.pl CGoto --core
-#$VAR1 = [];
-#$VAR2 = bless( {}, 'Parrot::OpTrans::CGoto' );
-#$VAR3 = '_cg';
-#/usr/local/bin/perl tools/build/ops2c.pl CGP --core
-#$VAR1 = [];
-#$VAR2 = bless( {}, 'Parrot::OpTrans::CGP' );
-#$VAR3 = '_cgp';

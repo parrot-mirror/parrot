@@ -20,16 +20,15 @@ BEGIN {
 use Test::More tests =>  30;
 use Carp;
 use Cwd;
-use lib ("$main::topdir/t/tools/ops2cutils/testlib");
-use_ok( "Capture" );
-
+use_ok( "Parrot::IO::Capture::Mini" );
 use_ok( 'Parrot::Ops2c::Auxiliary', qw| Usage getoptions | );
 
 ok(chdir $main::topdir, "Positioned at top-level Parrot directory");
 my $cwd = cwd();
 my ($msg, $tie, @lines);
 {
-    $tie = tie *STDERR, "Capture" or croak "Unable to tie";
+    $tie = tie *STDERR, "Parrot::IO::Capture::Mini"
+        or croak "Unable to tie";
     my $rv = Usage();
     $msg = $tie->READLINE;
     untie *STDERR or croak "Unable to untie";
@@ -118,6 +117,12 @@ F<lib/Parrot/Ops2c/Utils.pm> and F<lib/Parrot/Ops2c/Auxiliary.pm>.
 By doing so, they test the functionality of the F<ops2c.pl> utility.  
 That functionality has largely been extracted 
 into the methods of F<Utils.pm>.
+
+All the files in this directory are intended to be run B<after>
+F<Configure.pl> has been run but before F<make> has been called.  Hence, they
+are B<not> part of the test suite run by F<make test>.   Once you have run
+F<Configure.pl>, however, you may run these tests as part of F<make
+buildtools_tests>.
 
 F<02-usage.t> tests whether C<Parrot::Ops2c::Auxiliary::Usage()> 
 and F<getoptions()> work properly.

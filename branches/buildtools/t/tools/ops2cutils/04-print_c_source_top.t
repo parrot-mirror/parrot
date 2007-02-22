@@ -17,14 +17,13 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests =>  12;
+use Test::More tests =>  11;
 use Carp;
 use Cwd;
 use File::Copy;
 use File::Temp (qw| tempdir |);
 use_ok( 'Parrot::Ops2pm::Utils' );
 use lib ("$main::topdir/t/tools/ops2cutils/testlib");
-use_ok( "Capture" );
 use_ok( "GenerateCore", qw| generate_core | );
 
 my @srcopsfiles = qw( src/ops/core.ops src/ops/bit.ops src/ops/cmp.ops
@@ -37,7 +36,6 @@ my $skip = "src/ops/ops.skip";
 
 ok(chdir $main::topdir, "Positioned at top-level Parrot directory");
 my $cwd = cwd();
-my ($msg, $tie);
 
 {
     my $tdir = tempdir( CLEANUP => 1 );
@@ -90,6 +88,12 @@ F<lib/Parrot/Ops2c/Utils.pm> and F<lib/Parrot/Ops2c/Auxiliary.pm>.
 By doing so, they test the functionality of the F<ops2c.pl> utility.  
 That functionality has largely been extracted 
 into the methods of F<Utils.pm>.
+
+All the files in this directory are intended to be run B<after>
+F<Configure.pl> has been run but before F<make> has been called.  Hence, they
+are B<not> part of the test suite run by F<make test>.   Once you have run
+F<Configure.pl>, however, you may run these tests as part of F<make
+buildtools_tests>.
 
 F<04-print_c_source_top.t> tests whether 
 C<Parrot::Ops2c::Utils::print_c_source_top()> work properly.
