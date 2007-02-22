@@ -323,7 +323,6 @@ sub _print_run_core_func_decl_header {
 
 sub _print_coda {
     my $fh = shift;
-
     print $fh <<END_C;
 
 /*
@@ -628,23 +627,6 @@ sub print_c_source_bottom {
     return $c_source_final;
 }
     
-
-
-#################### SUBROUTINES ####################
-
-sub _print_coda {
-    my $fh = shift;
-    print $fh <<END_C;
-
-/*
- * Local variables:
- *   c-file-style: "parrot"
- * End:
- * vim: expandtab shiftwidth=4:
- */
-END_C
-}
-
 sub _reset_line_number {
     my ($self, $fh) = @_;
 
@@ -1034,6 +1016,8 @@ it in this package's methods.
 =item * F<tools/build/ops2c.pl>
 
 =item * Parrot::OpsFile
+
+=item * Parrot::Ops2c::Auxiliary
 
 =back
 
