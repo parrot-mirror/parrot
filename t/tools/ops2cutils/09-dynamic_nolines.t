@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006, The Perl Foundation.
+# Copyright (C) 2007, The Perl Foundation.
 # $Id: 09-dynamic_nolines.t 17036 2007-02-18 04:46:00Z jkeenan $
 # 09-dynamic_nolines.t
 
