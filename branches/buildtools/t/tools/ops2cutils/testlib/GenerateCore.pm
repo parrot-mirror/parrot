@@ -151,6 +151,8 @@ temporary copy of Parrot::OpLib::core.
 
 =item *  Parrot::Ops2c::Utils
 
+=back
+
 =head1 AUTHOR
 
 James E Keenan (jkeenan@cpan.org).
