@@ -17,7 +17,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests =>  14;
+use Test::More tests =>  42;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -49,14 +49,27 @@ my ($msg, $tie);
     unshift @INC, $tlib;
     require Parrot::Ops2c::Utils;
 
+    test_print_c_source_bottom( [ qw( C ) ] );
+    test_print_c_source_bottom( [ qw( CGoto ) ] );
+    test_print_c_source_bottom( [ qw( CGP ) ] );
+    test_print_c_source_bottom( [ qw( CSwitch ) ] );
+    test_print_c_source_bottom( [ qw( C CGoto CGP CSwitch CPrederef ) ] );
+
+    ok(chdir($cwd), "returned to starting directory");
+}
+
+
+pass("Completed all tests in $0");
+
+sub test_print_c_source_bottom {
+    my $local_argv_ref = shift;
     {
-        local @ARGV = qw( C CGoto CGP CSwitch CPrederef );
         my $self = Parrot::Ops2c::Utils->new( {
-            argv            => [ @ARGV ],
+            argv            => $local_argv_ref,
             flag            => { core => 1 },
         } );
         ok(defined $self, 
-            "Constructor correctly returned when provided >= 1 arguments");
+            "Constructor correctly returned when provided with argument(s): @{$local_argv_ref}");
 
         my $c_header_file = $self->print_c_header_file();
         ok(-e $c_header_file, "$c_header_file created");
@@ -71,28 +84,6 @@ my ($msg, $tie);
         ok(-e $c_source_final, "$c_source_final created");
         ok(-s $c_source_final, "$c_source_final has non-zero size");
     }
-
-    ok(chdir($cwd), "returned to starting directory");
-}
-
-
-pass("Completed all tests in $0");
-
-sub test_single_trans_and_header {
-    my $trans = shift;
-    my %available = map {$_, 1} qw( C CGoto CGP CSwitch CPrederef );
-    croak "Bad argument $trans to test_single_trans()"
-        unless $available{$trans};
-
-    my $self = Parrot::Ops2c::Utils->new( {
-            argv            => [ $trans ],
-            flag            => { core => 1 },
-        } );
-    ok(defined $self, 
-        "Constructor correct when provided with single argument $trans");
-    my $c_header_file = $self->print_c_header_file();
-    ok(-e $c_header_file, "$c_header_file created");
-    ok(-s $c_header_file, "$c_header_file has non-zero size");
 }
 
 ################### DOCUMENTATION ###################
