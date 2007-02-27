@@ -145,7 +145,19 @@ Return the classname.
         return SELF->vtable->whoami;
     }
 
+/*
 
+=item C<void add_attr(STRING* name)>
+
+Add attribute named C<name>.
+
+=cut
+
+*/
+
+    void add_attr(STRING* name) {
+        Parrot_add_attribute(interp, SELF, name);
+    }
 
 /*
 
