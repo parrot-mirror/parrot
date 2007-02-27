@@ -53,7 +53,18 @@ program
 ;
 
 chunk
-:   chunk   stat    _semicolon_opt
+:   _stat    laststat   _semicolon_opt
+        {
+            [ @{ $_[1] }, @{ $_[2] } ];
+        }
+|   _stat
+        {
+            $_[1];
+        }
+;
+
+_stat
+:   _stat   stat    _semicolon_opt
         {
             [ @{ $_[1] }, @{ $_[2] } ];
         }
@@ -75,11 +86,6 @@ block
         {
             PopScope( $_[0] );
             $_[1];
-        }
-|   chunk   laststat    _semicolon_opt
-        {
-            PopScope( $_[0] );
-            [ @{ $_[1] }, @{ $_[2] } ];
         }
 ;
 
@@ -699,7 +705,10 @@ sub Generate {
 
     my $generator = new pirVisitor($FH);
 #    my $generator = new pirVisitor(\*STDOUT);
-    print {$FH} $generator->{prologue};
+    my $prologue = $generator->{prologue};
+    $filename =~ s/\.pir$//;
+    $prologue =~ s/tmp/$filename/gm;
+    print {$FH} $prologue;
     foreach my $fct ( @{ $parser->YYData->{functs} } ) {
         foreach my $op ( @{$fct} ) {
             if ( ref($op) =~ /(Dir|Op)$/ ) {

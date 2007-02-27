@@ -49,6 +49,8 @@ See "Lua 5.1 Reference Manual", section 5.7 "Input and Ouput Facilities".
     set $P1, 'io'
     _lua__GLOBAL[$P1] = _io
 
+    _register($P1, _io)
+
     .const .Sub _io_close = '_io_close'
     set $P1, 'close'
     _io[$P1] = _io_close
@@ -144,7 +146,7 @@ See "Lua 5.1 Reference Manual", section 5.7 "Input and Ouput Facilities".
 
     .local pmc _lua__REGISTRY
     _lua__REGISTRY = global '_REGISTRY'
-    set $P1, 'file'
+    set $P1, 'ParrotIO'
     _lua__REGISTRY[$P1] = _lua_mt_file
 
 
@@ -237,7 +239,7 @@ L0:
     .local pmc _lua__REGISTRY
     .local pmc mt
     _lua__REGISTRY = global '_REGISTRY'
-    .const .LuaString key = 'file'
+    .const .LuaString key = 'ParrotIO'
     mt = _lua__REGISTRY[key]
     new file, .LuaUserdata
     file.'set_metatable'(mt)
@@ -315,7 +317,7 @@ L2:
     mt = file.'get_metatable'()
     .local pmc _lua__REGISTRY
     _lua__REGISTRY = global '_REGISTRY'
-    .const .LuaString key = 'file'
+    .const .LuaString key = 'ParrotIO'
     mt_file = _lua__REGISTRY[key]
     unless mt == mt_file goto L1
     ret = getattribute file, 'data'
@@ -328,7 +330,7 @@ L1:
     .param pmc file
     .local pmc f
     f = topfile(file)
-    if_null f, L1
+    if null f goto L1
     .return (f)
 L1:
     error("attempt to use a closed file")
@@ -382,7 +384,7 @@ file.
 .sub '_io_close' :anon
     .param pmc file
     .local pmc ret
-    unless_null file, L1
+    unless null file goto L1
     file = getiofile(1)
 L1:
     tofile(file)
@@ -423,13 +425,13 @@ error code.
 .sub '_io_input' :anon
     .param pmc file :optional
     .local pmc f
-    if_null file, L1
+    if null file goto L1
     unless file goto L1
     $I1 = isa file, 'LuaString'
     unless $I1 goto L2
     $S1 = file
     f = open $S1, '<'
-    unless_null f, L3
+    unless null f goto L3
     argerror(file)
 L3:
     $P0 = newfile()
@@ -467,13 +469,13 @@ input file. In this case it does not close the file when the loop ends.
     .param pmc filename :optional
     .local pmc file
     .local pmc f
-    unless_null filename, L1
+    unless null filename goto L1
     file = getiofile(0)
     .return _file_lines(file)
 L1:
     $S1 = checkstring(filename)
     f = open $S1, '<'
-    unless_null f, L2
+    unless null f goto L2
     argerror($S1)
 L2:
     file = newfile()
@@ -559,13 +561,13 @@ Similar to C<io.input>, but operates over the default output file.
 .sub '_io_output' :anon
     .param pmc file :optional
     .local pmc f
-    if_null file, L1
+    if null file goto L1
     unless file goto L1
     $I1 = isa file, 'LuaString'
     unless $I1 goto L2
     $S1 = file
     f = open $S1, '>'
-    unless_null f, L3
+    unless null f goto L3
     argerror(file)
 L3:
     $P0 = newfile()
@@ -647,7 +649,7 @@ handle, and B<nil> if C<obj> is not a file handle.
     mt = obj.'get_metatable'()
     .local pmc _lua__REGISTRY
     _lua__REGISTRY = global '_REGISTRY'
-    .const .LuaString key = 'file'
+    .const .LuaString key = 'ParrotIO'
     mt_file = _lua__REGISTRY[key]
     if mt == mt_file goto L1
     ret = new .LuaNil
@@ -655,7 +657,7 @@ handle, and B<nil> if C<obj> is not a file handle.
 L1:
     ret = new .LuaString
     f = getattribute obj, 'data'
-    unless_null f, L2
+    unless null f goto L2
     set ret, 'closed file'
     goto L3
 L2:

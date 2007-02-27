@@ -63,6 +63,8 @@ See "Lua 5.1 Reference Manual", section 5.6 "Mathematical Functions".
     set $P1, 'math'
     _lua__GLOBAL[$P1] = _math
 
+    _register($P1, _math)
+
     .const .Sub _math_abs = '_math_abs'
     set $P1, 'abs'
     _math[$P1] = _math_abs
@@ -452,11 +454,11 @@ L3:
     new $P0, .Random
     $N0 = $P0
     new ret, .LuaNumber
-    unless_null arg1, L1
+    unless null arg1 goto L1
     set ret, $N0
     goto L2
 L1:
-    unless_null arg2, L3
+    unless null arg2 goto L3
     u = checknumber(arg1)
     unless 1 <= u goto L4
     mul $N0, u

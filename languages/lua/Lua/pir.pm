@@ -42,7 +42,14 @@ L2:
   load_bytecode 'languages/lua/lib/luaio.pir'
   load_bytecode 'languages/lua/lib/luaos.pbc'
   load_bytecode 'languages/lua/lib/luadebug.pbc'
+  load_bytecode 'languages/lua/lib/luaperl.pbc'
   _main($P0 :flat)
+.end
+
+.sub '__onload' :anon :init
+  .const .Sub main = '_main'
+#  print "onload tmp\n"
+  set_root_global 'tmp', main
 .end
 
 };
@@ -265,13 +272,19 @@ L2:
         my $self = shift;
         my ($op) = @_;
         my $FH   = $self->{fh};
+        my $cond;
         if ( exists $op->{op} ) {
-            print {$FH}
-"  if $op->{arg1}->{symbol} $op->{op} $op->{arg2}->{symbol} goto $op->{result}->{symbol}\n";
+            if ( exists $op->{arg2} ) {
+                $cond = "$op->{arg1}->{symbol} $op->{op} $op->{arg2}->{symbol}";
+            }
+            else {
+                $cond = "$op->{op} $op->{arg1}";
+            }
         }
         else {
-            print {$FH} "  if $op->{arg1}->{symbol} goto $op->{result}->{symbol}\n";
+            $cond = "$op->{arg1}->{symbol}";
         }
+        print {$FH} "  if $cond goto $op->{result}->{symbol}\n";
         return;
     }
 
@@ -279,21 +292,19 @@ L2:
         my $self = shift;
         my ($op) = @_;
         my $FH   = $self->{fh};
+        my $cond;
         if ( exists $op->{op} ) {
-            print {$FH}
-"  unless $op->{arg1}->{symbol} $op->{op} $op->{arg2}->{symbol} goto $op->{result}->{symbol}\n";
+            if ( exists $op->{arg2} ) {
+                $cond = "$op->{arg1}->{symbol} $op->{op} $op->{arg2}->{symbol}";
+            }
+            else {
+                $cond = "$op->{op} $op->{arg1}->{symbol}";
+            }
         }
         else {
-            print {$FH} "  unless $op->{arg1}->{symbol} goto $op->{result}->{symbol}\n";
+            $cond = "$op->{arg1}->{symbol}";
         }
-        return;
-    }
-
-    sub visitBranchUnlessNullOp {
-        my $self = shift;
-        my ($op) = @_;
-        my $FH   = $self->{fh};
-        print {$FH} "  unless_null $op->{arg1}->{symbol}, $op->{result}->{symbol}\n";
+        print {$FH} "  unless $cond goto $op->{result}->{symbol}\n";
         return;
     }
 
