@@ -1,18 +1,20 @@
+# Copyright (C) 2006-2007, The Perl Foundation.
 # $Id$
+
+# PHP grammar for Plumhead partrige
+
+# The starting rule is TOP
 
 grammar Plumhead::Grammar;
 
-# a PHP grammar
-# derived from on languages/abc/abc.pg
-
 token TOP                     { <program> }
 
-regex SEA                     { .* <?before: \<> }
-token CODE_START              { \< \? p h p }
-token CODE_END                { \? \> }
+regex SEA                     { .*? <?before: \<> }
+token CODE_START              { <'<?php'> }
+token CODE_END                { <'?>'> <' '>* \n? }
 token DOUBLEQUOTE_STRING      { " <-["]>* " }
 token SINGLEQUOTE_STRING      { ' <-[']>* ' }
-token ECHO                    { e c h o }
+token ECHO                    { <'echo'> }
 token PAREN_OPEN              { \( }
 token PAREN_CLOSE             { \) }
 
@@ -22,17 +24,26 @@ token UNARY_MINUS             { \- }
 token UNARY_PLUS              { \+ }
 token ADD_OP                  { \+ | \- }
 token MUL_OP                  { \* | / | % }
+token REL_OP                  { <'=='> | <'<='> | <'>='> | <'!='> | <'<'>  | <'>'> }
 
-token IF                      { if }
-token ELSE                    { else }
+token IF                      { <'if'> }
+token ELSE                    { <'else'> }
 token program                 { ^ <SEA> <code> }
 
 rule  code                    { <?CODE_START> <statement>* <?CODE_END> }
 
+rule relational_expression    { <expression> <rel_op_clause>? }
+
 rule statement                { <ECHO> <expression> ;
-                              | <IF> <?PAREN_OPEN> <expression> <?PAREN_CLOSE> \{ <statement>* \} <else_clause>? 
+                              | <IF> <?PAREN_OPEN> <relational_expression> <?PAREN_CLOSE> \{ <statement>* \} <else_clause>? 
+                              | <inline_sea> 
                               }
+
 rule else_clause              { <?ELSE> \{ <statement>* \} }
+# TODO: rel_op_clause is not a nice name
+rule rel_op_clause            { <REL_OP> <expression> }
+rule else_clause              { <?ELSE> \{ <statement>* \} }
+token inline_sea              { <?CODE_END> <SEA> <?CODE_START> }
 
 token expression              { <DOUBLEQUOTE_STRING> | <SINGLEQUOTE_STRING> | <adding_expression> }
 

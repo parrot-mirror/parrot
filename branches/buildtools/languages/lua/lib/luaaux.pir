@@ -32,7 +32,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
 
 .sub 'checkany'
     .param pmc arg
-    unless_null arg, L1
+    unless null arg goto L1
     argerror("value expected")
 L1:
 .end
@@ -72,7 +72,7 @@ L3:
 .sub 'checknumber'
     .param pmc arg
     $S0 = "no value"
-    if_null arg, L0
+    if null arg goto L0
     $S1 = typeof arg
     if $S1 == 'Undef' goto L0
     $S0 = $S1
@@ -126,7 +126,7 @@ L2:
     .param pmc arg
     .local pmc val
     $S0 = "no value"
-    if_null arg, L0
+    if null arg goto L0
     $S1 = typeof arg
     if $S1 == 'Undef' goto L0
     $S0 = $S1
@@ -152,7 +152,7 @@ L0:
     .param pmc arg
     .param string type
     $S0 = "no value"
-    if_null arg, L0
+    if null arg goto L0
     $S0 = typeof arg
     if $S0 != type goto L0
     .return ()
@@ -171,6 +171,63 @@ L0:
     ex = new .Exception
     ex['_message'] =  message
     throw ex
+.end
+
+
+=item C<loadbuffer (buff, name)>
+
+=cut
+
+.sub 'loadbuffer'
+    .param string buff
+    .param string chunkname
+    .local pmc lua_comp
+    lua_comp = compreg 'Lua'
+    push_eh _handler
+    $P0 = lua_comp.'compile'(buff)
+    .return ($P0)
+_handler:
+    .get_results ($P0, $S0)
+    null $P0
+    .return ($P0, $S0)
+.end
+
+
+=item C<loadfile (filename)>
+
+=cut
+
+.sub 'loadfile'
+    .param string filename
+    .local pmc f
+    unless filename == '' goto L1
+    f = getstdin
+    goto L2
+L1:
+    f = open filename, '<'
+    unless f goto L3
+L2:
+    $S0 = f.'slurp'('')
+    if filename == '' goto L4
+    close f
+L4:
+    .local pmc lua_comp
+    lua_comp = compreg 'Lua'
+    push_eh _handler
+    $P0 = lua_comp.'compile'($S0)
+    .return ($P0)
+_handler:
+    .get_results ($P0, $S0)
+    goto L5
+L3:
+    $S0 = 'cannot open '
+    $S0 .= filename
+    $S0 .= ': '
+    $S1 = err
+    $S0 .= $S1
+L5:
+    null $P0
+    .return ($P0, $S0)
 .end
 
 
@@ -205,7 +262,7 @@ Support variable number of arguments function call.
 .sub 'optint'
     .param pmc arg
     .param int default
-    if_null arg, L0
+    if null arg goto L0
     unless arg goto L0
     $I1 = checknumber(arg)
     .return ($I1)
@@ -221,12 +278,27 @@ L0:
 .sub 'optstring'
     .param pmc arg
     .param string default
-    if_null arg, L0
+    if null arg goto L0
     unless arg goto L0
     $S0 = arg
     .return ($S0)
 L0:
     .return (default)
+.end
+
+
+=item C<_register (libname, lib)>
+
+=cut
+
+.sub '_register'
+    .param pmc libname
+    .param pmc lib
+    .const .LuaString _loaded = '_LOADED'
+    .local pmc _lua__REGISTRY
+    _lua__REGISTRY = global '_REGISTRY'
+    $P0 = _lua__REGISTRY[_loaded]
+    $P0[libname] = lib
 .end
 
 

@@ -39,6 +39,8 @@ See "Lua 5.1 Reference Manual", section 5.5 "Table Manipulation".
     set $P1, 'table'
     _lua__GLOBAL[$P1] = _table
 
+    _register($P1, _table)
+
     .const .Sub _table_concat = '_table_concat'
     set $P1, 'concat'
     _table[$P1] = _table_concat
@@ -242,7 +244,7 @@ inserts C<x> at the end of table C<t>.
     checktype(table, 'table')
     e = table.'len'()
     inc e
-    unless_null arg3, L1
+    unless null arg3 goto L1
     pos = e
     value = arg2
     goto L2
@@ -374,7 +376,7 @@ the given order may have their relative positions changed by the sort.
     .local int n
     checktype(table, 'table')
     n = table.'len'()
-    if_null comp, L1
+    if null comp goto L1
     $I0 = isa comp, 'LuaNil'
     if $I0 goto L1
     checktype(comp, 'function')
@@ -498,7 +500,7 @@ L2:
     .param pmc comp
     .param pmc a
     .param pmc b
-    if_null comp, L1
+    if null comp goto L1
     unless comp goto L1
     $P0 = comp(a, b)
     $I0 = istrue $P0

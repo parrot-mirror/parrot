@@ -1,4 +1,4 @@
-# Copyright (C) 2006, The Perl Foundation.
+# Copyright (C) 2006-2007, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -41,13 +41,7 @@ See "Lua 5.1 Reference Manual", section 5.3 "Modules".
     set $P1, 'package'
     _lua__GLOBAL[$P1] = _package
 
-    new $P0, .LuaString
-    set $P1, 'cpath'
-    _package[$P1] = $P0
-
-    new $P0, .LuaTable
-    set $P1, 'loaded'
-    _package[$P1] = $P0
+    _register($P1, _package)
 
     .const .Sub _package_loadlib = '_package_loadlib'
     set $P1, 'loadlib'
@@ -56,18 +50,202 @@ See "Lua 5.1 Reference Manual", section 5.3 "Modules".
     # LUA_COMPAT_LOADLIB
     _lua__GLOBAL[$P1] = _package_loadlib
 
-    new $P0, .LuaString
-    set $P1, 'path'
-    _package[$P1] = $P0
-
-    new $P0, .LuaTable
-    set $P1, 'preloaded'
-    _package[$P1] = $P0
-
     .const .Sub _package_seeall = '_package_seeall'
     set $P1, 'seeall'
     _package[$P1] = _package_seeall
 
+    .local pmc _loaders
+    new _loaders, .LuaTable
+    set $P1, 'loaders'
+    _package[$P1] = _loaders
+    new $P2, .LuaNumber
+
+    .const .Sub loader_preload = 'loader_preload'
+    set $P2, 1
+    _loaders[$P2] = loader_preload
+
+    .const .Sub loader_Lua = 'loader_Lua'
+    inc $P2
+    _loaders[$P2] = loader_Lua
+
+    .const .Sub loader_PBC = 'loader_PBC'
+    inc $P2
+    _loaders[$P2] = loader_PBC
+
+    setpath(_package, 'path', 'LUA_PATH', './?.lua')
+    setpath(_package, 'pbcpath', 'LUA_PBCPATH', './?.pbc;./?.pir')
+
+    .local pmc _lua__REGISTRY
+    _lua__REGISTRY = global '_REGISTRY'
+    set $P1, '_LOADED'
+    $P0 = _lua__REGISTRY[$P1]
+    set $P1, 'loaded'
+    _package[$P1] = $P0
+
+    new $P0, .LuaTable
+    set $P1, 'preload'
+    _package[$P1] = $P0
+
+.end
+
+.sub 'setpath' :anon
+    .param pmc package
+    .param string fieldname
+    .param string envname
+    .param string default
+    new $P1, .LuaString
+    set $P1, fieldname
+    new $P0, .Env
+    $S0 = $P0[envname]
+    if $S0 goto L1
+    $S0 = default
+    goto L2
+L1:
+L2:
+    new $P0, .LuaString
+    set $P0, $S0
+    package[$P1] = $P0
+.end
+
+.sub 'findfile' :anon
+    .param pmc name
+    .param string pname
+    $S1 = name
+    $S1 .= '.lua'
+    $I0 = stat $S1, 0
+    unless $I0 goto L1
+    .return ($S1)
+L1:
+    $S0 = "\n\tno file '"
+    $S0 .= $S1
+    $S0 .= "'"
+    new $P0, .LuaString
+    set $P0, $S0
+    .return ('', $P0)
+.end
+
+.sub 'loaderror' :anon
+    .param string name
+    .param string filename
+    .param string msg
+    $S0 = "error loading module '"
+    $S0 .= name
+    $S0 .= "' from file '"
+    $S0 .= filename
+    $S0 .= "':\n\t"
+    $S0 .= msg
+    error($S0)
+.end
+
+.sub 'loader_Lua' :anon
+    .param pmc name :optional
+    .local string filename
+    $S1 = checkstring(name)
+    (filename, $P0) = findfile(name, 'path')
+    unless filename == '' goto L1
+    # library not found in this path
+    .return ($P0)
+L1:
+    ($P0, $S0) = loadfile(filename)
+    unless null $P0 goto L2
+    loaderror($S1, filename, $S0)
+L2:
+    # library loaded successfully
+    .return ($P0)
+.end
+
+.sub 'findfile2' :anon
+    .param pmc name
+    .param string pname
+    $S1 = name
+    $S1 .= '.pbc'
+    $I0 = stat $S1, 0
+    unless $I0 goto L1
+    .return ($S1)
+L1:
+    $S0 = "\n\tno file '"
+    $S0 .= $S1
+    $S0 .= "'"
+    $S1 = name
+    $S1 .= '.pir'
+    $I0 = stat $S1, 0
+    unless $I0 goto L2
+    .return ($S1)
+L2:
+    $S0 .= "\n\tno file '"
+    $S0 .= $S1
+    $S0 .= "'"
+    new $P0, .LuaString
+    set $P0, $S0
+    .return ('', $P0)
+.end
+
+.sub 'loader_PBC' :anon
+    .param pmc name :optional
+    .local string funcname
+    .local string filename
+    $S1 = checkstring(name)
+    (filename, $P0) = findfile2(name, 'pbcpath')
+    unless filename == '' goto L1
+    # library not found in this path
+    .return ($P0)
+L1:
+    funcname = mkfuncname(name)
+    ($P0, $S0) = loadfunc(filename, funcname)
+    unless null $P0 goto L2
+    loaderror($S1, filename, $S0)
+L2:
+    # library loaded successfully
+    .return ($P0)
+.end
+
+.sub 'mkfuncname' :anon
+    .param pmc modname
+    $S1 = modname
+    $S0 = 'luaopen_'
+    $S0 .= $S1
+    .return ($S0)
+.end
+
+.sub 'loadfunc'
+    .param string path
+    .param string sym
+    load_bytecode path
+    $P0 = get_root_global sym
+    if null $P0 goto L1
+    .return ($P0)
+L1:
+    $S0 = "can't found function '"
+    $S0 .= sym
+    $S0 .= "' in module '"
+    $S0 .= path
+    $S0 .= "'"
+    .return ($P0, $S0)
+.end
+
+.sub 'loader_preload' :anon
+    .param pmc name :optional
+    $S1 = checkstring(name)
+    $P0 = global '_G'
+    new $P1, .LuaString
+    set $P1, 'package'
+    $P0 = $P0[$P1]
+    set $P1, 'preload'
+    $P0 = $P0[$P1]
+    $I0 = isa $P0, 'LuaTable'
+    if $I0 goto L1
+    error("'package.preload' must be a table")
+L1:
+    $P0 = $P0[name]
+    $I0 = isa $P0, 'LuaNil'
+    unless $I0 goto L2
+    $S0 = "\n\tno field package.preload['"
+    $S0 .= $S1
+    $S0 .= "']"
+    new $P0, .LuaString
+    set $P0, $S0
+L2:
+    .return ($P0)
 .end
 
 
@@ -124,14 +302,82 @@ loader (see below).
 If there is any error loading or running the module, or if it cannot find
 any loader for the module, then C<require> signals an error.
 
-NOT YET IMPLEMENTED.
+STILL INCOMPLETE (see loaders).
 
 =cut
 
 .sub '_lua_require' :anon
-    .param pmc packagename :optional
-    $S0 = checkstring(packagename)
-    not_implemented()
+    .param pmc modname :optional
+    .local pmc ret
+    $S1 = checkstring(modname)
+    .local pmc _lua__REGISTRY
+    _lua__REGISTRY = global '_REGISTRY'
+    new $P1, .LuaString
+    set $P1, '_LOADED'
+    .local pmc _LOADED
+    _LOADED = _lua__REGISTRY[$P1]
+    ret = _LOADED[modname]
+    $I0 = istrue ret
+    unless $I0 goto L1
+    $I0 = isa ret, 'LuaUserdata'
+    unless $I0 goto L2
+    $S0 = "loop or previous error loading module '"
+    $S0 .= $S1
+    $S0 .= "'"
+    error($S0)
+L2:
+    # package is already loaded
+    .return (ret)
+L1:
+    $P0 = global '_G'
+    set $P1, 'package'
+    $P0 = $P0[$P1]
+    .local pmc loaders
+    set $P1, 'loaders'
+    loaders = $P0[$P1]
+    .local pmc i
+    new i, .LuaNumber
+    set i, 1
+    .local pmc msg      # error message accumulator
+    new msg, .LuaString
+    set msg, ''
+L3:
+    $P0 = loaders[i]    # get a loader
+    $I0 = isa $P0, 'LuaNil'
+    unless $I0 goto L4
+    $S0 = "module '"
+    $S0 .= $S1
+    $S0 .= "' not found:"
+    $S1 = msg
+    $S0 .= $S1
+    error($S0)
+L4:
+    new $P1, .LuaNil
+    $P1 = $P0(modname)  # call it
+    $I0 = isa $P1 , 'LuaClosure'
+    if $I0 goto L5
+    $I0 = isa $P1 , 'LuaFunction'
+    if $I0 goto L5
+    $I0 = isa $P1 , 'LuaString'
+    unless $I0 goto L6
+    msg .= $P1
+L6:
+    inc i
+    goto L3
+L5:
+    .local pmc sentinel
+    new sentinel, .LuaUserdata
+    _LOADED[modname] = sentinel
+    new $P0, .LuaNil
+    $P0 = $P1(modname)  # run loaded module
+    $I0 = isa $P0, 'LuaNil'
+    unless $I0 goto L7
+    # use true as result
+    new $P0, .LuaBoolean
+    set $P0, 1
+L7:
+    _LOADED[modname] = $P0
+    .return ($P0)
 .end
 
 
@@ -143,7 +389,7 @@ Lua initializes the C path C<package.cpath> in the same way it initializes
 the Lua path C<package.path>, using the environment variable C<LUA_CPATH>
 (plus another default path).
 
-NOT YET IMPLEMENTED.
+NOT USED (see package.pbcpath).
 
 
 =item C<package.loaded>
@@ -151,9 +397,6 @@ NOT YET IMPLEMENTED.
 A table used by C<require> to control which modules are already loaded.
 When you require a module C<modname> and C<package.loaded[modname]> is not
 false, C<require> simply returns the value stored there.
-
-NOT YET IMPLEMENTED.
-
 
 =item C<package.loadlib (libname, funcname)>
 
@@ -196,15 +439,19 @@ the resulting file name. So, for instance, if the Lua path is
 the search for a Lua loader for module C<foo> will try to load the files
 C<./foo.lua>, C<./foo.lc>, and C</usr/local/foo/init.lua>, in that order.
 
-NOT YET IMPLEMENTED.
+STILL INCOMPLETE.
 
+=item C<package.pbcpath>
+
+The path used by C<require> to search for a PBC loader.
+
+STILL INCOMPLETE.
 
 =item C<package.preload>
 
 A table to store loaders for specific modules (see C<require>).
 
-NOT YET IMPLEMENTED.
-
+STILL INCOMPLETE.
 
 =item C<package.seeall (module)>
 
@@ -224,6 +471,7 @@ NOT YET IMPLEMENTED.
 
 =head1 AUTHORS
 
+Francois Perrad
 
 =cut
 

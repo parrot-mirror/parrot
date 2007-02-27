@@ -38,6 +38,10 @@ See "Lua 5.1 Reference Manual", section 5.1 "Basic Functions".
     global '_G' = _lua__GLOBAL
     new $P1, .LuaString
 
+    set $P1, '_LOADED'
+    new $P0, .LuaTable
+    _lua__REGISTRY[$P1] = $P0
+
 =item C<_G>
 
 A global variable (not a function) that holds the global environment (that is,
@@ -49,6 +53,8 @@ environments.)
 
     set $P1, '_G'
     _lua__GLOBAL[$P1] = _lua__GLOBAL
+
+    _register($P1, _lua__GLOBAL)
 
 =item C<_VERSION>
 
@@ -254,16 +260,17 @@ without arguments, C<dofile> executes the contents of the standard input
 C<dofile> propagates the error to its caller (that is, dofile does not run in
 protected mode).
 
-NOT YET IMPLEMENTED.
-
 =cut
 
 .sub '_lua_dofile' :anon
     .param pmc filename :optional
-    $S0 = optstring(filename, '')
-    not_implemented()
+    $S1 = optstring(filename, '')
+    ($P0, $S0) = loadfile($S1)
+    if null $P0 goto L1
+    .return $P0()
+L1:
+    error($S0)
 .end
-
 
 =item C<error (message [, level])>
 
@@ -353,7 +360,7 @@ See C<next> for the caveats of modifying the table during its traversal.
     .param pmc t :optional
     .param pmc i :optional
     checktype(t, 'table')
-    unless_null i, L1
+    unless null i goto L1
     .local pmc _G
     _G = global '_G'
     .const .LuaString key_ipairs = 'ipairs'
@@ -394,7 +401,25 @@ NOT YET IMPLEMENTED.
 =cut
 
 .sub '_lua_load' :anon
+    .param pmc func :optional
+    .param pmc chunkname :optional
+    checktype(func, 'function')
+    $S2 = optstring(chunkname, '=(load)')
     not_implemented()
+    .return load_aux($P0, $S0)
+.end
+
+.sub 'load_aux' :anon
+    .param pmc func
+    .param string error
+    if null func goto L1
+    .return (func)
+L1:
+    .local pmc msg
+    new msg, .LuaString
+    set msg, error
+    new func, .LuaNil
+    .return (func, msg)
 .end
 
 
@@ -403,14 +428,13 @@ NOT YET IMPLEMENTED.
 Similar to C<load>, but gets the chunk from file C<filename> or from the
 standard input, if no file name is given.
 
-NOT YET IMPLEMENTED.
-
 =cut
 
 .sub '_lua_loadfile' :anon
     .param pmc filename :optional
-    $S0 = optstring(filename, '')
-    not_implemented()
+    $S1 = optstring(filename, '')
+    ($P0, $S0) = loadfile($S1)
+    .return load_aux($P0, $S0)
 .end
 
 
@@ -422,16 +446,15 @@ To load and run a given string, use the idiom
 
     assert(loadstring(s))()
 
-NOT YET IMPLEMENTED.
-
 =cut
 
 .sub '_lua_loadstring' :anon
     .param pmc s :optional
     .param pmc chunkname :optional
-    $S0 = checkstring(s)
-    $S1 = optstring(chunkname, s)
-    not_implemented()
+    $S1 = checkstring(s)
+    $S2 = optstring(chunkname, $S1)
+    ($P0, $S0) = loadbuffer($S1, $S2)
+    .return load_aux($P0, $S0)
 .end
 
 
@@ -709,7 +732,7 @@ This function returns C<table>.
     .param pmc table :optional
     .param pmc metatable :optional
     checktype(table, 'table')
-    if_null metatable, L0
+    if null metatable goto L0
     $S0 = typeof metatable
     if $S0 == 'nil' goto L1
     if $S0 == 'table' goto L1
