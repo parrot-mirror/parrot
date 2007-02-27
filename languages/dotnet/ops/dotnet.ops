@@ -526,7 +526,7 @@ inline op net_clt_un(out INT, invar PMC, invar PMC) :base_core {
 
 
 /* Unsigned branch ops. */
-inline op net_bge_un(in INT, in INT, labelconst INT) :base_core {
+inline op net_bge_un(in INT, in INT, inconst LABEL) :base_core {
         if ((unsigned int)$1 >= (unsigned int)$2)
         {
                 goto OFFSET($3);
@@ -537,7 +537,7 @@ inline op net_bge_un(in INT, in INT, labelconst INT) :base_core {
         }
 }
 
-inline op net_bge_un(in NUM, in NUM, labelconst INT) :base_core {
+inline op net_bge_un(in NUM, in NUM, inconst LABEL) :base_core {
         if ((unsigned int)$1 >= (unsigned int)$2)
         {
                 goto OFFSET($3);
@@ -548,7 +548,7 @@ inline op net_bge_un(in NUM, in NUM, labelconst INT) :base_core {
         }
 }
 
-inline op net_bge_un(invar PMC, invar PMC, labelconst INT) :base_core {
+inline op net_bge_un(invar PMC, invar PMC, inconst LABEL) :base_core {
     int result;
     if ($1->vtable->isa(interp, $1,
         string_from_const_cstring(interp, "UInt64", 0)))
@@ -573,7 +573,7 @@ inline op net_bge_un(invar PMC, invar PMC, labelconst INT) :base_core {
     }
 }
 
-inline op net_bgt_un(in INT, in INT, labelconst INT) :base_core {
+inline op net_bgt_un(in INT, in INT, inconst LABEL) :base_core {
         if ((unsigned int)$1 > (unsigned int)$2)
         {
                 goto OFFSET($3);
@@ -584,7 +584,7 @@ inline op net_bgt_un(in INT, in INT, labelconst INT) :base_core {
         }
 }
 
-inline op net_bgt_un(in NUM, in NUM, labelconst INT) :base_core {
+inline op net_bgt_un(in NUM, in NUM, inconst LABEL) :base_core {
         if ($1 > $2)
         {
                 goto OFFSET($3);
@@ -595,7 +595,7 @@ inline op net_bgt_un(in NUM, in NUM, labelconst INT) :base_core {
         }
 }
 
-inline op net_bgt_un(invar PMC, invar PMC, labelconst INT) :base_core {
+inline op net_bgt_un(invar PMC, invar PMC, inconst LABEL) :base_core {
     int result;
     if ($1->vtable->isa(interp, $1,
         string_from_const_cstring(interp, "UInt64", 0)))
@@ -620,7 +620,7 @@ inline op net_bgt_un(invar PMC, invar PMC, labelconst INT) :base_core {
     }
 }
 
-inline op net_ble_un(in INT, in INT, labelconst INT) :base_core {
+inline op net_ble_un(in INT, in INT, inconst LABEL) :base_core {
         if ((unsigned int)$1 <= (unsigned int)$2)
         {
                 goto OFFSET($3);
@@ -631,7 +631,7 @@ inline op net_ble_un(in INT, in INT, labelconst INT) :base_core {
         }
 }
 
-inline op net_ble_un(in NUM, in NUM, labelconst INT) :base_core {
+inline op net_ble_un(in NUM, in NUM, inconst LABEL) :base_core {
         if ($1 <= $2)
         {
                 goto OFFSET($3);
@@ -642,7 +642,7 @@ inline op net_ble_un(in NUM, in NUM, labelconst INT) :base_core {
         }
 }
 
-inline op net_ble_un(invar PMC, invar PMC, labelconst INT) :base_core {
+inline op net_ble_un(invar PMC, invar PMC, inconst LABEL) :base_core {
     int result;
     if ($1->vtable->isa(interp, $1,
         string_from_const_cstring(interp, "UInt64", 0)))
@@ -667,7 +667,7 @@ inline op net_ble_un(invar PMC, invar PMC, labelconst INT) :base_core {
     }
 }
 
-inline op net_blt_un(in INT, in INT, labelconst INT) :base_core {
+inline op net_blt_un(in INT, in INT, inconst LABEL) :base_core {
         if ((unsigned int)$1 < (unsigned int)$2)
         {
                 goto OFFSET($3);
@@ -678,7 +678,7 @@ inline op net_blt_un(in INT, in INT, labelconst INT) :base_core {
         }
 }
 
-inline op net_blt_un(in NUM, in NUM, labelconst INT) :base_core {
+inline op net_blt_un(in NUM, in NUM, inconst LABEL) :base_core {
         if ($1 < $2)
         {
                 goto OFFSET($3);
@@ -689,7 +689,7 @@ inline op net_blt_un(in NUM, in NUM, labelconst INT) :base_core {
         }
 }
 
-inline op net_blt_un(invar PMC, invar PMC, labelconst INT) :base_core {
+inline op net_blt_un(invar PMC, invar PMC, inconst LABEL) :base_core {
     int result;
     if ($1->vtable->isa(interp, $1,
         string_from_const_cstring(interp, "UInt64", 0)))
@@ -714,7 +714,7 @@ inline op net_blt_un(invar PMC, invar PMC, labelconst INT) :base_core {
     }
 }
 
-inline op net_bne_un(in INT, in INT, labelconst INT) :base_core {
+inline op net_bne_un(in INT, in INT, inconst LABEL) :base_core {
         if ((unsigned int)$1 != (unsigned int)$2)
         {
                 goto OFFSET($3);
@@ -725,7 +725,7 @@ inline op net_bne_un(in INT, in INT, labelconst INT) :base_core {
         }
 }
 
-inline op net_bne_un(in NUM, in NUM, labelconst INT) :base_core {
+inline op net_bne_un(in NUM, in NUM, inconst LABEL) :base_core {
         if ($1 != $2)
         {
                 goto OFFSET($3);
@@ -736,7 +736,7 @@ inline op net_bne_un(in NUM, in NUM, labelconst INT) :base_core {
         }
 }
 
-inline op net_bne_un(invar PMC, invar PMC, labelconst INT) :base_core {
+inline op net_bne_un(invar PMC, invar PMC, inconst LABEL) :base_core {
     int result;
     if ($1->vtable->isa(interp, $1,
         string_from_const_cstring(interp, "UInt64", 0)))

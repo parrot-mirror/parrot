@@ -460,7 +460,7 @@ Add the attribute named $2 to the class $1.
 =cut
 
 inline op addattribute(invar PMC, in STR) :object_classes {
-    Parrot_add_attribute(interp, $1, $2);
+    VTABLE_add_attr(interp, $1, $2);
     goto NEXT();
 }
 
