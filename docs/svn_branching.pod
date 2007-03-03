@@ -1,5 +1,5 @@
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: submissions.pod 15385 2006-11-11 21:22:24Z chip $
+# $Id$
 
 =head1 NAME
 
