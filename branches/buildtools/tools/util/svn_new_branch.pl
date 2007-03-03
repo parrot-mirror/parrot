@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2001-2004, The Perl Foundation.
-# $Id: ops2pm.pl 16894 2007-02-04 22:54:29Z jkeenan $
+# $Id$
 use strict;
 use warnings;
 use lib ("lib");
