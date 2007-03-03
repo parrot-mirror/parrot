@@ -15,9 +15,9 @@ GetOptions(
     "branch=s" => \$branch,
     "sandbox=s" => \$sandbox,
 );
-croak "Must supply name of branch you are working with to '--branch' option"
+die "Must supply name of branch you are working with to '--branch' option"
     unless $branch;
-croak "Must supply absolute path to your sandbox directory to '--sandbox' option"
+die "Must supply absolute path to your sandbox directory to '--sandbox' option"
     unless $sandbox;
 
 synch_branch_to_trunk( {
@@ -39,7 +39,7 @@ svn_synch.pl - Synchronize Parrot branch to trunk
 
 From the top-level directory in your Parrot sandbox:
 
-    tools/util/svn_synch.pl \
+    perl tools/util/svn_synch.pl \
         --branch=my_branch_name \
         --sandbox=/home/username/path/to/parrot/sandbox
 
