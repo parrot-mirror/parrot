@@ -1,0 +1,25 @@
+# Copyright (C) 2007, The Perl Foundation.
+# $Id: submissions.pod 15385 2006-11-11 21:22:24Z chip $
+
+=head1 NAME
+
+docs/svn_branching.pod - Why and how to use Subversion branches in Parrot development
+
+=head1 SYNOPSIS
+
+=head1 WHY SHOULD I DO MY DEVELOPMENT IN BRANCHES?
+
+=head1 OKAY; HOW DO I DO IT?
+
+=head1 BRANCH MANAGEMENT
+
+=head1 AUTHOR
+
+James E. Keenan (jkeenan@cpan.org)
+
+=head1 SEE ALSO
+
+Parrot::Subversion::BranchManager.  F<tools/util/svn_new_branch.pl>.  F<tools/util/svn_synch.pl>.
+
+=cut
+
