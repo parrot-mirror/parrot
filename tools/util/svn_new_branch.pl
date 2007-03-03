@@ -29,14 +29,14 @@ svn_new_branch.pl - Create new branch in Parrot repository
 
 From the top-level directory in your Parrot sandbox:
 
-    perl tools/util/svn_new_branch.pl my_branch_name
+    perl tools/util/svn_new_branch.pl my_branch
 
 =head1 DESCRIPTION
 
 This program creates a new branch in the Parrot repository under
 F<https://svn.perl.org/parrot/branches/>.  It also creates a new tag in the
 Parrot repository under F<https://svn.perl.org/parrot/tags/>.  The tag is used
-by a companion program F<tools/util/svn_synch.pl>.
+by a companion program, F<tools/util/svn_synch.pl>.
 
 The program takes one command-line argument:  the name you have chosen for
 your new branch.  It then invokes 
