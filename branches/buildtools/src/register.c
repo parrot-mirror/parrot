@@ -72,6 +72,9 @@ to the previous values and the allocated register memory is discarded.
 
 #define CTX_ALLOC_SIZE 0x20000
 
+#define ALIGNED_CTX_SIZE (((sizeof (struct Parrot_Context) + NUMVAL_SIZE - 1) \
+        / NUMVAL_SIZE) * NUMVAL_SIZE )
+
 /*
 
 =item C<static void new_context_mem(Interp *, context_mem *ctx_mem)>
@@ -233,7 +236,6 @@ init_context(Interp *interp, parrot_context_t *ctx, parrot_context_t *old)
     ctx->lex_pad = PMCNULL;
     ctx->outer_ctx = NULL;
     ctx->current_cont = NULL;
-    ctx->current_method = NULL; /* XXX who clears it? */
     ctx->current_object = NULL; /* XXX who clears it?  */
     ctx->current_HLL = 0;
     if (old) {
