@@ -228,7 +228,6 @@ typedef struct Parrot_Context {
      */
     PMC *current_cont;          /* the return continuation PMC */
     PMC *current_object;        /* current object if a method call */
-    STRING *current_method;     /* name of method */
     opcode_t *current_pc;       /* program counter of Sub invocation */
     PMC *current_namespace;     /* The namespace we're currently in */
     INTVAL current_HLL;         /* see also src/hll.c */
@@ -241,19 +240,6 @@ typedef struct Parrot_Context {
      */
     size_t pred_offset;
 } parrot_context_t;
-
-#define SAVE_OFF_REGS(orig, next, save) \
-        save.bp = orig.bp;\
-        save.bp_ps = orig.bp_ps;\
-        orig.bp = next.bp;\
-        orig.bp_ps = next.bp_ps;
-
-#define RESTORE_REGS(orig, save) \
-        orig.bp = save.bp;\
-        orig.bp_ps = save.bp_ps;
-
-#define ALIGNED_CTX_SIZE (((sizeof (struct Parrot_Context) + NUMVAL_SIZE - 1) \
-        / NUMVAL_SIZE) * NUMVAL_SIZE )
 
 struct _Thread_data;    /* in thread.h */
 struct _Caches;         /* caches .h */
@@ -334,7 +320,9 @@ struct parrot_interp_t {
     int         n_libs;                       /* count of libs below */
     op_lib_t  **all_op_libs;                  /* all loaded opcode libraries */
 
-    Interp_flags flags;                       /* Various interpreter flags that */
+    Interp_flags flags;                       /* Various interpreter flags that
+                                               * signal that runops should do
+                                               * something */
 
     UINTVAL debug_flags;                      /* debug settings */
 
@@ -420,7 +408,6 @@ struct parrot_interp_t {
      */
     PMC *current_cont;                        /* the return continuation PMC */
     PMC *current_object;                      /* current object if a method call */
-    STRING *current_method;                   /* name of method */
 };
 
 /* typedef struct parrot_interp_t Interp;    done in parrot.h so that
