@@ -40,7 +40,7 @@ svn_synch.pl - Synchronize Parrot branch to trunk
 From the top-level directory in your Parrot sandbox:
 
     perl tools/util/svn_synch.pl \
-        --branch=my_branch_name \
+        --branch=my_branch \
         --sandbox=/home/username/path/to/parrot/sandbox
 
 Then:  resolve any conflicts and commit:
@@ -58,7 +58,7 @@ F<tools/util/svn_new_branch.pl>.
 
 In addition to creating a new branch in the Parrot repository,
 F<svn_new_branch.pl> creates a tag whose name follows the pattern
-C<my_branch_name-NNNNN>, where C<NNNNN> is the Subversion revision number at
+C<my_branch-NNNNN>, where C<NNNNN> is the Subversion revision number at
 the point where the branch was created.
 
 This program, F<svn_synch.pl>, makes use of the presence of that tag to help
