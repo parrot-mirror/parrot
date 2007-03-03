@@ -29,7 +29,7 @@ svn_new_branch.pl - Create new branch in Parrot repository
 
 From the top-level directory in your Parrot sandbox:
 
-    tools/util/svn_new_branch.pl my_branch_name
+    perl tools/util/svn_new_branch.pl my_branch_name
 
 =head1 DESCRIPTION
 
