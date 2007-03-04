@@ -15,10 +15,9 @@ $Revision$
 
 =head1 DEFINITIONS
 
-
 =head2 Object
 
-An object is kind a variable that incorporates both data and behavior
+An object is a value that incorporates both data and behavior
 related to that data.
 
 =head2 Class
@@ -86,13 +85,14 @@ An interface is a role that only adds methods.
 implement a core set of dynamic languages (Perl 6, Ruby, Python, etc).
 Other class systems may be implemented later to support other languages.
 
-=item - Classes have an associated namespace. (Which may be anonymous)
+=item - Classes may have an associated namespace. (Anonymous classes are
+not associated with a namespace.)
 
-=item - Classes have one or more immediate parent classes
+=item - Classes may have one or more immediate parent classes
 
-=item - Classes have a catalog of attribute names.
+=item - Classes may have a catalog of attribute names.
 
-=item - Classes have a list of roles they implement
+=item - Classes may have a list of roles they implement
 
 =item - Classes can instantiate an object of their class
 
@@ -105,7 +105,7 @@ Other class systems may be implemented later to support other languages.
 =item - Classes are instances of a meta-class and have their own sets of
 class methods and class attributes
 
-=item - Objects have an array of attributes. Attribute values may be
+=item - Objects may have an array of attributes. Attribute values may be
 PMCs or a low-level type.
 
 =item - Objects have an associated class.
@@ -191,31 +191,63 @@ An array PMC of the composed roles
 
 =item 5
 
-An array PMC of the methods defined in the class or composed into the
+An hash PMC of the methods defined in the class or composed into the
 class
-
 
 =item 6
 
-The class attribute hash. Keys are the attribute names and the values
-are a hash of attribute characteristics, including name, type, and the
-class they're associated with.
+An hash PMC of the overloaded PMC vtable entries for the class.
+
+=item 7
+
+The class attribute metadata hash. Keys are the attribute names and the
+values are a hash of attribute characteristics, including name, type, the
+class they're associated with and any flags (for example, private). Note
+that this only stores metadata for the attributes defined in this class,
+and not for attributes inherited from its parents.
+
+=item 8
+
+The full attribute lookup table. This associates attribute names with an
+index into the object's attribute storage (an array). It includes all
+attributes defined in the current class and every other class that it
+inherits from either directly or indirectly. The table is keyed on the
+name of the class where the attribute is defined, along with the
+attribute name. The value is an index into the per-object attribute
+store.
+
+=item 9
+
+The attribute cache. While the attribute lookup table defines every
+attribute, whether it is visible or not with the current method
+resolution order (MRO), the cache maps the names of the visible
+attributes directly to an index in the per- object attribute store. That
+saves a more costly lookup in the full attribute lookup table.
 
 =back
 
 The attribute catalog holds only the attributes defined in a particular
-class. When instantiating an object, it is necessary to scan all parent
-classes as well as the instantiated class for attributes defined there.
-The inheritance rules for a particular HLL will determine which child
-class attributes override which parent class attributes. 
+class. When instantiating an object, the object data store is created as
+a ResizablePMCArray, so doesn't need any specific details of the class's
+attribute structure. As attributes are set in the object (based on the
+index in the lookup table), the Array expands to accomodate the
+attribute indexes that are actually used. In the common case, a
+relatively small set near the lower index range is all that will be
+used.
 
-We may also add a cache to the class object: a hash that contains all
-child and parent attribute characteristcs. Whether this is useful
-largely depends on how slow it is to scan through the list of parent
-classes, and how dynamic we want the system to be. (If a parent class
-changes its set of attributes, should that change appear in later
-instantiations of objects from child classes? Probably, in which case
-caching parent attributes is an obstacle.)
+When setting the attribute cache it is necessary to scan all parent
+classes as well as the instantiated class for attributes defined there.
+The inheritance rules (MRO) for a particular HLL will determine which
+child class attributes override which parent class attributes.  The
+cache is only set on individual accesses to a particular attribute.
+
+(If a parent class changes its set of attributes, should that change
+appear in later instantiations of objects from child classes? If so, all
+of these classes would need to be re-constructed as a result of the
+change; note that any already instantiated objects would refer to the
+old class. NOTE: flag old classes with an "updated" status, to notify
+objects of the old class that they should rebless themselves into the
+new class next time they access the old class?)
 
 Class PMCs also have the "I am a class" flag set on them.
 
@@ -272,7 +304,7 @@ Adds a single role to the class. It takes a simple string name.
 [Stream-of-consciousness to be cleaned up later]
 The class registry has a much diminished role in this implementation.
 Its only responsibility is maintaining a mapping of unique IDs to class
-objects throught the system. (We may eventually be able to eliminate the
+objects throughout the system. (We may eventually be able to eliminate the
 registry altogether.) It can't be used for looking up classes by name,
 because it's possible to have multiple classes with the same name in the
 same namespace. (When you extend an existing class, it actually creates
@@ -281,7 +313,7 @@ class can't be thrown away if it has objects instantiated in it. The old
 objects still point to the old class and do their method resolution and
 attribute lookup through that class. If a class hasn't been
 instantiated, adding a method doesn't create a new class. If it has been
-instantiated, the it creates a new class the first time its extended,
+instantiated, it creates a new class the first time its extended,
 and then doesn't create a new class until it is instantiated again.) The
 class registry needs to have names removed entirely (it doesn't care
 about names anymore).  Low-level PMC types also need entries in the
@@ -292,8 +324,8 @@ class. All the class objects that nominally exist in a namespace point
 to that namespace object.
 
 A class can be garbage collected when it has no instantiatated objects
-referencing it. When a class is garbage collected, it should remove itself
-from the registry.
+and no Namespace object referencing it. When a class is garbage
+collected, it should remove itself from the registry.
 
 =head2 Object PMC API
 
@@ -311,31 +343,44 @@ The class PMC
 
 =item 1
 
-The class name
-
-=item 2
-
-The container type
-
-=item 2
-
-The object attribute hash. Keys are the attribute names and the values
-are the attribute values. (The "hash" may be implemented as a typed
-structure following the CStruct proposal.)
+The object attribute store. This is simply an array of PMCs that
+provide the values for the attributes. It may be a resizable PMC array
+to provide lazy growth rather than allocating all needed memory for
+all attributes. We find the indexes into this array from the attribute
+cache or lookup table in the class.
 
 =back
 
-A list of the object's attributes is accessible by extracting the keys
-from the object attribute hash. This direct introspetive capability may
-not be directly exposed in the HLLs (preserving the boundaries of an
-opaque object).
+A list of the object's attributes is accessible from the class. The
+attribute cache is the most straightforward way to retrieve a complete
+list of attributes visible to the object, but the first time you
+introspect for a complete list the class may have to calculate the list
+by traversing the inheritance hierarchy.
 
-Note that Object PMCs have the "I am an object" flag set on them.
+Object PMCs have the "I am an object" flag set on them.
 
 Object PMCs have no methods aside from those defined in their associated
 class. They do have vtable methods providing access to certain low-level
 information about the object, method call functionality, etc. See the
 sections below on L<Objects> and L<Vtables>.
+
+[stream-of-consciousness again]
+In addition to a value type, objects can have a containter type. The
+container type can't be stored in the object itself, because a single
+object may live within multiple containers. So, the container type (when
+it exists) is stored in the LexPad or Namespace entry for a particular
+variable.
+
+In a static language like C#.Net:
+B isa A
+A o1 = new B();
+B o2 = new B();
+
+o1.x; # retrieves A's attribute
+o2.x; # retrieves B's attribute
+
+o1.foo(); # call's B's method
+o2.foo(); # call's B's method
 
 =head2 Role PMC API
 
