@@ -34,6 +34,7 @@ providing a compreg-compatible method.
 
 # class files (HLL: _Tcl)
 .include 'languages/tcl/src/class/tclconst.pir'
+.include 'languages/tcl/src/class/tclproc.pir'
 
 # create the 'tcl' namespace -- see RT #39852
 # http://rt.perl.org/rt3/Ticket/Display.html?id=39852
@@ -97,7 +98,7 @@ env_loop_done:
   .local pmc    interp, config
   .local string slash
   interp = getinterp
-  .include "iglobals.pasm"
+  .include 'iglobals.pasm'
 
   config = interp[.IGLOBALS_CONFIG_HASH]
   $S0 = config['build_dir']
@@ -188,12 +189,6 @@ env_loop_done:
   $P1 = new .ResizablePMCArray
   store_global 'events', $P1
 
-  $P1 = new .TclArray
-  store_global 'proc_args', $P1
-
-  $P1 = new .TclDict
-  store_global 'proc_defaults', $P1
-
   # Global variable initialization
 
    #version info
@@ -241,7 +236,7 @@ env_loop_done:
 
   # the regex used for namespaces
   .local pmc p6rule, colons
-  p6rule = compreg "PGE::P6Regex"
+  p6rule = compreg 'PGE::P6Regex'
   colons = p6rule('\:\:+')
   set_hll_global 'colons', colons
 
@@ -267,7 +262,7 @@ env_loop_done:
 .namespace
 
 .sub __load_stdlib :load :anon
-  .include "iglobals.pasm"
+  .include 'iglobals.pasm'
   .local pmc interp
   interp = getinterp
   $P1 = interp[.IGLOBALS_CONFIG_HASH]
