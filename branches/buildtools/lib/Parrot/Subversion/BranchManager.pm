@@ -20,7 +20,7 @@ Parrot::Subversion::BranchManager - tools for best use of Subversion branches
         create_new_branch
         synch_branch_to_trunk
     );
-    
+
     create_new_branch( {
         standard  => qq{https://svn.perl.org/parrot},
         branch    => q{my_new_branch},
@@ -95,6 +95,8 @@ will be used by subroutine F<synch_branch_to_trunk()>.
 
 =back
 
+=back
+
 =cut
 
 sub create_new_branch {
@@ -115,36 +117,36 @@ sub create_new_branch {
     # (a)
     croak "Branch $branch already exists in $repos{branches}: $!"
         if defined(get(qq{$repos{branches}/$branch/}));
-    
+
     # (b)
     my $tagfile = qq{.$branch.tag};
     my $homedir = get_home_directory();
     my $tagfilepath = qq{$homedir/$tagfile};
     croak "You already have a hidden file named $tagfile in directory $homedir: $!"
         if -f $tagfilepath;
-    
+
     my $HEAD = get_HEAD_number(qq{$repository/});
-    
+
     print "HEAD in trunk is now:  $HEAD\n" if $verbose;
-    
+
     my $msg = qq{Creating $branch in $repos{branches}};
-    
+
     system(qq{svn copy "$repos{trunk}" "$repos{branches}/$branch" --message "$msg"} )
         and croak "Unable to create new branch $branch: $!"; #"
-    
+
     print "$branch branch has been created in $repos{branches}\n" if $verbose;
-    
+
     $msg =
         qq{Tagging trunk at r$HEAD so that the $branch can later be synched to it.};
-    
+
     system(qq{svn copy "$repos{trunk}" "$repos{tags}/$branch-$HEAD" --message "$msg"})
          and croak "Unable to create tag for r$HEAD: $!"; #"
-    
+
     print "$branch-$HEAD tag has been created\n"
         if $verbose;
-    
+
     update_tagfile($tagfilepath, $HEAD);
-    
+
     print "Finished\n" if $verbose;
     return 1;
 }
@@ -178,6 +180,8 @@ using for ongoing development of the branch.
 C<print>s useful statements to F<STDOUT> as subroutine runs.  Optional, but
 recommended.
 
+=back
+
 =item * B<Return Value:>
 
 Returns C<1> upon success.  If it fails at any internal point, will C<croak>
@@ -205,47 +209,47 @@ sub synch_branch_to_trunk {
     my $tagfilepath = qq{$homedir/$tagfile};
     croak "Cannot locate a hidden file named $tagfile in your home directory"
         unless -f $tagfilepath;
-    
+
     chdir $sandbox or croak "Unable to change to $sandbox";
-    
+
     open my $IN, $tagfilepath
         or croak "Unable to open $tagfilepath for reading: $!";
     my $lasttag;
     chomp($lasttag = <$IN>);
     close $IN or croak "Unable to close $tagfilepath after reading: $!";
-    
+
     print "Last tag I recorded:  $lasttag\n" if $verbose;
-    
+
     croak "Cannot locate tag $repos{tags}/$branch-$lasttag/: $!"
         unless defined(get(qq{$repos{tags}/$branch-$lasttag/}));
-    
+
     my $HEAD = get_HEAD_number(qq{$repository/});
     print "HEAD in trunk is now:  $HEAD\n" if $verbose;
-    
+
     my $msg =
         qq{Tagging trunk at r$HEAD so that the $branch can be synched to it.};
-    
+
     system(qq{svn copy "$repos{trunk}" "$repos{tags}/$branch-$HEAD" --message "$msg"})
          and croak "Unable to create tag for r$HEAD: $!"; #"
-    
+
     print "$branch-$HEAD tag has been created\n" if $verbose;
-    
+
     system(qq{svn merge $repos{tags}/$branch-$lasttag $repos{tags}/$branch-$HEAD $sandbox})
         and croak "Unable to create tag for r$HEAD: $!";
-    
+
     print "Sandbox for $branch branch has been updated by merging in head of trunk\n"
         if $verbose;
-    
+
     $msg = qq{Deleting superfluous tag $branch-$lasttag};
-    
+
     system(qq{svn delete "$repos{tags}/$branch-$lasttag" --message "$msg"})
         and croak "Unable to delete superfluous tag $branch-$lasttag"; #"
-    
+
     print "$branch-$lasttag tag has been deleted from Parrot repository.\n"
         if $verbose;
-    
+
     update_tagfile($tagfilepath, $HEAD);
-    
+
     print "Finished\n" if $verbose;
     return 1;
 }
