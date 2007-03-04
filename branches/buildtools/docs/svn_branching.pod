@@ -51,10 +51,10 @@ Parrot development.
 
 The authors of the Subversion book write:
 
-    ''[A] I<branch> ... [is] a line of development that exists independently of
-    another line, yet still shares a common history ....  A branch always begins
-    life as a copy of something, and moves on from there, generating its own
-    history ....''
+    ''[A] I<branch> ... [is] a line of development that exists
+    independently of another line, yet still shares a common history 
+    ....  A branch always begins life as a copy of something, and 
+    moves on from there, generating its own history ....''
 
 =head3 Branch Creation
     
@@ -62,25 +62,25 @@ The easiest way of launching a new branch in the Parrot repository is:
 
     svn copy https://svn.perl.org/parrot/trunk \
              https://svn.perl.org/parrot/branches/my_branch \
-      --message "Creating new Parrot development branch called my_branch."
+      --message "Creating new development branch called my_branch."
                   
 This is a B<cheap copy>; no data is actually duplicated.  Instead, as the
 Subversion authors write, 
 
-    ''[C<svn copy>] ... creates a new directory entry that points to an 
-    I<existing> tree.  If you're a Unix user, this is the same concept as a
-    hard link.  From there, the copy is said to be lazy.  That is, if you 
-    commit a change to one file within the copied directory, then only that 
-    file changes -- the rest of the files continue to exist as links to 
-    the original files in the original directory.''
+    ''[C<svn copy>] ... creates a new directory entry that points to an
+    I<existing> tree.  If you're a Unix user, this is the same concept
+    as a hard link.  From there, the copy is said to be lazy.  That is,
+    if you commit a change to one file within the copied directory, then
+    only that file changes -- the rest of the files continue to exist as
+    links to the original files in the original directory.''
     
 The implication of lazy copying is that you don't need to fear that you'll be
 'taking up too much space in the repository' if you create a new branch.
 Moreover,
 
-    ''Subversion has no internal concept of a branch -- only copies.  When you
-    copy a directory, the resulting directory is only a branch because I<you>
-    attach that meaning to it.''
+    ''Subversion has no internal concept of a branch -- only copies.
+    When you copy a directory, the resulting directory is only a branch
+    because I<you> attach that meaning to it.''
     
 You attach that meaning to the branch by creating it in the part of the Parrot
 repository designated for branches:  F<https://svn.perl.org/parrot/branches/>.
@@ -171,7 +171,7 @@ The canonical way of creating this tag would be:
 
     svn copy https://svn.perl.org/parrot/trunk \
              https://svn.perl.org/parrot/tags/karmic-17152 \
-      --message "Creating a tag to mark creation of 'karmic' branch at r17152."
+      --message "Tag to mark creation of 'karmic' branch at r17152."
 
 When you no longer need that tag, you can delete it from the repository:
 
