@@ -8,14 +8,16 @@ use Data::Dumper;
 use Carp qw(longmess croak);
 
 =pod
+
 $SIG{__WARN__} = sub {
     print longmess;
 };
+
 =cut
 
 =head1 NAME
 
-Parrot::Pmc2c::Utils::PMETHODs - Parses and preps PMC PMETHODS 
+Parrot::Pmc2c::Utils::PMETHODs - Parses and preps PMC PMETHODS
   called from F<Parrot:Pmc2c::Utils>
 
 =head1 SYNOPSIS
@@ -178,8 +180,11 @@ sub gen_arg_accessor {
     croak "$_ not recognized as INTVAL, FLOATVAL, STRING, or PMC";
   }
 
-  if ($arg_type eq 'param' or $arg_type eq 'result') {
+  if ($arg_type eq 'param') {
     return "    $type->{s} $name = CTX_REG_$type->{l}(ctx, $index);\n";
+  }
+  elsif ($arg_type eq 'result') {
+    return "    $name = CTX_REG_$type->{l}(ctx, $index);\n";
   }
   elsif ($arg_type eq 'name') {
     return "    CTX_REG_$type->{l}(ctx, $index) = string_from_const_cstring(interp, $name, 0);\n";
@@ -365,7 +370,7 @@ sub find_max_regs {
 }
 
 =head3 C<rewrite_pmethod()>
-    
+
     rewrite_pmethod($method_hash);
 
 =cut
@@ -466,7 +471,7 @@ sub rewrite_pminvoke {
   ((
   \( ([^\(]*) \)   #result spec
   \s*              #optional whitespace
-  = 
+  =
   )?
   \s*              #optional whitespace
   PMINVOKE          #method name
@@ -474,7 +479,7 @@ sub rewrite_pminvoke {
   \( ([^\(]*) \)   #parameters
   ;?)
   }sx;
-  
+
   my $regs_used = [];
 
   while ($$body and $$body =~ m/$signature_re/) {
@@ -482,7 +487,7 @@ sub rewrite_pminvoke {
     my ($result_n_regs_used, $result_indexes, $result_flags, $result_accessors)
         = parse_pmethod_invoke_results($3, 'result');
     push @$regs_used, $result_n_regs_used;
-    my ($pmc, $name, $args_n_regs_used, $arg_indexes, $arg_flags, $arg_accessors, $named_names) 
+    my ($pmc, $name, $args_n_regs_used, $arg_indexes, $arg_flags, $arg_accessors, $named_names)
         = parse_pmethod_invoke($4, 'arg');
 
     push @$regs_used, $args_n_regs_used;
@@ -493,10 +498,10 @@ sub rewrite_pminvoke {
     if (isquoted($name)) {
         $name = "string_from_const_cstring(interp, $name, 0)";
     }
-    
+
     my $file = '"' . __FILE__ . '"';
     my $lineno = __LINE__ + 7;
-    
+
     if (defined $n_regs_used) {
     $replacement .= <<END;
 
@@ -523,7 +528,7 @@ $named_names
 $arg_accessors
 END
     }
-    
+
     $replacement .= <<END;
 
       VTABLE_invoke(interp, $pmc, $name);

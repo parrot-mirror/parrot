@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2006, The Perl Foundation.
+# Copyright (C) 2005-2007, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -171,6 +171,69 @@ L0:
     ex = new .Exception
     ex['_message'] =  message
     throw ex
+.end
+
+
+=item C<findtable (t, fname)>
+
+=cut
+
+.sub 'findtable'
+    .param pmc t
+    .param string fname
+    new $P1, .LuaString
+L1:
+    $I1 = index fname, '.'
+    $I2 = $I2
+    unless $I1 < 0 goto L2
+    $I2 = length fname
+L2:
+    $S1 = substr fname, 0, $I2
+    set $P1, $S1
+    $P0 = t[$P1]
+    $I0 = isa $P0, 'LuaNil'
+    unless $I0 goto L3
+    new $P0, .LuaTable
+    t[$P1] = $P0
+    goto L4
+L3:
+    $I0 = isa $P0, 'LuaTable'
+    unless $I0 goto L4
+    null $P0
+    .return ($P0, fname)
+L4:
+    if $I1 < 0 goto L5
+    inc $I1
+    fname = substr fname, $I1
+    goto L1
+L5:
+    .return ($P0)
+.end
+
+
+=item C<gsub (src, pat, repl)>
+
+=cut
+
+.sub 'gsub'
+    .param string src
+    .param string pat
+    .param string repl
+    $I2 = length pat
+    .local string b
+    b = ''
+L1:
+    $I0 = index src, pat
+    if $I0 < 0 goto L2
+    $S0 = substr src, 0, $I0
+    b .= $S0
+    b .= repl
+    $I0 += $I2
+    src = substr src, $I0
+    goto L1
+L2:
+    b .= src
+    .return (b)
 .end
 
 

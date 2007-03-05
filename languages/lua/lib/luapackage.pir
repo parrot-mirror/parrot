@@ -72,6 +72,10 @@ See "Lua 5.1 Reference Manual", section 5.3 "Modules".
     inc $P2
     _loaders[$P2] = loader_PBC
 
+    .const .Sub loader_PBCroot = 'loader_PBCroot'
+    inc $P2
+    _loaders[$P2] = loader_PBCroot
+
     setpath(_package, 'path', 'LUA_PATH', './?.lua')
     setpath(_package, 'pbcpath', 'LUA_PBCPATH', './?.pbc;./?.pir;languages/lua/lib/?.pbc')
 
@@ -101,6 +105,8 @@ See "Lua 5.1 Reference Manual", section 5.3 "Modules".
     $S0 = default
     goto L2
 L1:
+    $S0 = gsub($S0, ';;', ';,;')
+    $S0 = gsub($S0, ',', default)
 L2:
     new $P0, .LuaString
     set $P0, $S0
@@ -108,20 +114,69 @@ L2:
 .end
 
 .sub 'findfile' :anon
-    .param pmc name
+    .param string name
     .param string pname
-    $S1 = name
-    $S1 .= '.lua'
-    $I0 = stat $S1, 0
-    unless $I0 goto L1
-    .return ($S1)
+    name = gsub(name, '.', '/')
+    $P0 = global '_G'
+    new $P1, .LuaString
+    set $P1, 'package'
+    $P0 = $P0[$P1]
+    set $P1, pname
+    $P0 = $P0[$P1]
+    $I0 = isa $P0, 'LuaString'
+    if $I0 goto L1
+    $S0 = "'package."
+    $S0 .= pname
+    $S0 .= "' must be a string"
+    error($S0)
 L1:
-    $S0 = "\n\tno file '"
-    $S0 .= $S1
+    .local string path
+    .local string tmpl
+    path = $P0
+    .local pmc msg      # error accumulator
+    new msg, .LuaString
+    set msg, ''
+L2:
+    (path, tmpl) = nexttemplate(path)
+    if tmpl == '' goto L3
+    .local string filename
+    filename = gsub(tmpl, '?', name)
+    $I0 = stat filename, 0
+    unless $I0 goto L4
+    .return (filename)
+L4:
+    $S0 = msg
+    $S0 .= "\n\tno file '"
+    $S0 .= filename
     $S0 .= "'"
-    new $P0, .LuaString
-    set $P0, $S0
-    .return ('', $P0)
+    set msg, $S0
+    goto L2
+L3:
+    # not found
+    .return ('', msg)
+.end
+
+.sub 'nexttemplate' :anon
+    .param string path
+L1:
+    $S0 = substr path, 0, 1
+    unless $S0 == ';' goto L2
+    # skip separators
+    path = substr path, 1
+    goto L1
+L2:
+    unless path == '' goto L3
+    # no more templates
+    .return ('', '')
+L3:
+    $I0 = index path, ';'
+    unless $I0 < 0 goto L4
+    .return ('', path)
+L4:
+    $S0 = substr path, 0, $I0
+    inc $I0
+    path = substr path, $I0
+    .return (path, $S0)
 .end
 
 .sub 'loaderror' :anon
@@ -141,7 +196,7 @@ L1:
     .param pmc name :optional
     .local string filename
     $S1 = checkstring(name)
-    (filename, $P0) = findfile(name, 'path')
+    (filename, $P0) = findfile($S1, 'path')
     unless filename == '' goto L1
     # library not found in this path
     .return ($P0)
@@ -154,43 +209,17 @@ L2:
     .return ($P0)
 .end
 
-.sub 'findfile2' :anon
-    .param pmc name
-    .param string pname
-    $S1 = name
-    $S1 .= '.pbc'
-    $I0 = stat $S1, 0
-    unless $I0 goto L1
-    .return ($S1)
-L1:
-    $S0 = "\n\tno file '"
-    $S0 .= $S1
-    $S0 .= "'"
-    $S1 = name
-    $S1 .= '.pir'
-    $I0 = stat $S1, 0
-    unless $I0 goto L2
-    .return ($S1)
-L2:
-    $S0 .= "\n\tno file '"
-    $S0 .= $S1
-    $S0 .= "'"
-    new $P0, .LuaString
-    set $P0, $S0
-    .return ('', $P0)
-.end
-
 .sub 'loader_PBC' :anon
     .param pmc name :optional
     .local string funcname
     .local string filename
     $S1 = checkstring(name)
-    (filename, $P0) = findfile2(name, 'pbcpath')
+    (filename, $P0) = findfile($S1, 'pbcpath')
     unless filename == '' goto L1
     # library not found in this path
     .return ($P0)
 L1:
-    funcname = mkfuncname(name)
+    funcname = mkfuncname($S1)
     ($P0, $S0) = loadfunc(filename, funcname)
     unless null $P0 goto L2
     loaderror($S1, filename, $S0)
@@ -199,11 +228,34 @@ L2:
     .return ($P0)
 .end
 
+.sub 'loader_PBCroot' :anon
+    .param pmc name :optional
+    .local string funcname
+    .local string filename
+    $S1 = checkstring(name)
+    $I0 = index $S1, '.'
+    unless $I0 < 0 goto L1
+    new $P0, .LuaString
+    .return ($P0)
+L1:
+    $S0 = substr name, 0, $I0
+    (filename, $P0) = findfile($S1, 'pbcpath')
+    unless filename == '' goto L2
+    # root not found
+    .return ($P0)
+L2:
+    funcname = mkfuncname($S1)
+    ($P0, $S0) = loadfunc(filename, funcname)
+    unless null $P0 goto L3
+    loaderror($S1, filename, $S0)
+L3:
+    # library loaded successfully
+    .return ($P0)
+.end
+
 .sub 'mkfuncname' :anon
-    .param pmc modname
-    $S1 = modname
-    $S0 = 'luaopen_'
-    $S0 .= $S1
+    .param string modname
+    $S0 = 'luaopen_' . modname
     .return ($S0)
 .end
 
@@ -273,14 +325,69 @@ in field C<c> of field C<b> of global C<a>.
 This function may receive optional I<options> after the module name, where
 each option is a function to be applied over the module.
 
-NOT YET IMPLEMENTED.
+STILL INCOMPLETE (see setfenv).
 
 =cut
 
 .sub '_lua_module' :anon
     .param pmc name :optional
-    $S0 = checkstring(name)
-    not_implemented()
+    .param pmc options :slurpy
+    .local pmc m
+    $S1 = checkstring(name)
+    .local pmc _lua__REGISTRY
+    _lua__REGISTRY = global '_REGISTRY'
+    new $P1, .LuaString
+    set $P1, '_LOADED'
+    .local pmc _LOADED
+    _LOADED = _lua__REGISTRY[$P1]
+    m = _LOADED[name]
+    $I0 = isa m, 'LuaTable'
+    if $I0 goto L1
+    # try global variable (and create one if it does not exist)
+    $P0 = global '_G'
+    m = findtable($P0, $S1)
+    unless null m goto L2
+    $S0 = "name conflict for module '"
+    $S0 .= $S1
+    $S0 .= "'"
+    error($S0)
+L2:
+    _LOADED[name] = m
+L1:
+    # check whether table already has a _NAME field
+    set $P1, '_NAME'
+    $P0 = m[$P1]
+    $I0 = isa $P0, 'LuaNil'
+    unless $I0 goto L3
+    # no; initialize it
+    m[$P1] = name
+    set $P1, '_M'
+    m[$P1] = m
+    set $P1, '_PACKAGE'
+    $I0 = index $S1, '.'
+    if $I0 < 0 goto L4
+L5:
+    $I1 = $I0
+    inc $I0
+    $I0 = index $S1, '.', $I0
+    unless $I0 < 0 goto L5
+    dec $I1
+    $S0 = substr $S1, 0, $I1
+    # set _PACKAGE as package name (full module name minus last part)
+    new $P0, .LuaString
+    set $P0, $S0
+    m[$P1] = $P0
+    goto L3
+L4:
+    m[$P1] = name
+L3:
+    # setfenv(1, m)
+L6:
+    unless options goto L7
+    $P0 = shift options
+    $P0(m)
+    goto L6
+L7:
 .end
 
 
@@ -301,8 +408,6 @@ loader (see below).
 
 If there is any error loading or running the module, or if it cannot find
 any loader for the module, then C<require> signals an error.
-
-STILL INCOMPLETE (see loaders).
 
 =cut
 
@@ -439,19 +544,17 @@ the resulting file name. So, for instance, if the Lua path is
 the search for a Lua loader for module C<foo> will try to load the files
 C<./foo.lua>, C<./foo.lc>, and C</usr/local/foo/init.lua>, in that order.
 
-STILL INCOMPLETE.
+STILL INCOMPLETE (see default).
 
 =item C<package.pbcpath>
 
 The path used by C<require> to search for a PBC loader.
 
-STILL INCOMPLETE.
+STILL INCOMPLETE (see default).
 
 =item C<package.preload>
 
 A table to store loaders for specific modules (see C<require>).
-
-STILL INCOMPLETE.
 
 =item C<package.seeall (module)>
 
@@ -459,12 +562,23 @@ Sets a metatable for C<module> with its C<__index> field referring to the
 global environment, so that this module inherits values from the global
 environment. To be used as an option to function C<module>.
 
-NOT YET IMPLEMENTED.
-
 =cut
 
 .sub '_package_seeall' :anon
-    not_implemented()
+    .param pmc module :optional
+    .local pmc mt
+    checktype(module, 'table')
+    mt = module.'get_metatable'()
+    $I0 = isa mt, 'LuaNil'
+    unless $I0 goto L1
+    new mt, .LuaTable
+    module.'set_metatable'(mt)
+L1:
+    # mt.__index = _G
+    $P0 = global '_G'
+    new $P1, .LuaString
+    set $P1, '__index'
+    mt[$P1] = $P0
 .end
 
 =back
