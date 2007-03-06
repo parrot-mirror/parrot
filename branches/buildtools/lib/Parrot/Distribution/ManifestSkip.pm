@@ -19,8 +19,6 @@ F<tools/dev/gen_manifest_skip.pl>.
 
 =head2 C<gen_manifest_skip()>
 
-=over 4
-
 B<Purpose:>  Gather the names of files needed to populate MANIFEST.SKIP.
 
 B<Arguments:>  None.
@@ -32,8 +30,6 @@ B<Comment:>
 
 This subroutine queries the svn:ignore property and generates the lines 
 for MANIFEST.SKIP.
-
-=back
 
 =head2 Note
 
@@ -69,6 +65,10 @@ purpose was quite distinct from the other Parrot::Distribution methods.
 =back
 
 =head1 AUTHOR
+
+Many people have worked on Parrot::Distribution, from which this package's
+code was extracted.  Bernhard Schmalhofer was original author of the
+subroutine.  Jim Keenan refactored C<gen_manifest_skip()> into this package.
 
 =head1 SEE ALSO
 
