@@ -35,8 +35,6 @@ use warnings;
 use ExtUtils::Manifest;
 use File::Spec;
 use lib ( "lib" );
-# use Parrot::Revision;
-# use Parrot::Configure::Step qw(capture_output);
 
 use Parrot::Docs::Directory;
 use base qw(Parrot::Docs::Directory);
@@ -695,55 +693,6 @@ sub delete_html_docs {
 
     return $self->html_docs_directory->delete();
 }
-
-
-#=item C<gen_manifest_skip>
-#
-#Query the svn:ignore property and generate the lines for MANIFEST.SKIP.
-#
-#=cut
-#
-#sub gen_manifest_skip {
-#
-#    # manicheck.pl is probably only useful for checked out revisions
-#    # Checkout is done either with svn or svk
-#    my $svn_cmd;
-#    if ( defined $Parrot::Revision::svn_entries
-#        && $Parrot::Revision::svn_entries =~ m/\.svn/ )
-#    {
-#        $svn_cmd = 'svn';
-#    }
-#    else {
-#        $svn_cmd = 'svk';
-#    }
-#
-#    # Find all directories in the Parrot distribution
-#    my %dir_list = map {
-#        my $dir = ( File::Spec->splitpath($_) )[1];
-#        $dir =~ s!\.svn/$!!;
-#        $dir => 1
-#    } keys %{ ExtUtils::Manifest::manifind() };
-#    my @skip;    # regular expressions for files to skip
-#    foreach my $dir ( sort keys %dir_list ) {
-#        next if $dir =~ m/\.svn/;
-#        next if ( $dir && !-d $dir );
-#
-#        my $patterns = capture_output("$svn_cmd propget svn:ignore $dir");
-#
-#        # TODO: escape chars that are special in regular expressions
-#        push @skip, qq{# generated from svn:ignore of '$dir'}, map {
-#            my $end = $dir_list{ $dir . $_ } ? '$' : '/';
-#                                        # ignore file or dir
-#            s/\./\\./g;                 # . is simply a dot
-#            s/\*/.*/g;                  # * is any amount of chars
-#            "^${dir}${_}\$",            # SVN globs are specific to a dir
-#            "^${dir}${_}/",             # SVN globs are specific to a dir
-#        } split( /\n/, $patterns );
-#    }
-#
-#    return \@skip;
-#}
-
 
 =item C<generated_files>
 
