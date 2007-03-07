@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2001-2004, The Perl Foundation.
-# $Id: svn_new_branch.pl 17314 2007-03-03 22:20:39Z jkeenan $
+# $Id$
 use strict;
 use warnings;
 use lib ("lib");
