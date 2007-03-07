@@ -10,7 +10,6 @@ use Test::More tests => 2;
 use Data::Dumper;
 use File::Find qw(find);
 use ExtUtils::Manifest;
-# use Parrot::Distribution;
 use Parrot::Distribution::ManifestSkip qw( gen_manifest_skip );
 use Parrot::Revision;
 
@@ -40,8 +39,6 @@ SKIP:
 
     diag "this may take a while...";
 
-#    my $dist = Parrot::Distribution->new();
-#    my @from_svn = grep { $_ && $_ !~ m/^#/ } @{ $dist->gen_manifest_skip() };
     my @from_svn = grep { $_ && $_ !~ m/^#/ } @{ gen_manifest_skip() };
     unshift @from_svn, '\B\.svn\b', '^debian$', '^debian/';    # added in gen_manifest_skip.pl
     open( *MANIFEST_SKIP, '<', $manifest_skip ) or die "Can't open $manifest_skip: $!";
