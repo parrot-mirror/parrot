@@ -1,5 +1,5 @@
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: Utils.pm 17167 2007-02-24 02:36:06Z jkeenan $
+# $Id$
 package Parrot::Ops2c::Utils;
 use strict;
 use lib ("lib/");

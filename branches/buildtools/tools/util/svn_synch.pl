@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: svn_synch.pl 17314 2007-03-03 22:20:39Z jkeenan $
+# $Id$
 use strict;
 use warnings;
 use Getopt::Long;
