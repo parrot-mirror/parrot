@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
-use Test::More tests => 34;
+use Test::More qw(no_plan); # tests => 34;
 use File::Spec;
 
 =head1 NAME
@@ -28,6 +28,7 @@ die "Run these tests from the distribution root\n" unless -d 't/perl';
 chdir 't/perl';
 my $d = Parrot::Distribution->new();
 isa_ok( $d, 'Parrot::Docs::Directory' );
+isa_ok( $d, 'Parrot::IO::Directory' );
 
 {
     my $d2 = Parrot::Distribution->new;

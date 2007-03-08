@@ -30,7 +30,7 @@ use warnings;
 use base qw( Parrot::Docs::Group );
 
 use Parrot::Docs::Item;
-use Parrot::Docs::Directory;
+# use Parrot::Docs::Directory;
 use Parrot::Docs::HTMLPage;
 
 =item C<root_section()>
