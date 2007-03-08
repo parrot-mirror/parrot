@@ -19,9 +19,11 @@ This script reports on any POD errors found in the files.
 use strict;
 use warnings;
 use lib 'lib';
-use Parrot::Docs::Directory;
+# use Parrot::Docs::Directory;
+use Parrot::IO::Directory;
 
-my $dir = Parrot::Docs::Directory->new( shift || '.' );
+# my $dir = Parrot::Docs::Directory->new( shift || '.' );
+my $dir = Parrot::IO::Directory->new( shift || '.' );
 my $ignore = shift || '^(icu)$';
 
 foreach my $file ( $dir->files( 1, $ignore ) ) {

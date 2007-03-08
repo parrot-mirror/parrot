@@ -33,7 +33,7 @@ package Parrot::Docs::Item;
 use strict;
 use warnings;
 
-use Parrot::Docs::Directory;
+# use Parrot::Docs::Directory;
 use Parrot::Docs::POD2HTML;
 
 =item C<new_item($text, @paths)>
