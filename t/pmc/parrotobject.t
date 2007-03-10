@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 8;
+use Parrot::Test tests => 11;
 
 =head1 NAME
 
@@ -191,6 +191,66 @@ CODE
 1
 1
 OUT
+
+pir_output_is(<<'CODE', <<'OUT', 'RT#41733 - Execution ends after returning from invoke');
+.namespace ['Foo']
+
+.sub invoke :vtable
+say "you invoked me!"
+.return()
+.end
+
+.sub main :main
+$P0 = newclass "Foo"
+$P1 = new "Foo"
+$P1()
+say "got here"
+.end
+CODE
+you invoked me!
+got here
+OUT
+
+pir_output_is(<<'CODE', <<'OUT', 'params/returns from overridden invoke');
+.namespace ['Foo']
+
+.sub invoke :vtable
+  .param int a
+  print a
+  print "\n"
+  inc a
+  .return(a)
+.end
+
+.sub main :main
+  $P0 = newclass "Foo"
+  $P1 = new "Foo"
+  $I0 = $P1(2)
+  print $I0
+  print "\n"
+.end
+CODE
+2
+3
+OUT
+
+pir_output_like( <<'CODE', <<'OUT', 'RT#41732');
+.namespace ['Foo']
+
+.sub __invoke
+  .param pmc a
+  say 'hi'
+.end
+
+.sub main :main
+    $P0 = newclass "Foo"
+    $P1 = new "Foo"
+    $P1()
+.end
+CODE
+/1 params expected/
+OUT
+
 
 # '
 
