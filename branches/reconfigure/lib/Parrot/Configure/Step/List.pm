@@ -75,13 +75,55 @@ sub get_steps_list {return @steps;}
 
 =head1 NAME
 
+Parrot::Configure::Step::List - Get sequence of configuration steps
+
 =head1 SYNOPSIS
+
+    use Parrot::Configure::Step::List qw( get_steps_list );
+
+    @steps = get_steps_list();
 
 =head1 DESCRIPTION
 
-=head1 AUTHOR
+Parrot::Configure::Step::List exports on demand a single subroutine,
+C<get_steps_list()>.  This subroutine returns a list of Parrot's configuration
+steps in the order in which they are to be executed.  To change the order in
+which the steps are executed, edit C<@steps> inside this module.
+
+=head1 SUBROUTINE
+
+=head2 C<get_steps_list()>
+
+=over 4
+
+=item * Purpose
+
+Provide Parrot configuration steps in their order of execution.
+
+=item * Arguments
+
+None.
+
+=item * Return Value
+
+List holding strings representing the configuration steps.
+
+=item * Comment
+
+I may change the value to return an array reference.  If so,
+C<Parrot::Configure::add_steps()> will be changed to take an array reference
+as its argument rather than a list.
+
+=back
+
+=head1 NOTES
+
+The functionality in this package was transferred from F<Configure.pl> by Jim
+Keenan.
 
 =head1 SEE ALSO
+
+F<Configure.pl>.
 
 =cut
 
