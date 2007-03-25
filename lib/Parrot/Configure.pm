@@ -67,18 +67,33 @@ Accepts no arguments and returns a L<Parrot::Configure> object.
 
 =cut
 
-sub new {
-    my $class = shift;
+#sub new {
+#    my $class = shift;
+#
+#    my $self = {
+#        steps   => [],
+#        data    => Parrot::Configure::Data->new,
+#        options => Parrot::Configure::Data->new,
+#    };
+#
+#    bless $self, ref $class || $class;
+#
+#    return $self;
+#}
 
-    my $self = {
+my $singleton;
+BEGIN {
+    $singleton = {
         steps   => [],
         data    => Parrot::Configure::Data->new,
         options => Parrot::Configure::Data->new,
     };
+    bless $singleton, "Parrot::Configure";
+}
 
-    bless $self, ref $class || $class;
-
-    return $self;
+sub new {
+    my $class = shift;
+    return $singleton;
 }
 
 =back
