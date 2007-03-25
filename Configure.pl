@@ -38,6 +38,7 @@ my $args = process_options( {
     parrot_version  => $parrot_version,
     svnid           => '$Id$',
 } );
+exit unless defined $args;
 
 my %args = %$args;
 
