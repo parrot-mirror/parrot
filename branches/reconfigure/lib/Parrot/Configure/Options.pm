@@ -16,9 +16,17 @@ my @valid_opts = qw(ask bindir cage cc ccflags ccwarn cgoto cxx datadir
     without-gmp without-icu yacc);
 
 sub process_options {
-    my $argsref = shift;
+    my $optionsref = shift;
+    $optionsref->{argv} = []
+        unless defined $optionsref->{argv};
+    $optionsref->{script} = q{Configure.pl}
+        unless defined $optionsref->{script};
+    die "Must provide argument 'parrot_version'"
+        unless $optionsref->{parrot_version};
+    die "Must provide argument 'svnid'"
+        unless $optionsref->{svnid};
     my %args;
-    for (@{$argsref->{argv}}) {
+    for (@{$optionsref->{argv}}) {
         my ( $key, $value ) = m/--([-\w]+)(?:=(.*))?/;
         $key   = 'help' unless defined $key;
         $value = 1      unless defined $value;
@@ -29,15 +37,13 @@ sub process_options {
     
         for ($key) {
             if ($key =~ m/version/) {
-#                print_version_info($argsref->{parrot_version});
-                print_version_info($argsref);
-                exit;
+                print_version_info($optionsref);
+                return;
             }
     
             if ($key =~ m/help/) {
-#                print_help($argsref->{script});
-                print_help($argsref);
-                exit;
+                print_help($optionsref);
+                return;
             }
             $args{$key} = $value;
         }
@@ -52,10 +58,6 @@ sub process_options {
 ################### SUBROUTINES ###################
 
 sub print_version_info {
-#    my $parrot_version = shift;
-#    my $svnid = '$Id$';
-#    print "Parrot Version $parrot_version Configure 2.0\n";
-#    print "$svnid\n";
     my $argsref = shift;
     print "Parrot Version $argsref->{parrot_version} Configure 2.0\n";
     print "$argsref->{svnid}\n";
@@ -187,13 +189,84 @@ EOT
 
 =head1 NAME
 
+Parrot::Configure::Options - Process command-line options to F<Configure.pl>
+
 =head1 SYNOPSIS
+
+    use Parrot::Configure::Options qw( process_options );
+
+    $args = process_options( {
+        argv            => [ @ARGV ],
+        script          => $0,
+        parrot_version  => $parrot_version,
+        svnid           => 
+            '$Id$',
+    } );
 
 =head1 DESCRIPTION
 
-=head1 AUTHOR
+Parrot::Configure::Options exports on demand a single subroutine,
+C<process_options()>, which processes the command-line options provided to
+F<Configure.pl>.
+
+If you provide F<Configure.pl> with either C<--help> or C<--version>,
+C<process_options()>  will print out the appropriate message and perform a
+bare C<return>, I<i.e.>, the return value will be C<undef>.  The calling
+script -- whether F<Configure.pl> or a test file -- can then check for the
+definedness of C<process_options()>'s return value and proceed appropriately.
+
+An array of valid command-line option names stored internally is consulted;
+the program will die if an invalid option is called.
+
+=head1 SUBROUTINE
+
+=head2 C<process_options()>
+
+=over 4
+
+=item * Purpose
+
+Process command-line options provided to F<Configure.pl> and proceed
+appropriately.
+
+=item * Arguments
+
+One argument:  Reference to a hash holding the following key-value pairs:
+
+    argv            : reference to @ARGV; defaults to []
+    script          : Perl's $0:  the calling program;
+                      defaults to 'Configure.pl'
+    parrot_version  : string holding Parrot version number
+                      (currently supplied by 
+                      Parrot::BuildUtil::parrot_version())
+    svnid           : string holding Subversion Id string
+
+=item * Return Value
+
+=over 4
+
+=item * C<--version> or C<--help>
+
+Bare return (C<undef>).
+
+=item * All other options
+
+Reference to a hash of option names and values.
+
+=back
+
+=item * Comment
+
+=back
+
+=head1 NOTES
+
+The functionality in this package was transferred from F<Configure.pl> by Jim
+Keenan.
 
 =head1 SEE ALSO
+
+F<Configure.pl>.
 
 =cut
 
