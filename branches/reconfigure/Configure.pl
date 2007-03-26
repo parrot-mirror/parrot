@@ -31,6 +31,7 @@ $| = 1; # $OUTPUT_AUTOFLUSH = 1;
 # warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 # Installation directories:
 
+# from Parrot::Configure::Options
 my $args = process_options( {
     argv            => [ @ARGV ],
     script          => $0,
@@ -41,28 +42,32 @@ exit unless defined $args;
 
 my %args = %$args;
 
+# from Parrot::Configure::Messages
 print_introduction($parrot_version);
 
 my $conf = Parrot::Configure->new;
 
+# from Parrot::Configure::Step::List
 $conf->add_steps(get_steps_list());
 
+# from Parrot::Configure::Data
 $conf->options->set(%args);
 
 if ( exists $args{step} ) {
+    # from Parrot::Configure::Data
     $conf->data()->slurp();
+    # from Parrot::Configure
     $conf->runstep( $args{step} );
     print "\n";
-    exit(0);
 }
 else {
-
     # Run the actual steps
+    # from Parrot::Configure
     $conf->runsteps or exit(1);
+    # tell users what to do next
+    # from Parrot::Configure::Messages
+    print_conclusion($conf->data->get('make'));
 }
-
-# tell users what to do next
-print_conclusion($conf->data->get('make'));
 
 exit(0);
 
