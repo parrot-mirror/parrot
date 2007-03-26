@@ -5,6 +5,7 @@ use 5.006_001;
 use strict;
 use warnings;
 use Data::Dumper;
+$Data::Dumper::Indent = 1;
 use lib 'lib';
 
 use Parrot::BuildUtil;
@@ -16,9 +17,7 @@ use Parrot::Configure::Messages qw(
 );
 use Parrot::Configure::Step::List qw( get_steps_list );
 
-# These globals are accessed in config/init/defaults.pm
-our $parrot_version = Parrot::BuildUtil::parrot_version();
-our @parrot_version = Parrot::BuildUtil::parrot_version();
+my $parrot_version = Parrot::BuildUtil::parrot_version();
 
 $| = 1; # $OUTPUT_AUTOFLUSH = 1;
 
@@ -45,6 +44,7 @@ my %args = %$args;
 print_introduction($parrot_version);
 
 my $conf = Parrot::Configure->new;
+
 $conf->add_steps(get_steps_list());
 
 $conf->options->set(%args);
