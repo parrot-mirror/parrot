@@ -110,10 +110,6 @@ List holding strings representing the configuration steps.
 
 =item * Comment
 
-I may change the value to return an array reference.  If so,
-C<Parrot::Configure::add_steps()> will be changed to take an array reference
-as its argument rather than a list.
-
 =back
 
 =head1 NOTES
