@@ -1,8 +1,6 @@
 # Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
-=pod
-
 =head1 NAME
 
 Parrot::Configure - Conducts the execution of Configuration Steps
@@ -66,20 +64,6 @@ Basic constructor.
 Accepts no arguments and returns a L<Parrot::Configure> object.
 
 =cut
-
-#sub new {
-#    my $class = shift;
-#
-#    my $self = {
-#        steps   => [],
-#        data    => Parrot::Configure::Data->new,
-#        options => Parrot::Configure::Data->new,
-#    };
-#
-#    bless $self, ref $class || $class;
-#
-#    return $self;
-#}
 
 my $singleton;
 BEGIN {
