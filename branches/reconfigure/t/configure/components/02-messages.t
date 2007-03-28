@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 01-messages.t
+# 02-messages.t
 
 use strict;
 use warnings;
@@ -76,11 +76,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-01-messages.t - test Parrot::Configure::Messages
+02-messages.t - test Parrot::Configure::Messages
 
 =head1 SYNOPSIS
 
-    % prove t/configure/components/01-messages.t
+    % prove t/configure/components/02-messages.t
 
 =head1 DESCRIPTION
 

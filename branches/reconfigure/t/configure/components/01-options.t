@@ -22,13 +22,54 @@ BEGIN {
 use Test::More qw(no_plan); # tests => 10;
 use Carp;
 use Data::Dumper;
-use_ok('Parrot::Configure::Options', qw| process_options | );
+use_ok('Parrot::Configure::Options', qw|
+    process_options
+    get_valid_options
+| );
 use_ok("Parrot::IO::Capture::Mini");
+
+
+my %valid;
+%valid = map {$_, 1} get_valid_options();
+ok(scalar keys %valid, "non-zero quantity of valid options found");
+ok(defined $valid{debugging}, "debugging option found");
+ok(defined $valid{maintainer}, "maintainer option found");
+ok(defined $valid{help}, "help option found");
+ok(defined $valid{version}, "version option found");
+ok(defined $valid{verbose}, "verbose option found");
+
+open my $FH, "$main::topdir/Configure.pl"
+    or croak "Unable to open handle to Configure.pl";
+my $bigstr;
+{
+    local $/ = undef;
+    $bigstr = <$FH>;
+}
+close $FH or croak "Unable to close handle to Configure.pl";
+
+# Ignore any POD I have moved to an __END__ block.
+$bigstr =~ s/__END__.*//s;
+my (@lines, @possible_methods);
+@lines = grep { /^=item/ } (split /\n/, $bigstr);
+foreach my $l (@lines) {
+    my $method;
+    if ($l =~ /^=item C<--([-_\w]+)(?:[=>])/) {
+        $method = $1;
+        push @possible_methods, $method;
+    }
+}
+my $invalid = 0;
+foreach my $m (@possible_methods) {
+    unless (defined $valid{$m}) {
+        carp "Possibly invalid method: $m";
+        $invalid++;
+    }
+}
+ok(! $invalid, "No invalid methods described in POD");
 
 my $parrot_version = '0.4.10';
 my $svnid = '$Id: Configure.pl 17734 2007-03-25 16:39:07Z jkeenan $';
 my ($args);
-
 $args = process_options( {
     argv            => [],
     script          => $0,
