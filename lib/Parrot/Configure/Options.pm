@@ -4,19 +4,26 @@ package Parrot::Configure::Options;
 use strict;
 use warnings;
 use base qw( Exporter );
-our @EXPORT_OK = qw( process_options );
+our @EXPORT_OK = qw(
+    process_options
+    get_valid_options
+);
 
-my @valid_opts = qw(ask bindir cage cc ccflags ccwarn cgoto cxx datadir
+sub get_valid_options {
+    return  qw(ask bindir cage cc ccflags ccwarn cgoto cxx datadir
     debugging define exec-prefix execcapable floatval gc help icu-config
     icudatadir icuheaders icushared includedir infodir inline intval
     jitcapable ld ldflags lex libdir libexecdir libs link linkflags
     localstatedir m maintainer mandir miniparrot nomanicheck oldincludedir
     opcode ops optimize parrot_is_shared pmc prefix profile sbindir
-    sharedstatedir step sysconfdir verbose verbose-step=N version without-gdbm
+    sharedstatedir step sysconfdir verbose verbose-step version without-gdbm
     without-gmp without-icu yacc);
+}
+#    sharedstatedir step sysconfdir verbose verbose-step=N version without-gdbm
 
 sub process_options {
     my $optionsref = shift;
+    my @valid_opts = get_valid_options();
     $optionsref->{argv} = []
         unless defined $optionsref->{argv};
     $optionsref->{script} = q{Configure.pl}
@@ -203,11 +210,14 @@ Parrot::Configure::Options - Process command-line options to F<Configure.pl>
             '$Id$',
     } );
 
+    @valid_options = get_valid_options();
+
 =head1 DESCRIPTION
 
-Parrot::Configure::Options exports on demand a single subroutine,
+Parrot::Configure::Options exports on demand two subroutines:  
 C<process_options()>, which processes the command-line options provided to
-F<Configure.pl>.
+F<Configure.pl>; and C<get_valid_options()>, which returns the list of
+currently valid options.
 
 If you provide F<Configure.pl> with either C<--help> or C<--version>,
 C<process_options()>  will print out the appropriate message and perform a
@@ -218,7 +228,7 @@ definedness of C<process_options()>'s return value and proceed appropriately.
 An array of valid command-line option names stored internally is consulted;
 the program will die if an invalid option is called.
 
-=head1 SUBROUTINE
+=head1 SUBROUTINES
 
 =head2 C<process_options()>
 
@@ -254,6 +264,26 @@ Bare return (C<undef>).
 Reference to a hash of option names and values.
 
 =back
+
+=item * Comment
+
+=back
+
+=head2 C<get_valid_options()>
+
+=over 4
+
+=item * Purpose
+
+Get a list of options currently valid for F<Configure.pl>.
+
+=item * Arguments
+
+None.
+
+=item * Return Value
+
+List of currently valid options.
 
 =item * Comment
 
