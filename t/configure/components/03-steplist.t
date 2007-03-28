@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: 03-steplist.t 17739 2007-03-25 19:38:47Z jkeenan $
+# $Id$
 # 03-steplist.t
 
 use strict;

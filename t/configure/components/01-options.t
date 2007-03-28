@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: 01-options.t 17739 2007-03-25 19:38:47Z jkeenan $
+# $Id$
 # 01-options.t
 
 use strict;
@@ -68,7 +68,7 @@ foreach my $m (@possible_methods) {
 ok(! $invalid, "No invalid methods described in POD");
 
 my $parrot_version = '0.4.10';
-my $svnid = '$Id: Configure.pl 17734 2007-03-25 16:39:07Z jkeenan $';
+my $svnid = '$Id$';
 my ($args);
 $args = process_options( {
     argv            => [],
