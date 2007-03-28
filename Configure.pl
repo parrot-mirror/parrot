@@ -212,17 +212,9 @@ Use the given loader flags for shared libraries
 
 Specify which lexer to use.
 
-=item C<--flex_required=X.Y.Z>
-
-Override the minimum acceptable flex version.
-
 =item C<--yacc=(parser)>
 
 Specify which parser to use.
-
-=item C<--bison_required=X.Y>
-
-Override the minimum acceptable bison version.
 
 =item C<--define=val1[,val2]>
 
@@ -339,3 +331,13 @@ F<lib/Parrot/Configure/Step.pm>, F<docs/configuration.pod>
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
+
+__END__
+=item C<--flex_required=X.Y.Z>
+
+Override the minimum acceptable flex version.
+
+=item C<--bison_required=X.Y>
+
+Override the minimum acceptable bison version.
+
