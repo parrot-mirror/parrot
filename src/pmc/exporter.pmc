@@ -60,25 +60,63 @@ Instantiates an Exporter.
 
 /*
 
-=item C<void src(PMC *)>
+=item C<void source(PMC *src)>
 
-Return the C<globals> array.
+Accessor for the source NameSpace object. Sets the value if C<src> is passed,
+otherwise returns the value.
 
 =cut
 
 */
 
-    PCCMETHOD void src(PMC *src :optional, int got_src :opt_flag) {
+    PCCMETHOD void source(PMC *src :optional, int got_src :opt_flag) {
         Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
-        PMC *ret_ns_src;
 
         /* TODO deal with non-namespace pmcs */
         if (got_src) {
-            exp->ns_src = VTABLE_clone(interp, src);
+            if (src->vtable->base_type != enum_class_NameSpace) {
+                real_exception(interp, NULL, 0,
+                        "source must be a NameSpace PMC");
+                return;
+            }
+
+            exp->ns_src = src;
         }
         else {
-            ret_ns_src = VTABLE_clone(interp, exp->ns_src);
-            PCCRETURN(PMC *ret_ns_src);
+            PMC *tmp_ns_src;
+            tmp_ns_src = exp->ns_src;
+            PCCRETURN(PMC *tmp_ns_src);
+        }
+    }
+
+
+/*
+
+=item C<void destination(PMC *dest)>
+
+Accessor for the destination NameSpace object. Sets the value if C<dest> is passed,
+otherwise returns the value.
+
+=cut
+
+*/
+
+    PCCMETHOD void destination(PMC *dest :optional, int got_dest :opt_flag) {
+        Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
+
+        /* TODO deal with non-namespace pmcs */
+        if (got_dest) {
+            if (dest->vtable->base_type != enum_class_NameSpace) {
+                real_exception(interp, NULL, 0,
+                        "destination must be a NameSpace PMC");
+                return;
+            }
+            exp->ns_dest = dest;
+        }
+        else {
+            PMC *tmp_ns_dest;
+            tmp_ns_dest = exp->ns_dest;
+            PCCRETURN(PMC *tmp_ns_dest);
         }
     }
 
@@ -87,16 +125,25 @@ Return the C<globals> array.
 
 =item C<PMC *globals(void)>
 
-Return the C<globals> array.
+Accessor for the array of globals to export. Sets the array if C<glb_array>
+is passed, otherwise returns the value.
 
 =cut
 
 */
 
-    PCCMETHOD void globals() {
+    PCCMETHOD void globals(PMC *glb_array :optional, int got_glb_array :opt_flag) {
         Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
-        PMC *ret_globals = VTABLE_clone(interp, exp->globals);
-        PCCRETURN(PMC *ret_globals);
+        PMC *ret_globals;
+
+        /* TODO deal properly with non-array pmcs */
+        if (got_glb_array) {
+            exp->globals = VTABLE_clone(interp, glb_array);
+        }
+        else {
+            ret_globals = VTABLE_clone(interp, exp->globals);
+            PCCRETURN(PMC *ret_globals);
+        }
     }
 
 
@@ -110,15 +157,18 @@ Add C<global> to the array of globals.
 
 */
 
-    void add_global(PMC *global) {
+    PCCMETHOD void add_global(PMC *global :optional, int has_global :opt_flag) {
         Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
-        PMC *globals = exp->globals;
+        if (has_global) {
+            VTABLE_push_string(interp, exp->globals,
+                    VTABLE_get_string(interp, global));
+        }
     }
 
 
 /*
 
-=item C<PMC *import(PMC *dest, PMC *src, PMC *globals)>
+=item C<void import(PMC *dest, PMC *src, PMC *globals)>
 
 Import C<globals> from the C<src> namespace to the C<dest> namespace.
 
@@ -126,10 +176,45 @@ Import C<globals> from the C<src> namespace to the C<dest> namespace.
 
 */
 
-    PMC *import(PMC *dest, PMC *src, PMC *globals) {
+    PCCMETHOD void import(PMC *dest :optional :named["destination"], int got_dest :opt_flag,
+            PMC *src :optional :named["source"], int got_src :opt_flag,
+            PMC *globals :optional :named["globals"], int got_globals :opt_flag) {
+/*
+ * notes:
+ * passed params override current values, so set them before using them
+ * check if any values are null before using them, and throw if so
+ * for each global,
+ *   find global in source namespace, throw exception if not found
+ *   find global in destination namespace, throw warning if found
+ *   store global in destination namespace
+ */
+
         Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
-        /*  */
-        return PMCNULL;
+        int copy_of_globals;
+
+        if (got_src)
+            PCCINVOKE(interp, SELF, "source", PMC *src);
+        if (got_dest)
+            PCCINVOKE(interp, SELF, "destination", PMC *dest);
+        if (got_globals)
+            PCCINVOKE(interp, SELF, "globals", PMC *globals);
+
+        if (exp->globals == PMCNULL) {
+            real_exception(interp, NULL, 0, "no globals to import");
+            return;
+        }
+        if (exp->ns_src == PMCNULL) {
+            real_exception(interp, NULL, 0, "source namespace not set");
+            return;
+        }
+        if (exp->ns_dest == PMCNULL) {
+            real_exception(interp, NULL, 0, "destination namespace not set");
+            return;
+        }
+
+        copy_of_globals = VTABLE_get_integer(interp, exp->globals);
+        return;
+        /* TODO for each global, look up in source and alias to dest */
     }
 
 /*

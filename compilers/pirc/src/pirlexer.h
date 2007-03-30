@@ -1,9 +1,9 @@
 #ifndef __PIRLEXER_H
-#define __PIRLEXER_H
+  #define __PIRLEXER_H
 
 typedef enum tokens {
-		T_GLOBAL,                           /* "global"                   */
-        T_GOTO,                				/* "goto",                    */
+        T_GLOBAL,                           /* "global"                   */
+        T_GOTO,                             /* "goto",                    */
         T_IF,                               /* "if",                      */
         T_INT,                              /* "int",                     */
         T_N_OPERATORS,                      /* "n_operators",             */
@@ -57,6 +57,7 @@ typedef enum tokens {
         T_LEX_FLAG,                         /* ":lex",                    */
         T_LOAD_FLAG,                        /* ":load",                   */
         T_MAIN_FLAG,                        /* ":main",                   */
+        T_METHOD_FLAG,                      /* ":method",                 */
         T_MULTI_FLAG,                       /* ":multi",                  */
         T_OUTER_FLAG,                       /* ":outer",                  */
         T_POSTCOMP_FLAG,                    /* ":postcomp",               */
@@ -123,14 +124,13 @@ typedef enum tokens {
         T_SINGLE_QUOTED_STRING,             /* "'string'",                */
         T_LITERAL,                          /* "'literal'",               */
         T_INVOCANT_IDENT,                   /* "invocant id",             */
-        T_NUMBER,                           /* "'number'",                */
         T_ERROR,                            /* "'error'",                 */
         T_POWER,                            /* "**",                      */
         T_POWER_ASSIGN,                     /* "**=",                     */
         T_MULTIPLY_ASSIGN,                  /* "*=",                      */
         T_PLUS_ASSIGN,                      /* "+=",                      */
         T_MINUS_ASSIGN,                     /* "-=",                      */
-        T_REGISTER,                         /* "'register'",              */
+        T_CONCAT_ASSIGN,                    /* ".="                       */
         T_DIVIDE_ASSIGN,                    /* "/=",                      */
         T_FDIVIDE_ASSIGN,                   /* "//=",                     */
         T_MODULO_ASSIGN,                    /* "%=",                      */
@@ -147,7 +147,7 @@ typedef enum tokens {
 } token;
 
 /* Make sure MAX_TOKEN is the last enum value from enum token {} */
-#define MAX_TOKEN T_PARROT_OP
+  #define MAX_TOKEN T_PARROT_OP
 
 
 /* pirlexer API */
@@ -173,7 +173,7 @@ extern void open_include_file(struct lexer_state *lexer);
 extern void close_include_file(struct lexer_state *lexer);
 
 /* get the characters of the current token */
-extern char * const get_current_token(struct lexer_state *s);
+extern char * const get_current_token(struct lexer_state const *s);
 
 /* print some text from the buffer in the neighbourhood of the current token */
 extern void print_error_context(struct lexer_state *s);
@@ -198,3 +198,9 @@ extern char const * find_keyword(token t);
 
 #endif
 
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
