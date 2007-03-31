@@ -332,12 +332,3 @@ F<lib/Parrot/Configure/Step.pm>, F<docs/configuration.pod>
 # End:
 # vim: expandtab shiftwidth=4:
 
-__END__
-=item C<--flex_required=X.Y.Z>
-
-Override the minimum acceptable flex version.
-
-=item C<--bison_required=X.Y>
-
-Override the minimum acceptable bison version.
-

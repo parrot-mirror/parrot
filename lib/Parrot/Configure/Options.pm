@@ -19,7 +19,6 @@ sub get_valid_options {
     sharedstatedir step sysconfdir verbose verbose-step version without-gdbm
     without-gmp without-icu yacc);
 }
-#    sharedstatedir step sysconfdir verbose verbose-step=N version without-gdbm
 
 sub process_options {
     my $optionsref = shift;

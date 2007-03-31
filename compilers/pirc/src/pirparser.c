@@ -4,13 +4,61 @@
 
 pirparser.c - parser for Parrot Intermediate Representation
 
+=head1 THOUGHTS FOR LATER
+
+=over 4
+
+=item *
+
+Remove limit of 10 heredoc arguments
+
+=item *
+
+Add error correcting stuff, so parsing can continue after simple errors.
+
+=item *
+
+Maybe use #define's to implement small functions. Effectively, these routines
+will be inlined in compilation_unit() or instruction(), but when using #define's
+it's still kinda code that looks good.
+
+=item *
+
+Skip first token of statements if it's sure that the token has already been checked by the caller. No need
+to match 'goto' again, if it was already checked in compilation_unit().
+
+=item *
+
+Maybe use compilers/bcg for back-end, if that would fit well.
+
+=item *
+
+Clean up grammar after discussion.
+ - For instance, why have :postcomp and :immediate, having same meaning?, and
+ - why ".sub" and ".pcc_sub"?
+ - why "object" as type? Why custom names as type, such as '.local Array x' --
+   this is not needed, and makes the code look more like a HLL. Just stick
+   to 'pmc', which works fine.
+ - why allow an optional comma between sub pragmas? param pragmas don't have that
+   so remove this opt. comma as well for consistency.
+ - unify '.sym' and '.local'. Just allow one, and think of something else for
+   local labels in macros.
+ - Decide on dot-prefix: either .Integer or Integer, but not both.
+   same for strings: .Integer, Integer or "Integer"?
+
+=back
+
+
 =cut
 
 */
 
 #include "pirlexer.h"
 #include "pirparser.h"
-#include "pirout.h" /* for test output */
+
+/* output stuff */
+#include "pirvtable.h" /* vtable definition */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -24,11 +72,12 @@ pirparser.c - parser for Parrot Intermediate Representation
 The parser_state structure has the following fields:
 
  typedef struct parser_state {
-    struct   lexer_state *lexer;     -- the lexer
-    token    curtoken;               -- the current token as returned by the lexer
-    char    *heredoc_ids[10];        -- array for holding heredoc arguments. XXX Limited to 10 currently XXX
-    unsigned heredoc_index;          -- index to keep track of heredoc ids in the array
-    unsigned parse_errors;           -- parse_errors
+    struct     lexer_state *lexer;     -- the lexer
+    token      curtoken;               -- the current token as returned by the lexer
+    char      *heredoc_ids[10];        -- array for holding heredoc arguments. XXX Limited to 10 currently XXX
+    unsigned   heredoc_index;          -- index to keep track of heredoc ids in the array
+    unsigned   parse_errors;           -- counter for parse_errors
+    pirvtable *vtable;                 -- vtable holding pointers for output routines
  }
 
 =cut
@@ -36,11 +85,12 @@ The parser_state structure has the following fields:
 */
 
 typedef struct parser_state {
-    struct   lexer_state *lexer;
-    token    curtoken;
-    char    *heredoc_ids[10];
-    unsigned heredoc_index;
-    unsigned parse_errors;
+    struct     lexer_state *lexer;
+    token      curtoken;
+    char      *heredoc_ids[10];
+    unsigned   heredoc_index;
+    unsigned   parse_errors;
+    pirvtable *vtable;
 
 } parser_state;
 
@@ -49,11 +99,9 @@ typedef struct parser_state {
 #define MAX_ERRORS  10
 
 
-/* call next() to get the next token from the lexer */ /* NOTE: it's calling pirout() */
+/* call next() to get the next token from the lexer */
+#define next(P) P->curtoken = next_token(P->lexer)
 
-/* #define next(P) P->curtoken = next_token(P->lexer) */
-
-#define next(P) do { pirout(P); P->curtoken = next_token(P->lexer); } while(0)
 
 
 /*
@@ -72,10 +120,13 @@ Clean up and exit the program normally.
 void
 exit_parser(parser_state *p) {
     destroy_lexer(p->lexer);
+    p->lexer = NULL;
     free(p);
     p = NULL;
     exit(0);
 }
+
+
 
 /*
 
@@ -95,13 +146,17 @@ get_parse_errors(parser_state *p) {
 
 =item new_parser()
 
-constructor for a parser_state object.
+constructor for a parser_state object. The specified filename
+is parsed. The semantic actions in vtable are called at certain
+points in the code. The vtable is constructed in the parser's
+client code.
 
 =cut
 
 */
 parser_state *
-new_parser(char const * filename) {
+new_parser(char const * filename, pirvtable *vtable) {
+
     parser_state *p = (parser_state *)malloc(sizeof(parser_state));
 
     if (p == NULL) {
@@ -112,6 +167,8 @@ new_parser(char const * filename) {
     p->curtoken      = next_token(p->lexer);
     p->parse_errors  = 0;
     p->heredoc_index = 0;
+    p->vtable        = vtable;
+
     return p;
 }
 
@@ -167,7 +224,7 @@ syntax_error(parser_state *p, int numargs, ...) {
     long line = get_current_line(p->lexer);
     char const *file = get_current_file(p->lexer);
 
-    fprintf(stderr, "syntax error in file '%s', line %ld: ", file, line);
+    fprintf(stderr, "\nsyntax error in file '%s', line %ld: ", file, line);
 
     va_start(arg_ptr, numargs);
     for (count = 0; count < numargs; count++) {
@@ -176,7 +233,7 @@ syntax_error(parser_state *p, int numargs, ...) {
     }
     va_end(arg_ptr);
 
-    fprintf(stderr, "\n");
+    fprintf(stderr, "\n\n");
 
     /* only show context on first error */
     if (p->parse_errors == 0) print_error_context(p->lexer);
@@ -268,6 +325,10 @@ expression(parser_state *p) {
         case T_PASM_SREG: case T_SREG:
         case T_MACRO_IDENT:
             exprtok = p->curtoken;
+
+            /* emit the expression */
+            emit_expr(p, get_current_token(p->lexer));
+
             next(p);
             break;
         default:
@@ -342,7 +403,7 @@ method(parser_state *p) {
 */
 static void
 target(parser_state *p) {
-    switch(p->curtoken) {
+    switch (p->curtoken) {
         case T_PASM_PREG: case T_PREG: case T_PASM_IREG: case T_IREG:
         case T_PASM_NREG: case T_NREG: case T_PASM_SREG: case T_SREG:
         case T_IDENTIFIER:
@@ -365,7 +426,7 @@ target(parser_state *p) {
 */
 static void
 type(parser_state *p) {
-    switch(p->curtoken) {
+    switch (p->curtoken) {
         case T_INT:
         case T_NUM:
         case T_PMC:
@@ -382,7 +443,7 @@ type(parser_state *p) {
 
 =item key()
 
-  key -> unop expression | '..' expression | expression [ '..' [ expression ] ]
+  key -> '-' expression | '..' expression | expression [ '..' [ expression ] ]
 
 =cut
 
@@ -391,10 +452,6 @@ static void
 key(parser_state *p) {
     switch (p->curtoken) {
         case T_MINUS:
-        /*
-        case T_BXOR:
-        case T_NOT:
-        */
         case T_DOTDOT: /* key -> '..' expression */
             next(p);
             expression(p);
@@ -424,7 +481,7 @@ static void
 keylist(parser_state *p) {
     match(p, T_LBRACKET); /* skip '[' */
     key(p);
-    while(p->curtoken == T_SEMICOLON || p->curtoken == T_COMMA) {
+    while (p->curtoken == T_SEMICOLON || p->curtoken == T_COMMA) {
         next(p); /* skip ';' or ',' */
         key(p);
     }
@@ -517,7 +574,7 @@ arguments(parser_state *p) {
         syntax_error(p, 1, "'\\n' expected");
     }
 
-    /* check whehter there are any heredocs to be parsed */
+    /* check whether there are any heredocs to be parsed */
     if ( p->heredoc_index > 0) {
         unsigned i;
         for (i = 0; i < p->heredoc_index; i++) {
@@ -569,7 +626,7 @@ just return.
 */
 static void
 arith_expression(parser_state *p) {
-    switch(p->curtoken) {
+    switch (p->curtoken) {
         case T_PLUS:
         case T_MINUS:
         case T_DIVIDE:
@@ -592,6 +649,38 @@ arith_expression(parser_state *p) {
         default:
             break;
     }
+}
+
+/*
+
+=item parrot_instruction
+
+  parrot_instruction -> PARROT_OP [ expression {',' expression } ] '\n'
+
+=cut
+
+*/
+static void
+parrot_instruction(parser_state *p) {
+    /* emit the op */
+    emit_op_start(p, get_current_token(p->lexer));
+
+    match(p, T_PARROT_OP);
+    /* XXX for now, parse as many arguments as necessary,
+     * don't know how to handle this. Just try and create the call to the
+     * instruction and wait for run-time error?
+     */
+    while (p->curtoken != T_NEWLINE) {
+        expression(p);
+        if (p->curtoken == T_COMMA) {
+            emit_next_expr(p);
+            next(p);
+        }
+        else break;
+    }
+
+    emit_op_end(p);
+    match(p, T_NEWLINE);
 }
 
 
@@ -619,7 +708,7 @@ static void
 assignment(parser_state *p) {
     match(p, T_ASSIGN);
 
-    switch(p->curtoken) {
+    switch (p->curtoken) {
         case T_NOT:
         case T_MINUS:
         case T_BXOR:  /* '~' used as binary 'not' op */
@@ -664,14 +753,7 @@ assignment(parser_state *p) {
             next(p);
             break;
         case T_PARROT_OP:
-            next(p);
-            if (p->curtoken != T_NEWLINE) {
-                expression(p);
-                while (p->curtoken == T_COMMA) {
-                    next(p);
-                    expression(p);
-                }
-            }
+            parrot_instruction(p);
             break;
         case T_HEREDOC_ID: { /* parse heredoc string */
             char *heredocid = clone_string(get_current_token(p->lexer));
@@ -799,7 +881,7 @@ local_id_list(parser_state *p) {
     match(p, T_IDENTIFIER);
     if (p->curtoken == T_UNIQUE_REG_FLAG) next(p);
 
-    while(p->curtoken == T_COMMA) {
+    while (p->curtoken == T_COMMA) {
         next(p); /* skip comma */
         match(p, T_IDENTIFIER);
 
@@ -892,7 +974,7 @@ static void
 conditional_expression(parser_state *p) {
     expression(p);
 
-    switch(p->curtoken) { /* optional */
+    switch (p->curtoken) { /* optional */
         case T_GE: case T_GT: case T_EQ:
         case T_NE: case T_LT: case T_LE:
             next(p); /* skip comparison op */
@@ -966,7 +1048,7 @@ if_statement(parser_state *p) {
 */
 static void
 const_definition(parser_state *p) {
-    switch(p->curtoken) {
+    switch (p->curtoken) {
         case T_INT:
             next(p);
             match(p, T_IDENTIFIER);
@@ -1067,7 +1149,7 @@ param_flags(parser_state *p) {
     int ok = 1;
     while (ok) {
         /* if the current token is a flag, parse it */
-        switch(p->curtoken) {
+        switch (p->curtoken) {
             case T_SLURPY_FLAG:
             case T_UNIQUE_REG_FLAG:
             case T_OPTIONAL_FLAG:
@@ -1090,7 +1172,7 @@ param_flags(parser_state *p) {
                 break;
             /* if none of the above, error! */
             default:
-                syntax_error(p, 2, "syntax error: parameter flag or newline expected, but got ", find_keyword(p->curtoken));
+                syntax_error(p, 2, "parameter flag or newline expected, but got ", find_keyword(p->curtoken));
                 ok = 0; /* stop loop */
                 break;
         }
@@ -1124,7 +1206,7 @@ long_invocation(parser_state *p) {
         match(p, T_NEWLINE);
     }
 
-    switch(p->curtoken) {
+    switch (p->curtoken) {
         case T_PCC_CALL: /* ... '.pcc_call' target '\n' ... */
         case T_NCI_CALL: /* ... '.nci_call' target '\n' ... */
             next(p);
@@ -1220,7 +1302,7 @@ static void
 target_statement(parser_state *p) {
     target(p);
 
-    switch(p->curtoken) {
+    switch (p->curtoken) {
         case T_ASSIGN:   /* target '=' expression */
             assignment(p);
             break;
@@ -1276,7 +1358,7 @@ static void
 target_list(parser_state *p) {
     match(p, T_LPAREN);
     target(p);
-    while(p->curtoken == T_COMMA) {
+    while (p->curtoken == T_COMMA) {
         next(p);
         target(p);
         param_flags(p);
@@ -1298,7 +1380,7 @@ multi_result_invocation(parser_state *p) {
     target_list(p);
     match(p, T_ASSIGN);
 
-    switch(p->curtoken) { /* TODO: REFACTOR */
+    switch (p->curtoken) {
         case T_IDENTIFIER: /* target_list '=' subcall */
         case T_PASM_PREG:
         case T_PREG:
@@ -1400,25 +1482,7 @@ global_assignment(parser_state *p) {
     match(p, T_NEWLINE);
 }
 
-/*
 
-=item parrot_instruction
-
-  parrot_instruction -> PARROT_OP [ expression {',' expression } ] '\n'
-
-=cut
-
-*/
-static void
-parrot_instruction(parser_state *p) {
-    match(p, T_PARROT_OP); /* XXX for now, parse as many arguments as necessary */
-    while (p->curtoken != T_NEWLINE) {
-        expression(p);
-        if (p->curtoken == T_COMMA) next(p);
-        else break;
-    }
-    match(p, T_NEWLINE);
-}
 
 
 /*
@@ -1627,39 +1691,31 @@ sub_flags(parser_state *p) {
     int wantmore = 0; /* flag that is set when a ',' is parsed */
 
     while (ok || wantmore) {
-        switch(p->curtoken) {
+        switch (p->curtoken) {
             case T_ANON_FLAG:
-                next(p);
-                break;
             case T_INIT_FLAG:
-                next(p);
-                break;
             case T_LOAD_FLAG:
-                next(p);
-                break;
             case T_MAIN_FLAG:
-                next(p);
-                break;
             case T_METHOD_FLAG:
-                next(p);
-                break;
             case T_LEX_FLAG:
+            case T_POSTCOMP_FLAG:    /* :postcomp and :immediate are the same */
+            case T_IMMEDIATE_FLAG:
+                emit_sub_flag(p, p->curtoken);
                 next(p);
                 break;
             case T_OUTER_FLAG:
-            case T_VTABLE_FLAG:
+            case T_VTABLE_FLAG: {
+                token flag = p->curtoken; /* store the flag for the emit() to come */
                 next(p);
                 match(p, T_LPAREN);
+                emit_sub_flag_arg(p, flag, get_current_token(p->lexer));
                 stringconstant(p);
                 match(p, T_RPAREN);
                 break;
+            }
             case T_MULTI_FLAG:
                 next(p);
                 multi_type_list(p);
-                break;
-            case T_POSTCOMP_FLAG:    /* :postcomp and :immediate are the same */
-            case T_IMMEDIATE_FLAG:
-                next(p);
                 break;
             case T_NEWLINE:
                 ok = 0; /* stop loop; wantmore is always cleared, so loop will stop */
@@ -1699,30 +1755,47 @@ static void
 parameters(parser_state *p) {
     while (p->curtoken == T_PARAM) {
         next(p); /* skip '.param */
+        emit_param_start(p);
         switch (p->curtoken) {
             case T_INT:
             case T_NUM:
             case T_PMC:
             case T_STRING:
-                type(p);
+                emit_type(p, get_current_token(p->lexer));
+                /* type(p); -- we know what it is; just skip it! */
+                next(p);
+
+                /* Maybe combine these 2 statements into an 'identifier'() function? */
+                emit_name(p, get_current_token(p->lexer));
                 match(p, T_IDENTIFIER);
                 param_flags(p);
                 break;
             case T_PREG:
-            case T_NREG:
-            case T_SREG:
-            case T_IREG:
             case T_PASM_PREG:
+                next(p);
+                emit_type(p, "pmc");
+                break;
+            case T_NREG:
             case T_PASM_NREG:
+                next(p);
+                emit_type(p, "num");
+                break;
+            case T_SREG:
             case T_PASM_SREG:
+                next(p);
+                emit_type(p, "string");
+                break;
+            case T_IREG:
             case T_PASM_IREG:
                 next(p);
+                emit_type(p, "int");
                 break;
             default:
                 syntax_error(p, 1, "type or register expected");
                 break;
         }
         match(p, T_NEWLINE);
+        emit_param_end(p);
     }
 }
 
@@ -1737,20 +1810,33 @@ parameters(parser_state *p) {
 */
 static void
 sub_definition(parser_state *p) {
-    /* either '.sub' or '.pcc_sub'. This kind of optimization (just skipping)
-     * can be done more often, if we're sure the token has already been checked for.
-     */
-    next(p);
+    /* call emit method */
+    emit_sub_start(p, "", get_current_filepos(p->lexer));
+    next(p); /* skip '.sub' or '.pcc_sub' */
 
-    if (p->curtoken == T_IDENTIFIER) match(p, T_IDENTIFIER);
-    else stringconstant(p);
+    switch (p->curtoken) { /* subname -> IDENTIFIER | SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING */
+        case T_IDENTIFIER:
+        case T_DOUBLE_QUOTED_STRING:
+        case T_SINGLE_QUOTED_STRING:
+            emit_name(p, get_current_token(p->lexer)); /* emit the subname */
+            next(p); /* and get next token */
+            break;
+        default:
+            syntax_error(p, 1, "sub identifier expected");
+            break;
+    }
 
     sub_flags(p);
-
     match(p, T_NEWLINE);
+    emit_stmts_start(p); /* open stmts block */
     parameters(p);
     instructions(p);
+    emit_stmts_end(p);  /* close stmts block */
     match(p, T_END);
+
+    /* call emit method to close sub*/
+    emit_sub_end(p);
+
 }
 
 /*
@@ -2031,12 +2117,16 @@ program(parser_state *p) {
     /* the file may have some initial newlines; eat them */
     if (p->curtoken == T_NEWLINE) next(p);
 
+    emit_init(p); /* initialize emitter */
+
     compilation_unit(p);
 
     while (p->curtoken != T_EOF ) {
         match(p, T_NEWLINE);
         compilation_unit(p);
     }
+
+    emit_end(p); /* close down emitter */
 }
 
 /*
@@ -2066,25 +2156,6 @@ TOP(parser_state *p) {
 
 =back
 
-=head1 POSSIBLE FUTURE OPTIMIZATIONS
-
-=over 4
-
-=item *
-
-Use #define's to inline short functions that are called often (such as next(), match())
-
-=item *
-
-Remove functions for short statements, and put in the matching into the switch() for compilation_unit.
-
-=item *
-
-Skip first token of statements if it's sure that the token has already been checked by the caller. No need
-to match 'goto' again, if it was already checked in compilation_unit().
-
-
-=back
 
 =cut
 

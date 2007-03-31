@@ -4,6 +4,39 @@
 
 pirlexer.c - lexical analysis for Parrot Intermediate Representation
 
+=head1 THOUGHTS FOR LATER
+
+=over 4
+
+=item *
+
+Implement dictionary as hashtable, which will be MUCH faster
+
+=item *
+
+Remove limit of 128 characters for identifier length
+
+=item *
+
+Optimize small functions (using #define to inline) and optimize by 'smarter'
+implementation (where appropiate). I'm doing a lot of stuff in read_char(),
+which might slow down things.
+
+=item *
+
+TODO: implement POD parsing
+
+=item *
+
+Place and remove checks for EOF where appropiate, they are scattered throughout
+the code. Clean that up.
+
+=item *
+
+Check for 'correct' use of data types (unsigned etc.)
+
+=back
+
 =cut
 
 */
@@ -43,30 +76,30 @@ lexer.
 
 The following are PIR directives.
 
-  .arg               .const      .constant    .emit             .end                  
-  .endnamespace      .endm       .eom         .get_results      .global               
-  .globalconst       .HLL        .HLL_map     .include          .invocant             
-  .lex               .loadlib    .local       .macro            .meth_call            
-  .namespace         .nci_call   .param       .pcc_begin        .pcc_begin_return     
-  .pcc_begin_yield   .pcc_call   .pcc_end     .pcc_end_return   .pcc_end_yield        
-  .pcc_sub           .pragma     .result      .return           .sub                  
-  .sym               .yield      
+  .arg               .const      .constant    .emit             .end
+  .endnamespace      .endm       .eom         .get_results      .global
+  .globalconst       .HLL        .HLL_map     .include          .invocant
+  .lex               .loadlib    .local       .macro            .meth_call
+  .namespace         .nci_call   .param       .pcc_begin        .pcc_begin_return
+  .pcc_begin_yield   .pcc_call   .pcc_end     .pcc_end_return   .pcc_end_yield
+  .pcc_sub           .pragma     .result      .return           .sub
+  .sym               .yield
 
 
 =head1 FLAGS
 
 The following are flags for subroutines:
 
-  :anon     :immediate   :init        :lex         :load        :main        
-  :method   :multi       :outer       :postcomp    :vtable      :named       
-  
+  :anon     :immediate   :init        :lex         :load        :main
+  :method   :multi       :outer       :postcomp    :vtable      :named
+
 The following are flags for parameters/arguments.
 
-  :opt_flag    
-  :optional    
-  :slurpy      
-  :flat        
-  :unique_reg  
+  :opt_flag
+  :optional
+  :slurpy
+  :flat
+  :unique_reg
 
 
 =cut
@@ -335,6 +368,34 @@ get_current_line(struct lexer_state *s) {
     return s->curfile->line;
 }
 
+/*
+
+=item get_current_linepos()
+
+Returns the current line position (i.o.w., how many characters
+have been read on the current line?)
+
+=cut
+
+*/
+unsigned short
+get_current_linepos(struct lexer_state *s) {
+    return s->curfile->linepos;
+}
+
+/*
+
+=item get_current_filepos()
+
+Returns the number of charactars read in the current file so far.
+
+=cut
+
+*/
+long
+get_current_filepos(struct lexer_state *s) {
+    return (s->curfile->curchar - s->curfile->buffer);
+}
 
 /*
 
@@ -363,7 +424,7 @@ print_error_context(struct lexer_state *s) {
         ++start;
     }
     /* print an indicator like "^" on the next line */
-    fprintf(stderr, "\n%*s\n", s->curfile->linepos - 1, "^");
+    fprintf(stderr, "\n%*s\n", s->curfile->linepos, "^");
 }
 
 
@@ -574,7 +635,8 @@ do_include_file(lexer_state *lexer, char const * filename) {
 
 =item is_op()
 
-TODO: FIX THIS
+TODO: check whether 'word' is an op. How does IMCC handle this?
+Is there an API call that checks for this?
 
 Function to check if the specified id is a Parrot op.
 Dynamically loaded op libraries need to be considered as well.
@@ -584,7 +646,7 @@ Dynamically loaded op libraries need to be considered as well.
 */
 static int
 is_op(char *word) {
-    if (strcmp(word, "add") == 0) return 1; /* FIX */
+    if (strcmp(word, "add") == 0) return 1; /* hardcoded some, to give an idea */
     if (strcmp(word, "print") == 0) return 1;
     if (strcmp(word, "new") == 0) return 1;
     return 0;
@@ -626,7 +688,7 @@ check_dictionary(lexer_state *lexer, char const *dictionary[]) {
     int index = 0;
     char const * word = dictionary[index];
     /* check all words in dictionary; if equal, return its token enum value */
-    while(word) {
+    while (word) {
         if (strcmp(word, lexer->token_chars) == 0) return index;
         word = dictionary[++index];
     }
@@ -685,9 +747,8 @@ read_digits(lexer_state *lexer) {
 
 =item update_line()
 
-Updates the line number in the lexer, and adjusts the
-error_context pointer, to show a bit of surrounding code
-when an error occurs.
+Updates the line number in the lexer, and resets
+the line position pointer.
 
 =cut
 
@@ -713,7 +774,7 @@ update_line(lexer_state *lexer) {
 =item read_heredoc()
 
 Reads heredoc text up to the specified heredoc label.
-Returns either T_HEREDOC_STRING if successful, or T_EOF.
+Returns either T_HEREDOC_STRING if successful, or T_EOF (if encountered).
 The heredoc string is stored in the token buffer.
 
 =cut
@@ -798,7 +859,7 @@ new_lexer(char const * filename) {
         exit(1);
     }
 
-    /* max. token length is 128 for now */
+    /* max. token length is 128 for now. XXX this should be fixed later */
     lexer->token_chars = (char *)calloc(128, sizeof(char));
     lexer->charptr = lexer->token_chars;
     lexer->curfile = NULL;
@@ -839,7 +900,8 @@ destroy_lexer(lexer_state *lexer) {
 =item clone_string()
 
 clone a string. Copy the characters of src into dest
-and return dest.
+and return dest. Memory allocation is done by this function, keeping
+this function's client code simple. Please free() the memory after usage!
 
 =cut
 
@@ -855,7 +917,7 @@ clone_string(char const * src) {
      * of the string - is returned
      */
     dest = ptr = (char *)calloc(srclen + 1, sizeof(char));
-    while(*src) {
+    while (*src) {
         *dest++ = *src++;
     }
     return ptr;
@@ -995,7 +1057,7 @@ is indicated explicitly.
 
 */
         /* now start checking for real tokens */
-        switch(c) {
+        switch (c) {
             case 'P':
                 buffer_char(lexer, c);              /* buffer 'P'                          */
                 count = read_digits(lexer);         /* read as many digits as you can      */
@@ -1191,7 +1253,7 @@ is indicated explicitly.
             c = read_char(lexer->curfile);
             if (c == EOF_MARKER) return T_EOF;
 
-            switch(c) {
+            switch (c) {
                 case 'P': regtype = T_PREG; break;
                 case 'N': regtype = T_NREG; break;
                 case 'S': regtype = T_SREG; break;
@@ -1240,7 +1302,7 @@ is indicated explicitly.
 =cut
 
 */
-        switch(c) {
+        switch (c) {
             case '(': buffer_char(lexer, c); return T_LPAREN;
             case ')': buffer_char(lexer, c); return T_RPAREN;
             case '[': buffer_char(lexer, c); return T_LBRACKET;
@@ -1286,7 +1348,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         /* check for possible multi-character special tokens */
         if (c == '*') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '*': return T_POWER;        /* *= */
                 case '=': return T_POWER_ASSIGN; /* **= */
                 case EOF_MARKER: return T_EOF;
@@ -1297,7 +1359,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         }
         else if (c == '%') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '=': return T_MODULO_ASSIGN; /* %= */
                 case EOF_MARKER: return T_EOF;
                 default:
@@ -1307,7 +1369,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         }
         else if (c == '/') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '/':
                     c = read_char(lexer->curfile);
                     if (c == '=') {
@@ -1327,7 +1389,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         }
         else if (c == '+') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '=': return T_PLUS_ASSIGN; /* += */
                 case EOF_MARKER: return T_EOF;
                 default:
@@ -1337,7 +1399,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         }
         else if (c == '-') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '>': return T_PTR;         /* -> */
                 case '=': return T_MINUS_ASSIGN; /* -= */
                 case EOF_MARKER: return T_EOF;
@@ -1348,7 +1410,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         }
         else if (c == '!') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '=': return T_NE;              /* != */
                 case EOF_MARKER: return T_EOF;
                 default:                            /* ! */
@@ -1358,7 +1420,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         }
         else if (c == '=') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '>': return T_ARROW;          /* => */
                 case '=': return T_EQ;             /* == */
                 case EOF_MARKER: return T_EOF;
@@ -1369,7 +1431,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         }
         else if (c == '>') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '>':
                     c = read_char(lexer->curfile);
                     if (c == '>') { /* >>> */
@@ -1398,7 +1460,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         }
         else if (c == '<') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '=': return T_LE; /* <= */
                 case '<': /* <<? */
                     c = read_char(lexer->curfile);
@@ -1429,7 +1491,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         }
         else if (c == '~') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '~': return T_XOR;             /* ~~ */
                 case '=': return T_BXOR_ASSIGN;     /* ~= */
                 case EOF_MARKER: return T_EOF;
@@ -1440,7 +1502,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         }
         else if (c == '&') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '&': return T_AND;             /* && */
                 case '=': return T_BAND_ASSIGN;     /* &= */
                 case EOF_MARKER: return T_EOF;
@@ -1451,7 +1513,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         }
         else if (c == '|') {
             c = read_char(lexer->curfile);
-            switch(c) {
+            switch (c) {
                 case '|': return T_OR;              /* || */
                 case '=': return T_BOR_ASSIGN;      /* |= */
                 case EOF_MARKER: return T_EOF;
@@ -1550,18 +1612,6 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
     return T_ERROR;
 
 }
-
-
-
-
-
-/*
-
-=cut
-
-*/
-
-
 
 /*
  * Local variables:

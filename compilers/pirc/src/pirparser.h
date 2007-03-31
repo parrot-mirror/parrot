@@ -1,13 +1,15 @@
 #ifndef __PIRPARSER_H
-  #define __PIRPARSER_H
+#  define __PIRPARSER_H
 
-  #include "pirlexer.h"
+#  include "pirlexer.h"
+#  include "pirvtable.h"
 
 /* hide internals; definition in pirparser.c */
 struct parser_state;
 
+
 /* parser constructor */
-extern struct parser_state *new_parser(char const * filename);
+extern struct parser_state *new_parser(char const * filename, pirvtable *vtable);
 
 /* entry function for the parser */
 extern void TOP(struct parser_state *p);
