@@ -1847,7 +1847,7 @@ PMC* Parrot_ComputeMRO_C3(Interp *interp, PMC *class)
 
 /*
 
-=item C<void Parrot_ComposeRole(Interp *interp, PMC *role, 
+=item C<void Parrot_ComposeRole(Interp *interp, PMC *role,
                         PMC *without, int got_without,
                         PMC *alias, int got_alias,
                         PMC *methods_hash, PMC *roles_list)>
@@ -1867,7 +1867,7 @@ the default implementation.
 
 */
 
-void Parrot_ComposeRole(Interp *interp, PMC *role, 
+void Parrot_ComposeRole(Interp *interp, PMC *role,
                         PMC *without, int got_without,
                         PMC *alias, int got_alias,
                         PMC *methods_hash, PMC *roles_list)
@@ -1935,7 +1935,8 @@ void Parrot_ComposeRole(Interp *interp, PMC *role,
                         method_name);
                 else
                     real_exception(interp, NULL, ROLE_COMPOSITOIN_METH_CONFLICT,
-                        "A conflict occurred during role composition due to the aliasing of '%S' to '%S'.",
+                        "A conflict occurred during role composition"
+                        " due to the aliasing of '%S' to '%S'.",
                         method_name, check_name);
                 return;
             }
@@ -1946,11 +1947,13 @@ void Parrot_ComposeRole(Interp *interp, PMC *role,
                  * very weird is going on. */
                 if (check_name != method_name)
                     real_exception(interp, NULL, ROLE_COMPOSITOIN_METH_CONFLICT,
-                        "A conflict occurred during role composition; '%S' was aliased to '%S', but the role already has a '%S'.",
+                        "A conflict occurred during role composition;"
+                        " '%S' was aliased to '%S', but the role already has a '%S'.",
                         method_name, check_name, check_name);
                 else
                     real_exception(interp, NULL, ROLE_COMPOSITOIN_METH_CONFLICT,
-                        "A conflict occurred during role composition; the method '%S' from the role managed to conflict with itself somehow.",
+                        "A conflict occurred during role composition;"
+                        " the method '%S' from the role managed to conflict with itself somehow.",
                         method_name);
                 return;
             }
@@ -1992,7 +1995,7 @@ void Parrot_ComposeRole(Interp *interp, PMC *role,
             if (VTABLE_get_pmc_keyed_int(interp, roles_list, j) == cur_role) {
                 /* We ain't be havin' it. */
                 VTABLE_push_pmc(interp, roles_list, cur_role);
-            }   
+            }
         }
     }
 }

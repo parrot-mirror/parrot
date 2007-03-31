@@ -53,7 +53,6 @@ my @steps = qw(
     auto::snprintf
     auto::perldoc
     auto::python
-    auto::bc
     auto::m4
     auto::cpu
     gen::icu

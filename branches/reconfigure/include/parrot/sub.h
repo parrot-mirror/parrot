@@ -87,7 +87,6 @@ typedef enum {
     SUB_COMP_FLAG_BIT_28 = 1 << 28,
     SUB_COMP_FLAG_BIT_29 = 1 << 29,
     SUB_COMP_FLAG_BIT_30 = 1 << 30,
-    SUB_COMP_FLAG_BIT_31 = 1 << 31,
     SUB_COMP_FLAG_MASK   = 0x00000400,
 } sub_comp_flags_enum;
 
@@ -109,7 +108,13 @@ union parrot_context_t;
  * a flag to signal a Sub that a new RetContinuation should be created
  */
 
-#define NEED_CONTINUATION ((void*)1)
+#define NEED_CONTINUATION ((PMC *)1)
+
+/*
+ * maximum sub recursion depth
+ */
+
+#define RECURSION_LIMIT 1000
 
 /*
  * Sub and Closure share a Parrot_sub structure.
