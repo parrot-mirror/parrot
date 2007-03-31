@@ -1,0 +1,329 @@
+/*
+Copyright (C) 2007, The Perl Foundation.
+$Id$
+
+=head1 NAME
+
+src/pmc/exporter.pmc - Export globals from one namespace to another
+
+=head1 DESCRIPTION
+
+Exports globals from one namespace to another.
+
+Exporter is not derived from any other PMC, and does not provide any
+standard interface--its inteface consists solely of non-vtable methods.
+
+=head2 Structure
+
+The Exporter PMC structure (C<Parrot_Exporter>) consists of three items:
+
+=over 4
+
+=item C<ns_src>
+
+The source namespace -- a NameSpace PMC.
+An empty PMC of this type is allocated upon initialization.
+
+=item C<ns_dest>
+
+The destination namespace -- a NameSpace PMC.
+An empty PMC of this type is allocated upon initialization.
+
+=item C<globals>
+
+The globals to export -- a ResizableStringArray.
+An empty PMC of this type is allocated during initialization.
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+#define PARROT_EXPORTER(e) ((Parrot_Exporter *) PMC_data(e))
+
+typedef struct Parrot_Exporter {
+    PMC *ns_src;
+    PMC *ns_dest;
+    PMC *globals;
+} Parrot_Exporter;
+
+
+/*
+
+=back
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
+pmclass Exporter
+    need_ext {
+
+
+/*
+
+=item C<void init()>
+
+Instantiates an Exporter.
+
+=cut
+
+*/
+
+    void init() {
+        Parrot_Exporter *exp = NULL;
+
+        /* Set flags for custom DOD mark and destroy. */
+        PObj_custom_mark_SET(SELF);
+        PObj_active_destroy_SET(SELF);
+
+        /* Set up the object. */
+        exp = mem_sys_allocate_zeroed(sizeof(Parrot_Exporter));
+        exp->ns_src  = pmc_new(interp, enum_class_NameSpace);
+        exp->ns_dest = pmc_new(interp, enum_class_NameSpace);
+        exp->globals = pmc_new(interp, enum_class_ResizableStringArray);
+        PMC_data(SELF) = exp;
+    }
+
+
+/*
+
+=item C<void destroy()>
+
+Free the object's underlying struct.
+
+=cut
+
+*/
+
+    void destroy() {
+            mem_sys_free(PMC_data(SELF));
+    }
+
+
+/*
+
+=item C<void mark()>
+
+Mark referenced strings and PMCs in the structure as live.
+
+=cut
+
+*/
+
+    void mark() {
+        Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
+        if (exp->ns_src)
+            pobject_lives(interp, (PObj*)exp->ns_src);
+        if (exp->ns_dest)
+            pobject_lives(interp, (PObj*)exp->ns_dest);
+        if (exp->globals)
+            pobject_lives(interp, (PObj*)exp->globals);
+    }
+
+
+/*
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=item C<PCCMETHOD void
+    source(PMC *src :optional, int got_src :opt_flag)>
+
+Accessor for the source NameSpace object (C<ns_src>.)
+Sets the value if C<src> is passed, otherwise returns the value.
+Throws an exception if a non-NameSpace PMC is passed.
+
+=cut
+
+*/
+
+    PCCMETHOD void source(PMC *src :optional, int got_src :opt_flag) {
+        Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
+
+        /* TODO deal with non-namespace pmcs */
+        if (got_src) {
+            if (src->vtable->base_type != enum_class_NameSpace) {
+                real_exception(interp, NULL, 0,
+                        "source must be a NameSpace PMC");
+                return;
+            }
+
+            exp->ns_src = src;
+        }
+        else {
+            PMC *tmp_ns_src;
+            tmp_ns_src = exp->ns_src;
+            PCCRETURN(PMC *tmp_ns_src);
+        }
+    }
+
+
+/*
+
+=item C<PCCMETHOD void
+    destination(PMC *dest :optional, int got_dest :opt_flag)>
+
+Accessor for the destination NameSpace object (C<ns_dest>.)
+Sets the value if C<dest> is passed, otherwise returns the value.
+Throws an exception if a non-NameSpace PMC is passed.
+
+=cut
+
+*/
+
+    PCCMETHOD void destination(PMC *dest :optional, int got_dest :opt_flag) {
+        Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
+
+        /* TODO deal with non-namespace pmcs */
+        if (got_dest) {
+            if (dest->vtable->base_type != enum_class_NameSpace) {
+                real_exception(interp, NULL, 0,
+                        "destination must be a NameSpace PMC");
+                return;
+            }
+            exp->ns_dest = dest;
+        }
+        else {
+            PMC *tmp_ns_dest;
+            tmp_ns_dest = exp->ns_dest;
+            PCCRETURN(PMC *tmp_ns_dest);
+        }
+    }
+
+
+/*
+
+=item C<PCCMETHOD void
+    globals(PMC *glb_array :optional, int got_glb_array :opt_flag)>
+
+Accessor for the array of globals to export (C<globals>.)
+Sets the array if C<glb_array> is passed, otherwise returns the value.
+
+TODO: need to add some type checking code.
+
+TODO: does not deal with non-array PMCs yet.
+
+=cut
+
+*/
+
+    PCCMETHOD void globals(PMC *glb_array :optional, int got_glb_array :opt_flag) {
+        Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
+        PMC *ret_globals;
+
+        /* TODO deal properly with non-array pmcs */
+        if (got_glb_array) {
+            exp->globals = VTABLE_clone(interp, glb_array);
+        }
+        else {
+            ret_globals = VTABLE_clone(interp, exp->globals);
+            PCCRETURN(PMC *ret_globals);
+        }
+    }
+
+
+/*
+
+=item C<PCCMETHOD void
+    add_global(PMC *global :optional, int has_global :opt_flag)>
+
+Add C<global> to the array of globals (C<globals>.)
+Sets the array if C<glb_array> is passed, otherwise does nothing.
+
+=cut
+
+*/
+
+    PCCMETHOD void add_global(PMC *global :optional, int has_global :opt_flag) {
+        Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
+        if (has_global) {
+            VTABLE_push_string(interp, exp->globals,
+                    VTABLE_get_string(interp, global));
+        }
+    }
+
+
+/*
+
+=item C<PCCMETHOD void
+    import(PMC *dest :optional :named["destination"], int got_dest :opt_flag,
+        PMC *src :optional :named["source"],      int got_src :opt_flag,
+        PMC *globals :optional :named["globals"], int got_globals :opt_flag)>
+
+Import C<globals> from the C<src> namespace to the C<dest> namespace.
+If C<src>, C<dest>, or C<globals> are passed, they will override
+the current value.
+Throws an exception upon error.
+
+=cut
+
+*/
+
+    PCCMETHOD void import(PMC *dest :optional :named["destination"], int got_dest :opt_flag,
+            PMC *src :optional :named["source"], int got_src :opt_flag,
+            PMC *globals :optional :named["globals"], int got_globals :opt_flag) {
+/*
+ * notes:
+ * for each global,
+ *   find global in source namespace, throw exception if not found
+ *   find global in destination namespace, throw warning if found
+ *   store global in destination namespace
+ */
+
+        Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
+        int copy_of_globals;
+
+        if (got_src)
+            PCCINVOKE(interp, SELF, "source", PMC *src);
+        if (got_dest)
+            PCCINVOKE(interp, SELF, "destination", PMC *dest);
+        if (got_globals)
+            PCCINVOKE(interp, SELF, "globals", PMC *globals);
+
+        if (exp->globals == PMCNULL) {
+            real_exception(interp, NULL, 0, "no globals to import");
+            return;
+        }
+        if (exp->ns_src == PMCNULL) {
+            real_exception(interp, NULL, 0, "source namespace not set");
+            return;
+        }
+        if (exp->ns_dest == PMCNULL) {
+            real_exception(interp, NULL, 0, "destination namespace not set");
+            return;
+        }
+
+        copy_of_globals = VTABLE_get_integer(interp, exp->globals);
+        return;
+        /* TODO for each global, look up in source and alias to dest */
+    }
+
+
+}
+
+/*
+
+=back
+
+=head1 SEE ALSO
+
+F<docs/pdds/pdd17_basic_types.pod>, F<docs/pdds/pdd21_namespaces.pod>.
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
