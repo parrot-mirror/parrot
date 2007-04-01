@@ -22,6 +22,7 @@ BEGIN {
 use Test::More qw(no_plan); # tests => 10;
 use Carp;
 use Data::Dumper;
+$Data::Dumper::Indent=1;
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
@@ -36,8 +37,11 @@ like($parrot_version, qr/\d+\.\d+\.\d+/,
 $| = 1;
 is($|, 1, "output autoflush is set");
 
+my $CC = "/usr/bin/gcc-3.3";
+my $localargv = [ qq{--cc=$CC} ];
 my $args = process_options( {
-    argv            => [ ],
+#    argv            => [ ],
+    argv            => $localargv,
     script          => $0,
     parrot_version  => $parrot_version,
     svnid           => '$Id$',
@@ -67,7 +71,6 @@ foreach my $k (qw| options data |) {
 }
 
 $conf->add_steps(get_steps_list());
-# print STDERR Dumper $conf;
 my @confsteps = @{$conf->steps};
 isnt(scalar @confsteps, 0,
     "Parrot::Configure object 'steps' key holds non-empty array reference");
@@ -77,7 +80,11 @@ foreach my $k (@confsteps) {
 }
 is($nontaskcount, 0, "Each step is a Parrot::Configure::Task object");
 
-
+# print STDERR Dumper ($conf->data, $conf->options);
+$conf->options->set(%args);
+# print STDERR Dumper ($conf->data, $conf->options);
+is($conf->options->{c}->{cc}, $CC, "command-line option being stored in object");
+is($conf->options->{c}->{debugging}, 1, "command-line option being stored in object");
 
 
 pass("Completed all tests in $0");
@@ -86,7 +93,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-04-configure.t - test Parrot::Configure::Step::List
+04-configure.t - test Parrot::Configure
 
 =head1 SYNOPSIS
 
@@ -97,7 +104,7 @@ pass("Completed all tests in $0");
 The files in this directory test functionality used by F<Configure.pl>.
 
 The tests in this file test subroutines exported by
-Parrot::Configure::Step::List.
+Parrot::Configure.
 
 =head1 AUTHOR
 
@@ -105,6 +112,6 @@ James E Keenan
 
 =head1 SEE ALSO
 
-Parrot::Configure::Step::List, F<Configure.pl>.
+Parrot::Configure, F<Configure.pl>.
 
 =cut
