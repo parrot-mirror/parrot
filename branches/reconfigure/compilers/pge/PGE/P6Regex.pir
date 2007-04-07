@@ -160,9 +160,6 @@ needed for compiling regexes.
 .sub '__onload' :load
     .local pmc optable
 
-    $P0 = subclass 'PGE::Exp::Subrule', 'PGE::Exp::WS'
-    $P0 = subclass 'PGE::Exp', 'PGE::Exp::Alias'
-
     optable = new 'PGE::OPTable'
     set_global '$optable', optable
 

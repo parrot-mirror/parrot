@@ -37,46 +37,57 @@ See "Lua 5.1 Reference Manual", section 5.8 "Operating System Facilities".
     _register($P1, _os)
 
     .const .Sub _os_clock = '_os_clock'
+    _os_clock.'setfenv'(_lua__GLOBAL)
     set $P1, 'clock'
     _os[$P1] = _os_clock
 
     .const .Sub _os_date = '_os_date'
+    _os_date.'setfenv'(_lua__GLOBAL)
     set $P1, 'date'
     _os[$P1] = _os_date
 
     .const .Sub _os_difftime = '_os_difftime'
+    _os_difftime.'setfenv'(_lua__GLOBAL)
     set $P1, 'difftime'
     _os[$P1] = _os_difftime
 
     .const .Sub _os_execute = '_os_execute'
+    _os_execute.'setfenv'(_lua__GLOBAL)
     set $P1, 'execute'
     _os[$P1] = _os_execute
 
     .const .Sub _os_exit = '_os_exit'
+    _os_exit.'setfenv'(_lua__GLOBAL)
     set $P1, 'exit'
     _os[$P1] = _os_exit
 
     .const .Sub _os_getenv = '_os_getenv'
+    _os_getenv.'setfenv'(_lua__GLOBAL)
     set $P1, 'getenv'
     _os[$P1] = _os_getenv
 
     .const .Sub _os_remove = '_os_remove'
+    _os_remove.'setfenv'(_lua__GLOBAL)
     set $P1, 'remove'
     _os[$P1] = _os_remove
 
     .const .Sub _os_rename = '_os_rename'
+    _os_rename.'setfenv'(_lua__GLOBAL)
     set $P1, 'rename'
     _os[$P1] = _os_rename
 
     .const .Sub _os_setlocale = '_os_setlocale'
+    _os_setlocale.'setfenv'(_lua__GLOBAL)
     set $P1, 'setlocale'
     _os[$P1] = _os_setlocale
 
     .const .Sub _os_time = '_os_time'
+    _os_time.'setfenv'(_lua__GLOBAL)
     set $P1, 'time'
     _os[$P1] = _os_time
 
     .const .Sub _os_tmpname = '_os_tmpname'
+    _os_tmpname.'setfenv'(_lua__GLOBAL)
     set $P1, 'tmpname'
     _os[$P1] = _os_tmpname
 
@@ -128,12 +139,12 @@ representation that depends on the host system and on the current locale
 
 .sub '_os_date' :anon
     .param pmc format :optional
-    .param pmc time :optional
+    .param pmc time_ :optional
     .local pmc ret
     .local int t
     $S1 = optstring(format, '%c')
     $I0 = time
-    t = optint(time, $I0)
+    t = optint(time_, $I0)
     $S0 = substr $S1, 0, 1
     unless $S0 == '!' goto L1
     $P0 = decodetime t

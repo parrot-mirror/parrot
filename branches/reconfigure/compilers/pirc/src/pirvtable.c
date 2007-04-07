@@ -15,7 +15,6 @@ implement all vtable methods for correct behaviour.
 
 */
 #include "pirvtable.h"
-#include "pirparser.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
@@ -39,7 +38,7 @@ many args a method has.
 
 */
 static void
-not_implemented(struct parser_state *p, ...) {
+not_implemented(struct emit_data *data, ...) {
     /* do nothing */
 }
 
@@ -70,24 +69,60 @@ new_pirvtable(void) {
     /* set all entries to 'default' by default. This way, another output module
      * only needs to override the entries that are interesting for that module.
      */
-    vtable->initialize   = not_implemented;
-    vtable->name         = not_implemented;
-    vtable->sub_start    = not_implemented;
-    vtable->sub_end      = not_implemented;
-    vtable->stmts_start  = not_implemented;
-    vtable->stmts_end    = not_implemented;
-    vtable->end          = not_implemented;
-    vtable->param_start  = not_implemented;
-    vtable->param_end    = not_implemented;
-    vtable->type         = not_implemented;
-    vtable->sub_flag     = not_implemented;
-    vtable->sub_flag_arg = not_implemented;
-    vtable->expression   = not_implemented;
-    vtable->next_expr    = not_implemented;
-    vtable->op_start     = not_implemented;
-    vtable->op_end       = not_implemented;
+    vtable->initialize       = not_implemented;
+    vtable->destroy          = not_implemented; /* destructor; highly recommended to implement! */
+    vtable->name             = not_implemented;
+    vtable->sub_start        = not_implemented;
+    vtable->sub_end          = not_implemented;
+    vtable->stmts_start      = not_implemented;
+    vtable->stmts_end        = not_implemented;
+    vtable->end              = not_implemented;
+    vtable->param_start      = not_implemented;
+    vtable->param_end        = not_implemented;
+    vtable->type             = not_implemented;
+    vtable->sub_flag         = not_implemented;
+    vtable->expression       = not_implemented;
+    vtable->next_expr        = not_implemented;
+    vtable->op_start         = not_implemented;
+    vtable->op_end           = not_implemented;
+    vtable->list_start       = not_implemented;
+    vtable->list_end         = not_implemented;
+    vtable->sub_flag_start   = not_implemented;
+    vtable->sub_flag_end     = not_implemented;
+    vtable->method_name      = not_implemented;
+    vtable->invocant         = not_implemented;
+    vtable->args_start       = not_implemented;
+    vtable->args_end         = not_implemented;
+    vtable->target           = not_implemented;
+    vtable->invokable        = not_implemented;
+    vtable->invocation_start = not_implemented;
+    vtable->invocation_end   = not_implemented;
+
+    /* set data to NULL, it's initialized in the backend module */
+    vtable->data           = NULL;
 
     return vtable;
+}
+
+/*
+
+=item destroy_pirvtable()
+
+Destructor for the pirvtable. It first calls the custome destructor
+of the emit_data structure, which is private to each of the back-ends
+(so we don't know what memory is allocated for that, only the back-ends
+know).
+
+=cut
+
+*/
+void
+destroy_pirvtable(pirvtable *vtable) {
+    /* call custom destructor of the backend */
+    (*vtable->destroy)(vtable->data);
+    /* free the vtable memory */
+    free(vtable);
+    vtable = NULL;
 }
 
 /*
@@ -97,6 +132,7 @@ new_pirvtable(void) {
 =cut
 
 */
+
 
 
 /*

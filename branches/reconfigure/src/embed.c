@@ -433,7 +433,7 @@ void
 Parrot_loadbc(Interp *interp, struct PackFile *pf)
 {
     if (pf == NULL) {
-        PIO_eprintf(interp, "Invalid packfile\n" );
+        PIO_eprintf(interp, "Invalid packfile\n");
         return;
     }
     interp->initial_pf = pf;
@@ -629,8 +629,7 @@ print_profile(Interp *interp, int status, void *p)
                         op_name(interp, k),
                         n,
                         t,
-                        (FLOATVAL)(t * 1000.0 / (FLOATVAL)n)
-                        );
+                        (FLOATVAL)(t * 1000.0 / (FLOATVAL)n));
             }
         }
 
@@ -639,8 +638,7 @@ print_profile(Interp *interp, int status, void *p)
                 "-",
                 call_count,
                 sum_time,
-                (FLOATVAL)(sum_time * 1000.0 / (FLOATVAL)call_count)
-                );
+                (FLOATVAL)(sum_time * 1000.0 / (FLOATVAL)call_count));
     }
 }
 
@@ -863,6 +861,10 @@ Parrot_disassemble(Interp *interp)
     PDB_t *pdb;
     PDB_line_t *line;
     char *c;
+    int op_code_seq_num = 0;
+    int debugs;
+    int num_mappings;
+    int curr_mapping = 0;
 
     pdb = (PDB_t *)mem_sys_allocate_zeroed(sizeof (PDB_t));
 
@@ -872,7 +874,36 @@ Parrot_disassemble(Interp *interp)
     PDB_disassemble(interp, NULL);
     line = pdb->file->line;
 
+    debugs = (interp->code->debugs != NULL);
+
+    PIO_printf(interp, "%12s-%12s", "Seq_Op_Num", "Relative-PC");
+    if ( debugs ) {
+        PIO_printf(interp, " %6s:\n","SrcLn#");
+        num_mappings = interp->code->debugs->num_mappings;
+    }
+    else {
+        PIO_printf(interp, "\n");
+    }
     while (line->next) {
+        /* PIO_printf(interp, "%i < %i %i == %i \n", curr_mapping, num_mappings, op_code_seq_num, interp->code->debugs->mappings[curr_mapping]->offset); */
+        if (debugs && curr_mapping < num_mappings)
+        {
+            if ( op_code_seq_num == interp->code->debugs->mappings[curr_mapping]->offset)
+            {
+                int filename_const_offset = interp->code->debugs->mappings[curr_mapping]->u.filename;
+                PIO_printf(interp, "Current Source Filename %Ss\n", interp->code->const_table->constants[filename_const_offset]->u.string);
+                curr_mapping++;
+            }
+        }
+
+        PIO_printf(interp, "%012i-%012i", op_code_seq_num, line->opcode - interp->code->base.data);
+        if ( debugs ) {
+            PIO_printf(interp, " %06i: \t",interp->code->debugs->base.data[op_code_seq_num]);
+        }
+        else {
+            PIO_printf(interp, "\t");
+        }
+
         /* If it has a label print it */
         if (line->label)
             PIO_printf(interp, "L%li:\t", line->label->number);
@@ -881,6 +912,7 @@ Parrot_disassemble(Interp *interp)
             PIO_printf(interp, "%c", *(c++));
         PIO_printf(interp, "\n");
         line = line->next;
+        op_code_seq_num++;
     }
     return;
 }

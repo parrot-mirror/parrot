@@ -81,7 +81,7 @@ complex_parse_string(Interp* interp,
         /* end of string; we only have a real part */
         second_num_length = 0;
     }
-    else if ( (*t == 'i' || *t == 'j') && *(t+1) == 0 ) {
+    else if ((*t == 'i' || *t == 'j') && *(t+1) == 0) {
         /* there is only an imaginary part, so the first number was
             actually the imaginary part */
         second_num_length = first_num_length;
@@ -115,7 +115,7 @@ complex_parse_string(Interp* interp,
             if (*t == ' ') t++; /* allow for one more optional space */
 
             /* verify that the string ends properly */
-            if ( (*t != 'i' && *t != 'j') || (*(t+1) != 0) ) {
+            if ((*t != 'i' && *t != 'j') || (*(t+1) != 0)) {
                 /* imaginary part does not end in 'i' or 'j' */
                 real_exception(interp, NULL, E_ValueError,
                     "Complex: malformed string");
@@ -1042,8 +1042,7 @@ Compares the complex number with C<value> and returns true if they are equal.
 MMD_Complex: {
             return (INTVAL)(
                     RE(SELF) == RE(value) &&
-                    IM(SELF) == IM(value)
-                );
+                    IM(SELF) == IM(value));
         }
 MMD_DEFAULT: {
             if (IM(SELF) != 0.0)
@@ -1230,8 +1229,8 @@ Returns C<FUNC>(SELF).
     METHOD PMC* tan() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
-        d = Parrot_Complex_sin(INTERP, SELF);
-        e = Parrot_Complex_cos(INTERP, SELF);
+        d = Parrot_Complex_nci_sin(INTERP, SELF);
+        e = Parrot_Complex_nci_cos(INTERP, SELF);
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
         return d;
     }
@@ -1239,8 +1238,8 @@ Returns C<FUNC>(SELF).
     METHOD PMC* cot() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
-        d = Parrot_Complex_cos(INTERP, SELF);
-        e = Parrot_Complex_sin(INTERP, SELF);
+        d = Parrot_Complex_nci_cos(INTERP, SELF);
+        e = Parrot_Complex_nci_sin(INTERP, SELF);
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
         return d;
     }
@@ -1250,7 +1249,7 @@ Returns C<FUNC>(SELF).
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
         RE(d) = 1.0;
         IM(d) = 0.0;
-        e = Parrot_Complex_cos(INTERP, SELF);
+        e = Parrot_Complex_nci_cos(INTERP, SELF);
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
         return d;
     }
@@ -1260,7 +1259,7 @@ Returns C<FUNC>(SELF).
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
         RE(d) = 1.0;
         IM(d) = 0.0;
-        e = Parrot_Complex_sin(INTERP, SELF);
+        e = Parrot_Complex_nci_sin(INTERP, SELF);
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
         return d;
     }
@@ -1304,10 +1303,10 @@ Returns the inverse function of SELF.
         e = Parrot_Complex_multiply_Complex(INTERP, SELF, SELF, e);
         RE(e) = 1.0 - RE(e);
         IM(e) = -IM(e);
-        d = Parrot_Complex_sqrt(INTERP, e);
+        d = Parrot_Complex_nci_sqrt(INTERP, e);
         RE(d) -= IM(SELF);
         IM(d) += RE(SELF);
-        d = Parrot_Complex_ln(INTERP, d);
+        d = Parrot_Complex_nci_ln(INTERP, d);
         RE(e) = IM(d);
         IM(e) = -RE(d);
         return e;
@@ -1319,10 +1318,10 @@ Returns the inverse function of SELF.
         e = Parrot_Complex_multiply_Complex(INTERP, SELF, SELF, e);
         RE(e) = 1.0 - RE(e);
         IM(e) = -IM(e);
-        d = Parrot_Complex_sqrt(INTERP, e);
+        d = Parrot_Complex_nci_sqrt(INTERP, e);
         RE(d) += IM(SELF);
         IM(d) -= RE(SELF);
-        e = Parrot_Complex_ln(INTERP, d);
+        e = Parrot_Complex_nci_ln(INTERP, d);
         RE(d) = IM(e) + 2.0 * atan(1);
         IM(d) = -RE(e);
         return d;
@@ -1339,7 +1338,7 @@ Returns the inverse function of SELF.
         RE(e) = -re;
         IM(e) = 1 - im;
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
-        d = Parrot_Complex_ln(INTERP, d);
+        d = Parrot_Complex_nci_ln(INTERP, d);
         RE(e) = IM(d) / -2.0;
         IM(e) = RE(d) / 2.0;
         return e;
@@ -1354,7 +1353,7 @@ Returns the inverse function of SELF.
         b = IM(SELF);
         RE(d) = a/(a*a + b*b);
         IM(d) = -b/(a*a + b*b);
-        d = Parrot_Complex_atan(INTERP, d);
+        d = Parrot_Complex_nci_atan(INTERP, d);
         return d;
     }
 
@@ -1365,7 +1364,7 @@ Returns the inverse function of SELF.
         b = IM(SELF);
         RE(d) = a/(a*a + b*b);
         IM(d) = -b/(a*a + b*b);
-        d = Parrot_Complex_asin(INTERP, d);
+        d = Parrot_Complex_nci_asin(INTERP, d);
         return d;
     }
 
@@ -1376,7 +1375,7 @@ Returns the inverse function of SELF.
         b = IM(SELF);
         RE(d) = a/(a*a + b*b);
         IM(d) = -b/(a*a + b*b);
-        d = Parrot_Complex_acos(INTERP, d);
+        d = Parrot_Complex_nci_acos(INTERP, d);
         return d;
     }
 
@@ -1423,8 +1422,8 @@ tanh(z) = sinh(z) / cosh(z)
     METHOD PMC* tanh() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
-        d = Parrot_Complex_sinh(INTERP, SELF);
-        e = Parrot_Complex_cosh(INTERP, SELF);
+        d = Parrot_Complex_nci_sinh(INTERP, SELF);
+        e = Parrot_Complex_nci_cosh(INTERP, SELF);
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
         return d;
     }
@@ -1432,7 +1431,7 @@ tanh(z) = sinh(z) / cosh(z)
     METHOD PMC* coth() {
         FLOATVAL a, b;
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
-        d = Parrot_Complex_tanh(INTERP, SELF);
+        d = Parrot_Complex_nci_tanh(INTERP, SELF);
         a = RE(d);
         b = IM(d);
         RE(d) = a/(a*a + b*b);
@@ -1443,7 +1442,7 @@ tanh(z) = sinh(z) / cosh(z)
     METHOD PMC* csch() {
         FLOATVAL a, b;
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
-        d = Parrot_Complex_sinh(INTERP, SELF);
+        d = Parrot_Complex_nci_sinh(INTERP, SELF);
         a = RE(d);
         b = IM(d);
         RE(d) = a/(a*a + b*b);
@@ -1454,7 +1453,7 @@ tanh(z) = sinh(z) / cosh(z)
     METHOD PMC* sech() {
         FLOATVAL a, b;
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
-        d = Parrot_Complex_cosh(INTERP, SELF);
+        d = Parrot_Complex_nci_cosh(INTERP, SELF);
         a = RE(d);
         b = IM(d);
         RE(d) = a/(a*a + b*b);
@@ -1495,7 +1494,7 @@ atanh = i atan(-ix)
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
         RE(d) = IM(SELF);
         IM(d) = -RE(SELF);
-        d = Parrot_Complex_asin(INTERP, d);
+        d = Parrot_Complex_nci_asin(INTERP, d);
         RE(e) = -IM(d);
         IM(e) = RE(d);
         return e;
@@ -1504,7 +1503,7 @@ atanh = i atan(-ix)
     METHOD PMC* acosh() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
-        d = Parrot_Complex_acos(INTERP, SELF);
+        d = Parrot_Complex_nci_acos(INTERP, SELF);
         RE(e) = -IM(d);
         IM(e) = RE(d);
         return e;
@@ -1515,7 +1514,7 @@ atanh = i atan(-ix)
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
         RE(d) = IM(SELF);
         IM(d) = -RE(SELF);
-        d = Parrot_Complex_atan(INTERP, d);
+        d = Parrot_Complex_nci_atan(INTERP, d);
         RE(e) = -IM(d);
         IM(e) = RE(d);
         return e;
@@ -1529,7 +1528,7 @@ atanh = i atan(-ix)
         b = IM(SELF);
         RE(d) = a/(a*a + b*b);
         IM(d) = -b/(a*a + b*b);
-        d = Parrot_Complex_atanh(INTERP, d);
+        d = Parrot_Complex_nci_atanh(INTERP, d);
         return d;
     }
 
@@ -1540,7 +1539,7 @@ atanh = i atan(-ix)
         b = IM(SELF);
         RE(d) = a/(a*a + b*b);
         IM(d) = -b/(a*a + b*b);
-        d = Parrot_Complex_asinh(INTERP, d);
+        d = Parrot_Complex_nci_asinh(INTERP, d);
         return d;
     }
 
@@ -1551,7 +1550,7 @@ atanh = i atan(-ix)
         b = IM(SELF);
         RE(d) = a/(a*a + b*b);
         IM(d) = -b/(a*a + b*b);
-        d = Parrot_Complex_acosh(INTERP, d);
+        d = Parrot_Complex_nci_acosh(INTERP, d);
         return d;
     }
 
@@ -1582,8 +1581,8 @@ MMD_Complex: {
                  else
                      dest = pmc_new(INTERP, SELF->vtable->base_type);
                  l = Parrot_Complex_multiply_Complex(INTERP,
-                         Parrot_Complex_ln(INTERP, SELF), value, l);
-                 dest = Parrot_Complex_exp(INTERP, l);
+                         Parrot_Complex_nci_ln(INTERP, SELF), value, l);
+                 dest = Parrot_Complex_nci_exp(INTERP, l);
                  return dest;
              }
 MMD_DEFAULT: {
@@ -1593,8 +1592,8 @@ MMD_DEFAULT: {
                  else
                      dest = pmc_new(INTERP, SELF->vtable->base_type);
                  l = Parrot_Complex_multiply(INTERP,
-                         Parrot_Complex_ln(INTERP, SELF), value, l);
-                 dest = Parrot_Complex_exp(INTERP, l);
+                         Parrot_Complex_nci_ln(INTERP, SELF), value, l);
+                 dest = Parrot_Complex_nci_exp(INTERP, l);
                  return dest;
              }
     }
@@ -1602,10 +1601,10 @@ MMD_DEFAULT: {
     /* sqrt(x) = exp(ln(x)/2) */
     METHOD PMC* sqrt() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
-        d = Parrot_Complex_ln(INTERP, SELF);
+        d = Parrot_Complex_nci_ln(INTERP, SELF);
         RE(d) *= 0.5;
         IM(d) *= 0.5;
-        d = Parrot_Complex_exp(INTERP, d);
+        d = Parrot_Complex_nci_exp(INTERP, d);
         return d;
     }
 

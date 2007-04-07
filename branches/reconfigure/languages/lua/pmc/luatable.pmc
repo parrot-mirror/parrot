@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2006, The Perl Foundation.
+Copyright (C) 2005-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -25,7 +25,6 @@ Now, Lua 5.0 uses a hybrid data structure with a Hash part and an Array part.
 #include "parrot/parrot.h"
 
 static STRING *luatable_name;
-extern STRING *lua_metatable;
 extern INTVAL dynpmc_LuaBoolean;
 extern INTVAL dynpmc_LuaClosure;
 extern INTVAL dynpmc_LuaFunction;
@@ -71,8 +70,7 @@ static PMC* _get(Interp* interp, PMC *obj, PMC* key)
     STRING* keystr = _make_key(interp, key);
     PMC* pair = parrot_hash_get(interp, hash, keystr);
     if (pair != NULL) {
-        PMC* value = PMC_pmc_val(pair);
-        return VTABLE_clone(interp, value);
+        return PMC_pmc_val(pair);
     }
     else {
         return NULL;
@@ -91,6 +89,7 @@ pmclass LuaTable
     extends LuaAny
     does hash
     dynpmc
+    need_ext
     group lua_group
     hll Lua {
 
@@ -113,6 +112,7 @@ Initializes the instance.
 */
     void init () {
         PMC_struct_val(SELF) = NULL;
+        PMC_metadata(SELF) = NULL;
         PObj_custom_mark_destroy_SETALL(SELF);
         parrot_new_pmc_hash(INTERP, SELF);
     }
@@ -413,8 +413,8 @@ MMD_DEFAULT: {
 
 */
     METHOD PMC* get_metatable() {
-        PMC* retval = VTABLE_getprop(INTERP, SELF, lua_metatable);
-        if (retval != NULL && retval->vtable->base_type == dynpmc_LuaTable)
+        PMC* retval = PMC_metadata(SELF);
+        if (retval != NULL)
             return retval;
         else
             return pmc_new(INTERP, dynpmc_LuaNil);
@@ -482,9 +482,9 @@ MMD_DEFAULT: {
             PMC *retval, *key, *value;
             retval = pmc_new(INTERP, enum_class_Array);
             VTABLE_set_integer_native(INTERP, retval, 2);
-            key = VTABLE_clone(INTERP, (PMC*)(PMC_struct_val(pair)));
+            key = (PMC*)(PMC_struct_val(pair));
             VTABLE_set_pmc_keyed_int(INTERP, retval, 0, key);
-            value = VTABLE_clone(INTERP, PMC_pmc_val(pair));
+            value = PMC_pmc_val(pair);
             VTABLE_set_pmc_keyed_int(INTERP, retval, 1, value);
             return retval;
         }
@@ -542,10 +542,10 @@ MMD_DEFAULT: {
 */
     METHOD void set_metatable(PMC *meta) {
         if (dynpmc_LuaNil == meta->vtable->base_type) {
-            VTABLE_delprop(INTERP, SELF, lua_metatable);
+            PMC_metadata(SELF) = NULL;
         }
         else {
-            VTABLE_setprop(INTERP, SELF, lua_metatable, meta);
+            PMC_metadata(SELF) = meta;
         }
     }
 

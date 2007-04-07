@@ -421,7 +421,7 @@ Parrot_single_subclass(Interp *interp, PMC *base_class,
         STRING *child_class_name = Parrot_sprintf_c(interp,
                 "%c%canon_%d", 0, 0, ++anon_count);
         name = pmc_new(interp, enum_class_String);
-        VTABLE_set_string_native(interp, name, child_class_name );
+        VTABLE_set_string_native(interp, name, child_class_name);
     }
     /*
      * ParrotClass is the baseclass anyway, so build just a new class
@@ -746,7 +746,7 @@ get_init_meth(Interp *interp, PMC *class,
         return NULL;
     meth = VTABLE_get_string(interp, prop);
 #else
-    if ( !(props = PMC_metadata(class)))
+    if (!(props = PMC_metadata(class)))
         return NULL;
     b = parrot_hash_get_bucket(interp,
                 (Hash*) PMC_struct_val(props), prop_str);
@@ -1233,7 +1233,7 @@ invalidate_type_caches(Interp *interp, UINTVAL type)
         return;
     for (i = 0; i < TBL_SIZE; ++i) {
         Meth_cache_entry *e;
-        for (e = mc->idx[type][i]; e; ) {
+        for (e = mc->idx[type][i]; e;) {
             Meth_cache_entry * const next = e->next;
             mem_sys_free(e);
             e = next;
@@ -1312,7 +1312,7 @@ Parrot_find_method_with_cache(Interp *interp, PMC *class,
     }
     mc = interp->caches;
     type = class->vtable->base_type;
-    bits = (((UINTVAL) method_name->strstart ) >> 2) & TBL_SIZE_MASK;
+    bits = (((UINTVAL) method_name->strstart) >> 2) & TBL_SIZE_MASK;
     if (type >= mc->mc_size) {
         if (mc->idx) {
             mc->idx = mem_sys_realloc(mc->idx, sizeof (UINTVAL*) * (type + 1));
@@ -1848,7 +1848,7 @@ PMC* Parrot_ComputeMRO_C3(Interp *interp, PMC *class)
 /*
 
 =item C<void Parrot_ComposeRole(Interp *interp, PMC *role,
-                        PMC *without, int got_without,
+                        PMC *exclude, int got_exclude,
                         PMC *alias, int got_alias,
                         PMC *methods_hash, PMC *roles_list)>
 
@@ -1868,7 +1868,7 @@ the default implementation.
 */
 
 void Parrot_ComposeRole(Interp *interp, PMC *role,
-                        PMC *without, int got_without,
+                        PMC *exclude, int got_exclude,
                         PMC *alias, int got_alias,
                         PMC *methods_hash, PMC *roles_list)
 {
@@ -1898,68 +1898,79 @@ void Parrot_ComposeRole(Interp *interp, PMC *role,
     methods_iter = VTABLE_get_iter(interp, methods);
     while (VTABLE_get_bool(interp, methods_iter)) {
         /* Get current method and its name. */
-        PMC *method_name_pmc = VTABLE_shift_pmc(interp, methods_iter);
-        STRING *method_name = VTABLE_get_string(interp, method_name_pmc);
-        PMC *cur_method = VTABLE_get_pmc_keyed(interp, methods, method_name_pmc);
+        STRING *method_name = VTABLE_shift_string(interp, methods_iter);
+        PMC *cur_method = VTABLE_get_pmc_keyed_str(interp, methods, method_name);
 
         /* Need to find the name we'll check for a conflict on. */
-        STRING *check_name = method_name;
+        int excluded = 0;
 
-        /* Ignore if it's in the exclude list. */
-        if (got_without) {
-            int without_count = VTABLE_elements(interp, without);
-            for (i = 0; i < without_count; i++) {
-                STRING *check = VTABLE_get_string_keyed_int(interp, without, i);
+        /* Check if it's in the exclude list. */
+        if (got_exclude) {
+            int exclude_count = VTABLE_elements(interp, exclude);
+            for (i = 0; i < exclude_count; i++) {
+                STRING *check = VTABLE_get_string_keyed_int(interp, exclude, i);
                 if (string_equal(interp, check, method_name) == 0) {
-                    check_name = NULL;
+                    excluded = 1;
                     break;
                 }
             }
         }
 
-        /* If we're not in the exclude list, now see if we've an alias. */
-        if (check_name != NULL && got_alias) {
-            if (VTABLE_exists_keyed_str(interp, alias, method_name))
-                check_name = VTABLE_get_string_keyed_str(interp, alias, method_name);
-        }
-
         /* If we weren't excluded... */
-        if (check_name != NULL) {
+        if (!excluded) {
             /* Is there a method with this name already in the class?
              * XXX TODO: multi-method handling. */
-            if (VTABLE_exists_keyed_str(interp, methods_hash, check_name)) {
+            if (VTABLE_exists_keyed_str(interp, methods_hash, method_name)) {
                 /* Conflicts with something already in the class. */
-                if (check_name == method_name)
-                    real_exception(interp, NULL, ROLE_COMPOSITOIN_METH_CONFLICT,
-                        "A conflict occurred during role composition due to method '%S'.",
-                        method_name);
-                else
-                    real_exception(interp, NULL, ROLE_COMPOSITOIN_METH_CONFLICT,
-                        "A conflict occurred during role composition"
-                        " due to the aliasing of '%S' to '%S'.",
-                        method_name, check_name);
+                real_exception(interp, NULL, ROLE_COMPOSITOIN_METH_CONFLICT,
+                    "A conflict occurred during role composition due to method '%S'.",
+                    method_name);
                 return;
             }
 
             /* What about a conflict with ourslef? */
-            if (VTABLE_exists_keyed_str(interp, proposed_add_methods, check_name)) {
-                /* If it's due to aliasing, say so. Otherwise, something
-                 * very weird is going on. */
-                if (check_name != method_name)
-                    real_exception(interp, NULL, ROLE_COMPOSITOIN_METH_CONFLICT,
-                        "A conflict occurred during role composition;"
-                        " '%S' was aliased to '%S', but the role already has a '%S'.",
-                        method_name, check_name, check_name);
-                else
-                    real_exception(interp, NULL, ROLE_COMPOSITOIN_METH_CONFLICT,
-                        "A conflict occurred during role composition;"
-                        " the method '%S' from the role managed to conflict with itself somehow.",
-                        method_name);
+            if (VTABLE_exists_keyed_str(interp, proposed_add_methods, method_name)) {
+                /* Something very weird is going on. */
+                real_exception(interp, NULL, ROLE_COMPOSITOIN_METH_CONFLICT,
+                    "A conflict occurred during role composition;"
+                    " the method '%S' from the role managed to conflict with itself somehow.",
+                    method_name);
                 return;
             }
 
-            /* If we got here, no conflicts! Add it to the "to compose" list. */
-            VTABLE_set_pmc_keyed_str(interp, proposed_add_methods, check_name, cur_method);
+            /* If we got here, no conflicts! Add method to the "to compose" list. */
+            VTABLE_set_pmc_keyed_str(interp, proposed_add_methods, method_name, cur_method);
+        }
+
+        /* Now see if we've got an alias. */
+        if (got_alias && VTABLE_exists_keyed_str(interp, alias, method_name)) {
+            /* Got one. Get name to alias it to. */
+            STRING *alias_name = VTABLE_get_string_keyed_str(interp, alias, method_name);
+
+            /* Is there a method with this name already in the class?
+             * XXX TODO: multi-method handling. */
+            if (VTABLE_exists_keyed_str(interp, methods_hash, alias_name)) {
+                /* Conflicts with something already in the class. */
+                real_exception(interp, NULL, ROLE_COMPOSITOIN_METH_CONFLICT,
+                    "A conflict occurred during role composition"
+                    " due to the aliasing of '%S' to '%S'.",
+                    method_name, alias_name);
+                return;
+            }
+
+            /* What about a conflict with ourslef? */
+            if (VTABLE_exists_keyed_str(interp, proposed_add_methods, alias_name)) {
+                real_exception(interp, NULL, ROLE_COMPOSITOIN_METH_CONFLICT,
+                    "A conflict occurred during role composition"
+                    " due to the aliasing of '%S' to '%S' (role already has"
+                    " a method '%S').",
+                    method_name, alias_name, alias_name);
+                return;
+            }
+
+            /* If we got here, no conflicts! Add method to the "to compose"
+             * list with its alias. */
+            VTABLE_set_pmc_keyed_str(interp, proposed_add_methods, alias_name, cur_method);
         }
     }
 
@@ -1967,10 +1978,9 @@ void Parrot_ComposeRole(Interp *interp, PMC *role,
     methods_iter = VTABLE_get_iter(interp, proposed_add_methods);
     while (VTABLE_get_bool(interp, methods_iter)) {
         /* Get current method and its name. */
-        PMC *method_name_pmc = VTABLE_shift_pmc(interp, methods_iter);
-        STRING *method_name = VTABLE_get_string(interp, method_name_pmc);
-        PMC *cur_method = VTABLE_get_pmc_keyed(interp, proposed_add_methods,
-            method_name_pmc);
+        STRING *method_name = VTABLE_shift_string(interp, methods_iter);
+        PMC *cur_method = VTABLE_get_pmc_keyed_str(interp, proposed_add_methods,
+            method_name);
 
         /* Add it to the methods of the class. */
         VTABLE_set_pmc_keyed_str(interp, methods_hash, method_name,

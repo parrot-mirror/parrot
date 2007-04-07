@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2006, The Perl Foundation.
+Copyright (C) 2005-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -27,6 +27,7 @@ See also: F<languages/lua/pmc/luaclosure.pmc>
 
 static STRING *luafunction_name;
 extern INTVAL dynpmc_LuaBoolean;
+extern INTVAL dynpmc_LuaNil;
 
 
 pmclass LuaFunction
@@ -35,6 +36,7 @@ pmclass LuaFunction
     does scalar
     does sub
     dynpmc
+    need_ext
     group lua_group
     hll Lua
     maps Sub {
@@ -58,6 +60,19 @@ Return the string "function".
 */
     STRING* name () {
         return luafunction_name;
+    }
+
+/*
+
+=item C<PMC *clone()>
+
+=cut
+
+*/
+    PMC* clone() {
+        PMC* ret = SUPER();
+        PMC_metadata(ret) = PMC_metadata(SELF);
+        return ret;
     }
 
 /*
@@ -96,6 +111,21 @@ MMD_DEFAULT: {
 
 =over 4
 
+=item C<PMC *getfenv()>
+
+=cut
+
+*/
+    METHOD PMC* getfenv() {
+        PMC *retval = PMC_metadata(SELF);
+        if (retval != NULL)
+            return retval;
+        else
+            return pmc_new(INTERP, dynpmc_LuaNil);
+    }
+
+/*
+
 =item C<PMC* rawequal (PMC* value)>
 
 =cut
@@ -112,6 +142,17 @@ MMD_DEFAULT: {
         else
             PMC_int_val(retval) = 0;
         return retval;
+    }
+
+/*
+
+=item C<void setfenv(PMC *env)>
+
+=cut
+
+*/
+    METHOD void setfenv(PMC *env) {
+        PMC_metadata(SELF) = env;
     }
 
 }
