@@ -14,10 +14,6 @@ Implement dictionary as hashtable, which will be MUCH faster
 
 =item *
 
-Remove limit of 128 characters for identifier length
-
-=item *
-
 Optimize small functions (using #define to inline) and optimize by 'smarter'
 implementation (where appropiate). I'm doing a lot of stuff in read_char(),
 which might slow down things.
@@ -54,7 +50,8 @@ Check for 'correct' use of data types (unsigned etc.)
 #define EOF_MARKER          -1
 /* number of characters being displayed in syntax errors */
 #define ERROR_CONTEXT_SIZE  30
-
+/* max. token length is 128 for now. */
+#define MAX_ID_LENGTH       128
 
 /*
 
@@ -103,6 +100,13 @@ The following are flags for parameters/arguments.
 
 
 =cut
+
+
+Note w.r.t. dictionary:
+
+Make sure that the spelling can /only/ be a single word if it is a keyword
+(or directive etc.). If it is a description, make sure the word cannot occurr
+as such, for instance, by using an embedded space.
 
 */
 static char const * dictionary[] = {
@@ -224,8 +228,7 @@ static char const * dictionary[] = {
     "label identifier",         /* T_LABEL,                 */
     "'\\n'",                    /* T_NEWLINE,               */
     "=",                        /* T_ASSIGN,                */
-    "\"string\"",               /* T_DOUBLE_QUOTED_STRING,  */
-    "'string'",                 /* T_SINGLE_QUOTED_STRING,  */
+    "string constant",          /* T_STRING_CONSTANT,       */
     "'literal'",                /* T_LITERAL,               */
     "invocant id",              /* T_INVOCANT_IDENT,        */
     "'error'",                  /* T_ERROR,                 */
@@ -842,6 +845,8 @@ read_macro(lexer_state *lexer) {
     return t; /* return either T_ENDM or T_EOF */
 }
 
+
+
 /*
 
 =item new_lexer()
@@ -859,8 +864,7 @@ new_lexer(char const * filename) {
         exit(1);
     }
 
-    /* max. token length is 128 for now. XXX this should be fixed later */
-    lexer->token_chars = (char *)calloc(128, sizeof(char));
+    lexer->token_chars = (char *)calloc(MAX_ID_LENGTH, sizeof(char));
     lexer->charptr = lexer->token_chars;
     lexer->curfile = NULL;
 
@@ -889,9 +893,12 @@ destroy_lexer(lexer_state *lexer) {
         file_buffer *tmp = buf; /* store current */
         buf = tmp->prevbuffer; /* get 'prevbuffer' */
         destroy_buffer(tmp);   /* destroy current */
+        tmp = NULL;
     }
     free(lexer->token_chars);
+    lexer->token_chars = NULL;
     free(lexer);
+    lexer = NULL;
 }
 
 
@@ -1555,7 +1562,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
             }
             while (c != '"');
 
-            return T_DOUBLE_QUOTED_STRING;
+            return T_STRING_CONSTANT;
         }
         else if (c == '\'') {
             buffer_char(lexer, c);
@@ -1572,7 +1579,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
             }
             while (c != '\'');
 
-            return T_SINGLE_QUOTED_STRING;
+            return T_STRING_CONSTANT;
         }
         else if (c == ':') { /* read flags */
             token tmp;

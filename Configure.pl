@@ -1,77 +1,7 @@
 #! perl
+
 # Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
-use 5.006_001;
-use strict;
-use warnings;
-use Data::Dumper;
-$Data::Dumper::Indent = 1;
-use lib 'lib';
-
-use Parrot::BuildUtil;
-use Parrot::Configure;
-use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Messages qw(
-    print_introduction
-    print_conclusion
-);
-use Parrot::Configure::Step::List qw( get_steps_list );
-
-my $parrot_version = Parrot::BuildUtil::parrot_version();
-
-$| = 1; # $OUTPUT_AUTOFLUSH = 1;
-
-# Install Option text was taken from:
-#
-# autoconf (GNU Autoconf) 2.59
-# Written by David J. MacKenzie and Akim Demaille.
-#
-# Copyright (C) 2003 Free Software Foundation, Inc.
-# This is free software; see the source for copying conditions.  There is NO
-# warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# Installation directories:
-
-# from Parrot::Configure::Options
-my $args = process_options( {
-    argv            => [ @ARGV ],
-    script          => $0,
-    parrot_version  => $parrot_version,
-    svnid           => '$Id$',
-} );
-exit unless defined $args;
-
-my %args = %$args;
-
-# from Parrot::Configure::Messages
-print_introduction($parrot_version);
-
-my $conf = Parrot::Configure->new;
-
-# from Parrot::Configure::Step::List
-$conf->add_steps(get_steps_list());
-
-# from Parrot::Configure::Data
-$conf->options->set(%args);
-
-if ( exists $args{step} ) {
-    # from Parrot::Configure::Data
-    $conf->data()->slurp();
-    # from Parrot::Configure
-    $conf->runstep( $args{step} );
-    print "\n";
-}
-else {
-    # Run the actual steps
-    # from Parrot::Configure
-    $conf->runsteps or exit(1);
-    # tell users what to do next
-    # from Parrot::Configure::Messages
-    print_conclusion($conf->data->get('make'));
-}
-
-exit(0);
-
-################### DOCUMENTATION ###################
 
 =head1 NAME
 
@@ -323,6 +253,78 @@ F<config/init/data.pl>, F<lib/Parrot/Configure/RunSteps.pm>,
 F<lib/Parrot/Configure/Step.pm>, F<docs/configuration.pod>
 
 =cut
+
+use 5.006_001;
+use strict;
+use warnings;
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+use lib 'lib';
+
+use Parrot::BuildUtil;
+use Parrot::Configure;
+use Parrot::Configure::Options qw( process_options );
+use Parrot::Configure::Messages qw(
+    print_introduction
+    print_conclusion
+);
+use Parrot::Configure::Step::List qw( get_steps_list );
+
+my $parrot_version = Parrot::BuildUtil::parrot_version();
+
+$| = 1; # $OUTPUT_AUTOFLUSH = 1;
+
+# Install Option text was taken from:
+#
+# autoconf (GNU Autoconf) 2.59
+# Written by David J. MacKenzie and Akim Demaille.
+#
+# Copyright (C) 2003 Free Software Foundation, Inc.
+# This is free software; see the source for copying conditions.  There is NO
+# warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+# from Parrot::Configure::Options
+my $args = process_options( {
+    argv            => [ @ARGV ],
+    script          => $0,
+    parrot_version  => $parrot_version,
+    svnid           => '$Id$',
+} );
+exit unless defined $args;
+
+my %args = %$args;
+
+# from Parrot::Configure::Messages
+print_introduction($parrot_version);
+
+my $conf = Parrot::Configure->new;
+
+# from Parrot::Configure::Step::List
+$conf->add_steps(get_steps_list());
+
+# from Parrot::Configure::Data
+$conf->options->set(%args);
+
+if ( exists $args{step} ) {
+    # from Parrot::Configure::Data
+    $conf->data()->slurp();
+    # from Parrot::Configure
+    $conf->runstep( $args{step} );
+    print "\n";
+}
+else {
+    # Run the actual steps
+    # from Parrot::Configure
+    $conf->runsteps or exit(1);
+}
+
+# tell users what to do next
+# from Parrot::Configure::Messages
+print_conclusion($conf->data->get('make'));
+
+exit(0);
+
+################### DOCUMENTATION ###################
 
 
 # Local Variables:

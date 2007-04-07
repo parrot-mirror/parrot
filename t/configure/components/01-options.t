@@ -119,10 +119,10 @@ my $CC = "/usr/bin/gcc-3.3";
 my $CX = "/usr/bin/g++-3.3";
 $args = process_options( {
     argv            => [
-        q{--cc=$CC},
-        q{--cxx=$CX},
-        q{--link=$CX},
-        q{--ld=$CX},
+        qq{--cc=$CC},
+        qq{--cxx=$CX},
+        qq{--link=$CX},
+        qq{--ld=$CX},
         q{--without-icu},
         q{--without-gmp},
     ],

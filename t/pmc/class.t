@@ -100,20 +100,31 @@ pir_output_is( <<'CODE', <<'OUT', 'new' );
     print 'not '
   ok_1:
     say 'ok 1 - new() with no args returns an object'
-
+    
+    push_eh ok_2
     $P1 = $P0.'new'('abc' => '123' )
-    $I0 = isa $P1, 'Object'
-    if $I0 goto ok_2
+    clear_eh
     print 'not '
   ok_2:
-    say 'ok 2 - new() with args returns an object'
+    say 'ok 2 - new() with non-attribute key fails'
+
+    $P0 = new .Class
+    $P0.'add_attribute'('foo')
+    $P0.'add_attribute'('bar')
+    $P1 = $P0.'new'('foo' => 1, 'bar' => 2)
+    $P2 = getattribute $P1, 'foo'
+    say $P2
+    $P2 = getattribute $P1, 'bar'
+    say $P2
+    say 'ok 3 - new() with key/value pairs sets attributes'
 .end
 CODE
 ok 1 - new() with no args returns an object
-ok 2 - new() with args returns an object
+ok 2 - new() with non-attribute key fails
+1
+2
+ok 3 - new() with key/value pairs sets attributes
 OUT
-## test what's set in the object by .'new'() in t/pmc/object.t
-## XXX Second test here should probably fail if the class has no abc attribute
 
 # L<PDD15/Class PMC API/=item attributes>
 pir_output_is( <<'CODE', <<'OUT', 'attributes' );
@@ -146,7 +157,8 @@ ok 1 - attributes() returns a Hash
 ok 2 - New Class PMC has no attributes
 ok 3 - attributes() is read-only accessor
 OUT
-## Q: what attributes the base Class have by default?
+## Q: what attributes does the base Class have by default?
+## A: it has no attributes by default
 
 # L<PDD15/Class PMC API/=item add_attribute>
 pir_output_is( <<'CODE', <<'OUT', 'add_attribute');
@@ -192,6 +204,9 @@ ok 3 - add_attribute() with valid args adds an attribute
 ok 4 - add_attribute() with existing attribute name fails
 OUT
 ## Q: should adding an attribute with an invalid type name fail?
+## A: since type compatibility checks does, you could specify a type
+# that isn't registered as a class/role. So, no, I don't think it should try to
+# validate types.
 
 ## NOTE i think this belongs in the Object PMC tests
 # L<PDD15/Class PMC API>
@@ -239,6 +254,9 @@ ok 1 - parents() returns a ResizablePMCArray
 OUT
 ## NOTE test that accessor is read-only
 ## NOTE figure out what parents the base Class has by default (if any)
+## A: It has no parents by default. (Note, the parents stored in the 'parents'
+# attribute aren't the parents of Class, they're the parents of the class object
+# that is an instance of Class.)
 
 ## TODO add_parent
 
@@ -258,6 +276,7 @@ ok 1 - roles() returns a ResizablePMCArray
 OUT
 ## NOTE test that accessor is read-only
 ## NOTE figure out what roles the base Class has by default (if any)
+# A: None. See comment for parents().
 
 ## TODO add_role
 
