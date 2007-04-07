@@ -135,11 +135,12 @@ sub steps {
 
 =item * C<add_step()>
 
-Registers a new step and any parameters that should be passed to it.  With the
-first parameter being the class name of the step register.  All other
-parameters are saved and passed to the registered class's C<runstep()> method.
+Registers a new step and any parameters that should be passed to it.  The
+first parameter passed is the class name of the step being registered.  All
+other parameters are saved and passed to the registered class's C<runstep()>
+method.
 
-Accepts a list and returns a L<Parrot::Configure> object.
+Accepts a list and modifies the data structure within the L<Parrot::Configure> object.
 
 =cut
 
@@ -148,14 +149,14 @@ sub add_step {
 
     push @{ $self->{steps} }, Parrot::Configure::Task->new( step => $step, params => \@params );
 
-    return $self;
+    return 1;
 }
 
 =item * C<add_steps()>
 
-Registers a new step to be run at the end of the execution queue.
+Registers new steps to be run at the end of the execution queue.
 
-Accepts a list and returns a L<Parrot::Configure> object.
+Accepts a list of new steps and modifies the data structure within the L<Parrot::Configure> object.
 
 =cut
 
@@ -166,17 +167,17 @@ sub add_steps {
         $self->add_step($step);
     }
 
-    return $self;
+    return 1;
 }
 
 =item * C<runsteps()>
 
-Sequentially executes step in the order they were registered.  The invoking
-L<Parrot::Configure> object is passed as the first argument to each steps
-C<runstep()> method followed by any parameters that were registered for that
+Sequentially executes steps in the order they were registered.  The invoking
+L<Parrot::Configure> object is passed as the first argument to each step's
+C<runstep()> method, followed by any parameters that were registered for that
 step.
 
-Accepts no arguments and returns a L<Parrot::Configure> object.
+Accepts no arguments and modifies the data structure within the L<Parrot::Configure> object.
 
 =cut
 
@@ -190,17 +191,16 @@ sub runsteps {
         $n++;
         $self->_runstep( $task, $verbose, $verbose_step, $ask, $n );
     }
-    return $self;
+    return 1;
 }
 
 =item * C<runstep()>
 
-The invoking
-L<Parrot::Configure> object is passed as the first argument to each steps
-C<runstep()> method followed by any parameters that were registered for that
-step.
+The invoking L<Parrot::Configure> object is passed as the first argument to
+each step's C<runstep()> method, followed by any parameters that were
+registered for that step.
 
-Accepts no arguments and returns a L<Parrot::Configure> object.
+Accepts no arguments and modifies the data structure within the L<Parrot::Configure> object.
 
 =cut
 
@@ -215,6 +215,7 @@ sub runstep {
             $self->_runstep( $task, $verbose, $verbose_step, $ask, 1 );
         }
     }
+    return 1;
 }
 
 sub _runstep {
