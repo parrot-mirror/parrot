@@ -15,7 +15,7 @@ BEGIN {
         print "\nOK:  Parrot top directory located\n";
     }
     else {
-        $topdir = realpath($Bin) . "/../../..";
+        $topdir = realpath($Bin) . "/../..";
     }
     unshift @INC, qq{$topdir/lib};
 }
