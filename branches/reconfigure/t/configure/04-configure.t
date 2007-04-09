@@ -80,11 +80,11 @@ foreach my $k (@confsteps) {
 }
 is($nontaskcount, 0, "Each step is a Parrot::Configure::Task object");
 
-# print STDERR Dumper ($conf->data, $conf->options);
 $conf->options->set(%args);
-# print STDERR Dumper ($conf->data, $conf->options);
-is($conf->options->{c}->{cc}, $CC, "command-line option being stored in object");
-is($conf->options->{c}->{debugging}, 1, "command-line option being stored in object");
+is($conf->options->{c}->{cc}, $CC,
+    "command-line option '--cc' has been stored in object");
+is($conf->options->{c}->{debugging}, 1,
+    "command-line option '--debugging' has been stored in object");
 
 
 pass("Completed all tests in $0");
@@ -103,8 +103,8 @@ pass("Completed all tests in $0");
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by
-Parrot::Configure.
+The tests in this file test those Parrot::Configure methods regularly called
+by F<Configure.pl> up to, but not including, C<Parrot::Configure::runsteps()>.
 
 =head1 AUTHOR
 
