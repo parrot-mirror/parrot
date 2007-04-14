@@ -19,7 +19,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More qw(no_plan); # tests => 10;
+use Test::More tests =>  4;
 use Carp;
 use_ok('Parrot::Configure::Step::List', qw|
     get_steps_list

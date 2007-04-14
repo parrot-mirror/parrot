@@ -19,7 +19,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More qw(no_plan); # tests => 10;
+use Test::More tests => 30;
 use Carp;
 use Data::Dumper;
 $Data::Dumper::Indent=1;
@@ -38,9 +38,11 @@ $| = 1;
 is($|, 1, "output autoflush is set");
 
 my $CC = "/usr/bin/gcc-3.3";
-my $localargv = [ qq{--cc=$CC} ];
+my $localargv = [
+    qq{--cc=$CC},
+    qq{--step=init::manifest},
+];
 my $args = process_options( {
-#    argv            => [ ],
     argv            => $localargv,
     script          => $0,
     parrot_version  => $parrot_version,
@@ -51,9 +53,12 @@ my %args = %$args;
 
 my $conf = Parrot::Configure->new;
 ok(defined $conf, "Parrot::Configure->new() returned okay");
+# print STDERR Dumper $conf, "\n";
+isa_ok($conf, "Parrot::Configure");
 
 my $newconf = Parrot::Configure->new;
 ok(defined $newconf, "Parrot::Configure->new() returned okay");
+isa_ok($newconf, "Parrot::Configure");
 is($conf, $newconf, "Parrot::Configure object is a singleton");
 
 # Since these tests peek into the Parrot::Configure object, they will break if
@@ -69,6 +74,15 @@ is(scalar @{$conf->steps}, 0,
 foreach my $k (qw| options data |) {
     isa_ok($conf->$k, "Parrot::Configure::Data");
 }
+
+can_ok("Parrot::Configure", qw| data |);
+can_ok("Parrot::Configure", qw| options |);
+can_ok("Parrot::Configure", qw| steps |);
+can_ok("Parrot::Configure", qw| add_step |);
+can_ok("Parrot::Configure", qw| add_steps |);
+can_ok("Parrot::Configure", qw| runstep |);
+can_ok("Parrot::Configure", qw| runsteps |);
+can_ok("Parrot::Configure", qw| _runstep |);
 
 $conf->add_steps(get_steps_list());
 my @confsteps = @{$conf->steps};
@@ -86,6 +100,10 @@ is($conf->options->{c}->{cc}, $CC,
 is($conf->options->{c}->{debugging}, 1,
     "command-line option '--debugging' has been stored in object");
 
+eval { $conf->data()->slurp(); };
+like($@,
+    qr/You cannot use --step until you have completed the full configure process/,
+    "Got expected error message when using --step option without prior completed configuration");
 
 pass("Completed all tests in $0");
 
@@ -105,6 +123,8 @@ The files in this directory test functionality used by F<Configure.pl>.
 
 The tests in this file test those Parrot::Configure methods regularly called
 by F<Configure.pl> up to, but not including, C<Parrot::Configure::runsteps()>.
+There is also a test for failure of the C<--step> option without prior
+completed configuration.
 
 =head1 AUTHOR
 

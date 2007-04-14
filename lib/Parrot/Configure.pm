@@ -215,7 +215,6 @@ sub runstep {
             $self->_runstep( $task, $verbose, $verbose_step, $ask, 1 );
         }
     }
-    return 1;
 }
 
 sub _runstep {
