@@ -19,7 +19,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 20;
+use Test::More tests => 23;
 use Carp;
 #use Data::Dumper;
 #$Data::Dumper::Indent=1;
@@ -38,7 +38,6 @@ like($parrot_version, qr/\d+\.\d+\.\d+/,
 $| = 1;
 is($|, 1, "output autoflush is set");
 
-my $CC = "/usr/bin/gcc-3.3";
 my $args = process_options( {
     argv            => [],
     script          => $0,
@@ -69,7 +68,11 @@ foreach my $k (qw| options data |) {
     isa_ok($conf->$k, "Parrot::Configure::Data");
 }
 
-$conf->add_steps( qw| init::manifest | );
+my $step = q{init::manifest};
+# Following assignment would change if config/init/manifest.pm changed.
+my $description = q{Checking MANIFEST};
+
+$conf->add_steps( $step );
 my @confsteps = @{$conf->steps};
 isnt(scalar @confsteps, 0,
     "Parrot::Configure object 'steps' key holds non-empty array reference");
@@ -80,6 +83,12 @@ foreach my $k (@confsteps) {
     $nontaskcount++ unless $k->isa("Parrot::Configure::Task");
 }
 is($nontaskcount, 0, "Each step is a Parrot::Configure::Task object");
+is($confsteps[0]->step, $step, 
+    "'step' element of Parrot::Configure::Task struct identified");
+is(ref($confsteps[0]->params), 'ARRAY',
+    "'params' element of Parrot::Configure::Task struct is array ref");
+ok(! ref($confsteps[0]->object),
+    "'object' element of Parrot::Configure::Task struct is not yet a ref");
 
 $conf->options->set(%args);
 is($conf->options->{c}->{debugging}, 1,
@@ -93,9 +102,9 @@ my ($tie, $msg);
     $rv = $conf->runsteps;
     $msg = $tie->READLINE;
 }
-ok($rv, "runsteps successfully ran init::manifest");
-like($msg, qr/Checking MANIFEST/,
-    "Got message expected upon running init::manifest");
+ok($rv, "runsteps successfully ran $step");
+like($msg, qr/$description/,
+    "Got message expected upon running $step");
 
 pass("Completed all tests in $0");
 
