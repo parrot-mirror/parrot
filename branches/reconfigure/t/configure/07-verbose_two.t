@@ -106,6 +106,10 @@ The files in this directory test functionality used by F<Configure.pl>.
 The tests in this file examine what happens when you configure with the
 <--verbose> option set to C<2>.
 
+(Since I am testing with only the first step, C<init::manifest>, and since that
+step has nothing to say when C<--verbose=1>, I have to advance to
+C<--verbose=2>.)
+
 =head1 AUTHOR
 
 James E Keenan
