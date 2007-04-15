@@ -27,6 +27,7 @@ use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::IO::Capture::Mini;
+use lib ("t/configure/testlib");
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 like($parrot_version, qr/\d+\.\d+\.\d+/,
@@ -36,7 +37,7 @@ $| = 1;
 is($|, 1, "output autoflush is set");
 
 my $args = process_options( {
-    argv            => [ q{--verbose-step=MANIFEST} ],
+    argv            => [ q{--verbose-step=foobar} ],
     script          => $0,
     parrot_version  => $parrot_version,
     svnid           => '$Id$',
@@ -47,9 +48,8 @@ my %args = %$args;
 my $conf = Parrot::Configure->new;
 ok(defined $conf, "Parrot::Configure->new() returned okay");
 
-my $step = q{init::manifest};
-# Following assignment would change if config/init/manifest.pm changed.
-my $description = q{Checking MANIFEST};
+my $step = q{init::foobar};
+my $description = 'Determining if your computer does foobar';
 
 $conf->add_steps( $step );
 my @confsteps = @{$conf->steps};
@@ -116,3 +116,10 @@ James E Keenan
 Parrot::Configure, F<Configure.pl>.
 
 =cut
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:

@@ -26,9 +26,6 @@ use Carp;
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-#use_ok('Parrot::Configure::Step::List', qw|
-#    get_steps_list
-#| );
 use Parrot::IO::Capture::Mini;
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
@@ -135,3 +132,10 @@ James E Keenan
 Parrot::Configure, F<Configure.pl>.
 
 =cut
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:
