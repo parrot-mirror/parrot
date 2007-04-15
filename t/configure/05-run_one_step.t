@@ -27,6 +27,7 @@ use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::IO::Capture::Mini;
+use lib ("t/configure/testlib");
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 like($parrot_version, qr/\d+\.\d+\.\d+/,
@@ -65,9 +66,8 @@ foreach my $k (qw| options data |) {
     isa_ok($conf->$k, "Parrot::Configure::Data");
 }
 
-my $step = q{init::manifest};
-# Following assignment would change if config/init/manifest.pm changed.
-my $description = q{Checking MANIFEST};
+my $step = q{init::foobar};
+my $description = 'Determining if your computer does foobar';
 
 $conf->add_steps( $step );
 my @confsteps = @{$conf->steps};
