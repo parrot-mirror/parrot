@@ -104,7 +104,7 @@ sub _capture { $errstr = $_[0];}
 
 =head1 SYNOPSIS
 
-    % prove t/configure/components/15-no_return.t
+    % prove t/configure15-no_return.t
 
 =head1 DESCRIPTION
 

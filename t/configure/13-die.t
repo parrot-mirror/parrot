@@ -102,7 +102,7 @@ sub _capture { $errstr = $_[0];}
 
 =head1 SYNOPSIS
 
-    % prove t/configure/components/13-die.t
+    % prove t/configure13-die.t
 
 =head1 DESCRIPTION
 

@@ -80,7 +80,7 @@ pass("Completed all tests in $0");
 
 =head1 SYNOPSIS
 
-    % prove t/configure/components/02-messages.t
+    % prove t/configure02-messages.t
 
 =head1 DESCRIPTION
 
