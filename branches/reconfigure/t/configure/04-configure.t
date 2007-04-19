@@ -53,7 +53,6 @@ my %args = %$args;
 
 my $conf = Parrot::Configure->new;
 ok(defined $conf, "Parrot::Configure->new() returned okay");
-# print STDERR Dumper $conf, "\n";
 isa_ok($conf, "Parrot::Configure");
 
 my $newconf = Parrot::Configure->new;
@@ -100,10 +99,21 @@ is($conf->options->{c}->{cc}, $CC,
 is($conf->options->{c}->{debugging}, 1,
     "command-line option '--debugging' has been stored in object");
 
-eval { $conf->data()->slurp(); };
-like($@,
-    qr/You cannot use --step until you have completed the full configure process/,
-    "Got expected error message when using --step option without prior completed configuration");
+my $res  = eval "no strict; use Parrot::Config; \\%PConfig";
+SKIP: {
+    my $reason = <<REASON;
+If you have already completed configuration, 
+you can call Parrot::Configure::Data::slurp().
+But here you are testing for that method's failure.
+REASON
+
+    skip $reason, 1 if defined $res;
+
+    eval { $conf->data()->slurp(); };
+    like($@,
+        qr/You cannot use --step until you have completed the full configure process/,
+        "Got expected error message when using --step option without prior completed configuration");
+}
 
 pass("Completed all tests in $0");
 
@@ -115,7 +125,7 @@ pass("Completed all tests in $0");
 
 =head1 SYNOPSIS
 
-    % prove t/configure/components/04-configure.t
+    % prove t/configure04-configure.t
 
 =head1 DESCRIPTION
 

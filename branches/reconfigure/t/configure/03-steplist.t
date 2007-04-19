@@ -43,7 +43,7 @@ pass("Completed all tests in $0");
 
 =head1 SYNOPSIS
 
-    % prove t/configure/components/03-steplist.t
+    % prove t/configure03-steplist.t
 
 =head1 DESCRIPTION
 

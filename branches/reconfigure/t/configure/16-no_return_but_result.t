@@ -105,7 +105,7 @@ something other than object but has a defined result method
 
 =head1 SYNOPSIS
 
-    % prove t/configure/components/16-no_return_but_result.t
+    % prove t/configure16-no_return_but_result.t
 
 =head1 DESCRIPTION
 
