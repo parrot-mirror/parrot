@@ -5,22 +5,9 @@
 
 use strict;
 use warnings;
-
-BEGIN {
-    use FindBin qw($Bin);
-    use Cwd qw(cwd realpath);
-    realpath($Bin) =~ m{^(.*\/parrot)\/[^/]*\/[^/]*\/[^/]*$};
-    our $topdir = $1;
-    if ( defined $topdir ) {
-        print "\nOK:  Parrot top directory located\n";
-    }
-    else {
-        $topdir = realpath($Bin) . "/../..";
-    }
-    unshift @INC, qq{$topdir/lib};
-}
 use Test::More tests =>  4;
 use Carp;
+use lib qw( . lib ../lib ../../lib );
 use_ok('Parrot::Configure::Step::List', qw|
     get_steps_list
 | );
@@ -43,7 +30,7 @@ pass("Completed all tests in $0");
 
 =head1 SYNOPSIS
 
-    % prove t/configure03-steplist.t
+    % prove t/configure/03-steplist.t
 
 =head1 DESCRIPTION
 
@@ -61,10 +48,3 @@ James E Keenan
 Parrot::Configure::Step::List, F<Configure.pl>.
 
 =cut
-
-# Local Variables:
-#   mode: cperl
-#   cperl-indent-level: 4
-#   fill-column: 100
-# End:
-# vim: expandtab shiftwidth=4:

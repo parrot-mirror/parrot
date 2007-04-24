@@ -6,28 +6,13 @@
 use strict;
 use warnings;
 
-BEGIN {
-    use FindBin qw($Bin);
-    use Cwd qw(cwd realpath);
-    realpath($Bin) =~ m{^(.*\/parrot)\/[^/]*\/[^/]*\/[^/]*$};
-    our $topdir = $1;
-    if ( defined $topdir ) {
-        print "\nOK:  Parrot top directory located\n";
-    }
-    else {
-        $topdir = realpath($Bin) . "/../..";
-    }
-    unshift @INC, qq{$topdir/lib};
-}
 use Test::More tests => 14;
 use Carp;
-#use Data::Dumper;
-#$Data::Dumper::Indent=1;
+use lib qw( . lib ../lib ../../lib t/configure/testlib );
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::IO::Capture::Mini;
-use lib ("t/configure/testlib");
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 like($parrot_version, qr/\d+\.\d+\.\d+/,
