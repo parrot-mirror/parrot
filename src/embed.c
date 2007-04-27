@@ -252,7 +252,7 @@ Parrot_setwarnings(Interp *interp, Parrot_warnclass wc)
 
 /*
 
-=item C<struct PackFile *
+=item C<PackFile *
 Parrot_readbc(Interp *interp, const char *filename)>
 
 Read in a bytecode, unpack it into a C<PackFile> structure, and do fixups.
@@ -261,12 +261,12 @@ Read in a bytecode, unpack it into a C<PackFile> structure, and do fixups.
 
 */
 
-struct PackFile *
+PackFile *
 Parrot_readbc(Interp *interp, const char *fullname)
 {
     INTVAL program_size, wanted;
     char *program_code;
-    struct PackFile *pf;
+    PackFile *pf;
     FILE * io = NULL;
     INTVAL is_mapped = 0;
 #ifdef PARROT_HAS_HEADER_SYSMMAN
@@ -325,7 +325,7 @@ again:
                 break;
             chunk_size = 1024;
             program_code =
-                mem_sys_realloc(program_code, program_size + chunk_size);
+                (char *)mem_sys_realloc(program_code, program_size + chunk_size);
 
             if (!program_code) {
                 PIO_eprintf(interp,
@@ -358,7 +358,7 @@ again:
         }
 
         program_code =
-            mmap(0, program_size, PROT_READ, MAP_SHARED, fd, (off_t)0);
+            (char *)mmap(0, program_size, PROT_READ, MAP_SHARED, fd, (off_t)0);
 
         if (program_code == (void *)MAP_FAILED) {
             Parrot_warn(interp, PARROT_WARNINGS_IO_FLAG,
@@ -421,7 +421,7 @@ again:
 /*
 
 =item C<void
-Parrot_loadbc(Interp *interp, struct PackFile *pf)>
+Parrot_loadbc(Interp *interp, PackFile *pf)>
 
 Loads the C<PackFile> returned by C<Parrot_readbc()>.
 
@@ -430,7 +430,7 @@ Loads the C<PackFile> returned by C<Parrot_readbc()>.
 */
 
 void
-Parrot_loadbc(Interp *interp, struct PackFile *pf)
+Parrot_loadbc(Interp *interp, PackFile *pf)
 {
     if (pf == NULL) {
         PIO_eprintf(interp, "Invalid packfile\n");
@@ -668,9 +668,9 @@ static PMC*
 set_current_sub(Interp *interp)
 {
     opcode_t i, ci;
-    struct PackFile_ByteCode *cur_cs;
-    struct PackFile_FixupTable *ft;
-    struct PackFile_ConstTable *ct;
+    PackFile_ByteCode *cur_cs;
+    PackFile_FixupTable *ft;
+    PackFile_ConstTable *ct;
     struct Parrot_sub *sub;
     PMC *sub_pmc;
     opcode_t *code_start;
@@ -937,12 +937,12 @@ void
 Parrot_run_native(Parrot_Interp interp, native_func_t func)
 {
     static opcode_t program_code[2];
-    struct PackFile *          pf;
+    PackFile *          pf;
 
     program_code[0] = interp->op_lib->op_code("enternative", 0);
     program_code[1] = 0; /* end */
     pf = PackFile_new(interp, 0);
-    pf->cur_cs = (struct PackFile_ByteCode *)
+    pf->cur_cs = (PackFile_ByteCode *)
         (pf->PackFuncs[PF_BYTEC_SEG].new_seg)(interp, pf, "code", 1);
     pf->cur_cs->base.data = program_code;
     pf->cur_cs->base.size = 2;

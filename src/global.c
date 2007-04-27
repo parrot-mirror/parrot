@@ -158,6 +158,54 @@ Parrot_make_namespace_keyed_str(Interp *interp, PMC *base_ns, STRING *str_key)
 /*
 
 =item C<PMC *
+Parrot_get_namespace_autobase(Interp *, PMC *key)>
+
+Find a namespace with the key C<key>, which may be a String, a Key, or an
+array of strings. If it is a String, then the lookup is relative to the
+current namespace. Otherwise, it is relative to the current HLL root
+namespace. Return the namespace, or NULL if not found.
+
+=item C<PMC *
+Parrot_make_namespace_autobase(Interp *, PMC *pmc_key)>
+
+Find, or create if necessary, a namespace with the key C<key>, which may be a
+String, a Key, or an array of strings. If it is a String, then the lookup is
+relative to the current namespace. Otherwise, it is relative to the current HLL
+root namespace. Return the namespace.  Errors will result in exceptions.
+
+=cut
+
+*/
+
+
+PMC *
+Parrot_make_namespace_autobase(Interp *interp, PMC *key)
+{
+    PMC *base_ns;
+    if (VTABLE_isa(interp, key, string_from_const_cstring(interp, "String", 0)))
+        base_ns = CONTEXT(interp->ctx)->current_namespace;
+    else
+        base_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
+            CONTEXT(interp->ctx)->current_HLL);
+    return Parrot_make_namespace_keyed(interp, base_ns, key);
+}
+
+PMC *
+Parrot_get_namespace_autobase(Interp *interp, PMC *key)
+{
+    PMC *base_ns;
+    if (VTABLE_isa(interp, key, string_from_const_cstring(interp, "String", 0)))
+        base_ns = CONTEXT(interp->ctx)->current_namespace;
+    else
+        base_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
+            CONTEXT(interp->ctx)->current_HLL);
+    return Parrot_get_namespace_keyed(interp, base_ns, key);
+}
+
+
+/*
+
+=item C<PMC *
 Parrot_get_global(Interp *, PMC *ns, STRING *globalname)>
 
 Look up the global named C<globalname> in the namespace C<ns>.  Return the
@@ -180,7 +228,7 @@ Parrot_get_global(Interp *interp, PMC *ns, STRING *globalname)
     if (PMC_IS_NULL(ns))
         return PMCNULL;
 
-    return VTABLE_get_pointer_keyed_str(interp, ns, globalname);
+    return (PMC *)VTABLE_get_pointer_keyed_str(interp, ns, globalname);
 }
 
 void
@@ -245,7 +293,7 @@ Parrot_find_global_n(Interp *interp, PMC *ns, STRING *globalname)
          * distinguishes 'get_pmc_keyed' from 'get_pointer_keyed';
          * the former is for NS and the latter is for non-NS.
          */
-        res = VTABLE_get_pointer_keyed_str(interp, ns, globalname);
+        res = (PMC *)VTABLE_get_pointer_keyed_str(interp, ns, globalname);
     }
 
     return PMC_IS_NULL(res) ? NULL : res;

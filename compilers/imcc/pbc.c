@@ -44,8 +44,8 @@ struct subs {
 
 /* subs are kept per code segment */
 struct cs_t {
-    struct PackFile_ByteCode *seg;      /* bytecode segment */
-    struct PackFile_Segment *jit_info;  /* bblocks, register usage */
+    PackFile_ByteCode *seg;      /* bytecode segment */
+    PackFile_Segment *jit_info;  /* bblocks, register usage */
     struct subs *subs;                  /* current sub data */
     struct subs *first;                 /* first sub of code segment */
     struct cs_t *prev;                  /* previous code segment */
@@ -310,16 +310,16 @@ find_global_label(char *name, struct subs *sym, int *pc)
     *pc = 0;
     for (s = globals.cs->first; s; s = s->next) {
 #if 0
-        fprintf(stderr, "namespace %s\n", s->unit->namespace ?
-                s->unit->namespace->name : "(null");
+        fprintf(stderr, "namespace %s\n", s->unit->_namespace ?
+                s->unit->_namespace->name : "(null");
 #endif
         r = s->unit->instructions->r[0];
         /* if names and namespaces are matching - ok */
         if (r && !strcmp(r->name, name) &&
-                    ((sym->unit->namespace && s->unit->namespace &&
-                     !strcmp(sym->unit->namespace->name,
-                         s->unit->namespace->name))
-                    || (!sym->unit->namespace && !s->unit->namespace))) {
+                    ((sym->unit->_namespace && s->unit->_namespace &&
+                     !strcmp(sym->unit->_namespace->name,
+                         s->unit->_namespace->name))
+                    || (!sym->unit->_namespace && !s->unit->_namespace))) {
             return s;
         }
         *pc += s->size;
@@ -485,7 +485,7 @@ mk_multi_sig(Interp* interp, SymReg *r)
     STRING *sig;
     PMC *multi_sig, *sig_pmc;
     struct pcc_sub_t *pcc_sub;
-    struct PackFile_ConstTable *ct;
+    PackFile_ConstTable *ct;
 
     pcc_sub = r->pcc_sub;
     multi_sig = pmc_new(interp, enum_class_FixedPMCArray);
@@ -527,7 +527,7 @@ create_lexinfo(Interp *interp, IMC_Unit *unit, PMC *sub, int need_lex)
     int i, k;
     SymReg * r;
     SymHash *hsh;
-    struct PackFile_Constant **constants;
+    PackFile_Constant **constants;
     STRING *lex_name;
     STRING *decl_lex;
     PMC *decl_lex_meth, *lex_info_class;
@@ -539,7 +539,7 @@ create_lexinfo(Interp *interp, IMC_Unit *unit, PMC *sub, int need_lex)
     /* TODO use CONST_STRING */
     decl_lex = const_string(interp, "declare_lex_preg");
     lex_info_id = Parrot_get_ctx_HLL_type(interp, enum_class_LexInfo);
-    lex_info_class = interp->vtables[lex_info_id]->class;
+    lex_info_class = interp->vtables[lex_info_id]->pmc_class;
     decl_lex_meth = VTABLE_find_method(interp,
             lex_info_class, decl_lex);
     if (!decl_lex_meth) {
@@ -637,25 +637,25 @@ static int
 add_const_pmc_sub(Interp *interp, SymReg *r,
         int offs, int end)
 {
-    int i, k;
-    INTVAL type;
-    PMC *ns_pmc;
-    PMC *sub_pmc;
-    struct Parrot_sub *sub;
-    struct PackFile_Constant *pfc;
-    SymReg *ns;
-    int ns_const = -1;
-    char *real_name;
-    struct PackFile_ConstTable *ct;
-    IMC_Unit *unit;
-    STRING *vtable_name;
-    char *c_name;
-    int vtable_index;
+    int                  i, k;
+    int                  ns_const = -1;
+    INTVAL               type;
+    INTVAL               vtable_index;
+    char                *real_name;
+    char                *c_name;
+    IMC_Unit            *unit;
+    PMC                 *ns_pmc;
+    PMC                 *sub_pmc;
+    struct Parrot_sub   *sub;
+    PackFile_Constant   *pfc;
+    PackFile_ConstTable *ct;
+    SymReg              *ns;
+    STRING              *vtable_name;
 
     unit = globals.cs->subs->unit;
 
-    if (unit->namespace) {
-        ns = unit->namespace->reg;
+    if (unit->_namespace) {
+        ns = unit->_namespace->reg;
         IMCC_debug(interp, DEBUG_PBC_CONST,
                 "name space const = %d ns name '%s'\n",
                 ns->color, ns->name);
@@ -737,29 +737,32 @@ add_const_pmc_sub(Interp *interp, SymReg *r,
             vtable_name = sub->name;
 
         /* Check this is a valid vtable method to override. */
-        c_name = string_to_cstring(interp, vtable_name);
-        vtable_index = Parrot_get_vtable_index(interp, c_name);
+        vtable_index = Parrot_get_vtable_index(interp, vtable_name);
+        c_name       = string_to_cstring(interp, vtable_name);
+
         if (vtable_index == -1) {
             IMCC_fatal(interp, 1,
                 "'%s' is not a v-table method, but was used with :vtable.\n",
                 c_name);
         }
+        string_cstring_free(c_name);
 
         /* TODO check for duplicates */
         sub->vtable_index = vtable_index;
     }
 
-    pfc->type = PFC_PMC;
-    pfc->u.key = sub_pmc;
+    pfc->type     = PFC_PMC;
+    pfc->u.key    = sub_pmc;
     unit->sub_pmc = sub_pmc;
+
     IMCC_debug(interp, DEBUG_PBC_CONST,
             "add_const_pmc_sub '%s' flags %d color %d (%s) "
             "lex_info %s :outer(%s)\n",
             r->name, r->pcc_sub->pragma, k,
-            (char*) sub_pmc->vtable->whoami->strstart,
+            (char *) sub_pmc->vtable->whoami->strstart,
             sub->lex_info ? "yes" : "no",
             sub->outer_sub ?
-                (char*)PMC_sub(sub->outer_sub)->name->strstart :
+                (char *)PMC_sub(sub->outer_sub)->name->strstart :
                 "*none*"
             );
     /*
@@ -777,12 +780,12 @@ add_const_key(Interp *interp, opcode_t key[],
 {
     int k;
     SymReg *r;
-    struct PackFile_Constant *pfc;
+    PackFile_Constant *pfc;
     opcode_t *rc;
 
     if ( (r = _get_sym(&globals.cs->key_consts, s_key)) != 0)
         return r->color;
-    pfc = malloc(sizeof (struct PackFile_Constant));
+    pfc = malloc(sizeof (PackFile_Constant));
     rc = PackFile_Constant_unpack_key(interp,
             interp->code->const_table, pfc, key);
     if (!rc)
@@ -950,7 +953,7 @@ static void
 make_pmc_const(Interp *interp, SymReg *r)
 {
     STRING *s;
-    PMC *p, *class;
+    PMC *p, *_class;
     int k;
 
     if (*r->name == '"')
@@ -960,8 +963,8 @@ make_pmc_const(Interp *interp, SymReg *r)
         s = string_unescape_cstring(interp, r->name + 1, '\'', NULL);
     else
         s = string_unescape_cstring(interp, r->name, 0, NULL);
-    class = interp->vtables[r->pmc_type]->class;
-    p = VTABLE_new_from_string(interp, class, s, PObj_constant_FLAG);
+    _class = interp->vtables[r->pmc_type]->pmc_class;
+    p = VTABLE_new_from_string(interp, _class, s, PObj_constant_FLAG);
     /* append PMC constant */
     k = PDB_extend_const_table(interp);
     interp->code->const_table->constants[k]->type = PFC_PMC;
@@ -1162,7 +1165,7 @@ e_pbc_emit(Interp *interp, void *param, IMC_Unit * unit, Instruction * ins)
     op_info_t *op_info;
     int op, i;
     /* XXX move these statics into IMCC_INFO */
-    static struct PackFile_Debug *debug_seg;
+    static PackFile_Debug *debug_seg;
     static int ins_line;
     static opcode_t * pc, npc;
     /* XXX end */

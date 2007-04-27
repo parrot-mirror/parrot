@@ -70,8 +70,7 @@ static void
 prederef_args(void **pc_prederef, Interp *interp,
         opcode_t *pc, op_info_t *opinfo)
 {
-    struct PackFile_ConstTable * const_table
-        = interp->code->const_table;
+    PackFile_ConstTable * const_table = interp->code->const_table;
     int i, n, m, regs_n, regs_i, regs_p, regs_s;
     PMC *sig = NULL;
 
@@ -552,7 +551,7 @@ runops_jit(Interp *interp, opcode_t *pc)
 #  ifdef PARROT_EXEC_OS_AIX
     /* AIX calling convention requires that function-call-by-ptr be made
        through the following struct: */
-    struct { jit_f functPtr; void *toc; void *env; } ptrgl_t;
+    struct ptrgl_t { jit_f functPtr; void *toc; void *env; } ptrgl_t;
     ptrgl_t.functPtr = (jit_f) D2FPTR(init_jit(interp, pc));
     ptrgl_t.env = NULL;
 

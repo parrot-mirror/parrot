@@ -373,6 +373,10 @@ access to act as an object.
 
 Remove an attribute from the class.
 
+=item remove_method(string *)
+
+Remove a method from the class.
+
 =item remove_parent(string *)
 
 Remove a parent from the class.
@@ -402,6 +406,12 @@ The accessor for the name attribute. With no argument, it simply returns
 the current value for name. When passed an argument, it sets the name of
 the class, and also sets the association with a namespace. With no
 argument it only returns the current value of the name attribute.
+
+=item namespace
+
+    $P1 = $P2.namespace()
+
+Retrieve the namespace object associated with the class.
 
 =item new
 
@@ -493,9 +503,9 @@ Create a subclass of $P2 with name $S3 and return it in $P1.
 
   $I1 = $P2.isa($S3)
 
-Returns true if the class passed in as a parameter is in the inheritance
-hierarchy of the class (this is not the same as the inheritance
-hierarchy of objects instantiated from the class), false otherwise.
+Returns true if the class name passed in as a parameter is in the inheritance
+hierarchy of the class (this is not the same as the inheritance hierarchy of
+objects instantiated from the class), false otherwise.
 
 =item can
 
@@ -510,6 +520,13 @@ otherwise.
 
 Returns true if the object in question implements the role, class, type,
 or behavior passed in, false otherwise.
+
+=item inspect
+
+  $P1 = $P2.inspect()
+  $P1 = $P2.inspect($S3)
+
+Return introspection information for the class.
 
 =back
 
@@ -711,13 +728,18 @@ introspection information corresponding to the requested string name
 
 Remove an attribute from the role.
 
+=item remove_method(string *)
+
+Remove a method from the role.
+
+
 =item remove_role(string *)
 
 Remove a role from the role.
 
 =back
 
-=head3 Methods
+=head3 Role Methods
 
 These methods are just syntactic sugar for the vtable methods. They are
 not included in the Role PMC by default, but added to Role as a role.
@@ -726,14 +748,17 @@ not included in the Role PMC by default, but added to Role as a role.
 
 =item name
 
+    $P1 = $P2.name( $S3 )
+
 The accessor for the name attribute. With no argument, it simply returns
 the current value for name. When passed an argument, it sets the name of
 the role, and also sets the association with a namespace.
 
-When you associate a class with a namespace, it pulls in all of the
-methods and vtable methods held within that namespace.  And when
-replacing one class with another in the association, it removes any
-methods and vtable methods from the previous class.
+=item namespace
+
+    $P1 = $P2.namespace()
+
+Retrieve the namespace object associated with the role.
 
 =item attributes
 
@@ -792,6 +817,13 @@ An accessor for the methods of the role. It returns a Hash of all methods,
 with a key of the method name and a value of an invokable PMC. The list will
 include methods added through composing other roles into this role. The
 accessor is read-only.
+
+=item inspect
+
+  $P1 = $P2.inspect()
+  $P1 = $P2.inspect($S3)
+
+Return introspection information for the role.
 
 =back
 
@@ -925,7 +957,12 @@ low-level PMC such as C<Integer> or C<ResizablePMCArray>.
   $P1 = get_class $P2
 
 Retrieve a class object for the class identified by the string name in
-$S2, or by the PMC key in $P2.
+$S2, or by the PMC key or namespace object in $P2.
+
+A string name looks for the class in a namespace with that name nested in the
+currently selected namespace. Passing in a namespace object looks for the class
+in that namespace object. A key looks for the class in the namespace identified
+by the multilevel key relative to the currently selected HLL.
 
 =item addparent
 
@@ -964,12 +1001,23 @@ the attribute from any objects that have already been instantiated, but
 it will be absent from all future objects of class $P1, of classes that
 inherit from class $P1, or of classes that compose the role $P1.
 
-=item addrole Px, Py
+=item addrole
 
   addrole $P1, $P2
 
 Add role $P2 to the end of the list of roles of class or role $P1. Adds
 any methods and attributes of $P2 that aren't already in $P1.
+
+=item inspect
+
+  $P1 = inspect $P2
+  $P1 = inspect $P2, $S3
+
+Return introspection information for the PMC.  Without the optional string
+argument, return a data structure of all information relevant to introspection.
+With the optional string argument, return a PMC Hash, Array, String, Integer,
+or Number value with introspection information corresponding to the requested
+string name.
 
 =back
 
@@ -1013,8 +1061,8 @@ To create a new class C<Foo> which has no parent classes:
 
 To create a class C<Foo> with the parents C<A> and C<B>, the code would be:
 
-   getclass $P0, "A"
-   getclass $P1, "B"
+   get_class $P0, "A"
+   get_class $P1, "B"
    subclass $P2, $P0, "Foo"
    addparent $P2, $P1
 

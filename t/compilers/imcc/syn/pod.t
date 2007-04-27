@@ -60,11 +60,11 @@ print FOO <<'ENDF';
 we don't cut out!!!
 
 ENDF
-close FOO;  
+close FOO;
 
 SKIP: {
-       skip("Closing out of pod from included files", 1);
-pir_output_is( <<'CODE', <<'OUT', "simple pod" );
+    skip( "Closing out of pod from included files", 1 );
+    pir_output_is( <<'CODE', <<'OUT', "simple pod" );
 .include "include.tempfile"
 .sub test :main
     print "pass\n"
@@ -75,9 +75,7 @@ pass
 OUT
 }
 
-unlink("macro.tempfile");
-
-
+unlink('macro.tempfile', 'include.tempfile');
 
 # Local Variables:
 #   mode: cperl

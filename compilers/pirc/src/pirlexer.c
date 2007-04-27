@@ -24,12 +24,18 @@ TODO: implement POD parsing
 
 =item *
 
+TODO: read input files a few blocks a time, instead of the whole file at once.
+This is to prevent failure when compiling 100M files.
+
+=item *
+
 Place and remove checks for EOF where appropiate, they are scattered throughout
 the code. Clean that up.
 
 =item *
 
-Check for 'correct' use of data types (unsigned etc.)
+Check for 'correct' use of data types (unsigned etc.) (should characters be stored
+in C<char>s or C<int>s?
 
 =back
 
@@ -37,9 +43,9 @@ Check for 'correct' use of data types (unsigned etc.)
 
 */
 #include "pirlexer.h"
+#include "pirutil.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include <string.h>
@@ -98,6 +104,15 @@ The following are flags for parameters/arguments.
   :flat
   :unique_reg
 
+
+=head1 STRING ENCODINGS
+
+The following are string encoding specifiers:
+
+  ascii:
+  binary:
+  iso-8859-1:
+  unicode:
 
 =cut
 
@@ -250,6 +265,10 @@ static char const * dictionary[] = {
     "heredoc id",               /* T_HEREDOC_ID,            */
     "heredoc string",           /* T_HEREDOC_STRING,        */
     "parrot op",                /* T_PARROT_OP              */
+    "unicode:",                 /* T_UNICODE                */
+    "ascii:",                   /* T_ASCII                  */
+    "binary:",                  /* T_BINARY                 */
+    "iso-8859-1:",              /* T_ISO_8859_1             */
     NULL                        /*                          */
 };
 
@@ -260,25 +279,63 @@ static char const * dictionary[] = {
 
 =head2 file_buffer structure
 
-Structure that represents a file.
-It contains the filename, a buffer for the file contents,
-a read pointer, the filesize, the current line number,
-and a pointer to the previous buffer. If any, the
-prevbuffer points to the structure of the file that
-.include'd this file.
+Structure that represents a file. Its layout is shown below. First, it contains the filename
+of the file that is represented by this buffer. Then, the buffer is an array that holds the
+complete file contents. This is done for efficiency (instead of reading character by character
+from disk). The C<curchar> acts like a cursor, that points to the current character.
+The field C<filesize> contains the size of the file counted in bytes, C<line> keeps track of
+the current line number, and C<linepos> counts the number of characters since the last newline
+character. The field C<lastchar> stores the previous character (so the character I<before> the
+character pointed to by C<curchar>. This field is used to decide whether the previous character
+was a newline. If so, then C<curchar> is at the start of a line (needed for Heredoc delimiters).
+
+The field C<prevbuffer> points to another file_buffer; if the current file was C<.include>d,
+then C<prevbuffer> points to the file_buffer that represents the including file. An example:
+
+ $ cat main.pir
+
+ .include "util.pir"
+
+ .sub main
+ # ...
+ .end
+
+ $ cat util.pir
+
+ .sub foo
+ # ...
+ .end
+
+In this case, when parsing the file C<main.pir>, C<prevbuffer> is NULL, because this file was
+not included. Then, when the file C<util.pir> is included, a new file_buffer is created for that
+file, and C<prevbuffer> is set to the file_buffer representing C<main.pir>.
+
+The file_buffer structure is shown below:
+
+ typedef struct file_buffer {
+     char     *filename;              -- the name of this file
+     char     *buffer;                -- buffer holding contents of this file
+     char     *curchar;               -- pointer to the current char.
+     unsigned  filesize;              -- size of this file in bytes
+     unsigned  long line;             -- line number
+     unsigned  short linepos;         -- position on the current line
+     char      lastchar;              -- the previous character that was read.
+     struct file_buffer *prevbuffer;  -- pointer to 'including' file if any
+
+ } file_buffer;
 
 =cut
 
 */
 typedef struct file_buffer {
-    char     *filename;              /* the name of this file                 */
-    char     *buffer;                /* buffer holding contents of this file  */
-    char     *curchar;               /* pointer to the current char.          */
-    unsigned  filesize;              /* size of this file in bytes            */
-    unsigned  long line;             /* line number                           */
-    unsigned  short linepos;         /* position on the current line          */
-    char      lastchar;              /* the previous character that was read. */
-    struct file_buffer *prevbuffer;  /* pointer to 'including' file if any    */
+    char     *filename;
+    char     *buffer;
+    char     *curchar;
+    unsigned  filesize;
+    unsigned  long line;
+    unsigned  short linepos;
+    char      lastchar;
+    struct file_buffer *prevbuffer;
 
 } file_buffer;
 
@@ -504,8 +561,11 @@ Debug function to show the rest of the current buffer.
 */
 static void
 print_buffer(lexer_state *lexer) {
+    fprintf(stderr, "token buffer: [%s]\n", lexer->token_chars);
+    /*
     fprintf(stderr, "Rest of buffer of file '%s'\n", lexer->curfile->filename);
     fprintf(stderr, "[%s]", lexer->curfile->curchar);
+    */
 }
 
 
@@ -560,12 +620,7 @@ read_file(char const * filename) {
     filebuff->filename = clone_string(filename);
     /*fprintf(stderr, "Opening file '%s'\n", filebuff->filename); */
 
-    fileptr = fopen(filename, "r");
-
-    if (fileptr == NULL) {
-        fprintf(stderr, "Error in read_file(): failed to open file '%s'\n", filename);
-        exit(1);
-    }
+    fileptr = open_file(filename, "r");
 
     /* allocate memory for this file. Reserve 1 more byte to store the EOF marker */
     stat(filename, &filestatus);
@@ -634,26 +689,6 @@ do_include_file(lexer_state *lexer, char const * filename) {
 }
 
 
-/*
-
-=item is_op()
-
-TODO: check whether 'word' is an op. How does IMCC handle this?
-Is there an API call that checks for this?
-
-Function to check if the specified id is a Parrot op.
-Dynamically loaded op libraries need to be considered as well.
-
-=cut
-
-*/
-static int
-is_op(char *word) {
-    if (strcmp(word, "add") == 0) return 1; /* hardcoded some, to give an idea */
-    if (strcmp(word, "print") == 0) return 1;
-    if (strcmp(word, "new") == 0) return 1;
-    return 0;
-}
 
 
 /*
@@ -763,6 +798,35 @@ update_line(lexer_state *lexer) {
 
 }
 
+
+/*
+
+=item read_string()
+
+Read a quoted string.
+
+=cut
+
+*/
+static token
+read_string(lexer_state *lexer, char delimiter) {
+    char c;
+    buffer_char(lexer, delimiter); /* buffer first delimiter */
+    do {
+        c = read_char(lexer->curfile);
+        if (c == '\n') {
+            fprintf(stderr, "Possibly a run-away string on line %ld\n", lexer->curfile->line);
+            buffer_char(lexer, delimiter); /* try to fix it */
+            update_line(lexer);
+            return T_ERROR;
+        }
+        if (c == EOF_MARKER) return T_EOF;
+        buffer_char(lexer, c);
+    }
+    while (c != delimiter);
+
+    return T_STRING_CONSTANT;
+}
 
 
 
@@ -902,33 +966,7 @@ destroy_lexer(lexer_state *lexer) {
 }
 
 
-/*
 
-=item clone_string()
-
-clone a string. Copy the characters of src into dest
-and return dest. Memory allocation is done by this function, keeping
-this function's client code simple. Please free() the memory after usage!
-
-=cut
-
-*/
-char *
-clone_string(char const * src) {
-    int srclen;
-    char * dest, *ptr;
-
-    assert(src != NULL);
-    srclen = strlen(src);
-    /* dest is used as an iterator, ptr - still pointing to the beginning
-     * of the string - is returned
-     */
-    dest = ptr = (char *)calloc(srclen + 1, sizeof(char));
-    while (*src) {
-        *dest++ = *src++;
-    }
-    return ptr;
-}
 
 /*
 
@@ -1007,14 +1045,11 @@ next_token(lexer_state *lexer) {
         if (isspace(c) && (c != '\n')) continue;
 
         /* skip pod */
-        /* FIX
-        while ((c == '=') && is_start_of_line(lexer->curfile)) {
-             c = read_char(lexer->curfile);
-        }
-        XXX */
+
+        /* FIX PARSING OF POD; kinda hard :-( */
 
 
-        /* skip comments */
+
 
 /*
 
@@ -1029,6 +1064,7 @@ POD comments are not yet supported.
 =cut
 
 */
+        /* skip comments */
         if (c == '#') {
             /* eat comments up to but not including newline */
             do {
@@ -1060,65 +1096,6 @@ is indicated explicitly.
 
   PASM-IREG       -> 'I' DIGIT+
 
-=cut
-
-*/
-        /* now start checking for real tokens */
-        switch (c) {
-            case 'P':
-                buffer_char(lexer, c);              /* buffer 'P'                          */
-                count = read_digits(lexer);         /* read as many digits as you can      */
-                c = read_char(lexer->curfile);      /* read next, this is not a digit      */
-                if (count > 0 && !isalnum(c) ) {    /* only if the #read digits > 0     .. */
-                    unread_char(lexer->curfile);    /* .. and current char is not alnum .. */
-                    return T_PASM_PREG;             /* put back last read char, and ..     */
-                }                                   /* return token for register.          */
-                break;
-            case 'S':
-                buffer_char(lexer, c);
-                count = read_digits(lexer);
-
-                c = read_char(lexer->curfile);
-                if (count > 0 && !isalnum(c) ) {
-                    unread_char(lexer->curfile);
-                    return T_PASM_SREG;
-                }
-                break;
-            case 'I':
-                buffer_char(lexer, c);
-                count = read_digits(lexer);
-                c = read_char(lexer->curfile);
-                if (count > 0 && !isalnum(c) ) {
-                    unread_char(lexer->curfile);
-                    return T_PASM_IREG;
-                }
-                break;
-            case 'N':
-                buffer_char(lexer, c);
-                count = read_digits(lexer);
-                c = read_char(lexer->curfile);
-                if (count > 0 && !isalnum(c) ) {
-                    unread_char(lexer->curfile);
-                    return T_PASM_NREG;
-                }
-                break;
-            default:
-                break; /* continue below */
-        }
-
-
-
-        /* it was not a PASM register. In case of the letters [S|N|I|P] and possibly
-         * some digits after that, those are already stored in the token buffer. That's
-         * no problem, just continue from there. Apparently this is an identifier, so
-         * it will match the rest of the identifier characters in the first if-block to
-         * come.
-         */
-
-/*
-
-=pod
-
   IDENT           -> [a-zA-Z_][a-zA-Z_0-9]*
 
   LABEL           -> IDENT ':'
@@ -1137,9 +1114,9 @@ is indicated explicitly.
 
   STRING-CONSTANT -> ' <characters> ' | " <characters> "
 
-  INT-CONSTANT    -> DIGIT+ | 0 [xX] DIGIT+ | 0 [bB] DIGIT+
+  INT-CONSTANT    -> [-] DIGIT+ | 0 [xX] DIGIT+ | 0 [bB] DIGIT+
 
-  NUM-CONSTANT    -> DIGIT+ '.' DIGIT*
+  NUM-CONSTANT    -> [-] DIGIT+ '.' DIGIT*
 
   DIGIT           -> [0-9]
 
@@ -1147,17 +1124,57 @@ is indicated explicitly.
 =cut
 
 */
+
         if (isalpha(c) || c == '_' ) {  /* check for identifier, op, invocant or label */
-            do {
+
+            /* handle pasm registers */
+            if (c == 'P' || c == 'I' || c == 'N' || c == 'S') {
+                int count;
+                char regtype = c; /* store register type for later */
+                buffer_char(lexer, c); /* store current char. */
+                count = read_digits(lexer); /* read digits and count how many */
+                c = read_char(lexer->curfile); /* the last one was not a digit, re-read it */
+
+                /* only if the current char is not an alpha and we just read a number of digits,
+                 * can this be a pasm register. */
+                if (count > 0 && !isalpha(c)) {
+                    if (c != '.') {
+                        /* last char was not a dot, so this is not an invocant */
+                        unread_char(lexer->curfile);
+                        /* check for the register type */
+                        if (regtype == 'P') return T_PREG;
+                        if (regtype == 'N') return T_NREG;
+                        if (regtype == 'S') return T_SREG;
+                        if (regtype == 'I') return T_IREG;
+                    }
+                    else {
+                        return T_INVOCANT; /* like 'P.' */
+                    }
+                }
+                /* else it is not a pasm register and not a single letter invocant */
+            }
+
+            /* it was not a pasm register or a single-letter invocant */
+
+            while (isalnum(c) || c == '_') {
                 buffer_char(lexer, c);
                 c = read_char(lexer->curfile);
                 if (c == EOF_MARKER) break;
             }
-            while ( isalnum(c) || c == '_');
 
+            /* we got some kind of an identifier, maybe it's a label, invocant, etc */
             if (c == ':') { /* label -> IDENT':' */
+                token tmp;
                 buffer_char(lexer, c);
-                return T_LABEL;
+
+                /* it might be a string encoding specifier */
+                tmp = check_dictionary(lexer, dictionary);
+
+                if (tmp == T_NOT_FOUND) return T_LABEL;
+                else {
+                    c = read_char(lexer->curfile); /* this should be a quote char. */
+                    return read_string(lexer, c);
+                }
             }
             else if (c == '.') { /* invocant_id -> IDENT'.' */
                 return T_INVOCANT_IDENT;
@@ -1216,23 +1233,16 @@ is indicated explicitly.
             buffer_char(lexer, c);
             c = read_char(lexer->curfile);
 
-            if (isdigit(c)) { /* integer or float */
-                do {
-                    buffer_char(lexer, c);
-                    c = read_char(lexer->curfile);
-                }
-                while (isdigit(c));
+            while (isdigit(c)) {
+                buffer_char(lexer, c);
+                c = read_char(lexer->curfile);
+            }
 
-                /* it is a different char, either '.', ' ' or something else */
-                if (c == '.') { /* floating point number */
-                    buffer_char(lexer, c);
-                    read_digits(lexer);
-                    return T_NUMBER_CONSTANT;
-                }
-                else {
-                    unread_char(lexer->curfile); /* put back last read char. */
-                    return T_INTEGER_CONSTANT;
-                }
+            /* it is a different char, either '.', ' ' or something else */
+            if (c == '.') { /* floating point number */
+                buffer_char(lexer, c);
+                read_digits(lexer);
+                return T_NUMBER_CONSTANT;
             }
             else if (c == 'b' || c == 'B') { /* 0b<digit>+ or 0B<digit>+ */
                 buffer_char(lexer, c);
@@ -1269,7 +1279,7 @@ is indicated explicitly.
                     c = read_char(lexer->curfile);
                     if (c == EOF_MARKER) return T_EOF;
 
-                    while (isalnum(c)) { /* this is all part of the label name */
+                    while (isalnum(c) || c == '_') { /* this is all part of the label name */
                         buffer_char(lexer, c);
                         c = read_char(lexer->curfile);
                         if (c == EOF_MARKER) return T_EOF;
@@ -1279,8 +1289,9 @@ is indicated explicitly.
                     if (c == ':') {
                         return T_MACRO_LABEL;
                     }
-                    else { /* $ ??? */
+                    else { /* $ ??? unexpected, put it back */
                         unread_char(lexer->curfile);
+                        fprintf(stderr, "Unknown token starting with '$'\n");
                         return T_ERROR;
                     }
             }
@@ -1288,11 +1299,24 @@ is indicated explicitly.
             buffer_char(lexer, c);
 
             numdigits = read_digits(lexer);
+
+            /* read next char, maybe a dot? */
+            c = read_char(lexer->curfile);
+
             if (numdigits == 0) {
+                unread_char(lexer->curfile);
                 fprintf(stderr, "digits expected (line %d)\n", lexer->curfile->line);
                 return T_ERROR;
             }
-            return regtype; /* return register */
+
+            if (c == '.') { /* $P0. and friends */
+                buffer_char(lexer, c);
+                return T_INVOCANT_IDENT;
+            }
+            else { /* just a simple pir reg $P0 */
+                unread_char(lexer->curfile);
+                return regtype; /* return register */
+            }
         }
 
 
@@ -1411,8 +1435,26 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
                 case '=': return T_MINUS_ASSIGN; /* -= */
                 case EOF_MARKER: return T_EOF;
                 default:
-                    unread_char(lexer->curfile);
-                    return T_MINUS;
+
+                    /* TODO: refactor this number reading code, it's also somewhere else */
+
+                    if (isdigit(c)) { /* handle negative numbers here */
+                        int count = read_digits(lexer);
+                        c = read_char(lexer->curfile);
+                        if (c == '.') {
+                            buffer_char(lexer, c);
+                            read_digits(lexer);
+                            return T_NUMBER_CONSTANT;
+                        }
+                        else {
+                            unread_char(lexer->curfile);
+                            return T_INTEGER_CONSTANT;
+                        }
+                    }
+                    else { /* no negative number, just a minus sign */
+                        unread_char(lexer->curfile);
+                        return T_MINUS;
+                    }
             }
         }
         else if (c == '!') {
@@ -1539,7 +1581,6 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
                 if (c == '\n') update_line(lexer);
                 else if (c == EOF_MARKER) return T_EOF;
             }
-            /* while ( c == ' ' || c == '\t' || c == '\n' || c == '\r');  */
             while (isspace(c));
 
             /* the last read char. was not space/newline, put it back */
@@ -1548,38 +1589,10 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
             return T_NEWLINE;
         }
         else if (c == '"') {
-            buffer_char(lexer, c);
-            do {
-                c = read_char(lexer->curfile);
-                if (c == '\n') {
-                    fprintf(stderr, "Possibly a run-away string on line %ld\n", lexer->curfile->line);
-                    buffer_char(lexer, '"'); /* try to fix it */
-                    update_line(lexer);
-                    return T_ERROR;
-                }
-                if (c == EOF_MARKER) return T_EOF;
-                buffer_char(lexer, c);
-            }
-            while (c != '"');
-
-            return T_STRING_CONSTANT;
+            return read_string(lexer, c);
         }
         else if (c == '\'') {
-            buffer_char(lexer, c);
-            do {
-                c = read_char(lexer->curfile);
-                if (c == '\n') {
-                    fprintf(stderr, "Possibly a run-away string on line %ld\n", lexer->curfile->line);
-                    buffer_char(lexer, '"'); /* try to fix it */
-                    update_line(lexer);
-                    return T_ERROR;
-                }
-                if (c == EOF_MARKER) return T_EOF;
-                buffer_char(lexer, c);
-            }
-            while (c != '\'');
-
-            return T_STRING_CONSTANT;
+            return read_string(lexer, c);
         }
         else if (c == ':') { /* read flags */
             token tmp;
@@ -1589,24 +1602,26 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
                 c = read_char(lexer->curfile);
                 if (c == EOF_MARKER) return T_EOF;
             }
-            while ( isalnum(c) );
+            while ( isalnum(c) || c == '_' );
 
             unread_char(lexer->curfile); /* push back last character not needed */
             tmp = check_dictionary(lexer, dictionary);
 
             /* if not found, then no valid flag found */
-            if (tmp == T_NOT_FOUND) return T_ERROR;
+            if (tmp == T_NOT_FOUND) {
+                fprintf(stderr, "invalid flag: '%s'\n", lexer->token_chars);
+                return T_ERROR;
+            }
             else return tmp;
         }
-        else if (isspace(c) && (lexer->charptr > lexer->token_chars) ) {
-            /* we read a register letter, but nothing more, then current char. is
-             * a space. Check if token buffer is not empty (then charptr > token_chars pointer)
-             * if not empty, it's an identifier */
-            return T_IDENTIFIER;
+        else if (c == 0) { /* this is necessary since svn properties on input files */
+            return T_EOF;
         }
         else {
 
-            fprintf(stderr, "BUG IN LEXER: Unknown character: %c", c);
+            fprintf(stderr, "BUG IN LEXER: Unknown character: '%c' (ascii: %d) "
+                            "at character position %d.\n", c, (int)c,
+                            get_current_filepos(lexer));
             fprintf(stderr, "Was parsing file: '%s'\n", lexer->curfile->filename);
             if (lexer->curfile->curchar >= lexer->curfile->buffer+lexer->curfile->filesize) {
                 printf("FATAL: end of file passed!\n");

@@ -26,8 +26,8 @@ NCI function setup, C<interpinfo>, and C<sysinfo> opcodes.
 /*
 
 =item C<void
-enter_nci_method(Parrot_Interp interp, int type,
-        void *func, const char *name, const char *proto)>
+register_nci_method(Parrot_Interp interp, int type,
+                    void *func, const char *name, const char *proto)>
 
 Create an entry in the C<nci_method_table> for the given NCI method of PMC
 class C<type>.
@@ -39,7 +39,14 @@ void Parrot_NCI_nci_make_raw_nci(Interp *interp, PMC *method, void *func);
 
 void
 enter_nci_method(Parrot_Interp interp, const int type, void *func,
-        const char *name, const char *proto)
+                const char *name, const char *proto)
+{
+    register_nci_method(interp, type, func, name, proto);
+}
+
+void
+register_nci_method(Parrot_Interp interp, const int type, void *func,
+                    const char *name, const char *proto)
 {
     PMC * const method = pmc_new(interp, enum_class_NCI);
     /* create call func */
@@ -213,7 +220,7 @@ interpinfo(Interp *interp, INTVAL what)
 {
     INTVAL ret = 0;
     int j;
-    struct Arenas *arena_base = interp->arena_base;
+    Arenas *arena_base = interp->arena_base;
 
     switch (what) {
         case TOTAL_MEM_ALLOC:
@@ -240,7 +247,7 @@ interpinfo(Interp *interp, INTVAL what)
         case ACTIVE_BUFFERS:
             ret = 0;
             for (j = 0; j < (INTVAL)arena_base->num_sized; j++) {
-                struct Small_Object_Pool * const header_pool =
+                Small_Object_Pool * const header_pool =
                     arena_base->sized_header_pools[j];
                 if (header_pool)
                     ret += header_pool->total_objects -
@@ -253,7 +260,7 @@ interpinfo(Interp *interp, INTVAL what)
         case TOTAL_BUFFERS:
             ret = 0;
             for (j = 0; j < (INTVAL)arena_base->num_sized; j++) {
-                struct Small_Object_Pool * const header_pool =
+                Small_Object_Pool * const header_pool =
                     arena_base->sized_header_pools[j];
                 if (header_pool)
                     ret += header_pool->total_objects;

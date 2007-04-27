@@ -105,15 +105,14 @@ extern void Parrot_Integer_i_subtract_Integer(Interp* , PMC* pmc, PMC* value);
 
 /*
 
-=item C<void parrot_PIC_alloc_store(Interp *,
-                                    struct PackFile_ByteCode *, size_t n);>
+=item C<void parrot_PIC_alloc_store(Interp *, PackFile_ByteCode *, size_t n);>
 
 Initialize the PIC storage for the given code segment with the capacitiy of
 holding at least C<n> MIC entries. The PIC_store itself, room for C<n> MICs and
 some space for PICs is allocated as one piece. MICs are returned from the start
 of usable memory, PICs from the rear.
 
-=item C<void parrot_PIC_destroy(Interp *, struct PackFile_ByteCode *);>
+=item C<void parrot_PIC_destroy(Interp *, PackFile_ByteCode *);>
 
 Free memory for the PIC storage.
 
@@ -122,8 +121,7 @@ Free memory for the PIC storage.
 */
 
 void
-parrot_PIC_alloc_store(Interp *interp,
-        struct PackFile_ByteCode *cs, size_t n)
+parrot_PIC_alloc_store(Interp *interp, PackFile_ByteCode *cs, size_t n)
 {
     size_t size, poly;
     Parrot_PIC_store *store;
@@ -139,7 +137,7 @@ parrot_PIC_alloc_store(Interp *interp,
         poly = 2 * sizeof (Parrot_PIC);
     size = n * sizeof (Parrot_MIC) + poly + sizeof (Parrot_PIC_store);
 
-    store = mem_sys_allocate_zeroed(size);
+    store = (Parrot_PIC_store *)mem_sys_allocate_zeroed(size);
     SET_NULL_P(store->prev, Parrot_PIC_store*);
     cs->pic_store = store;
 
@@ -150,7 +148,7 @@ parrot_PIC_alloc_store(Interp *interp,
 }
 
 void
-parrot_PIC_destroy(Interp *interp, struct PackFile_ByteCode *cs)
+parrot_PIC_destroy(Interp *interp, PackFile_ByteCode *cs)
 {
     Parrot_PIC_store *store;
 
@@ -214,7 +212,7 @@ parrot_PIC_alloc_pic(Interp *interp)
             (size_t)(store->n_mics * POLYMORPHIC) * sizeof (Parrot_PIC);
         if (size == 0)
             size = 2 * sizeof (Parrot_PIC);
-        new_store = mem_sys_allocate_zeroed(size + sizeof (Parrot_PIC_store));
+        new_store = (Parrot_PIC_store *)mem_sys_allocate_zeroed(size + sizeof (Parrot_PIC_store));
         new_store->prev = store;
         interp->code->pic_store = new_store;
 
@@ -545,7 +543,7 @@ parrot_PIC_prederef(Interp *interp, opcode_t op, void **pc_pred, int core)
     Parrot_MIC *mic = NULL;
 
     if (parrot_PIC_op_is_cached(interp, op)) {
-        struct PackFile_ByteCode *cs = interp->code;
+        PackFile_ByteCode *cs = interp->code;
         size_t n = cur_opcode - (opcode_t*)cs->prederef.code;
         /*
          * pic_index is half the size of the code
@@ -558,15 +556,15 @@ parrot_PIC_prederef(Interp *interp, opcode_t op, void **pc_pred, int core)
     switch (op) {
         case PARROT_OP_new_p_sc:
             {
-                STRING *class;
+                STRING *_class;
                 INTVAL type;
-                class = (STRING *)cur_opcode[2];
-                type = pmc_type(interp, class);
+                _class = (STRING *)cur_opcode[2];
+                type = pmc_type(interp, _class);
                 if (!type)
-                    type = pmc_type(interp, class);
+                    type = pmc_type(interp, _class);
                 if (type <= 0)
                     real_exception(interp, NULL, NO_CLASS,
-                            "Class '%Ss' not found", class);
+                            "Class '%Ss' not found", _class);
                 pc_pred[2] = (void*)type;
                 op = PARROT_OP_new_p_ic;
             }

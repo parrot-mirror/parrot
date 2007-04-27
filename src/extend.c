@@ -233,18 +233,23 @@ Parrot_PMC_get_cstring_intkey(Parrot_INTERP interp, Parrot_PMC pmc,
 
 Return a null-terminated string that represents the string value of the PMC.
 
+Note that you must free this string with C<string_cstring_free()>!
+
 =cut
 
 */
 
-char *Parrot_PMC_get_cstring_intkey(Parrot_INTERP interp, Parrot_PMC pmc,
+char *
+Parrot_PMC_get_cstring_intkey(Parrot_INTERP interp, Parrot_PMC pmc,
                                     Parrot_Int key) {
     STRING *intermediate;
-    char *retval;
+    char   *retval;
+
     PARROT_CALLIN_START(interp);
     intermediate = VTABLE_get_string_keyed_int(interp, pmc, key);
-    retval =  string_to_cstring(interp, intermediate);
+    retval       = string_to_cstring(interp, intermediate);
     PARROT_CALLIN_END(interp);
+
     return retval;
 }
 
@@ -254,17 +259,22 @@ char *Parrot_PMC_get_cstring_intkey(Parrot_INTERP interp, Parrot_PMC pmc,
 
 Return a null-terminated string that represents the string value of the PMC.
 
+Note that you must free this string with C<string_cstring_free()>!
+
 =cut
 
 */
 
-char *Parrot_PMC_get_cstring(Parrot_INTERP interp, Parrot_PMC pmc) {
+char *
+Parrot_PMC_get_cstring(Parrot_INTERP interp, Parrot_PMC pmc) {
     STRING *intermediate;
-    char *retval;
+    char   *retval;
+
     PARROT_CALLIN_START(interp);
     intermediate = VTABLE_get_string(interp, pmc);
-    retval = string_to_cstring(interp, intermediate);
+    retval       = string_to_cstring(interp, intermediate);
     PARROT_CALLIN_END(interp);
+
     return retval;
 }
 
@@ -279,17 +289,22 @@ Return a null-terminated string for the PMC, along with the length.
 Yes, right now this is a bit of a cheat. It needs fixing, but without
 disturbing the interface.
 
+Note that you must free the string with C<string_cstring_free()>.
+
 =cut
 
 */
 
-char *Parrot_PMC_get_cstringn(Parrot_INTERP interp, Parrot_PMC pmc,
+char *
+Parrot_PMC_get_cstringn(Parrot_INTERP interp, Parrot_PMC pmc,
                               Parrot_Int *length) {
     char *retval;
+
     PARROT_CALLIN_START(interp);
-    retval = string_to_cstring(interp, VTABLE_get_string(interp, pmc));
+    retval  = string_to_cstring(interp, VTABLE_get_string(interp, pmc));
     *length = strlen(retval);
     PARROT_CALLIN_END(interp);
+
     return retval;
 }
 
@@ -304,18 +319,23 @@ Return a null-terminated string for the PMC, along with the length.
 Yes, right now this is a bit of a cheat. It needs fixing, but without
 disturbing the interface.
 
+Note that you must free this string with C<string_cstring_free()>.
+
 =cut
 
 */
 
-char *Parrot_PMC_get_cstringn_intkey(Parrot_INTERP interp, Parrot_PMC pmc,
+char *
+Parrot_PMC_get_cstringn_intkey(Parrot_INTERP interp, Parrot_PMC pmc,
                                      Parrot_Int *length, Parrot_Int key) {
     char *retval;
+
     PARROT_CALLIN_START(interp);
-    retval = string_to_cstring(interp,
+    retval  = string_to_cstring(interp,
                                VTABLE_get_string_keyed_int(interp, pmc, key));
     *length = strlen(retval);
     PARROT_CALLIN_END(interp);
+
     return retval;
 }
 
@@ -661,7 +681,7 @@ Parrot_PMC Parrot_PMC_new(Parrot_INTERP interp, Parrot_Int type) {
 
 /*
 
-=item C<Parrot_Int Parrot_PMC_typenum(Parrot_INTERP interp, const char *class)>
+=item C<Parrot_Int Parrot_PMC_typenum(Parrot_INTERP interp, const char *_class)>
 
 Returns the internal identifier that represents the named class.
 
@@ -669,10 +689,10 @@ Returns the internal identifier that represents the named class.
 
 */
 
-Parrot_Int Parrot_PMC_typenum(Parrot_INTERP interp, const char *class) {
+Parrot_Int Parrot_PMC_typenum(Parrot_INTERP interp, const char *_class) {
     Parrot_Int retval;
     PARROT_CALLIN_START(interp);
-    retval = pmc_type(interp, string_from_cstring(interp, class, 0));
+    retval = pmc_type(interp, string_from_cstring(interp, _class, 0));
     PARROT_CALLIN_END(interp);
     return retval;
 }

@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 52;
+use Parrot::Test tests => 56;
 use Parrot::Config;
 
 =head1 NAME
@@ -584,6 +584,24 @@ CODE
 3.14
 OUTPUT
 
+pir_output_is( <<'CODE', <<'OUTPUT', "HLL and namespace directives" );
+.HLL '_Tcl', ''
+.namespace ['Foo'; 'Bar']
+
+.HLL 'Tcl', ''
+
+.sub main :main
+  $P0 = get_namespace
+  $P1 = $P0.'get_name'()
+  $S0 = join "::", $P1
+  print $S0
+  print "\n"
+  end
+.end
+CODE
+tcl
+OUTPUT
+
 {
     my $temp_a = "temp_a.pir";
 
@@ -666,7 +684,61 @@ print $S <<'EOF';
 EOF
 close $S;
 
-pir_output_is( <<"CODE", <<'OUTPUT', "export_to" );
+pir_output_like( <<'CODE', <<'OUTPUT', 'export_to() with null destination throws exception' );
+.sub 'test' :main
+    .local pmc nsa, nsb, ar
+
+    ar = new .ResizableStringArray
+    push ar, 'foo'
+    nsa = new .Null
+    nsb = get_namespace ['B']
+    nsb.'export_to'(nsa, ar)
+.end
+
+.namespace ['B']
+.sub 'foo' :anon
+.end
+CODE
+/^destination namespace not specified\n/
+OUTPUT
+
+pir_output_like(
+    <<'CODE', <<'OUTPUT', 'export_to() with null array exports default boject set !!!UNSPECIFIED!!!' );
+.sub 'test' :main
+    .local pmc nsa, nsb, ar
+
+    ar = new .Null
+    nsa = get_namespace
+    nsb = get_namespace ['B']
+    nsb.'export_to'(nsa, ar)
+.end
+
+.namespace ['B']
+.sub 'foo'
+.end
+CODE
+/^exporting default object set not yet specified\n/
+OUTPUT
+
+pir_output_like(
+    <<'CODE', <<'OUTPUT', 'export_to() with empty array exports default boject set !!!UNSPECIFIED!!!' );
+.sub 'test' :main
+    .local pmc nsa, nsb, ar
+
+    ar = new .ResizableStringArray
+    nsa = get_namespace
+    nsb = get_namespace ['B']
+    nsb.'export_to'(nsa, ar)
+.end
+
+.namespace ['B']
+.sub 'foo'
+.end
+CODE
+/^exporting default object set not yet specified\n/
+OUTPUT
+
+pir_output_is( <<"CODE", <<'OUTPUT', "export_to -- success" );
 .HLL 'A', ''
 .sub main :main
     a_foo()

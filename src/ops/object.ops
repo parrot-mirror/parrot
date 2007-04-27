@@ -72,7 +72,7 @@ op callmethodcc(invar PMC, invar PMC) :object_base {
 
   object = $1;
   method_pmc = $2;
-  /* XXX should we check if object.can(method) */
+  /* RT#42371 should we check if object.can(method) */
 
   next = expr NEXT();
   interp->current_object = object;
@@ -197,8 +197,8 @@ inline op isa(out INT, invar PMC, in STR) :object_base {
 }
 
 inline op isa(out INT, invar PMC, in PMC) :object_base {
-    PMC *class = Parrot_class_lookup_p(interp, $3);
-    $1 = Parrot_object_isa(interp, $2, class);
+    PMC *_class = Parrot_class_lookup_p(interp, $3);
+    $1 = Parrot_object_isa(interp, $2, _class);
     goto NEXT();
 }
 
@@ -233,7 +233,7 @@ inline op newclass(out PMC, in PMC) :object_classes {
 
 =item B<subclass>(out PMC, invar PMC, in PMC)
 
-KLUDGE ALERT - OPCODE NAME SHOULD DIFFER FROM BELOW - XXX FIXME
+RT#42372 KLUDGE ALERT - OPCODE NAME SHOULD DIFFER FROM BELOW
 
 Create a new class, put in $1, that is a subclass of $2.  $3, if available
 and not null, is the name of the new class--if not, the subclass is an
@@ -270,7 +270,7 @@ inline op subclass(out PMC, invar PMC, in PMC) :object_classes {
 
 =item B<subclass>(out PMC, in STR, in PMC)
 
-KLUDGE ALERT - OPCODE NAME SHOULD DIFFER FROM ABOVE - XXX FIXME
+RT#42372 KLUDGE ALERT - OPCODE NAME SHOULD DIFFER FROM ABOVE
 
 Create a new class, put in $1, that is a subclass of the class named $2.
 $3, if available and not null, is the name of the new class--if not, the
@@ -279,114 +279,187 @@ subclass is an anonymous subclass.
 =cut
 
 op subclass(out PMC, inconst PMC) :object_classes {
-  PMC *class = Parrot_class_lookup_p(interp, $2);
+  PMC *_class = Parrot_class_lookup_p(interp, $2);
   opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(class)) {
+  if (PMC_IS_NULL(_class)) {
     STRING *name = readable_name(interp, $2);
     real_exception(interp, next, NO_CLASS,
                 "Class '%Ss' doesn't exist", name);
   }
-  $1 = VTABLE_subclass(interp, class, PMCNULL);
+  $1 = VTABLE_subclass(interp, _class, PMCNULL);
   goto ADDRESS(next);
 }
 
 op subclass(out PMC, in STR) :object_classes {
-  PMC *class = Parrot_class_lookup(interp, $2);
+  PMC *_class = Parrot_class_lookup(interp, $2);
   opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(class)) {
+  if (PMC_IS_NULL(_class)) {
     real_exception(interp, next, NO_CLASS,
                 "Class '%Ss' doesn't exist", $2);
   }
-  $1 = VTABLE_subclass(interp, class, PMCNULL);
+  $1 = VTABLE_subclass(interp, _class, PMCNULL);
   goto ADDRESS(next);
 }
 
 
 op subclass(out PMC, inconst PMC, in STR) :object_classes {
-  PMC *class = Parrot_class_lookup_p(interp, $2);
+  PMC *_class = Parrot_class_lookup_p(interp, $2);
   PMC *subname_p;
   opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(class)) {
+  if (PMC_IS_NULL(_class)) {
     STRING *name = readable_name(interp, $2);
     real_exception(interp, next, NO_CLASS,
                 "Class '%Ss' doesn't exist", name);
   }
   subname_p = pmc_new(interp, enum_class_String);
   VTABLE_set_string_native(interp, subname_p, $3);
-  $1 = VTABLE_subclass(interp, class, subname_p);
+  $1 = VTABLE_subclass(interp, _class, subname_p);
   goto NEXT();
 }
 
 op subclass(out PMC, in STR, in STR) :object_classes {
-  PMC *class = Parrot_class_lookup(interp, $2);
+  PMC *_class = Parrot_class_lookup(interp, $2);
   PMC *subname_p;
   opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(class)) {
+  if (PMC_IS_NULL(_class)) {
     real_exception(interp, next, NO_CLASS,
                 "Class '%Ss' doesn't exist", $2);
   }
   subname_p = pmc_new(interp, enum_class_String);
   VTABLE_set_string_native(interp, subname_p, $3);
-  $1 = VTABLE_subclass(interp, class, subname_p);
+  $1 = VTABLE_subclass(interp, _class, subname_p);
   goto ADDRESS(next);
 }
 
 
 op subclass(out PMC, inconst PMC, in PMC) :object_classes {
-  PMC *class = Parrot_class_lookup_p(interp, $2);
+  PMC *_class = Parrot_class_lookup_p(interp, $2);
   opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(class)) {
+  if (PMC_IS_NULL(_class)) {
     STRING *name = readable_name(interp, $2);
     real_exception(interp, next, NO_CLASS,
                 "Class '%Ss' doesn't exist", name);
   }
-  $1 = VTABLE_subclass(interp, class, $3);
+  $1 = VTABLE_subclass(interp, _class, $3);
   goto ADDRESS(next);
 }
 
 op subclass(out PMC, in STR, in PMC) :object_classes {
-  PMC *class = Parrot_class_lookup(interp, $2);
-  opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(class)) {
-    real_exception(interp, next, NO_CLASS, "Class '%s' doesn't exist",
-                string_to_cstring(interp, $2));
-  }
-  $1 = VTABLE_subclass(interp, class, $3);
-  goto ADDRESS(next);
+    PMC      *_class = Parrot_class_lookup(interp, $2);
+    opcode_t *next   = expr NEXT();
+
+    if (PMC_IS_NULL(_class)) {
+        char *class_name = string_to_cstring(interp, $2);
+        real_exception(interp, next, NO_CLASS, "Class '%s' doesn't exist",
+                class_name);
+    }
+
+    $1 = VTABLE_subclass(interp, _class, $3);
+    goto ADDRESS(next);
 }
+
+###############################################################################
 
 =item B<getclass>(out PMC, in STR)
 
 =item B<getclass>(out PMC, in PMC)
 
-Find the PMC for a class, by name.
+Find the PMC for a class, by name. Deprecated - works with the old class
+system.
 
 =cut
 
 inline op getclass(out PMC, in STR) :object_classes {
-  PMC *class = Parrot_class_lookup(interp, $2);
-  opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(class)) {
-    real_exception(interp, next, NO_CLASS, "Class '%s' doesn't exist",
-                string_to_cstring(interp, $2));
-  }
-  else
-    $1 = class;
+    PMC      *_class = Parrot_class_lookup(interp, $2);
+    opcode_t *next   = expr NEXT();
+
+    if (PMC_IS_NULL(_class)) {
+        char *class_name = string_to_cstring(interp, $2);
+        real_exception(interp, next, NO_CLASS, "Class '%s' doesn't exist",
+                class_name);
+    }
+    else
+        $1 = _class;
+
   goto ADDRESS(next);
 }
 
 inline op getclass(out PMC, in PMC) :object_classes {
-  PMC *class = Parrot_class_lookup_p(interp, $2);
+  PMC *_class = Parrot_class_lookup_p(interp, $2);
   opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(class)) {
+  if (PMC_IS_NULL(_class)) {
     STRING *name = readable_name(interp, $2);
     real_exception(interp, next, NO_CLASS,
          "Class '%Ss' doesn't exist", name);
   }
   else
-    $1 = class;
+    $1 = _class;
   goto ADDRESS(next);
 }
+
+###############################################################################
+
+=item B<get_class>(out PMC, in STR)
+
+=item B<get_class>(out PMC, in PMC)
+
+Find the PMC for a class, by string name or by key.
+
+=cut
+
+inline op get_class(out PMC, in STR) :object_classes {
+  PMC *_class = PMCNULL;
+  opcode_t *next = expr NEXT();
+
+  /* Look up a namespace with the given name within the current
+   * namespace and if we find it, get the class associated with it, if any. */
+  PMC *ns = Parrot_get_namespace_keyed_str(interp,
+      CONTEXT(interp->ctx)->current_namespace, $2);
+  if (!PMC_IS_NULL(ns))
+      Parrot_PCCINVOKE(interp, ns,
+          string_from_const_cstring(interp, "get_class", 0), "->P", &_class);
+
+  /* If class is not found, throw an exception; otherwise, put it in $1. */
+  if (PMC_IS_NULL(_class))
+      real_exception(interp, next, NO_CLASS, "Class '%Ss' doesn't exist", $2);
+  else
+      $1 = _class;
+
+  goto ADDRESS(next);
+}
+
+inline op get_class(out PMC, in PMC) :object_classes {
+  PMC *_class = PMCNULL;
+  opcode_t *next = expr NEXT();
+
+  /* If we were not passed a namespace PMC, look it up, otherwise just use
+   * the supplied namespace PMC. */
+  PMC *ns;
+  if (!VTABLE_isa(interp, $2, string_from_const_cstring(interp, "NameSpace", 0)))
+      ns = Parrot_get_namespace_autobase(interp, $2);
+  else
+      ns = $2;
+
+  /* If we have got a namespace, get the class associated with it, if any. */
+  if (!PMC_IS_NULL(ns))
+      Parrot_PCCINVOKE(interp, ns,
+          string_from_const_cstring(interp, "get_class", 0), "->P", &_class);
+
+  /* If class is not found, throw an exception; otherwise, put it in $1. */
+  if (PMC_IS_NULL(_class)) {
+      STRING *name = readable_name(interp, $2);
+      real_exception(interp, next, NO_CLASS, "Class '%Ss' doesn't exist", name);
+  }
+  else {
+      $1 = _class;
+  }
+
+  goto ADDRESS(next);
+  /* Shouldn't be reached */
+  return NULL;
+}
+
+###############################################################################
 
 =item B<singleton>(invar PMC)  B<(unimplemented)>
 
@@ -447,6 +520,17 @@ inline op removeparent(invar PMC, invar PMC) :object_classes {
     goto NEXT();
 }
 
+=item B<addrole>(invar PMC, invar PMC)
+
+Compose the role $2 into $1.
+
+=cut
+
+inline op addrole(invar PMC, invar PMC) :object_classes {
+    VTABLE_add_role(interp, $1, $2);
+    goto NEXT();
+}
+
 =item B<addattribute>(invar PMC, in STR)
 
 Add the attribute named $2 to the class $1.
@@ -454,7 +538,17 @@ Add the attribute named $2 to the class $1.
 =cut
 
 inline op addattribute(invar PMC, in STR) :object_classes {
-    Parrot_add_attribute(interp, $1, $2);
+    STRING *class_name  = string_from_const_cstring(interp, "Class", 0);
+    STRING *pclass_name = string_from_const_cstring(interp, "ParrotClass", 0);
+
+    if (VTABLE_isa(interp, $1, class_name))
+        VTABLE_add_attribute(interp, $1, $2, PMCNULL);
+    else if (VTABLE_isa(interp, $1, pclass_name))
+        Parrot_add_attribute(interp, $1, $2);
+    else
+        real_exception(interp, NULL, INVALID_OPERATION,
+            "Cannot add attribute to non-class" );
+
     goto NEXT();
 }
 
@@ -554,11 +648,35 @@ op removedoes(invar PMC, in STR) :object_classes {
     goto NEXT();
 }
 
+###############################################################################
+
+=item B<inspect>(out PMC, in PMC)
+
+Sets $1 to a PMC hash of all introspection data available for $2, keyed on
+name.
+
+=item B<inspect>(out PMC, in PMC, in STR)
+
+Sets $1 to a PMC Hash, Array, String, Integer, or Number value with
+introspection information corresponding to the requested string name.
+
+=cut
+
+inline op inspect(out PMC, in PMC) :object_classes {
+  $1 = VTABLE_inspect(interp, $2);
+  goto NEXT();
+}
+
+inline op inspect(out PMC, in PMC, in STR) :object_classes {
+  $1 = VTABLE_inspect_str(interp, $2, $3);
+  goto NEXT();
+}
+
 =back
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001-2004, The Perl Foundation.
+Copyright (C) 2001-2007, The Perl Foundation.
 
 =head1 LICENSE
 

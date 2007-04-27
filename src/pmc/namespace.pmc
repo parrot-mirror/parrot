@@ -76,7 +76,7 @@ other fields.
     void init() {
         SUPER();                        /* _struct_val := Hash */
         PMC_pmc_val(SELF) = NULL;       /* parent */
-        PMC_data(SELF)    = mem_sys_allocate_zeroed(sizeof(Parrot_NSInfo));
+        PMC_data(SELF)    = mem_allocate_zeroed_typed(Parrot_NSInfo);
     }
 
 /*
@@ -110,6 +110,7 @@ Frees the namespace info struct.
 */
     void destroy() {
         mem_sys_free(PARROT_NSINFO(SELF));
+        SUPER();
     }
 
 /*
@@ -342,14 +343,14 @@ an invalid type exception if C<namespace> is not a NameSpace PMC or subclass.
 
 */
 
-    METHOD void add_namespace(STRING *name, PMC *namespace) {
+    METHOD void add_namespace(STRING *name, PMC *_namespace) {
         STRING *s_ns = CONST_STRING(INTERP, "NameSpace");
-        if (!VTABLE_isa(INTERP, namespace, s_ns))
+        if (!VTABLE_isa(INTERP, _namespace, s_ns))
             real_exception(INTERP, NULL, E_TypeError,
                 "Invalid type %d in add_namespace()",
-                namespace->vtable->base_type);
+                _namespace->vtable->base_type);
 
-        VTABLE_set_pmc_keyed_str(INTERP, SELF, name, namespace);
+        VTABLE_set_pmc_keyed_str(INTERP, SELF, name, _namespace);
         return;
     }
 
@@ -505,10 +506,13 @@ does not delete the PMC.
         if (ns == PMCNULL)
             return;
 
-        if (!VTABLE_isa(INTERP, ns, s_ns))
+        if (!VTABLE_isa(INTERP, ns, s_ns)) {
+            char *item_name = string_to_cstring(INTERP, name);
             real_exception(INTERP, NULL, E_TypeError,
                 "Invalid type %d for '%s' in del_namespace()",
-                ns->vtable->base_type, string_to_cstring(INTERP, name));
+                ns->vtable->base_type, item_name);
+            string_cstring_free(item_name);
+        }
 
         parrot_hash_delete(INTERP, hash, name);
     }
@@ -535,10 +539,13 @@ delete the PMC.
         if (sub == PMCNULL)
             return;
 
-        if (!VTABLE_isa(INTERP, sub, s_sub))
+        if (!VTABLE_isa(INTERP, sub, s_sub)) {
+            char *item_name = string_to_cstring(INTERP, name);
             real_exception(INTERP, NULL, E_TypeError,
                 "Invalid type %d for '%s' in del_sub()",
-                sub->vtable->base_type, string_to_cstring(INTERP, name));
+                sub->vtable->base_type, item_name);
+            string_cstring_free(item_name);
+        }
 
         parrot_hash_delete(INTERP, hash, name);
     }
@@ -596,9 +603,18 @@ is an array of (string) names to be exported.
     METHOD void export_to(PMC* dest, PMC* what) {
         INTVAL i, n;
 
-        n = VTABLE_elements(INTERP, what);
-        if (!n)
+        if (PMC_IS_NULL(dest)) {
+            real_exception(interp, NULL, 0,
+                    "destination namespace not specified");
             return;
+        }
+        if (PMC_IS_NULL(what) || !VTABLE_elements(interp, what)) {
+            real_exception(interp, NULL, 0,
+                    "exporting default object set not yet specified");
+            return;
+        }
+
+        n = VTABLE_elements(INTERP, what);
         for (i = 0; i < n; ++i) {
             STRING *name;
             PMC *el;
@@ -621,6 +637,39 @@ Return the parent NameSpace or PMCNULL, if none.
 
     METHOD PMC* get_parent() {
         return PMC_pmc_val(SELF) ? PMC_pmc_val(SELF) : PMCNULL;
+    }
+
+/*
+
+=item C<PCCMETHOD PMC* get_class()>
+
+Returns the class or role PMC that is associated with this namespace.
+
+=cut
+
+*/
+
+    PCCMETHOD void get_class()
+    {
+        Parrot_NSInfo *nsinfo = PARROT_NSINFO(SELF);
+        PMC *ret_class = nsinfo->class;
+        PCCRETURN(PMC *ret_class);
+    }
+
+/*
+
+=item C<PCCMETHOD void set_class(PMC *class_or_role)>
+
+Sets the class or role PMC that is associated with this namespace.
+
+=cut
+
+*/
+
+    PCCMETHOD void set_class(PMC *class_or_role)
+    {
+        Parrot_NSInfo *nsinfo = PARROT_NSINFO(SELF);
+        nsinfo->class = class_or_role;
     }
 
 }

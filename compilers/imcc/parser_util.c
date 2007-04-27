@@ -593,7 +593,7 @@ imcc_compile(Parrot_Interp interp, const char *s, int pasm_file,
      * save old cs, make new
      */
     char name[64];
-    struct PackFile_ByteCode *old_cs, *new_cs;
+    PackFile_ByteCode *old_cs, *new_cs;
     PMC *sub=NULL;
     parrot_sub_t sub_data;
     struct _imc_info_t *imc_info = NULL;
@@ -728,12 +728,14 @@ PMC *
 imcc_compile_pasm_ex(Parrot_Interp interp, const char *s)
 {
     STRING *error_message;
-    PMC *sub;
+    PMC    *sub;
+    char   *error_str;
 
     sub = imcc_compile(interp, s, 1, &error_message);
     if (sub == NULL ) {
-        real_exception(interp, NULL, E_Exception,
-              string_to_cstring(interp, error_message));
+        error_str = string_to_cstring(interp, error_message);
+        real_exception(interp, NULL, E_Exception, error_str);
+        string_cstring_free(error_str);
     }
     return sub;
 }
@@ -742,12 +744,14 @@ PMC *
 imcc_compile_pir_ex(Parrot_Interp interp, const char *s)
 {
     STRING *error_message;
-    PMC *sub;
+    PMC    *sub;
+    char   *error_str;
 
     sub = imcc_compile(interp, s, 0, &error_message);
     if (sub == NULL) {
-        real_exception(interp, NULL, E_Exception,
-              string_to_cstring(interp, error_message));
+        error_str = string_to_cstring(interp, error_message);
+        real_exception(interp, NULL, E_Exception, error_str);
+        string_cstring_free(error_str);
     }
     return sub;
 }
@@ -759,7 +763,7 @@ static void *
 imcc_compile_file(Parrot_Interp interp, const char *fullname,
                    STRING **error_message)
 {
-    struct PackFile_ByteCode *cs_save = interp->code, *cs=NULL;
+    PackFile_ByteCode *cs_save = interp->code, *cs=NULL;
     char *ext;
     FILE *fp;
     struct _imc_info_t *imc_info = NULL;

@@ -76,6 +76,21 @@ to the previous values and the allocated register memory is discarded.
         / NUMVAL_SIZE) * NUMVAL_SIZE)
 
 /*
+ * Round register allocation size up to the nearest multiple of 8. A
+ * granularity of 8 is arbitrary, it could have been some bigger power of 2. A
+ * "slot" is an index into the free_list array. Each slot in free_list has a
+ * linked list of pointers to already allocated contexts available for (re)use.
+ * The slot where an available context is stored corresponds to the size of the
+ * context.
+ */
+
+#define SLOT_CHUNK_SIZE 8
+
+#define ROUND_ALLOC_SIZE(size) ((((size) + SLOT_CHUNK_SIZE - 1) \
+        / SLOT_CHUNK_SIZE) * SLOT_CHUNK_SIZE)
+#define CALCULATE_SLOT_NUM(size) ((size) / SLOT_CHUNK_SIZE)
+
+/*
 
 =item C<static void new_context_mem(Interp *, context_mem *ctx_mem)>
 
@@ -129,13 +144,13 @@ create_initial_context(Interp *interp)
     int i;
     static INTVAL num_regs[] ={32,32,32,32};
 
-    /*
-     * create some initial free_list slots
-     */
+    /* Create some initial free_list slots. */
+
 #define INITIAL_FREE_SLOTS 8
     interp->ctx_mem.n_free_slots = INITIAL_FREE_SLOTS;
-    interp->ctx_mem.free_list =
-        mem_sys_allocate(INITIAL_FREE_SLOTS * sizeof (void *));
+    interp->ctx_mem.free_list    =
+        (void **)mem_sys_allocate(INITIAL_FREE_SLOTS * sizeof (void *));
+
     for (i = 0; i < INITIAL_FREE_SLOTS; ++i)
         interp->ctx_mem.free_list[i] = NULL;
     /*
@@ -273,20 +288,22 @@ Parrot_dup_context(Interp *interp, struct Parrot_Context *old)
     struct Parrot_Context *ctx;
 
     const size_t reg_alloc = old->regs_mem_size;
-    const int slot = reg_alloc >> 3;
+    const int slot = CALCULATE_SLOT_NUM(reg_alloc);
     void * ptr = interp->ctx_mem.free_list[slot];
 
     if (ptr) {
         interp->ctx_mem.free_list[slot] = *(void **) ptr;
     }
     else {
-        ptr = mem_sys_allocate(reg_alloc + ALIGNED_CTX_SIZE);
+        ptr = (void *)mem_sys_allocate(reg_alloc + ALIGNED_CTX_SIZE);
     }
-    CONTEXT(interp->ctx) = ctx = ptr;
-    ctx->regs_mem_size = reg_alloc;
-    ctx->n_regs_used = old->n_regs_used;
-    diff = (long*)ctx - (long*)old;
-    interp->ctx.bp.regs_i += diff;
+    CONTEXT(interp->ctx) = ctx = (struct Parrot_Context *)ptr;
+
+    ctx->regs_mem_size   = reg_alloc;
+    ctx->n_regs_used     = old->n_regs_used;
+    diff                 = (long*)ctx - (long*)old;
+
+    interp->ctx.bp.regs_i    += diff;
     interp->ctx.bp_ps.regs_s += diff;
     init_context(interp, ctx, old);
     return ctx;
@@ -318,6 +335,7 @@ Parrot_pop_context(Interp *interp)
     interp->ctx.bp_ps = old->bp_ps;
 }
 
+
 struct Parrot_Context *
 Parrot_alloc_context(Interp *interp, INTVAL *n_regs_used)
 {
@@ -328,30 +346,48 @@ Parrot_alloc_context(Interp *interp, INTVAL *n_regs_used)
      * TODO (OPT) if we allocate a new context due to a self-recursive call
      *      create a specialized version that just uses caller's size
      */
+    const size_t size_i = sizeof (INTVAL)   * n_regs_used[REGNO_INT];
     const size_t size_n = sizeof (FLOATVAL) * n_regs_used[REGNO_NUM];
-    const size_t size_nip = size_n +
-        sizeof (INTVAL) *   n_regs_used[REGNO_INT] +
-        sizeof (PMC*) *     n_regs_used[REGNO_PMC];
-    size_t reg_alloc = size_nip +
-        sizeof (STRING*) *  n_regs_used[REGNO_STR];
+    const size_t size_s = sizeof (STRING*)  * n_regs_used[REGNO_STR];
+    const size_t size_p = sizeof (PMC*)     * n_regs_used[REGNO_PMC];
 
-    const int slot = (reg_alloc + 7) >> 3;
-    reg_alloc = slot << 3;
+    const size_t size_nip = size_n + size_i + size_p;
+    const size_t all_regs_size  = size_n + size_i + size_p + size_s;
 
+    const size_t reg_alloc = ROUND_ALLOC_SIZE(all_regs_size);
+    const int slot = CALCULATE_SLOT_NUM(reg_alloc);
+
+    /*
+     * If slot is beyond the end of the allocated list, extend the list to
+     * allocate more slots.
+     */
     if (slot >= interp->ctx_mem.n_free_slots) {
-        const int n = slot + 1;
+        const int extend_size = slot + 1;
         int i;
 
-        interp->ctx_mem.free_list = mem_sys_realloc(
-                interp->ctx_mem.free_list, n * sizeof (void*));
-        for (i = interp->ctx_mem.n_free_slots; i < n; ++i)
+        interp->ctx_mem.free_list = (void **)mem_sys_realloc(
+                interp->ctx_mem.free_list, extend_size * sizeof (void*));
+
+        for (i = interp->ctx_mem.n_free_slots; i < extend_size; ++i)
             interp->ctx_mem.free_list[i] = NULL;
-        interp->ctx_mem.n_free_slots = n;
+        interp->ctx_mem.n_free_slots = extend_size;
     }
 
+    /*
+     * The free_list contains a linked list of pointers for each size (slot
+     * index). Pop off an available context of the desired size from free_list.
+     * If no contexts of the desired size are available, allocate a new one.
+     */
     ptr = interp->ctx_mem.free_list[slot];
     old = CONTEXT(interp->ctx);
     if (ptr) {
+        /*
+         * Store the next pointer from the linked list for this size (slot
+         * index) in free_list. On "*(void **) ptr", C won't dereference a void
+         * * pointer (untyped), so type cast ptr to void** (a dereference-able
+         * type) then dereference it to get a void*. Store the dereferenced
+         * value (the next pointer in the linked list) in free_list.
+         */
         interp->ctx_mem.free_list[slot] = *(void **) ptr;
     }
     else {
@@ -361,19 +397,23 @@ Parrot_alloc_context(Interp *interp, INTVAL *n_regs_used)
         else
             ptr = mem_sys_allocate_zeroed(to_alloc);
     }
+
 #if CTX_LEAK_DEBUG
     if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
         fprintf(stderr, "[alloc ctx %p]\n", ptr);
     }
 #endif
-    CONTEXT(interp->ctx) = ctx = ptr;
-    ctx->regs_mem_size = reg_alloc;
-    ctx->n_regs_used = n_regs_used;
+
+    CONTEXT(interp->ctx) = ctx = (struct Parrot_Context *)ptr;
+
+    ctx->regs_mem_size   = reg_alloc;
+    ctx->n_regs_used     = n_regs_used;
+
     /* regs start past the context */
     p = (void *) ((char *)ptr + ALIGNED_CTX_SIZE);
-    /* ctx.bp points to I0, which has Nx at left */
+    /* ctx.bp points to I0, which has Nx on the left */
     interp->ctx.bp.regs_i = (INTVAL*)((char*)p + size_n);
-    /* this points to S0 */
+    /* ctx.bp_ps points to S0, which has Px on the left */
     interp->ctx.bp_ps.regs_s = (STRING**)((char*)p + size_nip);
     init_context(interp, ctx, old);
     return ctx;
@@ -408,7 +448,7 @@ Parrot_free_context(Interp *interp, parrot_context_t *ctxp, int re_use)
         }
 #endif
         ptr = ctxp;
-        slot = ctxp->regs_mem_size >> 3;
+        slot = CALCULATE_SLOT_NUM(ctxp->regs_mem_size);
 
         assert(slot < interp->ctx_mem.n_free_slots);
         *(void **)ptr = interp->ctx_mem.free_list[slot];
@@ -447,7 +487,7 @@ Restore all registers from register stack.
 
 */
 
-typedef struct {
+typedef struct save_regs_t {
     Regs_ni  old_bp_ni;   /* restoreall just resets ptrs */
     Regs_ps  old_bp_ps;
     Regs_ps  bp_ps;       /* pushed regs need DOD marking */
@@ -471,23 +511,24 @@ Parrot_push_regs(Interp *interp)
     size_t size_nip, size_nips;
     void *ptr;
 
-    parrot_context_t * const ctx = CONTEXT(interp->ctx);
+    parrot_context_t * const ctx     = CONTEXT(interp->ctx);
     Stack_Chunk_t **   const chunk_p = &ctx->reg_stack;
-    save_regs_t *      const save_r = stack_prepare_push(interp, chunk_p);
+    save_regs_t *      const save_r  =
+        (save_regs_t *)stack_prepare_push(interp, chunk_p);
 
     save_r->old_bp_ni.regs_i = ctx->bp.regs_i;
     save_r->old_bp_ps.regs_s = ctx->bp_ps.regs_s;
-    save_r->n_regs_str = ctx->n_regs_used[REGNO_STR];
-    save_r->n_regs_pmc = ctx->n_regs_used[REGNO_PMC];
+    save_r->n_regs_str       = ctx->n_regs_used[REGNO_STR];
+    save_r->n_regs_pmc       = ctx->n_regs_used[REGNO_PMC];
 
-    size_nip = _SIZEOF_NUMS + _SIZEOF_INTS + _SIZEOF_PMCS;
+    size_nip  = _SIZEOF_NUMS + _SIZEOF_INTS + _SIZEOF_PMCS;
     size_nips = size_nip + _SIZEOF_STRS;
-    ptr = mem_sys_allocate(size_nips);
+    ptr       = mem_sys_allocate(size_nips);
     memcpy(ptr, (char*)ctx->bp.regs_i - _SIZEOF_NUMS, size_nips);
     interp->ctx.bp_ps.regs_s = ctx->bp_ps.regs_s =
-        save_r->bp_ps.regs_s = (void*) ((char*) ptr + size_nip);
+        save_r->bp_ps.regs_s = (STRING **) ((char*) ptr + size_nip);
     interp->ctx.bp.regs_i = ctx->bp.regs_i =
-        (void*) ((char*) ptr + _SIZEOF_NUMS);
+        (INTVAL *) ((char*) ptr + _SIZEOF_NUMS);
     chunk = *chunk_p;
     PObj_bufstart(chunk) = ptr;
     PObj_buflen  (chunk) = size_nips;
@@ -497,10 +538,11 @@ Parrot_push_regs(Interp *interp)
 void
 Parrot_pop_regs(Interp *interp)
 {
-    parrot_context_t * const ctx = CONTEXT(interp->ctx);
+    parrot_context_t * const ctx     = CONTEXT(interp->ctx);
     Stack_Chunk_t **   const chunk_p = &ctx->reg_stack;
-    Stack_Chunk_t *    const chunk = *chunk_p;
-    save_regs_t *      const save_r = stack_prepare_pop(interp, chunk_p);
+    Stack_Chunk_t *    const chunk   = *chunk_p;
+    save_regs_t *      const save_r  =
+        (save_regs_t *)stack_prepare_pop(interp, chunk_p);
 
     /* restore register base pointers */
     interp->ctx.bp.regs_i    = ctx->bp.regs_i    =

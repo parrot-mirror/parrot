@@ -6,7 +6,9 @@ use strict;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::Test;
 
-plan $^O =~ /MSWin32/ ? ( skip_all => 'Broken on Win32' ) : ( tests => 2 );
+plan $^O =~ /MSWin32|cygwin/
+   ? ( skip_all => 'broken on Win32 && cygwin' )
+   : ( tests => 2 );
 
 =head1 NAME
 
@@ -56,7 +58,7 @@ CODE
 0123
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "Add, remove, several threads", todo => 'RT#41892');
+pir_output_is( <<'CODE', <<'OUTPUT', "Add, remove, several threads", todo => 'RT#41892' );
 .sub add_thread
     .param pmc queue
     .param int start

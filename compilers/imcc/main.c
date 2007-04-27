@@ -9,8 +9,6 @@
  *
  */
 
-#define PARROT_IN_EXTENSION
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,17 +17,17 @@
 #include "imc.h"
 #include "parrot/embed.h"
 #include "parrot/longopt.h"
+#include "parrot/imcc.h"
 #include "pbc.h"
 #include "parser.h"
 
 static int load_pbc, run_pbc, write_pbc, pre_process, pasm_file;
-static char optimizer_opt[20];
 
 static void
 usage(FILE* fp)
 {
     fprintf(fp,
-            "parrot -[abcCEfgGhjprStvVwy.] [-d [FLAGS]] "
+            "parrot -[abcCEfgGhjprStvVwy.] [-d [FLAGS]] [-D [FLAGS]]"
             "[-O [level]] [-o FILE] <file>\n");
 }
 
@@ -59,7 +57,7 @@ help_debug(void)
     "    0010    thread debugging\n"
     "    0020    eval/compile\n"
     "    0040    fill I, N registers with garbage\n"
-    "    0080    show, when a context is destroyed\n"
+    "    0080    show when a context is destroyed\n"
     "\n"
     "--trace -t [Flags] ...\n"
     "    0001    opcodes\n"
@@ -112,7 +110,7 @@ help(void)
 
 
 static void
-imcc_version(Interp *interp)
+Parrot_version(Interp *interp)
 {
     int rev = PARROT_REVISION;
     printf("This is parrot version " PARROT_VERSION);
@@ -146,11 +144,11 @@ the GNU General Public License or the Artistic License for more details.\n\n");
 #define SET_TRACE(flag)  Parrot_set_trace(interp, flag)
 #define SET_CORE(core)   interp->run_core |= core
 
-#define OPT_GC_DEBUG     128
-#define OPT_DESTROY_FLAG 129
-#define OPT_HELP_DEBUG   130
-#define OPT_PBC_OUTPUT   131
-#define OPT_RUNTIME_PREFIX  132
+#define OPT_GC_DEBUG       128
+#define OPT_DESTROY_FLAG   129
+#define OPT_HELP_DEBUG     130
+#define OPT_PBC_OUTPUT     131
+#define OPT_RUNTIME_PREFIX 132
 
 static struct longopt_opt_decl options[] = {
     { '.', '.', (OPTION_flags)0, { "--wait" } },
@@ -161,7 +159,8 @@ static struct longopt_opt_decl options[] = {
     { 'O', 'O', OPTION_optional_FLAG, { "--optimize" } },
     { 'S', 'S', (OPTION_flags)0, { "--switched-core" } },
     { 'V', 'V', (OPTION_flags)0, { "--version" } },
-    { '\0', OPT_DESTROY_FLAG, (OPTION_flags)0,   { "--leak-test", "--destroy-at-end" } },
+    { '\0', OPT_DESTROY_FLAG, (OPTION_flags)0,
+                                 { "--leak-test", "--destroy-at-end" } },
     { '\0', OPT_GC_DEBUG, (OPTION_flags)0, { "--gc-debug" } },
     { 'a', 'a', (OPTION_flags)0, { "--pasm" } },
     { 'b', 'b', (OPTION_flags)0, { "--bounds-checks", "--slow-core" } },
@@ -185,7 +184,7 @@ static struct longopt_opt_decl options[] = {
 };
 
 static int
-is_all_hex_digitis(const char *s)
+is_all_hex_digits(const char *s)
 {
     for (; *s; s++)
         if (!isxdigit(*s))
@@ -194,11 +193,11 @@ is_all_hex_digitis(const char *s)
 }
 
 /* most stolen from test_main.c */
-static char *
+char *
 parseflags(Parrot_Interp interp, int *argc, char **argv[])
 {
     struct longopt_opt_info opt = LONGOPT_OPT_INFO_INIT;
-    int status;
+    int   status;
     if (*argc == 1) {
         usage(stderr);
         exit(1);
@@ -214,7 +213,7 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
                 SET_FLAG(PARROT_PROFILE_FLAG);
                 break;
             case 't':
-                if (opt.opt_arg && is_all_hex_digitis(opt.opt_arg)) {
+                if (opt.opt_arg && is_all_hex_digits(opt.opt_arg)) {
                     SET_TRACE(strtoul(opt.opt_arg, 0, 16));
                 }
                 else
@@ -236,7 +235,7 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
                 SET_CORE(PARROT_CGOTO_CORE);
                 break;
             case 'd':
-                if (opt.opt_arg && is_all_hex_digitis(opt.opt_arg)) {
+                if (opt.opt_arg && is_all_hex_digits(opt.opt_arg)) {
                     IMCC_INFO(interp)->debug = strtoul(opt.opt_arg, 0, 16);
                 }
                 else {
@@ -244,7 +243,7 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
                 }
                 break;
             case 'D':
-                if (opt.opt_arg && is_all_hex_digitis(opt.opt_arg)) {
+                if (opt.opt_arg && is_all_hex_digits(opt.opt_arg)) {
                     SET_DEBUG(strtoul(opt.opt_arg, 0, 16));
                 }
                 else
@@ -277,7 +276,7 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
                 exit(0);
                 break;
             case 'V':
-                imcc_version(interp);
+                Parrot_version(interp);
                 break;
             case 'r':
                 ++run_pbc;
@@ -307,40 +306,27 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
                 break;
 
             case 'O':
-                if (opt.opt_arg) {
-                    strncpy(optimizer_opt, opt.opt_arg, sizeof (optimizer_opt));
-                    optimizer_opt[sizeof (optimizer_opt)-1] = '\0';
+                if (!opt.opt_arg) {
+                    IMCC_INFO(interp)->optimizer_level |= OPT_PRE;
+                    break;
                 }
-                else {
-                    strcpy(optimizer_opt, "1");
-                }
-                if (strchr(optimizer_opt, 'p'))
+                if (strchr(opt.opt_arg, 'p'))
                     IMCC_INFO(interp)->optimizer_level |= OPT_PASM;
-                if (strchr(optimizer_opt, 'c'))
+                if (strchr(opt.opt_arg, 'c'))
                     IMCC_INFO(interp)->optimizer_level |= OPT_SUB;
 
                 IMCC_INFO(interp)->allocator = IMCC_GRAPH_ALLOCATOR;
-#if 0
                 /* currently not ok due to different register allocation */
-                if (strchr(optimizer_opt, 'j')) {
-                    int one = 1;
-                    optimizer_level |= (OPT_J | OPT_PASM);
-                    Parrot_setflag(interp, PARROT_JIT_FLAG, &one);
+                if (strchr(opt.opt_arg, 'j')) {
+                    SET_CORE(PARROT_JIT_CORE);
                 }
-#endif
-                if (strchr(optimizer_opt, '1')) {
+                if (strchr(opt.opt_arg, '1')) {
                     IMCC_INFO(interp)->optimizer_level |= OPT_PRE;
                 }
-                if (strchr(optimizer_opt, '2')) {
-                    /* FIXME -O2 is borken */
-#if 1
-                    IMCC_INFO(interp)->optimizer_level |=
-                        (OPT_PRE | OPT_CFG);
-#else
-                    IMCC_INFO(interp)->optimizer_level |= OPT_PRE;
-#endif
+                if (strchr(opt.opt_arg, '2')) {
+                    IMCC_INFO(interp)->optimizer_level |= (OPT_PRE | OPT_CFG);
                 }
-                if (strchr(optimizer_opt, 't')) {
+                if (strchr(opt.opt_arg, 't')) {
                     SET_CORE(PARROT_SWITCH_CORE);
 #ifdef HAVE_COMPUTED_GOTO
                     SET_CORE(PARROT_CGP_CORE);
@@ -363,7 +349,7 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
                 SET_FLAG(PARROT_DESTROY_FLAG);
                 break;
             default:
-                IMCC_fatal_standalone(interp, 1, "main: Invalid flag '%s' used."
+                internal_exception(1, "main: Invalid flag '%s' used."
                         "\n\nhelp: parrot -h\n", (*argv)[0]);
         }
     }
@@ -397,7 +383,7 @@ do_pre_process(Parrot_Interp interp)
     YYSTYPE val;
     void *yyscanner;
 
-    do_yylex_init( interp, &yyscanner);
+    do_yylex_init(interp, &yyscanner);
 
     IMCC_push_parser_state(interp);
     while ((c = yylex(&val, yyscanner, interp))) {
@@ -488,62 +474,133 @@ do_pre_process(Parrot_Interp interp)
             case ADV_ARROW:     printf("=>");break;
 
             default:
-                     if (c < 255)
-                         printf("%c", c);
-                     else
-                         printf("%s ", val.s);
-                     break;
+                if (c < 255)
+                    printf("%c", c);
+                else
+                    printf("%s ", val.s);
+                break;
         }
     }
+    yylex_destroy(&yyscanner);
+}
+
+static void
+imcc_get_optimization_description(Interp *interp, int opt_level, char *opt_desc)
+{
+    int i = 0;
+
+    if (opt_level & (OPT_PRE | OPT_CFG))
+            opt_desc[i++] = '2';
+    else
+        if (opt_level & OPT_PRE)
+            opt_desc[i++] = '1';
+
+    if (opt_level & OPT_PASM)
+        opt_desc[i++] = 'p';
+    if (opt_level & OPT_SUB)
+        opt_desc[i++] = 'c';
+
+    if (interp->run_core & PARROT_JIT_CORE)
+        opt_desc[i++] = 'j';
+
+    if (interp->run_core & PARROT_SWITCH_CORE)
+        opt_desc[i++] = 't';
+
+    opt_desc[i++] = '\0';
+    return;
 }
 
 int
-main(int argc, char * argv[])
+imcc_initialize(Interp *interp)
 {
-    struct PackFile *pf;
-    int obj_file;
-    char *sourcefile;
-    const char *output_file;
-    Interp *interp;
-    void *yyscanner;
-    STRING *executable_name;
-    PMC *executable_name_pmc;
+    yyscan_t yyscanner = IMCC_INFO(interp)->yyscanner;
 
-    Parrot_set_config_hash();
-
-    interp = Parrot_new(NULL);
-
-    do_yylex_init( interp, &yyscanner);
+    do_yylex_init(interp, &yyscanner);
 
     Parrot_block_DOD(interp);
     Parrot_block_GC(interp);
 
+    IMCC_INFO(interp)->yyscanner = yyscanner;
     IMCC_INFO(interp)->allocator = IMCC_VANILLA_ALLOCATOR;
 
-    /* We parse the arguments, but first store away the name of the Parrot
-       executable, since parsing destroys that and we want to make it
-       available. */
-    executable_name = string_from_cstring(interp, argv[0], 0);
-    executable_name_pmc = pmc_new(interp, enum_class_String);
-    VTABLE_set_string_native(interp, executable_name_pmc, executable_name);
-    VTABLE_set_pmc_keyed_int(interp, interp->iglobals, IGLOBALS_EXECUTABLE,
-        executable_name_pmc);
-
-    sourcefile = parseflags(interp, &argc, &argv);
-    output_file = interp->output_file;
-
     /* Default optimization level is zero; see optimizer.c, imc.h */
-    if (!*optimizer_opt) {
+    if (!IMCC_INFO(interp)->optimizer_level) {
 #if 1
-        strcpy(optimizer_opt, "0");
         IMCC_INFO(interp)->optimizer_level = 0;
 #else
         /* won't even make with this: something with Data::Dumper and
          * set_i_p_i*/
-        strcpy(optimizer_opt, "1");
         IMCC_INFO(interp)->optimizer_level = OPT_PRE;
 #endif
     }
+
+    return 1;
+}
+
+static void
+imcc_run_pbc(Interp *interp, int obj_file, const char *output_file,
+             int argc, char * argv[])
+{
+    if (IMCC_INFO(interp)->imcc_warn)
+        PARROT_WARNINGS_on(interp, PARROT_WARNINGS_ALL_FLAG);
+    else
+        PARROT_WARNINGS_off(interp, PARROT_WARNINGS_ALL_FLAG);
+
+    if (!IMCC_INFO(interp)->gc_off) {
+        Parrot_unblock_DOD(interp);
+        Parrot_unblock_GC(interp);
+    }
+
+    if (obj_file)
+        IMCC_info(interp, 1, "Writing %s\n", output_file);
+    else
+        IMCC_info(interp, 1, "Running...\n");
+
+    /* runs :init functions */
+    PackFile_fixup_subs(interp, PBC_MAIN, NULL);
+
+    /* XXX no return value :-( */
+    Parrot_runcode(interp, argc, argv);
+}
+
+static void
+imcc_write_pbc(Interp *interp, const char *output_file)
+{
+    size_t    size;
+    opcode_t *packed;
+    FILE     *fp;
+
+    IMCC_info(interp, 1, "Writing %s\n", output_file);
+
+    size = PackFile_pack_size(interp, interp->code->base.pf) *
+        sizeof (opcode_t);
+    IMCC_info(interp, 1, "packed code %d bytes\n", size);
+    packed = (opcode_t*) mem_sys_allocate(size);
+    PackFile_pack(interp, interp->code->base.pf, packed);
+    if (strcmp(output_file, "-") == 0)
+        fp = stdout;
+    else if ((fp = fopen(output_file, "wb")) == 0)
+        IMCC_fatal_standalone(interp, E_IOError,
+            "Couldn't open %s\n", output_file);
+
+    if ((1 != fwrite(packed, size, 1, fp)))
+        IMCC_fatal_standalone(interp, E_IOError,
+            "Couldn't write %s\n", output_file);
+    fclose(fp);
+    IMCC_info(interp, 1, "%s written.\n", output_file);
+    free(packed);
+}
+
+int
+imcc_run(Interp *interp, const char *sourcefile, int argc, char * argv[])
+{
+    PackFile *pf;
+    int              obj_file;
+    const char      *output_file;
+    yyscan_t         yyscanner;
+
+    yyscanner   = IMCC_INFO(interp)->yyscanner;
+    output_file = interp->output_file;
 
     /* Read in the source and determine whether it's Parrot bytecode,
        PASM or a Parrot abstract syntax tree (PAST) file. If it isn't
@@ -558,7 +615,7 @@ main(int argc, char * argv[])
         char *ext;
         ext = strrchr(sourcefile, '.');
         if (ext && strcmp(ext, ".pbc") == 0) {
-            load_pbc = 1;
+            load_pbc  = 1;
             write_pbc = 0;
         }
         else if (!load_pbc) {
@@ -576,6 +633,7 @@ main(int argc, char * argv[])
         do_pre_process(interp);
         Parrot_destroy(interp);
         yylex_destroy(yyscanner);
+        IMCC_INFO(interp)->yyscanner = NULL;
         Parrot_exit(interp, 0);
     }
 
@@ -589,10 +647,10 @@ main(int argc, char * argv[])
         }
         else if (ext && strcmp(ext, PARROT_OBJ_EXT) == 0) {
 #if EXEC_CAPABLE
-            load_pbc = 1;
+            load_pbc  = 1;
             write_pbc = 0;
-            run_pbc = 1;
-            obj_file = 1;
+            run_pbc   = 1;
+            obj_file  = 1;
             Parrot_set_run_core(interp, PARROT_EXEC_CORE);
 #else
             IMCC_fatal_standalone(interp, 1, "main: can't produce object file");
@@ -616,16 +674,23 @@ main(int argc, char * argv[])
     if (load_pbc) {
         pf = Parrot_readbc(interp, sourcefile);
         if (!pf)
-            IMCC_fatal_standalone(interp, 1,
-                "main: Packfile loading failed\n");
+            IMCC_fatal_standalone(interp, 1, "main: Packfile loading failed\n");
         Parrot_loadbc(interp, pf);
     }
     else {
         /* Otherwise, we need to compile our input to bytecode. */
-        int per_pbc = (write_pbc | run_pbc) != 0;
-        IMCC_info(interp, 1, "using optimization '%s' (%x) \n", optimizer_opt,
-                IMCC_INFO(interp)->optimizer_level);
-        pf = PackFile_new(interp, 0);
+        int per_pbc   = (write_pbc | run_pbc) != 0;
+        int opt_level = IMCC_INFO(interp)->optimizer_level;
+
+        /* Shouldn't be more than five, but five extra is cheap */
+        char opt_desc[10];
+
+        imcc_get_optimization_description(interp, opt_level, opt_desc);
+
+        IMCC_info(interp, 1, "using optimization '-O%s' (%x) \n",
+                  opt_desc, opt_level);
+
+        pf            = PackFile_new(interp, 0);
         Parrot_loadbc(interp, pf);
 
         IMCC_push_parser_state(interp);
@@ -638,28 +703,29 @@ main(int argc, char * argv[])
         IMCC_INFO(interp)->state->pasm_file = pasm_file;
         IMCC_TRY(IMCC_INFO(interp)->jump_buf,
                  IMCC_INFO(interp)->error_code) {
-            int retval;
-            retval = yyparse(yyscanner, (void *) interp);
-            if (retval) {
-                /* fprintf(stderr, "** Parsing failed **\n"); */
+            if (yyparse(yyscanner, (void *) interp))
                 exit(1);
-            }
+
             imc_compile_all_units(interp);
         }
         IMCC_CATCH(IMCC_FATAL_EXCEPTION) {
+            char *error_str = string_to_cstring(interp,
+                    IMCC_INFO(interp)->error_message);
+
             IMCC_INFO(interp)->error_code=IMCC_FATAL_EXCEPTION;
-            fprintf(stderr,"error:imcc:%s",
-                    string_to_cstring(interp,
-                    IMCC_INFO(interp)->error_message));
+            fprintf(stderr,"error:imcc:%s", error_str);
             IMCC_print_inc(interp);
+            string_cstring_free(error_str);
             Parrot_exit(interp, IMCC_FATAL_EXCEPTION);
         }
         IMCC_CATCH(IMCC_FATALY_EXCEPTION) {
+            char *error_str = string_to_cstring(interp,
+                    IMCC_INFO(interp)->error_message);
+
             IMCC_INFO(interp)->error_code=IMCC_FATALY_EXCEPTION;
-            fprintf(stderr,"error:imcc:%s",
-                    string_to_cstring(interp,
-                    IMCC_INFO(interp)->error_message));
+            fprintf(stderr,"error:imcc:%s", error_str);
             IMCC_print_inc(interp);
+            string_cstring_free(error_str);
             Parrot_exit(interp, IMCC_FATALY_EXCEPTION);
         }
         IMCC_END_TRY;
@@ -674,30 +740,8 @@ main(int argc, char * argv[])
     }
 
     /* Produce a PBC output file, if one was requested */
-    if (write_pbc) {
-        size_t size;
-        opcode_t *packed;
-        FILE *fp;
-        IMCC_info(interp, 1, "Writing %s\n", output_file);
-
-        size = PackFile_pack_size(interp, interp->code->base.pf) *
-            sizeof (opcode_t);
-        IMCC_info(interp, 1, "packed code %d bytes\n", size);
-        packed = (opcode_t*) mem_sys_allocate(size);
-        PackFile_pack(interp, interp->code->base.pf, packed);
-        if (strcmp(output_file, "-") == 0)
-            fp = stdout;
-        else if ((fp = fopen(output_file, "wb")) == 0)
-            IMCC_fatal_standalone(interp, E_IOError,
-                "Couldn't open %s\n", output_file);
-
-        if ((1 != fwrite(packed, size, 1, fp)))
-            IMCC_fatal_standalone(interp, E_IOError,
-                "Couldn't write %s\n", output_file);
-        fclose(fp);
-        IMCC_info(interp, 1, "%s written.\n", output_file);
-        free(packed);
-    }
+    if (write_pbc)
+        imcc_write_pbc(interp, output_file);
 
     /* If necessary, load the file written above */
     if (run_pbc == 2 && write_pbc && strcmp(output_file, "-")) {
@@ -711,36 +755,13 @@ main(int argc, char * argv[])
     }
 
     /* Run the bytecode */
-    if (run_pbc) {
+    if (run_pbc)
+        imcc_run_pbc(interp, obj_file, output_file, argc, argv);
 
-        if (IMCC_INFO(interp)->imcc_warn)
-            PARROT_WARNINGS_on(interp, PARROT_WARNINGS_ALL_FLAG);
-        else
-            PARROT_WARNINGS_off(interp, PARROT_WARNINGS_ALL_FLAG);
-        if (!IMCC_INFO(interp)->gc_off) {
-            Parrot_unblock_DOD(interp);
-            Parrot_unblock_GC(interp);
-        }
-        if (obj_file)
-            IMCC_info(interp, 1, "Writing %s\n", output_file);
-        else
-            IMCC_info(interp, 1, "Running...\n");
-
-        /* runs :init functions */
-        PackFile_fixup_subs(interp, PBC_MAIN, NULL);
-
-        Parrot_runcode(interp, argc, argv);
-        /* XXX no return value :-( */
-    }
-
-    /* Clean-up after ourselves */
-    Parrot_destroy(interp);
     yylex_destroy(yyscanner);
-    Parrot_exit(interp, 0);
-
+    IMCC_INFO(interp)->yyscanner = NULL;
     return 0;
 }
-
 
 /*
  * Local variables:

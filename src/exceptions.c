@@ -121,7 +121,7 @@ describe them as well.\n\n");
     fprintf(stderr, "Architecture: %s\n", PARROT_ARCHNAME);
     fprintf(stderr, "JIT Capable : %s\n", JIT_CAPABLE ? "Yes" : "No");
     if (interp)
-        fprintf(stderr, "Interp Flags: %#x\n", interp->flags);
+        fprintf(stderr, "Interp Flags: %#x\n", (unsigned int)interp->flags);
     else
         fprintf(stderr, "Interp Flags: (no interpreter)\n");
     fprintf(stderr, "Exceptions  : %s\n", "(missing from core)");
@@ -235,7 +235,7 @@ find_exception_handler(Interp *interp, PMC *exception)
     message = VTABLE_get_string_keyed_int(interp, exception, 0);
     /* [TODO: replace quadratic search with something linear, hopefully without
        trashing abstraction layers.  -- rgr, 17-Sep-06.] */
-    while ((e = stack_entry(interp, interp->dynamic_env, depth))) {
+    while ((e = stack_entry(interp, interp->dynamic_env, depth)) != NULL) {
         if (e->entry_type == STACK_ENTRY_PMC) {
             handler = UVal_pmc(e->entry);
             if (handler && handler->vtable->base_type ==
@@ -646,8 +646,7 @@ execution then resumes.
 
 */
 void
-do_exception(Interp *interp,
-        exception_severity severity, long error)
+do_exception(Interp *interp, INTVAL severity, long error)
 {
     Parrot_exception * const the_exception = interp->exceptions;
 

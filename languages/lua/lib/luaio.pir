@@ -44,6 +44,15 @@ See "Lua 5.1 Reference Manual", section 5.7 "Input and Ouput Facilities".
     _lua__GLOBAL = global '_G'
     new $P1, .LuaString
 
+    .local pmc _io_env
+    new _io_env, .LuaTable
+
+    .local pmc _popen_env
+    new _popen_env, .LuaTable
+
+    .local pmc _file
+    _file = createmeta(_io_env)
+
     .local pmc _io
     new _io, .LuaTable
     set $P1, 'io'
@@ -52,166 +61,189 @@ See "Lua 5.1 Reference Manual", section 5.7 "Input and Ouput Facilities".
     _register($P1, _io)
 
     .const .Sub _io_close = '_io_close'
-    _io_close.'setfenv'(_lua__GLOBAL)
+    _io_close.'setfenv'(_io_env)
     set $P1, 'close'
     _io[$P1] = _io_close
 
     .const .Sub _io_flush = '_io_flush'
-    _io_flush.'setfenv'(_lua__GLOBAL)
+    _io_flush.'setfenv'(_io_env)
     set $P1, 'flush'
     _io[$P1] = _io_flush
 
     .const .Sub _io_input = '_io_input'
-    _io_input.'setfenv'(_lua__GLOBAL)
+    _io_input.'setfenv'(_io_env)
     set $P1, 'input'
     _io[$P1] = _io_input
 
     .const .Sub _io_lines = '_io_lines'
-    _io_lines.'setfenv'(_lua__GLOBAL)
+    _io_lines.'setfenv'(_io_env)
     set $P1, 'lines'
     _io[$P1] = _io_lines
 
     .const .Sub _io_open = '_io_open'
-    _io_open.'setfenv'(_lua__GLOBAL)
+    _io_open.'setfenv'(_io_env)
     set $P1, 'open'
     _io[$P1] = _io_open
 
     .const .Sub _io_output = '_io_output'
-    _io_output.'setfenv'(_lua__GLOBAL)
+    _io_output.'setfenv'(_io_env)
     set $P1, 'output'
     _io[$P1] = _io_output
 
     .const .Sub _io_popen = '_io_popen'
-    _io_popen.'setfenv'(_lua__GLOBAL)
+    _io_popen.'setfenv'(_popen_env)
     set $P1, 'popen'
     _io[$P1] = _io_popen
 
     .const .Sub _io_read = '_io_read'
-    _io_read.'setfenv'(_lua__GLOBAL)
+    _io_read.'setfenv'(_io_env)
     set $P1, 'read'
     _io[$P1] = _io_read
 
     .const .Sub _io_tmpfile = '_io_tmpfile'
-    _io_tmpfile.'setfenv'(_lua__GLOBAL)
+    _io_tmpfile.'setfenv'(_io_env)
     set $P1, 'tmpfile'
     _io[$P1] = _io_tmpfile
 
     .const .Sub _io_type = '_io_type'
-    _io_type.'setfenv'(_lua__GLOBAL)
+    _io_type.'setfenv'(_io_env)
     set $P1, 'type'
     _io[$P1] = _io_type
 
     .const .Sub _io_write = '_io_write'
-    _io_write.'setfenv'(_lua__GLOBAL)
+    _io_write.'setfenv'(_io_env)
     set $P1, 'write'
     _io[$P1] = _io_write
 
+    .const .Sub _readline = 'readline'
+    _readline.'setfenv'(_io_env)
+
+
+    # set default close function
     .const .Sub _io_fclose = '_io_fclose'
-    _io_fclose.'setfenv'(_lua__GLOBAL)
+    _io_fclose.'setfenv'(_io_env)
     set $P1, '__close'
-    _io[$P1] = _io_fclose
+    _io_env[$P1] = _io_fclose
 
-    #
-    #    File
-    #
+    # create (and set) default files
+    createstdfiles(_file, _io, _io_env)
 
+    # environment for 'popen'
+    .const .Sub _io_pclose = '_io_pclose'
+    _io_pclose.'setfenv'(_io_env)
+    set $P1, '__close'
+    _popen_env[$P1] = _io_pclose
+
+.end
+
+
+.sub 'createmeta' :anon
+    .param pmc env
     .local pmc _file
     _file = newmetatable('ParrotIO')
+
+    new $P1, .LuaString
     set $P1, '__index'
     _file[$P1] = _file
 
     .const .Sub _file_close = '_io_close'
-    _file_close.'setfenv'(_lua__GLOBAL)
+    _file_close.'setfenv'(env)
     set $P1, 'close'
     _file[$P1] = _file_close
 
     .const .Sub _file_flush = '_file_flush'
-    _file_flush.'setfenv'(_lua__GLOBAL)
+    _file_flush.'setfenv'(env)
     set $P1, 'flush'
     _file[$P1] = _file_flush
 
     .const .Sub _file_lines = '_file_lines'
-    _file_lines.'setfenv'(_lua__GLOBAL)
+    _file_lines.'setfenv'(env)
     set $P1, 'lines'
     _file[$P1] = _file_lines
 
     .const .Sub _file_read = '_file_read'
-    _file_read.'setfenv'(_lua__GLOBAL)
+    _file_read.'setfenv'(env)
     set $P1, 'read'
     _file[$P1] = _file_read
 
     .const .Sub _file_seek = '_file_seek'
-    _file_seek.'setfenv'(_lua__GLOBAL)
+    _file_seek.'setfenv'(env)
     set $P1, 'seek'
     _file[$P1] = _file_seek
 
     .const .Sub _file_setvbuf = '_file_setvbuf'
-    _file_setvbuf.'setfenv'(_lua__GLOBAL)
+    _file_setvbuf.'setfenv'(env)
     set $P1, 'setvbuf'
     _file[$P1] = _file_setvbuf
 
     .const .Sub _file_write = '_file_write'
-    _file_write.'setfenv'(_lua__GLOBAL)
+    _file_write.'setfenv'(env)
     set $P1, 'write'
     _file[$P1] = _file_write
 
     .const .Sub _file__gc = '_file__gc'
-    _file__gc.'setfenv'(_lua__GLOBAL)
+    _file__gc.'setfenv'(env)
     set $P1, '__gc'
     _file[$P1] = _file__gc
 
     .const .Sub _file__tostring = '_file__tostring'
-    _file__tostring.'setfenv'(_lua__GLOBAL)
+    _file__tostring.'setfenv'(env)
     set $P1, '__tostring'
     _file[$P1] = _file__tostring
 
-    #
-    #    Standard Files
-    #
+    .return (_file)
+.end
 
-    .local pmc _lua__ENVIRON
-    _lua__ENVIRON = global '_ENVIRON'
+
+.const int IO_INPUT = 1
+.const int IO_OUTPUT = 2
+
+
+.sub 'createstdfiles' :anon
+    .param pmc mt
+    .param pmc io
+    .param pmc env
+    new $P1, .LuaString
     new $P3, .LuaNumber
 
     set $P1, 'stdin'
     $P2 = getstdin
     new $P0, .LuaUserdata
     setattribute $P0, 'data', $P2
-    $P0.'set_metatable'(_file)
-    _io[$P1] = $P0
-    set $P3, 0
-    _lua__ENVIRON[$P3] = $P0
+    $P0.'set_metatable'(mt)
+    io[$P1] = $P0
+    set $P3, IO_INPUT
+    env[$P3] = $P0
 
     set $P1, 'stdout'
     $P2 = getstdout
     new $P0, .LuaUserdata
     setattribute $P0, 'data', $P2
-    $P0.'set_metatable'(_file)
-    _io[$P1] = $P0
-    set $P3, 1
-    _lua__ENVIRON[$P3] = $P0
+    $P0.'set_metatable'(mt)
+    io[$P1] = $P0
+    set $P3, IO_OUTPUT
+    env[$P3] = $P0
 
     set $P1, 'stderr'
     $P2 = getstderr
     new $P0, .LuaUserdata
     setattribute $P0, 'data', $P2
-    $P0.'set_metatable'(_file)
-    _io[$P1] = $P0
-    set $P3, 2
-    _lua__ENVIRON[$P3] = $P0
-
+    $P0.'set_metatable'(mt)
+    io[$P1] = $P0
 .end
 
 
 .sub 'getiofile' :anon
     .param int findex
-    .local pmc _lua__ENVIRON
+    .local pmc env
     .local pmc io
     .local pmc file
-    _lua__ENVIRON = global '_ENVIRON'
+    $P0 = getinterp
+    $P1 = $P0['sub'; 1]
+    env = getfenv($P1)
     new io, .LuaNumber
     set io, findex
-    file = _lua__ENVIRON[io]
+    file = env[io]
     .return (file)
 .end
 
@@ -325,12 +357,14 @@ L4:
 .sub 'setiofile' :anon
     .param int findex
     .param pmc file
-    .local pmc _lua__ENVIRON
+    .local pmc env
     .local pmc io
-    _lua__ENVIRON = global '_ENVIRON'
+    $P0 = getinterp
+    $P1 = $P0['sub'; 1]
+    env = getfenv($P1)
     new io, .LuaNumber
     set io, findex
-    _lua__ENVIRON[io] = file
+    env[io] = file
 .end
 
 
@@ -366,7 +400,7 @@ L2:
     ret = getattribute file, 'data'
     .return (ret)
 L1:
-    tag_error($S0, 'file')
+    typerror($S0, 'file')
 .end
 
 .sub 'tofile' :anon
@@ -381,13 +415,13 @@ L1:
 
 .sub 'aux_close' :anon
     .param pmc file
-    # TODO: getfenv
-    $P0 = global '_G'
+    .local pmc env
+    $P0 = getinterp
+    $P1 = $P0['sub'; 1]
+    env = getfenv($P1)
     new $P1, .LuaString
-    set $P1, 'io'
-    $P0 = $P0[$P1]
     set $P1, '__close'
-    $P0 = $P0[$P1]
+    $P0 = env[$P1]
     .return $P0(file)
 .end
 
@@ -430,10 +464,11 @@ file.
     .param pmc file
     .local pmc ret
     unless null file goto L1
-    file = getiofile(1)
+    file = getiofile(IO_OUTPUT)
 L1:
     tofile(file)
-    .return aux_close(file)
+    ret = aux_close(file)
+    .return (ret)
 .end
 
 
@@ -446,7 +481,7 @@ Equivalent to C<file:flush> over the default output file.
 .sub '_io_flush' :anon
     .local pmc file
     .const .LuaString key = 'flush'
-    file = getiofile(1)
+    file = getiofile(IO_OUTPUT)
     $P0 = file[key]
     .return $P0(file)
 .end
@@ -467,6 +502,7 @@ error code.
 .sub '_io_input' :anon
     .param pmc file :optional
     .local pmc f
+    .local pmc ret
     if null file goto L1
     unless file goto L1
     $I1 = isa file, 'LuaString'
@@ -478,14 +514,15 @@ error code.
 L3:
     $P0 = newfile()
     setattribute $P0, 'data', f
-    setiofile(0, $P0)
+    setiofile(IO_INPUT, $P0)
     goto L1
 L2:
     tofile(file)
-    setiofile(0, file)
+    setiofile(IO_INPUT, file)
     goto L1
 L1:
-    .return getiofile(0)
+    ret = getiofile(IO_INPUT)
+    .return (ret)
 .end
 
 
@@ -512,7 +549,7 @@ input file. In this case it does not close the file when the loop ends.
     .local pmc file
     .local pmc f
     unless null filename goto L1
-    file = getiofile(0)
+    file = getiofile(IO_INPUT)
     .return _file_lines(file)
 L1:
     $S1 = checkstring(filename)
@@ -603,6 +640,7 @@ Similar to C<io.input>, but operates over the default output file.
 .sub '_io_output' :anon
     .param pmc file :optional
     .local pmc f
+    .local pmc ret
     if null file goto L1
     unless file goto L1
     $I1 = isa file, 'LuaString'
@@ -614,13 +652,14 @@ Similar to C<io.input>, but operates over the default output file.
 L3:
     $P0 = newfile()
     setattribute $P0, 'data', f
-    setiofile(1, $P0)
+    setiofile(IO_OUTPUT, $P0)
     goto L1
 L2:
     tofile(file)
-    setiofile(1, file)
+    setiofile(IO_OUTPUT, file)
 L1:
-    .return getiofile(1)
+    ret = getiofile(IO_OUTPUT)
+    .return (ret)
 .end
 
 
@@ -637,6 +676,15 @@ NOT YET IMPLEMENTED.
 =cut
 
 .sub '_io_popen' :anon
+    .param pmc prog :optional
+    .param pmc mode :optional
+    $S1 = checkstring(prog)
+    $S2 = optstring(mode, 'r')
+    not_implemented()
+.end
+
+.sub '_io_pclose' :anon
+    .param pmc file
     not_implemented()
 .end
 
@@ -651,7 +699,7 @@ Equivalent to C<io.input():read>.
     .param pmc argv :slurpy
     .local pmc file
     .const .LuaString key = 'read'
-    file = getiofile(0)
+    file = getiofile(IO_INPUT)
     $P0 = file[key]
     .return $P0(file, argv :flat)
 .end
@@ -717,7 +765,7 @@ Equivalent to C<io.output():write>.
     .param pmc argv :slurpy
     .local pmc file
     .const .LuaString key = 'write'
-    file = getiofile(1)
+    file = getiofile(IO_OUTPUT)
     $P0 = file[key]
     .return $P0(file, argv :flat)
 .end

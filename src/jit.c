@@ -69,7 +69,7 @@ static void
 insert_fixup_targets(Interp* interp, char *branch,
         size_t limit)
 {
-    struct PackFile_FixupTable *ft = interp->code->fixups;
+    PackFile_FixupTable *ft = interp->code->fixups;
     int i;
 
     if (!ft)
@@ -991,7 +991,7 @@ optimize_jit(Interp *interp,
 optimize_imcc_jit(Interp *interp,
             Parrot_jit_info_t *jit_info,
             opcode_t *code_start, opcode_t *code_end,
-            struct PackFile_Segment *jit_seg)>
+            PackFile_Segment *jit_seg)>
 
 Generate optimizer stuff from the C<_JIT> section in the packfile.
 
@@ -1003,7 +1003,7 @@ static void
 optimize_imcc_jit(Interp *interp,
             Parrot_jit_info_t *jit_info,
              opcode_t *code_start, opcode_t *code_end,
-             struct PackFile_Segment *jit_seg)
+             PackFile_Segment *jit_seg)
 {
     Parrot_jit_optimizer_t *optimizer;
     size_t size, i, typ, n;
@@ -1288,9 +1288,9 @@ Parrot_destroy_jit(void *ptr)
 static void
 set_reg_usage(Interp *interp, opcode_t *pc)
 {
-    struct PackFile_ByteCode *seg;
-    struct PackFile_FixupTable *ft;
-    struct PackFile_ConstTable *ct;
+    PackFile_ByteCode *seg;
+    PackFile_FixupTable *ft;
+    PackFile_ConstTable *ct;
     PMC *sub_pmc;
     parrot_sub_t sub;
     int i, ci;
@@ -1358,7 +1358,7 @@ parrot_build_asm(Interp *interp,
     Parrot_jit_info_t *jit_info = NULL;
     opcode_t cur_opcode_byte, *cur_op;
     Parrot_jit_optimizer_section_ptr cur_section;
-    struct PackFile_Segment *jit_seg;
+    PackFile_Segment *jit_seg;
     INTVAL *  n_regs_used;        /* INSP in PBC */
     /* XXX
      * no longer referenced due to disabled code below
@@ -1375,7 +1375,7 @@ parrot_build_asm(Interp *interp,
     int needs_fs;       /* fetch/store */
 
     jit_info = interp->code->jit_info =
-            mem_sys_allocate(sizeof (Parrot_jit_info_t));
+            mem_allocate_typed(Parrot_jit_info_t);
 
     jit_info->flags     = jit_type & JIT_CODE_RECURSIVE;
     jit_type &= ~ JIT_CODE_RECURSIVE;
@@ -1452,7 +1452,7 @@ parrot_build_asm(Interp *interp,
     if ((size_t)jit_info->arena.map_size * 10 > (size_t)jit_info->arena.size)
         jit_info->arena.size = jit_info->arena.map_size * 10;
     jit_info->native_ptr = jit_info->arena.start =
-        mem_alloc_executable((size_t)jit_info->arena.size);
+        (char *)mem_alloc_executable((size_t)jit_info->arena.size);
 #  if EXEC_CAPABLE
     if (obj)
         jit_info->objfile->text.code = jit_info->arena.start;
@@ -1527,7 +1527,7 @@ parrot_build_asm(Interp *interp,
 #if REQUIRES_CONSTANT_POOL
                 Parrot_jit_extend_arena(jit_info);
 #else
-                new_arena = mem_realloc_executable(jit_info->arena.start,
+                new_arena = (char *)mem_realloc_executable(jit_info->arena.start,
                         (size_t)jit_info->arena.size * 2);
                 jit_info->arena.size *= 2;
                 jit_info->native_ptr = new_arena +
@@ -1728,7 +1728,7 @@ Parrot_jit_newfixup(Parrot_jit_info_t *jit_info)
 {
     Parrot_jit_fixup_t *fixup;
 
-    fixup = mem_sys_allocate_zeroed(sizeof (*fixup));
+    fixup = mem_allocate_zeroed_typed(Parrot_jit_fixup_t);
 
     /* Insert fixup at the head of the list */
     fixup->next = jit_info->arena.fixups;

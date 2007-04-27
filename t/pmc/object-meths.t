@@ -707,6 +707,28 @@ in sub
 done
 OUTPUT
 
+pir_output_is( <<'CODE', <<'OUTPUT', "constructor - vtable override" );
+.sub main :main
+  $P0 = newclass 'Foo'
+  $P1 = subclass 'Foo', 'Bar'
+  $P2 = new 'Bar'
+.end
+
+.namespace ['Foo']
+.sub init :vtable :method
+  print "foo init\n"
+.end
+
+.namespace ['Bar']
+.sub init :vtable :method
+  print "bar init\n"
+.end
+
+CODE
+foo init
+bar init
+OUTPUT
+
 pir_output_is( <<'CODE', <<'OUTPUT', "same method name in two namespaces" );
 
 .namespace ["A"]
@@ -942,7 +964,7 @@ CODE
 foofoo
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "super 1 - two classes" );
+pir_output_is( <<'CODE', <<'OUTPUT', ".Super - test dispatch with two classes" );
 .sub main :main
     .local pmc o, cl
     cl = newclass 'Parent'
@@ -975,40 +997,7 @@ OUTPUT
 
 TODO: {
     local $TODO = "3 class interitance, 4-class diamond inheritance";
-    pir_output_is( <<'CODE', <<'OUTPUT', "super 2 - test dispatch" );
-.sub main :main
-    .local pmc o, cl, cl2
-    cl = newclass 'Parent'
-    #cl = subclass cl, 'Child'
-    cl2 = newclass 'Child'
-    addparent cl2, cl
-    o = new 'Child'
-    o."foo"()
-.end
-
-.namespace ['Parent']
-.sub foo :method
-    print "Parent foo\n"
-    self."bar"()
-.end
-.sub bar :method
-    print "Parent bar\n"
-.end
-
-.namespace ['Child']
-.sub foo :method
-    print "Child foo\n"
-    .local pmc s
-    s = new .Super, self
-    s."foo"()
-.end
-CODE
-Child foo
-Parent foo
-Parent bar
-OUTPUT
-
-    pir_output_is( <<'CODE', <<'OUTPUT', "super 3 - two classes, addparent" );
+    pir_output_is( <<'CODE', <<'OUTPUT', ".Super - dispatch on addparent-established heirarchy" );
 .sub main :main
     .local pmc o, p, c
     p = newclass 'Parent'
@@ -1040,7 +1029,7 @@ Parent foo
 Parent bar
 OUTPUT
 
-    pir_output_is( <<'CODE', <<'OUTPUT', "super 4 - three classes" );
+    pir_output_is( <<'CODE', <<'OUTPUT', ".Super - subclass established, three levels deep" );
 .sub main :main
     .local pmc o, p, c, g
     p = newclass 'Parent'
@@ -1078,7 +1067,7 @@ Child foo
 Parent foo
 OUTPUT
 
-    pir_output_is( <<'CODE', <<'OUTPUT', "super 5 - diamond" );
+    pir_output_is( <<'CODE', <<'OUTPUT', ".Super - simple 4-class diamond C3 dispatch" );
 .sub main :main
     .local pmc o, p, c1, c2, i
     p = newclass 'Parent'
