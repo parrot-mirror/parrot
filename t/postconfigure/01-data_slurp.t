@@ -133,7 +133,7 @@ only meaningful I<after> F<Configure.pl> has actually been run and
 Parrot::Config::Generated has been created.  So certain tests need to be run
 when your Parrot filesystem is in a "pre-F<make>, post-F<Configure.pl> state.
 
-The tests in this file test C<Parrot::Configure::Data::slurp().  What is
+The tests in this file test C<Parrot::Configure::Data::slurp()>.  What is
 'slurped' here is an already created C<%Parrot::Config::PConfig>.
 
 =head1 AUTHOR

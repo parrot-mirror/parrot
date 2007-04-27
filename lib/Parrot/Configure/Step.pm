@@ -36,9 +36,6 @@ use File::Which;
 use lib ("lib");
 use Parrot::Configure;
 
-## XXX $conf is a temporary hack
-#our $conf;
-
 my $conf = Parrot::Configure->new();
 
 our @EXPORT    = ();
