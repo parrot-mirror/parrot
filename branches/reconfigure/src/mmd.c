@@ -539,12 +539,12 @@ mmd_add_function(Interp *interp,
     if (func_nr >= (INTVAL)interp->n_binop_mmd_funcs) {
         if (interp->binop_mmd_funcs) {
             interp->binop_mmd_funcs =
-                mem_sys_realloc(interp->binop_mmd_funcs,
+                (MMD_table *)mem_sys_realloc(interp->binop_mmd_funcs,
                                 (func_nr + 1) * sizeof (MMD_table));
         }
         else {
             interp->binop_mmd_funcs =
-                mem_sys_allocate((func_nr + 1) * sizeof (MMD_table));
+                (MMD_table *)mem_sys_allocate((func_nr + 1) * sizeof (MMD_table));
         }
 
         for (i = interp->n_binop_mmd_funcs; i <= func_nr; ++i)  {
@@ -594,7 +594,7 @@ mmd_expand_x(Interp *interp, INTVAL func_nr, INTVAL new_x)
 
     /* First, fill in the whole new table with the default function
        pointer. We only really need to do the new part, but... */
-    new_table = mem_sys_allocate(sizeof (funcptr_t) * y * new_x);
+    new_table = (funcptr_t *)mem_sys_allocate(sizeof (funcptr_t) * y * new_x);
     for (i = 0; i < y * new_x; i++) {
         new_table[i] = NULL;
     }
@@ -644,7 +644,7 @@ mmd_expand_y(Interp *interp, INTVAL func_nr, INTVAL new_y)
 
     /* First, fill in the whole new table with the default function
        pointer. We only really need to do the new part, but... */
-    new_table = mem_sys_allocate(sizeof (funcptr_t) * x * new_y);
+    new_table = (funcptr_t *)mem_sys_allocate(sizeof (funcptr_t) * x * new_y);
     for (i = 0; i < x * new_y; i++) {
         new_table[i] = NULL;
     }
@@ -977,7 +977,7 @@ mmd_arg_tuple_func(Interp *interp)
     PMC* arg_tuple, *arg;
     PMC* args_array;    /* from recent set_args opcode */
     opcode_t *args_op;
-    struct PackFile_Constant **constants;
+    PackFile_Constant **constants;
 
     /*
      * if there is no signature e.g. because of
@@ -1127,7 +1127,7 @@ static void
 mmd_search_classes(Interp *interp, STRING *meth, PMC *arg_tuple,
         PMC *cl, INTVAL start_at_parent)
 {
-    PMC *pmc, *mro, *class;
+    PMC *pmc, *mro, *_class;
     INTVAL i, n, type1;
 
     /*
@@ -1145,8 +1145,8 @@ mmd_search_classes(Interp *interp, STRING *meth, PMC *arg_tuple,
         mro = interp->vtables[type1]->mro;
         n = VTABLE_elements(interp, mro);
         for (i = start_at_parent; i < n; ++i) {
-            class = VTABLE_get_pmc_keyed_int(interp, mro, i);
-            pmc = Parrot_find_method_with_cache(interp, class, meth);
+            _class = VTABLE_get_pmc_keyed_int(interp, mro, i);
+            pmc = Parrot_find_method_with_cache(interp, _class, meth);
             if (pmc) {
                 /*
                  * mmd_is_hidden would consider all previous candidates
@@ -1345,7 +1345,7 @@ mmd_sort_candidates(Interp *interp, PMC *arg_tuple, PMC *cl)
      */
     sort = pmc_new(interp, enum_class_FixedIntegerArray);
     VTABLE_set_integer_native(interp, sort, n);
-    helper = PMC_data(sort);
+    helper = (INTVAL *)PMC_data(sort);
     for (i = 0; i < n; ++i) {
         pmc = VTABLE_get_pmc_keyed_int(interp, cl, i);
         d = mmd_distance(interp, pmc, arg_tuple);
@@ -1364,7 +1364,7 @@ mmd_sort_candidates(Interp *interp, PMC *arg_tuple, PMC *cl)
      * now helper has a sorted list of indices in the upper 16 bits
      * fill helper with sorted candidates
      */
-    data = PMC_data(cl);
+    data = (PMC **)PMC_data(cl);
     for (i = 0; i < n; ++i) {
         INTVAL idx = helper[i] >> 16;
         /*
@@ -1575,7 +1575,7 @@ mmd_create_builtin_multi_meth_2(Interp *interp, PMC *ns,
     const char *short_name;
     char signature[6], val_sig;
     STRING *meth_name, *_sub;
-    PMC *method, *multi, *class, *multi_sig;
+    PMC *method, *multi, *_class, *multi_sig;
 
     assert(type != enum_class_Null && type != enum_class_delegate &&
             type != enum_class_Ref  && type != enum_class_SharedRef &&
@@ -1607,15 +1607,15 @@ mmd_create_builtin_multi_meth_2(Interp *interp, PMC *ns,
     if (memcmp(short_name, "__i_", 4) == 0)
         signature[0] = 'v';
     meth_name = const_string(interp, short_name);
-    class = interp->vtables[type]->class;
-    method = Parrot_find_method_direct(interp, class, meth_name);
+    _class = interp->vtables[type]->pmc_class;
+    method = Parrot_find_method_direct(interp, _class, meth_name);
     if (!method) {
         /* first method */
         method = constant_pmc_new(interp, enum_class_NCI);
         VTABLE_set_pointer_keyed_str(interp, method,
                 const_string(interp, signature),
                 F2DPTR(func_ptr));
-        VTABLE_add_method(interp, class, meth_name, method);
+        VTABLE_add_method(interp, _class, meth_name, method);
     }
     else {
         _sub = CONST_STRING(interp, "Sub");
@@ -1623,7 +1623,7 @@ mmd_create_builtin_multi_meth_2(Interp *interp, PMC *ns,
         if (method->vtable->base_type == enum_class_NCI) {
             /* convert first to a multi */
             multi = constant_pmc_new(interp, enum_class_MultiSub);
-            VTABLE_add_method(interp, class, meth_name, multi);
+            VTABLE_add_method(interp, _class, meth_name, multi);
             VTABLE_push_pmc(interp, multi, method);
         }
         else {

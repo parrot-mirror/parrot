@@ -529,4 +529,9 @@ not_num:
 .end
 
 .include "library/dumper.pir"
-# vim: ft=imc sw=4:
+
+# Local Variables:
+#   mode: pir
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:

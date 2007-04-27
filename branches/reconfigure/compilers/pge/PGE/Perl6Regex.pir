@@ -93,6 +93,7 @@ or the resulting PIR code (target='PIR').
     ##   Let's parse the source as a regex
     $P0 = get_global 'regex'
     match = $P0(source, adverbs :flat :named)
+    if source == '' goto err_null
     if target != 'parse' goto check
     .return (match)
 
@@ -112,8 +113,12 @@ or the resulting PIR code (target='PIR').
     $P0 = new .Hash
     pad['lexscope'] = $P0
     exp = exp.'perl6exp'(pad)
-
+    if null exp goto err_null
     .return exp.'compile'(adverbs :flat :named)
+
+  err_null:
+    $I0 = match.'from'()
+    'parse_error'(match, $I0, 'Null pattern illegal')
 .end
 
 
@@ -410,6 +415,7 @@ Parses terms beginning with backslash.
     concat charlist, $S1
     unless isbracketed goto scan_xdo_end
     if $S0 == ']' goto scan_xdo_end
+    if $S0 == '' goto err_missing_bracket
     if $S0 != ',' goto err_bracketed
     if isnegated goto err_negated_brackets
     inc pos
@@ -422,6 +428,8 @@ Parses terms beginning with backslash.
 
   err_reserved_metachar:
     parse_error(mob, pos, 'Alphanumeric metacharacters are reserved')
+  err_missing_bracket:
+    parse_error(mob, pos, 'Missing close bracket for \\x[...] or \\o[...]')
   err_bracketed:
     parse_error(mob, pos, 'Invalid digit in \\x[...] or \\o[...]')
   err_negated_brackets:

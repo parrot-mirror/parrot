@@ -8,7 +8,9 @@ use lib qw( . lib ../lib ../../lib );
 use Test::More;
 use Parrot::Test;
 
-plan $^O =~ m/MSWin32/ ? ( skip_all => 'broken on win32' ) : ( tests => 6 );
+plan $^O =~ m/MSWin32|cygwin/
+   ? ( skip_all => 'broken on win32 && cygwin' )
+   : ( tests => 6 );
 
 =head1 NAME
 
@@ -81,11 +83,11 @@ int
 main(int margc, char *margv[])
 {
     Parrot_Interp interp;
-    struct PackFile *pf;
+    PackFile *pf;
     int argc = 1;
     char *argv[] = { "test", NULL };
 
-    struct PackFile_Segment *seg;
+    PackFile_Segment *seg;
 
     /* Interpreter set-up */
     interp = Parrot_new(NULL);
@@ -163,11 +165,11 @@ int
 main(int margc, char *margv[])
 {
     Parrot_Interp interp;
-    struct PackFile *pf;
+    PackFile *pf;
     int argc = 1;
     char *argv[] = { "test", NULL };
 
-    struct PackFile_Segment *seg;
+    PackFile_Segment *seg;
 
     /* Interpreter set-up */
     interp = Parrot_new(NULL);
@@ -253,11 +255,11 @@ int
 main(int margc, char *margv[])
 {
     Parrot_Interp interp;
-    struct PackFile *pf;
+    PackFile *pf;
     int argc = 1;
     char *argv[] = { "test", NULL };
 
-    struct PackFile_Segment *seg;
+    PackFile_Segment *seg;
 
     /* Interpreter set-up */
     interp = Parrot_new(NULL);
@@ -344,11 +346,11 @@ int
 main(int margc, char *margv[])
 {
     Parrot_Interp interp;
-    struct PackFile *pf;
+    PackFile *pf;
     int argc = 1;
     char *argv[] = { "test", NULL };
 
-    struct PackFile_Segment *seg;
+    PackFile_Segment *seg;
 
     /* Interpreter set-up */
     interp = Parrot_new(NULL);
@@ -435,11 +437,11 @@ int
 main(int margc, char *margv[])
 {
     Parrot_Interp interp;
-    struct PackFile *pf;
+    PackFile *pf;
     int argc = 1;
     char *argv[] = { "test", NULL };
 
-    struct PackFile_Segment *seg;
+    PackFile_Segment *seg;
 
     /* Interpreter set-up */
     interp = Parrot_new(NULL);
@@ -525,11 +527,11 @@ int
 main(int margc, char *margv[])
 {
     Parrot_Interp interp;
-    struct PackFile *pf;
+    PackFile *pf;
     int argc = 1;
     char *argv[] = { "test", NULL };
 
-    struct PackFile_Segment *seg;
+    PackFile_Segment *seg;
 
     /* Interpreter set-up */
     interp = Parrot_new(NULL);

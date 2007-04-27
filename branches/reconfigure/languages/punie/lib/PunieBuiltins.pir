@@ -143,3 +143,14 @@
   iter_end:
     .return (1)
 .end
+
+.sub 'infix:,'
+    .param pmc args            :slurpy
+    .return (args)
+.end
+
+# Local Variables:
+#   mode: pir
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:

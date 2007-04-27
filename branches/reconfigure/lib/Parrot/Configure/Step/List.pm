@@ -66,7 +66,7 @@ my @steps = qw(
     gen::config_pm
 );
 
-sub get_steps_list {return @steps;}
+sub get_steps_list { return @steps; }
 
 1;
 

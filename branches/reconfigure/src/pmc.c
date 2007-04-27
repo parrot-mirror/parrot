@@ -127,7 +127,7 @@ pmc_reuse(Interp *interp, PMC *pmc, INTVAL new_type,
             /* if the PMC has a PMC_EXT structure,
              * return it to the pool/arena
              */
-            struct Small_Object_Pool * const ext_pool =
+            Small_Object_Pool * const ext_pool =
                 interp->arena_base->pmc_ext_pool;
             if (PObj_is_PMC_shared_TEST(pmc) && PMC_sync(pmc)) {
                 MUTEX_DESTROY(PMC_sync(pmc)->pmc_lock);
@@ -191,7 +191,7 @@ get_new_pmc_header(Interp *interp, INTVAL base_type, UINTVAL flags)
          *
          * - singletons are created in the constant pmc pool
          */
-        pmc = (vtable->get_pointer)(interp, NULL);
+        pmc = (PMC *)(vtable->get_pointer)(interp, NULL);
         /* LOCK */
         if (!pmc) {
             pmc = new_pmc_header(interp, PObj_constant_FLAG);
@@ -404,7 +404,7 @@ pmc_type(Interp* interp, STRING *name)
     PMC * const classname_hash = interp->class_hash;
     PMC *item;
 
-    item = VTABLE_get_pointer_keyed_str(interp, classname_hash, name);
+    item = (PMC *)VTABLE_get_pointer_keyed_str(interp, classname_hash, name);
     /* nested namespace with same name */
     if (item->vtable->base_type == enum_class_NameSpace)
         return 0;
@@ -419,7 +419,7 @@ pmc_type_p(Interp* interp, PMC *name)
     PMC * const classname_hash = interp->class_hash;
     PMC *item;
 
-    item = VTABLE_get_pointer_keyed(interp, classname_hash, name);
+    item = (PMC *)VTABLE_get_pointer_keyed(interp, classname_hash, name);
     if (!PMC_IS_NULL(item))
         return PMC_int_val((PMC*) item);
     return 0;
@@ -434,38 +434,38 @@ create_class_pmc(Interp *interp, INTVAL type)
      *
      * create a constant PMC
      */
-    PMC * const class = get_new_pmc_header(interp, type,
+    PMC * const _class = get_new_pmc_header(interp, type,
                                            PObj_constant_FLAG);
     /* If we are a second thread, we may get the same object as the
      * original because we have a singleton. Just set the singleton to
      * be our class object, but don't mess with its vtable.
      */
     if ((interp->vtables[type]->flags & VTABLE_PMC_IS_SINGLETON)
-        && (class == class->vtable->class)) {
-        interp->vtables[type]->class = class;
-        return class;
+        && (_class == _class->vtable->pmc_class)) {
+        interp->vtables[type]->pmc_class = _class;
+        return _class;
     }
-    if (PObj_is_PMC_EXT_TEST(class)) {
+    if (PObj_is_PMC_EXT_TEST(_class)) {
         /* if the PMC has a PMC_EXT structure,
          * return it to the pool/arena
          * we don't need it - basically only the vtable is important
          */
-        struct Small_Object_Pool * const ext_pool =
+        Small_Object_Pool * const ext_pool =
             interp->arena_base->pmc_ext_pool;
-        if (PMC_sync(class))
-            mem_internal_free(PMC_sync(class));
-        ext_pool->add_free_object(interp, ext_pool, class->pmc_ext);
+        if (PMC_sync(_class))
+            mem_internal_free(PMC_sync(_class));
+        ext_pool->add_free_object(interp, ext_pool, _class->pmc_ext);
     }
-    class->pmc_ext = NULL;
-    DOD_flag_CLEAR(is_special_PMC, class);
-    PMC_pmc_val(class)   = (void*)0xdeadbeef;
-    PMC_struct_val(class)= (void*)0xdeadbeef;
+    _class->pmc_ext = NULL;
+    DOD_flag_CLEAR(is_special_PMC, _class);
+    PMC_pmc_val(_class)   = (PMC *)0xdeadbeef;
+    PMC_struct_val(_class)= (void*)0xdeadbeef;
 
-    PObj_is_PMC_shared_CLEAR(class);
+    PObj_is_PMC_shared_CLEAR(_class);
 
-    interp->vtables[type]->class = class;
+    interp->vtables[type]->pmc_class = _class;
 
-    return class;
+    return _class;
 }
 
 /*
@@ -484,7 +484,7 @@ Parrot_create_mro(Interp *interp, INTVAL type)
     VTABLE *vtable;
     STRING *class_name, *isa;
     INTVAL pos, parent_type, total;
-    PMC *class, *mro;
+    PMC *_class, *mro;
     PMC *ns;
 
     vtable = interp->vtables[type];
@@ -516,11 +516,11 @@ Parrot_create_mro(Interp *interp, INTVAL type)
                     CONTEXT(interp->ctx)->current_namespace,
                     class_name, ns);
         }
-        class = vtable->class;
-        if (!class) {
-            class = create_class_pmc(interp, parent_type);
+        _class = vtable->pmc_class;
+        if (!_class) {
+            _class = create_class_pmc(interp, parent_type);
         }
-        VTABLE_push_pmc(interp, mro, class);
+        VTABLE_push_pmc(interp, mro, _class);
         if (pos >= total)
             break;
         len = string_str_index(interp, isa,

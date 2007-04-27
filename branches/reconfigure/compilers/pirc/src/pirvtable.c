@@ -17,7 +17,6 @@ implement all vtable methods for correct behaviour.
 #include "pirvtable.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <malloc.h>
 
 
 
@@ -30,7 +29,7 @@ implement all vtable methods for correct behaviour.
 =item not_implemented()
 
 Default entry that is set to all vtable entries. If a particular vtable entry is invoked,
-but was never implemented, this method is called. This is usefule, because not all output
+but was never implemented, this method is called. This is usefulS, because not all output
 type need all vtable methods. The variable arguments are necessary, you never know how
 many args a method has.
 
@@ -59,6 +58,7 @@ Constructor for a pir vtable. All entries are set to "not_implemented" function.
 */
 pirvtable *
 new_pirvtable(void) {
+
     pirvtable *vtable = (pirvtable *)malloc(sizeof(pirvtable));
 
     if (vtable == NULL) {
@@ -71,6 +71,8 @@ new_pirvtable(void) {
      */
     vtable->initialize       = not_implemented;
     vtable->destroy          = not_implemented; /* destructor; highly recommended to implement! */
+    vtable->source           = not_implemented;
+    vtable->position         = not_implemented;
     vtable->name             = not_implemented;
     vtable->sub_start        = not_implemented;
     vtable->sub_end          = not_implemented;
@@ -82,7 +84,6 @@ new_pirvtable(void) {
     vtable->type             = not_implemented;
     vtable->sub_flag         = not_implemented;
     vtable->expression       = not_implemented;
-    vtable->next_expr        = not_implemented;
     vtable->op_start         = not_implemented;
     vtable->op_end           = not_implemented;
     vtable->list_start       = not_implemented;
@@ -97,9 +98,16 @@ new_pirvtable(void) {
     vtable->invokable        = not_implemented;
     vtable->invocation_start = not_implemented;
     vtable->invocation_end   = not_implemented;
+    vtable->assign_start     = not_implemented;
+    vtable->assign_end       = not_implemented;
+    vtable->assign           = not_implemented;
+    vtable->comparison_op    = not_implemented;
+    vtable->binary_op        = not_implemented;
+    vtable->results_start    = not_implemented;
+    vtable->results_end      = not_implemented;
 
     /* set data to NULL, it's initialized in the backend module */
-    vtable->data           = NULL;
+    vtable->data = NULL;
 
     return vtable;
 }

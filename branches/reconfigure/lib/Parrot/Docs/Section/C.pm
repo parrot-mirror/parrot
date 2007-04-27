@@ -142,7 +142,6 @@ sub new {
             $self->c_item(
                 '',
                 'pairs'   => ['register'],
-                'headers' => ['regfuncs']
             ),
             $self->c_item(
                 '',
@@ -250,10 +249,7 @@ sub new {
         $self->new_group(
             'Garbage Collection',
             '',
-            $self->c_item(
-                'Parrot\'s garbage collection subsystem.',
-                'contents' => ['src/gc']
-            ),
+            $self->c_item( 'Parrot\'s garbage collection subsystem.', 'contents' => ['src/gc'] ),
         ),
         $self->new_group(
             'Debugging',

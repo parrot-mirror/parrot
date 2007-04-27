@@ -23,7 +23,7 @@ Opcode helper functions that don't really fit elsewhere.
 #include "parrot/parrot.h"
 
 /* Parrot_register_move companion functions i and data */
-typedef struct {
+typedef struct parrot_prm_context {
     unsigned char *dest_regs;
     unsigned char *src_regs;
     unsigned char temp_reg;
@@ -475,7 +475,7 @@ Parrot_make_la(Interp *interp, PMC *array) {
        to actually have an array, even if the inbound array is
        completely empty
     */
-    long * const out_array = mem_sys_allocate((sizeof (long)) * (arraylen + 1));
+    long * const out_array = (long *)mem_sys_allocate((sizeof (long)) * (arraylen + 1));
     out_array[arraylen] = 0;
     /*    printf("Long array has %i elements\n", arraylen);*/
     for (cur = 0; cur < arraylen; cur++) {
@@ -512,6 +512,8 @@ the new array, and the last (extra) element is set to 0.
 
 Currently unused.
 
+Note that you need to free this array with C<Parrot_destroy_cpa()>.
+
 =cut
 
 */
@@ -526,7 +528,7 @@ Parrot_make_cpa(Interp *interp, PMC *array) {
        to actually have an array, even if the inbound array is
        completely empty
     */
-    char ** const out_array = mem_sys_allocate((sizeof (char *))
+    char ** const out_array = (char **)mem_sys_allocate((sizeof (char *))
                                                * (arraylen + 1));
     out_array[arraylen] = 0;
 

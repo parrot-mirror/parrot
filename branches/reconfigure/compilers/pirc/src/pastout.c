@@ -14,28 +14,47 @@ Initial.
 
 #include "pastout.h"
 #include "pirvtable.h"
+#include "pirutil.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
 
-/* keep outputfile possibility easy */
-#define OUT         stderr
-#define INDENT      4
+/* number of spaces for 1 indention level */
+static const int INDENT = 4;
 
 
-#define indent(D)    D->indent += INDENT
-#define dedent(D)    D->indent -= INDENT
+/*
 
+=head1 DATA STRUCTURE
 
-/* Private declaration of emit_data.
- *
- *
- */
+The PAST back-end implements the C<emit_data> data structure.
+Currently, only a single data member is used, to control the
+indention.
+
+=cut
+
+*/
 typedef struct emit_data {
     int indent;
+    int index;
+    char *outputfile;
+    FILE *file;
 
 } emit_data;
 
+
+/* increase the indention level */
+static int
+indent(emit_data *data) {
+    data->indent += INDENT;
+    return data->indent;
+}
+
+/* decreate the indention level */
+static int
+dedent(emit_data *data) {
+    data->indent -= INDENT;
+    return data->indent;
+}
 
 /*
 
@@ -52,7 +71,11 @@ Prints initializing PAST: ["past" => PMC 'PAST::Block' {]
 */
 static void
 past_init(struct emit_data *data) {
-    fprintf(OUT, "\"past\" => PMC 'PAST::Block'  {\n");
+
+    if (data->outputfile) data->file = open_file(data->outputfile, "w");
+    else data->file = stdout;
+
+    fprintf(data->file, "\"past\" => PMC 'PAST::Block'  {\n");
     indent(data);
 }
 
@@ -66,11 +89,19 @@ Prints PAST for a block, including <source> and <pos> attributes.
 
 */
 static void
-past_block(struct emit_data *data, char *source, int pos) {
-    fprintf(OUT, "%*sPMC 'PAST::Block'  {\n", data->indent, " ");
+past_block(struct emit_data *data) {
+    fprintf(data->file, "%*sPMC 'PAST::Block'  {\n", data->indent, " ");
     indent(data);
-    fprintf(OUT, "%*s<source> => \"%s\"\n", data->indent, " ", source);
-    fprintf(OUT, "%*s<pos> => %d\n", data->indent, " ", pos);
+}
+
+static void
+past_source(emit_data *data, char *source) {
+    fprintf(data->file, "%*s<source> => \"%s\"\n", data->indent, " ", source);
+}
+
+static void
+past_position(emit_data *data, int pos) {
+    fprintf(data->file, "%*s<pos> => %d\n", data->indent, " ", pos);
 }
 
 /*
@@ -89,7 +120,7 @@ past_close(struct emit_data *data) {
     /* check for indent == 0, if so, then print no space, this is
      * so otherwise a single space is printed.
      */
-    fprintf(OUT, "%*s}\n", data->indent, (data->indent == 0) ? "" : " ");
+    fprintf(data->file, "%*s}\n", data->indent, (data->indent == 0) ? "" : " ");
 
 }
 
@@ -104,12 +135,12 @@ Prints a PAST <name> entry.
 */
 static void
 past_name(struct emit_data *data, char *name) {
-    fprintf(OUT, "%*s<name> => \"%s\"\n", data->indent, " ", name);
+    fprintf(data->file, "%*s<name> => \"%s\"\n", data->indent, " ", name);
 }
 
 /*
 
-=item past_init()
+=item past_stmts()
 
 Opens a PAST::Stmts node.
 
@@ -118,50 +149,99 @@ Opens a PAST::Stmts node.
 */
 static void
 past_stmts(struct emit_data *data) {
-    fprintf(OUT, "%*s[%d] => PMC 'PAST::Stmts'  {\n", data->indent, " ", 0); /* fix array index */
+    fprintf(data->file, "%*s[%d] => PMC 'PAST::Stmts'  {\n", data->indent, " ", data->index++);
     indent(data);
 }
 
+/*
 
+=item past_param()
+
+Generates a PAST::Var node and set its scope attribute to "parameter".
+
+=cut
+
+*/
 static void
 past_param(struct emit_data *data) {
-    fprintf(OUT, "%*sFIXTHIS => PMC 'PAST::Var'  {\n", data->indent, " ");
+    fprintf(data->file, "%*sFIXTHIS => PMC 'PAST::Var'  {\n", data->indent, " ");
     indent(data);
-    fprintf(OUT, "%*s<scope> => \"parameter\"\n", data->indent, " ");
+    fprintf(data->file, "%*s<scope> => \"parameter\"\n", data->indent, " ");
 }
 
+/*
+
+=item past_type()
+
+
+
+=cut
+
+*/
 static void
 past_type(struct emit_data *data, char *type) {
-    fprintf(OUT, "%*s<type> => \"%s\"\n", data->indent, " ", type);
+    fprintf(data->file, "%*s<type> => \"%s\"\n", data->indent, " ", type);
 }
 
+/*
+
+=item past_subflag()
+
+
+
+=cut
+
+*/
 static void
 past_subflag(struct emit_data *data, int flag) {
-    /* fprintf(OUT, "%*s<???> => \"%s\"\n", data->indent, " ", type);
+    /* fprintf(data->file, "%*s<???> => \"%s\"\n", data->indent, " ", type);
     */
 }
 
 
+/*
+
+=item past_op()
+
+
+
+=cut
+
+*/
 static void
 past_op(struct emit_data *data, char *op) {
-    fprintf(OUT, "%*sFIXME => PMC 'PAST::Op'  {\n", data->indent, " ");
+    fprintf(data->file, "%*sFIXME => PMC 'PAST::Op'  {\n", data->indent, " ");
     indent(data);
-    fprintf(OUT, "%*s<pirop> => \"%s\"\n", data->indent, " ", op);
+    fprintf(data->file, "%*s<pirop> => \"%s\"\n", data->indent, " ", op);
 
 }
 
+/*
+
+=item past_expr()
+
+
+
+=cut
+
+*/
 static void
 past_expr(struct emit_data *data, char *expr) {
-    fprintf(OUT, "%*s[%d] => \"%s\"\n", data->indent, " ", 0, expr); /* fix index */
+    fprintf(data->file, "%*s[%d] => \"%s\"\n", data->indent, " ", data->index++, expr); /* fix index */
 }
 
-static void
-past_next(struct emit_data *data) {
-    /* increment index */
-}
+/*
 
+=item past_destroy()
+
+Destructor, close the outputfile if any, and free the emit_data structure.
+
+=cut
+
+*/
 static void
 past_destroy(emit_data *data) {
+    if (data->outputfile) fclose(data->file);
     free(data);
     data = NULL;
 }
@@ -176,12 +256,14 @@ then this vtable is set into the parser_state struct.
 
 */
 pirvtable *
-init_past_vtable(void) {
+init_past_vtable(char *outputfile) {
     pirvtable *vtable = new_pirvtable();
 
     /* override vtable methods */
     vtable->initialize   = past_init;
     vtable->destroy      = past_destroy;
+    vtable->source       = past_source;
+    vtable->position     = past_position;
     vtable->sub_start    = past_block;
     vtable->sub_end      = past_close;
     vtable->name         = past_name;
@@ -195,14 +277,16 @@ init_past_vtable(void) {
     vtable->op_start     = past_op;
     vtable->expression   = past_expr;
     vtable->op_end       = past_close;
-    vtable->next_expr    = past_next;
 
+    /* allocate the emit_data structure and initialize it */
     vtable->data = (emit_data *)malloc(sizeof(emit_data));
     if (vtable->data == NULL) {
         fprintf(stderr, "Failed to allocate memory for vtable data\n");
         exit(1);
     }
     vtable->data->indent = 0;
+    vtable->data->outputfile = outputfile;
+    vtable->data->index = 0;
 
     return vtable;
 }

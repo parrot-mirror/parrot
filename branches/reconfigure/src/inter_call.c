@@ -37,18 +37,19 @@ subroutines.
         orig.bp_ps = save.bp_ps;
 
 
-static int next_arg(Interp *, struct call_state_item *st);
-static void next_arg_sig(Interp *interp, struct call_state_item *st);
-static int set_retval_util(Parrot_Interp interp, const char *sig, parrot_context_t *ctx,
-        struct call_state *st);
+static int next_arg(Interp *, call_state_item *st);
+static void next_arg_sig(Interp *interp, call_state_item *st);
+static int set_retval_util(Parrot_Interp interp, const char *sig,
+    parrot_context_t *ctx, call_state *st);
+static void check_for_opt_flag(Interp *interp, call_state *st, int has_arg);
 
 /*
 
-=item C<int Parrot_init_arg_nci(Interp *, struct call_state *st, const char *sig)>
+=item C<int Parrot_init_arg_nci(Interp *, call_state *st, const char *sig)>
 
 Initialize the argument passing state C<call_state> for the given NCI signature.
 
-=item C<int Parrot_init_ret_nci(Interp *, struct call_state *st, const char *sig)>
+=item C<int Parrot_init_ret_nci(Interp *, call_state *st, const char *sig)>
 
 Initialize the return value passing state C<call_state> for the given NCI signature.
 
@@ -57,15 +58,19 @@ Initialize the return value passing state C<call_state> for the given NCI signat
 */
 
 int
-Parrot_init_arg_nci(Interp *interp, struct call_state *st, const char *sig)
+Parrot_init_arg_nci(Interp *interp, call_state *st, const char *sig)
 {
-    Parrot_init_arg_op(interp, CONTEXT(interp->ctx), interp->current_args, &st->src);
+    if (PMC_IS_NULL(interp->args_signature))
+        Parrot_init_arg_op(interp, CONTEXT(interp->ctx), interp->current_args, &st->src);
+    else
+        Parrot_init_arg_indexes_and_sig_pmc(interp, CONTEXT(interp->ctx),
+            interp->current_args, interp->args_signature, &st->src);
     Parrot_init_arg_sig(interp, CONTEXT(interp->ctx), sig, NULL, &st->dest);
     return 1;
 }
 
 int
-Parrot_init_ret_nci(Interp *interp, struct call_state *st, const char *sig)
+Parrot_init_ret_nci(Interp *interp, call_state *st, const char *sig)
 {
     struct Parrot_Context *ctx = CONTEXT(interp->ctx);
     PMC *current_cont = ctx->current_cont;
@@ -85,20 +90,20 @@ Parrot_init_ret_nci(Interp *interp, struct call_state *st, const char *sig)
 
 /*
 int
-=item C<Parrot_init_arg_indexes_and_sig_pmc(Interp *interp, parrot_context_t *ctx,
-        opcode_t *indexes, PMC* sig_pmc, struct call_state_item *st)>
+=item C<Parrot_init_arg_indexes_and_sig_pmc(Interp *interp,
+    parrot_context_t *ctx, opcode_t *indexes, PMC* sig_pmc, call_state_item *st)>
 
 Initialize argument transfer with given context registers, register indexes, and
 a signature pmc.
 
 =item C<int Parrot_init_arg_sig(Interp *, parrot_context_t *ctx,
-        const char *sig, void *ap, struct call_state_item *st)>
+        const char *sig, void *ap, call_state_item *st)>
 
 Initialize argument transfer with given code segment (holding the
 const_table), registers, function signature, and arguments.
 
-=item C<int Parrot_init_arg_op(Interp *, parrot_context_t *ctx,
-        opcode_t *pc, struct call_state_item *st)>
+=item C<int Parrot_init_arg_op(Interp *, parrot_context_t *ctx, opcode_t *pc,
+    call_state_item *st)>
 
 Initialize argument transfer with given context registers, and opcode
 location of a get_ or set_ argument opcode.
@@ -114,7 +119,7 @@ These functions return 0, if no arguments are present, or 1 on success.
 
 int
 Parrot_init_arg_indexes_and_sig_pmc(Interp *interp, parrot_context_t *ctx,
-        opcode_t *indexes, PMC* sig_pmc, struct call_state_item *st)
+        opcode_t *indexes, PMC* sig_pmc, call_state_item *st)
 {
     if (!sig_pmc && indexes) {
         ++indexes;
@@ -123,6 +128,7 @@ Parrot_init_arg_indexes_and_sig_pmc(Interp *interp, parrot_context_t *ctx,
         ++indexes;
     }
 
+    st->used = 1;
     st->i = 0;
     st->n = 0;
     st->mode = CALL_STATE_OP;
@@ -143,8 +149,8 @@ Parrot_init_arg_indexes_and_sig_pmc(Interp *interp, parrot_context_t *ctx,
 }
 
 int
-Parrot_init_arg_op(Interp *interp, parrot_context_t *ctx,
-        opcode_t *pc, struct call_state_item *st)
+Parrot_init_arg_op(Interp *interp, parrot_context_t *ctx, opcode_t *pc,
+    call_state_item *st)
 {
     PMC *sig_pmc = PMCNULL;
     if (pc) {
@@ -157,9 +163,10 @@ Parrot_init_arg_op(Interp *interp, parrot_context_t *ctx,
 }
 
 int
-Parrot_init_arg_sig(Interp *interp, parrot_context_t *ctx,
-        const char *sig, void *ap, struct call_state_item *st)
+Parrot_init_arg_sig(Interp *interp, parrot_context_t *ctx, const char *sig,
+    void *ap, call_state_item *st)
 {
+    st->used = 1;
     st->i = 0;
     st->n = 0;
     st->mode = CALL_STATE_SIG;
@@ -181,7 +188,7 @@ Parrot_init_arg_sig(Interp *interp, parrot_context_t *ctx,
  * PMC being flattened, and fetch the first arg from the flattened set.
  */
 static void
-start_flatten(Interp *interp, struct call_state *st, PMC *p_arg)
+start_flatten(Interp *interp, call_state *st, PMC *p_arg)
 {
     if (PARROT_ARG_NAME_ISSET(st->src.sig)) {
         /* src ought to be an hash */
@@ -207,12 +214,11 @@ start_flatten(Interp *interp, struct call_state *st, PMC *p_arg)
     st->src.slurp_n = VTABLE_elements(interp, p_arg);
     /* the -1 is because the :flat PMC itself doesn't count. */
     st->n_actual_args += st->src.slurp_n - 1;
-    Parrot_fetch_arg(interp, st);
 }
 
 
 static void
-next_arg_sig(Interp *interp, struct call_state_item *st)
+next_arg_sig(Interp *interp, call_state_item *st)
 {
     switch (st->mode & CALL_S_D_MASK) {
         case CALL_STATE_OP:
@@ -239,20 +245,19 @@ next_arg_sig(Interp *interp, struct call_state_item *st)
 }
 
 static int
-next_arg(Interp *interp, struct call_state_item *st)
+next_arg(Interp *interp, call_state_item *st)
 {
     st->i++;
     if (st->i >= st->n) {
         st->sig = 0;
         return 0;
     }
-    st->mode &= ~CALL_STATE_NEXT_ARG;
     next_arg_sig(interp, st);
     return 1;
 }
 
-static void
-fetch_arg_sig(Interp *interp, struct call_state *st)
+static int
+fetch_arg_sig(Interp *interp, call_state *st)
 {
     va_list *ap = (va_list*)(st->src.u.sig.ap);
     switch (st->src.sig & PARROT_ARG_TYPE_MASK) {
@@ -273,16 +278,23 @@ fetch_arg_sig(Interp *interp, struct call_state *st)
 
             if (st->src.sig & PARROT_ARG_FLATTEN) {
                 start_flatten(interp, st, UVal_pmc(st->val));
-                return;
+                /* if the :flat arg is empty, just go to the next arg */
+                if (!st->src.slurp_n) {
+                    st->src.mode &= ~CALL_STATE_FLATTEN;
+                    st->src.i++;
+                }
+                st->src.used = 1;
+                return Parrot_fetch_arg(interp, st);
             }
             break;
     }
-    st->src.mode |= CALL_STATE_NEXT_ARG;
+    st->src.i++;
+    return 1;
 }
 
 
-static void
-fetch_arg_op(Interp *interp, struct call_state *st)
+static int
+fetch_arg_op(Interp *interp, call_state *st)
 {
     int constant = PARROT_ARG_CONSTANT_ISSET(st->src.sig);
     INTVAL idx = st->src.u.op.pc[st->src.i];
@@ -293,123 +305,116 @@ fetch_arg_op(Interp *interp, struct call_state *st)
             break;
         case PARROT_ARG_STRING:
             UVal_str(st->val) = constant ? st->src.ctx->constants[idx]->u.string
-                : CTX_REG_STR(st->src.ctx, idx);
+                                      : CTX_REG_STR(st->src.ctx, idx);
             break;
         case PARROT_ARG_FLOATVAL:
             UVal_num(st->val) = constant ? st->src.ctx->constants[idx]->u.number
-                : CTX_REG_NUM(st->src.ctx, idx);
+                                      : CTX_REG_NUM(st->src.ctx, idx);
             break;
         case PARROT_ARG_PMC:
             UVal_pmc(st->val) = constant ? st->src.ctx->constants[idx]->u.key
-                : CTX_REG_PMC(st->src.ctx, idx);
+                                      : CTX_REG_PMC(st->src.ctx, idx);
 
             if (st->src.sig & PARROT_ARG_FLATTEN) {
                 start_flatten(interp, st, UVal_pmc(st->val));
-                return;
+                /* if the :flat arg is empty, just go to the next arg */
+                if (!st->src.slurp_n) {
+                    st->src.mode &= ~CALL_STATE_FLATTEN;
+                    st->src.i++;
+                }
+                st->src.used = 1;
+                return Parrot_fetch_arg(interp, st);
             }
             break;
     }
-    st->src.mode |= CALL_STATE_NEXT_ARG;
-}
-
-
-int
-Parrot_fetch_arg(Interp *interp, struct call_state *st)
-{
-    if (st->dest.mode & CALL_STATE_NEXT_ARG) {
-        if (!next_arg(interp, &st->dest))
-            st->dest.mode |= CALL_STATE_x_END;
-    }
-    if (!st->src.n) {
-        st->dest.mode |= CALL_STATE_END_x;
-        return 0;
-    }
-    if (st->src.mode & CALL_STATE_NEXT_ARG) {
-        if (!next_arg(interp, &st->src)) {
-            st->dest.mode |= CALL_STATE_END_x;
-            return 0;
-        }
-    }
-#if 0
-    /* NOT YET
-     * e.g.
-     * $ make
-     * ../../parrot pgc.pir  --output=PGE/builtins_gen.pir PGE/builtins.pg
-     * positional inside named args
-     * ...
-     */
-
-    if ((st->dest.mode & CALL_STATE_NAMED_x) && !(st->src.sig & PARROT_ARG_NAME))
-        real_exception(interp, NULL, E_ValueError, "positional inside named args");
-#endif
-
-    if (st->src.mode & CALL_STATE_FLATTEN) {
-        if (st->src.slurp_i < st->src.slurp_n) {
-            PMC *elem;
-            if (st->key) {
-                st->src.slurp_i++;
-                st->name = (STRING *)parrot_hash_get_idx(interp,
-                               (Hash *)PMC_struct_val(st->src.slurp), st->key);
-                assert(st->name);
-                elem = VTABLE_get_pmc_keyed_str(interp, st->src.slurp, st->name);
-            }
-            else {
-                elem = VTABLE_get_pmc_keyed_int(interp, st->src.slurp, st->src.slurp_i++);
-            }
-            st->src.sig = PARROT_ARG_PMC;
-            UVal_pmc(st->val) = elem;
-            return 1;
-        }
-        /* done with flattening */
-        st->src.mode &= ~CALL_STATE_FLATTEN;
-        st->src.mode |= CALL_STATE_NEXT_ARG;
-        st->key = NULL;
-        /* advance src - get next arg */
-        return Parrot_fetch_arg(interp, st);
-    }
-
-    if ((st->src.sig & PARROT_ARG_NAME) && !(st->src.sig & PARROT_ARG_FLATTEN)) {
-        fetch_arg_op(interp, st);
-        st->name = UVal_str(st->val);
-        next_arg(interp, &st->src);
-    }
-    switch (st->src.mode & CALL_S_D_MASK) {
-        case CALL_STATE_OP:
-            fetch_arg_op(interp, st);
-            break;
-        case CALL_STATE_SIG:
-            fetch_arg_sig(interp, st);
-            break;
-    }
+    st->src.i++;
     return 1;
 }
 
 
 int
-Parrot_fetch_arg_nci(Interp *interp, struct call_state *st)
+Parrot_fetch_arg(Interp *interp, call_state *st)
 {
-    Parrot_fetch_arg(interp, st);
+    if (!st->src.used)
+        return 1;
+    if (st->src.i >= st->src.n)
+        return 0;
+    st->src.used = 0;
+
+    next_arg_sig(interp, &st->src);
+
+    /* check if we're at a :flat argument */
+    if (st->src.mode & CALL_STATE_FLATTEN) {
+        PMC *elem;
+        assert(st->src.slurp_i < st->src.slurp_n);
+        if (st->key) {
+            st->src.slurp_i++;
+            st->name = (STRING *)parrot_hash_get_idx(interp,
+                            (Hash *)PMC_struct_val(st->src.slurp), st->key);
+            assert(st->name);
+            elem = VTABLE_get_pmc_keyed_str(interp, st->src.slurp, st->name);
+        }
+        else {
+            elem = VTABLE_get_pmc_keyed_int(interp, st->src.slurp, st->src.slurp_i++);
+        }
+        st->src.sig = PARROT_ARG_PMC;
+        UVal_pmc(st->val) = elem;
+
+        /* done with flattening */
+        if (st->src.slurp_i == st->src.slurp_n) {
+            st->src.mode &= ~CALL_STATE_FLATTEN;
+            st->key = NULL;
+            st->src.i++;
+        }
+
+        return 1;
+    }
+
+    /* If we're at a named arg, store the name and then get the next arg, which
+     * is the actual value of the named arg. */
+    if ((st->src.sig & PARROT_ARG_NAME) && !(st->src.sig & PARROT_ARG_FLATTEN)) {
+        fetch_arg_op(interp, st);
+        st->name = UVal_str(st->val);
+        next_arg_sig(interp, &st->src);
+    }
+    switch (st->src.mode & CALL_S_D_MASK) {
+        case CALL_STATE_OP:
+            return fetch_arg_op(interp, st);
+        case CALL_STATE_SIG:
+            return fetch_arg_sig(interp, st);
+    }
+
+    internal_exception(1, "invalid call state mode");
+    return 0;
+}
+
+
+int
+Parrot_fetch_arg_nci(Interp *interp, call_state *st)
+{
+    next_arg_sig(interp, &st->dest);
     if (st->dest.sig & PARROT_ARG_SLURPY_ARRAY) {
         PMC *slurped;
         assert((st->dest.sig & PARROT_ARG_TYPE_MASK) == PARROT_ARG_PMC);
         slurped = pmc_new(interp, enum_class_ResizablePMCArray);
-        while (!(st->dest.mode & CALL_STATE_END_x)) {
+        while (Parrot_fetch_arg(interp, st)) {
+            st->src.used = 1;
             Parrot_convert_arg(interp, st);
-            st->dest.mode |= CALL_STATE_SLURP;
             VTABLE_push_pmc(interp, slurped, UVal_pmc(st->val));
-            Parrot_fetch_arg(interp, st);
         }
         UVal_pmc(st->val) = slurped;
     }
     else {
+        Parrot_fetch_arg(interp, st);
+        st->src.used = 1;
         Parrot_convert_arg(interp, st);
-        st->dest.mode |= CALL_STATE_NEXT_ARG;
     }
+    st->dest.i++;
     return 1;
 }
 
 static void
-convert_arg_from_int(Interp *interp, struct call_state *st)
+convert_arg_from_int(Interp *interp, call_state *st)
 {
     PMC *d;
 
@@ -429,7 +434,7 @@ convert_arg_from_int(Interp *interp, struct call_state *st)
 }
 
 static void
-convert_arg_from_num(Interp *interp, struct call_state *st)
+convert_arg_from_num(Interp *interp, call_state *st)
 {
     PMC *d;
 
@@ -449,7 +454,7 @@ convert_arg_from_num(Interp *interp, struct call_state *st)
 }
 
 static void
-convert_arg_from_str(Interp *interp, struct call_state *st)
+convert_arg_from_str(Interp *interp, call_state *st)
 {
     PMC *d;
 
@@ -469,7 +474,7 @@ convert_arg_from_str(Interp *interp, struct call_state *st)
 }
 
 static void
-convert_arg_from_pmc(Interp *interp, struct call_state *st)
+convert_arg_from_pmc(Interp *interp, call_state *st)
 {
     switch (st->dest.sig & PARROT_ARG_TYPE_MASK) {
         case PARROT_ARG_INTVAL:
@@ -484,13 +489,41 @@ convert_arg_from_pmc(Interp *interp, struct call_state *st)
     }
 }
 
+static void
+check_for_opt_flag(Interp *interp, call_state *st, int has_arg)
+{
+    INTVAL idx;
+    call_state_item *dest = &st->dest;
+
+    ++st->optionals;
+
+    /* look at the next arg */
+    dest->i++;
+    if (dest->i >= dest->n)
+        return;
+
+    next_arg_sig(interp, dest);
+    /* if this isn't an :opt_flag argument, we need to reset things
+     * and go to the next argument */
+    if (!(st->dest.sig & PARROT_ARG_OPT_FLAG)) {
+        dest->i--;
+        return;
+    }
+
+    /* we're at an :opt_flag argument, so actually store something */
+    idx = st->dest.u.op.pc[st->dest.i];
+    --st->params;
+    assert(idx >= 0);
+    CTX_REG_INT(st->dest.ctx, idx) = has_arg;
+}
+
 /*
  * replace any src register by their values (done inside clone)
  * need a test for tailcalls too, but I think there is no syntax
  * to pass a key to a tailcalled function or method
  */
 static void
-clone_key_arg(Interp *interp, struct call_state *st)
+clone_key_arg(Interp *interp, call_state *st)
 {
     PMC *key = UVal_pmc(st->val);
 
@@ -514,7 +547,7 @@ clone_key_arg(Interp *interp, struct call_state *st)
  * initializes dest calling state for recption of first named arg.
  */
 static void
-init_first_dest_named(Interp *interp, struct call_state *st)
+init_first_dest_named(Interp *interp, call_state *st)
 {
     int i, n_named, idx;
     INTVAL sig;
@@ -527,9 +560,7 @@ init_first_dest_named(Interp *interp, struct call_state *st)
 
     /* 1) if we were slurpying positional args, we are done, turn it off
      * 2) set destination named args bit */
-    st->dest.mode &= ~CALL_STATE_SLURP;
     st->dest.slurp = NULL;
-    st->dest.mode |= CALL_STATE_x_NAMED;
 
     /* 1) count named args, make sure there is less than 32/64
      * 2) create slurpy hash if needed */
@@ -565,14 +596,12 @@ init_first_dest_named(Interp *interp, struct call_state *st)
  * locate destination pos, return 0 if state changed
  */
 static int
-locate_pos_named(Interp *interp, struct call_state *st)
+locate_pos_named(Interp *interp, call_state *st)
 {
     int i, n_named;
     INTVAL sig;
 
     n_named = -1;
-    st->dest.mode &= ~CALL_STATE_SLURP;
-    st->dest.mode |= CALL_STATE_x_NAMED;
     for (i = st->first_named; i < st->dest.n; ++i) {
         sig = SIG_ITEM(st->dest.u.op.signature, i);
         if (!(sig & PARROT_ARG_NAME))
@@ -588,7 +617,6 @@ locate_pos_named(Interp *interp, struct call_state *st)
         st->named_done |= 1 << n_named;
         return 1;
     }
-    st->dest.mode |= CALL_STATE_x_END;
     return 0;
 }
 
@@ -596,26 +624,21 @@ locate_pos_named(Interp *interp, struct call_state *st)
  * locate destination name, return 0 if not found
  */
 static int
-locate_named_named(Interp *interp, struct call_state *st)
+locate_named_named(Interp *interp, call_state *st)
 {
     int i, n_named, idx;
-    INTVAL sig;
     STRING *param;
 
     n_named = -1;
-    st->dest.mode &= ~CALL_STATE_SLURP;
-    st->dest.mode &= ~CALL_STATE_OPT;
     for (i = st->first_named; i < st->dest.n; ++i) {
-        sig = SIG_ITEM(st->dest.u.op.signature, i);
-        if (!(sig & PARROT_ARG_NAME))
+        st->dest.sig = SIG_ITEM(st->dest.u.op.signature, i);
+        if (!(st->dest.sig & PARROT_ARG_NAME))
             continue;
-        if (sig & PARROT_ARG_SLURPY_ARRAY) {
-            st->dest.mode |= CALL_STATE_SLURP;
+        if (st->dest.sig & PARROT_ARG_SLURPY_ARRAY)
             return 1;
-        }
         n_named++;
         idx = st->dest.u.op.pc[i];
-        param = PARROT_ARG_CONSTANT_ISSET(sig) ? st->dest.ctx->constants[idx]->u.string
+        param = PARROT_ARG_CONSTANT_ISSET(st->dest.sig) ? st->dest.ctx->constants[idx]->u.string
                 : CTX_REG_STR(st->dest.ctx, idx);
         if (st->name == param || 0 == string_equal(interp, st->name, param)) {
             ++i;
@@ -629,12 +652,12 @@ locate_named_named(Interp *interp, struct call_state *st)
             return 1;
         }
     }
-    st->dest.mode |= CALL_STATE_x_END;
     return 0;
 }
 
+
 static void
-store_arg(struct call_state *st, INTVAL idx)
+store_arg(call_state *st, INTVAL idx)
 {
     switch (st->dest.sig & PARROT_ARG_TYPE_MASK) {
         case PARROT_ARG_INTVAL:
@@ -652,8 +675,9 @@ store_arg(struct call_state *st, INTVAL idx)
     }
 }
 
+
 static int
-store_current_arg(Interp *interp, struct call_state *st)
+store_current_arg(Interp *interp, call_state *st)
 {
     INTVAL idx;
     if (st->dest.i >= st->dest.n)
@@ -668,20 +692,19 @@ store_current_arg(Interp *interp, struct call_state *st)
 }
 
 int
-Parrot_store_arg(Interp *interp, struct call_state *st)
+Parrot_store_arg(Interp *interp, call_state *st)
 {
-    if (!store_current_arg(interp, st))
-        return 0;
-    if (!(st->dest.mode & CALL_STATE_x_NAMED))
-        st->dest.mode |= CALL_STATE_NEXT_ARG;
-    return 1;
+    return store_current_arg(interp, st);
 }
 
 
 
 static void
-create_slurpy_array(Interp *interp, struct call_state *st, INTVAL idx)
+create_slurpy_array(Interp *interp, call_state *st)
 {
+    INTVAL idx = st->dest.u.op.pc[st->dest.i];
+    assert(idx >= 0);
+
     st->dest.slurp =
         pmc_new(interp, Parrot_get_ctx_HLL_type(interp, enum_class_ResizablePMCArray));
 
@@ -690,12 +713,10 @@ create_slurpy_array(Interp *interp, struct call_state *st, INTVAL idx)
     dod_register_pmc(interp, st->dest.slurp);
 
     CTX_REG_PMC(st->dest.ctx, idx) = st->dest.slurp;
-    st->dest.mode |= CALL_STATE_SLURP;
-    st->dest.mode &= ~CALL_STATE_OPT;
 }
 
 static void
-too_few(Interp *interp, struct call_state *st, const char *action)
+too_few(Interp *interp, call_state *st, const char *action)
 {
     int max_expected_args = st->params;
     int min_expected_args = max_expected_args - st->optionals;
@@ -709,7 +730,7 @@ too_few(Interp *interp, struct call_state *st, const char *action)
 }
 
 static void
-too_many(Interp *interp, struct call_state *st, const char *action)
+too_many(Interp *interp, call_state *st, const char *action)
 {
     int max_expected_args = st->params;
     int min_expected_args = max_expected_args - st->optionals;
@@ -723,7 +744,7 @@ too_many(Interp *interp, struct call_state *st, const char *action)
 }
 
 static void
-null_val(int sig, struct call_state *st)
+null_val(int sig, call_state *st)
 {
     switch (sig & PARROT_ARG_TYPE_MASK) {
         case PARROT_ARG_INTVAL:
@@ -745,7 +766,7 @@ null_val(int sig, struct call_state *st)
  * STRING* name, [INPS] actual_arg, int opt_arg_flag
  */
 static void
-check_named(Interp *interp, struct call_state *st, const char *action)
+check_named(Interp *interp, call_state *st, const char *action)
 {
     int i;
     int n_named = -1;
@@ -808,24 +829,27 @@ check_named(Interp *interp, struct call_state *st, const char *action)
 }
 
 static void
-init_call_stats(struct call_state *st)
+init_call_stats(call_state *st)
 {
     st->n_actual_args = st->src.n;  /* initial guess, adjusted for :flat args */
-    st->optionals = 0;
-    st->params = st->dest.n;
-    st->name = NULL;
-    st->key = NULL;
-    st->first_named = -1;
+    st->optionals     = 0;
+    st->params        = st->dest.n;
+    st->name          = NULL;
+    st->key           = NULL;
+    st->first_named   = -1;
 }
 
 void
-Parrot_process_args(Interp *interp, struct call_state *st, arg_pass_t param_or_result)
+Parrot_process_args(Interp *interp, call_state *st, arg_pass_t param_or_result)
 {
-    int state, opt_flag;
+    int has_arg, n_named;
     int err_check = 1;
-    const char *action = (param_or_result == PARROT_PASS_RESULTS) ? "results" : "params";
-    INTVAL idx;
+    call_state_item *src, *dest;
 
+    const char *action = (param_or_result == PARROT_PASS_RESULTS) ? "results" : "params";
+
+    /* Check if we should be throwing errors. This can be configured separately
+     * for parameters and return values. */
     if (param_or_result == PARROT_PASS_RESULTS) {
         if (!PARROT_ERRORS_test(interp, PARROT_ERRORS_RESULT_COUNT_FLAG))
             err_check = 0;
@@ -835,187 +859,152 @@ Parrot_process_args(Interp *interp, struct call_state *st, arg_pass_t param_or_r
             err_check = 0;
     }
 
-    if (!st->src.n)
-        st->dest.mode |= CALL_STATE_END_x;
-    if (!st->dest.n)
-        st->dest.mode |= CALL_STATE_x_END;
     init_call_stats(st);
 
-    do {
-        Parrot_fetch_arg(interp, st);
-        state = st->dest.mode & CALL_STATE_MASK;
+    src  = &st->src;
+    dest = &st->dest;
 
-        /*  finished if both are at end or src at end * and we are slurpying */
-        if ((state & CALL_STATE_END_x) &&
-                ((state & CALL_STATE_x_END) || (state & CALL_STATE_SLURP)))
+    /*
+     * 1st: Positional non-:slurpy
+     */
+    for (; dest->i < dest->n; dest->i++) {
+        INTVAL idx;
+
+        /* check if the next dest arg is :slurpy */
+        next_arg_sig(interp, dest);
+        if (dest->sig & PARROT_ARG_SLURPY_ARRAY)
+            break;
+
+        /* check if there is another argument. we need to store the value to
+         * handle :opt_flag, which needs to know if there was a preceding
+         * argument. */
+        has_arg = Parrot_fetch_arg(interp, st);
+
+        /* if the src arg is named, we're done here */
+        if (st->name)
+            break;
+
+        /* if the dest is a named argument, we need to fill it as a positional
+         * since no named arguments have been given. so skip the name. */
+        if (dest->sig & PARROT_ARG_NAME) {
+            if (!has_arg)
+                break;
+            dest->i++;
+            next_arg_sig(interp, dest);
+        }
+
+        /* if there *is* an arg, convert it */
+        if (has_arg) {
+            src->used = 1;
+            Parrot_convert_arg(interp, st);
+        }
+        /* if this is an optional argument, null it */
+        else if (dest->sig & PARROT_ARG_OPTIONAL)
+            null_val(st->dest.sig, st);
+        /* there's no argument - throw an exception (if we're in to that) */
+        else if (err_check)
+            too_few(interp, st, action);
+        /* otherwise, we're done */
+        else
             return;
+        /* actually store the argument */
+        idx = st->dest.u.op.pc[st->dest.i];
+        assert(idx >= 0);
+        store_arg(st, idx);
 
-        /*
-         * handle state changes
-         */
-        if (!(state & CALL_STATE_NAMED_x)) {
-            if (!(state & CALL_STATE_SLURP) &&
-                    (st->dest.sig & (PARROT_ARG_SLURPY_ARRAY|PARROT_ARG_NAME))
-                    == PARROT_ARG_SLURPY_ARRAY) {
-                /* create dest slurp array */
-                idx = st->dest.u.op.pc[st->dest.i];
-                assert(idx >= 0);
-                create_slurpy_array(interp, st, idx);
-                state = CALL_STATE_POS_POS_SLURP;
-            }
-            /* positional src -> named src */
-            if (st->name) {
-                st->dest.mode |= CALL_STATE_NAMED_x;
+        /* if we're at an :optional argument, we need to check for an :opt_flag */
+        if (dest->sig & PARROT_ARG_OPTIONAL)
+            check_for_opt_flag(interp, st, has_arg);
+    }
 
-                if (state == CALL_STATE_POS_POS_SLURP) {
-                    /* stop slurpy array */
-                    st->dest.slurp = NULL;
-                    st->dest.mode &= ~CALL_STATE_SLURP;
-                    /*
-                     * work around bad interaction of _NEXT_ARG
-                     * and flattening (which always advances to next)
-                     * TODO rewrite all again, now that all pieces are
-                     * together
-                     */
-                    if (st->src.mode & CALL_STATE_FLATTEN) {
-                        if (!next_arg(interp, &st->dest)) {
-                            st->dest.mode |= CALL_STATE_x_END;
-                        }
-                    }
-                    else {
-                        st->src.mode &= ~CALL_STATE_NEXT_ARG;
-                        st->dest.mode |= CALL_STATE_NEXT_ARG;
-                        continue;
-                    }
-                }
-            }
+
+    /*
+     * 2nd: Positional :slurpy
+     */
+    if (dest->sig & PARROT_ARG_SLURPY_ARRAY && !(dest->sig & PARROT_ARG_NAME)) {
+        PMC *array = pmc_new(interp, enum_class_ResizablePMCArray);
+
+        INTVAL idx = st->dest.u.op.pc[dest->i];
+        assert(idx >= 0);
+        /* Must register this PMC or it may get collected when only the struct
+         * references it. */
+        dod_register_pmc(interp, array);
+        CTX_REG_PMC(st->dest.ctx, idx) = array;
+
+        while (Parrot_fetch_arg(interp, st)) {
+            /* if the src arg is named, we're done here */
+            if (st->name)
+                break;
+
+            src->used = 1;
+
+            /* we have to convert to a PMC to we can put it in the PMC array */
+            dest->sig |= PARROT_ARG_PMC;
+            Parrot_convert_arg(interp, st);
+
+            VTABLE_push_pmc(interp, array, UVal_pmc(st->val));
         }
 
-        /* first dest named arg, setup for recieving of named args */
-        if (!(state & CALL_STATE_x_NAMED) && (st->dest.sig & PARROT_ARG_NAME)) {
-            /* pos -> named dest */
-            init_first_dest_named(interp, st);
+        dest->i++;
+        dod_unregister_pmc(interp, array);
+    }
+
+    /* is there another argument? if we're thowing errors, that's an error */
+    if (err_check && Parrot_fetch_arg(interp, st) && !st->name && !(dest->sig & PARROT_ARG_NAME))
+        too_many(interp, st, action);
+
+    /* are we at the end? */
+    if (dest->i == dest->n)
+        return;
+
+
+    /*
+     * 3rd: :named
+     */
+    init_first_dest_named(interp, st);
+    n_named = 0;
+    while (Parrot_fetch_arg(interp, st)) {
+        src->used = 1;
+
+        if (!st->name)
+            real_exception(interp, NULL, 0,
+                           "positional inside named args at position %i",
+                           st->src.i - n_named);
+
+        if (!locate_named_named(interp, st))
+            real_exception(interp, NULL, E_ValueError,
+                           "too many named arguments - '%Ss' not expected", st->name);
+
+        n_named++;
+        /* if the dest arg is :named :slurpy */
+        if (dest->sig & PARROT_ARG_SLURPY_ARRAY) {
+            /* Convert to a PMC to store in the hash */
+            dest->sig |= PARROT_ARG_PMC;
+            Parrot_convert_arg(interp, st);
+            VTABLE_set_pmc_keyed_str(interp, dest->slurp, st->name, UVal_pmc(st->val));
+        }
+        else {
+            Parrot_convert_arg(interp, st);
+            store_current_arg(interp, st);
+
+            /* if we're at an :optional argument, we need to check for an :opt_flag */
+            if (dest->sig & PARROT_ARG_OPTIONAL)
+                check_for_opt_flag(interp, st, 1);
         }
 
-        state = st->dest.mode & CALL_STATE_MASK;
-        switch (state) {
-            case CALL_STATE_NAMED_NAMED:
-            case CALL_STATE_NAMED_NAMED_OPT:
-                if (!locate_named_named(interp, st))
-                    real_exception(interp, NULL, E_ValueError,
-                            "too many named arguments - '%Ss' not expected", st->name);
-                if (st->dest.mode & CALL_STATE_SLURP)
-                    state |= CALL_STATE_SLURP;
-                break;
-            case CALL_STATE_POS_NAMED:
-                locate_pos_named(interp, st);
-                break;
-        }
-        if (st->dest.sig & PARROT_ARG_OPTIONAL) {
-            st->dest.mode |= CALL_STATE_OPT;
-            state         |= CALL_STATE_OPT;
-        }
-        else if (state & CALL_STATE_SLURP) {
-            st->dest.sig &= ~PARROT_ARG_TYPE_MASK;
-            st->dest.sig |= PARROT_ARG_PMC;
-        }
+        /* otherwise this doesn't get reset and we can't catch positional args
+         * inside of named args */
+        st->name = NULL;
+    }
 
-        switch (state) {
-            case CALL_STATE_POS_POS:
-                st->dest.mode |= CALL_STATE_NEXT_ARG;
-                Parrot_convert_arg(interp, st);
-                store_current_arg(interp, st);
-                break;
-
-            case CALL_STATE_NAMED_NAMED:
-            case CALL_STATE_POS_NAMED:
-                Parrot_convert_arg(interp, st);
-                store_current_arg(interp, st);
-                break;
-
-            case CALL_STATE_NAMED_NAMED_OPT:
-            case CALL_STATE_POS_POS_OPT:
-                opt_flag = 1;
-
-              store_opt:
-                ++st->optionals;
-                Parrot_convert_arg(interp, st);
-                store_current_arg(interp, st);
-
-                /* :opt_flag is truely optional */
-                if (!next_arg(interp, &st->dest)) {
-                    /* do nothing */
-                }
-                else if (!(st->dest.sig & PARROT_ARG_OPT_FLAG)) {
-                    st->dest.i--;
-                }
-                else
-                {
-                    int idx = st->dest.u.op.pc[st->dest.i];
-                    --st->params;
-                    assert(idx >= 0);
-                    CTX_REG_INT(st->dest.ctx, idx) = opt_flag;
-                }
-                if (!(state & CALL_STATE_x_NAMED))
-                    st->dest.mode |= CALL_STATE_NEXT_ARG;
-                break;
-            case CALL_STATE_END_POS_OPT:
-                null_val(st->dest.sig, st);
-                opt_flag = 0;
-                goto store_opt;
-            case CALL_STATE_POS_POS_SLURP:
-                Parrot_convert_arg(interp, st);
-                VTABLE_push_pmc(interp, st->dest.slurp, UVal_pmc(st->val));
-                break;
-            case CALL_STATE_NAMED_NAMED_SLURP:
-                Parrot_convert_arg(interp, st);
-                VTABLE_set_pmc_keyed_str(interp, st->dest.slurp, st->name, UVal_pmc(st->val));
-                break;
-
-            case CALL_STATE_END_NAMED_NAMED|CALL_STATE_OPT:
-            case CALL_STATE_END_NAMED_NAMED:
-            case CALL_STATE_END_POS_NAMED:
-                check_named(interp, st, action);
-                return;
-
-            /* error conditions */
-            case CALL_STATE_END_x:
-                if (err_check)
-                    too_few(interp, st, action);
-                return;
-            case CALL_STATE_x_END|CALL_STATE_OPT:
-            case CALL_STATE_x_END:
-                if (err_check)
-                    too_many(interp, st, action);
-                return;
-            case CALL_STATE_END_x|CALL_STATE_SLURP:
-                /* this happens when flattening an empty array into a slurpy */
-                return;
-            case CALL_STATE_NAMED_POS:
-            case CALL_STATE_NAMED_POS_OPT:
-            case CALL_STATE_NAMED_POS_SLURP:
-                real_exception(interp, NULL, E_ValueError, "too many named arguments");
-                break;
-            case CALL_STATE_NAMED_x|CALL_STATE_x_NAMED|CALL_STATE_x_END:
-                /* XXX: this state doesn't properly reflect what's going on */
-                real_exception(interp, NULL, 0,
-                        "positional inside named args at position %i", st->src.i-1);
-                break;
-            default:
-                real_exception(interp, NULL, 0, "Unhandled process_args state 0x%x", state);
-                break;
-        }
-    } while (1);
+    check_named(interp, st, action);
+    /* we may or may not have registered this pmc */
+    dod_unregister_pmc(interp, dest->slurp);
 }
 
 void
-Parrot_convert_arg(Interp *interp, struct call_state *st)
+Parrot_convert_arg(Interp *interp, call_state *st)
 {
-#define END_OF_ARGS(x) (x.i >= x.n)
-    /* if END OF SRC or DEST ARGS, no need to convert */
-    if ((END_OF_ARGS(st->src) || END_OF_ARGS(st->dest)))
-        return;
-
     /* register key args have to be cloned */
     if ((st->src.sig & PARROT_ARG_TYPE_MASK) == PARROT_ARG_PMC)
         clone_key_arg(interp, st);
@@ -1038,7 +1027,6 @@ Parrot_convert_arg(Interp *interp, struct call_state *st)
         case PARROT_ARG_PMC:
             convert_arg_from_pmc(interp, st);
             break;
-
     }
 }
 
@@ -1069,7 +1057,7 @@ void
 parrot_pass_args(Interp *interp, parrot_context_t *src_ctx, parrot_context_t *dest_ctx,
         opcode_t *src_indexes, opcode_t *dest_indexes, arg_pass_t  param_or_result)
 {
-    struct call_state st;
+    call_state st;
     PMC* src_signature;
     PMC* dest_signature;
 
@@ -1110,7 +1098,7 @@ opcode_t *
 parrot_pass_args_fromc(Interp *interp, const char *sig,
         opcode_t *dest, parrot_context_t *old_ctxp, va_list ap)
 {
-    struct call_state st;
+    call_state st;
 
     Parrot_init_arg_op(interp, CONTEXT(interp->ctx), dest, &st.dest);
     Parrot_init_arg_sig(interp, old_ctxp, sig, PARROT_VA_TO_VAPTR(ap), &st.src);
@@ -1120,7 +1108,7 @@ parrot_pass_args_fromc(Interp *interp, const char *sig,
 
 int
 set_retval_util(Parrot_Interp interp, const char *sig, parrot_context_t *ctx,
-        struct call_state *st)
+        call_state *st)
 {
     opcode_t *src_pc = interp->current_returns;
     int todo = Parrot_init_arg_op(interp, ctx, src_pc, &st->src);
@@ -1144,7 +1132,7 @@ set_retval_util(Parrot_Interp interp, const char *sig, parrot_context_t *ctx,
 void*
 set_retval(Parrot_Interp interp, int sig_ret, parrot_context_t *ctx)
 {
-    struct call_state st;
+    call_state st;
 
     if (!sig_ret || sig_ret == 'v')
         return NULL;
@@ -1166,7 +1154,7 @@ set_retval(Parrot_Interp interp, int sig_ret, parrot_context_t *ctx)
 INTVAL
 set_retval_i(Parrot_Interp interp, int sig_ret, parrot_context_t *ctx)
 {
-    struct call_state st;
+    call_state st;
 
     if (sig_ret != 'I')
         real_exception(interp, NULL, E_ValueError, "return signature not 'I'");
@@ -1183,7 +1171,7 @@ set_retval_i(Parrot_Interp interp, int sig_ret, parrot_context_t *ctx)
 FLOATVAL
 set_retval_f(Parrot_Interp interp, int sig_ret, parrot_context_t *ctx)
 {
-    struct call_state st;
+    call_state st;
 
     if (sig_ret != 'N')
         real_exception(interp, NULL, E_ValueError, "return signature not 'N'");
@@ -1200,7 +1188,7 @@ set_retval_f(Parrot_Interp interp, int sig_ret, parrot_context_t *ctx)
 STRING*
 set_retval_s(Parrot_Interp interp, int sig_ret, parrot_context_t *ctx)
 {
-    struct call_state st;
+    call_state st;
 
     if (sig_ret != 'S')
         real_exception(interp, NULL, E_ValueError, "return signature not 'S'");
@@ -1217,7 +1205,7 @@ set_retval_s(Parrot_Interp interp, int sig_ret, parrot_context_t *ctx)
 PMC*
 set_retval_p(Parrot_Interp interp, int sig_ret, parrot_context_t *ctx)
 {
-    struct call_state st;
+    call_state st;
 
     if (sig_ret != 'P')
         real_exception(interp, NULL, E_ValueError, "return signature not 'P'");
@@ -1329,12 +1317,13 @@ Parrot_PCCINVOKE(Interp* interp, PMC* pmc, STRING *method_name, const char *sign
 {
 #define PCC_ARG_MAX 1024
     /* variables from PCCINVOKE impl in PCCMETHOD.pm */
-    INTVAL n_regs_used[] = { 0, 0, 0, 0, 0, 0, 0, 0 }; /* args INSP, returns INSP */
+    /* args INSP, returns INSP */
+    INTVAL n_regs_used[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
     opcode_t arg_indexes[PCC_ARG_MAX];
     opcode_t result_indexes[PCC_ARG_MAX];
-    PMC* args_sig = pmc_new(interp, enum_class_FixedIntegerArray);
+    PMC* args_sig    = pmc_new(interp, enum_class_FixedIntegerArray);
     PMC* results_sig = pmc_new(interp, enum_class_FixedIntegerArray);
-    PMC* ret_cont = new_ret_continuation_pmc(interp, NULL);
+    PMC* ret_cont    = new_ret_continuation_pmc(interp, NULL);
     parrot_context_t *ctx;
     PMC* pccinvoke_meth;
 
@@ -1343,18 +1332,31 @@ Parrot_PCCINVOKE(Interp* interp, PMC* pmc, STRING *method_name, const char *sign
     PMC* save_current_object;
 
     /* temporary state vars for building PCC index and PCC signature arrays. */
-    opcode_t *indexes[2] = { arg_indexes, result_indexes };
-    PMC *sigs[2] = { args_sig, results_sig };
-    int arg_ret_cnt[2] = { 0, 0 }; /* # of arg args, # of result args */
-    int max_regs[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }; /* INSP args, INSP results */
-    int seen_arrow = 0;
+
+    /* arg_indexes, result_indexes */
+    opcode_t *indexes[2];
+
+    /* args_sig, results_sig */
+    PMC *sigs[2];
+
+    /* # of arg args, # of result args */
+    int arg_ret_cnt[2] = { 0, 0 };
+
+    /* INSP args, INSP results */
+    int max_regs[8]    = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    int seen_arrow     = 0;
     const char *x;
     const char *ret_x;
     int index = -1;
-    int cur = 0;
+    int cur   =  0;
 
     va_list list;
     va_start(list, signature);
+
+    indexes[0] = arg_indexes;
+    indexes[1] = result_indexes;
+    sigs[0]    = args_sig;
+    sigs[1]    = results_sig;
 
     /* account for passing invocant in-band */
     if (pmc) {
@@ -1407,17 +1409,18 @@ Parrot_PCCINVOKE(Interp* interp, PMC* pmc, STRING *method_name, const char *sign
 
     /* second loop through signature to build all index and arg_flag
      * loop also assigns args(up to the ->) to registers */
+    index = -1;
+    seen_arrow = 0;
 
     /* account for passing invocant in-band */
     if (pmc) {
         indexes[0][0] = 0;
         VTABLE_set_integer_keyed_int(interp, sigs[0], 0, PARROT_ARG_PMC);
         CTX_REG_PMC(ctx, 0) = pmc;
+        n_regs_used[seen_arrow * 4 + REGNO_PMC]++;
         index = 0;
     }
 
-    index = -1;
-    seen_arrow = 0;
     for (x = signature; *x != '\0'; x++) {
         /* detect -> separator */
         if (*x == '-') {

@@ -16,7 +16,7 @@ token line {
 
 rule label { [<word>\:]? }
 
-token word { \w[\w|\d]* }
+token word { [\w|_][\w|\d|_]* }
 
 rule subroutine { sub <word> <block> }
 
@@ -39,16 +39,20 @@ rule gprint  { (print) <expr> }
 
 regex term {
       \( <expr> \)
-    | <variable>
     | <number>
     | <integer>
     | <stringdouble>
     | <stringsingle>
     | do <block>
     | <subcall>
+    | <variable>
 }
-rule variable { <sigil> <word> }
-token sigil { <[$@%]> }
+rule variable { <sigil>? <word> <key>? }
+token sigil { <[$@]> }
+token key {
+    $<KEY>:=[\[] <?ws> <expr> <?ws> $<KEY_CLOSE>:=[\]]
+    | $<KEY>:=[\{] <?ws> <expr> <?ws> $<KEY_CLOSE>:=[\}]
+}
 token integer { \d+ }
 token number { \d+\.\d+ }
 regex stringdouble { <PGE::Text::bracketed: "> }
@@ -137,6 +141,7 @@ proto infix:|| is looser('infix:&&') is assoc('left')
 
 proto infix:= is looser('infix:||')
     is past('assign')
+    is lvalue(1)
     {...}
 
 proto 'infix:,' is looser('infix:=') is assoc('list')

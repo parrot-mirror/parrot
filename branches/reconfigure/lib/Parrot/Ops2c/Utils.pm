@@ -309,6 +309,7 @@ sub _print_preamble_header {
 $self->{sym_export} extern op_lib_t *$self->{init_func}(long init);
 
 END_C
+    return 1;
 }
 
 sub _print_run_core_func_decl_header {
@@ -317,6 +318,7 @@ sub _print_run_core_func_decl_header {
     if ( $self->{trans}->can("run_core_func_decl") ) {
         my $run_core_func = $self->{trans}->run_core_func_decl( $self->{base} );
         print $fh "$run_core_func;\n";
+        return 1;
     }
     else {
         return;
@@ -334,6 +336,7 @@ sub _print_coda {
  * vim: expandtab shiftwidth=4:
  */
 END_C
+    return 1;
 }
 
 =head2 C<print_c_source_top()>
@@ -428,6 +431,7 @@ sub _print_ops_addr_decl {
 
     if ( $self->{trans}->can("ops_addr_decl") ) {
         print $fh $self->{trans}->ops_addr_decl( $self->{bs} );
+        return 1;
     }
     else {
         return;
@@ -441,6 +445,7 @@ sub _print_run_core_func_decl_source {
         print $fh $self->{trans}->run_core_func_decl( $self->{base} );
         print $fh "\n{\n";
         print $fh $self->{trans}->run_core_func_start;
+        return 1;
     }
     else {
         return;
@@ -522,6 +527,7 @@ sub _print_cg_jump_table {
 END_C
         print $fh $self->{trans}->run_core_after_addr_table( $self->{bs} );
     }
+    return 1;
 }
 
 sub _print_goto_opcode {
@@ -576,6 +582,7 @@ END_C
         print $fh $self->{trans}->run_core_finish( $self->{base} );
     }
     close($fh) || die "Unable to close after writing: $!";
+    return 1;
 }
 
 =head2 C<print_c_source_bottom()>
@@ -766,6 +773,7 @@ END_C
 
 END_C
     }
+    return 1;
 }
 
 sub _op_lookup {
@@ -835,18 +843,19 @@ static size_t hash_str(const char * str) {
 }
 
 static void store_op(op_info_t *info, int full) {
-    HOP * const p = mem_sys_allocate(sizeof(HOP));
+    HOP * const p     = mem_allocate_typed(HOP);
     const size_t hidx =
         hash_str(full ? info->full_name : info->name) % OP_HASH_SIZE;
-    p->info = info;
-    p->next = hop[hidx];
+
+    p->info   = info;
+    p->next   = hop[hidx];
     hop[hidx] = p;
 }
 static int get_op(const char * name, int full) {
     HOP * p;
     const size_t hidx = hash_str(name) % OP_HASH_SIZE;
     if (!hop) {
-        hop = mem_sys_allocate_zeroed(OP_HASH_SIZE * sizeof(HOP*));
+        hop = (HOP **)mem_sys_allocate_zeroed(OP_HASH_SIZE * sizeof(HOP*));
         hop_init();
     }
     for (p = hop[hidx]; p; p = p->next) {
@@ -889,6 +898,7 @@ END_C
 static void hop_deinit(void) {}
 END_C
     }
+    return 1;
 }
 
 sub _print_op_lib_descriptor {
@@ -916,6 +926,7 @@ static op_lib_t $self->{bs}op_lib = {
 };
 
 END_C
+    return 1;
 }
 
 sub _generate_init_func {
@@ -951,6 +962,7 @@ $init_set_dispatch
 }
 
 END_C
+    return 1;
 }
 
 sub _print_dynamic_lib_load {
@@ -974,6 +986,7 @@ $load_func(Parrot_Interp interp)
 }
 END_C
     }
+    return 1;
 }
 
 sub _rename_source {

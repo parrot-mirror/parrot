@@ -2185,7 +2185,7 @@ Parrot_emit_jump_to_eax(Parrot_jit_info_t *jit_info,
         emitm_movl_m_r(jit_info->native_ptr, emit_ECX, emit_EBX, 0, 1,
                 offsetof(Interp, code));
         emitm_movl_m_r(jit_info->native_ptr, emit_EDX, emit_ECX, 0, 1,
-                offsetof(struct PackFile_Segment, data));
+                offsetof(PackFile_Segment, data));
         /* calc code offset */
         jit_emit_sub_rr_i(jit_info->native_ptr, emit_EAX, emit_EDX);
         /*
@@ -2196,7 +2196,7 @@ Parrot_emit_jump_to_eax(Parrot_jit_info_t *jit_info,
          * TODO interleave these 2 calculations
          */
         emitm_movl_m_r(jit_info->native_ptr, emit_EDX, emit_ECX, 0, 1,
-                offsetof(struct PackFile_ByteCode, jit_info));
+                offsetof(PackFile_ByteCode, jit_info));
         emitm_lea_m_r(jit_info->native_ptr, emit_EDX, emit_EDX, 0, 1,
                 offsetof(Parrot_jit_info_t, arena));
         emitm_movl_m_r(jit_info->native_ptr, emit_EDX, emit_EDX, 0, 1,
@@ -2264,8 +2264,8 @@ static void call_func(Parrot_jit_info_t *jit_info, void *addr)
 #  undef Parrot_jit_vtable_newp_ic_op
 
 #  define CONST(i) (int *)(jit_info->cur_op[i] * \
-       sizeof (struct PackFile_Constant) + \
-       offsetof(struct PackFile_Constant, u))
+       sizeof (PackFile_Constant) + \
+       offsetof(PackFile_Constant, u))
 
 #  define CALL(f) Parrot_exec_add_text_rellocation_func(jit_info->objfile, \
        jit_info->native_ptr, f); \
@@ -2450,7 +2450,7 @@ Parrot_jit_vtable_n_op(Parrot_jit_info_t *jit_info,
     char *L4 = NULL;
 
     /* get the offset of the first vtable func */
-    offset = offsetof(struct _vtable, init);
+    offset = offsetof(VTABLE, init);
     offset += nvtable * sizeof (void *);
     op = *jit_info->cur_op;
     if (op == PARROT_OP_set_i_p_ki) {
@@ -2770,7 +2770,7 @@ Parrot_jit_vtable_newp_ic_op(Parrot_jit_info_t *jit_info,
 {
     int p1, i2;
     op_info_t *op_info = &interp->op_info_table[*jit_info->cur_op];
-    size_t offset = offsetof(struct _vtable, init);
+    size_t offset = offsetof(VTABLE, init);
     extern PARROT_API char **Parrot_exec_rel_addr;
     extern PARROT_API int Parrot_exec_rel_count;
 
@@ -3073,7 +3073,7 @@ jit_set_args_pc(Parrot_jit_info_t *jit_info, Interp *interp,
 {
     PMC *sig_args, *sig_params, *sig_result;
     INTVAL *sig_bits, sig, i, n;
-    struct PackFile_Constant ** constants;
+    PackFile_Constant ** constants;
     opcode_t *params, *result;
     char params_map;
     int skip, used_n;
@@ -3413,7 +3413,7 @@ Parrot_jit_begin_sub_regs(Parrot_jit_info_t *jit_info,
      */
     if (jit_info->flags & JIT_CODE_RECURSIVE) {
         char * L1;
-        struct PackFile_Constant ** constants;
+        PackFile_Constant ** constants;
         PMC *sig_result;
         opcode_t *result;
 

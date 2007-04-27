@@ -140,12 +140,13 @@ sub runstep {
     }
     elsif ($is_bcc) {
         $conf->data->set(
-            o          => '.obj',
-            a          => '.lib',
-            share_ext  => '.dll',
-            load_ext   => '.dll',
-            cc         => ${cc},
-            ccflags    => '-O2 -w-8066 -DWIN32 -DNO_STRICT -DNDEBUG -D_CONSOLE',
+            o         => '.obj',
+            a         => '.lib',
+            share_ext => '.dll',
+            load_ext  => '.dll',
+            cc        => ${cc},
+            ccflags =>
+                '-O2 -w-8066 -DWIN32 -DNO_STRICT -DNDEBUG -D_CONSOLE -w-par -w-aus -w-ccc -w-rch',
             cc_o_out   => '-o',
             cc_exe_out => '-e',
             cc_debug   => '-v',
@@ -162,10 +163,10 @@ sub runstep {
             link      => ${cc},
             linkflags => '',
 
-            ar       => 'tlib',
+            ar       => 'tlib /a /P128',
             ar_flags => '',
             ar_out   => '',
-            ar_extra => '/au',
+            ar_extra => '',
             slash    => '\\',
             blib_dir => 'blib\\lib',
             make_and => "\n\t",

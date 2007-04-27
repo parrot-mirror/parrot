@@ -10,7 +10,9 @@ use Test::More;
 use Parrot::Test;
 use Parrot::Config;
 
-plan $^O =~ m/MSWin32/ ? ( skip_all => 'broken on win32' ) : ( tests => 16 );
+plan $^O =~ m/MSWin32|cygwin/
+   ? ( skip_all => 'broken on win32 && cygwin' )
+   : ( tests => 16 );
 
 =head1 NAME
 
@@ -440,7 +442,7 @@ main(int argc, char* argv[])
 static opcode_t*
 the_test(Parrot_Interp interp, opcode_t *cur_op, opcode_t *start)
 {
-    struct PackFile *pf;
+    PackFile *pf;
     PMC *sub, *arg;
     STRING *name;
 
@@ -514,7 +516,7 @@ main(int argc, char* argv[])
 static opcode_t*
 the_test(Parrot_Interp interp, opcode_t *cur_op, opcode_t *start)
 {
-    struct PackFile *pf;
+    PackFile *pf;
     PMC *sub;
     STRING *name;
     Parrot_exception jb;

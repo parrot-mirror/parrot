@@ -253,7 +253,7 @@ string_init(Parrot_Interp interp)
             interp->parent_interpreter->const_cstring_table;
         return;
     }
-    interp->const_cstring_table = mem_sys_allocate(sizeof (STRING*) *
+    interp->const_cstring_table = (STRING**)mem_sys_allocate(sizeof (STRING*) *
         sizeof (parrot_cstrings)/sizeof (parrot_cstrings[0]));
     for (i = 0; i < sizeof (parrot_cstrings)/sizeof (parrot_cstrings[0]); ++i) {
         interp->const_cstring_table[i] =
@@ -477,7 +477,7 @@ Make a Parrot string from a specified C string.
 
 STRING *
 string_from_cstring(Interp *interp,
-    const void *buffer, UINTVAL len)
+    const char *buffer, UINTVAL len)
 {
     return string_make_direct(interp, buffer, len ? len :
             buffer ? strlen(buffer) : 0,
@@ -495,7 +495,7 @@ Make a Parrot string from a specified C string.
 
 STRING *
 string_from_const_cstring(Interp *interp,
-    const void *buffer, UINTVAL len)
+    const char *buffer, UINTVAL len)
 {
     return string_make_direct(interp, buffer, len ? len :
             buffer ? strlen(buffer) : 0,
@@ -528,6 +528,7 @@ string_primary_encoding_for_representation(Interp *interp,
             return NULL;
             break;
     }
+    return NULL;
 }
 
 /*
@@ -573,7 +574,7 @@ together.
 */
 
 STRING *
-string_make(Interp *interp, const void *buffer,
+string_make(Interp *interp, const char *buffer,
     UINTVAL len, const char *charset_name, UINTVAL flags)
 {
     ENCODING *encoding;
@@ -594,7 +595,7 @@ string_make(Interp *interp, const void *buffer,
 }
 
 STRING *
-string_make_direct(Interp *interp, const void *buffer,
+string_make_direct(Interp *interp, const char *buffer,
         UINTVAL len, ENCODING *encoding, CHARSET *charset, UINTVAL flags)
 {
     STRING * const s = new_string_header(interp, flags);
@@ -613,7 +614,7 @@ string_make_direct(Interp *interp, const void *buffer,
            it was safe by setting PObj_external_FLAG.
            (The cast is necessary to pacify TenDRA's tcc.)
            */
-        PObj_bufstart(s) = s->strstart = const_cast(buffer);
+        PObj_bufstart(s) = s->strstart = (char *)const_cast(buffer);
         PObj_buflen(s)   = s->bufused = len;
         if (encoding == Parrot_fixed_8_encoding_ptr)
             s->strlen = len;
@@ -725,8 +726,8 @@ string_str_index(Interp *interp, const STRING *s,
 
     saneify_string(s);
     saneify_string(s2);
-    src = const_cast(s);
-    search = const_cast(s2);
+    src = (STRING *)const_cast(s);
+    search = (STRING *)const_cast(s2);
 
     return CHARSET_INDEX(interp, src, search, start);
 }
@@ -1791,7 +1792,7 @@ string_to_num(Interp *interp, const STRING *s)
          * XXX C99 atof interpreters 0x prefix
          * XXX would strtod() be better for detecting malformed input?
          */
-        char * const cstr = string_to_cstring(interp, const_cast(s));
+        char * const cstr = string_to_cstring(interp, (STRING *)const_cast(s));
         const char *p = cstr;
         while (isspace(*p))
             p++;
@@ -1862,7 +1863,7 @@ string_to_cstring(Interp *interp, STRING * s)
     if (s == NULL) {
         return NULL;
     }
-    p = mem_sys_allocate(s->bufused + 1);
+    p = (char *)mem_sys_allocate(s->bufused + 1);
     memcpy(p, s->strstart, s->bufused);
     p[s->bufused] = 0;
     return p;
@@ -1879,9 +1880,9 @@ sorts of leak potential otherwise.
 */
 
 void
-string_cstring_free(void *ptr)
+string_cstring_free(char *p)
 {
-    mem_sys_free(ptr);
+    mem_sys_free(p);
 }
 
 /*
@@ -1895,7 +1896,7 @@ memory.
 void
 string_pin(Interp *interp, STRING * s)
 {
-    void *memory;
+    char *memory;
     INTVAL size;
 
     /* XXX -lt: COW strings have the external_FLAG set, so this will
@@ -1904,7 +1905,7 @@ string_pin(Interp *interp, STRING * s)
      */
     Parrot_unmake_COW(interp, s);
     size = PObj_buflen(s);
-    memory = mem_sys_allocate(size);
+    memory = (char *)mem_sys_allocate(size);
     mem_sys_memcopy(memory, PObj_bufstart(s), size);
     PObj_bufstart(s) = memory;
     s->strstart = memory;
@@ -2027,7 +2028,7 @@ string_escape_string_delimited(Interp *interp,
             Parrot_fixed_8_encoding_ptr, Parrot_ascii_charset_ptr, 0);
     /* more work TODO */
     ENCODING_ITER_INIT(interp, src, &iter);
-    dp = result->strstart;
+    dp = (unsigned char *)result->strstart;
     for (i = 0; len > 0; --len) {
         UINTVAL c = iter.get_and_advance(interp, &iter);
         if (c < 0x7f) {
@@ -2037,7 +2038,7 @@ string_escape_string_delimited(Interp *interp,
                 charlen += len * 2 + 16;
                 Parrot_reallocate_string(interp, result, charlen);
                 /* start can change */
-                dp = result->strstart;
+                dp = (unsigned char *)result->strstart;
             }
             switch (c) {
                 case '\\':
@@ -2093,7 +2094,7 @@ string_escape_string_delimited(Interp *interp,
         i += hex->strlen;
         /* and usable len */
         charlen = PObj_buflen(result);
-        dp = result->strstart;
+        dp = (unsigned char *)result->strstart;
         assert(i < charlen);
     }
     result->bufused = result->strlen = i;
@@ -2214,7 +2215,7 @@ STRING *
 string_upcase(Interp *interp, const STRING *s)
 {
     DECL_CONST_CAST;
-    STRING * const dest = string_copy(interp, const_cast(s));
+    STRING * const dest = string_copy(interp, (STRING *)const_cast(s));
     string_upcase_inplace(interp, dest);
     return dest;
 }
@@ -2247,7 +2248,7 @@ STRING *
 string_downcase(Interp *interp, const STRING *s)
 {
     DECL_CONST_CAST;
-    STRING * const dest = string_copy(interp, const_cast(s));
+    STRING * const dest = string_copy(interp, (STRING *)const_cast(s));
     string_downcase_inplace(interp, dest);
     return dest;
 }
@@ -2286,7 +2287,7 @@ STRING *
 string_titlecase(Interp *interp, const STRING *s)
 {
     DECL_CONST_CAST;
-    STRING * const dest = string_copy(interp, const_cast(s));
+    STRING * const dest = string_copy(interp, (STRING *)const_cast(s));
     string_titlecase_inplace(interp, dest);
     return dest;
 }
@@ -2359,8 +2360,7 @@ character classes. Returns 0 otherwise, or if the string is empty or NULL.
 */
 
 INTVAL
-Parrot_string_is_cclass(Interp *interp, PARROT_CCLASS_FLAGS flags,
-                        STRING *s, UINTVAL offset)
+Parrot_string_is_cclass(Interp *interp, INTVAL flags, STRING *s, UINTVAL offset)
 {
     if (!string_length(interp, s))
         return 0;
@@ -2368,8 +2368,8 @@ Parrot_string_is_cclass(Interp *interp, PARROT_CCLASS_FLAGS flags,
 }
 
 INTVAL
-Parrot_string_find_cclass(Interp *interp, PARROT_CCLASS_FLAGS flags,
-                          STRING *s, UINTVAL offset, UINTVAL count)
+Parrot_string_find_cclass(Interp *interp, INTVAL flags, STRING *s,
+                          UINTVAL offset, UINTVAL count)
 {
     if (!s)
         return -1;
@@ -2377,8 +2377,8 @@ Parrot_string_find_cclass(Interp *interp, PARROT_CCLASS_FLAGS flags,
 }
 
 INTVAL
-Parrot_string_find_not_cclass(Interp *interp, PARROT_CCLASS_FLAGS flags,
-                              STRING *s, UINTVAL offset, UINTVAL count)
+Parrot_string_find_not_cclass(Interp *interp, INTVAL flags, STRING *s,
+                              UINTVAL offset, UINTVAL count)
 {
     if (!s)
         return -1;

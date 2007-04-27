@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2006, The Perl Foundation.
+# Copyright (C) 2004-2007, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -32,7 +32,6 @@ package Parrot::Distribution;
 use strict;
 use warnings;
 
-use Cwd;
 use ExtUtils::Manifest;
 use File::Spec;
 use Parrot::Configure::Step qw(capture_output);
@@ -60,7 +59,9 @@ sub new {
     my ($class) = @_;
 
     return $dist if defined $dist;
+
     my $self = bless {}, $class;
+
     return $self->_initialize;
 }
 
@@ -100,6 +101,7 @@ sub _initialize {
 
 sub _croak {
     my ( $self, @message ) = @_;
+
     require Carp;
     Carp::croak(@message);
 }
@@ -184,7 +186,7 @@ BEGIN {
             ops => { file_exts => ['ops'] },
             lex => {
                 file_exts   => ['l'],
-                except_dirs => [ qw{ languages/lisp examples/library } ],
+                except_dirs => [qw{ languages/lisp examples/library }],
             },
             yacc => { file_exts => ['y'] },
             perl => {
@@ -347,6 +349,9 @@ This is to exclude automatically generated C-language files Parrot might have.
             languages/cola/lexer.c
             languages/cola/parser.c
             languages/cola/parser.h
+            languages/plumhead/lex.yy.c
+            languages/plumhead/y.tab.c
+            languages/plumhead/y.tab.h
             } unless @exemptions;
 
         $file->path =~ /\Q$_\E$/ && return 1 for @exemptions;
@@ -383,7 +388,7 @@ sub get_perl_language_files {
     }
 
     # return only those files which aren't exempt
-    return grep { !$self->is_perl_exemption($_) } @perl_files;
+    return grep { ! $self->is_perl_exemption($_) } @perl_files;
 }
 
 =item C<is_perl_exemption()>
@@ -401,9 +406,6 @@ any external modules Parrot might have.
     sub is_perl_exemption {
         my ( $self, $file ) = @_;
 
-        # RT#41611: write a test to make sure these files don't get picked up
-        # again...  i.e. a test of is_perl_exemption
-
         $exemptions ||= $self->get_perl_exemption_regexp();
 
         return $file->path =~ $exemptions;
@@ -419,9 +421,9 @@ coding-standard-exempt Perl files within Parrot
 
 sub get_perl_exemption_regexp {
     my $self = shift;
-    my $cwd  = cwd();
 
-    my @paths = map { File::Spec->catdir( $cwd, File::Spec->canonpath($_) ) } qw{
+    my $parrot_dir  = $self->path();
+    my @paths = map { File::Spec->catdir( $parrot_dir, File::Spec->canonpath($_) ) } qw{
         languages/lua/Lua/parser.pm
         languages/regex/lib/Regex/Grammar.pm
         lib/Class/
@@ -434,7 +436,8 @@ sub get_perl_exemption_regexp {
         lib/Text/
     };
 
-    my $regex = join '|', map { quotemeta } @paths;
+    my $regex = join '|', map { quotemeta $_ } @paths;
+
     return qr/^$regex/;
 }
 
@@ -490,9 +493,7 @@ returns a Parrot::Docs::File object
 sub get_pir_language_files {
     my $self = shift;
 
-    my @pir_files = (
-        $self->pir_source_files,
-    );
+    my @pir_files = ( $self->pir_source_files, );
 
     return @pir_files;
 }
@@ -693,45 +694,49 @@ sub gen_manifest_skip {
 
     # manicheck.pl is probably only useful for checked out revisions
     # Checkout is done either with svn or svk
-    my $cmd = (-d '.svn') ? 'svn' : 'svk';
+    my $cmd = ( -d '.svn' ) ? 'svn' : 'svk';
 
     # Find all directories in the Parrot distribution
     my %dir_list = map {
+
         #uniq
         $_, undef;
-    } grep {
+        } grep {
+
         # directories only...
         -d $_
-    } map {
-        # extract directory component, if any 
+        } map {
+
+        # extract directory component, if any
         my $dir = ( File::Spec->splitpath($_) )[1];
-    } map {
-        # strip off any .svn components. 
+        } map {
+
+        # strip off any .svn components.
         # (lets us match dirs with no versioned files)
         s/\.svn.*//;
         $_;
-    } keys %{ ExtUtils::Manifest::manifind() }; # start with everything
+        } keys %{ ExtUtils::Manifest::manifind() };    # start with everything
 
-    $dir_list{'.'} = undef; # check top level directory too.
+    $dir_list{'.'} = undef;                            # check top level directory too.
 
-    my @skip;    # regular expressions for files to skip
+    my @skip;                                          # regular expressions for files to skip
 
-    my @dirs = (sort keys %dir_list);
+    my @dirs = ( sort keys %dir_list );
 
     my $ignore_cmd = "$cmd propget svn:ignore @dirs";
 
-    my ($patterns, $err, $code) = capture_output($ignore_cmd);
+    my ( $patterns, $err, $code ) = capture_output($ignore_cmd);
     die $err if $code;
 
-    my @patterns_list = split(/\n/, $patterns);
+    my @patterns_list = split( /\n/, $patterns );
     my ($dir);
-    foreach my $pattern ( @patterns_list ) {
+    foreach my $pattern (@patterns_list) {
 
         next if $pattern =~ m/^\s*$/;
-        
-        if ($pattern =~ s/^(.*?) - //) {
+
+        if ( $pattern =~ s/^(.*?) - // ) {
             $dir = $1;
-            if ($dir eq ".") {
+            if ( $dir eq "." ) {
                 $dir = q{};
             }
             else {
@@ -743,10 +748,10 @@ sub gen_manifest_skip {
         # whatever's left must be a pattern to ignore in the previously
         # found directory.
 
-        $pattern =~ s/\./\\./g;            # . is simply a dot
-        $pattern =~ s/\*/.*/g;             # * is any amount of chars
-        push @skip, "^${dir}$pattern\$"; # SVN globs are specific to a dir
-        push @skip, "^${dir}$pattern/";  # SVN globs are specific to a dir
+        $pattern =~ s/\./\\./g;    # . is simply a dot
+        $pattern =~ s/\*/.*/g;     # * is any amount of chars
+        push @skip, "^${dir}$pattern\$";    # SVN globs are specific to a dir
+        push @skip, "^${dir}$pattern/";     # SVN globs are specific to a dir
     }
 
     return \@skip;
@@ -761,6 +766,7 @@ values are the comments.
 
 sub generated_files {
     my $self      = shift;
+
     my $generated = ExtUtils::Manifest::maniread('MANIFEST.generated');
     my $path      = $dist->path();
 

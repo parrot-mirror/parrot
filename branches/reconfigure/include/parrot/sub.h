@@ -87,7 +87,7 @@ typedef enum {
     SUB_COMP_FLAG_BIT_28 = 1 << 28,
     SUB_COMP_FLAG_BIT_29 = 1 << 29,
     SUB_COMP_FLAG_BIT_30 = 1 << 30,
-    SUB_COMP_FLAG_MASK   = 0x00000400,
+    SUB_COMP_FLAG_MASK   = 0x00000400
 } sub_comp_flags_enum;
 
 #define Sub_comp_get_FLAGS(o) ((PMC_sub(o))->comp_flags)
@@ -101,8 +101,6 @@ typedef enum {
 #define Sub_comp_INIT_TEST(o) Sub_comp_flag_TEST(PF_INIT, o)
 #define Sub_comp_INIT_SET(o) Sub_comp_flag_SET(PF_INIT, o)
 #define Sub_comp_INIT_CLEAR(o) Sub_comp_flag_CLEAR(PF_INIT, o)
-
-union parrot_context_t;
 
 /*
  * a flag to signal a Sub that a new RetContinuation should be created
@@ -157,7 +155,7 @@ typedef struct Parrot_coro {
     size_t   end_offs;
 
     INTVAL   HLL_id;             /* see src/hll.c XXX or per segment? */
-    PMC      *namespace;         /* where this Sub is in - this is either
+    PMC      *_namespace;        /* where this Sub is in - this is either
                                   * a String or a [Key] and describes
                                   * the relative path in the NameSpace
                                   */
@@ -202,7 +200,7 @@ struct Parrot_Context_info {
     STRING* nsname;
     STRING* fullname;
     int pc;
-    const char *file;
+    char *file;
     int line;
     opcode_t *address;
 };

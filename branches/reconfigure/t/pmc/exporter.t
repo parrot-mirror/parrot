@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 6;
+use Parrot::Test tests => 10;
 
 =head1 NAME
 
@@ -40,15 +40,14 @@ ok 1 - $P0 = new .Exporter
 ok 2 - isa $P0, 'Exporter'
 OUT
 
-
 pir_output_is( <<'CODE', <<'OUT', 'source' );
 .sub 'test' :main
     new $P0, .Exporter
     $P1 = $P0.'source'()
-    if $P1 == '' goto ok_1
+    if null $P1 goto ok_1
     print 'not '
   ok_1:
-    say 'ok 1 - source() with no args returns source namespace, which is empty at first'
+    say 'ok 1 - source() returns PMCNULL upon Exporter init'
 
     # get a NameSpace PMC for testing
     # TODO replace with make_namespace, when implemented
@@ -87,12 +86,11 @@ pir_output_is( <<'CODE', <<'OUT', 'source' );
 .sub 'Eponymous' :anon
 .end
 CODE
-ok 1 - source() with no args returns source namespace, which is empty at first
+ok 1 - source() returns PMCNULL upon Exporter init
 ok 2 - source() with args sets source namespace
 ok 3 - source() with too many args fails
 ok 4 - source() with non-namespace arg throws exception
 OUT
-
 
 pir_output_is( <<'CODE', <<'OUT', 'destination' );
 .sub 'test' :main
@@ -152,7 +150,6 @@ ok 3 - destination() with args sets destination namespace
 ok 4 - destination() with too many args fails
 ok 5 - destination() with non-namespace arg throws exception
 OUT
-
 
 pir_output_is( <<'CODE', <<'OUT', 'globals' );
 .sub 'test' :main
@@ -220,7 +217,6 @@ ok 3 - globals() with args sets globals array (array with two values)
 ok 4 - globals() with too many args fails
 OUT
 
-
 pir_output_is( <<'CODE', <<'OUT', 'add_global' );
 .sub 'test' :main
     $P0 = new .Exporter
@@ -274,22 +270,109 @@ ok 3 - add_global() with args adds string to globals array (again)
 ok 4 - add_global() with too many args fails
 OUT
 
-
 ## TODO import
-pir_output_like( <<'CODE', <<'OUT', 'import - no args', todo => 'not yet implemented' );
+pir_output_like( <<'CODE', <<'OUT', 'import - no args' );
 .sub 'test' :main
     $P0 = new .Exporter
 
     $P0.'import'()
-    say 'ok 1 - import() with no args does nothing'
+    say 'ok 1 - import() with no args throws an exception'
 
 .end
 CODE
 /^source namespace not set\n/
 OUT
 
+pir_output_is( <<'CODE', <<'OUT', 'import - same source and destination namespaces' );
+.sub 'test' :main
+    .local pmc exporter, src
 
+    src     = get_namespace
 
+    exporter = new .Exporter
+    exporter.'import'( src :named('source'), src :named('destination'), 'plan ok' :named('globals') )
+    plan(1)
+    ok(1)
+.end
+
+.sub 'plan'
+    .param int one
+    say '1..1'
+.end
+
+.sub 'ok'
+    .param int one
+    say 'ok 1'
+.end
+CODE
+1..1
+ok 1
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'import - globals as string' );
+.sub 'test' :main
+    load_bytecode 'Test/More.pir'
+    .local pmc exporter, src
+
+    src     = get_namespace ['Test::More']
+
+    exporter = new .Exporter
+    exporter.'import'( src :named('source'), 'plan ok' :named('globals') )
+    plan(1)
+    ok(1)
+.end
+CODE
+1..1
+ok 1
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'import - globals as array' );
+.sub 'test' :main
+    load_bytecode 'Test/More.pir'
+    .local pmc exporter, src, globals
+
+    src     = get_namespace ['Test::More']
+    globals = new .ResizableStringArray
+    globals = push 'ok'
+    globals = push 'plan'
+
+    exporter = new .Exporter
+    exporter.'import'( src :named('source'), globals :named('globals') )
+    plan(1)
+    ok(1)
+.end
+CODE
+1..1
+ok 1
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'import - globals with destination' );
+.sub 'test' :main
+    load_bytecode 'Test/More.pir'
+    .local pmc exporter, src, dest, globals
+
+    src     = get_namespace ['Test::More']
+    dest    = get_namespace ['foo']
+    globals = new .ResizableStringArray
+    globals = push 'ok'
+    globals = push 'plan'
+
+    exporter = new .Exporter
+    exporter.'import'( src :named('source'), dest :named('destination'), globals :named('globals') )
+
+    $P0 = find_global ['foo'], 'bar'
+    $P0()
+.end
+
+.namespace ['foo']
+.sub 'bar'
+    plan(1)
+    ok(1)
+.end
+CODE
+1..1
+ok 1
+OUT
 
 # Local Variables:
 #   mode: cperl

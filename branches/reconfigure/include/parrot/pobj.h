@@ -16,15 +16,15 @@
 #include "parrot/config.h"
 
 typedef union UnionVal {
-    struct {                                  /* One Buffer structure */
+    struct _b {                                  /* One Buffer structure */
         void *     _bufstart;
         size_t     _buflen;
     } _b;
-    struct {                                  /* or two pointers, both are defines */
+    struct _ptrs {                                  /* or two pointers, both are defines */
         DPOINTER * _struct_val;
         PMC *      _pmc_val;
     } _ptrs;
-    struct {
+    struct _i {
         INTVAL _int_val;                      /* or 2 intvals */
         INTVAL _int_val2;
     } _i;
@@ -78,13 +78,11 @@ typedef enum {
 struct parrot_string_t {
     pobj_t obj;
     UINTVAL bufused;
-    void *strstart;
+    char *strstart;
     UINTVAL strlen;
     /*    parrot_string_representation_t representation;*/
-    void *encoding; /* These should be of type ENCODING * and CHARSET *
-                     * respectively, but I'm not sure how to get them
-                     * to do that without a whole lotta work right now */
-    void *charset;
+    struct _encoding *encoding;
+    struct _charset *charset;
     UINTVAL hashval; /* cached hash value computation; not yet used */
 };
 
@@ -141,12 +139,16 @@ typedef struct PMC_EXT PMC_EXT;
 #  define PMC_ext_checked(pmc)             (assert((pmc)->pmc_ext), (pmc)->pmc_ext)
 #endif /* NDEBUG */
 #if PMC_DATA_IN_EXT
-#  define PMC_data(pmc)       PMC_ext_checked(pmc)->data
+#  define PMC_data(pmc)                   PMC_ext_checked(pmc)->data
+#  define PMC_data_typed(pmc, type) (type)PMC_ext_checked(pmc)->data
 #  define PMC_data0(pmc)      ((pmc)->pmc_ext ? pmc->pmc_ext->data : 0)
+#  define PMC_data0_typed(pmc, type) (type)(pmc)->pmc_ext ? pmc->pmc_ext->data : 0)
 #else
-#  define PMC_data(pmc)       (pmc)->data
+#  define PMC_data(pmc)                   (pmc)->data
+#  define PMC_data_typed(pmc, type) (type)(pmc)->data
 /* do not allow PMC_data2 as lvalue */
-#  define PMC_data0(pmc)      (1 ? (pmc)->data : 0)
+#  define PMC_data0(pmc)            (1 ? (pmc)->data : 0)
+#  define PMC_data0_typed(pmc)      (type)(1 ? (pmc)->data : 0)
 #endif /* PMC_DATA_IN_EXT */
 #define PMC_metadata(pmc)     PMC_ext_checked(pmc)->_metadata
 #define PMC_next_for_GC(pmc)  PMC_ext_checked(pmc)->_next_for_GC

@@ -120,6 +120,8 @@ maintainer.  Patches and suggestions can be sent to
 
 =cut
 
-## vim: expandtab sw=4
-
-
+# Local Variables:
+#   mode: pir
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:

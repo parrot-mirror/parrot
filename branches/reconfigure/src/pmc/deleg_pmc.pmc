@@ -39,7 +39,7 @@ pmclass deleg_pmc no_ro {
     void init() {
     }
 
-    void init_pmc(PMC* class) {
+    void init_pmc(PMC* _class) {
     }
 
     void mark() {
@@ -79,7 +79,7 @@ pmclass deleg_pmc no_ro {
         return SUPER(method_name);
     }
 
-    PMC* namespace() {
+    PMC* pmc_namespace() {
         return SELF->vtable->_namespace;
     }
 

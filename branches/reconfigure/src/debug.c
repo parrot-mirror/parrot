@@ -1273,7 +1273,7 @@ char *
 PDB_escape(const char *string, INTVAL length)
 {
     const char *end;
-    char *new,*fill;
+    char *_new,*fill;
 
     length = length > 20 ? 20 : length;
     end = string + length;
@@ -1282,7 +1282,7 @@ PDB_escape(const char *string, INTVAL length)
     if (!string)
         return NULL;
 
-    fill = new = (char *)mem_sys_allocate(length * 2 + 1);
+    fill = _new = (char *)mem_sys_allocate(length * 2 + 1);
 
     for (; string < end; string++) {
         switch (*string) {
@@ -1320,7 +1320,7 @@ PDB_escape(const char *string, INTVAL length)
         }
     }
     *fill = '\0';
-    return new;
+    return _new;
 }
 
 /*
@@ -1545,7 +1545,7 @@ PDB_disassemble_op(Interp *interp, char* dest, int space,
                     dest[size++] = '?';
                     break;
                 }
-                k = PMC_data(k);
+                k = (PMC *)PMC_data(k);
                 if (k) dest[size++] = ';';
             }
             dest[size++] = ']';
@@ -1624,7 +1624,7 @@ PDB_disassemble(Interp *interp, const char *command)
         if (space < default_size) {
             alloced += default_size;
             space += default_size;
-            pfile->source = mem_sys_realloc(pfile->source, alloced);
+            pfile->source = (char *)mem_sys_realloc(pfile->source, alloced);
         }
 
         size = PDB_disassemble_op(interp, pfile->source + pfile->size,
@@ -1685,7 +1685,7 @@ Add a label to the label list.
 long
 PDB_add_label(PDB_file_t *file, opcode_t *cur_opcode, opcode_t offset)
 {
-    PDB_label_t *new, *label = file->label;
+    PDB_label_t *_new, *label = file->label;
 
     /* See if there is already a label at this line */
     while (label) {
@@ -1695,20 +1695,20 @@ PDB_add_label(PDB_file_t *file, opcode_t *cur_opcode, opcode_t offset)
     }
     /* Allocate a new label */
     label = file->label;
-    new = (PDB_label_t *)mem_sys_allocate(sizeof (PDB_label_t));
-    new->opcode = cur_opcode + offset;
-    new->next   = NULL;
+    _new = mem_allocate_typed(PDB_label_t);
+    _new->opcode = cur_opcode + offset;
+    _new->next   = NULL;
     if (label) {
         while (label->next)
             label = label->next;
-        new->number = label->number + 1;
-        label->next = new;
+        _new->number = label->number + 1;
+        label->next = _new;
     }
     else {
-        file->label = new;
-        new->number = 1;
+        file->label = _new;
+        _new->number = 1;
     }
-    return new->number;
+    return _new->number;
 }
 
 /*
@@ -1810,7 +1810,7 @@ PDB_load_source(Interp *interp, const char *command)
     while ((c = fgetc(file)) != EOF) {
         /* Grow it */
         if (++size == 1024) {
-            pfile->source = mem_sys_realloc(pfile->source,
+            pfile->source = (char *)mem_sys_realloc(pfile->source,
                                             (size_t)pfile->size + 1024);
             size = 0;
         }
@@ -1970,8 +1970,8 @@ void
 PDB_eval(Interp *interp, const char *command)
 {
     opcode_t *run;
-    struct PackFile *eval_pf;
-    struct PackFile_ByteCode *old_cs;
+    PackFile *eval_pf;
+    PackFile_ByteCode *old_cs;
 
     /*
     The replacement code is almost certainly wrong. The previous
@@ -2053,12 +2053,12 @@ PDB_extend_const_table(Interp *interp)
     k = ++interp->code->const_table->const_count;
     if (interp->code->const_table->constants) {
         interp->code->const_table->constants =
-            mem_sys_realloc(interp->code->const_table->constants,
-                            k * sizeof (struct PackFile_Constant *));
+            (PackFile_Constant **)mem_sys_realloc(interp->code->const_table->constants,
+                            k * sizeof (PackFile_Constant *));
     }
     else {
         interp->code->const_table->constants =
-            mem_sys_allocate(k * sizeof (struct PackFile_Constant *));
+            (PackFile_Constant **)mem_sys_allocate(k * sizeof (PackFile_Constant *));
     }
 
     /* Allocate a new constant */
@@ -2491,7 +2491,7 @@ GDB_B(Interp *interp, char *s) {
 
         if (!gdb_bps) {
             nr = 0;
-            newbreak = mem_sys_allocate(sizeof (PDB_breakpoint_t));
+            newbreak = mem_allocate_typed(PDB_breakpoint_t);
             newbreak->prev = NULL;
             newbreak->next = NULL;
             gdb_bps = newbreak;
@@ -2505,7 +2505,7 @@ GDB_B(Interp *interp, char *s) {
                     break;
             }
             ++nr;
-            newbreak = mem_sys_allocate(sizeof (PDB_breakpoint_t));
+            newbreak = mem_allocate_typed(PDB_breakpoint_t);
             newbreak->prev = bp;
             newbreak->next = NULL;
             bp->next = newbreak;

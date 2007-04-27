@@ -274,5 +274,8 @@ Should replace vec with declared arrays of bit, uint2, uint4, etc.
 
 =cut
 
-
-## vim: expandtab sw=4
+# Local Variables:
+#   mode: pir
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:

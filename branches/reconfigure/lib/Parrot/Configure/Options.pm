@@ -10,14 +10,14 @@ our @EXPORT_OK = qw(
 );
 
 sub get_valid_options {
-    return  qw(ask bindir cage cc ccflags ccwarn cgoto cxx datadir
-    debugging define exec-prefix execcapable floatval gc help icu-config
-    icudatadir icuheaders icushared includedir infodir inline intval
-    jitcapable ld ldflags lex libdir libexecdir libs link linkflags
-    localstatedir m maintainer mandir miniparrot nomanicheck oldincludedir
-    opcode ops optimize parrot_is_shared pmc prefix profile sbindir
-    sharedstatedir step sysconfdir verbose verbose-step version without-gdbm
-    without-gmp without-icu yacc);
+    return qw(ask bindir cage cc ccflags ccwarn cgoto cxx datadir
+        debugging define exec-prefix execcapable floatval gc help icu-config
+        icudatadir icuheaders icushared includedir infodir inline intval
+        jitcapable ld ldflags lex libdir libexecdir libs link linkflags
+        localstatedir m maintainer mandir miniparrot nomanicheck oldincludedir
+        opcode ops optimize parrot_is_shared pmc prefix profile sbindir
+        sharedstatedir step sysconfdir verbose verbose-step version without-gdbm
+        without-gmp without-icu yacc);
 }
 
 sub process_options {
@@ -32,29 +32,29 @@ sub process_options {
     die "Must provide argument 'svnid'"
         unless $optionsref->{svnid};
     my %args;
-    for (@{$optionsref->{argv}}) {
+    for ( @{ $optionsref->{argv} } ) {
         my ( $key, $value ) = m/--([-\w]+)(?:=(.*))?/;
         $key   = 'help' unless defined $key;
         $value = 1      unless defined $value;
-    
+
         unless ( grep $key eq $_, @valid_opts ) {
             die qq/Invalid option $key. See "perl Configure.pl --help" for valid options\n/;
         }
-    
+
         for ($key) {
-            if ($key =~ m/version/) {
+            if ( $key =~ m/version/ ) {
                 print_version_info($optionsref);
                 return;
             }
-    
-            if ($key =~ m/help/) {
+
+            if ( $key =~ m/help/ ) {
                 print_help($optionsref);
                 return;
             }
             $args{$key} = $value;
         }
     }
-    
+
     $args{debugging} = 1
         unless ( ( exists $args{debugging} ) && !$args{debugging} );
     $args{maintainer} = 1 if defined $args{lex} or defined $args{yacc};
@@ -67,6 +67,7 @@ sub print_version_info {
     my $argsref = shift;
     print "Parrot Version $argsref->{parrot_version} Configure 2.0\n";
     print "$argsref->{svnid}\n";
+    return 1;
 }
 
 sub print_help {
@@ -187,7 +188,8 @@ Install Options:
     --mandir=DIR            man documentation [PREFIX/man]
 
 EOT
-};
+    return 1;
+}
 
 1;
 
@@ -205,7 +207,7 @@ Parrot::Configure::Options - Process command-line options to F<Configure.pl>
         argv            => [ @ARGV ],
         script          => $0,
         parrot_version  => $parrot_version,
-        svnid           => 
+        svnid           =>
             '$Id$',
     } );
 
@@ -213,7 +215,7 @@ Parrot::Configure::Options - Process command-line options to F<Configure.pl>
 
 =head1 DESCRIPTION
 
-Parrot::Configure::Options exports on demand two subroutines:  
+Parrot::Configure::Options exports on demand two subroutines:
 C<process_options()>, which processes the command-line options provided to
 F<Configure.pl>; and C<get_valid_options()>, which returns the list of
 currently valid options.
@@ -246,7 +248,7 @@ One argument:  Reference to a hash holding the following key-value pairs:
     script          : Perl's $0:  the calling program;
                       defaults to 'Configure.pl'
     parrot_version  : string holding Parrot version number
-                      (currently supplied by 
+                      (currently supplied by
                       Parrot::BuildUtil::parrot_version())
     svnid           : string holding Subversion Id string
 

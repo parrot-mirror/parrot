@@ -263,10 +263,10 @@ sub init {
         #
         # Note that this trick won't work if the singleton inherits from something else
         # (because the MRO will still be shared).
-        unless ( $self->implements('namespace') or $self->{super}{'namespace'} ne 'default' ) {
+        unless ( $self->implements('pmc_namespace') or $self->{super}{'pmc_namespace'} ne 'default' ) {
             push @{ $self->{methods} },
                 {
-                meth       => 'namespace',
+                meth       => 'pmc_namespace',
                 parameters => '',
                 body       => '{ return INTERP->vtables[SELF->vtable->base_type]->_namespace; }',
                 loc        => 'vtable',
@@ -275,7 +275,7 @@ sub init {
                 line       => 1,
                 attrs      => {},
                 };
-            $self->{has_method}{namespace} = $#{ $self->{methods} };
+            $self->{has_method}{pmc_namespace} = $#{ $self->{methods} };
         }
     }
 
@@ -550,7 +550,8 @@ sub body {
 
     my $total_body;
     if ( $method->{loc} eq 'vtable' ) {
-        $total_body = $self->rewrite_vtable_method( $classname, $meth, $super, $self->{super}, $body );
+        $total_body =
+            $self->rewrite_vtable_method( $classname, $meth, $super, $self->{super}, $body );
     }
     else {
         $total_body = $self->rewrite_nci_method( $classname, $meth, $body );
@@ -835,7 +836,7 @@ sub vtable_decl {
     my $enum_name = $self->{flags}{dynpmc} ? -1 : "enum_class_$classname";
     my $methlist = join( ",\n        ", @$methods );
     $cout .= <<ENDOFCODE;
-    const struct _vtable $name = {
+    const VTABLE $name = {
         NULL, /* namespace */
         $enum_name, /* base_type */
         NULL, /* whoami */
@@ -915,12 +916,12 @@ EOC
         /*
          * create vtable - clone it - we have to set a few items
          */
-        struct _vtable *vt_clone =
+        VTABLE *vt_clone =
             Parrot_clone_vtable(interp, &temp_base_vtable);
 EOC
     for my $k ( keys %extra_vt ) {
         $cout .= <<"EOC";
-        struct _vtable *vt_${k}_clone =
+        VTABLE *vt_${k}_clone =
             Parrot_clone_vtable(interp, &temp_${k}_vtable);
 EOC
     }
@@ -1000,8 +1001,7 @@ EOC
     foreach my $method ( @{ $self->{methods} } ) {
         next unless $method->{loc} eq 'nci';
         my $proto = proto( $method->{type}, $method->{parameters} );
-        my $symbol_name = defined $method->{symbol} ?
-            $method->{symbol} : $method->{meth};
+        my $symbol_name = defined $method->{symbol} ? $method->{symbol} : $method->{meth};
         if ( exists $method->{pre_block} ) {
             $cout .= <<"EOC";
         register_raw_nci_method_in_ns(interp, entry,
@@ -1010,7 +1010,7 @@ EOC
         }
         else {
             $cout .= <<"EOC";
-        enter_nci_method(interp, entry,
+        register_nci_method(interp, entry,
                 F2DPTR(Parrot_${classname}_$method->{meth}),
                 "$symbol_name", "$proto");
 EOC

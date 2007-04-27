@@ -82,7 +82,7 @@ PIO_mmap_open(Interp *interp, ParrotIOLayer *layer,
         status = fstat(io->fd, &statbuf);
         file_size = statbuf.st_size;
         /* TODO verify flags */
-        io->b.startb = mmap(0, file_size, PROT_READ, MAP_SHARED, io->fd, 0);
+        io->b.startb = (unsigned char *)mmap(0, file_size, PROT_READ, MAP_SHARED, io->fd, 0);
         io->b.size = (size_t)file_size;  /* XXX */
         io->b.endb = io->b.startb + io->b.size;
         io->b.flags |= PIO_BF_MMAP;
@@ -122,7 +122,8 @@ PIO_mmap_read(Interp *interp, ParrotIOLayer *layer, ParrotIO *io,
     if (s->strstart && PObj_sysmem_TEST(s))
         mem_sys_free(PObj_bufstart(s));
     PObj_get_FLAGS(s) |= PObj_external_FLAG;
-    PObj_bufstart(s) = s->strstart = io->b.startb + io->fpos;
+    PObj_bufstart(s) = io->b.startb + io->fpos;
+    s->strstart =  (char *) io->b.startb + io->fpos;
     len = s->bufused ? s->bufused : io->b.size;
     io->fpos += len;
     PObj_buflen(s) = s->strlen = len;

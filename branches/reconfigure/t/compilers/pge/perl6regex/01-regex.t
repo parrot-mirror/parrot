@@ -79,6 +79,7 @@ Description of the test.
     push test_files, 'rx_lookarounds'
     push test_files, 'rx_captures'
     push test_files, 'rx_modifiers'
+    push test_files, 'rx_syntax'
 
     .local pmc interp     # a handle to our interpreter object.
                interp = getinterp
@@ -319,7 +320,6 @@ Description of the test.
     if tab_number >= $I0 goto bad_line
     pattern     = $P1[tab_number]
     inc tab_number
-    if pattern == '' goto get_pattern
   get_target:
     if tab_number >= $I0 goto bad_line
     target      = $P1[tab_number]

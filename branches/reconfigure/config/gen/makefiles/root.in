@@ -371,6 +371,7 @@ IMCC_O_FILES = \
     $(IMCC_DIR)/imcparser$(O) \
     $(IMCC_DIR)/imclexer$(O) \
     $(IMCC_DIR)/imc$(O) \
+    $(IMCC_DIR)/main$(O) \
     $(IMCC_DIR)/symreg$(O) \
     $(IMCC_DIR)/instructions$(O) \
     $(IMCC_DIR)/cfg$(O) \
@@ -760,25 +761,25 @@ runtime/parrot/include/config.fpmc : myconfig config_lib.pasm $(MINIPARROT)
 	@echo Invoking Parrot to generate runtime/parrot/include/config.fpmc --cross your fingers
 	$(MINIPARROT) config_lib.pasm > $@
 
-$(PARROT) : $(IMCC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
+$(PARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
     lib/Parrot/OpLib/core.pm $(SRC_DIR)/parrot_config$(O) \
     $(MINIPARROT)
 	$(LINK) @ld_out@$@ \
-    $(IMCC_DIR)/main$(O) @rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS) $(LINK_DYNAMIC) \
+    $(SRC_DIR)/main$(O) @rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS) $(LINK_DYNAMIC) \
     $(SRC_DIR)/parrot_config$(O)
 #
 # TODO build the real miniparrot
 #
-$(MINIPARROT) : $(IMCC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
+$(MINIPARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
     lib/Parrot/OpLib/core.pm $(SRC_DIR)/null_config$(O)
-	$(LINK) @ld_out@$@ $(IMCC_DIR)/main$(O) \
+	$(LINK) @ld_out@$@ $(SRC_DIR)/main$(O) \
     @rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS) $(SRC_DIR)/null_config$(O)
 
-$(INSTALLABLEPARROT) : $(IMCC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
+$(INSTALLABLEPARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
     lib/Parrot/OpLib/core.pm $(SRC_DIR)/install_config$(O) \
     $(PARROT)
 	$(LINK) @ld_out@$@ \
-    $(IMCC_DIR)/main$(O) \
+    $(SRC_DIR)/main$(O) \
     $(ALL_PARROT_LIBS) $(LINKFLAGS) $(SRC_DIR)/install_config$(O)
 
 $(SRC_DIR)/parrot_config.c :  runtime/parrot/include/config.fpmc \
@@ -1081,6 +1082,8 @@ $(IO_DIR)/io_string$(O) : $(GENERAL_H_FILES) $(IO_DIR)/io_private.h
 $(IO_DIR)/io_passdown$(O) : $(GENERAL_H_FILES) $(IO_DIR)/io_private.h
 
 $(SRC_DIR)/gc/memory$(O) : $(GENERAL_H_FILES)
+
+$(SRC_DIR)/main$(O) : $(SRC_DIR)/main.c $(GENERAL_H_FILES)
 
 $(SRC_DIR)/pic$(O) : $(GENERAL_H_FILES)
 
@@ -1563,7 +1566,7 @@ prog-clean :
 	$(RM_F) \
     $(SRC_DIR)/string_private_cstring.h \
     "$(SRC_DIR)/*.str" "src/pmc/*.str" \
-    "src/pmc/*.c" "src/pmc/*.h" "src/pmc/*.dump" \
+    "src/pmc/*.c" "src/pmc/pmc_*.h" "src/pmc/*.dump" \
     vtable.dump "*.def" "*.lib" "*.exp"
 
 archclean: dynoplibs-clean dynpmc-clean dynext-clean

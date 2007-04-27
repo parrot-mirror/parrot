@@ -54,6 +54,7 @@ Clean up grammar after discussion.
 #include "pirlexer.h"
 #include "pirparser.h"
 #include "pirvtable.h" /* vtable definition */
+#include "pirutil.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -70,7 +71,7 @@ The parser_state structure has the following fields:
  typedef struct parser_state {
     struct     lexer_state *lexer;     -- the lexer
     token      curtoken;               -- the current token as returned by the lexer
-    char     **heredoc_ids;            -- array for holding heredoc arguments. XXX Limited to 10 currently XXX
+    char     **heredoc_ids;            -- array for holding heredoc arguments
     unsigned   heredoc_index;          -- index to keep track of heredoc ids in the array
     unsigned   parse_errors;           -- counter for parse_errors
     pirvtable *vtable;                 -- vtable holding pointers for output routines
@@ -103,6 +104,8 @@ typedef struct parser_state {
 #define next(P) P->curtoken = next_token(P->lexer)
 
 
+/* forward declaration; program is called by include. */
+static void program(parser_state *p);
 
 /*
 
@@ -231,12 +234,14 @@ resize_heredoc_args(parser_state *p) {
     }
     else {
         unsigned i; /* copy all contents of old array into new array */
-        for (i = 0; i < p->heredoc_index; i++)
+        for (i = 0; i < p->heredoc_index; i++) {
             newbuffer[i] = p->heredoc_ids[i];
+        }
 
         /* free old memory and store new buffer in parser_state structure */
         free(p->heredoc_ids);
         p->heredoc_ids = newbuffer;
+        p->heredoc_ids_size <<= 1; /* set the new size to twice its old size */
     }
 }
 
@@ -258,8 +263,10 @@ syntax_error(parser_state *p, int numargs, ...) {
     long line = get_current_line(p->lexer);
     char const *file = get_current_file(p->lexer);
 
+    /* general message */
     fprintf(stderr, "\nsyntax error in file '%s', line %ld: ", file, line);
 
+    /* print all arguments; they should all be of type "char *"! */
     va_start(arg_ptr, numargs);
     for (count = 0; count < numargs; count++) {
         char *arg = va_arg(arg_ptr, char *);
@@ -274,7 +281,7 @@ syntax_error(parser_state *p, int numargs, ...) {
 
     p->parse_errors++;
 
-
+    /* if there are too many errors, report that and bail out */
     if (p->parse_errors > MAX_ERRORS) {
         fprintf(stderr, "Too many errors; fix some first\n");
         exit_parser(p);
@@ -382,7 +389,6 @@ expression(parser_state *p) {
         case T_PASM_NREG: case T_NREG:
         case T_PASM_IREG: case T_IREG:
         case T_PASM_SREG: case T_SREG:
-        case T_MACRO_IDENT:
             exprtok = p->curtoken; /* store current token type to return */
             /* emit the expression */
             emit_expr(p, get_current_token(p->lexer));
@@ -544,11 +550,60 @@ keylist(parser_state *p) {
     match(p, T_RBRACKET); /* match closing ']' */
 }
 
+
+
 /*
 
 =item *
 
-  argument -> HEREDOCID | expression | STRINGC '=>' expression
+  arg_flags -> { arg_flag }
+
+  arg_flag -> ':flat' | ':named' [ '(' STRINGC ')' ]
+
+=cut
+
+*/
+static void
+arg_flags(parser_state *p) {
+    int ok = 1;
+
+    emit_list_start(p);
+
+    while (ok) {
+        switch (p->curtoken) {
+            case T_FLAT_FLAG:
+                next(p);
+                break;
+            case T_NAMED_FLAG:
+                next(p);
+                if (p->curtoken == T_LPAREN) {
+                    next(p);
+                    match(p, T_STRING_CONSTANT);
+                    match(p, T_RPAREN);
+                }
+                break;
+            case T_NEWLINE: /* for long-invocation */
+            case T_COMMA:   /* for short-invocation, comma inmplies next argument */
+            case T_RPAREN:  /* for short-invocation, last argument with flags */
+                ok = 0; /* stop loop */
+                break;
+            default:
+                ok = 0; /* stop loop */
+                syntax_error(p, 1, "':flat' or ':named' flag expected");
+                break;
+        }
+    }
+
+    emit_list_end(p);
+}
+
+
+
+/*
+
+=item *
+
+  argument -> HEREDOCID | expression arg_flags | STRINGC ('=>' expression | arg_flags)
 
 =cut
 
@@ -566,7 +621,7 @@ argument(parser_state *p) {
         p->heredoc_ids[p->heredoc_index++] = clone_string(get_current_token(p->lexer));
         next(p);
     }
-    else { /* argument -> expression | STRINGC '=>' expression */
+    else { /* argument -> expression [arg_flags] | STRINGC ( '=>' expression | arg_flags )*/
         token exprtok = expression(p);
         /* allow for "stringc '=>' expression" */
         if (exprtok == T_STRING_CONSTANT) {
@@ -574,6 +629,12 @@ argument(parser_state *p) {
                 next(p);
                 expression(p);
             }
+            else { /* a string argument can take arg_flags as well */
+                arg_flags(p);
+            }
+        }
+        else { /* it was an expression (but not a stringc), may take arg_flags */
+            arg_flags(p);
         }
     }
 }
@@ -603,7 +664,7 @@ argument_list(parser_state *p) {
 
 =item *
 
-  arguments         -> '(' [argument_list] ')' heredoc_arguments
+  arguments -> '(' [argument_list] ')' heredoc_arguments
 
   heredoc_arugments -> { HEREDOC_STRING }
 
@@ -637,7 +698,8 @@ arguments(parser_state *p) {
             heredocid = NULL;
         }
 
-        /* clear heredoc index */
+        /* clear heredoc index, next time the first
+         * heredoc arg is stored at location 0 again */
         p->heredoc_index = 0;
     }
     emit_args_end(p);
@@ -707,6 +769,7 @@ arith_expression(parser_state *p) {
         case T_LOG_RSHIFT:
         case T_LSHIFT:
         case T_CONCAT: /* yeah I know, it's not arithmetic */
+            emit_binary_op(p, find_keyword(p->curtoken));
             next(p);
             expression(p);
             break;
@@ -734,12 +797,12 @@ parrot_instruction(parser_state *p) {
      * instruction and wait for run-time error?
      */
     while (p->curtoken != T_NEWLINE) {
-        expression(p);
-        if (p->curtoken == T_COMMA) {
-            emit_next_expr(p);
-            next(p);
-        }
-        else break;
+
+        /* XXX for now, just skip ANYTHING until a newline. This is so we can handle
+         * "delete obj[bla] etc.
+         */
+        emit_expr(p, get_current_token(p->lexer));
+        next(p);
     }
 
     emit_op_end(p);
@@ -768,7 +831,9 @@ parrot_instruction(parser_state *p) {
 */
 static void
 assignment(parser_state *p) {
+    emit_assign_start(p); /* should this be here?? */
     match(p, T_ASSIGN);
+    emit_assign(p);
 
     switch (p->curtoken) {
         case T_NOT:
@@ -850,6 +915,7 @@ assignment(parser_state *p) {
             arith_expression(p);
             break;
     }
+    emit_assign_end(p);
 }
 
 
@@ -962,7 +1028,7 @@ open_ns(parser_state *p) {
 */
 static void
 local_id_list(parser_state *p) {
-    emit_expr(p, get_current_token(p->lexer));
+    emit_name(p, get_current_token(p->lexer));
     match(p, T_IDENTIFIER);
 
     /* process the flag, if any */
@@ -972,9 +1038,8 @@ local_id_list(parser_state *p) {
 
     while (p->curtoken == T_COMMA) {
         next(p); /* skip comma */
-        emit_next_expr(p);
 
-        emit_expr(p, get_current_token(p->lexer));
+        emit_name(p, get_current_token(p->lexer));
         match(p, T_IDENTIFIER);
 
         /* parse optional :unique_reg flag */
@@ -1051,7 +1116,6 @@ lex_declaration(parser_state *p) {
     match(p, T_LEX);
     emit_expr(p, get_current_token(p->lexer));
     match(p, T_STRING_CONSTANT);
-    emit_next_expr(p);
     match(p, T_COMMA);
     target(p);
     match(p, T_NEWLINE);
@@ -1078,6 +1142,7 @@ conditional_expression(parser_state *p) {
     switch (p->curtoken) { /* optional */
         case T_GE: case T_GT: case T_EQ:
         case T_NE: case T_LT: case T_LE:
+            emit_comparison_op(p, find_keyword(p->curtoken));
             next(p); /* skip comparison op */
             expression(p);
             break;
@@ -1144,7 +1209,6 @@ unless_statement(parser_state *p) {
         emit_op_start(p, "unless");
         conditional_expression(p);
     }
-    emit_next_expr(p); /* indicate there's another expression coming */
     jump_statement(p);
 }
 
@@ -1169,7 +1233,6 @@ if_statement(parser_state *p) {
         emit_op_start(p, "if");
         conditional_expression(p);
     }
-    emit_next_expr(p); /* indicate there's another expression coming */
     jump_statement(p);
 }
 
@@ -1224,41 +1287,6 @@ const_definition(parser_state *p) {
 }
 
 
-
-
-/*
-
-=item *
-
-  arg_flags -> { arg_flag }
-
-  arg_flag -> ':flat' | ':named' [ '(' STRINGC ')' ]
-
-=cut
-
-*/
-static void
-arg_flags(parser_state *p) {
-    while (p->curtoken != T_NEWLINE) {
-        switch (p->curtoken) {
-            case T_FLAT_FLAG:
-                next(p);
-                break;
-            case T_NAMED_FLAG:
-                next(p);
-                if (p->curtoken == T_LPAREN) {
-                    next(p);
-                    match(p, T_STRING_CONSTANT);
-                    match(p, T_RPAREN);
-                }
-                break;
-            default:
-                syntax_error(p, 1, "':flat' or ':named' flag expected");
-                break;
-        }
-    }
-}
-
 /*
 
 =item *
@@ -1296,14 +1324,15 @@ param_flags(parser_state *p) {
                 }
                 break;
             /* however, if the current token is a comma or ')', then quit parsing flags */
-            case T_COMMA: /* huh? */
+            case T_COMMA:
             case T_RPAREN:
             case T_NEWLINE:
                 ok = 0; /* stop loop */
                 break;
             /* if none of the above, error! */
             default:
-                syntax_error(p, 2, "parameter flag or newline expected, but got ", find_keyword(p->curtoken));
+                syntax_error(p, 2, "parameter flag or newline expected, but got ",
+                             find_keyword(p->curtoken));
                 ok = 0; /* stop loop */
                 break;
         }
@@ -1345,7 +1374,7 @@ invokable(parser_state *p) {
                      | '.invocant' invocant '\n'
                        '.meth_call' method '\n'
                      )
-                     { (local_declaration| '.result' target '\n') }
+                     { (local_declaration | '.result' target param_flags '\n') }
                      '.pcc_end' '\n'
 
 =cut
@@ -1392,14 +1421,14 @@ long_invocation(parser_state *p) {
     }
 
     /* results */
-    /*emit_results_start(p);
-    */
+    emit_results_start(p);
+
     while (more_results) {
         switch (p->curtoken) {
             case T_LOCAL:
                 local_declaration(p);
                 break;
-            case T_RESULT: /* '.result' target '\n' */
+            case T_RESULT: /* '.result' target param_flags '\n' */
                 next(p);
                 target(p);
                 param_flags(p);
@@ -1416,8 +1445,8 @@ long_invocation(parser_state *p) {
                 break;
         }
     }
-    /*emit_results_end(p);
-    */
+    emit_results_end(p);
+
     match(p, T_PCC_END); /* '.pcc_end' '\n' */
     match(p, T_NEWLINE);
 
@@ -1430,7 +1459,7 @@ long_invocation(parser_state *p) {
 =item *
 
   long_return_statement -> '.pcc_begin_return' '\n'
-                           { '.return' expression '\n' }
+                           { '.return' expression arg_flags '\n' }
                            '.pcc_end_return' '\n'
 
 =cut
@@ -1445,6 +1474,7 @@ long_return_statement(parser_state *p) {
     while (p->curtoken == T_RETURN) { /* ... { '.return' simple_expr '\n' } ...*/
         next(p); /* skip .return */
         expression(p);
+        arg_flags(p);
         match(p, T_NEWLINE);
     }
     match(p, T_PCC_END_RETURN); /* ... '.pcc_end_return' '\n' */
@@ -1457,7 +1487,7 @@ long_return_statement(parser_state *p) {
 =item *
 
   long_yield_statement -> '.pcc_begin_yield' '\n'
-                          { '.yield' expression '\n' }
+                          { '.return' expression arg_flags '\n' }
                           '.pcc_end_yield' '\n'
 
 =cut
@@ -1469,9 +1499,10 @@ long_yield_statement(parser_state *p) {
     match(p, T_PCC_BEGIN_YIELD);
     match(p, T_NEWLINE);
 
-    while (p->curtoken == T_YIELD) { /* { '.yield' expr '\n' } */
+    while (p->curtoken == T_RETURN) { /* { '.return expr arg_flags '\n' } */
         next(p); /* skip .yield */
         expression(p);
+        arg_flags(p);
         match(p, T_NEWLINE);
     }
     match(p, T_PCC_END_YIELD); /* '.pcc_end_yield' '\n' */
@@ -1503,7 +1534,6 @@ target_statement(parser_state *p) {
 
     switch (p->curtoken) {
         case T_ASSIGN:   /* target '=' expression */
-
             assignment(p);
             break;
         case T_PLUS_ASSIGN: /* target '+=' simple_expr '\n' (and '-=' etc.) */
@@ -1699,7 +1729,7 @@ global_assignment(parser_state *p) {
 
   instructions -> {instruction}
 
-  instruction  -> {LABEL '\n'} instr
+  instruction  -> {LABEL ['\n']} instr
 
   instr -> if_statement
          | unless_statement
@@ -1719,7 +1749,7 @@ global_assignment(parser_state *p) {
          | long_invocation
          | long_return_statement
          | long_yield_statement
-         | NULL var
+         | 'null' var
          | get_results_instruction
          | global_assignment
          | '\n'
@@ -1739,7 +1769,6 @@ instructions(parser_state *p) {
         while (p->curtoken == T_LABEL) {
             next(p);
             if (p->curtoken == T_NEWLINE) next(p); /* and continue loop */
-            else break; /* break loop */
         }
 
         switch (p->curtoken) {
@@ -1908,7 +1937,6 @@ multi_type_list(parser_state *p) {
         }
 
         if (p->curtoken == T_COMMA) {
-            emit_next_expr(p);
             next(p);
         }
         else wantmore = 0; /* no comma, so quit loop */
@@ -2068,7 +2096,7 @@ parameters(parser_state *p) {
 static void
 sub_definition(parser_state *p) {
     /* call emit method */
-    emit_sub_start(p, "", get_current_filepos(p->lexer));
+    emit_sub_start(p);
     next(p); /* skip '.sub' or '.pcc_sub' */
 
     switch (p->curtoken) { /* subname -> IDENTIFIER | STRINGC */
@@ -2166,6 +2194,7 @@ macro_definition(parser_state *p) {
     match(p, T_ENDM);
 }
 
+
 /*
 
 =item *
@@ -2192,7 +2221,8 @@ include(parser_state *p) {
         open_include_file(p->lexer);
         next(p);
 
-        TOP(p); /* go parse it */
+        program(p); /* go parse it, don't call TOP() which initializes the emitter */
+
         /* switch back to other file that included the one above */
         close_include_file(p->lexer);
         next(p); /* get next token from this file */
@@ -2348,7 +2378,9 @@ compilation_unit(parser_state *p) {
             hll_mapping(p);
             break;
         default:
-            syntax_error(p, 1, "compilation unit expected");
+            /* there may be newline tokens if there are comments between compilation units;
+             * just break; any syntax errors will be reported in program().
+             */
             break;
     }
 }
@@ -2358,7 +2390,7 @@ compilation_unit(parser_state *p) {
 
 =item *
 
-  program -> {'\n'} compilation_unit { '\n' compilation_unit }
+  program -> {'\n'} compilation_unit { '\n' compilation_unit } EOF
 
 =cut
 
@@ -2368,8 +2400,6 @@ program(parser_state *p) {
     /* the file may have some initial newlines; eat them */
     if (p->curtoken == T_NEWLINE) next(p);
 
-    emit_init(p); /* initialize emitter */
-
     compilation_unit(p);
 
     while (p->curtoken != T_EOF ) {
@@ -2377,14 +2407,17 @@ program(parser_state *p) {
         compilation_unit(p);
     }
 
-    emit_end(p); /* close down emitter */
+    /* do NOT match T_EOF; match() tries to read the next token instead, do a manual check. */
+    if (p->curtoken != T_EOF) {
+        syntax_error(p, 3, "end of file expected in file '", get_current_file(p->lexer), "'\n");
+    }
 }
 
 /*
 
 =item *
 
-  TOP -> program EOF
+  TOP -> program
 
 =cut
 
@@ -2392,14 +2425,9 @@ program(parser_state *p) {
 void
 TOP(parser_state *p) {
     /* file -> program EOF */
+    emit_init(p); /* initialize emitter */
     program(p);
-
-    /* do NOT match T_EOF; match() tries to read the next token instead, do a manual check. */
-    if (p->curtoken != T_EOF) {
-        syntax_error(p, 3, "end of file expected in file '", get_current_file(p->lexer), "'\n");
-    }
-
-    resize_heredoc_args(p);
+    emit_end(p); /* close down emitter */
 }
 
 
