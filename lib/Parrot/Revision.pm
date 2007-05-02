@@ -24,8 +24,6 @@ use strict;
 use warnings;
 use File::Spec;
 
-our $svn_entries = undef;
-
 sub __get_revision {
     return 0 unless ( -e 'DEVELOPING' );
 
@@ -37,16 +35,6 @@ sub __get_revision {
         if ( my ($line) = grep /^Revision:/, @svn_info ) {
             ($revision) = $line =~ / (\d+)$/;
         }
-    }
-    elsif ( defined $svn_entries and -r $svn_entries ) {
-        open my $FH, '<', $svn_entries
-            or die "Unable to open file ($svn_entries). Aborting. Error returned was: $!";
-        while (<$FH>) {
-            /^ *committed-rev=.(\d+)./ or next;
-            $revision = $1;
-            last;
-        }
-        close $FH;
     }
     elsif ( my @svk_info = qx/svk info 2>$nul/ and $? == 0 ) {
         if ( my ($line) = grep /(?:file|svn|https?)\b/, @svk_info ) {
