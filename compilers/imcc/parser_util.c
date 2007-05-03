@@ -494,8 +494,10 @@ INS(Interp *interp, IMC_Unit * unit, char *name,
     if (len >= 2)
         len -= 2;
     format[len] = '\0';
-    if (fmt && *fmt)
-        strcpy(format, fmt);
+    if (fmt && *fmt) {
+        strncpy(format, fmt, sizeof(format) - 1);
+        format[sizeof(format) - 1] = '\0';
+    }
 #if 1
     IMCC_debug(interp, DEBUG_PARSER,"%s %s\t%s\n", name, format, fullname);
 #endif
@@ -571,7 +573,6 @@ found_ins:
  *
  */
 extern void* yy_scan_string(const char *);
-/* extern SymReg *cur_namespace; -- s. imcc.y */
 
 
 int

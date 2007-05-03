@@ -291,7 +291,7 @@ D: Lexical pads, CPS.
 N: Jonathan Stowe
 
 N: Jonathan Worthington
-D: Bits of Win32 support, PBC utilities, debug segment work, .Net 
+D: Bits of Win32 support, PBC utilities, debug segment work, .Net
 D: to PIR translator and various patches
 E: jonathan@jwcs.net
 W: http://www.jwcs.net/~jonathan/
@@ -321,6 +321,7 @@ D: Parrot I/O; macro stuff in assembler.
 N: Julian Fondren
 E: ayrnieu@gmail.com
 D: Standardize and add languages/*/MAINTAINER files
+D: a patch to catch exception in Lua
 
 N: Karl Forner
 D: shootout examples testing
@@ -335,7 +336,7 @@ D: yield and other PIR improvements
 N: Kevin Falcone
 
 N: Kevin Tew
-D: Cardinal(Ruby on Parrot), ECMAScript PGE grammar, 
+D: Cardinal(Ruby on Parrot), ECMAScript PGE grammar,
 D: Python PGE grammar, C99 PGE Grammar
 D: Various Config Fixes, Compiler Warnings, etc
 
@@ -363,6 +364,9 @@ D: Many fixes
 
 N: Marcus Thiesen
 D: URM language, bugfixes
+
+N: Mark Glines
+D: Cage cleaning, report bugs
 
 N: Markus Amsler
 D: httpd.imc, bugfixes
@@ -500,6 +504,10 @@ N: Sean O'Rourke
 D: Original Perl6 compiler
 
 N: Sebastian Riedel
+
+N: Shawn M Moore
+D: Cage cleaner
+E: sartak@gmail.com
 
 N: Simon Cozens
 D: Release pumpking for 0.0.1-0.0.4
