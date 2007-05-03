@@ -1,5 +1,5 @@
 # Copyright (C) 2001-2003, The Perl Foundation.
-# $Id: beta.pm 18226 2007-04-15 17:23:44Z jkeenan $
+# $Id$
 
 =head1 NAME
 
