@@ -1,12 +1,12 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 18-revision_no_DEVELOPING.t
+# 02-revision_no_DEVELOPING.t
 
 use strict;
 use warnings;
 
-use Test::More tests => 13;
+use Test::More tests => 16;
 use Carp;
 use_ok( 'Cwd' );
 use_ok( 'File::Copy' );
@@ -15,48 +15,54 @@ use lib qw( . lib ../lib ../../lib );
 
 my ($current, $config);
 
-# Case 2:  DEVELOPING's non-existence is faked;  Parrot::Config not yet available. #'
+# Case 2:  DEVELOPING's non-existence is faked;  Parrot::Config available. #'
 my $cwd = cwd();
 my $reason =
-    'Either file DEVELOPING does not exist or configuration has completed (as evidenced by existence of Parrot::Config::Generated';
+    'Either file DEVELOPING does not exist or configuration has not completed (as evidenced by non-existence of Parrot::Config::Generated'; 
 
 SKIP: {
-    skip $reason,  9 if (
+    skip $reason, 12 if (
         (not -e 'DEVELOPING')
         or
-        ( -e q{lib/Parrot/Config/Generated.pm} )
+        (not -e q{lib/Parrot/Config/Generated.pm} )
     );
     my $tdir = tempdir();
     ok(chdir $tdir, "Changed to temporary directory for testing");
     ok((mkdir "lib"), "Able to make directory lib");
     ok((mkdir "lib/Parrot"), "Able to make directory lib/Parrot");
+    ok((mkdir "lib/Parrot/Config"),
+        "Able to make directory lib/Parrot/Config");
     ok(copy ("$cwd/lib/Parrot/Revision.pm", "lib/Parrot/"),
         "Able to copy Parrot::Revision for testing");
+    ok(copy ("$cwd/lib/Parrot/Config.pm", "lib/Parrot/"),
+        "Able to copy Parrot::Config for testing");
+    ok(copy ("$cwd/lib/Parrot/Config/Generated.pm", "lib/Parrot/Config/"),
+        "Able to copy Parrot::Config::Generated for testing");
     unshift(@INC, "lib");
     require Parrot::Revision;
     no warnings qw(once);
     $current = $Parrot::Revision::current;
     like($current, qr/^\d+$/, "current revision is all numeric");
+    is($current, 0,
+        "If DEVELOPING does not exist (release version), \$current is set to zero.");
     $config = $Parrot::Revision::config;
     use warnings;
     like($config, qr/^\d+$/, "current revision is all numeric");
-    is($current, $config, "current and config are identical");
-    is($current, 0, 'current is zero as expected');
+    isnt($current, $config, "current and config differ");
     ok(chdir $cwd, "Able to change back to directory after testing");
 }
 
-# Case 3:  DEVELOPING exists; Parrot::Config available.
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 
 =head1 NAME
 
-18-revision_no_DEVELOPING.t - test Parrot::Revision
+02-revision_no_DEVELOPING.t - test Parrot::Revision
 
 =head1 SYNOPSIS
 
-    % prove t/configure/18-revision_no_DEVELOPING.t
+    % prove t/postconfigure/02-revision_no_DEVELOPING.t
 
 =head1 DESCRIPTION
 
