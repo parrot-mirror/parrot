@@ -328,7 +328,7 @@ sub vtbl_embed {
         next unless $mmd eq '-1';
 
         my @params = parse_params($params);
-        my @sig    = ( 'Parrot_INTERP interp', 'Parrot_PMC pmc' );
+        my @sig    = ( 'Parrot_Interp interp', 'Parrot_PMC pmc' );
         my @args   = ( 'interp', 'pmc' );
 
         while ( my ( $type, $name ) = splice( @params, 0, 2 ) ) {
@@ -378,7 +378,7 @@ sub find_type {
     my $type = shift;
 
     my %typemap = (
-        'STRING*'   => 'Parrot_STRING',
+        'STRING*'   => 'Parrot_String',
         'void*'     => 'void*',
         'INTVAL'    => 'Parrot_Int',
         'PMC*'      => 'Parrot_PMC',

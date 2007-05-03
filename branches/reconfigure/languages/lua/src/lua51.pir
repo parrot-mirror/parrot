@@ -1,3 +1,34 @@
+# Copyright (C) 2006-2007, The Perl Foundation.
+# $Id$
+
+=head1 NAME
+
+src/lua51.pir -- The compiler for Lua 5.1
+
+=head1 DESCRIPTION
+
+This compiler extends C<HLLCompiler>
+(see F<runtime/parrot/library/Parrot/HLLCompiler.pir>)
+
+This compiler defines the following stages:
+
+=over 4
+
+=item * parse F<languages/lua/src/lua51.pg>
+
+=item * past  F<languages/lua/src/ASTGrammar.tg>
+
+=item * post  F<languages/lua/src/OSTGrammar.tg>
+
+=item * pir   F<languages/lua/src/PIRGrammar.tg>
+
+=item * run
+
+=back
+
+Used by F<languages/lua/luac.pir>.
+
+=cut
 
 .namespace [ 'Lua' ]
 
@@ -20,6 +51,16 @@
 
 
 .namespace [ 'Lua::Grammar' ]
+
+=head2 Functions
+
+Some grammar routines are handly written in PIR.
+
+=over 4
+
+=item C<warning (message)>
+
+=cut
 
 .sub 'warning'
     .param pmc self
@@ -45,6 +86,10 @@
     .return()
 .end
 
+
+=item C<syntax_error (message)>
+
+=cut
 
 .sub 'syntax_error'
     .param pmc self
@@ -75,6 +120,66 @@
     exit 1
 .end
 
+
+=item C<name>
+
+ident but not keywords
+
+=cut
+
+.sub 'name'
+    .param pmc mob
+    .param pmc params :slurpy
+
+    $P0 = get_hll_global ['PGE::Match'], 'ident'
+    mob = $P0(mob)
+
+    unless mob goto L1
+    .local pmc kw
+    kw = get_hll_global 'keyword'
+    unless null kw goto L2
+    kw = _const_keyword()
+    set_hll_global 'keyword', kw
+L2:
+    $S0 = mob.'text'()
+    $I0 = exists kw[$S0]
+    unless $I0 goto L1
+    mob.'next'()
+L1:
+    .return (mob)
+.end
+
+.sub _const_keyword :anon
+    .local pmc kw
+    new kw, .Hash
+    kw['and'] = 1
+    kw['break'] = 1
+    kw['do'] = 1
+    kw['else'] = 1
+    kw['elseif'] = 1
+    kw['end'] = 1
+    kw['false'] = 1
+    kw['for'] = 1
+    kw['function'] = 1
+    kw['if'] = 1
+    kw['in'] = 1
+    kw['local'] = 1
+    kw['nil'] = 1
+    kw['not'] = 1
+    kw['or'] = 1
+    kw['repeat'] = 1
+    kw['return'] = 1
+    kw['then'] = 1
+    kw['true'] = 1
+    kw['until'] = 1
+    kw['while'] = 1
+    .return (kw)
+.end
+
+
+=item C<quoted_literal>
+
+=cut
 
 .sub 'quoted_literal'
     .param pmc mob
@@ -148,6 +253,10 @@ CONCAT:
 .end
 
 
+=item C<long_string>
+
+=cut
+
 .sub 'long_string'
     .param pmc mob
     .param pmc adv :slurpy :named
@@ -197,7 +306,7 @@ L4:
     ($I0, $I1) = _skip_sep(target, pos, ']')
     if $I1 != sep goto L7
     pos = $I0 + 1
-    mob.'value'(literal)
+    mob.'result_object'(literal)
     mpos = pos
     goto END
 L7:
@@ -219,6 +328,10 @@ END:
     .return (mob)
 .end
 
+
+=item C<long_comment>
+
+=cut
 
 .sub 'long_comment'
     .param pmc mob
@@ -266,7 +379,7 @@ L4:
     ($I0, $I1) = _skip_sep(target, pos, ']')
     if $I1 != sep goto L7
     pos = $I0 + 1
-#    mob.'value'(literal)
+#    mob.'result_object'(literal)
     mpos = pos
     goto END
 L7:
@@ -312,12 +425,7 @@ L3:
 .include 'languages/lua/src/ASTGrammar.pir'
 .include 'languages/lua/src/lua51_grammar_gen.pir'
 
-=head1 LICENSE
-
-Copyright (C) 2007, The Perl Foundation.
-
-This is free software; you may redistribute it and/or modify
-it under the same terms as Parrot.
+=back
 
 =head1 AUTHORS
 

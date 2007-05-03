@@ -1,7 +1,7 @@
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2007, The Perl Foundation.
 # $Id$
 
-package Parrot::Test::Lua;
+package Parrot::Test::Lua_lex;
 
 use strict;
 
@@ -12,11 +12,11 @@ require Parrot::Test;
 
 =head1 NAME
 
-Test/Lua.pm - Testing routines specific to 'lua'.
+Test/Lua_lex.pm - Testing routines specific to 'lua' lexicography.
 
 =head1 DESCRIPTION
 
-Call 'Parrot lua' and 'original lua'.
+Call F<languages/lua/test_lex.pir>.
 
 =head1 METHODS
 
@@ -42,7 +42,7 @@ my %language_test_map = (
 foreach my $func ( keys %language_test_map ) {
     no strict 'refs';
 
-    *{"Parrot::Test::Lua::$func"} = sub {
+    *{"Parrot::Test::Lua_lex::$func"} = sub {
         my $self = shift;
         my ( $code, $output, $desc, %options ) = @_;
 
@@ -51,37 +51,11 @@ foreach my $func ( keys %language_test_map ) {
         my $params = $options{params} || q{};
 
         # flatten filenames (don't use directories)
-        my $lua_test = $ENV{PARROT_LUA_TEST_PROG} || q{};
         my $lang_fn = Parrot::Test::per_test( '.lua', $count );
-        my $pir_fn  = Parrot::Test::per_test( '.pir', $count );
-        my $lua_out_fn =
-            Parrot::Test::per_test( $lua_test eq 'lua' ? '.orig_out' : '.parrot_out', $count );
-        my $test_prog_args = $ENV{TEST_PROG_ARGS} || q{};
-        my @test_prog;
-        if ( $lua_test eq 'lua' ) {
-            @test_prog = ( "$ENV{PARROT_LUA_TEST_PROG} ${test_prog_args} languages/${lang_fn} $params", );
-        }
-        elsif ( $lua_test eq 'monkey' ) {
-            @test_prog = (
-                "monkey -o languages/${pir_fn} languages/${lang_fn}",
-                "$self->{parrot} languages/${pir_fn}",
-            );
-        }
-        elsif ( $lua_test eq 'lua2pir' ) {
-            @test_prog = (
-                "luac languages/${lang_fn}",
-                "l2p -o languages/${pir_fn} > nul",
-                "$self->{parrot} languages/${pir_fn}",
-            );
-        }
-        else {
-            @test_prog = (
-                "perl -Ilanguages/lua languages/lua/luac.pl languages/${lang_fn}",
-                "$self->{parrot} --no-gc languages/${pir_fn} $params",
-
-                # "$self->{parrot} languages/lua/luac.pir languages/${lang_fn}",
-            );
-        }
+        my $lua_out_fn = Parrot::Test::per_test( '.parrot_out', $count );
+        my @test_prog = (
+            "$self->{parrot} languages/lua/test_lex.pir languages/${lang_fn}",
+        );
 
         # This does not create byte code, but lua code
         Parrot::Test::write_code_to_file( $code, $lang_fn );
@@ -115,13 +89,9 @@ foreach my $func ( keys %language_test_map ) {
         }
 }
 
-=head1 HISTORY
-
-Mostly taken from F<languages/bc/lib/Parrot/Test/Bc.pm>.
-
 =head1 SEE ALSO
 
-F<languages/tcl/lib/Parrot/Test/Tcl.pm>, F<languages/m4/lib/Parrot/Test/M4.pm>
+F<languages/lua/lib/Parrot/Test/Lua.pm>
 
 =head1 AUTHOR
 

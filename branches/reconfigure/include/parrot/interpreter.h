@@ -104,9 +104,14 @@ typedef enum {
 
 struct parrot_interp_t;
 
-typedef struct parrot_interp_t *Parrot_Interp;
-
 #if defined(PARROT_IN_CORE)
+
+#define Parrot_String   STRING *
+#define Parrot_PMC      PMC *
+#define Parrot_Language Parrot_Int
+#define Parrot_Vtable struct _vtable*
+
+typedef struct parrot_interp_t *Parrot_Interp;
 
 typedef Parrot_Interp_flag Interp_flags;
 typedef Parrot_Run_core_t Run_Cores;
@@ -320,7 +325,7 @@ struct parrot_interp_t {
 
     UINTVAL debug_flags;                      /* debug settings */
 
-    Run_Cores run_core;                       /* type of core to run the ops */
+    INTVAL run_core;                          /* type of core to run the ops */
 
     /* TODO profile per code segment or global */
     RunProfile *profile;                      /* The structure and array where we keep the
@@ -446,6 +451,10 @@ PARROT_API extern PMC * PMCNULL;   /* Holds single Null PMC */
 #  define PMC_IS_NULL(p)  ((p) == PMCNULL)
 #endif /* PARROT_CATCH_NULL */
 
+
+#define STRING_IS_NULL(s) ((s) == NULL)
+#define STRING_IS_EMPTY(s) !(int)(s)->strlen
+
 /* &gen_from_def(sysinfo.pasm) prefix(SYSINFO_) */
 
 #define PARROT_INTSIZE               1
@@ -459,7 +468,7 @@ PARROT_API extern PMC * PMCNULL;   /* Holds single Null PMC */
 
 /* &end_gen */
 
-PARROT_API Interp *make_interpreter(Interp * parent, Interp_flags);
+PARROT_API Interp *make_interpreter(Interp * parent, INTVAL);
 PARROT_API void Parrot_init(Interp *);
 PARROT_API void Parrot_destroy(Interp *);
 
@@ -528,7 +537,7 @@ void *init_jit(Interp *interp, opcode_t *pc);
 PARROT_API void dynop_register(Interp *interp, PMC* op_lib);
 void do_prederef(void **pc_prederef, Interp *interp, int type);
 
-void clone_interpreter(Parrot_Interp dest, Parrot_Interp self, Parrot_clone_flags flags);
+void clone_interpreter(Parrot_Interp dest, Parrot_Interp self, INTVAL flags);
 
 PARROT_API void enter_nci_method(Interp *, const int type,
                 void *func, const char *name, const char *proto);
@@ -541,6 +550,9 @@ PARROT_API void Parrot_mark_method_writes(Interp *, int type, const char *name);
 void Parrot_setup_event_func_ptrs(Parrot_Interp interp);
 
 #else
+
+struct Parrot_Interp_;
+typedef struct Parrot_Interp_ *Parrot_Interp;
 
 typedef void * *(*native_func_t)(Parrot_Interp interp,
                                  void *cur_opcode,

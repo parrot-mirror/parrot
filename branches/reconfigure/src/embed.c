@@ -97,7 +97,7 @@ Parrot_init_stacktop(Interp *interp, void *stack_top)
 
 /*
 
-=item C<void Parrot_set_flag(Interp *interp, Parrot_Interp_flag flag)>
+=item C<void Parrot_set_flag(Interp *interp, INTVAL flag)>
 
 Sets a flag in the interpreter specified by C<flag>, any of
 C<PARROT_BOUNDS_FLAG>, or C<PARROT_PROFILE_FLAG> to enable profiling, and
@@ -119,7 +119,7 @@ Set a trace flag: C<PARROT_TRACE_FLAG>
 */
 
 void
-Parrot_set_flag(Interp *interp, Parrot_Interp_flag flag)
+Parrot_set_flag(Interp *interp, INTVAL flag)
 {
     /* These two macros (from interpreter.h) do exactly what they look like. */
 
@@ -150,7 +150,7 @@ Parrot_set_trace(Interp *interp, UINTVAL flag)
 
 /*
 
-=item C<void Parrot_clear_flag(Interp *, Parrot_Interp_flag flag)>
+=item C<void Parrot_clear_flag(Interp *, INTVAL flag)>
 
 =item C<void Parrot_clear_debug(Interp *, UINTVAL flag)>
 
@@ -163,7 +163,7 @@ Clears a flag in the interpreter.
 */
 
 void
-Parrot_clear_flag(Parrot_Interp interp, Parrot_Interp_flag flag)
+Parrot_clear_flag(Parrot_Interp interp, INTVAL flag)
 {
     Interp_flags_CLEAR(interp, flag);
 }
@@ -183,7 +183,7 @@ Parrot_clear_trace(Interp *interp, UINTVAL flag)
 /*
 
 =item C<Parrot_Int
-Parrot_test_flag(Interp*, Parrot_Interp_flag flag)>
+Parrot_test_flag(Interp*, INTVAL flag)>
 
 =item C<UINTVAL
 Parrot_test_debug(Interp*, UINTVAL flag)>
@@ -198,7 +198,7 @@ Test the interpreter flags specified in C<flag>.
 */
 
 Parrot_Int
-Parrot_test_flag(Interp* interp, Parrot_Interp_flag flag)
+Parrot_test_flag(Interp* interp, INTVAL flag)
 {
     return Interp_flags_TEST(interp, flag);
 }
@@ -858,25 +858,24 @@ This is used by the Parrot disassembler.
 void
 Parrot_disassemble(Interp *interp)
 {
-    PDB_t *pdb;
+    char       *c;
+    PDB_t      *pdb             = mem_allocate_zeroed_typed(PDB_t);
     PDB_line_t *line;
-    char *c;
-    int op_code_seq_num = 0;
-    int debugs;
-    int num_mappings;
-    int curr_mapping = 0;
+    int         debugs;
+    int         num_mappings    = 0;
+    int         curr_mapping    = 0;
+    int         op_code_seq_num = 0;
 
-    pdb = (PDB_t *)mem_sys_allocate_zeroed(sizeof (PDB_t));
-
-    interp->pdb = pdb;
+    interp->pdb     = pdb;
     pdb->cur_opcode = interp->code->base.data;
 
     PDB_disassemble(interp, NULL);
-    line = pdb->file->line;
 
+    line   = pdb->file->line;
     debugs = (interp->code->debugs != NULL);
 
     PIO_printf(interp, "%12s-%12s", "Seq_Op_Num", "Relative-PC");
+
     if ( debugs ) {
         PIO_printf(interp, " %6s:\n","SrcLn#");
         num_mappings = interp->code->debugs->num_mappings;
@@ -884,8 +883,13 @@ Parrot_disassemble(Interp *interp)
     else {
         PIO_printf(interp, "\n");
     }
+
     while (line->next) {
-        /* PIO_printf(interp, "%i < %i %i == %i \n", curr_mapping, num_mappings, op_code_seq_num, interp->code->debugs->mappings[curr_mapping]->offset); */
+
+        /* PIO_printf(interp, "%i < %i %i == %i \n", curr_mapping,
+         * num_mappings, op_code_seq_num,
+         * interp->code->debugs->mappings[curr_mapping]->offset); */
+
         if (debugs && curr_mapping < num_mappings)
         {
             if ( op_code_seq_num == interp->code->debugs->mappings[curr_mapping]->offset)
@@ -897,23 +901,26 @@ Parrot_disassemble(Interp *interp)
         }
 
         PIO_printf(interp, "%012i-%012i", op_code_seq_num, line->opcode - interp->code->base.data);
-        if ( debugs ) {
+
+        if ( debugs )
             PIO_printf(interp, " %06i: \t",interp->code->debugs->base.data[op_code_seq_num]);
-        }
-        else {
+        else
             PIO_printf(interp, "\t");
-        }
 
         /* If it has a label print it */
         if (line->label)
             PIO_printf(interp, "L%li:\t", line->label->number);
+
         c = pdb->file->source + line->source_offset;
+
         while (*c != '\n' && c)
             PIO_printf(interp, "%c", *(c++));
+
         PIO_printf(interp, "\n");
         line = line->next;
         op_code_seq_num++;
     }
+
     return;
 }
 

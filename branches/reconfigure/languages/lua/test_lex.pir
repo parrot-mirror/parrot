@@ -7,7 +7,11 @@ test_lex -- A dumper for Lua 5.1 lexicography
 
 =head1 SYNOPSIS
 
-  $ ./parrot languages/lua/test_lex.pir script.lua
+  $ parrot test_lex.pir script.lua
+  $ parrot test_lex.pir --target=parse script.lua
+                                 PAST
+                                 POST
+                                 PIR
 
 =head1 DESCRIPTION
 
@@ -34,8 +38,6 @@ C<test_lex> is a dumper for Lua 5.1 lexicography.
     # import Lua::Grammar::* into Lua::TestLex
     $P0 = get_hll_global ['Lua::Grammar'], 'name'
     set_hll_global ['Lua::TestLex'], 'Name', $P0
-    $P0 = get_hll_global ['Lua::Grammar'], 'keyword'
-    set_hll_global ['Lua::TestLex'], 'keyword', $P0
     $P0 = get_hll_global ['Lua::Grammar'], 'string'
     set_hll_global ['Lua::TestLex'], 'String', $P0
     $P0 = get_hll_global ['Lua::Grammar'], 'number'
@@ -53,14 +55,21 @@ C<test_lex> is a dumper for Lua 5.1 lexicography.
 
 .sub 'main' :main
     .param pmc args
-#    load_bytecode 'PGE/Dumper.pbc'
-#    load_bytecode 'dumper.pbc'
     $P0 = compreg 'LuaTestLex'
-    $P0.'command_line'(args, 'target' => 'past')
+    $P0.'command_line'(args)
 .end
 
 .include 'languages/lua/src/dumplex_gen.pir'
 .include 'languages/lua/src/lua51_testlex_gen.pir'
+
+.namespace
+
+.sub 'println'
+    .param pmc arg
+    print arg
+    print "\n"
+    .return ()
+.end
 
 =head1 AUTHOR
 

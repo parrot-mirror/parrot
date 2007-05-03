@@ -685,7 +685,7 @@ sub parse_pmc {
             $flags_ref->{need_fia_header} = 1;
         }
 
-        if ( $methodblock and $methodblock =~ /PCCINVOKE/ ) {
+        if ( $methodblock =~ /PCCINVOKE/ ) {
             $flags_ref->{need_fia_header} = 1;
         }
 

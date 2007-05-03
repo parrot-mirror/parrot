@@ -176,7 +176,8 @@ cnv_to_win32_filesep (STRING *path) {
     assert(path->encoding == Parrot_fixed_8_encoding_ptr ||
         path->encoding == Parrot_utf8_encoding_ptr);
 
-    while ((cnv = strchr(path->strstart, path_separator)) != NULL)
+    cnv = path->strstart;
+    while ((cnv = strchr(cnv, path_separator)) != NULL)
         *cnv = win32_path_separator;
 }
 
@@ -345,7 +346,7 @@ Parrot_locate_runtime_file(Interp *interp, const char *file_name,
 }
 /*
 
-=item C<const char* Parrot_get_runtime_prefix(Interp *, STRING **prefix_str)>
+=item C<char* Parrot_get_runtime_prefix(Interp *, STRING **prefix_str)>
 
 If C<prefix_str> is not NULL, set it to the prefix, else return a malloced
 c-string for the runtime prefix.  Remember to free the string with
@@ -355,7 +356,7 @@ C<string_cstring_free()>.
 
 */
 
-const char*
+char*
 Parrot_get_runtime_prefix(Interp *interp, STRING **prefix_str)
 {
     STRING *s, *key;
