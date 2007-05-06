@@ -291,6 +291,7 @@ use lib 'lib';
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
+use Parrot::Configure::Options::Test;
 use Parrot::Configure::Messages qw(
     print_introduction
     print_conclusion
@@ -319,33 +320,10 @@ my $args = process_options( {
 } );
 exit unless defined $args;
 
-my %args = %$args;
-
-my ($run_configure_tests, $run_build_tests);
-if (defined $args{test}) {
-    if ($args{test} eq '1') {
-        $run_configure_tests = 1;
-        $run_build_tests = 1;
-    } elsif ($args{test} eq 'configure') {
-        $run_configure_tests = 1;
-    } elsif ($args{test} eq 'build') {
-        $run_build_tests = 1;
-    } else {
-        die "'$args{test}' is a bad value for command-line option 'test'";
-    }
-}
-
-if ($run_configure_tests) {
-    print "As you requested, we'll start with some tests of the configuration tools.\n\n";
-    system(qq{prove t/configure/*.t})
-        and die "Unable to execute configuration tests";
-    print <<"TEST";
-
-I just ran some tests to demonstrate that
-Parrot's configuration tools will work as intended.
-
-TEST
-}
+my $opttest = Parrot::Configure::Options::Test->new($args);
+# configuration tests will only be run if you requested them 
+# as command-line option
+$opttest->run_configure_tests();
 
 # from Parrot::Configure::Messages
 print_introduction($parrot_version);
@@ -355,6 +333,7 @@ my $conf = Parrot::Configure->new;
 # from Parrot::Configure::Step::List
 $conf->add_steps(get_steps_list());
 
+my %args = %$args;
 # from Parrot::Configure::Data
 $conf->options->set(%args);
 
@@ -372,12 +351,17 @@ else {
 }
 
 # tell users what to do next
-if ($run_build_tests) {
-    print "\n\n";
-    print "As you requested, I will now run some tests of the build tools.\n\n";
-    system(qq{prove t/postconfigure/*.t t/tools/pmc2cutils/*.t t/tools/ops2cutils/*.t t/tools/ops2pmutils/*.t})
-        and die "Unable to execute post-configuration and build tools tests";
-}
+#if ($run_build_tests) {
+#    print "\n\n";
+#    print "As you requested, I will now run some tests of the build tools.\n\n";
+#    system(qq{prove t/postconfigure/*.t t/tools/pmc2cutils/*.t t/tools/ops2cutils/*.t t/tools/ops2pmutils/*.t})
+#        and die "Unable to execute post-configuration and build tools tests";
+#}
+
+
+# build tests will only be run if you requested them 
+# as command-line option
+$opttest->run_build_tests();
 
 # from Parrot::Configure::Messages
 print_conclusion($conf->data->get('make'));
