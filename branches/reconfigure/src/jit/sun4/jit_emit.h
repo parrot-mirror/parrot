@@ -6,7 +6,7 @@
 ** $Id$
 **/
 
-#if !defined(PARROT_SUN4_JIT_EMIT_H_GUARD)
+#ifndef PARROT_SUN4_JIT_EMIT_H_GUARD
 #  define PARROT_SUN4_JIT_EMIT_H_GUARD
 
 /*
@@ -849,7 +849,7 @@ Parrot_jit_vtable_n_op(Parrot_jit_info_t *jit_info,
     int    idx, pi, i;
     size_t offset;
 
-    offset  = offsetof(VTABLE, init);
+    offset  = offsetof(VTABLE, absolute);
     offset += nvtable * sizeof (void *);
 
     for (idx = 1; idx <= n; idx++) {

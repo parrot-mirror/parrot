@@ -56,6 +56,9 @@ Used by F<languages/lua/luac.pir>.
 
 Some grammar routines are handly written in PIR.
 
+See "Lua 5.1 Reference Manual", section 2.1 "Lexical Conventions",
+L<http://www.lua.org/manual/5.1/manual.html#2.1>.
+
 =over 4
 
 =item C<warning (message)>
@@ -87,45 +90,21 @@ Some grammar routines are handly written in PIR.
 .end
 
 
-=item C<syntax_error (message)>
+=item C<syntax_error (match, [message])>
 
 =cut
 
 .sub 'syntax_error'
-    .param pmc self
-    .param string message
-
-    $P0 = get_hll_global ['PGE::Util'], 'line_number'
-    if null $P0 goto NO_LINE_NR_METHOD
-    $I0 = self.$P0()
-
-    # line_number() starts counting at line 0, so increment:
-    inc $I0
-
-    printerr "Syntax error (line "
-    printerr $I0
-    printerr "): "
-    printerr message
-    printerr "\n\n"
-
-    # increment parse errors
-    .local pmc errs
-    errs = get_root_global 'errors'
-    inc errs
-
-    .return()
-
-  NO_LINE_NR_METHOD:
-    printerr "can't find PGE::Util::line_number"
-    exit 1
+    .param pmc mob
+    .param string message :optional
+    unless null message goto L1
+    message = 'syntax error'
+L1:
+    lexerror(mob, message)
 .end
 
 
-=item C<lexerror (message)>
-
-=cut
-
-.sub 'lexerror'
+.sub 'lexerror' :anon
     .param pmc mob
     .param string message
     .local int lineno
@@ -141,10 +120,12 @@ Some grammar routines are handly written in PIR.
     $S0 .= $S1
     $S0 .= ': '
     $S0 .= message
-    $S0 .= " near '"
     $S1 = mob.'text'()
+    if $S1 == '' goto L1
+    $S0 .= " near '"
     $S0 .= $S1
     $S0 .= "'"
+L1:
     .local pmc ex
     ex = new .Exception
     ex['_message'] = $S0
@@ -153,6 +134,25 @@ Some grammar routines are handly written in PIR.
 
 
 =item C<name>
+
+I<Names> (also called I<identifiers>) in Lua can be any string of letters,
+digits, and underscores, not beginning with a digit. This coincides with the
+definition of names in most languages. (The definition of letter depends on
+the current locale: any character considered alphabetic by the current locale
+can be used in an identifier.) Identifiers are used to name variables and
+table fields.
+
+The following keywords are reserved and cannot be used as names:
+
+     and       break     do        else      elseif
+     end       false     for       function  if
+     in        local     nil       not       or
+     repeat    return    then      true      until     while
+
+Lua is a case-sensitive language: C<and> is a reserved word, but C<And> and
+C<AND> are two different, valid names. As a convention, names starting with
+an underscore followed by uppercase letters (such as C<_VERSION>) are reserved
+for internal global variables used by Lua.
 
 =cut
 
@@ -222,6 +222,12 @@ L2:
 
 =item C<number>
 
+A I<numerical constant> may be written with an optional decimal part and an
+optional decimal exponent. Lua also accepts integer hexadecimal constants,
+by prefixing them with C<0x>. Examples of valid numerical constants are
+
+     3   3.0   3.1416   314.16e-2   0.31416E1   0xff   0x56
+
 =cut
 
 .sub 'number'
@@ -290,7 +296,7 @@ L1:
 .end
 
 
-.sub 'read_numeral'
+.sub 'read_numeral' :anon
     .param pmc mob
     .param pmc adverbs         :slurpy :named
     .local string target
@@ -342,6 +348,25 @@ L2:
 
 =item C<quoted_literal>
 
+I<Literal strings> can be delimited by matching single or double quotes,
+and can contain the following C-like escape sequences: C<'\a'> (bell),
+C<'\b'> (backspace), C<'\f'> (form feed), C<'\n'> (newline), C<'\r'>
+(carriage return), C<'\t'> (horizontal tab), C<'\v'> (vertical tab),
+C<'\\'> (backslash), C<'\"'> (quotation mark [double quote]),
+and C<'\''> (apostrophe [single quote]). Moreover, a backslash followed by
+a real newline results in a newline in the string. A character in a string
+may also be specified by its numerical value using the escape sequence C<\ddd>,
+where I<ddd> is a sequence of up to three decimal digits. (Note that if a
+numerical escape is to be followed by a digit, it must be expressed using
+exactly three digits.) Strings in Lua may contain any 8-bit value, including
+embedded zeros, which can be specified as C<'\0'>.
+
+To put a double (single) quote, a newline, a backslash, or an embedded zero
+inside a literal string enclosed by double (single) quotes you must use an
+escape sequence. Any other character may be directly inserted into the literal.
+(Some control characters may cause problems for the file system, but Lua has
+no problem with them.)
+
 =cut
 
 .sub 'quoted_literal'
@@ -360,6 +385,7 @@ L2:
     literal = ''
 LOOP:
     if pos < lastpos goto L1
+    mpos = pos
     lexerror(mob, "unfinished string")
 L1:
     $S0 = substr target, pos, 1
@@ -370,6 +396,7 @@ L1:
 L2:
     $I0 = index "\n\r", $S0
     if $I0 < 0 goto L3
+    mpos = pos
     lexerror(mob, "unfinished string")
 L3:
     if $S0 != "\\" goto CONCAT
@@ -405,6 +432,7 @@ L6:
     dec pos
 L7:
     if $I0 < 256 goto L8
+    mpos = pos
     lexerror(mob, "escape sequence too large")
 L8:
     $S0 = chr $I0
@@ -417,6 +445,32 @@ CONCAT:
 
 
 =item C<long_string>
+
+Literal strings can also be defined using a long format enclosed by
+I<long brackets>. We define an I<opening long bracket of level n> as an
+opening square bracket followed by I<n> equal signs followed by another
+opening square bracket. So, an opening long bracket of level 0 is written
+as C<[[>, an opening long bracket of level 1 is written as C<[=[>, and so on.
+A I<closing long bracket> is defined similarly; for instance, a closing long
+bracket of level 4 is written as C<]====]>. A long string starts with an
+opening long bracket of any level and ends at the first closing long bracket
+of the same level. Literals in this bracketed form may run for several lines,
+do not interpret any escape sequences, and ignore long brackets of any other
+level. They may contain anything except a closing bracket of the proper level.
+
+For convenience, when the opening long bracket is immediately followed by
+a newline, the newline is not included in the string. As an example, in
+a system using ASCII (in which C<'a'> is coded as 97, newline is coded as 10,
+and C<'1'> is coded as 49), the five literals below denote the same string:
+
+     a = 'alo\n123"'
+     a = "alo\n123\""
+     a = '\97lo\10\04923"'
+     a = [[alo
+     123"]]
+     a = [==[
+     alo
+     123"]==]
 
 =cut
 
@@ -439,6 +493,7 @@ CONCAT:
     (pos, sep) = _skip_sep(target, pos, '[')
     if sep >= 0 goto L1
     if sep == -1 goto END
+    mpos = pos
     lexerror(mob, "invalid long string delimiter")
 L1:
     inc pos
@@ -459,6 +514,8 @@ L3:
     inc pos
     $S0 = substr target, pos, 1
     if $S0 != '[' goto L5
+    inc pos
+    mpos = pos
     lexerror(mob, "nesting of [[...]] is deprecated")
 L5:
     dec pos
@@ -493,6 +550,12 @@ END:
 
 
 =item C<long_comment>
+
+A I<comment> starts with a double hyphen (C<-->) anywhere outside a string.
+If the text immediately after C<--> is not an opening long bracket,
+the comment is a I<short comment>, which runs until the end of the line.
+Otherwise, it is a I<long comment>, which runs until the corresponding closing
+long bracket. Long comments are frequently used to disable code temporarily.
 
 =cut
 
@@ -532,6 +595,8 @@ L3:
     inc pos
     $S0 = substr target, pos, 1
     if $S0 != '[' goto L5
+    inc pos
+    mpos = pos
     lexerror(mob, "nesting of [[...]] is deprecated")
 L5:
     dec pos
