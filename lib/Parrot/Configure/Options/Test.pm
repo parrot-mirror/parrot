@@ -41,8 +41,8 @@ sub run_configure_tests {
             and die "Unable to execute configuration tests";
         print <<"TEST";
     
-    I just ran some tests to demonstrate that
-    Parrot's configuration tools will work as intended.
+I just ran some tests to demonstrate that
+Parrot's configuration tools will work as intended.
     
 TEST
     }
