@@ -60,6 +60,33 @@ execute a single configure step
 
 This turns on the user prompts.
 
+=item C<--test>
+
+Run certain tests along with F<Configure.pl>:
+
+=over 4
+
+=item C<--test=configure>
+
+Run tests found in F<t/configure/> I<before> beginning configuration.  These
+tests demonstrate that Parrot's configuration tools will work properly once
+configuration has begun.
+
+=item C<--test=build>
+
+Run tests found in F<t/postconfigure/>, F<t/tools/pmc2cutils/>,
+F<t/tools/ops2cutils/> and F<t/tools/ops2pmutils/> I<after> configuration has
+completed.  These tests demonstrate (a) that certain of Parrot's configuration
+tools are working properly post-configuration; and (b) that certain of
+Parrot's build tools will work properly once you call F<make>.
+
+=item C<--test>
+
+Run the tests described in C<--test=configure>, conduct configuration, then
+run the tests described in C<--test=build>.
+
+=back
+
 =back
 
 Compile Options
@@ -294,6 +321,32 @@ exit unless defined $args;
 
 my %args = %$args;
 
+my ($run_configure_tests, $run_build_tests);
+if (defined $args{test}) {
+    if ($args{test} eq '1') {
+        $run_configure_tests = 1;
+        $run_build_tests = 1;
+    } elsif ($args{test} eq 'configure') {
+        $run_configure_tests = 1;
+    } elsif ($args{test} eq 'build') {
+        $run_build_tests = 1;
+    } else {
+        die "'$args{test}' is a bad value for command-line option 'test'";
+    }
+}
+
+if ($run_configure_tests) {
+    print "As you requested, we'll start with some tests of the configuration tools.\n\n";
+    system(qq{prove t/configure/*.t})
+        and die "Unable to execute configuration tests";
+    print <<"TEST";
+
+I just ran some tests to demonstrate that
+Parrot's configuration tools will work as intended.
+
+TEST
+}
+
 # from Parrot::Configure::Messages
 print_introduction($parrot_version);
 
@@ -319,6 +372,13 @@ else {
 }
 
 # tell users what to do next
+if ($run_build_tests) {
+    print "\n\n";
+    print "As you requested, I will now run some tests of the build tools.\n\n";
+    system(qq{prove t/postconfigure/*.t t/tools/pmc2cutils/*.t t/tools/ops2cutils/*.t t/tools/ops2pmutils/*.t})
+        and die "Unable to execute post-configuration and build tools tests";
+}
+
 # from Parrot::Configure::Messages
 print_conclusion($conf->data->get('make'));
 
