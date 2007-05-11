@@ -25,7 +25,7 @@ Tests the BigInt PMC.
 =cut
 
 if ( $PConfig{gmp} ) {
-    plan tests => 36;
+    plan tests => 43;
 }
 else {
     plan skip_all => "No BigInt Lib configured";
@@ -759,6 +759,26 @@ CODE
 102400000000000
 OUT
 
+pir_output_is( <<'CODE', <<'OUT', "shl_bigint with a negative shift" );
+## cf the shr_bigint case.
+.sub main :main
+   new $P0, .BigInt
+   set $P0, 8
+   new $P1, .BigInt
+   set $P1, -2
+   new $P2, .BigInt
+   shl $P2, $P0, $P1
+   say $P2
+   set $P0, "102400000000000"
+   set $P1, -10
+   shl $P2, $P0, $P1
+   say $P2
+.end
+CODE
+2
+100000000000
+OUT
+
 pasm_output_is( <<'CODE', <<'OUT', "shl_int" );
    new P0, .BigInt
    set P0, 2
@@ -788,6 +808,126 @@ CODE
 102400000000000
 OUT
 
+pir_output_is( <<'CODE', <<'OUT', "shl_int with a negative shift" );
+## cf the shr_int case.
+.sub main :main
+   new $P0, .BigInt
+   set $P0, 4
+   new $P1, .Integer
+   set $P1, -1
+   new $P2, .BigInt
+   shl $P2, $P0, $P1
+   say $P2
+   set $P0, "200000000000"
+   set $P1, -1
+   shl $P2, $P0, $P1
+   say $P2
+   set $P0, "102400000000000"
+   set $P1, -10
+   shl $P2, $P0, $P1
+   say $P2
+.end
+CODE
+2
+100000000000
+100000000000
+OUT
+
+pir_output_like( <<'CODE', <<'OUT', "shl_int and i_shl_int promote Integer to Bigint");
+## The result on the second line is a BigInt on 32-bit systems and still an
+## Integer on 64-bit systems.
+.sub main :main
+   new $P0, .Integer
+   set $P0, 1000001
+   new $P1, .Integer
+   set $P1, 10
+   new $P2, .Integer
+   ## shift by 10 bits . . .
+   shl $P2, $P0, $P1
+   $S2 = typeof $P2
+   print $S2
+   print ' '
+   say $P2
+   ## then by 20 bits . . .
+   $P1 = 20
+   new $P3, .Integer
+   $P3 = 1000001
+   shl $P3, $P0, $P1
+   $S2 = typeof $P3
+   print $S2
+   print ' '
+   say $P3
+   ## then by another 40 bits (total 60) in place.
+   $P1 = 40
+   shl $P3, $P3, $P1
+   $S2 = typeof $P3
+   print $S2
+   print ' '
+   say $P3
+.end
+CODE
+/Integer 1024001024
+(Integer|BigInt) 1048577048576
+BigInt 1152922657528351582846976
+/
+OUT
+
+pir_output_like( <<'CODE', <<'OUT', "shl_int throws an error when promotion is disabled");
+.include "errors.pasm"
+.sub main :main
+   errorson .PARROT_ERRORS_OVERFLOW_FLAG
+   new $P0, .Integer
+   set $P0, 1000001
+   new $P1, .Integer
+   set $P1, 10
+   new $P2, .Integer
+   ## shift by 10 bits . . .
+   shl $P2, $P0, $P1
+   $S2 = typeof $P2
+   print $S2
+   print ' '
+   say $P2
+   ## then by 60 bits.
+   $P1 = 60
+   $P0 = 1000001
+   n_shl $P3, $P0, $P1
+   $S2 = typeof $P3
+   print $S2
+   print ' '
+   say $P3
+.end
+CODE
+/Integer 1024001024
+Integer overflow
+current instr/
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', "shr_int and i_shr_int with a neg shift promote Integer to Bigint");
+.sub main :main
+   new $P0, .Integer
+   set $P0, 1000001
+   new $P1, .Integer
+   set $P1, -10
+   new $P2, .Integer
+   ## shift by 10 bits . . .
+   shr $P2, $P0, $P1
+   $S2 = typeof $P2
+   print $S2
+   print ' '
+   say $P2
+   ## then by another 50 bits (total 60) in place.
+   $P1 = -50
+   shr $P2, $P1
+   $S2 = typeof $P2
+   print $S2
+   print ' '
+   say $P2
+.end
+CODE
+Integer 1024001024
+BigInt 1152922657528351582846976
+OUT
+
 pasm_output_is( <<'CODE', <<'OUT', "shr_bigint" );
    new P0, .BigInt
    set P0, 8
@@ -808,6 +948,26 @@ pasm_output_is( <<'CODE', <<'OUT', "shr_bigint" );
 CODE
 2
 100000000000
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', "shr_bigint with a negative shift" );
+## cf the shl_bigint case.
+.sub main :main
+   new $P0, .BigInt
+   set $P0, 2
+   new $P1, .BigInt
+   set $P1, -2
+   new $P2, .BigInt
+   shr $P2, $P0, $P1
+   say $P2
+   set $P0, "100000000000"
+   set $P1, -10
+   shr $P2, $P0, $P1
+   say $P2
+.end
+CODE
+8
+102400000000000
 OUT
 
 pasm_output_is( <<'CODE', <<'OUT', "shr_int" );
@@ -837,6 +997,30 @@ CODE
 2
 100000000000
 100000000000
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', "shr_int with a negative shift" );
+## cf the shl_int case.
+.sub main :main
+   new $P0, .BigInt
+   set $P0, 2
+   new $P1, .Integer
+   set $P1, -1
+   new $P2, .BigInt
+   shr $P2, $P0, $P1
+   say $P2
+   set $P0, "100000000000"
+   set $P1, -1
+   shr $P2, $P0, $P1
+   say $P2
+   set $P1, -10
+   shr $P2, $P0, $P1
+   say $P2
+.end
+CODE
+4
+200000000000
+102400000000000
 OUT
 
 pir_output_is( <<'CODE', <<'OUT', "BUG #34949 gt" );
