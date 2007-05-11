@@ -27,16 +27,24 @@ Release Manager                 Jerry Gay
 Metacommitter                   Allison Randal
                                 Chip Salzenberg
                                 Jerry Gay
+                                Will Coleda
                                 Jesse Vincent
 
 
 Committers
 ----------
 
-Core Developer                  Leopold Toetsch (incl. JIT x86, ppc)
+Core Developer                  -
                                 Jonathan Worthington (bytecode format/loader)
+                                Matt Diephouse
+                                Bernhard Schmalhofer
+                                Kevin Tew
+                                Bob Rogers
+                                Nuno Carvalho
+                                chromatic
+                                Allison Randal
 
-Compiler Developer              Leopold Toetsch (IMCC)
+Compiler Developer              -
                                 Vishal Soni (BCG, IMCC)
                                 Patrick Michaud (PGE, PAST-pm, TGE)
                                 Allison Randal (TGE)

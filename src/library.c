@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2004, The Perl Foundation.
+Copyright (C) 2004-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -22,6 +22,53 @@ This file contains a C function to access parrot's bytecode library functions.
 #include "parrot/dynext.h"
 #include <assert.h>
 #include "library.str"
+
+/*
+  load_prefer is a toggle to prefer either the most low level form of a module
+  (compiled) or the highest level form of a module.
+
+  Users will typically want the compiled versions. This is also the perl5
+  behavior as well.
+
+  Developers who don't like to run a clean target inbetween changes can set the
+  environment variable PARROT_PREFER_SOURCE (value does not matter).
+
+  If a value for PARROT_PREFER_SOURCE is honored it should be a path spec of
+  directories for which source will be loaded over compiled objects.
+ */
+
+#define COMPILE_FIRST 0
+#define SOURCE_FIRST 1
+
+static int load_prefer = COMPILE_FIRST;
+
+static int
+query_load_prefer ( Interp* interp ) {
+    int free_it;
+    char *env;
+
+    env = Parrot_getenv("PARROT_PREFER_SOURCE", &free_it);
+
+    if (env) {
+        if (free_it)
+            free(env);
+
+        return 1;
+    }
+
+    return 0;
+}
+
+/*
+  extension guessing init to catch a ride with
+  parrot_init_library_paths on the init path.
+ */
+
+static void
+init_extension_guessing(Interp* interp) {
+    if( query_load_prefer(interp) )
+        load_prefer = SOURCE_FIRST;
+}
 
 /*
 
@@ -58,6 +105,8 @@ parrot_init_library_paths(Interp *interp)
 {
     PMC *iglobals, *lib_paths, *paths;
     STRING *entry;
+
+    init_extension_guessing(interp);
 
     iglobals = interp->iglobals;
     /* create the lib_paths array */
@@ -241,7 +290,7 @@ path_append(Interp *interp, STRING *l_path, STRING *r_path)
 
 /*
   binary path arguments. A new string is created
-  that is the concatentation of the two path components
+  that is the concatenation of the two path components
   with a path-separator.
  */
 
@@ -255,6 +304,91 @@ path_concat(Interp *interp, STRING *l_path, STRING *r_path)
     join = string_append(interp, join , r_path);
 
     return join;
+}
+
+#define LOAD_EXT_CODE_LAST 3
+
+static const char* load_ext_code[ LOAD_EXT_CODE_LAST + 1 ] = {
+    ".pbc",
+
+    /* source level files */
+
+    ".pasm",
+    ".past",
+    ".pir",
+};
+
+static STRING*
+try_load_path(Interp *interp, STRING* path) {
+    STRING *final;
+
+    final = string_copy(interp, path);
+
+#if 0
+    printf("path is \"%s\"\n",
+           string_to_cstring(interp, final ));
+#endif
+
+    final = path_finalize(interp, final );
+
+    if (Parrot_stat_info_intval(interp, final , STAT_EXISTS)) {
+        return final;
+    }
+
+    return NULL;
+}
+
+/*
+  guess extensions, so that the user can drop the extensions
+  leaving it up to the build process/install whether or not
+  a .pbc or a .pir file is used.
+ */
+
+static STRING*
+try_bytecode_extensions (Interp *interp, STRING* path )
+{
+    STRING *with_ext, *result;
+
+    int guess;
+
+    /*
+      first try the path without guessing to ensure compatibility with
+      existing code.
+     */
+
+    with_ext = string_copy(interp, path);
+
+    if ( (result = try_load_path(interp, with_ext) ) )
+        return result;
+
+    /*
+      Start guessing now. With load_prefer defaulting to COMPILE_FIRST
+      it tries the most compiled form first. With load_prefer set to
+      SOURCE_FIRST it will try the highest level source first.
+     */
+
+    if ( COMPILE_FIRST == load_prefer ) {
+        for( guess = 0 ; guess <= LOAD_EXT_CODE_LAST ; guess++ ) {
+            with_ext = string_copy(interp, path);
+            with_ext = string_append(interp,
+                                     with_ext, const_string(interp, load_ext_code[guess]));
+
+            if ( (result = try_load_path(interp, with_ext)) )
+                return result;
+        }
+    }
+    else {
+        for( guess = LOAD_EXT_CODE_LAST ; guess >= 0 ; guess-- ) {
+            with_ext = string_copy(interp, path);
+            with_ext = string_append(interp,
+                                     with_ext, const_string(interp, load_ext_code[guess]));
+
+            if ( (result = try_load_path(interp, with_ext)) )
+                return result;
+        }
+    }
+
+    return NULL;
 }
 
 /*
@@ -272,7 +406,7 @@ NULL otherwise.  Remember to free the string with C<string_cstring_free()>.
 Like above but use and return STRINGs. If successful, the returned STRING
 is 0-terminated so that C<result-E<gt>strstart> is usable as B<const char*>
 c-string for C library functions like fopen(3).
-This is the prefered API function.
+This is the preferred API function.
 
 The C<enum_runtime_ft type> is one or more of the types defined in
 F<include/parrot/library.h>.
@@ -288,6 +422,11 @@ Parrot_locate_runtime_file_str(Interp *interp, STRING *file,
     STRING *prefix, *path, *full_name;
     INTVAL i, n;
     PMC *paths;
+
+#if 0
+    printf("requesting path: \"%s\"\n",
+           string_to_cstring(interp, file ));
+#endif
 
     /* if this is an absolute path return it as is */
     if (is_abs_path(interp, file))
@@ -313,16 +452,20 @@ Parrot_locate_runtime_file_str(Interp *interp, STRING *file,
 
         full_name = path_append(interp, full_name , file);
 
-        full_name = path_finalize(interp, full_name);
-        if (Parrot_stat_info_intval(interp, full_name, STAT_EXISTS)) {
+        full_name = ( type & PARROT_RUNTIME_FT_DYNEXT )
+            ? try_load_path(interp, full_name)
+            : try_bytecode_extensions(interp, full_name);
+
+        if ( full_name )
             return full_name;
-        }
     }
 
-    full_name = path_finalize(interp, file);
-    if (Parrot_stat_info_intval(interp, full_name, STAT_EXISTS)) {
-        return full_name;
-    }
+     full_name = ( type & PARROT_RUNTIME_FT_DYNEXT )
+        ? try_load_path(interp, file)
+        : try_bytecode_extensions(interp, file);
+
+     if ( full_name )
+         return full_name;
 
     return NULL;
 }

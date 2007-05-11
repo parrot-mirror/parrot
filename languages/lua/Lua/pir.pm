@@ -14,19 +14,16 @@ package pirVisitor;
         $self->{fh}       = $fh;
         $self->{prologue} = q{
 .include 'interpinfo.pasm'
-.include 'except_severity.pasm'
 
 .HLL 'Lua', 'lua_group'
 
 .sub '__start' :main
   .param pmc args
-  .local string progname
-  progname = shift args
+  $S0 = shift args
   $I1 = args
   $P1 = new .Array
   set $P1, $I1
   $I0 = 0
-  push_eh _handler
 L1:
   unless $I0 < $I1 goto L2
   $S0 = shift args
@@ -52,30 +49,7 @@ L2:
   .const .Sub main = '_main'
   $P0 = get_global '_G'
   main.'setfenv'($P0)
-  .return main($P1 :flat)
-
-_handler:
-  .local pmc ex
-  .local string msg
-  .get_results (ex, msg)
-  .local int severity
-  severity = ex[2]
-  if severity == .EXCEPT_EXIT goto L3
-  .local int lineno
-  $S0 = 'lua: '
-  $S0 .= progname
-  $S0 .= ':'
-  lineno = 0        # TODO: source lineno
-  $S1 = lineno
-  $S0 .= $S1
-  $S0 .= ': '
-  $S0 .= msg
-  $S0 .= "\nstack traceback:\n"
-  $S0 .= "\tTODO\n"
-  printerr $S0
-  exit 1
-L3:
-  rethrow ex
+  docall(main, $P1 :flat)
 .end
 
 .sub '__onload' :anon :init

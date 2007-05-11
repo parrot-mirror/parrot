@@ -90,13 +90,14 @@ In F<Configure.pl>:
 
 On command line:
 
-    # run tests of configuration tools only
+    # run tests of configuration tools, then configure
     perl Configure.pl  --test=configure
 
-    # run tests of build tools only
+    # configure, then run tests of build tools
     perl Configure.pl  --test=build
 
-    # run tests of both configuration and build tools only
+    # run tests of configuration tools, then configure,
+    # then run tests of build tools
     perl Configure.pl  --test
     
 =head1 DESCRIPTION
