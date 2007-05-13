@@ -78,8 +78,9 @@ is( integrate( 1,     2 ),     2,     "integrate(1, 1)" );
     print $fromfile "foo" x 1000;
     $fromfile->flush;
 
-    ok( copy_if_diff( "$fromfname", "$tofname" ), "copy_if_diff() true return status" );
-    is( Parrot::Configure::Step::file_checksum("$tofname"),
+    ok( copy_if_diff( $fromfname, $tofname ),
+        "copy_if_diff() true return status" );
+    is( Parrot::Configure::Step::file_checksum($tofname),
         '324000', "copy_if_diff() copied differing files" );
 }
 
@@ -100,14 +101,15 @@ is( integrate( 1,     2 ),     2,     "integrate(1, 1)" );
     $fromfile->close();
     $tofile->close();
 
-    ok( move_if_diff( "$fromfname", "$tofname" ), "move_if_diff() true return status" );
-    ok( !-e "$fromfname", "move_if_diff() moved differing file" );
+    ok( move_if_diff( $fromfname, $tofname ),
+        "move_if_diff() true return status" );
+    ok( !-e $fromfname, "move_if_diff() moved differing file" );
 
     # redirect STDERR for the test below
     close *STDERR;
     open *STDERR, '<', $redir;
 
-    ok( -e "$tofname", "move_if_diff() moved differing file" );
+    ok( -e $tofname, "move_if_diff() moved differing file" );
 
     # restore STDERR
     close *STDERR;
@@ -138,9 +140,9 @@ is( integrate( 1,     2 ),     2,     "integrate(1, 1)" );
     $tf_params{SUFFIX} = '.exe' if 'MSWin32' eq $^O;
     my ( $tmpfile, $fname ) = tempfile(%tf_params);
 
-    local $ENV{PATH} = dirname("$fname");
-    chmod 0777, "$fname";
-    my $prog = basename("$fname");
+    local $ENV{PATH} = dirname($fname);
+    chmod 0777, $fname;
+    my $prog = basename($fname);
 
     is( check_progs($prog), $prog, "check_progs() returns the proper program" )
 }
@@ -150,9 +152,9 @@ is( integrate( 1,     2 ),     2,     "integrate(1, 1)" );
     $tf_params{SUFFIX} = '.exe' if 'MSWin32' eq $^O;
     my ( $tmpfile, $fname ) = tempfile(%tf_params);
 
-    local $ENV{PATH} = dirname("$fname");
-    chmod 0777, "$fname";
-    my $prog = basename("$fname");
+    local $ENV{PATH} = dirname($fname);
+    chmod 0777, $fname;
+    my $prog = basename($fname);
 
     is( check_progs( [$prog] ),
         $prog, "check_progs() returns the proper program when passed an array ref" )
