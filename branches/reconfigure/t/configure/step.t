@@ -7,7 +7,7 @@ use warnings;
 
 use lib qw( . lib ../lib ../../lib );
 
-use Test::More tests => 19;
+use Test::More qw(no_plan); # tests => 20;
 
 use File::Basename qw(basename dirname);
 use File::Temp 0.13 qw/tempfile/;
@@ -24,7 +24,7 @@ t/configure/step.t - tests Parrot::Configure::Step
 
 =head1 DESCRIPTION
 
-Regressions tests for the L<Parrote::Configure::Step> module.
+Regression tests for the L<Parrote::Configure::Step> module.
 
 =cut
 
@@ -51,8 +51,23 @@ is( integrate( 1,     2 ),     2,     "integrate(1, 1)" );
     my ( $tmpfile, $fname ) = tempfile( UNLINK => 1 );
     print $tmpfile "foo" x 1000;
     $tmpfile->flush;
-    is( Parrot::Configure::Step::file_checksum("$fname"),
+    is( Parrot::Configure::Step::file_checksum($fname),
         '324000', "file_checksum() returns correct checksum" );
+}
+
+{
+    my ( $tmpfile, $fname ) = tempfile( UNLINK => 1 );
+    my $str = 'Do not print this line';
+    print $tmpfile "foo" x 500;
+    print $tmpfile "\n";
+    print $tmpfile "$str\n";
+    print $tmpfile "foo" x 500;
+    $tmpfile->flush;
+    my $ignore_pattern = qr/$str/;
+    my $csum = Parrot::Configure::Step::file_checksum(
+        $fname, $ignore_pattern
+    );
+    is( $csum, '324010', "file_checksum() returns correct checksum" );
 }
 
 # copy_if_diff()
