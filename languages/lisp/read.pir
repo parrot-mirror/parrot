@@ -1,3 +1,4 @@
+# $Id$
 
 .sub _read
   .param pmc args
@@ -10,9 +11,10 @@
   .local pmc stream
   .local string token
   .local pmc retv
+  .local int nretv
 
   .ASSERT_LENGTH(args,1,ERROR_NARGS)  # We should have received one argument -
-				      # the input stream to read from.
+                                      # the input stream to read from.
 
   .CAR(istream, args)
   stream = istream._get_io()
@@ -55,9 +57,13 @@ STEP_4:
   .STRING(mchar, char)
 
   .LIST_2(margs, istream, mchar)           # Create a list of args to pass in
-   retv = _FUNCTION_CALL(macro, margs)         # Call the readmacro
+   # VALID_IN_PARROT_0_2_0 retv = _FUNCTION_CALL(macro, margs)         # Call the readmacro
 
-   if argcP == 0 goto STEP_1
+   # VALID_IN_PARROT_0_2_0 if argcP == 0 goto STEP_1
+   (retv :slurpy) = _FUNCTION_CALL(macro, margs)         # Call the readmacro
+   
+   nretv = retv
+   if nretv == 0 goto STEP_1
    goto DONE
 
 STEP_5:
@@ -156,8 +162,8 @@ DONE:
 .end
 
 .sub _error
-  .param string type			# There's current no way to add more
-  .param string mesg			# than just _message to the exception.
+  .param string type                    # There's current no way to add more
+  .param string mesg                    # than just _message to the exception.
   .local pmc e
 
   e = new Exception
@@ -179,6 +185,7 @@ DONE:
   .local pmc stream
   .local pmc symbol
   .local pmc tretv
+  .local pmc ntretv
   .local pmc retv
   .local pmc lptr
   .local int ordv
@@ -191,7 +198,7 @@ DONE:
    dchar = delimit
 
   .SECOND(istream, args)                  # Second arg is the input stream
-  .NULL(istream, GET_STDIN)		  # If we don't have a stream get stdin
+  .NULL(istream, GET_STDIN)               # If we don't have a stream get stdin
    goto DONE_ARGS
 
 GET_STDIN:
@@ -260,7 +267,9 @@ CALL_MACRO:
 
    tretv = _FUNCTION_CALL(macro, margs)   # Call the readmacro
 
-   if argcP == 0 goto LOOP                # If macro is NULL, start loop again
+   # VALID_IN_PARROT_0_2_0 if argcP == 0 goto LOOP                # If macro is NULL, start loop again
+   ntretv = tretv
+   if ntretv == 0 goto LOOP               # If macro is NULL, start loop again
    goto APPEND_TO_LIST                    # else add the return value to list
 
 DELIMIT_CHAR:                             # We've hit the delimter char -
@@ -315,7 +324,7 @@ DONE:
   .ERROR_0("reader-error", "An object cannot start with #\\)")
 .end
 
-.sub _single_quote_macro		# As described in CLtL section 2.4.3
+.sub _single_quote_macro                # As described in CLtL section 2.4.3
   .param pmc args
   .local pmc stream
   .local pmc symbol
@@ -336,7 +345,7 @@ RETURN:
   .return(retv)
 .end
 
-.sub _semicolon_macro			# As described in CLtL section 2.4.4
+.sub _semicolon_macro                   # As described in CLtL section 2.4.4
   .param pmc args
   .local string char
   .local pmc istream
@@ -355,7 +364,7 @@ LOOP:
 RETURN:
 .end
 
-.sub _double_quote_macro	        # As described in CLtL section 2.4.5.
+.sub _double_quote_macro                # As described in CLtL section 2.4.5.
   .param pmc args
   .local string strtok
   .local pmc istream
@@ -409,7 +418,7 @@ RETURN:
   .return(token)
 .end
 
-.sub _backquote_macro			 # As described in CLtL section 2.4.6
+.sub _backquote_macro                    # As described in CLtL section 2.4.6
   .param pmc args
 
   .ERROR_0("reader-error", "the backquote macro has not yet been implemented")
@@ -417,7 +426,7 @@ RETURN:
 DONE:
 .end
 
-.sub _comma_macro			 # As described in CLtL section 2.4.7
+.sub _comma_macro                        # As described in CLtL section 2.4.7
   .param pmc args
 
   .ERROR_0("reader-error", "comma is illegal outside of backquote")
@@ -425,7 +434,7 @@ DONE:
 DONE:
 .end
 
-.sub _sharpsign_macro			 # As described in CLtL section 2.4.8
+.sub _sharpsign_macro                   # As described in CLtL section 2.4.8
   .param pmc args
   .local string char
   .local string test
