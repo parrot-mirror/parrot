@@ -61,6 +61,54 @@ typedef Buffer PObj;
 #define PMC_num_val(pmc)      (pmc)->obj.u._num_val
 #define PMC_str_val(pmc)      (pmc)->obj.u._string_val
 
+/* See src/gc/resources.c. the basic idea is that buffer memory is
+   set up as follows:
+                    +-----------------+
+                    |  ref_count   |f |    # GC header
+  obj->bufstart  -> +-----------------+
+                    |  data           |
+                    v                 v
+
+The actual set-up is more involved because of padding.  obj->bufstart must
+be suitably aligned for any UnionVal.  (Perhaps it should be a Buffer
+there instead.)  The start of the memory region (as returned by malloc()
+is also suitably aligned for any use.  If, for example, malloc() returns
+objects aligned on 8-byte boundaries, and obj->bufstart is also aligned
+on 8-byte boundaries, then there should be 4 bytes of padding.  It is
+handled differently in the two files resources.c and res_lea.c.  (I have
+not yet figured out how the 'possible padding' is handled in resources.c.
+--A.D.  2007-05-11.)
+
+                     src/gc/resources.c:       src/gc/res_lea.c:
+
+ptr from malloc ->  +------------------+      +------------------+
+                    | possible padding |      | INTVAL ref_count |
+                    | INTVAL ref_count |      | possible padding |
+obj->bufstart   ->  +------------------+      +------------------+
+                    |     data         |      |      data        |
+                    v                  v      v                  v
+
+*/
+typedef struct Buffer_alloc_unit {
+    INTVAL ref_count;
+    UnionVal buffer[1]; /* Guarantee it's suitably aligned */
+} Buffer_alloc_unit;
+
+/* Given a pointer to the buffer, find the ref_count and the actual start of
+   the allocated space. Setting ref_count is clunky because we avoid lvalue
+   casts. */
+#ifdef GC_IS_MALLOC       /* see src/gc/res_lea.c */
+#  define Buffer_alloc_offset    (offsetof(Buffer_alloc_unit, buffer))
+#  define PObj_bufallocstart(b)  ((char *)PObj_bufstart(b) - Buffer_alloc_offset)
+#  define PObj_bufrefcount(b)    (((Buffer_alloc_unit *)PObj_bufallocstart(b))->ref_count)
+#  define PObj_bufrefcountptr(b) (&PObj_bufrefcount(b))
+#else                     /* see src/gc/resources.c */
+#  define Buffer_alloc_offset sizeof(INTVAL)
+#  define PObj_bufallocstart(b)  ((char *)PObj_bufstart(b) - Buffer_alloc_offset)
+#  define PObj_bufrefcount(b)    (*(INTVAL *)PObj_bufallocstart(b))
+#  define PObj_bufrefcountptr(b) ((INTVAL *)PObj_bufallocstart(b))
+#endif
+
 /* BEGIN DEPRECATED BUFFER ACCESSORS */
 /* macros for accessing old buffer members
  * #define bufstart obj.u._b._bufstart
@@ -101,7 +149,7 @@ struct PMC {
 
 struct _Sync;   /* forward decl */
 
-struct PMC_EXT {
+typedef struct PMC_EXT {
 #if PMC_DATA_IN_EXT
     DPOINTER *data;
 #endif /* PMC_DATA_IN_EXT */
@@ -129,9 +177,7 @@ struct PMC_EXT {
        stuff, which'd merit an extra dereference when setting, but let
        us memset the actual GC data in a big block
     */
-};
-
-typedef struct PMC_EXT PMC_EXT;
+} PMC_EXT;
 
 #ifdef NDEBUG
 #  define PMC_ext_checked(pmc)             (pmc)->pmc_ext

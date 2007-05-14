@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: 25-options_test.t 18310 2007-04-24 01:27:22Z jkeenan $
+# $Id$
 # 25-options_test.t
 
 use strict;
@@ -22,7 +22,7 @@ use_ok("Parrot::Configure::Options::Test");
 my ($args, $opttest);
 
 my $parrot_version = '0.4.10';
-my $svnid          = '$Id: 25-options_test.t 18310 2007-04-24 01:27:22Z jkeenan $';
+my $svnid          = '$Id$';
 $args = process_options(
     {
         argv            => [ q{--test} ],
@@ -61,13 +61,18 @@ TEST
     my ($tie, $errtie, @lines);
     no warnings 'once';
 
+    my $reason = q{Devel::Cover gags on this test};
+
     @Parrot::Configure::Options::Test::preconfiguration_tests = 
         ( $test );
     {
         $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
             or croak "Unable to tie";
-        ok($opttest->run_configure_tests(),
-            "Configuration tests are runnable");
+        SKIP: {
+            skip $reason, 1 if $ENV{PERL5OPT};        
+            ok($opttest->run_configure_tests(),
+                "Configuration tests are runnable");
+        }
     }
 
     @Parrot::Configure::Options::Test::postconfiguration_tests = 
@@ -75,8 +80,11 @@ TEST
     {
         $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
             or croak "Unable to tie";
-        ok($opttest->run_build_tests(),
-            "Build tests are runnable");
+        SKIP: {
+            skip $reason, 1 if $ENV{PERL5OPT};        
+            ok($opttest->run_build_tests(),
+                "Build tests are runnable");
+        }
     }
 
     ok( (chdir $cwd), "Changed back to starting directory after testing");

@@ -42,6 +42,7 @@ is( integrate( undef, undef ), undef, "integrate(undef, undef)" );
 is( integrate( undef, 1 ),     1,     "integrate(undef, 1)" );
 is( integrate( 1,     undef ), 1,     "integrate(1, undef)" );
 is( integrate( 1,     2 ),     2,     "integrate(1, 1)" );
+is( integrate( 1, q{ }), 1, 'integrate(1, [empty string])' );
 
 # reopn STDIN to test prompt()
 
@@ -82,6 +83,18 @@ is( integrate( 1,     2 ),     2,     "integrate(1, 1)" );
         "copy_if_diff() true return status" );
     is( Parrot::Configure::Step::file_checksum($tofname),
         '324000', "copy_if_diff() copied differing files" );
+}
+
+{
+    my ( $fromfile, $fromfname ) = tempfile( UNLINK => 1 );
+    my ( $tofile,   $tofname )   = tempfile( UNLINK => 1 );
+    print $fromfile "foo" x 1000;
+    $fromfile->flush;
+    print $tofile "foo" x 1000;
+    $tofile->flush;
+
+    ok (! defined(copy_if_diff( $fromfname, $tofname )),
+        "copy_if_diff() true return undef" );
 }
 
 # move_if_diff()
