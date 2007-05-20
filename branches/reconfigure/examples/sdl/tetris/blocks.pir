@@ -66,7 +66,7 @@ END:
 
 # ##
 # ##
-.sub __init method
+.sub __init :method
     .local pmc block
 
     block = new IntList
@@ -77,10 +77,8 @@ END:
     assign self, block
 .end
 
-.sub id method
-    .pcc_begin_return
-    .return 0
-    .pcc_end_return
+.sub id :method
+    .return (0)
 .end
 
 .namespace ["Tetris::Block::1"]
@@ -88,7 +86,7 @@ END:
 # ###
 # #..
 # ...
-.sub __init method
+.sub __init :method
     .local pmc block
 
     block = new IntList
@@ -104,10 +102,8 @@ END:
     assign self, block
 .end
 
-.sub id method
-    .pcc_begin_return
-    .return 1
-    .pcc_end_return
+.sub id :method
+    .return (1)
 .end
 
 .namespace ["Tetris::Block::2"]
@@ -115,7 +111,7 @@ END:
 # ###
 # ..#
 # ...
-.sub __init method
+.sub __init :method
     .local pmc block
     
     block = new IntList
@@ -131,10 +127,8 @@ END:
     assign self, block
 .end
 
-.sub id method
-    .pcc_begin_return
-    .return 2
-    .pcc_end_return
+.sub id :method
+    .return (2)
 .end
 
 .namespace ["Tetris::Block::3"]
@@ -142,7 +136,7 @@ END:
 # ##.
 # .##
 # ...
-.sub __init method
+.sub __init :method
     .local pmc block
     
     block = new IntList
@@ -158,10 +152,8 @@ END:
     assign self, block
 .end
 
-.sub id method
-    .pcc_begin_return
-    .return 3
-    .pcc_end_return
+.sub id :method
+    .return (3)
 .end
 
 .namespace ["Tetris::Block::4"]
@@ -169,7 +161,7 @@ END:
 # .##
 # ##.
 # ...
-.sub __init method
+.sub __init :method
     .local pmc block
     
     block = new IntList
@@ -185,10 +177,8 @@ END:
     assign self, block
 .end
 
-.sub id method
-    .pcc_begin_return
-    .return 4
-    .pcc_end_return
+.sub id :method
+    .return (4)
 .end
 
 .namespace ["Tetris::Block::5"]
@@ -196,7 +186,7 @@ END:
 # ###
 # .#.
 # ...
-.sub __init method
+.sub __init :method
     .local pmc block
     
     block = new IntList
@@ -212,10 +202,8 @@ END:
     assign self, block
 .end
 
-.sub id method
-    .pcc_begin_return
-    .return 5
-    .pcc_end_return
+.sub id :method
+    .return (5)
 .end
 
 .namespace ["Tetris::Block::6"]
@@ -224,7 +212,7 @@ END:
 # ....
 # ....
 # ....
-.sub __init method
+.sub __init :method
     .local pmc block
     
     block = new IntList
@@ -247,10 +235,8 @@ END:
     assign self, block
 .end
 
-.sub id method
-    .pcc_begin_return
-    .return 6
-    .pcc_end_return
+.sub id :method
+    .return (6)
 .end
 
 =head1 AUTHOR

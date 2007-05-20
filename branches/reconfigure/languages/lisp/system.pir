@@ -13,29 +13,37 @@
 
   .HASH(value)
 
-  .FUNCTION(function, _left_paren_macro)
-   value["("] = function
+  # VALID_IN_PARROT_0_2_0  .FUNCTION(function, _left_paren_macro )
+    .FUNCTION(function, "_left_paren_macro" )
+    value["("] = function
 
-  .FUNCTION(function, _right_paren_macro)
-   value[")"] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _right_paren_macro)
+    .FUNCTION(function, "_right_paren_macro" )
+    value[")"] = function
 
-  .FUNCTION(function, _single_quote_macro)
-   value["'"] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _single_quote_macro)
+    .FUNCTION(function, "_single_quote_macro" )
+    value["'"] = function
 
-  .FUNCTION(function, _semicolon_macro)
-   value[";"] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _semicolon_macro)
+    .FUNCTION(function, "_semicolon_macro" )
+    value[";"] = function
 
-  .FUNCTION(function, _double_quote_macro)
-   value["\""] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _double_quote_macro)
+    .FUNCTION(function, "_double_quote_macro" )
+    value['"'] = function
 
-  .FUNCTION(function, _backquote_macro)
-   value["`"] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _backquote_macro)
+    .FUNCTION(function, "_backquote_macro" )
+    value["`"] = function
 
-  .FUNCTION(function, _comma_macro)
-   value[","] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _comma_macro)
+    .FUNCTION(function, "_comma_macro" )
+    value[","] = function
 
-  .FUNCTION(function, _sharpsign_macro)
-   value["#"] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _sharpsign_macro)
+    .FUNCTION(function, "_sharpsign_macro" )
+    value["#"] = function
 
   .DEFVAR(symbol, package, "*READER-MACROS*", value)
 

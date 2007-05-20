@@ -1,0 +1,36 @@
+# Copyright (C) 2004-2007, The Perl Foundation.
+# $Id: configuration.pod 18432 2007-05-06 01:22:20Z jkeenan $
+
+=pod
+
+=head1 NAME
+
+docs/configure/files.pod - Files created by Parrot configuration system
+
+=head1 DESCRIPTION
+
+This document is intended to be a supplement to F<docs/configuration.pod>
+describing the various types of files which are created by the Parrot
+configuration process.  As currently structured, that configuration process is executed by running
+F<Configure.pl>.  Above and beyond the files that are part of a checkout from
+the Parrot repository or a Parrot tarball, what files are created during
+configuration and are therefore available at the point you invoke F<make>?
+
+Since the exact list of files created during configuration depends on the
+options with which you run F<Configure.pl>, the content of that list will vary
+from user to user.  Hence, no listing of those files can be considered
+definitive, exhaustive or exclusive.  What follows is an attempt to give
+Parrot hackers a good idea of the flavor of files created during
+configuration.
+
+=head1 AUTHOR
+
+James E Keenan (jkeenan@cpan.org)
+
+=head1 SEE ALSO
+
+F<Configure.pl>, F<docs/configuration.pod>.
+
+=cut
+
+

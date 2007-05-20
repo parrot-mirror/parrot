@@ -58,7 +58,7 @@ Returns the created data object.
 
 =cut
 
-.sub init method
+.sub init :method
     .param int w
     .param int h
     .local pmc data
@@ -113,7 +113,7 @@ This method returns nothing.
 
 =cut
 
-.sub fill method
+.sub fill :method
     .param int val
     .local pmc data
     .local int i
@@ -132,16 +132,14 @@ WHILE:
 END:
 .end
 
-.sub __get_integer method
+.sub __get_integer :method
     classoffset $I0, self, "Tetris::BoardData"
     getattribute $P0, self, $I0
     $I0 = $P0
-    .pcc_begin_return
-    .return $I0
-    .pcc_end_return
+    .return ($I0)
 .end
 
-.sub __get_integer_keyed method
+.sub __get_integer_keyed :method
     .param pmc key
     
     classoffset $I0, self, "Tetris::BoardData"
@@ -158,12 +156,10 @@ END:
 OK:
     $I0 = $P0[$I0]
     
-    .pcc_begin_return
-    .return $I0
-    .pcc_end_return
+    .return ($I0)
 .end
 
-.sub __set_integer_keyed method
+.sub __set_integer_keyed :method
     .param pmc key
     .param int val
 
@@ -172,7 +168,7 @@ OK:
     $P0[key] = val
 .end
 
-.sub __set_integer_native method
+.sub __set_integer_native :method
     .param int val
 
     classoffset $I0, self, "Tetris::BoardData"
@@ -180,7 +176,7 @@ OK:
     $P0 = val
 .end
 
-.sub __push_integer method
+.sub __push_integer :method
     .param int val
 
     classoffset $I0, self, "Tetris::BoardData"
@@ -194,14 +190,12 @@ Returns the width (number of blocks in one row) of the board.
 
 =cut
 
-.sub width method
+.sub width :method
     classoffset $I0, self, "Tetris::BoardData"
     add $I0, bWidth
     getattribute $P0, self, $I0
     $I0 = $P0
-    .pcc_begin_return
-    .return $I0
-    .pcc_end_return
+    .return ($I0)
 .end
 
 =item height = data."height"()
@@ -210,14 +204,12 @@ Returns the height (number of blocks in one column) of the board.
 
 =cut
 
-.sub height method
+.sub height :method
     classoffset $I0, self, "Tetris::BoardData"
     add $I0, bHeight
     getattribute $P0, self, $I0
     $I0 = $P0
-    .pcc_begin_return
-    .return $I0
-    .pcc_end_return
+    .return ($I0)
 .end
 
 =item (width, height) = data."dimensions"()
@@ -226,7 +218,7 @@ Returns the width and height of the board.
 
 =cut
 
-.sub dimensions method
+.sub dimensions :method
     .local int w
     .local int h
     .local pmc temp
@@ -241,10 +233,7 @@ Returns the width and height of the board.
     getattribute $P0, self, $I0
     h = $P0
     
-    .pcc_begin_return
-    .return w
-    .return h
-    .pcc_end_return
+    .return (w, h)
 .end
 
 =back

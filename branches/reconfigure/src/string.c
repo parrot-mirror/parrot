@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -724,9 +724,7 @@ string_str_index(Interp *interp, const STRING *s,
     if (!string_length(interp, s2))
         return -1;
 
-    saneify_string(s);
-    saneify_string(s2);
-    src = (STRING *)const_cast(s);
+    src    = (STRING *)const_cast(s);
     search = (STRING *)const_cast(s2);
 
     return CHARSET_INDEX(interp, src, search, start);
@@ -1880,7 +1878,7 @@ sorts of leak potential otherwise.
 */
 
 void
-string_cstring_free(char *p)
+string_cstring_free(const char * const p)
 {
     mem_sys_free(p);
 }

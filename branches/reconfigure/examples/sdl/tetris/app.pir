@@ -86,7 +86,7 @@ This method throws an exception if an error occurs.
 
 =cut
 
-.sub BUILD method
+.sub BUILD :method
     # create the app object
     store_global "Tetris::App", "app", self
 
@@ -146,15 +146,13 @@ The Tetris::App class provides the following methods:
 
 =cut
 
-.sub SDL method
+.sub SDL :method
     classoffset $I0, self, "Tetris::App"
     add $I0, tSDL
 
     getattribute $P0, self, $I0
 
-    .pcc_begin_return
-    .return $P0
-    .pcc_end_return
+    .return ($P0)
 .end
 
 =item app."shutdown"()
@@ -168,7 +166,7 @@ This method returns nothing.
 
 =cut
 
-.sub shutdown method
+.sub shutdown :method
     .local pmc sdl
 
     # XXX free data structures
@@ -195,7 +193,7 @@ An exeption is thrown if an error occurs.
     $P0."timer"()
 .end
 
-.sub run method
+.sub run :method
     .local pmc eh
     .local pmc loop
 
@@ -216,7 +214,7 @@ An exeption is thrown if an error occurs.
 
 =cut
 
-.sub initTimer method
+.sub initTimer :method
     $P0 = new SArray
     $P1 = find_global "Tetris::App", "_app_timer"
     $P0 = 8
@@ -252,7 +250,7 @@ An exeption is thrown if an error occurs.
 
 =cut
 
-.sub setTimerStatus method
+.sub setTimerStatus :method
     .param int status
 
     classoffset $I0, self, "Tetris::App"
@@ -265,7 +263,7 @@ An exeption is thrown if an error occurs.
 
 =cut
 
-.sub enableTimer method
+.sub enableTimer :method
     classoffset $I0, self, "Tetris::App"
     add $I0, tTimerDisableCount
     getattribute $P0, self, $I0
@@ -279,7 +277,7 @@ END:
 
 =cut
 
-.sub disableTimer method
+.sub disableTimer :method
     classoffset $I0, self, "Tetris::App"
     add $I0, tTimerDisableCount
     getattribute $P0, self, $I0
@@ -293,7 +291,7 @@ Returns the specified color entry from the palette.
 
 =cut
 
-.sub color method
+.sub color :method
     .param int number
     .local pmc palette
     .local pmc color
@@ -301,9 +299,7 @@ Returns the specified color entry from the palette.
     palette = self."palette"()
     color = palette[number]
 
-    .pcc_begin_return
-    .return color
-    .pcc_end_return
+    .return (color)
 .end
 
 =item palette = app."palette"()
@@ -312,7 +308,7 @@ Returns the color palette.
 
 =cut
 
-.sub palette method
+.sub palette :method
     .local pmc palette
 
     classoffset $I0, self, "Tetris::App"
@@ -320,14 +316,16 @@ Returns the color palette.
     getattribute palette, self, $I0
     if_null palette, CREATE
     branch RET
+CREATE:
+    (palette) = self."genPalette"()
+    
+    branch RET
 
 NULL:
     print "warning: no color palette found!\n"
 
 RET:
-    .pcc_begin_return
-    .return palette
-    .pcc_end_return
+    .return (palette)
 .end
 
 =item palette = app."genPalette"() B<(internal)>
@@ -338,7 +336,7 @@ This method returns the created palette.
 
 =cut
 
-.sub genPalette method
+.sub genPalette :method
     .local pmc palette
     .local pmc hash
     .local pmc color
@@ -383,9 +381,7 @@ NOT_BRIGHT:
     add $I0, tPalette
     setattribute self, $I0, palette
 
-    .pcc_begin_return
-    .return palette
-    .pcc_end_return
+    .return (palette)
 .end
 
 =item board = self."board"( boardID )
@@ -405,7 +401,7 @@ no board with the specified ID exists.
 
 =cut
 
-.sub board method
+.sub board :method
     .param int boardID
     .local pmc board
 
@@ -428,9 +424,7 @@ OK:
     unless $I0 goto ERR
 
 END:
-    .pcc_begin_return
-    .return board
-    .pcc_end_return
+    .return (board)
 .end
 
 =item block = app."currentBlock"( boardID )
@@ -449,7 +443,7 @@ Returns the block object, or NULL if the board was not found.
 
 =cut
 
-.sub currentBlock method
+.sub currentBlock :method
     .param int boardID
     .local pmc temp
 
@@ -458,9 +452,7 @@ Returns the block object, or NULL if the board was not found.
     temp = temp."currentBlock"()
 
 BLOCKISNULL:
-    .pcc_begin_return
-    .return temp
-    .pcc_end_return
+    .return (temp)
 .end
 
 =item success = app."rotate"( boardID, dir )
@@ -485,7 +477,7 @@ Returns 1 if the rotation was possible, 0 otherwise.
 
 =cut
 
-.sub rotate method
+.sub rotate :method
     .param int boardID
     .param int dir
     .local pmc block
@@ -509,9 +501,7 @@ Returns 1 if the rotation was possible, 0 otherwise.
 END:
     self."enableTimer"()
 
-    .pcc_begin_return
-    .return ret
-    .pcc_end_return
+    .return (ret)
 .end
 
 =item success = app."move"( boardID, xval, yval )
@@ -546,7 +536,7 @@ Returns 1 if the movement was possible, 0 otherwise.
 
 =cut
 
-.sub move method
+.sub move :method
     .param int boardID
     .param int xval
     .param int yval
@@ -567,9 +557,7 @@ END:
     # reenable the timer
     self."enableTimer"()
 
-    .pcc_begin_return
-    .return success
-    .pcc_end_return
+    .return (success)
 .end
 
 =item block = self."nextBlock"( boardID, id )
@@ -597,9 +585,10 @@ This method returns the new falling block.
 
 =cut
 
-.sub nextBlock method
+.sub nextBlock :method
     .param int boardID
-    .param int id
+    .param int id       :optional
+    .param int got_id   :opt_flag
     .local pmc temp
 
     print "nextBlock: ("
@@ -608,20 +597,17 @@ This method returns the new falling block.
     print id
     print "\n"
 
-    # check the number of INT args
-    if argcI >= 2 goto SKIP_ID
+    if got_id goto SKIP_SET_ID
     # no INT arg => use a random next block
-    set id, -1
-SKIP_ID:
+    id = -1
+SKIP_SET_ID:
 
     temp = self."board"( boardID )
     if_null temp, APP_NEXTBLOCK_END
     temp = temp."nextBlock"(id )
 
 APP_NEXTBLOCK_END:
-    .pcc_begin_return
-    .return temp
-    .pcc_end_return
+    .return (temp)
 .end
 
 =item app."fall"( boardID )
@@ -641,7 +627,7 @@ This method returns 1 if the board was found, 0 otherwise.
 
 =cut
 
-.sub fall method
+.sub fall :method
     .param int boardID
     .local pmc board
     .local int ret
@@ -653,9 +639,7 @@ This method returns 1 if the board was found, 0 otherwise.
     ret = 1
 
 APP_FALL_END:
-    .pcc_begin_return
-    .return ret
-    .pcc_end_return
+    .return (ret)
 .end
 
 =item falling = app."falling"( boardID )
@@ -675,7 +659,7 @@ This method returns 1 if the block is falling down fast, 0 otherwise.
 
 =cut
 
-.sub falling method
+.sub falling :method
     .param int boardID
     .local pmc board
     .local int ret
@@ -686,9 +670,7 @@ This method returns 1 if the block is falling down fast, 0 otherwise.
     ret = board."falling"()
 
 APP_FALLING_END:
-    .pcc_begin_return
-    .return ret
-    .pcc_end_return
+    .return (ret)
 .end
 
 =item interval = app."fallInterval"( boardID )
@@ -708,7 +690,7 @@ to fall down one unit.
 
 =cut
 
-.sub fallInterval method
+.sub fallInterval :method
     .param int boardID
     .local pmc board
     .local num ret
@@ -719,9 +701,7 @@ to fall down one unit.
     ret = board."fallInterval"()
 
 APP_INTERVAL_END:
-    .pcc_begin_return
-    .return ret
-    .pcc_end_return
+    .return (ret)
 .end
 
 =item nextfall = app."nextFallTime"( boardID )
@@ -741,7 +721,7 @@ Returns the time when the block falls down the next time.
 
 =cut
 
-.sub nextFallTime method
+.sub nextFallTime :method
     .param int boardID
     .local pmc board
     .local num ret
@@ -751,9 +731,7 @@ Returns the time when the block falls down the next time.
     ret = board."nextFallTime"()
 
 APP_NEXTFALL_END:
-    .pcc_begin_return
-    .return ret
-    .pcc_end_return
+    .return (ret)
 .end
 
 =item app."setNextFallTime"( boardID, val )
@@ -777,7 +755,7 @@ This method returns nothing.
 
 =cut
 
-.sub setNextFallTime method
+.sub setNextFallTime :method
     .param int boardID
     .param num val
     .local pmc board
@@ -787,8 +765,7 @@ This method returns nothing.
     board."setNextFallTime"( val )
 
 APP_SETFALL_END:
-    .pcc_begin_return
-    .pcc_end_return
+    .return ()
 .end
 
 =item redrawn = app."timer"()
@@ -799,7 +776,7 @@ Returns 1 if the screen has been redrawn, 0 otherwise.
 
 =cut
 
-.sub timer method
+.sub timer :method
     .local pmc board
     .local int redraw
     .local int ret
@@ -851,9 +828,7 @@ NOREDRAW:
     dec inTimer
 END:
 
-    .pcc_begin_return
-    .return redraw
-    .pcc_end_return
+    .return (redraw)
 .end
 
 =item app."drawScreen"( full )
@@ -874,7 +849,7 @@ This method returns nothing.
 
 =cut
 
-.sub drawScreen method
+.sub drawScreen :method
     .param int full
     .local pmc screen
     .local pmc temp
@@ -943,7 +918,7 @@ NO_MAINBACKGROUND:
 
 =cut
 
-.sub drawBoards method
+.sub drawBoards :method
     .param pmc screen
     .param int full
     .local pmc boards
@@ -960,8 +935,7 @@ LOOP:
     branch LOOP
 
 END:
-    .pcc_begin_return
-    .pcc_end_return
+    .return ()
 .end
 
 =item (boards, count) = app."boards"()
@@ -971,7 +945,7 @@ the boards array.
 
 =cut
 
-.sub boards method
+.sub boards :method
     .local pmc boards
     .local int count
 
@@ -983,10 +957,7 @@ the boards array.
     count = boards
 
 END:
-    .pcc_begin_return
-    .return boards
-    .return count
-    .pcc_end_return
+    .return (boards, count)
 .end
 
 =item app."registerBoard"( board, id ) B<(internal)>
@@ -997,7 +968,7 @@ the board has been added, which is used as the board ID.
 
 =cut
 
-.sub registerBoard method
+.sub registerBoard :method
     .param pmc board
     .local pmc boards
     .local int id
@@ -1005,9 +976,7 @@ the board has been added, which is used as the board ID.
     (boards, id) = self."boards"()
     set boards[id], board
 
-    .pcc_begin_return
-    .return id
-    .pcc_end_return
+    .return (id)
 .end
 
 =item value = app."flag"( name, value )
@@ -1030,9 +999,11 @@ Returns the flag's (new) value.
 
 =cut
 
-.sub flag method
+.sub flag :method
     .param string name
-    .param int value
+    .param int value        :optional
+    .param int got_value    :opt_flag
+
     .local pmc flag
     .local int ret
 
@@ -1042,16 +1013,14 @@ Returns the flag's (new) value.
     getattribute flag, self, $I0
 
     # check the number of INT args
-    if argcI <= 1 goto FLAG_GET
+    unless got_value goto FLAG_GET
     # set a new value
     set flag[name], value
 
 FLAG_GET:
     set ret, flag[name]
 
-    .pcc_begin_return
-    .return ret
-    .pcc_end_return
+    .return (ret)
 .end
 
 =item app."newGame"( boards )
@@ -1070,8 +1039,9 @@ This method returns nothing.
 
 =cut
 
-.sub newGame method
-    .param int players
+.sub newGame :method
+    .param int players     :optional
+    .param int got_players :opt_flag
     .local pmc temp
     .local int xpos
 
@@ -1080,7 +1050,7 @@ This method returns nothing.
     set xpos, 10
 
     # check the number of INT args
-    if argcI >= 1 goto SET
+    if got_players goto SET
 
     classoffset $I0, self, "Tetris::App"
     add $I0, tPlayers
@@ -1127,8 +1097,7 @@ NEWGAME_END:
 
     self."enableTimer"()
 
-    .pcc_begin_return
-    .pcc_end_return
+    .return ()
 .end
 
 =back

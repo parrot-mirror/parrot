@@ -45,7 +45,7 @@ This method returns the old data representation.
 
 =cut
 
-.sub rotateData method
+.sub rotateData :method
     .param int val
     .local int size
     .local int x
@@ -94,9 +94,7 @@ DONE:
     if x >= size goto yLOOP
     branch xLOOP
 END:
-    .pcc_begin_return
-    .return olddata
-    .pcc_end_return
+    .return (olddata)
 .end
 
 =item rows = blockdata."vfree"()
@@ -108,7 +106,7 @@ Returns the number of free rows.
 
 =cut
 
-.sub vfree method
+.sub vfree :method
     .local int size
     .local int free
     .local int i
@@ -130,9 +128,7 @@ VFREE_LOOP:
 VFREE_END:
     div i, size
 END:
-    .pcc_begin_return
-    .return i
-    .pcc_end_return
+    .return (i)
 .end
 
 =item columns = blockdata."hfree"()
@@ -148,7 +144,7 @@ Returns the number of free columns.
 
 =cut
 
-.sub hfree method
+.sub hfree :method
     .local int size
     .local int free
     .local int i
@@ -201,9 +197,7 @@ HFREE_LOOPcheck2:
 HFREE_ERROR2:
     inc free
 HFREE_END:
-    .pcc_begin_return
-    .return free
-    .pcc_end_return
+    .return (free)
 .end
 
 =item size = blockdata."size"()
@@ -214,7 +208,7 @@ items in the blockdata array.
 
 =cut
 
-.sub size method
+.sub size :method
     classoffset $I0, self, "Tetris::BlockData"
     getattribute $P0, self, $I0
     $I0 = 0
@@ -224,19 +218,17 @@ items in the blockdata array.
     sqrt $N0, $I0
     $I0 = $N0
 END:
-    .pcc_begin_return
-    .return $I0
-    .pcc_end_return
+    .return ($I0)
 .end
 
-.sub __set_pmc method
+.sub __set_pmc :method
     .param pmc data
     
     classoffset $I0, self, "Tetris::BlockData"
     setattribute self, $I0, data
 .end
 
-.sub __get_integer_keyed method
+.sub __get_integer_keyed :method
     .param pmc key
     .local int index
     
@@ -248,9 +240,7 @@ END:
     $I0 = $P0
     if index >= $I0 goto ERR
     $I0 = $P0[index]
-    .pcc_begin_return
-    .return $I0
-    .pcc_end_return
+    .return ($I0)
 
 ERR:
     print "index out of bounds ("
@@ -263,7 +253,7 @@ ERR:
     throw $P0
 .end
 
-.sub __set_integer_keyed method
+.sub __set_integer_keyed :method
     .param pmc key
     .param int val
     .local int index
@@ -276,9 +266,7 @@ ERR:
     $I0 = $P0
     if index >= $I0 goto ERR
     $P0[index] = val
-    .pcc_begin_return
-    .return $I0
-    .pcc_end_return
+    .return ($I0)
 
 ERR:
     print "index out of bounds ("
