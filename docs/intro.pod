@@ -256,7 +256,7 @@ with a C<#> are comments.
       .local int maxnum
       maxnum = 10
 
-      # Some named registers we'll use. Note how we can declare many
+      # We'll use some named registers. Note that we can declare many
       # registers of the same type on one line.
       .local int i, total, temp
       total = 0
