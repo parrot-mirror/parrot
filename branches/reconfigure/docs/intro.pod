@@ -107,7 +107,7 @@ needed.
 
 =head2 Garbage Collection
 
-Parrot provides garbage collection, meaning that Parrot programs to do not need
+Parrot provides garbage collection, meaning that Parrot programs do not need
 to free memory explicitly; it will be freed when it is no longer in use (that
 is, no longer referenced) whenever the garbage collector runs.
 
