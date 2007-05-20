@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006, The Perl Foundation.
+# Copyright (C) 2006-2007, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -48,7 +48,7 @@ CODE
 fortytwo
 OUTPUT
 
-pir_output_like( << 'CODE', << 'OUTPUT', "hcf" );
+pir_error_output_like( << 'CODE', << 'OUTPUT', "hcf" );
 .loadlib "myops_ops"
 .sub main :main
     print "neither here\n"
@@ -61,11 +61,13 @@ CODE
 OUTPUT
 
 {
+    my @todo;
+    @todo = ( todo => 'broken with -j' ) if $ENV{TEST_PROG_ARGS} =~ /-j/;
     my $quine = <<'END_PASM';
 .loadlib "myops_ops"
 q
 END_PASM
-    pasm_output_is( $quine, $quine, 'a short cheating quine' );
+    pasm_output_is( $quine, $quine, 'a short cheating quine', @todo );
 }
 
 pir_output_is( << 'CODE', << 'OUTPUT', "one alarm" );

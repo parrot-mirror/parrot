@@ -1,5 +1,5 @@
 #!perl
-# Copyright (C) 2001-2006, The Perl Foundation.
+# Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -7,11 +7,16 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
 use Parrot::Config;
-use Parrot::Test tests => 4;
+use Parrot::Test;
+
+plan skip_all => 'No reason to compile invalid PBC here'
+    if $ENV{TEST_PROG_ARGS} =~ /-r/;
+
+plan tests => 4;
 
 ## tests for imcc error messages
 
-pir_output_like( <<'CODE', <<'OUT', "op not found." );
+pir_error_output_like( <<'CODE', <<'OUT', "op not found.");
 .sub 'test' :main
     branch $P0
 .end
@@ -19,7 +24,7 @@ CODE
 /.*The opcode 'branch_p' \(branch\<1\>\) was not found\. Check the type and number of the arguments.*/
 OUT
 
-pir_output_like( <<'CODE', <<'OUT', "check parser recovery 1." );
+pir_error_output_like( <<'CODE', <<'OUT', "check parser recovery 1.");
 .sub foo :main
         $I1 = 2
         print "foo\n"
@@ -46,11 +51,11 @@ for ( 1 .. 50 ) {
 }
 $test_3_pir_code .= ".end\n";
 
-pir_output_like( $test_3_pir_code, <<'OUT', "check parser recovery patience." );
+pir_error_output_like( $test_3_pir_code, <<'OUT', "check parser recovery patience.");
 /Too many errors. Correct some first.\n$/
 OUT
 
-pir_output_like( <<'CODE', <<'OUT', '#line nnn "file"' );
+pir_error_output_like( <<'CODE', <<'OUT', '#line nnn "file"');
 .sub main :main
 #line 54 "xyz.pir"
     say "Hello"

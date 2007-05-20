@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2006, The Perl Foundation.
+# Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -23,7 +23,7 @@ Tests the multi-method dispatch.
 
 =cut
 
-pir_output_is( <<'CODE', <<'OUTPUT', "PASM divide", todo => 'RT #41374' );
+pir_output_is( <<'CODE', <<'OUTPUT', "Integer_divide_PerlInt  10 / 3 = 1003", todo => 'RT #41374' );
 
 .sub 'test' :main
 
@@ -55,12 +55,13 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PASM divide", todo => 'RT #41374' );
     .param pmc lhs
     $I0 = left
     $I1 = right
-    $I2 = $I0/$I1   # don't call divide Integer/PerlInt here
-    lhs = $I2       # '
+    $I2 = $I0/$I1     # don't call divide Integer/PerlInt here
+    lhs = $I2         # '
+    lhs += 1000  # prove that this function has been called
     .return(lhs)
 .end
 CODE
-3
+1003
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "1+1=3" );
@@ -99,7 +100,7 @@ CODE
 3
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "PASM divide - override builtin" );
+pir_output_is( <<'CODE', <<'OUTPUT', "PASM divide - override builtin 10 / 3 = 42" );
 
 .sub _main
 
@@ -283,7 +284,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - new result" );
 
     new P1, .Integer
     set P1, 3
-    n_bxor P9, P1, 2	# create new result
+    n_bxor P9, P1, 2    # create new result
     print P9
     print "\n"
     end
@@ -311,7 +312,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - existing result" );
     new P0, .Integer
     new P1, .Integer
     set P1, 3
-    bxor P0, P1, 2	# use result
+    bxor P0, P1, 2    # use result
     print P0
     print "\n"
     end
@@ -341,7 +342,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - mixed" );
     bxor P0, P1, 2      # reuse destination
     print P0
     print "\n"
-    n_bxor P9, P1, 2	# create new result
+    n_bxor P9, P1, 2    # create new result
     print P9
     print "\n"
     end
@@ -406,54 +407,54 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', "MMD second arg int/float dispatch" );
 .sub foo :multi(_, Integer)
-	.param pmc first
-	.param pmc second
-	print "(_, Int) method:  "
-	print first
-	print ', '
-	print second
-	print "\n"
+    .param pmc first
+    .param pmc second
+    print "(_, Int) method:  "
+    print first
+    print ', '
+    print second
+    print "\n"
 .end
 .sub foo :multi(_, Float)
-	.param pmc first
-	.param pmc second
-	print "(_, Float) method:  "
-	print first
-	print ', '
-	print second
-	print "\n"
+    .param pmc first
+    .param pmc second
+    print "(_, Float) method:  "
+    print first
+    print ', '
+    print second
+    print "\n"
 .end
 .sub main :main
-	$P0 = new .Float
-	$P0 = 9.5
-	foo(1, $P0)
-	$P1 = new .Integer
-	$P1 = 3
-	foo(1, $P1)
+    $P0 = new .Float
+    $P0 = 9.5
+    foo(1, $P0)
+    $P1 = new .Integer
+    $P1 = 3
+    foo(1, $P1)
 .end
 CODE
 (_, Float) method:  1, 9.5
 (_, Int) method:  1, 3
 OUT
 
-pir_output_like( <<'CODE', <<'OUT', "MMD single method, dispatch failure" );
+pir_error_output_like( <<'CODE', <<'OUT', "MMD single method, dispatch failure" );
 ## Compare this to the previous example.
 .sub foo :multi(_, Float)
-	.param pmc first
-	.param pmc second
-	print "(_, Float) method:  "
-	print first
-	print ', '
-	print second
-	print "\n"
+    .param pmc first
+    .param pmc second
+    print "(_, Float) method:  "
+    print first
+    print ', '
+    print second
+    print "\n"
 .end
 .sub main :main
-	$P0 = new .Float
-	$P0 = 9.5
-	foo(1, $P0)
-	$P1 = new .Integer
-	$P1 = 3
-	foo(1, $P1)
+    $P0 = new .Float
+    $P0 = 9.5
+    foo(1, $P0)
+    $P1 = new .Integer
+    $P1 = 3
+    foo(1, $P1)
 .end
 CODE
 /\A\(_, Float\) method:  1, 9\.5

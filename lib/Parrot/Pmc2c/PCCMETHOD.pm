@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2006, The Perl Foundation.
+# Copyright (C) 2004-2007, The Perl Foundation.
 # $Id$
 
 package Parrot::Pmc2c::PCCMETHOD;
@@ -235,6 +235,7 @@ sub rewrite_PCCRETURNs {
         my $lineno1     = __LINE__ + 2;
         my $lineno2     = __LINE__ + 7;
         my $replacement = <<END;
+{
 #line $lineno1 $file
     /*BEGIN PCCRETURN $returns */
     /*BEGIN GENERATED ACCESSORS */
@@ -249,6 +250,7 @@ $returns_accessors
         string_from_const_cstring(interp, $returns_flags, 0), 0);
     $goto_string
     /*END PCCRETURN $returns */
+}
 END
         $$body =~ s/\Q$1\E/$replacement/;
     }
@@ -523,7 +525,7 @@ $arg_accessors
       PMC_cont(ret_cont)->from_ctx = ctx;
 
       pccinvoke_meth = VTABLE_find_method(interp, $invocant, $method_name);
-      if (!pccinvoke_meth)
+      if (PMC_IS_NULL(pccinvoke_meth))
           real_exception(interp, NULL, METH_NOT_FOUND,
             "Method '%Ss' not found", $method_name);
       else

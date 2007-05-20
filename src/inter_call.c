@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2003, The Perl Foundation.
+Copyright (C) 2001-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -311,7 +311,7 @@ fetch_arg_op(Interp *interp, call_state *st)
                                       : CTX_REG_NUM(st->src.ctx, idx);
             break;
         case PARROT_ARG_PMC:
-            UVal_pmc(st->val) = constant ? st->src.ctx->constants[idx]->u.key
+                UVal_pmc(st->val) = constant ? st->src.ctx->constants[idx]->u.key
                                       : CTX_REG_PMC(st->src.ctx, idx);
 
             if (st->src.sig & PARROT_ARG_FLATTEN) {
@@ -1498,7 +1498,7 @@ Parrot_PCCINVOKE(Interp* interp, PMC* pmc, STRING *method_name, const char *sign
     ctx->current_cont = ret_cont;
     PMC_cont(ret_cont)->from_ctx = ctx;
     pccinvoke_meth = VTABLE_find_method(interp, pmc, method_name);
-    if (!pccinvoke_meth) {
+    if (PMC_IS_NULL(pccinvoke_meth)) {
         real_exception(interp, NULL, METH_NOT_FOUND, "Method '%Ss' not found", method_name);
     }
     else {

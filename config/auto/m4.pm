@@ -1,4 +1,4 @@
-# Copyright (C) 2005, The Perl Foundation.
+# Copyright (C) 2005-2007, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -48,7 +48,7 @@ sub runstep {
 
         # This seems to work for GNU m4 1.4.2
         my $output = capture_output( 'm4', '--version' ) || '';
-        $has_gnu_m4 = ( $output =~ m/^GNU [mM]4 / ) ? 1 : 0;
+        $has_gnu_m4 = ( $output =~ m/GNU\s+[mM]4/ ) ? 1 : 0;
     }
 
     $conf->data->set( has_gnu_m4 => $has_gnu_m4 );

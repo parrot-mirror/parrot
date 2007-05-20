@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006 The Perl Foundation.
+# Copyright (C) 2006-2007, The Perl Foundation.
 # $Id$
 use warnings;
 use strict;
@@ -57,6 +57,9 @@ loop:
 CODE
 0123
 OUTPUT
+
+SKIP: {
+    skip( 'known segfault; needs GC/STM hackery', 1 );
 
 pir_output_is( <<'CODE', <<'OUTPUT', "Add, remove, several threads", todo => 'RT#41892' );
 .sub add_thread
@@ -148,6 +151,7 @@ join_loop:
 CODE
 sum is 4950
 OUTPUT
+}
 
 __DATA__
 
