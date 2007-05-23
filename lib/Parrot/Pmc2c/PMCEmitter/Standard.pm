@@ -12,16 +12,6 @@ use base 'Parrot::Pmc2c::PMCEmitter';
 use strict;
 use warnings;
 
-=item C<body($method, $line, $out_name)>
-
-Returns the C code for the method body. C<$line> is used to accumulate
-the number of lines, C<$out_name> is the name of the output file we are
-generating.
-
-=back
-
-=cut
-
 1;
 
 # Local Variables:

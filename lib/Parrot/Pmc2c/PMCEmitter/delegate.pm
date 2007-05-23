@@ -10,6 +10,43 @@ use base 'Parrot::Pmc2c::PMCEmitter';
 use strict;
 use warnings;
 
+=item C<pre_method_gen($self)>
+
+Returns the C code for the method body.
+
+The C<delegate> PMC redirects all methods to bytecode.
+
+=back
+
+=cut
+
+sub pre_method_gen {
+    my ( $self ) = @_;
+    
+    # vtable methods
+    foreach my $method ( @{ $self->vtable->methods } ) {
+        my $vt_method_name = $method->name;
+        next if $vt_method_name eq 'class_init';
+        next if $self->implements_vtable($vt_method_name);
+        my $new_default_method = $method->clone();
+        my ( $func_ret, $ret_suffix, $args, $sig ) = $self->signature($method);
+
+        my $body = <<EOC;
+
+    STRING *meth = CONST_STRING(interp, "$vt_method_name");
+    PMC *sub = Parrot_find_vtable_meth(interp, pmc, meth);
+    if (PMC_IS_NULL(sub))
+        vtable_meth_not_found(interp, pmc, "$vt_method_name");
+    ${func_ret}Parrot_run_meth_fromc_args$ret_suffix(interp, sub, pmc, meth, "$sig"$args);
+EOC
+        $new_default_method->body($body);
+        $new_default_method->type(Parrot::Pmc2c::Method::VTABLE);
+        $self->add_method($new_default_method);
+    }
+    return 1;
+}
+
+
 =item C<implements($method)>
 
 True for vtables.
@@ -69,44 +106,6 @@ sub signature {
     return ( $func_ret, $method_suffix, $args, $sig );
 }
  
-=item C<body($self)>
-
-Returns the C code for the method body. C<$line> is used to accumulate
-the number of lines, C<$out_name> is the name of the output file we are
-generating.
-
-The C<delegate> PMC redirects all methods to bytecode.
-
-=back
-
-=cut
-sub pre_method_gen {
-    my ( $self ) = @_;
-    
-    # vtable methods
-    foreach my $method ( @{ $self->vtable->methods } ) {
-        my $vt_method_name = $method->name;
-        next if $vt_method_name eq 'class_init';
-        unless ( $self->implements_vtable($vt_method_name) ) {
-            my $new_default_method = $method->clone();
-            my ( $func_ret, $ret_suffix, $args, $sig ) = $self->signature($method);
-
-            my $body = <<EOC;
-
-    STRING *meth = CONST_STRING(interp, "$vt_method_name");
-    PMC *sub = Parrot_find_vtable_meth(interp, pmc, meth);
-    if (PMC_IS_NULL(sub))
-        vtable_meth_not_found(interp, pmc, "$vt_method_name");
-    ${func_ret}Parrot_run_meth_fromc_args$ret_suffix(interp, sub, pmc, meth, "$sig"$args);
-EOC
-            $new_default_method->body($body);
-            $new_default_method->type(Parrot::Pmc2c::Method::VTABLE);
-            $self->add_method($new_default_method);
-        }
-    }
-    return 1;
-}
-
 1;
 
 # Local Variables:

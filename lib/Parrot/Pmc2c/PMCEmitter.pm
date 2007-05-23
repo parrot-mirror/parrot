@@ -30,8 +30,13 @@ use Parrot::Pmc2c::UtilFunctions
 use Text::Balanced 'extract_bracketed';
 use Parrot::Pmc2c::PCCMETHOD;
 use Parrot::Pmc2c::PMC::RO;
+use Parrot::Pmc2c::PMCEmitter::Standard;
 use Parrot::Pmc2c::PMCEmitter::default;
 use Parrot::Pmc2c::PMCEmitter::delegate;
+use Parrot::Pmc2c::PMCEmitter::deleg_pmc;
+use Parrot::Pmc2c::PMCEmitter::Ref;
+use Parrot::Pmc2c::PMCEmitter::SharedRef;
+use Parrot::Pmc2c::PMCEmitter::StmRef;
 
 sub new {
     my ( $this, $pmc_dump, $vtable_dump, $options ) = @_;
@@ -154,10 +159,6 @@ sub hdecls {
     $self->{hdecls} .= $hout;
     $self->{hdecls};
 }
-
-use Parrot::Pmc2c::PMCEmitter::Standard;
-use Parrot::Pmc2c::PMCEmitter::StandardRO;
-use Parrot::Pmc2c::PMCEmitter::default;
 
 =back
 
