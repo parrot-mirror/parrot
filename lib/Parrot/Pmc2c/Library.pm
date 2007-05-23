@@ -25,9 +25,9 @@ package Parrot::Pmc2c::Library;
 
 use strict;
 use warnings;
-
-use Parrot::Pmc2c;
-use Parrot::Pmc2c::UtilFunctions qw( dont_edit dynext_load_code c_code_coda );
+use Data::Dumper;
+use Parrot::Pmc2c::PMCEmitter;
+use Parrot::Pmc2c::UtilFunctions qw(dont_edit dynext_load_code c_code_coda spew);
 
 =item C<new($opt, $vtable_dump, %pmcs)>
 
@@ -44,37 +44,37 @@ C<library> key its value will be used for the library name.
 =cut
 
 sub new {
-    my ( $class, $opt, $vtable_dump ) = ( shift, shift, shift );
-    my %pmcs = @_;
+    my ( $class, $opt, $vtable_dump, %pmcs ) = @_;
+    my %emitters;
 
-    foreach my $file ( keys %pmcs ) {
-        $pmcs{$file}->{vtable} = $vtable_dump;
-        $pmcs{$file} = Parrot::Pmc2c->new( $pmcs{$file}, $opt );
+    foreach my $pmc ( values %pmcs ) {
+        my $pmc_copy = $pmc->new($pmc);
+        $emitters{$pmc->filename} = Parrot::Pmc2c::PMCEmitter->new( $pmc_copy, $vtable_dump, $opt );
     }
 
     return bless {
         opt  => $opt,
         pmcs => \%pmcs,
+        emitters=> \%emitters,
     }, $class;
 }
 
-sub _write_a_file($$$) {
-    my ( $generator, $h_name, $c_name ) = @_;
-    my $opt = $generator->{opt};
+sub generate_libarary($$) {
+    my ( $self, $library_name ) = @_;
+    my $h_name  = "$library_name.h";
+    my $c_name  = "$library_name.c";
+    my $debug   = $self->{opt}->{debug};
+    my $verbose = $self->{opt}->{verbose};
 
-    print Data::Dumper->Dump( [$generator] ) if $opt->{debug} > 1;
-    my $cout = $generator->gen_c($c_name);
-    print $cout               if $opt->{debug};
-    print "Writing $c_name\n" if $opt->{verbose};
-    open my $C, '>', $c_name or die "Can't write '$c_name";
-    print $C $cout;
-    close $C;
-    my $hout = $generator->gen_h($h_name);
-    print $hout               if $opt->{debug};
-    print "Writing $h_name\n" if $opt->{verbose};
-    open my $H, '>', $h_name or die "Can't write '$h_name";
-    print $H $hout;
-    close $H;
+    my $cout = $self->gen_c;
+    print $cout               if $debug;
+    print "Writing $h_name\n" if $verbose;
+    spew($c_name, $cout);
+
+    my $hout = $self->gen_h;
+    print $hout               if $debug;
+    print "Writing $h_name\n" if $verbose;
+    spew($h_name, $hout);
 }
 
 =item C<write_all_files()>
@@ -87,24 +87,14 @@ represents a named library.
 
 sub write_all_files {
     my $self    = shift;
-    my $library = $self->{opt}{library};
+    my $library_name = $self->{opt}{library};
 
-    if ($library) {
-        my $hout = $self->gen_h($library);
-        my $h    = "$library.h";
-        my $c    = "$library.c";
-        _write_a_file( $self, $h, $c );
+    if ($library_name) {
+        generate_library( $self, $library_name);
     }
     else {
-        while ( my @fc = each %{ $self->{pmcs} } ) {
-            my ( $file, $generator ) = @fc;
-            my $h;
-            ( $h = $file ) =~ s/\.\w+$/.h/;
-            $h =~ s/(\w+)\.h$/pmc_$1.h/;
-            my $c;
-            ( $c = $file ) =~ s/\.\w+$/.c/;
-
-            _write_a_file( $generator, $h, $c );
+        for my $emitter ( values %{ $self->{emitters} } ) {
+            $emitter->generate;
         }
     }
 }
@@ -138,36 +128,25 @@ sub gen_c {
     my ($self) = @_;
     my $cout = dont_edit('various files');
 
-    $cout .= $self->includes;
-    $cout .= dynext_load_code( $self->{opt}{library},
-        map { $_->{class} => $_ } values %{ $self->{pmcs} } );
-    $cout .= $self->c_code_coda;
-
-    return $cout;
-}
-
-=item C<includes()>
-
-Returns the set of C C<#include>s for the library.
-
-=cut
-
-sub includes() {
-    my $self = shift;
-    my $cout = "";
     $cout .= <<"EOC";
 #define PARROT_IN_EXTENSION
 #include "parrot/parrot.h"
 #include "parrot/extend.h"
 #include "parrot/dynext.h"
 EOC
+    
     foreach my $pmc ( values %{ $self->{pmcs} } ) {
-        my $name = lc $pmc->{class};
+        my $name = lc $pmc->{name};
         $cout .= <<"EOC";
 #include "pmc_$name.h"
 EOC
     }
-    "$cout\n";
+    $cout .= "\n";
+    $cout .= dynext_load_code( $self->{opt}{library},
+        map { $_->{name} => $_ } values %{ $self->{pmcs} } );
+    $cout .= $self->c_code_coda;
+
+    return $cout;
 }
 
 =back

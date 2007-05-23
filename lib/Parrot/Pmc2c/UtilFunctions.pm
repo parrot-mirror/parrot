@@ -2,7 +2,8 @@ package Parrot::Pmc2c::UtilFunctions;
 use strict;
 use warnings;
 use base qw( Exporter );
-our @EXPORT_OK = qw( count_newlines gen_ret dont_edit dynext_load_code c_code_coda );
+our @EXPORT_OK = qw( count_newlines gen_ret dont_edit dynext_load_code
+        c_code_coda slurp spew splat open_file filename);
 
 =over 4
 
@@ -53,11 +54,12 @@ sub gen_ret {
     my ( $method, $body ) = @_;
 
     my $ret;
+    my $return_type = $method->return_type;
     if ($body) {
-        $ret = $method->{type} eq 'void' ? "$body;" : "return $body;";
+        $ret = $return_type eq 'void' ? "$body;" : "return $body;";
     }
     else {
-        $ret = $method->{type} eq 'void' ? "" : "return ($method->{type})0;";
+        $ret = $return_type eq 'void' ? "" : "return ($return_type)0;";
     }
     $ret;
 }
@@ -150,19 +152,93 @@ Returns the Parrot C code coda
 =cut
 
 sub c_code_coda() {
-    my $self = shift;
-    my $cout = "";
-    $cout .= <<"EOC";
+    <<"EOC";
 /*
  * Local variables:
  *   c-file-style: "parrot"
  * End:
  * vim: expandtab shiftwidth=4:
  */
+
 EOC
-    "$cout\n";
 }
 
+=head3 C<open_file()>
+
+    $fh = open_file( "<", $file, $verbose);
+
+B<Purpose:>  Utility subroutine.
+
+B<Arguments:>  List of scalars:  two required, one optional.
+
+=over 4
+
+=item * action
+
+String holding action/direction desired:   C<E<lt>> for
+reading or C<E<gt>E<gt>> for writing or appending.
+
+=item * filename
+
+String holding name of file to be opened.
+
+=item * verbose
+
+Optional.  True value if verbose output is desired.  That output will be the
+action followed by the filename.
+In most cases, the third argument will be C<$self->{opt}{verbose}>.
+
+=back
+
+B<Return Values:>  Filehandle to file so opened.
+
+B<Comment:>  Called within C<dump_vtable()>, C<read_dump()>, and C<dump_pmc()>.
+
+=cut
+
+sub open_file {
+    my ( $direction, $filename, $verbose ) = @_;
+
+    my $actions_descriptions = { '<' => 'Reading', '>>' => "Appending", '>' => "Writing" };
+    my $action = $actions_descriptions->{$direction} || "Unknown";
+
+    print "$action $filename\n" if $verbose;
+    open my $fh, $direction, $filename or die "$action $filename: $!\n";
+    return $fh;
+}
+
+
+sub slurp {
+    my ( $filename, $verbose ) = @_;
+    my $fh = open_file( '<', $filename, $verbose );
+    my $data = do { local $/; <$fh> };
+    close $fh;
+    return $data;
+}
+
+sub spew {
+    my ( $filename, $data, $verbose ) = @_;
+    my $fh = open_file( '>', $filename, $verbose );
+    print $fh $data;
+    close $fh;
+}
+
+sub splat {
+    my ( $filename, $data, $verbose ) = @_;
+    my $fh = open_file( '>>', $filename, $verbose );
+    print $fh $data;
+    close $fh;
+}
+
+sub filename {
+    my ( $filename, $type ) = @_;
+    
+    $filename =~ s/(\w+)\.\w+$/pmc_$1.h/ if ($type eq ".h");
+    $filename =~ s/\.\w+$/.c/            if ($type eq ".c");
+    $filename =~ s/\.\w+$/.dump/         if ($type eq ".dump");
+    $filename =~ s/\.\w+$/.pmc/          if ($type eq ".pmc");
+    return $filename;
+}
 1;
 
 # Local Variables:

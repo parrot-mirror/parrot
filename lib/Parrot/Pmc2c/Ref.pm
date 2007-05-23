@@ -102,10 +102,10 @@ sub body {
     $ret_assign VTABLE_$meth(interp, $deref$arg);
     $post
 EOC
-    my $decl = $self->decl( $self->{class}, $method, 0 );
+    my $decl = $self->decl( $self->{name}, $method, 0 );
 
     # I think that these will be out by one - NWC
-    my $l = $self->line_directive( $line, "\L$self->{class}.c" );
+    my $l = $self->line_directive( $line, "\L$self->{name}.c" );
     return <<EOC;
 $l
 $decl {

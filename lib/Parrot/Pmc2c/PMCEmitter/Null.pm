@@ -5,23 +5,11 @@
 
 =cut
 
-package Parrot::Pmc2c::Null;
-use base 'Parrot::Pmc2c';
+package Parrot::Pmc2c::PMCEmitter::Null;
+use base 'Parrot::Pmc2c::PMCEmitter';
 use strict;
 use warnings;
 use Parrot::Pmc2c::UtilFunctions qw( gen_ret );
-
-=item C<implements($method)>
-
-True for vtable methods.
-
-=cut
-
-sub implements {
-
-    my ( $self, $meth ) = @_;
-    $self->implements_vtable($meth);
-}
 
 =item C<body($method, $line, $out_name)>
 
@@ -35,30 +23,26 @@ The C<Null> PMC throws an execption for all methods.
 
 =cut
 
-sub body {
-    my ( $self, $method, $line, $out_name ) = @_;
-
-    my $meth = $method->{meth};
+sub gen_body {
+    my ( $self, $method, ) = @_;
+    my $methodname = $method->name;
 
     # existing methods get emitted
-    if ( $self->SUPER::implements($meth) ) {
-        my $n = $self->{has_method}{$meth};
-        return $self->SUPER::body( $self->{methods}[$n], $line, $out_name );
+    if ( $self->SUPER::implements_vtable($methname) ) {
+        return $self->SUPER::gen_body( $self->get_method($methodname));
     }
-    my $decl = $self->decl( $self->{name}, $method, 0 );
+
+    my $decl = $method->decl( $self, 'CFILE' );
     my $ret = gen_ret($method);
 
-    # I think that these will be out by one - NWC
-    my $l = $self->line_directive( $line, "\L$self->{name}.c" );
     my $output = <<EOC;
-$l
 ${decl} {
     real_exception(interp, NULL, NULL_REG_ACCESS,
         "Null PMC access in $meth()");
 EOC
 
     $output .= $ret if $ret;
-    return $output .= "\n}\n";
+    return $output .= "}\n";
 }
 
 1;

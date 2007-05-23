@@ -28,8 +28,8 @@ sub body {
 
     my $meth = $method->{meth};
 
-    my $decl       = $self->decl( $self->{class}, $method, 0 );
-    my $classname  = $self->{class};
+    my $decl       = $self->decl( $self->{name}, $method, 0 );
+    my $classname  = $self->{name};
     my $parentname = $self->{parentname};
     my $ret        = gen_ret($method);
     my $cout       = <<"EOC";

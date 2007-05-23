@@ -44,7 +44,7 @@ sub body {
         my $n = $self->{has_method}{$meth};
         return $self->SUPER::body( $self->{methods}[$n], $line, $out_name );
     }
-    my $decl = $self->decl( $self->{class}, $method, 0 );
+    my $decl = $self->decl( $self->{name}, $method, 0 );
     my $ret = "";
     if ( $method->{type} ne 'void' ) {
 
@@ -53,7 +53,7 @@ sub body {
     }
 
     # I think that these will be out by one - NWC
-    my $l = $self->line_directive( $line, "\L$self->{class}.c" );
+    my $l = $self->line_directive( $line, "\L$self->{name}.c" );
     my $cout = <<EOC;
 $l
 ${decl}\{

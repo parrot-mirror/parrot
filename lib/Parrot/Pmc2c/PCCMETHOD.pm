@@ -7,14 +7,6 @@ use warnings;
 use Data::Dumper;
 use Carp qw(longmess croak);
 
-=pod
-
-$SIG{__WARN__} = sub {
-    print longmess;
-};
-
-=cut
-
 =head1 NAME
 
 Parrot::Pmc2c::PCCMETHOD - Parses and preps PMC PCCMETHOD called from F<Parrot:Pmc2c::Pmc2cMain>
@@ -437,7 +429,7 @@ $method_returns
 END
     ( $self->{parameters}, $self->{pre_block}, $self->{post_block} ) =
         ( "", $PRE_STUB, $POST_STUB );
-    return;
+    return 1;
 }
 
 sub isquoted {

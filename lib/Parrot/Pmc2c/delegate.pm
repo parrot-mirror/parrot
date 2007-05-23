@@ -74,7 +74,7 @@ sub body {
         my $n = $self->{has_method}{$meth};
         return $self->SUPER::body( $self->{methods}[$n], $line, $out_name );
     }
-    my $decl       = $self->decl( $self->{class}, $method, 0 );
+    my $decl       = $self->decl( $self->{name}, $method, 0 );
     my $parameters = $method->{parameters};
     my $n          = 0;
     my @args       = grep { $n++ & 1 ? $_ : 0 } split / /, $parameters;
@@ -95,7 +95,7 @@ sub body {
     }
 
     # I think that these will be out by one - NWC
-    my $l = $self->line_directive( $line, "\L$self->{class}.c" );
+    my $l = $self->line_directive( $line, "\L$self->{name}.c" );
     # [Leave the space between "${decl}" and the "{"; otherwise Perl 5.8.0
     # thinks this is a hashref.  -- rgr, 29-Apr-07.]
     my $cout = <<EOC;

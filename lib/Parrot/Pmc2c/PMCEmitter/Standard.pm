@@ -7,8 +7,8 @@ Standard behavior.
 
 =cut
 
-package Parrot::Pmc2c::Standard;
-use base 'Parrot::Pmc2c';
+package Parrot::Pmc2c::PMCEmitter::Standard;
+use base 'Parrot::Pmc2c::PMCEmitter';
 use strict;
 use warnings;
 
@@ -21,13 +21,6 @@ generating.
 =back
 
 =cut
-
-sub body {
-    my ( $self, $method, $line, $out_name ) = @_;
-    my $meth = $method->{meth};
-    my $n    = $self->{has_method}{$meth};
-    return $self->SUPER::body( $self->{methods}[$n], $line, $out_name );
-}
 
 1;
 

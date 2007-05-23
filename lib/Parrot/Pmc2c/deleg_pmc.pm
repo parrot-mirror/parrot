@@ -48,10 +48,10 @@ sub body {
     $parameters = ", $parameters" if $parameters;
     my $body = "VTABLE_$meth(interp, attr$arg)";
     my $ret  = gen_ret( $method, $body );
-    my $decl = $self->decl( $self->{class}, $method, 0 );
+    my $decl = $self->decl( $self->{name}, $method, 0 );
 
     # I think that these will be out by one - NWC
-    my $l = $self->line_directive( $line + 1, "\L$self->{class}.c" );
+    my $l = $self->line_directive( $line + 1, "\L$self->{name}.c" );
     return <<EOC;
 $l
 $decl {
