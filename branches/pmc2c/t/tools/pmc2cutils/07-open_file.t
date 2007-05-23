@@ -24,7 +24,7 @@ use File::Basename;
 use File::Copy;
 use FindBin;
 use Data::Dumper;
-use_ok('Parrot::Pmc2c::Pmc2cMain');
+use_ok('Parrot::Pmc2c::UtilFunctions');
 use_ok('Cwd');
 use_ok( 'File::Temp', qw| tempdir | );
 
@@ -45,17 +45,17 @@ my $fh;
     ok( create_test_file($file), "test file created" );
 
     $direction = '<';
-    ok( $fh = Parrot::Pmc2c::Pmc2cMain::open_file( $direction, $file, $verbose ),
+    ok( $fh = Parrot::Pmc2c::UtilFunctions::open_file( $direction, $file, $verbose ),
         "file opened for reading" );
     close $fh or die "Unable to close handle to test file";
 
     $direction = '>';
-    ok( $fh = Parrot::Pmc2c::Pmc2cMain::open_file( $direction, $file, $verbose ),
+    ok( $fh = Parrot::Pmc2c::UtilFunctions::open_file( $direction, $file, $verbose ),
         "file opened for writing" );
     close $fh or die "Unable to close handle to test file";
 
     $direction = '>>';
-    ok( $fh = Parrot::Pmc2c::Pmc2cMain::open_file( $direction, $file, $verbose ),
+    ok( $fh = Parrot::Pmc2c::UtilFunctions::open_file( $direction, $file, $verbose ),
         "file opened for appending" );
     close $fh or die "Unable to close handle to test file";
 
@@ -75,7 +75,7 @@ my $fh;
     {
         $currfh = select($msgfh);
         open( $msgfh, '>', \$msg ) or die "Unable to open handle: $!";
-        $fh = Parrot::Pmc2c::Pmc2cMain::open_file( $direction, $file, $verbose );
+        $fh = Parrot::Pmc2c::UtilFunctions::open_file( $direction, $file, $verbose );
         ok( $fh, "file opened for reading" );
         close $fh or die "Unable to close handle: $!";
         select($currfh);
@@ -86,7 +86,7 @@ my $fh;
     {
         $currfh = select($msgfh);
         open( $msgfh, '>', \$msg ) or die "Unable to open handle: $!";
-        $fh = Parrot::Pmc2c::Pmc2cMain::open_file( $direction, $file, $verbose );
+        $fh = Parrot::Pmc2c::UtilFunctions::open_file( $direction, $file, $verbose );
         ok( $fh, "file opened for writing" );
         close $fh or die "Unable to close handle: $!";
         select($currfh);
@@ -97,7 +97,7 @@ my $fh;
     {
         $currfh = select($msgfh);
         open( $msgfh, '>', \$msg ) or die "Unable to open handle: $!";
-        $fh = Parrot::Pmc2c::Pmc2cMain::open_file( $direction, $file, $verbose );
+        $fh = Parrot::Pmc2c::UtilFunctions::open_file( $direction, $file, $verbose );
         ok( $fh, "file opened for appending" );
         close $fh or die "Unable to close handle: $!";
         select($currfh);
@@ -118,7 +118,7 @@ my $fh;
     {
         $currfh = select($msgfh);
         open( $msgfh, '>', \$msg ) or die "Unable to open handle: $!";
-        eval { $fh = Parrot::Pmc2c::Pmc2cMain::open_file( $direction, $file, $verbose ); };
+        eval { $fh = Parrot::Pmc2c::UtilFunctions::open_file( $direction, $file, $verbose ); };
         select($currfh);
     }
     like( $@,   qr/^Reading sample.txt/, "correctly failed to read nonexistent file" );
@@ -140,7 +140,7 @@ sub create_test_file {
 
 =head1 NAME
 
-07-open_file.t - test C<Parrot::Pmc2c::Pmc2cMain::open_file()>
+07-open_file.t - test C<Parrot::Pmc2c::UtilFunctions::open_file()>
 
 =head1 SYNOPSIS
 
@@ -153,7 +153,7 @@ F<lib/Parrot/Pmc2c/Pmc2cMain.pm>.  By doing so, they test the functionality
 of the F<pmc2c.pl> utility.  That functionality has largely been extracted
 into the methods of F<Pmc2cMain.pm>.
 
-F<07-open_file.t> tests the C<Parrot::Pmc2c::Pmc2cMain::open_file()> subroutine.
+F<07-open_file.t> tests the C<Parrot::Pmc2c::UtilFunctions::open_file()> subroutine.
 This subroutine is I<not> called F<make> but is called by  methods which are
 called by F<make>.
 

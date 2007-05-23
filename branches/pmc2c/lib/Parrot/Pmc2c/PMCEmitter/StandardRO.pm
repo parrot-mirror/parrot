@@ -7,8 +7,8 @@ Returns the C code for the method body.
 
 =cut
 
-package Parrot::Pmc2c::Standard::RO;
-use base 'Parrot::Pmc2c::Standard';
+package Parrot::Pmc2c::PMCEmitter::Standard::RO;
+use base 'Parrot::Pmc2c::PMCEmitter::Standard';
 use strict;
 use warnings;
 use Parrot::Pmc2c::UtilFunctions qw( gen_ret );
@@ -36,17 +36,17 @@ generating.
 
 =cut
 
-sub body {
-    my ( $self, $method, $line, $out_name ) = @_;
+sub gen_body {
+    my ( $self, $pmc ) = @_;
 
-    my $meth       = $method->{meth};
-    my $decl       = $self->decl( $self->{name}, $method, 0 );
-    my $classname  = $self->{name};
-    my $parentname = $self->{parentname};
-    my $ret        = gen_ret($method);
+    my $methodname = $self->name;
+    my $decl       = $self->decl( $pmc, 'HEADER' );
+    my $pmcname    = $pmc->name;
+    my $parentname = $self->parentname;
+    my $ret        = gen_ret($self);
     my $cout;
 
-    if ( $meth eq 'find_method' ) {
+    if ( $methodname eq 'find_method' ) {
         my $real_findmethod = 'Parrot_' . $self->{super}{find_method} . '_find_method';
         $cout = <<"EOC";
 $decl {
@@ -62,7 +62,7 @@ EOC
         $cout = <<"EOC";
 $decl {
     internal_exception(WRITE_TO_CONSTCLASS,
-            "$meth() in read-only instance of $classname");
+            "$methodname() in read-only instance of $pmcname");
 EOC
         $cout .= "    $ret\n" if $ret;
         $cout .= <<"EOC";
