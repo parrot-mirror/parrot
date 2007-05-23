@@ -1,5 +1,5 @@
-package Parrot::Pmc2c::STMRef;
-use base 'Parrot::Pmc2c::Ref';
+package Parrot::Pmc2c::PMCEmitter::STMRef;
+use base 'Parrot::Pmc2c::PMCEmitter::Ref';
 use strict;
 use warnings;
 
