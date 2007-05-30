@@ -7,7 +7,7 @@ docs/glossary.pod - Parrot Glossary
 
 =head1 SUMMARY
 
-Short descriptions of words you might need to know
+Short descriptions of words and acronyms you might want to know
 because they show up in Parrot development.
 
 =head1 GLOSSARY
@@ -155,6 +155,11 @@ associated DB handle. Finalization reduces active objects down to passive
 blocks of memory, but does not actually reclaim that memory. Memory is
 reclaimed by the related L<"destruction"> operation, as and when necessary.
 
+=head2 fotw
+
+File of the week. A file that is designated to be focus of development for a week,
+aiming for code cleanups and general improvements.
+
 =head2 GC
 
 Garbage Collection is the process of sweeping through all the active objects,
@@ -177,8 +182,8 @@ High-Level Language
 International Components for Unicode
 
 ICU is a C and C++ library that provides support for Unicode on a variety of
-platforms.  It was added to Parrot with the 0.0.8 release to provide future
-Unicode support.
+platforms.  It was distributed with parrot at one time, but current releases
+require you to get your own copy.
 
 L<http://oss.software.ibm.com/icu/index.html>
 

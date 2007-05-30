@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2003, The Perl Foundation.
+Copyright (C) 2001-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -47,7 +47,7 @@ const char Parrot_utf8skip[256] = {
 typedef unsigned char utf8_t;
 #endif
 
-static void iter_init(Interp *, String *src, String_iter *iter);
+static void iter_init(Interp *, const String *src, String_iter *iter);
 /*
 
 =item C<static UINTVAL
@@ -375,9 +375,7 @@ to_encoding(Interp *interp, STRING *src, STRING *dest)
 static UINTVAL
 get_codepoint(Interp *interp, const STRING *src, UINTVAL offset)
 {
-    const void *start;
-
-    start = utf8_skip_forward(src->strstart, offset);
+    const void * const start = utf8_skip_forward(src->strstart, offset);
     return utf8_decode(start);
 }
 
@@ -527,7 +525,7 @@ bytes(Interp *interp, STRING *src)
 }
 
 static void
-iter_init(Interp *interp, String *src, String_iter *iter)
+iter_init(Interp *interp, const String *src, String_iter *iter)
 {
     iter->str = src;
     iter->bytepos = iter->charpos = 0;

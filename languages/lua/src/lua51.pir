@@ -16,17 +16,13 @@ This compiler defines the following stages:
 
 =item * parse F<languages/lua/src/lua51.pg>
 
-=item * past  F<languages/lua/src/ASTGrammar.tg>
+=item * PAST  F<languages/lua/src/PASTGrammar.tg>
 
-=item * post  F<languages/lua/src/OSTGrammar.tg>
-
-=item * pir   F<languages/lua/src/PIRGrammar.tg>
-
-=item * run
+=item * POST  F<languages/lua/src/POSTGrammar.tg>
 
 =back
 
-Used by F<languages/lua/luac.pir>.
+Used by F<languages/lua/lua.pir>.
 
 =cut
 
@@ -43,6 +39,7 @@ Used by F<languages/lua/luac.pir>.
     $P0.'language'('Lua')
     $P0.'parsegrammar'('Lua::Grammar')
     $P0.'astgrammar'('Lua::PAST::Grammar')
+    $P0.'ostgrammar'('Lua::POST::Grammar')
 
     $S0 = "Lua 5.1 on Parrot  Copyright (C) 2005-2007, The Perl Foundation.\n"
     $P0.'commandline_banner'($S0)
@@ -666,8 +663,58 @@ used in F<languages/lua/src/ASTGrammar.tg>
     exit 1
 .end
 
-.include 'languages/lua/src/ASTGrammar.pir'
-.include 'languages/lua/src/lua51_grammar_gen.pir'
+.namespace [ "Lua::POST" ]
+
+.sub '__onload' :load :init
+
+    $P0 = subclass 'POST::Sub', 'Lua::POST::Chunk'
+
+#    .local pmc pirtable
+#    pirtable = new .Hash
+#    pirtable['add'] = '%tP+'
+#    pirtable['sub'] = '%tP+'
+#    pirtable['mul'] = '%tP+'
+#    pirtable['div'] = '%tP+'
+#    pirtable['n_add'] = '%rP+'
+#    pirtable['n_sub'] = '%rP+'
+#    pirtable['n_mul'] = '%rP+'
+#    pirtable['n_div'] = '%rP+'
+#    pirtable['concat'] = '%tP~'
+#    pirtable['abs'] = '%t'
+#    pirtable['say'] = '%v'
+#    pirtable['print'] = '%v'
+#    pirtable['set'] = '%rP'
+#    pirtable['call'] = '%rPPPPPPPPPPPPPPPP'                # FIXME:
+#    pirtable['callmethod'] = '%rPPPPPPPPPPPPPPPP'          # FIXME:
+#    set_hll_global ['Lua::POST'], '%pirtable', pirtable
+    .return ()
+.end
+
+.namespace [ "Lua::POST::Chunk" ]
+
+.sub 'prologue' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('prologue', value, has_value)
+.end
+
+.sub 'pir' :method
+    self.'cpir'()
+    $S0 = self.'prologue'()
+    if $S0 == '' goto L1
+    .local pmc code
+    new code, 'PGE::CodeString'
+    code.'emit'($S0)
+    $P0 = get_hll_global ['POST'], '$!subpir'
+    code .= $P0
+    set_hll_global ['POST'], '$!subpir', code
+L1:
+.end
+
+
+.include 'languages/lua/src/lua51_gen.pir'
+.include 'languages/lua/src/PASTGrammar_gen.pir'
+.include 'languages/lua/src/POSTGrammar_gen.pir'
 
 =back
 

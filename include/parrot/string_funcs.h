@@ -1,5 +1,5 @@
 /* string_funcs.h
- *  Copyright (C) 2001-2006, The Perl Foundation.
+ *  Copyright (C) 2001-2007, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -24,24 +24,24 @@
 PARROT_API STRING *Parrot_reuse_COW_reference(Interp *, STRING *, STRING *);
 PARROT_API STRING *Parrot_make_COW_reference(Interp *, STRING *);
 PARROT_API void Parrot_unmake_COW(Interp *, STRING *);
-PARROT_API INTVAL string_compute_strlen(Interp *, STRING *);
-PARROT_API INTVAL string_max_bytes(Interp *, STRING*, INTVAL);
-PARROT_API STRING *string_concat(Interp *, STRING *, STRING *, UINTVAL);
-PARROT_API STRING *string_append(Interp *, STRING *, STRING *);
+PARROT_API INTVAL string_compute_strlen(Interp *, STRING *str);
+PARROT_API INTVAL string_max_bytes(Interp *, const STRING *str, INTVAL);
+PARROT_API STRING *string_concat(Interp *, STRING *str, STRING *appendage, UINTVAL len);
+PARROT_API STRING *string_append(Interp *, STRING *str, STRING *appendage);
 PARROT_API STRING *string_repeat(Interp *, const STRING *, UINTVAL,
         STRING **);
 PARROT_API STRING *string_chopn(Interp *, STRING *, INTVAL, int in_place);
 PARROT_API STRING *string_substr(Interp *, STRING *, INTVAL,
         INTVAL, STRING **, int replace_dest);
-PARROT_API STRING *string_replace(Interp *, STRING *, INTVAL, INTVAL,
-        STRING *, STRING **);
+PARROT_API STRING *string_replace(Interp *, STRING *src, INTVAL offset, INTVAL length,
+        STRING *rep, STRING **d);
 PARROT_API STRING *string_nprintf(Interp *,
         STRING *, INTVAL, const char *, ...);
 PARROT_API STRING *string_printf(Interp *interp,
         const char *format, ...);
-PARROT_API INTVAL string_compare(Interp *, STRING *, STRING *);
-PARROT_API INTVAL string_equal(Interp *, STRING *, STRING *);
-PARROT_API INTVAL string_bool(Interp *, const STRING *);
+PARROT_API INTVAL string_compare(Interp *, const STRING *a, const STRING *b);
+PARROT_API INTVAL string_equal(Interp *, const STRING *a, const STRING *b);
+PARROT_API INTVAL string_bool(Interp *, const STRING *a);
 PARROT_API STRING *string_increment(Interp *, const STRING *);
 PARROT_API const char *Parrot_string_cstring(Interp *, const STRING *);
 
@@ -82,7 +82,7 @@ PARROT_API STRING *string_from_cstring(Interp *, const char *, UINTVAL);
 PARROT_API STRING *string_from_const_cstring(Interp *, const char *, UINTVAL);
 PARROT_API STRING *const_string(Interp *, const char *buffer)
         __attribute__nonnull__(2);
-PARROT_API char *string_to_cstring(Interp *, STRING *);
+PARROT_API char *string_to_cstring(Interp *, const STRING *s);
 PARROT_API void string_cstring_free(char *);
 PARROT_API void string_pin(Interp *, STRING *);
 PARROT_API void string_unpin(Interp *, STRING *);
@@ -100,8 +100,8 @@ PARROT_API UINTVAL string_decode_and_advance(struct string_iterator_t *i);
 PARROT_API size_t string_hash(Interp *interp, STRING *s, size_t seed);
 PARROT_API STRING * string_unescape_cstring(Interp *,
         const char *cstring, char delimiter, const char *enc_or_charset);
-PARROT_API STRING * string_escape_string(Interp *, STRING *);
-PARROT_API STRING * string_escape_string_delimited(Interp *, STRING *,
+PARROT_API STRING * string_escape_string(Interp *, const STRING *);
+PARROT_API STRING * string_escape_string_delimited(Interp *, const STRING *,
         UINTVAL len);
 PARROT_API STRING * string_compose(Interp *, STRING *);
 
@@ -136,7 +136,7 @@ PARROT_API STRING* Parrot_string_trans_charset(Interp *, STRING *src,
 PARROT_API STRING* Parrot_string_trans_encoding(Interp *, STRING *src,
         INTVAL encoding_nr, STRING *dest);
 
-PARROT_API CHARSET* string_rep_compatible(Interp *, STRING *a, const STRING *b,
+PARROT_API CHARSET* string_rep_compatible(Interp *, const STRING *a, const STRING *b,
         ENCODING**);
 PARROT_API STRING* string_join(Interp *, STRING *j, PMC *ar);
 PARROT_API PMC* string_split(Interp *, STRING *del, STRING *s);

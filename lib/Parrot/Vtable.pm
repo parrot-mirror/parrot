@@ -357,7 +357,8 @@ sub vtbl_embed {
 
         my $ret_type = find_type($return_type);
 
-        $protos .= sprintf "extern %s Parrot_PMC_%s( %s );\n", $ret_type, $name, $signature;
+        $protos .= sprintf "extern PARROT_API %s Parrot_PMC_%s( %s );\n",
+            $ret_type, $name, $signature;
 
         $funcs .= sprintf "/*
 
@@ -368,7 +369,8 @@ sub vtbl_embed {
 
 */
 
-%s Parrot_PMC_%s( %s )
+PARROT_API %s
+Parrot_PMC_%s( %s )
 {
 ", ( $ret_type, $name, $signature ) x 2;
 

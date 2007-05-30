@@ -1,6 +1,6 @@
 #! perl
 
-# Copyright (C) 2001-2006, The Perl Foundation.
+# Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -333,7 +333,7 @@ my $conf = Parrot::Configure->new;
 # from Parrot::Configure::Step::List
 $conf->add_steps(get_steps_list());
 
-my %args = %$args;
+my %args = %{$args};
 # from Parrot::Configure::Data
 $conf->options->set(%args);
 
@@ -349,15 +349,6 @@ else {
     # from Parrot::Configure
     $conf->runsteps or exit(1);
 }
-
-# tell users what to do next
-#if ($run_build_tests) {
-#    print "\n\n";
-#    print "As you requested, I will now run some tests of the build tools.\n\n";
-#    system(qq{prove t/postconfigure/*.t t/tools/pmc2cutils/*.t t/tools/ops2cutils/*.t t/tools/ops2pmutils/*.t})
-#        and die "Unable to execute post-configuration and build tools tests";
-#}
-
 
 # build tests will only be run if you requested them 
 # as command-line option
