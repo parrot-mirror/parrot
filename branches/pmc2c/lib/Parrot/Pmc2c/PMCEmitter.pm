@@ -56,11 +56,11 @@ sub new {
 
 sub generate {
     my ( $self ) = @_;
-    my $emitter = $self->{emitter} = Parrot::Pmc2c::Emitter->new( $self->filename(".c"), $self );
+    my $emitter = $self->{emitter} = Parrot::Pmc2c::Emitter->new( $self->filename(".c") );
     $self->generate_c_file;
     $emitter->write_to_file;
 
-    $emitter = $self->{emitter} = Parrot::Pmc2c::Emitter->new( $self->filename(".h"), $self );
+    $emitter = $self->{emitter} = Parrot::Pmc2c::Emitter->new( $self->filename(".h") );
     $self->generate_h_file;
     $emitter->write_to_file;
 }
@@ -190,10 +190,11 @@ sub fixup_singleton {
     # (because the MRO will still be shared).
     unless ( $self->implements_vtable('pmc_namespace') 
             or $self->super_method('pmc_namespace') ne 'default' ) {
+        my $body = Parrot::Pmc2c::Emitter->text('{ return INTERP->vtables[SELF->vtable->base_type]->_namespace; }');
         $self->add_method( Parrot::Pmc2c::Method->new( {
             name        => 'pmc_namespace',
             parameters  => '',
-            body        => '{ return INTERP->vtables[SELF->vtable->base_type]->_namespace; }',
+            body        => $body,
             type        => Parrot::Pmc2c::Method::VTABLE,
             mmds        => [],
             return_type => 'PMC*',
@@ -287,24 +288,20 @@ Returns the C code for the pmc methods.
 
 sub gen_methods {
     my ( $self ) = @_;
-    {
-        no warnings;
-      *emit = sub { $self->{emitter}->emit(@_); };
-    }
 
     # vtable methods
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
         next if $vt_method_name eq 'class_init';
         if ( $self->implements_vtable($vt_method_name) ) {
-            emit( $self->get_method($vt_method_name)->generate_body($self) );
+            $self->get_method($vt_method_name)->generate_body($self);
         }
     }
 
     # non-vtable methods
     foreach my $method ( @{ $self->methods } ) {
         next if $method->is_vtable;
-        emit($method->generate_body($self));
+        $method->generate_body($self);
     }
 }
 
@@ -686,13 +683,6 @@ True if this class generates code for the method C<$method>.
 True if this class generates code for VTABLE method C<$method>.
 
 =cut
-
-sub implements_vtable2 {
-    my ( $self, $meth ) = @_;
-    return 1 if exists $self->{has_method}{$meth};
-    my $n = $self->{vtable}{has_method}{$meth};
-    return $self->{vtable}{methods}[$n]{mmd} =~ /MMD/ ? 0 : 1;
-}
 
 sub is_vtable_method {
     my ( $self, $vt_method_name ) = @_;

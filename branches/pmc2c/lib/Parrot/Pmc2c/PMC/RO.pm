@@ -85,7 +85,7 @@ sub new {
     internal_exception(WRITE_TO_CONSTCLASS, "$vt_method_name() in read-only instance of $pmcname");
 EOC
             $body .= "    $ret\n" if $ret;
-            $ro_method->body($body);
+            $ro_method->body(Parrot::Pmc2c::Emitter->text($body));
             $self->add_method($ro_method);
         }
         else {

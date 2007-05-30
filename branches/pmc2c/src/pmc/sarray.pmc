@@ -232,7 +232,7 @@ get_entry(PMC *self, INTVAL key)
     return e;
 }
 
-pmclass SArray const_too need_ext does array {
+pmclass SArray need_ext does array {
 
 /*
 

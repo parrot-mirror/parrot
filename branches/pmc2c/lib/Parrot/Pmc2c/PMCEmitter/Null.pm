@@ -23,26 +23,26 @@ The C<Null> PMC throws an execption for all methods.
 
 =cut
 
-sub gen_body {
-    my ( $self, $method, ) = @_;
-    my $methodname = $method->name;
+sub pre_method_gen {
+    my ( $self ) = @_;
+    
+    # vtable methods
+    foreach my $method ( @{ $self->vtable->methods } ) {
+        my $vt_method_name = $method->name;
+        next unless $self->normal_unimplemented_vtable($vt_method_name);
+        my $new_default_method = $method->clone();
 
-    # existing methods get emitted
-    if ( $self->SUPER::implements_vtable($methname) ) {
-        return $self->SUPER::gen_body( $self->get_method($methodname));
-    }
-
-    my $decl = $method->decl( $self, 'CFILE' );
-    my $ret = gen_ret($method);
-
-    my $output = <<EOC;
-${decl} {
-    real_exception(interp, NULL, NULL_REG_ACCESS,
-        "Null PMC access in $meth()");
+        my $ret = "";
+        $ret = gen_ret($method);
+        my $output = <<EOC;
+    real_exception(interp, NULL, NULL_REG_ACCESS, "Null PMC access in $meth()");
 EOC
-
-    $output .= $ret if $ret;
-    return $output .= "}\n";
+        $output .= $ret if $ret;
+        $new_default_method->body(Parrot::Pmc2c::Emitter->text($output));
+        $new_default_method->type(Parrot::Pmc2c::Method::VTABLE);
+        $self->add_method($new_default_method);
+    }
+    return 1;
 }
 
 1;

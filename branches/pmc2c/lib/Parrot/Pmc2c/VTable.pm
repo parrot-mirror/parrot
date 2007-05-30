@@ -83,6 +83,12 @@ sub has_method {
     return $self->{'has_method'}->{$methodname};
 }
 
+sub is_mmd {
+    my ( $self, $methodname ) = @_;
+    my $method = $self->get_method($methodname);
+    return (defined $method and $method->is_mmd);
+}
+
 sub get_method {
     my ( $self, $methodname ) = @_;
     my $method_index = $self->has_method($methodname);
