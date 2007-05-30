@@ -122,11 +122,12 @@ sub implements_vtable {
     return get_method($self, $vt_meth)->is_vtable;
 }
 
-sub implements_vtable_not_mmd {
+sub normal_unimplemented_vtable {
     my ( $self, $vt_meth ) = @_;
-    return 0 unless $self->has_method($vt_meth);
-    my $method = $self->get_method($vt_meth);
-    return $method->is_vtable and not $method->is_mmd;
+    return 0 if $vt_meth eq 'class_init';
+    return 0 if $self->vtable->is_mmd($vt_meth);
+    return 0 if $self->has_method($vt_meth);
+    return 1;
 }
 
 #getters

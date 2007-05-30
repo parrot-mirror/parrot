@@ -24,18 +24,16 @@ sub pre_method_gen {
     # vtable methods
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
-        next if $vt_method_name eq 'class_init';
-        unless ( $self->implements_vtable($vt_method_name) ) {
-            my $new_default_method = $method->clone();
+        next unless $self->normal_unimplemented_vtable($vt_method_name);
+        my $new_default_method = $method->clone();
 
-            my $ret = "";
-            $ret = gen_ret($method);
-            $new_default_method->body(<<"EOC");
+        my $ret = "";
+        $ret = gen_ret($method);
+        $new_default_method->body(Parrot::Pmc2c::Emitter->text(<<"EOC"));
     cant_do_method(interp, pmc, "$vt_method_name");$ret
 EOC
-            $new_default_method->type(Parrot::Pmc2c::Method::VTABLE);
-            $self->add_method($new_default_method);
-        }
+        $new_default_method->type(Parrot::Pmc2c::Method::VTABLE);
+        $self->add_method($new_default_method);
     }
     return 1;
 }

@@ -8,7 +8,7 @@ our @EXPORT_OK = qw( parse_pmc extract_balanced );
 use Data::Dumper;
 use Parrot::Pmc2c::PMC;
 use Parrot::Pmc2c::Method;
-use Parrot::Pmc2c::CodeFragment;
+use Parrot::Pmc2c::Emitter;
 use Parrot::Pmc2c::UtilFunctions qw(count_newlines filename slurp);
 use Text::Balanced 'extract_bracketed';
 
@@ -61,7 +61,7 @@ sub parse_pmc {
         = parse_top_level( $code );
    
     my $pmc = Parrot::Pmc2c::PMC->new();
-    $pmc->preamble( Parrot::Pmc2c::CodeFragment->new($preamble, $filename, 1));
+    $pmc->preamble( Parrot::Pmc2c::Emitter->text($preamble, $filename, 1));
     $pmc->name($pmcname);
     $pmc->set_filename($filename);
     $pmc->set_flags($flags);
@@ -95,10 +95,11 @@ sub parse_pmc {
             = ( $2, $3, $4, $5, parse_method_attrs($6));
         ( my $methodblock, $pmcbody ) = extract_balanced($pmcbody);
         $methodblock = strip_outer_brackets($methodblock);
+        $methodblock =~ s/^[ ]{4}//mg;
 
         my $method = Parrot::Pmc2c::Method->new( {
             name        => $methodname,
-            body        => Parrot::Pmc2c::CodeFragment->new($methodblock, $filename, $lineno),
+            body        => Parrot::Pmc2c::Emitter->text($methodblock, $filename, $lineno),
             return_type => $return_type,
             parameters  => $parameters,
             type        => Parrot::Pmc2c::Method::VTABLE,
@@ -107,8 +108,8 @@ sub parse_pmc {
 
         #PCCMETHOD needs FixedIntegerArray header
         if ( $marker and $marker =~ /PCCMETHOD/ ) {
-            #Parrot::Pmc2c::PCCMETHOD::rewrite_pccmethod($method);
-            $pmc->flag('need_fia_header');
+            Parrot::Pmc2c::PCCMETHOD::rewrite_pccmethod($method, $pmc);
+            $pmc->set_flag('need_fia_header');
         }
 
         #PCCINVOKE needs FixedIntegerArray header
@@ -132,7 +133,7 @@ sub parse_pmc {
        $lineno += count_newlines($methodblock);
     }
 
-    $pmc->postamble(Parrot::Pmc2c::CodeFragment->new($post, $filename, $lineno));
+    $pmc->postamble(Parrot::Pmc2c::Emitter->text($post, $filename, $lineno));
     #ensure class_init is the last method in the method list
     $pmc->add_method($class_init) if $class_init;
 
@@ -153,7 +154,7 @@ sub parse_mmds {
         my $mmd_part = extract_bracketed_body_text( $body_text, '{' );
         die "Empty MMD body near '$body_text'" if ( !$mmd_part );
         my $mmd_part_lines = count_newlines($mmd_part);
-        $mmd_part =~ s/(\n\s*)$//s;
+        #$mmd_part =~ s/(\n\s*)$//s;
         if ( $right_type eq 'DEFAULT' ) {
             $default_body = $mmd_part;
             $default_body_lineno = $lineno;
@@ -161,7 +162,7 @@ sub parse_mmds {
         else {
             my $mmd_method = Parrot::Pmc2c::Method->new( {
                 name        => $method->name . "_$right_type",
-                body        => Parrot::Pmc2c::CodeFragment->new($mmd_part, $filename, $lineno),
+                body        => Parrot::Pmc2c::Emitter->text($mmd_part, $filename, $lineno),
                 return_type => $method->return_type,
                 parameters  => $method->parameters,
                 type        => Parrot::Pmc2c::Method::VTABLE,
@@ -174,8 +175,8 @@ sub parse_mmds {
         $lineno += $mmd_part_lines;
     }
     $method->mmds($mmd_methods);
-    $method->body(Parrot::Pmc2c::CodeFragment->
-        new($default_body, $filename, $default_body_lineno));
+    $method->body(Parrot::Pmc2c::Emitter->
+        text($default_body, $filename, $default_body_lineno));
 }
 
 sub strip_outer_brackets {

@@ -45,12 +45,12 @@ sub mmd_rights {
 }
 
 #getters/setters
-for my $x qw( name type body return_type mmds symbol mmd_prefix mmd_table mmd_name right 
+for my $x qw( name type return_type body mmds symbol mmd_prefix mmd_table mmd_name right 
         attrs parameters ) {
     my $code = <<'EOC';
 sub REPLACE {
     my ( $self, $value ) = @_;
-    $self->{REPLACE} = $value if $value;
+    $self->{REPLACE} = $value if defined $value;
     return $self->{REPLACE}
 }
 EOC

@@ -871,7 +871,7 @@ parameter list.
             /* Build attributes index. */
             build_attrib_index(interp, SELF);
             if (PMC_IS_NULL(_class->attrib_index))
-                return;
+                PCCRETURN();
         }
 
         /* Set instantiated flag. */
