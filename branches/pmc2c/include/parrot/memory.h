@@ -1,5 +1,5 @@
 /* memory.h
- *  Copyright (C) 2001-2003, The Perl Foundation.
+ *  Copyright (C) 2001-2007, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:

@@ -99,7 +99,8 @@ Create a new package with name N, placing the result in P.
   upcase _ucname, _ucname
   .STRING(_name, _ucname)
 
-  setattribute .P, "LispPackage\0name", _name
+  # VALID_IN_PARROT_0_2_0 setattribute .P, "LispPackage\0name", _name
+  setattribute .P, "name", _name
 .endm
 
 =head1 .FUNCTION(F,L)
@@ -109,12 +110,13 @@ Create a new function object with label L, placing the result in F.
 =cut
 
 .macro FUNCTION(F,L)
-  .sym pmc _func
 
-   .F = new "LispFunction"
-   # VALID_IN_PARROT_0_2_0 newsub _func, .Sub, .L
+    .F = new "LispFunction"
+    # VALID_IN_PARROT_0_2_0 newsub _func, .Sub, .L
+    # VALID_IN_PARROT_0_2_0 setattribute .F, "LispFunction\0body", .L
+    .const .Sub _func = .L
+    setattribute .F, "body", _func
 
-   # VALID_IN_PARROT_0_2_0 setattribute .F, "LispFunction\0body", .L
 .endm
 
 =head1 .MACRO(F,L)
@@ -129,7 +131,8 @@ Create a new macro object with label L, placing the result in F.
    .F = new "LispMacro"
    newsub _func, .Sub, .L
 
-   setattribute .F, "LispMacro\0body", _func
+   # VALID_IN_PARROT_0_2_0 setattribute .F, "LispMacro\0body", _func
+   setattribute .F, "body", _func
 .endm
 
 

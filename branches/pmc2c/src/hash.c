@@ -53,7 +53,7 @@ Return the hashed value of the key C<value>.
 static size_t
 key_hash_STRING(Interp *interp, STRING *value, size_t seed)
 {
-    STRING *s = value;
+    STRING * const s = value;
 
     if (s->hashval) {
         return s->hashval;
@@ -74,9 +74,9 @@ Compares the two strings, returning 0 if they are identical.
 */
 
 static int
-STRING_compare(Parrot_Interp interp, void *search_key, void *bucket_key)
+STRING_compare(Parrot_Interp interp, const void *search_key, const void *bucket_key)
 {
-    return string_equal(interp, (STRING *)search_key, (STRING *)bucket_key);
+    return string_equal(interp, (const STRING *)search_key, (const STRING *)bucket_key);
 }
 
 /*
@@ -91,7 +91,7 @@ Compares the two pointers, returning 0 if they are identical
 */
 
 static int
-pointer_compare(Parrot_Interp interp, void *a, void *b) {
+pointer_compare(Parrot_Interp interp, const void * const a, const void * const b) {
     return a != b;
 }
 
@@ -172,7 +172,7 @@ key_hash_int(Interp *interp, void *value, size_t seed)
 }
 
 static int
-int_compare(Parrot_Interp interp, void *a, void *b)
+int_compare(Parrot_Interp interp, const void *a, const void *b)
 {
     UNUSED(interp);
     return a != b;
@@ -720,7 +720,7 @@ parrot_hash_size(Interp *interp, Hash *hash)
 /*
 
 =item C<void *
-parrot_hash_get_idx(Interp *interp, Hash *hash, PMC * key)>
+parrot_hash_get_idx(Interp *interp, const Hash *hash, PMC * key)>
 
 Called by iterator.
 
@@ -729,10 +729,10 @@ Called by iterator.
 */
 
 void *
-parrot_hash_get_idx(Interp *interp, Hash *hash, PMC * key)
+parrot_hash_get_idx(Interp *interp, const Hash *hash, PMC * key)
 {
     INTVAL i = PMC_int_val(key);
-    BucketIndex bi = (BucketIndex)PMC_data(key);
+    const BucketIndex bi = (BucketIndex)PMC_data(key);
     HashBucket *b;
     void *res;
     INTVAL size;
@@ -772,7 +772,7 @@ parrot_hash_get_idx(Interp *interp, Hash *hash, PMC * key)
 /*
 
 =item C<HashBucket *
-parrot_hash_get_bucket(Interp *interp, Hash *hash, void *key)>
+parrot_hash_get_bucket(Interp *interp, const Hash *hash, void *key)>
 
 Returns the bucket for C<key>.
 
@@ -781,9 +781,9 @@ Returns the bucket for C<key>.
 */
 
 HashBucket *
-parrot_hash_get_bucket(Interp *interp, Hash *hash, void *key)
+parrot_hash_get_bucket(Interp *interp, const Hash *hash, void *key)
 {
-    UINTVAL hashval = (hash->hash_val)(interp, key, hash->seed);
+    const UINTVAL hashval = (hash->hash_val)(interp, key, hash->seed);
     HashBucket *bucket = hash->bi[hashval & hash->mask];
     while (bucket) {
         /* store hash_val or not */
@@ -808,7 +808,7 @@ Returns the bucket for C<key> or C<NULL> if no bucket is found.
 void *
 parrot_hash_get(Interp *interp, Hash *hash, void *key)
 {
-    HashBucket *bucket = parrot_hash_get_bucket(interp, hash, key);
+    const HashBucket * const bucket = parrot_hash_get_bucket(interp, hash, key);
     return bucket ? bucket->value : NULL;
 }
 
@@ -826,7 +826,7 @@ Returns whether the key exists in the hash.
 INTVAL
 parrot_hash_exists(Interp *interp, Hash *hash, void *key)
 {
-    HashBucket *bucket = parrot_hash_get_bucket(interp, hash, key);
+    const HashBucket * const bucket = parrot_hash_get_bucket(interp, hash, key);
     return bucket ? 1 : 0;
 }
 
@@ -845,7 +845,7 @@ copied.
 HashBucket*
 parrot_hash_put(Interp *interp, Hash *hash, void *key, void *value)
 {
-    UINTVAL hashval = (hash->hash_val)(interp, key, hash->seed);
+    const UINTVAL hashval = (hash->hash_val)(interp, key, hash->seed);
     HashBucket *bucket = hash->bi[hashval & hash->mask];
     while (bucket) {
         /* store hash_val or not */
@@ -895,11 +895,10 @@ Deletes the key from the hash.
 void
 parrot_hash_delete(Interp *interp, Hash *hash, void *key)
 {
-    UINTVAL hashval;
     HashBucket *bucket;
     HashBucket *prev = NULL;
 
-    hashval = (hash->hash_val)(interp, key, hash->seed) & hash->mask;
+    const UINTVAL hashval = (hash->hash_val)(interp, key, hash->seed) & hash->mask;
 
     for (bucket = hash->bi[hashval]; bucket; bucket = bucket->next) {
         if ((hash->compare)(interp, key, bucket->key) == 0) {
@@ -940,7 +939,7 @@ parrot_hash_clone(Interp *interp, Hash *hash, Hash **dest)
     for (i = 0; i <= hash->mask; i++) {
         b = hash->bi[i];
         while (b) {
-            void *key = b->key;
+            void * const key = b->key;
             void *valtmp;
             switch (hash->entry_type) {
             case enum_type_undef:

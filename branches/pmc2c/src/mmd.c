@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2003-2006, The Perl Foundation.
+Copyright (C) 2003-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -57,7 +57,7 @@ dump_mmd(Interp *interp, INTVAL function)
     UINTVAL x, y;
     UINTVAL offset, x_funcs, y_funcs;
     MMD_table * const table = interp->binop_mmd_funcs + function;
-    funcptr_t func, def;
+    funcptr_t func, def; /* XXX Looks like def is never defined */
 
     x_funcs = table->x;
     y_funcs = table->y;
@@ -98,11 +98,10 @@ get_mmd_dispatch_type(Interp *interp, INTVAL func_nr, INTVAL left_type,
         INTVAL right_type, int *is_pmc)
 {
     funcptr_t func, func_;
-    UINTVAL offset, x_funcs, y_funcs;
     INTVAL r;
     MMD_table *table = interp->binop_mmd_funcs + func_nr;
-    x_funcs = table->x;
-    y_funcs = table->y;
+    const UINTVAL x_funcs = table->x;
+    const UINTVAL y_funcs = table->y;
 
 #if MMD_DEBUG
     fprintf(stderr, "running function %d with left type=%u, right type=%u\n",
@@ -119,12 +118,12 @@ get_mmd_dispatch_type(Interp *interp, INTVAL func_nr, INTVAL left_type,
     else
         right_type += 4;
     if ((UINTVAL)left_type < x_funcs && (UINTVAL)right_type < y_funcs) {
-            offset = x_funcs * right_type + left_type;
+            const UINTVAL offset = x_funcs * right_type + left_type;
             func = table->mmd_funcs[offset];
     }
     if (!func) {
         const char *meth_c = Parrot_MMD_method_name(interp, func_nr);
-        STRING *meth_s = const_string(interp, meth_c);
+        STRING * const meth_s = const_string(interp, meth_c);
         PMC *method = Parrot_MMD_search_default_infix(interp,
                 meth_s, left_type, r);
         if (!method)
@@ -633,31 +632,19 @@ static void
 mmd_expand_y(Interp *interp, INTVAL func_nr, INTVAL new_y)
 {
     funcptr_t *new_table;
-    UINTVAL x;
-    UINTVAL y;
-    UINTVAL i;
+    UINTVAL    new_size;
     MMD_table *table = interp->binop_mmd_funcs + func_nr;
 
-    x = table->x;
-    assert(x);
-    y = table->y;
+    assert(table->x);
 
-    /* First, fill in the whole new table with the default function
-       pointer. We only really need to do the new part, but... */
-    new_table = (funcptr_t *)mem_sys_allocate(sizeof (funcptr_t) * x * new_y);
-    for (i = 0; i < x * new_y; i++) {
-        new_table[i] = NULL;
-    }
+    new_size = sizeof (funcptr_t) * table->x * new_y;
 
-    /* Then copy the old table over, if it existed in the first place. */
-    if (table->mmd_funcs) {
-        memcpy(new_table, table->mmd_funcs,
-               sizeof (funcptr_t) * x * y);
-        mem_sys_free(table->mmd_funcs);
-    }
+    if (table->mmd_funcs)
+        table->mmd_funcs = mem_sys_realloc(table->mmd_funcs, new_size);
+    else
+        table->mmd_funcs = (funcptr_t *)mem_sys_allocate(new_size);
+
     table->y = new_y;
-    table->mmd_funcs = new_table;
-
 }
 
 /*
@@ -1127,8 +1114,7 @@ static void
 mmd_search_classes(Interp *interp, STRING *meth, PMC *arg_tuple,
         PMC *cl, INTVAL start_at_parent)
 {
-    PMC *pmc, *mro, *_class;
-    INTVAL i, n, type1;
+    INTVAL type1;
 
     /*
      * get the class of the first argument
@@ -1142,12 +1128,14 @@ mmd_search_classes(Interp *interp, STRING *meth, PMC *arg_tuple,
         /* TODO create some class namespace */
     }
     else {
-        mro = interp->vtables[type1]->mro;
-        n = VTABLE_elements(interp, mro);
+        PMC * const mro = interp->vtables[type1]->mro;
+        const INTVAL n = VTABLE_elements(interp, mro);
+        INTVAL i;
+
         for (i = start_at_parent; i < n; ++i) {
-            _class = VTABLE_get_pmc_keyed_int(interp, mro, i);
-            pmc = Parrot_find_method_with_cache(interp, _class, meth);
-            if (pmc) {
+            PMC * const _class = VTABLE_get_pmc_keyed_int(interp, mro, i);
+            PMC * const pmc = Parrot_find_method_with_cache(interp, _class, meth);
+            if (!PMC_IS_NULL(pmc)) {
                 /*
                  * mmd_is_hidden would consider all previous candidates
                  * XXX pass current n so that only candidates from this
@@ -1192,17 +1180,17 @@ Create Manhattan Distance of sub C<pmc> against given argument types.
 static PMC*
 mmd_cvt_to_types(Interp* interp, PMC *multi_sig)
 {
-    INTVAL i, n, type;
-    PMC *ar, *sig_elem;
-    STRING *sig;
+    INTVAL i, type;
 
-    n = VTABLE_elements(interp, multi_sig);
-    ar = pmc_new(interp, enum_class_FixedIntegerArray);
+    const INTVAL n = VTABLE_elements(interp, multi_sig);
+
+    PMC * const ar = pmc_new(interp, enum_class_FixedIntegerArray);
     VTABLE_set_integer_native(interp, ar, n);
     for (i = 0; i < n; ++i) {
-        sig_elem = VTABLE_get_pmc_keyed_int(interp, multi_sig, i);
+        PMC * const sig_elem = VTABLE_get_pmc_keyed_int(interp, multi_sig, i);
+
         if (sig_elem->vtable->base_type == enum_class_String) {
-            sig = VTABLE_get_string(interp, sig_elem);
+            const STRING * const sig = VTABLE_get_string(interp, sig_elem);
             if (memcmp(sig->strstart, "__VOID", 6) == 0) {
                 PMC_int_val(ar)--;  /* XXX */
                 break;
@@ -1224,7 +1212,6 @@ mmd_distance(Interp *interp, PMC *pmc, PMC *arg_tuple)
 {
     PMC *multi_sig, *mro;
     INTVAL i, n, args, dist, j, m;
-    INTVAL type_sig, type_call;
 
     if (pmc->vtable->base_type == enum_class_NCI) {
         /* has to be a builtin multi method */
@@ -1259,8 +1246,8 @@ mmd_distance(Interp *interp, PMC *pmc, PMC *arg_tuple)
      * now go through args
      */
     for (i = 0; i < n; ++i) {
-        type_sig  = VTABLE_get_integer_keyed_int(interp, multi_sig, i);
-        type_call = VTABLE_get_integer_keyed_int(interp, arg_tuple, i);
+        const INTVAL type_sig  = VTABLE_get_integer_keyed_int(interp, multi_sig, i);
+        const INTVAL type_call = VTABLE_get_integer_keyed_int(interp, arg_tuple, i);
         if (type_sig == type_call)
             continue;
         /*
@@ -1472,9 +1459,8 @@ mmd_maybe_candidate(Interp *interp, PMC *pmc, PMC *arg_tuple, PMC *cl)
      */
     n = VTABLE_elements(interp, pmc);
     for (i = 0; i < n; ++i) {
-        PMC *multi_sub;
+        PMC * const multi_sub = VTABLE_get_pmc_keyed_int(interp, pmc, i);
 
-        multi_sub = VTABLE_get_pmc_keyed_int(interp, pmc, i);
         if (!mmd_is_hidden(interp, multi_sub, cl))
             VTABLE_push_pmc(interp, cl, multi_sub);
     }
@@ -1609,7 +1595,7 @@ mmd_create_builtin_multi_meth_2(Interp *interp, PMC *ns,
     meth_name = const_string(interp, short_name);
     _class = interp->vtables[type]->pmc_class;
     method = Parrot_find_method_direct(interp, _class, meth_name);
-    if (!method) {
+    if (PMC_IS_NULL(method)) {
         /* first method */
         method = constant_pmc_new(interp, enum_class_NCI);
         VTABLE_set_pointer_keyed_str(interp, method,

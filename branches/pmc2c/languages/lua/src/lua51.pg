@@ -30,9 +30,9 @@ rule statement {
   | <do_block>
   | <for_stat>
   | <repeat_stat>
+  | <function_stat>
   | <local_stat>
   | <expression_stat>
-  | <function_stat>
 }
 
 rule function_stat {
@@ -40,8 +40,16 @@ rule function_stat {
 }
 
 rule last_statement {
-  | (<'return'>) <expression_list>?
-  | (<'break'>)
+  | <return_statement>
+  | <break_statement>
+}
+
+rule return_statement {
+  <'return'> <expression_list>?
+}
+
+token break_statement {
+  <'break'>
 }
 
 rule do_block {
@@ -49,7 +57,7 @@ rule do_block {
 }
 
 rule local_stat {
-  <local_function> | <local_declaration>
+  <'local'> [ <local_function> | <local_declaration> ]
 }
 
 rule expression_stat {
@@ -98,11 +106,11 @@ rule else_block {
 }
 
 rule local_declaration {
-  <'local'> <name> [ <','> <name> ]* [ <'='> <expression_list> ]?
+  <name> [ <','> <name> ]* [ <'='> <expression_list> ]?
 }
 
 rule local_function {
-  <'local'> <'function'> <name> <function_body>
+  <'function'> <name> <function_body>
 }
 
 rule functionname {
@@ -114,7 +122,7 @@ rule index {
 }
 
 rule record_field {
-  [ <name> | <index> ] <?assign> <expression>
+  [ <name> | <index> ] <'='> <expression>
 }
 
 rule constructor {
@@ -122,20 +130,16 @@ rule constructor {
 }
 
 rule tablefieldlist {
-  <tablefield> [ <?fieldsep> <tablefield> ]* <?fieldsep>?
-}
-
-rule fieldsep {
-  <','> | <';'>
+  <tablefield> [ <[,;]> <tablefield> ]* <[,;]>?
 }
 
 rule tablefield {
-  [ <record_field> | <expression> ]*
+  <record_field> | <expression>
 }
 
 rule parameter_list {
-  | <name_list> [ <','> <'...'> ]?
-  | <'...'>
+  | <name_list> [ <','> <vararg> ]?
+  | <vararg>
 }
 
 rule function_body {
@@ -173,53 +177,14 @@ rule primary_expression {
 rule simple_expression {
   | <number>
   | <string>
-  | <'nil'>
-  | <'true'>
-  | <'false'>
-  | <'...'>
+  | <nil>
+  | <true>
+  | <false>
+  | <vararg>
   | <constructor>
   | <'function'> <function_body>
   | <primary_expression>
 }
-
-
-=head2 EXPRESSIONS
-
-Operator precedence is implemented using an optable.
-
-=cut
-
-rule 'expression'   is optable { ... }
-
-proto 'term:'       is precedence('=')      is parsed(&simple_expression) { ... }
-
-proto 'infix:^'     is looser('term:')
-                    is assoc('right')           { ... }
-
-proto 'prefix:not'  is looser('infix:^')    is pirop('not')      { ... }
-proto 'prefix:#'    is equiv('prefix:not')  is pirop('elements') { ... } # does this work?? it needs an I register
-proto 'prefix:-'    is equiv('prefix:not')  is pirop('neg')      { ... }
-
-proto 'infix:*'     is looser('prefix:not') is pirop('mul') { ... }
-proto 'infix:/'     is equiv('infix:*')     is pirop('div') { ... }
-proto 'infix:%'     is equiv('infix:*')     is pirop('mod') { ... }
-
-proto 'infix:+'     is looser('infix:*')    is pirop('add') { ... }
-proto 'infix:-'     is equiv('infix:+')     is pirop('sub') { ... }
-
-proto 'infix:..'    is looser('infix:+')    is pirop('concat')
-                    is assoc('right')           { ... }
-
-proto 'infix:<'     is looser('infix:..')       { ... }
-proto 'infix:>'     is equiv('infix:<')         { ... }
-proto 'infix:<='    is equiv('infix:<')         { ... }
-proto 'infix:>='    is equiv('infix:<')         { ... }
-proto 'infix:~='    is equiv('infix:<')         { ... }
-proto 'infix:=='    is equiv('infix:<')         { ... }
-
-proto 'infix:and'   is looser('infix:<')        { ... }
-
-proto 'infix:or'    is looser('infix:and')      { ... }
 
 
 =head2 HELPER RULES
@@ -254,10 +219,6 @@ rule in {
   <'in'> | <syntax_error: 'in' expected>
 }
 
-rule assign {
-  <'='>  | <syntax_error: '=' expected>
-}
-
 rule closebracket {
   <']'>  | <syntax_error: ']' expected>
 }
@@ -271,10 +232,10 @@ rule closeparen {
 }
 
 
-=head3 Strings
+=head2 TOKENS
 
-A string can be either a single-quoted, double-quoted or a long string.
-Long strings are parsed using a custom parsing method.
+Tokens not defined here (in PGE) are written in PIR in
+F<languages/lua/src/lua51.pir>.
 
 =cut
 
@@ -284,6 +245,21 @@ token string {
   | <long_string>
 }
 
+token nil {
+  <'nil'>
+}
+
+token true {
+  <'true'>
+}
+
+token false {
+  <'false'>
+}
+
+token vararg {
+  <'...'>
+}
 
 token ws {
     [ \s+
@@ -292,9 +268,60 @@ token ws {
     ]*
 }
 
+
+=head2 EXPRESSIONS
+
+Operator precedence is implemented using an optable.
+
+=cut
+
+rule 'expression'   is optable { ... }
+
+proto 'term:'       is precedence('=')
+                    is parsed(&simple_expression)              { ... }
+
+proto 'infix:^'     is looser('term:')      is pirop('pow')     is assoc('right')
+                    is returns('.LuaNumber')                    { ... }
+
+proto 'prefix:not'  is looser('infix:^')    is pirop('not')
+                    is returns('.LuaBoolean')                   { ... }
+proto 'prefix:#'    is equiv('prefix:not')  is past('len')
+                    is returns('.LuaNumber')                    { ... }
+proto 'prefix:-'    is equiv('prefix:not')  is pirop('neg')
+                    is returns('.LuaNumber')                    { ... }
+
+proto 'infix:*'     is looser('prefix:not') is pirop('mul')
+                    is returns('.LuaNumber')                    { ... }
+proto 'infix:/'     is equiv('infix:*')     is pirop('div')
+                    is returns('.LuaNumber')                    { ... }
+proto 'infix:%'     is equiv('infix:*')     is pirop('mod')
+                    is returns('.LuaNumber')                    { ... }
+
+proto 'infix:+'     is looser('infix:*')    is pirop('add')
+                    is returns('.LuaNumber')                    { ... }
+proto 'infix:-'     is equiv('infix:+')     is pirop('sub')
+                    is returns('.LuaNumber')                    { ... }
+
+proto 'infix:..'    is looser('infix:+')    is pirop('concat')  is assoc('right')
+                    is returns('.LusString')                    { ... }
+
+proto 'infix:<'     is looser('infix:..')                       { ... }
+proto 'infix:>'     is equiv('infix:<')                         { ... }
+proto 'infix:<='    is equiv('infix:<')                         { ... }
+proto 'infix:>='    is equiv('infix:<')                         { ... }
+proto 'infix:~='    is equiv('infix:<')                         { ... }
+proto 'infix:=='    is equiv('infix:<')                         { ... }
+
+proto 'infix:and'   is looser('infix:<')                        { ... }
+
+proto 'infix:or'    is looser('infix:and')                      { ... }
+
+
 =head1 AUTHORS
 
 Klaas-Jan Stol <parrotcode@gmail.com>
+
+Francois Perrad
 
 =cut
 

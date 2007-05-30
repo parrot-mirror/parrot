@@ -32,7 +32,7 @@ PARROT_API PMC *Parrot_single_subclass(Parrot_Interp, PMC *, PMC *);
 PARROT_API void Parrot_new_class(Parrot_Interp, PMC *, PMC *);
 PARROT_API PMC *Parrot_class_lookup(Parrot_Interp, STRING *);
 PARROT_API PMC *Parrot_class_lookup_p(Parrot_Interp, PMC *);
-PARROT_API PMC *Parrot_add_parent(Parrot_Interp, PMC *, PMC *);
+PARROT_API void Parrot_add_parent(Parrot_Interp, PMC *, PMC *);
 PARROT_API PMC *Parrot_remove_parent(Parrot_Interp, PMC *, PMC *);
 PARROT_API PMC *Parrot_multi_subclass(Parrot_Interp, PMC *, STRING *);
 PARROT_API void Parrot_instantiate_object(Parrot_Interp, PMC *);
@@ -57,7 +57,7 @@ PARROT_API void Parrot_set_class_destructor(Parrot_Interp, STRING *, INTVAL, STR
 PARROT_API void Parrot_set_class_fallback(Parrot_Interp, STRING *, INTVAL, STRING *);
 PARROT_API void Parrot_invalidate_method_cache(Interp*, STRING *_class, STRING *meth);
 PARROT_API STRING *readable_name(Parrot_Interp, PMC *);
-PARROT_API INTVAL Parrot_get_vtable_index(Interp *, STRING *name);
+PARROT_API INTVAL Parrot_get_vtable_index(Interp *, const STRING *name);
 PARROT_API PMC *Parrot_find_vtable_meth(Interp* interp, PMC *pmc, STRING *meth);
 
 /* Objects, classes and PMCarrays all use the same data scheme:
@@ -90,7 +90,7 @@ PARROT_API PMC *Parrot_find_vtable_meth(Interp* interp, PMC *pmc, STRING *meth);
 } while (0)
 
 /*
- * class marocs
+ * class macros
  */
 
 #  define CLASS_ATTRIB_COUNT(cl) PMC_int_val2(cl)

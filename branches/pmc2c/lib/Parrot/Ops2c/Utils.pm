@@ -192,10 +192,15 @@ sub new {
     $argsref->{num_ops}     = $num_ops;
     $argsref->{num_entries} = $num_entries;
 
-    $argsref->{preamble}  = $preamble;
-    $argsref->{init_func} = $init_func;
+    $argsref->{preamble}     = $preamble;
+    $argsref->{init_func}    = $init_func;
+    $argsref->{bs}           = "$argsref->{base}$argsref->{suffix}_";
+    $argsref->{opsarraytype} = $argsref->{trans}->opsarraytype();
 
-    $argsref->{flag} = $flagref;
+    # Invoked as:  ${defines}
+    $argsref->{defines}      = $argsref->{trans}->defines();
+
+    $argsref->{flag}         = $flagref;
     return bless $argsref, $class;
 }
 
@@ -420,9 +425,6 @@ B<A:>  It is re-used as an argument to the next method.
 
 sub print_c_source_top {
     my $self = shift;
-    $self->{defines}      = $self->{trans}->defines();          # Invoked as:  ${defines}
-    $self->{bs}           = "$self->{base}$self->{suffix}_";    # Also invoked as ${bs}
-    $self->{opsarraytype} = $self->{trans}->opsarraytype();
 
     ##### BEGIN printing to $SOURCE #####
     open my $SOURCE, '>', $self->{source}
@@ -717,7 +719,7 @@ END_C
         print $fh @{ $self->{op_func_table} };
 
         print $fh <<END_C;
-  (op_func$self->{suffix}_t *)0  /* NULL function pointer */
+  NULL /* NULL function pointer */
 };
 
 
@@ -1012,11 +1014,13 @@ sub _print_dynamic_lib_load {
 /*
  * dynamic lib load function - called once
  */
+$self->{sym_export} PMC*
+$load_func(Parrot_Interp interp);
 
 $self->{sym_export} PMC*
 $load_func(Parrot_Interp interp)
 {
-    PMC *lib = pmc_new(interp, enum_class_ParrotLibrary);
+    PMC *lib            = pmc_new(interp, enum_class_ParrotLibrary);
     PMC_struct_val(lib) = (void *) $self->{init_func};
     dynop_register(interp, lib);
     return lib;

@@ -13,29 +13,37 @@
 
   .HASH(value)
 
-  .FUNCTION(function, _left_paren_macro)
-   value["("] = function
+  # VALID_IN_PARROT_0_2_0  .FUNCTION(function, _left_paren_macro )
+    .FUNCTION(function, "_left_paren_macro" )
+    value["("] = function
 
-  .FUNCTION(function, _right_paren_macro)
-   value[")"] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _right_paren_macro)
+    .FUNCTION(function, "_right_paren_macro" )
+    value[")"] = function
 
-  .FUNCTION(function, _single_quote_macro)
-   value["'"] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _single_quote_macro)
+    .FUNCTION(function, "_single_quote_macro" )
+    value["'"] = function
 
-  .FUNCTION(function, _semicolon_macro)
-   value[";"] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _semicolon_macro)
+    .FUNCTION(function, "_semicolon_macro" )
+    value[";"] = function
 
-  .FUNCTION(function, _double_quote_macro)
-   value["\""] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _double_quote_macro)
+    .FUNCTION(function, "_double_quote_macro" )
+    value['"'] = function
 
-  .FUNCTION(function, _backquote_macro)
-   value["`"] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _backquote_macro)
+    .FUNCTION(function, "_backquote_macro" )
+    value["`"] = function
 
-  .FUNCTION(function, _comma_macro)
-   value[","] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _comma_macro)
+    .FUNCTION(function, "_comma_macro" )
+    value[","] = function
 
-  .FUNCTION(function, _sharpsign_macro)
-   value["#"] = function
+  # VALID_IN_PARROT_0_2_0 .FUNCTION(function, _sharpsign_macro)
+    .FUNCTION(function, "_sharpsign_macro" )
+    value["#"] = function
 
   .DEFVAR(symbol, package, "*READER-MACROS*", value)
 
@@ -44,39 +52,56 @@
 
   .DEFVAR(symbol, package, "*INSIDE-BACKQUOTE-LIST*", value)
 
-  .DEFUN(symbol, package, "%GET-OBJECT-ATTRIBUTE", _get_object_attr)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%GET-OBJECT-ATTRIBUTE", _get_object_attr)
+  .DEFUN(symbol, package, "%GET-OBJECT-ATTRIBUTE", "_get_object_attr")
 
-  .DEFUN(symbol, package, "%SET-OBJECT-ATTRIBUTE", _set_object_attr)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%SET-OBJECT-ATTRIBUTE", _set_object_attr)
+  .DEFUN(symbol, package, "%SET-OBJECT-ATTRIBUTE", "_set_object_attr")
 
-  .DEFUN(symbol, package, "%MAKE-HASH-TABLE", _make_hash)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%MAKE-HASH-TABLE", _make_hash)
+  .DEFUN(symbol, package, "%MAKE-HASH-TABLE", "_make_hash")
 
-  .DEFUN(symbol, package, "%SET-HASH", _set_hash)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%SET-HASH", _set_hash)
+  .DEFUN(symbol, package, "%SET-HASH", "_set_hash")
 
-  .DEFUN(symbol, package, "%GET-HASH", _get_hash)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%GET-HASH", _get_hash)
+  .DEFUN(symbol, package, "%GET-HASH", "_get_hash")
 
-  .DEFUN(symbol, package, "%ALIAS-PACKAGE", _alias_package)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%ALIAS-PACKAGE", _alias_package)
+  .DEFUN(symbol, package, "%ALIAS-PACKAGE", "_alias_package")
 
-  .DEFUN(symbol, package, "%FIND-PACKAGE", _find_package)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%FIND-PACKAGE", _find_package)
+  .DEFUN(symbol, package, "%FIND-PACKAGE", "_find_package")
 
-  .DEFUN(symbol, package, "%MAKE-PACKAGE", _make_package)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%MAKE-PACKAGE", _make_package)
+  .DEFUN(symbol, package, "%MAKE-PACKAGE", "_make_package")
 
-  .DEFUN(symbol, package, "%USE-PACKAGE", _use_package)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%USE-PACKAGE", _use_package)
+  .DEFUN(symbol, package, "%USE-PACKAGE", "_use_package")
 
-  .DEFUN(symbol, package, "%EXPORT", _export)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%EXPORT", _export)
+  .DEFUN(symbol, package, "%EXPORT", "_export")
 
-  .DEFUN(symbol, package, "%OPEN-FILE", _open_file)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%OPEN-FILE", _open_file)
+  .DEFUN(symbol, package, "%OPEN-FILE", "_open_file")
 
-  .DEFUN(symbol, package, "%PEEK", _peek)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%PEEK", _peek)
+  .DEFUN(symbol, package, "%PEEK", "_peek")
 
-  .DEFUN(symbol, package, "%CLOSE", _close)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%CLOSE", _close)
+  .DEFUN(symbol, package, "%CLOSE", "_close")
 
-  .DEFUN(symbol, package, "%STRING-EQUAL", _string_equal)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%STRING-EQUAL", _string_equal)
+  .DEFUN(symbol, package, "%STRING-EQUAL", "_string_equal")
 
-  .DEFUN(symbol, package, "%MAKE-MACRO", _make_macro)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "%MAKE-MACRO", _make_macro)
+  .DEFUN(symbol, package, "%MAKE-MACRO", "_make_macro")
 
   # XXX - THESE SHOULD BE REMOVED AND CONVERTED TO PROPER LISP FUNCTIONS
-  .DEFUN(symbol, package, "ERROR", _raise_error)
-  .DEFUN(symbol, package, "LOAD", _load)
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "ERROR", _raise_error)
+  .DEFUN(symbol, package, "ERROR", "_raise_error")
+  # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "LOAD", _load)
+  .DEFUN(symbol, package, "LOAD", "_load")
 
   .return(1)
 .end
@@ -416,29 +441,30 @@ DONE:
 
 .sub _get_object_attr
   .param pmc args
+
   .local string attr
-  .local string objt
+  # VALID_IN_PARROT_0_2_0 .local string objt
   .local pmc symbol
-  .local pmc objstr
+  # VALID_IN_PARROT_0_2_0 .local pmc objstr
   .local pmc attrib
   .local pmc retv
 
   .ASSERT_LENGTH(args,3,ERROR_NARGS)
 
   .CAR(symbol,args)
-  .SECOND(objstr,args)
+   # VALID_IN_PARROT_0_2_0 .SECOND(objstr,args)
   .THIRD(attrib,args)
 
   .NIL(retv)
 
-  .ASSERT_TYPE(objstr, "string")
+   # VALID_IN_PARROT_0_2_0 .ASSERT_TYPE(objstr, "string")
   .ASSERT_TYPE(attrib, "string")
 
    attr = attrib
-   objt = objstr
+   # VALID_IN_PARROT_0_2_0 objt = objstr
 
-   concat objt, objt, "\0"
-   concat attr, objt, attr
+   # VALID_IN_PARROT_0_2_0 concat objt, objt, "\0"
+   # VALID_IN_PARROT_0_2_0 concat attr, objt, attr
 
    getattribute retv, symbol, attr
    if_null retv, NO_VALUE
@@ -459,27 +485,27 @@ DONE:
 .sub _set_object_attr
   .param pmc args
   .local string attr
-  .local string objt
+  # VALID_IN_PARROT_0_2_0 .local string objt
   .local pmc symbol
-  .local pmc objstr
+  # VALID_IN_PARROT_0_2_0 .local pmc objstr
   .local pmc attrib
   .local pmc value
 
   .ASSERT_LENGTH(args,4,ERROR_NARGS)
 
   .CAR(symbol,args)
-  .SECOND(objstr,args)
+  # VALID_IN_PARROT_0_2_0 .SECOND(objstr,args)
   .THIRD(attrib,args)
   .FOURTH(value,args)
 
-  .ASSERT_TYPE(objstr, "string")
+  # VALID_IN_PARROT_0_2_0 .ASSERT_TYPE(objstr, "string")
   .ASSERT_TYPE(attrib, "string")
 
    attr = attrib
-   objt = objstr
+   # VALID_IN_PARROT_0_2_0 objt = objstr
 
-   concat objt, objt, "\0"
-   concat attr, objt, attr
+   # VALID_IN_PARROT_0_2_0 concat objt, objt, "\0"
+   # VALID_IN_PARROT_0_2_0 concat attr, objt, attr
 
    setattribute symbol, attr, value
    goto DONE

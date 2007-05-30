@@ -16,23 +16,17 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
 .HLL 'Lua', 'lua_group'
 
 
-=item C<lua_argerror (narg, extramsg)>
+=item C<lua_argerror (narg, extramsg, ...)>
 
 =cut
 
 .sub 'lua_argerror'
     .param int narg
-    .param string extramsg
+    .param pmc extramsg :slurpy
     $S1 = narg
-    $S0 = "bad argument #" . $S1
-    $S0 .= " to '"
     new $P0, .Lua
-    $S1 = $P0.'caller'()
-    $S0 .= $S1
-    $S0 .= "' ("
-    $S0 .= extramsg
-    $S0 .= ")"
-    lua_error($S0)
+    $S0 = $P0.'caller'()
+    lua_error("bad argument #", $S1, " to '", $S0, "' (", extramsg :flat, ")")
 .end
 
 
@@ -96,10 +90,7 @@ L3:
     inc i
     goto L1
 L2:
-    $S0 = "invalid option '"
-    concat $S0, name
-    concat $S0, "'"
-    lua_argerror(narg, $S0)
+    lua_argerror(narg, "invalid option '", name, "'")
 .end
 
 
@@ -175,15 +166,16 @@ L1:
 .end
 
 
-=item C<lua_error (message)>
+=item C<lua_error (message, ...)>
 
 =cut
 
 .sub 'lua_error'
-    .param string message
+    .param pmc message :slurpy
+    $S0 = join '', message
     .local pmc ex
     ex = new .Exception
-    ex['_message'] =  message
+    ex['_message'] =  $S0
     throw ex
 .end
 
@@ -231,15 +223,15 @@ L5:
 
 .sub 'lua_getfenv'
     .param pmc o
-    .local pmc ret
+    .local pmc res
     if null o goto L1
     $I0 = can o, 'getfenv'
     unless $I0 goto L1
-    ret = o.'getfenv'()
-    .return (ret)
+    res = o.'getfenv'()
+    .return (res)
 L1:
-    new ret, .LuaNil
-    .return (ret)
+    new res, .LuaNil
+    .return (res)
 .end
 
 
@@ -339,17 +331,17 @@ L5:
 .sub 'lua_newmetatable'
     .param string tname
     .local pmc _lua__REGISTRY
-    .local pmc ret
+    .local pmc res
     _lua__REGISTRY = global '_REGISTRY'
     new $P1, .LuaString
     set $P1, tname
-    ret = _lua__REGISTRY[$P1]
-    $I0 = isa ret, 'LuaNil'
+    res = _lua__REGISTRY[$P1]
+    $I0 = isa res, 'LuaNil'
     unless $I0 goto L1
-    new ret, .LuaTable
-    _lua__REGISTRY[$P1] = ret
+    new res, .LuaTable
+    _lua__REGISTRY[$P1] = res
 L1:
-    .return (ret)
+    .return (res)
 .end
 
 
@@ -427,10 +419,7 @@ L1:
     .param int narg
     .param string got
     .param string expec
-    $S0 = expec
-    concat $S0, " expected, got "
-    concat $S0, got
-    lua_argerror(narg, $S0)
+    lua_argerror(narg, expec, " expected, got ", got)
 .end
 
 
@@ -568,6 +557,124 @@ L1:
     goto L1
 L2:
     .return (table)
+.end
+
+
+=back
+
+=head2 Builtins
+
+=over 4
+
+=item C<infix:==>
+
+=cut
+
+.sub 'infix:=='
+    .param pmc a
+    .param pmc b
+    $I0 = iseq a, b
+    new $P0, .LuaBoolean
+    set $P0, $I0
+    .return ($P0)
+.end
+
+
+=item C<infix:!=>
+
+=cut
+
+.sub 'infix:!='
+    .param pmc a
+    .param pmc b
+    $I0 = isne a, b
+    new $P0, .LuaBoolean
+    set $P0, $I0
+    .return ($P0)
+.end
+
+
+=item C<infix:E<lt>=>
+
+=cut
+
+.sub 'infix:E<gt>='
+    .param pmc a
+    .param pmc b
+    $I0 = isle a, b
+    new $P0, .LuaBoolean
+    set $P0, $I0
+    .return ($P0)
+.end
+
+
+=item C<infix:>=>
+
+=cut
+
+.sub 'infix:E<gt>='
+    .param pmc a
+    .param pmc b
+    $I0 = isge a, b
+    new $P0, .LuaBoolean
+    set $P0, $I0
+    .return ($P0)
+.end
+
+
+=item C<infix:E<lt>>
+
+=cut
+
+.sub 'infix:<'
+    .param pmc a
+    .param pmc b
+    $I0 = islt a, b
+    new $P0, .LuaBoolean
+    set $P0, $I0
+    .return ($P0)
+.end
+
+
+=item C<infix:E<gt>>
+
+=cut
+
+.sub 'infix:>'
+    .param pmc a
+    .param pmc b
+    $I0 = isgt a, b
+    new $P0, .LuaBoolean
+    set $P0, $I0
+    .return ($P0)
+.end
+
+
+=item C<infix:and>
+
+=cut
+
+.sub 'infix:and'
+    .param pmc a
+    .param pmc b
+    if a goto L1
+    .return (a)
+L1:
+    .return (b)
+.end
+
+
+=item C<infix:or>
+
+=cut
+
+.sub 'infix:or'
+    .param pmc a
+    .param pmc b
+    unless a goto L1
+    .return (a)
+L1:
+    .return (b)
 .end
 
 

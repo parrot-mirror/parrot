@@ -1,4 +1,4 @@
-# Copyright (C) 2005, The Perl Foundation.
+# Copyright (C) 2005-2007, The Perl Foundation.
 # $Id$
 
 package init::hints::linux;
@@ -52,6 +52,9 @@ sub runstep {
         }
     }
     else {
+        # hide non-exported symbols
+        $cflags .= ' -fvisibility=hidden';
+
         if ( $ld_share_flags !~ /-fPIC/ ) {
             $ld_share_flags .= ' -fPIC';
         }
@@ -87,6 +90,7 @@ sub runstep {
         libparrot_shared       => 'libparrot$(SHARE_EXT).$(SOVERSION)',
         libparrot_shared_alias => 'libparrot$(SHARE_EXT)',
         libparrot_soname       => '-Wl,-soname=libparrot$(SHARE_EXT).$(SOVERSION)',
+        sym_export             => '__attribute__ ((visibility("default")))',
     );
 
     if ( ( split( '-', $Config{archname} ) )[0] eq 'ia64' ) {

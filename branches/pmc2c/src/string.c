@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -116,9 +116,10 @@ allocating a new buffer.
 
 */
 
-extern int Parrot_in_memory_pool(Interp *, void *);
+extern int Parrot_in_memory_pool(Interp *, void *); /* XXX Move this to a public .h file */
+
 STRING *
-Parrot_make_COW_reference(Interp *interp, STRING *s)
+Parrot_make_COW_reference(Interp *interp, STRING *s /* NULLOK */)
 {
     STRING *d;
     if (s == NULL)
@@ -166,7 +167,7 @@ using the one passed in and returns it.
 */
 
 STRING*
-Parrot_reuse_COW_reference(Interp *interp, STRING *s, STRING *d /*NN*/)
+Parrot_reuse_COW_reference(Interp *interp, STRING *s /*NULLOK*/, STRING *d /*NN*/)
 {
     if (s == NULL) {
         return NULL;
@@ -195,7 +196,7 @@ second.
 */
 
 STRING *
-string_set(Interp *interp, STRING *dest /*NN*/, STRING *src)
+string_set(Interp *interp, STRING *dest /*NN*/, STRING *src /*NULLOK*/)
 {
     if (!src)
         return NULL;
@@ -340,7 +341,7 @@ Returs NULL, if no compatible string representation can be found.
 
 CHARSET *
 string_rep_compatible(Interp *interp,
-                       STRING *a /*NN*/,
+                       const STRING *a /*NN*/,
                        const STRING *b /*NN*/,
                        ENCODING **e /*NN*/)
 {
@@ -399,10 +400,9 @@ So make sure to _use_ the return value.
 */
 
 STRING *
-string_append(Interp *interp,
-    STRING *a, STRING *b)
+string_append(Interp *interp, STRING *a, STRING *b /*NULLOK*/)
 {
-    UINTVAL a_capacity, b_len;
+    UINTVAL a_capacity;
     UINTVAL total_length;
     CHARSET *cs;
     ENCODING *enc;
@@ -410,7 +410,7 @@ string_append(Interp *interp,
     /* XXX should this be a CHARSET method? */
 
     /* If B isn't real, we just bail */
-    b_len = string_length(interp, b);
+    const UINTVAL b_len = string_length(interp, b);
     if (!b_len) {
         return a;
     }
@@ -477,7 +477,7 @@ Make a Parrot string from a specified C string.
 
 STRING *
 string_from_cstring(Interp *interp,
-    const char *buffer, UINTVAL len)
+    const char *buffer /*NULLOK*/, UINTVAL len)
 {
     return string_make_direct(interp, buffer, len ? len :
             buffer ? strlen(buffer) : 0,
@@ -493,6 +493,7 @@ Make a Parrot string from a specified C string.
 
 */
 
+/* XXX This is identical to string_from_cstring and should be removed */
 STRING *
 string_from_const_cstring(Interp *interp,
     const char *buffer, UINTVAL len)
@@ -650,7 +651,7 @@ Grows the Parrot string's buffer by the specified number of characters.
 */
 
 STRING *
-string_grow(Interp * interp, STRING * s, INTVAL addlen)
+string_grow(Interp * interp, STRING * s /*NN*/, INTVAL addlen)
 {
     Parrot_unmake_COW(interp,s);
 
@@ -671,7 +672,7 @@ Returns the number of characters in the specified Parrot string.
 */
 
 UINTVAL
-string_length(Interp *interp, const STRING *s)
+string_length(Interp *interp, const STRING *s /*NULLOK*/)
 {
     return s ? s->strlen : 0;
 }
@@ -724,9 +725,7 @@ string_str_index(Interp *interp, const STRING *s,
     if (!string_length(interp, s2))
         return -1;
 
-    saneify_string(s);
-    saneify_string(s2);
-    src = (STRING *)const_cast(s);
+    src    = (STRING *)const_cast(s);
     search = (STRING *)const_cast(s2);
 
     return CHARSET_INDEX(interp, src, search, start);
@@ -804,7 +803,7 @@ Creates and returns a copy of the specified Parrot string.
 */
 
 STRING *
-string_copy(Interp *interp, STRING *s)
+string_copy(Interp *interp, STRING *s /*NULLOK*/)
 {
     return Parrot_make_COW_reference(interp, s);
 }
@@ -836,7 +835,7 @@ of characters in the specified Parrot string's representation.
 */
 
 INTVAL
-string_max_bytes(Interp *interp, STRING *s, INTVAL nchars)
+string_max_bytes(Interp *interp, const STRING *s, INTVAL nchars)
 {
     assert(s->encoding);
     return ENCODING_MAX_BYTES_PER_CODEPOINT(interp, s) * nchars;
@@ -854,7 +853,7 @@ created and returned.
 */
 
 STRING *
-string_concat(Interp *interp, STRING *a, STRING *b, UINTVAL Uflags)
+string_concat(Interp *interp, STRING *a /*NULLOK*/, STRING *b /*NULLOK*/, UINTVAL Uflags)
 {
     if (a != NULL && a->strlen != 0) {
         if (b != NULL && b->strlen != 0) {
@@ -1013,8 +1012,8 @@ A negative offset is allowed to replace from the end.
 */
 
 STRING *
-string_replace(Interp *interp, STRING *src,
-    INTVAL offset, INTVAL length, STRING *rep, STRING **d)
+string_replace(Interp *interp, STRING *src /*NULLOK*/,
+    INTVAL offset, INTVAL length, STRING *rep /*NULLOK*/, STRING **d)
 {
     STRING *dest = NULL;
     UINTVAL start_byte, end_byte;
@@ -1204,7 +1203,7 @@ string_chopn(Interp *interp, STRING *s, INTVAL n, int in_place)
 
 
 INTVAL
-string_compare(Interp *interp, STRING *s1, STRING *s2)
+string_compare(Interp *interp, const STRING *s1, const STRING *s2)
 {
     if (!s1 && !s2) {
         return 0;
@@ -1235,7 +1234,7 @@ otherwise.
 */
 
 INTVAL
-string_equal(Interp *interp, STRING *s1, STRING *s2)
+string_equal(Interp *interp, const STRING *s1, const STRING *s2)
 {
     if ((s1 == s2) || (!s1 && !s2)) {
         return 0;
@@ -1853,7 +1852,7 @@ result in a memory leak.
 */
 
 char *
-string_to_cstring(Interp *interp, STRING * s)
+string_to_cstring(Interp *interp, const STRING * const s /* NULLOK */)
 {
     char *p;
     /*
@@ -1882,7 +1881,8 @@ sorts of leak potential otherwise.
 void
 string_cstring_free(char *p)
 {
-    mem_sys_free(p);
+    DECL_CONST_CAST;
+    mem_sys_free((void *)const_cast(p));
 }
 
 /*
@@ -1991,7 +1991,7 @@ greater than this as I<\x{hh...hh}>.
 */
 
 STRING *
-string_escape_string(Interp *interp, STRING *src)
+string_escape_string(Interp *interp, const STRING *src)
 {
     return string_escape_string_delimited(interp, src,
             (UINTVAL) ~0);
@@ -2007,7 +2007,7 @@ Like above but limit output to len chars (used for trace output of strings).
 
 STRING *
 string_escape_string_delimited(Interp *interp,
-        STRING *src, UINTVAL limit)
+        const STRING *src, UINTVAL limit)
 {
     STRING *result, *hex;
     UINTVAL i, len, charlen;
