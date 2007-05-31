@@ -595,7 +595,7 @@ EOC
         my $proto = proto( $method->return_type, $method->parameters );
         my $method_name = $method->name;
         my $symbol_name = defined $method->symbol ? $method->symbol : $method->name;
-        if ( exists $method->{pre_block} ) {
+        if ( exists $method->{PCCMETHOD} ) {
             $cout .= <<"EOC";
         register_raw_nci_method_in_ns(interp, entry,
             F2DPTR(Parrot_${classname}_${method_name}), "$symbol_name");

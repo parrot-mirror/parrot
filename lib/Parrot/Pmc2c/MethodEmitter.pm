@@ -58,7 +58,7 @@ sub generate_body {
     $emit->($self->decl( $pmc, 'CFILE' ));
     $emit->("{\n");
     $emit->($body);
-    $emit->("}\n\n");
+    $emit->("}\n");
 
     for my $mmd ( @{ $self->mmds } ) {
         $mmd->generate_body($pmc);

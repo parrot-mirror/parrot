@@ -151,12 +151,13 @@ sub parse_mmds {
         $lineno += count_newlines($1);
         my $right_type = $2;
         $method->add_mmd_rights($right_type);
-        my $mmd_part = extract_bracketed_body_text( $body_text, '{' );
+        my $mmd_part = extract_bracketed_body_text( \$body_text, '{' );
         die "Empty MMD body near '$body_text'" if ( !$mmd_part );
         my $mmd_part_lines = count_newlines($mmd_part);
         #$mmd_part =~ s/(\n\s*)$//s;
         if ( $right_type eq 'DEFAULT' ) {
             $default_body = $mmd_part;
+            print "$right_type $default_body \n";
             $default_body_lineno = $lineno;
         }
         else {
@@ -188,7 +189,7 @@ sub strip_outer_brackets {
 
 sub extract_bracketed_body_text {
     my ( $body_text, $bracketed ) = @_;
-    return strip_outer_brackets( extract_bracketed( $body_text, $bracketed ) );
+    return strip_outer_brackets( extract_bracketed( $$body_text, $bracketed ) );
 
 }
 

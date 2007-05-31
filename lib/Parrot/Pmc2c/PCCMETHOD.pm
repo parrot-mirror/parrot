@@ -250,7 +250,6 @@ END
         string_from_const_cstring(interp, $returns_flags, 0), 0);
     $goto_string
     /*END PCCRETURN $returns */
-}
 END
         $matched->replace($match, $e);
     }
@@ -425,19 +424,15 @@ $method_returns
 END
     $e_post->emit(<<"END", __FILE__, __LINE__ + 1);
 
-    /* if (PMC_cont(ccont)->address) { */
-    {
-        /* parrot_context_t * const caller_ctx = PMC_cont(ccont)->to_ctx; */
-        if (! caller_ctx) {
-            /* there is no point calling real_exception here, because
-               PDB_backtrace can't deal with a missing to_ctx either. */
-            internal_exception(1, "No caller_ctx for continuation \%p.", ccont);
-        }
-
-        interp->returns_signature = return_sig;
-        parrot_pass_args(interp, ctx, caller_ctx, return_indexes,
-            caller_ctx->current_results, PARROT_PASS_RESULTS);
+    if (! caller_ctx) {
+        /* there is no point calling real_exception here, because
+           PDB_backtrace can't deal with a missing to_ctx either. */
+        internal_exception(1, "No caller_ctx for continuation \%p.", ccont);
     }
+
+    interp->returns_signature = return_sig;
+    parrot_pass_args(interp, ctx, caller_ctx, return_indexes,
+        caller_ctx->current_results, PARROT_PASS_RESULTS);
 
     /* END PARAMS SCOPE */
     }
@@ -454,6 +449,7 @@ END
     $e_body->emit($self->body);
     $e_body->emit($e_post);
     $self->body($e_body);
+    $self->{PCCMETHOD} = 1;
     
     return 1;
 }
