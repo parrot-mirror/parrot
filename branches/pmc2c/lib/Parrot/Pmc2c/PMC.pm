@@ -122,6 +122,13 @@ sub implements_vtable {
     return get_method($self, $vt_meth)->is_vtable;
 }
 
+sub unimplemented_vtable {
+    my ( $self, $vt_meth ) = @_;
+    return 0 if $vt_meth eq 'class_init';
+    return 0 if $self->has_method($vt_meth);
+    return 1;
+}
+
 sub normal_unimplemented_vtable {
     my ( $self, $vt_meth ) = @_;
     return 0 if $vt_meth eq 'class_init';

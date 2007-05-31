@@ -71,7 +71,25 @@ sub new {
     # (e.g. some ro_fail pseudoclass that generates an exception)
     foreach my $vt_method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $vt_method->name;
-        if ( $parent->vtable_method_does_write($vt_method_name) ) {
+        if ( $vt_method_name eq 'find_method' ) {
+            my $ro_method = Parrot::Pmc2c::Method->new({
+                name        => $vt_method_name,
+                return_type => $vt_method->return_type,
+                parameters  => $vt_method->parameters,
+                type        => Parrot::Pmc2c::Method::VTABLE,
+                });
+          my $real_findmethod = 'Parrot_' . $self->{super}{find_method} . '_find_method';
+          my $body = <<"EOC";
+    PMC *const method = $real_findmethod(interp, pmc, method_name);
+    if (!PMC_IS_NULL(VTABLE_getprop(interp, method, const_string(interp, "write"))))
+        return PMCNULL;
+    else
+        return method;
+EOC
+            $ro_method->body(Parrot::Pmc2c::Emitter->text($body));
+            $self->add_method($ro_method);
+        }
+        elsif ( $parent->vtable_method_does_write($vt_method_name) ) {
             my $ro_method = Parrot::Pmc2c::Method->new({
                 name        => $vt_method_name,
                 return_type => $vt_method->return_type,
@@ -81,8 +99,8 @@ sub new {
             my $pmcname = $parent->name;
             my $ret = gen_ret($ro_method);
             my $body = <<EOC;
-
-    internal_exception(WRITE_TO_CONSTCLASS, "$vt_method_name() in read-only instance of $pmcname");
+    internal_exception(WRITE_TO_CONSTCLASS,
+            "$vt_method_name() in read-only instance of $pmcname");
 EOC
             $body .= "    $ret\n" if $ret;
             $ro_method->body(Parrot::Pmc2c::Emitter->text($body));
