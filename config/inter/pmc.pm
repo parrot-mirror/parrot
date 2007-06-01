@@ -144,16 +144,14 @@ PMC2C_FILES = \\
 \t\tlib/Parrot/Pmc2c/MethodEmitter.pm \\
 \t\tlib/Parrot/Pmc2c/Library.pm \\
 \t\tlib/Parrot/Pmc2c/UtilFunctions.pm \\
-\t\tlib/Parrot/Pmc2c/PMCEmitter/default.pm \\
-\t\tlib/Parrot/Pmc2c/PMCEmitter/delegate.pm \\
-\t\tlib/Parrot/Pmc2c/PMCEmitter/deleg_pmc.pm \\
-\t\tlib/Parrot/Pmc2c/PMCEmitter/Standard.pm \\
-\t\tlib/Parrot/Pmc2c/PMCEmitter/Null.pm \\
-\t\tlib/Parrot/Pmc2c/PMCEmitter/Ref.pm \\
-\t\tlib/Parrot/Pmc2c/PMCEmitter/SharedRef.pm \\
-\t\tlib/Parrot/Pmc2c/PMCEmitter/StmRef.pm \\
+\t\tlib/Parrot/Pmc2c/PMC/default.pm \\
+\t\tlib/Parrot/Pmc2c/PMC/delegate.pm \\
+\t\tlib/Parrot/Pmc2c/PMC/deleg_pmc.pm \\
+\t\tlib/Parrot/Pmc2c/PMC/Null.pm \\
+\t\tlib/Parrot/Pmc2c/PMC/Ref.pm \\
+\t\tlib/Parrot/Pmc2c/PMC/SharedRef.pm \\
+\t\tlib/Parrot/Pmc2c/PMC/STMRef.pm \\
 \t\tlib/Parrot/Pmc2c/PMC/RO.pm
-
 END
 
     foreach my $pmc ( split( /\s+/, $pmc_list ) ) {
@@ -170,7 +168,7 @@ END
 src/pmc/$pmc.c : src/pmc/$pmc.dump
 \t\$(PMC2CC) src/pmc/$pmc.pmc
 
-src/pmc/$pmc.dump : \$(PMC2C_FILES) vtable.dump $parent_dumps src/pmc/$pmc.pmc
+src/pmc/$pmc.dump : vtable.dump $parent_dumps src/pmc/$pmc.pmc \$(PMC2C_FILES) 
 \t\$(PMC2CD) src/pmc/$pmc.pmc 
 
 src/pmc/pmc_$pmc.h: src/pmc/$pmc.c

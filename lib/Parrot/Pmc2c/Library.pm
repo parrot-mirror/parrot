@@ -48,8 +48,7 @@ sub new {
     my %emitters;
 
     foreach my $pmc ( values %pmcs ) {
-        my $pmc_copy = $pmc->new($pmc);
-        $emitters{$pmc->filename} = Parrot::Pmc2c::PMCEmitter->new( $pmc_copy, $vtable_dump, $opt );
+        $emitters{$pmc->filename} = Parrot::Pmc2c::PMC->prep_for_emit($pmc, $vtable_dump);
     }
 
     return bless {
@@ -59,7 +58,7 @@ sub new {
     }, $class;
 }
 
-sub generate_libarary($$) {
+sub generate_library($$) {
     my ( $self, $library_name ) = @_;
     my $h_name  = "$library_name.h";
     my $c_name  = "$library_name.c";
@@ -90,7 +89,7 @@ sub write_all_files {
     my $library_name = $self->{opt}{library};
 
     if ($library_name) {
-        generate_library( $self, $library_name);
+        generate_library($self, $library_name);
     }
     else {
         for my $emitter ( values %{ $self->{emitters} } ) {

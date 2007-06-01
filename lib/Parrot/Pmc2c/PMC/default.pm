@@ -1,16 +1,16 @@
 
-=head1 Parrot::Pmc2c::default Instance Methods
+=head1 Parrot::Pmc2c::PMC::default Instance Methods
 
 =over 4
 
 =cut
 
-package Parrot::Pmc2c::PMCEmitter::default;
+package Parrot::Pmc2c::PMC::default;
 use strict;
 use warnings;
 use Data::Dumper;
 use Parrot::Pmc2c::UtilFunctions qw( gen_ret );
-use base qw( Parrot::Pmc2c::PMCEmitter );
+use base qw( Parrot::Pmc2c::PMC );
 
 =item C<pre_method_gen()>
 

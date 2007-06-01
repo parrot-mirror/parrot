@@ -1,9 +1,6 @@
-
 =head1 Parrot::Pmc2c::Standard Instance Methods
 
 Standard behavior.
-
-=over 4
 
 =cut
 

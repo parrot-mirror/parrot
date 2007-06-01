@@ -1,12 +1,11 @@
-
 =head1 Parrot::Pmc2c::delegate Instance Methods
 
 =over 4
 
 =cut
 
-package Parrot::Pmc2c::PMCEmitter::delegate;
-use base 'Parrot::Pmc2c::PMCEmitter';
+package Parrot::Pmc2c::PMC::delegate;
+use base 'Parrot::Pmc2c::PMC';
 use strict;
 use warnings;
 
@@ -15,8 +14,6 @@ use warnings;
 Returns the C code for the method body.
 
 The C<delegate> PMC redirects all methods to bytecode.
-
-=back
 
 =cut
 
@@ -29,13 +26,16 @@ sub pre_method_gen {
         next unless $self->normal_unimplemented_vtable($vt_method_name);
         my $new_default_method = $method->clone();
         my ( $func_ret, $ret_suffix, $args, $sig ) = $self->signature($method);
+        my $super_args = $args;
+        $super_args =~ s/^,//;
 
         $new_default_method->body(Parrot::Pmc2c::Emitter->text(<<"EOC"));
 
     STRING *meth = CONST_STRING(interp, "$vt_method_name");
     PMC *sub = Parrot_find_vtable_meth(interp, pmc, meth);
     if (PMC_IS_NULL(sub))
-        vtable_meth_not_found(interp, pmc, "$vt_method_name");
+        return SUPER($super_args);
+        /* vtable_meth_not_found(interp, pmc, "$vt_method_name"); */
     ${func_ret}Parrot_run_meth_fromc_args$ret_suffix(interp, sub, pmc, meth, "$sig"$args);
 EOC
         $new_default_method->type(Parrot::Pmc2c::Method::VTABLE);
@@ -75,6 +75,8 @@ sub trans {
 =item C<signature($params)>
 
 Returns the method signature for C<$params>.
+
+=back
 
 =cut
 

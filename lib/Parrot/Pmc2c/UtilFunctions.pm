@@ -96,7 +96,7 @@ Parrot_PMC Parrot_lib_${lc_libname}_load(Parrot_Interp interp)
     Parrot_PMC    pmc;
 EOC
     while ( my ( $class, $info ) = each %classes ) {
-        next if $info->{flags}->{noinit};
+        next if $info->{flags}{noinit};
         $cout .= <<"EOC";
     Parrot_Int type${class};
 EOC
@@ -118,7 +118,7 @@ EOC
      */
 EOC
     while ( my ( $class, $info ) = each %classes ) {
-        my $lhs = $info->{flags}->{noinit} ? "" : "type$class = ";
+        my $lhs = $info->{flags}{noinit} ? "" : "type$class = ";
         $cout .= <<"EOC";
     whoami = const_string(interp, "$class");
     ${lhs}pmc_register(interp, whoami);
@@ -130,7 +130,7 @@ EOC
     for (pass = 0; pass <= 1; ++pass) {
 EOC
     while ( my ( $class, $info ) = each %classes ) {
-        next if $info->{flags}->{noinit};
+        next if $info->{flags}{noinit};
         $cout .= <<"EOC";
         Parrot_${class}_class_init(interp, type$class, pass);
 EOC

@@ -5,8 +5,8 @@
 
 =cut
 
-package Parrot::Pmc2c::PMCEmitter::Null;
-use base 'Parrot::Pmc2c::PMCEmitter';
+package Parrot::Pmc2c::PMC::Null;
+use base 'Parrot::Pmc2c::PMC';
 use strict;
 use warnings;
 use Parrot::Pmc2c::UtilFunctions qw( gen_ret );
@@ -35,7 +35,7 @@ sub pre_method_gen {
         my $ret = "";
         $ret = gen_ret($method);
         my $output = <<EOC;
-    real_exception(interp, NULL, NULL_REG_ACCESS, "Null PMC access in $meth()");
+    real_exception(interp, NULL, NULL_REG_ACCESS, "Null PMC access in $vt_method_name()");
 EOC
         $output .= $ret if $ret;
         $new_default_method->body(Parrot::Pmc2c::Emitter->text($output));
