@@ -60,7 +60,7 @@ sub parse_pmc {
     my ($preamble, $pmcname, $flags, $parents, $pmcbody, $post, $chewed_lines)
         = parse_top_level( $code );
    
-    my $pmc = Parrot::Pmc2c::PMC->new();
+    my $pmc = Parrot::Pmc2c::PMC->create($pmcname);
     $pmc->preamble( Parrot::Pmc2c::Emitter->text($preamble, $filename, 1));
     $pmc->name($pmcname);
     $pmc->set_filename($filename);
@@ -95,7 +95,9 @@ sub parse_pmc {
             = ( $2, $3, $4, $5, parse_method_attrs($6));
         ( my $methodblock, $pmcbody ) = extract_balanced($pmcbody);
         $methodblock = strip_outer_brackets($methodblock);
-        $methodblock =~ s/^[ ]{4}//mg;
+        $methodblock =~ s/^[ ]{4}//mg; #remove pmclass 4 space indent
+        $methodblock =~ s/\n\s+$/\n/g; #trim trailing whitespace from lastline
+
 
         my $method = Parrot::Pmc2c::Method->new( {
             name        => $methodname,
@@ -136,6 +138,8 @@ sub parse_pmc {
     $pmc->postamble(Parrot::Pmc2c::Emitter->text($post, $filename, $lineno));
     #ensure class_init is the last method in the method list
     $pmc->add_method($class_init) if $class_init;
+    $pmc->vtable($pmc2cMain->read_dump("vtable.pmc"));
+    $pmc->pre_method_gen();
 
     return $pmc;
 }
@@ -151,13 +155,12 @@ sub parse_mmds {
         $lineno += count_newlines($1);
         my $right_type = $2;
         $method->add_mmd_rights($right_type);
-        my $mmd_part = extract_bracketed_body_text( \$body_text, '{' );
+        ( my $mmd_part, $body_text ) = extract_bracketed_body_text( $body_text, '{' );
         die "Empty MMD body near '$body_text'" if ( !$mmd_part );
         my $mmd_part_lines = count_newlines($mmd_part);
-        #$mmd_part =~ s/(\n\s*)$//s;
+        $mmd_part =~ s/\n\s*$/\n/s;  #remove whitespace at end of last line
         if ( $right_type eq 'DEFAULT' ) {
             $default_body = $mmd_part;
-            print "$right_type $default_body \n";
             $default_body_lineno = $lineno;
         }
         else {
@@ -189,7 +192,8 @@ sub strip_outer_brackets {
 
 sub extract_bracketed_body_text {
     my ( $body_text, $bracketed ) = @_;
-    return strip_outer_brackets( extract_bracketed( $$body_text, $bracketed ) );
+    my ( $extracted, $remaining ) = extract_bracketed( $body_text, $bracketed );
+    return ( strip_outer_brackets( $extracted ), $remaining );
 
 }
 
@@ -265,8 +269,8 @@ sub parse_top_level {
     return ($preamble, $pmcname, $flags, $parents, $body, $postamble, $chewed_lines);
 }
   
-our %has_value = map { $_ => 1 } qw(group lib hll);
-our %has_values = map { $_ => 1 } qw(does extends maps);
+our %has_value = map { $_ => 1 } qw(group hll);
+our %has_values = map { $_ => 1 } qw(does extends maps lib);
 
 sub parse_flags {
     my ( $data, $pmcname ) = @_;

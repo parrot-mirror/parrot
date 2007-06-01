@@ -5,8 +5,8 @@
 
 =cut
 
-package Parrot::Pmc2c::PMCEmitter::Ref;
-use base 'Parrot::Pmc2c::PMCEmitter';
+package Parrot::Pmc2c::PMC::Ref;
+use base 'Parrot::Pmc2c::PMC';
 use strict;
 use warnings;
 use Parrot::Pmc2c::UtilFunctions qw( gen_ret );

@@ -1,5 +1,25 @@
 # Copyright (C) 2004-2006, The Perl Foundation.
-# $Id: Parser.pm 18503 2007-05-11 07:39:22Z paultcochrane $
+# $Id: PMC
+# PMC.pm 18503 2007-05-11 07:39:22Z paultcochrane $
+#
+=head1 NAME
+
+Parrot::Pmc2c::PMC - PMC model object  
+
+=head1 SYNOPSIS
+
+    use Parrot::Pmc2c::PMC;
+
+=head1 DESCRIPTION
+
+C<Parrot::Pmc2c::PMC> is used by F<tools/build/pmc2c.pl> to generate C code from PMC files.
+
+=head2 Functions
+
+=over
+
+=cut
+
 package Parrot::Pmc2c::PMC;
 use strict;
 use warnings;
@@ -9,6 +29,19 @@ use Data::Dumper;
 use Parrot::PMC;
 use Parrot::Pmc2c::UtilFunctions qw(spew);
 use Parrot::Pmc2c::Method;
+
+sub create {
+    my ( $this, $pmc_classname ) = @_;
+
+    my $classname = ref($this) || $this;
+
+    #test to see if specific subclass exists
+    eval "use ${classname}::$pmc_classname";
+    $classname = $@ ? "$classname" : "${classname}::${pmc_classname}";
+    my $self = Parrot::Pmc2c::PMC->new;
+    bless $self, $classname;
+    $self;
+}
 
 sub new {
     my ( $class, $self ) = @_;
@@ -59,7 +92,7 @@ sub inherits_method {
 
 sub parent_has_method {
     my ( $self, $parent_name, $vt_meth) = @_;
-    return $self->{has_parent}{$parent_name}{$vt_meth};
+    return exists $self->{'has_parent'}{$parent_name}{$vt_meth};
 }
 
 #parents
@@ -75,7 +108,7 @@ sub add_parent {
 
 Determines if a given PMC type is dynamically loaded or not.
 
-=item C<implements($method)>
+=item C<implements_vtable($method)>
 
 True if pmc generates code for vtable method C<$method>.
 
@@ -166,7 +199,7 @@ sub set_parents {
 }
 sub set_flag {
     my ( $self, $name, $value ) = @_;
-    $self->{flags}->{$name} = ($value or 1);
+    $self->{flags}{$name} = ($value or 1);
     return $self->flag($name);
 }
 sub set_flags {
@@ -194,7 +227,7 @@ sub ro {
 }
 sub flag {
     my ( $self, $name ) = @_;
-    return $self->{flags}->{$name};
+    return $self->{flags}{$name};
 }
 sub preamble {
     my ( $self, $value ) = @_;
@@ -234,6 +267,8 @@ sub method_attrs {
 
 Returns true if the vtable method C<$method> writes our value.
 
+=back
+
 =cut
 
 sub vtable_method_does_write {
@@ -251,15 +286,13 @@ sub super_method {
         my $super_pmc_name;
         if (ref($super_pmc)) {
             $super_pmc_name = $super_pmc->name;
-            #print "---- $vt_meth $super_pmc_name\n";
-            #copy over the supers vt_meth attributes
+            
             my $super_method = $super_pmc->get_method($vt_meth);
 
             $self->super_attrs($vt_meth, $super_method->attrs);
 
             $self->inherit_attrs($vt_meth) if $self->get_method($vt_meth);
 
-            #print Dumper($super_method);
             my $super_mmd_rights = $super_method->mmd_rights;
             if ( $super_mmd_rights && scalar @{$super_mmd_rights} ) {
                 $self->{super_mmd_rights}{$vt_meth}->{$super_pmc_name} = $super_mmd_rights;
@@ -295,6 +328,7 @@ within C<dump_pmc()>.
 
 B<Comments:> Called within C<gen_super_meths()>.
 
+
 =cut
 
 sub inherit_attrs {
@@ -310,6 +344,31 @@ sub inherit_attrs {
     return $;
 }
 
+=head2 These are auxiliary subroutines called inside the methods described above.
+
+=head3 C<dump_is_current()>
+
+    dump_is_current($existing);
+
+B<Purpose:>  Determines whether the dump of a file is newer than the PMC file.
+(If it's not, then the PMC file has changed and the dump has not been updated.)
+
+B<Arguments:>  String holding filename.
+
+B<Return Values:>  Returns true if timestamp of existing is more recent than
+that of PMC.
+
+B<Comments:>  Called within C<dump_pmc()>.
+
+=cut
+
+sub dump_is_current {
+    my ( $self ) = @_;
+    my $dumpfile = $self->filename('.dump');
+    my $pmcfile  = $self->filename('.pmc');
+    return 0 unless -e $dumpfile;
+    return ( stat $dumpfile )[9] > ( stat $pmcfile )[9];
+}
 
 
 1;

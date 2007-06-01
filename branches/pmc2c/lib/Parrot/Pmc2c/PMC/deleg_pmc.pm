@@ -1,12 +1,14 @@
-package Parrot::Pmc2c::PMCEmitter::deleg_pmc;
-use base 'Parrot::Pmc2c::PMCEmitter';
+package Parrot::Pmc2c::PMC::deleg_pmc;
+use base 'Parrot::Pmc2c::PMC';
 use strict;
 use warnings;
 use Parrot::Pmc2c::UtilFunctions qw( gen_ret );
 
-=item C<body($method,)>
+=over 4
 
-Returns the C code for the method body.
+=item C<pre_method_gen()>
+
+Autogenerates a PMC deleg_pmc method.
 
 Overrides the default implementation to direct all unknown methods to
 the PMC in the first attribute slot.
@@ -22,21 +24,20 @@ sub pre_method_gen {
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
         next unless $self->normal_unimplemented_vtable($vt_method_name);
-        my $new_default_method = $method->clone();
+        my $new_method = $method->clone();
 
         my $n    = 0;
         my @args = grep { $n++ & 1 ? $_ : 0 } split / /, $method->parameters;
         my $arg  = @args ? ", " . join( ' ', @args ) : '';
         my $ret  = gen_ret( $method, "VTABLE_$vt_method_name(interp, attr$arg)" );
-        $new_default_method->body(Parrot::Pmc2c::Emitter->text(<<"EOC"));
+        $new_method->body(Parrot::Pmc2c::Emitter->text(<<"EOC"));
     PMC *attr = get_attrib_num(PMC_data_typed(pmc, SLOTTYPE *), 0);
     $ret
 EOC
-
-        $new_default_method->type(Parrot::Pmc2c::Method::VTABLE);
-        $self->add_method($new_default_method);
+        $new_method->type(Parrot::Pmc2c::Method::VTABLE);
+        $self->add_method($new_method);
     }
-return 1;
+  return 1;
 }
 
 1;

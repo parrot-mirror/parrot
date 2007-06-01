@@ -1,6 +1,6 @@
 # Copyright (C) 2004-2007, The Perl Foundation.
 
-# $Id: Pmc2c.pm 18426 2007-05-05 14:41:57Z bernhard $
+# $Id$
 
 =head1 NAME
 

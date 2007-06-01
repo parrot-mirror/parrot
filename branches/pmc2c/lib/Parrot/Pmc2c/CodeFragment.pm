@@ -1,5 +1,5 @@
 # Copyright (C) 2004-2006, The Perl Foundation.
-# $Id: Parser.pm 18503 2007-05-11 07:39:22Z paultcochrane $
+# $Id$
 package Parrot::Pmc2c::CodeFragment;
 use strict;
 use warnings;

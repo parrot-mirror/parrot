@@ -1,14 +1,14 @@
 =head1 NAME
 
-Parrot::Pmc2c - PMC to C Code Generation
+Parrot::Pmc2c::PMCEmitter - PMC to C Code Generation
 
 =head1 SYNOPSIS
 
-    use Parrot::Pmc2c;
+    use Parrot::Pmc2c::PMCEmitter;
 
 =head1 DESCRIPTION
 
-C<Parrot::Pmc2c> is used by F<tools/build/pmc2c.pl> to generate C code from PMC files.
+C<Parrot::Pmc2c::PMCEmitter> is used by F<tools/build/pmc2c.pl> to generate C code from PMC files.
 
 =head2 Functions
 
@@ -16,11 +16,9 @@ C<Parrot::Pmc2c> is used by F<tools/build/pmc2c.pl> to generate C code from PMC 
 
 =cut
 
-package Parrot::Pmc2c::PMCEmitter;
+package Parrot::Pmc2c::PMC;
 use strict;
 use warnings;
-use base qw( Exporter Parrot::Pmc2c::PMC);
-our @EXPORT_OK = qw( );
 use Data::Dumper;
 use Parrot::Pmc2c::Emitter;
 use Parrot::Pmc2c::Method;
@@ -30,28 +28,13 @@ use Parrot::Pmc2c::UtilFunctions
 use Text::Balanced 'extract_bracketed';
 use Parrot::Pmc2c::PCCMETHOD;
 use Parrot::Pmc2c::PMC::RO;
-use Parrot::Pmc2c::PMCEmitter::Standard;
-use Parrot::Pmc2c::PMCEmitter::default;
-use Parrot::Pmc2c::PMCEmitter::delegate;
-use Parrot::Pmc2c::PMCEmitter::deleg_pmc;
-use Parrot::Pmc2c::PMCEmitter::Ref;
-use Parrot::Pmc2c::PMCEmitter::SharedRef;
-use Parrot::Pmc2c::PMCEmitter::StmRef;
 
-sub new {
-    my ( $this, $pmc_dump, $vtable_dump, $options ) = @_;
+sub prep_for_emit {
+    my ( $this, $pmc, $vtable_dump ) = @_;
 
-    #determine blessed classname
-    my $classname = ref($this) || $this;
-    my $pmc_classname = $pmc_dump->name;
-    #test to see if specific subclass exists
-    eval "use ${classname}::$pmc_classname";
-    $classname = $@ ? "${classname}::Standard" : "${classname}::${pmc_classname}";
-
-    bless $pmc_dump, $classname;
-    $pmc_dump->vtable($vtable_dump);
-    $pmc_dump->init();
-    $pmc_dump;
+    $pmc->vtable($vtable_dump);
+    $pmc->init();
+    $pmc;
 }
 
 sub generate {
@@ -80,7 +63,6 @@ sub generate_c_file {
     $c->emit( "#define PARROT_IN_EXTENSION\n" ) if ( $self->is_dynamic );
     $c->emit( $self->preamble );
     $self->gen_includes;
-    $self->pre_method_gen;
     $self->gen_methods;
     my $ro = $self->ro;
     if ( $ro ) {
@@ -190,7 +172,7 @@ sub fixup_singleton {
     # (because the MRO will still be shared).
     unless ( $self->implements_vtable('pmc_namespace') 
             or $self->super_method('pmc_namespace') ne 'default' ) {
-        my $body = Parrot::Pmc2c::Emitter->text('{ return INTERP->vtables[SELF->vtable->base_type]->_namespace; }');
+        my $body = Parrot::Pmc2c::Emitter->text("  return INTERP->vtables[SELF->vtable->base_type]->_namespace;\n");
         $self->add_method( Parrot::Pmc2c::Method->new( {
             name        => 'pmc_namespace',
             parameters  => '',
@@ -482,6 +464,7 @@ sub init_func {
     my $class_init_code = "";
     $class_init_code =  $self->get_method('class_init')->body if $self->has_method('class_init');
     $class_init_code =~ s/INTERP/interp/g;
+    $class_init_code =~ s/^/        /mg;  #fix indenting
 
     my %extra_vt;
 
@@ -618,7 +601,11 @@ EOC
     $cout .= <<"EOC";
         /* class_init */
 EOC
-    $cout .= "    $class_init_code\n" if $class_init_code;
+    $cout .= <<"EOC" if $class_init_code;
+        {
+$class_init_code
+        }
+EOC
 
     $cout .= <<"EOC";
         {
@@ -678,9 +665,12 @@ EOC
 True if this class generates code for the method C<$method>.
 
 =cut
+
 =item C<implements_vtable($method)>
 
 True if this class generates code for VTABLE method C<$method>.
+
+=back
 
 =cut
 
@@ -696,21 +686,6 @@ sub vtable {
     return $self->{vtable};
 }
 
-=back
-
-=cut
-=pod
-require Parrot::Pmc2c::default;
-require Parrot::Pmc2c::delegate;
-require Parrot::Pmc2c::deleg_pmc;
-require Parrot::Pmc2c::Null;
-require Parrot::Pmc2c::Ref;
-require Parrot::Pmc2c::SharedRef;
-require Parrot::Pmc2c::Standard;
-require Parrot::Pmc2c::StandardConst;
-require Parrot::Pmc2c::StandardRO;
-require Parrot::Pmc2c::StmRef;
-=cut
 1;
 
 # Local Variables:
