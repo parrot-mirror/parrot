@@ -16,17 +16,13 @@ This compiler defines the following stages:
 
 =item * parse F<languages/lua/src/lua51.pg>
 
-=item * past  F<languages/lua/src/ASTGrammar.tg>
+=item * PAST  F<languages/lua/src/PASTGrammar.tg>
 
-=item * post  F<languages/lua/src/OSTGrammar.tg>
-
-=item * pir   F<languages/lua/src/PIRGrammar.tg>
-
-=item * run
+=item * POST  F<languages/lua/src/POSTGrammar.tg>
 
 =back
 
-Used by F<languages/lua/luac.pir>.
+Used by F<languages/lua/lua.pir>.
 
 =cut
 
@@ -43,6 +39,7 @@ Used by F<languages/lua/luac.pir>.
     $P0.'language'('Lua')
     $P0.'parsegrammar'('Lua::Grammar')
     $P0.'astgrammar'('Lua::PAST::Grammar')
+    $P0.'ostgrammar'('Lua::POST::Grammar')
 
     $S0 = "Lua 5.1 on Parrot  Copyright (C) 2005-2007, The Perl Foundation.\n"
     $P0.'commandline_banner'($S0)
@@ -99,7 +96,7 @@ L<http://www.lua.org/manual/5.1/manual.html#2.1>.
     .param string message :optional
     unless null message goto L1
     message = 'syntax error'
-L1:
+  L1:
     lexerror(mob, message)
 .end
 
@@ -125,7 +122,7 @@ L1:
     $S0 .= " near '"
     $S0 .= $S1
     $S0 .= "'"
-L1:
+  L1:
     .local pmc ex
     ex = new .Exception
     ex['_message'] = $S0
@@ -174,7 +171,7 @@ for internal global variables used by Lua.
     if $S0 == '_' goto L1
     $I0 = is_cclass .CCLASS_ALPHABETIC, target, pos
     if $I0 == 0 goto L2
-L1:
+  L1:
     $I0 = pos
     pos = find_not_cclass .CCLASS_WORD, target, pos, lastpos
     $I1 = pos - $I0
@@ -184,11 +181,11 @@ L1:
     unless null kw goto L3
     kw = _const_keyword()
     set_hll_global 'keyword', kw
-L3:
+  L3:
     $I0 = exists kw[$S0]
     if $I0 goto L2
     mpos = pos
-L2:
+  L2:
     .return (mob)
 .end
 
@@ -242,7 +239,7 @@ by prefixing them with C<0x>. Examples of valid numerical constants are
 
     target = mob.'text'()
     lastpos = length target
-L_alt1:     #   0 [Xx] <xdigit>+
+  L_alt1:     #   0 [Xx] <xdigit>+
     pos = 0
     $S0 = substr target, pos, 1
     unless $S0 == '0' goto L_alt2
@@ -255,7 +252,7 @@ L_alt1:     #   0 [Xx] <xdigit>+
     if $I0 == 0 goto L_alt2
     pos = find_not_cclass .CCLASS_HEXADECIMAL, target, pos, lastpos
     goto L_end
-L_alt2:     #   <digit>+ [\.]?
+  L_alt2:     #   <digit>+ [\.]?
     pos = 0
     $I0 = is_cclass .CCLASS_NUMERIC, target, pos
     if $I0 == 0 goto L_alt3
@@ -264,16 +261,16 @@ L_alt2:     #   <digit>+ [\.]?
     unless $S0 == '.' goto L_opt2
     inc pos
     goto L_opt1
-L_alt3:     #   \. <digit>
+  L_alt3:     #   \. <digit>
     pos = 0
     $S0 = substr target, pos, 1
     unless $S0 == '.' goto L_end
     inc pos
     $I0 = is_cclass .CCLASS_NUMERIC, target, pos
     if $I0 == 0 goto L_end
-L_opt1:     #   <digit>*
+  L_opt1:     #   <digit>*
     pos = find_not_cclass .CCLASS_NUMERIC, target, pos, lastpos
-L_opt2:     #   [Ee] [+\-]? <digit>+
+  L_opt2:     #   [Ee] [+\-]? <digit>+
     .local int pos2
     pos2 = pos
     $S0 = substr target, pos2, 1
@@ -284,14 +281,14 @@ L_opt2:     #   [Ee] [+\-]? <digit>+
     $I0 = index '+-', $S0
     if $I0 < 0 goto L_opt3
     inc pos2
-L_opt3:
+  L_opt3:
     $I0 = is_cclass .CCLASS_NUMERIC, target, pos2
     if $I0 == 0 goto L_end
     pos = find_not_cclass .CCLASS_NUMERIC, target, pos2, lastpos
-L_end:
+  L_end:
     if pos == lastpos goto L1
     lexerror(mob, 'malformed number')
-L1:
+  L1:
     .return (mob)
 .end
 
@@ -311,11 +308,11 @@ L1:
     $S0 = substr target, pos, 1
     unless $S0 == '.' goto L1
     inc pos
-L1:
+  L1:
     $I0 = is_cclass .CCLASS_NUMERIC, target, pos
     if $I0 == 0 goto L2
     inc pos
-L3:
+  L3:
     $I0 = is_cclass .CCLASS_NUMERIC, target, pos
     if $I0 == 0 goto L4
     pos = find_not_cclass .CCLASS_NUMERIC, target, pos, lastpos
@@ -323,12 +320,12 @@ L3:
     unless $S0 == '.' goto L5
     inc pos
     goto L3
-L4:
+  L4:
     $S0 = substr target, pos, 1
     unless $S0 == '.' goto L5
     inc pos
     goto L3
-L5:
+  L5:
     $S0 = substr target, pos, 1
     $I0 = index 'Ee', $S0
     if $I0 < 0 goto L6
@@ -337,11 +334,11 @@ L5:
     $I0 = index '+-', $S0
     if $I0 < 0 goto L6
     inc pos
-L6:
+  L6:
     $I0 = .CCLASS_NUMERIC | .CCLASS_WORD
     pos = find_not_cclass $I0, target, pos, lastpos
     mpos = pos
-L2:
+  L2:
     .return (mob)
 .end
 
@@ -383,22 +380,22 @@ no problem with them.)
 
     .local string literal
     literal = ''
-LOOP:
+  LOOP:
     if pos < lastpos goto L1
     mpos = pos
     lexerror(mob, "unfinished string")
-L1:
+  L1:
     $S0 = substr target, pos, 1
     if $S0 != delim goto L2
     mob.'result_object'(literal)
     mpos = pos
     .return (mob)
-L2:
+  L2:
     $I0 = index "\n\r", $S0
     if $I0 < 0 goto L3
     mpos = pos
     lexerror(mob, "unfinished string")
-L3:
+  L3:
     if $S0 != "\\" goto CONCAT
     inc pos
     if pos == lastpos goto LOOP # error
@@ -407,12 +404,12 @@ L3:
     if $I0 < 0 goto L4
     $S0 = substr "\a\b\f\n\r\t\x0b", $I0, 1
     goto CONCAT
-L4:
+  L4:
     $I0 = index "\n\r", $S0
     if $I0 < 0 goto L5
     $S0 = "\n"
     goto CONCAT
-L5:
+  L5:
     $I0 = index '0123456789', $S0
     if $I0 < 0 goto CONCAT
     inc pos
@@ -428,16 +425,16 @@ L5:
     $I0 *= 10
     $I0 += $I1
     goto L7
-L6:
+  L6:
     dec pos
-L7:
+  L7:
     if $I0 < 256 goto L8
     mpos = pos
     lexerror(mob, "escape sequence too large")
-L8:
+  L8:
     $S0 = chr $I0
 
-CONCAT:
+  CONCAT:
     concat literal, $S0
     inc pos
     goto LOOP
@@ -495,20 +492,20 @@ and C<'1'> is coded as 49), the five literals below denote the same string:
     if sep == -1 goto END
     mpos = pos
     lexerror(mob, "invalid long string delimiter")
-L1:
+  L1:
     inc pos
     $S0 = substr target, pos, 1
     $I0 = index "\n\r", $S0
     if $I0 < 0 goto L2
     inc pos
-L2:
+  L2:
 
     .local string literal
     literal = ''
-LOOP:
+  LOOP:
     if pos < lastpos goto L3
     lexerror(mob, "unfinished long string")
-L3:
+  L3:
     $S0 = substr target, pos, 1
     if $S0 != '[' goto L4
     inc pos
@@ -517,10 +514,10 @@ L3:
     inc pos
     mpos = pos
     lexerror(mob, "nesting of [[...]] is deprecated")
-L5:
+  L5:
     dec pos
     goto CONCAT
-L4:
+  L4:
     if $S0 != ']' goto L6
     inc pos
     ($I0, $I1) = _skip_sep(target, pos, ']')
@@ -529,22 +526,22 @@ L4:
     mob.'result_object'(literal)
     mpos = pos
     goto END
-L7:
+  L7:
     dec pos
     goto CONCAT
-L6:
+  L6:
     $I0 = index "\n\r", $S0
     if $I0 < 0 goto L8
     $S0 = "\n"
     goto CONCAT
-L8:
+  L8:
 
-CONCAT:
+  CONCAT:
     concat literal, $S0
     inc pos
     goto LOOP
 
-END:
+  END:
     .return (mob)
 .end
 
@@ -582,14 +579,14 @@ long bracket. Long comments are frequently used to disable code temporarily.
 #    $I0 = index "\n\r", $S0
 #    if $I0 < 0 goto L2
 #    inc pos
-#L2:
+#  L2:
 
 #    .local string literal
 #    literal = ''
-LOOP:
+  LOOP:
     if pos < lastpos goto L3
     lexerror(mob, "unfinished long comment")
-L3:
+  L3:
     $S0 = substr target, pos, 1
     if $S0 != '[' goto L4
     inc pos
@@ -598,10 +595,10 @@ L3:
     inc pos
     mpos = pos
     lexerror(mob, "nesting of [[...]] is deprecated")
-L5:
+  L5:
     dec pos
     goto CONCAT
-L4:
+  L4:
     if $S0 != ']' goto L6
     inc pos
     ($I0, $I1) = _skip_sep(target, pos, ']')
@@ -610,22 +607,22 @@ L4:
 #    mob.'result_object'(literal)
     mpos = pos
     goto END
-L7:
+  L7:
     dec pos
     goto CONCAT
-L6:
+  L6:
     $I0 = index "\n\r", $S0
     if $I0 < 0 goto L8
 #    $S0 = "\n"
     goto CONCAT
-L8:
+  L8:
 
-CONCAT:
+  CONCAT:
 #    concat literal, $S0
     inc pos
     goto LOOP
 
-END:
+  END:
     .return (mob)
 .end
 
@@ -635,17 +632,17 @@ END:
     .param string delim
     .local int count
     count = 0
-L1:
+  L1:
     $S0 = substr target, pos, 1
     if $S0 != '=' goto L2
     inc count
     inc pos
     goto L1
-L2:
+  L2:
     if $S0 == delim goto L3
     neg count
     dec count
-L3:
+  L3:
     .return (pos, count)
 .end
 
@@ -654,7 +651,7 @@ L3:
 
 =item C<internal_error>
 
-used in F<languages/lua/src/ASTGrammar.tg>
+used in F<languages/lua/src/PASTGrammar.tg>
 
 =cut
 
@@ -666,8 +663,94 @@ used in F<languages/lua/src/ASTGrammar.tg>
     exit 1
 .end
 
-.include 'languages/lua/src/ASTGrammar.pir'
-.include 'languages/lua/src/lua51_grammar_gen.pir'
+
+.namespace [ 'Lua::POST::Grammar' ]
+
+=item C<internal_error>
+
+used in F<languages/lua/src/POSTGrammar.tg>
+
+=cut
+
+.sub internal_error
+    .param string msg
+    $S0 = "ERROR_INTERNAL (POST): " . msg
+    $S0 .= "\n"
+    printerr $S0
+    exit 1
+.end
+
+
+.namespace [ "Lua::POST" ]
+
+.sub '__onload' :load :init
+
+    $P0 = subclass 'POST::Sub', 'Lua::POST::Chunk'
+
+#    .local pmc pirtable
+#    pirtable = new .Hash
+#    pirtable['add'] = '%tP+'
+#    pirtable['sub'] = '%tP+'
+#    pirtable['mul'] = '%tP+'
+#    pirtable['div'] = '%tP+'
+#    pirtable['n_add'] = '%rP+'
+#    pirtable['n_sub'] = '%rP+'
+#    pirtable['n_mul'] = '%rP+'
+#    pirtable['n_div'] = '%rP+'
+#    pirtable['concat'] = '%tP~'
+#    pirtable['abs'] = '%t'
+#    pirtable['say'] = '%v'
+#    pirtable['print'] = '%v'
+#    pirtable['set'] = '%rP'
+#    pirtable['call'] = '%rPPPPPPPPPPPPPPPP'                # FIXME:
+#    pirtable['callmethod'] = '%rPPPPPPPPPPPPPPPP'          # FIXME:
+#    set_hll_global ['Lua::POST'], '%pirtable', pirtable
+    .return ()
+.end
+
+
+.namespace [ "Lua::POST::Chunk" ]
+
+.sub 'prologue' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('prologue', value, has_value)
+.end
+
+.sub 'pir' :method
+    self.'cpir'()
+    $S0 = self.'prologue'()
+    if $S0 == '' goto L1
+    .local pmc code
+    new code, 'PGE::CodeString'
+    code.'emit'($S0)
+    $P0 = get_hll_global ['POST'], '$!subpir'
+    code .= $P0
+    set_hll_global ['POST'], '$!subpir', code
+  L1:
+.end
+
+
+.namespace [ "Lua::Symbtab" ]
+
+.sub '__onload' :load :init
+    $P0 = subclass 'Hash', 'Lua::Symbtab'
+.end
+
+.sub 'insert' :method
+    .param string name
+    self[name] = 1
+.end
+
+.sub 'lookup' :method
+    .param string name
+    $I0 = exists self[name]
+    .return ($I0)
+.end
+
+.include 'languages/lua/src/lua51_gen.pir'
+.include 'languages/lua/src/PASTGrammar_gen.pir'
+.include 'languages/lua/src/POSTGrammar_gen.pir'
 
 =back
 

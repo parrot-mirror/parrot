@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2003, The Perl Foundation.
+Copyright (C) 2001-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -47,7 +47,7 @@ const char Parrot_utf8skip[256] = {
 typedef unsigned char utf8_t;
 #endif
 
-static void iter_init(Interp *, String *src, String_iter *iter);
+static void iter_init(Interp *, const String *src, String_iter *iter);
 /*
 
 =item C<static UINTVAL
@@ -60,7 +60,7 @@ Returns the number of characters in the C<byte_len> bytes from C<*ptr>.
 */
 
 static UINTVAL
-utf8_characters(const void *ptr, UINTVAL byte_len)
+utf8_characters(const utf8_t *ptr, UINTVAL byte_len)
 {
     const utf8_t *u8ptr = ptr;
     const utf8_t *u8end = u8ptr + byte_len;
@@ -90,7 +90,7 @@ Returns the integer for the UTF-8 character found at C<*ptr>.
 */
 
 static UINTVAL
-utf8_decode(const void *ptr)
+utf8_decode(const utf8_t *ptr)
 {
     const utf8_t *u8ptr = ptr;
     UINTVAL c = *u8ptr;
@@ -265,7 +265,7 @@ utf8_encode_and_advance(Interp *interp, String_iter *i, UINTVAL c)
     unsigned char *new_pos, *pos;
 
     pos = (unsigned char *)s->strstart + i->bytepos;
-    new_pos = utf8_encode(pos, c);
+    new_pos = (unsigned char *)utf8_encode(pos, c);
     i->bytepos += (new_pos - pos);
     /* XXX possible buffer overrun exception? */
     assert(i->bytepos <= PObj_buflen(s));
@@ -327,7 +327,7 @@ to_encoding(Interp *interp, STRING *src, STRING *dest)
 
     if (in_place) {
         /* need intermediate memory */
-        p = mem_sys_allocate(src_len);
+        p = (unsigned char *)mem_sys_allocate(src_len);
     }
     else {
         Parrot_reallocate_string(interp, dest, src_len);
@@ -350,7 +350,7 @@ to_encoding(Interp *interp, STRING *src, STRING *dest)
                     need = 16;
                 dest_len += need;
                 if (in_place)
-                    p = mem_sys_realloc(p, dest_len);
+                    p = (unsigned char *)mem_sys_realloc(p, dest_len);
                 else {
                     result->bufused = dest_pos;
                     Parrot_reallocate_string(interp, dest, dest_len);
@@ -359,7 +359,7 @@ to_encoding(Interp *interp, STRING *src, STRING *dest)
             }
 
             pos = p + dest_pos;
-            new_pos = utf8_encode(pos, c);
+            new_pos = (unsigned char *)utf8_encode(pos, c);
             dest_pos += (new_pos - pos);
         }
         result->bufused = dest_pos;
@@ -375,9 +375,7 @@ to_encoding(Interp *interp, STRING *src, STRING *dest)
 static UINTVAL
 get_codepoint(Interp *interp, const STRING *src, UINTVAL offset)
 {
-    const void *start;
-
-    start = utf8_skip_forward(src->strstart, offset);
+    const utf8_t * const start = (utf8_t *)utf8_skip_forward(src->strstart, offset);
     return utf8_decode(start);
 }
 
@@ -527,7 +525,7 @@ bytes(Interp *interp, STRING *src)
 }
 
 static void
-iter_init(Interp *interp, String *src, String_iter *iter)
+iter_init(Interp *interp, const String *src, String_iter *iter)
 {
     iter->str = src;
     iter->bytepos = iter->charpos = 0;

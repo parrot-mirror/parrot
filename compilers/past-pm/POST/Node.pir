@@ -7,8 +7,6 @@ POST - Parrot opcode syntax tree
 This file implements the various opcode syntax tree nodes
 for compiling programs in Parrot.
 
-=head1 METHODS
-
 =cut
 
 .namespace [ 'POST' ]
@@ -45,6 +43,21 @@ for compiling programs in Parrot.
 .end
 
 
+=head1 POST Node types
+
+=head2 POST::Node
+
+C<POST::Node> is the base class for all POST nodes.  It's derived from class
+C<PAST::Node> (see F<compilers/past-pm/PAST/Node.pir>).
+
+=over 4
+
+=item result([value])
+
+Get/set
+
+=cut
+
 .namespace [ 'POST::Node' ]
 
 .sub 'result' :method
@@ -66,6 +79,10 @@ for compiling programs in Parrot.
     .return (value)
 .end
 
+
+=item push_pirop(pirop [,arglist :slurpy] [,adverbs :slurpy :named])
+
+=cut
 
 .sub 'push_pirop' :method
     .param pmc pirop
@@ -91,6 +108,10 @@ for compiling programs in Parrot.
 .end
 
 
+=item cpir()
+
+=cut
+
 .sub 'cpir' :method
     .local pmc code, iter
     code = new 'PGE::CodeString'
@@ -106,12 +127,39 @@ for compiling programs in Parrot.
     .return (code)
 .end
 
+
+=back
+
+=head2 POST::Ops
+
+C<POST::Ops> is a container of C<POST::Node>.
+
+=over 4
+
+=item pir()
+
+=cut
+
 .namespace [ 'POST::Ops' ]
 
 .sub 'pir' :method
     .return self.'cpir'()
 .end
 
+
+=back
+
+=head2 POST::Op
+
+C<POST::Op> nodes represents any PIR opcodes.
+
+=over 4
+
+=item pirop([opcode])
+
+Get/set
+
+=cut
 
 .namespace [ 'POST::Op' ]
 
@@ -120,6 +168,10 @@ for compiling programs in Parrot.
     .param int has_value       :opt_flag
     .return self.'attr'('pirop', value, has_value)
 .end
+
+=item arglist(arglist)
+
+=cut
 
 .sub 'arglist' :method
     .param pmc arglist         :slurpy
@@ -141,6 +193,10 @@ for compiling programs in Parrot.
     .return (arglist)
 .end
 
+
+=item pir()
+
+=cut
 
 .sub 'pir' :method
     .local pmc code, arglist
@@ -178,6 +234,20 @@ for compiling programs in Parrot.
 .end
 
 
+=back
+
+=head2 POST::Label
+
+C<POST::Label> nodes represent PIR labels.
+
+=over 4
+
+=item result([value])
+
+Get/set
+
+=cut
+
 .namespace [ 'POST::Label' ]
 
 .sub 'result' :method
@@ -196,6 +266,10 @@ for compiling programs in Parrot.
 .end
 
 
+=item pir()
+
+=cut
+
 .sub 'pir' :method
     .local string code
     .local string value
@@ -206,6 +280,18 @@ for compiling programs in Parrot.
     .return (code)
 .end
 
+
+=back
+
+=head2 POST::Sub
+
+C<POST::Sub> nodes represent PIR subroutines.
+
+=over 4
+
+=item pir()
+
+=cut
 
 .namespace [ 'POST::Sub' ]
 
@@ -246,7 +332,10 @@ for compiling programs in Parrot.
   iter_end:
     .local string value
     value = self.'result'()
-    code.'emit'("    .return (%0)\n.end\n", value)
+    if value == '' goto no_return
+    code.'emit'("    .return (%0)\n", value)
+  no_return:
+    code.'emit'(".end\n")
     $P0 = get_hll_global ['POST'], '$!subpir'
     code .= $P0
     set_hll_global ['POST'], '$!subpir', code
@@ -298,12 +387,24 @@ for compiling programs in Parrot.
 .end
 
 
+=item outer([outer])
+
+Get/set
+
+=cut
+
 .sub 'outer' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
     .return self.'attr'('outer', value, has_value)
 .end
 
+
+=item pragma([pragma])
+
+Get/set
+
+=cut
 
 .sub 'pragma' :method
     .param pmc value           :optional
@@ -312,12 +413,24 @@ for compiling programs in Parrot.
 .end
 
 
+=item blocktype([type])
+
+Get/set
+
+=cut
+
 .sub 'blocktype' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
     .return self.'attr'('blocktype', value, has_value)
 .end
 
+
+=item paramcode([paramcode])
+
+Get/set
+
+=cut
 
 .sub 'paramcode' :method
     .param pmc value           :optional
@@ -326,12 +439,22 @@ for compiling programs in Parrot.
 .end
 
 
+=item compiler([name])
+
+Get/set
+
+=cut
+
 .sub 'compiler' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
     .return self.'attr'('compiler', value, has_value)
 .end
 
+
+=item push_param(STR regtype, STR pname, STR flags, INT has_flags)
+
+=cut
 
 .sub 'push_param' :method
     .param string regtype
@@ -352,6 +475,16 @@ for compiling programs in Parrot.
     .return ()
 .end
 
+
+=back
+
+=head1 AUTHOR
+
+Patrick Michaud <pmichaud@pobox.com> is the author and maintainer.
+Please send patches and suggestions to the Parrot porters or
+Perl 6 compilers mailing lists.
+
+=cut
 
 
 # Local Variables:

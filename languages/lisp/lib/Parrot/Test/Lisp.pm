@@ -22,36 +22,25 @@ sub new {
 sub output_is {
     my ( $self, $code, $output, $desc ) = @_;
 
-    my $count = $self->{builder}->current_test + 1;
+    my $count = $self->{builder}->current_test() + 1;
 
-    my $lang_f = Parrot::Test::per_test( '.l',  $count );
-    my $out_f  = Parrot::Test::per_test( '.out', $count );
-    my $parrotdir = dirname $self->{parrot};
+    my $lang_fn = File::Spec->rel2abs(Parrot::Test::per_test( '.l',  $count ));
+    my $out_fn  = File::Spec->rel2abs(Parrot::Test::per_test( '.out', $count ));
+    Parrot::Test::write_code_to_file( $code, $lang_fn );
 
-    my $args = $ENV{TEST_PROG_ARGS} || '';
+    my $args     = $ENV{TEST_PROG_ARGS} || '';
+    my $cmd      = "../../$self->{parrot} $args lisp.pbc $lang_fn";
+    my $lang_dir = File::Spec->catdir( $self->{relpath}, qw( languages lisp ) );
 
-    $lang_f = File::Spec->rel2abs($lang_f);
-    $out_f  = File::Spec->rel2abs($out_f);
-    Parrot::Test::write_code_to_file( $code, $lang_f );
-
-    my $cmd;
-    my $exit_code = 0;
-    my $pass      = 0;
-
-    $cmd = "$self->{parrot} $args languages/lisp/lisp.pbc $lang_f";
-
-    $exit_code = Parrot::Test::run_command(
+    my $exit_code = Parrot::Test::run_command(
         $cmd,
-        CD     => $self->{relpath},
-        STDOUT => $out_f,
-        STDERR => $out_f
+        CD     => $lang_dir,
+        STDOUT => $out_fn,
+        STDERR => $out_fn
     );
-    unless ($pass) {
-        my $file = Parrot::Test::slurp_file($out_f);
-        $pass = $self->{builder}->is_eq( Parrot::Test::slurp_file($out_f), $output, $desc );
-        $self->{builder}->diag("'$cmd' failed with exit code $exit_code")
-            if $exit_code and not $pass;
-    }
+    my $pass = $self->{builder}->is_eq( Parrot::Test::slurp_file($out_fn), $output, $desc );
+    $self->{builder}->diag("'$cmd' failed with exit code $exit_code")
+        if $exit_code and not $pass;
 
     return $pass;
 }

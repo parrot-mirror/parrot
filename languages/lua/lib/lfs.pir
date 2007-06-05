@@ -112,14 +112,13 @@ See original on L<http://luaforge.net/projects/luafilesystem/>
     .param int narg
     .param pmc fh
     .param string funcname
-    .local pmc ret
+    .local pmc res
     lua_checkudata(narg, fh, 'ParrotIO')
-    ret =  getattribute fh, 'data'
-    unless null ret goto L1
-    $S0 = concat funcname, ": closed file"
-    lua_error($S0)
-L1:
-    .return (ret)
+    res =  getattribute fh, 'data'
+    unless null res goto L1
+    lua_error(funcname, ": closed file")
+  L1:
+    .return (res)
 .end
 
 =item C<lfs.attributes (filepath [, aname])>
@@ -199,7 +198,7 @@ optimal file system I/O blocksize; (Unix only)
 .sub 'attributes' :anon
     .param pmc filepath :optional
     .param pmc aname :optional
-    .local pmc ret
+    .local pmc res
     .local pmc members
     $S1 = lua_checkstring(1, filepath)
     $S0 = $S1
@@ -241,31 +240,31 @@ optimal file system I/O blocksize; (Unix only)
     $P2 = members[$S2]
     unless null $P2 goto L3
     lua_checkoption(2, $S2, '')
-L3:
-    ret = $P2($P1)
-    .return (ret)
-L2:
+  L3:
+    res = $P2($P1)
+    .return (res)
+  L2:
     $I0 = isa aname, 'LuaTable'
     unless $I0 goto L1
-    ret = aname
+    res = aname
     goto L4
-L1:
-    new ret, .LuaTable
-L4:
+  L1:
+    new res, .LuaTable
+  L4:
     .local pmc iter
     new iter, .Iterator, members
     new $P2, .LuaString
-L5:
+  L5:
     unless iter goto L6
     $S2 = shift iter
     set $P2, $S2
     $P3 = members[$S2]
     $P4 = $P3($P1)
-    ret[$P2] = $P4
+    res[$P2] = $P4
     goto L5
-L6:
-    .return (ret)
-_handler:
+  L6:
+    .return (res)
+  _handler:
     .local pmc nil
     .local pmc msg
     new nil, .LuaNil
@@ -310,31 +309,31 @@ _handler:
     unless $I0 == S_IFREG goto L1
     set $P0, 'file'
     .return ($P0)
-L1:
+  L1:
     unless $I0 == S_IFDIR goto L2
     set $P0, 'dir'
     .return ($P0)
-L2:
+  L2:
     unless $I0 == S_IFLNK goto L3
     set $P0, 'link'
     .return ($P0)
-L3:
+  L3:
     unless $I0 == S_IFSOCK goto L4
     set $P0, 'socket'
     .return ($P0)
-L4:
+  L4:
     unless $I0 == S_IFIFO goto L5
     set $P0, 'named pipe'
     .return ($P0)
-L5:
+  L5:
     unless $I0 == S_IFCHR goto L6
     set $P0, 'char device'
     .return ($P0)
-L6:
+  L6:
     unless $I0 == S_IFBLK goto L7
     set $P0, 'block device'
     .return ($P0)
-L7:
+  L7:
     set $P0, 'other'
     .return ($P0)
 .end
@@ -411,7 +410,7 @@ L7:
     new $P0, .LuaNumber
     set $P0, $I0
     .return ($P0)
-L1:
+  L1:
     new $P0, .LuaNil
     .return ($P0)
 .end
@@ -424,7 +423,7 @@ L1:
     new $P0, .LuaNumber
     set $P0, $I0
     .return ($P0)
-L1:
+  L1:
     new $P0, .LuaNil
     .return ($P0)
 .end
@@ -440,16 +439,16 @@ Returns C<true> in case of success or C<nil> plus an error string.
 
 .sub 'chdir' :anon
     .param pmc path :optional
-    .local pmc ret
+    .local pmc res
     $S1 = lua_checkstring(1, path)
     $S0 = $S1
     new $P0, .OS
     push_eh _handler
     $P0.'chdir'($S1)
-    new ret, .LuaBoolean
-    set ret, 1
-    .return (ret)
-_handler:
+    new res, .LuaBoolean
+    set res, 1
+    .return (res)
+  _handler:
     .local pmc nil
     .local pmc msg
     .local pmc e
@@ -474,14 +473,14 @@ string.
 =cut
 
 .sub 'currentdir' :anon
-    .local pmc ret
+    .local pmc res
     new $P0, .OS
     push_eh _handler
     $S0 = $P0.'cwd'()
-    new ret, .LuaString
-    set ret, $S0
-    .return (ret)
-_handler:
+    new res, .LuaString
+    set res, $S0
+    .return (res)
+  _handler:
     .local pmc nil
     .local pmc msg
     .local pmc e
@@ -504,7 +503,7 @@ when there is no more entries. Raises an error if C<path> is not a directory.
 
 .sub 'dir' :anon
     .param pmc path :optional
-    .local pmc ret
+    .local pmc res
     $S1 = lua_checkstring(1, path)
     $S0 = $S1
     new $P0, .OS
@@ -512,29 +511,26 @@ when there is no more entries. Raises an error if C<path> is not a directory.
     $P1 = $P0.'readdir'($S1)
     .lex 'upvar_dir', $P1
     .const .Sub dir_aux = 'dir_aux'
-    ret = newclosure dir_aux
-    .return (ret)
-_handler:
+    res = newclosure dir_aux
+    .return (res)
+  _handler:
     .local pmc e
     .local string s
     .get_results (e, s)
-    $S0 = concat "cannot open ", $S0
-    $S0 = concat ": "
-    $S0 = concat s
-    lua_error($S0)
+    lua_error("cannot open ", $S0, ": ", s)
 .end
 
 .sub 'dir_aux' :anon :lex :outer(dir)
-    .local pmc ret
+    .local pmc res
     $P1 = find_lex 'upvar_dir'
     unless $P1 goto L1
     $S1 = shift $P1
-    new ret, .LuaString
-    set ret, $S1
-    .return (ret)
-L1:
-    new ret, .LuaNil
-    .return (ret)
+    new res, .LuaString
+    set res, $S1
+    .return (res)
+  L1:
+    new res, .LuaNil
+    .return (res)
 .end
 
 
@@ -557,11 +553,11 @@ NOT YET IMPLEMENTED.
     .param pmc filehandle :optional
     .param pmc mode :optional
     .param pmc start :optional
-    .param pmc length :optional
+    .param pmc length_ :optional
     $P1 = check_file(1, filehandle, 'lock')
     $S2 = lua_checkstring(2, mode)
     $I3 = lua_optint(3, start, 0)
-    $I4 = lua_optint(4, length, 0)
+    $I4 = lua_optint(4, length_, 0)
     not_implemented()
 .end
 
@@ -577,16 +573,16 @@ C<nil> plus an error string.
 
 .sub 'mkdir' :anon
     .param pmc dirname :optional
-    .local pmc ret
+    .local pmc res
     $S1 = lua_checkstring(1, dirname)
     new $P0, .OS
     push_eh _handler
     $I1 = 0o775
     $P0.'mkdir'($S1, $I1)
-    new ret, .LuaBoolean
-    set ret, 1
-    .return (ret)
-_handler:
+    new res, .LuaBoolean
+    set res, 1
+    .return (res)
+  _handler:
     .local pmc nil
     .local pmc msg
     .local pmc e
@@ -610,15 +606,15 @@ C<nil> plus an error string.
 
 .sub 'rmdir' :anon
     .param pmc dirname :optional
-    .local pmc ret
+    .local pmc res
     $S1 = lua_checkstring(1, dirname)
     new $P0, .OS
     push_eh _handler
     $P0.'rm'($S1)
-    new ret, .LuaBoolean
-    set ret, 1
-    .return (ret)
-_handler:
+    new res, .LuaBoolean
+    set res, 1
+    .return (res)
+  _handler:
     .local pmc nil
     .local pmc msg
     .local pmc e
@@ -674,10 +670,10 @@ NOT YET IMPLEMENTED.
 .sub 'unlock' :anon
     .param pmc filehandle :optional
     .param pmc start :optional
-    .param pmc length :optional
+    .param pmc length_ :optional
     $P1 = check_file(1, filehandle, 'unlock')
     $I2 = lua_optint(2, start, 0)
-    $I3 = lua_optint(3, length, 0)
+    $I3 = lua_optint(3, length_, 0)
     not_implemented()
 .end
 

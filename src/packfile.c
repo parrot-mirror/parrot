@@ -112,34 +112,6 @@ PackFile_destroy(Interp *interp, PackFile *pf)
     return;
 }
 
-/*
-
-=item C<static INTVAL
-PackFile_check_segment_size(opcode_t segment_size, const char *debug)>
-
-Internal function to check C<segment_size % sizeof (opcode_t)>.
-
-=cut
-
-*/
-
-static INTVAL
-PackFile_check_segment_size(opcode_t segment_size, const char *debug)
-{
-#if TRACE_PACKFILE
-    PIO_eprintf(NULL,"PackFile_unpack(): Unpacking %ld bytes for %s table...\n",
-           (long)segment_size, debug);
-#endif
-
-    if (segment_size % sizeof (opcode_t)) {
-        PIO_eprintf(NULL,
-                    "PackFile_unpack: Illegal %s table segment size "
-                    "%ld (must be multiple of %ld)!\n",
-                    debug, (long)segment_size, (long)sizeof (opcode_t));
-        return 0;
-    }
-    return 1;
-}
 
 /*
 
@@ -2751,19 +2723,19 @@ fixup_unpack(Interp *interp, PackFile_Segment *seg, opcode_t *cursor)
         PackFile_FixupEntry * const entry =
             self->fixups[i] =
             mem_allocate_typed(PackFile_FixupEntry);
-        self->fixups[i]->type = PF_fetch_opcode(pf, &cursor);
-        switch (self->fixups[i]->type) {
+        entry->type = PF_fetch_opcode(pf, &cursor);
+        switch (entry->type) {
             case enum_fixup_label:
             case enum_fixup_sub:
-                self->fixups[i]->name = PF_fetch_cstring(pf, &cursor);
-                self->fixups[i]->offset = PF_fetch_opcode(pf, &cursor);
+                entry->name = PF_fetch_cstring(pf, &cursor);
+                entry->offset = PF_fetch_opcode(pf, &cursor);
                 break;
             case enum_fixup_none:
                 break;
             default:
                 PIO_eprintf(interp,
                         "PackFile_FixupTable_unpack: Unknown fixup type %d!\n",
-                        self->fixups[i]->type);
+                        entry->type);
                 return 0;
         }
     }

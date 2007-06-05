@@ -72,7 +72,7 @@ to the previous values and the allocated register memory is discarded.
 
 #define CTX_ALLOC_SIZE 0x20000
 
-#define ALIGNED_CTX_SIZE (((sizeof (struct Parrot_Context) + NUMVAL_SIZE - 1) \
+#define ALIGNED_CTX_SIZE (((sizeof (Parrot_Context) + NUMVAL_SIZE - 1) \
         / NUMVAL_SIZE) * NUMVAL_SIZE)
 
 /*
@@ -116,12 +116,12 @@ void
 destroy_context(Interp *interp)
 {
     int slot;
-    struct Parrot_Context *context, *prev;
+    Parrot_Context *context;
 
     /* clear active contexts all the way back to the initial context */
     context = CONTEXT(interp->ctx);
     while (context) {
-        prev    = context->caller_ctx;
+        Parrot_Context * prev = context->caller_ctx;
         mem_sys_free(context);
         context = prev;
     }
@@ -253,7 +253,7 @@ clear_regs(Interp *interp, parrot_context_t *ctx)
 }
 
 static void
-init_context(Interp *interp, parrot_context_t *ctx, parrot_context_t *old)
+init_context(Interp *interp, parrot_context_t *ctx, const parrot_context_t *old)
 {
     ctx->ref_count = 0;                 /* TODO 1 - Exceptions !!! */
     ctx->current_results = NULL;
@@ -281,11 +281,12 @@ init_context(Interp *interp, parrot_context_t *ctx, parrot_context_t *old)
     clear_regs(interp, ctx);
 }
 
-struct Parrot_Context *
-Parrot_dup_context(Interp *interp, struct Parrot_Context *old)
+Parrot_Context *
+Parrot_dup_context(Interp *interp, const Parrot_Context *old)
 {
-    size_t diff;
-    struct Parrot_Context *ctx;
+    size_t          diff;
+    Parrot_Context *ctx;
+    DECL_CONST_CAST;
 
     const size_t reg_alloc = old->regs_mem_size;
     const int slot = CALCULATE_SLOT_NUM(reg_alloc);
@@ -297,11 +298,11 @@ Parrot_dup_context(Interp *interp, struct Parrot_Context *old)
     else {
         ptr = (void *)mem_sys_allocate(reg_alloc + ALIGNED_CTX_SIZE);
     }
-    CONTEXT(interp->ctx) = ctx = (struct Parrot_Context *)ptr;
+    CONTEXT(interp->ctx) = ctx = (Parrot_Context *)ptr;
 
     ctx->regs_mem_size   = reg_alloc;
     ctx->n_regs_used     = old->n_regs_used;
-    diff                 = (long*)ctx - (long*)old;
+    diff                 = (long *)ctx - (long *)const_cast(old);
 
     interp->ctx.bp.regs_i    += diff;
     interp->ctx.bp_ps.regs_s += diff;
@@ -309,11 +310,11 @@ Parrot_dup_context(Interp *interp, struct Parrot_Context *old)
     return ctx;
 }
 
-struct Parrot_Context *
+Parrot_Context *
 Parrot_push_context(Interp *interp, INTVAL *n_regs_used)
 {
-    struct Parrot_Context * const old = CONTEXT(interp->ctx);
-    struct Parrot_Context * const ctx =
+    Parrot_Context * const old = CONTEXT(interp->ctx);
+    Parrot_Context * const ctx =
         Parrot_alloc_context(interp, n_regs_used);
 
     ctx->caller_ctx = old;
@@ -325,8 +326,8 @@ Parrot_push_context(Interp *interp, INTVAL *n_regs_used)
 void
 Parrot_pop_context(Interp *interp)
 {
-    struct Parrot_Context * const ctx = CONTEXT(interp->ctx);
-    struct Parrot_Context * const old = ctx->caller_ctx;
+    Parrot_Context * const ctx = CONTEXT(interp->ctx);
+    Parrot_Context * const old = ctx->caller_ctx;
 
     Parrot_free_context(interp, ctx, 1);
     /* restore old, set cached interpreter base pointers */
@@ -336,10 +337,10 @@ Parrot_pop_context(Interp *interp)
 }
 
 
-struct Parrot_Context *
+Parrot_Context *
 Parrot_alloc_context(Interp *interp, INTVAL *n_regs_used)
 {
-    struct Parrot_Context *old, *ctx;
+    Parrot_Context *old, *ctx;
     void *ptr, *p;
 
     /*
@@ -404,7 +405,7 @@ Parrot_alloc_context(Interp *interp, INTVAL *n_regs_used)
     }
 #endif
 
-    CONTEXT(interp->ctx) = ctx = (struct Parrot_Context *)ptr;
+    CONTEXT(interp->ctx) = ctx = (Parrot_Context *)ptr;
 
     ctx->regs_mem_size   = reg_alloc;
     ctx->n_regs_used     = n_regs_used;
@@ -422,9 +423,6 @@ Parrot_alloc_context(Interp *interp, INTVAL *n_regs_used)
 void
 Parrot_free_context(Interp *interp, parrot_context_t *ctxp, int re_use)
 {
-    void *ptr;
-    int slot;
-
     /*
      * The context structure has a reference count, initially 0.  This field is
      * incrementented when a continuation that points to it is created -- either
@@ -435,11 +433,13 @@ Parrot_free_context(Interp *interp, parrot_context_t *ctxp, int re_use)
      *
      */
     if (re_use || --ctxp->ref_count == 0) {
+        void *ptr;
+        int slot;
+
 #ifndef NDEBUG
         if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
             /* can't probably PIO_eprintf here */
-            Parrot_sub *doomed;
-            doomed = PMC_sub(ctxp->current_sub);
+            const Parrot_sub * const doomed = PMC_sub(ctxp->current_sub);
 
             fprintf(stderr, "[free  ctx %p of sub '%s']\n",
                     (void *)ctxp,
@@ -571,11 +571,10 @@ Marks the register stack and its registers as live.
 void
 mark_register_stack(Parrot_Interp interp, Stack_Chunk_t* chunk)
 {
-    struct Interp_Context ctx;
-    save_regs_t   *save_r;
-
     for (; ; chunk = chunk->prev) {
         int i;
+        save_regs_t   *save_r;
+        struct Interp_Context ctx;
 
         pobject_lives(interp, (PObj*)chunk);
         if (chunk == chunk->prev)

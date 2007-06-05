@@ -189,12 +189,19 @@ PARROT_API extern INTVAL PIO_listen(Interp *, PMC *pmc, INTVAL backlog);
 PARROT_API extern PMC *PIO_accept(Interp *, PMC *pmc);
 
 
-PARROT_API extern INTVAL PIO_putps(Interp *, PMC *io, STRING *s);
-PARROT_API extern INTVAL PIO_fprintf(Interp *, PMC *io, const char *s, ...);
-PARROT_API extern INTVAL PIO_printf(Interp *, const char *s, ...);
-PARROT_API extern INTVAL PIO_eprintf(Interp *, const char *s, ...);
-PARROT_API extern PIOHANDLE PIO_getfd(Interp *, PMC *io);
-PARROT_API extern PIOOFF_T PIO_tell(Interp *, PMC *io);
+PARROT_API extern INTVAL PIO_putps(Interp *, PMC *io, STRING *s)
+        __attribute__nonnull__(2);
+PARROT_API extern INTVAL PIO_fprintf(Interp *, PMC *io, const char *s, ...)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+PARROT_API extern INTVAL PIO_printf(Interp *, const char *s, ...)
+        __attribute__nonnull__(2);
+PARROT_API extern INTVAL PIO_eprintf(Interp *, const char *s, ...)
+        __attribute__nonnull__(2);
+PARROT_API extern PIOHANDLE PIO_getfd(Interp *, PMC *io)
+        __attribute__nonnull__(2);
+PARROT_API extern PIOOFF_T PIO_tell(Interp *, PMC *io)
+        __attribute__nonnull__(2);
 
 PARROT_API extern void Parrot_IOData_mark(Interp *, ParrotIOData *piodata);
 
@@ -224,9 +231,9 @@ PIOOFF_T PIO_make_offset32(INTVAL hi, INTVAL lo);
 PIOOFF_T PIO_make_offset_pmc(Interp *, PMC *pmc);
 
 /* the internal system redefines them as macros */
-extern PMC *PIO_STDIN(Interp *);
-extern PMC *PIO_STDOUT(Interp *);
-extern PMC *PIO_STDERR(Interp *);
+PARROT_API extern PMC *PIO_STDIN(Interp *);
+PARROT_API extern PMC *PIO_STDOUT(Interp *);
+PARROT_API extern PMC *PIO_STDERR(Interp *);
 
 /*
  * pioctl definitions -- These are mostly for reference

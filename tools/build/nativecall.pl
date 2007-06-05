@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2005, The Perl Foundation.
+# Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -204,10 +204,10 @@ while (<>) {
     my ( $ret, $args ) = split /\s+/, $_;
 
     $args = '' if not defined $args;
-    $args =~ s/^v$//
-        and warn "Removed deprecated 'v' argument signature on line $. of $ARGV";
+    warn "Removed deprecated 'v' argument signature on line $. of $ARGV\n"
+        if $args =~ s/^v$//;
 
-    die "Invalid return signature char '$ret' on line $. of $ARGV"
+    die "Invalid return signature char '$ret' on line $. of $ARGV\n"
         unless exists $ret_assign{$ret};
 
     if ( ( $seen{"$ret$args"} ||= $. ) != $. ) {
@@ -275,7 +275,7 @@ sub print_head {
  */
 
 /* nci.c
- *  Copyright (C) 2001-2006, The Perl Foundation.
+ *  Copyright (C) 2001-2007, The Perl Foundation.
  *  SVN Info
  *     \$Id\$
  *  Overview:
@@ -353,7 +353,7 @@ get_nci_P(Interp *interp, call_state *st, int n)
     if (n < st->src.n)
         Parrot_fetch_arg_nci(interp, st);
     else
-        UVal_pmc(st->val) = NULL;
+        UVal_pmc(st->val) = PMCNULL;
 
     return UVal_pmc(st->val);
 }
@@ -648,7 +648,6 @@ build_call_func(Interp *interp, PMC *pmc_nci,
     UINTVAL    signature_len;
 
     void       *result        = NULL;
-    Hash       *known_frames  = NULL;
     PMC        *HashPointer   = NULL;
 
 #if defined(CAN_BUILD_CALL_FRAMES)
