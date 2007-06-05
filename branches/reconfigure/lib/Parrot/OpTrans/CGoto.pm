@@ -64,7 +64,7 @@ Returns the C C<#define> macros required by the ops.
 sub defines {
     return <<END;
 #undef CONST
-#define REL_PC     ((size_t)(cur_opcode - interp->code->base.data))
+#define REL_PC     ((size_t)(cur_opcode - (opcode_t*)interp->code->base.data))
 #define CUR_OPCODE cur_opcode
 #define IREG(i) REG_INT(cur_opcode[i])
 #define NREG(i) REG_NUM(cur_opcode[i])
@@ -278,7 +278,7 @@ Returns the C code prior to the run core function.
 sub run_core_func_start {
     return <<END_C;
 #if defined(__GNUC__) && defined(I386) /* && defined(NO_DYNOPS) */
-    register opcode_t *cur_opcode asm ("esi") = cur_op;
+    register opcode_t *cur_opcode __asm__ ("esi") = cur_op;
 #else
     opcode_t *cur_opcode = cur_op;
 #endif

@@ -48,6 +48,8 @@ Sets R to true (the TRUE symbol).
 
   _specialformp = new "LispSpecialForm"
   # VALID_IN_PARROT_0_2_0 _specialformp._set_body(.L)
+  .const .Sub _special_func = .L
+  _specialformp._set_body(_special_func)
 
   _namep = new "LispString"
   _namep = .N
@@ -62,8 +64,7 @@ Sets R to true (the TRUE symbol).
   .sym pmc _functionp
   .sym pmc _namep
 
-  # VALID_IN_PARROT_0_2_0 .FUNCTION(_functionp, .L)
-  .FUNCTION(_functionp, ".L")
+  .FUNCTION(_functionp, .L)
 
   _namep = new "LispString"
   _namep = .N

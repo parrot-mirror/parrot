@@ -105,8 +105,8 @@ NOT YET IMPLEMENTED (no clock).
 =cut
 
 .sub 'clock' :anon
-    .local pmc ret
-    new ret, .LuaNumber
+    .local pmc res
+    new res, .LuaNumber
     not_implemented()
 .end
 
@@ -141,7 +141,7 @@ representation that depends on the host system and on the current locale
 .sub 'date' :anon
     .param pmc format :optional
     .param pmc time_ :optional
-    .local pmc ret
+    .local pmc res
     .local int t
     $S1 = lua_optstring(1, format, '%c')
     $I0 = time
@@ -151,65 +151,65 @@ representation that depends on the host system and on the current locale
     $P0 = decodetime t
     $S1 = substr $S1, 1
     goto L2
-L1:
+  L1:
     $P0 = decodelocaltime t
-L2:
+  L2:
     unless null $P0 goto L3
-    new ret, .LuaNil
-    .return (ret)
-L3:
+    new res, .LuaNil
+    .return (res)
+  L3:
     unless $S1 == '*t' goto L4
-    new ret, .LuaTable
+    new res, .LuaTable
     new $P1, .LuaString
     new $P2, .LuaNumber
     set $P1, 'sec'
     $I0 = $P0[.TM_SEC]
     set $P2, $I0
-    ret[$P1] = $P2
+    res[$P1] = $P2
     set $P1, 'min'
     $I0 = $P0[.TM_MIN]
     set $P2, $I0
-    ret[$P1] = $P2
+    res[$P1] = $P2
     set $P1, 'hour'
     $I0 = $P0[.TM_HOUR]
     set $P2, $I0
-    ret[$P1] = $P2
+    res[$P1] = $P2
     set $P1, 'day'
     $I0 = $P0[.TM_MDAY]
     set $P2, $I0
-    ret[$P1] = $P2
+    res[$P1] = $P2
     set $P1, 'month'
     $I0 = $P0[.TM_MON]
     set $P2, $I0
-    ret[$P1] = $P2
+    res[$P1] = $P2
     set $P1, 'year'
     $I0 = $P0[.TM_YEAR]
     set $P2, $I0
-    ret[$P1] = $P2
+    res[$P1] = $P2
     set $P1, 'wday'
     $I0 = $P0[.TM_WDAY]
     inc $I0
     set $P2, $I0
-    ret[$P1] = $P2
+    res[$P1] = $P2
     set $P1, 'yday'
     $I0 = $P0[.TM_YDAY]
     inc $I0
     set $P2, $I0
-    ret[$P1] = $P2
+    res[$P1] = $P2
     new $P2, .LuaBoolean
     set $P1, 'isdst'
     $I0 = $P0[.TM_ISDST]
     set $P2, $I0
-    ret[$P1] = $P2
-    .return (ret)
-L4:
+    res[$P1] = $P2
+    .return (res)
+  L4:
     .local string b
     .local int idx
     b = ''
     idx = 0
     $I1 = length $S1
     new $P1, .Lua
-L5:
+  L5:
     unless idx < $I1 goto L6
     $S0 = substr $S1, idx, 1
     if $S0 != '%' goto L7
@@ -218,14 +218,14 @@ L5:
     $S0 = substr $S1, idx, 1
     $S2 = '%' . $S0
     $S0 = $P1.'strftime'($S2, $P0)
-L7:
+  L7:
     b .= $S0
     inc idx
     goto L5
-L6:
-    new ret, .LuaString
-    set ret, b
-    .return (ret)
+  L6:
+    new res, .LuaString
+    set res, b
+    .return (res)
 .end
 
 
@@ -239,13 +239,13 @@ Windows, and some other systems, this value is exactly C<t2-t1>.
 .sub 'difftime' :anon
     .param pmc t2 :optional
     .param pmc t1 :optional
-    .local pmc ret
+    .local pmc res
     $I2 = lua_checknumber(1, t2)
     $I1 = lua_optint(2, t1, 0)
     $I0 = $I2 - $I1
-    new ret, .LuaNumber
-    set ret, $I0
-    .return (ret)
+    new res, .LuaNumber
+    set res, $I0
+    .return (res)
 .end
 
 
@@ -264,18 +264,18 @@ shell is available and zero otherwise.
 
 .sub 'execute' :anon
     .param pmc command :optional
-    .local pmc ret
+    .local pmc res
     $S1 = lua_optstring(1, command, '')
     unless $S1 == '' goto L1
     $I0 = 1
     goto L2
-L1:
+  L1:
     $I0 = spawnw $S1
     $I0 = $I0 / 256
-L2:
-    new ret, .LuaNumber
-    ret = $I0
-    .return (ret)
+  L2:
+    new res, .LuaNumber
+    res = $I0
+    .return (res)
 .end
 
 
@@ -302,17 +302,17 @@ if the variable is not defined.
 
 .sub 'getenv' :anon
     .param pmc varname :optional
-    .local pmc ret
+    .local pmc res
     $S1 = lua_checkstring(1, varname)
     new $P0, .Env
     $S0 = $P0[$S1]
     if $S0 goto L1
-    new ret, .LuaNil
-    .return (ret)
-L1:
-    new ret, .LuaString
-    set ret, $S0
-    .return (ret)
+    new res, .LuaNil
+    .return (res)
+  L1:
+    new res, .LuaString
+    set res, $S0
+    .return (res)
 .end
 
 
@@ -326,16 +326,16 @@ describing the error.
 
 .sub 'remove' :anon
     .param pmc filename :optional
-    .local pmc ret
+    .local pmc res
     $S1 = lua_checkstring(1, filename)
     $S0 = $S1
     new $P0, .OS
     push_eh _handler
     $P0.'rm'($S1)
-    new ret, .LuaBoolean
-    set ret, 1
-    .return (ret)
-_handler:
+    new res, .LuaBoolean
+    set res, 1
+    .return (res)
+  _handler:
     .local pmc nil
     .local pmc msg
     .local pmc e
@@ -360,17 +360,17 @@ fails, it returns B<nil>, plus a string describing the error.
 .sub 'rename' :anon
     .param pmc oldname :optional
     .param pmc newname :optional
-    .local pmc ret
+    .local pmc res
     $S1 = lua_checkstring(1, oldname)
     $S0 = $S1
     $S2 = lua_checkstring(2, newname)
     new $P0, .OS
     push_eh _handler
     $P0.'rename'($S1, $S2)
-    new ret, .LuaBoolean
-    set ret, 1
-    .return (ret)
-_handler:
+    new res, .LuaBoolean
+    set res, 1
+    .return (res)
+  _handler:
     .local pmc nil
     .local pmc msg
     .local pmc e
@@ -426,16 +426,16 @@ STILL INCOMPLETE (no mktime).
 
 .sub 'time' :anon
     .param pmc table :optional
-    .local pmc ret
+    .local pmc res
     if null table goto L1
     $I0 = isa table, 'LuaNil'
     unless $I0 goto L2
-L1:
+  L1:
     $I0 = time
-    new ret, .LuaNumber
-    set ret, $I0
-    .return (ret)
-L2:
+    new res, .LuaNumber
+    set res, $I0
+    .return (res)
+  L2:
     lua_checktype(1, table, 'table')
     $I1 = getfield(table, 'sec', 0)
     $I2 = getfield(table, 'min', 0)
@@ -453,42 +453,39 @@ L2:
     .param pmc t
     .param string key
     .param int d
-    .local int ret
+    .local int res
     new $P1, .LuaString
     set $P1, key
     $P0 = t[$P1]
     $P0 = $P0.'tonumber'()
     $I0 = isa $P0, 'LuaNumber'
     unless $I0 goto L1
-    ret = $P0
+    res = $P0
     goto L2
-L1:
+  L1:
     unless d < 0 goto L3
-    $S0 = "field '"
-    $S0 .= key
-    $S0 .= "' missing in date table"
-    lua_error($S0)
-L3:
-    ret = d
-L2:
-    .return (ret)
+    lua_error("field '", key, "' missing in date table")
+  L3:
+    res = d
+  L2:
+    .return (res)
 .end
 
 .sub 'getboolfield' :anon
     .param pmc t
     .param string key
-    .local int ret
+    .local int res
     new $P1, .LuaString
     set $P1, key
     $P0 = t[$P1]
     $I0 = isa $P0, 'LuaNil'
     unless $I0 goto L1
-    ret = -1
+    res = -1
     goto L2
-L1:
-    ret = istrue $P0
-L2:
-    .return (ret)
+  L1:
+    res = istrue $P0
+  L2:
+    .return (res)
 .end
 
 
@@ -503,8 +500,8 @@ NOT YET IMPLEMENTED (no tmpname).
 =cut
 
 .sub 'tmpname' :anon
-    .local pmc ret
-    new ret, .LuaString
+    .local pmc res
+    new res, .LuaString
     not_implemented()
 .end
 

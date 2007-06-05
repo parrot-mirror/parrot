@@ -29,8 +29,8 @@
 	     "NOT" "NULL" "PACKAGE-NAME" "PRINT" "PROGN" "QUOTE" "READ"
 	     "READ-DELIMITED-LIST" "RPLACA" "RPLACD" "SETQ" "SYMBOL-FUNCTION"
 	     "SYMBOL-NAME" "SYMBOL-PACKAGE" "TYPE-OF" "VALUES"
-	     "IN-PACKAGE" 
-	     
+	     "IN-PACKAGE"
+ 
 	     ;; Miscellaneous symbols
 	     "*GENSYM-COUNTER*" "*MACROEXPAND-HOOK*" "*PACKAGE*" "*READ-EVAL*"
 	     "*READTABLE*" "*STANDARD-INPUT*" "*STANDARD-OUTPUT*" "BASE-CHAR"
@@ -82,8 +82,8 @@
 	   (lambda (stream char)
 	     (error "reader-error" "#) is invalid syntax"))))
 
-(setq *macroexpand-hook* #'(lambda (fn form env)
-			     (apply fn (list form env))))
+;        (setq *macroexpand-hook* #'(lambda (fn form env)
+;        			     (apply fn (list form env))))
 
 ;; Create the KEYWORD package.
 (sys:%make-package "KEYWORD")
@@ -103,4 +103,4 @@
 (sys:%use-package (sys:%find-package "CL-USER")
 		  (sys:%find-package "COMMON-LISP"))
 
-(in-package "COMMON-LISP-USER")
+;        (in-package "COMMON-LISP-USER")

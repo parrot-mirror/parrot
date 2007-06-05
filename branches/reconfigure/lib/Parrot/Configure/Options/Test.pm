@@ -2,6 +2,7 @@
 # $Id$
 package Parrot::Configure::Options::Test;
 use strict;
+use warnings;
 
 our @preconfiguration_tests = qw(
     t/configure/*.t
@@ -40,10 +41,10 @@ sub run_configure_tests {
         system(qq{prove @preconfiguration_tests})
             and die "Unable to execute configuration tests";
         print <<"TEST";
-    
+
 I just ran some tests to demonstrate that
 Parrot's configuration tools will work as intended.
-    
+
 TEST
     }
     return 1;
@@ -99,7 +100,7 @@ On command line:
     # run tests of configuration tools, then configure,
     # then run tests of build tools
     perl Configure.pl  --test
-    
+
 =head1 DESCRIPTION
 
 Test suites have been constructed which test those of Parrot's configuration

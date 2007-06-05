@@ -192,11 +192,18 @@ sub new {
     $argsref->{num_ops}     = $num_ops;
     $argsref->{num_entries} = $num_entries;
 
-    $argsref->{preamble}  = $preamble;
-    $argsref->{init_func} = $init_func;
+    $argsref->{preamble}     = $preamble;
+    $argsref->{init_func}    = $init_func;
+    $argsref->{bs}           = "$argsref->{base}$argsref->{suffix}_";
+    $argsref->{opsarraytype} = $argsref->{trans}->opsarraytype();
 
-    $argsref->{flag} = $flagref;
-    return bless $argsref, $class;
+    # Invoked as:  ${defines}
+    $argsref->{defines}      = $argsref->{trans}->defines();
+
+    $argsref->{flag}         = $flagref;
+    my $self = bless $argsref, $class;
+    $self->_iterate_over_ops();
+    return $self;
 }
 
 sub _prepare_core {
@@ -288,6 +295,11 @@ sub print_c_header_file {
 
     $self->_print_preamble_header($HEADER);
 
+    my @op_protos = @{ $self->{op_protos} };
+    foreach my $proto (@op_protos) {
+        print $HEADER "$proto;\n";
+    }
+
     $self->_print_run_core_func_decl_header($HEADER);
 
     $self->_print_guard_suffix($HEADER);
@@ -340,7 +352,7 @@ sub _generate_guard_macro_name {
     shift @path if $path[0] eq 'include';
     shift @path if $path[0] eq 'parrot';
     return uc(join('_', 'parrot', @path, 'h', 'guard'));
-    
+
 }
 
 sub _print_guard_prefix {
@@ -420,9 +432,6 @@ B<A:>  It is re-used as an argument to the next method.
 
 sub print_c_source_top {
     my $self = shift;
-    $self->{defines}      = $self->{trans}->defines();          # Invoked as:  ${defines}
-    $self->{bs}           = "$self->{base}$self->{suffix}_";    # Also invoked as ${bs}
-    $self->{opsarraytype} = $self->{trans}->opsarraytype();
 
     ##### BEGIN printing to $SOURCE #####
     open my $SOURCE, '>', $self->{source}
@@ -433,9 +442,6 @@ sub print_c_source_top {
     $self->_print_ops_addr_decl($SOURCE);
 
     $self->_print_run_core_func_decl_source($SOURCE);
-
-    # Iterate over the ops, appending HEADER and SOURCE fragments:
-    $self->_iterate_over_ops();
 
     $self->_print_cg_jump_table($SOURCE);
 
@@ -492,6 +498,7 @@ sub _print_run_core_func_decl_source {
 sub _iterate_over_ops {
     my $self = shift;
     my @op_funcs;
+    my @op_protos;
     my @op_func_table;
     my @cg_jump_table;
     my $index = 0;
@@ -516,7 +523,7 @@ sub _iterate_over_ops {
             $comment    = "/* " . $op->full_name() . " */";
         }
         else {
-            $definition = "$prototype;\n$self->{opsarraytype} *\n$func_name ($args)";
+            $definition = "$self->{opsarraytype} *\n$func_name ($args)";
         }
 
         my $src = $op->source( $self->{trans} );
@@ -540,6 +547,7 @@ sub _iterate_over_ops {
         else {
             $one_op .= "$definition $comment {\n$src}\n\n";
             push @op_funcs, $one_op;
+            push @op_protos, $prototype;
             $prev_src = $src if ( $self->{suffix} eq '_cgp' || $self->{suffix} eq '_switch' );
             $prev_index = $index;
         }
@@ -547,6 +555,7 @@ sub _iterate_over_ops {
     }
     $self->{index}         = $index;
     $self->{op_funcs}      = \@op_funcs;
+    $self->{op_protos}     = \@op_protos;
     $self->{op_func_table} = \@op_func_table;
     $self->{cg_jump_table} = \@cg_jump_table;
 }
@@ -575,7 +584,7 @@ sub _print_goto_opcode {
 #ifdef __GNUC__
 # ifdef I386
     else if (cur_opcode == (void **) 1)
-    asm ("jmp *4(%ebp)");  /* jump to ret addr, used by JIT */
+    __asm__ ("jmp *4(%ebp)");  /* jump to ret addr, used by JIT */
 # endif
 #endif
     _reg_base = (char*)interp->ctx.bp.regs_i;
@@ -717,7 +726,7 @@ END_C
         print $fh @{ $self->{op_func_table} };
 
         print $fh <<END_C;
-  (op_func$self->{suffix}_t *)0  /* NULL function pointer */
+  NULL /* NULL function pointer */
 };
 
 
@@ -1012,11 +1021,13 @@ sub _print_dynamic_lib_load {
 /*
  * dynamic lib load function - called once
  */
+$self->{sym_export} PMC*
+$load_func(Parrot_Interp interp);
 
 $self->{sym_export} PMC*
 $load_func(Parrot_Interp interp)
 {
-    PMC *lib = pmc_new(interp, enum_class_ParrotLibrary);
+    PMC *lib            = pmc_new(interp, enum_class_ParrotLibrary);
     PMC_struct_val(lib) = (void *) $self->{init_func};
     dynop_register(interp, lib);
     return lib;

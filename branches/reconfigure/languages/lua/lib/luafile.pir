@@ -83,10 +83,10 @@ are garbage collected, but that takes an unpredictable amount of time to happen.
 =cut
 
 .sub 'close' :method :anon
-    .local pmc ret
+    .local pmc res
     tofile(self)
-    ret = aux_close(self)
-    .return (ret)
+    res = aux_close(self)
+    .return (res)
 .end
 
 
@@ -98,12 +98,12 @@ Saves any written data to C<file>.
 
 .sub 'flush' :method :anon
     .local pmc f
-    .local pmc ret
+    .local pmc res
     f = tofile(self)
     f.'flush'()
-    new ret, .LuaBoolean
-    set ret, 1
-    .return (ret)
+    new res, .LuaBoolean
+    set res, 1
+    .return (res)
 .end
 
 
@@ -164,21 +164,21 @@ empty string, or B<nil> on end of file.
 
 .sub 'read' :method :anon
     .param pmc formats :slurpy
-    .local pmc ret
+    .local pmc res
     .local pmc f
     tofile(self)
     f = getattribute self, 'data'
-    if formats, L1
+    if formats goto L1
     .return read_line(f)
-L1:
+  L1:
     .local int narg
     .local int i
     .local pmc format
     narg = formats
-    new ret, .FixedPMCArray
-    set ret, narg
+    new res, .FixedPMCArray
+    set res, narg
     i = 0
-L2:
+  L2:
     unless i < narg goto L3
     format = formats[i]
     $I0 = isa format, 'LuaNumber'
@@ -187,42 +187,42 @@ L2:
     l = format
     unless l == 0 goto L5
     $P0 = test_eof(f)
-    ret[i] = $P0
+    res[i] = $P0
     goto L6
-L5:
+  L5:
     $P0 = read_chars(f, l)
-    ret[i] = $P0
+    res[i] = $P0
     goto L6
-L4:
+  L4:
     $S0 = lua_checkstring(i, format)
     $I0 = index $S0, '*n'
     unless $I0 == 0 goto L7
     # number
     $P0 = read_number(f)
-    ret[i] = $P0
+    res[i] = $P0
     goto L6
-L7:
+  L7:
     $I0 = index $S0, '*l'
     unless $I0 == 0 goto L8
     # line
     $P0 = read_line(f)
-    ret[i] = $P0
+    res[i] = $P0
     goto L6
-L8:
+  L8:
     $I0 = index $S0, '*a'
     unless $I0 == 0 goto L9
     # file
     $P0 = read_chars(f, 65535)
-    ret[i] = $P0
+    res[i] = $P0
     goto L6
-L9:
+  L9:
     inc i
     lua_argerror(i, "invalid format")
-L6:
+  L6:
     inc i
     goto L2
-L3:
-    .return (ret :flat)
+  L3:
+    .return (res :flat)
 .end
 
 
@@ -264,7 +264,7 @@ position to the end of the file, and returns its size.
     .param pmc whence :optional
     .param pmc offset :optional
     .local pmc f
-    .local pmc ret
+    .local pmc res
     tofile(self)
     $S1 = lua_optstring(1, whence, 'cur')
     $I1 = lua_checkoption(1, $S1, 'set cur end')
@@ -272,9 +272,9 @@ position to the end of the file, and returns its size.
     f = getattribute self, 'data'
     seek f, $I2, $I1
     $I0 = tell f
-    new ret, .LuaNumber
-    set ret, $I0
-    .return (ret)
+    new res, .LuaNumber
+    set res, $I0
+    .return (res)
 .end
 
 
@@ -312,7 +312,7 @@ NOT YET IMPLEMENTED.
     .param pmc size :optional
     .local pmc mode
     .local pmc f
-    .local pmc ret
+    .local pmc res
     tofile(self)
     $S1 = lua_checkstring(1, mode)
     $I1 = lua_checkoption(1, $S1, 'no full line')
@@ -328,10 +328,10 @@ NOT YET IMPLEMENTED.
     f.'buffer_type'($I0)
     if $I1 == 0 goto L1
     f.'buffer_size'($I2)
-L1:
-    new ret, .LuaBoolean
-    set ret, 1
-    .return (ret)
+  L1:
+    new res, .LuaBoolean
+    set res, 1
+    .return (res)
 .end
 
 
@@ -345,7 +345,7 @@ or C<string.format> before write.
 
 .sub 'write' :method :anon
     .param pmc argv :slurpy
-    .local pmc ret
+    .local pmc res
     .local int argc
     .local int i
     .local pmc f
@@ -353,7 +353,7 @@ or C<string.format> before write.
     f = getattribute self, 'data'
     argc = argv
     i = 0
-L1:
+  L1:
     if i >= argc goto L2
     $P0 = argv[i]
     inc i
@@ -361,14 +361,14 @@ L1:
     unless $I0 goto L3
     print f, $P0
     goto L1
-L3:
+  L3:
     $S0 = lua_checkstring(i, $P0)
     print f, $S0
     goto L1
-L2:
-    new ret, .LuaBoolean
-    set ret, 1
-    .return (ret)
+  L2:
+    new res, .LuaBoolean
+    set res, 1
+    .return (res)
 .end
 
 
@@ -386,30 +386,30 @@ L2:
     $P0 = getstderr
     $I0 = issame $P0, f
     if $I0 goto L1
-    print "closing file for you.\n"
+    printerr "closing file for you.\n"
     aux_close(self)
-L1:
+  L1:
     .return ()
 .end
 
 
 .sub '__tostring' :method :anon
     .local pmc f
-    .local pmc ret
+    .local pmc res
     f = topfile(self)
-    new ret, .LuaString
+    new res, .LuaString
     if f goto L1
     $S0 = "file (closed)"
     goto L2
-L1:
+  L1:
     $S0 = "file ("
     $S1 = self
     $S1 = substr $S1, 10, 8
     concat $S0, $S1
     concat $S0, ")"
-L2:
-    set ret, $S0
-    .return (ret)
+  L2:
+    set res, $S0
+    .return (res)
 .end
 
 =back

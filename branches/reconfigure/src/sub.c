@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -302,21 +302,22 @@ Parrot_Context_get_info(Interp *interp, parrot_context_t *ctx,
                     Parrot_Context_info *info)
 {
     Parrot_sub *sub;
+    DECL_CONST_CAST;
 
     /* set file/line/pc defaults */
-    info->file = (char *) "(unknown file)";
-    info->line = -1;
-    info->pc = -1;
-    info->nsname = NULL;
-    info->subname = NULL;
+    info->file     = (char *) const_cast("(unknown file)");
+    info->line     = -1;
+    info->pc       = -1;
+    info->nsname   = NULL;
+    info->subname  = NULL;
     info->fullname = NULL;
 
     /* is the current sub of the specified context valid? */
     if (PMC_IS_NULL(ctx->current_sub)) {
-        info->subname = string_from_cstring(interp, "???", 3);
-        info->nsname = info->subname;
+        info->subname  = string_from_cstring(interp, "???", 3);
+        info->nsname   = info->subname;
         info->fullname = string_from_cstring(interp, "??? :: ???", 10);
-        info->pc = -1;
+        info->pc       = -1;
         return 0;
     }
 
@@ -348,15 +349,17 @@ Parrot_Context_get_info(Interp *interp, parrot_context_t *ctx,
 
     /* determine the current source file/line */
     if (ctx->current_pc) {
-        size_t offs = info->pc;
+        const size_t offs = info->pc;
         size_t i, n;
         opcode_t *pc = sub->seg->base.data;
-        PackFile_Debug *debug = sub->seg->debugs;
+        PackFile_Debug * const debug = sub->seg->debugs;
+
         if (!debug)
             return 0;
         for (i = n = 0; n < sub->seg->base.size; i++) {
-            op_info_t *op_info = &interp->op_info_table[*pc];
+            op_info_t * const op_info = &interp->op_info_table[*pc];
             opcode_t var_args = 0;
+
             if (i >= debug->base.size)
                 return 0;
             if (n >= offs) {
@@ -385,7 +388,7 @@ Parrot_Context_infostr(Interp *interp, parrot_context_t *ctx)
 
     Parrot_block_DOD(interp);
     if (Parrot_Context_get_info(interp, ctx, &info)) {
-        char *file = info.file;
+        char * const file = info.file;
         res        = Parrot_sprintf_c(interp,
             "%s '%Ss' pc %d (%s:%d)", msg,
             info.fullname, info.pc, file, info.line);

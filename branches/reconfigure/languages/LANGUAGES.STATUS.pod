@@ -61,7 +61,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.4.7
+0.4.12
 
 =item Location
 
@@ -134,7 +134,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -182,7 +182,7 @@ Passes all tests. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -325,7 +325,7 @@ library.
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -372,7 +372,7 @@ Works and is mostly complete.
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -410,7 +410,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.4.7
+0.4.12
 
 =item Location
 
@@ -461,7 +461,7 @@ See details in F<languages/lua/doc/status.pod>.
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -523,7 +523,7 @@ Development is stalled. Takers are welcome.
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -618,7 +618,7 @@ Working. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -734,14 +734,41 @@ A PIR compiler using Parrot compiler tools.
 Fairly complete, about 95%. Note that this implementation is not exactly the same
 as the language as accepted by IMCC. 
 
-
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item location
 
 languages/PIR
+
+=back
+
+
+=head2 PJS
+
+=over 4
+
+=item Description
+
+PJS is a JavaScript (ECMAScript) implementation. It makes use of flex/bison for parsing.
+It can only do basic things right now (variables, if-else, loops, try-catch-finally, eval, etc.).
+
+=item Status
+
+Started.
+
+=item Last verified with parrot version
+
+0.4.12
+
+=item Location
+
+L<http://users.fulladsl.be/spb1622/pjs/>
+
+=item Wiki
+
+L<http://rakudo.org/parrot/index.cgi?javascript>
 
 =back
 
@@ -763,7 +790,7 @@ Started.
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -816,7 +843,7 @@ and logic ops.
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -887,7 +914,7 @@ Part of languages smoke testing. Almost all tests are succeeding.
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -987,7 +1014,7 @@ use tcltest.tcl)
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -1060,7 +1087,7 @@ expected to change soon.
 
 =item Last verified with parrot version
 
-0.4.9
+0.4.12
 
 =item Location
 
@@ -1136,7 +1163,7 @@ Infocom's Z-machine. See also http://en.wikipedia.org/wiki/Z-machine.
 
 =item Last verified with parrot version
 
-0.4.10
+0.4.12
 
 =item Location
 

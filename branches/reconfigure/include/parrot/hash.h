@@ -38,7 +38,7 @@ typedef struct _hash_entry {
 typedef UINTVAL BucketIndex;
 #define INITBucketIndex ((BucketIndex)-2)
 
-typedef int    (*hash_comp_fn)(Parrot_Interp, void*, void*);
+typedef int    (*hash_comp_fn)(Parrot_Interp, const void*const, const void*const);
 typedef void   (*hash_mark_key_fn)(Parrot_Interp, PObj *);
 typedef size_t (*hash_hash_key_fn)(Parrot_Interp, void*, size_t seed);
 
@@ -86,7 +86,7 @@ PARROT_API void parrot_hash_clone(Interp *interp, Hash * src, Hash **dest);
 PARROT_API INTVAL parrot_hash_size(Interp *interp, Hash *hash);
 PARROT_API void parrot_hash_set_size(Interp *interp, Hash *hash, UINTVAL size);
 PARROT_API void parrot_hash_destroy(Interp *interp, Hash *hash);
-PARROT_API HashBucket *parrot_hash_get_bucket(Interp *interp, Hash *hash, void *key);
+PARROT_API HashBucket *parrot_hash_get_bucket(Interp *interp, const Hash *hash, void *key);
 PARROT_API void *parrot_hash_get(Interp *interp, Hash *hash, void *key);
 PARROT_API INTVAL parrot_hash_exists(Interp *interp, Hash *hash, void *key);
 PARROT_API HashBucket *parrot_hash_put(Interp *interp, Hash *hash, void *key, void *value);
@@ -94,7 +94,7 @@ PARROT_API void parrot_hash_delete(Interp *interp, Hash *hash, void *key);
 PARROT_API void parrot_mark_hash(Interp *interp, Hash *hash);
 PARROT_API void parrot_hash_visit(Interp *interp, Hash *hash, void*);
 PARROT_API void parrot_dump_hash(Interp *interp, Hash *hash);
-PARROT_API void* parrot_hash_get_idx(Interp *interp, Hash *hash, PMC *key);
+PARROT_API void* parrot_hash_get_idx(Interp *interp, const Hash *hash, PMC *key);
 
 #endif /* PARROT_HASH_H_GUARD */
 

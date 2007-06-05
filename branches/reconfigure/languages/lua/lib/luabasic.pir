@@ -217,7 +217,7 @@ message; when absent, it defaults to "assertion failed!"
     if $I0 goto L1
     $S2 = lua_optstring(2, message, "assertion failed!")
     lua_error($S2)
-L1:
+  L1:
     .return (v, message)
 .end
 
@@ -269,21 +269,21 @@ STILL INCOMPLETE (see gc).
 .sub 'collectgarbage' :anon
     .param pmc opt :optional
     .param pmc arg :optional
-    .local pmc ret
+    .local pmc res
     $S1 = lua_optstring(1, opt, 'collect')
     lua_checkoption(1, $S1, 'stop restart collect count step setpause setstepmul')
     $I2 = lua_optint(2, arg, 0)
     $N0 = gc($S1, $I2)
     unless $S1 == 'step' goto L1
-    new ret, .LuaBoolean
+    new res, .LuaBoolean
     $I0 = $N0
-    set ret, $I0
+    set res, $I0
     goto L2
-L1:
-    new ret, .LuaNumber
-    set ret, $N0
-L2:
-    .return (ret)
+  L1:
+    new res, .LuaNumber
+    set res, $N0
+  L2:
+    .return (res)
 .end
 
 .include 'interpinfo.pasm'
@@ -293,37 +293,37 @@ L2:
     .param int data
     .local float res
     res = 0
-L_stop:
+  L_stop:
     unless what == 'stop' goto L_restart
     collectoff
     goto L_end
-L_restart:
+  L_restart:
     unless what == 'restart' goto L_collect
     collecton
     goto L_end
-L_collect:
+  L_collect:
     unless what == 'collect' goto L_count
     collect
     goto L_end
-L_count:
+  L_count:
     unless what == 'count' goto L_step
     interpinfo $I0, .INTERPINFO_TOTAL_MEM_ALLOC
     # GC values are expressed in Kbytes
     res = $I0 / 1024
     goto L_end
-L_step:
+  L_step:
     unless what == 'step' goto L_setpause
     goto L_end
-L_setpause:
+  L_setpause:
     unless what == 'setpause' goto L_setstepmul
     # not_implemented()
     goto L_end
-L_setstepmul:
+  L_setstepmul:
     unless what == 'setstepmul' goto L_default
     goto L_end
-L_default:
+  L_default:
     res = -1
-L_end:
+  L_end:
     .return (res)
 .end
 
@@ -344,7 +344,7 @@ protected mode).
     ($P0, $S0) = lua_loadfile($S1)
     if null $P0 goto L1
     .return $P0()
-L1:
+  L1:
     lua_error($S0)
 .end
 
@@ -387,18 +387,18 @@ default for C<f> is 1.
 
 .sub 'getfenv' :anon
     .param pmc f :optional
-    .local pmc ret
+    .local pmc res
     if null f goto L1
     .const .LuaNumber zero = '0'
     if f == zero goto L2
-L1:
+  L1:
     f = getfunc(f, 1)
     $I0 = isa f, 'LuaClosure'
     if $I0 goto L3
-L2:
-    ret = get_global '_G'
-    .return (ret)
-L3:
+  L2:
+    res = get_global '_G'
+    .return (res)
+  L3:
     .return lua_getfenv(f)
 .end
 
@@ -410,24 +410,24 @@ L3:
     if $I0 goto L2
     $I0 = isa f, 'LuaClosure'
     if $I0 goto L2
-L1:
+  L1:
     .local int level
     unless opt goto L3
     level = lua_optint(1, f, 1)
     goto L4
-L3:
+  L3:
     level = lua_checknumber(1, f)
-L4:
+  L4:
     if level >= 0 goto L5
     lua_argerror(1, "level must be non-negative")
-L5:
+  L5:
     $P0 = getinterp
     inc level
     push_eh _handler
     f = $P0['sub'; level]
-L2:
+  L2:
     .return (f)
-_handler:
+  _handler:
     lua_argerror(1, "invalid level")
 .end
 
@@ -441,19 +441,19 @@ Otherwise, returns the metatable of the given object.
 
 .sub 'getmetatable' :anon
     .param pmc obj :optional
-    .local pmc ret
+    .local pmc res
     lua_checkany(1, obj)
-    ret = obj.'get_metatable'()
-    if ret goto L1
-    .return (ret)
-L1:
+    res = obj.'get_metatable'()
+    if res goto L1
+    .return (res)
+  L1:
     .local pmc prot
     .const .LuaString mt = '__metatable'
-    prot = ret.'rawget'(mt)
+    prot = res.'rawget'(mt)
     unless prot goto L2
     .return (prot)
-L2:
-    .return (ret)
+  L2:
+    .return (res)
 .end
 
 
@@ -485,15 +485,15 @@ See C<next> for the caveats of modifying the table during its traversal.
     new zero, .LuaNumber
     set zero, 0.0
     .return (ipairs, t, zero)
-L1:
+  L1:
     $P2 = lua_checknumber(2, i)
     $P0 = clone $P2
     inc $P0
-    .local pmc ret
-    ret = t.'rawget'($P0)
-    unless ret goto L2
-    .return ($P0, ret)
-L2:
+    .local pmc res
+    res = t.'rawget'($P0)
+    unless res goto L2
+    .return ($P0, res)
+  L2:
     .return ()
 .end
 
@@ -529,7 +529,7 @@ NOT YET IMPLEMENTED.
     .param string error
     if null func goto L1
     .return (func)
-L1:
+  L1:
     .local pmc msg
     new msg, .LuaString
     set msg, error
@@ -603,7 +603,7 @@ existing fields. In particular, you may clear existing fields.
     $P0 = table.'next'(idx)
     unless $P0 goto L1
     .return ($P0 :flat)
-L1:
+  L1:
     .return ($P0)   # nil
 .end
 
@@ -649,15 +649,15 @@ In case of any error, C<pcall> returns B<false> plus the error message.
 .sub 'pcall' :anon
     .param pmc f :optional
     .param pmc argv :slurpy
-    .local pmc ret
+    .local pmc res
     .local pmc status
     new status, .LuaBoolean
     lua_checkany(1, f)
     push_eh _handler
-    (ret :slurpy) = f(argv :flat)
+    (res :slurpy) = f(argv :flat)
     set status, 1
-    .return (status, ret :flat)
-_handler:
+    .return (status, res :flat)
+  _handler:
     .local pmc e
     .local string s
     .local pmc msg
@@ -684,17 +684,17 @@ debugging. For formatted output, use C<string.format>.
     .local int i
     argc = argv
     i = 0
-L1:
+  L1:
     if i >= argc goto L3
     if i == 0 goto L2
     print "\t"
-L2:
+  L2:
     $P0 = argv[i]
     $P0 = $P0.'tostring'()
     print $P0
     inc i
     goto L1
-L3:
+  L3:
     print "\n"
 .end
 
@@ -709,11 +709,11 @@ Returns a boolean.
 .sub 'rawequal' :anon
     .param pmc v1 :optional
     .param pmc v2 :optional
-    .local pmc ret
+    .local pmc res
     lua_checkany(1, v1)
     lua_checkany(2, v2)
-    ret = v1.'rawequal'(v2)
-    .return (ret)
+    res = v1.'rawequal'(v2)
+    .return (res)
 .end
 
 
@@ -727,11 +727,11 @@ C<table> must be a table; C<index> is any value different from B<nil>.
 .sub 'rawget' :anon
     .param pmc table :optional
     .param pmc idx :optional
-    .local pmc ret
+    .local pmc res
     lua_checktype(1, table, 'table')
     lua_checkany(2, idx)
-    ret = table.'rawget'(idx)
-    .return (ret)
+    res = table.'rawget'(idx)
+    .return (res)
 .end
 
 
@@ -768,17 +768,17 @@ total number of extra arguments it received.
 .sub 'select' :anon
     .param pmc idx :optional
     .param pmc argv :slurpy
-    .local pmc ret
+    .local pmc res
     unless idx goto L1
     $I0 = isa idx, 'LuaString'
     unless $I0 goto L1
     $S0 = idx
     unless $S0 == '#' goto L1
     $I1 = argv
-    new ret, .LuaNumber
-    ret = $I1
-    .return (ret)
-L1:
+    new res, .LuaNumber
+    res = $I1
+    .return (res)
+  L1:
     .local int i
     i = lua_checknumber(1, idx)
     .local int n
@@ -787,27 +787,27 @@ L1:
     unless i < 0 goto L2
     i = n + i
     goto L3
-L2:
+  L2:
     unless i > n goto L3
     i = n
-L3:
+  L3:
     if 1 <= i goto L4
     lua_argerror(1, "index out of range")
-L4:
+  L4:
     $I0 = n - i
-    new ret, .FixedPMCArray
-    set ret, $I0
+    new res, .FixedPMCArray
+    set res, $I0
     $I1 = 0
     dec i
-L5:
+  L5:
     unless $I1 < $I0 goto L6
     $P0 = argv[i]
-    ret[$I1] = $P0
+    res[$I1] = $P0
     inc i
     inc $I1
     goto L5
-L6:
-    .return (ret :flat)
+  L6:
+    .return (res :flat)
 .end
 
 
@@ -833,14 +833,14 @@ STILL INCOMPLETE.
     # change environment of current thread
     not_implemented()
     .return ()
-L1:
+  L1:
     f = getfunc(f, 0)
     $I0 = isa f, 'LuaFunction'
     if $I0 goto L2
     $I0 = lua_setfenv(f, table)
     unless $I0 goto L2
     .return (f)
-L2:
+  L2:
     lua_error("'setfenv' cannot change environment of given object")
 .end
 
@@ -865,9 +865,9 @@ This function returns C<table>.
     if $I0 goto L2
     $I0 = isa metatable, 'LuaTable'
     if $I0 goto L2
-L1:
+  L1:
     lua_argerror(2, "nil or table expected")
-L2:
+  L2:
     .local pmc meta
     meta = table.'get_metatable'()
     unless meta goto L3
@@ -876,7 +876,7 @@ L2:
     prot = meta.'rawget'(mt)
     unless prot goto L3
     lua_error("cannot change a protected metatable")
-L3:
+  L3:
     table.'set_metatable'(metatable)
     .return (table)
 .end
@@ -900,22 +900,22 @@ unsigned integers are accepted.
 .sub 'tonumber' :anon
     .param pmc e :optional
     .param pmc base :optional
-    .local pmc ret
+    .local pmc res
     lua_checkany(1, e)
     $I2 = lua_optint(2, base, 10)
     unless $I2 == 10 goto L1
-    ret = e.'tonumber'()
-    .return (ret)
-L1:
+    res = e.'tonumber'()
+    .return (res)
+  L1:
     $P0 = lua_checkstring(1, e)
     unless 2 <= $I2 goto L2
     unless $I2 <= 36 goto L2
     goto L3
-L2:
+  L2:
     lua_argerror(2, "base out of range")
-L3:
-    ret = $P0.'tobase'($I2)
-    .return (ret)
+  L3:
+    res = $P0.'tobase'($I2)
+    .return (res)
 .end
 
 
@@ -932,10 +932,10 @@ as its result.
 
 .sub 'tostring' :anon
     .param pmc e :optional
-    .local pmc ret
+    .local pmc res
     lua_checkany(1, e)
-    ret = e.'tostring'()
-    .return (ret)
+    res = e.'tostring'()
+    .return (res)
 .end
 
 
@@ -950,12 +950,12 @@ C<"userdata">.
 
 .sub 'type' :anon
     .param pmc v :optional
-    .local pmc ret
+    .local pmc res
     lua_checkany(1, v)
     $S0 = typeof v
-    new ret, .LuaString
-    set ret, $S0
-    .return (ret)
+    new res, .LuaString
+    set res, $S0
+    .return (res)
 .end
 
 
@@ -975,8 +975,8 @@ length operator.
     .param pmc list :optional
     .param pmc i :optional
     .param pmc j :optional
-    .local pmc ret
-    .local pmc index
+    .local pmc res
+    .local pmc index_
     .local int idx
     .local int e
     .local int n
@@ -986,20 +986,20 @@ length operator.
     e = lua_optint(3, j, $I0)
     n = e - $I2
     inc n
-    new ret, .FixedPMCArray
-    set ret, n
-    new index, .LuaNumber
-    set index, $I2
+    new res, .FixedPMCArray
+    set res, n
+    new index_, .LuaNumber
+    set index_, $I2
     idx = 0
-L1:
+  L1:
     unless idx < n goto L2
-    $P0 = list.'rawget'(index)
-    ret[idx] = $P0
-    inc index
+    $P0 = list.'rawget'(index_)
+    res[idx] = $P0
+    inc index_
     inc idx
     goto L1
-L2:
-    .return (ret :flat)
+  L2:
+    .return (res :flat)
 .end
 
 
@@ -1020,26 +1020,26 @@ error, C<xpcall> returns false plus the result from C<err>.
 
 .sub 'xpcall' :anon
     .param pmc f :optional
-    .param pmc err :optional
-    .local pmc ret
+    .param pmc err_ :optional
+    .local pmc res
     .local pmc status
     new status, .LuaBoolean
     lua_checkany(1, f)
-    lua_checkany(2, err)
+    lua_checkany(2, err_)
     push_eh _handler
-    (ret :slurpy) = f()
+    (res :slurpy) = f()
     set status, 1
-    .return (status, ret :flat)
-_handler:
+    .return (status, res :flat)
+  _handler:
     set status, 0
-    $I0 = isa err, 'LuaFunction'
+    $I0 = isa err_, 'LuaFunction'
     if $I0 goto L1
-    $I0 = isa err, 'LuaClosure'
+    $I0 = isa err_, 'LuaClosure'
     unless $I0 goto L2
-L1:
-    (ret :slurpy) = err()
-    .return (status, ret :flat)
-L2:
+  L1:
+    (res :slurpy) = err_()
+    .return (status, res :flat)
+  L2:
     .return (status)
 .end
 

@@ -108,10 +108,10 @@ jit_can_compile_sub(Interp *interp, PMC *sub)
 
 
 static int
-args_match_params(Interp *interp, PMC *sig_args, PackFile_ByteCode *seg,
+args_match_params(Interp *interp, const PMC *sig_args, PackFile_ByteCode *seg,
     opcode_t *start)
 {
-    PMC *sig_params;
+    const PMC *sig_params;
     int n, type;
 
     if (*start != PARROT_OP_get_params_pc)
@@ -145,7 +145,7 @@ args_match_params(Interp *interp, PMC *sig_args, PackFile_ByteCode *seg,
 }
 
 static int
-returns_match_results(Interp *interp, PMC *sig_ret, PMC *sig_result)
+returns_match_results(Interp *interp, const PMC *sig_ret, const PMC *sig_result)
 {
     int type;
     const int n = parrot_pic_check_sig(interp, sig_ret, sig_result, &type);
@@ -209,20 +209,16 @@ call_is_safe(Interp *interp, PMC *sub, opcode_t **set_args)
 }
 
 static int
-ops_jittable(Interp *interp, PMC *sub, PMC *sig_results, PackFile_ByteCode *seg,
+ops_jittable(Interp *interp, PMC *sub, const PMC *sig_results, PackFile_ByteCode *seg,
         opcode_t *pc, opcode_t *end, int *flags)
 {
-    int        op;
-    op_info_t *op_info;
-    int        n;
-
     while (pc < end) {
         /* special opcodes which are handled, but not marked as JITtable */
         int i;
 
-        op      = *pc;
-        op_info = interp->op_info_table + op;
-        n       = op_info->op_count;
+        const int op = *pc;
+        const op_info_t * const op_info = interp->op_info_table + op;
+        int n = op_info->op_count;
 
         switch (op) {
             case PARROT_OP_returncc:
@@ -231,8 +227,7 @@ ops_jittable(Interp *interp, PMC *sub, PMC *sig_results, PackFile_ByteCode *seg,
                 break;
             case PARROT_OP_set_returns_pc:
                 {
-                PMC *sig_ret;
-                sig_ret = seg->const_table->constants[pc[1]]->u.key;
+                const PMC * const sig_ret = seg->const_table->constants[pc[1]]->u.key;
                 if (!returns_match_results(interp, sig_ret, sig_results))
                     return 0;
                 }
