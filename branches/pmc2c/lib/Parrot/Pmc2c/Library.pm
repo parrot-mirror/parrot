@@ -62,17 +62,11 @@ sub generate_library($$) {
     my ( $self, $library_name ) = @_;
     my $h_name  = "$library_name.h";
     my $c_name  = "$library_name.c";
-    my $debug   = $self->{opt}->{debug};
-    my $verbose = $self->{opt}->{verbose};
 
     my $cout = $self->gen_c;
-    print $cout               if $debug;
-    print "Writing $h_name\n" if $verbose;
     spew($c_name, $cout);
 
     my $hout = $self->gen_h;
-    print $hout               if $debug;
-    print "Writing $h_name\n" if $verbose;
     spew($h_name, $hout);
 }
 

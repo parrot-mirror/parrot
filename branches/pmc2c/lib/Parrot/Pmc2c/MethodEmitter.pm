@@ -30,8 +30,6 @@ use Parrot::Pmc2c::UtilFunctions
 use Text::Balanced 'extract_bracketed';
 use Parrot::Pmc2c::PCCMETHOD;
 
-$SIG{'__WARN__'} = sub { use Carp; warn $_[0]; Carp::confess; };
-
 =item C<body($method, $line, $out_name)>
 
 Returns the C code for the method body. C<$line> is used to accumulate

@@ -76,6 +76,7 @@ sub dump {
     my $Dumper = Data::Dumper->new( [$self], ['class'] );
     $Dumper->Indent(3);
     spew($dump_filename, $Dumper->Dump);
+    return $dump_filename;
 }
 
 sub has_method {

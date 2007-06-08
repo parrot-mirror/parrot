@@ -11,8 +11,6 @@ our @EXPORT_OK = qw();
 use Carp;
 use Parrot::Pmc2c::UtilFunctions qw(count_newlines);
 
-$SIG{'__WARN__'} = sub { warn $_[0]; use Carp; print Carp::longmess; };
-
 sub new {
     my ( $class, $self_hash ) = @_;
     my $self = {(
