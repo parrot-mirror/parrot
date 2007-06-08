@@ -26,10 +26,11 @@ our $ok = {
 sub pre_method_gen {
     my ( $self ) = @_;
     
+    my $selfname = $self->name;
     # vtable methods
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
-        next unless exists $ok->{$vt_method_name};
+        #next unless exists $ok->{$vt_method_name};
         next unless $self->normal_unimplemented_vtable($vt_method_name);
         my $new_default_method = $method->clone();
         my ( $func_ret, $ret_suffix, $args, $sig ) = $self->signature($method);
@@ -40,9 +41,11 @@ sub pre_method_gen {
 
     STRING *meth = CONST_STRING(interp, "$vt_method_name");
     PMC *sub = Parrot_find_vtable_meth(interp, pmc, meth);
-    if (PMC_IS_NULL(sub))
-        /* return SUPER($super_args); */
-        vtable_meth_not_found(interp, pmc, "$vt_method_name");
+    if (PMC_IS_NULL(sub)) {
+        PIO_printf(interp, "Delegate %Ss - $vt_method_name\\n", pmc->vtable->whoami );
+        return SUPER($super_args);
+        /* vtable_meth_not_found(interp, pmc, "$vt_method_name"); */
+    }
     ${func_ret}Parrot_run_meth_fromc_args$ret_suffix(interp, sub, pmc, meth, "$sig"$args);
 EOC
         $new_default_method->type(Parrot::Pmc2c::Method::VTABLE);
