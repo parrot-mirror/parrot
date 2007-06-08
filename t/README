@@ -1,40 +1,56 @@
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2005-2007, The Perl Foundation.
 # $Id$
 
 This directory contains the Parrot test suite.
-For details, see the documentation in '../docs/tests.pod'.
+
+For details on how tests are written see the documentation in '../docs/tests.pod'.
 For status of the testing effort, see 'TESTS.STATUS.pod' in this directory.
+The script 'harness' actually runs the test suite.
 
-benchmark:    Run all benchmarks
+Below is a list of subdirs along with a short description
+of what is tested in there.
 
-compilers:    Mini languages distributed with Parrot
+benchmark:      Run benchmarks
 
-configure:    Perl modules of configuration subsystem
+codingstd:      Conventions and Guidelines for Parrot Source Code
 
-codingstd:    Conventions and Guidelines for Parrot Source Code
+compilers:      Mini languages distributed with Parrot
 
-distro:       Tests run before a distro is released
+configure:      Perl modules of configuration subsystem
 
-doc:          Completeness and sanity of the documentation
+distro:         Tests run before a distribution is released
 
-dynpmc:       Dynamic PMCs
+doc:            Completeness and sanity of the documentation
 
-examples:     Check whether the examples are still working
+dynoplibs:      Dynamic opcode libraries
 
-library:      Parrot modules
+dynpmc:         Dynamic PMCs
 
-native_pbc:   Parrot Byte Code
+examples:       Check whether the examples are still working
 
-op:           Try to cover all core operators
+library:        Parrot modules
 
-perl:         Test Perl5 modules used for configuration, building and testing of Parrot.
+native_pbc:     Parrot Byte Code
 
-pmc:          Try to cover all builtin PMCs
+oo:             Object oriented features of Parrot
 
-run:          Mostly command line options of the 'parrot' executable
+op:             Try to cover all core operators
 
-src:          Tests written in C. XXX Is this a meaningful category?
+pdd15oo:        New version of the object support as specified in PDD15
 
-stress:       Stress testing
+perl:           Test Perl 5 modules used for configuration, building and testing of Parrot.
 
-tools:        Executables besides 'parrot'
+pmc:            Try to cover all builtin PMCs
+
+postconfigure:  Tests of configuration system which cannot be run until
+                configuration has completed.
+
+run:            Mostly command line options of the 'parrot' executable
+
+src:            Tests written in C.
+
+stm:            Storage transactional memory
+
+stress:         Stress testing. Make Parrot sweat.
+
+tools:          Executables and script besides 'parrot'. Tools for development.

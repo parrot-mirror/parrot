@@ -1,3 +1,6 @@
+# Copyright (C) 2007, The Perl Foundation.
+# $Id$
+
 package Parrot::Pmc2c::UtilFunctions;
 use strict;
 use warnings;
@@ -53,15 +56,16 @@ This method is imported by subclasses.
 sub gen_ret {
     my ( $method, $body ) = @_;
 
-    my $ret;
     my $return_type = $method->return_type;
     if ($body) {
-        $ret = $return_type eq 'void' ? "$body;" : "return $body;";
+        return "$body;" if $return_type eq 'void';
+        return "return $body;";
     }
     else {
-        $ret = $return_type eq 'void' ? "" : "return ($return_type)0;";
+        return '' if $return_type eq 'void';
+        return "return PMCNULL;" if $return_type eq 'PMC*';
+        return "return ($return_type)0;";
     }
-    $ret;
 }
 
 =item C<dynext_load_code($library_name, %classes)>

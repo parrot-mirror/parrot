@@ -734,9 +734,11 @@ help :
 	@echo "  lint:              code checking with lint."
 	@echo "  splint:            code checking with splint."
 	@echo "  splint2:           another code checking with splint."
+	@echo "  headerizer:        recreate header files for appropriate"
+	@echo "                     C-source files"
 	@echo ""
 	@echo "Release:"
-	@echo "  release:           create a TAR ball."
+	@echo "  release:           create a tarball."
 	@echo "  rpm:               create RPMs."
 	@echo "  win32-inno-installer:      create MSWin32 setup."
 	@echo ""
@@ -1806,11 +1808,16 @@ tags: tags.dummy
 	ctags \
 		--links=no --totals \
 		-R --exclude=blib --exclude=.svn  \
-		--languages=c,perl --langmap=c:+.h,c,l,y:+.pmc \
+		--languages=c,perl --langmap=c:+.h,c:+.pmc \
 		$(CUR_DIR)
 	$(PERL) $(BUILD_TOOLS_DIR)/addopstags.pl $(OPS_DIR)/*.ops
 
 tags.dummy:
+
+# This target will eventually create all the headers automatically.
+# If you are having problems with linkage in Win32 (or elsewhere), because something
+# is not PARROT_API, but should be, then put PARROT_API in the C file and 
+# run "make hwork".  The .h file will get updated.
 
 HEADERIZER_O_FILES = \
     $(INTERP_O_FILES) \
@@ -1818,6 +1825,24 @@ HEADERIZER_O_FILES = \
     $(IO_O_FILES) \
     $(CLASS_O_FILES) \
     $(ENCODING_O_FILES)
+
+# Slowing working my way up to having everything headerized in $(HEADERIZER_O_FILES)
+HEADERIZER_O_FILES = \
+    src/string.o \
+    src/string_primitives.o \
+    src/pic.o \
+    src/stacks.o \
+    src/stack_common.o \
+    src/mmd.o \
+    src/objects.o \
+    src/key.o \
+    src/hash.o \
+    src/pmc.o \
+    src/list.o \
+    src/intlist.o \
+    src/datatypes.o \
+    src/gc/resources.o \
+    src/utils.o \
 
 headerizer:
 	$(PERL) $(BUILD_TOOLS_DIR)/headerize.pl $(HEADERIZER_O_FILES)
@@ -1846,6 +1871,7 @@ smoke-clean :
 #
 # Local variables:
 # mode: makefile
+# ex: ft=make
 # End:
 #
 

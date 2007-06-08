@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2006, The Perl Foundation.
+# Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -27,6 +27,8 @@ on the command line.
 * Generate docs from funcs
 
 * Test the POD of the stuff we're parsing.
+
+* Somehow handle static functions in the source file
 
 =head1 NOTES
 
@@ -59,7 +61,6 @@ One or more object file names.
 
 =cut
 
-use Data::Dumper;
 use Getopt::Long;
 use lib qw( lib );
 use Parrot::Config;
@@ -77,9 +78,9 @@ sub open_file {
     my $filename  = shift;
 
     my %actions = (
-        "<"  => "Reading",
-        ">"  => "Writing",
-        ">>" => "Appending",
+        '<'  => 'Reading',
+        '>'  => 'Writing',
+        '>>' => 'Appending',
     );
 
     my $action = $actions{$direction} or die "Invalid direction '$direction'";
@@ -131,33 +132,137 @@ sub extract_functions {
 sub function_components {
     my $proto = shift;
 
-    my @parts      = split( /\n/, $proto, 2 );
-    my $returntype = $parts[0];
-    my $parms      = $parts[1];
+    my @lines = split( /\n/, $proto );
+    chomp @lines;
+    my $parrot_api;
+    if ( $lines[0] eq 'PARROT_API' ) {
+        $parrot_api = 1;
+        shift @lines;
+    }
+
+    my $returntype = shift @lines;
+    my $parms      = join( " ", @lines );
 
     $parms =~ s/\s+/ /g;
-    $parms =~ s/([^(]+)\s*\((.+)\);?/$2/ or die "Couldn't handle $proto";
+    $parms =~ s{([^(]+)\s*\((.+)\)\s*(/\*\s*(.*?)\s*\*/)?;?}{$2} or die qq{Couldn't handle "$proto"};
     my $funcname = $1;
     $parms = $2;
+    my $funcflags = $4;
+
     my @parms = split( /\s*,\s*/, $parms );
     for (@parms) {
-        /\S+\s+\S+/ || ( $_ eq "..." ) || ( $_ eq "void" ) || /theINTERP/
+        /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' ) || /theINTERP/
             or die "Bad parms in $proto";
     }
 
     my $static;
     $returntype =~ s/^((static)\s+)?//i;
-    $static = $2 || "";
+    $static = $2 || '';
 
-    return [ $static, $returntype, $funcname, @parms ];
+    die "Impossible to have both static and PARROT_API" if $parrot_api && $static;
+
+    return [ $parrot_api, $static, $returntype, $funcname, $funcflags, @parms ];
+}
+
+sub attrs_from_args {
+    my @args = @_;
+
+    my @attrs = ();
+
+    my $n = 0;
+    for my $arg ( @args ) {
+        ++$n;
+        if ( $arg =~ m{/\*\s*NN\s*\*/} ) {
+            push( @attrs, "__attribute__nonnull__($n)" );
+        }
+    }
+
+    return @attrs;
+}
+
+sub attrs_from_funcflags {
+    my $funcflags = shift;
+
+    return if not $funcflags;
+    return if $funcflags =~ /XXX/;
+
+    my @attrs = ();
+    my @opts = split( /\s*,\s*/, $funcflags );
+
+    # For details about these attributes, see
+    # http://gcc.gnu.org/onlinedocs/gcc-4.2.0/gcc/Function-Attributes.html
+    for my $opt ( @opts ) {
+        if ( $opt eq 'WARN_UNUSED' ) {
+            push( @attrs, '__attribute__warn_unused_result__' );
+        }
+        elsif ( $opt eq 'NORETURN' ) {
+            push( @attrs, '__attribute__noreturn__' );
+        }
+        elsif ( $opt eq 'CONST' ) {
+            push( @attrs, '__attribute__const__' );
+        }
+        elsif ( $opt eq 'PURE' ) {
+            push( @attrs, '__attribute__pure__' );
+        }
+        else {
+            die qq{Unknown function flag "$funcflags" -> "$opt"\n};
+        }
+    }
+
+    return @attrs;
+}
+
+sub make_function_decls {
+    my @funcs = @_;
+
+    my @decls;
+    foreach my $func ( @funcs ) {
+        my ($parrot_api, $static, $ret_type, $funcname, $funcflags, @args) = @{$func};
+        next if $static;
+
+        my $multiline = 0;
+
+        my $decl = sprintf( "%s %s(", $ret_type, $funcname );
+        $decl = "PARROT_API $decl" if $parrot_api;
+
+        my @attrs = attrs_from_args( @args );
+        push( @attrs, attrs_from_funcflags( $funcflags ) );
+
+        my $argline = join( ", ", @args );
+        if ( length($decl.$argline) <= 75 ) {
+            $decl = "$decl $argline )";
+        }
+        else {
+            if ( $args[0] =~ /^Interp\b/ ) {
+                $decl .= " " . (shift @args);
+                $decl .= "," if @args;
+            }
+            $argline = join( ",", map { "\n\t$_" } @args );
+            $decl = "$decl$argline )";
+            $multiline = 1;
+        }
+
+        my $attrs = join( "", map { "\n\t\t$_" } @attrs );
+        if ( $attrs ) {
+            $decl .= $attrs;
+            $multiline = 1;
+        }
+        $decl .= $multiline ? ";\n" : ";";
+        $decl =~ s/\t/    /g;
+        push( @decls, $decl );
+    }
+
+    return @decls;
 }
 
 sub main {
-    GetOptions( "verbose" => \$opt{verbose}, ) or exit(1);
+    GetOptions( 'verbose' => \$opt{verbose}, ) or exit(1);
 
     my $nfuncs = 0;
     my @ofiles = @ARGV;
     my %files;
+
+    # Walk the object files and find corresponding source (either .c or .pmc)
     for my $ofile (@ofiles) {
         next if $ofile =~ m/^\Qsrc$PConfig{slash}ops\E/;
 
@@ -169,11 +274,11 @@ sub main {
 
         my $sourcefile = -f $pmcfile ? $pmcfile : $cfile;
 
-        my $fh = open_file( "<", $cfile );
+        my $fh = open_file( '<', $cfile );
         my $source = do { local $/; <$fh> };
         close $fh;
 
-        print "\n=== $cfile ===\n";
+        print "=== $cfile ===\n";
 
         die "can't find HEADER directive in '$cfile'"
             unless $source =~ m#/\*\s+HEADER:\s+([^*]+?)\s+\*/#s;
@@ -188,7 +293,6 @@ sub main {
         }
     }    # for @cfiles
     my $nfiles = scalar keys %files;
-    print Dumper( \%files ) if $opt{verbose};
     print "$nfuncs funcs in $nfiles files\n";
 
     for my $hfile ( sort keys %files ) {
@@ -198,29 +302,17 @@ sub main {
         my $header = do { local $/ = undef; <$FILE> };    # slurp
         close $FILE;
 
-        for my $cfile ( sort keys %$cfiles ) {
+        for my $cfile ( sort keys %{$cfiles} ) {
             my $funcs = $cfiles->{$cfile};
+            my @funcs = sort { $a->[3] cmp $b->[3] } @{$funcs};
 
-            my @function_defs;
-            foreach my $func ( sort { $a->[2] cmp $b->[2] } @$funcs ) {
-                my $static = shift @$func;
-                next if $static;
+            my @function_decls = make_function_decls( @funcs );
 
-                my $ret_type = shift @$func;
-                my $funcname = shift @$func;
-                my @args     = @$func;
-
-                push( @function_defs,
-                    sprintf "PARROT_API %s %s( %s );\n",
-                    $ret_type, $funcname, join( ",\n\t", @args ),
-                );
-            }
-
-            my $function_defs = join( "\n", @function_defs );
+            my $function_decls = join( "\n", @function_decls );
             my $STARTMARKER   = qr#/\* HEADERIZER BEGIN: $cfile \*/\n#;
             my $ENDMARKER     = qr#/\* HEADERIZER END: $cfile \*/\n?#;
-            $header =~ s#($STARTMARKER)(?:.*?)($ENDMARKER)#$1$function_defs$2#s
-                or die "no HEADERIZER markers for '$cfile' found in '$hfile'";
+            $header =~ s#($STARTMARKER)(?:.*?)($ENDMARKER)#$1\n$function_decls\n$2#s
+                or die "Need begin/end HEADERIZER markers for $cfile in $hfile\n";
         }    # for %cfiles
 
         open $FILE, '>', $hfile or die "couldn't write '$hfile': $!";

@@ -139,11 +139,11 @@ rule tablefield {
 
 rule parameter_list {
   | <name_list> [ <','> <vararg> ]?
-  | <vararg>
+  | <vararg>?
 }
 
 rule function_body {
-  <'('> <parameter_list>? <?closeparen> <block> <?end>
+  <'('> <parameter_list> <?closeparen> <block> <?end>
 }
 
 rule expression_list {
@@ -303,7 +303,7 @@ proto 'infix:-'     is equiv('infix:+')     is pirop('sub')
                     is returns('.LuaNumber')                    { ... }
 
 proto 'infix:..'    is looser('infix:+')    is pirop('concat')  is assoc('right')
-                    is returns('.LusString')                    { ... }
+                    is returns('.LuaString')                    { ... }
 
 proto 'infix:<'     is looser('infix:..')                       { ... }
 proto 'infix:>'     is equiv('infix:<')                         { ... }
