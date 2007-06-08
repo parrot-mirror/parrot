@@ -112,34 +112,6 @@ PackFile_destroy(Interp *interp, PackFile *pf)
     return;
 }
 
-/*
-
-=item C<static INTVAL
-PackFile_check_segment_size(opcode_t segment_size, const char *debug)>
-
-Internal function to check C<segment_size % sizeof (opcode_t)>.
-
-=cut
-
-*/
-
-static INTVAL
-PackFile_check_segment_size(opcode_t segment_size, const char *debug)
-{
-#if TRACE_PACKFILE
-    PIO_eprintf(NULL,"PackFile_unpack(): Unpacking %ld bytes for %s table...\n",
-           (long)segment_size, debug);
-#endif
-
-    if (segment_size % sizeof (opcode_t)) {
-        PIO_eprintf(NULL,
-                    "PackFile_unpack: Illegal %s table segment size "
-                    "%ld (must be multiple of %ld)!\n",
-                    debug, (long)segment_size, (long)sizeof (opcode_t));
-        return 0;
-    }
-    return 1;
-}
 
 /*
 
@@ -279,13 +251,12 @@ Run autoloaded or immediate bytecode, mark MAIN subroutine entry
 */
 
 static PMC*
-do_1_sub_pragma(Parrot_Interp interp, PMC *sub_pmc, int action)
+do_1_sub_pragma(Parrot_Interp interp, PMC *sub_pmc /*NN*/, int action)
 {
 
     size_t start_offs;
     Parrot_sub const * sub = PMC_sub(sub_pmc);
     PMC *result;
-    void *lo_var_ptr;
 
     switch (action) {
         case PBC_IMMEDIATE:
@@ -293,6 +264,8 @@ do_1_sub_pragma(Parrot_Interp interp, PMC *sub_pmc, int action)
              * run IMMEDIATE sub
              */
             if (PObj_get_FLAGS(sub_pmc) & SUB_FLAG_PF_IMMEDIATE) {
+                void *lo_var_ptr;
+
                 PObj_get_FLAGS(sub_pmc) &= ~SUB_FLAG_PF_IMMEDIATE;
                 lo_var_ptr = interp->lo_var_ptr;
                 result = run_sub(interp, sub_pmc);
@@ -331,7 +304,7 @@ do_1_sub_pragma(Parrot_Interp interp, PMC *sub_pmc, int action)
             if (PObj_get_FLAGS(sub_pmc) & SUB_FLAG_PF_MAIN) {
                 if ((interp->resume_flag & RESUME_INITIAL) &&
                         interp->resume_offset == 0) {
-                    ptrdiff_t code = (ptrdiff_t) sub->seg->base.data;
+                    const ptrdiff_t code = (ptrdiff_t) sub->seg->base.data;
 
                     start_offs =
                         ((ptrdiff_t) VTABLE_get_pointer(interp, sub_pmc)
@@ -1545,9 +1518,9 @@ directory_destroy(Interp *interp, PackFile_Segment *self)
     PackFile_Directory *dir = (PackFile_Directory *)self;
     size_t i;
 
-    for (i = 0; i < dir->num_segments; i++) {
+    for (i = 0; i < dir->num_segments; i++)
         PackFile_Segment_destroy(interp, dir->segments[i]);
-    }
+
     if (dir->segments) {
         mem_sys_free(dir->segments);
         dir->segments = NULL;
@@ -1859,10 +1832,10 @@ byte_code_destroy(Interp *interp, PackFile_Segment *self)
             byte_code->prederef.branches = NULL;
         }
     }
-    byte_code->fixups = NULL;
-    byte_code->debugs = NULL;
+    byte_code->fixups      = NULL;
     byte_code->const_table = NULL;
-    byte_code->pic_index = NULL;
+    byte_code->pic_index   = NULL;
+    byte_code->debugs      = NULL;
 }
 
 /*
@@ -1926,7 +1899,7 @@ pf_debug_destroy(Interp *interp, PackFile_Segment *self)
 
     /* Free mappings pointer array. */
     mem_sys_free(debug->mappings);
-    debug->mappings = NULL;
+    debug->mappings     = NULL;
     debug->num_mappings = 0;
 }
 
@@ -2217,9 +2190,6 @@ Parrot_new_debug_seg(Interp *interp, PackFile_ByteCode *cs, size_t size)
 
         debug->base.data    = (opcode_t *)mem_sys_allocate(size *
             sizeof (opcode_t));
-        debug->num_mappings = 0;
-        debug->mappings     = mem_allocate_typed(PackFile_DebugMapping *);
-
         debug->code = cs;
         cs->debugs = debug;
     }

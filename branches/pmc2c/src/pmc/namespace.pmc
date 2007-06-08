@@ -52,8 +52,8 @@ enum {
 /* We store extra information about the namespace in a struct, which we will
  * hang off the PMC_data slot. */
 typedef struct Parrot_NSInfo {
-    STRING *name; /* Name of this namespace part. */
-    PMC *class;   /* The class or role attached to this namespace. */
+    STRING *name;  /* Name of this namespace part. */
+    PMC *_class;   /* The class or role attached to this namespace. */
 } Parrot_NSInfo;
 
 /* Macro for easy access to the namespcae info. */
@@ -95,8 +95,8 @@ Marks the namespace as live.
             pobject_lives(INTERP, (PObj*)PMC_pmc_val(SELF));
         if (nsinfo->name)
             pobject_lives(INTERP, (PObj*)nsinfo->name);
-        if (nsinfo->class)
-            pobject_lives(INTERP, (PObj*)nsinfo->class);
+        if (nsinfo->_class)
+            pobject_lives(INTERP, (PObj*)nsinfo->_class);
     }
 
 /*
@@ -221,7 +221,7 @@ a NameSpace or a var, the NameSpace is returned.
             }
         }
 
-        real_exception(INTERP, NULL, E_NameError, "Invalid namespace key");
+        real_exception(INTERP, NULL, E_NameError, "Invalid namespace key in set_pmc_keyed");
     }
 
     PMC* get_pmc_keyed_str(STRING *key) {
@@ -258,7 +258,7 @@ a NameSpace or a var, the NameSpace is returned.
             return ns;
         }
 
-        real_exception(INTERP, NULL, E_NameError, "Invalid namespace key");
+        real_exception(INTERP, NULL, E_NameError, "Invalid namespace key in get_pmc_keyed_str");
         /* NOTREACHED */
         return PMCNULL;
     }
@@ -312,7 +312,7 @@ TOTAL KLUDGE.  ON THE CHOPPING BLOCK.
             return ns;
         }
 
-        real_exception(INTERP, NULL, E_NameError, "Invalid namespace key");
+        real_exception(INTERP, NULL, E_NameError, "Invalid namespace key in get_pointer_keyed");
         /* NOTREACHED */
         return PMCNULL;
     }
@@ -740,7 +740,7 @@ Returns the class or role PMC that is associated with this namespace.
     PCCMETHOD void get_class()
     {
         Parrot_NSInfo *nsinfo = PARROT_NSINFO(SELF);
-        PMC *ret_class = nsinfo->class;
+        PMC *ret_class = nsinfo->_class;
         PCCRETURN(PMC *ret_class);
     }
 
@@ -757,7 +757,7 @@ Sets the class or role PMC that is associated with this namespace.
     PCCMETHOD void set_class(PMC *class_or_role)
     {
         Parrot_NSInfo *nsinfo = PARROT_NSINFO(SELF);
-        nsinfo->class = class_or_role;
+        nsinfo->_class        = class_or_role;
     }
 
 }

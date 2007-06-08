@@ -121,7 +121,7 @@ destroy_context(Interp *interp)
     /* clear active contexts all the way back to the initial context */
     context = CONTEXT(interp->ctx);
     while (context) {
-        Parrot_Context * prev = context->caller_ctx;
+        Parrot_Context * const prev = context->caller_ctx;
         mem_sys_free(context);
         context = prev;
     }
@@ -141,7 +141,6 @@ destroy_context(Interp *interp)
 void
 create_initial_context(Interp *interp)
 {
-    int i;
     static INTVAL num_regs[] ={32,32,32,32};
 
     /* Create some initial free_list slots. */
@@ -149,10 +148,8 @@ create_initial_context(Interp *interp)
 #define INITIAL_FREE_SLOTS 8
     interp->ctx_mem.n_free_slots = INITIAL_FREE_SLOTS;
     interp->ctx_mem.free_list    =
-        (void **)mem_sys_allocate(INITIAL_FREE_SLOTS * sizeof (void *));
+        (void **)mem_sys_allocate_zeroed(INITIAL_FREE_SLOTS * sizeof (void *));
 
-    for (i = 0; i < INITIAL_FREE_SLOTS; ++i)
-        interp->ctx_mem.free_list[i] = NULL;
     /*
      * For now create context with 32 regs each. Some src tests (and maybe other
      * extenders) are assuming the presence of these registers
@@ -311,7 +308,7 @@ Parrot_dup_context(Interp *interp, const Parrot_Context *old)
 }
 
 Parrot_Context *
-Parrot_push_context(Interp *interp, INTVAL *n_regs_used)
+Parrot_push_context(Interp *interp, INTVAL *n_regs_used /*NN*/)
 {
     Parrot_Context * const old = CONTEXT(interp->ctx);
     Parrot_Context * const ctx =
@@ -338,7 +335,7 @@ Parrot_pop_context(Interp *interp)
 
 
 Parrot_Context *
-Parrot_alloc_context(Interp *interp, INTVAL *n_regs_used)
+Parrot_alloc_context(Interp *interp, INTVAL *n_regs_used /*NN*/)
 {
     Parrot_Context *old, *ctx;
     void *ptr, *p;

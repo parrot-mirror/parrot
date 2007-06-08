@@ -76,6 +76,7 @@ lookup of the cache has to be done in the opcode itself.
 
 */
 
+/* HEADER: include/parrot/pic.h */
 #include "parrot/parrot.h"
 #include "parrot/oplib/ops.h"
 #include <assert.h>
@@ -121,7 +122,7 @@ Free memory for the PIC storage.
 */
 
 void
-parrot_PIC_alloc_store(Interp *interp, PackFile_ByteCode *cs, size_t n)
+parrot_PIC_alloc_store(Interp *interp, struct PackFile_ByteCode *cs /*NN*/, size_t n)
 {
     size_t size, poly;
     Parrot_PIC_store *store;
@@ -138,7 +139,7 @@ parrot_PIC_alloc_store(Interp *interp, PackFile_ByteCode *cs, size_t n)
     size = n * sizeof (Parrot_MIC) + poly + sizeof (Parrot_PIC_store);
 
     store = (Parrot_PIC_store *)mem_sys_allocate_zeroed(size);
-    SET_NULL_P(store->prev, Parrot_PIC_store*);
+    store->prev = NULL;
     cs->pic_store = store;
 
     store->pic    = (Parrot_PIC*)((char *)store + size);
@@ -148,7 +149,7 @@ parrot_PIC_alloc_store(Interp *interp, PackFile_ByteCode *cs, size_t n)
 }
 
 void
-parrot_PIC_destroy(Interp *interp, PackFile_ByteCode *cs)
+parrot_PIC_destroy(Interp *interp, struct PackFile_ByteCode *cs /*NN*/)
 {
     Parrot_PIC_store *store;
 
@@ -230,19 +231,6 @@ parrot_PIC_alloc_pic(Interp *interp)
     store->usable -= sizeof (Parrot_PIC);
     return --store->pic;
 }
-
-/*
-
-=item C<void parrot_PIC_prederef(Interp *, opcode_t op,
-                                 void **pc_pred, int type)>
-
-Define either the normal prederef function or the PIC stub, if PIC for
-this opcode function is available. Called from C<do_prederef>.
-
-=cut
-
-*/
-
 
 void *
 parrot_pic_opcode(Interp *interp, INTVAL op)
@@ -370,7 +358,8 @@ pass_mixed(Interp *interp, PMC *sig, char *src_base, void **src,
  * the type PARROT_ARG_CONSTANT stands for mixed types or constants
  */
 int
-parrot_pic_check_sig(Interp *interp, const PMC *sig1, const PMC *sig2, int *type /*NN*/)
+parrot_pic_check_sig(Interp *interp, const PMC *sig1 /*NN*/,
+        const PMC *sig2 /*NN*/, int *type /*NN*/)
 {
     int i, n, t0, t1, t2;
     t0 = 0; /* silence compiler uninit warning */
@@ -412,12 +401,11 @@ parrot_pic_check_sig(Interp *interp, const PMC *sig1, const PMC *sig2, int *type
 }
 
 static int
-is_pic_param(Interp *interp, void **pc, Parrot_MIC* mic, opcode_t op)
+is_pic_param(Interp *interp, void **pc, Parrot_MIC* const mic, opcode_t op)
 {
     PMC *sig2;
     int n, type;
     parrot_context_t *caller_ctx;
-    INTVAL const_nr;
     opcode_t *args;
     PMC * const sig1 = (PMC*)(pc[1]);
     parrot_context_t * const ctx = CONTEXT(interp->ctx);
@@ -534,6 +522,18 @@ is_pic_func(Interp *interp, void **pc, Parrot_MIC *mic, int core_type)
     return 1;
 }
 
+/*
+
+=item C<void parrot_PIC_prederef(Interp *, opcode_t op,
+                                 void **pc_pred, int type)>
+
+Define either the normal prederef function or the PIC stub, if PIC for
+this opcode function is available. Called from C<do_prederef>.
+
+=cut
+
+*/
+
 void
 parrot_PIC_prederef(Interp *interp, opcode_t op, void **pc_pred, int core)
 {
@@ -542,7 +542,7 @@ parrot_PIC_prederef(Interp *interp, opcode_t op, void **pc_pred, int core)
     Parrot_MIC *mic = NULL;
 
     if (parrot_PIC_op_is_cached(interp, op)) {
-        PackFile_ByteCode *cs = interp->code;
+        const PackFile_ByteCode * const cs = interp->code;
         size_t n = cur_opcode - (opcode_t*)cs->prederef.code;
         /*
          * pic_index is half the size of the code
@@ -631,8 +631,8 @@ parrot_pic_move(Interp* interp, Parrot_MIC *mic)
 }
 
 void
-parrot_pic_find_infix_v_pp(Interp *interp, PMC *left, PMC *right,
-                Parrot_MIC *mic, void **cur_opcode)
+parrot_pic_find_infix_v_pp(Interp *interp, PMC *left /*NN*/, PMC *right /*NN*/,
+                Parrot_MIC *mic /*NN*/, opcode_t *cur_opcode /*NN*/)
 {
     funcptr_t func;
     int is_pmc;
@@ -660,10 +660,10 @@ parrot_pic_find_infix_v_pp(Interp *interp, PMC *left, PMC *right,
     func = get_mmd_dispatch_type(interp,
             mic->m.func_nr, left_type, right_type, &is_pmc);
     if (is_pmc) {
-        const size_t offs = cur_opcode - interp->code->prederef.code;
-        opcode_t* const real_op = interp->code->base.data + offs + 1;
-
-        /* set prederef code address to orig slot for now */
+        const size_t offs = cur_opcode - (opcode_t *)interp->code->prederef.code;
+        opcode_t* real_op = interp->code->base.data + offs + 1;
+        /* set prederef code address to orig slot for now
+         */
         ((void**)cur_opcode)[0] =
             parrot_pic_opcode(interp, PARROT_OP_infix_ic_p_p);
         /* restore 1st operand i.e. .MMD_func_nr */
