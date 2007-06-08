@@ -22,8 +22,6 @@ GetOptions(
     "tree"      => \$action{tree},
     #command line options
     "no-lines"  => \$options{nolines},
-    "debug+"    => \$options{debug},
-    "verbose+"  => \$options{verbose},
     "library=s" => \$options{library},
     "testing"   => \$options{testing},
 ) or exit 1;
@@ -104,18 +102,9 @@ that can be compiled for use with the Parrot interpreter.
 
 =over 4
 
-=item C<--debug>
-
-Increase debug level
-
-=item C<--verbose>
-
-Increase verbose level
-
 =item C<--no-lines>
 
 Omit source line info
-
 
 =item C<--include=/path/to/pmc>
 

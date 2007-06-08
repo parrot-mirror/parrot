@@ -169,7 +169,7 @@ EOC
 
 =head3 C<open_file()>
 
-    $fh = open_file( "<", $file, $verbose);
+    $fh = open_file( "<", $file );
 
 B<Purpose:>  Utility subroutine.
 
@@ -186,12 +186,6 @@ reading or C<E<gt>E<gt>> for writing or appending.
 
 String holding name of file to be opened.
 
-=item * verbose
-
-Optional.  True value if verbose output is desired.  That output will be the
-action followed by the filename.
-In most cases, the third argument will be C<$self->{opt}{verbose}>.
-
 =back
 
 B<Return Values:>  Filehandle to file so opened.
@@ -201,35 +195,36 @@ B<Comment:>  Called within C<dump_vtable()>, C<read_dump()>, and C<dump_pmc()>.
 =cut
 
 sub open_file {
-    my ( $direction, $filename, $verbose ) = @_;
+    my ( $direction, $filename ) = @_;
 
+    my $verbose = 0;
     my $actions_descriptions = { '<' => 'Reading', '>>' => "Appending", '>' => "Writing" };
     my $action = $actions_descriptions->{$direction} || "Unknown";
-
     print "$action $filename\n" if $verbose;
+
     open my $fh, $direction, $filename or die "$action $filename: $!\n";
     return $fh;
 }
 
 
 sub slurp {
-    my ( $filename, $verbose ) = @_;
-    my $fh = open_file( '<', $filename, $verbose );
+    my ( $filename ) = @_;
+    my $fh = open_file( '<', $filename );
     my $data = do { local $/; <$fh> };
     close $fh;
     return $data;
 }
 
 sub spew {
-    my ( $filename, $data, $verbose ) = @_;
-    my $fh = open_file( '>', $filename, $verbose );
+    my ( $filename, $data ) = @_;
+    my $fh = open_file( '>', $filename );
     print $fh $data;
     close $fh;
 }
 
 sub splat {
-    my ( $filename, $data, $verbose ) = @_;
-    my $fh = open_file( '>>', $filename, $verbose );
+    my ( $filename, $data ) = @_;
+    my $fh = open_file( '>>', $filename );
     print $fh $data;
     close $fh;
 }

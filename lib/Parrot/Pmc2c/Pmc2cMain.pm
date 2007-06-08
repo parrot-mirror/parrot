@@ -23,7 +23,7 @@ use Cwd qw(cwd realpath);
 use File::Basename;
 use Carp;
 
-$SIG{'__WARN__'} = sub { use Carp; warn $_[0]; Carp::confess; };
+#$SIG{'__WARN__'} = sub { use Carp; warn $_[0]; Carp::confess; };
 
 
 =head1 NAME
@@ -93,7 +93,7 @@ sub new {
     unshift @{ $allargsref->{include} },
         ( ".", "$FindBin::Bin/../..", "$FindBin::Bin/../../src/pmc/" );
 
-    foreach my $opt qw(nolines debug verbose) {
+    foreach my $opt qw(nolines) {
         if ( !defined $allargsref->{opt}{$opt} ) {
             $allargsref->{opt}{$opt} = 0;
         }
@@ -125,8 +125,7 @@ When the caller is F<make>, that directory is the top-level Parrot directory.
 
 sub dump_vtable {
     my ( $self, $file ) = @_;
-    Parrot::Pmc2c::VTable->new( $file )->dump;
-    return 1;
+    return Parrot::Pmc2c::VTable->new( $file )->dump;
 }
 
 =head3 C<dump_pmc()>
@@ -208,7 +207,7 @@ sub print_tree {
     for my $f (@files) {
         my $class = $self->read_dump($f);
         print "    " x $depth, $class->{name}, "\n";
-        for my $k ( keys %{ $class->{flags}{extends} } ) {
+        for my $k ( @{ $class->parents } ) {
             $self->print_tree(
                 {
                     depth => $depth + 1,
@@ -248,7 +247,7 @@ sub read_dump {
     $filename = $self->find_file( filename($filename, '.dump'), 1 );
 
     my $class;
-    eval do { slurp($filename, $self->{opt}{verbose}); };
+    eval do { slurp($filename); };
     die $@ if $@;
 
     return $class;

@@ -19,7 +19,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 25;
+use Test::More tests => 21;
 
 use_ok('Parrot::Pmc2c::Pmc2cMain');
 
@@ -42,11 +42,6 @@ can_ok( $self, q{gen_c} );
 can_ok( $self, q{dump_pmc} );
 
 can_ok( 'Parrot::Pmc2c::UtilFunctions', q{open_file} );
-
-can_ok( 'Parrot::Pmc2c::Dumper', q{inherit_attrs} );
-can_ok( 'Parrot::Pmc2c::Dumper', q{gen_parent_lookup_info} );
-can_ok( 'Parrot::Pmc2c::Dumper', q{gen_parent_reverse_lookup_info} );
-can_ok( 'Parrot::Pmc2c::Dumper', q{dump_is_newer} );
 
 can_ok( 'Parrot::Pmc2c::Parser', q{parse_pmc} );
 can_ok( 'Parrot::Pmc2c::Parser', q{parse_flags} );
