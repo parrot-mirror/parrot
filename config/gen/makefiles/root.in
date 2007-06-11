@@ -1817,7 +1817,7 @@ tags.dummy:
 # This target will eventually create all the headers automatically.
 # If you are having problems with linkage in Win32 (or elsewhere), because something
 # is not PARROT_API, but should be, then put PARROT_API in the C file and 
-# run "make hwork".  The .h file will get updated.
+# run "make headerizer".  The .h file will get updated.
 
 HEADERIZER_O_FILES = \
     $(INTERP_O_FILES) \
@@ -1828,20 +1828,31 @@ HEADERIZER_O_FILES = \
 
 # Slowing working my way up to having everything headerized in $(HEADERIZER_O_FILES)
 HEADERIZER_O_FILES = \
-    src/string.o \
-    src/string_primitives.o \
-    src/pic.o \
-    src/stacks.o \
-    src/stack_common.o \
+    src/datatypes.o \
+    src/byteorder.o \
+    src/exceptions.o \
+    src/exit.o \
+    src/gc/dod.o \
+    src/gc/memory.o \
+    src/gc/register.o \
+    src/gc/resources.o \
+    src/gc/smallobject.o \
+    src/hash.o \
+    src/headers.o \
+    src/intlist.o \
+    src/key.o \
+    src/list.o \
     src/mmd.o \
     src/objects.o \
-    src/key.o \
-    src/hash.o \
+    src/packdump.o \
+    src/packfile.o \
+    src/packout.o \
+    src/pic.o \
     src/pmc.o \
-    src/list.o \
-    src/intlist.o \
-    src/datatypes.o \
-    src/gc/resources.o \
+    src/stack_common.o \
+    src/stacks.o \
+    src/string.o \
+    src/string_primitives.o \
     src/utils.o \
 
 headerizer:

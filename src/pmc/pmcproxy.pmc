@@ -91,6 +91,7 @@ Initializes a PMCProxy PMC.
         _pmc->_namespace      = PMCNULL;
         _pmc->parents         = pmc_new(interp, enum_class_ResizablePMCArray);
         _pmc->all_parents     = pmc_new(interp, enum_class_ResizablePMCArray);
+        _pmc->methods         = pmc_new(interp, enum_class_Hash);
 
         /* We put ourself on the all parents list. */
         VTABLE_push_pmc(interp, _pmc->all_parents, SELF);
@@ -132,6 +133,8 @@ Mark any referenced strings and PMCs in the structure as live.
             pobject_lives(interp, (PObj*)_pmc->parents);
         if (_pmc->all_parents)
             pobject_lives(interp, (PObj*)_pmc->all_parents);
+        if (_pmc->methods)
+            pobject_lives(interp, (PObj*)_pmc->methods);
     }
 
 /*

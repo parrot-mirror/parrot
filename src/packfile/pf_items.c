@@ -52,7 +52,7 @@ C<opcode_t> units.
  * convert i386 LE 12 byte long double to IEEE 754 8 byte double
  */
 static void
-cvt_num12_num8(unsigned char *dest, unsigned char *src)
+cvt_num12_num8(unsigned char *dest, const unsigned char *src)
 {
     int expo, i, s;
 #ifdef __LCC__
@@ -100,7 +100,7 @@ nul:
 }
 
 static void
-cvt_num12_num8_be(unsigned char *dest, unsigned char *src)
+cvt_num12_num8_be(unsigned char *dest, const unsigned char *src)
 {
     cvt_num12_num8(dest, src);
     /* TODO endianize */
@@ -631,7 +631,7 @@ Fetch a cstring from bytecode and return an allocated copy
 */
 
 char *
-PF_fetch_cstring(PackFile *pf, opcode_t **cursor)
+PF_fetch_cstring(PackFile *pf, opcode_t **cursor /*NN*/)
 {
     size_t str_len = strlen ((char *)(*cursor)) + 1;
     char *p = (char *)mem_sys_allocate(str_len);

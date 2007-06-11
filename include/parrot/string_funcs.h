@@ -10,6 +10,7 @@
  *  References:
  */
 
+#pragma once
 #ifndef PARROT_STRING_FUNCS_H_GUARD
 #define PARROT_STRING_FUNCS_H_GUARD
 
@@ -20,6 +21,15 @@
 /* Declarations of accessors */
 
 /* HEADERIZER BEGIN: src/string.c */
+
+PARROT_API STRING * const_string( Interp *interp, const char *buffer /*NN*/ )
+        __attribute__nonnull__(2);
+
+PARROT_API STRING * int_to_str( Interp *interp,
+    char *tc /*NN*/,
+    HUGEINTVAL num,
+    char base )
+        __attribute__nonnull__(2);
 
 PARROT_API STRING * Parrot_make_COW_reference( Interp *interp,
     STRING *s /*NULLOK*/ );
@@ -63,15 +73,6 @@ PARROT_API STRING* Parrot_string_trans_encoding( Interp *interp,
     STRING *dest /*NULLOK*/ );
 
 PARROT_API void Parrot_unmake_COW( Interp *interp, STRING *s /*NN*/ )
-        __attribute__nonnull__(2);
-
-PARROT_API STRING * const_string( Interp *interp, const char *buffer /*NN*/ )
-        __attribute__nonnull__(2);
-
-PARROT_API STRING * int_to_str( Interp *interp,
-    char *tc /*NN*/,
-    HUGEINTVAL num,
-    char base )
         __attribute__nonnull__(2);
 
 PARROT_API STRING * string_append( Interp *interp,
