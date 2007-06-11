@@ -17,6 +17,7 @@
  *  References: misc.c, spf_vtable.c, spf_render.c
  */
 
+#pragma once
 #ifndef PARROT_MISC_H_GUARD
 #define PARROT_MISC_H_GUARD
 
@@ -41,11 +42,16 @@ PARROT_API INTVAL Parrot_byte_rindex( Interp *interp,
     const STRING *search /*NN*/,
     UINTVAL start_offset )
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        __attribute__warn_unused_result__;
+
+PARROT_API void Parrot_destroy_cpa( char **array /*NN*/ )
+        __attribute__nonnull__(1);
 
 PARROT_API void Parrot_destroy_la( long *array );
 PARROT_API FLOATVAL Parrot_float_rand( INTVAL how_random );
 PARROT_API INTVAL Parrot_int_rand( INTVAL how_random );
+PARROT_API void * Parrot_make_cpa( Interp *interp, PMC *array );
 PARROT_API void * Parrot_make_la( Interp *interp, PMC *array /*NN*/ )
         __attribute__nonnull__(2)
         __attribute__warn_unused_result__;
@@ -68,6 +74,11 @@ PARROT_API void Parrot_register_move( Interp *interp,
 
 PARROT_API void Parrot_srand( INTVAL seed );
 PARROT_API INTVAL Parrot_uint_rand( INTVAL how_random );
+PARROT_API PMC* tm_to_array(
+    Parrot_Interp interp,
+    const struct tm *tm /*NN*/ )
+        __attribute__nonnull__(2);
+
 FLOATVAL floatval_mod( FLOATVAL n2, FLOATVAL n3 )
         __attribute__pure__
         __attribute__warn_unused_result__;
@@ -75,11 +86,6 @@ FLOATVAL floatval_mod( FLOATVAL n2, FLOATVAL n3 )
 INTVAL intval_mod( INTVAL i2, INTVAL i3 )
         __attribute__pure__
         __attribute__warn_unused_result__;
-
-PARROT_API PMC* tm_to_array(
-    Parrot_Interp interp,
-    const struct tm *tm /*NN*/ )
-        __attribute__nonnull__(2);
 
 /* HEADERIZER END: src/utils.c */
 
