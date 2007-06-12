@@ -73,6 +73,7 @@ sub new {
     if ( $vt_method_name eq 'find_method' ) {
       my $ro_method = Parrot::Pmc2c::Method->new({
           name        => $vt_method_name,
+          parent_name => $parent->name,
           return_type => $vt_method->return_type,
           parameters  => $vt_method->parameters,
           type        => Parrot::Pmc2c::Method::VTABLE,
@@ -98,6 +99,7 @@ EOC
     elsif ( $parent->vtable_method_does_write($vt_method_name) ) {
       my $ro_method = Parrot::Pmc2c::Method->new({
           name        => $vt_method_name,
+          parent_name => $parent->name,
           return_type => $vt_method->return_type,
           parameters  => $vt_method->parameters,
           type        => Parrot::Pmc2c::Method::VTABLE,
@@ -114,7 +116,8 @@ EOC
     }
     else {
       if ( $parent->implements_vtable($vt_method_name) ) {
-        $self->{super}{$vt_method_name} = $parent->name;
+        my $parent_method = $parent->get_method($vt_method_name);
+        $self->{super}{$vt_method_name} = $parent_method->parent_name;
       }
       else {
         $self->{super}{$vt_method_name} = $parent->{super}{$vt_method_name};

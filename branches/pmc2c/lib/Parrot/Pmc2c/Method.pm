@@ -19,6 +19,7 @@ sub new {
         body => "",
         parameters => "",
         mmd_rights => [],
+        parent_name => "",
         %{ $self_hash || {} }
       )};
     bless $self, (ref($class) || $class);
@@ -26,10 +27,10 @@ sub new {
 }
 
 sub clone {
-    my ( $self ) = @_;
-    my $new = {( %{ $self } )};
-    bless $new, ref($self);
-    return $new;
+    my ( $self, $self_hash ) = @_;
+    return $self->new( {( %{ $self },
+                          %{ $self_hash || {} }
+                       )} );
 }
 
 sub add_mmd_rights {
@@ -43,8 +44,8 @@ sub mmd_rights {
 }
 
 #getters/setters
-for my $x qw( name type return_type body mmds symbol mmd_prefix mmd_table mmd_name right 
-        attrs parameters ) {
+for my $x qw( name parent_name type return_type body mmds symbol mmd_prefix mmd_table mmd_name
+        right attrs parameters ) {
     my $code = <<'EOC';
 sub REPLACE {
     my ( $self, $value ) = @_;

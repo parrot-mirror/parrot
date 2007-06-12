@@ -314,6 +314,11 @@ sub full_arguments {
     return "INTERP, $obj";
 }
 
+sub full_method_name {
+    my ( $self, $parent_name ) = @_;
+    return "Parrot_${parent_name}_" . $self->name;
+}
+
 1;
 
 # Local Variables:

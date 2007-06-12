@@ -50,6 +50,7 @@ sub new {
         methods => [],
         super => {},
         variant => '',
+        mixins => [],
         %{ $self } ) } ;
     bless $self, (ref($class) || $class);
     $self;
@@ -96,11 +97,21 @@ sub parent_has_method {
 }
 
 #parents
+sub is_parent {
+    my ( $self, $parent_name ) = @_;
+    return grep /$parent_name/, @{ $self->{parents} };
+}
+
 sub add_parent {
     my ( $self, $parent ) = @_;
     my $parent_name = $parent->name;
     $self->{has_parent}{$parent_name} = { %{ $parent->{has_method} } };
-    push @{ $self->{parents} }, $parent_name unless grep /$parent_name/, @{ $self->{parents} };
+    push @{ $self->{parents} }, $parent_name unless $self->is_parent($parent_name);
+}
+
+sub add_mixin {
+    my ( $self, $mixin_name ) = @_;
+    push @{ $self->{mixins} }, $mixin_name unless grep /$mixin_name/, @{ $self->{mixins} };
 }
 
 
@@ -174,6 +185,10 @@ sub normal_unimplemented_vtable {
 sub parents {
     my ( $self) = @_;
     return $self->{parents}
+}
+sub mixins {
+    my ( $self) = @_;
+    return $self->{mixins}
 }
 sub methods {
     my ( $self) = @_;
@@ -285,9 +300,9 @@ sub super_method {
     if ($super_pmc) {
         my $super_pmc_name;
         if (ref($super_pmc)) {
-            $super_pmc_name = $super_pmc->name;
-            
             my $super_method = $super_pmc->get_method($vt_meth);
+            $super_pmc_name = $super_method->parent_name;
+            $self->add_mixin($super_pmc_name) unless $self->is_parent($super_pmc_name);
 
             $self->super_attrs($vt_meth, $super_method->attrs);
 

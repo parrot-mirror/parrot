@@ -131,7 +131,7 @@ sub annotate_worker {
         }
         else {
             $line = $self->{current_line} if $line == -1;;
-            #$data .= "#line $line \"$filename\" \n";
+            $data .= "#line $line \"$filename\"\n";
             $data .= $it->{data};
         }
         $self->{output} .= $data;

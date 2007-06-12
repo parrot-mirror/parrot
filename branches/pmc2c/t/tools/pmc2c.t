@@ -28,7 +28,7 @@ use lib qw( . lib ../lib ../../lib );
 
 use Fatal qw{open close};
 use Test::More;
-use Parrot::Test tests => 11;
+use Parrot::Test tests => 9;
 use Parrot::Config;
 
 my $pmc2c = join $PConfig{slash}, qw(. tools build pmc2c.pl);
@@ -136,50 +136,23 @@ END_C
 pmc2c_output_like( <<'END_PMC', <<'END_C', 'need_ext' );
 pmclass a need_ext { }
 END_PMC
-    const VTABLE temp_base_vtable = {
-        NULL, /* namespace */
+   const VTABLE temp_ro_vtable = {
+        NULL,   /* namespace */
         enum_class_a, /* base_type */
-        NULL, /* whoami */
-        0|VTABLE_PMC_NEEDS_EXT|VTABLE_HAS_READONLY_FLAG, /* flags */
+        NULL,   /* whoami */
+        0|VTABLE_PMC_NEEDS_EXT|VTABLE_IS_READONLY_FLAG, /* flags */
 END_C
 
-pmc2c_output_like( <<'END_PMC', <<'END_C', 'const_too 1' );
-pmclass a const_too { }
-END_PMC
-void
-Parrot_a_class_init(Parrot_Interp interp, int entry, int pass)
-{
-    const VTABLE temp_base_vtable = {
-        NULL, /* namespace */
-        enum_class_a, /* base_type */
-        NULL, /* whoami */
-        VTABLE_HAS_CONST_TOO, /* flags */
-END_C
-
-pmc2c_output_like( <<'END_PMC', <<'END_C', 'const_too 2' );
-pmclass a const_too { }
-END_PMC
-void
-Parrot_Consta_class_init(Parrot_Interp interp, int entry, int pass)
-{
-    const VTABLE temp_base_vtable = {
-        NULL, /* namespace */
-        enum_class_Consta, /* base_type */
-        NULL, /* whoami */
-        VTABLE_IS_CONST_FLAG, /* flags */
-END_C
 
 pmc2c_output_like( <<'END_PMC', <<'END_C', 'maps' );
 pmclass a hll dale maps Integer { }
 END_PMC
-            INTVAL pmc_id = Parrot_get_HLL_id(
-                interp, const_string(interp, "dale")
+            INTVAL pmc_id = Parrot_get_HLL_id( interp, const_string(interp, "dale")
             );
             if (pmc_id > 0)
-                Parrot_register_HLL_type(
-                    interp, pmc_id, enum_class_Integer, entry
-                );
+                Parrot_register_HLL_type( interp, pmc_id, enum_class_Integer, entry);
 END_C
+
 
 # Local Variables:
 #   mode: cperl
