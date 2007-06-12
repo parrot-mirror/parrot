@@ -18,13 +18,43 @@ use FindBin;
 use lib "$FindBin::Bin/../lib", "$FindBin::Bin/../../../lib";
 
 # core Perl modules
-use Test::More     tests => 1;
+use Test::More; 
 
 # Parrot modules
 use Parrot::Test;
 
-language_output_is( 'Lisp', <<'END_CODE', <<'END_OUT', 'integer 1' );
-(print 1)
-END_CODE
-1
-END_OUT
+my @test_cases = (
+    [ q{ 1 },
+      1,
+      'integer 1'
+    ],
+    [ q{ -2 },
+      -2,
+      'integer -2'
+    ],
+    [ q{ (- 3) },
+      -3,
+      '3 negated'
+    ],
+    [ q{ 0 },
+      0,
+      'zero'
+    ],
+    [ q{ nil },
+      'NIL',
+      'false'
+    ],
+    [ q{ t },
+      'T',
+      'true'
+    ],
+);
+
+Test::More::plan( tests => scalar @test_cases );
+
+foreach ( @test_cases )
+{
+     my ( $code, $out, $desc ) = @{ $_ };
+
+     language_output_is( 'Lisp', "( print $code )", $out . "\n", $desc );
+}

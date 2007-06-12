@@ -65,20 +65,45 @@ transform past (Perl6::Grammar::statement) :language('PIR') {
     unless null $P0 goto block
     $P0 = node['statement_control']
     unless null $P0 goto statement_control
+    $P0 = node['closure_trait']
+    unless null $P0 goto closure_trait
 
   expression:
     $P0 = node['expression']
     .return tree.'get'('past', $P0, 'Perl6::Grammar::expression')
 
   use_statement:
-    null $P0
-    .return ($P0)
+    .local pmc name
+    name = $P0['version';'ident']
+
+    .local string name_string
+    name_string = name
+
+    if name_string == 'v6' goto  use_pragma
+    if name_string == 'lib' goto use_pragma
+
+    .local pmc use_op
+    use_op = new 'PAST::Op'
+    use_op.'init'('node' => $P0, 'name' => 'use')
+
+    .local pmc module_name
+    module_name = new 'PAST::Val'
+    module_name.'init'('node' => $P0, 'vtype' => '.Perl6Str', 'name' => name, 'ctype' => 's~')
+    use_op.'push'(module_name)
+
+    .return (use_op)
   block:
     $P1 = tree.'get'('past', $P0, 'Perl6::Grammar::block')
     $P1.'blocktype'('immediate')
     .return ($P1)
   statement_control:
     .return tree.'get'('past', $P0, 'Perl6::Grammar::statement_control')
+  closure_trait:
+    .return tree.'get'('past', $P0, 'Perl6::Grammar::closure_trait')
+
+  use_pragma:
+    # For now, ignore all pragmas
+    .return ()
 }
 
 
@@ -153,6 +178,34 @@ transform if (Perl6::Grammar::statement_control) :language('PIR') {
 
 transform unless (Perl6::Grammar::statement_control) :language('PIR') {
     .return tree.'get'('if', node, 'Perl6::Grammar::statement_control')
+}
+
+transform for (Perl6::Grammar::statement_control) :language('PIR') {
+    .local pmc collection, pointy_sub, signature
+    collection   = node['expression']
+    pointy_sub = node['pblock']
+    signature = pointy_sub['signature']
+     
+    unless null signature goto ok_variable
+
+    # Fake up a new signature to replace our missing one...
+    $P1 = find_global 'Perl6::Grammar', 'signature'
+    signature = new .ResizablePMCArray
+    $P2 = $P1('$_','grammar' => 'Perl6::Grammar')
+    push signature, $P2
+ 
+    pointy_sub['signature'] = signature
+ok_variable:
+
+    .local pmc collpast, subpast
+    collpast = tree.'get'('past', collection, 'Perl6::Grammar::expression')
+    subpast  = tree.'get'('past', pointy_sub, 'Perl6::Grammar::subroutine')
+
+    .local pmc past
+    past = new 'PAST::Op'
+    past.'init'(collpast, subpast, 'node'=>node, 'pasttype'=>'for')
+
+    .return (past)
 }
 
 
@@ -530,6 +583,14 @@ transform past (Perl6::Grammar::variable) :language('PIR') {
     .return (past)
 }
 
+transform past (Perl6::Grammar::type_name) :language('PIR') {
+    .local pmc cpast
+    $S0 = node
+    cpast = new 'PAST::Val'
+    cpast.'init'('node'=>node, 'vtype'=>'.Perl6Str', 'name'=>$S0, 'ctype'=>'s~')
+    .return (cpast)
+}
+
 
 transform past (Perl6::Grammar::subroutine) :language('PIR') {
     .local pmc outerblock, symtable
@@ -620,6 +681,14 @@ transform past (Perl6::Grammar::try_block) :language('PIR') {
     past = cpast.'new'('PAST::Stmts', $P2, 'node'=>node)
     past.'push_new'('PAST::Op', cpast, 'node'=>node, 'pasttype'=>'try')
     .return (past)
+}
+
+transform past (Perl6::Grammar::closure_trait) :language('PIR') {
+    $P0 = node['block']
+    $P1 = tree.'get'('past', $P0, 'Perl6::Grammar::block')
+    # obviously, this needs to be expanded to deal with other types.
+    $P1.'blocktype'('END')
+    .return ($P1) 
 }
 
 =back

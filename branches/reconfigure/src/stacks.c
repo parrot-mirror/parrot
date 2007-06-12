@@ -32,8 +32,8 @@ debugging/error reporting.
 PARROT_API
 Stack_Chunk_t *
 new_stack(Interp *interp, const char *name /*NN*/)
+    /* WARN_UNUSED */
 {
-
     return register_new_stack(interp, name, sizeof (Stack_Entry_t));
 }
 
@@ -96,6 +96,7 @@ Returns the height of the stack. The maximum "depth" is height - 1.
 PARROT_API
 size_t
 stack_height(Interp *interp, const Stack_Chunk_t *chunk /*NN*/)
+    /* PURE, WARN_UNUSED */
 {
     size_t height = 0;
 
@@ -121,7 +122,8 @@ if C<|depth| > number> of entries in stack.
 
 PARROT_API
 Stack_Entry_t *
-stack_entry(Interp *interp, Stack_Chunk_t *stack /*NN*/, INTVAL depth)
+stack_entry(Interp *interp /*NN*/, Stack_Chunk_t *stack /*NN*/, INTVAL depth)
+    /* PURE, WARN_UNUSED */
 {
     Stack_Chunk_t *chunk;
     Stack_Entry_t *entry;
@@ -327,7 +329,7 @@ Pop off a destination entry and return a pointer to the contents.
 
 PARROT_API
 void *
-pop_dest(Interp *interp)
+pop_dest(Interp *interp /*NN*/)
 {
     /* We don't mind the extra call, so we do this: (previous comment
      * said we *do* mind, but I say let the compiler decide) */
@@ -346,8 +348,9 @@ Peek at stack and return pointer to entry and the type of the entry.
 
 PARROT_API
 void *
-stack_peek(Interp *interp, Stack_Chunk_t *stack_base /*NN*/,
+stack_peek(Interp *interp /*NN*/, Stack_Chunk_t *stack_base /*NN*/,
            Stack_entry_type *type /*NULLOK*/)
+    /* PURE, WARN_UNUSED */
 {
     const Stack_Entry_t * const entry = stack_entry(interp, stack_base, 0);
     if (entry == NULL) {
@@ -376,6 +379,7 @@ Returns the stack entry type of C<entry>.
 PARROT_API
 Stack_entry_type
 get_entry_type(Interp *interp, const Stack_Entry_t *entry /*NN*/)
+    /* PURE, WARN_UNUSED */
 {
     return entry->entry_type;
 }
@@ -390,7 +394,7 @@ C<PIO_eprintf>).  This is used only temporarily for debugging.
 
 PARROT_API
 void
-Parrot_dump_dynamic_environment(Interp *interp,
+Parrot_dump_dynamic_environment(Interp *interp /*NN*/,
                                 Stack_Chunk_t *dynamic_env /*NN*/)
 {
     int height = (int) stack_height(interp, dynamic_env);

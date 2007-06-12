@@ -92,15 +92,17 @@ token statement_control {
         [ <?ws>: [while|until] <expression:  ;> ]
     | $<KEY>:=[loop] [ \( <expression> ; <expression> ; <expression> \) ]?
         <block>
-    | $<KEY>:=[for] <expression:  {> <block>
+    | $<KEY>:=[for] <expression> <pblock>
     ]
 }
-
 
 token statement_modifier {
     <?ws> $<KEY>:=[if|unless|for|while|until] <expression:  ;>
 }
 
+token pblock { 
+  <?ws> [<'->'> <?ws> <signature> <?ws>]? <block>
+}
 
 token block {
     <?ws>
@@ -111,6 +113,7 @@ token block {
 
 
 token closure_trait {
+    <?ws>?
     $<trait>:=[ BEGIN | CHECK | INIT | END | START
               | ENTER | LEAVE | KEEP | UNDO
               | FIRST | NEXT  | LAST
@@ -146,6 +149,7 @@ token term {
     | <quote_term>
     | <number>
     | <integer>
+    | <type_name>
     | <listop>
     | <circumfix>
     ] <postop>*
@@ -169,7 +173,7 @@ token postcircumfix {
     | $<KEY>:=[\{] <?ws> <expression>? <?ws> $<KEY_CLOSE>:=[\}]
 }
 
-token methodop { <ident> [ <!postop> <listop_expression> ]? }
+token methodop { <ident> }
 token listop { <ident> [ <!postop> <listop_expression> ]? }
 
 token circumfix {
@@ -191,13 +195,12 @@ rule scoped_variables {
 token scope_declarator { [ my | our ] }
 token class_declarator { [ class | grammar | module | role | package ] }
 
-token class_block {
+rule class_block {
     <scope_declarator>?
     <class_declarator>
-    $<name>:=[ <'::'>? <name> | <?null> ] ;
-    <block>
+    $<name>:=[ <'::'>? <name> [ - <version_number> ]? | <?null> ]
+    [ ; | <block> ]
 }
-
 
 ## XXX: These are just placeholder regexes for demonstration,
 ## they certainly need to be expanded to be more complete.
@@ -206,6 +209,7 @@ token twigil { <[.^*+?=!]> }
 token variable {  \$! | \$/ | \$_ | <sigil> <twigil>? <name> }
 token sigil { <[$@%^&]> | <'::'> }
 token name { <ident> [ <'::'> <ident> ]* }
+token version_number { \d+ \. \d+ \. \d+ }
 
 token integer {
     | 0 [ b <[01]>+           [ _ <[01]>+ ]*
@@ -219,6 +223,8 @@ token integer {
 token number {
     \d+[_\d+]* [ \. \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]? ]
 }
+
+token type_name { [ <'::'> ? <[A..Z]> <[0..9a..z_]>* ]+ }
 
 token quote_term {
     |    $<KEY>:=[']    <quote_expression> '

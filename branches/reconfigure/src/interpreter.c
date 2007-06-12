@@ -304,6 +304,7 @@ get_op_lib_init(int core_op, int which, PMC *lib)
                 init_func = PARROT_CORE_OPLIB_INIT;
                 break;
             default:
+                init_func = NULL;
                 internal_exception(1, "Couldn't find init_func for core %d", which);
                 break;
         }
@@ -893,8 +894,8 @@ dynop_register(Parrot_Interp interp, PMC* lib_pmc)
      * the base names of this lib and the previous one are the same
      */
     if (interp->n_libs >= 2 &&
-            !strcmp(interp->all_op_libs[interp->n_libs-2]->name,
-                lib->name)) {
+            (strcmp(interp->all_op_libs[interp->n_libs-2]->name,
+                lib->name) == 0) ) {
         /* registering is handled below */
         return;
     }

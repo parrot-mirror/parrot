@@ -1,5 +1,5 @@
 /* misc.h
- *  Copyright (C) 2001-2003, The Perl Foundation.
+ *  Copyright (C) 2001-2007, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -17,6 +17,7 @@
  *  References: misc.c, spf_vtable.c, spf_render.c
  */
 
+#pragma once
 #ifndef PARROT_MISC_H_GUARD
 #define PARROT_MISC_H_GUARD
 
@@ -25,33 +26,68 @@
 /*
  * utils.c
  */
-
-INTVAL   intval_mod(INTVAL i2, INTVAL i3);
-FLOATVAL floatval_mod(FLOATVAL n2, FLOATVAL n3);
-
-PARROT_API FLOATVAL Parrot_float_rand(INTVAL how_random);
-PARROT_API INTVAL Parrot_uint_rand(INTVAL how_random);
-PARROT_API INTVAL Parrot_int_rand(INTVAL how_random);
-PARROT_API INTVAL Parrot_range_rand(INTVAL from, INTVAL to, INTVAL how_random);
-PARROT_API void Parrot_srand(INTVAL seed);
-
-PARROT_API void *Parrot_make_la(Interp *, PMC *);
-PARROT_API void *Parrot_make_cpa(Interp *, PMC *);
-PARROT_API void Parrot_destroy_la(long *);
-PARROT_API void Parrot_destroy_cpa(char **);
-PMC* tm_to_array(Parrot_Interp interp, const struct tm *tm);
-PARROT_API INTVAL Parrot_byte_index(Interp *interp, const STRING *base,
-        const STRING *search, UINTVAL start_offset);
-PARROT_API INTVAL Parrot_byte_rindex(Interp *interp, const STRING *base,
-        const STRING *search, UINTVAL start_offset);
 typedef int (*reg_move_func)(Interp*, unsigned char d, unsigned char s, void *);
 
-PARROT_API void Parrot_register_move(Interp *interp, int n_regs,
-        unsigned char *dest_regs, unsigned char *src_regs,
-        unsigned char temp_reg,
-        reg_move_func mov,
-        reg_move_func mov_alt,
-        void *info);
+/* HEADERIZER BEGIN: src/utils.c */
+
+PARROT_API INTVAL Parrot_byte_index( Interp *interp,
+    const STRING *base /*NN*/,
+    const STRING *search /*NN*/,
+    UINTVAL start_offset )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_API INTVAL Parrot_byte_rindex( Interp *interp,
+    const STRING *base /*NN*/,
+    const STRING *search /*NN*/,
+    UINTVAL start_offset )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__warn_unused_result__;
+
+PARROT_API void Parrot_destroy_cpa( char **array /*NN*/ )
+        __attribute__nonnull__(1);
+
+PARROT_API void Parrot_destroy_la( long *array );
+PARROT_API FLOATVAL Parrot_float_rand( INTVAL how_random );
+PARROT_API INTVAL Parrot_int_rand( INTVAL how_random );
+PARROT_API void * Parrot_make_cpa( Interp *interp, PMC *array );
+PARROT_API void * Parrot_make_la( Interp *interp, PMC *array /*NN*/ )
+        __attribute__nonnull__(2)
+        __attribute__warn_unused_result__;
+
+PARROT_API INTVAL Parrot_range_rand(
+    INTVAL from,
+    INTVAL to,
+    INTVAL how_random );
+
+PARROT_API void Parrot_register_move( Interp *interp,
+    int n_regs,
+    unsigned char *dest_regs /*NN*/,
+    unsigned char *src_regs /*NN*/,
+    unsigned char temp_reg,
+    reg_move_func mov,
+    reg_move_func mov_alt,
+    void *info )
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
+PARROT_API void Parrot_srand( INTVAL seed );
+PARROT_API INTVAL Parrot_uint_rand( INTVAL how_random );
+PARROT_API PMC* tm_to_array(
+    Parrot_Interp interp,
+    const struct tm *tm /*NN*/ )
+        __attribute__nonnull__(2);
+
+FLOATVAL floatval_mod( FLOATVAL n2, FLOATVAL n3 )
+        __attribute__pure__
+        __attribute__warn_unused_result__;
+
+INTVAL intval_mod( INTVAL i2, INTVAL i3 )
+        __attribute__pure__
+        __attribute__warn_unused_result__;
+
+/* HEADERIZER END: src/utils.c */
 
 /*
  * IMCC API
