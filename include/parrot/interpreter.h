@@ -10,6 +10,7 @@
  *  References:
  */
 
+#pragma once
 #ifndef PARROT_INTERPRETER_H_GUARD
 #define PARROT_INTERPRETER_H_GUARD
 
@@ -301,8 +302,9 @@ struct parrot_interp_t {
     struct Arenas *arena_base;                /* Pointer to this interpreter's
                                                * arena */
 
-    PMC *class_hash;                          /* Hash of classes */
+    PMC    *class_hash;                       /* Hash of classes */
     VTABLE **vtables;                         /* array of vtable ptrs */
+    PMC    *pmc_proxies;                      /* PMC array of PMC Proxy objects */
     int    n_vtable_max;                      /* highest used type */
     int    n_vtable_alloced;                  /* alloced vtable space */
 

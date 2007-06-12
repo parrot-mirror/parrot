@@ -24,6 +24,7 @@ strings.
 #include "parrot/compiler.h"
 #include "parrot/string_funcs.h"
 #include "string_private_cstring.h"
+#include "parrot/resources.h"
 #include <assert.h>
 
 /*
@@ -42,9 +43,9 @@ strings.
 
 
 #define saneify_string(s) \
-    assert(s->encoding && \
-           s->charset && \
-           !PObj_on_free_list_TEST(s))
+    assert(s->encoding); \
+    assert(s->charset); \
+    assert(!PObj_on_free_list_TEST(s))
 
 /* HEADER: include/parrot/string_funcs.h */
 
@@ -116,8 +117,6 @@ Creates a copy-on-write string by cloning a string header without
 allocating a new buffer.
 
 */
-
-extern int Parrot_in_memory_pool(Interp *, void *); /* XXX Move this to a public .h file */
 
 PARROT_API
 STRING *
@@ -299,6 +298,7 @@ is how many bytes can be appended onto strstart.
 PARROT_API
 UINTVAL
 string_capacity(Interp *interp, const STRING *s /*NN*/)
+    /*PURE,WARN_UNUSED*/
 {
     return ((ptrcast_t)PObj_bufstart(s) + PObj_buflen(s) -
             (ptrcast_t)s->strstart);
@@ -489,6 +489,7 @@ PARROT_API
 STRING *
 string_from_cstring(Interp *interp,
     const char * const buffer /*NULLOK*/, const UINTVAL len)
+    /* WARN_UNUSED */
 {
     return string_make_direct(interp, buffer, len ? len :
             buffer ? strlen(buffer) : 0,
@@ -508,7 +509,8 @@ Make a Parrot string from a specified C string.
 PARROT_API
 STRING *
 string_from_const_cstring(Interp *interp,
-    const char * const buffer /*NULLOK*/, const UINTVAL len)
+    const char *buffer /*NULLOK*/, const UINTVAL len)
+    /* WARN_UNUSED */
 {
     return string_make_direct(interp, buffer, len ? len :
             buffer ? strlen(buffer) : 0,
@@ -691,6 +693,7 @@ Returns the number of characters in the specified Parrot string.
 PARROT_API
 UINTVAL
 string_length(Interp *interp, const STRING *s /*NULLOK*/)
+    /*PURE,WARN_UNUSED*/
 {
     return s ? s->strlen : 0;
 }
@@ -1234,7 +1237,8 @@ string_chopn(Interp *interp, STRING *s /*NULLOK*/, INTVAL n, int in_place)
 
 PARROT_API
 INTVAL
-string_compare(Interp *interp, const STRING * const s1 /*NULLOK*/, const STRING * const s2 /*NULLOK*/)
+string_compare(Interp *interp, const STRING *s1 /*NULLOK*/, const STRING *s2 /*NULLOK*/)
+    /* PURE, WARN_UNUSED */
 {
     if (!s1 && !s2) {
         return 0;
@@ -1267,6 +1271,7 @@ otherwise.
 PARROT_API
 INTVAL
 string_equal(Interp *interp, const STRING *s1 /*NULLOK*/, const STRING *s2 /*NULLOK*/)
+    /* PURE, WARN_UNUSED */
 {
     if ((s1 == s2) || (!s1 && !s2)) {
         return 0;
@@ -1660,6 +1665,7 @@ if it is equal to anything other than C<0>, C<""> or C<"0">.
 PARROT_API
 INTVAL
 string_bool(Interp *interp, const STRING *s /*NULLOK*/)
+    /* PURE, WARN_UNUSED */
 {
     const INTVAL len = string_length(interp, s);
 
@@ -1898,7 +1904,8 @@ result in a memory leak.
 
 PARROT_API
 char *
-string_to_cstring(Interp *interp, const STRING * const s /* NULLOK */)
+string_to_cstring(Interp *interp, const STRING *s /* NULLOK */)
+    /* WARN_UNUSED */
 {
     char *p;
     /*
@@ -2403,6 +2410,7 @@ as constants -- i.e. do not resize the result.
 PARROT_API
 const char *
 Parrot_string_cstring(Interp *interp, const STRING *str /*NN*/)
+    /* PURE, WARN_UNUSED */
 {
     /* TODO handle NUL and friends */
     return str->strstart;

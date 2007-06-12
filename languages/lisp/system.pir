@@ -138,7 +138,6 @@ DONE:
 .sub _get_hash
   .param pmc args
   .local string keys
-  .local string type
   .local pmc hash
   .local pmc key
   .local pmc val
@@ -154,8 +153,7 @@ DONE:
    keys = key                                      # Convert the key to a string
    val = hash[keys]
 
-   typeof type, val
-   if type == "None" goto NO_VALUE_SET
+   if_null val, NO_VALUE_SET
 
    goto DONE
 
@@ -474,7 +472,7 @@ DONE:
    # VALID_IN_PARROT_0_2_0 concat objt, objt, "\0"
    # VALID_IN_PARROT_0_2_0 concat attr, objt, attr
 
-   getattribute retv, symbol, attr
+   retv = getattribute symbol, attr
    if_null retv, NO_VALUE
    goto DONE
 

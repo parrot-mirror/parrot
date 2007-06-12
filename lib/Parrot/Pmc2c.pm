@@ -1013,6 +1013,8 @@ EOC
     $cout .= <<"EOC";
         /* setup MRO and _namespace */
         Parrot_create_mro(interp, entry);
+        /* create PMC Proxy object */
+        Parrot_create_pmc_proxy(interp, entry);
 EOC
 
     # declare each nci method for this class
@@ -1178,6 +1180,7 @@ sub gen_h {
     my $name = uc $self->{class};
     $hout .= <<"EOH";
 
+#pragma once
 #ifndef PARROT_PMC_${name}_H_GUARD
 #define PARROT_PMC_${name}_H_GUARD
 

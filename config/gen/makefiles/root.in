@@ -734,9 +734,11 @@ help :
 	@echo "  lint:              code checking with lint."
 	@echo "  splint:            code checking with splint."
 	@echo "  splint2:           another code checking with splint."
+	@echo "  headerizer:        recreate header files for appropriate"
+	@echo "                     C-source files"
 	@echo ""
 	@echo "Release:"
-	@echo "  release:           create a TAR ball."
+	@echo "  release:           create a tarball."
 	@echo "  rpm:               create RPMs."
 	@echo "  win32-inno-installer:      create MSWin32 setup."
 	@echo ""
@@ -1812,6 +1814,11 @@ tags: tags.dummy
 
 tags.dummy:
 
+# This target will eventually create all the headers automatically.
+# If you are having problems with linkage in Win32 (or elsewhere), because something
+# is not PARROT_API, but should be, then put PARROT_API in the C file and 
+# run "make headerizer".  The .h file will get updated.
+
 HEADERIZER_O_FILES = \
     $(INTERP_O_FILES) \
     $(CHARSET_O_FILES) \
@@ -1819,17 +1826,39 @@ HEADERIZER_O_FILES = \
     $(CLASS_O_FILES) \
     $(ENCODING_O_FILES)
 
+# Slowing working my way up to having everything headerized in $(HEADERIZER_O_FILES)
+HEADERIZER_O_FILES = \
+    src/datatypes.o \
+    src/byteorder.o \
+    src/exceptions.o \
+    src/exit.o \
+    src/fingerprint.o \
+    src/gc/dod.o \
+    src/gc/memory.o \
+    src/gc/register.o \
+    src/gc/resources.o \
+    src/gc/smallobject.o \
+    src/hash.o \
+    src/headers.o \
+    src/intlist.o \
+    src/key.o \
+    src/list.o \
+    src/mmd.o \
+    src/objects.o \
+    src/packdump.o \
+    src/packfile.o \
+    src/packfile/pf_items.o \
+    src/packout.o \
+    src/pic.o \
+    src/pmc.o \
+    src/stack_common.o \
+    src/stacks.o \
+    src/string.o \
+    src/string_primitives.o \
+    src/utils.o \
+
 headerizer:
 	$(PERL) $(BUILD_TOOLS_DIR)/headerize.pl $(HEADERIZER_O_FILES)
-
-# Slowing working my way up to having everything headerized in $(HEADERIZER_O_FILES)
-hwork:
-	$(PERL) $(BUILD_TOOLS_DIR)/headerize.pl \
-		src/string.o \
-		src/string_primitives.o \
-		src/pic.o \
-		src/stacks.o \
-		src/stack_common.o \
 
 ###############################################################################
 #

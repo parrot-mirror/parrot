@@ -1,32 +1,22 @@
 /* mmd.h
- *  Copyright (C) 2003, The Perl Foundation.
+ *  Copyright (C) 2003-2007, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
- *     This is the api header for the mmd subsystem
+ *     This is the API header for the mmd subsystem
  *  Data Structure and Algorithms:
  *  History:
  *  Notes:
  *  References:
  */
 
+#pragma once
 #ifndef PARROT_MMD_H_GUARD
 #define PARROT_MMD_H_GUARD
 
-/* inplace */
-PARROT_API void mmd_dispatch_v_pp(Parrot_Interp, PMC *, PMC *, INTVAL);
-PARROT_API void mmd_dispatch_v_pi(Parrot_Interp, PMC *, INTVAL, INTVAL);
-PARROT_API void mmd_dispatch_v_pn(Parrot_Interp, PMC *, FLOATVAL, INTVAL);
-PARROT_API void mmd_dispatch_v_ps(Parrot_Interp, PMC *, STRING *, INTVAL);
-
-/* return result */
-PARROT_API PMC* mmd_dispatch_p_ppp(Parrot_Interp, PMC *, PMC *, PMC *, INTVAL);
-PARROT_API PMC* mmd_dispatch_p_pip(Parrot_Interp, PMC *, INTVAL, PMC *, INTVAL);
-PARROT_API PMC* mmd_dispatch_p_pnp(Parrot_Interp, PMC *, FLOATVAL, PMC *, INTVAL);
-PARROT_API PMC* mmd_dispatch_p_psp(Parrot_Interp, PMC *, STRING *, PMC *, INTVAL);
-
-/* compare */
-PARROT_API INTVAL mmd_dispatch_i_pp(Parrot_Interp, PMC *, PMC *, INTVAL);
+#include "parrot/config.h"
+#include "parrot/compiler.h"
+#include "parrot/parrot.h"
 
 /* function typedefs */
 typedef PMC*    (*mmd_f_p_ppp)(Interp *, PMC *, PMC *, PMC *);
@@ -41,25 +31,11 @@ typedef void    (*mmd_f_v_ps)(Interp *, PMC *, STRING *);
 
 typedef INTVAL  (*mmd_f_i_pp) (Interp *, PMC *, PMC *);
 
-PARROT_API void mmd_add_by_class(Parrot_Interp, INTVAL, STRING *, STRING *, funcptr_t);
-PARROT_API void mmd_register(Parrot_Interp, INTVAL, INTVAL, INTVAL, funcptr_t);
-PARROT_API void mmd_register_sub(Parrot_Interp, INTVAL, INTVAL, INTVAL, PMC*);
-PARROT_API void mmd_add_function(Parrot_Interp, INTVAL, funcptr_t);
-PARROT_API void mmd_add_function_sub(Parrot_Interp, INTVAL, PMC*);
-PARROT_API void mmd_destroy(Parrot_Interp);
-PARROT_API PMC *mmd_vtfind(Parrot_Interp, INTVAL, INTVAL, INTVAL);
-
 typedef struct _MMD_init {
         INTVAL func_nr;
         INTVAL left, right;
         funcptr_t func_ptr;
 } MMD_init;
-
-PARROT_API void Parrot_mmd_register_table(Interp*, INTVAL, const MMD_init *, INTVAL);
-PARROT_API void Parrot_mmd_rebuild_table(Interp*, INTVAL class_enum, INTVAL func_nr);
-
-PARROT_API funcptr_t get_mmd_dispatch_type(Interp *interp,
-        INTVAL function, INTVAL left_type, INTVAL right_type, int *is_pmc);
 
 typedef struct _MMD_table {
     funcptr_t *mmd_funcs;     /* The functions for the MMD table */
@@ -68,15 +44,156 @@ typedef struct _MMD_table {
 } MMD_table;
 
 
-PARROT_API PMC *Parrot_mmd_sort_candidate_list(Interp *, PMC *candidates);
-PARROT_API PMC *Parrot_MMD_search_default_infix(Interp *, STRING *meth,
-        INTVAL left_type, INTVAL right_type);
+/* HEADERIZER BEGIN: src/mmd.c */
+
+PARROT_API funcptr_t get_mmd_dispatch_type( Interp *interp /*NN*/,
+    INTVAL func_nr,
+    INTVAL left_type,
+    INTVAL right_type,
+    int *is_pmc /*NN*/  )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(5)
+        __attribute__warn_unused_result__;
+
+PARROT_API void mmd_add_by_class( Interp *interp /*NN*/,
+    INTVAL functype,
+    STRING *left_class /*NN*/,
+    STRING *right_class /*NN*/,
+    funcptr_t funcptr /*NULLOK*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
+PARROT_API void mmd_add_function( Interp *interp /*NN*/,
+    INTVAL func_nr,
+    funcptr_t function )
+        __attribute__nonnull__(1);
+
+PARROT_API void mmd_destroy( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+PARROT_API INTVAL mmd_dispatch_i_pp( Interp *interp /*NN*/,
+    PMC *left /*NN*/,
+    PMC *right /*NN*/,
+    INTVAL func_nr )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_API PMC* mmd_dispatch_p_pip( Interp *interp /*NN*/,
+    PMC *left /*NN*/,
+    INTVAL right,
+    PMC *dest,
+    INTVAL func_nr )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__warn_unused_result__;
+
+PARROT_API PMC* mmd_dispatch_p_pnp( Interp *interp /*NN*/,
+    PMC *left /*NN*/,
+    FLOATVAL right,
+    PMC *dest,
+    INTVAL func_nr )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__warn_unused_result__;
+
+PARROT_API PMC* mmd_dispatch_p_ppp( Interp *interp,
+    PMC *left /*NN*/,
+    PMC *right /*NN*/,
+    PMC *dest,
+    INTVAL func_nr )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__warn_unused_result__;
+
+PARROT_API PMC* mmd_dispatch_p_psp( Interp *interp /*NN*/,
+    PMC *left /*NN*/,
+    STRING *right,
+    PMC *dest,
+    INTVAL func_nr )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__warn_unused_result__;
+
+PARROT_API void mmd_dispatch_v_pn( Interp *interp /*NN*/,
+    PMC *left /*NN*/,
+    FLOATVAL right,
+    INTVAL func_nr )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API void mmd_dispatch_v_pp( Interp *interp /*NN*/,
+    PMC *left /*NN*/,
+    PMC *right /*NN*/,
+    INTVAL func_nr )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_API void mmd_dispatch_v_ps( Interp *interp /*NN*/,
+    PMC *left /*NN*/,
+    STRING *right,
+    INTVAL func_nr )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API void mmd_register( Interp *interp /*NN*/,
+    INTVAL func_nr,
+    INTVAL left_type,
+    INTVAL right_type,
+    funcptr_t funcptr /*NULLOK*/ )
+        __attribute__nonnull__(1);
+
+PARROT_API void mmd_register_sub( Interp *interp /*NN*/,
+    INTVAL func_nr,
+    INTVAL left_type,
+    INTVAL right_type,
+    PMC *sub /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(5);
+
+PARROT_API PMC * mmd_vtfind( Interp *interp /*NN*/,
+    INTVAL func_nr,
+    INTVAL left,
+    INTVAL right )
+        __attribute__nonnull__(1)
+        __attribute__warn_unused_result__;
+
+PARROT_API void Parrot_mmd_rebuild_table( Interp* interp /*NN*/,
+    INTVAL type,
+    INTVAL func_nr )
+        __attribute__nonnull__(1);
+
+PARROT_API void Parrot_mmd_register_table( Interp* interp,
+    INTVAL type,
+    const MMD_init *mmd_table,
+    INTVAL n );
+
+PARROT_API PMC * Parrot_MMD_search_default_infix( Interp *interp /*NN*/,
+    STRING *meth,
+    INTVAL left_type,
+    INTVAL right_type )
+        __attribute__nonnull__(1);
+
+PARROT_API PMC * Parrot_mmd_sort_candidate_list( Interp *interp /*NN*/,
+    PMC *candidates )
+        __attribute__nonnull__(1);
+
+void mmd_dispatch_v_pi( Interp *interp /*NN*/,
+    PMC *left /*NN*/,
+    INTVAL right,
+    INTVAL func_nr )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+/* HEADERIZER END: src/mmd.c */
 
 /*
  * in src/objects.c :
  */
 PARROT_API const char* Parrot_MMD_method_name(Interp* i, INTVAL idx);
-PARROT_API INTVAL Parrot_MMD_method_idx(Interp *interp, char *name);
+PARROT_API INTVAL Parrot_MMD_method_idx(Interp *interp, const char *name);
 
 #endif /* PARROT_MMD_H_GUARD */
 

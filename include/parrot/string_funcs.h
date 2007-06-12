@@ -10,6 +10,7 @@
  *  References:
  */
 
+#pragma once
 #ifndef PARROT_STRING_FUNCS_H_GUARD
 #define PARROT_STRING_FUNCS_H_GUARD
 
@@ -21,6 +22,15 @@
 
 /* HEADERIZER BEGIN: src/string.c */
 
+PARROT_API STRING * const_string( Interp *interp, const char *buffer /*NN*/ )
+        __attribute__nonnull__(2);
+
+PARROT_API STRING * int_to_str( Interp *interp,
+    char *tc /*NN*/,
+    HUGEINTVAL num,
+    char base )
+        __attribute__nonnull__(2);
+
 PARROT_API STRING * Parrot_make_COW_reference( Interp *interp,
     STRING *s /*NULLOK*/ );
 
@@ -31,7 +41,9 @@ PARROT_API STRING* Parrot_reuse_COW_reference( Interp *interp,
 
 PARROT_API const char * Parrot_string_cstring( Interp *interp,
     const STRING *str /*NN*/ )
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__pure__
+        __attribute__warn_unused_result__;
 
 PARROT_API INTVAL Parrot_string_find_cclass( Interp *interp,
     INTVAL flags,
@@ -63,15 +75,6 @@ PARROT_API STRING* Parrot_string_trans_encoding( Interp *interp,
 PARROT_API void Parrot_unmake_COW( Interp *interp, STRING *s /*NN*/ )
         __attribute__nonnull__(2);
 
-PARROT_API STRING * const_string( Interp *interp, const char *buffer /*NN*/ )
-        __attribute__nonnull__(2);
-
-PARROT_API STRING * int_to_str( Interp *interp,
-    char *tc /*NN*/,
-    HUGEINTVAL num,
-    char base )
-        __attribute__nonnull__(2);
-
 PARROT_API STRING * string_append( Interp *interp,
     STRING *a /*NULLOK*/,
     STRING *b /*NULLOK*/ );
@@ -95,9 +98,14 @@ PARROT_API STRING * string_bitwise_xor( Interp *interp,
     STRING *s2 /*NULLOK*/,
     STRING **dest /*NULLOK*/ );
 
-PARROT_API INTVAL string_bool( Interp *interp, const STRING *s /*NULLOK*/ );
+PARROT_API INTVAL string_bool( Interp *interp, const STRING *s /*NULLOK*/ )
+        __attribute__pure__
+        __attribute__warn_unused_result__;
+
 PARROT_API UINTVAL string_capacity( Interp *interp, const STRING *s /*NN*/ )
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__pure__
+        __attribute__warn_unused_result__;
 
 PARROT_API STRING * string_chopn( Interp *interp,
     STRING *s /*NULLOK*/,
@@ -107,7 +115,9 @@ PARROT_API STRING * string_chopn( Interp *interp,
 PARROT_API STRING * string_chr( Interp *interp, UINTVAL character );
 PARROT_API INTVAL string_compare( Interp *interp,
     const STRING *s1 /*NULLOK*/,
-    const STRING *s2 /*NULLOK*/ );
+    const STRING *s2 /*NULLOK*/ )
+        __attribute__pure__
+        __attribute__warn_unused_result__;
 
 PARROT_API STRING * string_compose( Interp *interp, STRING *src /*NULLOK*/ );
 PARROT_API INTVAL string_compute_strlen( Interp *interp, STRING *s /*NN*/ )
@@ -129,7 +139,9 @@ PARROT_API void string_downcase_inplace( Interp *interp,
 
 PARROT_API INTVAL string_equal( Interp *interp,
     const STRING *s1 /*NULLOK*/,
-    const STRING *s2 /*NULLOK*/ );
+    const STRING *s2 /*NULLOK*/ )
+        __attribute__pure__
+        __attribute__warn_unused_result__;
 
 PARROT_API STRING * string_escape_string( Interp *interp,
     const STRING *src /*NULLOK*/ );
@@ -140,11 +152,13 @@ PARROT_API STRING * string_escape_string_delimited( Interp *interp,
 
 PARROT_API STRING * string_from_const_cstring( Interp *interp,
     const char *buffer /*NULLOK*/,
-    UINTVAL len );
+    const UINTVAL len )
+        __attribute__warn_unused_result__;
 
 PARROT_API STRING * string_from_cstring( Interp *interp,
-    const char *buffer /*NULLOK*/,
-    UINTVAL len );
+    const char * const buffer /*NULLOK*/,
+    const UINTVAL len )
+        __attribute__warn_unused_result__;
 
 PARROT_API STRING * string_from_int( Interp *interp, INTVAL i );
 PARROT_API STRING * string_from_num( Interp *interp, FLOATVAL f );
@@ -170,7 +184,10 @@ PARROT_API STRING* string_join( Interp *interp,
     STRING *j /*NULLOK*/,
     PMC *ar );
 
-PARROT_API UINTVAL string_length( Interp *interp, const STRING *s /*NULLOK*/ );
+PARROT_API UINTVAL string_length( Interp *interp, const STRING *s /*NULLOK*/ )
+        __attribute__pure__
+        __attribute__warn_unused_result__;
+
 PARROT_API STRING * string_make( Interp *interp,
     const char *buffer /*NULLOK*/,
     UINTVAL len,
@@ -270,7 +287,8 @@ PARROT_API void string_titlecase_inplace( Interp *interp,
     STRING *s /*NULLOK*/ );
 
 PARROT_API char * string_to_cstring( Interp *interp,
-    const STRING *s /* NULLOK */ );
+    const STRING *s /* NULLOK */ )
+        __attribute__warn_unused_result__;
 
 PARROT_API INTVAL string_to_int( Interp *interp, const STRING *s /*NULLOK*/ );
 PARROT_API FLOATVAL string_to_num( Interp *interp,
