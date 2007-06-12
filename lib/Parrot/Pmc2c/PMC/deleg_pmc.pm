@@ -24,7 +24,10 @@ sub pre_method_gen {
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
         next unless $self->normal_unimplemented_vtable($vt_method_name);
-        my $new_method = $method->clone();
+        my $new_method = $method->clone({ 
+                parent_name => $self->name, 
+                type        => Parrot::Pmc2c::Method::VTABLE,
+          });
 
         my $n    = 0;
         my @args = grep { $n++ & 1 ? $_ : 0 } split / /, $method->parameters;
@@ -34,7 +37,6 @@ sub pre_method_gen {
     PMC *attr = get_attrib_num(PMC_data_typed(pmc, SLOTTYPE *), 0);
     $ret
 EOC
-        $new_method->type(Parrot::Pmc2c::Method::VTABLE);
         $self->add_method($new_method);
     }
   return 1;

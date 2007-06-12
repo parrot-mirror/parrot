@@ -28,6 +28,7 @@ use Parrot::Pmc2c::UtilFunctions
 use Text::Balanced 'extract_bracketed';
 use Parrot::Pmc2c::PCCMETHOD;
 use Parrot::Pmc2c::PMC::RO;
+use Parrot::Pmc2c::PMC::ParrotClass;
 
 sub prep_for_emit {
     my ( $this, $pmc, $vtable_dump ) = @_;
@@ -175,6 +176,7 @@ sub fixup_singleton {
         my $body = Parrot::Pmc2c::Emitter->text("  return INTERP->vtables[SELF->vtable->base_type]->_namespace;\n");
         $self->add_method( Parrot::Pmc2c::Method->new( {
             name        => 'pmc_namespace',
+            parent_name => $self->name,
             parameters  => '',
             body        => $body,
             type        => Parrot::Pmc2c::Method::VTABLE,
@@ -205,6 +207,9 @@ EOC
 
     foreach my $parent_name ( $self->name, @{ $self->parents } ) {
         $c->emit('#include "pmc_' . lc $parent_name . ".h\"\n");
+    }
+    foreach my $mixin_name ( @{ $self->mixins } ) {
+        $c->emit('#include "pmc_' . lc $mixin_name . ".h\"\n");
     }
     $c->emit('#include "' . lc $self->name . ".str\"\n") unless $self->is_dynamic;
 }
@@ -384,7 +389,8 @@ sub build_full_c_vt_method_name {
 
     my $implementor;
     if ( $self->implements_vtable($vt_method_name) ) {
-        $implementor = $self->name . $self->{variant};
+        return $self->get_method($vt_method_name)->
+            full_method_name($self->name . $self->{variant});
     }
     elsif ( $self->{super}{$vt_method_name} ) {
         $implementor = $self->{super}{$vt_method_name};
@@ -553,7 +559,7 @@ EOC
     # To make use of the .HLL directive, register any mapping...
     if ( $self->{flags}{hll} && $self->{flags}{maps} ) {
 
-        my $hll  = ( keys %{ $self->{flags}{hll} } )[0];
+        my $hll  = $self->{flags}{hll};
         my $maps = ( keys %{ $self->{flags}{maps} } )[0];
         $cout .= <<"EOC";
 

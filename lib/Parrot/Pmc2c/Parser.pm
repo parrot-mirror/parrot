@@ -101,6 +101,7 @@ sub parse_pmc {
 
         my $method = Parrot::Pmc2c::Method->new( {
             name        => $methodname,
+            parent_name => $pmc->name,
             body        => Parrot::Pmc2c::Emitter->text($methodblock, $filename, $lineno),
             return_type => $return_type,
             parameters  => $parameters,
@@ -166,6 +167,7 @@ sub parse_mmds {
         else {
             my $mmd_method = Parrot::Pmc2c::Method->new( {
                 name        => $method->name . "_$right_type",
+                parent_name => $method->parent_name,
                 body        => Parrot::Pmc2c::Emitter->text($mmd_part, $filename, $lineno),
                 return_type => $method->return_type,
                 parameters  => $method->parameters,

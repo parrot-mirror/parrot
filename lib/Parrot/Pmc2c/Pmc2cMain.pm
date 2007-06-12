@@ -23,7 +23,7 @@ use Cwd qw(cwd realpath);
 use File::Basename;
 use Carp;
 
-#$SIG{'__WARN__'} = sub { use Carp; warn $_[0]; Carp::confess; };
+$SIG{'__WARN__'} = sub { use Carp; warn $_[0]; Carp::confess; };
 
 
 =head1 NAME

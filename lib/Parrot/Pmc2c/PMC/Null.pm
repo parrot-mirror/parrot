@@ -30,7 +30,10 @@ sub pre_method_gen {
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
         next unless $self->normal_unimplemented_vtable($vt_method_name);
-        my $new_default_method = $method->clone();
+        my $new_default_method = $method->clone({ 
+                parent_name => $self->name, 
+                type        => Parrot::Pmc2c::Method::VTABLE,
+          });
 
         my $ret = "";
         $ret = gen_ret($method);
@@ -39,7 +42,6 @@ sub pre_method_gen {
 EOC
         $output .= $ret if $ret;
         $new_default_method->body(Parrot::Pmc2c::Emitter->text($output));
-        $new_default_method->type(Parrot::Pmc2c::Method::VTABLE);
         $self->add_method($new_default_method);
     }
     return 1;

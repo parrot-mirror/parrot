@@ -234,6 +234,7 @@ sub rewrite_PCCRETURNs {
         my $e = Parrot::Pmc2c::Emitter->new($pmc->filename);
 
         $e->emit(<<"END", __FILE__, __LINE__ + 1);
+    {
     /*BEGIN PCCRETURN $returns */
     /*BEGIN GENERATED ACCESSORS */
 END
@@ -250,6 +251,7 @@ END
         string_from_const_cstring(interp, $returns_flags, 0), 0);
     $goto_string
     /*END PCCRETURN $returns */
+    }
 END
         $matched->replace($match, $e);
     }
@@ -467,8 +469,8 @@ sub rewrite_pccinvoke {
       \( ([^\(]*) \)   #results
       \s*              #optional whitespace
       =                #results equals PCCINVOKE invocation
-      )?               #results are optional
       \s*              #optional whitespace
+      )?               #results are optional
       PCCINVOKE        #method name
       \s*              #optional whitespace
       \( ([^\(]*) \)   #parameters
