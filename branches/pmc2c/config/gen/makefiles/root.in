@@ -317,6 +317,7 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/PGE/Dumper.pbc \
     $(LIBRARY_DIR)/PGE/Glob.pbc \
     $(LIBRARY_DIR)/PGE/P6Grammar.pbc \
+    $(LIBRARY_DIR)/PGE/Perl6Grammar.pbc \
     $(LIBRARY_DIR)/PGE/Text.pbc \
     $(LIBRARY_DIR)/PGE/Util.pbc \
     $(LIBRARY_DIR)/Stream/Base.pbc \
@@ -1832,6 +1833,7 @@ HEADERIZER_O_FILES = \
     src/byteorder.o \
     src/exceptions.o \
     src/exit.o \
+    src/fingerprint.o \
     src/gc/dod.o \
     src/gc/memory.o \
     src/gc/register.o \
@@ -1846,6 +1848,7 @@ HEADERIZER_O_FILES = \
     src/objects.o \
     src/packdump.o \
     src/packfile.o \
+    src/packfile/pf_items.o \
     src/packout.o \
     src/pic.o \
     src/pmc.o \
@@ -1854,6 +1857,7 @@ HEADERIZER_O_FILES = \
     src/string.o \
     src/string_primitives.o \
     src/utils.o \
+    src/vtables.o \
 
 headerizer:
 	$(PERL) $(BUILD_TOOLS_DIR)/headerize.pl $(HEADERIZER_O_FILES)

@@ -10,7 +10,6 @@
  *  References:
  */
 
-#pragma once
 #ifndef PARROT_PMC_H_GUARD
 #define PARROT_PMC_H_GUARD
 
@@ -54,13 +53,15 @@ PARROT_API PMC* pmc_reuse( Interp *interp /*NN*/,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API INTVAL pmc_type( Interp* interp /*NN*/, STRING *name )
+PARROT_API INTVAL pmc_type( Interp* interp /*NN*/, STRING *name /*NN*/ )
         __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
         __attribute__pure__
         __attribute__warn_unused_result__;
 
-PARROT_API INTVAL pmc_type_p( Interp* interp /*NN*/, PMC *name )
-        __attribute__nonnull__(1);
+PARROT_API INTVAL pmc_type_p( Interp* interp /*NN*/, PMC *name /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 void dod_unregister_pmc( Interp* interp /*NN*/, PMC* pmc )
         __attribute__nonnull__(1);
