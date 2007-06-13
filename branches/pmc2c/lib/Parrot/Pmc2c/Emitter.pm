@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use base qw( Exporter );
 our @EXPORT_OK = qw();
-use Parrot::Pmc2c::UtilFunctions qw(count_newlines spew);
+use Parrot::Pmc2c::UtilFunctions qw(count_newlines spew escape_filename);
 use overload '""' => \&stringify;
 use overload 'bool' => \&boolify;
 use Data::Dumper;
@@ -132,8 +132,8 @@ sub annotate_worker {
           $data = $it->{data};
         }
         else {
-            $line = $self->{current_line} if $line == -1;;
-            ( my $filename_escaped = $filename) =~ s|(\\)|$1$1|g; 
+            $line = $self->{current_line} if $line == -1;
+            my $filename_escaped = escape_filename($filename);
             $data .= "#line $line \"$filename_escaped\"\n";
             $data .= $it->{data};
         }
