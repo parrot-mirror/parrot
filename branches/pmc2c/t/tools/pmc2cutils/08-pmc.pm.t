@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2006-2007, The Perl Foundation.
-# $Id: 01-pmc2cutils.t 18696 2007-05-30 22:16:09Z tewk $
+# $Id$
 # 01-pmc2cutils.t
 
 use strict;
