@@ -133,7 +133,8 @@ sub annotate_worker {
         }
         else {
             $line = $self->{current_line} if $line == -1;;
-            $data .= "#line $line \"$filename\"\n";
+            ( my $filename_escaped = $filename) =~ s|(\\)|$1$1|g; 
+            $data .= "#line $line \"$filename_escaped\"\n";
             $data .= $it->{data};
         }
         $self->{output} .= $data;
