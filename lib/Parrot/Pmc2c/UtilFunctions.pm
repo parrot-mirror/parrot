@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use base qw( Exporter );
 our @EXPORT_OK = qw( count_newlines gen_ret dont_edit dynext_load_code
-        c_code_coda slurp spew splat open_file filename);
+        c_code_coda slurp spew splat open_file filename escape_filename );
 
 =over 4
 
@@ -18,6 +18,11 @@ Returns the number of newlines (C<\n>) in C<$string>.
 
 sub count_newlines {
     return scalar $_[0] =~ tr/\n//;
+}
+
+sub escape_filename {
+    (my $filename = shift) =~ s|(\\)|$1$1|g;
+    return $filename;
 }
 
 =item C<dont_edit($pmcfile)>
