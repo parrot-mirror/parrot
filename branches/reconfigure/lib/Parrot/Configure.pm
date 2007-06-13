@@ -211,7 +211,7 @@ sub runstep {
     my ( $verbose, $verbose_step, $ask ) = $self->options->get(qw(verbose verbose-step ask));
 
     for my $task ( $self->steps() ) {
-        print STDERR $task->{"Parrot::Configure::Task::step"}, "\n"; 
+#        print STDERR $task->{"Parrot::Configure::Task::step"}, "\n"; 
         if ( $task->{"Parrot::Configure::Task::step"} eq $taskname ) {
             $self->_runstep( $task, $verbose, $verbose_step, $ask, 1 );
         }
