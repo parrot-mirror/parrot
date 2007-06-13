@@ -30,8 +30,7 @@ sub pre_method_gen {
                 type        => Parrot::Pmc2c::Method::VTABLE,
           });
 
-        my $ret = "";
-        $ret = gen_ret($method);
+        my $ret = gen_ret($method);
         $new_default_method->body(Parrot::Pmc2c::Emitter->text(<<"EOC"));
     cant_do_method(interp, pmc, "$vt_method_name");
     $ret

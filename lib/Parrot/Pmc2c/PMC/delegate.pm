@@ -30,8 +30,6 @@ sub pre_method_gen {
                 type        => Parrot::Pmc2c::Method::VTABLE,
           });
         my ( $func_ret, $ret_suffix, $args, $sig ) = $self->signature($method);
-        my $super_args = $args;
-        $super_args =~ s/^,//;
 
         $new_default_method->body(Parrot::Pmc2c::Emitter->text(<<"EOC"));
 
@@ -44,18 +42,6 @@ EOC
         $self->add_method($new_default_method);
     }
     return 1;
-}
-
-
-=item C<implements($method)>
-
-True for vtables.
-
-=cut
-
-sub implements {
-    my ( $self, $meth ) = @_;
-    $self->implements_vtable($meth);
 }
 
 =item C<trans($type)>

@@ -11,11 +11,9 @@ use strict;
 use warnings;
 use Parrot::Pmc2c::UtilFunctions qw( gen_ret );
 
-=item C<body($method, $line, $out_name)>
+=item C<pre_method_gen($method, $line, $out_name)>
 
-Returns the C code for the method body. C<$line> is used to accumulate
-the number of lines, C<$out_name> is the name of the output file we are
-generating.
+Auto generates methods for the NULL PMC. 
 
 The C<Null> PMC throws an execption for all methods.
 
@@ -35,8 +33,7 @@ sub pre_method_gen {
                 type        => Parrot::Pmc2c::Method::VTABLE,
           });
 
-        my $ret = "";
-        $ret = gen_ret($method);
+        my $ret = gen_ret($method);
         my $output = <<EOC;
     real_exception(interp, NULL, NULL_REG_ACCESS, "Null PMC access in $vt_method_name()");
 EOC

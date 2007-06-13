@@ -12,8 +12,7 @@ Parrot::Pmc2c::Library - PMC to C Code Generation
 =head1 DESCRIPTION
 
 Parrot::Pmc2c::Library is a wrapper around a collection of PMCs linked in the
-same dynamic library. A degenerate case is having an unnamed library with just
-one PMC, which is the case used by the Parrot core. See L<Parrot::Pmc2c>
+same dynamic library.
 
 =head2 Instance Methods
 
@@ -29,68 +28,19 @@ use Data::Dumper;
 use Parrot::Pmc2c::PMCEmitter;
 use Parrot::Pmc2c::UtilFunctions qw(dont_edit dynext_load_code c_code_coda spew);
 
-=item C<new($opt, $vtable_dump, %pmcs)>
+=item C<generate_library($library_name, $pmcs)>
 
-    $library = Parrot::Pmc2c::Library->new
-        ( $options,     # hash refernce, the same passed to other constructors
-          $vtable_dump, # vtable.dump
-          pmc1        => $pmc1_dump,
-          pmc2        => $pmc2_dump,
-          ... );
-
-Creates a new library object. If the C<$options> hash contains a
-C<library> key its value will be used for the library name.
+    Parrot::Pmc2c::Library->generate_library( $library_name, $pmcs );
 
 =cut
 
-sub new {
-    my ( $class, $opt, $vtable_dump, %pmcs ) = @_;
-    my %emitters;
+sub generate_library {
+    my ( $class, $library_name, $pmcs ) = @_;
 
-    foreach my $pmc ( values %pmcs ) {
-        $emitters{$pmc->filename} = Parrot::Pmc2c::PMC->prep_for_emit($pmc, $vtable_dump);
-    }
-
-    return bless {
-        opt  => $opt,
-        pmcs => \%pmcs,
-        emitters=> \%emitters,
-    }, $class;
+    spew("$library_name.c", gen_c($library_name, $pmcs));
+    spew("$library_name.h", gen_h($library_name));
 }
 
-sub generate_library($$) {
-    my ( $self, $library_name ) = @_;
-    my $h_name  = "$library_name.h";
-    my $c_name  = "$library_name.c";
-
-    my $cout = $self->gen_c;
-    spew($c_name, $cout);
-
-    my $hout = $self->gen_h;
-    spew($h_name, $hout);
-}
-
-=item C<write_all_files()>
-
-Writes C and header files for all the PMCs in the library,
-I<or> E<lt>libnameE<gt>.c and pmc_E<lt>libnameE<gt>.h if his object
-represents a named library.
-
-=cut
-
-sub write_all_files {
-    my $self    = shift;
-    my $library_name = $self->{opt}{library};
-
-    if ($library_name) {
-        generate_library($self, $library_name);
-    }
-    else {
-        for my $emitter ( values %{ $self->{emitters} } ) {
-            $emitter->generate;
-        }
-    }
-}
 
 =item C<gen_h>
 
@@ -99,26 +49,25 @@ Writes the header file for the library.
 =cut
 
 sub gen_h {
-    my ($self)     = @_;
-    my $hout       = dont_edit('various files');
-    my $lc_libname = lc $self->{opt}{library};
+    my $lc_library_name = lc shift;
 
+    my $hout = dont_edit('various files');
     $hout .= <<"EOH";
-Parrot_PMC Parrot_lib_${lc_libname}_load(Parrot_Interp interp);
+Parrot_PMC Parrot_lib_${lc_library_name}_load(Parrot_Interp interp);
 EOH
-    $hout .= $self->c_code_coda;
+    $hout .= c_code_coda;
 
     return $hout;
 }
 
 =item C<gen_c>
 
-Writes the C file for the library.
+rites the C file for the library.
 
 =cut
 
 sub gen_c {
-    my ($self) = @_;
+    my ( $library_name, $pmcs ) = @_;
     my $cout = dont_edit('various files');
 
     $cout .= <<"EOC";
@@ -127,17 +76,17 @@ sub gen_c {
 #include "parrot/extend.h"
 #include "parrot/dynext.h"
 EOC
+    my %pmcs = ( map { $_->{name} => $_ } @{ $pmcs } );
     
-    foreach my $pmc ( values %{ $self->{pmcs} } ) {
-        my $name = lc $pmc->{name};
+    foreach my $name ( keys %pmcs ) {
+        my $lcname = lc $name;
         $cout .= <<"EOC";
-#include "pmc_$name.h"
+#include "pmc_$lcname.h"
 EOC
     }
     $cout .= "\n";
-    $cout .= dynext_load_code( $self->{opt}{library},
-        map { $_->{name} => $_ } values %{ $self->{pmcs} } );
-    $cout .= $self->c_code_coda;
+    $cout .= dynext_load_code( $library_name, %pmcs );
+    $cout .= c_code_coda;
 
     return $cout;
 }
