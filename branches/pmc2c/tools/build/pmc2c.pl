@@ -55,6 +55,11 @@ if ( $action{tree} ) {
     exit;
 }
 
+if ( $options{library} ) {
+    $self->gen_library($options{library});
+    exit;
+}
+
 if ( $action{gen_c} ) {
     $self->gen_c();
     exit;

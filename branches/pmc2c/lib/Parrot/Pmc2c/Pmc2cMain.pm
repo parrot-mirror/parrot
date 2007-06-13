@@ -273,13 +273,19 @@ Perl-ish C<1>.
 
 sub gen_c {
     my $self        = shift;
-    my @files       = @{ $self->{args} };
-    my $optsref     = $self->{opt};
-    my %pmcs        = map { $_, $self->read_dump($_) } @files;
     my $vtable_dump = $self->read_dump("vtable.pmc");
 
-    Parrot::Pmc2c::Library->new( $optsref, $vtable_dump, %pmcs )->write_all_files;
+    foreach my $filename ( @{ $self->{args} } ) {
+        Parrot::Pmc2c::PMC->prep_for_emit($self->read_dump($filename), $vtable_dump)->generate;
+    }
+    return 1;
+}
 
+sub gen_library {
+    my ( $self, $library_name ) = @_;
+    my $pmcs = [ map { $self->read_dump($_) } @{ $self->{args} } ];
+
+    Parrot::Pmc2c::Library->generate_library( $library_name, $pmcs );
     return 1;
 }
 

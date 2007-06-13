@@ -5,7 +5,6 @@ use strict;
 use warnings;
 use base qw( Parrot::Pmc2c::Method Exporter );
 use Data::Dumper;
-use Parrot::Pmc2c::UtilFunctions qw(count_newlines );
 
 sub new {
     my ( $class, $self_hash ) = @_;
@@ -24,10 +23,8 @@ sub generate_body {
 }
 
 sub generate_headers {
-    my ( $self, $pmc ) = @_;
     return "";
 }
-
 
 1;
 

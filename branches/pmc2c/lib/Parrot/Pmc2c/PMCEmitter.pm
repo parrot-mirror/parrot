@@ -668,20 +668,6 @@ EOC
     $cout;
 }
 
-=item C<implements($method)>
-
-True if this class generates code for the method C<$method>.
-
-=cut
-
-=item C<implements_vtable($method)>
-
-True if this class generates code for VTABLE method C<$method>.
-
-=back
-
-=cut
-
 sub is_vtable_method {
     my ( $self, $vt_method_name ) = @_;
     return 1 if $self->vtable->has_method($vt_method_name);

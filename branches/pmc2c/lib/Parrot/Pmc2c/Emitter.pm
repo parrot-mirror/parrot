@@ -66,11 +66,13 @@ sub subst {
 sub replace {
     my ( $self, $regex, $replacement ) = @_;
     my $m = $self->{data} =~ /((.*)\Q$regex\E)(.*)/s;
-    $self->emit($2, $self->filename, $self->{bline});
+    my ( $all, $pre, $post ) = ( $1, $2, $3 );
+    $self->emit($pre, $self->filename, $self->{bline});
     $self->add_fragment($replacement);
-    $self->emit($3, $self->filename, $self->{bline} + count_newlines($1));
-    for my $x qw( data filename bline eline) {
-        delete $self->{data};
+    $self->emit($post, $self->filename, $self->{bline} + count_newlines($all));
+
+    for my $x qw( data bline eline ) {
+        delete $self->{$x};
     }
     return 1;
 }
