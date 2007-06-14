@@ -10,7 +10,6 @@
  *  References:
  */
 
-#pragma once
 #ifndef PARROT_MEMORY_H_GUARD
 #define PARROT_MEMORY_H_GUARD
 #include <assert.h>
@@ -44,28 +43,34 @@
 /* HEADERIZER BEGIN: src/gc/memory.c */
 
 PARROT_API void * mem__sys_realloc( void *from /*NULLOK*/, size_t size )
+        __attribute__malloc__
         __attribute__warn_unused_result__;
 
 PARROT_API void * mem__sys_realloc_zeroed(
     void *from /*NULLOK*/,
     size_t size,
     size_t old_size )
+        __attribute__malloc__
         __attribute__warn_unused_result__;
 
 PARROT_API void * mem_sys_allocate( size_t size )
+        __attribute__malloc__
         __attribute__warn_unused_result__;
 
 PARROT_API void * mem_sys_allocate_zeroed( size_t size )
+        __attribute__malloc__
         __attribute__warn_unused_result__;
 
 PARROT_API void mem_sys_free( void * from );
 void * mem__internal_allocate( size_t size, const char *file, int line )
+        __attribute__malloc__
         __attribute__warn_unused_result__;
 
 void * mem__internal_allocate_zeroed(
     size_t size,
     const char *file,
     int line )
+        __attribute__malloc__
         __attribute__warn_unused_result__;
 
 void mem__internal_free( void *from, const char *file /*NN*/, int line )
@@ -78,6 +83,7 @@ void * mem__internal_realloc(
     int line )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
+        __attribute__malloc__
         __attribute__warn_unused_result__;
 
 void mem_setup_allocator( Interp *interp /*NN*/ )
