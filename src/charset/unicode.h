@@ -1,5 +1,5 @@
 /* unicode.h
- *  Copyright (C) 2005, The Perl Foundation.
+ *  Copyright (C) 2005-2007, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -10,7 +10,6 @@
  *  References:
  */
 
-#pragma once
 #ifndef PARROT_CHARSET_UNICODE_H_GUARD
 #define PARROT_CHARSET_UNICODE_H_GUARD
 
@@ -18,7 +17,11 @@
  * init function
  */
 
-CHARSET *Parrot_charset_unicode_init(Interp *);
+
+/* HEADERIZER BEGIN: src/charset/unicode.c */
+
+CHARSET * Parrot_charset_unicode_init( Interp *interp );
+/* HEADERIZER END: src/charset/unicode.c */
 
 
 #endif /* PARROT_CHARSET_UNICODE_H_GUARD */

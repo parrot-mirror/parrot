@@ -317,6 +317,7 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/PGE/Dumper.pbc \
     $(LIBRARY_DIR)/PGE/Glob.pbc \
     $(LIBRARY_DIR)/PGE/P6Grammar.pbc \
+    $(LIBRARY_DIR)/PGE/Perl6Grammar.pbc \
     $(LIBRARY_DIR)/PGE/Text.pbc \
     $(LIBRARY_DIR)/PGE/Util.pbc \
     $(LIBRARY_DIR)/Stream/Base.pbc \
@@ -1828,8 +1829,11 @@ HEADERIZER_O_FILES = \
 
 # Slowing working my way up to having everything headerized in $(HEADERIZER_O_FILES)
 HEADERIZER_O_FILES = \
-    src/datatypes.o \
+    $(CHARSET_O_FILES) \
     src/byteorder.o \
+    src/charset.o \
+    src/datatypes.o \
+    src/encoding.o \
     src/exceptions.o \
     src/exit.o \
     src/fingerprint.o \
@@ -1838,6 +1842,7 @@ HEADERIZER_O_FILES = \
     src/gc/register.o \
     src/gc/resources.o \
     src/gc/smallobject.o \
+    src/global_setup.o \
     src/hash.o \
     src/headers.o \
     src/intlist.o \
@@ -1856,8 +1861,9 @@ HEADERIZER_O_FILES = \
     src/string.o \
     src/string_primitives.o \
     src/utils.o \
+    src/vtables.o \
 
-headerizer:
+headerizer : $(SRC_DIR)/fingerprint.c
 	$(PERL) $(BUILD_TOOLS_DIR)/headerize.pl $(HEADERIZER_O_FILES)
 
 ###############################################################################
