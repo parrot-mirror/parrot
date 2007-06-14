@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-config/auto/make.pm - make utility
+config/inter/make.pm - make utility
 
 =head1 DESCRIPTION
 
@@ -37,11 +37,17 @@ sub runstep {
 
     my $prog;
 
-    # precedence of sources for the program:
-    # default -> probe -> environment -> option -> ask
-    $prog ||= $conf->data->get($util);
-    $prog ||= $conf->options->get($util);
+    # check the candidates for a 'make' program in this order:
+    # environment ; option ; probe ; ask ; default
+    # first pick wins.
     $prog ||= $ENV{ uc($util) };
+    $prog ||= $conf->options->get($util);
+    $prog ||= check_progs( ['gmake', 'mingw32-make', 'nmake', 'make'], $verbose );
+    if ( !$prog ) {
+        $prog = ( $conf->options->get('ask') )
+            ? prompt( $prompt, $prog ? $prog : $conf->data->get($util) )
+            : $conf->data->get($util);
+    }
 
     # never override the user.  If a non-existent program is specified then
     # the user is responsible for the consequences.
@@ -50,18 +56,9 @@ sub runstep {
         $self->set_result('yes');
     }
     else {
-        $prog = check_progs( [ 'gmake', 'mingw32-make', 'nmake', 'make' ], $verbose );
-
-        unless ($prog) {
-
-            # fall back to default
-            $self->set_result('no');
-            return $self;
-        }
-    }
-
-    if ( $conf->options->get('ask') ) {
-        $prog = prompt( $prompt, $prog ? $prog : $conf->data->get($util) );
+        # fall back to default
+        $self->set_result('no');
+        return $self;
     }
 
     my ( $stdout, $stderr, $ret ) = capture_output( $prog, '--version' );
@@ -69,7 +66,6 @@ sub runstep {
     # don't override the user even if the program they provided appears to be
     # broken
     if ( $ret == -1 and !$conf->options->get('ask') ) {
-
         # fall back to default
         $self->set_result('no');
         return $self;

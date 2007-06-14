@@ -2,7 +2,8 @@
 parrot_version
 
 ## here i'm overriding the command-line vars passed to Configure.pl
-process_opts --test=configure
+#process_opts --test=configure
+process_opts
 
 ## that will cause this op to run, since $args{test} eq 'configure'
 test configure
@@ -35,7 +36,8 @@ run inter::encoding
 run inter::types
 run inter::ops
 ## pass options to a specific config step
-run inter::pmc --ask
+#run inter::pmc --ask
+run inter::pmc
 run auto::alignptrs
 run auto::headers
 run auto::sizes

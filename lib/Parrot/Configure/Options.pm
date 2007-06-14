@@ -14,10 +14,10 @@ sub get_valid_options {
         debugging define exec-prefix execcapable floatval gc help icu-config
         icudatadir icuheaders icushared includedir infodir inline intval
         jitcapable ld ldflags lex libdir libexecdir libs link linkflags
-        localstatedir m maintainer mandir miniparrot nomanicheck oldincludedir
-        opcode ops optimize parrot_is_shared pmc prefix profile sbindir
-        sharedstatedir step sysconfdir test verbose verbose-step version
-        without-gdbm without-gmp without-icu yacc);
+        localstatedir m make maintainer mandir miniparrot nomanicheck
+        oldincludedir opcode ops optimize parrot_is_shared pmc prefix profile
+        sbindir sharedstatedir step sysconfdir test verbose verbose-step
+        version without-gdbm without-gmp without-icu yacc);
 }
 
 sub process_options {
@@ -115,6 +115,7 @@ Compile Options:
    --ld=(linker)        Use the given loader for shared libraries
    --ldflags=(flags)    Use the given loader flags for shared libraries
    --lex=(lexer)        Use the given lexical analyzer generator
+   --make=(make tool)   Use the given make utility
    --yacc=(parser)      Use the given parser generator
 
    --define=inet_aton   Quick hack to use inet_aton instead of inet_pton
