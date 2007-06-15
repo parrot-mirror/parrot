@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: 03-steplist.t 18404 2007-05-03 01:26:50Z jkeenan $
+# $Id$
 # 131-auto_funcptr.t
 
 use strict;
