@@ -5,10 +5,44 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  2;
+use Test::More qw(no_plan); # tests =>  2;
 use Carp;
+use Data::Dumper;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::init::defaults');
+use Parrot::BuildUtil;
+use Parrot::Configure;
+use Parrot::Configure::Options qw( process_options );
+
+my $pkg = q{init::defaults};
+my $parrot_version = Parrot::BuildUtil::parrot_version();
+my $args = process_options( {
+    argv            => [ @ARGV ],
+    script          => $0,
+    parrot_version  => $parrot_version,
+    svnid           => '$Id$',
+} );
+
+my $conf = Parrot::Configure->new;
+$conf->add_steps($pkg);
+$conf->options->set(%{$args});
+
+my $task = $conf->steps->[0];
+my $step_name   = $task->step;
+my @step_params = @{ $task->params };
+
+my $step = $step_name->new();
+ok(defined $step, "$step_name constructor returned defined value");
+isa_ok($step, $step_name);
+ok($step->description(), "$step_name has description");
+my $ret = $step->runstep($conf);
+ok(defined $ret, "$step_name runstep() returned defined value");
+
+#print STDERR Dumper ($ret, $conf);
+
+# TODO:  Peer into $ret, which is actually $conf as augmented by the operation
+# of init::defaults::runstep().  What happens when different options are
+# provided.
 
 pass("Completed all tests in maketest.pl");
 
