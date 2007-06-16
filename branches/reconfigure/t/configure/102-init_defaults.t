@@ -17,7 +17,14 @@ use Parrot::Configure::Options qw( process_options );
 my $pkg = q{init::defaults};
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
-    argv            => [ @ARGV ],
+    argv            => [q{--debugging=0}, q{--profile}, q{--m=32}],
+                        # These 3 options are non-default and inside
+                        # init::defaults::runsteps() they create what, from a
+                        # testing coverage perspective, create branches or
+                        # conditions.  The regular run of Configure.pl during
+                        # coverage analysis will cover the default 
+                        # branches/conditions.  Hence, we supply the 
+                        # non-default options here to increase coverage.
     script          => $0,
     parrot_version  => $parrot_version,
     svnid           => '$Id$',
@@ -38,11 +45,8 @@ ok($step->description(), "$step_name has description");
 my $ret = $step->runstep($conf);
 ok(defined $ret, "$step_name runstep() returned defined value");
 
-#print STDERR Dumper ($ret, $conf);
-
 # TODO:  Peer into $ret, which is actually $conf as augmented by the operation
-# of init::defaults::runstep().  What happens when different options are
-# provided.
+# of init::defaults::runstep().
 
 pass("Completed all tests in maketest.pl");
 
