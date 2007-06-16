@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 18-revision.t
+# 018-revision.t
 
 use strict;
 use warnings;
@@ -38,11 +38,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-18-revision.t - test Parrot::Revision
+018-revision.t - test Parrot::Revision
 
 =head1 SYNOPSIS
 
-    % prove t/configure/18-revision.t
+    % prove t/configure/018-revision.t
 
 =head1 DESCRIPTION
 

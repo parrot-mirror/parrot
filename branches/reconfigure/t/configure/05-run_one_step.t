@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 05-run_one_step.t
+# 005-run_one_step.t
 
 use strict;
 use warnings;
@@ -94,11 +94,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-05-run_one_step.t - test Parrot::Configure by running one step
+005-run_one_step.t - test Parrot::Configure by running one step
 
 =head1 SYNOPSIS
 
-    % prove t/configure/05-run_one_step.t
+    % prove t/configure/005-run_one_step.t
 
 =head1 DESCRIPTION
 

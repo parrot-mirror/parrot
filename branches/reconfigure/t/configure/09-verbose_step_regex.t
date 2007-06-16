@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 09-verbose_step_regex.t
+# 009-verbose_step_regex.t
 
 use strict;
 use warnings;
@@ -78,11 +78,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-09-verbose_step_regex.t - test bad step failure case in Parrot::Configure
+009-verbose_step_regex.t - test bad step failure case in Parrot::Configure
 
 =head1 SYNOPSIS
 
-    % prove t/configure/09-verbose_step_regex.t
+    % prove t/configure/009-verbose_step_regex.t
 
 =head1 DESCRIPTION
 

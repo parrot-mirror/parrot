@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 12-verbose.t
+# 012-verbose.t
 
 use strict;
 use warnings;
@@ -78,11 +78,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-12-verbose.t - test the C<--verbose> command-line argument
+012-verbose.t - test the C<--verbose> command-line argument
 
 =head1 SYNOPSIS
 
-    % prove t/configure/12-verbose.t
+    % prove t/configure/012-verbose.t
 
 =head1 DESCRIPTION
 
