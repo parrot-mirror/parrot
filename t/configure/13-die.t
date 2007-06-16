@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 13-die.t
+# 013-die.t
 
 use strict;
 use warnings;
@@ -83,11 +83,11 @@ sub _capture { $errstr = $_[0];}
 
 =head1 NAME
 
-13-die.t - test what happens when a configuration step dies during execution
+013-die.t - test what happens when a configuration step dies during execution
 
 =head1 SYNOPSIS
 
-    % prove t/configure/13-die.t
+    % prove t/configure/013-die.t
 
 =head1 DESCRIPTION
 

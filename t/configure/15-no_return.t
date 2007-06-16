@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 15-no_return.t
+# 015-no_return.t
 
 use strict;
 use warnings;
@@ -84,11 +84,11 @@ sub _capture { $errstr = $_[0];}
 
 =head1 NAME
 
-15-no_return.t - see what happens when configuration step does not return object
+015-no_return.t - see what happens when configuration step does not return object
 
 =head1 SYNOPSIS
 
-    % prove t/configure/15-no_return.t
+    % prove t/configure/015-no_return.t
 
 =head1 DESCRIPTION
 

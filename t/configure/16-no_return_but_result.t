@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 16-no_return_but_result.t
+# 016-no_return_but_result.t
 
 use strict;
 use warnings;
@@ -84,12 +84,12 @@ sub _capture { $errstr = $_[0];}
 
 =head1 NAME
 
-16-no_return_but_result.t - see what happens when configuration step returns
+016-no_return_but_result.t - see what happens when configuration step returns
 something other than object but has a defined result method
 
 =head1 SYNOPSIS
 
-    % prove t/configure/16-no_return_but_result.t
+    % prove t/configure/016-no_return_but_result.t
 
 =head1 DESCRIPTION
 

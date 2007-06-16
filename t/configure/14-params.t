@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 14-params.t
+# 014-params.t
 
 use strict;
 use warnings;
@@ -81,11 +81,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-14-params.t - test what happens when a step is registered with parameters
+014-params.t - test what happens when a step is registered with parameters
 
 =head1 SYNOPSIS
 
-    % prove t/configure/14-params.t
+    % prove t/configure/014-params.t
 
 =head1 DESCRIPTION
 

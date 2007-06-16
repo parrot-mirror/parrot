@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 01-options.t
+# 001-options.t
 
 use strict;
 use warnings;
@@ -251,11 +251,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-01-options.t - test Parrot::Configure::Options
+001-options.t - test Parrot::Configure::Options
 
 =head1 SYNOPSIS
 
-    % prove t/configure/01-options.t
+    % prove t/configure/001-options.t
 
 =head1 DESCRIPTION
 

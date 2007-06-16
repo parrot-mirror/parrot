@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 11-no_description.t
+# 011-no_description.t
 
 use strict;
 use warnings;
@@ -78,11 +78,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-11-no_description.t - test what happens when a configuration step has no C<$description> defined
+011-no_description.t - test what happens when a configuration step has no C<$description> defined
 
 =head1 SYNOPSIS
 
-    % prove t/configure/11-no_description.t
+    % prove t/configure/011-no_description.t
 
 =head1 DESCRIPTION
 
