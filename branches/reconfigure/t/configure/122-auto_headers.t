@@ -10,6 +10,12 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::headers');
 
+=for hints_for_testing You may need to write SKIP blocks to encapsulate
+OS-specific tests.  Check latest reports of Parrot configuration tools
+testing coverage to see where your time available for writing tests is spent.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
