@@ -12,6 +12,7 @@ use_ok('config::inter::libparrot');
 
 =for hints_for_testing Check latest reports of Parrot configuration tools
 testing coverage to see where your time available for writing tests is spent.
+You will have to determine a way to test a user's response to a prompt. #'
 
 =cut
 
