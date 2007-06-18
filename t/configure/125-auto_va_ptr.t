@@ -10,6 +10,13 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::va_ptr');
 
+=for hints_for_testing The documentation of the package being tested is
+insufficient; please try to improve it.  Explore the likelihood of seg faults
+while running the test.  Check latest reports of Parrot configuration tools
+testing coverage to see where your time available for writing tests is spent.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
