@@ -10,7 +10,15 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::init::install');
 
-pass("Completed all tests in maketest.pl");
+=for hints_for_testing This file ought to test what happens when you provide a
+non-default directory to each of the options in config/init/install.  For
+testing purposes, these directories probably do not have to be real.  You
+should probably test the Parrot::Configure object before and after calling
+runsteps() in order to verify that the non-defaults made it into the object.
+
+=cut
+
+pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 

@@ -10,7 +10,14 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::inter::make');
 
-pass("Completed all tests in maketest.pl");
+=for hints_for_testing Since inter::make probes for the make program found on
+a particular OS, it will probably be difficult to achieve high branch or
+condition coverage.  Check latest reports of Parrot configuration tools
+testing coverage to see where your time is best devoted.
+
+=cut
+
+pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 

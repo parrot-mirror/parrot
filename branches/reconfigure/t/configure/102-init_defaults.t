@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests =>  2;
+use Test::More tests =>  6;
 use Carp;
 use Data::Dumper;
 use lib qw( . lib ../lib ../../lib );
@@ -47,8 +47,10 @@ ok(defined $ret, "$step_name runstep() returned defined value");
 
 # TODO:  Peer into $ret, which is actually $conf as augmented by the operation
 # of init::defaults::runstep().
+# TODO:  Write a SKIP block which will test the one OS-specific branch in
+# init::defaults.
 
-pass("Completed all tests in maketest.pl");
+pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 

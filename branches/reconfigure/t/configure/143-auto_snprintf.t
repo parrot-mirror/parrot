@@ -10,7 +10,7 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::snprintf');
 
-pass("Completed all tests in maketest.pl");
+pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 
