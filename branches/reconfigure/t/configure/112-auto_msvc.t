@@ -10,6 +10,13 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::msvc');
 
+=for hints_for_testing This test may be meaningless if you are not on Windows.
+Consider writing a SKIP block.  Check latest reports of Parrot configuration
+tools testing coverage to see where your time available for writing tests is
+spent.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
