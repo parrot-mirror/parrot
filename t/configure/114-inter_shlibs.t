@@ -10,6 +10,15 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::inter::shlibs');
 
+=for hints_for_testing Check latest reports of Parrot configuration tools
+testing coverage to see where your time available for writing tests is spent.
+Note the comment in POD:  "This is a separate unit from config/inter/progs.pm
+because the answers depend on which compiler is in use.  Thus it should come
+after the gccversion test." This may affect how the tests in this file are set
+up.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

@@ -10,6 +10,13 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::inter::yacc');
 
+=for hints_for_testing Since inter::yacc probes for the yacc program found on
+a particular OS, it will probably be difficult to achieve high branch or
+condition coverage.  Check latest reports of Parrot configuration tools
+testing coverage to see where your time is best devoted.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

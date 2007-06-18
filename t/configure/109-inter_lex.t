@@ -10,7 +10,7 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::inter::lex');
 
-=for hints_for_testing Since inter::make probes for the lex program found on
+=for hints_for_testing Since inter::lex probes for the lex program found on
 a particular OS, it will probably be difficult to achieve high branch or
 condition coverage.  Check latest reports of Parrot configuration tools
 testing coverage to see where your time is best devoted.
