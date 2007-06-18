@@ -39,15 +39,11 @@ PARROT_API
 INTVAL
 Parrot_get_vtable_index(Interp *interp, const STRING *name /*NN*/)
 {
-    char * const name_c = string_to_cstring(interp, name);
-    INTVAL low    = 0;
-    INTVAL high   = NUM_VTABLE_FUNCTIONS - 1;
+    char * const name_c      = string_to_cstring(interp, name);
 
     /* some of the first "slots" don't have names. skip 'em. */
-    while (!Parrot_vtable_slot_names[low]) {
-        low++;
-        high++;
-    }
+    INTVAL low               = PARROT_VTABLE_LOW;
+    INTVAL high              = NUM_VTABLE_FUNCTIONS + PARROT_VTABLE_LOW;
 
     while (low < high) {
         const INTVAL       mid    = (low + high) / 2;
@@ -81,28 +77,7 @@ Return Sub PMC if a method with the vtable name exists in ns
 static PMC*
 find_vtable_meth_ns(Interp *interp, PMC *ns, INTVAL vtable_index)
 {
-    const INTVAL k   = VTABLE_elements(interp, ns);
-    PMC   * const key = VTABLE_nextkey_keyed(interp, key_new(interp), ns,
-        ITERATE_FROM_START);
-
-    const char * const meth     = Parrot_vtable_slot_names[vtable_index];
-    STRING     * const meth_str = string_from_cstring(interp, meth, strlen(meth));
-
-    int         j;
-
-    for (j = 0; j < k; ++j) {
-        STRING * const ns_key = (STRING *)parrot_hash_get_idx(interp,
-                            (Hash *)PMC_struct_val(ns), key);
-        PMC * const res    = VTABLE_get_pmc_keyed_str(interp, ns, ns_key);
-
-        /* success if matching vtable index or double-underscored name */
-        if (res->vtable->base_type == enum_class_Sub &&
-               (PMC_sub(res)->vtable_index == vtable_index ||
-                string_compare(interp, meth_str, ns_key) == 0))
-            return res;
-    }
-
-    return PMCNULL;
+    return VTABLE_get_pmc_keyed_int(interp, ns, vtable_index);
 }
 
 /*
@@ -1083,7 +1058,8 @@ Parrot_add_parent(Interp *interp, PMC *_class, PMC *parent)
             VTABLE_name(interp, _class));
 
         create_deleg_pmc_vtable(interp, _class, class_name, 1);
-    } else if (!PObj_is_class_TEST(parent)) {
+    }
+    else if (!PObj_is_class_TEST(parent)) {
         internal_exception(1, "Parent isn't a ParrotClass");
     }
 

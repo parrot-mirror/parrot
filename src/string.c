@@ -411,7 +411,7 @@ So make sure to _use_ the return value.
 
 PARROT_API
 STRING *
-string_append(Interp *interp, STRING *a /*NULLOK*/, STRING *b /*NULLOK*/)
+string_append(Interp *interp /*NN*/, STRING *a /*NULLOK*/, STRING *b /*NULLOK*/)
 {
     UINTVAL a_capacity;
     UINTVAL total_length;
@@ -488,7 +488,7 @@ Make a Parrot string from a specified C string.
 
 PARROT_API
 STRING *
-string_from_cstring(Interp *interp,
+string_from_cstring(Interp *interp /*NN*/,
     const char * const buffer /*NULLOK*/, const UINTVAL len)
     /* WARN_UNUSED */
 {
@@ -557,7 +557,7 @@ Creates and returns a constant Parrot string.
 
 PARROT_API
 STRING *
-const_string(Interp *interp, const char *buffer /*NN*/)
+const_string(Interp *interp /*NN*/, const char *buffer /*NN*/)
 {
     /* TODO cache the strings */
     return string_make_direct(interp, buffer, strlen(buffer),
@@ -615,7 +615,7 @@ string_make(Interp *interp /*NN*/, const char *buffer /*NULLOK*/,
 
 PARROT_API
 STRING *
-string_make_direct(Interp *interp, const char *buffer /*NULLOK*/, UINTVAL len,
+string_make_direct(Interp *interp /*NN*/, const char *buffer /*NULLOK*/, UINTVAL len,
         ENCODING *encoding /*NN*/, CHARSET *charset /*NN*/, UINTVAL flags)
 {
     STRING * const s = new_string_header(interp, flags);
@@ -830,7 +830,7 @@ Creates and returns a copy of the specified Parrot string.
 
 PARROT_API
 STRING *
-string_copy(Interp *interp, STRING *s /*NULLOK*/)
+string_copy(Interp *interp /*NN*/, STRING *s /*NULLOK*/)
 {
     return Parrot_make_COW_reference(interp, s);
 }
@@ -1869,7 +1869,7 @@ Returns a Parrot string representation of the specified integer value.
 
 PARROT_API
 STRING *
-string_from_int(Interp *interp, INTVAL i)
+string_from_int(Interp *interp /*NN*/, INTVAL i)
 {
     char buf[128];
     return int_to_str(interp, buf, i, 10);
@@ -2554,7 +2554,7 @@ string_compose(Interp *interp /*NN*/, STRING *src /*NULLOK*/)
 
 PARROT_API
 STRING*
-string_join(Interp *interp, STRING *j /*NULLOK*/, PMC *ar)
+string_join(Interp *interp /*NN*/, STRING *j /*NULLOK*/, PMC *ar)
 {
     STRING *res;
     STRING *s;

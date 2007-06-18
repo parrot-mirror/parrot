@@ -163,7 +163,7 @@ Set up the package 'COMMON-LISP'
 
   .ASSERT_TYPE(cdr, "list")
 
-   typeof type, car
+   type = typeof car
 
    if type == "LispFunction" goto FUNCTION
    if type == "LispSymbol" goto SYMBOL
@@ -212,7 +212,7 @@ DONE:
 
   .CAR(a, args)
 
-   typeof type, a                             # An atom is anything that is
+   type = typeof a                             # An atom is anything that is
    if type != "LispCons" goto ATOM            # not a cons.
    goto CONS
 
@@ -307,6 +307,7 @@ DONE:
 
 .sub _char
  .param pmc args
+
  .local pmc retval
  .local pmc ke
  .local string str
@@ -396,6 +397,7 @@ DONE:
 
 .sub _function
   .param pmc args
+
   .local string symname
   .local string pkgname
   .local string type
@@ -410,7 +412,7 @@ DONE:
 
   .CAR(form, args)
 
-   typeof type, form
+   type = typeof form
 
    if type == "LispSymbol" goto SYMBOL          # Retrieve function from symbol
 
@@ -652,7 +654,7 @@ DONE:
    push_eh CLEANUP_HANDLER                      # Set a handler for cleanup
 
 INIT_FORM:                                      # Process the init form
-   typeof type, init
+   type = typeof init
    if type == "LispSymbol" goto INIT_SYMBOL
    if type == "LispCons"   goto INIT_LIST
    goto EVAL_BODY
@@ -986,7 +988,7 @@ DONE:
 
    null nil
 
-   typeof type, form
+   type = typeof form
 
    if type == "LispCons"     goto CONS
    if type == "LispFloat"    goto FLOAT
