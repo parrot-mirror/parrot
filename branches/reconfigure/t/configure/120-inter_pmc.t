@@ -13,6 +13,7 @@ use_ok('config::inter::pmc');
 =for hints_for_testing Check latest reports of Parrot configuration tools
 testing coverage to see where your time available for writing tests is spent.
 You will have to determine a way to test a user's response to a prompt. #'
+In the course of writing tests, you should try to resolve RT 43172.
 
 =cut
 
