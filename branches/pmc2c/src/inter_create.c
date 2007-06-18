@@ -24,6 +24,8 @@ Create or destroy a Parrot interpreter
 #include "parrot/oplib/core_ops.h"
 #include "../compilers/imcc/imc.h"
 
+/* HEADER: none */ /* XXX Headerize this at the same time as the other interpreter files */
+
 #if EXEC_CAPABLE
 Interp interpre;
 #endif
@@ -41,10 +43,10 @@ Checks whether the specified environment variable is set.
 */
 
 static int
-is_env_var_set(const char* var)
+is_env_var_set(const char* var /*NN*/)
 {
     int free_it, retval;
-    char* value = Parrot_getenv(var, &free_it);
+    char* const value = Parrot_getenv(var, &free_it);
     if (value == NULL)
         retval = 0;
     else if (*value == '\0')
@@ -69,7 +71,7 @@ Setup default compiler for PASM.
 static void
 setup_default_compreg(Parrot_Interp interp)
 {
-    STRING *pasm1 = string_from_cstring(interp, "PASM1", 0);
+    STRING * const pasm1 = string_from_cstring(interp, "PASM1", 0);
 
     /* register the nci compiler object */
     Parrot_compreg(interp, pasm1, (Parrot_compiler_func_t)PDB_compile);
@@ -77,19 +79,16 @@ setup_default_compreg(Parrot_Interp interp)
 
 /*
 
-=item C<Parrot_Interp
-make_interpreter(Parrot_Interp parent, INTVAL flags)>
+FUNCDOC: make_interpreter
 
 Create the Parrot interpreter. Allocate memory and clear the registers.
-
-=cut
 
 */
 
 void Parrot_really_destroy(Interp *, int exit_code, void *);
 
 Parrot_Interp
-make_interpreter(Parrot_Interp parent, INTVAL flags)
+make_interpreter(Interp *parent /*NULLOK*/, INTVAL flags)
 {
     Interp *interp;
 #if EXEC_CAPABLE
@@ -259,18 +258,16 @@ make_interpreter(Parrot_Interp parent, INTVAL flags)
 
 /*
 
-=item C<void
-Parrot_destroy(Interp *interp)>
+FUNCDOC: Parrot_destroy
 
 Does nothing if C<ATEXIT_DESTROY> is defined. Otherwise calls
 C<Parrot_really_destroy()> with exit code 0.
 
 This function is not currently used.
 
-=cut
-
 */
 
+PARROT_API
 void
 Parrot_destroy(Interp *interp)
 {

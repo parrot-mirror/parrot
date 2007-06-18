@@ -12,16 +12,14 @@ src/builtin.c - Builtin Methods
 
 =head2 Functions
 
-=over 4
-
-=cut
-
 */
 
 #include "parrot/parrot.h"
 #include "parrot/compiler.h"
 #include "builtin.str"
 #include <assert.h>
+
+/* HEADER: include/parrot/builtin.h */
 
 
 typedef struct _builtin {
@@ -84,24 +82,22 @@ static Builtins builtins[] = {
 
 /*
 
-=item C<void Parrot_init_builtins(Interp *)>
+FUNCDOC: Parrot_init_builtins
 
 Initialize the builtins structure.
 
-=item C<int Parrot_is_builtin(Interp *, char *func, char *sig)>
+FUNCDOC: Parrot_is_builtin
 
 Return the index of the builtin or -1 on failure.
 
-=item C<PMC* Parrot_find_builtin(Interp *, STRING *func)>
+FUNCDOC: Parrot_find_builtin
 
 Return the NCI PMC of the builtin or NULL.
-
-=cut
 
 */
 
 void
-Parrot_init_builtins(Interp *interp)
+Parrot_init_builtins(Interp *interp /*NN*/)
 {
     size_t i;
     char buffer[128];
@@ -121,28 +117,26 @@ Parrot_init_builtins(Interp *interp)
     }
 }
 
-static int find_builtin(Interp *interp, const char *func)
-    __attribute__nonnull__(2);
+static int find_builtin(const char *func)
+    __attribute__nonnull__(1);
 static int find_builtin_s(Interp *interp, STRING *func)
+    __attribute__nonnull__(1)
     __attribute__nonnull__(2);
-static int check_builtin_sig(Interp *interp, size_t i,
-                             const char *sig, int pass)
-    __attribute__nonnull__(3);
+static int check_builtin_sig(size_t i, const char *sig, int pass)
+    __attribute__nonnull__(2);
 
 static int
-find_builtin(Interp *interp, const char *func /*NN*/)
+find_builtin(const char *func /*NN*/)
 {
     int low  = 0;
     int high = N_BUILTINS - 1;
 
     /* binary search */
-    while (low <= high)
-    {
+    while (low <= high) {
         int i   = (low + high) / 2;
-        int cmp = strcmp(func, builtins[i].c_name);
+        const int cmp = strcmp(func, builtins[i].c_name);
 
-        if (!cmp)
-        {
+        if (!cmp) {
             /* we have to loop here because there is currently more than one
                entry for the 'say' opcode and we depend on having the first
                one so we can check signatures. --mdiep */
@@ -164,11 +158,10 @@ find_builtin_s(Interp *interp, STRING *func /*NN*/)
     int low  = 0;
     int high = N_BUILTINS - 1;
 
-    /* binary search */
-    while (low <= high)
-    {
-        int i   = (low + high) / 2;
-        int cmp = string_compare(interp, func, builtins[i].meth_name);
+    /* binary search */ /* XXX isn't there a standard C func for this? */
+    while (low <= high) {
+        const int i   = (low + high) / 2;
+        const int cmp = string_compare(interp, func, builtins[i].meth_name);
 
         if (!cmp)
             return i;
@@ -181,8 +174,7 @@ find_builtin_s(Interp *interp, STRING *func /*NN*/)
 }
 
 static int
-check_builtin_sig(Interp *interp, size_t i,
-                  const char *sig /*NN*/, int pass)
+check_builtin_sig(size_t i, const char *sig /*NN*/, int pass)
 {
     const Builtins * const b = builtins + i;
     const char *p;
@@ -214,11 +206,12 @@ check_builtin_sig(Interp *interp, size_t i,
 }
 
 int
-Parrot_is_builtin(Interp *interp, const char *func, const char *sig)
+Parrot_is_builtin(Interp *interp, const char *func /*NN*/, const char *sig)
+    /* WARN_UNUSED */
 {
     int bi, i, pass;
 
-    i = find_builtin(interp, func);
+    i = find_builtin(func);
     if (i < 0)
         return -1;
     if (!sig)
@@ -227,7 +220,7 @@ Parrot_is_builtin(Interp *interp, const char *func, const char *sig)
     for (pass = 0; pass <= 1; ++pass) {
         i = bi;
 again:
-        if (check_builtin_sig(interp, i, sig, pass))
+        if (check_builtin_sig(i, sig, pass))
             return i;
         if (i < N_BUILTINS - 1) {
             /* try next with same name */
@@ -241,7 +234,8 @@ again:
 }
 
 PMC*
-Parrot_find_builtin(Interp *interp, STRING *func)
+Parrot_find_builtin(Interp *interp, STRING *func /*NN*/)
+    /* WARN_UNUSED */
 {
     const int i = find_builtin_s(interp, func);
     if (i < 0)
@@ -257,6 +251,7 @@ Parrot_find_builtin(Interp *interp, STRING *func)
 const char *
 Parrot_builtin_get_c_namespace(Interp *interp, int bi)
 {
+    UNUSED(interp);
     assert(bi >= 0 && bi < N_BUILTINS);
     return builtins[bi].c_ns;
 }
@@ -264,6 +259,7 @@ Parrot_builtin_get_c_namespace(Interp *interp, int bi)
 int
 Parrot_builtin_is_class_method(Interp *interp, int bi)
 {
+    UNUSED(interp);
     assert(bi >= 0 && bi < N_BUILTINS);
     return builtins[bi].signature[2] != 'O';
 }
@@ -271,19 +267,16 @@ Parrot_builtin_is_class_method(Interp *interp, int bi)
 int
 Parrot_builtin_is_void(Interp *interp, int bi)
 {
+    UNUSED(interp);
     assert(bi >= 0 && bi < N_BUILTINS);
     return builtins[bi].signature[0] == 'v';
 }
 
 /*
 
-=back
-
 =head1 SEE ALSO
 
 F<ops/math.ops>
-
-=cut
 
 */
 

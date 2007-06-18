@@ -1822,31 +1822,45 @@ tags.dummy:
 
 HEADERIZER_O_FILES = \
     $(INTERP_O_FILES) \
-    $(CHARSET_O_FILES) \
-    $(IO_O_FILES) \
-    $(CLASS_O_FILES) \
-    $(ENCODING_O_FILES)
 
 # Slowing working my way up to having everything headerized in $(HEADERIZER_O_FILES)
 HEADERIZER_O_FILES = \
+    $(CHARSET_O_FILES) \
+    $(ENCODING_O_FILES) \
+    $(IO_O_FILES) \
+    src/builtin.o \
     src/byteorder.o \
     src/charset.o \
+    src/core_pmcs.o \
+    src/cpu_dep.o \
     src/datatypes.o \
+    src/debug.o \
+    src/dynext.o \
     src/encoding.o \
+    src/events.o \
     src/exceptions.o \
     src/exit.o \
+    src/extend.o \
     src/fingerprint.o \
     src/gc/dod.o \
+    src/gc/gc_gms.o \
+    src/gc/gc_ims.o \
     src/gc/memory.o \
     src/gc/register.o \
     src/gc/resources.o \
     src/gc/smallobject.o \
+    src/global.o \
     src/global_setup.o \
     src/hash.o \
     src/headers.o \
+    src/hll.o \
+    src/inter_call.o \
     src/intlist.o \
     src/key.o \
+    src/library.o \
     src/list.o \
+    src/longopt.o \
+    src/misc.o \
     src/mmd.o \
     src/objects.o \
     src/packdump.o \
@@ -1859,10 +1873,13 @@ HEADERIZER_O_FILES = \
     src/stacks.o \
     src/string.o \
     src/string_primitives.o \
+    src/sub.o \
+    src/trace.o \
+    src/tsq.o \
     src/utils.o \
     src/vtables.o \
 
-headerizer : $(SRC_DIR)/fingerprint.c 
+headerizer : $(SRC_DIR)/fingerprint.c $(SRC_DIR)/core_pmcs.c
 	$(PERL) $(BUILD_TOOLS_DIR)/headerize.pl $(HEADERIZER_O_FILES)
 
 ###############################################################################

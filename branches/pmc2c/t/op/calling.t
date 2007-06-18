@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 94;
+use Parrot::Test tests => 96;
 
 =head1 NAME
 
@@ -2407,6 +2407,74 @@ pir_output_is( <<'CODE', <<'OUTPUT', "RT #40490 - flat/slurpy named arguments" )
 CODE
 Have bar: 2
 OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', "Tail call without arguments should not free the context when a closure depends on it" );
+.sub main :main
+    $P0 = create_closure_and_run_it()
+.end
+
+.sub create_closure_and_run_it
+    P0 = new "Integer"
+    P0 = 3
+    .lex "val", P0
+    P2 = get_global "myclosure"
+    P1 = newclosure P2
+    # There is a closure depending on our current context, so this shouldn't
+    # free it.
+    .return P1()
+.end
+
+.sub myclosure :outer(create_closure_and_run_it)
+    P1 = find_lex "val"
+    say P1
+    donothing()
+    P1 = find_lex "val"
+    say P1
+    .return ()
+.end
+
+.sub donothing
+    P0 = new "Integer"
+    P0 = 5
+    # This creates a new binding that is not accessible by the
+    # caller (myclosure)
+    .lex "val", P0
+    P2 = null
+    P1 = null
+.end
+CODE
+3
+3
+OUTPUT
+
+
+pir_output_is( <<'CODE', <<'OUTPUT', "slurpy named after :optional" );
+.sub main :main
+    foo(0, 'abc' => 1)
+    foo('abc' => 2)
+    $P0 = new .ResizablePMCArray
+    push $P0, 1
+    foo($P0 :flat, 'abc' => 3)
+    $P0 = new .ResizablePMCArray
+    foo($P0 :flat, 'abc' => 4)
+.end
+
+.sub foo
+        .param pmc val     :optional
+        .param int has_val :opt_flag
+        .param pmc hash    :slurpy :named
+        print "ok "
+        $P0 = hash['abc']
+        print $P0
+        print "\n"
+.end
+CODE
+ok 1
+ok 2
+ok 3
+ok 4
+OUTPUT
+
 
 # Local Variables:
 #   mode: cperl

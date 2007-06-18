@@ -38,9 +38,9 @@ static All_encodings *all_encodings;
 void
 parrot_init_encodings_2(Interp *interp)
 {
-    int i, n;
+    const int n = all_encodings->n_encodings;
+    int i;
 
-    n = all_encodings->n_encodings;
     for (i = 0; i < n; ++i) {
         all_encodings->enc[i].name->charset = Parrot_default_charset_ptr;
     }
@@ -49,7 +49,7 @@ parrot_init_encodings_2(Interp *interp)
 void
 parrot_deinit_encodings(Interp *interp)
 {
-    const n = all_encodings->n_encodings;
+    const int n = all_encodings->n_encodings;
     int i;
 
     for (i = 0; i < n; ++i) {
@@ -71,8 +71,9 @@ Parrot_new_encoding(Interp *interp)
 PARROT_API
 ENCODING *
 Parrot_find_encoding(Interp *interp, const char *encodingname /*NN*/)
+    /* WARN_UNUSED */
 {
-    const n = all_encodings->n_encodings;
+    const int n = all_encodings->n_encodings;
     int i;
 
     for (i = 0; i < n; ++i) {
@@ -174,10 +175,10 @@ Parrot_encoding_c_name(Interp *interp, INTVAL number_of_encoding)
 }
 
 static INTVAL
-register_encoding(Interp *interp, const char *encodingname,
-        ENCODING *encoding)
+register_encoding(Interp *interp, const char *encodingname /*NN*/,
+        ENCODING *encoding /*NN*/)
 {
-    const n = all_encodings->n_encodings;
+    const int n = all_encodings->n_encodings;
     int i;
 
     for (i = 0; i < n; ++i) {
