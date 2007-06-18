@@ -10,7 +10,12 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::init::headers');
 
-pass("Completed all tests in maketest.pl");
+=for hints_for_testing config/init/headers.pm would benefit from an
+explanation of what 'nongenerated headers' are.
+
+=cut
+
+pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 

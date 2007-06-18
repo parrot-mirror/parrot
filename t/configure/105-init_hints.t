@@ -10,7 +10,14 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::init::hints');
 
-pass("Completed all tests in maketest.pl");
+=for hints_for_testing init::hints functions as a loader for the OS-specific
+hints file in config/init/hints/ as well as for any locally installed
+hints file.  So a dummy local hints file should probably be created in a
+temporary directory, then have its loading be tested.
+
+=cut
+
+pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 
