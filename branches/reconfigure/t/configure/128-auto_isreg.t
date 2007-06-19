@@ -10,6 +10,13 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::isreg');
 
+=for hints_for_testing The documentation of the package being tested is
+insufficient; please try to improve it.  Check latest reports of Parrot
+configuration tools testing coverage to see where your time available for
+writing tests is spent.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
