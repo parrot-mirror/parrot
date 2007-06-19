@@ -48,7 +48,7 @@ mem_sys_allocate(size_t size)
 }
 
 void *
-mem__internal_allocate(size_t size, const char *file, int line)
+mem__internal_allocate(size_t size, const char *file /*NN*/, int line)
     /* MALLOC, WARN_UNUSED */
 {
     void * const ptr = malloc((size_t)size);
@@ -182,7 +182,7 @@ Free a chunk of memory back to the system.
 
 PARROT_API
 void
-mem_sys_free(void * from)
+mem_sys_free(void *from /*NULLOK*/)
 {
 #ifdef DETAIL_MEMORY_DEBUG
     fprintf(stderr, "Freed %p\n", from);
@@ -192,7 +192,7 @@ mem_sys_free(void * from)
 }
 
 void
-mem__internal_free(void *from, const char *file /*NN*/, int line)
+mem__internal_free(void *from /*NULLOK*/, const char *file /*NN*/, int line)
 {
 #ifdef DETAIL_MEMORY_DEBUG
     fprintf(stderr, "Internal free of %p (%s/%d)\n", from, file, line);
