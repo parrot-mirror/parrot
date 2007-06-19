@@ -102,10 +102,10 @@ constant table into a contiguous region of memory.
 
 PARROT_API
 size_t
-PackFile_ConstTable_pack_size(Interp *interp, PackFile_Segment *seg /*NN*/)
+PackFile_ConstTable_pack_size(Interp *interp /*NN*/, const PackFile_Segment *seg /*NN*/)
 {
     opcode_t i;
-    PackFile_ConstTable* const self = (PackFile_ConstTable *) seg;
+    const PackFile_ConstTable* const self = (const PackFile_ConstTable *) seg;
     size_t size = 1;    /* const_count */
 
     for (i = 0; i < self->const_count; i++)
@@ -155,8 +155,8 @@ constant is in constant table, so we have to search for it.
 
 PARROT_API
 int
-PackFile_find_in_const(Interp *interp, PackFile_ConstTable *ct /*NN*/, PMC *key /*NN*/,
-                       int type)
+PackFile_find_in_const(Interp *interp /*NN*/,
+        const PackFile_ConstTable *ct /*NN*/, PMC *key /*NN*/, int type)
 {
     int i;
     for (i = 0; i < ct->const_count; i++)
@@ -166,7 +166,7 @@ PackFile_find_in_const(Interp *interp, PackFile_ConstTable *ct /*NN*/, PMC *key 
         else if (type == PFC_NUMBER && ct->constants[i]->u.number ==
                  PMC_num_val(key))
             return i;
-    PIO_eprintf(NULL, "find_in_const: couldn't find const for key\n");
+    PIO_eprintf(NULL, "PackFile_find_in_const: couldn't find const for key\n");
     Parrot_exit(interp, 1);
     return 0;
 }
@@ -190,7 +190,7 @@ The data is zero-padded to an opcode_t-boundary, so pad bytes may be added.
 
 PARROT_API
 opcode_t *
-PackFile_Constant_pack(Interp* interp, PackFile_ConstTable * const_table,
+PackFile_Constant_pack(Interp *interp, const PackFile_ConstTable *const_table /*NN*/,
         PackFile_Constant *self, opcode_t *cursor /*NN*/)
 {
     PMC *key;
