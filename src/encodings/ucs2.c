@@ -253,7 +253,7 @@ Parrot_encoding_ucs2_init(Interp *interp)
         bytes,
         iter_init
     };
-    memcpy(return_encoding, &base_encoding, sizeof (ENCODING));
+    *return_encoding = base_encoding;
     Parrot_register_encoding(interp, "ucs2", return_encoding);
     return return_encoding;
 }
