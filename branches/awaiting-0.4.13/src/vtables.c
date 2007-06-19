@@ -47,8 +47,10 @@ Parrot_clone_vtable(Interp *interp, const VTABLE *base_vtable /*NN*/)
     /* MALLOC, WARN_UNUSED */
 {
     VTABLE * const new_vtable = mem_allocate_typed(VTABLE);
+    UNUSED(interp);
+
     if (new_vtable) {
-        *new_table = *base_vtable;
+        *new_vtable = *base_vtable;
     }
     return new_vtable;
 }
