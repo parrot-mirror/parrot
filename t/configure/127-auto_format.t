@@ -10,6 +10,15 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::format');
 
+=for hints_for_testing The documentation of the package being tested is
+insufficient; please try to improve it.  Check latest reports of Parrot
+configuration tools testing coverage to see where your time available for
+writing tests is spent.  Try to write tests which will trigger the 'die'
+statements in the package being tested.  They can be caught in 'eval' blocks
+and then the error messages can be examined with Test::More::like().
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
