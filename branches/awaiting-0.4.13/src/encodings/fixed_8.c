@@ -59,7 +59,7 @@ set_codepoint(Interp *interp, STRING *source_string,
 static UINTVAL
 get_byte(Interp *interp, const STRING *source_string, UINTVAL offset)
 {
-    unsigned char *contents = (unsigned char *)source_string->strstart;
+    const unsigned char *contents = (const unsigned char *)source_string->strstart;
     if (offset >= source_string->bufused) {
 /*        internal_exception(0,
                 "get_byte past the end of the buffer (%i of %i)",
@@ -234,7 +234,7 @@ Parrot_encoding_fixed_8_init(Interp *interp)
         iter_init
 
     };
-    memcpy(return_encoding, &base_encoding, sizeof (ENCODING));
+    *return_encoding = base_encoding;
     Parrot_register_encoding(interp, "fixed_8", return_encoding);
     return return_encoding;
 }
