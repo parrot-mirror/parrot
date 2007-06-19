@@ -10,6 +10,13 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::gmp');
 
+=for hints_for_testing The documentation for this package is skimpy; please
+try to improve it, e.g., by providing a link to an introduction to the GNU MP
+library. Please consider the issues raised in
+http://rt.perl.org/rt3/Ticket/Display.html?id=43134.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
