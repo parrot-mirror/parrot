@@ -47,6 +47,11 @@ strings.
     assert(s->charset); \
     assert(!PObj_on_free_list_TEST(s))
 
+
+/* Copies the string header from the first Parrot string to the second.  */
+#define copy_string_header(d,s) *(d) = *(s)
+
+
 /* HEADER: include/parrot/string_funcs.h */
 
 /*
@@ -95,19 +100,6 @@ Parrot_unmake_COW(Interp *interp, STRING *s /*NN*/)
     s->hashval = 0;
 }
 
-/*
-
-FUNCDOC: copy_string_header
-
-Copies the string header from the first Parrot string to the second.
-
-*/
-
-static void
-copy_string_header(STRING *dest /*NN*/, const STRING *src /*NN*/)
-{
-    memcpy(dest, src, sizeof (STRING));
-}
 
 /*
 
