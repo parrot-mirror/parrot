@@ -59,8 +59,12 @@ PARROT_API void * mem_sys_allocate_zeroed( size_t size )
         __attribute__malloc__
         __attribute__warn_unused_result__;
 
-PARROT_API void mem_sys_free( void * from );
-void * mem__internal_allocate( size_t size, const char *file, int line )
+PARROT_API void mem_sys_free( void *from /*NULLOK*/ );
+void * mem__internal_allocate(
+    size_t size,
+    const char *file /*NN*/,
+    int line )
+        __attribute__nonnull__(2)
         __attribute__malloc__
         __attribute__warn_unused_result__;
 
@@ -71,7 +75,10 @@ void * mem__internal_allocate_zeroed(
         __attribute__malloc__
         __attribute__warn_unused_result__;
 
-void mem__internal_free( void *from, const char *file /*NN*/, int line )
+void mem__internal_free(
+    void *from /*NULLOK*/,
+    const char *file /*NN*/,
+    int line )
         __attribute__nonnull__(2);
 
 void * mem__internal_realloc(
