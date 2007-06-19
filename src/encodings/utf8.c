@@ -41,10 +41,6 @@ const char Parrot_utf8skip[256] = {
     4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6      /* cjk etc. */
 };
 
-#if 0
-typedef unsigned char utf8_t;
-#endif
-
 static void iter_init(Interp *, const STRING *src, String_iter *iter);
 
 /*
@@ -123,7 +119,7 @@ Returns the UTF-8 encoding of integer C<c>.
 static void *
 utf8_encode(void *ptr, UINTVAL c)
 {
-    utf8_t *u8ptr = (utf8_t *)ptr;
+    utf8_t * const u8ptr = (utf8_t *)ptr;
     UINTVAL len = UNISKIP(c);
     utf8_t *u8end = u8ptr + len - 1;
 
@@ -235,13 +231,12 @@ utf8_decode_and_advance(Interp *interp, String_iter *i)
 }
 
 static void
-utf8_encode_and_advance(Interp *interp, String_iter *i, UINTVAL c)
+utf8_encode_and_advance(Interp *interp, String_iter *i /*NN*/, UINTVAL c)
 {
-    const STRING *s = i->str;
-    unsigned char *new_pos, *pos;
+    const STRING * const s        = i->str;
+    unsigned char * const pos     = (unsigned char *)s->strstart + i->bytepos;
+    unsigned char * const new_pos = (unsigned char *)utf8_encode(pos, c);
 
-    pos = (unsigned char *)s->strstart + i->bytepos;
-    new_pos = (unsigned char *)utf8_encode(pos, c);
     i->bytepos += (new_pos - pos);
     /* XXX possible buffer overrun exception? */
     assert(i->bytepos <= PObj_buflen(s));
@@ -272,13 +267,13 @@ utf8_set_position(Interp *interp, String_iter *i, UINTVAL pos)
 
 
 static STRING *
-to_encoding(Interp *interp, STRING *src, STRING *dest)
+to_encoding(Interp *interp, STRING *src /*NN*/, STRING *dest /*NULLOK*/)
 {
+    const int in_place = (dest == NULL);
     STRING *result;
     String_iter src_iter;
-    UINTVAL offs, c, dest_len, dest_pos, src_len;
-    int in_place = dest == NULL;
-    unsigned char *new_pos, *pos, *p;
+    UINTVAL offs, src_len;
+    unsigned char *pos, *p;
 
     if (src->encoding == Parrot_utf8_encoding_ptr)
         return in_place ? src : string_copy(interp, src);
@@ -308,16 +303,23 @@ to_encoding(Interp *interp, STRING *src, STRING *dest)
         p = (unsigned char *)dest->strstart;
     }
     if (src->charset == Parrot_ascii_charset_ptr) {
+        UINTVAL dest_len;
+
         for (dest_len = 0; dest_len < src_len; ++dest_len) {
             p[dest_len] = ((unsigned char*)src->strstart)[dest_len];
         }
         result->bufused = dest_len;
     }
     else {
+        UINTVAL dest_len;
+        UINTVAL dest_pos;
+
         dest_len = src_len;
         dest_pos = 0;
         for (offs = 0; offs < src_len; ++offs) {
-            c = src_iter.get_and_advance(interp, &src_iter);
+            const UINTVAL c = src_iter.get_and_advance(interp, &src_iter);
+            unsigned char *new_pos;
+
             if (dest_len - dest_pos < 6) {
                 UINTVAL need = (UINTVAL)((src->strlen - offs) * 1.5);
                 if (need < 16)
@@ -354,7 +356,7 @@ get_codepoint(Interp *interp, const STRING *src, UINTVAL offset)
 }
 
 static void
-set_codepoint(Interp *interp, STRING *src,
+set_codepoint(Interp *interp, STRING *src /*NN*/,
         UINTVAL offset, UINTVAL codepoint)
 {
     const void *start;
@@ -369,7 +371,7 @@ set_codepoint(Interp *interp, STRING *src,
 static UINTVAL
 get_byte(Interp *interp, const STRING *src, UINTVAL offset)
 {
-    unsigned char *contents = (unsigned char *)src->strstart;
+    const unsigned char *const contents = (unsigned char *)src->strstart;
     if (offset >= src->bufused) {
 /*        internal_exception(0,
                 "get_byte past the end of the buffer (%i of %i)",
@@ -511,7 +513,7 @@ iter_init(Interp *interp, const STRING *src, String_iter *iter)
 ENCODING *
 Parrot_encoding_utf8_init(Interp *interp)
 {
-    ENCODING *return_encoding = Parrot_new_encoding(interp);
+    ENCODING * const return_encoding = Parrot_new_encoding(interp);
 
     static const ENCODING base_encoding = {
         "utf8",
@@ -532,7 +534,7 @@ Parrot_encoding_utf8_init(Interp *interp)
         bytes,
         iter_init
     };
-    memcpy(return_encoding, &base_encoding, sizeof (ENCODING));
+    *return_encoding = base_encoding;
     Parrot_register_encoding(interp, "utf8", return_encoding);
     return return_encoding;
 }
