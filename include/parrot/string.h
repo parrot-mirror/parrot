@@ -3,7 +3,7 @@
  *  SVN Info
  *     $Id$
  *  Overview:
- *     This is the api header for the string subsystem
+ *     This is the API header for the string subsystem
  *  Data Structure and Algorithms:
  *  History:
  *  Notes:
@@ -37,8 +37,6 @@ typedef struct string_iterator_t {
     void (*set_and_advance)(Interp *, struct string_iterator_t *i, UINTVAL c);
     void (*set_position)(Interp *, struct string_iterator_t *i, UINTVAL pos);
 } String_iter;
-
-void string_iter_init(Interp *, const STRING *str, String_iter *);
 
 /* stringinfo parameters */
 
