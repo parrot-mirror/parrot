@@ -45,33 +45,6 @@ static void iter_init(Interp *, const STRING *src, String_iter *iter);
 
 /*
 
-FUNCDOC: utf8_characters
-
-Returns the number of characters in the C<byte_len> bytes from C<*ptr>.
-
-*/
-
-static UINTVAL
-utf8_characters(const utf8_t *ptr, UINTVAL byte_len)
-{
-    const utf8_t *u8ptr = ptr;
-    const utf8_t *u8end = u8ptr + byte_len;
-    UINTVAL characters = 0;
-
-    while (u8ptr < u8end) {
-        u8ptr += UTF8SKIP(u8ptr);
-        characters++;
-    }
-
-    if (u8ptr > u8end) {
-        internal_exception(MALFORMED_UTF8, "Unaligned end in UTF-8 string\n");
-    }
-
-    return characters;
-}
-
-/*
-
 FUNCDOC: utf8_decode
 
 Returns the integer for the UTF-8 character found at C<*ptr>.
@@ -153,28 +126,6 @@ utf8_skip_forward(const void *ptr, UINTVAL n)
 
     while (n-- > 0) {
         u8ptr += UTF8SKIP(u8ptr);
-    }
-
-    return u8ptr;
-}
-
-/*
-
-FUNCDOC: utf8_skip_backward
-
-Moves C<ptr> C<n> characters back.
-
-*/
-
-static const void *
-utf8_skip_backward(const void *ptr, UINTVAL n)
-{
-    const utf8_t *u8ptr = (const utf8_t *)ptr;
-
-    while (n-- > 0) {
-        u8ptr--;
-        while (UTF8_IS_CONTINUATION(*u8ptr))
-            u8ptr--;
     }
 
     return u8ptr;
