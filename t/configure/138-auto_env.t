@@ -10,6 +10,14 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::env');
 
+=for hints_for_testing The documentation for this package is skimpy; please
+try to improve it, e.g., by explaining what 'setenv' and 'unsetenv' are.  Try
+to cover all branches and conditions.  Check latest reports of Parrot
+configuration tools testing coverage to see where your time available for
+writing tests is spent.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
