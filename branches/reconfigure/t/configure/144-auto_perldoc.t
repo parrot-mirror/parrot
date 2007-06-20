@@ -10,6 +10,14 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::perldoc');
 
+=for hints_for_testing Try to test all branches and conditions; consult a recent
+code coverage report for guidance.  You might consider adding a line to the
+POD which indicates why this test is necessary, given the fact that the user
+already has Perl 5.  (It is because packaging systems can and do offer
+minimalist Perl 5 packages that omit 'perldoc'.)
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
