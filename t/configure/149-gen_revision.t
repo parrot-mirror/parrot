@@ -10,6 +10,15 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::gen::revision');
 
+=for hints_for_testing See also:
+t/configure/017-revision_no_DEVELOPING.t
+t/configure/018-revision.t
+t/configure/149-gen_revision.t
+t/postconfigure/02-revision_no_DEVELOPING.t
+t/postconfigure/03-revision.t
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
