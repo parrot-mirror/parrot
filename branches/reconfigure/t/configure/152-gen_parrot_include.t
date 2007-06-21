@@ -10,6 +10,11 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::gen::parrot_include');
 
+=for hints_for_testing Consider writing a description of what 'runtime parrot
+include' files means.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

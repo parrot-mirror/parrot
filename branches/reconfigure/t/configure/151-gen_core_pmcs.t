@@ -10,6 +10,12 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::gen::core_pmcs');
 
+=for hints_for_testing (At last!  A config/ package with somewhat adequate
+documentation!)  Consider testing the content of the files which the POD
+claims the module creates.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

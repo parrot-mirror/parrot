@@ -10,6 +10,10 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::gen::config_pm');
 
+=for hints_for_testing The grand finale!  Try to maximize branch coverage.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

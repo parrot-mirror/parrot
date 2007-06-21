@@ -10,6 +10,11 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::gen::languages');
 
+=for hints_for_testing Consider testing the content of the files which the POD
+claims the module creates.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

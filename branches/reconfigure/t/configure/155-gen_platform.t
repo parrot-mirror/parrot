@@ -10,6 +10,12 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::gen::platform');
 
+=for hints_for_testing By definition, test coverage of this package will
+appear low because you can only test the OS you are currently running on.  Use
+Test::More SKIP blocks as needed.
+
+=cut
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
