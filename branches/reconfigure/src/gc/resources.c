@@ -465,7 +465,7 @@ aligned_size(const Buffer *buffer /*NN*/, size_t len)
 
 static char *
 aligned_mem(const Buffer *buffer /*NN*/, char *mem)
-    /* PURE, WARN_UNUSED */
+    /* WARN_UNUSED */
 {
     if (PObj_is_COWable_TEST(buffer))
         mem += sizeof (void*);
@@ -693,7 +693,7 @@ Parrot_allocate_aligned(Interp *interp /*NN*/, Buffer *buffer /*NN*/, size_t siz
 FUNCDOC: Parrot_allocate_string
 
 Allocate the STRING's buffer memory to the given size. The allocated
-buffer maybe be slightly bigger than the given C<size>. This function
+buffer maybe slightly bigger than the given C<size>. This function
 sets also C<< str->strstart >> to the new buffer location, C<< str->bufused >>
 is B<not> changed.
 

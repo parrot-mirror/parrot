@@ -509,6 +509,8 @@ PARROT_API INTVAL Parrot_run_meth_fromc_arglist_reti(Interp *, PMC *sub,
 PARROT_API FLOATVAL Parrot_run_meth_fromc_arglist_retf(Interp *, PMC *sub,
         PMC* obj, STRING *meth, const char *signature, va_list);
 
+PARROT_API void Parrot_run_callback(Parrot_Interp, PMC* cbi, char *ext);
+
 PARROT_API void Parrot_callback_C(char *external_data, PMC *callback_info);
 PARROT_API void Parrot_callback_D(PMC *callback_info, char *external_data);
 PARROT_API PMC* Parrot_make_cb(Interp *interp, PMC* sub, PMC* user_data,
@@ -528,7 +530,7 @@ PARROT_API void Parrot_compreg(Interp *interp, STRING *, Parrot_compiler_func_t 
 PARROT_API PMC *Parrot_compile_string(Parrot_Interp interp,
         STRING *type, char *code, STRING **error);
 PARROT_API void *Parrot_compile_file(Parrot_Interp interp,
-        char *fullname, String **error);
+        char *fullname, STRING **error);
 
 INTVAL sysinfo_i(Interp *interp, INTVAL info_wanted);
 STRING *sysinfo_s(Interp *interp, INTVAL info_wanted);
@@ -550,6 +552,8 @@ PARROT_API void Parrot_mark_method_writes(Interp *, int type, const char *name);
 
 void Parrot_setup_event_func_ptrs(Parrot_Interp interp);
 
+PARROT_API void disable_event_checking(Interp *interp /*NN*/);
+PARROT_API void enable_event_checking(Interp *interp /*NN*/);
 #else
 
 struct Parrot_Interp_;

@@ -64,7 +64,7 @@ Mathematics*, Second Edition. Addison-Wesley, 1994.
 
 INTVAL
 intval_mod(INTVAL i2, INTVAL i3)
-    /* PURE,WARN_UNUSED */
+    /* CONST, WARN_UNUSED */
 {
     INTVAL y;
     INTVAL z = i3;
@@ -105,7 +105,7 @@ Includes a workaround for buggy code generation in the C<lcc> compiler.
 
 FLOATVAL
 floatval_mod(FLOATVAL n2, FLOATVAL n3)
-    /* PURE, WARN_UNUSED */
+    /* CONST, WARN_UNUSED */
 {
 #ifdef __LCC__
 
@@ -329,6 +329,8 @@ PARROT_API
 FLOATVAL
 Parrot_float_rand(INTVAL how_random)
 {
+    UNUSED(how_random);
+
     return _drand48();          /* [0.0..1.0] */
 }
 
@@ -346,6 +348,8 @@ PARROT_API
 INTVAL
 Parrot_uint_rand(INTVAL how_random)
 {
+    UNUSED(how_random);
+
     return _lrand48();          /* [0..2^31] */
 }
 
@@ -363,6 +367,8 @@ PARROT_API
 INTVAL
 Parrot_int_rand(INTVAL how_random)
 {
+    UNUSED(how_random);
+
     return _mrand48();          /* [-2^31..2^31] */
 }
 
@@ -677,7 +683,8 @@ process_cycle_without_exit(int node_index, parrot_prm_context* c /*NN*/)
     if (0 == alt) { /* use temp reg */
         move_reg(c->dest_regs[node_index],c->temp_reg, c);
         c->backup[node_index] = c->temp_reg;
-    } else
+    }
+    else
         c->backup[node_index] = c->dest_regs[node_index];
 
     rec_climb_back_and_mark(node_index, c);

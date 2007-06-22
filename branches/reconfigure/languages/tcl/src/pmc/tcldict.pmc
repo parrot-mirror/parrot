@@ -52,7 +52,7 @@ Initializes variables needed by the class.
     void class_init() {
         if (pass) {
             dynpmc_TclString = pmc_type(INTERP,
-                string_from_const_cstring(INTERP, "TclString", 0));
+                string_from_literal(INTERP, "TclString"));
         }
     }
 
@@ -71,8 +71,8 @@ Copy the contents of other to self.
     }
 
     void assign_pmc(PMC *other) {
-        STRING *hash   = string_from_const_cstring(INTERP, "hash", 4);
-        STRING *undef  = string_from_const_cstring(INTERP, "Undef", 5);
+        STRING *hash   = string_from_cstring(INTERP, "hash", 4);
+        STRING *undef  = string_from_cstring(INTERP, "Undef", 5);
 
         if (VTABLE_does(INTERP, other, hash))
         {
@@ -109,10 +109,10 @@ Returns the dict as a string
 
     STRING* get_string() {
         PMC *dictToString, *namespace;
-        STRING *_tcl_namespace, *sub, *value;
+        STRING *_tcl_namespace, *sub;
 
-        _tcl_namespace = string_from_const_cstring(INTERP, "_tcl", 4);
-        sub            = string_from_const_cstring(INTERP, "__dictToString",14);
+        _tcl_namespace = string_from_cstring(INTERP, "_tcl", 4);
+        sub            = string_from_cstring(INTERP, "__dictToString",14);
 
         namespace = INTERP->root_namespace;
         namespace = VTABLE_get_pmc_keyed_str(INTERP, namespace, _tcl_namespace);
@@ -120,8 +120,7 @@ Returns the dict as a string
 
         CONTEXT(INTERP->ctx)->constants =
           PMC_sub(dictToString)->seg->const_table->constants;
-        value = Parrot_runops_fromc_args(INTERP, dictToString, "SP", SELF);
-        return value;
+        return (STRING *)Parrot_runops_fromc_args(INTERP, dictToString, "SP", SELF);
 
     }
 }

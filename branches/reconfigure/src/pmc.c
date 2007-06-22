@@ -155,6 +155,7 @@ Gets a new PMC header.
 
 static PMC*
 get_new_pmc_header(Interp *interp /*NN*/, INTVAL base_type, UINTVAL flags)
+    /* WARN_UNUSED */
 {
     PMC *pmc;
     VTABLE *vtable = interp->vtables[base_type];
@@ -263,7 +264,7 @@ Creates a new constant PMC of type C<base_type>.
 
 PARROT_API
 PMC *
-constant_pmc_new_noinit(Interp *interp, INTVAL base_type)
+constant_pmc_new_noinit(Interp *interp /*NN*/, INTVAL base_type)
 {
     PMC * const pmc = get_new_pmc_header(interp, base_type,
             PObj_constant_FLAG);
@@ -279,7 +280,7 @@ Creates a new constant PMC of type C<base_type>, the call C<init>.
 
 PARROT_API
 PMC *
-constant_pmc_new(Interp *interp, INTVAL base_type)
+constant_pmc_new(Interp *interp /*NN*/, INTVAL base_type)
 {
     PMC * const pmc = get_new_pmc_header(interp, base_type,
             PObj_constant_FLAG);
@@ -296,7 +297,7 @@ As C<pmc_new()>, but passes C<init> to the PMC's C<init_pmc()> method.
 
 PARROT_API
 PMC *
-pmc_new_init(Interp *interp, INTVAL base_type, PMC *init)
+pmc_new_init(Interp *interp /*NN*/, INTVAL base_type, PMC *init)
 {
     PMC * const pmc = pmc_new_noinit(interp, base_type);
 
@@ -314,7 +315,7 @@ As C<constant_pmc_new>, but passes C<init> to the PMC's C<init_pmc> method.
 
 PARROT_API
 PMC *
-constant_pmc_new_init(Interp *interp, INTVAL base_type, PMC *init)
+constant_pmc_new_init(Interp *interp /*NN*/, INTVAL base_type, PMC *init)
 {
     PMC * const pmc = get_new_pmc_header(interp, base_type, PObj_constant_FLAG);
     VTABLE_init_pmc(interp, pmc, init);
@@ -366,7 +367,7 @@ Returns the PMC type for C<name>.
 PARROT_API
 INTVAL
 pmc_type(Interp* interp /*NN*/, STRING *name /*NN*/)
-    /* PURE, WARN_UNUSED */
+    /* WARN_UNUSED */
 {
     PMC * const classname_hash = interp->class_hash;
     PMC * const item = (PMC *)VTABLE_get_pointer_keyed_str(interp, classname_hash, name);
@@ -399,7 +400,7 @@ pmc_type_p(Interp* interp /*NN*/, PMC *name /*NN*/)
 }
 
 static PMC*
-create_class_pmc(Interp *interp, INTVAL type)
+create_class_pmc(Interp *interp /*NN*/, INTVAL type)
 {
     /*
      * class interface - a PMC is its own class
@@ -595,8 +596,6 @@ C<5.1.0.14.2.20011008152120.02158148@pop.sidhe.org>
 =head1 HISTORY
 
 Initial version by Simon on 2001.10.20.
-
-=cut
 
 */
 

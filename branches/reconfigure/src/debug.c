@@ -29,22 +29,22 @@ debugger, and the C<debug> ops.
 #include "parrot/debug.h"
 #include "parrot/oplib/ops.h"
 
+/* HEADER: include/parrot/debug.h */
+
 static const char* GDB_P(Interp *interp, const char *s);
 
 /*
 
-=item C<static char* nextarg(char *command)>
+FUNCDOC: nextarg
 
 Returns the position just past the current argument in the PASM instruction
 C<command>. This is not the same as C<skip_command()>, which is intended for
 debugger commands. This function is used for C<eval>.
 
-=cut
-
 */
 
 static char const *
-nextarg(char const *command)
+nextarg(char const *command /*NN*/)
 {
     /* as long as the character pointed to by command is not NULL,
      * and it is either alphanumeric, a comma or a closing bracket,
@@ -63,16 +63,14 @@ nextarg(char const *command)
 
 /*
 
-=item C<static const char* skip_ws(const char *str)>
+FUNCDOC: skip_ws
 
 Returns the pointer past any whitespace.
-
-=cut
 
 */
 
 static const char *
-skip_ws(const char *str)
+skip_ws(const char *str /*NN*/)
 {
     /* as long as str is not NULL and it contains space, skip it */
     while (*str && isspace((int) *str))
@@ -83,17 +81,15 @@ skip_ws(const char *str)
 
 /*
 
-=item C<static const char* skip_command(const char *str)>
+FUNCDOC: skip_command
 
 Returns the pointer past the current debugger command. (This is an
 alternative to the C<skip_command()> macro above.)
 
-=cut
-
 */
 
 static const char *
-skip_command(const char *str)
+skip_command(const char *str /*NN*/)
 {
     /* while str is not null and it contains a command (no spaces),
      * skip the character
@@ -262,7 +258,7 @@ parse_command(const char *command, unsigned long *cmdP)
 
 /*
 
-=item C<void PDB_get_command(Interp *interp)>
+FUNCDOC: PDB_get_command
 
 Get a command from the user input to execute.
 
@@ -275,17 +271,15 @@ The user input can't be longer than 255 characters.
 
 The input is saved in C<< pdb->cur_command >>.
 
-=cut
-
 */
 
 void
-PDB_get_command(Interp *interp)
+PDB_get_command(Interp *interp /*NN*/)
 {
     unsigned int  i;
     int           ch;
     char         *c;
-    PDB_t        *pdb = interp->pdb;
+    PDB_t        * const pdb = interp->pdb;
     PDB_line_t   *line;
 
     /* flush the buffered data */
@@ -343,23 +337,73 @@ PDB_get_command(Interp *interp)
 
 /*
 
-=item C<void
-PDB_run_command(Interp *interp, const char *command)>
+FUNCDOC: PDB_script_file
+
+Interprets the contents of a file as user input commands
+
+*/
+
+void
+PDB_script_file(Interp *interp /*NN*/, const char *command /*NN*/)
+{
+    char buf[1024];
+    const char *ptr = (const char *)&buf;
+    int line = 0;
+    FILE *fd;
+
+    command = nextarg(command);
+
+    fd = fopen(command, "r");
+    if (!fd) {
+        IMCC_warning(interp, "script_file: "
+            "Error reading script file %s.\n",
+            command);
+        return;
+    }
+
+    while(!feof(fd)) {
+        line++;
+        buf[0]='\0';
+        fgets(buf, 1024, fd);
+
+        /* skip spaces */
+        for(ptr=(char *)&buf;*ptr&&isspace(*ptr);ptr=ptr+1);
+
+        /* avoid null blank and commented lines */
+        if (*buf == '\0' || *buf == '#')
+            continue;
+
+        buf[strlen(buf)-1]='\0';
+        /* TODO: handle command error and print out script line
+         *       PDB_run_command should return non-void value?
+         *       stop execution of script if fails
+         * TODO: avoid this verbose output? add -v flag? */
+        if (PDB_run_command(interp, buf)) {
+            IMCC_warning(interp, "script_file: "
+                "Error interpreting command at line %d (%s).\n",
+                line, command);
+                break;
+        }
+    }
+    fclose(fd);
+}
+
+/*
+
+FUNCDOC: PDB_run_command
 
 Run a command.
 
 Hash the command to make a simple switch calling the correct handler.
 
-=cut
-
 */
 
-void
-PDB_run_command(Interp *interp, const char *command)
+int
+PDB_run_command(Interp *interp /*NN*/, const char *command /*NN*/)
 {
     unsigned long c;
     const char   *temp;
-    PDB_t        *pdb = interp->pdb;
+    PDB_t        * const pdb = interp->pdb;
 
     /* keep a pointer to the command, in case we need to report an error */
     temp = command;
@@ -371,6 +415,9 @@ PDB_run_command(Interp *interp, const char *command)
         skip_command(command);
 
     switch (c) {
+        case c_script_file:
+            PDB_script_file(interp, command);
+            break;
         case c_disassemble:
             PDB_disassemble(interp, command);
             break;
@@ -442,8 +489,9 @@ PDB_run_command(Interp *interp, const char *command)
         default:
             PIO_eprintf(interp,
                         "Undefined command: \"%s\".  Try \"help\".", temp);
-            break;
+            return 1;
     }
+    return 0;
 }
 
 /*
@@ -469,6 +517,7 @@ PDB_next(Interp *interp, const char *command)
     if (!(pdb->state & PDB_RUNNING))
         PDB_init(interp, command);
 
+    command = nextarg(command);
     /* Get the number of operations to execute if any */
     if (command && isdigit((int) *command))
         n = atol(command);
@@ -514,6 +563,7 @@ PDB_trace(Interp *interp, const char *command)
     if (!(pdb->state & PDB_RUNNING))
         PDB_init(interp, command);
 
+    command = nextarg(command);
     /* if the number of ops to run is specified, convert to a long */
     if (command && isdigit((int) *command))
         n = atol(command);
@@ -781,6 +831,7 @@ PDB_set_break(Interp *interp, const char *command)
     PDB_line_t       *line;
     long              ln, i;
 
+    command = nextarg(command);
     /* If no line number was specified, set it at the current line */
     if (command && *command) {
         ln = atol(command);
@@ -918,6 +969,7 @@ PDB_continue(Interp *interp, const char *command)
             return;
         }
 
+        command = nextarg(command);
         ln = atol(command);
         PDB_skip_breakpoint(interp, ln);
     }
@@ -945,6 +997,7 @@ PDB_find_breakpoint(Interp *interp, const char *command)
     PDB_breakpoint_t *breakpoint;
     long              n;
 
+    command = nextarg(command);
     if (isdigit((int) *command)) {
         n          = atol(command);
         breakpoint = interp->pdb->breakpoint;
@@ -1980,6 +2033,7 @@ PDB_list(Interp *interp, const char *command)
         return;
     }
 
+    command = nextarg(command);
     /* set the list line if provided */
     if (isdigit((int) *command)) {
         line_number = atol(command) - 1;
@@ -2166,6 +2220,7 @@ PDB_print_user_stack(Interp *interp, const char *command)
     long           depth = 0;
     Stack_Chunk_t *chunk = CONTEXT(interp->ctx)->user_stack;
 
+    command = nextarg(command);
     if (*command)
         depth = atol(command);
 
@@ -2204,19 +2259,16 @@ PDB_print_user_stack(Interp *interp, const char *command)
 
 /*
 
-=item C<void
-PDB_print(Interp *interp, const char *command)>
+FUNCDOC: PDB_print
 
 Print interp registers.
-
-=cut
 
 */
 
 void
-PDB_print(Interp *interp, const char *command)
+PDB_print(Interp *interp /*NN*/, const char *command /*NN*/)
 {
-    const char *s = GDB_P(interp->pdb->debugee, command);
+    const char * const s = GDB_P(interp->pdb->debugee, command);
     PIO_eprintf(interp, "%s\n", s);
 }
 
@@ -2313,6 +2365,11 @@ For example:\n\n\
            break 45 if S1 == \"foo\"\n\n\
 The command returns a number which is the breakpoint identifier.");
             break;
+        case c_script_file:
+PIO_eprintf(interp, "Interprets a file.\n\
+Usage:\n\
+(pdb) script file.script\n");
+            break;
         case c_watch:
             PIO_eprintf(interp,"No documentation yet");
             break;
@@ -2381,6 +2438,7 @@ List of commands:\n\
     list     (l) -- list the source code file\n\
     run      (r) -- run the program\n\
     break    (b) -- add a breakpoint\n\
+    script   (f) -- interprets a file as user commands\n\
     watch    (w) -- add a watchpoint\n\
     delete   (d) -- delete a breakpoint\n\
     disable      -- disable a breakpoint\n\
@@ -2456,7 +2514,8 @@ PDB_backtrace(Interp *interp)
             PMC_cont(old)->to_ctx->current_sub ==
             PMC_cont(sub)->to_ctx->current_sub) {
                 ++rec_level;
-        } else if (rec_level != 0) {
+        }
+        else if (rec_level != 0) {
             PIO_eprintf(interp, "... call repeated %d times\n", rec_level);
             rec_level = 0;
         }
@@ -2486,7 +2545,7 @@ PDB_backtrace(Interp *interp)
  */
 
 static const char*
-GDB_P(Interp *interp, const char *s) {
+GDB_P(Interp *interp, const char *s /*NN*/) {
     int t, n;
     switch (*s) {
         case 'I': t = REGNO_INT; break;

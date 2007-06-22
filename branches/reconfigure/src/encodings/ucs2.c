@@ -12,14 +12,12 @@ UCS-2 encoding with the help of the ICU library.
 
 =head2 Functions
 
-=over 4
-
-=cut
-
 */
 
 #include "parrot/parrot.h"
 #include "../unicode.h"
+
+/* HEADER: src/encodings/ucs2.h */
 
 #include "ucs2.h"
 
@@ -30,14 +28,14 @@ UCS-2 encoding with the help of the ICU library.
 #define UNIMPL internal_exception(UNIMPLEMENTED, "unimpl ucs2")
 
 
-static void iter_init(Interp *, const String *src, String_iter *iter);
+static void iter_init(Interp *, const STRING *src, String_iter *iter);
 
 
 static STRING *
 to_encoding(Interp *interp, STRING *src, STRING *dest)
 {
-    STRING *result = Parrot_utf16_encoding_ptr->to_encoding(interp,
-                                                            src, dest);
+    STRING * const result =
+        Parrot_utf16_encoding_ptr->to_encoding(interp, src, dest);
     /*
      * conversion to utf16 downgrads to ucs-2 if possible - check result
      */
@@ -217,7 +215,7 @@ ucs2_set_position(Interp *interp, String_iter *i, UINTVAL n)
 
 #endif
 static void
-iter_init(Interp *interp, const String *src, String_iter *iter)
+iter_init(Interp *interp, const STRING *src, String_iter *iter)
 {
     iter->str = src;
     iter->bytepos = iter->charpos = 0;
@@ -232,9 +230,9 @@ iter_init(Interp *interp, const String *src, String_iter *iter)
 }
 
 ENCODING *
-Parrot_encoding_ucs2_init(Interp *interp)
+Parrot_encoding_ucs2_init(Interp *interp /*NN*/)
 {
-    ENCODING *return_encoding = Parrot_new_encoding(interp);
+    ENCODING * const return_encoding = Parrot_new_encoding(interp);
 
     static const ENCODING base_encoding = {
         "ucs2",
@@ -255,14 +253,12 @@ Parrot_encoding_ucs2_init(Interp *interp)
         bytes,
         iter_init
     };
-    memcpy(return_encoding, &base_encoding, sizeof (ENCODING));
+    STRUCT_COPY(return_encoding, &base_encoding);
     Parrot_register_encoding(interp, "ucs2", return_encoding);
     return return_encoding;
 }
 
 /*
-
-=back
 
 =head1 SEE ALSO
 
@@ -271,8 +267,6 @@ F<src/encodings/utf8.c>,
 F<src/string.c>,
 F<include/parrot/string.h>,
 F<docs/string.pod>.
-
-=cut
 
 */
 

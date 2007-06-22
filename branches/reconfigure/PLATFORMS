@@ -19,11 +19,11 @@ linux-x86-gcc3.3.5.2005013        Y    Y    Y     Y   Y   Y    Y     ?  20060618
 linux-x86-gcc4.0.2                Y    Y    Y     Y   Y   Y    Y     ?  20060514
 linux-x86-gcc4.0.3                Y    Y    Y     Y   Y   Y    Y     ?  20060707
 linux-x86-gcc4.1.0                Y    Y    Y     Y   Y   Y    Y     Y  20060306
-linux-x86-gcc4.1.2                Y    Y    ?     Y   Y   Y    Y     ?  20070320
+linux-x86-gcc4.1.2                Y    Y    ?     Y   Y   Y    Y     ?  20070619
 linux-x86_64-gcc3.4.3         8   Y    -    -     Y   Y   Y    Y     ?  20060618
 linux-x86_64-gcc4.1.0         8   Y    -    -     Y   Y   Y    Y     ?  20070116
 linux-x86_64-gcc4.1.0         4   Y    -    -     Y   Y   Y    Y/2   ?  20060807
-linux-x86_64-gcc4.1.2         8   Y    -    -     Y   Y   Y    Y     ?  20070116
+linux-x86_64-gcc4.1.2         8   Y    -    -     Y   Y   Y    Y     ?  20070619
 openbsd-zaurus-gcc3.3.5           Y    -    -     Y   Y   Y    ?     ?  20070309
 sol8-sparc-cc                B    -    -    -     -   -   -    Y/441 ?  20070427
 sol10-sparc-cc_5.8           B    Y    -    -     Y   Y   Y    Y/9   ?  20060807
@@ -33,8 +33,8 @@ opensolaris-x86-gcc_4.0.3     4   Y    Y    ?     ?   ?   Y    Y/3   ?  20070417
 tru64-alpha-compaq_c6.5       8   ?    ?    ?     Y   ?   Y    Y/2   ?  20060203
 win32-x86-cygwin_1.5.21           -    -    -     -   -   -    -     -  20070221
 win32-x86-mingw-gcc3.4.2          Y    Y    -     -   -   Y    Y/19  Y  20070515
-win32-x86-msvc_7.1                -    Y    -     -   -   Y    Y     ?  20070515
-win32-x86-msvc_8.0                -    Y    -     -   -   Y    Y     ?  20070515
+win32-x86-msvc_7.1                -    Y    -     -   -   Y    Y     ?  20070618
+win32-x86-msvc_8.0                -    Y    -     -   -   Y    Y*2   ?  20070618
 
 ?   ... unknown or untested
 -   ... no
@@ -62,6 +62,7 @@ YYYYMMDD  The date tested.
 
 Remarks:
 *1 need PATH=$PATH:$PWD/blib/lib to locate DLL
+*2 some tests fail intermittently when building x86 on xeon processor
 
 The following configurations are also working on x86/linux (and possibly
 other platforms):

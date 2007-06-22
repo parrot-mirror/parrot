@@ -97,20 +97,6 @@ Parrot_unmake_COW(Interp *interp, STRING *s /*NN*/)
 
 /*
 
-FUNCDOC: copy_string_header
-
-Copies the string header from the first Parrot string to the second.
-
-*/
-
-static void
-copy_string_header(String *dest /*NN*/, const String *src /*NN*/)
-{
-    memcpy(dest, src, sizeof (String));
-}
-
-/*
-
 FUNCDOC: Parrot_make_COW_reference
 
 Creates a copy-on-write string by cloning a string header without
@@ -129,7 +115,7 @@ Parrot_make_COW_reference(Interp *interp /*NN*/, STRING *s /*NULLOK*/)
     if (PObj_constant_TEST(s)) {
         d = new_string_header(interp, PObj_get_FLAGS(s) & ~PObj_constant_FLAG);
         PObj_COW_SET(s);
-        copy_string_header(d, s);
+        STRUCT_COPY(d,s);
         /* we can't move the memory, because constants aren't
          * scanned in compact_pool, therefore the other end
          * would point to garbage.
@@ -140,7 +126,7 @@ Parrot_make_COW_reference(Interp *interp /*NN*/, STRING *s /*NULLOK*/)
     else {
         d = new_string_header(interp, PObj_get_FLAGS(s));
         PObj_COW_SET(s);
-        copy_string_header(d, s);
+        STRUCT_COPY(d,s);
         PObj_sysmem_CLEAR(d);
 #if 0
         /* XXX FIXME hack to avoid cross-interpreter issue until it
@@ -177,13 +163,13 @@ Parrot_reuse_COW_reference(Interp *interp /*NULLOK*/, STRING *s /*NULLOK*/, STRI
     }
     if (PObj_constant_TEST(s)) {
         PObj_COW_SET(s);
-        copy_string_header(d, s);
+        STRUCT_COPY(d,s);
         PObj_constant_CLEAR(d);
         PObj_external_SET(d);
     }
     else {
         PObj_COW_SET(s);
-        copy_string_header(d, s);
+        STRUCT_COPY(d,s);
         PObj_sysmem_CLEAR(d);
     }
     return d;
@@ -411,7 +397,7 @@ So make sure to _use_ the return value.
 
 PARROT_API
 STRING *
-string_append(Interp *interp, STRING *a /*NULLOK*/, STRING *b /*NULLOK*/)
+string_append(Interp *interp /*NN*/, STRING *a /*NULLOK*/, STRING *b /*NULLOK*/)
 {
     UINTVAL a_capacity;
     UINTVAL total_length;
@@ -488,7 +474,7 @@ Make a Parrot string from a specified C string.
 
 PARROT_API
 STRING *
-string_from_cstring(Interp *interp,
+string_from_cstring(Interp *interp /*NN*/,
     const char * const buffer /*NULLOK*/, const UINTVAL len)
     /* WARN_UNUSED */
 {
@@ -497,26 +483,6 @@ string_from_cstring(Interp *interp,
                               PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
                               0); /* Force an 8-bit encoding at some
                                      point? */
-}
-
-/*
-
-FUNCDOC:
-Make a Parrot string from a specified C string.
-
-*/
-
-/* XXX This is identical to string_from_cstring and should be removed */
-PARROT_API
-STRING *
-string_from_const_cstring(Interp *interp,
-    const char *buffer /*NULLOK*/, const UINTVAL len)
-    /* WARN_UNUSED */
-{
-    return string_make_direct(interp, buffer, len ? len :
-            buffer ? strlen(buffer) : 0,
-                          PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET, 0);
-    /* make this utf-8 eventually? */
 }
 
 /*
@@ -557,7 +523,7 @@ Creates and returns a constant Parrot string.
 
 PARROT_API
 STRING *
-const_string(Interp *interp, const char *buffer /*NN*/)
+const_string(Interp *interp /*NN*/, const char *buffer /*NN*/)
 {
     /* TODO cache the strings */
     return string_make_direct(interp, buffer, strlen(buffer),
@@ -615,7 +581,7 @@ string_make(Interp *interp /*NN*/, const char *buffer /*NULLOK*/,
 
 PARROT_API
 STRING *
-string_make_direct(Interp *interp, const char *buffer /*NULLOK*/, UINTVAL len,
+string_make_direct(Interp *interp /*NN*/, const char *buffer /*NULLOK*/, UINTVAL len,
         ENCODING *encoding /*NN*/, CHARSET *charset /*NN*/, UINTVAL flags)
 {
     STRING * const s = new_string_header(interp, flags);
@@ -830,7 +796,7 @@ Creates and returns a copy of the specified Parrot string.
 
 PARROT_API
 STRING *
-string_copy(Interp *interp, STRING *s /*NULLOK*/)
+string_copy(Interp *interp /*NN*/, STRING *s /*NULLOK*/)
 {
     return Parrot_make_COW_reference(interp, s);
 }
@@ -1272,8 +1238,10 @@ otherwise.
 PARROT_API
 INTVAL
 string_equal(Interp *interp, const STRING *s1 /*NULLOK*/, const STRING *s2 /*NULLOK*/)
-    /* PURE, WARN_UNUSED */
+    /* WARN_UNUSED */
 {
+    UNUSED(interp);
+
     if ((s1 == s2) || (!s1 && !s2)) {
         return 0;
     }
@@ -1666,7 +1634,7 @@ if it is equal to anything other than C<0>, C<""> or C<"0">.
 PARROT_API
 INTVAL
 string_bool(Interp *interp /*NN*/, const STRING *s /*NULLOK*/)
-    /* PURE, WARN_UNUSED */
+    /* WARN_UNUSED */
 {
     const INTVAL len = string_length(interp, s);
 
@@ -1869,7 +1837,7 @@ Returns a Parrot string representation of the specified integer value.
 
 PARROT_API
 STRING *
-string_from_int(Interp *interp, INTVAL i)
+string_from_int(Interp *interp /*NN*/, INTVAL i)
 {
     char buf[128];
     return int_to_str(interp, buf, i, 10);
@@ -2272,6 +2240,7 @@ TODO - implemented only for ASCII.
 PARROT_API
 STRING *
 string_upcase(Interp *interp, const STRING *s /*NULLOK*/)
+    /* WARN_UNUSED, MALLOC */
 {
     DECL_CONST_CAST;
     STRING * const dest = string_copy(interp, (STRING *)const_cast(s));
@@ -2307,6 +2276,7 @@ Non-caseable characters are left unchanged.
 PARROT_API
 STRING *
 string_downcase(Interp *interp, const STRING *s /*NULLOK*/)
+    /* WARN_UNUSED, MALLOC */
 {
     DECL_CONST_CAST;
     STRING * const dest = string_copy(interp, (STRING *)const_cast(s));
@@ -2348,6 +2318,7 @@ Non-caseable characters are left unchanged.
 PARROT_API
 STRING *
 string_titlecase(Interp *interp, const STRING *s /*NULLOK*/)
+    /* WARN_UNUSED, MALLOC */
 {
     DECL_CONST_CAST;
     STRING * const dest = string_copy(interp, (STRING *)const_cast(s));
@@ -2554,7 +2525,7 @@ string_compose(Interp *interp /*NN*/, STRING *src /*NULLOK*/)
 
 PARROT_API
 STRING*
-string_join(Interp *interp, STRING *j /*NULLOK*/, PMC *ar)
+string_join(Interp *interp /*NN*/, STRING *j /*NULLOK*/, PMC *ar)
 {
     STRING *res;
     STRING *s;

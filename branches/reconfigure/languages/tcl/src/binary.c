@@ -238,10 +238,10 @@ PMC *ParTcl_binary_scan(Interp *interp, STRING *BINSTR, STRING *FORMAT)
     /* make sure we've found the type numbers for the PMCs we want to create */
     if (!class_TclFloat)
     {
-        class_TclFloat  = pmc_type(interp, string_from_const_cstring(interp, "TclFloat", 0));
-        class_TclInt    = pmc_type(interp, string_from_const_cstring(interp, "TclInt", 0));
-        class_TclList   = pmc_type(interp, string_from_const_cstring(interp, "TclList", 0));
-        class_TclString = pmc_type(interp, string_from_const_cstring(interp, "TclString", 0));
+        class_TclFloat  = pmc_type(interp, string_from_literal(interp, "TclFloat"));
+        class_TclInt    = pmc_type(interp, string_from_literal(interp, "TclInt"));
+        class_TclList   = pmc_type(interp, string_from_literal(interp, "TclList"));
+        class_TclString = pmc_type(interp, string_from_literal(interp, "TclString"));
     }
 
     values = pmc_new(interp, class_TclList);
@@ -303,19 +303,19 @@ binary_format_number_field(Interp *interp, char field, STRING *binstr, PMC *valu
         case 'd':
             d      = (double)VTABLE_get_number(interp, value);
             len    = sizeof (double)/sizeof (char);
-            binstr = string_concat(interp, binstr, string_from_cstring(interp, &d, len), 0);
+            binstr = string_concat(interp, binstr, string_from_num(interp, (float)d), 0);
             break;
         /* a float */
         case 'f':
             f      = (float)VTABLE_get_number(interp, value);
             len    = sizeof (float)/sizeof (char);
-            binstr = string_concat(interp, binstr, string_from_cstring(interp, &f, len), 0);
+            binstr = string_concat(interp, binstr, string_from_num(interp, f), 0);
             break;
         /* a native integer */
         case 'n':
             n      = (int)VTABLE_get_integer(interp, value);
             len    = sizeof (int)/sizeof (char);
-            binstr = string_concat(interp, binstr, string_from_cstring(interp, &n, len), 0);
+            binstr = string_concat(interp, binstr, string_from_int(interp, n), 0);
             break;
     }
 
