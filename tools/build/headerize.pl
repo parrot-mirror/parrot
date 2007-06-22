@@ -108,10 +108,16 @@ sub extract_functions {
     @funcs = grep /^\S/, @funcs;
 
     # Typedefs, enums and externs are no good
-    @funcs = grep !/^(typedef|enum|extern)/, @funcs;
+    @funcs = grep !/^(typedef|enum|extern)\b/, @funcs;
 
     # Structs are OK if they're not alone on the line
     @funcs = grep { !/^struct.+;\n/ } @funcs;
+
+    # Structs are OK if they're not being defined
+    @funcs = grep { !/^(static\s+)?struct.+{\n/ } @funcs;
+
+    # Ignore magic function name YY_DECL
+    @funcs = grep !/YY_DECL/, @funcs;
 
     # Variables are of no use to us
     @funcs = grep !/=/, @funcs;
@@ -159,6 +165,9 @@ sub function_components {
     my $static;
     $returntype =~ s/^((static)\s+)?//i;
     $static = $2 || '';
+
+    # No inline in the header file
+    $returntype =~ s/^PARROT_INLINE\s+//;
 
     die "Impossible to have both static and PARROT_API" if $parrot_api && $static;
 
@@ -263,7 +272,8 @@ sub main {
     GetOptions( 'verbose' => \$opt{verbose}, ) or exit(1);
 
     my $nfuncs = 0;
-    my @ofiles = @ARGV;
+    my %ofiles = map {($_,1)} @ARGV;
+    my @ofiles = sort keys %ofiles;
     my %files;
 
     # Walk the object files and find corresponding source (either .c or .pmc)
@@ -271,7 +281,7 @@ sub main {
         next if $ofile =~ m/^\Qsrc$PConfig{slash}ops\E/;
 
         my $cfile = $ofile;
-        $cfile =~ s/\Q$PConfig{o}\E$/.c/;
+        $cfile =~ s/\Q$PConfig{o}\E$/.c/ or die "$cfile doesn't look like an object file";
 
         my $pmcfile = $ofile;
         $pmcfile =~ s/\Q$PConfig{o}\E$/.pmc/;
@@ -285,7 +295,7 @@ sub main {
         print "=== $cfile ===\n";
 
         die "can't find HEADER directive in '$cfile'"
-            unless $source =~ m#/\*\s+HEADER:\s+([^*]+?)\s+\*/#s;
+            unless $source =~ m#/\*\s+HEADER(?:IZER TARGET)?:\s+([^*]+?)\s+\*/#s;
         my $hfile = $1;
         next if $hfile eq 'none';
         die "'$hfile' not found (referenced from '$cfile')" unless -f $hfile;

@@ -388,13 +388,14 @@ find_not_cclass(Interp *interp, INTVAL flags, STRING *source_string /*NN*/,
  * TODO pass in the Hash's seed value as initial hashval
  */
 size_t
-ascii_compute_hash(Interp *interp, STRING *source_string /*NN*/, size_t seed)
+ascii_compute_hash(Interp *interp, const STRING *source_string /*NN*/, size_t seed)
     /* PURE,WARN_UNUSED */
 {
     size_t hashval = seed;
-
     const char *buffptr = (char *)source_string->strstart;
     UINTVAL len = source_string->strlen;
+
+    UNUSED(interp);
 
     assert(source_string->encoding == Parrot_fixed_8_encoding_ptr);
     while (len--) {
@@ -434,7 +435,7 @@ Parrot_charset_ascii_init(Interp *interp)
         NULL
     };
 
-    memcpy(return_set, &base_set, sizeof (CHARSET));
+    STRUCT_COPY(return_set, &base_set);
     return_set->preferred_encoding = Parrot_fixed_8_encoding_ptr;
     Parrot_register_charset(interp, "ascii", return_set);
     return return_set;

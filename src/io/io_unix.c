@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -29,6 +29,8 @@ APitUE - W. Richard Stevens, AT&T SFIO, Perl5 (Nick Ing-Simmons)
 
 #include "parrot/parrot.h"
 #include "io_private.h"
+
+/* HEADER: none */
 
 #ifdef PIO_OS_UNIX
 
@@ -121,21 +123,21 @@ success and C<-1> on error.
 static INTVAL
 PIO_unix_init(Interp *interp, ParrotIOLayer *layer)
 {
-    ParrotIOData *d = interp->piodata;
+    ParrotIOData * const d = interp->piodata;
     if (d != NULL && d->table != NULL) {
         ParrotIO *io;
 
         io = PIO_unix_fdopen(interp, layer, STDIN_FILENO, PIO_F_READ);
         if (!io) return -1;
-        PIO_STDIN(interp) = new_io_pmc(interp, io);
+        _PIO_STDIN(interp) = new_io_pmc(interp, io);
 
         io = PIO_unix_fdopen(interp, layer, STDOUT_FILENO, PIO_F_WRITE);
         if (!io) return -1;
-        PIO_STDOUT(interp) = new_io_pmc(interp, io);
+        _PIO_STDOUT(interp) = new_io_pmc(interp, io);
 
         io = PIO_unix_fdopen(interp, layer, STDERR_FILENO, PIO_F_WRITE);
         if (!io) return -1;
-        PIO_STDERR(interp) = new_io_pmc(interp, io);
+        _PIO_STDERR(interp) = new_io_pmc(interp, io);
 
         return 0;
     }
@@ -571,12 +573,25 @@ static PIOOFF_T
 PIO_unix_seek(Interp *interp, ParrotIOLayer *layer, ParrotIO *io,
               PIOOFF_T offset, INTVAL whence)
 {
-    PIOOFF_T pos;
+    PIOOFF_T pos, avail;
 
     UNUSED(interp);
     UNUSED(layer);
 
     if ((pos = lseek(io->fd, offset, whence)) >= 0) {
+        switch (whence) {
+            case SEEK_SET:
+                io->fsize = offset > io->fsize ? offset : io->fsize;
+                break;
+            case SEEK_CUR:
+                avail     = io->b.next - io->b.startb + offset;
+                io->fsize = ( avail > io->fsize) ? avail : io->fsize;
+                break;
+            case SEEK_END:
+            default:
+                break;
+        }
+
         io->lpos = io->fpos;
         io->fpos = pos;
     }

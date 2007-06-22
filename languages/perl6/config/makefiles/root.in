@@ -5,7 +5,9 @@ LN_S     = @lns@
 PERL     = @perl@
 RM_RF    = @rm_rf@
 PARROT   = ../../parrot@exe@
+BUILD_DIR= @build_dir@
 BUILD    = $(PERL) @build_dir@/tools/build/dynpmc.pl
+CONFIGURE= $(PERL) @build_dir@/Configure.pl
 TOOL_DIR = ../..
 TGE_DIR  = ../../compilers/tge
 CAT      = $(PERL) -MExtUtils::Command -e cat
@@ -17,7 +19,7 @@ PGE_LIBRARY  = @build_dir@/runtime/parrot/library/PGE
 
 PMCDIR   = src/pmc
 
-all: perl6.pbc 
+all: perl6.pbc
 
 SOURCES = perl6.pir \
   src/parser/grammar_rules.pg \
@@ -41,19 +43,26 @@ BUILTINS_PIR = \
   src/builtins/math.pir \
   src/builtins/named-unary.pir \
   src/builtins/op.pir \
+  src/builtins/parrot.pir \
   src/builtins/range.pir \
   src/builtins/string.pir \
+  src/classes/Bool.pir \
   src/classes/Code.pir \
   src/classes/List.pir \
   src/classes/Num.pir \
-  src/classes/Str.pir
+  src/classes/Str.pir \
+  src/classes/Undef.pir
 
-PMCS = perl6str perl6bool
+PMCS = perl6str perl6bool perl6undef
 PMC_SOURCES = $(PMCDIR)/perl6str.pmc
+
+# [rt43253]: [BUG] parrot segfaults when building perl6 on windows with msvc
+# added -G flag in order to work around segfault
+PARROT_ARGS = -G
 
 # the default target
 perl6.pbc: $(PARROT) $(PGE_LIBRARY)/Perl6Grammar.pir $(SOURCES)
-	$(PARROT) $(PGE_LIBRARY)/Perl6Grammar.pir \
+	$(PARROT) $(PARROT_ARGS) $(PGE_LIBRARY)/Perl6Grammar.pir \
 	    --output=src/parser/grammar_gen.pir \
 	    src/parser/grammar_rules.pg src/parser/grammar_optok.pg
 	$(PARROT) $(TGE_DIR)/tgc.pir --output=src/PAST/Grammar_gen.pir src/PAST/Grammar.tg
@@ -68,6 +77,9 @@ $(PMCDIR)/perl6_group$(LOAD_EXT): $(PARROT) $(PMC_SOURCES)
 src/builtins_gen.pir: $(BUILTINS_PIR)
 	$(CAT) $(BUILTINS_PIR) >src/builtins_gen.pir
 
+# regenerate the Makefile
+Makefile: config/makefiles/root.in
+	cd $(BUILD_DIR) && $(CONFIGURE) --step=gen::languages --languages=perl6
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -91,7 +103,7 @@ help:
 	@echo ""
 
 test: all
-	$(PERL) t/harness
+	$(PERL) t/harness t/00-parrot t/01-sanity
 
 # this target has nothing to do
 testclean:
@@ -99,16 +111,10 @@ testclean:
 spectest: all t/spec
 # XXX when tests pass, run more here.
 	@echo "only running sanity tests..."
-	$(PERL) t/harness t/spec/01-sanity/*.t t/spec/02-test-pm/*.t
+	$(PERL) t/harness t/spec/01-sanity t/spec/operators
 
 t/spec:
-	@echo "This step needs svn"
-# XXX not needed when we get all the tests.
-	$(PERL) -MFile::Path -e"mkpath q{t/spec}"
-# XXX when tests pass, import more here.
-# // -> / for some reason... (this comment only makes sense in .in)
-	svn export http:////svn.pugscode.org/pugs/t/01-sanity  t/spec/01-sanity
-	svn export http:////svn.pugscode.org/pugs/t/02-test-pm t/spec/02-test-pm
+	$(PERL) t/fetchspec
 
 CLEANUPS = \
   perl6.pbc \
@@ -123,7 +129,8 @@ CLEANUPS = \
   $(PMCDIR)/*.c \
   $(PMCDIR)/*.dump \
   $(PMCDIR)/*$(O) \
-  $(PMCDIR)/*$(LOAD_EXT)
+  $(PMCDIR)/*$(LOAD_EXT) \
+  t/spec
 
 clean: 
 	$(RM_RF) $(CLEANUPS)

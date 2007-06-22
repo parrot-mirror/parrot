@@ -29,6 +29,8 @@ the C-library.
 #include "inter_cb.str"
 
 
+/* HEADER: none */ /* XXX Needs to get done at the same time as the other interpreter files */
+
 /*
 
 =item C<PMC* Parrot_make_cb(Parrot_Interp interp, PMC* sub, PMC* user
@@ -156,8 +158,7 @@ verify_CD(char *external_data, PMC *user_data)
             continue;
         interp = interpreter_array[i];
         if (interp)
-            if (contained_in_pool(interp,
-                        interp->arena_base->pmc_pool, user_data))
+            if (contained_in_pool(interp->arena_base->pmc_pool, user_data))
                 break;
     }
     UNLOCK(interpreter_array_mutex);
@@ -244,20 +245,17 @@ callback_CD(Parrot_Interp interp, char *external_data, PMC *user_data)
 
 /*
 
-=item C<void
-Parrot_run_callback(Parrot_Interp interp,
-                    PMC* user_data, void* external_data)>
+FUNCDOC: Parrot_run_callback
 
 Run a callback function. The PMC* user_data holds all
 necessary items in its properties.
 
-=cut
-
 */
 
+PARROT_API
 void
-Parrot_run_callback(Parrot_Interp interp,
-                    PMC* user_data, char* external_data)
+Parrot_run_callback(Interp *interp /*NN*/,
+        PMC* user_data, char* external_data)
 {
     PMC *    signature;
     PMC *    sub;

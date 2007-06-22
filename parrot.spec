@@ -1,11 +1,11 @@
 Name:           parrot
-Version:        0.4.12
+Version:        0.4.13
 Release:        1%{?dist}
 Summary:        Parrot Virtual Machine
-License:        GPL or Artistic
+License:        Artistic 2.0
 Group:          Development/Libraries
 URL:            http://www.parrotcode.org/
-Source0:        http://www.cpan.org/authors/id/M/MD/MDIEP/parrot-%{version}.tar.gz
+Source0:        http://www.cpan.org/authors/id/A/AR/ARANDAL/parrot-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  readline-devel
 BuildRequires:  ncurses-devel
@@ -19,7 +19,7 @@ BuildRequires:  perl-SVK
 
 %package devel
 Summary:        Parrot Virtual Machine development headers and libraries
-License:        GPL or Artistic
+License:        Artistic 2.0
 Group:          Development/Libraries
 Requires:       %{name} = %{version}-%{release}
 Requires:       %{_libdir}/pkgconfig
@@ -70,8 +70,8 @@ make reallyinstall DESTDIR=$RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_ROOT/%{_docdir}/parrot
 
 # Force permissions on doc directories.
-find LICENSES docs examples -type d -exec chmod 755 {} \;
-find LICENSES docs examples -type f -exec chmod 644 {} \;
+find docs examples -type d -exec chmod 755 {} \;
+find docs examples -type f -exec chmod 644 {} \;
 
 # Force permissions on shared libs so they get stripped.
 find $RPM_BUILD_ROOT%{_libdir} -type f \( -name '*.so' -o -name '*.so.*' \) \
@@ -101,7 +101,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %doc ABI_CHANGES ChangeLog CREDITS NEWS PBC_COMPAT PLATFORMS README
 %doc RESPONSIBLE_PARTIES TODO
-%doc LICENSES docs examples
+%doc docs examples
 %exclude %{_bindir}/parrot-config
 %{_bindir}/*
 %{_libdir}/parrot

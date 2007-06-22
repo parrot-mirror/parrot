@@ -13,10 +13,6 @@ and its utility functions.
 
 =head2 Utility Functions
 
-=over 4
-
-=cut
-
 */
 
 #define IN_SPF_SYSTEM
@@ -25,6 +21,8 @@ and its utility functions.
 #include "parrot/string_funcs.h"
 #include "spf_render.str"
 #include <assert.h>
+
+/* HEADER: include/parrot/misc.h */
 
 /* Per Dan's orders, we will not use sprintf if snprintf isn't
  * around for us.
@@ -35,13 +33,9 @@ and its utility functions.
 
 /*
 
-=item C<static STRING *
-handle_flags(Interp *interp,
-             SpfInfo info, STRING *str, INTVAL is_int_type, const char *prefix)>
+FUNCDOC: handle_flags
 
 Handles C<+>, C<->, C<0>, C<#>, space, width, and prec.
-
-=cut
 
 */
 
@@ -140,7 +134,8 @@ handle_flags(Interp *interp,
     return str;
 }
 
-static STRING* str_append_w_flags(Interp *interp,
+static STRING*
+str_append_w_flags(Interp *interp,
         STRING* dest, SpfInfo info, STRING* src, STRING *prefix)
 {
     src = handle_flags(interp, info, src, 1, prefix);
@@ -150,21 +145,16 @@ static STRING* str_append_w_flags(Interp *interp,
 
 /*
 
-=item C<static void
-gen_sprintf_call(Interp *interp, char *out,
-                 SpfInfo info, int thingy)>
+FUNCDOC: gen_sprintf_call
 
 Turn the info structure back into an sprintf format. Far from being
 pointless, this is used to call C<snprintf()> when we're confronted with
 a float.
 
-=cut
-
 */
 
 static void
-gen_sprintf_call(Interp *interp, char *out,
-                 SpfInfo info, int thingy)
+gen_sprintf_call(char *out, SpfInfo info /*NN*/, int thingy)
 {
     int i = 0;
 
@@ -215,19 +205,16 @@ gen_sprintf_call(Interp *interp, char *out,
 
 /*
 
-=item C<STRING *
-Parrot_sprintf_format(Interp *interp, STRING *pat,
-                      SPRINTF_OBJ * obj)>
+FUNCDOC: Parrot_sprintf_format
 
 This is the engine that does all the formatting.
-
-=cut
 
 */
 
 STRING *
-Parrot_sprintf_format(Interp *interp, STRING *pat,
-                      SPRINTF_OBJ * obj)
+Parrot_sprintf_format(Interp *interp /*NN*/,
+        STRING *pat /*NN*/, SPRINTF_OBJ *obj /*NN*/)
+    /* WARN_UNUSED */
 {
     INTVAL i, len, old;
     /*
@@ -572,7 +559,7 @@ Parrot_sprintf_format(Interp *interp, STRING *pat,
                                 info.flags &= ~FLAG_ZERO;
                             theint = obj->getint(interp, info.type, obj);
 do_sprintf:
-                            gen_sprintf_call(interp, tc, &info, ch);
+                            gen_sprintf_call(tc, &info, ch);
                             ts = cstr2pstr(tc);
                             {
                                 char * const tempstr =
@@ -610,7 +597,7 @@ do_sprintf:
                             thefloat = obj->getfloat(interp, info.type, obj);
                             /* turn -0.0 into 0.0 */
                             /* WTF if( thefloat == 0.0 ) { thefloat = 0.0; } */
-                            gen_sprintf_call(interp, tc, &info, ch);
+                            gen_sprintf_call(tc, &info, ch);
                             ts = cstr2pstr(tc);
                             /* XXX lost precision if %Hg or whatever
                                */
@@ -636,7 +623,7 @@ do_sprintf:
                              */
 
                             if (ch == 'g' || ch == 'G' || ch == 'e' || ch == 'E') {
-                                size_t tclen = strlen(tc);
+                                const size_t tclen = strlen(tc);
                                 size_t j;
                                 for (j = 0; j < tclen; j++) {
                                     if ((tc[j] == 'e' || tc[j] == 'E')
@@ -749,13 +736,9 @@ do_sprintf:
 
 /*
 
-=back
-
 =head1 SEE ALSO
 
 F<src/misc.h>, F<src/misc.c>, F<src/spf_vtable.c>.
-
-=cut
 
 */
 

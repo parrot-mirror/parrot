@@ -1,5 +1,5 @@
 /* utf8.h
- *  Copyright (C) 2004, The Perl Foundation.
+ *  Copyright (C) 2004-2007, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -13,7 +13,12 @@
 #ifndef PARROT_ENCODING_UTF8_H_GUARD
 #define PARROT_ENCODING_UTF8_H_GUARD
 
-ENCODING *Parrot_encoding_utf8_init(Interp *);
+/* HEADERIZER BEGIN: src/encodings/utf8.c */
+
+ENCODING * Parrot_encoding_utf8_init( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: src/encodings/utf8.c */
 
 #endif /* PARROT_ENCODING_UTF8_H_GUARD */
 

@@ -10,12 +10,25 @@ src/encodings/fixed_8.c
 
 This file implements the encoding functions for fixed-width 8-bit codepoints
 
-=cut
-
 */
 
 #include "parrot/parrot.h"
 #include "fixed_8.h"
+
+/* HEADER: src/encodings/fixed_8.h */
+
+static UINTVAL get_codepoint(Interp *interp, const STRING *source_string, UINTVAL offset);
+static void set_codepoint(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL codepoint);
+static UINTVAL get_byte(Interp *interp, const STRING *source_string, UINTVAL offset);
+static void set_byte(Interp *interp, const STRING *source_string, UINTVAL offset, UINTVAL byte);
+static STRING *get_codepoints(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count);
+static STRING *get_bytes(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count);
+static STRING *get_bytes_inplace(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *dest_string);
+static void set_codepoints(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *new_codepoints);
+static void set_bytes(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *new_bytes);
+static void become_encoding(Interp *interp, STRING *source_string);
+static UINTVAL codepoints(Interp *interp, STRING *source_string);
+static UINTVAL bytes(Interp *interp, STRING *source_string);
 
 #define UNIMPL internal_exception(UNIMPLEMENTED, "unimpl fixed_8")
 
@@ -29,7 +42,7 @@ to_encoding(Interp *interp, STRING *src, STRING *dest)
 
 /* codepoints are bytes, so delegate */
 static UINTVAL
-get_codepoint(Interp *interp, const STRING *source_string,
+get_codepoint(Interp *interp, const STRING *source_string /*NN*/,
         UINTVAL offset)
 {
     return get_byte(interp, source_string, offset);
@@ -187,7 +200,7 @@ fixed8_set_position(Interp *interp, String_iter *iter, UINTVAL pos)
 
 
 static void
-iter_init(Interp *interp, const String *src, String_iter *iter)
+iter_init(Interp *interp, const STRING *src, String_iter *iter)
 {
     iter->str = src;
     iter->bytepos = iter->charpos = 0;
@@ -197,9 +210,9 @@ iter_init(Interp *interp, const String *src, String_iter *iter)
 }
 
 ENCODING *
-Parrot_encoding_fixed_8_init(Interp *interp)
+Parrot_encoding_fixed_8_init(Interp *interp /*NN*/)
 {
-    ENCODING *return_encoding = Parrot_new_encoding(interp);
+    ENCODING * const return_encoding = Parrot_new_encoding(interp);
 
     ENCODING base_encoding = {
         "fixed_8",
@@ -221,14 +234,10 @@ Parrot_encoding_fixed_8_init(Interp *interp)
         iter_init
 
     };
-    memcpy(return_encoding, &base_encoding, sizeof (ENCODING));
+    STRUCT_COPY(return_encoding, &base_encoding);
     Parrot_register_encoding(interp, "fixed_8", return_encoding);
     return return_encoding;
 }
-
-
-
-
 
 
 /*

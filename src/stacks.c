@@ -47,7 +47,7 @@ Mark entries in a stack structure during DOD.
 
 PARROT_API
 void
-mark_stack(Interp *interp, Stack_Chunk_t *chunk /*NN*/)
+mark_stack(Interp *interp /*NN*/, Stack_Chunk_t *chunk /*NN*/)
 {
     for (; ; chunk = chunk->prev) {
         Stack_Entry_t *entry;
@@ -81,9 +81,10 @@ stack_destroy() doesn't need to do anything, since GC does it all.
 
 PARROT_API
 void
-stack_destroy(Stack_Chunk_t * top)
+stack_destroy(Stack_Chunk_t *top)
 {
-   /* GC does it all */
+    UNUSED(top)
+    /* GC does it all */
 }
 
 /*
@@ -96,9 +97,10 @@ Returns the height of the stack. The maximum "depth" is height - 1.
 PARROT_API
 size_t
 stack_height(Interp *interp, const Stack_Chunk_t *chunk /*NN*/)
-    /* PURE, WARN_UNUSED */
+    /* WARN_UNUSED */
 {
     size_t height = 0;
+    UNUSED(interp);
 
     for (; ; chunk = chunk->prev) {
         if (chunk == chunk->prev)
@@ -123,7 +125,7 @@ if C<|depth| > number> of entries in stack.
 PARROT_API
 Stack_Entry_t *
 stack_entry(Interp *interp /*NN*/, Stack_Chunk_t *stack /*NN*/, INTVAL depth)
-    /* PURE, WARN_UNUSED */
+    /* WARN_UNUSED */
 {
     Stack_Chunk_t *chunk;
     Stack_Entry_t *entry;
@@ -248,7 +250,7 @@ stack_push(Interp *interp, Stack_Chunk_t **stack_p /*NN*/,
             UVal_pmc(entry->entry) = (PMC *)thing;
             break;
         case STACK_ENTRY_STRING:
-            UVal_str(entry->entry) = (String *)thing;
+            UVal_str(entry->entry) = (STRING *)thing;
             break;
         case STACK_ENTRY_POINTER:
         case STACK_ENTRY_DESTINATION:
@@ -305,7 +307,7 @@ stack_pop(Interp *interp, Stack_Chunk_t **stack_p /*NN*/,
         *(PMC **)where     = UVal_pmc(entry->entry);
         break;
     case STACK_ENTRY_STRING:
-        *(String **)where  = UVal_str(entry->entry);
+        *(STRING **)where  = UVal_str(entry->entry);
         break;
     case STACK_ENTRY_POINTER:
     case STACK_ENTRY_DESTINATION:
@@ -350,7 +352,7 @@ PARROT_API
 void *
 stack_peek(Interp *interp /*NN*/, Stack_Chunk_t *stack_base /*NN*/,
            Stack_entry_type *type /*NULLOK*/)
-    /* PURE, WARN_UNUSED */
+    /* WARN_UNUSED */
 {
     const Stack_Entry_t * const entry = stack_entry(interp, stack_base, 0);
     if (entry == NULL) {
@@ -381,6 +383,8 @@ Stack_entry_type
 get_entry_type(Interp *interp, const Stack_Entry_t *entry /*NN*/)
     /* PURE, WARN_UNUSED */
 {
+    UNUSED(interp);
+
     return entry->entry_type;
 }
 

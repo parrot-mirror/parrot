@@ -244,7 +244,6 @@ PARROT_API
 PMC*
 mmd_dispatch_p_ppp(Interp *interp,
         PMC *left /*NN*/, PMC *right /*NN*/, PMC *dest, INTVAL func_nr)
-    /* WARN_UNUSED */
 {
     mmd_f_p_ppp real_function;
     int is_pmc;
@@ -273,7 +272,6 @@ PARROT_API
 PMC*
 mmd_dispatch_p_pip(Interp *interp /*NN*/,
         PMC *left /*NN*/, INTVAL right, PMC *dest, INTVAL func_nr)
-    /* WARN_UNUSED */
 {
     int is_pmc;
 
@@ -307,7 +305,6 @@ PARROT_API
 PMC*
 mmd_dispatch_p_pnp(Interp *interp /*NN*/,
         PMC *left /*NN*/, FLOATVAL right, PMC *dest, INTVAL func_nr)
-    /* WARN_UNUSED */
 {
     mmd_f_p_pnp real_function;
     int is_pmc;
@@ -336,7 +333,6 @@ PARROT_API
 PMC*
 mmd_dispatch_p_psp(Interp *interp /*NN*/,
         PMC *left /*NN*/, STRING *right, PMC *dest, INTVAL func_nr)
-    /* WARN_UNUSED */
 {
     mmd_f_p_psp real_function;
     int is_pmc;
@@ -574,7 +570,7 @@ mmd_expand_x(Interp *interp /*NN*/, INTVAL func_nr, INTVAL new_x)
     old_dp = sizeof (funcptr_t) * x;
     new_dp = sizeof (funcptr_t) * new_x;
     for (i = 0; i < y; i++) {
-        memcpy(dest_ptr, src_ptr, sizeof (funcptr_t) * x);
+        STRUCT_COPY_N(dest_ptr, src_ptr, x);
         src_ptr  += old_dp;
         dest_ptr += new_dp;
     }

@@ -50,6 +50,8 @@ have the same number of elements because there is a one-to-one mapping.
 #include "parrot/dynext.h"
 
 
+/* HEADER: none */ /* XXX Needs to get done at the same time as the other interpreter files */
+
 void Parrot_setup_event_func_ptrs(Parrot_Interp interp);
 
 /*
@@ -1126,19 +1128,17 @@ notify_func_table(Parrot_Interp interp, op_func_t* table /*NN*/, int on)
 
 /*
 
-=item C<void
-disable_event_checking(Parrot_Interp interp)>
+FUNCDOC: disable_event_checking
 
 Restore old function table.
 
 XXX This is only implemented for the function core at present.
 
-=cut
-
 */
 
+PARROT_API
 void
-disable_event_checking(Parrot_Interp interp)
+disable_event_checking(Interp *interp /*NN*/)
 {
     /*
      * restore func table
@@ -1149,8 +1149,7 @@ disable_event_checking(Parrot_Interp interp)
 
 /*
 
-=item C<void
-enable_event_checking(Parrot_Interp interp)>
+FUNCDOC: enable_event_checking
 
 Replace func table with one that does event checking for all opcodes.
 
@@ -1159,12 +1158,11 @@ thread. All action done from here has to be async safe.
 
 XXX This is only implemented for the function core at present.
 
-=cut
-
 */
 
+PARROT_API
 void
-enable_event_checking(Parrot_Interp interp)
+enable_event_checking(Interp *interp /*NN*/)
 {
     /*
      * put table in place

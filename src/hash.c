@@ -38,15 +38,13 @@ don't apply.
 /*
 
 FUNCDOC:
-Return the hashed value of the key C<value>.
-
-see also string.c
+Return the hashed value of the key C<value>.  See also string.c.
 
 */
 
 
 static size_t
-key_hash_STRING(Interp *interp, STRING *value, size_t seed)
+key_hash_STRING(Interp *interp /*NN*/, STRING *value /*NN*/, size_t seed)
 {
     STRING * const s = value;
 
@@ -98,7 +96,7 @@ static size_t
 key_hash_cstring(Interp *interp, const void *value /*NN*/, size_t seed)
 {
     register size_t h = seed;
-    unsigned char * p = (unsigned char *) value;
+    const unsigned char * p = (const unsigned char *) value;
     while (*p) {
         h += h << 5;
         h += *p++;
@@ -222,7 +220,7 @@ C<pinfo> is the visit info, (see include/parrot/pmc_freeze.h>).
 */
 
 static void
-hash_thaw(Interp *interp, Hash *hash /*NN*/, visit_info* info)
+hash_thaw(Interp *interp, Hash *hash /*NN*/, visit_info* info /*NN*/)
 {
     size_t i;
     IMAGE_IO * const io = info->image_io;
@@ -501,7 +499,7 @@ parrot_new_cstring_hash(Interp *interp, Hash **hptr)
 }
 
 static void
-init_hash(Interp *interp, Hash *hash,
+init_hash(Interp *interp, Hash *hash /*NN*/,
         PARROT_DATA_TYPES val_type,
         Hash_key_type hkey_type,
         hash_comp_fn compare, hash_hash_key_fn keyhash)
@@ -550,13 +548,34 @@ PARROT_API
 void
 parrot_hash_destroy(Interp *interp, Hash *hash /*NN*/)
 {
+    UNUSED(interp);
+
     mem_sys_free(hash->bs);
     mem_sys_free(hash);
+}
+
+void
+parrot_chash_destroy(Interp *interp, Hash *hash /*NN*/)
+{
+    UINTVAL i;
+    UNUSED(interp);
+
+    for (i = 0; i <= hash->mask; i++) {
+        HashBucket *bucket = hash->bi[i];
+        while (bucket) {
+            mem_sys_free(bucket->key);
+            mem_sys_free(bucket->value);
+            bucket = bucket->next;
+        }
+    }
+
+    parrot_hash_destroy(interp, hash);
 }
 
 /*
 
 FUNCDOC: parrot_new_hash_x
+
 Returns a new hash in C<hptr>.
 
 FIXME: This function can go back to just returning the hash struct
@@ -654,7 +673,7 @@ Return the number of used entries in the hash.
 
 PARROT_API
 INTVAL
-parrot_hash_size(Interp *interp, Hash *hash /*NN*/)
+parrot_hash_size(Interp *interp, const Hash *hash /*NN*/)
     /*PURE, WARN_UNUSED*/
 {
     UNUSED(interp);
@@ -779,7 +798,7 @@ copied.
 
 PARROT_API
 HashBucket*
-parrot_hash_put(Interp *interp, Hash *hash, void *key, void *value)
+parrot_hash_put(Interp *interp, Hash *hash /*NN*/, void *key, void *value)
 {
     const UINTVAL hashval = (hash->hash_val)(interp, key, hash->seed);
     HashBucket   *bucket = hash->bi[hashval & hash->mask];
@@ -831,7 +850,7 @@ Deletes the key from the hash.
 
 PARROT_API
 void
-parrot_hash_delete(Interp *interp, Hash *hash, void *key)
+parrot_hash_delete(Interp *interp, Hash *hash /*NN*/, void *key)
 {
     HashBucket *bucket;
     HashBucket *prev = NULL;
