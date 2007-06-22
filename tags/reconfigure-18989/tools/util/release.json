@@ -1,0 +1,26 @@
+{
+    "release.version"  : "0.4.12",
+    "release.name"     : "Of the Caribbean",
+    "release.day"      : "Tuesday",
+    "release.date"     : "15 May 2007",
+    "release.nextdate" : "19 June 2007",
+
+    "web.root"         : "http://parrotcode.org/",
+    "web.source"       : "source.html",
+    "web.openpatches"  : "openpatches.html",
+    "web.repository"   : "https://svn.perl.org/parrot/trunk/",
+
+    "bugday.day"       : "Saturday",
+    "bugday.date"      : "16 June 2007",
+
+    "rt.root"          : "https://rt.perl.org/rt3/",
+    "rt.tracking"      : "Ticket/Display.html?id=42964",
+    "rt.saved_search"  : "http://xrl.us/wdoy",
+
+    "wiki.root"        : "http://rakudo.org/parrot/index.cgi?",
+    "wiki.bugday"      : "planned_release_june_16_2007",
+
+    "cpan.search"      : "http://search.cpan.org/",
+    "subversion.root"  : "http://subversion.tigris.org/",
+    "svk.root"         : "http://svk.bestpractical.com/"
+}
