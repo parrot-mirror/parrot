@@ -14,6 +14,10 @@ use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 
+=for hints_for_testing To come.
+
+=cut
+
 my $pkg = q{init::defaults};
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
