@@ -13,7 +13,8 @@ use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 
-=for hints_for_testing To come.
+=for hints_for_testing See if you can get the program to 'ack' when it
+thinks there are files missing from those listed in the MANIFEST.
 
 =cut
 

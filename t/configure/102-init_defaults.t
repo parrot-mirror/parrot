@@ -14,7 +14,9 @@ use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 
-=for hints_for_testing To come.
+=for hints_for_testing Some branches and conditions will only be
+testable on certain OS/chip combinations.  Consider using Test::More
+SKIP blocks to write tests in these instances.
 
 =cut
 
