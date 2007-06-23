@@ -10,10 +10,10 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::signal');
 
-=for hints_for_testing The documentation for this package is skimpy; please
-try to improve it.  Try to cover all branches and conditions.  Check latest
-reports of Parrot configuration tools testing coverage to see where your time
-available for writing tests is spent.
+=for hints_for_testing The documentation for this package is skimpy;
+please try to improve it.  Try to cover all branches and conditions.
+Check latest reports of Parrot configuration tools testing coverage to
+see where your time available for writing tests is spent.
 
 =cut
 

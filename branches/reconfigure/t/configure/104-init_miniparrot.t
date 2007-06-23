@@ -10,9 +10,10 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::init::miniparrot');
 
-=for hints_for_testing This file ought to test what happens when you first
-create a Parrot::Configure object, populate it with default settings as in
-init::defaults, then override those settings per init::miniparrot.
+=for hints_for_testing This file ought to test what happens when you
+first create a Parrot::Configure object, populate it with default
+settings as in init::defaults, then override those settings per
+init::miniparrot.
 
 =cut
 

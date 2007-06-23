@@ -10,8 +10,9 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::alignptrs');
 
-=for hints_for_testing Check latest reports of Parrot configuration tools
-testing coverage to see where your time available for writing tests is spent.
+=for hints_for_testing Check latest reports of Parrot configuration
+tools testing coverage to see where your time available for writing
+tests is spent.
 
 =cut
 

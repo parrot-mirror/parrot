@@ -10,10 +10,10 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::snprintf');
 
-=for hints_for_testing The documentation for this package is skimpy; please
-try to improve it, e.g., by providing a short description of what the
-'autosnprintf' is.  Try to test all branches and conditions; consult a recent
-code coverage report for guidance.
+=for hints_for_testing The documentation for this package is skimpy;
+please try to improve it, e.g., by providing a short description of what
+the 'autosnprintf' is.  Try to test all branches and conditions; consult
+a recent code coverage report for guidance.
 
 =cut
 

@@ -10,10 +10,11 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::jit');
 
-=for hints_for_testing Check latest reports of Parrot configuration tools
-testing coverage to see where your time available for writing tests is spent.
-You will have to determine a way to test a user's response to a prompt. #'
-In the course of writing tests, you should try to resolve RT 43146.
+=for hints_for_testing Check latest reports of Parrot configuration
+tools testing coverage to see where your time available for writing
+tests is spent.  You will have to determine a way to test a user
+response to a prompt. In the course of writing tests, you should try
+to resolve RT 43146.
 
 =cut
 

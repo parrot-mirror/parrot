@@ -10,9 +10,9 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::gen::makefiles');
 
-=for hints_for_testing Consider testing the content of the files which the POD
-claims the module creates.  Consider resolving questions raised in inline
-comments such as "Why is this here?"
+=for hints_for_testing Consider testing the content of the files which
+the POD claims the module creates.  Consider resolving questions raised
+in inline comments such as "Why is this here?"
 
 =cut
 

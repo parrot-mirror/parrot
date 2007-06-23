@@ -10,10 +10,11 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::init::optimize');
 
-=for hints_for_testing Check latest reports of Parrot configuration tools
-testing coverage to see where your time available for writing tests is spent.
-You may need to create some dummy optimizations to boost test coverage.  Note
-the comment in POD:  "Should this be part of config/inter/progs.pm?"
+=for hints_for_testing Check latest reports of Parrot configuration
+tools testing coverage to see where your time available for writing
+tests is spent.  You may need to create some dummy optimizations to
+boost test coverage.  Note the comment in POD:  "Should this be part of
+config/inter/progs.pm?"
 
 =cut
 

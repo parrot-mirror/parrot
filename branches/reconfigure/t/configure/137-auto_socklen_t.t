@@ -10,10 +10,11 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::socklen_t');
 
-=for hints_for_testing The documentation for this package is skimpy; please
-try to improve it, e.g., by explaining what a socklent_t is.  Try to cover all
-branches and conditions.  Check latest reports of Parrot configuration tools
-testing coverage to see where your time available for writing tests is spent.
+=for hints_for_testing The documentation for this package is skimpy;
+please try to improve it, e.g., by explaining what a socklent_t is.  Try
+to cover all branches and conditions.  Check latest reports of Parrot
+configuration tools testing coverage to see where your time available
+for writing tests is spent.
 
 =cut
 

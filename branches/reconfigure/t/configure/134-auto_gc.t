@@ -10,11 +10,11 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::gc');
 
-=for hints_for_testing Check latest reports of Parrot configuration tools
-testing coverage to see where your time available for writing tests is spent.
-Try to cover all branches and conditions.  In the course of testing, try to
-determine whether the comment in the for= block in runsteps() should continue
-to reside in the code.
+=for hints_for_testing Check latest reports of Parrot configuration
+tools testing coverage to see where your time available for writing
+tests is spent.  Try to cover all branches and conditions.  In the
+course of testing, try to determine whether the comment in the for=
+block in runsteps() should continue to reside in the code.
 
 =cut
 
