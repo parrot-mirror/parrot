@@ -10,9 +10,9 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::cpu');
 
-=for hints_for_testing You may have to create a dummy local hints package to
-test this package effectively.  Try to test all branches and conditions;
-consult a recent code coverage report for guidance.
+=for hints_for_testing You may have to create a dummy local hints
+package to test this package effectively.  Try to test all branches and
+conditions; consult a recent code coverage report for guidance.
 
 =cut
 

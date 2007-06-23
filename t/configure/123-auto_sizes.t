@@ -10,10 +10,10 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::sizes');
 
-=for hints_for_testing You will need to explore writing tests that trigger the
-various warnings in the package being tested.  Check latest reports of Parrot
-configuration tools testing coverage to see where your time available for
-writing tests is spent.
+=for hints_for_testing You will need to explore writing tests that
+trigger the various warnings in the package being tested.  Check latest
+reports of Parrot configuration tools testing coverage to see where your
+time available for writing tests is spent.
 
 =cut
 

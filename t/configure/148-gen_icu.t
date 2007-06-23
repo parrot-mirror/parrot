@@ -10,10 +10,10 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::gen::icu');
 
-=for hints_for_testing Provide an explanation in the POD for what 'ICU' is.
-Try to test all branches and conditions; consult a recent code coverage report
-for guidance.  See if you can write tests which generate the 'die's, then
-capture the error messages and analyze them.
+=for hints_for_testing Provide an explanation in the POD for what 'ICU'
+is.  Try to test all branches and conditions; consult a recent code
+coverage report for guidance.  See if you can write tests which generate
+the 'die's, then capture the error messages and analyze them.
 
 =cut
 

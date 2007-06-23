@@ -10,11 +10,11 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::inter::lex');
 
-=for hints_for_testing Since inter::lex probes for the lex program found on
-a particular OS, it will probably be difficult to achieve high branch or
-condition coverage.  Check latest reports of Parrot configuration tools
-testing coverage to see where your time is best devoted.
-You will have to determine a way to test a user's response to a prompt. #'
+=for hints_for_testing Since inter::lex probes for the lex program found
+on a particular OS, it will probably be difficult to achieve high branch
+or condition coverage.  Check latest reports of Parrot configuration
+tools testing coverage to see where your time is best devoted.  You will
+have to determine a way to test a user response to a prompt.
 
 =cut
 

@@ -12,9 +12,10 @@ use_ok('config::auto::m4');
 
 pass("Completed all tests in $0");
 
-=for hints_for_testing Try to test all branches and conditions; consult a recent
-code coverage report for guidance.  Certain branches appear to be OS-specific.
-Consider adding a note to the POD explaining what 'm4' is.
+=for hints_for_testing Try to test all branches and conditions; consult
+a recent code coverage report for guidance.  Certain branches appear to
+be OS-specific.  Consider adding a note to the POD explaining what 'm4'
+is.
 
 =cut
 

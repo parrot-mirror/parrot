@@ -10,8 +10,8 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::python');
 
-=for hints_for_testing Try to test all branches and conditions; consult a recent
-code coverage report for guidance.
+=for hints_for_testing Try to test all branches and conditions; consult
+a recent code coverage report for guidance.
 
 =cut
 

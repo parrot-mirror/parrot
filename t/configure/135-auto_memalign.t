@@ -10,10 +10,11 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::auto::memalign');
 
-=for hints_for_testing Check latest reports of Parrot configuration tools
-testing coverage to see where your time available for writing tests is spent.
-Try to cover all branches and conditions.  Can you generate cases where the
-'eval's fail?  If so, examine the error message with Test::More::like().
+=for hints_for_testing Check latest reports of Parrot configuration
+tools testing coverage to see where your time available for writing
+tests is spent.  Try to cover all branches and conditions.  Can you
+generate cases where the 'eval's fail?  If so, examine the error message
+with Test::More::like().
 
 =cut
 
