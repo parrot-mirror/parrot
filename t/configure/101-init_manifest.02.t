@@ -1,18 +1,22 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id$
-# 101-init_manifest.t
+# $Id: 101-init_manifest.02.t 19274 2007-06-23 00:38:00Z jkeenan $
+# 101-init_manifest.02.t
 
 use strict;
 use warnings;
-use Test::More tests =>  7;
+use Test::More tests =>  6;
 use Carp;
+use Cwd;
 use Data::Dumper;
+use File::Copy;
+use File::Temp qw(tempdir);
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::init::manifest');
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
+use Parrot::IO::Capture::Mini;
 
 =for hints_for_testing See if you can get the program to 'ack' when it
 thinks there are files missing from those listed in the MANIFEST.
@@ -22,10 +26,10 @@ thinks there are files missing from those listed in the MANIFEST.
 my $pkg = q{init::manifest};
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
-    argv            => [ q{--nomanicheck} ],
+    argv            => [ ],
     script          => $0,
     parrot_version  => $parrot_version,
-    svnid           => '$Id$',
+    svnid           => '$Id: 101-init_manifest.02.t 19274 2007-06-23 00:38:00Z jkeenan $',
 } );
 
 my $conf = Parrot::Configure->new;
@@ -40,10 +44,25 @@ my $step = $step_name->new();
 ok(defined $step, "$step_name constructor returned defined value");
 isa_ok($step, $step_name);
 ok($step->description(), "$step_name has description");
-my $ret = $step->runstep($conf);
-ok(defined $ret, "$step_name runstep() returned defined value");
-is($ret->result, q{skipped},
-    "Because of --nomanicheck, result is 'skipped'.");
+# Lets see if we can trick ExtUtils::Manifest into thinking there are missing
+# files.
+my $cwd = cwd();
+{
+    my $tdir = tempdir();
+    chdir $tdir or croak "Unable to change to tempdir";
+    copy (qq{$cwd/MANIFEST}, qq{$tdir/MANIFEST}) or croak "Unable to copy MANIFEST";
+    {
+        my $tie_err = tie *STDERR, "Parrot::IO::Capture::Mini"
+            or croak "Unable to tie";
+        my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
+            or croak "Unable to tie";
+        my $ret = $step->runstep($conf);
+        my @lines = $tie_err->READLINE;
+        my @more_lines = $tie_out->READLINE;
+        is($ret, undef, "$step_name runstep returned undef");
+    }
+    chdir $cwd or croak "Unable to change back";
+}
 
 pass("Completed all tests in $0");
 
@@ -51,11 +70,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-101-init_manifest.t - test config::init::manifest
+101-init_manifest.02.t - test config::init::manifest
 
 =head1 SYNOPSIS
 
-    % prove t/configure/101-init_manifest.t
+    % prove t/configure/101-init_manifest.02.t
 
 =head1 DESCRIPTION
 
