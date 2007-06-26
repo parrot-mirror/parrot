@@ -52,9 +52,14 @@ Tells Configure.pl not to run the MANIFEST check.
 
 Sets the location where parrot will be installed.
 
-=item C<--step==>
+=item C<--step=>
 
-execute a single configure step
+Execute a single configure step.
+
+=item C<--languages="list of languages">
+
+Specify a list of languages to process (space separated.)
+Used in combination with C<--step=gen::languages> to regenerate makefiles.
 
 =item C<--ask>
 
@@ -319,6 +324,7 @@ my $args = process_options( {
     svnid           => '$Id$',
 } );
 exit unless defined $args;
+my %args = %{$args};
 
 my $opttest = Parrot::Configure::Options::Test->new($args);
 # configuration tests will only be run if you requested them
@@ -326,14 +332,13 @@ my $opttest = Parrot::Configure::Options::Test->new($args);
 $opttest->run_configure_tests();
 
 # from Parrot::Configure::Messages
-print_introduction($parrot_version);
+print_introduction($parrot_version) unless exists $args{step};
 
 my $conf = Parrot::Configure->new;
 
 # from Parrot::Configure::Step::List
 $conf->add_steps(get_steps_list());
 
-my %args = %{$args};
 # from Parrot::Configure::Data
 $conf->options->set(%args);
 
@@ -355,7 +360,7 @@ else {
 $opttest->run_build_tests();
 
 # from Parrot::Configure::Messages
-print_conclusion($conf->data->get('make'));
+print_conclusion($conf->data->get('make')) unless exists $args{step};
 
 exit(0);
 

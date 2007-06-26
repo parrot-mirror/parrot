@@ -337,7 +337,7 @@ a sleep opcode.
 #include "parrot/dod.h"
 #include <assert.h>
 
-/* HEADER: include/parrot/dod.h */
+/* HEADERIZER TARGET: include/parrot/dod.h */
 
 /*
  * size of one arena
@@ -819,7 +819,7 @@ parrot_gc_ims_run_increment(Interp* interp)
             }
             break;
         default:
-            PANIC("Unknown state in gc_ims");
+            PANIC(interp, "Unknown state in gc_ims");
     }
     IMS_DEBUG((stderr, "%d\n", g_ims->state));
 }

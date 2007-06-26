@@ -17,7 +17,7 @@ Subroutines, continuations, co-routines and other fun stuff...
 #include "parrot/parrot.h"
 #include "parrot/oplib/ops.h"
 
-/* HEADER: include/parrot/sub.h */
+/* HEADERIZER TARGET: include/parrot/sub.h */
 
 /*
 
@@ -249,9 +249,9 @@ Parrot_full_sub_name(Interp *interp /*NN*/, PMC* sub /*NULLOK*/)
     Parrot_sub * s;
     STRING *res;
 
-
     if (!sub || !VTABLE_defined(interp, sub))
         return NULL;
+
     s = PMC_sub(sub);
     if (PMC_IS_NULL(s->namespace_stash)) {
         return s->name;
@@ -310,7 +310,7 @@ Parrot_Context_get_info(Interp *interp /*NN*/, parrot_context_t *ctx /*NN*/,
 
     /* set the namespace name and fullname of the sub */
     if (PMC_IS_NULL(sub->namespace_name)) {
-        info->nsname = string_from_cstring(interp, "", 0);
+        info->nsname = string_from_literal(interp, "");
         info->fullname = info->subname;
     }
     else {
@@ -418,7 +418,6 @@ Parrot_find_pad(Interp *interp /*NN*/, STRING *lex_name, parrot_context_t *ctx /
 #endif
         ctx = outer;
     }
-    return NULL;
 }
 
 PARROT_API

@@ -23,7 +23,7 @@ NCI function setup, compiler registration, C<interpinfo>, and C<sysinfo> opcodes
 #include "parrot/parrot.h"
 #include "inter_misc.str"
 
-/* HEADER: none */ /* XXX Needs to get done at the same time as the other interpreter files */
+/* HEADERIZER TARGET: none */ /* XXX Needs to get done at the same time as the other interpreter files */
 
 /*
 
@@ -149,7 +149,7 @@ void Parrot_compreg(Parrot_Interp interp, STRING *type,
 
 =item C<PMC *
 Parrot_compile_string(Parrot_Interp interp, STRING *type,
-                      char *code, String **error)>
+                      char *code, STRING **error)>
 
 Compile code string.
 
@@ -179,7 +179,7 @@ Parrot_compile_string(Parrot_Interp interp, STRING *type,
 
 =item C<void
 Parrot_compile_file(Parrot_Interp interp, const char *fullname,
-                    String **error)>
+                    STRING **error)>
 
 Compile code file.
 
@@ -189,7 +189,7 @@ Compile code file.
 
 void *
 Parrot_compile_file(Parrot_Interp interp, char *fullname,
-                    String **error)
+                    STRING **error)
 {
     return IMCC_compile_file_s(interp, fullname, error);
 }
@@ -426,7 +426,7 @@ sysinfo_s(Parrot_Interp interp, INTVAL info_wanted)
 {
     switch (info_wanted) {
     case PARROT_OS:
-        return string_from_cstring(interp, BUILD_OS_NAME, 0);
+        return string_from_literal(interp, BUILD_OS_NAME);
     case PARROT_OS_VERSION:
     case PARROT_OS_VERSION_NUMBER:
     case CPU_ARCH:

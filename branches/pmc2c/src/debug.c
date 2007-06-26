@@ -29,7 +29,14 @@ debugger, and the C<debug> ops.
 #include "parrot/debug.h"
 #include "parrot/oplib/ops.h"
 
-/* HEADER: include/parrot/debug.h */
+
+/* Not sure how we want to handle this sort of cross-project header */
+PARROT_API
+void
+IMCC_warning(Interp *interp /*NN*/, const char *fmt /*NN*/, ...);
+
+
+/* HEADERIZER TARGET: include/parrot/debug.h */
 
 static const char* GDB_P(Interp *interp, const char *s);
 
@@ -337,6 +344,59 @@ PDB_get_command(Interp *interp /*NN*/)
 
 /*
 
+FUNCDOC: PDB_script_file
+
+Interprets the contents of a file as user input commands
+
+*/
+
+void
+PDB_script_file(Interp *interp /*NN*/, const char *command /*NN*/)
+{
+    char buf[1024];
+    const char *ptr = (const char *)&buf;
+    int line = 0;
+    FILE *fd;
+
+    command = nextarg(command);
+
+    fd = fopen(command, "r");
+    if (!fd) {
+        IMCC_warning(interp, "script_file: "
+            "Error reading script file %s.\n",
+            command);
+        return;
+    }
+
+    while(!feof(fd)) {
+        line++;
+        buf[0]='\0';
+        fgets(buf, 1024, fd);
+
+        /* skip spaces */
+        for(ptr=(char *)&buf;*ptr&&isspace(*ptr);ptr=ptr+1);
+
+        /* avoid null blank and commented lines */
+        if (*buf == '\0' || *buf == '#')
+            continue;
+
+        buf[strlen(buf)-1]='\0';
+        /* TODO: handle command error and print out script line
+         *       PDB_run_command should return non-void value?
+         *       stop execution of script if fails
+         * TODO: avoid this verbose output? add -v flag? */
+        if (PDB_run_command(interp, buf)) {
+            IMCC_warning(interp, "script_file: "
+                "Error interpreting command at line %d (%s).\n",
+                line, command);
+                break;
+        }
+    }
+    fclose(fd);
+}
+
+/*
+
 FUNCDOC: PDB_run_command
 
 Run a command.
@@ -345,23 +405,25 @@ Hash the command to make a simple switch calling the correct handler.
 
 */
 
-void
+int
 PDB_run_command(Interp *interp /*NN*/, const char *command /*NN*/)
 {
     unsigned long c;
-    const char   *temp;
     PDB_t        * const pdb = interp->pdb;
+    const char   * const original_command = command;
 
     /* keep a pointer to the command, in case we need to report an error */
-    temp = command;
 
     /* get a number from what the user typed */
-    command = parse_command(command, &c);
+    command = parse_command(original_command, &c);
 
     if (command)
         skip_command(command);
 
     switch (c) {
+        case c_script_file:
+            PDB_script_file(interp, command);
+            break;
         case c_disassemble:
             PDB_disassemble(interp, command);
             break;
@@ -432,9 +494,10 @@ PDB_run_command(Interp *interp /*NN*/, const char *command /*NN*/)
             break;
         default:
             PIO_eprintf(interp,
-                        "Undefined command: \"%s\".  Try \"help\".", temp);
-            break;
+                        "Undefined command: \"%s\".  Try \"help\".", original_command);
+            return 1;
     }
+    return 0;
 }
 
 /*
@@ -454,12 +517,13 @@ void
 PDB_next(Interp *interp, const char *command)
 {
     unsigned long  n   = 1;
-    PDB_t         *pdb = interp->pdb;
+    PDB_t  * const pdb = interp->pdb;
 
     /* Init the program if it's not running */
     if (!(pdb->state & PDB_RUNNING))
         PDB_init(interp, command);
 
+    command = nextarg(command);
     /* Get the number of operations to execute if any */
     if (command && isdigit((int) *command))
         n = atol(command);
@@ -498,13 +562,14 @@ void
 PDB_trace(Interp *interp, const char *command)
 {
     unsigned long  n   = 1;
-    PDB_t         *pdb = interp->pdb;
+    PDB_t *  const pdb = interp->pdb;
     Interp        *debugee;
 
     /* if debugger is not running yet, initialize */
     if (!(pdb->state & PDB_RUNNING))
         PDB_init(interp, command);
 
+    command = nextarg(command);
     /* if the number of ops to run is specified, convert to a long */
     if (command && isdigit((int) *command))
         n = atol(command);
@@ -772,6 +837,7 @@ PDB_set_break(Interp *interp, const char *command)
     PDB_line_t       *line;
     long              ln, i;
 
+    command = nextarg(command);
     /* If no line number was specified, set it at the current line */
     if (command && *command) {
         ln = atol(command);
@@ -909,6 +975,7 @@ PDB_continue(Interp *interp, const char *command)
             return;
         }
 
+        command = nextarg(command);
         ln = atol(command);
         PDB_skip_breakpoint(interp, ln);
     }
@@ -936,6 +1003,7 @@ PDB_find_breakpoint(Interp *interp, const char *command)
     PDB_breakpoint_t *breakpoint;
     long              n;
 
+    command = nextarg(command);
     if (isdigit((int) *command)) {
         n          = atol(command);
         breakpoint = interp->pdb->breakpoint;
@@ -1971,6 +2039,7 @@ PDB_list(Interp *interp, const char *command)
         return;
     }
 
+    command = nextarg(command);
     /* set the list line if provided */
     if (isdigit((int) *command)) {
         line_number = atol(command) - 1;
@@ -2157,6 +2226,7 @@ PDB_print_user_stack(Interp *interp, const char *command)
     long           depth = 0;
     Stack_Chunk_t *chunk = CONTEXT(interp->ctx)->user_stack;
 
+    command = nextarg(command);
     if (*command)
         depth = atol(command);
 
@@ -2301,6 +2371,11 @@ For example:\n\n\
            break 45 if S1 == \"foo\"\n\n\
 The command returns a number which is the breakpoint identifier.");
             break;
+        case c_script_file:
+PIO_eprintf(interp, "Interprets a file.\n\
+Usage:\n\
+(pdb) script file.script\n");
+            break;
         case c_watch:
             PIO_eprintf(interp,"No documentation yet");
             break;
@@ -2369,6 +2444,7 @@ List of commands:\n\
     list     (l) -- list the source code file\n\
     run      (r) -- run the program\n\
     break    (b) -- add a breakpoint\n\
+    script   (f) -- interprets a file as user commands\n\
     watch    (w) -- add a watchpoint\n\
     delete   (d) -- delete a breakpoint\n\
     disable      -- disable a breakpoint\n\

@@ -29,7 +29,7 @@ Win32 System Programming, 2nd Edition.
 #include "parrot/parrot.h"
 #include "io_private.h"
 
-/* HEADER: none */
+/* HEADERIZER TARGET: none */
 
 #ifdef PIO_OS_WIN32
 
@@ -715,7 +715,7 @@ AGAIN:
          */
         *s = string_make(interp, buf, bytesread, "ascii", 0);
         if (!*s) {
-            PANIC("PIO_recv: Failed to allocate string");
+            PANIC(interp, "PIO_recv: Failed to allocate string");
         }
 #    if PIO_TRACE
         PIO_eprintf(interp, "PIO_win32_recv: %d bytes\n", bytesread);

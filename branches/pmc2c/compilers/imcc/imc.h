@@ -60,78 +60,225 @@
 #define IMCC_FATAL_EXCEPTION      1
 #define IMCC_FATALY_EXCEPTION     2
 
+#define N_ELEMENTS(x) (sizeof(x)/sizeof((x)[0]))
+
+
 /*
  * imc.c
  */
-PARROT_API void imc_compile_all_units(Interp *);
-PARROT_API void imc_compile_unit(Interp *, IMC_Unit * unit);
-PARROT_API void imc_cleanup(Interp *, void *yyscanner);
-PARROT_API void imc_pragma(char * str);
-PARROT_API FILE* imc_yyin_set(FILE*, void*);
-PARROT_API FILE* imc_yyin_get(void*);
 
-/*
- * instructions.c
- */
-void imcc_init_tables(Interp * interp);
+/* HEADERIZER BEGIN: compilers/imcc/imc.c */
 
-/*
- * optimizer.c
- */
-const char * get_neg_op(char *op, int *nargs);
+PARROT_API void imc_cleanup( Interp *interp /*NN*/, void *yyscanner )
+        __attribute__nonnull__(1);
 
-/*
- * reg_alloc.c
- */
-void imc_reg_alloc(Interp *, IMC_Unit * unit);
-void free_reglist(IMC_Unit *);
+PARROT_API void imc_compile_all_units( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
 
-/*
- * parser_util.c
- */
-PARROT_API void imcc_init(Parrot_Interp interp);
-PARROT_API void imcc_destroy(Parrot_Interp interp);
-int check_op(Interp *, char * fullname, char *op, SymReg *r[], int narg, int keyvec);
-int is_op(Interp *, const char *opname);
-char *str_dup(const char *);
-char *str_cat(const char *, const char *);
-int imcc_vfprintf(Interp *, FILE *fd, const char *format, va_list ap);
-int imcc_fprintf(Interp *, FILE *fd, const char *fmt, ...);
+PARROT_API void imc_compile_unit( Interp *interp /*NN*/, IMC_Unit *unit )
+        __attribute__nonnull__(1);
 
-/*
- * FIXME create an official interface
- * imcc compile interface
- *       this is needed for the debugger pdb and called from imcc/main.c
- */
-PMC *imcc_compile_pir(Parrot_Interp interp, const char *s);
-PMC *imcc_compile_pasm(Parrot_Interp interp, const char *s);
-PMC *imcc_compile_pir_ex(Parrot_Interp interp, const char *s);
-PMC *imcc_compile_pasm_ex(Parrot_Interp interp, const char *s);
-void *IMCC_compile_file(Parrot_Interp interp, const char *s);
-void *IMCC_compile_file_s(Parrot_Interp interp, const char *s,
-      STRING **error_message);
-PMC * IMCC_compile_pir_s(Parrot_Interp interp, const char *s,
-      STRING **error_message);
-PMC * IMCC_compile_pasm_s(Parrot_Interp interp, const char *s,
-      STRING **error_message);
+void imc_close_unit( Interp *interp, IMC_Unit *unit /*NULLOK*/ );
+IMC_Unit * imc_open_unit( Interp *interp /*NN*/, IMC_Unit_Type t )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: compilers/imcc/imc.c */
+
+
+/* HEADERIZER BEGIN: compilers/imcc/reg_alloc.c */
+
+void free_reglist( IMC_Unit *unit /*NN*/ )
+        __attribute__nonnull__(1);
+
+void graph_coloring_reg_alloc( Interp *interp /*NN*/, IMC_Unit *unit /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+int ig_test( int i, int j, int N, unsigned int* graph );
+void imc_reg_alloc( Interp *interp /*NN*/, IMC_Unit *unit /*NULLOK*/ )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: compilers/imcc/reg_alloc.c */
+
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#  define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
+
+
+/* HEADERIZER BEGIN: compilers/imcc/imcparser.c */
+
+Instruction * IMCC_create_itcall_label( Interp* interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+void IMCC_itcall_sub( Interp* interp /*NN*/, SymReg* sub )
+        __attribute__nonnull__(1);
+
+Instruction * INS_LABEL( Interp *interp /*NN*/,
+    IMC_Unit *unit,
+    SymReg *r0,
+    int emit )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: compilers/imcc/imcparser.c */
+
+/* HEADERIZER BEGIN: compilers/imcc/parser_util.c */
+
+PARROT_API int do_yylex_init( Interp* interp, yyscan_t* yyscanner );
+PARROT_API void imcc_destroy( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+PARROT_API void imcc_init( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+int check_op( Interp *interp /*NN*/,
+    char *fullname /*NN*/,
+    const char *name,
+    SymReg *r[],
+    int narg,
+    int keyvec )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PMC * imcc_compile(
+    Parrot_Interp interp,
+    const char *s,
+    int pasm_file,
+    STRING **error_message );
+
+void * IMCC_compile_file( Parrot_Interp interp, const char *s );
+void * IMCC_compile_file_s(
+    Parrot_Interp interp,
+    const char *s,
+    STRING **error_message );
+
+PMC * imcc_compile_pasm( Parrot_Interp interp, const char *s );
+PMC * imcc_compile_pasm_ex( Parrot_Interp interp, const char *s );
+PMC * IMCC_compile_pasm_s(
+    Parrot_Interp interp,
+    const char *s,
+    STRING **error_message );
+
+PMC * imcc_compile_pir( Parrot_Interp interp, const char *s );
+PMC * imcc_compile_pir_ex( Parrot_Interp interp, const char *s );
+PMC * IMCC_compile_pir_s(
+    Parrot_Interp interp,
+    const char *s,
+    STRING **error_message );
+
+int imcc_fprintf( Interp *interp /*NN*/,
+    FILE *fd /*NN*/,
+    const char *fmt /*NN*/,
+    ... )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+int imcc_vfprintf( Interp *interp /*NN*/,
+    FILE *fd /*NN*/,
+    const char *format /*NN*/,
+    va_list ap )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+Instruction * iNEW( Interp *interp,
+    IMC_Unit *unit,
+    SymReg *r0,
+    char *type,
+    SymReg *init,
+    int emit );
+
+Instruction * INS( Interp *interp,
+    IMC_Unit * unit,
+    const char *name,
+    const char *fmt,
+    SymReg **r,
+    int n,
+    int keyvec,
+    int emit );
+
+int is_op( Interp *interp, const char *name );
+Instruction * multi_keyed( Interp *interp,
+    IMC_Unit * unit,
+    char *name,
+    SymReg ** r,
+    int nr,
+    int keyvec,
+    int emit );
+
+void op_fullname(
+    char *dest /*NN*/,
+    const char *name /*NN*/,
+    SymReg * args[],
+    int narg,
+    int keyvec )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void register_compilers( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+char * str_cat( const char *s1 /*NN*/, const char *s2 /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+char * str_dup( const char *old /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__malloc__
+        __attribute__warn_unused_result__;
+
+int try_find_op( Interp *interp /*NN*/,
+    IMC_Unit * unit,
+    const char *name /*NN*/,
+    SymReg ** r,
+    int n,
+    int keyvec,
+    int emit )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+/* HEADERIZER END: compilers/imcc/parser_util.c */
+
+/* imclexer.c */
+void IMCC_print_inc(Interp *interp);
 
 /* Call convention independant API */
 
-/*
- * pcc.c
- */
-void expand_pcc_sub(Parrot_Interp interp, IMC_Unit *, Instruction *ins);
-void expand_pcc_sub_ret(Parrot_Interp interp, IMC_Unit *, Instruction *ins);
-void expand_pcc_sub_call(Parrot_Interp interp, IMC_Unit *, Instruction *ins);
+/* HEADERIZER BEGIN: compilers/imcc/pcc.c */
+
+void expand_pcc_sub(
+    Parrot_Interp interp,
+    IMC_Unit *unit /*NN*/,
+    Instruction *ins /*NN*/ )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+void expand_pcc_sub_call(
+    Parrot_Interp interp,
+    IMC_Unit *unit,
+    Instruction *ins );
+
+void expand_pcc_sub_ret(
+    Parrot_Interp interp,
+    IMC_Unit *unit,
+    Instruction *ins );
+
+SymReg* get_const( Interp *interp /*NN*/, const char *name, int type )
+        __attribute__nonnull__(1);
+
+SymReg* get_pasm_reg( Interp* interp /*NN*/, const char *name )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: compilers/imcc/pcc.c */
 
 /* pragmas avialable: */
 typedef enum {
   PR_N_OPERATORS = 0x01
 } _imc_pragmas;
 
-#define PARROT_MAX_RECOVER_ERRORS 40 /* this is the number of times
-                                      * parrot will try to retry while
-                                      * compiling. */
+#define PARROT_MAX_RECOVER_ERRORS 40
+/* this is the number of times parrot will try to retry while compiling. */
 
 typedef enum _enum_opt {
     OPT_NONE,
@@ -245,15 +392,10 @@ typedef struct _imc_info_t {
 #define IMC_TRACE 0
 #define IMC_TRACE_HIGH 0
 
-PARROT_API Instruction * IMCC_create_itcall_label(Interp *);
-PARROT_API void IMCC_itcall_sub(Interp* interp, SymReg* sub);
+/* imclexer.c */
+PARROT_API FILE* imc_yyin_set(FILE* new_yyin, void *yyscanner);
+PARROT_API FILE* imc_yyin_get(void *yyscanner);
 
-STRING * IMCC_string_from_reg(Interp *interp, SymReg *r);
-INTVAL   IMCC_int_from_reg(Interp *interp, SymReg *r);
-Instruction * IMCC_subst_constants_umix(Interp *, IMC_Unit * unit, char *name,
-        SymReg **r, int n);
-Instruction * IMCC_subst_constants(Interp *, IMC_Unit * unit, char *name,
-        SymReg **r, int n, int *op);
 
 #endif /* PARROT_IMCC_IMC_H_GUARD */
 

@@ -19,6 +19,9 @@
 
 /* Declarations of accessors */
 
+#define CSTRING_WITH_LEN(s) (s ""), (sizeof(s)-1)
+#define string_from_literal(i,s) string_from_cstring((i),CSTRING_WITH_LEN(s))
+
 /* HEADERIZER BEGIN: src/string.c */
 
 PARROT_API STRING * const_string( Interp *interp /*NN*/,
@@ -110,7 +113,6 @@ PARROT_API STRING * string_bitwise_xor( Interp *interp /*NN*/,
 PARROT_API INTVAL string_bool( Interp *interp /*NN*/,
     const STRING *s /*NULLOK*/ )
         __attribute__nonnull__(1)
-        __attribute__pure__
         __attribute__warn_unused_result__;
 
 PARROT_API UINTVAL string_capacity( Interp *interp /*NULLOK*/,
@@ -151,7 +153,9 @@ PARROT_API void string_deinit( Interp *interp /*NN*/ )
         __attribute__nonnull__(1);
 
 PARROT_API STRING * string_downcase( Interp *interp,
-    const STRING *s /*NULLOK*/ );
+    const STRING *s /*NULLOK*/ )
+        __attribute__warn_unused_result__
+        __attribute__malloc__;
 
 PARROT_API void string_downcase_inplace( Interp *interp,
     STRING *s /*NULLOK*/ );
@@ -159,7 +163,6 @@ PARROT_API void string_downcase_inplace( Interp *interp,
 PARROT_API INTVAL string_equal( Interp *interp,
     const STRING *s1 /*NULLOK*/,
     const STRING *s2 /*NULLOK*/ )
-        __attribute__pure__
         __attribute__warn_unused_result__;
 
 PARROT_API STRING * string_escape_string( Interp *interp,
@@ -168,11 +171,6 @@ PARROT_API STRING * string_escape_string( Interp *interp,
 PARROT_API STRING * string_escape_string_delimited( Interp *interp,
     const STRING *src /*NULLOK*/,
     UINTVAL limit );
-
-PARROT_API STRING * string_from_const_cstring( Interp *interp,
-    const char *buffer /*NULLOK*/,
-    const UINTVAL len )
-        __attribute__warn_unused_result__;
 
 PARROT_API STRING * string_from_cstring( Interp *interp /*NN*/,
     const char * const buffer /*NULLOK*/,
@@ -315,7 +313,9 @@ PARROT_API STRING * string_substr( Interp *interp /*NN*/,
         __attribute__nonnull__(2);
 
 PARROT_API STRING * string_titlecase( Interp *interp,
-    const STRING *s /*NULLOK*/ );
+    const STRING *s /*NULLOK*/ )
+        __attribute__warn_unused_result__
+        __attribute__malloc__;
 
 PARROT_API void string_titlecase_inplace( Interp *interp,
     STRING *s /*NULLOK*/ );
@@ -340,7 +340,9 @@ PARROT_API void string_unpin( Interp *interp, STRING *s /*NN*/ )
         __attribute__nonnull__(2);
 
 PARROT_API STRING * string_upcase( Interp *interp,
-    const STRING *s /*NULLOK*/ );
+    const STRING *s /*NULLOK*/ )
+        __attribute__warn_unused_result__
+        __attribute__malloc__;
 
 PARROT_API void string_upcase_inplace( Interp *interp, STRING *s /*NULLOK*/ );
 PARROT_API STRING* uint_to_str( Interp *interp /*NN*/,
@@ -358,10 +360,11 @@ PARROT_API UINTVAL Parrot_char_digit_value( Interp *interp,
     UINTVAL character );
 
 PARROT_API void string_fill_from_buffer( Interp *interp,
-    const void *buffer,
+    const void *buffer /*NN*/,
     UINTVAL len,
     const char *encoding_name,
-    STRING *s /*NULLOK*/ );
+    STRING *s /*NULLOK*/ )
+        __attribute__nonnull__(2);
 
 PARROT_API void string_set_data_directory( const char *dir );
 PARROT_API Parrot_UInt4 string_unescape_one( Interp *interp,

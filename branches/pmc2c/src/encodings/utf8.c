@@ -18,7 +18,7 @@ UTF-8 (L<http://www.utf-8.com/>).
 #include "../unicode.h"
 #include "utf8.h"
 
-/* HEADER: src/encodings/utf8.h */
+/* HEADERIZER TARGET: src/encodings/utf8.h */
 
 #define UNIMPL internal_exception(UNIMPLEMENTED, "unimpl utf8")
 
@@ -45,7 +45,7 @@ const char Parrot_utf8skip[256] = {
 typedef unsigned char utf8_t;
 #endif
 
-static void iter_init(Interp *, const String *src, String_iter *iter);
+static void iter_init(Interp *, const STRING *src, String_iter *iter);
 
 /*
 
@@ -349,12 +349,12 @@ to_encoding(Interp *interp, STRING *src, STRING *dest)
 static UINTVAL
 get_codepoint(Interp *interp, const STRING *src, UINTVAL offset)
 {
-    const utf8_t * const start = (utf8_t *)utf8_skip_forward(src->strstart, offset);
+    const utf8_t * const start = (const utf8_t *)utf8_skip_forward(src->strstart, offset);
     return utf8_decode(start);
 }
 
 static void
-set_codepoint(Interp *interp, STRING *src,
+set_codepoint(Interp *interp, STRING *src /*NN*/,
         UINTVAL offset, UINTVAL codepoint)
 {
     const void *start;
@@ -499,7 +499,7 @@ bytes(Interp *interp, STRING *src)
 }
 
 static void
-iter_init(Interp *interp, const String *src, String_iter *iter)
+iter_init(Interp *interp, const STRING *src, String_iter *iter)
 {
     iter->str = src;
     iter->bytepos = iter->charpos = 0;
@@ -509,9 +509,9 @@ iter_init(Interp *interp, const String *src, String_iter *iter)
 }
 
 ENCODING *
-Parrot_encoding_utf8_init(Interp *interp)
+Parrot_encoding_utf8_init(Interp *interp /*NN*/)
 {
-    ENCODING *return_encoding = Parrot_new_encoding(interp);
+    ENCODING * const return_encoding = Parrot_new_encoding(interp);
 
     static const ENCODING base_encoding = {
         "utf8",
@@ -532,7 +532,7 @@ Parrot_encoding_utf8_init(Interp *interp)
         bytes,
         iter_init
     };
-    memcpy(return_encoding, &base_encoding, sizeof (ENCODING));
+    STRUCT_COPY(return_encoding, &base_encoding);
     Parrot_register_encoding(interp, "utf8", return_encoding);
     return return_encoding;
 }

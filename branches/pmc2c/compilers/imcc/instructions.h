@@ -81,38 +81,12 @@ Instruction * _mk_instruction(const char *,const char *, int n, SymReg **, int);
 #else
 #  define _mk_instruction(a,b,n,c,d) dont_use(a,b)
 #endif
-Instruction * INS(Interp *, struct _IMC_Unit *, char * name,
-        const char *fmt, SymReg **regs, int nargs, int keyv, int emit);
-Instruction * INS_LABEL(Interp * interp, struct _IMC_Unit *, SymReg * r0, int emit);
-
-Instruction * iNEW(Interp *, struct _IMC_Unit *, SymReg * r0, char * type,
-        SymReg *init, int emit);
-Instruction * iNEWSUB(Interp *, struct _IMC_Unit *, SymReg * r0, int type,
-        SymReg *init, int emit);
-Instruction * emitb(Interp * interp, struct _IMC_Unit *, Instruction *);
-
-int instruction_reads(Instruction *, SymReg *);
-int instruction_writes(Instruction *, SymReg *);
-int ins_reads2(Instruction *, int);
-int ins_writes2(Instruction *, int);
-
-void free_ins(Instruction *);
-int ins_print(Interp *, FILE *fd, Instruction * ins);
-
-Instruction *delete_ins(struct _IMC_Unit *, Instruction *ins, int needs_freeing);
-void insert_ins(struct _IMC_Unit *, Instruction *ins, Instruction * tmp);
-void prepend_ins(struct _IMC_Unit *, Instruction *ins, Instruction * tmp);
-Instruction *move_ins(struct _IMC_Unit *, Instruction *cur, Instruction *to);
-void subst_ins(struct _IMC_Unit *, Instruction *ins, Instruction * tmp, int);
-
-int get_branch_regno(Instruction * ins);
-SymReg *get_branch_reg(Instruction * ins);
 
 /* Globals */
 
 typedef struct _emittert {
     int (*open)(Interp *, void *param);
-    int (*emit)(Interp *, void *param, struct _IMC_Unit *, Instruction *ins);
+    int (*emit)(Interp *, void *param, struct _IMC_Unit *, const Instruction *ins);
     int (*new_sub)(Interp *, void *param, struct _IMC_Unit *);
     int (*end_sub)(Interp *, void *param, struct _IMC_Unit *);
     int (*close)(Interp *, void *param);
@@ -120,12 +94,108 @@ typedef struct _emittert {
 
 enum Emitter_type { EMIT_FILE, EMIT_PBC };
 
-PARROT_API int emit_open(Interp *, int type, void *param);
-PARROT_API int emit_flush(Interp *, void *param, struct _IMC_Unit *);
-PARROT_API int emit_close(Interp *, void *param);
+/* HEADERIZER BEGIN: compilers/imcc/instructions.c */
 
-PARROT_API void open_comp_unit(void);
-PARROT_API void close_comp_unit(Parrot_Interp);
+PARROT_API int emit_close( Interp *interp, void *param );
+PARROT_API int emit_flush( Interp *interp /*NN*/,
+    void *param,
+    struct _IMC_Unit *unit /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+PARROT_API int emit_open( Interp *interp /*NN*/, int type, void *param )
+        __attribute__nonnull__(1);
+
+Instruction * _mk_instruction(
+    const char *op /*NN*/,
+    const char *fmt /*NN*/,
+    int n,
+    SymReg ** r,
+    int flags )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__malloc__
+        __attribute__warn_unused_result__;
+
+Instruction * delete_ins(
+    struct _IMC_Unit *unit /*NN*/,
+    Instruction *ins /*NN*/,
+    int needs_freeing )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+Instruction * emitb( Interp *interp /*NN*/,
+    struct _IMC_Unit *unit /*NULLOK*/,
+    Instruction *i /*NULLOK*/ )
+        __attribute__nonnull__(1);
+
+void free_ins( Instruction *ins /*NN*/ )
+        __attribute__nonnull__(1);
+
+SymReg * get_branch_reg( const Instruction *ins /*NN*/ )
+        __attribute__nonnull__(1);
+
+int get_branch_regno( const Instruction *ins /*NN*/ )
+        __attribute__nonnull__(1);
+
+void imcc_init_tables( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+int ins_print( Interp *interp /*NN*/,
+    FILE *fd /*NN*/,
+    const Instruction *ins /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+int ins_reads2( const Instruction *ins /*NN*/, int t )
+        __attribute__nonnull__(1);
+
+int ins_writes2( const Instruction *ins /*NN*/, int t )
+        __attribute__nonnull__(1);
+
+void insert_ins(
+    struct _IMC_Unit *unit /*NN*/,
+    Instruction *ins /*NULLOK*/,
+    Instruction *tmp /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+int instruction_reads( const Instruction *ins /*NN*/, const SymReg *r /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+int instruction_writes(
+    const Instruction *ins /*NN*/,
+    const SymReg *r /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+Instruction * move_ins(
+    struct _IMC_Unit *unit /*NN*/,
+    Instruction *ins /*NN*/,
+    Instruction *to /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+void prepend_ins(
+    struct _IMC_Unit *unit /*NN*/,
+    Instruction *ins /*NULLOK*/,
+    Instruction *tmp /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+void subst_ins(
+    struct _IMC_Unit *unit /*NN*/,
+    Instruction *ins /*NN*/,
+    Instruction *tmp /*NN*/,
+    int needs_freeing )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+/* HEADERIZER END: compilers/imcc/instructions.c */
 
 #endif /* PARROT_IMCC_INSTRUCTIONS_H_GUARD */
 

@@ -335,6 +335,9 @@
 #include "parrot/dynext.h"
 #include "pbc.h"
 #include "parser.h"
+#include "optimizer.h"
+
+/* HEADERIZER TARGET: compilers/imcc/imc.h */
 
 #define YYDEBUG 1
 #define YYERROR_VERBOSE 1
@@ -366,7 +369,7 @@
  *        code.
  */
 static Instruction *
-MK_I(Interp *interp, IMC_Unit * unit, const char * fmt, int n, ...)
+MK_I(Interp *interp, IMC_Unit * unit, const char *fmt /*NN*/, int n, ...)
 {
     char opname[64];
     char *p;
@@ -397,9 +400,9 @@ MK_I(Interp *interp, IMC_Unit * unit, const char * fmt, int n, ...)
 
 static Instruction*
 mk_pmc_const(Parrot_Interp interp, IMC_Unit *unit,
-             char *type, SymReg *left, char *constant)
+             const char *type /*NN*/, SymReg *left /*NN*/, char *constant /*NN*/)
 {
-    int type_enum = atoi(type);
+    const int type_enum = atoi(type);
     SymReg *rhs;
     SymReg *r[2];
     char *name;
@@ -463,18 +466,18 @@ func_ins(Parrot_Interp interp, IMC_Unit *unit, SymReg *lhs, char *op,
  * labels and such
  */
 
-static void clear_state(Interp *interp)
+static void
+clear_state(Interp *interp /*NN*/)
 {
     IMCC_INFO(interp) -> nargs = 0;
     IMCC_INFO(interp) -> keyvec = 0;
 }
 
-Instruction * INS_LABEL(Interp * interp, IMC_Unit * unit, SymReg * r0, int emit)
+Instruction *
+INS_LABEL(Interp *interp /*NN*/, IMC_Unit *unit, SymReg *r0, int emit)
 {
+    Instruction * const ins = _mk_instruction("","%s:", 1, &r0, 0);
 
-    Instruction *ins;
-
-    ins = _mk_instruction("","%s:", 1, &r0, 0);
     ins->type = ITLABEL;
     r0->first_ins = ins;
     if (emit)
@@ -482,16 +485,21 @@ Instruction * INS_LABEL(Interp * interp, IMC_Unit * unit, SymReg * r0, int emit)
     return ins;
 }
 
-static Instruction * iLABEL(Interp *interp, IMC_Unit * unit, SymReg * r0) {
-    Instruction *i = INS_LABEL(interp, unit, r0, 1);
+static Instruction *
+iLABEL(Interp *interp /*NN*/, IMC_Unit *unit, SymReg * r0)
+{
+    Instruction * const i = INS_LABEL(interp, unit, r0, 1);
+
     i->line = IMCC_INFO(interp)->line;
     clear_state(interp);
     return i;
 }
 
-static Instruction * iSUBROUTINE(Interp *interp, IMC_Unit * unit, SymReg * r) {
-    Instruction *i;
-    i =  iLABEL(interp, unit, r);
+static Instruction *
+iSUBROUTINE(Interp *interp /*NN*/, IMC_Unit *unit, SymReg *r /*NN*/)
+{
+    Instruction * const i =  iLABEL(interp, unit, r);
+
     r->type = (r->type & VT_ENCODED) ? VT_PCC_SUB|VT_ENCODED : VT_PCC_SUB;
     r->pcc_sub = (pcc_sub_t*)calloc(1, sizeof(struct pcc_sub_t));
     IMCC_INFO(interp)->cur_call = r;
@@ -508,7 +516,7 @@ iINDEXFETCH(Interp *interp, IMC_Unit * unit, SymReg * r0, SymReg * r1,
             SymReg * r2)
 {
     if (r0->set == 'S' && r1->set == 'S' && r2->set == 'I') {
-        SymReg * r3 = mk_const(interp, str_dup("1"), 'I');
+        SymReg * const r3 = mk_const(interp, str_dup("1"), 'I');
         return MK_I(interp, unit, "substr %s, %s, %s, 1", 4, r0, r1, r2, r3);
     }
     IMCC_INFO(interp) -> keyvec |= KEY_BIT(2);
@@ -538,13 +546,15 @@ iINDEXSET(Interp *interp, IMC_Unit * unit,
     return 0;
 }
 
-static char * inv_op(char *op) {
+static const char *
+inv_op(const char *op)
+{
     int n;
-    return (char *) get_neg_op(op, &n);
+    return get_neg_op(op, &n);
 }
 
 Instruction *
-IMCC_create_itcall_label(Interp* interp)
+IMCC_create_itcall_label(Interp* interp /*NN*/)
 {
     char name[128];
     SymReg * r;
@@ -574,13 +584,14 @@ mk_sub_address_fromc(Interp *interp, char * name)
 static SymReg *
 mk_sub_address_u(Interp *interp, char * name)
 {
-    SymReg *r = mk_sub_address(interp, name);
+    SymReg * const r = mk_sub_address(interp, name);
+
     r->type |= VT_ENCODED;
     return r;
 }
 
 void
-IMCC_itcall_sub(Interp* interp, SymReg* sub)
+IMCC_itcall_sub(Interp* interp /*NN*/, SymReg* sub)
 {
     IMCC_INFO(interp)->cur_call->pcc_sub->sub = sub;
     if (IMCC_INFO(interp)->cur_obj) {
@@ -596,11 +607,12 @@ IMCC_itcall_sub(Interp* interp, SymReg* sub)
 }
 
 static void
-begin_return_or_yield(Interp *interp, int yield)
+begin_return_or_yield(Interp *interp /*NN*/, int yield)
 {
-    Instruction *i, *ins;
+    Instruction * const ins = IMCC_INFO(interp)->cur_unit->instructions;
+    Instruction *i;
     char name[128];
-    ins = IMCC_INFO(interp)->cur_unit->instructions;
+
     if (!ins || !ins->r[0] || !(ins->r[0]->type & VT_PCC_SUB))
         IMCC_fataly(interp, E_SyntaxError,
                     "yield or return directive outside pcc subroutine\n");
@@ -615,7 +627,7 @@ begin_return_or_yield(Interp *interp, int yield)
 }
 
 static void
-set_lexical(Interp *interp, SymReg *r, char *name)
+set_lexical(Interp *interp /*NN*/, SymReg *r /*NN*/, char *name)
 {
     SymReg *n;
     r->usage |= U_LEXICAL;
@@ -632,10 +644,10 @@ set_lexical(Interp *interp, SymReg *r, char *name)
 
 
 static void
-add_pcc_named_arg(Interp *interp, SymReg *cur_call, char *name, SymReg *value)
+add_pcc_named_arg(Interp *interp /*NN*/, SymReg *cur_call /*NN*/, char *name, SymReg *value)
 {
-    SymReg *r;
-    r = mk_const(interp, name, 'S');
+    SymReg * const r = mk_const(interp, name, 'S');
+
     r->type |= VT_NAMED;
     add_pcc_arg(cur_call, r);
     add_pcc_arg(cur_call, value);
@@ -645,8 +657,8 @@ add_pcc_named_arg(Interp *interp, SymReg *cur_call, char *name, SymReg *value)
 static void
 add_pcc_named_result(Interp *interp, SymReg *cur_call, char *name, SymReg *value)
 {
-    SymReg *r;
-    r = mk_const(interp, name, 'S');
+    SymReg * const r = mk_const(interp, name, 'S');
+
     r->type |= VT_NAMED;
     add_pcc_result(cur_call, r);
     add_pcc_result(cur_call, value);
@@ -656,8 +668,8 @@ add_pcc_named_result(Interp *interp, SymReg *cur_call, char *name, SymReg *value
 static void
 add_pcc_named_param(Interp *interp, SymReg *cur_call, char *name, SymReg *value)
 {
-    SymReg *r;
-    r = mk_const(interp, name, 'S');
+    SymReg *r = mk_const(interp, name, 'S');
+
     r->type |= VT_NAMED;
     add_pcc_param(cur_call, r);
     add_pcc_param(cur_call, value);
@@ -666,15 +678,15 @@ add_pcc_named_param(Interp *interp, SymReg *cur_call, char *name, SymReg *value)
 static void
 add_pcc_named_return(Interp *interp, SymReg *cur_call, char *name, SymReg *value)
 {
-    SymReg *r;
-    r = mk_const(interp, name, 'S');
+    SymReg * const r = mk_const(interp, name, 'S');
+
     r->type |= VT_NAMED;
     add_pcc_return(cur_call, r);
     add_pcc_return(cur_call, value);
 }
 
 static void
-adv_named_set(Interp *interp, char *name) {
+adv_named_set(Interp *interp /*NN*/, char *name) {
     if (IMCC_INFO(interp)->adv_named_id) {
         IMCC_fataly(interp, E_SyntaxError,
                     "Named parameter with more than one name.\n");
@@ -683,12 +695,14 @@ adv_named_set(Interp *interp, char *name) {
 }
 
 static void
-do_loadlib(Interp *interp, char *lib)
+do_loadlib(Interp *interp /*NN*/, const char *lib /*NN*/)
 {
-    STRING *s = string_unescape_cstring(interp, lib + 1, '"', NULL);
+    STRING * const s = string_unescape_cstring(interp, lib + 1, '"', NULL);
     Parrot_load_lib(interp, s, NULL);
     Parrot_register_HLL(interp, NULL, s);
 }
+
+/* HEADERIZER STOP */
 
 
 

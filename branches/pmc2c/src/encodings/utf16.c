@@ -17,7 +17,7 @@ UTF-16 encoding with the help of the ICU library.
 #include "parrot/parrot.h"
 #include "../unicode.h"
 
-/* HEADER: src/encodings/utf16.h */
+/* HEADERIZER TARGET: src/encodings/utf16.h */
 
 #include "utf16.h"
 
@@ -29,7 +29,7 @@ UTF-16 encoding with the help of the ICU library.
 #define UNIMPL internal_exception(UNIMPLEMENTED, "unimpl utf16")
 
 
-static void iter_init(Interp *, const String *src, String_iter *iter);
+static void iter_init(Interp *, const STRING *src, String_iter *iter);
 
 /*
 
@@ -322,7 +322,7 @@ utf16_set_position(Interp *interp, String_iter *i, UINTVAL n)
 
 #endif
 static void
-iter_init(Interp *interp, const String *src, String_iter *iter)
+iter_init(Interp *interp, const STRING *src, String_iter *iter)
 {
     iter->str = src;
     iter->bytepos = iter->charpos = 0;
@@ -337,9 +337,9 @@ iter_init(Interp *interp, const String *src, String_iter *iter)
 }
 
 ENCODING *
-Parrot_encoding_utf16_init(Interp *interp)
+Parrot_encoding_utf16_init(Interp *interp /*NN*/)
 {
-    ENCODING *return_encoding = Parrot_new_encoding(interp);
+    ENCODING * const return_encoding = Parrot_new_encoding(interp);
 
     static const ENCODING base_encoding = {
         "utf16",
@@ -360,7 +360,7 @@ Parrot_encoding_utf16_init(Interp *interp)
         bytes,
         iter_init
     };
-    memcpy(return_encoding, &base_encoding, sizeof (ENCODING));
+    STRUCT_COPY(return_encoding, &base_encoding);
     Parrot_register_encoding(interp, "utf16", return_encoding);
     return return_encoding;
 }

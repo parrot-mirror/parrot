@@ -15,7 +15,7 @@ These are parrot's generic encoding handling functions
 #define PARROT_NO_EXTERN_ENCODING_PTRS
 #include "parrot/parrot.h"
 
-/* HEADER: include/parrot/encoding.h */
+/* HEADERIZER TARGET: include/parrot/encoding.h */
 
 ENCODING *Parrot_default_encoding_ptr;
 ENCODING *Parrot_fixed_8_encoding_ptr;
@@ -175,7 +175,7 @@ Parrot_encoding_c_name(Interp *interp, INTVAL number_of_encoding)
 }
 
 static INTVAL
-register_encoding(Interp *interp, const char *encodingname /*NN*/,
+register_encoding(Interp *interp /*NN*/, const char *encodingname /*NN*/,
         ENCODING *encoding /*NN*/)
 {
     const int n = all_encodings->n_encodings;
@@ -204,7 +204,7 @@ register_encoding(Interp *interp, const char *encodingname /*NN*/,
 
 PARROT_API
 INTVAL
-Parrot_register_encoding(Interp *interp, const char *encodingname /*NN*/,
+Parrot_register_encoding(Interp *interp /*NN*/, const char *encodingname /*NN*/,
         ENCODING *encoding /*NN*/)
 {
     if (!all_encodings) {

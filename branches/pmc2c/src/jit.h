@@ -7,6 +7,10 @@
 #ifndef PARROT_JIT_H_GUARD
 #define PARROT_JIT_H_GUARD
 
+#if EXEC_CAPABLE
+#  include "parrot/exec.h"
+#endif
+
 typedef void (*jit_f)(Interp *interp, opcode_t *pc);
 
 
@@ -318,7 +322,7 @@ parrot_build_asm(Interp *interp,
 /*
  * NCI interface
  */
-void *Parrot_jit_build_call_func(Interp *, PMC *, String *);
+void *Parrot_jit_build_call_func(Interp *, PMC *, STRING *);
 
 #endif /* PARROT_JIT_H_GUARD */
 

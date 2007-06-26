@@ -15,7 +15,7 @@ src/vtables.c - Functions to build and manipulate vtables
 #include "parrot/parrot.h"
 #include "parrot/vtables.h"
 
-/* HEADER: include/parrot/vtables.h */
+/* HEADERIZER TARGET: include/parrot/vtables.h */
 
 /*
 
@@ -48,7 +48,7 @@ Parrot_clone_vtable(Interp *interp, const VTABLE *base_vtable /*NN*/)
 {
     VTABLE * const new_vtable = mem_allocate_typed(VTABLE);
     if (new_vtable) {
-        memcpy(new_vtable, base_vtable, sizeof (VTABLE));
+        STRUCT_COPY(new_vtable, base_vtable);
     }
     return new_vtable;
 }

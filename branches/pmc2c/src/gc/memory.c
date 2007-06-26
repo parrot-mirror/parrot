@@ -20,7 +20,7 @@ setup function to initialize the memory pools.
 #include "parrot/parrot.h"
 #include "parrot/memory.h"
 
-/* HEADER: include/parrot/memory.h */
+/* HEADERIZER TARGET: include/parrot/memory.h */
 
 /* for PANIC */
 #define interp NULL
@@ -43,7 +43,7 @@ mem_sys_allocate(size_t size)
     fprintf(stderr, "Allocated %i at %p\n", size, ptr);
 #endif
     if (!ptr)
-        PANIC("Out of mem");
+        PANIC(interp, "Out of mem");
     return ptr;
 }
 
@@ -57,7 +57,7 @@ mem__internal_allocate(size_t size, const char *file, int line)
             size, ptr, file, line);
 #endif
     if (!ptr)
-        PANIC("Out of mem");
+        PANIC(interp, "Out of mem");
     return ptr;
 }
 
@@ -79,7 +79,7 @@ mem_sys_allocate_zeroed(size_t size)
     fprintf(stderr, "Allocated %i at %p\n", size, ptr);
 #endif
     if (!ptr && size)
-        PANIC("Out of mem");
+        PANIC(interp, "Out of mem");
     return ptr;
 }
 
@@ -93,7 +93,7 @@ mem__internal_allocate_zeroed(size_t size, const char *file, int line)
             size, ptr, file, line);
 #endif
     if (!ptr && size)
-        PANIC("Out of mem");
+        PANIC(interp, "Out of mem");
     return ptr;
 }
 
@@ -119,7 +119,7 @@ mem__sys_realloc(void *from /*NULLOK*/, size_t size)
     fprintf(stderr, "Allocated %i at %p\n", size, ptr);
 #endif
     if (!ptr)
-         PANIC("Out of mem");
+         PANIC(interp, "Out of mem");
     return ptr;
 }
 
@@ -146,7 +146,7 @@ mem__sys_realloc_zeroed(void *from /*NULLOK*/, size_t size, size_t old_size)
     fprintf(stderr, "Allocated %i at %p\n", size, ptr);
 #endif
     if (!ptr)
-         PANIC("Out of mem");
+         PANIC(interp, "Out of mem");
 
     if (size > old_size)
         memset((char*)ptr + old_size, 0, size - old_size);
@@ -167,7 +167,7 @@ mem__internal_realloc(void *from /*NN*/, size_t size,
             size, ptr, file, line);
 #endif
     if (!ptr)
-        PANIC("Out of mem");
+        PANIC(interp, "Out of mem");
     return ptr;
 }
 #undef interp

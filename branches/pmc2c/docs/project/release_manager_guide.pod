@@ -43,6 +43,10 @@ Also update the version number, date, and your name in the
 following files: F<DEVELOPING>, F<docs/parrothist.pod>,
 and F<docs/ROADMAP.pod>
 
+Also update the URL in F<parrot.spec> for "Source0" to point to the
+current release manager's CPAN directory. [Really, we should provide a
+more standard location for the release tarball.]
+
 =item b
 
 Update F<ChangeLog>, F<NEWS> with the new version number and any other
@@ -197,7 +201,8 @@ Test locally in combust before pushing update out.
 =item 10.
 
 Close any release-related tickets in RT. If they are not yet resolved,
-migrate them to the next milestone release ticket.
+migrate the critical ones to the next milestone release ticket.
+Non-critical unresolved tickets can be simply unlinked.
 
 =item 11.
 
@@ -256,7 +261,7 @@ Tuesday of the month.
  - Feb 20th (0.4.9)  Patrick Michaud (pmichaud)
  - Mar 20th (0.4.10) Will Coleda (Coke)
  - Apr 17th (0.4.11) Matt Diephouse (mdiep)
- - May 15th, chromatic
+ - May 15th (0.4.12) chromatic
  - Jun 19th, Allison Randal
  - Jul 17th, Jerry Gay (particle)
  - Aug 21th, Patrick Michaud (pmichaud)

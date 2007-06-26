@@ -32,21 +32,19 @@ don't apply.
 #define HASH_ALLOC_SIZE(n) (N_BUCKETS(n) * sizeof (HashBucket) + \
                              (n) * sizeof (HashBucket *))
 
-/* HEADER: include/parrot/hash.h */
+/* HEADERIZER TARGET: include/parrot/hash.h */
 
 
 /*
 
 FUNCDOC:
-Return the hashed value of the key C<value>.
-
-see also string.c
+Return the hashed value of the key C<value>.  See also string.c.
 
 */
 
 
 static size_t
-key_hash_STRING(Interp *interp, STRING *value, size_t seed)
+key_hash_STRING(Interp *interp /*NN*/, STRING *value /*NN*/, size_t seed)
 {
     STRING * const s = value;
 
@@ -98,7 +96,7 @@ static size_t
 key_hash_cstring(Interp *interp, const void *value /*NN*/, size_t seed)
 {
     register size_t h = seed;
-    unsigned char * p = (unsigned char *) value;
+    const unsigned char * p = (const unsigned char *) value;
     while (*p) {
         h += h << 5;
         h += *p++;
@@ -222,7 +220,7 @@ C<pinfo> is the visit info, (see include/parrot/pmc_freeze.h>).
 */
 
 static void
-hash_thaw(Interp *interp, Hash *hash /*NN*/, visit_info* info)
+hash_thaw(Interp *interp, Hash *hash /*NN*/, visit_info* info /*NN*/)
 {
     size_t i;
     IMAGE_IO * const io = info->image_io;
@@ -675,7 +673,7 @@ Return the number of used entries in the hash.
 
 PARROT_API
 INTVAL
-parrot_hash_size(Interp *interp, Hash *hash /*NN*/)
+parrot_hash_size(Interp *interp, const Hash *hash /*NN*/)
     /*PURE, WARN_UNUSED*/
 {
     UNUSED(interp);
@@ -800,7 +798,7 @@ copied.
 
 PARROT_API
 HashBucket*
-parrot_hash_put(Interp *interp, Hash *hash, void *key, void *value)
+parrot_hash_put(Interp *interp, Hash *hash /*NN*/, void *key, void *value)
 {
     const UINTVAL hashval = (hash->hash_val)(interp, key, hash->seed);
     HashBucket   *bucket = hash->bi[hashval & hash->mask];
@@ -852,7 +850,7 @@ Deletes the key from the hash.
 
 PARROT_API
 void
-parrot_hash_delete(Interp *interp, Hash *hash, void *key)
+parrot_hash_delete(Interp *interp, Hash *hash /*NN*/, void *key)
 {
     HashBucket *bucket;
     HashBucket *prev = NULL;

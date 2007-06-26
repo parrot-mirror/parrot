@@ -29,7 +29,7 @@ void Parrot_register_core_pmcs(Interp *interp, PMC* registry);
 static const unsigned char* parrot_config_stored = NULL;
 static unsigned int parrot_config_size_stored = 0;
 
-/* HEADER: include/parrot/global_setup.h */
+/* HEADERIZER TARGET: include/parrot/global_setup.h */
 
 /*
 
@@ -117,7 +117,7 @@ init_world(Interp *interp /*NN*/)
     for (i = 0; i <= interp->n_vtable_max; i++)
         if (interp->vtables[i])
             Parrot_PCCINVOKE(interp, interp->vtables[i]->_namespace,
-                string_from_const_cstring(interp, "set_class", 0), "P->",
+                string_from_literal(interp, "set_class"), "P->",
                 VTABLE_get_pmc_keyed_int(interp, interp->pmc_proxies, i));
 
     iglobals = interp->iglobals;
