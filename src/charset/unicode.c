@@ -17,7 +17,7 @@ This file implements the charset functions for unicode data
 #include "ascii.h"
 #include "tables.h"
 
-/* HEADER: src/charset/unicode.h */
+/* HEADERIZER TARGET: src/charset/unicode.h */
 
 #ifdef EXCEPTION
 #  undef EXCEPTION
@@ -513,15 +513,15 @@ string_from_codepoint(Interp *interp, UINTVAL codepoint)
 }
 
 static size_t
-compute_hash(Interp *interp, STRING *src, size_t seed)
+compute_hash(Interp *interp, const STRING *src, size_t seed)
 {
     String_iter iter;
     size_t hashval = seed;
-    UINTVAL offs, c;
+    UINTVAL offs;
 
     ENCODING_ITER_INIT(interp, src, &iter);
     for (offs = 0; offs < src->strlen; ++offs) {
-        c = iter.get_and_advance(interp, &iter);
+        const UINTVAL c = iter.get_and_advance(interp, &iter);
         hashval += hashval << 5;
         hashval += c;
     }
@@ -558,7 +558,7 @@ Parrot_charset_unicode_init(Interp *interp)
         NULL
     };
 
-    memcpy(return_set, &base_set, sizeof (CHARSET));
+    STRUCT_COPY(return_set, &base_set);
     /*
      * for now use utf8
      * TODO replace it with a fixed uint_16 or uint_32 encoding

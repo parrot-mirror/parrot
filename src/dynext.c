@@ -15,7 +15,7 @@ src/dynext.c - Dynamic extensions to Parrot
 #include "parrot/parrot.h"
 #include "parrot/dynext.h"
 
-/* HEADER: include/parrot/dynext.h */
+/* HEADERIZER TARGET: include/parrot/dynext.h */
 
 /* _PARROTLIB is now the default */
 /*#define _PARROTLIB not working: "make testr" */
@@ -111,7 +111,7 @@ get_path(Interp *interp /*NN*/, STRING *lib, void **handle /*NN*/,
     if (lib == NULL) {
         *handle = Parrot_dlopen((char *)NULL);
         if (*handle) {
-            return string_from_const_cstring(interp, "", 0);
+            return string_from_literal(interp, "");
         }
         err = Parrot_dlerror();
         Parrot_warn(interp, PARROT_WARNINGS_DYNEXT_FLAG,
@@ -391,7 +391,7 @@ Parrot_load_lib(Interp *interp /*NN*/, STRING *lib /*NULLOK*/, PMC *initializer)
      * LOCK()
      */
     if (lib == NULL) {
-        wo_ext   = string_from_const_cstring(interp, "", 0);
+        wo_ext   = string_from_literal(interp, "");
         lib_name = NULL;
     }
     else {

@@ -23,8 +23,9 @@ structure of the frozen bytecode.
 #include "parrot/parrot.h"
 #include "parrot/embed.h"
 #include "parrot/packfile.h"
+#include "jit.h"
 
-/* HEADER: include/parrot/packfile.h */
+/* HEADERIZER TARGET: include/parrot/packfile.h */
 
 #include <assert.h>
 
@@ -1202,11 +1203,11 @@ PackFile_Segment_unpack(Interp *interp, PackFile_Segment *self /*NN*/,
 
     cursor = default_unpack(interp, self, cursor);
     if (!cursor)
-        return 0;
+        return NULL;
     if (f) {
         cursor = (f)(interp, self, cursor);
         if (!cursor)
-            return 0;
+            return NULL;
     }
     ALIGN_16(self->pf->src, cursor);
     return cursor;
@@ -1515,7 +1516,7 @@ Packs the directory C<self>.
 static opcode_t *
 directory_pack(Interp *interp, PackFile_Segment *self /*NN*/, opcode_t *cursor /*NN*/)
 {
-    PackFile_Directory *dir = (PackFile_Directory *)self;
+    PackFile_Directory * const dir = (PackFile_Directory *)self;
     size_t i;
     size_t align;
     const size_t num_segs = dir->num_segments;
@@ -1660,13 +1661,11 @@ default_pack(Interp *interp, const PackFile_Segment *self /*NN*/,
     *dest++ = self->itype;
     *dest++ = self->id;
     *dest++ = self->size;
-    if (self->size)
-        memcpy(dest, self->data, self->size * sizeof (opcode_t));
+    if (self->size) {
+        STRUCT_COPY_N(dest, self->data, self->size);
+    }
     return dest + self->size;
 }
-
-/* XXX Should be declared elsewhere */
-extern void Parrot_destroy_jit(void *ptr);
 
 /*
 
@@ -2141,20 +2140,20 @@ Parrot_debug_pc_to_filename(Interp *interp, PackFile_Debug *debug /*NN*/, opcode
         {
             switch (debug->mappings[i]->mapping_type) {
                 case PF_DEBUGMAPPINGTYPE_NONE:
-                    return string_from_const_cstring(interp,
-                        "(unknown file)", 0);
+                    return string_from_literal(interp,
+                        "(unknown file)");
                 case PF_DEBUGMAPPINGTYPE_FILENAME:
                     return PF_CONST(debug->code,
                         debug->mappings[i]->u.filename)->u.string;
                 case PF_DEBUGMAPPINGTYPE_SOURCESEG:
-                    return string_from_const_cstring(interp,
-                        "(unknown file)", 0);
+                    return string_from_literal(interp,
+                        "(unknown file)");
             }
         }
     }
 
     /* Otherwise, no mappings = no filename. */
-    return string_from_const_cstring(interp, "(unknown file)", 0);
+    return string_from_literal(interp, "(unknown file)");
 }
 
 /*
@@ -2823,6 +2822,7 @@ PackFile_Constant_new(Interp *interp)
 {
     PackFile_Constant * const self =
         mem_allocate_zeroed_typed(PackFile_Constant);
+    UNUSED(interp);
 
     self->type = PFC_NONE;
 

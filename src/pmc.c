@@ -16,7 +16,7 @@ src/pmc.c - The base vtable calling functions
 #include <assert.h>
 #include "pmc.str"
 
-/* HEADER: include/parrot/pmc.h */
+/* HEADERIZER TARGET: include/parrot/pmc.h */
 
 static PMC* get_new_pmc_header(Interp*, INTVAL base_type, UINTVAL flags);
 
@@ -166,7 +166,7 @@ get_new_pmc_header(Interp *interp /*NN*/, INTVAL base_type, UINTVAL flags)
          * Parrot_(classname)_class_init to init_world, or you forgot
          * to run 'make realclean' after adding a new PMC class.
          */
-        PANIC("Null vtable used");
+        PANIC(interp, "Null vtable used");
     }
 
     /* we only have one global Env object, living in the interp */
@@ -367,7 +367,7 @@ Returns the PMC type for C<name>.
 PARROT_API
 INTVAL
 pmc_type(Interp* interp /*NN*/, STRING *name /*NN*/)
-    /* PURE, WARN_UNUSED */
+    /* WARN_UNUSED */
 {
     PMC * const classname_hash = interp->class_hash;
     PMC * const item = (PMC *)VTABLE_get_pointer_keyed_str(interp, classname_hash, name);

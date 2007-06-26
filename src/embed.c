@@ -18,7 +18,7 @@ This file implements the Parrot embedding interface.
 #include "parrot/embed.h"
 #include "parrot/oplib/ops.h"
 
-/* HEADER: include/parrot/embed.h */
+/* HEADERIZER TARGET: include/parrot/embed.h */
 
 /*
 
@@ -428,7 +428,7 @@ Loads the C<PackFile> returned by C<Parrot_readbc()>.
 
 PARROT_API
 void
-Parrot_loadbc(Parrot_Interp interp /*NN*/, PackFile *pf /*NULLOK*/)
+Parrot_loadbc(Parrot_Interp interp /*NN*/, PackFile *pf /*NN*/)
 {
     if (pf == NULL) {
         PIO_eprintf(interp, "Invalid packfile\n");

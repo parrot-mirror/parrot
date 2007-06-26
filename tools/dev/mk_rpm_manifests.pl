@@ -1,16 +1,16 @@
 #! perl
 ################################################################################
-# Copyright (C) 2001-2003, The Perl Foundation.
-# $Id: mk_manifests.pl 14650 2006-09-18 19:20:45Z bernhard $
+# Copyright (C) 2001-2007, The Perl Foundation.
+# $Id$
 ################################################################################
 
 =head1 TITLE
 
-tools/dev/mk_manifests.pl - Generate MANIFEST.* files for building RPMs
+tools/dev/mk_rpm_manifests.pl - Generate MANIFEST.* files for building RPMs
 
 =head1 SYNOPSIS
 
-    % perl tools/dev/mk_manifests.pl [options]
+    % perl tools/dev/mk_rpm_manifests.pl [options]
 
 =head1 DESCRIPTION
 

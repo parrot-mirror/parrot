@@ -16,7 +16,7 @@ This file implements the charset functions for iso-8859-1 data
 #include "iso-8859-1.h"
 #include "ascii.h"
 
-/* HEADER: src/charset/iso-8859-1.h */
+/* HEADERIZER TARGET: src/charset/iso-8859-1.h */
 
 #ifdef EXCEPTION
 #  undef EXCEPTION
@@ -353,7 +353,7 @@ Parrot_charset_iso_8859_1_init(Interp *interp)
         NULL
     };
 
-    memcpy(return_set, &base_set, sizeof (CHARSET));
+    STRUCT_COPY(return_set, &base_set);
     return_set->preferred_encoding = Parrot_fixed_8_encoding_ptr;
     Parrot_register_charset(interp, "iso-8859-1", return_set);
     return return_set;
