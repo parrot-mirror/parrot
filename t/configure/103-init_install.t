@@ -5,9 +5,10 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests =>  2;
+use Test::More tests => 19;
 use Carp;
 use Cwd;
+use Data::Dumper;
 use File::Temp qw(tempdir);
 use lib qw( . lib ../lib ../../lib );
 use Parrot::BuildUtil;
@@ -26,11 +27,28 @@ runsteps() in order to verify that the non-defaults made it into the object.
 my $cwd = cwd();
 {
     my $tdir = tempdir();
+    my $tdir1 = tempdir();
 #    chdir $tdir or croak "Unable to change to tempdir";
     my $pkg = q{init::install};
     my $parrot_version = Parrot::BuildUtil::parrot_version();
     my $args = process_options( {
-        argv            => [ q{--prefix=$tdir} ],
+        argv            => [ 
+                            qq{--prefix=$tdir},
+                            qq{--exec-prefix=$tdir},
+                            qq{--bindir=$tdir1},
+                            qq{--sbindir=$tdir1},
+                            qq{--libexecdir=$tdir1},
+                            qq{--datadir=$tdir1},
+                            qq{--sysconfdir=$tdir1},
+                            qq{--sharedstatedir=$tdir1},
+                            qq{--localstatedir=$tdir1},
+                            qq{--libdir=$tdir1},
+                            qq{--includedir=$tdir1},
+                            qq{--oldincludedir=$tdir1},
+                            qq{--infodir=$tdir1},
+                            qq{--mandir=$tdir1},
+#                            qq{--doc_dir=$tdir1},
+                            ],
         script          => $0,
         parrot_version  => $parrot_version,
         svnid           => '$Id$',
@@ -50,6 +68,34 @@ my $cwd = cwd();
     ok($step->description(), "$step_name has description");
     my $ret = $step->runstep($conf);
     ok(defined $ret, "$step_name runstep() returned defined value");
+    is($conf->data->get('prefix'), $tdir,
+        "--prefix option confirmed");
+    is($conf->data->get('exec_prefix'), $tdir,
+        "--exec-prefix option confirmed");
+    is($conf->data->get('bindir'), $tdir1,
+        "--bindir option confirmed");
+    is($conf->data->get('sbindir'), $tdir1,
+        "--sbindir option confirmed");
+    is($conf->data->get('libexecdir'), $tdir1,
+        "--libexecdir option confirmed");
+    is($conf->data->get('datadir'), $tdir1,
+        "--datadir option confirmed");
+    is($conf->data->get('sharedstatedir'), $tdir1,
+        "--sharedstatedir option confirmed");
+    is($conf->data->get('localstatedir'), $tdir1,
+        "--localstatedir option confirmed");
+    is($conf->data->get('libdir'), $tdir1,
+        "--libdir option confirmed");
+    is($conf->data->get('includedir'), $tdir1,
+        "--includedir option confirmed");
+    is($conf->data->get('oldincludedir'), $tdir1,
+        "--oldincludedir option confirmed");
+    is($conf->data->get('infodir'), $tdir1,
+        "--infodir option confirmed");
+    is($conf->data->get('mandir'), $tdir1,
+        "--mandir option confirmed");
+#    is($conf->data->get('doc_dir'), $tdir1,
+#        "--doc_dir option confirmed");
 
 #    chdir $cwd or croak "Unable to change back";
 }
