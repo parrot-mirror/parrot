@@ -29,7 +29,15 @@ void Parrot_register_core_pmcs(Interp *interp, PMC* registry);
 static const unsigned char* parrot_config_stored = NULL;
 static unsigned int parrot_config_size_stored = 0;
 
-/* HEADER: include/parrot/global_setup.h */
+/* HEADERIZER TARGET: include/parrot/global_setup.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void parrot_set_config_hash_interpreter( Interp* interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: static */
+
 
 /*
 
@@ -40,6 +48,7 @@ will be used in subsequently created Interpreters
 
 */
 
+PARROT_API
 void
 Parrot_set_config_hash_internal(const unsigned char* parrot_config /*NN*/,
                                  unsigned int parrot_config_size)

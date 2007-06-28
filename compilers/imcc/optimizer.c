@@ -66,21 +66,69 @@
 /* buggy - turned off */
 #define  DO_LOOP_OPTIMIZATION 0
 
-static int strength_reduce(Interp *interp, IMC_Unit *);
-static int if_branch(Interp *, IMC_Unit *);
+/* HEADERIZER BEGIN: static */
 
-static int branch_branch(Interp *interp, IMC_Unit *);
-static int branch_reorg(Interp *interp, IMC_Unit *);
-static int unused_label(Interp *interp, IMC_Unit *);
-static int dead_code_remove(Interp *interp, IMC_Unit *);
-static int branch_cond_loop(Interp *interp, IMC_Unit *);
+static int _is_ins_save(
+    IMC_Unit * unit,
+    Instruction *check_ins,
+    SymReg *r,
+    int what );
 
-static int constant_propagation(Interp *interp, IMC_Unit *);
-static int used_once(Interp *, IMC_Unit *);
+static int branch_branch( Interp *interp, IMC_Unit * unit /*NN*/ )
+        __attribute__nonnull__(2);
+
+static int branch_cond_loop( Interp *interp, IMC_Unit * unit );
+static int branch_cond_loop_swap( Interp *interp,
+    IMC_Unit *unit,
+    Instruction *branch,
+    Instruction *start,
+    Instruction *cond );
+
+static int branch_reorg( Interp *interp, IMC_Unit * unit );
+static int check_clone(
+    Parrot_Interp interp,
+    IMC_Unit * unit,
+    Instruction *ins );
+
+static int clone_remove( Parrot_Interp interp, IMC_Unit * unit );
+static int constant_propagation( Interp *interp, IMC_Unit * unit );
+static int dead_code_remove( Interp *interp, IMC_Unit * unit );
+static int eval_ins( Interp *interp, char *op, size_t ops, SymReg **r );
+static Basic_block * find_outer( IMC_Unit * unit, Basic_block * blk );
+static int if_branch( Interp *interp /*NN*/, IMC_Unit *unit )
+        __attribute__nonnull__(1);
+
+static int is_ins_save(
+    Parrot_Interp interp,
+    IMC_Unit * unit,
+    Instruction *ins,
+    SymReg *r,
+    int what );
+
+static int is_invariant(
+    Parrot_Interp interp,
+    IMC_Unit * unit,
+    Instruction *ins );
+
+static int loop_one( Interp *interp /*NN*/, IMC_Unit *unit /*NN*/, int bnr )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int loop_optimization( Interp *interp, IMC_Unit * unit );
+static int max_loop_depth( IMC_Unit * unit );
+static int move_ins_out( Interp *interp,
+    IMC_Unit *unit /*NN*/,
+    Instruction **ins,
+    Basic_block *bb )
+        __attribute__nonnull__(2);
+
+static int strength_reduce( Interp *interp, IMC_Unit * unit );
+static int unused_label( Interp *interp, IMC_Unit * unit );
+static int used_once( Parrot_Interp interp, IMC_Unit * unit );
+/* HEADERIZER END: static */
 #if DO_LOOP_OPTIMIZATION
 static int loop_optimization(Interp *, IMC_Unit *);
 #endif
-static int clone_remove(Interp *, IMC_Unit *);
 
 /*
  * Handles optimizations occuring before the construction of the CFG.
@@ -150,21 +198,21 @@ optimize(Interp *interp /*NN*/, IMC_Unit *unit /*NN*/)
  * Get negated form of operator. If no negated form is known, return 0.
  */
 const char *
-get_neg_op(char *op, int *n)
+get_neg_op(const char *op /*NN*/, int *n /*NN*/)
 {
     static struct br_pairs {
         const char *op;
         const char *nop;
         int n;
     } br_pairs[] = {
-    { "if", "unless", 2 },
-    { "eq", "ne", 3 },
-    { "gt", "le", 3 },
-    { "ge", "lt", 3 },
+        { "if", "unless", 2 },
+        { "eq", "ne", 3 },
+        { "gt", "le", 3 },
+        { "ge", "lt", 3 },
     };
     unsigned int i;
-    for (i = 0; i < sizeof (br_pairs)/sizeof (br_pairs[0]); i++) {
-        *n= br_pairs[i].n;
+    for (i = 0; i < N_ELEMENTS(br_pairs); i++) {
+        *n = br_pairs[i].n;
         if (strcmp(op, br_pairs[i].op) == 0)
             return br_pairs[i].nop;
         if (strcmp(op, br_pairs[i].nop) == 0)
@@ -186,7 +234,7 @@ get_neg_op(char *op, int *n)
  *
  */
 static int
-if_branch(Interp *interp, IMC_Unit * unit)
+if_branch(Interp *interp /*NN*/, IMC_Unit *unit)
 {
     Instruction *ins, *last;
     int reg, changed = 0;
@@ -200,12 +248,12 @@ if_branch(Interp *interp, IMC_Unit * unit)
                 (ins->type & IF_goto) &&        /* branch L2*/
                 !strcmp(ins->op, "branch") &&
                 (reg = get_branch_regno(last)) >= 0) {
-            SymReg * br_dest = last->r[reg];
+            SymReg * const br_dest = last->r[reg];
             if (ins->next &&
                     (ins->next->type & ITLABEL) &&    /* L1 */
                     ins->next->r[0] == br_dest) {
                 const char * neg_op;
-                SymReg * go = get_branch_reg(ins);
+                SymReg * const go = get_branch_reg(ins);
                 int args;
 
                 IMCC_debug(interp, DEBUG_OPT1,"if_branch %s ... %s\n",
@@ -576,7 +624,7 @@ next_constant:;
  * rewrite e.g. add_n_ic => add_n_nc
  */
 Instruction *
-IMCC_subst_constants_umix(Interp *interp, IMC_Unit * unit, char *name,
+IMCC_subst_constants_umix(Interp *interp, IMC_Unit * unit, const char *name /*NN*/,
         SymReg **r, int n)
 {
     Instruction *tmp;
@@ -587,7 +635,7 @@ IMCC_subst_constants_umix(Interp *interp, IMC_Unit * unit, char *name,
     char b[128];
 
     tmp = NULL;
-    for (i = 0; i < sizeof (ops)/sizeof (ops[0]); i++) {
+    for (i = 0; i < N_ELEMENTS(ops); i++) {
         if (n == 3 &&
                 r[0]->set == 'N' &&
                 r[1]->type == VTCONST &&
@@ -683,8 +731,8 @@ eval_ins(Interp *interp, char *op, size_t ops, SymReg **r)
  */
 
 Instruction *
-IMCC_subst_constants(Interp *interp, IMC_Unit * unit, char *name,
-        SymReg **r, int n, int *ok)
+IMCC_subst_constants(Interp *interp, IMC_Unit * unit, const char *name /*NN*/,
+        SymReg **r, int n, int *ok /*NN*/)
 {
     Instruction *tmp;
     const char *ops[] = {
@@ -732,7 +780,7 @@ IMCC_subst_constants(Interp *interp, IMC_Unit * unit, char *name,
 
     tmp = NULL;
     found = 0;
-    for (i = 0; i < sizeof (ops)/sizeof (ops[0]); i++) {
+    for (i = 0; i < N_ELEMENTS(ops); i++) {
         if (n == 4 &&
                 r[1]->type & (VTCONST|VT_CONSTP) &&
                 r[2]->type & (VTCONST|VT_CONSTP) &&
@@ -747,7 +795,7 @@ IMCC_subst_constants(Interp *interp, IMC_Unit * unit, char *name,
             break;
         }
     }
-    for (i = 0; !found && i < sizeof (ops2)/sizeof (ops2[0]); i++) {
+    for (i = 0; !found && i < N_ELEMENTS(ops2); i++) {
         /*
          * abs_i_ic ...
          */
@@ -761,7 +809,7 @@ IMCC_subst_constants(Interp *interp, IMC_Unit * unit, char *name,
             break;
         }
     }
-    for (i = 0; !found && i < sizeof (ops3)/sizeof (ops3[0]); i++) {
+    for (i = 0; !found && i < N_ELEMENTS(ops3); i++) {
         /*
          * eq_xc_xc_labelc ...
          */
@@ -776,7 +824,7 @@ IMCC_subst_constants(Interp *interp, IMC_Unit * unit, char *name,
             break;
         }
     }
-    for (i = 0; !found && i < sizeof (ops4)/sizeof (ops4[0]); i++) {
+    for (i = 0; !found && i < N_ELEMENTS(ops4); i++) {
         /*
          * if_xc_labelc, unless
          */
@@ -1431,7 +1479,7 @@ find_outer(IMC_Unit * unit, Basic_block * blk)
 
 /* move the instruction ins before loop in bb */
 static int
-move_ins_out(Interp *interp, IMC_Unit * unit,
+move_ins_out(Interp *interp, IMC_Unit *unit /*NN*/,
                      Instruction **ins, Basic_block *bb)
 {
     Basic_block *pred;
@@ -1473,9 +1521,9 @@ move_ins_out(Interp *interp, IMC_Unit * unit,
 }
 
 static int
-loop_one(Interp *interp, IMC_Unit * unit, int bnr)
+loop_one(Interp *interp /*NN*/, IMC_Unit *unit /*NN*/, int bnr)
 {
-    Basic_block *bb = unit->bb_list[bnr];
+    Basic_block * const bb = unit->bb_list[bnr];
     Instruction *ins;
     int changed = 0;
 

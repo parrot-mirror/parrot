@@ -81,17 +81,12 @@ Instruction * _mk_instruction(const char *,const char *, int n, SymReg **, int);
 #else
 #  define _mk_instruction(a,b,n,c,d) dont_use(a,b)
 #endif
-Instruction * INS(Interp *, struct _IMC_Unit *, char * name,
-        const char *fmt, SymReg **regs, int nargs, int keyv, int emit);
-Instruction * INS_LABEL(Interp * interp, struct _IMC_Unit *, SymReg * r0, int emit);
-Instruction * iNEW(Interp *, struct _IMC_Unit *, SymReg * r0, char * type,
-        SymReg *init, int emit);
 
 /* Globals */
 
 typedef struct _emittert {
     int (*open)(Interp *, void *param);
-    int (*emit)(Interp *, void *param, struct _IMC_Unit *, Instruction *ins);
+    int (*emit)(Interp *, void *param, struct _IMC_Unit *, const Instruction *ins);
     int (*new_sub)(Interp *, void *param, struct _IMC_Unit *);
     int (*end_sub)(Interp *, void *param, struct _IMC_Unit *);
     int (*close)(Interp *, void *param);
@@ -112,11 +107,15 @@ PARROT_API int emit_open( Interp *interp /*NN*/, int type, void *param )
         __attribute__nonnull__(1);
 
 Instruction * _mk_instruction(
-    const char *op,
-    const char * fmt,
+    const char *op /*NN*/,
+    const char *fmt /*NN*/,
     int n,
     SymReg ** r,
-    int flags );
+    int flags )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__malloc__
+        __attribute__warn_unused_result__;
 
 Instruction * delete_ins(
     struct _IMC_Unit *unit /*NN*/,
@@ -125,9 +124,10 @@ Instruction * delete_ins(
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-Instruction * emitb( Interp *interp,
+Instruction * emitb( Interp *interp /*NN*/,
     struct _IMC_Unit *unit /*NULLOK*/,
-    Instruction *i /*NULLOK*/ );
+    Instruction *i /*NULLOK*/ )
+        __attribute__nonnull__(1);
 
 void free_ins( Instruction *ins /*NN*/ )
         __attribute__nonnull__(1);
@@ -138,18 +138,22 @@ SymReg * get_branch_reg( const Instruction *ins /*NN*/ )
 int get_branch_regno( const Instruction *ins /*NN*/ )
         __attribute__nonnull__(1);
 
-void imcc_init_tables( Interp *interp );
+void imcc_init_tables( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
 int ins_print( Interp *interp /*NN*/,
     FILE *fd /*NN*/,
-    Instruction *ins /*NN*/ )
+    const Instruction *ins /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-int ins_reads2( Instruction *ins /*NN*/, int t )
+int ins_reads2( const Instruction *ins /*NN*/, int t )
         __attribute__nonnull__(1);
 
-int ins_writes2( Instruction *ins, int t );
+int ins_writes2( const Instruction *ins /*NN*/, int t )
+        __attribute__nonnull__(1);
+
 void insert_ins(
     struct _IMC_Unit *unit /*NN*/,
     Instruction *ins /*NULLOK*/,
@@ -170,9 +174,10 @@ int instruction_writes(
 Instruction * move_ins(
     struct _IMC_Unit *unit /*NN*/,
     Instruction *ins /*NN*/,
-    Instruction *to )
+    Instruction *to /*NN*/ )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 void prepend_ins(
     struct _IMC_Unit *unit /*NN*/,

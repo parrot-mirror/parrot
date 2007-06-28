@@ -17,15 +17,30 @@ This is used by C<parrot>.
 #include "parrot/parrot.h"
 #include "parrot/longopt.h"
 
-/* HEADER: include/parrot/longopt.h */
+/* HEADERIZER TARGET: include/parrot/longopt.h */
 
-static int longopt_get_longopt(Parrot_Interp, int argc, char* argv[],
-                               const struct longopt_opt_decl options[],
-                               struct longopt_opt_info* info_buf);
+/* HEADERIZER BEGIN: static */
 
-static int longopt_get_shortopt(Parrot_Interp, int argc, char* argv[],
-                                const struct longopt_opt_decl options[],
-                                struct longopt_opt_info* info_buf);
+static int longopt_get_longopt( Interp *interp /*NN*/,
+    int argc,
+    char* argv[] /*NN*/,
+    const struct longopt_opt_decl options[] /*NN*/,
+    struct longopt_opt_info* info_buf )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
+static int longopt_get_shortopt( Interp *interp /*NN*/,
+    int argc,
+    char* argv[] /*NN*/,
+    const struct longopt_opt_decl options[] /*NN*/,
+    struct longopt_opt_info* info_buf /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5);
+
+/* HEADERIZER END: static */
 
 static char longopt_error_buffer[512];
 

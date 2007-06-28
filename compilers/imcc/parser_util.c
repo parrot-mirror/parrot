@@ -25,12 +25,52 @@
 #include "parrot/builtin.h"
 #include "pbc.h"
 #include "parser.h"
+#include "optimizer.h"
 
 /* HEADERIZER TARGET: compilers/imcc/imc.h */
 
 /* HEADERIZER BEGIN: static */
-static const char *try_rev_cmp(Parrot_Interp, IMC_Unit *unit, char *name,
-                               SymReg **r);
+
+static int change_op( Interp *interp,
+    IMC_Unit *unit,
+    SymReg **r,
+    int num,
+    int emit );
+
+static void * imcc_compile_file(
+    Parrot_Interp interp,
+    const char *fullname,
+    STRING **error_message );
+
+static int is_infix( const char *name, int n, SymReg **r /*NN*/ )
+        __attribute__nonnull__(3);
+
+static Instruction * maybe_builtin( Interp *interp,
+    IMC_Unit *unit,
+    const char *name /*NN*/,
+    SymReg **r,
+    int n )
+        __attribute__nonnull__(3);
+
+static char * to_infix( Interp *interp,
+    const char *name,
+    SymReg **r,
+    int *n,
+    int mmd_op );
+
+static const char * try_rev_cmp(
+    Parrot_Interp interp,
+    IMC_Unit * unit,
+    const char *name,
+    SymReg ** r );
+
+static Instruction * var_arg_ins( Interp *interp,
+    IMC_Unit * unit,
+    const char *name,
+    SymReg **r,
+    int n,
+    int emit );
+
 /* HEADERIZER END: static */
 
 /*
@@ -54,7 +94,7 @@ static INTVAL eval_nr = 0;
  * best would be to have a flag in core.ops, where a PMC type is expected
  */
 Instruction *
-iNEW(Interp *interp, struct _IMC_Unit *unit, SymReg *r0,
+iNEW(Interp *interp, IMC_Unit *unit, SymReg *r0,
         char *type, SymReg *init, int emit)
 {
     char fmt[256];
@@ -100,7 +140,7 @@ iNEW(Interp *interp, struct _IMC_Unit *unit, SymReg *r0,
  * out, but please don't remove it. :) -Mel
  */
 void
-op_fullname(char * dest, const char * name, SymReg * args[],
+op_fullname(char *dest /*NN*/, const char *name /*NN*/, SymReg * args[],
         int narg, int keyvec)
 {
     int i;
@@ -159,8 +199,8 @@ op_fullname(char * dest, const char * name, SymReg * args[],
  * Return opcode value for op name
  */
 int
-check_op(Interp *interp, char *fullname,
-        char *name, SymReg *r[], int narg, int keyvec)
+check_op(Interp *interp /*NN*/, char *fullname /*NN*/,
+        const char *name, SymReg *r[], int narg, int keyvec)
 {
     int op;
 
@@ -170,7 +210,7 @@ check_op(Interp *interp, char *fullname,
 }
 
 static Instruction *
-maybe_builtin(Interp *interp, IMC_Unit *unit, char *name,
+maybe_builtin(Interp *interp, IMC_Unit *unit, const char *name /*NN*/,
         SymReg **r, int n)
 {
     Instruction *ins;
@@ -197,10 +237,9 @@ maybe_builtin(Interp *interp, IMC_Unit *unit, char *name,
     is_void = Parrot_builtin_is_void(interp, bi);
     meth = mk_sub_address(interp, str_dup(name));
     if (is_class_meth) {    /* ParrotIO.open() */
-        const char *ns = Parrot_builtin_get_c_namespace(interp, bi);
-        SymReg *ns_sym;
+        const char * const ns = Parrot_builtin_get_c_namespace(interp, bi);
+        SymReg * const ns_sym = mk_const(interp, str_dup(ns), 'S');
 
-        ns_sym = mk_const(interp, str_dup(ns), 'S');
         ins = IMCC_create_itcall_label(interp);
         sub = ins->r[0];
         IMCC_itcall_sub(interp, meth);
@@ -244,7 +283,7 @@ is_op(Interp *interp, const char *name)
 
 /* sub x, y, z  => infix .MMD_SUBTRACT, x, y, z */
 static char *
-to_infix(Interp *interp, char *name, SymReg **r, int *n, int mmd_op)
+to_infix(Interp *interp, const char *name, SymReg **r, int *n, int mmd_op)
 {
     SymReg *mmd;
     char buf[10];
@@ -277,7 +316,7 @@ to_infix(Interp *interp, char *name, SymReg **r, int *n, int mmd_op)
 }
 
 static int
-is_infix(const char *name, int n, SymReg **r)
+is_infix(const char *name, int n, SymReg **r /*NN*/)
 {
     if (n < 2 || r[0]->set != 'P')
         return -1;
@@ -339,7 +378,7 @@ is_infix(const char *name, int n, SymReg **r)
 }
 
 static Instruction *
-var_arg_ins(Interp *interp, IMC_Unit * unit, char *name,
+var_arg_ins(Interp *interp, IMC_Unit * unit, const char *name,
         SymReg **r, int n, int emit)
 {
     int op;
@@ -374,7 +413,7 @@ var_arg_ins(Interp *interp, IMC_Unit * unit, char *name,
  * s. e.g. imc.c for usage
  */
 Instruction *
-INS(Interp *interp, IMC_Unit * unit, char *name,
+INS(Interp *interp, IMC_Unit * unit, const char *name,
         const char *fmt, SymReg **r, int n, int keyvec, int emit)
 {
     char fullname[64];
@@ -935,7 +974,7 @@ change_op(Interp *interp, IMC_Unit *unit, SymReg **r, int num, int emit)
  *      acos_n_i   => acos_n_n
  */
 int
-try_find_op(Parrot_Interp interp, IMC_Unit * unit, char *name,
+try_find_op(Interp *interp /*NN*/, IMC_Unit * unit, const char *name /*NN*/,
         SymReg ** r, int n, int keyvec, int emit)
 {
     char fullname[64];
@@ -1017,7 +1056,7 @@ try_find_op(Parrot_Interp interp, IMC_Unit * unit, char *name,
 }
 
 static const char *
-try_rev_cmp(Parrot_Interp interp, IMC_Unit * unit, char *name,
+try_rev_cmp(Parrot_Interp interp, IMC_Unit * unit, const char *name,
         SymReg ** r)
 {
     static struct br_pairs {
@@ -1036,7 +1075,7 @@ try_rev_cmp(Parrot_Interp interp, IMC_Unit * unit, char *name,
 
     UNUSED(interp);
     UNUSED(unit);
-    for (i = 0; i < sizeof (br_pairs)/sizeof (br_pairs[0]); i++) {
+    for (i = 0; i < N_ELEMENTS(br_pairs); i++) {
         if (strcmp(name, br_pairs[i].op) == 0) {
             to_swap =  br_pairs[i].to_swap;
             if (r[to_swap + 1]->set == 'P')
@@ -1147,7 +1186,7 @@ multi_keyed(Interp *interp, IMC_Unit * unit, char *name,
 }
 
 int
-imcc_fprintf(Interp *interp, FILE *fd, const char *fmt, ...)
+imcc_fprintf(Interp *interp /*NN*/, FILE *fd /*NN*/, const char *fmt /*NN*/, ...)
 {
     va_list ap;
     int len;
@@ -1159,7 +1198,7 @@ imcc_fprintf(Interp *interp, FILE *fd, const char *fmt, ...)
 }
 
 int
-imcc_vfprintf(Interp *interp, FILE *fd, const char *format, va_list ap)
+imcc_vfprintf(Interp *interp /*NN*/, FILE *fd /*NN*/, const char *format /*NN*/, va_list ap)
 {
     int len;
     const char *cp;
@@ -1249,10 +1288,12 @@ imcc_vfprintf(Interp *interp, FILE *fd, const char *format, va_list ap)
  */
 
 char *
-str_dup(const char * old)
+str_dup(const char *old /*NN*/)
+    /* MALLOC, WARN_UNUSED */
 {
-    char * copy = mem_sys_allocate(strlen(old) + 1);
-    strcpy(copy, old);
+    const size_t bytes = strlen(old) + 1;
+    char * const copy = mem_sys_allocate(bytes);
+    memcpy(copy, old, bytes);
 #ifdef MEMDEBUG
     debug(interp, 1,"line %d str_dup %s [%x]\n", line, old, copy);
 #endif
@@ -1260,12 +1301,15 @@ str_dup(const char * old)
 }
 
 char *
-str_cat(const char * s1, const char * s2)
+str_cat(const char *s1 /*NN*/, const char *s2 /*NN*/)
 {
-    int len = strlen(s1) + strlen(s2) + 1;
-    char * s3 = mem_sys_allocate(len);
-    strcpy(s3, s1);
-    strcat(s3, s2);
+    const size_t len1 = strlen(s1);
+    const size_t len2 = strlen(s2);
+
+    char * const s3 = mem_sys_allocate(len1 + len2 + 1);
+    memcpy(s3, s1, len1);
+    memcpy(s3+len1, s2, len2+1);
+
     return s3;
 }
 

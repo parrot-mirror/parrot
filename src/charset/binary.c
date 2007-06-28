@@ -20,7 +20,56 @@ This file implements the charset functions for binary data
 #include "ascii.h"
 #include "binary.h"
 
-/* HEADER: src/charset/binary.h */
+/* HEADERIZER TARGET: src/charset/binary.h */
+
+/* HEADERIZER BEGIN: static */
+
+static INTVAL compare( Interp *interp, const STRING *lhs, const STRING *rhs );
+static STRING* compose( Interp *interp, STRING *source_string );
+static INTVAL cs_index( Interp *interp,
+    STRING *source_string,
+    STRING *search_string,
+    UINTVAL offset );
+
+static INTVAL cs_rindex( Interp *interp,
+    STRING *source_string,
+    STRING *search_string,
+    UINTVAL offset );
+
+static STRING* decompose( Interp *interp, STRING *source_string );
+static void downcase( Interp *interp, STRING *source_string );
+static void downcase_first( Interp *interp, STRING *source_string );
+static INTVAL find_cclass( Interp *interp,
+    INTVAL flags,
+    STRING *source_string,
+    UINTVAL offset,
+    UINTVAL count );
+
+static INTVAL find_not_cclass( Interp *interp,
+    INTVAL flags,
+    STRING *source_string,
+    UINTVAL offset,
+    UINTVAL count );
+
+static INTVAL is_cclass( Interp *interp,
+    INTVAL flags,
+    STRING *source_string,
+    UINTVAL offset );
+
+static void set_graphemes( Interp *interp,
+    STRING *source_string,
+    UINTVAL offset,
+    UINTVAL replace_count,
+    STRING *insert_string );
+
+static STRING * string_from_codepoint( Interp *interp, UINTVAL codepoint );
+static void titlecase( Interp *interp, STRING *source_string );
+static void titlecase_first( Interp *interp, STRING *source_string );
+static STRING* to_charset( Interp *interp, STRING *src, STRING *dest );
+static void upcase( Interp *interp, STRING *source_string );
+static void upcase_first( Interp *interp, STRING *source_string );
+static UINTVAL validate( Interp *interp, STRING *source_string );
+/* HEADERIZER END: static */
 
 #ifdef EXCEPTION
 #  undef EXCEPTION
@@ -45,7 +94,7 @@ to_charset(Interp *interp, STRING *src, STRING *dest)
                     src->charset, Parrot_binary_charset_ptr))) {
          return conversion_func(interp, src, dest);
     }
-    internal_exception(UNIMPLEMENTED, "to_charset for binary not implemented");
+    real_exception(interp, NULL, UNIMPLEMENTED, "to_charset for binary not implemented");
     return NULL;
 }
 

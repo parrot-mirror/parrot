@@ -18,9 +18,79 @@ UTF-8 (L<http://www.utf-8.com/>).
 #include "../unicode.h"
 #include "utf8.h"
 
-/* HEADER: src/encodings/utf8.h */
+/* HEADERIZER TARGET: src/encodings/utf8.h */
 
-#define UNIMPL internal_exception(UNIMPLEMENTED, "unimpl utf8")
+/* HEADERIZER BEGIN: static */
+
+static void become_encoding( Interp *interp, STRING *src );
+static UINTVAL bytes( Interp *interp, STRING *src );
+static UINTVAL codepoints( Interp *interp, STRING *src );
+static UINTVAL get_byte( Interp *interp, const STRING *src, UINTVAL offset );
+static STRING * get_bytes( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count );
+
+static STRING * get_bytes_inplace( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *return_string );
+
+static UINTVAL get_codepoint( Interp *interp,
+    const STRING *src,
+    UINTVAL offset );
+
+static STRING * get_codepoints( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count );
+
+static STRING * get_codepoints_inplace( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *return_string );
+
+static void iter_init( Interp *interp, const STRING *src, String_iter *iter );
+static void set_byte( Interp *interp,
+    const STRING *src,
+    UINTVAL offset,
+    UINTVAL byte );
+
+static void set_bytes( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *new_bytes );
+
+static void set_codepoint( Interp *interp,
+    STRING *src /*NN*/,
+    UINTVAL offset,
+    UINTVAL codepoint )
+        __attribute__nonnull__(2);
+
+static void set_codepoints( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *new_codepoints );
+
+static STRING * to_encoding( Interp *interp, STRING *src, STRING *dest );
+static UINTVAL utf8_characters( const utf8_t *ptr, UINTVAL byte_len );
+static UINTVAL utf8_decode( const utf8_t *ptr );
+static UINTVAL utf8_decode_and_advance( Interp *interp, String_iter *i );
+static void * utf8_encode( void *ptr, UINTVAL c );
+static void utf8_encode_and_advance( Interp *interp,
+    String_iter *i,
+    UINTVAL c );
+
+static void utf8_set_position( Interp *interp, String_iter *i, UINTVAL pos );
+static const void * utf8_skip_backward( const void *ptr, UINTVAL n );
+static const void * utf8_skip_forward( const void *ptr, UINTVAL n );
+/* HEADERIZER END: static */
+
+#define UNIMPL real_exception(interp, NULL, UNIMPLEMENTED, "unimpl utf8")
 
 const char Parrot_utf8skip[256] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,     /* ascii */
@@ -214,17 +284,17 @@ utf8_decode_and_advance(Interp *interp, String_iter *i)
         for (len--; len; len--) {
             u8ptr++;
             if (!UTF8_IS_CONTINUATION(*u8ptr)) {
-                internal_exception(MALFORMED_UTF8, "Malformed UTF-8 string\n");
+                real_exception(interp, NULL, MALFORMED_UTF8, "Malformed UTF-8 string\n");
             }
             c = UTF8_ACCUMULATE(c, *u8ptr);
         }
 
         if (UNICODE_IS_SURROGATE(c)) {
-            internal_exception(MALFORMED_UTF8, "Surrogate in UTF-8 string\n");
+            real_exception(interp, NULL, MALFORMED_UTF8, "Surrogate in UTF-8 string\n");
         }
     }
     else if (!UNICODE_IS_INVARIANT(c)) {
-        internal_exception(MALFORMED_UTF8, "Malformed UTF-8 string\n");
+        real_exception(interp, NULL, MALFORMED_UTF8, "Malformed UTF-8 string\n");
     }
     else {
         i->bytepos++;
@@ -371,7 +441,7 @@ get_byte(Interp *interp, const STRING *src, UINTVAL offset)
 {
     unsigned char *contents = (unsigned char *)src->strstart;
     if (offset >= src->bufused) {
-/*        internal_exception(0,
+/*        real_exception(interp, NULL, 0,
                 "get_byte past the end of the buffer (%i of %i)",
                 offset, src->bufused);*/
         return 0;
@@ -385,7 +455,7 @@ set_byte(Interp *interp, const STRING *src,
 {
     unsigned char *contents;
     if (offset >= src->bufused) {
-        internal_exception(0, "set_byte past the end of the buffer");
+        real_exception(interp, NULL, 0, "set_byte past the end of the buffer");
     }
     contents = (unsigned char *)src->strstart;
     contents[offset] = (unsigned char)byte;

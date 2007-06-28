@@ -4,6 +4,7 @@
 
 use strict;
 use warnings;
+use Carp qw( confess );
 
 =head1 NAME
 
@@ -32,7 +33,7 @@ on the command line.
 
 =head1 NOTES
 
-* the .c files MUST have a /* HEADER: foo/bar.h */ directive in them
+* the .c files MUST have a /* HEADERIZER TARGET: foo/bar.h */ directive in them
 
 * Support for multiple .c files pointing at the same .h file
 
@@ -73,24 +74,10 @@ main();
 
 =cut
 
-sub open_file {
-    my $direction = shift;
-    my $filename  = shift;
-
-    my %actions = (
-        '<'  => 'Reading',
-        '>'  => 'Writing',
-        '>>' => 'Appending',
-    );
-
-    my $action = $actions{$direction} or die "Invalid direction '$direction'";
-    print "$action $filename\n" if $opt{verbose};
-    open my $fh, $direction, $filename or die "$action $filename: $!\n";
-    return $fh;
-}
-
-sub extract_functions {
+sub extract_function_declarations {
     my $text = shift;
+
+    $text =~ s[/\*\s*HEADERIZER STOP.+][]s;
 
     # Strip blocks of comments
     $text =~ s[^/\*.*?\*/][]mxsg;
@@ -136,7 +123,7 @@ sub extract_functions {
     return @funcs;
 }
 
-sub function_components {
+sub function_components_from_declaration {
     my $proto = shift;
 
     my @lines = split( /\n/, $proto );
@@ -162,16 +149,15 @@ sub function_components {
             or die "Bad parms in $proto";
     }
 
-    my $static;
-    $returntype =~ s/^((static)\s+)?//i;
-    $static = $2 || '';
+    my $is_static = 0;
+    $is_static = $2 if $returntype =~ s/^((static)\s+)?//i;
 
     # No inline in the header file
     $returntype =~ s/^PARROT_INLINE\s+//;
 
-    die "Impossible to have both static and PARROT_API" if $parrot_api && $static;
+    die "Impossible to have both static and PARROT_API" if $parrot_api && $is_static;
 
-    return [ $parrot_api, $static, $returntype, $funcname, $funcflags, @parms ];
+    return ( $is_static, $parrot_api, $returntype, $funcname, $funcflags, @parms );
 }
 
 sub attrs_from_args {
@@ -218,7 +204,7 @@ sub attrs_from_funcflags {
             push( @attrs, '__attribute__malloc__' );
         }
         else {
-            die qq{Unknown function flag "$funcflags" -> "$opt"\n};
+            confess( qq{Unknown function flag "$funcflags" -> "$opt"\n} );
         }
     }
 
@@ -230,13 +216,13 @@ sub make_function_decls {
 
     my @decls;
     foreach my $func ( @funcs ) {
-        my ($parrot_api, $static, $ret_type, $funcname, $funcflags, @args) = @{$func};
-        next if $static;
+        my ($is_static, $parrot_api, $ret_type, $funcname, $funcflags, @args) = @{$func};
 
         my $multiline = 0;
 
         my $decl = sprintf( "%s %s(", $ret_type, $funcname );
         $decl = "PARROT_API $decl" if $parrot_api;
+        $decl = "static $decl" if $is_static;
 
         my @attrs = attrs_from_args( @args );
         push( @attrs, attrs_from_funcflags( $funcflags ) );
@@ -274,7 +260,8 @@ sub main {
     my $nfuncs = 0;
     my %ofiles = map {($_,1)} @ARGV;
     my @ofiles = sort keys %ofiles;
-    my %files;
+    my %cfiles;
+    my %cfiles_with_statics;
 
     # Walk the object files and find corresponding source (either .c or .pmc)
     for my $ofile (@ofiles) {
@@ -288,64 +275,149 @@ sub main {
 
         my $sourcefile = -f $pmcfile ? $pmcfile : $cfile;
 
-        my $fh = open_file( '<', $cfile );
-        my $source = do { local $/; <$fh> };
-        close $fh;
-
-        print "=== $cfile ===\n";
+        my $source = read_file( $cfile );
 
         die "can't find HEADER directive in '$cfile'"
-            unless $source =~ m#/\*\s+HEADER(?:IZER TARGET)?:\s+([^*]+?)\s+\*/#s;
+            unless $source =~ m#/\*\s+HEADERIZER TARGET:\s+([^*]+?)\s+\*/#s;
         my $hfile = $1;
         next if $hfile eq 'none';
         die "'$hfile' not found (referenced from '$cfile')" unless -f $hfile;
 
-        my @funcs = extract_functions($source);
-
-        for my $func (@funcs) {
-            push( @{ $files{$hfile}->{$cfile} }, function_components($func) );
+        my @decls = extract_function_declarations($source);
+        for my $decl (@decls) {
+            my @components = function_components_from_declaration($decl);
+            push( @{ $cfiles{$hfile}->{$cfile} }, [@components] );
+            push( @{ $cfiles_with_statics{ $cfile } }, [@components] ) if $components[0];
             ++$nfuncs;
         }
     }    # for @cfiles
-    my $nfiles = scalar keys %files;
-    print "$nfuncs funcs in $nfiles files\n";
+    my $nfiles = scalar keys %cfiles;
+    print "$nfuncs funcs in $nfiles C files\n";
 
-    for my $hfile ( sort keys %files ) {
-        my $cfiles = $files{$hfile};
+    # Update all the .h files
+    for my $hfile ( sort keys %cfiles ) {
+        my $cfiles = $cfiles{$hfile};
 
-        open my $FILE, '<', $hfile or die "couldn't read '$hfile': $!";
-        my $header = do { local $/ = undef; <$FILE> };    # slurp
-        close $FILE;
+        my $header = read_file( $hfile );
 
         for my $cfile ( sort keys %{$cfiles} ) {
-            my $funcs = $cfiles->{$cfile};
-            my @funcs = sort api_first_then_alpha @{$funcs};
+            my @funcs = @{$cfiles->{$cfile}};
+            @funcs = grep { not $_->[0] } @funcs; # skip statics
+            $header = replace_headerized_declarations( $header, $cfile, $hfile, @funcs );
+        }
 
-            my @function_decls = make_function_decls( @funcs );
+        write_file( $hfile, $header );
+    }
 
-            my $function_decls = join( "\n", @function_decls );
-            my $STARTMARKER   = qr#/\* HEADERIZER BEGIN: $cfile \*/\n#;
-            my $ENDMARKER     = qr#/\* HEADERIZER END: $cfile \*/\n?#;
-            $header =~ s#($STARTMARKER)(?:.*?)($ENDMARKER)#$1\n$function_decls\n$2#s
-                or die "Need begin/end HEADERIZER markers for $cfile in $hfile\n";
-        }    # for %cfiles
+    # Update all the .c files in place
+    for my $cfile ( sort keys %cfiles_with_statics ) {
+        my @funcs = @{$cfiles_with_statics{ $cfile }};
+        @funcs = grep { $_->[0] } @funcs; # statics only
 
-        open $FILE, '>', $hfile or die "couldn't write '$hfile': $!";
-        print $FILE $header;
-        close $FILE;
-        print "Wrote '$hfile'\n";
-    }    # for %files
+        my $source = read_file( $cfile );
+        $source = replace_headerized_declarations( $source, 'static', $cfile, @funcs );
+
+        write_file( $cfile, $source );
+    }
 
     return;
 }
 
+sub read_file {
+    my $filename = shift;
+
+    open my $fh, '<', $filename or die "couldn't read '$filename': $!";
+    my $text = do { local $/ = undef; <$fh> };
+    close $fh;
+
+    return $text;
+}
+
+sub write_file {
+    my $filename = shift;
+    my $text = shift;
+
+    open my $fh, '>', $filename or die "couldn't write '$filename': $!";
+    print {$fh} $text;
+    close $fh;
+    print "Wrote '$filename'\n";
+}
+
+sub replace_headerized_declarations {
+    my $source_code = shift;
+    my $cfile = shift;
+    my $hfile = shift;
+    my @funcs = @_;
+
+    # Allow a way to not headerize statics
+    if ( $source_code =~ m{/\*\s*HEADERIZER NONE:\s*$cfile\s*\*/} ) {
+        return $source_code;
+    }
+
+    @funcs = sort api_first_then_alpha @funcs;
+
+    my @function_decls = make_function_decls( @funcs );
+
+    my $function_decls = join( "\n", @function_decls );
+    my $STARTMARKER   = qr#/\* HEADERIZER BEGIN: $cfile \*/\n#;
+    my $ENDMARKER     = qr#/\* HEADERIZER END: $cfile \*/\n?#;
+    $source_code =~ s#($STARTMARKER)(?:.*?)($ENDMARKER)#$1\n$function_decls\n$2#s
+        or die "Need begin/end HEADERIZER markers for $cfile in $hfile\n";
+
+    return $source_code;
+}
+
 sub api_first_then_alpha {
     return
-        ( ($b->[0]||0) <=> ($a->[0]||0) )
+        ( ($b->[1]||0) <=> ($a->[1]||0) )
             ||
         ( lc $a->[3] cmp lc $b->[3] )
     ;
 }
+
+=head1 NAME
+
+headerizer.pl
+
+=head1 SYNOPSIS
+
+  $ tools/build/headerizer.pl [object files]
+
+Generates C function declarations based on the function definitions in
+the C source code.
+
+=head1 DIRECTIVES
+
+The headerizer works off of directives in the source and header files.
+
+One source file's public declarations can only go into one header file.
+However, one header file can have declarations from multiple source files.
+In other words, headers-to-source is one-to-many.
+
+=over 4
+
+=item HEADERIZER BEGIN: F<source-filename> / HEADERIZER END: F<source-filename>
+
+Marks the beginning and end of a block of declarations in a header file.
+
+    # In file foo.h
+    /* HEADERIZER BEGIN: src/foo.c */
+    /* HEADERIZER END: src/foo.c */
+
+    /* HEADERIZER BEGIN: src/bar.c */
+    /* HEADERIZER END: src/bar.c */
+
+=item HEADERIZER TARGET: F<header-filename>
+
+Tells the headerizer where the declarations for the functions should go
+
+    # In file foo.c
+    /* HEADERIZER TARGET: foo.h */
+
+    # In file bar.c
+    /* HEADERIZER TARGET: foo.h */
+
+=cut
 
 # Local Variables:
 #   mode: cperl

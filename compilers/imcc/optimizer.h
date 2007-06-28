@@ -9,19 +9,25 @@ int cfg_optimize( Interp *interp /*NN*/, IMC_Unit *unit /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-const char * get_neg_op( char *op, int *n );
+const char * get_neg_op( const char *op /*NN*/, int *n /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 Instruction * IMCC_subst_constants( Interp *interp,
     IMC_Unit * unit,
-    char *name,
+    const char *name /*NN*/,
     SymReg **r,
     int n,
-    int *ok );
+    int *ok /*NN*/ )
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(6);
 
 Instruction * IMCC_subst_constants_umix( Interp *interp,
     IMC_Unit * unit,
-    char *name,
+    const char *name /*NN*/,
     SymReg **r,
-    int n );
+    int n )
+        __attribute__nonnull__(3);
 
 int optimize( Interp *interp /*NN*/, IMC_Unit *unit /*NN*/ )
         __attribute__nonnull__(1)

@@ -18,7 +18,34 @@ Handles the accessing of small object pools (header pools).
 #include "parrot/smallobject.h"
 #include <assert.h>
 
-/* HEADER: include/parrot/smallobject.h */
+/* HEADERIZER TARGET: include/parrot/smallobject.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void gc_ms_add_free_object( Interp *interp,
+    Small_Object_Pool *pool /*NN*/,
+    void *to_add )
+        __attribute__nonnull__(2);
+
+static void gc_ms_alloc_objects( Interp *interp /*NN*/,
+    Small_Object_Pool *pool /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void * gc_ms_get_free_object( Interp *interp,
+    Small_Object_Pool *pool /*NN*/ )
+        __attribute__nonnull__(2);
+
+static void gc_ms_pool_init( Interp *interp, Small_Object_Pool *pool /*NN*/ )
+        __attribute__nonnull__(2);
+
+static void more_traceable_objects( Interp *interp /*NN*/,
+    Small_Object_Pool *pool /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+/* HEADERIZER END: static */
+
 
 #define GC_DEBUG_REPLENISH_LEVEL_FACTOR        0.0
 #define GC_DEBUG_UNITS_PER_ALLOC_GROWTH_FACTOR 1
@@ -247,7 +274,7 @@ gc_ms_alloc_objects(Interp *interp /*NN*/, Small_Object_Pool *pool /*NN*/)
         mem_internal_allocate_typed(Small_Object_Arena);
 
     if (!new_arena)
-        PANIC("Out of arena memory");
+        PANIC(interp, "Out of arena memory");
 
     size = pool->object_size * pool->objects_per_alloc;
 

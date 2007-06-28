@@ -13,6 +13,7 @@ use File::Spec;
 use Test::More;
 use Parrot::Config qw{%PConfig};
 use Parrot::Distribution;
+use Getopt::Long;
 
 BEGIN {
     eval { require Perl::Critic };
@@ -27,33 +28,33 @@ BEGIN {
 
 my $perl_tidy_conf = 'tools/util/perltidy.conf';
 
-my ( @files, %policies, $list_policies, $list_files );
+my %policies;
+my ( $list_policies_flag, $list_files_flag, @input_policies );
+my $policy_group = 'default';
 
-while (@ARGV) {
-    my $arg = $ARGV[0];
-    if ( $arg eq '--' ) {
-        shift @ARGV;    # discard
-        last;
-    }
-    if ( $arg eq '--list' ) {
-        $list_policies = 1;
-        shift @ARGV;    # discard
-    }
-    elsif ( $arg eq '--listfiles' ) {
-        $list_files = 1;
-        shift @ARGV;    #discard
-    }
-    elsif ( $arg =~ /^--(.*)/ ) {
-        $policies{$1} = 1;
-        shift @ARGV;    # discard
-    }
-    else {
-        last;
+GetOptions(
+    'list'           => \$list_policies_flag,
+    'listfiles'      => \$list_files_flag,
+    'policy=s'       => \@input_policies,
+    'group=s'        => \$policy_group,  # all, default, extra
+);
+
+# if we we're given a policy (or policies), set it to the policies hash
+# this still doesn't implement passing options to policies though...
+# i.e. need to be able to handle --policy=foo=>{'bar'=>baz}
+if ( @input_policies ) {
+    foreach my $input_policy ( @input_policies ) {
+        # now split on commas if that's been used as well
+        my @sub_policies = split(/,/, $input_policy);
+        foreach my $sub_policy ( @sub_policies ) {
+            $policies{$sub_policy} = 1;
+        }
     }
 }
 
 # get the files to check
 my $DIST = Parrot::Distribution->new();
+my @files;
 if ( !@ARGV ) {
 
     # XXX We should skip any files that are copied wholesale
@@ -91,36 +92,43 @@ else {
     }
 }
 
-if ($list_files) {
+if ($list_files_flag) {
     print "Files to be tested by perlcritic:\n";
     for my $file (@files) {
         print $file, "\n";
     }
+
     exit;
 }
 
 # Add in the few cases we should care about.
 # For a list of available policies, perldoc Perl::Critic
 if ( !keys %policies ) {
-    %policies = (
+    my %default_policies = (
+        'CodeLayout::ProhibitDuplicateCoda'               => 1,
+        'CodeLayout::ProhibitHardTabs'                    =>
+            { allow_leading_tabs => 0 },
+        'CodeLayout::ProhibitTrailingWhitespace'          => 1,
+        'CodeLayout::UseParrotCoda'                       => 1,
+        'TestingAndDebugging::MisplacedShebang'           => 1,
+        'TestingAndDebugging::ProhibitShebangWarningsArg' => 1,
+        'TestingAndDebugging::RequirePortableShebang'     => 1,
         'TestingAndDebugging::RequireUseStrict'           => 1,
         'TestingAndDebugging::RequireUseWarnings'         => 1,
-        'TestingAndDebugging::RequirePortableShebang'     => 1,
-        'TestingAndDebugging::ProhibitShebangWarningsArg' => 1,
-        'TestingAndDebugging::MisplacedShebang'           => 1,
-        'Variables::ProhibitConditionalDeclarations'      => 1,
-        'InputOutput::ProhibitTwoArgOpen'                 => 1,
-        'InputOutput::ProhibitBarewordFileHandles'        => 1,
-        'NamingConventions::ProhibitAmbiguousNames'       => 1,
-        'Subroutines::ProhibitBuiltinHomonyms'            => 1,
-        'Subroutines::ProhibitExplicitReturnUndef'        => 1,
-        'Subroutines::ProhibitSubroutinePrototypes'       => 1,
-        'CodeLayout::UseParrotCoda'                       => 1,
-        'CodeLayout::ProhibitDuplicateCoda'               => 1,
-        'CodeLayout::ProhibitTrailingWhitespace'          => 1,
-        'CodeLayout::ProhibitHardTabs'                    => { allow_leading_tabs => 0 },
-        'CodeLayout::RequireTidyCode'                     => { perltidyrc => $perl_tidy_conf },
-        'Subroutines::RequireFinalReturn'                 => 1,
+    );
+
+    # add other policies which aren't yet passing consistently see RT#42427
+    my %extra_policies = (
+        'Variables::ProhibitConditionalDeclarations' => 1,
+        'InputOutput::ProhibitTwoArgOpen'            => 1,
+        'InputOutput::ProhibitBarewordFileHandles'   => 1,
+        'NamingConventions::ProhibitAmbiguousNames'  => 1,
+        'Subroutines::ProhibitBuiltinHomonyms'       => 1,
+        'Subroutines::ProhibitExplicitReturnUndef'   => 1,
+        'Subroutines::ProhibitSubroutinePrototypes'  => 1,
+        'CodeLayout::RequireTidyCode'                =>
+            { perltidyrc => $perl_tidy_conf },
+        'Subroutines::RequireFinalReturn'            => 1,
     );
 
     # Add Perl::Critic::Bangs if it exists
@@ -129,7 +137,7 @@ if ( !keys %policies ) {
         diag "Perl::Critic::Bangs not installed: not testing for TODO items in code";
     }
     else {
-        $policies{'Bangs::ProhibitFlagComments'} = 1;
+        $extra_policies{'Bangs::ProhibitFlagComments'} = 1;
     }
 
     # Give a diag to let users know if this is doing anything, how to repeat.
@@ -138,12 +146,33 @@ if ( !keys %policies ) {
         diag "Using $perl_tidy_conf for Perl::Tidy settings";
     }
 
+    # decide which policy group to use
+    if ( $policy_group eq 'default' ) {
+        %policies = %default_policies;
+    }
+    elsif ( $policy_group eq 'extra' ) {
+        %policies = %extra_policies;
+    }
+    elsif ( $policy_group eq 'all' ) {
+        %policies = ( %default_policies, %extra_policies );
+    }
+    else {
+        warn "Unknown policy group, using 'default' policy group";
+    }
 }
 
-if ($list_policies) {
+if ($list_policies_flag) {
     use Data::Dumper;
     $Data::Dumper::Indent = 1;
-    warn Dumper( \%policies );
+    $Data::Dumper::Terse = 1;
+    foreach my $policy ( sort keys %policies ) {
+        if ( $policies{$policy} == 1 ) {
+            print $policy, "\n";
+        }
+        else {
+            warn $policy, " => ", Dumper( \$policies{$policy} );
+        }
+    }
     exit;
 }
 
@@ -209,6 +238,12 @@ t/codingstd/perlcritic.t - use perlcritic for perl coding stds.
 
  % prove t/codingstd/perlcritic.t
 
+ % perl --policy=TestingAndDebugging::RequireUseWarnings t/codingstd/perlcritic.t
+
+ % perl --group=all t/codingstd/perlcritic.t
+
+ % perl --group=extra t/codingstd/perlcritic.t
+
 =head1 DESCRIPTION
 
 Tests all perl source files for some very specific perl coding violations.
@@ -220,10 +255,18 @@ By default, this script will validate the specified files against a default
 set of policies. To run the test for a B<specific> Rule, specify it on the
 command line before any other files, as:
 
- perl t/codingstd/perlcritic.t --TestingAndDebugging::RequireUseWarnings
+ perl t/codingstd/perlcritic.t --policy=TestingAndDebugging::RequireUseWarnings
 
 This will, for example, use B<only> that policy (see L<Perl::Critic> for
 more information on policies) when examining files from the manifest.
+
+Multiple policies can be specified either by separating the individual
+policies with a comma:
+
+ --policy=foo,bar
+
+and/or by specifying the C<--policy> argument multiple times on the command
+line.
 
 If you just wish to get a listing of the polices that will be checked
 without actually running them, use:
@@ -233,7 +276,12 @@ without actually running them, use:
 If you just wish to get a listing of the files that will be checked
 without actually running the tests, use:
 
- perl t/codingstd/perlcritic.t --listfils
+ perl t/codingstd/perlcritic.t --listfiles
+
+Not all policies are analysed by default.  To process the extra policies,
+use the C<--group=extra> argument.  To process all policies use:
+
+ perl t/codingstd/perlcritic.t --group=all
 
 =head1 BUGS AND LIMITATIONS
 

@@ -16,9 +16,21 @@ src/pmc.c - The base vtable calling functions
 #include <assert.h>
 #include "pmc.str"
 
-/* HEADER: include/parrot/pmc.h */
+/* HEADERIZER TARGET: include/parrot/pmc.h */
 
-static PMC* get_new_pmc_header(Interp*, INTVAL base_type, UINTVAL flags);
+/* HEADERIZER BEGIN: static */
+
+static PMC* create_class_pmc( Interp *interp /*NN*/, INTVAL type )
+        __attribute__nonnull__(1)
+        __attribute__warn_unused_result__;
+
+static PMC* get_new_pmc_header( Interp *interp /*NN*/,
+    INTVAL base_type,
+    UINTVAL flags )
+        __attribute__nonnull__(1)
+        __attribute__warn_unused_result__;
+
+/* HEADERIZER END: static */
 
 
 PMC * PMCNULL;
@@ -62,6 +74,8 @@ pmc_reuse(Interp *interp /*NN*/, PMC *pmc /*NN*/, INTVAL new_type,
 {
     INTVAL has_ext, new_flags;
     VTABLE *new_vtable;
+
+    UNUSED(flags);
 
     if (pmc->vtable->base_type == new_type)
         return pmc;
@@ -166,7 +180,7 @@ get_new_pmc_header(Interp *interp /*NN*/, INTVAL base_type, UINTVAL flags)
          * Parrot_(classname)_class_init to init_world, or you forgot
          * to run 'make realclean' after adding a new PMC class.
          */
-        PANIC("Null vtable used");
+        PANIC(interp, "Null vtable used");
     }
 
     /* we only have one global Env object, living in the interp */
@@ -179,7 +193,7 @@ get_new_pmc_header(Interp *interp /*NN*/, INTVAL base_type, UINTVAL flags)
          *
          * - singletons are created in the constant pmc pool
          */
-        pmc = (PMC *)(vtable->get_pointer)(interp, NULL);
+        PMC *pmc = (PMC *)(vtable->get_pointer)(interp, NULL);
         /* LOCK */
         if (!pmc) {
             pmc = new_pmc_header(interp, PObj_constant_FLAG);
@@ -401,6 +415,7 @@ pmc_type_p(Interp* interp /*NN*/, PMC *name /*NN*/)
 
 static PMC*
 create_class_pmc(Interp *interp /*NN*/, INTVAL type)
+    /* WARN_UNUSED */
 {
     /*
      * class interface - a PMC is its own class
@@ -426,8 +441,11 @@ create_class_pmc(Interp *interp /*NN*/, INTVAL type)
          */
         Small_Object_Pool * const ext_pool =
             interp->arena_base->pmc_ext_pool;
-        if (PMC_sync(_class))
+        if (PMC_sync(_class)) {
+            MUTEX_DESTROY(PMC_sync(_class)->pmc_lock);
             mem_internal_free(PMC_sync(_class));
+            PMC_sync(_class) = NULL;
+        }
         ext_pool->add_free_object(interp, ext_pool, _class->pmc_ext);
     }
     _class->pmc_ext = NULL;
@@ -516,17 +534,12 @@ PARROT_API
 void
 dod_register_pmc(Interp* interp /*NN*/, PMC* pmc)
 {
-    PMC *registry;
     /* Better not trigger a DOD run with a potentially unanchored PMC */
     Parrot_block_DOD(interp);
 
-    if (!interp->DOD_registry) {
-        registry = interp->DOD_registry =
-            pmc_new(interp, enum_class_AddrRegistry);
-    }
-    else
-        registry = interp->DOD_registry;
-    VTABLE_set_pmc_keyed(interp, registry, pmc, PMCNULL);
+    if (!interp->DOD_registry)
+        interp->DOD_registry = pmc_new(interp, enum_class_AddrRegistry);
+    VTABLE_set_pmc_keyed(interp, interp->DOD_registry, pmc, PMCNULL);
     Parrot_unblock_DOD(interp);
 
 }

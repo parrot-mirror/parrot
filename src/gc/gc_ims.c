@@ -337,7 +337,39 @@ a sleep opcode.
 #include "parrot/dod.h"
 #include <assert.h>
 
-/* HEADER: include/parrot/dod.h */
+/* HEADERIZER TARGET: include/parrot/dod.h */
+
+/* HEADERIZER BEGIN: static */
+
+static int collect_cb( Interp *interp,
+    Small_Object_Pool *pool,
+    int flag,
+    void *arg );
+
+static void gc_ims_add_free_object( Interp *interp,
+    Small_Object_Pool *pool,
+    void *to_add );
+
+static void gc_ims_alloc_objects( Interp *interp, Small_Object_Pool *pool );
+static void * gc_ims_get_free_object( Interp *interp,
+    Small_Object_Pool *pool );
+
+static void gc_ims_pool_init( Interp *interp, Small_Object_Pool *pool );
+static int parrot_gc_ims_collect( Interp* interp, int check_only );
+static int parrot_gc_ims_collect( Interp* interp, int check_only );
+static void parrot_gc_ims_deinit( Interp* interp );
+static void parrot_gc_ims_mark( Interp* interp );
+static void parrot_gc_ims_reinit( Interp* interp );
+static void parrot_gc_ims_run( Interp *interp, int flags );
+static void parrot_gc_ims_run_increment( Interp* interp );
+static void parrot_gc_ims_sweep( Interp* interp );
+static int sweep_cb( Interp *interp,
+    Small_Object_Pool *pool,
+    int flag,
+    void *arg );
+
+/* HEADERIZER END: static */
+
 
 /*
  * size of one arena
@@ -728,7 +760,7 @@ collect_cb(Interp *interp, Small_Object_Pool *pool, int flag, void *arg)
 }
 
 static int
-parrot_gc_ims_collect(Interp* interp, INTVAL check_only)
+parrot_gc_ims_collect(Interp* interp, int check_only)
 {
     Arenas * const arena_base = interp->arena_base;
     Gc_ims_private *g_ims;
@@ -819,7 +851,7 @@ parrot_gc_ims_run_increment(Interp* interp)
             }
             break;
         default:
-            PANIC("Unknown state in gc_ims");
+            PANIC(interp, "Unknown state in gc_ims");
     }
     IMS_DEBUG((stderr, "%d\n", g_ims->state));
 }
