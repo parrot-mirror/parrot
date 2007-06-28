@@ -67,6 +67,7 @@ $conf->add_steps($pkg);
 $conf->options->set(%{$args});
 
 $task = $conf->steps->[1];
+print STDERR Dumper $conf->steps;
 $step_name   = $task->step;
 @step_params = @{ $task->params };
 
