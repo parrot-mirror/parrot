@@ -10,10 +10,9 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::init::headers');
 
-=for hints_for_testing config/init/headers.pm would benefit from an
-explanation of what 'nongenerated headers' are.
-
-=cut
+# config/init/headers.pm is completely tested in all statements, branches and
+# conditions by other tests among the configuration tests.  So there is no
+# need to add additional unit tests in this file.
 
 pass("Completed all tests in $0");
 
