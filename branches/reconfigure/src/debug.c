@@ -29,9 +29,40 @@ debugger, and the C<debug> ops.
 #include "parrot/debug.h"
 #include "parrot/oplib/ops.h"
 
-/* HEADER: include/parrot/debug.h */
 
-static const char* GDB_P(Interp *interp, const char *s);
+/* Not sure how we want to handle this sort of cross-project header */
+PARROT_API
+void
+IMCC_warning(Interp *interp /*NN*/, const char *fmt /*NN*/, ...);
+
+
+/* HEADERIZER TARGET: include/parrot/debug.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void dump_string( Interp *interp, const STRING *s /*NULLOK*/ );
+static int GDB_B( Interp *interp, char *s );
+static const char* GDB_P( Interp *interp, const char *s /*NN*/ )
+        __attribute__nonnull__(2);
+
+static char const * nextarg( char const *command /*NN*/ )
+        __attribute__nonnull__(1);
+
+static const char * parse_command( const char *command, unsigned long *cmdP );
+static const char * parse_int( const char *str, int *intP );
+static const char* parse_key( Interp *interp, const char *str, PMC **keyP );
+static const char * parse_string( Interp *interp,
+    const char *str,
+    STRING **strP );
+
+static const char * skip_command( const char *str /*NN*/ )
+        __attribute__nonnull__(1);
+
+static const char * skip_ws( const char *str /*NN*/ )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: static */
+
 
 /*
 
@@ -402,14 +433,13 @@ int
 PDB_run_command(Interp *interp /*NN*/, const char *command /*NN*/)
 {
     unsigned long c;
-    const char   *temp;
     PDB_t        * const pdb = interp->pdb;
+    const char   * const original_command = command;
 
     /* keep a pointer to the command, in case we need to report an error */
-    temp = command;
 
     /* get a number from what the user typed */
-    command = parse_command(command, &c);
+    command = parse_command(original_command, &c);
 
     if (command)
         skip_command(command);
@@ -488,7 +518,7 @@ PDB_run_command(Interp *interp /*NN*/, const char *command /*NN*/)
             break;
         default:
             PIO_eprintf(interp,
-                        "Undefined command: \"%s\".  Try \"help\".", temp);
+                        "Undefined command: \"%s\".  Try \"help\".", original_command);
             return 1;
     }
     return 0;
@@ -511,7 +541,7 @@ void
 PDB_next(Interp *interp, const char *command)
 {
     unsigned long  n   = 1;
-    PDB_t         *pdb = interp->pdb;
+    PDB_t  * const pdb = interp->pdb;
 
     /* Init the program if it's not running */
     if (!(pdb->state & PDB_RUNNING))
@@ -556,7 +586,7 @@ void
 PDB_trace(Interp *interp, const char *command)
 {
     unsigned long  n   = 1;
-    PDB_t         *pdb = interp->pdb;
+    PDB_t *  const pdb = interp->pdb;
     Interp        *debugee;
 
     /* if debugger is not running yet, initialize */
@@ -2545,7 +2575,8 @@ PDB_backtrace(Interp *interp)
  */
 
 static const char*
-GDB_P(Interp *interp, const char *s /*NN*/) {
+GDB_P(Interp *interp, const char *s /*NN*/)
+{
     int t, n;
     switch (*s) {
         case 'I': t = REGNO_INT; break;

@@ -19,6 +19,9 @@
 
 /* Declarations of accessors */
 
+#define CSTRING_WITH_LEN(s) (s ""), (sizeof(s)-1)
+#define string_from_literal(i,s) string_from_cstring((i),CSTRING_WITH_LEN(s))
+
 /* HEADERIZER BEGIN: src/string.c */
 
 PARROT_API STRING * const_string( Interp *interp /*NN*/,
@@ -37,7 +40,7 @@ PARROT_API STRING * Parrot_make_COW_reference( Interp *interp /*NN*/,
     STRING *s /*NULLOK*/ )
         __attribute__nonnull__(1);
 
-PARROT_API STRING* Parrot_reuse_COW_reference( Interp *interp /*NULLOK*/,
+PARROT_API STRING* Parrot_reuse_COW_reference( Interp *interp,
     STRING *s /*NULLOK*/,
     STRING *d /*NN*/ )
         __attribute__nonnull__(3);
@@ -112,8 +115,7 @@ PARROT_API INTVAL string_bool( Interp *interp /*NN*/,
         __attribute__nonnull__(1)
         __attribute__warn_unused_result__;
 
-PARROT_API UINTVAL string_capacity( Interp *interp /*NULLOK*/,
-    const STRING *s /*NN*/ )
+PARROT_API UINTVAL string_capacity( Interp *interp, const STRING *s /*NN*/ )
         __attribute__nonnull__(2)
         __attribute__pure__
         __attribute__warn_unused_result__;
@@ -174,9 +176,6 @@ PARROT_API STRING * string_from_cstring( Interp *interp /*NN*/,
     const UINTVAL len )
         __attribute__nonnull__(1)
         __attribute__warn_unused_result__;
-
-#define CSTRING_WITH_LEN(s) (s ""), (sizeof(s)-1)
-#define string_from_literal(i,s) string_from_cstring((i),CSTRING_WITH_LEN(s))
 
 PARROT_API STRING * string_from_int( Interp *interp /*NN*/, INTVAL i )
         __attribute__nonnull__(1);
@@ -360,10 +359,11 @@ PARROT_API UINTVAL Parrot_char_digit_value( Interp *interp,
     UINTVAL character );
 
 PARROT_API void string_fill_from_buffer( Interp *interp,
-    const void *buffer,
+    const void *buffer /*NN*/,
     UINTVAL len,
     const char *encoding_name,
-    STRING *s /*NULLOK*/ );
+    STRING *s /*NULLOK*/ )
+        __attribute__nonnull__(2);
 
 PARROT_API void string_set_data_directory( const char *dir );
 PARROT_API Parrot_UInt4 string_unescape_one( Interp *interp,

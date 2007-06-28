@@ -60,6 +60,9 @@
 #define IMCC_FATAL_EXCEPTION      1
 #define IMCC_FATALY_EXCEPTION     2
 
+#define N_ELEMENTS(x) (sizeof(x)/sizeof((x)[0]))
+
+
 /*
  * imc.c
  */
@@ -81,15 +84,6 @@ IMC_Unit * imc_open_unit( Interp *interp /*NN*/, IMC_Unit_Type t )
 
 /* HEADERIZER END: compilers/imcc/imc.c */
 
-/*
- * instructions.c
- */
-void imcc_init_tables(Interp * interp);
-
-/*
- * optimizer.c
- */
-const char * get_neg_op(char *op, int *nargs);
 
 /* HEADERIZER BEGIN: compilers/imcc/reg_alloc.c */
 
@@ -106,14 +100,28 @@ void imc_reg_alloc( Interp *interp /*NN*/, IMC_Unit *unit /*NULLOK*/ )
 
 /* HEADERIZER END: compilers/imcc/reg_alloc.c */
 
-/*
- * parser_util.c
- */
-
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #  define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
+
+
+/* HEADERIZER BEGIN: compilers/imcc/imcparser.c */
+
+Instruction * IMCC_create_itcall_label( Interp* interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+void IMCC_itcall_sub( Interp* interp /*NN*/, SymReg* sub )
+        __attribute__nonnull__(1);
+
+Instruction * INS_LABEL( Interp *interp /*NN*/,
+    IMC_Unit *unit,
+    SymReg *r0,
+    int emit )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: compilers/imcc/imcparser.c */
+
 /* HEADERIZER BEGIN: compilers/imcc/parser_util.c */
 
 PARROT_API int do_yylex_init( Interp* interp, yyscan_t* yyscanner );
@@ -123,12 +131,14 @@ PARROT_API void imcc_destroy( Interp *interp /*NN*/ )
 PARROT_API void imcc_init( Interp *interp /*NN*/ )
         __attribute__nonnull__(1);
 
-int check_op( Interp *interp,
-    char *fullname,
-    char *name,
+int check_op( Interp *interp /*NN*/,
+    char *fullname /*NN*/,
+    const char *name,
     SymReg *r[],
     int narg,
-    int keyvec );
+    int keyvec )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PMC * imcc_compile(
     Parrot_Interp interp,
@@ -156,10 +166,24 @@ PMC * IMCC_compile_pir_s(
     const char *s,
     STRING **error_message );
 
-int imcc_fprintf( Interp *interp, FILE *fd, const char *fmt, ... );
-int imcc_vfprintf( Interp *interp, FILE *fd, const char *format, va_list ap );
+int imcc_fprintf( Interp *interp /*NN*/,
+    FILE *fd /*NN*/,
+    const char *fmt /*NN*/,
+    ... )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+int imcc_vfprintf( Interp *interp /*NN*/,
+    FILE *fd /*NN*/,
+    const char *format /*NN*/,
+    va_list ap )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
 Instruction * iNEW( Interp *interp,
-    struct _IMC_Unit *unit,
+    IMC_Unit *unit,
     SymReg *r0,
     char *type,
     SymReg *init,
@@ -167,7 +191,7 @@ Instruction * iNEW( Interp *interp,
 
 Instruction * INS( Interp *interp,
     IMC_Unit * unit,
-    char *name,
+    const char *name,
     const char *fmt,
     SymReg **r,
     int n,
@@ -184,25 +208,35 @@ Instruction * multi_keyed( Interp *interp,
     int emit );
 
 void op_fullname(
-    char * dest,
-    const char * name,
+    char *dest /*NN*/,
+    const char *name /*NN*/,
     SymReg * args[],
     int narg,
-    int keyvec );
+    int keyvec )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 void register_compilers( Interp *interp /*NN*/ )
         __attribute__nonnull__(1);
 
-char * str_cat( const char * s1, const char * s2 );
-char * str_dup( const char * old );
-int try_find_op(
-    Parrot_Interp interp,
+char * str_cat( const char *s1 /*NN*/, const char *s2 /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+char * str_dup( const char *old /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__malloc__
+        __attribute__warn_unused_result__;
+
+int try_find_op( Interp *interp /*NN*/,
     IMC_Unit * unit,
-    char *name,
+    const char *name /*NN*/,
     SymReg ** r,
     int n,
     int keyvec,
-    int emit );
+    int emit )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
 
 /* HEADERIZER END: compilers/imcc/parser_util.c */
 
@@ -357,14 +391,6 @@ typedef struct _imc_info_t {
 
 #define IMC_TRACE 0
 #define IMC_TRACE_HIGH 0
-
-PARROT_API Instruction * IMCC_create_itcall_label(Interp *);
-PARROT_API void IMCC_itcall_sub(Interp* interp, SymReg* sub);
-
-Instruction * IMCC_subst_constants_umix(Interp *, IMC_Unit * unit, char *name,
-        SymReg **r, int n);
-Instruction * IMCC_subst_constants(Interp *, IMC_Unit * unit, char *name,
-        SymReg **r, int n, int *op);
 
 /* imclexer.c */
 PARROT_API FILE* imc_yyin_set(FILE* new_yyin, void *yyscanner);

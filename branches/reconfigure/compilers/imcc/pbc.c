@@ -69,9 +69,94 @@ static struct globals {
 
 
 /* HEADERIZER BEGIN: static */
-static int add_const_str(Interp *, const SymReg *r);
 
-static opcode_t build_key(Interp *interp, SymReg *reg);
+static void add_1_const( Interp *interp /*NN*/, SymReg *r /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int add_const_key( Interp *interp,
+    opcode_t key[],
+    int size,
+    char *s_key );
+
+static int add_const_num( Interp *interp /*NN*/, const char *buf )
+        __attribute__nonnull__(1);
+
+static int add_const_pmc_sub( Interp *interp, SymReg *r, int offs, int end );
+static int add_const_str( Interp *interp /*NN*/, const SymReg *r /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static opcode_t build_key( Interp *interp /*NN*/, SymReg *key_reg /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void constant_folding( Interp *interp, IMC_Unit *unit /*NN*/ )
+        __attribute__nonnull__(2);
+
+static PMC* create_lexinfo( Interp *interp,
+    IMC_Unit *unit,
+    PMC *sub,
+    int need_lex );
+
+static subs_t * find_global_label(
+    const char *name /*NN*/,
+    const subs_t *sym /*NN*/,
+    int *pc /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static PMC* find_outer( Interp *interp, IMC_Unit *unit /*NN*/ )
+        __attribute__nonnull__(2);
+
+static void fixup_globals( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+static int get_codesize( Interp *interp /*NN*/,
+    IMC_Unit *unit /*NN*/,
+    int *src_lines /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static int get_old_size( Interp *interp /*NN*/, int *ins_line /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void imcc_globals_destroy( Interp *interp, int ex, void *param );
+static void make_new_sub( IMC_Unit *unit );
+static void make_pmc_const( Interp *interp /*NN*/, SymReg *r /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static PMC* mk_multi_sig( Interp *interp /*NN*/, SymReg *r /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int old_blocks( void )
+        __attribute__warn_unused_result__;
+
+static const char * slice_deb( int bits )
+        __attribute__const__
+        __attribute__warn_unused_result__;
+
+static void store_fixup( Interp *interp,
+    SymReg *r /*NN*/,
+    int pc,
+    int offset )
+        __attribute__nonnull__(2);
+
+static void store_key_const( const char *str /*NN*/, int idx )
+        __attribute__nonnull__(1);
+
+static void store_sub_size( size_t size, size_t ins_line );
+static void verify_signature( Interp *interp /*NN*/,
+    const Instruction *ins /*NN*/,
+    opcode_t *pc )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 /* HEADERIZER END: static */
 
 static void
@@ -1227,10 +1312,10 @@ e_pbc_end_sub(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/)
  */
 
 static void
-verify_signature(Interp *interp /*NN*/, Instruction *ins /*NN*/, opcode_t *pc)
+verify_signature(Interp *interp /*NN*/, const Instruction *ins /*NN*/, opcode_t *pc)
 {
     INTVAL  i, n;
-    int     no_consts, k;
+    int     no_consts;
 
     int     needed      = 0;
     PMC    *changed_sig = NULL;
@@ -1282,7 +1367,7 @@ verify_signature(Interp *interp /*NN*/, Instruction *ins /*NN*/, opcode_t *pc)
 
     if (changed_sig) {
         /* append PMC constant */
-        k      = PDB_extend_const_table(interp);
+        const int k = PDB_extend_const_table(interp);
 
         interp->code->const_table->constants[k]->type  = PFC_PMC;
         interp->code->const_table->constants[k]->u.key = changed_sig;
@@ -1293,7 +1378,7 @@ verify_signature(Interp *interp /*NN*/, Instruction *ins /*NN*/, opcode_t *pc)
 
 /* now let the fun begin, actually emit code for one ins */
 int
-e_pbc_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/, Instruction *ins /*NN*/)
+e_pbc_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/, const Instruction *ins /*NN*/)
 {
     int        op, i;
     int        ok = 0;
@@ -1314,10 +1399,10 @@ e_pbc_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/, Instructio
 
     /* first instruction, do initialisation ... */
     if (ins == unit->instructions) {
-        int code_size, ins_size, oldsize, bytes;
+        int ins_size, bytes;
 
-        oldsize   = get_old_size(interp, &ins_line);
-        code_size = get_codesize(interp, unit, &ins_size);
+        const int oldsize   = get_old_size(interp, &ins_line);
+        const int code_size = get_codesize(interp, unit, &ins_size);
 
         IMCC_debug(interp, DEBUG_PBC, "code_size(ops) %d  oldsize %d\n",
                 code_size, oldsize);
@@ -1353,8 +1438,7 @@ e_pbc_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/, Instructio
         /* add debug if necessary */
         if (!IMCC_INFO(interp)->optimizer_level ||
             IMCC_INFO(interp)->optimizer_level == OPT_PASM) {
-            const char *sourcefile;
-            sourcefile = unit->file;
+            const char * const sourcefile = unit->file;
 
             /* FIXME length and multiple subs */
             debug_seg  = Parrot_new_debug_seg(interp,
@@ -1376,8 +1460,7 @@ e_pbc_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/, Instructio
         }
         else {
             /* need a dummy to hold register usage */
-            SymReg *r;
-            r          = mk_sub_label(interp, str_dup("(null)"));
+            SymReg * const r = mk_sub_label(interp, str_dup("(null)"));
             r->type    = VT_PCC_SUB;
             r->pcc_sub = calloc(1, sizeof (pcc_sub_t));
 
@@ -1418,9 +1501,8 @@ e_pbc_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/, Instructio
         op = (opcode_t)ins->opnum;
 
         /* add PIC idx */
-        if (parrot_PIC_op_is_cached(interp, op)) {
-            size_t offs;
-            offs = pc - interp->code->base.data;
+        if (parrot_PIC_op_is_cached(op)) {
+            const size_t offs = pc - interp->code->base.data;
             /*
              * for pic_idx fitting into a short, we could
              * further reduce the size by storing shorts

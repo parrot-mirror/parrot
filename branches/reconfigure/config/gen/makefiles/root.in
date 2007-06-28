@@ -1916,7 +1916,8 @@ tags: tags.dummy
 	ctags \
 		--links=no --totals \
 		-R --exclude=blib --exclude=.svn  \
-		--languages=c,perl --langmap=c:+.h,c:+.pmc \
+		--exclude=res_lea.c \
+		--languages=c,perl --langmap=c:+.h,c:+.pmc,c:+.ops \
 		$(CUR_DIR)
 	$(PERL) $(BUILD_TOOLS_DIR)/addopstags.pl $(OPS_DIR)/*.ops
 
@@ -1963,6 +1964,7 @@ HEADERIZER_O_FILES = \
     src/headers.o \
     src/hll.o \
     src/inter_call.o \
+    src/inter_run.o \
     src/intlist.o \
     src/key.o \
     src/library.o \
@@ -1988,8 +1990,10 @@ HEADERIZER_O_FILES = \
     src/tsq.o \
     src/utils.o \
     src/vtables.o \
+    compilers/imcc/cfg.o \
     compilers/imcc/debug.o \
     compilers/imcc/imc.o \
+    compilers/imcc/imcparser.o \
     compilers/imcc/instructions.o \
     compilers/imcc/optimizer.o \
     compilers/imcc/parser_util.o \
@@ -2000,7 +2004,7 @@ HEADERIZER_O_FILES = \
     compilers/imcc/symreg.o \
 
 headerizer : $(SRC_DIR)/fingerprint.c $(SRC_DIR)/core_pmcs.c
-	$(PERL) $(BUILD_TOOLS_DIR)/headerize.pl $(HEADERIZER_O_FILES)
+	$(PERL) $(BUILD_TOOLS_DIR)/headerizer.pl $(HEADERIZER_O_FILES)
 
 ###############################################################################
 #

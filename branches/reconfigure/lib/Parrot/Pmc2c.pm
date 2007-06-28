@@ -321,6 +321,26 @@ $export$extern$ret${newl}Parrot_${classname}${variant}_$meth(Interp *$interp, PM
 EOC
 }
 
+=item C<all_args_unused( $method )>
+
+Returns the C code for indicating that all arguments are unused, so we
+don't get compiler errors.
+
+=cut
+
+sub all_args_unused {
+    my $self = shift;
+    my $method = shift;
+
+    my @args = split( /\s*,\s*/, $method->{parameters} );
+    for my $arg ( @args ) {
+        $arg =~ s/.*\b(\w+)$/$1/;
+    }
+    @args = ( 'interp', 'pmc', @args );
+
+    return join( "\n", map { "    UNUSED($_);" } @args );
+}
+
 =item C<includes()>
 
 Returns the C C<#include> for the header file of each of the PMC's
@@ -1057,7 +1077,7 @@ EOC
     foreach my $dynpmc (@$dyn_mmds) {
         next if $dynpmc eq $classname;
         $cout .= <<"EOC";
-            int my_enum_class_$dynpmc = pmc_type(interp, string_from_cstring(interp, "$dynpmc", 0));
+            int my_enum_class_$dynpmc = pmc_type(interp, string_from_literal(interp, "$dynpmc"));
 EOC
     }
 

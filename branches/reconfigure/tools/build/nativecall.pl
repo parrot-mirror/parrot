@@ -290,7 +290,7 @@ sub print_head {
 #include "parrot/hash.h"
 #include "parrot/oplib/ops.h"
 
-/* HEADER: none */
+/* HEADERIZER TARGET: none */
 
 /*
  * if the architecture can build some or all of these signatures
@@ -679,7 +679,7 @@ build_call_func(Interp *interp, PMC *pmc_nci,
     iglobals = interp->iglobals;
 
     if (PMC_IS_NULL(iglobals))
-        PANIC("iglobals isn't created yet");
+        PANIC(interp, "iglobals isn't created yet");
     HashPointer = VTABLE_get_pmc_keyed_int(interp, iglobals,
             IGLOBALS_NCI_FUNCS);
 
@@ -717,7 +717,7 @@ $put_pointer
      * aborting.
      */
     c = string_to_cstring(interp, message);
-    PANIC(c);
+    PANIC(interp, c);
     return NULL;
 }
 

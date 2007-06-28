@@ -29,7 +29,29 @@ Define the internal interpreter exceptions.
 #include "parrot/parrot.h"
 #include "parrot/exceptions.h"
 
-/* HEADER: include/parrot/exceptions.h */
+/* HEADERIZER TARGET: include/parrot/exceptions.h */
+
+/* HEADERIZER BEGIN: static */
+
+static opcode_t * create_exception( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__warn_unused_result__;
+
+static size_t dest2offset( Interp *interp /*NN*/,
+    const opcode_t *dest /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__pure__
+        __attribute__warn_unused_result__;
+
+static PMC * find_exception_handler( Interp *interp /*NN*/, PMC *exception )
+        __attribute__nonnull__(1)
+        __attribute__warn_unused_result__;
+
+static void run_cleanup_action( Interp *interp, Stack_Entry_t *e /*NN*/ )
+        __attribute__nonnull__(2);
+
+/* HEADERIZER END: static */
 
 #include <stdarg.h>
 
@@ -149,13 +171,13 @@ void
 push_exception(Interp *interp /*NN*/, PMC *handler /*NN*/)
 {
     if (handler->vtable->base_type != enum_class_Exception_Handler)
-        PANIC("Tried to set_eh a non Exception_Handler");
+        PANIC(interp, "Tried to set_eh a non Exception_Handler");
     stack_push(interp, &interp->dynamic_env, handler,
                STACK_ENTRY_PMC, STACK_CLEANUP_NULL);
 }
 
 static void
-run_cleanup_action(Interp *interp, Stack_Entry_t *e)
+run_cleanup_action(Interp *interp, Stack_Entry_t *e /*NN*/)
 {
     /*
      * this is called during normal stack_pop of the control
@@ -214,6 +236,7 @@ Find the exception handler for C<exception>.
 
 static PMC *
 find_exception_handler(Interp *interp /*NN*/, PMC *exception)
+    /* WARN_UNUSED */
 {
     char *m;
     int exit_status, print_location;
@@ -371,11 +394,13 @@ Throw the exception.
 
 PARROT_API
 opcode_t *
-throw_exception(Interp *interp, PMC *exception, void *dest)
+throw_exception(Interp *interp /*NN*/, PMC *exception, void *dest)
 {
     opcode_t *address;
-
     PMC * const handler = find_exception_handler(interp, exception);
+
+    UNUSED(dest);
+
     if (!handler)
         return NULL;
     /* put the handler aka continuation ctx in the interpreter */
@@ -406,7 +431,7 @@ rethrow_exception(Interp *interp /*NN*/, PMC *exception /*NN*/)
     opcode_t *address;
 
     if (exception->vtable->base_type != enum_class_Exception)
-        PANIC("Illegal rethrow");
+        PANIC(interp, "Illegal rethrow");
     handler = find_exception_handler(interp, exception);
     address = VTABLE_invoke(interp, handler, exception);
     /* return the address of the handler */
@@ -456,7 +481,7 @@ after an exception had occurred.
 
 static size_t
 dest2offset(Interp *interp /*NN*/, const opcode_t *dest /*NN*/)
-    /* WARN_UNUSED */
+    /* PURE, WARN_UNUSED */
 {
     size_t offset;
     /* translate an absolute location in byte_code to an offset
@@ -484,6 +509,7 @@ Create an exception.
 
 static opcode_t *
 create_exception(Interp *interp /*NN*/)
+    /* WARN_UNUSED */
 {
     PMC *exception;     /* exception object */
     opcode_t *dest;     /* absolute address of handler */
@@ -573,7 +599,7 @@ Place internal exception buffer back on the free list.
 
 PARROT_API
 void
-free_internal_exception(Interp *interp)
+free_internal_exception(Interp *interp /*NN*/)
 {
     Parrot_exception * const e = interp->exceptions;
     interp->exceptions = e->prev;

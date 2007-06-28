@@ -13,13 +13,9 @@ API.
 
 =head2 Functions
 
-=over 4
-
-=cut
-
 */
 
-/* HEADER: include/parrot/string_funcs.h */
+/* HEADERIZER TARGET: include/parrot/string_funcs.h */
 
 #include "parrot/parrot.h"
 #if PARROT_HAS_ICU
@@ -34,13 +30,10 @@ API.
 
 /*
 
-=item C<void
-string_set_data_directory(const char *dir)>
+FUNCDOC: string_set_data_directory
 
 Set the directory where ICU finds its data files (encodings, locales,
 etc.).
-
-=cut
 
 */
 
@@ -63,6 +56,8 @@ string_set_data_directory(const char *dir)
                 "(apparently) for directory [%s]", dir);
     }
 #else
+    UNUSED(dir);
+
     internal_exception(ICU_ERROR,
         "string_set_data_directory: parrot compiled without ICU support");
 #endif
@@ -77,7 +72,7 @@ supported encoding into Parrot string's internal format.
 
 PARROT_API
 void
-string_fill_from_buffer(Interp *interp, const void *buffer,
+string_fill_from_buffer(Interp *interp, const void *buffer /*NN*/,
             UINTVAL len, const char *encoding_name, STRING *s /*NULLOK*/)
 {
 #if PARROT_HAS_ICU
@@ -88,7 +83,8 @@ string_fill_from_buffer(Interp *interp, const void *buffer,
     const char *source = NULL;
     const char *source_limit = NULL;
 
-    assert(buffer); assert(encoding_name);
+    assert(buffer);
+    assert(encoding_name);
 
     if (s && !len) {
         /* XXX: I _guess_ this is always an empty string--is that right? */
@@ -149,6 +145,12 @@ string_fill_from_buffer(Interp *interp, const void *buffer,
     s->bufused = (char *)target - (char *)s->strstart;
     string_compute_strlen(interp, s);
 #else
+    UNUSED(interp);
+    UNUSED(buffer);
+    UNUSED(len);
+    UNUSED(encoding_name);
+    UNUSED(s);
+
     internal_exception(ICU_ERROR,
         "string_fill_from_buffer: parrot compiled without ICU support");
 #endif
@@ -363,14 +365,9 @@ string_unescape_one(Interp *interp, UINTVAL *offset /*NN*/,
 
 /*
 
-=back
-
 =head2 Character Property Functions
 
-=over
-
-=item C<UINTVAL
-Parrot_char_digit_value(Interp *interp, UINTVAL character)>
+FUNCDOC: Parrot_char_digit_value
 
 Returns the decimal digit value of the specified character if it is a decimal
 digit character. If not, then -1 is returned.
@@ -379,14 +376,13 @@ Note that as currently written, C<Parrot_char_digit_value()> can
 correctly return the decimal digit value of characters for which
 C<Parrot_char_is_digit()> returns false.
 
-=cut
-
 */
 
 PARROT_API
 UINTVAL
 Parrot_char_digit_value(Interp *interp, UINTVAL character)
 {
+    UNUSED(interp);
 #if PARROT_HAS_ICU
     return u_charDigitValue(character);
 #else
@@ -397,8 +393,6 @@ Parrot_char_digit_value(Interp *interp, UINTVAL character)
 }
 
 /*
-
-=back
 
 =head1 SEE ALSO
 
@@ -411,8 +405,6 @@ Parrot_char_digit_value(Interp *interp, UINTVAL character)
 =item F<src/string.c>
 
 =back
-
-=cut
 
 */
 

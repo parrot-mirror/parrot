@@ -24,7 +24,12 @@ Remember you read something about it in F<docs/infant.dev>?
 
 #include "parrot/parrot.h"
 
-/* HEADER: include/parrot/dod.h */
+/* HEADERIZER TARGET: include/parrot/dod.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void trace_system_stack( Interp *interp );
+/* HEADERIZER END: static */
 
 #ifdef __ia64__
 

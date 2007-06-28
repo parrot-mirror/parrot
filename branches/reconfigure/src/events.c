@@ -21,7 +21,8 @@ dispatches these to one or all interpreters.
 #include "parrot/events.h"
 #include <assert.h>
 
-/* HEADER: include/parrot/events.h */
+/* HEADERIZER TARGET: include/parrot/events.h */
+/* HEADERIZER NONE: static */
 
 /*
  * event debugging stuff - turn it off before running tests
@@ -226,7 +227,7 @@ init_events_first(Interp *interp)
      * we could use pthread_once for that too
      */
     if (event_queue)
-        PANIC("event queue already exists - missing parent_interp?");
+        PANIC(interp, "event queue already exists - missing parent_interp?");
     /*
      * create event queue
      */

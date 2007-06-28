@@ -32,9 +32,18 @@ int n_comp_units;
 /* HEADERIZER TARGET: compilers/imcc/instructions.h */
 
 /* HEADERIZER BEGIN: static */
-static int e_file_open(Interp *, void *);
-static int e_file_close(Interp *, void *);
-static int e_file_emit(Interp *, void *param, IMC_Unit *, Instruction *);
+
+static int e_file_close( Interp *interp /*NN*/, void *param )
+        __attribute__nonnull__(1);
+
+static int e_file_emit( Interp *interp /*NN*/,
+    void *param,
+    IMC_Unit *unit,
+    const Instruction *ins /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(4);
+
+static int e_file_open( Interp *interp, void *param );
 /* HEADERIZER END: static */
 
 const char types[] = "INPS";
@@ -59,8 +68,9 @@ static int emitter;     /* XXX */
 /* Creates a new instruction */
 
 Instruction *
-_mk_instruction(const char *op, const char * fmt, int n,
+_mk_instruction(const char *op /*NN*/, const char *fmt /*NN*/, int n,
         SymReg ** r, int flags)
+    /* MALLOC, WARN_UNUSED */
 {
     int i, reg_space;
     Instruction * ins;
@@ -97,9 +107,8 @@ static int r_special[5];
 static int w_special[1+4*3];
 
 void
-imcc_init_tables(Interp *interp)
+imcc_init_tables(Interp *interp /*NN*/)
 {
-    size_t i;
     const char *reads[] = {
         "saveall"
     };
@@ -109,13 +118,14 @@ imcc_init_tables(Interp *interp)
     };
     /* init opnums */
     if (!r_special[0]) {
-        for (i = 0; i < sizeof (reads)/sizeof (reads[0]); i++) {
-            int n = interp->op_lib->op_code(reads[i], 1);
+        size_t i;
+        for (i = 0; i < N_ELEMENTS(reads); i++) {
+            const int n = interp->op_lib->op_code(reads[i], 1);
             assert(n);
             r_special[i] = n;
         }
-        for (i = 0; i < sizeof (writes)/sizeof (writes[0]); i++) {
-            int n = interp->op_lib->op_code(writes[i], 1);
+        for (i = 0; i < N_ELEMENTS(writes); i++) {
+            const int n = interp->op_lib->op_code(writes[i], 1);
             assert(n);
             w_special[i] = n;
         }
@@ -126,20 +136,20 @@ imcc_init_tables(Interp *interp)
  * Returns TRUE if instruction ins reads from a register of type t
  */
 int
-ins_reads2(Instruction *ins /*NN*/, int t)
+ins_reads2(const Instruction *ins /*NN*/, int t)
 {
-    size_t i, idx;
-    char *p;
+    const char *p;
 
     if (ins->opnum == r_special[0])
         return 1;
     p = strchr(types, t);
-    if (!p)
-        return 0;
-    idx = p - types;
-    for (i = 1; i < sizeof (r_special)/sizeof (int); i += 4) {
-        if (ins->opnum == r_special[i + idx])
-            return 1;
+    if (p) {
+        const size_t idx = p - types;
+        size_t i;
+
+        for (i = 1; i < N_ELEMENTS(r_special); i += 4)
+            if (ins->opnum == r_special[i + idx])
+                return 1;
     }
     return 0;
 }
@@ -148,20 +158,20 @@ ins_reads2(Instruction *ins /*NN*/, int t)
  * Returns TRUE if instruction ins writes to a register of type t
  */
 int
-ins_writes2(Instruction *ins, int t)
+ins_writes2(const Instruction *ins /*NN*/, int t)
 {
-    size_t i, idx;
-    char *p;
+    const char *p;
 
     if (ins->opnum == w_special[0])
         return 1;
     p = strchr(types, t);
-    if (!p)
-        return 0;
-    idx = p - types;
-    for (i = 1; i < sizeof (w_special)/sizeof (int); i += 4) {
-        if (ins->opnum == w_special[i + idx])
-            return 1;
+    if (p) {
+        const size_t idx = p - types;
+        size_t i;
+
+        for (i = 1; i < N_ELEMENTS(w_special); i += 4)
+            if (ins->opnum == w_special[i + idx])
+                return 1;
     }
     return 0;
 }
@@ -177,11 +187,10 @@ instruction_reads(const Instruction *ins /*NN*/, const SymReg *r /*NN*/)
 
     if (ins->opnum == PARROT_OP_set_args_pc ||
             ins->opnum == PARROT_OP_set_returns_pc) {
-        for (i = 0; i < ins->n_r; i++) {
-            const SymReg * const ri = ins->r[i];
-            if (ri == r)
+        int i;
+        for (i = 0; i < ins->n_r; i++)
+            if (r ==ins->r[i] )
                 return 1;
-        }
         return 0;
     }
     else if (ins->opnum == PARROT_OP_get_params_pc ||
@@ -208,6 +217,7 @@ instruction_reads(const Instruction *ins /*NN*/, const SymReg *r /*NN*/)
     }
     /* a sub call reads the previous args */
     if (ins->type & ITPCCSUB) {
+        int i;
         while (ins && ins->opnum != PARROT_OP_set_args_pc)
             ins = ins->prev;
         if (!ins)
@@ -232,6 +242,7 @@ instruction_writes(const Instruction *ins /*NN*/, const SymReg *r /*NN*/)
      * postpone the effect after the invoke
      */
     if (ins->opnum == PARROT_OP_get_results_pc) {
+        int i;
         /* but only, if it isn't the get_results opcode of
          * an exception_handler, which doesn't have
          * a call next
@@ -245,6 +256,7 @@ instruction_writes(const Instruction *ins /*NN*/, const SymReg *r /*NN*/)
         return 0;
     }
     else if (ins->type & ITPCCSUB) {
+        int i;
         ins = ins->prev;
         /* can't used pcc_sub->ret due to bug #38406
          * it seems that all sub SymRegs are shared
@@ -263,6 +275,7 @@ instruction_writes(const Instruction *ins /*NN*/, const SymReg *r /*NN*/)
     }
 
     if (ins->opnum == PARROT_OP_get_params_pc) {
+        int i;
         for (i = 0; i < ins->n_r; i++) {
             if (ins->r[i] == r)
                 return 1;
@@ -274,10 +287,9 @@ instruction_writes(const Instruction *ins /*NN*/, const SymReg *r /*NN*/)
         return 0;
     }
     for (i = 0; i < ins->n_r; i++)
-        if (f & (1<<(16+i))) {
+        if (f & (1<<(16+i)))
             if (ins->r[i] == r)
                 return 1;
-        }
 
     return 0;
 }
@@ -423,7 +435,7 @@ subst_ins(struct _IMC_Unit *unit /*NN*/, Instruction *ins /*NN*/,
  * initial position of ins.
  */
 Instruction *
-move_ins(struct _IMC_Unit *unit /*NN*/, Instruction *ins /*NN*/, Instruction *to)
+move_ins(struct _IMC_Unit *unit /*NN*/, Instruction *ins /*NN*/, Instruction *to /*NN*/)
 {
     Instruction * const next = delete_ins(unit, ins, 0);
     insert_ins(unit, to, ins);
@@ -433,7 +445,7 @@ move_ins(struct _IMC_Unit *unit /*NN*/, Instruction *ins /*NN*/, Instruction *to
 
 /* Emit a single instruction into the current unit buffer. */
 Instruction *
-emitb(Interp *interp, struct _IMC_Unit *unit /*NULLOK*/, Instruction *i /*NULLOK*/)
+emitb(Interp *interp /*NN*/, struct _IMC_Unit *unit /*NULLOK*/, Instruction *i /*NULLOK*/)
 {
 
     if (!unit || !i)
@@ -464,7 +476,7 @@ free_ins(Instruction *ins /*NN*/)
  * Print details of instruction ins in file fd.
  */
 int
-ins_print(Interp *interp /*NN*/, FILE *fd /*NN*/, Instruction *ins /*NN*/)
+ins_print(Interp *interp /*NN*/, FILE *fd /*NN*/, const Instruction *ins /*NN*/)
 {
     char regb[IMCC_MAX_FIX_REGS][256];      /* XXX */
     /* only long key constants can overflow */
@@ -480,7 +492,7 @@ ins_print(Interp *interp /*NN*/, FILE *fd /*NN*/, Instruction *ins /*NN*/)
         return fprintf(fd, "%s", ins->fmt);
     }
     for (i = 0; i < ins->n_r; i++) {
-        SymReg *p = ins->r[i];
+        const SymReg *p = ins->r[i];
         if (!p)
             continue;
         if (p->type & VT_CONSTP)
@@ -497,7 +509,8 @@ ins_print(Interp *interp /*NN*/, FILE *fd /*NN*/, Instruction *ins /*NN*/)
                     regstr[i] = regb[i];
         }
         else if (p->type & VTREGKEY) {
-            SymReg * k = p->nextkey;
+            const SymReg *k = p->nextkey;
+
             for (*regb[i] = '\0'; k; k = k->nextkey) {
                 if (k->reg && k->reg->color >= 0)
                     sprintf(regb[i]+strlen(regb[i]), "%c%d",
@@ -575,7 +588,7 @@ e_file_open(Interp *interp, void *param)
 }
 
 static int
-e_file_close(Interp *interp, void *param)
+e_file_close(Interp *interp /*NN*/, void *param)
 {
     UNUSED(param);
     printf("\n\n");
@@ -585,7 +598,7 @@ e_file_close(Interp *interp, void *param)
 }
 
 static int
-e_file_emit(Interp *interp, void *param, IMC_Unit * unit, Instruction * ins)
+e_file_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit, const Instruction *ins /*NN*/)
 {
     UNUSED(param);
     UNUSED(unit);

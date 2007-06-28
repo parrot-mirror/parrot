@@ -29,7 +29,7 @@ the C-library.
 #include "inter_cb.str"
 
 
-/* HEADER: none */ /* XXX Needs to get done at the same time as the other interpreter files */
+/* HEADERIZER TARGET: none */ /* XXX Needs to get done at the same time as the other interpreter files */
 
 /*
 
@@ -42,6 +42,7 @@ Create a callback function according to pdd16.
 
 */
 
+PARROT_API
 PMC*
 Parrot_make_cb(Parrot_Interp interp, PMC* sub, PMC* user_data,
         STRING *cb_signature)
@@ -145,7 +146,7 @@ verify_CD(char *external_data, PMC *user_data)
 
     /* a NULL pointer or a pointer not aligned is very likely wrong */
     if (!user_data || ((UINTVAL)user_data & 3))
-        PANIC("user_data doesn't look like a pointer");
+        PANIC(interp, "user_data doesn't look like a pointer");
 
     /*
      * We don't yet know which interpreter this PMC is from, so run
@@ -163,7 +164,7 @@ verify_CD(char *external_data, PMC *user_data)
     }
     UNLOCK(interpreter_array_mutex);
     if (!interp)
-        PANIC("interpreter not found for callback");
+        PANIC(interp, "interpreter not found for callback");
 
     /*
      * 2) some more checks
@@ -173,10 +174,10 @@ verify_CD(char *external_data, PMC *user_data)
 
     /* if that doesn't look like a PMC we are still lost */
     if (!PObj_is_PMC_TEST(user_data))
-        PANIC("user_data isn't a PMC");
+        PANIC(interp, "user_data isn't a PMC");
 
     if (!user_data->vtable)
-        PANIC("user_data hasn't a vtable");
+        PANIC(interp, "user_data hasn't a vtable");
     /*
      * ok fine till here
      */
@@ -209,7 +210,7 @@ callback_CD(Parrot_Interp interp, char *external_data, PMC *user_data)
     sc = CONST_STRING(interp, "_interpreter");
     passed_interp = VTABLE_getprop(interp, user_data, sc);
     if (PMC_data(passed_interp) != interp)
-        PANIC("callback gone to wrong interpreter");
+        PANIC(interp, "callback gone to wrong interpreter");
 
     sc = CONST_STRING(interp, "_synchronous");
     passed_synchronous = VTABLE_getprop(interp, user_data, sc);
@@ -348,12 +349,14 @@ NCI callback functions. See pdd16.
 
 */
 
+PARROT_API
 void
 Parrot_callback_C(char *external_data, PMC *user_data)
 {
     verify_CD(external_data, user_data);
 }
 
+PARROT_API
 void
 Parrot_callback_D(PMC *user_data, char *external_data)
 {

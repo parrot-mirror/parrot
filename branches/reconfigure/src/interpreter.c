@@ -50,7 +50,7 @@ have the same number of elements because there is a one-to-one mapping.
 #include "parrot/dynext.h"
 
 
-/* HEADER: none */ /* XXX Needs to get done at the same time as the other interpreter files */
+/* HEADERIZER TARGET: none */ /* XXX Needs to get done at the same time as the other interpreter files */
 
 void Parrot_setup_event_func_ptrs(Parrot_Interp interp);
 
@@ -390,7 +390,7 @@ init_prederef(Interp *interp, int which)
             n = opinfo->op_count;
             ADD_OP_VAR_PART(interp, interp->code, pc, n);
             /* count ops that need a PIC */
-            if (parrot_PIC_op_is_cached(interp, *pc))
+            if (parrot_PIC_op_is_cached(*pc))
                 n_pics++;
             pc += n;
             i += n;
@@ -400,7 +400,7 @@ init_prederef(Interp *interp, int which)
         /* allocate pic store */
         if (n_pics) {
             /* pic_index is starting from 1 */
-            parrot_PIC_alloc_store(interp, interp->code, n_pics + 1);
+            parrot_PIC_alloc_store(interp->code, n_pics + 1);
         }
     }
 }
