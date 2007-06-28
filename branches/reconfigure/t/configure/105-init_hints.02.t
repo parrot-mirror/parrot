@@ -1,13 +1,15 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 105-init_hints.01.t
+# 105-init_hints.02.t
 
 use strict;
 use warnings;
 use Test::More tests => 17;
 use Carp;
-use Data::Dumper;
+use Cwd;
+use File::Path ();
+use File::Temp qw(tempdir);
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::init::defaults');
 use_ok('config::init::install');
@@ -78,15 +80,36 @@ $step = $step_name->new();
 ok(defined $step, "$step_name constructor returned defined value");
 isa_ok($step, $step_name);
 ok($step->description(), "$step_name has description");
-# need to capture the --verbose output, because the fact that it does not end
-# in a newline confuses Test::Harness
+my $cwd = cwd();
 {
-    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $ret = $step->runstep($conf);
-    my @more_lines = $tie_out->READLINE;
-    ok(@more_lines, "verbose output:  hints were captured");
-    ok(defined $ret, "$step_name runstep() returned defined value");
+    my $tdir = tempdir( CLEANUP => 1 );
+    File::Path::mkpath( qq{$tdir/init/hints} )
+        or croak "Unable to create directory for local hints";
+    my $localhints = q{local.pm};
+    open my $FH, '>', qq{$tdir/init/hints/local.pm}
+        or croak "Unable to open temp file for writing";
+    print $FH <<END;
+package init::hints::local;
+use strict;
+sub runstep {
+    return 1;
+}
+1;
+END
+    close $FH or croak "Unable to close temp file after writing";
+    unshift(@INC, $tdir);
+
+    # need to capture the --verbose output,
+    # because the fact that it does not end
+    # in a newline confuses Test::Harness
+    {
+        my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
+            or croak "Unable to tie";
+        $ret = $step->runstep($conf);
+        my @more_lines = $tie_out->READLINE;
+        ok(@more_lines, "verbose output:  hints were captured");
+        ok(defined $ret, "$step_name runstep() returned defined value");
+    }
 }
 
 
@@ -96,11 +119,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-105-init_hints.01.t - test config::init::hints
+105-init_hints.02.t - test config::init::hints
 
 =head1 SYNOPSIS
 
-    % prove t/configure/105-init_hints.01.t
+    % prove t/configure/105-init_hints.02.t
 
 =head1 DESCRIPTION
 
