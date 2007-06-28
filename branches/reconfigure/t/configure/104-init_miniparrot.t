@@ -7,7 +7,6 @@ use strict;
 use warnings;
 use Test::More tests => 22;
 use Carp;
-use Data::Dumper;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::init::defaults');
 use_ok('config::init::miniparrot');
@@ -67,7 +66,6 @@ $conf->add_steps($pkg);
 $conf->options->set(%{$args});
 
 $task = $conf->steps->[1];
-print STDERR Dumper $conf->steps;
 $step_name   = $task->step;
 @step_params = @{ $task->params };
 
