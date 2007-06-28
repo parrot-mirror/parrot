@@ -48,12 +48,11 @@ sub runstep {
     $hints = "init::hints::local";
     print "$hints " if $verbose;
     eval "use $hints";
-    die $@ if $@;
 
-#    unless ($@) {
+    unless ($@) {
         $hints->runstep( $conf, @_ ) if $hints->can('runstep');
         $hints_used++;
-#    }
+    }
 
     if ( $hints_used == 0 ) {
         print "(no hints) " if $verbose;
