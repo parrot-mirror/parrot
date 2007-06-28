@@ -54,8 +54,8 @@ sub runstep {
         $hints_used++;
     }
 
-    if ( $hints_used == 0 ) {
-        print "(no hints) " if $verbose;
+    if ( $hints_used == 0 and $verbose ) {
+        print "(no hints) ";
     }
 
     print "]" if $verbose;
