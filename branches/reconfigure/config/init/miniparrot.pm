@@ -8,11 +8,11 @@ config/init/miniparrot.pm - Miniparrot configuration
 =head1 DESCRIPTION
 
 Modifies settings to match miniparrot (ANSI C Parrot)'s needs.  This step
-primarily  overwrites a lot of settings in the Configure database to disable
-JIT and match ANSI  characteristics.
+primarily overwrites a lot of settings in the Configure database to disable
+JIT and match ANSI characteristics.
 
 Centralizing these settings will (hopefully) allow for an eventual move away
-from using  Configure at all for miniparrot builds.
+from using Configure at all for miniparrot builds.
 
 =cut
 
@@ -38,6 +38,8 @@ sub runstep {
         return $self;
     }
 
+#        print STDERR "skipped not set\n";
+#        print STDERR $conf->data->get('DEVEL'), "\n";
     $conf->data->set(
         miniparrot         => 1,
         DEVEL              => $conf->data->get('DEVEL') . '-miniparrot',
