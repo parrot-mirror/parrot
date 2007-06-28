@@ -38,8 +38,6 @@ sub runstep {
         return $self;
     }
 
-#        print STDERR "skipped not set\n";
-#        print STDERR $conf->data->get('DEVEL'), "\n";
     $conf->data->set(
         miniparrot         => 1,
         DEVEL              => $conf->data->get('DEVEL') . '-miniparrot',
