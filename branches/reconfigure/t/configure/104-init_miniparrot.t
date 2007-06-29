@@ -27,7 +27,7 @@ my $conf = Parrot::Configure->new;
 
 test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
 
-is($conf->data->get('miniparrot'), undef, 
+is($conf->data->get('miniparrot'), undef,
     "miniparrot is not yet enabled");
 is($conf->data->get('jitarchname'), undef,
     "jitarchname undef as expected");
@@ -40,7 +40,7 @@ is($conf->data->get('jitosname'), undef,
 
 test_step_thru_runstep($conf, q{init::miniparrot}, $args, 1);
 
-ok($conf->data->get('miniparrot'), 
+ok($conf->data->get('miniparrot'),
     "miniparrot is enabled");
 is($conf->data->get('jitarchname'), 'nojit',
     "jitarchname as expected");
@@ -50,7 +50,7 @@ is($conf->data->get('jitcpu'), 'I386',
     "jitcpu as expected");
 is($conf->data->get('jitosname'), 'nojit',
     "jitosname as expected");
-ok(! $conf->data->get('jitcapable'), 
+ok(! $conf->data->get('jitcapable'),
     "jitcapable as expected");
 
 pass("Completed all tests in $0");
