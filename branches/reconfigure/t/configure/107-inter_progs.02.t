@@ -31,7 +31,7 @@ determine a way to test a user response to a prompt.
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
-    argv            => [ q{--ask}, q{--debugging} ],
+    argv            => [ q{--ask}, q{--debugging=0} ],
     script          => $0,
     parrot_version  => $parrot_version,
     svnid           => '$Id: 107-inter_progs.02.t 19469 2007-06-29 15:38:47Z jkeenan $',
@@ -45,7 +45,7 @@ test_step_thru_runstep($conf, q{init::hints}, $args, 2);
 
 my (@prompts, $object, @entered);
 @prompts = map { q{foo_} . $_ } 
-    qw| alpha beta gamma delta epsilon zeta eta theta iota kappa |;
+    qw| alpha beta gamma delta epsilon zeta eta theta iota |;
 $object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
 can_ok('Tie::Filehandle::Preempt::Stdin', ('READLINE'));
 isa_ok($object, 'Tie::Filehandle::Preempt::Stdin');
