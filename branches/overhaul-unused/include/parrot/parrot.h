@@ -240,11 +240,13 @@ typedef void (*funcptr_t)(void);
 #  define O_BINARY 0
 #endif /* O_BINARY */
 
+
 /* define a macro to acknowledge an unused argument, and silence a "helpful"
    compiler warning. gcc will emit a warning on an empty if body unless {} is
    used to make an empty block.  */
-#define UNUSED(a) if (a) {}
-
+#define UNUSED_INTERP Interp *interp __attribute__unused__
+#define UNUSED(a) if (0) (void)(a);
+#define UA(a) a##_unused __attribute__unused__
 
 /* Hide our struct copying behind macros */
 #define STRUCT_COPY(d,s)    assert(d);assert(s);*(d)=*(s);
