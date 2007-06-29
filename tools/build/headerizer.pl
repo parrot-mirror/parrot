@@ -145,8 +145,10 @@ sub function_components_from_declaration {
 
     my @parms = split( /\s*,\s*/, $parms );
     for (@parms) {
-        /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' ) || /theINTERP/
+        s/UNUSED_INTERP/UA(Interp *interp)/;
+        /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' )
             or die "Bad parms in $proto";
+        s/UA\(\s*(\w+.*\w+)\s*\)/$1/e;
     }
 
     my $is_static = 0;
@@ -226,6 +228,12 @@ sub make_function_decls {
 
         my @attrs = attrs_from_args( @args );
         push( @attrs, attrs_from_funcflags( $funcflags ) );
+
+        for my $arg ( @args ) {
+            if ( $arg =~ m{UA\((.+)\)} ) {
+                $arg = $1;
+            }
+        }
 
         my $argline = join( ", ", @args );
         if ( length($decl.$argline) <= 75 ) {
