@@ -719,7 +719,7 @@ create_lexinfo(Interp *interp, IMC_Unit *unit, PMC *sub, int need_lex)
 }
 
 static PMC*
-find_outer(SHIM_INTERP, IMC_Unit *unit /*NN*/)
+find_outer(Interp *interp, IMC_Unit *unit /*NN*/)
 {
     subs_t *s;
     SymReg *sub;
@@ -1095,7 +1095,7 @@ build_key(Interp *interp /*NN*/, SymReg *key_reg /*NN*/)
 }
 
 INTVAL
-IMCC_int_from_reg(SHIM_INTERP, const SymReg *r /*NN*/)
+IMCC_int_from_reg(Interp *interp, const SymReg *r /*NN*/)
 {
     INTVAL i;
 
