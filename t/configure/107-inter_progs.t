@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests =>  2;
+use Test::More tests => 24;
 use Carp;
 use Data::Dumper;
 use lib qw( . lib ../lib ../../lib t/configure/testlib );
