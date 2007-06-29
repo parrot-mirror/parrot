@@ -1148,17 +1148,14 @@ PDB_delete_breakpoint(Interp *interp, const char *command)
 
 /*
 
-=item C<void
-PDB_delete_condition(Interp *interp, PDB_breakpoint_t *breakpoint)>
+FUNCDOC: PDB_delete_condition
 
 Delete a condition associated with a breakpoint.
-
-=cut
 
 */
 
 void
-PDB_delete_condition(Interp *interp, PDB_breakpoint_t *breakpoint)
+PDB_delete_condition(UNUSED_INTERP, PDB_breakpoint_t *breakpoint /*NN*/)
 {
     if (breakpoint->condition->value) {
         if (breakpoint->condition->type & PDB_cond_str) {
@@ -1181,22 +1178,16 @@ PDB_delete_condition(Interp *interp, PDB_breakpoint_t *breakpoint)
 
 /*
 
-=item C<void
-PDB_skip_breakpoint(Interp *interp, long i)>
+FUNCDOC: PDB_skip_breakpoint
 
 Skip C<i> times all breakpoints.
-
-=cut
 
 */
 
 void
-PDB_skip_breakpoint(Interp *interp, long i)
+PDB_skip_breakpoint(Interp *interp /*NN*/, long i)
 {
-    if (i == 0)
-        interp->pdb->breakpoint_skip = i;
-    else
-        interp->pdb->breakpoint_skip = i - 1;
+    interp->pdb->breakpoint_skip = i ? i-1 : i;
 }
 
 /*
@@ -1211,9 +1202,9 @@ End the program.
 */
 
 char
-PDB_program_end(Interp *interp)
+PDB_program_end(Interp *interp /*NN*/)
 {
-    PDB_t *pdb = interp->pdb;
+    PDB_t * const pdb = interp->pdb;
 
     /* Remove the RUNNING state */
     pdb->state &= ~PDB_RUNNING;
@@ -1234,7 +1225,7 @@ Returns true if the condition was met.
 */
 
 char
-PDB_check_condition(Interp *interp, PDB_condition_t *condition)
+PDB_check_condition(Interp *interp, PDB_condition_t *condition /*NN*/)
 {
     INTVAL   i,  j;
     FLOATVAL k,  l;
@@ -1309,18 +1300,16 @@ PDB_check_condition(Interp *interp, PDB_condition_t *condition)
 
 /*
 
-=item C<char PDB_break(Interp *interp)>
+FUNCDOC: PDB_break
 
 Returns true if we have to stop running.
-
-=cut
 
 */
 
 char
-PDB_break(Interp *interp)
+PDB_break(Interp *interp /*NN*/)
 {
-    PDB_t            *pdb        = interp->pdb;
+    PDB_t            * const pdb = interp->pdb;
     PDB_breakpoint_t *breakpoint = pdb->breakpoint;
     PDB_condition_t  *watchpoint = pdb->watchpoint;
 
@@ -1450,13 +1439,15 @@ Do inplace unescape of C<\r>, C<\n>, C<\t>, C<\a> and C<\\>.
 int
 PDB_unescape(char *string)
 {
-    char *fill;
-    int   i, l = 0;
+    int l = 0;
 
     for (; *string; string++) {
         l++;
 
         if (*string == '\\') {
+            char *fill;
+            char i;
+
             switch (string[1]) {
                 case 'n':
                     *string = '\n';

@@ -137,9 +137,8 @@ imc_open_unit(Interp *interp /*NN*/, IMC_Unit_Type t)
  * list.
  */
 void
-imc_close_unit(Interp *interp, IMC_Unit *unit /*NULLOK*/)
+imc_close_unit(UNUSED_INTERP, IMC_Unit *unit /*NULLOK*/)
 {
-    UNUSED(interp);
     if (unit) {
 #if COMPILE_IMMEDIATE
         imc_compile_unit(interp, unit);
