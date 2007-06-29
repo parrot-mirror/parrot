@@ -56,25 +56,6 @@ ok($step->description(), "$step_name has description");
     ok(defined $ret, "$step_name runstep() returned defined value");
 }
 
-#sub test_step_thru_runstep {
-#    my ($conf, $pkg, $args, $stepnum) = @_;
-#    my ($task, $step_name, @step_params, $step, $ret);
-#    
-#    $conf->add_steps($pkg);
-#    $conf->options->set(%{$args});
-#
-#    $task = $conf->steps->[$stepnum];
-#    $step_name   = $task->step;
-#    @step_params = @{ $task->params };
-#
-#    $step = $step_name->new();
-#    ok(defined $step, "$step_name constructor returned defined value");
-#    isa_ok($step, $step_name);
-#    ok($step->description(), "$step_name has description");
-#    $ret = $step->runstep($conf);
-#    ok(defined $ret, "$step_name runstep() returned defined value");
-#}
-
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
