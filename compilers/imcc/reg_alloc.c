@@ -837,7 +837,7 @@ allocate_uniq(Parrot_Interp interp, IMC_Unit *unit, int usage)
 }
 
 static void
-vanilla_reg_alloc(UNUSED_INTERP, IMC_Unit *unit)
+vanilla_reg_alloc(SHIM_INTERP, IMC_Unit *unit)
 {
     char type[] = "INSP";
     int i, j, reg_set, first_reg;

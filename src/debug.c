@@ -960,11 +960,9 @@ Init the program.
 extern void imcc_init(Parrot_Interp interp);
 
 void
-PDB_init(Interp *interp, const char *command)
+PDB_init(Interp *interp, SHIM(const char *command))
 {
-    PDB_t *pdb = interp->pdb;
-
-    UNUSED(command);
+    PDB_t * const pdb = interp->pdb;
 
     /* Restart if we are already running */
     if (pdb->state & PDB_RUNNING)
@@ -1155,7 +1153,7 @@ Delete a condition associated with a breakpoint.
 */
 
 void
-PDB_delete_condition(UNUSED_INTERP, PDB_breakpoint_t *breakpoint /*NN*/)
+PDB_delete_condition(SHIM_INTERP, PDB_breakpoint_t *breakpoint /*NN*/)
 {
     if (breakpoint->condition->value) {
         if (breakpoint->condition->type & PDB_cond_str) {

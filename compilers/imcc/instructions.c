@@ -574,7 +574,7 @@ ins_print(Interp *interp /*NN*/, FILE *fd /*NN*/, const Instruction *ins /*NN*/)
 static char *output;
 
 static int
-e_file_open(UNUSED_INTERP, void *param)
+e_file_open(SHIM_INTERP, void *param)
 {
     char * const file = (char *) param;
 
@@ -587,7 +587,7 @@ e_file_open(UNUSED_INTERP, void *param)
 }
 
 static int
-e_file_close(Interp *interp /*NN*/, UA(void *param))
+e_file_close(Interp *interp /*NN*/, SHIM(void *param))
 {
     printf("\n\n");
     fclose(stdout);
@@ -596,7 +596,7 @@ e_file_close(Interp *interp /*NN*/, UA(void *param))
 }
 
 static int
-e_file_emit(Interp *interp /*NN*/, UA(void *param), UA(IMC_Unit *unit), const Instruction *ins /*NN*/)
+e_file_emit(Interp *interp /*NN*/, SHIM(void *param), SHIM(IMC_Unit *unit), const Instruction *ins /*NN*/)
 {
 #if IMC_TRACE
     PIO_eprintf(NULL, "e_file_emit\n");

@@ -160,7 +160,7 @@ static void verify_signature( Interp *interp /*NN*/,
 /* HEADERIZER END: static */
 
 static void
-imcc_globals_destroy(UNUSED_INTERP, UA(int ex), UA(void *param))
+imcc_globals_destroy(SHIM_INTERP, SHIM(int ex), SHIM(void *param))
 {
     cs_t   *cs, *prev_cs;
 
@@ -186,7 +186,7 @@ imcc_globals_destroy(UNUSED_INTERP, UA(int ex), UA(void *param))
 }
 
 int
-e_pbc_open(Interp *interp, UA(void *param))
+e_pbc_open(Interp *interp, SHIM(void *param))
 {
     cs_t *cs;
 
@@ -719,7 +719,7 @@ create_lexinfo(Interp *interp, IMC_Unit *unit, PMC *sub, int need_lex)
 }
 
 static PMC*
-find_outer(UNUSED_INTERP, IMC_Unit *unit /*NN*/)
+find_outer(SHIM_INTERP, IMC_Unit *unit /*NN*/)
 {
     subs_t *s;
     SymReg *sub;
@@ -1095,7 +1095,7 @@ build_key(Interp *interp /*NN*/, SymReg *key_reg /*NN*/)
 }
 
 INTVAL
-IMCC_int_from_reg(UNUSED_INTERP, const SymReg *r /*NN*/)
+IMCC_int_from_reg(SHIM_INTERP, const SymReg *r /*NN*/)
 {
     INTVAL i;
 
@@ -1248,7 +1248,7 @@ constant_folding(Interp *interp, IMC_Unit *unit /*NN*/)
 }
 
 int
-e_pbc_new_sub(UNUSED_INTERP, UA(void *param), IMC_Unit *unit /*NN*/)
+e_pbc_new_sub(SHIM_INTERP, SHIM(void *param), IMC_Unit *unit /*NN*/)
 {
     if (!unit->instructions)
         return 0;
@@ -1260,7 +1260,7 @@ e_pbc_new_sub(UNUSED_INTERP, UA(void *param), IMC_Unit *unit /*NN*/)
 }
 
 int
-e_pbc_end_sub(Interp *interp /*NN*/, UA(void *param), IMC_Unit *unit /*NN*/)
+e_pbc_end_sub(Interp *interp /*NN*/, SHIM(void *param), IMC_Unit *unit /*NN*/)
 {
     Instruction *ins;
     int          pragma;
@@ -1362,7 +1362,7 @@ verify_signature(Interp *interp /*NN*/, const Instruction *ins /*NN*/, opcode_t 
 
 /* now let the fun begin, actually emit code for one ins */
 int
-e_pbc_emit(Interp *interp /*NN*/, UA(void *param), IMC_Unit *unit /*NN*/, const Instruction *ins /*NN*/)
+e_pbc_emit(Interp *interp /*NN*/, SHIM(void *param), IMC_Unit *unit /*NN*/, const Instruction *ins /*NN*/)
 {
     int        op, i;
     int        ok = 0;
@@ -1580,7 +1580,7 @@ e_pbc_emit(Interp *interp /*NN*/, UA(void *param), IMC_Unit *unit /*NN*/, const 
 }
 
 int
-e_pbc_close(Interp *interp /*NN*/, UA(void *param))
+e_pbc_close(Interp *interp /*NN*/, SHIM(void *param))
 {
     fixup_globals(interp);
 

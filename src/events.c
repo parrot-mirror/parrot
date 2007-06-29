@@ -658,7 +658,7 @@ io_thread_ready_rd(pending_io_events *ios, int ready_rd)
 }
 
 static void*
-io_thread(UA(void *data))
+io_thread(SHIM(void *data))
 {
     fd_set act_rfds, act_wfds;
     int n_highest, i;
