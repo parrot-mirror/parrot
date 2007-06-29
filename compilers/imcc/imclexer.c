@@ -5846,7 +5846,7 @@ compile_string(Interp *interp, char *s, void *yyscanner)
 }
 
 void
-IMCC_print_inc(SHIM_INTERP)
+IMCC_print_inc(Interp *interp)
 {
     struct macro_frame_t *f;
     const char *old;

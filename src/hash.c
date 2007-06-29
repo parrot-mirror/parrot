@@ -36,8 +36,7 @@ don't apply.
 
 /* HEADERIZER BEGIN: static */
 
-static int cstring_compare(
-    Parrot_Interp interp,
+static int cstring_compare( Interp *interp,
     const char *a /*NN*/,
     const char *b /*NN*/ )
         __attribute__nonnull__(2)
@@ -81,6 +80,10 @@ static size_t key_hash_STRING( Interp *interp /*NN*/,
     size_t seed )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+static int pointer_compare( Interp *interp,
+    const void * const a,
+    const void * const b );
 
 static int STRING_compare(
     Parrot_Interp interp,
