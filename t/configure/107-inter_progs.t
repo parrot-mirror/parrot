@@ -8,13 +8,17 @@ use warnings;
 use Test::More qw(no_plan); # tests =>  2;
 use Carp;
 use Data::Dumper;
-use Tie::Filehandle::Preempt::Stdin;
-use lib qw( . lib ../lib ../../lib );
+use lib qw( . lib ../lib ../../lib t/configure/testlib );
+use_ok('config::init::defaults');
+use_ok('config::init::install');
+use_ok('config::init::hints');
 use_ok('config::inter::progs');
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::IO::Capture::Mini;
+use Auxiliary qw( test_step_thru_runstep);
+use Tie::Filehandle::Preempt::Stdin;
 
 =for hints_for_testing Testing and refactoring of inter::progs should
 entail understanding of issues discussed in the following RT tickets:
@@ -25,14 +29,6 @@ determine a way to test a user response to a prompt.
 
 =cut
 
-my (@prompts, $object, @entered);
-@prompts = map { q{foo_} . $_ } 
-    qw| alpha beta gamma delta epsilon zeta eta theta iota kappa |;
-$object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
-can_ok('Tie::Filehandle::Preempt::Stdin', ('READLINE'));
-isa_ok($object, 'Tie::Filehandle::Preempt::Stdin');
-
-my $pkg = q{inter::progs};
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
     argv            => [ q{--ask} ],
@@ -41,25 +37,40 @@ my $args = process_options( {
     svnid           => '$Id$',
 } );
 
-my $conf = Parrot::Configure->new();
+my $conf = Parrot::Configure->new;
+
+test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
+test_step_thru_runstep($conf, q{init::install}, $args, 1);
+test_step_thru_runstep($conf, q{init::hints}, $args, 2);
+
+my (@prompts, $object, @entered);
+@prompts = map { q{foo_} . $_ } 
+    qw| alpha beta gamma delta epsilon zeta eta theta iota kappa |;
+$object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
+can_ok('Tie::Filehandle::Preempt::Stdin', ('READLINE'));
+isa_ok($object, 'Tie::Filehandle::Preempt::Stdin');
+
+my ($task, $step_name, @step_params, $step, $ret);
+my $pkg = q{inter::progs};
+
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
 
-my $task = $conf->steps->[0];
-my $step_name   = $task->step;
-my @step_params = @{ $task->params };
+$task = $conf->steps->[3];
+$step_name   = $task->step;
+@step_params = @{ $task->params };
 
-my $step = $step_name->new();
+$step = $step_name->new();
 ok(defined $step, "$step_name constructor returned defined value");
 isa_ok($step, $step_name);
 ok($step->description(), "$step_name has description");
-# print STDERR Dumper ($conf, $step);
+
 # need to capture the --verbose output, because the fact that it does not end
 # in a newline confuses Test::Harness
 {
     my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";
-    my $ret = $step->runstep($conf);
+    $ret = $step->runstep($conf);
     my @more_lines = $tie_out->READLINE;
     ok(@more_lines, "prompts were captured");
     ok(defined $ret, "$step_name runstep() returned defined value");
