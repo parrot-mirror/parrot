@@ -10,25 +10,17 @@ use Carp;
 use Cwd;
 use Data::Dumper;
 use File::Temp qw(tempdir);
-use lib qw( . lib ../lib ../../lib );
+use lib qw( . lib ../lib ../../lib t/configure/testlib );
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use_ok('config::init::install');
-
-=for hints_for_testing This file ought to test what happens when you provide a
-non-default directory to each of the options in config/init/install.  For
-testing purposes, these directories probably do not have to be real.  You
-should probably test the Parrot::Configure object before and after calling
-runsteps() in order to verify that the non-defaults made it into the object.
-
-=cut
+use Auxiliary qw( test_hint);
 
 my $cwd = cwd();
 {
     my $tdir = tempdir();
     my $tdir1 = tempdir();
-    my $pkg = q{init::install};
     my $parrot_version = Parrot::BuildUtil::parrot_version();
     my $args = process_options( {
         argv            => [ 
@@ -53,19 +45,8 @@ my $cwd = cwd();
     } );
     
     my $conf = Parrot::Configure->new;
-    $conf->add_steps($pkg);
-    $conf->options->set(%{$args});
-    
-    my $task = $conf->steps->[0];
-    my $step_name   = $task->step;
-    my @step_params = @{ $task->params };
-    
-    my $step = $step_name->new();
-    ok(defined $step, "$step_name constructor returned defined value");
-    isa_ok($step, $step_name);
-    ok($step->description(), "$step_name has description");
-    my $ret = $step->runstep($conf);
-    ok(defined $ret, "$step_name runstep() returned defined value");
+    test_hint($conf, q{init::install}, $args, 0);
+
     is($conf->data->get('prefix'), $tdir,
         "--prefix option confirmed");
     is($conf->data->get('exec_prefix'), $tdir,
