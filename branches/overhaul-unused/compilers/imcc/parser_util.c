@@ -209,7 +209,7 @@ check_op(Interp *interp /*NN*/, char *fullname /*NN*/,
 }
 
 static Instruction *
-maybe_builtin(Interp *interp, UA(IMC_Unit *unit), const char *name /*NN*/,
+maybe_builtin(Interp *interp, SHIM(IMC_Unit *unit), const char *name /*NN*/,
         SymReg **r, int n)
 {
     Instruction *ins;
@@ -1054,7 +1054,7 @@ try_find_op(Interp *interp /*NN*/, IMC_Unit * unit, const char *name /*NN*/,
 }
 
 static const char *
-try_rev_cmp(UNUSED_INTERP, UA(IMC_Unit * unit), const char *name,
+try_rev_cmp(SHIM_INTERP, SHIM(IMC_Unit * unit), const char *name,
         SymReg ** r)
 {
     static struct br_pairs {
@@ -1068,11 +1068,11 @@ try_rev_cmp(UNUSED_INTERP, UA(IMC_Unit * unit), const char *name,
         { "isge", "isle", 1 },
     };
     unsigned int i;
-    SymReg *t;
 
     for (i = 0; i < N_ELEMENTS(br_pairs); i++) {
         if (strcmp(name, br_pairs[i].op) == 0) {
             const int to_swap =  br_pairs[i].to_swap;
+            SymReg *t;
 
             if (r[to_swap + 1]->set == 'P')
                 return NULL;
@@ -1087,7 +1087,7 @@ try_rev_cmp(UNUSED_INTERP, UA(IMC_Unit * unit), const char *name,
 
 Instruction *
 multi_keyed(Interp *interp, IMC_Unit * unit, char *name,
-            SymReg ** r, int nr, int keyvec, UA(int emit))
+            SymReg ** r, int nr, int keyvec, SHIM(int emit))
 {
     int i, keyf, kv, n;
     char buf[16];

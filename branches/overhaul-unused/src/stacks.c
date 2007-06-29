@@ -81,7 +81,7 @@ stack_destroy() doesn't need to do anything, since GC does it all.
 
 PARROT_API
 void
-stack_destroy(UA(Stack_Chunk_t *top))
+stack_destroy(SHIM(Stack_Chunk_t *top))
 {
     /* GC does it all */
 }
@@ -95,7 +95,7 @@ Returns the height of the stack. The maximum "depth" is height - 1.
 
 PARROT_API
 size_t
-stack_height(UNUSED_INTERP, const Stack_Chunk_t *chunk /*NN*/)
+stack_height(SHIM_INTERP, const Stack_Chunk_t *chunk /*NN*/)
     /* WARN_UNUSED */
 {
     size_t height = 0;
@@ -378,7 +378,7 @@ Returns the stack entry type of C<entry>.
 
 PARROT_API
 Stack_entry_type
-get_entry_type(UNUSED_INTERP, const Stack_Entry_t *entry /*NN*/)
+get_entry_type(SHIM_INTERP, const Stack_Entry_t *entry /*NN*/)
     /* PURE, WARN_UNUSED */
 {
     return entry->entry_type;

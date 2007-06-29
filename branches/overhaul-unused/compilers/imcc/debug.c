@@ -14,7 +14,7 @@
 
 PARROT_API
 void
-IMCC_fatal(Interp *interp /*NN*/, UA(int code), const char *fmt /*NN*/, ...)
+IMCC_fatal(Interp *interp /*NN*/, SHIM(int code), const char *fmt /*NN*/, ...)
     /* NORETURN */
 {
     va_list ap;
@@ -27,7 +27,7 @@ IMCC_fatal(Interp *interp /*NN*/, UA(int code), const char *fmt /*NN*/, ...)
 
 PARROT_API
 void
-IMCC_fataly(Interp *interp /*NN*/, UA(int code), const char *fmt /*NN*/, ...)
+IMCC_fataly(Interp *interp /*NN*/, SHIM(int code), const char *fmt /*NN*/, ...)
     /* NORETURN */
 {
     va_list ap;

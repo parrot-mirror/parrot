@@ -603,7 +603,7 @@ free_life_info(const struct _IMC_Unit *unit /*NN*/, SymReg *r /*NN*/)
  */
 
 static void
-analyse_life_block(UNUSED_INTERP, Basic_block* bb /*NN*/, SymReg* r /*NN*/)
+analyse_life_block(SHIM_INTERP, Basic_block* bb /*NN*/, SymReg* r /*NN*/)
 {
     Instruction* ins, *special;
     Life_range* l;

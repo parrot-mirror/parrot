@@ -1192,7 +1192,7 @@ ig_precolor(Interp* interp, IMC_Unit* unit, graph* G)
  * find available color for register #x in available colors
  */
 static int
-ig_find_color(UNUSED_INTERP, IMC_Unit *unit, int x, const char *avail)
+ig_find_color(SHIM_INTERP, IMC_Unit *unit, int x, const char *avail)
 {
     int c, t;
     SymReg *r;

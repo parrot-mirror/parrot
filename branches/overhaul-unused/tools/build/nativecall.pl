@@ -639,7 +639,7 @@ sub print_tail {
    signature for a C function we want to call and returns a pointer
    to a function that can call it. */
 void *
-build_call_func(Interp *interp, UA(PMC *pmc_nci), STRING *signature)
+build_call_func(Interp *interp, SHIM(PMC *pmc_nci), STRING *signature)
 {
     char       *c;
     STRING     *ns, *message;

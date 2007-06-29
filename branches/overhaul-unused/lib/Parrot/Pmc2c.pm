@@ -305,7 +305,7 @@ sub decl {
 
     my @args = ( 'PMC *pmc' );
     push( @args, split( /\s*,\s*/, $args ) ) if $args =~ /\S+/;
-    @args = map { "UA($_)" } @args if $unused;
+    @args = map { "SHIM($_)" } @args if $unused;
     unshift( @args, 'Interp *interp' );
     my $arg_list = join( ', ', @args );
 
