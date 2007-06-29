@@ -16,7 +16,7 @@ use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::IO::Capture::Mini;
-use Auxiliary qw( test_hint);
+use Auxiliary qw( test_step_thru_runstep);
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
@@ -28,8 +28,8 @@ my $args = process_options( {
 
 my $conf = Parrot::Configure->new;
 
-test_hint($conf, q{init::defaults}, $args, 0);
-test_hint($conf, q{init::install}, $args, 1);
+test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
+test_step_thru_runstep($conf, q{init::install}, $args, 1);
 
 my ($task, $step_name, @step_params, $step, $ret);
 my $pkg = q{init::hints};
@@ -56,7 +56,7 @@ ok($step->description(), "$step_name has description");
     ok(defined $ret, "$step_name runstep() returned defined value");
 }
 
-#sub test_hint {
+#sub test_step_thru_runstep {
 #    my ($conf, $pkg, $args, $stepnum) = @_;
 #    my ($task, $step_name, @step_params, $step, $ret);
 #    

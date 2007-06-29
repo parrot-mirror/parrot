@@ -15,7 +15,7 @@ use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use_ok('config::init::install');
-use Auxiliary qw( test_hint);
+use Auxiliary qw( test_step_thru_runstep);
 
 my $cwd = cwd();
 {
@@ -45,7 +45,7 @@ my $cwd = cwd();
     } );
     
     my $conf = Parrot::Configure->new;
-    test_hint($conf, q{init::install}, $args, 0);
+    test_step_thru_runstep($conf, q{init::install}, $args, 0);
 
     is($conf->data->get('prefix'), $tdir,
         "--prefix option confirmed");

@@ -13,7 +13,7 @@ use_ok('config::init::miniparrot');
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Auxiliary qw( test_hint);
+use Auxiliary qw( test_step_thru_runstep);
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
@@ -25,7 +25,7 @@ my $args = process_options( {
 
 my $conf = Parrot::Configure->new;
 
-test_hint($conf, q{init::defaults}, $args, 0);
+test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
 
 is($conf->data->get('miniparrot'), undef, 
     "miniparrot is not yet enabled");
@@ -38,7 +38,7 @@ is($conf->data->get('jitcpu'), undef,
 is($conf->data->get('jitosname'), undef,
     "jitosname undef as expected");
 
-test_hint($conf, q{init::miniparrot}, $args, 1);
+test_step_thru_runstep($conf, q{init::miniparrot}, $args, 1);
 
 ok($conf->data->get('miniparrot'), 
     "miniparrot is enabled");
