@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 107-inter_progs.t
+# 107-inter_progs.01.t
 
 use strict;
 use warnings;
@@ -45,7 +45,7 @@ test_step_thru_runstep($conf, q{init::hints}, $args, 2);
 
 my (@prompts, $object, @entered);
 @prompts = map { q{foo_} . $_ } 
-    qw| alpha beta gamma delta epsilon zeta eta theta iota kappa |;
+    qw| alpha beta gamma delta epsilon zeta eta theta iota |;
 $object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
 can_ok('Tie::Filehandle::Preempt::Stdin', ('READLINE'));
 isa_ok($object, 'Tie::Filehandle::Preempt::Stdin');
@@ -85,11 +85,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-107-inter_progs.t - test config::inter::progs
+107-inter_progs.01.t - test config::inter::progs
 
 =head1 SYNOPSIS
 
-    % prove t/configure/107-inter_progs.t
+    % prove t/configure/107-inter_progs.01.t
 
 =head1 DESCRIPTION
 
