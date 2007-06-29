@@ -28,7 +28,6 @@ my $cwd = cwd();
 {
     my $tdir = tempdir();
     my $tdir1 = tempdir();
-#    chdir $tdir or croak "Unable to change to tempdir";
     my $pkg = q{init::install};
     my $parrot_version = Parrot::BuildUtil::parrot_version();
     my $args = process_options( {
@@ -47,7 +46,6 @@ my $cwd = cwd();
                             qq{--oldincludedir=$tdir1},
                             qq{--infodir=$tdir1},
                             qq{--mandir=$tdir1},
-#                            qq{--doc_dir=$tdir1},
                             ],
         script          => $0,
         parrot_version  => $parrot_version,
@@ -94,10 +92,6 @@ my $cwd = cwd();
         "--infodir option confirmed");
     is($conf->data->get('mandir'), $tdir1,
         "--mandir option confirmed");
-#    is($conf->data->get('doc_dir'), $tdir1,
-#        "--doc_dir option confirmed");
-
-#    chdir $cwd or croak "Unable to change back";
 }
 
 pass("Completed all tests in $0");
