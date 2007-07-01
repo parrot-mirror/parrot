@@ -103,6 +103,8 @@ LINKFLAGS  = @linkflags@ @link_debug@ @ld_debug@
 LD         = @ld@
 LDFLAGS    = @ldflags@ @ld_debug@
 
+CONFIGURE  = $(PERL) Configure.pl
+
 LINT = lint
 LINTFLAGS = \
     -b \
@@ -313,6 +315,7 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/pcre.pbc \
     $(LIBRARY_DIR)/Parrot/Capture_PIR.pbc \
     $(LIBRARY_DIR)/Parrot/Coroutine.pbc \
+    $(LIBRARY_DIR)/Parrot/Exception.pbc \
     $(LIBRARY_DIR)/Parrot/HLLCompiler.pbc \
     $(LIBRARY_DIR)/PGE/Dumper.pbc \
     $(LIBRARY_DIR)/PGE/Glob.pbc \
@@ -752,6 +755,9 @@ world : all parrot_utils
 parrot_utils : $(PDUMP) $(DIS) $(PINFO) $(PDB) $(PBCMERGE)
 
 installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPINFO) $(INSTALLABLEPDB) $(INSTALLABLEPBCMERGE)
+
+Makefile : config/gen/makefiles/root.in
+	$(CONFIGURE) --step=gen::makefiles --target=Makefile
 
 flags_dummy :
 	@echo "Compiling with:"
@@ -1710,11 +1716,16 @@ lint : $(PARROT)
 
 ANDYLINTFLAGS = \
 	-a \
-	-aa \
 	-c \
+	-e \
 	-h \
 	-n \
+	-p \
 	-r \
+	-u \
+	-z \
+	-F \
+	-V \
 
 andylint : $(PARROT)
 	rm -f *.ln
@@ -1940,7 +1951,6 @@ HEADERIZER_O_FILES = \
     src/builtin.o \
     src/byteorder.o \
     src/charset.o \
-    src/core_pmcs.o \
     src/cpu_dep.o \
     src/datatypes.o \
     src/debug.o \
@@ -1965,6 +1975,7 @@ HEADERIZER_O_FILES = \
     src/hll.o \
     src/inter_call.o \
     src/inter_run.o \
+    src/interpreter.o \
     src/intlist.o \
     src/key.o \
     src/library.o \
@@ -1977,6 +1988,7 @@ HEADERIZER_O_FILES = \
     src/packfile.o \
     src/packfile/pf_items.o \
     src/packout.o \
+    src/pbc_merge.o \
     src/pic_jit.o \
     src/pic.o \
     src/pmc.o \

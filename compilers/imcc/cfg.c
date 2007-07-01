@@ -18,8 +18,7 @@
 
 /* HEADERIZER BEGIN: static */
 
-static void analyse_life_block(
-    Parrot_Interp interp,
+static void analyse_life_block( Interp *interp,
     Basic_block* bb /*NN*/,
     SymReg* r /*NN*/ )
         __attribute__nonnull__(2)
@@ -547,9 +546,7 @@ analyse_life_symbol(Parrot_Interp interp, const struct _IMC_Unit *unit /*NN*/, S
 
     for (i=0; i < unit->n_basic_blocks; i++) {
         if (r->life_info[i]->flags & LF_use) {
-            Instruction *ins, *prev;
-
-            ins = unit->bb_list[i]->start;
+            const Instruction * const ins = unit->bb_list[i]->start;
 
             /*
              * if the previous instruction (the last of the previous block)
@@ -557,7 +554,8 @@ analyse_life_symbol(Parrot_Interp interp, const struct _IMC_Unit *unit /*NN*/, S
              * allocation in the non-volatile register range
              */
             if (ins->prev) {
-                prev = ins->prev;
+                const Instruction * const prev = ins->prev;
+
                 if ((prev->type & (ITPCCSUB|ITPCCYIELD)) &&
                         prev->opnum != PARROT_OP_tailcall_p)
                     r->usage |= U_NON_VOLATILE;
@@ -604,13 +602,12 @@ free_life_info(const struct _IMC_Unit *unit /*NN*/, SymReg *r /*NN*/)
  */
 
 static void
-analyse_life_block(Parrot_Interp interp, Basic_block* bb /*NN*/, SymReg* r /*NN*/)
+analyse_life_block(Interp *interp, Basic_block* bb /*NN*/, SymReg* r /*NN*/)
 {
     Instruction* ins, *special;
     Life_range* l;
     int is_alias;
 
-    UNUSED(interp);
     l = make_life_range(r, bb->index);
 
     special = NULL;

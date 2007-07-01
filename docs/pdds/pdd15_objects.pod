@@ -896,8 +896,12 @@ put it in $P1.
 =item setattribute
 
   setattribute $P1, $S2, $P3
+  setattribute $P1, $P2, $S3, $P4
 
-Set the attribute of object $P1 with the fully qualified name $S2 to $P3
+Set the attribute of object $P1 with the attribute name $S2 to $P3. To set an
+attribute for a parent class that has the same name as an attribute in the
+child class, pass an optional class object or namespace key $P2 for the parent
+class.
 
 =item callmethod
 
@@ -967,6 +971,17 @@ A string name looks for the class in a namespace with that name nested in the
 currently selected namespace. Passing in a namespace object looks for the class
 in that namespace object. A key looks for the class in the namespace identified
 by the multilevel key relative to the currently selected HLL.
+
+=item new
+
+  $P1 = new $S2
+  $P1 = new $S2, $P3
+  $P1 = new $P2
+  $P1 = new $P2, $P3
+
+Create a new object from the class named by $S2 or $P2 (a string PMC, namespace
+key, or class object), and put the PMC for it in $P1. You may optionally pass a
+hash of initialization parameters for the class in $P3.
 
 =item addparent
 

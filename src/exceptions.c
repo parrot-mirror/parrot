@@ -193,7 +193,7 @@ Parrot_push_action(Interp *interp /*NN*/, PMC *sub)
 {
     if (!VTABLE_isa(interp, sub,
                 const_string(interp, "Sub"))) {
-        internal_exception(1, "Tried to push a non Sub PMC action");
+        real_exception(interp, NULL, 1, "Tried to push a non Sub PMC action");
     }
     stack_push(interp, &interp->dynamic_env, sub,
                STACK_ENTRY_ACTION, run_cleanup_action);
@@ -394,12 +394,10 @@ Throw the exception.
 
 PARROT_API
 opcode_t *
-throw_exception(Interp *interp /*NN*/, PMC *exception, void *dest)
+throw_exception(Interp *interp /*NN*/, PMC *exception, SHIM(void *dest))
 {
     opcode_t *address;
     PMC * const handler = find_exception_handler(interp, exception);
-
-    UNUSED(dest);
 
     if (!handler)
         return NULL;

@@ -81,9 +81,8 @@ stack_destroy() doesn't need to do anything, since GC does it all.
 
 PARROT_API
 void
-stack_destroy(Stack_Chunk_t *top)
+stack_destroy(SHIM(Stack_Chunk_t *top))
 {
-    UNUSED(top)
     /* GC does it all */
 }
 
@@ -96,11 +95,10 @@ Returns the height of the stack. The maximum "depth" is height - 1.
 
 PARROT_API
 size_t
-stack_height(Interp *interp, const Stack_Chunk_t *chunk /*NN*/)
+stack_height(SHIM_INTERP, const Stack_Chunk_t *chunk /*NN*/)
     /* WARN_UNUSED */
 {
     size_t height = 0;
-    UNUSED(interp);
 
     for (; ; chunk = chunk->prev) {
         if (chunk == chunk->prev)
@@ -257,7 +255,7 @@ stack_push(Interp *interp, Stack_Chunk_t **stack_p /*NN*/,
             UVal_ptr(entry->entry) = thing;
             break;
         default:
-            internal_exception(ERROR_BAD_STACK_TYPE,
+            real_exception(interp, NULL, ERROR_BAD_STACK_TYPE,
                     "Invalid Stack_Entry_type!");
             break;
     }
@@ -279,7 +277,7 @@ stack_pop(Interp *interp, Stack_Chunk_t **stack_p /*NN*/,
 
     /* Types of 0 mean we don't care */
     if (type && entry->entry_type != type) {
-        internal_exception(ERROR_BAD_STACK_TYPE,
+        real_exception(interp, NULL, ERROR_BAD_STACK_TYPE,
                            "Wrong type on top of stack!\n");
     }
 
@@ -314,7 +312,7 @@ stack_pop(Interp *interp, Stack_Chunk_t **stack_p /*NN*/,
         *(void **)where    = UVal_ptr(entry->entry);
         break;
     default:
-        internal_exception(ERROR_BAD_STACK_TYPE,
+        real_exception(interp, NULL, ERROR_BAD_STACK_TYPE,
                            "Wrong type on top of stack!\n");
         break;
     }
@@ -380,11 +378,9 @@ Returns the stack entry type of C<entry>.
 
 PARROT_API
 Stack_entry_type
-get_entry_type(Interp *interp, const Stack_Entry_t *entry /*NN*/)
+get_entry_type(SHIM_INTERP, const Stack_Entry_t *entry /*NN*/)
     /* PURE, WARN_UNUSED */
 {
-    UNUSED(interp);
-
     return entry->entry_type;
 }
 
@@ -405,8 +401,9 @@ Parrot_dump_dynamic_environment(Interp *interp /*NN*/,
 
     while (dynamic_env->prev != dynamic_env) {
         const Stack_Entry_t * const e = stack_entry(interp, dynamic_env, 0);
-        if (! e)
-            internal_exception(1, "Control stack damaged");
+        if (! e) {
+            real_exception(interp, NULL, 1, "Control stack damaged");
+        }
 
         PIO_eprintf(interp, "[%4d:  chunk %p entry %p "
                                  "type %d cleanup %p]\n",
