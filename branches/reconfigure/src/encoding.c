@@ -107,7 +107,8 @@ ENCODING *
 Parrot_load_encoding(Interp *interp, const char *encodingname)
     /* WARN_UNUSED, NORETURN */
 {
-    internal_exception(UNIMPLEMENTED, "Can't load encodings yet");
+    UNUSED(encodingname);
+    real_exception(interp, NULL, UNIMPLEMENTED, "Can't load encodings yet");
     return NULL;
 }
 
@@ -262,6 +263,7 @@ Parrot_make_default_encoding(Interp *interp, const char *encodingname,
         ENCODING *encoding /*NN*/)
 {
     UNUSED(interp);
+    UNUSED(encodingname);
 
     Parrot_default_encoding_ptr = encoding;
     return 1;

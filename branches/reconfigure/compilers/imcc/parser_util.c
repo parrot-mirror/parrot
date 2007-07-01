@@ -45,11 +45,12 @@ static void * imcc_compile_file(
 static int is_infix( const char *name, int n, SymReg **r /*NN*/ )
         __attribute__nonnull__(3);
 
-static Instruction * maybe_builtin( Interp *interp,
+static Instruction * maybe_builtin( Interp *interp /*NN*/,
     IMC_Unit *unit,
     const char *name /*NN*/,
     SymReg **r,
     int n )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
 static char * to_infix( Interp *interp,
@@ -58,8 +59,7 @@ static char * to_infix( Interp *interp,
     int *n,
     int mmd_op );
 
-static const char * try_rev_cmp(
-    Parrot_Interp interp,
+static const char * try_rev_cmp( Interp *interp,
     IMC_Unit * unit,
     const char *name,
     SymReg ** r );
@@ -210,7 +210,7 @@ check_op(Interp *interp /*NN*/, char *fullname /*NN*/,
 }
 
 static Instruction *
-maybe_builtin(Interp *interp, IMC_Unit *unit, const char *name /*NN*/,
+maybe_builtin(Interp *interp /*NN*/, SHIM(IMC_Unit *unit), const char *name /*NN*/,
         SymReg **r, int n)
 {
     Instruction *ins;
@@ -220,24 +220,23 @@ maybe_builtin(Interp *interp, IMC_Unit *unit, const char *name /*NN*/,
     int first_arg, is_void;
 
     assert(n < 15);
-    UNUSED(unit);
     for (i = 0; i < n; ++i) {
         sig[i] = r[i]->set;
         rr[i] = r[i];
     }
     sig[i] = '\0';
-    bi = Parrot_is_builtin(interp, name, sig);
+    bi = Parrot_is_builtin(name, sig);
     if (bi < 0)
         return NULL;
     /*
      * create a method see imcc.y target = sub_call
      * cos Px, Py  => Px = Py.cos()
      */
-    is_class_meth = Parrot_builtin_is_class_method(interp, bi);
-    is_void = Parrot_builtin_is_void(interp, bi);
-    meth = mk_sub_address(interp, str_dup(name));
+    is_class_meth = Parrot_builtin_is_class_method(bi);
+    is_void = Parrot_builtin_is_void(bi);
+    meth = mk_sub_address(interp, str_dup(name)); /* XXX Memory leak on name! */
     if (is_class_meth) {    /* ParrotIO.open() */
-        const char * const ns = Parrot_builtin_get_c_namespace(interp, bi);
+        const char * const ns = Parrot_builtin_get_c_namespace(bi);
         SymReg * const ns_sym = mk_const(interp, str_dup(ns), 'S');
 
         ins = IMCC_create_itcall_label(interp);
@@ -269,7 +268,7 @@ maybe_builtin(Interp *interp, IMC_Unit *unit, const char *name /*NN*/,
  * Is instruction a parrot opcode?
  */
 int
-is_op(Interp *interp, const char *name)
+is_op(Interp *interp /*NN*/, const char *name)
 {
     int (*op_lookup)(const char *, int full) =
         interp->op_lib->op_code;
@@ -278,7 +277,7 @@ is_op(Interp *interp, const char *name)
         || ((name[0] == 'n' && name[1] == '_')
                 && (op_lookup(name + 2, 0) >= 0
                    || op_lookup(name + 2, 1) >= 0))
-        || Parrot_is_builtin(interp, name, NULL) >= 0;
+        || Parrot_is_builtin(name, NULL) >= 0;
 }
 
 /* sub x, y, z  => infix .MMD_SUBTRACT, x, y, z */
@@ -1056,7 +1055,7 @@ try_find_op(Interp *interp /*NN*/, IMC_Unit * unit, const char *name /*NN*/,
 }
 
 static const char *
-try_rev_cmp(Parrot_Interp interp, IMC_Unit * unit, const char *name,
+try_rev_cmp(SHIM_INTERP, SHIM(IMC_Unit * unit), const char *name,
         SymReg ** r)
 {
     static struct br_pairs {
@@ -1070,14 +1069,12 @@ try_rev_cmp(Parrot_Interp interp, IMC_Unit * unit, const char *name,
         { "isge", "isle", 1 },
     };
     unsigned int i;
-    int to_swap;
-    SymReg *t;
 
-    UNUSED(interp);
-    UNUSED(unit);
     for (i = 0; i < N_ELEMENTS(br_pairs); i++) {
         if (strcmp(name, br_pairs[i].op) == 0) {
-            to_swap =  br_pairs[i].to_swap;
+            const int to_swap =  br_pairs[i].to_swap;
+            SymReg *t;
+
             if (r[to_swap + 1]->set == 'P')
                 return NULL;
             t = r[to_swap];
@@ -1100,8 +1097,6 @@ multi_keyed(Interp *interp, IMC_Unit * unit, char *name,
     SymReg *nreg[3];
     Instruction *ins = 0;
 
-    UNUSED(emit);
-
     /* count keys in keyvec */
     kv = keyvec;
     for (i = keyf = 0; i < nr; i++, kv >>= 1)
@@ -1111,6 +1106,7 @@ multi_keyed(Interp *interp, IMC_Unit * unit, char *name,
         return 0;
     /* XXX what to do, if we don't emit instruction? */
     assert(emit);
+    UNUSED(emit);
     /* OP  _p_k    _p_k_p_k =>
      * set      py, p_k
      * set      pz,     p_k

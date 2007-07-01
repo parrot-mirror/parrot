@@ -40,6 +40,20 @@ More platforms also means more compilers.  Maybe your DEC compiler
 is more picky than gcc, and spews more warnings.  Good!  More
 opportunities for cleaning!
 
+=head3 icc
+
+C<icc> is the Intel C/C++ Compiler and is available for free for
+non-commercial use.  To use C<icc> to build parrot, use the following
+arguments to C<Configure.pl>:
+
+  perl Configure.pl --cc=icc --link=icc --ld=icc --ccflags=-I<icc-header-path>
+
+(courtesy of Steve Peters, C<steve at fisharerojo dot org>).
+
+For example, those using icc version 9.1 series, the configure line is:
+
+  perl Configure.pl --cc=icc --link=icc --ld=icc --ccflags=-I/opt/intel/compiler91/include/
+
 =head2 Compiler pickiness
 
 Use as many compiler warnings as we possibly can.  The more warnings
@@ -273,6 +287,14 @@ many more.
 
 Valgrind (L<http://valgrind.org/>) is a profiler/debugger most notable
 for the way it magically monitors memory accesses and management.
+
+To run parrot under Valgrind, the following argument set should be helpful:
+
+  valgrind --num-callers=500 \
+     --leak-check=full --leak-resolution=high --show-reachable=yes \
+     parrot --leak-test
+
+(adapted from a post to C<parrot-porters> by chromatic).
 
 =head2 IMCC cleanup
 

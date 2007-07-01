@@ -138,15 +138,19 @@ sub function_components_from_declaration {
     my $parms      = join( " ", @lines );
 
     $parms =~ s/\s+/ /g;
-    $parms =~ s{([^(]+)\s*\((.+)\)\s*(/\*\s*(.*?)\s*\*/)?;?}{$2} or die qq{Couldn't handle "$proto"};
+    $parms =~ s{([^(]+)\s*\((.+)\)\s*(/\*\s*(.*?)\s*\*/)?;?}{$2} or
+        die qq{Couldn't handle "$proto"};
+
     my $funcname = $1;
     $parms = $2;
     my $funcflags = $4;
 
     my @parms = split( /\s*,\s*/, $parms );
     for (@parms) {
-        /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' ) || /theINTERP/
+        s/SHIM_INTERP/SHIM(Interp *interp)/;
+        /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' )
             or die "Bad parms in $proto";
+        s/SHIM\(\s*(\w+.*\w+)\s*\)/$1/e;
     }
 
     my $is_static = 0;
@@ -227,6 +231,12 @@ sub make_function_decls {
         my @attrs = attrs_from_args( @args );
         push( @attrs, attrs_from_funcflags( $funcflags ) );
 
+        for my $arg ( @args ) {
+            if ( $arg =~ m{SHIM\((.+)\)} ) {
+                $arg = $1;
+            }
+        }
+
         my $argline = join( ", ", @args );
         if ( length($decl.$argline) <= 75 ) {
             $decl = "$decl $argline )";
@@ -277,16 +287,18 @@ sub main {
 
         my $source = read_file( $cfile );
 
-        die "can't find HEADER directive in '$cfile'"
+        die "can't find HEADERIZER TARGET directive in '$cfile'"
             unless $source =~ m#/\*\s+HEADERIZER TARGET:\s+([^*]+?)\s+\*/#s;
         my $hfile = $1;
-        next if $hfile eq 'none';
-        die "'$hfile' not found (referenced from '$cfile')" unless -f $hfile;
+
+        if ( ($hfile ne 'none') && (not -f $hfile) ) {
+            die "'$hfile' not found (referenced from '$cfile')";
+        }
 
         my @decls = extract_function_declarations($source);
         for my $decl (@decls) {
             my @components = function_components_from_declaration($decl);
-            push( @{ $cfiles{$hfile}->{$cfile} }, [@components] );
+            push( @{ $cfiles{$hfile}->{$cfile} }, [@components] ) unless $hfile eq 'none';
             push( @{ $cfiles_with_statics{ $cfile } }, [@components] ) if $components[0];
             ++$nfuncs;
         }
