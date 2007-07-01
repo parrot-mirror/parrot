@@ -38,10 +38,6 @@ sub runstep {
     # undef means we don't have flex... default to not having flex
     $conf->data->set( flex_version => undef );
 
-#print STDERR "maint:  $conf->options->get('maintainer')\n";
-require Data::Dumper;
-#print Data::Dumper->Dump( [ $conf->options->get('maintainer') ] );
-print Data::Dumper->Dump( [ $conf ] );
     unless ( $conf->options->get('maintainer') ) {
         $conf->data->set( $util => 'echo' );
         $self->set_result('skipped');
