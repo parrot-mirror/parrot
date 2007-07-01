@@ -27,7 +27,7 @@ have to determine a way to test a user response to a prompt.
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
-    argv            => [ q{--ask} ],
+    argv            => [ q{--ask}, q{--lex} ],
     script          => $0,
     parrot_version  => $parrot_version,
     svnid           => '$Id$',
