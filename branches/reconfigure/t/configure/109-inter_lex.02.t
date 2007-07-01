@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id$
-# 109-inter_lex.01.t
+# $Id: 109-inter_lex.02.t 19525 2007-07-01 16:31:02Z jkeenan $
+# 109-inter_lex.02.t
 
 use strict;
 use warnings;
@@ -30,7 +30,7 @@ my $args = process_options( {
     argv            => [ q{--ask}, q{--lex} ],
     script          => $0,
     parrot_version  => $parrot_version,
-    svnid           => '$Id$',
+    svnid           => '$Id: 109-inter_lex.02.t 19525 2007-07-01 16:31:02Z jkeenan $',
 } );
 
 my $conf = Parrot::Configure->new;
@@ -70,11 +70,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-109-inter_lex.01.t - test config::inter::lex
+109-inter_lex.02.t - test config::inter::lex
 
 =head1 SYNOPSIS
 
-    % prove t/configure/109-inter_lex.01.t
+    % prove t/configure/109-inter_lex.02.t
 
 =head1 DESCRIPTION
 
