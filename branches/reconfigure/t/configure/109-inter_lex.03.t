@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: 109-inter_lex.02.t 19525 2007-07-01 16:31:02Z jkeenan $
-# 109-inter_lex.02.t
+# $Id: 109-inter_lex.03.t 19525 2007-07-01 16:31:02Z jkeenan $
+# 109-inter_lex.03.t
 
 use strict;
 use warnings;
@@ -10,6 +10,7 @@ use Test::More qw(no_plan); # tests =>  2;
 use Carp;
 use lib qw( . lib ../lib ../../lib t/configure/testlib );
 use_ok('config::init::defaults');
+$ENV{TEST_LEX} = 'foobar';
 use_ok('config::inter::lex');
 use Parrot::BuildUtil;
 use Parrot::Configure;
@@ -17,14 +18,12 @@ use Parrot::Configure::Options qw( process_options );
 use Parrot::IO::Capture::Mini;
 use Auxiliary qw( test_step_thru_runstep);
 
-$ENV{LEX} = 'foobar';
-
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
     argv            => [ q{--ask}, q{--maintainer} ],
     script          => $0,
     parrot_version  => $parrot_version,
-    svnid           => '$Id: 109-inter_lex.02.t 19525 2007-07-01 16:31:02Z jkeenan $',
+    svnid           => '$Id: 109-inter_lex.03.t 19525 2007-07-01 16:31:02Z jkeenan $',
 } );
 
 my $conf = Parrot::Configure->new();
@@ -46,10 +45,10 @@ ok(defined $step, "$step_name constructor returned defined value");
 isa_ok($step, $step_name);
 ok($step->description(), "$step_name has description");
 $ret = $step->runstep($conf);
-ok(defined $ret, "$step_name runstep() returned defined value");
-my $result_expected = q{user defined}; 
+is($ret, undef, "$step_name runstep() returned undefined value");
+my $result_expected = q{no lex program was found}; 
 is($step->result(), $result_expected,
-    "Result was $result_expected because environmental variable was set");
+    "Result was $result_expected");
 
 pass("Completed all tests in $0");
 
@@ -57,20 +56,21 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-109-inter_lex.02.t - test config::inter::lex
+109-inter_lex.03.t - test config::inter::lex
 
 =head1 SYNOPSIS
 
-    % prove t/configure/109-inter_lex.02.t
+    % prove t/configure/109-inter_lex.03.t
 
 =head1 DESCRIPTION
 
 The files in this directory test functionality used by F<Configure.pl>.
 
 The tests in this file test subroutines exported by config::inter::lex.  In
-this case, the C<--ask> and C<--maintainer> options are provided but the
-F<lex>-equivalent program is provided by the user via an environmental
-variable.  As a result, no prompt is ever reached.
+this case, the C<--ask> and C<--maintainer> options are provided but an
+environmental variable was provided in order to trick the package into not
+finding a real F<lex>-equivalent program.  As a result, no prompt is ever
+reached.
 
 =head1 AUTHOR
 
