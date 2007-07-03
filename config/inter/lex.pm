@@ -28,6 +28,10 @@ $description = "Determining whether $util is installed";
 $prompt      = "Do you have a lexical analyzer generator like flex or lex?";
 @args        = qw( lex ask maintainer );
 
+my @lex_defaults = defined($ENV{TEST_LEX})
+    ? $ENV{TEST_LEX}
+    : qw( flex lex );
+   
 my $default_required = '2.5.33';
 
 sub runstep {
@@ -59,7 +63,7 @@ sub runstep {
         return $self;
     }
 
-    $prog = check_progs( [ 'flex', 'lex' ], $verbose );
+    $prog = check_progs( [ @lex_defaults ], $verbose );
 
     unless ($prog) {
         $self->set_result('no lex program was found');
@@ -95,7 +99,8 @@ sub runstep {
             $req = $default_required;
         }
         if ($req) {
-            my ( $rmajor, $rminor, $rpatch ) = ( $req =~ / ^ (\d+) \. (\d+) \. (\d+) $ /x );
+            my ( $rmajor, $rminor, $rpatch ) = 
+                ( $req =~ / ^ (\d+) \. (\d+) \. (\d+) $ /x );
             unless ( defined $rmajor ) {
                 $self->set_result("could not understand flex version requirement");
                 return;
