@@ -78,18 +78,16 @@ sub runstep {
 
     my ( $stdout, $stderr, $ret ) = capture_output( $prog, '--version' );
 
-    # don't override the user even if the program they provided appears to be
-    # broken
+    # don't override the user even if the program they provided 
+    # appears to be broken
     if ( $ret == -1 and !$conf->options->get('ask') ) {
-
         # fall back to default
         $self->set_result('lex program does not exist or does not understand --version');
         return;
-    }
-
-    # if '--version' returns a string assume that this is flex.
-    # flex calls it self by $0 so it will claim to be lex if invoked as `lex`
-    if ( $stdout =~ /f?lex .*? (\d+) \. (\d+) \. (\d+)/x ) {
+    } elsif ( $stdout =~ /f?lex .*? (\d+) \. (\d+) \. (\d+)/x ) {
+        # if '--version' returns a string assume that this is flex.
+        # flex calls it self by $0 so it will claim to be lex 
+        # if invoked as `lex`
         my ( $prog_major, $prog_minor, $prog_patch ) = ( $1, $2, $3 );
         my $prog_version = "$1.$2.$3";
 
@@ -101,38 +99,33 @@ sub runstep {
         if ($req) {
             my ( $rmajor, $rminor, $rpatch ) = 
                 ( $req =~ / ^ (\d+) \. (\d+) \. (\d+) $ /x );
-            unless ( defined $rmajor ) {
+            if  (! defined $rmajor ) {
                 $self->set_result("could not understand flex version requirement");
                 return;
-            }
-
-            if (
+            } elsif (
                 $prog_major < $rmajor
-
                 or (    $prog_major == $rmajor
                     and $prog_minor < $rminor )
-
                 or (    $prog_major == $rmajor
                     and $prog_minor == $rminor
                     and $prog_patch < $rpatch )
-                )
-            {
+                ) {
                 $self->set_result( "found flex version $prog_version"
                         . " but at least $rmajor.$rminor.$rpatch is required" );
                 return;
+            } else {
+               1;  # lack an explicit 'else' here
             }
         }
 
         $conf->data->set( flex_version => $prog_version );
         $self->set_result("flex $prog_version");
         $conf->data->set( $util => $prog );
-    }
-    else {
+        return $self;
+    } else {
         $self->set_result('lex program does not exist or does not understand --version');
         return;
     }
-
-    return $self;
 }
 
 1;
