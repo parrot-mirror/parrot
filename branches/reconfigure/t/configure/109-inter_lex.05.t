@@ -65,7 +65,8 @@ ok($step->description(), "$step_name has description");
 }
 
 my $possible_results = qr/^(
-    lex\sprogram\sdoes\snot\sexist\sor\sdoes\snot\sunderstand\s--version
+    no\slex\sprogram\swas\sfound
+  | lex\sprogram\sdoes\snot\sexist\sor\sdoes\snot\sunderstand\s--version
   | could\snot\sunderstand\sflex\sversion\srequirement
   | found\sflex\sversion.*?but\sat\sleast.*?is\srequired
   | flex
