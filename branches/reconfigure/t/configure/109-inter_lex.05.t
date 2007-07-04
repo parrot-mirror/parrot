@@ -61,19 +61,23 @@ ok($step->description(), "$step_name has description");
         or croak "Unable to tie";
     $ret = $step->runstep($conf);
     my @more_lines = $tie_out->READLINE;
-    ok(@more_lines, "prompts were captured");
+    my $possible_results = qr/^(
+        no\slex\sprogram\swas\sfound
+      | lex\sprogram\sdoes\snot\sexist\sor\sdoes\snot\sunderstand\s--version
+      | could\snot\sunderstand\sflex\sversion\srequirement
+      | found\sflex\sversion.*?but\sat\sleast.*?is\srequired
+      | flex
+    )/x;
+    my @dump_msg = ( Dumper($step->result()) =~ /'(.*?)'/ );
+    like($step->result(), $possible_results,
+        "Response to prompt led to acceptable result:  " . $dump_msg[0]);
+    if ($dump_msg[0] eq q{no lex program was found}) {
+        ok(! @more_lines, "No lex program => no prompts");
+    } else {
+        ok(@more_lines, "prompts were captured");
+    }
 }
 
-my $possible_results = qr/^(
-    no\slex\sprogram\swas\sfound
-  | lex\sprogram\sdoes\snot\sexist\sor\sdoes\snot\sunderstand\s--version
-  | could\snot\sunderstand\sflex\sversion\srequirement
-  | found\sflex\sversion.*?but\sat\sleast.*?is\srequired
-  | flex
-)/x;
-my @dump_msg = ( Dumper($step->result()) =~ /'(.*?)'/ );
-like($step->result(), $possible_results,
-    "Response to prompt led to acceptable result:  " . $dump_msg[0]);
 
 $object = undef;
 untie *STDIN;
