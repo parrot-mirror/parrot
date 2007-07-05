@@ -5,7 +5,6 @@
 
 use strict;
 use warnings;
-use Data::Dumper;
 use Test::More tests => 14;
 use Carp;
 use lib qw( . lib ../lib ../../lib t/configure/testlib );
@@ -14,7 +13,6 @@ use_ok('config::inter::lex');
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::IO::Capture::Mini;
 use Auxiliary qw( test_step_thru_runstep);
 use Tie::Filehandle::Preempt::Stdin;
 
