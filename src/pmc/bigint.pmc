@@ -29,7 +29,9 @@ C<BigInt> provides arbitrary precision integer mathematic functions.
  */
 
 #ifdef PARROT_HAS_GMP
-#  include <gmp.h>
+#  ifndef S_SPLINT_S
+#    include <gmp.h>
+#  endif
 typedef struct BIGINT {
     mpz_t b;
 } BIGINT;
