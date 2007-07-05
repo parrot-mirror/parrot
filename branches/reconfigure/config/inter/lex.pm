@@ -74,7 +74,8 @@ sub runstep {
                     $prompt, $prog ? $prog : $conf->data->get($util)
                 );
             }
-            my ( $stdout, $stderr, $ret ) = capture_output( $prog, '--version' );
+            my ( $stdout, $stderr, $ret ) =
+                capture_output( $prog, '--version' );
             # don't override the user even if the program they provided 
             # appears to be broken
             if ( $ret == -1 and !$conf->options->get('ask') ) {
@@ -97,7 +98,8 @@ sub runstep {
                     my ( $rmajor, $rminor, $rpatch ) = 
                         ( $req =~ / ^ (\d+) \. (\d+) \. (\d+) $ /x );
                     if  (! defined $rmajor ) {
-                        $self->set_result("could not understand flex version requirement");
+                        $self->set_result(
+                            "could not understand flex version requirement");
                         return;
                     } elsif (
                         $prog_major < $rmajor
