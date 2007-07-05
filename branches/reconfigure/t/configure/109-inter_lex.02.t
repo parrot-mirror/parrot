@@ -14,7 +14,6 @@ use_ok('config::inter::lex');
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::IO::Capture::Mini;
 use Auxiliary qw( test_step_thru_runstep);
 
 $ENV{LEX} = 'foobar';

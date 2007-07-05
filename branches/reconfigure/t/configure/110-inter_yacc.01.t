@@ -13,7 +13,6 @@ use_ok('config::inter::yacc');
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::IO::Capture::Mini;
 use Auxiliary qw( test_step_thru_runstep);
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
