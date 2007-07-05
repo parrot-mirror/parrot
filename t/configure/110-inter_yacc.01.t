@@ -1,23 +1,50 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 110-inter_yacc.t
+# 110-inter_yacc.01.t
 
 use strict;
 use warnings;
-use Test::More tests =>  2;
+use Test::More tests => 12;
 use Carp;
-use lib qw( . lib ../lib ../../lib );
+use lib qw( . lib ../lib ../../lib t/configure/testlib );
+use_ok('config::init::defaults');
 use_ok('config::inter::yacc');
+use Parrot::BuildUtil;
+use Parrot::Configure;
+use Parrot::Configure::Options qw( process_options );
+use Parrot::IO::Capture::Mini;
+use Auxiliary qw( test_step_thru_runstep);
 
-=for hints_for_testing Since inter::yacc probes for the yacc program
-found on a particular OS, it will probably be difficult to achieve high
-branch or condition coverage.  Check latest reports of Parrot
-configuration tools testing coverage to see where your time is best
-devoted.  You will have to determine a way to test a user response to
-a prompt.
+my $parrot_version = Parrot::BuildUtil::parrot_version();
+my $args = process_options( {
+    argv            => [ q{--ask} ],
+    script          => $0,
+    parrot_version  => $parrot_version,
+    svnid           => '$Id$',
+} );
 
-=cut
+my $conf = Parrot::Configure->new();
+
+test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
+
+my ($task, $step_name, @step_params, $step, $ret);
+my $pkg = q{inter::yacc};
+
+$conf->add_steps($pkg);
+$conf->options->set(%{$args});
+$task = $conf->steps->[1];
+$step_name   = $task->step;
+@step_params = @{ $task->params };
+
+$step = $step_name->new();
+ok(defined $step, "$step_name constructor returned defined value");
+isa_ok($step, $step_name);
+ok($step->description(), "$step_name has description");
+$ret = $step->runstep($conf);
+ok(defined $ret, "$step_name runstep() returned defined value");
+is($step->result(), q{skipped},
+    "Step was skipped as expected; no '--maintainer' option");
 
 pass("Completed all tests in $0");
 
@@ -25,17 +52,19 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-110-inter_yacc.t - test config::inter::yacc
+110-inter_yacc.01.t - test config::inter::yacc
 
 =head1 SYNOPSIS
 
-    % prove t/configure/110-inter_yacc.t
+    % prove t/configure/110-inter_yacc.01.t
 
 =head1 DESCRIPTION
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::inter::yacc.
+The tests in this file test subroutines exported by config::inter::yacc. In
+this case, only the C<--ask> option is provided.  Because the C<--maintainer>
+option is not provided, the step is skipped and no prompt is ever reached.
 
 =head1 AUTHOR
 
