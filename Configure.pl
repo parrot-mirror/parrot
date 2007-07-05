@@ -52,9 +52,14 @@ Tells Configure.pl not to run the MANIFEST check.
 
 Sets the location where parrot will be installed.
 
-=item C<--step==>
+=item C<--step=>
 
-execute a single configure step
+Execute a single configure step.
+
+=item C<--languages="list of languages">
+
+Specify a list of languages to process (space separated.)
+Used in combination with C<--step=gen::languages> to regenerate makefiles.
 
 =item C<--ask>
 
@@ -281,237 +286,85 @@ F<lib/Parrot/Configure/Step.pm>, F<docs/configuration.pod>
 
 =cut
 
-use 5.008;
+use 5.008_000;
 use strict;
 use warnings;
-
-use Carp;
-use Data::Dumper; $Data::Dumper::Indent = 1;
-
-use File::Basename qw( basename );
-use File::Spec::Functions qw( catdir catfile );
-use FindBin qw( $Bin );
-
-# used in tasks to find parrot libraries
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
 use lib 'lib';
 
+use Parrot::BuildUtil;
+use Parrot::Configure;
+use Parrot::Configure::Options qw( process_options );
+use Parrot::Configure::Options::Test;
+use Parrot::Configure::Messages qw(
+    print_introduction
+    print_conclusion
+);
+use Parrot::Configure::Step::List qw( get_steps_list );
 
-main( @ARGV ) unless caller;
+my $parrot_version = Parrot::BuildUtil::parrot_version();
 
+$| = 1; # $OUTPUT_AUTOFLUSH = 1;
 
-sub main {
-    ## data store for directory operations
-    my $dirstack= [];
+# Install Option text was taken from:
+#
+# autoconf (GNU Autoconf) 2.59
+# Written by David J. MacKenzie and Akim Demaille.
+#
+# Copyright (C) 2003 Free Software Foundation, Inc.
+# This is free software; see the source for copying conditions.  There is NO
+# warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-    ## data store
-    ## TODO should this be backed by dbm::deep or something?
-    my $DS= {
-        DIRS       => $dirstack,
-        PARROT     => {
-            argv   => [ @ARGV ],
-            script => $0,
-            svnid  => '$Id$',
-        },
-        user       => {},
-    };
+# from Parrot::Configure::Options
+my $args = process_options( {
+    argv            => [ @ARGV ],
+    script          => $0,
+    parrot_version  => $parrot_version,
+    svnid           => '$Id$',
+} );
+exit unless defined $args;
+my %args = %{$args};
 
-    my $actions= {
-        include      => \&read_config,
-        define       => \&define_config_directive,
-        _DEFAULT_    => \&no_such_directive,
-        DUMP         => sub{ print Dumper \@_ },
-    };
+my $opttest = Parrot::Configure::Options::Test->new($args);
+# configuration tests will only be run if you requested them
+# as command-line option
+$opttest->run_configure_tests();
 
-    my $ddir= catdir $Bin, 'config', 'directives';
+# from Parrot::Configure::Messages
+print_introduction($parrot_version) unless exists $args{step};
 
-    ## define io commands, which operate on the directory stack
-    read_config( catfile( $ddir, 'io.op'), $actions, $dirstack );
+my $conf = Parrot::Configure->new;
 
-    ## define commands which operate on the data store
-    for my $f (qw/ core intro /)
-    {
-        read_config( catfile( $ddir, $f . '.op'), $actions, $DS );
-    }
+# from Parrot::Configure::Step::List
+$conf->add_steps(get_steps_list());
 
-    ## process the list of configure directives
-    ## TODO allow the --script=s option to override this
-    read_config( catfile( $ddir, 'configure.op' ), $actions, $DS );
+# from Parrot::Configure::Data
+$conf->options->set(%args);
+
+if ( exists $args{step} ) {
+    # from Parrot::Configure::Data
+    $conf->data()->slurp();
+    $conf->data()->slurp_temp()
+        if $args{step} =~ /gen::makefiles/;
+    # from Parrot::Configure
+    $conf->runstep( $args{step} );
+    print "\n";
+}
+else {
+    # Run the actual steps
+    # from Parrot::Configure
+    $conf->runsteps or exit(1);
 }
 
+# build tests will only be run if you requested them
+# as command-line option
+$opttest->run_build_tests();
 
+# from Parrot::Configure::Messages
+print_conclusion($conf->data->get('make')) unless exists $args{step};
 
-exit;
-
-
-
-sub read_config
-{
-    my( $filename, $actions, $userparam )= @_;
-    open my($CF) => $filename
-        or carp $!;
-
-    LINE: while(<$CF>)
-    {
-        chomp;
-        ## skip blank lines and comments
-        next if m/^\s*$/ || m/\s*#/;
-
-        my( $directive, $rest )= split /\s+/ => $_, 2;
-
-        ## deal with heredocs
-        ## heredoc delimeters can be any non-space chars following '<<'
-        ## and optional spaces (eg. '<< %END!' or '<<DESC')
-        $rest= read_heredoc( $CF, $1, $filename )
-            if( $rest && $rest =~ m/^<< \s* (\S*)$/x );
-
-        ## resolve the action
-        ## first try user-defined, otherwise default
-        my $action= $actions->{$directive}
-            || $actions->{_DEFAULT_};
-        if( $action )
-        {
-            $action->( $directive, $rest, $actions, $userparam );
-        }
-        else
-        {
-            die "unrecognized directive '$directive'"
-                . " at line $. of $filename; aborting";
-        }
-    }
-    return 1;
-}
-
-
-sub read_heredoc
-{
-    my( $CF, $marker, $filename )= @_;
-    my $line_num= $.;
-
-    my $rest= '';
-    while( my $buffer= <$CF>)
-    {
-        die "runaway heredoc on line $line_num of $filename; aborting"
-            unless defined $buffer;
-        last if $buffer =~ m/^$marker$/;
-        $rest .= $buffer;
-    }
-    return $rest;
-}
-
-
-sub define_config_directive
-{
-    my( $directive, $rest, $dispatch )= @_;
-    $rest =~ s/^\s+//;
-    my( $new_directive, $def_text )= split /\s+/ => $rest, 2;
-
-    if( exists $dispatch->{$new_directive} )
-    {
-        warn "$new_directive already defined; skipping.\n";
-        return;
-    }
-
-    my $def= eval "sub { $def_text }";
-    if( not defined $def )
-    {
-        warn "could not compile definition for '$new_directive':"
-            . "$@; skipping.\n";
-        return;
-    }
-
-    $dispatch->{$new_directive}= $def;
-}
-
-
-## handles missing directives
-sub no_such_directive
-{
-    my( $directive )= @_;
-    $directive ||= ''; $. ||= 0;
-    warn "unrecognized directive '$directive' at line $.; ignoring.\n";
-}
-
-
-## XXX fix passed arguments processing... it defaults to space-sep which is wrong TODO
-sub process_opts
-{
-    require Parrot::Configure::Options;
-
-    my( $var, $val, undef, $stash )= @_;
-    my $args = Parrot::Configure::Options::process_options( {
-        argv            => [ defined $val ? $val : @ARGV ],
-        script          => $0,
-        parrot_version  => $stash->{PARROT}{parrot_version},
-        svnid           => '$Id$',
-    } );
-    # XXX really? just exit? it should give a friendly message
-    exit unless defined $args;
-
-    set_parrot_var( args => $args, undef, $stash );
-}
-
-
-## sets a parrot variable to a value
-sub set_parrot_var
-{
-    my( $var, $val, undef, $stash )= @_;
-    $stash->{PARROT}{$var}= $val;
-}
-
-
-## sets a user variable to a value
-sub set_user_var
-{
-    my( $var, $val, undef, $stash )= @_;
-    $stash->{user}{$var}= $val;
-}
-
-
-## sets a configuration variable to a value
-sub set_conf_var
-{
-    my( $var, $val, undef, $stash )= @_;
-    $stash->{user}{conf}->data->set($var, $val);
-}
-
-
-## gets a parrot variable
-sub get_parrot_var { $_[3]->{PARROT}{$_[0]} }
-
-
-## gets a user variable
-sub get_user_var { $_[3]->{user}{$_[0]} }
-
-
-## gets a value from the configuration
-sub get_conf_var { $_[3]->{user}{conf}->data->get($_[0]) }
-
-
-## resets all parrot variables
-sub reset_parrot_vars
-{
-    my( undef, undef, undef, $stash )= @_;
-    delete $stash->{PARROT};
-    $stash->{PARROT}= {};
-}
-
-
-## resets all user variables
-sub reset_user_vars
-{
-    my( $var, undef, undef, $stash )= @_;
-    delete $stash->{user};
-    $stash->{user}= {};
-}
-
-
-## quit
-sub quit { exit 0 }
-
-
-$_ ^=~ { AUTHOR => 'particle' };
-
-
+exit(0);
 
 ################### DOCUMENTATION ###################
 
