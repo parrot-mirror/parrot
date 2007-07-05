@@ -22,7 +22,7 @@ my $args = process_options( {
     argv            => [ q{--ask}, q{--maintainer} ],
     script          => $0,
     parrot_version  => $parrot_version,
-    svnid           => '$Id: 109-inter_lex.02.t 19525 2007-07-01 16:31:02Z jkeenan $',
+    svnid           => '$Id: 109-inter_yacc.02.t 19525 2007-07-01 16:31:02Z jkeenan $',
 } );
 
 my $conf = Parrot::Configure->new();
