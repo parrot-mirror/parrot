@@ -135,7 +135,7 @@ SPLINTFLAGS  = -weak +showscan +showsummary +posixstrictlib -abstract \
     +distinctinternalnames +evalorder +fielduse +forcehints -globs \
     +imptype +includenest 8 +incondefs +incondefslib +linelen 9999 \
     +longintegral +macroassign +macroempty +macroredef +matchanyintegral \
-    +nestedextern +noeffect +readonlystrings +realcompare +shadow -type \
+    +nestedextern +noeffect +readonlystrings -realcompare +shadow -type \
     -isoreserved
 
 # slightly weaker, more realistic variant.
@@ -1992,6 +1992,7 @@ HEADERIZER_O_FILES = \
     src/pic_jit.o \
     src/pic.o \
     src/pmc.o \
+    src/pmc_freeze.o \
     src/spf_render.o \
     src/stack_common.o \
     src/stacks.o \
@@ -2007,6 +2008,7 @@ HEADERIZER_O_FILES = \
     compilers/imcc/imc.o \
     compilers/imcc/imcparser.o \
     compilers/imcc/instructions.o \
+    compilers/imcc/main.o \
     compilers/imcc/optimizer.o \
     compilers/imcc/parser_util.o \
     compilers/imcc/pbc.o \

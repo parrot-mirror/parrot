@@ -25,7 +25,7 @@ There's also a verbose mode for garbage collection.
 #include "parrot/dod.h"
 #include <assert.h>
 
-/* HEADERIZER TARGET: include/parrot/dod.h */
+/* HEADERIZER HFILE: include/parrot/dod.h */
 
 /* HEADERIZER BEGIN: static */
 
@@ -179,6 +179,14 @@ pobject_lives(Interp *interp /*NN*/, PObj *obj /*NN*/)
 #  endif
     /* mark it live */
     PObj_live_SET(obj);
+
+    /* if object is a PMC and it's real_self pointer points to another
+     * PMC, we must mark that. */
+    if (PObj_is_PMC_TEST(obj)) {
+        PMC * const p = (PMC*)obj;
+        if (p->real_self != p)
+            pobject_lives(interp, p->real_self);
+    }
 
     /* if object is a PMC and contains buffers or PMCs, then attach
      * the PMC to the chained mark list.

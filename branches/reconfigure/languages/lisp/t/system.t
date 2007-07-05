@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-lisp/t/system.t - tests function in SYSTEM
+lisp/t/system.t - tests functions in SYSTEM
 
 =head1 DESCRIPTION
 
-Functions defined in system.pir.
+Implementations specific functions.
 
 =cut
 
@@ -24,13 +24,50 @@ use Test::More;
 use Parrot::Test;
 
 my @test_cases = (
+    [ q{ ( print SYS:*INSIDE-BACKQUOTE* )
+      },
+      q{unused variable *INSIDE-BACKQUOTE*},
+      q{undefined var *INSIDE-BACKQUOTE*},
+      todo => 'need to check error output'
+    ],
+    [ q{ ( print sys:*inside-backquote-list*)
+      },
+      q{unused variable *INSIDE-BACKQUOTE-LIST*},
+      q{undefined var *INSIDE-BACKQUOTE-LIST*},
+      todo => 'need to check error output'
+    ],
+    [ q{ ( print *gensym-counter* )
+      },
+      q{1},
+      q{defined var *gensym-counter*},
+    ],
+    [ q{ ( print (sys:%get-object-attribute '*gensym-counter* "LispSymbol" "name"))
+      },
+      q{*GENSYM-COUNTER*},
+      q{get-object-attribute name},
+    ],
+    [ q{ ( print ( sys:%package-name (sys:%get-object-attribute '*gensym-counter* "LispSymbol" "package")))
+      },
+      q{COMMON-LISP},
+      q{get-object-attribute package},
+    ],
+    [ q{ ( print (sys:%get-object-attribute '*gensym-counter* "LispSymbol" "value"))
+      },
+      q{1},
+      q{get-object-attribute value},
+    ],
     [ q{ (setq english_to_german (sys:%make-hash-table))
          (setf (sys:%get-hash "House" table) "Haus")
          ( print (sys:%get-hash "House" table))
       },
       q{Haus},
       q{hash-table},
-      todo => 'setf not here yet'
+      todo => 'setf not implemented yet'
+    ],
+    [ q{ ( print (sys:%package-name (sys:%find-package "common-lisp")))
+      },
+      q{COMMON-LISP},
+      q{package-name},
     ],
 );
 
