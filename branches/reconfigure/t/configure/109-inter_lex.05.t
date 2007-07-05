@@ -51,11 +51,6 @@ ok(defined $step, "$step_name constructor returned defined value");
 isa_ok($step, $step_name);
 ok($step->description(), "$step_name has description");
 
-# This test reaches the prompt in runstep().  I will need to capture the
-# prompt's content on STDOUT.  Then I'll need to preempt STDIN (probably with
-# both good and bad values) and proceed from there.  I will also have to deal
-# with the insufficient version problem.
-
 {
     my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";

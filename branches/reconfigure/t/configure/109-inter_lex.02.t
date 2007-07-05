@@ -5,7 +5,6 @@
 
 use strict;
 use warnings;
-use Data::Dumper;
 use Test::More tests => 12;
 use Carp;
 use lib qw( . lib ../lib ../../lib t/configure/testlib );

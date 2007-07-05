@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests => 12;
+use Test::More tests => 12;
 use Carp;
 use lib qw( . lib ../lib ../../lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -64,9 +64,11 @@ pass("Completed all tests in $0");
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::inter::yacc. In
-this case, only the C<--ask> option is provided.  Because the C<--maintainer>
-option is not provided, the step is skipped and no prompt is ever reached.
+The tests in this file test subroutines exported by config::inter::yacc.  In
+this case, the C<--ask> and C<--maintainer> options are provided but an
+environmental variable was provided in order to trick the package into not
+finding a real F<yacc>-equivalent program.  As a result, no prompt is ever
+reached.
 
 =head1 AUTHOR
 
