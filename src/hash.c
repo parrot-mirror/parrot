@@ -32,7 +32,7 @@ don't apply.
 #define HASH_ALLOC_SIZE(n) (N_BUCKETS(n) * sizeof (HashBucket) + \
                              (n) * sizeof (HashBucket *))
 
-/* HEADERIZER TARGET: include/parrot/hash.h */
+/* HEADERIZER HFILE: include/parrot/hash.h */
 
 /* HEADERIZER BEGIN: static */
 
@@ -722,7 +722,7 @@ Return the number of used entries in the hash.
 
 PARROT_API
 INTVAL
-parrot_hash_size(Interp *interp, const Hash *hash /*NULLOK*/)
+parrot_hash_size(Interp *interp, const Hash *hash /*NN*/)
     /*PURE, WARN_UNUSED*/
 {
     if (hash)

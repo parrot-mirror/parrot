@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -27,8 +27,6 @@ In the current implementation C<IMAGE_IO> is a stand-in for some kind of
 serializer PMC which will eventually be written. It associates a Parrot
 C<STRING> with a vtable.
 
-=cut
-
 */
 
 #include "parrot/parrot.h"
@@ -36,6 +34,236 @@ C<STRING> with a vtable.
 
 /* default.pmc thawing of properties */
 void Parrot_default_thaw(Interp* , PMC* pmc, visit_info *info);
+
+/* XXX This should be in a header file. */
+extern void
+Parrot_default_thawfinish(Interp* interp, PMC* pmc, visit_info *info);
+
+
+/* HEADERIZER HFILE: include/parrot/pmc_freeze.h */
+/* HEADERIZER BEGIN: static */
+
+static void add_pmc_next_for_GC( Interp *interp,
+    PMC *pmc /*NN*/,
+    visit_info *info /*NN*/ )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static void add_pmc_todo_list(
+    Parrot_Interp interp /*NN*/,
+    PMC *pmc,
+    visit_info *info /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+static void cleanup_next_for_GC( Parrot_Interp interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void cleanup_next_for_GC_pool( Small_Object_Pool *pool /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void create_image(
+    Parrot_Interp interp /*NN*/,
+    PMC *pmc,
+    visit_info *info /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+PARROT_INLINE static void do_action(
+    Parrot_Interp interp /*NN*/,
+    PMC *pmc,
+    visit_info *info /*NN*/,
+    int seen,
+    UINTVAL id )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+PARROT_INLINE static void do_thaw(
+    Parrot_Interp interp /*NN*/,
+    PMC* pmc,
+    visit_info *info )
+        __attribute__nonnull__(1);
+
+PARROT_INLINE static void freeze_pmc(
+    Parrot_Interp interp /*NN*/,
+    PMC *pmc,
+    visit_info *info,
+    int seen,
+    UINTVAL id )
+        __attribute__nonnull__(1);
+
+static void ft_init( Parrot_Interp interp /*NN*/, visit_info *info /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static UINTVAL id_from_pmc( Parrot_Interp interp /*NN*/, PMC* pmc )
+        __attribute__nonnull__(1);
+
+PARROT_INLINE static int next_for_GC_seen(
+    Parrot_Interp interp /*NN*/,
+    PMC *pmc,
+    visit_info *info,
+    UINTVAL *id )
+        __attribute__nonnull__(1);
+
+static void op_append(
+    Parrot_Interp interp /*NN*/,
+    STRING *s,
+    opcode_t b,
+    size_t len )
+        __attribute__nonnull__(1);
+
+PARROT_INLINE static void op_check_size(
+    Parrot_Interp interp /*NN*/,
+    STRING *s,
+    size_t len )
+        __attribute__nonnull__(1);
+
+static void pmc_add_ext( Parrot_Interp interp /*NN*/, PMC *pmc /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void push_ascii_integer(
+    Parrot_Interp interp /*NN*/,
+    IMAGE_IO *io,
+    INTVAL v )
+        __attribute__nonnull__(1);
+
+static void push_ascii_number(
+    Parrot_Interp interp /*NN*/,
+    IMAGE_IO *io,
+    FLOATVAL v )
+        __attribute__nonnull__(1);
+
+static void push_ascii_pmc(
+    Parrot_Interp interp /*NN*/,
+    IMAGE_IO *io,
+    const PMC* v )
+        __attribute__nonnull__(1);
+
+static void push_ascii_string(
+    Parrot_Interp interp /*NN*/,
+    IMAGE_IO *io,
+    STRING *s )
+        __attribute__nonnull__(1);
+
+static void push_opcode_integer(
+    Parrot_Interp interp /*NN*/,
+    IMAGE_IO *io,
+    INTVAL v )
+        __attribute__nonnull__(1);
+
+static void push_opcode_number(
+    Parrot_Interp interp /*NN*/,
+    IMAGE_IO *io,
+    FLOATVAL v )
+        __attribute__nonnull__(1);
+
+static void push_opcode_pmc(
+    Parrot_Interp interp /*NN*/,
+    IMAGE_IO *io,
+    PMC* v )
+        __attribute__nonnull__(1);
+
+static void push_opcode_string(
+    Parrot_Interp interp /*NN*/,
+    IMAGE_IO *io,
+    STRING* v )
+        __attribute__nonnull__(1);
+
+static PMC* run_thaw(
+    Parrot_Interp interp /*NN*/,
+    STRING* image /*NN*/,
+    visit_enum_type what )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static INTVAL shift_ascii_integer( Interp *interp, IMAGE_IO *io );
+static FLOATVAL shift_ascii_number( Interp *interp, IMAGE_IO *io );
+static PMC* shift_ascii_pmc( Interp *interp, IMAGE_IO *io );
+static STRING* shift_ascii_string( Parrot_Interp interp /*NN*/, IMAGE_IO *io )
+        __attribute__nonnull__(1);
+
+static INTVAL shift_opcode_integer( Interp *interp, IMAGE_IO *io );
+static FLOATVAL shift_opcode_number( Interp *interp, IMAGE_IO *io );
+static PMC* shift_opcode_pmc( Parrot_Interp interp /*NN*/, IMAGE_IO *io )
+        __attribute__nonnull__(1);
+
+static STRING* shift_opcode_string(
+    Parrot_Interp interp /*NN*/,
+    IMAGE_IO *io )
+        __attribute__nonnull__(1);
+
+static void str_append(
+    Parrot_Interp interp /*NN*/,
+    STRING *s,
+    const void *b,
+    size_t len )
+        __attribute__nonnull__(1);
+
+PARROT_INLINE static PMC* thaw_create_pmc(
+    Parrot_Interp interp /*NN*/,
+    const visit_info *info,
+    INTVAL type )
+        __attribute__nonnull__(1);
+
+PARROT_INLINE static int thaw_pmc(
+    Parrot_Interp interp /*NN*/,
+    visit_info *info,
+    UINTVAL *id,
+    INTVAL *type )
+        __attribute__nonnull__(1);
+
+static void todo_list_init(
+    Parrot_Interp interp /*NN*/,
+    visit_info *info /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_INLINE static int todo_list_seen(
+    Parrot_Interp interp /*NN*/,
+    PMC *pmc,
+    visit_info *info /*NN*/,
+    UINTVAL *id /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
+static void visit_loop_next_for_GC(
+    Parrot_Interp interp /*NN*/,
+    PMC *current /*NN*/,
+    visit_info *info )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void visit_loop_todo_list(
+    Parrot_Interp interp /*NN*/,
+    PMC *current,
+    visit_info *info /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+static void visit_next_for_GC(
+    Parrot_Interp interp /*NN*/,
+    PMC* pmc,
+    visit_info* info /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+static void visit_todo_list(
+    Parrot_Interp interp /*NN*/,
+    PMC* pmc,
+    visit_info* info /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+static void visit_todo_list_thaw(
+    Parrot_Interp interp /*NN*/,
+    PMC* old,
+    visit_info* info )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: static */
 
 /*
  * define this to 1 for testing
@@ -68,10 +296,7 @@ void Parrot_default_thaw(Interp* , PMC* pmc, visit_info *info);
 
 =head2 Image Stream Functions
 
-=over 4
-
-=item C<static void
-str_append(Parrot_Interp interp, STRING *s, const void *b, size_t len)>
+FUNCDOC: str_append
 
 Appends C<len> bytes from buffer C<*b> to string C<*s>.
 
@@ -81,12 +306,10 @@ For speed reasons we mess around with the string buffers directly.
 
 No encoding of strings, no transcoding.
 
-=cut
-
 */
 
 static void
-str_append(Parrot_Interp interp, STRING *s, const void *b, size_t len)
+str_append(Parrot_Interp interp /*NN*/, STRING *s, const void *b, size_t len)
 {
     const size_t used = s->bufused;
     const int need_free = (int)PObj_buflen(s) - used - len;
@@ -107,18 +330,15 @@ str_append(Parrot_Interp interp, STRING *s, const void *b, size_t len)
 
 /*
 
-=item C<static void
-push_ascii_integer(Parrot_Interp interp, IMAGE_IO *io, INTVAL v)>
+FUNCDOC: push_ascii_integer
 
 Pushes an ASCII version of the integer C<v> onto the end of the C<*io>
 "stream".
 
-=cut
-
 */
 
 static void
-push_ascii_integer(Parrot_Interp interp, IMAGE_IO *io, INTVAL v)
+push_ascii_integer(Parrot_Interp interp /*NN*/, IMAGE_IO *io, INTVAL v)
 {
     char buffer[128];
     sprintf(buffer, "%d ", (int) v);
@@ -127,18 +347,15 @@ push_ascii_integer(Parrot_Interp interp, IMAGE_IO *io, INTVAL v)
 
 /*
 
-=item C<static void
-push_ascii_number(Parrot_Interp interp, IMAGE_IO *io, FLOATVAL v)>
+FUNCDOC: push_ascii_number
 
 Pushes an ASCII version of the number C<v> onto the end of the C<*io>
 "stream".
 
-=cut
-
 */
 
 static void
-push_ascii_number(Parrot_Interp interp, IMAGE_IO *io, FLOATVAL v)
+push_ascii_number(Parrot_Interp interp /*NN*/, IMAGE_IO *io, FLOATVAL v)
 {
     char buffer[128];
     sprintf(buffer, "%g ", (double) v);
@@ -147,8 +364,7 @@ push_ascii_number(Parrot_Interp interp, IMAGE_IO *io, FLOATVAL v)
 
 /*
 
-=item C<static void
-push_ascii_string(Parrot_Interp interp, IMAGE_IO *io, STRING *s)>
+FUNCDOC: push_ascii_string
 
 Pushes an ASCII version of the string C<*s> onto the end of the C<*io>
 "stream".
@@ -157,12 +373,10 @@ For testing only - no encodings and such.
 
 XXX no string delimiters - so no space allowed.
 
-=cut
-
 */
 
 static void
-push_ascii_string(Parrot_Interp interp, IMAGE_IO *io, STRING *s)
+push_ascii_string(Parrot_Interp interp /*NN*/, IMAGE_IO *io, STRING *s)
 {
     const UINTVAL length = string_length(interp, s);
     char * const buffer = (char *)malloc(4*length);
@@ -182,18 +396,15 @@ push_ascii_string(Parrot_Interp interp, IMAGE_IO *io, STRING *s)
 
 /*
 
-=item C<static void
-push_ascii_pmc(Parrot_Interp interp, IMAGE_IO *io, PMC* v)>
+FUNCDOC: push_ascii_pmc
 
 Pushes an ASCII version of the PMC C<*v> onto the end of the C<*io>
 "stream".
 
-=cut
-
 */
 
 static void
-push_ascii_pmc(Parrot_Interp interp, IMAGE_IO *io, const PMC* v)
+push_ascii_pmc(Parrot_Interp interp /*NN*/, IMAGE_IO *io, const PMC* v)
 {
     char buffer[128];
     sprintf(buffer, "%p ", (const void *)v);
@@ -202,17 +413,14 @@ push_ascii_pmc(Parrot_Interp interp, IMAGE_IO *io, const PMC* v)
 
 /*
 
-=item C<static INTVAL
-shift_ascii_integer(Parrot_Interp interp, IMAGE_IO *io)>
+FUNCDOC: shift_ascii_integer
 
 Removes and returns an integer from the start of the C<*io> "stream".
-
-=cut
 
 */
 
 static INTVAL
-shift_ascii_integer(Parrot_Interp interp, IMAGE_IO *io)
+shift_ascii_integer(SHIM_INTERP, IMAGE_IO *io)
 {
     char * const start = (char*)io->image->strstart;
     char *p = start;
@@ -228,17 +436,14 @@ shift_ascii_integer(Parrot_Interp interp, IMAGE_IO *io)
 
 /*
 
-=item C<static FLOATVAL
-shift_ascii_number(Parrot_Interp interp, IMAGE_IO *io)>
+FUNCDOC: shift_ascii_number
 
 Removes and returns an number from the start of the C<*io> "stream".
-
-=cut
 
 */
 
 static FLOATVAL
-shift_ascii_number(Parrot_Interp interp, IMAGE_IO *io)
+shift_ascii_number(SHIM_INTERP, IMAGE_IO *io)
 {
     char * const start = (char*)io->image->strstart;
     char *p = start;
@@ -254,17 +459,14 @@ shift_ascii_number(Parrot_Interp interp, IMAGE_IO *io)
 
 /*
 
-=item C<static STRING*
-shift_ascii_string(Parrot_Interp interp, IMAGE_IO *io)>
+FUNCDOC: shift_ascii_string
 
 Removes and returns an string from the start of the C<*io> "stream".
-
-=cut
 
 */
 
 static STRING*
-shift_ascii_string(Parrot_Interp interp, IMAGE_IO *io)
+shift_ascii_string(Parrot_Interp interp /*NN*/, IMAGE_IO *io)
 {
     STRING *s;
 
@@ -285,17 +487,14 @@ shift_ascii_string(Parrot_Interp interp, IMAGE_IO *io)
 
 /*
 
-=item C<static PMC*
-shift_ascii_pmc(Parrot_Interp interp, IMAGE_IO *io)>
+FUNCDOC: shift_ascii_pmc
 
 Removes and returns a PMC from the start of the C<*io> "stream".
-
-=cut
 
 */
 
 static PMC*
-shift_ascii_pmc(Parrot_Interp interp, IMAGE_IO *io)
+shift_ascii_pmc(SHIM_INTERP, IMAGE_IO *io)
 {
     char * const start = (char*)io->image->strstart;
     char *p = start;
@@ -310,24 +509,18 @@ shift_ascii_pmc(Parrot_Interp interp, IMAGE_IO *io)
 
 /*
 
-=back
-
 =head2 C<opcode_t> IO Functions
 
-=over 4
-
-=item C<static PARROT_INLINE void
-op_check_size(Parrot_Interp interp, STRING *s, size_t len)>
+FUNCDOC: op_check_size
 
 Checks the size of the "stream" buffer to see if it can accommodate
 C<len> more bytes. If not then the buffer is expanded.
 
-=cut
-
 */
 
-static PARROT_INLINE void
-op_check_size(Parrot_Interp interp, STRING *s, size_t len)
+PARROT_INLINE
+static void
+op_check_size(Parrot_Interp interp /*NN*/, STRING *s, size_t len)
 {
     const size_t used = s->bufused;
     const int need_free = (int)PObj_buflen(s) - used - len;
@@ -348,17 +541,14 @@ op_check_size(Parrot_Interp interp, STRING *s, size_t len)
 
 /*
 
-=item C<static void
-op_append(Parrot_Interp interp, STRING *s, opcode_t b, size_t len)>
+FUNCDOC: op_append
 
 Appends the opcode C<b> to the string C<*s>.
-
-=cut
 
 */
 
 static void
-op_append(Parrot_Interp interp, STRING *s, opcode_t b, size_t len)
+op_append(Parrot_Interp interp /*NN*/, STRING *s, opcode_t b, size_t len)
 {
     op_check_size(interp, s, len);
     *((opcode_t *)((ptrcast_t)s->strstart + s->bufused)) = b;
@@ -368,19 +558,16 @@ op_append(Parrot_Interp interp, STRING *s, opcode_t b, size_t len)
 
 /*
 
-=item C<static void
-push_opcode_integer(Parrot_Interp interp, IMAGE_IO *io, INTVAL v)>
+FUNCDOC: push_opcode_integer
 
 Pushes the integer C<v> onto the end of the C<*io> "stream".
 
 XXX assumes sizeof (opcode_t) == sizeof (INTVAL).
 
-=cut
-
 */
 
 static void
-push_opcode_integer(Parrot_Interp interp, IMAGE_IO *io, INTVAL v)
+push_opcode_integer(Parrot_Interp interp /*NN*/, IMAGE_IO *io, INTVAL v)
 {
     assert(sizeof (opcode_t) == sizeof (INTVAL));
     op_append(interp, io->image, (opcode_t)v, sizeof (opcode_t));
@@ -388,17 +575,14 @@ push_opcode_integer(Parrot_Interp interp, IMAGE_IO *io, INTVAL v)
 
 /*
 
-=item C<static void
-push_opcode_number(Parrot_Interp interp, IMAGE_IO *io, FLOATVAL v)>
+FUNCDOC: push_opcode_number
 
 Pushes the number C<v> onto the end of the C<*io> "stream".
-
-=cut
 
 */
 
 static void
-push_opcode_number(Parrot_Interp interp, IMAGE_IO *io, FLOATVAL v)
+push_opcode_number(Parrot_Interp interp /*NN*/, IMAGE_IO *io, FLOATVAL v)
 {
     const size_t len = PF_size_number() * sizeof (opcode_t);
     STRING * const s = io->image;
@@ -412,17 +596,14 @@ push_opcode_number(Parrot_Interp interp, IMAGE_IO *io, FLOATVAL v)
 
 /*
 
-=item C<static void
-push_opcode_string(Parrot_Interp interp, IMAGE_IO *io, STRING* v)>
+FUNCDOC: push_opcode_string
 
 Pushes the string C<*v> onto the end of the C<*io> "stream".
-
-=cut
 
 */
 
 static void
-push_opcode_string(Parrot_Interp interp, IMAGE_IO *io, STRING* v)
+push_opcode_string(Parrot_Interp interp /*NN*/, IMAGE_IO *io, STRING* v)
 {
     const size_t len = PF_size_string(v) * sizeof (opcode_t);
     STRING * const s = io->image;
@@ -436,37 +617,31 @@ push_opcode_string(Parrot_Interp interp, IMAGE_IO *io, STRING* v)
 
 /*
 
-=item C<static void
-push_opcode_pmc(Parrot_Interp interp, IMAGE_IO *io, PMC* v)>
+FUNCDOC: push_opcode_pmc
 
 Pushes the PMC C<*v> onto the end of the C<*io> "stream".
-
-=cut
 
 */
 
 static void
-push_opcode_pmc(Parrot_Interp interp, IMAGE_IO *io, PMC* v)
+push_opcode_pmc(Parrot_Interp interp /*NN*/, IMAGE_IO *io, PMC* v)
 {
     op_append(interp, io->image, (opcode_t)v, sizeof (opcode_t));
 }
 
 /*
 
-=item C<static INTVAL
-shift_opcode_integer(Parrot_Interp interp, IMAGE_IO *io)>
+FUNCDOC: shift_opcode_integer
 
 Removes and returns an integer from the start of the C<*io> "stream".
 
 TODO - The shift functions aren't portable yet. We need to have a
 packfile header for wordsize and endianess.
 
-=cut
-
 */
 
 static INTVAL
-shift_opcode_integer(Parrot_Interp interp, IMAGE_IO *io)
+shift_opcode_integer(SHIM_INTERP, IMAGE_IO *io)
 {
     const char * const start = (char*)io->image->strstart;
     const INTVAL i =
@@ -479,38 +654,32 @@ shift_opcode_integer(Parrot_Interp interp, IMAGE_IO *io)
 
 /*
 
-=item C<static PMC*
-shift_opcode_pmc(Parrot_Interp interp, IMAGE_IO *io)>
+FUNCDOC: shift_opcode_pmc
 
 Removes and returns an PMC from the start of the C<*io> "stream".
 
 Note that this actually reads a PMC id, not a PMC.
 
-=cut
-
 */
 
 static PMC*
-shift_opcode_pmc(Parrot_Interp interp, IMAGE_IO *io)
+shift_opcode_pmc(Parrot_Interp interp /*NN*/, IMAGE_IO *io)
 {
     return (PMC*) shift_opcode_integer(interp, io);
 }
 
 /*
 
-=item C<tatic FLOATVAL
-shift_opcode_number(Parrot_Interp interp, IMAGE_IO *io)>
+FUNCDOC: shift_opcode_number
 
 Removes and returns an number from the start of the C<*io> "stream".
-
-=cut
 
 */
 
 static FLOATVAL
-shift_opcode_number(Parrot_Interp interp, IMAGE_IO *io)
+shift_opcode_number(SHIM_INTERP, IMAGE_IO *io)
 {
-    const char * const start = (char*)io->image->strstart;
+    const char * const start = (const char*)io->image->strstart;
     const FLOATVAL f =
         PF_fetch_number(io->pf, (opcode_t**) &io->image->strstart);
 
@@ -521,17 +690,14 @@ shift_opcode_number(Parrot_Interp interp, IMAGE_IO *io)
 
 /*
 
-=item C<static STRING*
-shift_opcode_string(Parrot_Interp interp, IMAGE_IO *io)>
+FUNCDOC: shift_opcode_string
 
 Removes and returns a string from the start of the C<*io> "stream".
-
-=cut
 
 */
 
 static STRING*
-shift_opcode_string(Parrot_Interp interp, IMAGE_IO *io)
+shift_opcode_string(Parrot_Interp interp /*NN*/, IMAGE_IO *io)
 {
     char * const start = (char*)io->image->strstart;
     STRING * const s =
@@ -544,29 +710,16 @@ shift_opcode_string(Parrot_Interp interp, IMAGE_IO *io)
 
 /*
 
-=back
-
 =head2 Helper Functions
 
-=over 4
-
-=cut
-
-*/
-
-/*
-
-=item C<static void
-pmc_add_ext(Parrot_Interp interp, PMC *pmc)>
+FUNCDOC: pmc_add_ext
 
 Adds a C<PMC_EXT> to C<*pmc>.
-
-=cut
 
 */
 
 static void
-pmc_add_ext(Parrot_Interp interp, PMC *pmc)
+pmc_add_ext(Parrot_Interp interp /*NN*/, PMC *pmc /*NN*/)
 {
     if (pmc->vtable->flags & VTABLE_PMC_NEEDS_EXT)
         add_pmc_ext(interp, pmc);
@@ -574,17 +727,14 @@ pmc_add_ext(Parrot_Interp interp, PMC *pmc)
 
 /*
 
-=item C<static void
-cleanup_next_for_GC_pool(Parrot_Interp interp, Small_Object_Pool *pool)>
+FUNCDOC: cleanup_next_for_GC_pool
 
 Sets all the C<next_for_GC> pointers to C<NULL>.
-
-=cut
 
 */
 
 static void
-cleanup_next_for_GC_pool(Parrot_Interp interp, Small_Object_Pool *pool)
+cleanup_next_for_GC_pool(Small_Object_Pool *pool /*NN*/)
 {
     Small_Object_Arena *arena;
 
@@ -604,22 +754,17 @@ cleanup_next_for_GC_pool(Parrot_Interp interp, Small_Object_Pool *pool)
 
 /*
 
-=item C<static void
-cleanup_next_for_GC(Parrot_Interp interp)>
+FUNCDOC: cleanup_next_for_GC
 
 Cleans up the C<next_for_GC> pointers.
-
-=cut
 
 */
 
 static void
-cleanup_next_for_GC(Parrot_Interp interp)
+cleanup_next_for_GC(Parrot_Interp interp /*NN*/)
 {
-    cleanup_next_for_GC_pool(interp,
-            interp->arena_base->pmc_pool);
-    cleanup_next_for_GC_pool(interp,
-            interp->arena_base->constant_pmc_pool);
+    cleanup_next_for_GC_pool(interp->arena_base->pmc_pool);
+    cleanup_next_for_GC_pool(interp->arena_base->constant_pmc_pool);
 }
 
 /*
@@ -654,17 +799,14 @@ static image_funcs opcode_funcs = {
 
 /*
 
-=item C<static void
-ft_init(Parrot_Interp interp, visit_info *info)>
+FUNCDOC: ft_init
 
 Initializes the freeze/thaw subsystem.
-
-=cut
 
 */
 
 static void
-ft_init(Parrot_Interp interp, visit_info *info)
+ft_init(Parrot_Interp interp /*NN*/, visit_info *info /*NN*/)
 {
     STRING *s = info->image;
     PackFile *pf;
@@ -703,22 +845,16 @@ ft_init(Parrot_Interp interp, visit_info *info)
     info->container = NULL;
 }
 
-static void visit_todo_list(Parrot_Interp, PMC*, visit_info* info);
-static void add_pmc_todo_list(Parrot_Interp, PMC*, visit_info* info);
-
 /*
 
-=item C<static void
-todo_list_init(Parrot_Interp interp, visit_info *info)>
+FUNCDOC: todo_list_init
 
 Initializes the C<*info> lists.
-
-=cut
 
 */
 
 static void
-todo_list_init(Parrot_Interp interp, visit_info *info)
+todo_list_init(Parrot_Interp interp /*NN*/, visit_info *info /*NN*/)
 {
     info->visit_pmc_now = visit_todo_list;
     info->visit_pmc_later = add_pmc_todo_list;
@@ -729,18 +865,10 @@ todo_list_init(Parrot_Interp interp, visit_info *info)
     ft_init(interp, info);
 }
 
-/*
 
-=item C<PARROT_INLINE static void
-freeze_pmc(Parrot_Interp interp, PMC *pmc, visit_info *info,
-        int seen, UINTVAL id)>
-
-=cut
-
-*/
-
-PARROT_INLINE static void
-freeze_pmc(Parrot_Interp interp, PMC *pmc, visit_info *info,
+PARROT_INLINE
+static void
+freeze_pmc(Parrot_Interp interp /*NN*/, PMC *pmc, visit_info *info,
         int seen, UINTVAL id)
 {
     IMAGE_IO * const io = info->image_io;
@@ -776,34 +904,31 @@ freeze_pmc(Parrot_Interp interp, PMC *pmc, visit_info *info,
 
 /*
 
-=item C<PARROT_INLINE static int
-thaw_pmc(Parrot_Interp interp, visit_info *info,
-        UINTVAL *id, INTVAL *type)>
+FUNCDOC: thaw_pmc
 
 Freeze and thaw a PMC (id).
 
 For example, the ASCII representation of the C<Array>
 
-P0 = [P1=666, P2=777, P0]
+    P0 = [P1=666, P2=777, P0]
 
 may look like this:
 
-0xdf4 30 3 0xdf8 33 666 0xdf2 777 0xdf5
+    0xdf4 30 3 0xdf8 33 666 0xdf2 777 0xdf5
 
 where 30 is C<class_enum_Array>, 33 is C<class_enum_Integer>, the
 type of the second C<Integer> is suppressed, the repeated P0 has bit 0
 set.
 
-=cut
-
 */
 
-PARROT_INLINE static int
-thaw_pmc(Parrot_Interp interp, visit_info *info,
+PARROT_INLINE
+static int
+thaw_pmc(Parrot_Interp interp /*NN*/, visit_info *info,
         UINTVAL *id, INTVAL *type)
 {
     PMC *n;
-    IMAGE_IO *io = info->image_io;
+    IMAGE_IO * const io = info->image_io;
     int seen = 0;
 
     info->extra_flags = EXTRA_IS_NULL;
@@ -834,21 +959,18 @@ thaw_pmc(Parrot_Interp interp, visit_info *info,
 
 /*
 
-=item C<PARROT_INLINE static void
-do_action(Parrot_Interp interp, PMC *pmc, visit_info *info,
-        int seen, UINTVAL id)>
+FUNCDOC: do_action
 
 Called from C<visit_next_for_GC()> and C<visit_todo_list()> to perform
 the action specified in C<< info->what >>.
 
 Currently only C<VISIT_FREEZE_NORMAL> is implemented.
 
-=cut
-
 */
 
-PARROT_INLINE static void
-do_action(Parrot_Interp interp, PMC *pmc, visit_info *info,
+PARROT_INLINE
+static void
+do_action(Parrot_Interp interp /*NN*/, PMC *pmc, visit_info *info /*NN*/,
         int seen, UINTVAL id)
 {
     switch (info->what) {
@@ -866,18 +988,15 @@ do_action(Parrot_Interp interp, PMC *pmc, visit_info *info,
 
 /*
 
-=item C<PARROT_INLINE static PMC*
-thaw_create_pmc(Parrot_Interp interp, PMC *pmc, visit_info *info,
-        INTVAL type)>
+FUNCDOC: thaw_create_pmc
 
 Called from C<do_thaw()> to attach the vtable etc. to C<*pmc>.
 
-=cut
-
 */
 
-PARROT_INLINE static PMC*
-thaw_create_pmc(Parrot_Interp interp, const visit_info *info,
+PARROT_INLINE
+static PMC*
+thaw_create_pmc(Parrot_Interp interp /*NN*/, const visit_info *info,
         INTVAL type)
 {
     PMC *pmc;
@@ -898,19 +1017,17 @@ thaw_create_pmc(Parrot_Interp interp, const visit_info *info,
 
 /*
 
-=item C<PARROT_INLINE static void
-do_thaw(Parrot_Interp interp, PMC* pmc, visit_info *info)>
+FUNCDOC: do_thaw
 
 Called by C<visit_todo_list_thaw()> to thaw and return a PMC.
 
 C<seen> is false if this is the first time the PMC has been encountered.
 
-=cut
-
 */
 
-PARROT_INLINE static void
-do_thaw(Parrot_Interp interp, PMC* pmc, visit_info *info)
+PARROT_INLINE
+static void
+do_thaw(Parrot_Interp interp /*NN*/, PMC* pmc, visit_info *info)
 {
     UINTVAL id;
     INTVAL type;
@@ -994,7 +1111,7 @@ do_thaw(Parrot_Interp interp, PMC* pmc, visit_info *info)
 
 
 static UINTVAL
-id_from_pmc(Parrot_Interp interp, PMC* pmc)
+id_from_pmc(Parrot_Interp interp /*NN*/, PMC* pmc)
 {
     UINTVAL id = 1;     /* first PMC in first arena */
     Small_Object_Arena *arena;
@@ -1031,17 +1148,14 @@ id_from_pmc(Parrot_Interp interp, PMC* pmc)
 
 /*
 
-=item C<static void
-add_pmc_next_for_GC(Parrot_Interp interp, PMC *pmc, visit_info *info)>
+FUNCDOC: add_pmc_next_for_GC
 
 Remembers the PMC for later processing.
-
-=cut
 
 */
 
 static void
-add_pmc_next_for_GC(Parrot_Interp interp, PMC *pmc, visit_info *info)
+add_pmc_next_for_GC(SHIM_INTERP, PMC *pmc /*NN*/, visit_info *info /*NN*/)
 {
     if (pmc->pmc_ext) {
         PMC_next_for_GC(info->mark_ptr) = pmc;
@@ -1051,21 +1165,18 @@ add_pmc_next_for_GC(Parrot_Interp interp, PMC *pmc, visit_info *info)
 
 /*
 
-=item C<PARROT_INLINE static int
-next_for_GC_seen(Parrot_Interp interp, PMC *pmc, visit_info *info,
-        UINTVAL *id)>
+FUNCDOC: next_for_GC_seen
 
 Remembers next child to visit via the C<next_for_GC pointer> generate a
 unique ID per PMC and freeze the ID (not the PMC address) so thaw the
 hash-lookup can be replaced by an array lookup then which is a lot
 faster.
 
-=cut
-
 */
 
-PARROT_INLINE static int
-next_for_GC_seen(Parrot_Interp interp, PMC *pmc, visit_info *info,
+PARROT_INLINE
+static int
+next_for_GC_seen(Parrot_Interp interp /*NN*/, PMC *pmc, visit_info *info,
         UINTVAL *id)
 {
     int seen = 0;
@@ -1096,38 +1207,32 @@ skip:
 
 /*
 
-=item C<static void
-add_pmc_todo_list(Parrot_Interp interp, PMC *pmc, visit_info *info)>
+FUNCDOC: add_pmc_todo_list
 
 Remembers the PMC to be processed later.
-
-=cut
 
 */
 
 static void
-add_pmc_todo_list(Parrot_Interp interp, PMC *pmc, visit_info *info)
+add_pmc_todo_list(Parrot_Interp interp /*NN*/, PMC *pmc, visit_info *info /*NN*/)
 {
     list_push(interp, (List *)PMC_data(info->todo), pmc, enum_type_PMC);
 }
 
 /*
 
-=item C<PARROT_INLINE static int
-todo_list_seen(Parrot_Interp interp, PMC *pmc, visit_info *info,
-        UINTVAL *id)>
+FUNCDOC: todo_list_seen
 
 Returns true if the PMC was seen, otherwise it put it on the todo list,
 generates an ID (tag) for PMC, offset by 4 as are addresses, low bits
 are flags.
 
-=cut
-
 */
 
-PARROT_INLINE static int
-todo_list_seen(Parrot_Interp interp, PMC *pmc, visit_info *info,
-        UINTVAL *id)
+PARROT_INLINE
+static int
+todo_list_seen(Parrot_Interp interp /*NN*/, PMC *pmc, visit_info *info /*NN*/,
+        UINTVAL *id /*NN*/)
 {
     HashBucket * const b =
         parrot_hash_get_bucket(interp, (Hash *)PMC_struct_val(info->seen), pmc);
@@ -1148,20 +1253,17 @@ todo_list_seen(Parrot_Interp interp, PMC *pmc, visit_info *info,
 
 /*
 
-=item C<static void
-visit_next_for_GC(Parrot_Interp interp, PMC* pmc, visit_info* info)>
+FUNCDOC: visit_next_for_GC
 
 C<visit_child> callbacks:
 
 Checks if the PMC was seen, generate an ID for it if not, then do the
 appropriate action.
 
-=cut
-
 */
 
 static void
-visit_next_for_GC(Parrot_Interp interp, PMC* pmc, visit_info* info)
+visit_next_for_GC(Parrot_Interp interp /*NN*/, PMC* pmc, visit_info* info /*NN*/)
 {
     UINTVAL id;
     const int seen = next_for_GC_seen(interp, pmc, info, &id);
@@ -1180,17 +1282,14 @@ visit_next_for_GC(Parrot_Interp interp, PMC* pmc, visit_info* info)
 
 /*
 
-=item C<static void
-visit_todo_list(Parrot_Interp interp, PMC* pmc, visit_info* info)>
+FUNCDOC: visit_todo_list
 
 Checks the seen PMC via the todo list.
-
-=cut
 
 */
 
 static void
-visit_todo_list(Parrot_Interp interp, PMC* pmc, visit_info* info)
+visit_todo_list(Parrot_Interp interp /*NN*/, PMC* pmc, visit_info* info /*NN*/)
 {
     UINTVAL id;
     int seen;
@@ -1208,38 +1307,31 @@ visit_todo_list(Parrot_Interp interp, PMC* pmc, visit_info* info)
 
 /*
 
-=item C<static void
-visit_todo_list_thaw(Parrot_Interp interp, PMC* old, visit_info* info)>
+FUNCDOC: visit_todo_list_thaw
 
 Callback for thaw - action first.
 
 Todo-list and seen handling is all in C<do_thaw()>.
 
-=cut
-
 */
 
 static void
-visit_todo_list_thaw(Parrot_Interp interp, PMC* old, visit_info* info)
+visit_todo_list_thaw(Parrot_Interp interp /*NN*/, PMC* old, visit_info* info)
 {
     do_thaw(interp, old, info);
 }
 
 /*
 
-=item C<static void
-visit_loop_next_for_GC(Parrot_Interp interp, PMC *current,
-        visit_info *info)>
+FUNCDOC: visit_loop_next_for_GC
 
 Put first item on todo list, then run as long as there are items to be
 done.
 
-=cut
-
 */
 
 static void
-visit_loop_next_for_GC(Parrot_Interp interp, PMC *current,
+visit_loop_next_for_GC(Parrot_Interp interp /*NN*/, PMC *current /*NN*/,
         visit_info *info)
 {
     visit_next_for_GC(interp, current, info);
@@ -1256,23 +1348,15 @@ visit_loop_next_for_GC(Parrot_Interp interp, PMC *current,
 
 /*
 
-=item C<static PMC*
-visit_loop_todo_list(Parrot_Interp interp, PMC *current,
-        visit_info *info)>
+FUNCDOC: visit_loop_todo_list
 
 The thaw loop.
 
-=cut
-
 */
 
-/* XXX This should be in a header file. */
-extern void
-Parrot_default_thawfinish(Interp* interp, PMC* pmc, visit_info *info);
-
 static void
-visit_loop_todo_list(Parrot_Interp interp, PMC *current,
-        visit_info *info)
+visit_loop_todo_list(Parrot_Interp interp /*NN*/, PMC *current,
+        visit_info *info /*NN*/)
 {
     List *todo = (List *)PMC_data(info->todo);
     PMC *finish_list_pmc;
@@ -1338,17 +1422,14 @@ again:
 
 /*
 
-=item C<static void
-create_image(Parrot_Interp interp, PMC *pmc, visit_info *info)>
+FUNCDOC: create_image
 
 Allocate image to some estimated size.
-
-=cut
 
 */
 
 static void
-create_image(Parrot_Interp interp, PMC *pmc, visit_info *info)
+create_image(Parrot_Interp interp /*NN*/, PMC *pmc, visit_info *info /*NN*/)
 {
     INTVAL len;
     if (!PMC_IS_NULL(pmc) && (VTABLE_does(interp, pmc,
@@ -1369,8 +1450,7 @@ create_image(Parrot_Interp interp, PMC *pmc, visit_info *info)
 
 /*
 
-=item C<static PMC*
-run_thaw(Parrot_Interp interp, STRING* image, visit_enum_type what)>
+FUNCDOC: run_thaw
 
 Performs thawing. C<what> indicates what to be thawed.
 
@@ -1384,12 +1464,10 @@ use, e.g.: given a big image, the first thawed item is a small
 aggregate. This implies, it probably contains (or some big strings) more
 nested containers, for which the C<next_for_GC> approach could be a win.
 
-=cut
-
 */
 
 static PMC*
-run_thaw(Parrot_Interp interp, STRING* image, visit_enum_type what)
+run_thaw(Parrot_Interp interp /*NN*/, STRING* image /*NN*/, visit_enum_type what)
 {
     visit_info info;
     int dod_block = 0;
@@ -1443,25 +1521,19 @@ run_thaw(Parrot_Interp interp, STRING* image, visit_enum_type what)
 
 /*
 
-=back
-
 =head2 Public Interface
 
-=over 4
-
-=item C<STRING*
-Parrot_freeze_at_destruct(Parrot_Interp interp, PMC* pmc)>
+FUNCDOC: Parrot_freeze_at_destruct
 
 This function must not consume any resources (except the image itself).
 It uses the C<next_for_GC> pointer, so its not reentrant and must not be
 interrupted by a DOD run.
 
-=cut
-
 */
 
+PARROT_API
 STRING*
-Parrot_freeze_at_destruct(Parrot_Interp interp, PMC* pmc)
+Parrot_freeze_at_destruct(Parrot_Interp interp /*NN*/, PMC* pmc)
 {
     visit_info info;
 
@@ -1485,17 +1557,15 @@ Parrot_freeze_at_destruct(Parrot_Interp interp, PMC* pmc)
 
 /*
 
-=item C<STRING*
-Parrot_freeze(Parrot_Interp interp, PMC* pmc)>
+FUNCDOC: Parrot_freeze
 
 Freeze using either method.
 
-=cut
-
 */
 
+PARROT_API
 STRING*
-Parrot_freeze(Parrot_Interp interp, PMC* pmc)
+Parrot_freeze(Parrot_Interp interp /*NN*/, PMC* pmc)
 {
 #if FREEZE_USE_NEXT_FOR_GC
     /*
@@ -1524,61 +1594,53 @@ Parrot_freeze(Parrot_Interp interp, PMC* pmc)
 
 /*
 
-=item C<PMC*
-Parrot_thaw(Parrot_Interp interp, STRING* image)>
+FUNCDOC: Parrot_thaw
 
 Thaw a PMC, called from the C<thaw> opcode.
 
-=cut
-
 */
 
+PARROT_API
 PMC*
-Parrot_thaw(Parrot_Interp interp, STRING* image)
+Parrot_thaw(Parrot_Interp interp /*NN*/, STRING* image)
 {
     return run_thaw(interp, image, VISIT_THAW_NORMAL);
 }
 
 /*
 
-=item C<PMC*
-Parrot_thaw_constants(Parrot_Interp interp, STRING* image)>
+FUNCDOC: Parrot_thaw_constants
 
 Thaw the constants. This is used by PackFile for unpacking PMC
 constants.
 
-=cut
-
 */
 
+PARROT_API
 PMC*
-Parrot_thaw_constants(Parrot_Interp interp, STRING* image)
+Parrot_thaw_constants(Parrot_Interp interp /*NN*/, STRING* image /*NN*/)
 {
     return run_thaw(interp, image, VISIT_THAW_CONSTANTS);
 }
 
 /*
 
-=item C<PMC*
-Parrot_clone(Parrot_Interp interp, PMC* pmc)>
+FUNCDOC: Parrot_clone
 
 There are for sure shortcuts to clone faster, e.g. always thaw the image
 immediately or use a special callback. But for now we just thaw a frozen
 PMC.
 
-=cut
-
 */
 
+PARROT_API
 PMC*
-Parrot_clone(Parrot_Interp interp, PMC* pmc)
+Parrot_clone(Parrot_Interp interp /*NN*/, PMC* pmc)
 {
     return Parrot_thaw(interp, Parrot_freeze(interp, pmc));
 }
 
 /*
-
-=back
 
 =head1 TODO
 
@@ -1591,8 +1653,6 @@ Lot of discussion on p6i and F<docs/dev/pmc_freeze.pod>.
 =head1 HISTORY
 
 Initial version by leo 2003.11.03 - 2003.11.07.
-
-=cut
 
 */
 

@@ -48,7 +48,7 @@ C<$opt> is a hash reference.
 =cut
 
 my %special_class_name =
-    map { ( $_, 1 ) } qw( STMRef Ref default Null delegate SharedRef deleg_pmc );
+    map { ( $_, 1 ) } qw( STMRef Ref default Null delegate SharedRef deleg_pmc Object );
 
 sub new {
     my ( $this, $self, $options ) = @_;
@@ -434,7 +434,7 @@ sub rewrite_nci_method {
     s/\bDYNSELF\b           # Macro: DYNSELF
       \.(\w+)           # other_method
       \(\s*(.*?)\)      # capture argument list
-     /"pmc->vtable->$1(" . full_arguments($2) . ')'/xeg;
+     /"pmc->real_self->vtable->$1(" . full_arguments($2, 'pmc->real_self') . ')'/xeg;
 
     # Rewrite SELF.other_method(args...)
     s/\bSELF\b              # Macro SELF
@@ -1249,6 +1249,7 @@ require Parrot::Pmc2c::Standard;
 require Parrot::Pmc2c::StandardConst;
 require Parrot::Pmc2c::StandardRO;
 require Parrot::Pmc2c::StmRef;
+require Parrot::Pmc2c::Object;
 
 1;
 

@@ -25,7 +25,7 @@ structure of the frozen bytecode.
 #include "parrot/packfile.h"
 #include "jit.h"
 
-/* HEADERIZER TARGET: include/parrot/packfile.h */
+/* HEADERIZER HFILE: include/parrot/packfile.h */
 
 /* HEADERIZER BEGIN: static */
 
@@ -794,7 +794,7 @@ PackFile_map_segments(Interp *interp, PackFile_Directory *dir /*NN*/,
 FUNCDOC: PackFile_add_segment
 
 Adds the Segment C<seg> to the directory C<dir> The PackFile becomes the
-owner of the segment; that means its getting destroyed, when the
+owner of the segment; that means it's getting destroyed, when the
 packfile gets destroyed.
 
 */

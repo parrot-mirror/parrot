@@ -25,7 +25,7 @@ subroutines.
 #include "parrot/oplib/ops.h"
 #include "inter_call.str"
 
-/* HEADERIZER TARGET: include/parrot/inter_call.h */
+/* HEADERIZER HFILE: include/parrot/inter_call.h */
 
 /* HEADERIZER BEGIN: static */
 
@@ -1186,7 +1186,7 @@ parrot_pass_args(Interp *interp /*NN*/, parrot_context_t *src_ctx /*NN*/, parrot
 FUNCDOC: parrot_pass_args_fromc
 
 Pass arguments from C code with given signature to a Parrot Sub.
-Prerequsits are like above.
+Prerequisites are like above.
 
 */
 

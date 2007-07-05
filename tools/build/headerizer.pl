@@ -33,7 +33,7 @@ on the command line.
 
 =head1 NOTES
 
-* the .c files MUST have a /* HEADERIZER TARGET: foo/bar.h */ directive in them
+* the .c files MUST have a /* HEADERIZER HFILE: foo/bar.h */ directive in them
 
 * Support for multiple .c files pointing at the same .h file
 
@@ -129,39 +129,52 @@ sub function_components_from_declaration {
     my @lines = split( /\n/, $proto );
     chomp @lines;
     my $parrot_api;
+    my $parrot_inline;
     if ( $lines[0] eq 'PARROT_API' ) {
         $parrot_api = 1;
         shift @lines;
     }
 
-    my $returntype = shift @lines;
-    my $parms      = join( " ", @lines );
+    if ( $lines[0] eq 'PARROT_INLINE' ) {
+        $parrot_inline = 1;
+        shift @lines;
+    }
 
-    $parms =~ s/\s+/ /g;
-    $parms =~ s{([^(]+)\s*\((.+)\)\s*(/\*\s*(.*?)\s*\*/)?;?}{$2} or
+    my $return_type = shift @lines;
+    my $args      = join( " ", @lines );
+
+    $args =~ s/\s+/ /g;
+    $args =~ s{([^(]+)\s*\((.+)\)\s*(/\*\s*(.*?)\s*\*/)?;?}{$2} or
         die qq{Couldn't handle "$proto"};
 
-    my $funcname = $1;
-    $parms = $2;
-    my $funcflags = $4;
+    my $name = $1;
+    $args = $2;
+    my $flags = $4;
 
-    my @parms = split( /\s*,\s*/, $parms );
-    for (@parms) {
+    die "Can't have both PARROT_API and PARROT_INLINE on $name\n" if $parrot_inline && $parrot_api;
+
+    my @args = split( /\s*,\s*/, $args );
+    for (@args) {
         s/SHIM_INTERP/SHIM(Interp *interp)/;
         /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' )
-            or die "Bad parms in $proto";
+            or die "Bad args in $proto";
         s/SHIM\(\s*(\w+.*\w+)\s*\)/$1/e;
     }
 
     my $is_static = 0;
-    $is_static = $2 if $returntype =~ s/^((static)\s+)?//i;
-
-    # No inline in the header file
-    $returntype =~ s/^PARROT_INLINE\s+//;
+    $is_static = $2 if $return_type =~ s/^((static)\s+)?//i;
 
     die "Impossible to have both static and PARROT_API" if $parrot_api && $is_static;
 
-    return ( $is_static, $parrot_api, $returntype, $funcname, $funcflags, @parms );
+    return {
+        name        => $name,
+        flags       => $flags,
+        args        => \@args,
+        is_static   => $is_static,
+        is_inline   => $parrot_inline,
+        is_api      => $parrot_api,
+        return_type => $return_type,
+    };
 }
 
 sub attrs_from_args {
@@ -180,14 +193,14 @@ sub attrs_from_args {
     return @attrs;
 }
 
-sub attrs_from_funcflags {
-    my $funcflags = shift;
+sub attrs_from_flags {
+    my $flags = shift;
 
-    return if not $funcflags;
-    return if $funcflags =~ /XXX/;
+    return if not $flags;
+    return if $flags =~ /XXX/;
 
     my @attrs = ();
-    my @opts = split( /\s*,\s*/, $funcflags );
+    my @opts = split( /\s*,\s*/, $flags );
 
     # For details about these attributes, see
     # http://gcc.gnu.org/onlinedocs/gcc-4.2.0/gcc/Function-Attributes.html
@@ -208,28 +221,31 @@ sub attrs_from_funcflags {
             push( @attrs, '__attribute__malloc__' );
         }
         else {
-            confess( qq{Unknown function flag "$funcflags" -> "$opt"\n} );
+            confess( qq{Unknown function flag "$flags" -> "$opt"\n} );
         }
     }
 
     return @attrs;
 }
 
+sub wango { 'foo' }
+
 sub make_function_decls {
     my @funcs = @_;
 
     my @decls;
     foreach my $func ( @funcs ) {
-        my ($is_static, $parrot_api, $ret_type, $funcname, $funcflags, @args) = @{$func};
-
         my $multiline = 0;
 
-        my $decl = sprintf( "%s %s(", $ret_type, $funcname );
-        $decl = "PARROT_API $decl" if $parrot_api;
-        $decl = "static $decl" if $is_static;
+        my $decl = sprintf( "%s %s(", $func->{return_type}, $func->{name} );
+        $decl = "PARROT_API $decl" if $func->{is_api};
+        $decl = "static $decl" if $func->{is_static};
 
+        $decl = "PARROT_INLINE $decl" if $func->{is_inline};
+
+        my @args = @{$func->{args}};
         my @attrs = attrs_from_args( @args );
-        push( @attrs, attrs_from_funcflags( $funcflags ) );
+        push( @attrs, attrs_from_flags( $func->{flags} ) );
 
         for my $arg ( @args ) {
             if ( $arg =~ m{SHIM\((.+)\)} ) {
@@ -287,8 +303,8 @@ sub main {
 
         my $source = read_file( $cfile );
 
-        die "can't find HEADERIZER TARGET directive in '$cfile'"
-            unless $source =~ m#/\*\s+HEADERIZER TARGET:\s+([^*]+?)\s+\*/#s;
+        die "can't find HEADERIZER HFILE directive in '$cfile'"
+            unless $source =~ m#/\*\s+HEADERIZER HFILE:\s+([^*]+?)\s+\*/#s;
         my $hfile = $1;
 
         if ( ($hfile ne 'none') && (not -f $hfile) ) {
@@ -297,9 +313,9 @@ sub main {
 
         my @decls = extract_function_declarations($source);
         for my $decl (@decls) {
-            my @components = function_components_from_declaration($decl);
-            push( @{ $cfiles{$hfile}->{$cfile} }, [@components] ) unless $hfile eq 'none';
-            push( @{ $cfiles_with_statics{ $cfile } }, [@components] ) if $components[0];
+            my $components = function_components_from_declaration($decl);
+            push( @{ $cfiles{$hfile}->{$cfile} }, $components ) unless $hfile eq 'none';
+            push( @{ $cfiles_with_statics{ $cfile } }, $components ) if $components->{is_static};
             ++$nfuncs;
         }
     }    # for @cfiles
@@ -314,7 +330,7 @@ sub main {
 
         for my $cfile ( sort keys %{$cfiles} ) {
             my @funcs = @{$cfiles->{$cfile}};
-            @funcs = grep { not $_->[0] } @funcs; # skip statics
+            @funcs = grep { not $_->{is_static} } @funcs; # skip statics
             $header = replace_headerized_declarations( $header, $cfile, $hfile, @funcs );
         }
 
@@ -324,7 +340,7 @@ sub main {
     # Update all the .c files in place
     for my $cfile ( sort keys %cfiles_with_statics ) {
         my @funcs = @{$cfiles_with_statics{ $cfile }};
-        @funcs = grep { $_->[0] } @funcs; # statics only
+        @funcs = grep { $_->{is_static} } @funcs;
 
         my $source = read_file( $cfile );
         $source = replace_headerized_declarations( $source, 'static', $cfile, @funcs );
@@ -381,9 +397,9 @@ sub replace_headerized_declarations {
 
 sub api_first_then_alpha {
     return
-        ( ($b->[1]||0) <=> ($a->[1]||0) )
+        ( ($b->{is_api}||0) <=> ($a->{is_api}||0) )
             ||
-        ( lc $a->[3] cmp lc $b->[3] )
+        ( lc $a->{name} cmp lc $b->{name} )
     ;
 }
 
@@ -419,15 +435,15 @@ Marks the beginning and end of a block of declarations in a header file.
     /* HEADERIZER BEGIN: src/bar.c */
     /* HEADERIZER END: src/bar.c */
 
-=item HEADERIZER TARGET: F<header-filename>
+=item HEADERIZER HFILE: F<header-filename>
 
 Tells the headerizer where the declarations for the functions should go
 
     # In file foo.c
-    /* HEADERIZER TARGET: foo.h */
+    /* HEADERIZER HFILE: foo.h */
 
     # In file bar.c
-    /* HEADERIZER TARGET: foo.h */
+    /* HEADERIZER HFILE: foo.h */
 
 =cut
 

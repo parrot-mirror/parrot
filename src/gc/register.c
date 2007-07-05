@@ -26,7 +26,7 @@ to the previous values and the allocated register memory is discarded.
 #include "parrot/parrot.h"
 #include "parrot/register.h"
 
-/* HEADERIZER TARGET: include/parrot/register.h */
+/* HEADERIZER HFILE: include/parrot/register.h */
 
 /* HEADERIZER BEGIN: static */
 
@@ -504,6 +504,8 @@ PARROT_API
 void
 Parrot_set_context_threshold(Interp *interp, struct Parrot_Context *ctxp)
 {
+    UNUSED(interp);
+    UNUSED(ctxp);
     /* nothing to do */
 }
 
