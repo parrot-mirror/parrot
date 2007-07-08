@@ -5,10 +5,16 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  2;
+use Test::More tests =>  3;
 use Carp;
-use lib qw( . lib ../lib ../../lib );
+use lib qw( . lib ../lib ../../lib t/configure/testlib );
+use_ok('config::init::defaults');
 use_ok('config::auto::format');
+use Parrot::BuildUtil;
+use Parrot::Configure;
+use Parrot::Configure::Options qw( process_options );
+use Parrot::IO::Capture::Mini;
+use Auxiliary qw( test_step_thru_runstep);
 
 =for hints_for_testing The documentation of the package being tested is
 insufficient; please try to improve it.  Check latest reports of Parrot
@@ -19,6 +25,43 @@ for writing tests is spent.  Try to write tests which will trigger the
 Test::More::like().
 
 =cut
+
+#my $parrot_version = Parrot::BuildUtil::parrot_version();
+#my $args = process_options( {
+#    argv            => [ ],
+#    script          => $0,
+#    parrot_version  => $parrot_version,
+#    svnid           => '$Id$',
+#} );
+#
+#my $conf = Parrot::Configure->new();
+#
+#test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
+#
+#my ($task, $step_name, @step_params, $step, $ret);
+#my $pkg = q{auto::format};
+#
+#$conf->add_steps($pkg);
+#$conf->options->set(%{$args});
+#
+#$task = $conf->steps->[1];
+#$step_name   = $task->step;
+#@step_params = @{ $task->params };
+#
+#$step = $step_name->new();
+#ok(defined $step, "$step_name constructor returned defined value");
+#isa_ok($step, $step_name);
+#ok($step->description(), "$step_name has description");
+#
+#require Data::Dumper;
+## print STDERR Data::Dumper->Dump([ $conf, $step ]);
+#print STDERR Data::Dumper->Dump([ $conf->data->{c}, $step ]);
+
+# $ret = $step->runstep($conf);
+# ok(defined $ret, "$step_name runstep() returned defined value");
+
+
+
 
 pass("Completed all tests in $0");
 

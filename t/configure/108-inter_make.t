@@ -35,7 +35,7 @@ my $args = process_options( {
     svnid           => '$Id$',
 } );
 
-my $conf = Parrot::Configure->new;
+my $conf = Parrot::Configure->new();
 
 test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
 
