@@ -64,6 +64,7 @@ sub get_valid_options {
         sharedstatedir
         step
         sysconfdir
+        target
         test
         verbose
         verbose-step
