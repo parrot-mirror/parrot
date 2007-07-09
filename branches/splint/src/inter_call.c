@@ -147,11 +147,6 @@ static void too_many( Interp *interp,
         orig.bp_ps = save.bp_ps;
 
 
-static void next_arg_sig(call_state_item *st /*NN*/)
-    __attribute__nonnull__(1);
-static void check_for_opt_flag(call_state *st /*NN*/, int has_arg)
-    __attribute__nonnull__(1);
-
 /*
 
 FUNCDOC: Parrot_init_arg_nci
@@ -290,7 +285,7 @@ Parrot_init_arg_sig(Interp *interp, parrot_context_t *ctx, const char *sig /*NN*
         st->n = strlen(sig);
         /* initialize st->sig */
         if (st->n)
-          next_arg_sig(st);
+            next_arg_sig(st);
     }
     return st->n > 0;
 }

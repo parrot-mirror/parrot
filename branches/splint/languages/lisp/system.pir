@@ -32,44 +32,33 @@ Use in bootstrapping.
 
     _init_reader_macros( package )
 
-    .local pmc symbol, value
-    .NIL(value)
+    .local pmc symbol, nil
+    .NIL(nil)
 
-    .DEFVAR(symbol, package, "*INSIDE-BACKQUOTE*", value)
+    .DEFVAR(symbol, package, "*INSIDE-BACKQUOTE*",      nil)      # not used yet
+    .DEFVAR(symbol, package, "*INSIDE-BACKQUOTE-LIST*", nil)      # not used yet
 
-    .DEFVAR(symbol, package, "*INSIDE-BACKQUOTE-LIST*", value)
+    .DEFUN(symbol, package, "%GET-OBJECT-ATTRIBUTE",  "_get_object_attr")
+    .DEFUN(symbol, package, "%SET-OBJECT-ATTRIBUTE",  "_set_object_attr")
 
-    .DEFUN(symbol, package, "%GET-OBJECT-ATTRIBUTE", "_get_object_attr")
+    .DEFUN(symbol, package, "%MAKE-HASH-TABLE",       "_make_hash_table")
+    .DEFUN(symbol, package, "%SET-HASH",              "_set_hash")
+    .DEFUN(symbol, package, "%GET-HASH",              "_get_hash")
 
-    .DEFUN(symbol, package, "%SET-OBJECT-ATTRIBUTE", "_set_object_attr")
+    .DEFUN(symbol, package, "%ALIAS-PACKAGE",         "_alias_package")
+    .DEFUN(symbol, package, "%FIND-PACKAGE",          "_find_package")
+    .DEFUN(symbol, package, "%PACKAGE-NAME",          "_package_name")
+    .DEFUN(symbol, package, "%MAKE-PACKAGE",          "_make_package")
+    .DEFUN(symbol, package, "%USE-PACKAGE",           "_use_package")
+    .DEFUN(symbol, package, "%EXPORT",                "_export")
 
-    .DEFUN(symbol, package, "%MAKE-HASH-TABLE", "_make_hash")
+    .DEFUN(symbol, package, "%OPEN-FILE",             "_open_file")
+    .DEFUN(symbol, package, "%PEEK",                  "_peek")
+    .DEFUN(symbol, package, "%CLOSE",                 "_close")
 
-    .DEFUN(symbol, package, "%SET-HASH", "_set_hash")
+    .DEFUN(symbol, package, "%STRING-EQUAL",          "_string_equal")
 
-    .DEFUN(symbol, package, "%GET-HASH", "_get_hash")
-
-    .DEFUN(symbol, package, "%ALIAS-PACKAGE", "_alias_package")
-
-    .DEFUN(symbol, package, "%FIND-PACKAGE", "_find_package")
-
-    .DEFUN(symbol, package, "%PACKAGE-NAME", "_package_name")
-
-    .DEFUN(symbol, package, "%MAKE-PACKAGE", "_make_package")
-
-    .DEFUN(symbol, package, "%USE-PACKAGE", "_use_package")
-
-    .DEFUN(symbol, package, "%EXPORT", "_export")
-
-    .DEFUN(symbol, package, "%OPEN-FILE", "_open_file")
-
-    .DEFUN(symbol, package, "%PEEK", "_peek")
-
-    .DEFUN(symbol, package, "%CLOSE", "_close")
-
-    .DEFUN(symbol, package, "%STRING-EQUAL", "_string_equal")
-
-    .DEFUN(symbol, package, "%MAKE-MACRO", "_make_macro")
+    .DEFUN(symbol, package, "%MAKE-MACRO",            "_make_macro")
 
     # XXX - THESE SHOULD BE REMOVED AND CONVERTED TO PROPER LISP FUNCTIONS
     .DEFUN(symbol, package, "ERROR", "_raise_error")
@@ -118,85 +107,83 @@ Use in bootstrapping.
 .end
 
 .sub _set_hash
-  .param pmc args
-  .local string keys
-  .local pmc hash
-  .local pmc key
-  .local pmc val
+    .param pmc args
+    .ASSERT_LENGTH(args,3,ERROR_NARGS)
 
-  .ASSERT_LENGTH(args,3,ERROR_NARGS)
+    .local pmc hash
+    .CAR(hash,args)
+    .ASSERT_TYPE(hash, "hash")
 
-  .CAR(hash,args)
-  .SECOND(key,args)
-  .THIRD(val,args)
+    .local pmc key
+    .SECOND(key,args)
+    .ASSERT_TYPE(key, "string")
 
-  .ASSERT_TYPE(hash, "hash")
-  .ASSERT_TYPE(key, "string")
+    .local pmc val
+    .THIRD(val,args)
 
-   keys = key
-   hash[keys] = val
+    .local string key_str
+    key_str = key
+    hash[key_str] = val
 
-   goto DONE
+    goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error", "wrong number of arguments to %SET-HASH")
-   goto DONE
+    .ERROR_0("program-error", "wrong number of arguments to %SET-HASH")
+    goto DONE
 
 DONE:
-  .return(val)
+    .return(val)
 .end
 
 .sub _get_hash
-  .param pmc args
-  .local string keys
-  .local pmc hash
-  .local pmc key
-  .local pmc val
+    .param pmc args
+    .ASSERT_LENGTH(args,2,ERROR_NARGS)
 
-  .ASSERT_LENGTH(args,2,ERROR_NARGS)
+    .local pmc hash
+    .CAR(hash,args)
+    .ASSERT_TYPE(hash, "hash")
 
-  .CAR(hash,args)
-  .SECOND(key,args)
+    .local pmc key
+    .SECOND(key,args)
+    .ASSERT_TYPE(key, "string")
 
-  .ASSERT_TYPE(hash, "hash")
-  .ASSERT_TYPE(key, "string")
+    .local string key_str
+    key_str = key                                      # Convert the key to a string
+    .local pmc val
+    val = hash[key_str]
 
-   keys = key                                      # Convert the key to a string
-   val = hash[keys]
+    if_null val, NO_VALUE_SET
 
-   if_null val, NO_VALUE_SET
-
-   goto DONE
+    goto DONE
 
 NO_VALUE_SET:
-  .NIL(val)
-   goto DONE
+    .NIL(val)
+    goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error", "wrong number of arguments to %GET-HASH")
-   goto DONE
+    .ERROR_0("program-error", "wrong number of arguments to %GET-HASH")
+    goto DONE
 
 DONE:
-  .return(val)
+    .return(val)
 .end
 
 .sub _package_name
-  .param pmc args
+    .param pmc args
+    .ASSERT_LENGTH(args, 1, ERROR_NARGS)
 
-  .local pmc pkg, pkgname
+    .local pmc pkg
+    .CAR(pkg, args)
+    .ASSERT_TYPE(pkg, "package")
 
-  .ASSERT_LENGTH(args, 1, ERROR_NARGS)
+    .local pmc pkgname
+    pkgname = pkg._get_name()
 
-  .CAR(pkg, args)
-  .ASSERT_TYPE(pkg, "package")
-
-   pkgname = pkg._get_name()
-
-   goto DONE
+    goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error", "wrong number of arguments to SYS:%PACKAGE-NAME")
-   goto DONE
+    .ERROR_0("program-error", "wrong number of arguments to SYS:%PACKAGE-NAME")
+    goto DONE
 
 DONE:
   .return(pkgname)
@@ -204,98 +191,92 @@ DONE:
 
 
 .sub _find_package
-  .param pmc args
+    .param pmc args
+    .ASSERT_LENGTH(args, 1, ERROR_NARGS)
 
-  .local string pkgname_str
-  .local pmc pkgname
-  .local pmc retv
+    .local pmc pkgname
+    .CAR(pkgname, args)
+    .ASSERT_TYPE(pkgname, "string")
 
-  .ASSERT_LENGTH(args, 1, ERROR_NARGS)
+     .local string pkgname_str
+     pkgname_str = pkgname
+     upcase pkgname_str
 
-  .CAR(pkgname, args)
-  .ASSERT_TYPE(pkgname, "string")
+     push_eh PACKAGE_NOT_FOUND
+     .local pmc retv
+     retv = find_global "PACKAGES", pkgname_str
+     if_null retv, PACKAGE_NOT_FOUND
+     clear_eh
 
-   pkgname_str = pkgname
-   upcase pkgname_str
-
-   push_eh PACKAGE_NOT_FOUND
-   retv = find_global "PACKAGES", pkgname_str
-   if_null retv, PACKAGE_NOT_FOUND
-   clear_eh
-
-   goto DONE
+     goto DONE
 
 PACKAGE_NOT_FOUND:
-  .ERROR_1("internal", "there is no package with the name \"%s\"", pkgname)
-   goto DONE
+     .NIL(retv)
+     goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error", "wrong number of arguments to %FIND-PACKAGE")
-   goto DONE
+    .ERROR_0("program-error", "wrong number of arguments to %FIND-PACKAGE")
+     goto DONE
 
 DONE:
-  .return(retv)
+    .return(retv)
 .end
 
 .sub _alias_package
-  .param pmc args
+    .param pmc args
+    .ASSERT_LENGTH(args, 2, ERROR_NARGS)
 
-  .local string pkgnames
-  .local pmc package
-  .local pmc pkgname
-  .local pmc retv
+    .local pmc package
+    .CAR(package, args)
+    .ASSERT_TYPE(package, "package")
 
-  .ASSERT_LENGTH(args, 2, ERROR_NARGS)
+    .local pmc pkgname
+    .SECOND(pkgname, args)
+    .ASSERT_TYPE(pkgname, "string")
 
-  .CAR(package, args)
-  .ASSERT_TYPE(package, "package")
+    .local string pkgname_str
+    pkgname_str = pkgname
+    upcase pkgname_str
 
-  .SECOND(pkgname, args)
-  .ASSERT_TYPE(pkgname, "string")
+    store_global "PACKAGES", pkgname_str, package
 
-   pkgnames = pkgname
-
-   store_global "PACKAGES", pkgnames, package
-
-  .TRUE(retv)
-   goto DONE
+    .local pmc retv
+    .TRUE(retv)
+    goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error", "wrong number of arguments to %ALIAS-PACKAGE")
-   goto DONE
+    .ERROR_0("program-error", "wrong number of arguments to %ALIAS-PACKAGE")
+    goto DONE
 
 DONE:
-  .return(retv)
+    .return(retv)
 .end
 
 .sub _make_package
-  .param pmc args
-  .local string pkgnames
-  .local pmc packages
-  .local pmc package
-  .local pmc pkgname
-  .local pmc symbol
+    .param pmc args
+    .ASSERT_LENGTH(args, 1, ERROR_NARGS)
 
-  .ASSERT_LENGTH(args, 1, ERROR_NARGS)
+    .local pmc pkgname
+    .CAR(pkgname, args)
+    .ASSERT_TYPE(pkgname, "string")
 
-  .CAR(pkgname, args)
-  .ASSERT_TYPE(pkgname, "string")
+    .local pmc package
+    .PACKAGE(package, pkgname)
 
-  .PACKAGE(package, pkgname)
+    .local string pkgname_str
+    pkgname_str = pkgname
+    upcase pkgname_str
 
-   pkgnames = pkgname
-   upcase pkgnames, pkgnames
+    store_global "PACKAGES", pkgname_str, package
 
-   store_global "PACKAGES", pkgnames, package
-
-   goto DONE
+    goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error", "wrong number of arguments to %MAKE-PACKAGE")
-   goto DONE
+    .ERROR_0("program-error", "wrong number of arguments to %MAKE-PACKAGE")
+    goto DONE
 
 DONE:
-  .return(package)
+    .return(package)
 .end
 
 .sub _use_package
@@ -380,21 +361,20 @@ DONE:
   .return(retv)
 .end
 
-.sub _make_hash
-  .param pmc args
-  .local pmc retv
+.sub _make_hash_table
+    .param pmc args
+    .ASSERT_LENGTH(args,0,ERROR_NARGS)
 
-  .ASSERT_LENGTH(args,0,ERROR_NARGS)
-
-  .HASH(retv)
-   goto DONE
+    .local pmc retv
+    .HASH(retv)
+    goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error", "wrong number of arguments to %MAKE-HASH")
-   goto DONE
+    .ERROR_0("program-error", "wrong number of arguments to %MAKE-HASH-TABLE")
+    goto DONE
 
 DONE:
-  .return(retv)
+    .return(retv)
 .end
 
 .sub _raise_error
@@ -481,86 +461,75 @@ DONE:
 .end
 
 .sub _get_object_attr
-  .param pmc args
+    .param pmc args
+    .ASSERT_LENGTH(args,3,ERROR_NARGS)
 
-  .local string attr
-  # VALID_IN_PARROT_0_2_0 .local string objt
-  .local pmc symbol
-  # VALID_IN_PARROT_0_2_0 .local pmc objstr
-  .local pmc attrib
-  .local pmc retv
+    .local pmc symbol
+    .CAR(symbol,args)
 
-  .ASSERT_LENGTH(args,3,ERROR_NARGS)
+    .local pmc obj_type
+    .SECOND(obj_type,args)
+    .ASSERT_TYPE(obj_type, "string")
+    # TODO: check type of symbol
 
-  .CAR(symbol,args)
-   # VALID_IN_PARROT_0_2_0 .SECOND(objstr,args)
-  .THIRD(attrib,args)
+    .local pmc attr_name
+    .THIRD(attr_name,args)
+    .ASSERT_TYPE(attr_name, "string")
+    .local string attr_name_str
+    attr_name_str = attr_name
 
-  .NIL(retv)
-
-   # VALID_IN_PARROT_0_2_0 .ASSERT_TYPE(objstr, "string")
-  .ASSERT_TYPE(attrib, "string")
-
-   attr = attrib
-   # VALID_IN_PARROT_0_2_0 objt = objstr
-
-   # VALID_IN_PARROT_0_2_0 concat objt, objt, "\0"
-   # VALID_IN_PARROT_0_2_0 concat attr, objt, attr
-
-   retv = getattribute symbol, attr
-   if_null retv, NO_VALUE
-   goto DONE
+    .local pmc retv
+    retv = getattribute symbol, attr_name_str
+    if_null retv, NO_VALUE
+    goto DONE
 
 NO_VALUE:
-  .NIL(retv)
-  goto DONE
+    .NIL(retv)
+    goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error","wrong number of arguments to %GET-OBJECT-ATTRIBUTE")
-   goto DONE
+    .ERROR_0("program-error","wrong number of arguments to %GET-OBJECT-ATTRIBUTE")
+    goto DONE
 
 DONE:
-  .return(retv)
+    .return(retv)
 .end
 
 .sub _set_object_attr
-  .param pmc args
-  .local string attr
-  # VALID_IN_PARROT_0_2_0 .local string objt
-  .local pmc symbol
-  # VALID_IN_PARROT_0_2_0 .local pmc objstr
-  .local pmc attrib
-  .local pmc value
+    .param pmc args
+    .ASSERT_LENGTH(args,4,ERROR_NARGS)
 
-  .ASSERT_LENGTH(args,4,ERROR_NARGS)
+    .local pmc symbol
+    .CAR(symbol,args)
 
-  .CAR(symbol,args)
-  # VALID_IN_PARROT_0_2_0 .SECOND(objstr,args)
-  .THIRD(attrib,args)
-  .FOURTH(value,args)
+    .local pmc obj_type
+    .SECOND(obj_type,args)
+    .ASSERT_TYPE(obj_type, "string")
+    # TODO: check type of symbol
 
-  # VALID_IN_PARROT_0_2_0 .ASSERT_TYPE(objstr, "string")
-  .ASSERT_TYPE(attrib, "string")
+    .local pmc attr_name
+    .THIRD(attr_name,args)
+    .ASSERT_TYPE(attr_name, "string")
+    .local string attr_name_str
+    attr_name_str = attr_name
 
-   attr = attrib
-   # VALID_IN_PARROT_0_2_0 objt = objstr
+    .local pmc value
+    .FOURTH(value,args)
 
-   # VALID_IN_PARROT_0_2_0 concat objt, objt, "\0"
-   # VALID_IN_PARROT_0_2_0 concat attr, objt, attr
-
-   setattribute symbol, attr, value
-   goto DONE
+     setattribute symbol, attr_name_str, value
+     goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error","wrong number of arguments to %SET-SYMBOL-ATTRIBUTE")
-   goto DONE
+    .ERROR_0("program-error","wrong number of arguments to %SET-SYMBOL-ATTRIBUTE")
+    goto DONE
 
 DONE:
-  .return(value)
+    .return(value)
 .end
 
 .sub _open_file
   .param pmc args
+
   .local string modes
   .local string names
   .local pmc stream

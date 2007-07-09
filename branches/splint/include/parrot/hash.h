@@ -64,7 +64,7 @@ typedef struct _hash {
     UINTVAL mask;               /* alloced - 1 */
     PMC *container;             /* e.g. the PerlHash PMC */
     Hash_key_type key_type;     /* cstring, ascii-string, utf8-string */
-    PARROT_DATA_TYPES entry_type;   /* type of value */
+    PARROT_DATA_TYPE entry_type;/* type of value */
     size_t seed;                /* randomizes the hash_key generation
                                    updated for each new hash */
     hash_comp_fn   compare;     /* compare two keys, 0 = equal */
@@ -74,62 +74,81 @@ typedef struct _hash {
 /* HEADERIZER BEGIN: src/hash.c */
 
 PARROT_API void parrot_dump_hash( Interp *interp, const Hash *hash );
-PARROT_API void parrot_hash_clone( Interp *interp,
+PARROT_API void parrot_hash_clone( Interp *interp /*NN*/,
     Hash *hash /*NN*/,
     Hash **dest )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API void parrot_hash_delete( Interp *interp,
+PARROT_API void parrot_hash_delete( Interp *interp /*NN*/,
     Hash *hash /*NN*/,
     void *key )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API void parrot_hash_destroy( Interp *interp, Hash *hash /*NN*/ )
         __attribute__nonnull__(2);
 
-PARROT_API INTVAL parrot_hash_exists( Interp *interp, Hash *hash, void *key )
-        __attribute__pure__
-        __attribute__warn_unused_result__;
-
-PARROT_API void * parrot_hash_get( Interp *interp, Hash *hash, void *key )
-        __attribute__pure__
-        __attribute__warn_unused_result__;
-
-PARROT_API HashBucket * parrot_hash_get_bucket( Interp *interp,
-    const Hash *hash,
-    void *key )
-        __attribute__pure__
-        __attribute__warn_unused_result__;
-
-PARROT_API void * parrot_hash_get_idx( Interp *interp,
-    const Hash *hash,
-    PMC *key /*NN*/ )
-        __attribute__nonnull__(3)
-        __attribute__pure__
-        __attribute__warn_unused_result__;
-
-PARROT_API HashBucket* parrot_hash_put( Interp *interp,
+PARROT_API INTVAL parrot_hash_exists( Interp *interp /*NN*/,
     Hash *hash /*NN*/,
-    void *key,
-    void *value )
-        __attribute__nonnull__(2);
-
-PARROT_API INTVAL parrot_hash_size( Interp *interp, const Hash *hash /*NN*/ )
+    void *key )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__pure__
         __attribute__warn_unused_result__;
 
-PARROT_API void parrot_hash_visit( Interp *interp,
-    Hash *hash,
+PARROT_API void * parrot_hash_get( Interp *interp /*NN*/,
+    Hash *hash /*NN*/,
+    void *key )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__warn_unused_result__;
+
+PARROT_API HashBucket * parrot_hash_get_bucket( Interp *interp /*NN*/,
+    const Hash *hash /*NN*/,
+    void *key )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__warn_unused_result__;
+
+PARROT_API void * parrot_hash_get_idx( Interp *interp,
+    const Hash *hash /*NN*/,
+    PMC *key /*NN*/ )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__pure__
+        __attribute__warn_unused_result__;
+
+PARROT_API HashBucket* parrot_hash_put( Interp *interp /*NN*/,
+    Hash *hash /*NN*/,
+    void *key,
+    void *value )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API INTVAL parrot_hash_size( Interp *interp /*NN*/,
+    const Hash *hash /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__pure__
+        __attribute__warn_unused_result__;
+
+PARROT_API void parrot_hash_visit( Interp *interp /*NN*/,
+    Hash *hash /*NN*/,
     void *pinfo /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_API void parrot_mark_hash( Interp *interp, Hash *hash /*NN*/ )
+PARROT_API void parrot_mark_hash( Interp *interp /*NN*/, Hash *hash /*NN*/ )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API void parrot_new_cstring_hash( Interp *interp, Hash **hptr );
 PARROT_API void parrot_new_hash( Interp *interp, Hash **hptr );
-PARROT_API PMC* Parrot_new_INTVAL_hash( Interp *interp, UINTVAL flags );
+PARROT_API PMC* Parrot_new_INTVAL_hash( Interp *interp /*NN*/, UINTVAL flags )
+        __attribute__nonnull__(1);
+
 PARROT_API void parrot_new_pmc_hash( Interp *interp, PMC *container );
 PARROT_API void parrot_new_pointer_hash( Interp *interp, Hash **hptr /*NN*/ )
         __attribute__nonnull__(2);
@@ -139,7 +158,7 @@ void parrot_chash_destroy( Interp *interp, Hash *hash /*NN*/ )
 
 void parrot_new_hash_x(
     Hash **hptr /*NN*/,
-    PARROT_DATA_TYPES val_type,
+    PARROT_DATA_TYPE val_type,
     Hash_key_type hkey_type,
     hash_comp_fn compare,
     hash_hash_key_fn keyhash )
@@ -147,7 +166,7 @@ void parrot_new_hash_x(
 
 void parrot_new_pmc_hash_x( Interp *interp,
     PMC *container /*NN*/,
-    PARROT_DATA_TYPES val_type,
+    PARROT_DATA_TYPE val_type,
     Hash_key_type hkey_type,
     hash_comp_fn compare,
     hash_hash_key_fn keyhash )

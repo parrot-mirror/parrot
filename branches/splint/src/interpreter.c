@@ -51,33 +51,51 @@ have the same number of elements because there is a one-to-one mapping.
 /* HEADERIZER BEGIN: static */
 
 static void dynop_register_switch( size_t n_old, size_t n_new );
-static void dynop_register_xx(
-    Parrot_Interp interp,
+static void dynop_register_xx( Interp *interp /*NN*/,
     size_t n_old,
     size_t n_new,
-    oplib_init_f init_func );
+    oplib_init_f init_func )
+        __attribute__nonnull__(1);
 
-static oplib_init_f get_op_lib_init( int core_op, int which, PMC *lib );
-static void init_prederef( Interp *interp, int which );
-static void load_prederef( Interp *interp, int which );
-static void notify_func_table(
-    Parrot_Interp interp,
+static oplib_init_f get_op_lib_init( Interp *interp,
+    int core_op,
+    int which,
+    PMC *lib );
+
+static void init_prederef( Interp *interp /*NN*/, int which )
+        __attribute__nonnull__(1);
+
+static void load_prederef( Interp *interp /*NN*/, int which )
+        __attribute__nonnull__(1);
+
+static void notify_func_table( Interp *interp /*NN*/,
     op_func_t* table /*NN*/,
     int on )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static void prederef_args(
     void **pc_prederef,
-    Interp *interp,
-    opcode_t *pc,
-    op_info_t *opinfo );
+    Interp *interp /*NN*/,
+    opcode_t *pc /*NN*/,
+    const op_info_t *opinfo /*NN*/ )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 static opcode_t * runops_cgp( Interp *interp, opcode_t *pc );
 static opcode_t * runops_exec( Interp *interp, opcode_t *pc );
 static opcode_t * runops_jit( Interp *interp, opcode_t *pc );
-static opcode_t * runops_switch( Interp *interp, opcode_t *pc );
-static void stop_prederef( Interp *interp );
-static void turn_ev_check( Parrot_Interp interp, int on );
+static opcode_t * runops_switch( Interp *interp /*NN*/, opcode_t *pc /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void stop_prederef( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void turn_ev_check( Interp *interp /*NN*/, int on )
+        __attribute__nonnull__(1);
+
 /* HEADERIZER END: static */
 
 /*
@@ -91,8 +109,8 @@ C<pc_prederef> is the current opcode.
 */
 
 static void
-prederef_args(void **pc_prederef, Interp *interp,
-        opcode_t *pc, op_info_t *opinfo)
+prederef_args(void **pc_prederef, Interp *interp /*NN*/,
+        opcode_t *pc /*NN*/, const op_info_t *opinfo /*NN*/)
 {
     const PackFile_ConstTable * const const_table = interp->code->const_table;
 
@@ -107,7 +125,7 @@ prederef_args(void **pc_prederef, Interp *interp,
 
     ADD_OP_VAR_PART(interp, interp->code, pc, n);
     for (i = 1; i < n; i++) {
-        opcode_t arg = pc[i];
+        const opcode_t arg = pc[i];
         int type;
         if (i >= m) {
             PMC * const sig = (PMC*) pc_prederef[1];
@@ -192,7 +210,7 @@ do_prederef(void **pc_prederef, Parrot_Interp interp, int type)
 {
     const size_t offset = pc_prederef - interp->code->prederef.code;
     opcode_t * const pc = ((opcode_t *)interp->code->base.data) + offset;
-    op_info_t *opinfo;
+    const op_info_t *opinfo;
     size_t n;
 
     if (*pc < 0 || *pc >= (opcode_t)interp->op_count)
@@ -259,7 +277,7 @@ handler thread.
 */
 
 static void
-turn_ev_check(Parrot_Interp interp, int on)
+turn_ev_check(Interp *interp /*NN*/, int on)
 {
     const Prederef * const pi = &interp->code->prederef;
     size_t i;
@@ -294,7 +312,7 @@ C<ParrotLibrary> PMC.
 */
 
 static oplib_init_f
-get_op_lib_init(int core_op, int which, PMC *lib)
+get_op_lib_init(Interp *interp, int core_op, int which, PMC *lib)
 {
     if (core_op) {
         oplib_init_f init_func;
@@ -320,7 +338,7 @@ get_op_lib_init(int core_op, int which, PMC *lib)
                 break;
             default:
                 init_func = NULL;
-                internal_exception(1, "Couldn't find init_func for core %d", which);
+                real_exception(interp, NULL, 1, "Couldn't find init_func for core %d", which);
                 break;
         }
         return init_func;
@@ -337,9 +355,9 @@ C<< interp->op_lib >> = prederefed oplib.
 */
 
 static void
-load_prederef(Interp *interp, int which)
+load_prederef(Interp *interp /*NN*/, int which)
 {
-    const oplib_init_f init_func = get_op_lib_init(1, which, NULL);
+    const oplib_init_f init_func = get_op_lib_init(interp, 1, which, NULL);
     int (*get_op)(const char * name, int full);
 
     get_op = interp->op_lib->op_code;
@@ -361,7 +379,7 @@ Initialize: load prederef C<func_table>, file prederef.code.
 */
 
 static void
-init_prederef(Interp *interp, int which)
+init_prederef(Interp *interp /*NN*/, int which)
 {
     load_prederef(interp, which);
     if (!interp->code->prederef.code) {
@@ -423,7 +441,7 @@ for run-core changes, but we don't know the old run core.
 */
 
 static void
-stop_prederef(Interp *interp)
+stop_prederef(Interp *interp /*NN*/)
 {
     interp->op_func_table = PARROT_CORE_OPLIB_INIT(1)->op_func_table;
     if (interp->evc_func_table) {
@@ -654,7 +672,7 @@ Runs the C<switch> core.
 */
 
 static opcode_t *
-runops_switch(Interp *interp, opcode_t *pc)
+runops_switch(Interp *interp /*NN*/, opcode_t *pc /*NN*/)
 {
     opcode_t * const code_start = (opcode_t *)interp->code->base.data;
     opcode_t *pc_prederef;
@@ -676,7 +694,7 @@ evaluation of opcode continues.
 */
 
 void
-runops_int(Interp *interp, size_t offset)
+runops_int(Interp *interp /*NN*/, size_t offset)
 {
     int lo_var_ptr;
     opcode_t *(*core) (Interp *, opcode_t *) =
@@ -700,7 +718,7 @@ runops_int(Interp *interp, size_t offset)
     interp->resume_flag |= RESUME_RESTART;
 
     while (interp->resume_flag & RESUME_RESTART) {
-        opcode_t *pc = (opcode_t *)
+        opcode_t * const pc = (opcode_t *)
             interp->code->base.data + interp->resume_offset;
 
         interp->resume_offset = 0;
@@ -794,7 +812,7 @@ void
 Parrot_setup_event_func_ptrs(Parrot_Interp interp)
 {
     const size_t n = interp->op_count;
-    const oplib_init_f init_func = get_op_lib_init(1, interp->run_core, NULL);
+    const oplib_init_f init_func = get_op_lib_init(interp, 1, interp->run_core, NULL);
     op_lib_t * const lib = init_func(1);
     /*
      * remember op_func_table
@@ -855,7 +873,7 @@ dynop_register(Parrot_Interp interp, PMC* lib_pmc)
         interp->all_op_libs = (op_lib_t **)mem_sys_realloc(interp->all_op_libs,
                 sizeof (op_lib_t *) * (interp->n_libs + 1));
 
-    init_func = get_op_lib_init(0, 0, lib_pmc);
+    init_func = get_op_lib_init(interp, 0, 0, lib_pmc);
     lib = init_func(1);
 
     interp->all_op_libs[interp->n_libs++] = lib;
@@ -942,7 +960,7 @@ Register C<op_lib> with other cores.
 */
 
 static void
-dynop_register_xx(Parrot_Interp interp,
+dynop_register_xx(Interp *interp /*NN*/,
         size_t n_old, size_t n_new, oplib_init_f init_func)
 {
     op_lib_t *cg_lib, *new_lib;
@@ -1003,7 +1021,7 @@ dynop_register_xx(Parrot_Interp interp,
     if (0 /*lib_variant */) {
         size_t i;
 
-        new_init_func = get_op_lib_init(0, 0, lib_variant);
+        new_init_func = get_op_lib_init(interp, 0, 0, lib_variant);
         new_lib = new_init_func(1);
         for (i = n_old; i < n_tot; ++i)
             ops_addr[i] = (new_lib->op_func_table)[i - n_old];
@@ -1053,9 +1071,9 @@ Tell the interpreter's running core about the new function table.
 */
 
 static void
-notify_func_table(Parrot_Interp interp, op_func_t* table /*NN*/, int on)
+notify_func_table(Interp *interp /*NN*/, op_func_t* table /*NN*/, int on)
 {
-    const oplib_init_f init_func = get_op_lib_init(1, interp->run_core, NULL);
+    const oplib_init_f init_func = get_op_lib_init(interp, 1, interp->run_core, NULL);
 
     init_func((long) table);
     switch (interp->run_core) {

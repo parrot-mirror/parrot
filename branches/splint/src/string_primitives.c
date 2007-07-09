@@ -15,7 +15,7 @@ API.
 
 */
 
-/* HEADERIZER HFILE: include/parrot/string_funcs.h */
+/* HEADERIZER HFILE: include/parrot/string_primitives.h */
 
 #include "parrot/parrot.h"
 #if PARROT_HAS_ICU
@@ -24,9 +24,7 @@ API.
 #  include <unicode/uchar.h>
 #  include <unicode/ustring.h>
 #else
-#  ifndef S_SPLINT_S
-#    include <ctype.h>
-#  endif
+#  include <ctype.h>
 #endif
 #include <assert.h>
 
@@ -41,7 +39,7 @@ etc.).
 
 PARROT_API
 void
-string_set_data_directory(const char *dir)
+string_set_data_directory(Interp *interp, const char *dir)
 {
 #if PARROT_HAS_ICU
     u_setDataDirectory(dir);
@@ -53,14 +51,14 @@ string_set_data_directory(const char *dir)
        EBCDIC.) */
 
     if (!u_isdigit(57) || (u_charDigitValue(57) != 9)) {
-            internal_exception(ICU_ERROR,
+            real_exception(interp, NULL, ICU_ERROR,
                 "string_set_data_directory: ICU data files not found"
                 "(apparently) for directory [%s]", dir);
     }
 #else
     UNUSED(dir);
 
-    internal_exception(ICU_ERROR,
+    real_exception(interp, NULL, ICU_ERROR,
         "string_set_data_directory: parrot compiled without ICU support");
 #endif
 }

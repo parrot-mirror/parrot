@@ -246,30 +246,27 @@ PARROT_API
 STRING*
 Parrot_full_sub_name(Interp *interp /*NN*/, PMC* sub /*NULLOK*/)
 {
-    Parrot_sub * s;
-    STRING *res;
+    if (sub && VTABLE_defined(interp, sub)) {
+        Parrot_sub * const s = PMC_sub(sub);
 
-    if (!sub || !VTABLE_defined(interp, sub))
-        return NULL;
-
-    s = PMC_sub(sub);
-    if (PMC_IS_NULL(s->namespace_stash)) {
-        return s->name;
-    }
-    else {
-        PMC *ns_array;
-        STRING *j;
-
-        Parrot_block_DOD(interp);
-        ns_array = Parrot_NameSpace_nci_get_name(interp, s->namespace_stash);
-        if (s->name) {
-            VTABLE_push_string(interp, ns_array, s->name);
+        if (PMC_IS_NULL(s->namespace_stash)) {
+            return s->name;
         }
-        j = const_string(interp, ";");
+        else {
+            PMC *ns_array;
+            STRING *j;
+            STRING *res;
 
-        res = string_join(interp, j, ns_array);
-        Parrot_unblock_DOD(interp);
-        return res;
+            Parrot_block_DOD(interp);
+            ns_array = Parrot_NameSpace_nci_get_name(interp, s->namespace_stash);
+            if (s->name)
+                VTABLE_push_string(interp, ns_array, s->name);
+            j = const_string(interp, ";");
+
+            res = string_join(interp, j, ns_array);
+            Parrot_unblock_DOD(interp);
+            return res;
+        }
     }
     return NULL;
 }
@@ -375,6 +372,7 @@ Parrot_Context_infostr(Interp *interp /*NN*/, parrot_context_t *ctx /*NN*/)
         /* free the non-constant string, but not the constant one */
         if (strncmp( "(unknown file)", file, 14 ) < 0 )
             string_cstring_free(file);
+        /* XXX This is probably a source of mis-freeing. */
     }
     else
         res = NULL;

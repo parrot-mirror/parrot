@@ -137,9 +137,6 @@ static void mmd_sort_candidates( Interp *interp, PMC *arg_tuple, PMC *cl );
 
 #define MMD_DEBUG 0
 
-static void mmd_create_builtin_multi_meth_2(Interp *, PMC *ns,
-        INTVAL func_nr, INTVAL type, INTVAL right, funcptr_t func_ptr);
-
 #ifndef NDEBUG
 static void
 dump_mmd(Interp *interp /*NN*/, INTVAL function)
@@ -1018,7 +1015,7 @@ mmd_arg_tuple_func(Interp *interp /*NN*/)
             int j, n;
 
             idx = *args_op;
-            arg = REG_PMC(idx);
+            arg = REG_PMC(interp, idx);
             n = VTABLE_elements(interp, arg);
             for (j = 0; j < n; ++j)  {
                 PMC * const elem = VTABLE_get_pmc_keyed_int(interp, arg, j);
@@ -1042,7 +1039,7 @@ mmd_arg_tuple_func(Interp *interp /*NN*/)
                 if ((type & PARROT_ARG_CONSTANT))
                     arg = constants[idx]->u.key;
                 else
-                    arg = REG_PMC(idx);
+                    arg = REG_PMC(interp, idx);
                 type = VTABLE_type(interp, arg);
                 VTABLE_push_integer(interp, arg_tuple, type);
                 break;
@@ -1538,7 +1535,7 @@ mmd_create_builtin_multi_meth_2(Interp *interp, PMC *ns,
 {
     const char *short_name;
     char signature[6], val_sig;
-    STRING *meth_name, *_sub;
+    STRING *meth_name;
     PMC *method, *multi, *_class, *multi_sig;
 
     assert(type != enum_class_Null && type != enum_class_delegate &&
@@ -1582,7 +1579,6 @@ mmd_create_builtin_multi_meth_2(Interp *interp, PMC *ns,
         VTABLE_add_method(interp, _class, meth_name, method);
     }
     else {
-        _sub = CONST_STRING(interp, "Sub");
         /* multiple methods with that same name */
         if (method->vtable->base_type == enum_class_NCI) {
             /* convert first to a multi */
