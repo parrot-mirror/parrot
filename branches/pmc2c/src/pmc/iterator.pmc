@@ -8,9 +8,52 @@ src/pmc/iterator.pmc - Iterator PMC
 
 =head1 DESCRIPTION
 
-These are the vtable functions for the Iterator base class
+These are the vtable functions for the Iterator base class. Iterators are
+used in combination with other classes(mainly aggregates) to visit all entries
+in that aggregate.
 
-=head2 Methods
+=head1 SYNOPSIS
+
+=head2 default usage
+
+    .local pmc iterator, array, entry
+    iterator = new .Iterator, array
+  iter_loop:
+    unless iterator, iter_end  # while (more values)
+    entry = shift iterator     # get an entry
+    ...
+    goto iter_loop
+  iter_end:
+
+The C<new> can alteratively be written as:
+
+  iterator = iter array
+
+=head2 iterate from the end, for arrays
+
+    .local pmc iterator, array, entry
+    iterator = new .Iterator, array
+    iterator = .ITERATE_FROM_END
+  iter_loop:
+    unless iterator, iter_end  # while (more values)
+    entry = pop iterator     # get an entry
+    ...
+    goto iter_loop
+  iter_end:
+
+=head2 iterate over a hash
+
+    .local pmc iterator, hash, key, entry
+    iterator = new .Iterator, hash
+  iter_loop:
+    unless iterator, iter_end  # while (more values)
+    key = shift iterator       # get the key..
+    entry = hash[key]
+    ...
+    goto iter_loop
+  iter_end:
+
+=head1 Methods
 
 =over 4
 
@@ -97,7 +140,7 @@ Make a clone of the iterator.
 
     PMC* clone() {
         PMC * const key = (PMC *)PMC_struct_val(SELF);
-        PMC *res = pmc_new_init(INTERP, SELF->vtable->base_type, PMC_pmc_val(SELF));
+        PMC * const res = pmc_new_init(INTERP, SELF->vtable->base_type, PMC_pmc_val(SELF));
         PMC_struct_val(res) = VTABLE_clone(interp, key);
         return res;
     }
@@ -422,39 +465,41 @@ See F<docs/pdds/pdd03_calling_conventions.pod>.
 
 */
     opcode_t* invoke(void *next) {
-        PMC *agg, *key, *res;
-        INTVAL ires;
+        PMC *agg;
 
-        if (REG_INT(3) == 1) {       /* iterator constructor */
-            PMC *iter, *arg = REG_PMC(5);
+        if (REG_INT(interp, 3) == 1) {       /* iterator constructor */
+            PMC *iter, *arg = REG_PMC(interp, 5);
             if (PObj_is_object_TEST(arg)) {
-                REG_PMC(5) = VTABLE_get_iter(INTERP, arg);
+                REG_PMC(interp, 5) = VTABLE_get_iter(INTERP, arg);
                 return (opcode_t *)next;
             }
-            REG_PMC(5) = iter = pmc_new_init(INTERP,
+            REG_PMC(interp, 5) = iter = pmc_new_init(INTERP,
                     enum_class_Iterator, arg);
             VTABLE_set_integer_native(INTERP, iter, 0);
             return (opcode_t *)next;
         }
-        else if (REG_INT(3) == 2)   /* TODO function+sentinel */
+        else if (REG_INT(interp, 3) == 2)   /* TODO function+sentinel */
             real_exception(INTERP, NULL, E_AssertionError,
                     "Iterator: invoke 2 args");
 
-        REG_INT(1) = REG_INT(2) = REG_INT(3) = REG_INT(4) = 0;
-        key        = (PMC *)PMC_struct_val(SELF);
+        REG_INT(interp, 1) = REG_INT(interp, 2) = REG_INT(interp, 3) = REG_INT(interp, 4) = 0;
         agg        = (PMC *)PMC_pmc_val(SELF);
 
         switch (agg->vtable->base_type) {
             case enum_class_IntList:
-                ires       = DYNSELF.shift_integer();
-                REG_INT(1) = 1;
-                REG_INT(5) = ires;
+                {
+                const INTVAL ires = DYNSELF.shift_integer();
+                REG_INT(interp, 1) = 1;
+                REG_INT(interp, 5) = ires;
                 return (opcode_t *)next;
+                }
             default:
-                res        = DYNSELF.shift_pmc();
-                REG_INT(3) = 1;
-                REG_PMC(5) = res;
+                {
+                PMC * const res = DYNSELF.shift_pmc();
+                REG_INT(interp, 3) = 1;
+                REG_PMC(interp, 5) = res;
                 return (opcode_t *)next;
+                }
         }
 
         return NULL;

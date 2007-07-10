@@ -29,7 +29,7 @@ the C-library.
 #include "inter_cb.str"
 
 
-/* HEADERIZER TARGET: none */ /* XXX Needs to get done at the same time as the other interpreter files */
+/* HEADERIZER HFILE: none */ /* XXX Needs to get done at the same time as the other interpreter files */
 
 /*
 
@@ -42,6 +42,7 @@ Create a callback function according to pdd16.
 
 */
 
+PARROT_API
 PMC*
 Parrot_make_cb(Parrot_Interp interp, PMC* sub, PMC* user_data,
         STRING *cb_signature)
@@ -65,7 +66,7 @@ Parrot_make_cb(Parrot_Interp interp, PMC* sub, PMC* user_data,
     sig_str = cb_signature->strstart;
 
     if (strlen(sig_str) != 3) {
-        internal_exception(1, "unhandled signature '%s' in make_cb",
+        real_exception(interp, NULL, 1, "unhandled signature '%s' in make_cb",
               cb_signature->strstart);
     }
 
@@ -80,7 +81,7 @@ Parrot_make_cb(Parrot_Interp interp, PMC* sub, PMC* user_data,
             type = 'C';
         }
         else {
-            internal_exception(1, "unhandled signature '%s' in make_cb",
+            real_exception(interp, NULL, 1, "unhandled signature '%s' in make_cb",
                     cb_signature->strstart);
         }
     }
@@ -329,7 +330,7 @@ case_I:
             param = string_from_cstring(interp, external_data, 0);
             break;
         default:
-            internal_exception(1, "unhandled signature char '%c' in run_cb",
+            real_exception(interp, NULL, 1, "unhandled signature char '%c' in run_cb",
                                *p);
     }
     pasm_sig[3] = '\0';
@@ -348,12 +349,14 @@ NCI callback functions. See pdd16.
 
 */
 
+PARROT_API
 void
 Parrot_callback_C(char *external_data, PMC *user_data)
 {
     verify_CD(external_data, user_data);
 }
 
+PARROT_API
 void
 Parrot_callback_D(PMC *user_data, char *external_data)
 {

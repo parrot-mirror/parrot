@@ -26,7 +26,22 @@ to the previous values and the allocated register memory is discarded.
 #include "parrot/parrot.h"
 #include "parrot/register.h"
 
-/* HEADERIZER TARGET: include/parrot/register.h */
+/* HEADERIZER HFILE: include/parrot/register.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void clear_regs( Interp *interp /*NN*/, parrot_context_t *ctx /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void init_context( Interp *interp /*NN*/,
+    parrot_context_t *ctx /*NN*/,
+    const parrot_context_t *old /*NULLOK*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+/* HEADERIZER END: static */
+
 
 /*
  * Context and register frame layout
@@ -174,6 +189,8 @@ parrot_gc_context(Interp *interp /*NN*/)
     LVALUE_CAST(char *, ctx.bp) = interp->ctx_mem.threshold -
         sizeof (struct parrot_regs_t);
     /* TODO */
+#else
+    UNUSED(interp);
 #endif
 }
 
@@ -487,6 +504,8 @@ PARROT_API
 void
 Parrot_set_context_threshold(Interp *interp, struct Parrot_Context *ctxp)
 {
+    UNUSED(interp);
+    UNUSED(ctxp);
     /* nothing to do */
 }
 
@@ -633,7 +652,7 @@ Parrot_clear_i(Interp *interp /*NN*/)
 {
     int i;
     for (i = 0; i < CONTEXT(interp->ctx)->n_regs_used[REGNO_INT]; ++i)
-        REG_INT(i) = 0;
+        REG_INT(interp, i) = 0;
 }
 
 PARROT_API
@@ -642,7 +661,7 @@ Parrot_clear_s(Interp *interp /*NN*/)
 {
     int i;
     for (i = 0; i < CONTEXT(interp->ctx)->n_regs_used[REGNO_STR]; ++i)
-        REG_STR(i) = NULL;
+        REG_STR(interp, i) = NULL;
 }
 
 PARROT_API
@@ -651,7 +670,7 @@ Parrot_clear_p(Interp *interp /*NN*/)
 {
     int i;
     for (i = 0; i < CONTEXT(interp->ctx)->n_regs_used[REGNO_PMC]; ++i)
-        REG_PMC(i) = PMCNULL;
+        REG_PMC(interp, i) = PMCNULL;
 }
 
 PARROT_API
@@ -660,7 +679,7 @@ Parrot_clear_n(Interp *interp /*NN*/)
 {
     int i;
     for (i = 0; i < CONTEXT(interp->ctx)->n_regs_used[REGNO_NUM]; ++i)
-        REG_NUM(i) = 0.0;
+        REG_NUM(interp, i) = 0.0;
 }
 
 

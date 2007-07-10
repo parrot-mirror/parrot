@@ -58,7 +58,15 @@ the context.  If no type is registered, returns C<core_type>.
 #include "parrot/dynext.h"
 #include <assert.h>
 
-/* HEADERIZER TARGET: include/parrot/hll.h */
+/* HEADERIZER HFILE: include/parrot/hll.h */
+
+/* HEADERIZER BEGIN: static */
+
+static PMC* new_hll_entry( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: static */
+
 
 enum {
     e_HLL_name,
@@ -81,15 +89,8 @@ enum {
     } while (0)
 #define END_WRITE_HLL_INFO(interp, hll_info)
 
+#define ASSERT_CONST_STRING(src) assert(PObj_constant_TEST(src))
 
-static STRING*
-string_as_const_string(Interp* interp, STRING *src)
-{
-    if (PObj_constant_TEST(src))
-        return src;
-    assert(0);
-    return NULL;
-}
 
 static PMC*
 new_hll_entry(Interp *interp /*NN*/)
@@ -128,7 +129,7 @@ Parrot_register_HLL(Interp *interp /*NN*/, STRING *hll_name /*NULLOK*/, STRING *
 
         /* register dynlib */
         name    = constant_pmc_new_noinit(interp, enum_class_String);
-        hll_lib = string_as_const_string(interp, hll_lib);
+        ASSERT_CONST_STRING(hll_lib);
 
         VTABLE_set_string_native(interp, name, hll_lib);
         VTABLE_set_pmc_keyed_int(interp, entry, e_HLL_lib, name);
@@ -152,7 +153,7 @@ Parrot_register_HLL(Interp *interp /*NN*/, STRING *hll_name /*NULLOK*/, STRING *
 
     /* register HLL name */
     name     = constant_pmc_new_noinit(interp, enum_class_String);
-    hll_name = string_as_const_string(interp, hll_name);
+    ASSERT_CONST_STRING(hll_name);
 
     VTABLE_set_string_native(interp, name, hll_name);
     VTABLE_set_pmc_keyed_int(interp, entry, e_HLL_name, name);
@@ -178,7 +179,7 @@ Parrot_register_HLL(Interp *interp /*NN*/, STRING *hll_name /*NULLOK*/, STRING *
     if (!hll_lib)
         hll_lib = const_string(interp, "");
 
-    hll_lib = string_as_const_string(interp, hll_lib);
+    ASSERT_CONST_STRING(hll_lib);
 
     VTABLE_set_string_native(interp, name, hll_lib);
     VTABLE_set_pmc_keyed_int(interp, entry, e_HLL_lib, name);

@@ -181,27 +181,92 @@ Also all array usage depends on list.
 #include "parrot/parrot.h"
 #include <assert.h>
 
-/* HEADERIZER TARGET: include/parrot/list.h */
+/* HEADERIZER HFILE: include/parrot/list.h */
 
-/* internals */
-static List_chunk *allocate_chunk(Interp *interp, List *list,
-        UINTVAL items, UINTVAL size);
-static UINTVAL rebuild_chunk_list(Interp *interp, List *list);
-static List_chunk *alloc_next_size(Interp *interp, List *list,
-        int where, UINTVAL idx);
-static List_chunk *add_chunk(Interp *interp, List *list,
-        int where, UINTVAL idx);
-static List_chunk *get_chunk(Interp *interp, List *list, UINTVAL *idx);
-static void split_chunk(Interp *interp, List *list,
-        List_chunk *chunk, UINTVAL idx);
-static void list_set(Interp *interp, List *list, void *item, INTVAL type,
-                     INTVAL idx);
-static void *list_item(Interp *interp, List *list, int type, INTVAL idx);
-static void list_append(Interp *interp, List *list, void *item,
-        int type, UINTVAL idx);
-#ifdef LIST_DEBUG
-static void list_dump(List *list, INTVAL type);
-#endif
+/* HEADERIZER BEGIN: static */
+
+static List_chunk * add_chunk( Interp *interp /*NN*/,
+    List *list /*NN*/,
+    int where,
+    UINTVAL idx )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static List_chunk * alloc_next_size( Interp *interp /*NN*/,
+    List *list /*NN*/,
+    int where,
+    UINTVAL idx )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static List_chunk * allocate_chunk( Interp *interp /*NN*/,
+    List *list /*NN*/,
+    UINTVAL items,
+    UINTVAL size )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__malloc__
+        __attribute__warn_unused_result__;
+
+static List_chunk * get_chunk( Interp *interp /*NN*/,
+    List *list /*NN*/,
+    UINTVAL *idx /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static void list_append( Interp *interp /*NN*/,
+    List *list /*NN*/,
+    void *item,
+    int type,
+    UINTVAL idx )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void list_dump( const List *list /*NN*/, INTVAL type )
+        __attribute__nonnull__(1);
+
+static void * list_item( Interp *interp /*NN*/,
+    List *list /*NN*/,
+    int type,
+    INTVAL idx )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void list_set( Interp *interp /*NN*/,
+    List *list /*NN*/,
+    void *item,
+    INTVAL type,
+    INTVAL idx )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static UINTVAL rebuild_chunk_list( Interp *interp /*NN*/, List *list /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void rebuild_chunk_ptrs( List *list /*NN*/, int cut )
+        __attribute__nonnull__(1);
+
+static void rebuild_fix_ends( List *list /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void rebuild_other( Interp *interp /*NN*/, List *list /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void rebuild_sparse( List *list /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void split_chunk( Interp *interp /*NN*/,
+    List *list /*NN*/,
+    List_chunk *chunk /*NN*/,
+    UINTVAL ix )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+/* HEADERIZER END: static */
 
 #define chunk_list_size(list) \
                 (PObj_buflen(&list->chunk_list) / sizeof (List_chunk *))
@@ -810,7 +875,7 @@ get_chunk(Interp *interp /*NN*/, List *list /*NN*/, UINTVAL *idx /*NN*/)
             return chunk;
         *idx -= chunk->items;
     }
-    internal_exception(INTERNAL_PANIC, "list structure chaos!\n");
+    real_exception(interp, NULL, INTERNAL_PANIC, "list structure chaos!\n");
 #endif
 
 
@@ -877,9 +942,9 @@ get_chunk(Interp *interp /*NN*/, List *list /*NN*/, UINTVAL *idx /*NN*/)
             chunk = chunk->next;
             continue;
         }
-        internal_exception(INTERNAL_PANIC, "list structure chaos #1!\n");
+        real_exception(interp, NULL, INTERNAL_PANIC, "list structure chaos #1!\n");
     }
-    internal_exception(INTERNAL_PANIC, "list structure chaos #2!\n");
+    real_exception(interp, NULL, INTERNAL_PANIC, "list structure chaos #2!\n");
     return 0;
 }
 
@@ -1013,7 +1078,7 @@ list_set(Interp *interp /*NN*/, List *list /*NN*/, void *item, INTVAL type, INTV
         ((STRING **) PObj_bufstart(&chunk->data))[idx] = (STRING *)item;
         break;
     default:
-        internal_exception(1, "Unknown list entry type\n");
+        real_exception(interp, NULL, 1, "Unknown list entry type\n");
         break;
     }
 }
@@ -1027,7 +1092,7 @@ Get the pointer to the item of type C<type> in the chunk at C<idx>.
 */
 
 static void *
-list_item(Interp *interp, List *list /*NN*/, int type, INTVAL idx)
+list_item(Interp *interp /*NN*/, List *list /*NN*/, int type, INTVAL idx)
 {
     List_chunk * const chunk = get_chunk(interp, list, (UINTVAL *)&idx);
     /* if this is a sparse chunk return -1, the caller may decide to return 0
@@ -1046,31 +1111,22 @@ list_item(Interp *interp, List *list /*NN*/, int type, INTVAL idx)
     case enum_type_sized:
         return (void *)&((char *)
                          PObj_bufstart(&chunk->data))[idx * list->item_size];
-        break;
     case enum_type_char:
         return (void *)&((char *) PObj_bufstart(&chunk->data))[idx];
-        break;
     case enum_type_short:
         return (void *)&((short *) PObj_bufstart(&chunk->data))[idx];
-        break;
     case enum_type_int:
         return (void *)&((int *) PObj_bufstart(&chunk->data))[idx];
-        break;
     case enum_type_INTVAL:
         return (void *)&((INTVAL *) PObj_bufstart(&chunk->data))[idx];
-        break;
     case enum_type_FLOATVAL:
         return (void *)&((FLOATVAL *) PObj_bufstart(&chunk->data))[idx];
-        break;
     case enum_type_PMC:
         return (void *)&((PMC **) PObj_bufstart(&chunk->data))[idx];
-        break;
     case enum_type_STRING:
         return (void *)&((STRING **) PObj_bufstart(&chunk->data))[idx];
-        break;
     default:
-        internal_exception(1, "Unknown list entry type\n");
-        break;
+        real_exception(interp, NULL, 1, "Unknown list entry type\n");
     }
     return 0;
 
@@ -1107,8 +1163,8 @@ Returns a new list of type C<type>.
 
 PARROT_API
 List *
-list_new(Interp *interp, INTVAL type)
-    /*WARN_UNUSED*/
+list_new(Interp *interp /*NN*/, PARROT_DATA_TYPE type)
+    /* MALLOC, WARN_UNUSED */
 {
     List * const list = (List *)new_bufferlike_header(interp, sizeof (*list));
 
@@ -1137,7 +1193,7 @@ list_new(Interp *interp, INTVAL type)
         list->item_size = sizeof (STRING *);
         break;
     default:
-        internal_exception(1, "Unknown list type\n");
+        real_exception(interp, NULL, 1, "Unknown list type\n");
         break;
     }
     return list;
@@ -1179,18 +1235,20 @@ these values is stored in user_data, where the keys are explicit.
 
 PARROT_API
 List *
-list_new_init(Interp *interp /*NN*/, INTVAL type, PMC *init /*NN*/)
+list_new_init(Interp *interp /*NN*/, PARROT_DATA_TYPE type, PMC *init /*NN*/)
     /* WARN_UNUSED */
 {
     List *list;
     PMC * user_array, *multi_key;
     INTVAL i, len, size, item_size, items_per_chunk;
 
-    if (!init->vtable)
-        internal_exception(1, "Illegal initializer for init\n");
+    if (!init->vtable) {
+        real_exception(interp, NULL, 1, "Illegal initializer for init\n");
+    }
     len = VTABLE_elements(interp, init);
-    if (len & 1)
-        internal_exception(1, "Illegal initializer for init: odd elements\n");
+    if (len & 1) {
+        real_exception(interp, NULL, 1, "Illegal initializer for init: odd elements\n");
+    }
 
     size = item_size = items_per_chunk = 0;
     multi_key = NULL;
@@ -1218,8 +1276,9 @@ list_new_init(Interp *interp /*NN*/, INTVAL type, PMC *init /*NN*/)
     }
     list = list_new(interp, type);
     if (list->item_type == enum_type_sized) { /* override item_size */
-        if (!item_size)
-            internal_exception(1, "No item_size for type_sized list\n");
+        if (!item_size) {
+            real_exception(interp, NULL, 1, "No item_size for type_sized list\n");
+        }
         list->item_size = item_size;
         list->items_per_chunk =
             items_per_chunk
@@ -1415,10 +1474,9 @@ Returns the length of the list.
 
 PARROT_API
 INTVAL
-list_length(Interp *interp, const List *list /*NN*/)
+list_length(SHIM_INTERP, const List *list /*NN*/)
     /* PURE, WARN_UNUSED */
 {
-    UNUSED(interp);
     return list->length;
 }
 
@@ -1793,14 +1851,15 @@ list_splice(Interp *interp /*NN*/, List *list /*NN*/, List *value_list /*NULLOK*
     const int type = list->item_type;
     INTVAL i, j;
 
-    if (value_list && type != value_list->item_type)
-        internal_exception(1, "Item type mismatch in splice\n");
+    if (value_list && type != value_list->item_type) {
+        real_exception(interp, NULL, 1, "Item type mismatch in splice\n");
+    }
 
     /* start from end */
     if (offset < 0)
         offset += length;
     if (offset < 0)
-        internal_exception(OUT_OF_BOUNDS, "illegal splice offset\n");
+        real_exception(interp, NULL, OUT_OF_BOUNDS, "illegal splice offset\n");
     /* "leave that many elements off the end of the array" */
     if (count < 0)
         count += length - offset + 1;

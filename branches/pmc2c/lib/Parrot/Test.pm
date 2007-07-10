@@ -293,15 +293,16 @@ sub run_command {
         $err = "&STDOUT";
     }
 
-    local *OLDOUT if $out;
-    local *OLDERR if $err;
+    local *OLDOUT if $out;  ## no critic Variables::ProhibitConditionalDeclarations
+    local *OLDERR if $err;  ## no critic Variables::ProhibitConditionalDeclarations
 
     # Save the old filehandles; we must not let them get closed.
     open OLDOUT, '>&STDOUT' or die "Can't save     stdout" if $out;  ## no critic InputOutput::ProhibitBarewordFileHandles
     open OLDERR, '>&STDERR' or die "Can't save     stderr" if $err;  ## no critic InputOutput::ProhibitBarewordFileHandles
 
-    open STDOUT, ">", "$out" or die "Can't redirect stdout to $out" if $out;
-    open STDERR, ">$err" or die "Can't redirect stderr to $err" if $err;
+    open STDOUT, '>', $out or die "Can't redirect stdout to $out" if $out;
+    # See 'Obscure Open Tricks' in perlopentut
+    open STDERR, ">$err"  or die "Can't redirect stderr to $err"  if $err;  ## no critic InputOutput::ProhibitTwoArgOpen
 
     # If $command isn't already an arrayref (because of a multi-command
     # test), make it so now so the code below can treat everybody the
@@ -386,11 +387,11 @@ sub write_code_to_file {
 sub slurp_file {
     my ($file_name) = @_;
 
-    open( SLURP, '<', $file_name ) or die "open '$file_name': $!";
+    open( my $SLURP, '<', $file_name ) or die "open '$file_name': $!";
     local $/ = undef;
-    my $file = <SLURP> . '';
+    my $file = <$SLURP> . '';
     $file =~ s/\cM\cJ/\n/g;
-    close SLURP;
+    close $SLURP;
 
     return $file;
 }
@@ -439,7 +440,7 @@ sub generate_languages_functions {
 
             no strict 'refs';
 
-            local *{ $call_pkg . '::TODO' } = \$options{todo}
+            local *{ $call_pkg . '::TODO' } = \$options{todo}  ## no critic Variables::ProhibitConditionalDeclarations
                 if defined $options{todo};
 
             my $count = $self->{builder}->current_test() + 1;
@@ -685,7 +686,7 @@ sub _generate_functions {
             my $call_pkg = $builder->exported_to() || '';
 
             no strict 'refs';
-            local *{ $call_pkg . '::TODO' } = \$extra{todo}
+            local *{ $call_pkg . '::TODO' } = \$extra{todo}  ## no critic Variables::ProhibitConditionalDeclarations
                 if defined $extra{todo};
 
             if ($func =~ /_error_/) {
@@ -775,7 +776,7 @@ sub _generate_functions {
             # set a TODO for Test::Builder to find
             my $call_pkg = $builder->exported_to() || '';
 
-            local *{ $call_pkg . '::TODO' } = \$extra{todo}
+            local *{ $call_pkg . '::TODO' } = \$extra{todo}  ## no critic Variables::ProhibitConditionalDeclarations
                 if defined $extra{todo};
 
             my $pass = $builder->$meth( $real_output, $expected, $desc );

@@ -24,7 +24,7 @@ Create or destroy a Parrot interpreter
 #include "parrot/oplib/core_ops.h"
 #include "../compilers/imcc/imc.h"
 
-/* HEADERIZER TARGET: none */ /* XXX Headerize this at the same time as the other interpreter files */
+/* HEADERIZER HFILE: none */ /* XXX Headerize this at the same time as the other interpreter files */
 
 #if EXEC_CAPABLE
 Interp interpre;
@@ -87,6 +87,7 @@ Create the Parrot interpreter. Allocate memory and clear the registers.
 
 void Parrot_really_destroy(Interp *, int exit_code, void *);
 
+PARROT_API
 Parrot_Interp
 make_interpreter(Interp *parent /*NULLOK*/, INTVAL flags)
 {
@@ -293,11 +294,8 @@ Note that C<exit_code> is ignored.
 */
 
 void
-Parrot_really_destroy(Interp *interp, int exit_code, void *arg)
+Parrot_really_destroy(Interp *interp, SHIM(int exit_code), SHIM(void *arg))
 {
-    UNUSED(exit_code);
-    UNUSED(arg);
-
     /*
      * wait for threads to complete if needed
      */

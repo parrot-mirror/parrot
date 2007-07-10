@@ -23,7 +23,18 @@ tdb
 #include "parrot/parrot.h"
 #include "global.str"
 
-/* HEADERIZER TARGET: none */ /* XXX It's really include/parrot/global.h, but not yet */
+/* HEADERIZER HFILE: none */ /* XXX It's really include/parrot/global.h, but not yet */
+/* HEADERIZER BEGIN: static */
+
+static PMC * get_namespace_pmc( Parrot_Interp interp, PMC *sub );
+static PMC * internal_ns_keyed( Interp *interp,
+    PMC *base_ns,
+    PMC *pmc_key,
+    STRING *str_key /*NULLOK*/,
+    int flags );
+
+static void store_sub_in_multi( Parrot_Interp interp, PMC *sub, PMC *ns );
+/* HEADERIZER END: static */
 
 #define DEBUG_GLOBAL 0
 
@@ -494,7 +505,7 @@ anywhere, return PMCNULL.
 
 PARROT_API
 PMC *
-Parrot_find_name_op(Interp *interp /*NN*/, STRING *name, void *next)
+Parrot_find_name_op(Interp *interp /*NN*/, STRING *name, SHIM(void *next))
 {
     parrot_context_t * const ctx = CONTEXT(interp->ctx);
     PMC *g, *lex_pad;
@@ -527,8 +538,8 @@ Parrot_find_name_op(Interp *interp /*NN*/, STRING *name, void *next)
 static PMC *
 get_namespace_pmc(Parrot_Interp interp, PMC *sub)
 {
-    PMC *nsname = PMC_sub(sub)->namespace_name;
-    PMC *nsroot = Parrot_get_HLL_namespace(interp, PMC_sub(sub)->HLL_id);
+    PMC * const nsname = PMC_sub(sub)->namespace_name;
+    PMC * const nsroot = Parrot_get_HLL_namespace(interp, PMC_sub(sub)->HLL_id);
 
     /* If we have a NULL, return the HLL namespace */
     if (PMC_IS_NULL(nsname))

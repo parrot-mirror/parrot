@@ -84,6 +84,7 @@ An empty ResizablePMCArray PMC is allocated during initialization.
 
 */
 
+#define PARROT_IN_OBJECTS_C /* To get the vtable.h imports we want. */
 #include "parrot/parrot.h"
 #include "pmc_namespace.h"
 #include "classobject.h"
@@ -238,6 +239,7 @@ init_class_from_hash(Parrot_Interp interp, PMC *self, PMC *info) {
         STRING *new_name;
         PMC    *new_namespace;
         PMC    *name_arg = VTABLE_get_pmc_keyed_str(interp, info, name_str);
+        VTABLE *new_vtable;
 
         /* If we were passed a namespace PMC, set the namespace attribute
          * directly. Otherwise, lookup or create the appropriate namespace. */
@@ -267,9 +269,10 @@ init_class_from_hash(Parrot_Interp interp, PMC *self, PMC *info) {
         type_num = register_type(interp, name_arg);
 
         /* Link the type number with the class's vtable. */
-        self->vtable->base_type   = type_num;
-        interp->vtables[type_num] = self->vtable;
-        interp->vtables[type_num]->pmc_class = self;
+        new_vtable = Parrot_clone_vtable(interp, self->vtable);
+        new_vtable->base_type     = type_num;
+        new_vtable->pmc_class     = self;
+        interp->vtables[type_num] = new_vtable;
     }
 
     /* If we were attached to a namespace and are now attached to a new one,
@@ -477,8 +480,7 @@ Creates a subclass, optionally with a given C<name>.
         }
         else {
             PMC *naming_hash = pmc_new(interp, enum_class_Hash);
-            VTABLE_set_pmc_keyed_str(interp, naming_hash,
-                CONST_STRING(interp, "name"), name);
+            VTABLE_set_pmc_keyed_str(interp, naming_hash, CONST_STRING(interp, "name"), name);
             child_class      = pmc_new_init(interp, enum_class_Class,
                 naming_hash);
         }
@@ -603,12 +605,10 @@ Returns an error if an attribute of C<name> already exists.
                 string_to_cstring(interp, name));
 
         /* Set name and type. */
-        VTABLE_set_string_keyed_str(interp, new_attribute,
-            CONST_STRING(interp, "name"), name);
+        VTABLE_set_string_keyed_str(interp, new_attribute, CONST_STRING(interp, "name"), name);
 
         if (!PMC_IS_NULL(type))
-            VTABLE_set_pmc_keyed_str(interp, new_attribute,
-                CONST_STRING(interp, "type"), type);
+            VTABLE_set_pmc_keyed_str(interp, new_attribute, CONST_STRING(interp, "type"), type);
 
         /* Enter the attribute in the attributes array. */
         VTABLE_set_pmc_keyed_str(interp, _class->attrib_metadata, name,
@@ -927,8 +927,7 @@ Sets the name of the class, and updates the namespace accoringly.
              * init_class_from_hash - saves some code duplication. */
             PMC *naming_hash = pmc_new(interp, enum_class_Hash);
 
-            VTABLE_set_string_keyed_str(interp, naming_hash,
-                CONST_STRING(interp, "name"), name);
+            VTABLE_set_string_keyed_str(interp, naming_hash, CONST_STRING(interp, "name"), name);
             init_class_from_hash(interp, SELF, naming_hash);
         }
 
@@ -1078,11 +1077,14 @@ parameter list.
 
                     (PMC *parent_ins) = PCCINVOKE(interp, class_check, "new");
 
+                    /* Associate it with this class as the real self. */
+                    parent_ins->real_self = obj;
+
                     /* ...and tack on end of the attribute store (after all the
                      * slots for attributes). */
                     position = VTABLE_elements(interp, obj_guts->attrib_store);
                     VTABLE_set_pmc_keyed_int(interp, obj_guts->attrib_store,
-                        position, class_check);
+                        position, parent_ins);
                 }
             }
         }
@@ -1101,7 +1103,7 @@ providing a set of key/value pairs describing the attribute.
 
 */
     PCCMETHOD void attributes() {
-        PMC *ret_attrib_metadata = VTABLE_inspect_str(interp, SELF,
+        PMC *ret_attrib_metadata = DYNSELF.inspect_str(
             CONST_STRING(interp, "attributes"));
 
         PCCRETURN(PMC *ret_attrib_metadata);
@@ -1118,9 +1120,8 @@ Add an attribute to the class. Requires a name and, optionally, a type.
 */
     PCCMETHOD void add_attribute(STRING *attribute_name,
             PMC* attribute_type :optional, int got_type :opt_flag) {
-
-        VTABLE_add_attribute(interp, SELF, attribute_name,
-            got_type ? attribute_type : PMCNULL);
+        PMC *type = got_type ? attribute_type : PMCNULL;
+        DYNSELF.add_attribute(attribute_name, type);
     }
 
 /*
@@ -1133,8 +1134,7 @@ Return a hash where the keys are method names and the values are methods.
 
 */
     PCCMETHOD void methods() {
-        PMC *ret_methods = VTABLE_inspect_str(interp, SELF,
-            CONST_STRING(interp, "methods"));
+        PMC *ret_methods = DYNSELF.inspect_str(CONST_STRING(interp, "methods"));
 
         PCCRETURN(PMC *ret_methods);
     }
@@ -1149,9 +1149,37 @@ C<add_method> vtable method.
 =cut
 
 */
-    PCCMETHOD void add_method(STRING *name, PMC *sub)
+    PCCMETHOD void add_method(STRING *name, PMC *sub,
+                              int vtable :optional :named["vtable"],
+                              int got_vtable :opt_flag,
+                              int anon :optional :named["anon"],
+                              int got_anon :opt_flag)
     {
-        VTABLE_add_method(interp, SELF, name, sub);
+        Parrot_Class  *_class    = PARROT_CLASS(SELF);
+
+        /* If it's a vtable method... */
+        if (got_vtable) {
+            /* Check name is a valid vtable method name. */
+            char *c_name = string_to_cstring(interp, name);
+            int found = 0;
+            int i;
+            for (i = PARROT_VTABLE_LOW; i < NUM_VTABLE_FUNCTIONS; i++) {
+                if (strcmp(c_name, Parrot_vtable_slot_names[i] + 2) == 0) {
+                    found = 1;
+                    break;
+                }
+            }
+            if (!found)
+                real_exception(interp, NULL, METH_NOT_FOUND,
+                    "'%S' is not a valid v-table method name.", name);
+
+            /* Add it to vtable methods list. */
+            VTABLE_set_pmc_keyed_str(interp, _class->vtable_methods, name, sub);
+        }
+
+        /* Provided it's not anonymous, add it to the methods list. */
+        if (!got_anon)
+            DYNSELF.add_method(name, sub);
     }
 
 /*
@@ -1203,8 +1231,7 @@ Return the parents array PMC.
 
 */
     PCCMETHOD void parents() {
-        PMC *ret_parents = VTABLE_inspect_str(interp, SELF,
-            CONST_STRING(interp, "parents"));
+        PMC *ret_parents = DYNSELF.inspect_str(CONST_STRING(interp, "parents"));
 
         PCCRETURN(PMC *ret_parents);
     }
@@ -1219,7 +1246,7 @@ Adds the supplied PMC to the list of parents for the class.
 
 */
     PCCMETHOD void add_parent(PMC *parent) {
-        VTABLE_add_parent(interp, SELF, parent);
+        DYNSELF.add_parent(parent);
     }
 
 /*
@@ -1232,8 +1259,7 @@ Return the roles array PMC.
 
 */
     PCCMETHOD void roles() {
-        PMC *ret_roles = VTABLE_inspect_str(interp, SELF,
-            CONST_STRING(interp, "roles"));
+        PMC *ret_roles = DYNSELF.inspect_str(CONST_STRING(interp, "roles"));
 
         PCCRETURN(PMC *ret_roles);
     }
@@ -1297,9 +1323,9 @@ parameter is supplied, a particular item of introspection data.
 
         /* Just delegate to the appropriate vtable method. */
         if (got_what)
-            found = VTABLE_inspect_str(interp, SELF, what);
+            found = DYNSELF.inspect_str(what);
         else
-            found = VTABLE_inspect(interp, SELF);
+            found = DYNSELF.inspect();
 
         PCCRETURN(PMC *found);
     }
@@ -1315,7 +1341,7 @@ C<class_name>, false otherwise.
 
 */
     PCCMETHOD void isa(STRING *class_name) {
-        INTVAL isa = VTABLE_isa(interp, SELF, class_name);
+        INTVAL isa = DYNSELF.isa(class_name);
 
         PCCRETURN(INTVAL isa);
     }

@@ -25,7 +25,30 @@ There's also a verbose mode for garbage collection.
 #include "parrot/dod.h"
 #include <assert.h>
 
-/* HEADERIZER TARGET: include/parrot/dod.h */
+/* HEADERIZER HFILE: include/parrot/dod.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void clear_live_bits( Small_Object_Pool *pool /*NN*/ )
+        __attribute__nonnull__(1);
+
+static size_t find_common_mask( Interp *interp, size_t val1, size_t val2 );
+static void mark_special( Interp *interp /*NN*/, PMC *obj /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int sweep_cb( Interp *interp /*NN*/,
+    Small_Object_Pool *pool /*NN*/,
+    int flag,
+    void *arg )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int trace_active_PMCs( Interp *interp /*NN*/, int trace_stack )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: static */
+
 
 /* Set this to 1 to see if unanchored objects are found in system areas.
  * Please note: these objects might be bogus
@@ -37,7 +60,7 @@ There's also a verbose mode for garbage collection.
 int CONSERVATIVE_POINTER_CHASING = 0;
 #endif
 
-static size_t find_common_mask(size_t val1, size_t val2)
+static size_t find_common_mask(Interp *interp, size_t val1, size_t val2)
     __attribute__const__
     __attribute__warn_unused_result__;
 
@@ -156,6 +179,14 @@ pobject_lives(Interp *interp /*NN*/, PObj *obj /*NN*/)
 #  endif
     /* mark it live */
     PObj_live_SET(obj);
+
+    /* if object is a PMC and it's real_self pointer points to another
+     * PMC, we must mark that. */
+    if (PObj_is_PMC_TEST(obj)) {
+        PMC * const p = (PMC*)obj;
+        if (p->real_self != p)
+            pobject_lives(interp, (PObj *)p->real_self);
+    }
 
     /* if object is a PMC and contains buffers or PMCs, then attach
      * the PMC to the chained mark list.
@@ -536,7 +567,6 @@ Parrot_dod_sweep(Interp *interp /*NN*/, Small_Object_Pool *pool /*NN*/)
     UINTVAL object_size   = pool->object_size;
 
     Small_Object_Arena *cur_arena;
-    size_t              nm;
 #if REDUCE_ARENAS
     UINTVAL free_arenas = 0, old_total_used = 0;
 #endif
@@ -560,7 +590,7 @@ Parrot_dod_sweep(Interp *interp /*NN*/, Small_Object_Pool *pool /*NN*/)
             NULL != cur_arena; cur_arena = cur_arena->prev) {
         Buffer *b = (Buffer *)cur_arena->start_objects;
 
-        for (i = nm = 0; i < cur_arena->used; i++) {
+        for (i = 0; i < cur_arena->used; i++) {
             if (PObj_on_free_list_TEST(b))
                 ; /* if it's on free list, do nothing */
             else if (PObj_live_TEST(b)) {
@@ -694,7 +724,7 @@ Find a mask covering the longest common bit-prefix of C<val1> and C<val2>.
 */
 
 static size_t
-find_common_mask(size_t val1, size_t val2)
+find_common_mask(Interp *interp, size_t val1, size_t val2)
 {
     int       i;
     const int bound = sizeof (size_t) * 8;
@@ -715,7 +745,7 @@ find_common_mask(size_t val1, size_t val2)
         return 0;
     }
 
-    internal_exception(INTERP_ERROR,
+    real_exception(interp, NULL, INTERP_ERROR,
             "Unexpected condition in find_common_mask()!\n");
 
     return 0;
@@ -741,7 +771,8 @@ trace_mem_block(Interp *interp /*NN*/, size_t lo_var_ptr, size_t hi_var_ptr)
     const size_t pmc_max    = get_max_pmc_address(interp);
 
     const size_t mask       =
-        find_common_mask(buffer_min < pmc_min ? buffer_min : pmc_min,
+        find_common_mask(interp,
+                         buffer_min < pmc_min ? buffer_min : pmc_min,
                          buffer_max > pmc_max ? buffer_max : pmc_max);
 
     if (!lo_var_ptr || !hi_var_ptr)
@@ -793,9 +824,8 @@ Run through all PMC arenas and clear live bits.
 
 */
 
-/* interp is unused and can be removed */
 static void
-clear_live_bits(Interp *interp /*NULLOK*/, Small_Object_Pool *pool /*NN*/)
+clear_live_bits(Small_Object_Pool *pool /*NN*/)
 {
     Small_Object_Arena *arena;
     const UINTVAL       object_size = pool->object_size;
@@ -817,7 +847,7 @@ void
 Parrot_dod_clear_live_bits(Interp *interp /*NN*/)
 {
     Small_Object_Pool * const pool = interp->arena_base->pmc_pool;
-    clear_live_bits(interp, pool);
+    clear_live_bits(pool);
 }
 
 /*
@@ -952,8 +982,7 @@ Parrot_dod_ms_run(Interp *interp /*NN*/, int flags)
     if (flags & DOD_finish_FLAG) {
         /* XXX */
         Parrot_dod_clear_live_bits(interp);
-        clear_live_bits(interp,
-            interp->arena_base->constant_pmc_pool);
+        clear_live_bits(interp->arena_base->constant_pmc_pool);
 
         Parrot_dod_sweep(interp, interp->arena_base->pmc_pool);
         Parrot_dod_sweep(interp, interp->arena_base->constant_pmc_pool);

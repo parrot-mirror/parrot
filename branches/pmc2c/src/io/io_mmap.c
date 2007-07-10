@@ -21,16 +21,26 @@ Open mmaps the file.
 #include "parrot/parrot.h"
 #include "io_private.h"
 
-/* HEADERIZER TARGET: none */
+/* HEADERIZER HFILE: none */
 
-static ParrotIO *
-PIO_mmap_open(Interp *interp, ParrotIOLayer *layer,
-               const char *path, INTVAL flags);
-static size_t
-PIO_mmap_read(Interp *interp, ParrotIOLayer *layer, ParrotIO *io,
-              STRING **buf);
-static INTVAL
-PIO_mmap_close(Interp *interp, ParrotIOLayer *layer, ParrotIO *io);
+/* HEADERIZER BEGIN: static */
+
+static INTVAL PIO_mmap_close( Interp *interp,
+    ParrotIOLayer *layer,
+    ParrotIO *io );
+
+static ParrotIO * PIO_mmap_open( Interp *interp,
+    ParrotIOLayer *layer,
+    const char *path,
+    INTVAL flags );
+
+static size_t PIO_mmap_read( Interp *interp,
+    ParrotIOLayer *layer,
+    ParrotIO *io,
+    STRING **buf );
+
+/* HEADERIZER END: static */
+
 
 static const ParrotIOLayerAPI pio_mmap_layer_api = {
     PIO_null_init,
@@ -118,7 +128,7 @@ PIO_mmap_open(Interp *interp, ParrotIOLayer *layer,
         int status;
         PIOOFF_T file_size;
 
-        status = fstat(io->fd, &statbuf);
+        status = fstat(io->fd, &statbuf); /* XXX We're ignoring this return value. */
         file_size = statbuf.st_size;
         /* TODO verify flags */
         io->b.startb = (unsigned char *)mmap(0, file_size, PROT_READ, MAP_SHARED, io->fd, 0);

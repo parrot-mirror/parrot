@@ -15,7 +15,7 @@ API.
 
 */
 
-/* HEADERIZER TARGET: include/parrot/string_funcs.h */
+/* HEADERIZER HFILE: include/parrot/string_primitives.h */
 
 #include "parrot/parrot.h"
 #if PARROT_HAS_ICU
@@ -30,8 +30,7 @@ API.
 
 /*
 
-=item C<void
-string_set_data_directory(const char *dir)>
+FUNCDOC: string_set_data_directory
 
 Set the directory where ICU finds its data files (encodings, locales,
 etc.).
@@ -40,7 +39,7 @@ etc.).
 
 PARROT_API
 void
-string_set_data_directory(const char *dir)
+string_set_data_directory(Interp *interp, const char *dir)
 {
 #if PARROT_HAS_ICU
     u_setDataDirectory(dir);
@@ -52,12 +51,14 @@ string_set_data_directory(const char *dir)
        EBCDIC.) */
 
     if (!u_isdigit(57) || (u_charDigitValue(57) != 9)) {
-            internal_exception(ICU_ERROR,
+            real_exception(interp, NULL, ICU_ERROR,
                 "string_set_data_directory: ICU data files not found"
                 "(apparently) for directory [%s]", dir);
     }
 #else
-    internal_exception(ICU_ERROR,
+    UNUSED(dir);
+
+    real_exception(interp, NULL, ICU_ERROR,
         "string_set_data_directory: parrot compiled without ICU support");
 #endif
 }
@@ -100,12 +101,12 @@ string_fill_from_buffer(Interp *interp, const void *buffer /*NN*/,
 
     if (!conv || icuError != U_ZERO_ERROR) {
         /* unknown encoding??? */
-        internal_exception(ICU_ERROR,
+        real_exception(interp, NULL, ICU_ERROR,
                 "string_fill_from_buffer: ICU error from ucnv_open()");
 
     }
 
-    target = s->strstart;
+    target = (UChar *)s->strstart;
     /* buflen may be larger than what we asked for,
      * so take advantage of the space
      */
@@ -134,17 +135,23 @@ string_fill_from_buffer(Interp *interp, const void *buffer /*NN*/,
 
     if (icuError != U_ZERO_ERROR) {
         /* handle error */
-        internal_exception(ICU_ERROR,
+        real_exception(interp, NULL, ICU_ERROR,
                 "string_fill_from_buffer: ICU error from ucnv_toUnicode()");
     }
 
-    internal_exception(UNIMPLEMENTED, "Can't do unicode yet");
+    real_exception(interp, NULL, UNIMPLEMENTED, "Can't do unicode yet");
 
     /* temporary; need to promote to rep 4 if has non-BMP characters*/
     s->bufused = (char *)target - (char *)s->strstart;
     string_compute_strlen(interp, s);
 #else
-    internal_exception(ICU_ERROR,
+    UNUSED(interp);
+    UNUSED(buffer);
+    UNUSED(len);
+    UNUSED(encoding_name);
+    UNUSED(s);
+
+    real_exception(interp, NULL, ICU_ERROR,
         "string_fill_from_buffer: parrot compiled without ICU support");
 #endif
 }
@@ -196,16 +203,16 @@ string_unescape_one(Interp *interp, UINTVAL *offset /*NN*/,
                         workchar += codepoint - 'A' + 10;
                     }
                     else {
-                        internal_exception(UNIMPLEMENTED,
+                        real_exception(interp, NULL, UNIMPLEMENTED,
                                 "Illegal escape sequence inside {}");
                     }
                 }
                 if (*offset == len)
-                    internal_exception(UNIMPLEMENTED,
+                    real_exception(interp, NULL, UNIMPLEMENTED,
                             "Illegal escape sequence no '}'");
             }
             else {
-                internal_exception(UNIMPLEMENTED, "Illegal escape sequence in");
+                real_exception(interp, NULL, UNIMPLEMENTED, "Illegal escape sequence in");
             }
             ++*offset;
             if (*offset < len) {
@@ -235,7 +242,7 @@ string_unescape_one(Interp *interp, UINTVAL *offset /*NN*/,
                 workchar = codepoint - 'A' + 1;
             }
             else {
-                internal_exception(UNIMPLEMENTED, "Illegal escape sequence");
+                real_exception(interp, NULL, UNIMPLEMENTED, "Illegal escape sequence");
             }
             ++*offset;
             return workchar;
@@ -255,12 +262,12 @@ string_unescape_one(Interp *interp, UINTVAL *offset /*NN*/,
                         workchar += codepoint - 'A' + 10;
                     }
                     else {
-                        internal_exception(UNIMPLEMENTED,
+                        real_exception(interp, NULL, UNIMPLEMENTED,
                                 "Illegal escape sequence in uxxx escape");
                     }
                 }
                 else {
-                    internal_exception(UNIMPLEMENTED,
+                    real_exception(interp, NULL, UNIMPLEMENTED,
                         "Illegal escape sequence in uxxx escape - too short");
                 }
                 ++*offset;
@@ -282,12 +289,12 @@ string_unescape_one(Interp *interp, UINTVAL *offset /*NN*/,
                         workchar += codepoint - 'A' + 10;
                     }
                     else {
-                        internal_exception(UNIMPLEMENTED,
+                        real_exception(interp, NULL, UNIMPLEMENTED,
                                 "Illegal escape sequence in Uxxx escape");
                     }
                 }
                 else {
-                    internal_exception(UNIMPLEMENTED,
+                    real_exception(interp, NULL, UNIMPLEMENTED,
                         "Illegal escape sequence in uxxx escape - too short");
                 }
                 ++*offset;
@@ -373,9 +380,8 @@ C<Parrot_char_is_digit()> returns false.
 
 PARROT_API
 UINTVAL
-Parrot_char_digit_value(Interp *interp, UINTVAL character)
+Parrot_char_digit_value(SHIM_INTERP, UINTVAL character)
 {
-    UNUSED(interp);
 #if PARROT_HAS_ICU
     return u_charDigitValue(character);
 #else

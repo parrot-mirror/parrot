@@ -25,7 +25,113 @@ subroutines.
 #include "parrot/oplib/ops.h"
 #include "inter_call.str"
 
-/* HEADERIZER TARGET: include/parrot/inter_call.h */
+/* HEADERIZER HFILE: include/parrot/inter_call.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void check_for_opt_flag( call_state *st /*NN*/, int has_arg )
+        __attribute__nonnull__(1);
+
+static void check_named( Interp *interp /*NN*/, call_state *st /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void clone_key_arg( Interp *interp /*NN*/, call_state *st /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void commit_last_arg( Interp *interp,
+    int index,
+    int cur,
+    opcode_t *n_regs_used,
+    int seen_arrow,
+    PMC **sigs,
+    opcode_t **indexes,
+    parrot_context_t *ctx,
+    PMC *pmc,
+    va_list *list );
+
+static void convert_arg_from_int( Interp *interp /*NN*/,
+    call_state *st /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void convert_arg_from_num( Interp *interp /*NN*/,
+    call_state *st /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void convert_arg_from_pmc( Interp *interp /*NN*/,
+    call_state *st /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void convert_arg_from_str( Interp *interp /*NN*/,
+    call_state *st /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int fetch_arg_op( Interp *interp /*NN*/, call_state *st /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int fetch_arg_sig( Interp *interp /*NN*/, call_state *st /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void init_call_stats( call_state *st /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void init_first_dest_named( Interp *interp /*NN*/,
+    call_state *st /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int locate_named_named( Interp *interp /*NN*/, call_state *st /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void next_arg_sig( call_state_item *st /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void null_val( int sig, call_state *st /*NN*/ )
+        __attribute__nonnull__(2);
+
+static int set_retval_util( Interp *interp /*NN*/,
+    const char *sig /*NN*/,
+    parrot_context_t *ctx /*NN*/,
+    call_state *st /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
+static void start_flatten( Interp *interp /*NN*/,
+    call_state *st /*NN*/,
+    PMC *p_arg )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void store_arg( call_state *st /*NN*/, INTVAL idx )
+        __attribute__nonnull__(1);
+
+static int store_current_arg( call_state *st /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void too_few( Interp *interp,
+    const call_state *st /*NN*/,
+    const char *action /*NN*/ )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static void too_many( Interp *interp,
+    const call_state *st /*NN*/,
+    const char *action /*NN*/ )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+/* HEADERIZER END: static */
+
 
 /* Make sure we don't conflict with any other MAX() macros defined elsewhere */
 #define PARROT_MAX(a,b) (((a)) > (b) ? (a) : (b))
@@ -40,11 +146,6 @@ subroutines.
         orig.bp = save.bp;\
         orig.bp_ps = save.bp_ps;
 
-
-static void next_arg_sig(call_state_item *st /*NN*/)
-    __attribute__nonnull__(1);
-static void check_for_opt_flag(call_state *st /*NN*/, int has_arg)
-    __attribute__nonnull__(1);
 
 /*
 
@@ -184,7 +285,7 @@ Parrot_init_arg_sig(Interp *interp, parrot_context_t *ctx, const char *sig /*NN*
         st->n = strlen(sig);
         /* initialize st->sig */
         if (st->n)
-          next_arg_sig(st);
+            next_arg_sig(st);
     }
     return st->n > 0;
 }
@@ -396,7 +497,7 @@ Parrot_fetch_arg(Interp *interp /*NN*/, call_state *st /*NN*/)
             return fetch_arg_sig(interp, st);
     }
 
-    internal_exception(1, "invalid call state mode");
+    real_exception(interp, NULL, 1, "invalid call state mode");
     return 0;
 }
 
@@ -730,15 +831,25 @@ null_val(int sig, call_state *st /*NN*/)
     }
 }
 
-/* check_named makes sure that all required named args are set and that
- * all optional args and flags are set to null and false if not present.
- * a  named arg takes the form of
- * STRING* name, [INPS] actual_arg,
- * or
- * STRING* name, [INPS] actual_arg, int opt_arg_flag
- */
+/*
+
+FUNCDOC: check_named
+
+Makes sure that all required named args are set and that all optional
+args and flags are set to null and false if not present.
+
+A named arg takes the form of
+
+    STRING* name, [INPS] actual_arg,
+
+or
+
+    STRING* name, [INPS] actual_arg, int opt_arg_flag
+
+*/
+
 static void
-check_named(Interp *interp /*NN*/, call_state *st /*NN*/, const char *action /*NN*/)
+check_named(Interp *interp /*NN*/, call_state *st /*NN*/)
 {
     int i;
     int n_named = -1;
@@ -982,7 +1093,7 @@ Parrot_process_args(Interp *interp /*NN*/, call_state *st /*NN*/, arg_pass_t par
         st->name = NULL;
     }
 
-    check_named(interp, st, action);
+    check_named(interp, st);
     /* we may or may not have registered this pmc */
     dod_unregister_pmc(interp, dest->slurp);
 }
@@ -1019,10 +1130,7 @@ Parrot_convert_arg(Interp *interp /*NN*/, call_state *st /*NN*/)
 
 /*
 
-=item C<opcode_t * parrot_pass_args(Interp *,
-          parrot_context_t *src_ctx, parrot_context_t *dest_ctx,
-          opcode_t *src_index, optcode_t *dest_index, arg_pass_t param_or_result)>
-
+FUNCDOC: parrot_pass_args
 
 Main argument passing routine.
 
@@ -1034,8 +1142,6 @@ context. C<dst_seg> has the constants of the destination.
 C<what> is either C<PARROT_OP_get_params_pc> or C<PARROT_OP_get_results_pc>.
 With the former arguments are passed from the caller into a subroutine,
 the latter handles return values and yields.
-
-=cut
 
 */
 
@@ -1072,13 +1178,10 @@ parrot_pass_args(Interp *interp /*NN*/, parrot_context_t *src_ctx /*NN*/, parrot
 
 /*
 
-=item C<opcode_t *parrot_pass_args_fromc(Interp *, const char *sig,
-INTVAL src_n, opcode_t *dest, parrot_context_t * ctxp, va_list ap)>
+FUNCDOC: parrot_pass_args_fromc
 
 Pass arguments from C code with given signature to a Parrot Sub.
-Prerequsits are like above.
-
-=cut
+Prerequisites are like above.
 
 */
 
@@ -1095,7 +1198,7 @@ parrot_pass_args_fromc(Interp *interp /*NN*/, const char *sig,
 }
 
 static int
-set_retval_util(Interp *interp /*NN*/, const char *sig, parrot_context_t *ctx /*NN*/,
+set_retval_util(Interp *interp /*NN*/, const char *sig /*NN*/, parrot_context_t *ctx /*NN*/,
         call_state *st /*NN*/)
 {
     opcode_t * const src_pc = interp->current_returns;
@@ -1513,29 +1616,32 @@ Parrot_PCCINVOKE(Interp* interp, PMC* pmc, STRING *method_name, const char *sign
     index      = 0;
     seen_arrow = 1;
 
-    for (x=ret_x; *x != '\0'; x++) {
+    for (x=ret_x; *x; x++) {
         if (isupper(*x)) {
-            INTVAL    *tmpINTVAL;
-            FLOATVAL  *tmpFLOATVAL;
-            STRING   **tmpSTRING;
-            PMC      **tmpPMC;
-
             switch (*x) {
                 case 'I':
-                    tmpINTVAL  = va_arg(list, INTVAL*);
+                    {
+                    INTVAL * const tmpINTVAL  = va_arg(list, INTVAL*);
                     *tmpINTVAL = CTX_REG_INT(ctx, indexes[seen_arrow][index]);
+                    }
                     break;
                 case 'N':
-                    tmpFLOATVAL  = va_arg(list, FLOATVAL*);
+                    {
+                    FLOATVAL * const tmpFLOATVAL  = va_arg(list, FLOATVAL*);
                     *tmpFLOATVAL = CTX_REG_NUM(ctx, indexes[seen_arrow][index]);
+                    }
                     break;
                 case 'S':
-                    tmpSTRING  = va_arg(list, STRING**);
+                    {
+                    STRING ** const tmpSTRING  = va_arg(list, STRING**);
                     *tmpSTRING = CTX_REG_STR(ctx, indexes[seen_arrow][index]);
+                    }
                     break;
                 case 'P':
-                    tmpPMC  = va_arg(list, PMC**);
+                    {
+                    PMC ** const tmpPMC  = va_arg(list, PMC**);
                     *tmpPMC = CTX_REG_PMC(ctx, indexes[seen_arrow][index]);
+                    }
                     break;
                 default:
                           real_exception(interp, NULL, E_IndexError,

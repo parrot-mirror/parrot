@@ -33,7 +33,7 @@ use warnings;
 my $opt_warndups = 0;
 
 # This file will eventually be compiled
-open my $NCI, ">", "src/nci.c" or die "Can't open nci.c!";
+open my $NCI, '>', 'src/nci.c' or die "Can't create nci.c: $!";
 
 print_head( \@ARGV );
 
@@ -290,7 +290,7 @@ sub print_head {
 #include "parrot/hash.h"
 #include "parrot/oplib/ops.h"
 
-/* HEADERIZER TARGET: none */
+/* HEADERIZER HFILE: none */
 
 /*
  * if the architecture can build some or all of these signatures
@@ -639,8 +639,7 @@ sub print_tail {
    signature for a C function we want to call and returns a pointer
    to a function that can call it. */
 void *
-build_call_func(Interp *interp, PMC *pmc_nci,
-                STRING *signature)
+build_call_func(Interp *interp, SHIM(PMC *pmc_nci), STRING *signature)
 {
     char       *c;
     STRING     *ns, *message;
@@ -666,9 +665,9 @@ build_call_func(Interp *interp, PMC *pmc_nci,
 
     /* And in here is the platform-independent way. Which is to say
        "here there be hacks" */
-    UNUSED(pmc_nci);
     signature_len = string_length(interp, signature);
-    if (0 == signature_len) return F2DPTR(pcf_v_);
+    if (0 == signature_len)
+       return F2DPTR(pcf_v_);
     /* remove deprecated void argument 'v' character */
     if (2 == signature_len && 'v' == string_index(interp, signature, 1)) {
        Parrot_warn(interp, PARROT_WARNINGS_ALL_FLAG, "function signature argument character 'v' ignored");
@@ -736,11 +735,11 @@ static void pcf_$funcname(Interp *interp, PMC *self) {
     pointer = PMC_struct_val(self);
     return_data = ($ret_type)(*pointer)($params);
     $ret_reg  = return_data;
-    REG_INT(0) = $stack_returns;
-    REG_INT(1) = $int_returns;
-    REG_INT(2) = $string_returns;
-    REG_INT(3) = $pmc_returns;
-    REG_INT(4) = $num_returns;
+    REG_INT(interp, 0) = $stack_returns;
+    REG_INT(interp, 1) = $int_returns;
+    REG_INT(interp, 2) = $string_returns;
+    REG_INT(interp, 3) = $pmc_returns;
+    REG_INT(interp, 4) = $num_returns;
     return;
 }
 

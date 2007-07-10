@@ -17,7 +17,71 @@ UCS-2 encoding with the help of the ICU library.
 #include "parrot/parrot.h"
 #include "../unicode.h"
 
-/* HEADERIZER TARGET: src/encodings/ucs2.h */
+/* HEADERIZER HFILE: src/encodings/ucs2.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void become_encoding( Interp *interp, STRING *src );
+static UINTVAL bytes( Interp *interp, STRING *src );
+static UINTVAL codepoints( Interp *interp, STRING *src );
+static UINTVAL get_byte( Interp *interp, const STRING *src, UINTVAL offset );
+static STRING * get_bytes( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count );
+
+static STRING * get_bytes_inplace( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *return_string );
+
+static UINTVAL get_codepoint( Interp *interp,
+    const STRING *src,
+    UINTVAL offset );
+
+static STRING * get_codepoints( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count );
+
+static STRING * get_codepoints_inplace( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *dest_string );
+
+static void iter_init( Interp *interp, const STRING *src, String_iter *iter );
+static void set_byte( Interp *interp,
+    const STRING *src,
+    UINTVAL offset,
+    UINTVAL byte );
+
+static void set_bytes( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *new_bytes );
+
+static void set_codepoint( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL codepoint );
+
+static void set_codepoints( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *new_codepoints );
+
+static STRING * to_encoding( Interp *interp, STRING *src, STRING *dest );
+static UINTVAL ucs2_decode_and_advance( Interp *interp, String_iter *i );
+static void ucs2_encode_and_advance( Interp *interp,
+    String_iter *i,
+    UINTVAL c );
+
+static void ucs2_set_position( Interp *interp, String_iter *i, UINTVAL n );
+/* HEADERIZER END: static */
 
 #include "ucs2.h"
 
@@ -25,7 +89,7 @@ UCS-2 encoding with the help of the ICU library.
 #  include <unicode/ustring.h>
 #endif
 
-#define UNIMPL internal_exception(UNIMPLEMENTED, "unimpl ucs2")
+#define UNIMPL real_exception(interp, NULL, UNIMPLEMENTED, "unimpl ucs2")
 
 
 static void iter_init(Interp *, const STRING *src, String_iter *iter);

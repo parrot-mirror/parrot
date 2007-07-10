@@ -359,7 +359,7 @@ sub genfile {
                 $line =~ s{\$ \( addprefix \s+ ([^,]+) \s* , \s* ([^)]+) \)}{
                 my ($prefix,$list) = ($1, $2);
                 join (' ',
-                    map { $_ = $prefix . $_, $_ }
+                    map { $_ = $prefix . $_ }
                         split(' ', $list)
                 )
             }egx
@@ -435,7 +435,8 @@ sub _run_command {
     open my $OLDERR, '>&', \*STDERR or die "Can't save     stderr" if $err;
 
     open STDOUT, '>', $out or die "Can't redirect stdout" if $out;
-    open STDERR, '>', $err or die "Can't redirect stderr" if $err;
+    # See 'Obscure Open Tricks' in perlopentut
+    open STDERR, ">$err"   or die "Can't redirect stderr" if $err;  ## no critic InputOutput::ProhibitTwoArgOpen
 
     system $command;
     my $exit_code = $? >> 8;

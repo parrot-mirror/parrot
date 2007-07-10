@@ -11,10 +11,14 @@ use Config;
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $libs      = $conf->data->get('libs');
-    my $cflags    = $conf->data->get('ccflags');
-    my $cc        = $conf->data->get('cc');
-    my $linkflags = $conf->data->get('linkflags');
+    my $libs      = $conf->options->get('libs') ?
+        $conf->options->get('libs') : $conf->data->get('libs');
+    my $cflags    = $conf->options->get('ccflags') ?
+        $conf->options->get('ccflags') : $conf->data->get('ccflags');
+    my $cc        = $conf->options->get('cc') ?
+        $conf->options->get('cc') : $conf->data->get('cc');
+    my $linkflags = $conf->options->get('linkflags') ?
+        $conf->options->get('linkflags') : $conf->data->get('linkflags');
 
     # should find g++ in most cases
     my $link = $conf->data->get('link') || 'c++';
@@ -26,7 +30,6 @@ sub runstep {
     my $cc_shared      = $conf->data->get('cc_shared');
 
     if ( $cc =~ /icc/ ) {
-
         # Intel C++ compiler has the same name as its C compiler
         $link = 'icc';
 
@@ -35,12 +38,11 @@ sub runstep {
 
         # suppress sprintf warnings that don't apply
         $cflags .= ' -wd269';
-        if ( $ld_share_flags !~ /-fPIC/ ) {
-            $ld_share_flags .= ' -fPIC';
-        }
-        if ( $cc_shared !~ /-fPIC/ ) {
-            $cc_shared .= ' -fPIC';
-        }
+
+        $cflags .= ' -Wall -Wcheck -w2';
+
+        $ld_share_flags = ' -shared -g -pipe -fexceptions -fPIC';
+        $cc_shared .= ' -fPIC';
     }
     elsif ( $cc =~ /suncc/ ) {
         $link = 'sunCC';

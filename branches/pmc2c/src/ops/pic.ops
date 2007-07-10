@@ -2,7 +2,7 @@
 ** pic.ops
 */
 
-#define DEPRECATED internal_exception(UNIMPLEMENTED, "you shouldn't see this")
+#define DEPRECATED real_exception(interp, NULL, UNIMPLEMENTED, "you shouldn't see this")
 
 #include "parrot/oplib/ops.h"
 
@@ -288,7 +288,7 @@ inline op pic_callr__(inconst PMC) :pic {
                         ((opcode_t*)cur_opcode)[2 + i]);
                 break;
             default:
-                internal_exception(1, "unhandled sig_bits");
+                real_exception(interp, NULL, 1, "unhandled sig_bits");
         }
     }
     /* set_args (); set_p_pc; get_results (1), x; invokecc_p */

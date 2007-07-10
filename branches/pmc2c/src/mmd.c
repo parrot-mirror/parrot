@@ -43,12 +43,99 @@ not highest type in table.
 #include "mmd.str"
 #include <assert.h>
 
-/* HEADERIZER TARGET: include/parrot/mmd.h */
+/* HEADERIZER HFILE: include/parrot/mmd.h */
+
+/* HEADERIZER BEGIN: static */
+
+static INTVAL distance_cmp( Interp *interp, INTVAL a, INTVAL b );
+static void dump_mmd( Interp *interp /*NN*/, INTVAL function )
+        __attribute__nonnull__(1);
+
+static funcptr_t get_mmd_dispatcher( Interp *interp /*NN*/,
+    PMC *left,
+    PMC *right,
+    INTVAL function,
+    int *is_pmc /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(5);
+
+static PMC* mmd_arg_tuple_func( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+static PMC* mmd_arg_tuple_inline( Interp *interp /*NN*/,
+    STRING *signature /*NN*/,
+    va_list args )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void mmd_create_builtin_multi_meth( Interp *interp,
+    PMC *ns,
+    INTVAL type,
+    const MMD_init *entry /*NN*/ )
+        __attribute__nonnull__(4);
+
+static void mmd_create_builtin_multi_meth_2( Interp *interp,
+    PMC *ns,
+    INTVAL func_nr,
+    INTVAL type,
+    INTVAL right,
+    funcptr_t func_ptr );
+
+static PMC * mmd_create_builtin_multi_stub( Interp *interp,
+    PMC* ns,
+    INTVAL func_nr );
+
+static PMC* mmd_cvt_to_types( Interp* interp, PMC *multi_sig );
+static PMC * mmd_deref( Interp *interp, PMC *value /*NN*/ )
+        __attribute__nonnull__(2);
+
+static UINTVAL mmd_distance( Interp *interp, PMC *pmc /*NN*/, PMC *arg_tuple )
+        __attribute__nonnull__(2);
+
+static void mmd_ensure_writable( Interp *interp,
+    INTVAL function,
+    PMC *pmc /*NULLOK*/ );
+
+static void mmd_expand_x( Interp *interp /*NN*/,
+    INTVAL func_nr,
+    INTVAL new_x )
+        __attribute__nonnull__(1);
+
+static void mmd_expand_y( Interp *interp /*NN*/,
+    INTVAL func_nr,
+    INTVAL new_y )
+        __attribute__nonnull__(1);
+
+static PMC* mmd_get_ns( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+static int mmd_is_hidden( Interp *interp, PMC *multi, PMC *cl );
+static PMC* mmd_make_ns( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+static int mmd_maybe_candidate( Interp *interp /*NN*/, PMC *pmc, PMC *cl )
+        __attribute__nonnull__(1);
+
+static void mmd_search_builtin( Interp *interp /*NN*/, STRING *meth, PMC *cl )
+        __attribute__nonnull__(1);
+
+static void mmd_search_classes( Interp *interp /*NN*/,
+    STRING *meth,
+    PMC *arg_tuple,
+    PMC *cl,
+    INTVAL start_at_parent )
+        __attribute__nonnull__(1);
+
+static int mmd_search_cur_namespace( Interp *interp, STRING *meth, PMC *cl );
+static PMC* mmd_search_default( Interp *interp, STRING *meth, PMC *arg_tuple );
+static PMC* mmd_search_scopes( Interp *interp /*NN*/, STRING *meth )
+        __attribute__nonnull__(1);
+
+static void mmd_sort_candidates( Interp *interp, PMC *arg_tuple, PMC *cl );
+/* HEADERIZER END: static */
+
 
 #define MMD_DEBUG 0
-
-static void mmd_create_builtin_multi_meth_2(Interp *, PMC *ns,
-        INTVAL func_nr, INTVAL type, INTVAL right, funcptr_t func_ptr);
 
 #ifndef NDEBUG
 static void
@@ -178,7 +265,7 @@ call on the 'real' value.
 */
 
 static PMC *
-mmd_deref(Interp *interp, INTVAL function, PMC *value /*NN*/)
+mmd_deref(Interp *interp, PMC *value /*NN*/)
 {
     if (VTABLE_type(interp, value) != value->vtable->base_type)
         return VTABLE_get_pmc(interp, value);
@@ -248,8 +335,8 @@ mmd_dispatch_p_ppp(Interp *interp,
     mmd_f_p_ppp real_function;
     int is_pmc;
 
-    left = mmd_deref(interp, func_nr, left);
-    right = mmd_deref(interp, func_nr, right);
+    left = mmd_deref(interp, left);
+    right = mmd_deref(interp, right);
 
     real_function = (mmd_f_p_ppp)get_mmd_dispatcher(interp,
             left, right, func_nr, &is_pmc);
@@ -278,7 +365,7 @@ mmd_dispatch_p_pip(Interp *interp /*NN*/,
     UINTVAL left_type;
     mmd_f_p_pip real_function;
 
-    left = mmd_deref(interp, func_nr, left);
+    left = mmd_deref(interp, left);
 
     left_type = left->vtable->base_type;
 
@@ -310,7 +397,7 @@ mmd_dispatch_p_pnp(Interp *interp /*NN*/,
     int is_pmc;
     UINTVAL left_type;
 
-    left = mmd_deref(interp, func_nr, left);
+    left = mmd_deref(interp, left);
 
     left_type = left->vtable->base_type;
     real_function = (mmd_f_p_pnp)get_mmd_dispatch_type(interp,
@@ -365,8 +452,8 @@ mmd_dispatch_v_pp(Interp *interp /*NN*/,
     mmd_f_v_pp real_function;
     int is_pmc;
 
-    left = mmd_deref(interp, func_nr, left);
-    right = mmd_deref(interp, func_nr, right);
+    left = mmd_deref(interp, left);
+    right = mmd_deref(interp, right);
 
     mmd_ensure_writable(interp, func_nr, left);
 
@@ -390,7 +477,7 @@ mmd_dispatch_v_pi(Interp *interp /*NN*/,
     int is_pmc;
     UINTVAL left_type;
 
-    left = mmd_deref(interp, func_nr, left);
+    left = mmd_deref(interp, left);
     mmd_ensure_writable(interp, func_nr, left);
 
     left_type = left->vtable->base_type;
@@ -414,7 +501,7 @@ mmd_dispatch_v_pn(Interp *interp /*NN*/,
     int is_pmc;
     UINTVAL left_type;
 
-    left = mmd_deref(interp, func_nr, left);
+    left = mmd_deref(interp, left);
     mmd_ensure_writable(interp, func_nr, left);
 
     left_type = left->vtable->base_type;
@@ -438,7 +525,7 @@ mmd_dispatch_v_ps(Interp *interp /*NN*/,
     int is_pmc;
     UINTVAL left_type;
 
-    left = mmd_deref(interp, func_nr, left);
+    left = mmd_deref(interp, left);
     mmd_ensure_writable(interp, func_nr, left);
 
     left_type = VTABLE_type(interp, left);
@@ -470,8 +557,8 @@ mmd_dispatch_i_pp(Interp *interp /*NN*/,
     int is_pmc;
     INTVAL ret;
 
-    left = mmd_deref(interp, func_nr, left);
-    right = mmd_deref(interp, func_nr, right);
+    left = mmd_deref(interp, left);
+    right = mmd_deref(interp, right);
 
     real_function = (mmd_f_i_pp)get_mmd_dispatcher(interp,
             left, right, func_nr, &is_pmc);
@@ -500,7 +587,7 @@ TODO change this to a MMD register interface that takes a function *name*.
 PARROT_API
 void
 mmd_add_function(Interp *interp /*NN*/,
-        INTVAL func_nr, funcptr_t function)
+        INTVAL func_nr, SHIM(funcptr_t function))
 {
     if (func_nr >= (INTVAL)interp->n_binop_mmd_funcs) {
         INTVAL i;
@@ -782,17 +869,6 @@ mmd_vtfind(Interp *interp /*NN*/, INTVAL func_nr, INTVAL left, INTVAL right)
     return f;
 }
 
-
-static PMC* mmd_arg_tuple_func(Interp *);
-static PMC* mmd_search_default(Interp *, STRING *meth, PMC *arg_tuple);
-static PMC* mmd_search_scopes(Interp *, STRING *meth, PMC *arg_tuple);
-static void mmd_search_classes(Interp *, STRING *meth, PMC *arg_tuple, PMC *,
-        INTVAL start);
-static int  mmd_search_cur_namespace(Interp *, STRING *meth, PMC *arg_tuple, PMC *);
-static void mmd_search_builtin(Interp *, STRING *meth, PMC *arg_tuple, PMC *);
-static int  mmd_maybe_candidate(Interp *, PMC *pmc, PMC *arg_tuple, PMC *cl);
-static void mmd_sort_candidates(Interp *, PMC *arg_tuple, PMC *cl);
-
 PARROT_API
 PMC *
 Parrot_MMD_search_default_infix(Interp *interp /*NN*/, STRING *meth,
@@ -888,7 +964,7 @@ mmd_arg_tuple_inline(Interp *interp /*NN*/, STRING *signature /*NN*/, va_list ar
                         i, type);
                 break;
             default:
-                internal_exception(1,
+                real_exception(interp, NULL, 1,
                         "Unknown signature type %d in mmd_arg_tuple", type);
                 break;
         }
@@ -939,7 +1015,7 @@ mmd_arg_tuple_func(Interp *interp /*NN*/)
             int j, n;
 
             idx = *args_op;
-            arg = REG_PMC(idx);
+            arg = REG_PMC(interp, idx);
             n = VTABLE_elements(interp, arg);
             for (j = 0; j < n; ++j)  {
                 PMC * const elem = VTABLE_get_pmc_keyed_int(interp, arg, j);
@@ -963,12 +1039,12 @@ mmd_arg_tuple_func(Interp *interp /*NN*/)
                 if ((type & PARROT_ARG_CONSTANT))
                     arg = constants[idx]->u.key;
                 else
-                    arg = REG_PMC(idx);
+                    arg = REG_PMC(interp, idx);
                 type = VTABLE_type(interp, arg);
                 VTABLE_push_integer(interp, arg_tuple, type);
                 break;
             default:
-                internal_exception(1,
+                real_exception(interp, NULL, 1,
                         "Unknown signature type %d in mmd_arg_tuple", type);
                 break;
         }
@@ -995,7 +1071,7 @@ mmd_search_default(Interp *interp, STRING *meth, PMC *arg_tuple)
     /*
      * 2) create a list of matching functions
      */
-    PMC * const candidate_list = mmd_search_scopes(interp, meth, arg_tuple);
+    PMC * const candidate_list = mmd_search_scopes(interp, meth);
     /*
      * 3) if list is empty fail
      *    if the first found function is a plain Sub: finito
@@ -1056,7 +1132,7 @@ mmd_search_classes(Interp *interp /*NN*/, STRING *meth, PMC *arg_tuple,
     type1 = VTABLE_get_integer_keyed_int(interp, arg_tuple, 0);
     if (type1 < 0) {
         return;
-        internal_exception(1, "unimplemented native MMD type");
+        real_exception(interp, NULL, 1, "unimplemented native MMD type");
         /* TODO create some class namespace */
     }
     else {
@@ -1073,7 +1149,7 @@ mmd_search_classes(Interp *interp /*NN*/, STRING *meth, PMC *arg_tuple,
                  * XXX pass current n so that only candidates from this
                  *     mro are used?
                  */
-                if (mmd_maybe_candidate(interp, pmc, arg_tuple, cl))
+                if (mmd_maybe_candidate(interp, pmc, cl))
                     break;
             }
         }
@@ -1081,10 +1157,10 @@ mmd_search_classes(Interp *interp /*NN*/, STRING *meth, PMC *arg_tuple,
 }
 
 static INTVAL
-distance_cmp(Interp *interp /*NULLOK*/, INTVAL a, INTVAL b)
+distance_cmp(SHIM_INTERP, INTVAL a, INTVAL b)
 {
-    short da = (short)a & 0xffff;
-    short db = (short)b & 0xffff;
+    short da = (short)(a & 0xffff);
+    short db = (short)(b & 0xffff);
     /* sort first by distance */
     if (da > db)
         return 1;
@@ -1308,14 +1384,14 @@ C<arg_tuple>.
 */
 
 static PMC*
-mmd_search_scopes(Interp *interp, STRING *meth, PMC *arg_tuple)
+mmd_search_scopes(Interp *interp /*NN*/, STRING *meth)
 {
     PMC * const candidate_list = pmc_new(interp, enum_class_ResizablePMCArray);
 
-    const int stop = mmd_search_cur_namespace(interp, meth, arg_tuple, candidate_list);
+    const int stop = mmd_search_cur_namespace(interp, meth, candidate_list);
     if (stop)
         return candidate_list;
-    mmd_search_builtin(interp, meth, arg_tuple, candidate_list);
+    mmd_search_builtin(interp, meth, candidate_list);
     return candidate_list;
 }
 
@@ -1337,6 +1413,9 @@ mmd_is_hidden(Interp *interp, PMC *multi, PMC *cl)
      *
      * TODO
      */
+    UNUSED(interp);
+    UNUSED(multi);
+    UNUSED(cl);
     return 0;
 }
 
@@ -1353,7 +1432,7 @@ to continue searching outer scopes.
 */
 
 static int
-mmd_maybe_candidate(Interp *interp, PMC *pmc, PMC *arg_tuple, PMC *cl)
+mmd_maybe_candidate(Interp *interp /*NN*/, PMC *pmc, PMC *cl)
 {
     INTVAL i, n;
 
@@ -1394,11 +1473,11 @@ TRUE if the MMD search should stop.
 */
 
 static int
-mmd_search_cur_namespace(Interp *interp, STRING *meth, PMC *arg_tuple, PMC *cl)
+mmd_search_cur_namespace(Interp *interp, STRING *meth, PMC *cl)
 {
     PMC * const pmc = Parrot_find_global_cur(interp, meth);
 
-    return pmc && mmd_maybe_candidate(interp, pmc, arg_tuple, cl);
+    return pmc && mmd_maybe_candidate(interp, pmc, cl);
 }
 
 static PMC*
@@ -1429,12 +1508,12 @@ search in all the namespaces.
 */
 
 static void
-mmd_search_builtin(Interp *interp, STRING *meth, PMC *arg_tuple, PMC *cl)
+mmd_search_builtin(Interp *interp /*NN*/, STRING *meth, PMC *cl)
 {
     PMC * const ns = mmd_get_ns(interp);
     PMC * const pmc = Parrot_find_global_n(interp, ns, meth);
     if (pmc)
-        mmd_maybe_candidate(interp, pmc, arg_tuple, cl);
+        mmd_maybe_candidate(interp, pmc, cl);
 }
 
 
@@ -1456,7 +1535,7 @@ mmd_create_builtin_multi_meth_2(Interp *interp, PMC *ns,
 {
     const char *short_name;
     char signature[6], val_sig;
-    STRING *meth_name, *_sub;
+    STRING *meth_name;
     PMC *method, *multi, *_class, *multi_sig;
 
     assert(type != enum_class_Null && type != enum_class_delegate &&
@@ -1500,7 +1579,6 @@ mmd_create_builtin_multi_meth_2(Interp *interp, PMC *ns,
         VTABLE_add_method(interp, _class, meth_name, method);
     }
     else {
-        _sub = CONST_STRING(interp, "Sub");
         /* multiple methods with that same name */
         if (method->vtable->base_type == enum_class_NCI) {
             /* convert first to a multi */
@@ -1610,6 +1688,8 @@ Parrot_mmd_rebuild_table(Interp* interp /*NN*/, INTVAL type, INTVAL func_nr)
 {
     MMD_table *table;
     UINTVAL i;
+
+    UNUSED(type);
 
     if (!interp->binop_mmd_funcs)
         return;

@@ -93,9 +93,10 @@ PARROT_API void Parrot_instantiate_object_init( Interp *interp,
     PMC *object,
     PMC *init );
 
-PARROT_API void Parrot_invalidate_method_cache( Interp *interp,
+PARROT_API void Parrot_invalidate_method_cache( Interp *interp /*NN*/,
     STRING *_class,
-    STRING *meth );
+    STRING *meth )
+        __attribute__nonnull__(1);
 
 PARROT_API INTVAL Parrot_MMD_method_idx( Interp *interp, const char *name )
         __attribute__warn_unused_result__
@@ -152,8 +153,15 @@ PARROT_API PMC * Parrot_single_subclass( Interp *interp,
 PARROT_API STRING* readable_name( Interp *interp, PMC *name /*NN*/ )
         __attribute__nonnull__(2);
 
-void destroy_object_cache( Interp *interp );
-void mark_object_cache( Interp *interp );
+void destroy_object_cache( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+void init_object_cache( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+void mark_object_cache( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
 PMC * Parrot_class_lookup_p( Interp *interp, PMC *class_name );
 /* HEADERIZER END: src/objects.c */
 
@@ -195,18 +203,6 @@ PMC * Parrot_class_lookup_p( Interp *interp, PMC *class_name );
        obj->vtable->pmc_class = cl
 #  define GET_CLASS(arr, obj) \
        obj->vtable->pmc_class
-
-
-/* ************************************************************************ */
-/* ********* BELOW HERE IS NEW PPD15 IMPLEMENTATION RELATED STUFF ********* */
-/* ************************************************************************ */
-
-PARROT_API PMC* Parrot_ComputeMRO_C3(Interp *interp, PMC *_class);
-
-PARROT_API void Parrot_ComposeRole(Interp *interp, PMC *role,
-                                   PMC *without, int got_without,
-                                   PMC *alias, int got_alias,
-                                   PMC *methods_hash, PMC *roles_list);
 
 #endif /* PARROT_OBJECTS_H_GUARD */
 

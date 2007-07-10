@@ -337,7 +337,103 @@
 #include "parser.h"
 #include "optimizer.h"
 
-/* HEADERIZER TARGET: compilers/imcc/imc.h */
+/* HEADERIZER HFILE: compilers/imcc/imc.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void add_pcc_named_arg( Interp *interp /*NN*/,
+    SymReg *cur_call /*NN*/,
+    char *name,
+    SymReg *value )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void add_pcc_named_param( Interp *interp,
+    SymReg *cur_call,
+    char *name,
+    SymReg *value );
+
+static void add_pcc_named_result( Interp *interp,
+    SymReg *cur_call,
+    char *name,
+    SymReg *value );
+
+static void add_pcc_named_return( Interp *interp,
+    SymReg *cur_call,
+    char *name,
+    SymReg *value );
+
+static void begin_return_or_yield( Interp *interp /*NN*/, int yield )
+        __attribute__nonnull__(1);
+
+static void clear_state( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void do_loadlib( Interp *interp /*NN*/, const char *lib /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static Instruction* func_ins(
+    Parrot_Interp interp,
+    IMC_Unit *unit,
+    SymReg *lhs,
+    const char *op,
+    SymReg ** r,
+    int n,
+    int keyv,
+    int emit )
+        __attribute__warn_unused_result__;
+
+static Instruction * iINDEXFETCH( Interp *interp,
+    IMC_Unit * unit,
+    SymReg * r0,
+    SymReg * r1,
+    SymReg * r2 );
+
+static Instruction * iINDEXSET( Interp *interp,
+    IMC_Unit * unit,
+    SymReg * r0,
+    SymReg * r1,
+    SymReg * r2 );
+
+static Instruction * iLABEL( Interp *interp /*NN*/,
+    IMC_Unit *unit,
+    SymReg * r0 )
+        __attribute__nonnull__(1);
+
+static const char * inv_op( const char *op );
+static Instruction * iSUBROUTINE( Interp *interp /*NN*/,
+    IMC_Unit *unit,
+    SymReg *r /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+static Instruction * MK_I( Interp *interp /*NN*/,
+    IMC_Unit * unit,
+    const char *fmt /*NN*/,
+    int n,
+    ... )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+static Instruction* mk_pmc_const( Interp *interp /*NN*/,
+    IMC_Unit *unit,
+    const char *type /*NN*/,
+    SymReg *left /*NN*/,
+    char *constant /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
+        __attribute__warn_unused_result__;
+
+static SymReg * mk_sub_address_fromc( Interp *interp, char * name );
+static SymReg * mk_sub_address_u( Interp *interp, char * name );
+static void set_lexical( Interp *interp /*NN*/, SymReg *r /*NN*/, char *name )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+/* HEADERIZER END: static */
 
 #define YYDEBUG 1
 #define YYERROR_VERBOSE 1
@@ -369,7 +465,7 @@
  *        code.
  */
 static Instruction *
-MK_I(Interp *interp, IMC_Unit * unit, const char *fmt /*NN*/, int n, ...)
+MK_I(Interp *interp /*NN*/, IMC_Unit * unit, const char *fmt /*NN*/, int n, ...)
 {
     char opname[64];
     char *p;
@@ -382,7 +478,7 @@ MK_I(Interp *interp, IMC_Unit * unit, const char *fmt /*NN*/, int n, ...)
         *p++ = *q++;
     *p = 0;
     if (!*q)
-        fmt = 0;
+        fmt = NULL;
     else
         fmt = ++q;
 #if OPDEBUG
@@ -399,14 +495,15 @@ MK_I(Interp *interp, IMC_Unit * unit, const char *fmt /*NN*/, int n, ...)
 }
 
 static Instruction*
-mk_pmc_const(Parrot_Interp interp, IMC_Unit *unit,
+mk_pmc_const(Interp *interp /*NN*/, IMC_Unit *unit,
              const char *type /*NN*/, SymReg *left /*NN*/, char *constant /*NN*/)
+    /* WARN_UNUSED */
 {
     const int type_enum = atoi(type);
     SymReg *rhs;
     SymReg *r[2];
     char *name;
-    int len, ascii;
+    int ascii;
 
     if (left->type == VTADDRESS) {      /* IDENTIFIER */
         if (IMCC_INFO(interp)->state->pasm_file) {
@@ -421,7 +518,7 @@ mk_pmc_const(Parrot_Interp interp, IMC_Unit *unit,
     ascii = (*constant == '\'' || *constant == '"' );
     if (ascii) {
         /* strip delimiters */
-        len = strlen(constant);
+        const size_t len = strlen(constant);
         name = (char *)mem_sys_allocate(len);
         constant[len - 1] = '\0';
         strcpy(name, constant + 1);
@@ -448,8 +545,9 @@ mk_pmc_const(Parrot_Interp interp, IMC_Unit *unit,
 }
 
 static Instruction*
-func_ins(Parrot_Interp interp, IMC_Unit *unit, SymReg *lhs, char *op,
+func_ins(Parrot_Interp interp, IMC_Unit *unit, SymReg *lhs, const char *op,
          SymReg ** r, int n, int keyv, int emit)
+    /* WARN_UNUSED */
 {
     int i;
     /* shift regs up by 1 */

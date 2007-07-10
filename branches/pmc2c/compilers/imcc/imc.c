@@ -11,10 +11,15 @@
 #include "imc.h"
 #include "optimizer.h"
 
-/* HEADERIZER TARGET: compilers/imcc/imc.h */
+/* HEADERIZER HFILE: compilers/imcc/imc.h */
 
 /* HEADERIZER BEGIN: static */
-static void imc_free_unit(Parrot_Interp interp, IMC_Unit * unit);
+
+static void imc_free_unit( Interp *interp /*NN*/, IMC_Unit *unit /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static IMC_Unit * imc_new_unit( IMC_Unit_Type t );
 /* HEADERIZER END: static */
 
 #define COMPILE_IMMEDIATE 1
@@ -134,12 +139,11 @@ imc_open_unit(Interp *interp /*NN*/, IMC_Unit_Type t)
 void
 imc_close_unit(Interp *interp, IMC_Unit *unit /*NULLOK*/)
 {
-    UNUSED(interp);
-    if (unit) {
 #if COMPILE_IMMEDIATE
+    if (unit) {
         imc_compile_unit(interp, unit);
-#endif
     }
+#endif
     IMCC_INFO(interp)->cur_unit = NULL;
 }
 

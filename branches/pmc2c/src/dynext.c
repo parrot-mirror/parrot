@@ -15,7 +15,45 @@ src/dynext.c - Dynamic extensions to Parrot
 #include "parrot/parrot.h"
 #include "parrot/dynext.h"
 
-/* HEADERIZER TARGET: include/parrot/dynext.h */
+/* HEADERIZER HFILE: include/parrot/dynext.h */
+
+/* HEADERIZER BEGIN: static */
+
+static STRING * get_path( Interp *interp /*NN*/,
+    STRING *lib,
+    void **handle /*NN*/,
+    STRING *wo_ext,
+    STRING *ext )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+static PMC* is_loaded( Interp *interp /*NN*/, STRING *path )
+        __attribute__nonnull__(1);
+
+static PMC * make_string_pmc( Interp *interp /*NN*/, STRING *string )
+        __attribute__nonnull__(1);
+
+static PMC * run_init_lib( Interp *interp,
+    void *handle,
+    STRING *lib_name /*NN*/,
+    STRING *wo_ext )
+        __attribute__nonnull__(3);
+
+static void set_cstring_prop(
+    Parrot_Interp interp,
+    PMC *lib_pmc,
+    const char *what /*NN*/,
+    STRING *name )
+        __attribute__nonnull__(3);
+
+static void store_lib_pmc(
+    Parrot_Interp interp,
+    PMC* lib_pmc,
+    STRING *path,
+    STRING *type,
+    STRING *lib_name );
+
+/* HEADERIZER END: static */
 
 /* _PARROTLIB is now the default */
 /*#define _PARROTLIB not working: "make testr" */
@@ -375,15 +413,13 @@ Parrot_clone_lib_into(Interp *d, Interp *s, PMC *lib_pmc)
 
 PARROT_API
 PMC *
-Parrot_load_lib(Interp *interp /*NN*/, STRING *lib /*NULLOK*/, PMC *initializer)
+Parrot_load_lib(Interp *interp /*NN*/, STRING *lib /*NULLOK*/, SHIM(PMC *initializer))
 {
     void * handle;
     PMC *lib_pmc;
     STRING *path;
     STRING *lib_name, *wo_ext, *ext;    /* library stem without path
                                          * or extension.  */
-
-    UNUSED(initializer);
     /* Find the pure library name, without path or extension.  */
     /*
      * TODO move the class_count_mutex here
@@ -405,7 +441,7 @@ Parrot_load_lib(Interp *interp /*NN*/, STRING *lib /*NULLOK*/, PMC *initializer)
     path = get_path(interp, lib, &handle, wo_ext, ext);
     if (!path || !handle) {
         /*
-         * XXX internal_exception? return PMCNULL?
+         * XXX real_exception? return PMCNULL?
          * PMC Undef seems convenient, because it can be queried with get_bool()
          */
         return pmc_new(interp, enum_class_Undef);

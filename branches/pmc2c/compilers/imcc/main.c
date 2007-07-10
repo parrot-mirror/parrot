@@ -21,10 +21,51 @@
 #include "pbc.h"
 #include "parser.h"
 
+/* HEADERIZER HFILE: none */
+
+/* HEADERIZER BEGIN: static */
+
+static void do_pre_process( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void help( void );
+static void help_debug( void );
+static void imcc_get_optimization_description(
+    const Interp *interp /*NN*/,
+    int opt_level,
+    char *opt_desc /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+static void imcc_run_pbc( Interp *interp,
+    int obj_file,
+    const char *output_file,
+    int argc,
+    char * argv[] );
+
+static void imcc_write_pbc( Interp *interp /*NN*/,
+    const char *output_file /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int is_all_hex_digits( const char *s /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__pure__
+        __attribute__warn_unused_result__;
+
+static void Parrot_version( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void usage( FILE* fp /*NN*/ )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: static */
+
+
 static int load_pbc, run_pbc, write_pbc, pre_process_only, pasm_file;
 
 static void
-usage(FILE* fp)
+usage(FILE* fp /*NN*/)
 {
     fprintf(fp,
             "parrot -[abcCEfgGhjprStvVwy.] [-d [FLAGS]] [-D [FLAGS]]"
@@ -110,7 +151,7 @@ help(void)
 
 
 static void
-Parrot_version(Interp *interp)
+Parrot_version(Interp *interp /*NN*/)
 {
     int rev = PARROT_REVISION;
     printf("This is parrot version " PARROT_VERSION);
@@ -127,16 +168,11 @@ Parrot_version(Interp *interp)
     }
     printf("Copyright (C) 2001-2007, The Perl Foundation.\n\
 \n\
-Parrot is distributed under the terms of the Artistic License 2.0.\
+This code is distributed under the terms of the Artistic License 2.0.\
 \n\
-For more details, see the full text of the license in the file LICENSE,\
+For more details, see the full text of the license in the LICENSE file\
 \n\
-which may be found in the Parrot source kit.\n\
-\n\
-This program is distributed in the hope that it will be useful,\n\
-but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either\n\
-the GNU General Public License or the Artistic License for more details.\n\n");
+included in the Parrot source tree.\n\n");
 
     Parrot_exit(interp, 0);
 }
@@ -186,7 +222,8 @@ static struct longopt_opt_decl options[] = {
 };
 
 static int
-is_all_hex_digits(const char *s)
+is_all_hex_digits(const char *s /*NN*/)
+    /* PURE, WARN_UNUSED */
 {
     for (; *s; s++)
         if (!isxdigit(*s))
@@ -352,7 +389,7 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
                 SET_FLAG(PARROT_DESTROY_FLAG);
                 break;
             default:
-                internal_exception(1, "main: Invalid flag '%s' used."
+                real_exception(interp, NULL, 1, "main: Invalid flag '%s' used."
                         "\n\nhelp: parrot -h\n", (*argv)[0]);
         }
     }
@@ -380,13 +417,12 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
 }
 
 static void
-do_pre_process(Parrot_Interp interp)
+do_pre_process(Interp *interp /*NN*/)
 {
     int       c;
     YYSTYPE   val;
-    yyscan_t  yyscanner;
 
-    yyscanner   = IMCC_INFO(interp)->yyscanner;
+    const yyscan_t yyscanner = IMCC_INFO(interp)->yyscanner;
 
     IMCC_push_parser_state(interp);
     while ((c = yylex(&val, yyscanner, interp))) {
@@ -493,7 +529,7 @@ do_pre_process(Parrot_Interp interp)
 }
 
 static void
-imcc_get_optimization_description(const Interp *interp /*NN*/, int opt_level, char *opt_desc)
+imcc_get_optimization_description(const Interp *interp /*NN*/, int opt_level, char *opt_desc /*NN*/)
 {
     int i = 0;
 
@@ -514,12 +550,12 @@ imcc_get_optimization_description(const Interp *interp /*NN*/, int opt_level, ch
     if (interp->run_core & PARROT_SWITCH_CORE)
         opt_desc[i++] = 't';
 
-    opt_desc[i++] = '\0';
+    opt_desc[i] = '\0';
     return;
 }
 
 int
-imcc_initialize(Interp *interp)
+imcc_initialize(Interp *interp /*NN*/)
 {
     yyscan_t yyscanner = IMCC_INFO(interp)->yyscanner;
 
@@ -572,7 +608,7 @@ imcc_run_pbc(Interp *interp, int obj_file, const char *output_file,
 }
 
 static void
-imcc_write_pbc(Interp *interp, const char *output_file)
+imcc_write_pbc(Interp *interp /*NN*/, const char *output_file /*NN*/)
 {
     size_t    size;
     opcode_t *packed;
@@ -600,14 +636,14 @@ imcc_write_pbc(Interp *interp, const char *output_file)
 }
 
 int
-imcc_run(Interp *interp, const char *sourcefile, int argc, char * argv[])
+imcc_run(Interp *interp /*NN*/, const char *sourcefile, int argc, char * argv[])
 {
     int              obj_file;
-    const char      *output_file;
-    yyscan_t         yyscanner;
+    yyscan_t        yyscanner   = IMCC_INFO(interp)->yyscanner;
+    const char * const output_file = interp->output_file;
 
-    yyscanner   = IMCC_INFO(interp)->yyscanner;
-    output_file = interp->output_file;
+    if (!interp->lo_var_ptr)
+        interp->lo_var_ptr = (void *)&obj_file;
 
     /* Read in the source and determine whether it's Parrot bytecode,
        PASM or a Parrot abstract syntax tree (PAST) file. If it isn't
@@ -615,13 +651,13 @@ imcc_run(Interp *interp, const char *sourcefile, int argc, char * argv[])
     if (!sourcefile || !*sourcefile) {
         IMCC_fatal_standalone(interp, 1, "main: No source file specified.\n");
     }
-    else if (!strcmp(sourcefile, "-")) {
+    else if (strcmp(sourcefile, "-") == 0) {
         imc_yyin_set(stdin, yyscanner);
     }
     else {
         const char * const ext = strrchr(sourcefile, '.');
 
-        if (ext && strcmp(ext, ".pbc") == 0) {
+        if (ext && (strcmp(ext, ".pbc") == 0)) {
             load_pbc  = 1;
             write_pbc = 0;
         }
@@ -719,7 +755,7 @@ imcc_run(Interp *interp, const char *sourcefile, int argc, char * argv[])
             imc_compile_all_units(interp);
         }
         IMCC_CATCH(IMCC_FATAL_EXCEPTION) {
-            char *error_str = string_to_cstring(interp,
+            char * const error_str = string_to_cstring(interp,
                     IMCC_INFO(interp)->error_message);
 
             IMCC_INFO(interp)->error_code=IMCC_FATAL_EXCEPTION;

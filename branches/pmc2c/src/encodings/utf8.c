@@ -18,9 +18,121 @@ UTF-8 (L<http://www.utf-8.com/>).
 #include "../unicode.h"
 #include "utf8.h"
 
-/* HEADERIZER TARGET: src/encodings/utf8.h */
+/* HEADERIZER HFILE: src/encodings/utf8.h */
 
-#define UNIMPL internal_exception(UNIMPLEMENTED, "unimpl utf8")
+/* HEADERIZER BEGIN: static */
+
+static void become_encoding( Interp *interp, STRING *src );
+static UINTVAL bytes( Interp *interp, STRING *src /*NN*/ )
+        __attribute__nonnull__(2)
+        __attribute__pure__
+        __attribute__warn_unused_result__;
+
+static UINTVAL codepoints( Interp *interp, STRING *src /*NN*/ )
+        __attribute__nonnull__(2);
+
+static UINTVAL get_byte( Interp *interp,
+    const STRING *src /*NN*/,
+    UINTVAL offset )
+        __attribute__nonnull__(2);
+
+static STRING * get_bytes( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count );
+
+static STRING * get_bytes_inplace( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *return_string );
+
+static UINTVAL get_codepoint( Interp *interp,
+    const STRING *src /*NN*/,
+    UINTVAL offset )
+        __attribute__nonnull__(2);
+
+static STRING * get_codepoints( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count );
+
+static STRING * get_codepoints_inplace( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *return_string );
+
+static void iter_init( Interp *interp,
+    const STRING *src,
+    String_iter *iter /*NN*/ )
+        __attribute__nonnull__(3);
+
+static void set_byte( Interp *interp /*NN*/,
+    const STRING *src /*NN*/,
+    UINTVAL offset,
+    UINTVAL byte )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void set_bytes( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *new_bytes );
+
+static void set_codepoint( Interp *interp,
+    STRING *src /*NN*/,
+    UINTVAL offset,
+    UINTVAL codepoint )
+        __attribute__nonnull__(2);
+
+static void set_codepoints( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *new_codepoints );
+
+static STRING * to_encoding( Interp *interp /*NN*/,
+    STRING *src /*NN*/,
+    STRING *dest )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static UINTVAL utf8_characters( Interp *interp,
+    const utf8_t *ptr /*NN*/,
+    UINTVAL byte_len )
+        __attribute__nonnull__(2);
+
+static UINTVAL utf8_decode( Interp *interp, const utf8_t *ptr );
+static UINTVAL utf8_decode_and_advance( Interp *interp /*NN*/,
+    String_iter *i /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void * utf8_encode( Interp *interp, void *ptr /*NN*/, UINTVAL c )
+        __attribute__nonnull__(2);
+
+static void utf8_encode_and_advance( Interp *interp /*NN*/,
+    String_iter *i /*NN*/,
+    UINTVAL c )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void utf8_set_position( Interp *interp,
+    String_iter *i /*NN*/,
+    UINTVAL pos )
+        __attribute__nonnull__(2);
+
+static const void * utf8_skip_backward( const void *ptr /*NN*/, UINTVAL n )
+        __attribute__nonnull__(1);
+
+static const void * utf8_skip_forward( const void *ptr /*NN*/, UINTVAL n )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: static */
+
+#define UNIMPL real_exception(interp, NULL, UNIMPLEMENTED, "unimpl utf8")
 
 const char Parrot_utf8skip[256] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,     /* ascii */
@@ -45,8 +157,6 @@ const char Parrot_utf8skip[256] = {
 typedef unsigned char utf8_t;
 #endif
 
-static void iter_init(Interp *, const STRING *src, String_iter *iter);
-
 /*
 
 FUNCDOC: utf8_characters
@@ -56,7 +166,7 @@ Returns the number of characters in the C<byte_len> bytes from C<*ptr>.
 */
 
 static UINTVAL
-utf8_characters(const utf8_t *ptr, UINTVAL byte_len)
+utf8_characters(Interp *interp, const utf8_t *ptr /*NN*/, UINTVAL byte_len)
 {
     const utf8_t *u8ptr = ptr;
     const utf8_t *u8end = u8ptr + byte_len;
@@ -68,7 +178,7 @@ utf8_characters(const utf8_t *ptr, UINTVAL byte_len)
     }
 
     if (u8ptr > u8end) {
-        internal_exception(MALFORMED_UTF8, "Unaligned end in UTF-8 string\n");
+        real_exception(interp, NULL, MALFORMED_UTF8, "Unaligned end in UTF-8 string\n");
     }
 
     return characters;
@@ -83,7 +193,7 @@ Returns the integer for the UTF-8 character found at C<*ptr>.
 */
 
 static UINTVAL
-utf8_decode(const utf8_t *ptr)
+utf8_decode(Interp *interp, const utf8_t *ptr)
 {
     const utf8_t *u8ptr = ptr;
     UINTVAL c = *u8ptr;
@@ -96,17 +206,17 @@ utf8_decode(const utf8_t *ptr)
         for (count = 1; count < len; count++) {
             u8ptr++;
             if (!UTF8_IS_CONTINUATION(*u8ptr)) {
-                internal_exception(MALFORMED_UTF8, "Malformed UTF-8 string\n");
+                real_exception(interp, NULL, MALFORMED_UTF8, "Malformed UTF-8 string\n");
             }
             c = UTF8_ACCUMULATE(c, *u8ptr);
         }
 
         if (UNICODE_IS_SURROGATE(c)) {
-            internal_exception(MALFORMED_UTF8, "Surrogate in UTF-8 string\n");
+            real_exception(interp, NULL, MALFORMED_UTF8, "Surrogate in UTF-8 string\n");
         }
     }
     else if (!UNICODE_IS_INVARIANT(c)) {
-        internal_exception(MALFORMED_UTF8, "Malformed UTF-8 string\n");
+        real_exception(interp, NULL, MALFORMED_UTF8, "Malformed UTF-8 string\n");
     }
 
     return c;
@@ -121,14 +231,14 @@ Returns the UTF-8 encoding of integer C<c>.
 */
 
 static void *
-utf8_encode(void *ptr, UINTVAL c)
+utf8_encode(Interp *interp, void *ptr /*NN*/, UINTVAL c)
 {
     utf8_t *u8ptr = (utf8_t *)ptr;
     UINTVAL len = UNISKIP(c);
     utf8_t *u8end = u8ptr + len - 1;
 
     if (c > 0x10FFFF || UNICODE_IS_SURROGATE(c)) {
-        internal_exception(INVALID_CHARACTER,
+        real_exception(interp, NULL, INVALID_CHARACTER,
                            "Invalid character for UTF-8 encoding\n");
     }
 
@@ -151,7 +261,7 @@ Moves C<ptr> C<n> characters forward.
 */
 
 static const void *
-utf8_skip_forward(const void *ptr, UINTVAL n)
+utf8_skip_forward(const void *ptr /*NN*/, UINTVAL n)
 {
     const utf8_t *u8ptr = (const utf8_t *)ptr;
 
@@ -171,7 +281,7 @@ Moves C<ptr> C<n> characters back.
 */
 
 static const void *
-utf8_skip_backward(const void *ptr, UINTVAL n)
+utf8_skip_backward(const void *ptr /*NN*/, UINTVAL n)
 {
     const utf8_t *u8ptr = (const utf8_t *)ptr;
 
@@ -201,7 +311,7 @@ function.
 */
 
 static UINTVAL
-utf8_decode_and_advance(Interp *interp, String_iter *i)
+utf8_decode_and_advance(Interp *interp /*NN*/, String_iter *i /*NN*/)
 {
     const utf8_t *u8ptr = (utf8_t *)((char *)i->str->strstart + i->bytepos);
     UINTVAL c = *u8ptr;
@@ -214,17 +324,17 @@ utf8_decode_and_advance(Interp *interp, String_iter *i)
         for (len--; len; len--) {
             u8ptr++;
             if (!UTF8_IS_CONTINUATION(*u8ptr)) {
-                internal_exception(MALFORMED_UTF8, "Malformed UTF-8 string\n");
+                real_exception(interp, NULL, MALFORMED_UTF8, "Malformed UTF-8 string\n");
             }
             c = UTF8_ACCUMULATE(c, *u8ptr);
         }
 
         if (UNICODE_IS_SURROGATE(c)) {
-            internal_exception(MALFORMED_UTF8, "Surrogate in UTF-8 string\n");
+            real_exception(interp, NULL, MALFORMED_UTF8, "Surrogate in UTF-8 string\n");
         }
     }
     else if (!UNICODE_IS_INVARIANT(c)) {
-        internal_exception(MALFORMED_UTF8, "Malformed UTF-8 string\n");
+        real_exception(interp, NULL, MALFORMED_UTF8, "Malformed UTF-8 string\n");
     }
     else {
         i->bytepos++;
@@ -235,13 +345,12 @@ utf8_decode_and_advance(Interp *interp, String_iter *i)
 }
 
 static void
-utf8_encode_and_advance(Interp *interp, String_iter *i, UINTVAL c)
+utf8_encode_and_advance(Interp *interp /*NN*/, String_iter *i /*NN*/, UINTVAL c)
 {
-    const STRING *s = i->str;
-    unsigned char *new_pos, *pos;
+    const STRING * const s = i->str;
+    unsigned char * const pos = (unsigned char *)s->strstart + i->bytepos;
+    unsigned char * const new_pos = (unsigned char *)utf8_encode(interp, pos, c);
 
-    pos = (unsigned char *)s->strstart + i->bytepos;
-    new_pos = (unsigned char *)utf8_encode(pos, c);
     i->bytepos += (new_pos - pos);
     /* XXX possible buffer overrun exception? */
     assert(i->bytepos <= PObj_buflen(s));
@@ -259,9 +368,9 @@ function.
 
 /* XXX Should use quickest direction */
 static void
-utf8_set_position(Interp *interp, String_iter *i, UINTVAL pos)
+utf8_set_position(SHIM_INTERP, String_iter *i /*NN*/, UINTVAL pos)
 {
-    const utf8_t *u8ptr = (utf8_t *)i->str->strstart;
+    const utf8_t *u8ptr = (const utf8_t *)i->str->strstart;
 
     i->charpos = pos;
     while (pos-- > 0) {
@@ -272,7 +381,7 @@ utf8_set_position(Interp *interp, String_iter *i, UINTVAL pos)
 
 
 static STRING *
-to_encoding(Interp *interp, STRING *src, STRING *dest)
+to_encoding(Interp *interp /*NN*/, STRING *src /*NN*/, STRING *dest)
 {
     STRING *result;
     String_iter src_iter;
@@ -333,7 +442,7 @@ to_encoding(Interp *interp, STRING *src, STRING *dest)
             }
 
             pos = p + dest_pos;
-            new_pos = (unsigned char *)utf8_encode(pos, c);
+            new_pos = (unsigned char *)utf8_encode(interp, pos, c);
             dest_pos += (new_pos - pos);
         }
         result->bufused = dest_pos;
@@ -347,10 +456,10 @@ to_encoding(Interp *interp, STRING *src, STRING *dest)
 }
 
 static UINTVAL
-get_codepoint(Interp *interp, const STRING *src, UINTVAL offset)
+get_codepoint(Interp *interp, const STRING *src /*NN*/, UINTVAL offset)
 {
     const utf8_t * const start = (const utf8_t *)utf8_skip_forward(src->strstart, offset);
-    return utf8_decode(start);
+    return utf8_decode(interp, start);
 }
 
 static void
@@ -363,15 +472,15 @@ set_codepoint(Interp *interp, STRING *src /*NN*/,
 
     start = utf8_skip_forward(src->strstart, offset);
     p = const_cast(start);
-    utf8_encode(p, codepoint);
+    utf8_encode(interp, p, codepoint);
 }
 
 static UINTVAL
-get_byte(Interp *interp, const STRING *src, UINTVAL offset)
+get_byte(SHIM_INTERP, const STRING *src /*NN*/, UINTVAL offset)
 {
     unsigned char *contents = (unsigned char *)src->strstart;
     if (offset >= src->bufused) {
-/*        internal_exception(0,
+/*        real_exception(interp, NULL, 0,
                 "get_byte past the end of the buffer (%i of %i)",
                 offset, src->bufused);*/
         return 0;
@@ -380,12 +489,12 @@ get_byte(Interp *interp, const STRING *src, UINTVAL offset)
 }
 
 static void
-set_byte(Interp *interp, const STRING *src,
+set_byte(Interp *interp /*NN*/, const STRING *src /*NN*/,
         UINTVAL offset, UINTVAL byte)
 {
     unsigned char *contents;
     if (offset >= src->bufused) {
-        internal_exception(0, "set_byte past the end of the buffer");
+        real_exception(interp, NULL, 0, "set_byte past the end of the buffer");
     }
     contents = (unsigned char *)src->strstart;
     contents[offset] = (unsigned char)byte;
@@ -397,8 +506,7 @@ get_codepoints(Interp *interp, STRING *src,
 {
     String_iter iter;
     UINTVAL start;
-    STRING *return_string = Parrot_make_COW_reference(interp,
-            src);
+    STRING * const return_string = Parrot_make_COW_reference(interp, src);
     iter_init(interp, src, &iter);
     iter.set_position(interp, &iter, offset);
     start = iter.bytepos;
@@ -452,6 +560,9 @@ get_bytes_inplace(Interp *interp, STRING *src,
         UINTVAL offset, UINTVAL count, STRING *return_string)
 {
     UNIMPL;
+    UNUSED(interp);
+    UNUSED(src);
+    UNUSED(return_string);
     return NULL;
 }
 
@@ -459,6 +570,9 @@ static void
 set_codepoints(Interp *interp, STRING *src,
         UINTVAL offset, UINTVAL count, STRING *new_codepoints)
 {
+    UNUSED(interp);
+    UNUSED(src);
+    UNUSED(new_codepoints);
     UNIMPL;
 }
 
@@ -466,6 +580,9 @@ static void
 set_bytes(Interp *interp, STRING *src,
         UINTVAL offset, UINTVAL count, STRING *new_bytes)
 {
+    UNUSED(interp);
+    UNUSED(src);
+    UNUSED(new_bytes);
     UNIMPL;
 }
 
@@ -474,12 +591,14 @@ set_bytes(Interp *interp, STRING *src,
 static void
 become_encoding(Interp *interp, STRING *src)
 {
+    UNUSED(interp);
+    UNUSED(src);
     UNIMPL;
 }
 
 
 static UINTVAL
-codepoints(Interp *interp, STRING *src)
+codepoints(Interp *interp, STRING *src /*NN*/)
 {
     String_iter iter;
     /*
@@ -493,13 +612,14 @@ codepoints(Interp *interp, STRING *src)
 }
 
 static UINTVAL
-bytes(Interp *interp, STRING *src)
+bytes(SHIM_INTERP, STRING *src /*NN*/)
+    /* PURE, WARN_UNUSED */
 {
     return src->bufused;
 }
 
 static void
-iter_init(Interp *interp, const STRING *src, String_iter *iter)
+iter_init(SHIM_INTERP, const STRING *src, String_iter *iter /*NN*/)
 {
     iter->str = src;
     iter->bytepos = iter->charpos = 0;

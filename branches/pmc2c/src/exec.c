@@ -28,7 +28,7 @@ src/exec.c - Generate an object file
 #include "exec_save.h"
 #include "parrot/compiler.h"
 
-/* HEADERIZER TARGET: include/parrot/exec.h */
+/* HEADERIZER HFILE: include/parrot/exec.h */
 
 static void exec_init(Parrot_exec_objfile_t *obj);
 static void add_data_member(Parrot_exec_objfile_t *obj, void *src, size_t len);
@@ -113,7 +113,7 @@ Parrot_exec(Interp *interp, opcode_t *pc,
     offset_fixup(obj);
     output = interp->output_file ?
         interp->output_file : "exec_output.o";
-    Parrot_exec_save(obj, output);
+    Parrot_exec_save(interp, obj, output);
 }
 
 /*
@@ -126,16 +126,16 @@ C<< obj->data_size[N] >>.
 */
 
 static void
-add_data_member(Parrot_exec_objfile_t *obj /*NN*/, void *src, size_t len)
+add_data_member(Parrot_exec_objfile_t *obj /*NN*/, void *src /*NULLOK*/, size_t len)
 {
     char *cp;
-    int *nds, i = 0;
 
     if (obj->data.size == 0) {
         obj->data.code = (char *)mem_sys_allocate(len);
         obj->data_size = (int *)mem_sys_allocate(sizeof (int));
     }
     else {
+        int *nds;
         obj->data.code = (char *)mem_sys_realloc(obj->data.code,
                                                  obj->data.size + len);
         nds = (int *)mem_sys_realloc(obj->data_size, (obj->data_count + 2) *

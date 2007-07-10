@@ -16,9 +16,21 @@ src/pmc.c - The base vtable calling functions
 #include <assert.h>
 #include "pmc.str"
 
-/* HEADERIZER TARGET: include/parrot/pmc.h */
+/* HEADERIZER HFILE: include/parrot/pmc.h */
 
-static PMC* get_new_pmc_header(Interp*, INTVAL base_type, UINTVAL flags);
+/* HEADERIZER BEGIN: static */
+
+static PMC* create_class_pmc( Interp *interp /*NN*/, INTVAL type )
+        __attribute__nonnull__(1)
+        __attribute__warn_unused_result__;
+
+static PMC* get_new_pmc_header( Interp *interp /*NN*/,
+    INTVAL base_type,
+    UINTVAL flags )
+        __attribute__nonnull__(1)
+        __attribute__warn_unused_result__;
+
+/* HEADERIZER END: static */
 
 
 PMC * PMCNULL;
@@ -58,7 +70,7 @@ type.
 PARROT_API
 PMC*
 pmc_reuse(Interp *interp /*NN*/, PMC *pmc /*NN*/, INTVAL new_type,
-          UINTVAL flags)
+          SHIM(UINTVAL flags))
 {
     INTVAL has_ext, new_flags;
     VTABLE *new_vtable;
@@ -75,28 +87,28 @@ pmc_reuse(Interp *interp /*NN*/, PMC *pmc /*NN*/, INTVAL new_type,
     {
         /* First, is the destination a singleton? No joy for us there */
         if (new_vtable->flags & VTABLE_PMC_IS_SINGLETON) {
-            internal_exception(ALLOCATION_ERROR,
+            real_exception(interp, NULL, ALLOCATION_ERROR,
                                "Parrot VM: Can't turn to a singleton type!\n");
             return NULL;
         }
 
         /* First, is the destination a constant? No joy for us there */
         if (new_vtable->flags & VTABLE_IS_CONST_FLAG) {
-            internal_exception(ALLOCATION_ERROR,
+            real_exception(interp, NULL, ALLOCATION_ERROR,
                                "Parrot VM: Can't turn to a constant type!\n");
             return NULL;
         }
 
         /* Is the source a singleton? */
         if (pmc->vtable->flags & VTABLE_PMC_IS_SINGLETON) {
-            internal_exception(ALLOCATION_ERROR,
+            real_exception(interp, NULL, ALLOCATION_ERROR,
                                "Parrot VM: Can't modify a singleton\n");
             return NULL;
         }
 
         /* Is the source constant? */
         if (pmc->vtable->flags & VTABLE_IS_CONST_FLAG) {
-            internal_exception(ALLOCATION_ERROR,
+            real_exception(interp, NULL, ALLOCATION_ERROR,
                                "Parrot VM: Can't modify a constant\n");
             return NULL;
         }
@@ -179,11 +191,12 @@ get_new_pmc_header(Interp *interp /*NN*/, INTVAL base_type, UINTVAL flags)
          *
          * - singletons are created in the constant pmc pool
          */
-        pmc = (PMC *)(vtable->get_pointer)(interp, NULL);
+        PMC *pmc = (PMC *)(vtable->get_pointer)(interp, NULL);
         /* LOCK */
         if (!pmc) {
             pmc = new_pmc_header(interp, PObj_constant_FLAG);
             pmc->vtable = vtable;
+            pmc->real_self = pmc;
             VTABLE_set_pointer(interp, pmc, pmc);
         }
         return pmc;
@@ -218,12 +231,13 @@ get_new_pmc_header(Interp *interp /*NN*/, INTVAL base_type, UINTVAL flags)
 
     pmc = new_pmc_header(interp, flags);
     if (!pmc) {
-        internal_exception(ALLOCATION_ERROR,
+        real_exception(interp, NULL, ALLOCATION_ERROR,
                 "Parrot VM: PMC allocation failed!\n");
         return NULL;
     }
 
     pmc->vtable = vtable;
+    pmc->real_self = pmc;
 
 #if GC_VERBOSE
     if (Interp_flags_TEST(interp, PARROT_TRACE_FLAG)) {
@@ -341,7 +355,7 @@ pmc_register(Interp* interp /*NN*/, STRING *name)
         return type;
     }
     if (type < enum_type_undef) {
-        internal_exception(1, "native type with name '%s' already exists - "
+        real_exception(interp, NULL, 1, "native type with name '%s' already exists - "
                 "can't register PMC", data_types[type].name);
         return 0;
     }
@@ -401,6 +415,7 @@ pmc_type_p(Interp* interp /*NN*/, PMC *name /*NN*/)
 
 static PMC*
 create_class_pmc(Interp *interp /*NN*/, INTVAL type)
+    /* WARN_UNUSED */
 {
     /*
      * class interface - a PMC is its own class
@@ -426,8 +441,11 @@ create_class_pmc(Interp *interp /*NN*/, INTVAL type)
          */
         Small_Object_Pool * const ext_pool =
             interp->arena_base->pmc_ext_pool;
-        if (PMC_sync(_class))
+        if (PMC_sync(_class)) {
+            MUTEX_DESTROY(PMC_sync(_class)->pmc_lock);
             mem_internal_free(PMC_sync(_class));
+            PMC_sync(_class) = NULL;
+        }
         ext_pool->add_free_object(interp, ext_pool, _class->pmc_ext);
     }
     _class->pmc_ext = NULL;
@@ -516,17 +534,12 @@ PARROT_API
 void
 dod_register_pmc(Interp* interp /*NN*/, PMC* pmc)
 {
-    PMC *registry;
     /* Better not trigger a DOD run with a potentially unanchored PMC */
     Parrot_block_DOD(interp);
 
-    if (!interp->DOD_registry) {
-        registry = interp->DOD_registry =
-            pmc_new(interp, enum_class_AddrRegistry);
-    }
-    else
-        registry = interp->DOD_registry;
-    VTABLE_set_pmc_keyed(interp, registry, pmc, PMCNULL);
+    if (!interp->DOD_registry)
+        interp->DOD_registry = pmc_new(interp, enum_class_AddrRegistry);
+    VTABLE_set_pmc_keyed(interp, interp->DOD_registry, pmc, PMCNULL);
     Parrot_unblock_DOD(interp);
 
 }
@@ -565,9 +578,10 @@ Parrot_create_pmc_proxy(Interp* interp /*NN*/, int type_num)
     Parrot_PMCProxy *proxy_info;
 
     /* Ensure that it's a valid type number. */
-    if (type_num > interp->n_vtable_max || type_num < 0)
-        internal_exception(1,
+    if (type_num > interp->n_vtable_max || type_num < 0) {
+        real_exception(interp, NULL, 1,
             "Attempt to create PMC Proxy for invalid type number!");
+    }
 
     /* Create PMC proxy object and set up number, name and namespcae. */
     proxy = pmc_new(interp, enum_class_PMCProxy);

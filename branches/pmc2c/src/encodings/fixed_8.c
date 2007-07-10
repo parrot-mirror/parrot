@@ -15,27 +15,108 @@ This file implements the encoding functions for fixed-width 8-bit codepoints
 #include "parrot/parrot.h"
 #include "fixed_8.h"
 
-/* HEADERIZER TARGET: src/encodings/fixed_8.h */
+/* HEADERIZER HFILE: src/encodings/fixed_8.h */
 
-static UINTVAL get_codepoint(Interp *interp, const STRING *source_string, UINTVAL offset);
-static void set_codepoint(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL codepoint);
-static UINTVAL get_byte(Interp *interp, const STRING *source_string, UINTVAL offset);
-static void set_byte(Interp *interp, const STRING *source_string, UINTVAL offset, UINTVAL byte);
-static STRING *get_codepoints(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count);
-static STRING *get_bytes(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count);
-static STRING *get_bytes_inplace(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *dest_string);
-static void set_codepoints(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *new_codepoints);
-static void set_bytes(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *new_bytes);
-static void become_encoding(Interp *interp, STRING *source_string);
-static UINTVAL codepoints(Interp *interp, STRING *source_string);
-static UINTVAL bytes(Interp *interp, STRING *source_string);
+/* HEADERIZER BEGIN: static */
 
-#define UNIMPL internal_exception(UNIMPLEMENTED, "unimpl fixed_8")
+static void become_encoding( Interp *interp, STRING *source_string );
+static UINTVAL bytes( Interp *interp, STRING *source_string /*NN*/ )
+        __attribute__nonnull__(2);
+
+static UINTVAL codepoints( Interp *interp, STRING *source_string /*NN*/ )
+        __attribute__nonnull__(2);
+
+static UINTVAL fixed8_get_next( Interp *interp /*NN*/,
+    String_iter *iter /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void fixed8_set_next( Interp *interp /*NN*/,
+    String_iter *iter /*NN*/,
+    UINTVAL c )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void fixed8_set_position( Interp *interp,
+    String_iter *iter /*NN*/,
+    UINTVAL pos )
+        __attribute__nonnull__(2);
+
+static UINTVAL get_byte( Interp *interp,
+    const STRING *source_string /*NN*/,
+    UINTVAL offset )
+        __attribute__nonnull__(2);
+
+static STRING * get_bytes( Interp *interp,
+    STRING *source_string /*NN*/,
+    UINTVAL offset,
+    UINTVAL count )
+        __attribute__nonnull__(2);
+
+static STRING * get_bytes_inplace( Interp *interp,
+    STRING *source_string,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *return_string /*NN*/ )
+        __attribute__nonnull__(5);
+
+static UINTVAL get_codepoint( Interp *interp,
+    const STRING *source_string /*NN*/,
+    UINTVAL offset )
+        __attribute__nonnull__(2);
+
+static STRING * get_codepoints( Interp *interp,
+    STRING *source_string /*NN*/,
+    UINTVAL offset,
+    UINTVAL count )
+        __attribute__nonnull__(2);
+
+static STRING * get_codepoints_inplace( Interp *interp,
+    STRING *source_string,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *dest_string /*NN*/ )
+        __attribute__nonnull__(5);
+
+static void iter_init( Interp *interp, const STRING *src, String_iter *iter );
+static void set_byte( Interp *interp,
+    const STRING *source_string /*NN*/,
+    UINTVAL offset,
+    UINTVAL byte )
+        __attribute__nonnull__(2);
+
+static void set_bytes( Interp *interp,
+    STRING *source_string /*NN*/,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *new_bytes /*NN*/ )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(5);
+
+static void set_codepoint( Interp *interp,
+    STRING *source_string,
+    UINTVAL offset,
+    UINTVAL codepoint );
+
+static void set_codepoints( Interp *interp,
+    STRING *source_string /*NN*/,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *new_codepoints )
+        __attribute__nonnull__(2);
+
+static STRING * to_encoding( Interp *interp, STRING *src, STRING *dest );
+/* HEADERIZER END: static */
+
+#define UNIMPL real_exception(interp, NULL, UNIMPLEMENTED, "unimpl fixed_8")
 
 static STRING *
 to_encoding(Interp *interp, STRING *src, STRING *dest)
 {
     UNIMPL;
+    UNUSED(interp);
+    UNUSED(src);
+    UNUSED(dest);
     return NULL;
 }
 
@@ -57,11 +138,11 @@ set_codepoint(Interp *interp, STRING *source_string,
 }
 
 static UINTVAL
-get_byte(Interp *interp, const STRING *source_string, UINTVAL offset)
+get_byte(Interp *interp, const STRING *source_string /*NN*/, UINTVAL offset)
 {
     unsigned char *contents = (unsigned char *)source_string->strstart;
     if (offset >= source_string->bufused) {
-/*        internal_exception(0,
+/*        real_exception(interp, NULL, 0,
                 "get_byte past the end of the buffer (%i of %i)",
                 offset, source_string->bufused);*/
         return 0;
@@ -70,12 +151,12 @@ get_byte(Interp *interp, const STRING *source_string, UINTVAL offset)
 }
 
 static void
-set_byte(Interp *interp, const STRING *source_string,
+set_byte(Interp *interp, const STRING *source_string /*NN*/,
         UINTVAL offset, UINTVAL byte)
 {
     unsigned char *contents;
     if (offset >= source_string->bufused) {
-        internal_exception(0, "set_byte past the end of the buffer");
+        real_exception(interp, NULL, 0, "set_byte past the end of the buffer");
     }
     contents = (unsigned char *)source_string->strstart;
     contents[offset] = (unsigned char)byte;
@@ -83,20 +164,20 @@ set_byte(Interp *interp, const STRING *source_string,
 
 /* Delegate to get_bytes */
 static STRING *
-get_codepoints(Interp *interp, STRING *source_string,
+get_codepoints(Interp *interp, STRING *source_string /*NN*/,
         UINTVAL offset, UINTVAL count)
 {
-    STRING *return_string = get_bytes(interp, source_string,
+    STRING * const return_string = get_bytes(interp, source_string,
             offset, count);
     return_string->charset = source_string->charset;
     return return_string;
 }
 
 static STRING *
-get_bytes(Interp *interp, STRING *source_string,
+get_bytes(Interp *interp, STRING *source_string /*NN*/,
         UINTVAL offset, UINTVAL count)
 {
-    STRING *return_string = Parrot_make_COW_reference(interp,
+    STRING * const return_string = Parrot_make_COW_reference(interp,
             source_string);
     return_string->encoding = source_string->encoding;
     return_string->charset = source_string->charset;
@@ -114,7 +195,7 @@ get_bytes(Interp *interp, STRING *source_string,
 /* Delegate to get_bytes */
 static STRING *
 get_codepoints_inplace(Interp *interp, STRING *source_string,
-        UINTVAL offset, UINTVAL count, STRING *dest_string)
+        UINTVAL offset, UINTVAL count, STRING *dest_string /*NN*/)
 {
 
     return get_bytes_inplace(interp, source_string, offset,
@@ -123,7 +204,7 @@ get_codepoints_inplace(Interp *interp, STRING *source_string,
 
 static STRING *
 get_bytes_inplace(Interp *interp, STRING *source_string,
-        UINTVAL offset, UINTVAL count, STRING *return_string)
+        UINTVAL offset, UINTVAL count, STRING *return_string /*NN*/)
 {
     Parrot_reuse_COW_reference(interp, source_string, return_string);
 
@@ -138,15 +219,15 @@ get_bytes_inplace(Interp *interp, STRING *source_string,
 
 /* Delegate to set_bytes */
 static void
-set_codepoints(Interp *interp, STRING *source_string,
+set_codepoints(Interp *interp, STRING *source_string /*NN*/,
         UINTVAL offset, UINTVAL count, STRING *new_codepoints)
 {
-    set_bytes(interp, source_string, offset, count, new_codepoints);
+    set_bytes(interp, source_string, offset, count, new_codepoints /*NN*/);
 }
 
 static void
-set_bytes(Interp *interp, STRING *source_string,
-        UINTVAL offset, UINTVAL count, STRING *new_bytes)
+set_bytes(Interp *interp, STRING *source_string /*NN*/,
+        UINTVAL offset, UINTVAL count, STRING *new_bytes /*NN*/)
 {
     string_replace(interp, source_string, offset, count, new_bytes, NULL);
 }
@@ -156,18 +237,20 @@ set_bytes(Interp *interp, STRING *source_string,
 static void
 become_encoding(Interp *interp, STRING *source_string)
 {
+    UNUSED(interp);
+    UNUSED(source_string);
     UNIMPL;
 }
 
 
 static UINTVAL
-codepoints(Interp *interp, STRING *source_string)
+codepoints(Interp *interp, STRING *source_string /*NN*/)
 {
     return bytes(interp, source_string);
 }
 
 static UINTVAL
-bytes(Interp *interp, STRING *source_string)
+bytes(SHIM_INTERP, STRING *source_string /*NN*/)
 {
     return source_string->bufused;
 }
@@ -177,22 +260,22 @@ bytes(Interp *interp, STRING *source_string)
  */
 
 static UINTVAL
-fixed8_get_next(Interp *interp, String_iter *iter)
+fixed8_get_next(Interp *interp /*NN*/, String_iter *iter /*NN*/)
 {
-    UINTVAL c = get_byte(interp, iter->str, iter->charpos++);
+    const UINTVAL c = get_byte(interp, iter->str, iter->charpos++);
     iter->bytepos++;
     return c;
 }
 
 static void
-fixed8_set_next(Interp *interp, String_iter *iter, UINTVAL c)
+fixed8_set_next(Interp *interp /*NN*/, String_iter *iter /*NN*/, UINTVAL c)
 {
     set_byte(interp, iter->str, iter->charpos++, c);
     iter->bytepos++;
 }
 
 static void
-fixed8_set_position(Interp *interp, String_iter *iter, UINTVAL pos)
+fixed8_set_position(SHIM_INTERP, String_iter *iter /*NN*/, UINTVAL pos)
 {
     iter->bytepos = iter->charpos = pos;
     assert(pos <= PObj_buflen(iter->str));
@@ -200,7 +283,7 @@ fixed8_set_position(Interp *interp, String_iter *iter, UINTVAL pos)
 
 
 static void
-iter_init(Interp *interp, const STRING *src, String_iter *iter)
+iter_init(SHIM_INTERP, const STRING *src, String_iter *iter)
 {
     iter->str = src;
     iter->bytepos = iter->charpos = 0;

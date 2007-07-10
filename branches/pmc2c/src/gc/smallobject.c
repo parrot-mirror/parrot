@@ -18,7 +18,35 @@ Handles the accessing of small object pools (header pools).
 #include "parrot/smallobject.h"
 #include <assert.h>
 
-/* HEADERIZER TARGET: include/parrot/smallobject.h */
+/* HEADERIZER HFILE: include/parrot/smallobject.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void gc_ms_add_free_object( Interp *interp,
+    Small_Object_Pool *pool /*NN*/,
+    void *to_add /*NN*/ )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static void gc_ms_alloc_objects( Interp *interp /*NN*/,
+    Small_Object_Pool *pool /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void * gc_ms_get_free_object( Interp *interp,
+    Small_Object_Pool *pool /*NN*/ )
+        __attribute__nonnull__(2);
+
+static void gc_ms_pool_init( Interp *interp, Small_Object_Pool *pool /*NN*/ )
+        __attribute__nonnull__(2);
+
+static void more_traceable_objects( Interp *interp /*NN*/,
+    Small_Object_Pool *pool /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+/* HEADERIZER END: static */
+
 
 #define GC_DEBUG_REPLENISH_LEVEL_FACTOR        0.0
 #define GC_DEBUG_UNITS_PER_ALLOC_GROWTH_FACTOR 1
@@ -120,10 +148,9 @@ Add an unused object back to the free pool for later reuse.
 */
 
 static void
-gc_ms_add_free_object(Interp *interp, Small_Object_Pool *pool /*NN*/,
-                      void   *to_add)
+gc_ms_add_free_object(SHIM_INTERP, Small_Object_Pool *pool /*NN*/,
+                      void *to_add /*NN*/)
 {
-    UNUSED(interp);
     *(void **)to_add = pool->free_list;
     pool->free_list  = to_add;
 }
@@ -315,10 +342,8 @@ gc_pmc_ext_pool_init(Small_Object_Pool *pool /*NN*/)
 }
 
 static void
-gc_ms_pool_init(Interp *interp, Small_Object_Pool *pool /*NN*/)
+gc_ms_pool_init(SHIM_INTERP, Small_Object_Pool *pool /*NN*/)
 {
-    UNUSED(interp);
-
     pool->add_free_object = gc_ms_add_free_object;
     pool->get_free_object = gc_ms_get_free_object;
     pool->alloc_objects   = gc_ms_alloc_objects;

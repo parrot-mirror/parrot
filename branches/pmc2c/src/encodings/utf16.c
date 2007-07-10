@@ -17,7 +17,80 @@ UTF-16 encoding with the help of the ICU library.
 #include "parrot/parrot.h"
 #include "../unicode.h"
 
-/* HEADERIZER TARGET: src/encodings/utf16.h */
+/* HEADERIZER HFILE: src/encodings/utf16.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void become_encoding( Interp *interp, STRING *src );
+static UINTVAL bytes( Interp *interp, STRING *src );
+static UINTVAL codepoints( Interp *interp, STRING *src );
+static UINTVAL get_byte( Interp *interp,
+    const STRING *src /*NN*/,
+    UINTVAL offset )
+        __attribute__nonnull__(2);
+
+static STRING * get_bytes( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count );
+
+static STRING * get_bytes_inplace( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *return_string );
+
+static UINTVAL get_codepoint( Interp *interp,
+    const STRING *src,
+    UINTVAL offset );
+
+static STRING * get_codepoints( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count );
+
+static STRING * get_codepoints_inplace( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *return_string );
+
+static void iter_init( Interp *interp, const STRING *src, String_iter *iter );
+static void set_byte( Interp *interp,
+    const STRING *src,
+    UINTVAL offset,
+    UINTVAL byte );
+
+static void set_bytes( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *new_bytes );
+
+static void set_codepoint( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL codepoint );
+
+static void set_codepoints( Interp *interp,
+    STRING *src,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *new_codepoints );
+
+static STRING * to_encoding( Interp *interp,
+    STRING *src /*NN*/,
+    STRING *dest )
+        __attribute__nonnull__(2)
+        __attribute__warn_unused_result__;
+
+static UINTVAL utf16_decode_and_advance( Interp *interp, String_iter *i );
+static void utf16_encode_and_advance( Interp *interp,
+    String_iter *i,
+    UINTVAL c );
+
+static void utf16_set_position( Interp *interp, String_iter *i, UINTVAL n );
+/* HEADERIZER END: static */
 
 #include "utf16.h"
 
@@ -26,7 +99,7 @@ UTF-16 encoding with the help of the ICU library.
 #  include <unicode/ustring.h>
 #endif
 
-#define UNIMPL internal_exception(UNIMPLEMENTED, "unimpl utf16")
+#define UNIMPL real_exception(interp, NULL, UNIMPLEMENTED, "unimpl utf16")
 
 
 static void iter_init(Interp *, const STRING *src, String_iter *iter);
@@ -87,7 +160,7 @@ to_encoding(Interp *interp, STRING *src /*NN*/, STRING *dest)
     }
     else {
         Parrot_reallocate_string(interp, dest, sizeof (UChar) * src_len);
-        p = dest->strstart;
+        p = (UChar *)dest->strstart;
     }
     if (src->charset == Parrot_iso_8859_1_charset_ptr ||
             src->charset == Parrot_ascii_charset_ptr) {
@@ -109,7 +182,7 @@ to_encoding(Interp *interp, STRING *src /*NN*/, STRING *dest)
                 result->bufused = dest_len * sizeof (UChar);
                 Parrot_reallocate_string(interp, dest,
                                          sizeof (UChar) * dest_len);
-                p = dest->strstart;
+                p = (UChar *)dest->strstart;
             }
             u_strFromUTF8(p, dest_len,
                     &dest_len, src->strstart, src->bufused, &err);
@@ -166,7 +239,7 @@ get_byte(Interp *interp, const STRING *src /*NN*/, UINTVAL offset)
 {
     unsigned char *contents = (unsigned char *)src->strstart;
     if (offset >= src->bufused) {
-/*        internal_exception(0,
+/*        real_exception(interp, NULL, 0,
                 "get_byte past the end of the buffer (%i of %i)",
                 offset, src->bufused);*/
         return 0;
@@ -180,7 +253,7 @@ set_byte(Interp *interp, const STRING *src,
 {
     unsigned char *contents;
     if (offset >= src->bufused) {
-        internal_exception(0, "set_byte past the end of the buffer");
+        real_exception(interp, NULL, 0, "set_byte past the end of the buffer");
     }
     contents = (unsigned char *)src->strstart;
     contents[offset] = (unsigned char)byte;

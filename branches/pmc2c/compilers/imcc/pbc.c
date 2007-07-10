@@ -7,7 +7,7 @@
 #include "pbc.h"
 #include "parrot/packfile.h"
 
-/* HEADERIZER TARGET: compilers/imcc/pbc.h */
+/* HEADERIZER HFILE: compilers/imcc/pbc.h */
 
 /*
  * pbc.c
@@ -69,28 +69,109 @@ static struct globals {
 
 
 /* HEADERIZER BEGIN: static */
-static int add_const_str(Interp *, const SymReg *r);
 
-static opcode_t build_key(Interp *interp, SymReg *reg);
+static void add_1_const( Interp *interp /*NN*/, SymReg *r /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int add_const_key( Interp *interp,
+    opcode_t key[],
+    int size,
+    char *s_key );
+
+static int add_const_num( Interp *interp /*NN*/, const char *buf )
+        __attribute__nonnull__(1);
+
+static int add_const_pmc_sub( Interp *interp, SymReg *r, int offs, int end );
+static int add_const_str( Interp *interp /*NN*/, const SymReg *r /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static opcode_t build_key( Interp *interp /*NN*/, SymReg *key_reg /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void constant_folding( Interp *interp, IMC_Unit *unit /*NN*/ )
+        __attribute__nonnull__(2);
+
+static PMC* create_lexinfo( Interp *interp,
+    IMC_Unit *unit,
+    PMC *sub,
+    int need_lex );
+
+static subs_t * find_global_label(
+    const char *name /*NN*/,
+    const subs_t *sym /*NN*/,
+    int *pc /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static PMC* find_outer( Interp *interp, IMC_Unit *unit /*NN*/ )
+        __attribute__nonnull__(2);
+
+static void fixup_globals( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1);
+
+static int get_codesize( Interp *interp /*NN*/,
+    IMC_Unit *unit /*NN*/,
+    int *src_lines /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__warn_unused_result__;
+
+static int get_old_size( Interp *interp /*NN*/, int *ins_line /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void imcc_globals_destroy( Interp *interp, int ex, void *param );
+static void make_new_sub( IMC_Unit *unit );
+static void make_pmc_const( Interp *interp /*NN*/, SymReg *r /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static PMC* mk_multi_sig( Interp *interp /*NN*/, SymReg *r /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int old_blocks( void )
+        __attribute__warn_unused_result__;
+
+static const char * slice_deb( int bits )
+        __attribute__const__
+        __attribute__warn_unused_result__;
+
+static void store_fixup( Interp *interp,
+    SymReg *r /*NN*/,
+    int pc,
+    int offset )
+        __attribute__nonnull__(2);
+
+static void store_key_const( const char *str /*NN*/, int idx )
+        __attribute__nonnull__(1);
+
+static void store_sub_size( size_t size, size_t ins_line );
+static void verify_signature( Interp *interp /*NN*/,
+    const Instruction *ins /*NN*/,
+    opcode_t *pc )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 /* HEADERIZER END: static */
 
 static void
-imcc_globals_destroy(Interp *interp, int ex, void *param)
+imcc_globals_destroy(SHIM_INTERP, SHIM(int ex), SHIM(void *param))
 {
     cs_t   *cs, *prev_cs;
-    subs_t *s,  *prev_s;
-
-    UNUSED(ex);
-    UNUSED(param);
-    UNUSED(interp);
 
     cs = globals.cs;
 
     while (cs) {
-        s = cs->subs;
+        subs_t *s = cs->subs;
 
         while (s) {
-            prev_s = s->prev;
+            subs_t * const prev_s = s->prev;
             clear_sym_hash(&s->fixup);
             mem_sys_free(s);
             s      = prev_s;
@@ -106,12 +187,9 @@ imcc_globals_destroy(Interp *interp, int ex, void *param)
 }
 
 int
-e_pbc_open(Interp *interp, void *param)
+e_pbc_open(Interp *interp, SHIM(void *param))
 {
     cs_t *cs;
-
-    /* make a new code segment */
-    UNUSED(param);
 
     /* register cleanup code */
     if (!globals.cs)
@@ -286,6 +364,7 @@ store_key_const(const char *str /*NN*/, int idx)
  * return size in ops */
 static int
 get_codesize(Interp *interp /*NN*/, IMC_Unit *unit /*NN*/, int *src_lines /*NN*/)
+    /* WARN_UNUSED */
 {
     Instruction *ins;
     int          code_size;
@@ -649,8 +728,6 @@ find_outer(Interp *interp, IMC_Unit *unit /*NN*/)
     size_t  len;
     PMC    *current;
     STRING *cur_name;
-
-    UNUSED(interp);
 
     if (!unit->outer)
         return NULL;
@@ -1024,7 +1101,6 @@ IMCC_int_from_reg(Interp *interp, const SymReg *r /*NN*/)
 {
     INTVAL i;
 
-    UNUSED(interp);
     errno = 0;
 
     if (r->type & VT_CONSTP)
@@ -1174,11 +1250,8 @@ constant_folding(Interp *interp, IMC_Unit *unit /*NN*/)
 }
 
 int
-e_pbc_new_sub(Interp *interp, void *param, IMC_Unit *unit /*NN*/)
+e_pbc_new_sub(SHIM_INTERP, SHIM(void *param), IMC_Unit *unit /*NN*/)
 {
-    UNUSED(param);
-    UNUSED(interp);
-
     if (!unit->instructions)
         return 0;
 
@@ -1189,12 +1262,10 @@ e_pbc_new_sub(Interp *interp, void *param, IMC_Unit *unit /*NN*/)
 }
 
 int
-e_pbc_end_sub(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/)
+e_pbc_end_sub(Interp *interp /*NN*/, SHIM(void *param), IMC_Unit *unit /*NN*/)
 {
     Instruction *ins;
     int          pragma;
-
-    UNUSED(param);
 
     if (!unit->instructions)
         return 0;
@@ -1293,7 +1364,7 @@ verify_signature(Interp *interp /*NN*/, const Instruction *ins /*NN*/, opcode_t 
 
 /* now let the fun begin, actually emit code for one ins */
 int
-e_pbc_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/, const Instruction *ins /*NN*/)
+e_pbc_emit(Interp *interp /*NN*/, SHIM(void *param), IMC_Unit *unit /*NN*/, const Instruction *ins /*NN*/)
 {
     int        op, i;
     int        ok = 0;
@@ -1309,8 +1380,6 @@ e_pbc_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/, const Inst
 #if IMC_TRACE_HIGH
     PIO_eprintf(NULL, "e_pbc_emit\n");
 #endif
-
-    UNUSED(param);
 
     /* first instruction, do initialisation ... */
     if (ins == unit->instructions) {
@@ -1416,7 +1485,7 @@ e_pbc_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/, const Inst
         op = (opcode_t)ins->opnum;
 
         /* add PIC idx */
-        if (parrot_PIC_op_is_cached(interp, op)) {
+        if (parrot_PIC_op_is_cached(op)) {
             const size_t offs = pc - interp->code->base.data;
             /*
              * for pic_idx fitting into a short, we could
@@ -1513,9 +1582,8 @@ e_pbc_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit /*NN*/, const Inst
 }
 
 int
-e_pbc_close(Interp *interp /*NN*/, void *param)
+e_pbc_close(Interp *interp /*NN*/, SHIM(void *param))
 {
-    UNUSED(param);
     fixup_globals(interp);
 
     return 0;
