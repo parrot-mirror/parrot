@@ -66,6 +66,7 @@ if ( $action{gen_c} ) {
 }
 
 __END__
+
 =head1 NAME
 
 tools/build/pmc2c.pl - PMC definition to C compiler
@@ -123,6 +124,7 @@ after libname and will initialize all PMCs in the library.
 
 =back
 
+=cut
 
 # Local Variables:
 #   mode: cperl

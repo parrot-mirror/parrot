@@ -56,6 +56,7 @@ $(C_BUILTIN)/cd.pir \
 $(C_BUILTIN)/expr.pir \
 $(C_BUILTIN)/list.pir \
 $(C_BUILTIN)/return.pir \
+runtime/hacks.pir \
 runtime/conversions.pir \
 runtime/list_to_string.pir \
 runtime/string_to_list.pir \
@@ -128,9 +129,9 @@ runtime/tcllib.pbc: $(PARROT) runtime/tcllib.pir runtime/builtins.pir $(CLASSES)
 	$(PARROT) --output=runtime/tcllib.pbc runtime/tcllib.pir
 
 tclsh: $(PARROT) tcl.pbc
-	$(PARROT) --gc-debug tcl.pbc
+	$(PARROT) -G tcl.pbc
 
-test:	tcl.pbc
+test: tcl.pbc
 	prove -r t
 
 # Can only run a few of these cleanly with test_more at the moment.
@@ -322,7 +323,8 @@ $(GENERATED_INLINES) \
 "$(OPSDIR)/*.ilk" \
 "$(OPSDIR)/*.lib" \
 "$(OPSDIR)/*.pdb" \
-"$(TCL_LIB)/*.pir"
+"$(TCL_LIB)/*.pir" \
+lib/*.pre_c
 
 # that last line should be cleaned up for x-platform.
 

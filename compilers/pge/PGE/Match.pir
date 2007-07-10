@@ -50,9 +50,9 @@ the current position of C<mob>.
   newfrom_1:
     $I0 = isa mob, 'PGE::Match'
     if $I0 goto newfrom_mob
-    target = new .String
+    target = new 'String'
     assign target, mob
-    from = new .Integer
+    from = new 'Integer'
     from = -1
     if has_grammar goto new_me
     grammar = 'PGE::Match'
@@ -65,12 +65,10 @@ the current position of C<mob>.
     from = getattribute mob, '$.pos'
     from = clone from
   new_me:
-    $I0 = find_type grammar
-    if $I0 == 0 goto err_grammar
-    me = new $I0
+    me = new grammar
     setattribute me, '$.target', target
     setattribute me, '$.from', from
-    pos = new .Integer
+    pos = new 'Integer'
     pos = -1
     setattribute me, '$.pos', pos
     if has_fromd == 0 goto end
@@ -78,15 +76,6 @@ the current position of C<mob>.
     from = fromd
   end:
     .return (me, target, from, pos)
-  err_grammar:
-    .local pmc ex
-    .local string message
-    ex = new .Exception
-    message = "Class '"
-    message .= grammar
-    message .= "' not found"
-    ex['_message'] = message
-    throw ex
 .end
 
 =back
@@ -133,7 +122,7 @@ is set or implied.
     issrcmatch = isa src, 'PGE::Match'
     if issrcmatch goto target_from_src
     .local pmc target
-    target = new .String
+    target = new 'String'
     target = src
     pos = 0
     iscont = 1
@@ -184,28 +173,16 @@ is set or implied.
 
     ##   create the new match object
     .local pmc mob, mfrom, mpos
-    $I0 = find_type grammar
-    if $I0 == 0 goto err_grammar
-    mob = new $I0
+    mob = new grammar
     setattribute mob, '$.target', target
-    mfrom = new .Integer
+    mfrom = new 'Integer'
     mfrom = pos
     setattribute mob, '$.from', mfrom
-    mpos = new .Integer
+    mpos = new 'Integer'
     mpos = -1
     setattribute mob, '$.pos', mpos
 
     .return (mob, pos, target, mfrom, mpos, iscont)
-
-  err_grammar:
-    .local pmc ex
-    .local string message
-    ex = new .Exception
-    message = "Class '"
-    message .= grammar
-    message .= "' not found"
-    ex['_message'] = message
-    throw ex
 .end
 
 
@@ -347,7 +324,7 @@ then simply return the first key found.
     .return ($S0)
   first_key:
     $P0 = self.'get_hash'()
-    $P1 = new .Iterator, $P0
+    $P1 = new 'Iterator', $P0
     unless $P1 goto not_found
     $S0 = shift $P1
     .return ($S0)
@@ -374,7 +351,7 @@ the position of the match object to C<cutvalue>.
     setattribute self, '@!capt', $P0
     setattribute self, '$!result', $P0
     .local pmc iter
-    iter = new .Iterator, self
+    iter = new 'Iterator', self
   iter_loop:
     unless iter goto iter_end
     $S0 = shift iter
@@ -474,7 +451,7 @@ objects depending on the rule.
     .local pmc capt
     capt = getattribute self, '@!capt'
     unless_null capt, set_1
-    capt = new .ResizablePMCArray
+    capt = new 'ResizablePMCArray'
     setattribute self, '@!capt', capt
   set_1:
     capt[key] = val
@@ -503,7 +480,7 @@ objects depending on the rule.
     .local pmc capt
     capt = getattribute self, '@!capt'
     unless null capt goto push_1
-    capt = new .ResizablePMCArray
+    capt = new 'ResizablePMCArray'
     setattribute self, '@!capt', capt
   push_1:
     push capt, val

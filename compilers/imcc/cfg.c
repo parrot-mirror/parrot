@@ -14,18 +14,73 @@
 #include "imc.h"
 #include "optimizer.h"
 
-/* HEADERIZER TARGET: compilers/imcc/cfg.h */
+/* HEADERIZER HFILE: compilers/imcc/cfg.h */
 
 /* HEADERIZER BEGIN: static */
-static void propagate_need(Basic_block *bb, SymReg* r, int i);
-static void bb_findadd_edge(Parrot_Interp, IMC_Unit *, Basic_block*, SymReg*);
-static void mark_loop(Parrot_Interp, IMC_Unit *, const Edge*);
-static void init_basic_blocks(IMC_Unit *);
-static void analyse_life_symbol(Parrot_Interp, const IMC_Unit *, SymReg*);
-static void analyse_life_block(Parrot_Interp, Basic_block*, SymReg*);
-static void bb_add_edge(IMC_Unit *, Basic_block*, Basic_block*);
-static void bb_remove_edge(IMC_Unit *, Edge*);
-static Basic_block* make_basic_block(Interp *, IMC_Unit *, Instruction*);
+
+static void analyse_life_block( Interp *interp,
+    Basic_block* bb /*NN*/,
+    SymReg* r /*NN*/ )
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static void analyse_life_symbol(
+    Parrot_Interp interp,
+    const struct _IMC_Unit *unit /*NN*/,
+    SymReg* r )
+        __attribute__nonnull__(2);
+
+static void bb_add_edge(
+    IMC_Unit *unit /*NN*/,
+    Basic_block *from /*NN*/,
+    Basic_block *to /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static void bb_check_set_addr(
+    Parrot_Interp interp,
+    IMC_Unit * unit,
+    Basic_block *bb,
+    SymReg *label );
+
+static void bb_findadd_edge(
+    Parrot_Interp interp,
+    IMC_Unit * unit,
+    Basic_block *from,
+    SymReg *label );
+
+static void bb_remove_edge( IMC_Unit *unit /*NN*/, Edge *edge /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int check_invoke_type( Interp *interp /*NN*/,
+    const IMC_Unit * unit,
+    const Instruction *ins /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+static void free_dominance_frontiers( IMC_Unit * unit );
+static void free_dominators( IMC_Unit *unit /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void free_edge( IMC_Unit *unit /*NN*/ )
+        __attribute__nonnull__(1);
+
+static void free_loops( IMC_Unit * unit );
+static void init_basic_blocks( IMC_Unit *unit /*NN*/ )
+        __attribute__nonnull__(1);
+
+static Basic_block* make_basic_block( Interp *interp /*NN*/,
+    IMC_Unit *unit /*NN*/,
+    Instruction* ins /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static void mark_loop( Parrot_Interp interp, IMC_Unit * unit, const Edge* e );
+static void propagate_need( Basic_block *bb, SymReg* r, int i );
+static void sort_loops( Parrot_Interp interp, IMC_Unit * unit );
 /* HEADERIZER END: static */
 
 /* Code: */
@@ -491,9 +546,7 @@ analyse_life_symbol(Parrot_Interp interp, const struct _IMC_Unit *unit /*NN*/, S
 
     for (i=0; i < unit->n_basic_blocks; i++) {
         if (r->life_info[i]->flags & LF_use) {
-            Instruction *ins, *prev;
-
-            ins = unit->bb_list[i]->start;
+            const Instruction * const ins = unit->bb_list[i]->start;
 
             /*
              * if the previous instruction (the last of the previous block)
@@ -501,7 +554,8 @@ analyse_life_symbol(Parrot_Interp interp, const struct _IMC_Unit *unit /*NN*/, S
              * allocation in the non-volatile register range
              */
             if (ins->prev) {
-                prev = ins->prev;
+                const Instruction * const prev = ins->prev;
+
                 if ((prev->type & (ITPCCSUB|ITPCCYIELD)) &&
                         prev->opnum != PARROT_OP_tailcall_p)
                     r->usage |= U_NON_VOLATILE;
@@ -548,13 +602,12 @@ free_life_info(const struct _IMC_Unit *unit /*NN*/, SymReg *r /*NN*/)
  */
 
 static void
-analyse_life_block(Parrot_Interp interp, Basic_block* bb, SymReg* r)
+analyse_life_block(Interp *interp, Basic_block* bb /*NN*/, SymReg* r /*NN*/)
 {
     Instruction* ins, *special;
     Life_range* l;
     int is_alias;
 
-    UNUSED(interp);
     l = make_life_range(r, bb->index);
 
     special = NULL;

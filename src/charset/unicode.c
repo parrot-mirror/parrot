@@ -17,7 +17,64 @@ This file implements the charset functions for unicode data
 #include "ascii.h"
 #include "tables.h"
 
-/* HEADERIZER TARGET: src/charset/unicode.h */
+/* HEADERIZER HFILE: src/charset/unicode.h */
+
+/* HEADERIZER BEGIN: static */
+
+static INTVAL compare( Interp *interp, const STRING *lhs, const STRING *rhs );
+static STRING* compose( Interp *interp, STRING *src );
+static size_t compute_hash( Interp *interp, const STRING *src, size_t seed );
+static INTVAL cs_rindex( Interp *interp,
+    STRING *source_string,
+    STRING *search_string,
+    UINTVAL offset );
+
+static STRING* decompose( Interp *interp, STRING *src );
+static void downcase( Interp *interp, STRING *src );
+static void downcase_first( Interp *interp, STRING *source_string );
+static INTVAL find_cclass( Interp *interp,
+    INTVAL flags,
+    STRING *source_string,
+    UINTVAL offset,
+    UINTVAL count );
+
+static INTVAL find_not_cclass( Interp *interp,
+    INTVAL flags,
+    STRING *source_string,
+    UINTVAL offset,
+    UINTVAL count );
+
+static STRING * get_graphemes( Interp *interp,
+    STRING *source_string,
+    UINTVAL offset,
+    UINTVAL count );
+
+static STRING * get_graphemes_inplace( Interp *interp,
+    STRING *source_string,
+    UINTVAL offset,
+    UINTVAL count,
+    STRING *dest_string );
+
+static INTVAL is_cclass( Interp *interp,
+    INTVAL flags,
+    STRING *source_string,
+    UINTVAL offset );
+
+static void set_graphemes( Interp *interp,
+    STRING *source_string,
+    UINTVAL offset,
+    UINTVAL replace_count,
+    STRING *insert_string );
+
+static STRING * string_from_codepoint( Interp *interp, UINTVAL codepoint );
+static void titlecase( Interp *interp, STRING *src );
+static void titlecase_first( Interp *interp, STRING *source_string );
+static STRING* to_charset( Interp *interp, STRING *src, STRING *dest );
+static int u_iscclass( Interp *interp, UINTVAL codepoint, INTVAL flags );
+static void upcase( Interp *interp, STRING *src );
+static void upcase_first( Interp *interp, STRING *source_string );
+static UINTVAL validate( Interp *interp, STRING *src );
+/* HEADERIZER END: static */
 
 #ifdef EXCEPTION
 #  undef EXCEPTION
@@ -89,21 +146,21 @@ compose(Interp *interp, STRING *src)
     dest = string_make_direct(interp, NULL, src_len * sizeof (UChar),
             src->encoding, src->charset, 0);
     err = U_ZERO_ERROR;
-    dest_len = unorm_normalize(src->strstart, src_len,
+    dest_len = unorm_normalize((UChar *)src->strstart, src_len,
             UNORM_DEFAULT,      /* default is NFC */
             0,                  /* options 0 default - no specific icu
                                  * version */
-            dest->strstart, dest_len,
+            (UChar *)dest->strstart, dest_len,
             &err);
     dest->bufused = dest_len * sizeof (UChar);
     if (!U_SUCCESS(err)) {
         err = U_ZERO_ERROR;
         Parrot_reallocate_string(interp, dest, dest->bufused);
-        dest_len = unorm_normalize(src->strstart, src_len,
+        dest_len = unorm_normalize((UChar *)src->strstart, src_len,
                 UNORM_DEFAULT,      /* default is NFC */
                 0,                  /* options 0 default - no specific
                                      * icu version */
-                dest->strstart, dest_len,
+                (UChar *)dest->strstart, dest_len,
                 &err);
         assert(U_SUCCESS(err));
         dest->bufused = dest_len * sizeof (UChar);
@@ -167,7 +224,7 @@ upcase(Interp *interp, STRING *src)
      *  TODO downcase, titlecase
      */
     needed = u_strToUpper(NULL, 0,
-            src->strstart, src_len,
+            (UChar *)src->strstart, src_len,
             NULL,       /* locale = default */
             &err);
     if (needed > dest_len) {
@@ -175,8 +232,8 @@ upcase(Interp *interp, STRING *src)
         dest_len = needed;
     }
     err = U_ZERO_ERROR;
-    dest_len = u_strToUpper(src->strstart, dest_len,
-            src->strstart, src_len,
+    dest_len = u_strToUpper((UChar *)src->strstart, dest_len,
+            (UChar *)src->strstart, src_len,
             NULL,       /* locale = default */
             &err);
     assert(U_SUCCESS(err));
@@ -220,16 +277,16 @@ u_strToLower(UChar *dest, int32_t destCapacity,
      */
     err = U_ZERO_ERROR;
     src_len = src->bufused / sizeof (UChar);
-    dest_len = u_strToLower(src->strstart, src_len,
-            src->strstart, src_len,
+    dest_len = u_strToLower((UChar *)src->strstart, src_len,
+            (UChar *)src->strstart, src_len,
             NULL,       /* locale = default */
             &err);
     src->bufused = dest_len * sizeof (UChar);
     if (!U_SUCCESS(err)) {
         err = U_ZERO_ERROR;
         Parrot_reallocate_string(interp, src, src->bufused);
-        dest_len = u_strToLower(src->strstart, dest_len,
-                src->strstart, src_len,
+        dest_len = u_strToLower((UChar *)src->strstart, dest_len,
+                (UChar *)src->strstart, src_len,
                 NULL,       /* locale = default */
                 &err);
         assert(U_SUCCESS(err));
@@ -267,8 +324,8 @@ u_strToTitle(UChar *dest, int32_t destCapacity,
      */
     err = U_ZERO_ERROR;
     src_len = src->bufused / sizeof (UChar);
-    dest_len = u_strToTitle(src->strstart, src_len,
-            src->strstart, src_len,
+    dest_len = u_strToTitle((UChar *)src->strstart, src_len,
+            (UChar *)src->strstart, src_len,
             NULL,       /* default titleiter */
             NULL,       /* locale = default */
             &err);
@@ -276,8 +333,8 @@ u_strToTitle(UChar *dest, int32_t destCapacity,
     if (!U_SUCCESS(err)) {
         err = U_ZERO_ERROR;
         Parrot_reallocate_string(interp, src, src->bufused);
-        dest_len = u_strToTitle(src->strstart, dest_len,
-                src->strstart, src_len,
+        dest_len = u_strToTitle((UChar *)src->strstart, dest_len,
+                (UChar *)src->strstart, src_len,
                 NULL, NULL,
                 &err);
         assert(U_SUCCESS(err));

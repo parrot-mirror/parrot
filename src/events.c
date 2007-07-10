@@ -21,7 +21,8 @@ dispatches these to one or all interpreters.
 #include "parrot/events.h"
 #include <assert.h>
 
-/* HEADERIZER TARGET: include/parrot/events.h */
+/* HEADERIZER HFILE: include/parrot/events.h */
+/* HEADERIZER NONE: static */
 
 /*
  * event debugging stuff - turn it off before running tests
@@ -549,7 +550,6 @@ Broadcast an event.
 void
 Parrot_schedule_broadcast_qentry(struct QUEUE_ENTRY *entry)
 {
-    Interp *interp;
     parrot_event * const event = (parrot_event *)entry->data;
 
     switch (event->type) {
@@ -571,6 +571,8 @@ Parrot_schedule_broadcast_qentry(struct QUEUE_ENTRY *entry)
             switch (event->u.signal) {
                 case SIGHUP:
                 case SIGINT:
+                    {
+                    Interp *interp;
                     if (n_interpreters) {
                         size_t i;
                         LOCK(interpreter_array_mutex);
@@ -586,6 +588,7 @@ Parrot_schedule_broadcast_qentry(struct QUEUE_ENTRY *entry)
                     interp = interpreter_array[0];
                     Parrot_schedule_interp_qentry(interp, entry);
                     edebug((stderr, "deliver SIGINT to 0\n"));
+                    }
                     break;
                 default:
                     mem_sys_free(entry);
@@ -655,10 +658,9 @@ io_thread_ready_rd(pending_io_events *ios, int ready_rd)
 }
 
 static void*
-io_thread(void *data)
+io_thread(SHIM(void *data))
 {
-    QUEUE *event_q = (QUEUE *) data;
-    fd_set rfds, wfds, act_rfds, act_wfds;
+    fd_set act_rfds, act_wfds;
     int n_highest, i;
     int  running = 1;
     pending_io_events ios;
@@ -670,7 +672,6 @@ io_thread(void *data)
 
     FD_ZERO(&act_rfds);
     FD_ZERO(&act_wfds);
-    UNUSED(event_q);
     /*
      * Watch the reader end of the pipe for messages
      */
@@ -682,10 +683,10 @@ io_thread(void *data)
      */
     Parrot_unblock_signal(SIGHUP);
     while (running) {
-        int retval;
-        rfds = act_rfds;
-        wfds = act_wfds;
-        retval = select(n_highest, &rfds, &wfds, NULL, NULL);
+        fd_set rfds = act_rfds;
+        fd_set wfds = act_wfds;
+        const int retval = select(n_highest, &rfds, &wfds, NULL, NULL);
+
         switch (retval) {
             case -1:
                 if (errno == EINTR) {
@@ -784,13 +785,13 @@ Tell the IO thread to stop.
 static void
 stop_io_thread(void)
 {
+#ifndef WIN32
     io_thread_msg buf;
     /*
      * tell IO thread to stop
      */
     memset(&buf, 0, sizeof(buf));
     buf.command = IO_THR_MSG_TERMINATE;
-#ifndef WIN32
     if (write(PIPE_WRITE_FD, &buf, sizeof(buf)) != sizeof(buf))
         internal_exception(1, "msg pipe write failed");
 #endif

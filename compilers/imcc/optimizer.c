@@ -11,7 +11,7 @@
 #include "pbc.h"
 #include "optimizer.h"
 
-/* HEADERIZER TARGET: compilers/imcc/optimizer.h */
+/* HEADERIZER HFILE: compilers/imcc/optimizer.h */
 
 
 /*
@@ -66,21 +66,69 @@
 /* buggy - turned off */
 #define  DO_LOOP_OPTIMIZATION 0
 
-static int strength_reduce(Interp *interp, IMC_Unit *);
-static int if_branch(Interp *, IMC_Unit *);
+/* HEADERIZER BEGIN: static */
 
-static int branch_branch(Interp *interp, IMC_Unit *);
-static int branch_reorg(Interp *interp, IMC_Unit *);
-static int unused_label(Interp *interp, IMC_Unit *);
-static int dead_code_remove(Interp *interp, IMC_Unit *);
-static int branch_cond_loop(Interp *interp, IMC_Unit *);
+static int _is_ins_save(
+    IMC_Unit * unit,
+    Instruction *check_ins,
+    SymReg *r,
+    int what );
 
-static int constant_propagation(Interp *interp, IMC_Unit *);
-static int used_once(Interp *, IMC_Unit *);
+static int branch_branch( Interp *interp, IMC_Unit * unit /*NN*/ )
+        __attribute__nonnull__(2);
+
+static int branch_cond_loop( Interp *interp, IMC_Unit * unit );
+static int branch_cond_loop_swap( Interp *interp,
+    IMC_Unit *unit,
+    Instruction *branch,
+    Instruction *start,
+    Instruction *cond );
+
+static int branch_reorg( Interp *interp, IMC_Unit * unit );
+static int check_clone(
+    Parrot_Interp interp,
+    IMC_Unit * unit,
+    Instruction *ins );
+
+static int clone_remove( Parrot_Interp interp, IMC_Unit * unit );
+static int constant_propagation( Interp *interp, IMC_Unit * unit );
+static int dead_code_remove( Interp *interp, IMC_Unit * unit );
+static int eval_ins( Interp *interp, char *op, size_t ops, SymReg **r );
+static Basic_block * find_outer( IMC_Unit * unit, Basic_block * blk );
+static int if_branch( Interp *interp /*NN*/, IMC_Unit *unit )
+        __attribute__nonnull__(1);
+
+static int is_ins_save(
+    Parrot_Interp interp,
+    IMC_Unit * unit,
+    Instruction *ins,
+    SymReg *r,
+    int what );
+
+static int is_invariant(
+    Parrot_Interp interp,
+    IMC_Unit * unit,
+    Instruction *ins );
+
+static int loop_one( Interp *interp /*NN*/, IMC_Unit *unit /*NN*/, int bnr )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int loop_optimization( Interp *interp, IMC_Unit * unit );
+static int max_loop_depth( IMC_Unit * unit );
+static int move_ins_out( Interp *interp,
+    IMC_Unit *unit /*NN*/,
+    Instruction **ins,
+    Basic_block *bb )
+        __attribute__nonnull__(2);
+
+static int strength_reduce( Interp *interp, IMC_Unit * unit );
+static int unused_label( Interp *interp, IMC_Unit * unit );
+static int used_once( Parrot_Interp interp, IMC_Unit * unit );
+/* HEADERIZER END: static */
 #if DO_LOOP_OPTIMIZATION
 static int loop_optimization(Interp *, IMC_Unit *);
 #endif
-static int clone_remove(Interp *, IMC_Unit *);
 
 /*
  * Handles optimizations occuring before the construction of the CFG.
@@ -637,17 +685,17 @@ eval_ins(Interp *interp, char *op, size_t ops, SymReg **r)
                 if (ops <= 2 || i) { /* fill source regs */
                     switch (r[i]->set) {
                         case 'I':
-                            REG_INT(i) =
+                            REG_INT(interp, i) =
                                 IMCC_int_from_reg(interp, r[i]);
                             break;
                         case 'N':
                             s = string_from_cstring(interp,
                                     r[i]->name, 0);
-                            REG_NUM(i) =
+                            REG_NUM(interp, i) =
                                 string_to_num(interp, s);
                             break;
                         case 'S':
-                            REG_STR(i) =
+                            REG_STR(interp, i) =
                                 IMCC_string_from_reg(interp, r[i]);
                             break;
                     }
@@ -826,10 +874,10 @@ IMCC_subst_constants(Interp *interp, IMC_Unit * unit, const char *name /*NN*/,
          */
         switch (r[0]->set) {
             case 'I':
-                sprintf(b, INTVAL_FMT, REG_INT(0));
+                sprintf(b, INTVAL_FMT, REG_INT(interp, 0));
                 break;
             case 'N':
-                sprintf(b, fmt, REG_NUM(0));
+                sprintf(b, fmt, REG_NUM(interp, 0));
                 break;
         }
         r[1] = mk_const(interp, str_dup(b), r[0]->set);
@@ -1431,7 +1479,7 @@ find_outer(IMC_Unit * unit, Basic_block * blk)
 
 /* move the instruction ins before loop in bb */
 static int
-move_ins_out(Interp *interp, IMC_Unit * unit,
+move_ins_out(Interp *interp, IMC_Unit *unit /*NN*/,
                      Instruction **ins, Basic_block *bb)
 {
     Basic_block *pred;
@@ -1442,7 +1490,6 @@ move_ins_out(Interp *interp, IMC_Unit * unit,
 #  ifdef MOVE_INS_1_BL
     pred = find_outer(unit, bb);
 #  else
-    UNUSED(bb);
     pred = unit->bb_list[0];
 #  endif
     if (!pred) {
@@ -1473,9 +1520,9 @@ move_ins_out(Interp *interp, IMC_Unit * unit,
 }
 
 static int
-loop_one(Interp *interp, IMC_Unit * unit, int bnr)
+loop_one(Interp *interp /*NN*/, IMC_Unit *unit /*NN*/, int bnr)
 {
-    Basic_block *bb = unit->bb_list[bnr];
+    Basic_block * const bb = unit->bb_list[bnr];
     Instruction *ins;
     int changed = 0;
 

@@ -109,8 +109,7 @@ children and attributes.  Returns the newly created node.
     .param pmc children        :slurpy
     .param pmc adverbs         :slurpy :named
 
-    $I0 = find_type class
-    $P0 = new $I0
+    $P0 = new class
     $P0.'init'(children :flat, 'node'=>self, adverbs :flat :named)
     .return ($P0)
 .end
@@ -643,6 +642,20 @@ blocks in Perl6 C<if>, C<while>, and other similar statements).
     .param pmc value           :optional
     .param int has_value       :opt_flag
     .return self.'attr'('blocktype', value, has_value)
+.end
+
+
+=item namespace([STRING type])
+
+Set the namespace for this block.  If no namespace is given,
+then this block will inherit the namespace of any outer block.
+
+=cut
+
+.sub 'namespace' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('namespace', value, has_value)
 .end
 
 

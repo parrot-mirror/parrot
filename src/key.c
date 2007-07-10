@@ -17,7 +17,7 @@ The base vtable calling functions.
 #include "parrot/parrot.h"
 #include "parrot/key.h"
 
-/* HEADERIZER TARGET: include/parrot/key.h */
+/* HEADERIZER HFILE: include/parrot/key.h */
 
 /*
 
@@ -122,7 +122,7 @@ key_new_pmc(Interp *interp /*NN*/, PMC *value)
     PMC * const key = pmc_new(interp, enum_class_Key);
 
     PObj_get_FLAGS(key) |= KEY_pmc_FLAG;
-    internal_exception(1, "this is broken - see slice.pmc");
+    real_exception(interp, NULL, 1, "this is broken - see slice.pmc");
     PMC_pmc_val(key) = value;
 
     return key;
@@ -137,7 +137,7 @@ Set the integer C<value> in C<key>.
 
 PARROT_API
 void
-key_set_integer(Interp *interp, PMC *key /*NN*/, INTVAL value)
+key_set_integer(SHIM_INTERP, PMC *key /*NN*/, INTVAL value)
 {
     PObj_get_FLAGS(key) &= ~KEY_type_FLAGS;
     PObj_get_FLAGS(key) |= KEY_integer_FLAG;
@@ -155,7 +155,7 @@ Set the register C<value> in C<key>.
 
 PARROT_API
 void
-key_set_register(Interp *interp, PMC *key /*NN*/, INTVAL value,
+key_set_register(SHIM_INTERP, PMC *key /*NN*/, INTVAL value,
                  INTVAL flag)
 {
     PObj_get_FLAGS(key) &= ~KEY_type_FLAGS;
@@ -174,7 +174,7 @@ Set the number C<value> in C<key>.
 
 PARROT_API
 void
-key_set_number(Interp *interp, PMC *key /*NN*/, FLOATVAL value)
+key_set_number(SHIM_INTERP, PMC *key /*NN*/, FLOATVAL value)
 {
     PObj_get_FLAGS(key) &= ~KEY_type_FLAGS;
     PObj_get_FLAGS(key) |= KEY_number_FLAG;
@@ -192,7 +192,7 @@ Set the string C<value> in C<key>.
 
 PARROT_API
 void
-key_set_string(Interp *interp, PMC *key /*NN*/, STRING *value)
+key_set_string(SHIM_INTERP, PMC *key /*NN*/, STRING *value)
 {
     PObj_get_FLAGS(key) &= ~KEY_type_FLAGS;
     PObj_get_FLAGS(key) |= KEY_string_FLAG;
@@ -218,7 +218,7 @@ key_set_pmc(Interp *interp, PMC *key /*NN*/, PMC *value)
      * XXX leo
      * what for is this indirection?
      */
-    internal_exception(1, "this is broken - see slice.pmc");
+    real_exception(interp, NULL, 1, "this is broken - see slice.pmc");
     PMC_pmc_val(key) = value;
 
     return;
@@ -233,7 +233,7 @@ Returns the type of C<key>.
 
 PARROT_API
 INTVAL
-key_type(Interp *interp, const PMC *key /*NN*/)
+key_type(SHIM_INTERP, const PMC *key /*NN*/)
 {
     return (PObj_get_FLAGS(key) & KEY_type_FLAGS) & ~KEY_register_FLAG;
 }
@@ -247,17 +247,17 @@ key_integer(Interp *interp, PMC *key /*NN*/)
     case KEY_integer_FLAG:
         return PMC_int_val(key);
     case KEY_integer_FLAG | KEY_register_FLAG:
-        return REG_INT(PMC_int_val(key));
+        return REG_INT(interp, PMC_int_val(key));
     case KEY_pmc_FLAG | KEY_register_FLAG:
         {
-        PMC * const reg = REG_PMC(PMC_int_val(key));
+        PMC * const reg = REG_PMC(interp, PMC_int_val(key));
         return VTABLE_get_integer(interp, reg);
         }
     case KEY_string_FLAG:
         return string_to_int(interp, PMC_str_val(key));
     case KEY_string_FLAG | KEY_register_FLAG:
         {
-        STRING * const s_reg = REG_STR(PMC_int_val(key));
+        STRING * const s_reg = REG_STR(interp, PMC_int_val(key));
         return string_to_int(interp, s_reg);
         }
     default:
@@ -274,18 +274,18 @@ key_number(Interp *interp, PMC *key /*NN*/)
     case KEY_number_FLAG:
         return PMC_num_val(key);
     case KEY_number_FLAG | KEY_register_FLAG:
-        return REG_NUM(PMC_int_val(key));
+        return REG_NUM(interp, PMC_int_val(key));
     case KEY_pmc_FLAG:
         return VTABLE_get_number(interp, key);
                                                  /*  PMC_pmc_val(key)); */
     case KEY_pmc_FLAG | KEY_register_FLAG:
         {
-        PMC * const reg = REG_PMC(PMC_int_val(key));
+        PMC * const reg = REG_PMC(interp, PMC_int_val(key));
         return VTABLE_get_number(interp, reg);
         }
     default:
-        internal_exception(INVALID_OPERATION, "Key not a number!\n");
-        return 0;
+        real_exception(interp, NULL, INVALID_OPERATION, "Key not a number!\n");
+        return (FLOATVAL)0;
     }
 }
 
@@ -297,17 +297,17 @@ key_string(Interp *interp /*NN*/, PMC *key /*NN*/)
     case KEY_string_FLAG:
         return PMC_str_val(key);
     case KEY_string_FLAG | KEY_register_FLAG:
-        return REG_STR(PMC_int_val(key));
+        return REG_STR(interp, PMC_int_val(key));
                                                    /*   PMC_pmc_val(key)); */
     case KEY_pmc_FLAG | KEY_register_FLAG:
         {
-        PMC * const reg = REG_PMC(PMC_int_val(key));
+        PMC * const reg = REG_PMC(interp, PMC_int_val(key));
         return VTABLE_get_string(interp, reg);
         }
     case KEY_integer_FLAG:
         return string_from_int(interp, PMC_int_val(key));
     case KEY_integer_FLAG | KEY_register_FLAG:
-        return string_from_int(interp, REG_INT(PMC_int_val(key)));
+        return string_from_int(interp, REG_INT(interp, PMC_int_val(key)));
     default:
     case KEY_pmc_FLAG:
         return VTABLE_get_string(interp, key);
@@ -328,7 +328,7 @@ key_pmc(Interp *interp, PMC *key /*NN*/)
 {
     switch (PObj_get_FLAGS(key) & KEY_type_FLAGS) {
     case KEY_pmc_FLAG | KEY_register_FLAG:
-        return REG_PMC(PMC_int_val(key));
+        return REG_PMC(interp, PMC_int_val(key));
     default:
         return key; /* PMC_pmc_val(key); */
     }
@@ -343,11 +343,9 @@ Returns the next key if C<key> is in a sequence of linked keys.
 
 PARROT_API
 PMC *
-key_next(Interp *interp, PMC *key /*NN*/)
+key_next(SHIM_INTERP, PMC *key /*NN*/)
 {
-    if (!key->pmc_ext)
-        return NULL;
-    return (PMC *)PMC_data(key);
+    return key->pmc_ext ? (PMC *)PMC_data(key) : NULL;
 }
 
 /*
@@ -364,7 +362,7 @@ Returns C<key1>.
 
 PARROT_API
 PMC *
-key_append(Interp *interp, PMC *key1 /*NN*/, PMC *key2 /*NN*/)
+key_append(SHIM_INTERP, PMC *key1 /*NN*/, PMC *key2 /*NN*/)
 {
     PMC *tail = key1;
 
@@ -427,16 +425,16 @@ key_set_to_string(Interp *interp /*NN*/, PMC *key /*NULLOK*/)
                 string_append(interp, value, VTABLE_get_string(interp, key));
                 break;
             case KEY_integer_FLAG | KEY_register_FLAG:
-                string_append(interp, value, string_from_int(interp, REG_INT(PMC_int_val(key))));
+                string_append(interp, value, string_from_int(interp, REG_INT(interp, PMC_int_val(key))));
                 break;
             case KEY_string_FLAG | KEY_register_FLAG:
                 string_append(interp, value, quote);
-                string_append(interp, value, REG_STR(PMC_int_val(key)));
+                string_append(interp, value, REG_STR(interp, PMC_int_val(key)));
                 string_append(interp, value, quote);
                 break;
             case KEY_pmc_FLAG | KEY_register_FLAG:
                 {
-                PMC * const reg = REG_PMC(PMC_int_val(key));
+                PMC * const reg = REG_PMC(interp, PMC_int_val(key));
                 string_append(interp, value, VTABLE_get_string(interp, reg));
                 }
                 break;
@@ -461,8 +459,6 @@ F<include/parrot/key.h>.
 =head1 HISTORY
 
 Initial version by Jeff G. on 2001.12.05.
-
-=cut
 
 */
 

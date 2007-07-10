@@ -132,7 +132,7 @@ Of course, a check for valid pointers could be added here.
 
 #include "parrot/parrot.h"
 
-/* HEADERIZER TARGET: include/parrot/intlist.h */
+/* HEADERIZER HFILE: include/parrot/intlist.h */
 
 /*
 
@@ -187,10 +187,9 @@ Returns the length of the list.
 */
 
 INTVAL
-intlist_length(Interp *interp, const IntList *list /*NN*/)
+intlist_length(SHIM_INTERP, const IntList *list /*NN*/)
     /* PURE, WARN_UNUSED */
 {
-    UNUSED(interp);
     return ((const List *)list)->length;
 }
 
@@ -298,6 +297,10 @@ intlist_dump(FILE *fp, IntList *list /*NN*/, int verbose)
 {
 #ifdef LIST_DEBUG
     list_dump(fp, (List *)list, verbose);
+#else
+    UNUSED(fp);
+    UNUSED(list);
+    UNUSED(verbose);
 #endif
 }
 

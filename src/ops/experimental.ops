@@ -416,10 +416,10 @@ op instantiate(out PMC) {
           _class = interp->vtables[typ]->pmc_class;
           break;
       case PARROT_ARG_P:
-          _class = REG_PMC(arg_op[2]);
+          _class = REG_PMC(interp, arg_op[2]);
           break;
       default:
-          internal_exception(UNIMPLEMENTED,
+          real_exception(interp, NULL, UNIMPLEMENTED,
                   "uninplement class argument in instantiate");
           _class = NULL; /* just for cc */
           break;

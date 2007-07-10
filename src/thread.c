@@ -124,11 +124,7 @@ make_local_args_copy(Parrot_Interp interp, Parrot_Interp old_interp, PMC *args)
     VTABLE_set_integer_native(interp, ret_val, old_size);
 
     for (i = 0; i < old_size; ++i) {
-        PMC *copy, *orig;
-
-        orig = VTABLE_get_pmc_keyed_int(old_interp, args, i);
-
-        copy = make_local_copy(interp, old_interp,
+        PMC * const copy = make_local_copy(interp, old_interp,
                 VTABLE_get_pmc_keyed_int(old_interp, args, i));
 
         VTABLE_set_pmc_keyed_int(interp, ret_val, i, copy);
@@ -194,7 +190,7 @@ PMC *pt_shared_fixup(Parrot_Interp interp, PMC *pmc) {
 
         if (type_num == enum_type_undef) {
             UNLOCK_INTERPRETER(master);
-            internal_exception(1, "pt_shared_fixup: unsharable type");
+            real_exception(interp, NULL, 1, "pt_shared_fixup: unsharable type");
             return PMCNULL;
         }
 
@@ -1152,7 +1148,7 @@ pt_thread_join(Parrot_Interp parent, UINTVAL tid)
      */
     state = interp->thread_data->state;
     UNLOCK(interpreter_array_mutex);
-    internal_exception(1, "join: illegal thread state %d tid %d",
+    real_exception(interp, NULL, 1, "join: illegal thread state %d tid %d",
             state, tid);
     return NULL;
 }

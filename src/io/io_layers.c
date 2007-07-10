@@ -28,11 +28,11 @@ will be copied to the new instance.
 #include "parrot/io.h"
 #include "io_private.h"
 
-/* HEADERIZER TARGET: include/parrot/io.h */
+/* HEADERIZER HFILE: include/parrot/io.h */
 
 PARROT_API
 ParrotIOLayer *
-PIO_base_new_layer(ParrotIOLayer *proto)
+PIO_base_new_layer(ParrotIOLayer *proto /*NULLOK*/)
 {
     ParrotIOLayer * const new_layer = mem_allocate_typed(ParrotIOLayer);
 
@@ -153,12 +153,11 @@ PIO_push_layer(Interp *interp, PMC *pmc /*NULLOK*/, ParrotIOLayer *layer /*NULLO
 
 PARROT_API
 ParrotIOLayer *
-PIO_get_layer(Interp *interp, const char *name /*NN*/)
+PIO_get_layer(SHIM_INTERP, const char *name /*NN*/)
     /* WARN_UNUSED */
 {
     ParrotIOLayer **t;
 
-    UNUSED(interp);
     for (t = pio_registered_layers; *t; ++t)
         if (strcmp(name, (*t)->name) == 0)
             return *t;
@@ -173,8 +172,9 @@ PIO_push_layer_str(Interp *interp, PMC *pmc, STRING *ls)
     ParrotIOLayer * newlayer;
 
     string_cstring_free(cls);
-    if (!l)
-        internal_exception(1, "Layer not found");
+    if (!l) {
+        real_exception(interp, NULL, 1, "Layer not found");
+    }
 
     /* make private copy */
     newlayer = PIO_base_new_layer(l);
@@ -247,7 +247,7 @@ PIO_pop_layer(Interp *interp, PMC *pmc /*NULLOK*/)
 }
 
 STRING *
-PIO_pop_layer_str(Interp *interp, PMC *pmc)
+PIO_pop_layer_str(Interp *interp /*NN*/, PMC *pmc /*NN*/)
 {
     ParrotIOLayer * const layer = PIO_pop_layer(interp, pmc);
     STRING * const ls = string_make(interp, layer->name,

@@ -18,7 +18,7 @@ Opcode helper functions that don't really fit elsewhere.
 
 #include "parrot/parrot.h"
 
-/* HEADERIZER TARGET: include/parrot/misc.h */
+typedef unsigned short _rand_buf[3];
 
 /* Parrot_register_move companion functions i and data */
 typedef struct parrot_prm_context {
@@ -34,9 +34,31 @@ typedef struct parrot_prm_context {
     void *info;
 } parrot_prm_context;
 
-static void rec_climb_back_and_mark(int regindex, parrot_prm_context* c);
-static void process_cycle_without_exit(int regindex, parrot_prm_context* c);
-static void move_reg(int from, int dest, parrot_prm_context* c);
+/* HEADERIZER HFILE: include/parrot/misc.h */
+/* HEADERIZER BEGIN: static */
+
+static FLOATVAL _drand48( void );
+static FLOATVAL _erand48( _rand_buf buf );
+static long _jrand48( _rand_buf buf );
+static long _lrand48( void );
+static long _mrand48( void );
+static long _nrand48( _rand_buf buf );
+static void _srand48( long seed );
+static void move_reg( int from, int dest, parrot_prm_context* c /*NN*/ )
+        __attribute__nonnull__(3);
+
+static void next_rand( _rand_buf X );
+static void process_cycle_without_exit(
+    int node_index,
+    parrot_prm_context* c /*NN*/ )
+        __attribute__nonnull__(2);
+
+static void rec_climb_back_and_mark(
+    int node_index,
+    parrot_prm_context* c /*NN*/ )
+        __attribute__nonnull__(2);
+
+/* HEADERIZER END: static */
 
 /*
 
@@ -138,7 +160,6 @@ Based on the C<rand48()> family of functions.
  */
 #ifndef PARROT_HAS_DRAND48
 
-typedef unsigned short _rand_buf[3];
 /*
  * s. man drand48, SuS V2
  *
@@ -563,7 +584,7 @@ tm_to_array(Parrot_Interp interp, const struct tm *tm /*NN*/)
 
 PARROT_API
 INTVAL
-Parrot_byte_index(Interp *interp, const STRING *base /*NN*/,
+Parrot_byte_index(SHIM_INTERP, const STRING *base /*NN*/,
         const STRING *search /*NN*/, UINTVAL start_offset)
 {
     const INTVAL searchlen = search->strlen;
@@ -584,7 +605,7 @@ Parrot_byte_index(Interp *interp, const STRING *base /*NN*/,
 
 PARROT_API
 INTVAL
-Parrot_byte_rindex(Interp *interp, const STRING *base /*NN*/,
+Parrot_byte_rindex(SHIM_INTERP, const STRING *base /*NN*/,
         const STRING *search /*NN*/, UINTVAL start_offset)
     /* WARN_UNUSED */
 {

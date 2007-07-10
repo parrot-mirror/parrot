@@ -21,7 +21,7 @@ These stacks all differ only in the size of items.
 #include "parrot/stacks.h"
 #include <assert.h>
 
-/* HEADERIZER TARGET: include/parrot/stacks.h */
+/* HEADERIZER HFILE: include/parrot/stacks.h */
 
 /*
 
@@ -33,9 +33,8 @@ register stacks.
 
 PARROT_API
 void
-stack_system_init(Interp *interp)
+stack_system_init(SHIM_INTERP)
 {
-    UNUSED(interp);
 }
 
 
@@ -119,13 +118,12 @@ void*
 stack_prepare_pop(Interp *interp, Stack_Chunk_t **stack_p /*NN*/)
 {
     Stack_Chunk_t * const chunk = *stack_p;
-    UNUSED(interp);
 
     /*
      * the first entry (initial top) refers to itself
      */
     if (chunk == chunk->prev) {
-        internal_exception(ERROR_STACK_EMPTY, "No entries on %sStack!",
+        real_exception(interp, NULL, ERROR_STACK_EMPTY, "No entries on %sStack!",
                 chunk->name);
     }
     *stack_p = chunk->prev;

@@ -29,7 +29,29 @@ Define the internal interpreter exceptions.
 #include "parrot/parrot.h"
 #include "parrot/exceptions.h"
 
-/* HEADERIZER TARGET: include/parrot/exceptions.h */
+/* HEADERIZER HFILE: include/parrot/exceptions.h */
+
+/* HEADERIZER BEGIN: static */
+
+static opcode_t * create_exception( Interp *interp /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__warn_unused_result__;
+
+static size_t dest2offset( Interp *interp /*NN*/,
+    const opcode_t *dest /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__pure__
+        __attribute__warn_unused_result__;
+
+static PMC * find_exception_handler( Interp *interp /*NN*/, PMC *exception )
+        __attribute__nonnull__(1)
+        __attribute__warn_unused_result__;
+
+static void run_cleanup_action( Interp *interp, Stack_Entry_t *e /*NN*/ )
+        __attribute__nonnull__(2);
+
+/* HEADERIZER END: static */
 
 #include <stdarg.h>
 
@@ -155,7 +177,7 @@ push_exception(Interp *interp /*NN*/, PMC *handler /*NN*/)
 }
 
 static void
-run_cleanup_action(Interp *interp, Stack_Entry_t *e)
+run_cleanup_action(Interp *interp, Stack_Entry_t *e /*NN*/)
 {
     /*
      * this is called during normal stack_pop of the control
@@ -171,7 +193,7 @@ Parrot_push_action(Interp *interp /*NN*/, PMC *sub)
 {
     if (!VTABLE_isa(interp, sub,
                 const_string(interp, "Sub"))) {
-        internal_exception(1, "Tried to push a non Sub PMC action");
+        real_exception(interp, NULL, 1, "Tried to push a non Sub PMC action");
     }
     stack_push(interp, &interp->dynamic_env, sub,
                STACK_ENTRY_ACTION, run_cleanup_action);
@@ -214,6 +236,7 @@ Find the exception handler for C<exception>.
 
 static PMC *
 find_exception_handler(Interp *interp /*NN*/, PMC *exception)
+    /* WARN_UNUSED */
 {
     char *m;
     int exit_status, print_location;
@@ -371,11 +394,11 @@ Throw the exception.
 
 PARROT_API
 opcode_t *
-throw_exception(Interp *interp /*NN*/, PMC *exception, void *dest)
+throw_exception(Interp *interp /*NN*/, PMC *exception, SHIM(void *dest))
 {
     opcode_t *address;
-
     PMC * const handler = find_exception_handler(interp, exception);
+
     if (!handler)
         return NULL;
     /* put the handler aka continuation ctx in the interpreter */
@@ -456,7 +479,7 @@ after an exception had occurred.
 
 static size_t
 dest2offset(Interp *interp /*NN*/, const opcode_t *dest /*NN*/)
-    /* WARN_UNUSED */
+    /* PURE, WARN_UNUSED */
 {
     size_t offset;
     /* translate an absolute location in byte_code to an offset
@@ -468,6 +491,7 @@ dest2offset(Interp *interp /*NN*/, const opcode_t *dest /*NN*/)
         case PARROT_CGP_CORE:
         case PARROT_CGP_JIT_CORE:
             offset = dest - (const opcode_t *)interp->code->prederef.code;
+            break;
         default:
             offset = dest - interp->code->base.data;
     }
@@ -484,6 +508,7 @@ Create an exception.
 
 static opcode_t *
 create_exception(Interp *interp /*NN*/)
+    /* WARN_UNUSED */
 {
     PMC *exception;     /* exception object */
     opcode_t *dest;     /* absolute address of handler */

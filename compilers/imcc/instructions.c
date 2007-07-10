@@ -29,12 +29,21 @@ static Instruction * last_ins;
 int n_comp_units;
 #endif
 
-/* HEADERIZER TARGET: compilers/imcc/instructions.h */
+/* HEADERIZER HFILE: compilers/imcc/instructions.h */
 
 /* HEADERIZER BEGIN: static */
-static int e_file_open(Interp *, void *);
-static int e_file_close(Interp *, void *);
-static int e_file_emit(Interp *, void *param, IMC_Unit *, const Instruction *);
+
+static int e_file_close( Interp *interp /*NN*/, void *param )
+        __attribute__nonnull__(1);
+
+static int e_file_emit( Interp *interp /*NN*/,
+    void *param,
+    IMC_Unit *unit,
+    const Instruction *ins /*NN*/ )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(4);
+
+static int e_file_open( Interp *interp, void *param );
 /* HEADERIZER END: static */
 
 const char types[] = "INPS";
@@ -565,11 +574,10 @@ ins_print(Interp *interp /*NN*/, FILE *fd /*NN*/, const Instruction *ins /*NN*/)
 static char *output;
 
 static int
-e_file_open(Interp *interp, void *param)
+e_file_open(SHIM_INTERP, void *param)
 {
     char * const file = (char *) param;
 
-    UNUSED(interp);
     if (strcmp(file, "-"))
         freopen(file, "w", stdout);
     output = file;
@@ -579,9 +587,8 @@ e_file_open(Interp *interp, void *param)
 }
 
 static int
-e_file_close(Interp *interp /*NN*/, void *param)
+e_file_close(Interp *interp /*NN*/, SHIM(void *param))
 {
-    UNUSED(param);
     printf("\n\n");
     fclose(stdout);
     IMCC_info(interp, 1, "assembly module %s written.\n", output);
@@ -589,10 +596,8 @@ e_file_close(Interp *interp /*NN*/, void *param)
 }
 
 static int
-e_file_emit(Interp *interp /*NN*/, void *param, IMC_Unit *unit, const Instruction *ins /*NN*/)
+e_file_emit(Interp *interp /*NN*/, SHIM(void *param), SHIM(IMC_Unit *unit), const Instruction *ins /*NN*/)
 {
-    UNUSED(param);
-    UNUSED(unit);
 #if IMC_TRACE
     PIO_eprintf(NULL, "e_file_emit\n");
 #endif
