@@ -29,9 +29,9 @@ contiguous region of memory.
 
 PARROT_API
 opcode_t
-PackFile_pack_size(Interp *interp, PackFile *self /*NN*/)
+PackFile_pack_size(PARROT_INTERP, PackFile *self /*NN*/)
 {
-    opcode_t size;
+    size_t size;
     PackFile_Directory * const dir = &self->directory;
 
     size = PACKFILE_HEADER_BYTES / sizeof (opcode_t);
@@ -62,7 +62,7 @@ Other pack routines are in F<src/packfile.c>.
 
 PARROT_API
 void
-PackFile_pack(Interp *interp, PackFile *self /*NN*/, opcode_t *cursor /*NN*/)
+PackFile_pack(PARROT_INTERP, PackFile *self /*NN*/, opcode_t *cursor /*NN*/)
 {
     opcode_t *ret;
 
@@ -102,7 +102,7 @@ constant table into a contiguous region of memory.
 
 PARROT_API
 size_t
-PackFile_ConstTable_pack_size(Interp *interp /*NN*/, PackFile_Segment *seg /*NN*/)
+PackFile_ConstTable_pack_size(PARROT_INTERP, PackFile_Segment *seg /*NN*/)
 {
     opcode_t i;
     PackFile_ConstTable* const self = (PackFile_ConstTable *) seg;
@@ -129,7 +129,7 @@ C<PackFile_ConstTable_pack()>
 
 PARROT_API
 opcode_t *
-PackFile_ConstTable_pack(Interp *interp,
+PackFile_ConstTable_pack(PARROT_INTERP,
         PackFile_Segment *seg /*NN*/, opcode_t *cursor)
 {
     PackFile_ConstTable * const self = (PackFile_ConstTable *)seg;
@@ -155,7 +155,7 @@ constant is in constant table, so we have to search for it.
 
 PARROT_API
 int
-PackFile_find_in_const(Interp *interp /*NN*/,
+PackFile_find_in_const(PARROT_INTERP,
         const PackFile_ConstTable *ct /*NN*/, const PMC *key /*NN*/, int type)
 {
     int i;
@@ -190,7 +190,7 @@ The data is zero-padded to an opcode_t-boundary, so pad bytes may be added.
 
 PARROT_API
 opcode_t *
-PackFile_Constant_pack(Interp *interp,
+PackFile_Constant_pack(PARROT_INTERP,
         const PackFile_ConstTable *const_table /*NN*/,
         const PackFile_Constant *self /*NN*/, opcode_t *cursor /*NN*/)
 {
@@ -224,7 +224,7 @@ PackFile_Constant_pack(Interp *interp,
         *cursor++ = i;
         /* and now type / value per component */
         for (key = self->u.key; key; key = (PMC *)PMC_data(key)) {
-            opcode_t type = PObj_get_FLAGS(key);
+            const opcode_t type = PObj_get_FLAGS(key);
             slice_bits = 0;
             if ((type & (KEY_start_slice_FLAG|KEY_inf_slice_FLAG)) ==
                     (KEY_start_slice_FLAG|KEY_inf_slice_FLAG))
@@ -237,8 +237,7 @@ PackFile_Constant_pack(Interp *interp,
             if (type & KEY_end_slice_FLAG)
                 slice_bits |= PF_VT_END_SLICE;
 
-            type &= KEY_type_FLAGS;
-            switch (type) {
+            switch (type & KEY_type_FLAGS) {
                 case KEY_integer_FLAG:
                     *cursor++ = PARROT_ARG_IC | slice_bits;
                     *cursor++ = PMC_int_val(key);

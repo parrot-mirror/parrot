@@ -29,22 +29,24 @@ There's also a verbose mode for garbage collection.
 
 /* HEADERIZER BEGIN: static */
 
-static void clear_live_bits( Small_Object_Pool *pool /*NN*/ )
+static void clear_live_bits( NOTNULL(Small_Object_Pool *pool) )
         __attribute__nonnull__(1);
 
-static size_t find_common_mask( size_t val1, size_t val2 );
-static void mark_special( Interp *interp /*NN*/, PMC *obj /*NN*/ )
+static size_t find_common_mask( PARROT_INTERP, size_t val1, size_t val2 )
+        __attribute__nonnull__(1);
+
+static void mark_special( PARROT_INTERP, NOTNULL(PMC *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int sweep_cb( Interp *interp /*NN*/,
-    Small_Object_Pool *pool /*NN*/,
+static int sweep_cb( PARROT_INTERP,
+    NOTNULL(Small_Object_Pool *pool),
     int flag,
     void *arg )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int trace_active_PMCs( Interp *interp /*NN*/, int trace_stack )
+static int trace_active_PMCs( PARROT_INTERP, int trace_stack )
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
@@ -60,7 +62,7 @@ static int trace_active_PMCs( Interp *interp /*NN*/, int trace_stack )
 int CONSERVATIVE_POINTER_CHASING = 0;
 #endif
 
-static size_t find_common_mask(size_t val1, size_t val2)
+static size_t find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
     __attribute__const__
     __attribute__warn_unused_result__;
 
@@ -77,7 +79,7 @@ be better if it were a macro.
 */
 
 static void
-mark_special(Interp *interp /*NN*/, PMC *obj /*NN*/)
+mark_special(PARROT_INTERP, NOTNULL(PMC *obj))
 {
     int     hi_prio;
     Arenas *arena_base;
@@ -155,7 +157,7 @@ mark_special(Interp *interp /*NN*/, PMC *obj /*NN*/)
 
 PARROT_API
 void
-pobject_lives(Interp *interp /*NN*/, PObj *obj /*NN*/)
+pobject_lives(PARROT_INTERP, NOTNULL(PObj *obj))
 {
 #if PARROT_GC_GMS
     do {
@@ -185,7 +187,7 @@ pobject_lives(Interp *interp /*NN*/, PObj *obj /*NN*/)
     if (PObj_is_PMC_TEST(obj)) {
         PMC * const p = (PMC*)obj;
         if (p->real_self != p)
-            pobject_lives(interp, p->real_self);
+            pobject_lives(interp, (PObj *)p->real_self);
     }
 
     /* if object is a PMC and contains buffers or PMCs, then attach
@@ -236,7 +238,7 @@ C<trace_stack> can have these values:
 
 PARROT_API
 int
-Parrot_dod_trace_root(Interp *interp /*NN*/, int trace_stack)
+Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
 {
     Arenas           * const arena_base = interp->arena_base;
     parrot_context_t *ctx;
@@ -350,7 +352,7 @@ whether the run completed, that is, whether it's safe to proceed with GC.
 */
 
 static int
-trace_active_PMCs(Interp *interp /*NN*/, int trace_stack)
+trace_active_PMCs(PARROT_INTERP, int trace_stack)
 {
     if (!Parrot_dod_trace_root(interp, trace_stack))
         return 0;
@@ -370,7 +372,7 @@ Returns whether the tracing process completed.
 
 PARROT_API
 int
-Parrot_dod_trace_children(Interp *interp /*NN*/, size_t how_many)
+Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
 {
     Arenas * const arena_base = interp->arena_base;
     const int     lazy_dod    = arena_base->lazy_dod;
@@ -474,7 +476,7 @@ Clear the COW ref count.
 */
 
 void
-clear_cow(Interp *interp, Small_Object_Pool *pool /*NN*/, int cleanup)
+clear_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)
 {
     const UINTVAL       object_size = pool->object_size;
     Small_Object_Arena *cur_arena;
@@ -517,7 +519,7 @@ Find other users of COW's C<bufstart>.
 */
 
 void
-used_cow(Interp *interp, Small_Object_Pool *pool /*NN*/, int cleanup)
+used_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)
 {
     UINTVAL             object_size = pool->object_size;
     Small_Object_Arena *cur_arena;
@@ -560,14 +562,13 @@ are immune from collection (i.e. constant).
 
 PARROT_API
 void
-Parrot_dod_sweep(Interp *interp /*NN*/, Small_Object_Pool *pool /*NN*/)
+Parrot_dod_sweep(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
 {
     Arenas * const arena_base = interp->arena_base;
     UINTVAL i, total_used = 0;
     UINTVAL object_size   = pool->object_size;
 
     Small_Object_Arena *cur_arena;
-    size_t              nm;
 #if REDUCE_ARENAS
     UINTVAL free_arenas = 0, old_total_used = 0;
 #endif
@@ -591,7 +592,7 @@ Parrot_dod_sweep(Interp *interp /*NN*/, Small_Object_Pool *pool /*NN*/)
             NULL != cur_arena; cur_arena = cur_arena->prev) {
         Buffer *b = (Buffer *)cur_arena->start_objects;
 
-        for (i = nm = 0; i < cur_arena->used; i++) {
+        for (i = 0; i < cur_arena->used; i++) {
             if (PObj_on_free_list_TEST(b))
                 ; /* if it's on free list, do nothing */
             else if (PObj_live_TEST(b)) {
@@ -725,7 +726,7 @@ Find a mask covering the longest common bit-prefix of C<val1> and C<val2>.
 */
 
 static size_t
-find_common_mask(size_t val1, size_t val2)
+find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
 {
     int       i;
     const int bound = sizeof (size_t) * 8;
@@ -746,7 +747,7 @@ find_common_mask(size_t val1, size_t val2)
         return 0;
     }
 
-    internal_exception(INTERP_ERROR,
+    real_exception(interp, NULL, INTERP_ERROR,
             "Unexpected condition in find_common_mask()!\n");
 
     return 0;
@@ -761,7 +762,7 @@ Traces the memory block between C<lo_var_ptr> and C<hi_var_ptr>.
 */
 
 void
-trace_mem_block(Interp *interp /*NN*/, size_t lo_var_ptr, size_t hi_var_ptr)
+trace_mem_block(PARROT_INTERP, size_t lo_var_ptr, size_t hi_var_ptr)
 {
     size_t    prefix;
     ptrdiff_t cur_var_ptr;
@@ -772,7 +773,8 @@ trace_mem_block(Interp *interp /*NN*/, size_t lo_var_ptr, size_t hi_var_ptr)
     const size_t pmc_max    = get_max_pmc_address(interp);
 
     const size_t mask       =
-        find_common_mask(buffer_min < pmc_min ? buffer_min : pmc_min,
+        find_common_mask(interp,
+                         buffer_min < pmc_min ? buffer_min : pmc_min,
                          buffer_max > pmc_max ? buffer_max : pmc_max);
 
     if (!lo_var_ptr || !hi_var_ptr)
@@ -825,7 +827,7 @@ Run through all PMC arenas and clear live bits.
 */
 
 static void
-clear_live_bits(Small_Object_Pool *pool /*NN*/)
+clear_live_bits(NOTNULL(Small_Object_Pool *pool))
 {
     Small_Object_Arena *arena;
     const UINTVAL       object_size = pool->object_size;
@@ -844,7 +846,7 @@ clear_live_bits(Small_Object_Pool *pool /*NN*/)
 
 PARROT_API
 void
-Parrot_dod_clear_live_bits(Interp *interp /*NN*/)
+Parrot_dod_clear_live_bits(PARROT_INTERP)
 {
     Small_Object_Pool * const pool = interp->arena_base->pmc_pool;
     clear_live_bits(pool);
@@ -860,7 +862,7 @@ Records the start time of a DOD run when profiling is enabled.
 
 PARROT_API
 void
-Parrot_dod_profile_start(Interp *interp /*NN*/)
+Parrot_dod_profile_start(PARROT_INTERP)
 {
     if (Interp_flags_TEST(interp, PARROT_PROFILE_FLAG))
         interp->profile->dod_time = Parrot_floatval_time();
@@ -877,7 +879,7 @@ Also record start time of next part.
 
 PARROT_API
 void
-Parrot_dod_profile_end(Interp *interp /*NN*/, int what)
+Parrot_dod_profile_end(PARROT_INTERP, int what)
 {
     if (Interp_flags_TEST(interp, PARROT_PROFILE_FLAG)) {
         RunProfile * const profile = interp->profile;
@@ -909,7 +911,7 @@ Prepare for a mark & sweep DOD run.
 
 PARROT_API
 void
-Parrot_dod_ms_run_init(Interp *interp /*NN*/)
+Parrot_dod_ms_run_init(PARROT_INTERP)
 {
     Arenas * const arena_base       = interp->arena_base;
 
@@ -920,7 +922,7 @@ Parrot_dod_ms_run_init(Interp *interp /*NN*/)
 }
 
 static int
-sweep_cb(Interp *interp /*NN*/, Small_Object_Pool *pool /*NN*/, int flag, void *arg)
+sweep_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, void *arg)
 {
     int * const total_free = (int *) arg;
 
@@ -954,7 +956,7 @@ Run the stop-the-world mark & sweep collector.
 
 PARROT_API
 void
-Parrot_dod_ms_run(Interp *interp /*NN*/, int flags)
+Parrot_dod_ms_run(PARROT_INTERP, int flags)
 {
     Arenas * const arena_base = interp->arena_base;
 
@@ -1046,7 +1048,7 @@ Call the configured garbage collector to reclaim unused headers.
 
 PARROT_API
 void
-Parrot_do_dod_run(Interp *interp /*NN*/, UINTVAL flags)
+Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
 {
     interp->arena_base->do_dod_run(interp, flags);
     parrot_gc_context(interp);

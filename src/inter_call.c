@@ -32,15 +32,15 @@ subroutines.
 static void check_for_opt_flag( call_state *st /*NN*/, int has_arg )
         __attribute__nonnull__(1);
 
-static void check_named( Interp *interp /*NN*/, call_state *st /*NN*/ )
+static void check_named( PARROT_INTERP, call_state *st /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void clone_key_arg( Interp *interp /*NN*/, call_state *st /*NN*/ )
+static void clone_key_arg( PARROT_INTERP, call_state *st /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void commit_last_arg( Interp *interp,
+static void commit_last_arg( PARROT_INTERP,
     int index,
     int cur,
     opcode_t *n_regs_used,
@@ -49,55 +49,51 @@ static void commit_last_arg( Interp *interp,
     opcode_t **indexes,
     parrot_context_t *ctx,
     PMC *pmc,
-    va_list *list );
+    va_list *list )
+        __attribute__nonnull__(1);
 
-static void convert_arg_from_int( Interp *interp /*NN*/,
-    call_state *st /*NN*/ )
+static void convert_arg_from_int( PARROT_INTERP, call_state *st /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void convert_arg_from_num( Interp *interp /*NN*/,
-    call_state *st /*NN*/ )
+static void convert_arg_from_num( PARROT_INTERP, call_state *st /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void convert_arg_from_pmc( Interp *interp /*NN*/,
-    call_state *st /*NN*/ )
+static void convert_arg_from_pmc( PARROT_INTERP, call_state *st /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void convert_arg_from_str( Interp *interp /*NN*/,
-    call_state *st /*NN*/ )
+static void convert_arg_from_str( PARROT_INTERP, call_state *st /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int fetch_arg_op( Interp *interp /*NN*/, call_state *st /*NN*/ )
+static int fetch_arg_op( PARROT_INTERP, call_state *st /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int fetch_arg_sig( Interp *interp /*NN*/, call_state *st /*NN*/ )
+static int fetch_arg_sig( PARROT_INTERP, call_state *st /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static void init_call_stats( call_state *st /*NN*/ )
         __attribute__nonnull__(1);
 
-static void init_first_dest_named( Interp *interp /*NN*/,
-    call_state *st /*NN*/ )
+static void init_first_dest_named( PARROT_INTERP, call_state *st /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int locate_named_named( Interp *interp /*NN*/, call_state *st /*NN*/ )
+static int locate_named_named( PARROT_INTERP, call_state *st /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void next_arg_sig( call_state_item *st /*NN*/ )
+static void next_arg_sig( call_state_item *sti /*NN*/ )
         __attribute__nonnull__(1);
 
 static void null_val( int sig, call_state *st /*NN*/ )
         __attribute__nonnull__(2);
 
-static int set_retval_util( Interp *interp /*NN*/,
+static int set_retval_util( PARROT_INTERP,
     const char *sig /*NN*/,
     parrot_context_t *ctx /*NN*/,
     call_state *st /*NN*/ )
@@ -106,9 +102,7 @@ static int set_retval_util( Interp *interp /*NN*/,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static void start_flatten( Interp *interp /*NN*/,
-    call_state *st /*NN*/,
-    PMC *p_arg )
+static void start_flatten( PARROT_INTERP, call_state *st /*NN*/, PMC *p_arg )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -118,15 +112,17 @@ static void store_arg( call_state *st /*NN*/, INTVAL idx )
 static int store_current_arg( call_state *st /*NN*/ )
         __attribute__nonnull__(1);
 
-static void too_few( Interp *interp,
+static void too_few( PARROT_INTERP,
     const call_state *st /*NN*/,
     const char *action /*NN*/ )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static void too_many( Interp *interp,
+static void too_many( PARROT_INTERP,
     const call_state *st /*NN*/,
     const char *action /*NN*/ )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
@@ -147,11 +143,6 @@ static void too_many( Interp *interp,
         orig.bp_ps = save.bp_ps;
 
 
-static void next_arg_sig(call_state_item *st /*NN*/)
-    __attribute__nonnull__(1);
-static void check_for_opt_flag(call_state *st /*NN*/, int has_arg)
-    __attribute__nonnull__(1);
-
 /*
 
 FUNCDOC: Parrot_init_arg_nci
@@ -166,7 +157,7 @@ Initialize the return value passing state C<call_state> for the given NCI signat
 
 PARROT_API
 int
-Parrot_init_arg_nci(Interp *interp /*NN*/, call_state *st /*NN*/, const char *sig /*NN*/)
+Parrot_init_arg_nci(PARROT_INTERP, call_state *st /*NN*/, const char *sig /*NN*/)
 {
     if (PMC_IS_NULL(interp->args_signature))
         Parrot_init_arg_op(interp, CONTEXT(interp->ctx), interp->current_args, &st->src);
@@ -179,7 +170,7 @@ Parrot_init_arg_nci(Interp *interp /*NN*/, call_state *st /*NN*/, const char *si
 
 PARROT_API
 int
-Parrot_init_ret_nci(Interp *interp /*NN*/, call_state *st /*NN*/, const char *sig /*NN*/)
+Parrot_init_ret_nci(PARROT_INTERP, call_state *st /*NN*/, const char *sig /*NN*/)
 {
     Parrot_Context *ctx                 = CONTEXT(interp->ctx);
     PMC            * const current_cont = ctx->current_cont;
@@ -222,8 +213,8 @@ These functions return 0, if no arguments are present, or 1 on success.
 
 PARROT_API
 int
-Parrot_init_arg_indexes_and_sig_pmc(Interp *interp, parrot_context_t *ctx /*NN*/,
-        opcode_t *indexes /*NN*/, PMC* sig_pmc /*NN*/, call_state_item *st /*NN*/)
+Parrot_init_arg_indexes_and_sig_pmc(PARROT_INTERP, parrot_context_t *ctx /*NN*/,
+        opcode_t *indexes /*NN*/, PMC* sig_pmc /*NN*/, call_state_item *sti /*NN*/)
 {
     UNUSED(interp);
 
@@ -234,30 +225,30 @@ Parrot_init_arg_indexes_and_sig_pmc(Interp *interp, parrot_context_t *ctx /*NN*/
         ++indexes;
     }
 
-    st->used = 1;
-    st->i = 0;
-    st->n = 0;
-    st->mode = CALL_STATE_OP;
-    st->ctx = ctx;
-    st->sig = 0;
+    sti->used = 1;
+    sti->i = 0;
+    sti->n = 0;
+    sti->mode = CALL_STATE_OP;
+    sti->ctx = ctx;
+    sti->sig = 0;
 
     if (indexes) {
         ASSERT_SIG_PMC(sig_pmc);
-        st->u.op.signature = sig_pmc;
-        st->u.op.pc = indexes;
-        st->n = SIG_ELEMS(sig_pmc);
-        /* initialize st->sig */
-        if (st->n)
-            next_arg_sig(st);
+        sti->u.op.signature = sig_pmc;
+        sti->u.op.pc = indexes;
+        sti->n = SIG_ELEMS(sig_pmc);
+        /* initialize sti->sig */
+        if (sti->n)
+            next_arg_sig(sti);
 
     }
-    return st->n > 0;
+    return sti->n > 0;
 }
 
 PARROT_API
 int
-Parrot_init_arg_op(Interp *interp, parrot_context_t *ctx /*NN*/, opcode_t *pc /*NULLOK*/,
-    call_state_item *st /*NN*/)
+Parrot_init_arg_op(PARROT_INTERP, parrot_context_t *ctx /*NN*/, opcode_t *pc /*NULLOK*/,
+    call_state_item *sti /*NN*/)
 {
     PMC *sig_pmc = PMCNULL;
 
@@ -267,39 +258,39 @@ Parrot_init_arg_op(Interp *interp, parrot_context_t *ctx /*NN*/, opcode_t *pc /*
         ASSERT_SIG_PMC(sig_pmc);
         ++pc;
     }
-    return Parrot_init_arg_indexes_and_sig_pmc(interp, ctx, pc, sig_pmc, st);
+    return Parrot_init_arg_indexes_and_sig_pmc(interp, ctx, pc, sig_pmc, sti);
 }
 
 PARROT_API
 int
-Parrot_init_arg_sig(Interp *interp, parrot_context_t *ctx, const char *sig /*NN*/,
-    void *ap, call_state_item *st /*NN*/)
+Parrot_init_arg_sig(PARROT_INTERP, parrot_context_t *ctx, const char *sig /*NN*/,
+    void *ap, call_state_item *sti /*NN*/)
 {
     UNUSED(interp);
 
-    st->used = 1;
-    st->i = 0;
-    st->n = 0;
-    st->mode = CALL_STATE_SIG;
-    st->ctx = ctx;
-    st->sig = 0;
+    sti->used = 1;
+    sti->i = 0;
+    sti->n = 0;
+    sti->mode = CALL_STATE_SIG;
+    sti->ctx = ctx;
+    sti->sig = 0;
 
     if (*sig) {
-        st->u.sig.sig = sig;
-        st->u.sig.ap = ap;
-        st->n = strlen(sig);
+        sti->u.sig.sig = sig;
+        sti->u.sig.ap = ap;
+        sti->n = strlen(sig);
         /* initialize st->sig */
-        if (st->n)
-          next_arg_sig(st);
+        if (sti->n)
+            next_arg_sig(sti);
     }
-    return st->n > 0;
+    return sti->n > 0;
 }
 
 /* mark the source state as flattening with the passed
  * PMC being flattened, and fetch the first arg from the flattened set.
  */
 static void
-start_flatten(Interp *interp /*NN*/, call_state *st /*NN*/, PMC *p_arg)
+start_flatten(PARROT_INTERP, call_state *st /*NN*/, PMC *p_arg)
 {
     if (PARROT_ARG_NAME_ISSET(st->src.sig)) {
         /* src ought to be an hash */
@@ -330,34 +321,34 @@ start_flatten(Interp *interp /*NN*/, call_state *st /*NN*/, PMC *p_arg)
 
 
 static void
-next_arg_sig(call_state_item *st /*NN*/)
+next_arg_sig(call_state_item *sti /*NN*/)
 {
-    switch (st->mode & CALL_S_D_MASK) {
+    switch (sti->mode & CALL_S_D_MASK) {
         case CALL_STATE_OP:
-            st->sig = SIG_ITEM(st->u.op.signature, st->i);
+            sti->sig = SIG_ITEM(sti->u.op.signature, sti->i);
             break;
         case CALL_STATE_SIG:
-            switch (st->u.sig.sig[st->i]) {
+            switch (sti->u.sig.sig[sti->i]) {
                 case 'I':
-                    st->sig = PARROT_ARG_INTVAL; break;
+                    sti->sig = PARROT_ARG_INTVAL; break;
                 case 'N':
-                    st->sig = PARROT_ARG_FLOATVAL; break;
+                    sti->sig = PARROT_ARG_FLOATVAL; break;
                 case 'S':
-                    st->sig = PARROT_ARG_STRING; break;
+                    sti->sig = PARROT_ARG_STRING; break;
                 case 'O':
                 case 'P':
-                    st->sig = PARROT_ARG_PMC; break;
+                    sti->sig = PARROT_ARG_PMC; break;
                 case '@':
-                    st->sig = PARROT_ARG_PMC | PARROT_ARG_SLURPY_ARRAY; break;
+                    sti->sig = PARROT_ARG_PMC | PARROT_ARG_SLURPY_ARRAY; break;
                 case 'F':
-                    st->sig = PARROT_ARG_PMC | PARROT_ARG_FLATTEN; break;
+                    sti->sig = PARROT_ARG_PMC | PARROT_ARG_FLATTEN; break;
             }
             break;
     }
 }
 
 static int
-fetch_arg_sig(Interp *interp /*NN*/, call_state *st /*NN*/)
+fetch_arg_sig(PARROT_INTERP, call_state *st /*NN*/)
 {
     va_list *ap = (va_list*)(st->src.u.sig.ap);
     switch (st->src.sig & PARROT_ARG_TYPE_MASK) {
@@ -402,7 +393,7 @@ fetch_arg_sig(Interp *interp /*NN*/, call_state *st /*NN*/)
 
 
 static int
-fetch_arg_op(Interp *interp /*NN*/, call_state *st /*NN*/)
+fetch_arg_op(PARROT_INTERP, call_state *st /*NN*/)
 {
     const int constant = PARROT_ARG_CONSTANT_ISSET(st->src.sig);
     const INTVAL idx = st->src.u.op.pc[st->src.i];
@@ -449,7 +440,7 @@ fetch_arg_op(Interp *interp /*NN*/, call_state *st /*NN*/)
 
 PARROT_API
 int
-Parrot_fetch_arg(Interp *interp /*NN*/, call_state *st /*NN*/)
+Parrot_fetch_arg(PARROT_INTERP, call_state *st /*NN*/)
 {
     if (!st->src.used)
         return 1;
@@ -509,7 +500,7 @@ Parrot_fetch_arg(Interp *interp /*NN*/, call_state *st /*NN*/)
 
 PARROT_API
 int
-Parrot_fetch_arg_nci(Interp *interp /*NN*/, call_state *st /*NN*/)
+Parrot_fetch_arg_nci(PARROT_INTERP, call_state *st /*NN*/)
 {
     next_arg_sig(&st->dest);
     if (st->dest.sig & PARROT_ARG_SLURPY_ARRAY) {
@@ -533,7 +524,7 @@ Parrot_fetch_arg_nci(Interp *interp /*NN*/, call_state *st /*NN*/)
 }
 
 static void
-convert_arg_from_int(Interp *interp /*NN*/, call_state *st /*NN*/)
+convert_arg_from_int(PARROT_INTERP, call_state *st /*NN*/)
 {
     switch (st->dest.sig & PARROT_ARG_TYPE_MASK) {
         case PARROT_ARG_FLOATVAL:
@@ -553,7 +544,7 @@ convert_arg_from_int(Interp *interp /*NN*/, call_state *st /*NN*/)
 }
 
 static void
-convert_arg_from_num(Interp *interp /*NN*/, call_state *st /*NN*/)
+convert_arg_from_num(PARROT_INTERP, call_state *st /*NN*/)
 {
     switch (st->dest.sig & PARROT_ARG_TYPE_MASK) {
         case PARROT_ARG_INTVAL:
@@ -573,7 +564,7 @@ convert_arg_from_num(Interp *interp /*NN*/, call_state *st /*NN*/)
 }
 
 static void
-convert_arg_from_str(Interp *interp /*NN*/, call_state *st /*NN*/)
+convert_arg_from_str(PARROT_INTERP, call_state *st /*NN*/)
 {
     switch (st->dest.sig & PARROT_ARG_TYPE_MASK) {
         case PARROT_ARG_INTVAL:
@@ -593,7 +584,7 @@ convert_arg_from_str(Interp *interp /*NN*/, call_state *st /*NN*/)
 }
 
 static void
-convert_arg_from_pmc(Interp *interp /*NN*/, call_state *st /*NN*/)
+convert_arg_from_pmc(PARROT_INTERP, call_state *st /*NN*/)
 {
     switch (st->dest.sig & PARROT_ARG_TYPE_MASK) {
         case PARROT_ARG_INTVAL:
@@ -642,7 +633,7 @@ check_for_opt_flag(call_state *st /*NN*/, int has_arg)
  * to pass a key to a tailcalled function or method
  */
 static void
-clone_key_arg(Interp *interp /*NN*/, call_state *st /*NN*/)
+clone_key_arg(PARROT_INTERP, call_state *st /*NN*/)
 {
     PMC *key = UVal_pmc(st->val);
 
@@ -666,7 +657,7 @@ clone_key_arg(Interp *interp /*NN*/, call_state *st /*NN*/)
  * initializes dest calling state for recption of first named arg.
  */
 static void
-init_first_dest_named(Interp *interp /*NN*/, call_state *st /*NN*/)
+init_first_dest_named(PARROT_INTERP, call_state *st /*NN*/)
 {
     int i, n_named;
 
@@ -716,7 +707,7 @@ init_first_dest_named(Interp *interp /*NN*/, call_state *st /*NN*/)
  * locate destination name, return 0 if not found
  */
 static int
-locate_named_named(Interp *interp /*NN*/, call_state *st /*NN*/)
+locate_named_named(PARROT_INTERP, call_state *st /*NN*/)
 {
     int i, n_named, idx;
     STRING *param;
@@ -784,7 +775,7 @@ store_current_arg(call_state *st /*NN*/)
 }
 
 int
-Parrot_store_arg(Interp *interp, call_state *st /*NN*/)
+Parrot_store_arg(PARROT_INTERP, call_state *st /*NN*/)
 {
     UNUSED(interp);
 
@@ -792,7 +783,7 @@ Parrot_store_arg(Interp *interp, call_state *st /*NN*/)
 }
 
 static void
-too_few(Interp *interp, const call_state *st /*NN*/, const char *action /*NN*/)
+too_few(PARROT_INTERP, const call_state *st /*NN*/, const char *action /*NN*/)
 {
     const int max_expected_args = st->params;
     const int min_expected_args = max_expected_args - st->optionals;
@@ -807,7 +798,7 @@ too_few(Interp *interp, const call_state *st /*NN*/, const char *action /*NN*/)
 }
 
 static void
-too_many(Interp *interp, const call_state *st /*NN*/, const char *action /*NN*/)
+too_many(PARROT_INTERP, const call_state *st /*NN*/, const char *action /*NN*/)
 {
     const int max_expected_args = st->params;
     const int min_expected_args = max_expected_args - st->optionals;
@@ -854,7 +845,7 @@ or
 */
 
 static void
-check_named(Interp *interp /*NN*/, call_state *st /*NN*/)
+check_named(PARROT_INTERP, call_state *st /*NN*/)
 {
     int i;
     int n_named = -1;
@@ -926,7 +917,7 @@ init_call_stats(call_state *st /*NN*/)
 
 PARROT_API
 void
-Parrot_process_args(Interp *interp /*NN*/, call_state *st /*NN*/, arg_pass_t param_or_result)
+Parrot_process_args(PARROT_INTERP, call_state *st /*NN*/, arg_pass_t param_or_result)
 {
     int has_arg, n_named;
     int err_check = 1;
@@ -1105,7 +1096,7 @@ Parrot_process_args(Interp *interp /*NN*/, call_state *st /*NN*/, arg_pass_t par
 
 PARROT_API
 void
-Parrot_convert_arg(Interp *interp /*NN*/, call_state *st /*NN*/)
+Parrot_convert_arg(PARROT_INTERP, call_state *st /*NN*/)
 {
     /* register key args have to be cloned */
     if ((st->src.sig & PARROT_ARG_TYPE_MASK) == PARROT_ARG_PMC)
@@ -1152,7 +1143,7 @@ the latter handles return values and yields.
 
 PARROT_API
 void
-parrot_pass_args(Interp *interp /*NN*/, parrot_context_t *src_ctx /*NN*/, parrot_context_t *dest_ctx /*NN*/,
+parrot_pass_args(PARROT_INTERP, parrot_context_t *src_ctx /*NN*/, parrot_context_t *dest_ctx /*NN*/,
         opcode_t *src_indexes /*NN*/, opcode_t *dest_indexes /*NN*/, arg_pass_t param_or_result)
 {
     call_state st;
@@ -1191,7 +1182,7 @@ Prerequisites are like above.
 */
 
 opcode_t *
-parrot_pass_args_fromc(Interp *interp /*NN*/, const char *sig,
+parrot_pass_args_fromc(PARROT_INTERP, const char *sig,
         opcode_t *dest, parrot_context_t *old_ctxp, va_list ap)
 {
     call_state st;
@@ -1203,7 +1194,7 @@ parrot_pass_args_fromc(Interp *interp /*NN*/, const char *sig,
 }
 
 static int
-set_retval_util(Interp *interp /*NN*/, const char *sig /*NN*/, parrot_context_t *ctx /*NN*/,
+set_retval_util(PARROT_INTERP, const char *sig /*NN*/, parrot_context_t *ctx /*NN*/,
         call_state *st /*NN*/)
 {
     opcode_t * const src_pc = interp->current_returns;
@@ -1226,7 +1217,7 @@ set_retval_util(Interp *interp /*NN*/, const char *sig /*NN*/, parrot_context_t 
  * handle void, and pointer (PMC*, STRING*) return values
  */
 void*
-set_retval(Interp *interp /*NN*/, int sig_ret, parrot_context_t *ctx /*NN*/)
+set_retval(PARROT_INTERP, int sig_ret, parrot_context_t *ctx /*NN*/)
 {
     call_state st;
 
@@ -1249,7 +1240,7 @@ set_retval(Interp *interp /*NN*/, int sig_ret, parrot_context_t *ctx /*NN*/)
  */
 
 INTVAL
-set_retval_i(Interp *interp /*NN*/, int sig_ret, parrot_context_t *ctx /*NN*/)
+set_retval_i(PARROT_INTERP, int sig_ret, parrot_context_t *ctx /*NN*/)
 {
     call_state st;
 
@@ -1266,7 +1257,7 @@ set_retval_i(Interp *interp /*NN*/, int sig_ret, parrot_context_t *ctx /*NN*/)
  * handle FLOATVAL return value
  */
 FLOATVAL
-set_retval_f(Interp *interp /*NN*/, int sig_ret, parrot_context_t *ctx /*NN*/)
+set_retval_f(PARROT_INTERP, int sig_ret, parrot_context_t *ctx /*NN*/)
 {
     call_state st;
 
@@ -1283,7 +1274,7 @@ set_retval_f(Interp *interp /*NN*/, int sig_ret, parrot_context_t *ctx /*NN*/)
  * handle STRING return value
  */
 STRING*
-set_retval_s(Interp *interp /*NN*/, int sig_ret, parrot_context_t *ctx /*NN*/)
+set_retval_s(PARROT_INTERP, int sig_ret, parrot_context_t *ctx /*NN*/)
 {
     call_state st;
 
@@ -1300,7 +1291,7 @@ set_retval_s(Interp *interp /*NN*/, int sig_ret, parrot_context_t *ctx /*NN*/)
  * handle PMC return value
  */
 PMC*
-set_retval_p(Interp *interp /*NN*/, int sig_ret, parrot_context_t *ctx /*NN*/)
+set_retval_p(PARROT_INTERP, int sig_ret, parrot_context_t *ctx /*NN*/)
 {
     call_state st;
 
@@ -1318,7 +1309,7 @@ set_retval_p(Interp *interp /*NN*/, int sig_ret, parrot_context_t *ctx /*NN*/)
  * in the arg signature.  see Parrot_PCCINVOKE for signature syntax.
  */
 static void
-commit_last_arg(Interp *interp, int index, int cur, opcode_t *n_regs_used, int seen_arrow,
+commit_last_arg(PARROT_INTERP, int index, int cur, opcode_t *n_regs_used, int seen_arrow,
         PMC **sigs, opcode_t **indexes, parrot_context_t *ctx, PMC *pmc, va_list *list)
 {
     int reg_offset = 0;
@@ -1621,29 +1612,32 @@ Parrot_PCCINVOKE(Interp* interp, PMC* pmc, STRING *method_name, const char *sign
     index      = 0;
     seen_arrow = 1;
 
-    for (x=ret_x; *x != '\0'; x++) {
+    for (x=ret_x; *x; x++) {
         if (isupper(*x)) {
-            INTVAL    *tmpINTVAL;
-            FLOATVAL  *tmpFLOATVAL;
-            STRING   **tmpSTRING;
-            PMC      **tmpPMC;
-
             switch (*x) {
                 case 'I':
-                    tmpINTVAL  = va_arg(list, INTVAL*);
+                    {
+                    INTVAL * const tmpINTVAL  = va_arg(list, INTVAL*);
                     *tmpINTVAL = CTX_REG_INT(ctx, indexes[seen_arrow][index]);
+                    }
                     break;
                 case 'N':
-                    tmpFLOATVAL  = va_arg(list, FLOATVAL*);
+                    {
+                    FLOATVAL * const tmpFLOATVAL  = va_arg(list, FLOATVAL*);
                     *tmpFLOATVAL = CTX_REG_NUM(ctx, indexes[seen_arrow][index]);
+                    }
                     break;
                 case 'S':
-                    tmpSTRING  = va_arg(list, STRING**);
+                    {
+                    STRING ** const tmpSTRING  = va_arg(list, STRING**);
                     *tmpSTRING = CTX_REG_STR(ctx, indexes[seen_arrow][index]);
+                    }
                     break;
                 case 'P':
-                    tmpPMC  = va_arg(list, PMC**);
+                    {
+                    PMC ** const tmpPMC  = va_arg(list, PMC**);
                     *tmpPMC = CTX_REG_PMC(ctx, indexes[seen_arrow][index]);
+                    }
                     break;
                 default:
                           real_exception(interp, NULL, E_IndexError,

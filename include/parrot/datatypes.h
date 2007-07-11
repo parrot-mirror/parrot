@@ -66,7 +66,7 @@ typedef enum {
     enum_type_sized,            /* arbitrary size type for list_new */
     enum_last_type              /* + one */
 
-} PARROT_DATA_TYPES;
+} PARROT_DATA_TYPE;
 
 /* &end_gen */
 struct _data_types {
@@ -128,12 +128,16 @@ extern const struct _data_types data_types[];
 
 /* HEADERIZER BEGIN: src/datatypes.c */
 
-PARROT_API INTVAL Parrot_get_datatype_enum( Interp *interp,
+PARROT_API
+INTVAL Parrot_get_datatype_enum( PARROT_INTERP,
     const STRING *type_name /*NN*/ )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__warn_unused_result__;
 
-PARROT_API STRING * Parrot_get_datatype_name( Interp *interp, INTVAL type )
+PARROT_API
+STRING * Parrot_get_datatype_name( PARROT_INTERP, INTVAL type )
+        __attribute__nonnull__(1)
         __attribute__warn_unused_result__;
 
 /* HEADERIZER END: src/datatypes.c */

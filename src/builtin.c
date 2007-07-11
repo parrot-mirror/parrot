@@ -90,7 +90,8 @@ static int find_builtin( const char *func /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__warn_unused_result__;
 
-static int find_builtin_s( Interp *interp, STRING *func /*NN*/ )
+static int find_builtin_s( PARROT_INTERP, STRING *func /*NN*/ )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__warn_unused_result__;
 
@@ -113,15 +114,17 @@ Return the NCI PMC of the builtin or NULL.
 */
 
 void
-Parrot_init_builtins(Interp *interp /*NN*/)
+Parrot_init_builtins(PARROT_INTERP)
 {
     size_t i;
-    char buffer[128];
 
-    buffer[0] = buffer[1] = '_';
     for (i = 0; i < N_BUILTINS; ++i) {
         /* XXX mangle yes or no */
 #ifdef MANGLE_BUILTINS
+        char buffer[128];
+
+        buffer[0] = '_';
+        buffer[1] = '_';
         strcpy(buffer + 2, builtins[i].c_name);
         builtins[i].meth_name = const_string(interp, buffer);
 #else
@@ -162,7 +165,7 @@ find_builtin(const char *func /*NN*/)
 }
 
 static int
-find_builtin_s(Interp *interp, STRING *func /*NN*/)
+find_builtin_s(PARROT_INTERP, STRING *func /*NN*/)
     /* WARN_UNUSED */
 {
     int low  = 0;
@@ -245,7 +248,7 @@ again:
 }
 
 PMC*
-Parrot_find_builtin(Interp *interp, STRING *func /*NN*/)
+Parrot_find_builtin(PARROT_INTERP, STRING *func /*NN*/)
     /* WARN_UNUSED */
 {
     const int i = find_builtin_s(interp, func);

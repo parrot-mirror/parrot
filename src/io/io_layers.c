@@ -32,7 +32,7 @@ will be copied to the new instance.
 
 PARROT_API
 ParrotIOLayer *
-PIO_base_new_layer(ParrotIOLayer *proto)
+PIO_base_new_layer(ParrotIOLayer *proto /*NULLOK*/)
 {
     ParrotIOLayer * const new_layer = mem_allocate_typed(ParrotIOLayer);
 
@@ -87,7 +87,7 @@ Push a layer onto an IO object (C<*pmc>).
 
 PARROT_API
 INTVAL
-PIO_push_layer(Interp *interp, PMC *pmc /*NULLOK*/, ParrotIOLayer *layer /*NULLOK*/)
+PIO_push_layer(PARROT_INTERP, PMC *pmc /*NULLOK*/, ParrotIOLayer *layer /*NULLOK*/)
 {
     if (layer == NULL)
         return -1;
@@ -165,7 +165,7 @@ PIO_get_layer(SHIM_INTERP, const char *name /*NN*/)
 }
 
 void
-PIO_push_layer_str(Interp *interp, PMC *pmc, STRING *ls)
+PIO_push_layer_str(PARROT_INTERP, PMC *pmc, STRING *ls)
 {
     char * const cls = string_to_cstring(interp, ls);
     ParrotIOLayer * const l = PIO_get_layer(interp, cls);
@@ -197,7 +197,7 @@ popped layer. The layer gets freed.
 
 PARROT_API
 ParrotIOLayer *
-PIO_pop_layer(Interp *interp, PMC *pmc /*NULLOK*/)
+PIO_pop_layer(PARROT_INTERP, PMC *pmc /*NULLOK*/)
 {
     ParrotIO * const io = PMC_data_typed(pmc, ParrotIO *);
 
@@ -247,7 +247,7 @@ PIO_pop_layer(Interp *interp, PMC *pmc /*NULLOK*/)
 }
 
 STRING *
-PIO_pop_layer_str(Interp *interp, PMC *pmc)
+PIO_pop_layer_str(PARROT_INTERP, PMC *pmc /*NN*/)
 {
     ParrotIOLayer * const layer = PIO_pop_layer(interp, pmc);
     STRING * const ls = string_make(interp, layer->name,

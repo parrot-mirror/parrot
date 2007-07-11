@@ -92,7 +92,7 @@ typedef struct BaseTypes {
 
 /*
 
-=item C<static void write_types(FILE *stabs, Interp *interp)>
+=item C<static void write_types(FILE *stabs, PARROT_INTERP)>
 
 Writes the types to C<stabs>.
 
@@ -101,7 +101,7 @@ Writes the types to C<stabs>.
 */
 
 static void
-write_types(FILE *stabs, Interp *interp)
+write_types(FILE *stabs, PARROT_INTERP)
 {
     int i, j;
     /* borrowed from mono */
@@ -212,7 +212,7 @@ write_types(FILE *stabs, Interp *interp)
 /*
 
 =item C<static void
-write_vars(FILE *stabs, Interp *interp)>
+write_vars(FILE *stabs, PARROT_INTERP)>
 
 Writes the contents of the registers to C<stabs>.
 
@@ -221,26 +221,26 @@ Writes the contents of the registers to C<stabs>.
 */
 
 static void
-write_vars(FILE *stabs, Interp *interp)
+write_vars(FILE *stabs, PARROT_INTERP)
 {
     int i;
     /* fake static var stabs */
     for (i = 0; i < NUM_REGISTERS; i++) {
         fprintf(stabs, ".stabs \"I%d:S(0,12)\"," N_STSYM ",0,0,%p\n", i,
-                (char*)&REG_INT(i));
+                (char*)&REG_INT(interp, i));
         fprintf(stabs, ".stabs \"N%d:S(0,13)\"," N_STSYM ",0,0,%p\n", i,
-                (char*)&REG_NUM(i));
+                (char*)&REG_NUM(interp, i));
         fprintf(stabs, ".stabs \"S%d:S(0,16)\"," N_STSYM ",0,0,%p\n", i,
-                (char*)&REG_STR(i));
+                (char*)&REG_STR(interp, i));
         fprintf(stabs, ".stabs \"P%d:S*(0,19)\"," N_STSYM ",0,0,%p\n", i,
-                (char*)&REG_PMC(i));
+                (char*)&REG_PMC(interp, i));
     }
 }
 
 /*
 
 =item C<static STRING *
-debug_file(Interp *interp, STRING *file, const char *ext)>
+debug_file(PARROT_INTERP, STRING *file, const char *ext)>
 
 Returns C<file> with C<ext> appended.
 
@@ -249,7 +249,7 @@ Returns C<file> with C<ext> appended.
 */
 
 static STRING *
-debug_file(Interp *interp, STRING *file, const char *ext)
+debug_file(PARROT_INTERP, STRING *file, const char *ext)
 {
     STRING *ret;
     ret = string_copy(interp, file);
@@ -262,7 +262,7 @@ debug_file(Interp *interp, STRING *file, const char *ext)
 /*
 
 =item C<static void
-Parrot_jit_debug_stabs(Interp *interp)>
+Parrot_jit_debug_stabs(PARROT_INTERP)>
 
 Writes the JIT debugging stabs.
 
@@ -271,7 +271,7 @@ Writes the JIT debugging stabs.
 */
 
 static void
-Parrot_jit_debug_stabs(Interp *interp)
+Parrot_jit_debug_stabs(PARROT_INTERP)
 {
     Parrot_jit_info_t *jit_info = interp->code->jit_info;
     STRING *file = NULL;

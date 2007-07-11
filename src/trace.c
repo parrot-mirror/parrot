@@ -57,7 +57,7 @@ trace_class_name(const PMC* pmc /*NN*/)
 }
 
 void
-trace_pmc_dump(Interp *interp /*NN*/, PMC *pmc /*NN*/)
+trace_pmc_dump(PARROT_INTERP, PMC *pmc /*NN*/)
 {
     Interp * const debugger = interp->debugger;
 
@@ -69,7 +69,7 @@ trace_pmc_dump(Interp *interp /*NN*/, PMC *pmc /*NN*/)
         PIO_eprintf(debugger, "PMCNULL");
         return;
     }
-    if (!pmc->vtable || (INTVAL)pmc->vtable == 0xdeadbeef) {
+    if (!pmc->vtable || (UINTVAL)pmc->vtable == 0xdeadbeef) {
         PIO_eprintf(debugger, "<!!no vtable!!>");
         return;
     }
@@ -144,7 +144,7 @@ Prints a key to C<stderr>, returns the length of the output.
 */
 
 int
-trace_key_dump(Interp *interp /*NN*/, const PMC *key /*NN*/)
+trace_key_dump(PARROT_INTERP, const PMC *key /*NN*/)
 {
     Interp * const debugger = interp->debugger;
 
@@ -171,15 +171,15 @@ trace_key_dump(Interp *interp /*NN*/, const PMC *key /*NN*/)
             break;
         case KEY_integer_FLAG|KEY_register_FLAG:
             len += PIO_eprintf(debugger, "I%vd=%vd", PMC_int_val(key),
-                    REG_INT(PMC_int_val(key)));
+                    REG_INT(interp, PMC_int_val(key)));
             break;
         case KEY_number_FLAG|KEY_register_FLAG:
             len += PIO_eprintf(debugger, "I%vd=%vd", PMC_int_val(key),
-                    REG_NUM(PMC_int_val(key)));
+                    REG_NUM(interp, PMC_int_val(key)));
             break;
         case KEY_string_FLAG|KEY_register_FLAG:
             {
-            const STRING * const s = REG_STR(PMC_int_val(key));
+            const STRING * const s = REG_STR(interp, PMC_int_val(key));
             STRING* const escaped = string_escape_string_delimited(
                             interp, s, 20);
             if (escaped)
@@ -192,7 +192,7 @@ trace_key_dump(Interp *interp /*NN*/, const PMC *key /*NN*/)
             break;
         case KEY_pmc_FLAG|KEY_register_FLAG:
             len += PIO_eprintf(debugger, "P%vd=", PMC_int_val(key));
-            trace_pmc_dump(debugger, REG_PMC(PMC_int_val(key)));
+            trace_pmc_dump(debugger, REG_PMC(interp, PMC_int_val(key)));
             break;
         default:
             len += PIO_eprintf(debugger, "??");
@@ -222,7 +222,7 @@ Prints the PC, OP and ARGS. Used by C<trace_op()>.
 */
 
 void
-trace_op_dump(Interp *interp /*NN*/, const opcode_t *code_start /*NN*/, const opcode_t *pc /*NN*/)
+trace_op_dump(PARROT_INTERP, const opcode_t *code_start /*NN*/, const opcode_t *pc /*NN*/)
 {
     INTVAL s, n;
     int more = 0, var_args;
@@ -369,10 +369,10 @@ trace_op_dump(Interp *interp /*NN*/, const opcode_t *code_start /*NN*/, const op
             }
             switch (type) {
                 case PARROT_ARG_I:
-                    PIO_eprintf(debugger, "I%vd=%vd", o, REG_INT(o));
+                    PIO_eprintf(debugger, "I%vd=%vd", o, REG_INT(interp, o));
                     break;
                 case PARROT_ARG_N:
-                    PIO_eprintf(debugger, "N%vd=%vf", o, REG_NUM(o));
+                    PIO_eprintf(debugger, "N%vd=%vf", o, REG_NUM(interp, o));
                     break;
                 case PARROT_ARG_PC:
                     PIO_eprintf(debugger, "PC%vd=", o);
@@ -380,12 +380,12 @@ trace_op_dump(Interp *interp /*NN*/, const opcode_t *code_start /*NN*/, const op
                     break;
                 case PARROT_ARG_P:
                     PIO_eprintf(debugger, "P%vd=", o);
-                    trace_pmc_dump(interp, REG_PMC(o));
+                    trace_pmc_dump(interp, REG_PMC(interp, o));
                     break;
                 case PARROT_ARG_S:
-                    if (REG_STR(o)) {
+                    if (REG_STR(interp, o)) {
                         STRING* const escaped = string_escape_string_delimited(
-                                interp, REG_STR(o), 20);
+                                interp, REG_STR(interp, o), 20);
                         PIO_eprintf(debugger, "S%vd=\"%Ss\"", o,
                                 escaped);
                     }
@@ -394,10 +394,10 @@ trace_op_dump(Interp *interp /*NN*/, const opcode_t *code_start /*NN*/, const op
                     break;
                 case PARROT_ARG_K:
                     PIO_eprintf(debugger, "P%vd=", o);
-                    trace_key_dump(interp, REG_PMC(*(pc + i)));
+                    trace_key_dump(interp, REG_PMC(interp, *(pc + i)));
                     break;
                 case PARROT_ARG_KI:
-                    PIO_eprintf(debugger, "I%vd=[%vd]", o, REG_INT(o));
+                    PIO_eprintf(debugger, "I%vd=[%vd]", o, REG_INT(interp, o));
                     break;
                 default:
                     break;
@@ -420,7 +420,7 @@ checking.
 */
 
 void
-trace_op(Interp *interp, const opcode_t *code_start /*NN*/,
+trace_op(PARROT_INTERP, const opcode_t *code_start /*NN*/,
          const opcode_t *code_end /*NN*/, const opcode_t *pc /*NULLOK*/)
 {
     if (!pc) {

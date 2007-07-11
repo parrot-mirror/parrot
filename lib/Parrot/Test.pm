@@ -185,21 +185,13 @@ mark a TODO test.
 
 =item C<example_output_is( $example_f, $expected, @todo )>
 
-Determine the language from the extension of C<$example_f> and runs
-language_output_is().  This I<does> set a description for you, so don't pass
-one.
-
 =item C<example_output_like( $example_f, $expected, @todo )>
-
-Determine the language from the extension of C<$example_f> and runs
-language_output_like().  This I<does> set a description for you, so don't pass
-one.
 
 =item C<example_output_isnt( $example_f, $expected, @todo )>
 
-Determine the language from the extension of C<$example_f> and runs
-language_output_isnt().  This I<does> set a description for you, so don't pass
-one.
+Determines the language, PIR or PASM, from the extension of C<$example_f> and runs
+the appropriate C<^language_output_(is|kike|isnt)> sub.
+C<$example_f> is used as a description, so don't pass one.
 
 =item C<skip($why, $how_many)>
 
@@ -435,7 +427,7 @@ sub generate_languages_functions {
             my $self = shift;
             my ( $code, $output, $desc, %options ) = @_;
 
-            # set a TODO for Test::Builder to find
+            # set a todo-item for Test::Builder to find
             my $call_pkg = $self->{builder}->exported_to() || '';
 
             no strict 'refs';
@@ -453,7 +445,7 @@ sub generate_languages_functions {
 
             Parrot::Test::write_code_to_file( $code, $lang_f );
 
-            # set a TODO for Test::Builder to find
+            # set a todo-item for Test::Builder to find
             my $skip_why = $self->skip_why( \%options );
             if ($skip_why) {
                 $self->{builder}->skip($skip_why);
@@ -575,7 +567,7 @@ sub run_test_file
             ;    # Make cleanup and svn:ignore more simple
         $exe_f =~ s@[\\/:]@$PConfig{slash}@g;
 
-        # XXX put this into sub generate_pbc()
+        # RT#43751 put this into sub generate_pbc()
         run_command(
             qq{$parrot $args -o $pbc_f "$code_f"},
             CD     => $path_to_parrot,
@@ -682,7 +674,7 @@ sub _generate_functions {
 
             unlink $out_f unless $ENV{POSTMORTEM};
 
-            # set a TODO for Test::Builder to find
+            # set a todo-item for Test::Builder to find
             my $call_pkg = $builder->exported_to() || '';
 
             no strict 'refs';
@@ -773,7 +765,7 @@ sub _generate_functions {
                 $expected =~ s/[\t ]+/ /gm;
             }
 
-            # set a TODO for Test::Builder to find
+            # set a todo-item for Test::Builder to find
             my $call_pkg = $builder->exported_to() || '';
 
             local *{ $call_pkg . '::TODO' } = \$extra{todo}  ## no critic Variables::ProhibitConditionalDeclarations
@@ -827,11 +819,11 @@ sub _generate_functions {
             }
             else {
 
-                # TODO: $language should be the name of the test Module
+                # RT#43753: $language should be the name of the test Module
                 #       that would open the door for Scheme::Test
                 $language = ucfirst($language);
 
-                # make sure TODO will work, by telling Test::Builder which
+                # make sure todo-items will work, by telling Test::Builder which
                 # package the .t file is in (one more than usual, due to the
                 # extra layer of package indirection
                 my $level = $builder->level();
@@ -858,7 +850,6 @@ sub _generate_functions {
         *{ $package . '::' . $func } = $test_sub;
     }
 
-    # XXX this is broken WRT todo tests
     my %example_test_map = (
         example_output_is   => 'language_output_is',
         example_output_like => 'language_output_like',
@@ -924,7 +915,7 @@ sub _generate_functions {
             my $out_f    = per_test( '.out',   $test_no );
             my $build_f  = per_test( '.build', $test_no );
 
-            # set TODO before trying to compile or link
+            # set todo-option before trying to compile or link
             local *main::TODO;
             *main::TODO = \$options{todo} if $options{todo};
 
