@@ -102,7 +102,7 @@ binary_scan_number_slurpy(Interp *interp, char field, char *binstr, int *_pos, i
     PMC *elem;
     PMC *values = pmc_new(interp, class_TclList);
 
-    while (elem = binary_scan_number_field(interp, field, binstr, _pos, length))
+    while ( (elem = binary_scan_number_field(interp, field, binstr, _pos, length)) )
         VTABLE_push_pmc(interp, values, elem);
 
     return values;
@@ -322,7 +322,7 @@ binary_format_number_field(Interp *interp, char field, STRING *binstr, PMC *valu
     return binstr;
 }
 
-STRING *
+static STRING *
 binary_format_number(Interp *interp, char field, STRING *binstr, PMC *value,
                      char *format, int *formatpos, int formatlen)
 {
@@ -360,7 +360,7 @@ binary_format_string_field(Interp *interp, char field, STRING *binstr,
     return binstr;
 }
 
-STRING *
+static STRING *
 binary_format_string(Interp *interp, char field, STRING *binstr, PMC *value,
                      char *format, int *formatpos, int formatlen)
 {

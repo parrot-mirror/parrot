@@ -71,7 +71,8 @@ static const char * to_infix( Interp *interp /*NN*/,
         __attribute__nonnull__(4)
         __attribute__warn_unused_result__;
 
-static const char * try_rev_cmp( Interp *interp,
+static const char * try_rev_cmp(
+    SHIM_INTERP,
     IMC_Unit * unit,
     const char *name,
     SymReg ** r );
@@ -116,7 +117,7 @@ iNEW(Interp *interp, IMC_Unit *unit, SymReg *r0,
     char fmt[256];
     SymReg *regs[3];
     SymReg *pmc;
-    int i, nargs;
+    int nargs;
     const int pmc_num = pmc_type(interp,
             string_from_cstring(interp, *type == '.' ?type+1:type, 0));
 
@@ -139,7 +140,6 @@ iNEW(Interp *interp, IMC_Unit *unit, SymReg *r0,
     }
     else
         nargs = 2;
-    i = nargs;
     return INS(interp, unit, "new", fmt, regs, nargs,0, emit);
 }
 
@@ -1216,14 +1216,11 @@ imcc_vfprintf(Interp *interp /*NN*/, FILE *fd /*NN*/, const char *format /*NN*/,
     int len;
     const char *cp;
     const char *fmt;
-    int ch, n;
-    int _int;
-    double _double;
-    Instruction  *_ins;
-    char *_string;
     char buf[128];
 
     for (len = 0, fmt = format ; ; ) {
+        int ch, n;
+
         for (n = 0, cp = fmt; (ch = *fmt) && ch != '%'; fmt++)
             n++;
         /* print prev string */
@@ -1249,7 +1246,7 @@ imcc_vfprintf(Interp *interp /*NN*/, FILE *fd /*NN*/, const char *format /*NN*/,
         if (!ch) {
             /* no fatal here, else we get recursion */
             fprintf(stderr, "illegal format at %s\n", cp);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         /* ok, we have a valid format char */
         ++fmt;
@@ -1262,10 +1259,12 @@ imcc_vfprintf(Interp *interp /*NN*/, FILE *fd /*NN*/, const char *format /*NN*/,
             case 'X':
             case 'p':
             case 'c':
-                _int = va_arg(ap, int);
+                {
+                const int _int = va_arg(ap, int);
                 memcpy(buf, cp, n = (fmt - cp));
                 buf[n] = '\0';
                 len += fprintf(fd, buf, _int);
+                }
                 break;
             case 'e':
             case 'E':
@@ -1273,23 +1272,29 @@ imcc_vfprintf(Interp *interp /*NN*/, FILE *fd /*NN*/, const char *format /*NN*/,
             case 'F':
             case 'g':
             case 'G':
-                _double = va_arg(ap, double);
+                {
+                const double _double = va_arg(ap, double);
                 memcpy(buf, cp, n = (fmt - cp));
                 buf[n] = '\0';
                 len += fprintf(fd, buf, _double);
+                }
                 break;
             case 's':
-                _string = va_arg(ap, char *);
+                {
+                const char * const _string = va_arg(ap, char *);
                 memcpy(buf, cp, n = (fmt - cp));
                 assert(n<128);
                 buf[n] = '\0';
                 len += fprintf(fd, buf, _string);
+                }
                 break;
             /* this is the reason for the whole mess */
             case 'I':
-                _ins = va_arg(ap, Instruction *);
+                {
+                Instruction * const _ins = va_arg(ap, Instruction *);
                 len += fprintf(fd, "%s ", _ins->op);
                 len += ins_print(interp, fd, _ins);
+                }
                 break;
         }
     }
@@ -1300,9 +1305,10 @@ imcc_vfprintf(Interp *interp /*NN*/, FILE *fd /*NN*/, const char *format /*NN*/,
  * Utility functions
  */
 
+PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
 char *
-str_dup(const char *old /*NN*/)
-    /* MALLOC, WARN_UNUSED */
+str_dup(NOTNULL(const char *old))
 {
     const size_t bytes = strlen(old) + 1;
     char * const copy = mem_sys_allocate(bytes);
@@ -1312,20 +1318,6 @@ str_dup(const char *old /*NN*/)
 #endif
     return copy;
 }
-
-char *
-str_cat(const char *s1 /*NN*/, const char *s2 /*NN*/)
-{
-    const size_t len1 = strlen(s1);
-    const size_t len2 = strlen(s2);
-
-    char * const s3 = mem_sys_allocate(len1 + len2 + 1);
-    memcpy(s3, s1, len1);
-    memcpy(s3+len1, s2, len2+1);
-
-    return s3;
-}
-
 
 PARROT_API
 void

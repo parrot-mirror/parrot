@@ -53,42 +53,43 @@ typedef enum {
 #define SUB_FLAG_TAILCALL_SET(o) SUB_FLAG_flag_SET(TAILCALL, o)
 #define SUB_FLAG_TAILCALL_CLEAR(o) SUB_FLAG_flag_CLEAR(TAILCALL, o)
 
-
+#define SUB_FLAG(n) ((UINTVAL)1 << (n))
 typedef enum {
-    SUB_COMP_FLAG_BIT_0 = 1 << 0,
-    SUB_COMP_FLAG_BIT_1 = 1 << 1,
-    SUB_COMP_FLAG_BIT_2 = 1 << 2,
-    SUB_COMP_FLAG_BIT_3 = 1 << 3,
-    SUB_COMP_FLAG_BIT_4 = 1 << 4,
-    SUB_COMP_FLAG_BIT_5 = 1 << 5,
-    SUB_COMP_FLAG_BIT_6 = 1 << 6,
-    SUB_COMP_FLAG_BIT_7 = 1 << 7,
-    SUB_COMP_FLAG_BIT_8 = 1 << 8,
-    SUB_COMP_FLAG_BIT_9 = 1 << 9,
-    SUB_COMP_FLAG_PF_INIT = 1 << 10,
-    SUB_COMP_FLAG_BIT_10 = 1 << 10,
-    SUB_COMP_FLAG_BIT_11 = 1 << 11,
-    SUB_COMP_FLAG_BIT_12 = 1 << 12,
-    SUB_COMP_FLAG_BIT_13 = 1 << 13,
-    SUB_COMP_FLAG_BIT_14 = 1 << 14,
-    SUB_COMP_FLAG_BIT_15 = 1 << 15,
-    SUB_COMP_FLAG_BIT_16 = 1 << 16,
-    SUB_COMP_FLAG_BIT_17 = 1 << 17,
-    SUB_COMP_FLAG_BIT_18 = 1 << 18,
-    SUB_COMP_FLAG_BIT_19 = 1 << 19,
-    SUB_COMP_FLAG_BIT_20 = 1 << 20,
-    SUB_COMP_FLAG_BIT_21 = 1 << 21,
-    SUB_COMP_FLAG_BIT_22 = 1 << 22,
-    SUB_COMP_FLAG_BIT_23 = 1 << 23,
-    SUB_COMP_FLAG_BIT_24 = 1 << 24,
-    SUB_COMP_FLAG_BIT_25 = 1 << 25,
-    SUB_COMP_FLAG_BIT_26 = 1 << 26,
-    SUB_COMP_FLAG_BIT_27 = 1 << 27,
-    SUB_COMP_FLAG_BIT_28 = 1 << 28,
-    SUB_COMP_FLAG_BIT_29 = 1 << 29,
-    SUB_COMP_FLAG_BIT_30 = 1 << 30,
-    SUB_COMP_FLAG_MASK   = 0x00000400
+    SUB_COMP_FLAG_BIT_0     = SUB_FLAG(0),
+    SUB_COMP_FLAG_BIT_1     = SUB_FLAG(1),
+    SUB_COMP_FLAG_BIT_2     = SUB_FLAG(2),
+    SUB_COMP_FLAG_BIT_3     = SUB_FLAG(3),
+    SUB_COMP_FLAG_BIT_4     = SUB_FLAG(4),
+    SUB_COMP_FLAG_BIT_5     = SUB_FLAG(5),
+    SUB_COMP_FLAG_BIT_6     = SUB_FLAG(6),
+    SUB_COMP_FLAG_BIT_7     = SUB_FLAG(7),
+    SUB_COMP_FLAG_BIT_8     = SUB_FLAG(8),
+    SUB_COMP_FLAG_BIT_9     = SUB_FLAG(9),
+    SUB_COMP_FLAG_BIT_10    = SUB_FLAG(10),
+    SUB_COMP_FLAG_PF_INIT   = SUB_COMP_FLAG_BIT_10,
+    SUB_COMP_FLAG_BIT_11    = SUB_FLAG(11),
+    SUB_COMP_FLAG_BIT_12    = SUB_FLAG(12),
+    SUB_COMP_FLAG_BIT_13    = SUB_FLAG(13),
+    SUB_COMP_FLAG_BIT_14    = SUB_FLAG(14),
+    SUB_COMP_FLAG_BIT_15    = SUB_FLAG(15),
+    SUB_COMP_FLAG_BIT_16    = SUB_FLAG(16),
+    SUB_COMP_FLAG_BIT_17    = SUB_FLAG(17),
+    SUB_COMP_FLAG_BIT_18    = SUB_FLAG(18),
+    SUB_COMP_FLAG_BIT_19    = SUB_FLAG(19),
+    SUB_COMP_FLAG_BIT_20    = SUB_FLAG(20),
+    SUB_COMP_FLAG_BIT_21    = SUB_FLAG(21),
+    SUB_COMP_FLAG_BIT_22    = SUB_FLAG(22),
+    SUB_COMP_FLAG_BIT_23    = SUB_FLAG(23),
+    SUB_COMP_FLAG_BIT_24    = SUB_FLAG(24),
+    SUB_COMP_FLAG_BIT_25    = SUB_FLAG(25),
+    SUB_COMP_FLAG_BIT_26    = SUB_FLAG(26),
+    SUB_COMP_FLAG_BIT_27    = SUB_FLAG(27),
+    SUB_COMP_FLAG_BIT_28    = SUB_FLAG(28),
+    SUB_COMP_FLAG_BIT_29    = SUB_FLAG(29),
+    SUB_COMP_FLAG_BIT_30    = SUB_FLAG(30),
+    SUB_COMP_FLAG_MASK      = 0x00000400
 } sub_comp_flags_enum;
+#undef SUB_FLAG
 
 #define Sub_comp_get_FLAGS(o) ((PMC_sub(o))->comp_flags)
 #define Sub_comp_flag_TEST(flag, o) (Sub_comp_get_FLAGS(o) & SUB_COMP_FLAG_ ## flag)
@@ -200,69 +201,68 @@ typedef struct Parrot_Context_info {
     STRING* nsname;
     STRING* fullname;
     int pc;
-    char *file;
+    const char *file;
     int line;
     opcode_t *address;
 } Parrot_Context_info;
 
 /* HEADERIZER BEGIN: src/sub.c */
 
-PARROT_API PMC * new_ret_continuation_pmc( Interp *interp /*NN*/,
-    opcode_t *address )
+PARROT_API
+PMC * new_ret_continuation_pmc( PARROT_INTERP, opcode_t *address )
         __attribute__nonnull__(1);
 
-PARROT_API int Parrot_Context_get_info( Interp *interp /*NN*/,
+PARROT_API
+int Parrot_Context_get_info( PARROT_INTERP,
     parrot_context_t *ctx /*NN*/,
     Parrot_Context_info *info /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_API STRING* Parrot_Context_infostr( Interp *interp /*NN*/,
-    parrot_context_t *ctx /*NN*/ )
+PARROT_API
+STRING* Parrot_Context_infostr( PARROT_INTERP, parrot_context_t *ctx /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API STRING* Parrot_full_sub_name( Interp *interp /*NN*/,
-    PMC* sub /*NULLOK*/ )
+PARROT_API
+STRING* Parrot_full_sub_name( PARROT_INTERP, PMC* sub /*NULLOK*/ )
         __attribute__nonnull__(1);
 
-PARROT_API PMC* parrot_new_closure( Interp *interp /*NN*/, PMC *sub_pmc )
+PARROT_API
+PMC* parrot_new_closure( PARROT_INTERP, PMC *sub_pmc )
         __attribute__nonnull__(1);
 
-void invalidate_retc_context( Interp *interp /*NN*/, PMC *cont /*NN*/ )
+void invalidate_retc_context( PARROT_INTERP, PMC *cont /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void mark_context( Interp *interp /*NN*/, parrot_context_t* ctx /*NN*/ )
+void mark_context( PARROT_INTERP, parrot_context_t* ctx /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-Parrot_sub * new_closure( Interp *interp /*NN*/ )
+Parrot_sub * new_closure( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-Parrot_cont * new_continuation( Interp *interp /*NN*/,
-    Parrot_cont *to /*NULLOK*/ )
+Parrot_cont * new_continuation( PARROT_INTERP, Parrot_cont *to /*NULLOK*/ )
         __attribute__nonnull__(1);
 
-Parrot_coro * new_coroutine( Interp *interp /*NN*/ )
+Parrot_coro * new_coroutine( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-Parrot_cont * new_ret_continuation( Interp *interp /*NN*/ )
+Parrot_cont * new_ret_continuation( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-Parrot_sub * new_sub( Interp *interp /*NN*/ )
+Parrot_sub * new_sub( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-PMC* Parrot_find_pad( Interp *interp /*NN*/,
+PMC* Parrot_find_pad( PARROT_INTERP,
     STRING *lex_name,
     parrot_context_t *ctx /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
 /* HEADERIZER END: src/sub.c */
-
-PARROT_API PMC* parrot_new_closure(Interp*, PMC*);
 
 #endif /* PARROT_SUB_H_GUARD */
 

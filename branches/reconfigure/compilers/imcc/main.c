@@ -240,7 +240,7 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
     extern int yydebug;
     if (*argc == 1) {
         usage(stderr);
-        exit(0);
+        exit(EXIT_SUCCESS);
     }
     run_pbc = 1;
 
@@ -313,7 +313,7 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
                 break;
             case OPT_RUNTIME_PREFIX:
                 printf("%s\n", Parrot_get_runtime_prefix(interp, NULL));
-                exit(0);
+                exit(EXIT_SUCCESS);
                 break;
             case 'V':
                 Parrot_version(interp);
@@ -550,7 +550,7 @@ imcc_get_optimization_description(const Interp *interp /*NN*/, int opt_level, ch
     if (interp->run_core & PARROT_SWITCH_CORE)
         opt_desc[i++] = 't';
 
-    opt_desc[i++] = '\0';
+    opt_desc[i] = '\0';
     return;
 }
 
@@ -750,7 +750,7 @@ imcc_run(Interp *interp /*NN*/, const char *sourcefile, int argc, char * argv[])
         IMCC_TRY(IMCC_INFO(interp)->jump_buf,
                  IMCC_INFO(interp)->error_code) {
             if (yyparse(yyscanner, interp))
-                exit(1);
+                exit(EXIT_FAILURE);
 
             imc_compile_all_units(interp);
         }

@@ -33,22 +33,22 @@ Define the internal interpreter exceptions.
 
 /* HEADERIZER BEGIN: static */
 
-static opcode_t * create_exception( Interp *interp /*NN*/ )
+static opcode_t * create_exception( PARROT_INTERP )
         __attribute__nonnull__(1)
         __attribute__warn_unused_result__;
 
-static size_t dest2offset( Interp *interp /*NN*/,
-    const opcode_t *dest /*NN*/ )
+static size_t dest2offset( PARROT_INTERP, const opcode_t *dest /*NN*/ )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__pure__
         __attribute__warn_unused_result__;
 
-static PMC * find_exception_handler( Interp *interp /*NN*/, PMC *exception )
+static PMC * find_exception_handler( PARROT_INTERP, PMC *exception )
         __attribute__nonnull__(1)
         __attribute__warn_unused_result__;
 
-static void run_cleanup_action( Interp *interp, Stack_Entry_t *e /*NN*/ )
+static void run_cleanup_action( PARROT_INTERP, Stack_Entry_t *e /*NN*/ )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 /* HEADERIZER END: static */
@@ -94,7 +94,7 @@ internal_exception(int exitcode, const char *format /*NN*/, ...)
 #  define dumpcore() \
      fprintf(stderr, "Sorry, coredump is not yet implemented " \
              "for this platform.\n\n"); \
-             exit(1);
+             exit(EXIT_FAILURE);
 #endif
 
 /*
@@ -106,7 +106,7 @@ Panic handler.
 */
 
 void
-do_panic(Interp *interp /*NULLOK*/, const char *message /*NULLOK*/,
+do_panic(PARROT_INTERP /*NULLOK*/, const char *message /*NULLOK*/,
          const char *file /*NULLOK*/, int line)
     /* NORETURN */
 {
@@ -168,7 +168,7 @@ Pop items off the dynamic environment up to the mark.
 
 PARROT_API
 void
-push_exception(Interp *interp /*NN*/, PMC *handler /*NN*/)
+push_exception(PARROT_INTERP, PMC *handler /*NN*/)
 {
     if (handler->vtable->base_type != enum_class_Exception_Handler)
         PANIC(interp, "Tried to set_eh a non Exception_Handler");
@@ -177,7 +177,7 @@ push_exception(Interp *interp /*NN*/, PMC *handler /*NN*/)
 }
 
 static void
-run_cleanup_action(Interp *interp, Stack_Entry_t *e /*NN*/)
+run_cleanup_action(PARROT_INTERP, Stack_Entry_t *e /*NN*/)
 {
     /*
      * this is called during normal stack_pop of the control
@@ -189,7 +189,7 @@ run_cleanup_action(Interp *interp, Stack_Entry_t *e /*NN*/)
 
 PARROT_API
 void
-Parrot_push_action(Interp *interp /*NN*/, PMC *sub)
+Parrot_push_action(PARROT_INTERP, PMC *sub)
 {
     if (!VTABLE_isa(interp, sub,
                 const_string(interp, "Sub"))) {
@@ -201,7 +201,7 @@ Parrot_push_action(Interp *interp /*NN*/, PMC *sub)
 
 PARROT_API
 void
-Parrot_push_mark(Interp *interp /*NN*/, INTVAL mark)
+Parrot_push_mark(PARROT_INTERP, INTVAL mark)
 {
     stack_push(interp, &interp->dynamic_env, &mark,
                STACK_ENTRY_MARK, STACK_CLEANUP_NULL);
@@ -209,7 +209,7 @@ Parrot_push_mark(Interp *interp /*NN*/, INTVAL mark)
 
 PARROT_API
 void
-Parrot_pop_mark(Interp *interp /*NN*/, INTVAL mark)
+Parrot_pop_mark(PARROT_INTERP, INTVAL mark)
 {
     do {
         const Stack_Entry_t * const e
@@ -235,7 +235,7 @@ Find the exception handler for C<exception>.
 */
 
 static PMC *
-find_exception_handler(Interp *interp /*NN*/, PMC *exception)
+find_exception_handler(PARROT_INTERP, PMC *exception)
     /* WARN_UNUSED */
 {
     char *m;
@@ -323,7 +323,7 @@ Pops the topmost exception handler off the stack.
 
 PARROT_API
 void
-pop_exception(Interp *interp /*NN*/)
+pop_exception(PARROT_INTERP)
 {
     Stack_entry_type  type;
     Parrot_cont      *cc;
@@ -358,7 +358,7 @@ flag bit is set.
 
 PARROT_API
 PMC*
-new_c_exception_handler(Interp *interp /*NN*/, Parrot_exception *jb)
+new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
 {
     PMC * const handler = pmc_new(interp, enum_class_Exception_Handler);
     /*
@@ -379,7 +379,7 @@ Pushes an new C exception handler onto the stack.
 
 PARROT_API
 void
-push_new_c_exception_handler(Interp *interp /*NN*/, Parrot_exception *jb)
+push_new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
 {
     push_exception(interp, new_c_exception_handler(interp, jb));
 }
@@ -394,7 +394,7 @@ Throw the exception.
 
 PARROT_API
 opcode_t *
-throw_exception(Interp *interp /*NN*/, PMC *exception, SHIM(void *dest))
+throw_exception(PARROT_INTERP, PMC *exception, SHIM(void *dest))
 {
     opcode_t *address;
     PMC * const handler = find_exception_handler(interp, exception);
@@ -423,7 +423,7 @@ Rethrow the exception.
 
 PARROT_API
 opcode_t *
-rethrow_exception(Interp *interp /*NN*/, PMC *exception /*NN*/)
+rethrow_exception(PARROT_INTERP, PMC *exception /*NN*/)
 {
     PMC *handler;
     opcode_t *address;
@@ -446,7 +446,7 @@ that this is called from within a handler setup with C<new_c_exception>.
 */
 
 void
-rethrow_c_exception(Interp *interp /*NN*/)
+rethrow_c_exception(PARROT_INTERP)
     /* NORETURN */
 {
     Parrot_exception * const the_exception = interp->exceptions;
@@ -478,7 +478,7 @@ after an exception had occurred.
 */
 
 static size_t
-dest2offset(Interp *interp /*NN*/, const opcode_t *dest /*NN*/)
+dest2offset(PARROT_INTERP, const opcode_t *dest /*NN*/)
     /* PURE, WARN_UNUSED */
 {
     size_t offset;
@@ -491,6 +491,7 @@ dest2offset(Interp *interp /*NN*/, const opcode_t *dest /*NN*/)
         case PARROT_CGP_CORE:
         case PARROT_CGP_JIT_CORE:
             offset = dest - (const opcode_t *)interp->code->prederef.code;
+            break;
         default:
             offset = dest - interp->code->base.data;
     }
@@ -506,7 +507,7 @@ Create an exception.
 */
 
 static opcode_t *
-create_exception(Interp *interp /*NN*/)
+create_exception(PARROT_INTERP)
     /* WARN_UNUSED */
 {
     PMC *exception;     /* exception object */
@@ -552,7 +553,7 @@ Handle an exception.
 
 PARROT_API
 size_t
-handle_exception(Interp *interp /*NN*/)
+handle_exception(PARROT_INTERP)
 {
     /* absolute address of handler */
     const opcode_t * const dest = create_exception(interp);
@@ -571,7 +572,7 @@ getting one from the free list.
 
 PARROT_API
 void
-new_internal_exception(Interp *interp /*NN*/)
+new_internal_exception(PARROT_INTERP)
 {
     Parrot_exception *the_exception;
 
@@ -597,7 +598,7 @@ Place internal exception buffer back on the free list.
 
 PARROT_API
 void
-free_internal_exception(Interp *interp /*NN*/)
+free_internal_exception(PARROT_INTERP)
 {
     Parrot_exception * const e = interp->exceptions;
     interp->exceptions = e->prev;
@@ -606,7 +607,7 @@ free_internal_exception(Interp *interp /*NN*/)
 }
 
 void
-destroy_exception_list(Interp *interp /*NN*/)
+destroy_exception_list(PARROT_INTERP)
 {
     really_destroy_exception_list(interp->exceptions);
     really_destroy_exception_list(interp->exc_free_list);
@@ -634,7 +635,7 @@ execution then resumes.
 
 PARROT_API
 void
-do_exception(Interp *interp /*NN*/, INTVAL severity, long error)
+do_exception(PARROT_INTERP, INTVAL severity, long error)
     /* NORETURN */
 {
     Parrot_exception * const the_exception = interp->exceptions;
@@ -662,7 +663,7 @@ C<throw_exception>, which calls the handler.
 
 PARROT_API
 void
-real_exception(Interp *interp /*NN*/, void *ret_addr,
+real_exception(PARROT_INTERP, void *ret_addr,
         int exitcode, const char *format /*NN*/, ...)
     /* NORETURN */
 {
@@ -732,7 +733,7 @@ Create exception objects.
 */
 
 void
-Parrot_init_exceptions(Interp *interp /*NN*/) {
+Parrot_init_exceptions(PARROT_INTERP) {
     int i;
 
     interp->exception_list = (PMC **)mem_sys_allocate(

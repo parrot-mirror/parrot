@@ -106,6 +106,9 @@ sub extract_function_declarations {
     # Ignore magic function name YY_DECL
     @funcs = grep !/YY_DECL/, @funcs;
 
+    # Ignore anything with magic words HEADERIZER SKIP
+    @funcs = grep !m{/\*\s*HEADERIZER SKIP\s*\*/}, @funcs;
+
     # Variables are of no use to us
     @funcs = grep !/=/, @funcs;
 
@@ -128,16 +131,19 @@ sub function_components_from_declaration {
 
     my @lines = split( /\n/, $proto );
     chomp @lines;
+
+    my @macros;
     my $parrot_api;
     my $parrot_inline;
-    if ( $lines[0] eq 'PARROT_API' ) {
-        $parrot_api = 1;
-        shift @lines;
-    }
 
-    if ( $lines[0] eq 'PARROT_INLINE' ) {
-        $parrot_inline = 1;
-        shift @lines;
+    while ( @lines && ( $lines[0] =~ /^PARROT_/ ) ) {
+        my $macro = shift @lines;
+        if ( $macro eq 'PARROT_API' ) {
+            $parrot_api = 1;
+        } elsif ( $macro eq 'PARROT_INLINE' ) {
+            $parrot_inline = 1;
+        }
+        push( @macros, $macro );
     }
 
     my $return_type = shift @lines;
@@ -149,14 +155,13 @@ sub function_components_from_declaration {
 
     my $name = $1;
     $args = $2;
-    my $flags = $4;
+    my $flags = $4; # Soon to be replaced by the PARROT_X macros
 
     die "Can't have both PARROT_API and PARROT_INLINE on $name\n" if $parrot_inline && $parrot_api;
 
     my @args = split( /\s*,\s*/, $args );
     for (@args) {
-        s/SHIM_INTERP/SHIM(Interp *interp)/;
-        /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' )
+        /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' ) || ( $_ =~ /(SHIM|PARROT)_INTERP/ )
             or die "Bad args in $proto";
         s/SHIM\(\s*(\w+.*\w+)\s*\)/$1/e;
     }
@@ -170,6 +175,7 @@ sub function_components_from_declaration {
         name        => $name,
         flags       => $flags,
         args        => \@args,
+        macros      => \@macros,
         is_static   => $is_static,
         is_inline   => $parrot_inline,
         is_api      => $parrot_api,
@@ -185,7 +191,7 @@ sub attrs_from_args {
     my $n = 0;
     for my $arg ( @args ) {
         ++$n;
-        if ( $arg =~ m{/\*\s*NN\s*\*/} ) {
+        if ( $arg =~ m{/\*\s*NN\s*\*/} || $arg =~ m{NOTNULL\(} || $arg eq 'PARROT_INTERP' ) {
             push( @attrs, "__attribute__nonnull__($n)" );
         }
     }
@@ -228,8 +234,6 @@ sub attrs_from_flags {
     return @attrs;
 }
 
-sub wango { 'foo' }
-
 sub make_function_decls {
     my @funcs = @_;
 
@@ -238,10 +242,7 @@ sub make_function_decls {
         my $multiline = 0;
 
         my $decl = sprintf( "%s %s(", $func->{return_type}, $func->{name} );
-        $decl = "PARROT_API $decl" if $func->{is_api};
         $decl = "static $decl" if $func->{is_static};
-
-        $decl = "PARROT_INLINE $decl" if $func->{is_inline};
 
         my @args = @{$func->{args}};
         my @attrs = attrs_from_args( @args );
@@ -258,7 +259,7 @@ sub make_function_decls {
             $decl = "$decl $argline )";
         }
         else {
-            if ( $args[0] =~ /^Interp\b/ ) {
+            if ( $args[0] =~ /^(PARROT_INTERP|Interp)\b/ ) {
                 $decl .= " " . (shift @args);
                 $decl .= "," if @args;
             }
@@ -272,7 +273,11 @@ sub make_function_decls {
             $decl .= $attrs;
             $multiline = 1;
         }
+        my @macros = @{$func->{macros}};
+        $multiline = 1 if @macros;
+
         $decl .= $multiline ? ";\n" : ";";
+        $decl = join( "\n", @macros, $decl );
         $decl =~ s/\t/    /g;
         push( @decls, $decl );
     }
@@ -292,6 +297,8 @@ sub main {
     # Walk the object files and find corresponding source (either .c or .pmc)
     for my $ofile (@ofiles) {
         next if $ofile =~ m/^\Qsrc$PConfig{slash}ops\E/;
+
+        $ofile =~ s/\\/\//g;
 
         my $cfile = $ofile;
         $cfile =~ s/\Q$PConfig{o}\E$/.c/ or die "$cfile doesn't look like an object file";

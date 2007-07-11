@@ -43,7 +43,7 @@ static int e_file_emit( Interp *interp /*NN*/,
         __attribute__nonnull__(1)
         __attribute__nonnull__(4);
 
-static int e_file_open( Interp *interp, void *param );
+static int e_file_open( SHIM_INTERP, void *param );
 /* HEADERIZER END: static */
 
 const char types[] = "INPS";
@@ -564,7 +564,7 @@ ins_print(Interp *interp /*NN*/, FILE *fd /*NN*/, const Instruction *ins /*NN*/)
         default:
             fprintf(stderr, "unhandled: opsize (%d), op %s, fmt %s\n",
                     ins->opsize, ins->op, ins->fmt);
-            exit(1);
+            exit(EXIT_FAILURE);
             break;
     }
     return len;
@@ -650,4 +650,5 @@ emit_close(Interp *interp, void *param)
  * End:
  * vim: expandtab shiftwidth=4:
  */
+
 

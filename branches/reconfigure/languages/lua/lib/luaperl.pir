@@ -67,29 +67,6 @@ It's a temporary work. Waiting for the real PIR compiler/interpreter.
 .end
 
 
-.sub 'save_pbc' :anon
-    .param string pbc_out
-    .param string filename
-    .local string output
-    .local pmc fh
-    output = concat filename, '.pbc'
-    fh = open output, '>'
-    if fh goto L1
-    $S0 = err
-    print "Can't open '"
-    print output
-    print "' ("
-    print $S0
-    print ")\n"
-    goto L2
-  L1:
-    print fh, pbc_out
-    close fh
-  L2:
-    .return (output)
-.end
-
-
 .sub 'load_script' :anon
     .param string filename
     .local pmc pio
@@ -129,11 +106,13 @@ It's a temporary work. Waiting for the real PIR compiler/interpreter.
     if pir goto L1
     $P0 = getclass 'ParrotIO'
     $S0 = $P0.'slurp'(out)
+    unlink(out)  # cleaning up the temporary file
     .local pmc ex
     ex = new .Exception
     ex['_message'] = $S0
     throw ex
   L1:
+    unlink(out)  # cleaning up the temporary file
     .local pmc pir_comp
     pir_comp = compreg 'PIR'
     $P0 = pir_comp(pir)
@@ -148,7 +127,7 @@ Compile C<source>.
 =cut
 
 .sub 'compile' :method
-    .param pmc source
+    .param string source
 
     $S0 = 'tmp'
     $P0 = getprop 'num', self
@@ -161,13 +140,8 @@ Compile C<source>.
     $S0 .= $S1
     setprop self, 'num', $P0
     $S1 = $S0 . '.lua'
-    $S2 = source
-    save_lua($S2, $S1)
-    $P0 = compile_file($S1)
-    $S3 = save_pbc($P0, $S0)
-    load_bytecode $S3
-    $P1 = get_root_global $S0
-    .return ($P1)
+    save_lua(source, $S1)
+    .return compile_file($S1)
 .end
 
 =back

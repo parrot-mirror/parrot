@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2005, The Perl Foundation.
+# Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -38,7 +38,7 @@ sub runstep {
             $self->set_result('yes, old version');
         }
         else {
-            if ( open my $FH, "<", "c99da7c4.tmp" ) {
+            if ( open my $FH, '<', 'c99da7c4.tmp' ) {
                 local $/;
                 $content = <$FH>;
                 close $FH;
@@ -57,7 +57,7 @@ sub runstep {
     else {
         $self->set_result('no');
     }
-    unlink "c99da7c4.tmp";
+    unlink 'c99da7c4.tmp';
 
     $conf->data->set(
         has_perldoc => $version != 0 ? 1 : 0,
