@@ -65,6 +65,7 @@ sub get_valid_options {
         step
         sysconfdir
         target
+        trace_configure
         test
         verbose
         verbose-step

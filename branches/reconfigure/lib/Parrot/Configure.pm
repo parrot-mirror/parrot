@@ -39,6 +39,7 @@ use warnings;
 
 use lib qw(config);
 use Carp qw(carp);
+use Storable qw(nstore retrieve);
 use Parrot::Configure::Data;
 
 use Class::Struct;
@@ -188,6 +189,10 @@ sub runsteps {
     my ( $verbose, $verbose_step, $ask ) =
         $self->options->get( qw( verbose verbose-step ask ) );
 
+    my $sto = q{.trace_configure.sto};
+    if ($self->options->get(q{trace_configure}) and (-f $sto)) {
+        unlink $sto or die "Unable to unlink configuration trace file";
+    }
     foreach my $task ( $self->steps ) {
         $n++;
         $self->_run_this_step( {
@@ -196,6 +201,7 @@ sub runsteps {
             verbose_step    => $verbose_step,
             ask             => $ask,
             n               => $n,
+            sto             => $sto,
         } );
     }
     return 1;
@@ -241,6 +247,10 @@ sub _run_this_step {
     eval "use $step_name;";
     die $@ if $@;
 
+    my $conftrace = [];
+    if ( (defined $args->{sto}) and (-e $args->{sto}) ) {
+        $conftrace = retrieve($args->{sto});
+    }
     my $step = $step_name->new;
 
     # RT#43675 This works. but is probably not a good design.
@@ -299,6 +309,14 @@ sub _run_this_step {
     print "." x ( 71 - length($description) - length($result) );
     print "$result." unless $step =~ m{^inter/} && $args->{ask};
 
+    if (defined $args->{sto}) {
+        if (! defined $conftrace->[0]) {
+            $conftrace->[0] = [];
+        }
+        push @{$conftrace->[0]}, $step_name;
+        push @{$conftrace}, $self;
+        nstore($conftrace, $args->{sto});
+    }
     # reset verbose value for the next step
     $self->options->set( verbose => $args->{verbose} );
 }
