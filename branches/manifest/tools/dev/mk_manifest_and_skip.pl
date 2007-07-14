@@ -1,21 +1,20 @@
-#! perl
+##! perl
 # $Id$
 package main;
 use strict;
 use warnings;
 use lib ( qw| lib | );
-use Parrot::Manifest::Files;
-use Parrot::Manifest::Skip;
+use Parrot::Manifest;
 
 my $script = $0;
 
-my $mani = Parrot::Manifest::Files->new($script);
-$mani->prepare_manifest();
-$mani->print_manifest();
+my $mani = Parrot::Manifest->new($script);
 
-my $skip = Parrot::Manifest::Skip->new($script);
-$skip->prepare_manifest_skip();
-$skip->print_manifest_skip();
+my $manifest_lines_ref = $mani->prepare_manifest();
+$mani->print_manifest($manifest_lines_ref);
+
+my $ignore_ref = $mani->prepare_manifest_skip();
+$mani->print_manifest_skip($ignore_ref);
 
 =head1 NAME
 
@@ -32,7 +31,7 @@ So far tested with svn 1.2.0, svn 1.4.2, and svk 1.08.
 
 =head1 SEE ALSO
 
-Parrot::Manifest, Parrot::Manifest::Files, Parrot::Manifest::Skip.
+Parrot::Manifest.
 
 =cut
 
