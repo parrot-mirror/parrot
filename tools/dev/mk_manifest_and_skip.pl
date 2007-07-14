@@ -7,7 +7,7 @@ use lib ( qw| lib | );
 use Parrot::Manifest::Files;
 use Parrot::Manifest::Skip;
 
-my script = $0;
+my $script = $0;
 
 my $mani = Parrot::Manifest::Files->new($script);
 $mani->prepare_manifest();
