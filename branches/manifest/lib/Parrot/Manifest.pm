@@ -169,7 +169,6 @@ sub prepare_manifest_skip {
             $ignore{$1} = $2 if $2;
         }
     }
-#    $self->{ignore} = \%ignore;
     return \%ignore;
 }
 
