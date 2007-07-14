@@ -92,6 +92,14 @@ sub get_current_skips {
 
 Parrot::Manifest::Skip - Create MANIFEST.SKIP
 
+=head1 SYNOPSIS
+
+    use Parrot::Manifest::Skip;
+
+    $skip = Parrot::Manifest::Skip->new($0);
+    $skip->prepare_manifest_skip();
+    $skip->print_manifest_skip();
+
 =head1 AUTHOR
 
 James E. Keenan (jkeenan@cpan.org) refactored code from earlier versions of

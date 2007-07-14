@@ -115,6 +115,14 @@ sub get_manifest_entry {
 
 Parrot::Manifest::Files - Create MANIFEST
 
+=head1 SYNOPSIS
+
+    use Parrot::Manifest::Files;
+
+    $mani = Parrot::Manifest::Files->new($0);
+    $mani->prepare_manifest();
+    $mani->print_manifest();
+
 =head1 SEE ALSO
 
 Parrot::Manifest, Parrot::Manifest::Files, 
