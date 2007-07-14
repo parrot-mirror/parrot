@@ -55,9 +55,10 @@ my $time    = scalar gmtime;
 
 my $cmd = -d '.svn' ? 'svn' : 'svk';
 
-my $manifest_lines_ref = prepare_manifest( {
+# my $manifest_lines_ref = prepare_manifest( {
+my ($manifest_lines_ref, $dirs_ref) = prepare_manifest( {
     cmd     => $cmd,
-    dirs    => \@dirs,
+#    dirs    => \@dirs,
     special => \%special,
 } );
 
@@ -73,7 +74,8 @@ my $current_skips_ref = get_current_skips();
 
 my $ignore_ref = prepare_manifest_skip( {
     cmd     => $cmd,
-    dirs    => \@dirs,
+#    dirs    => \@dirs,
+    dirs    => $dirs_ref,
 } );
 
 print_manifest_skip( {
@@ -91,6 +93,7 @@ sub prepare_manifest {
     
     # now grab the versioned resources:
     my @versioned_files = ();
+    my @dirs = ();
     my @versioned_output = grep !/^\?/, @status_output;
     for my $line (@versioned_output) {
         my @line_info = split( /\s+/, $line );
@@ -98,28 +101,34 @@ sub prepare_manifest {
         # the file is the last item in the @line_info array
         my $filename = $line_info[-1];
         $filename =~ s/\\/\//g;
-        push @versioned_files, $filename;
+        # ignore the debian directory
+        next if $filename =~ m[/\.svn|blib|debian];
+        if ( -d $filename ) {
+            push @dirs, $filename;
+        } else {
+            push @versioned_files, $filename;
+        }
     }
     
     my $manifest_lines_ref = [];
     
     for my $file (@versioned_files) {
     
-        # ignore the debian directory
-        next if $file =~ m[/\.svn|blib|debian];
+#        # ignore the debian directory
+#        next if $file =~ m[/\.svn|blib|debian];
     
-        # don't want to keep directories
-        if ( -d $file ) {
-            push @{ $argsref->{dirs} }, $file;
-            next;
-        }
+#        # don't want to keep directories
+#        if ( -d $file ) {
+#            push @{ $argsref->{dirs} }, $file;
+#            next;
+#        }
     
         # now get the manifest entry
         $manifest_lines_ref = get_manifest_entry(
             $file, $manifest_lines_ref, $argsref->{special}
         );
     }
-    return $manifest_lines_ref;
+    return ($manifest_lines_ref, \@dirs);
 }
 
 sub print_manifest {
