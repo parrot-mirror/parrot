@@ -1,6 +1,5 @@
 ##! perl
 # $Id$
-package main;
 use strict;
 use warnings;
 use lib ( qw| lib | );
