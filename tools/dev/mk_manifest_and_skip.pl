@@ -5,8 +5,6 @@ package main;
 use strict;
 use warnings;
 
-my @dirs;    # will be filled in wanted
-
 # XXX Most of these can probably be cleaned up
 my %special = qw(
     LICENSE                                         [main]doc
@@ -55,10 +53,8 @@ my $time    = scalar gmtime;
 
 my $cmd = -d '.svn' ? 'svn' : 'svk';
 
-# my $manifest_lines_ref = prepare_manifest( {
 my ($manifest_lines_ref, $dirs_ref) = prepare_manifest( {
     cmd     => $cmd,
-#    dirs    => \@dirs,
     special => \%special,
 } );
 
@@ -74,7 +70,6 @@ my $current_skips_ref = get_current_skips();
 
 my $ignore_ref = prepare_manifest_skip( {
     cmd     => $cmd,
-#    dirs    => \@dirs,
     dirs    => $dirs_ref,
 } );
 
@@ -113,15 +108,6 @@ sub prepare_manifest {
     my $manifest_lines_ref = [];
     
     for my $file (@versioned_files) {
-    
-#        # ignore the debian directory
-#        next if $file =~ m[/\.svn|blib|debian];
-    
-#        # don't want to keep directories
-#        if ( -d $file ) {
-#            push @{ $argsref->{dirs} }, $file;
-#            next;
-#        }
     
         # now get the manifest entry
         $manifest_lines_ref = get_manifest_entry(
