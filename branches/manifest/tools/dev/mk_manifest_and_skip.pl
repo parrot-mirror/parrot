@@ -7,11 +7,13 @@ use lib ( qw| lib | );
 use Parrot::Manifest::Files;
 use Parrot::Manifest::Skip;
 
-my $mani = Parrot::Manifest::Files->new($0);
+my script = $0;
+
+my $mani = Parrot::Manifest::Files->new($script);
 $mani->prepare_manifest();
 $mani->print_manifest();
 
-my $skip = Parrot::Manifest::Skip->new($0);
+my $skip = Parrot::Manifest::Skip->new($script);
 $skip->prepare_manifest_skip();
 $skip->print_manifest_skip();
 
