@@ -176,9 +176,6 @@ sub print_manifest_skip {
     my $self = shift;
     my $ignore_ref = shift;
     my %ignore = %{ $ignore_ref };
-#    open my $MANIFEST_SKIP, '>', 'MANIFEST.SKIP'
-#        or die "Unable to open MANIFEST.SKIP for writing";
-#    print $MANIFEST_SKIP <<"END_HEADER";
     my $print_str = <<"END_HEADER";
 # ex: set ro:
 # $self->{id}
@@ -201,37 +198,59 @@ END_HEADER
     foreach my $directory ( sort keys %ignore ) {
         my $dir = $directory;
         $dir =~ s!\\!/!g;
-#        print $MANIFEST_SKIP "# generated from svn:ignore of '$dir/'\n";
         $print_str .= "# generated from svn:ignore of '$dir/'\n";
         foreach ( sort split /\n/, $ignore{$directory} ) {
             s/\./\\./g;
             s/\*/.*/g;
-#            print $MANIFEST_SKIP $dir ne '.'
             $print_str .= ($dir ne '.')
                 ? "^$dir/$_\$\n^$dir/$_/\n"
                 : "^$_\$\n^$_/\n";
         }
     }
-    open my $MANIFEST_SKIP, '>', 'MANIFEST.SKIP'
-        or die "Unable to open MANIFEST.SKIP for writing";
-    print $MANIFEST_SKIP $print_str;
-    close $MANIFEST_SKIP
-        or die "Unable to close MANIFEST.SKIP after writing";
+    my $current_skips_ref = get_current_skips();
+    my $proposed_skips_ref = get_proposed_skips($print_str);
+    my $different_patterns_count = 0;
+    foreach my $cur (keys %{ $current_skips_ref }) {
+        $different_patterns_count++ unless $proposed_skips_ref->{$cur};
+    }
+    foreach my $pro (keys %{ $proposed_skips_ref }) {
+        $different_patterns_count++ unless $current_skips_ref->{$pro};
+    }
+    if ( $different_patterns_count or (! -f 'MANIFEST.SKIP') ) {
+        open my $MANIFEST_SKIP, '>', 'MANIFEST.SKIP'
+            or die "Unable to open MANIFEST.SKIP for writing";
+        print $MANIFEST_SKIP $print_str;
+        close $MANIFEST_SKIP
+            or die "Unable to close MANIFEST.SKIP after writing";
+    }
     return 1;
 }
 
 sub get_current_skips {
+    my $sk = q{MANIFEST.SKIP};
+    return {} unless -f $sk;
     my %current_skips = ();
-    open my $SKIP, "<", 'MANIFEST.SKIP'
-        or die "Unable to open MANIFEST.SKIP for reading";
+    open my $SKIP, "<", $sk or die "Unable to open $sk for reading";
     while (my $line = <$SKIP>) {
         chomp $line;
         next if $line =~ /^\s*$/o;
         next if $line =~ /^#/o;
         $current_skips{$line}++;
     }
-    close $SKIP or die "Unable to close MANIFEST.SKIP after reading";
+    close $SKIP or die "Unable to close $sk after reading";
     return \%current_skips;
+}
+
+sub get_proposed_skips {
+    my $print_str = shift;
+    my @proposed_lines = split /\n/, $print_str;
+    my %proposed_skips = ();
+    for my $line (@proposed_lines) {
+        next if $line =~ /^\s*$/o;
+        next if $line =~ /^#/o;
+        $proposed_skips{$line}++;
+    }
+    return \%proposed_skips;
 }
 
 1;
