@@ -22,7 +22,7 @@ sub new {
     # grab the versioned resources:
     my @versioned_files = ();
     my @dirs = ();
-    my @versioned_output = grep !/^\?/, @status_output;
+    my @versioned_output = grep !/^[?D]/, @status_output;
     for my $line (@versioned_output) {
         my @line_info = split( /\s+/, $line );
     
@@ -47,16 +47,12 @@ sub new {
 
 sub prepare_manifest {
     my $self = shift;
-    my $manifest_lines_ref = [];
+    my @manifest_lines;
     
     for my $file (@{ $self->{versioned_files} }) {
-    
-        # now get the manifest entry
-        $manifest_lines_ref = get_manifest_entry(
-            $file, $manifest_lines_ref
-        );
+        push @manifest_lines, _get_manifest_entry($file);
     }
-    return $manifest_lines_ref;
+    return \@manifest_lines;
 }
 
 sub print_manifest {
@@ -80,9 +76,33 @@ END_HEADER
     close $MANIFEST or croak "Unable to close MANIFEST after writing";
 }
 
-sub get_manifest_entry {
-    my ($file, $manifest_lines_ref) = @_;
+sub _get_manifest_entry {
+    my $file = shift;
     # XXX Most of these can probably be cleaned up
+    
+    my $special = _get_special();
+    my $loc  = '[]';
+    for ($file) {
+        $loc =
+              exists( $special->{$_} ) ? $special->{$_}
+            : !m[/]                  ? '[]'
+            : m[^LICENSES/]          ? '[main]doc'
+            : m[^docs/]              ? '[main]doc'
+            : m[^editor/]            ? '[devel]'
+            : m[^examples/]          ? '[main]doc'
+            : m[^include/]           ? '[main]include'
+            : ( m[^languages/(\w+)/] and $1 ne 'conversion' ) ? "[$1]"
+            : m[^lib/]        ? '[devel]'
+            : m[^runtime/]    ? '[library]'
+            : m[^tools/docs/] ? '[devel]'
+            : m[^tools/dev/]  ? '[devel]'
+            : m[^(apps/\w+)/] ? "[$1]"
+            :                   '[]';
+    }
+    return sprintf( "%- 59s %s\n", $file, $loc );
+}
+
+sub _get_special {
     my %special = qw(
         LICENSE                                         [main]doc
         NEWS                                            [devel]doc
@@ -124,28 +144,7 @@ sub get_manifest_entry {
         tools/build/revision_c.pl                       [devel]
         vtable.tbl                                      [devel]
     );
-    
-    my $loc  = '[]';
-    for ($file) {
-        $loc =
-              exists( $special{$_} ) ? $special{$_}
-            : !m[/]                  ? '[]'
-            : m[^LICENSES/]          ? '[main]doc'
-            : m[^docs/]              ? '[main]doc'
-            : m[^editor/]            ? '[devel]'
-            : m[^examples/]          ? '[main]doc'
-            : m[^include/]           ? '[main]include'
-            : ( m[^languages/(\w+)/] and $1 ne 'conversion' ) ? "[$1]"
-            : m[^lib/]        ? '[devel]'
-            : m[^runtime/]    ? '[library]'
-            : m[^tools/docs/] ? '[devel]'
-            : m[^tools/dev/]  ? '[devel]'
-            : m[^(apps/\w+)/] ? "[$1]"
-            :                   '[]';
-    }
-    push @{ $manifest_lines_ref }, sprintf( "%- 59s %s\n", $file, $loc );
-
-    return $manifest_lines_ref;
+    return \%special;
 }
 
 sub prepare_manifest_skip {
@@ -207,8 +206,8 @@ END_HEADER
                 : "^$_\$\n^$_/\n";
         }
     }
-    my $current_skips_ref = get_current_skips();
-    my $proposed_skips_ref = get_proposed_skips($print_str);
+    my $current_skips_ref = _get_current_skips();
+    my $proposed_skips_ref = _get_proposed_skips($print_str);
     my $different_patterns_count = 0;
     foreach my $cur (keys %{ $current_skips_ref }) {
         $different_patterns_count++ unless $proposed_skips_ref->{$cur};
@@ -226,7 +225,7 @@ END_HEADER
     return 1;
 }
 
-sub get_current_skips {
+sub _get_current_skips {
     my $sk = q{MANIFEST.SKIP};
     return {} unless -f $sk;
     my %current_skips = ();
@@ -241,7 +240,7 @@ sub get_current_skips {
     return \%current_skips;
 }
 
-sub get_proposed_skips {
+sub _get_proposed_skips {
     my $print_str = shift;
     my @proposed_lines = split /\n/, $print_str;
     my %proposed_skips = ();
