@@ -173,14 +173,13 @@ sub prepare_manifest_skip {
             $ignore{$1} = $2 if $2;
         }
     }
-    return \%ignore;
+    return $self->_compose_print_str( \%ignore );
 }
 
-sub print_manifest_skip {
+sub determine_need_for_manifest_skip {
     my $self = shift;
-    my $print_str = $self->_compose_print_str( +shift );
+    my $print_str = shift;
     if  ( ! -f $self->{skip} ) {
-        $self->_print_manifest_skip($print_str);
         return 1;
     } else {
         my $current_skips_ref = $self->_get_current_skips();
@@ -192,9 +191,19 @@ sub print_manifest_skip {
         foreach my $pro (keys %{ $proposed_skips_ref }) {
             $different_patterns_count++ unless $current_skips_ref->{$pro};
         }
-        $self->_print_manifest_skip($print_str) if $different_patterns_count;
-        return 1;
+        $different_patterns_count ? return 1 : return;
     }
+}
+
+sub print_manifest_skip {
+    my $self = shift;
+    my $print_str = shift;
+    open my $MANIFEST_SKIP, '>', $self->{skip}
+        or die "Unable to open $self->{skip} for writing";
+    print $MANIFEST_SKIP $print_str;
+    close $MANIFEST_SKIP
+        or die "Unable to close $self->{skip} after writing";
+    return 1;
 }
 
 sub _compose_print_str {
@@ -233,17 +242,6 @@ END_HEADER
         }
     }
     return $print_str;
-}
-
-sub _print_manifest_skip {
-    my $self = shift;
-    my $print_str = shift;
-    open my $MANIFEST_SKIP, '>', $self->{skip}
-        or die "Unable to open $self->{skip} for writing";
-    print $MANIFEST_SKIP $print_str;
-    close $MANIFEST_SKIP
-        or die "Unable to close $self->{skip} after writing";
-    return 1;
 }
 
 sub _get_current_skips {
