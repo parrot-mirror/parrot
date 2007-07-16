@@ -3,6 +3,7 @@ package Parrot::Manifest;
 use strict;
 use warnings;
 use Carp;
+use Data::Dumper;
 
 sub new {
     my $class = shift;
@@ -17,12 +18,14 @@ sub new {
         script      => $script,
     );
 
-    my @status_output = qx($data{cmd} status -v);
+    my $status_output_ref = defined ($ENV{TEST_SVN_ADD_DELETE})
+        ? $ENV{TEST_SVN_ADD_DELETE}
+        : [ qx($data{cmd} status -v) ];
     
     # grab the versioned resources:
     my @versioned_files = ();
     my @dirs = ();
-    my @versioned_output = grep !/^[?D]/, @status_output;
+    my @versioned_output = grep !/^[?D]/, @{ $status_output_ref };
     for my $line (@versioned_output) {
         my @line_info = split( /\s+/, $line );
     
@@ -216,12 +219,18 @@ END_HEADER
         $different_patterns_count++ unless $current_skips_ref->{$pro};
     }
     if ( $different_patterns_count or (! -f 'MANIFEST.SKIP') ) {
-        open my $MANIFEST_SKIP, '>', 'MANIFEST.SKIP'
-            or die "Unable to open MANIFEST.SKIP for writing";
-        print $MANIFEST_SKIP $print_str;
-        close $MANIFEST_SKIP
-            or die "Unable to close MANIFEST.SKIP after writing";
+        _print_manifest_skip('MANIFEST.SKIP', $print_str);
     }
+    return 1;
+}
+
+sub _print_manifest_skip {
+    my ($skipfile, $print_str) = @_;
+    open my $MANIFEST_SKIP, '>', $skipfile
+        or die "Unable to open $skipfile for writing";
+    print $MANIFEST_SKIP $print_str;
+    close $MANIFEST_SKIP
+        or die "Unable to close $skipfile after writing";
     return 1;
 }
 
