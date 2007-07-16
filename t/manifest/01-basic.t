@@ -14,7 +14,10 @@ use lib ( qw| lib | );
 use_ok('Parrot::Manifest');
 
 my $script = $0;
-my $mani = Parrot::Manifest->new($script);
+# my $mani = Parrot::Manifest->new($script);
+my $mani = Parrot::Manifest->new( {
+    script          => $script,
+} );
 isa_ok($mani, 'Parrot::Manifest');
 
 ok(scalar(@{ $mani->{dirs} } ),
