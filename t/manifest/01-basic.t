@@ -14,7 +14,6 @@ use lib ( qw| lib | );
 use_ok('Parrot::Manifest');
 
 my $script = $0;
-# my $mani = Parrot::Manifest->new($script);
 my $mani = Parrot::Manifest->new( {
     script          => $script,
 } );
