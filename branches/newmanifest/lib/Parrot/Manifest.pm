@@ -7,15 +7,17 @@ use Data::Dumper;
 
 sub new {
     my $class = shift;
-    my $script = shift;
+    my $argsref = shift;
 
     my $self = bless( {}, $class );
 
     my %data = (
         id          => '$' . 'Id$',
         time        => scalar gmtime,
-        cmd         => -d '.svn' ? 'svn' : 'svk',
-        script      => $script,
+        cmd     => -d '.svn' ? 'svn' : 'svk',
+        script  => $argsref->{script},
+        file    => $argsref->{file} ? $argsref->{file} : q{MANIFEST},
+        skip    => $argsref->{skip} ? $argsref->{skip} : q{MANIFEST.SKIP},
     );
 
     my $status_output_ref = defined ($ENV{TEST_SVN_ADD_DELETE})
@@ -61,8 +63,8 @@ sub prepare_manifest {
 sub print_manifest {
     my $self = shift;
     my $manifest_lines_ref = shift;
-    open my $MANIFEST, '>', 'MANIFEST'
-        or croak "Unable to open MANIFEST for writing";
+    open my $MANIFEST, '>', $self->{file}
+        or croak "Unable to open $self->{file} for writing";
     print $MANIFEST <<"END_HEADER";
 # ex: set ro:
 # $self->{id}
@@ -76,7 +78,7 @@ sub print_manifest {
 END_HEADER
 
     print $MANIFEST $_ for ( sort @{ $manifest_lines_ref } );
-    close $MANIFEST or croak "Unable to close MANIFEST after writing";
+    close $MANIFEST or croak "Unable to close $self->{file} after writing";
 }
 
 sub _get_manifest_entry {
@@ -176,6 +178,27 @@ sub prepare_manifest_skip {
 
 sub print_manifest_skip {
     my $self = shift;
+    my $print_str = $self->_compose_print_str( +shift );
+    if  ( ! -f $self->{skip} ) {
+        $self->_print_manifest_skip($print_str);
+        return 1;
+    } else {
+        my $current_skips_ref = $self->_get_current_skips();
+        my $proposed_skips_ref = _get_proposed_skips($print_str);
+        my $different_patterns_count = 0;
+        foreach my $cur (keys %{ $current_skips_ref }) {
+            $different_patterns_count++ unless $proposed_skips_ref->{$cur};
+        }
+        foreach my $pro (keys %{ $proposed_skips_ref }) {
+            $different_patterns_count++ unless $current_skips_ref->{$pro};
+        }
+        $self->_print_manifest_skip($print_str) if $different_patterns_count;
+        return 1;
+    }
+}
+
+sub _compose_print_str {
+    my $self = shift;
     my $ignore_ref = shift;
     my %ignore = %{ $ignore_ref };
     my $print_str = <<"END_HEADER";
@@ -209,43 +232,32 @@ END_HEADER
                 : "^$_\$\n^$_/\n";
         }
     }
-    my $current_skips_ref = _get_current_skips();
-    my $proposed_skips_ref = _get_proposed_skips($print_str);
-    my $different_patterns_count = 0;
-    foreach my $cur (keys %{ $current_skips_ref }) {
-        $different_patterns_count++ unless $proposed_skips_ref->{$cur};
-    }
-    foreach my $pro (keys %{ $proposed_skips_ref }) {
-        $different_patterns_count++ unless $current_skips_ref->{$pro};
-    }
-    if ( $different_patterns_count or (! -f 'MANIFEST.SKIP') ) {
-        _print_manifest_skip('MANIFEST.SKIP', $print_str);
-    }
-    return 1;
+    return $print_str;
 }
 
 sub _print_manifest_skip {
-    my ($skipfile, $print_str) = @_;
-    open my $MANIFEST_SKIP, '>', $skipfile
-        or die "Unable to open $skipfile for writing";
+    my $self = shift;
+    my $print_str = shift;
+    open my $MANIFEST_SKIP, '>', $self->{skip}
+        or die "Unable to open $self->{skip} for writing";
     print $MANIFEST_SKIP $print_str;
     close $MANIFEST_SKIP
-        or die "Unable to close $skipfile after writing";
+        or die "Unable to close $self->{skip} after writing";
     return 1;
 }
 
 sub _get_current_skips {
-    my $sk = q{MANIFEST.SKIP};
-    return {} unless -f $sk;
+    my $self = shift;
     my %current_skips = ();
-    open my $SKIP, "<", $sk or die "Unable to open $sk for reading";
+    open my $SKIP, "<", $self->{skip}
+        or die "Unable to open $self->{skip} for reading";
     while (my $line = <$SKIP>) {
         chomp $line;
         next if $line =~ /^\s*$/o;
         next if $line =~ /^#/o;
         $current_skips{$line}++;
     }
-    close $SKIP or die "Unable to close $sk after reading";
+    close $SKIP or die "Unable to close $self->{skip} after reading";
     return \%current_skips;
 }
 

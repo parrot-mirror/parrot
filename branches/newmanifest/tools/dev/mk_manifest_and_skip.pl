@@ -7,7 +7,9 @@ use Parrot::Manifest;
 
 my $script = $0;
 
-my $mani = Parrot::Manifest->new($script);
+my $mani = Parrot::Manifest->new( {
+    script          => $script,
+} );
 
 my $manifest_lines_ref = $mani->prepare_manifest();
 $mani->print_manifest($manifest_lines_ref);
