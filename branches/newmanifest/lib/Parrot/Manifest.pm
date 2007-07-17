@@ -12,17 +12,15 @@ sub new {
     my $self = bless( {}, $class );
 
     my %data = (
-        id          => '$' . 'Id$',
-        time        => scalar gmtime,
+        id      => '$' . 'Id$',
+        time    => scalar gmtime,
         cmd     => -d '.svn' ? 'svn' : 'svk',
         script  => $argsref->{script},
         file    => $argsref->{file} ? $argsref->{file} : q{MANIFEST},
         skip    => $argsref->{skip} ? $argsref->{skip} : q{MANIFEST.SKIP},
     );
 
-    my $status_output_ref = defined ($ENV{TEST_SVN_ADD_DELETE})
-        ? $ENV{TEST_SVN_ADD_DELETE}
-        : [ qx($data{cmd} status -v) ];
+    my $status_output_ref = [ qx($data{cmd} status -v) ];
     
     # grab the versioned resources:
     my @versioned_files = ();
@@ -52,12 +50,30 @@ sub new {
 
 sub prepare_manifest {
     my $self = shift;
-    my @manifest_lines;
+    my %manifest_lines;
     
     for my $file (@{ $self->{versioned_files} }) {
-        push @manifest_lines, _get_manifest_entry($file);
+        $manifest_lines{$file} = _get_manifest_entry($file);
     }
-    return \@manifest_lines;
+    return \%manifest_lines;
+}
+
+sub determine_need_for_manifest {
+    my $self = shift;
+    my $proposed_files_ref = shift;
+    if  ( ! -f $self->{file} ) {
+        return 1;
+    } else {
+        my $current_files_ref = $self->_get_current_files();
+        my $different_patterns_count = 0;
+        foreach my $cur (keys %{ $current_files_ref }) {
+            $different_patterns_count++ unless $proposed_files_ref->{$cur};
+        }
+        foreach my $pro (keys %{ $proposed_files_ref }) {
+            $different_patterns_count++ unless $current_files_ref->{$pro};
+        }
+        $different_patterns_count ? return 1 : return;
+    }
 }
 
 sub print_manifest {
@@ -77,8 +93,11 @@ sub print_manifest {
 # has been told about new or deleted files.
 END_HEADER
 
-    print $MANIFEST $_ for ( sort @{ $manifest_lines_ref } );
+    for my $k ( sort keys %{ $manifest_lines_ref } ) {
+        printf $MANIFEST "%- 59s %s\n", ($k, $manifest_lines_ref->{$k});
+    } 
     close $MANIFEST or croak "Unable to close $self->{file} after writing";
+    return 1;
 }
 
 sub _get_manifest_entry {
@@ -104,7 +123,7 @@ sub _get_manifest_entry {
             : m[^(apps/\w+)/] ? "[$1]"
             :                   '[]';
     }
-    return sprintf( "%- 59s %s\n", $file, $loc );
+    return $loc;
 }
 
 sub _get_special {
@@ -150,6 +169,22 @@ sub _get_special {
         vtable.tbl                                      [devel]
     );
     return \%special;
+}
+
+sub _get_current_files {
+    my $self = shift;
+    my %current_files = ();
+    open my $FILE, "<", $self->{file}
+        or die "Unable to open $self->{file} for reading";
+    while (my $line = <$FILE>) {
+        chomp $line;
+        next if $line =~ /^\s*$/o;
+        next if $line =~ /^#/o;
+        my @els = split /\s+/, $line;
+        $current_files{$els[0]}++;
+    }
+    close $FILE or die "Unable to close $self->{file} after reading";
+    return \%current_files;
 }
 
 sub prepare_manifest_skip {
@@ -286,10 +321,12 @@ Parrot::Manifest - Re-create MANIFEST and MANIFEST.SKIP
     $mani = Parrot::Manifest->new($0);
 
     $manifest_lines_ref = $mani->prepare_manifest();
-    $mani->print_manifest($manifest_lines_ref);
+    $need_for_files = $mani->determine_need_for_manifest($manifest_lines_ref);
+    $mani->print_manifest($manifest_lines_ref) if $need_for_files;
 
-    $ignore_ref = $mani->prepare_manifest_skip();
-    $mani->print_manifest_skip($ignore_ref);
+    $print_str = $mani->prepare_manifest_skip();
+    $need_for_skip = $mani->determine_need_for_manifest_skip($print_str);
+    $mani->print_manifest_skip($print_str) if $need_for_skip;
 
 =head1 SEE ALSO
 
