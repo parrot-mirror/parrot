@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More qw(no_plan); # tests => 11;
+use Test::More tests => 13;
 use Carp;
 use Cwd;
 use File::Temp qw( tempdir );
@@ -41,7 +41,7 @@ my $cwd = cwd();
 }
 
 my $print_str = $mani->prepare_manifest_skip();
-ok($print_str, "prepare_manifest() returned");
+ok($print_str, "prepare_manifest_skip() returned");
 
 {
     my $tdir = tempdir( CLEANUP => 1 );
