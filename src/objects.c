@@ -53,10 +53,12 @@ static void create_deleg_pmc_vtable( PARROT_INTERP,
         __attribute__nonnull__(2);
 
 static void debug_trace_find_meth( PARROT_INTERP,
-    PMC *_class,
-    STRING *name,
-    PMC *sub )
-        __attribute__nonnull__(1);
+    NOTNULL(PMC *_class),
+    NOTNULL(STRING *name),
+    NULLOK(PMC *sub) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 static void do_initcall( PARROT_INTERP,
     NULLOK(PMC* _class),
@@ -77,8 +79,11 @@ static PMC * find_method_direct_1( PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
-static PMC* find_vtable_meth_ns( PARROT_INTERP, PMC *ns, INTVAL vtable_index )
-        __attribute__nonnull__(1);
+static PMC* find_vtable_meth_ns( PARROT_INTERP,
+    NOTNULL(PMC *ns),
+    INTVAL vtable_index )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 static PMC* get_init_meth( PARROT_INTERP,
@@ -178,7 +183,7 @@ Return Sub PMC if a method with the vtable name exists in ns
 
 PARROT_WARN_UNUSED_RESULT
 static PMC*
-find_vtable_meth_ns(PARROT_INTERP, PMC *ns, INTVAL vtable_index)
+find_vtable_meth_ns(PARROT_INTERP, NOTNULL(PMC *ns), INTVAL vtable_index)
 {
     return VTABLE_get_pmc_keyed_int(interp, ns, vtable_index);
 }
@@ -193,7 +198,7 @@ Return the vtable method PMC if found.
 
 PARROT_API
 PMC*
-Parrot_find_vtable_meth(PARROT_INTERP, NOTNULL(PMC *pmc), STRING *meth)
+Parrot_find_vtable_meth(PARROT_INTERP, NOTNULL(PMC *pmc), NOTNULL(STRING *meth))
 {
     INTVAL i, n;
     PMC   *ns, *mro;
@@ -1187,7 +1192,8 @@ This currently does nothing but return C<PMCNULL>.
 
 PARROT_API
 PMC *
-Parrot_remove_parent(PARROT_INTERP, PMC *removed_class, PMC *existing_class)
+Parrot_remove_parent(PARROT_INTERP, NOTNULL(PMC *removed_class),
+        NOTNULL(PMC *existing_class))
 {
     UNUSED(interp);
     UNUSED(removed_class);
@@ -1205,8 +1211,8 @@ This currently does nothing but return C<PMCNULL>.
 
 PARROT_API
 PMC *
-Parrot_multi_subclass(PARROT_INTERP, PMC *base_class_array,
-    STRING *child_class_name)
+Parrot_multi_subclass(PARROT_INTERP, NOTNULL(PMC *base_class_array),
+    NOTNULL(STRING *child_class_name))
 {
     UNUSED(interp);
     UNUSED(base_class_array);
@@ -1224,7 +1230,7 @@ Returns whether the object C<pmc> is an instance of class C<_class>.
 
 PARROT_API
 INTVAL
-Parrot_object_isa(PARROT_INTERP, PMC *pmc, PMC *_class)
+Parrot_object_isa(PARROT_INTERP, NOTNULL(PMC *pmc), NOTNULL(PMC *_class))
 {
     PMC   *mro;
     INTVAL i, classcount;
@@ -1338,11 +1344,9 @@ all classes are invalidated.
 
 PARROT_API
 void
-Parrot_invalidate_method_cache(PARROT_INTERP, STRING *_class, STRING *meth)
+Parrot_invalidate_method_cache(PARROT_INTERP, NULLOK(STRING *_class), NOTNULL(STRING *meth))
 {
     INTVAL type;
-
-    UNUSED(meth);
 
     /* during interp creation and NCI registration the class_hash
      * isn't yet up */
@@ -1486,7 +1490,8 @@ Parrot_find_method_with_cache(PARROT_INTERP, PMC *_class, NOTNULL(STRING *method
 #  define TRACE_FM(i, c, m, sub)
 #else
 static void
-debug_trace_find_meth(PARROT_INTERP, PMC *_class, STRING *name, PMC *sub)
+debug_trace_find_meth(PARROT_INTERP, NOTNULL(PMC *_class),
+        NOTNULL(STRING *name), NULLOK(PMC *sub))
 {
     STRING *class_name;
     const char *result;

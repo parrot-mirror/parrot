@@ -21,14 +21,14 @@ sub new {
     );
 
     my $status_output_ref = [ qx($data{cmd} status -v) ];
-    
+
     # grab the versioned resources:
     my @versioned_files = ();
     my @dirs = ();
     my @versioned_output = grep !/^[?D]/, @{ $status_output_ref };
     for my $line (@versioned_output) {
         my @line_info = split( /\s+/, $line );
-    
+
         # the file is the last item in the @line_info array
         my $filename = $line_info[-1];
         $filename =~ s/\\/\//g;
@@ -51,7 +51,7 @@ sub new {
 sub prepare_manifest {
     my $self = shift;
     my %manifest_lines;
-    
+
     for my $file (@{ $self->{versioned_files} }) {
         $manifest_lines{$file} = _get_manifest_entry($file);
     }
@@ -104,7 +104,7 @@ END_HEADER
 sub _get_manifest_entry {
     my $file = shift;
     # XXX Most of these can probably be cleaned up
-    
+
     my $special = _get_special();
     my $loc  = '[]';
     for ($file) {

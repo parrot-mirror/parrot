@@ -74,7 +74,8 @@ typedef struct _hash {
 /* HEADERIZER BEGIN: src/hash.c */
 
 PARROT_API
-void parrot_dump_hash( SHIM_INTERP, const Hash *hash );
+void parrot_dump_hash( SHIM_INTERP, NOTNULL(const Hash *hash) )
+        __attribute__nonnull__(2);
 
 PARROT_API
 void parrot_hash_clone( PARROT_INTERP,
@@ -117,8 +118,7 @@ HashBucket * parrot_hash_get_bucket( PARROT_INTERP,
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-void * parrot_hash_get_idx(
-    SHIM_INTERP,
+void * parrot_hash_get_idx( SHIM_INTERP,
     NOTNULL(const Hash *hash),
     NOTNULL(PMC *key) )
         __attribute__nonnull__(2)
@@ -165,8 +165,9 @@ PMC* Parrot_new_INTVAL_hash( PARROT_INTERP, UINTVAL flags )
         __attribute__nonnull__(1);
 
 PARROT_API
-void parrot_new_pmc_hash( PARROT_INTERP, PMC *container )
-        __attribute__nonnull__(1);
+void parrot_new_pmc_hash( PARROT_INTERP, NOTNULL(PMC *container) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 void parrot_new_pointer_hash( SHIM_INTERP, NOTNULL(Hash **hptr) )
@@ -184,8 +185,7 @@ void parrot_new_hash_x(
     hash_hash_key_fn keyhash )
         __attribute__nonnull__(1);
 
-void parrot_new_pmc_hash_x(
-    SHIM_INTERP,
+void parrot_new_pmc_hash_x( SHIM_INTERP,
     NOTNULL(PMC *container),
     PARROT_DATA_TYPE val_type,
     Hash_key_type hkey_type,

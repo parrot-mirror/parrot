@@ -99,16 +99,18 @@ enum Emitter_type { EMIT_FILE, EMIT_PBC };
 /* HEADERIZER BEGIN: compilers/imcc/instructions.c */
 
 PARROT_API
-int emit_close( PARROT_INTERP, void *param )
+int emit_close( PARROT_INTERP, NULLOK(void *param) )
         __attribute__nonnull__(1);
 
 PARROT_API
-int emit_flush( PARROT_INTERP, void *param, NOTNULL(struct _IMC_Unit *unit) )
+int emit_flush( PARROT_INTERP,
+    NULLOK(void *param),
+    NOTNULL(struct _IMC_Unit *unit) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
 PARROT_API
-int emit_open( PARROT_INTERP, int type, void *param )
+int emit_open( PARROT_INTERP, int type, NULLOK(void *param) )
         __attribute__nonnull__(1);
 
 PARROT_MALLOC

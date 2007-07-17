@@ -295,32 +295,38 @@ void do_sub_pragmas( PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_API
-INTVAL PackFile_add_segment(
-    SHIM_INTERP,
+INTVAL PackFile_add_segment( SHIM_INTERP,
     NOTNULL(PackFile_Directory *dir),
     NOTNULL(PackFile_Segment *seg) )
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 PARROT_API
-void PackFile_Constant_destroy( SHIM_INTERP, PackFile_Constant *self );
+void PackFile_Constant_destroy( SHIM_INTERP, NULLOK(PackFile_Constant *self) );
 
 PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 PackFile_Constant * PackFile_Constant_new( SHIM_INTERP );
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
 size_t PackFile_Constant_pack_size( PARROT_INTERP,
     NOTNULL(PackFile_Constant *self) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 opcode_t * PackFile_Constant_unpack( PARROT_INTERP,
-    PackFile_ConstTable *constt,
+    NOTNULL(PackFile_ConstTable *constt),
     NOTNULL(PackFile_Constant *self),
-    opcode_t *cursor )
+    NOTNULL(opcode_t *cursor) )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 PARROT_API
 opcode_t * PackFile_Constant_unpack_key( PARROT_INTERP,
@@ -344,6 +350,8 @@ void PackFile_ConstTable_clear( PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 opcode_t * PackFile_ConstTable_unpack( PARROT_INTERP,
     NOTNULL(PackFile_Segment *seg),
     opcode_t *cursor )
@@ -355,6 +363,8 @@ void PackFile_destroy( PARROT_INTERP, NULLOK(PackFile *pf) )
         __attribute__nonnull__(1);
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PackFile_FixupEntry * PackFile_find_fixup_entry( PARROT_INTERP,
     INTVAL type,
     char *name )
@@ -388,8 +398,7 @@ void PackFile_FixupTable_new_entry( PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_API
-INTVAL PackFile_funcs_register(
-    SHIM_INTERP,
+INTVAL PackFile_funcs_register( SHIM_INTERP,
     NOTNULL(PackFile *pf),
     UINTVAL type,
     PackFile_funcs funcs )
@@ -413,8 +422,7 @@ PackFile * PackFile_new_dummy( PARROT_INTERP, NOTNULL(const char *name) )
         __attribute__nonnull__(2);
 
 PARROT_API
-PackFile_Segment * PackFile_remove_segment_by_name(
-    SHIM_INTERP,
+PackFile_Segment * PackFile_remove_segment_by_name( SHIM_INTERP,
     NOTNULL(PackFile_Directory *dir),
     NOTNULL(const char *name) )
         __attribute__nonnull__(2)
@@ -432,8 +440,7 @@ void PackFile_Segment_dump( PARROT_INTERP, NOTNULL(PackFile_Segment *self) )
         __attribute__nonnull__(2);
 
 PARROT_API
-PackFile_Segment * PackFile_Segment_new(
-    SHIM_INTERP,
+PackFile_Segment * PackFile_Segment_new( SHIM_INTERP,
     PackFile *pf,
     const char *name,
     int add );

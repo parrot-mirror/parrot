@@ -23,9 +23,18 @@
 
 /* HEADERIZER BEGIN: static */
 
-static void allocate_lexicals( Parrot_Interp interp, IMC_Unit *unit );
-static void allocate_non_volatile( Parrot_Interp interp, IMC_Unit *unit );
-static void allocate_uniq( Parrot_Interp interp, IMC_Unit *unit, int usage );
+static void allocate_lexicals( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void allocate_non_volatile( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void allocate_uniq( PARROT_INTERP, NOTNULL(IMC_Unit *unit), int usage )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 static void build_interference_graph( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -42,22 +51,34 @@ static void compute_one_du_chain(
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int first_avail( IMC_Unit *unit, int reg_set, Set **avail );
+static int first_avail(
+    NOTNULL(IMC_Unit *unit),
+    int reg_set,
+    NULLOK(Set **avail) )
+        __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
 static unsigned int* ig_allocate( int N );
+
 static int ig_find_color(
     NOTNULL(const IMC_Unit *unit),
     NOTNULL(const char *avail) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CANNOT_RETURN_NULL
 static unsigned int* ig_get_word(
     int i,
     int j,
     int N,
-    unsigned int* graph,
-    int* bit_ofs );
+    NOTNULL(unsigned int *graph),
+    NOTNULL(int* bit_ofs) )
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5);
 
-static void ig_set( int i, int j, int N, unsigned int* graph );
+static void ig_set( int i, int j, int N, NOTNULL(unsigned int *graph) )
+        __attribute__nonnull__(4);
+
 static void imc_stat_init( NOTNULL(IMC_Unit *unit) )
         __attribute__nonnull__(1);
 
@@ -77,20 +98,27 @@ static void make_stat(
         __attribute__nonnull__(1);
 
 static void map_colors(
-    IMC_Unit* unit,
+    NOTNULL(IMC_Unit* unit),
     int x,
-    unsigned int *graph,
-    char avail[],
+    NOTNULL(unsigned int *graph),
+    NOTNULL(char *avail),
     int typ,
-    int already_allocated );
+    int already_allocated )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
-static void print_stat( PARROT_INTERP /*N*/, NOTNULL(IMC_Unit *unit) )
+static void print_stat( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static void rebuild_reglist( NOTNULL(IMC_Unit *unit) )
         __attribute__nonnull__(1);
 
-static int reg_sort_f( const void *a, const void *b );
+static int reg_sort_f( NOTNULL(const void *a), NOTNULL(const void *b) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 static void sort_reglist( NOTNULL(IMC_Unit *unit) )
         __attribute__nonnull__(1);
 
@@ -98,11 +126,15 @@ static int try_allocate( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void vanilla_reg_alloc( SHIM_INTERP, IMC_Unit *unit );
+static void vanilla_reg_alloc( SHIM_INTERP, NOTNULL(IMC_Unit *unit) )
+        __attribute__nonnull__(2);
+
 /* HEADERIZER END: static */
 
+PARROT_CANNOT_RETURN_NULL
 static unsigned int*
-ig_get_word(int i, int j, int N, unsigned int* graph, int* bit_ofs)
+ig_get_word(int i, int j, int N, NOTNULL(unsigned int *graph),
+        NOTNULL(int* bit_ofs))
 {
     unsigned int bit = i * N + j;
     *bit_ofs = bit % sizeof (*graph);
@@ -110,7 +142,7 @@ ig_get_word(int i, int j, int N, unsigned int* graph, int* bit_ofs)
 }
 
 static void
-ig_set(int i, int j, int N, unsigned int* graph)
+ig_set(int i, int j, int N, NOTNULL(unsigned int *graph))
 {
     int bit_ofs;
     unsigned int* word = ig_get_word(i, j, N, graph, &bit_ofs);
@@ -118,13 +150,14 @@ ig_set(int i, int j, int N, unsigned int* graph)
 }
 
 int
-ig_test(int i, int j, int N, unsigned int* graph)
+ig_test(int i, int j, int N, NOTNULL(unsigned int *graph))
 {
     int bit_ofs;
     unsigned int* word = ig_get_word(i, j, N, graph, &bit_ofs);
     return *word & (1 << bit_ofs);
 }
 
+PARROT_CANNOT_RETURN_NULL
 static unsigned int*
 ig_allocate(int N)
 {
@@ -309,7 +342,7 @@ imc_stat_init(NOTNULL(IMC_Unit *unit))
 
 /* and final */
 static void
-print_stat(PARROT_INTERP /*N*/, NOTNULL(IMC_Unit *unit))
+print_stat(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 {
     int sets[4] = {0,0,0,0};
 
@@ -347,7 +380,7 @@ print_stat(PARROT_INTERP /*N*/, NOTNULL(IMC_Unit *unit))
 
 /* sort list by line  nr */
 static int
-reg_sort_f(const void *a, const void *b)
+reg_sort_f(NOTNULL(const void *a), NOTNULL(const void *b))
 {
     const SymReg * const ra = *(SymReg**) a;
     const SymReg * const rb = *(SymReg**) b;
@@ -737,22 +770,21 @@ try_allocate(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
  * map_colors: calculates what colors can be assigned to the x-th symbol.
  */
 static void
-map_colors(IMC_Unit* unit, int x, unsigned int *graph, char avail[],
+map_colors(NOTNULL(IMC_Unit* unit), int x, NOTNULL(unsigned int *graph), NOTNULL(char *avail),
         int typ, int already_allocated)
 {
-    int y = 0, n_symbols;
-    SymReg * r;
+    const int n_symbols = unit->n_symbols;
+    int y;
 
-    n_symbols = unit->n_symbols;
     for (y = 0; y < n_symbols; y++) {
-        if (! ig_test(x, y, n_symbols, graph))
-            continue;
-        r = unit->reglist[y];
-        if (   r
-                && r->color != -1
-                && r->set == typ) {
-            assert(r->color - already_allocated >= 0);
-            avail[r->color - already_allocated] = 0;
+        if (ig_test(x, y, n_symbols, graph)) {
+            const SymReg * const r = unit->reglist[y];
+            if (   r
+                    && r->color != -1
+                    && r->set == typ) {
+                assert(r->color - already_allocated >= 0);
+                avail[r->color - already_allocated] = 0;
+            }
         }
     }
 }
@@ -762,10 +794,9 @@ map_colors(IMC_Unit* unit, int x, unsigned int *graph, char avail[],
  */
 
 static int
-first_avail(IMC_Unit *unit, int reg_set, Set **avail)
+first_avail(NOTNULL(IMC_Unit *unit), int reg_set, NULLOK(Set **avail))
 {
     int i, n, first;
-    SymReg * r;
     SymHash *hsh;
     Set *allocated;
 
@@ -775,6 +806,7 @@ first_avail(IMC_Unit *unit, int reg_set, Set **avail)
     allocated = set_make(n + 1);
     hsh = &unit->hash;
     for (i = 0; i < hsh->size; i++) {
+        SymReg * r;
         for (r = hsh->data[i]; r; r = r->next) {
             if (r->set != reg_set)
                 continue;
@@ -798,17 +830,19 @@ first_avail(IMC_Unit *unit, int reg_set, Set **avail)
  */
 
 static void
-allocate_uniq(Parrot_Interp interp, IMC_Unit *unit, int usage)
+allocate_uniq(PARROT_INTERP, NOTNULL(IMC_Unit *unit), int usage)
 {
     char type[] = "INSP";
-    int i, j, reg_set, first_reg;
+    int j, first_reg;
     SymReg * r;
     SymHash *hsh;
     Set *avail;
 
     hsh = &unit->hash;
     for (j = 0; j < 4; j++) {
-        reg_set = type[j];
+        int i;
+        const int reg_set = type[j];
+
         first_reg = first_avail(unit, reg_set, &avail);
         for (i = 0; i < hsh->size; i++) {
             for (r = hsh->data[i]; r; r = r->next) {
@@ -839,7 +873,7 @@ allocate_uniq(Parrot_Interp interp, IMC_Unit *unit, int usage)
 }
 
 static void
-vanilla_reg_alloc(SHIM_INTERP, IMC_Unit *unit)
+vanilla_reg_alloc(SHIM_INTERP, NOTNULL(IMC_Unit *unit))
 {
     char type[] = "INSP";
     int i, j, reg_set, first_reg;
@@ -880,14 +914,14 @@ vanilla_reg_alloc(SHIM_INTERP, IMC_Unit *unit)
 }
 
 static void
-allocate_lexicals(Parrot_Interp interp, IMC_Unit *unit)
+allocate_lexicals(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 {
     IMCC_debug(interp, DEBUG_IMC, "allocate lexicals\n");
     allocate_uniq(interp, unit, U_LEXICAL);
 }
 
 static void
-allocate_non_volatile(Parrot_Interp interp, IMC_Unit *unit)
+allocate_non_volatile(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 {
     IMCC_debug(interp, DEBUG_IMC, "allocate non_volatile\n");
     allocate_uniq(interp, unit, U_NON_VOLATILE);
