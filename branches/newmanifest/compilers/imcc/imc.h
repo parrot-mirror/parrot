@@ -78,8 +78,9 @@ void imc_compile_all_units( PARROT_INTERP )
         __attribute__nonnull__(1);
 
 PARROT_API
-void imc_compile_unit( PARROT_INTERP, IMC_Unit *unit )
-        __attribute__nonnull__(1);
+void imc_compile_unit( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 void imc_close_unit( PARROT_INTERP, NULLOK(IMC_Unit *unit) )
         __attribute__nonnull__(1);
@@ -99,7 +100,9 @@ void graph_coloring_reg_alloc( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-int ig_test( int i, int j, int N, unsigned int* graph );
+int ig_test( int i, int j, int N, NOTNULL(unsigned int *graph) )
+        __attribute__nonnull__(4);
+
 void imc_reg_alloc( PARROT_INTERP, NULLOK(IMC_Unit *unit) )
         __attribute__nonnull__(1);
 
@@ -139,14 +142,17 @@ PARROT_API
 void imcc_init( PARROT_INTERP )
         __attribute__nonnull__(1);
 
+PARROT_WARN_UNUSED_RESULT
 int check_op( PARROT_INTERP,
     NOTNULL(char *fullname),
-    const char *name,
-    SymReg *r[],
+    NOTNULL(const char *name),
+    NOTNULL(SymReg *r[]),
     int narg,
     int keyvec )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 PMC * imcc_compile( PARROT_INTERP,
     NOTNULL(const char *s),
@@ -213,36 +219,48 @@ int imcc_vfprintf( PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+PARROT_CAN_RETURN_NULL
 Instruction * iNEW( PARROT_INTERP,
-    IMC_Unit *unit,
-    SymReg *r0,
-    char *type,
-    SymReg *init,
+    NOTNULL(IMC_Unit *unit),
+    NOTNULL(SymReg *r0),
+    NOTNULL(char *type),
+    NULLOK(SymReg *init),
     int emit )
-        __attribute__nonnull__(1);
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
+PARROT_CAN_RETURN_NULL
 Instruction * INS( PARROT_INTERP,
-    IMC_Unit * unit,
+    NOTNULL(IMC_Unit *unit),
     NOTNULL(const char *name),
-    const char *fmt,
-    SymReg **r,
+    NULLOK(const char *fmt),
+    NOTNULL(SymReg **r),
     int n,
     int keyvec,
     int emit )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(5);
 
-int is_op( PARROT_INTERP, const char *name )
-        __attribute__nonnull__(1);
+PARROT_WARN_UNUSED_RESULT
+int is_op( PARROT_INTERP, NOTNULL(const char *name) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 Instruction * multi_keyed( PARROT_INTERP,
-    IMC_Unit * unit,
-    char *name,
-    SymReg ** r,
+    NOTNULL(IMC_Unit *unit),
+    NOTNULL(char *name),
+    NOTNULL(SymReg **r),
     int nr,
     int keyvec,
     int emit )
-        __attribute__nonnull__(1);
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 void op_fullname(
     NOTNULL(char *dest),
@@ -281,22 +299,26 @@ void IMCC_print_inc(PARROT_INTERP);
 
 /* HEADERIZER BEGIN: compilers/imcc/pcc.c */
 
-void expand_pcc_sub(
-    Parrot_Interp interp,
-    NOTNULL(IMC_Unit *unit),
-    NOTNULL(Instruction *ins) )
+void expand_pcc_sub( PARROT_INTERP,
+    NOTNULL(NOTNULL(IMC_Unit *unit)),
+    NOTNULL(NOTNULL(Instruction *ins)) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-void expand_pcc_sub_call(
-    Parrot_Interp interp,
-    IMC_Unit *unit,
-    Instruction *ins );
+void expand_pcc_sub_call( PARROT_INTERP,
+    NOTNULL(IMC_Unit *unit),
+    NOTNULL(Instruction *ins) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
-void expand_pcc_sub_ret(
-    Parrot_Interp interp,
-    IMC_Unit *unit,
-    Instruction *ins );
+void expand_pcc_sub_ret( PARROT_INTERP,
+    NOTNULL(IMC_Unit *unit),
+    NOTNULL(Instruction *ins) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 SymReg* get_const( PARROT_INTERP, const char *name, int type )
         __attribute__nonnull__(1);
