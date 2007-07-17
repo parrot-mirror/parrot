@@ -79,9 +79,7 @@ sub determine_need_for_manifest {
 sub print_manifest {
     my $self = shift;
     my $manifest_lines_ref = shift;
-    open my $MANIFEST, '>', $self->{file}
-        or croak "Unable to open $self->{file} for writing";
-    print $MANIFEST <<"END_HEADER";
+    my $print_str = <<"END_HEADER";
 # ex: set ro:
 # $self->{id}
 #
@@ -94,8 +92,11 @@ sub print_manifest {
 END_HEADER
 
     for my $k ( sort keys %{ $manifest_lines_ref } ) {
-        printf $MANIFEST "%- 59s %s\n", ($k, $manifest_lines_ref->{$k});
+        $print_str .= sprintf "%- 59s %s\n", ($k, $manifest_lines_ref->{$k});
     } 
+    open my $MANIFEST, '>', $self->{file}
+        or croak "Unable to open $self->{file} for writing";
+    print $MANIFEST $print_str;
     close $MANIFEST or croak "Unable to close $self->{file} after writing";
     return 1;
 }
