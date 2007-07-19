@@ -324,6 +324,7 @@ my $args = process_options( {
     svnid           => '$Id$',
 } );
 exit(1) unless defined $args;
+
 my %args = %{$args};
 
 my $opttest = Parrot::Configure::Options::Test->new($args);
