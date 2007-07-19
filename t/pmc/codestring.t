@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 7;
+use Parrot::Test tests => 8;
 
 =head1 NAME
 
@@ -126,6 +126,22 @@ CODE
   label_1234:
     say "H, W"
     say "alpha, beta, W"
+OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', 'global unique #' );
+.sub main :main
+    .local pmc code1, code2
+    code1 = new 'CodeString'
+    code2 = new 'CodeString'
+    .local string unique1, unique2
+    unique1 = code1.'unique'()
+    unique2 = code2.'unique'('$P')
+    say unique1
+    say unique2
+.end
+CODE
+10
+$P11
 OUTPUT
 
 # Local Variables:
