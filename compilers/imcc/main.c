@@ -38,10 +38,12 @@ static void imcc_get_optimization_description(
 
 static void imcc_run_pbc( PARROT_INTERP,
     int obj_file,
-    const char *output_file,
+    NOTNULL(const char *output_file),
     int argc,
-    char * argv[] )
-        __attribute__nonnull__(1);
+    NOTNULL(char *argv[]) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(5);
 
 static void imcc_write_pbc( PARROT_INTERP, NOTNULL(const char *output_file) )
         __attribute__nonnull__(1)
@@ -266,7 +268,6 @@ parseflags(PARROT_INTERP, int *argc, char **argv[])
                 SET_CORE(PARROT_SWITCH_CORE);
                 break;
             case 'C':
-                SET_CORE(PARROT_CGP_CORE);
                 break;
             case 'f':
                 SET_CORE(PARROT_FAST_CORE);
@@ -312,8 +313,12 @@ parseflags(PARROT_INTERP, int *argc, char **argv[])
                 exit(EX_USAGE);
                 break;
             case OPT_RUNTIME_PREFIX:
-                printf("%s\n", Parrot_get_runtime_prefix(interp, NULL));
+                {
+                char *prefix = Parrot_get_runtime_prefix(interp, NULL);
+                printf("%s\n", prefix);
+                free(prefix);
                 exit(EXIT_SUCCESS);
+                }
                 break;
             case 'V':
                 Parrot_version(interp);
@@ -582,8 +587,8 @@ imcc_initialize(PARROT_INTERP)
 }
 
 static void
-imcc_run_pbc(PARROT_INTERP, int obj_file, const char *output_file,
-             int argc, char * argv[])
+imcc_run_pbc(PARROT_INTERP, int obj_file, NOTNULL(const char *output_file),
+             int argc, NOTNULL(char *argv[]))
 {
     if (IMCC_INFO(interp)->imcc_warn)
         PARROT_WARNINGS_on(interp, PARROT_WARNINGS_ALL_FLAG);

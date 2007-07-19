@@ -122,8 +122,12 @@ Instruction * IMCC_create_itcall_label( PARROT_INTERP )
 void IMCC_itcall_sub( PARROT_INTERP, SymReg* sub )
         __attribute__nonnull__(1);
 
-Instruction * INS_LABEL( PARROT_INTERP, IMC_Unit *unit, SymReg *r0, int emit )
-        __attribute__nonnull__(1);
+Instruction * INS_LABEL( PARROT_INTERP,
+    NOTNULL(IMC_Unit *unit),
+    SymReg *r0,
+    int emit )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 /* HEADERIZER END: compilers/imcc/imcparser.c */
 
@@ -154,6 +158,8 @@ int check_op( PARROT_INTERP,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC * imcc_compile( PARROT_INTERP,
     NOTNULL(const char *s),
     int pasm_file,
@@ -265,11 +271,12 @@ Instruction * multi_keyed( PARROT_INTERP,
 void op_fullname(
     NOTNULL(char *dest),
     NOTNULL(const char *name),
-    SymReg * args[],
+    NOTNULL(SymReg *args[]),
     int narg,
     int keyvec )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 void register_compilers( PARROT_INTERP )
         __attribute__nonnull__(1);
@@ -407,7 +414,7 @@ typedef struct _imc_info_t {
     int cur_pmc_type;
     SymReg *cur_call;
     SymReg *cur_obj;
-    char *adv_named_id;
+    const char *adv_named_id;
 
     /* Lex globals */
     int in_pod;

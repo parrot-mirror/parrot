@@ -33,13 +33,15 @@
 
 PARROT_WARN_UNUSED_RESULT
 static int change_op( PARROT_INTERP,
-    IMC_Unit *unit,
+    NOTNULL(IMC_Unit *unit),
     NOTNULL(SymReg **r),
     int num,
     int emit )
         __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+PARROT_CANNOT_RETURN_NULL
 static void * imcc_compile_file( PARROT_INTERP,
     NOTNULL(const char *fullname),
     NOTNULL(STRING **error_message) )
@@ -74,10 +76,13 @@ static const char * to_infix( PARROT_INTERP,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static const char * try_rev_cmp( SHIM_INTERP,
-    IMC_Unit * unit,
-    const char *name,
-    SymReg ** r );
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static const char * try_rev_cmp(
+    NOTNULL(const char *name),
+    NOTNULL(SymReg **r) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 static Instruction * var_arg_ins( PARROT_INTERP,
@@ -161,7 +166,7 @@ iNEW(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0),
  * out, but please don't remove it. :) -Mel
  */
 void
-op_fullname(NOTNULL(char *dest), NOTNULL(const char *name), SymReg * args[],
+op_fullname(NOTNULL(char *dest), NOTNULL(const char *name), NOTNULL(SymReg *args[]),
         int narg, int keyvec)
 {
     int i;
@@ -464,7 +469,9 @@ INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
         (strcmp(name, "set_returns") == 0)) {
         return var_arg_ins(interp, unit, name, r, n, emit);
     }
-    if ((op = is_infix(name, n, r)) >= 0) {
+
+    op = is_infix(name, n, r);
+    if (op >= 0) {
         /* sub x, y, z  => infix .MMD_SUBTRACT, x, y, z */
         name = to_infix(interp, name, r, &n, op);
     }
@@ -490,7 +497,7 @@ INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
     if (op < 0)         /* maybe we got a fullname */
         op = interp->op_lib->op_code(name, 1);
     if (op < 0) {         /* still wrong, try reverse compare */
-        const char * const n_name = try_rev_cmp(interp, unit, name, r);
+        const char * const n_name = try_rev_cmp(name, r);
         if (n_name) {
             DECL_CONST_CAST;
             name = const_cast(n_name);
@@ -661,6 +668,8 @@ do_yylex_init(PARROT_INTERP, NOTNULL(yyscan_t* yyscanner))
     return retval;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
 imcc_compile(PARROT_INTERP, NOTNULL(const char *s), int pasm_file,
              NOTNULL(STRING **error_message))
@@ -832,6 +841,8 @@ imcc_compile_pir_ex(PARROT_INTERP, NOTNULL(const char *s))
 /*
  * Compile a file by filename (can be either PASM or IMCC code)
  */
+
+PARROT_CANNOT_RETURN_NULL
 static void *
 imcc_compile_file(PARROT_INTERP, NOTNULL(const char *fullname),
                    NOTNULL(STRING **error_message))
@@ -856,17 +867,13 @@ imcc_compile_file(PARROT_INTERP, NOTNULL(const char *fullname),
     }
 
     fs = string_make(interp, fullname, strlen(fullname), NULL, 0);
-    if (Parrot_stat_info_intval(interp, fs, STAT_ISDIR)) {
+    if (Parrot_stat_info_intval(interp, fs, STAT_ISDIR))
         real_exception(interp, NULL, E_IOError,
                 "imcc_compile_file: '%s' is a directory\n", fullname);
-        return NULL;
-    }
 
-    if (!(fp = fopen(fullname, "r"))) {
+    if (!(fp = fopen(fullname, "r")))
         IMCC_fatal(interp, E_IOError,
                 "imcc_compile_file: couldn't open '%s'\n", fullname);
-        return NULL;
-    }
 
 #if IMC_TRACE
     fprintf(stderr, "parser_util.c: imcc_compile_file '%s'\n", fullname);
@@ -960,13 +967,13 @@ register_compilers(PARROT_INTERP)
 
 PARROT_WARN_UNUSED_RESULT
 static int
-change_op(PARROT_INTERP, IMC_Unit *unit, NOTNULL(SymReg **r), int num, int emit)
+change_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg **r), int num, int emit)
 {
     int changed = 0;
 
     if (r[num]->type & (VTCONST|VT_CONSTP)) {
         /* make a number const */
-        SymReg *c = r[num];
+        const SymReg *c = r[num];
         SymReg *s;
         if (c->type & VT_CONSTP)
             c = c->reg;
@@ -1087,14 +1094,15 @@ try_find_op(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
     return -1;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static const char *
-try_rev_cmp(SHIM_INTERP, SHIM(IMC_Unit * unit), const char *name,
-        SymReg ** r)
+try_rev_cmp(NOTNULL(const char *name), NOTNULL(SymReg **r))
 {
     static struct br_pairs {
-        const char *op;
-        const char *nop;
-        int to_swap;
+        NOTNULL( const char * const op );
+        NOTNULL( const char * const nop );
+        const int to_swap;
     } br_pairs[] = {
         { "gt", "lt", 0 },
         { "ge", "le", 0 },

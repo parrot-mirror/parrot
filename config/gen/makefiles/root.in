@@ -141,8 +141,8 @@ NONGEN_HEADERS  = @TEMP_nongen_headers@
 GEN_MAKEFILES = \
     Makefile \
 #CONDITIONED_LINE(has_perldoc):    docs/Makefile \
-    compilers/past/Makefile \
     compilers/past-pm/Makefile \
+    compilers/pct/Makefile \
     compilers/pge/Makefile \
     compilers/pirc/Makefile \
     compilers/tge/Makefile \
@@ -1254,10 +1254,10 @@ dynoplibs-clean :
 compilers : compilers.dummy
 
 compilers.dummy : $(PARROT)
-	$(MAKE) compilers/past
 	$(MAKE) compilers/pge
 	$(MAKE) compilers/tge
 	$(MAKE) compilers/past-pm
+	$(MAKE) compilers/pct
 	$(MAKE) compilers/json
 
 languages : languages.dummy
@@ -1281,8 +1281,8 @@ languages-clean :
 ###############################################################################
 
 compilers-clean :
-	$(MAKE) compilers/past clean
 	$(MAKE) compilers/past-pm clean
+	$(MAKE) compilers/pct clean
 	$(MAKE) compilers/pge clean
 	$(MAKE) compilers/tge clean
 	$(MAKE) compilers/json clean
@@ -1325,7 +1325,6 @@ RUNCORE_TEST_FILES = \
     t/dynpmc/*.t \
     t/dynoplibs/*.t \
     t/compilers/json/*.t \
-    t/compilers/past/*.t \
     t/compilers/pge/*.t \
     t/compilers/pge/p5regexp/*.t \
     t/compilers/pge/p6rules/*.t \
@@ -1875,12 +1874,19 @@ splint : $(PARROT)
 splint-andy :
 	$(MKPATH) $(SPLINT_TMP)
 	/var/splint312/bin/splint $(CC_INC) @cc_hasjit@ "-Isrc/pmc" "-Icompilers/ast" $(SPLINTFLAGS) $(SPLINTFLAGS_TEST) \
+		+fcnpost \
+		+showscan \
+		+stats \
+		-showsummary \
 		\
+		src/string.c
+
+X = \
 		src/gc/dod.c  src/gc/gc_gms.c  src/gc/gc_ims.c \
 		src/gc/memory.c  src/gc/register.c  \
 		src/gc/resources.c  src/gc/smallobject.c \
 
-###############################################################################
+
 #
 # installation
 #
