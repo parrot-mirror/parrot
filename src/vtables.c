@@ -26,9 +26,9 @@ Creates and returns a pointer to the new C<VTABLE>.
 */
 
 PARROT_API
+PARROT_MALLOC
 VTABLE *
 Parrot_new_vtable(SHIM_INTERP)
-    /* MALLOC, WARN_UNUSED */
 {
     return mem_allocate_zeroed_typed(VTABLE);
 }
@@ -42,9 +42,9 @@ Clones C<*base_vtable> and returns a pointer to the new C<VTABLE>.
 */
 
 PARROT_API
+PARROT_MALLOC
 VTABLE *
-Parrot_clone_vtable(SHIM_INTERP, const VTABLE *base_vtable /*NN*/)
-    /* MALLOC, WARN_UNUSED */
+Parrot_clone_vtable(SHIM_INTERP, NOTNULL(const VTABLE *base_vtable))
 {
     VTABLE * const new_vtable = mem_allocate_typed(VTABLE);
     if (new_vtable) {
@@ -64,7 +64,7 @@ Destroys C<*vtable>.
 
 PARROT_API
 void
-Parrot_destroy_vtable(SHIM_INTERP, VTABLE *vtable /*NULLOK*/)
+Parrot_destroy_vtable(SHIM_INTERP, NULLOK(VTABLE *vtable))
 {
     /* XXX We sometimes get a type number allocated without any corresponding
      * vtable. E.g. if you load perl_group, perlscalar is this way.

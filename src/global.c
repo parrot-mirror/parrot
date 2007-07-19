@@ -26,18 +26,24 @@ tdb
 /* HEADERIZER HFILE: none */ /* XXX It's really include/parrot/global.h, but not yet */
 /* HEADERIZER BEGIN: static */
 
-static PMC * get_namespace_pmc( PARROT_INTERP, PMC *sub )
-        __attribute__nonnull__(1);
+static PMC * get_namespace_pmc( PARROT_INTERP, NOTNULL(PMC *sub) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 static PMC * internal_ns_keyed( PARROT_INTERP,
-    PMC *base_ns,
-    PMC *pmc_key,
-    STRING *str_key /*NULLOK*/,
+    NOTNULL(PMC *base_ns),
+    NULLOK(PMC *pmc_key),
+    NULLOK(STRING *str_key),
     int flags )
-        __attribute__nonnull__(1);
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
-static void store_sub_in_multi( PARROT_INTERP, PMC *sub, PMC *ns )
-        __attribute__nonnull__(1);
+static void store_sub_in_multi( PARROT_INTERP,
+    NOTNULL(PMC *sub),
+    NOTNULL(PMC *ns) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 /* HEADERIZER END: static */
 
@@ -53,8 +59,8 @@ static void store_sub_in_multi( PARROT_INTERP, PMC *sub, PMC *ns )
 #define INTERN_NS_CREAT 1       /* I'm a fan of the classics */
 
 static PMC *
-internal_ns_keyed(PARROT_INTERP, PMC *base_ns, PMC *pmc_key,
-                               STRING *str_key /*NULLOK*/, int flags)
+internal_ns_keyed(PARROT_INTERP, NOTNULL(PMC *base_ns), NULLOK(PMC *pmc_key),
+                               NULLOK(STRING *str_key), int flags)
 {
     PMC *ns, *sub_ns;
     INTVAL i, n;
@@ -258,7 +264,7 @@ Set the global named C<globalname> in the namespace C<ns> to the value C<val>.
 
 PARROT_API
 PMC *
-Parrot_get_global(PARROT_INTERP, PMC *ns /*NULLOK*/, STRING *globalname)
+Parrot_get_global(PARROT_INTERP, NULLOK(PMC *ns), STRING *globalname)
 {
     if (PMC_IS_NULL(ns))
         return PMCNULL;
@@ -311,7 +317,7 @@ entirely use the untyped interface.
 
 PARROT_API
 PMC *
-Parrot_find_global_n(PARROT_INTERP, PMC *ns /*NULLOK*/, STRING *globalname)
+Parrot_find_global_n(PARROT_INTERP, NULLOK(PMC *ns), STRING *globalname)
 {
     PMC *res;
 
@@ -395,7 +401,7 @@ the HLL root if C<str_key> is NULL, with the name C<globalname>.
 
 PARROT_API
 void
-Parrot_store_global_n(PARROT_INTERP, PMC *ns /*NULLOK*/,
+Parrot_store_global_n(PARROT_INTERP, NULLOK(PMC *ns),
                       STRING *globalname, PMC *val)
 {
 #if DEBUG_GLOBAL
@@ -422,7 +428,7 @@ Parrot_store_global_cur(PARROT_INTERP, STRING *globalname, PMC *val)
 
 PARROT_API
 void
-Parrot_store_global_k(PARROT_INTERP, PMC *pmc_key /*NN*/,
+Parrot_store_global_k(PARROT_INTERP, NOTNULL(PMC *pmc_key),
                       STRING *globalname, PMC *val)
 {
     PMC *ns;
@@ -449,7 +455,7 @@ Parrot_store_global_k(PARROT_INTERP, PMC *pmc_key /*NN*/,
 
 PARROT_API
 void
-Parrot_store_global_s(Interp *inter /*NN*/, STRING *str_key,
+Parrot_store_global_s(NOTNULL(Interp *inter), STRING *str_key,
                       STRING *globalname, PMC *val)
 {
     PMC * const ns = Parrot_make_namespace_keyed_str(inter,
@@ -477,7 +483,7 @@ PMCNULL.
 
 PMC *
 Parrot_find_global_op(PARROT_INTERP, PMC *ns,
-                      STRING *globalname /*NN*/, void *next)
+                      NOTNULL(STRING *globalname), void *next)
 {
     PMC *res;
 
@@ -510,16 +516,16 @@ anywhere, return PMCNULL.
 
 PARROT_API
 PMC *
-Parrot_find_name_op(PARROT_INTERP, STRING *name, SHIM(void *next))
+Parrot_find_name_op(PARROT_INTERP, NOTNULL(STRING *name), SHIM(void *next))
 {
     parrot_context_t * const ctx = CONTEXT(interp->ctx);
-    PMC *g, *lex_pad;
+    PMC * const lex_pad = Parrot_find_pad(interp, name, ctx);
+    PMC *g;
 
-    g = PMCNULL;
-
-    lex_pad = Parrot_find_pad(interp, name, ctx);
     if (!PMC_IS_NULL(lex_pad))
         g = VTABLE_get_pmc_keyed_str(interp, lex_pad, name);
+    else
+        g = PMCNULL;
 
     /* TODO TODO TODO - walk up the scopes!  duh!! */
 
@@ -541,7 +547,7 @@ Parrot_find_name_op(PARROT_INTERP, STRING *name, SHIM(void *next))
 }
 
 static PMC *
-get_namespace_pmc(PARROT_INTERP, PMC *sub)
+get_namespace_pmc(PARROT_INTERP, NOTNULL(PMC *sub))
 {
     PMC * const nsname = PMC_sub(sub)->namespace_name;
     PMC * const nsroot = Parrot_get_HLL_namespace(interp, PMC_sub(sub)->HLL_id);
@@ -558,7 +564,7 @@ get_namespace_pmc(PARROT_INTERP, PMC *sub)
 }
 
 static void
-store_sub_in_multi(PARROT_INTERP, PMC *sub, PMC *ns)
+store_sub_in_multi(PARROT_INTERP, NOTNULL(PMC *sub), NOTNULL(PMC *ns))
 {
     INTVAL func_nr;
     char *c_meth;
@@ -577,15 +583,15 @@ store_sub_in_multi(PARROT_INTERP, PMC *sub, PMC *ns)
         VTABLE_push_pmc(interp, multisub, sub);
 
     c_meth = string_to_cstring(interp, subname);
-    if ((func_nr = Parrot_MMD_method_idx(interp, c_meth))  >= 0) {
+    func_nr = Parrot_MMD_method_idx(interp, c_meth);
+    if (func_nr >= 0)
         Parrot_mmd_rebuild_table(interp, -1, func_nr);
-    }
     string_cstring_free(c_meth);
 }
 
 PARROT_API
 void
-Parrot_store_sub_in_namespace(PARROT_INTERP, PMC *sub)
+Parrot_store_sub_in_namespace(PARROT_INTERP, NOTNULL(PMC *sub))
 {
     const INTVAL cur_id = CONTEXT(interp->ctx)->current_HLL;
 

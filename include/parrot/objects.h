@@ -88,57 +88,71 @@ PMC * Parrot_find_method_direct( PARROT_INTERP,
 PARROT_API
 PMC * Parrot_find_method_with_cache( PARROT_INTERP,
     PMC *_class,
-    STRING *method_name /*NN*/ )
+    NOTNULL(STRING *method_name) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
 PARROT_API
-PMC* Parrot_find_vtable_meth( PARROT_INTERP, PMC *pmc /*NN*/, STRING *meth )
+PMC* Parrot_find_vtable_meth( PARROT_INTERP,
+    NOTNULL(PMC *pmc),
+    NOTNULL(STRING *meth) )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_API
-PMC * Parrot_get_attrib_by_num( PARROT_INTERP, PMC *object, INTVAL attrib )
-        __attribute__nonnull__(1);
+PMC * Parrot_get_attrib_by_num( PARROT_INTERP,
+    NOTNULL(PMC *object),
+    INTVAL attrib )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 PMC * Parrot_get_attrib_by_str( PARROT_INTERP, PMC *object, STRING *attr )
         __attribute__nonnull__(1);
 
 PARROT_API
-INTVAL Parrot_get_vtable_index( PARROT_INTERP, const STRING *name /*NN*/ )
+INTVAL Parrot_get_vtable_index( PARROT_INTERP, NOTNULL(const STRING *name) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
-void Parrot_instantiate_object( PARROT_INTERP, PMC *object )
-        __attribute__nonnull__(1);
+void Parrot_instantiate_object( PARROT_INTERP, NOTNULL(PMC *object) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
-void Parrot_instantiate_object_init( PARROT_INTERP, PMC *object, PMC *init )
-        __attribute__nonnull__(1);
+void Parrot_instantiate_object_init( PARROT_INTERP,
+    NOTNULL(PMC *object),
+    NOTNULL(PMC *init) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_API
 void Parrot_invalidate_method_cache( PARROT_INTERP,
-    STRING *_class,
-    STRING *meth )
-        __attribute__nonnull__(1);
+    NULLOK(STRING *_class),
+    NOTNULL(STRING *meth) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
 
 PARROT_API
-INTVAL Parrot_MMD_method_idx( SHIM_INTERP, const char *name )
-        __attribute__warn_unused_result__
-        __attribute__pure__;
+PARROT_PURE_FUNCTION
+INTVAL Parrot_MMD_method_idx( SHIM_INTERP, NOTNULL(const char *name) )
+        __attribute__nonnull__(2);
 
 PARROT_API
-const char* Parrot_MMD_method_name( SHIM_INTERP, INTVAL idx )
-        __attribute__warn_unused_result__
-        __attribute__pure__;
+PARROT_PURE_FUNCTION
+PARROT_CAN_RETURN_NULL
+const char* Parrot_MMD_method_name( SHIM_INTERP, INTVAL idx );
 
 PARROT_API
 PMC * Parrot_multi_subclass( PARROT_INTERP,
-    PMC *base_class_array,
-    STRING *child_class_name )
-        __attribute__nonnull__(1);
+    NOTNULL(PMC *base_class_array),
+    NOTNULL(STRING *child_class_name) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_API
 void Parrot_new_class( PARROT_INTERP, PMC *_class, PMC *name )
@@ -153,28 +167,39 @@ void Parrot_note_method_offset( PARROT_INTERP, UINTVAL offset, PMC *method )
         __attribute__nonnull__(1);
 
 PARROT_API
-INTVAL Parrot_object_isa( PARROT_INTERP, PMC *pmc, PMC *_class )
-        __attribute__nonnull__(1);
+INTVAL Parrot_object_isa( PARROT_INTERP,
+    NOTNULL(PMC *pmc),
+    NOTNULL(PMC *_class) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_API
 PMC * Parrot_remove_parent( PARROT_INTERP,
-    PMC *removed_class,
-    PMC *existing_class )
-        __attribute__nonnull__(1);
+    NOTNULL(PMC *removed_class),
+    NOTNULL(PMC *existing_class) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_API
 void Parrot_set_attrib_by_num( PARROT_INTERP,
-    PMC *object,
+    NOTNULL(PMC *object),
     INTVAL attrib,
-    PMC *value )
-        __attribute__nonnull__(1);
+    NOTNULL(PMC *value) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(4);
 
 PARROT_API
 void Parrot_set_attrib_by_str( PARROT_INTERP,
-    PMC *object,
-    STRING *attr,
-    PMC *value )
-        __attribute__nonnull__(1);
+    NOTNULL(PMC *object),
+    NOTNULL(STRING *attr),
+    NOTNULL(PMC *value) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 PARROT_API
 void Parrot_set_class_constructor( PARROT_INTERP,
@@ -200,11 +225,11 @@ void Parrot_set_class_fallback( PARROT_INTERP,
 PARROT_API
 PMC * Parrot_single_subclass( PARROT_INTERP,
     PMC *base_class,
-    PMC *name /*NULLOK*/ )
+    NULLOK(PMC *name) )
         __attribute__nonnull__(1);
 
 PARROT_API
-STRING* readable_name( PARROT_INTERP, PMC *name /*NN*/ )
+STRING* readable_name( PARROT_INTERP, NOTNULL(PMC *name) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

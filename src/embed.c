@@ -202,7 +202,7 @@ Test the interpreter flags specified in C<flag>.
 
 PARROT_API
 Parrot_Int
-Parrot_test_flag(Interp* interp /*NN*/, INTVAL flag)
+Parrot_test_flag(PARROT_INTERP, INTVAL flag)
 {
     return Interp_flags_TEST(interp, flag);
 }
@@ -262,7 +262,7 @@ Read in a bytecode, unpack it into a C<PackFile> structure, and do fixups.
 
 PARROT_API
 PackFile *
-Parrot_readbc(PARROT_INTERP, const char *fullname /*NULLOK*/)
+Parrot_readbc(PARROT_INTERP, NULLOK(const char *fullname))
 {
     INTVAL program_size, wanted;
     char *program_code;
@@ -428,7 +428,7 @@ Loads the C<PackFile> returned by C<Parrot_readbc()>.
 
 PARROT_API
 void
-Parrot_loadbc(PARROT_INTERP, PackFile *pf /*NN*/)
+Parrot_loadbc(PARROT_INTERP, NOTNULL(PackFile *pf))
 {
     if (pf == NULL) {
         PIO_eprintf(interp, "Invalid packfile\n");
@@ -488,7 +488,7 @@ Sort function for profile data. Sorts by time.
 */
 
 static int
-prof_sort_f(const void *a /*NN*/, const void *b /*NN*/)
+prof_sort_f(NOTNULL(const void *a), NOTNULL(const void *b))
 {
     const FLOATVAL timea = ((const ProfData *)a)->time;
     const FLOATVAL timeb = ((const ProfData *)b)->time;
@@ -577,7 +577,7 @@ print_profile(PARROT_INTERP, SHIM(int status), SHIM(void *p))
         UINTVAL op_count = 0;
         UINTVAL call_count = 0;
         FLOATVAL sum_time = 0.0;
-        FLOATVAL empty = calibrate(interp);
+        const FLOATVAL empty = calibrate(interp);
 
         PIO_printf(interp,
                    " Code J Name                         "
@@ -833,7 +833,6 @@ PARROT_API
 void
 Parrot_disassemble(PARROT_INTERP)
 {
-    char       *c;
     PDB_t      *pdb             = mem_allocate_zeroed_typed(PDB_t);
     PDB_line_t *line;
     int         debugs;
@@ -860,6 +859,7 @@ Parrot_disassemble(PARROT_INTERP)
     }
 
     while (line->next) {
+        const char *c;
 
         /* PIO_printf(interp, "%i < %i %i == %i \n", curr_mapping,
          * num_mappings, op_code_seq_num,
@@ -867,7 +867,7 @@ Parrot_disassemble(PARROT_INTERP)
 
         if (debugs && curr_mapping < num_mappings) {
             if ( op_code_seq_num == interp->code->debugs->mappings[curr_mapping]->offset) {
-                int filename_const_offset = interp->code->debugs->mappings[curr_mapping]->u.filename;
+                const int filename_const_offset = interp->code->debugs->mappings[curr_mapping]->u.filename;
                 PIO_printf(interp, "Current Source Filename %Ss\n", interp->code->const_table->constants[filename_const_offset]->u.string);
                 curr_mapping++;
             }
@@ -886,7 +886,7 @@ Parrot_disassemble(PARROT_INTERP)
 
         c = pdb->file->source + line->source_offset;
 
-        while (*c != '\n' && c)
+        while (c && *c != '\n')
             PIO_printf(interp, "%c", *(c++));
 
         PIO_printf(interp, "\n");

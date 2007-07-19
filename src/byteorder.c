@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2003, The Perl Foundation.
+Copyright (C) 2001-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -36,9 +36,10 @@ conversion is done.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CONST_FUNCTION
 INTVAL
 fetch_iv_le(INTVAL w)
-    /* CONST,WARN_UNUSED */
 {
 #if !PARROT_BIGENDIAN
     return w;
@@ -70,9 +71,10 @@ If the native format is already big endian, then no conversion is done.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CONST_FUNCTION
 INTVAL
 fetch_iv_be(INTVAL w)
-    /* CONST, WARN_UNUSED */
 {
 #if PARROT_BIGENDIAN
     return w;
@@ -102,9 +104,10 @@ Same as C<fetch_iv_be> for opcode_t
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CONST_FUNCTION
 opcode_t
 fetch_op_be(opcode_t w)
-    /* CONST, WARN_UNUSED */
 {
 #if PARROT_BIGENDIAN
     return w;
@@ -136,9 +139,10 @@ Same as C<fetch_iv_le> for opcode_t
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CONST_FUNCTION
 opcode_t
 fetch_op_le(opcode_t w)
-    /* CONST, WARN_UNUSED */
 {
 #if !PARROT_BIGENDIAN
     return w;
@@ -171,7 +175,7 @@ out of a padded buffer.
 */
 
 void
-fetch_buf_be_4(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
+fetch_buf_be_4(NOTNULL(unsigned char *rb), NOTNULL(const unsigned char *b))
 {
 #if PARROT_BIGENDIAN
     memcpy(rb, b, 4);
@@ -184,7 +188,7 @@ fetch_buf_be_4(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
 }
 
 void
-fetch_buf_le_4(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
+fetch_buf_le_4(NOTNULL(unsigned char *rb), NOTNULL(const unsigned char *b))
 {
 #if !PARROT_BIGENDIAN
     memcpy(rb, b, 4);
@@ -197,7 +201,7 @@ fetch_buf_le_4(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
 }
 
 void
-fetch_buf_be_8(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
+fetch_buf_be_8(NOTNULL(unsigned char *rb), NOTNULL(const unsigned char *b))
 {
 #if PARROT_BIGENDIAN
     memcpy(rb, b, 8);
@@ -214,7 +218,7 @@ fetch_buf_be_8(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
 }
 
 void
-fetch_buf_le_8(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
+fetch_buf_le_8(NOTNULL(unsigned char *rb), NOTNULL(const unsigned char *b))
 {
 #if !PARROT_BIGENDIAN
     memcpy(rb, b, 8);
@@ -231,7 +235,7 @@ fetch_buf_le_8(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
 }
 
 void
-fetch_buf_le_12(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
+fetch_buf_le_12(NOTNULL(unsigned char *rb), NOTNULL(const unsigned char *b))
 {
 #if !PARROT_BIGENDIAN
     memcpy(rb, b, 12);
@@ -252,7 +256,7 @@ fetch_buf_le_12(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
 }
 
 void
-fetch_buf_be_12(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
+fetch_buf_be_12(NOTNULL(unsigned char *rb), NOTNULL(const unsigned char *b))
 {
 #if PARROT_BIGENDIAN
     memcpy(rb, b, 12);
@@ -273,7 +277,7 @@ fetch_buf_be_12(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
 }
 
 void
-fetch_buf_le_16(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
+fetch_buf_le_16(NOTNULL(unsigned char *rb), NOTNULL(const unsigned char *b))
 {
 #if !PARROT_BIGENDIAN
     memcpy(rb, b, 16);
@@ -298,7 +302,7 @@ fetch_buf_le_16(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
 }
 
 void
-fetch_buf_be_16(unsigned char *rb /*NN*/, const unsigned char *b /*NN*/)
+fetch_buf_be_16(NOTNULL(unsigned char *rb), NOTNULL(const unsigned char *b))
 {
 #if PARROT_BIGENDIAN
     memcpy(rb, b, 16);

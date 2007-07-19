@@ -17,18 +17,17 @@
 /* HEADERIZER BEGIN: src/vtables.c */
 
 PARROT_API
-VTABLE * Parrot_clone_vtable( SHIM_INTERP, const VTABLE *base_vtable /*NN*/ )
-        __attribute__nonnull__(2)
-        __attribute__malloc__
-        __attribute__warn_unused_result__;
+PARROT_MALLOC
+VTABLE * Parrot_clone_vtable( SHIM_INTERP,
+    NOTNULL(const VTABLE *base_vtable) )
+        __attribute__nonnull__(2);
 
 PARROT_API
-void Parrot_destroy_vtable( SHIM_INTERP, VTABLE *vtable /*NULLOK*/ );
+void Parrot_destroy_vtable( SHIM_INTERP, NULLOK(VTABLE *vtable) );
 
 PARROT_API
-VTABLE * Parrot_new_vtable( SHIM_INTERP )
-        __attribute__malloc__
-        __attribute__warn_unused_result__;
+PARROT_MALLOC
+VTABLE * Parrot_new_vtable( SHIM_INTERP );
 
 void parrot_alloc_vtables( PARROT_INTERP )
         __attribute__nonnull__(1);

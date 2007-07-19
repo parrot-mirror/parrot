@@ -33,21 +33,21 @@ Define the internal interpreter exceptions.
 
 /* HEADERIZER BEGIN: static */
 
+PARROT_WARN_UNUSED_RESULT
 static opcode_t * create_exception( PARROT_INTERP )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(1);
 
-static size_t dest2offset( PARROT_INTERP, const opcode_t *dest /*NN*/ )
+PARROT_WARN_UNUSED_RESULT
+static size_t dest2offset( PARROT_INTERP, NOTNULL(const opcode_t *dest) )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__pure__
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static PMC * find_exception_handler( PARROT_INTERP, PMC *exception )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(1);
 
-static void run_cleanup_action( PARROT_INTERP, Stack_Entry_t *e /*NN*/ )
+static void run_cleanup_action( PARROT_INTERP, NOTNULL(Stack_Entry_t *e) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -69,9 +69,9 @@ environment.
 */
 
 PARROT_API
+PARROT_DOES_NOT_RETURN
 void
-internal_exception(int exitcode, const char *format /*NN*/, ...)
-    /* NORETURN */
+internal_exception(int exitcode, NOTNULL(const char *format), ...)
 {
     va_list arglist;
     va_start(arglist, format);
@@ -105,10 +105,10 @@ Panic handler.
 
 */
 
+PARROT_DOES_NOT_RETURN
 void
-do_panic(PARROT_INTERP /*NULLOK*/, const char *message /*NULLOK*/,
-         const char *file /*NULLOK*/, int line)
-    /* NORETURN */
+do_panic(NULLOK_INTERP, NULLOK(const char *message),
+         NULLOK(const char *file), int line)
 {
     /* Note: we can't format any floats in here--Parrot_sprintf
     ** may panic because of floats.
@@ -168,7 +168,7 @@ Pop items off the dynamic environment up to the mark.
 
 PARROT_API
 void
-push_exception(PARROT_INTERP, PMC *handler /*NN*/)
+push_exception(PARROT_INTERP, NOTNULL(PMC *handler))
 {
     if (handler->vtable->base_type != enum_class_Exception_Handler)
         PANIC(interp, "Tried to set_eh a non Exception_Handler");
@@ -177,7 +177,7 @@ push_exception(PARROT_INTERP, PMC *handler /*NN*/)
 }
 
 static void
-run_cleanup_action(PARROT_INTERP, Stack_Entry_t *e /*NN*/)
+run_cleanup_action(PARROT_INTERP, NOTNULL(Stack_Entry_t *e))
 {
     /*
      * this is called during normal stack_pop of the control
@@ -234,9 +234,10 @@ Find the exception handler for C<exception>.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static PMC *
 find_exception_handler(PARROT_INTERP, PMC *exception)
-    /* WARN_UNUSED */
 {
     char *m;
     int exit_status, print_location;
@@ -357,6 +358,7 @@ flag bit is set.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
 PMC*
 new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
 {
@@ -393,6 +395,7 @@ Throw the exception.
 */
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
 opcode_t *
 throw_exception(PARROT_INTERP, PMC *exception, SHIM(void *dest))
 {
@@ -422,8 +425,9 @@ Rethrow the exception.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
 opcode_t *
-rethrow_exception(PARROT_INTERP, PMC *exception /*NN*/)
+rethrow_exception(PARROT_INTERP, NOTNULL(PMC *exception))
 {
     PMC *handler;
     opcode_t *address;
@@ -445,9 +449,9 @@ that this is called from within a handler setup with C<new_c_exception>.
 
 */
 
+PARROT_DOES_NOT_RETURN
 void
 rethrow_c_exception(PARROT_INTERP)
-    /* NORETURN */
 {
     Parrot_exception * const the_exception = interp->exceptions;
 
@@ -477,9 +481,9 @@ after an exception had occurred.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static size_t
-dest2offset(PARROT_INTERP, const opcode_t *dest /*NN*/)
-    /* PURE, WARN_UNUSED */
+dest2offset(PARROT_INTERP, NOTNULL(const opcode_t *dest))
 {
     size_t offset;
     /* translate an absolute location in byte_code to an offset
@@ -491,7 +495,6 @@ dest2offset(PARROT_INTERP, const opcode_t *dest /*NN*/)
         case PARROT_CGP_CORE:
         case PARROT_CGP_JIT_CORE:
             offset = dest - (const opcode_t *)interp->code->prederef.code;
-            break;
         default:
             offset = dest - interp->code->base.data;
     }
@@ -506,9 +509,9 @@ Create an exception.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static opcode_t *
 create_exception(PARROT_INTERP)
-    /* WARN_UNUSED */
 {
     PMC *exception;     /* exception object */
     opcode_t *dest;     /* absolute address of handler */
@@ -614,7 +617,7 @@ destroy_exception_list(PARROT_INTERP)
 }
 
 void
-really_destroy_exception_list(Parrot_exception *e /*NULLOK*/)
+really_destroy_exception_list(NULLOK(Parrot_exception *e))
 {
     while (e != NULL) {
         Parrot_exception * const prev = e->prev;
@@ -634,9 +637,9 @@ execution then resumes.
 */
 
 PARROT_API
+PARROT_DOES_NOT_RETURN
 void
 do_exception(PARROT_INTERP, INTVAL severity, long error)
-    /* NORETURN */
 {
     Parrot_exception * const the_exception = interp->exceptions;
 
@@ -662,10 +665,10 @@ C<throw_exception>, which calls the handler.
 */
 
 PARROT_API
+PARROT_DOES_NOT_RETURN
 void
-real_exception(PARROT_INTERP, void *ret_addr,
-        int exitcode, const char *format /*NN*/, ...)
-    /* NORETURN */
+real_exception(PARROT_INTERP, NULLOK(void *ret_addr),
+        int exitcode, NOTNULL(const char *format), ...)
 {
     STRING *msg;
     Parrot_exception * const the_exception = interp->exceptions;

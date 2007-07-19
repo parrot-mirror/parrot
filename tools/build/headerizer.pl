@@ -68,6 +68,19 @@ use Parrot::Config;
 
 my %opt;
 
+my %valid_macros = map {($_,1)} qw(
+    PARROT_API
+    PARROT_INLINE
+    PARROT_CAN_RETURN_NULL
+    PARROT_CANNOT_RETURN_NULL
+    PARROT_MAY_IGNORE_RESULT
+    PARROT_WARN_UNUSED_RESULT
+    PARROT_PURE_FUNCTION
+    PARROT_CONST_FUNCTION
+    PARROT_DOES_NOT_RETURN
+    PARROT_MALLOC
+);
+
 main();
 
 =head1 FUNCTIONS
@@ -127,6 +140,7 @@ sub extract_function_declarations {
 }
 
 sub function_components_from_declaration {
+    my $file = shift;
     my $proto = shift;
 
     my @lines = split( /\n/, $proto );
@@ -150,30 +164,34 @@ sub function_components_from_declaration {
     my $args      = join( " ", @lines );
 
     $args =~ s/\s+/ /g;
-    $args =~ s{([^(]+)\s*\((.+)\)\s*(/\*\s*(.*?)\s*\*/)?;?}{$2} or
+    $args =~ s{([^(]+)\s*\((.+)\);?}{$2} or
         die qq{Couldn't handle "$proto"};
 
     my $name = $1;
     $args = $2;
-    my $flags = $4; # Soon to be replaced by the PARROT_X macros
 
     die "Can't have both PARROT_API and PARROT_INLINE on $name\n" if $parrot_inline && $parrot_api;
 
     my @args = split( /\s*,\s*/, $args );
     for (@args) {
-        /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' ) || ( $_ =~ /(SHIM|PARROT)_INTERP/ )
+        /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' ) || ( $_ =~ /(PARROT|NULLOK|SHIM)_INTERP/ )
             or die "Bad args in $proto";
-        s/SHIM\(\s*(\w+.*\w+)\s*\)/$1/e;
     }
 
     my $is_static = 0;
     $is_static = $2 if $return_type =~ s/^((static)\s+)?//i;
 
-    die "Impossible to have both static and PARROT_API" if $parrot_api && $is_static;
+    die "$file $name: Impossible to have both static and PARROT_API" if $parrot_api && $is_static;
+
+    for my $macro ( @macros ) {
+        if ( not $valid_macros{$macro} ) {
+            warn "$file $name: Invalid macro $macro\n";
+        }
+    }
 
     return {
+        file        => $file,
         name        => $name,
-        flags       => $flags,
         args        => \@args,
         macros      => \@macros,
         is_static   => $is_static,
@@ -183,7 +201,9 @@ sub function_components_from_declaration {
     };
 }
 
+
 sub attrs_from_args {
+    my $func = shift;
     my @args = @_;
 
     my @attrs = ();
@@ -191,48 +211,19 @@ sub attrs_from_args {
     my $n = 0;
     for my $arg ( @args ) {
         ++$n;
-        if ( $arg =~ m{/\*\s*NN\s*\*/} || $arg =~ m{NOTNULL\(} || $arg eq 'PARROT_INTERP' ) {
+        if ( $arg =~ m{NOTNULL\(} || $arg eq 'PARROT_INTERP' ) {
             push( @attrs, "__attribute__nonnull__($n)" );
         }
-    }
-
-    return @attrs;
-}
-
-sub attrs_from_flags {
-    my $flags = shift;
-
-    return if not $flags;
-    return if $flags =~ /XXX/;
-
-    my @attrs = ();
-    my @opts = split( /\s*,\s*/, $flags );
-
-    # For details about these attributes, see
-    # http://gcc.gnu.org/onlinedocs/gcc-4.2.0/gcc/Function-Attributes.html
-    for my $opt ( @opts ) {
-        if ( $opt eq 'WARN_UNUSED' ) {
-            push( @attrs, '__attribute__warn_unused_result__' );
-        }
-        elsif ( $opt eq 'NORETURN' ) {
-            push( @attrs, '__attribute__noreturn__' );
-        }
-        elsif ( $opt eq 'CONST' ) {
-            push( @attrs, '__attribute__const__' );
-        }
-        elsif ( $opt eq 'PURE' ) {
-            push( @attrs, '__attribute__pure__' );
-        }
-        elsif ( $opt eq 'MALLOC' ) {
-            push( @attrs, '__attribute__malloc__' );
-        }
-        else {
-            confess( qq{Unknown function flag "$flags" -> "$opt"\n} );
+        if ( ( $arg =~ m{\*} ) && ( $arg !~ /SHIM|NOTNULL|NULLOK/ ) ) {
+            my $name = $func->{name};
+            my $file = $func->{file};
+            warn qq{$file $name: "$arg" isn't protected with NOTNULL or NULLOK\n};
         }
     }
 
     return @attrs;
 }
+
 
 sub make_function_decls {
     my @funcs = @_;
@@ -245,8 +236,7 @@ sub make_function_decls {
         $decl = "static $decl" if $func->{is_static};
 
         my @args = @{$func->{args}};
-        my @attrs = attrs_from_args( @args );
-        push( @attrs, attrs_from_flags( $func->{flags} ) );
+        my @attrs = attrs_from_args( $func, @args );
 
         for my $arg ( @args ) {
             if ( $arg =~ m{SHIM\((.+)\)} ) {
@@ -259,7 +249,7 @@ sub make_function_decls {
             $decl = "$decl $argline )";
         }
         else {
-            if ( $args[0] =~ /^(PARROT_INTERP|Interp)\b/ ) {
+            if ( $args[0] =~ /^((SHIM|PARROT)_INTERP|Interp)\b/ ) {
                 $decl .= " " . (shift @args);
                 $decl .= "," if @args;
             }
@@ -320,7 +310,7 @@ sub main {
 
         my @decls = extract_function_declarations($source);
         for my $decl (@decls) {
-            my $components = function_components_from_declaration($decl);
+            my $components = function_components_from_declaration($cfile, $decl);
             push( @{ $cfiles{$hfile}->{$cfile} }, $components ) unless $hfile eq 'none';
             push( @{ $cfiles_with_statics{ $cfile } }, $components ) if $components->{is_static};
             ++$nfuncs;
@@ -355,6 +345,8 @@ sub main {
         write_file( $cfile, $source );
     }
 
+    print "Headerization complete.\n";
+
     return;
 }
 
@@ -375,7 +367,6 @@ sub write_file {
     open my $fh, '>', $filename or die "couldn't write '$filename': $!";
     print {$fh} $text;
     close $fh;
-    print "Wrote '$filename'\n";
 }
 
 sub replace_headerized_declarations {
