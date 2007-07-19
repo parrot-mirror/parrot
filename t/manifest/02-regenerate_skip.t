@@ -1,12 +1,12 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: 02-add.t 19892 2007-07-15 14:26:43Z jkeenan $
-# 02-add.t
+# $Id$
+# 02-regenerate_skip.t
 
 use strict;
 use warnings;
 
-use Test::More qw(no_plan); # tests => 11;
+use Test::More tests => 10;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -14,18 +14,6 @@ use File::Temp qw( tempdir );
 use Tie::File;
 use lib ( qw| lib | );
 use_ok('Parrot::Manifest');
-
-=pod
-
-Plan:  To test whether the module correctly determines whether to regenerate
-MANIFEST.SKIP or not, we will switch to a tempdir, create a dummy SKIP in that
-dir, then hijack the proposed patterns to either add or subtract a pattern.
-
-Similarly, we will create a dummy MANIFEST in a tempdir, then hijack
-@status_output to add either an 'A' or a 'D' (or any other Subversion status
-code).
-
-=cut
 
 my $script = $0;
 my $mani = Parrot::Manifest->new( {
@@ -38,7 +26,10 @@ my $sk = q{MANIFEST.SKIP};
 my $print_str = $mani->prepare_manifest_skip();
 ok($print_str, "prepare_manifest_skip() returned");
 
-# 1
+# 1:  Copy the real MANIFEST.SKIP unaltered to the tempdir.
+# Assuming the real MANIFEST.SKIP was correct going in to this test, the 
+# absence of any change in it will mean that there will be no need to 
+# regenerate it.
 {
     my $tdir = tempdir( CLEANUP => 1 );
     chdir $tdir or
@@ -52,7 +43,9 @@ ok($print_str, "prepare_manifest_skip() returned");
         croak "Unable to change back from temporary directory after testing";
 }
 
-# 2
+# 2:  Copy the real MANIFEST.SKIP to the tempdir but mangle it there.
+# The alteration in the copied MANIFEST.SKIP will be sufficient to require
+# regeneration of MANIFEST.SKIP.
 {
     my $tdir = tempdir( CLEANUP => 1 );
     chdir $tdir or
@@ -86,20 +79,19 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-02-add.t - test C<Parrot::Manifest> constructor
+02-regenerate_skip.t - test C<Parrot::Manifest> MANIFEST.SKIP-related methods
 
 =head1 SYNOPSIS
 
-    % prove t/manifest/02-add.t
+    % prove t/manifest/02-regenerate_skip.t
 
 =head1 DESCRIPTION
 
 The files in this directory test the publicly callable methods of
 F<lib/Parrot/Manifest.pm> and packages which inherit from that package.
 
-F<02-add.t> tests whether the Parrot::Manifest methods correctly add to the
-MANIFEST those files scheduled for addition to the repository but not yet
-committed.
+F<02-regenerate_skip.t> tests whether Parrot::Manifest correctly determines
+whether MANIFEST.SKIP needs to be regenerated or not.
 
 =head1 AUTHOR
 
