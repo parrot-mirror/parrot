@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 03-regenerate_file.t
+# 02-regenerate_file.t
 
 use strict;
 use warnings;
@@ -82,11 +82,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-03-regenerate_file.t - test C<Parrot::Manifest> MANIFEST-related methods
+02-regenerate_file.t - test C<Parrot::Manifest> MANIFEST-related methods
 
 =head1 SYNOPSIS
 
-    % prove t/manifest/03-regenerate_file.t
+    % prove t/manifest/02-regenerate_file.t
 
 =head1 DESCRIPTION
 
