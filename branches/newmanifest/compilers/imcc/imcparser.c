@@ -342,29 +342,40 @@
 /* HEADERIZER BEGIN: static */
 
 static void add_pcc_named_arg( PARROT_INTERP,
-    NOTNULL(SymReg *cur_call),
-    char *name,
-    SymReg *value )
+    NOTNULL(NOTNULL(SymReg *cur_call)),
+    NOTNULL(const char *name),
+    NOTNULL(SymReg *value) )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 static void add_pcc_named_param( PARROT_INTERP,
-    SymReg *cur_call,
-    char *name,
-    SymReg *value )
-        __attribute__nonnull__(1);
+    NOTNULL(SymReg *cur_call),
+    NOTNULL(const char *name),
+    NOTNULL(SymReg *value) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 static void add_pcc_named_result( PARROT_INTERP,
-    SymReg *cur_call,
-    char *name,
-    SymReg *value )
-        __attribute__nonnull__(1);
+    NOTNULL(SymReg *cur_call),
+    NOTNULL(const char *name),
+    NOTNULL(SymReg *value) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 static void add_pcc_named_return( PARROT_INTERP,
-    SymReg *cur_call,
-    char *name,
-    SymReg *value )
-        __attribute__nonnull__(1);
+    NOTNULL(SymReg *cur_call),
+    NOTNULL(const char *name),
+    NOTNULL(SymReg *value) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 static void begin_return_or_yield( PARROT_INTERP, int yield )
         __attribute__nonnull__(1);
@@ -377,56 +388,75 @@ static void do_loadlib( PARROT_INTERP, NOTNULL(const char *lib) )
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
-static Instruction* func_ins(
-    Parrot_Interp interp,
-    IMC_Unit *unit,
-    SymReg *lhs,
-    const char *op,
-    NOTNULL(SymReg ** r),
+static Instruction* func_ins( PARROT_INTERP,
+    NOTNULL(IMC_Unit *unit),
+    NOTNULL(SymReg *lhs),
+    NOTNULL(const char *op),
+    NOTNULL(SymReg **r),
     int n,
     int keyv,
     int emit )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
 static Instruction * iINDEXFETCH( PARROT_INTERP,
-    IMC_Unit * unit,
-    SymReg * r0,
-    SymReg * r1,
-    SymReg * r2 )
-        __attribute__nonnull__(1);
+    NOTNULL(IMC_Unit *unit),
+    NOTNULL(SymReg *r0),
+    NOTNULL(SymReg *r1),
+    NOTNULL(SymReg *r2) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5);
 
 static Instruction * iINDEXSET( PARROT_INTERP,
-    IMC_Unit * unit,
-    SymReg * r0,
-    SymReg * r1,
-    SymReg * r2 )
-        __attribute__nonnull__(1);
+    NOTNULL(IMC_Unit *unit),
+    NOTNULL(SymReg *r0),
+    NOTNULL(SymReg *r1),
+    NOTNULL(SymReg *r2) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5);
 
-static Instruction * iLABEL( PARROT_INTERP, IMC_Unit *unit, SymReg * r0 )
-        __attribute__nonnull__(1);
+static Instruction * iLABEL( PARROT_INTERP,
+    NOTNULL(IMC_Unit *unit),
+    NOTNULL(SymReg *r0) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 static const char * inv_op( const char *op );
 static Instruction * iSUBROUTINE( PARROT_INTERP,
-    IMC_Unit *unit,
+    NOTNULL(IMC_Unit *unit),
     NOTNULL(SymReg *r) )
         __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+PARROT_CAN_RETURN_NULL
 static Instruction * MK_I( PARROT_INTERP,
-    IMC_Unit * unit,
+    NOTNULL(IMC_Unit *unit),
     NOTNULL(const char *fmt),
     int n,
     ... )
         __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
 static Instruction* mk_pmc_const( PARROT_INTERP,
-    IMC_Unit *unit,
+    NOTNULL(IMC_Unit *unit),
     NOTNULL(const char *type),
     NOTNULL(SymReg *left),
     NOTNULL(char *constant) )
         __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
@@ -437,9 +467,12 @@ static SymReg * mk_sub_address_fromc( PARROT_INTERP, char * name )
 static SymReg * mk_sub_address_u( PARROT_INTERP, char * name )
         __attribute__nonnull__(1);
 
-static void set_lexical( PARROT_INTERP, NOTNULL(SymReg *r), char *name )
+static void set_lexical( PARROT_INTERP,
+    NOTNULL(SymReg *r),
+    NOTNULL(const char *name) )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 /* HEADERIZER END: static */
 
@@ -472,8 +505,10 @@ static void set_lexical( PARROT_INTERP, NOTNULL(SymReg *r), char *name )
  *        exceptions. Thus, we can't easily factorize that piece of
  *        code.
  */
+
+PARROT_CAN_RETURN_NULL
 static Instruction *
-MK_I(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *fmt), int n, ...)
+MK_I(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *fmt), int n, ...)
 {
     char opname[64];
     char *p;
@@ -504,7 +539,7 @@ MK_I(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *fmt), int n, ...)
 
 PARROT_WARN_UNUSED_RESULT
 static Instruction*
-mk_pmc_const(PARROT_INTERP, IMC_Unit *unit,
+mk_pmc_const(PARROT_INTERP, NOTNULL(IMC_Unit *unit),
              NOTNULL(const char *type), NOTNULL(SymReg *left), NOTNULL(char *constant))
 {
     const int type_enum = atoi(type);
@@ -554,8 +589,8 @@ mk_pmc_const(PARROT_INTERP, IMC_Unit *unit,
 
 PARROT_WARN_UNUSED_RESULT
 static Instruction*
-func_ins(Parrot_Interp interp, IMC_Unit *unit, SymReg *lhs, const char *op,
-         NOTNULL(SymReg ** r), int n, int keyv, int emit)
+func_ins(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *lhs), NOTNULL(const char *op),
+         NOTNULL(SymReg **r), int n, int keyv, int emit)
 {
     int i;
     /* shift regs up by 1 */
@@ -580,7 +615,7 @@ clear_state(PARROT_INTERP)
 }
 
 Instruction *
-INS_LABEL(PARROT_INTERP, IMC_Unit *unit, SymReg *r0, int emit)
+INS_LABEL(PARROT_INTERP, NOTNULL(IMC_Unit *unit), SymReg *r0, int emit)
 {
     Instruction * const ins = _mk_instruction("","%s:", 1, &r0, 0);
 
@@ -592,7 +627,7 @@ INS_LABEL(PARROT_INTERP, IMC_Unit *unit, SymReg *r0, int emit)
 }
 
 static Instruction *
-iLABEL(PARROT_INTERP, IMC_Unit *unit, SymReg * r0)
+iLABEL(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0))
 {
     Instruction * const i = INS_LABEL(interp, unit, r0, 1);
 
@@ -602,7 +637,7 @@ iLABEL(PARROT_INTERP, IMC_Unit *unit, SymReg * r0)
 }
 
 static Instruction *
-iSUBROUTINE(PARROT_INTERP, IMC_Unit *unit, NOTNULL(SymReg *r))
+iSUBROUTINE(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r))
 {
     Instruction * const i =  iLABEL(interp, unit, r);
 
@@ -618,8 +653,8 @@ iSUBROUTINE(PARROT_INTERP, IMC_Unit *unit, NOTNULL(SymReg *r))
  * substr or X = P[key]
  */
 static Instruction *
-iINDEXFETCH(PARROT_INTERP, IMC_Unit * unit, SymReg * r0, SymReg * r1,
-            SymReg * r2)
+iINDEXFETCH(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0), NOTNULL(SymReg *r1),
+            NOTNULL(SymReg *r2))
 {
     if (r0->set == 'S' && r1->set == 'S' && r2->set == 'I') {
         SymReg * const r3 = mk_const(interp, str_dup("1"), 'I');
@@ -634,11 +669,11 @@ iINDEXFETCH(PARROT_INTERP, IMC_Unit * unit, SymReg * r0, SymReg * r1,
  */
 
 static Instruction *
-iINDEXSET(PARROT_INTERP, IMC_Unit * unit,
-          SymReg * r0, SymReg * r1, SymReg * r2)
+iINDEXSET(PARROT_INTERP, NOTNULL(IMC_Unit *unit),
+          NOTNULL(SymReg *r0), NOTNULL(SymReg *r1), NOTNULL(SymReg *r2))
 {
     if (r0->set == 'S' && r1->set == 'I' && r2->set == 'S') {
-        SymReg * r3 = mk_const(interp, str_dup("1"), 'I');
+        SymReg * const r3 = mk_const(interp, str_dup("1"), 'I');
         MK_I(interp, unit, "substr %s, %s, %s, %s", 4, r0, r1,r3, r2);
     }
     else if (r0->set == 'P') {
@@ -676,7 +711,7 @@ IMCC_create_itcall_label(PARROT_INTERP)
 
 
 static SymReg *
-mk_sub_address_fromc(PARROT_INTERP, char * name)
+mk_sub_address_fromc(PARROT_INTERP, char * name) /* XXX Why are we truncating and freeing what's been sent in??? */
 {
     /* name is a quoted sub name */
     SymReg *r;
@@ -733,7 +768,7 @@ begin_return_or_yield(PARROT_INTERP, int yield)
 }
 
 static void
-set_lexical(PARROT_INTERP, NOTNULL(SymReg *r), char *name)
+set_lexical(PARROT_INTERP, NOTNULL(SymReg *r), NOTNULL(const char *name))
 {
     SymReg *n;
     r->usage |= U_LEXICAL;
@@ -750,7 +785,7 @@ set_lexical(PARROT_INTERP, NOTNULL(SymReg *r), char *name)
 
 
 static void
-add_pcc_named_arg(PARROT_INTERP, NOTNULL(SymReg *cur_call), char *name, SymReg *value)
+add_pcc_named_arg(PARROT_INTERP, NOTNULL(NOTNULL(SymReg *cur_call)), NOTNULL(const char *name), NOTNULL(SymReg *value))
 {
     SymReg * const r = mk_const(interp, name, 'S');
 
@@ -761,7 +796,7 @@ add_pcc_named_arg(PARROT_INTERP, NOTNULL(SymReg *cur_call), char *name, SymReg *
 
 
 static void
-add_pcc_named_result(PARROT_INTERP, SymReg *cur_call, char *name, SymReg *value)
+add_pcc_named_result(PARROT_INTERP, NOTNULL(SymReg *cur_call), NOTNULL(const char *name), NOTNULL(SymReg *value))
 {
     SymReg * const r = mk_const(interp, name, 'S');
 
@@ -772,7 +807,7 @@ add_pcc_named_result(PARROT_INTERP, SymReg *cur_call, char *name, SymReg *value)
 
 
 static void
-add_pcc_named_param(PARROT_INTERP, SymReg *cur_call, char *name, SymReg *value)
+add_pcc_named_param(PARROT_INTERP, NOTNULL(SymReg *cur_call), NOTNULL(const char *name), NOTNULL(SymReg *value))
 {
     SymReg *r = mk_const(interp, name, 'S');
 
@@ -782,7 +817,7 @@ add_pcc_named_param(PARROT_INTERP, SymReg *cur_call, char *name, SymReg *value)
 }
 
 static void
-add_pcc_named_return(PARROT_INTERP, SymReg *cur_call, char *name, SymReg *value)
+add_pcc_named_return(PARROT_INTERP, NOTNULL(SymReg *cur_call), NOTNULL(const char *name), NOTNULL(SymReg *value))
 {
     SymReg * const r = mk_const(interp, name, 'S');
 
@@ -792,7 +827,7 @@ add_pcc_named_return(PARROT_INTERP, SymReg *cur_call, char *name, SymReg *value)
 }
 
 static void
-adv_named_set(PARROT_INTERP, char *name) {
+adv_named_set(PARROT_INTERP, NOTNULL(const char *name)) {
     if (IMCC_INFO(interp)->adv_named_id) {
         IMCC_fataly(interp, E_SyntaxError,
                     "Named parameter with more than one name.\n");
