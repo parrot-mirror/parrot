@@ -5,16 +5,41 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  2;
+use Test::More tests => 10;
 use Carp;
-use lib qw( . lib ../lib ../../lib );
+use lib qw( . lib ../lib ../../lib t/configure/testlib );
+use_ok('config::init::defaults');
 use_ok('config::auto::gcc');
+use Parrot::BuildUtil;
+use Parrot::Configure;
+use Parrot::Configure::Options qw( process_options );
+use Auxiliary qw( test_step_thru_runstep);
 
-=for hints_for_testing Check latest reports of Parrot configuration
-tools testing coverage to see where your time available for writing
-tests is spent.
+my $parrot_version = Parrot::BuildUtil::parrot_version();
+my $args = process_options( {
+    argv            => [],
+    script          => $0,
+    parrot_version  => $parrot_version,
+    svnid           => '$Id$',
+} );
 
-=cut
+my $conf = Parrot::Configure->new();
+
+test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
+
+my ($task, $step_name, @step_params, $step, $ret);
+my $pkg = q{auto::gcc};
+
+$conf->add_steps($pkg);
+$conf->options->set(%{$args});
+$task = $conf->steps->[1];
+$step_name   = $task->step;
+@step_params = @{ $task->params };
+
+$step = $step_name->new();
+ok(defined $step, "$step_name constructor returned defined value");
+isa_ok($step, $step_name);
+ok($step->description(), "$step_name has description");
 
 pass("Completed all tests in $0");
 
