@@ -43,7 +43,7 @@ extern int jit_op_count(void);
 #endif
 
 #if defined __GNUC__ || defined __IBMC__
-void Parrot_jit_debug(Interp* interp);
+void Parrot_jit_debug(PARROT_INTERP);
 #endif
 
 PARROT_API char **Parrot_exec_rel_addr;
@@ -52,7 +52,7 @@ PARROT_API int Parrot_exec_rel_count;
 /*
 
 =item C<static void
-insert_fixup_targets(Interp* interp, char *branch,
+insert_fixup_targets(PARROT_INTERP, char *branch,
         size_t limit)>
 
 Look at fixups, mark all fixup entries as branch target.
@@ -66,7 +66,7 @@ inserted.
 */
 
 static void
-insert_fixup_targets(Interp* interp, char *branch,
+insert_fixup_targets(PARROT_INTERP, char *branch,
         size_t limit)
 {
     PackFile_FixupTable *ft = interp->code->fixups;
@@ -1149,10 +1149,10 @@ Parrot_jit_load_registers(Parrot_jit_info_t *jit_info,
                     }
                     offs = reg_offs(interp, typ, us);
                     if (typ == 3)
-                        (arch_info->mov_RM_n)(jit_info,
+                        (arch_info->mov_RM_n)(interp, jit_info,
                                               maps[typ][i], base_reg, offs);
                     else
-                        (arch_info->mov_RM_i)(jit_info,
+                        (arch_info->mov_RM_i)(interp, jit_info,
                                               maps[typ][i], base_reg, offs);
 
                 }
@@ -1221,10 +1221,10 @@ Parrot_jit_save_registers(Parrot_jit_info_t *jit_info,
 
                     offs = reg_offs(interp, typ, us);
                     if (typ == 3)
-                        (arch_info->mov_MR_n)(jit_info,
+                        (arch_info->mov_MR_n)(interp, jit_info,
                                  base_reg, offs, maps[typ][i]);
                     else
-                        (arch_info->mov_MR_i)(jit_info,
+                        (arch_info->mov_MR_i)(interp, jit_info,
                                  base_reg, offs, maps[typ][i]);
 
                 }

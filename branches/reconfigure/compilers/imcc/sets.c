@@ -10,9 +10,9 @@
     exit(e); \
 } while (0)
 
+PARROT_MALLOC
 Set*
 set_make(int length)
-    /* WARN_UNUSED, MALLOC */
 {
     Set * const s = mem_sys_allocate(sizeof (Set));
     s->length = length;
@@ -20,9 +20,9 @@ set_make(int length)
     return s;
 }
 
+PARROT_MALLOC
 Set*
 set_make_full(int length)
-    /* WARN_UNUSED, MALLOC */
 {
     Set * const s = set_make(length);
     int i;
@@ -39,21 +39,21 @@ set_make_full(int length)
 }
 
 void
-set_free(Set *s /*NN*/)
+set_free(NOTNULL(Set *s))
 {
     mem_sys_free(s->bmp);
     mem_sys_free(s);
 }
 
 void
-set_clear(Set *s /*NN*/)
+set_clear(NOTNULL(Set *s))
 {
     memset(s->bmp, 0, s->length/8 +1);
 }
 
+PARROT_MALLOC
 Set*
-set_copy(Set *s1 /*NN*/)
-    /* WARN_UNUSED, MALLOC */
+set_copy(NOTNULL(Set *s1))
 {
     Set * const s = set_make(s1->length);
 
@@ -63,7 +63,7 @@ set_copy(Set *s1 /*NN*/)
 
 
 int
-set_equal(const Set *s1 /*NN*/, const Set *s2 /*NN*/)
+set_equal(NOTNULL(const Set *s1), NOTNULL(const Set *s2))
 {
     int mask;
     const int bytes = s1->length/8;
@@ -84,14 +84,15 @@ set_equal(const Set *s1 /*NN*/, const Set *s2 /*NN*/)
 }
 
 void
-set_add(Set *s /*NN*/, int element)
+set_add(NOTNULL(Set *s), int element)
 {
     s->bmp[element >> 3] |= (1 << (element & 7));
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
 int
-set_first_zero(const Set *s /*NN*/)
-    /* WARN_UNUSED */
+set_first_zero(NOTNULL(const Set *s))
 {
     int i;
     for (i = 0; i < s->length; ++i)
@@ -100,9 +101,10 @@ set_first_zero(const Set *s /*NN*/)
     return s->length;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
 int
-set_contains(const Set *s /*NN*/, int element)
-    /* WARN_UNUSED */
+set_contains(NOTNULL(const Set *s), int element)
 {
 #ifdef __LCC__
     /* workaround for another lcc bug.. */
@@ -113,9 +115,9 @@ set_contains(const Set *s /*NN*/, int element)
 #endif
 }
 
+PARROT_MALLOC
 Set *
-set_union(const Set *s1 /*NN*/, const Set *s2 /*NN*/)
-    /* WARN_UNUSED, MALLOC */
+set_union(NOTNULL(const Set *s1), NOTNULL(const Set *s2))
 {
     int i;
     Set * const s = set_make(s1->length);
@@ -132,9 +134,9 @@ set_union(const Set *s1 /*NN*/, const Set *s2 /*NN*/)
 
 
 
+PARROT_MALLOC
 Set *
-set_intersec(const Set *s1 /*NN*/, const Set *s2 /*NN*/)
-    /* WARN_UNUSED, MALLOC */
+set_intersec(NOTNULL(const Set *s1), NOTNULL(const Set *s2))
 {
     int i;
     Set * const s = set_make(s1->length);
@@ -150,7 +152,7 @@ set_intersec(const Set *s1 /*NN*/, const Set *s2 /*NN*/)
 }
 
 void
-set_intersec_inplace(Set *s1 /*NN*/, const Set *s2 /*NN*/)
+set_intersec_inplace(NOTNULL(Set *s1), NOTNULL(const Set *s2))
 {
     int i;
 

@@ -78,7 +78,7 @@ mem_sys_allocate_zeroed(size_t size)
 #ifdef DETAIL_MEMORY_DEBUG
     fprintf(stderr, "Allocated %i at %p\n", size, ptr);
 #endif
-    if (!ptr && size)
+    if (!ptr)
         PANIC(NULL, "Out of mem");
     return ptr;
 }
@@ -95,7 +95,7 @@ mem__internal_allocate_zeroed(size_t size, NOTNULL(const char *file), int line)
     UNUSED(file);
     UNUSED(line);
 #endif
-    if (!ptr && size)
+    if (!ptr)
         PANIC(NULL, "Out of mem");
     return ptr;
 }
@@ -139,7 +139,6 @@ PARROT_API
 PARROT_MALLOC
 void *
 mem__sys_realloc_zeroed(NULLOK(void *from), size_t size, size_t old_size)
-    /* MALLOC, WARN_UNUSED */
 {
     void *ptr;
 #ifdef DETAIL_MEMORY_DEBUG
@@ -198,7 +197,7 @@ mem_sys_free(NULLOK(void *from))
 }
 
 void
-mem__internal_free(NULLOK(void *from), NOTNULL(const char *file /*NN*/), int line)
+mem__internal_free(NULLOK(void *from), NOTNULL(const char *file), int line)
 {
 #ifdef DETAIL_MEMORY_DEBUG
     fprintf(stderr, "Internal free of %p (%s/%d)\n", from, file, line);

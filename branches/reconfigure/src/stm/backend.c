@@ -39,98 +39,120 @@ static void STM_TRACE_SAFE(const char *x, ...) /* HEADERIZER SKIP */
 
 /* HEADERIZER BEGIN: static */
 
-static STM_read_record * alloc_read( PARROT_INTERP, STM_tx_log *log )
-        __attribute__nonnull__(1);
+static STM_read_record * alloc_read( PARROT_INTERP, NOTNULL(STM_tx_log *log) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
-static STM_write_record * alloc_write( PARROT_INTERP, STM_tx_log *log )
-        __attribute__nonnull__(1);
+static STM_write_record * alloc_write( PARROT_INTERP,
+    NOTNULL(STM_tx_log *log) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 static void do_partial_abort( PARROT_INTERP,
-    STM_tx_log *log /*NN*/,
-    STM_tx_log_sub *inner /*NN*/ )
+    NOTNULL(STM_tx_log *log),
+    NOTNULL(STM_tx_log_sub *inner) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 static void do_real_abort( PARROT_INTERP,
-    STM_tx_log *log /*NN*/,
-    STM_tx_log_sub *inner /*NN*/ )
+    NOTNULL(STM_tx_log *log),
+    NOTNULL(STM_tx_log_sub *inner) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static int do_real_commit( PARROT_INTERP, STM_tx_log *log )
-        __attribute__nonnull__(1);
-
-static STM_write_record * find_write_record( PARROT_INTERP,
-    STM_tx_log *log /*NN*/,
-    Parrot_STM_PMC_handle handle,
-    int overwrite_p )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__warn_unused_result__;
-
-static PMC * force_sharing( PARROT_INTERP, PMC *pmc )
-        __attribute__nonnull__(1);
-
-static STM_read_record * get_read( PARROT_INTERP, STM_tx_log *log, int i )
-        __attribute__nonnull__(1);
-
-static int get_read_valid_depth( PARROT_INTERP, STM_tx_log *log /*NN*/ )
+static int do_real_commit( PARROT_INTERP, NOTNULL(STM_tx_log *log) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static STM_tx_log_sub * get_sublog( STM_tx_log *log, int i );
-static STM_write_record * get_write( PARROT_INTERP,
-    STM_tx_log *log /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+static STM_write_record * find_write_record( PARROT_INTERP,
+    NOTNULL(STM_tx_log *log),
+    Parrot_STM_PMC_handle handle,
+    int overwrite_p )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static PMC * force_sharing( PARROT_INTERP, NULLOK(PMC *pmc) )
+        __attribute__nonnull__(1);
+
+static STM_read_record * get_read( PARROT_INTERP,
+    NOTNULL(STM_tx_log *log),
     int i )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int is_aborted( STM_tx_log *log )
-        __attribute__warn_unused_result__;
-
-static int is_version( const void *maybe_version /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-static PMC * local_pmc_copy( PARROT_INTERP, PMC * const original )
-        __attribute__nonnull__(1);
-
-static void mark_read_record( PARROT_INTERP, STM_read_record *read /*NN*/ )
+static int get_read_valid_depth( PARROT_INTERP, NOTNULL(STM_tx_log *log) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void mark_write_record( PARROT_INTERP, STM_write_record *write /*NN*/ )
+static STM_tx_log_sub * get_sublog( NOTNULL(STM_tx_log *log), int i )
+        __attribute__nonnull__(1);
+
+static STM_write_record * get_write( PARROT_INTERP,
+    NOTNULL(STM_tx_log *log),
+    int i )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
+static int is_aborted( NOTNULL(STM_tx_log *log) )
+        __attribute__nonnull__(1);
+
+PARROT_PURE_FUNCTION
+static int is_version( NOTNULL(const void *maybe_version) )
+        __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC * local_pmc_copy( PARROT_INTERP, NULLOK(PMC * const original) )
+        __attribute__nonnull__(1);
+
+static void mark_read_record( PARROT_INTERP, NOTNULL(STM_read_record *read) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void mark_write_record( PARROT_INTERP,
+    NOTNULL(STM_write_record *write) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static int merge_transactions( PARROT_INTERP,
-    STM_tx_log *log,
-    STM_tx_log_sub *outer,
-    STM_tx_log_sub *inner,
+    NOTNULL(STM_tx_log *log),
+    NOTNULL(STM_tx_log_sub *outer),
+    NOTNULL(STM_tx_log_sub *inner),
     int always )
-        __attribute__nonnull__(1);
-
-static void * next_version( const void *old_version /*NN*/ )
         __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
-static void replay_writes( PARROT_INTERP, STM_tx_log *log, int from, int to )
+PARROT_WARN_UNUSED_RESULT
+static void * next_version( NOTNULL(const void *old_version) )
         __attribute__nonnull__(1);
 
-static int safe_to_clone( PARROT_INTERP, const PMC * const original /*NN*/ )
+static void replay_writes( PARROT_INTERP,
+    NOTNULL(STM_tx_log *log),
+    int from,
+    int to )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int setup_wait( PARROT_INTERP, STM_tx_log *log /*NN*/ )
+PARROT_WARN_UNUSED_RESULT
+static int safe_to_clone( PARROT_INTERP, NOTNULL(const PMC * const original) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static int setup_wait( PARROT_INTERP, NOTNULL(STM_tx_log *log) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static void * wait_for_version( PARROT_INTERP,
-    STM_tx_log *log,
+    NOTNULL(STM_tx_log *log),
     Parrot_STM_PMC_handle handle )
-        __attribute__nonnull__(1);
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 /* HEADERIZER END: static */
 
@@ -200,14 +222,14 @@ Parrot_STM_alloc(PARROT_INTERP, PMC *pmc)
  */
 
 void
-Parrot_freeze_STM_PMC_handle(PARROT_INTERP, IMAGE_IO *io /*NN*/,
-            Parrot_STM_PMC_handle handle /*NN*/)
+Parrot_freeze_STM_PMC_handle(PARROT_INTERP, NOTNULL(IMAGE_IO *io),
+            NOTNULL(Parrot_STM_PMC_handle handle))
 {
     io->vtable->push_pmc(interp, io, (PMC*) handle);
 }
 
 Parrot_STM_PMC_handle
-Parrot_thaw_STM_PMC_handle(PARROT_INTERP, IMAGE_IO *io /*NN*/)
+Parrot_thaw_STM_PMC_handle(PARROT_INTERP, NOTNULL(IMAGE_IO *io))
 {
     Parrot_STM_PMC_handle handle = (Parrot_STM_PMC_handle) io->vtable->shift_pmc(interp, io);
     return handle;
@@ -215,7 +237,7 @@ Parrot_thaw_STM_PMC_handle(PARROT_INTERP, IMAGE_IO *io /*NN*/)
 
 
 static STM_write_record *
-get_write(PARROT_INTERP, STM_tx_log *log /*NN*/, int i)
+get_write(PARROT_INTERP, NOTNULL(STM_tx_log *log), int i)
 {
     assert(i >= 0);
     assert(i <= log->last_write);
@@ -223,7 +245,7 @@ get_write(PARROT_INTERP, STM_tx_log *log /*NN*/, int i)
 }
 
 static STM_read_record *
-get_read(PARROT_INTERP, STM_tx_log *log, int i)
+get_read(PARROT_INTERP, NOTNULL(STM_tx_log *log), int i)
 {
     assert(i >= 0);
     assert(i <= log->last_read);
@@ -237,7 +259,7 @@ get_read(PARROT_INTERP, STM_tx_log *log, int i)
  */
 
 static STM_write_record *
-alloc_write(PARROT_INTERP, STM_tx_log *log)
+alloc_write(PARROT_INTERP, NOTNULL(STM_tx_log *log))
 {
     STM_write_record *write;
     const int         i = ++log->last_write;
@@ -255,7 +277,7 @@ alloc_write(PARROT_INTERP, STM_tx_log *log)
 }
 
 static STM_read_record *
-alloc_read(PARROT_INTERP, STM_tx_log *log)
+alloc_read(PARROT_INTERP, NOTNULL(STM_tx_log *log))
 {
     STM_read_record *read;
     const int i = ++log->last_read;
@@ -272,34 +294,34 @@ alloc_read(PARROT_INTERP, STM_tx_log *log)
     return read;
 }
 
+PARROT_WARN_UNUSED_RESULT
 static void *
-next_version(const void *old_version /*NN*/)
-    /* WARN_UNUSED */
+next_version(NOTNULL(const void *old_version))
 {
     const UINTVAL v = PTR2UINTVAL(old_version) + 2;
 
     return UINTVAL2PTR(void *, v);
 }
 
+PARROT_PURE_FUNCTION
 static int
-is_version(const void *maybe_version /*NN*/)
-    /* WARN_UNUSED */
+is_version(NOTNULL(const void *maybe_version))
 {
     const UINTVAL v = PTR2UINTVAL(maybe_version);
     return v & 1;
 }
 
 static STM_tx_log_sub *
-get_sublog(STM_tx_log *log, int i)
+get_sublog(NOTNULL(STM_tx_log *log), int i)
 {
     assert(i > 0);
     assert(i <= log->depth);
     return &log->inner[i - 1];
 }
 
+PARROT_WARN_UNUSED_RESULT
 static int
-is_aborted(STM_tx_log *log)
-    /* WARN_UNUSED */
+is_aborted(NOTNULL(STM_tx_log *log))
 {
     int i;
 
@@ -355,8 +377,8 @@ Parrot_STM_start_transaction(PARROT_INTERP)
  * so we can abort.
  */
 static int
-merge_transactions(PARROT_INTERP, STM_tx_log *log,
-        STM_tx_log_sub *outer, STM_tx_log_sub *inner, int always)
+merge_transactions(PARROT_INTERP, NOTNULL(STM_tx_log *log),
+        NOTNULL(STM_tx_log_sub *outer), NOTNULL(STM_tx_log_sub *inner), int always)
 {
     int i;
     int status;
@@ -439,7 +461,7 @@ merge_transactions(PARROT_INTERP, STM_tx_log *log,
 }
 
 static PMC *
-force_sharing(PARROT_INTERP, PMC *pmc)
+force_sharing(PARROT_INTERP, NULLOK(PMC *pmc))
 {
     PMC *ret;
 
@@ -455,7 +477,7 @@ force_sharing(PARROT_INTERP, PMC *pmc)
  * are all valid.
  */
 static int
-get_read_valid_depth(PARROT_INTERP, STM_tx_log *log /*NN*/)
+get_read_valid_depth(PARROT_INTERP, NOTNULL(STM_tx_log *log))
 {
     int i;
     int validp    = 1;
@@ -506,7 +528,7 @@ get_read_valid_depth(PARROT_INTERP, STM_tx_log *log /*NN*/)
  * Inner transactions are committed by merge_transaction().
  */
 static int
-do_real_commit(PARROT_INTERP, STM_tx_log *log) {
+do_real_commit(PARROT_INTERP, NOTNULL(STM_tx_log *log)) {
     int i;
     int successp;
     STM_tx_log_sub *inner;
@@ -572,7 +594,7 @@ do_real_commit(PARROT_INTERP, STM_tx_log *log) {
  * transaction log.
  */
 static void
-do_partial_abort(PARROT_INTERP, STM_tx_log *log /*NN*/, STM_tx_log_sub *inner /*NN*/)
+do_partial_abort(PARROT_INTERP, NOTNULL(STM_tx_log *log), NOTNULL(STM_tx_log_sub *inner))
 {
     int i;
 
@@ -600,7 +622,7 @@ do_partial_abort(PARROT_INTERP, STM_tx_log *log /*NN*/, STM_tx_log_sub *inner /*
 
 /* Does an abort. This is also used for inner transactions. */
 static void
-do_real_abort(PARROT_INTERP, STM_tx_log *log /*NN*/, STM_tx_log_sub *inner /*NN*/)
+do_real_abort(PARROT_INTERP, NOTNULL(STM_tx_log *log), NOTNULL(STM_tx_log_sub *inner))
 {
     STM_TRACE_SAFE("really aborting");
     do_partial_abort(interp, log, inner);
@@ -617,7 +639,7 @@ do_real_abort(PARROT_INTERP, STM_tx_log *log /*NN*/, STM_tx_log_sub *inner /*NN*
  * question is re-partial-aborted.
  */
 static void
-replay_writes(PARROT_INTERP, STM_tx_log *log, int from, int to)
+replay_writes(PARROT_INTERP, NOTNULL(STM_tx_log *log), int from, int to)
 {
     int i;
     int validp    = 1;
@@ -761,7 +783,7 @@ for verifying that any outer transaction is invalid after calling this.
  * assumes transcation is _not_ yet aborted.
  */
 static int
-setup_wait(PARROT_INTERP, STM_tx_log *log /*NN*/)
+setup_wait(PARROT_INTERP, NOTNULL(STM_tx_log *log))
 {
     int need_wait = 1;
     int i;
@@ -856,9 +878,9 @@ active transaction.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 int
 Parrot_STM_validate(PARROT_INTERP)
-    /* WARN_UNUSED */
 {
     STM_tx_log_sub *inner;
     int             status;
@@ -887,7 +909,7 @@ collect them from us.
 */
 
 static void
-mark_write_record(PARROT_INTERP, STM_write_record *write /*NN*/)
+mark_write_record(PARROT_INTERP, NOTNULL(STM_write_record *write))
 {
     if (!PMC_IS_NULL(write->value))
         pobject_lives(interp, (PObj *) write->value);
@@ -896,7 +918,7 @@ mark_write_record(PARROT_INTERP, STM_write_record *write /*NN*/)
 }
 
 static void
-mark_read_record(PARROT_INTERP, STM_read_record *read /*NN*/)
+mark_read_record(PARROT_INTERP, NOTNULL(STM_read_record *read))
 {
     if (!PMC_IS_NULL(read->value))
         pobject_lives(interp, (PObj *) read->value);
@@ -977,7 +999,7 @@ Parrot_STM_transaction_depth(PARROT_INTERP)
  */
 static void *
 wait_for_version(PARROT_INTERP,
-        STM_tx_log *log, Parrot_STM_PMC_handle handle)
+        NOTNULL(STM_tx_log *log), Parrot_STM_PMC_handle handle)
 {
     void                  *version;
     STM_tx_log_sub        *curlog;
@@ -1163,8 +1185,9 @@ Parrot_STM_read(PARROT_INTERP, Parrot_STM_PMC_handle handle)
     return read->value;
 }
 
+PARROT_WARN_UNUSED_RESULT
 static int
-safe_to_clone(PARROT_INTERP, const PMC * const original /*NN*/)
+safe_to_clone(PARROT_INTERP, NOTNULL(const PMC * const original))
 {
     if (    original->vtable->base_type == enum_class_Integer
         ||  original->vtable->base_type == enum_class_Float
@@ -1175,8 +1198,10 @@ safe_to_clone(PARROT_INTERP, const PMC * const original /*NN*/)
         return 0;
 }
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static PMC *
-local_pmc_copy(PARROT_INTERP, PMC * const original)
+local_pmc_copy(PARROT_INTERP, NULLOK(PMC * const original))
 {
     if (PMC_IS_NULL(original))
         return PMCNULL;
@@ -1194,10 +1219,10 @@ local_pmc_copy(PARROT_INTERP, PMC * const original)
  * If C<overwrite_p> is true, assume we are going to overwrite this record,
  * so initialize it to PMCNULL.
  */
+PARROT_WARN_UNUSED_RESULT
 static STM_write_record *
-find_write_record(PARROT_INTERP, STM_tx_log *log /*NN*/,
+find_write_record(PARROT_INTERP, NOTNULL(STM_tx_log *log),
         Parrot_STM_PMC_handle handle, int overwrite_p)
-    /* WARN_UNUSED */
 {
     /* FIXME check for read log or previous tx's write log */
     STM_tx_log_sub   *cursub;
@@ -1575,7 +1600,7 @@ Parrot_STM_dump_profile(PARROT_INTERP)
 }
 
 void
-Parrot_STM_merge_profile(Interp *d /*NN*/, Interp *s /*NN*/)
+Parrot_STM_merge_profile(NOTNULL(Interp *d), NOTNULL(Interp *s))
 {
     INTVAL i;
 

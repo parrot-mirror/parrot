@@ -588,7 +588,7 @@ sub _print_goto_opcode {
 # endif
 #endif
     _reg_base = (char*)interp->ctx.bp.regs_i;
-    goto *(void *)cur_opcode;
+    goto **cur_opcode;
 
 END_C
     }
@@ -1022,12 +1022,12 @@ sub _print_dynamic_lib_load {
  * dynamic lib load function - called once
  */
 $self->{sym_export} PMC*
-$load_func(Parrot_Interp interp);
+$load_func(PARROT_INTERP);
 
 $self->{sym_export} PMC*
-$load_func(Parrot_Interp interp)
+$load_func(PARROT_INTERP)
 {
-    PMC *lib            = pmc_new(interp, enum_class_ParrotLibrary);
+    PMC *const lib      = pmc_new(interp, enum_class_ParrotLibrary);
     PMC_struct_val(lib) = (void *) $self->{init_func};
     dynop_register(interp, lib);
     return lib;

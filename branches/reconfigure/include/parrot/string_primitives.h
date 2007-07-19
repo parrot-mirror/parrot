@@ -21,21 +21,12 @@ PARROT_API
 UINTVAL Parrot_char_digit_value( SHIM_INTERP, UINTVAL character );
 
 PARROT_API
-void string_fill_from_buffer( PARROT_INTERP,
-    const void *buffer /*NN*/,
-    UINTVAL len,
-    const char *encoding_name,
-    STRING *s /*NULLOK*/ )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
 void string_set_data_directory( PARROT_INTERP, const char *dir )
         __attribute__nonnull__(1);
 
 PARROT_API
 Parrot_UInt4 string_unescape_one( PARROT_INTERP,
-    UINTVAL *offset /*NN*/,
+    NOTNULL(UINTVAL *offset),
     STRING *string )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);

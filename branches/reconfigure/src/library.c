@@ -23,49 +23,49 @@ This file contains a C function to access Parrot's bytecode library functions.
 
 /* HEADERIZER BEGIN: static */
 
-static void cnv_to_win32_filesep( STRING *path /*NN*/ )
+static void cnv_to_win32_filesep( NOTNULL(STRING *path) )
         __attribute__nonnull__(1);
 
+PARROT_WARN_UNUSED_RESULT
 static PMC* get_search_paths( PARROT_INTERP, enum_lib_paths which )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(1);
 
-static int is_abs_path( const STRING *file /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
+PARROT_PURE_FUNCTION
+static int is_abs_path( NOTNULL(const STRING *file) )
+        __attribute__nonnull__(1);
 
 static STRING* path_append( PARROT_INTERP,
-    STRING *l_path /*NN*/,
-    STRING *r_path /*NN*/ )
+    NOTNULL(STRING *l_path),
+    NOTNULL(STRING *r_path) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 static STRING* path_concat( PARROT_INTERP,
-    STRING *l_path /*NN*/,
-    STRING *r_path /*NN*/ )
+    NOTNULL(STRING *l_path),
+    NOTNULL(STRING *r_path) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static STRING* path_finalize( PARROT_INTERP, STRING *path /*NN*/ )
+static STRING* path_finalize( PARROT_INTERP, NOTNULL(STRING *path) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static STRING* path_guarantee_trailing_separator( PARROT_INTERP,
-    STRING *path /*NN*/ )
+    NOTNULL(STRING *path) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static STRING* try_bytecode_extensions( PARROT_INTERP, STRING* path /*NN*/ )
+PARROT_WARN_UNUSED_RESULT
+static STRING* try_bytecode_extensions( PARROT_INTERP, NOTNULL(STRING* path) )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(2);
 
-static STRING* try_load_path( PARROT_INTERP, STRING* path /*NN*/ )
+PARROT_WARN_UNUSED_RESULT
+static STRING* try_load_path( PARROT_INTERP, NOTNULL(STRING* path) )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(2);
 
 /* HEADERIZER END: static */
 
@@ -91,7 +91,7 @@ If the platform defines
 
 if will be called as a function with this prototype:
 
-  void the_init_hook(Interp*, PMC *lib_paths);
+  void the_init_hook(PARROT_INTERP, PMC *lib_paths);
 
 Platform code may add, delete, or replace search path entries as needed. See
 also F<include/parrot/library.h> for C<enum_lib_paths>.
@@ -171,9 +171,9 @@ parrot_init_library_paths(PARROT_INTERP)
 #endif
 }
 
+PARROT_WARN_UNUSED_RESULT
 static PMC*
 get_search_paths(PARROT_INTERP, enum_lib_paths which)
-    /* WARN_UNUSED */
 {
     PMC * const iglobals = interp->iglobals;
     PMC * const lib_paths = VTABLE_get_pmc_keyed_int(interp, iglobals,
@@ -181,9 +181,9 @@ get_search_paths(PARROT_INTERP, enum_lib_paths which)
     return VTABLE_get_pmc_keyed_int(interp, lib_paths, which);
 }
 
+PARROT_PURE_FUNCTION
 static int
-is_abs_path(const STRING *file /*NN*/)
-    /* WARN_UNUSED */
+is_abs_path(NOTNULL(const STRING *file))
 {
     const char * const file_name = file->strstart;
     if (file->strlen <= 1)
@@ -214,7 +214,7 @@ static const char win32_path_separator = '\\';
    Converts a path with forward slashes to one with backward slashes.
 */
 static void
-cnv_to_win32_filesep(STRING *path /*NN*/)
+cnv_to_win32_filesep(NOTNULL(STRING *path))
 {
     char* cnv;
 
@@ -229,7 +229,7 @@ cnv_to_win32_filesep(STRING *path /*NN*/)
 #endif
 
 static STRING*
-path_finalize(PARROT_INTERP, STRING *path /*NN*/)
+path_finalize(PARROT_INTERP, NOTNULL(STRING *path))
 {
 
     /* TODO create a string API that just does that
@@ -257,7 +257,7 @@ path_finalize(PARROT_INTERP, STRING *path /*NN*/)
  */
 
 static STRING*
-path_guarantee_trailing_separator(PARROT_INTERP, STRING *path /*NN*/)
+path_guarantee_trailing_separator(PARROT_INTERP, NOTNULL(STRING *path))
 {
     STRING * const path_separator_string = string_chr(interp, path_separator);
 
@@ -276,7 +276,7 @@ path_guarantee_trailing_separator(PARROT_INTERP, STRING *path /*NN*/)
  */
 
 static STRING*
-path_append(PARROT_INTERP, STRING *l_path /*NN*/, STRING *r_path /*NN*/)
+path_append(PARROT_INTERP, NOTNULL(STRING *l_path), NOTNULL(STRING *r_path))
 {
     l_path = path_guarantee_trailing_separator(interp, l_path);
     l_path = string_append(interp, l_path, r_path);
@@ -291,7 +291,7 @@ path_append(PARROT_INTERP, STRING *l_path /*NN*/, STRING *r_path /*NN*/)
  */
 
 static STRING*
-path_concat(PARROT_INTERP, STRING *l_path /*NN*/, STRING *r_path /*NN*/)
+path_concat(PARROT_INTERP, NOTNULL(STRING *l_path), NOTNULL(STRING *r_path))
 {
     STRING* join;
 
@@ -314,9 +314,9 @@ static const char* load_ext_code[ LOAD_EXT_CODE_LAST + 1 ] = {
     ".pir",
 };
 
+PARROT_WARN_UNUSED_RESULT
 static STRING*
-try_load_path(PARROT_INTERP, STRING* path /*NN*/)
-    /* WARN_UNUSED */
+try_load_path(PARROT_INTERP, NOTNULL(STRING* path))
 {
     STRING *final;
 
@@ -342,9 +342,9 @@ try_load_path(PARROT_INTERP, STRING* path /*NN*/)
   a .pbc or a .pir file is used.
  */
 
+PARROT_WARN_UNUSED_RESULT
 static STRING*
-try_bytecode_extensions(PARROT_INTERP, STRING* path /*NN*/)
-    /* WARN_UNUSED */
+try_bytecode_extensions(PARROT_INTERP, NOTNULL(STRING* path))
 {
     STRING *with_ext, *result;
 
@@ -399,10 +399,10 @@ F<include/parrot/library.h>.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
 STRING*
-Parrot_locate_runtime_file_str(PARROT_INTERP, STRING *file /*NN*/,
+Parrot_locate_runtime_file_str(PARROT_INTERP, NOTNULL(STRING *file),
         enum_runtime_ft type)
-    /* WARN_UNUSED */
 {
     STRING *prefix;
     STRING *full_name;
@@ -458,10 +458,10 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, STRING *file /*NN*/,
 }
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
 char*
-Parrot_locate_runtime_file(PARROT_INTERP, const char *file_name /*NN*/,
+Parrot_locate_runtime_file(PARROT_INTERP, NOTNULL(const char *file_name),
         enum_runtime_ft type)
-    /* WARN_UNUSED */
 {
     STRING * const file = string_from_cstring(interp, file_name, 0);
     STRING * const result = Parrot_locate_runtime_file_str(interp,
@@ -491,8 +491,11 @@ whether we're searching for a STRING or a cstring.
 */
 
 PARROT_API
+PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 char*
-Parrot_get_runtime_prefix(PARROT_INTERP, STRING **prefix_str /*NULLOK*/)
+Parrot_get_runtime_prefix(PARROT_INTERP, NULLOK(STRING **prefix_str))
 {
     STRING *s, *key;
     PMC    *config_hash;
@@ -550,8 +553,8 @@ extension and C<ext> to the extension or NULL.
 */
 
 STRING *
-parrot_split_path_ext(Interp* interp /*NN*/, STRING *in,
-        STRING **wo_ext /*NN*/, STRING **ext /*NN*/)
+parrot_split_path_ext(PARROT_INTERP, STRING *in,
+        NOTNULL(STRING **wo_ext), NOTNULL(STRING **ext))
 {
     STRING * const slash1 = CONST_STRING(interp, "/");
     STRING * const slash2 = CONST_STRING(interp, "\\");

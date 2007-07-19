@@ -49,9 +49,7 @@ PARROT_MALLOC
 void * mem__sys_realloc_zeroed(
     NULLOK(void *from),
     size_t size,
-    size_t old_size )
-        __attribute__malloc__
-        __attribute__warn_unused_result__;
+    size_t old_size );
 
 PARROT_API
 PARROT_MALLOC
@@ -80,7 +78,7 @@ void * mem__internal_allocate_zeroed(
 
 void mem__internal_free(
     NULLOK(void *from),
-    NOTNULL(const char *file /*NN*/),
+    NOTNULL(const char *file),
     int line )
         __attribute__nonnull__(2);
 

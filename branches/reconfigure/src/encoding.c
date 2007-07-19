@@ -20,8 +20,8 @@ These are parrot's generic encoding handling functions
 /* HEADERIZER BEGIN: static */
 
 static INTVAL register_encoding( PARROT_INTERP,
-    const char *encodingname /*NN*/,
-    ENCODING *encoding /*NN*/ )
+    NOTNULL(const char *encodingname),
+    NOTNULL(ENCODING *encoding) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -72,29 +72,25 @@ parrot_deinit_encodings(void)
 }
 
 PARROT_API
+PARROT_MALLOC
 ENCODING *
-Parrot_new_encoding(PARROT_INTERP)
-    /* MALLOC, WARN_UNUSED */
+Parrot_new_encoding(SHIM_INTERP)
 {
-    UNUSED(interp);
-
     return mem_allocate_typed(ENCODING);
 }
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 ENCODING *
-Parrot_find_encoding(PARROT_INTERP, const char *encodingname /*NN*/)
-    /* WARN_UNUSED */
+Parrot_find_encoding(SHIM_INTERP, NOTNULL(const char *encodingname))
 {
     const int n = all_encodings->n_encodings;
     int i;
-    UNUSED(interp);
 
-    for (i = 0; i < n; ++i) {
-        if (strcmp(all_encodings->enc[i].encoding->name, encodingname) == 0) {
+    for (i = 0; i < n; ++i)
+        if (strcmp(all_encodings->enc[i].encoding->name, encodingname) == 0)
             return all_encodings->enc[i].encoding;
-        }
-    }
     return NULL;
 }
 
@@ -103,13 +99,12 @@ Parrot_find_encoding(PARROT_INTERP, const char *encodingname /*NN*/)
    info set up to actually build strings... */
 
 PARROT_API
+PARROT_DOES_NOT_RETURN
 ENCODING *
-Parrot_load_encoding(PARROT_INTERP, const char *encodingname)
-    /* WARN_UNUSED, NORETURN */
+Parrot_load_encoding(PARROT_INTERP, NOTNULL(const char *encodingname))
 {
     UNUSED(encodingname);
     real_exception(interp, NULL, UNIMPLEMENTED, "Can't load encodings yet");
-    return NULL;
 }
 
 /*
@@ -121,9 +116,9 @@ Return the number of the encoding or -1 if not found.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_encoding_number(PARROT_INTERP, STRING *encodingname /*NN*/)
-    /* WARN_UNUSED */
+Parrot_encoding_number(PARROT_INTERP, NOTNULL(STRING *encodingname))
 {
     const int n = all_encodings->n_encodings;
     int i;
@@ -145,9 +140,9 @@ Return the number of the encoding of the given string or -1 if not found.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_encoding_number_of_str(PARROT_INTERP, STRING *src /*NN*/)
-    /* WARN_UNUSED */
+Parrot_encoding_number_of_str(PARROT_INTERP, NOTNULL(STRING *src))
 {
     const int n = all_encodings->n_encodings;
     int i;
@@ -161,44 +156,41 @@ Parrot_encoding_number_of_str(PARROT_INTERP, STRING *src /*NN*/)
 }
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 STRING*
-Parrot_encoding_name(PARROT_INTERP, INTVAL number_of_encoding)
-    /* WARN_UNUSED */
+Parrot_encoding_name(SHIM_INTERP, INTVAL number_of_encoding)
 {
-    UNUSED(interp);
-
     if (number_of_encoding >= all_encodings->n_encodings)
         return NULL;
     return all_encodings->enc[number_of_encoding].name;
 }
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 ENCODING*
 Parrot_get_encoding(PARROT_INTERP, INTVAL number_of_encoding)
-    /* WARN_UNUSED */
 {
-    UNUSED(interp);
-
     if (number_of_encoding >= all_encodings->n_encodings)
         return NULL;
     return all_encodings->enc[number_of_encoding].encoding;
 }
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 const char *
 Parrot_encoding_c_name(PARROT_INTERP, INTVAL number_of_encoding)
-    /* WARN_UNUSED */
 {
-    UNUSED(interp);
-
     if (number_of_encoding >= all_encodings->n_encodings)
         return NULL;
     return all_encodings->enc[number_of_encoding].encoding->name;
 }
 
 static INTVAL
-register_encoding(PARROT_INTERP, const char *encodingname /*NN*/,
-        ENCODING *encoding /*NN*/)
+register_encoding(PARROT_INTERP, NOTNULL(const char *encodingname),
+        NOTNULL(ENCODING *encoding))
 {
     const int n = all_encodings->n_encodings;
     int i;
@@ -226,8 +218,8 @@ register_encoding(PARROT_INTERP, const char *encodingname /*NN*/,
 
 PARROT_API
 INTVAL
-Parrot_register_encoding(PARROT_INTERP, const char *encodingname /*NN*/,
-        ENCODING *encoding /*NN*/)
+Parrot_register_encoding(PARROT_INTERP, NOTNULL(const char *encodingname),
+        NOTNULL(ENCODING *encoding))
 {
     if (!all_encodings) {
         all_encodings = mem_allocate_typed(All_encodings);
@@ -259,29 +251,23 @@ Parrot_register_encoding(PARROT_INTERP, const char *encodingname /*NN*/,
 
 PARROT_API
 INTVAL
-Parrot_make_default_encoding(PARROT_INTERP, const char *encodingname,
-        ENCODING *encoding /*NN*/)
+Parrot_make_default_encoding(SHIM_INTERP, SHIM(const char *encodingname),
+        NOTNULL(ENCODING *encoding))
 {
-    UNUSED(interp);
-    UNUSED(encodingname);
-
     Parrot_default_encoding_ptr = encoding;
     return 1;
 }
 
 PARROT_API
 ENCODING *
-Parrot_default_encoding(PARROT_INTERP)
+Parrot_default_encoding(SHIM_INTERP)
 {
-    UNUSED(interp);
-
     return Parrot_default_encoding_ptr;
 }
 
 PARROT_API
 encoding_converter_t
-Parrot_find_encoding_converter(PARROT_INTERP, ENCODING *lhs,
-        ENCODING *rhs)
+Parrot_find_encoding_converter(PARROT_INTERP, ENCODING *lhs, ENCODING *rhs)
 {
     UNUSED(interp);
     UNUSED(lhs);

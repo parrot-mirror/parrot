@@ -19,30 +19,36 @@ src/dynext.c - Dynamic extensions to Parrot
 
 /* HEADERIZER BEGIN: static */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static STRING * get_path( PARROT_INTERP,
     STRING *lib,
-    void **handle /*NN*/,
+    NOTNULL(void **handle),
     STRING *wo_ext,
     STRING *ext )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static PMC* is_loaded( PARROT_INTERP, STRING *path )
         __attribute__nonnull__(1);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static PMC * make_string_pmc( PARROT_INTERP, STRING *string )
         __attribute__nonnull__(1);
 
 static PMC * run_init_lib( PARROT_INTERP,
     void *handle,
-    STRING *lib_name /*NN*/,
+    NOTNULL(STRING *lib_name),
     STRING *wo_ext )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
 static void set_cstring_prop( PARROT_INTERP,
     PMC *lib_pmc,
-    const char *what /*NN*/,
+    NOTNULL(const char *what),
     STRING *name )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
@@ -69,7 +75,7 @@ C<lib_pmc>.
 */
 
 static void
-set_cstring_prop(PARROT_INTERP, PMC *lib_pmc, const char *what /*NN*/,
+set_cstring_prop(PARROT_INTERP, PMC *lib_pmc, NOTNULL(const char *what),
         STRING *name)
 {
     STRING *key;
@@ -114,6 +120,8 @@ If it does, return it. Otherwise, return NULL.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static PMC*
 is_loaded(PARROT_INTERP, STRING *path)
 {
@@ -134,8 +142,10 @@ Return path and handle of a dynamic lib, setting lib_name to just the filestem
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static STRING *
-get_path(PARROT_INTERP, STRING *lib, void **handle /*NN*/,
+get_path(PARROT_INTERP, STRING *lib, NOTNULL(void **handle),
                          STRING *wo_ext, STRING *ext)
 {
     STRING *path, *full_name;
@@ -253,8 +263,8 @@ TODO: fetch Parrot_lib load/init handler exceptions
 PARROT_API
 PMC *
 Parrot_init_lib(PARROT_INTERP,
-                PMC *(*load_func)(Interp *) /*NULLOK*/,
-                void (*init_func)(Interp *, PMC *) /*NULLOK*/)
+                PMC *(*load_func)(NULLOK(Interp *)),
+                void (*init_func)(Interp *, NULLOK(PMC *)))
 {
     PMC *lib_pmc = NULL;
 
@@ -282,7 +292,7 @@ Parrot_init_lib(PARROT_INTERP,
 
 static PMC *
 run_init_lib(PARROT_INTERP, void *handle,
-                         STRING *lib_name /*NN*/, STRING *wo_ext)
+                         NOTNULL(STRING *lib_name), STRING *wo_ext)
 {
     STRING *type;
     PMC *(*load_func)(Interp *);
@@ -340,6 +350,8 @@ run_init_lib(PARROT_INTERP, void *handle,
     return lib_pmc;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static STRING *
 clone_string_into(Interp *d, Interp *s, PMC *value) {
     STRING * const orig = VTABLE_get_string(s, value);
@@ -352,6 +364,8 @@ clone_string_into(Interp *d, Interp *s, PMC *value) {
     return ret;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static PMC *
 make_string_pmc(PARROT_INTERP, STRING *string)
 {
@@ -362,6 +376,8 @@ make_string_pmc(PARROT_INTERP, STRING *string)
 }
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_clone_lib_into(Interp *d, Interp *s, PMC *lib_pmc)
 {
@@ -413,8 +429,10 @@ Parrot_clone_lib_into(Interp *d, Interp *s, PMC *lib_pmc)
 }
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
-Parrot_load_lib(PARROT_INTERP, STRING *lib /*NULLOK*/, SHIM(PMC *initializer))
+Parrot_load_lib(PARROT_INTERP, NULLOK(STRING *lib), SHIM(PMC *initializer))
 {
     void * handle;
     PMC *lib_pmc;
