@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 02-regenerate_skip.t
+# 03-regenerate_skip.t
 
 use strict;
 use warnings;
@@ -79,18 +79,18 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-02-regenerate_skip.t - test C<Parrot::Manifest> MANIFEST.SKIP-related methods
+03-regenerate_skip.t - test C<Parrot::Manifest> MANIFEST.SKIP-related methods
 
 =head1 SYNOPSIS
 
-    % prove t/manifest/02-regenerate_skip.t
+    % prove t/manifest/03-regenerate_skip.t
 
 =head1 DESCRIPTION
 
 The files in this directory test the publicly callable methods of
 F<lib/Parrot/Manifest.pm> and packages which inherit from that package.
 
-F<02-regenerate_skip.t> tests whether Parrot::Manifest correctly determines
+F<03-regenerate_skip.t> tests whether Parrot::Manifest correctly determines
 whether MANIFEST.SKIP needs to be regenerated or not.
 
 =head1 AUTHOR
