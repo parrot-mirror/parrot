@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests =>  9;
+use Test::More tests => 10;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -65,10 +65,10 @@ ok($manifest_lines_ref, "prepare_manifest_skip() returned");
     }
     untie @lines or croak "Unable to untie from $f";
     my $need_for_file =
-        $mani->determine_need_for_manifest_file($manifest_lines_ref);
+        $mani->determine_need_for_manifest($manifest_lines_ref);
     ok($need_for_file, "Need to regenerate $f");
-    ok( $mani->print_manifest_file($manifest_lines_ref),
-        "print_manifest_file() returned true");
+    ok( $mani->print_manifest($manifest_lines_ref),
+        "print_manifest() returned true");
     ok(  -f $f,
         "$f has been created in tempdir");
     chdir $cwd or
