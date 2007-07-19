@@ -5,10 +5,15 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  2;
+use Test::More qw(no_plan); # tests =>  2;
 use Carp;
-use lib qw( . lib ../lib ../../lib );
+use lib qw( . lib ../lib ../../lib t/configure/testlib );
+use_ok('config::init::defaults');
 use_ok('config::init::optimize');
+use Parrot::BuildUtil;
+use Parrot::Configure;
+use Parrot::Configure::Options qw( process_options );
+use Auxiliary qw( test_step_thru_runstep);
 
 =for hints_for_testing Check latest reports of Parrot configuration
 tools testing coverage to see where your time available for writing
@@ -18,6 +23,35 @@ config/inter/progs.pm?"  Also note the reference to
 http://rt.perl.org/rt3//Ticket/Display.html?id=43151.
 
 =cut
+
+my $parrot_version = Parrot::BuildUtil::parrot_version();
+my $args = process_options( {
+    argv            => [],
+    script          => $0,
+    parrot_version  => $parrot_version,
+    svnid           => '$Id$',
+} );
+
+my $conf = Parrot::Configure->new();
+
+test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
+
+my ($task, $step_name, @step_params, $step, $ret);
+my $pkg = q{init::optimize};
+
+$conf->add_steps($pkg);
+$conf->options->set(%{$args});
+$task = $conf->steps->[1];
+$step_name   = $task->step;
+@step_params = @{ $task->params };
+
+$step = $step_name->new();
+ok(defined $step, "$step_name constructor returned defined value");
+isa_ok($step, $step_name);
+ok($step->description(), "$step_name has description");
+
+$ret = $step->runstep($conf);
+ok(defined $ret, "$step_name runstep() returned defined value");
 
 pass("Completed all tests in $0");
 
