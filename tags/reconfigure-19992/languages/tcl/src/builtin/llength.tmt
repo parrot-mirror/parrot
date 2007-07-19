@@ -1,0 +1,5 @@
+[llength list:list]
+
+$I0 = elements $list
+$R  = new .TclInt
+$R  = $I0
