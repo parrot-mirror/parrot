@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 10;
+use Test::More tests => 12;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -71,6 +71,20 @@ ok($manifest_lines_ref, "prepare_manifest_skip() returned");
         "print_manifest() returned true");
     ok(  -f $f,
         "$f has been created in tempdir");
+    chdir $cwd or
+        croak "Unable to change back from temporary directory after testing";
+}
+
+# 3:  Go to a tempdir which lacks a MANIFEST.  Confirm that you need to
+# regenerate MANIFEST (but do not bother to actually do it there).
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or
+        croak "Unable to change to temporary directory for testing";
+    ok(! -f $f, "$f found in tempdir");
+    my $need_for_file =
+        $mani->determine_need_for_manifest($manifest_lines_ref);
+    ok($need_for_file, "We would need to regenerate $f");
     chdir $cwd or
         croak "Unable to change back from temporary directory after testing";
 }
