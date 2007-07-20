@@ -173,10 +173,8 @@ prefixed with 'unicode:'.
     STRING *escaped_str = string_escape_string(INTERP, str);
     STRING *quote       = string_from_literal (INTERP, "\"");
     STRING *x           = string_from_literal (INTERP, "\\x");
-    STRING *u, *unicode;
-    INTVAL x_pos, u_pos;
+    INTVAL x_pos;
     INTVAL is_unicode = 0;
-
     
     escaped_str = string_concat(INTERP, quote, escaped_str, 1);
     escaped_str = string_concat(INTERP, escaped_str, quote, 1);
@@ -185,15 +183,15 @@ prefixed with 'unicode:'.
     if (x_pos != -1) {
       is_unicode = 1;
     } else {
-      u = string_from_literal (INTERP, "\\u");
-      u_pos = string_str_index    (INTERP, escaped_str, u, 0);
+      STRING *u = string_from_literal (INTERP, "\\u");
+      INTVAL u_pos = string_str_index (INTERP, escaped_str, u, 0);
       if (u_pos != -1) {
         is_unicode = 1;
       } 
     } 
 
     if (is_unicode) {
-      unicode = string_from_literal (INTERP, "unicode:");
+      STRING *unicode = string_from_literal (INTERP, "unicode:");
       escaped_str = string_concat(INTERP, unicode, escaped_str, 1);
     }
 
