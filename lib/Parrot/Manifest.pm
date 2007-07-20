@@ -111,7 +111,7 @@ sub _get_manifest_entry {
         $loc =
               exists( $special->{$_} ) ? $special->{$_}
             : !m[/]                  ? '[]'
-            : m[^LICENSES/]          ? '[main]doc'
+            : m[^LICENSE/]           ? '[main]doc'
             : m[^docs/]              ? '[main]doc'
             : m[^editor/]            ? '[devel]'
             : m[^examples/]          ? '[main]doc'
