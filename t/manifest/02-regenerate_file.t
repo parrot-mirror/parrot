@@ -47,7 +47,8 @@ ok($manifest_lines_ref, "prepare_manifest_skip() returned");
 
 # 2:  Copy the real MANIFEST to the tempdir but mangle it there.
 # The alteration in the copied MANIFEST will be sufficient to require
-# regeneration of MANIFEST.
+# regeneration of MANIFEST.  And for good measure, toss in a line of all
+# whitespace to demonstrate that it is correctly skipped.
 {
     my $tdir = tempdir( CLEANUP => 1 );
     chdir $tdir or
@@ -63,6 +64,8 @@ ok($manifest_lines_ref, "prepare_manifest_skip() returned");
             pop @lines;
         }
     }
+    push @lines, q{   };
+    push @lines, q{};
     untie @lines or croak "Unable to untie from $f";
     my $need_for_file =
         $mani->determine_need_for_manifest($manifest_lines_ref);
