@@ -34,29 +34,7 @@ objects with other strings outside of the C<emit> method.
 
 #include "parrot/parrot.h"
 
-pmclass CodeString extends String does string need_ext {
-
-/*
-
-=item C<void init()>
-
-Initializes the Codestring.
-
-=cut
-
-*/
-
-    void init() {
-        /* counter to keep track of unique #s */
-        PMC_data(SELF) =pmc_new(INTERP, enum_class_Integer); 
-
-        PMC_str_val(SELF) =
-            string_make_empty(INTERP, enum_stringrep_one, 0);
-
-        PObj_custom_mark_SET(SELF);
-
-        VTABLE_set_integer_native(INTERP, (PMC*) PMC_data(SELF), 10);
-    }
+pmclass CodeString extends String does string {
 
 /*
 
@@ -143,7 +121,7 @@ A newline is automatically added to the end of the fmt.
         VTABLE_set_string_native(INTERP, SELF, S1);
     }
 
-    PCCRETURN(PMC* PMCNULL); /* XXX Better way to signify an empty return? */
+    PCCRETURN(PMC* SELF);
 }
 
 
@@ -163,20 +141,20 @@ counting at 10 (so that the values 0..9 can be considered "safe").
 */
 
   PCCMETHOD void unique(STRING* format :optional, int has_fmt :opt_flag) {
-    PMC* counter = PMC_data(SELF);
-    STRING* counter_as_string = VTABLE_get_string(INTERP, counter);
+    static INTVAL counter = 10;
+    STRING* counter_as_string = string_from_int(INTERP, counter);
     STRING* result;
+
+    counter++;
  
     if (!has_fmt) {
-      format = string_from_literal(INTERP, "");
+        PCCRETURN(STRING* counter_as_string);
     }
-
-    result = Parrot_make_COW_reference(INTERP, format);    
-    result = string_concat(INTERP, result, counter_as_string, 1);
-
-    VTABLE_increment(INTERP, counter);
-
-    PCCRETURN(STRING* result);
+    else {
+        result = Parrot_make_COW_reference(INTERP, format);    
+        result = string_concat(INTERP, result, counter_as_string, 1);
+        PCCRETURN(STRING* result);
+    }
   }
 
 /*
@@ -221,25 +199,6 @@ prefixed with 'unicode:'.
 
     PCCRETURN(STRING* escaped_str);
   }
-
-
-/*
-
-=item C<void mark()>
-
-Marks the string as live.
-
-=cut
-
-*/
-
-    void mark() {
-        if (PMC_str_val(SELF))
-            pobject_lives(INTERP, (PObj *)PMC_str_val(SELF));
-        if (PMC_data(SELF))
-            pobject_lives(INTERP, (PObj *) PMC_data(SELF));
-    }
-
 
 /*
 
