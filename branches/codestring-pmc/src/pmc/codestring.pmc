@@ -143,7 +143,6 @@ counting at 10 (so that the values 0..9 can be considered "safe").
   PCCMETHOD void unique(STRING* format :optional, int has_fmt :opt_flag) {
     static INTVAL counter = 10;
     STRING* counter_as_string = string_from_int(INTERP, counter);
-    STRING* result;
 
     counter++;
  
@@ -151,6 +150,7 @@ counting at 10 (so that the values 0..9 can be considered "safe").
         PCCRETURN(STRING* counter_as_string);
     }
     else {
+        STRING* result;
         result = Parrot_make_COW_reference(INTERP, format);    
         result = string_concat(INTERP, result, counter_as_string, 1);
         PCCRETURN(STRING* result);
