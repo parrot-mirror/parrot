@@ -73,7 +73,7 @@ sub get_state_at_step {
     my $state;
     if ($step =~ /^\d+$/) {
         croak "Must supply positive integer as step number"
-            unless $step > 0;
+            unless $step > 0 and $step <= $#{$self->[0]};
         return $self->[$step];
     } else {
         my $index = $self->index_steps();
