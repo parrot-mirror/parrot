@@ -527,7 +527,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     .lex 'where', where
     new where, .LuaString
     f(vararg :flat)
-    .return ()
+    .return (0)
   _handler:
     .local pmc ex
     .local string msg
@@ -544,7 +544,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     $S0 .= "\n"
     printerr $S0
     printerr traceback
-    .return ()
+    .return (1)
   L1:
     rethrow ex
 .end
@@ -584,6 +584,24 @@ Support variable number of arguments function call.
     ex = new .Exception
     ex['_message'] =  "not implemented"
     throw ex
+.end
+
+
+=item C<prompt (env)>
+
+=cut
+
+.sub 'prompt'
+    .param pmc env
+    $S0 = '> '
+    .const .LuaString k__PROMPT = '_PROMPT'
+    $P0 = env[k__PROMPT]
+    $I0 = isa $P0, 'LuaNil'
+    if $I0 goto L1
+    $S0 = $P0
+  L1:
+    $P0 = compreg 'Lua'
+    $P0.'commandline_prompt'($S0)
 .end
 
 

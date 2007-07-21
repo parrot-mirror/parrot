@@ -342,7 +342,6 @@ hash_thaw(PARROT_INTERP, NOTNULL(Hash *hash), NOTNULL(visit_info* info))
                 break;
             default:
                 real_exception(interp, NULL, 1, "unimplemented key type");
-                b = NULL;
                 break;
         }
         switch (hash->entry_type) {
@@ -379,7 +378,6 @@ hash_freeze(PARROT_INTERP, NOTNULL(const Hash * const hash), NOTNULL(visit_info*
                     break;
                 default:
                     real_exception(interp, NULL, 1, "unimplemented key type");
-                    b = NULL;
                     break;
             }
             switch (hash->entry_type) {
@@ -891,6 +889,8 @@ copied.
 */
 
 PARROT_API
+PARROT_IGNORABLE_RESULT
+PARROT_CANNOT_RETURN_NULL
 HashBucket*
 parrot_hash_put(PARROT_INTERP, NOTNULL(Hash *hash), void *key, void *value)
 {

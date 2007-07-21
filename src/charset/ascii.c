@@ -36,11 +36,13 @@ charset functionality for similar charsets like iso-8859-1.
 
 /* HEADERIZER BEGIN: static */
 
-static STRING* compose( PARROT_INTERP, NULLOK(STRING *src) )
-        __attribute__nonnull__(1);
+static STRING* compose( PARROT_INTERP, NOTNULL(STRING *src) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
-static STRING* decompose( PARROT_INTERP, NULLOK(STRING *src) )
-        __attribute__nonnull__(1);
+static STRING* decompose( PARROT_INTERP, NOTNULL(STRING *src) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 static void downcase( PARROT_INTERP, NOTNULL(STRING *source_string) )
         __attribute__nonnull__(1)
@@ -219,14 +221,14 @@ to_charset(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
 
 /* A noop. can't compose ascii */
 static STRING*
-compose(PARROT_INTERP, NULLOK(STRING *src))
+compose(PARROT_INTERP, NOTNULL(STRING *src))
 {
     return string_copy(interp, src);
 }
 
 /* A noop. can't decompose ascii */
 static STRING*
-decompose(PARROT_INTERP, NULLOK(STRING *src))
+decompose(PARROT_INTERP, NOTNULL(STRING *src))
 {
     return string_copy(interp, src);
 }
@@ -511,7 +513,8 @@ ascii_compute_hash(SHIM_INTERP, NOTNULL(const STRING *source_string), size_t see
     return hashval;
 }
 
-CHARSET *
+PARROT_CANNOT_RETURN_NULL
+const CHARSET *
 Parrot_charset_ascii_init(PARROT_INTERP)
 {
     CHARSET * const return_set = Parrot_new_charset(interp);
