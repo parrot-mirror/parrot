@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: 107-inter_progs.02.t 19469 2007-06-29 15:38:47Z jkeenan $
+# $Id$
 # 107-inter_progs.02.t
 
 use strict;
@@ -34,7 +34,7 @@ my $args = process_options( {
     argv            => [ q{--ask}, q{--debugging=0} ],
     script          => $0,
     parrot_version  => $parrot_version,
-    svnid           => '$Id: 107-inter_progs.02.t 19469 2007-06-29 15:38:47Z jkeenan $',
+    svnid           => '$Id$',
 } );
 
 my $conf = Parrot::Configure->new;
