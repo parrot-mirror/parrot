@@ -189,8 +189,8 @@ sub runsteps {
     my ( $verbose, $verbose_step, $ask ) =
         $self->options->get( qw( verbose verbose-step ask ) );
 
-    my $sto = q{.trace_configure.sto};
-    if ($self->options->get(q{trace_configure}) and (-f $sto)) {
+    my $sto = q{.configure_trace.sto};
+    if ($self->options->get(q{configure_trace}) and (-f $sto)) {
         unlink $sto or die "Unable to unlink configuration trace file";
     }
     foreach my $task ( $self->steps ) {
@@ -262,7 +262,11 @@ sub _run_this_step {
     if ( defined $args->{verbose_step} ) {
 
         # by step number
-        if ( $args->{verbose_step} =~ /^\d+$/ && $args->{n} == $args->{verbose_step} ) {
+        if (
+            $args->{verbose_step} =~ /^\d+$/
+            &&
+            $args->{n} == $args->{verbose_step}
+        ) {
             $self->options->set( verbose => 2 );
         }
 

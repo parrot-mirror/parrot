@@ -18,6 +18,7 @@ sub get_valid_options {
         ccflags
         ccwarn
         cgoto
+        configure_trace
         cxx
         datadir
         debugging
@@ -65,7 +66,6 @@ sub get_valid_options {
         step
         sysconfdir
         target
-        trace_configure
         test
         verbose
         verbose-step
