@@ -1,19 +1,24 @@
-# Copyright (C) 2001-2005, The Perl Foundation.
-# $Id: Data.pm 19800 2007-07-11 23:38:47Z jkeenan $
-
+# Copyright (C) 2001-2007, The Perl Foundation.
+# $Id$
 package Parrot::Configure::Trace;
 use strict;
 use warnings;
-use Data::Dumper;
+use Carp;
 use Storable qw(nstore retrieve);
 
 sub new {
     my $class = shift;
     my $argsref = shift || {};
+    croak "Constructor correctly failed due to non-hashref argument"
+        unless ref($argsref) eq 'HASH';
     my $self = bless( [], $class );
     my $sto = $argsref->{storable} || q{.configure_trace.sto};
-    @{$self} = @{ retrieve($sto) };
-    return $self;
+    eval { @{$self} = @{ retrieve($sto) }; };
+    if ($@) {
+        croak "Unable to retrieve storable file of configuration step data";
+    } else {
+        return $self;
+    }
 }
 
 sub list_steps {
