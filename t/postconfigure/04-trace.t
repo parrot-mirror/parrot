@@ -13,7 +13,7 @@ if (
         and
         (-e qq{./.configure_trace.sto})
     ) {
-    plan tests => 26;
+    plan tests => 36;
 } else {
     plan skip_all => q{Tests irrelevant unless configuration has completed.};;
 }
@@ -58,7 +58,53 @@ is(ref($index), q{HASH},
 is(scalar(keys %{$index}), $steps_number,
     "list_steps() and index_steps() return same number of elements");
 
-my $attr;
+my ($attr, $trig, $bad);
+
+$attr = $obj->trace_options_c( {
+    attr        => 'yacc',
+} );
+is(ref($attr), q{ARRAY},
+    "trace_options_c() correctly returned array ref");
+is(scalar(@{$attr}), $steps_number,
+    "trace_options_c() and list_steps() return same number of elements");
+
+$attr = $obj->trace_options_c( {
+    attr        => 'yacc',
+    verbose     => 1,
+} );
+is(ref($attr), q{ARRAY},
+    "trace_options_c() correctly returned array ref");
+is(scalar(@{$attr}), $steps_number,
+    "trace_options_c() and list_steps() return same number of elements");
+$bad = 0;
+foreach my $el (@{$attr}) {
+    $bad++ unless ref($el) eq 'HASH';
+}
+is($bad, 0,
+    "With 'verbose', each element in array returned by trace_options_c() is hash ref");
+
+$trig = $obj->trace_options_triggers( {
+    trig        => 'yacc',
+} );
+is(ref($trig), q{ARRAY},
+    "trace_options_triggers() correctly returned array ref");
+is(scalar(@{$trig}), $steps_number,
+    "trace_options_triggers() and list_steps() return same number of elements");
+
+$trig = $obj->trace_options_triggers( {
+    trig        => 'yacc',
+    verbose     => 1,
+} );
+is(ref($trig), q{ARRAY},
+    "trace_options_triggers() correctly returned array ref");
+is(scalar(@{$trig}), $steps_number,
+    "trace_options_triggers() and list_steps() return same number of elements");
+$bad = 0;
+foreach my $el (@{$trig}) {
+    $bad++ unless ref($el) eq 'HASH';
+}
+is($bad, 0,
+    "With 'verbose', each element in array returned by trace_options_triggers() is hash ref");
 
 $attr = $obj->trace_data_c( {
     attr        => 'yacc',
@@ -76,14 +122,12 @@ is(ref($attr), q{ARRAY},
     "trace_data_c() correctly returned array ref");
 is(scalar(@{$attr}), $steps_number,
     "trace_data_c() and list_steps() return same number of elements");
-my $bad = 0;
+$bad = 0;
 foreach my $el (@{$attr}) {
     $bad++ unless ref($el) eq 'HASH';
 }
 is($bad, 0,
     "With 'verbose', each element in array returned by trace_data_c() is hash ref");
-
-my $trig;
 
 $trig = $obj->trace_data_triggers( {
     trig        => 'yacc',
