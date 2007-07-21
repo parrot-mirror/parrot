@@ -7,7 +7,11 @@ use strict;
 use warnings;
 use Carp;
 use Test::More;
-if (-e qq{./lib/Parrot/Config/Generated.pm} ) {
+if (
+        (-e qq{./lib/Parrot/Config/Generated.pm})
+        and
+        (-e qq{./.configure_trace.sto})
+    ) {
     plan tests => 20;
 } else {
     plan skip_all => q{Tests irrelevant unless configuration has completed.};;
