@@ -19,7 +19,7 @@ Parrot::Configure - Conducts the execution of Configuration Steps
 =head1 DESCRIPTION
 
 This module provides provides a means for registering, executing, and
-coordinating one or more Configuration steps.  Please see
+coordinating one or more configuration steps.  Please see
 F<docs/configuration.pod> for further details about the configuration
 framework.
 
@@ -318,7 +318,11 @@ sub _run_this_step {
             $conftrace->[0] = [];
         }
         push @{$conftrace->[0]}, $step_name;
-        push @{$conftrace}, $self;
+        my $evolved_data = {
+            options => $self->{options},
+            data    => $self->{data},
+        };
+        push @{$conftrace}, $evolved_data;
         nstore($conftrace, $args->{sto});
     }
     # reset verbose value for the next step

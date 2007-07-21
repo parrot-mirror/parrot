@@ -6,13 +6,14 @@
 use strict;
 use warnings;
 use Carp;
+use Data::Dumper;
 use Test::More;
 if (
         (-e qq{./lib/Parrot/Config/Generated.pm})
         and
         (-e qq{./.configure_trace.sto})
     ) {
-    plan tests => 20;
+    plan tests => 23;
 } else {
     plan skip_all => q{Tests irrelevant unless configuration has completed.};;
 }
@@ -106,6 +107,24 @@ foreach my $el (@{$trig}) {
 }
 is($bad, 0,
     "With 'verbose', each element in array returned by trace_data_triggers() is hash ref");
+
+my @state;
+ok($state[0] = $obj->get_state_at_step(54),
+    "get_state_at_step() returned true");
+ok($state[1] = $obj->get_state_at_step('gen::makefiles'),
+    "get_state_at_step() returned true");
+is_deeply($state[0], $state[1],
+    "Numeric and string arguments gave same result");
+
+#@state = ();
+#$state[1] = $obj->get_state_at_step(1);
+#$state[56] = $obj->get_state_at_step(56);
+#print STDERR Dumper ($state[1], $state[56]);
+#my @task;
+#for (1,56) {
+#    $task[$_] = $state[$_]->{steps};
+#}
+#is_deeply($task[1], $task[56], "same task");
 
 pass("Completed all tests in $0");
 
