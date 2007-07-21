@@ -278,6 +278,62 @@ Hash reference:
 
 =back
 
+=head2 C<trace_options_c()>
+
+=over 4
+
+=item * Purpose
+
+Provide a list of the values which a given attribute in the C<{options}->{c}>
+part of the Parrot::Configure object takes over the course of the
+configuration steps.
+
+=item * Arguments
+
+Hash reference.  Key C<attr> is mandatory; it is the key whose value you wish
+to trace over the course of the configuration steps.  Key C<verbose> is
+optional.
+
+=item * Return Value
+
+Array reference.  Element C<n> of this array holds the value of the attribute
+in the C<{options}->{c}> part of the Parrot::Configure object at configuration
+step C<n + 1>.
+
+If, however, C<verbose> is set, each element C<n> of the array holds a hash
+reference where the hash key is the name of configuration step C<n + 1> and
+the value is the value of the attribute at step C<n + 1>.
+
+=back
+
+=head2 C<trace_data_triggers()>
+
+=over 4
+
+=item * Purpose
+
+Provide a list of the values which a given attribute in the
+C<{options}->{triggers}> part of the Parrot::Configure object takes over the
+course of the configuration steps.
+
+=item * Arguments
+
+Hash reference.  Key C<attr> is mandatory; it is the key whose value you wish
+to trace over the course of the configuration steps.  Key C<verbose> is
+optional.
+
+=item * Return Value
+
+Array reference.  Element C<n> of this array holds the value of the attribute
+in the C<{options}->{triggers}> part of the Parrot::Configure object at
+configuration step C<n + 1>.
+
+If, however, C<verbose> is set, each element C<n> of the array holds a hash
+reference where the hash key is the name of configuration step C<n + 1> and
+the value is the value of the attribute at step C<n + 1>.
+
+=back
+
 =head2 C<trace_data_c()>
 
 =over 4
