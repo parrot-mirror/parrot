@@ -237,7 +237,7 @@ really a public API.
                 STRING *meth_name = key;
 
                 if (string_str_index(interp, key,
-                    CONST_STRING(interp, "__"), 0 == 0)) {
+                    CONST_STRING(interp, "__"), 0) == 0) {
                     meth_name = string_substr(interp, key, 2,
                         string_length(interp, key) - 2, NULL, 0);
                 }
@@ -415,6 +415,8 @@ Return the name of this namespace part.
 Stores the given namespace under this namespace, with the given name.  Throws
 an invalid type exception if C<namespace> is not a NameSpace PMC or subclass.
 
+=cut
+
 */
 
     METHOD void add_namespace(STRING *name, PMC *_namespace) {
@@ -437,6 +439,8 @@ an invalid type exception if C<namespace> is not a NameSpace PMC or subclass.
 Stores the given sub under this namespace, with the given name.  Throws an
 invalid type exception if C<sub> is not a Sub PMC or subclass.
 
+=cut
+
 */
 
     METHOD void add_sub(STRING *name, PMC *sub) {
@@ -456,6 +460,8 @@ invalid type exception if C<sub> is not a Sub PMC or subclass.
 =item C<METHOD void PMC* add_var(STRING *name, PMC *var)>
 
 Stores the given sub under this namespace, with the given name.
+
+=cut
 
 */
 

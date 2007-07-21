@@ -39,10 +39,14 @@ static void STM_TRACE_SAFE(const char *x, ...) /* HEADERIZER SKIP */
 
 /* HEADERIZER BEGIN: static */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static STM_read_record * alloc_read( PARROT_INTERP, NOTNULL(STM_tx_log *log) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static STM_write_record * alloc_write( PARROT_INTERP,
     NOTNULL(STM_tx_log *log) )
         __attribute__nonnull__(1)
@@ -67,6 +71,7 @@ static int do_real_commit( PARROT_INTERP, NOTNULL(STM_tx_log *log) )
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static STM_write_record * find_write_record( PARROT_INTERP,
     NOTNULL(STM_tx_log *log),
     Parrot_STM_PMC_handle handle,
@@ -74,9 +79,13 @@ static STM_write_record * find_write_record( PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static PMC * force_sharing( PARROT_INTERP, NULLOK(PMC *pmc) )
         __attribute__nonnull__(1);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static STM_read_record * get_read( PARROT_INTERP,
     NOTNULL(STM_tx_log *log),
     int i )
@@ -87,9 +96,13 @@ static int get_read_valid_depth( PARROT_INTERP, NOTNULL(STM_tx_log *log) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static STM_tx_log_sub * get_sublog( NOTNULL(STM_tx_log *log), int i )
         __attribute__nonnull__(1);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static STM_write_record * get_write( PARROT_INTERP,
     NOTNULL(STM_tx_log *log),
     int i )
@@ -129,6 +142,7 @@ static int merge_transactions( PARROT_INTERP,
         __attribute__nonnull__(4);
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static void * next_version( NOTNULL(const void *old_version) )
         __attribute__nonnull__(1);
 
@@ -148,6 +162,8 @@ static int setup_wait( PARROT_INTERP, NOTNULL(STM_tx_log *log) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static void * wait_for_version( PARROT_INTERP,
     NOTNULL(STM_tx_log *log),
     Parrot_STM_PMC_handle handle )
@@ -191,7 +207,7 @@ of the PMC will be a copy of C<pmc>.
 */
 
 Parrot_STM_PMC_handle
-Parrot_STM_alloc(PARROT_INTERP, PMC *pmc)
+Parrot_STM_alloc(PARROT_INTERP, NULLOK(PMC *pmc))
 {
     Parrot_STM_PMC_handle_data *handle;
     STM_TRACE("Parrot_STM_alloc");
@@ -236,6 +252,8 @@ Parrot_thaw_STM_PMC_handle(PARROT_INTERP, NOTNULL(IMAGE_IO *io))
 }
 
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static STM_write_record *
 get_write(PARROT_INTERP, NOTNULL(STM_tx_log *log), int i)
 {
@@ -244,6 +262,8 @@ get_write(PARROT_INTERP, NOTNULL(STM_tx_log *log), int i)
     return &log->writes[i];
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static STM_read_record *
 get_read(PARROT_INTERP, NOTNULL(STM_tx_log *log), int i)
 {
@@ -258,6 +278,8 @@ get_read(PARROT_INTERP, NOTNULL(STM_tx_log *log), int i)
  * marked with the value uninitialized.
  */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static STM_write_record *
 alloc_write(PARROT_INTERP, NOTNULL(STM_tx_log *log))
 {
@@ -276,6 +298,8 @@ alloc_write(PARROT_INTERP, NOTNULL(STM_tx_log *log))
     return write;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static STM_read_record *
 alloc_read(PARROT_INTERP, NOTNULL(STM_tx_log *log))
 {
@@ -295,6 +319,7 @@ alloc_read(PARROT_INTERP, NOTNULL(STM_tx_log *log))
 }
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static void *
 next_version(NOTNULL(const void *old_version))
 {
@@ -311,6 +336,8 @@ is_version(NOTNULL(const void *maybe_version))
     return v & 1;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static STM_tx_log_sub *
 get_sublog(NOTNULL(STM_tx_log *log), int i)
 {
@@ -460,6 +487,8 @@ merge_transactions(PARROT_INTERP, NOTNULL(STM_tx_log *log),
     }
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static PMC *
 force_sharing(PARROT_INTERP, NULLOK(PMC *pmc))
 {
@@ -997,6 +1026,9 @@ Parrot_STM_transaction_depth(PARROT_INTERP)
  *
  * This may mark us as aborted and return NULL.
  */
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static void *
 wait_for_version(PARROT_INTERP,
         NOTNULL(STM_tx_log *log), Parrot_STM_PMC_handle handle)
@@ -1113,6 +1145,8 @@ Read the value stored in the PMC wrapped by C<handle>.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_STM_read(PARROT_INTERP, Parrot_STM_PMC_handle handle)
 {
@@ -1220,6 +1254,7 @@ local_pmc_copy(PARROT_INTERP, NULLOK(PMC * const original))
  * so initialize it to PMCNULL.
  */
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static STM_write_record *
 find_write_record(PARROT_INTERP, NOTNULL(STM_tx_log *log),
         Parrot_STM_PMC_handle handle, int overwrite_p)
@@ -1370,6 +1405,8 @@ be given it when they read the value).
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_STM_begin_update(PARROT_INTERP, Parrot_STM_PMC_handle handle)
 {
@@ -1395,17 +1432,14 @@ Write C<new_value> into the PMC wrapped by C<handle>.
 */
 
 void
-Parrot_STM_write(PARROT_INTERP, Parrot_STM_PMC_handle handle, PMC* new_value)
+Parrot_STM_write(PARROT_INTERP, Parrot_STM_PMC_handle handle, NULLOK(PMC* new_value))
 {
     /* XXX no transaction case */
     STM_write_record   *write;
     STM_tx_log * const log = Parrot_STM_tx_log_get(interp);
 
-    if (log->depth == 0) {
-        /* error for now */
+    if (log->depth == 0) /* error for now */
         real_exception(interp, NULL, 1, "STM_write outside transaction");
-        return;
-    }
 
     write        = find_write_record(interp, log, handle, 1);
     write->value = new_value;
@@ -1420,6 +1454,8 @@ enough to wait() for it to become valid. User access through STMLog PMC class.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 void *
 Parrot_STM_extract(PARROT_INTERP)
 {
@@ -1460,41 +1496,39 @@ in.
 */
 
 void
-Parrot_STM_replay_extracted(PARROT_INTERP, void *saved_log_data)
+Parrot_STM_replay_extracted(PARROT_INTERP, NULLOK(void *saved_log_data))
 {
-    STM_tx_log       *log;
-    STM_saved_tx_log *saved;
-    STM_tx_log_sub   *sublog;
-    int               i, start;
 
-    if (saved_log_data == NULL)
-        return;
+    if (saved_log_data) {
+        STM_saved_tx_log * const saved = (STM_saved_tx_log *)saved_log_data;
+        STM_tx_log * const       log   = Parrot_STM_tx_log_get(interp);
 
-    saved = (STM_saved_tx_log *)saved_log_data;
-    log   = Parrot_STM_tx_log_get(interp);
+        STM_tx_log_sub *sublog;
+        int i, start;
 
-    if (log->depth == 0)
-        real_exception(interp, NULL, 1, "replay_extracted outside of transaction");
+        if (log->depth == 0)
+            real_exception(interp, NULL, 1, "replay_extracted outside of transaction");
 
-    sublog = get_sublog(log, log->depth);
-    start  = log->last_read;
+        sublog = get_sublog(log, log->depth);
+        start  = log->last_read;
 
-    for (i = 0; i < saved->num_reads; ++i)
-        *(alloc_read(interp, log)) = saved->reads[i];
+        for (i = 0; i < saved->num_reads; ++i)
+            *(alloc_read(interp, log)) = saved->reads[i];
 
-    start = log->last_write;
+        start = log->last_write;
 
-    for (i = 0; i < saved->num_writes; ++i) {
-        int successp;
-        STM_write_record * const write = alloc_write(interp, log);
-        *write                         = saved->writes[i];
+        for (i = 0; i < saved->num_writes; ++i) {
+            int successp;
+            STM_write_record * const write = alloc_write(interp, log);
+            *write                         = saved->writes[i];
 
-        PARROT_ATOMIC_PTR_CAS(successp, write->handle->owner_or_version,
-                              write->saw_version, sublog);
+            PARROT_ATOMIC_PTR_CAS(successp, write->handle->owner_or_version,
+                                write->saw_version, sublog);
 
-        /* failed! */
-        if (!successp)
-            PARROT_ATOMIC_INT_SET(sublog->status, STM_STATUS_ABORTED);
+            /* failed! */
+            if (!successp)
+                PARROT_ATOMIC_INT_SET(sublog->status, STM_STATUS_ABORTED);
+        }
     }
 }
 
@@ -1507,21 +1541,18 @@ Mark GC-managed objects reachable through an extracted transaction log.
 */
 
 void
-Parrot_STM_mark_extracted(PARROT_INTERP, void *saved_log_data)
+Parrot_STM_mark_extracted(PARROT_INTERP, NULLOK(void *saved_log_data))
 {
-    STM_saved_tx_log *saved;
-    int               i;
+    if (saved_log_data) {
+        STM_saved_tx_log * const saved = (STM_saved_tx_log *)saved_log_data;
+        int i;
 
-    if (saved_log_data == NULL)
-        return;
+        for (i = 0; i < saved->num_reads; ++i)
+            mark_read_record(interp, &saved->reads[i]);
 
-    saved = (STM_saved_tx_log *)saved_log_data;
-
-    for (i = 0; i < saved->num_reads; ++i)
-        mark_read_record(interp, &saved->reads[i]);
-
-    for (i = 0; i < saved->num_writes; ++i)
-        mark_write_record(interp, &saved->writes[i]);
+        for (i = 0; i < saved->num_writes; ++i)
+            mark_write_record(interp, &saved->writes[i]);
+    }
 }
 
 /*
@@ -1533,17 +1564,15 @@ Free memory associated with an extracted transaction log.
 */
 
 void
-Parrot_STM_destroy_extracted(PARROT_INTERP, void *saved_log_data)
+Parrot_STM_destroy_extracted(PARROT_INTERP, NULLOK(void *saved_log_data))
 {
-    STM_saved_tx_log *saved;
+    if (saved_log_data) {
+        STM_saved_tx_log * const saved = (STM_saved_tx_log *)saved_log_data;
 
-    if (saved_log_data == NULL)
-        return;
-
-    saved = (STM_saved_tx_log *)saved_log_data;
-    mem_sys_free(saved->reads);
-    mem_sys_free(saved->writes);
-    mem_sys_free(saved);
+        mem_sys_free(saved->reads);
+        mem_sys_free(saved->writes);
+        mem_sys_free(saved);
+    }
 }
 
 #if STM_PROFILE

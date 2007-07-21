@@ -133,7 +133,6 @@ to_charset(PARROT_INTERP, NOTNULL(STRING *src), NOTNULL(STRING *dest))
     if (conversion_func)
          return conversion_func(interp, src, dest);
     real_exception(interp, NULL, UNIMPLEMENTED, "to_charset for binary not implemented");
-    return NULL;
 }
 
 /* A err. can't compose binary */
@@ -141,7 +140,6 @@ static STRING*
 compose(PARROT_INTERP, SHIM(STRING *source_string))
 {
     EXCEPTION(INVALID_CHARTYPE, "Can't compose binary data");
-    return NULL;
 }
 
 /* A err. can't decompose binary */
@@ -149,7 +147,6 @@ static STRING*
 decompose(PARROT_INTERP, SHIM(STRING *source_string))
 {
     EXCEPTION(INVALID_CHARTYPE, "Can't decompose binary data");
-    return NULL;
 }
 
 static void
@@ -245,7 +242,8 @@ string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)
 }
 
 
-CHARSET *
+PARROT_CANNOT_RETURN_NULL
+const CHARSET *
 Parrot_charset_binary_init(PARROT_INTERP)
 {
     CHARSET * const return_set = Parrot_new_charset(interp);
