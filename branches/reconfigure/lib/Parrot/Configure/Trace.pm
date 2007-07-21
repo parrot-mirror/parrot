@@ -67,6 +67,22 @@ sub trace_data_triggers {
     return \@triggers;
 }
 
+sub get_state_at_step {
+    my $self = shift;
+    my $step = shift;
+    my $state;
+    if ($step =~ /^\d+$/) {
+        croak "Must supply positive integer as step number"
+            unless $step > 0;
+        return $self->[$step];
+    } else {
+        my $index = $self->index_steps();
+        croak "Must supply valid step name"
+            unless $index->{$step};
+        return $self->[$index->{$step}];
+    }
+}
+
 ################### DOCUMENTATION ###################
 
 =head1 NAME
@@ -99,6 +115,10 @@ After configuration has completed:
         verbose     => 1,               # optional
     } );
 
+    $state = $obj->get_state_at_step($step_no);
+
+    $state = $obj->get_state_at_step('some::step');
+
 =head1 DESCRIPTION
 
 This module provides ways to trace the evolution of the data structure within
@@ -106,12 +126,12 @@ the Parrot::Configure object over the various steps in the configuration
 process.  An understanding of this data structure's development may be useful
 to Parrot developers working on the configuration process or its results.
 
-To make use of its methods, first configure with the
+To make use of Parrot::Configure::Trace's methods, first configure with the
 C<--configure_trace> option.  As configuration proceeds through what are
 currently 56 individual steps, the state of the Parrot::Configuration object
-is recorded in a Perl array reference stored on disk via the Storable module
-in a file called F<.configure_trace.sto> stored in the top-level of your
-Parrot sandbox directory.
+is recorded in a Perl array reference.  That array ref is stored on disk via
+the Storable module in a file called F<.configure_trace.sto> found in the
+top-level of your Parrot sandbox directory.
 
 Once that storable file has been created, you can write programs which
 retrieve its data into a Parrot::Configure::Trace object and then call methods
@@ -150,6 +170,16 @@ The Parrot::Configure::Trace object is a blessed array reference.  Element
 C<0> of that array is a reference to an array holding the names of the
 individual configuration steps; elements C<1> through C<$#array> hold the
 state of the Parrot::Configure object at the conclusion of each step.
+
+Since the purpose of Parrot::Configure::Trace is to track the B<evolution> of
+the Parrot::Configure object through the configuration steps, there is no
+point in recording information about those parts of the Parrot::Configure
+object which are invariant.  The C<steps> element is set in F<Configure.pl>
+before the configuration steps are run and does not change during those steps.
+Hence, no information about the C<steps> element is recorded and no methods
+are provided herein to retrieve that information.  Since the C<options> and
+(especially) C<data> elements of the Parrot::Configure object do change over
+the course of configuration, methods are provided to access that data.
 
 =back
 
@@ -260,6 +290,32 @@ configuration step C<n + 1>.
 If, however, C<verbose> is set, each element C<n> of the array holds a hash
 reference where the hash key is the name of configuration step C<n + 1> and
 the value is the value of the attribute at step C<n + 1>.
+
+=back
+
+=head2 C<get_state_at_step()>
+
+=over 4
+
+=item * Purpose
+
+Get a snapshot of the data structure in the Parrot::Configure object at the
+conclusion of a given configuration step.
+
+=item * Arguments
+
+Either a positive integer corresponding to the step number:
+
+    $state = $obj->get_state_at_step(54);
+
+... or the C<x::y> string corresponding to the step's name in
+Parrot::Configure::Step::List.
+
+    $state = $obj->get_state_at_step('gen::makefiles');
+
+=item * Return Value
+
+Hash reference.
 
 =back
 
