@@ -36,6 +36,37 @@ sub index_steps {
     return \%index;
 }
 
+sub trace_options_c {
+    my ($self, $argsref) = @_;
+    my @data = @{$self};
+    my @c = ();
+    for (my $step = 1; $step <= $#data; $step++) {
+        my $value = $data[$step]->{options}->{c}->{$argsref->{attr}};
+        if ($argsref->{verbose}) {
+            push @c, { $self->[0]->[$step - 1] => $value };
+        } else {
+            push @c, $value;
+        }
+    }
+    return \@c;
+}
+
+sub trace_options_triggers {
+    my ($self, $argsref) = @_;
+    my @data = @{$self};
+    my @triggers = ();
+    for (my $step = 1; $step <= $#data; $step++) {
+        my $value =
+            $data[$step]->{options}->{triggers}->{$argsref->{trig}};
+        if ($argsref->{verbose}) {
+            push @triggers, { $self->[0]->[$step - 1] => $value };
+        } else {
+            push @triggers, $value;
+        }
+    }
+    return \@triggers;
+}
+
 sub trace_data_c {
     my ($self, $argsref) = @_;
     my @data = @{$self};
@@ -104,6 +135,16 @@ After configuration has completed:
     $steps_list = $obj->list_steps();
 
     $steps_index = $obj->index_steps();
+
+    $attr = $obj->trace_options_c( {
+        attr        => 'some_attr',
+        verbose     => 1,               # optional
+    } );
+
+    $attr = $obj->trace_options_triggers( {
+        trig        => 'some_trig',
+        verbose     => 1,               # optional
+    } );
 
     $attr = $obj->trace_data_c( {
         attr        => 'some_attr',
