@@ -1,5 +1,5 @@
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: GenerateCore.pm 17576 2007-03-17 22:50:07Z paultcochrane $
+# $Id$
 package Auxiliary;
 use strict;
 use warnings;
@@ -51,7 +51,7 @@ Auxiliary - subroutines used in F<t/configure/*> tests
     argv            => [ ],
     script          => $0,
     parrot_version  => $parrot_version,
-    svnid           => '$Id: 105-init_hints.01.t 19432 2007-06-29 00:24:16Z jkeenan $',
+    svnid           => '$Id$',
 } );
 
     $conf = Parrot::Configure->new;
