@@ -13,7 +13,7 @@ if (
         and
         (-e qq{./.configure_trace.sto})
     ) {
-    plan tests => 23;
+    plan tests => 26;
 } else {
     plan skip_all => q{Tests irrelevant unless configuration has completed.};;
 }
@@ -115,6 +115,19 @@ ok($state[1] = $obj->get_state_at_step('gen::makefiles'),
     "get_state_at_step() returned true");
 is_deeply($state[0], $state[1],
     "Numeric and string arguments gave same result");
+
+my $state;
+eval { $state = $obj->get_state_at_step(0); };
+like($@, qr/^Must supply positive integer as step number/,
+    "Correctly failed due to non-positive argument");
+
+eval { $state = $obj->get_state_at_step(1000000); };
+like($@, qr/^Must supply positive integer as step number/,
+    "Correctly failed due to non-existent step");
+
+eval { $state = $obj->get_state_at_step(q{init::something}); };
+like($@, qr/^Must supply valid step name/,
+    "Correctly failed due to non-existent step");
 
 #@state = ();
 #$state[1] = $obj->get_state_at_step(1);
