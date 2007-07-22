@@ -25,38 +25,39 @@
 
 /* HEADERIZER BEGIN: static */
 
-static void do_pre_process( Interp *interp /*NN*/ )
+static void do_pre_process( PARROT_INTERP )
         __attribute__nonnull__(1);
 
 static void help( void );
 static void help_debug( void );
 static void imcc_get_optimization_description(
-    const Interp *interp /*NN*/,
+    const PARROT_INTERP,
     int opt_level,
-    char *opt_desc /*NN*/ )
-        __attribute__nonnull__(1)
+    NOTNULL(char *opt_desc) )
         __attribute__nonnull__(3);
 
-static void imcc_run_pbc( Interp *interp,
+static void imcc_run_pbc( PARROT_INTERP,
     int obj_file,
-    const char *output_file,
+    NOTNULL(const char *output_file),
     int argc,
-    char * argv[] );
+    NOTNULL(char *argv[]) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(5);
 
-static void imcc_write_pbc( Interp *interp /*NN*/,
-    const char *output_file /*NN*/ )
+static void imcc_write_pbc( PARROT_INTERP, NOTNULL(const char *output_file) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int is_all_hex_digits( const char *s /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__pure__
-        __attribute__warn_unused_result__;
-
-static void Parrot_version( Interp *interp /*NN*/ )
+PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
+static int is_all_hex_digits( NOTNULL(const char *s) )
         __attribute__nonnull__(1);
 
-static void usage( FILE* fp /*NN*/ )
+static void Parrot_version( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
+static void usage( NOTNULL(FILE* fp) )
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
@@ -65,7 +66,7 @@ static void usage( FILE* fp /*NN*/ )
 static int load_pbc, run_pbc, write_pbc, pre_process_only, pasm_file;
 
 static void
-usage(FILE* fp /*NN*/)
+usage(NOTNULL(FILE* fp))
 {
     fprintf(fp,
             "parrot -[abcCEfgGhjprStvVwy.] [-d [FLAGS]] [-D [FLAGS]]"
@@ -151,7 +152,7 @@ help(void)
 
 
 static void
-Parrot_version(Interp *interp /*NN*/)
+Parrot_version(PARROT_INTERP)
 {
     int rev = PARROT_REVISION;
     printf("This is parrot version " PARROT_VERSION);
@@ -221,9 +222,10 @@ static struct longopt_opt_decl options[] = {
     { 0, 0, (OPTION_flags)0, { NULL } }
 };
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
 static int
-is_all_hex_digits(const char *s /*NN*/)
-    /* PURE, WARN_UNUSED */
+is_all_hex_digits(NOTNULL(const char *s))
 {
     for (; *s; s++)
         if (!isxdigit(*s))
@@ -232,15 +234,17 @@ is_all_hex_digits(const char *s /*NN*/)
 }
 
 /* most stolen from test_main.c */
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 char *
-parseflags(Parrot_Interp interp, int *argc, char **argv[])
+parseflags(PARROT_INTERP, int *argc, char **argv[])
 {
     struct longopt_opt_info opt = LONGOPT_OPT_INFO_INIT;
     int   status;
     extern int yydebug;
     if (*argc == 1) {
         usage(stderr);
-        exit(0);
+        exit(EXIT_SUCCESS);
     }
     run_pbc = 1;
 
@@ -266,7 +270,6 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
                 SET_CORE(PARROT_SWITCH_CORE);
                 break;
             case 'C':
-                SET_CORE(PARROT_CGP_CORE);
                 break;
             case 'f':
                 SET_CORE(PARROT_FAST_CORE);
@@ -312,8 +315,12 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
                 exit(EX_USAGE);
                 break;
             case OPT_RUNTIME_PREFIX:
-                printf("%s\n", Parrot_get_runtime_prefix(interp, NULL));
-                exit(0);
+                {
+                char *prefix = Parrot_get_runtime_prefix(interp, NULL);
+                printf("%s\n", prefix);
+                free(prefix);
+                exit(EXIT_SUCCESS);
+                }
                 break;
             case 'V':
                 Parrot_version(interp);
@@ -417,7 +424,7 @@ parseflags(Parrot_Interp interp, int *argc, char **argv[])
 }
 
 static void
-do_pre_process(Interp *interp /*NN*/)
+do_pre_process(PARROT_INTERP)
 {
     int       c;
     YYSTYPE   val;
@@ -529,7 +536,7 @@ do_pre_process(Interp *interp /*NN*/)
 }
 
 static void
-imcc_get_optimization_description(const Interp *interp /*NN*/, int opt_level, char *opt_desc /*NN*/)
+imcc_get_optimization_description(const PARROT_INTERP, int opt_level, NOTNULL(char *opt_desc))
 {
     int i = 0;
 
@@ -555,7 +562,7 @@ imcc_get_optimization_description(const Interp *interp /*NN*/, int opt_level, ch
 }
 
 int
-imcc_initialize(Interp *interp /*NN*/)
+imcc_initialize(PARROT_INTERP)
 {
     yyscan_t yyscanner = IMCC_INFO(interp)->yyscanner;
 
@@ -582,8 +589,8 @@ imcc_initialize(Interp *interp /*NN*/)
 }
 
 static void
-imcc_run_pbc(Interp *interp, int obj_file, const char *output_file,
-             int argc, char * argv[])
+imcc_run_pbc(PARROT_INTERP, int obj_file, NOTNULL(const char *output_file),
+             int argc, NOTNULL(char *argv[]))
 {
     if (IMCC_INFO(interp)->imcc_warn)
         PARROT_WARNINGS_on(interp, PARROT_WARNINGS_ALL_FLAG);
@@ -608,7 +615,7 @@ imcc_run_pbc(Interp *interp, int obj_file, const char *output_file,
 }
 
 static void
-imcc_write_pbc(Interp *interp /*NN*/, const char *output_file /*NN*/)
+imcc_write_pbc(PARROT_INTERP, NOTNULL(const char *output_file))
 {
     size_t    size;
     opcode_t *packed;
@@ -636,7 +643,7 @@ imcc_write_pbc(Interp *interp /*NN*/, const char *output_file /*NN*/)
 }
 
 int
-imcc_run(Interp *interp /*NN*/, const char *sourcefile, int argc, char * argv[])
+imcc_run(PARROT_INTERP, const char *sourcefile, int argc, char * argv[])
 {
     int              obj_file;
     yyscan_t        yyscanner   = IMCC_INFO(interp)->yyscanner;
@@ -750,7 +757,7 @@ imcc_run(Interp *interp /*NN*/, const char *sourcefile, int argc, char * argv[])
         IMCC_TRY(IMCC_INFO(interp)->jump_buf,
                  IMCC_INFO(interp)->error_code) {
             if (yyparse(yyscanner, interp))
-                exit(1);
+                exit(EXIT_FAILURE);
 
             imc_compile_all_units(interp);
         }

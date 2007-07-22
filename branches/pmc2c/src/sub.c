@@ -28,7 +28,7 @@ Marks the context C<*ctx>.
 */
 
 void
-mark_context(Interp *interp /*NN*/, parrot_context_t* ctx /*NN*/)
+mark_context(PARROT_INTERP, NOTNULL(parrot_context_t* ctx))
 {
     PObj *obj;
     int i;
@@ -78,8 +78,10 @@ Returns a new C<Parrot_sub>.
 
 */
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Parrot_sub *
-new_sub(Interp *interp /*NN*/)
+new_sub(PARROT_INTERP)
 {
     /* Using system memory until I figure out GC issues */
     Parrot_sub * const newsub = mem_allocate_zeroed_typed(Parrot_sub);
@@ -97,8 +99,10 @@ XXX: Need to document semantics in detail.
 
 */
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Parrot_sub *
-new_closure(Interp *interp /*NN*/)
+new_closure(PARROT_INTERP)
 {
     Parrot_sub * const newsub = new_sub(interp);
     return newsub;
@@ -114,8 +118,10 @@ to the current context.
 
 */
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Parrot_cont *
-new_continuation(Interp *interp /*NN*/, Parrot_cont *to /*NULLOK*/)
+new_continuation(PARROT_INTERP, NULLOK(Parrot_cont *to))
 {
     Parrot_cont    * const cc     = mem_allocate_typed(Parrot_cont);
     Parrot_Context * const to_ctx = to ? to->to_ctx : CONTEXT(interp->ctx);
@@ -145,8 +151,10 @@ Returns a new C<Parrot_cont> pointing to the current context.
 
 */
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Parrot_cont *
-new_ret_continuation(Interp *interp /*NN*/)
+new_ret_continuation(PARROT_INTERP)
 {
     Parrot_cont * const cc = mem_allocate_typed(Parrot_cont);
 
@@ -170,8 +178,10 @@ XXX: Need to document semantics in detail.
 
 */
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Parrot_coro *
-new_coroutine(Interp *interp /*NN*/)
+new_coroutine(PARROT_INTERP)
 {
     Parrot_coro * const co = mem_allocate_zeroed_typed(Parrot_coro);
 
@@ -191,8 +201,10 @@ if possible; otherwise, creates a new one.
 */
 
 PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 PMC *
-new_ret_continuation_pmc(Interp *interp /*NN*/, opcode_t *address)
+new_ret_continuation_pmc(PARROT_INTERP, NULLOK(opcode_t *address))
 {
     PMC* const continuation = pmc_new(interp, enum_class_RetContinuation);
     VTABLE_set_pointer(interp, continuation, address);
@@ -208,7 +220,7 @@ Make true Continuation from all RetContinuations up the call chain.
 */
 
 void
-invalidate_retc_context(Interp *interp /*NN*/, PMC *cont /*NN*/)
+invalidate_retc_context(PARROT_INTERP, NOTNULL(PMC *cont))
 {
     Parrot_Context *ctx = PMC_cont(cont)->from_ctx;
 
@@ -232,7 +244,7 @@ invalidate_retc_context(Interp *interp /*NN*/, PMC *cont /*NN*/)
 /* XXX use method lookup - create interface
  *                         see also pbc.c
  */
-extern PMC* Parrot_NameSpace_nci_get_name(Interp *interp, PMC* pmc);
+extern PMC* Parrot_NameSpace_nci_get_name(PARROT_INTERP, PMC* pmc);
 
 /*
 
@@ -243,8 +255,10 @@ Return namespace, name, and location of subroutine.
 */
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 STRING*
-Parrot_full_sub_name(Interp *interp /*NN*/, PMC* sub /*NULLOK*/)
+Parrot_full_sub_name(PARROT_INTERP, NULLOK(PMC* sub))
 {
     if (sub && VTABLE_defined(interp, sub)) {
         Parrot_sub * const s = PMC_sub(sub);
@@ -273,8 +287,8 @@ Parrot_full_sub_name(Interp *interp /*NN*/, PMC* sub /*NULLOK*/)
 
 PARROT_API
 int
-Parrot_Context_get_info(Interp *interp /*NN*/, parrot_context_t *ctx /*NN*/,
-                    Parrot_Context_info *info /*NN*/)
+Parrot_Context_get_info(PARROT_INTERP, NOTNULL(parrot_context_t *ctx),
+                    NOTNULL(Parrot_Context_info *info))
 {
     Parrot_sub *sub;
     DECL_CONST_CAST;
@@ -353,8 +367,10 @@ Parrot_Context_get_info(Interp *interp /*NN*/, parrot_context_t *ctx /*NN*/,
 }
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 STRING*
-Parrot_Context_infostr(Interp *interp /*NN*/, parrot_context_t *ctx /*NN*/)
+Parrot_Context_infostr(PARROT_INTERP, NOTNULL(parrot_context_t *ctx))
 {
     Parrot_Context_info info;
     const char* const msg = (CONTEXT(interp->ctx) == ctx)
@@ -389,8 +405,10 @@ Locate the LexPad containing the given name. Return NULL on failure.
 
 */
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 PMC*
-Parrot_find_pad(Interp *interp /*NN*/, STRING *lex_name, parrot_context_t *ctx /*NN*/)
+Parrot_find_pad(PARROT_INTERP, NOTNULL(STRING *lex_name), NOTNULL(parrot_context_t *ctx))
 {
     while (1) {
         PMC * const lex_pad = ctx->lex_pad;
@@ -419,8 +437,10 @@ Parrot_find_pad(Interp *interp /*NN*/, STRING *lex_name, parrot_context_t *ctx /
 }
 
 PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 PMC*
-parrot_new_closure(Interp *interp /*NN*/, PMC *sub_pmc)
+parrot_new_closure(PARROT_INTERP, NOTNULL(PMC *sub_pmc))
 {
     PMC *cont;
 

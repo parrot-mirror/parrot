@@ -46,11 +46,12 @@ struct longopt_opt_info {
 
 /* HEADERIZER BEGIN: src/longopt.c */
 
-PARROT_API int longopt_get( Interp *interp /*NN*/,
+PARROT_API
+int longopt_get( PARROT_INTERP,
     int argc,
-    char* argv[] /*NN*/,
-    const struct longopt_opt_decl options[] /*NN*/,
-    struct longopt_opt_info* info_buf /*NN*/ )
+    NOTNULL(char* argv[]),
+    NOTNULL(const struct longopt_opt_decl options[]),
+    NOTNULL(struct longopt_opt_info* info_buf) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005, The Perl Foundation.
+Copyright (C) 2005-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -12,10 +12,6 @@ Open mmaps the file.
 
 =head2 mmap layer functions
 
-=over 4
-
-=cut
-
 */
 
 #include "parrot/parrot.h"
@@ -25,19 +21,31 @@ Open mmaps the file.
 
 /* HEADERIZER BEGIN: static */
 
-static INTVAL PIO_mmap_close( Interp *interp,
-    ParrotIOLayer *layer,
-    ParrotIO *io );
+static INTVAL PIO_mmap_close( PARROT_INTERP,
+    NOTNULL(ParrotIOLayer *layer),
+    NOTNULL(ParrotIO *io) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
-static ParrotIO * PIO_mmap_open( Interp *interp,
-    ParrotIOLayer *layer,
-    const char *path,
-    INTVAL flags );
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static ParrotIO * PIO_mmap_open( PARROT_INTERP,
+    NOTNULL(ParrotIOLayer *layer),
+    NOTNULL(const char *path),
+    INTVAL flags )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
-static size_t PIO_mmap_read( Interp *interp,
-    ParrotIOLayer *layer,
-    ParrotIO *io,
-    STRING **buf );
+static size_t PIO_mmap_read( PARROT_INTERP,
+    NOTNULL(ParrotIOLayer *layer),
+    NOTNULL(ParrotIO *io),
+    NOTNULL(STRING **buf) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 /* HEADERIZER END: static */
 
@@ -67,14 +75,14 @@ static const ParrotIOLayerAPI pio_mmap_layer_api = {
     PIO_null_getcount,
     PIO_null_fill,
     PIO_null_eof,
-    0, /* no poll */
-    0, /* no socket */
-    0, /* no connect */
-    0, /* no send */
-    0, /* no recv */
-    0, /* no bind */
-    0, /* no listen */
-    0  /* no accept */
+    NULL, /* no poll */
+    NULL, /* no socket */
+    NULL, /* no connect */
+    NULL, /* no send */
+    NULL, /* no recv */
+    NULL, /* no bind */
+    NULL, /* no listen */
+    NULL  /* no accept */
 };
 
 ParrotIOLayer pio_mmap_layer = {
@@ -82,9 +90,11 @@ ParrotIOLayer pio_mmap_layer = {
     "mmap",
     0,
     &pio_mmap_layer_api,
-    0, 0
+    NULL, NULL
 };
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 ParrotIOLayer *
 PIO_mmap_register_layer(void)
 {
@@ -93,19 +103,17 @@ PIO_mmap_register_layer(void)
 
 /*
 
-=item C<static ParrotIO *
-PIO_mmap_open(Interp *interp, ParrotIOLayer *layer,
-               const char *path, INTVAL flags)>
+FUNCDOC: PIO_mmap_open
 
 The buffer layer's C<Open> function.
 
-=cut
-
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static ParrotIO *
-PIO_mmap_open(Interp *interp, ParrotIOLayer *layer,
-               const char *path, INTVAL flags)
+PIO_mmap_open(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer),
+               NOTNULL(const char *path), INTVAL flags)
 {
     ParrotIO *io;
     ParrotIOLayer *l = PIO_DOWNLAYER(layer);
@@ -142,20 +150,16 @@ PIO_mmap_open(Interp *interp, ParrotIOLayer *layer,
 
 /*
 
-=item C<static size_t
-PIO_mmap_read(Interp *interp, ParrotIOLayer *layer, ParrotIO *io,
-              STRING ** buf)>
+FUNCDOC: PIO_mmap_read
 
 Calls C<read()> to return up to C<len> bytes in the memory starting at
 C<buffer>.
 
-=cut
-
 */
 
 static size_t
-PIO_mmap_read(Interp *interp, ParrotIOLayer *layer, ParrotIO *io,
-              STRING **buf)
+PIO_mmap_read(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io),
+              NOTNULL(STRING **buf))
 {
     STRING *s;
     UINTVAL len;
@@ -181,29 +185,23 @@ PIO_mmap_read(Interp *interp, ParrotIOLayer *layer, ParrotIO *io,
 
 /*
 
-=item C<static INTVAL
-PIO_mmap_close(Interp *interp, ParrotIOLayer *layer, ParrotIO *io)>
+FUNCDOC: PIO_mmap_close
 
 Closes C<*io>'s file descriptor.
-
-=cut
 
 */
 
 static INTVAL
-PIO_mmap_close(Interp *interp, ParrotIOLayer *layer, ParrotIO *io)
+PIO_mmap_close(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io))
 {
     INTVAL ret = -1;
 
-    if (io->fd >= 0) {
+    if (io->fd >= 0)
         ret = PIO_close_down(interp, PIO_DOWNLAYER(layer), io);
-    }
     return ret;
 }
 
 /*
-
-=back
 
 =head1 SEE ALSO
 
@@ -215,8 +213,6 @@ F<src/io/io_private.h>.
 =head1 HISTORY
 
 Initially written by Leo.
-
-=cut
 
 */
 

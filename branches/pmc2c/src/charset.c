@@ -36,12 +36,12 @@ CHARSET *Parrot_ascii_charset_ptr;
  */
 
 typedef struct To_converter {
-    CHARSET *to;
-    charset_converter_t func;
+    NOTNULL(CHARSET *to);
+    NOTNULL(charset_converter_t func);
 } To_converter;
 
 typedef struct One_charset {
-    CHARSET *charset;
+    NOTNULL(CHARSET *charset);
     STRING  *name;
     int n_converters;
     To_converter *to_converters;
@@ -58,19 +58,23 @@ static All_charsets *all_charsets;
 
 /* HEADERIZER BEGIN: static */
 
-static INTVAL register_charset( Interp *interp,
-    const char *charsetname /*NN*/,
-    CHARSET *charset /*NN*/ )
+static INTVAL register_charset( PARROT_INTERP,
+    NOTNULL(const char *charsetname),
+    NOTNULL(CHARSET *charset) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static void register_static_converters( Interp *interp );
+static void register_static_converters( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
 /* HEADERIZER END: static */
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_MALLOC
 CHARSET *
 Parrot_new_charset(SHIM_INTERP)
-    /* MALLOC, WARN_UNUSED */
 {
     return mem_allocate_typed(CHARSET);
 }
@@ -94,9 +98,10 @@ Parrot_charsets_encodings_deinit(SHIM_INTERP)
 }
 
 PARROT_API
-CHARSET *
-Parrot_find_charset(SHIM_INTERP, const char *charsetname /*NN*/)
-    /* WARN_UNUSED */
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+const CHARSET *
+Parrot_find_charset(SHIM_INTERP, NOTNULL(const char *charsetname))
 {
     int i;
     const int n = all_charsets->n_charsets;
@@ -110,15 +115,14 @@ Parrot_find_charset(SHIM_INTERP, const char *charsetname /*NN*/)
 }
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 CHARSET *
-Parrot_load_charset(Interp *interp, const char *charsetname /*NN*/)
-    /* WARN_UNUSED, NORETURN */
+Parrot_load_charset(PARROT_INTERP, NOTNULL(const char *charsetname))
 {
-    UNUSED(interp);
     UNUSED(charsetname);
 
     real_exception(interp, NULL, UNIMPLEMENTED, "Can't load charsets yet");
-    return NULL;
 }
 
 /*
@@ -130,9 +134,9 @@ Return the number of the charset or -1 if not found.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_charset_number(Interp *interp, STRING *charsetname /*NN*/)
-    /* WARN_UNUSED */
+Parrot_charset_number(PARROT_INTERP, NOTNULL(STRING *charsetname))
 {
     const int n = all_charsets->n_charsets;
     int i;
@@ -153,9 +157,9 @@ Return the number of the charset of the given string or -1 if not found.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_charset_number_of_str(SHIM_INTERP, STRING *src /*NN*/)
-    /* WARN_UNUSED */
+Parrot_charset_number_of_str(SHIM_INTERP, NOTNULL(STRING *src))
 {
     int i;
     const int n = all_charsets->n_charsets;
@@ -168,9 +172,10 @@ Parrot_charset_number_of_str(SHIM_INTERP, STRING *src /*NN*/)
 }
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 STRING*
 Parrot_charset_name(SHIM_INTERP, INTVAL number_of_charset)
-    /* WARN_UNUSED */
 {
     if (number_of_charset >= all_charsets->n_charsets)
         return NULL;
@@ -178,9 +183,10 @@ Parrot_charset_name(SHIM_INTERP, INTVAL number_of_charset)
 }
 
 PARROT_API
-CHARSET*
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+const CHARSET *
 Parrot_get_charset(SHIM_INTERP, INTVAL number_of_charset)
-    /* WARN_UNUSED */
 {
     if (number_of_charset >= all_charsets->n_charsets)
         return NULL;
@@ -188,9 +194,10 @@ Parrot_get_charset(SHIM_INTERP, INTVAL number_of_charset)
 }
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 const char *
 Parrot_charset_c_name(SHIM_INTERP, INTVAL number_of_charset)
-    /* WARN_UNUSED */
 {
     if (number_of_charset >= all_charsets->n_charsets)
         return NULL;
@@ -198,8 +205,8 @@ Parrot_charset_c_name(SHIM_INTERP, INTVAL number_of_charset)
 }
 
 static INTVAL
-register_charset(Interp *interp, const char *charsetname /*NN*/,
-        CHARSET *charset /*NN*/)
+register_charset(PARROT_INTERP, NOTNULL(const char *charsetname),
+        NOTNULL(CHARSET *charset))
 {
     const int n = all_charsets->n_charsets;
     int i;
@@ -227,7 +234,7 @@ register_charset(Interp *interp, const char *charsetname /*NN*/,
 }
 
 static void
-register_static_converters(Interp *interp)
+register_static_converters(PARROT_INTERP)
 {
     Parrot_register_charset_converter(interp,
             Parrot_iso_8859_1_charset_ptr, Parrot_ascii_charset_ptr,
@@ -246,8 +253,8 @@ register_static_converters(Interp *interp)
 
 PARROT_API
 INTVAL
-Parrot_register_charset(Interp *interp, const char *charsetname /*NN*/,
-        CHARSET *charset /*NN*/)
+Parrot_register_charset(PARROT_INTERP, NOTNULL(const char *charsetname),
+        NOTNULL(CHARSET *charset))
 {
     if (!all_charsets) {
         all_charsets = mem_allocate_typed(All_charsets);
@@ -278,7 +285,7 @@ Parrot_register_charset(Interp *interp, const char *charsetname /*NN*/,
 
 PARROT_API
 void
-Parrot_charsets_encodings_init(Interp *interp /*NN*/)
+Parrot_charsets_encodings_init(PARROT_INTERP)
 {
     /* the order is crucial here:
      * 1) encodings, default = fixed_8
@@ -307,25 +314,28 @@ Parrot_charsets_encodings_init(Interp *interp /*NN*/)
 PARROT_API
 INTVAL
 Parrot_make_default_charset(SHIM_INTERP, SHIM(const char *charsetname),
-        CHARSET *charset /*NN*/)
+        NOTNULL(CHARSET *charset))
 {
     Parrot_default_charset_ptr = charset;
     return 1;
 }
 
 PARROT_API
-CHARSET *
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+const CHARSET *
 Parrot_default_charset(SHIM_INTERP)
-    /* WARN_UNUSED */
 {
     return Parrot_default_charset_ptr;
 }
 
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 charset_converter_t
-Parrot_find_charset_converter(SHIM_INTERP, CHARSET *lhs /*NN*/, CHARSET *rhs /*NN*/)
-    /* WARN_UNUSED */
+Parrot_find_charset_converter(SHIM_INTERP,
+        NOTNULL(const CHARSET *lhs), NOTNULL(const CHARSET *rhs))
 {
     int i;
     const int n = all_charsets->n_charsets;
@@ -348,7 +358,8 @@ Parrot_find_charset_converter(SHIM_INTERP, CHARSET *lhs /*NN*/, CHARSET *rhs /*N
 PARROT_API
 void
 Parrot_register_charset_converter(SHIM_INTERP,
-        CHARSET *lhs /*NN*/, CHARSET *rhs /*NN*/, charset_converter_t func /*NN*/)
+        NOTNULL(const CHARSET *lhs), NOTNULL(CHARSET *rhs),
+        NOTNULL(charset_converter_t func))
 {
     const int n = all_charsets->n_charsets;
     int i;

@@ -23,16 +23,23 @@ representation.
 
 /* HEADERIZER BEGIN: static */
 
-static size_t PIO_utf8_read( Interp *interp,
-    ParrotIOLayer *layer,
-    ParrotIO *io,
-    STRING **buf );
+static size_t PIO_utf8_read( PARROT_INTERP,
+    NOTNULL(ParrotIOLayer *layer),
+    NOTNULL(ParrotIO *io),
+    NOTNULL(STRING **buf) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
-static size_t PIO_utf8_write( Interp *interp,
-    ParrotIOLayer *l /*NN*/,
-    ParrotIO *io,
-    STRING *s )
-        __attribute__nonnull__(2);
+static size_t PIO_utf8_write( PARROT_INTERP,
+    NOTNULL(ParrotIOLayer *l),
+    NOTNULL(ParrotIO *io),
+    NOTNULL(STRING *s) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 /* HEADERIZER END: static */
 
@@ -61,14 +68,14 @@ static const ParrotIOLayerAPI pio_utf8_layer_api = {
     PIO_null_getcount,
     PIO_null_fill,
     PIO_null_eof,
-    0, /* no poll */
-    0, /* no socket */
-    0, /* no connect */
-    0, /* no send */
-    0, /* no recv */
-    0, /* no bind */
-    0, /* no listen */
-    0  /* no accept */
+    NULL, /* no poll */
+    NULL, /* no socket */
+    NULL, /* no connect */
+    NULL, /* no send */
+    NULL, /* no recv */
+    NULL, /* no bind */
+    NULL, /* no listen */
+    NULL  /* no accept */
 };
 
 ParrotIOLayer pio_utf8_layer = {
@@ -76,9 +83,11 @@ ParrotIOLayer pio_utf8_layer = {
     "utf8",
     0,
     &pio_utf8_layer_api,
-    0, 0
+    NULL, NULL
 };
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 ParrotIOLayer *
 PIO_utf8_register_layer(void)
 {
@@ -86,8 +95,8 @@ PIO_utf8_register_layer(void)
 }
 
 static size_t
-PIO_utf8_read(Interp *interp, ParrotIOLayer *layer, ParrotIO *io,
-              STRING **buf)
+PIO_utf8_read(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer),
+        NOTNULL(ParrotIO *io), NOTNULL(STRING **buf))
 {
     STRING *s, *s2;
     String_iter iter;
@@ -130,7 +139,7 @@ ok:
 }
 
 static size_t
-PIO_utf8_write(Interp *interp, ParrotIOLayer *l /*NN*/, ParrotIO *io, STRING *s)
+PIO_utf8_write(PARROT_INTERP, NOTNULL(ParrotIOLayer *l), NOTNULL(ParrotIO *io), NOTNULL(STRING *s))
 {
     STRING *dest;
 

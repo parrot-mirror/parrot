@@ -19,24 +19,28 @@
 /* HEADERIZER BEGIN: static */
 
 static SymReg * _get_sym_typed(
-    const SymHash *hsh /*NN*/,
-    const char *name /*NN*/,
+    NOTNULL(const SymHash *hsh),
+    NOTNULL(const char *name),
     int t )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static char * add_ns( Interp *interp, char *name /*NN*/ )
+static char * add_ns( PARROT_INTERP, NOTNULL(char *name) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static SymReg* mk_pmc_const_2( Interp *interp /*NN*/,
-    IMC_Unit *unit,
-    SymReg *left /*NN*/,
-    SymReg *rhs /*NN*/ )
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static SymReg* mk_pmc_const_2( PARROT_INTERP,
+    NOTNULL(IMC_Unit *unit),
+    NOTNULL(SymReg *left),
+    NOTNULL(SymReg *rhs) )
         __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static void resize_symhash( SymHash *hsh /*NN*/ )
+static void resize_symhash( NOTNULL(SymHash *hsh) )
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
@@ -53,9 +57,9 @@ push_namespace(char * name)
 }
 
 void
-pop_namespace(char *name /*NULLOK*/)
+pop_namespace(NULLOK(char *name))
 {
-    Namespace * ns = _namespace;
+    Namespace * const ns = _namespace;
 
     if (ns == NULL) {
         fprintf(stderr, "pop() on empty namespace stack\n");
@@ -80,7 +84,7 @@ pop_namespace(char *name /*NULLOK*/)
 
 /* Gets a symbol from the hash */
 static SymReg *
-_get_sym_typed(const SymHash *hsh /*NN*/, const char *name /*NN*/, int t)
+_get_sym_typed(NOTNULL(const SymHash *hsh), NOTNULL(const char *name), int t)
 {
     const int i = hash_str(name) % hsh->size;
     SymReg   *p;
@@ -104,7 +108,7 @@ _get_sym_typed(const SymHash *hsh /*NN*/, const char *name /*NN*/, int t)
  * should be changed.
  */
 SymReg *
-_mk_symreg(SymHash* hsh /*NN*/, char *name /*NN*/, int t)
+_mk_symreg(NOTNULL(SymHash* hsh), NOTNULL(char *name), int t)
 {
     SymReg * r = _get_sym_typed(hsh, name, t);
 
@@ -133,7 +137,7 @@ _mk_symreg(SymHash* hsh /*NN*/, char *name /*NN*/, int t)
 }
 
 SymReg *
-mk_symreg(Interp *interp /*NN*/, char *name /*NN*/, int t)
+mk_symreg(PARROT_INTERP, NOTNULL(char *name), int t)
 {
     IMC_Unit * const unit = IMCC_INFO(interp)->last_unit;
     return _mk_symreg(&unit->hash, name, t);
@@ -142,9 +146,9 @@ mk_symreg(Interp *interp /*NN*/, char *name /*NN*/, int t)
 /*
  * Dump a SymReg to a printable format.
  */
+PARROT_MALLOC
 char *
-symreg_to_str(const SymReg *s /*NN*/)
-    /* MALLOC, WARN_UNUSED */
+symreg_to_str(NOTNULL(const SymReg *s))
 {
     /* NOTE: the below magic number encompasses all the quoted strings which
      * may be included in the sprintf output */
@@ -172,7 +176,7 @@ symreg_to_str(const SymReg *s /*NN*/)
 
 
 SymReg *
-mk_temp_reg(Interp *interp /*NN*/, int t)
+mk_temp_reg(PARROT_INTERP, int t)
 {
     char buf[128];
     static int temp;
@@ -181,7 +185,7 @@ mk_temp_reg(Interp *interp /*NN*/, int t)
 }
 
 SymReg *
-mk_pcc_sub(Interp *interp /*NN*/, char *name /*NN*/, int proto)
+mk_pcc_sub(PARROT_INTERP, NOTNULL(char *name), int proto)
 {
     IMC_Unit * const unit = IMCC_INFO(interp)->last_unit;
     SymReg   * const r    = _mk_symreg(&unit->hash, name, proto);
@@ -196,7 +200,7 @@ mk_pcc_sub(Interp *interp /*NN*/, char *name /*NN*/, int proto)
  * add current namespace to sub decl
  */
 void
-add_namespace(Interp *interp /*NN*/, struct _IMC_Unit *unit /*NN*/)
+add_namespace(PARROT_INTERP, NOTNULL(struct _IMC_Unit *unit))
 {
     SymReg * const ns = IMCC_INFO(interp)->cur_namespace;
 
@@ -225,7 +229,7 @@ add_namespace(Interp *interp /*NN*/, struct _IMC_Unit *unit /*NN*/)
  * Add a register or constant to the function arg list
  */
 void
-add_pcc_arg(SymReg *r /*NN*/, SymReg *arg /*NN*/)
+add_pcc_arg(NOTNULL(SymReg *r), NOTNULL(SymReg *arg))
 {
     const int n      = r->pcc_sub->nargs;
 
@@ -243,13 +247,13 @@ add_pcc_arg(SymReg *r /*NN*/, SymReg *arg /*NN*/)
 
 /* XXX Why do we have both add_pcc_arg and add_pcc_param? */
 void
-add_pcc_param(SymReg *r /*NN*/, SymReg *arg /*NN*/)
+add_pcc_param(NOTNULL(SymReg *r), NOTNULL(SymReg *arg))
 {
     add_pcc_arg(r, arg);
 }
 
 void
-add_pcc_result(SymReg *r /*NN*/, SymReg *arg /*NN*/)
+add_pcc_result(NOTNULL(SymReg *r), NOTNULL(SymReg *arg))
 {
     const int n     = r->pcc_sub->nret;
 
@@ -271,7 +275,7 @@ add_pcc_result(SymReg *r /*NN*/, SymReg *arg /*NN*/)
 }
 
 void
-add_pcc_multi(SymReg *r /*NN*/, SymReg *arg)
+add_pcc_multi(NOTNULL(SymReg *r), SymReg *arg)
 {
     const int n       = r->pcc_sub->nmulti;
 
@@ -283,25 +287,25 @@ add_pcc_multi(SymReg *r /*NN*/, SymReg *arg)
 }
 
 void
-add_pcc_return(SymReg *r /*NN*/, SymReg *arg /*NN*/)
+add_pcc_return(NOTNULL(SymReg *r), NOTNULL(SymReg *arg))
 {
     add_pcc_result(r, arg);
 }
 
 void
-add_pcc_sub(SymReg *r /*NN*/, SymReg * arg)
+add_pcc_sub(NOTNULL(SymReg *r), SymReg * arg)
 {
     r->pcc_sub->sub = arg;
 }
 
 void
-add_pcc_cc(SymReg *r /*NN*/, SymReg *arg)
+add_pcc_cc(NOTNULL(SymReg *r), SymReg *arg)
 {
     r->pcc_sub->cc = arg;
 }
 
 SymReg *
-mk_pasm_reg(Interp *interp /*NN*/, char *name)
+mk_pasm_reg(PARROT_INTERP, char *name)
 {
     SymReg * r = _get_sym(&IMCC_INFO(interp)->cur_unit->hash, name);
 
@@ -320,7 +324,7 @@ mk_pasm_reg(Interp *interp /*NN*/, char *name)
 }
 
 char *
-_mk_fullname(const Namespace *ns /*NULLOK*/, const char *name /*NN*/)
+_mk_fullname(NULLOK(const Namespace *ns), NOTNULL(const char *name))
 {
     char * result;
 
@@ -334,14 +338,16 @@ _mk_fullname(const Namespace *ns /*NULLOK*/, const char *name /*NN*/)
 }
 
 char *
-mk_fullname(const char *name /*NN*/)
+mk_fullname(NOTNULL(const char *name))
 {
     return _mk_fullname(_namespace, name);
 }
 
 /* Makes a new identifier */
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 SymReg *
-mk_ident(Interp *interp /*NN*/, char *name /*NN*/, int t)
+mk_ident(PARROT_INTERP, NOTNULL(char *name), int t)
 {
     char   *fullname = _mk_fullname(_namespace, name);
     SymReg *r;
@@ -368,8 +374,10 @@ mk_ident(Interp *interp /*NN*/, char *name /*NN*/, int t)
     return r;
 }
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 SymReg*
-mk_ident_ur(Interp *interp /*NN*/, char *name, int t)
+mk_ident_ur(PARROT_INTERP, NOTNULL(char *name), int t)
 {
     SymReg * const r = mk_ident(interp, name, t);
     r->usage        |= U_NON_VOLATILE;
@@ -377,8 +385,11 @@ mk_ident_ur(Interp *interp /*NN*/, char *name, int t)
     return r;
 }
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static SymReg*
-mk_pmc_const_2(Interp *interp /*NN*/, IMC_Unit *unit, SymReg *left /*NN*/, SymReg *rhs /*NN*/)
+mk_pmc_const_2(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *left), NOTNULL(SymReg *rhs))
+    /* XXX This always returns NULL.  Probably shouldn't return anything then. */
 {
     SymReg *r[2];
     char   *name;
@@ -420,8 +431,8 @@ mk_pmc_const_2(Interp *interp /*NN*/, IMC_Unit *unit, SymReg *left /*NN*/, SymRe
 
 /* Makes a new identifier constant with value val */
 SymReg *
-mk_const_ident(Interp *interp /*NN*/,
-        char *name /*NN*/, int t, SymReg *val /*NN*/, int global)
+mk_const_ident(PARROT_INTERP,
+        NOTNULL(char *name), int t, NOTNULL(SymReg *val), int global)
 {
     SymReg *r;
 
@@ -461,7 +472,7 @@ mk_const_ident(Interp *interp /*NN*/,
 
 /* Makes a new constant */
 SymReg *
-_mk_const(SymHash *hsh /*NN*/, char *name /*NN*/, int t)
+_mk_const(NOTNULL(SymHash *hsh), NOTNULL(const char *name), int t)
 {
     SymReg * const r = _mk_symreg(hsh, name, t);
     r->type          = VTCONST;
@@ -478,7 +489,7 @@ _mk_const(SymHash *hsh /*NN*/, char *name /*NN*/, int t)
 }
 
 SymReg *
-mk_const(Interp *interp /*NN*/, char * name, int t)
+mk_const(PARROT_INTERP, NOTNULL(const char *name), int t)
 {
     SymHash * const h = &IMCC_INFO(interp)->ghash;
 
@@ -490,7 +501,7 @@ mk_const(Interp *interp /*NN*/, char * name, int t)
 
 /* add namespace to sub if any */
 static char *
-add_ns(Interp *interp, char *name /*NN*/)
+add_ns(PARROT_INTERP, NOTNULL(char *name))
 {
     int len, l;
     char *ns_name, *p;
@@ -524,7 +535,7 @@ add_ns(Interp *interp, char *name /*NN*/)
 
 /* Makes a new address */
 SymReg *
-_mk_address(Interp *interp /*NN*/, SymHash *hsh /*NN*/, char *name /*NN*/,
+_mk_address(PARROT_INTERP, NOTNULL(SymHash *hsh), NOTNULL(char *name),
             int uniq)
 {
     SymReg * r;
@@ -564,13 +575,14 @@ _mk_address(Interp *interp /*NN*/, SymHash *hsh /*NN*/, char *name /*NN*/,
 
 /* Eventually make mk_address static */
 SymReg *
-mk_address(Interp *interp /*NN*/, char *name, int uniq)
+mk_address(PARROT_INTERP, char *name, int uniq)
 {
-    SymHash * const h = *name == '_'
+    const int begins_with_underscore = *name == '_';
+    SymHash * const h = begins_with_underscore
         ? &IMCC_INFO(interp)->ghash : &IMCC_INFO(interp)->cur_unit->hash;
     SymReg  * const s = _mk_address(interp, h, name, uniq);
 
-    if (*name == '_')
+    if (begins_with_underscore)
        s->usage |= U_FIXUP;
 
     return s;
@@ -581,7 +593,7 @@ mk_address(Interp *interp /*NN*/, char *name, int uniq)
  * Label gets a fixup entry.
  */
 SymReg *
-mk_sub_label(Interp *interp /*NN*/, char *name)
+mk_sub_label(PARROT_INTERP, NOTNULL(char *name))
 {
     SymReg * const s = _mk_address(interp, &IMCC_INFO(interp)->ghash,
             name, U_add_uniq_sub);
@@ -595,7 +607,7 @@ mk_sub_label(Interp *interp /*NN*/, char *name)
  * Make a symbol for a label, symbol gets a fixup entry.
  */
 SymReg *
-mk_sub_address(Interp *interp /*NN*/, char *name)
+mk_sub_address(PARROT_INTERP, NOTNULL(char *name))
 {
     SymReg * const s = _mk_address(interp, &IMCC_INFO(interp)->ghash,
             name, U_add_all);
@@ -609,14 +621,14 @@ mk_sub_address(Interp *interp /*NN*/, char *name)
  * Make a local symbol, no fixup entry.
  */
 SymReg *
-mk_local_label(Interp *interp /*NN*/, char *name)
+mk_local_label(PARROT_INTERP, NOTNULL(char *name))
 {
     IMC_Unit * const unit = IMCC_INFO(interp)->last_unit;
     return _mk_address(interp, &unit->hash, name, U_add_uniq_label);
 }
 
 SymReg *
-mk_label_address(Interp *interp /*NN*/, char *name)
+mk_label_address(PARROT_INTERP, NOTNULL(char *name))
 {
     IMC_Unit * const unit = IMCC_INFO(interp)->last_unit;
     return _mk_address(interp, &unit->hash, name, U_add_once);
@@ -661,20 +673,19 @@ mk_label_address(Interp *interp /*NN*/, char *name)
  *
  */
 
+PARROT_MALLOC
 SymReg *
-dup_sym(const SymReg *r /*NN*/)
-    /* MALLOC, WARN_UNUSED */
+dup_sym(NOTNULL(const SymReg *r))
 {
     SymReg * const new_sym = mem_allocate_typed(SymReg);
-
-    *new_sym      = *r;
+    STRUCT_COPY(new_sym,r);
     new_sym->name = str_dup(r->name);
 
     return new_sym;
 }
 
 SymReg *
-link_keys(Interp *interp /*NN*/, int nargs, SymReg * keys[], int force)
+link_keys(PARROT_INTERP, int nargs, NOTNULL(SymReg * keys[]), int force)
 {
     SymReg *key, *keychain;
     int i, len, any_slice;
@@ -756,7 +767,7 @@ link_keys(Interp *interp /*NN*/, int nargs, SymReg * keys[], int force)
 }
 
 void
-free_sym(SymReg *r /*NN*/)
+free_sym(NOTNULL(SymReg *r))
 {
     if (r->pcc_sub) {
         if (r->pcc_sub->args)
@@ -782,7 +793,7 @@ free_sym(SymReg *r /*NN*/)
  */
 
 void
-create_symhash(SymHash *hash /*NN*/)
+create_symhash(NOTNULL(SymHash *hash))
 {
    hash->data    = (SymReg**)mem_sys_allocate_zeroed(16 * sizeof (SymReg*));
    hash->size    = 16;
@@ -790,7 +801,7 @@ create_symhash(SymHash *hash /*NN*/)
 }
 
 static void
-resize_symhash(SymHash *hsh /*NN*/)
+resize_symhash(NOTNULL(SymHash *hsh))
 {
     SymHash nh;
     SymReg *r, *next;
@@ -839,7 +850,7 @@ resize_symhash(SymHash *hsh /*NN*/)
 
 /* Stores a symbol into the hash */
 void
-_store_symreg(SymHash *hsh /*NN*/, SymReg *r /*NN*/)
+_store_symreg(NOTNULL(SymHash *hsh), NOTNULL(SymReg *r))
 {
     const int i = hash_str(r->name) % hsh->size;
 #if IMC_TRACE_HIGH
@@ -855,14 +866,14 @@ _store_symreg(SymHash *hsh /*NN*/, SymReg *r /*NN*/)
 }
 
 void
-store_symreg(Interp *interp /*NN*/, SymReg *r /*NN*/)
+store_symreg(PARROT_INTERP, NOTNULL(SymReg *r))
 {
     _store_symreg(&IMCC_INFO(interp)->cur_unit->hash, r);
 }
 
 /* Gets a symbol from the hash */
 SymReg *
-_get_sym(SymHash *hsh /*NN*/, const char *name /*NN*/)
+_get_sym(NOTNULL(SymHash *hsh), NOTNULL(const char *name))
 {
     SymReg   *p;
     const int i = hash_str(name) % hsh->size;
@@ -880,15 +891,15 @@ _get_sym(SymHash *hsh /*NN*/, const char *name /*NN*/)
 
 /* Gets a symbol from the current unit symbol table */
 SymReg *
-get_sym(Interp *interp /*NN*/, const char *name /*NN*/)
+get_sym(PARROT_INTERP, NOTNULL(const char *name))
 {
     return _get_sym(&IMCC_INFO(interp)->cur_unit->hash, name);
 }
 
 /* find a symbol hash or ghash */
 SymReg *
-_find_sym(Interp *interp, const Namespace *nspace /*NULLOK*/,
-    SymHash *hsh /*NN*/, const char *name /*NN*/)
+_find_sym(PARROT_INTERP, NULLOK(const Namespace *nspace),
+    NOTNULL(SymHash *hsh), NOTNULL(const char *name))
 {
     const Namespace * ns;
     SymReg *p;
@@ -918,7 +929,7 @@ _find_sym(Interp *interp, const Namespace *nspace /*NULLOK*/,
 
 
 SymReg *
-find_sym(Interp *interp /*NN*/, const char *name /*NN*/)
+find_sym(PARROT_INTERP, NOTNULL(const char *name))
 {
     if (IMCC_INFO(interp)->cur_unit)
         return _find_sym(interp, _namespace,
@@ -929,7 +940,7 @@ find_sym(Interp *interp /*NN*/, const char *name /*NN*/)
 
 
 void
-clear_sym_hash(SymHash *hsh /*NN*/)
+clear_sym_hash(NOTNULL(SymHash *hsh))
 {
     int i;
 
@@ -954,7 +965,7 @@ clear_sym_hash(SymHash *hsh /*NN*/)
 }
 
 void
-debug_dump_sym_hash(SymHash *hsh)
+debug_dump_sym_hash(NOTNULL(SymHash *hsh))
 {
     int i;
 
@@ -968,7 +979,7 @@ debug_dump_sym_hash(SymHash *hsh)
 
 /* Deletes all local symbols and clears life info */
 void
-clear_locals(struct _IMC_Unit *unit /*NULLOK*/)
+clear_locals(NULLOK(struct _IMC_Unit *unit))
 {
     SymHash * const hsh = &unit->hash;
     int i;
@@ -993,7 +1004,7 @@ clear_locals(struct _IMC_Unit *unit /*NULLOK*/)
 
 /* Clear global symbols */
 void
-clear_globals(Interp *interp /*NN*/)
+clear_globals(PARROT_INTERP)
 {
     SymHash * const hsh = &IMCC_INFO(interp)->ghash;
 
@@ -1004,9 +1015,9 @@ clear_globals(Interp *interp /*NN*/)
 
 /* utility functions: */
 
+PARROT_PURE_FUNCTION
 unsigned int
-hash_str(const char *str /*NN*/)
-    /* PURE, WARN_UNUSED */
+hash_str(NOTNULL(const char *str))
 {
     unsigned long  key = 0;
     const    char *s;

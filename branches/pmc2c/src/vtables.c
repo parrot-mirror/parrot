@@ -26,9 +26,10 @@ Creates and returns a pointer to the new C<VTABLE>.
 */
 
 PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 VTABLE *
 Parrot_new_vtable(SHIM_INTERP)
-    /* MALLOC, WARN_UNUSED */
 {
     return mem_allocate_zeroed_typed(VTABLE);
 }
@@ -42,9 +43,10 @@ Clones C<*base_vtable> and returns a pointer to the new C<VTABLE>.
 */
 
 PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 VTABLE *
-Parrot_clone_vtable(SHIM_INTERP, const VTABLE *base_vtable /*NN*/)
-    /* MALLOC, WARN_UNUSED */
+Parrot_clone_vtable(SHIM_INTERP, NOTNULL(const VTABLE *base_vtable))
 {
     VTABLE * const new_vtable = mem_allocate_typed(VTABLE);
     if (new_vtable) {
@@ -64,7 +66,7 @@ Destroys C<*vtable>.
 
 PARROT_API
 void
-Parrot_destroy_vtable(SHIM_INTERP, VTABLE *vtable /*NULLOK*/)
+Parrot_destroy_vtable(SHIM_INTERP, NULLOK(VTABLE *vtable))
 {
     /* XXX We sometimes get a type number allocated without any corresponding
      * vtable. E.g. if you load perl_group, perlscalar is this way.
@@ -77,7 +79,7 @@ Parrot_destroy_vtable(SHIM_INTERP, VTABLE *vtable /*NULLOK*/)
 }
 
 void
-parrot_alloc_vtables(Interp *interp /*NN*/)
+parrot_alloc_vtables(PARROT_INTERP)
 {
     interp->vtables =
         (VTABLE **)mem_sys_allocate_zeroed(sizeof (VTABLE *) * PARROT_MAX_CLASSES);
@@ -86,7 +88,7 @@ parrot_alloc_vtables(Interp *interp /*NN*/)
 }
 
 void
-parrot_realloc_vtables(Interp *interp /*NN*/)
+parrot_realloc_vtables(PARROT_INTERP)
 {
     /* 16 bigger seems reasonable, though it's only a pointer
        table and we could get bigger without blowing much memory
@@ -99,7 +101,7 @@ parrot_realloc_vtables(Interp *interp /*NN*/)
 }
 
 void
-parrot_free_vtables(Interp *interp /*NN*/)
+parrot_free_vtables(PARROT_INTERP)
 {
     int i;
 

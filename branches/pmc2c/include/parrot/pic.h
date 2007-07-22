@@ -65,68 +65,84 @@ typedef struct Parrot_pic_store_t {
     size_t n_mics;                      /* range check, debugging mainly */
 } Parrot_PIC_store;
 
-typedef int (*arg_pass_f)(Interp *, PMC *sig,
+typedef int (*arg_pass_f)(PARROT_INTERP, PMC *sig,
             char *src_base, void **src_pc, char *dest_base, void **dest_pc);
 
 /* more or less private interfaces */
 
 /* HEADERIZER BEGIN: src/pic.c */
 
-Parrot_MIC* parrot_PIC_alloc_mic( const Interp *interp /*NN*/, size_t n )
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+Parrot_MIC* parrot_PIC_alloc_mic( const PARROT_INTERP, size_t n );
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+Parrot_PIC* parrot_PIC_alloc_pic( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-Parrot_PIC* parrot_PIC_alloc_pic( Interp *interp /*NN*/ )
+void parrot_PIC_alloc_store( NOTNULL(struct PackFile_ByteCode *cs), size_t n )
         __attribute__nonnull__(1);
 
-void parrot_PIC_alloc_store( struct PackFile_ByteCode *cs /*NN*/, size_t n )
-        __attribute__nonnull__(1);
-
+PARROT_WARN_UNUSED_RESULT
 int parrot_pic_check_sig(
-    const PMC *sig1 /*NN*/,
-    const PMC *sig2 /*NN*/,
-    int *type /*NN*/ )
+    NOTNULL(const PMC *sig1),
+    NOTNULL(const PMC *sig2),
+    NOTNULL(int *type) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(3);
 
-void parrot_PIC_destroy( struct PackFile_ByteCode *cs /*NN*/ )
+void parrot_PIC_destroy( NOTNULL(struct PackFile_ByteCode *cs) )
         __attribute__nonnull__(1);
 
-void parrot_pic_find_infix_v_pp( Interp *interp,
-    PMC *left /*NN*/,
-    PMC *right /*NN*/,
-    Parrot_MIC *mic /*NN*/,
-    opcode_t *cur_opcode /*NN*/ )
+void parrot_pic_find_infix_v_pp( PARROT_INTERP,
+    NOTNULL(PMC *left),
+    NOTNULL(PMC *right),
+    NOTNULL(Parrot_MIC *mic),
+    NOTNULL(opcode_t *cur_opcode) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-int parrot_PIC_op_is_cached( int op_code )
-        __attribute__const__
-        __attribute__warn_unused_result__;
+PARROT_CONST_FUNCTION
+int parrot_PIC_op_is_cached( int op_code );
 
-void * parrot_pic_opcode( Interp *interp, INTVAL op );
-void parrot_PIC_prederef( Interp *interp,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+void * parrot_pic_opcode( PARROT_INTERP, INTVAL op )
+        __attribute__nonnull__(1);
+
+void parrot_PIC_prederef( PARROT_INTERP,
     opcode_t op,
-    void **pc_pred,
-    int core );
+    NOTNULL(void **pc_pred),
+    int core )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
 
 /* HEADERIZER END: src/pic.c */
 
 
 /* HEADERIZER BEGIN: src/pic_jit.c */
 
-int parrot_pic_is_safe_to_jit( Interp *interp /*NN*/,
-    PMC *sub /*NN*/,
-    PMC *sig_args,
-    PMC *sig_results,
-    int *flags )
+PARROT_WARN_UNUSED_RESULT
+int parrot_pic_is_safe_to_jit( PARROT_INTERP,
+    NOTNULL(PMC *sub),
+    NOTNULL(PMC *sig_args),
+    NOTNULL(PMC *sig_results),
+    NOTNULL(int *flags) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5);
+
+funcptr_t parrot_pic_JIT_sub( PARROT_INTERP, NOTNULL(PMC *sub), int flags )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-funcptr_t parrot_pic_JIT_sub( Interp *interp, PMC *sub, int flags );
 /* HEADERIZER END: src/pic_jit.c */
 
 #endif /* PARROT_PIC_H_GUARD */

@@ -14,12 +14,9 @@ typedef struct Small_Object_Arena {
 
 struct Small_Object_Pool;
 
-typedef void (*add_free_object_fn_type)(Interp *,
-                             struct Small_Object_Pool *, void *);
-typedef void * (*get_free_object_fn_type)(Interp *,
-                             struct Small_Object_Pool *);
-typedef void (*alloc_objects_fn_type)(Interp *,
-                           struct Small_Object_Pool *);
+typedef void (*add_free_object_fn_type)(PARROT_INTERP, struct Small_Object_Pool *, void *);
+typedef void * (*get_free_object_fn_type)(PARROT_INTERP, struct Small_Object_Pool *);
+typedef void (*alloc_objects_fn_type)(PARROT_INTERP, struct Small_Object_Pool *);
 
 #if PARROT_GC_GMS
 /*
@@ -133,46 +130,50 @@ typedef struct Small_Object_Pool {
 
 /* HEADERIZER BEGIN: src/gc/smallobject.c */
 
+PARROT_WARN_UNUSED_RESULT
 INTVAL contained_in_pool(
-    const Small_Object_Pool *pool /*NN*/,
-    const void *ptr )
+    NOTNULL(const Small_Object_Pool *pool),
+    NOTNULL(const void *ptr) )
         __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(2);
 
-void gc_pmc_ext_pool_init( Small_Object_Pool *pool /*NN*/ )
+void gc_pmc_ext_pool_init( NOTNULL(Small_Object_Pool *pool) )
         __attribute__nonnull__(1);
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Small_Object_Pool * new_small_object_pool(
     size_t object_size,
-    size_t objects_per_alloc )
-        __attribute__warn_unused_result__
-        __attribute__malloc__;
+    size_t objects_per_alloc );
 
-void Parrot_add_to_free_list( Interp *interp,
-    Small_Object_Pool *pool /*NN*/,
-    Small_Object_Arena *arena /*NN*/,
+void Parrot_add_to_free_list( PARROT_INTERP,
+    NOTNULL(Small_Object_Pool *pool),
+    NOTNULL(Small_Object_Arena *arena),
     UINTVAL start,
     UINTVAL end )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-void Parrot_append_arena_in_pool( Interp *interp /*NN*/,
-    Small_Object_Pool *pool /*NN*/,
-    Small_Object_Arena *new_arena /*NN*/,
+void Parrot_append_arena_in_pool( PARROT_INTERP,
+    NOTNULL(Small_Object_Pool *pool),
+    NOTNULL(Small_Object_Arena *new_arena),
     size_t size )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-void Parrot_gc_ms_init( Interp *interp /*NN*/ )
+void Parrot_gc_ms_init( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-int Parrot_is_const_pmc( Parrot_Interp interp /*NN*/, PMC *pmc )
-        __attribute__nonnull__(1);
+int Parrot_is_const_pmc( PARROT_INTERP, NOTNULL(PMC *pmc) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
-void Parrot_small_object_pool_merge( Interp *interp,
-    Small_Object_Pool *dest /*NN*/,
-    Small_Object_Pool *source /*NN*/ )
+void Parrot_small_object_pool_merge( PARROT_INTERP,
+    NOTNULL(Small_Object_Pool *dest),
+    NOTNULL(Small_Object_Pool *source) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 

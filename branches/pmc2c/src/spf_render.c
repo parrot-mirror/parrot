@@ -22,32 +22,63 @@ and its utility functions.
 #include "spf_render.str"
 #include <assert.h>
 
+typedef enum {
+    PHASE_FLAGS = 0,
+    PHASE_WIDTH,
+    PHASE_PREC,
+    PHASE_TYPE,
+    PHASE_TERM,
+    PHASE_DONE
+} PHASE;
+
+typedef struct SpfInfo_tag {
+    UINTVAL width;
+    UINTVAL prec;
+    INTVAL  flags;
+    INTVAL  type;
+    PHASE   phase;
+} SpfInfo;
+
+typedef enum {
+    FLAG_MINUS  = (1<<0),
+    FLAG_PLUS   = (1<<1),
+    FLAG_ZERO   = (1<<2),
+    FLAG_SPACE  = (1<<3),
+    FLAG_SHARP  = (1<<4),
+    FLAG_WIDTH  = (1<<5),
+    FLAG_PREC   = (1<<6)
+};
+
 /* HEADERIZER HFILE: include/parrot/misc.h */
 
 /* HEADERIZER BEGIN: static */
 
 static void gen_sprintf_call(
-    char *out /*NN*/,
-    SpfInfo info /*NN*/,
+    NOTNULL(char *out),
+    NOTNULL(SpfInfo *info),
     int thingy )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static STRING * handle_flags( Interp *interp /*NN*/,
-    SpfInfo info,
-    STRING *str /*NN*/,
+PARROT_CANNOT_RETURN_NULL
+static STRING * handle_flags( PARROT_INTERP,
+    NOTNULL(SpfInfo *info),
+    NOTNULL(STRING *str),
     INTVAL is_int_type,
-    STRING* prefix /*NULLOK*/ )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
-
-static STRING* str_append_w_flags( Interp *interp /*NN*/,
-    STRING* dest /*NN*/,
-    SpfInfo info,
-    STRING* src /*NN*/,
-    STRING *prefix /*NULLOK*/ )
+    NULLOK(STRING* prefix) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_CANNOT_RETURN_NULL
+static STRING* str_append_w_flags( PARROT_INTERP,
+    NOTNULL(STRING* dest),
+    NOTNULL(SpfInfo *info),
+    NOTNULL(STRING* src),
+    NULLOK(STRING *prefix) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
 /* HEADERIZER END: static */
@@ -68,9 +99,10 @@ Handles C<+>, C<->, C<0>, C<#>, space, width, and prec.
 
 */
 
+PARROT_CANNOT_RETURN_NULL
 static STRING *
-handle_flags(Interp *interp /*NN*/,
-             SpfInfo info, STRING *str /*NN*/, INTVAL is_int_type, STRING* prefix /*NULLOK*/)
+handle_flags(PARROT_INTERP, NOTNULL(SpfInfo *info), NOTNULL(STRING *str),
+        INTVAL is_int_type, NULLOK(STRING* prefix))
 {
     UINTVAL len = string_length(interp, str);
 
@@ -78,7 +110,7 @@ handle_flags(Interp *interp /*NN*/,
         if (info->flags & FLAG_PREC && info->prec == 0 &&
                 len == 1 &&
                 string_ord(interp, str, 0) == '0') {
-            string_chopn(interp, str, len, 1);
+            string_chopn_inplace(interp, str, len);
             len = 0;
         }
         /* +, space */
@@ -119,12 +151,12 @@ handle_flags(Interp *interp /*NN*/,
     else {
         /* string precision */
         if (info->flags & FLAG_PREC && info->prec == 0) {
-            string_chopn(interp, str, len, 1);
+            string_chopn_inplace(interp, str, len);
             len = 0;
         }
         else
             if (info->flags & FLAG_PREC && info->prec < len) {
-                string_chopn(interp, str, -(INTVAL)(info->prec), 1);
+                string_chopn_inplace(interp, str, -(INTVAL)(info->prec));
                 len = info->prec;
             }
     }
@@ -146,7 +178,7 @@ handle_flags(Interp *interp /*NN*/,
                     string_ord(interp, str,0) == '+')) {
                 STRING *temp = NULL;
                 string_substr(interp, str, 1, len-1, &temp, 0);
-                string_chopn(interp, str, -1, 1);
+                string_chopn_inplace(interp, str, -1);
                 str = string_append(interp, str, fill);
                 str = string_append(interp, str, temp);
             }
@@ -158,9 +190,10 @@ handle_flags(Interp *interp /*NN*/,
     return str;
 }
 
+PARROT_CANNOT_RETURN_NULL
 static STRING*
-str_append_w_flags(Interp *interp /*NN*/,
-        STRING* dest /*NN*/, SpfInfo info, STRING* src /*NN*/, STRING *prefix /*NULLOK*/)
+str_append_w_flags(PARROT_INTERP, NOTNULL(STRING* dest), NOTNULL(SpfInfo *info),
+        NOTNULL(STRING* src), NULLOK(STRING *prefix))
 {
     src = handle_flags(interp, info, src, 1, prefix);
     dest = string_append(interp, dest, src);
@@ -178,7 +211,7 @@ a float.
 */
 
 static void
-gen_sprintf_call(char *out /*NN*/, SpfInfo info /*NN*/, int thingy)
+gen_sprintf_call(NOTNULL(char *out), NOTNULL(SpfInfo *info), int thingy)
 {
     int i = 0;
 
@@ -235,10 +268,11 @@ This is the engine that does all the formatting.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_sprintf_format(Interp *interp /*NN*/,
-        STRING *pat /*NN*/, SPRINTF_OBJ *obj /*NN*/)
-    /* WARN_UNUSED */
+Parrot_sprintf_format(PARROT_INTERP,
+        NOTNULL(STRING *pat), NOTNULL(SPRINTF_OBJ *obj))
 {
     INTVAL i, len, old;
     /*
@@ -259,6 +293,7 @@ Parrot_sprintf_format(Interp *interp /*NN*/,
         if (string_ord(interp, pat, i) == '%') {        /* % */
             if (len) {
                 string_substr(interp, pat, old, len, &substr, 1);
+                /* XXX This shouldn't modify targ the pointer */
                 targ = string_append(interp, targ, substr);
             }
             len = 0;
@@ -277,7 +312,7 @@ Parrot_sprintf_format(Interp *interp /*NN*/,
                 HUGEINTVAL sharedint = 0;
 
                 /* Storage for flags, etc. */
-                struct spfinfo_t info = { 0, 0, 0, 0, 0 };
+                SpfInfo info = { 0, 0, 0, 0, 0 };
 
                 /* Reset temporaries */
                 tc[0] = '\0';

@@ -51,7 +51,7 @@ and imports many definitions from the full Lua compiler
     $P0 = get_hll_global ['Lua::Grammar'], 'ws'
     set_hll_global ['Lua::TestLex'], 'ws', $P0
 
-    $P0 = get_hll_global ['Lua::Grammar'], 'syntax_error'
+    $P0 = get_hll_global ['Lua::Grammar'], 'syntaxerror'
     set_hll_global ['Lua::TestLex'], 'die', $P0
     $P0 = get_hll_global ['Lua::Grammar'], 'name'
     set_hll_global ['Lua::TestLex'], 'Name', $P0
@@ -63,6 +63,8 @@ and imports many definitions from the full Lua compiler
     set_hll_global ['Lua::TestLex'], 'long_string', $P0
     $P0 = get_hll_global ['Lua::Grammar'], 'long_comment'
     set_hll_global ['Lua::TestLex'], 'long_comment', $P0
+    $P0 = get_hll_global ['Lua::Grammar'], 'shebang'
+    set_hll_global ['Lua::TestLex'], 'shebang', $P0
 
     # import Lua::PAST::Grammar::internal_error into Lua::DumpLex
     $P0 = get_hll_global ['Lua::PAST::Grammar'], 'internal_error'
@@ -71,7 +73,6 @@ and imports many definitions from the full Lua compiler
 
 .sub 'main' :main
     .param pmc args
-    load_bytecode 'PGE/Dumper.pbc'
     $P0 = compreg 'LuaTestLex'
     $P0.'command_line'(args)
 .end

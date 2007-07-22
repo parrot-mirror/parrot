@@ -29,7 +29,7 @@ contiguous region of memory.
 
 PARROT_API
 opcode_t
-PackFile_pack_size(Interp *interp, PackFile *self /*NN*/)
+PackFile_pack_size(PARROT_INTERP, NOTNULL(PackFile *self))
 {
     size_t size;
     PackFile_Directory * const dir = &self->directory;
@@ -62,7 +62,7 @@ Other pack routines are in F<src/packfile.c>.
 
 PARROT_API
 void
-PackFile_pack(Interp *interp, PackFile *self /*NN*/, opcode_t *cursor /*NN*/)
+PackFile_pack(PARROT_INTERP, NOTNULL(PackFile *self), NOTNULL(opcode_t *cursor))
 {
     opcode_t *ret;
 
@@ -102,7 +102,7 @@ constant table into a contiguous region of memory.
 
 PARROT_API
 size_t
-PackFile_ConstTable_pack_size(Interp *interp /*NN*/, PackFile_Segment *seg /*NN*/)
+PackFile_ConstTable_pack_size(PARROT_INTERP, NOTNULL(PackFile_Segment *seg))
 {
     opcode_t i;
     PackFile_ConstTable* const self = (PackFile_ConstTable *) seg;
@@ -128,18 +128,19 @@ C<PackFile_ConstTable_pack()>
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 opcode_t *
-PackFile_ConstTable_pack(Interp *interp,
-        PackFile_Segment *seg /*NN*/, opcode_t *cursor)
+PackFile_ConstTable_pack(PARROT_INTERP,
+        NOTNULL(PackFile_Segment *seg), NOTNULL(opcode_t *cursor))
 {
     PackFile_ConstTable * const self = (PackFile_ConstTable *)seg;
     opcode_t i;
 
     *cursor++ = self->const_count;
 
-    for (i = 0; i < self->const_count; i++) {
+    for (i = 0; i < self->const_count; i++)
         cursor = PackFile_Constant_pack(interp, self, self->constants[i], cursor);
-    }
 
     return cursor;
 }
@@ -155,8 +156,8 @@ constant is in constant table, so we have to search for it.
 
 PARROT_API
 int
-PackFile_find_in_const(Interp *interp /*NN*/,
-        const PackFile_ConstTable *ct /*NN*/, const PMC *key /*NN*/, int type)
+PackFile_find_in_const(PARROT_INTERP,
+        NOTNULL(const PackFile_ConstTable *ct), NOTNULL(const PMC *key), int type)
 {
     int i;
     for (i = 0; i < ct->const_count; i++)
@@ -189,10 +190,12 @@ The data is zero-padded to an opcode_t-boundary, so pad bytes may be added.
 */
 
 PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 opcode_t *
-PackFile_Constant_pack(Interp *interp,
-        const PackFile_ConstTable *const_table /*NN*/,
-        const PackFile_Constant *self /*NN*/, opcode_t *cursor /*NN*/)
+PackFile_Constant_pack(PARROT_INTERP,
+        NOTNULL(const PackFile_ConstTable *const_table),
+        NOTNULL(const PackFile_Constant *self), NOTNULL(opcode_t *cursor))
 {
     PMC *key;
     size_t i;

@@ -100,14 +100,6 @@ Get/set
 .end
 
 
-.sub 'pir' :method
-    .local pmc code
-    code = self.'cpir'()
-    # code = concat "    # POST::Node\n", code
-    .return (code)
-.end
-
-
 =item cpir()
 
 =cut
@@ -159,6 +151,8 @@ C<POST::Op> nodes represents any PIR opcodes.
 
 Get/set
 
+call, callmethod, tailcall, inline
+
 =cut
 
 .namespace [ 'POST::Op' ]
@@ -206,6 +200,7 @@ Get/set
     pirop = self.'pirop'()
     if pirop == 'call' goto pir_call
     if pirop == 'callmethod' goto pir_callmethod
+    if pirop == 'tailcall' goto pir_tailcall
     if pirop == 'inline' goto pir_inline
     code.'emit'('    %n %,', arglist :flat, 'n'=>pirop)
     .return (code)
@@ -214,7 +209,11 @@ Get/set
     .local pmc result, name
     result = self.'result'()
     name = shift arglist
+    if result == '' goto call_without_ret
     code.'emit'('    %r = %n(%,)', arglist :flat, 'r'=>result, 'n'=>name)
+    .return (code)
+  call_without_ret:
+    code.'emit'('    %n(%,)', arglist :flat, 'n'=>name)
     .return (code)
 
   pir_callmethod:
@@ -222,7 +221,17 @@ Get/set
     result = self.'result'()
     name = shift arglist
     invocant = shift arglist
+    if result == '' goto callmethod_without_ret
     code.'emit'('    %r = %i.%n(%,)', arglist :flat, 'r'=>result, 'i'=>invocant, 'n'=>name)
+    .return (code)
+  callmethod_without_ret:
+    code.'emit'('    %i.%n(%,)', arglist :flat, 'i'=>invocant, 'n'=>name)
+    .return (code)
+
+  pir_tailcall:
+    .local pmc name
+    name = shift arglist
+    code.'emit'('    .return %n(%,)', arglist :flat, 'n'=>name)
     .return (code)
 
   pir_inline:

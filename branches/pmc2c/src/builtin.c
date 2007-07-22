@@ -21,11 +21,11 @@ src/builtin.c - Builtin Methods
 
 
 typedef struct _builtin {
-    const char *c_name;         /* short name 'cos' */
-    const char *signature;      /* e.g. PP */
-    const char *c_ns;           /* namespace */
-    STRING *meth_name;          /* internal name e.g. '__cos' */
-    STRING *_namespace;          /* same */
+    NOTNULL( const char * const c_name );       /* short name 'cos' */
+    NOTNULL( const char * const signature );    /* e.g. PP */
+    NOTNULL( const char * const c_ns );         /* namespace */
+    NULLOK(  STRING *meth_name );               /* internal name e.g. '__cos' */
+    NULLOK(  STRING *_namespace );              /* same */
 } Builtins;
 
 #define N_BUILTINS (int)(sizeof (builtins) / sizeof (builtins[0]))
@@ -33,46 +33,46 @@ static Builtins builtins[] = {
     /*
      * Please keep this list sorted
      */
-    { "acos",   "PJO",          "Float",        0, 0 },
-    { "asec",   "PJO",          "Float",        0, 0 },
-    { "asin",   "PJO",          "Float",        0, 0 },
-    { "atan2",  "PJOP",         "Float",        0, 0 },
-    { "atan",   "PJO",          "Float",        0, 0 },
-    { "chdir",  "vJOS",         "OS",           0, 0 },
-    { "chroot", "vJOS",         "OS",           0, 0 },
-    { "copy",   "vJOSS",        "File",         0, 0 },
-    { "cosh",   "PJO",          "Float",        0, 0 },
-    { "cos",    "PJO",          "Float",        0, 0 },
-    { "cwd",    "SJO",          "OS",           0, 0 },
-    { "exp",    "PJO",          "Float",        0, 0 },
-    { "index",  "IJSS.I",       "String",       0, 0 },
-    { "is_integer","IJS",       "String",       0, 0 },
-    { "link",   "vJOSS",        "OS",           0, 0 },
-    { "ln",     "PJO",          "Float",        0, 0 },
-    { "log10",  "PJO",          "Float",        0, 0 },
-    { "log2",   "PJO",          "Float",        0, 0 },
-    { "lower",  "PJO",          "String",       0, 0 },
-    { "lstat",  "PJOS",         "OS",           0, 0 },
-    { "mkdir",  "vJOSI",        "OS",           0, 0 },
-    { "open",   "PJS.S",        "ParrotIO",     0, 0 },
-    { "puts",   "IJOS",         "ParrotIO",     0, 0 },
-    { "rename", "vJOSS",        "File",         0, 0 },
-    { "reverse","vJS",          "String",       0, 0 },
-    { "rm",     "vJOS",         "OS",           0, 0 },
-    { "say",    "IJOS",         "ParrotIO",     0, 0 },
-    { "say",    "IJS",          "ParrotIO",     0, 0 },
-    { "say",    "vJOS",         "ParrotIO",     0, 0 },
-    { "say",    "vJS",          "ParrotIO",     0, 0 },
-    { "sech",   "PJO",          "Float",        0, 0 },
-    { "sec",    "PJO",          "Float",        0, 0 },
-    { "sinh",   "PJO",          "Float",        0, 0 },
-    { "sin",    "PJO",          "Float",        0, 0 },
-    { "sqrt",   "PJO",          "Float",        0, 0 },
-    { "symlink","vJOSS",        "OS",           0, 0 },
-    { "tanh",   "PJO",          "Float",        0, 0 },
-    { "tan",    "PJO",          "Float",        0, 0 },
-    { "trans",  "vJSP",         "String",       0, 0 },
-    { "umask",  "IJOI",         "OS",           0, 0 },
+    { "acos",   "PJO",          "Float",        NULL, NULL },
+    { "asec",   "PJO",          "Float",        NULL, NULL },
+    { "asin",   "PJO",          "Float",        NULL, NULL },
+    { "atan2",  "PJOP",         "Float",        NULL, NULL },
+    { "atan",   "PJO",          "Float",        NULL, NULL },
+    { "chdir",  "vJOS",         "OS",           NULL, NULL },
+    { "chroot", "vJOS",         "OS",           NULL, NULL },
+    { "copy",   "vJOSS",        "File",         NULL, NULL },
+    { "cosh",   "PJO",          "Float",        NULL, NULL },
+    { "cos",    "PJO",          "Float",        NULL, NULL },
+    { "cwd",    "SJO",          "OS",           NULL, NULL },
+    { "exp",    "PJO",          "Float",        NULL, NULL },
+    { "index",  "IJSS.I",       "String",       NULL, NULL },
+    { "is_integer","IJS",       "String",       NULL, NULL },
+    { "link",   "vJOSS",        "OS",           NULL, NULL },
+    { "ln",     "PJO",          "Float",        NULL, NULL },
+    { "log10",  "PJO",          "Float",        NULL, NULL },
+    { "log2",   "PJO",          "Float",        NULL, NULL },
+    { "lower",  "PJO",          "String",       NULL, NULL },
+    { "lstat",  "PJOS",         "OS",           NULL, NULL },
+    { "mkdir",  "vJOSI",        "OS",           NULL, NULL },
+    { "open",   "PJS.S",        "ParrotIO",     NULL, NULL },
+    { "puts",   "IJOS",         "ParrotIO",     NULL, NULL },
+    { "rename", "vJOSS",        "File",         NULL, NULL },
+    { "reverse","vJS",          "String",       NULL, NULL },
+    { "rm",     "vJOS",         "OS",           NULL, NULL },
+    { "say",    "IJOS",         "ParrotIO",     NULL, NULL },
+    { "say",    "IJS",          "ParrotIO",     NULL, NULL },
+    { "say",    "vJOS",         "ParrotIO",     NULL, NULL },
+    { "say",    "vJS",          "ParrotIO",     NULL, NULL },
+    { "sech",   "PJO",          "Float",        NULL, NULL },
+    { "sec",    "PJO",          "Float",        NULL, NULL },
+    { "sinh",   "PJO",          "Float",        NULL, NULL },
+    { "sin",    "PJO",          "Float",        NULL, NULL },
+    { "sqrt",   "PJO",          "Float",        NULL, NULL },
+    { "symlink","vJOSS",        "OS",           NULL, NULL },
+    { "tanh",   "PJO",          "Float",        NULL, NULL },
+    { "tan",    "PJO",          "Float",        NULL, NULL },
+    { "trans",  "vJSP",         "String",       NULL, NULL },
+    { "umask",  "IJOI",         "OS",           NULL, NULL },
     /*
      * Please keep this list sorted
      */
@@ -82,17 +82,18 @@ static Builtins builtins[] = {
 
 /* HEADERIZER BEGIN: static */
 
-static int check_builtin_sig( size_t i, const char *sig /*NN*/, int pass )
-        __attribute__nonnull__(2)
-        __attribute__warn_unused_result__;
+PARROT_WARN_UNUSED_RESULT
+static int check_builtin_sig( size_t i, NOTNULL(const char *sig), int pass )
+        __attribute__nonnull__(2);
 
-static int find_builtin( const char *func /*NN*/ )
+PARROT_WARN_UNUSED_RESULT
+static int find_builtin( NOTNULL(const char *func) )
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+static int find_builtin_s( PARROT_INTERP, NOTNULL(STRING *func) )
         __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-static int find_builtin_s( Interp *interp, STRING *func /*NN*/ )
-        __attribute__nonnull__(2)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(2);
 
 /* HEADERIZER END: static */
 
@@ -113,7 +114,7 @@ Return the NCI PMC of the builtin or NULL.
 */
 
 void
-Parrot_init_builtins(Interp *interp /*NN*/)
+Parrot_init_builtins(PARROT_INTERP)
 {
     size_t i;
 
@@ -135,9 +136,9 @@ Parrot_init_builtins(Interp *interp /*NN*/)
     }
 }
 
+PARROT_WARN_UNUSED_RESULT
 static int
-find_builtin(const char *func /*NN*/)
-    /* WARN_UNUSED */
+find_builtin(NOTNULL(const char *func))
 {
     int low  = 0;
     int high = N_BUILTINS - 1;
@@ -163,9 +164,9 @@ find_builtin(const char *func /*NN*/)
     return -1;
 }
 
+PARROT_WARN_UNUSED_RESULT
 static int
-find_builtin_s(Interp *interp, STRING *func /*NN*/)
-    /* WARN_UNUSED */
+find_builtin_s(PARROT_INTERP, NOTNULL(STRING *func))
 {
     int low  = 0;
     int high = N_BUILTINS - 1;
@@ -185,9 +186,9 @@ find_builtin_s(Interp *interp, STRING *func /*NN*/)
     return -1;
 }
 
+PARROT_WARN_UNUSED_RESULT
 static int
-check_builtin_sig(size_t i, const char *sig /*NN*/, int pass)
-    /* WARN_UNUSED */
+check_builtin_sig(size_t i, NOTNULL(const char *sig), int pass)
 {
     const Builtins * const b = builtins + i;
     const char *p;
@@ -218,9 +219,9 @@ check_builtin_sig(size_t i, const char *sig /*NN*/, int pass)
     return 0;
 }
 
+PARROT_WARN_UNUSED_RESULT
 int
-Parrot_is_builtin(const char *func /*NN*/, const char *sig /*NULLOK*/)
-    /* WARN_UNUSED */
+Parrot_is_builtin(NOTNULL(const char *func), NULLOK(const char *sig))
 {
     int bi, i, pass;
 
@@ -246,9 +247,10 @@ again:
     return -1;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC*
-Parrot_find_builtin(Interp *interp, STRING *func /*NN*/)
-    /* WARN_UNUSED */
+Parrot_find_builtin(PARROT_INTERP, NOTNULL(STRING *func))
 {
     const int i = find_builtin_s(interp, func);
     if (i < 0)
@@ -261,25 +263,29 @@ Parrot_find_builtin(Interp *interp, STRING *func /*NN*/)
                                     builtins[i].meth_name);
 }
 
+PARROT_CONST_FUNCTION
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 const char *
 Parrot_builtin_get_c_namespace(int bi)
-    /* CONST, WARN_UNUSED */
 {
     assert(bi >= 0 && bi < N_BUILTINS);
     return builtins[bi].c_ns;
 }
 
+PARROT_CONST_FUNCTION
+PARROT_WARN_UNUSED_RESULT
 int
 Parrot_builtin_is_class_method(int bi)
-    /* CONST, WARN_UNUSED */
 {
     assert(bi >= 0 && bi < N_BUILTINS);
     return builtins[bi].signature[2] != 'O';
 }
 
+PARROT_CONST_FUNCTION
+PARROT_WARN_UNUSED_RESULT
 int
 Parrot_builtin_is_void(int bi)
-    /* CONST, WARN_UNUSED */
 {
     assert(bi >= 0 && bi < N_BUILTINS);
     return builtins[bi].signature[0] == 'v';

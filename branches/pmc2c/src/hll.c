@@ -62,7 +62,9 @@ the context.  If no type is registered, returns C<core_type>.
 
 /* HEADERIZER BEGIN: static */
 
-static PMC* new_hll_entry( Interp *interp /*NN*/ )
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* new_hll_entry( PARROT_INTERP )
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
@@ -92,8 +94,10 @@ enum {
 #define ASSERT_CONST_STRING(src) assert(PObj_constant_TEST(src))
 
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static PMC*
-new_hll_entry(Interp *interp /*NN*/)
+new_hll_entry(PARROT_INTERP)
 {
     PMC * const hll_info = interp->HLL_info;
     /*
@@ -111,7 +115,7 @@ new_hll_entry(Interp *interp /*NN*/)
 
 PARROT_API
 INTVAL
-Parrot_register_HLL(Interp *interp /*NN*/, STRING *hll_name /*NULLOK*/, STRING *hll_lib)
+Parrot_register_HLL(PARROT_INTERP, NULLOK(STRING *hll_name), NULLOK(STRING *hll_lib))
 {
     PMC *entry, *name, *type_hash, *ns_hash, *hll_info;
     INTVAL idx;
@@ -199,9 +203,9 @@ Parrot_register_HLL(Interp *interp /*NN*/, STRING *hll_name /*NULLOK*/, STRING *
 }
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_get_HLL_id(Interp *interp /*NN*/, STRING *hll_name /*NULLOK*/)
-    /* WARN_UNUSED */
+Parrot_get_HLL_id(PARROT_INTERP, NULLOK(STRING *hll_name))
 {
     INTVAL i, nelements;
 
@@ -230,9 +234,11 @@ Parrot_get_HLL_id(Interp *interp /*NN*/, STRING *hll_name /*NULLOK*/)
     return i < nelements ? i : -1;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PARROT_API
 STRING *
-Parrot_get_HLL_name(Interp *interp /*NN*/, INTVAL id)
+Parrot_get_HLL_name(PARROT_INTERP, INTVAL id)
 {
     PMC * const  hll_info  = interp->HLL_info;
     const INTVAL nelements = VTABLE_elements(interp, hll_info);
@@ -258,7 +264,7 @@ Parrot_get_HLL_name(Interp *interp /*NN*/, INTVAL id)
 
 PARROT_API
 void
-Parrot_register_HLL_type(Interp *interp /*NN*/, INTVAL hll_id,
+Parrot_register_HLL_type(PARROT_INTERP, INTVAL hll_id,
         INTVAL core_type, INTVAL hll_type)
 {
     PMC         *entry, *type_hash;
@@ -294,7 +300,7 @@ Parrot_register_HLL_type(Interp *interp /*NN*/, INTVAL hll_id,
 
 PARROT_API
 INTVAL
-Parrot_get_HLL_type(Interp *interp /*NN*/, INTVAL hll_id, INTVAL core_type)
+Parrot_get_HLL_type(PARROT_INTERP, INTVAL hll_id, INTVAL core_type)
 {
     PMC        *entry, *type_hash, *hll_info;
     Hash       *hash;
@@ -339,7 +345,7 @@ Parrot_get_HLL_type(Interp *interp /*NN*/, INTVAL hll_id, INTVAL core_type)
 
 PARROT_API
 INTVAL
-Parrot_get_ctx_HLL_type(Interp *interp /*NN*/, INTVAL core_type)
+Parrot_get_ctx_HLL_type(PARROT_INTERP, INTVAL core_type)
 {
     const INTVAL hll_id = CONTEXT(interp->ctx)->current_HLL;
 
@@ -355,8 +361,10 @@ Return root namespace of the current HLL.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PMC*
-Parrot_get_ctx_HLL_namespace(Interp *interp /*NN*/)
+Parrot_get_ctx_HLL_namespace(PARROT_INTERP)
 {
     return Parrot_get_HLL_namespace(interp, CONTEXT(interp->ctx)->current_HLL);
 }
@@ -371,8 +379,10 @@ special value C<PARROT_HLL_NONE>, return the global root namespace.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PMC*
-Parrot_get_HLL_namespace(Interp *interp /*NN*/, int hll_id)
+Parrot_get_HLL_namespace(PARROT_INTERP, int hll_id)
 {
     if (hll_id == PARROT_HLL_NONE)
         return interp->root_namespace;
@@ -394,7 +404,7 @@ creating a new interpreter which shares an old interpreter's HLL_info.
 
 PARROT_API
 void
-Parrot_regenerate_HLL_namespaces(Interp *interp /*NN*/)
+Parrot_regenerate_HLL_namespaces(PARROT_INTERP)
 {
     const INTVAL n = VTABLE_elements(interp, interp->HLL_info);
     INTVAL       hll_id;

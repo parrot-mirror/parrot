@@ -19,15 +19,16 @@
 
 /* HEADERIZER BEGIN: src/global_setup.c */
 
-PARROT_API void Parrot_set_config_hash_internal(
-    const unsigned char* parrot_config /*NN*/,
+PARROT_API
+void Parrot_set_config_hash_internal(
+    NOTNULL(const unsigned char* parrot_config),
     unsigned int parrot_config_size )
         __attribute__nonnull__(1);
 
-void init_world( Interp *interp /*NN*/ )
+void init_world( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-void parrot_global_setup_2( Interp *interp /*NN*/ )
+void parrot_global_setup_2( PARROT_INTERP )
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: src/global_setup.c */

@@ -51,49 +51,70 @@ have the same number of elements because there is a one-to-one mapping.
 /* HEADERIZER BEGIN: static */
 
 static void dynop_register_switch( size_t n_old, size_t n_new );
-static void dynop_register_xx( Interp *interp /*NN*/,
+static void dynop_register_xx( PARROT_INTERP,
     size_t n_old,
     size_t n_new,
     oplib_init_f init_func )
         __attribute__nonnull__(1);
 
-static oplib_init_f get_op_lib_init( Interp *interp,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static oplib_init_f get_op_lib_init( PARROT_INTERP,
     int core_op,
     int which,
-    PMC *lib );
-
-static void init_prederef( Interp *interp /*NN*/, int which )
+    NULLOK(PMC *lib) )
         __attribute__nonnull__(1);
 
-static void load_prederef( Interp *interp /*NN*/, int which )
+static void init_prederef( PARROT_INTERP, int which )
         __attribute__nonnull__(1);
 
-static void notify_func_table( Interp *interp /*NN*/,
-    op_func_t* table /*NN*/,
+static void load_prederef( PARROT_INTERP, int which )
+        __attribute__nonnull__(1);
+
+static void notify_func_table( PARROT_INTERP,
+    NOTNULL(op_func_t* table),
     int on )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static void prederef_args(
-    void **pc_prederef,
-    Interp *interp /*NN*/,
-    opcode_t *pc /*NN*/,
-    const op_info_t *opinfo /*NN*/ )
+    NOTNULL(void **pc_prederef),
+    PARROT_INTERP,
+    NOTNULL(opcode_t *pc),
+    NOTNULL(const op_info_t *opinfo) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static opcode_t * runops_cgp( Interp *interp, opcode_t *pc );
-static opcode_t * runops_exec( Interp *interp, opcode_t *pc );
-static opcode_t * runops_jit( Interp *interp, opcode_t *pc );
-static opcode_t * runops_switch( Interp *interp /*NN*/, opcode_t *pc /*NN*/ )
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static opcode_t * runops_cgp( PARROT_INTERP, NOTNULL(opcode_t *pc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void stop_prederef( Interp *interp /*NN*/ )
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static opcode_t * runops_exec( PARROT_INTERP, NOTNULL(opcode_t *pc) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static opcode_t * runops_jit( PARROT_INTERP, NOTNULL(opcode_t *pc) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static opcode_t * runops_switch( PARROT_INTERP, NOTNULL(opcode_t *pc) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void stop_prederef( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-static void turn_ev_check( Interp *interp /*NN*/, int on )
+static void turn_ev_check( PARROT_INTERP, int on )
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
@@ -109,8 +130,8 @@ C<pc_prederef> is the current opcode.
 */
 
 static void
-prederef_args(void **pc_prederef, Interp *interp /*NN*/,
-        opcode_t *pc /*NN*/, const op_info_t *opinfo /*NN*/)
+prederef_args(NOTNULL(void **pc_prederef), PARROT_INTERP,
+        NOTNULL(opcode_t *pc), NOTNULL(const op_info_t *opinfo))
 {
     const PackFile_ConstTable * const const_table = interp->code->const_table;
 
@@ -206,7 +227,7 @@ C<pc_prederef> is the current opcode, and C<type> is the run core type.
 */
 
 void
-do_prederef(void **pc_prederef, Parrot_Interp interp, int type)
+do_prederef(void **pc_prederef, PARROT_INTERP, int type)
 {
     const size_t offset = pc_prederef - interp->code->prederef.code;
     opcode_t * const pc = ((opcode_t *)interp->code->base.data) + offset;
@@ -277,7 +298,7 @@ handler thread.
 */
 
 static void
-turn_ev_check(Interp *interp /*NN*/, int on)
+turn_ev_check(PARROT_INTERP, int on)
 {
     const Prederef * const pi = &interp->code->prederef;
     size_t i;
@@ -311,8 +332,10 @@ C<ParrotLibrary> PMC.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static oplib_init_f
-get_op_lib_init(Interp *interp, int core_op, int which, PMC *lib)
+get_op_lib_init(PARROT_INTERP, int core_op, int which, NULLOK(PMC *lib))
 {
     if (core_op) {
         oplib_init_f init_func;
@@ -337,9 +360,7 @@ get_op_lib_init(Interp *interp, int core_op, int which, PMC *lib)
                 init_func = PARROT_CORE_OPLIB_INIT;
                 break;
             default:
-                init_func = NULL;
                 real_exception(interp, NULL, 1, "Couldn't find init_func for core %d", which);
-                break;
         }
         return init_func;
     }
@@ -355,7 +376,7 @@ C<< interp->op_lib >> = prederefed oplib.
 */
 
 static void
-load_prederef(Interp *interp /*NN*/, int which)
+load_prederef(PARROT_INTERP, int which)
 {
     const oplib_init_f init_func = get_op_lib_init(interp, 1, which, NULL);
     int (*get_op)(const char * name, int full);
@@ -379,7 +400,7 @@ Initialize: load prederef C<func_table>, file prederef.code.
 */
 
 static void
-init_prederef(Interp *interp /*NN*/, int which)
+init_prederef(PARROT_INTERP, int which)
 {
     load_prederef(interp, which);
     if (!interp->code->prederef.code) {
@@ -441,7 +462,7 @@ for run-core changes, but we don't know the old run core.
 */
 
 static void
-stop_prederef(Interp *interp /*NN*/)
+stop_prederef(PARROT_INTERP)
 {
     interp->op_func_table = PARROT_CORE_OPLIB_INIT(1)->op_func_table;
     if (interp->evc_func_table) {
@@ -466,7 +487,7 @@ C<op_info_table>
 */
 
 void
-exec_init_prederef(Interp *interp, void *prederef_arena)
+exec_init_prederef(PARROT_INTERP, void *prederef_arena)
 {
     load_prederef(interp, PARROT_CGP_CORE);
 
@@ -489,8 +510,10 @@ Initializes JIT function for the specified opcode and returns it.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 void *
-init_jit(Interp *interp, opcode_t *pc)
+init_jit(PARROT_INTERP, NULLOK(opcode_t *pc))
 {
 #if JIT_CAPABLE
     opcode_t *code_start;
@@ -534,7 +557,7 @@ Prepares to run the interpreter's run core.
 */
 
 void
-prepare_for_run(Parrot_Interp interp)
+prepare_for_run(PARROT_INTERP)
 {
     switch (interp->run_core) {
         case PARROT_JIT_CORE:
@@ -563,8 +586,10 @@ Runs the JIT code for the specified opcode.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static opcode_t *
-runops_jit(Interp *interp, opcode_t *pc)
+runops_jit(PARROT_INTERP, NOTNULL(opcode_t *pc))
 {
 #if JIT_CAPABLE
 #  ifdef PARROT_EXEC_OS_AIX
@@ -598,8 +623,10 @@ Runs the native executable version of the specified opcode.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static opcode_t *
-runops_exec(Interp *interp, opcode_t *pc)
+runops_exec(PARROT_INTERP, NOTNULL(opcode_t *pc))
 {
 #if EXEC_CAPABLE
     opcode_t *code_start;
@@ -645,11 +672,13 @@ Runs the C C<goto>, predereferenced core.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static opcode_t *
-runops_cgp(Interp *interp, opcode_t *pc)
+runops_cgp(PARROT_INTERP, NOTNULL(opcode_t *pc))
 {
 #ifdef HAVE_COMPUTED_GOTO
-    opcode_t *code_start = (opcode_t *)interp->code->base.data;
+    opcode_t * const code_start = (opcode_t *)interp->code->base.data;
     opcode_t *pc_prederef;
     init_prederef(interp, PARROT_CGP_CORE);
     pc_prederef = (opcode_t*)interp->code->prederef.code + (pc - code_start);
@@ -659,7 +688,6 @@ runops_cgp(Interp *interp, opcode_t *pc)
     PIO_eprintf(interp,
             "Computed goto unavailable in this configuration.\n");
     Parrot_exit(interp, 1);
-    return NULL;
 #endif
 }
 
@@ -671,8 +699,10 @@ Runs the C<switch> core.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static opcode_t *
-runops_switch(Interp *interp /*NN*/, opcode_t *pc /*NN*/)
+runops_switch(PARROT_INTERP, NOTNULL(opcode_t *pc))
 {
     opcode_t * const code_start = (opcode_t *)interp->code->base.data;
     opcode_t *pc_prederef;
@@ -694,7 +724,7 @@ evaluation of opcode continues.
 */
 
 void
-runops_int(Interp *interp /*NN*/, size_t offset)
+runops_int(PARROT_INTERP, size_t offset)
 {
     int lo_var_ptr;
     opcode_t *(*core) (Interp *, opcode_t *) =
@@ -809,7 +839,7 @@ TODO: Free it at destroy. Handle run-core changes.
 */
 
 void
-Parrot_setup_event_func_ptrs(Parrot_Interp interp)
+Parrot_setup_event_func_ptrs(PARROT_INTERP)
 {
     const size_t n = interp->op_count;
     const oplib_init_f init_func = get_op_lib_init(interp, 1, interp->run_core, NULL);
@@ -844,7 +874,7 @@ Register a dynamic oplib.
 */
 
 void
-dynop_register(Parrot_Interp interp, PMC* lib_pmc)
+dynop_register(PARROT_INTERP, PMC* lib_pmc)
 {
     op_lib_t *lib, *core;
     oplib_init_f init_func;
@@ -960,7 +990,7 @@ Register C<op_lib> with other cores.
 */
 
 static void
-dynop_register_xx(Interp *interp /*NN*/,
+dynop_register_xx(PARROT_INTERP,
         size_t n_old, size_t n_new, oplib_init_f init_func)
 {
     op_lib_t *cg_lib, *new_lib;
@@ -1071,7 +1101,7 @@ Tell the interpreter's running core about the new function table.
 */
 
 static void
-notify_func_table(Interp *interp /*NN*/, op_func_t* table /*NN*/, int on)
+notify_func_table(PARROT_INTERP, NOTNULL(op_func_t* table), int on)
 {
     const oplib_init_f init_func = get_op_lib_init(interp, 1, interp->run_core, NULL);
 
@@ -1104,7 +1134,7 @@ XXX This is only implemented for the function core at present.
 
 PARROT_API
 void
-disable_event_checking(Interp *interp /*NN*/)
+disable_event_checking(PARROT_INTERP)
 {
     /*
      * restore func table
@@ -1128,7 +1158,7 @@ XXX This is only implemented for the function core at present.
 
 PARROT_API
 void
-enable_event_checking(Interp *interp /*NN*/)
+enable_event_checking(PARROT_INTERP)
 {
     /*
      * put table in place

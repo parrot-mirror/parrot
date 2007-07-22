@@ -24,51 +24,89 @@ This file implements the charset functions for binary data
 
 /* HEADERIZER BEGIN: static */
 
-static INTVAL compare( Interp *interp, const STRING *lhs, const STRING *rhs );
-static STRING* compose( Interp *interp, STRING *source_string );
-static INTVAL cs_index( Interp *interp,
+static INTVAL compare( PARROT_INTERP, const STRING *lhs, const STRING *rhs )
+        __attribute__nonnull__(1);
+
+static STRING* compose( PARROT_INTERP, STRING *source_string )
+        __attribute__nonnull__(1);
+
+static INTVAL cs_index( PARROT_INTERP,
     STRING *source_string,
     STRING *search_string,
-    UINTVAL offset );
+    UINTVAL offset )
+        __attribute__nonnull__(1);
 
-static INTVAL cs_rindex( Interp *interp,
+static INTVAL cs_rindex( PARROT_INTERP,
     STRING *source_string,
     STRING *search_string,
-    UINTVAL offset );
+    UINTVAL offset )
+        __attribute__nonnull__(1);
 
-static STRING* decompose( Interp *interp, STRING *source_string );
-static void downcase( Interp *interp, STRING *source_string );
-static void downcase_first( Interp *interp, STRING *source_string );
-static INTVAL find_cclass( Interp *interp,
+static STRING* decompose( PARROT_INTERP, STRING *source_string )
+        __attribute__nonnull__(1);
+
+static void downcase( PARROT_INTERP, STRING *source_string )
+        __attribute__nonnull__(1);
+
+static void downcase_first( PARROT_INTERP, STRING *source_string )
+        __attribute__nonnull__(1);
+
+static INTVAL find_cclass( PARROT_INTERP,
     INTVAL flags,
-    STRING *source_string,
+    NOTNULL(STRING *source_string),
     UINTVAL offset,
-    UINTVAL count );
+    UINTVAL count )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
 
-static INTVAL find_not_cclass( Interp *interp,
+static INTVAL find_not_cclass( PARROT_INTERP,
     INTVAL flags,
-    STRING *source_string,
+    NOTNULL(STRING *source_string),
     UINTVAL offset,
-    UINTVAL count );
+    UINTVAL count )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
 
-static INTVAL is_cclass( Interp *interp,
+static INTVAL is_cclass( PARROT_INTERP,
     INTVAL flags,
     STRING *source_string,
-    UINTVAL offset );
+    UINTVAL offset )
+        __attribute__nonnull__(1);
 
-static void set_graphemes( Interp *interp,
-    STRING *source_string,
+static void set_graphemes( PARROT_INTERP,
+    NOTNULL(STRING *source_string),
     UINTVAL offset,
     UINTVAL replace_count,
-    STRING *insert_string );
+    NOTNULL(STRING *insert_string) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(5);
 
-static STRING * string_from_codepoint( Interp *interp, UINTVAL codepoint );
-static void titlecase( Interp *interp, STRING *source_string );
-static void titlecase_first( Interp *interp, STRING *source_string );
-static STRING* to_charset( Interp *interp, STRING *src, STRING *dest );
-static void upcase( Interp *interp, STRING *source_string );
-static void upcase_first( Interp *interp, STRING *source_string );
-static UINTVAL validate( Interp *interp, STRING *source_string );
+static STRING * string_from_codepoint( PARROT_INTERP, UINTVAL codepoint )
+        __attribute__nonnull__(1);
+
+static void titlecase( PARROT_INTERP, STRING *source_string )
+        __attribute__nonnull__(1);
+
+static void titlecase_first( PARROT_INTERP, STRING *source_string )
+        __attribute__nonnull__(1);
+
+static STRING* to_charset( PARROT_INTERP,
+    NOTNULL(STRING *src),
+    NOTNULL(STRING *dest) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static void upcase( PARROT_INTERP, STRING *source_string )
+        __attribute__nonnull__(1);
+
+static void upcase_first( PARROT_INTERP, STRING *source_string )
+        __attribute__nonnull__(1);
+
+static UINTVAL validate( PARROT_INTERP, STRING *source_string )
+        __attribute__nonnull__(1);
+
 /* HEADERIZER END: static */
 
 #ifdef EXCEPTION
@@ -79,136 +117,134 @@ static UINTVAL validate( Interp *interp, STRING *source_string );
     real_exception(interp, NULL, err, str)
 
 static void
-set_graphemes(Interp *interp, STRING *source_string,
-        UINTVAL offset, UINTVAL replace_count, STRING *insert_string)
+set_graphemes(PARROT_INTERP, NOTNULL(STRING *source_string),
+        UINTVAL offset, UINTVAL replace_count, NOTNULL(STRING *insert_string))
 {
     ENCODING_SET_BYTES(interp, source_string, offset,
             replace_count, insert_string);
 }
 
 static STRING*
-to_charset(Interp *interp, STRING *src, STRING *dest)
+to_charset(PARROT_INTERP, NOTNULL(STRING *src), NOTNULL(STRING *dest))
 {
-    charset_converter_t conversion_func;
-    if ((conversion_func = Parrot_find_charset_converter(interp,
-                    src->charset, Parrot_binary_charset_ptr))) {
+    charset_converter_t conversion_func =
+        Parrot_find_charset_converter(interp, src->charset, Parrot_binary_charset_ptr);
+
+    if (conversion_func)
          return conversion_func(interp, src, dest);
-    }
     real_exception(interp, NULL, UNIMPLEMENTED, "to_charset for binary not implemented");
-    return NULL;
 }
 
 /* A err. can't compose binary */
 static STRING*
-compose(Interp *interp, STRING *source_string)
+compose(PARROT_INTERP, SHIM(STRING *source_string))
 {
     EXCEPTION(INVALID_CHARTYPE, "Can't compose binary data");
-    return NULL;
 }
 
 /* A err. can't decompose binary */
 static STRING*
-decompose(Interp *interp, STRING *source_string)
+decompose(PARROT_INTERP, SHIM(STRING *source_string))
 {
     EXCEPTION(INVALID_CHARTYPE, "Can't decompose binary data");
-    return NULL;
 }
 
 static void
-upcase(Interp *interp, STRING *source_string)
+upcase(PARROT_INTERP, SHIM(STRING *source_string))
 {
     EXCEPTION(INVALID_CHARTYPE, "Can't upcase binary data");
 }
 
 static void
-downcase(Interp *interp, STRING *source_string)
+downcase(PARROT_INTERP, SHIM(STRING *source_string))
 {
     EXCEPTION(INVALID_CHARTYPE, "Can't downcase binary data");
 }
 
 static void
-titlecase(Interp *interp, STRING *source_string)
+titlecase(PARROT_INTERP, SHIM(STRING *source_string))
 {
     EXCEPTION(INVALID_CHARTYPE, "Can't titlecase binary data");
 }
 
 static void
-upcase_first(Interp *interp, STRING *source_string)
+upcase_first(PARROT_INTERP, SHIM(STRING *source_string))
 {
     EXCEPTION(INVALID_CHARTYPE, "Can't upcase binary data");
 }
 
 static void
-downcase_first(Interp *interp, STRING *source_string)
+downcase_first(PARROT_INTERP, SHIM(STRING *source_string))
 {
     EXCEPTION(INVALID_CHARTYPE, "Can't downcase binary data");
 }
 
 static void
-titlecase_first(Interp *interp, STRING *source_string)
+titlecase_first(PARROT_INTERP, SHIM(STRING *source_string))
 {
     EXCEPTION(INVALID_CHARTYPE, "Can't titlecase binary data");
 }
 
 static INTVAL
-compare(Interp *interp, const STRING *lhs, const STRING *rhs)
+compare(PARROT_INTERP, SHIM(const STRING *lhs), SHIM(const STRING *rhs))
 {
-  return 0;
+    return 0;
 }
 
 static INTVAL
-cs_index(Interp *interp, STRING *source_string,
-        STRING *search_string, UINTVAL offset)
+cs_index(PARROT_INTERP, SHIM(STRING *source_string),
+        SHIM(STRING *search_string), UINTVAL offset)
 {
     return -1;
 }
 
 static INTVAL
-cs_rindex(Interp *interp, STRING *source_string,
-        STRING *search_string, UINTVAL offset)
+cs_rindex(PARROT_INTERP, SHIM(STRING *source_string),
+        SHIM(STRING *search_string), UINTVAL offset)
 {
     return -1;
 }
 
 /* Binary's always valid */
 static UINTVAL
-validate(Interp *interp, STRING *source_string)
+validate(PARROT_INTERP, SHIM(STRING *source_string))
 {
     return 1;
 }
 
 static INTVAL
-is_cclass(Interp *interp, INTVAL flags, STRING *source_string, UINTVAL offset)
+is_cclass(PARROT_INTERP, INTVAL flags, SHIM(STRING *source_string), UINTVAL offset)
 {
     return 0;
 }
 
 static INTVAL
-find_cclass(Interp *interp, INTVAL flags,
-            STRING *source_string, UINTVAL offset, UINTVAL count)
+find_cclass(PARROT_INTERP, INTVAL flags,
+            NOTNULL(STRING *source_string), UINTVAL offset, UINTVAL count)
 {
     return offset + count;
 }
 
 static INTVAL
-find_not_cclass(Interp *interp, INTVAL flags,
-                STRING *source_string, UINTVAL offset, UINTVAL count)
+find_not_cclass(PARROT_INTERP, INTVAL flags,
+                NOTNULL(STRING *source_string), UINTVAL offset, UINTVAL count)
 {
     return offset + count;
 }
 
 static STRING *
-string_from_codepoint(Interp *interp, UINTVAL codepoint)
+string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)
 {
-    STRING *return_string = NULL;
+    STRING *return_string;
     char real_codepoint = (char)codepoint;
     return_string = string_make(interp, &real_codepoint, 1, "binary", 0);
     return return_string;
 }
 
 
-CHARSET *
-Parrot_charset_binary_init(Interp *interp)
+PARROT_CANNOT_RETURN_NULL
+const CHARSET *
+Parrot_charset_binary_init(PARROT_INTERP)
 {
     CHARSET * const return_set = Parrot_new_charset(interp);
     static const CHARSET base_set = {

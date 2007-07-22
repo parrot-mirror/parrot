@@ -52,82 +52,95 @@ typedef struct pbc_merge_input {
 
 /* HEADERIZER BEGIN: static */
 
-static void help( Interp *interp /*NN*/ )
+static void help( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-static PackFile* pbc_merge_begin( Interp *interp /*NN*/,
-    pbc_merge_input **inputs /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PackFile* pbc_merge_begin( PARROT_INTERP,
+    NOTNULL(pbc_merge_input **inputs),
     int num_inputs )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static PackFile_ByteCode* pbc_merge_bytecode( Interp *interp /*NN*/,
-    pbc_merge_input **inputs /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PackFile_ByteCode* pbc_merge_bytecode( PARROT_INTERP,
+    NOTNULL(pbc_merge_input **inputs),
     int num_inputs,
-    PackFile *pf /*NN*/ )
+    NOTNULL(PackFile *pf) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(4);
 
-static PackFile_ConstTable* pbc_merge_constants( Interp *interp /*NN*/,
-    pbc_merge_input **inputs /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PackFile_ConstTable* pbc_merge_constants( PARROT_INTERP,
+    NOTNULL(pbc_merge_input **inputs),
     int num_inputs,
-    PackFile *pf /*NN*/,
-    PackFile_ByteCode *bc /*NN*/ )
+    NOTNULL(PackFile *pf),
+    NOTNULL(PackFile_ByteCode *bc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-static void pbc_merge_ctpointers( Interp *interp /*NN*/,
-    pbc_merge_input **inputs /*NN*/,
+static void pbc_merge_ctpointers( PARROT_INTERP,
+    NOTNULL(pbc_merge_input **inputs),
     int num_inputs,
-    PackFile_ByteCode *bc /*NN*/ )
+    NOTNULL(PackFile_ByteCode *bc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(4);
 
-static void pbc_merge_debugs( Interp *interp /*NN*/,
-    pbc_merge_input **inputs /*NN*/,
+static void pbc_merge_debugs( PARROT_INTERP,
+    NOTNULL(pbc_merge_input **inputs),
     int num_inputs,
-    PackFile *pf /*NN*/,
-    PackFile_ByteCode *bc /*NN*/ )
+    NOTNULL(PackFile *pf),
+    NOTNULL(PackFile_ByteCode *bc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-static void pbc_merge_fixups( Interp *interp /*NN*/,
-    pbc_merge_input **inputs /*NN*/,
+static void pbc_merge_fixups( PARROT_INTERP,
+    NOTNULL(pbc_merge_input **inputs),
     int num_inputs,
-    PackFile *pf /*NN*/,
-    PackFile_ByteCode *bc /*NN*/ )
+    NOTNULL(PackFile *pf),
+    NOTNULL(PackFile_ByteCode *bc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-static PackFile* pbc_merge_loadpbc( Interp *interp /*NN*/,
-    const char *fullname /*NN*/ )
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PackFile* pbc_merge_loadpbc( PARROT_INTERP,
+    NOTNULL(const char *fullname) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void pbc_merge_pic_index( Interp *interp /*NN*/,
-    pbc_merge_input **inputs /*NN*/,
+static void pbc_merge_pic_index( PARROT_INTERP,
+    NOTNULL(pbc_merge_input **inputs),
     int num_inputs,
-    PackFile *pf /*NN*/,
-    PackFile_ByteCode *bc /*NN*/ )
+    NOTNULL(PackFile *pf),
+    NOTNULL(PackFile_ByteCode *bc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-static void pbc_merge_write( Interp *interp /*NN*/,
-    PackFile *pf /*NN*/,
-    const char *filename /*NN*/ )
+static void pbc_merge_write( PARROT_INTERP,
+    NOTNULL(PackFile *pf),
+    NOTNULL(const char *filename) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
+
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+static char * str_dup( NOTNULL(const char *old) )
+        __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
 
@@ -140,7 +153,7 @@ Print out the user help info.
 */
 
 static void
-help(Interp *interp /*NN*/)
+help(PARROT_INTERP)
 {
     printf("pbc_merge - merge multiple parrot bytecode files into one\n");
     printf("Usage:\n");
@@ -148,6 +161,27 @@ help(Interp *interp /*NN*/)
     Parrot_exit(interp, 0);
 }
 
+/*
+
+FUNCDOC: str_dup
+
+Duplicate a C string
+
+*/
+
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+static char *
+str_dup(NOTNULL(const char *old))
+{
+    const size_t bytes = strlen(old) + 1;
+    char * const copy = mem_sys_allocate(bytes);
+    memcpy(copy, old, bytes);
+#ifdef MEMDEBUG
+    debug(interp, 1,"line %d str_dup %s [%x]\n", line, old, copy);
+#endif
+    return copy;
+}
 
 /*
 
@@ -158,8 +192,10 @@ use Parrot_readbc because that is specified to also
 fixup the segments, which we don't want.
 
 */
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static PackFile*
-pbc_merge_loadpbc(Interp *interp /*NN*/, const char *fullname /*NN*/)
+pbc_merge_loadpbc(PARROT_INTERP, NOTNULL(const char *fullname))
 {
     INTVAL program_size, wanted;
     char *program_code;
@@ -243,9 +279,11 @@ This function merges the bytecode from the input packfiles, storing the
 offsets that each bit of bytecode now exists at.
 
 */
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static PackFile_ByteCode*
-pbc_merge_bytecode(Interp *interp /*NN*/, pbc_merge_input **inputs /*NN*/,
-                   int num_inputs, PackFile *pf /*NN*/)
+pbc_merge_bytecode(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                   int num_inputs, NOTNULL(PackFile *pf))
 {
     opcode_t *bc = mem_allocate_typed(opcode_t);
     opcode_t cursor = 0;
@@ -291,7 +329,7 @@ pbc_merge_bytecode(Interp *interp /*NN*/, pbc_merge_input **inputs /*NN*/,
     /* Stash produced bytecode. */
     bc_seg->base.data = bc;
     bc_seg->base.size = cursor;
-    bc_seg->base.name = strdup("MERGED");
+    bc_seg->base.name = str_dup("MERGED");
     return bc_seg;
 }
 
@@ -303,9 +341,11 @@ FUNCDOC: pbc_merge_constants
 This function merges the constants tables from the input PBC files.
 
 */
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static PackFile_ConstTable*
-pbc_merge_constants(Interp *interp /*NN*/, pbc_merge_input **inputs /*NN*/,
-                    int num_inputs, PackFile *pf /*NN*/, PackFile_ByteCode *bc /*NN*/)
+pbc_merge_constants(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                    int num_inputs, NOTNULL(PackFile *pf), NOTNULL(PackFile_ByteCode *bc))
 {
     PackFile_Constant   **constants = mem_allocate_typed(PackFile_Constant *);
     opcode_t cursor = 0;
@@ -395,8 +435,8 @@ This function merges the fixups tables from the input PBC files.
 
 */
 static void
-pbc_merge_fixups(Interp *interp /*NN*/, pbc_merge_input **inputs /*NN*/,
-                 int num_inputs, PackFile *pf /*NN*/, PackFile_ByteCode *bc /*NN*/)
+pbc_merge_fixups(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                 int num_inputs, NOTNULL(PackFile *pf), NOTNULL(PackFile_ByteCode *bc))
 {
     PackFile_FixupTable *fixup_seg;
     PackFile_FixupEntry **fixups = mem_allocate_typed(PackFile_FixupEntry *);
@@ -487,8 +527,8 @@ This function merges the debug segments from the input PBC files.
 
 */
 static void
-pbc_merge_debugs(Interp *interp /*NN*/, pbc_merge_input **inputs /*NN*/,
-                 int num_inputs, PackFile *pf /*NN*/, PackFile_ByteCode *bc /*NN*/)
+pbc_merge_debugs(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                 int num_inputs, NOTNULL(PackFile *pf), NOTNULL(PackFile_ByteCode *bc))
 {
     PackFile_Debug *debug_seg;
     opcode_t *lines                  = mem_allocate_typed(opcode_t);
@@ -554,8 +594,8 @@ This function merges the pic_index segments from the input PBC files.
 */
 
 static void
-pbc_merge_pic_index(Interp *interp /*NN*/, pbc_merge_input **inputs /*NN*/,
-                 int num_inputs, PackFile *pf /*NN*/, PackFile_ByteCode *bc /*NN*/)
+pbc_merge_pic_index(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                 int num_inputs, NOTNULL(PackFile *pf), NOTNULL(PackFile_ByteCode *bc))
 {
     int i;
     PackFile_Segment *pic_index;
@@ -603,8 +643,8 @@ bytecode.
 
 */
 static void
-pbc_merge_ctpointers(Interp *interp /*NN*/, pbc_merge_input **inputs /*NN*/,
-                     int num_inputs, PackFile_ByteCode *bc /*NN*/)
+pbc_merge_ctpointers(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                     int num_inputs, NOTNULL(PackFile_ByteCode *bc))
 {
     opcode_t  *op_ptr;
     opcode_t  *ops       = bc->base.data;
@@ -677,11 +717,12 @@ FUNCDOC: pbc_merge_begin
 This is the function that drives PBC merging process.
 
 */
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static PackFile*
-pbc_merge_begin(Interp *interp /*NN*/, pbc_merge_input **inputs /*NN*/, int num_inputs)
+pbc_merge_begin(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs), int num_inputs)
 {
     PackFile_ByteCode   *bc;
-    PackFile_ConstTable *ct;
 
     /* Create a new empty packfile. */
     PackFile * const merged = PackFile_new(interp, 0);
@@ -692,7 +733,7 @@ pbc_merge_begin(Interp *interp /*NN*/, pbc_merge_input **inputs /*NN*/, int num_
 
     /* Merge the various stuff. */
     bc = pbc_merge_bytecode(interp, inputs, num_inputs, merged);
-    ct = pbc_merge_constants(interp, inputs, num_inputs, merged, bc);
+    pbc_merge_constants(interp, inputs, num_inputs, merged, bc);
 
     pbc_merge_fixups(interp, inputs, num_inputs, merged, bc);
     pbc_merge_debugs(interp, inputs, num_inputs, merged, bc);
@@ -714,7 +755,7 @@ This functions writes out the merged packfile.
 
 */
 static void
-pbc_merge_write(Interp *interp /*NN*/, PackFile *pf /*NN*/, const char *filename /*NN*/)
+pbc_merge_write(PARROT_INTERP, NOTNULL(PackFile *pf), NOTNULL(const char *filename))
 {
     FILE     *fp;
 
@@ -760,16 +801,14 @@ static struct longopt_opt_decl options[] = {
 int
 main(int argc, char **argv)
 {
-    Interp *interp;
     int status;
     pbc_merge_input** input_files;
     PackFile *merged;
     int i;
     const char *output_file     = NULL;
     struct longopt_opt_info opt = LONGOPT_OPT_INFO_INIT;
+    Interp * const interp = Parrot_new(NULL);
 
-    /* Create a Parrot interpreter. */
-    interp = Parrot_new(NULL);
     Parrot_block_DOD(interp);
 
     /* Get options, ensuring we have at least one input

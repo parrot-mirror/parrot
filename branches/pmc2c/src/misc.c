@@ -55,9 +55,10 @@ in turn calls C<Parrot_sprintf_format()> (see F<src/spf_render.c>).
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_vsprintf_s(Interp *interp /*NN*/, STRING *pat /*NN*/, va_list args)
-    /* WARN_UNUSED */
+Parrot_vsprintf_s(PARROT_INTERP, NOTNULL(STRING *pat), va_list args)
 {
     SPRINTF_OBJ obj = va_core;
     obj.data = PARROT_VA_TO_VAPTR(args);
@@ -74,9 +75,9 @@ C string version of C<Parrot_vsprintf_s()>.
 */
 
 PARROT_API
+PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_vsprintf_c(Interp *interp /*NN*/, const char *pat /*NN*/, va_list args)
-    /* WARN_UNUSED */
+Parrot_vsprintf_c(PARROT_INTERP, NOTNULL(const char *pat), va_list args)
 {
     STRING * const realpat = string_make(interp, pat, strlen(pat),
                                   NULL, PObj_external_FLAG);
@@ -97,8 +98,8 @@ Similar to C<Parrot_vsprintf()> but with an option to specify the length
 
 PARROT_API
 void
-Parrot_vsnprintf(Interp *interp /*NN*/, char *targ /*NN*/,
-                 size_t len, const char *pat /*NN*/, va_list args)
+Parrot_vsnprintf(PARROT_INTERP, NOTNULL(char *targ),
+                 size_t len, NOTNULL(const char *pat), va_list args)
 {
     if (len == 0)
         return;
@@ -126,9 +127,10 @@ Calls C<Parrot_vsprintf_s()> with the C<va_list> obtained from C<...>.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_sprintf_s(Interp *interp /*NN*/, STRING *pat /*NN*/, ...)
-    /* WARN_UNUSED */
+Parrot_sprintf_s(PARROT_INTERP, NOTNULL(STRING *pat), ...)
 {
     STRING *ret;
     va_list args;
@@ -151,9 +153,10 @@ C string version of C<Parrot_sprintf_s()>.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_sprintf_c(Interp *interp /*NN*/, const char *pat /*NN*/, ...)
-    /* WARN_UNUSED */
+Parrot_sprintf_c(PARROT_INTERP, NOTNULL(const char *pat), ...)
 {
     STRING *ret;
     va_list args;
@@ -178,8 +181,8 @@ Similar to C<Parrot_sprintf()> but with an option to specify the length
 
 PARROT_API
 void
-Parrot_snprintf(Interp *interp /*NN*/, char *targ /*NN*/, size_t len,
-                const char *pat /*NN*/, ...)
+Parrot_snprintf(PARROT_INTERP, NOTNULL(char *targ), size_t len,
+                NOTNULL(const char *pat), ...)
 {
     va_list args;
 
@@ -200,9 +203,10 @@ C<Array> PMC.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_psprintf(Interp *interp /*NN*/, STRING *pat /*NN*/, PMC *ary /*NN*/)
-    /* WARN_UNUSED */
+Parrot_psprintf(PARROT_INTERP, NOTNULL(STRING *pat), NOTNULL(PMC *ary))
 {
     SPRINTF_OBJ obj = pmc_core;
     obj.data = ary;
