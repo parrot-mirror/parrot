@@ -189,10 +189,6 @@ sub runsteps {
     my ( $verbose, $verbose_step, $ask ) =
         $self->options->get( qw( verbose verbose-step ask ) );
 
-    my $sto = q{.configure_trace.sto};
-    if ($self->options->get(q{configure_trace}) and (-f $sto)) {
-        unlink $sto or die "Unable to unlink configuration trace file";
-    }
     foreach my $task ( $self->steps ) {
         $n++;
         $self->_run_this_step( {
@@ -201,7 +197,6 @@ sub runsteps {
             verbose_step    => $verbose_step,
             ask             => $ask,
             n               => $n,
-            sto             => $sto,
         } );
     }
     return 1;
@@ -248,8 +243,9 @@ sub _run_this_step {
     die $@ if $@;
 
     my $conftrace = [];
-    if ( (defined $args->{sto}) and (-e $args->{sto}) ) {
-        $conftrace = retrieve($args->{sto});
+    my $sto = q{.configure_trace.sto};
+    if ($self->options->get(q{configure_trace}) and (-e $sto)) {
+        $conftrace = retrieve($sto);
     }
     my $step = $step_name->new;
 
@@ -313,7 +309,7 @@ sub _run_this_step {
     print "." x ( 71 - length($description) - length($result) );
     print "$result." unless $step =~ m{^inter/} && $args->{ask};
 
-    if (defined $args->{sto}) {
+    if ($self->options->get(q{configure_trace}) ) {
         if (! defined $conftrace->[0]) {
             $conftrace->[0] = [];
         }
@@ -323,7 +319,7 @@ sub _run_this_step {
             data    => $self->{data},
         };
         push @{$conftrace}, $evolved_data;
-        nstore($conftrace, $args->{sto});
+        nstore($conftrace, $sto);
     }
     # reset verbose value for the next step
     $self->options->set( verbose => $args->{verbose} );
