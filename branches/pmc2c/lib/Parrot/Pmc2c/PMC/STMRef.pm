@@ -18,7 +18,7 @@ sub prederef {
     handle   = (Parrot_STM_PMC_handle)PMC_struct_val(pmc);
 EOC
 
-    if ( $self->vtable_method_does_write($name) ) {    # XXX is this good enough?
+    if ( $self->vtable_method_does_write($name) ) {    # RT#43749 is this good enough?
         $code .= <<'EOC';
     real_pmc = Parrot_STM_begin_update(interp, handle);
 EOC
