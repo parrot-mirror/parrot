@@ -185,21 +185,13 @@ mark a TODO test.
 
 =item C<example_output_is( $example_f, $expected, @todo )>
 
-Determine the language from the extension of C<$example_f> and runs
-language_output_is().  This I<does> set a description for you, so don't pass
-one.
-
 =item C<example_output_like( $example_f, $expected, @todo )>
-
-Determine the language from the extension of C<$example_f> and runs
-language_output_like().  This I<does> set a description for you, so don't pass
-one.
 
 =item C<example_output_isnt( $example_f, $expected, @todo )>
 
-Determine the language from the extension of C<$example_f> and runs
-language_output_isnt().  This I<does> set a description for you, so don't pass
-one.
+Determines the language, PIR or PASM, from the extension of C<$example_f> and runs
+the appropriate C<^language_output_(is|kike|isnt)> sub.
+C<$example_f> is used as a description, so don't pass one.
 
 =item C<skip($why, $how_many)>
 
@@ -233,6 +225,23 @@ Convert Win32 style line endins with Unix style line endings.
 
 Construct a relative path from the current dir to the parrot root dir.
 
+=item C<per_test( $ext, $test_no )>
+
+Construct a path for a temporary files.
+Takes C<$0> into account.
+
+=item C<write_code_to_file($code, $code_f)>
+
+Writes C<$code> into the file C<$code_f>.
+
+=item C<generate_languages_functions>
+
+Generate functions that are only used by a couple of
+Parrot::Test::<lang> modules.
+See RT#43266.
+This implementation is experimental and currently only works
+for languages/plumhead.
+
 =back
 
 =cut
@@ -246,6 +255,8 @@ use Cwd;
 use Data::Dumper;
 use File::Basename;
 use File::Spec;
+use Memoize ();
+
 use Parrot::Config;
 
 require Exporter;
@@ -256,11 +267,18 @@ our @EXPORT = qw( plan run_command skip slurp_file );
 
 use base qw( Exporter );
 
-# tell parrot it's being tested--disables searching of installed libraries.
+# Memoize functions with a fixed output
+Memoize::memoize( 'path_to_parrot' );
+
+# Tell parrot it's being tested--disables searching of installed libraries.
 # (see Parrot_get_runtime_prefix in src/library.c).
 $ENV{PARROT_TEST} = 1 unless defined $ENV{PARROT_TEST};
 
 my $builder = Test::Builder->new();
+
+# Generate subs where the name serves as an
+# extra parameter.
+_generate_test_functions();
 
 sub import {
     my ( $class, $plan, @args ) = @_;
@@ -347,16 +365,6 @@ sub run_command {
     );
 }
 
-sub handle_error_output {
-    my ( $builder, $real_output, $expected, $desc ) = @_;
-
-    $builder->ok( 0, $desc );
-    $builder->diag( "Expected error but exited cleanly\n" .
-    "Received:\n$real_output\nExpected:\n$expected\n" );
-
-    return 0;
-}
-
 sub per_test {
     my ( $ext, $test_no ) = @_;
 
@@ -408,19 +416,12 @@ sub path_to_parrot {
 
     my $path = $INC{'Parrot/Config.pm'};
     $path =~ s{ /lib/Parrot/Config.pm \z}{}xms;
-    if ( $path eq q{} ) {
-        $path = File::Spec->curdir();
-    }
-
-    return $path;
+    return $path eq q{} ?
+               File::Spec->curdir()
+               :
+               $path;
 }
 
-
-# These functions are only used by various
-# Parrot::Test::<lang> modules.
-# See RT#43266
-# This implementation is experimental and currently only works
-# for languages/plumhead
 sub generate_languages_functions {
 
     my %test_map = (
@@ -435,7 +436,7 @@ sub generate_languages_functions {
             my $self = shift;
             my ( $code, $output, $desc, %options ) = @_;
 
-            # set a TODO for Test::Builder to find
+            # set a todo-item for Test::Builder to find
             my $call_pkg = $self->{builder}->exported_to() || '';
 
             no strict 'refs';
@@ -453,7 +454,7 @@ sub generate_languages_functions {
 
             Parrot::Test::write_code_to_file( $code, $lang_f );
 
-            # set a TODO for Test::Builder to find
+            # set a todo-item for Test::Builder to find
             my $skip_why = $self->skip_why( \%options );
             if ($skip_why) {
                 $self->{builder}->skip($skip_why);
@@ -499,13 +500,21 @@ sub generate_languages_functions {
     }
 }
 
-#
-# private methods, should not be used by Modules inheriting from Parrot::Test
-#
+# The following methods are private.
+# They should not be used by modules inheriting from Parrot::Test.
 
-sub run_test_file
-{
-    local $SIG{__WARN__}                          = \&report_odd_hash;
+sub _handle_error_output {
+    my ( $builder, $real_output, $expected, $desc ) = @_;
+
+    $builder->ok( 0, $desc );
+    $builder->diag( "Expected error but exited cleanly\n" .
+    "Received:\n$real_output\nExpected:\n$expected\n" );
+
+    return 0;
+}
+
+sub _run_test_file {
+    local $SIG{__WARN__}                          = \&_report_odd_hash;
     my ( $func, $code, $expected, $desc, %extra ) = @_;
 
     my $path_to_parrot   = path_to_parrot();
@@ -575,7 +584,7 @@ sub run_test_file
             ;    # Make cleanup and svn:ignore more simple
         $exe_f =~ s@[\\/:]@$PConfig{slash}@g;
 
-        # XXX put this into sub generate_pbc()
+        # RT#43751 put this into sub generate_pbc()
         run_command(
             qq{$parrot $args -o $pbc_f "$code_f"},
             CD     => $path_to_parrot,
@@ -644,45 +653,51 @@ sub run_test_file
     return ( $out_f, $cmd, $exit_code );
 }
 
-sub _generate_functions {
-    my $package = 'Parrot::Test';
+sub _report_odd_hash {
+    my $warning = shift;
+    if ( $warning =~ m/Odd number of elements in hash assignment/ ) {
+        require Carp;
+        my @args = DB::uplevel_args();
+        shift @args;
+        my $func = ( caller() )[2];
 
+        Carp::carp("Odd $func invocation; probably missing description for TODO test");
+    }
+    else {
+        warn $warning;
+    }
+}
+
+sub _generate_test_functions {
+
+    my $package = 'Parrot::Test';
     my $path_to_parrot = path_to_parrot();
     my $parrot = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
 
-    my %parrot_test_map = (
-        pbc_output_is      => 'is_eq',
-        pbc_output_isnt    => 'isnt_eq',
-        pbc_output_like    => 'like',
-        pbc_output_unlike  => 'unlike',
-        pasm_output_is     => 'is_eq',
-        pasm_output_isnt   => 'isnt_eq',
-        pasm_output_like   => 'like',
-        pasm_output_unlike => 'unlike',
-        pir_output_is      => 'is_eq',
-        pir_output_isnt    => 'isnt_eq',
-        pir_output_like    => 'like',
-        pir_output_unlike  => 'unlike',
-    );
-
-    for my $func ( keys %parrot_test_map ) {
-        (my $error_func = $func) =~ s/_output/_error_output/;
-        $parrot_test_map{ $error_func } = $parrot_test_map{ $func };
-    }
-
+    my %parrot_test_map
+         = map { $_ . '_output_is'            => 'is_eq',
+                 $_ . '_error_output_is'      => 'is_eq',
+                 $_ . '_output_isnt'          => 'isnt_eq',
+                 $_ . '_error_output_isnt'    => 'isnt_eq',
+                 $_ . '_output_like'          => 'like',
+                 $_ . '_error_output_like'    => 'like',
+                 $_ . '_output_unlike'        => 'unlike',
+                 $_ . '_error_output_unlike'  => 'unlike',
+               }
+               qw( pasm pbc pir );
     for my $func ( keys %parrot_test_map ) {
         push @EXPORT, $func;
 
         my $test_sub = sub {
             my ( $code, $expected, $desc, %extra ) = @_;
-            my ( $out_f, $cmd, $exit_code )        = run_test_file( $func, @_ );
+            my ( $out_f, $cmd, $exit_code )        = _run_test_file( $func, @_ );
 
             my $meth        = $parrot_test_map{$func};
             my $real_output = slurp_file($out_f);
 
             unlink $out_f unless $ENV{POSTMORTEM};
 
-            # set a TODO for Test::Builder to find
+            # set a todo-item for Test::Builder to find
             my $call_pkg = $builder->exported_to() || '';
 
             no strict 'refs';
@@ -690,7 +705,7 @@ sub _generate_functions {
                 if defined $extra{todo};
 
             if ($func =~ /_error_/) {
-                return handle_error_output(
+                return _handle_error_output(
                     $builder, $real_output, $expected, $desc
                 ) unless $exit_code;
             }
@@ -773,7 +788,7 @@ sub _generate_functions {
                 $expected =~ s/[\t ]+/ /gm;
             }
 
-            # set a TODO for Test::Builder to find
+            # set a todo-item for Test::Builder to find
             my $call_pkg = $builder->exported_to() || '';
 
             local *{ $call_pkg . '::TODO' } = \$extra{todo}  ## no critic Variables::ProhibitConditionalDeclarations
@@ -827,11 +842,11 @@ sub _generate_functions {
             }
             else {
 
-                # TODO: $language should be the name of the test Module
+                # RT#43753: $language should be the name of the test Module
                 #       that would open the door for Scheme::Test
                 $language = ucfirst($language);
 
-                # make sure TODO will work, by telling Test::Builder which
+                # make sure todo-items will work, by telling Test::Builder which
                 # package the .t file is in (one more than usual, due to the
                 # extra layer of package indirection
                 my $level = $builder->level();
@@ -858,7 +873,6 @@ sub _generate_functions {
         *{ $package . '::' . $func } = $test_sub;
     }
 
-    # XXX this is broken WRT todo tests
     my %example_test_map = (
         example_output_is   => 'language_output_is',
         example_output_like => 'language_output_like',
@@ -924,7 +938,7 @@ sub _generate_functions {
             my $out_f    = per_test( '.out',   $test_no );
             my $build_f  = per_test( '.build', $test_no );
 
-            # set TODO before trying to compile or link
+            # set todo-option before trying to compile or link
             local *main::TODO;
             *main::TODO = \$options{todo} if $options{todo};
 
@@ -1026,8 +1040,6 @@ sub _generate_functions {
     return;
 }
 
-Parrot::Test::_generate_functions();
-
 =head1 SEE ALSO
 
 =over 4
@@ -1043,21 +1055,6 @@ Parrot::Test::_generate_functions();
 =back
 
 =cut
-
-sub report_odd_hash {
-    my $warning = shift;
-    if ( $warning =~ m/Odd number of elements in hash assignment/ ) {
-        require Carp;
-        my @args = DB::uplevel_args();
-        shift @args;
-        my $func = ( caller() )[2];
-
-        Carp::carp("Odd $func invocation; probably missing description for TODO test");
-    }
-    else {
-        warn $warning;
-    }
-}
 
 package DB;
 

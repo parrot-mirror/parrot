@@ -99,7 +99,7 @@ pmc2c_output_like( <<'END_PMC', <<'END_C', 'class initialization' );
 pmclass a { }
 END_PMC
 void
-Parrot_a_class_init(Parrot_Interp interp, int entry, int pass)
+Parrot_a_class_init(PARROT_INTERP, int entry, int pass)
 {
     const VTABLE temp_base_vtable = {
 END_C
@@ -142,7 +142,6 @@ END_PMC
         NULL,   /* whoami */
         0|VTABLE_PMC_NEEDS_EXT|VTABLE_IS_READONLY_FLAG, /* flags */
 END_C
-
 
 pmc2c_output_like( <<'END_PMC', <<'END_C', 'maps' );
 pmclass a hll dale maps Integer { }

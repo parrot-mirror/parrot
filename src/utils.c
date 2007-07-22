@@ -44,18 +44,18 @@ static long _lrand48( void );
 static long _mrand48( void );
 static long _nrand48( _rand_buf buf );
 static void _srand48( long seed );
-static void move_reg( int from, int dest, parrot_prm_context* c /*NN*/ )
+static void move_reg( int from, int dest, NOTNULL(parrot_prm_context* c) )
         __attribute__nonnull__(3);
 
 static void next_rand( _rand_buf X );
 static void process_cycle_without_exit(
     int node_index,
-    parrot_prm_context* c /*NN*/ )
+    NOTNULL(parrot_prm_context* c) )
         __attribute__nonnull__(2);
 
 static void rec_climb_back_and_mark(
     int node_index,
-    parrot_prm_context* c /*NN*/ )
+    NOTNULL(parrot_prm_context* c) )
         __attribute__nonnull__(2);
 
 /* HEADERIZER END: static */
@@ -84,9 +84,9 @@ Mathematics*, Second Edition. Addison-Wesley, 1994.
 
 */
 
+PARROT_CONST_FUNCTION
 INTVAL
 intval_mod(INTVAL i2, INTVAL i3)
-    /* CONST, WARN_UNUSED */
 {
     INTVAL y;
     INTVAL z = i3;
@@ -125,9 +125,9 @@ Includes a workaround for buggy code generation in the C<lcc> compiler.
 
 */
 
+PARROT_CONST_FUNCTION
 FLOATVAL
 floatval_mod(FLOATVAL n2, FLOATVAL n3)
-    /* CONST, WARN_UNUSED */
 {
 #ifdef __LCC__
 
@@ -441,9 +441,10 @@ Used in C<src/nci.c>.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 void *
-Parrot_make_la(Interp *interp, PMC *array /*NN*/)
-    /* WARN_UNUSED */
+Parrot_make_la(PARROT_INTERP, NOTNULL(PMC *array))
 {
     const INTVAL arraylen = VTABLE_elements(interp, array);
     INTVAL cur;
@@ -473,7 +474,7 @@ Use this to destroy an array created with C<Parrot_make_la()>.
 
 PARROT_API
 void
-Parrot_destroy_la(long *array) {
+Parrot_destroy_la(NULLOK(long *array)) {
     mem_sys_free(array);
 }
 
@@ -492,8 +493,10 @@ Note that you need to free this array with C<Parrot_destroy_cpa()>.
 */
 
 PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 void *
-Parrot_make_cpa(Interp *interp, PMC *array)
+Parrot_make_cpa(PARROT_INTERP, NOTNULL(PMC *array))
 {
     const INTVAL arraylen = VTABLE_elements(interp, array);
     INTVAL cur;
@@ -529,7 +532,7 @@ Use this to destroy an array created with C<Parrot_make_cpa()>.
 
 PARROT_API
 void
-Parrot_destroy_cpa(char **array /*NN*/)
+Parrot_destroy_cpa(NOTNULL(char **array))
 {
     UINTVAL offset = 0;
     /* Free each piece */
@@ -563,8 +566,9 @@ Helper to convert a B<struct tm *> to an Array
 */
 
 PARROT_API
+PARROT_CANNOT_RETURN_NULL
 PMC*
-tm_to_array(Parrot_Interp interp, const struct tm *tm /*NN*/)
+tm_to_array(PARROT_INTERP, NOTNULL(const struct tm *tm))
 {
     PMC * const Array = pmc_new(interp, enum_class_Array);
 
@@ -584,8 +588,8 @@ tm_to_array(Parrot_Interp interp, const struct tm *tm /*NN*/)
 
 PARROT_API
 INTVAL
-Parrot_byte_index(SHIM_INTERP, const STRING *base /*NN*/,
-        const STRING *search /*NN*/, UINTVAL start_offset)
+Parrot_byte_index(SHIM_INTERP, NOTNULL(const STRING *base),
+        NOTNULL(const STRING *search), UINTVAL start_offset)
 {
     const INTVAL searchlen = search->strlen;
     const char * const search_start = search->strstart;
@@ -604,19 +608,19 @@ Parrot_byte_index(SHIM_INTERP, const STRING *base /*NN*/,
 }
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_byte_rindex(SHIM_INTERP, const STRING *base /*NN*/,
-        const STRING *search /*NN*/, UINTVAL start_offset)
-    /* WARN_UNUSED */
+Parrot_byte_rindex(SHIM_INTERP, NOTNULL(const STRING *base),
+        NOTNULL(const STRING *search), UINTVAL start_offset)
 {
     const INTVAL searchlen = search->strlen;
     const char * const search_start = search->strstart;
     UINTVAL max_possible_offset = (base->strlen - search->strlen);
     INTVAL current_offset;
 
-    if (start_offset && start_offset < max_possible_offset) {
+    if (start_offset && start_offset < max_possible_offset)
         max_possible_offset = start_offset;
-    }
+
     for (current_offset = max_possible_offset; current_offset >= 0;
             current_offset--) {
         const char * const base_start = (char *)base->strstart + current_offset;
@@ -652,7 +656,7 @@ case marks it, and set node_index as its backup.
 */
 
 static void
-rec_climb_back_and_mark(int node_index, parrot_prm_context* c /*NN*/)
+rec_climb_back_and_mark(int node_index, NOTNULL(parrot_prm_context* c))
 {
     const int node = c->dest_regs[node_index];
     const int pred = c->src_regs[node_index];
@@ -691,7 +695,7 @@ For instance: 1-->2, 2-->3, 3-->1
 */
 
 static void
-process_cycle_without_exit(int node_index, parrot_prm_context* c /*NN*/)
+process_cycle_without_exit(int node_index, NOTNULL(parrot_prm_context* c))
 {
     const int pred = c->src_regs[node_index];
 
@@ -716,7 +720,7 @@ process_cycle_without_exit(int node_index, parrot_prm_context* c /*NN*/)
  */
 
 static void
-move_reg(int from, int dest, parrot_prm_context* c /*NN*/)
+move_reg(int from, int dest, NOTNULL(parrot_prm_context* c))
 {
    /* fprintf(stderr,"move %i ==> %i\n",from,dest);*/
     c->mov(c->interp, dest, from, c->info);
@@ -774,10 +778,10 @@ TODO: Add tests for the above conditions.
 
 PARROT_API
 void
-Parrot_register_move(Interp *interp, int n_regs,
-                     unsigned char *dest_regs /*NN*/, unsigned char *src_regs /*NN*/,
+Parrot_register_move(PARROT_INTERP, int n_regs,
+                     NOTNULL(unsigned char *dest_regs), NOTNULL(unsigned char *src_regs),
                      unsigned char temp_reg,
-                     reg_move_func mov, reg_move_func mov_alt, void *info)
+                     reg_move_func mov, reg_move_func mov_alt, NOTNULL(void *info))
 {
     int i;
     int max_reg = 0;

@@ -35,32 +35,41 @@ typedef enum {
 
 /* HEADERIZER BEGIN: src/library.c */
 
-PARROT_API char* Parrot_get_runtime_prefix( Interp *interp /*NN*/,
-    STRING **prefix_str /*NULLOK*/ )
+PARROT_API
+PARROT_MALLOC
+PARROT_CAN_RETURN_NULL
+char* Parrot_get_runtime_prefix( PARROT_INTERP, NULLOK(STRING **prefix_str) )
         __attribute__nonnull__(1);
 
-PARROT_API char* Parrot_locate_runtime_file( Interp *interp /*NN*/,
-    const char *file_name /*NN*/,
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+char* Parrot_locate_runtime_file( PARROT_INTERP,
+    NOTNULL(const char *file_name),
     enum_runtime_ft type )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(2);
 
-PARROT_API STRING* Parrot_locate_runtime_file_str( Interp *interp /*NN*/,
-    STRING *file /*NN*/,
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+STRING* Parrot_locate_runtime_file_str( PARROT_INTERP,
+    NOTNULL(STRING *file),
     enum_runtime_ft type )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(2);
 
-void parrot_init_library_paths( Interp *interp /*NN*/ )
+void parrot_init_library_paths( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-STRING * parrot_split_path_ext( Interp* interp /*NN*/,
-    STRING *in,
-    STRING **wo_ext /*NN*/,
-    STRING **ext /*NN*/ )
+PARROT_IGNORABLE_RESULT
+PARROT_CANNOT_RETURN_NULL
+STRING * parrot_split_path_ext( PARROT_INTERP,
+    NOTNULL(STRING *in),
+    NOTNULL(STRING **wo_ext),
+    NOTNULL(STRING **ext) )
         __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 

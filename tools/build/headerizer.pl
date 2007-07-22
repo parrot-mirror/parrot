@@ -66,7 +66,21 @@ use Getopt::Long;
 use lib qw( lib );
 use Parrot::Config;
 
+my %warnings;
 my %opt;
+
+my %valid_macros = map {($_,1)} qw(
+    PARROT_API
+    PARROT_INLINE
+    PARROT_CAN_RETURN_NULL
+    PARROT_CANNOT_RETURN_NULL
+    PARROT_IGNORABLE_RESULT
+    PARROT_WARN_UNUSED_RESULT
+    PARROT_PURE_FUNCTION
+    PARROT_CONST_FUNCTION
+    PARROT_DOES_NOT_RETURN
+    PARROT_MALLOC
+);
 
 main();
 
@@ -127,52 +141,70 @@ sub extract_function_declarations {
 }
 
 sub function_components_from_declaration {
+    my $file = shift;
     my $proto = shift;
 
     my @lines = split( /\n/, $proto );
     chomp @lines;
+
+    my @macros;
     my $parrot_api;
     my $parrot_inline;
-    if ( $lines[0] eq 'PARROT_API' ) {
-        $parrot_api = 1;
-        shift @lines;
-    }
 
-    if ( $lines[0] eq 'PARROT_INLINE' ) {
-        $parrot_inline = 1;
-        shift @lines;
+    while ( @lines && ( $lines[0] =~ /^PARROT_/ ) ) {
+        my $macro = shift @lines;
+        if ( $macro eq 'PARROT_API' ) {
+            $parrot_api = 1;
+        } elsif ( $macro eq 'PARROT_INLINE' ) {
+            $parrot_inline = 1;
+        }
+        push( @macros, $macro );
     }
 
     my $return_type = shift @lines;
     my $args      = join( " ", @lines );
 
     $args =~ s/\s+/ /g;
-    $args =~ s{([^(]+)\s*\((.+)\)\s*(/\*\s*(.*?)\s*\*/)?;?}{$2} or
+    $args =~ s{([^(]+)\s*\((.+)\);?}{$2} or
         die qq{Couldn't handle "$proto"};
 
     my $name = $1;
     $args = $2;
-    my $flags = $4;
 
     die "Can't have both PARROT_API and PARROT_INLINE on $name\n" if $parrot_inline && $parrot_api;
 
     my @args = split( /\s*,\s*/, $args );
     for (@args) {
-        s/SHIM_INTERP/SHIM(Interp *interp)/;
-        /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' )
+        /\S+\s+\S+/ || ( $_ eq '...' ) || ( $_ eq 'void' ) || ( $_ =~ /(PARROT|NULLOK|SHIM)_INTERP/ )
             or die "Bad args in $proto";
-        s/SHIM\(\s*(\w+.*\w+)\s*\)/$1/e;
     }
 
     my $is_static = 0;
     $is_static = $2 if $return_type =~ s/^((static)\s+)?//i;
 
-    die "Impossible to have both static and PARROT_API" if $parrot_api && $is_static;
+    die "$file $name: Impossible to have both static and PARROT_API" if $parrot_api && $is_static;
+
+    my %macros;
+    for my $macro ( @macros ) {
+        $macros{$macro} = 1;
+        if ( not $valid_macros{$macro} ) {
+            squawk( $file, $name, "Invalid macro $macro" );
+        }
+    }
+    if ( $return_type =~ /\*/ ) {
+        if ( !$macros{PARROT_CAN_RETURN_NULL} && !$macros{PARROT_CANNOT_RETURN_NULL} ) {
+            squawk( $file, $name, "Returns a pointer, but no PARROT_CAN(NOT)_RETURN_NULL macro found." );
+        }
+        elsif ( $macros{PARROT_CAN_RETURN_NULL} && $macros{PARROT_CANNOT_RETURN_NULL} ) {
+            squawk( $file, $name, "Can't have both PARROT_CAN_RETURN_NULL and PARROT_CANNOT_RETURN_NULL together." );
+        }
+    }
 
     return {
+        file        => $file,
         name        => $name,
-        flags       => $flags,
         args        => \@args,
+        macros      => \@macros,
         is_static   => $is_static,
         is_inline   => $parrot_inline,
         is_api      => $parrot_api,
@@ -180,7 +212,9 @@ sub function_components_from_declaration {
     };
 }
 
+
 sub attrs_from_args {
+    my $func = shift;
     my @args = @_;
 
     my @attrs = ();
@@ -188,50 +222,19 @@ sub attrs_from_args {
     my $n = 0;
     for my $arg ( @args ) {
         ++$n;
-        if ( $arg =~ m{/\*\s*NN\s*\*/} ) {
+        if ( $arg =~ m{NOTNULL\(} || $arg eq 'PARROT_INTERP' ) {
             push( @attrs, "__attribute__nonnull__($n)" );
         }
-    }
-
-    return @attrs;
-}
-
-sub attrs_from_flags {
-    my $flags = shift;
-
-    return if not $flags;
-    return if $flags =~ /XXX/;
-
-    my @attrs = ();
-    my @opts = split( /\s*,\s*/, $flags );
-
-    # For details about these attributes, see
-    # http://gcc.gnu.org/onlinedocs/gcc-4.2.0/gcc/Function-Attributes.html
-    for my $opt ( @opts ) {
-        if ( $opt eq 'WARN_UNUSED' ) {
-            push( @attrs, '__attribute__warn_unused_result__' );
-        }
-        elsif ( $opt eq 'NORETURN' ) {
-            push( @attrs, '__attribute__noreturn__' );
-        }
-        elsif ( $opt eq 'CONST' ) {
-            push( @attrs, '__attribute__const__' );
-        }
-        elsif ( $opt eq 'PURE' ) {
-            push( @attrs, '__attribute__pure__' );
-        }
-        elsif ( $opt eq 'MALLOC' ) {
-            push( @attrs, '__attribute__malloc__' );
-        }
-        else {
-            confess( qq{Unknown function flag "$flags" -> "$opt"\n} );
+        if ( ( $arg =~ m{\*} ) && ( $arg !~ /SHIM|NOTNULL|NULLOK/ ) ) {
+            my $name = $func->{name};
+            my $file = $func->{file};
+            squawk( $file, $name, qq{"$arg" isn't protected with NOTNULL or NULLOK} );
         }
     }
 
     return @attrs;
 }
 
-sub wango { 'foo' }
 
 sub make_function_decls {
     my @funcs = @_;
@@ -241,14 +244,10 @@ sub make_function_decls {
         my $multiline = 0;
 
         my $decl = sprintf( "%s %s(", $func->{return_type}, $func->{name} );
-        $decl = "PARROT_API $decl" if $func->{is_api};
         $decl = "static $decl" if $func->{is_static};
 
-        $decl = "PARROT_INLINE $decl" if $func->{is_inline};
-
         my @args = @{$func->{args}};
-        my @attrs = attrs_from_args( @args );
-        push( @attrs, attrs_from_flags( $func->{flags} ) );
+        my @attrs = attrs_from_args( $func, @args );
 
         for my $arg ( @args ) {
             if ( $arg =~ m{SHIM\((.+)\)} ) {
@@ -261,7 +260,7 @@ sub make_function_decls {
             $decl = "$decl $argline )";
         }
         else {
-            if ( $args[0] =~ /^Interp\b/ ) {
+            if ( $args[0] =~ /^((SHIM|PARROT)_INTERP|Interp)\b/ ) {
                 $decl .= " " . (shift @args);
                 $decl .= "," if @args;
             }
@@ -275,7 +274,11 @@ sub make_function_decls {
             $decl .= $attrs;
             $multiline = 1;
         }
+        my @macros = @{$func->{macros}};
+        $multiline = 1 if @macros;
+
         $decl .= $multiline ? ";\n" : ";";
+        $decl = join( "\n", @macros, $decl );
         $decl =~ s/\t/    /g;
         push( @decls, $decl );
     }
@@ -283,10 +286,17 @@ sub make_function_decls {
     return @decls;
 }
 
+sub squawk {
+    my $file = shift;
+    my $func = shift;
+    my $error = shift;
+
+    push( @{$warnings{$file}->{$func}}, $error );
+}
+
 sub main {
     GetOptions( 'verbose' => \$opt{verbose}, ) or exit(1);
 
-    my $nfuncs = 0;
     my %ofiles = map {($_,1)} @ARGV;
     my @ofiles = sort keys %ofiles;
     my %cfiles;
@@ -295,6 +305,8 @@ sub main {
     # Walk the object files and find corresponding source (either .c or .pmc)
     for my $ofile (@ofiles) {
         next if $ofile =~ m/^\Qsrc$PConfig{slash}ops\E/;
+
+        $ofile =~ s/\\/\//g;
 
         my $cfile = $ofile;
         $cfile =~ s/\Q$PConfig{o}\E$/.c/ or die "$cfile doesn't look like an object file";
@@ -316,14 +328,11 @@ sub main {
 
         my @decls = extract_function_declarations($source);
         for my $decl (@decls) {
-            my $components = function_components_from_declaration($decl);
+            my $components = function_components_from_declaration($cfile, $decl);
             push( @{ $cfiles{$hfile}->{$cfile} }, $components ) unless $hfile eq 'none';
             push( @{ $cfiles_with_statics{ $cfile } }, $components ) if $components->{is_static};
-            ++$nfuncs;
         }
     }    # for @cfiles
-    my $nfiles = scalar keys %cfiles;
-    print "$nfuncs funcs in $nfiles C files\n";
 
     # Update all the .h files
     for my $hfile ( sort keys %cfiles ) {
@@ -351,6 +360,27 @@ sub main {
         write_file( $cfile, $source );
     }
 
+    print "Headerization complete.\n";
+    if ( keys %warnings ) {
+        my $nwarnings = 0;
+        my $nwarningfuncs = 0;
+        my $nwarningfiles = 0;
+        for my $file ( sort keys %warnings ) {
+            ++$nwarningfiles;
+            print "$file\n";
+            my $funcs = $warnings{$file};
+            for my $func ( sort keys %{$funcs} ) {
+                ++$nwarningfuncs;
+                for my $error ( @{$funcs->{$func}} ) {
+                    print "    $func: $error\n";
+                    ++$nwarnings;
+                }
+            }
+        }
+
+        print "$nwarnings warnings in $nwarningfuncs funcs in $nwarningfiles C files\n";
+    }
+
     return;
 }
 
@@ -371,7 +401,6 @@ sub write_file {
     open my $fh, '>', $filename or die "couldn't write '$filename': $!";
     print {$fh} $text;
     close $fh;
-    print "Wrote '$filename'\n";
 }
 
 sub replace_headerized_declarations {

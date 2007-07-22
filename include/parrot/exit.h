@@ -16,7 +16,7 @@
 
 #include "parrot/compiler.h"    /* compiler capabilities */
 
-typedef void (*exit_handler_f)(Interp *, int , void *);
+typedef void (*exit_handler_f)(PARROT_INTERP, int , void *);
 
 typedef struct _handler_node_t {
     exit_handler_f function;
@@ -26,13 +26,15 @@ typedef struct _handler_node_t {
 
 /* HEADERIZER BEGIN: src/exit.c */
 
-PARROT_API void Parrot_exit( Interp *interp /*NN*/, int status )
-        __attribute__nonnull__(1)
-        __attribute__noreturn__;
+PARROT_API
+PARROT_DOES_NOT_RETURN
+void Parrot_exit( PARROT_INTERP, int status )
+        __attribute__nonnull__(1);
 
-PARROT_API int Parrot_on_exit( Interp *interp /*NN*/,
-    exit_handler_f function /*NN*/,
-    void *arg )
+PARROT_API
+int Parrot_on_exit( PARROT_INTERP,
+    NOTNULL(exit_handler_f function),
+    NULLOK(void *arg) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

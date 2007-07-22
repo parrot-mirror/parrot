@@ -21,59 +21,79 @@
 
 /* HEADERIZER BEGIN: src/pmc.c */
 
-PARROT_API PMC * constant_pmc_new( Interp *interp /*NN*/, INTVAL base_type )
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PMC * constant_pmc_new( PARROT_INTERP, INTVAL base_type )
         __attribute__nonnull__(1);
 
-PARROT_API PMC * constant_pmc_new_init( Interp *interp /*NN*/,
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PMC * constant_pmc_new_init( PARROT_INTERP,
     INTVAL base_type,
-    PMC *init )
+    NULLOK(PMC *init) )
         __attribute__nonnull__(1);
 
-PARROT_API PMC * constant_pmc_new_noinit( Interp *interp /*NN*/,
-    INTVAL base_type )
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PMC * constant_pmc_new_noinit( PARROT_INTERP, INTVAL base_type )
         __attribute__nonnull__(1);
 
-PARROT_API void dod_register_pmc( Interp* interp /*NN*/, PMC* pmc )
+PARROT_API
+void dod_register_pmc( PARROT_INTERP, NOTNULL(PMC* pmc) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+void Parrot_create_mro( PARROT_INTERP, INTVAL type )
         __attribute__nonnull__(1);
 
-PARROT_API void Parrot_create_mro( Interp *interp /*NN*/, INTVAL type )
+PARROT_API
+void Parrot_create_pmc_proxy( PARROT_INTERP, int type_num )
         __attribute__nonnull__(1);
 
-PARROT_API void Parrot_create_pmc_proxy( Interp* interp /*NN*/, int type_num )
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PMC * pmc_new( PARROT_INTERP, INTVAL base_type )
         __attribute__nonnull__(1);
 
-PARROT_API PMC * pmc_new( Interp *interp /*NN*/, INTVAL base_type )
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PMC * pmc_new_init( PARROT_INTERP, INTVAL base_type, NULLOK(PMC *init) )
         __attribute__nonnull__(1);
 
-PARROT_API PMC * pmc_new_init( Interp *interp /*NN*/,
-    INTVAL base_type,
-    PMC *init )
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PMC * pmc_new_noinit( PARROT_INTERP, INTVAL base_type )
         __attribute__nonnull__(1);
 
-PARROT_API PMC * pmc_new_noinit( Interp *interp /*NN*/, INTVAL base_type )
-        __attribute__nonnull__(1);
+PARROT_API
+INTVAL pmc_register( PARROT_INTERP, NOTNULL(STRING *name) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
-PARROT_API INTVAL pmc_register( Interp* interp /*NN*/, STRING *name )
-        __attribute__nonnull__(1);
-
-PARROT_API PMC* pmc_reuse( Interp *interp /*NN*/,
-    PMC *pmc /*NN*/,
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PMC* pmc_reuse( PARROT_INTERP,
+    NOTNULL(PMC *pmc),
     INTVAL new_type,
     UINTVAL flags )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API INTVAL pmc_type( Interp* interp /*NN*/, STRING *name /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__warn_unused_result__;
-
-PARROT_API INTVAL pmc_type_p( Interp* interp /*NN*/, PMC *name /*NN*/ )
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+INTVAL pmc_type( PARROT_INTERP, NOTNULL(STRING *name) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void dod_unregister_pmc( Interp* interp /*NN*/, PMC* pmc )
-        __attribute__nonnull__(1);
+PARROT_API
+INTVAL pmc_type_p( PARROT_INTERP, NOTNULL(PMC *name) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void dod_unregister_pmc( PARROT_INTERP, NOTNULL(PMC* pmc) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 /* HEADERIZER END: src/pmc.c */
 

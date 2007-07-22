@@ -39,7 +39,7 @@ etc.).
 
 PARROT_API
 void
-string_set_data_directory(Interp *interp, const char *dir)
+string_set_data_directory(PARROT_INTERP, NOTNULL(const char *dir))
 {
 #if PARROT_HAS_ICU
     u_setDataDirectory(dir);
@@ -63,106 +63,13 @@ string_set_data_directory(Interp *interp, const char *dir)
 #endif
 }
 
-/*
-
-Creates a Parrot string from an "external" buffer, converting from any
-supported encoding into Parrot string's internal format.
-
-*/
-
-PARROT_API
-void
-string_fill_from_buffer(Interp *interp, const void *buffer /*NN*/,
-            UINTVAL len, const char *encoding_name, STRING *s /*NULLOK*/)
-{
-#if PARROT_HAS_ICU
-    UErrorCode icuError = U_ZERO_ERROR;
-    UConverter *conv = NULL;
-    UChar *target = NULL;
-    UChar *target_limit = NULL;
-    const char *source = NULL;
-    const char *source_limit = NULL;
-
-    assert(buffer);
-    assert(encoding_name);
-
-    if (s && !len) {
-        /* XXX: I _guess_ this is always an empty string--is that right? */
-        s->bufused = 0;
-        s->strlen = 0;
-        return;
-    }
-
-    /* big guess--allocate same space for string as buffer needed.
-       may be able to make a more educated guess based on the encoding. */
-    Parrot_allocate_string(interp, s, len);
-
-    conv = ucnv_open(encoding_name, &icuError);
-
-    if (!conv || icuError != U_ZERO_ERROR) {
-        /* unknown encoding??? */
-        real_exception(interp, NULL, ICU_ERROR,
-                "string_fill_from_buffer: ICU error from ucnv_open()");
-
-    }
-
-    target = (UChar *)s->strstart;
-    /* buflen may be larger than what we asked for,
-     * so take advantage of the space
-     */
-    target_limit = (UChar *)((char *)PObj_bufstart(s) + PObj_buflen(s) - 1);
-    source = buffer;
-    source_limit = source + len;
-
-    ucnv_toUnicode(conv, &target, target_limit, &source,
-            source_limit, NULL, TRUE, &icuError);
-
-    while (icuError == U_BUFFER_OVERFLOW_ERROR) {
-        const size_t consumed_length = (char *)target - (char *)(s->strstart);
-
-        /* double size, at least */
-        Parrot_reallocate_string(interp, s, 2 * PObj_buflen(s));
-
-        target = (UChar *)((char *)s->strstart + consumed_length);
-        target_limit = (UChar *)((char *)PObj_bufstart(s) + PObj_buflen(s) - 1);
-
-        icuError = U_ZERO_ERROR;
-        ucnv_toUnicode(conv, &target, target_limit, &source,
-                source_limit, NULL, TRUE, &icuError);
-    }
-
-    ucnv_close(conv);
-
-    if (icuError != U_ZERO_ERROR) {
-        /* handle error */
-        real_exception(interp, NULL, ICU_ERROR,
-                "string_fill_from_buffer: ICU error from ucnv_toUnicode()");
-    }
-
-    real_exception(interp, NULL, UNIMPLEMENTED, "Can't do unicode yet");
-
-    /* temporary; need to promote to rep 4 if has non-BMP characters*/
-    s->bufused = (char *)target - (char *)s->strstart;
-    string_compute_strlen(interp, s);
-#else
-    UNUSED(interp);
-    UNUSED(buffer);
-    UNUSED(len);
-    UNUSED(encoding_name);
-    UNUSED(s);
-
-    real_exception(interp, NULL, ICU_ERROR,
-        "string_fill_from_buffer: parrot compiled without ICU support");
-#endif
-}
-
 
 /* Unescape a single character. We assume that we're at the start of a
    sequence, right after the \ */
 PARROT_API
 Parrot_UInt4
-string_unescape_one(Interp *interp, UINTVAL *offset /*NN*/,
-        STRING *string)
+string_unescape_one(PARROT_INTERP, NOTNULL(UINTVAL *offset),
+        NOTNULL(STRING *string))
 {
     UINTVAL workchar = 0;
     UINTVAL charcount = 0;
@@ -379,6 +286,7 @@ C<Parrot_char_is_digit()> returns false.
 */
 
 PARROT_API
+PARROT_CONST_FUNCTION
 UINTVAL
 Parrot_char_digit_value(SHIM_INTERP, UINTVAL character)
 {

@@ -154,7 +154,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     unless $I0 goto L1
     .local pmc _lua__REGISTRY
     .local pmc key
-    _lua__REGISTRY = global '_REGISTRY'
+    _lua__REGISTRY = get_global '_REGISTRY'
     new key, .LuaString
     set key, type
     $P0 = _lua__REGISTRY[key]
@@ -272,6 +272,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     lua_comp = compreg 'Lua'
     push_eh _handler
     $P0 = lua_comp.'compile'(buff)
+    $P0 = $P0[1]
     .local pmc env
     env = get_global '_G'
     $P0.'setfenv'(env)
@@ -305,6 +306,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     lua_comp = compreg 'Lua'
     push_eh _handler
     $P0 = lua_comp.'compile'($S0)
+    $P0 = $P0[1]
     .local pmc env
     env = get_global '_G'
     $P0.'setfenv'(env)
@@ -332,7 +334,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     .param string tname
     .local pmc _lua__REGISTRY
     .local pmc res
-    _lua__REGISTRY = global '_REGISTRY'
+    _lua__REGISTRY = get_global '_REGISTRY'
     new $P1, .LuaString
     set $P1, tname
     res = _lua__REGISTRY[$P1]
@@ -388,7 +390,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     .param pmc lib
     .const .LuaString _loaded = '_LOADED'
     .local pmc _lua__REGISTRY
-    _lua__REGISTRY = global '_REGISTRY'
+    _lua__REGISTRY = get_global '_REGISTRY'
     $P0 = _lua__REGISTRY[_loaded]
     $P0[libname] = lib
 .end
@@ -428,6 +430,55 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
 =head2 Others functions
 
 =over 4
+
+=item C<argstolua (env, args)>
+
+=cut
+
+.sub 'argstolua'
+    .param pmc env
+    .param pmc args
+    .local pmc res
+    new res, .FixedPMCArray
+    if null args goto L1
+    $P0 = getinterp
+    push_eh _handler
+    $P0 = $P0['sub', 2]
+    unshift args, 'dummy HLLCompiler'
+  _handler:
+    $S0 = shift args
+    $I1 = args
+    set res, $I1
+    $I0 = 0
+  L2:
+    unless $I0 < $I1 goto L1
+    $S0 = shift args
+    $P0 = new .LuaString
+    set $P0, $S0
+    res[$I0] = $P0
+    inc $I0
+    goto L2
+  L1:
+    if null args goto L3
+    # not interactive mode
+    .local pmc iter, i
+    new iter, .Iterator, res
+    new i, .LuaNumber
+    set i, 1
+    new $P0, .LuaTable
+  L4:
+    unless iter goto L5
+    $P1 = shift iter
+    $P0[i] = $P1
+    inc i
+    goto L4
+  L5:
+    .const .LuaString k_arg = 'arg'
+    env[k_arg] = $P0
+  L3:
+    .return (res)
+.end
+
 
 =item C<checkforloop (start, limit, step)>
 
@@ -476,7 +527,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     .lex 'where', where
     new where, .LuaString
     f(vararg :flat)
-    .return ()
+    .return (0)
   _handler:
     .local pmc ex
     .local string msg
@@ -493,7 +544,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     $S0 .= "\n"
     printerr $S0
     printerr traceback
-    .return ()
+    .return (1)
   L1:
     rethrow ex
 .end
@@ -536,7 +587,27 @@ Support variable number of arguments function call.
 .end
 
 
+=item C<prompt (env)>
+
+=cut
+
+.sub 'prompt'
+    .param pmc env
+    $S0 = '> '
+    .const .LuaString k__PROMPT = '_PROMPT'
+    $P0 = env[k__PROMPT]
+    $I0 = isa $P0, 'LuaNil'
+    if $I0 goto L1
+    $S0 = $P0
+  L1:
+    $P0 = compreg 'Lua'
+    $P0.'commandline_prompt'($S0)
+.end
+
+
 =item C<tconstruct (table, index, argv)>
+
+end of table constructor with argv
 
 =cut
 
@@ -557,128 +628,6 @@ Support variable number of arguments function call.
     goto L1
   L2:
     .return (table)
-.end
-
-
-=back
-
-=head2 Builtins
-
-=over 4
-
-=item C<infix:==>
-
-=cut
-
-.sub 'infix:=='
-    .param pmc a
-    .param pmc b
-    $I0 = iseq a, b
-    new $P0, .LuaBoolean
-    set $P0, $I0
-    .return ($P0)
-.end
-
-
-=item C<infix:~=>
-
-=cut
-
-.sub 'infix:~='
-    .param pmc a
-    .param pmc b
-    $I0 = isne a, b
-    new $P0, .LuaBoolean
-    set $P0, $I0
-    .return ($P0)
-.end
-
-
-=item C<infix:E<lt>=>
-
-=cut
-
-.sub 'infix:<='
-    .param pmc a
-    .param pmc b
-    $I0 = isle a, b
-    new $P0, .LuaBoolean
-    set $P0, $I0
-    .return ($P0)
-.end
-
-
-=item C<infix:>=>
-
-=cut
-
-.sub 'infix:>='
-    .param pmc a
-    .param pmc b
-    $I0 = isge a, b
-    new $P0, .LuaBoolean
-    set $P0, $I0
-    .return ($P0)
-.end
-
-
-=item C<infix:E<lt>>
-
-=cut
-
-.sub 'infix:<'
-    .param pmc a
-    .param pmc b
-    $I0 = islt a, b
-    new $P0, .LuaBoolean
-    set $P0, $I0
-    .return ($P0)
-.end
-
-
-=item C<infix:E<gt>>
-
-=cut
-
-.sub 'infix:>'
-    .param pmc a
-    .param pmc b
-    $I0 = isgt a, b
-    new $P0, .LuaBoolean
-    set $P0, $I0
-    .return ($P0)
-.end
-
-
-=item C<infix:and>
-
-=cut
-
-.sub 'infix:and'
-    .param pmc a
-    .param pmc b
-    if a goto L1
-    $P0 = clone a
-    .return ($P0)
-  L1:
-    $P0 = clone b
-    .return ($P0)
-.end
-
-
-=item C<infix:or>
-
-=cut
-
-.sub 'infix:or'
-    .param pmc a
-    .param pmc b
-    unless a goto L1
-    $P0 = clone a
-    .return ($P0)
-  L1:
-    $P0 = clone b
-    .return ($P0)
 .end
 
 

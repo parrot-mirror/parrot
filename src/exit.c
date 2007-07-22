@@ -32,7 +32,7 @@ Register the specified function to be called on exit.
 
 PARROT_API
 int
-Parrot_on_exit(Interp *interp /*NN*/, exit_handler_f function /*NN*/, void *arg)
+Parrot_on_exit(PARROT_INTERP, NOTNULL(exit_handler_f function), NULLOK(void *arg))
 {
     /* XXX  we might want locking around the list access.   I'm sure this
      * will be the least of the threading issues. */
@@ -55,9 +55,9 @@ Exit, calling any registered exit handlers.
 */
 
 PARROT_API
+PARROT_DOES_NOT_RETURN
 void
-Parrot_exit(Interp *interp /*NN*/, int status)
-    /* NORETURN */
+Parrot_exit(PARROT_INTERP, int status)
 {
     /* call all the exit handlers */
     /* we are well "below" the runloop now, where lo_var_ptr

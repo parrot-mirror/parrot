@@ -43,7 +43,7 @@ Checks whether the specified environment variable is set.
 */
 
 static int
-is_env_var_set(const char* var /*NN*/)
+is_env_var_set(NOTNULL(const char* var))
 {
     int free_it, retval;
     char* const value = Parrot_getenv(var, &free_it);
@@ -60,7 +60,7 @@ is_env_var_set(const char* var /*NN*/)
 
 /*
 
-=item C<static void setup_default_compreg(Parrot_Interp interp)>
+=item C<static void setup_default_compreg(PARROT_INTERP)>
 
 Setup default compiler for PASM.
 
@@ -69,7 +69,7 @@ Setup default compiler for PASM.
 */
 
 static void
-setup_default_compreg(Parrot_Interp interp)
+setup_default_compreg(PARROT_INTERP)
 {
     STRING * const pasm1 = string_from_literal(interp, "PASM1");
 
@@ -88,8 +88,9 @@ Create the Parrot interpreter. Allocate memory and clear the registers.
 void Parrot_really_destroy(Interp *, int exit_code, void *);
 
 PARROT_API
+PARROT_CANNOT_RETURN_NULL
 Parrot_Interp
-make_interpreter(Interp *parent /*NULLOK*/, INTVAL flags)
+make_interpreter(NULLOK(Interp *parent), INTVAL flags)
 {
     Interp *interp;
 #if EXEC_CAPABLE
@@ -270,7 +271,7 @@ This function is not currently used.
 
 PARROT_API
 void
-Parrot_destroy(Interp *interp)
+Parrot_destroy(PARROT_INTERP)
 {
 #ifdef ATEXIT_DESTROY
     UNUSED(interp);
@@ -282,7 +283,7 @@ Parrot_destroy(Interp *interp)
 /*
 
 =item C<void
-Parrot_really_destroy(Interp *interp, int exit_code, void *arg)>
+Parrot_really_destroy(PARROT_INTERP, int exit_code, void *arg)>
 
 Waits for any threads to complete, then frees all allocated memory, and
 closes any open file handles, etc.
@@ -294,7 +295,7 @@ Note that C<exit_code> is ignored.
 */
 
 void
-Parrot_really_destroy(Interp *interp, SHIM(int exit_code), SHIM(void *arg))
+Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
 {
     /*
      * wait for threads to complete if needed

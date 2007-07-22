@@ -19,70 +19,82 @@
 
 /* HEADERIZER BEGIN: src/charset/ascii.c */
 
-INTVAL ascii_compare( Interp *interp,
-    const STRING *lhs /*NN*/,
-    const STRING *rhs /*NN*/ )
+PARROT_WARN_UNUSED_RESULT
+INTVAL ascii_compare( PARROT_INTERP,
+    NOTNULL(const STRING *lhs),
+    NOTNULL(const STRING *rhs) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(3);
 
-size_t ascii_compute_hash( Interp *interp,
-    const STRING *source_string /*NN*/,
+PARROT_PURE_FUNCTION
+size_t ascii_compute_hash( SHIM_INTERP,
+    NOTNULL(const STRING *source_string),
     size_t seed )
-        __attribute__nonnull__(2)
-        __attribute__pure__
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(2);
 
-INTVAL ascii_cs_index( Interp *interp,
-    STRING *source_string /*NN*/,
-    STRING *search_string /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+INTVAL ascii_cs_index( PARROT_INTERP,
+    NOTNULL(STRING *source_string),
+    NOTNULL(STRING *search_string),
     UINTVAL offset )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(3);
 
-INTVAL ascii_cs_rindex( Interp *interp,
-    STRING *source_string /*NN*/,
-    STRING *search_string /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+INTVAL ascii_cs_rindex( PARROT_INTERP,
+    NOTNULL(STRING *source_string),
+    NOTNULL(STRING *search_string),
     UINTVAL offset )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(3);
 
-STRING * ascii_get_graphemes( Interp *interp,
-    STRING *source_string,
+PARROT_WARN_UNUSED_RESULT
+STRING * ascii_get_graphemes( PARROT_INTERP,
+    NOTNULL(STRING *source_string),
     UINTVAL offset,
     UINTVAL count )
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
-STRING * ascii_get_graphemes_inplace( Interp *interp,
-    STRING *source_string,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+STRING * ascii_get_graphemes_inplace( PARROT_INTERP,
+    NOTNULL(STRING *source_string),
     UINTVAL offset,
     UINTVAL count,
-    STRING *dest_string )
-        __attribute__warn_unused_result__;
-
-STRING * charset_cvt_ascii_to_binary( Interp *interp /*NN*/,
-    STRING *src /*NN*/,
-    STRING *dest /*NULLOK*/ )
+    NOTNULL(STRING *dest_string) )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-STRING * charset_cvt_ascii_to_iso_8859_1( Interp *interp /*NN*/,
-    STRING *src /*NN*/,
-    STRING *dest /*NULLOK*/ )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-INTVAL mixed_cs_index( Interp *interp,
-    STRING *src /*NN*/,
-    STRING *search /*NN*/,
-    UINTVAL offs )
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__warn_unused_result__;
+        __attribute__nonnull__(5);
 
-CHARSET * Parrot_charset_ascii_init( Interp *interp );
+STRING * charset_cvt_ascii_to_binary( PARROT_INTERP,
+    NOTNULL(STRING *src),
+    NULLOK(STRING *dest) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+STRING * charset_cvt_ascii_to_iso_8859_1( PARROT_INTERP,
+    NOTNULL(STRING *src),
+    NULLOK(STRING *dest) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
+INTVAL mixed_cs_index( PARROT_INTERP,
+    NOTNULL(STRING *src),
+    NOTNULL(STRING *search),
+    UINTVAL offs )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_CANNOT_RETURN_NULL
+const CHARSET * Parrot_charset_ascii_init( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
 /* HEADERIZER END: src/charset/ascii.c */
 
 #endif /* PARROT_CHARSET_ASCII_H_GUARD */

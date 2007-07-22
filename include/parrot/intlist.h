@@ -40,53 +40,55 @@ typedef IntList_Chunk IntList;
 
 /* HEADERIZER BEGIN: src/intlist.c */
 
-void intlist_assign( Interp *i /*NN*/,
-    IntList *l /*NN*/,
+void intlist_assign( PARROT_INTERP,
+    NOTNULL(IntList *l),
     INTVAL idx,
     INTVAL val )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-IntList * intlist_clone( Interp *i /*NN*/, const IntList *list/*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__malloc__
-        __attribute__warn_unused_result__;
-
-void intlist_dump( FILE *fp, IntList *list /*NN*/, int verbose )
-        __attribute__nonnull__(2);
-
-INTVAL intlist_get( Interp *interp /*NN*/, IntList *list /*NN*/, INTVAL idx )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__warn_unused_result__;
-
-INTVAL intlist_length( Interp *interp, const IntList *list /*NN*/ )
-        __attribute__nonnull__(2)
-        __attribute__pure__
-        __attribute__warn_unused_result__;
-
-void intlist_mark( Interp *i /*NN*/, IntList *l /*NN*/ )
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+IntList * intlist_clone( PARROT_INTERP, NOTNULL(const IntList *list) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-IntList * intlist_new( Interp *i /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__malloc__
-        __attribute__warn_unused_result__;
-
-INTVAL intlist_pop( Interp *i /*NN*/, IntList *l /*NN*/ )
+void intlist_dump( NOTNULL(FILE *fp), NOTNULL(IntList *list), int verbose )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void intlist_push( Interp *i /*NN*/, IntList *l /*NN*/, INTVAL val )
+PARROT_WARN_UNUSED_RESULT
+INTVAL intlist_get( PARROT_INTERP, NOTNULL(IntList *list), INTVAL idx )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-INTVAL intlist_shift( Interp *i, IntList **l /*NN*/ )
+PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
+INTVAL intlist_length( SHIM_INTERP, NOTNULL(const IntList *list) )
         __attribute__nonnull__(2);
 
-void intlist_unshift( Interp *i /*NN*/, IntList **l /*NN*/, INTVAL val )
+void intlist_mark( PARROT_INTERP, NOTNULL(IntList *l) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+IntList * intlist_new( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
+INTVAL intlist_pop( PARROT_INTERP, NOTNULL(IntList *l) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void intlist_push( PARROT_INTERP, NOTNULL(IntList *l), INTVAL val )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+INTVAL intlist_shift( PARROT_INTERP, NOTNULL(IntList **l) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void intlist_unshift( PARROT_INTERP, NOTNULL(IntList **l), INTVAL val )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

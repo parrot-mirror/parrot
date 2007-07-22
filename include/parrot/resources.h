@@ -26,7 +26,7 @@ typedef struct Memory_Block {
 
 typedef struct Memory_Pool {
     Memory_Block *top_block;
-    void (*compact)(Interp *, struct Memory_Pool *);
+    void (*compact)(PARROT_INTERP, struct Memory_Pool *);
     size_t minimum_block_size;
     size_t total_allocated; /* total bytes allocated to this pool */
     size_t guaranteed_reclaimable;     /* bytes that can definitely be reclaimed*/
@@ -38,51 +38,50 @@ typedef struct Memory_Pool {
 
 /* HEADERIZER BEGIN: src/gc/resources.c */
 
-void Parrot_allocate( Interp *interp /*NN*/,
-    Buffer *buffer /*NN*/,
+void Parrot_allocate( PARROT_INTERP, NOTNULL(Buffer *buffer), size_t size )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void Parrot_allocate_aligned( PARROT_INTERP,
+    NOTNULL(Buffer *buffer),
     size_t size )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void Parrot_allocate_aligned( Interp *interp /*NN*/,
-    Buffer *buffer /*NN*/,
+void Parrot_allocate_string( PARROT_INTERP,
+    NOTNULL(STRING *str),
     size_t size )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void Parrot_allocate_string( Interp *interp /*NN*/,
-    STRING *str /*NN*/,
-    size_t size )
+void Parrot_destroy_memory_pools( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
+void Parrot_go_collect( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+int Parrot_in_memory_pool( PARROT_INTERP, NOTNULL(void *bufstart) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void Parrot_destroy_memory_pools( Interp *interp /*NN*/ )
+void Parrot_initialize_memory_pools( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-void Parrot_go_collect( Interp *interp /*NN*/ )
-        __attribute__nonnull__(1);
-
-int Parrot_in_memory_pool( Interp *interp /*NN*/, void *bufstart /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__warn_unused_result__;
-
-void Parrot_initialize_memory_pools( Interp *interp /*NN*/ )
-        __attribute__nonnull__(1);
-
-void Parrot_merge_memory_pools( Interp *dest_interp /*NN*/,
-    Interp *source_interp /*NN*/ )
+void Parrot_merge_memory_pools(
+    NOTNULL(Interp *dest_interp),
+    NOTNULL(Interp *source_interp) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void Parrot_reallocate( Interp *interp /*NN*/,
-    Buffer *buffer /*NN*/,
+void Parrot_reallocate( PARROT_INTERP,
+    NOTNULL(Buffer *buffer),
     size_t tosize )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void Parrot_reallocate_string( Interp *interp /*NN*/,
-    STRING *str /*NN*/,
+void Parrot_reallocate_string( PARROT_INTERP,
+    NOTNULL(STRING *str),
     size_t tosize )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -103,9 +102,9 @@ typedef struct Arenas {
     /*
      * function slots that each subsystem must provide
      */
-    void (*do_dod_run)(Interp*, int flags);
-    void (*de_init_gc_system) (Interp*);
-    void (*init_pool)(Interp *, struct Small_Object_Pool *);
+    void (*do_dod_run)(PARROT_INTERP, int flags);
+    void (*de_init_gc_system) (PARROT_INTERP);
+    void (*init_pool)(PARROT_INTERP, struct Small_Object_Pool *);
     /*
      * statistics for DOD and GC
      */

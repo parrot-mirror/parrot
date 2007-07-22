@@ -1,5 +1,5 @@
 /* binary.h
- *  Copyright (C) 2004, The Perl Foundation.
+ *  Copyright (C) 2004-2007, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -15,7 +15,10 @@
 
 /* HEADERIZER BEGIN: src/charset/binary.c */
 
-CHARSET * Parrot_charset_binary_init( Interp *interp );
+PARROT_CANNOT_RETURN_NULL
+const CHARSET * Parrot_charset_binary_init( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
 /* HEADERIZER END: src/charset/binary.c */
 
 #endif /* PARROT_CHARSET_BINARY_H_GUARD */

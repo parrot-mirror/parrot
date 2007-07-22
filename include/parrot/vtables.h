@@ -16,26 +16,28 @@
 
 /* HEADERIZER BEGIN: src/vtables.c */
 
-PARROT_API VTABLE * Parrot_clone_vtable( Interp *interp,
-    const VTABLE *base_vtable /*NN*/ )
-        __attribute__nonnull__(2)
-        __attribute__malloc__
-        __attribute__warn_unused_result__;
+PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+VTABLE * Parrot_clone_vtable( SHIM_INTERP,
+    NOTNULL(const VTABLE *base_vtable) )
+        __attribute__nonnull__(2);
 
-PARROT_API void Parrot_destroy_vtable( Interp *interp,
-    VTABLE *vtable /*NULLOK*/ );
+PARROT_API
+void Parrot_destroy_vtable( SHIM_INTERP, NULLOK(VTABLE *vtable) );
 
-PARROT_API VTABLE * Parrot_new_vtable( Interp *interp )
-        __attribute__malloc__
-        __attribute__warn_unused_result__;
+PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+VTABLE * Parrot_new_vtable( SHIM_INTERP );
 
-void parrot_alloc_vtables( Interp *interp /*NN*/ )
+void parrot_alloc_vtables( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-void parrot_free_vtables( Interp *interp /*NN*/ )
+void parrot_free_vtables( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-void parrot_realloc_vtables( Interp *interp /*NN*/ )
+void parrot_realloc_vtables( PARROT_INTERP )
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: src/vtables.c */

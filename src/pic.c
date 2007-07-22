@@ -70,10 +70,6 @@ lookup of the cache has to be done in the opcode itself.
 
 =head2 Functions
 
-=over 4
-
-=cut
-
 */
 
 #include "parrot/parrot.h"
@@ -108,68 +104,89 @@ extern void Parrot_Integer_i_subtract_Integer(Interp* , PMC* pmc, PMC* value);
 
 /* HEADERIZER BEGIN: static */
 
-static int is_pic_func( Interp *interp /*NN*/,
-    void **pc /*NN*/,
-    Parrot_MIC *mic /*NN*/,
+static int is_pic_func( PARROT_INTERP,
+    NOTNULL(void **pc),
+    NOTNULL(Parrot_MIC *mic),
     int core_type )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static int is_pic_param( Interp *interp /*NN*/,
-    void **pc /*NN*/,
-    Parrot_MIC* const mic /*NN*/,
+static int is_pic_param( PARROT_INTERP,
+    NOTNULL(void **pc),
+    NOTNULL(Parrot_MIC* const mic),
     opcode_t op )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static void parrot_pic_move( Interp* interp /*NN*/, Parrot_MIC *mic /*NN*/ )
+static void parrot_pic_move( PARROT_INTERP, NOTNULL(Parrot_MIC *mic) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int pass_int( Interp *interp,
-    PMC *sig /*NN*/,
-    char *src_base,
-    void **src,
-    char *dest_base,
-    void **dest /*NN*/ )
+static int pass_int( PARROT_INTERP,
+    NOTNULL(PMC *sig),
+    NOTNULL(char *src_base),
+    NOTNULL(void **src),
+    NOTNULL(char *dest_base),
+    NOTNULL(void **dest) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
         __attribute__nonnull__(6);
 
-static int pass_mixed( Interp *interp,
-    PMC *sig /*NN*/,
-    char *src_base,
-    void **src,
-    char *dest_base,
-    void **dest )
-        __attribute__nonnull__(2);
-
-static int pass_num( Interp *interp,
-    PMC *sig /*NN*/,
-    char *src_base,
-    void **src,
-    char *dest_base,
-    void **dest /*NN*/ )
+static int pass_mixed( PARROT_INTERP,
+    NOTNULL(PMC *sig),
+    NOTNULL(char *src_base),
+    NOTNULL(void **src),
+    NOTNULL(char *dest_base),
+    NOTNULL(void **dest) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
         __attribute__nonnull__(6);
 
-static int pass_pmc( Interp *interp,
-    PMC *sig /*NN*/,
-    char *src_base,
-    void **src,
-    char *dest_base,
-    void **dest /*NN*/ )
+static int pass_num( PARROT_INTERP,
+    NOTNULL(PMC *sig),
+    NOTNULL(char *src_base),
+    NOTNULL(void **src),
+    NOTNULL(char *dest_base),
+    NOTNULL(void **dest) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
         __attribute__nonnull__(6);
 
-static int pass_str( Interp *interp,
-    PMC *sig /*NN*/,
-    char *src_base,
-    void **src,
-    char *dest_base,
-    void **dest /*NN*/ )
+static int pass_pmc( PARROT_INTERP,
+    NOTNULL(PMC *sig),
+    NOTNULL(char *src_base),
+    NOTNULL(void **src),
+    NOTNULL(char *dest_base),
+    NOTNULL(void **dest) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
+        __attribute__nonnull__(6);
+
+static int pass_str( PARROT_INTERP,
+    NOTNULL(PMC *sig),
+    NOTNULL(char *src_base),
+    NOTNULL(void **src),
+    NOTNULL(char *dest_base),
+    NOTNULL(void **dest) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
         __attribute__nonnull__(6);
 
 /* HEADERIZER END: static */
@@ -191,7 +208,7 @@ Free memory for the PIC storage.
 */
 
 void
-parrot_PIC_alloc_store(struct PackFile_ByteCode *cs /*NN*/, size_t n)
+parrot_PIC_alloc_store(NOTNULL(struct PackFile_ByteCode *cs), size_t n)
 {
     size_t size, poly;
     Parrot_PIC_store *store;
@@ -218,7 +235,7 @@ parrot_PIC_alloc_store(struct PackFile_ByteCode *cs /*NN*/, size_t n)
 }
 
 void
-parrot_PIC_destroy(struct PackFile_ByteCode *cs /*NN*/)
+parrot_PIC_destroy(NOTNULL(struct PackFile_ByteCode *cs))
 {
     Parrot_PIC_store *store = cs->pic_store;
 
@@ -238,9 +255,9 @@ Return true, if the opcode needs a PIC slot.
 
 */
 
+PARROT_CONST_FUNCTION
 int
 parrot_PIC_op_is_cached(int op_code)
-    /* CONST, WARN_UNUSED */
 {
     switch (op_code) {
         case PARROT_OP_infix_ic_p_p:
@@ -254,27 +271,32 @@ parrot_PIC_op_is_cached(int op_code)
 
 /*
 
-=item C<Parrot_MIC* parrot_PIC_alloc_mic(Interp*, size_t n);>
+FUNCDOC: parrot_PIC_alloc_mic
 
-=item C<Parrot_MIC* parrot_PIC_alloc_pic(Interp*);>
-
-Allocate a new PIC or MIC structure for the C<n>th cached opcode in this
+Allocate a new MIC structure for the C<n>th cached opcode in this
 bytecode segement.
 
-=cut
+FUNCDOC: parrot_PIC_alloc_pic
+
+Allocate a new PIC structure for the C<n>th cached opcode in this
+bytecode segement.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 Parrot_MIC*
-parrot_PIC_alloc_mic(const Interp *interp /*NN*/, size_t n)
+parrot_PIC_alloc_mic(const PARROT_INTERP, size_t n)
 {
     Parrot_PIC_store * const store = interp->code->pic_store;
     assert(n < store->n_mics);
     return store->mic + n;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 Parrot_PIC*
-parrot_PIC_alloc_pic(Interp *interp /*NN*/)
+parrot_PIC_alloc_pic(PARROT_INTERP)
 {
     Parrot_PIC_store *store = interp->code->pic_store;
     Parrot_PIC_store *new_store;
@@ -303,8 +325,10 @@ parrot_PIC_alloc_pic(Interp *interp /*NN*/)
     return --store->pic;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 void *
-parrot_pic_opcode(Interp *interp, INTVAL op)
+parrot_pic_opcode(PARROT_INTERP, INTVAL op)
 {
     const int core = interp->run_core;
 #ifdef HAVE_COMPUTED_GOTO
@@ -322,8 +346,8 @@ parrot_pic_opcode(Interp *interp, INTVAL op)
 }
 
 static int
-pass_int(Interp *interp, PMC *sig /*NN*/, char *src_base, void **src,
-        char *dest_base, void **dest /*NN*/)
+pass_int(PARROT_INTERP, NOTNULL(PMC *sig), NOTNULL(char *src_base),
+        NOTNULL(void **src), NOTNULL(char *dest_base), NOTNULL(void **dest))
 {
     int n = SIG_ELEMS(sig);
     int i;
@@ -336,8 +360,8 @@ pass_int(Interp *interp, PMC *sig /*NN*/, char *src_base, void **src,
 }
 
 static int
-pass_num(Interp *interp, PMC *sig /*NN*/, char *src_base, void **src,
-        char *dest_base, void **dest /*NN*/)
+pass_num(PARROT_INTERP, NOTNULL(PMC *sig), NOTNULL(char *src_base),
+        NOTNULL(void **src), NOTNULL(char *dest_base), NOTNULL(void **dest))
 {
     int n = SIG_ELEMS(sig);
     int i;
@@ -350,8 +374,8 @@ pass_num(Interp *interp, PMC *sig /*NN*/, char *src_base, void **src,
 }
 
 static int
-pass_str(Interp *interp, PMC *sig /*NN*/, char *src_base, void **src,
-        char *dest_base, void **dest /*NN*/)
+pass_str(PARROT_INTERP, NOTNULL(PMC *sig), NOTNULL(char *src_base),
+        NOTNULL(void **src), NOTNULL(char *dest_base), NOTNULL(void **dest))
 {
     int n = SIG_ELEMS(sig);
     int i;
@@ -364,8 +388,8 @@ pass_str(Interp *interp, PMC *sig /*NN*/, char *src_base, void **src,
 }
 
 static int
-pass_pmc(Interp *interp, PMC *sig /*NN*/, char *src_base, void **src,
-        char *dest_base, void **dest /*NN*/)
+pass_pmc(PARROT_INTERP, NOTNULL(PMC *sig), NOTNULL(char *src_base),
+        NOTNULL(void **src), NOTNULL(char *dest_base), NOTNULL(void **dest))
 {
     int n = SIG_ELEMS(sig);
     int i;
@@ -378,8 +402,8 @@ pass_pmc(Interp *interp, PMC *sig /*NN*/, char *src_base, void **src,
 }
 
 static int
-pass_mixed(Interp *interp, PMC *sig /*NN*/, char *src_base, void **src,
-        char *dest_base, void **dest)
+pass_mixed(PARROT_INTERP, NOTNULL(PMC *sig), NOTNULL(char *src_base),
+        NOTNULL(void **src), NOTNULL(char *dest_base), NOTNULL(void **dest))
 {
     PMC* argP;
     int i, n = SIG_ELEMS(sig);
@@ -436,10 +460,10 @@ pass_mixed(Interp *interp, PMC *sig /*NN*/, char *src_base, void **src,
  * return argument count and type of the signature or -1 if not pic-able
  * the type PARROT_ARG_CONSTANT stands for mixed types or constants
  */
+PARROT_WARN_UNUSED_RESULT
 int
-parrot_pic_check_sig(const PMC *sig1 /*NN*/, const PMC *sig2 /*NN*/,
-        int *type /*NN*/)
-    /* WARN_UNUSED */
+parrot_pic_check_sig(NOTNULL(const PMC *sig1), NOTNULL(const PMC *sig2),
+        NOTNULL(int *type))
 {
     int i, n, t0, t1, t2;
     t0 = 0; /* silence compiler uninit warning */
@@ -481,7 +505,7 @@ parrot_pic_check_sig(const PMC *sig1 /*NN*/, const PMC *sig2 /*NN*/,
 }
 
 static int
-is_pic_param(Interp *interp /*NN*/, void **pc /*NN*/, Parrot_MIC* const mic /*NN*/, opcode_t op)
+is_pic_param(PARROT_INTERP, NOTNULL(void **pc), NOTNULL(Parrot_MIC* const mic), opcode_t op)
 {
     PMC *sig2;
     int n, type;
@@ -546,7 +570,7 @@ is_pic_param(Interp *interp /*NN*/, void **pc /*NN*/, Parrot_MIC* const mic /*NN
 
 
 static int
-is_pic_func(Interp *interp /*NN*/, void **pc /*NN*/, Parrot_MIC *mic /*NN*/, int core_type)
+is_pic_func(PARROT_INTERP, NOTNULL(void **pc), NOTNULL(Parrot_MIC *mic), int core_type)
 {
     /*
      * if we have these opcodes
@@ -604,18 +628,15 @@ is_pic_func(Interp *interp /*NN*/, void **pc /*NN*/, Parrot_MIC *mic /*NN*/, int
 
 /*
 
-=item C<void parrot_PIC_prederef(Interp *, opcode_t op,
-                                 void **pc_pred, int type)>
+FUNCDOC: parrot_PIC_prederef
 
 Define either the normal prederef function or the PIC stub, if PIC for
 this opcode function is available. Called from C<do_prederef>.
 
-=cut
-
 */
 
 void
-parrot_PIC_prederef(Interp *interp, opcode_t op, void **pc_pred, int core)
+parrot_PIC_prederef(PARROT_INTERP, opcode_t op, NOTNULL(void **pc_pred), int core)
 {
     op_func_t * const prederef_op_func = interp->op_lib->op_func_table;
     opcode_t * const cur_opcode = (opcode_t*)pc_pred;
@@ -681,7 +702,7 @@ parrot_PIC_prederef(Interp *interp, opcode_t op, void **pc_pred, int core)
 }
 
 static void
-parrot_pic_move(Interp* interp /*NN*/, Parrot_MIC *mic /*NN*/)
+parrot_pic_move(PARROT_INTERP, NOTNULL(Parrot_MIC *mic))
 {
     /*
      * MIC slot is empty - use it
@@ -711,8 +732,8 @@ parrot_pic_move(Interp* interp /*NN*/, Parrot_MIC *mic /*NN*/)
 }
 
 void
-parrot_pic_find_infix_v_pp(Interp *interp, PMC *left /*NN*/, PMC *right /*NN*/,
-                Parrot_MIC *mic /*NN*/, opcode_t *cur_opcode /*NN*/)
+parrot_pic_find_infix_v_pp(PARROT_INTERP, NOTNULL(PMC *left), NOTNULL(PMC *right),
+                NOTNULL(Parrot_MIC *mic), NOTNULL(opcode_t *cur_opcode))
 {
     funcptr_t func;
     int is_pmc;
@@ -767,8 +788,6 @@ parrot_pic_find_infix_v_pp(Interp *interp, PMC *left /*NN*/, PMC *right /*NN*/,
 
 /*
 
-=back
-
 =head1 AUTHOR
 
 Leopold Toetsch with many hints from Ken Fox.
@@ -777,8 +796,6 @@ Leopold Toetsch with many hints from Ken Fox.
 
 F<src/mmd.c>, F<src/object.c>, F<src/interpreter.c>, F<ops/core_ops_cgp.c>,
 F<include/parrot/pic.h>, F<ops/pic.ops>
-
-=cut
 
 */
 

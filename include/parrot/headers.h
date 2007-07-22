@@ -42,101 +42,116 @@ typedef enum {
     POOL_ALL    = 0x07
 } pool_iter_enum;
 
-typedef int (*pool_iter_fn)(Interp *, struct Small_Object_Pool *, int, void*);
+typedef int (*pool_iter_fn)(PARROT_INTERP, struct Small_Object_Pool *, int, void*);
 
 
 /* HEADERIZER BEGIN: src/headers.c */
 
-void add_pmc_ext( Interp *interp /*NN*/, PMC *pmc /*NN*/ )
+void add_pmc_ext( PARROT_INTERP, NOTNULL(PMC *pmc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void add_pmc_sync( Interp *interp, PMC *pmc /*NN*/ )
+void add_pmc_sync( PARROT_INTERP, NOTNULL(PMC *pmc) )
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-Small_Object_Pool * get_bufferlike_pool( Interp *interp /*NN*/,
-    size_t buffer_size )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-size_t get_max_buffer_address( Interp *interp /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-size_t get_max_pmc_address( const Interp *interp /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-size_t get_min_buffer_address( Interp *interp /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-size_t get_min_pmc_address( Interp *interp /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-int is_buffer_ptr( const Interp *interp /*NN*/, const void *ptr /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__warn_unused_result__;
-
-int is_pmc_ptr( const Interp *interp /*NN*/, const void *ptr )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-Small_Object_Pool * make_bufferlike_pool( Interp *interp /*NN*/,
-    size_t buffer_size )
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+Small_Object_Pool * get_bufferlike_pool( PARROT_INTERP, size_t buffer_size )
         __attribute__nonnull__(1);
 
-Buffer * new_buffer_header( Interp *interp /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
+PARROT_WARN_UNUSED_RESULT
+size_t get_max_buffer_address( PARROT_INTERP )
+        __attribute__nonnull__(1);
 
-Small_Object_Pool * new_buffer_pool( Interp *interp /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
+PARROT_WARN_UNUSED_RESULT
+size_t get_max_pmc_address( PARROT_INTERP )
+        __attribute__nonnull__(1);
 
-void * new_bufferlike_header( Interp *interp /*NN*/, size_t size )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
+PARROT_WARN_UNUSED_RESULT
+size_t get_min_buffer_address( PARROT_INTERP )
+        __attribute__nonnull__(1);
 
-Small_Object_Pool * new_bufferlike_pool( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+size_t get_min_pmc_address( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+int is_buffer_ptr( PARROT_INTERP, NOTNULL(const void *ptr) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
+int is_pmc_ptr( PARROT_INTERP, NOTNULL(const void *ptr) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+Small_Object_Pool * make_bufferlike_pool( PARROT_INTERP, size_t buffer_size )
+        __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+Buffer * new_buffer_header( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+Small_Object_Pool * new_buffer_pool( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+void * new_bufferlike_header( PARROT_INTERP, size_t size )
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+Small_Object_Pool * new_bufferlike_pool( PARROT_INTERP,
     size_t actual_buffer_size )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-PMC * new_pmc_header( Interp *interp /*NN*/, UINTVAL flags )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-Small_Object_Pool * new_pmc_pool( Interp *interp /*NN*/ )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-STRING * new_string_header( Interp *interp /*NN*/, UINTVAL flags )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-Small_Object_Pool * new_string_pool( Interp *interp /*NN*/, INTVAL constant )
-        __attribute__nonnull__(1)
-        __attribute__warn_unused_result__;
-
-void Parrot_destroy_header_pools( Interp *interp /*NN*/ )
         __attribute__nonnull__(1);
 
-int Parrot_forall_header_pools( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * new_pmc_header( PARROT_INTERP, UINTVAL flags )
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+Small_Object_Pool * new_pmc_pool( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+STRING * new_string_header( PARROT_INTERP, UINTVAL flags )
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+Small_Object_Pool * new_string_pool( PARROT_INTERP, INTVAL constant )
+        __attribute__nonnull__(1);
+
+void Parrot_destroy_header_pools( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+int Parrot_forall_header_pools( PARROT_INTERP,
     int flag,
-    void *arg,
-    pool_iter_fn func /*NN*/ )
+    NULLOK(void *arg),
+    NOTNULL(pool_iter_fn func) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(4);
 
-void Parrot_initialize_header_pool_names( Interp *interp );
-void Parrot_initialize_header_pools( Interp *interp /*NN*/ )
+void Parrot_initialize_header_pool_names( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-void Parrot_merge_header_pools( Interp *dest_interp /*NN*/,
-    Interp *source_interp /*NN*/ )
+void Parrot_initialize_header_pools( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
+void Parrot_merge_header_pools(
+    NOTNULL(Interp *dest_interp),
+    NOTNULL(Interp *source_interp) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

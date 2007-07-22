@@ -50,12 +50,19 @@ Writes the header file for the library.
 
 sub gen_h {
     my $lc_library_name = lc shift;
+    my $guardname  = uc(join('_', 'PARROT_LIB', $lc_libname, 'H_GUARD'));
 
     my $hout = dont_edit('various files');
     $hout .= <<"EOH";
-Parrot_PMC Parrot_lib_${lc_library_name}_load(Parrot_Interp interp);
+
+#ifndef $guardname
+#define $guardname
+
+Parrot_PMC Parrot_lib_${lc_library_name}_load(PARROT_INTERP);
 EOH
     $hout .= c_code_coda;
+
+#endif $guardname
 
     return $hout;
 }

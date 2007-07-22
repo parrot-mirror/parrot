@@ -79,7 +79,7 @@ http://sources.redhat.com/gdb/current/onlinedocs/stabs_toc.html.
 #define N_NBLCS "248"
 
 #ifdef __GNUC__
-void Parrot_jit_debug(Interp* interp);
+void Parrot_jit_debug(PARROT_INTERP);
 
 #  define BIT_SIZE(t) ((int)(sizeof (t)*8))
 #  define BYTE_SIZE(t) ((int)sizeof (t))
@@ -92,7 +92,7 @@ typedef struct BaseTypes {
 
 /*
 
-=item C<static void write_types(FILE *stabs, Interp *interp)>
+=item C<static void write_types(FILE *stabs, PARROT_INTERP)>
 
 Writes the types to C<stabs>.
 
@@ -101,7 +101,7 @@ Writes the types to C<stabs>.
 */
 
 static void
-write_types(FILE *stabs, Interp *interp)
+write_types(FILE *stabs, PARROT_INTERP)
 {
     int i, j;
     /* borrowed from mono */
@@ -212,7 +212,7 @@ write_types(FILE *stabs, Interp *interp)
 /*
 
 =item C<static void
-write_vars(FILE *stabs, Interp *interp)>
+write_vars(FILE *stabs, PARROT_INTERP)>
 
 Writes the contents of the registers to C<stabs>.
 
@@ -221,7 +221,7 @@ Writes the contents of the registers to C<stabs>.
 */
 
 static void
-write_vars(FILE *stabs, Interp *interp)
+write_vars(FILE *stabs, PARROT_INTERP)
 {
     int i;
     /* fake static var stabs */
@@ -240,7 +240,7 @@ write_vars(FILE *stabs, Interp *interp)
 /*
 
 =item C<static STRING *
-debug_file(Interp *interp, STRING *file, const char *ext)>
+debug_file(PARROT_INTERP, STRING *file, const char *ext)>
 
 Returns C<file> with C<ext> appended.
 
@@ -249,7 +249,7 @@ Returns C<file> with C<ext> appended.
 */
 
 static STRING *
-debug_file(Interp *interp, STRING *file, const char *ext)
+debug_file(PARROT_INTERP, STRING *file, const char *ext)
 {
     STRING *ret;
     ret = string_copy(interp, file);
@@ -262,7 +262,7 @@ debug_file(Interp *interp, STRING *file, const char *ext)
 /*
 
 =item C<static void
-Parrot_jit_debug_stabs(Interp *interp)>
+Parrot_jit_debug_stabs(PARROT_INTERP)>
 
 Writes the JIT debugging stabs.
 
@@ -271,7 +271,7 @@ Writes the JIT debugging stabs.
 */
 
 static void
-Parrot_jit_debug_stabs(Interp *interp)
+Parrot_jit_debug_stabs(PARROT_INTERP)
 {
     Parrot_jit_info_t *jit_info = interp->code->jit_info;
     STRING *file = NULL;
@@ -294,9 +294,9 @@ Parrot_jit_debug_stabs(Interp *interp)
 
         ext = strrchr(src, '.');
         if (ext && strcmp(ext, ".pasm") == 0)
-            file = string_chopn(interp, file, 4, 1);
+            string_chopn_inplace(interp, file, 4);
         else if (ext && strcmp(ext, ".pir") == 0)
-            file = string_chopn(interp, file, 3, 1);
+            string_chopn_inplace(interp, file, 3);
         else if (!ext) /* EVAL_n */
             file = string_append(interp, file,
                     string_make(interp, ".", 1, NULL, PObj_external_FLAG));
@@ -305,7 +305,7 @@ Parrot_jit_debug_stabs(Interp *interp)
     }
     else {
         /* chop pbc */
-        file = string_chopn(interp, file, 3, 1);
+        string_chopn_inplace(interp, file, 3);
         pasmfile = debug_file(interp, file, "pasm");
     }
     stabsfile = debug_file(interp, file, "stabs.s");
@@ -373,7 +373,7 @@ Parrot_jit_debug_stabs(Interp *interp)
 /*
 
 =item C<void
-Parrot_jit_debug(Interp* interp)>
+Parrot_jit_debug(PARROT_INTERP)>
 
 Writes the JIT debugging stabs. Just calls C<Parrot_jit_debug_stabs()>.
 
@@ -382,7 +382,7 @@ Writes the JIT debugging stabs. Just calls C<Parrot_jit_debug_stabs()>.
 */
 
 void
-Parrot_jit_debug(Interp* interp)
+Parrot_jit_debug(PARROT_INTERP)
 {
     Parrot_jit_debug_stabs(interp);
 }

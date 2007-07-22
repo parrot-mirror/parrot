@@ -26,75 +26,93 @@ retrieve arguments.
 
 /* HEADERIZER BEGIN: static */
 
-static STRING * getchr_pmc( Interp *interp /*NN*/,
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static STRING * getchr_pmc( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static STRING * getchr_va( Interp *interp /*NN*/,
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static STRING * getchr_va( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static HUGEFLOATVAL getfloat_pmc( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+static HUGEFLOATVAL getfloat_pmc( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static HUGEFLOATVAL getfloat_va( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+static HUGEFLOATVAL getfloat_va( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static HUGEINTVAL getint_pmc( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+static HUGEINTVAL getint_pmc( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static HUGEINTVAL getint_va( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+static HUGEINTVAL getint_va( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static void * getptr_pmc( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static void * getptr_pmc( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static void * getptr_va( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static void * getptr_va( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static STRING * getstring_pmc( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static STRING * getstring_pmc( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static STRING * getstring_va( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static STRING * getstring_va( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static UHUGEINTVAL getuint_pmc( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+static UHUGEINTVAL getuint_pmc( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static UHUGEINTVAL getuint_va( Interp *interp /*NN*/,
+PARROT_WARN_UNUSED_RESULT
+static UHUGEINTVAL getuint_va( PARROT_INTERP,
     INTVAL size,
-    SPRINTF_OBJ *obj /*NN*/ )
+    NOTNULL(SPRINTF_OBJ *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
@@ -111,8 +129,10 @@ C<size> is unused.
 
 */
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static STRING *
-getchr_va(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getchr_va(PARROT_INTERP, INTVAL size, NOTNULL(SPRINTF_OBJ *obj))
 {
     va_list *arg = (va_list *)(obj->data);
 
@@ -134,8 +154,9 @@ of the integer.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static HUGEINTVAL
-getint_va(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getint_va(PARROT_INTERP, INTVAL size, NOTNULL(SPRINTF_OBJ *obj))
 {
     va_list * const arg = (va_list *)(obj->data);
 
@@ -165,7 +186,6 @@ getint_va(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
         }
     default:
         PANIC(interp, "Invalid int type!");
-        return 0;
     }
 }
 
@@ -181,8 +201,9 @@ of the integer.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static UHUGEINTVAL
-getuint_va(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getuint_va(PARROT_INTERP, INTVAL size, NOTNULL(SPRINTF_OBJ *obj))
 {
     va_list * const arg = (va_list *)(obj->data);
 
@@ -212,7 +233,6 @@ getuint_va(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
         }
     default:
         PANIC(interp, "Invalid uint type!");
-        return 0;
     }
 }
 
@@ -228,8 +248,9 @@ the number.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static HUGEFLOATVAL
-getfloat_va(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getfloat_va(PARROT_INTERP, INTVAL size, NOTNULL(SPRINTF_OBJ *obj))
 {
     va_list * const arg = (va_list *)(obj->data);
 
@@ -274,8 +295,10 @@ of the string.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static STRING *
-getstring_va(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getstring_va(PARROT_INTERP, INTVAL size, NOTNULL(SPRINTF_OBJ *obj))
 {
     va_list * const arg = (va_list *)(obj->data);
 
@@ -306,7 +329,6 @@ getstring_va(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
         real_exception(interp, NULL, INVALID_CHARACTER,
                 "Internal sprintf doesn't recognize size %d for a string",
                 size);
-        return NULL;
     }
 }
 
@@ -320,8 +342,10 @@ C<size> is unused.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static void *
-getptr_va(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getptr_va(PARROT_INTERP, SHIM(INTVAL size), NOTNULL(SPRINTF_OBJ *obj))
 {
     va_list * const arg = (va_list *)(obj->data);
 
@@ -344,8 +368,10 @@ from C<obj>.
 
 */
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static STRING *
-getchr_pmc(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getchr_pmc(PARROT_INTERP, INTVAL size, NOTNULL(SPRINTF_OBJ *obj))
 {
     STRING *s;
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
@@ -367,8 +393,9 @@ from C<obj>.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static HUGEINTVAL
-getint_pmc(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getint_pmc(PARROT_INTERP, INTVAL size, NOTNULL(SPRINTF_OBJ *obj))
 {
     HUGEINTVAL ret;
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
@@ -402,8 +429,9 @@ from C<obj>.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static UHUGEINTVAL
-getuint_pmc(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getuint_pmc(PARROT_INTERP, INTVAL size, NOTNULL(SPRINTF_OBJ *obj))
 {
     UHUGEINTVAL ret;
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
@@ -437,8 +465,9 @@ from C<obj>.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static HUGEFLOATVAL
-getfloat_pmc(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getfloat_pmc(PARROT_INTERP, INTVAL size, NOTNULL(SPRINTF_OBJ *obj))
 {
     HUGEFLOATVAL ret;
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
@@ -469,8 +498,10 @@ from C<obj>.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static STRING *
-getstring_pmc(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getstring_pmc(PARROT_INTERP, INTVAL size, NOTNULL(SPRINTF_OBJ *obj))
 {
     STRING *s;
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
@@ -491,8 +522,10 @@ from C<obj>.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static void *
-getptr_pmc(Interp *interp /*NN*/, INTVAL size, SPRINTF_OBJ *obj /*NN*/)
+getptr_pmc(PARROT_INTERP, INTVAL size, NOTNULL(SPRINTF_OBJ *obj))
 {
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
             ((PMC *)obj->data),
