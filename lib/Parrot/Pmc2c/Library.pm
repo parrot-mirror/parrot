@@ -50,7 +50,7 @@ Writes the header file for the library.
 
 sub gen_h {
     my $lc_library_name = lc shift;
-    my $guardname  = uc(join('_', 'PARROT_LIB', $lc_libname, 'H_GUARD'));
+    my $guardname  = uc(join('_', 'PARROT_LIB', $lc_library_name, 'H_GUARD'));
 
     my $hout = dont_edit('various files');
     $hout .= <<"EOH";
