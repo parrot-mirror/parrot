@@ -206,6 +206,7 @@ sub rewrite_PCCRETURNs {
     my $method_name  = $self->name;
     my $body         = $self->body;
     my $regs_used    = [];
+    my $qty_returns  = 0;
     my $signature_re = qr{
       (PCCRETURN       #method name
       \s*              #optional whitespace
@@ -224,6 +225,7 @@ sub rewrite_PCCRETURNs {
             last unless $matched;
         }
 
+        $qty_returns++;
         $matched =~ /$signature_re/;
         my ( $match, $returns ) = ( $1, $2 );
         my $goto_string = "goto ${method_name}_returns;";
@@ -257,7 +259,7 @@ END
         $matched->replace($match, $e);
     }
     
-    return $regs_used;
+    return $regs_used, $qty_returns;
 }
 
 sub parse_p_args_string {
@@ -362,7 +364,7 @@ sub rewrite_pccmethod {
     my ( $params_n_regs_used, $params_indexes, $params_flags, $params_accessors, $named_names ) =
         process_pccmethod_args( $linear_args, 'arg' );
 
-    my $n_regs = rewrite_PCCRETURNs( $self, $pmc );
+    my ($n_regs, $qty_returns) = rewrite_PCCRETURNs( $self, $pmc );
     rewrite_pccinvoke( $self, $pmc );
     unshift @$n_regs, $params_n_regs_used;
     my $n_regs_used = find_max_regs($n_regs);
@@ -426,10 +428,9 @@ END
     /* END PMETHOD BODY */
 
 END
-    $e_post->emit(<<"END");
-$method_returns
-END
+    if ($qty_returns) {
     $e_post->emit(<<"END", __FILE__, __LINE__ + 1);
+$method_returns
 
     if (! caller_ctx) {
         /* there is no point calling real_exception here, because
@@ -440,6 +441,9 @@ END
     interp->returns_signature = return_sig;
     parrot_pass_args(interp, ctx, caller_ctx, return_indexes,
         caller_ctx->current_results, PARROT_PASS_RESULTS);
+END
+}
+    $e_post->emit(<<"END", __FILE__, __LINE__ + 1);
 
     /* END PARAMS SCOPE */
     }
