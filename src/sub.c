@@ -58,6 +58,10 @@ mark_context(PARROT_INTERP, NOTNULL(parrot_context_t* ctx))
     obj = (PObj*)ctx->lex_pad;
     if (obj)
         pobject_lives(interp, obj);
+
+    if (!ctx->n_regs_used)
+        return;
+
     for (i = 0; i < ctx->n_regs_used[REGNO_PMC]; ++i) {
         obj = (PObj*) CTX_REG_PMC(ctx, i);
         if (obj)
@@ -78,6 +82,8 @@ Returns a new C<Parrot_sub>.
 
 */
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Parrot_sub *
 new_sub(PARROT_INTERP)
 {
@@ -97,6 +103,8 @@ XXX: Need to document semantics in detail.
 
 */
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Parrot_sub *
 new_closure(PARROT_INTERP)
 {
@@ -114,6 +122,8 @@ to the current context.
 
 */
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Parrot_cont *
 new_continuation(PARROT_INTERP, NULLOK(Parrot_cont *to))
 {
@@ -145,6 +155,8 @@ Returns a new C<Parrot_cont> pointing to the current context.
 
 */
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Parrot_cont *
 new_ret_continuation(PARROT_INTERP)
 {
@@ -170,6 +182,8 @@ XXX: Need to document semantics in detail.
 
 */
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Parrot_coro *
 new_coroutine(PARROT_INTERP)
 {
@@ -191,8 +205,10 @@ if possible; otherwise, creates a new one.
 */
 
 PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 PMC *
-new_ret_continuation_pmc(PARROT_INTERP, opcode_t *address)
+new_ret_continuation_pmc(PARROT_INTERP, NULLOK(opcode_t *address))
 {
     PMC* const continuation = pmc_new(interp, enum_class_RetContinuation);
     VTABLE_set_pointer(interp, continuation, address);
@@ -243,6 +259,8 @@ Return namespace, name, and location of subroutine.
 */
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 STRING*
 Parrot_full_sub_name(PARROT_INTERP, NULLOK(PMC* sub))
 {
@@ -353,6 +371,8 @@ Parrot_Context_get_info(PARROT_INTERP, NOTNULL(parrot_context_t *ctx),
 }
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 STRING*
 Parrot_Context_infostr(PARROT_INTERP, NOTNULL(parrot_context_t *ctx))
 {
@@ -389,6 +409,8 @@ Locate the LexPad containing the given name. Return NULL on failure.
 
 */
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 PMC*
 Parrot_find_pad(PARROT_INTERP, NOTNULL(STRING *lex_name), NOTNULL(parrot_context_t *ctx))
 {
@@ -419,8 +441,10 @@ Parrot_find_pad(PARROT_INTERP, NOTNULL(STRING *lex_name), NOTNULL(parrot_context
 }
 
 PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 PMC*
-parrot_new_closure(PARROT_INTERP, PMC *sub_pmc)
+parrot_new_closure(PARROT_INTERP, NOTNULL(PMC *sub_pmc))
 {
     PMC *cont;
 

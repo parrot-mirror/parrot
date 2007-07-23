@@ -57,7 +57,7 @@ static int trace_active_PMCs( PARROT_INTERP, int trace_stack )
 /* Set this to 1 to see if unanchored objects are found in system areas.
  * Please note: these objects might be bogus
  */
-#define GC_VERBOSE 0
+#define GC_VERBOSE 1
 
 #if ! DISABLE_GC_DEBUG
 /* Set when walking the system stack */
@@ -590,7 +590,7 @@ Parrot_dod_sweep(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
             NULL != cur_arena; cur_arena = cur_arena->prev) {
         Buffer *b = (Buffer *)cur_arena->start_objects;
 
-        for (i = 0; i < cur_arena->used; i++) {
+        for (i = 0; i < cur_arena->total_objects; i++) {
             if (PObj_on_free_list_TEST(b))
                 ; /* if it's on free list, do nothing */
             else if (PObj_live_TEST(b)) {
@@ -679,8 +679,10 @@ Parrot_dod_sweep(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
                         if (PObj_COW_TEST(b)) {
                             INTVAL *refcount = ((INTVAL *)PObj_bufstart(b) - 1);
 
-                            if (!--(*refcount))
+                            if (!--(*refcount)) {
                                 free(refcount); /* the actual bufstart */
+                                refcount = NULL;
+                            }
                         }
                         else
                             free((INTVAL*)PObj_bufstart(b) - 1);
@@ -748,8 +750,6 @@ find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
 
     real_exception(interp, NULL, INTERP_ERROR,
             "Unexpected condition in find_common_mask()!\n");
-
-    return 0;
 }
 
 /*

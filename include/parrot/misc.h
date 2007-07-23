@@ -25,7 +25,7 @@
 /*
  * utils.c
  */
-typedef int (*reg_move_func)(Interp*, unsigned char d, unsigned char s, void *);
+typedef int (*reg_move_func)(PARROT_INTERP, unsigned char d, unsigned char s, void *);
 
 /* HEADERIZER BEGIN: src/utils.c */
 
@@ -51,7 +51,7 @@ void Parrot_destroy_cpa( NOTNULL(char **array) )
         __attribute__nonnull__(1);
 
 PARROT_API
-void Parrot_destroy_la( long *array );
+void Parrot_destroy_la( NULLOK(long *array) );
 
 PARROT_API
 FLOATVAL Parrot_float_rand( INTVAL how_random );
@@ -60,11 +60,15 @@ PARROT_API
 INTVAL Parrot_int_rand( INTVAL how_random );
 
 PARROT_API
-void * Parrot_make_cpa( PARROT_INTERP, PMC *array )
-        __attribute__nonnull__(1);
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+void * Parrot_make_cpa( PARROT_INTERP, NOTNULL(PMC *array) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 void * Parrot_make_la( PARROT_INTERP, NOTNULL(PMC *array) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -80,10 +84,11 @@ void Parrot_register_move( PARROT_INTERP,
     unsigned char temp_reg,
     reg_move_func mov,
     reg_move_func mov_alt,
-    void *info )
+    NOTNULL(void *info) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(8);
 
 PARROT_API
 void Parrot_srand( INTVAL seed );
@@ -92,6 +97,7 @@ PARROT_API
 INTVAL Parrot_uint_rand( INTVAL how_random );
 
 PARROT_API
+PARROT_CANNOT_RETURN_NULL
 PMC* tm_to_array( PARROT_INTERP, NOTNULL(const struct tm *tm) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -122,6 +128,7 @@ PMC * IMCC_compile_pasm_s(Parrot_Interp interp, const char *s,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 STRING * Parrot_psprintf( PARROT_INTERP,
     NOTNULL(STRING *pat),
     NOTNULL(PMC *ary) )
@@ -141,12 +148,14 @@ void Parrot_snprintf( PARROT_INTERP,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 STRING * Parrot_sprintf_c( PARROT_INTERP, NOTNULL(const char *pat), ... )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 STRING * Parrot_sprintf_s( PARROT_INTERP, NOTNULL(STRING *pat), ... )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -162,6 +171,7 @@ void Parrot_vsnprintf( PARROT_INTERP,
         __attribute__nonnull__(4);
 
 PARROT_API
+PARROT_CANNOT_RETURN_NULL
 STRING * Parrot_vsprintf_c( PARROT_INTERP,
     NOTNULL(const char *pat),
     va_list args )
@@ -170,6 +180,7 @@ STRING * Parrot_vsprintf_c( PARROT_INTERP,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 STRING * Parrot_vsprintf_s( PARROT_INTERP,
     NOTNULL(STRING *pat),
     va_list args )
@@ -196,26 +207,7 @@ STRING * Parrot_vsprintf_s( PARROT_INTERP,
 
     /* SPRINTF DATA STRUCTURE AND FLAGS */
 
-    typedef enum spf_phase_t {
-        PHASE_FLAGS = 0,
-        PHASE_WIDTH,
-        PHASE_PREC,
-        PHASE_TYPE,
-        PHASE_TERM,
-        PHASE_DONE
-    } PHASE;
-
-    typedef enum spf_flag_t {
-        FLAG_MINUS = 1,
-        FLAG_PLUS = 2,
-        FLAG_ZERO = 4,
-        FLAG_SPACE = 8,
-        FLAG_SHARP = 16,
-        FLAG_WIDTH = 32,
-        FLAG_PREC = 64
-    } FLAG;
-
-    typedef enum spf_type_t {
+    typedef enum {
         SIZE_REG = 0,
         SIZE_SHORT,
         SIZE_LONG,
@@ -224,32 +216,18 @@ STRING * Parrot_vsprintf_s( PARROT_INTERP,
         SIZE_OPCODE,
         SIZE_PMC,
         SIZE_PSTR
-    } TYPE;
-
-    typedef struct spfinfo_t {
-        UINTVAL width;
-        UINTVAL prec;
-        INTVAL flags;
-        INTVAL type;
-        INTVAL phase;
-    } *SpfInfo;
+    } spf_type_t;
 
     /* SPRINTF ARGUMENT OBJECT */
 
     typedef struct sprintf_obj SPRINTF_OBJ;
 
-    typedef STRING *(*sprintf_getchar_t) (Interp *, INTVAL,
-                                          SPRINTF_OBJ *);
-    typedef HUGEINTVAL(*sprintf_getint_t) (Interp *, INTVAL,
-                                           SPRINTF_OBJ *);
-    typedef UHUGEINTVAL(*sprintf_getuint_t) (Interp *, INTVAL,
-                                             SPRINTF_OBJ *);
-    typedef HUGEFLOATVAL(*sprintf_getfloat_t) (Interp *, INTVAL,
-                                               SPRINTF_OBJ *);
-    typedef STRING *(*sprintf_getstring_t) (Interp *, INTVAL,
-                                            SPRINTF_OBJ *);
-    typedef void *(*sprintf_getptr_t) (Interp *, INTVAL,
-                                       SPRINTF_OBJ *);
+    typedef STRING *(*sprintf_getchar_t) (PARROT_INTERP, INTVAL, SPRINTF_OBJ *);
+    typedef HUGEINTVAL(*sprintf_getint_t) (PARROT_INTERP, INTVAL, SPRINTF_OBJ *);
+    typedef UHUGEINTVAL(*sprintf_getuint_t) (PARROT_INTERP, INTVAL, SPRINTF_OBJ *);
+    typedef HUGEFLOATVAL(*sprintf_getfloat_t) (PARROT_INTERP, INTVAL, SPRINTF_OBJ *);
+    typedef STRING *(*sprintf_getstring_t) (PARROT_INTERP, INTVAL, SPRINTF_OBJ *);
+    typedef void *(*sprintf_getptr_t) (PARROT_INTERP, INTVAL, SPRINTF_OBJ *);
 
     struct sprintf_obj {
         void *data;
@@ -269,6 +247,7 @@ STRING * Parrot_vsprintf_s( PARROT_INTERP,
 /* HEADERIZER BEGIN: src/spf_render.c */
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 STRING * Parrot_sprintf_format( PARROT_INTERP,
     NOTNULL(STRING *pat),
     NOTNULL(SPRINTF_OBJ *obj) )

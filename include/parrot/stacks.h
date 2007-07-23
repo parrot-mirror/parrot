@@ -21,7 +21,7 @@
 typedef struct Stack_Entry {
     UnionVal entry;
     Stack_entry_type  entry_type;
-    void (*cleanup)(Interp *, struct Stack_Entry *);
+    void (*cleanup)(PARROT_INTERP, struct Stack_Entry *);
 } Stack_Entry_t;
 
 typedef struct Stack_Chunk {
@@ -61,6 +61,8 @@ void mark_stack( PARROT_INTERP, NOTNULL(Stack_Chunk_t *chunk) )
         __attribute__nonnull__(2);
 
 PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 Stack_Chunk_t * new_stack( PARROT_INTERP, NOTNULL(const char *name) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -73,6 +75,7 @@ void Parrot_dump_dynamic_environment( PARROT_INTERP,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 void * pop_dest( PARROT_INTERP )
         __attribute__nonnull__(1);
 
@@ -133,6 +136,7 @@ void stack_push( PARROT_INTERP,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 Stack_Chunk_t * cst_new_stack_chunk( PARROT_INTERP,
     NOTNULL(const Stack_Chunk_t *chunk) )
         __attribute__nonnull__(1)
@@ -140,6 +144,7 @@ Stack_Chunk_t * cst_new_stack_chunk( PARROT_INTERP,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 Stack_Chunk_t * register_new_stack( PARROT_INTERP,
     NOTNULL(const char *name),
     size_t item_size )
@@ -148,12 +153,14 @@ Stack_Chunk_t * register_new_stack( PARROT_INTERP,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 void* stack_prepare_pop( PARROT_INTERP, NOTNULL(Stack_Chunk_t **stack_p) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 void* stack_prepare_push( PARROT_INTERP, NOTNULL(Stack_Chunk_t **stack_p) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
