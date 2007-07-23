@@ -87,7 +87,7 @@ PARROT_API
 void list_assign( PARROT_INTERP,
     NOTNULL(List *list),
     INTVAL idx,
-    void *item,
+    NULLOK(void *item),
     int type )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -135,6 +135,7 @@ void list_mark( PARROT_INTERP, NOTNULL(List *list) )
 
 PARROT_API
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 List * list_new( PARROT_INTERP, PARROT_DATA_TYPE type )
         __attribute__nonnull__(1);
 
@@ -195,14 +196,18 @@ void list_splice( PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_API
-void list_unshift( PARROT_INTERP, NOTNULL(List *list), void *item, int type )
+void list_unshift( PARROT_INTERP,
+    NOTNULL(List *list),
+    NULLOK(void *item),
+    int type )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
-void list_visit( PARROT_INTERP, NOTNULL(List *list), void *pinfo )
+void list_visit( PARROT_INTERP, NOTNULL(List *list), NOTNULL(void *pinfo) )
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 /* HEADERIZER END: src/list.c */
 

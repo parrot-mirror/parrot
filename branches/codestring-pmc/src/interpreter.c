@@ -62,9 +62,8 @@ PARROT_CANNOT_RETURN_NULL
 static oplib_init_f get_op_lib_init( PARROT_INTERP,
     int core_op,
     int which,
-    NOTNULL(PMC *lib) )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(4);
+    NULLOK(PMC *lib) )
+        __attribute__nonnull__(1);
 
 static void init_prederef( PARROT_INTERP, int which )
         __attribute__nonnull__(1);
@@ -88,19 +87,26 @@ static void prederef_args(
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static opcode_t * runops_cgp( PARROT_INTERP, NOTNULL(opcode_t *pc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static opcode_t * runops_exec( PARROT_INTERP, NOTNULL(opcode_t *pc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static opcode_t * runops_jit( PARROT_INTERP, NOTNULL(opcode_t *pc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static opcode_t * runops_switch( PARROT_INTERP, NOTNULL(opcode_t *pc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -329,7 +335,7 @@ C<ParrotLibrary> PMC.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static oplib_init_f
-get_op_lib_init(PARROT_INTERP, int core_op, int which, NOTNULL(PMC *lib))
+get_op_lib_init(PARROT_INTERP, int core_op, int which, NULLOK(PMC *lib))
 {
     if (core_op) {
         oplib_init_f init_func;
@@ -504,8 +510,10 @@ Initializes JIT function for the specified opcode and returns it.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 void *
-init_jit(PARROT_INTERP, opcode_t *pc)
+init_jit(PARROT_INTERP, NULLOK(opcode_t *pc))
 {
 #if JIT_CAPABLE
     opcode_t *code_start;
@@ -578,6 +586,8 @@ Runs the JIT code for the specified opcode.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static opcode_t *
 runops_jit(PARROT_INTERP, NOTNULL(opcode_t *pc))
 {
@@ -613,6 +623,8 @@ Runs the native executable version of the specified opcode.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static opcode_t *
 runops_exec(PARROT_INTERP, NOTNULL(opcode_t *pc))
 {
@@ -660,6 +672,7 @@ Runs the C C<goto>, predereferenced core.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static opcode_t *
 runops_cgp(PARROT_INTERP, NOTNULL(opcode_t *pc))
@@ -686,6 +699,8 @@ Runs the C<switch> core.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static opcode_t *
 runops_switch(PARROT_INTERP, NOTNULL(opcode_t *pc))
 {

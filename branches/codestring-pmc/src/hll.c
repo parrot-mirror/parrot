@@ -62,6 +62,8 @@ the context.  If no type is registered, returns C<core_type>.
 
 /* HEADERIZER BEGIN: static */
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static PMC* new_hll_entry( PARROT_INTERP )
         __attribute__nonnull__(1);
 
@@ -92,6 +94,8 @@ enum {
 #define ASSERT_CONST_STRING(src) assert(PObj_constant_TEST(src))
 
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static PMC*
 new_hll_entry(PARROT_INTERP)
 {
@@ -111,7 +115,7 @@ new_hll_entry(PARROT_INTERP)
 
 PARROT_API
 INTVAL
-Parrot_register_HLL(PARROT_INTERP, NULLOK(STRING *hll_name), STRING *hll_lib)
+Parrot_register_HLL(PARROT_INTERP, NULLOK(STRING *hll_name), NULLOK(STRING *hll_lib))
 {
     PMC *entry, *name, *type_hash, *ns_hash, *hll_info;
     INTVAL idx;
@@ -230,6 +234,8 @@ Parrot_get_HLL_id(PARROT_INTERP, NULLOK(STRING *hll_name))
     return i < nelements ? i : -1;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PARROT_API
 STRING *
 Parrot_get_HLL_name(PARROT_INTERP, INTVAL id)
@@ -355,6 +361,8 @@ Return root namespace of the current HLL.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PMC*
 Parrot_get_ctx_HLL_namespace(PARROT_INTERP)
 {
@@ -371,6 +379,8 @@ special value C<PARROT_HLL_NONE>, return the global root namespace.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PMC*
 Parrot_get_HLL_namespace(PARROT_INTERP, int hll_id)
 {
