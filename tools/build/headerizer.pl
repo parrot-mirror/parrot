@@ -66,6 +66,7 @@ use Getopt::Long;
 use lib qw( lib );
 use Parrot::Config;
 
+my %warnings;
 my %opt;
 
 my %valid_macros = map {($_,1)} qw(
@@ -73,7 +74,7 @@ my %valid_macros = map {($_,1)} qw(
     PARROT_INLINE
     PARROT_CAN_RETURN_NULL
     PARROT_CANNOT_RETURN_NULL
-    PARROT_MAY_IGNORE_RESULT
+    PARROT_IGNORABLE_RESULT
     PARROT_WARN_UNUSED_RESULT
     PARROT_PURE_FUNCTION
     PARROT_CONST_FUNCTION
@@ -183,9 +184,19 @@ sub function_components_from_declaration {
 
     die "$file $name: Impossible to have both static and PARROT_API" if $parrot_api && $is_static;
 
+    my %macros;
     for my $macro ( @macros ) {
+        $macros{$macro} = 1;
         if ( not $valid_macros{$macro} ) {
-            warn "$file $name: Invalid macro $macro\n";
+            squawk( $file, $name, "Invalid macro $macro" );
+        }
+    }
+    if ( $return_type =~ /\*/ ) {
+        if ( !$macros{PARROT_CAN_RETURN_NULL} && !$macros{PARROT_CANNOT_RETURN_NULL} ) {
+            squawk( $file, $name, "Returns a pointer, but no PARROT_CAN(NOT)_RETURN_NULL macro found." );
+        }
+        elsif ( $macros{PARROT_CAN_RETURN_NULL} && $macros{PARROT_CANNOT_RETURN_NULL} ) {
+            squawk( $file, $name, "Can't have both PARROT_CAN_RETURN_NULL and PARROT_CANNOT_RETURN_NULL together." );
         }
     }
 
@@ -217,7 +228,7 @@ sub attrs_from_args {
         if ( ( $arg =~ m{\*} ) && ( $arg !~ /SHIM|NOTNULL|NULLOK/ ) ) {
             my $name = $func->{name};
             my $file = $func->{file};
-            warn qq{$file $name: "$arg" isn't protected with NOTNULL or NULLOK\n};
+            squawk( $file, $name, qq{"$arg" isn't protected with NOTNULL or NULLOK} );
         }
     }
 
@@ -275,10 +286,17 @@ sub make_function_decls {
     return @decls;
 }
 
+sub squawk {
+    my $file = shift;
+    my $func = shift;
+    my $error = shift;
+
+    push( @{$warnings{$file}->{$func}}, $error );
+}
+
 sub main {
     GetOptions( 'verbose' => \$opt{verbose}, ) or exit(1);
 
-    my $nfuncs = 0;
     my %ofiles = map {($_,1)} @ARGV;
     my @ofiles = sort keys %ofiles;
     my %cfiles;
@@ -313,11 +331,8 @@ sub main {
             my $components = function_components_from_declaration($cfile, $decl);
             push( @{ $cfiles{$hfile}->{$cfile} }, $components ) unless $hfile eq 'none';
             push( @{ $cfiles_with_statics{ $cfile } }, $components ) if $components->{is_static};
-            ++$nfuncs;
         }
     }    # for @cfiles
-    my $nfiles = scalar keys %cfiles;
-    print "$nfuncs funcs in $nfiles C files\n";
 
     # Update all the .h files
     for my $hfile ( sort keys %cfiles ) {
@@ -346,6 +361,25 @@ sub main {
     }
 
     print "Headerization complete.\n";
+    if ( keys %warnings ) {
+        my $nwarnings = 0;
+        my $nwarningfuncs = 0;
+        my $nwarningfiles = 0;
+        for my $file ( sort keys %warnings ) {
+            ++$nwarningfiles;
+            print "$file\n";
+            my $funcs = $warnings{$file};
+            for my $func ( sort keys %{$funcs} ) {
+                ++$nwarningfuncs;
+                for my $error ( @{$funcs->{$func}} ) {
+                    print "    $func: $error\n";
+                    ++$nwarnings;
+                }
+            }
+        }
+
+        print "$nwarnings warnings in $nwarningfuncs funcs in $nwarningfiles C files\n";
+    }
 
     return;
 }

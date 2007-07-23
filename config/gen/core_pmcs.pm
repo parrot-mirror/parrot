@@ -102,16 +102,16 @@ sub generate_c {
 
 END_C
 
-    print {$OUT} "extern void Parrot_${_}_class_init(Interp *, int, int);\n" foreach (@pmcs);
+    print {$OUT} "extern void Parrot_${_}_class_init(PARROT_INTERP, int, int);\n" foreach (@pmcs);
 
     print {$OUT} <<"END_C";
 
 /* HEADERIZER HFILE: none */
 /* This isn't strictly true, but the headerizer should not bother */
 
-void Parrot_register_core_pmcs(Interp *interp, PMC* registry);
-extern void Parrot_initialize_core_pmcs(Interp *interp);
-void Parrot_initialize_core_pmcs(Interp *interp)
+void Parrot_register_core_pmcs(PARROT_INTERP, PMC* registry);
+extern void Parrot_initialize_core_pmcs(PARROT_INTERP);
+void Parrot_initialize_core_pmcs(PARROT_INTERP)
 {
     int pass;
     for (pass = 0; pass <= 1; ++pass) {
@@ -131,14 +131,14 @@ END_C
     }
 }
 
-static void register_pmc(Interp *interp, PMC* registry, int pmc_id)
+static void register_pmc(PARROT_INTERP, PMC* registry, int pmc_id)
 {
     STRING* const key = interp->vtables[pmc_id]->whoami;
     VTABLE_set_integer_keyed_str(interp, registry, key, pmc_id);
 }
 
 void
-Parrot_register_core_pmcs(Interp *interp, PMC* registry)
+Parrot_register_core_pmcs(PARROT_INTERP, PMC* registry)
 {
 END_C
 

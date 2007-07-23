@@ -36,11 +36,13 @@ charset functionality for similar charsets like iso-8859-1.
 
 /* HEADERIZER BEGIN: static */
 
-static STRING* compose( PARROT_INTERP, NULLOK(STRING *src) )
-        __attribute__nonnull__(1);
+static STRING* compose( PARROT_INTERP, NOTNULL(STRING *src) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
-static STRING* decompose( PARROT_INTERP, NULLOK(STRING *src) )
-        __attribute__nonnull__(1);
+static STRING* decompose( PARROT_INTERP, NOTNULL(STRING *src) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 static void downcase( PARROT_INTERP, NOTNULL(STRING *source_string) )
         __attribute__nonnull__(1)
@@ -219,14 +221,14 @@ to_charset(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
 
 /* A noop. can't compose ascii */
 static STRING*
-compose(PARROT_INTERP, NULLOK(STRING *src))
+compose(PARROT_INTERP, NOTNULL(STRING *src))
 {
     return string_copy(interp, src);
 }
 
 /* A noop. can't decompose ascii */
 static STRING*
-decompose(PARROT_INTERP, NULLOK(STRING *src))
+decompose(PARROT_INTERP, NOTNULL(STRING *src))
 {
     return string_copy(interp, src);
 }
@@ -242,7 +244,7 @@ upcase(PARROT_INTERP, NOTNULL(STRING *source_string))
         UINTVAL offset;
 
         for (offset = 0; offset < n; offset++) {
-            buffer[offset] = toupper(buffer[offset]);
+            buffer[offset] = toupper((unsigned char)buffer[offset]);
         }
     }
 }
@@ -258,7 +260,7 @@ downcase(PARROT_INTERP, NOTNULL(STRING *source_string))
         UINTVAL offset;
 
         for (offset = 0; offset < n; offset++) {
-            buffer[offset] = tolower(buffer[offset]);
+            buffer[offset] = tolower((unsigned char)buffer[offset]);
         }
     }
 }
@@ -273,9 +275,9 @@ titlecase(PARROT_INTERP, NOTNULL(STRING *source_string))
         char * const buffer = source_string->strstart;
         UINTVAL offset;
 
-        buffer[0] = toupper(buffer[0]);
+        buffer[0] = toupper((unsigned char)buffer[0]);
         for (offset = 1; offset < n; offset++) {
-            buffer[offset] = tolower(buffer[offset]);
+            buffer[offset] = tolower((unsigned char)buffer[offset]);
         }
     }
 }
@@ -287,7 +289,7 @@ upcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
 
     if (source_string->strlen) {
         char * const buffer = source_string->strstart;
-        buffer[0] = toupper(buffer[0]);
+        buffer[0] = toupper((unsigned char)buffer[0]);
     }
 }
 
@@ -298,7 +300,7 @@ downcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
 
     if (source_string->strlen) {
         char * const buffer = source_string->strstart;
-        buffer[0] = tolower(buffer[0]);
+        buffer[0] = tolower((unsigned char)buffer[0]);
     }
 }
 
@@ -309,7 +311,7 @@ titlecase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
 
     if (source_string->strlen) {
         char * const buffer = source_string->strstart;
-        buffer[0] = toupper(buffer[0]);
+        buffer[0] = toupper((unsigned char)buffer[0]);
     }
 }
 
@@ -511,7 +513,8 @@ ascii_compute_hash(SHIM_INTERP, NOTNULL(const STRING *source_string), size_t see
     return hashval;
 }
 
-CHARSET *
+PARROT_CANNOT_RETURN_NULL
+const CHARSET *
 Parrot_charset_ascii_init(PARROT_INTERP)
 {
     CHARSET * const return_set = Parrot_new_charset(interp);

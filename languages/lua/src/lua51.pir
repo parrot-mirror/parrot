@@ -42,8 +42,6 @@ Used by F<languages/lua/lua.pir>.
     $P0.'astgrammar'('Lua::PAST::Grammar')
     $P0.'ostgrammar'('Lua::POST::Grammar')
 
-    $S0 = "Lua 5.1 on Parrot  Copyright (C) 2005-2007, The Perl Foundation.\n"
-    $P0.'commandline_banner'($S0)
     $P0.'commandline_prompt'('> ')
 .end
 
@@ -655,7 +653,7 @@ used in F<languages/lua/src/POSTGrammar.tg>
 .end
 
 
-.namespace [ "Lua::POST::Chunk" ]
+.namespace [ 'Lua::POST::Chunk' ]
 
 .sub '__onload' :load :init
     $P0 = subclass 'POST::Sub', 'Lua::POST::Chunk'
@@ -711,7 +709,7 @@ used in F<languages/lua/src/POSTGrammar.tg>
 .end
 
 
-.namespace [ "Lua::Symbtab" ]
+.namespace [ 'Lua::Symbtab' ]
 
 .sub '__onload' :load :init
     $P0 = subclass 'ResizablePMCArray', 'Lua::Symbtab'

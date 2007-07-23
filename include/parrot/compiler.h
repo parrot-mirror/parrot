@@ -74,7 +74,7 @@
  * get "_unused" added to them so that you can't accidentally use them
  * without removing the shim designation.
  */
-#define SHIM(a) /*@unused@*/ a##_unused __attribute__unused__ /*@null@*/
+#define SHIM(a) /*@unused@*/ /*@null@*/ a##_unused __attribute__unused__
 
 /* UNUSED() is the old way we handled shim arguments Should still be
    used in cases where the argument should, at some point be used.
@@ -84,7 +84,7 @@
 #define PARROT_CAN_RETURN_NULL      /*@null@*/
 #define PARROT_CANNOT_RETURN_NULL   /*@notnull@*/
 
-#define PARROT_MAY_IGNORE_RESULT
+#define PARROT_IGNORABLE_RESULT
 #define PARROT_WARN_UNUSED_RESULT   __attribute__warn_unused_result__
 
 #define PARROT_PURE_FUNCTION        __attribute__pure__ __attribute__warn_unused_result__

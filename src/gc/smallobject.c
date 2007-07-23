@@ -33,6 +33,8 @@ static void gc_ms_alloc_objects( PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static void * gc_ms_get_free_object( PARROT_INTERP,
     NOTNULL(Small_Object_Pool *pool) )
         __attribute__nonnull__(1)
@@ -163,6 +165,8 @@ Get a new object from the free pool and return it.
 
 */
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static void *
 gc_ms_get_free_object(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
 {
@@ -200,7 +204,7 @@ Parrot_add_to_free_list(PARROT_INTERP,
     UINTVAL  i;
     void    *object;
 
-    pool->total_objects += end - start;
+    pool->total_objects += (end - start) / pool->object_size;
     arena->used          = end;
 
     /* Move all the new objects into the free list */
@@ -217,7 +221,7 @@ Parrot_add_to_free_list(PARROT_INTERP,
         object = (void *)((char *)object + pool->object_size);
     }
 
-    pool->num_free_objects += end - start;
+    pool->num_free_objects += (end - start) / pool->object_size;
 }
 
 /*
@@ -317,6 +321,7 @@ Creates a new C<Small_Object_Pool> and returns a pointer to it.
 */
 
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Small_Object_Pool *
 new_small_object_pool(size_t object_size, size_t objects_per_alloc)
 {
