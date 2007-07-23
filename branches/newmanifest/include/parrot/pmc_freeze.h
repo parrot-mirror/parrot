@@ -14,7 +14,7 @@
 #define      PARROT_PMC_FREEZE_H_GUARD
 
 struct _visit_info;
-typedef void (*visit_f)(Parrot_Interp, PMC*, struct _visit_info*);
+typedef void (*visit_f)(PARROT_INTERP, PMC*, struct _visit_info*);
 
 typedef enum {
     VISIT_FREEZE_NORMAL,
@@ -28,14 +28,14 @@ typedef enum {
 
 struct _image_io;
 #define IMAGE_IO struct _image_io
-typedef void    (*push_integer_f)       (Parrot_Interp, IMAGE_IO*, INTVAL);
-typedef void    (*push_pmc_f)           (Parrot_Interp, IMAGE_IO*, PMC*);
-typedef void    (*push_string_f)        (Parrot_Interp, IMAGE_IO*, STRING*);
-typedef void    (*push_number_f)        (Parrot_Interp, IMAGE_IO*, FLOATVAL);
-typedef INTVAL  (*shift_integer_f)      (Parrot_Interp, IMAGE_IO*);
-typedef PMC*    (*shift_pmc_f)          (Parrot_Interp, IMAGE_IO*);
-typedef STRING* (*shift_string_f)       (Parrot_Interp, IMAGE_IO*);
-typedef FLOATVAL(*shift_number_f)       (Parrot_Interp, IMAGE_IO*);
+typedef void    (*push_integer_f)       (PARROT_INTERP, IMAGE_IO*, INTVAL);
+typedef void    (*push_pmc_f)           (PARROT_INTERP, IMAGE_IO*, PMC*);
+typedef void    (*push_string_f)        (PARROT_INTERP, IMAGE_IO*, STRING*);
+typedef void    (*push_number_f)        (PARROT_INTERP, IMAGE_IO*, FLOATVAL);
+typedef INTVAL  (*shift_integer_f)      (PARROT_INTERP, IMAGE_IO*);
+typedef PMC*    (*shift_pmc_f)          (PARROT_INTERP, IMAGE_IO*);
+typedef STRING* (*shift_string_f)       (PARROT_INTERP, IMAGE_IO*);
+typedef FLOATVAL(*shift_number_f)       (PARROT_INTERP, IMAGE_IO*);
 
 typedef struct _image_funcs {
     push_integer_f      push_integer;
@@ -88,22 +88,36 @@ typedef struct _visit_info {
 /* HEADERIZER BEGIN: src/pmc_freeze.c */
 
 PARROT_API
-PMC* Parrot_clone( PARROT_INTERP, PMC* pmc )
-        __attribute__nonnull__(1);
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+PMC* Parrot_clone( PARROT_INTERP, NOTNULL(PMC* pmc) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
-STRING* Parrot_freeze( PARROT_INTERP, PMC* pmc )
-        __attribute__nonnull__(1);
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+STRING* Parrot_freeze( PARROT_INTERP, NOTNULL(PMC* pmc) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
-STRING* Parrot_freeze_at_destruct( PARROT_INTERP, PMC* pmc )
-        __attribute__nonnull__(1);
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+STRING* Parrot_freeze_at_destruct( PARROT_INTERP, NOTNULL(PMC* pmc) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
-PMC* Parrot_thaw( PARROT_INTERP, STRING* image )
-        __attribute__nonnull__(1);
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+PMC* Parrot_thaw( PARROT_INTERP, NOTNULL(STRING* image) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PMC* Parrot_thaw_constants( PARROT_INTERP, NOTNULL(STRING* image) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);

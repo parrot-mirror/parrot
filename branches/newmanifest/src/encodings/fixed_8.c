@@ -255,7 +255,7 @@ static void
 set_codepoints(PARROT_INTERP, NOTNULL(STRING *source_string),
         UINTVAL offset, UINTVAL count, NOTNULL(STRING *new_codepoints))
 {
-    set_bytes(interp, source_string, offset, count, NOTNULL(new_codepoints));
+    set_bytes(interp, source_string, offset, count, new_codepoints);
 }
 
 static void
@@ -323,7 +323,6 @@ iter_init(SHIM_INTERP, NOTNULL(const STRING *src), NOTNULL(String_iter *iter))
     iter->set_position =    fixed8_set_position;
 }
 
-PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 ENCODING *
 Parrot_encoding_fixed_8_init(PARROT_INTERP)

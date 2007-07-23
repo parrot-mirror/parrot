@@ -161,7 +161,6 @@ get_codepoint(PARROT_INTERP, NOTNULL(const STRING *src), UINTVAL offset)
 #else
     real_exception(interp, NULL, E_LibraryNotLoadedError,
             "no ICU lib loaded");
-    return 0;
 #endif
 }
 
@@ -182,7 +181,6 @@ static UINTVAL
 get_byte(PARROT_INTERP, SHIM(const STRING *src), UINTVAL offset)
 {
     UNIMPL;
-    return 0;
 }
 
 static void
@@ -220,7 +218,6 @@ static STRING *
 get_bytes(PARROT_INTERP, SHIM(STRING *src), UINTVAL offset, UINTVAL count)
 {
     UNIMPL;
-    return NULL;
 }
 
 
@@ -230,7 +227,6 @@ get_codepoints_inplace(PARROT_INTERP, SHIM(STRING *src),
 {
 
     UNIMPL;
-    return NULL;
 }
 
 static STRING *
@@ -238,7 +234,6 @@ get_bytes_inplace(PARROT_INTERP, SHIM(STRING *src),
         UINTVAL offset, UINTVAL count, SHIM(STRING *return_string))
 {
     UNIMPL;
-    return NULL;
 }
 
 static void
@@ -272,7 +267,6 @@ codepoints(PARROT_INTERP, NOTNULL(STRING *src))
 #else
     real_exception(interp, NULL, E_LibraryNotLoadedError,
             "no ICU lib loaded");
-    return 0;
 #endif
 }
 
@@ -287,7 +281,7 @@ static UINTVAL
 ucs2_decode_and_advance(PARROT_INTERP, NOTNULL(String_iter *i))
 {
     UChar * const s = (UChar*) i->str->strstart;
-    const size_t pos = i->bytepos / sizeof (UChar);
+    size_t pos = i->bytepos / sizeof (UChar);
 
     /* TODO either make sure that we don't go past end or use SAFE
      *      iter versions
@@ -332,7 +326,6 @@ iter_init(PARROT_INTERP, NOTNULL(const STRING *src), NOTNULL(String_iter *iter))
 #endif
 }
 
-PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 ENCODING *
 Parrot_encoding_ucs2_init(PARROT_INTERP)
