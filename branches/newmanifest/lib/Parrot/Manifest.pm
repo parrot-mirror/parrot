@@ -3,7 +3,6 @@ package Parrot::Manifest;
 use strict;
 use warnings;
 use Carp;
-use Data::Dumper;
 
 sub new {
     my $class = shift;
