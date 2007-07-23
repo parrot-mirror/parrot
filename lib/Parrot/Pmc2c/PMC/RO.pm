@@ -107,7 +107,7 @@ EOC
       my $pmcname = $parent->name;
       my $ret = gen_ret($ro_method);
       my $body = <<EOC;
-    internal_exception(WRITE_TO_CONSTCLASS,
+    real_exception(interp, NULL, WRITE_TO_CONSTCLASS,
             "$vt_method_name() in read-only instance of $pmcname");
 EOC
       $body .= "    $ret\n" if $ret;
