@@ -26,34 +26,10 @@ sub pre_method_gen {
                 type        => Parrot::Pmc2c::Method::VTABLE,
           });
 
-      my ( $func_ret, $ret_suffix, $args, $sig ) = $new_default_method->signature;
+      my ( $return_prefix, $ret_suffix, $args, $sig, $return_type_char, $null_return ) = $new_default_method->signature;
+      my $void_return = $return_type_char eq 'v' ? 'return;' : '';
+      my $return = $return_type_char eq 'v' ? '' : $return_prefix;
 
-      # Do we have a return value?
-      my $method_return_type = $method->return_type;
-      my $return = $method_return_type =~ /void/ ? '' : 'return ';
-      my $void_return = $method_return_type =~ /void/ ? 'return;' : '';
-
-      # work out what the null return should be so that we can quieten the "no
-      # return from non-void function" warnings.
-      # unfortunately, the general case:
-      #my $null_return = "($method->{type})NULL";
-      # doesn't work with gcc (it builds and tests without even a warning with
-      # icc), so we add a workaround for the null return from a FLOATVAL
-      # function
-      my $null_return;
-      if ($method_return_type eq 'void') {
-          $null_return = '';
-      }
-      elsif ($method_return_type =~ /PMC|INTVAL|STRING|opcode_t/) {
-          $null_return = "return ($method_return_type)NULL;";
-      }
-      # workaround for gcc because the general case doesn't work there
-      elsif ($method_return_type =~ /FLOATVAL/) {
-          $null_return = 'return (FLOATVAL) 0;';
-      }
-      else {
-          $null_return = '';
-      }
 
         $new_default_method->body(Parrot::Pmc2c::Emitter->text(<<"EOC"));
     Parrot_Object * const obj = PARROT_OBJECT(pmc);
