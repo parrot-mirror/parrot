@@ -182,7 +182,7 @@ sub rewrite_nci_method {
       \.(\w+)           # other_method
       \(\s*(.*?)\)      # capture argument list
       }x,
-      sub { "pmc->vtable->$1(" . full_arguments($2) . ')' });
+      sub { "pmc->real_self->vtable->$1(" . full_arguments($2, 'pmc->real_self') . ')' });
 
     # Rewrite SELF.other_method(args...)
     $body->subst( qr{

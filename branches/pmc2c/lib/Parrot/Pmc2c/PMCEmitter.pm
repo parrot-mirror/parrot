@@ -138,7 +138,7 @@ sub hdecls {
 
     # class init decl
     $hout .= 'PARROT_DYNEXT_EXPORT ' if ( $self->is_dynamic );
-    $hout .= "void Parrot_${name}_class_init(Parrot_Interp, int, int);\n";
+    $hout .= "void Parrot_${name}_class_init(PARROT_INTERP, int, int);\n";
     $self->{hdecls} .= $hout;
     $self->{hdecls};
 }
@@ -623,7 +623,7 @@ EOC
     foreach my $dynpmc (@$dyn_mmds) {
         next if $dynpmc eq $classname;
         $cout .= <<"EOC";
-            int my_enum_class_$dynpmc = pmc_type(interp, string_from_const_cstring(interp, "$dynpmc", 0));
+            int my_enum_class_$dynpmc = pmc_type(interp, string_from_literal(interp, "$dynpmc"));
 EOC
     }
 
