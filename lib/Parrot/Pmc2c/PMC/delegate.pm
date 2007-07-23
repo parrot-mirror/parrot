@@ -29,7 +29,7 @@ sub pre_method_gen {
                 parent_name => $self->name, 
                 type        => Parrot::Pmc2c::Method::VTABLE,
           });
-        my ( $func_ret, $ret_suffix, $args, $sig ) = $self->signature($method);
+        my ( $func_ret, $ret_suffix, $args, $sig ) = $new_default_method->signature;
 
         $new_default_method->body(Parrot::Pmc2c::Emitter->text(<<"EOC"));
 
@@ -42,56 +42,6 @@ EOC
         $self->add_method($new_default_method);
     }
     return 1;
-}
-
-=item C<trans($type)>
-
-Used in C<signature()> to normalize argument types.
-
-=cut
-
-sub trans {
-    my ( $self, $type ) = @_;
-
-    my $char = substr $type, 0, 1;
-    return $1 if ( $char =~ /([ISP])/ );
-    return 'N' if ( $char eq 'F' );
-    return 'v' if ( $type eq 'void' );
-    return '?';
-}
-
-=item C<signature($params)>
-
-Returns the method signature for C<$params>.
-
-=back
-
-=cut
-
-sub signature {
-    my ( $self, $method ) = @_;
-
-    my $return_type = $method->return_type;
-    my $n = 0;
-    my ( @types, @args );
-
-    for my $x (split / /, $method->parameters) {
-        push @{ ($n++ & 1) ? \@args : \@types }, $x;
-    }
-
-    my $args = @args ? ", " . join( ' ', @args ) : '';
-    my $sig = $self->trans($return_type) . join '', map { $self->trans($_) } @types;
-    my $func_ret = '';
-    my $method_suffix = '';
-
-    if ( $return_type ne 'void' ) {
-        $func_ret = "return ($return_type)";
-        if ( $return_type !~ /\*/ ) { # PMC* and STRING* don't need a special suffix
-            $method_suffix = "_ret" . lc substr $return_type, 0, 1;
-            $method_suffix =~ s/_retu/_reti/; #change UINTVAl type to reti
-        }
-    }
-    return ( $func_ret, $method_suffix, $args, $sig );
 }
  
 1;

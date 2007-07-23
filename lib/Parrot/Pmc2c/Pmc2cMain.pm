@@ -19,6 +19,7 @@ use Parrot::Pmc2c::PMC::Null;
 use Parrot::Pmc2c::PMC::Ref;
 use Parrot::Pmc2c::PMC::SharedRef;
 use Parrot::Pmc2c::PMC::STMRef;
+use Parrot::Pmc2c::PMC::Object;
 use Cwd qw(cwd realpath);
 use File::Basename;
 use Carp;

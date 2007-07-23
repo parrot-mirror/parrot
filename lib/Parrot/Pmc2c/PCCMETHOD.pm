@@ -229,6 +229,7 @@ sub rewrite_PCCRETURNs {
         my $goto_string = "goto ${method_name}_returns;";
         my ( $returns_n_regs_used, $returns_indexes, $returns_flags, $returns_accessors ) =
             process_pccmethod_args( parse_p_args_string($returns), 'return' );
+        $returns_indexes = "0" unless $returns_indexes;
 
         push @$regs_used, $returns_n_regs_used;
         my $e = Parrot::Pmc2c::Emitter->new($pmc->filename);

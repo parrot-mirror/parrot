@@ -480,7 +480,7 @@ sub init_func {
 
     $cout .= <<"EOC";
 void
-Parrot_${classname}_class_init(Parrot_Interp interp, int entry, int pass)
+Parrot_${classname}_class_init(PARROT_INTERP, int entry, int pass)
 {
 $vtable_decl
 EOC
