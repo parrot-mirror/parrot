@@ -72,6 +72,59 @@ sub is_mmd {
     return 0;
 }
 
+
+=head1 C<trans($type)>
+
+Used in C<signature()> to normalize argument types.
+
+=cut
+
+
+sub trans {
+    my ( $self, $type ) = @_;
+
+    return "v" if (!$type);
+    my $char = substr $type, 0, 1;
+    return $1 if ( $char =~ /([ISP])/ );
+    return 'N' if ( $char eq 'F' );
+    return 'v' if ( $type eq 'void' );
+    return 'P' if ( $type =~ /opcode_t\*/);
+    return "I" if ( $type =~ /int(val)?/i);
+    return '?';
+}
+
+=head1 C<signature()>
+
+Returns the method signature for the methods $parameters
+
+=cut
+
+sub signature {
+    my ( $self ) = @_;
+
+    my $return_type = $self->return_type;
+    my $n = 0;
+    my ( @types, @args );
+
+    for my $x (split / /, $self->parameters) {
+        push @{ ($n++ & 1) ? \@args : \@types }, $x;
+    }
+
+    my $args = @args ? ", " . join( ' ', @args ) : '';
+    my $sig = $self->trans($return_type) . join '', map { $self->trans($_) } @types;
+    my $func_ret = '';
+    my $method_suffix = '';
+
+    if ( $return_type ne 'void' ) {
+        $func_ret = "return ($return_type)";
+        if ( $return_type !~ /\*/ ) { # PMC* and STRING* don't need a special suffix
+            $method_suffix = "_ret" . lc substr $return_type, 0, 1;
+            $method_suffix =~ s/_retu/_reti/; #change UINTVAl type to reti
+        }
+    }
+    return ( $func_ret, $method_suffix, $args, $sig );
+}
+
 1;
 
 # Local Variables:

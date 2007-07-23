@@ -890,8 +890,8 @@ Returns whether the PMC "does" perform C<*interface>.
 
 */
 
-    INTVAL does(STRING* interface) {
-        return does_isa(INTERP, interface, SELF->vtable->does_str);
+    INTVAL does(STRING* _interface) {
+        return does_isa(INTERP, _interface, SELF->vtable->does_str);
     }
 
 /*
