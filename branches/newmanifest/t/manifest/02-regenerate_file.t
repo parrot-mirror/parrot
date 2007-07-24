@@ -39,7 +39,7 @@ ok($manifest_lines_ref, "prepare_manifest_skip() returned");
         or croak "Unable to copy $f to tempdir";
     ok(-f $f, "$f found in tempdir");
     my $need_for_file =
-        $mani->determine_need_for_manifest($manifest_lines_ref);
+        $mani->is_manifest_needed($manifest_lines_ref);
     ok(! $need_for_file, "No need to regenerate $f");
     chdir $cwd or
         croak "Unable to change back from temporary directory after testing";
@@ -68,7 +68,7 @@ ok($manifest_lines_ref, "prepare_manifest_skip() returned");
     push @lines, q{};
     untie @lines or croak "Unable to untie from $f";
     my $need_for_file =
-        $mani->determine_need_for_manifest($manifest_lines_ref);
+        $mani->is_manifest_needed($manifest_lines_ref);
     ok($need_for_file, "Need to regenerate $f");
     ok( $mani->print_manifest($manifest_lines_ref),
         "print_manifest() returned true");
@@ -86,7 +86,7 @@ ok($manifest_lines_ref, "prepare_manifest_skip() returned");
         croak "Unable to change to temporary directory for testing";
     ok(! -f $f, "$f found in tempdir");
     my $need_for_file =
-        $mani->determine_need_for_manifest($manifest_lines_ref);
+        $mani->is_manifest_needed($manifest_lines_ref);
     ok($need_for_file, "We would need to regenerate $f");
     chdir $cwd or
         croak "Unable to change back from temporary directory after testing";

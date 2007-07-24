@@ -24,7 +24,7 @@ my $print_str = $mani->prepare_manifest_skip();
 ok($print_str, "prepare_manifest_skip() returned");
 
 ok(! -f $g, "No $g found");
-my $need_for_skip = $mani->determine_need_for_manifest_skip($print_str);
+my $need_for_skip = $mani->is_manifest_skip_needed($print_str);
 ok($need_for_skip, "Need to regenerate $g");
 
 pass("Completed all tests in $0");

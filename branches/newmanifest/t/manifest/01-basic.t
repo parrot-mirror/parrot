@@ -52,7 +52,7 @@ ok($print_str, "prepare_manifest_skip() returned");
         croak "Unable to change to temporary directory for testing";
     ok(! -f $skip,
         "No $skip yet in tempdir");
-    my $need_for_skip = $mani->determine_need_for_manifest_skip($print_str);
+    my $need_for_skip = $mani->is_manifest_skip_needed($print_str);
     ok($need_for_skip,
         "No $skip in tempdir; it must be regenerated");
     ok( $mani->print_manifest_skip($print_str),

@@ -12,11 +12,11 @@ my $mani = Parrot::Manifest->new( {
 } );
 
 my $manifest_lines_ref = $mani->prepare_manifest();
-my $need_for_files = $mani->determine_need_for_manifest($manifest_lines_ref);
+my $need_for_files = $mani->is_manifest_needed($manifest_lines_ref);
 $mani->print_manifest($manifest_lines_ref) if $need_for_files;
 
 my $print_str = $mani->prepare_manifest_skip();
-my $need_for_skip = $mani->determine_need_for_manifest_skip($print_str);
+my $need_for_skip = $mani->is_manifest_skip_needed($print_str);
 $mani->print_manifest_skip($print_str) if $need_for_skip;
 
 #################### DOCUMENTATION ####################

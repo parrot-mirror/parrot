@@ -37,7 +37,7 @@ ok($print_str, "prepare_manifest_skip() returned");
     copy(qq{$cwd/$sk}, qq{$tdir/$sk})
         or croak "Unable to copy $sk to tempdir";
     ok(-f $sk, "$sk found in tempdir");
-    my $need_for_skip = $mani->determine_need_for_manifest_skip($print_str);
+    my $need_for_skip = $mani->is_manifest_skip_needed($print_str);
     ok(! $need_for_skip, "No need to regenerate $sk");
     chdir $cwd or
         croak "Unable to change back from temporary directory after testing";
@@ -62,7 +62,7 @@ ok($print_str, "prepare_manifest_skip() returned");
         }
     }
     untie @lines or croak "Unable to untie from $sk";
-    my $need_for_skip = $mani->determine_need_for_manifest_skip($print_str);
+    my $need_for_skip = $mani->is_manifest_skip_needed($print_str);
     ok($need_for_skip, "Need to regenerate $sk");
     ok( $mani->print_manifest_skip($print_str),
         "print_manifest_skip() returned true");

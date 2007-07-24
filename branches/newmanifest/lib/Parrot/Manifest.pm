@@ -57,7 +57,7 @@ sub prepare_manifest {
     return \%manifest_lines;
 }
 
-sub determine_need_for_manifest {
+sub is_manifest_needed {
     my $self = shift;
     my $proposed_files_ref = shift;
     if  ( ! -f $self->{file} ) {
@@ -211,7 +211,7 @@ sub prepare_manifest_skip {
     return $self->_compose_print_str( \%ignore );
 }
 
-sub determine_need_for_manifest_skip {
+sub is_manifest_skip_needed {
     my $self = shift;
     my $print_str = shift;
     if  ( ! -f $self->{skip} ) {
@@ -321,11 +321,11 @@ Parrot::Manifest - Re-create MANIFEST and MANIFEST.SKIP
     $mani = Parrot::Manifest->new($0);
 
     $manifest_lines_ref = $mani->prepare_manifest();
-    $need_for_files = $mani->determine_need_for_manifest($manifest_lines_ref);
+    $need_for_files = $mani->is_manifest_needed($manifest_lines_ref);
     $mani->print_manifest($manifest_lines_ref) if $need_for_files;
 
     $print_str = $mani->prepare_manifest_skip();
-    $need_for_skip = $mani->determine_need_for_manifest_skip($print_str);
+    $need_for_skip = $mani->is_manifest_skip_needed($print_str);
     $mani->print_manifest_skip($print_str) if $need_for_skip;
 
 =head1 SEE ALSO
