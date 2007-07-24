@@ -25,7 +25,7 @@ ok($manifest_lines_ref, "prepare_manifest_skip() returned");
 
 ok(! -f $g, "No $g found");
 my $need_for_file =
-  $mani->determine_need_for_manifest($manifest_lines_ref);
+  $mani->is_manifest_needed($manifest_lines_ref);
 ok($need_for_file, "Need to regenerate $g");
 
 pass("Completed all tests in $0");
