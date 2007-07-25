@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 102-init_defaults.t
+# 102-init_defaults.01.t
 
 use strict;
 use warnings;
@@ -13,12 +13,6 @@ use_ok('config::init::defaults');
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-
-=for hints_for_testing Some branches and conditions will only be
-testable on certain OS/chip combinations.  Consider using Test::More
-SKIP blocks to write tests in these instances.
-
-=cut
 
 my $pkg = q{init::defaults};
 my $parrot_version = Parrot::BuildUtil::parrot_version();
@@ -62,11 +56,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-102-init_defaults.t - test config::init::defaults
+102-init_defaults.01.t - test config::init::defaults
 
 =head1 SYNOPSIS
 
-    % prove t/configure/102-init_defaults.t
+    % prove t/configure/102-init_defaults.01.t
 
 =head1 DESCRIPTION
 
