@@ -72,7 +72,7 @@ my %proto_type = (
     d   => "double",
     t   => "char *",
     v   => "void",
-    J   => "Interp *",
+    J   => "PARROT_INTERP",
     P   => "PMC *",
     O   => "PMC *",      # object
     S   => "STRING *",
@@ -710,7 +710,6 @@ $put_pointer
      */
     c = string_to_cstring(interp, message);
     PANIC(interp, c);
-    return NULL;
 }
 
 TAIL

@@ -166,7 +166,7 @@ Returns the boolean value of the string.
 
     INTVAL get_bool() {
         STRING* const s = VTABLE_get_string(INTERP, SELF);
-        return string_bool(INTERP, s);
+        return s ? string_bool(INTERP, s) : 0;
     }
 
 /*
@@ -683,7 +683,7 @@ TODO Currently overflow to BigInt is B<not> handled nor detected.
             const unsigned char c = *start;
             int dig;
 
-            if (isdigit(c)) {
+            if (isdigit((unsigned char)c)) {
                 dig = c - '0';
             }
             else if (c >= 'a' && c <= 'z') {

@@ -14,12 +14,9 @@ typedef struct Small_Object_Arena {
 
 struct Small_Object_Pool;
 
-typedef void (*add_free_object_fn_type)(Interp *,
-                             struct Small_Object_Pool *, void *);
-typedef void * (*get_free_object_fn_type)(Interp *,
-                             struct Small_Object_Pool *);
-typedef void (*alloc_objects_fn_type)(Interp *,
-                           struct Small_Object_Pool *);
+typedef void (*add_free_object_fn_type)(PARROT_INTERP, struct Small_Object_Pool *, void *);
+typedef void * (*get_free_object_fn_type)(PARROT_INTERP, struct Small_Object_Pool *);
+typedef void (*alloc_objects_fn_type)(PARROT_INTERP, struct Small_Object_Pool *);
 
 #if PARROT_GC_GMS
 /*
@@ -144,6 +141,7 @@ void gc_pmc_ext_pool_init( NOTNULL(Small_Object_Pool *pool) )
         __attribute__nonnull__(1);
 
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Small_Object_Pool * new_small_object_pool(
     size_t object_size,
     size_t objects_per_alloc );

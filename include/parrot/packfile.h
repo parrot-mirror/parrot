@@ -26,24 +26,39 @@
 
 
 /*
-** Bytes that we don't have to reorder
-*  PACKFILE_HEADER_BYTES must be an integer times sizeof (opcode_t).
+** The number of bytes in the packfile header that we can read/write
+** directly. This excludes the final element in the struct, which holds a
+** pointer to the UUID data, if there is any.
 */
-#define PACKFILE_HEADER_BYTES 16
+#define PACKFILE_HEADER_BYTES 18
 
 typedef struct PackFile_Header {
+    /* Magic string to identify the PBC file. */
+    unsigned char magic[8];
+
+    /* Word size, byte ordering and floating point number format. */
     unsigned char wordsize;
     unsigned char byteorder;
+    unsigned char floattype;
+
+    /* Version of Parrot that wrote the bytecode file. */
     unsigned char major;
     unsigned char minor;
-    unsigned char intvalsize;   /* was flags */
-    unsigned char floattype;
-    unsigned char pad[10];      /* fingerprint */
-    /* Start words/opcodes on 16-byte boundary */
-    opcode_t magic;
-    opcode_t opcodetype;
-    opcode_t dir_format;        /* was fixup_ss */
-    opcode_t _unused_padding;
+    unsigned char patch;
+
+    /* Bytecode format version. */
+    unsigned char bc_major;
+    unsigned char bc_minor;
+
+    /* UUID type and length. */
+    unsigned char uuid_type;
+    unsigned char uuid_size;
+
+    /* The UUID data. */
+    unsigned char *uuid_data;
+
+    /* Directory format. */
+    opcode_t dir_format;
 } PackFile_Header;
 
 typedef struct PackFile_Constant {
@@ -72,17 +87,17 @@ typedef struct PackFile_DebugMapping {
 */
 
 typedef struct PackFile_Segment * (*PackFile_Segment_new_func_t)
-    (Interp *, struct PackFile *, const char *, int add);
-typedef void (*PackFile_Segment_destroy_func_t) (Interp *,
-        struct PackFile_Segment *);
-typedef size_t (*PackFile_Segment_packed_size_func_t)(Interp *,
-        struct PackFile_Segment *);
-typedef opcode_t * (*PackFile_Segment_pack_func_t) (Interp *,
-        struct PackFile_Segment *, opcode_t *dest);
-typedef opcode_t * (*PackFile_Segment_unpack_func_t) (Interp *,
-        struct PackFile_Segment *, opcode_t *packed);
-typedef void (*PackFile_Segment_dump_func_t) (Interp *,
-        struct PackFile_Segment *);
+    (PARROT_INTERP, struct PackFile *, const char *, int add);
+typedef void (*PackFile_Segment_destroy_func_t)
+    (PARROT_INTERP, struct PackFile_Segment *);
+typedef size_t (*PackFile_Segment_packed_size_func_t)
+    (PARROT_INTERP, struct PackFile_Segment *);
+typedef opcode_t * (*PackFile_Segment_pack_func_t)
+    (PARROT_INTERP, struct PackFile_Segment *, opcode_t *dest);
+typedef opcode_t * (*PackFile_Segment_unpack_func_t)
+    (PARROT_INTERP, struct PackFile_Segment *, opcode_t *packed);
+typedef void (*PackFile_Segment_dump_func_t)
+    (PARROT_INTERP, struct PackFile_Segment *);
 
 typedef struct PackFile_funcs {
     PackFile_Segment_new_func_t         new_seg;
@@ -123,8 +138,8 @@ typedef struct PackFile_Segment {
     opcode_t            *data;         /* oparray e.g. bytecode */
 } PackFile_Segment;
 
-typedef INTVAL (*PackFile_map_segments_func_t) (Interp *,
-        PackFile_Segment *seg, void *user_data);
+typedef INTVAL (*PackFile_map_segments_func_t)
+    (PARROT_INTERP, PackFile_Segment *seg, void *user_data);
 
 /*
 ** PackFile_FixupTable:
@@ -397,7 +412,9 @@ PackFile_Segment * PackFile_find_segment( PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_API
-void PackFile_fixup_subs( PARROT_INTERP, pbc_action_enum_t what, PMC *eval )
+void PackFile_fixup_subs( PARROT_INTERP,
+    pbc_action_enum_t what,
+    NULLOK(PMC *eval) )
         __attribute__nonnull__(1);
 
 PARROT_API
@@ -425,7 +442,7 @@ PARROT_API
 INTVAL PackFile_map_segments( PARROT_INTERP,
     NOTNULL(PackFile_Directory *dir),
     PackFile_map_segments_func_t callback,
-    void *user_data )
+    NULLOK(void *user_data) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
