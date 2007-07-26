@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: 112-auto_backtrace.t 19985 2007-07-19 02:02:32Z jkeenan $
+# $Id$
 # 112-auto_backtrace.t
 
 use strict;
@@ -20,7 +20,7 @@ my $args = process_options( {
     argv            => [],
     script          => $0,
     parrot_version  => $parrot_version,
-    svnid           => '$Id: 112-auto_backtrace.t 19985 2007-07-19 02:02:32Z jkeenan $',
+    svnid           => '$Id$',
 } );
 
 my $conf = Parrot::Configure->new();
