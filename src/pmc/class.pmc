@@ -92,7 +92,8 @@ An empty ResizablePMCArray PMC is allocated during initialization.
 /* This function builds the attribute index (table to map class name and
  * attribute name to an index) for the current class. */
 static void
-build_attrib_index(Parrot_Interp interp, PMC *self) {
+build_attrib_index(PARROT_INTERP, PMC *self)
+{
     Parrot_Class * const _class      = PARROT_CLASS(self);
     int                  cur_index   = 0;
     PMC * const          table       = pmc_new(interp, enum_class_Hash);
@@ -152,7 +153,8 @@ build_attrib_index(Parrot_Interp interp, PMC *self) {
  */
 
 static void
-fail_if_type_exists(Interp *interp, PMC *name) {
+fail_if_type_exists(PARROT_INTERP, PMC *name)
+{
     INTVAL      type;
 
     PMC * const classname_hash = interp->class_hash;
@@ -182,7 +184,7 @@ fail_if_type_exists(Interp *interp, PMC *name) {
  * allows the new object metamodel to interact with the old one until it does.
  */
 static INTVAL
-register_type(Parrot_Interp interp, PMC *name) {
+register_type(PARROT_INTERP, PMC *name) {
     INTVAL  type;
     PMC    *classname_hash, *item;
 
@@ -216,7 +218,8 @@ register_type(Parrot_Interp interp, PMC *name) {
 
 /* Takes a hash and initializes the class based on it. */
 static void
-init_class_from_hash(Parrot_Interp interp, PMC *self, PMC *info) {
+init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
+{
     Parrot_Class *_class      = PARROT_CLASS(self);
     STRING       *name_str    = string_from_cstring(interp, "name",        4);
     STRING       *parents_str = string_from_cstring(interp, "parents",     7);
@@ -892,9 +895,37 @@ Creates a new PMC object of the type of the class and calls init().
 
         /* If we've not been instantiated before... */
         if (!_class->instantiated) {
-            /* Check that we have all methods listed in resolve list. */
-            int resolve_count = VTABLE_elements(interp, _class->resolve_method);
+            int resolve_count;
 
+            /* Pull in methods from the namespace, if any. */
+            if (!PMC_IS_NULL(_class->_namespace)) {
+                PMC *methods, *vtable_methods;
+                PMC *ns = _class->_namespace;
+
+                /* Import any methods. */
+                (PMC *methods) = PCCINVOKE(interp, ns,
+                    "get_associated_methods");
+                if (!PMC_IS_NULL(methods)) {
+                    PMC *iter = VTABLE_get_iter(interp, methods);
+                    while (VTABLE_get_bool(interp, iter)) {
+                        STRING *meth_name = VTABLE_shift_string(interp, iter);
+                        PMC *meth_sub = VTABLE_get_pmc_keyed_str(interp, methods,
+                            meth_name);
+                        VTABLE_add_method(interp, SELF, meth_name, meth_sub);
+                    }
+                }
+
+                /* Import any vtable methods. */
+                (PMC *vtable_methods) = PCCINVOKE(interp, ns,
+                    "get_associated_vtable_methods");
+                if (!PMC_IS_NULL(vtable_methods)) {
+                    /* TODO: Hash is keyed on index, not name, but a patch to do
+                     * that is forthcoming. */
+                }
+            }
+
+            /* Check that we have all methods listed in resolve list. */
+            resolve_count = VTABLE_elements(interp, _class->resolve_method);
             for (i = 0; i < resolve_count; i++) {
                 STRING *check_meth = VTABLE_get_string_keyed_int(interp,
                     _class->resolve_method, i);
@@ -1119,8 +1150,37 @@ parameter list.
 
         /* If we've not been instantiated before... */
         if (!_class->instantiated) {
+            int resolve_count;
+
+            /* Pull in methods from the namespace, if any. */
+            if (!PMC_IS_NULL(_class->_namespace)) {
+                PMC *methods, *vtable_methods;
+                PMC *ns = _class->_namespace;
+
+                /* Import any methods. */
+                (PMC *methods) = PCCINVOKE(interp, ns,
+                    "get_associated_methods");
+                if (!PMC_IS_NULL(methods)) {
+                    PMC *iter = VTABLE_get_iter(interp, methods);
+                    while (VTABLE_get_bool(interp, iter)) {
+                        STRING *meth_name = VTABLE_shift_string(interp, iter);
+                        PMC *meth_sub = VTABLE_get_pmc_keyed_str(interp, methods,
+                            meth_name);
+                        VTABLE_add_method(interp, SELF, meth_name, meth_sub);
+                    }
+                }
+
+                /* Import any vtable methods. */
+                (PMC *vtable_methods) = PCCINVOKE(interp, ns,
+                    "get_associated_vtable_methods");
+                if (!PMC_IS_NULL(vtable_methods)) {
+                    /* TODO: Hash is keyed on index, not name, but a patch to do
+                     * that is forthcoming. */
+                }
+            }
+
             /* Check that we have all methods listed in resolve list. */
-            int resolve_count = VTABLE_elements(interp, _class->resolve_method);
+            resolve_count = VTABLE_elements(interp, _class->resolve_method);
 
             for (i = 0; i < resolve_count; i++) {
                 STRING *check_meth = VTABLE_get_string_keyed_int(interp,

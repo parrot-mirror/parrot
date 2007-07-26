@@ -108,7 +108,7 @@ Panic handler.
 PARROT_DOES_NOT_RETURN
 void
 do_panic(NULLOK_INTERP, NULLOK(const char *message),
-         NULLOK(const char *file), int line)
+         NULLOK(const char *file), unsigned int line)
 {
     /* Note: we can't format any floats in here--Parrot_sprintf
     ** may panic because of floats.
@@ -749,6 +749,46 @@ Parrot_init_exceptions(PARROT_INTERP) {
         VTABLE_set_integer_keyed_int(interp, ex, 1, i);
     }
 }
+
+
+
+/*
+
+FUNCDOC: Parrot_confess
+
+A better version of assert() that gives a backtrace if possible.
+
+*/
+
+PARROT_API
+PARROT_DOES_NOT_RETURN
+void
+Parrot_confess(NOTNULL(const char *cond), NOTNULL(const char *file), unsigned int line)
+{
+    printf ("%s:%u: failed assertion '%s'\n", file, line, cond);
+    Parrot_print_backtrace();
+    exit(EXIT_FAILURE);
+}
+
+void
+Parrot_print_backtrace(void)
+{
+#ifdef PARROT_HAS_GLIBC_BACKTRACE
+    /* stolen from http://www.delorie.com/gnu/docs/glibc/libc_665.html */
+    void *array[10];
+    size_t i;
+
+    const size_t size = backtrace (array, 10);
+    char ** const strings = backtrace_symbols (array, size);
+
+    printf ("Obtained %zd stack frames.\n", size);
+    for (i = 0; i < size; i++)
+        printf ("%s\n", strings[i]);
+
+    free (strings);
+#endif
+}
+
 
 /*
 

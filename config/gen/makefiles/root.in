@@ -237,11 +237,11 @@ GEN_HEADERS = \
     $(INC_DIR)/oplib/core_ops.h \
     $(INC_DIR)/oplib/ops.h \
     $(INC_DIR)/oplib/core_ops_switch.h \
-    $(INC_DIR)/extend_vtable.h
+    $(INC_DIR)/extend_vtable.h \
+    $(INC_DIR)/pbcversion.h
 
 GEN_SOURCES = \
     $(SRC_DIR)/core_ops.c \
-    $(SRC_DIR)/fingerprint.c \
     $(SRC_DIR)/nci.c \
     $(SRC_DIR)/core_ops_switch.c \
     $(SRC_DIR)/jit_cpu.c \
@@ -292,6 +292,7 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/Stream/Sub.pbc \
     $(LIBRARY_DIR)/Stream/Writer.pbc \
     $(LIBRARY_DIR)/String/Utils.pbc \
+    $(LIBRARY_DIR)/Tcl/Glob.pbc \
     $(LIBRARY_DIR)/YAML/Parser/Syck.pbc \
     $(LIBRARY_DIR)/STM.pbc \
     $(LIBRARY_DIR)/libpcre.pbc \
@@ -388,7 +389,6 @@ INTERP_O_FILES = \
     $(SRC_DIR)/exit$(O) \
     $(SRC_DIR)/extend$(O) \
     $(SRC_DIR)/extend_vtable$(O) \
-    $(SRC_DIR)/fingerprint$(O) \
     $(SRC_DIR)/gc/dod$(O) \
     $(SRC_DIR)/gc/gc_gms$(O) \
     $(SRC_DIR)/gc/gc_ims$(O) \
@@ -753,6 +753,9 @@ $(INSTALLABLEPARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
     $(SRC_DIR)/main$(O) \
     $(ALL_PARROT_LIBS) $(LINKFLAGS) $(SRC_DIR)/install_config$(O)
 
+$(INC_DIR)/pbcversion.h :
+	$(PERL) $(BUILD_TOOLS_DIR)/pbcversion_h.pl > $(INC_DIR)/pbcversion.h
+
 $(SRC_DIR)/parrot_config.c :  runtime/parrot/include/config.fpmc \
     $(BUILD_TOOLS_DIR)/parrot_config_c.pl
 	$(PERL) $(BUILD_TOOLS_DIR)/parrot_config_c.pl > \
@@ -895,10 +898,6 @@ $(IMCC_DIR)/main$(O) : $(IMCC_DIR)/main.c $(GENERAL_H_FILES) $(IMCC_H_FILES)
 $(INC_DIR)/oplib/ops.h lib/Parrot/OpLib/core.pm : $(OPS_FILES) $(BUILD_TOOLS_DIR)/ops2pm.pl \
     lib/Parrot/OpsFile.pm lib/Parrot/Op.pm $(OPS_DIR)/ops.num $(OPS_DIR)/ops.skip
 	$(PERL) $(BUILD_TOOLS_DIR)/ops2pm.pl $(OPS_FILES)
-
-$(SRC_DIR)/fingerprint.c : $(BUILD_TOOLS_DIR)/fingerprint_c.pl PBC_COMPAT
-	$(PERL) $(BUILD_TOOLS_DIR)/fingerprint_c.pl > $(SRC_DIR)/fingerprint.c
-
 
 $(SRC_DIR)/revision.c : $(SVN_ENTRIES) $(BUILD_TOOLS_DIR)/revision_c.pl
 	$(PERL) -Ilib $(BUILD_TOOLS_DIR)/revision_c.pl > $(SRC_DIR)/revision.c
@@ -1370,8 +1369,11 @@ BUILDTOOLS_TEST_FILES = \
         $(OPS2CUTILS_DIR)/09-dynamic_nolines.t
 MANIFEST_DIR = t/manifest
 MANIFEST_TEST_FILES = \
-        $(MANIFEST_DIR)/01-basic.t
-
+        $(MANIFEST_DIR)/01-basic.t \
+        $(MANIFEST_DIR)/02-regenerate_file.t \
+        $(MANIFEST_DIR)/03-regenerate_skip.t \
+        $(MANIFEST_DIR)/04-alt_file.t \
+        $(MANIFEST_DIR)/05-alt_skip.t
 
 # Common prep for all test targets.
 # We probably need a complete build before running the tests.
@@ -1768,7 +1770,7 @@ SPLINTFLAGS  = \
 	+linelen 120 \
 	+showdeephistory \
 	-showfunc \
-	-hints \
+	+hints \
 	\
 	-abstract \
 	+aliasunique \
@@ -1808,7 +1810,7 @@ SPLINTFLAGS  = \
 	+nullderef \
 	+nullret \
 	+nullpass \
-	+nullstate \
+	-nullstate \
 	-paramuse \
 	+posixstrictlib \
 	-predboolint \
@@ -1830,6 +1832,8 @@ SPLINTFLAGS  = \
 	\
 	\
 	\
+	-nullstate \
+	-usereleased \
 	-mustfreefresh \
 	-mustfreeonly \
 	-compdestroy \
@@ -1873,18 +1877,13 @@ splint : $(PARROT)
 
 splint-andy :
 	$(MKPATH) $(SPLINT_TMP)
-	/var/splint312/bin/splint $(CC_INC) @cc_hasjit@ "-Isrc/pmc" "-Icompilers/ast" $(SPLINTFLAGS) $(SPLINTFLAGS_TEST) \
+	splint $(CC_INC) @cc_hasjit@ "-Isrc/pmc" "-Icompilers/ast" $(SPLINTFLAGS) $(SPLINTFLAGS_TEST) \
 		+fcnpost \
 		+showscan \
 		+stats \
 		-showsummary \
 		+partial \
-		src/gc/*.c \
-
-X = \
-		src/gc/dod.c  src/gc/gc_gms.c  src/gc/gc_ims.c \
-		src/gc/memory.c  src/gc/register.c  \
-		src/gc/resources.c  src/gc/smallobject.c \
+		src/string.c \
 
 
 #
@@ -2007,7 +2006,6 @@ HEADERIZER_O_FILES = \
     src/exceptions$(O) \
     src/exit$(O) \
     src/extend$(O) \
-    src/fingerprint$(O) \
     src/gc/dod$(O) \
     src/gc/gc_gms$(O) \
     src/gc/gc_ims$(O) \
@@ -2068,7 +2066,7 @@ HEADERIZER_O_FILES = \
     compilers/imcc/sets$(O) \
     compilers/imcc/symreg$(O) \
 
-headerizer : $(SRC_DIR)/fingerprint.c $(SRC_DIR)/core_pmcs.c
+headerizer : $(SRC_DIR)/core_pmcs.c
 	$(PERL) $(BUILD_TOOLS_DIR)/headerizer.pl $(HEADERIZER_O_FILES)
 
 ###############################################################################
