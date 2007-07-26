@@ -204,7 +204,7 @@ is_abs_path(NOTNULL(const STRING *file))
             file->encoding == Parrot_utf8_encoding_ptr);
 #ifdef WIN32
     if (file_name[0] == '\\' || file_name[0] == '/' ||
-            (isalpha(file_name[0]) && file->strlen > 2 &&
+            (isalpha((unsigned char)file_name[0]) && file->strlen > 2 &&
              (strncmp(file_name+1, ":\\", 2) == 0 ||
               strncmp(file_name+1, ":/",  2) == 0)))
 #else
@@ -474,14 +474,13 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, NOTNULL(STRING *file),
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
+PARROT_CAN_RETURN_NULL
 char*
 Parrot_locate_runtime_file(PARROT_INTERP, NOTNULL(const char *file_name),
         enum_runtime_ft type)
 {
     STRING * const file = string_from_cstring(interp, file_name, 0);
-    STRING * const result = Parrot_locate_runtime_file_str(interp,
-            file, type);
+    STRING * const result = Parrot_locate_runtime_file_str(interp, file, type);
     /*
      * XXX valgrind shows e.g.
      *     invalid read of size 8 inside a string of length 69
@@ -490,7 +489,7 @@ Parrot_locate_runtime_file(PARROT_INTERP, NOTNULL(const char *file_name),
      *
      *     see also the log at #37814
      */
-    return string_to_cstring(interp, result);
+    return result ? string_to_cstring(interp, result) : NULL;
 }
 
 /*
@@ -586,7 +585,7 @@ parrot_split_path_ext(PARROT_INTERP, NOTNULL(STRING *in),
     pos_dot = CHARSET_RINDEX(interp, in, dot, len);
 
     /* XXX directory parrot-0.4.1 or such */
-    if (pos_dot != -1 && isdigit(((char*)in->strstart)[pos_dot+1]))
+    if (pos_dot != -1 && isdigit((unsigned char)((char*)in->strstart)[pos_dot+1]))
         pos_dot = -1;
 
     ++pos_dot;

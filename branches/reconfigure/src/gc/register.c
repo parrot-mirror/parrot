@@ -273,6 +273,7 @@ Duplicate the passed context
 */
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 struct Parrot_Context *
 Parrot_dup_context(PARROT_INTERP, NOTNULL(const struct Parrot_Context *old) )
 {
@@ -284,17 +285,21 @@ Parrot_dup_context(PARROT_INTERP, NOTNULL(const struct Parrot_Context *old) )
     const int slot = CALCULATE_SLOT_NUM(reg_alloc);
     void * ptr = interp->ctx_mem.free_list[slot];
 
-    if (ptr) {
+    if (ptr)
         interp->ctx_mem.free_list[slot] = *(void **) ptr;
-    }
-    else {
+    else
         ptr = (void *)mem_sys_allocate(reg_alloc + ALIGNED_CTX_SIZE);
-    }
-    CONTEXT(interp->ctx) = ctx = (Parrot_Context *)ptr;
 
-    ctx->regs_mem_size   = reg_alloc;
-    ctx->n_regs_used     = old->n_regs_used;
-    diff                 = (long *)ctx - (long *)const_cast(old);
+    ctx = (Parrot_Context *)ptr;
+    CONTEXT(interp->ctx) = ctx;
+
+    ctx->regs_mem_size          = reg_alloc;
+    ctx->n_regs_used            = mem_sys_allocate(sizeof (INTVAL) * 4);
+    ctx->n_regs_used[REGNO_INT] = old->n_regs_used[REGNO_INT];
+    ctx->n_regs_used[REGNO_NUM] = old->n_regs_used[REGNO_NUM];
+    ctx->n_regs_used[REGNO_STR] = old->n_regs_used[REGNO_STR];
+    ctx->n_regs_used[REGNO_PMC] = old->n_regs_used[REGNO_PMC];
+    diff                        = (long *)ctx - (long *)const_cast(old);
 
     interp->ctx.bp.regs_i    += diff;
     interp->ctx.bp_ps.regs_s += diff;
@@ -312,6 +317,8 @@ C<Parrot_pop_context>.
 */
 
 PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 struct Parrot_Context *
 Parrot_push_context(PARROT_INTERP, NOTNULL(INTVAL *n_regs_used))
 {
@@ -356,14 +363,15 @@ Parrot_pop_context(PARROT_INTERP)
 
 FUNCDOC: Parrot_alloc_context
 
-Allocate a new context and set the context pointer. Please note that
-the register usage C<n_regs_used> is not copied; just the pointer is
-stored.  The function returns the new context.
+Allocate a new context and set the context pointer. Please note that the
+register usage C<n_regs_used> is copied.  The function returns the new context.
 
 */
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 struct Parrot_Context *
-Parrot_alloc_context(PARROT_INTERP, NOTNULL(INTVAL *n_regs_used))
+Parrot_alloc_context(PARROT_INTERP, NOTNULL(INTVAL *number_regs_used))
 {
     Parrot_Context *old, *ctx;
     void *ptr, *p;
@@ -372,15 +380,22 @@ Parrot_alloc_context(PARROT_INTERP, NOTNULL(INTVAL *n_regs_used))
      * TODO (OPT) if we allocate a new context due to a self-recursive call
      *      create a specialized version that just uses caller's size
      */
-    const size_t size_i = sizeof (INTVAL)   * n_regs_used[REGNO_INT];
-    const size_t size_n = sizeof (FLOATVAL) * n_regs_used[REGNO_NUM];
-    const size_t size_s = sizeof (STRING*)  * n_regs_used[REGNO_STR];
-    const size_t size_p = sizeof (PMC*)     * n_regs_used[REGNO_PMC];
+    const size_t size_i = sizeof (INTVAL)   * number_regs_used[REGNO_INT];
+    const size_t size_n = sizeof (FLOATVAL) * number_regs_used[REGNO_NUM];
+    const size_t size_s = sizeof (STRING*)  * number_regs_used[REGNO_STR];
+    const size_t size_p = sizeof (PMC*)     * number_regs_used[REGNO_PMC];
 
     const size_t size_nip      = size_n + size_i + size_p;
     const size_t all_regs_size = size_n + size_i + size_p + size_s;
     const size_t reg_alloc     = ROUND_ALLOC_SIZE(all_regs_size);
     const int    slot          = CALCULATE_SLOT_NUM(reg_alloc);
+
+    /* this gets attached to the context, which should free it */
+    INTVAL *n_regs_used    = mem_sys_allocate(sizeof (INTVAL) * 4);
+    n_regs_used[REGNO_INT] = number_regs_used[REGNO_INT];
+    n_regs_used[REGNO_NUM] = number_regs_used[REGNO_NUM];
+    n_regs_used[REGNO_STR] = number_regs_used[REGNO_STR];
+    n_regs_used[REGNO_PMC] = number_regs_used[REGNO_PMC];
 
     /*
      * If slot is beyond the end of the allocated list, extend the list to
@@ -484,6 +499,11 @@ Parrot_free_context(PARROT_INTERP, NOTNULL(struct Parrot_Context *ctxp), int re_
                      : (char*)doomed->name->strstart));
         }
 #endif
+        if (ctxp->n_regs_used) {
+            mem_sys_free(ctxp->n_regs_used);
+            ctxp->n_regs_used = NULL;
+        }
+
         ptr  = ctxp;
         slot = CALCULATE_SLOT_NUM(ctxp->regs_mem_size);
 
@@ -503,7 +523,7 @@ Mark the context as possible threshold.
 
 PARROT_API
 void
-Parrot_set_context_threshold(PARROT_INTERP, struct Parrot_Context *ctxp)
+Parrot_set_context_threshold(PARROT_INTERP, NULLOK(struct Parrot_Context *ctxp))
 {
     UNUSED(interp);
     UNUSED(ctxp);

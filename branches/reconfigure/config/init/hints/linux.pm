@@ -8,17 +8,21 @@ use warnings;
 
 use Config;
 
+sub option_or_data {
+    my $conf = shift;
+    my $arg = shift;
+
+    my $opt = $conf->options->get( $arg );
+    return $opt ? $opt : $conf->data->get( $arg );
+}
+
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $libs      = $conf->options->get('libs') ?
-        $conf->options->get('libs') : $conf->data->get('libs');
-    my $cflags    = $conf->options->get('ccflags') ?
-        $conf->options->get('ccflags') : $conf->data->get('ccflags');
-    my $cc        = $conf->options->get('cc') ?
-        $conf->options->get('cc') : $conf->data->get('cc');
-    my $linkflags = $conf->options->get('linkflags') ?
-        $conf->options->get('linkflags') : $conf->data->get('linkflags');
+    my $libs        = option_or_data($conf, 'libs');
+    my $cc_flags      = option_or_data($conf, 'ccflags');
+    my $cc          = option_or_data($conf, 'cc');
+    my $linkflags   = option_or_data($conf, 'linkflags');
 
     # should find g++ in most cases
     my $link = $conf->data->get('link') || 'c++';
@@ -31,15 +35,15 @@ sub runstep {
 
     if ( $cc =~ /icc/ ) {
         # Intel C++ compiler has the same name as its C compiler
-        $link = 'icc';
+        $link = $cc;
 
         # don't allow icc to pretend it's gcc
-        $cflags .= ' -no-gcc';
+        $cc_flags .= ' -no-gcc';
 
         # suppress sprintf warnings that don't apply
-        $cflags .= ' -wd269';
+        $cc_flags .= ' -wd269';
 
-        $cflags .= ' -Wall -Wcheck -w2';
+        $cc_flags .= ' -Wall -Wcheck -w2';
 
         $ld_share_flags = ' -shared -g -pipe -fexceptions -fPIC';
         $cc_shared .= ' -fPIC';
@@ -65,16 +69,16 @@ sub runstep {
         $linkflags .= ' -Wl,-E';
     }
 
-    if ( $cflags !~ /-D_GNU_SOURCE/ ) {
+    if ( $cc_flags !~ /-D_GNU_SOURCE/ ) {
 
         # Request visibility of all POSIX symbols
         # _XOPEN_SOURCE=600 doesn't work with glibc 2.1.3
         # _XOPEN_SOURCE=500 gives 2 undefined warns (setenv, unsetenv) on 2.1.3
-        $cflags .= ' -D_GNU_SOURCE';
+        $cc_flags .= ' -D_GNU_SOURCE';
     }
 
     $conf->data->set(
-        ccflags        => $cflags,
+        ccflags        => $cc_flags,
         libs           => $libs,
         ld_share_flags => $ld_share_flags,
         ld_load_flags  => $ld_share_flags,
