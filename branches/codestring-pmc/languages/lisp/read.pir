@@ -4,168 +4,181 @@
 
 read.pir - lexing and parsing, reader macros
 
+=head1 DESCRIPTION
+
+The Lisp reader is implemented here.
+See CLtL section 23.1 .
+
+=head1 SUBROUTINES
+
+=cut
+
+=head2 _read
+
+The function that implements the Lisp reader CLtL 2.2.
+
 =cut
 
 .sub _read
-  .param pmc args
+    .param pmc args
 
-  .local pmc readmacros
-  .local pmc readtable
-  .local pmc readcase
-  .local pmc readobj
-  .local pmc symbol
-  .local pmc istream
-  .local pmc stream
-  .local string token
-  .local pmc retv
-  .local int nretv
+    .local pmc readmacros
+    .local pmc readtable
+    .local pmc readcase
+    .local pmc readobj
+    .local pmc symbol
+    .local pmc istream
+    .local pmc stream
+    .local string token
+    .local pmc retv
+    .local int nretv
 
-  .ASSERT_LENGTH(args,1,ERROR_NARGS)  # We should have received one argument -
-                                      # the input stream to read from.
+    .ASSERT_LENGTH(args,1,ERROR_NARGS)  # We should have received one argument -
+                                        # the input stream to read from.
 
-  .CAR(istream, args)
-  stream = istream._get_io()
+    .CAR(istream, args)
+    stream = istream._get_io()
 
-  symbol = _LOOKUP_GLOBAL("SYSTEM", "*READER-MACROS*")
-  readmacros = symbol._get_value()
+    symbol = _LOOKUP_GLOBAL("SYSTEM", "*READER-MACROS*")
+    readmacros = symbol._get_value()
 
-  symbol = _LOOKUP_GLOBAL("COMMON-LISP", "*READTABLE*")
-  readobj = symbol._get_value()
+    symbol = _LOOKUP_GLOBAL("COMMON-LISP", "*READTABLE*")
+    readobj = symbol._get_value()
 
-  readtable = readobj._get_table()
-  readcase  = readobj._get_case()
+    readtable = readobj._get_table()
+    readcase  = readobj._get_case()
 
-  .local string char
-  .local int ordv
-  .local int type
+    .local string char
+    .local int ordv
+    .local int type
 
 STEP_1:
-  read char, stream, 1                    # Read a character from the stream
-  if char == "" goto EOF
+    read char, stream, 1                    # Read a character from the stream
+    if char == "" goto EOF
 
-  ord ordv, char                          # Figure out what kind of character
-  type = readtable[ordv]                  # it represents
+    ord ordv, char                          # Figure out what kind of character
+    type = readtable[ordv]                  # it represents
 
-  if type == INVALID_CHAR     goto READER_ERROR
-  if type == WHITESPACE_CHAR  goto STEP_1
-  if type == TERM_MACRO_CHAR  goto STEP_4
-  if type == NTERM_MACRO_CHAR goto STEP_4
-  if type == SESCAPE_CHAR     goto STEP_5
-  if type == MESCAPE_CHAR     goto STEP_6
-  if type == CONSTITUENT_CHAR goto STEP_7
-  goto READER_ERROR
+    if type == INVALID_CHAR     goto READER_ERROR
+    if type == WHITESPACE_CHAR  goto STEP_1
+    if type == TERM_MACRO_CHAR  goto STEP_4
+    if type == NTERM_MACRO_CHAR goto STEP_4
+    if type == SESCAPE_CHAR     goto STEP_5
+    if type == MESCAPE_CHAR     goto STEP_6
+    if type == CONSTITUENT_CHAR goto STEP_7
+    goto READER_ERROR
 
 STEP_4:
-  .local pmc macro
-  .local pmc margs
-  .local pmc mchar
+    .local pmc macro
+    .local pmc margs
+    .local pmc mchar
 
-   macro = readmacros[char]                # Get the readmacro we're calling
+     macro = readmacros[char]                # Get the readmacro we're calling
 
-  .STRING(mchar, char)
+    .STRING(mchar, char)
 
-  .LIST_2(margs, istream, mchar)           # Create a list of args to pass in
-   # VALID_IN_PARROT_0_2_0 retv = _FUNCTION_CALL(macro, margs)         # Call the readmacro
+    .LIST_2(margs, istream, mchar)           # Create a list of args to pass in
+     # VALID_IN_PARROT_0_2_0 retv = _FUNCTION_CALL(macro, margs)         # Call the readmacro
 
-   null retv
-   retv = _FUNCTION_CALL(macro, margs)         # Call the readmacro
-   # VALID_IN_PARROT_0_2_0 if argcP == 0 goto STEP_1
-   if_null retv, STEP_1
-   goto DONE
+     null retv
+     retv = _FUNCTION_CALL(macro, margs)         # Call the readmacro
+     # VALID_IN_PARROT_0_2_0 if argcP == 0 goto STEP_1
+     if_null retv, STEP_1
+     goto DONE
 
 STEP_5:
-  read char, stream, 1
-  if char == "" goto EOF
+    read char, stream, 1
+    if char == "" goto EOF
 
-  token = char
+    token = char
 
-  goto STEP_9
+    goto STEP_9
 
 STEP_6:
-  token = ""
-  goto STEP_9
+    token = ""
+    goto STEP_9
 
 STEP_7:
-  token = char
+    token = char
 
 STEP_8:
-  peek char, stream                         # A bit of a workaround until a
-  ord ordv, char                            # unget opcode is implemented 
-  type = readtable[ordv]                    # to push chars back on the stream.
+    peek char, stream                         # A bit of a workaround until a
+    ord ordv, char                            # unget opcode is implemented 
+    type = readtable[ordv]                    # to push chars back on the stream.
 
-  if char == "" goto STEP_10
+    if char == "" goto STEP_10
 
-  if type == WHITESPACE_CHAR  goto STEP_10
-  if type == TERM_MACRO_CHAR  goto STEP_10
+    if type == WHITESPACE_CHAR  goto STEP_10
+    if type == TERM_MACRO_CHAR  goto STEP_10
 
-  read char, stream, 1
+    read char, stream, 1
 
-  if type == CONSTITUENT_CHAR goto STEP_8a
-  if type == NTERM_MACRO_CHAR goto STEP_8a
-  if type == SESCAPE_CHAR     goto STEP_8c
-  if type == MESCAPE_CHAR     goto STEP_9
-  if type == INVALID_CHAR     goto READER_ERROR
-  goto READER_ERROR
+    if type == CONSTITUENT_CHAR goto STEP_8a
+    if type == NTERM_MACRO_CHAR goto STEP_8a
+    if type == SESCAPE_CHAR     goto STEP_8c
+    if type == MESCAPE_CHAR     goto STEP_9
+    if type == INVALID_CHAR     goto READER_ERROR
+    goto READER_ERROR
 
 STEP_8a:
-  if readcase == 0 goto STEP_8b
-  upcase char
+    if readcase == 0 goto STEP_8b
+    upcase char
 
 STEP_8b:
-  concat token, char
-  goto STEP_8
+    concat token, char
+    goto STEP_8
 
 STEP_8c:
-  read char, stream, 1
-  if char == "" goto EOF
+    read char, stream, 1
+    if char == "" goto EOF
 
-  concat token, char
-  goto STEP_8
+    concat token, char
+    goto STEP_8
 
 STEP_9:
-  read char, stream, 1
-  if char == "" goto EOF
+    read char, stream, 1
+    if char == "" goto EOF
 
-  if type == CONSTITUENT_CHAR goto STEP_9a
-  if type == WHITESPACE_CHAR  goto STEP_9a
-  if type == TERM_MACRO_CHAR  goto STEP_9a
-  if type == NTERM_MACRO_CHAR goto STEP_9a
-  if type == SESCAPE_CHAR     goto STEP_9b
-  if type == MESCAPE_CHAR     goto STEP_8
-  if type == INVALID_CHAR     goto READER_ERROR
-  goto READER_ERROR
+    if type == CONSTITUENT_CHAR goto STEP_9a
+    if type == WHITESPACE_CHAR  goto STEP_9a
+    if type == TERM_MACRO_CHAR  goto STEP_9a
+    if type == NTERM_MACRO_CHAR goto STEP_9a
+    if type == SESCAPE_CHAR     goto STEP_9b
+    if type == MESCAPE_CHAR     goto STEP_8
+    if type == INVALID_CHAR     goto READER_ERROR
+    goto READER_ERROR
 
 STEP_9a:
-  concat token, char
-  goto STEP_9
+    concat token, char
+    goto STEP_9
 
 STEP_9b:
-  read char, stream, 1
-  if char == "" goto EOF
+    read char, stream, 1
+    if char == "" goto EOF
 
-  concat token, char
-  goto STEP_9
+    concat token, char
+    goto STEP_9
 
 STEP_10:
-  retv = _VALIDATE_TOKEN(token)
-  if_null retv, READER_ERROR
+    retv = _VALIDATE_TOKEN(token)
+    if_null retv, READER_ERROR
 
-  goto DONE
+    goto DONE
 
 READER_ERROR:
-  .ERROR_0("reader-error", "Invalid character found in input stream.")
-  goto DONE
+    .ERROR_0("reader-error", "Invalid character found in input stream.")
+    goto DONE
 
 EOF:
-  .NIL(retv)
-  goto DONE
+    .NIL(retv)
+    goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error", "wrong number of arguments to READ")
-  goto DONE
+    .ERROR_0("program-error", "wrong number of arguments to READ")
+    goto DONE
 
 DONE:
-  .return(retv)
+    .return(retv)
 .end
 
 .sub _error
@@ -310,51 +323,68 @@ DONE:
   .return(retv)
 .end
 
+=head2 _left_paren_macro
 
-.sub _left_paren_macro                  # As described in CLtL section 2.4.1
-  .param pmc args
+CLtL section 2.4.1.
 
-  .local pmc stream
-  .local pmc delimit
-  .local pmc rargs
-  .local pmc retv
+=cut
 
-  .CAR(stream, args)                    # Get the input stream off the args
+.sub _left_paren_macro
+    .param pmc args
 
-  .STRING(delimit, ")")                 # ')' is the delimiter for this macro
-  .LIST_2(rargs, delimit, stream)       # Package it up for the call
+    .local pmc stream
+    .CAR(stream, args)                    # Get the input stream off the args
 
-   retv = _read_delimited_list(rargs)   # Read the delimited list in.
+    .local pmc delimit
+    .STRING(delimit, ")")                 # ')' is the delimiter for this macro
 
-  .return(retv)
+    .local pmc rargs
+    .LIST_2(rargs, delimit, stream)       # Package it up for the call
+
+    .local pmc retv
+    retv = _read_delimited_list(rargs)   # Read the delimited list in.
+
+    .return(retv)
 .end
 
-.sub _right_paren_macro                 # As described in CLtL section 2.4.2
-  .param pmc args
+=head2 _right_paren_macro   
 
-  .ERROR_0("reader-error", "An object cannot start with #\\)")
+As described in CLtL section 2.4.2
+
+=cut
+
+.sub _right_paren_macro
+    .param pmc args
+
+    .ERROR_0("reader-error", "An object cannot start with #\\)")
 .end
 
-.sub _single_quote_macro                # As described in CLtL section 2.4.3
-  .param pmc args
+=head2 _single_quote_macro
 
-  .local pmc stream
-  .local pmc symbol
-  .local pmc rargs
-  .local pmc form
-  .local pmc retv
+As described in CLtL section 2.4.3
 
-  .CAR(stream, args)                    # Get the input stream off the args
-  .LIST_1(rargs, stream)                # Package it up for the call to _read
+=cut
 
-   form = _read(rargs)                  # Read in a new object
+.sub _single_quote_macro                
+    .param pmc args
 
-   symbol = _LOOKUP_GLOBAL("COMMON-LISP", "QUOTE")
+    .local pmc stream
+    .CAR(stream, args)                    # Get the input stream off the args
 
-  .LIST_2(retv, symbol, form)           # Create a list equiv to (quote token)
+    .local pmc rargs
+    .LIST_1(rargs, stream)                # Package it up for the call to _read
+
+    .local pmc form
+    form = _read(rargs)                  # Read in a new object
+
+    .local pmc symbol
+    symbol = _LOOKUP_GLOBAL("COMMON-LISP", "QUOTE")
+
+    .local pmc retv
+    .LIST_2(retv, symbol, form)           # Create a list equiv to (quote token)
 
 RETURN:
-  .return(retv)
+    .return(retv)
 .end
 
 =head2 _semicolon_macro
@@ -366,95 +396,107 @@ As described in CLtL section 2.4.4
 
 =cut
 
-.sub _semicolon_macro                   # As described in CLtL section 2.4.4
-  .param pmc args
+.sub _semicolon_macro
+    .param pmc args
 
-  .local string char
-  .local pmc istream
-  .local pmc stream
-  .local pmc retv
 
-  .CAR(stream, args)                    # Get the input stream off the args
-   istream = stream._get_io()
+    .local pmc stream
+    .CAR(stream, args)                    # Get the input stream off the args
+    .local pmc istream
+     istream = stream._get_io()
 
+    .local string char
 LOOP:
-   read char, istream, 1
-   if char == "\n" goto RETURN
-   if char == ""   goto RETURN
-   goto LOOP
+     read char, istream, 1
+     if char == "\n" goto RETURN
+     if char == ""   goto RETURN
+     goto LOOP
 
 RETURN:
 .end
 
-.sub _double_quote_macro                # As described in CLtL section 2.4.5.
-  .param pmc args
+=head2
 
-  .local string strtok
-  .local pmc istream
-  .local pmc stream
-  .local pmc readtable
-  .local pmc symbol
-  .local pmc table
-  .local string char
-  .local int ordval
-  .local int chtype
-  .local pmc token
+As described in CLtL section 2.4.5.
 
-  .CAR(stream, args)                    # Get the input stream off the args
-  istream = stream._get_io()
+=cut
 
-  symbol = _LOOKUP_GLOBAL("COMMON-LISP", "*READTABLE*")
-  readtable = symbol._get_value()
-  table = readtable._get_table()
+.sub _double_quote_macro
+    .param pmc args
 
-  strtok = ""
+    .local pmc stream
+    .CAR(stream, args)                    # Get the input stream off the args
+    .local pmc istream
+    istream = stream._get_io()
 
-  goto STEP_1
+    .local pmc symbol
+    symbol = _LOOKUP_GLOBAL("COMMON-LISP", "*READTABLE*")
+    .local pmc readtable
+    readtable = symbol._get_value()
+    .local pmc table
+    table = readtable._get_table()
+
+    .local string strtok
+    strtok = ""
+
+    .local string char
+    .local int ordval
+    .local int chtype
+
+    goto STEP_1
 
 STEP_1:
-  read char, istream, 1
-  if char == "" goto EOF_ERROR
+    read char, istream, 1
+    if char == "" goto EOF_ERROR
 
-  ord ordval, char
-  chtype = table[ordval]
+    ord ordval, char
+    chtype = table[ordval]
 
-  if chtype == SESCAPE_CHAR goto STEP_1a
-  if char == "\"" goto RETURN
-  goto STEP_1b
+    if chtype == SESCAPE_CHAR goto STEP_1a
+    if char == "\"" goto RETURN
+    goto STEP_1b
 
 STEP_1a:
-  read char, istream, 1
-  if char == "" goto EOF_ERROR
+    read char, istream, 1
+    if char == "" goto EOF_ERROR
 
-  goto STEP_1b
+    goto STEP_1b
 
 STEP_1b:
-  concat strtok, char
-  goto STEP_1
+    concat strtok, char
+    goto STEP_1
 
 EOF_ERROR:
-  .ERROR_0("end-of-file", "EOF on input stream reached.")
-  goto RETURN
+    .ERROR_0("end-of-file", "EOF on input stream reached.")
+    goto RETURN
 
 RETURN:
-  .STRING(token, strtok)
-  .return(token)
+    .local pmc token
+    .STRING(token, strtok)
+
+    .return(token)
 .end
 
-.sub _backquote_macro                    # As described in CLtL section 2.4.6
-  .param pmc args
+=head2 _backquote_macro
 
-  .ERROR_0("reader-error", "the backquote macro has not yet been implemented")
+As described in CLtL section 2.4.6
 
-DONE:
+=cut
+
+.sub _backquote_macro
+
+    .ERROR_0("reader-error", "The backquote macro has not yet been implemented.")
 .end
 
-.sub _comma_macro                        # As described in CLtL section 2.4.7
-  .param pmc args
+=head2 _comma_macro
 
-  .ERROR_0("reader-error", "comma is illegal outside of backquote")
+As described in CLtL section 2.4.7
 
-DONE:
+=cut
+
+.sub _comma_macro
+
+  .ERROR_0("reader-error", "Comma is illegal outside of backquote.")
 .end
 
 .sub _sharpsign_macro                   # As described in CLtL section 2.4.8

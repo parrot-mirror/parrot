@@ -107,13 +107,12 @@ Given a PMC, get a number from it.
   astbuilder = astgrammar.apply(match)
   ast = astbuilder.get('past')
 
-  .local string class
+  .local string className
   .local pmc    value
-  class = ast['class']
-  value = ast['value']
+  className = ast['class']
+  value     = ast['value']
 
-  $I0    = find_type class
-  number = new $I0
+  number = new className
   assign number, value
 
   .return(number)
@@ -369,11 +368,13 @@ Given a chunk of tcl code, return a subroutine.
 
 .sub __script
     .param string code
-    .param int    pir_only :named('pir_only') :optional
-    .param pmc    ns       :named('ns')       :optional
-    .param int    has_ns   :opt_flag
-    .param int    bsnl     :named('bsnl')     :optional
-    .param int    has_bsnl :opt_flag
+    .param int    pir_only    :named('pir_only') :optional
+    .param pmc    ns          :named('ns')       :optional
+    .param int    has_ns      :opt_flag
+    .param int    bsnl        :named('bsnl')     :optional
+    .param int    has_bsnl    :opt_flag
+    .param int    wrapper     :named('wrapper')  :optional
+    .param int    has_wrapper :opt_flag
 
     .local pmc parse
     .local pmc match
@@ -385,12 +386,6 @@ Given a chunk of tcl code, return a subroutine.
 end_preamble:
     parse = get_root_global ['parrot'; 'TclExpr::Grammar'], 'program'
     match = parse(code, 'pos'=>0, 'grammar'=>'TclExpr::Grammar')
-
-    # the following will dump out the match object
-    #load_bytecode 'dumper.pbc'
-    #load_bytecode 'PGE/Dumper.pbc'
-    #$P0 = get_root_global ['parrot'], '_dumper'
-    #$P0(match)
 
     unless match goto premature_end
     $I0 = length code
@@ -426,11 +421,15 @@ end_preamble:
 
     .local string ret
     ret = ast['ret']
-    if pir_only goto only_pir
 
     .local pmc pir
     pir = new 'CodeString'
+    unless pir_only goto do_wrapper
+    if has_wrapper  goto do_wrapper
+    pir = result
+    goto only_pir
 
+do_wrapper:
     pir.emit(".HLL 'Tcl', ''")
     pir.emit(".loadlib 'tcl_ops'")
     pir.emit('.namespace %0', namespace)
@@ -439,13 +438,20 @@ end_preamble:
     pir .= result
     pir.emit('  .return(%0)', ret)
     pir.emit('.end')
+    pir.emit(<<"END_PIR")
 
+.sub '_init' :init
+    load_bytecode 'languages/tcl/runtime/tcllib.pir'
+.end
+END_PIR
+
+    if pir_only goto only_pir
     $P1 = compreg 'PIR'
     $P2 = $P1(pir)
     .return ($P2)
 
   only_pir:
-    .return(result, ret)
+    .return(pir, ret)
 
   premature_end:
     say code
@@ -579,7 +585,7 @@ was this a valid tcl-style level, or did we get this value as a default?
 .sub __call_level
   .param pmc tcl_level
   .local pmc parrot_level, defaulted, orig_level
-  defaulted = new .Integer
+  defaulted = new 'Integer'
   defaulted = 0
 
   .local pmc call_chain, __number
@@ -587,7 +593,7 @@ was this a valid tcl-style level, or did we get this value as a default?
   call_chain = get_root_global ['_tcl'], 'call_chain'
   call_level = elements call_chain
   __number   = get_root_global ['_tcl'], '__number'
-  orig_level = new .Integer
+  orig_level = new 'Integer'
   orig_level = call_level
  
   .local int num_length
@@ -613,7 +619,7 @@ get_integer:
  
 default:
   defaulted = 1
-  parrot_level = new Integer
+  parrot_level = new 'Integer'
   parrot_level = orig_level - 1
   # fallthrough.
 

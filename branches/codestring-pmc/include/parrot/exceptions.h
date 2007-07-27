@@ -177,6 +177,15 @@ void new_internal_exception( PARROT_INTERP )
         __attribute__nonnull__(1);
 
 PARROT_API
+PARROT_DOES_NOT_RETURN
+void Parrot_confess(
+    NOTNULL(const char *cond),
+    NOTNULL(const char *file),
+    unsigned int line )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
 void Parrot_pop_mark( PARROT_INTERP, INTVAL mark )
         __attribute__nonnull__(1);
 
@@ -230,11 +239,12 @@ void do_panic(
     NULLOK_INTERP,
     NULLOK(const char *message),
     NULLOK(const char *file),
-    int line );
+    unsigned int line );
 
 void Parrot_init_exceptions( PARROT_INTERP )
         __attribute__nonnull__(1);
 
+void Parrot_print_backtrace( void );
 void really_destroy_exception_list( NULLOK(Parrot_exception *e) );
 PARROT_DOES_NOT_RETURN
 void rethrow_c_exception( PARROT_INTERP )
@@ -243,6 +253,13 @@ void rethrow_c_exception( PARROT_INTERP )
 /* HEADERIZER END: src/exceptions.c */
 
 #define PANIC(interp, message) do_panic(interp, message, __FILE__, __LINE__)
+
+#ifdef NDEBUG
+#  define PARROT_ASSERT(x) ((void)0)
+#else
+#  define PARROT_ASSERT(x) ((void) ((x) ? 0 : Parrot_confess(#x, __FILE__, __LINE__)))
+#endif
+
 
 
 #endif /* PARROT_EXCEPTIONS_H_GUARD */
