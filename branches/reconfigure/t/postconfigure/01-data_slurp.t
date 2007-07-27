@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 30;
+use Test::More tests => 31;
 use Carp;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::BuildUtil;
@@ -15,6 +15,7 @@ use Parrot::Configure::Options qw( process_options );
 use_ok('Parrot::Configure::Step::List', qw|
     get_steps_list
 | );
+use Parrot::IO::Capture::Mini;
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 like($parrot_version, qr/\d+\.\d+\.\d+/,
@@ -26,7 +27,7 @@ is($|, 1, "output autoflush is set");
 my $CC = "/usr/bin/gcc-3.3";
 my $localargv = [
     qq{--cc=$CC},
-    qq{--step=init::manifest},
+    qq{--step=inter::make},
 ];
 my $args = process_options( {
     argv            => $localargv,
@@ -93,10 +94,16 @@ you can call Parrot::Configure::Data::slurp().
 But here you are testing for that method's failure.
 REASON
 
-    skip $reason, 1 unless defined $res;
+    skip $reason, 2 unless defined $res;
 
     eval { $conf->data()->slurp(); };
     ok( (defined $@) && (! $@), "Parrot::Configure::slurp() succeeded");
+
+    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
+        or croak "Unable to tie";
+    my $ret = $conf->runstep( $args->{step} );
+    my @more_lines = $tie_out->READLINE;
+    ok( (defined $@) && (! $@), "Parrot::Configure::runstep() succeeded");
 }
 
 pass("Completed all tests in $0");
