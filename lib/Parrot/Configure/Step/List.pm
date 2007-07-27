@@ -19,6 +19,7 @@ my @steps = qw(
     inter::lex
     inter::yacc
     auto::gcc
+    auto::backtrace
     auto::msvc
     init::optimize
     inter::shlibs

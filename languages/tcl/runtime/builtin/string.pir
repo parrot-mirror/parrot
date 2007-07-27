@@ -16,7 +16,7 @@
   subcommand_name = shift argv
 
   .local pmc options
-  options = new .ResizablePMCArray
+  options = new 'ResizablePMCArray'
   push options, 'bytelength'
   push options, 'compare'
   push options, 'equal'
@@ -440,7 +440,7 @@ match_next:
 
 match_continue:
   .local pmc globber
-  globber = compreg 'PGE::Glob'
+  globber = compreg 'Tcl::Glob'
 
   .local pmc rule, match 
   rule = globber.'compile'(pattern)
@@ -646,7 +646,7 @@ bad_args:
   the_string = argv[1]
 
   .local pmc options
-  options = new .ResizablePMCArray
+  options = new 'ResizablePMCArray'
   push options, 'alnum'
   push options, 'alpha'
   push options, 'ascii'
@@ -1067,7 +1067,7 @@ bad_args:
   if argc != 1 goto bad_args
  
   $S0 = shift argv
-  $P0 = new .TclString
+  $P0 = new 'TclString'
   $S0 = $P0.'reverse'($S0) 
   .return ($S0)
 

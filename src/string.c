@@ -25,7 +25,6 @@ strings.
 #include "parrot/string_funcs.h"
 #include "string_private_cstring.h"
 #include "parrot/resources.h"
-#include <assert.h>
 
 /*
  * this extra size is in the hope that some concat ops might
@@ -43,9 +42,9 @@ strings.
 
 
 #define saneify_string(s) \
-    assert(s->encoding); \
-    assert(s->charset); \
-    assert(!PObj_on_free_list_TEST(s))
+    PARROT_ASSERT(s->encoding); \
+    PARROT_ASSERT(s->charset); \
+    PARROT_ASSERT(!PObj_on_free_list_TEST(s))
 
 /* HEADERIZER HFILE: include/parrot/string_funcs.h */
 
@@ -74,6 +73,8 @@ PARROT_API
 void
 Parrot_unmake_COW(PARROT_INTERP, NOTNULL(STRING *s))
 {
+    PARROT_ASSERT(s);
+
     /* COW_FLAG | constant_FLAG | external_FLAG) */
     if (PObj_is_cowed_TESTALL(s)) {
         STRING for_alloc;
@@ -118,15 +119,14 @@ allocating a new buffer.
 
 */
 PARROT_API
-PARROT_CAN_RETURN_NULL
+PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING *
-Parrot_make_COW_reference(PARROT_INTERP, NULLOK(STRING *s))
+Parrot_make_COW_reference(PARROT_INTERP, NOTNULL(STRING *s))
 {
     STRING *d;
 
-    if (!s)
-        return NULL;
+    PARROT_ASSERT(s);
 
     if (PObj_constant_TEST(s)) {
         d = new_string_header(interp, PObj_get_FLAGS(s) & ~PObj_constant_FLAG);
@@ -175,6 +175,8 @@ PARROT_CANNOT_RETURN_NULL
 STRING *
 Parrot_reuse_COW_reference(SHIM_INTERP, NOTNULL(STRING *s), NOTNULL(STRING *d))
 {
+    PARROT_ASSERT(s);
+
     if (PObj_constant_TEST(s)) {
         PObj_COW_SET(s);
         STRUCT_COPY(d,s);
@@ -300,6 +302,8 @@ PARROT_PURE_FUNCTION
 UINTVAL
 string_capacity(SHIM_INTERP, NOTNULL(const STRING *s))
 {
+    PARROT_ASSERT(s);
+
     return ((ptrcast_t)PObj_bufstart(s) + PObj_buflen(s) -
             (ptrcast_t)s->strstart);
 }
@@ -353,7 +357,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 const CHARSET *
 string_rep_compatible(SHIM_INTERP,
-    NOTNULL(const STRING *a), NOTNULL(const STRING *b), NOTNULL(const ENCODING **e))
+    NOTNULL(const STRING *a), NOTNULL(const STRING *b), ARGOUT(const ENCODING **e))
 {
     if (a->encoding == b->encoding && a->charset == b->charset) {
         *e = a->encoding;
@@ -423,7 +427,7 @@ string_append(PARROT_INTERP, NULLOK(STRING *a), NULLOK(STRING *b))
     /* XXX should this be a CHARSET method? */
 
     /* If B isn't real, we just bail */
-    const UINTVAL b_len = string_length(interp, b);
+    const UINTVAL b_len = b ? string_length(interp, b) : 0;
     if (!b_len)
         return a;
 
@@ -672,12 +676,13 @@ Returns the number of characters in the specified Parrot string.
 */
 
 PARROT_API
-PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
 UINTVAL
-string_length(SHIM_INTERP, NULLOK(const STRING *s))
+string_length(SHIM_INTERP, NOTNULL(const STRING *s))
 {
-    return s ? s->strlen : 0;
+    PARROT_ASSERT(s);
+
+    return s->strlen;
 }
 
 /*
@@ -752,9 +757,9 @@ are treated as counting from the end of the string.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-string_ord(PARROT_INTERP, NULLOK(const STRING *s), INTVAL idx)
+string_ord(PARROT_INTERP, NOTNULL(const STRING *s), INTVAL idx)
 {
-    const UINTVAL len = string_length(interp, s);
+    const UINTVAL len = s ? string_length(interp, s) : 0;
 
     if (len == 0) {
         real_exception(interp, NULL, ORD_OUT_OF_STRING,
@@ -862,7 +867,7 @@ PARROT_WARN_UNUSED_RESULT
 INTVAL
 string_max_bytes(SHIM_INTERP, NOTNULL(const STRING *s), INTVAL nchars)
 {
-    assert(s->encoding);
+    PARROT_ASSERT(s->encoding);
     return ENCODING_MAX_BYTES_PER_CODEPOINT(interp, s) * nchars;
 }
 
@@ -909,12 +914,9 @@ string_concat(PARROT_INTERP, NULLOK(STRING *a), NULLOK(STRING *b), UINTVAL Uflag
         }
     }
     else {
-        if (b != NULL) {
-            return string_copy(interp, b);
-        }
-        else {
-            return string_make(interp, NULL, 0, NULL, Uflags);
-        }
+        return b
+            ? string_copy(interp, b)
+            : string_make(interp, NULL, 0, NULL, Uflags);
     }
 }
 
@@ -1000,7 +1002,7 @@ string_substr(PARROT_INTERP, NOTNULL(STRING *src), INTVAL offset, INTVAL length,
 
     /* do in-place i.e. reuse existing header if one */
     if (replace_dest && d && *d) {
-        assert(src->encoding == Parrot_fixed_8_encoding_ptr);
+        PARROT_ASSERT(src->encoding == Parrot_fixed_8_encoding_ptr);
         dest           = *d;
 
         dest->encoding = src->encoding;
@@ -1191,9 +1193,9 @@ PARROT_CANNOT_RETURN_NULL
 STRING *
 string_chopn(PARROT_INTERP, NOTNULL(STRING *s), INTVAL n)
 {
-    s = string_copy(interp, s);
-    string_chopn_inplace(interp, s, n);
-    return s;
+    STRING * const chopped = string_copy(interp, s);
+    string_chopn_inplace(interp, chopped, n);
+    return chopped;
 }
 
 /*
@@ -1686,7 +1688,7 @@ if it is equal to anything other than C<0>, C<""> or C<"0">.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-string_bool(PARROT_INTERP, NULLOK(const STRING *s))
+string_bool(PARROT_INTERP, NOTNULL(const STRING *s))
 {
     const INTVAL len = string_length(interp, s);
 
@@ -1797,45 +1799,45 @@ number, rounding towards zero.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-string_to_int(SHIM_INTERP, NULLOK(const STRING *s))
+string_to_int(SHIM_INTERP, NOTNULL(const STRING *s))
 {
     INTVAL i = 0;
 
-    if (s) {
-        const char         *start = s->strstart;
-        const char * const  end   = start + s->bufused;
+    const char         *start = s->strstart;
+    const char * const  end   = start + s->bufused;
 
-        int    sign      = 1;
-        INTVAL in_number = 0;
+    int    sign      = 1;
+    INTVAL in_number = 0;
 
-        while (start < end) {
-            const unsigned char c = *start;
+    PARROT_ASSERT(s);
 
-            if (isdigit((unsigned char)c)) {
-                in_number = 1;
-                i = i * 10 + (c - '0');
-            }
-            else if (!in_number) {
-                /* we've not yet seen any digits */
-                if (c == '-') {
-                    sign = -1;
-                    in_number = 1;
-                }
-                else if (c == '+')
-                    in_number = 1;
-                else if (isspace((unsigned char)c))
-                    ;
-                else
-                    break;
-            }
-            else {
-                break;
-            }
-            ++start;
+    while (start < end) {
+        const unsigned char c = *start;
+
+        if (isdigit((unsigned char)c)) {
+            in_number = 1;
+            i = i * 10 + (c - '0');
         }
-
-        i = i * sign;
+        else if (!in_number) {
+            /* we've not yet seen any digits */
+            if (c == '-') {
+                sign = -1;
+                in_number = 1;
+            }
+            else if (c == '+')
+                in_number = 1;
+            else if (isspace((unsigned char)c))
+                ;
+            else
+                break;
+        }
+        else {
+            break;
+        }
+        ++start;
     }
+
+    i = i * sign;
 
     return i;
 }
@@ -1936,18 +1938,13 @@ result in a memory leak.
 
 PARROT_API
 PARROT_MALLOC
-PARROT_CAN_RETURN_NULL
+PARROT_CANNOT_RETURN_NULL
 char *
-string_to_cstring(SHIM_INTERP, NULLOK(const STRING *s))
+string_to_cstring(SHIM_INTERP, NOTNULL(const STRING *s))
 {
     char *p;
 
-    /*
-     * TODO always provide a NUL at end of strings
-     *      ICU needs this too for a lot of string functions
-     */
-    if (s == NULL)
-        return NULL;
+    PARROT_ASSERT(s);
 
     p = (char *)mem_sys_allocate(s->bufused + 1);
     memcpy(p, s->strstart, s->bufused);
@@ -2192,7 +2189,7 @@ string_escape_string_delimited(PARROT_INTERP,
             }
             if (c >= 0x20) {
                 dp[i++] = (unsigned char)c;
-                assert(i < charlen);
+                PARROT_ASSERT(i < charlen);
                 continue;
             }
         }
@@ -2214,7 +2211,7 @@ string_escape_string_delimited(PARROT_INTERP,
         charlen = PObj_buflen(result);
         dp      = (unsigned char *)result->strstart;
 
-        assert(i < charlen);
+        PARROT_ASSERT(i < charlen);
     }
 
     result->bufused = result->strlen = i;
@@ -2293,7 +2290,7 @@ string_unescape_cstring(PARROT_INTERP,
         r = (Parrot_UInt4)((unsigned char*)result->strstart)[offs];
 
         /* There cannot be any NULs within this string.  */
-        assert(r != '\0');
+        PARROT_ASSERT(r != '\0');
 
         if (r == '\\') {
             ++offs;
@@ -2309,7 +2306,7 @@ string_unescape_cstring(PARROT_INTERP,
             continue;
         }
 
-        assert(d < offs);
+        PARROT_ASSERT(d < offs);
         iter.set_and_advance(interp, &iter, r);
         ++d;
     }
@@ -2467,9 +2464,11 @@ PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING *
-string_increment(PARROT_INTERP, NULLOK(const STRING *s))
+string_increment(PARROT_INTERP, NOTNULL(const STRING *s))
 {
     INTVAL o;
+
+    PARROT_ASSERT(s);
 
     if (string_length(interp, s) != 1)
         real_exception(interp, NULL, UNIMPLEMENTED, "increment only for length=1 done");
@@ -2682,12 +2681,14 @@ string_join(PARROT_INTERP, NULLOK(STRING *j), NOTNULL(PMC *ar))
         return string_make_empty(interp, enum_stringrep_one, 0);
 
     s   = VTABLE_get_string_keyed_int(interp, ar, 0);
-    res = string_copy(interp, s);
+    res = s ? string_copy(interp, s) : NULL;
 
     for (i = 1; i < ar_len; ++i) {
+        STRING *next;
+
         res = string_append(interp, res, j);
-        s   = VTABLE_get_string_keyed_int(interp, ar, i);
-        res = string_append(interp, res, s);
+        next = VTABLE_get_string_keyed_int(interp, ar, i);
+        res = string_append(interp, res, next);
     }
 
     return res;
@@ -2774,7 +2775,7 @@ uint_to_str(PARROT_INTERP,
     char *p = tc + sizeof (UHUGEINTVAL)*8 + 1;
     const char * const tail = p;
 
-    assert(base >= 2 && base <= 36);
+    PARROT_ASSERT(base >= 2 && base <= 36);
     do {
         const char cur = (char)(num % base);
         if (cur < 10) {

@@ -892,9 +892,37 @@ Creates a new PMC object of the type of the class and calls init().
 
         /* If we've not been instantiated before... */
         if (!_class->instantiated) {
-            /* Check that we have all methods listed in resolve list. */
-            int resolve_count = VTABLE_elements(interp, _class->resolve_method);
+            int resolve_count;
 
+            /* Pull in methods from the namespace, if any. */
+            if (!PMC_IS_NULL(_class->_namespace)) {
+                PMC *methods, *vtable_methods;
+                PMC *ns = _class->_namespace;
+
+                /* Import any methods. */
+                (PMC *methods) = PCCINVOKE(interp, ns,
+                    "get_associated_methods");
+                if (!PMC_IS_NULL(methods)) {
+                    PMC *iter = VTABLE_get_iter(interp, methods);
+                    while (VTABLE_get_bool(interp, iter)) {
+                        STRING *meth_name = VTABLE_shift_string(interp, iter);
+                        PMC *meth_sub = VTABLE_get_pmc_keyed_str(interp, methods,
+                            meth_name);
+                        VTABLE_add_method(interp, SELF, meth_name, meth_sub);
+                    }
+                }
+
+                /* Import any vtable methods. */
+                (PMC *vtable_methods) = PCCINVOKE(interp, ns,
+                    "get_associated_vtable_methods");
+                if (!PMC_IS_NULL(vtable_methods)) {
+                    /* TODO: Hash is keyed on index, not name, but a patch to do
+                     * that is forthcoming. */
+                }
+            }
+
+            /* Check that we have all methods listed in resolve list. */
+            resolve_count = VTABLE_elements(interp, _class->resolve_method);
             for (i = 0; i < resolve_count; i++) {
                 STRING *check_meth = VTABLE_get_string_keyed_int(interp,
                     _class->resolve_method, i);
@@ -1119,8 +1147,37 @@ parameter list.
 
         /* If we've not been instantiated before... */
         if (!_class->instantiated) {
+            int resolve_count;
+
+            /* Pull in methods from the namespace, if any. */
+            if (!PMC_IS_NULL(_class->_namespace)) {
+                PMC *methods, *vtable_methods;
+                PMC *ns = _class->_namespace;
+
+                /* Import any methods. */
+                (PMC *methods) = PCCINVOKE(interp, ns,
+                    "get_associated_methods");
+                if (!PMC_IS_NULL(methods)) {
+                    PMC *iter = VTABLE_get_iter(interp, methods);
+                    while (VTABLE_get_bool(interp, iter)) {
+                        STRING *meth_name = VTABLE_shift_string(interp, iter);
+                        PMC *meth_sub = VTABLE_get_pmc_keyed_str(interp, methods,
+                            meth_name);
+                        VTABLE_add_method(interp, SELF, meth_name, meth_sub);
+                    }
+                }
+
+                /* Import any vtable methods. */
+                (PMC *vtable_methods) = PCCINVOKE(interp, ns,
+                    "get_associated_vtable_methods");
+                if (!PMC_IS_NULL(vtable_methods)) {
+                    /* TODO: Hash is keyed on index, not name, but a patch to do
+                     * that is forthcoming. */
+                }
+            }
+
             /* Check that we have all methods listed in resolve list. */
-            int resolve_count = VTABLE_elements(interp, _class->resolve_method);
+            resolve_count = VTABLE_elements(interp, _class->resolve_method);
 
             for (i = 0; i < resolve_count; i++) {
                 STRING *check_meth = VTABLE_get_string_keyed_int(interp,
@@ -1139,7 +1196,21 @@ parameter list.
             build_attrib_index(interp, SELF);
 
             if (PMC_IS_NULL(_class->attrib_index))
-                return;
+                PCCRETURN();
+
+            /* See if we have any parents from other universes and if so set a
+             * flag stating so. */
+            mro_length = VTABLE_elements(interp, _class->all_parents);
+
+            for (i = 0; i < mro_length; i++) {
+                PMC * const class_check = VTABLE_get_pmc_keyed_int(interp,
+                    _class->all_parents, i);
+                if (!VTABLE_isa(interp, class_check, class_str)) {
+                    /* Found one; that's enough. */
+                    PObj_HasAlienParents_SET(SELF);
+                    break;
+                }
+            }
 
             /* See if we have any parents from other universes and if so set a
              * flag stating so. */
