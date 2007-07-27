@@ -194,7 +194,7 @@ Get/set
     ##  evaluate children nodes
     .local pmc code, iter
     .local int argindex
-    code = new 'PGE::CodeString'
+    code = new 'CodeString'
     argindex = 2
     iter = self.'iterator'()
   iter_loop:
@@ -279,7 +279,7 @@ Get/set the constant value for this node.
     .param pmc options         :slurpy :named
     .local pmc code, value
     .local string pirconst, vtype, ctype
-    code = new 'PGE::CodeString'
+    code = new 'CodeString'
     value = self.'value'()
     pirconst = value
     vtype = typeof value
