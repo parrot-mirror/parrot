@@ -37,7 +37,7 @@ my $args = process_options( {
 
 my $conf = Parrot::Configure->new();
 
-test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
+test_step_thru_runstep($conf, q{init::defaults}, $args);
 
 my (@prompts, $object, @entered);
 @prompts = map { q{foo_} . $_ } 

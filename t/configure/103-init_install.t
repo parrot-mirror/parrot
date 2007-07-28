@@ -45,7 +45,7 @@ my $cwd = cwd();
     } );
     
     my $conf = Parrot::Configure->new;
-    test_step_thru_runstep($conf, q{init::install}, $args, 0);
+    test_step_thru_runstep($conf, q{init::install}, $args);
 
     is($conf->data->get('prefix'), $tdir,
         "--prefix option confirmed");
