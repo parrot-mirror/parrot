@@ -36,7 +36,7 @@ Test::More::like().
 #
 #my $conf = Parrot::Configure->new();
 #
-#test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
+#test_step_thru_runstep($conf, q{init::defaults}, $args);
 #
 #my ($task, $step_name, @step_params, $step, $ret);
 #my $pkg = q{auto::format};

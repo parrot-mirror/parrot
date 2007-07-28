@@ -25,7 +25,7 @@ my $args = process_options( {
 
 my $conf = Parrot::Configure->new;
 
-test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
+test_step_thru_runstep($conf, q{init::defaults}, $args);
 
 is($conf->data->get('miniparrot'), undef,
     "miniparrot is not yet enabled");
@@ -38,7 +38,7 @@ is($conf->data->get('jitcpu'), undef,
 is($conf->data->get('jitosname'), undef,
     "jitosname undef as expected");
 
-test_step_thru_runstep($conf, q{init::miniparrot}, $args, 1);
+test_step_thru_runstep($conf, q{init::miniparrot}, $args);
 
 ok($conf->data->get('miniparrot'),
     "miniparrot is enabled");

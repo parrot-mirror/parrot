@@ -14,8 +14,11 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::Configure;
 
+my $stepnum = 0;
+
 sub test_step_thru_runstep {
-    my ($conf, $pkg, $args, $stepnum) = @_;
+#    my ($conf, $pkg, $args, $stepnum) = @_;
+    my ($conf, $pkg, $args) = @_;
     my ($task, $step_name, @step_params, $step, $ret);
     
     $conf->add_steps($pkg);
@@ -31,6 +34,7 @@ sub test_step_thru_runstep {
     ok($step->description(), "$step_name has description");
     $ret = $step->runstep($conf);
     ok(defined $ret, "$step_name runstep() returned defined value");
+    $stepnum++;
 }
 
 1;
