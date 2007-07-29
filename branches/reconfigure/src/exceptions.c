@@ -118,7 +118,7 @@ do_panic(NULLOK_INTERP, NULLOK(const char *message),
     fprintf(stderr, "Parrot VM: PANIC: %s!\n",
                message ? message : "(no message available)");
 
-    fprintf(stderr, "C file %s, line %d\n",
+    fprintf(stderr, "C file %s, line %ud\n",
                file ? file : "(not available)", line);
 
     fprintf(stderr, "Parrot file (not available), ");
@@ -765,7 +765,7 @@ PARROT_DOES_NOT_RETURN
 void
 Parrot_confess(NOTNULL(const char *cond), NOTNULL(const char *file), unsigned int line)
 {
-    printf ("%s:%u: failed assertion '%s'\n", file, line, cond);
+    fprintf(stderr, "%s:%u: failed assertion '%s'\n", file, line, cond);
     Parrot_print_backtrace();
     exit(EXIT_FAILURE);
 }
@@ -774,19 +774,56 @@ void
 Parrot_print_backtrace(void)
 {
 #ifdef PARROT_HAS_GLIBC_BACKTRACE
+#  define BACKTRACE_DEPTH 32
+/*#  define BACKTRACE_VERBOSE */
     /* stolen from http://www.delorie.com/gnu/docs/glibc/libc_665.html */
-    void *array[10];
+    void *array[BACKTRACE_DEPTH];
     size_t i;
+#  ifndef BACKTRACE_VERBOSE
+    int ident;
+    char *caller;
+    size_t callerLength;
+    int j;
+#  endif
 
-    const size_t size = backtrace (array, 10);
+    const size_t size = backtrace (array, BACKTRACE_DEPTH);
     char ** const strings = backtrace_symbols (array, size);
 
-    printf ("Obtained %zd stack frames.\n", size);
+    fprintf (stderr, "Backtrace - Obtained %zd stack frames (max trace depth is %d).\n", size, BACKTRACE_DEPTH);
+#  ifndef BACKTRACE_VERBOSE
+    for (i = 0; i < size; i++) {
+        /* always ident */
+        ident = 2;  /* initial indent */
+        ident += 2 * i; /* nesting depth */
+        fprintf(stderr, "%*s", ident, "");
+
+        /* if the caller was an anon function then strchr won't
+        find a '(' in the string and will return NULL */
+        caller = strchr(strings[i], '(');
+        if (caller) {
+            /* skip over the '(' */
+            caller++;
+            /* find the end of the symbol name */
+            callerLength = abs(strchr(caller, '+') - caller);
+            /* print just the symbol name */
+            for (j = 0; j < callerLength; j++) {
+                fputc(caller[j], stderr);
+            }
+            fprintf(stderr, "\n");
+        }
+        else {
+            fprintf(stderr, "(unknown)\n");
+        }
+    }
+#  else
     for (i = 0; i < size; i++)
-        printf ("%s\n", strings[i]);
+        fprintf (stderr, "%s\n", strings[i]);
+#  endif
 
     free (strings);
-#endif
+
+#  undef BACKTRACE_DEPTH
+#endif /* ifdef PARROT_HAS_GLIBC_BACKTRACE */
 }
 
 

@@ -168,6 +168,7 @@ GEN_MAKEFILES = \
     languages/lua/Makefile \
     languages/m4/Makefile \
     languages/miniperl/Makefile \
+    languages/nqp/Makefile \
     languages/ook/Makefile \
     languages/parrot_compiler/Makefile \
     languages/perl6/Makefile \
@@ -1884,7 +1885,7 @@ splint-andy :
 		+stats \
 		-showsummary \
 		+partial \
-		src/string.c \
+		src/inter*.c \
 
 
 #
@@ -2020,6 +2021,9 @@ HEADERIZER_O_FILES = \
     src/headers$(O) \
     src/hll$(O) \
     src/inter_call$(O) \
+    src/inter_cb$(O) \
+    src/inter_create$(O) \
+    src/inter_misc$(O) \
     src/inter_run$(O) \
     src/interpreter$(O) \
     src/intlist$(O) \

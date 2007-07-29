@@ -331,7 +331,6 @@ a sleep opcode.
 
 #include "parrot/parrot.h"
 #include "parrot/dod.h"
-#include <assert.h>
 
 /* HEADERIZER HFILE: include/parrot/dod.h */
 
@@ -532,7 +531,6 @@ gc_ims_alloc_objects(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
 {
     Small_Object_Arena *new_arena;
     size_t size;
-    UINTVAL start, end;
 
     pool->objects_per_alloc  = ALLOCATION_BLOCK_SIZE / pool->object_size;
 
@@ -543,9 +541,7 @@ gc_ims_alloc_objects(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
 
     Parrot_append_arena_in_pool(interp, pool, new_arena, size);
 
-    start = 0;
-    end = pool->objects_per_alloc;
-    Parrot_add_to_free_list(interp, pool, new_arena, start, end);
+    Parrot_add_to_free_list(interp, pool, new_arena);
 }
 
 static void
@@ -652,7 +648,7 @@ parrot_gc_ims_mark(PARROT_INTERP)
     else
         work_factor = 1.0;
     todo = (size_t)(g_ims->alloc_trigger * g_ims->throttle * work_factor);
-    assert(arena_base->lazy_dod == 0);
+    PARROT_ASSERT(arena_base->lazy_dod == 0);
     Parrot_dod_trace_children(interp, todo);
     /*
      * check if we are finished with marking - the end is
@@ -728,7 +724,7 @@ memory.
 
 */
 
-#if !GC_IS_MALLOC
+#if !defined(GC_IS_MALLOC) || !GC_IS_MALLOC
 static int
 collect_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg))
 {
@@ -769,7 +765,7 @@ collect_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(vo
 static int
 parrot_gc_ims_collect(PARROT_INTERP, int check_only)
 {
-#if GC_IS_MALLOC
+#if defined(GC_IS_MALLOC) && GC_IS_MALLOC
     UNUSED(interp);
     UNUSED(check_only);
 #else

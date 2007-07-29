@@ -7,7 +7,6 @@
  */
 
 #include <string.h>
-#include <assert.h>
 #include "imc.h"
 #include "optimizer.h"
 
@@ -144,6 +143,7 @@ imc_close_unit(PARROT_INTERP, NULLOK(IMC_Unit *unit))
         imc_compile_unit(interp, unit);
     }
 #endif
+
     IMCC_INFO(interp)->cur_unit = NULL;
 }
 

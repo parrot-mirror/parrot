@@ -16,7 +16,6 @@ Handles the accessing of small object pools (header pools).
 
 #include "parrot/parrot.h"
 #include "parrot/smallobject.h"
-#include <assert.h>
 
 /* HEADERIZER HFILE: include/parrot/smallobject.h */
 
@@ -106,7 +105,7 @@ Parrot_is_const_pmc(PARROT_INTERP, NOTNULL(PMC *pmc))
     const               int   c    = contained_in_pool(pool, pmc);
 
     /* some paranoia first */
-    assert(!!PObj_constant_TEST(pmc) == !!c);
+    PARROT_ASSERT(!!PObj_constant_TEST(pmc) == !!c);
 
     return c;
 }
@@ -190,27 +189,26 @@ gc_ms_get_free_object(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
 
 FUNCDOC: Parrot_add_to_free_list
 
-Adds the memory between C<start> and C<end> to the free list.
+Adds the objects in the newly allocated C<arena> to the free list.
 
 */
 
 void
 Parrot_add_to_free_list(PARROT_INTERP,
         NOTNULL(Small_Object_Pool  *pool),
-        NOTNULL(Small_Object_Arena *arena),
-        UINTVAL             start,
-        UINTVAL             end)
+        NOTNULL(Small_Object_Arena *arena))
 {
     UINTVAL  i;
     void    *object;
+    UINTVAL  num_objects = pool->objects_per_alloc;
 
-    pool->total_objects += (end - start) / pool->object_size;
-    arena->used          = end;
+    pool->total_objects += num_objects;
+    arena->used          = num_objects;
 
     /* Move all the new objects into the free list */
-    object = (void *)((char *)arena->start_objects + start * pool->object_size);
+    object = (void *)((char *)arena->start_objects);
 
-    for (i = start; i < end; i++) {
+    for (i = 0; i < num_objects; i++) {
         PObj_flags_SETTO((PObj *)object, PObj_on_free_list_FLAG);
         /*
          * during GC buflen is used to check for objects on the
@@ -221,7 +219,7 @@ Parrot_add_to_free_list(PARROT_INTERP,
         object = (void *)((char *)object + pool->object_size);
     }
 
-    pool->num_free_objects += (end - start) / pool->object_size;
+    pool->num_free_objects += num_objects;
 }
 
 /*
@@ -271,7 +269,6 @@ static void
 gc_ms_alloc_objects(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
 {
     size_t  size;
-    UINTVAL start, end;
 
     /* Setup memory for the new objects */
     Small_Object_Arena * const new_arena =
@@ -287,9 +284,7 @@ gc_ms_alloc_objects(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
 
     Parrot_append_arena_in_pool(interp, pool, new_arena, size);
 
-    start = 0;
-    end   = pool->objects_per_alloc;
-    Parrot_add_to_free_list(interp, pool, new_arena, start, end);
+    Parrot_add_to_free_list(interp, pool, new_arena);
 
     /* Allocate more next time */
     if (GC_DEBUG(interp)) {
@@ -400,9 +395,9 @@ Parrot_small_object_pool_merge(PARROT_INTERP,
     }
 #endif
 
-    /* assert(source->total_objects); */
-    assert(dest->object_size == source->object_size);
-    assert((dest->name == NULL && source->name == NULL) ||
+    /* PARROT_ASSERT(source->total_objects); */
+    PARROT_ASSERT(dest->object_size == source->object_size);
+    PARROT_ASSERT((dest->name == NULL && source->name == NULL) ||
         0 == strcmp(dest->name, source->name));
 
     dest->total_objects += source->total_objects;

@@ -744,7 +744,7 @@ link_keys(PARROT_INTERP, int nargs, NOTNULL(SymReg * keys[]), int force)
         /* if any component is a variable, we need to track it in
          * life analysis
          */
-        if (keys[i]->type & VTREGISTER)
+        if (REG_NEEDS_ALLOC(keys[i]))
             keychain->type |= VTREGKEY;
 
         key->nextkey = dup_sym(keys[i]);
@@ -753,7 +753,7 @@ link_keys(PARROT_INTERP, int nargs, NOTNULL(SymReg * keys[]), int force)
         /* for registers, point ->reg to the original, needed by
          * life analyses & coloring
          */
-        if (keys[i]->type & VTREGISTER)
+        if (REG_NEEDS_ALLOC(keys[i]))
             key->reg = keys[i];
     }
 
@@ -872,6 +872,8 @@ store_symreg(PARROT_INTERP, NOTNULL(SymReg *r))
 }
 
 /* Gets a symbol from the hash */
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 SymReg *
 _get_sym(NOTNULL(SymHash *hsh), NOTNULL(const char *name))
 {
@@ -886,10 +888,12 @@ _get_sym(NOTNULL(SymHash *hsh), NOTNULL(const char *name))
             return p;
     }
 
-    return 0;
+    return NULL;
 }
 
 /* Gets a symbol from the current unit symbol table */
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 SymReg *
 get_sym(PARROT_INTERP, NOTNULL(const char *name))
 {
@@ -897,6 +901,8 @@ get_sym(PARROT_INTERP, NOTNULL(const char *name))
 }
 
 /* find a symbol hash or ghash */
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 SymReg *
 _find_sym(PARROT_INTERP, NULLOK(const Namespace *nspace),
     NOTNULL(SymHash *hsh), NOTNULL(const char *name))
@@ -924,10 +930,12 @@ _find_sym(PARROT_INTERP, NULLOK(const Namespace *nspace),
     if (p)
         return p;
 
-    return 0;
+    return NULL;
 }
 
 
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 SymReg *
 find_sym(PARROT_INTERP, NOTNULL(const char *name))
 {

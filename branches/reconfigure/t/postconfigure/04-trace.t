@@ -38,7 +38,7 @@ eval {
     } );
 };
 like($@, qr/^Unable to retrieve storable file of configuration step data/,
-    "Correctly failed due to non-existent config data file"); 
+    "Correctly failed due to non-existent config data file");
 
 ok($obj = Parrot::Configure::Trace->new(),
     "Constructor returned true");
@@ -173,16 +173,6 @@ like($@, qr/^Must supply positive integer as step number/,
 eval { $state = $obj->get_state_at_step(q{init::something}); };
 like($@, qr/^Must supply valid step name/,
     "Correctly failed due to non-existent step");
-
-#@state = ();
-#$state[1] = $obj->get_state_at_step(1);
-#$state[56] = $obj->get_state_at_step(56);
-#print STDERR Dumper ($state[1], $state[56]);
-#my @task;
-#for (1,56) {
-#    $task[$_] = $state[$_]->{steps};
-#}
-#is_deeply($task[1], $task[56], "same task");
 
 pass("Completed all tests in $0");
 

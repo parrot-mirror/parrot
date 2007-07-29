@@ -493,8 +493,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_from_cstring(PARROT_INTERP,
-    NULLOK(const char * const buffer), const UINTVAL len)
+string_from_cstring(PARROT_INTERP, NULLOK(const char * const buffer), const UINTVAL len)
 {
     return string_make_direct(interp, buffer, len ? len :
             buffer ? strlen(buffer) : 0,
@@ -540,6 +539,8 @@ PARROT_CANNOT_RETURN_NULL
 STRING *
 const_string(PARROT_INTERP, NOTNULL(const char *buffer))
 {
+    PARROT_ASSERT(buffer);
+
     /* TODO cache the strings */
     return string_make_direct(interp, buffer, strlen(buffer),
                        PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
@@ -849,6 +850,8 @@ PARROT_IGNORABLE_RESULT
 INTVAL
 string_compute_strlen(PARROT_INTERP, NOTNULL(STRING *s))
 {
+    PARROT_ASSERT(s);
+
     s->strlen = CHARSET_CODEPOINTS(interp, s);
     return s->strlen;
 }
@@ -1347,17 +1350,6 @@ make_writable(PARROT_INTERP, NOTNULL(STRING **s),
         Parrot_unmake_COW(interp, *s);
 }
 
-#define BITWISE_AND_STRINGS(type1, type2, restype, s1, s2, res, minlen) \
-do { \
-    const type1 *curr1 = (type1 *)s1->strstart; \
-    const type2 *curr2 = (type2 *)s2->strstart; \
-    restype     *dp    = (restype *)res->strstart; \
-    size_t       len   = minlen; \
- \
-    for (; len ; ++curr1, ++curr2, ++dp, --len) \
-        *dp = *curr1 & *curr2; \
-} while (0)
-
 /*
 
 FUNCDOC: string_bitwise_and
@@ -1418,8 +1410,15 @@ string_bitwise_and(PARROT_INTERP, NULLOK(STRING *s1),
 
     make_writable(interp, &res, minlen, enum_stringrep_one);
 
-    BITWISE_AND_STRINGS(Parrot_UInt1, Parrot_UInt1,
-            Parrot_UInt1, s1, s2, res, minlen);
+    { /* bitwise AND the strings */
+        const Parrot_UInt1 *curr1 = (Parrot_UInt1 *)s1->strstart;
+        const Parrot_UInt1 *curr2 = (Parrot_UInt1 *)s2->strstart;
+        Parrot_UInt1       *dp    = (Parrot_UInt1 *)res->strstart;
+        size_t len = minlen;
+
+        while (len--)
+            *dp++ = *curr1++ & *curr2++;
+    }
 
     res->bufused = res->strlen = minlen;
 
@@ -1485,7 +1484,7 @@ string_bitwise_or(PARROT_INTERP, NULLOK(STRING *s1),
     if (s1) {
         if (s1->encoding != Parrot_fixed_8_encoding_ptr)
             real_exception(interp, NULL, INVALID_ENCODING,
-                    "string bitwise_and (%s/%s) unsupported",
+                    "string bitwise_or (%s/%s) unsupported",
                     s1->encoding->name, s2->encoding->name);
         maxlen = s1->bufused;
     }
@@ -1493,7 +1492,7 @@ string_bitwise_or(PARROT_INTERP, NULLOK(STRING *s1),
     if (s2) {
         if (s2->encoding != Parrot_fixed_8_encoding_ptr)
             real_exception(interp, NULL, INVALID_ENCODING,
-                    "string bitwise_and (%s/%s) unsupported",
+                    "string bitwise_or (%s/%s) unsupported",
                     s1->encoding->name, s2->encoding->name);
 
         if (s2->bufused > maxlen)
@@ -1555,7 +1554,7 @@ string_bitwise_xor(PARROT_INTERP, NULLOK(STRING *s1),
     if (s1) {
         if (s1->encoding != Parrot_fixed_8_encoding_ptr) {
             real_exception(interp, NULL, INVALID_ENCODING,
-                    "string bitwise_and (%s/%s) unsupported",
+                    "string bitwise_xor (%s/%s) unsupported",
                     s1->encoding->name, s2->encoding->name);
         }
         maxlen = s1->bufused;
@@ -1564,7 +1563,7 @@ string_bitwise_xor(PARROT_INTERP, NULLOK(STRING *s1),
     if (s2) {
         if (s2->encoding != Parrot_fixed_8_encoding_ptr) {
             real_exception(interp, NULL, INVALID_ENCODING,
-                    "string bitwise_and (%s/%s) unsupported",
+                    "string bitwise_xor (%s/%s) unsupported",
                     s1->encoding->name, s2->encoding->name);
         }
 
@@ -1637,7 +1636,7 @@ string_bitwise_not(PARROT_INTERP, NULLOK(STRING *s), NULLOK(STRING **dest))
     if (s) {
         if (s->encoding != Parrot_fixed_8_encoding_ptr)
             real_exception(interp, NULL, INVALID_ENCODING,
-                    "string bitwise_and (%s/%s) unsupported",
+                    "string bitwise_not (%s/%s) unsupported",
                     s->encoding->name, s->encoding->name);
         len = s->bufused;
     }
@@ -1854,35 +1853,37 @@ returned.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 FLOATVAL
-string_to_num(PARROT_INTERP, NULLOK(const STRING *s))
+string_to_num(PARROT_INTERP, NOTNULL(const STRING *s))
 {
     FLOATVAL f = 0.0;
+    char *cstr;
+    const char *p;
     DECL_CONST_CAST;
 
-    if (s) {
-        /*
-         * XXX C99 atof interprets 0x prefix
-         * XXX would strtod() be better for detecting malformed input?
-         */
-        char * const  cstr = string_to_cstring(interp, (STRING *)const_cast(s));
-        const char   *p    = cstr;
+    PARROT_ASSERT(s);
 
-        while (isspace((unsigned char)*p))
-            p++;
+    /*
+     * XXX C99 atof interprets 0x prefix
+     * XXX would strtod() be better for detecting malformed input?
+     */
+    cstr = string_to_cstring(interp, (STRING *)const_cast(s));
+    p = cstr;
 
-        f = atof(p);
+    while (isspace(*p))
+        p++;
 
-        /* Not all atof()s return -0 from "-0" */
-        if (*p == '-' && f == 0.0)
+    f = atof(p);
+
+    /* Not all atof()s return -0 from "-0" */
+    if (*p == '-' && f == 0.0)
 #if defined(_MSC_VER)
-            /* Visual C++ compiles -0.0 to 0.0, so we need to trick
-               the compiler. */
-            f = 0.0 * -1;
+        /* Visual C++ compiles -0.0 to 0.0, so we need to trick
+            the compiler. */
+        f = 0.0 * -1;
 #else
-            f = -0.0;
+        f = -0.0;
 #endif
-        string_cstring_free(cstr);
-    }
+    string_cstring_free(cstr);
 
     return f;
 }

@@ -126,6 +126,10 @@ destroy_context(PARROT_INTERP)
     context = CONTEXT(interp->ctx);
     while (context) {
         Parrot_Context * const prev = context->caller_ctx;
+        if (context->n_regs_used) {
+            mem_sys_free(context->n_regs_used);
+            context->n_regs_used = NULL;
+        }
         mem_sys_free(context);
         context = prev;
     }
@@ -507,7 +511,7 @@ Parrot_free_context(PARROT_INTERP, NOTNULL(struct Parrot_Context *ctxp), int re_
         ptr  = ctxp;
         slot = CALCULATE_SLOT_NUM(ctxp->regs_mem_size);
 
-        assert(slot < interp->ctx_mem.n_free_slots);
+        PARROT_ASSERT(slot < interp->ctx_mem.n_free_slots);
         *(void **)ptr = interp->ctx_mem.free_list[slot];
         interp->ctx_mem.free_list[slot] = ptr;
     }

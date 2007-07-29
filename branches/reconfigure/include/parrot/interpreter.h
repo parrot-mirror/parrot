@@ -1,13 +1,9 @@
 /* interpreter.h
- *  Copyright (C) 2001-2006, The Perl Foundation.
+ *  Copyright (C) 2001-2007, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
- *     The interpreter api handles running the operations
- *  Data Structure and Algorithms:
- *  History:
- *  Notes:
- *  References:
+ *     The interpreter API handles running the operations
  */
 
 #ifndef PARROT_INTERPRETER_H_GUARD
@@ -109,7 +105,7 @@ struct parrot_interp_t;
 
 #define PARROT_INTERP /*@notnull@*/ Parrot_Interp interp
 #define NULLOK_INTERP /*@null@*/    Parrot_Interp interp
-#define SHIM_INTERP   /*@unused@*/  Parrot_Interp interp_unused __attribute__unused__
+#define SHIM_INTERP   /*@unused@*/ /*@null@*/ Parrot_Interp interp_unused __attribute__unused__
 
 
 #ifdef PARROT_IN_CORE
@@ -489,11 +485,22 @@ typedef PMC *(*Parrot_compiler_func_t)(Parrot_Interp interp,
                                        const char * program );
 
 /* embed.c */
-PARROT_API void Parrot_init(Interp *);
+PARROT_API void Parrot_init(PARROT_INTERP);
 
-/* inter_create.c */
-PARROT_API Interp *make_interpreter(Interp * parent, INTVAL);
-PARROT_API void Parrot_destroy(Interp *);
+/* HEADERIZER BEGIN: src/inter_create.c */
+
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+Parrot_Interp make_interpreter( NULLOK(Interp *parent), INTVAL flags );
+
+PARROT_API
+void Parrot_destroy( PARROT_INTERP )
+        __attribute__nonnull__(1);
+
+void Parrot_really_destroy( PARROT_INTERP, int exit_code, void *arg )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: src/inter_create.c */
 
 /* HEADERIZER BEGIN: src/inter_run.c */
 
@@ -680,30 +687,114 @@ void runops( PARROT_INTERP, size_t offs )
 
 /* HEADERIZER END: src/inter_run.c */
 
-/* inter_cb.c */
-PARROT_API void Parrot_run_callback(Parrot_Interp, PMC* cbi, char *ext);
+/* HEADERIZER BEGIN: src/inter_cb.c */
 
-PARROT_API void Parrot_callback_C(char *external_data, PMC *callback_info);
-PARROT_API void Parrot_callback_D(PMC *callback_info, char *external_data);
-PARROT_API PMC* Parrot_make_cb(PARROT_INTERP, PMC* sub, PMC* user_data,
-        STRING* cb_signature);
+PARROT_API
+void Parrot_callback_C(
+    NOTNULL(char *external_data),
+    NOTNULL(PMC *user_data) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
-/* inter_misc.c */
-PARROT_API INTVAL interpinfo(PARROT_INTERP, INTVAL what);
-PARROT_API PMC*   interpinfo_p(PARROT_INTERP, INTVAL what);
-PARROT_API STRING*interpinfo_s(PARROT_INTERP, INTVAL what);
-PARROT_API void Parrot_compreg(PARROT_INTERP, STRING *, Parrot_compiler_func_t func);
-PARROT_API PMC *Parrot_compile_string(Parrot_Interp interp,
-        STRING *type, char *code, STRING **error);
-PARROT_API void *Parrot_compile_file(Parrot_Interp interp,
-        char *fullname, STRING **error);
-INTVAL sysinfo_i(PARROT_INTERP, INTVAL info_wanted);
-STRING *sysinfo_s(PARROT_INTERP, INTVAL info_wanted);
-PARROT_API void register_nci_method(Interp *, const int type,
-                void *func, const char *name, const char *proto);
-PARROT_API void register_raw_nci_method_in_ns(Parrot_Interp interp, const int type,
-                void *func, const char *name);
-PARROT_API void Parrot_mark_method_writes(Interp *, int type, const char *name);
+PARROT_API
+void Parrot_callback_D(
+    NOTNULL(PMC *user_data),
+    NOTNULL(char *external_data) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC* Parrot_make_cb( PARROT_INTERP,
+    PMC* sub,
+    PMC* user_data,
+    STRING *cb_signature )
+        __attribute__nonnull__(1);
+
+PARROT_API
+void Parrot_run_callback( PARROT_INTERP, PMC* user_data, char* external_data )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: src/inter_cb.c */
+
+/* HEADERIZER BEGIN: src/inter_misc.c */
+
+PARROT_API
+INTVAL interpinfo( PARROT_INTERP, INTVAL what )
+        __attribute__nonnull__(1);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+PMC* interpinfo_p( PARROT_INTERP, INTVAL what )
+        __attribute__nonnull__(1);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+STRING* interpinfo_s( PARROT_INTERP, INTVAL what )
+        __attribute__nonnull__(1);
+
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+void * Parrot_compile_file( PARROT_INTERP,
+    NOTNULL(const char *fullname),
+    NOTNULL(STRING **error) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+PMC * Parrot_compile_string( PARROT_INTERP,
+    NOTNULL(STRING *type),
+    NOTNULL(const char *code),
+    NOTNULL(STRING **error) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
+PARROT_API
+void Parrot_compreg( PARROT_INTERP,
+    STRING *type,
+    Parrot_compiler_func_t func )
+        __attribute__nonnull__(1);
+
+PARROT_API
+void Parrot_mark_method_writes( PARROT_INTERP,
+    int type,
+    NOTNULL(const char *name) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+PARROT_API
+void register_nci_method( PARROT_INTERP,
+    const int type,
+    void *func,
+    const char *name,
+    const char *proto )
+        __attribute__nonnull__(1);
+
+PARROT_API
+void register_raw_nci_method_in_ns( PARROT_INTERP,
+    const int type,
+    void *func,
+    const char *name )
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+INTVAL sysinfo_i( SHIM_INTERP, INTVAL info_wanted );
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+STRING * sysinfo_s( PARROT_INTERP, INTVAL info_wanted )
+        __attribute__nonnull__(1);
+
+/* HEADERIZER END: src/inter_misc.c */
+
 
 /* interpreter.c */
 void runops_int(Interp *, size_t offset);

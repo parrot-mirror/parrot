@@ -19,7 +19,6 @@ dispatches these to one or all interpreters.
 
 #include "parrot/parrot.h"
 #include "parrot/events.h"
-#include <assert.h>
 
 typedef struct pending_io_events {
     int n;
@@ -304,7 +303,7 @@ init_events_first(PARROT_INTERP)
      * s. p6i: "event.c - of signals and pipes"
      */
     if (pipe(pipe_fds))
-        internal_exception(1, "Couldn't create message pipe");
+        real_exception(interp, NULL, 1, "Couldn't create message pipe");
 #endif
     /*
      * now set some sig handlers before any thread is started, so
@@ -435,7 +434,8 @@ Parrot_new_timer_event(PARROT_INTERP, NOTNULL(PMC *timer), FLOATVAL diff,
 {
     parrot_event* const ev = mem_allocate_typed(parrot_event);
 
-    FLOATVAL now = Parrot_floatval_time();
+    const FLOATVAL now = Parrot_floatval_time();
+
     ev->type = typ;
     ev->u.timer_event.timer = timer;
     ev->u.timer_event.abs_time = now + diff;
@@ -878,7 +878,7 @@ Parrot_event_add_io_event(PARROT_INTERP,
     buf.ev      = event;
 #ifndef WIN32
     if (write(PIPE_WRITE_FD, &buf, sizeof(buf)) != sizeof(buf))
-        internal_exception(1, "msg pipe write failed");
+        real_exception(interp, NULL, 1, "msg pipe write failed");
 #endif
 }
 
@@ -984,7 +984,7 @@ process_events(NOTNULL(QUEUE *event_q))
             default:
                 internal_exception(1, "Unknown queue entry");
         }
-        assert(event);
+        PARROT_ASSERT(event);
         if (event->type == EVENT_TYPE_NONE) {
             mem_sys_free(entry);
             mem_sys_free(event);
