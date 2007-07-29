@@ -14,7 +14,11 @@ use Carp;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::Configure;
 
-my $stepnum = 0;
+my $stepnum = -1;
+sub stepnum {
+    $stepnum++;
+    return $stepnum;
+}
 
 sub test_step_thru_runstep {
     my ($conf, $pkg, $args) = @_;
@@ -23,7 +27,7 @@ sub test_step_thru_runstep {
     $conf->add_steps($pkg);
     $conf->options->set(%{$args});
 
-    $task = $conf->steps->[$stepnum];
+    $task = $conf->steps->[ stepnum() ];
     $step_name   = $task->step;
     @step_params = @{ $task->params };
 
@@ -33,7 +37,7 @@ sub test_step_thru_runstep {
     ok($step->description(), "$step_name has description");
     $ret = $step->runstep($conf);
     ok(defined $ret, "$step_name runstep() returned defined value");
-    $stepnum++;
+    return $stepnum;
 }
 
 1;
@@ -109,7 +113,8 @@ C<Parrot::Configure::Options::process_options()>.
 
 =item * Return Value
 
-No explicit return value.
+Returns the step number, but currently this is not used and needs
+further exploration.
 
 =item * Comment
 
