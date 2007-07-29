@@ -13,7 +13,7 @@ use_ok('config::inter::yacc');
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Auxiliary qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw( test_step_thru_runstep);
 
 $ENV{YACC} = 'foobar';
 
