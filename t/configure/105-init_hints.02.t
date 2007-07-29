@@ -18,7 +18,7 @@ use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::IO::Capture::Mini;
-use Auxiliary qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw( test_step_thru_runstep);
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {

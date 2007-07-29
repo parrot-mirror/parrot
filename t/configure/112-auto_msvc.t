@@ -13,7 +13,7 @@ use_ok('config::auto::msvc');
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Auxiliary qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw( test_step_thru_runstep);
 
 =for hints_for_testing Testing config::auto::msvc::runstep() may be
 meaningless if you are not on Windows.  Consider writing a SKIP block.  Check

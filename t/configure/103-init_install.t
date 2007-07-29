@@ -15,7 +15,7 @@ use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use_ok('config::init::install');
-use Auxiliary qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw( test_step_thru_runstep);
 
 my $cwd = cwd();
 {

@@ -13,7 +13,7 @@ use_ok('config::init::optimize');
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Auxiliary qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw( test_step_thru_runstep);
 
 =for hints_for_testing Check latest reports of Parrot configuration
 tools testing coverage to see where your time available for writing
