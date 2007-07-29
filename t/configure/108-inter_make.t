@@ -37,7 +37,7 @@ my $args = process_options( {
 
 my $conf = Parrot::Configure->new();
 
-test_step_thru_runstep($conf, q{init::defaults}, $args);
+my $step_num = test_step_thru_runstep($conf, q{init::defaults}, $args, 0);
 
 my (@prompts, $object, @entered);
 @prompts = map { q{foo_} . $_ } 
@@ -52,6 +52,7 @@ my $pkg = q{inter::make};
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
 
+#$task = $conf->steps->[$step_num + 1];
 $task = $conf->steps->[1];
 $step_name   = $task->step;
 @step_params = @{ $task->params };
@@ -63,8 +64,8 @@ ok($step->description(), "$step_name has description");
 $ret = $step->runstep($conf);
 ok(defined $ret, "$step_name runstep() returned defined value");
 
-$object = undef;
-untie *STDIN;
+#$object = undef;
+#untie *STDIN;
 
 pass("Completed all tests in $0");
 

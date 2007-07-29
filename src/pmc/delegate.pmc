@@ -22,7 +22,6 @@ Almost all methods are auto-generated in lib/Parrot/Pmc2c.pm
 
 #include "parrot/parrot.h"
 #include "delegate.str"
-#include <assert.h>
 
 /*
 
@@ -73,6 +72,7 @@ useful defaults and don't throw exceptions.
 =cut
 
 */
+
 
     void init() {
         STRING* const meth = CONST_STRING(interp, "init");
