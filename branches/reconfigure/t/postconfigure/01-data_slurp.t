@@ -66,7 +66,7 @@ can_ok("Parrot::Configure", qw| options |);
 can_ok("Parrot::Configure", qw| steps |);
 can_ok("Parrot::Configure", qw| add_step |);
 can_ok("Parrot::Configure", qw| add_steps |);
-can_ok("Parrot::Configure", qw| runstep |);
+can_ok("Parrot::Configure", qw| run_single_step |);
 can_ok("Parrot::Configure", qw| runsteps |);
 can_ok("Parrot::Configure", qw| _run_this_step |);
 
@@ -101,9 +101,10 @@ REASON
 
     my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";
-    my $ret = $conf->runstep( $args->{step} );
+    my $ret = $conf->run_single_step( $args->{step} );
     my @more_lines = $tie_out->READLINE;
-    ok( (defined $@) && (! $@), "Parrot::Configure::runstep() succeeded");
+    ok( (defined $@) && (! $@),
+        "Parrot::Configure::run_single_step() succeeded");
 }
 
 pass("Completed all tests in $0");
