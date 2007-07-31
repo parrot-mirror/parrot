@@ -11,6 +11,11 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Step::List qw( get_steps_list );
 
+# So far, I'm only permitting one option:  --step=some::step
+# What other options should be permitted?
+# Well, one obvious choice is --ask, because without it you can't get any of
+# the inter::* steps to stop and prompt you for an answer.
+# And that leads to --verbose and --verbose-step.
 
 my $parrot_version = Parrot::BuildUtil::parrot_version();
 $| = 1; # $OUTPUT_AUTOFLUSH = 1;
