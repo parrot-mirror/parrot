@@ -48,15 +48,13 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 =cut
 
 .HLL 'Lua', 'lua_group'
+.namespace [ 'Lua::math' ]
 
-.sub 'init_math' :load :anon
-
-    load_bytecode 'languages/lua/lib/luabasic.pbc'
-
+.sub 'luaopen_math'
 #    print "init Lua Math\n"
 
     .local pmc _lua__GLOBAL
-    _lua__GLOBAL = get_global '_G'
+    _lua__GLOBAL = get_hll_global '_G'
     new $P1, .LuaString
 
     .local pmc _math

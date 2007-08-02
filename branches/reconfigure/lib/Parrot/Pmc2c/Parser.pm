@@ -200,15 +200,16 @@ sub extract_bracketed_body_text {
 }
 
 
-=head2 C<parse_flags()>
+=head2 C<parse_top_level()>
 
-    ($pre, $pmcname, $flags_ref)   = parse_flags(\$code);
+    my ($preamble, $pmcname, $flags, $parents, $pmcbody, $post, $chewed_lines)
+        = parse_top_level(\$code);
 
 B<Purpose:>  Extract a pmc signature from the code ref.
 
 B<Argument:>  PMC file contents slurped by C<parse_pmc()>.
 
-B<Return Values:>  List of three elements:
+B<Return Values:>  List of seven elements:
 
 =over 4
 
@@ -227,6 +228,10 @@ C<extends> and C<does>).
 
 =item *
 
+the list of parents this pmc extends
+
+=item *
+
 the body of the pmc
 
 =item *
@@ -235,7 +240,7 @@ the code found after the pmc body
 
 =item *
 
-number of newlines in the pmc signatuer that need to be addde to the
+number of newlines in the pmc signature that need to be added to the
 running total of lines in the file
 
 =back
@@ -273,6 +278,34 @@ sub parse_top_level {
 
 our %has_value = map { $_ => 1 } qw(group hll);
 our %has_values = map { $_ => 1 } qw(does extends maps lib);
+
+
+=head2 C<parse_flags()>
+
+    my ($flags, $parents) = parse_flags($attributes, $pmcname);
+
+B<Purpose:>  Extract a pmc signature from the code ref.
+
+B<Argument:>  PMC file contents slurped by C<parse_pmc()>.
+
+B<Return Values:>  List of two elements:
+
+=over 4
+
+=item *
+
+a hash ref containing the flags associated with the pmc (such as
+C<extends> and C<does>).
+
+=item *
+
+the list of parents this pmc extends
+
+=back
+
+B<Comments:>  Called internally by C<parse_top_level()>.
+
+=cut
 
 sub parse_flags {
     my ( $data, $pmcname ) = @_;
@@ -364,7 +397,7 @@ sub extract_balanced {
             return ( substr($code, 0, pos, "" ), $code ) if not $unbalanced;
         }
     }
-    die "Badly balanced" if $unbalanced;
+    die "Badly balanced PMC source\n" if $unbalanced;
     return;
 }
 

@@ -30,15 +30,13 @@ L<http://www.lua.org/manual/5.1/manual.html#5.4>.
 =cut
 
 .HLL 'Lua', 'lua_group'
+.namespace [ 'Lua::string' ]
 
-.sub 'init_string' :load :anon
-
-    load_bytecode 'languages/lua/lib/luabasic.pbc'
-
+.sub 'luaopen_string'
 #    print "init Lua String\n"
 
     .local pmc _lua__GLOBAL
-    _lua__GLOBAL = get_global '_G'
+    _lua__GLOBAL = get_hll_global '_G'
     new $P1, .LuaString
 
     .local pmc _string
@@ -125,12 +123,9 @@ L<http://www.lua.org/manual/5.1/manual.html#5.4>.
 
     .local pmc _lua_mt_string
     new _lua_mt_string, .LuaTable
-    set_global 'mt_string', _lua_mt_string
+    set_hll_global 'mt_string', _lua_mt_string
     set $P1, '__index'
     _lua_mt_string[$P1] = _string
-
-
-    load_bytecode 'languages/lua/lib/luaregex.pbc'
 
 .end
 

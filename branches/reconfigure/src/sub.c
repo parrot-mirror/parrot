@@ -384,18 +384,19 @@ Parrot_Context_infostr(PARROT_INTERP, NOTNULL(parrot_context_t *ctx))
 
     Parrot_block_DOD(interp);
     if (Parrot_Context_get_info(interp, ctx, &info)) {
-        char * const file = info.file;
+        const char *file = info.file;
         res        = Parrot_sprintf_c(interp,
             "%s '%Ss' pc %d (%s:%d)", msg,
             info.fullname, info.pc, file, info.line);
 
         /* free the non-constant string, but not the constant one */
         if (strncmp( "(unknown file)", file, 14 ) < 0 )
-            string_cstring_free(file);
+            string_cstring_free((char *)file);
         /* XXX This is probably a source of mis-freeing. */
     }
-    else
+    else {
         res = NULL;
+    }
 
     Parrot_unblock_DOD(interp);
     return res;

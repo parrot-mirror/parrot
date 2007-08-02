@@ -222,10 +222,10 @@ sub attrs_from_args {
     my $n = 0;
     for my $arg ( @args ) {
         ++$n;
-        if ( $arg =~ m{NOTNULL\(} || $arg eq 'PARROT_INTERP' ) {
+        if ( $arg =~ m{(ARGOUT|ARGINOUT|NOTNULL)\(} || $arg eq 'PARROT_INTERP' ) {
             push( @attrs, "__attribute__nonnull__($n)" );
         }
-        if ( ( $arg =~ m{\*} ) && ( $arg !~ /\b(SHIM|NOTNULL|NULLOK|ARGIN|ARGOUT)\b/ ) ) {
+        if ( ( $arg =~ m{\*} ) && ( $arg !~ /\b(SHIM|NOTNULL|NULLOK|ARGIN|ARGOUT|ARGINOUT)/ ) ) {
             my $name = $func->{name};
             my $file = $func->{file};
             squawk( $file, $name, qq{"$arg" isn't protected with NOTNULL or NULLOK} );
@@ -252,6 +252,12 @@ sub make_function_decls {
         for my $arg ( @args ) {
             if ( $arg =~ m{SHIM\((.+)\)} ) {
                 $arg = $1;
+                if ( $func->{is_static} || ($arg =~ /\*/) ) {
+                    $arg = "SHIM($arg)";
+                }
+                else {
+                    $arg = "NULLOK($arg)";
+                }
             }
         }
 
@@ -297,8 +303,12 @@ sub squawk {
 sub main {
     GetOptions( 'verbose' => \$opt{verbose}, ) or exit(1);
 
-    my %ofiles = map {($_,1)} @ARGV;
+    my %ofiles;
+    ++$ofiles{$_} for @ARGV;
     my @ofiles = sort keys %ofiles;
+    for ( @ofiles ) {
+        print "$_ is specified more than once.\n" if $ofiles{$_} > 1;
+    }
     my %cfiles;
     my %cfiles_with_statics;
 
