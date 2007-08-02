@@ -228,7 +228,7 @@ opcode_t * rethrow_exception( PARROT_INTERP, NOTNULL(PMC *exception) )
 
 PARROT_API
 PARROT_CAN_RETURN_NULL
-opcode_t * throw_exception( PARROT_INTERP, PMC *exception, void *dest )
+opcode_t * throw_exception( PARROT_INTERP, PMC *exception, SHIM(void *dest) )
         __attribute__nonnull__(1);
 
 void destroy_exception_list( PARROT_INTERP )
@@ -257,7 +257,7 @@ void rethrow_c_exception( PARROT_INTERP )
 #ifdef NDEBUG
 #  define PARROT_ASSERT(x) ((void)0)
 #else
-#  define PARROT_ASSERT(x) ((void) ((x) ? 0 : Parrot_confess(#x, __FILE__, __LINE__)))
+#  define PARROT_ASSERT(x) (((x) ? (void)0 : (void)Parrot_confess(#x, __FILE__, __LINE__)))
 #endif
 
 

@@ -184,7 +184,7 @@ Francois Perrad
 
 =cut
 
-.sub '__onload' :load
+.sub '__onload' :anon :load
     load_bytecode 'PGE.pbc'
 
     $P0 = getclass 'PGE::Exp::CCShortcut'
@@ -217,8 +217,7 @@ Francois Perrad
     target = downcase target
 
     .local pmc match
-    $P0 = get_global 'luaregex'
-    match = $P0(source)
+    match = luaregex(source)
     if target != 'parse' goto check
     .return (match)
 

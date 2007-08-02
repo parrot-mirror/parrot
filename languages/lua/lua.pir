@@ -87,22 +87,30 @@ show version information.
 
 .include 'languages/lua/src/lua51.pir'
 
+
 .HLL 'Lua', 'lua_group'
+
+.sub '__oninit' :anon :init
+    # to do with pbc_merge
+    load_bytecode 'languages/lua/lib/luaaux.pbc'
+    load_bytecode 'languages/lua/lib/luabasic.pbc'
+    load_bytecode 'languages/lua/lib/luacoroutine.pbc'
+    load_bytecode 'languages/lua/lib/luapackage.pbc'
+    load_bytecode 'languages/lua/lib/luastring.pbc'
+    load_bytecode 'languages/lua/lib/luaregex.pbc'
+    load_bytecode 'languages/lua/lib/luatable.pbc'
+    load_bytecode 'languages/lua/lib/luamath.pbc'
+    load_bytecode 'languages/lua/lib/luaio.pbc'
+    load_bytecode 'languages/lua/lib/luafile.pbc'
+    load_bytecode 'languages/lua/lib/luaos.pbc'
+    load_bytecode 'languages/lua/lib/luadebug.pbc'
+.end
 
 
 .sub 'main' :main
     .param pmc args
-    load_bytecode "languages/lua/lib/luaaux.pbc"
     # lua_gc('stop')
-    load_bytecode "languages/lua/lib/luabasic.pbc"
-    load_bytecode "languages/lua/lib/luacoroutine.pbc"
-    load_bytecode "languages/lua/lib/luapackage.pbc"
-    load_bytecode "languages/lua/lib/luastring.pbc"
-    load_bytecode "languages/lua/lib/luatable.pbc"
-    load_bytecode "languages/lua/lib/luamath.pbc"
-    load_bytecode "languages/lua/lib/luaio.pbc"
-    load_bytecode "languages/lua/lib/luaos.pbc"
-    load_bytecode "languages/lua/lib/luadebug.pbc"
+    lua_openlibs()
     # lua_gc('restart')
     .local int status
     status = handle_luainit()
@@ -280,7 +288,7 @@ show version information.
     .local int narg
     (narg, $P0) = getargs(args, n)  # collect arguments
     .local pmc env
-    env = get_global '_G'
+    env = get_hll_global '_G'
     .const .LuaString k_arg = 'arg'
     env.'rawset'(k_arg, $P0)
     .local string fname
@@ -367,7 +375,7 @@ show version information.
 .sub 'dolibrary' :anon
     .param string name
     .local pmc env
-    env = get_global '_G'
+    env = get_hll_global '_G'
     .const .LuaString k_require = 'require'
     $P0 = env.'rawget'(k_require)
     new $P1, .LuaString
@@ -383,7 +391,7 @@ show version information.
 
 .sub 'dotty' :anon
     .local pmc env
-    env = get_global '_G'
+    env = get_hll_global '_G'
     .const .LuaString k_print = 'print'
     .local int has_readline
     .local pmc stdin
@@ -456,7 +464,7 @@ show version information.
 .sub 'get_prompt' :anon
     .param int firstline
     .local pmc env
-    env = get_global '_G'
+    env = get_hll_global '_G'
     $S0 = '_PROMPT'
     $S1 = '> '
     if firstline goto L1

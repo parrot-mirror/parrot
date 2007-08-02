@@ -237,6 +237,9 @@ print $JITCPU <<"END_C";
  *
  */
 
+/* HEADERIZER HFILE: none */
+/* HEADERIZER STOP */
+
 #include<parrot/parrot.h>
 #if HAVE_COMPUTED_GOTO
 #  include<parrot/oplib/core_ops_cgp.h>
@@ -496,7 +499,7 @@ if ( $genfile =~ /jit_cpu.c/ ) {
     PARROT_API Parrot_jit_fn_info_t *op_jit = &_op_jit[0];
 
     extern int jit_op_count(void);
-    int jit_op_count() { return $core_numops; }
+    int jit_op_count(void) { return $core_numops; }
 EOC
 }
 

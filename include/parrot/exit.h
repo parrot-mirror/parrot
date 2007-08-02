@@ -32,7 +32,7 @@ void Parrot_exit( PARROT_INTERP, int status )
         __attribute__nonnull__(1);
 
 PARROT_API
-int Parrot_on_exit( PARROT_INTERP,
+void Parrot_on_exit( PARROT_INTERP,
     NOTNULL(exit_handler_f function),
     NULLOK(void *arg) )
         __attribute__nonnull__(1)
