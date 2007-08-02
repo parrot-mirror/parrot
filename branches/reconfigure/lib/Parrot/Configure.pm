@@ -148,7 +148,11 @@ Accepts a list and modifies the data structure within the L<Parrot::Configure> o
 sub add_step {
     my ( $self, $step, @params ) = @_;
 
-    push @{ $self->{steps} }, Parrot::Configure::Task->new( step => $step, params => \@params );
+    push @{ $conf->{steps} },
+        Parrot::Configure::Task->new(
+            step    => $step,
+            params  => \@params,
+        );
 
     return 1;
 }
