@@ -329,6 +329,15 @@ sub _run_this_step {
     $conf->options->set( verbose => $args->{verbose} );
 }
 
+sub option_or_data {
+    my $conf = shift;
+    my $arg = shift;
+
+    my $opt = $conf->options->get( $arg );
+    return $opt ? $opt : $conf->data->get( $arg );
+}
+
+
 =back
 
 =head1 CREDITS
