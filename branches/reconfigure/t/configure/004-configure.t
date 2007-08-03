@@ -26,7 +26,6 @@ is($|, 1, "output autoflush is set");
 my $CC = "/usr/bin/gcc-3.3";
 my $localargv = [
     qq{--cc=$CC},
-    qq{--step=init::manifest},
 ];
 my $args = process_options( {
     argv            => $localargv,

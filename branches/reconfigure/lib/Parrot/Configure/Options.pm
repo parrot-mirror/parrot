@@ -63,7 +63,6 @@ sub get_valid_options {
         profile
         sbindir
         sharedstatedir
-        step
         sysconfdir
         target
         test
@@ -141,8 +140,6 @@ General Options:
    --verbose-step=N     Set verbose for step N only
    --verbose-step=regex Set verbose for step matching description
    --nomanicheck        Don't check the MANIFEST
-   --step=(gen::languages)
-                        Execute a single configure step
    --languages="list of languages"
                         Specify a list of languages to process
 
