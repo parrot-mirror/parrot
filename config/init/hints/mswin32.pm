@@ -46,6 +46,15 @@ sub runstep {
         $ccflags =~ s/-O1 // if $cc_output =~ m/Standard/ || $cc_output =~ m{/ZI};
         $ccflags =~ s/-Gf/-GF/ if $cc_output =~ m/Version (\d+)/ && $1 >= 13;
 
+        # override perl's warnings level
+        $ccflags =~ s/-W\d/-W4/;
+
+        my $ccwarn = '';
+        # disable certain very noisy warnings
+        $ccwarn .= "-wd4127 ";    # conditional expression is constant
+        $ccwarn .= "-wd4054 ";    # type cast from function ptr to data ptr
+        $ccwarn .= "-wd4310 ";    # cast truncates constant value
+
         $conf->data->set(
             share_ext  => '.dll',
             load_ext   => '.dll',
@@ -74,7 +83,7 @@ sub runstep {
             slash               => '\\',
             blib_dir            => 'blib\\lib',
             ccflags             => $ccflags,
-            ccwarn              => '',
+            ccwarn              => $ccwarn,
             has_dynamic_linking => 1,
             parrot_is_shared    => 1,
 
