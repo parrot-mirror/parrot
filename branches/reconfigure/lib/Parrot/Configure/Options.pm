@@ -64,7 +64,6 @@ sub get_valid_options {
         sbindir
         sharedstatedir
         sysconfdir
-        target
         test
         verbose
         verbose-step
@@ -75,6 +74,8 @@ sub get_valid_options {
         yacc
     );
 }
+#        step
+#        target
 
 sub process_options {
     my $optionsref = shift;
@@ -86,29 +87,25 @@ sub process_options {
         unless $optionsref->{parrot_version};
     die "Must provide argument 'svnid'"
         unless $optionsref->{svnid};
-    my @valid_opts = get_valid_options();
+    my %valid_opts = map {$_, 1} get_valid_options();
     my %args;
     for ( @{ $optionsref->{argv} } ) {
         my ( $key, $value ) = m/--([-\w]+)(?:=(.*))?/;
         $key   = 'help' unless defined $key;
         $value = 1      unless defined $value;
 
-        unless ( grep $key eq $_, @valid_opts ) {
+        unless ( $valid_opts{$key} ) {
             die qq/Invalid option "$key". See "perl Configure.pl --help" for valid options\n/;
         }
-
-        for ($key) {
-            if ( $key =~ m/version/ ) {
-                print_version_info($optionsref);
-                return;
-            }
-
-            if ( $key =~ m/help/ ) {
-                print_help($optionsref);
-                return;
-            }
-            $args{$key} = $value;
+        if ( $key =~ m/version/ ) {
+            print_version_info($optionsref);
+            return;
         }
+        if ( $key =~ m/help/ ) {
+            print_help($optionsref);
+            return;
+        }
+        $args{$key} = $value;
     }
 
     $args{debugging} = 1
@@ -140,6 +137,8 @@ General Options:
    --verbose-step=N     Set verbose for step N only
    --verbose-step=regex Set verbose for step matching description
    --nomanicheck        Don't check the MANIFEST
+   --step=(gen::languages)
+                        Execute a single configure step
    --languages="list of languages"
                         Specify a list of languages to process
 
@@ -149,6 +148,7 @@ General Options:
                         calling 'make'
    --test               Run configuration tools tests, configure, then run
                         build tools tests
+
 
 Compile Options:
 

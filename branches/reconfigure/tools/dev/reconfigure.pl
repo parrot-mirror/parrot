@@ -58,6 +58,7 @@ sub get_valid_options {
         lex
         maintainer
         step
+        target
         verbose
         yacc
     );
@@ -69,24 +70,21 @@ sub process_options {
         unless defined $optionsref->{argv};
     $optionsref->{script} = q{tools/dev/reconfigure.pl}
         unless defined $optionsref->{script};
-    my @valid_opts = get_valid_options();
+    my %valid_opts = map {$_, 1} get_valid_options();
     my %args;
     for ( @{ $optionsref->{argv} } ) {
         my ( $key, $value ) = m/--([-\w]+)(?:=(.*))?/;
         $key   = 'help' unless defined $key;
         $value = 1      unless defined $value;
 
-        unless ( grep $key eq $_, @valid_opts ) {
+        unless ( $valid_opts{$key} ) {
             die qq/Invalid option "$key". See "perl $optionsref->{script} --help" for valid options\n/;
         }
-
-        for ($key) {
-            if ( $key =~ m/help/ ) {
-                print_help($optionsref);
-                return;
-            }
-            $args{$key} = $value;
+        if ( $key =~ m/help/ ) {
+            print_help($optionsref);
+            return;
         }
+        $args{$key} = $value;
     }
 
     $args{debugging} = 1
