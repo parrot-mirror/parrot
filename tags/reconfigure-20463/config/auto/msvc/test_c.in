@@ -1,0 +1,52 @@
+#include <stdio.h>
+
+
+#include "parrot/compiler.h"
+
+__attribute__malloc__
+__attribute__noreturn__
+__attribute__warn_unused_result__
+__attribute__deprecated__
+int
+dummyfunc(int x)
+    __attribute__format__(1,2,3)
+    __attribute__nonnull__(1)
+    ;
+
+__attribute__const__
+int constfunc(int x);
+
+__attribute__pure__
+int purefunc(int x);
+
+int useless(void) { int x __attribute__unused__; }
+
+int
+main(int argc, char *argv[])
+{
+    puts("(");
+#ifdef _MSC_VER
+    printf("_MSC_VER => %d,\n", _MSC_VER);
+#else
+    printf("_MSC_VER => undef,\n");
+#endif
+
+#ifdef _MSC_FULL_VER
+    printf("_MSC_FULL_VER => %d,\n", _MSC_FULL_VER);
+#else
+    printf("_MSC_FULL_VER => undef,\n");
+#endif
+    puts(");");
+
+    return 0;
+}
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+ */
