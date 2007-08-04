@@ -103,7 +103,7 @@ LINKFLAGS  = @linkflags@ @link_debug@ @ld_debug@
 LD         = @ld@
 LDFLAGS    = @ldflags@ @ld_debug@
 
-CONFIGURE  = $(PERL) Configure.pl
+RECONFIGURE  = $(PERL) tools/dev/reconfigure.pl
 
 INNO_SETUP = iscc
 
@@ -721,7 +721,7 @@ parrot_utils : $(PDUMP) $(DIS) $(PINFO) $(PDB) $(PBCMERGE)
 installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPINFO) $(INSTALLABLEPDB) $(INSTALLABLEPBCMERGE)
 
 Makefile : config/gen/makefiles/root.in
-	$(CONFIGURE) --step=gen::makefiles --target=Makefile
+	$(RECONFIGURE) --step=gen::makefiles --target=Makefile
 
 flags_dummy :
 	@echo "Compiling with:"
@@ -734,7 +734,7 @@ runtime/parrot/include/config.fpmc : myconfig config_lib.pasm $(MINIPARROT)
 	@echo Invoking Parrot to generate runtime/parrot/include/config.fpmc --cross your fingers
 	$(MINIPARROT) config_lib.pasm > $@
 
-$(PARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
+$(PARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) CFLAGS \
     lib/Parrot/OpLib/core.pm $(SRC_DIR)/parrot_config$(O) \
     $(MINIPARROT)
 	$(LINK) @ld_out@$@ \
@@ -1643,6 +1643,8 @@ test-clean :
 	$(RM_F) \
     "t/tools/pmc2c.t_*" \
     "t/tools/pmc2c.pmc_t_*"
+	$(RM_F) \
+    "t/tools/pdb.t.*"
 
 imcc-clean:
 	$(RM_F) \
