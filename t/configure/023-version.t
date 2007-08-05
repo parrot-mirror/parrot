@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 14;
+use Test::More tests => 12;
 use Carp;
 use_ok( 'Cwd' );
 use_ok( 'File::Copy' );
@@ -36,11 +36,6 @@ my $errstr;
     is_deeply(\@pv, [ 0, 4, 11 ],
         "Correct version number returned in scalar context");
 
-    $pv = Parrot::BuildUtil::parrot_version();
-    @pv = Parrot::BuildUtil::parrot_version();
-    is($pv, q{0.4.11}, "Correct version number returned in scalar context");
-    is_deeply(\@pv, [ 0, 4, 11 ],
-        "Correct version number returned in scalar context");
     ok(chdir $cwd, "Able to change back to directory after testing");
 }
 
