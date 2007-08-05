@@ -12,7 +12,7 @@ BEGIN {
     our $topdir = realpath($Bin) . "/../..";
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 35;
+use Test::More tests => 37;
 use Carp;
 use_ok(
     'Parrot::Configure::Options', qw|
@@ -173,6 +173,22 @@ like(
         "process_options() returned undef after 'help' option" );
     $msg = $tie->READLINE;
     like( $msg, qr/--help/i, "got correct message after 'help' option" );
+}
+
+{
+    my ( $tie, $rv, $msg );
+    $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
+        or croak "Unable to tie";
+    $args = process_options(
+        {
+            argv    => [q{--}],
+            mode    => q{configure},
+        }
+    );
+    ok( !defined $args,
+        "process_options() returned undef after '--' option triggered help message" );
+    $msg = $tie->READLINE;
+    like( $msg, qr/--help/i, "got help message as expected");
 }
 
 {
