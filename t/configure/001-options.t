@@ -12,12 +12,15 @@ BEGIN {
     our $topdir = realpath($Bin) . "/../..";
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 33;
+use Test::More tests => 35;
 use Carp;
 use_ok(
     'Parrot::Configure::Options', qw|
         process_options
-        get_valid_options
+    |
+);
+use_ok("Parrot::Configure::Options::Conf", qw|
+        @valid_options
     |
 );
 use_ok("Parrot::IO::Capture::Mini");
@@ -25,7 +28,9 @@ use_ok("Parrot::IO::Capture::Mini");
 my %valid;
 my $badoption = q{samsonanddelilah};
 
-%valid = map { $_, 1 } get_valid_options();
+no warnings 'once';
+%valid = map { $_, 1 } @Parrot::Configure::Options::Conf::valid_options;
+use warnings;
 ok( scalar keys %valid,          "non-zero quantity of valid options found" );
 ok( defined $valid{debugging},   "debugging option found" );
 ok( defined $valid{maintainer},  "maintainer option found" );
@@ -33,6 +38,8 @@ ok( defined $valid{help},        "help option found" );
 ok( defined $valid{version},     "version option found" );
 ok( defined $valid{verbose},     "verbose option found" );
 ok( !defined $valid{$badoption}, "invalid option not found" );
+ok( !defined $valid{step}, "invalid 'step' option not found" );
+ok( !defined $valid{target}, "invalid 'target' option not found" );
 
 open my $FH, '<', "$main::topdir/Configure.pl"
     or croak "Unable to open handle to $main::topdir/Configure.pl:  $!";
@@ -63,61 +70,37 @@ foreach my $m (@possible_methods) {
 }
 ok( !$invalid, "No invalid methods described in POD" );
 
-my $parrot_version = '0.4.10';
-my $svnid          = '$Id$';
-my ($args);
+my $args;
 $args = process_options(
     {
         argv           => [],
-        script         => $0,
-        parrot_version => $parrot_version,
-        svnid          => $svnid,
+        mode            => q{configure},
     }
 );
 ok( defined $args, "process_options() returned successfully" );
 ok( $args->{debugging}, "debugging turned on by default" );
 
-eval { $args = process_options( { argv => [], script => $0, svnid => $svnid, } ); };
+eval { $args = process_options( { argv => [] } ); };
 like(
     $@,
-    qr/Must provide argument 'parrot_version'/,
-    "process_options() failed due to lack of argument 'parrot_version'"
+    qr/'mode' argument not provided to process_options\(\)/,
+    "process_options() failed due to lack of argument 'mode'"
 );
 
-eval {
-    $args = process_options(
-        {
-            argv           => [],
-            script         => $0,
-            parrot_version => $parrot_version,
-        }
-    );
-};
+eval { $args = process_options( { argv => [], mode => 'foobar' } ); };
 like(
     $@,
-    qr/Must provide argument 'svnid'/,
-    "process_options() failed due to lack of argument 'svnid'"
+    qr/Invalid value for 'mode' argument to process_options\(\)/,
+    "process_options() failed due to invalid 'mode' argument"
 );
 
 $args = process_options(
     {
-        script         => $0,
-        parrot_version => $parrot_version,
-        svnid          => $svnid,
+        mode => q{configure},,
     }
 );
 ok( defined $args,
     "process_options() returned successfully even though no explicit 'argv' key was provided" );
-
-$args = process_options(
-    {
-        argv           => [],
-        parrot_version => $parrot_version,
-        svnid          => $svnid,
-    }
-);
-ok( defined $args,
-    "process_options() returned successfully even though no explicit 'scripts' key was provided" );
 
 my $CC = "/usr/bin/gcc-3.3";
 my $CX = "/usr/bin/g++-3.3";
@@ -127,9 +110,7 @@ $args = process_options(
             q{--cc=$CC},      q{--cxx=$CX}, q{--link=$CX}, q{--ld=$CX},
             q{--without-icu}, q{--without-gmp},
         ],
-        script         => $0,
-        parrot_version => $parrot_version,
-        svnid          => $svnid,
+        mode => q{configure},
     }
 );
 ok( defined $args, "process_options() returned successfully when options were specified" );
@@ -137,10 +118,38 @@ ok( defined $args, "process_options() returned successfully when options were sp
 eval {
     $args = process_options(
         {
-            argv           => [qq<--${badoption}=72>],
-            script         => $0,
-            parrot_version => $parrot_version,
-            svnid          => $svnid,
+            argv    => [qq<--${badoption}=72>],
+            mode    => q{configure},
+        }
+    );
+};
+like(
+    $@,
+    qr/^Invalid option.*$badoption/,
+    "process_options() failed due to bad option '$badoption'"
+);
+
+$badoption = q{step};
+eval {
+    $args = process_options(
+        {
+            argv    => [qq<--${badoption}>],
+            mode    => q{configure},
+        }
+    );
+};
+like(
+    $@,
+    qr/^Invalid option.*$badoption/,
+    "process_options() failed due to bad option '$badoption'"
+);
+
+$badoption = q{target};
+eval {
+    $args = process_options(
+        {
+            argv    => [qq<--${badoption}>],
+            mode    => q{configure},
         }
     );
 };
@@ -156,15 +165,14 @@ like(
         or croak "Unable to tie";
     $args = process_options(
         {
-            argv           => [q{--help}],
-            script         => $0,
-            parrot_version => $parrot_version,
-            svnid          => $svnid,
+            argv    => [q{--help}],
+            mode    => q{configure},
         }
     );
-    ok( !defined $args, "process_options() returned undef after 'help' option" );
+    ok( !defined $args,
+        "process_options() returned undef after 'help' option" );
     $msg = $tie->READLINE;
-    like( $msg, qr/--help/i, "got correct message after 'version' option" );
+    like( $msg, qr/--help/i, "got correct message after 'help' option" );
 }
 
 {
@@ -173,62 +181,40 @@ like(
         or croak "Unable to tie";
     $args = process_options(
         {
-            argv           => [q{--}],
-            script         => $0,
-            parrot_version => $parrot_version,
-            svnid          => $svnid,
+            argv    => [q{--version}],
+            mode    => q{configure},
         }
     );
-    ok( !defined $args, "process_options() returned undef after 'help' option: case '--'" );
-    $msg = $tie->READLINE;
-    like( $msg, qr/--help/i, "got correct message after 'version' option" );
-}
-
-{
-    my ( $tie, $rv, $msg );
-    $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $args = process_options(
-        {
-            argv           => [q{--version}],
-            script         => $0,
-            parrot_version => $parrot_version,
-            svnid          => $svnid,
-        }
-    );
-    ok( !defined $args, "process_options() returned undef after 'version' option" );
+    ok( !defined $args,
+        "process_options() returned undef after 'version' option" );
     $msg = $tie->READLINE;
     like( $msg, qr/Parrot Version/i, "got correct message after 'version' option" );
 }
 
 $args = process_options(
     {
-        argv           => [ q{--lex}, ],
-        script         => $0,
-        parrot_version => $parrot_version,
-        svnid          => $svnid,
+        argv        => [ q{--lex}, ],
+        mode        => q{configure},
     }
 );
-ok( defined $args, "process_options() returned successfully after 'lex' option" );
+ok( defined $args,
+    "process_options() returned successfully after 'lex' option" );
 ok( $args->{maintainer}, "'maintainer' attribute is true after 'lex' option" );
 
 $args = process_options(
     {
-        argv           => [ q{--yacc}, ],
-        script         => $0,
-        parrot_version => $parrot_version,
-        svnid          => $svnid,
+        argv        => [ q{--yacc}, ],
+        mode        => q{configure},
     }
 );
-ok( defined $args, "process_options() returned successfully after 'yacc' option" );
+ok( defined $args,
+    "process_options() returned successfully after 'yacc' option" );
 ok( $args->{maintainer}, "'maintainer' attribute is true after 'yacc' option" );
 
 $args = process_options(
     {
-        argv           => [q{--debugging=1}],
-        script         => $0,
-        parrot_version => $parrot_version,
-        svnid          => $svnid,
+        argv        => [q{--debugging=1}],
+        mode        => q{configure},
     }
 );
 ok( defined $args, "process_options() returned successfully" );
@@ -236,10 +222,8 @@ ok( $args->{debugging}, "debugging turned on explicitly" );
 
 $args = process_options(
     {
-        argv           => [q{--debugging=0}],
-        script         => $0,
-        parrot_version => $parrot_version,
-        svnid          => $svnid,
+        argv        => [q{--debugging=0}],
+        mode        => q{configure},
     }
 );
 ok( defined $args, "process_options() returned successfully" );
@@ -251,7 +235,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-001-options.t - test Parrot::Configure::Options
+001-options.t - test Parrot::Configure::Options as used in Configure.pl
 
 =head1 SYNOPSIS
 
@@ -262,7 +246,8 @@ pass("Completed all tests in $0");
 The files in this directory test functionality used by F<Configure.pl>.
 
 The tests in this file test subroutines exported by
-Parrot::Configure::Options.
+Parrot::Configure::Options as it is used in F<Configure.pl>, I<i.e.>, with
+C<mode => configure>..
 
 =head1 AUTHOR
 
@@ -270,7 +255,7 @@ James E Keenan
 
 =head1 SEE ALSO
 
-Parrot::Configure::Options, F<Configure.pl>.
+Parrot::Configure::Options, Parrot::Configure::Options::Conf, F<Configure.pl>.
 
 =cut
 
