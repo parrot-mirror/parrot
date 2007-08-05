@@ -32,9 +32,9 @@ my $errstr;
     my ($pv, @pv);
     @pv = Parrot::BuildUtil::parrot_version();
     $pv = Parrot::BuildUtil::parrot_version();
+    is($pv, q{0.4.11}, "Correct version number returned in scalar context");
     is_deeply(\@pv, [ 0, 4, 11 ],
         "Correct version number returned in scalar context");
-    is($pv, q{0.4.11}, "Correct version number returned in scalar context");
 
     ok(chdir $cwd, "Able to change back to directory after testing");
 }
