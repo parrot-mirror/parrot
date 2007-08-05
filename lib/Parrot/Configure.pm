@@ -170,8 +170,6 @@ sub add_steps {
 
     $conf->{list_of_steps} = [ @new_steps ];
 
-#    foreach my $step (@new_steps) {
-#        $conf->add_step($step);
     for (my $i = 0; $i <= $#new_steps; $i++) {
         $conf->add_step($new_steps[$i]);
         $conf->{hash_of_steps}->{$new_steps[$i]} = $i + 1;
@@ -265,20 +263,6 @@ sub _run_this_step {
 
     # set per step verbosity
     if ( defined $args->{verbose_step} ) {
-
-#        # by step number
-#        if (
-#            $args->{verbose_step} =~ /^\d+$/
-#            &&
-#            $args->{n} == $args->{verbose_step}
-#        ) {
-#            $conf->options->set( verbose => 2 );
-#        }
-#
-#        # by description
-#        elsif ( $description =~ /$args->{verbose_step}/ ) {
-#            $conf->options->set( verbose => 2 );
-#        }
         if (
             (
                 # by step number
