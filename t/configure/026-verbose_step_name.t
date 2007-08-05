@@ -89,8 +89,8 @@ pass("Completed all tests in $0");
 The files in this directory test functionality used by F<Configure.pl>.
 
 The tests in this file examine what happens when you configure with the
-<--verbose-step> option set to match the description associated with step
-C<init::manifest>.
+<--verbose-step> option set to the name of a configuration step in
+C<some::step> format.
 
 =head1 AUTHOR
 
