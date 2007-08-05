@@ -10,7 +10,6 @@ use Carp;
 use lib qw( . lib ../lib ../../lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::init::optimize');
-use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
@@ -24,12 +23,9 @@ http://rt.perl.org/rt3//Ticket/Display.html?id=43151.
 
 =cut
 
-my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
     argv            => [],
-    script          => $0,
-    parrot_version  => $parrot_version,
-    svnid           => '$Id$',
+    mode            => q{configure},
 } );
 
 my $conf = Parrot::Configure->new();

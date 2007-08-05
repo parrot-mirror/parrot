@@ -13,7 +13,6 @@ use_ok('config::init::defaults');
 use_ok('config::init::install');
 use_ok('config::init::hints');
 use_ok('config::inter::progs');
-use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::IO::Capture::Mini;
@@ -29,12 +28,9 @@ determine a way to test a user response to a prompt.
 
 =cut
 
-my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
     argv            => [ q{--ask}, q{--debugging=0} ],
-    script          => $0,
-    parrot_version  => $parrot_version,
-    svnid           => '$Id$',
+    mode            => q{configure},
 } );
 
 my $conf = Parrot::Configure->new;

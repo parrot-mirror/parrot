@@ -11,19 +11,15 @@ use Data::Dumper;
 use lib qw( . lib ../lib ../../lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::inter::yacc');
-use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::IO::Capture::Mini;
 use Parrot::Configure::Test qw( test_step_thru_runstep);
 use Tie::Filehandle::Preempt::Stdin;
 
-my $parrot_version = Parrot::BuildUtil::parrot_version();
 my $args = process_options( {
     argv            => [ q{--ask}, q{--maintainer} ],
-    script          => $0,
-    parrot_version  => $parrot_version,
-    svnid           => '$Id$',
+    mode            => q{configure},
 } );
 
 my $conf = Parrot::Configure->new();

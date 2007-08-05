@@ -287,7 +287,6 @@ use strict;
 use warnings;
 use lib 'lib';
 
-use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Options::Test;
@@ -296,8 +295,6 @@ use Parrot::Configure::Messages qw(
     print_conclusion
 );
 use Parrot::Configure::Step::List qw( get_steps_list );
-
-my $parrot_version = Parrot::BuildUtil::parrot_version();
 
 $| = 1; # $OUTPUT_AUTOFLUSH = 1;
 
@@ -311,11 +308,12 @@ $| = 1; # $OUTPUT_AUTOFLUSH = 1;
 # warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # from Parrot::Configure::Options
+#my $args = process_options( {
+#    mode            => 'configure',
+#} );
 my $args = process_options( {
-    argv            => [ @ARGV ],
-    script          => $0,
-    parrot_version  => $parrot_version,
-    svnid           => '$Id$',
+    mode    => 'configure',
+    argv    => [ @ARGV ],
 } );
 exit(1) unless defined $args;
 
@@ -324,6 +322,7 @@ my $opttest = Parrot::Configure::Options::Test->new($args);
 # as command-line option
 $opttest->run_configure_tests();
 
+my $parrot_version = $Parrot::Configure::Options::Conf::parrot_version;
 # from Parrot::Configure::Messages
 print_introduction($parrot_version);
 
