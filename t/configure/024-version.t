@@ -30,8 +30,8 @@ my $errstr;
     # Case 5:  Valid version number
     make_VERSION_file(q{0.4.11});
     my ($pv, @pv);
-    @pv = Parrot::BuildUtil::parrot_version();
     $pv = Parrot::BuildUtil::parrot_version();
+    @pv = Parrot::BuildUtil::parrot_version();
     is($pv, q{0.4.11}, "Correct version number returned in scalar context");
     is_deeply(\@pv, [ 0, 4, 11 ],
         "Correct version number returned in scalar context");
