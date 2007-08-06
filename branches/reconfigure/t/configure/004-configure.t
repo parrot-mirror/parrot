@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 29;
+use Test::More tests => 30;
 use Carp;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::Configure;
@@ -88,6 +88,22 @@ REASON
     skip $reason, 1 if defined $res;
 
     eval { $conf->data()->slurp(); };
+    like($@,
+        qr/You cannot use --step until you have completed the full configure process/,
+        "Got expected error message when using --step option without prior completed configuration");
+}
+
+my $res  = eval "no strict; use Parrot::Config; \\%PConfig_Temp";
+SKIP: {
+    my $reason = <<REASON;
+If you have already completed configuration, 
+you can call Parrot::Configure::Data::slurp_temp().
+But here you are testing for that method's failure.
+REASON
+
+    skip $reason, 1 if defined $res;
+
+    eval { $conf->data()->slurp_temp(); };
     like($@,
         qr/You cannot use --step until you have completed the full configure process/,
         "Got expected error message when using --step option without prior completed configuration");
