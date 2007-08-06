@@ -93,7 +93,7 @@ REASON
         "Got expected error message when using --step option without prior completed configuration");
 }
 
-my $res  = eval "no strict; use Parrot::Config; \\%PConfig_Temp";
+$res  = eval "no strict; use Parrot::Config; \\%PConfig_Temp";
 SKIP: {
     my $reason = <<REASON;
 If you have already completed configuration, 
