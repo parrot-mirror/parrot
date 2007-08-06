@@ -1,12 +1,12 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id$
-# 02-data_slurp.t
+# $Id: 06-data_slurp_temp.t 20500 2007-08-05 20:49:59Z jkeenan $
+# 06-data_slurp_temp.t
 
 use strict;
 use warnings;
 
-use Test::More qw(no_plan); # tests => 29;
+use Test::More tests => 31;
 use Carp;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::Configure;
@@ -20,7 +20,7 @@ $| = 1;
 is($|, 1, "output autoflush is set");
 
 my $args = process_options( {
-    argv    => [ q{--step=inter::make} ],
+    argv    => [ q{--step=gen::makefiles}, q{--target=Makefile} ],
     mode    => q{reconfigure},
 } );
 ok(defined $args, "process_options returned successfully");
@@ -69,8 +69,8 @@ foreach my $k (@confsteps) {
 is($nontaskcount, 0, "Each step is a Parrot::Configure::Task object");
 
 $conf->options->set(%{$args});
-is($conf->options->{c}->{step}, 'inter::make',
-    "command-line option '--step=inter::make' has been stored in object");
+is($conf->options->{c}->{step}, 'gen::makefiles',
+    "command-line option '--step=gen::makefiles' has been stored in object");
 is($conf->options->{c}->{debugging}, 1,
     "command-line option '--debugging' has been stored in object");
 
@@ -88,6 +88,9 @@ REASON
     eval { $conf->data()->slurp(); };
     ok( (defined $@) && (! $@), "Parrot::Configure::slurp() succeeded");
 
+    eval { $conf->data()->slurp_temp(); };
+    ok( (defined $@) && (! $@), "Parrot::Configure::slurp_temp() succeeded");
+
     my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";
     my $ret = $conf->run_single_step( $args->{step} );
@@ -102,11 +105,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-02-data_slurp.t - test Parrot::Configure::Data::slurp() once configuration has been completed
+06-data_slurp_temp.t - test Parrot::Configure::Data::slurp() once configuration has been completed
 
 =head1 SYNOPSIS
 
-    % prove t/postconfigure/02-data_slurp.t
+    % prove t/postconfigure/06-data_slurp_temp.t
 
 =head1 DESCRIPTION
 
