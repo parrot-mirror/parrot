@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 31;
+use Test::More qw(no_plan); # tests => 31;
 use Carp;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::Configure;
@@ -71,6 +71,8 @@ is($nontaskcount, 0, "Each step is a Parrot::Configure::Task object");
 $conf->options->set(%{$args});
 is($conf->options->{c}->{step}, 'gen::makefiles',
     "command-line option '--step=gen::makefiles' has been stored in object");
+is($conf->options->{c}->{target}, 'Makefile',
+    "command-line option '--target=Makefiles' has been stored in object");
 is($conf->options->{c}->{debugging}, 1,
     "command-line option '--debugging' has been stored in object");
 
