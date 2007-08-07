@@ -9,8 +9,7 @@ use Carp;
 use Cwd;
 use Data::Dumper;
 use File::Temp qw( tempdir );
-#use Test::More tests => 10;
-use Test::More qw(no_plan);
+use Test::More tests => 12;
 use lib qw( . lib ../lib ../../lib );
 use_ok('Parrot::IO::Capture::Mini');
 use_ok(
@@ -53,6 +52,30 @@ ok(! scalar(@lines),
 }
 ok(! scalar(@lines),
     "Nothing captured because no pre-build tests were run.");
+
+$args = process_options(
+    {
+        argv            => [ q{--test=configure} ],
+        mode            => q{configure},
+    }
+);
+ok( defined $args,
+    "process_options() returned successfully when '--test=configure' was specified" );
+
+$opttest = Parrot::Configure::Options::Test->new($args);
+ok(defined $opttest, "Constructor returned successfully");
+
+$args = process_options(
+    {
+        argv            => [ q{--test=build} ],
+        mode            => q{configure},
+    }
+);
+ok( defined $args,
+    "process_options() returned successfully when '--test=build' was specified" );
+
+$opttest = Parrot::Configure::Options::Test->new($args);
+ok(defined $opttest, "Constructor returned successfully");
 
 pass("Completed all tests in $0");
 
