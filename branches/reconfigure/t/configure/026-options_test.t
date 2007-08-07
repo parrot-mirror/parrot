@@ -9,7 +9,7 @@ use Carp;
 use Cwd;
 use Data::Dumper;
 use File::Temp qw( tempdir );
-use Test::More tests => 12;
+use Test::More tests => 14;
 use lib qw( . lib ../lib ../../lib );
 use_ok('Parrot::IO::Capture::Mini');
 use_ok(
@@ -76,6 +76,20 @@ ok( defined $args,
 
 $opttest = Parrot::Configure::Options::Test->new($args);
 ok(defined $opttest, "Constructor returned successfully");
+
+my $badoption = q{foobar};
+$args = process_options(
+    {
+        argv            => [ qq{--test=$badoption} ],
+        mode            => q{configure},
+    }
+);
+ok( defined $args,
+    "process_options() returned successfully when '--test=$badoption' was specified" );
+
+eval { $opttest = Parrot::Configure::Options::Test->new($args); };
+like($@, qr/'$badoption' is a bad value/,
+    "Bad option to '--test' correctly detected");
 
 pass("Completed all tests in $0");
 
