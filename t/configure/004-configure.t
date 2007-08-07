@@ -90,10 +90,10 @@ REASON
     eval { $conf->data()->slurp(); };
     like($@,
         qr/You cannot use --step until you have completed the full configure process/,
-        "Got expected error message when using --step option without prior completed configuration");
+        "Got expected error message when using --step option and slurp() without prior completed configuration");
 }
 
-$res  = eval "no strict; use Parrot::Config; \\%PConfig_Temp";
+$res  = eval "no strict; use Parrot::Config::Generated; \\%PConfig_Temp";
 SKIP: {
     my $reason = <<REASON;
 If you have already completed configuration, 
@@ -106,7 +106,7 @@ REASON
     eval { $conf->data()->slurp_temp(); };
     like($@,
         qr/You cannot use --step until you have completed the full configure process/,
-        "Got expected error message when using --step option without prior completed configuration");
+        "Got expected error message when using --step option and slurp_temp() without prior completed configuration");
 }
 
 pass("Completed all tests in $0");
