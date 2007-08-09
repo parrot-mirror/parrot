@@ -46,8 +46,8 @@ Accepts no arguments and returns a L<Parrot::Configure::Step::> object.
 
 sub new {
     my $class = shift;
-
-    return bless {}, ref $class || $class;
+    my $data = (ref $class) ? ref $class : $class;
+    return bless {}, $data;
 }
 
 =back
@@ -101,7 +101,7 @@ This method also works as an object method.
 
 sub description {
     my $class = shift;
-    $class = ref $class || $class;
+    $class = (ref $class) ? ref $class : $class;
     {
         no strict 'refs';
         return ${ $class . "::description" };
@@ -119,7 +119,7 @@ This method also works as an object method.
 
 sub args {
     my $class = shift;
-    $class = ref $class || $class;
+    $class = (ref $class) ? ref $class : $class;
     {
         no strict 'refs';
         return @{ $class . "::args" };
