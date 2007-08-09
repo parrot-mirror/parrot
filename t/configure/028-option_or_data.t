@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More qw(no_plan); # tests => 30;
+use Test::More tests => 25;
 use Carp;
 use lib qw( . lib ../lib ../../lib );
 use_ok('config::init::defaults');
