@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: 06-data_slurp_temp.t 20500 2007-08-05 20:49:59Z jkeenan $
+# $Id$
 # 06-data_slurp_temp.t
 
 use strict;
