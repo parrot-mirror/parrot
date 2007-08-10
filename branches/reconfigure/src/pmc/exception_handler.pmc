@@ -70,20 +70,20 @@ Initializes the exception handler.
      */
 
     void destroy() {
-        struct Parrot_cont * cc = PMC_cont(SELF);
+        struct Parrot_cont *cc = PMC_cont(SELF);
         if (cc) {
             mem_sys_free(cc);
             PMC_struct_val(SELF) = NULL;
         }
     }
 
-    PMC* clone() {
+    PMC *clone() {
         PMC *result = SUPER();
         PObj_custom_mark_CLEAR(result);
         return result;
     }
 
-    opcode_t* invoke(void* ex) {
+    opcode_t *invoke(void *ex) {
         struct Parrot_cont *cc        = PMC_cont(SELF);
         PMC                *exception = (PMC *)ex;
         opcode_t           *next      = NULL;
