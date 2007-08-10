@@ -36,7 +36,8 @@ Overrides the default to do nothing.
     void init() {
     }
 
-    void* get_pointer() {
+    PARROT_CAN_RETURN_NULL
+    void *get_pointer() {
         return PMCNULL;
     }
 
@@ -44,7 +45,7 @@ Overrides the default to do nothing.
         PMCNULL = (PMC *)p;
     }
 
-    INTVAL does(STRING* what) {
+    INTVAL does(STRING *what) {
         /* XXX maybe a hack to get TGE running again */
         return 0;
     }

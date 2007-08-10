@@ -97,8 +97,17 @@ sub decl {
     my $meth    = $self->name;
     my $args    = $self->parameters;
     my $ro      = $pmc->flag('is_ro') ? '' : '';
+    my $decs    = $self->decorators;
+
+    # convert 'type*' to 'type *' per PDD07
+    $ret =~ s/^(.*)\s*(\*)$/$1 $2/;
+
+    # convert args to PDD07
     $args = ", $args" if $args =~ /\S/;
-    my ( $export, $extern, $newl, $semi, $interp, $pmcvar );
+    $args =~ s/(\w+)\s*(\*)\s*/$1 $2/g;
+
+    my ( $decorators, $export, $extern, $newl, $semi, $interp, $pmcvar );
+    $decorators = length @$decs ? join $/ => @$decs, '' : '';
     if ($for_header eq 'HEADER') {
         $export = $pmc->is_dynamic ? 'PARROT_DYNEXT_EXPORT ' : 'PARROT_API ';
         $extern = "extern ";
@@ -112,10 +121,11 @@ sub decl {
         $newl   = "\n";
         $semi   = "";
         $interp = 'interp';
-        $pmcvar    = ' pmc';
+        $pmcvar    = 'pmc';
     }
+
     return <<"EOC";
-$export$extern$ret${newl}Parrot_${pmcname}${ro}_$meth(PARROT_INTERP, PMC*$pmcvar$args)$semi
+$decorators$export$extern$ret${newl}Parrot_${pmcname}${ro}_$meth(PARROT_INTERP, PMC *$pmcvar$args)$semi
 EOC
 }
 
@@ -137,20 +147,30 @@ my %calltype = (
     "FLOATVAL" => "N",
     "double"   => "d",
     "STRING*"  => "S",
+    "STRING *" => "S",
     "char*"    => "t",
+    "char *"   => "t",
     "PMC*"     => "P",
+    "PMC *"    => "P",
     "short*"   => "2",
+    "short *"  => "2",
     "int*"     => "3",
+    "int *"    => "3",
     "long*"    => "4",
+    "long *"   => "4",
     "void"     => "v",
     "void*"    => "b",
+    "void *"   => "b",
     "void**"   => "B",
+    "void **"  => "B",
 
-    #"BIGNUM*" => "???" # XXX
+    #"BIGNUM*" => "???" # RT#43731
+    #"BIGNUM *"=> "???" # RT#43731
 );
 
 sub proto {
     my ( $type, $parameters ) = @_;
+
 
     # reduce to a comma separated set of types
     $parameters =~ s/\w+(,|$)/,/g;
@@ -160,9 +180,10 @@ sub proto {
     my $ret = $calltype{ $type or "void" };
     $ret .= "JO" . join( '', map { $calltype{$_} or "?" } split( /,/, $parameters ) );
 
-    # TODO
+    # RT#43733
     # scan src/call_list.txt if the generated signature is available
-    # TODO report errors for "?"
+
+    # RT#43735 report errors for "?"
     # --leo
 
     return $ret;

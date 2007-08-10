@@ -70,6 +70,7 @@ sub parse_pmc {
     my $lineno = count_newlines($preamble) + $chewed_lines + 1; #the +1 puts us on the current line
     my $class_init;
 
+    # backreferences here are all +1 because below the qr is wrapped in quotes
     my $signature_re = qr{
         ^
         (?:
@@ -77,10 +78,14 @@ sub parse_pmc {
           (?:/\*.*?\*/)?      #C comments
         )*
 
-        ((?:PCC)?METHOD\s+)?  #method flag
+        ((?:PARROT_\w+\s+)+)? #decorators
 
-        (\w+\**)              #return type
-        \s+
+        # no return type for PCCMETHOD
+        (
+          (PCC)?METHOD\s+)?   #method marker
+          (?(4) | (\w+\s*?\**) #return type
+        )
+        \s*
         (\w+)                 #method name
         \s*
         \( ([^\(]*) \)        #parameters
@@ -91,13 +96,20 @@ sub parse_pmc {
 
     while ( $pmcbody =~ s/($signature_re)// ) {
         $lineno += count_newlines($1);
-        my ( $marker, $return_type, $methodname, $parameters, $attrs)
-            = ( $2, $3, $4, $5, parse_method_attrs($6));
+        my ( $decorators, $marker, $pcc, $return_type, $methodname, $parameters, $attrs)
+            = ( $2, $3, $4, $5, $6, $7, parse_method_attrs($8));
+
         ( my $methodblock, $pmcbody ) = extract_balanced($pmcbody);
         $methodblock = strip_outer_brackets($methodblock);
         $methodblock =~ s/^[ ]{4}//mg; #remove pmclass 4 space indent
         $methodblock =~ s/\n\s+$/\n/g; #trim trailing whitespace from lastline
 
+        $decorators ||= '';
+        $decorators =~ s/^\s*(.*?)\s*$/$1/s;
+        $decorators = [split /\s+/ => $decorators];
+
+        $return_type = 'void'
+            if defined $pcc;
 
         my $method = Parrot::Pmc2c::Method->new( {
             name        => $methodname,
@@ -107,6 +119,7 @@ sub parse_pmc {
             parameters  => $parameters,
             type        => Parrot::Pmc2c::Method::VTABLE,
             attrs       => $attrs,
+            decorators  => $decorators,
         });
 
         #PCCMETHOD needs FixedIntegerArray header

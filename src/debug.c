@@ -313,7 +313,7 @@ parse_command(NOTNULL(const char *command), NOTNULL(unsigned long *cmdP))
     }
 
     for (i = 0; *command && isalpha((unsigned char) *command); command++, i++)
-        c += (tolower((int) *command) + (i + 1)) * ((i + 1) * 255);
+        c += (tolower((unsigned char) *command) + (i + 1)) * ((i + 1) * 255);
 
     /* Nonempty and did not start with a letter */
     if (c == 0)
@@ -480,6 +480,8 @@ PDB_run_command(PARROT_INTERP, NOTNULL(const char *command))
 
     if (command)
         skip_command(command);
+    else
+        return 0;
 
     switch (c) {
         case c_script_file:

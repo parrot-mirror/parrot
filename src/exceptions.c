@@ -48,8 +48,9 @@ static size_t dest2offset( PARROT_INTERP, NOTNULL(const opcode_t *dest) )
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static PMC * find_exception_handler( PARROT_INTERP, PMC *exception )
-        __attribute__nonnull__(1);
+static PMC * find_exception_handler( PARROT_INTERP, NOTNULL(PMC *exception) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 static void run_cleanup_action( PARROT_INTERP, NOTNULL(Stack_Entry_t *e) )
         __attribute__nonnull__(1)
@@ -241,7 +242,7 @@ Find the exception handler for C<exception>.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC *
-find_exception_handler(PARROT_INTERP, PMC *exception)
+find_exception_handler(PARROT_INTERP, NOTNULL(PMC *exception))
 {
     char *m;
     int exit_status, print_location;
@@ -461,8 +462,8 @@ rethrow_c_exception(PARROT_INTERP)
 {
     Parrot_exception * const the_exception = interp->exceptions;
 
-    PMC * const exception = NULL;   /* TODO */
-    PMC * const handler = find_exception_handler(interp, exception);
+    PMC * const exception = PMCNULL;   /* TODO */
+    PMC * const handler   = find_exception_handler(interp, exception);
 
     /* XXX we should only peek for the next handler */
     push_exception(interp, handler);
@@ -771,7 +772,7 @@ Parrot_confess(NOTNULL(const char *cond), NOTNULL(const char *file), unsigned in
 {
     fprintf(stderr, "%s:%u: failed assertion '%s'\n", file, line, cond);
     Parrot_print_backtrace();
-    exit(EXIT_FAILURE);
+    abort();
 }
 
 void
@@ -787,7 +788,7 @@ Parrot_print_backtrace(void)
     int ident;
     char *caller;
     size_t callerLength;
-    int j;
+    size_t j;
 #  endif
 
     const size_t size = backtrace (array, BACKTRACE_DEPTH);

@@ -61,71 +61,24 @@ sub try_attr {
     $verbose and print "trying attribute '$attr'$/";
 
     my $cc = $conf->option_or_data( 'cc' );
-    $verbose and print "  cc: $cc$/";
-
-    if ( $cc =~ /gcc/ ) {
-        cc_gen('config/auto/gcc/test_c.in');
-    }
-    elsif ( $cc eq 'cl' ) {
-        cc_gen('config/auto/msvc/test_c.in');
-    }
+    cc_gen('config/auto/attributes/test_c.in');
 
     my $ccflags = $conf->option_or_data( 'ccflags');
-
     my $tryflags = "$ccflags -D$attr";
 
-    # These are OK to fail, becuase we're trying them out.
+    # These are OK to fail, because we're trying them out.
     my $command_line = "$cc -o test -Iinclude $tryflags test.c";
     $verbose and print "  ", $command_line, $/;
-    my $exit_code = Parrot::Configure::Step::_run_command( $command_line, 'test.cco', 'test.cco' );
+
+    my $exit_code = Parrot::Configure::Step::_run_command(
+        $command_line, 'test.cco', 'test.cco' );
     $verbose and print "  exit code: $exit_code$/";
 
     return if $exit_code;
 
-    my %eval = eval cc_run();
-    return if !%eval;
-
     $conf->data->set( ccflags => $tryflags );
 
     return;
-}
-
-sub blerugh {
-    my ( $self, $conf, $attr ) = @_;
-
-    my $verbose = $conf->options->get('verbose');
-    if ( 0 ) {
-        my $hints_used = 0;
-
-        my $hints = "init::hints::" . lc($^O);
-
-        print "[ $hints " if $verbose;
-
-        eval "use $hints";
-        die $@ if $@;
-
-        # Call the runstep method if it exists.
-        # Otherwise the step must have done
-        # its work when it was loaded.
-        $hints->runstep( $conf, @_ ) if $hints->can('runstep');
-        $hints_used++;
-
-        $hints = "init::hints::local";
-        print "$hints " if $verbose;
-        eval "use $hints";
-        unless ($@) {
-            $hints->runstep( $conf, @_ ) if $hints->can('runstep');
-            $hints_used++;
-        }
-
-        if ( $hints_used == 0 ) {
-            print "(no hints) " if $verbose;
-        }
-
-        print "]" if $verbose;
-    }
-
-    return $self;
 }
 
 1;
