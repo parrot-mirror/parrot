@@ -308,9 +308,6 @@ $| = 1; # $OUTPUT_AUTOFLUSH = 1;
 # warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # from Parrot::Configure::Options
-#my $args = process_options( {
-#    mode            => 'configure',
-#} );
 my $args = process_options( {
     mode    => 'configure',
     argv    => [ @ARGV ],
