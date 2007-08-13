@@ -96,11 +96,18 @@ token block {
 }
 
 token noun {
+    | <colonpair> {*}                                      #= colonpair
     | <variable> {*}                                       #= variable
     | <quote> {*}                                          #= quote
     | <number> {*}                                         #= number
     | <subcall> {*}                                        #= subcall
 }
+
+
+token colonpair {
+    | ':' <ident> [ '(' <EXPR> ')' ] {*}
+}
+
 
 token term {
     <noun>
@@ -142,8 +149,11 @@ proto 'term:' is precedence('z=')
     is parsed(&term)
     { ... }
 
-proto postcircumfix:<( )> is equiv('term:') { ... }
-
 proto infix:<+> is looser('term:')
     is pirop('add')
+    { ... }
+
+proto infix:<,> 
+    is assoc('list')
+    is looser(infix:<+>) 
     { ... }

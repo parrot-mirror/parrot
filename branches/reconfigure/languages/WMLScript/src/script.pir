@@ -1,6 +1,6 @@
 
-.sub '_init_script'
-#    print "_init_script (script.pir)\n"
+.sub '__onload' :anon :load
+#    print "__onload (script.pir)\n"
     $P0 = subclass 'Hash', 'Wmls::Script'
     $P0 = subclass 'Array', 'Wmls::Constants'
     $P0 = subclass 'Integer', 'Wmls::ConstantInteger'
@@ -97,7 +97,7 @@
 
 .sub '__onload' :load :anon
 
-  $P0 = get_global '@stdlibs'
+  $P0 = get_hll_global '@stdlibs'
   unless null $P0 goto L1
   load_bytecode 'languages/WMLScript/src/WMLScript.pbc'
 L1:
@@ -180,7 +180,7 @@ PIRCODE
     pir .= $S0
     pir .= "\n  new const"
     pir .= $S0
-    pir .= ", .WmlsInteger\n  set const"
+    pir .= ", 'WmlsInteger'\n  set const"
     pir .= $S0
     pir .= ", "
     $S0 = self
@@ -204,7 +204,7 @@ PIRCODE
     pir .= $S0
     pir .= "\n  new const"
     pir .= $S0
-    pir .= ", .WmlsFloat\n  set const"
+    pir .= ", 'WmlsFloat'\n  set const"
     pir .= $S0
     pir .= ", "
     $S0 = self
@@ -232,7 +232,7 @@ PIRCODE
     pir .= $S0
     pir .= "\n  new const"
     pir .= $S0
-    pir .= ", .WmlsString\n  set const"
+    pir .= ", 'WmlsString'\n  set const"
     pir .= $S0
     pir .= ", unicode:\""
     $S0 = self
@@ -256,7 +256,9 @@ PIRCODE
     pir .= $S0
     pir .= "\n  new const"
     pir .= $S0
-    pir .= ", .WmlsString, ''\n"
+    pir .= ", 'WmlsString'\n  set const"
+    pir .= $S0
+    pir .= ", ''\n"
     .return (pir)
 .end
 
@@ -279,7 +281,7 @@ PIRCODE
     pir .= $S0
     pir .= "\n  new const"
     pir .= $S0
-    pir .= ", .WmlsString\n  set const"
+    pir .= ", 'WmlsString'\n  set const"
     pir .= $S0
     pir .= ", \""
     $S0 = self
@@ -413,7 +415,7 @@ PIRCODE
     pir .= " = 'function"
     $S0 = function_index
     pir .= $S0
-    pir .= "'\n  set_global '"
+    pir .= "'\n  set_hll_global '"
     pir .= namespace
     pir .= ":"
     pir .= function_name
@@ -541,7 +543,7 @@ PIRCODE
   L6:
 
     unless number_of_local_variables goto L7
-    pir .= "  new $P0, .WmlsString, ''\n"
+    pir .= "  new $P0, 'WmlsString'\n  set $P0, ''\n"
   L7:
     unless idx < number_of_variables goto L8
     pir .= "  local"
@@ -558,7 +560,8 @@ PIRCODE
     pir .= $S0
 
     pir .= <<'PIRCODE'
-  new $P0, .WmlsString, ''
+  new $P0, 'WmlsString'
+  set $P0, ''
   .return ($P0)
 .end
 PIRCODE
