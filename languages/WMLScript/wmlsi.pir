@@ -35,8 +35,6 @@ Francois Perrad.
     .local string filename
     .local string entryname
     .local string content
-    _init_script()
-    _init_lib()
     argc = elements argv
     if argc < 3 goto USAGE
     progname = shift argv
@@ -46,7 +44,7 @@ Francois Perrad.
     unless content goto L1
     .local pmc loader
     .local pmc script
-    new loader, .WmlsBytecode
+    new loader, 'WmlsBytecode'
     push_eh _handler
     script = loader.load(content)
     script['filename'] = filename
@@ -56,14 +54,14 @@ Francois Perrad.
     .local pmc pbc_out
     pir_comp = compreg 'PIR'
     pbc_out = pir_comp(gen_pir)
-    $S0 = save_pbc(pbc_out, filename)
-    load_bytecode $S0
+    $P0 = pbc_out[0]    # __onload
+    $P0()
     .local pmc params
-    params = new .ResizablePMCArray
+    new params, 'ResizablePMCArray'
   L2:
     unless argv goto L3
     $S0 = shift argv
-    new $P0, .WmlsString
+    new $P0, 'WmlsString'
     $P0 = $S0
     push params, $P0
     goto L2
@@ -72,7 +70,12 @@ Francois Perrad.
     $S0 = filename
     $S0 .= ':'
     $S0 .= entryname
-    entry = get_global $S0
+    entry = get_hll_global $S0
+    unless null entry goto L4
+    print $S0
+    print " not found.\n"
+    end
+  L4:
     entry(params :flat)
     end
   _handler:

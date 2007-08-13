@@ -33,7 +33,6 @@ Francois Perrad.
     .local string progname
     .local string filename
     .local string content
-    _init_script()
     argc = elements argv
     if argc != 2 goto USAGE
     progname = shift argv
@@ -42,7 +41,7 @@ Francois Perrad.
     unless content goto L1
     .local pmc loader
     .local pmc script
-    new loader, .WmlsBytecode
+    new loader, 'WmlsBytecode'
     push_eh _handler
     script = loader.load(content)
     script['filename'] = filename

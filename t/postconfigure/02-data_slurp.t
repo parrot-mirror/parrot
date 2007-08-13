@@ -74,7 +74,7 @@ is($conf->options->{c}->{step}, 'inter::make',
 is($conf->options->{c}->{debugging}, 1,
     "command-line option '--debugging' has been stored in object");
 
-my $res  = eval "no strict; use Parrot::Config; \\%PConfig";
+my $res  = eval "no strict; use Parrot::Config::Generated; \\%PConfig";
 SKIP: {
     my $reason = <<REASON;
 If you have already completed configuration, 
