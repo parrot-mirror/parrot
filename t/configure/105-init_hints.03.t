@@ -48,8 +48,8 @@ my $cwd = cwd();
     my $tdir = tempdir( CLEANUP => 1 );
     File::Path::mkpath( qq{$tdir/init/hints} )
         or croak "Unable to create directory for local hints";
-    my $localhints = q{local.pm};
-    open my $FH, '>', qq{$tdir/init/hints/local.pm}
+    my $localhints = qq{$tdir/local.pm};
+    open my $FH, '>', $localhints
         or croak "Unable to open temp file for writing";
     print $FH <<END;
 package init::hints::local;
@@ -70,6 +70,7 @@ END
         ok(@more_lines, "verbose output:  hints were captured");
         ok(defined $ret, "$step_name runstep() returned defined value");
     }
+    unlink $localhints or croak "Unable to delete $localhints";
 }
 
 pass("Completed all tests in $0");
