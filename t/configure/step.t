@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 29;
+use Test::More tests => 30;
 use Carp;
 use Cwd;
 use File::Basename qw(basename dirname);
@@ -167,6 +167,26 @@ my $cwd = cwd();
         $dummy            => 'CFLAGS',
         makefile          => 1,
     ), "genfile() returned true value with 'makefile' option");
+    unlink $dummy or croak "Unable to delete file after testing";
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $dummy = 'dummy';
+    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
+    print $IN qq{Hello world\n};
+    close $IN or croak "Unable to close temp file";
+    eval {
+        genfile(
+            $dummy            => 'CFLAGS',
+            makefile          => 1,
+            comment_type      => q{<!--},
+        );
+    };
+    like($@, qr/^Unknown comment type/,
+        "genfile() failed due to unrecognized comment type with expected message");
     unlink $dummy or croak "Unable to delete file after testing";
     chdir $cwd or croak "Unable to change back to starting directory";
 }
