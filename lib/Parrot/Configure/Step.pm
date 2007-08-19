@@ -283,7 +283,7 @@ sub genfile {
     }
 
     # this loop can not be implemented as a foreach loop as the body
-    # is dependant on <IN> being evaluated lazily
+    # is dependent on <IN> being evaluated lazily
 
     while ( my $line = <$in> ) {
 
