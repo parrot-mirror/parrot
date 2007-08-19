@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 31;
+use Test::More tests => 33;
 use Carp;
 use Cwd;
 use File::Basename qw(basename dirname);
@@ -203,6 +203,33 @@ my $cwd = cwd();
         makefile        => 1,
         feature_file    => 0,
     ), "genfile() returned true value with false value for 'feature_file' option");
+    unlink $dummy or croak "Unable to delete file after testing";
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $dummy = 'dummy';
+    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
+    print $IN q{#perl\nuse strict;\n$something = 'something';\n};
+    print $IN <<'END_DUMMY';
+#perl
+if (@miniparrot@) { sprint "Hello world\n"; }
+END_DUMMY
+    close $IN or croak "Unable to close temp file";
+    my $tie_err = tie *STDERR, "Parrot::IO::Capture::Mini"
+        or croak "Unable to tie";
+    eval {
+        genfile(
+            $dummy          => 'CFLAGS',
+            feature_file    => 1,
+        );
+    };
+    my @lines = $tie_err->READLINE;
+    ok(@lines, "Error message caught");
+    ok($@, "Bad Perl code caught by genfile()");
+
     unlink $dummy or croak "Unable to delete file after testing";
     chdir $cwd or croak "Unable to change back to starting directory";
 }
