@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 33;
+use Test::More tests => 35;
 use Carp;
 use Cwd;
 use File::Basename qw(basename dirname);
@@ -229,6 +229,25 @@ END_DUMMY
     my @lines = $tie_err->READLINE;
     ok(@lines, "Error message caught");
     ok($@, "Bad Perl code caught by genfile()");
+
+    unlink $dummy or croak "Unable to delete file after testing";
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $dummy = 'dummy';
+    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
+    print $IN q{@foobar@\n};
+    close $IN or croak "Unable to close temp file";
+    my $tie_err = tie *STDERR, "Parrot::IO::Capture::Mini"
+        or croak "Unable to tie";
+    ok(genfile( $dummy => 'CFLAGS' ),
+        "genfile() returned true when warning expected");
+    my $line = $tie_err->READLINE;
+    like($line, qr/value for 'foobar'/,
+        "got expected warning");
 
     unlink $dummy or croak "Unable to delete file after testing";
     chdir $cwd or croak "Unable to change back to starting directory";
