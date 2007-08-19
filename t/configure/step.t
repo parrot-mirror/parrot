@@ -5,10 +5,11 @@
 use strict;
 use warnings;
 
-use Test::More qw(no_plan); # tests => 22;
+use Test::More tests => 29;
 use Carp;
+use Cwd;
 use File::Basename qw(basename dirname);
-use File::Temp 0.13 qw/tempfile/;
+use File::Temp 0.13 qw/ tempfile tempdir /;
 use File::Spec;
 use IO::Handle;
 use lib qw( . lib ../lib ../../lib );
@@ -31,11 +32,12 @@ is( integrate( 1,     undef ), 1,     "integrate(1, undef)" );
 is( integrate( 1,     2 ),     2,     "integrate(1, 1)" );
 is( integrate( 1, q{ }), 1, 'integrate(1, [empty string])' );
 
-# reopn STDIN to test prompt()
+# prompt()
+# Tests in t/configure/1??-inter-*.t do a good job of testing prompt().
+# They leave only one condition to be tested here.
 
-my (@prompts, $object, @entered);
-@prompts = ( q{} );
-$object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
+my @prompts = ( q{} );
+my $object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
 can_ok('Tie::Filehandle::Preempt::Stdin', ('READLINE'));
 isa_ok($object, 'Tie::Filehandle::Preempt::Stdin');
 my $cc = q{gcc-3.3};
@@ -51,6 +53,13 @@ $object = undef;
 untie *STDIN;
 
 # file_checksum(), not exported
+
+my $nonexistent = q{foobar};
+eval {
+    my $sum = Parrot::Configure::Step::file_checksum($nonexistent);
+};
+like($@, qr/Can't open $nonexistent/, #'
+    "Got expected error message when trying to get checksum on non-existent file");
 
 {
     my ( $tmpfile, $fname ) = tempfile( UNLINK => 1 );
@@ -135,6 +144,32 @@ untie *STDIN;
 }
 
 # genfile()
+
+$nonexistent = 'config/gen/makefiles/foobar';
+eval {
+    genfile(
+        $nonexistent    => 'CFLAGS',
+        comment_type    => '#',
+    );
+};
+like($@, qr/Can't open $nonexistent/, #'
+    "Got expected error message when non-existent file provided as argument to genfile().");
+
+my $cwd = cwd();
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $dummy = 'dummy';
+    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
+    print $IN qq{Hello world\n};
+    close $IN or croak "Unable to close temp file";
+    ok( genfile(
+        $dummy            => 'CFLAGS',
+        makefile          => 1,
+    ), "genfile() returned true value with 'makefile' option");
+    unlink $dummy or croak "Unable to delete file after testing";
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
 
 # _run_command()
 
