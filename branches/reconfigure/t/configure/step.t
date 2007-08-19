@@ -5,28 +5,15 @@
 use strict;
 use warnings;
 
-use lib qw( . lib ../lib ../../lib );
-
-use Test::More tests => 22;
-
+use Test::More qw(no_plan); # tests => 22;
+use Carp;
 use File::Basename qw(basename dirname);
 use File::Temp 0.13 qw/tempfile/;
 use File::Spec;
 use IO::Handle;
-
-=head1 NAME
-
-t/configure/step.t - tests Parrot::Configure::Step
-
-=head1 SYNOPSIS
-
-    prove t/configure/step.t
-
-=head1 DESCRIPTION
-
-Regression tests for the L<Parrote::Configure::Step> module.
-
-=cut
+use lib qw( . lib ../lib ../../lib );
+use Parrot::IO::Capture::Mini;
+use Tie::Filehandle::Preempt::Stdin;
 
 BEGIN { use_ok('Parrot::Configure::Step'); }
 
@@ -45,6 +32,23 @@ is( integrate( 1,     2 ),     2,     "integrate(1, 1)" );
 is( integrate( 1, q{ }), 1, 'integrate(1, [empty string])' );
 
 # reopn STDIN to test prompt()
+
+my (@prompts, $object, @entered);
+@prompts = ( q{} );
+$object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
+can_ok('Tie::Filehandle::Preempt::Stdin', ('READLINE'));
+isa_ok($object, 'Tie::Filehandle::Preempt::Stdin');
+my $cc = q{gcc-3.3};
+{
+    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
+        or croak "Unable to tie";
+    my $rv = prompt( "What C compiler do you want to use?", $cc );
+    my @lines = $tie_out->READLINE;
+    ok(@lines, "prompts were captured");
+    is($rv, $cc, "Empty response to prompt led to expected return value");
+}
+$object = undef;
+untie *STDIN;
 
 # file_checksum(), not exported
 
@@ -190,6 +194,22 @@ is( integrate( 1, q{ }), 1, 'integrate(1, [empty string])' );
     $tmpfile->flush;
     is( Parrot::Configure::Step::_slurp($fname), "foo" x 1000, "_slurp() slurped the file" );
 }
+
+################### DOCUMENTATION ###################
+
+=head1 NAME
+
+t/configure/step.t - tests Parrot::Configure::Step
+
+=head1 SYNOPSIS
+
+    prove t/configure/step.t
+
+=head1 DESCRIPTION
+
+Regression tests for the L<Parrote::Configure::Step> module.
+
+=cut
 
 # Local Variables:
 #   mode: cperl
