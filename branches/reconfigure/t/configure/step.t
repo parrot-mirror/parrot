@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 35;
+use Test::More tests => 36;
 use Carp;
 use Cwd;
 use File::Basename qw(basename dirname);
@@ -248,6 +248,26 @@ END_DUMMY
     my $line = $tie_err->READLINE;
     like($line, qr/value for 'foobar'/,
         "got expected warning");
+
+    unlink $dummy or croak "Unable to delete file after testing";
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $dummy = 'dummy';
+    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
+    print $IN q{This line ends in a slash/}, qq{\n};
+    close $IN or croak "Unable to close temp file";
+    eval {
+        genfile(
+            $dummy          => 'CFLAGS',
+            replace_slashes => 1,
+        );
+    };
+    like($@, qr//,
+        "genfile() died as expected with replace_slashes option and line ending in trailing slash");
 
     unlink $dummy or croak "Unable to delete file after testing";
     chdir $cwd or croak "Unable to change back to starting directory";
