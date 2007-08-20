@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 36;
+use Test::More tests => 40;
 use Carp;
 use Cwd;
 use File::Basename qw(basename dirname);
@@ -24,6 +24,9 @@ can_ok( __PACKAGE__, @Parrot::Configure::Step::EXPORT_OK );
 
 # RT#44455 add verbose tests with some Test::Warn like mechanism
 
+my $cwd = cwd();
+my (@prompts, $object, $cc, $nonexistent, $command);
+
 # integrate()
 
 is( integrate( undef, undef ), undef, "integrate(undef, undef)" );
@@ -36,11 +39,11 @@ is( integrate( 1, q{ }), 1, 'integrate(1, [empty string])' );
 # Tests in t/configure/1??-inter-*.t do a good job of testing prompt().
 # They leave only one condition to be tested here.
 
-my @prompts = ( q{} );
-my $object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
+@prompts = ( q{} );
+$object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
 can_ok('Tie::Filehandle::Preempt::Stdin', ('READLINE'));
 isa_ok($object, 'Tie::Filehandle::Preempt::Stdin');
-my $cc = q{gcc-3.3};
+$cc = q{gcc-3.3};
 {
     my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";
@@ -51,10 +54,11 @@ my $cc = q{gcc-3.3};
 }
 $object = undef;
 untie *STDIN;
+untie *STDOUT;
 
 # file_checksum(), not exported
 
-my $nonexistent = q{foobar};
+$nonexistent = q{foobar};
 eval {
     my $sum = Parrot::Configure::Step::file_checksum($nonexistent);
 };
@@ -155,7 +159,6 @@ eval {
 like($@, qr/Can't open $nonexistent/, #'
     "Got expected error message when non-existent file provided as argument to genfile().");
 
-my $cwd = cwd();
 {
     my $tdir = tempdir( CLEANUP => 1 );
     chdir $tdir or croak "Unable to change to temporary directory";
@@ -233,6 +236,7 @@ END_DUMMY
     unlink $dummy or croak "Unable to delete file after testing";
     chdir $cwd or croak "Unable to change back to starting directory";
 }
+untie *STDERR;
 
 {
     my $tdir = tempdir( CLEANUP => 1 );
@@ -252,6 +256,7 @@ END_DUMMY
     unlink $dummy or croak "Unable to delete file after testing";
     chdir $cwd or croak "Unable to change back to starting directory";
 }
+untie *STDERR;
 
 {
     my $tdir = tempdir( CLEANUP => 1 );
@@ -274,6 +279,67 @@ END_DUMMY
 }
 
 # _run_command()
+
+$command = q{echo Hello world};
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $out = q{out};
+    my $err = q{err};
+    my $verbose = 0;
+    my $rv = Parrot::Configure::Step::_run_command(
+        $command, $out, $err, $verbose);
+    is($rv, 0, "Got expected exit code of 0");
+    
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+$command = q{echo Hello world};
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $out = q{out};
+    my $err = q{err};
+    my $verbose = 1;
+#    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
+#        or croak "Unable to tie";
+    my $rv = Parrot::Configure::Step::_run_command(
+        $command, $out, $err, $verbose);
+    is($rv, 0, "Got expected exit code of 0");
+#    my @lines = $tie_out->READLINE;
+#    ok(@lines, "verbose output was captured");
+    
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+untie *STDOUT;
+
+$command = q{echo Hello world};
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $out = q{out};
+    my $err = $out;
+    my $verbose = 0;
+    my $rv = Parrot::Configure::Step::_run_command(
+        $command, $out, $err, $verbose);
+    is($rv, 0, "Got expected exit code of 0");
+    
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+$command = q{echo Hello world};
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $out = q{out};
+    my $err = q{/dev/null};
+    my $verbose = 0;
+    my $rv = Parrot::Configure::Step::_run_command(
+        $command, $out, $err, $verbose);
+    is($rv, 0, "Got expected exit code of 0");
+    
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
 
 # cc_gen()
 
