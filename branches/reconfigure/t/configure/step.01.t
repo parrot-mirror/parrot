@@ -5,13 +5,12 @@
 use strict;
 use warnings;
 
-use Test::More tests => 40;
+use Test::More tests => 27;
 use Carp;
 use Cwd;
 use File::Basename qw(basename dirname);
-use File::Temp 0.13 qw/ tempfile tempdir /;
+use File::Temp 0.13 qw/ tempfile /;
 use File::Spec;
-use IO::Handle;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::IO::Capture::Mini;
 use Tie::Filehandle::Preempt::Stdin;
@@ -147,200 +146,6 @@ like($@, qr/Can't open $nonexistent/, #'
     close *OLDERR;
 }
 
-# genfile()
-
-$nonexistent = 'config/gen/makefiles/foobar';
-eval {
-    genfile(
-        $nonexistent    => 'CFLAGS',
-        comment_type    => '#',
-    );
-};
-like($@, qr/Can't open $nonexistent/, #'
-    "Got expected error message when non-existent file provided as argument to genfile().");
-
-{
-    my $tdir = tempdir( CLEANUP => 1 );
-    chdir $tdir or croak "Unable to change to temporary directory";
-    my $dummy = 'dummy';
-    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
-    print $IN qq{Hello world\n};
-    close $IN or croak "Unable to close temp file";
-    ok( genfile(
-        $dummy            => 'CFLAGS',
-        makefile          => 1,
-    ), "genfile() returned true value with 'makefile' option");
-    unlink $dummy or croak "Unable to delete file after testing";
-    chdir $cwd or croak "Unable to change back to starting directory";
-}
-
-{
-    my $tdir = tempdir( CLEANUP => 1 );
-    chdir $tdir or croak "Unable to change to temporary directory";
-    my $dummy = 'dummy';
-    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
-    print $IN qq{Hello world\n};
-    close $IN or croak "Unable to close temp file";
-    eval {
-        genfile(
-            $dummy            => 'CFLAGS',
-            makefile          => 1,
-            comment_type      => q{<!--},
-        );
-    };
-    like($@, qr/^Unknown comment type/,
-        "genfile() failed due to unrecognized comment type with expected message");
-    unlink $dummy or croak "Unable to delete file after testing";
-    chdir $cwd or croak "Unable to change back to starting directory";
-}
-
-{
-    my $tdir = tempdir( CLEANUP => 1 );
-    chdir $tdir or croak "Unable to change to temporary directory";
-    my $dummy = 'dummy';
-    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
-    print $IN qq{#perl Hello world\n};
-    close $IN or croak "Unable to close temp file";
-    ok( genfile(
-        $dummy          => 'CFLAGS',
-        makefile        => 1,
-        feature_file    => 0,
-    ), "genfile() returned true value with false value for 'feature_file' option");
-    unlink $dummy or croak "Unable to delete file after testing";
-    chdir $cwd or croak "Unable to change back to starting directory";
-}
-
-{
-    my $tdir = tempdir( CLEANUP => 1 );
-    chdir $tdir or croak "Unable to change to temporary directory";
-    my $dummy = 'dummy';
-    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
-    print $IN q{#perl\nuse strict;\n$something = 'something';\n};
-    print $IN <<'END_DUMMY';
-#perl
-if (@miniparrot@) { sprint "Hello world\n"; }
-END_DUMMY
-    close $IN or croak "Unable to close temp file";
-    my $tie_err = tie *STDERR, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    eval {
-        genfile(
-            $dummy          => 'CFLAGS',
-            feature_file    => 1,
-        );
-    };
-    my @lines = $tie_err->READLINE;
-    ok(@lines, "Error message caught");
-    ok($@, "Bad Perl code caught by genfile()");
-
-    unlink $dummy or croak "Unable to delete file after testing";
-    chdir $cwd or croak "Unable to change back to starting directory";
-}
-untie *STDERR;
-
-{
-    my $tdir = tempdir( CLEANUP => 1 );
-    chdir $tdir or croak "Unable to change to temporary directory";
-    my $dummy = 'dummy';
-    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
-    print $IN q{@foobar@\n};
-    close $IN or croak "Unable to close temp file";
-    my $tie_err = tie *STDERR, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    ok(genfile( $dummy => 'CFLAGS' ),
-        "genfile() returned true when warning expected");
-    my $line = $tie_err->READLINE;
-    like($line, qr/value for 'foobar'/,
-        "got expected warning");
-
-    unlink $dummy or croak "Unable to delete file after testing";
-    chdir $cwd or croak "Unable to change back to starting directory";
-}
-untie *STDERR;
-
-{
-    my $tdir = tempdir( CLEANUP => 1 );
-    chdir $tdir or croak "Unable to change to temporary directory";
-    my $dummy = 'dummy';
-    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
-    print $IN q{This line ends in a slash/}, qq{\n};
-    close $IN or croak "Unable to close temp file";
-    eval {
-        genfile(
-            $dummy          => 'CFLAGS',
-            replace_slashes => 1,
-        );
-    };
-    like($@, qr//,
-        "genfile() died as expected with replace_slashes option and line ending in trailing slash");
-
-    unlink $dummy or croak "Unable to delete file after testing";
-    chdir $cwd or croak "Unable to change back to starting directory";
-}
-
-# _run_command()
-
-$command = q{echo Hello world};
-{
-    my $tdir = tempdir( CLEANUP => 1 );
-    chdir $tdir or croak "Unable to change to temporary directory";
-    my $out = q{out};
-    my $err = q{err};
-    my $verbose = 0;
-    my $rv = Parrot::Configure::Step::_run_command(
-        $command, $out, $err, $verbose);
-    is($rv, 0, "Got expected exit code of 0");
-    
-    chdir $cwd or croak "Unable to change back to starting directory";
-}
-
-$command = q{echo Hello world};
-{
-    my $tdir = tempdir( CLEANUP => 1 );
-    chdir $tdir or croak "Unable to change to temporary directory";
-    my $out = q{out};
-    my $err = q{err};
-    my $verbose = 1;
-#    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-#        or croak "Unable to tie";
-    my $rv = Parrot::Configure::Step::_run_command(
-        $command, $out, $err, $verbose);
-    is($rv, 0, "Got expected exit code of 0");
-#    my @lines = $tie_out->READLINE;
-#    ok(@lines, "verbose output was captured");
-    
-    chdir $cwd or croak "Unable to change back to starting directory";
-}
-untie *STDOUT;
-
-$command = q{echo Hello world};
-{
-    my $tdir = tempdir( CLEANUP => 1 );
-    chdir $tdir or croak "Unable to change to temporary directory";
-    my $out = q{out};
-    my $err = $out;
-    my $verbose = 0;
-    my $rv = Parrot::Configure::Step::_run_command(
-        $command, $out, $err, $verbose);
-    is($rv, 0, "Got expected exit code of 0");
-    
-    chdir $cwd or croak "Unable to change back to starting directory";
-}
-
-$command = q{echo Hello world};
-{
-    my $tdir = tempdir( CLEANUP => 1 );
-    chdir $tdir or croak "Unable to change to temporary directory";
-    my $out = q{out};
-    my $err = q{/dev/null};
-    my $verbose = 0;
-    my $rv = Parrot::Configure::Step::_run_command(
-        $command, $out, $err, $verbose);
-    is($rv, 0, "Got expected exit code of 0");
-    
-    chdir $cwd or croak "Unable to change back to starting directory";
-}
-
 # cc_gen()
 
 # cc_build()
@@ -402,15 +207,15 @@ $command = q{echo Hello world};
 
 =head1 NAME
 
-t/configure/step.t - tests Parrot::Configure::Step
+t/configure/step.01.t - tests Parrot::Configure::Step
 
 =head1 SYNOPSIS
 
-    prove t/configure/step.t
+    prove t/configure/step.01.t
 
 =head1 DESCRIPTION
 
-Regression tests for the L<Parrote::Configure::Step> module.
+Regression tests for the L<Parrot::Configure::Step> module.
 
 =cut
 
