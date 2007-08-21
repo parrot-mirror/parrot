@@ -453,9 +453,9 @@ sub _run_command {
                 && ( $_ ne File::Spec->devnull )
                 && ( !m/^&/ ) )
             {
-                open( my $out, '<', $_ );
-                print <$out>;
-                close $out;
+                open( my $verbose_handle, '<', $_ );
+                print <$verbose_handle>;
+                close $verbose_handle;
             }
         }
     }
