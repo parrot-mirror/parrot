@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests =>  6;
+use Test::More tests =>  7;
 use Carp;
 use Cwd;
 use File::Temp 0.13 qw/ tempdir /;
@@ -75,6 +75,20 @@ $command = q{echo Hello world};
     chdir $tdir or croak "Unable to change to temporary directory";
     my $out = q{out};
     my $err = q{/dev/null};
+    my $verbose = 0;
+    my $rv = Parrot::Configure::Step::_run_command(
+        $command, $out, $err, $verbose);
+    is($rv, 0, "Got expected exit code of 0");
+    
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+$command = q{date};
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $out = undef;
+    my $err = q{err};
     my $verbose = 0;
     my $rv = Parrot::Configure::Step::_run_command(
         $command, $out, $err, $verbose);
