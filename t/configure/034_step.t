@@ -155,11 +155,11 @@ untie *STDERR;
 
 =head1 NAME
 
-t/configure/step.02.t - tests Parrot::Configure::Step
+t/configure/034_step.t - tests Parrot::Configure::Step
 
 =head1 SYNOPSIS
 
-    prove t/configure/step.02.t
+    prove t/configure/034_step.t
 
 =head1 DESCRIPTION
 

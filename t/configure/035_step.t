@@ -143,11 +143,11 @@ $command = q{date};
 
 =head1 NAME
 
-t/configure/step.03.t - tests Parrot::Configure::Step
+t/configure/035_step.t - tests Parrot::Configure::Step
 
 =head1 SYNOPSIS
 
-    prove t/configure/step.03.t
+    prove t/configure/035_step.t
 
 =head1 DESCRIPTION
 

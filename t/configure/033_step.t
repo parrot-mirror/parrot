@@ -245,11 +245,11 @@ untie *STDOUT;
 
 =head1 NAME
 
-t/configure/step.01.t - tests Parrot::Configure::Step
+t/configure/033_step.t - tests Parrot::Configure::Step
 
 =head1 SYNOPSIS
 
-    prove t/configure/step.01.t
+    prove t/configure/033_step.t
 
 =head1 DESCRIPTION
 
