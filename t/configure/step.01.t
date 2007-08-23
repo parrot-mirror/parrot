@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 27;
+use Test::More tests => 32;
 use Carp;
 use Cwd;
 use File::Basename qw(basename dirname);
@@ -193,6 +193,44 @@ like($@, qr/Can't open $nonexistent/, #'
         [], "check_progs() returns () in list context on failure" );
     is_deeply( [ check_progs($cmd) ], [], "check_progs() returns () in list context on failure" );
 }
+
+{
+    my %tf_params = ( UNLINK => 1, );
+    $tf_params{SUFFIX} = '.exe' if 'MSWin32' eq $^O;
+    my ( $tmpfile, $fname ) = tempfile(%tf_params);
+
+    local $ENV{PATH} = dirname($fname);
+    chmod 0777, $fname;
+    my $prog = basename($fname);
+
+    my $verbose = 1;
+    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
+        or croak "Unable to tie";
+    is( check_progs($prog, $verbose), $prog,
+        "check_progs() returns the proper program" );
+    my $line = $tie_out->READLINE;
+    like($line, qr/checking for program/,
+        "Got expected verbose output");
+}
+untie *STDOUT;
+
+{
+    my $verbose = 1;
+    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
+        or croak "Unable to tie";
+    my $prog = check_progs(
+        ['gmake', 'mingw32-make', 'nmake', 'make'],
+        $verbose,
+    );
+    ok( defined( $prog ),"check_progs() returned a 'make' program" );
+    my @lines = $tie_out->READLINE;
+    my $line = join "\n", @lines;
+    like($line, qr/checking for program/s,
+        "Got expected verbose output");
+    like($line, qr/$prog is executable/s,
+        "Got expected verbose output for executable program");
+}
+untie *STDOUT;
 
 # _slurp(), not exported
 
