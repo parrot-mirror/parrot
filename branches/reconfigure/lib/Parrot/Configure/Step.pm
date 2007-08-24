@@ -331,7 +331,7 @@ sub genfile {
                 $line =~ s{\$ \( notdir \s+ ([^)]+) \)}{
                 join (' ',
                     map { (File::Spec->splitpath($_))[2] }
-                        split(' ', $1)
+                        split(/\s+/, $1)
                 )
             }egx
                 )
@@ -347,7 +347,7 @@ sub genfile {
                         my @split = File::Spec->splitpath($_);
                         $split[2] =~ s/\.[^.]*$//;
                         File::Spec->catpath(@split);
-                    } split(' ', $1)
+                    } split(/\s+/, $1)
                 )
             }egx
                 )
@@ -360,7 +360,7 @@ sub genfile {
                 my ($prefix,$list) = ($1, $2);
                 join (' ',
                     map { $_ = $prefix . $_ }
-                        split(' ', $list)
+                        split(/\s+/, $list)
                 )
             }egx
                 )
