@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 11;
+use Test::More tests => 15;
 use Carp;
 use Cwd;
 use File::Temp 0.13 qw/ tempdir /;
@@ -151,6 +151,69 @@ untie *STDERR;
     chdir $cwd or croak "Unable to change back to starting directory";
 }
 
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $dummy = 'dummy';
+    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
+    my $line = q{$(basename   morgan/lefay/abra.ca.dabra src/foo.c		hacks)};
+    print $IN $line, "\n";
+    close $IN or croak "Unable to close temp file";
+    ok( genfile(
+        $dummy            => 'CFLAGS',
+    ), "genfile() did transformation of 'make' 'basename' as expected");
+    unlink $dummy or croak "Unable to delete file after testing";
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $dummy = 'dummy';
+    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
+    my $line = q{$(notdir morgan/lefay/abra.ca.dabra src/foo.c		hacks)};
+
+    print $IN $line, "\n";
+    close $IN or croak "Unable to close temp file";
+    ok( genfile(
+        $dummy            => 'CFLAGS',
+    ), "genfile() did transformation of 'make' 'notdir' as expected");
+    unlink $dummy or croak "Unable to delete file after testing";
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $dummy = 'dummy';
+    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
+    my $line = q{$(addprefix src/,morgan/lefay/abra.ca.dabra foo		bar)};
+
+    print $IN $line, "\n";
+    close $IN or croak "Unable to close temp file";
+    ok( genfile(
+        $dummy            => 'CFLAGS',
+    ), "genfile() did transformation of 'make' 'addprefix' as expected");
+    unlink $dummy or croak "Unable to delete file after testing";
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $dummy = 'dummy';
+    open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
+    my $line = q{$(wildcard *.c		*.o)};
+
+    print $IN $line, "\n";
+    close $IN or croak "Unable to close temp file";
+    ok( genfile(
+        $dummy            => 'CFLAGS',
+    ), "genfile() did transformation of 'make' 'wildcard' as expected");
+    unlink $dummy or croak "Unable to delete file after testing";
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
 ################### DOCUMENTATION ###################
 
 =head1 NAME
@@ -165,6 +228,9 @@ t/configure/034_step.t - tests Parrot::Configure::Step
 
 Regression tests for the L<Parrote::Configure::Step> module.  This file holds
 tests for Parrot::Configure::Step::genfile().
+
+Thanks to http://start.it.uts.edu.au/w/doc/solaris/gmake/make_8.html for
+instruction in using F<gmake> functions.
 
 =cut
 
