@@ -161,6 +161,7 @@ untie *STDERR;
     close $IN or croak "Unable to close temp file";
     ok( genfile(
         $dummy            => 'CFLAGS',
+        expand_gmake_syntax => 1,
     ), "genfile() did transformation of 'make' 'basename' as expected");
     unlink $dummy or croak "Unable to delete file after testing";
     chdir $cwd or croak "Unable to change back to starting directory";
@@ -177,6 +178,7 @@ untie *STDERR;
     close $IN or croak "Unable to close temp file";
     ok( genfile(
         $dummy            => 'CFLAGS',
+        expand_gmake_syntax => 1,
     ), "genfile() did transformation of 'make' 'notdir' as expected");
     unlink $dummy or croak "Unable to delete file after testing";
     chdir $cwd or croak "Unable to change back to starting directory";
@@ -193,6 +195,7 @@ untie *STDERR;
     close $IN or croak "Unable to close temp file";
     ok( genfile(
         $dummy            => 'CFLAGS',
+        expand_gmake_syntax => 1,
     ), "genfile() did transformation of 'make' 'addprefix' as expected");
     unlink $dummy or croak "Unable to delete file after testing";
     chdir $cwd or croak "Unable to change back to starting directory";
@@ -209,6 +212,7 @@ untie *STDERR;
     close $IN or croak "Unable to close temp file";
     ok( genfile(
         $dummy            => 'CFLAGS',
+        expand_gmake_syntax => 1,
     ), "genfile() did transformation of 'make' 'wildcard' as expected");
     unlink $dummy or croak "Unable to delete file after testing";
     chdir $cwd or croak "Unable to change back to starting directory";
