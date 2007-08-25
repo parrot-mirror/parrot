@@ -74,10 +74,10 @@ is($conf->options->{c}->{step}, 'inter::make',
 is($conf->options->{c}->{debugging}, 1,
     "command-line option '--debugging' has been stored in object");
 
-my $res  = eval "no strict; use Parrot::Config::Generated; \\%PConfig";
+my $res  = eval "no strict; use Parrot::Config; \\%PConfig";
 SKIP: {
     my $reason = <<REASON;
-If you have already completed configuration, 
+If you have already completed configuration,
 you can call Parrot::Configure::Data::slurp().
 You appear not to have completed configuration;
 hence, two tests are skipped.

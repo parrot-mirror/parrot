@@ -42,22 +42,21 @@ DONE:
 =cut
 
 .sub _LOOKUP_LEXICAL
-  .param string symname
+    .param string symname
 
-  .local pmc retv
+    push_eh LEXICAL_NOT_FOUND                     # Set an error handler
+    .local pmc retv
+    find_lex retv, symname                        # Look for the lexical symbol
+    clear_eh
 
-  push_eh LEXICAL_NOT_FOUND                     # Set an error handler
-  find_lex retv, symname                        # Look for the lexical symbol
-  clear_eh
-
-  goto DONE
+    goto DONE
 
 LEXICAL_NOT_FOUND:                              # Return null if not found
-  null retv
-  goto DONE
+    null retv
+    goto DONE
 
 DONE:
-  .return(retv)
+    .return(retv)
 .end
 
 
@@ -232,72 +231,79 @@ DONE:
 
 =head2 _FUNCTION_CALL
 
+Call a function.
+
 =cut
 
 .sub _FUNCTION_CALL
-  .param pmc function
-  .param pmc args
+    .param pmc function
+    .param pmc args
 
-  .local string type
-  .local pmc proto
-  .local pmc scope
-  .local pmc body
+    .local pmc proto
+    proto = function._get_args()
+    .local pmc body
+    body  = function._get_body()
 
-  proto = function._get_args()
-  body  = function._get_body()
+    .local string type
+    type = typeof function                     # Get the function type
+    # print function
+    # print " of type "
+    # print type
+    type = typeof body                     # Get the function type
+    # print " with body "
+    # print body
+    # print " with bodytype "
+    # print type
+    # print " in _FUNCTION_CALL\n"
+    type = typeof body                     # Get the function type
 
-  type = typeof body                     # Get the function type
+    # print type
+    # print " is the type\n"
+    if type != 'Sub' goto NOT_A_COMPILED_FUNCTION
+        .return body( args )
+    NOT_A_COMPILED_FUNCTION:
 
-  if type == "Sub" goto COMPILED_FUNCTION
-  goto INTERPRETED_FUNCTION
-
-COMPILED_FUNCTION:
-  # VALID_IN_PARROT_0_2_0 set_args "0", args                    # First argument
-  # VALID_IN_PARROT_0_2_0 goto CALL_FUNCTION
-  # Just a wild guess
-  .return body( args )
-   
-
-INTERPRETED_FUNCTION:
-  scope = function._get_scope()
+    if type != 'LispCons' goto NOT_A_LISP_CONS
+        .local pmc scope
+        scope = function._get_scope()
 
                                         # 1st arg - the code to evaluate
                                         # 2nd arg - the arg prototype
                                         # 3rd arg - the args to evaluate
                                         # The closure
-  set_args "0,0,0", body, proto, args
-  goto CALL_FUNCTION
+        # set_args "0,0,0", body, proto, args
+        .return scope( body, proto, args )
+        # VALID_IN_PARROT_0_2_0 pushtopp                            # Save the upper registers
+        # VALID_IN_PARROT_0_2_0 invokecc                            # Call the closure
+        # VALID_IN_PARROT_0_2_0 poptopp                             # Restore the upper registers
 
-CALL_FUNCTION:
-  # VALID_IN_PARROT_0_2_0 pushtopp                            # Save the upper registers
-  # VALID_IN_PARROT_0_2_0 invokecc                            # Call the closure
-  # VALID_IN_PARROT_0_2_0 poptopp                            # Restore the upper registers
+        # VALID_IN_PARROT_0_2_0 returncc
+    NOT_A_LISP_CONS:
+       
+    .return ()
 
-  # VALID_IN_PARROT_0_2_0 returncc
+DONE:
+  .return()
 .end
 
 .sub _IS_SPECIAL
-  .param pmc symbol
+    .param pmc symbol
 
-  .local pmc special
-  .local int retv
+    .local int retv
+    retv = 1
 
-   retv = 1
+    .local pmc special
+    special = getattribute symbol, "special"
+    if_null special, NOT_SPECIAL
 
-   # VALID_IN_PARROT_0_2_0 getattribute special, symbol, "LispSymbol\0special"
-   special = getattribute symbol, "special"
-   if_null special, NOT_SPECIAL
-
-  .NULL(special, NOT_SPECIAL)
-
-   goto DONE
+    goto DONE
 
 NOT_SPECIAL:
-   retv = 0
-   goto DONE
+    retv = 0
+    goto DONE
 
 DONE:
-   .return(retv)
+    .return(retv)
 .end
 
 .sub _IS_ORDINARY_LAMBDA_LIST
@@ -333,109 +339,111 @@ DONE:
 .end
 
 .sub _MAKE_LAMBDA
-  .param pmc form
-  .local pmc closure
-  .local pmc symbol
-  .local pmc args
-  .local pmc body
-  .local pmc lptr
-  .local pmc retv
+    .param pmc form
 
-  .SECOND(args, form)
-  .THIRD(body, form)
+    # .FIRST is 'lambda'
 
-   lptr = args
+    # check the parameter declaration
+    .local pmc args
+    .SECOND(args, form)
+    .local pmc lptr
+    lptr = args
+    .local pmc symbol
+ARG_LOOP_BEGIN:
+    .NULL(lptr, ARG_LOOP_END)
 
-ARG_LOOP:
-  .NULL(lptr, SETUP_CLOSURE)
+    .CAR(symbol, lptr)                            # Ensure all the arguments are
+    .ASSERT_TYPE(symbol, "symbol")                # symbol types.
 
-  .CAR(symbol, lptr)                            # Ensure all the arguments are
-  .ASSERT_TYPE(symbol, "symbol")                # symbol types.
+    .CDR(lptr, lptr)
+    goto ARG_LOOP_BEGIN
+ARG_LOOP_END:
 
-  .CDR(lptr, lptr)
-   goto ARG_LOOP
+    .local pmc body
+    .THIRD(body, form)
 
-SETUP_CLOSURE:
-   closure = new .Closure                       # Capture the scope the closure
-   set_addr closure, CLOSURE_START              # will later be run in
+    .const .Sub sub_that_calls_eval = 'sub_that_calls_eval' 
+    .local pmc closure
+    closure = newclosure sub_that_calls_eval       # Capture the scope the closure
 
-   retv = new "LispFunction"
+    .local pmc lisp_function
+    lisp_function = new "LispFunction"
+    lisp_function._set_args(args)
+    lisp_function._set_body(body)
+    lisp_function._set_scope(closure)
 
-   retv._set_args(args)
-   retv._set_body(body)
-   retv._set_scope(closure)
+    .return(lisp_function)
+.end
 
-   goto DONE
+.sub sub_that_calls_eval :outer('_MAKE_LAMBDA')    # TODO: what is really :outer ???
+   .param pmc clbody
+   .param pmc clprot
+   .param pmc clargs
 
-CLOSURE_START:
-  .local string clsymname
-  .local pmc clargsptr
-  .local pmc clprotptr
-  .local pmc clbody
-  .local pmc clprot
-  .local pmc clargs
-  .local pmc clarg
-  .local pmc clval
-  .local pmc clsym
+   # print "sub_that_calls_eval\n body: "
+   # print clbody
+   # print "\nproto: "
+   # print clprot
+   # print "\nargs: "
+   # print clargs
+   .local string clsymname
+   .local pmc clargsptr
+   .local pmc clprotptr
+   .local pmc clbody
+   .local pmc clprot
+   .local pmc clargs
+   .local pmc clarg
+   .local pmc clval
+   .local pmc clsym
 
-   clbody = P5
-   clprot = P6
-   clargs = P7
+    clargsptr = clargs
+    clprotptr = clprot
 
-   clargsptr = clargs
-   clprotptr = clprot
+    # VALID_IN_PARROT_0_2_0  new_pad -1
 
-   # VALID_IN_PARROT_0_2_0  new_pad -1
-
-   goto CLOSURE_ARGS
+    goto CLOSURE_ARGS
 
 CLOSURE_ARGS:
-  .NULL(clprotptr, CLOSURE_CHECK_ARGS)
-  .NULL(clargsptr, CLOSURE_TOO_FEW_ARGS)
+    .NULL(clprotptr, CLOSURE_CHECK_ARGS)
+    .NULL(clargsptr, CLOSURE_TOO_FEW_ARGS)
 
-  .CAR(clval, clargsptr)                        # The lexical value
-  .CAR(clarg, clprotptr)                        # The lexical arg prototype
+    .CAR(clval, clargsptr)                        # The lexical value
+    .CAR(clarg, clprotptr)                        # The lexical arg prototype
 
-   clsymname = clarg._get_name_as_string()
-   clsym = _LEXICAL_SYMBOL(clsymname, clval)    # Create a new lexical symbol
+    clsymname = clarg._get_name_as_string()
+    clsym = _LEXICAL_SYMBOL(clsymname, clval)    # Create a new lexical symbol
 
-  .CDR(clargsptr, clargsptr)
-  .CDR(clprotptr, clprotptr)
+    .CDR(clargsptr, clargsptr)
+    .CDR(clprotptr, clprotptr)
 
-   goto CLOSURE_ARGS
+    goto CLOSURE_ARGS
 
 CLOSURE_CHECK_ARGS:
-  .NULL(clargsptr, CLOSURE_BODY)                # Ensure we didn't have too
-   goto CLOSURE_TOO_MANY_ARGS                   # many args
+    .NULL(clargsptr, CLOSURE_BODY)                # Ensure we didn't have too
+    goto CLOSURE_TOO_MANY_ARGS                   # many args
 
 CLOSURE_BODY:
-  .local pmc clearg
-  .local pmc clretv
+    .local pmc clearg
+    .local pmc clretv
 
-  .LIST_1(clearg, clbody)
-   clretv = _eval(clearg)
-
-   # VALID_IN_PARROT_0_2_0  pop_pad
-
-   goto CLOSURE_DONE
+    .LIST_1(clearg, clbody)
+    # VALID_IN_PARROT_0_2_0  pop_pad
+    .return _eval(clearg)
 
 CLOSURE_TOO_FEW_ARGS:
-   # VALID_IN_PARROT_0_2_0  pop_pad
+    # VALID_IN_PARROT_0_2_0  pop_pad
 
-  .ERROR_0("program-error", "Too few arguments given to LAMBDA")
-   goto CLOSURE_DONE
+    .ERROR_0("program-error", "Too few arguments given to LAMBDA")
+    goto CLOSURE_DONE
 
 CLOSURE_TOO_MANY_ARGS:
-   # VALID_IN_PARROT_0_2_0  pop_pad
+    # VALID_IN_PARROT_0_2_0  pop_pad
 
-  .ERROR_0("program-error", "Too many arguments given to LAMBDA")
-   goto CLOSURE_DONE
+    .ERROR_0("program-error", "Too many arguments given to LAMBDA")
+    goto CLOSURE_DONE
 
 CLOSURE_DONE:
-   returncc
-
-DONE:
-  .return(retv)
+    .return()
 .end
 
 .sub _LIST_LENGTH

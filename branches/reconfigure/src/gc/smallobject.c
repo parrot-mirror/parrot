@@ -152,6 +152,7 @@ Add an unused object back to the free pool for later reuse.
 static void
 gc_ms_add_free_object(SHIM_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(PObj *to_add))
 {
+    PObj_flags_SETTO(to_add, PObj_on_free_list_FLAG);
     PMC_struct_val(to_add) = pool->free_list;
     pool->free_list        = to_add;
 }
@@ -202,7 +203,7 @@ Parrot_add_to_free_list(PARROT_INTERP,
         NOTNULL(Small_Object_Arena *arena))
 {
     UINTVAL  i;
-    void    *object;
+    PObj    *object;
     UINTVAL  num_objects = pool->objects_per_alloc;
 
     pool->total_objects += num_objects;

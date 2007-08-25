@@ -10,9 +10,10 @@ To prepare a release:
 =item 0.
 
 Announce to parrot-porters and #parrot at least a couple days in advance,
-asking if there are any showstopping bugs. You might also select a name
-for your release (e.g., perhaps select a name from
-L<http://en.wikipedia.org/wiki/List_of_parrots>).
+asking if there are any showstopping bugs.  It's also good to ask for
+updates to F<NEWS>, F<CREDITS>, F<PLATFORMS>, F<RESPONSIBLE_PARTIES>,
+etc.  You might also select a name for your release (e.g., perhaps
+select a name from L<http://en.wikipedia.org/wiki/List_of_parrots>).
 
 =item 1.
 
@@ -275,9 +276,9 @@ Tuesday of the month.
  - Mar 20th (0.4.10) Will Coleda (Coke)
  - Apr 17th (0.4.11) Matt Diephouse (mdiep)
  - May 15th (0.4.12) chromatic
- - Jun 19th, Allison Randal
- - Jul 17th, Jerry Gay (particle)
- - Aug 21th, Patrick Michaud (pmichaud)
+ - Jun 19th (0.4.13) Allison Randal
+ - Jul 17th (0.4.14) Jerry Gay (particle)
+ - Aug 21st (0.4.15) Patrick Michaud (pmichaud)
  - Sep 18th, Matt Diephouse (mdiep)
  - Oct 16th, Will Coleda (Coke)
  - Nov 20th, chromatic

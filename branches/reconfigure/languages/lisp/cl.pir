@@ -39,7 +39,6 @@ cl.pir - Set up the package 'COMMON-LISP'
     .DEFVAR(symbol, package, "*READTABLE*", value)
 
     .local pmc stream
-
     getstdin stream
     .STREAM(value,stream)
     .DEFVAR(symbol, package, "*STANDARD-INPUT*", value)
@@ -50,7 +49,7 @@ cl.pir - Set up the package 'COMMON-LISP'
     .STREAM(value,stream)
     .DEFVAR(symbol, package, "*STANDARD-OUTPUT*", value)
 
-    .local pmc function   # this is needed in r20261
+    .local pmc function   # this is needed in r20641
 
     # VALID_IN_PARROT_0_2_0 .DEFUN(symbol, package, "APPLY", _apply)
     .DEFUN(symbol, package, "APPLY", "_apply")
@@ -147,57 +146,48 @@ cl.pir - Set up the package 'COMMON-LISP'
 .end
 
 .sub _apply
-  .param pmc args
-  .local string type
-  .local pmc func
-  .local pmc retv
-  .local pmc car
-  .local pmc cdr
+    .param pmc args
+    .ASSERT_MINIMUM_LENGTH(args, 2, ERROR_NARGS)
 
-  .ASSERT_MINIMUM_LENGTH(args, 2, ERROR_NARGS)
+    .local pmc car
+    .CAR(car, args)
 
-  .CAR(car, args)
-  .SECOND(cdr, args)
+    .local pmc args_of_func
+    .SECOND(args_of_func, args)
+    .ASSERT_TYPE(args_of_func, "list")
 
-  .ASSERT_TYPE(cdr, "list")
+    .local string type
+    type = typeof car
+    if type == "LispFunction" goto CAR_IS_FUNCTION
+    if type == "LispSymbol"   goto CAR_IS_SYMBOL
+    goto INVALID_FUNCTION_NAME
 
-   type = typeof car
+CAR_IS_FUNCTION:
+    .return _FUNCTION_CALL(car, args_of_func)
 
-   if type == "LispFunction" goto FUNCTION
-   if type == "LispSymbol" goto SYMBOL
-
-   goto INVALID_FUNCTION_NAME
-
-FUNCTION:
-   _FUNCTION_CALL(car, cdr)
-   goto DONE
-
-SYMBOL:
-   func = car._get_function()                   # Get the function from symbol
-   if_null func, INVALID_FUNCTION_NAME          # Throw an error if undefined
-
-   _FUNCTION_CALL(func,cdr)
-   goto DONE
+CAR_IS_SYMBOL:
+    .local pmc func
+    func = car._get_function()                   # Get the function from symbol
+    if_null func, INVALID_FUNCTION_NAME          # Throw an error if undefined
+    type = typeof func
+    # print type
+    # print ' for CAR_IS_SYMBOL'
+    .return _FUNCTION_CALL(func,args_of_func)
 
 INVALID_FUNCTION_NAME:
-  .ERROR_1("undefined-function", "%s is not a function name", car)
-   goto DONE
+    .ERROR_1("undefined-function", "%s is not a function name", car)
+    goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error", "wrong number of arguments to APPLY")
-   goto DONE
+    .ERROR_0("program-error", "wrong number of arguments to APPLY")
+    goto DONE
 
 ERROR_NONLIST:
-  .ERROR_0("type-error", "second argument to APPLY must be a proper list")
-   goto DONE
+    .ERROR_0("type-error", "second argument to APPLY must be a proper list")
+     goto DONE
 
 DONE:
-   # VALID_IN_PARROT_0_2_0 argcI = 0                                    # No integer values returned
-   # VALID_IN_PARROT_0_2_0 argcN = 0                                    # No float values returned
-   # VALID_IN_PARROT_0_2_0 argcS = 0                                    # No string values returned
-
-   # VALID_IN_PARROT_0_2_0 returncc                                     # Call the return continuation
-   .return()                                   # Call the return continuation
+    .return()                                   # Call the return continuation
 .end
 
 .sub _atom
@@ -394,66 +384,64 @@ DONE:
 .end
 
 .sub _function
-  .param pmc args
+    .param pmc args
+    .ASSERT_LENGTH(args, 1, ERROR_NARGS)
 
-  .local string symname
-  .local string pkgname
-  .local string type
-  .local pmc package
-  .local pmc symbol
-  .local int found
-  .local int test
-  .local pmc form
-  .local pmc retv
+    .local pmc form
+    .CAR(form, args)
+  
+    .local pmc retv
 
-  .ASSERT_LENGTH(args, 1, ERROR_NARGS)
-
-  .CAR(form, args)
-
-   type = typeof form
-
-   if type == "LispSymbol" goto SYMBOL          # Retrieve function from symbol
-
-   test = _IS_ORDINARY_LAMBDA_LIST(form)        # Check if it's a lambda form
-   if test goto LAMBDA_FORM                     # and build a closure if so
-
-   goto INVALID_FUNCTION_NAME
-
+    .local string type
+    type = typeof form
+    if type == "LispSymbol" goto SYMBOL          # Retrieve function from symbol
+  
+    .local int is_lambda_list
+    is_lambda_list = _IS_ORDINARY_LAMBDA_LIST(form)        # Check if it's a lambda form
+    if is_lambda_list goto LAMBDA_FORM                     # and build a closure if so
+  
+    goto INVALID_FUNCTION_NAME
+  
 SYMBOL:
-   symname = form._get_name_as_string()         # Retrieve the symbols name
-
-   package = form._get_package()                # Retrieve the symbols package name
-   pkgname = package._get_name_as_string()
-
-   symbol = _LOOKUP_GLOBAL(pkgname, symname)    # Lookup the symbol
-
-   defined found, symbol                        # Ensure the symbol was found in
-   unless found goto FUNCTION_NOT_FOUND         # the global namespace
-
-   retv = symbol._get_function()                # Ensure the symbol had a function
-   defined found, symbol                        # defined
-   unless found goto FUNCTION_NOT_FOUND
-
-   goto DONE
-
+    .local string symname
+    symname = form._get_name_as_string()         # Retrieve the symbols name
+ 
+    .local pmc package
+    package = form._get_package()                # Retrieve the symbols package name
+    .local string pkgname
+    pkgname = package._get_name_as_string()
+ 
+    .local pmc symbol
+    symbol = _LOOKUP_GLOBAL(pkgname, symname)    # Lookup the symbol
+ 
+    .local int found
+    found = defined symbol                       # Ensure the symbol was found in
+    unless found goto FUNCTION_NOT_FOUND         # the global namespace
+ 
+    retv = symbol._get_function()                # Ensure the symbol had a function
+    defined found, symbol                        # defined
+    unless found goto FUNCTION_NOT_FOUND
+ 
+    goto DONE
+ 
 LAMBDA_FORM:
-   retv = _MAKE_LAMBDA(form)                    # Create a closure object
-   goto DONE
+    retv = _MAKE_LAMBDA(form)                    # Create a closure PMC
+    goto DONE
 
 INVALID_FUNCTION_NAME:
-  .ERROR_1("undefined-function", "%s is not a function name", form)
-   goto DONE
+    .ERROR_1("undefined-function", "%s is not a function name", form)
+    goto DONE
 
 FUNCTION_NOT_FOUND:
-  .ERROR_1("undefined-function", "the function %s is undefined", symname)
-   goto DONE
+    .ERROR_1("undefined-function", "the function %s is undefined", symname)
+    goto DONE
 
 ERROR_NARGS:
-  .ERROR_0("program-error", "wrong number of arguments to FUNCTION")
-   goto DONE
+    .ERROR_0("program-error", "wrong number of arguments to FUNCTION")
+    goto DONE
 
 DONE:
-  .return(retv)
+    .return(retv)
 .end
 
 .sub _gensym
@@ -617,182 +605,179 @@ DONE:
 .end
 
 .sub _let
-  .param pmc args
-  .local string name
-  .local string type
-  .local pmc dynvars
-  .local pmc keyvals
-  .local pmc package
-  .local pmc symbol
-  .local pmc error
-  .local pmc value
-  .local pmc fargs
-  .local pmc init
-  .local pmc body
-  .local pmc lptr
-  .local pmc form
-  .local pmc retv
-  .local int test
-  .local int nvar
-  .local int i
+    .param pmc args
+    .ASSERT_MINIMUM_LENGTH(args, 1, ERROR_NARGS)
 
-   # VALID_IN_PARROT_0_2_0 new_pad -1                    # Create new lexical scope
+    .local string name
+    .local string type
+    .local pmc package
+    .local pmc symbol
+    .local pmc value
+    .local pmc fargs
+    .local pmc init
+    .local pmc body
+    .local pmc lptr
+    .local pmc form
+    .local int test
+    .local int i
 
-  .ASSERT_MINIMUM_LENGTH(args, 1, ERROR_NARGS)
+    # VALID_IN_PARROT_0_2_0 new_pad -1                    # Create new lexical scope
 
-  .CAR(init, args)                              # The variable bindings
-  .CDR(body, args)                              # The form to evaluate
+    .CAR(init, args)                             # The variable bindings
+    .CDR(body, args)                             # The form to evaluate
 
-   keyvals = new ResizablePMCArray              # List for holding init values
-   dynvars = new ResizablePMCArray              # List for holding dynamic vars
-   null error
+    .local pmc keyvals
+    keyvals = new ResizablePMCArray              # List for holding init values
+    .local pmc dynvars
+    dynvars = new ResizablePMCArray              # List for holding dynamic vars
 
-  .NIL(retv)                                    # Initialize return value
+    # for exception handling, currently broken
+    .local pmc error
+    null error
+    push_eh CLEANUP_HANDLER                      # Set a handler for cleanup
 
-   push_eh CLEANUP_HANDLER                      # Set a handler for cleanup
+    .local pmc retv
+    .NIL(retv)                                   # Initialize return value
 
-INIT_FORM:                                      # Process the init form
-   type = typeof init
-   if type == "LispSymbol" goto INIT_SYMBOL
-   if type == "LispCons"   goto INIT_LIST
-   goto EVAL_BODY
+INIT_FORM:                                       # Process the init form
+    type = typeof init
+    if type == "LispSymbol" goto INIT_SYMBOL
+    if type == "LispCons"   goto INIT_LIST
+    goto EVAL_BODY
 
 INIT_SYMBOL:
-   null value                                   # Init form was just a symbol -
-   push keyvals, init                           # no value is assigned to it.
-   push keyvals, value
+    push keyvals, init                          # Init form was just a symbol -
+    null value                                  # no value is assigned to it
+    push keyvals, value
 
-   goto BIND_VARS
+    goto INIT_DONE
 
 INIT_LIST:
-   lptr = init
-   goto INIT_LIST_LOOP
+    lptr = init
+    goto INIT_LIST_LOOP
 
 INIT_LIST_LOOP:
-  .NULL(lptr, INIT_LIST_DONE)
+    .NULL(lptr, INIT_DONE)
 
-  .CAR(form, lptr)                              # Get the next init form
+    .CAR(form, lptr)                              # Get the next init form
 
-  .ASSERT_TYPE_AND_BRANCH(form, "list", ERROR_BAD_SPEC)
-  # VALID_IN_PARROT_0_2_0 .ASSERT_LENGTH(form, 2, ERROR_BADSPEC)                # Ensure a valid init form
-  .ASSERT_LENGTH(form, 2, ERROR_BAD_SPEC)       # Ensure a valid init form
+    .ASSERT_TYPE_AND_BRANCH(form, "list", ERROR_BAD_SPEC)
+    # VALID_IN_PARROT_0_2_0 .ASSERT_LENGTH(form, 2, ERROR_BADSPEC)                # Ensure a valid init form
+    .ASSERT_LENGTH(form, 2, ERROR_BAD_SPEC)       # Ensure a valid init form
 
-  .CAR(symbol, form)                            # The symbol we're assigning to
-  .SECOND(value, form)                          # The value being assigned
+    .CAR(symbol, form)                            # The symbol we're assigning to
+    .SECOND(value, form)                          # The value being assigned
 
-  .ASSERT_TYPE_AND_BRANCH(symbol, "symbol", ERROR_BAD_SPEC)
+    .ASSERT_TYPE_AND_BRANCH(symbol, "symbol", ERROR_BAD_SPEC)
 
-  .LIST_1(fargs, value)                         # Put value into an arg list
-   value = _eval(fargs)                         # Evaluate it
+    .LIST_1(fargs, value)                         # Put value into an arg list
+     value = _eval(fargs)                         # Evaluate it
 
-   push keyvals, symbol                         # Push symbol onto key/val list
-   push keyvals, value                          # Push value onto key/val list
+     push keyvals, symbol                         # Push symbol onto key/val list
+     push keyvals, value                          # Push value onto key/val list
 
-  .CDR(lptr, lptr)
-   goto INIT_LIST_LOOP
+    .CDR(lptr, lptr)
+     goto INIT_LIST_LOOP
 
-INIT_LIST_DONE:
-   goto BIND_VARS
+INIT_DONE:
 
-
-BIND_VARS:
-   nvar = keyvals
-   i = 0
-   goto BIND_LOOP
-
+    # bind the variables in init
+    .local int nvar
+    nvar = keyvals
+    i = 0
 BIND_LOOP:
-   if i >= nvar goto BIND_DONE
+    if i >= nvar goto BIND_DONE
 
-   symbol = keyvals[i]                          # Pop symbol of key/val list
-   inc i
-   value  = keyvals[i]                          # Pop value of key/val list
+    symbol = keyvals[i]                          # Pop symbol of key/val list
+    inc i
+    value  = keyvals[i]                          # Pop value of key/val list
 
-   name = symbol._get_name_as_string()
-   test = _IS_SPECIAL(symbol)
+    name = symbol._get_name_as_string()
 
-   if test == 0 goto BIND_LEXICAL
-   goto BIND_DYNAMIC
+    test = _IS_SPECIAL(symbol)
+    if test == 0 goto BIND_LEXICAL
+    goto BIND_DYNAMIC
 
 BIND_LEXICAL:
-   symbol = _LEXICAL_SYMBOL(name, value)        # Create a new lexical symbol
-   inc i
-   goto BIND_LOOP
+    # TODO: replace push_pad, pop_pad, do not worry about closures yet
+    symbol = _LEXICAL_SYMBOL(name, value)        # Create a new lexical symbol
+    inc i
+    goto BIND_LOOP
 
 BIND_DYNAMIC:
-   package = symbol._get_package()              # Get dynamic symbols package
+    package = symbol._get_package()              # Get dynamic symbols package
 
-   symbol = package._shadow_symbol(name)        # Shadow the symbol
-   symbol._set_value(value)                     # Set the new value
+    symbol = package._shadow_symbol(name)        # Shadow the symbol
+    symbol._set_value(value)                     # Set the new value
 
-   push dynvars, symbol                         # Keep around for tracking
+    push dynvars, symbol                         # Keep around for tracking
 
-   inc i
-   goto BIND_LOOP
+    inc i
+    goto BIND_LOOP
 
 BIND_DONE:
    goto EVAL_BODY
 
 
 EVAL_BODY:
-   lptr = body                                  # Set pointer to the body form
+    lptr = body                                  # Set pointer to the body form
 
 EVAL_LOOP:                                      # Evaluate each form in order
-  .NULL(lptr, EVAL_DONE)
+    .NULL(lptr, EVAL_DONE)
 
-  .CAR(form, lptr)                              # Get the next form in the body
-  .LIST_1(fargs, form)                          # Put it into an arg list
-   retv = _eval(fargs)                          # Evaluate it
+    .CAR(form, lptr)                              # Get the next form in the body
+    .LIST_1(fargs, form)                          # Put it into an arg list
+    retv = _eval(fargs)                          # Evaluate it
 
-  .CDR(lptr, lptr)                              # Get a pointer to next form
-   goto EVAL_LOOP
+    .CDR(lptr, lptr)                              # Get a pointer to next form
+    goto EVAL_LOOP
 
 EVAL_DONE:
-   goto CLEANUP
+    goto CLEANUP
 
 
 CLEANUP_HANDLER:
-   error = P5                                   # Caught an exception - save it
-   goto CLEANUP                                 # and clean up before rethrow
+    error = P5                                   # Caught an exception - save it
+    goto CLEANUP                                 # and clean up before rethrow
 
 CLEANUP:
-   # VALID_IN_PARROT_0_2_0    pop_pad                       # Pop off the lexical scope
+    # VALID_IN_PARROT_0_2_0    pop_pad                       # Pop off the lexical scope
 
-   nvar = dynvars
-   i = 0
+    nvar = dynvars
+    i = 0
 
 CLEANUP_LOOP:
-   if i >= nvar goto CLEANUP_DONE
+    if i >= nvar goto CLEANUP_DONE
 
-   symbol  = dynvars[i]                         # Symbol to be unshadowed
-   name    = symbol._get_name_as_string()
-   package = symbol._get_package()
+    symbol  = dynvars[i]                         # Symbol to be unshadowed
+    name    = symbol._get_name_as_string()
+    package = symbol._get_package()
 
-   package._unshadow_symbol(name)               # Unshadow the symbol
+    package._unshadow_symbol(name)               # Unshadow the symbol
 
-   inc i
-   goto CLEANUP_LOOP
+    inc i
+    goto CLEANUP_LOOP
 
 CLEANUP_DONE:
-   if_null error, DONE                          # Rethrow an exception if we
-   rethrow error                                # need to
-   goto DONE
+    if_null error, DONE                          # Rethrow an exception if we
+    rethrow error                                # need to
+    goto DONE
 
 CLEANUP_RETHROW:
-   rethrow P5
-   goto DONE
-
+    rethrow P5
+    goto DONE
 
 # VALID_IN_PARROT_0_2_0 ERROR_BADSPEC:
 ERROR_BAD_SPEC:
-  .ERROR_1("program-error", "illegal variable specification %s", form)
-   goto CLEANUP
+    .ERROR_1("program-error", "illegal variable specification %s", form)
+    goto CLEANUP
 
 ERROR_NARGS:
-  .ERROR_0("program-error", "wrong number of arguments to LET")
-   goto CLEANUP
+    .ERROR_0("program-error", "wrong number of arguments to LET")
+    goto CLEANUP
 
 DONE:
-  .return(retv)
+    .return(retv)
 .end
 
 .sub _print                     # This is just a temporary stand-in - it

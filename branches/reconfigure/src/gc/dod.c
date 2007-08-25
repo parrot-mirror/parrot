@@ -234,7 +234,6 @@ C<trace_stack> can have these values:
 
 */
 
-PARROT_API
 int
 Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
 {
@@ -278,18 +277,7 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
      * It seems that the Class PMC gets DODed - these should
      * get created as constant PMCs.
      */
-    for (i = 1; i < (unsigned int)interp->n_vtable_max; i++) {
-        const VTABLE * const vtable = interp->vtables[i];
-        /*
-         * XXX dynpmc groups have empty slots for abstract objects
-         */
-        if (vtable) {
-            if (vtable->mro)
-                pobject_lives(interp, (PObj *)vtable->mro);
-
-            pobject_lives(interp, (PObj *)vtable->_namespace);
-        }
-    }
+    mark_vtables(interp);
 
     /* mark exception list */
     for (i = 0; i <= E_LAST_PYTHON_E; ++i)
@@ -366,7 +354,6 @@ Returns whether the tracing process completed.
 
 */
 
-PARROT_API
 int
 Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
 {
@@ -416,18 +403,8 @@ Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
          * largest percentage of PMCs won't have anything in their data
          * pointer that we need to trace. */
         if (bits) {
-            if (bits == PObj_data_is_PMC_array_FLAG) {
-                /* malloced array of PMCs */
-                PMC ** const data = PMC_data_typed(current, PMC **);
-
-                if (data) {
-                    int i;
-                    for (i = 0; i < PMC_int_val(current); i++) {
-                        if (data[i])
-                            pobject_lives(interp, (PObj *)data[i]);
-                    }
-                }
-            }
+            if (bits == PObj_data_is_PMC_array_FLAG)
+                Parrot_dod_trace_pmc_data(interp, current);
             else {
                 /* All that's left is the custom */
                 PARROT_ASSERT(!PObj_on_free_list_TEST(current));
@@ -455,6 +432,21 @@ Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
     return 1;
 }
 
+void
+Parrot_dod_trace_pmc_data(PARROT_INTERP, NOTNULL(PMC * const p))
+{
+    /* malloced array of PMCs */
+    PMC ** const data = PMC_data_typed(p, PMC **);
+    INTVAL i;
+
+    if (!data)
+        return;
+
+    for (i = 0; i < PMC_int_val(p); i++) {
+        if (data[i])
+            pobject_lives(interp, (PObj *)data[i]);
+    }
+}
 
 #ifdef GC_IS_MALLOC
 
@@ -551,20 +543,14 @@ are immune from collection (i.e. constant).
 
 */
 
-PARROT_API
 void
 Parrot_dod_sweep(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
 {
-    Arenas * const arena_base = interp->arena_base;
-
     UINTVAL i;
     UINTVAL total_used    = 0;
     UINTVAL object_size   = pool->object_size;
 
     Small_Object_Arena *cur_arena;
-#if REDUCE_ARENAS
-    UINTVAL free_arenas = 0, old_total_used = 0;
-#endif
 
 #if GC_VERBOSE
     if (Interp_trace_TEST(interp, 1)) {
@@ -622,92 +608,129 @@ Parrot_dod_sweep(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
 
                 /* if object is a PMC and needs destroying */
                 if (PObj_is_PMC_TEST(b)) {
-                    PMC * const p = (PMC *)b;
-
-                    /* then destroy it here
-                     *
-                     * TODO collect objects with finalizers
-                    */
-                    if (PObj_needs_early_DOD_TEST(p))
-                        --arena_base->num_early_DOD_PMCs;
-
-                    if (PObj_active_destroy_TEST(p))
-                        VTABLE_destroy(interp, p);
-
-                    if (PObj_is_PMC_EXT_TEST(p) && p->pmc_ext != NULL) {
-                        /* if the PMC has a PMC_EXT structure,
-                         * return it to the pool/arena */
-                        Small_Object_Pool * const ext_pool
-                            = arena_base->pmc_ext_pool;
-
-                        if (PObj_is_PMC_shared_TEST(p) && PMC_sync(p)) {
-                            MUTEX_DESTROY(PMC_sync(p)->pmc_lock);
-                            mem_internal_free(PMC_sync(p));
-                            PMC_sync(p) = NULL;
-                        }
-
-                        ext_pool->add_free_object(interp, ext_pool, (PObj *)p->pmc_ext);
-                    }
-#ifndef NDEBUG
-                    /*
-                     * invalidate the PMC
-                     */
-                    p->pmc_ext     = (PMC_EXT *)0xdeadbeef;
-                    p->vtable      = (VTABLE  *)0xdeadbeef;
-                    PMC_pmc_val(p) = (PMC     *)0xdeadbeef;
-#endif
+                    Parrot_dod_free_pmc(interp, (PMC *)b);
                 }
                 /* else object is a buffer(like) */
-                else if (PObj_sysmem_TEST(b) && PObj_bufstart(b)) {
-                    /* has sysmem allocated, e.g. string_pin */
-                    mem_sys_free(PObj_bufstart(b));
-                    PObj_bufstart(b) = NULL;
-                    PObj_buflen(b)   = 0;
+                else if (PObj_sysmem_TEST(b)) {
+                    Parrot_dod_free_sysmem(interp, b);
                 }
                 else {
 #ifdef GC_IS_MALLOC
-                    /* free allocated space at (int*)bufstart - 1,
-                     * but not if it used COW or is external
-                     */
-                    if (PObj_bufstart(b) &&
-                            !PObj_is_external_or_free_TESTALL(b)) {
-                        if (PObj_COW_TEST(b)) {
-                            INTVAL *refcount = ((INTVAL *)PObj_bufstart(b) - 1);
 
-                            if (!--(*refcount)) {
-                                free(refcount); /* the actual bufstart */
-                                refcount = NULL;
-                            }
-                        }
-                        else
-                            free((INTVAL*)PObj_bufstart(b) - 1);
-                    }
+                    /* free allocated space at (int*)bufstart - 1, but not if
+                     * it used COW or is external */
+                    if ( PObj_bufstart(b) &&
+                        !PObj_is_external_or_free_TESTALL(b))
+                        Parrot_dod_free_buffer_malloc(interp, b);
 #else
-                    /*
-                     * XXX Jarkko did report that on irix pool->mem_pool
-                     *     was NULL, which really shouldn't happen
-                     */
-                    if (pool->mem_pool) {
-                        if (!PObj_COW_TEST(b)) {
-                            ((Memory_Pool *)
-                             pool->mem_pool)->guaranteed_reclaimable +=
-                                PObj_buflen(b);
-                        }
-                        ((Memory_Pool *)
-                         pool->mem_pool)->possibly_reclaimable +=
-                            PObj_buflen(b);
-                    }
+                    Parrot_dod_free_buffer(interp, pool, b);
 #endif
                     PObj_buflen(b) = 0;
                 }
-                PObj_flags_SETTO((PObj *)b, PObj_on_free_list_FLAG);
+
                 pool->add_free_object(interp, pool, b);
             }
 next:
             b = (Buffer *)((char *)b + object_size);
         }
     }
+
     pool->num_free_objects = pool->total_objects - total_used;
+}
+
+void
+Parrot_dod_free_pmc(PARROT_INTERP, NOTNULL(PMC * const p))
+{
+    Arenas * const arena_base = interp->arena_base;
+
+    /* TODO collect objects with finalizers */
+    if (PObj_needs_early_DOD_TEST(p))
+        --arena_base->num_early_DOD_PMCs;
+
+    if (PObj_active_destroy_TEST(p))
+        VTABLE_destroy(interp, p);
+
+    if (PObj_is_PMC_EXT_TEST(p))
+         Parrot_free_pmc_ext(interp, p);
+
+#ifndef NDEBUG
+
+    /* invalidate the PMC */
+    p->pmc_ext     = (PMC_EXT *)0xdeadbeef;
+    p->vtable      = (VTABLE  *)0xdeadbeef;
+    PMC_pmc_val(p) = (PMC     *)0xdeadbeef;
+
+#endif
+
+}
+
+/*
+
+FUNCDOC: Parrot_free_pmc_ext
+
+Frees the PMC_EXT structure attached to a PMC, if it exists.
+
+*/
+
+void
+Parrot_free_pmc_ext(PARROT_INTERP, NOTNULL(PMC *p))
+{
+    /* if the PMC has a PMC_EXT structure, return it to the pool/arena */
+    Arenas            * const arena_base = interp->arena_base;
+    Small_Object_Pool * const ext_pool   = arena_base->pmc_ext_pool;
+
+    if (PObj_is_PMC_shared_TEST(p) && PMC_sync(p)) {
+        MUTEX_DESTROY(PMC_sync(p)->pmc_lock);
+        mem_internal_free(PMC_sync(p));
+        PMC_sync(p) = NULL;
+    }
+
+    if (p->pmc_ext)
+        ext_pool->add_free_object(interp, ext_pool, (PObj *)p->pmc_ext);
+
+    p->pmc_ext = NULL;
+}
+
+void
+Parrot_dod_free_sysmem(PARROT_INTERP, NOTNULL(PObj *b))
+{
+    /* has sysmem allocated, e.g. string_pin */
+    if (PObj_bufstart(b))
+        mem_sys_free(PObj_bufstart(b));
+
+    PObj_bufstart(b) = NULL;
+    PObj_buflen(b)   = 0;
+}
+
+void
+Parrot_dod_free_buffer_malloc(PARROT_INTERP, NOTNULL(PObj *b))
+{
+    if (PObj_COW_TEST(b)) {
+        INTVAL *refcount = ((INTVAL *)PObj_bufstart(b) - 1);
+
+        if (!--(*refcount)) {
+            free(refcount); /* the actual bufstart */
+            refcount = NULL;
+        }
+    }
+    else
+        free((INTVAL *)PObj_bufstart(b) - 1);
+}
+
+void
+Parrot_dod_free_buffer( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
+    NOTNULL(PObj *b))
+{
+    Memory_Pool *mem_pool = (Memory_Pool *)pool->mem_pool;
+
+    /* XXX Jarkko reported that on irix pool->mem_pool was NULL, which really
+     * shouldn't happen */
+    if (mem_pool) {
+        if (!PObj_COW_TEST(b))
+            mem_pool->guaranteed_reclaimable += PObj_buflen(b);
+
+         mem_pool->possibly_reclaimable += PObj_buflen(b);
+    }
 }
 
 #ifndef PLATFORM_STACK_WALK
@@ -839,7 +862,6 @@ clear_live_bits(NOTNULL(Small_Object_Pool *pool))
 
 }
 
-PARROT_API
 void
 Parrot_dod_clear_live_bits(PARROT_INTERP)
 {
@@ -855,7 +877,6 @@ Records the start time of a DOD run when profiling is enabled.
 
 */
 
-PARROT_API
 void
 Parrot_dod_profile_start(PARROT_INTERP)
 {
@@ -872,7 +893,6 @@ Also record start time of next part.
 
 */
 
-PARROT_API
 void
 Parrot_dod_profile_end(PARROT_INTERP, int what)
 {
@@ -904,7 +924,6 @@ Prepare for a mark & sweep DOD run.
 
 */
 
-PARROT_API
 void
 Parrot_dod_ms_run_init(PARROT_INTERP)
 {
@@ -950,7 +969,6 @@ Run the stop-the-world mark & sweep collector.
 
 */
 
-PARROT_API
 void
 Parrot_dod_ms_run(PARROT_INTERP, int flags)
 {
@@ -997,6 +1015,8 @@ Parrot_dod_ms_run(PARROT_INTERP, int flags)
 
     /* Now go trace the PMCs */
     if (trace_active_PMCs(interp, flags & DOD_trace_stack_FLAG)) {
+        int ignored;
+
         arena_base->dod_trace_ptr = NULL;
         arena_base->dod_mark_ptr  = NULL;
 
@@ -1004,7 +1024,7 @@ Parrot_dod_ms_run(PARROT_INTERP, int flags)
         pt_DOD_stop_mark(interp);
 
         /* Now put unused PMCs and Buffers on the free list */
-        Parrot_forall_header_pools(interp, POOL_BUFFER | POOL_PMC,
+        ignored = Parrot_forall_header_pools(interp, POOL_BUFFER | POOL_PMC,
             (void*)&total_free, sweep_cb);
 
         if (interp->profile)
@@ -1037,7 +1057,6 @@ Call the configured garbage collector to reclaim unused headers.
 
 */
 
-PARROT_API
 void
 Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
 {

@@ -51,40 +51,57 @@
 
 /* HEADERIZER BEGIN: src/gc/dod.c */
 
-PARROT_API
 void Parrot_do_dod_run( PARROT_INTERP, UINTVAL flags )
         __attribute__nonnull__(1);
 
-PARROT_API
 void Parrot_dod_clear_live_bits( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-PARROT_API
 void Parrot_dod_ms_run( PARROT_INTERP, int flags )
         __attribute__nonnull__(1);
 
-PARROT_API
 void Parrot_dod_ms_run_init( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-PARROT_API
 void Parrot_dod_profile_end( PARROT_INTERP, int what )
         __attribute__nonnull__(1);
 
-PARROT_API
 void Parrot_dod_profile_start( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-PARROT_API
 void Parrot_dod_sweep( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API
+void Parrot_dod_free_pmc( PARROT_INTERP, NOTNULL(PMC * const p) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void Parrot_free_pmc_ext( PARROT_INTERP, NOTNULL(PMC *p) )
+    __attribute__nonnull__(1)
+    __attribute__nonnull__(2);
+
+void Parrot_dod_free_sysmem( PARROT_INTERP, NOTNULL(PObj *b) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void Parrot_dod_free_buffer_malloc( PARROT_INTERP, NOTNULL(PObj *b) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void Parrot_dod_free_buffer( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
+    NOTNULL(PObj *b) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
 int Parrot_dod_trace_children( PARROT_INTERP, size_t how_many )
         __attribute__nonnull__(1);
 
-PARROT_API
+void Parrot_dod_trace_pmc_data( PARROT_INTERP, NOTNULL(PMC * const p))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 int Parrot_dod_trace_root( PARROT_INTERP, int trace_stack )
         __attribute__nonnull__(1);
 
@@ -124,11 +141,9 @@ extern int CONSERVATIVE_POINTER_CHASING;
 /* GC subsystem init functions */
 /* HEADERIZER BEGIN: src/gc/gc_gms.c */
 
-PARROT_API
 void Parrot_gc_gms_init( PARROT_INTERP )
         __attribute__nonnull__(1);
 
-PARROT_API
 void parrot_gc_gms_pobject_lives( PARROT_INTERP, NOTNULL(PObj *obj) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -136,7 +151,7 @@ void parrot_gc_gms_pobject_lives( PARROT_INTERP, NOTNULL(PObj *obj) )
 void parrot_gc_gms_wb( PARROT_INTERP,
     NOTNULL(PMC *agg),
     NOTNULL(void *old),
-    NOTNULL(void *new) )
+    NOTNULL(void *_new) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -146,7 +161,7 @@ void parrot_gc_gms_wb_key( PARROT_INTERP,
     NOTNULL(PMC *agg),
     NOTNULL(void *old),
     NOTNULL(void *old_key),
-    NOTNULL(void *new),
+    NOTNULL(void *_new),
     NOTNULL(void *new_key) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -159,13 +174,11 @@ void parrot_gc_gms_wb_key( PARROT_INTERP,
 
 /* HEADERIZER BEGIN: src/gc/gc_ims.c */
 
-PARROT_API
 void Parrot_dod_ims_wb( PARROT_INTERP, NOTNULL(PMC *agg), NOTNULL(PMC *_new) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_API
 void Parrot_gc_ims_init( PARROT_INTERP )
         __attribute__nonnull__(1);
 

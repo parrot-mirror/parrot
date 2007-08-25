@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2007, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -60,6 +60,8 @@ static int symbol_list_find(
  */
 
 int Parrot_exec_run = 0;
+extern PARROT_API char **Parrot_exec_rel_addr;
+extern PARROT_API int Parrot_exec_rel_count;
 
 /*
 
@@ -80,8 +82,6 @@ Parrot_exec(PARROT_INTERP, opcode_t *pc,
     const char *output;
     long bhs;
     Parrot_jit_info_t *jit_info;
-    extern PARROT_API char **Parrot_exec_rel_addr;
-    extern PARROT_API int Parrot_exec_rel_count;
 
     Parrot_exec_objfile_t * const obj =
         mem_allocate_zeroed_typed(Parrot_exec_objfile_t);
@@ -280,13 +280,11 @@ Parrot_exec_add_text_rellocation(NOTNULL(Parrot_exec_objfile_t *obj), char *nptr
 {
     int symbol_number = 0;
     char *addr;
-    Parrot_exec_rellocation_t *new_relloc;
-    extern PARROT_API char **Parrot_exec_rel_addr;
-    extern PARROT_API int Parrot_exec_rel_count;
+    Parrot_exec_rellocation_t *new_relloc = (Parrot_exec_rellocation_t *)
+        mem_sys_realloc(obj->text_rellocation_table,
+            (size_t)(obj->text_rellocation_count + 1) *
+            sizeof (Parrot_exec_rellocation_t));
 
-    new_relloc = (Parrot_exec_rellocation_t *)mem_sys_realloc(
-        obj->text_rellocation_table, (size_t)(obj->text_rellocation_count + 1)
-            * sizeof (Parrot_exec_rellocation_t));
     obj->text_rellocation_table = new_relloc;
     new_relloc = &obj->text_rellocation_table[obj->text_rellocation_count++];
 

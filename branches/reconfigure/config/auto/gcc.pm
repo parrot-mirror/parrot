@@ -104,7 +104,7 @@ sub runstep {
                 . " -Waggregate-return"
                 . " -Winline"
                 . " -Wno-unused"
-                . " -Wnested-externs -Wfloat-equal"
+                . " -Wnested-externs"
                 . ( $maint ? " -Wlarger-than-4096" : "" ),
 
             # others; ones we might like marked with ?
@@ -153,6 +153,8 @@ sub runstep {
             # us -Wpadded may prove interesting, or even noisy.
             # -Wunreachable-code might be useful in a non debugging version
             4.0 => "-fvisibility=hidden",
+            # Needed to prevent C++ compatibility issues
+            4.1 => " -Wc++-compat",
         );
 
         my @cage_opt_and_vers = (
@@ -183,7 +185,7 @@ sub runstep {
                 . " -Wno-div-by-zero"
                 . " -Wno-endif-labels"
                 . " -Werror-implicit-function-declaration"
-                . " -Wfloat-equal"
+                #. " -Wfloat-equal"
                 . " -Wformat"
                 . " -Wformat=2"
                 . " -Wno-format-extra-args"

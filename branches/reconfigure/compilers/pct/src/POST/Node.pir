@@ -14,8 +14,8 @@ for compiling programs in Parrot.
 .sub '__onload' :load :init
     .local pmc base
 
+    ##  create POST classes
     base = subclass 'PAST::Node', 'POST::Node'
-
     $P0 = subclass base, 'POST::Op'
     $P0 = subclass base, 'POST::Ops'
     $P0 = subclass base, 'POST::Val'
@@ -23,6 +23,7 @@ for compiling programs in Parrot.
     $P0 = subclass base, 'POST::Label'
     $P0 = subclass base, 'POST::Sub'
 
+    ##  initialize %pirtable with opcode argument types
     .local pmc pirtable
     pirtable = new 'Hash'
     pirtable['add'] = '%tP+'
@@ -33,6 +34,7 @@ for compiling programs in Parrot.
     pirtable['n_sub'] = '%rP+'
     pirtable['n_mul'] = '%rP+'
     pirtable['n_div'] = '%rP+'
+    pirtable['n_neg'] = '%rP'
     pirtable['concat'] = '%tP~'
     pirtable['abs'] = '%t'
     pirtable['say'] = '%v'
@@ -40,6 +42,7 @@ for compiling programs in Parrot.
     pirtable['call'] = '%r*****************'                # FIXME:
     pirtable['callmethod'] = '%r*****************'          # FIXME:
     set_hll_global ['POST'], '%pirtable', pirtable
+
     .return ()
 .end
 
@@ -49,7 +52,7 @@ for compiling programs in Parrot.
 =head2 POST::Node
 
 C<POST::Node> is the base class for all POST nodes.  It's derived from class
-C<PAST::Node> (see F<compilers/past-pm/PAST/Node.pir>).
+C<PAST::Node> (see F<compilers/pct/src/PAST/Node.pir>).
 
 =over 4
 
@@ -160,6 +163,14 @@ Get/set
     .return self.'attr'('pirop', value, has_value)
 .end
 
+
+.sub 'inline' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('inline', value, has_value)
+.end
+
+
 =item arglist(arglist)
 
 =cut
@@ -212,7 +223,7 @@ Get/set
     arglist = self['arglist']
     arglist = clone arglist
 
-    # if pirop == 'inline' goto pir_inline
+    if pirop == 'inline' goto pir_inline
     if pirop == 'call' goto pir_call
     if pirop == 'callmethod' goto pir_callmethod
 
@@ -230,7 +241,7 @@ Get/set
   pir_inline:
     .local pmc inline
     result = self.'result'()
-    inline = shift arglist
+    inline = self.'inline'()
     code.'emit'(inline, arglist :flat, 'r'=>result, 't'=>result, 'u'=>result)
     .return (code)
 

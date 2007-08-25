@@ -283,6 +283,10 @@ static int sub_pragma( PARROT_INTERP,
 
 /* HEADERIZER END: static */
 
+#if EXEC_CAPABLE
+    extern int Parrot_exec_run;
+#endif
+
 #define TRACE_PACKFILE 0
 #define TRACE_PACKFILE_PMC 0
 
@@ -501,10 +505,10 @@ do_1_sub_pragma(PARROT_INTERP, NOTNULL(PMC *sub_pmc), int action)
                 if ((interp->resume_flag & RESUME_INITIAL) &&
                         interp->resume_offset == 0) {
                     const ptrdiff_t code = (ptrdiff_t) sub->seg->base.data;
+                    void           *ptr  = VTABLE_get_pointer(interp, sub_pmc);
 
-                    const size_t start_offs =
-                        ((ptrdiff_t) VTABLE_get_pointer(interp, sub_pmc)
-                         - code) / sizeof (opcode_t*);
+                    const size_t start_offs = ((ptrdiff_t)ptr - code) /
+                        sizeof (opcode_t*);
                     interp->resume_offset = start_offs;
                     PObj_get_FLAGS(sub_pmc) &= ~SUB_FLAG_PF_MAIN;
                     CONTEXT(interp->ctx)->current_sub = sub_pmc;
@@ -667,8 +671,9 @@ PackFile_unpack(PARROT_INTERP, NOTNULL(PackFile *self), NOTNULL(opcode_t *packed
     PackFile_Header * const header = self->header;
     opcode_t *cursor;
     int header_read_length;
+    opcode_t padding;
 
-    self->src = packed;
+    self->src  = packed;
     self->size = packed_size;
 
     /* Extract the header. */
@@ -724,7 +729,7 @@ PackFile_unpack(PARROT_INTERP, NOTNULL(PackFile *self), NOTNULL(opcode_t *packed
     else if (header->uuid_type == 1) {
         /* Read in the UUID. We'll put it in a NULL-terminated string, just in
          * case pepole use it that way. */
-        header->uuid_data = mem_sys_allocate(header->uuid_size + 1);
+        header->uuid_data = (unsigned char *)mem_sys_allocate(header->uuid_size + 1);
         memcpy(header->uuid_data, packed + PACKFILE_HEADER_BYTES,
             header->uuid_size);
         header->uuid_data[header->uuid_size] = 0; /* NULL terminate */
@@ -757,9 +762,9 @@ PackFile_unpack(PARROT_INTERP, NOTNULL(PackFile *self), NOTNULL(opcode_t *packed
     }
 
     /* Padding. */
-    PF_fetch_opcode(self, &cursor);
-    PF_fetch_opcode(self, &cursor);
-    PF_fetch_opcode(self, &cursor);
+    padding = PF_fetch_opcode(self, &cursor);
+    padding = PF_fetch_opcode(self, &cursor);
+    padding = PF_fetch_opcode(self, &cursor);
 
 #if TRACE_PACKFILE
     PIO_eprintf(NULL, "PackFile_unpack: Directory read, offset %d.\n",
@@ -1739,25 +1744,12 @@ directory_pack(PARROT_INTERP, NOTNULL(PackFile_Segment *self), NOTNULL(opcode_t 
     align = 16/sizeof (opcode_t);
     if (align && (cursor - self->pf->src) % align)
         cursor += align - (cursor - self->pf->src) % align;
+
     /* now pack all segments into new format */
     for (i = 0; i < dir->num_segments; i++) {
         PackFile_Segment * const seg = dir->segments[i];
-        const size_t size = seg->op_count;
 
-        PackFile_Segment_pack(interp, seg, cursor);
-        /*
-         * XXX somehow it's smelling fishy here:
-         * - either cursor is unaligned
-         * - or the return result of _pack doesn't match
-         *   expected size
-         *
-         * likely in combination with pbc_merge
-         *
-         * the relevant code with size check is visible in:
-         *
-         * svn diff -r15516:15517
-         */
-        cursor += size;
+        cursor = PackFile_Segment_pack(interp, seg, cursor);
     }
 
     return cursor;
@@ -2641,7 +2633,6 @@ fixup_packed_size(PARROT_INTERP, NOTNULL(PackFile_Segment *self))
                 break;
             default:
                 real_exception(interp, NULL, 1, "Unknown fixup type\n");
-                return 0;
         }
     }
     return size;
@@ -2941,9 +2932,6 @@ PackFile_ConstTable_unpack(PARROT_INTERP, NOTNULL(PackFile_Segment *seg),
     opcode_t i;
     PackFile_ConstTable * const self = (PackFile_ConstTable *)seg;
     PackFile * const pf              = seg->pf;
-#if EXEC_CAPABLE
-    extern int Parrot_exec_run;
-#endif
 
     PackFile_ConstTable_clear(interp, self);
 

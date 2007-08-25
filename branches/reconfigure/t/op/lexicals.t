@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 42;
+use Parrot::Test tests => 43;
 
 =head1 NAME
 
@@ -82,7 +82,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', '.lex - same PMC twice fails (.local pmc ab
     .local pmc ab, a, b
     .lex '$a', ab
     .lex '$b', ab
-    ab = new .String
+    ab = new 'String'
     ab = "ok\n"
     a = find_lex '$a'
     print a
@@ -201,7 +201,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'get_lexpad - set var via pad' );
     end
 ok:
     print "ok\n"
-    P1 = new .Integer
+    P1 = new 'Integer'
     P1 = 13013
     pad['$a'] = P1
     print P0
@@ -226,7 +226,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'get_lexpad - set two vars via pad (2 lex -
     end
 ok:
     print "ok\n"
-    P1 = new .Integer
+    P1 = new 'Integer'
     P1 = 13013
     pad['$a'] = P1
     print P0
@@ -246,7 +246,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', 'synopsis example' );
 .sub main
     .lex '$a', P0
-    P1 = new .Integer
+    P1 = new 'Integer'
     P1 = 13013
     store_lex '$a', P1
     print P0
@@ -438,7 +438,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'get_outer via interp' );
     sub = interp["outer"; "sub"; 2]
     print sub
     print "\n"
-    $P0 = new .String
+    $P0 = new 'String'
     $P0 = "I messed with your var\n"
     pad = interp["outer"; "lexpad"; 2]
     pad['a'] = $P0
@@ -827,7 +827,7 @@ pir_error_output_like( <<'CODE', <<'OUT', 'closure 8' );
 
 .sub main :main
     .lex '$x', $P0
-    $P0 = new .Integer
+    $P0 = new 'Integer'
     $P0 = 5
     anon_1()
 .end
@@ -837,7 +837,7 @@ pir_error_output_like( <<'CODE', <<'OUT', 'closure 8' );
     $P0 = find_lex '$x'
     print $P0
     .lex '$x', $P1
-    $P1 = new .Integer
+    $P1 = new 'Integer'
     $P1 = 4
     print $P1
 .end
@@ -865,7 +865,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', 'find_name on lexicals' );
 .sub main :main
     .lex 'a', $P0
-    $P1 = new .String
+    $P1 = new 'String'
     $P1 = "ok\n"
     store_lex 'a', $P1
     $P2 = find_name 'a'
@@ -884,7 +884,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'multiple names' );
     .lex 'a', $P0
     .lex 'b', $P0
     .lex 'c', $P0
-    $P1 = new .String
+    $P1 = new 'String'
     $P1 = "ok\n"
     store_lex 'a', $P1
     $P2 = find_name 'b'
@@ -909,22 +909,22 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'package-scoped closure 1' );
 .sub '&main' :main :anon
     .local pmc sx
     .lex '$x', sx
-    sx = new .Integer
+    sx = new 'Integer'
     sx = 33
     '&f'()
     print sx    # no find_lex needed - 'sx' is defined here
     print "\n"
 
     '&f'()
-    print sx 
+    print sx
     print "\n"
 
     '&f'()
-    print sx 
+    print sx
     print "\n"
 .end
 
-.sub '&f' :outer('&main') 
+.sub '&f' :outer('&main')
     $P0 = find_lex '$x'           # find_lex needed
     inc $P0
 .end
@@ -943,7 +943,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'package-scoped closure 2' );
 .sub '&main' :main :anon
     .local pmc sx
     .lex '$x', sx
-    sx = new .Integer
+    sx = new 'Integer'
     sx = -32
     '&g'()
     print sx
@@ -959,7 +959,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'package-scoped closure 2' );
 
 .end
 
-.sub '&f' :outer('&main') 
+.sub '&f' :outer('&main')
     $P0 = find_lex '$x'
     inc $P0
 .end
@@ -975,12 +975,12 @@ CODE
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', 'package-scoped closure 3 - autoclose' );
-#     sub f ($x) { 
-#         sub g ($y) { $x + $y }; g($x); 
-#     } 
-#     f(10); # 20 
+#     sub f ($x) {
+#         sub g ($y) { $x + $y }; g($x);
+#     }
+#     f(10); # 20
 #     g(100); # 110
-.sub '&f' 
+.sub '&f'
     .param pmc x
     .lex '$x', x
     $P0 = '&g'(x)
@@ -1012,11 +1012,11 @@ CODE
 OUTPUT
 
 pir_error_output_like( <<'CODE', <<'OUTPUT', 'package-scoped closure 4 - autoclose' );
-#     sub f ($x) { 
-#         sub g () { print $x }; 
-#     } 
-#     g(); 
-.sub '&f' 
+#     sub f ($x) {
+#         sub g () { print $x };
+#     }
+#     g();
+.sub '&f'
     .param pmc x
     .lex '$x', x
 .end
@@ -1036,12 +1036,12 @@ CODE
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', 'package-scoped closure 5 - autoclose' );
-#     sub f ($x) { 
-#         sub g () { print "$x\n" }; 
-#     } 
-#     f(10); 
-#     g(); 
-.sub '&f' 
+#     sub f ($x) {
+#         sub g () { print "$x\n" };
+#     }
+#     f(10);
+#     g();
+.sub '&f'
     .param pmc x
     .lex '$x', x
 .end
@@ -1062,13 +1062,13 @@ CODE
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', 'package-scoped closure 6 - autoclose' );
-#     sub f ($x) { 
-#         sub g () { print "$x\n" }; 
-#     } 
-#     f(10); 
-#     f(20); 
-#     g(); 
-.sub '&f' 
+#     sub f ($x) {
+#         sub g () { print "$x\n" };
+#     }
+#     f(10);
+#     f(20);
+#     g();
+.sub '&f'
     .param pmc x
     .lex '$x', x
 .end
@@ -1091,17 +1091,158 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', 'find_lex: (Perl6 OUTER::)', todo => 'not yet implemented' );
 .sub main :main
-	.lex '$x', 42
-	get_outer()
+    .lex '$x', 42
+    get_outer()
 .end
 
 .sub 'get_outer' :outer('main')
-	.lex '$x', 13
-	$P0 = find_lex '$x', 1
-	say $P0
+    .lex '$x', 13
+    $P0 = find_lex '$x', 1
+    say $P0
 .end
 CODE
 42
+OUTPUT
+
+
+pir_output_is( <<'CODE', <<'OUTPUT', 'Example for RT 44395' );
+
+=for never
+
+# The following PIR should be like:
+
+use strict;
+
+test_closures();
+
+sub test_closures
+{
+    my @closures;
+
+    # create some closures, outer scope
+    {
+         my $shared = 1;
+
+         # inner scope
+         for (1..3) {
+            my $not_shared = 1;
+            my $sub_num    = $_;
+            push @closures,
+                 sub {
+                     print "Sub $sub_num was called $not_shared times. Any sub was called $shared times.\n";
+                     $shared++;
+                     $not_shared++;
+                 };
+         }
+    }
+
+    for ( 1 .. 4 ) {
+         foreach ( @closures ) {
+             $_->();
+         }
+    }
+
+}
+
+=cut
+
+.sub test_closures :main
+
+    .lex '@closures', $P0
+    $P0 = new 'ResizablePMCArray'
+
+    # create some closures, outer scope
+    outer_scope()
+
+    # and call them in turn.
+    $I0 = 0
+    NEXT_LOOP0:
+    if $I0 >= 4 goto DONE_LOOP0
+        $I1 = 0
+        NEXT_LOOP1:
+        if $I1 >= 3 goto DONE_LOOP1
+           $P1 = $P0[$I1]
+           $P1()
+           inc $I1
+           goto NEXT_LOOP1
+        DONE_LOOP1:
+        inc $I0
+        goto NEXT_LOOP0
+    DONE_LOOP0:
+
+.end
+
+# Return n closures, each with lexical references to "$n" and "$sub_num".
+.sub 'outer_scope' :outer('test_closures')
+
+    .lex '$shared', $P0
+    $P0 = new 'Integer'
+    $P0 = 1
+
+    $I3 = 1
+    NEXT:
+    if $I3 > 3 goto DONE
+        inner_scope( $I3 )
+        inc $I3
+        goto NEXT
+    DONE:
+
+.end
+
+
+.sub 'inner_scope' :outer('outer_scope')
+    .param int topic
+
+    .lex '$sub_num', $P0
+    $P0 = new 'Integer'
+    $P0 = topic
+
+    .lex '$not_shared', $P1
+    $P1 = new 'Integer'
+    $P1 = 1
+
+    find_lex $P2, '@closures'
+    .const .Sub $P3 = 'anonymous'
+    newclosure $P4, $P3
+    push $P2, $P4
+
+    .return ()
+.end
+
+.sub 'anonymous' :outer('inner_scope')
+
+    find_lex $P0, '$sub_num'
+    find_lex $P1, '$not_shared'
+    find_lex $P2, '$shared'
+
+    print "Sub "
+    print $P0
+    print " was called "
+    print $P1
+    print " times. Any sub was called "
+    print $P2
+    print " times.\n"
+
+    inc $P1
+    inc $P2
+
+    .return ()
+.end
+
+
+CODE
+Sub 1 was called 1 times. Any sub was called 1 times.
+Sub 2 was called 1 times. Any sub was called 2 times.
+Sub 3 was called 1 times. Any sub was called 3 times.
+Sub 1 was called 2 times. Any sub was called 4 times.
+Sub 2 was called 2 times. Any sub was called 5 times.
+Sub 3 was called 2 times. Any sub was called 6 times.
+Sub 1 was called 3 times. Any sub was called 7 times.
+Sub 2 was called 3 times. Any sub was called 8 times.
+Sub 3 was called 3 times. Any sub was called 9 times.
+Sub 1 was called 4 times. Any sub was called 10 times.
+Sub 2 was called 4 times. Any sub was called 11 times.
+Sub 3 was called 4 times. Any sub was called 12 times.
 OUTPUT
 
 # Local Variables:

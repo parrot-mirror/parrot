@@ -85,16 +85,18 @@ $1 = gcd($4, $5) = $2 * $4 + $3 * $5 (d = gcd(a,b) = x*a + y*b)
 
 inline op gcd(out INT, in NUM, in NUM) :advanced_math {
 
-  FLOATVAL q = 0;
-  FLOATVAL c = 0;
-  FLOATVAL temp2 = $2 < 0.0 ? -$2 : $2;
-  FLOATVAL temp3 = $3 < 0.0 ? -$3 : $3;
-  while (temp3 != 0) {
-    q = floor((FLOATVAL)temp2/temp3);
-    c = temp2 - temp3*q;
+  FLOATVAL q     = 0;
+  FLOATVAL c     = 0;
+  FLOATVAL temp2 = fabs($2);
+  FLOATVAL temp3 = fabs($3);
+
+  while (!FLOAT_IS_ZERO(temp3)) {
+    q     = floor((FLOATVAL)temp2/temp3);
+    c     = temp2 - temp3*q;
     temp2 = temp3;
     temp3 = c;
   }
+
   $1 = (INTVAL)temp2;
   goto NEXT();
 }
@@ -420,9 +422,7 @@ op instantiate(out PMC) {
           break;
       default:
           real_exception(interp, NULL, UNIMPLEMENTED,
-                  "uninplement class argument in instantiate");
-          _class = NULL; /* just for cc */
-          break;
+                  "unimplemented class argument in instantiate");
   }
   $1 = VTABLE_instantiate(interp, _class, sig);
   interp->current_args = NULL;
@@ -462,7 +462,8 @@ back to the type ID if no class object is stored in the namespace.
 =cut
 
 inline op new(out PMC, invar PMC) :object_classes {
-    PMC *ns, *classobj;
+    PMC *ns       = PMCNULL;
+    PMC *classobj = PMCNULL;
     INTVAL type;
     switch ($2->vtable->base_type) {
         case enum_class_String:
@@ -510,7 +511,8 @@ inline op new(out PMC, invar PMC) :object_classes {
 }
 
 inline op new(out PMC, invar PMC, in PMC) :object_classes {
-    PMC *ns, *classobj;
+    PMC *ns       = PMCNULL;
+    PMC *classobj = PMCNULL;
     INTVAL type;
     switch ($2->vtable->base_type) {
         case enum_class_String:

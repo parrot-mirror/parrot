@@ -115,11 +115,20 @@ children and attributes.  Returns the newly created node.
 .end
 
 
+=item unshift(child)
+
+Add C<child> to the beginning of the invocant's list of children.
+
 =item push(child)
 
 Add C<child> to the end of the invocant's list of children.
 
 =cut
+
+.sub 'unshift' :method
+    .param pmc value
+    unshift self, value
+.end
 
 .sub 'push' :method
     .param pmc value
@@ -637,11 +646,43 @@ blocks in Perl6 C<if>, C<while>, and other similar statements).
 .end
 
 
+=item symbol(name, [attr1 => val, attr2 => val2, ...])
+
+If called with named arguments, sets the symbol hash corresponding
+to C<name> in the current block.  The HLL is free to select
+any symbol attributes desired, although the 'scope' attribute
+is typically used to assist with lexical scoping of PAST::Var
+nodes.
+
+If no named arguments are given, returns the current
+attribute hash for symbol C<name>.
+
+=cut
+
+.sub 'symbol' :method
+    .param string name
+    .param pmc attr            :slurpy :named
+    .local pmc symtable
+    symtable = self['symtable']
+    unless null symtable goto have_symtable
+    symtable = new 'Hash'
+    self['symtable'] = symtable
+  have_symtable:
+    if attr goto set_symbol
+  get_symbol:
+    $P0 = symtable[name]
+    if null $P0 goto set_symbol
+    .return ($P0)
+  set_symbol:
+    symtable[name] = attr
+    .return (attr)
+.end
+
+
 =item symtable([value])
 
-Get/set the symbol table for the block.  In the current implementation,
-the data structure for the symbol table is left entirely up to the
-caller; PAST doesn't use C<symtable> for any code generation.
+Get/set the symbol table for the block.  May be deprecated in
+favor of the C<symbol> method above.
 
 =cut
 
