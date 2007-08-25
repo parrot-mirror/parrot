@@ -21,7 +21,7 @@ use vars qw($description @args);
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
-
+use Parrot::BuildUtil;
 
 $description = 'Detecting compiler attributes (-DHASATTRIBUTE_xxx)';
 
@@ -65,8 +65,14 @@ sub try_attr {
     my $cc = $conf->option_or_data( 'cc' );
     cc_gen('config/auto/attributes/test_c.in');
 
+    my $disable_warnings = '';
+    # work around msvc warning for unused variable
+    if ( defined $conf->option_or_data( 'msvcversion' ) ) {
+        $disable_warnings = '-wd4101';
+    }
+
     my $ccflags = $conf->option_or_data( 'ccflags');
-    my $tryflags = "$ccflags -D$attr";
+    my $tryflags = "$ccflags -D$attr $disable_warnings";
 
     my $command_line = Parrot::Configure::Step::_build_compile_command( $cc, $tryflags );
     $verbose and print "  ", $command_line, $/;
@@ -76,30 +82,18 @@ sub try_attr {
         $command_line, $output_file, $output_file );
     $verbose and print "  exit code: $exit_code$/";
 
+    $conf->data->set( $attr => !$exit_code | 0 );
+
     return if $exit_code;
 
-    my $output = _slurp_file( $output_file );
+    my $output = Parrot::BuildUtil::slurp_file( $output_file );
+    $verbose and print "  output: $output$/";
 
     if ( $output !~ /error|warning/i ) {
         $conf->data->set( ccflags => $tryflags );
     }
 
     return;
-}
-
-
-# Stolen from Parrot::Test
-# Should be put somewhere more central
-sub _slurp_file {
-    my ($file_name) = @_;
-
-    open( my $SLURP, '<', $file_name ) or die "open '$file_name': $!";
-    local $/ = undef;
-    my $file = <$SLURP> . '';
-    $file =~ s/\cM\cJ/\n/g;
-    close $SLURP;
-
-    return $file;
 }
 
 1;

@@ -50,6 +50,43 @@ pmclass LuaClosure
 
 /*
 
+=item C<void init_pmc(PMC *sub)>
+
+=cut
+
+*/
+    void init_pmc (PMC* sub) {
+        if ( VTABLE_isa(INTERP, sub, const_string(INTERP, "Closure")) ) {
+            PMC_struct_val(SELF) = mem_allocate_typed(struct Parrot_sub);
+            PMC_pmc_val(SELF)    = PMCNULL;
+            PMC_metadata(SELF)   = PMCNULL;
+            PObj_custom_mark_destroy_SETALL(SELF);
+            /* copy the sub struct */
+            memcpy(PMC_sub(SELF), PMC_sub(sub), sizeof (struct Parrot_sub));
+        }
+        else {
+            real_exception(INTERP, NULL, E_Exception, "not a Closure (%s)",
+                           string_to_cstring(INTERP, SELF->vtable->whoami));
+        }
+    }
+
+/*
+
+=item C<void mark()>
+
+Marks the closure as live.
+
+=cut
+
+*/
+    void mark() {
+        SUPER();
+        if (PMC_metadata(SELF))
+            pobject_lives(INTERP, (PObj *)PMC_metadata(SELF));
+    }
+
+/*
+
 =item C<STRING* name()>
 
 Return the string "function".

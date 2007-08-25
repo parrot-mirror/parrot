@@ -40,10 +40,9 @@ is setting.
 Tells Configure.pl to output information about i<every> setting added or
 changed.
 
-=item C<--verbose-step={N|name|regex}>
+=item C<--verbose-step={N|regex}>
 
-Run one step with C<--verbose=2>; step indicated  by step number C<N>, by step
-name (I<e.g.>, C<--verbose-step=inter::make>), or by matching description.
+Run C<--verbose=2> for step number C<N> or matching description.
 
 =item C<--nomanicheck>
 

@@ -1740,7 +1740,7 @@ string_nprintf(PARROT_INTERP,
      * XXX -leo: bytelen with strlen compare
      */
     if (bytelen > 0 && bytelen < (INTVAL)string_length(interp, output))
-        string_substr(interp, output, 0, bytelen, &output, 1);
+        output = string_substr(interp, output, 0, bytelen, &output, 1);
 
     if (dest == NULL)
         return output;
@@ -1867,7 +1867,7 @@ string_to_num(PARROT_INTERP, NOTNULL(const STRING *s))
      * XXX would strtod() be better for detecting malformed input?
      */
     cstr = string_to_cstring(interp, (STRING *)const_cast(s));
-    p = cstr;
+    p    = cstr;
 
     while (isspace((unsigned char)*p))
         p++;
@@ -1875,7 +1875,7 @@ string_to_num(PARROT_INTERP, NOTNULL(const STRING *s))
     f = atof(p);
 
     /* Not all atof()s return -0 from "-0" */
-    if (*p == '-' && f == 0.0)
+    if (*p == '-' && FLOAT_IS_ZERO(f))
 #if defined(_MSC_VER)
         /* Visual C++ compiles -0.0 to 0.0, so we need to trick
             the compiler. */

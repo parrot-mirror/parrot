@@ -325,14 +325,16 @@ run_init_lib(PARROT_INTERP, NOTNULL(void *handle),
         char * const cload_func_name = string_to_cstring(interp, load_func_name);
         STRING *init_func_name;
 
-        load_func = (PMC * (*)(PARROT_INTERP))D2FPTR(Parrot_dlsym(handle,
-                    cload_func_name));
+        load_func    = (PMC * (*)(PARROT_INTERP))
+            (Parrot_dlsym(handle, cload_func_name));
+
         string_cstring_free(cload_func_name);
+
         /* get init_func */
-        init_func_name = Parrot_sprintf_c(interp, "Parrot_lib_%Ss_init",
+        init_func_name  = Parrot_sprintf_c(interp, "Parrot_lib_%Ss_init",
                                           lib_name);
         cinit_func_name = string_to_cstring(interp, init_func_name);
-        init_func = (void (*)(PARROT_INTERP, PMC *))D2FPTR(Parrot_dlsym(handle,
+        init_func      = (void (*)(PARROT_INTERP, PMC *))(Parrot_dlsym(handle,
                     cinit_func_name));
         string_cstring_free(cinit_func_name);
     }
@@ -461,6 +463,7 @@ Parrot_load_lib(PARROT_INTERP, NULLOK(STRING *lib), SHIM(PMC *initializer))
     if (lib == NULL) {
         wo_ext   = string_from_literal(interp, "");
         lib_name = NULL;
+        ext      = NULL;
     }
     else {
         lib_name = parrot_split_path_ext(interp, lib, &wo_ext, &ext);

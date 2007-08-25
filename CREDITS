@@ -85,9 +85,8 @@ D: Numerous improvements and proposals.
 N: Bernhard Schmalhofer
 D: Bugfixes
 D: Parrot m4
-D: Parrot bc
 D: Plumhead
-D: Cleanup of examples/assembly
+D: Tests for languages/lisp
 E: Bernhard.Schmalhofer@gmx.de
 
 N: Bob Diertens
@@ -130,6 +129,10 @@ N: Chris Dolan
 D: TAP language author, and Parrot Bug fixes
 E: cdolan@cpan.org
 
+N: Christoph Otto
+D: Patch for key flags in pdd08
+E: christoph@mksig.org
+
 N: chromatic
 D: SDL library and examples; PIR Test::*; test suite cleanup
 D: Parrot::Embed; Pheme
@@ -144,6 +147,11 @@ N: Clinton A. Pierce
 D: Many PIR tests and fixes
 D: A small XML parser in PASM
 D: Interpreter and compiler for BASIC
+
+N: Colin Kuskie
+D: nqp hackery
+D: PIR tutorial updates, docs/test cleanups
+E: ckuskie@sterling.net
 
 N: Cory Spencer
 D: Peek opcode and PIO implementation
@@ -248,7 +256,7 @@ N: Ion Alexandru Morega
 D: string.pmc, complex.pmc
 
 N: James E Keenan (Jim)
-D: Testing of build tools
+D: Testing of configuration and build tools
 W: http://thenceforward.net/parrot/
 S:  Brooklyn, NY, USA
 
@@ -371,7 +379,9 @@ N: Marcus Thiesen
 D: URM language, bugfixes
 
 N: Mark Glines
-D: Cage cleaning, report bugs
+D: Cage cleaning, random bugfixes, report bugs
+E: mark@glines.org
+S: South Lake Tahoe, CA, USA
 
 N: Markus Amsler
 D: httpd.imc, bugfixes
@@ -454,6 +464,7 @@ D: Fixes for pdb, the Parrot debugger
 N: Patrick R. Michaud
 D: Parrot Grammar Engine
 D: Perl 6 pumpking
+D: NQP, PCT, PAST, POST
 D: APL
 D: Pynie
 E: pmichaud@pobox.com

@@ -26,15 +26,15 @@ my $library = <<'CODE';
 .sub make_readonly
     .param pmc arg
     .local pmc one
-    one = new Integer
+    one = new 'Integer'
     one = 1
     setprop arg, '_ro', one
 .end
 
 .sub make_writable
     .param pmc arg
-    .local pmc zero 
-    zero = new Integer
+    .local pmc zero
+    zero = new 'Integer'
     zero = 0
     setprop arg, '_ro', zero
 .end
@@ -44,7 +44,7 @@ pir_error_output_unlike( $library . <<'CODE', <<'OUTPUT', "Integer set read-only
 .sub main :main
     .local pmc foo
 
-    foo = new Integer
+    foo = new 'Integer'
     foo = 42
 
     make_readonly(foo)
@@ -60,7 +60,7 @@ pir_output_is( $library . <<'CODE', <<'OUTPUT', "Integer set read-only can be re
     .local pmc foo
     .local pmc tmp
 
-    foo = new Integer
+    foo = new 'Integer'
     foo = 42
 
     make_readonly(foo)
@@ -72,8 +72,8 @@ pir_output_is( $library . <<'CODE', <<'OUTPUT', "Integer set read-only can be re
     print "\n"
     print $S0
     print "\n"
-    
-    tmp = new Integer
+
+    tmp = new 'Integer'
     add tmp, foo, foo
     print tmp
     print "\n"
@@ -100,7 +100,7 @@ $library
 .sub main :main
     .local pmc foo
 
-    foo = new PerlInteger
+    foo = new 'PerlInteger'
     foo = 42
 
     make_readonly(foo)
@@ -114,8 +114,8 @@ OUTPUT
 pir_output_is( $library . <<'CODE', <<'OUTPUT', "Integer stays Integer" );
 .sub main :main
     .local pmc foo
-    
-    foo = new Integer
+
+    foo = new 'Integer'
     foo = 42
 
     make_readonly(foo)
@@ -131,7 +131,7 @@ pir_error_output_unlike( $library . <<'CODE', <<'OUTPUT', "Integer add" );
 .sub main :main
     .local pmc foo
 
-    foo = new Integer
+    foo = new 'Integer'
     foo = 42
 
     make_readonly(foo)
@@ -145,8 +145,8 @@ OUTPUT
 pir_error_output_unlike( $library . <<'CODE', <<'OUTPUT', "Complex i_add" );
 .sub main :main
     .local pmc foo
-    
-    foo = new Complex
+
+    foo = new 'Complex'
     foo[0] = 1.0
     foo[1] = 1.0
     make_readonly(foo)
@@ -178,10 +178,8 @@ OUTPUT
         my $code = $library . <<"CODE";
 .loadlib 'rotest'
 .sub main :main
-    .local int type
     .local pmc value
-    type = find_type 'ROTest'
-    value = new type
+    value = new 'ROTest'
     #READONLYTEST
     $test
     print "reached end\\n"
@@ -209,11 +207,11 @@ pir_error_output_unlike( $library . <<'CODE', <<'OUTPUT', "ResizablePMCArray (no
     .local pmc foo
     .local pmc three
     .local pmc four
-    
-    foo = new ResizablePMCArray
-    three = new Integer
+
+    foo = new 'ResizablePMCArray'
+    three = new 'Integer'
     three = 3
-    four = new Integer
+    four = new 'Integer'
     four = 4
 
     foo = 3
@@ -234,12 +232,12 @@ pir_error_output_unlike( $library . <<'CODE', <<'OUTPUT', "Objects" );
     .local pmc fooclass
     .local pmc foo
 
-    $P0 = new Integer
+    $P0 = new 'Integer'
     $P0 = 1
 
     fooclass = newclass 'Foo'
     addattribute fooclass, 'bar'
-    foo = new 'Foo' 
+    foo = new 'Foo'
     setattribute foo, 'bar', $P0
     make_readonly(foo)
     inc $P0
@@ -259,8 +257,8 @@ OUTPUT
     .local pmc three
     .local pmc tmp
 
-    foo = new ResizablePMCArray
-    three = new Integer
+    foo = new 'ResizablePMCArray'
+    three = new 'Integer'
     three = 3
 
     foo = 1
@@ -270,7 +268,7 @@ OUTPUT
     make_readonly(foo)
     print "after\n"
 
-    # three = 4 # should fail -- is that what we want 
+    # three = 4 # should fail -- is that what we want
     tmp = foo[0]
     tmp = 4
     print "NOT OKAY\n"
