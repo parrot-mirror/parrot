@@ -226,17 +226,16 @@ sub run_single_step {
     my ( $verbose, $verbose_step, $ask ) =
         $conf->options->get( qw( verbose verbose-step ask ) );
 
-    for my $task ( $conf->steps() ) {
-        if ( $task->{"Parrot::Configure::Task::step"} eq $taskname ) {
-            $conf->_run_this_step( {
-                task            => $task,
-                verbose         => $verbose,
-                verbose_step    => $verbose_step,
-                ask             => $ask,
-                n               => 1,
-            } );
-        }
-    }
+    return unless $conf->{hash_of_steps}{$taskname};
+    my $step_no = $conf->{hash_of_steps}{$taskname};
+    $conf->_run_this_step( {
+        task            => ($conf->steps())[$step_no - 1],
+        verbose         => $verbose,
+        verbose_step    => $verbose_step,
+        ask             => $ask,
+        n               => 1,
+    } );
+    return 1;
 }
 
 sub _run_this_step {
