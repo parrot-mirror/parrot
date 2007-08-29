@@ -10,8 +10,6 @@ O           = @o@
 #
 # gdbmhash is only built when 'libgdbm.so' is available
 #
-# There is no config probe for libquantum yet, so add 'quantumreg' manually if desired
-#
 PMCS = \
   dynlexpad \
   foo \
@@ -19,6 +17,7 @@ PMCS = \
 #CONDITIONED_LINE(has_gdbm):gdbmhash \
   match \
   matchrange \
+  rational \
   subproxy 
 
 BUILD = $(PERL) @build_dir@/tools/build/dynpmc.pl
