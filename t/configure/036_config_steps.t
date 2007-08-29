@@ -5,18 +5,18 @@
 use strict;
 use warnings;
 
-use lib qw( . lib ../lib ../../lib );
+use lib qw( lib );
 
 use Test::More;
 use File::Find;
 
 =head1 NAME
 
-t/configure/config_steps.t - tests step modules under the config dir
+t/configure/036_config_steps.t - tests step modules under the config dir
 
 =head1 SYNOPSIS
 
-    prove t/configure/config_steps.t
+    prove t/configure/036_config_steps.t
 
 =head1 DESCRIPTION
 
