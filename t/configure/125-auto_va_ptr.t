@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use Test::More tests =>  2;
 use Carp;
-use lib qw( . lib ../lib ../../lib );
+use lib qw( lib );
 use_ok('config::auto::va_ptr');
 
 =for hints_for_testing The documentation of the package being tested is

@@ -226,7 +226,7 @@ sub run_single_step {
     my ( $verbose, $verbose_step, $ask ) =
         $conf->options->get( qw( verbose verbose-step ask ) );
 
-    if ($conf->{hash_of_steps}{$taskname}) {
+    if ( exists $conf->{hash_of_steps}{$taskname} ) {
         my $step_no = $conf->{hash_of_steps}{$taskname};
         $conf->_run_this_step( {
             task            => ($conf->steps())[$step_no - 1],
