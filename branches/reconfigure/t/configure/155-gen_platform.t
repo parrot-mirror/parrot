@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use Test::More tests =>  2;
 use Carp;
-use lib qw( . lib ../lib ../../lib );
+use lib qw( lib );
 use_ok('config::gen::platform');
 
 =for hints_for_testing By definition, test coverage of this package will

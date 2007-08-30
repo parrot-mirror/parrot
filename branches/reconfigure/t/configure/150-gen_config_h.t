@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use Test::More tests =>  2;
 use Carp;
-use lib qw( . lib ../lib ../../lib );
+use lib qw( lib );
 use_ok('config::gen::config_h');
 
 =for hints_for_testing (At last!  A config/ package with somewhat

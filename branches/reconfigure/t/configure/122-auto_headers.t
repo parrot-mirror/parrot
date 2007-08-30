@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use Test::More tests =>  2;
 use Carp;
-use lib qw( . lib ../lib ../../lib );
+use lib qw( lib );
 use_ok('config::auto::headers');
 
 =for hints_for_testing You may need to write SKIP blocks to encapsulate

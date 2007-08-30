@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use Test::More tests => 12;
 use Carp;
-use lib qw( . lib ../lib ../../lib t/configure/testlib );
+use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 $ENV{TEST_LEX} = 'foobar';
 use_ok('config::inter::lex');

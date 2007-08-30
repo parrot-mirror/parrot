@@ -8,7 +8,7 @@ use warnings;
 
 use Test::More tests => 32;
 use Carp;
-use lib qw( . lib ../lib ../../lib );
+use lib qw( lib );
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use_ok('Parrot::Configure::Step::List', qw|
@@ -90,7 +90,8 @@ SKIP: {
 
     my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";
-    my $ret = $conf->run_single_step( $args->{step} );
+#    my $ret = $conf->run_single_step( $args->{step} );
+    my $ret = $conf->run_single_step( $conf->options->{c}->{step} );
     my @more_lines = $tie_out->READLINE;
     ok( (defined $@) && (! $@),
         "Parrot::Configure::run_single_step() succeeded");

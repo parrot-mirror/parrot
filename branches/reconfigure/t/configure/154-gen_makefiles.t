@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use Test::More tests =>  2;
 use Carp;
-use lib qw( . lib ../lib ../../lib );
+use lib qw( lib );
 use_ok('config::gen::makefiles');
 
 =for hints_for_testing Consider testing the content of the files which

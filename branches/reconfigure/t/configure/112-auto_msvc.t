@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use Test::More tests => 10;
 use Carp;
-use lib qw( . lib ../lib ../../lib t/configure/testlib );
+use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::auto::msvc');
 use Parrot::Configure;
