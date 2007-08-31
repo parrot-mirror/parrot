@@ -296,6 +296,11 @@ use Parrot::Configure::Messages qw(
 );
 use Parrot::Configure::Step::List qw( get_steps_list );
 
+eval { require Bundle::Parrot };
+if ($@) {
+    die "Bundle::Parrot has not been installed, Configure.pl cannot continue.";
+}
+
 $| = 1; # $OUTPUT_AUTOFLUSH = 1;
 
 # Install Option text was taken from:
