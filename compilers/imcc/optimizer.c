@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2002-2007, The Perl Foundation.
+ */
+
+/*
  * optimizer.c
  *
  * Optimization occurs in three stages:
@@ -1111,7 +1115,7 @@ branch_cond_loop_swap(PARROT_INTERP, IMC_Unit *unit, Instruction *branch,
             }
 
             reg_index = get_branch_regno(cond);
-            if (reg_index == -1) {
+            if (reg_index < 0) {
                 real_exception(interp, NULL, 1,
                         "Negative branch register address detected");
             }
