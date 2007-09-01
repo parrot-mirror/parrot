@@ -1038,7 +1038,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "OO argument passing - 2" );
     .return ($S0)
 .end
 CODE
-Foo ok 1
+parrot;Foo ok 1
 ok 2
 ok 1
 OUTPUT
@@ -1065,7 +1065,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "OO argument passing - 3" );
 .end
 
 CODE
-Foo ok 1
+parrot;Foo ok 1
 OUTPUT
 
 # see also tcl in leo-ctx5 by Coke; Date 28.08.2005
@@ -1724,7 +1724,7 @@ OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "named - 2 flatten" );
 .pcc_sub main:
-    new P0, .Hash
+    new P0, 'Hash'
     set P0['a'], 20
     set P0['b'], 10
     set_args "(0x220)", P0            # :flatten :named
