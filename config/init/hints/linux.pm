@@ -69,6 +69,37 @@ sub runstep {
         $cc_flags .= ' -D_GNU_SOURCE';
     }
 
+    ### XXX This is a dummy callback to test callbacks.
+    ### This is for debugging purposes only and is not expected to work.
+    ### Suggested by Andy Dougherty.
+    ### Cf: http://rt.perl.org/rt3/Ticket/Display.html?id=45025
+    # Run the gcc version test to see if $cc is really gcc.
+    my $linux_link_cb = sub {
+        use Parrot::Configure::Step qw(cc_gen cc_run);
+        use Carp;
+        my ( $key, $cc ) = @_;
+        my %gnuc;
+        my $link = $conf->data->get('link');
+        cc_gen("config/auto/gcc/test_c.in");
+
+        # Can't call cc_build since we haven't set all the flags yet.
+        # This should suffice for this test.
+        my $cc_inc = $conf->data->get('cc_inc');
+        Parrot::Configure::Step::_run_command( "$cc -o test test.c $cc_inc", 'test.cco', 'test.cco' )
+            and confess "C compiler failed (see test.cco)";
+        %gnuc = eval cc_run() or die "Can't run the test program: $!";
+        if ( defined $gnuc{__GNUC__} ) {
+            # $link = 'g++';  # don't actually set it in this test function.
+       $conf->data->set( link => $link );
+        }
+        else {
+            # Don't know what compiler we have, so don't touch $link.
+        }
+        $conf->data->deltrigger( "cc", "linux_link" );
+    };
+    $conf->data->settrigger( "cc", "linux_link", $linux_link_cb );
+    ### XXX End of dummy callback to test callbacks
+
     $conf->data->set(
         ccflags        => $cc_flags,
         libs           => $libs,
