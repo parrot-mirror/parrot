@@ -40,6 +40,7 @@ use warnings;
 use lib qw(config);
 use Carp qw(carp);
 use Storable qw(nstore retrieve);
+#$Storable::forgive_me = 1;
 use Parrot::Configure::Data;
 
 use Class::Struct;
@@ -251,8 +252,11 @@ sub _run_this_step {
 
     my $conftrace = [];
     my $sto = q{.configure_trace.sto};
-    if ($conf->options->get(q{configure_trace}) and (-e $sto)) {
-        $conftrace = retrieve($sto);
+    {
+        local $Storable::Eval = 1;
+        if ($conf->options->get(q{configure_trace}) and (-e $sto)) {
+            $conftrace = retrieve($sto);
+        }
     }
     my $step = $step_name->new;
 
@@ -336,7 +340,10 @@ sub _run_this_step {
             data    => $conf->{data},
         };
         push @{$conftrace}, $evolved_data;
-        nstore($conftrace, $sto);
+        {
+            local $Storable::Deparse = 1;
+            nstore($conftrace, $sto);
+        }
     }
 }
 
