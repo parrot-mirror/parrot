@@ -225,20 +225,32 @@ sub run_single_step {
 
     my ( $verbose, $verbose_step, $ask ) =
         $conf->options->get( qw( verbose verbose-step ask ) );
-
-    if ( exists $conf->{hash_of_steps}{$taskname} ) {
-        my $step_no = $conf->{hash_of_steps}{$taskname};
-        $conf->_run_this_step( {
-            task            => ($conf->steps())[$step_no - 1],
-            verbose         => $verbose,
-            verbose_step    => $verbose_step,
-            ask             => $ask,
-            n               => 1,
-        } );
-        return 1;
-    } else {
-        return;
+ 
+    for my $task ( $conf->steps() ) {
+        if ( $task->{"Parrot::Configure::Task::step"} eq $taskname ) {
+            $conf->_run_this_step( {
+                task            => $task,
+                verbose         => $verbose,
+                verbose_step    => $verbose_step,
+                ask             => $ask,
+                n               => 1,
+            } );
+        }
     }
+
+#    if ( exists $conf->{hash_of_steps}{$taskname} ) {
+#        my $step_no = $conf->{hash_of_steps}{$taskname};
+#        $conf->_run_this_step( {
+#            task            => ($conf->steps())[$step_no - 1],
+#            verbose         => $verbose,
+#            verbose_step    => $verbose_step,
+#            ask             => $ask,
+#            n               => 1,
+#        } );
+#        return 1;
+#    } else {
+#        return;
+#    }
 }
 
 sub _run_this_step {
@@ -253,8 +265,11 @@ sub _run_this_step {
 
     my $conftrace = [];
     my $sto = q{.configure_trace.sto};
-    if ($conf->options->get(q{configure_trace}) and (-e $sto)) {
-        $conftrace = retrieve($sto);
+    {
+        local $Storable::Eval = 1;
+        if ($conf->options->get(q{configure_trace}) and (-e $sto)) {
+            $conftrace = retrieve($sto);
+        }
     }
     my $step = $step_name->new;
 
@@ -338,7 +353,10 @@ sub _run_this_step {
             data    => $conf->{data},
         };
         push @{$conftrace}, $evolved_data;
-        nstore($conftrace, $sto);
+        {
+            local $Storable::Deparse = 1;
+            nstore($conftrace, $sto);
+        }
     }
 }
 

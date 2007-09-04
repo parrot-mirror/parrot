@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2004-2007, The Perl Foundation.
+ */
+
 #ifndef PARROT_PLATFORM_GENERIC_STAT_H_GUARD
 #define PARROT_PLATFORM_GENERIC_STAT_H_GUARD
 /*

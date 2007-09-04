@@ -225,7 +225,7 @@ OUT
 
 pir_2_pasm_like( <<'CODE', <<'OUT', "in P param" );
 .sub _main
-    $P0 = new Undef
+    $P0 = new 'Undef'
     $P0 = 42
     foo($P0)
     noop
@@ -237,7 +237,7 @@ pir_2_pasm_like( <<'CODE', <<'OUT', "in P param" );
 .end
 CODE
 /_main:
-  new (P\d+), \d+ # \.Undef
+  new (P\d), 'Undef'
   set \1, 42
 @pcc_sub_call_\d:
   set_args

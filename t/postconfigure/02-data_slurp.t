@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 32;
+use Test::More tests => 30;
 use Carp;
 use lib qw( lib );
 use Parrot::Configure;
@@ -75,14 +75,14 @@ is($conf->options->{c}->{debugging}, 1,
     "command-line option '--debugging' has been stored in object");
 
 my $res  = eval "no strict; use Parrot::Config; \\%PConfig";
-my $reason = <<REASON;
+SKIP: {
+    my $reason = <<REASON;
 If you have already completed configuration,
 you can call Parrot::Configure::Data::slurp().
 You appear not to have completed configuration;
 hence, two tests are skipped.
 REASON
 
-SKIP: {
     skip $reason, 2 unless defined $res;
 
     eval { $conf->data()->slurp(); };
@@ -90,23 +90,12 @@ SKIP: {
 
     my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";
-#    my $ret = $conf->run_single_step( $args->{step} );
-    my $ret = $conf->run_single_step( $conf->options->{c}->{step} );
+    my $ret = $conf->run_single_step( $args->{step} );
     my @more_lines = $tie_out->READLINE;
     ok( (defined $@) && (! $@),
         "Parrot::Configure::run_single_step() succeeded");
 }
-untie *STDOUT;
 
-SKIP: {
-    skip $reason, 2 unless defined $res;
-
-    eval { $conf->data()->slurp(); };
-    ok( (defined $@) && (! $@), "Parrot::Configure::slurp() succeeded");
-
-    ok(! defined ($conf->run_single_step( 'foobar' ) ),
-        "Nonexistent single step returned undef as expected");
-}
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

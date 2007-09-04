@@ -72,23 +72,19 @@ use constant REGNO_NUM => 1;
 use constant REGNO_STR => 2;
 use constant REGNO_PMC => 3;
 
-#/* 4 low bits are argument types */
-use constant PARROT_ARG_INTVAL    => 0x000;
-use constant PARROT_ARG_STRING    => 0x001;
-use constant PARROT_ARG_PMC       => 0x002;
-use constant PARROT_ARG_FLOATVAL  => 0x003;
-use constant PARROT_ARG_TYPE_MASK => 0x00f;
-
-#/* argument meaning and conversion bits */
-use constant PARROT_ARG_CONSTANT => 0x010;
-
-#/* bits a user has to define */
-use constant PARROT_ARG_FLATTEN      => 0x020;                 # /* .flatten_arg */
-use constant PARROT_ARG_SLURPY_ARRAY => PARROT_ARG_FLATTEN;    # /* i.e. foldup  */
-
-use constant PARROT_ARG_OPTIONAL => 0x080;
-use constant PARROT_ARG_OPT_FLAG => 0x100;                     # /* prev optional was set */
-use constant PARROT_ARG_NAME     => 0x200;                     # /* this String is an arg name */
+# TODO: refactor to a simple module import, RT#42286
+BEGIN {
+    my $bits = 'Parrot/Pmc2c/PCCMETHOD_BITS.pl';
+    my %consts = do $bits;
+    unless (%consts) {
+        die $@ if $@;
+        die "$bits: $!";
+    }
+    require constant;
+    while (my ($k, $v) = each %consts) {
+        constant->import($k, $v);
+    }
+}
 
 =head3
     regtype to argtype conversion hash
@@ -383,7 +379,16 @@ sub rewrite_pccmethod {
     parrot_context_t *caller_ctx = CONTEXT(interp->ctx);
     PMC* ret_cont                = new_ret_continuation_pmc(interp, NULL);
     parrot_context_t *ctx        = Parrot_push_context(interp, n_regs_used);
-    PMC* ccont                   = caller_ctx->current_cont;
+    PMC* ccont                   = PMCNULL;
+
+    if (caller_ctx) {
+        ccont = caller_ctx->current_cont;
+    }
+    else {
+        /* there is no point calling real_exception here, because
+           PDB_backtrace can't deal with a missing to_ctx either. */
+        internal_exception(1, "No caller_ctx for continuation \%p.", ccont);
+    }
 
     ctx->current_cont            = ret_cont;
     PMC_cont(ret_cont)->from_ctx = ctx;
