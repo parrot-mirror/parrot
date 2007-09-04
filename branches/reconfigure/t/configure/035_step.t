@@ -10,7 +10,7 @@ use Carp;
 use Cwd;
 use File::Temp 0.13 qw/ tempdir /;
 use IO::Handle;
-use lib qw( lib );
+use lib qw( lib t/configure/testlib );
 use Parrot::IO::Capture::Mini;
 
 BEGIN { use_ok('Parrot::Configure::Step'); }
@@ -32,7 +32,7 @@ $command = q{echo Hello world};
     my $rv = Parrot::Configure::Step::_run_command(
         $command, $out, $err, $verbose);
     is($rv, 0, "Got expected exit code of 0");
-    
+
     chdir $cwd or croak "Unable to change back to starting directory";
 }
 
@@ -50,7 +50,7 @@ $command = q{echo Hello world};
     is($rv, 0, "Got expected exit code of 0");
 #    my @lines = $tie_out->READLINE;
 #    ok(@lines, "verbose output was captured");
-    
+
     chdir $cwd or croak "Unable to change back to starting directory";
 }
 untie *STDOUT;
@@ -65,7 +65,7 @@ $command = q{echo Hello world};
     my $rv = Parrot::Configure::Step::_run_command(
         $command, $out, $err, $verbose);
     is($rv, 0, "Got expected exit code of 0");
-    
+
     chdir $cwd or croak "Unable to change back to starting directory";
 }
 
@@ -79,11 +79,11 @@ $command = q{echo Hello world};
     my $rv = Parrot::Configure::Step::_run_command(
         $command, $out, $err, $verbose);
     is($rv, 0, "Got expected exit code of 0");
-    
+
     chdir $cwd or croak "Unable to change back to starting directory";
 }
 
-$command = q{date};
+$command = $^O eq 'MSWin32' ? q{dir} : q{date};
 {
     my $tdir = tempdir( CLEANUP => 1 );
     chdir $tdir or croak "Unable to change to temporary directory";
@@ -93,11 +93,11 @@ $command = q{date};
     my $rv = Parrot::Configure::Step::_run_command(
         $command, $out, $err, $verbose);
     is($rv, 0, "Got expected exit code of 0");
-    
+
     chdir $cwd or croak "Unable to change back to starting directory";
 }
 
-$command = q{date};
+$command = $^O eq 'MSWin32' ? q{dir} : q{date};
 {
     my $tdir = tempdir( CLEANUP => 1 );
     chdir $tdir or croak "Unable to change to temporary directory";
@@ -107,11 +107,11 @@ $command = q{date};
     my $rv = Parrot::Configure::Step::_run_command(
         $command, $out, $err, $verbose);
     is($rv, 0, "Got expected exit code of 0");
-    
+
     chdir $cwd or croak "Unable to change back to starting directory";
 }
 
-$command = q{date};
+$command = $^O eq 'MSWin32' ? q{dir} : q{date};
 {
     my $tdir = tempdir( CLEANUP => 1 );
     chdir $tdir or croak "Unable to change to temporary directory";
@@ -121,11 +121,11 @@ $command = q{date};
     my $rv = Parrot::Configure::Step::_run_command(
         $command, $out, $err, $verbose);
     is($rv, 0, "Got expected exit code of 0");
-    
+
     chdir $cwd or croak "Unable to change back to starting directory";
 }
 
-$command = q{date};
+$command = $^O eq 'MSWin32' ? q{dir} : q{date};
 {
     my $tdir = tempdir( CLEANUP => 1 );
     chdir $tdir or croak "Unable to change to temporary directory";
@@ -135,7 +135,7 @@ $command = q{date};
     my $rv = Parrot::Configure::Step::_run_command(
         $command, $out, $err, $verbose);
     is($rv, 0, "Got expected exit code of 0");
-    
+
     chdir $cwd or croak "Unable to change back to starting directory";
 }
 

@@ -1,12 +1,12 @@
 #! perl
-# Copyright (C) 2001-2005, The Perl Foundation.
+# Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
 
 use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 9;
+use Parrot::Test tests => 8;
 
 =head1 NAME
 
@@ -24,7 +24,7 @@ type combinations.
 =cut
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "Initialization, and integer tests" );
-    new P0,.Boolean
+    new P0, 'Boolean'
 
     set I0, P0
     eq I0,0,OK_1
@@ -52,7 +52,7 @@ ok 3
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "Number tests" );
-        new P0, .Boolean
+        new P0, 'Boolean'
 
         set N0, 0
         set P0, N0
@@ -76,7 +76,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "String tests" );
-        new P0, .Boolean
+        new P0, 'Boolean'
 
         set S0, "0"
         set P0, S0
@@ -108,8 +108,8 @@ ok 3
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "PMC to PMC" );
-        new P0, .Boolean
-        new P1, .Boolean
+        new P0, 'Boolean'
+        new P1, 'Boolean'
 
         set P0, 1
         clone P1, P0
@@ -138,7 +138,7 @@ ok 3
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "As boolean" );
-        new P0, .Boolean
+        new P0, 'Boolean'
 
         set P0, 1
         if P0, OK_1
@@ -151,9 +151,9 @@ ok 1
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "Logic operations" );
-        new P0, .Boolean
-        new P1, .Boolean
-        new P2, .Boolean
+        new P0, 'Boolean'
+        new P1, 'Boolean'
+        new P2, 'Boolean'
 
         set P0, 1
         set P1, 0
@@ -230,8 +230,8 @@ ok 9
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "neg" );
-    new P0, .Boolean
-        new P1, .Boolean
+        new P0, 'Boolean'
+        new P1, 'Boolean'
 
         set P0, 1
         neg P1, P0
@@ -286,24 +286,6 @@ CODE
 1
 1
 0
-OUTPUT
-
-pasm_output_is( <<'CODE', <<'OUTPUT', "True and False globals" );
-        find_global P0, "True"
-        find_global P1, "False"
-
-        if P0, OK_1
-        print "not "
-OK_1:   print "ok 1\n"
-
-        unless P1, OK_2
-        print "not "
-OK_2:   print "ok 2\n"
-
-        end
-CODE
-ok 1
-ok 2
 OUTPUT
 
 # Local Variables:

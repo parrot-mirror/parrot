@@ -1,3 +1,6 @@
+# Copyright (C) 2005-2007, The Perl Foundation.
+# $Id$
+
 RM_F    = @rm_f@
 PERL    = @perl@
 PARROT  = ../../parrot@exe@
@@ -181,7 +184,7 @@ help:
 	@echo "  help:              Print this help message."
 	@echo ""
 
-test:
+test: all
 	cd .. && $(PERL) t/harness --languages=lua
 
 

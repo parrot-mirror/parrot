@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2007, The Perl Foundation.
+ */
+
+/*
 
 =head1 NAME
 
@@ -49,7 +53,7 @@ in C<char>s or C<int>s?
 #include <sys/stat.h>
 #include <ctype.h>
 #include <string.h>
-
+#include "parrot/parrot.h"
 
 /* end of file marker. Just use "EOF" (defined as -1) */
 #define EOF_MARKER          -1

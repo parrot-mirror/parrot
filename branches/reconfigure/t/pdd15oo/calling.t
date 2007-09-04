@@ -1004,10 +1004,10 @@ pir_output_is( <<'CODE', <<'OUTPUT', "OO argument passing" );
     .return ($S0)
 .end
 CODE
-parrot;Foo ok 1
-parrot;Foo ok 2
-parrot;Foo ok 3
-parrot;Foo ok 4
+Foo ok 1
+Foo ok 2
+Foo ok 3
+Foo ok 4
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "OO argument passing - 2" );
@@ -1724,7 +1724,7 @@ OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "named - 2 flatten" );
 .pcc_sub main:
-    new P0, .Hash
+    new P0, 'Hash'
     set P0['a'], 20
     set P0['b'], 10
     set_args "(0x220)", P0            # :flatten :named

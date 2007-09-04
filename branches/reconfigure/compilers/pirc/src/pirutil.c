@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2007, The Perl Foundation.
+ */
+
+/*
 
 =head1 NAME
 
@@ -11,6 +15,8 @@ pirutil.c - various utility functions
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "parrot/parrot.h"
 
 /*
 

@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
 use Parrot::Config;
-use Parrot::Test tests => 15;
+use Parrot::Test tests => 16;
 
 pir_output_is( <<'CODE', <<'OUT', "if/unless" );
 .sub test :main
@@ -64,7 +64,7 @@ pir_output_is( <<'CODE', <<'OUT', "new" );
 .sub test :main
     $P1 = new String
     $P1 = "ok 1\n"
-    new P1, .String
+    new P1, 'String'
     set P1, "ok 2\n"
     print $P1
     print P1
@@ -80,7 +80,7 @@ pir_output_is( <<'CODE', <<'OUT', "clone" );
     $P1 = new String
     $P1 = "ok 1\n"
     $P0 = clone $P1
-    new P1, .String
+    new P1, 'String'
     set P1, "ok 2\n"
     clone P0, P1
     print $P0
@@ -96,7 +96,7 @@ pir_output_is( <<'CODE', <<'OUT', "defined" );
 .sub test :main
     $P1 = new Hash
     $I0 = defined $P1
-    new P1, .Hash
+    new P1, 'Hash'
     defined I0, P1
     print $I0
     print "\n"
@@ -114,7 +114,7 @@ pir_output_is( <<'CODE', <<'OUT', "defined keyed" );
     $P1 = new Hash
     $P1["a"] = "ok 1\n"
     $I0 = defined $P1["a"]
-    new P1, .Hash
+    new P1, 'Hash'
     set P1["a"], "ok 2\n"
     defined I0, P1["a"]
     defined I1, P1["b"]
@@ -177,6 +177,16 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', "new with a native type");
 .end
 CODE
 /error:\w+:Unknown PMC type 'INTVAL'/
+OUTPUT
+
+pir_error_output_like( <<'CODE', <<'OUTPUT', "new with an unknown class");
+.sub test :main
+        $P1 = new 'INTVAL'
+    print "never\n"
+    end
+.end
+CODE
+/Class 'INTVAL' not found/
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "setline w comment" );
