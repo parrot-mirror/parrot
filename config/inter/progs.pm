@@ -102,8 +102,11 @@ END
     $debug = 'y' if $conf->options->get('debugging');
     $debug = prompt( "Do you want a debugging build of Parrot?", $debug )
         if $ask;
+    unless ($debug =~ /^[yn]$/i) {
+        return;
+    }
 
-    if ( !$debug || $debug =~ /n/i ) {
+    if ( $debug =~ /n/i ) {
         $conf->data->set(
             cc_debug   => '',
             link_debug => '',
