@@ -33,19 +33,6 @@ sub runstep {
 
     my ( $cc, $cxx, $link, $ld, $ccflags, $ccwarn, $linkflags, $ldflags, $libs, $lex, $yacc );
 
-    # Find a working version of a program:
-    # Try each alternative, until one works.
-    # If none work, then set to null command.
-    # RT#43173 need config support for a null command.
-    my $null          = 'echo';
-    my $first_working = sub {
-        foreach (@_) {
-            `$_ -h 2>&1`;
-            return $_ if not $?;
-        }
-        return $null;
-    };
-
     my $ask = $conf->options->get('ask');
     if ($ask) {
         print <<'END';
