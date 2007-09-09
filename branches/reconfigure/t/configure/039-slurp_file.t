@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests =>  9;
+use Test::More tests => 10;
 use Carp;
 use_ok( 'File::Temp', qw| tempfile | );
 use lib qw( lib );
@@ -41,6 +41,17 @@ use Parrot::BuildUtil;
     like($str, qr/\n{2}/m,
         "DOS line endings correctly converted during slurp_file");
 }
+
+
+
+{
+    my $phony = q{foobar};
+    my $str;
+    eval { $str = Parrot::BuildUtil::slurp_file($phony); };
+    like($@, qr/open '$phony'/,
+        "Got error message expected upon attempting to slurp non-existent file");
+}
+
 
 pass("Completed all tests in $0");
 
