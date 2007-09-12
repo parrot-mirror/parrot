@@ -57,16 +57,23 @@ void Parrot_regenerate_HLL_namespaces( PARROT_INTERP )
         __attribute__nonnull__(1);
 
 PARROT_API
-INTVAL Parrot_register_HLL( PARROT_INTERP,
-    NULLOK(STRING *hll_name),
-    NULLOK(STRING *hll_lib) )
-        __attribute__nonnull__(1);
+INTVAL Parrot_register_HLL( PARROT_INTERP, NOTNULL(STRING *hll_name) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+INTVAL Parrot_register_HLL_lib( PARROT_INTERP, NOTNULL(STRING *hll_lib) )
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 void Parrot_register_HLL_type( PARROT_INTERP,
     INTVAL hll_id,
     INTVAL core_type,
     INTVAL hll_type )
+        __attribute__nonnull__(1);
+
+void Parrot_init_HLL( PARROT_INTERP )
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: src/hll.c */

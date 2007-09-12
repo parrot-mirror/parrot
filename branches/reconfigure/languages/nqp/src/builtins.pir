@@ -1,5 +1,15 @@
 .namespace
 
+=over 4
+
+=item C<print(...)>
+
+Implementing a Perl 6 style print statement.
+
+=back
+
+=cut
+
 .sub 'print'
     .param pmc list            :slurpy
     .local pmc iter
@@ -14,6 +24,16 @@
     .return (1)
 .end
 
+=over 4
+
+=item C<say(...)>
+
+Implementing a Perl 6 style say statement, which automatically appends
+a newline to the end of what is printed.
+
+=back
+
+=cut
 
 .sub 'say'
     .param pmc list            :slurpy
@@ -21,6 +41,40 @@
     print "\n"
     .return (1)
 .end
+
+=over 4
+
+=item C<infix:,(...)>
+
+Build a list from the arguments sent to the operator.
+
+=back
+
+=cut
+
+.sub 'infix:,'
+    .param pmc args            :slurpy
+    .local pmc list
+    list = new 'ResizablePMCArray'
+  args_loop:
+    unless args goto end
+    $P0 = shift args
+    push list, $P0
+    goto args_loop
+  end:
+    .return (list)
+.end
+
+=over 4
+
+=item C<ok(...)>
+
+Internal implementation of the Test::More 'ok'.  It increments
+the internal test counter and handles making test output.
+
+=back
+
+=cut
 
 .sub 'ok'
     .param pmc    condition
@@ -40,6 +94,17 @@
     print "\n"
     .return (1)
 .end
+
+=over 4
+
+=item C<plan(...)>
+
+Internal implementation of the Test::More 'plan'.  It sets the internal
+test counter to 0 and outputs the TAP plan line.
+
+=back
+
+=cut
 
 .sub 'plan'
     .param int quantity

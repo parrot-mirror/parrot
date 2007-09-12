@@ -45,12 +45,12 @@ TODO: return None PMC for nonexisting keys.
 
  */
 
-#include "parrot/parrot.h"
 #include <gdbm.h>
+#include "parrot/parrot.h"
 
 /*
 
-=item C<static STRING* make_hash_key(Interp *interp, PMC *key)>
+=item C<static STRING* make_hash_key(PARROT_INTERP, PMC *key)>
 
 Returns a Parrot string for C<*key>.
 
@@ -58,7 +58,7 @@ Returns a Parrot string for C<*key>.
 
 */
 
-static STRING* make_hash_key(Interp* interp, PMC * key)
+static STRING* make_hash_key(PARROT_INTERP, NOTNULL(PMC * key))
 {
     if (key == NULL) {
         real_exception(interp, NULL, OUT_OF_BOUNDS, "Hash: Cannot use NULL key");
