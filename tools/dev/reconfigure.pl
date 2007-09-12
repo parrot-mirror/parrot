@@ -5,7 +5,6 @@
 use 5.008_000;
 use strict;
 use warnings;
-# use Carp;
 use lib 'lib';
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );

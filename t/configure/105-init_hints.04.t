@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: 105-init_hints.04.t 20998 2007-09-02 13:56:56Z jkeenan $
+# $Id$
 # 105-init_hints.04.t
 
 use strict;

@@ -52,11 +52,11 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "Coroutines - M. Wallace yield example" );
 
 .sub __main__
-    .local object return
-    .local object counter
+    .local pmc return
+    .local pmc counter
     .const .Sub itr = "_iterator"
 
-    .local object zero
+    .local pmc zero
     zero = new 'Integer'
     zero = 0
 
@@ -81,8 +81,8 @@ return_here:
 .end
 
 .pcc_sub _iterator
-    .local object x
-    x = new Integer
+    .local pmc x
+    x = new 'Integer'
     x = 0
     iloop:
         .pcc_begin_yield
@@ -271,7 +271,7 @@ pir_output_is( <<'CODE', 'Coroutine', "Coro new - type" );
 .end
 .sub coro
     .local pmc x
-    x = new Integer
+    x = new 'Integer'
     x = 0
     iloop:
         .yield (x)
@@ -298,7 +298,7 @@ ex:
 .end
 .sub coro
     .local pmc x
-    x = new Integer
+    x = new 'Integer'
     x = 0
     iloop:
         .yield (x)
@@ -319,7 +319,7 @@ loop:
 .end
 .sub coro
     .local pmc x
-    x = new Integer
+    x = new 'Integer'
     x = 0
     iloop:
         .yield (x)
@@ -334,7 +334,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', "check whether interface is done" );
 
 .sub _main
     .local pmc pmc1
-    pmc1 = new Coroutine
+    pmc1 = new 'Coroutine'
     .local int bool1
     does bool1, pmc1, "scalar"      # XXX WTF
     print bool1
