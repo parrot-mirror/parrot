@@ -342,7 +342,7 @@ my $queue_test = <<'CODE';
     .local pmc class
     $I0 = find_type 'STMQueue'
     if $I0 goto done
-    class = newpdd15class 'STMQueue'
+    class = newclass 'STMQueue'
     addattribute class, 'head'
     addattribute class, 'tail'
     addattribute class, 'used'

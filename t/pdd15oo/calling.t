@@ -976,7 +976,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "OO argument passing" );
 .sub main :main
     .local pmc cl, o, f
-    cl = newpdd15class "Foo"
+    cl = newclass "Foo"
     #o = new "Foo"
     o = cl.'new'()
     o."bar"("ok 1\n")
@@ -1013,7 +1013,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "OO argument passing - 2" );
 .sub main :main
     .local pmc cl, o, f
-    cl = newpdd15class "Foo"
+    cl = newclass "Foo"
     #o = new "Foo"
     o = cl.'new'()
     $S0 = o
@@ -1046,7 +1046,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "OO argument passing - 3" );
 .sub main :main
     .local pmc cl, o, f
-    cl = newpdd15class "Foo"
+    cl = newclass "Foo"
     #o = new "Foo"
     o = cl.'new'()
     $S0 = foo(o)
@@ -1411,7 +1411,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "clone_key_arg" );
 
 .sub foo
     .local pmc cl, o
-    cl = newpdd15class "MyClass"
+    cl = newclass "MyClass"
     #o = new "MyClass"
     o = cl.'new'()
     $S0 = "key"
@@ -1682,7 +1682,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "call evaled vtable code" );
 .sub main :main
     .local string s
     .local pmc cl, o
-    cl = newpdd15class "Foo"
+    cl = newclass "Foo"
     s  = ".namespace ['Foo']\n"
     s .= ".sub get_integer_keyed_int :vtable :method\n"
     s .= ".param int i\n"

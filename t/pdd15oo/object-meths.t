@@ -23,7 +23,7 @@ Tests PMC object methods.
 =cut
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethod - unknown method" );
-    newpdd15class P2, "Foo"
+    newclass P2, "Foo"
     set S0, "nada"
     callmethodcc P2, S0
     print "nope\n"
@@ -33,7 +33,7 @@ CODE
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethod (STR) - unknown method" );
-    newpdd15class P2, "Foo"
+    newclass P2, "Foo"
     set S1, "nada"
     callmethod P2, S1, P1
     print "nope\n"
@@ -43,7 +43,7 @@ CODE
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethodcc - unknown method" );
-    newpdd15class P2, "Foo"
+    newclass P2, "Foo"
     set S0, "nada"
     callmethodcc P2, S0
     print "nope\n"
@@ -53,7 +53,7 @@ CODE
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethodcc (STR) - unknown method" );
-    newpdd15class P2, "Foo"
+    newclass P2, "Foo"
     set S1, "nada"
     callmethodcc P2, S1
     print "nope\n"
@@ -64,7 +64,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "callmethod 1" );
 .sub main :main
-    $P2 = newpdd15class "Foo"
+    $P2 = newclass "Foo"
     $P3 = new $P2
     set $S0, "meth"
 
@@ -87,7 +87,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "can class" );
 .sub main :main
-    $P2 = newpdd15class "Foo"
+    $P2 = newclass "Foo"
 
     $P3 = new "Sub"
     # Add a method to the class manually
@@ -105,7 +105,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "can object" );
 .sub main :main
-    $P2 = newpdd15class "Foo"
+    $P2 = newclass "Foo"
     $P4 = new "Foo"
 
     $P3 = new "Sub"
@@ -127,7 +127,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "constructor" );
 .sub main :main
-    $P1 = newpdd15class "Foo"
+    $P1 = newclass "Foo"
     new $P3, "Foo"
     print "ok 2\n"
     end
@@ -143,7 +143,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "disabling the constructor" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     new P0, 'String'
     setprop P1, "BUILD", P0
     new P3, "Foo"
@@ -158,7 +158,7 @@ ok 1
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "specified constructor method does not exist" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     new P0, 'String'
     set P0, "bar"
     setprop P1, "BUILD", P0
@@ -186,7 +186,7 @@ Class BUILD method ('bar') not found
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "constructor - init attr" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     addattribute P1, ".i"
     new P3, "Foo"
     print "ok 2\n"
@@ -214,7 +214,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "constructor - parents" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     subclass P2, P1, "Bar"
     subclass P3, P2, "Baz"
     new P3, "Baz"
@@ -268,8 +268,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "methods: self" );
     .local pmc A
     .local pmc B
 
-    newpdd15class A, "A"
-    newpdd15class B, "B"
+    newclass A, "A"
+    newclass B, "B"
 
     new A, "A"
     new B, "B"
@@ -323,8 +323,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "methods: self w arg" );
     .local pmc A
     .local pmc B
 
-    newpdd15class A, "A"
-    newpdd15class B, "B"
+    newclass A, "A"
+    newclass B, "B"
 
     new A, "A"
     new B, "B"
@@ -375,8 +375,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "methods: self w arg and ret" );
     .local pmc A
     .local pmc B
 
-    newpdd15class A, "A"
-    newpdd15class B, "B"
+    newclass A, "A"
+    newclass B, "B"
 
     new A, "A"
     new B, "B"
@@ -431,7 +431,7 @@ SKIP: {
 _main:
     push_eh eh
 
-    newpdd15class P0, "Foo"
+    newclass P0, "Foo"
 
     print "new\n"
     new P2, "Foo"
@@ -456,7 +456,7 @@ OUTPUT
 }
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "find_method" );
-    newpdd15class P3, "Foo"
+    newclass P3, "Foo"
     new P2, "Foo"
 
     set S0, "meth"
@@ -483,7 +483,7 @@ back
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "find_method - unknown method" );
-    newpdd15class P2, "Foo"
+    newclass P2, "Foo"
     set S0, "nada"
     find_method P0, P2, S0
     print "nope\n"
@@ -500,13 +500,13 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "constructor - diamond parents" );
 #    \   /
 #     \ /
 #      F
-    newpdd15class P1, "A"
-    newpdd15class P2, "B"
+    newclass P1, "A"
+    newclass P2, "B"
     subclass P3, P1, "C"
     addparent P3, P2
 
     subclass P4, P1, "D"
-    newpdd15class P5, "E"
+    newclass P5, "E"
     addparent P4, P5
 
     subclass P6, P3, "F"
@@ -637,7 +637,7 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "constructor - parents BUILD" );
     new P10, 'String'
     set P10, "_new"
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     setprop P1, "BUILD", P10
     subclass P2, P1, "Bar"
     setprop P2, "BUILD", P10
@@ -690,7 +690,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "constructor - vtable override" );
 .sub main :main
-  $P0 = newpdd15class 'Foo'
+  $P0 = newclass 'Foo'
   $P1 = subclass 'Foo', 'Bar'
   $P2 = new 'Bar'
 .end
@@ -741,7 +741,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "self - CURRENT_OBJECT" );
 .sub _main
     .local pmc A
 
-    newpdd15class A, "A"
+    newclass A, "A"
     new A, "A"
     A."foo"()
     end
@@ -763,7 +763,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "Bug in method calling with nonconst keys" );
 
 .sub _main
-    newpdd15class $P0, "Foo"
+    newclass $P0, "Foo"
 
     new $P1, "Foo"
 
@@ -792,7 +792,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "Bug in method calling with nonconst keys - clobber" );
 
 .sub _main
-    newpdd15class $P0, "Foo"
+    newclass $P0, "Foo"
 
     new $P1, "Foo"
 
@@ -826,7 +826,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "method cache invalidation" );
 .sub main :main
     .local pmc o, cl
-    newpdd15class cl, "Foo"
+    newclass cl, "Foo"
     subclass cl, cl, "Bar"
     o = new "Bar"
     print o
@@ -848,7 +848,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "callmethod - method name" );
 .sub main :main
-    $P2 = newpdd15class "Foo"
+    $P2 = newclass "Foo"
     $S0 = "meth"
     print "main\n"
     $P3 = new $P2
@@ -896,7 +896,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "tailcallmeth" );
 .sub main :main
     .local pmc cl, o, n
-    cl = newpdd15class "Foo"
+    cl = newclass "Foo"
     addattribute cl, "n"
     o = new "Foo"
     n = new 'Integer'
@@ -946,7 +946,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', ".Super - test dispatch with two classes" );
 .sub main :main
     .local pmc o, cl
-    cl = newpdd15class 'Parent'
+    cl = newclass 'Parent'
     cl = subclass cl, 'Child'
     o = new 'Child'
     o."foo"()
@@ -979,8 +979,8 @@ TODO: {
     pir_output_is( <<'CODE', <<'OUTPUT', ".Super - dispatch on addparent-established heirarchy" );
 .sub main :main
     .local pmc o, p, c
-    p = newpdd15class 'Parent'
-    c = newpdd15class 'Child'
+    p = newclass 'Parent'
+    c = newclass 'Child'
     addparent c, p
     o = new 'Child'
     o."foo"()
@@ -1011,7 +1011,7 @@ OUTPUT
     pir_output_is( <<'CODE', <<'OUTPUT', ".Super - subclass established, three levels deep" );
 .sub main :main
     .local pmc o, p, c, g
-    p = newpdd15class 'Parent'
+    p = newclass 'Parent'
     c = subclass p, 'Child'
     g = subclass c, 'GrandChild'
     o = new 'GrandChild'
@@ -1049,7 +1049,7 @@ OUTPUT
     pir_output_is( <<'CODE', <<'OUTPUT', ".Super - simple 4-class diamond C3 dispatch" );
 .sub main :main
     .local pmc o, p, c1, c2, i
-    p = newpdd15class 'Parent'
+    p = newclass 'Parent'
     c1 = subclass p, 'Child1'
     c2 = subclass p, 'Child2'
     i = subclass c1, 'Inbred'
@@ -1099,7 +1099,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "delegate keyed_int" );
 .sub main :main
     .local pmc cl, o
-    cl = newpdd15class "MyClass"
+    cl = newclass "MyClass"
     o = new "MyClass"
     $I0 = 5
     $S0 = "foo"
@@ -1241,7 +1241,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "addmethod op" );
 .sub main :main
     .local pmc c
-    c = newpdd15class ['whatever']
+    c = newclass ['whatever']
     .const .Sub foo = "whatever_foo"
     addmethod c, "foo", foo
     $P0 = new ['whatever']
@@ -1272,7 +1272,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "init calls" );
 .sub main :main
     .local pmc cl, o
-    cl = newpdd15class 'MyClass'
+    cl = newclass 'MyClass'
     o = new 'MyClass'
     o = new 'MyClass', $P0
 .end
@@ -1296,7 +1296,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "overloading find_method vtable" );
 .sub main :main
     .local pmc cl, o
-    cl = newpdd15class 'MyClass'
+    cl = newclass 'MyClass'
     o = new 'MyClass'
     o.'foo'()
 .end
@@ -1322,7 +1322,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "overloading attribute accessor vtable" );
 .sub main :main
     .local pmc cl, o
-    cl = newpdd15class 'MyClass'
+    cl = newclass 'MyClass'
     o = new 'MyClass'
     $P2 = new String
     $P2 = "blue"
@@ -1349,7 +1349,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "overloading get_class vtable" );
 .sub main :main
     .local pmc cl, o, cl2
-    cl = newpdd15class 'MyClass'
+    cl = newclass 'MyClass'
     o = new 'MyClass'
     cl2 = class o
 .end

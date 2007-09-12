@@ -432,7 +432,7 @@ pir_output_is( <<'CODE', <<'OUT', "bug #32996" );
 .namespace ["Foo"]
 
 .sub __biginit :main
-        newpdd15class $P0, "Foo"
+        newclass $P0, "Foo"
         $P1 = new "Foo"
         $P1.method1()
         $P1.method2()

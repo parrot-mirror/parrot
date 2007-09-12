@@ -369,9 +369,9 @@ pir_output_is( <<'CODE', <<'OUT', "first dynamic MMD call" );
 
 .sub main :main
     .local pmc F, B, f, b, m, s
-    newpdd15class F, "Foo"
+    newclass F, "Foo"
     f = new "Foo"
-    newpdd15class B, "Bar"
+    newclass B, "Bar"
     b = new "Bar"
     # create a multi the hard way
     ## m = new MultiSub
@@ -1051,7 +1051,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "mmd bug reported by Jeff" );
 .namespace
 
 .sub main :main
-    newpdd15class $P0, 'Foo'
+    newclass $P0, 'Foo'
 
     $P0 = new 'Foo'
 
@@ -1072,7 +1072,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "use a core func for an object" );
 .sub main :main
     .local pmc d, l, r, cl
-    cl = newpdd15class "AInt"
+    cl = newclass "AInt"
     addattribute cl, ".i"
     d = new "AInt"
     l = new "AInt"
@@ -1254,7 +1254,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "keyed class name and multi" );
 .sub main :main
     .local pmc class
-    newpdd15class class, [ 'Some'; 'Class' ]
+    newclass class, [ 'Some'; 'Class' ]
 
     .local pmc instance
     instance = new [ 'Some'; 'Class' ]
@@ -1274,7 +1274,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "keyed class name and multi" );
 .sub main :main
     .local pmc class
-    newpdd15class class, [ 'Some'; 'Class' ]
+    newclass class, [ 'Some'; 'Class' ]
 
 
     .local pmc instance

@@ -1047,7 +1047,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "immediate code as const - obj" );
 .sub make_obj :immediate, :anon
     .local pmc cl, o
-    cl = newpdd15class "Foo"
+    cl = newclass "Foo"
     addattribute cl, 'x'
     o = new 'Foo'
     $P0 = new 'String'

@@ -176,7 +176,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<OUTPUT, "vanishing return continuation in method calls" );
 .sub main :main
     .local pmc o, cl
-    cl = newpdd15class "Foo"
+    cl = newclass "Foo"
 
     new o, "Foo"
     print "ok\n"
@@ -212,8 +212,8 @@ ok
 OUTPUT
 
 pasm_output_is( <<'CODE', <<OUTPUT, "failing if regsave is not marked" );
-    newpdd15class P9, "Source"
-    newpdd15class P10, "Source::Buffer"
+    newclass P9, "Source"
+    newclass P10, "Source::Buffer"
     new P12, "Source"
 
     set S20, P12
@@ -288,7 +288,7 @@ pir_output_is( <<'CODE', <<OUTPUT, "Recursion and exceptions" );
     .local pmc n
     $P0 = getinterp
     $P0."recursion_limit"(10)
-    newpdd15class $P0, "b"
+    newclass $P0, "b"
     $P0 = new "b"
     $P1 = new 'Integer'
     $P1 = 0
