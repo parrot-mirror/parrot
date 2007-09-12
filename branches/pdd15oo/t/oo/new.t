@@ -24,7 +24,7 @@ Tests OO features related to instantiating new objects.
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from class object');
 .sub main :main
-    $P1 = newpdd15class "Foo"
+    $P1 = newclass "Foo"
     $S1 = typeof $P1
     say $S1
 
@@ -120,7 +120,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from class object method');
 .sub main :main
-    $P1 = newpdd15class "Foo"
+    $P1 = newclass "Foo"
     $P2 = $P1.'new'()
 
     $S1 = typeof $P2
@@ -142,7 +142,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from string name');
 .sub main :main
-    $P1 = newpdd15class "Foo"
+    $P1 = newclass "Foo"
     $P2 = new 'Foo'
 
     $S1 = typeof $P2
@@ -164,7 +164,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from string register name');
 .sub main :main
-    $P1 = newpdd15class "Foo"
+    $P1 = newclass "Foo"
     $S1 = 'Foo'
     $P2 = new $S1
 
@@ -187,7 +187,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from string PMC name');
 .sub main :main
-    $P1 = newpdd15class "Foo"
+    $P1 = newclass "Foo"
     $P3 = new 'String'
     $P3 = 'Foo'
     $P2 = new $P3
@@ -211,7 +211,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from key name');
 .sub main :main
-    $P1 = newpdd15class ['Foo';'Bar']
+    $P1 = newclass ['Foo';'Bar']
     $S1 = typeof $P1
     say $S1
 
@@ -242,7 +242,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from key PMC name', todo=>'create non-constant key');
 .sub main :main
-    $P1 = newpdd15class ['Foo';'Bar']
+    $P1 = newclass ['Foo';'Bar']
     $S1 = typeof $P1
     say $S1
 
@@ -276,7 +276,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from class object with init');
 .sub main :main
-    $P1 = newpdd15class "Foo"
+    $P1 = newclass "Foo"
     addattribute $P1, 'data'
     $P3 = new 'Hash'
     $P4 = new 'String'
@@ -308,7 +308,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from string name with init');
 .sub main :main
-    $P1 = newpdd15class "Foo"
+    $P1 = newclass "Foo"
     addattribute $P1, 'data'
     $P3 = new 'Hash'
     $P4 = new 'String'
@@ -340,7 +340,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from string register name with init');
 .sub main :main
-    $P1 = newpdd15class "Foo"
+    $P1 = newclass "Foo"
     addattribute $P1, 'data'
     $P3 = new 'Hash'
     $P4 = new 'String'
@@ -373,7 +373,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from string PMC name with init');
 .sub main :main
-    $P1 = newpdd15class "Foo"
+    $P1 = newclass "Foo"
     addattribute $P1, 'data'
     $P3 = new 'Hash'
     $P4 = new 'String'
@@ -407,7 +407,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from key name with init', todo=>'init keyed');
 .sub main :main
-    $P1 = newpdd15class ['Foo';'Bar']
+    $P1 = newclass ['Foo';'Bar']
     addattribute $P1, 'data'
 
     $P3 = new 'Hash'
