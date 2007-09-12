@@ -48,7 +48,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from class object');
 CODE
 Class
 1
-parrot;Foo
+Foo
 1
 1
 OUT
@@ -113,7 +113,7 @@ pir_output_is( <<'CODE', <<'OUT', 'manually create named class object');
 CODE
 Class
 1
-parrot;Foo
+Foo
 1
 1
 OUT
@@ -135,7 +135,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from class object method');
     print "\n"
 .end
 CODE
-parrot;Foo
+Foo
 1
 1
 OUT
@@ -157,7 +157,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from string name');
     print "\n"
 .end
 CODE
-parrot;Foo
+Foo
 1
 1
 OUT
@@ -180,7 +180,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from string register name');
     print "\n"
 .end
 CODE
-parrot;Foo
+Foo
 1
 1
 OUT
@@ -204,7 +204,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from string PMC name');
     print "\n"
 .end
 CODE
-parrot;Foo
+Foo
 1
 1
 OUT
@@ -235,7 +235,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from key name');
 CODE
 Class
 1
-parrot;Foo;Bar
+Foo;Bar
 1
 1
 OUT
@@ -269,7 +269,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from key PMC name', todo=>'create
 CODE
 Class
 1
-parrot;Foo;Bar
+Foo;Bar
 1
 1
 OUT
@@ -300,7 +300,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from class object with init');
     print $P5
 .end
 CODE
-parrot;Foo
+Foo
 1
 1
 data for Foo
@@ -332,7 +332,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from string name with init');
     print $P5
 .end
 CODE
-parrot;Foo
+Foo
 1
 1
 data for Foo
@@ -365,7 +365,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from string register name with in
     print $P5
 .end
 CODE
-parrot;Foo
+Foo
 1
 1
 data for Foo
@@ -399,7 +399,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from string PMC name with init');
     print $P5
 .end
 CODE
-parrot;Foo
+Foo
 1
 1
 data for Foo
@@ -432,7 +432,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from key name with init', todo=>'
     print $P5
 .end
 CODE
-parrot;Foo;Bar
+Foo;Bar
 1
 1
 data for Foo;Bar
