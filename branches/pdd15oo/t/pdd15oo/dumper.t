@@ -518,7 +518,7 @@ pir_output_is( <<'CODE', <<'OUT', "dumping objects" );
 
     load_bytecode "dumper.pbc"
 
-    temp = newpdd15class "TestClass"
+    temp = newclass "TestClass"
 
     array = new 'ResizablePMCArray'
     o = temp.'new'()

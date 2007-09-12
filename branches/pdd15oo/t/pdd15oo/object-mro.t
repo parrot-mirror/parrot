@@ -32,13 +32,13 @@ pir_output_is( <<'CODE', <<'OUTPUT', "print mro diamond" );
 #      F
 .sub main :main
     .local pmc A, B, C, D, E, F, m, p, it
-    newpdd15class A, "A"
-    newpdd15class B, "B"
+    newclass A, "A"
+    newclass B, "B"
     subclass C, A, "C"
     addparent C, B
 
     subclass D, A, "D"
-    newpdd15class E, "E"
+    newclass E, "E"
     addparent D, E
 
     subclass F, C, "F"
@@ -97,7 +97,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "print mro 1" );
 #
 .sub main :main
     .local pmc A, B, C, D, E, F, O
-    newpdd15class O, "O"
+    newclass O, "O"
     subclass F, O, "F"
     subclass E, O, "E"
     subclass D, O, "D"
@@ -168,7 +168,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "print mro 2" );
 
 .sub main :main
     .local pmc A, B, C, D, E, F, O
-    newpdd15class O, "O"
+    newclass O, "O"
     subclass F, O, "F"
     subclass E, O, "E"
     subclass D, O, "D"
@@ -214,7 +214,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "print mro 3" );
 #
 .sub main :main
     .local pmc A, B, C, D
-    newpdd15class C, "C"
+    newclass C, "C"
     subclass A, C, "A"
     subclass B, C, "B"
     subclass D, A, "D"
@@ -267,7 +267,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "print mro 4" );
 .sub main :main
     .local pmc TestObject, LifeForm, Sentient, BiPedal, Intelligent, Humanoid, Vulcan
 
-    newpdd15class TestObject, "TestObject"
+    newclass TestObject, "TestObject"
 
     subclass LifeForm, TestObject, "LifeForm"
 
@@ -320,7 +320,7 @@ pir_output_like( <<'CODE', <<'OUTPUT', "mro error 1" );
 .sub main :main
     .local pmc O, X, Y, A, B, Z
 
-    newpdd15class O, "O"
+    newclass O, "O"
     subclass X, O, "X"
     subclass Y, O, "Y"
 

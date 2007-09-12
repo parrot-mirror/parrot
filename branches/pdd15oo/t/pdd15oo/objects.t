@@ -23,7 +23,7 @@ Tests the object/class subsystem.
 =cut
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "find_type (base class)" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
 
     find_type I0, "Foo"
     isgt I0, I0, 0
@@ -41,7 +41,7 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "find_type (subclass)" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     subclass P2, P1, "Bar"
 
     find_type I0, "Foo"
@@ -66,7 +66,7 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "find_type nested, with key" );
-    newpdd15class P1, ["Foo"; "Bar"]
+    newclass P1, ["Foo"; "Bar"]
 
     find_type I0, ["Foo"; "Bar"]
     isgt I1, I0, 0
@@ -82,7 +82,7 @@ new
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "find_type nested, with array [EXPERIMENTAL]" );
-    newpdd15class P1, ["Foo"; "Bar"]
+    newclass P1, ["Foo"; "Bar"]
 
     new P2, 'ResizablePMCArray'
     push P2, "Foo"
@@ -102,7 +102,7 @@ new
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "get classname from class" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     set S0, P1
     print S0
     print "\n"
@@ -124,7 +124,7 @@ Baz
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "getclass" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     getclass P2, "Foo"
     set S2, P2
     print S2
@@ -216,7 +216,7 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "new object" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     new P2, "Foo"
     print "ok 1\n"
     end
@@ -225,7 +225,7 @@ ok 1
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "new object - type, isa" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     new P2, P1
     print "ok 1\n"
     isa I0, P2, "Foo"
@@ -240,7 +240,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "new object - classname" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     new P2, P1
     set S0, P1	# class
     print S0
@@ -248,7 +248,6 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "new object - classname" );
     set S0, P2	# object
     print S0
     print "\n"
-# XXX
 
     class P3, P1
     set S0, P1	# class
@@ -257,7 +256,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "new object - classname" );
     class P3, P1
     set S0, P2	# object
     print S0
-#    print "\n"
+    print "\n"
     end
 CODE
 Foo
@@ -267,7 +266,7 @@ Foo
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "isa subclass" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     subclass P2, P1, "Bar"
     isa I0, P1, "Foo"
     if I0, ok1
@@ -305,7 +304,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "isa subclass - objects" );
 .sub 'main' :main
-    newpdd15class P3, "Foo"
+    newclass P3, "Foo"
     subclass P4, P3, "Bar"
     P1 = P3.'new'()
     P2 = P4.'new'()
@@ -345,7 +344,7 @@ ok 5
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "addattribute" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
 # Check that addattribute doesn't blow up
     addattribute P1, "foo_i"
     print "ok 1\n"
@@ -371,7 +370,7 @@ ok 3
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "addattribute subclass" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     addattribute P1, "foo_i"
     print "ok 1\n"
     subclass P2, P1, "Bar"
@@ -385,7 +384,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "addattribute subclass - same name" );
 .sub main :main
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     addattribute P1, "i"
     addattribute P1, "j"
     subclass P2, P1, "Bar"
@@ -441,7 +440,7 @@ Foo.i Foo.j Bar.j Bar.k
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "set/get object attribs" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     addattribute P1, "i"
     new P2, P1
 
@@ -459,7 +458,7 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "set/get multiple object attribs" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     addattribute P1, "i"
     addattribute P1, "j"
     new P2, "Foo"
@@ -486,7 +485,7 @@ Value
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "setting non-existent attribute" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     new P2, P1
 
     new P3, 'Integer'
@@ -497,7 +496,7 @@ CODE
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "setting non-existent by name" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     new P2, P1
 
     new P3, 'Integer'
@@ -506,9 +505,10 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "setting non-existent by name" );
 CODE
 /No such attribute 'no_such' in class 'Foo'/
 OUTPUT
+#XXX
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "getting NULL attribute" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     addattribute P1, "i"
     new P2, P1
 
@@ -523,7 +523,7 @@ OUTPUT
 
 pir_error_output_like( <<'CODE', <<'OUTPUT', "getting non-existent attribute" );
 .sub 'main' :main
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     P2 = P1.'new'()
 
     getattribute P3, P2, "bar"
@@ -533,7 +533,7 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values are specific to objects" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     addattribute P1, "i"
     new P2, P1
     new P3, P1
@@ -558,7 +558,7 @@ One hundred
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values and subclassing" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     addattribute P1, "i"
     addattribute P1, "j"
     subclass P2, P1, "Bar"
@@ -607,7 +607,7 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values and subclassing 2" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     # must add attributes before object instantiation
     addattribute P1, ".i"
     addattribute P1, ".j"
@@ -617,7 +617,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values and subclassing 2" );
     addattribute P2, ".l"
 
     # subclass is preferred for the SI case over
-    #   newpdd15class P2, "Bar"
+    #   newclass P2, "Bar"
     #   addattrib ...
     #   addparent P2, P1
     # which is suitable for adding multiple parents to one class
@@ -666,7 +666,7 @@ Bar
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values, subclassing access meths " );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     # must add attributes before object instantiation
     addattribute P1, ".i"
     addattribute P1, ".j"
@@ -784,7 +784,7 @@ l
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values, inherited access meths" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     # must add attributes before object instantiation
     addattribute P1, ".i"
     addattribute P1, ".j"
@@ -800,7 +800,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values, inherited access meths"
     addattribute P2, ".m"
 
     # subclass is preferred for the SI case over
-    #   newpdd15class P2, "Bar"
+    #   newclass P2, "Bar"
     #   addattrib ...
     #   addparent P2, P1
     # which is suitable for adding multiple parents to one class
@@ -898,7 +898,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "overridden vtables" );
 .sub 'main' :main
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     # must add attributes before object instantiation
     addattribute P1, ".i"
 
@@ -969,8 +969,8 @@ OUTPUT
 
 # Not sure if this is right or not
 # pasm_output_is(<<'CODE', <<'OUTPUT', "typeof classes");
-#     newpdd15class P0, "A"
-#     newpdd15class P1, "B"
+#     newclass P0, "A"
+#     newclass P1, "B"
 #
 #     typeof S0, P0
 #     typeof S1, P1
@@ -983,8 +983,8 @@ OUTPUT
 # OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "typeof objects" );
-    newpdd15class P0, "A"
-    newpdd15class P1, "B"
+    newclass P0, "A"
+    newclass P1, "B"
 
     new P0, "A"
     new P1, "B"
@@ -1002,10 +1002,10 @@ B
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "multiple inheritance, with attributes" );
-    newpdd15class P1, "Star"
+    newclass P1, "Star"
     addattribute P1, "Spectral Type"
 
-    newpdd15class P2, "Company"
+    newclass P2, "Company"
     addattribute P2, "Annual Profit"
 
     subclass P3, P1, "Sun"
@@ -1034,13 +1034,13 @@ $100,000,000
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "two levels of inheritance" );
-    newpdd15class P0, "Astronomical Object"
+    newclass P0, "Astronomical Object"
     addattribute P0, "Location"
 
     subclass P1, P0, "Star"
     addattribute P1, "Spectral Type"
 
-    newpdd15class P2, "Sun"
+    newclass P2, "Sun"
     addparent P2, P1
     addparent P2, P0
 
@@ -1058,7 +1058,7 @@ Taurus
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "addparent exceptions #1" );
-    newpdd15class P0, "Astronomical Object"
+    newclass P0, "Astronomical Object"
     new P1, 'String'
     set P1, "Not a class"
     addparent P0, P1
@@ -1071,7 +1071,7 @@ OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "addparent exceptions #2" );
     new P0, 'Hash'
-    newpdd15class P1, "Trashcan"
+    newclass P1, "Trashcan"
     addparent P0, P1
     end
 CODE
@@ -1081,7 +1081,7 @@ OUTPUT
 # '
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "class op test" );
-    newpdd15class P0, "City"
+    newclass P0, "City"
     new P1, "City"
 
     class P2, P1
@@ -1114,7 +1114,7 @@ OUTPUT
 # '
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "anon. subclass has no name" );
-    newpdd15class P0, "City"
+    newclass P0, "City"
     subclass P1, P0
 #    classname S0, P1 # deprecated
     set S0, P1
@@ -1128,7 +1128,7 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "get attrib by name" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     addattribute P1, "i"
     new P2, "Foo"
     new P3, 'String'
@@ -1143,7 +1143,7 @@ ok
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "get attrib by name subclass" );
-    newpdd15class P0, "Bar"
+    newclass P0, "Bar"
     addattribute P0, "j"
     subclass P1, P0, "Foo"
     addattribute P1, "i"
@@ -1166,7 +1166,7 @@ bar j
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "set attrib by name subclass" );
-    newpdd15class P0, "Bar"
+    newclass P0, "Bar"
     addattribute P0, "j"
     subclass P1, P0, "Foo"
     addattribute P1, "i"
@@ -1189,7 +1189,7 @@ bar j
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "addattribute duplicate" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     addattribute P1, "i"
     addattribute P1, "j"
     addattribute P1, "i"
@@ -1674,7 +1674,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "namespace vs name" );
 .sub main :main
     .local pmc o, cl, f
-    newpdd15class cl, "Foo"
+    newclass cl, "Foo"
     o = new "Foo"
     print o
     Foo()
@@ -1710,9 +1710,9 @@ OUTPUT
 #' for vim
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "multpile anon classes - #33103" );
-     newpdd15class P0, "City"
+     newclass P0, "City"
      subclass P1, P0
-     newpdd15class P2, "State"
+     newclass P2, "State"
      subclass P3, P2
      print "ok\n"
      end
@@ -1750,7 +1750,7 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "short name attributes" );
-    newpdd15class P1, "Foo"
+    newclass P1, "Foo"
     addattribute P1, "i"
     addattribute P1, "j"
     subclass P2, P1, "Bar"
@@ -1805,7 +1805,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "init with and w/o arg" );
 .sub 'main' :main
     .local pmc cl, o, h, a
-    cl = newpdd15class "Foo"
+    cl = newclass "Foo"
     addattribute cl, "a"
     o = cl.'new'()
     a = getattribute o, "a"
@@ -1836,8 +1836,8 @@ ok 1
 ok 2
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "newpdd15class [] parsing)" );
-    newpdd15class P0, ['Foo';'Bar']
+pasm_output_is( <<'CODE', <<'OUTPUT', "newclass [] parsing)" );
+    newclass P0, ['Foo';'Bar']
     print "ok\n"
     end
 CODE
@@ -1845,7 +1845,7 @@ ok
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "verfiy namespace types" );
-    newpdd15class P0, ['Foo';'Bar']
+    newclass P0, ['Foo';'Bar']
     getinterp P0
     .include "iglobals.pasm"
     set P1, P0[.IGLOBALS_CLASSNAME_HASH]
@@ -1863,7 +1863,7 @@ NameSpace
 OUTPUT
 
 pasm_output_like( <<'CODE', <<'OUTPUT', "verfiy data type" );
-    newpdd15class P0, ['Foo';'Bar']
+    newclass P0, ['Foo';'Bar']
     getinterp P0
     .include "iglobals.pasm"
     set P1, P0[.IGLOBALS_CLASSNAME_HASH]
@@ -1879,7 +1879,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "new keyed" );
 .sub main :main
     .local pmc cl, o
-    cl = newpdd15class ['Foo';'Bar']
+    cl = newclass ['Foo';'Bar']
     o = cl.'new'()
     print "ok\n"
 .end
@@ -1895,8 +1895,8 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "new keyed 2" );
 .sub main :main
     .local pmc c1, c2, o1, o2
-    c1 = newpdd15class ['Foo';'Bar']
-    c2 = newpdd15class ['Foo';'Baz']
+    c1 = newclass ['Foo';'Bar']
+    c2 = newclass ['Foo';'Baz']
     o1 = c1.'new'()
     o2 = c2.'new'()
     print "ok\n"
@@ -1919,9 +1919,9 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "new keyed 3" );
 .sub main :main
     .local pmc c1, c2, c3, o1, o2, o3
-    c1 = newpdd15class ['Foo';'Bar']
-    c2 = newpdd15class ['Foo';'Baz']
-    c3 = newpdd15class 'Foo'
+    c1 = newclass ['Foo';'Bar']
+    c2 = newclass ['Foo';'Baz']
+    c3 = newclass 'Foo'
     o1 = new      ['Foo';'Bar']
     o2 = new      ['Foo';'Baz']
     o3 = new      'Foo'
@@ -2022,8 +2022,8 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "new nested ordering" );
 .sub main :main
     .local pmc c1, c2, o
-    c1 = newpdd15class ['Foo']
-    c2 = newpdd15class ['Foo';'Bar']
+    c1 = newclass ['Foo']
+    c2 = newclass ['Foo';'Bar']
     o = c2.'new'()
     print "ok\n"
 .end
@@ -2067,7 +2067,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "super __init called twice (#39081)" );
 .sub main :main
-    $P0 = newpdd15class 'Foo'
+    $P0 = newclass 'Foo'
     $P1 = subclass $P0, 'Bar'
 
     $P2 = $P1.'new'()
@@ -2085,7 +2085,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "Using key from classname op with new" );
 .sub main :main
-    $P0 = newpdd15class [ "Monkey" ; "Banana" ]
+    $P0 = newclass [ "Monkey" ; "Banana" ]
     $P0 = $P0.'new'()
     $P0.ook()
     $P1 = class $P0

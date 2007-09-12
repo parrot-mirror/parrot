@@ -322,7 +322,7 @@ OUT
 pir_output_is( <<'CODE', <<'OUT', "new tail method call syntax" );
 .sub main :main
     .local pmc cl, o, n
-    cl = newpdd15class "Foo"
+    cl = newclass "Foo"
     addattribute cl, "n"
     o = new "Foo"
     n = new 'Integer'

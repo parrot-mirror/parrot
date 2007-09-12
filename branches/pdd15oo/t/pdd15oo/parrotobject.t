@@ -37,7 +37,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', ':vtable override' );
 .sub main :main
-   $P0 = newpdd15class [ "Test" ]
+   $P0 = newclass [ "Test" ]
    $P1 = new [ "Test" ]
    $I1 = $P1[11]
    print $I1
@@ -58,7 +58,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', ':vtable("...") override' );
 .sub main :main
-    $P0 = newpdd15class [ "Test" ]
+    $P0 = newclass [ "Test" ]
     $P1 = new [ "Test" ]
     $S1 = $P1[11]
     print $S1
@@ -92,7 +92,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', ':vtable and init' );
 .sub main :main
-   $P0 = newpdd15class [ "Test" ]
+   $P0 = newclass [ "Test" ]
    $P1 = new [ "Test" ]
    print "ok\n"
 .end
@@ -111,8 +111,8 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', ':vtable inheritance' );
 .sub main :main
-   $P0 = newpdd15class [ "Test" ]
-   $P1 = newpdd15class [ "Test2" ]
+   $P0 = newclass [ "Test" ]
+   $P1 = newclass [ "Test2" ]
    addparent $P1, $P0
    $P2 = new [ "Test2" ]
    $P3 = clone $P2
@@ -201,7 +201,7 @@ say "you invoked me!"
 .end
 
 .sub main :main
-$P0 = newpdd15class "Foo"
+$P0 = newclass "Foo"
 $P1 = new "Foo"
 $P1()
 say "got here"
@@ -223,7 +223,7 @@ pir_output_is( <<'CODE', <<'OUT', 'params/returns from overridden invoke' );
 .end
 
 .sub main :main
-  $P0 = newpdd15class "Foo"
+  $P0 = newclass "Foo"
   $P1 = new "Foo"
   $I0 = $P1(2)
   print $I0
@@ -243,7 +243,7 @@ pir_error_output_like( <<'CODE', <<'OUT', 'RT#41732' );
 .end
 
 .sub main :main
-    $P0 = newpdd15class "Foo"
+    $P0 = newclass "Foo"
     $P1 = new "Foo"
     $P1()
 .end
