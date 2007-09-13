@@ -84,36 +84,40 @@ op new(out PMC, in INT, in PMC) {
 }
 
 op new(out PMC, in STR) {
-    STRING *_class = $2;
+    PMC *hll_ns, *ns;
+    STRING *classname = $2;
     PMC *classobj = PMCNULL;
 
-    /* Look up a namespace with the given name within the current
+    /* Look up a namespace with the given name within the current HLL
      * namespace and if we find it, get the class associated with it, if any. */
-    PMC *ns = Parrot_get_namespace_keyed_str(interp,
-      CONTEXT(interp->ctx)->current_namespace, _class);
+    hll_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
+      CONTEXT(interp->ctx)->current_HLL);
+    ns = Parrot_get_namespace_keyed_str(interp, hll_ns, classname);
     if (!PMC_IS_NULL(ns))
         classobj = VTABLE_get_class(interp, ns);
 
     if (!PMC_IS_NULL(classobj) && !VTABLE_isa(interp, classobj, string_from_literal(interp, "PMCProxy")))
         $1 = VTABLE_instantiate(interp, classobj, PMCNULL);
     else {
-        INTVAL type = pmc_type(interp, _class);
+        INTVAL type = pmc_type(interp, classname);
         if (!type)
-            type = pmc_type(interp, _class);
+            type = pmc_type(interp, classname);
         if (type <= 0)
             real_exception(interp, NULL, NO_CLASS,
-                "Class '%Ss' not found", _class);
+                "Class '%Ss' not found", classname);
         $1 = pmc_new(interp, type);
     }
     goto NEXT();
 }
 
 op new(out PMC, in STR, in PMC) {
-    STRING *_class = $2;
+    PMC *hll_ns, *ns;
+    STRING *classname = $2;
     PMC *classobj = PMCNULL;
 
-    PMC *ns = Parrot_get_namespace_keyed_str(interp,
-      CONTEXT(interp->ctx)->current_namespace, _class);
+    hll_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
+      CONTEXT(interp->ctx)->current_HLL);
+    ns = Parrot_get_namespace_keyed_str(interp, hll_ns, classname);
     if (!PMC_IS_NULL(ns))
         classobj = VTABLE_get_class(interp, ns);
 
@@ -121,45 +125,46 @@ op new(out PMC, in STR, in PMC) {
             string_from_literal(interp, "PMCProxy")))
         $1 = VTABLE_instantiate(interp, classobj, $3);
     else {
-        INTVAL type = pmc_type(interp, _class);
+        INTVAL type = pmc_type(interp, classname);
         if (!type)
-            type = pmc_type(interp, _class);
+            type = pmc_type(interp, classname);
         if (type <= 0)
             real_exception(interp, NULL, NO_CLASS,
-                "Class '%Ss' not found", _class);
+                "Class '%Ss' not found", classname);
         $1 = pmc_new_init(interp, type, $3);
     }
     goto NEXT();
 }
 
 inline op new(out PMC, inconst PMC) :object_classes {
-    PMC *ns;
+    PMC *hll_ns, *ns;
     PMC *classobj = PMCNULL;
-    PMC *_class = $2;
+    PMC *classname_key = $2;
     /* Lookup namespace by key */
-    ns = Parrot_get_namespace_keyed(interp,
-        CONTEXT(interp->ctx)->current_namespace, $2);
+    hll_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
+      CONTEXT(interp->ctx)->current_HLL);
+    ns = Parrot_get_namespace_keyed(interp, hll_ns, classname_key);
     if (!PMC_IS_NULL(ns))
         classobj = VTABLE_get_class(interp, ns);
     if (!PMC_IS_NULL(classobj) && !VTABLE_isa(interp, classobj,
             string_from_literal(interp, "PMCProxy")))
         $1 = VTABLE_instantiate(interp, classobj, PMCNULL);
     else {
-        INTVAL type = pmc_type_p(interp, _class);
+        INTVAL type = pmc_type_p(interp, classname_key);
         if (type <= 0)
             real_exception(interp, NULL, NO_CLASS,
-                "Class '%Ss' not found", readable_name(interp, _class));
+                "Class '%Ss' not found", readable_name(interp, classname_key));
         $1 = pmc_new(interp, type);
     }
     goto NEXT();
 }
 
 op new(out PMC, inconst PMC, in PMC) {
-    PMC *_class = $2;
-    INTVAL type = pmc_type_p(interp, _class);
+    PMC *classname_key = $2;
+    INTVAL type = pmc_type_p(interp, classname_key);
     if (type <= 0)
         real_exception(interp, NULL, NO_CLASS,
-            "Class '%Ss' not found", readable_name(interp, _class));
+            "Class '%Ss' not found", readable_name(interp, classname_key));
     $1 = pmc_new_init(interp, type, $3);
     goto NEXT();
 }
