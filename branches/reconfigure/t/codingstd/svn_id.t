@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2007, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -43,7 +43,7 @@ my @all_files = ( @c_files, @perl_files );
 my @files = @ARGV ? @ARGV : @all_files;
 my @no_id_files;
 
-my $id_line = '\$Id:.*\$$';
+my $id_line = '\$Id.*\$';
 
 foreach my $file (@files) {
     my $buf;
