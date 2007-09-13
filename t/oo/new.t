@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 14;
+use Parrot::Test tests => 15;
 
 =head1 NAME
 
@@ -14,7 +14,7 @@ t/oo/new.t - Test OO instantiation
 
 =head1 SYNOPSIS
 
-    % prove t/oo/names.t
+    % prove t/oo/new.t
 
 =head1 DESCRIPTION
 
@@ -436,6 +436,31 @@ Foo;Bar
 1
 1
 data for Foo;Bar
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'regression test, instantiate class within different namespace');
+.sub main :main
+    $P0 = newclass 'Foo'
+    $P0 = newclass 'Bar'
+
+    $P1 = new 'Foo'
+    $P1.'blue'()
+.end
+
+.namespace [ 'Foo' ]
+.sub 'blue' :method
+    say 'foo blue'
+    $P1 = new 'Bar'
+    $P1.'blue'()
+.end
+
+.namespace [ 'Bar' ]
+.sub 'blue' :method
+    say 'bar blue'
+.end
+CODE
+foo blue
+bar blue
 OUT
 
 
