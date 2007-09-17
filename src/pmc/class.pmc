@@ -445,6 +445,44 @@ find_vtable_override(PARROT_INTERP, PMC *parrot_class, STRING *name)
     return PMCNULL;
 }
 
+static void
+initialize_parents(PARROT_INTERP, PMC *all_parents, PMC *object)
+{
+    INTVAL parent_index  = VTABLE_elements(interp, all_parents) - 1;
+    STRING *name         = string_from_literal(interp, "init");
+
+    /* Loop through the parents in reverse MRO order. */
+    for (; parent_index >= 0; parent_index--) {
+        PMC * const parent = VTABLE_get_pmc_keyed_int(interp,
+            all_parents, parent_index);
+
+        PMC *meth = find_vtable_override(interp, parent, name);
+        if (!PMC_IS_NULL(meth)) {
+            Parrot_run_meth_fromc_args(interp, meth,
+                    object, name, "v");
+        }
+    }
+}
+
+static void
+initialize_parents_pmc(PARROT_INTERP, PMC *all_parents, PMC *object, PMC *init)
+{
+    INTVAL parent_index = VTABLE_elements(interp, all_parents) - 1;
+    STRING *name        = string_from_literal(interp, "init_pmc");
+
+    /* Loop through the parents in reverse MRO order. */
+    for (; parent_index >= 0; parent_index--) {
+        PMC * const parent = VTABLE_get_pmc_keyed_int(interp,
+            all_parents, parent_index);
+
+        PMC *meth = find_vtable_override(interp, parent, name);
+        if (!PMC_IS_NULL(meth)) {
+            Parrot_run_meth_fromc_args(interp, meth,
+                    object, name, "vP", init);
+        }
+    }
+}
+
 
 /*
 
@@ -1018,7 +1056,7 @@ Creates a new PMC object of the type of the class and calls init().
         STRING * const class_str = string_from_cstring(interp, "Class", 5);
         PMC           *iter, *object;
 
-        int            i, mro_length;
+        INTVAL         i, mro_length;
 
         object = PMCNULL;
 
@@ -1125,22 +1163,10 @@ Creates a new PMC object of the type of the class and calls init().
 
         /* Check for overrides on the init or init_pmc vtable function and call
          * them if they exist */
-        if (PMC_IS_NULL(init)) {
-            STRING *name = string_from_literal(interp, "init");
-            PMC *meth = find_vtable_override(interp, SELF, name);
-            if (!PMC_IS_NULL(meth)) {
-                Parrot_run_meth_fromc_args(interp, meth,
-                        object, name, "v");
-            }
-        }
-        else {
-            STRING *name = string_from_literal(interp, "init_pmc");
-            PMC *meth = find_vtable_override(interp, SELF, name);
-            if (!PMC_IS_NULL(meth)) {
-                Parrot_run_meth_fromc_args(interp, meth,
-                        object, name, "vP", init);
-            }
-        }
+        if (PMC_IS_NULL(init)) 
+            initialize_parents(interp, _class->all_parents, object);
+        else 
+            initialize_parents_pmc(interp, _class->all_parents, object, init);
 
         return object;
     }
