@@ -52,26 +52,29 @@ is($conf->options->{c}->{debugging}, 1,
     "command-line option '--debugging' has been stored in object");
 
 my $rv;
-my ($tie, @lines, $errstr);
+my ($tie, @lines, $errtie, @errlines);
 {
     $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";
-    local $SIG{__WARN__} = \&_capture;
+    $errtie = tie *STDERR, "Parrot::IO::Capture::Mini"
+        or croak "Unable to tie";
     $rv = $conf->runsteps;
     @lines = $tie->READLINE;
+    @errlines = $errtie->READLINE;
 }
+untie *STDOUT;
+untie *STDERR;
 ok($rv, "runsteps successfully ran $step");
 my $bigmsg = join q{}, @lines;
 like($bigmsg,
     qr/$description/s,
-    "Got message expected upon running $step");
-like($errstr,
-    qr/step $step failed:\s*no result returned/s,
-    "Got error message expected when config module did not return object");
+    "Got correct description for $step");
+my $errmsg = join q{}, @errlines;
+like($errmsg,
+    qr/step $step failed:/,
+    "Got error message expected upon running $step");
 
 pass("Completed all tests in $0");
-
-sub _capture { $errstr = $_[0];}
 
 ################### DOCUMENTATION ###################
 
