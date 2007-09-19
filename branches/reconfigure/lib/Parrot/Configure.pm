@@ -237,20 +237,6 @@ sub run_single_step {
             } );
         }
     }
-
-#    if ( exists $conf->{hash_of_steps}{$taskname} ) {
-#        my $step_no = $conf->{hash_of_steps}{$taskname};
-#        $conf->_run_this_step( {
-#            task            => ($conf->steps())[$step_no - 1],
-#            verbose         => $verbose,
-#            verbose_step    => $verbose_step,
-#            ask             => $ask,
-#            n               => 1,
-#        } );
-#        return 1;
-#    } else {
-#        return;
-#    }
 }
 
 sub _run_this_step {
