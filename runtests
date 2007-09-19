@@ -1,0 +1,56 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+use App::Prove;
+
+my $prove = App::Prove->new;
+$prove->process_args(qw(--harness Parrot::TAP::Harness), @ARGV);
+$prove->run;
+
+# We build-in the harness so we don't have to look for it.  Feel free to
+# put it in a .pm file and figure out where it is relative to $0.
+BEGIN {
+  package Parrot::TAP::Harness;
+
+  use base 'TAP::Harness';
+  use constant auto_inherit => 1;
+
+  my $parrot = './parrot'; # TODO pick a parrot
+
+  # This gets called just before running each test.  The return value
+  # gets handed to a TAP::Parser->new().  Private -- yeah...whatever.
+  sub _get_parser_args {
+    my ( $self, $test ) = @_;
+    
+    open(my $fh, '<', $test) or die "cannot read '$test' $!";
+    chomp(my $shebang = <$fh>);
+    $shebang =~ s/^#!\s*//;
+    my @shparts = split(/\s+/, $shebang);
+
+    my $args = $self->SUPER::_get_parser_args($test);
+
+    unless($shparts[0] eq 'perl') {
+      warn "shebang @shparts\n";
+      # the compiler is either a pbc (currently with or without the .pbc)
+      # or just parrot -- straight pir
+      my $compiler = shift(@shparts);
+      if($compiler !~ m#(?:.*/)?parrot#) {
+        $compiler =~ s/(?:\.pbc)?$/.pbc/;
+        unshift(@shparts, $compiler);
+      }
+
+      #warn "shebang @shparts";
+      # TODO interpreter-specific and/or parrot specific options
+      $args->{exec} = [$parrot, @shparts, $test];
+      delete($args->{source});
+    }
+
+    return($args);
+  }
+  $INC{'Parrot/TAP/Harness.pm'} = __FILE__; # make require() happy
+} # end Parrot::TAP::Harness
+########################################################################
+
+# vim:ts=2:sw=2:et:sta
