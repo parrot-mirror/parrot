@@ -1,10 +1,12 @@
+# $Id$
+# Copyright (C) 2002-2007, The Perl Foundation.
+
 package Scheme::Builtins;
 
-# Copyright (C) 2002-2006, The Perl Foundation.
-# $Id$
-
+# pragmata
 use strict;
 use warnings;
+use 5.008;
 
 # nice for debugging
 use Data::Dumper;
@@ -110,13 +112,18 @@ my %built_ins = (
 
 sub new {
     my $class = shift;
+
     my $self = { instruction => [] };
-    bless $self, $class;
+    
+    return bless $self, $class;
 }
 
 sub _add_inst {
     my $self = shift;
+
     push @{ $self->{instruction} }, [@_];
+
+    return;
 }
 
 sub generate {
@@ -127,11 +134,11 @@ sub generate {
     my $self = Scheme::Builtins->new();
 
     for ( @{ $built_ins{$name} } ) {
-        my ( $label, $op, @args ) = @$_;
+        my ( $label, $op, @args ) = @{$_};
         $self->_add_inst( $label, $op, [@args] );
     }
 
-    $self;
+    return $self;
 }
 
 1;

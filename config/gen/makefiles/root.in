@@ -1172,6 +1172,8 @@ $(SRC_DIR)/exec_cpu.c : lib/Parrot/OpLib/core.pm $(SRC_DIR)/jit_emit.h \
 
 $(IMCC_DIR)/imcc.y.flag $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcparser.h : $(IMCC_DIR)/imcc.y
 	$(YACC) $(IMCC_DIR)/imcc.y -d -o $(IMCC_DIR)/imcparser.c
+	$(PERL) $(BUILD_TOOLS_DIR)/fixup_gen_file.pl $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcc.y
+	$(PERL) $(BUILD_TOOLS_DIR)/fixup_gen_file.pl $(IMCC_DIR)/imcparser.h $(IMCC_DIR)/imcc.y
 	$(TOUCH) $(IMCC_DIR)/imcc.y.flag $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcparser.h
 
 $(IMCC_DIR)/imcc.l.flag $(IMCC_DIR)/imclexer.c : $(IMCC_DIR)/imcc.l
@@ -1516,7 +1518,7 @@ clean : \
     imcc-clean \
     compilers-clean \
     smoke-clean \
-    cover-clean \
+#INVERSE_CONDITIONED_LINE(win32): cover-clean \
     editor-clean
 	@TEMP_cg_r@
 	$(RM_F) chartypes "*.s" "*~" $(FLUID_FILES)
@@ -1621,6 +1623,7 @@ test-clean :
     "t/compilers/*/*/*.pir" \
     "t/compilers/*/*/*.stabs.s"
 	$(RM_F) \
+    "t/dynoplibs/*.pbc" \
     "t/examples/*.pbc" \
     "t/examples/*_pbcexe*" \
     "t/examples/*.past"
@@ -1656,7 +1659,8 @@ imcc-clean:
 realclean : clean
 	$(RM_RF) \
     $(STICKY_FILES) \
-    blib
+    blib \
+    cover_db
 
 distclean : realclean
 
@@ -1690,7 +1694,7 @@ status :
 patch :
 	svn diff
 
-LINTABLE_CFILES = `echo $(SRC_DIR)/main$(O) $(O_FILES) $(SRC_DIR)/parrot_config$(O) | sed @PQ@s/\.o/\.c/g@PQ@`
+LINTABLE_CFILES = `echo $(SRC_DIR)/main$(O) $(O_FILES) $(SRC_DIR)/parrot_config$(O) | $(PERL) -pe @PQ@s/\.o/\.c/g@PQ@`
 
 lint : sunlint
 
@@ -1877,7 +1881,7 @@ SPLINTFLAGS_TEST   =
 
 splint : $(PARROT)
 	$(MKPATH) $(SPLINT_TMP)
-	$(SPLINT) $(CC_INC) @cc_hasjit@ "-Isrc/pmc" "-Icompilers/ast" $(SPLINTFLAGS) $(SPLINTFLAGS_TEST) `echo $(O_FILES) | sed @PQ@s/\.o/\.c/g@PQ@`
+	$(SPLINT) $(CC_INC) @cc_hasjit@ "-Isrc/pmc" "-Icompilers/ast" $(SPLINTFLAGS) $(SPLINTFLAGS_TEST) `echo $(O_FILES) | $(PERL) -pe @PQ@s/\.o/\.c/g@PQ@`
 	$(SPLINT) $(CC_INC) $(SPLINTFLAGS) $(SPLINTFLAGS_TEST) $(IMCC_DIR)/main.c
 
 splint-andy :
@@ -1892,21 +1896,36 @@ splint-andy :
 		src/inte*.c \
 
 COVER_FLAGS = -fprofile-arcs -ftest-coverage
-COVERABLE_FILES = `echo $(SRC_DIR)/main$(O) $(O_FILES) $(SRC_DIR)/parrot_config$(O) | sed @PQ@s/\.o/\.c/g@PQ@`
-GCDA_FILES = `echo $(SRC_DIR)/main$(O) $(O_FILES) $(SRC_DIR)/parrot_config$(O) | sed @PQ@s/\.o/\.gcda/g@PQ@`
-GCNO_FILES = `echo $(SRC_DIR)/main$(O) $(O_FILES) $(SRC_DIR)/parrot_config$(O) | sed @PQ@s/\.o/\.gcno/g@PQ@`
-GCOV_FILES = `echo $(SRC_DIR)/main$(O) $(O_FILES) $(SRC_DIR)/parrot_config$(O) | sed @PQ@s/\.o/\.gcov/g@PQ@`
+COVER_DIRS = \
+	     $(SRC_DIR) \
+	     $(SRC_DIR)/charset \
+	     $(SRC_DIR)/dynoplibs \
+	     $(SRC_DIR)/dynpmc \
+	     $(SRC_DIR)/encodings \
+	     $(SRC_DIR)/gc \
+	     $(SRC_DIR)/ops \
+	     $(SRC_DIR)/packfile \
+	     $(SRC_DIR)/pmc \
+	     $(SRC_DIR)/stm \
+	     $(IO_DIR) \
+	     $(IMCC_DIR)
 
 cover:
 	$(PERL) Configure.pl --ccflags="$(CC_FLAGS) $(COVER_FLAGS)" \
 		--linkflags="$(COVER_FLAGS)" --ldflags="$(COVER_FLAGS)"
-	@make@ fulltest
-	gcov $(COVERABLE_FILES)
-	gcov2perl $(GCOV_FILES)
-	cover
+	-PERL5OPT="-MDevel::Cover" @make@ fulltest
+	for dir in $(COVER_DIRS); \
+	do \
+		pwd=$$PWD; cd $$dir; gcov *.c; cd $$pwd; \
+		gcov2perl $$dir/*.gcov; \
+	done
+	cover -ignore_re '^\/usr\/local\/bin'
 
 cover-clean:
-	$(RM_F) $(GCDA_FILES) $(GCNO_FILES) $(GCOV_FILES)
+	for dir in $(COVER_DIRS); \
+	do \
+		pwd=$$PWD; cd $$dir; $(RM_F) *.gcda *.gcno *.gcov; cd $$pwd; \
+	done
 
 
 ###############################################################################

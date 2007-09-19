@@ -25,33 +25,41 @@
 #include "parser.h"
 #include "optimizer.h"
 
-/* HEADERIZER TARGET: compilers/imcc/imc.h */
+/* HEADERIZER HFILE: compilers/imcc/imc.h */
 
 /* HEADERIZER BEGIN: static */
 
+#ifndef YYENABLE_NLS
+#  define YYENABLE_NLS 0
+#endif
+
+#ifndef YYLTYPE_IS_TRIVIAL
+#  define YYLTYPE_IS_TRIVIAL 0
+#endif
+
 static void add_pcc_named_arg( PARROT_INTERP,
     NOTNULL(SymReg *cur_call),
-    char *name,
-    SymReg *value )
+    const char     *name,
+    SymReg         *value )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static void add_pcc_named_param( PARROT_INTERP,
-    SymReg *cur_call,
-    char *name,
-    SymReg *value )
+    SymReg     *cur_call,
+    const char *name,
+    SymReg     *value )
         __attribute__nonnull__(1);
 
 static void add_pcc_named_result( PARROT_INTERP,
-    SymReg *cur_call,
-    char *name,
-    SymReg *value )
+    SymReg     *cur_call,
+    const char *name,
+    SymReg     *value )
         __attribute__nonnull__(1);
 
 static void add_pcc_named_return( PARROT_INTERP,
-    SymReg *cur_call,
-    char *name,
-    SymReg *value )
+    SymReg     *cur_call,
+    const char *name,
+    SymReg     *value )
         __attribute__nonnull__(1);
 
 static void begin_return_or_yield( PARROT_INTERP, int yield )
@@ -178,7 +186,7 @@ MK_I(PARROT_INTERP, IMC_Unit *unit, NOTNULL(const char *fmt), int n, ...)
         fmt = NULL;
     else
         fmt = ++q;
-#if OPDEBUG
+#ifdef OPDEBUG
     fprintf(stderr, "op '%s' format '%s' (%d)\n", opname, fmt?:"",n);
 #endif
     va_start(ap, n);
@@ -439,7 +447,7 @@ set_lexical(PARROT_INTERP, NOTNULL(SymReg *r), char *name)
 }
 
 static void
-add_pcc_named_arg(PARROT_INTERP, NOTNULL(SymReg *cur_call), char *name,
+add_pcc_named_arg(PARROT_INTERP, NOTNULL(SymReg *cur_call), const char *name,
                   SymReg *value)
 {
     SymReg *r = mk_const(interp, name, 'S');
@@ -450,7 +458,8 @@ add_pcc_named_arg(PARROT_INTERP, NOTNULL(SymReg *cur_call), char *name,
 }
 
 static void
-add_pcc_named_result(PARROT_INTERP, SymReg *cur_call, char *name, SymReg *value)
+add_pcc_named_result(PARROT_INTERP, SymReg *cur_call, const char *name,
+                     SymReg *value)
 {
     SymReg * const r = mk_const(interp, name, 'S');
     r->type         |= VT_NAMED;
@@ -460,7 +469,8 @@ add_pcc_named_result(PARROT_INTERP, SymReg *cur_call, char *name, SymReg *value)
 }
 
 static void
-add_pcc_named_param(PARROT_INTERP, SymReg *cur_call, char *name, SymReg *value)
+add_pcc_named_param(PARROT_INTERP, SymReg *cur_call, const char *name,
+                    SymReg *value)
 {
     SymReg * const r = mk_const(interp, name, 'S');
     r->type         |= VT_NAMED;
@@ -470,7 +480,8 @@ add_pcc_named_param(PARROT_INTERP, SymReg *cur_call, char *name, SymReg *value)
 }
 
 static void
-add_pcc_named_return(PARROT_INTERP, SymReg *cur_call, char *name, SymReg *value)
+add_pcc_named_return(PARROT_INTERP, SymReg *cur_call, const char *name,
+                     SymReg *value)
 {
     SymReg * const r = mk_const(interp, name, 'S');
     r->type         |= VT_NAMED;
@@ -541,7 +552,7 @@ do_loadlib(PARROT_INTERP, NOTNULL(const char *lib))
 %type <t> type ptr pragma_1 hll_def
 %type <i> program
 %type <i> class_namespace
-%type <i> global constdef sub emit pcc_sub  pcc_ret
+%type <i> constdef sub emit pcc_sub  pcc_ret
 %type <i> compilation_units compilation_unit pmc_const pragma
 %type <s> classname relop any_string
 %type <i> labels _labels label  statement sub_call
@@ -602,7 +613,6 @@ compilation_units:
 compilation_unit:
      class_namespace  { $$ = $1; }
    | constdef      { $$ = $1; }
-   | global        { $$ = $1; }
    | sub           { $$ = $1;
                      imc_close_unit(interp, IMCC_INFO(interp)->cur_unit);
                      IMCC_INFO(interp)->cur_unit = 0; }
@@ -647,21 +657,6 @@ hll_def: HLL STRINGC COMMA STRINGC
              Parrot_register_HLL_type(interp,
                 CONTEXT(((Interp*)interp)->ctx)->current_HLL, atoi($2), atoi($4));
              $$ = 0;
-         }
-   ;
-
-global:
-     GLOBAL type IDENTIFIER
-         {
-            IMCC_fataly(interp, E_SyntaxError,
-                ".global not implemented yet\n");
-            $$ = 0;
-         }
-   | GLOBAL type IDENTIFIER '=' const
-         {
-            IMCC_fataly(interp, E_SyntaxError,
-                ".global not implemented yet\n");
-            $$ = 0;
          }
    ;
 
