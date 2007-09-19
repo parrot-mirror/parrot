@@ -1,0 +1,21 @@
+# $Id$
+
+Goals:
+
+Completely unified testing.  The ability to run tests and aggregate their
+results regardless of how the test is implemented, (perl, parrot, hll, etc.)
+HTML Reports should function much as we have now, but with the additional
+ability to look at results across versions to check when tests were injected.
+
+Steps:
+
+1) Make TAP::Harness run top level (t/harness) tests cleanly with no shebang issues.
+
+2) Make TAP::Harness run top level and language harnesses cleanly, regardless of
+   test implementation.
+
+3) Add processing of the output of Configure --test.
+
+4) Smolder investigation
+
+5) Final HTML report work
