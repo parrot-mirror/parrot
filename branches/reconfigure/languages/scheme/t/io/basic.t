@@ -6,9 +6,9 @@
 use strict;
 use warnings;
 use FindBin;
-use lib "$FindBin::Bin/../..";
+use lib "$FindBin::Bin/../../lib";
 
-use Scheme::Test tests => 2;
+use Parrot::Test::Scheme tests => 2;
 
 output_is( <<'CODE', '0', "basic write" );
 (write 0)

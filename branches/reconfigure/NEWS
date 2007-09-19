@@ -1,5 +1,22 @@
 # $Id$
 
+New in 0.4.16
+- Implementation:
+ + Performed code review on every PMC
+ + Modified PMC code generation to use Storable, reducing compile times
+ + Added a makefile target to generate test coverage data of C sources
+- Languages:
+ + NQP: added lists, for loops, operators, comparison and multiplicative operators
+ + Announced Kea-CL, Kea Common Lisp, an ANSI Common Lisp implementation
+   The repository is available at https://rgrjr.dyndns.org/svn/kea-cl/trunk/
+- Documentation
+ + PDD17 "PMCs" - draft approved, the design is complete
+ + Added more PIR tutorials, see examples/tutorial/00_README.pod
+- Miscellaneous:
+ + Many bugfixes, enhancements, documentation, and coding standard updates
+ + Deprecated PMC constants and other crufty syntax, see DEPRECATED.pod
+ + Improved icc compiler compatibility for error line reporting
+
 New in 0.4.15
 - Implementation:
  + Lots of code review, many bugs fixed
