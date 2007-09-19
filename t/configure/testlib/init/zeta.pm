@@ -21,11 +21,11 @@ $description = 'Determining if your computer does zeta';
 @args = ();
 
 my $result = q|Hello world|;
+
 sub runstep {
     my ( $self, $conf ) = @_;
     $self->set_result( $result );
-    return $self;
-#    $self->result();
+    return 1;
 }
 
 
