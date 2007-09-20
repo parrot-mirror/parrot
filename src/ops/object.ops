@@ -253,7 +253,8 @@ anonymous subclass.
 =cut
 
 inline op subclass(out PMC, invar PMC) :object_classes {
-  $1 = VTABLE_subclass(interp, $2, PMCNULL);
+  $1 = pmc_new(interp, enum_class_Class);
+  VTABLE_add_parent(interp, $1, $2);
   goto NEXT();
 }
 
@@ -329,17 +330,47 @@ op subclass(out PMC, inconst PMC, in STR) :object_classes {
 }
 
 op subclass(out PMC, in STR, in STR) :object_classes {
-  PMC *_class = Parrot_class_lookup(interp, $2);
-  PMC *subname_p;
-  opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(_class)) {
-    real_exception(interp, next, NO_CLASS,
+    PMC *hll_ns, *parent_ns;
+    STRING *parent_name = $2;
+    PMC *child_name;
+    PMC *parent_class = PMCNULL;
+    PMC *child_class = PMCNULL;
+    opcode_t *next = expr NEXT();
+
+    /* Create a new class from the subclass name */
+    child_name = pmc_new(interp, enum_class_String);
+    VTABLE_set_string_native(interp, child_name, $3);
+    PMC *naming_hash = pmc_new(interp, enum_class_Hash);
+    VTABLE_set_pmc_keyed_str(interp, naming_hash,
+        string_from_literal(interp, "name"), child_name);
+    child_class = pmc_new_init(interp, enum_class_Class, naming_hash);
+
+    /* Look up a namespace with the parent name within the current HLL
+     * namespace and if we find it, get the class associated with it, if any. */
+    hll_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
+      CONTEXT(interp->ctx)->current_HLL);
+    parent_ns = Parrot_get_namespace_keyed_str(interp, hll_ns, parent_name);
+    if (!PMC_IS_NULL(parent_ns))
+        parent_class = VTABLE_get_class(interp, parent_ns);
+
+    if (PMC_IS_NULL(parent_class)) {
+        /* Look up a low-level class and create a proxy */
+        PMC *type_num = pmc_new(interp, enum_class_Integer);
+        VTABLE_set_integer_native(interp, type_num, pmc_type(interp, parent_class));
+        parent_class = pmc_new_init(interp, enum_class_PMCProxy, type_num);
+    }
+
+    if (PMC_IS_NULL(parent_class)) {
+      real_exception(interp, next, NO_CLASS,
                 "Class '%Ss' doesn't exist", $2);
-  }
-  subname_p = pmc_new(interp, enum_class_String);
-  VTABLE_set_string_native(interp, subname_p, $3);
-  $1 = VTABLE_subclass(interp, _class, subname_p);
-  goto ADDRESS(next);
+    }
+
+    /* Make the new class a subclass of the current class */
+    VTABLE_add_parent(interp, child_class, parent_class);
+
+    $1 = child_class;
+
+    goto ADDRESS(next);
 }
 
 
