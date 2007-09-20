@@ -97,6 +97,36 @@ Initializes a PMCProxy PMC.
         PObj_is_class_SET(SELF);
     }
 
+    void init_pmc(PMC *init_data) {
+        INTVAL type_num = VTABLE_get_integer(interp, init_data);
+        Parrot_PMCProxy *proxy_info;
+
+        /* Ensure that it's a valid type number. */
+        if (type_num > interp->n_vtable_max || type_num < 0) {
+            real_exception(interp, NULL, 1,
+                "Attempt to create PMC Proxy for invalid type number!");
+        }
+
+        /* Set up the object. */
+        SELF.init();
+
+        /* Set up number, name and namespace. */
+        proxy_info = PARROT_PMCPROXY(SELF);
+        proxy_info->id = type_num;
+        proxy_info->name = interp->vtables[type_num]->whoami;
+        proxy_info->_namespace = interp->vtables[type_num]->_namespace;
+
+        /* XXX Parents and MRO still todo. */
+
+        /* Enter it in the list of proxy objects. */
+        VTABLE_set_pmc_keyed_int(interp, interp->pmc_proxies, type_num, SELF);
+
+        /* Link namespace to this class, if there is one. */
+        if (!PMC_IS_NULL(proxy_info->_namespace))
+            Parrot_PCCINVOKE(interp, proxy_info->_namespace,
+                string_from_literal(interp, "set_class"), "P->", SELF);
+    }
+
 /*
 
 =item C<PMC *instantiate(PMC *init)>
@@ -334,6 +364,24 @@ parameter is supplied, a particular item of introspection data.
 
         PCCRETURN(PMC *found);
     }
+
+/*
+
+=item C<STRING *get_string()>
+
+Return the name of the low-level class (without the HLL namespace).
+
+=cut
+
+*/
+
+    STRING *get_string() {
+        Parrot_PMCProxy * const proxy_info = PARROT_PMCPROXY(SELF);
+
+        /* Copy the stored string name of the proxy. */
+        return string_copy(interp, proxy_info->name);
+    }
+
 
 } /* END pmclass */
 
