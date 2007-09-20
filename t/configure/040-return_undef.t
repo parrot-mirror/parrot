@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 016-no_return_but_result.t
+# 040-return_undef.t
 
 use strict;
 use warnings;
@@ -26,8 +26,8 @@ my %args = %$args;
 my $conf = Parrot::Configure->new;
 ok(defined $conf, "Parrot::Configure->new() returned okay");
 
-my $step = q{init::zeta};
-my $description = 'Determining if your computer does zeta';
+my $step = q{init::eta};
+my $description = 'Determining if your computer does eta';
 
 $conf->add_steps( $step );
 my @confsteps = @{$conf->steps};
@@ -80,12 +80,12 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-016-no_return_but_result.t - see what happens when configuration step returns
-something other than object but has a defined result method
+040-return_undef.t - see what happens when configuration step returns an
+undefined value
 
 =head1 SYNOPSIS
 
-    % prove t/configure/016-no_return_but_result.t
+    % prove t/configure/040-return_undef.t
 
 =head1 DESCRIPTION
 
