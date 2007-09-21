@@ -332,7 +332,7 @@ op subclass(out PMC, inconst PMC, in STR) :object_classes {
 op subclass(out PMC, in STR, in STR) :object_classes {
     PMC *hll_ns, *parent_ns;
     STRING *parent_name = $2;
-    PMC *child_name;
+    PMC *child_name, *naming_hash;
     PMC *parent_class = PMCNULL;
     PMC *child_class = PMCNULL;
     opcode_t *next = expr NEXT();
@@ -340,7 +340,7 @@ op subclass(out PMC, in STR, in STR) :object_classes {
     /* Create a new class from the subclass name */
     child_name = pmc_new(interp, enum_class_String);
     VTABLE_set_string_native(interp, child_name, $3);
-    PMC *naming_hash = pmc_new(interp, enum_class_Hash);
+    naming_hash = pmc_new(interp, enum_class_Hash);
     VTABLE_set_pmc_keyed_str(interp, naming_hash,
         string_from_literal(interp, "name"), child_name);
     child_class = pmc_new_init(interp, enum_class_Class, naming_hash);
