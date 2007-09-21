@@ -284,6 +284,27 @@ non-zero value if it does.
 
 /*
 
+=item C<INTVAL isa_pmc(PMC *classname)>
+
+Returns whether the object's class is or inherits from C<*classname>.
+
+=cut
+
+*/
+
+    INTVAL isa_pmc(PMC *lookup) {
+        if (PMC_IS_NULL(lookup))
+            return 0;
+
+        if (SUPER(lookup))
+            return 1;
+
+        /* Dispatch isa to the object's class */
+        return VTABLE_isa_pmc(interp, VTABLE_get_class(interp, SELF), lookup);
+    }
+
+/*
+
 =item C<INTVAL isa(STRING *classname)>
 
 Returns whether the class is or inherits from C<*classname>.

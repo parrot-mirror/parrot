@@ -1174,7 +1174,7 @@ Creates a new PMC object of the type of the class and calls init().
 
 /*
 
-=item C<INTVAL isa(STRING *classname)>
+=item C<INTVAL isa_pmc(PMC *classname)>
 
 Returns whether the class is or inherits from C<*classname>.
 
@@ -1182,11 +1182,41 @@ Returns whether the class is or inherits from C<*classname>.
 
 */
 
-    INTVAL isa(STRING *classname) {
-        Parrot_Class *_class      = PARROT_CLASS(SELF);
+    INTVAL isa_pmc(PMC *lookup) {
+        Parrot_Class *_class    = PARROT_CLASS(SELF);
         INTVAL        i, num_classes;
+        STRING       *classname;
+        PMC          *classobj = PMCNULL;
+        PMC          *parent_ns;
+        PMC *hll_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
+          CONTEXT(interp->ctx)->current_HLL);
 
-        if (SUPER(classname))
+        if (PMC_IS_NULL(lookup))
+            return 0;
+
+        if (SUPER(lookup))
+            return 1;
+
+        if (VTABLE_isa(interp, lookup, CONST_STRING(interp, "Class"))) {
+            classobj = lookup;
+        }
+        else if (VTABLE_isa(interp, lookup, CONST_STRING(interp, "NameSpace"))) {
+            classobj = VTABLE_get_class(interp, lookup);
+        }
+        else if (VTABLE_isa(interp, lookup, CONST_STRING(interp, "String"))
+                || VTABLE_isa(interp, lookup, CONST_STRING(interp, "Key"))) {
+            parent_ns = Parrot_get_namespace_keyed(interp, hll_ns, lookup);
+            if (!PMC_IS_NULL(parent_ns))
+                classobj = VTABLE_get_class(interp, parent_ns);
+        }
+
+        if (PMC_IS_NULL(classobj))
+            return 0;
+
+        classname = VTABLE_get_string(interp, classobj);
+
+        /* Check if the class object is the same as self's class object */
+        if (VTABLE_is_same(interp, SELF, classobj))
             return 1;
 
         /* Check if the passed name is the same as the stored short name. */
@@ -1198,16 +1228,33 @@ Returns whether the class is or inherits from C<*classname>.
             return 1;
 
         /* Iterate over all the parents and check if they respond true
-         * for 'isa' on the classname.
+         * for 'isa' on the original comparison.
          */
         num_classes = VTABLE_elements(interp, _class->parents);
         for (i = 0; i < num_classes; i++) {
             PMC *cur_class = VTABLE_get_pmc_keyed_int(interp, _class->parents, i);
-            if (VTABLE_isa(interp, cur_class, classname))
+            if (VTABLE_isa_pmc(interp, cur_class, lookup))
                 return 1;
         }
 
         return 0;
+    }
+
+/*
+
+=item C<INTVAL isa(STRING *classname)>
+
+Returns whether the class is or inherits from C<*classname>.
+
+=cut
+
+*/
+
+    INTVAL isa(STRING *classname) {
+        PMC *string_pmc = pmc_new(interp, enum_class_String);
+        VTABLE_set_string_native(interp, string_pmc, classname);
+
+        return VTABLE_isa_pmc(interp, SELF, string_pmc);
     }
 
     /* **********************************************************************
