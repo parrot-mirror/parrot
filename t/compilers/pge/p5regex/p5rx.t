@@ -1,4 +1,4 @@
-#!./parrot -G
+#!parrot -G
 # Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 # vi: ft=pir

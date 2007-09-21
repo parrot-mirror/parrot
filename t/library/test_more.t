@@ -1,4 +1,4 @@
-#!./parrot
+#!parrot
 
 .sub _main :main
 	load_bytecode 'library/Test/Builder/Tester.pir'

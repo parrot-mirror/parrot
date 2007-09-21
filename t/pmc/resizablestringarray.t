@@ -1,4 +1,4 @@
-#!./parrot
+#!parrot
 
 .const int NUM_OF_TESTS = 184
 
