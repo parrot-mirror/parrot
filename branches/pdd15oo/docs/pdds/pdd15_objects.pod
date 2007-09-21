@@ -346,11 +346,16 @@ associated with a namespace.) Just adding a sub to a namespace will not
 automatically make it a method of the class, you have to call add_method
 too.
 
-=item isa(class *)
+=item isa(pmc *)
 
-Returns true or false if the class passed in as a parameter is in the
-inheritance hierarchy of the object. {{This should also support type
-names and namespace names as a parameter, not just class objects.}}
+Returns true or false if the class object, namespace object, key, or
+string name PMC passed in as a parameter is a class in the inheritance
+hierarchy of the object.
+
+=item isa_str(string *)
+
+Returns true or false if the string passed in as a parameter is a
+class in the inheritance hierarchy of the object.
 
 =item can(string *)
 
