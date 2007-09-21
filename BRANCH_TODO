@@ -7,9 +7,15 @@ results regardless of how the test is implemented, (perl, parrot, hll, etc.)
 HTML Reports should function much as we have now, but with the additional
 ability to look at results across versions to check when tests were injected.
 
+This will be done with a combination of Makefile and TAP::Harness 3.0 code.
+
 Steps:
 
 1) Make TAP::Harness run top level (t/harness) tests cleanly with no shebang issues.
+    Make a competing harness based on TAP::Harness 3.0 and App::Prove
+    Fix shebang line issues in tests
+    Figure out a way to use existing prove switches AND t/harness switches at the same time
+        (Getopt::Long and --)
 
 2) Write a coding standard test to make sure that t/* tests call out a location
    independent parrot/interpreter.
