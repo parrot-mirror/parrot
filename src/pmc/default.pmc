@@ -899,6 +899,24 @@ true (1) is returned; otherwise, false (0) is returned.
 
 /*
 
+=item C<INTVAL isa_pmc(PMC *_class)>
+
+Reports whether the PMC "isa" C<_class>.
+If the class C<_class> is found in the PMC's class hierarchy,
+true (1) is returned; otherwise, false (0) is returned.
+
+=cut
+
+*/
+
+    INTVAL isa_pmc(PMC *lookup) {
+        /* TODO FIXME - walk mro */
+        return does_isa(INTERP, VTABLE_get_string(INTERP, lookup),
+                SELF->vtable->isa_str);
+    }
+
+/*
+
 =item C<INTVAL isa(STRING *_class)>
 
 Reports whether the PMC "isa" C<_class>.

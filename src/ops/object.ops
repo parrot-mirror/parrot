@@ -208,8 +208,7 @@ inline op isa(out INT, invar PMC, in STR) :object_base {
 }
 
 inline op isa(out INT, invar PMC, in PMC) :object_base {
-    PMC * const _class = Parrot_class_lookup_p(interp, $3);
-    $1 = Parrot_object_isa(interp, $2, _class);
+    $1 = $3 ? $2->vtable->isa_pmc(interp, $2, $3) : 0;
     goto NEXT();
 }
 

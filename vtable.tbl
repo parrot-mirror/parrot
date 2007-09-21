@@ -340,6 +340,7 @@ INTVAL can(STRING* method)
 
 INTVAL does(STRING* method)
 
+INTVAL isa_pmc(PMC* lookup)
 INTVAL isa(STRING* _class)
 
 PMC* get_attr(INTVAL idx)
