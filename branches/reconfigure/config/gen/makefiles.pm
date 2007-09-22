@@ -73,7 +73,7 @@ sub runstep {
     $self->makefiles($conf);
     $self->cflags($conf);
 
-    return $self;
+    return 1;
 }
 
 

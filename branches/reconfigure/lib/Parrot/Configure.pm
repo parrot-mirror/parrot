@@ -313,20 +313,20 @@ sub _run_this_step {
     } else {
         # A Parrot configuration step can run successfully, but if it fails to
         # achieve its objective it is supposed to return an undefined status.
-        if ( ! defined($ret) ) {
+        if ( ! defined($ret) or ! $ret) {
             _failure_message($step, $step_name);
             return;
         } else {
-            # The Parrot configuration step returned a defined value -- but is
-            # that value an object with a 'result' method? 
-            # (This is rather bizarre, IMHO.)
-            eval { $ret->can('result'); };
-        
-            # if not, report the result and return
-            if ($@) {
-                _failure_message($step, $step_name);
-                return;
-            } else {
+#            # The Parrot configuration step returned a defined value -- but is
+#            # that value an object with a 'result' method? 
+#            # (This is rather bizarre, IMHO.)
+#            eval { $ret->can('result'); };
+#        
+#            # if not, report the result and return
+#            if ($@) {
+#                _failure_message($step, $step_name);
+#                return;
+#            } else {
                 _finish_printing_result( {
                     step        => $step,
                     args        => $args,
@@ -344,7 +344,7 @@ sub _run_this_step {
                     } );
                 }
                 return 1;
-            }
+#            }
         }
     }
 }
