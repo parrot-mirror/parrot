@@ -196,15 +196,53 @@ sub runsteps {
     my ( $verbose, $verbose_step, $ask ) =
         $conf->options->get( qw( verbose verbose-step ask ) );
 
+#    $conf->{log} = [];
+    # The way the options are currently structured, 'verbose' applies to all
+    # steps; 'verbose-step' can only apply to a single step; and 'ask' applies
+    # to all steps but has no relevance unless the step in an 'inter::' step.
+    #
+    # Suppose we made verbose-step a comma-delimited string of step names .  
+    # We could then split that string on the commas and build a hash of steps
+    # which get verbose output.  As we go thru the steps, we could check to
+    # see if the step_name were an element in this hash, then turn on verbose
+    # output for that step.
+    #
+    # Analogously, we could create a 'fatal-step' option which also would be a
+    # comma-delimited string which would be parsed to create a hash which
+    # would be checked in the event a step did a bare return.  In non-fatal
+    # circumstances, a bare return would go on to a list of steps to be
+    # reported as having not DWIMmed.  In fatal circumstances, we would
+    # terminate configuration in an orderly manner.
+    #
+    # Only problem:  We currently allow users great (excessive, IMHO)
+    # flexibility in specifying the value for 'verbose-step'.  You can provide
+    # a step name, a step number, and even a string to be pattern-matched
+    # against the step's $description.  The latter approach was explicitly
+    # defended by Joshua Hoblit in RT 44353 as recently as Aug 02 2007.  
+
+    # All this is done *within*
+    # _run_this_step(), in part because it's only there that the step's
+    # $description becomes knowable.
+    # IMO, the only reasonable way to handle
+    # a comma-delimited string is to require its components to be
+    # configuration step names.  We could check the components of this string
+    # against $conf->{hash_of_steps} for validity.  I'd rather know whether a
+    # step is going to have verbose output or be capable of fatalizing an
+    # error *before* we run that step -- which means having that info at hand
+    # before we run *any* steps.
+
     foreach my $task ( $conf->steps ) {
         $n++;
-        $conf->_run_this_step( {
+        my $rv = $conf->_run_this_step( {
             task            => $task,
             verbose         => $verbose,
             verbose_step    => $verbose_step,
             ask             => $ask,
             n               => $n,
         } );
+#        ${$conf->{log}}[$n] = $rv
+#            ? { $task->step, 1 }
+#            : { $task->step, undef };;
     }
     return 1;
 }
@@ -261,7 +299,9 @@ sub _run_this_step {
     }
     my $step = $step_name->new();
 
-    my $description = $step->description() || q{};
+    unless ( $step->description() ) {
+        $step->description() = q{};
+    }
 
     # set per step verbosity
     if ( defined $args->{verbose_step} ) {
@@ -282,7 +322,7 @@ sub _run_this_step {
                 or
             (
                 # by description
-                $description =~ /$args->{verbose_step}/
+                $step->description =~ /$args->{verbose_step}/
             )
         ) {
             $conf->options->set( verbose => 2 );
@@ -292,7 +332,7 @@ sub _run_this_step {
     # RT#43673 cc_build uses this verbose setting, why?
     $conf->data->set( verbose => $args->{verbose} ) if $args->{n} > 2;
 
-    print "\n", $description, '...';
+    print "\n", $step->description, '...';
     print "\n" if $args->{verbose} && $args->{verbose} == 2;
 
     my $ret;
@@ -313,14 +353,11 @@ sub _run_this_step {
     } else {
         # A Parrot configuration step can run successfully, but if it fails to
         # achieve its objective it is supposed to return an undefined status.
-        if ( ! defined($ret) or ! $ret) {
-            _failure_message($step, $step_name);
-            return;
-        } else {
+        if ( $ret ) {
             _finish_printing_result( {
                 step        => $step,
                 args        => $args,
-                description => $description,
+                description => $step->description,
             } );
             # reset verbose value for the next step
             $conf->options->set( verbose => $args->{verbose} );
@@ -334,6 +371,9 @@ sub _run_this_step {
                 } );
             }
             return 1;
+        } else {
+            _failure_message($step, $step_name);
+            return;
         }
     }
 }
