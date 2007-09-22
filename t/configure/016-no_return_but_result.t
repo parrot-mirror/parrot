@@ -71,7 +71,7 @@ like($bigmsg,
     "Got correct description for $step");
 my $errmsg = join q{}, @errlines;
 like($errmsg,
-    qr/step $step failed:/,
+    qr/step $step failed:\sGoodbye, cruel world/,
     "Got error message expected upon running $step");
 
 pass("Completed all tests in $0");
@@ -81,7 +81,7 @@ pass("Completed all tests in $0");
 =head1 NAME
 
 016-no_return_but_result.t - see what happens when configuration step returns
-something other than object but has a defined result method
+undefined value but has a defined result method
 
 =head1 SYNOPSIS
 

@@ -34,7 +34,7 @@ sub runstep {
     if ($without) {
         $conf->data->set( has_gmp => 0 );
         $self->set_result('no');
-        return $self;
+        return 1;
     }
 
     my $cc        = $conf->data->get('cc');
@@ -96,7 +96,7 @@ sub runstep {
         $self->set_result('no');
     }
 
-    return $self;
+    return 1;
 }
 
 1;

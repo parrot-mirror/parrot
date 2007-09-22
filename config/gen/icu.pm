@@ -98,7 +98,7 @@ sub runstep {
             icu_dir    => '',
         );
         $self->set_result("no") unless defined $self->result;
-        return $self;
+        return 1;
     }
 
     my $ok = 1;
@@ -166,7 +166,7 @@ HELP
 
     $self->set_result("yes");
 
-    return $self;
+    return 1;
 }
 
 1;

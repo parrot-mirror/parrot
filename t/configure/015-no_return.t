@@ -51,28 +51,22 @@ $conf->options->set(%args);
 is($conf->options->{c}->{debugging}, 1,
     "command-line option '--debugging' has been stored in object");
 
-my $rv;
-my ($tie, @lines, $errtie, @errlines);
 {
+    my $rv;
+    my ($tie, @lines);
     $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $errtie = tie *STDERR, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";
     $rv = $conf->runsteps;
     @lines = $tie->READLINE;
-    @errlines = $errtie->READLINE;
+    ok($rv, "runsteps successfully ran $step");
+    my $bigmsg = join q{}, @lines;
+    like($bigmsg,
+        qr/$description/s,
+        "Got correct description for $step");
+    like($bigmsg, qr/done\.\z/,
+        "got 'done' in lieu of result set by step");
 }
 untie *STDOUT;
-untie *STDERR;
-ok($rv, "runsteps successfully ran $step");
-my $bigmsg = join q{}, @lines;
-like($bigmsg,
-    qr/$description/s,
-    "Got correct description for $step");
-my $errmsg = join q{}, @errlines;
-like($errmsg,
-    qr/step $step failed:/,
-    "Got error message expected upon running $step");
 
 pass("Completed all tests in $0");
 
@@ -80,7 +74,8 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-015-no_return.t - see what happens when configuration step does not return object
+015-no_return.t - see what happens when configuration step implicitly returns
+true value but does not set a result
 
 =head1 SYNOPSIS
 

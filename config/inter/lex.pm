@@ -45,7 +45,7 @@ sub runstep {
     unless ( $conf->options->get('maintainer') ) {
         $conf->data->set( $util => 'echo' );
         $self->set_result('skipped');
-        return $self;
+        return 1;
     }
 
     # precedence of sources for the program:
@@ -60,7 +60,7 @@ sub runstep {
     if ( defined $prog ) {
         $conf->data->set( $util => $prog );
         $self->set_result('user defined');
-        return $self;
+        return 1;
     } else {
         $prog = check_progs( [ @lex_defaults ], $verbose );
         if  (! $prog) {
@@ -119,7 +119,7 @@ sub runstep {
                 $conf->data->set( flex_version => $prog_version );
                 $self->set_result("flex $prog_version");
                 $conf->data->set( $util => $prog );
-                return $self;
+                return 1;
             } else {
                 $self->set_result('lex program does not exist or does not understand --version');
                 return;
