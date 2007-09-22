@@ -317,34 +317,23 @@ sub _run_this_step {
             _failure_message($step, $step_name);
             return;
         } else {
-#            # The Parrot configuration step returned a defined value -- but is
-#            # that value an object with a 'result' method? 
-#            # (This is rather bizarre, IMHO.)
-#            eval { $ret->can('result'); };
-#        
-#            # if not, report the result and return
-#            if ($@) {
-#                _failure_message($step, $step_name);
-#                return;
-#            } else {
-                _finish_printing_result( {
-                    step        => $step,
-                    args        => $args,
-                    description => $description,
+            _finish_printing_result( {
+                step        => $step,
+                args        => $args,
+                description => $description,
+            } );
+            # reset verbose value for the next step
+            $conf->options->set( verbose => $args->{verbose} );
+        
+            if ($conf->options->get(q{configure_trace}) ) {
+                _update_conftrace( {
+                    conftrace   => $conftrace,
+                    step_name   => $step_name,
+                    conf        => $conf,
+                    sto         => $sto,
                 } );
-                # reset verbose value for the next step
-                $conf->options->set( verbose => $args->{verbose} );
-            
-                if ($conf->options->get(q{configure_trace}) ) {
-                    _update_conftrace( {
-                        conftrace   => $conftrace,
-                        step_name   => $step_name,
-                        conf        => $conf,
-                        sto         => $sto,
-                    } );
-                }
-                return 1;
-#            }
+            }
+            return 1;
         }
     }
 }
