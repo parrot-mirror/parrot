@@ -299,9 +299,7 @@ sub _run_this_step {
     }
     my $step = $step_name->new();
 
-    unless ( $step->description() ) {
-        $step->description() = q{};
-    }
+    my $description = $step->description() || q{};
 
     # set per step verbosity
     if ( defined $args->{verbose_step} ) {
@@ -322,7 +320,7 @@ sub _run_this_step {
                 or
             (
                 # by description
-                $step->description =~ /$args->{verbose_step}/
+                $description =~ /$args->{verbose_step}/
             )
         ) {
             $conf->options->set( verbose => 2 );
@@ -332,7 +330,7 @@ sub _run_this_step {
     # RT#43673 cc_build uses this verbose setting, why?
     $conf->data->set( verbose => $args->{verbose} ) if $args->{n} > 2;
 
-    print "\n", $step->description, '...';
+    print "\n", $description, '...';
     print "\n" if $args->{verbose} && $args->{verbose} == 2;
 
     my $ret;
@@ -357,7 +355,7 @@ sub _run_this_step {
             _finish_printing_result( {
                 step        => $step,
                 args        => $args,
-                description => $step->description,
+                description => $description,
             } );
             # reset verbose value for the next step
             $conf->options->set( verbose => $args->{verbose} );
