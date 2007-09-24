@@ -646,11 +646,23 @@ composed into the class).
 
 =item get_attr(STRING*)
 
-Returns the attribute with the fully qualified name for the object.
+Returns the attribute with the string name for the object.
 
-=item set_attr(STRING*, PMC *)
+=item get_attr_keyed(PMC*, STRING*)
 
-Set the attribute with the fully qualified name for the object.
+Returns the attribute with the string name for the object. Lookup is on
+the attribute store of a particular parent of the object's class,
+identified by a classname, namespace, or key PMC.
+
+=item set_attr(STRING*, PMC*)
+
+Set the attribute with the string name for the object.
+
+=item set_attr_keyed(PMC*, STRING*, PMC*)
+
+Set the attribute with the string name for the object. The value is set
+in the attribute store of a particular parent of the object's class,
+identified by a classname, namespace, or key PMC.
 
 =item get_class
 
