@@ -1172,8 +1172,8 @@ $(SRC_DIR)/exec_cpu.c : lib/Parrot/OpLib/core.pm $(SRC_DIR)/jit_emit.h \
 
 $(IMCC_DIR)/imcc.y.flag $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcparser.h : $(IMCC_DIR)/imcc.y
 	$(YACC) $(IMCC_DIR)/imcc.y -d -o $(IMCC_DIR)/imcparser.c
-	$(PERL) $(BUILD_TOOLS_DIR)/fixup_gen_file.pl $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcc.y
-	$(PERL) $(BUILD_TOOLS_DIR)/fixup_gen_file.pl $(IMCC_DIR)/imcparser.h $(IMCC_DIR)/imcc.y
+	$(PERL) $(BUILD_TOOLS_DIR)/fixup_gen_file.pl -noheaderizer $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcc.y
+	$(PERL) $(BUILD_TOOLS_DIR)/fixup_gen_file.pl -noheaderizer $(IMCC_DIR)/imcparser.h $(IMCC_DIR)/imcc.y
 	$(TOUCH) $(IMCC_DIR)/imcc.y.flag $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcparser.h
 
 $(IMCC_DIR)/imcc.l.flag $(IMCC_DIR)/imclexer.c : $(IMCC_DIR)/imcc.l
@@ -1910,16 +1910,73 @@ COVER_DIRS = \
 	     $(IO_DIR) \
 	     $(IMCC_DIR)
 
-cover:
-	$(PERL) Configure.pl --ccflags="$(CC_FLAGS) $(COVER_FLAGS)" \
-		--linkflags="$(COVER_FLAGS)" --ldflags="$(COVER_FLAGS)"
-	-PERL5OPT="-MDevel::Cover" @make@ fulltest
+cover: \
+    cover.dummy \
+    cover-testb \
+#CONDITIONED_LINE(cg_flag): cover-testC \
+    cover-testf \
+#CONDITIONED_LINE(cg_flag): cover-testg \
+#CONDITIONED_LINE(jitcapable): cover-testj \
+    cover-testr \
+    cover-testS \
+    cover-src \
+    cover-perl \
+    cover-codingstd \
+    cover-benchmark \
+    cover-doc \
+    cover-distro
+	build_dir=$$PWD; \
 	for dir in $(COVER_DIRS); \
 	do \
-		pwd=$$PWD; cd $$dir; gcov *.c; cd $$pwd; \
+		cd $$dir; \
+		gcov *.c; \
+		cd $$build_dir; \
 		gcov2perl $$dir/*.gcov; \
 	done
 	cover -ignore_re '^\/usr\/local\/bin'
+
+cover.dummy:
+	$(PERL) Configure.pl --ccflags="$(CC_FLAGS) $(COVER_FLAGS)" \
+		--linkflags="$(COVER_FLAGS)" --ldflags="$(COVER_FLAGS)"
+
+cover-testb: cover.dummy
+	-@make@ testb
+
+cover-testC: cover.dummy
+	-@make@ testC
+
+cover-testf: cover.dummy
+	-@make@ testf
+
+cover-testg: cover.dummy
+	-@make@ testg
+
+cover-testj: cover.dummy
+	-@make@ testj
+
+cover-testr: cover.dummy
+	-@make@ testr
+
+cover-testS: cover.dummy
+	-@make@ testS
+
+cover-src: cover.dummy
+	-@make@ src_tests
+
+cover-perl: cover.dummy
+	-@make@ perl_tests
+
+cover-codingstd: cover.dummy
+	-@make@ codingstd_tests
+
+cover-benchmark: cover.dummy
+	-@make@ benchmark_tests
+
+cover-doc: cover.dummy
+	-@make@ doc_tests
+
+cover-distro: cover.dummy
+	-@make@ distro_tests
 
 cover-clean:
 	for dir in $(COVER_DIRS); \

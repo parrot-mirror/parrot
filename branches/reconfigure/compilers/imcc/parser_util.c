@@ -26,10 +26,6 @@
 #include "parser.h"
 #include "optimizer.h"
 
-/* HEADERIZER HFILE: compilers/imcc/imc.h */
-
-/* HEADERIZER BEGIN: static */
-
 /*
 
 =head1 NAME
@@ -39,6 +35,10 @@ ParserUtil - Parser support functions.
 =cut
 
 */
+
+/* HEADERIZER HFILE: compilers/imcc/imc.h */
+
+/* HEADERIZER BEGIN: static */
 
 PARROT_WARN_UNUSED_RESULT
 static int change_op( PARROT_INTERP,
@@ -819,6 +819,7 @@ imcc_compile(PARROT_INTERP, NOTNULL(const char *s), int pasm_file,
     IMCC_INFO(interp)->expect_pasm      = 0;
 
     ignored = Parrot_push_context(interp, regs_used);
+    UNUSED(ignored);
 
     compile_string(interp, (char *)const_cast(s), yyscanner);
 
@@ -1060,6 +1061,7 @@ imcc_compile_file(PARROT_INTERP, NOTNULL(const char *fullname),
      */
     Parrot_block_DOD(interp);
     ignored = Parrot_push_context(interp, regs_used);
+    UNUSED(ignored);
 
     if (ext && strcmp(ext, ".pasm") == 0) {
         void *yyscanner;

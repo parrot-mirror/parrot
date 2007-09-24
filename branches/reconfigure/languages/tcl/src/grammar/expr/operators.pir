@@ -41,16 +41,23 @@ empty_string:
 .sub 'prefix:-' :multi(String)
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc __number, __integer
+    __number  = get_root_global ['_tcl'], '__number'
 
     push_eh is_string
       a = __number(a)
     clear_eh
+    $S0 = typeof a
+    if $S0 == "TclInt" goto is_int
 
     $N0 = a
     $N0 = neg $N0
     .return($N0)
+
+is_int:
+    $I0 = a
+    $I0 = neg $I0
+    .return($I0)
 
 is_string:
     if a == '' goto empty_string
