@@ -7,6 +7,8 @@
  * Any changes made here will be lost!
  *
 */
+/* HEADERIZER HFILE: none */
+/* HEADERIZER STOP */
 /* A Bison parser, made by GNU Bison 2.3.  */
 
 /* Skeleton interface for Bison's Yacc-like parsers in C
@@ -162,8 +164,7 @@
      LINECOMMENT = 369,
      FILECOMMENT = 370,
      DOT = 371,
-     CONCAT = 372,
-     POINTY = 373
+     CONCAT = 372
    };
 #endif
 /* Tokens.  */
@@ -282,14 +283,13 @@
 #define FILECOMMENT 370
 #define DOT 371
 #define CONCAT 372
-#define POINTY 373
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 514 "compilers/imcc/imcc.y"
+#line 516 "compilers/imcc/imcc.y"
 {
     IdList * idlist;
     int t;
@@ -298,7 +298,7 @@ typedef union YYSTYPE
     Instruction *i;
 }
 /* Line 1489 of yacc.c.  */
-#line 293 "compilers/imcc/imcparser.h"
+#line 291 "compilers/imcc/imcparser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

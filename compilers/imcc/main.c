@@ -20,11 +20,11 @@
 #include "pbc.h"
 #include "parser.h"
 
+extern int yydebug;
+
 /* HEADERIZER HFILE: none */
 
 /* HEADERIZER BEGIN: static */
-
-extern int yydebug;
 
 static void determine_input_file_type(PARROT_INTERP,  NOTNULL(
     const char * const sourcefile) );
@@ -34,12 +34,10 @@ static void determine_output_file_type(PARROT_INTERP,  NOTNULL(
     NOTNULL(const char *output_file) )
         __attribute__nonnull__(2);
 
-void
+static void
 compile_to_bytecode(PARROT_INTERP,
                     NOTNULL(const char * const sourcefile),
-                    NOTNULL(const char * const output_file))
-    __attribute__nonnull__(2)
-    __attribute__nonnull__(3);
+                    NOTNULL(const char * const output_file));
 
 static void do_pre_process( PARROT_INTERP )
         __attribute__nonnull__(1);
@@ -708,7 +706,7 @@ static void determine_output_file_type(PARROT_INTERP,
     }
 }
 
-void
+static void
 compile_to_bytecode(PARROT_INTERP,
                     NOTNULL(const char * const sourcefile),
                     NOTNULL(const char * const output_file))

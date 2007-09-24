@@ -6,7 +6,7 @@
 	#.param int argc
 	#.param string display
 	#.local string buf
-         
+
         # XXX pass along whatever arguments were given.
 
 	#buf = _BUILTIN_DISPLAY_WORK(showme)
@@ -31,13 +31,13 @@
 	PRINTCOL = $P0["value"]
 
 	buf = ""
-NEXT:	
+NEXT:
 	if argc==0 goto END_DISPLAY
 	dec argc
 	$I0 = typeof printme
 	if $I0 == .String goto DISPSTRING
 	if $I0 != .Float  goto DISPERR
-	
+
 	# Now, do floats
 	intver = printme
 	$N0 = intver
@@ -46,7 +46,7 @@ NEXT:
 	s = _NORMALIZE_FLOAT(printme)
 	if printme < 0 goto NEGFLO
         buf .= " "
-NEGFLO:	
+NEGFLO:
 	buf .= s
 	buf .= " "
 	goto NEXT
@@ -57,7 +57,7 @@ DISPINT:
 	$S0 = intver
 	if intver <0 goto NEGINT
 	buf .= " "
-NEGINT: 	
+NEGINT:
 	buf .= $S0
 	buf .= " "
 	goto NEXT
@@ -80,7 +80,7 @@ DISPTAB:
 	inc PRINTCOL
         inc $I1
         goto DISPTAB
-DISPNL:	
+DISPNL:
 	PRINTCOL = 0
 	goto NEXT
 END_DISPLAY:
@@ -94,7 +94,7 @@ DISPERR:
 .end
 
 .sub _NORMALIZE_FLOAT	# string normalize_flo(float number)
-	.param float number	# INTERNAL, no argc!
+	.param num number	# INTERNAL, no argc!
 	set $S0, number
 FLO_NORM:
 	length $I0, $S0
@@ -116,8 +116,8 @@ FLO_END:
 #
 .sub _BUILTIN_ABS   		# float abs(float arg)
 	.param int argc
-	.param float arg
-	.local float res
+	.param num arg
+	.local num res
 	abs res, arg
 	.return(res)
 .end
@@ -125,8 +125,8 @@ FLO_END:
 #       or equal to a numeric-expression
 .sub _BUILTIN_INT   		# float int(float arg)
 	.param int argc
-	.param float arg
-	.local float res
+	.param num arg
+	.local num res
 	.local int truncate
 	set truncate, arg
 	set res, truncate
@@ -136,7 +136,7 @@ ENDINT:	.return(res)
 .end
 .sub _BUILTIN_CHR_STRING	# string chr(float arg)
 	.param int argc
-	.param float arg
+	.param num arg
 	.local string res
 	.local int truncate
 	set truncate, arg
@@ -147,14 +147,14 @@ ENDINT:	.return(res)
 	.param int argc
 	.param string arg
 	.local int conv
-	.local float res
+	.local num res
 	ord conv, arg
 	set res, conv
 	.return(res)
 .end
 .sub _BUILTIN_STR_STRING	# string str(float arg)
 	.param int argc
-	.param float arg
+	.param num arg
 	.local string res
 	set res, arg
 	.return(res)
@@ -162,14 +162,14 @@ ENDINT:	.return(res)
 .sub _BUILTIN_VAL 		# float val(string arg)
 	.param int argc
 	.param string arg
-	.local float res
+	.local num res
 	set res, arg
 	.return(res)
 .end
 .sub _BUILTIN_LEN 		# float len(string arg)
 	.param int argc
 	.param string arg
-	.local float res
+	.local num res
 	.local int conv
 	length conv, arg
 	set res, conv
@@ -178,8 +178,8 @@ ENDINT:	.return(res)
 .sub _BUILTIN_MID_STRING	# string mid(string targ, float start [, float extent])
 	.param int argc
 	.param string target
-	.param float start
-        .param float extent :optional
+	.param num start
+        .param num extent :optional
 	.param int has_extent :opt_flag
 
 	.local string res
@@ -200,8 +200,8 @@ MIDLOOP:ge pos, strlen, MIDDONE
 	branch MIDLOOP
 
 MID3ARG:
-	.local float count
-	.local float extent
+	.local num count
+	.local num extent
 	set count, 0.0
 MID3L:
 	ge pos, strlen, MIDDONE
@@ -211,23 +211,23 @@ MID3L:
 	inc count
 	ge count, extent, MIDDONE
 	branch MID3L
-	
+
 MIDDONE:
 	.return(res)
 .end
 .sub _BUILTIN_LEFT_STRING	# string left(string targ, float extent)
 	.param int argc
 	.param string targ
-	.param float extent
+	.param num extent
 	.local string res
-	
+
 	res = _BUILTIN_MID_STRING(3, targ, 1.0, extent)
 	.return(res)
 .end
 .sub _BUILTIN_RIGHT_STRING	# string right(string targ, float extent)
 	.param int argc
 	.param string targ
-	.param float extent
+	.param num extent
 	.local string res
 	.local int conv
 
@@ -248,7 +248,7 @@ MIDDONE:
 	find_global $P0, "RANDSEED"
 	set RANDSEED, $P0["value"]
 	eq argc, 0, RND_GEN
-	.local float repeat
+	.local num repeat
 
 	eq repeat, 0.0, RND_REPEAT
 RND_GEN:
@@ -277,7 +277,7 @@ RND_BAIL:
 # float instr(float start, string full, string substring);
 .sub _BUILTIN_INSTR :multi(int, float, string, string)
 	.param int argc
-	.param float start
+	.param num start
 	.param string full
 	.param string substring
 
@@ -346,7 +346,7 @@ XCASE_DONE:
 .end
 .sub _BUILTIN_SGN	# float sgn(float number)
 	.param int argc
-	.param float number
+	.param num number
 	set $N0, 0.0
 	eq number, 0.0, FINISHED
 	set $N0, -1.0
@@ -357,7 +357,7 @@ FINISHED:
 .end
 .sub _BUILTIN_STRING_STRING	# string string(float repeat, float ascii)
 	.param int argc
-	.param float repeatf
+	.param num repeatf
 
 	.local int repeat
 	set repeat, repeatf
@@ -370,7 +370,7 @@ FINISHED:
 	.local string thing
 	set repeater, thing
 	branch REP
-FLOATB:	.local float ascii
+FLOATB:	.local num ascii
 	set $I0, ascii
 	chr repeater, $I0
 REP: 	ge $I1, repeat, BAIL
@@ -381,44 +381,44 @@ BAIL:	.return(target)
 .end
 .sub _BUILTIN_LOG		# float log(float op)
 	.param int argc
-	.param float op
+	.param num op
 	ln op, op
 	.return(op)
 .end
 .sub _BUILTIN_EXP		# float exp(float op)
 	.param int argc
-	.param float op
+	.param num op
 	exp op, op
 	.return(op)
 .end
 .sub _BUILTIN_SIN		# float sin(float op)
 	.param int argc
-	.param float op
+	.param num op
 	sin op, op
 	.return(op)
 .end
 .sub _BUILTIN_COS		# float cos(float op)
 	.param int argc
-	.param float op
+	.param num op
 	cos op, op
 	.return(op)
 .end
 .sub _BUILTIN_TAN		# float tan(float op)
 	.param int argc
-	.param float op
+	.param num op
 	tan op, op
 	.return(op)
 .end
 .sub _BUILTIN_ATN		# float atn(float op)
 	.param int argc
-	.param float op
+	.param num op
 	atan op, op
 	.return(op)
 .end
 .const float EPSILON = 0.000001
 .sub _BUILTIN_SQR		# float sqr(float operand)
 	.param int argc
-	.param float op
+	.param num op
         if op < 0 goto ERR_RANGE
 	sqrt op, op
 	.return(op)
@@ -428,7 +428,7 @@ ERR_RANGE:
 .end
 .sub _BUILTIN_TAB_STRING		# string tab(float cols)
 	.param int argc
-	.param float cols
+	.param num cols
 	.local int PRINTCOL
 	find_global $P0, "PRINTCOL"
 	set PRINTCOL, $P0["value"]
@@ -482,7 +482,7 @@ RTRIM_END:
 .end
 .sub _BUILTIN_INPUT_STRING 	# string input$(float numchars[, string fdinfo])
 	.param int argc
-	.param float numcharsf
+	.param num numcharsf
 	.local int numchars
 	.local string res
 	set numchars, numcharsf
@@ -498,7 +498,7 @@ DOREAD: res = _READCHARS(numchars,fd)
 	.return(res)
 .end
 .sub _BUILTIN_INKEY_STRING	# string inkey$(void)
-	.param int argc		
+	.param int argc
 	.local string res
 	_scan_read()		# Put terminal in char-at-a-time mode
 	res = _inkey_string()

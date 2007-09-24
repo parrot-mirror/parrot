@@ -48,8 +48,8 @@ constructed out of these fundamental building blocks.
 All PMCs have the form:
 
     struct PMC {
-        Parrot_UInt flags;
         UnionVal cache;
+        Parrot_UInt flags;
         VTABLE *vtable;
         DPOINTER *data;
         struct PMC_EXT *pmc_ext;
@@ -64,9 +64,12 @@ where C<cache> is a C<UnionVal> union:
         } _b;
         struct {
             DPOINTER* _struct_val;
-            PMC* _pmc_val;
+            PMC*      _pmc_val;
         } _ptrs;
-        INTVAL _int_val;
+        struct _i {
+            INTVAL _int_val;
+            INTVAL _int_val2;
+        } _i;
         FLOATVAL _num_val;
         struct parrot_string_t * _string_val;
     } UnionVal;
@@ -133,7 +136,7 @@ Adds the C<PMC_EXT> structure when instantiating the PMC.
 The PMC cannot be instantiated. (By convention, abstract classes are given
 lower-case names.)
 
-=item noinit
+=item no_init
 
 Don't generate class initialization code (don't set up a vtable for the PMC).
 Used with C<abstract>.
@@ -237,15 +240,10 @@ compose roles, and in PMCs that will be subclassed by high-level classes
 =head3 Defining vtable functions
 
 Vtable functions are defined as C functions within the body of the C<pmclass>
-declaration.
+declaration, and are marked with C<VTABLE>.
 
-  STRING *get_string() {...}
-  void set_string_native(STRING *value) {...}
-
-{{ PROPOSAL: I'd like to require that all vtable functions be declared
-with "VTABLE" at the beginning of the declaration, similar to "METHOD"
-and "PCCMETHOD". At the very least it's self-documentation. It might
-also be a useful hook for future pmc2c preprocessing. }}
+  VTABLE STRING *get_string() {...}
+  VTABLE void set_string_native(STRING *value) {...}
 
 Within the body of vtable functions, several shortcuts are provided:
 
@@ -821,13 +819,6 @@ Make the PMC in I<self> refer to the PMC passed as I<value>.
 Set the pointer value of the PMC Useful for PMCs that hold pointers to
 arbitrary data. The details of the data (type, location etc.) depend on the
 PMC.
-
-=item hash [deprecated]
-
-  INTVAL hash(INTERP, PMC* self, size_t seed)
-
-Create a hashed integer value for the PMC, given a particular seed.
-[NOTE: not really used and not really useful.]
 
 =back
 

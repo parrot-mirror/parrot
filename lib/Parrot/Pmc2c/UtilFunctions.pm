@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use base qw( Exporter );
 our @EXPORT_OK = qw( count_newlines gen_ret dont_edit dynext_load_code
-        c_code_coda slurp spew splat open_file filename escape_filename );
+    c_code_coda slurp spew splat open_file filename escape_filename );
 
 =over 4
 
@@ -21,7 +21,7 @@ sub count_newlines {
 }
 
 sub escape_filename {
-    (my $filename = shift) =~ s|(\\)|$1$1|g;
+    ( my $filename = shift ) =~ s|(\\)|$1$1|g;
     return $filename;
 }
 
@@ -70,7 +70,7 @@ sub gen_ret {
         return "return $body;";
     }
     else {
-        return '' if $return_type eq 'void';
+        return ''                if $return_type eq 'void';
         return "return PMCNULL;" if $return_type eq 'PMC*';
         return "return ($return_type)0;";
     }
@@ -108,7 +108,7 @@ Parrot_PMC Parrot_lib_${lc_libname}_load(PARROT_INTERP)
     Parrot_PMC    pmc;
 EOC
     while ( my ( $class, $info ) = each %classes ) {
-        next if $info->{flags}{noinit};
+        next if $info->{flags}{no_init};
         $cout .= <<"EOC";
     Parrot_Int type${class};
 EOC
@@ -130,7 +130,7 @@ EOC
      */
 EOC
     while ( my ( $class, $info ) = each %classes ) {
-        my $lhs = $info->{flags}{noinit} ? "" : "type$class = ";
+        my $lhs = $info->{flags}{no_init} ? "" : "type$class = ";
         $cout .= <<"EOC";
     whoami = const_string(interp, "$class");
     ${lhs}pmc_register(interp, whoami);
@@ -142,7 +142,7 @@ EOC
     for (pass = 0; pass <= 1; ++pass) {
 EOC
     while ( my ( $class, $info ) = each %classes ) {
-        next if $info->{flags}{noinit};
+        next if $info->{flags}{no_init};
         $cout .= <<"EOC";
         Parrot_${class}_class_init(interp, type$class, pass);
 EOC
@@ -205,18 +205,17 @@ B<Comment:>  Called within C<dump_vtable()>, C<read_dump()>, and C<dump_pmc()>.
 sub open_file {
     my ( $direction, $filename ) = @_;
 
-    my $verbose = 0;
+    my $verbose              = 0;
     my $actions_descriptions = { '<' => 'Reading', '>>' => "Appending", '>' => "Writing" };
-    my $action = $actions_descriptions->{$direction} || "Unknown";
+    my $action               = $actions_descriptions->{$direction} || "Unknown";
     print "$action $filename\n" if $verbose;
 
     open my $fh, $direction, $filename or die "$action $filename: $!\n";
     return $fh;
 }
 
-
 sub slurp {
-    my ( $filename ) = @_;
+    my ($filename) = @_;
     my $fh = open_file( '<', $filename );
     my $data = do { local $/; <$fh> };
     close $fh;
@@ -240,10 +239,10 @@ sub splat {
 sub filename {
     my ( $filename, $type ) = @_;
 
-    $filename =~ s/(\w+)\.\w+$/pmc_$1.h/ if ($type eq ".h");
-    $filename =~ s/\.\w+$/.c/            if ($type eq ".c");
-    $filename =~ s/\.\w+$/.dump/         if ($type eq ".dump");
-    $filename =~ s/\.\w+$/.pmc/          if ($type eq ".pmc");
+    $filename =~ s/(\w+)\.\w+$/pmc_$1.h/ if ( $type eq ".h" );
+    $filename =~ s/\.\w+$/.c/            if ( $type eq ".c" );
+    $filename =~ s/\.\w+$/.dump/         if ( $type eq ".dump" );
+    $filename =~ s/\.\w+$/.pmc/          if ( $type eq ".pmc" );
     return $filename;
 }
 1;

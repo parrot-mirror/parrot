@@ -17,16 +17,16 @@ use base qw(Parrot::Configure::Step::Base);
 use Parrot::Configure::Step;
 
 $description = 'Determining if your computer does zeta';
-@args = ();
+@args        = ();
 
 my $result = q|Goodbye, cruel world|;
 
+
 sub runstep {
     my ( $self, $conf ) = @_;
-    $self->set_result( $result );
+    $self->set_result($result);
     return;
 }
-
 
 1;
 

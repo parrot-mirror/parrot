@@ -819,7 +819,7 @@ parrot_instruction(parser_state *p) {
 
   assignment -> '=' ( unop expression
                     | expression arith_expr
-                    | target ( keylist | [ '->' method ] arguments )
+                    | target ( keylist | arguments )
                     | STRINGC arguments
                     | 'global' STRINGC
                     | heredocstring
@@ -876,14 +876,6 @@ assignment(parser_state *p) {
                     arguments(p);
                     emit_invocation_end(p);
                     break;
-                case T_PTR: /* method call; foo '->' method arguments */
-                    emit_invocation_start(p);
-                    emit_invocant(p, obj);
-                    next(p);
-                    method(p);
-                    arguments(p);
-                    emit_invocation_end(p);
-                    break;
                 case T_LBRACKET: /* target '=' target '[' expression ']' */
                     emit_target(p, obj);
                     keylist(p);
@@ -930,7 +922,7 @@ assignment(parser_state *p) {
 =item *
 
   return_statement -> '.return' ( arguments
-                                | target ['->' method] arguments
+                                | target arguments
                                 | methodcall
                                 )
                                 '\n'
@@ -951,10 +943,6 @@ return_statement(parser_state *p) {
             break;
         default: /* '.return' target ['->' method] arguments */
             target(p);
-            if (p->curtoken == T_PTR) { /* optional '->' method */
-                next(p);
-                method(p);
-            }
             arguments(p);
             break;
     }
@@ -1521,7 +1509,6 @@ long_yield_statement(parser_state *p) {
   target_statement -> target ( '=' assignment
                              | augmented_op expression
                              | keylist '=' expression
-                             | '->' method arguments
                              | arguments
                              )
                              '\n'
@@ -1560,11 +1547,6 @@ target_statement(parser_state *p) {
             keylist(p);
             match(p, T_ASSIGN);
             expression(p);
-            break;
-        case T_PTR:  /* target '->' method arguments '\n' */
-            next(p); /* skip '->' */
-            method(p);
-            arguments(p);
             break;
         case T_LPAREN:  /* target '(' arguments ')' */
             arguments(p);
@@ -1885,21 +1867,6 @@ instructions(parser_state *p) {
 
 =item *
 
-  global_definition -> '.global' IDENTIFIER
-
-=cut
-
-*/
-static void
-global_definition(parser_state *p) {
-    match(p, T_GLOBAL_DECL);
-    match(p, T_IDENTIFIER);
-}
-
-/*
-
-=item *
-
   multi-type-list -> '(' [multi-type {',' multi-type } ] ')'
 
   multi-type -> IDENTIFIER | STRINGC | keylist | type
@@ -2110,7 +2077,7 @@ static void
 sub_definition(parser_state *p) {
     /* call emit method */
     emit_sub_start(p);
-    next(p); /* skip '.sub' or '.pcc_sub' */
+    next(p); /* skip '.sub' */
 
     switch (p->curtoken) { /* subname -> IDENTIFIER | STRINGC */
         case T_IDENTIFIER:
@@ -2337,8 +2304,7 @@ loadlib(parser_state *p) {
 
 =item *
 
-  compilation_unit -> global_definition
-                    | sub_definition
+  compilation_unit -> sub_definition
                     | '.const' const_definition
                     | emit_block
                     | include
@@ -2355,11 +2321,7 @@ loadlib(parser_state *p) {
 static void
 compilation_unit(parser_state *p) {
     switch (p->curtoken) {
-        case T_GLOBAL_DECL: /* compilation_unit -> global_definition */
-            global_definition(p);
-            break;
         case T_SUB: /* compilation_unit -> sub_definition */
-        case T_PCC_SUB:
             sub_definition(p);
             break;
         case T_CONST: /* compilation_unit -> '.const' const_definition */

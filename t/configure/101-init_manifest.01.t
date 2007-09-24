@@ -18,24 +18,26 @@ thinks there are files missing from those listed in the MANIFEST.
 
 =cut
 
-my $pkg = q{init::manifest};
-my $args = process_options( {
-    argv            => [ q{--nomanicheck} ],
-    mode            => q{configure},
-} );
+my $pkg  = q{init::manifest};
+my $args = process_options(
+    {
+        argv => [q{--nomanicheck}],
+        mode => q{configure},
+    }
+);
 
 my $conf = Parrot::Configure->new;
 $conf->add_steps($pkg);
-$conf->options->set(%{$args});
+$conf->options->set( %{$args} );
 
-my $task = $conf->steps->[0];
+my $task        = $conf->steps->[0];
 my $step_name   = $task->step;
 my @step_params = @{ $task->params };
 
 my $step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-ok($step->description(), "$step_name has description");
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+ok( $step->description(), "$step_name has description" );
 ok(! defined ($step->result), "result not yet defined");
 my $ret = $step->runstep($conf);
 ok(defined $ret, "$step_name runstep() returned defined value");
