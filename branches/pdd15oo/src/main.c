@@ -31,6 +31,8 @@ Start Parrot
 
 The entry point from the command line into Parrot.
 
+=cut
+
 */
 
 int
@@ -58,6 +60,7 @@ main(int argc, char * argv[])
 
     sourcefile = parseflags(interp, &argc, &argv);
     status     = imcc_run(interp, sourcefile, argc, argv);
+    UNUSED(status);
 
     /* Clean-up after ourselves */
     Parrot_destroy(interp);

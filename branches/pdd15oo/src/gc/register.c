@@ -4,7 +4,7 @@ $Id$
 
 =head1 NAME
 
-src/register.c - Register handling routines
+src/gc/register.c - Register handling routines
 
 =head1 DESCRIPTION
 
@@ -19,7 +19,7 @@ allocated storage and points the register base pointers to this
 storage. In C<Parrot_pop_regs> the register base pointers are restored
 to the previous values and the allocated register memory is discarded.
 
-=head2 Context and Register Allocation Functions
+=cut
 
 */
 
@@ -44,45 +44,50 @@ static void init_context( PARROT_INTERP,
 
 
 /*
- * Context and register frame layout
- *
- *    +----------++----+------+------------+----+
- *    | context  || N  |  I   |   P        |  S +
- *    +----------++----+------+------------+----+
- *    ^          ^     ^                   ^
- *    |          |     ctx.bp              ctx.bp_ps
- *    ctx.state  opt
- *               padding
- *
- * Registers are addressed as usual via the register base pointer ctx.bp.
- *
- * The macro CONTEXT() hides these details
- *
- */
+=head2 Context and register frame layout
+
+    +----------++----+------+------------+----+
+    | context  || N  |  I   |   P        |  S +
+    +----------++----+------+------------+----+
+    ^          ^     ^                   ^
+    |          |     ctx.bp              ctx.bp_ps
+    ctx.state  opt
+               padding
+
+Registers are addressed as usual via the register base pointer ctx.bp.
+
+The macro CONTEXT() hides these details
+
+=cut
+
+*/
 
 /*
- * Context and register frame allocation
- *
- * There are two allocation strategies: chunked memory and malloced
- * with a free list.
- *
- * CHUNKED_CTX_MEM = 1
- *
- * C<ctx_mem.data> is a pointer to an allocated chunk of memory.
- * The pointer C<ctx_mem.free> holds the next usable
- * location. With (full) continuations the C<ctx_mem.free> pointer can't be
- * moved below the C<ctx_mem.threshold>, which is the highest context pointer
- * of all active continuations.
- * [the code for this is incomplete; it had suffered some bit-rot and was
- * getting in the way of maintaining the other case.  -- rgr, 4-Feb-06.]
- *
- * TODO GC has to lower this threshold when collecting continuations.
- *
- * CHUNKED_CTX_MEM = 0
- *
- * Context/register memory is malloced. C<ctx_mem.free> is used as a free
- * list of reusable items.
- */
+=head2 Context and register frame allocation
+
+There are two allocation strategies: chunked memory and malloced
+with a free list.
+
+ CHUNKED_CTX_MEM = 1
+
+C<ctx_mem.data> is a pointer to an allocated chunk of memory.
+The pointer C<ctx_mem.free> holds the next usable
+location. With (full) continuations the C<ctx_mem.free> pointer can't be
+moved below the C<ctx_mem.threshold>, which is the highest context pointer
+of all active continuations.
+[the code for this is incomplete; it had suffered some bit-rot and was
+getting in the way of maintaining the other case.  -- rgr, 4-Feb-06.]
+
+TODO GC has to lower this threshold when collecting continuations.
+
+ CHUNKED_CTX_MEM = 0
+
+Context/register memory is malloced. C<ctx_mem.free> is used as a free
+list of reusable items.
+
+=cut
+
+*/
 
 #define CTX_ALLOC_SIZE 0x20000
 
@@ -90,13 +95,19 @@ static void init_context( PARROT_INTERP,
         / NUMVAL_SIZE) * NUMVAL_SIZE)
 
 /*
- * Round register allocation size up to the nearest multiple of 8. A
- * granularity of 8 is arbitrary, it could have been some bigger power of 2. A
- * "slot" is an index into the free_list array. Each slot in free_list has a
- * linked list of pointers to already allocated contexts available for (re)use.
- * The slot where an available context is stored corresponds to the size of the
- * context.
- */
+
+=pod
+
+Round register allocation size up to the nearest multiple of 8. A
+granularity of 8 is arbitrary, it could have been some bigger power of 2. A
+"slot" is an index into the free_list array. Each slot in free_list has a
+linked list of pointers to already allocated contexts available for (re)use.
+The slot where an available context is stored corresponds to the size of the
+context.
+
+=cut
+
+*/
 
 #define SLOT_CHUNK_SIZE 8
 
@@ -110,9 +121,21 @@ static void init_context( PARROT_INTERP,
 
 /*
 
-FUNCDOC: destroy_context
+=head2 Context and Register Allocation Functions
+
+=over 4
+
+=cut
+
+*/
+
+/*
+
+=item C<destroy_context>
 
 Free allocated context memory
+
+=cut
 
 */
 
@@ -148,9 +171,11 @@ destroy_context(PARROT_INTERP)
 
 /*
 
-FUNCDOC: create_initial_context
+=item C<create_initial_context>
 
 Create initial interpreter context.
+
+=cut
 
 */
 
@@ -170,13 +195,16 @@ create_initial_context(PARROT_INTERP)
     /* For now create context with 32 regs each. Some src tests (and maybe
      * other extenders) assume the presence of these registers */
     ignored = Parrot_alloc_context(interp, num_regs);
+    UNUSED(ignored);
 }
 
 /*
 
-FUNCDOC: parrot_gc_context
+=item C<parrot_gc_context>
 
 Cleanup dead context memory. Called by the garbage collector.
+
+=cut
 
 */
 
@@ -196,6 +224,16 @@ parrot_gc_context(PARROT_INTERP)
     UNUSED(interp);
 #endif
 }
+
+/*
+
+=item C<clear_regs>
+
+Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 clear_regs(PARROT_INTERP, NOTNULL(parrot_context_t *ctx))
@@ -236,6 +274,16 @@ clear_regs(PARROT_INTERP, NOTNULL(parrot_context_t *ctx))
     }
 }
 
+/*
+
+=item C<init_context>
+
+Not yet documented!!!
+
+=cut
+
+*/
+
 static void
 init_context(PARROT_INTERP, NOTNULL(parrot_context_t *ctx),
         NULLOK(const parrot_context_t *old))
@@ -269,16 +317,18 @@ init_context(PARROT_INTERP, NOTNULL(parrot_context_t *ctx),
 
 /*
 
-FUNCDOC: Parrot_dup_context
+=item C<Parrot_dup_context>
 
 Duplicate the passed context
+
+=cut
 
 */
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-Parrot_Context *
-Parrot_dup_context(PARROT_INTERP, NOTNULL(const Parrot_Context *old) )
+struct Parrot_Context *
+Parrot_dup_context(PARROT_INTERP, NOTNULL(const struct Parrot_Context *old) )
 {
     size_t          diff;
     Parrot_Context *ctx;
@@ -312,17 +362,19 @@ Parrot_dup_context(PARROT_INTERP, NOTNULL(const Parrot_Context *old) )
 
 /*
 
-FUNCDOC: Parrot_push_context
+=item C<Parrot_push_context>
 
 Remember old context in C<caller_ctx>, suitable to use with
 C<Parrot_pop_context>.
+
+=cut
 
 */
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-Parrot_Context *
+struct Parrot_Context *
 Parrot_push_context(PARROT_INTERP, NOTNULL(INTVAL *n_regs_used))
 {
     Parrot_Context * const old = CONTEXT(interp->ctx);
@@ -339,10 +391,12 @@ Parrot_push_context(PARROT_INTERP, NOTNULL(INTVAL *n_regs_used))
 
 /*
 
-FUNCDOC: Parrot_pop_context
+=item C<Parrot_pop_context>
 
 Free the context created with C<Parrot_push_context> and restore the previous
 context.
+
+=cut
 
 */
 
@@ -364,16 +418,18 @@ Parrot_pop_context(PARROT_INTERP)
 
 /*
 
-FUNCDOC: Parrot_alloc_context
+=item C<Parrot_alloc_context>
 
 Allocate a new context and set the context pointer. Please note that the
 register usage C<n_regs_used> is copied.  The function returns the new context.
+
+=cut
 
 */
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-Parrot_Context *
+struct Parrot_Context *
 Parrot_alloc_context(PARROT_INTERP, NOTNULL(INTVAL *number_regs_used))
 {
     Parrot_Context *old, *ctx;
@@ -468,16 +524,18 @@ Parrot_alloc_context(PARROT_INTERP, NOTNULL(INTVAL *number_regs_used))
 
 /*
 
-FUNCDOC: Parrot_free_context
+=item C<Parrot_free_context>
 
 Free the context. If C<re_use> is true, this function is called by a
 return continuation invoke, else from the destructor of a continuation.
+
+=cut
 
 */
 
 PARROT_API
 void
-Parrot_free_context(PARROT_INTERP, NOTNULL(Parrot_Context *ctxp), int re_use)
+Parrot_free_context(PARROT_INTERP, NOTNULL(struct Parrot_Context *ctxp), int re_use)
 {
     /*
      * The context structure has a reference count, initially 0.  This field is
@@ -521,15 +579,17 @@ Parrot_free_context(PARROT_INTERP, NOTNULL(Parrot_Context *ctxp), int re_use)
 
 /*
 
-FUNCDOC: Parrot_set_context_threshold
+=item C<Parrot_set_context_threshold>
 
 Mark the context as possible threshold.
+
+=cut
 
 */
 
 PARROT_API
 void
-Parrot_set_context_threshold(PARROT_INTERP, NULLOK(Parrot_Context *ctxp))
+Parrot_set_context_threshold(PARROT_INTERP, NULLOK(struct Parrot_Context *ctxp))
 {
     UNUSED(interp);
     UNUSED(ctxp);
@@ -538,7 +598,13 @@ Parrot_set_context_threshold(PARROT_INTERP, NULLOK(Parrot_Context *ctxp))
 
 /*
 
+=back
+
 =head2 Register Stack Functions
+
+=over 4
+
+=cut
 
 */
 
@@ -552,9 +618,11 @@ typedef struct save_regs_t {
 
 /*
 
-FUNCDOC: setup_register_stacks
+=item C<setup_register_stacks>
 
 Set up the register stacks.
+
+=cut
 
 */
 
@@ -569,9 +637,11 @@ setup_register_stacks(PARROT_INTERP)
 
 /*
 
-FUNCDOC: Parrot_push_regs
+=item C<Parrot_push_regs>
 
 Save all registers onto the register stack.
+
+=cut
 
 */
 
@@ -609,9 +679,11 @@ Parrot_push_regs(PARROT_INTERP)
 
 /*
 
-FUNCDOC: Parrot_pop_regs
+=item C<Parrot_pop_regs>
 
 Restore all registers from register stack.
+
+=cut
 
 */
 
@@ -639,9 +711,11 @@ Parrot_pop_regs(PARROT_INTERP)
 
 /*
 
-FUNCDOC: mark_register_stack
+=item C<mark_register_stack>
 
 Marks the register stack and its registers as live.
+
+=cut
 
 */
 
@@ -673,6 +747,16 @@ mark_register_stack(PARROT_INTERP, NOTNULL(Stack_Chunk_t* chunk))
 }
 
 
+/*
+
+=item C<Parrot_clear_i>
+
+Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_API
 void
 Parrot_clear_i(PARROT_INTERP)
@@ -681,6 +765,16 @@ Parrot_clear_i(PARROT_INTERP)
     for (i = 0; i < CONTEXT(interp->ctx)->n_regs_used[REGNO_INT]; ++i)
         REG_INT(interp, i) = 0;
 }
+
+/*
+
+=item C<Parrot_clear_s>
+
+Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_API
 void
@@ -691,6 +785,16 @@ Parrot_clear_s(PARROT_INTERP)
         REG_STR(interp, i) = NULL;
 }
 
+/*
+
+=item C<Parrot_clear_p>
+
+Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_API
 void
 Parrot_clear_p(PARROT_INTERP)
@@ -699,6 +803,16 @@ Parrot_clear_p(PARROT_INTERP)
     for (i = 0; i < CONTEXT(interp->ctx)->n_regs_used[REGNO_PMC]; ++i)
         REG_PMC(interp, i) = PMCNULL;
 }
+
+/*
+
+=item C<Parrot_clear_n>
+
+Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_API
 void
@@ -712,9 +826,13 @@ Parrot_clear_n(PARROT_INTERP)
 
 /*
 
+=back
+
 =head1 SEE ALSO
 
 F<include/parrot/register.h> and F<src/stack_common.c>
+
+=cut
 
 */
 

@@ -152,7 +152,7 @@ its contents have changed.
 
 =cut
 
-sub move_if_diff {  ## no critic Subroutines::RequireFinalReturn
+sub move_if_diff {    ## no critic Subroutines::RequireFinalReturn
     my ( $from, $to, $ignore_pattern ) = @_;
     copy_if_diff( $from, $to, $ignore_pattern );
     unlink $from;
@@ -435,8 +435,11 @@ sub _run_command {
     open my $OLDERR, '>&', \*STDERR or die "Can't save     stderr" if $err;
 
     open STDOUT, '>', $out or die "Can't redirect stdout" if $out;
+
     # See 'Obscure Open Tricks' in perlopentut
-    open STDERR, ">$err"   or die "Can't redirect stderr" if $err;  ## no critic InputOutput::ProhibitTwoArgOpen
+    open STDERR, ">$err" ## no critic InputOutput::ProhibitTwoArgOpen
+        or die "Can't redirect stderr"
+        if $err;
 
     system $command;
     my $exit_code = $? >> 8;
@@ -513,12 +516,19 @@ sub cc_build {
         );
 
     my $compile_command = _build_compile_command( $cc, $ccflags, $cc_args );
-    _run_command( $compile_command, 'test.cco', 'test.cco', $verbose )
+    my $compile_result = _run_command( $compile_command, 'test.cco', 'test.cco', $verbose )
         and confess "C compiler failed (see test.cco)";
+    if ($compile_result) {
+        return $compile_result;
+    }
 
-    _run_command( "$link $linkflags test$o $link_args ${cc_exe_out}test$exe $libs",
+    my $link_result =
+        _run_command( "$link $linkflags test$o $link_args ${cc_exe_out}test$exe $libs",
         'test.ldo', 'test.ldo', $verbose )
         and confess "Linker failed (see test.ldo)";
+    if ($link_result) {
+        return $link_result;
+    }
 }
 
 =item C<cc_run()>
@@ -529,16 +539,18 @@ F<test.out>.
 =cut
 
 sub cc_run {
-    my $exe     = $conf->data->get('exe');
-    my $slash   = $conf->data->get('slash');
-    my $verbose = $conf->options->get('verbose');
+    my $exe      = $conf->data->get('exe');
+    my $slash    = $conf->data->get('slash');
+    my $verbose  = $conf->options->get('verbose');
+    my $test_exe = ".${slash}test${exe}";
 
+    my $run_error;
     if ( defined( $_[0] ) && length( $_[0] ) ) {
         local $" = ' ';
-        _run_command( ".${slash}test${exe} @_", './test.out', undef, $verbose );
+        $run_error = _run_command( "$test_exe @_", './test.out', undef, $verbose );
     }
     else {
-        _run_command( ".${slash}test${exe}", './test.out', undef, $verbose );
+        $run_error = _run_command( "$test_exe", './test.out', undef, $verbose );
     }
 
     my $output = _slurp('./test.out');
@@ -577,7 +589,7 @@ Cleans up all files in the root folder that match the glob F<test.*>.
 
 =cut
 
-sub cc_clean { ## no critic Subroutines::RequireFinalReturn
+sub cc_clean {    ## no critic Subroutines::RequireFinalReturn
     unlink map "test$_", qw( .c .cco .ldo .out), $conf->data->get(qw( o exe ));
 }
 
@@ -594,7 +606,7 @@ sub capture_output {
 
     # disable STDERR
     open my $OLDERR, '>&', \*STDERR;
-    open STDERR,     '>',  'test.err';
+    open STDERR, '>', 'test.err';
 
     my $output = `$command`;
     my $retval = ( $? == -1 ) ? -1 : ( $? >> 8 );

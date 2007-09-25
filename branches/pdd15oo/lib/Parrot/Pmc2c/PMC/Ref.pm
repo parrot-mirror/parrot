@@ -1,4 +1,5 @@
 # Copyright (C) 2007, The Perl Foundation.
+# $Id$
 
 =head1 Parrot::Pmc2c::Ref Instance Methods
 
@@ -56,16 +57,18 @@ the thing referred to.
 =cut
 
 sub pre_method_gen {
-    my ( $self ) = @_;
+    my ($self) = @_;
 
     # vtable methods
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
         next unless $self->normal_unimplemented_vtable($vt_method_name);
-        my $new_default_method = $method->clone({
+        my $new_default_method = $method->clone(
+            {
                 parent_name => $self->name,
                 type        => Parrot::Pmc2c::Method::VTABLE,
-          });
+            }
+        );
 
         my $n    = 0;
         my @args = grep { $n++ & 1 ? $_ : 0 } split / /, $method->parameters;
@@ -91,7 +94,7 @@ sub pre_method_gen {
     $ret
 EOC
 
-        $new_default_method->body(Parrot::Pmc2c::Emitter->text($body));
+        $new_default_method->body( Parrot::Pmc2c::Emitter->text($body) );
         $self->add_method($new_default_method);
     }
     return 1;

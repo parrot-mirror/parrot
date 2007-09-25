@@ -48,31 +48,24 @@ my @isxxx_functions_list = qw(
     ispunct
     isspace
     isupper
-    );
+);
 my $isxxx_functions = join '|', @isxxx_functions_list;
 
 foreach my $file (@files) {
-    my $buf;
-
     # if we have command line arguments, the file is the full path
     # otherwise, use the relevant Parrot:: path method
     my $path = @ARGV ? $file : $file->path;
 
-    # slurp in the file
-    open( my $fh, '<', $path )
-        or die "Cannot open '$path' for reading: $!\n";
-    {
-        local $/;
-        $buf = <$fh>;
-    }
+    my $buf = $DIST->slurp( $path );
 
-    my @buffer_lines = split(/\n/, $buf);
+    my @buffer_lines = split( /\n/, $buf );
 
     # find out if isxxx() functions appear in the file
     my $num_isxxx = grep m/[^_]($isxxx_functions)\(/, @buffer_lines;
 
     # if so, check if the args are cast to unsigned char
-    if ( $num_isxxx ) {
+    if ($num_isxxx) {
+
         # get the lines just matching isxxx
         my @isxxx_lines = grep m/[^_]($isxxx_functions)\(/, @buffer_lines;
 
@@ -88,7 +81,9 @@ foreach my $file (@files) {
 }
 
 ok( !scalar(@no_explicit_cast), 'isxxx() functions cast correctly' )
-    or diag( "isxxx() function not cast to unsigned char " . scalar @no_explicit_cast . " files:\n@no_explicit_cast" );
+    or diag( "isxxx() function not cast to unsigned char "
+        . scalar @no_explicit_cast
+        . " files:\n@no_explicit_cast" );
 
 # Local Variables:
 #   mode: cperl

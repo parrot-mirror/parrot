@@ -175,11 +175,14 @@ my @coding_std_tests = map { "t/codingstd/$_" } qw(
     c_header_guards.t
     c_indent.t
     c_struct.t
+    check_isxxx.t
+    check_toxxx.t
     copyright.t
     cppcomments.t
     cuddled_else.t
     gmt_utc.t
     pir_code_coda.t
+    svn_id.t
     tabs.t
     trailing_space.t
 );

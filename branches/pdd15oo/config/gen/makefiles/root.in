@@ -1172,6 +1172,8 @@ $(SRC_DIR)/exec_cpu.c : lib/Parrot/OpLib/core.pm $(SRC_DIR)/jit_emit.h \
 
 $(IMCC_DIR)/imcc.y.flag $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcparser.h : $(IMCC_DIR)/imcc.y
 	$(YACC) $(IMCC_DIR)/imcc.y -d -o $(IMCC_DIR)/imcparser.c
+	$(PERL) $(BUILD_TOOLS_DIR)/fixup_gen_file.pl -noheaderizer $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcc.y
+	$(PERL) $(BUILD_TOOLS_DIR)/fixup_gen_file.pl -noheaderizer $(IMCC_DIR)/imcparser.h $(IMCC_DIR)/imcc.y
 	$(TOUCH) $(IMCC_DIR)/imcc.y.flag $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcparser.h
 
 $(IMCC_DIR)/imcc.l.flag $(IMCC_DIR)/imclexer.c : $(IMCC_DIR)/imcc.l
@@ -1516,6 +1518,7 @@ clean : \
     imcc-clean \
     compilers-clean \
     smoke-clean \
+#INVERSE_CONDITIONED_LINE(win32): cover-clean \
     editor-clean
 	@TEMP_cg_r@
 	$(RM_F) chartypes "*.s" "*~" $(FLUID_FILES)
@@ -1620,6 +1623,7 @@ test-clean :
     "t/compilers/*/*/*.pir" \
     "t/compilers/*/*/*.stabs.s"
 	$(RM_F) \
+    "t/dynoplibs/*.pbc" \
     "t/examples/*.pbc" \
     "t/examples/*_pbcexe*" \
     "t/examples/*.past"
@@ -1655,7 +1659,8 @@ imcc-clean:
 realclean : clean
 	$(RM_RF) \
     $(STICKY_FILES) \
-    blib
+    blib \
+    cover_db
 
 distclean : realclean
 
@@ -1689,7 +1694,7 @@ status :
 patch :
 	svn diff
 
-LINTABLE_CFILES = `echo $(SRC_DIR)/main$(O) $(O_FILES) $(SRC_DIR)/parrot_config$(O) | sed @PQ@s/\.o/\.c/g@PQ@`
+LINTABLE_CFILES = `echo $(SRC_DIR)/main$(O) $(O_FILES) $(SRC_DIR)/parrot_config$(O) | $(PERL) -pe @PQ@s/\.o/\.c/g@PQ@`
 
 lint : sunlint
 
@@ -1876,7 +1881,7 @@ SPLINTFLAGS_TEST   =
 
 splint : $(PARROT)
 	$(MKPATH) $(SPLINT_TMP)
-	$(SPLINT) $(CC_INC) @cc_hasjit@ "-Isrc/pmc" "-Icompilers/ast" $(SPLINTFLAGS) $(SPLINTFLAGS_TEST) `echo $(O_FILES) | sed @PQ@s/\.o/\.c/g@PQ@`
+	$(SPLINT) $(CC_INC) @cc_hasjit@ "-Isrc/pmc" "-Icompilers/ast" $(SPLINTFLAGS) $(SPLINTFLAGS_TEST) `echo $(O_FILES) | $(PERL) -pe @PQ@s/\.o/\.c/g@PQ@`
 	$(SPLINT) $(CC_INC) $(SPLINTFLAGS) $(SPLINTFLAGS_TEST) $(IMCC_DIR)/main.c
 
 splint-andy :
@@ -1890,7 +1895,97 @@ splint-andy :
 		src/nci.c \
 		src/inte*.c \
 
+COVER_FLAGS = -fprofile-arcs -ftest-coverage
+COVER_DIRS = \
+	     $(SRC_DIR) \
+	     $(SRC_DIR)/charset \
+	     $(SRC_DIR)/dynoplibs \
+	     $(SRC_DIR)/dynpmc \
+	     $(SRC_DIR)/encodings \
+	     $(SRC_DIR)/gc \
+	     $(SRC_DIR)/ops \
+	     $(SRC_DIR)/packfile \
+	     $(SRC_DIR)/pmc \
+	     $(SRC_DIR)/stm \
+	     $(IO_DIR) \
+	     $(IMCC_DIR)
 
+cover: \
+    cover.dummy \
+    cover-testb \
+#CONDITIONED_LINE(cg_flag): cover-testC \
+    cover-testf \
+#CONDITIONED_LINE(cg_flag): cover-testg \
+#CONDITIONED_LINE(jitcapable): cover-testj \
+    cover-testr \
+    cover-testS \
+    cover-src \
+    cover-perl \
+    cover-codingstd \
+    cover-benchmark \
+    cover-doc \
+    cover-distro
+	build_dir=$$PWD; \
+	for dir in $(COVER_DIRS); \
+	do \
+		cd $$dir; \
+		gcov *.c; \
+		cd $$build_dir; \
+		gcov2perl $$dir/*.gcov; \
+	done
+	cover -ignore_re '^\/usr\/local\/bin'
+
+cover.dummy:
+	$(PERL) Configure.pl --ccflags="$(CC_FLAGS) $(COVER_FLAGS)" \
+		--linkflags="$(COVER_FLAGS)" --ldflags="$(COVER_FLAGS)"
+
+cover-testb: cover.dummy
+	-@make@ testb
+
+cover-testC: cover.dummy
+	-@make@ testC
+
+cover-testf: cover.dummy
+	-@make@ testf
+
+cover-testg: cover.dummy
+	-@make@ testg
+
+cover-testj: cover.dummy
+	-@make@ testj
+
+cover-testr: cover.dummy
+	-@make@ testr
+
+cover-testS: cover.dummy
+	-@make@ testS
+
+cover-src: cover.dummy
+	-@make@ src_tests
+
+cover-perl: cover.dummy
+	-@make@ perl_tests
+
+cover-codingstd: cover.dummy
+	-@make@ codingstd_tests
+
+cover-benchmark: cover.dummy
+	-@make@ benchmark_tests
+
+cover-doc: cover.dummy
+	-@make@ doc_tests
+
+cover-distro: cover.dummy
+	-@make@ distro_tests
+
+cover-clean:
+	for dir in $(COVER_DIRS); \
+	do \
+		pwd=$$PWD; cd $$dir; $(RM_F) *.gcda *.gcno *.gcov; cd $$pwd; \
+	done
+
+
+###############################################################################
 #
 # installation
 #

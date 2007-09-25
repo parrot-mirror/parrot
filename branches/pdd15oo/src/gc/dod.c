@@ -4,7 +4,7 @@ $Id$
 
 =head1 NAME
 
-src/dod.c - Dead object destruction of the various headers
+src/gc/dod.c - Dead object destruction of the various headers
 
 =head1 DESCRIPTION
 
@@ -17,6 +17,10 @@ processor registers. The actual checking is implemented in F<src/cpu_dep.c>.
 There's also a verbose mode for garbage collection.
 
 =head1 FUNCTIONS
+
+=over 4
+
+=cut
 
 */
 
@@ -65,13 +69,15 @@ int CONSERVATIVE_POINTER_CHASING = 0;
 
 /*
 
-FUNCDOC: mark_special
+=item C<mark_special>
 
 Mark a special PMC. If it has a C<PMC_EXT> structure, append or prepend
 the C<next_for_GC> pointer; otherwise, do the custom mark directly.
 
 This should really be inline, so if inline isn't available, it would
 be better if it were a macro.
+
+=cut
 
 */
 
@@ -153,6 +159,16 @@ mark_special(PARROT_INTERP, NOTNULL(PMC *obj))
     }
 }
 
+/*
+
+=item C<pobject_lives>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_API
 void
 pobject_lives(PARROT_INTERP, NOTNULL(PObj *obj))
@@ -221,7 +237,7 @@ pobject_lives(PARROT_INTERP, NOTNULL(PObj *obj))
 
 /*
 
-FUNCDOC: Parrot_dod_trace_root
+=item C<Parrot_dod_trace_root>
 
 Trace the root set. Returns 0 if it's a lazy DOD run and all objects
 that need timely destruction were found.
@@ -231,6 +247,8 @@ C<trace_stack> can have these values:
  0 ... trace normal roots, no system areas
  1 ... trace whole root set
  2 ... trace system areas only
+
+=cut
 
 */
 
@@ -328,10 +346,12 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
 
 /*
 
-FUNCDOC: trace_active_PMCs
+=item C<trace_active_PMCs>
 
 Do a full trace run and mark all the PMCs as active if they are. Returns
 whether the run completed, that is, whether it's safe to proceed with GC.
+
+=cut
 
 */
 
@@ -348,9 +368,11 @@ trace_active_PMCs(PARROT_INTERP, int trace_stack)
 
 /*
 
-FUNCDOC: Parrot_dod_trace_children
+=item C<Parrot_dod_trace_children>
 
 Returns whether the tracing process completed.
+
+=cut
 
 */
 
@@ -432,6 +454,16 @@ Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
     return 1;
 }
 
+/*
+
+=item C<Parrot_dod_trace_pmc_data>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
 Parrot_dod_trace_pmc_data(PARROT_INTERP, NOTNULL(PMC * const p))
 {
@@ -452,9 +484,11 @@ Parrot_dod_trace_pmc_data(PARROT_INTERP, NOTNULL(PMC * const p))
 
 /*
 
-FUNCDOC: clear_cow
+=item C<clear_cow>
 
 Clear the COW ref count.
+
+=cut
 
 */
 
@@ -495,9 +529,11 @@ clear_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)
 
 /*
 
-FUNCDOC: used_cow
+=item C<used_cow>
 
 Find other users of COW's C<bufstart>.
+
+=cut
 
 */
 
@@ -535,11 +571,13 @@ used_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)
 
 /*
 
-FUNCDOC: Parrot_dod_sweep
+=item C<Parrot_dod_sweep>
 
 Put any buffers/PMCs that are now unused onto the pool's free list. If
 C<GC_IS_MALLOC>, bufstart gets freed too, if possible. Avoid buffers that
 are immune from collection (i.e. constant).
+
+=cut
 
 */
 
@@ -620,10 +658,21 @@ next:
     pool->num_free_objects = pool->total_objects - total_used;
 }
 
+/*
+
+=item C<Parrot_dod_free_pmc>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
 Parrot_dod_free_pmc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PMC * const p))
+    NOTNULL(PObj *p))
 {
+    PMC           *pmc        = (PMC *)p;
     Arenas * const arena_base = interp->arena_base;
 
     /* TODO collect objects with finalizers */
@@ -631,17 +680,16 @@ Parrot_dod_free_pmc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
         --arena_base->num_early_DOD_PMCs;
 
     if (PObj_active_destroy_TEST(p))
-        VTABLE_destroy(interp, p);
+        VTABLE_destroy(interp, pmc);
 
     if (PObj_is_PMC_EXT_TEST(p))
-         Parrot_free_pmc_ext(interp, p);
+         Parrot_free_pmc_ext(interp, pmc);
 
 #ifndef NDEBUG
 
-    /* invalidate the PMC */
-    p->pmc_ext     = (PMC_EXT *)0xdeadbeef;
-    p->vtable      = (VTABLE  *)0xdeadbeef;
-    PMC_pmc_val(p) = (PMC     *)0xdeadbeef;
+    pmc->pmc_ext     = (PMC_EXT *)0xdeadbeef;
+    pmc->vtable      = (VTABLE  *)0xdeadbeef;
+    PMC_pmc_val(pmc) = (PMC     *)0xdeadbeef;
 
 #endif
 
@@ -649,9 +697,11 @@ Parrot_dod_free_pmc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
 
 /*
 
-FUNCDOC: Parrot_free_pmc_ext
+=item C<Parrot_free_pmc_ext>
 
 Frees the PMC_EXT structure attached to a PMC, if it exists.
+
+=cut
 
 */
 
@@ -674,6 +724,16 @@ Parrot_free_pmc_ext(PARROT_INTERP, NOTNULL(PMC *p))
     p->pmc_ext = NULL;
 }
 
+/*
+
+=item C<parrot_dod_free_sysmem>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
 Parrot_dod_free_sysmem(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
     NOTNULL(PObj *b))
@@ -685,6 +745,16 @@ Parrot_dod_free_sysmem(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
     PObj_bufstart(b) = NULL;
     PObj_buflen(b)   = 0;
 }
+
+/*
+
+=item C<Parrot_dod_free_buffer_malloc>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 void
 Parrot_dod_free_buffer_malloc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
@@ -699,7 +769,7 @@ Parrot_dod_free_buffer_malloc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
         return;
 
     if (PObj_COW_TEST(b)) {
-        INTVAL *refcount = ((INTVAL *)PObj_bufstart(b) - 1);
+        INTVAL *refcount = PObj_bufrefcountptr(b);
 
         if (!--(*refcount)) {
             free(refcount); /* the actual bufstart */
@@ -707,8 +777,18 @@ Parrot_dod_free_buffer_malloc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
         }
     }
     else
-        free((INTVAL *)PObj_bufstart(b) - 1);
+        free(PObj_bufrefcountptr(b));
 }
+
+/*
+
+=item C<Parrot_dod_free_buffer>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 void
 Parrot_dod_free_buffer( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
@@ -732,9 +812,11 @@ Parrot_dod_free_buffer( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
 
 /*
 
-FUNCDOC: find_common_mask
+=item C<find_common_mask>
 
 Find a mask covering the longest common bit-prefix of C<val1> and C<val2>.
+
+=cut
 
 */
 
@@ -767,9 +849,11 @@ find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
 
 /*
 
-FUNCDOC: trace_mem_block
+=item C<trace_mem_block>
 
 Traces the memory block between C<lo_var_ptr> and C<hi_var_ptr>.
+
+=cut
 
 */
 
@@ -834,8 +918,11 @@ trace_mem_block(PARROT_INTERP, size_t lo_var_ptr, size_t hi_var_ptr)
 
 /*
 
-FUNCDOC:
+=item C<clear_live_bits>
+
 Run through all PMC arenas and clear live bits.
+
+=cut
 
 */
 
@@ -857,6 +944,16 @@ clear_live_bits(NOTNULL(Small_Object_Pool *pool))
 
 }
 
+/*
+
+=item C<Parrot_dod_clear_live_bits>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
 Parrot_dod_clear_live_bits(PARROT_INTERP)
 {
@@ -866,9 +963,11 @@ Parrot_dod_clear_live_bits(PARROT_INTERP)
 
 /*
 
-FUNCDOC: Parrot_dod_profile_start
+=item C<Parrot_dod_profile_start>
 
 Records the start time of a DOD run when profiling is enabled.
+
+=cut
 
 */
 
@@ -881,10 +980,12 @@ Parrot_dod_profile_start(PARROT_INTERP)
 
 /*
 
-FUNCDOC: Parrot_dod_profile_end
+=item C<Parrot_dod_profile_end>
 
 Records the end time of the DOD part C<what> run when profiling is enabled.
 Also record start time of next part.
+
+=cut
 
 */
 
@@ -913,9 +1014,11 @@ Parrot_dod_profile_end(PARROT_INTERP, int what)
 
 /*
 
-FUNCDOC: Parrot_dod_ms_run_init
+=item C<Parrot_dod_ms_run_init>
 
 Prepare for a mark & sweep DOD run.
+
+=cut
 
 */
 
@@ -929,6 +1032,16 @@ Parrot_dod_ms_run_init(PARROT_INTERP)
     arena_base->num_early_PMCs_seen = 0;
     arena_base->num_extended_PMCs   = 0;
 }
+
+/*
+
+=item C<sweep_cb>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static int
 sweep_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag,
@@ -958,9 +1071,11 @@ sweep_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag,
 
 /*
 
-FUNCDOC: Parrot_dod_ms_run
+=item C<Parrot_dod_ms_run>
 
 Run the stop-the-world mark & sweep collector.
+
+=cut
 
 */
 
@@ -1021,6 +1136,7 @@ Parrot_dod_ms_run(PARROT_INTERP, int flags)
         /* Now put unused PMCs and Buffers on the free list */
         ignored = Parrot_forall_header_pools(interp, POOL_BUFFER | POOL_PMC,
             (void*)&total_free, sweep_cb);
+        UNUSED(ignored);
 
         if (interp->profile)
             Parrot_dod_profile_end(interp, PARROT_PROF_DOD_cb);
@@ -1046,9 +1162,11 @@ Parrot_dod_ms_run(PARROT_INTERP, int flags)
 
 /*
 
-FUNCDOC: Parrot_do_dod_run
+=item C<Parrot_do_dod_run>
 
 Call the configured garbage collector to reclaim unused headers.
+
+=cut
 
 */
 
@@ -1061,6 +1179,8 @@ Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
 
 /*
 
+=back
+
 =head1 SEE ALSO
 
 F<include/parrot/dod.h>, F<src/cpu_dep.c>, F<docs/dev/dod.dev> and
@@ -1069,6 +1189,8 @@ F<docs/pdds/pdd09_gc.pod>.
 =head1 HISTORY
 
 Initial version by Mike Lambert on 2002.05.27.
+
+=cut
 
 */
 

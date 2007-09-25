@@ -1,6 +1,7 @@
 #! perl
 
 # Copyright (C) 2006-2007, The Perl Foundation.
+# $Id$
 
 use strict;
 use warnings;
@@ -65,10 +66,8 @@ pcc_like(
 
 pcc_ok( { params => ".param pmc abc :optional" }, 'G3: optional param may be empty', );
 
-pcc_ok(
-    { params => ".param pmc abc :optional :slurpy" },
-    'G4: optional slurpy param may be empty'
-);
+pcc_ok( { params => ".param pmc abc :optional :slurpy" },
+    'G4: optional slurpy param may be empty' );
 
 pcc_error_like(
     { params => ".param pmc abc :named('x')" },

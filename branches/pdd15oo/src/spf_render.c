@@ -13,6 +13,10 @@ and its utility functions.
 
 =head2 Utility Functions
 
+=over 4
+
+=cut
+
 */
 
 #define IN_SPF_SYSTEM
@@ -92,9 +96,11 @@ static STRING* str_append_w_flags( PARROT_INTERP,
 
 /*
 
-FUNCDOC: handle_flags
+=item C<handle_flags>
 
 Handles C<+>, C<->, C<0>, C<#>, space, width, and prec.
+
+=cut
 
 */
 
@@ -176,7 +182,9 @@ handle_flags(PARROT_INTERP, NOTNULL(SpfInfo *info), NOTNULL(STRING *str),
                 && (string_ord(interp, str,0) == '-' ||
                     string_ord(interp, str,0) == '+')) {
                 STRING *temp = NULL;
-                string_substr(interp, str, 1, len-1, &temp, 0);
+                STRING *ignored;
+                ignored = string_substr(interp, str, 1, len-1, &temp, 0);
+                UNUSED(ignored);
                 string_chopn_inplace(interp, str, -1);
                 str = string_append(interp, str, fill);
                 str = string_append(interp, str, temp);
@@ -201,11 +209,13 @@ str_append_w_flags(PARROT_INTERP, NOTNULL(STRING* dest), NOTNULL(SpfInfo *info),
 
 /*
 
-FUNCDOC: gen_sprintf_call
+=item C<gen_sprintf_call>
 
 Turn the info structure back into an sprintf format. Far from being
 pointless, this is used to call C<snprintf()> when we're confronted with
 a float.
+
+=cut
 
 */
 
@@ -261,9 +271,11 @@ gen_sprintf_call(NOTNULL(char *out), NOTNULL(SpfInfo *info), int thingy)
 
 /*
 
-FUNCDOC: Parrot_sprintf_format
+=item C<Parrot_sprintf_format>
 
 This is the engine that does all the formatting.
+
+=cut
 
 */
 
@@ -291,7 +303,9 @@ Parrot_sprintf_format(PARROT_INTERP,
     for (i = old = len = 0; i < (INTVAL) string_length(interp, pat); i++) {
         if (string_ord(interp, pat, i) == '%') {        /* % */
             if (len) {
-                string_substr(interp, pat, old, len, &substr, 1);
+                STRING *ignored;
+                ignored =  string_substr(interp, pat, old, len, &substr, 1);
+                UNUSED(ignored);
                 /* XXX This shouldn't modify targ the pointer */
                 targ = string_append(interp, targ, substr);
             }
@@ -804,7 +818,9 @@ do_sprintf:
         }
     }
     if (len) {
-        string_substr(interp, pat, old, len, &substr, 1);
+        STRING *ignored;
+        ignored = string_substr(interp, pat, old, len, &substr, 1);
+        UNUSED(ignored);
         targ = string_append(interp, targ, substr);
     }
 
@@ -813,9 +829,13 @@ do_sprintf:
 
 /*
 
+=back
+
 =head1 SEE ALSO
 
 F<src/misc.h>, F<src/misc.c>, F<src/spf_vtable.c>.
+
+=cut
 
 */
 

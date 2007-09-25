@@ -1,20 +1,13 @@
 #!perl
 
 # Copyright (C) 2007, The Perl Foundation.
+# $Id$
 
 use strict;
 use warnings;
 use lib qw(t . lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 12;
+use Parrot::Test tests => 11;
 use Test::More;
-
-language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'global defs' );
-
-.global g_X
-
-.global g_Y
-
-CODE
 
 language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'const defs' );
 

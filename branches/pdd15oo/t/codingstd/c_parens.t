@@ -55,14 +55,9 @@ sub check_parens {
     my @space_between_parens;
 
     foreach my $file (@_) {
-        my $buf;
         my $path = @ARGV ? $file : $file->path();
-        open my $fh, '<', $path
-            or die "Can not open '$path' for reading!\n";
-        {
-            local $/;
-            $buf = <$fh>;
-        }
+
+        my $buf = $DIST->slurp( $path );
         $buf =~ s{ (?:
                        (?: (') (?: \\\\ | \\' | [^'] )* (') ) # remove ' string
                      | (?: (") (?: \\\\ | \\" | [^"] )* (") ) # remove " string
@@ -82,7 +77,7 @@ sub check_parens {
     }
 
 ## L<PDD07/Code Formatting/"there should be at least one space between a C keyword and any subsequent open parenthesis">
-    ok( !scalar(@keyword_paren), 'Spacing between C keyword and following open parenthesis'  )
+    ok( !scalar(@keyword_paren), 'Spacing between C keyword and following open parenthesis' )
         or diag( "incorrect spacing between C keyword and following open parenthesis found in "
             . scalar @keyword_paren
             . " files:\n@keyword_paren" );

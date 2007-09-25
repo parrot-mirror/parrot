@@ -1,4 +1,5 @@
 /*
+ * $Id$
  * Copyright (C) 2006-2007, The Perl Foundation
  */
 
@@ -406,7 +407,7 @@ Parrot_STM_tx_log_get(PARROT_INTERP)
     STM_tx_log *log = interp->thread_data->stm_log;
 
     if (!log)
-        log = Parrot_STM_tx_log_alloc(interp, sizeof(*log));
+        log = Parrot_STM_tx_log_alloc(interp, sizeof (*log));
 
     PARROT_ASSERT(log->depth >= 0);
     return log;

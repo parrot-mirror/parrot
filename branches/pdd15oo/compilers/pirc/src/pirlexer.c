@@ -1,4 +1,5 @@
 /*
+ * $Id$
  * Copyright (C) 2007, The Perl Foundation.
  */
 
@@ -83,12 +84,12 @@ lexer.
 The following are PIR directives.
 
   .arg               .const      .constant    .emit             .end
-  .endnamespace      .endm       .eom         .get_results      .global
+  .endnamespace      .endm       .eom         .get_results
   .globalconst       .HLL        .HLL_map     .include          .invocant
   .lex               .loadlib    .local       .macro            .meth_call
   .namespace         .nci_call   .param       .pcc_begin        .pcc_begin_return
   .pcc_begin_yield   .pcc_call   .pcc_end     .pcc_end_return   .pcc_end_yield
-  .pcc_sub           .pragma     .result      .return           .sub
+  .pragma     .result      .return           .sub
   .sym               .yield
 
 
@@ -148,7 +149,6 @@ static char const * dictionary[] = {
     ".endm",                    /* T_ENDM,                  */
     ".eom",                     /* T_EOM,                   */
     ".get_results",             /* T_GET_RESULTS            */
-    ".global",                  /* T_GLOBAL_DECL,           */
     ".globalconst",             /* T_GLOBALCONST            */
     ".HLL",                     /* T_HLL                    */
     ".HLL_map",                 /* T_HLL_MAP                */
@@ -169,7 +169,6 @@ static char const * dictionary[] = {
     ".pcc_end",                 /* T_PCC_END                */
     ".pcc_end_return",          /* T_PCC_END_RETURN         */
     ".pcc_end_yield",           /* T_PCC_END_YIELD          */
-    ".pcc_sub",                 /* T_PCC_SUB                */
     ".pragma",                  /* T_PRAGMA                 */
     ".result",                  /* T_RESULT,                */
     ".return",                  /* T_RETURN,                */
@@ -480,7 +479,7 @@ print_error_context(struct lexer_state *s) {
     char *end          = s->curfile->curchar;
 
     /* print all characters from start to end */
-    while (start < end ) {
+    while (start < end) {
         /* print tab characters as spaces to make the "^" indicator fit nicely */
         if (*start == '\t') fprintf(stderr, " ");
         else fprintf(stderr, "%c", *start);
@@ -613,7 +612,7 @@ read_file(char const * filename) {
 
     PARROT_ASSERT(filename != NULL);
 
-    filebuff = (file_buffer *)malloc(sizeof(file_buffer));
+    filebuff = (file_buffer *)malloc(sizeof (file_buffer));
 
     if (filebuff == NULL) {
         fprintf(stderr, "Error in read_file(): failed to allocate memory for file buffer\n");
@@ -631,7 +630,7 @@ read_file(char const * filename) {
 
     /* printf("file size: %ld\n", filebuff->filesize); */
 
-    filebuff->buffer = (char *)calloc(filebuff->filesize + 1, sizeof(char));
+    filebuff->buffer = (char *)calloc(filebuff->filesize + 1, sizeof (char));
 
     if (filebuff->buffer == NULL) {
         fprintf(stderr, "Error in read_file(): failed to allocate memory for file contents\n");
@@ -643,7 +642,7 @@ read_file(char const * filename) {
     filebuff->line = 1;
 
     /* read file contents into buffer */
-    fread(filebuff->buffer, sizeof(char), filebuff->filesize, fileptr);
+    fread(filebuff->buffer, sizeof (char), filebuff->filesize, fileptr);
     fclose(fileptr);
 
     /* set EOF marker at last position of buffer */
@@ -775,7 +774,7 @@ read_digits(lexer_state *lexer) {
     int count = 0;
     char c    = read_char(lexer->curfile);
 
-    while ( isdigit((unsigned char)c) ) {
+    while (isdigit((unsigned char)c)) {
         buffer_char(lexer, c);
         c = read_char(lexer->curfile);
         count++;
@@ -925,13 +924,13 @@ Constructor for the lexer.
 */
 lexer_state *
 new_lexer(char const * filename) {
-    lexer_state *lexer = (lexer_state *)malloc(sizeof(lexer_state));
+    lexer_state *lexer = (lexer_state *)malloc(sizeof (lexer_state));
     if (lexer == NULL) {
         fprintf(stderr, "Error in new_lexer(): failed to allocate memory for lexer\n");
         exit(EXIT_FAILURE);
     }
 
-    lexer->token_chars = (char *)calloc(MAX_ID_LENGTH, sizeof(char));
+    lexer->token_chars = (char *)calloc(MAX_ID_LENGTH, sizeof (char));
     lexer->charptr = lexer->token_chars;
     lexer->curfile = NULL;
 
@@ -1129,7 +1128,7 @@ is indicated explicitly.
 
 */
 
-        if (isalpha((unsigned char)c) || c == '_' ) {  /* check for identifier, op, invocant or label */
+        if (isalpha((unsigned char)c) || c == '_') {  /* check for identifier, op, invocant or label */
 
             /* handle pasm registers */
             if (c == 'P' || c == 'I' || c == 'N' || c == 'S') {
@@ -1212,12 +1211,12 @@ is indicated explicitly.
             if (c == '=') return T_CONCAT_ASSIGN;
             if (c == '.') return T_DOTDOT;  /* ".." */
 
-            if ( isspace((unsigned char)c) ) { /* a dot followed by a space */
+            if (isspace((unsigned char)c)) { /* a dot followed by a space */
                 unread_char(lexer->curfile);
                 return T_CONCAT;
             }
 
-            while ( isalnum((unsigned char)c) || c == '_') {
+            while (isalnum((unsigned char)c) || c == '_') {
                 buffer_char(lexer, c);
                 c = read_char(lexer->curfile);
                 if (c == EOF_MARKER) break;
@@ -1233,7 +1232,7 @@ is indicated explicitly.
                 return tmp;
             }
         }
-        else if (isdigit((unsigned char)c) ) { /* check for numbers */
+        else if (isdigit((unsigned char)c)) { /* check for numbers */
             buffer_char(lexer, c);
             c = read_char(lexer->curfile);
 
@@ -1435,7 +1434,6 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
         else if (c == '-') {
             c = read_char(lexer->curfile);
             switch (c) {
-                case '>': return T_PTR;         /* -> */
                 case '=': return T_MINUS_ASSIGN; /* -= */
                 case EOF_MARKER: return T_EOF;
                 default:
@@ -1606,7 +1604,7 @@ Due to PIR's simplicity, there are no different levels of precedence for operato
                 c = read_char(lexer->curfile);
                 if (c == EOF_MARKER) return T_EOF;
             }
-            while ( isalnum((unsigned char)c) || c == '_' );
+            while (isalnum((unsigned char)c) || c == '_');
 
             unread_char(lexer->curfile); /* push back last character not needed */
             tmp = check_dictionary(lexer, dictionary);

@@ -6,15 +6,16 @@
 use strict;
 use warnings;
 use FindBin;
-use lib "$FindBin::Bin/../..";
+use lib "$FindBin::Bin/../../lib";
 
-use Scheme::Test tests => 2;
+use Test::More tests => 2;
+use Parrot::Test;
 
-output_is( <<'CODE', '0', "basic write" );
+language_output_is( 'Scheme', <<'CODE', '0', "basic write" );
 (write 0)
 CODE
 
-output_is( <<'CODE', '01', "basic write" );
+language_output_is( 'Scheme', <<'CODE', '01', "basic write" );
 (write 0 1)
 CODE
 
