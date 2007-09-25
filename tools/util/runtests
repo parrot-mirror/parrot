@@ -4,9 +4,65 @@ use warnings;
 use strict;
 
 use App::Prove;
+use Getopt::Long;
 
 my $prove = App::Prove->new;
 $prove->process_args(qw(--harness Parrot::TAP::Harness), @ARGV);
+
+my($run_exec, $running_make_test, $gc_debug, $make_html);
+my %options = (
+  'running-make-test'  => \$running_make_test,
+  'html'               => \$make_html, 
+);
+
+GetOptions( \%options,
+    'w',        #enable warnings
+    'g',        #run CGoto
+    'j',        #run JIT
+    'C',        #run Switched
+    'S',        #run bounds checked
+    'f',        #run fast core
+    'run-exec', #run exec core
+    'v',        #run verbose
+    'd',        #run debug
+    'r',        #assemble to PBC and run the PBC
+    'gc-debug', #run with GC debugger
+    'O=i',      #optimize, with level
+    'D=i',      #Debug flags for parrot
+);
+
+# add -D40;  merge it with any existing -D argument
+$options{D} = sprintf( '%x', hex(40) | (defined $options{D} ? hex($options{D}) : 0));
+
+delete $options{'running-make-test'};
+delete $options{'html'};
+
+my @args = ();
+
+##Short options with flags
+foreach my $flag (qw/O D/) {
+  if (defined $options{$flag}) {
+    push @args, "-".$flag.$options{$flag};
+    delete $options{$flag};
+  }
+}
+
+##Long options
+foreach my $flag (qw/gc-debug run-exec/) {
+  if (defined $options{$flag}) {
+    push @args, '--'.$flag;
+    delete $options{$flag};
+  }
+}
+
+##Create argument for both the harness, and the environment
+
+push @args, map { '-'.$_ } keys %options;
+my $args = join(' ', @args);
+
+$ENV{TEST_PROG_ARGS} = $args;
+$ENV{RUNNING_MAKE_TEST} = $running_make_test;
+
 $prove->run;
 
 # We build-in the harness so we don't have to look for it.  Feel free to
@@ -40,6 +96,7 @@ BEGIN {
         $compiler =~ s/(?:\.pbc)?$/.pbc/;
         unshift(@shparts, $compiler);
       }
+      splice(@shparts, 1, 0, @args);  ##Add in the arguments for deliberate execution
 
       #warn "shebang @shparts";
       # TODO interpreter-specific and/or parrot specific options
@@ -52,5 +109,101 @@ BEGIN {
   $INC{'Parrot/TAP/Harness.pm'} = __FILE__; # make require() happy
 } # end Parrot::TAP::Harness
 ########################################################################
+
+__END__
+
+=head1 NAME
+
+runtests - Run parrot tests via TAP::Harness 3.0.
+
+=head1 USAGE
+
+ runtests [options] -- [parrot options] [files or directories]
+
+Since the runtests and parrot options collide, they should be separated by a bare --,
+this will let Getopt::Long do the right thing with both sets, operated on one at a time.
+
+=head1 PARROT SPECIFIC OPTIONS
+
+=over 4
+
+=item C<-w>
+
+Turn warnings on.
+
+=item C<-g>
+
+Run the C<CGoto> core.
+
+=item C<-j>
+
+Run with JIT enabled.
+
+=item C<-C>
+
+Run the C<CGP> core.
+
+=item C<-S>
+
+Run Switched.
+
+=item C<-b>
+
+Run bounds checking enabled.
+
+=item C<-d>
+
+Run with debugging enabled.
+
+=item C<-f>
+
+Run fast core.
+
+=item C<-r>
+
+compile to Parrot bytecode and then run the bytecode.
+
+=item C<-O[012]>
+
+Run optimized to the specified level.
+
+=item C<-D[number]>
+
+Pass the specified debug bits to the parrot interpreter.  Note that 
+C<-D40> (fill I, N registers with garbage) is always enabled.  
+See 'parrot --help-debug' for available flags.
+
+=back
+
+There are also long command line options:
+
+=over 4
+
+=item C<--run-exec>
+
+Run the exec core.
+
+=item C<--running-make-test>
+
+Some test scripts run more quickly when this is set.
+
+=item C<--gc-debug>
+
+Invoke parrot with '--gc-debug'.
+
+=item C<--html>
+
+Emit a C<smoke.html> file instead of displaying results.  B<Not currently working.>
+
+=back
+
+
+=head1 NOTES
+
+=head1 SEE ALSO
+
+L<App::Prove>
+
+=cut
 
 # vim:ts=2:sw=2:et:sta
