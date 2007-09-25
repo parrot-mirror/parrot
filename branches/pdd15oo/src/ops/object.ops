@@ -355,7 +355,7 @@ op subclass(out PMC, in STR, in STR) :object_classes {
     if (PMC_IS_NULL(parent_class)) {
         /* Look up a low-level class and create a proxy */
         PMC *type_num = pmc_new(interp, enum_class_Integer);
-        VTABLE_set_integer_native(interp, type_num, pmc_type(interp, parent_class));
+        VTABLE_set_integer_native(interp, type_num, pmc_type(interp, parent_name));
         parent_class = pmc_new_init(interp, enum_class_PMCProxy, type_num);
     }
 
@@ -600,8 +600,14 @@ op removeattribute(invar PMC, in INT) {
 
 =item B<getattribute>(out PMC, invar PMC, in STR)
 
-Get attribute number $3 from object $2 and put the result in $1.
-String attribute names have to be fully qualified.
+Get the attribute $3 from object $2 and put the result in $1.
+
+=item B<getattribute>(out PMC, invar PMC, in PMC, in STR)
+
+Get the attribute $4 from the parent $3 of object $2 and put the
+result in $1. (This is useful for storing data for a parent class
+attribute that is overridden in a child class.) The parent $3 is a
+class name, namespace, or key PMC.
 
 =cut
 
@@ -615,11 +621,22 @@ inline op getattribute(out PMC, invar PMC, in STR) :object_classes {
     goto NEXT();
 }
 
+inline op getattribute(out PMC, invar PMC, in PMC, in STR) :object_classes {
+    $1 = VTABLE_get_attr_keyed(interp, $2, $3, $4);
+    goto NEXT();
+}
+
 =item B<setattribute>(invar PMC, in INT, invar PMC)
 
 =item B<setattribute>(invar PMC, in STR, invar PMC)
 
-Set attribute $2 of object $1 to $3
+Set attribute $2 of object $1 to $3.
+
+=item B<setattribute>(invar PMC, in PMC, in STR, invar PMC)
+
+Set attribute $3 of the parent $2 of object $1 to $4. (This is useful
+for storing data for a parent class attribute that is overridden in a
+child class.) The parent $2 is a class name, namespace, or key PMC.
 
 =cut
 
@@ -630,6 +647,11 @@ inline op setattribute(invar PMC, in INT, invar PMC) :object_classes {
 
 inline op setattribute(invar PMC, in STR, invar PMC) :object_classes {
     VTABLE_set_attr_str(interp, $1, $2, $3);
+    goto NEXT();
+}
+
+inline op setattribute(invar PMC, in PMC, in STR, invar PMC) :object_classes {
+    VTABLE_set_attr_keyed(interp, $1, $2, $3, $4);
     goto NEXT();
 }
 
