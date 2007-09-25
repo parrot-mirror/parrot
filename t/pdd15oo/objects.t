@@ -653,36 +653,32 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values and subclassing 2" );
     getattribute P11, P3, ".l"
     print P11
 
-    set S0, P3		# verify classname is still ok
-    print S0
-    print "\n"
     end
 CODE
 i
 j
 k
 l
-Bar
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values, subclassing access meths " );
     newclass P1, "Foo"
     # must add attributes before object instantiation
-    addattribute P1, ".i"
-    addattribute P1, ".j"
+    addattribute P1, "i"
+    addattribute P1, "j"
     # define attrib access functions in Foo namespace
     find_global P5, "Foo::set"
-    store_global "Foo", "Foo::set", P5
+    addmethod P1, "Foo::set", P5
     find_global P5, "Foo::get"
-    store_global "Foo", "Foo::get", P5
+    addmethod P1, "Foo::get", P5
 
     subclass P2, P1, "Bar"
-    addattribute P2, ".k"
-    addattribute P2, ".l"
+    addattribute P2, "k"
+    addattribute P2, "l"
     find_global P5, "Bar::set"
-    store_global "Bar", "Bar::set", P5
+    addmethod P2, "Bar::set", P5
     find_global P5, "Bar::get"
-    store_global "Bar", "Bar::get", P5
+    addmethod P2, "Bar::get", P5
 
     # instantiate a Bar object
     new P13, "Bar"
@@ -786,18 +782,18 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values, inherited access meths" );
     newclass P1, "Foo"
     # must add attributes before object instantiation
-    addattribute P1, ".i"
-    addattribute P1, ".j"
+    addattribute P1, "i"
+    addattribute P1, "j"
     # define attrib access functions
     find_global P5, "set"
-    store_global "Foo", "set", P5
+    addmethod P1, "set", P5
     find_global P5, "get"
-    store_global "Foo", "get", P5
+    addmethod P1, "get", P5
 
     subclass P2, P1, "Bar"
-    addattribute P2, ".k"
-    addattribute P2, ".l"
-    addattribute P2, ".m"
+    addattribute P2, "k"
+    addattribute P2, "l"
+    addattribute P2, "m"
 
     # subclass is preferred for the SI case over
     #   newclass P2, "Bar"
@@ -875,16 +871,16 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values, inherited access meths"
 .include "interpinfo.pasm"
     get_params "(0,0,0)", P5, S4, S5
     interpinfo P2, .INTERPINFO_CURRENT_OBJECT
-    setattribute P2, S4, P5
+    setattribute P2, S5, P5
     set_returns "()"
     returncc
 
 # Pattr = get(obj: SClass, Sattr)
 .pcc_sub get:
-    get_params "(0,0)", S5, S4
+    get_params "(0,0)", S4, S5
 .include "interpinfo.pasm"
     interpinfo P2, .INTERPINFO_CURRENT_OBJECT
-    getattribute P5, P2, S4
+    getattribute P5, P2, S5
     set_returns "(0)", P5
     returncc
 
