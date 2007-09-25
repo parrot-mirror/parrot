@@ -1692,8 +1692,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "call evaled vtable code" );
     .local pmc comp
     comp = compreg "PIR"
     $P0 = comp(s)
-    #o = new 'Foo'
-    o = cl.'new'()
+    cl.'add_method'('get_integer_keyed_int', $P0, 'vtable' => 1)
+    o = new 'Foo'
     $I0 = o[12]
     print $I0
     print "\n"
