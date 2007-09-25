@@ -1340,7 +1340,14 @@ parameter list.
 
 */
     PCCMETHOD new(PMC *args :slurpy :named) {
-        PMC *obj = VTABLE_instantiate(interp, SELF, args);
+        PMC *obj;
+        /* Check if any arguments are in the slurpy hash, don't pass an empty
+         * hash to instantiate */
+        if (VTABLE_elements(interp, args) > 0)
+            obj = VTABLE_instantiate(interp, SELF, args);
+        else
+            obj = VTABLE_instantiate(interp, SELF, PMCNULL);
+
         PCCRETURN(PMC *obj);
      }
 
