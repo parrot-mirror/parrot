@@ -951,7 +951,7 @@ Creates a subclass, optionally with a given C<name>.
 
 =item C<PMC *get_class()>
 
-Returns SELF. A PMC is it's own class.
+Returns SELF. A PMC is its own class.
 
 =item C<PMC *get_attr_str(STRING *attr)>
 
@@ -1003,6 +1003,29 @@ Look for NCI methods and properties.
 
         /* TODO bound user functions */
         return p;
+    }
+
+/*
+
+=item C<PMC *get_attr_keyed(PMC *key, STRING *name)>
+
+Default version of keyed attribute lookups. Discards the key and does a lookup
+by the string name passed in.
+
+=item C<void set_attr_keyed(PMC *key, STRING *name, PMC *value)>
+
+Default version of keyed attribute set. Discards the key and does a set by
+the string name passed in.
+
+=cut
+
+*/
+    PMC *get_attr_keyed(PMC *key, STRING *name) {
+        return VTABLE_get_attr_str(INTERP, SELF, name);
+    }
+    
+    void set_attr_keyed(PMC *key, STRING *name, PMC *value) {
+        VTABLE_set_attr_str(INTERP, SELF, name, value);
     }
 
 /*
