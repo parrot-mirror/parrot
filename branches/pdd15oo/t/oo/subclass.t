@@ -25,7 +25,7 @@ Tests OO features related to subclassing.
 pir_output_is( <<'CODE', <<'OUT', 'instantiate subclass from class object');
 .sub main :main
     $P0 = newclass "Pre"
-    $P1 = subclass "Pre", "Foo"
+    $P1 = subclass $P0, "Foo"
     $S1 = typeof $P1
     say $S1
 
@@ -56,7 +56,13 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'manually create anonymous class object');
 .sub main :main
-    $P1 = new "Class"
+    .local pmc parent, class_init_args, parent_list
+    parent = new "Class"
+    class_init_args = new 'Hash'
+    parent_list = new 'ResizablePMCArray'
+    push parent_list, parent
+    class_init_args['parents'] = parent_list
+    $P1 = new "Class", class_init_args
     $S1 = typeof $P1
     say $S1
 
@@ -75,6 +81,10 @@ pir_output_is( <<'CODE', <<'OUT', 'manually create anonymous class object');
     print $I3
     print "\n"
 
+    $I3 = isa $P2, parent
+    print $I3
+    print "\n"
+
     $I3 = isa $P2, "Object"
     print $I3
     print "\n"
@@ -85,11 +95,18 @@ Class
 ''
 0
 1
+1
 OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'manually create named class object');
 .sub main :main
-    $P1 = new "Class"
+    .local pmc parent, class_init_args, parent_list
+    parent = new "Class"
+    class_init_args = new 'Hash'
+    parent_list = new 'ResizablePMCArray'
+    push parent_list, parent
+    class_init_args['parents'] = parent_list
+    $P1 = new "Class", class_init_args
     $P1.name("Foo")
     $S1 = typeof $P1
     say $S1
@@ -230,7 +247,7 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from key name');
     $S1 = typeof $P2
     say $S1
 
-    $I3 = isa $P2, 'Bar'
+    $I3 = isa $P2, ['Foo';'Bar']
     print $I3
     print "\n"
 
