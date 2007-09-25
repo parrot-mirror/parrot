@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 17;
+use Parrot::Test tests => 18;
 
 =head1 NAME
 
@@ -554,6 +554,30 @@ Bar init
 first string
 second string
 third string
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'set inherited attributes by parent key');
+.sub main :main
+    $P0 = newclass 'Foo'
+    addattribute $P0, 'storage'
+    $P99 = subclass $P0, 'Bar'
+    $P1 = $P99.'new'()
+    $P2 = getattribute $P1, 'storage'
+    say $P2
+.end
+
+.namespace [ 'Bar' ]
+.sub 'init' :method :vtable
+    say 'Bar init'
+    .local pmc newstring
+    newstring = new 'String'
+    newstring = 'storage attribute value'
+    setattribute self, ['Foo'], 'storage', newstring
+.end
+
+CODE
+Bar init
+storage attribute value
 OUT
 
 
