@@ -712,6 +712,32 @@ Parrot_class_lookup_p(PARROT_INTERP, NOTNULL(PMC *class_name))
     return pmc;
 }
 
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+Parrot_oo_get_class(PARROT_INTERP, NOTNULL(PMC *key))
+{
+    PMC *hll_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
+            CONTEXT(interp->ctx)->current_HLL);
+
+    PMC *classobj = PMCNULL;
+    if (VTABLE_isa(interp, key, CONST_STRING(interp, "Class"))) {
+        classobj = key;
+    }
+    else if (VTABLE_isa(interp, key, CONST_STRING(interp, "NameSpace"))) {
+        classobj = VTABLE_get_class(interp, key);
+    }
+    else if (VTABLE_isa(interp, key, CONST_STRING(interp, "String"))
+            || VTABLE_isa(interp, key, CONST_STRING(interp, "Key"))) {
+        PMC *parent_ns = Parrot_get_namespace_keyed(interp, hll_ns, key);
+        if (!PMC_IS_NULL(parent_ns))
+            classobj = VTABLE_get_class(interp, parent_ns);
+    }
+    PARROT_ASSERT(classobj);
+    return classobj;
+}
+
+
 PARROT_WARN_UNUSED_RESULT
 static INTVAL
 register_type(PARROT_INTERP, NOTNULL(PMC *name))
