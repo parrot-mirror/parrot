@@ -149,11 +149,12 @@ this method.
 =item L<runstep>
 
 This method is called to actually execute the step.  The global
-L<Parrot::Configure> is passed in as the first parameter.  The return value is
-undefined.
+L<Parrot::Configure> is passed in as the first parameter.  The return
+value should be C<1> if the step accomplishes what it is intended to do.
+Otherwise, the step should simply C<return>, I<i.e.>, return an
+undefined value.
 
-I<XXX> In the near future the return value of this method will be significant
-and there will be a means of passing additional parameters.
+I<XXX> In the near future there will be a means of passing additional parameters.
 
 =back
 
