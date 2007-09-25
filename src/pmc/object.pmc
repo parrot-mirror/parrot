@@ -213,7 +213,8 @@ defined in the parent identified by the given key.
         /* If lookup failed, exception. */
         if (index == -1)
             real_exception(interp, NULL, ATTRIB_NOT_FOUND,
-                "No such attribute '%S'", name);
+                "No such attribute '%S' in class '%S'", name,
+                VTABLE_get_string(interp, key));
 
         return VTABLE_get_pmc_keyed_int(interp, obj->attrib_store, index);
     }
@@ -257,7 +258,8 @@ defined in the parent identified by the given key.
         /* If lookup failed, exception. */
         if (index == -1)
             real_exception(interp, NULL, ATTRIB_NOT_FOUND,
-                "No such attribute '%S'", name);
+                "No such attribute '%S' in class '%S'", name,
+                VTABLE_get_string(interp, key));
 
         VTABLE_set_pmc_keyed_int(interp, obj->attrib_store, index, value);
     }
