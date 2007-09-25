@@ -1,6 +1,7 @@
 package Tie::Filehandle::Preempt::Stdin;
 
 # Copyright (C) 2007, The Perl Foundation.
+# $Id$
 
 use strict;
 use warnings;
@@ -21,7 +22,8 @@ sub READLINE {
     my $self = shift;
     if (@$self) {
         shift @$self;
-    } else {
+    }
+    else {
         croak "List of prompt responses has been exhausted: $!";
     }
 }

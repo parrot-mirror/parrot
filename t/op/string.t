@@ -1163,7 +1163,13 @@ pasm_output_is( <<'CODE', chr(122), 'chr of 122 is z in ASCII' );
 	end
 CODE
 
-pasm_output_is( <<'CODE', <<'OUTPUT', 'if_s_ic' );
+SKIP: {
+
+    skip( "RT#45503: broken test in jit runcore", 1 )
+        if ( defined $ENV{TEST_PROG_ARGS} )
+        and ( $ENV{TEST_PROG_ARGS} =~ /-j/ );
+
+    pasm_output_is( <<'CODE', <<'OUTPUT', 'if_s_ic' );
 	set	S0, "I've told you once, I've told you twice..."
 	if	S0, OK1
 	print	"not "
@@ -1231,6 +1237,8 @@ ok 8
 ok 9
 ok 10
 OUTPUT
+
+}
 
 pasm_output_is( <<'CODE', <<'OUTPUT', 'repeat_s_s|sc_i|ic' );
 	set S0, "x"

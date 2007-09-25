@@ -289,13 +289,13 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - new result" );
     print "\n"
     end
 .pcc_sub Integer_bxor_Intval:
-    get_params "(0,0)", P5, I5
+    get_params "0,0", P5, I5
     print "ok\n"
     set I10, P5
     bxor I11, I10, I5
     new P6, 'Integer'
     set P6, I11
-    set_returns "(0)", P6
+    set_returns "0", P6
     returncc
 CODE
 ok
@@ -317,12 +317,12 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - existing result" );
     print "\n"
     end
 .pcc_sub Integer_bxor_Intval:
-    get_params "(0,0,0)", P5, I5, P6
+    get_params "0,0,0", P5, I5, P6
     print "ok\n"
     set I10, P5
     bxor I11, I10, I5
     set P6, I11
-    set_returns "(0)", P6
+    set_returns "0", P6
     returncc
 CODE
 ok
@@ -348,7 +348,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - mixed" );
     end
 .pcc_sub Integer_bxor_Intval:
     # the destination is optional, depending on the infix op used
-    get_params "(0,0,0x80,0x100)", P5, I5, P6, I7
+    get_params "0,0,0x80,0x100", P5, I5, P6, I7
     print "ok\n"
     set I10, P5
     bxor I11, I10, I5
@@ -356,7 +356,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - mixed" );
     new P6, 'Integer'
 has_dest:
     set P6, I11
-    set_returns "(0)", P6
+    set_returns "0", P6
     returncc
 
 CODE
@@ -1035,17 +1035,17 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "mmd bug reported by Jeff" );
 .namespace ['Foo']
 
-.sub bar :method, :multi(Foo, string)
+.sub bar :method :multi(Foo, string)
     .param string arg
     print "string\n"
 .end
 
-.sub bar :method, :multi(Foo, pmc)
+.sub bar :method :multi(Foo, pmc)
     .param pmc arg
     print "PMC\n"
 .end
 
-.sub bar :method, :multi(Foo)
+.sub bar :method :multi(Foo)
     print "nothing\n"
 .end
 
@@ -1106,7 +1106,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "use a core func for an object" );
     $P0 = i
 .end
 .sub set_number_native :vtable :method
-    .param float f
+    .param num f
     $P0 = getattribute self, ".i"
     $P0 = f
 .end
@@ -1133,11 +1133,11 @@ pir_output_is( <<'CODE', <<'OUTPUT', "multisub vs find_name" );
     print $S0
     print "\n"
 .end
-.sub foo :method, :multi(string)
+.sub foo :method :multi(string)
     .param pmc x
     print "  foo\n"
 .end
-.sub foo :method, :multi(pmc)
+.sub foo :method :multi(pmc)
     .param pmc x
     print "  foo\n"
 .end

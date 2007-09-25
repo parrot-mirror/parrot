@@ -1,6 +1,7 @@
 #! perl
 
 # Copyright (C) 2003-2006, The Perl Foundation.
+# $Id$
 
 use strict;
 use warnings;
@@ -13,7 +14,8 @@ my %seen;
 
 ## make sure files have been globbed on non-globbing OSes
 ## and make sure at least one command-line parameter has been passed
-@ARGV = @ARGV
+@ARGV =
+    @ARGV
     ? map { glob $_ } @ARGV
     : die "usage: " . basename($0) . " FILE [ FILE [ ... ] ]\n";
 

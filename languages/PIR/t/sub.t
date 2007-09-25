@@ -1,11 +1,12 @@
 #!perl
 
 # Copyright (C) 2007, The Perl Foundation.
+# $Id$
 
 use strict;
 use warnings;
 use lib qw(t . lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 22;
+use Parrot::Test tests => 21;
 use Test::More;
 
 language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'basic sub' );
@@ -101,13 +102,6 @@ language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'combine flags
 .end
 CODE
 
-
-
-language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'combine flags with commas' );
-.sub main :main, :load, :immediate, :init
-.end
-CODE
-
 language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'parameters' );
 .sub main
 	.param pmc pargs
@@ -127,8 +121,8 @@ language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'parameter fla
 .end
 CODE
 
-language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'pcc_sub' );
-.pcc_sub x
+language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'sub' );
+.sub x
 	.param int i                    # positional parameter
   .param pmc argv :slurpy         # slurpy array
   .param pmc value :named('key')  # named parameter

@@ -1,4 +1,5 @@
 /*
+ * $Id$
  * Copyright (C) 2004-2007, The Perl Foundation.
  */
 
@@ -29,6 +30,7 @@ Parrot_Run_OS_Command(Parrot_Interp interp, STRING *command)
         int status;
         pid_t returnstat;
         returnstat = waitpid(child, &status, 0);
+        UNUSED(returnstat);
         return status;
     }
     else {
@@ -64,6 +66,7 @@ Parrot_Run_OS_Command_Argv(Parrot_Interp interp, PMC *cmdargs)
         int status;
         pid_t returnstat;
         returnstat = waitpid(child, &status, 0);
+        UNUSED(returnstat);
         return status;
     }
     else {

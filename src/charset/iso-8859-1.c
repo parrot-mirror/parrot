@@ -10,6 +10,10 @@ src/charset/iso-8859-1.c
 
 This file implements the charset functions for iso-8859-1 data
 
+=over 4
+
+=cut
+
 */
 
 #include "parrot/parrot.h"
@@ -115,6 +119,16 @@ static UINTVAL validate( PARROT_INTERP, NOTNULL(STRING *src) )
 
 #include "tables.h"
 
+/*
+
+=item C<set_graphemes>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
 set_graphemes(PARROT_INTERP, NOTNULL(STRING *source_string),
         UINTVAL offset, UINTVAL replace_count, NOTNULL(STRING *insert_string))
@@ -122,6 +136,16 @@ set_graphemes(PARROT_INTERP, NOTNULL(STRING *source_string),
     ENCODING_SET_BYTES(interp, source_string, offset,
             replace_count, insert_string);
 }
+
+/*
+
+=item C<to_latin1>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static STRING *
 to_latin1(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
@@ -150,6 +174,16 @@ to_latin1(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
     }
     return dest;
 }
+
+/*
+
+=item C<to_unicode>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static STRING *
 to_unicode(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
@@ -182,6 +216,16 @@ to_unicode(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
             "to_unicode inplace for iso-8859-1 not implemented");
 }
 
+/*
+
+=item C<to_charset>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_WARN_UNUSED_RESULT
 static STRING *
 to_charset(PARROT_INTERP, NOTNULL(STRING *src), NOTNULL(STRING *dest))
@@ -196,6 +240,16 @@ to_charset(PARROT_INTERP, NOTNULL(STRING *src), NOTNULL(STRING *dest))
 }
 
 
+/*
+
+=item C<compose>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 /* A noop. can't compose iso-8859-1 */
 PARROT_WARN_UNUSED_RESULT
 static STRING*
@@ -204,12 +258,32 @@ compose(PARROT_INTERP, NOTNULL(STRING *src))
     return string_copy(interp, src);
 }
 
+/*
+
+=item C<decompose>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static STRING*
 decompose(PARROT_INTERP, SHIM(STRING *src))
 {
     real_exception(interp, NULL, UNIMPLEMENTED,
             "decompose for iso-8859-1 not implemented");
 }
+
+/*
+
+=item C<upcase>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 upcase(PARROT_INTERP, NOTNULL(STRING *source_string))
@@ -228,9 +302,19 @@ upcase(PARROT_INTERP, NOTNULL(STRING *source_string))
             c &= ~0x20;
         else
             c = toupper((unsigned char)c);
-        buffer[offset] = c;
+        buffer[offset] = (unsigned char)c;
     }
 }
+
+/*
+
+=item C<downcase>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 downcase(PARROT_INTERP, NOTNULL(STRING *source_string))
@@ -247,10 +331,20 @@ downcase(PARROT_INTERP, NOTNULL(STRING *source_string))
                 c |= 0x20;
             else
                 c = tolower((unsigned char)c);
-            buffer[offset] = c;
+            buffer[offset] = (unsigned char)c;
         }
     }
 }
+
+/*
+
+=item C<titlecase>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 titlecase(PARROT_INTERP, NOTNULL(STRING *source_string))
@@ -269,7 +363,7 @@ titlecase(PARROT_INTERP, NOTNULL(STRING *source_string))
         c &= ~0x20;
     else
         c = toupper((unsigned char)c);
-    buffer[0] = c;
+    buffer[0] = (unsigned char)c;
 
     for (offset = 1; offset < source_string->strlen; offset++) {
         c = buffer[offset];
@@ -277,9 +371,19 @@ titlecase(PARROT_INTERP, NOTNULL(STRING *source_string))
             c |= 0x20;
         else
             c = tolower((unsigned char)c);
-        buffer[offset] = c;
+        buffer[offset] = (unsigned char)c;
     }
 }
+
+/*
+
+=item C<upcase_first>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 upcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
@@ -295,9 +399,19 @@ upcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
             c &= ~0x20;
         else
             c = toupper((unsigned char)c);
-        buffer[0] = c;
+        buffer[0] = (unsigned char)c;
     }
 }
+
+/*
+
+=item C<downcase_first>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 downcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
@@ -313,10 +427,19 @@ downcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
             c &= ~0x20;
         else
             c = tolower((unsigned char)c);
-        buffer[0] = c;
-        buffer[0] = toupper((unsigned char)buffer[0]);
+        buffer[0] = (unsigned char)c;
     }
 }
+
+/*
+
+=item C<titlecase_first>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 titlecase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
@@ -324,6 +447,16 @@ titlecase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
     upcase_first(interp, source_string);
 }
 
+
+/*
+
+=item C<validate>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static UINTVAL
 validate(PARROT_INTERP, NOTNULL(STRING *src))
@@ -337,6 +470,16 @@ validate(PARROT_INTERP, NOTNULL(STRING *src))
     }
     return 1;
 }
+
+/*
+
+=item C<is_cclass>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static INTVAL
 is_cclass(PARROT_INTERP, INTVAL flags,
@@ -353,6 +496,16 @@ is_cclass(PARROT_INTERP, INTVAL flags,
     }
     return (Parrot_iso_8859_1_typetable[codepoint] & flags) ? 1 : 0;
 }
+
+/*
+
+=item C<find_cclass>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static INTVAL
 find_cclass(PARROT_INTERP, INTVAL flags,
@@ -373,6 +526,16 @@ find_cclass(PARROT_INTERP, INTVAL flags,
     return end;
 }
 
+/*
+
+=item C<find_not_cclass>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static INTVAL
 find_not_cclass(PARROT_INTERP, INTVAL flags,
                 NOTNULL(STRING *source_string), UINTVAL offset, UINTVAL count)
@@ -392,6 +555,16 @@ find_not_cclass(PARROT_INTERP, INTVAL flags,
 }
 
 
+/*
+
+=item C<string_from_codepoint>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static STRING *
 string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)
 {
@@ -400,6 +573,16 @@ string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)
             "iso-8859-1", 0);
     return return_string;
 }
+
+/*
+
+=item C<Parrot_charset_iso_8859_1_init>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_CANNOT_RETURN_NULL
 const CHARSET *
@@ -437,6 +620,16 @@ Parrot_charset_iso_8859_1_init(PARROT_INTERP)
     Parrot_register_charset(interp, "iso-8859-1", return_set);
     return return_set;
 }
+
+/*
+
+=item C<charset_cvt_iso_8859_1_to_ascii>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_WARN_UNUSED_RESULT
 STRING *

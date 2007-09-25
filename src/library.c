@@ -12,6 +12,10 @@ This file contains a C function to access Parrot's bytecode library functions.
 
 =head2 Functions
 
+=over 4
+
+=cut
+
 */
 
 #include "parrot/parrot.h"
@@ -82,7 +86,7 @@ static STRING* try_load_path( PARROT_INTERP, NOTNULL(STRING* path) )
 
 /*
 
-FUNCDOC: parrot_init_library_paths
+=item C<parrot_init_library_paths>
 
 Create an array of StringArrays with library searchpaths and shared
 extension used for loading various files at runtime. The created
@@ -105,6 +109,8 @@ if will be called as a function with this prototype:
 
 Platform code may add, delete, or replace search path entries as needed. See
 also F<include/parrot/library.h> for C<enum_lib_paths>.
+
+=cut
 
 */
 
@@ -383,7 +389,7 @@ try_bytecode_extensions(PARROT_INTERP, NOTNULL(STRING* path))
       loop control. This is so the array can easily be processed in reverse.
      */
 
-    for( guess = 0 ; guess <= LOAD_EXT_CODE_LAST ; guess++ ) {
+    for (guess = 0 ; guess <= LOAD_EXT_CODE_LAST ; guess++) {
         with_ext = string_copy(interp, path);
         with_ext = string_append(interp,
                                  with_ext, const_string(interp, load_ext_code[guess]));
@@ -398,13 +404,13 @@ try_bytecode_extensions(PARROT_INTERP, NOTNULL(STRING* path))
 
 /*
 
-FUNCDOC: Parrot_locate_runtime_file
+=item C<Parrot_locate_runtime_file>
 
 Locate the full path for C<file_name> and the given file type(s). If
 successful, returns a C-string allocated with C<string_to_cstring> or
 NULL otherwise.  Remember to free the string with C<string_cstring_free()>.
 
-FUNCDOC: Parrot_locate_runtime_file_str
+=item C<Parrot_locate_runtime_file_str>
 
 Like above but use and return STRINGs. If successful, the returned STRING
 is 0-terminated so that C<result-E<gt>strstart> is usable as B<const char*>
@@ -413,6 +419,8 @@ This is the preferred API function.
 
 The C<enum_runtime_ft type> is one or more of the types defined in
 F<include/parrot/library.h>.
+
+=cut
 
 */
 
@@ -425,8 +433,9 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, NOTNULL(STRING *file),
 {
     STRING *prefix;
     STRING *full_name;
-    INTVAL i, n;
-    PMC *paths;
+    PMC    *paths;
+    char   *ignored;
+    INTVAL  i, n;
 
     /* if this is an absolute path return it as is */
     if (is_abs_path(file))
@@ -439,8 +448,11 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, NOTNULL(STRING *file),
     else
         paths = get_search_paths(interp, PARROT_LIB_PATH_INCLUDE);
 
-    Parrot_get_runtime_prefix(interp, &prefix);
-    n = VTABLE_elements(interp, paths);
+    ignored = Parrot_get_runtime_prefix(interp, &prefix);
+    n       = VTABLE_elements(interp, paths);
+
+    UNUSED(ignored);
+
     for (i = 0; i < n; ++i) {
         STRING * const path = VTABLE_get_string_keyed_int(interp, paths, i);
 
@@ -493,7 +505,7 @@ Parrot_locate_runtime_file(PARROT_INTERP, NOTNULL(const char *file_name),
 
 /*
 
-FUNCDOC: Parrot_get_runtime_prefix
+=item C<Parrot_get_runtime_prefix>
 
 If C<prefix_str> is not NULL, set it to the prefix, else return a malloced
 c-string for the runtime prefix.  Remember to free the string with
@@ -501,6 +513,8 @@ C<string_cstring_free()>.
 
 XXX This is suboptimal.  We should have two funcs, so it's explicit
 whether we're searching for a STRING or a cstring.
+
+=cut
 
 */
 
@@ -557,11 +571,13 @@ Parrot_get_runtime_prefix(PARROT_INTERP, NULLOK(STRING **prefix_str))
 
 /*
 
-FUNCDOC: parrot_split_path_ext
+=item C<parrot_split_path_ext>
 
 Split the pathstring C<in> into <path><filestem><ext>. Return the
 C<filestem> of the pathstring. Set C<wo_ext> to the part without
 extension and C<ext> to the extension or NULL.
+
+=cut
 
 */
 
@@ -615,9 +631,13 @@ parrot_split_path_ext(PARROT_INTERP, NOTNULL(STRING *in),
 
 /*
 
+=back
+
 =head1 SEE ALSO
 
 F<include/parrot/library.h>
+
+=cut
 
 */
 

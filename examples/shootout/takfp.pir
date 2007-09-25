@@ -14,7 +14,7 @@
 	$S0 = argv[1]
 	n = $S0
 argsok:
-	.local float f
+	.local num f
 	$N0 = n
 	$N0 *= 3
 	$N1 = n
@@ -30,13 +30,13 @@ argsok:
 .end
 
 .sub Tak
-	.param float x
-	.param float y
-	.param float z
+	.param num x
+	.param num y
+	.param num z
 	unless y >= x goto endif
 	.return(z)
 endif:
-	.local float tmp
+	.local num tmp
 	tmp = x - 1
 	$N0 = Tak(tmp, y, z)
 	tmp = y - 1

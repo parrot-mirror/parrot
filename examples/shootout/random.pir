@@ -20,13 +20,13 @@ while_1:
 	.return(0)
 .end
 
-.const float IM = 139968.0
-.const float IA = 3877.0
-.const float IC = 29573.0
+.const num IM = 139968.0
+.const num IA = 3877.0
+.const num IC = 29573.0
 
 .sub gen_random
-	.param float max
-	.local float last
+	.param num max
+	.local num last
 	last = 42.0
 loop:
 	$N0 = last
@@ -38,7 +38,7 @@ loop:
 	$N1 /= IM
 	last = $N0
 	.yield($N1)
-	get_params "(0)", max
+	get_params "0", max
 	goto loop
 .end
 

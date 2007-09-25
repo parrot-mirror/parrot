@@ -1,4 +1,5 @@
 /*
+ * $Id$
  * Copyright (C) 2002-2007, The Perl Foundation.
  */
 
@@ -76,104 +77,59 @@ static int _is_ins_save(
     NOTNULL(IMC_Unit *unit),
     NOTNULL(Instruction *check_ins),
     NOTNULL(SymReg *r),
-    int what )
+    int what)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static int branch_branch( PARROT_INTERP, NOTNULL(IMC_Unit * unit) )
+static int branch_branch(PARROT_INTERP, NOTNULL(IMC_Unit * unit))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int branch_cond_loop( PARROT_INTERP, IMC_Unit * unit )
+static int branch_cond_loop(PARROT_INTERP, IMC_Unit * unit)
         __attribute__nonnull__(1);
 
-static int branch_cond_loop_swap( PARROT_INTERP,
+static int branch_cond_loop_swap(PARROT_INTERP,
     IMC_Unit *unit,
     Instruction *branch,
     Instruction *start,
-    Instruction *cond )
+    Instruction *cond)
         __attribute__nonnull__(1);
 
-static int branch_reorg( PARROT_INTERP, IMC_Unit * unit )
+static int branch_reorg(PARROT_INTERP, IMC_Unit * unit)
         __attribute__nonnull__(1);
 
-PARROT_WARN_UNUSED_RESULT
-static int check_clone( PARROT_INTERP,
-    NOTNULL(IMC_Unit *unit),
-    NOTNULL(Instruction *ins) )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-static int clone_remove( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-static int constant_propagation( PARROT_INTERP, IMC_Unit * unit )
+static int constant_propagation(PARROT_INTERP, IMC_Unit * unit)
         __attribute__nonnull__(1);
 
-static int dead_code_remove( PARROT_INTERP, IMC_Unit * unit )
+static int dead_code_remove(PARROT_INTERP, IMC_Unit * unit)
         __attribute__nonnull__(1);
 
-static int eval_ins( PARROT_INTERP, char *op, size_t ops, SymReg **r )
+static int eval_ins(PARROT_INTERP, char *op, size_t ops, SymReg **r)
         __attribute__nonnull__(1);
 
-Basic_block * find_outer(
-    NOTNULL(IMC_Unit *unit),
-    NOTNULL(Basic_block *blk) )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-static int if_branch( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
+static int if_branch(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
-static int is_ins_save( PARROT_INTERP,
+static int is_ins_save(PARROT_INTERP,
     NOTNULL(IMC_Unit *unit),
     NOTNULL(Instruction *ins),
     NOTNULL(SymReg *r),
-    int what )
+    int what)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-int is_invariant( PARROT_INTERP,
-    NOTNULL(IMC_Unit * unit),
-    NOTNULL(Instruction *ins) )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-int loop_one( PARROT_INTERP, NOTNULL(IMC_Unit *unit), int bnr )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-int loop_optimization( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-int max_loop_depth( NOTNULL(IMC_Unit *unit) )
+static int strength_reduce(PARROT_INTERP, IMC_Unit * unit)
         __attribute__nonnull__(1);
 
-int move_ins_out( PARROT_INTERP,
-    NOTNULL(IMC_Unit *unit),
-    NOTNULL(Instruction **ins),
-    NOTNULL(Basic_block *bb) )
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
-
-static int strength_reduce( PARROT_INTERP, IMC_Unit * unit )
+static int unused_label(PARROT_INTERP, IMC_Unit * unit)
         __attribute__nonnull__(1);
 
-static int unused_label( PARROT_INTERP, IMC_Unit * unit )
-        __attribute__nonnull__(1);
-
-static int used_once( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
+static int used_once(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -234,8 +190,6 @@ optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
     if (IMCC_INFO(interp)->optimizer_level & OPT_CFG) {
         IMCC_info(interp, 2, "optimize\n");
         any = constant_propagation(interp, unit);
-        if (0 && clone_remove(interp, unit)) /* XXX Why is this commented out? */
-            return 1;
         if (used_once(interp, unit))
             return 1;
 #if DO_LOOP_OPTIMIZATION
@@ -1637,34 +1591,6 @@ loop_optimization(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
     return 0;
 }
 #endif
-
-PARROT_WARN_UNUSED_RESULT
-static int
-check_clone(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *ins))
-{
-    SymReg * rl = ins->r[0];
-    SymReg * rr = ins->r[1];
-    if (0 && is_ins_save(interp, unit, ins, rl, CHK_CLONE) &&
-        is_ins_save(interp, unit, ins, rr, CHK_CLONE)) {
-        IMCC_debug(interp, DEBUG_OPT2, "clone %I removed\n", ins);
-        free(ins->op);
-        ins->op = str_dup("set");
-        return 1;
-    }
-    return 0;
-}
-
-static int
-clone_remove(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
-{
-    Instruction *ins;
-    int changes = 0;
-    IMCC_debug(interp, DEBUG_OPT2, "clone_remove\n");
-    for (ins = unit->instructions; ins; ins = ins->next)
-        if (!strcmp(ins->op, "clone"))
-            changes |= check_clone(interp, unit, ins);
-    return changes;
-}
 
 /*
  * Local variables:

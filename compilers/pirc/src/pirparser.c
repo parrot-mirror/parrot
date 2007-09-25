@@ -1,4 +1,5 @@
 /*
+ * $Id$
  * Copyright (C) 2007, The Perl Foundation.
  */
 
@@ -165,7 +166,7 @@ client code.
 parser_state *
 new_parser(char const * filename, pirvtable *vtable) {
 
-    parser_state *p = (parser_state *)malloc(sizeof(parser_state));
+    parser_state *p = (parser_state *)malloc(sizeof (parser_state));
 
     if (p == NULL) {
         fprintf(stderr, "no parser");
@@ -178,7 +179,7 @@ new_parser(char const * filename, pirvtable *vtable) {
     p->vtable        = vtable;
 
     /* allocate array to store heredoc arguments */
-    p->heredoc_ids      = (char **)calloc(MAX_HEREDOC_ARGS, sizeof(char *));
+    p->heredoc_ids      = (char **)calloc(MAX_HEREDOC_ARGS, sizeof (char *));
     p->heredoc_ids_size = MAX_HEREDOC_ARGS;
     return p;
 }
@@ -231,7 +232,7 @@ it's 2 times MAX_HEREDOC_ARGS, after the second time it's 2 * 2 * MAX_HEREDOC_AR
 static void
 resize_heredoc_args(parser_state *p) {
     /* allocate a new buffer*/
-    char **newbuffer = (char **)calloc(p->heredoc_ids_size << 1, sizeof(char **));
+    char **newbuffer = (char **)calloc(p->heredoc_ids_size << 1, sizeof (char **));
     if (newbuffer == NULL) {
         fprintf(stderr, "Failed to reallocate memory for heredoc arguments\n");
     }
@@ -689,7 +690,7 @@ arguments(parser_state *p) {
     }
 
     /* check whether there are any heredocs to be parsed */
-    if ( p->heredoc_index > 0) {
+    if (p->heredoc_index > 0) {
         unsigned i;
         for (i = 0; i < p->heredoc_index; i++) {
             char *heredocid = p->heredoc_ids[i];
@@ -818,7 +819,7 @@ parrot_instruction(parser_state *p) {
 
   assignment -> '=' ( unop expression
                     | expression arith_expr
-                    | target ( keylist | [ '->' method ] arguments )
+                    | target ( keylist | arguments )
                     | STRINGC arguments
                     | 'global' STRINGC
                     | heredocstring
@@ -875,14 +876,6 @@ assignment(parser_state *p) {
                     arguments(p);
                     emit_invocation_end(p);
                     break;
-                case T_PTR: /* method call; foo '->' method arguments */
-                    emit_invocation_start(p);
-                    emit_invocant(p, obj);
-                    next(p);
-                    method(p);
-                    arguments(p);
-                    emit_invocation_end(p);
-                    break;
                 case T_LBRACKET: /* target '=' target '[' expression ']' */
                     emit_target(p, obj);
                     keylist(p);
@@ -929,7 +922,7 @@ assignment(parser_state *p) {
 =item *
 
   return_statement -> '.return' ( arguments
-                                | target ['->' method] arguments
+                                | target arguments
                                 | methodcall
                                 )
                                 '\n'
@@ -950,10 +943,6 @@ return_statement(parser_state *p) {
             break;
         default: /* '.return' target ['->' method] arguments */
             target(p);
-            if (p->curtoken == T_PTR) { /* optional '->' method */
-                next(p);
-                method(p);
-            }
             arguments(p);
             break;
     }
@@ -1520,7 +1509,6 @@ long_yield_statement(parser_state *p) {
   target_statement -> target ( '=' assignment
                              | augmented_op expression
                              | keylist '=' expression
-                             | '->' method arguments
                              | arguments
                              )
                              '\n'
@@ -1559,11 +1547,6 @@ target_statement(parser_state *p) {
             keylist(p);
             match(p, T_ASSIGN);
             expression(p);
-            break;
-        case T_PTR:  /* target '->' method arguments '\n' */
-            next(p); /* skip '->' */
-            method(p);
-            arguments(p);
             break;
         case T_LPAREN:  /* target '(' arguments ')' */
             arguments(p);
@@ -1884,21 +1867,6 @@ instructions(parser_state *p) {
 
 =item *
 
-  global_definition -> '.global' IDENTIFIER
-
-=cut
-
-*/
-static void
-global_definition(parser_state *p) {
-    match(p, T_GLOBAL_DECL);
-    match(p, T_IDENTIFIER);
-}
-
-/*
-
-=item *
-
   multi-type-list -> '(' [multi-type {',' multi-type } ] ')'
 
   multi-type -> IDENTIFIER | STRINGC | keylist | type
@@ -1952,7 +1920,7 @@ multi_type_list(parser_state *p) {
 
 =item *
 
-  sub_flags -> [sub_flag { [','] sub_flag } ]
+  sub_flags -> [sub_flag { sub_flag } ]
 
   sub_flag  -> ':anon'
              | ':init'
@@ -1972,11 +1940,10 @@ multi_type_list(parser_state *p) {
 static void
 sub_flags(parser_state *p) {
     int ok = 1;
-    int wantmore = 0; /* flag that is set when a ',' is parsed */
 
     emit_sub_flag_start(p);
 
-    while (ok || wantmore) {
+    while (ok) {
         switch (p->curtoken) {
             case T_ANON_FLAG:
             case T_INIT_FLAG:
@@ -2017,7 +1984,6 @@ sub_flags(parser_state *p) {
                 break;
             case T_NEWLINE:
                 ok = 0; /* stop loop; wantmore is always cleared, so loop will stop */
-                if (wantmore) syntax_error(p, 1, "sub flag expected after ','");
                 break;
             default:
                 syntax_error(p, 3, "sub flag expected, but got '",
@@ -2026,13 +1992,6 @@ sub_flags(parser_state *p) {
                 next(p);
                 ok = 0;
                 break;
-        }
-
-        wantmore = 0; /* clear wantmore flag */
-
-        if (p->curtoken == T_COMMA) {
-            next(p); /* skip the comma */
-            wantmore = 1;  /* after the optional comma we expect another sub flag */
         }
     }
 
@@ -2109,7 +2068,7 @@ static void
 sub_definition(parser_state *p) {
     /* call emit method */
     emit_sub_start(p);
-    next(p); /* skip '.sub' or '.pcc_sub' */
+    next(p); /* skip '.sub' */
 
     switch (p->curtoken) { /* subname -> IDENTIFIER | STRINGC */
         case T_IDENTIFIER:
@@ -2336,8 +2295,7 @@ loadlib(parser_state *p) {
 
 =item *
 
-  compilation_unit -> global_definition
-                    | sub_definition
+  compilation_unit -> sub_definition
                     | '.const' const_definition
                     | emit_block
                     | include
@@ -2354,11 +2312,7 @@ loadlib(parser_state *p) {
 static void
 compilation_unit(parser_state *p) {
     switch (p->curtoken) {
-        case T_GLOBAL_DECL: /* compilation_unit -> global_definition */
-            global_definition(p);
-            break;
         case T_SUB: /* compilation_unit -> sub_definition */
-        case T_PCC_SUB:
             sub_definition(p);
             break;
         case T_CONST: /* compilation_unit -> '.const' const_definition */
@@ -2414,7 +2368,7 @@ program(parser_state *p) {
 
     compilation_unit(p);
 
-    while (p->curtoken != T_EOF ) {
+    while (p->curtoken != T_EOF) {
         match(p, T_NEWLINE);
         compilation_unit(p);
     }

@@ -1,6 +1,8 @@
 /*
  * cola.h
  *
+ * $Id$
+ *
  * Cola compiler for Parrot
  *
  * Copyright (C) 2002 Melvin Smith <melvin.smith@mindspring.com>
@@ -329,8 +331,8 @@ void                resolve_identifier(Symbol **);
 
 char                *str_dup(const char *);
 char                *str_cat(const char *, const char *);
-void                dump_namespace(Symbol * );
-void                dump_symbol_table(SymbolTable * );
+void                dump_namespace(Symbol *);
+void                dump_symbol_table(SymbolTable *);
 Symbol              *check_id_redecl(SymbolTable * table, const char * name);
 Symbol              *check_id_decl(SymbolTable * table, const char * name);
 void                unshift_ast(AST ** list, AST * p);

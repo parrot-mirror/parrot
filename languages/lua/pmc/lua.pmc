@@ -21,11 +21,19 @@ This singleton PMC holds some static methods.
 #include "lua_private.h"
 #include <locale.h>
 
+INTVAL dynpmc_LuaBoolean;
+INTVAL dynpmc_LuaClosure;
+INTVAL dynpmc_LuaFunction;
+INTVAL dynpmc_LuaNil;
+INTVAL dynpmc_LuaNumber;
+INTVAL dynpmc_LuaString;
+INTVAL dynpmc_LuaTable;
+INTVAL dynpmc_LuaUserdata;
 
 static PMC * Lua_PMC;
 
 static STRING*
-context_infostr(Interp *interp, parrot_context_t *ctx)
+context_infostr(PARROT_INTERP, parrot_context_t *ctx)
 {
     struct Parrot_Context_info info;
     STRING *res = NULL;
@@ -37,7 +45,7 @@ context_infostr(Interp *interp, parrot_context_t *ctx)
                                        file, info.line, info.subname);
 
         /* free the non-constant string, but not the constant one */
-        if (strncmp( "(unknown file)", file, 14 ) < 0 )
+        if (strncmp("(unknown file)", file, 14) < 0)
             string_cstring_free(file);
     }
     Parrot_unblock_DOD(interp);
@@ -70,6 +78,8 @@ pmclass Lua
               const_string(INTERP, "LuaString"));
             dynpmc_LuaTable = pmc_type(INTERP,
               const_string(INTERP, "LuaTable"));
+            dynpmc_LuaUserdata = pmc_type(INTERP,
+              const_string(INTERP, "LuaUserdata"));
         }
     }
 
@@ -111,7 +121,7 @@ information see F<src/pmc.c>.
                 Parrot_block_DOD(INTERP);
                 if (Parrot_Context_get_info(INTERP, ctx, &info)) {
                     /* free the non-constant string, but not the constant one */
-                    if (strncmp( "(unknown file)", info.file, 14 ) < 0 )
+                    if (strncmp("(unknown file)", info.file, 14) < 0)
                         string_cstring_free(info.file);
 
                     Parrot_unblock_DOD(INTERP);
@@ -371,15 +381,15 @@ information see F<src/pmc.c>.
         while (1) {
             PMC *cont;
             PMC *sub = ctx->current_sub;
-            if ( PMC_metadata(sub) != NULL
-              && VTABLE_isa(INTERP, sub, const_string(INTERP, "LuaClosure")) ) {
+            if (PMC_metadata(sub) != NULL
+              && VTABLE_isa(INTERP, sub, const_string(INTERP, "LuaClosure"))) {
                 struct Parrot_Context_info info;
                 Parrot_block_DOD(INTERP);
                 if (Parrot_Context_get_info(INTERP, ctx, &info)) {
                     STRING* res = Parrot_sprintf_c(INTERP, "%s:%d:",
                                                    info.file, info.line);
                     /* free the non-constant string, but not the constant one */
-                    if (strncmp( "(unknown file)", info.file, 14 ) < 0 )
+                    if (strncmp("(unknown file)", info.file, 14) < 0)
                         string_cstring_free(info.file);
 
                     Parrot_unblock_DOD(INTERP);
