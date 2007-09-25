@@ -992,8 +992,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "OO argument passing" );
     print " "
     print s
 .end
-.sub baz
-    .param pmc self
+.sub baz :method
     .param string s
     print self
     print " "
@@ -1689,6 +1688,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "call evaled vtable code" );
     .local pmc comp
     comp = compreg "PIR"
     $P0 = comp(s)
+    cl.'add_method'('get_integer_keyed_int', $P0, 'vtable' => 1)
     o = new 'Foo'
     $I0 = o[12]
     print $I0
