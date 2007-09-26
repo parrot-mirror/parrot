@@ -175,6 +175,8 @@ op new(out PMC, inconst PMC, in PMC) {
 
 =item B<typeof>(out INT, invar PMC)
 
+=item B<typeof>(out PMC, invar PMC)
+
 Return the type of PMC in $2.
 
 =item B<typeof>(out INT, invar PMC, in KEY)
@@ -187,6 +189,11 @@ Return the type of the entry in aggregate PMC in $2 at key $3.
 
 inline op typeof (out STR, invar PMC) {
   $1 = VTABLE_name(interp, $2);
+  goto NEXT();
+}
+
+inline op typeof (out PMC, invar PMC) {
+  $1 = VTABLE_get_class(interp, $2);
   goto NEXT();
 }
 
