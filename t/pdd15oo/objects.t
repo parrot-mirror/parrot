@@ -1591,7 +1591,7 @@ ok 4
 MyInt2(42)
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "subclassing ParrotClass" );
+pir_output_is( <<'CODE', <<'OUTPUT', "subclassing Class" );
 
 .sub main :main
     .local pmc cl
