@@ -922,7 +922,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "overridden vtables" );
     print "in set_integer\n"
     new P6, 'Integer'
     set P6, val
-    setattribute P2, ".i", P6
+    setattribute self, ".i", P6
 
     .return ()
 .end
@@ -1071,7 +1071,7 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "addparent exceptions #2" );
     addparent P0, P1
     end
 CODE
-/Class isn't a ParrotClass/
+/Only classes can be subclassed/
 OUTPUT
 
 # '

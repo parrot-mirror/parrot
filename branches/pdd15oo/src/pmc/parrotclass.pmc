@@ -473,7 +473,7 @@ Create the class from the thawed parents and attributes array.
                     parent_class = parent_class->vtable->pmc_class;
                 }
 
-                Parrot_add_parent(INTERP, _class, parent_class);
+/* removed function: Parrot_add_parent(INTERP, _class, parent_class); */
             }
         }
 
