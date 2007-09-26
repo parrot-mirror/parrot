@@ -354,9 +354,12 @@ op subclass(out PMC, in STR, in STR) :object_classes {
 
     if (PMC_IS_NULL(parent_class)) {
         /* Look up a low-level class and create a proxy */
-        PMC *type_num = pmc_new(interp, enum_class_Integer);
-        VTABLE_set_integer_native(interp, type_num, pmc_type(interp, parent_name));
-        parent_class = pmc_new_init(interp, enum_class_PMCProxy, type_num);
+        INTVAL type = pmc_type(interp, parent_name);
+        if (type) {
+             PMC *type_num = pmc_new(interp, enum_class_Integer);
+             VTABLE_set_integer_native(interp, type_num, type);
+             parent_class = pmc_new_init(interp, enum_class_PMCProxy, type_num);
+        }
     }
 
     if (PMC_IS_NULL(parent_class)) {
