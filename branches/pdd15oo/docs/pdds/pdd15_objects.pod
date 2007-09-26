@@ -1029,6 +1029,16 @@ currently selected namespace. Passing in a namespace object looks for the class
 in that namespace object. A key looks for the class in the namespace identified
 by the multilevel key relative to the currently selected HLL.
 
+=item typeof
+
+  $S1 = typeof $P2
+  $P1 = typeof $P2
+
+Lookup the type of the instance object in $P2. Return the string name if the
+destination is a string register or variable. If the destination is a PMC
+register or variable, return the class object for an instance of a high-level
+class, or the class proxy object for an instance of a low-level PMC.
+
 =item new
 
   $P1 = new $S2
