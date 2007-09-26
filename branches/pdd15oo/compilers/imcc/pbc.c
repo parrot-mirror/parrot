@@ -70,108 +70,108 @@ static struct globals {
 
 /* HEADERIZER BEGIN: static */
 
-static void add_1_const(PARROT_INTERP, NOTNULL(SymReg *r))
+static void add_1_const( PARROT_INTERP, NOTNULL(SymReg *r) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int add_const_key(PARROT_INTERP,
+static int add_const_key( PARROT_INTERP,
     NOTNULL(opcode_t key[]),
     int size,
-    NOTNULL(const char *s_key))
+    NOTNULL(const char *s_key) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(4);
 
-static int add_const_num(PARROT_INTERP, const char *buf)
+static int add_const_num( PARROT_INTERP, const char *buf )
         __attribute__nonnull__(1);
 
-static int add_const_pmc_sub(PARROT_INTERP,
+static int add_const_pmc_sub( PARROT_INTERP,
     NOTNULL(SymReg *r),
     int offs,
-    int end)
+    int end )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int add_const_str(PARROT_INTERP, NOTNULL(const SymReg *r))
+static int add_const_str( PARROT_INTERP, NOTNULL(const SymReg *r) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static opcode_t build_key(PARROT_INTERP, NOTNULL(SymReg *key_reg))
+static opcode_t build_key( PARROT_INTERP, NOTNULL(SymReg *key_reg) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void constant_folding(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
+static void constant_folding( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static PMC* create_lexinfo(PARROT_INTERP,
+static PMC* create_lexinfo( PARROT_INTERP,
     IMC_Unit *unit,
     PMC *sub,
-    int need_lex)
+    int need_lex )
         __attribute__nonnull__(1);
 
 static subs_t * find_global_label(
     NOTNULL(const char *name),
     NOTNULL(const subs_t *sym),
-    NOTNULL(int *pc))
+    NOTNULL(int *pc) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static PMC* find_outer(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
+static PMC* find_outer( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void fixup_globals(PARROT_INTERP)
+static void fixup_globals( PARROT_INTERP )
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
-static int get_codesize(PARROT_INTERP,
+static int get_codesize( PARROT_INTERP,
     NOTNULL(IMC_Unit *unit),
-    NOTNULL(int *src_lines))
+    NOTNULL(int *src_lines) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static int get_old_size(PARROT_INTERP, NOTNULL(int *ins_line))
+static int get_old_size( PARROT_INTERP, NOTNULL(int *ins_line) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void imcc_globals_destroy(SHIM_INTERP,
+static void imcc_globals_destroy( SHIM_INTERP,
     SHIM(int ex),
-    SHIM(void *param));
+    SHIM(void *param) );
 
-static void make_new_sub(NOTNULL(IMC_Unit *unit))
+static void make_new_sub( NOTNULL(IMC_Unit *unit) )
         __attribute__nonnull__(1);
 
-static void make_pmc_const(PARROT_INTERP, NOTNULL(SymReg *r))
+static void make_pmc_const( PARROT_INTERP, NOTNULL(SymReg *r) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static PMC* mk_multi_sig(PARROT_INTERP, NOTNULL(SymReg *r))
+static PMC* mk_multi_sig( PARROT_INTERP, NOTNULL(SymReg *r) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
-static int old_blocks(void);
+static int old_blocks( void );
 
 PARROT_CONST_FUNCTION
-static const char * slice_deb(int bits);
+static const char * slice_deb( int bits );
 
-static void store_fixup(PARROT_INTERP,
+static void store_fixup( PARROT_INTERP,
     NOTNULL(SymReg *r),
     int pc,
-    int offset)
+    int offset )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void store_key_const(NOTNULL(const char *str), int idx)
+static void store_key_const( NOTNULL(const char *str), int idx )
         __attribute__nonnull__(1);
 
-static void store_sub_size(size_t size, size_t ins_line);
-static void verify_signature(PARROT_INTERP,
+static void store_sub_size( size_t size, size_t ins_line );
+static void verify_signature( PARROT_INTERP,
     NOTNULL(const Instruction *ins),
-    opcode_t *pc)
+    opcode_t *pc )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

@@ -41,45 +41,45 @@ ParserUtil - Parser support functions.
 /* HEADERIZER BEGIN: static */
 
 PARROT_WARN_UNUSED_RESULT
-static int change_op(PARROT_INTERP,
+static int change_op( PARROT_INTERP,
     NOTNULL(IMC_Unit *unit),
     NOTNULL(SymReg **r),
     int num,
-    int emit)
+    int emit )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 PARROT_CANNOT_RETURN_NULL
-static void * imcc_compile_file(PARROT_INTERP,
+static void * imcc_compile_file( PARROT_INTERP,
     NOTNULL(const char *fullname),
-    NOTNULL(STRING **error_message))
+    NOTNULL(STRING **error_message) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
-static int is_infix(NOTNULL(const char *name), int n, NOTNULL(SymReg **r))
+static int is_infix( NOTNULL(const char *name), int n, NOTNULL(SymReg **r) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static Instruction * maybe_builtin(PARROT_INTERP,
+static Instruction * maybe_builtin( PARROT_INTERP,
     NOTNULL(const char *name),
     NOTNULL(SymReg **r),
-    int n)
+    int n )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static const char * to_infix(PARROT_INTERP,
+static const char * to_infix( PARROT_INTERP,
     NOTNULL(const char *name),
     NOTNULL(SymReg **r),
     NOTNULL(int *n),
-    int mmd_op)
+    int mmd_op )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -89,17 +89,17 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static const char * try_rev_cmp(
     NOTNULL(const char *name),
-    NOTNULL(SymReg **r))
+    NOTNULL(SymReg **r) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
-static Instruction * var_arg_ins(PARROT_INTERP,
+static Instruction * var_arg_ins( PARROT_INTERP,
     NOTNULL(IMC_Unit *unit),
     NOTNULL(const char *name),
     NOTNULL(SymReg **r),
     int n,
-    int emit)
+    int emit )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)

@@ -20,61 +20,61 @@
 
 /* HEADERIZER BEGIN: static */
 
-static void insert_tail_call(PARROT_INTERP,
+static void insert_tail_call( PARROT_INTERP,
     NOTNULL(IMC_Unit * unit),
     NOTNULL(NOTNULL(Instruction *ins)),
     NOTNULL(SymReg *sub),
-    NULLOK(SymReg *meth))
+    NULLOK(SymReg *meth) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static Instruction * insINS(PARROT_INTERP,
+static Instruction * insINS( PARROT_INTERP,
     IMC_Unit * unit,
     NOTNULL(Instruction *ins),
     char *name,
     SymReg **regs,
-    int n)
+    int n )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static Instruction * move_regs(PARROT_INTERP,
+static Instruction * move_regs( PARROT_INTERP,
     IMC_Unit * unit,
     NOTNULL(Instruction *ins),
     int n,
     SymReg **dest,
-    SymReg **src)
+    SymReg **src )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static Instruction* pcc_get_args(PARROT_INTERP,
+static Instruction* pcc_get_args( PARROT_INTERP,
     IMC_Unit * unit,
     NOTNULL(Instruction *ins),
     char *op_name,
     int n,
     SymReg **args,
-    int *arg_flags)
+    int *arg_flags )
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static int pcc_reg_mov(PARROT_INTERP,
+static int pcc_reg_mov( PARROT_INTERP,
     unsigned char d,
     unsigned char s,
-    NOTNULL(void *vinfo))
+    NOTNULL(void *vinfo) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(4);
 
-static int recursive_tail_call(PARROT_INTERP,
+static int recursive_tail_call( PARROT_INTERP,
     NOTNULL(NOTNULL(IMC_Unit *unit)),
     NOTNULL(NOTNULL(Instruction *ins)),
-    NOTNULL(SymReg *sub))
+    NOTNULL(SymReg *sub) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static void unshift_self(NOTNULL(SymReg *sub), SymReg *obj)
+static void unshift_self( NOTNULL(SymReg *sub), SymReg *obj )
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */

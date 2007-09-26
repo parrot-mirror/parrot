@@ -23,28 +23,29 @@
 
 /* HEADERIZER BEGIN: static */
 
-static SymReg * _get_sym_typed(NOTNULL(const SymHash *hsh),
+static SymReg * _get_sym_typed(
+    NOTNULL(const SymHash *hsh),
     NOTNULL(const char *name),
-    int t)
+    int t )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static char * add_ns(PARROT_INTERP, NOTNULL(char *name))
+static char * add_ns( PARROT_INTERP, NOTNULL(char *name) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-static SymReg* mk_pmc_const_2(PARROT_INTERP,
+static SymReg* mk_pmc_const_2( PARROT_INTERP,
     NOTNULL(IMC_Unit *unit),
     NOTNULL(SymReg *left),
-    NOTNULL(SymReg *rhs))
+    NOTNULL(SymReg *rhs) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static void resize_symhash(NOTNULL(SymHash *hsh))
+static void resize_symhash( NOTNULL(SymHash *hsh) )
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
