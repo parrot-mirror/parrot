@@ -19,11 +19,11 @@
 
 /* HEADERIZER BEGIN: static */
 
-static void imc_free_unit(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
+static void imc_free_unit( PARROT_INTERP, NOTNULL(IMC_Unit *unit) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static IMC_Unit * imc_new_unit(IMC_Unit_Type t);
+static IMC_Unit * imc_new_unit( IMC_Unit_Type t );
 /* HEADERIZER END: static */
 
 #define COMPILE_IMMEDIATE 1

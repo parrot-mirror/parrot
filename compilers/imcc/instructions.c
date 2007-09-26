@@ -36,17 +36,17 @@ int n_comp_units;
 
 /* HEADERIZER BEGIN: static */
 
-static int e_file_close(PARROT_INTERP, SHIM(void *param))
+static int e_file_close( PARROT_INTERP, SHIM(void *param) )
         __attribute__nonnull__(1);
 
-static int e_file_emit(PARROT_INTERP,
+static int e_file_emit( PARROT_INTERP,
     SHIM(void *param),
     SHIM(IMC_Unit *unit),
-    NOTNULL(const Instruction *ins))
+    NOTNULL(const Instruction *ins) )
         __attribute__nonnull__(1)
         __attribute__nonnull__(4);
 
-static int e_file_open(SHIM_INTERP, NOTNULL(void *param))
+static int e_file_open( SHIM_INTERP, NOTNULL(void *param) )
         __attribute__nonnull__(2);
 
 /* HEADERIZER END: static */
