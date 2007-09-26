@@ -1245,3 +1245,4 @@ setattribute_p_p_s_p           1214
 setattribute_p_p_sc_p          1215
 setattribute_p_pc_s_p          1216
 setattribute_p_pc_sc_p         1217
+typeof_p_p                     1218
