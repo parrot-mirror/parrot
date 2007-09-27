@@ -186,6 +186,60 @@ Mark any referenced strings and PMCs in the structure as live.
 
 /*
 
+=item C<INTVAL isa_pmc(PMC *classname)>
+
+Returns whether the class is or inherits from C<*classname>.
+
+=cut
+
+*/
+
+    INTVAL isa_pmc(PMC *lookup) {
+        Parrot_PMCProxy * const _proxy = PARROT_PMCPROXY(SELF);
+        INTVAL        i, num_classes;
+        STRING       *classname;
+        PMC          *classobj = PMCNULL;
+
+        if (PMC_IS_NULL(lookup))
+            return 0;
+
+        if (SUPER(lookup))
+            return 1;
+
+        classobj = Parrot_oo_get_class(interp, lookup);
+
+        if (PMC_IS_NULL(classobj))
+            return 0;
+
+        classname = VTABLE_get_string(interp, classobj);
+
+        /* Check if the class object is the same as self's class object */
+        if (VTABLE_is_same(interp, SELF, classobj))
+            return 1;
+
+        /* Check if the passed name is the same as the stored short name. */
+        if (string_equal(interp, classname, _proxy->name) == 0)
+            return 1;
+
+        /* Check if the passed name is the same as the fully qualified name. */
+        if (string_equal(interp, classname, VTABLE_get_string(interp, SELF)) == 0)
+            return 1;
+
+        /* Iterate over all the parents and check if they respond true
+         * for 'isa' on the original comparison.
+         */
+        num_classes = VTABLE_elements(interp, _proxy->parents);
+        for (i = 0; i < num_classes; i++) {
+            PMC *cur_class = VTABLE_get_pmc_keyed_int(interp, _proxy->parents, i);
+            if (VTABLE_isa_pmc(interp, cur_class, lookup))
+                return 1;
+        }
+
+        return 0;
+    }
+
+/*
+
 =item C<PMC *inspect_str(STRING *what)>
 
 Provides introspection of a specific piece of information about the PMC. The
