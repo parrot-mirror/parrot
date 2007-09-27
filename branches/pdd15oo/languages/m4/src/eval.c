@@ -93,22 +93,22 @@ PARROT_DYNEXT_EXPORT int   m4_evaluate(void *);
 `--------------------*/
 
 /* Pointer to next character of input text.  */
-static const char *eval_text;
+static const unsigned char *eval_text;
 
 /* Value of eval_text, from before last call of eval_lex().  This is so we
    can back up, if we have read too much.  */
-static const char *last_text;
+static const unsigned char *last_text;
 
 static void eval_init_lex(const char *text)
 {
-  eval_text = text;
+  eval_text = (const unsigned char *)text;
   last_text = NULL;
 }
 
 static void
 eval_undo(void)
 {
-  eval_text = last_text;
+  eval_text = (const unsigned char *)last_text;
 }
 
 /* VAL is numerical value, if any.  */
@@ -121,7 +121,7 @@ static eval_token eval_lex(eval_t *val)
 
   if (*eval_text == '\0') return M4_EOTEXT;
 
-  if (isdigit(*eval_text))
+  if (isdigit((unsigned char)*eval_text))
   {
       int base, digit;
 
@@ -146,7 +146,7 @@ static eval_token eval_lex(eval_t *val)
             case 'R':
               base = 0;
               eval_text++;
-              while (isdigit(*eval_text) && base <= 36)
+              while (isdigit((unsigned char)*eval_text) && base <= 36)
                 base = 10 * base + *eval_text++ - '0';
               if (base == 0 || base > 36 || *eval_text != ':')
                 return M4_ERROR;
@@ -163,11 +163,11 @@ static eval_token eval_lex(eval_t *val)
       (*val) = 0;
       for (; *eval_text; eval_text++)
         {
-          if (isdigit(*eval_text))
+          if (isdigit((unsigned char)*eval_text))
             digit = *eval_text - '0';
-          else if (islower(*eval_text))
+          else if (islower((unsigned char)*eval_text))
             digit = *eval_text - 'a' + 10;
-          else if (isupper(*eval_text))
+          else if (isupper((unsigned char)*eval_text))
             digit = *eval_text - 'A' + 10;
           else
             break;

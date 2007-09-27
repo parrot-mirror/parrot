@@ -71,8 +71,6 @@ are deprecated:
 
 =item B<new>(out PMC, in INT, in STR)
 
-=item B<instantiate>(out PMC)
-
 =back
 
 They will be removed in the 0.5.0 release.
@@ -103,9 +101,14 @@ the "new" opcode for the PMCs that use it.)
   PMC* subclass(PMC *name)
 
 The subclass vtable method is deprecated and will be removed in the 0.5.0
-release.
+release. The subclass opcode stays.
 
 =item 5
+
+The C<getclass> opcode is deprecated (replaced by the C<get_class> opcode) and
+will be removed in the 0.5.0 release.
+
+=item 6
 
 The PMC union struct is deprecated and will be removed once all core PMCs have
 been updated.
@@ -137,6 +140,29 @@ Instead, you should write:
  #
  .end
 
+=item C<.HLL_map INTC, INTC> will become C<.HLL_map STRINGC, STRINGC>
+
+As the dot-prefix type notation (for instance, '.Integer') is disappearing, the
+C<.HLL_map> syntax will also be updated to take strings to indicate the types.
+[RT#45453].
+
+=item .sym directive
+
+The C<.sym> directive will be removed, as there is already the C<.local> directive
+to declare a variable.
+
+See [RT#45405]
+
+=item .local macro labels will become C<.label>
+
+In macros you can declare a unique label by writing:
+
+ .local $myLabel:
+
+This will be automagically translated into some magic that generates
+a unique label. The C<.local> directive will be changed into C<.label>.
+
+See [RT#45405]
 
 =back
 

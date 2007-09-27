@@ -25,10 +25,6 @@
 #include "parser.h"
 #include "optimizer.h"
 
-/* HEADERIZER HFILE: compilers/imcc/imc.h */
-
-/* HEADERIZER BEGIN: static */
-
 #ifndef YYENABLE_NLS
 #  define YYENABLE_NLS 0
 #endif
@@ -36,6 +32,10 @@
 #ifndef YYLTYPE_IS_TRIVIAL
 #  define YYLTYPE_IS_TRIVIAL 0
 #endif
+
+/* HEADERIZER HFILE: compilers/imcc/imc.h */
+
+/* HEADERIZER BEGIN: static */
 
 static void add_pcc_named_arg(PARROT_INTERP,
     NOTNULL(SymReg *cur_call),
@@ -658,6 +658,23 @@ hll_def: HLL STRINGC COMMA STRINGC
              Parrot_register_HLL_type(interp,
                 CONTEXT(((Interp*)interp)->ctx)->current_HLL, atoi($2), atoi($4));
              $$ = 0;
+         }
+   | HLL_MAP STRINGC COMMA STRINGC
+         {
+            int built_in_type = 0;
+            int language_type = 0;
+
+            STRING *built_in_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
+            STRING *language_name = string_unescape_cstring(interp, $4 + 1, '"', NULL);
+            built_in_type = pmc_type(interp, built_in_name);
+            language_type = pmc_type(interp, language_name);
+
+            /*
+            fprintf(stderr, "built in type is: %d, language type is: %d\n", built_in_type, language_type);
+            */
+            Parrot_register_HLL_type(interp,
+                 CONTEXT(((Interp *)interp)->ctx)->current_HLL, built_in_type, language_type);
+            $$ = 0;
          }
    ;
 

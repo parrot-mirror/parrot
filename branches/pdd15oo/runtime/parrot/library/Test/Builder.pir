@@ -88,9 +88,6 @@ the same state.
 
 =cut
 
-.sub __fake_init :method
-.end
-
 .sub init :vtable :method
     .local pmc args
     .local pmc output
