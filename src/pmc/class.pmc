@@ -1187,9 +1187,6 @@ Returns whether the class is or inherits from C<*classname>.
         INTVAL        i, num_classes;
         STRING       *classname;
         PMC          *classobj = PMCNULL;
-        PMC          *parent_ns;
-        PMC *hll_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
-          CONTEXT(interp->ctx)->current_HLL);
 
         if (PMC_IS_NULL(lookup))
             return 0;
@@ -1197,18 +1194,7 @@ Returns whether the class is or inherits from C<*classname>.
         if (SUPER(lookup))
             return 1;
 
-        if (VTABLE_isa(interp, lookup, CONST_STRING(interp, "Class"))) {
-            classobj = lookup;
-        }
-        else if (VTABLE_isa(interp, lookup, CONST_STRING(interp, "NameSpace"))) {
-            classobj = VTABLE_get_class(interp, lookup);
-        }
-        else if (VTABLE_isa(interp, lookup, CONST_STRING(interp, "String"))
-                || VTABLE_isa(interp, lookup, CONST_STRING(interp, "Key"))) {
-            parent_ns = Parrot_get_namespace_keyed(interp, hll_ns, lookup);
-            if (!PMC_IS_NULL(parent_ns))
-                classobj = VTABLE_get_class(interp, parent_ns);
-        }
+        classobj = Parrot_oo_get_class(interp, lookup);
 
         if (PMC_IS_NULL(classobj))
             return 0;
