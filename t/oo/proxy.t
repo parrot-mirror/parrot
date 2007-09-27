@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 3;
+use Parrot::Test tests => 4;
 
 =head1 NAME
 
@@ -73,6 +73,19 @@ pir_output_is( <<'CODE', <<'OUT', 'typeof a Class object');
 CODE
 Class
 1
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'proxy as parent of class');
+.sub main :main
+    $P0 = get_class 'Hash'
+    $P1 = subclass $P0, [ 'MyClass' ]
+    $P2 = new [ 'MyClass' ]
+    $P2['xyz'] = 'abc'
+    $S1 = $P2['xyz']
+    print $S1
+    print "\n"
+.end
+CODE
 OUT
 
 # Local Variables:
