@@ -10,7 +10,7 @@ PGE::OPTable - PGE operator precedence table and parser
 
 =cut
 
-.namespace [ "PGE::OPTable" ]
+.namespace ['PGE';'OPTable']
 
 .const int PGE_OPTABLE_EXPECT_TERM   = 0x01
 .const int PGE_OPTABLE_EXPECT_OPER   = 0x02
@@ -34,8 +34,8 @@ PGE::OPTable - PGE operator precedence table and parser
 .sub '__onload' :load
     .local pmc base
     .local pmc sctable
-    $P0 = getclass 'Hash'
-    base = subclass $P0, 'PGE::OPTable'
+    $P0 = get_class 'Hash'
+    base = subclass $P0, ['PGE';'OPTable']
     addattribute base, '%!key'
     addattribute base, '%!klen'
     addattribute base, '&!ws'
@@ -77,8 +77,8 @@ Adds (or replaces) a syntactic category's defaults.
     tokentable = self
     keytable = new 'Hash'
     klentable = new 'Hash'
-    setattribute self, "PGE::OPTable\x0%!key", keytable
-    setattribute self, "PGE::OPTable\x0%!klen", klentable
+    setattribute self, '%!key', keytable
+    setattribute self, '%!klen', klentable
 .end
 
 
@@ -93,7 +93,7 @@ Adds (or replaces) a syntactic category's defaults.
     key = substr name, $I0
 
     .local pmc sctable, token
-    sctable = get_hll_global ["PGE::OPTable"], "%!sctable"
+    sctable = get_global '%!sctable'
     $I0 = exists sctable[syncat]
     if $I0 == 0 goto token_hash
     token = sctable[syncat]
@@ -119,7 +119,7 @@ Adds (or replaces) a syntactic category's defaults.
     token[$P1] = $P2
     goto args_loop
   args_end:
-    
+
     $S0 = token['match']
     if $S0 > '' goto with_match
     token['match'] = 'PGE::Match'
@@ -173,8 +173,8 @@ Adds (or replaces) a syntactic category's defaults.
 
   add_key:
     .local pmc keytable, klentable
-    keytable = getattribute self, "PGE::OPTable\x0%!key"
-    klentable = getattribute self, "PGE::OPTable\x0%!klen"
+    keytable = getattribute self, '%!key'
+    klentable = getattribute self, '%!klen'
     $I1 = length key
     $S0 = substr key, 0, 1
     $I0 = klentable[$S0]
@@ -214,7 +214,6 @@ Adds (or replaces) a syntactic category's defaults.
     .param pmc adverbs         :slurpy :named
     .local pmc tokentable, keytable, klentable
     .local pmc tokenstack, operstack, termstack
-    .local pmc newfrom
     .local string target
     .local pmc mfrom, mpos
     .local int pos, lastpos, wspos
@@ -227,8 +226,8 @@ Adds (or replaces) a syntactic category's defaults.
     .local int circumnest
 
     tokentable = self
-    keytable = getattribute self, "PGE::OPTable\x0%!key"
-    klentable = getattribute self, "PGE::OPTable\x0%!klen"
+    keytable = getattribute self, '%!key'
+    klentable = getattribute self, '%!klen'
 
     unless null adverbs goto with_adverbs
     adverbs = new 'Hash'
@@ -280,13 +279,12 @@ Adds (or replaces) a syntactic category's defaults.
     tighter = token['precedence']
   with_tighter:
 
-    ws = getattribute self, "PGE::OPTable\x0&!ws"
+    ws = getattribute self, '&!ws'
     tokenstack = new 'ResizablePMCArray'
     operstack = new 'ResizablePMCArray'
     termstack = new 'ResizablePMCArray'
 
-    newfrom = get_hll_global ["PGE::Match"], "newfrom"
-    $P0 = getclass 'PGE::Match'
+    $P0 = get_hll_global ['PGE'], 'Match'
     (mob, pos, target, mfrom, mpos) = $P0.'new'(mob, adverbs :flat :named)
     lastpos = length target
     circumnest = 0
@@ -368,7 +366,7 @@ Adds (or replaces) a syntactic category's defaults.
     $I0 = expect & PGE_OPTABLE_EXPECT_TERM
     if $I0 == 0 goto end
     ##   otherwise, let's add a "dummy" term to the stack for reduction
-    (oper, $S0, $P0, $P1) = newfrom(mob, pos, "PGE::Match")
+    oper = mob.'new'(mob, 'pos'=>pos)
     push termstack, oper
     ##   if the current operator doesn't allow nullterm, end match
     unless tokenstack goto end
@@ -376,7 +374,7 @@ Adds (or replaces) a syntactic category's defaults.
     $I0 = top['nullterm']
     if $I0 == 0 goto end
     ##   it's a nullterm operator, so we can continue parsing
-    $P1 = pos
+    oper.'to'(pos)
     expect = PGE_OPTABLE_EXPECT_OPER
     goto token_next
 
@@ -467,7 +465,7 @@ Adds (or replaces) a syntactic category's defaults.
     wspos = -1
     $P0 = pop termstack
     if topcat != PGE_OPTABLE_CIRCUMFIX goto reduce_end
-    (oper, $S0, $P0, $P1) = newfrom(mob, pos, "PGE::Match")
+    oper = mob.'new'(mob, 'pos'=>pos)
     push termstack, oper
     goto reduce_end
   reduce_close:
@@ -521,10 +519,10 @@ Adds (or replaces) a syntactic category's defaults.
     $I0 = exists token['parsed']
     if $I0 goto token_match_sub
     $S0 = token['match']
-    (oper, $P99, $P99, $P0) = newfrom(mob, pos, $S0)
+    oper = mob.'new'(mob, 'pos'=>pos, 'grammar'=>$S0)
     $I0 = length key
     $I0 += pos
-    $P0 = $I0
+    oper.'to'($I0)
     goto token_match_success
   token_match_sub:
     $P0 = token['parsed']
@@ -534,10 +532,9 @@ Adds (or replaces) a syntactic category's defaults.
     mpos = $I0
     oper = $P0(mob, 'action'=>action)
     delete mob['KEY']
-    $P0 = oper.from()
-    $P0 = pos
+    oper.'from'(pos)
   token_match_success:
-    $P0 = token["name"]
+    $P0 = token['name']
     $P0 = clone $P0
     oper['type'] = $P0
     oper['top'] = token
