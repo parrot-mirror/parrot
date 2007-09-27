@@ -61,7 +61,7 @@ push @args, map { '-'.$_ } keys %options;
 my $args = join(' ', @args);
 
 $ENV{TEST_PROG_ARGS} = $args;
-$ENV{RUNNING_MAKE_TEST} = $running_make_test;
+$ENV{RUNNING_MAKE_TEST} = $running_make_test if defined $running_make_test;
 
 $prove->run;
 
