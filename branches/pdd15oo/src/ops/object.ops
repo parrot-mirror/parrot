@@ -237,11 +237,11 @@ inline op newclass(out PMC, in PMC) :object_classes {
     goto NEXT();
 }
 
-=item B<subclass>(out PMC, invar PMC)
+=item B<subclass>(out PMC, in PMC)
 
-=item B<subclass>(out PMC, invar PMC, in STR)
+=item B<subclass>(out PMC, in PMC, in STR)
 
-=item B<subclass>(out PMC, invar PMC, in PMC)
+=item B<subclass>(out PMC, in PMC, in PMC)
 
 RT#42969 subclass is deprecated
 
@@ -251,29 +251,41 @@ anonymous subclass.
 
 =cut
 
-inline op subclass(out PMC, invar PMC) :object_classes {
-  $1 = pmc_new(interp, enum_class_Class);
-  VTABLE_add_parent(interp, $1, $2);
-  goto NEXT();
+inline op subclass(out PMC, in PMC) :object_classes {
+    PMC *parent_class = Parrot_oo_get_class(interp, $2);
+    opcode_t *next = expr NEXT();
+    if (PMC_IS_NULL(parent_class)) {
+      real_exception(interp, next, NO_CLASS,
+                  "Class '%Ss' doesn't exist", VTABLE_get_string(interp, $2));
+    }
+    $1 = pmc_new(interp, enum_class_Class);
+    VTABLE_add_parent(interp, $1, parent_class);
+    goto ADDRESS(next);
 }
 
-inline op subclass(out PMC, invar PMC, in STR) :object_classes {
-  PMC *name = pmc_new(interp, enum_class_String);
-  VTABLE_set_string_native(interp, name, $3);
-  $1 = VTABLE_subclass(interp, $2, name);
-  goto NEXT();
+inline op subclass(out PMC, in PMC, in STR) :object_classes {
+    PMC *parent_class = Parrot_oo_get_class(interp, $2);
+    opcode_t *next = expr NEXT();
+    if (PMC_IS_NULL(parent_class)) {
+      real_exception(interp, next, NO_CLASS,
+                  "Class '%Ss' doesn't exist", VTABLE_get_string(interp, $2));
+    }
+    $1 = Parrot_oo_newclass_from_str(interp, $3);
+    VTABLE_add_parent(interp, $1, parent_class);
+    goto ADDRESS(next);
 }
 
-inline op subclass(out PMC, invar PMC, in PMC) :object_classes {
-  $1 = VTABLE_subclass(interp, $2, $3);
-  goto NEXT();
+inline op subclass(out PMC, in PMC, in PMC) :object_classes {
+    PMC *parent_class = Parrot_oo_get_class(interp, $2);
+    opcode_t *next = expr NEXT();
+    if (PMC_IS_NULL(parent_class)) {
+      real_exception(interp, next, NO_CLASS,
+                  "Class '%Ss' doesn't exist", VTABLE_get_string(interp, $2));
+    }
+    $1 = pmc_new_init(interp, enum_class_Class, $3);
+    VTABLE_add_parent(interp, $1, parent_class);
+    goto ADDRESS(next);
 }
-
-=item B<subclass>(out PMC, inconst PMC)
-
-=item B<subclass>(out PMC, inconst PMC, in STR)
-
-=item B<subclass>(out PMC, inconst PMC, in PMC)
 
 =item B<subclass>(out PMC, in STR)
 
@@ -289,102 +301,45 @@ subclass is an anonymous subclass.
 
 =cut
 
-op subclass(out PMC, inconst PMC) :object_classes {
-  PMC *_class = Parrot_class_lookup_p(interp, $2);
-  opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(_class)) {
-    STRING *name = readable_name(interp, $2);
-    real_exception(interp, next, NO_CLASS,
-                "Class '%Ss' doesn't exist", name);
-  }
-  $1 = VTABLE_subclass(interp, _class, PMCNULL);
-  goto ADDRESS(next);
-}
 
 op subclass(out PMC, in STR) :object_classes {
-  PMC *_class = Parrot_class_lookup(interp, $2);
-  opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(_class)) {
-    real_exception(interp, next, NO_CLASS,
-                "Class '%Ss' doesn't exist", $2);
-  }
-  $1 = VTABLE_subclass(interp, _class, PMCNULL);
-  goto ADDRESS(next);
-}
+    PMC *parent_class = Parrot_oo_get_class_str(interp, $2);
+    opcode_t *next = expr NEXT();
+    if (PMC_IS_NULL(parent_class)) {
+      real_exception(interp, next, NO_CLASS,
+                  "Class '%Ss' doesn't exist", $2);
+    }
 
-
-op subclass(out PMC, inconst PMC, in STR) :object_classes {
-  PMC *_class = Parrot_class_lookup_p(interp, $2);
-  PMC *subname_p;
-  opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(_class)) {
-    STRING *name = readable_name(interp, $2);
-    real_exception(interp, next, NO_CLASS,
-                "Class '%Ss' doesn't exist", name);
-  }
-  subname_p = pmc_new(interp, enum_class_String);
-  VTABLE_set_string_native(interp, subname_p, $3);
-  $1 = VTABLE_subclass(interp, _class, subname_p);
-  goto NEXT();
+    $1 = pmc_new(interp, enum_class_Class);
+    VTABLE_add_parent(interp, $1, parent_class);
+    goto ADDRESS(next);
 }
 
 op subclass(out PMC, in STR, in STR) :object_classes {
-    PMC *hll_ns, *parent_ns;
-    PMC *child_name, *parent_name, *naming_hash;
-    PMC *parent_class = PMCNULL;
-    PMC *child_class = PMCNULL;
+    PMC *parent_class = Parrot_oo_get_class_str(interp, $2);
     opcode_t *next = expr NEXT();
-
-    /* Create a new class from the subclass name */
-    child_name = pmc_new(interp, enum_class_String);
-    VTABLE_set_string_native(interp, child_name, $3);
-    naming_hash = pmc_new(interp, enum_class_Hash);
-    VTABLE_set_pmc_keyed_str(interp, naming_hash,
-        string_from_literal(interp, "name"), child_name);
-    child_class = pmc_new_init(interp, enum_class_Class, naming_hash);
-
-    /* Lookup the parent class by string name */
-    parent_name = pmc_new(interp, enum_class_String);
-    VTABLE_set_string_native(interp, parent_name, $2);
-    parent_class = Parrot_oo_get_class(interp, parent_name);
 
     if (PMC_IS_NULL(parent_class)) {
       real_exception(interp, next, NO_CLASS,
                 "Class '%Ss' doesn't exist", $2);
     }
 
-    /* Make the new class a subclass of the current class */
-    VTABLE_add_parent(interp, child_class, parent_class);
-
-    $1 = child_class;
-
+    $1  = Parrot_oo_newclass_from_str(interp, $3);
+    VTABLE_add_parent(interp, $1, parent_class);
     goto ADDRESS(next);
 }
 
-
-op subclass(out PMC, inconst PMC, in PMC) :object_classes {
-  PMC *_class = Parrot_class_lookup_p(interp, $2);
-  opcode_t *next = expr NEXT();
-  if (PMC_IS_NULL(_class)) {
-    STRING *name = readable_name(interp, $2);
-    real_exception(interp, next, NO_CLASS,
-                "Class '%Ss' doesn't exist", name);
-  }
-  $1 = VTABLE_subclass(interp, _class, $3);
-  goto ADDRESS(next);
-}
-
 op subclass(out PMC, in STR, in PMC) :object_classes {
-    PMC      *_class = Parrot_class_lookup(interp, $2);
+    PMC *parent_class = Parrot_oo_get_class_str(interp, $2);
     opcode_t *next   = expr NEXT();
 
-    if (PMC_IS_NULL(_class)) {
-        char *class_name = string_to_cstring(interp, $2);
-        real_exception(interp, next, NO_CLASS, "Class '%s' doesn't exist",
-                class_name);
+    if (PMC_IS_NULL(parent_class)) {
+      real_exception(interp, next, NO_CLASS,
+                "Class '%Ss' doesn't exist", $2);
     }
 
-    $1 = VTABLE_subclass(interp, _class, $3);
+    $1 = pmc_new_init(interp, enum_class_Class, $3);
+    VTABLE_add_parent(interp, $1, parent_class);
     goto ADDRESS(next);
 }
 

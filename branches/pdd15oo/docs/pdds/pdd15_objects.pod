@@ -1010,7 +1010,12 @@ optionally pass a hash of initialization parameters for the class in $P3.
 
 =item subclass
 
+  $P1 = subclass $S2
+  $P1 = subclass $P2
+  $P1 = subclass $S2, $S3
   $P1 = subclass $P2, $S3
+  $P1 = subclass $S2, $P3
+  $P1 = subclass $P2, $P3
 
 Create a new class, named $S3, which has $P2 as its immediate parent. $P2 may
 be either another high-level class based on the Class PMC, or it may be a

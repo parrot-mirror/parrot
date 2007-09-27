@@ -123,20 +123,20 @@ Bar
 Baz
 OUTPUT
 
-pasm_error_output_like( <<'CODE', <<'OUTPUT', "getclass" );
+pasm_error_output_like( <<'CODE', <<'OUTPUT', "get_class" );
     newclass P1, "Foo"
-    getclass P2, "Foo"
+    get_class P2, "Foo"
     set S2, P2
     print S2
     print "\n"
 
     subclass P3, P1, "FooBar"
-    getclass P4, "FooBar"
+    get_class P4, "FooBar"
     set S4, P4
     print S4
     print "\n"
 
-    getclass P3, "NoSuch"
+    get_class P3, "NoSuch"
     end
 CODE
 /Foo
@@ -1196,9 +1196,9 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "PMC as classes" );
-    getclass P0, "Integer"
+    get_class P0, "Integer"
     print "ok 1\n"
-    getclass P0, "Integer"
+    get_class P0, "Integer"
     print "ok 2\n"
     typeof S0, P0
     print S0
@@ -1207,14 +1207,14 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PMC as classes" );
 CODE
 ok 1
 ok 2
-Integer
+PMCProxy
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - subclass" );
 
 .sub main :main
   .local pmc MyInt
-  getclass $P0, "Integer"
+  get_class $P0, "Integer"
   print "ok 1\n"
   subclass MyInt, $P0, "MyInt"
   print "ok 2\n"
@@ -1230,7 +1230,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - subclass" );
 CODE
 ok 1
 ok 2
-MyInt
+Class
 11
 OUTPUT
 
@@ -1238,7 +1238,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - instantiate" );
 
 .sub main :main
   .local pmc MyInt
-  getclass $P0, "Integer"
+  get_class $P0, "Integer"
   print "ok 1\n"
   subclass MyInt, $P0, "MyInt"
   addattribute MyInt, ".i"
@@ -1257,7 +1257,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - methods" );
 
 .sub main :main
   .local pmc MyInt
-  getclass $P0, "Integer"
+  get_class $P0, "Integer"
   print "ok 1\n"
   subclass MyInt, $P0, "MyInt"
   print "ok 2\n"
@@ -1309,7 +1309,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - mmd methods" );
 
 .sub main :main
   .local pmc MyInt
-  getclass $P0, "Integer"
+  get_class $P0, "Integer"
   subclass MyInt, $P0, "MyInt"
   .local pmc i
   .local pmc j
@@ -1350,7 +1350,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - overridden mmd methods" )
 
 .sub main :main
   .local pmc MyInt
-  getclass $P0, "Integer"
+  get_class $P0, "Integer"
   subclass MyInt, $P0, "MyInt"
   .local pmc i
   .local pmc j
@@ -1395,10 +1395,10 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 1" );
 .sub main :main
   .local pmc MyInt
   .local pmc MyInt2
-  getclass $P0, "Integer"
+  get_class $P0, "Integer"
   print "ok 1\n"
   subclass MyInt, $P0, "MyInt"
-  getclass $P1, "MyInt"
+  get_class $P1, "MyInt"
   subclass MyInt2, $P1, "MyInt2"
   print "ok 2\n"
   .local pmc i
@@ -1458,10 +1458,10 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 2" );
 .sub main :main
   .local pmc MyInt
   .local pmc MyInt2
-  getclass $P0, "Integer"
+  get_class $P0, "Integer"
   print "ok 1\n"
   subclass MyInt, $P0, "MyInt"
-  getclass $P1, "MyInt"
+  get_class $P1, "MyInt"
   subclass MyInt2, $P1, "MyInt2"
   print "ok 2\n"
   .local pmc i
@@ -1533,10 +1533,10 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 3" );
 .sub main :main
   .local pmc MyInt
   .local pmc MyInt2
-  getclass $P0, "Integer"
+  get_class $P0, "Integer"
   print "ok 1\n"
   subclass MyInt, $P0, "MyInt"
-  getclass $P1, "MyInt"
+  get_class $P1, "MyInt"
   subclass MyInt2, $P1, "MyInt2"
   print "ok 2\n"
   .local pmc i
@@ -1596,7 +1596,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "subclassing Class" );
 .sub main :main
     .local pmc cl
     .local pmc parent
-    parent = getclass "Class"
+    parent = get_class "Class"
     cl = subclass parent, "Foo"
     print "ok 1\n"
     .local pmc o
@@ -1985,11 +1985,11 @@ CODE
 Perl6;PAST;Node
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "getclass" );
+pir_output_is( <<'CODE', <<'OUTPUT', "get_class" );
 .sub main :main
     .local pmc base, o1, o2
     base = subclass 'Hash', ['Perl6'; 'PAST'; 'Node']
-    $P0 = getclass ['Perl6'; 'PAST'; 'Node']
+    $P0 = get_class ['Perl6'; 'PAST'; 'Node']
     $S0 = classname $P0
     print $S0
     print "\n"
@@ -2039,7 +2039,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "vtable override once removed (#39056)" );
 .sub main :main
     .local pmc base
-    $P0 = getclass 'Integer'
+    $P0 = get_class 'Integer'
     base = subclass $P0, 'Foo'          # create subclass 'Foo'
     addattribute base, '@!capt'
 
