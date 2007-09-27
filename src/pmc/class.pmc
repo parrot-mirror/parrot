@@ -1115,8 +1115,8 @@ Creates a new PMC object of the type of the class and calls init().
          * class. */
         obj_guts               = mem_allocate_zeroed_typed(Parrot_Object);
         obj_guts->_class       = SELF;
-        obj_guts->attrib_store = pmc_new(interp, enum_class_ResizablePMCArray);
         PMC_data(object)       = obj_guts;
+        obj_guts->attrib_store = pmc_new(interp, enum_class_ResizablePMCArray);
 
         if (!PMC_IS_NULL(init)) {
             /* Initialize attributes with the supplied values. */
