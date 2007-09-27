@@ -86,6 +86,19 @@ pir_output_is( <<'CODE', <<'OUT', 'proxy as parent of class');
     print "\n"
 .end
 CODE
+abc
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'proxy as parent of class w/new');
+.sub main :main
+    $P0 = get_class 'Hash'
+    $P1 = subclass $P0, ['Foo';'Bar']
+    $P2 = new ['Foo';'Bar']
+    $S0 = typeof $P2
+    say $S0
+.end
+CODE
+Foo;Bar
 OUT
 
 # Local Variables:
