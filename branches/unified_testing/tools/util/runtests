@@ -9,6 +9,8 @@ use Getopt::Long;
 my $prove = App::Prove->new;
 $prove->process_args(qw(--harness Parrot::TAP::Harness), @ARGV);
 
+@ARGV = @{ $prove->{argv} };
+
 my($run_exec, $running_make_test, $gc_debug, $make_html);
 my %options = (
   'running-make-test'  => \$running_make_test,
