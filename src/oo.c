@@ -26,6 +26,16 @@ Handles class and object manipulation.
 
 /* HEADERIZER HFILE: include/parrot/oo.h */
 
+/*
+
+=item C<Parrot_oo_get_class>
+
+Lookup a class object from a namespace, string, or key PMC.
+
+=cut
+
+*/
+
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
@@ -57,6 +67,53 @@ Parrot_oo_get_class(PARROT_INTERP, NOTNULL(PMC *key))
              classobj = pmc_new_init(interp, enum_class_PMCProxy, type_num);
         }
     }
+    PARROT_ASSERT(classobj);
+    return classobj;
+}
+
+/*
+
+=item C<Parrot_oo_get_class_str>
+
+Lookup a class object from a builtin string.
+
+=cut
+
+*/
+
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+Parrot_oo_get_class_str(PARROT_INTERP, NOTNULL(STRING *name))
+{
+    PMC *namearg = pmc_new(interp, enum_class_String);
+    VTABLE_set_string_native(interp, namearg, name);
+    return Parrot_oo_get_class(interp, namearg);
+}
+
+/*
+
+=item C<Parrot_oo_newclass_from_str>
+
+Create a new class object from a string name.
+
+=cut
+
+*/
+
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+Parrot_oo_newclass_from_str(PARROT_INTERP, NOTNULL(STRING *name))
+{
+    PMC *namearg, *namehash, *classobj;
+    namearg = pmc_new(interp, enum_class_String);
+    VTABLE_set_string_native(interp, namearg, name);
+    namehash = pmc_new(interp, enum_class_Hash);
+    VTABLE_set_pmc_keyed_str(interp, namehash,
+        string_from_literal(interp, "name"), namearg);
+    classobj = pmc_new_init(interp, enum_class_Class, namehash);
+
     PARROT_ASSERT(classobj);
     return classobj;
 }
