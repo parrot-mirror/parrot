@@ -1260,6 +1260,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - methods" );
   get_class $P0, "Integer"
   print "ok 1\n"
   subclass MyInt, $P0, "MyInt"
+  addattribute MyInt, "intval"
   print "ok 2\n"
   .local pmc i
   i = new "MyInt"
@@ -1275,25 +1276,25 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - methods" );
 .end
 
 .namespace ["MyInt"]
+.sub set_integer_native :vtable :method
+   .param int new_value
+   $P1 = new 'Integer'
+   $P1 = new_value
+   setattribute self, "intval", $P1
+.end
 .sub get_integer :vtable :method
-   $I0 = classoffset self, "MyInt"
-   $P0 = getattribute self, $I0
+   $P0 = getattribute self, "intval"
    $I0 = $P0
-   .pcc_begin_return
-   .return $I0
-   .pcc_end_return
+   .return ($I0)
 .end
 .sub get_string :vtable :method
-   $I0 = classoffset self, "MyInt"
-   $P0 = getattribute self, $I0
+   $P0 = getattribute self, "intval"
    $I0 = $P0
    $S1 = $I0
    $S0 = "MyInt("
    $S0 .= $S1
    $S0 .= ")"
-   .pcc_begin_return
-   .return $S0
-   .pcc_end_return
+   .return ($S0)
 .end
 CODE
 ok 1
@@ -1330,16 +1331,12 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - mmd methods" );
 
 .namespace ["MyInt"]
 .sub get_string :vtable :method
-   $I0 = classoffset self, "MyInt"
-   $P0 = getattribute self, $I0
-   $I0 = $P0
+   $I0 = self   # get_integer is not overridden
    $S1 = $I0
    $S0 = "MyInt("
    $S0 .= $S1
    $S0 .= ")"
-   .pcc_begin_return
-   .return $S0
-   .pcc_end_return
+   .return ($S0)
 .end
 CODE
 42
