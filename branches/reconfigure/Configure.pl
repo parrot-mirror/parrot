@@ -44,6 +44,11 @@ changed.
 
 Run C<--verbose=2> for step number C<N> or matching description.
 
+=item C<--fatal-step={init::alpha,inter::beta,auto::gamma}>
+
+Tells Configure.pl to halt completely if any configuration step in
+comma-delimited string individually fails.
+
 =item C<--nomanicheck>
 
 Tells Configure.pl not to run the MANIFEST check.

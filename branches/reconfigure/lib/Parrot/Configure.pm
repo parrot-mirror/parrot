@@ -36,9 +36,10 @@ package Parrot::Configure;
 
 use strict;
 use warnings;
+use Data::Dumper;
 
 use lib qw(config);
-use Carp qw(carp);
+use Carp qw(carp croak);
 use Storable qw(nstore retrieve);
 use Parrot::Configure::Data;
 
@@ -194,7 +195,8 @@ sub runsteps {
     my $conf = shift;
 
     my $n = 0;    # step number
-    my ( $verbose, $verbose_step, $ask ) = $conf->options->get(qw( verbose verbose-step ask ));
+    my ( $verbose, $verbose_step, $fatal_step, $ask ) =
+        $conf->options->get(qw( verbose verbose-step fatal-step ask ));
 
 #    $conf->{log} = [];
     # The way the options are currently structured, 'verbose' applies to all
@@ -231,7 +233,31 @@ sub runsteps {
     # error *before* we run that step -- which means having that info at hand
     # before we run *any* steps.
 
+    my %steps_to_die_for = ();
+    # We make certain that argument to --fatal-step is a comma-delimited
+    # string of configuration steps, each of which is a string delimited by
+    # two colons, the first half of which is one of init|inter|auto|gen
+    my $step_pattern = qr/((?:init|inter|auto|gen)::[a-z]+)/;
+    if ( $fatal_step =~ /^
+        $step_pattern
+        (, $step_pattern)*
+        $/x
+    ) {
+        %steps_to_die_for = map {$_, 1} (split /,/, $fatal_step);
+        print STDERR Dumper \%steps_to_die_for;
+    } else {
+        die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps";
+    }
+
     foreach my $task ( $conf->steps ) {
+        my $red_flag;
+        my $step_name   = $task->step;
+        if ( scalar ( keys ( %steps_to_die_for ) ) ) {
+            if ( $steps_to_die_for{$step_name} ) {
+                $red_flag++;
+            }
+        }
+
         $n++;
         my $rv = $conf->_run_this_step( {
             task            => $task,
@@ -240,9 +266,9 @@ sub runsteps {
             ask             => $ask,
             n               => $n,
         } );
-#        ${$conf->{log}}[$n] = $rv
-#            ? { $task->step, 1 }
-#            : { $task->step, undef };;
+        if ( ( not defined ( $rv ) ) and $red_flag ) {
+            return;
+        }
     }
     return 1;
 }
@@ -261,7 +287,8 @@ sub run_single_step {
     my $conf     = shift;
     my $taskname = shift;
 
-    my ( $verbose, $verbose_step, $ask ) = $conf->options->get(qw( verbose verbose-step ask ));
+    my ( $verbose, $verbose_step, $ask ) =
+        $conf->options->get(qw( verbose verbose-step ask ));
  
     my $task = ( $conf->steps() )[0];
     if ( $task->{"Parrot::Configure::Task::step"} eq $taskname ) {
@@ -298,8 +325,6 @@ sub _run_this_step {
     }
     my $step = $step_name->new();
 
-    my $description = $step->description() || q{};
-
     # set per step verbosity
     if ( defined $args->{verbose_step} ) {
         if (
@@ -317,7 +342,7 @@ sub _run_this_step {
             or (
 
                 # by description
-                $description =~ /$args->{verbose_step}/
+                $step->description =~ /$args->{verbose_step}/
             )
             )
         {
@@ -328,7 +353,7 @@ sub _run_this_step {
     # RT#43673 cc_build uses this verbose setting, why?
     $conf->data->set( verbose => $args->{verbose} ) if $args->{n} > 2;
 
-    print "\n", $description, '...';
+    print "\n", $step->description, '...';
     print "\n" if $args->{verbose} && $args->{verbose} == 2;
 
     my $ret;
@@ -352,7 +377,7 @@ sub _run_this_step {
             _finish_printing_result( {
                 step        => $step,
                 args        => $args,
-                description => $description,
+                description => $step->description,
             } );
             # reset verbose value for the next step
             $conf->options->set( verbose => $args->{verbose} );
