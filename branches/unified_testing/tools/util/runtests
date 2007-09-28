@@ -6,6 +6,14 @@ use strict;
 use App::Prove;
 use Getopt::Long;
 
+use Cwd;
+use File::Spec;
+
+my $currentDir = getcwd();
+my @path_parts = File::Spec->splitdir( $currentDir );
+my $current_directory = pop @path_parts;
+my $parent_directory  = pop @path_parts;
+
 my $prove = App::Prove->new;
 unshift @ARGV, qw(--harness Parrot::TAP::Harness);
 
@@ -13,8 +21,8 @@ $prove->process_args(\@ARGV);
 
 my($run_exec, $running_make_test, $gc_debug, $make_html);
 my %options = (
-  'running-make-test'  => \$running_make_test,
-  'html'               => \$make_html, 
+    'running-make-test'  => \$running_make_test,
+    'html'               => \$make_html, 
 );
 
 GetOptions( \%options,
@@ -30,12 +38,18 @@ GetOptions( \%options,
     'gc-debug', #run with GC debugger
     'O=i',      #optimize, with level
     'D=i',      #Debug flags for parrot
+    'RT1',      #Print out the name of the directory that you are in and die.
 );
+
+if ($options{RT1}) {
+    warn "Your parent directory is : ".$parent_directory."\n";
+    die "Your working directory is: ".$current_directory."\n";
+}
 
 $prove->{argv} = \@ARGV;
 
 # add -D40;  merge it with any existing -D argument
-$options{D} = sprintf( '%x', hex(40) | (defined $options{D} ? hex($options{D}) : 0));
+$options{D} = sprintf( '%x', hex(40) | (defined $options{D} ? hex($options{D}) : 0)) if exists $options{D};
 
 delete $options{'running-make-test'};
 delete $options{'html'};
@@ -44,18 +58,18 @@ my @args = ();
 
 ##Short options with flags
 foreach my $flag (qw/O D/) {
-  if (defined $options{$flag}) {
-    push @args, "-".$flag.$options{$flag};
-    delete $options{$flag};
-  }
+    if (defined $options{$flag}) {
+        push @args, "-".$flag.$options{$flag};
+        delete $options{$flag};
+    }
 }
 
 ##Long options
 foreach my $flag (qw/gc-debug/) {
-  if (defined $options{$flag}) {
-    push @args, '--'.$flag;
-    delete $options{$flag};
-  }
+    if (defined $options{$flag}) {
+        push @args, '--'.$flag;
+        delete $options{$flag};
+    }
 }
 
 ##Create argument for both the harness, and the environment
@@ -176,6 +190,12 @@ Pass the specified debug bits to the parrot interpreter.  Note that
 C<-D40> (fill I, N registers with garbage) is always enabled.  
 See 'parrot --help-debug' for available flags.
 
+=item C<RT1>
+
+Print out the current working directory and parent directory.  Useful for debugging
+runtests during development.  This option will probably go away after the branch
+merge.
+
 =back
 
 There are also long command line options:
@@ -205,4 +225,4 @@ L<App::Prove>
 
 =cut
 
-# vim:ts=2:sw=2:et:sta
+# vim:ts=4:sw=4:et:sta
