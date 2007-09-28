@@ -238,15 +238,17 @@ sub runsteps {
     # string of configuration steps, each of which is a string delimited by
     # two colons, the first half of which is one of init|inter|auto|gen
     my $step_pattern = qr/((?:init|inter|auto|gen)::[a-z]+)/;
-    if ( $fatal_step =~ /^
-        $step_pattern
-        (, $step_pattern)*
-        $/x
-    ) {
-        %steps_to_die_for = map {$_, 1} (split /,/, $fatal_step);
-        print STDERR Dumper \%steps_to_die_for;
-    } else {
-        die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps";
+    if ( defined ( $fatal_step ) ) {
+        if ( $fatal_step =~ /^
+            $step_pattern
+            (, $step_pattern)*
+            $/x
+        ) {
+            %steps_to_die_for = map {$_, 1} (split /,/, $fatal_step);
+            print STDERR Dumper \%steps_to_die_for;
+        } else {
+            die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps";
+        }
     }
 
     foreach my $task ( $conf->steps ) {
