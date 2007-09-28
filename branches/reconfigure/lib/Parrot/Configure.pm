@@ -332,8 +332,7 @@ sub _run_this_step {
     print "\n" if $args->{verbose} && $args->{verbose} == 2;
 
     my $ret;
-    # When successful, a Parrot configuration step returns itself,
-    # i.e., returns its own object.
+    # When successful, a Parrot configuration step now returns 1
     eval {
         if (@step_params)
         {
