@@ -7,9 +7,9 @@ use App::Prove;
 use Getopt::Long;
 
 my $prove = App::Prove->new;
-$prove->process_args(qw(--harness Parrot::TAP::Harness), @ARGV);
+unshift @ARGV, qw(--harness Parrot::TAP::Harness);
 
-@ARGV = @{ $prove->{argv} };
+$prove->process_args(\@ARGV);
 
 my($run_exec, $running_make_test, $gc_debug, $make_html);
 my %options = (
@@ -24,7 +24,6 @@ GetOptions( \%options,
     'C',        #run Switched
     'S',        #run bounds checked
     'f',        #run fast core
-    'run-exec', #run exec core
     'v',        #run verbose
     'd',        #run debug
     'r',        #assemble to PBC and run the PBC
@@ -32,6 +31,8 @@ GetOptions( \%options,
     'O=i',      #optimize, with level
     'D=i',      #Debug flags for parrot
 );
+
+$prove->{argv} = \@ARGV;
 
 # add -D40;  merge it with any existing -D argument
 $options{D} = sprintf( '%x', hex(40) | (defined $options{D} ? hex($options{D}) : 0));
@@ -50,7 +51,7 @@ foreach my $flag (qw/O D/) {
 }
 
 ##Long options
-foreach my $flag (qw/gc-debug run-exec/) {
+foreach my $flag (qw/gc-debug/) {
   if (defined $options{$flag}) {
     push @args, '--'.$flag;
     delete $options{$flag};
@@ -82,7 +83,7 @@ BEGIN {
   sub _get_parser_args {
     my ( $self, $test ) = @_;
     
-    open(my $fh, '<', $test) or die "cannot read '$test' $!";
+    open(my $fh, '<', $test) or die "cannot read '$test' to test shebang: $!";
     chomp(my $shebang = <$fh>);
     $shebang =~ s/^#!\s*//;
     my @shparts = split(/\s+/, $shebang);
@@ -98,9 +99,9 @@ BEGIN {
         $compiler =~ s/(?:\.pbc)?$/.pbc/;
         unshift(@shparts, $compiler);
       }
-      splice(@shparts, 1, 0, @args);  ##Add in the arguments for deliberate execution
+      unshift(@shparts, @args);  ##Add in the arguments for deliberate execution
 
-      #warn "shebang @shparts";
+      # warn "shebang @shparts";
       # TODO interpreter-specific and/or parrot specific options
       $args->{exec} = [$parrot, @shparts, $test];
       delete($args->{source});
@@ -120,7 +121,7 @@ runtests - Run parrot tests via TAP::Harness 3.0.
 
 =head1 USAGE
 
- runtests [options] -- [parrot options] [files or directories]
+ runtests [options] -- [parrot harness options] [files or directories]
 
 Since the runtests and parrot options collide, they should be separated by a bare --,
 this will let Getopt::Long do the right thing with both sets, operated on one at a time.
@@ -180,10 +181,6 @@ See 'parrot --help-debug' for available flags.
 There are also long command line options:
 
 =over 4
-
-=item C<--run-exec>
-
-Run the exec core.
 
 =item C<--running-make-test>
 
