@@ -303,7 +303,7 @@ With a null C<initializer>, calls C<init()>, else throws an exception.
 
 /*
 
-=item C<PMC *instantiate(PMC *sig)>
+=item C<PMC *instantiate(PMC *init)>
 
 Default fallback. Creates a new PMC of the type of the class SELF and
 calls init().
@@ -312,11 +312,12 @@ calls init().
 
 */
 
-    PMC *instantiate(PMC *sig) {
+    PMC *instantiate(PMC *init) {
         const INTVAL type = SELF->vtable->base_type;
-        PMC *const   ret  = pmc_new_noinit(INTERP, type);
-        VTABLE_init(INTERP, ret);
-        return ret;
+        if (!PMC_IS_NULL(init))
+            return pmc_new_init(INTERP, type, init);
+
+        return pmc_new(INTERP, type);
     }
 
 /*
