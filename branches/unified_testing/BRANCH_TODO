@@ -12,13 +12,13 @@ This will be done with a combination of Makefile and TAP::Harness 3.0 code.
 Steps:
 
 1) Make TAP::Harness run top level (t/harness) tests cleanly with no shebang issues.
-    Make a competing harness based on TAP::Harness 3.0 and App::Prove
-    Fix shebang line issues in tests
-    Figure out a way to use existing prove switches AND t/harness switches at the same time
+    DONE: Make a competing harness based on TAP::Harness 3.0 and App::Prove
+    DONE: Figure out a way to use existing prove switches AND t/harness switches at the same time
         (Getopt::Long and --)
 
 2) Write a coding standard test to make sure that t/* tests call out a location
    independent parrot/interpreter.
+    Fix shebang line issues in tests
 
 3) Make TAP::Harness run top level and language harnesses cleanly, regardless of
    test implementation.

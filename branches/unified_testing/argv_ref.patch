@@ -1,0 +1,63 @@
+Index: t/200-prove.t
+===================================================================
+--- t/200-prove.t	(revision 614)
++++ t/200-prove.t	(working copy)
+@@ -1164,7 +1164,7 @@
+ 
+     # Optionally parse command args
+     if ( my $switches = $test->{switches} ) {
+-        eval { $app->process_args(@$switches) };
++        eval { $app->process_args($switches) };
+         if ( my $err_pattern = $test->{parse_error} ) {
+             like $@, $err_pattern, "$name: expected parse error";
+         }
+Index: lib/App/Prove.pm
+===================================================================
+--- lib/App/Prove.pm	(revision 614)
++++ lib/App/Prove.pm	(working copy)
+@@ -90,20 +90,18 @@
+ =cut
+ 
+ sub process_args {
+-    my ( $self, @args ) = @_;
++    my ( $self, $args ) = @_;
+ 
+-    if ( my @bad = map {"-$_"} grep {/^-(man|help)$/} @args ) {
++    if ( my @bad = map {"-$_"} grep {/^-(man|help)$/} @{$args} ) {
+         die "Long options should be written with two dashes: ",
+           join( ', ', @bad ), "\n";
+     }
+ 
+-    # Allow cuddling the paths with the -I
+-    @args = map { /^(-I)(.+)/ ? ( $1, $2 ) : $_ } @args;
+-
+     my $help_sub = sub { $self->_help; $self->_exit };
+ 
+     {
+-        local @ARGV = @args;
++        # Allow cuddling the paths with the -I
++        local @ARGV = map { /^(-I)(.+)/ ? ( $1, $2 ) : $_ } @{$args};
+         Getopt::Long::Configure( 'no_ignore_case', 'bundling' );
+         GetOptions(
+             'v|verbose'   => \$self->{verbose},
+@@ -143,6 +141,7 @@
+ 
+         # Stash the remainder of argv for later
+         $self->{argv} = [@ARGV];
++        @{$args} = @ARGV;
+     }
+ }
+ 
+Index: bin/prove
+===================================================================
+--- bin/prove	(revision 614)
++++ bin/prove	(working copy)
+@@ -4,7 +4,7 @@
+ use App::Prove;
+ 
+ my $app = App::Prove->new;
+-$app->process_args(@ARGV);
++$app->process_args(\@ARGV);
+ $app->run;
+ 
+ __END__
