@@ -228,6 +228,10 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from key name' );
     print $I3
     print "\n"
 
+    $I3 = isa $P2, ['Foo';'Bar']
+    print $I3
+    print "\n"
+
     $I3 = isa $P2, "Object"
     print $I3
     print "\n"
@@ -236,6 +240,7 @@ CODE
 Class
 1
 Foo;Bar
+1
 1
 1
 OUT
