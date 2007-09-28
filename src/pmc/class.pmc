@@ -425,7 +425,7 @@ find_vtable_override(PARROT_INTERP, PMC *parrot_class, STRING *name)
 
         /* If it's from this universe or the class doesn't inherit from
          * anything outside of it... */
-        if (all_in_universe || VTABLE_isa(interp, cur_class,
+        if (VTABLE_isa(interp, cur_class,
                 string_from_literal(interp, "Class"))) {
             const Parrot_Class * const class_info = PARROT_CLASS(cur_class);
             if (VTABLE_exists_keyed_str(interp, class_info->vtable_overrides,
