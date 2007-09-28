@@ -86,7 +86,7 @@ op new(out PMC, in STR) {
     STRING *classname = $2;
     PMC *classobj = Parrot_oo_get_class_str(interp, classname);
 
-    if (!PMC_IS_NULL(classobj) && !VTABLE_isa(interp, classobj, string_from_literal(interp, "PMCProxy")))
+    if (!PMC_IS_NULL(classobj))
         $1 = VTABLE_instantiate(interp, classobj, PMCNULL);
     else {
         INTVAL type = pmc_type(interp, classname);
@@ -105,8 +105,7 @@ op new(out PMC, in STR, in PMC) {
     STRING *classname = $2;
     PMC *classobj = Parrot_oo_get_class_str(interp, classname);
 
-    if (!PMC_IS_NULL(classobj) && !VTABLE_isa(interp, classobj,
-            string_from_literal(interp, "PMCProxy")))
+    if (!PMC_IS_NULL(classobj))
         $1 = VTABLE_instantiate(interp, classobj, $3);
     else {
         INTVAL type = pmc_type(interp, classname);
@@ -124,8 +123,7 @@ inline op new(out PMC, in PMC) :object_classes {
     PMC *classname_key = $2;
     PMC *classobj = Parrot_oo_get_class(interp, classname_key);
 
-    if (!PMC_IS_NULL(classobj) && !VTABLE_isa(interp, classobj,
-            string_from_literal(interp, "PMCProxy")))
+    if (!PMC_IS_NULL(classobj))
         $1 = VTABLE_instantiate(interp, classobj, PMCNULL);
     else {
         INTVAL type = pmc_type_p(interp, classname_key);
@@ -141,8 +139,7 @@ op new(out PMC, in PMC, in PMC) {
     PMC *classname_key = $2;
     PMC *classobj = Parrot_oo_get_class(interp, classname_key);
 
-    if (!PMC_IS_NULL(classobj) && !VTABLE_isa(interp, classobj,
-            string_from_literal(interp, "PMCProxy")))
+    if (!PMC_IS_NULL(classobj))
         $1 = VTABLE_instantiate(interp, classobj, $3);
     else {
         INTVAL type = pmc_type_p(interp, classname_key);
