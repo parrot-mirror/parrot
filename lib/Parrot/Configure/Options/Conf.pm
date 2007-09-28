@@ -29,6 +29,7 @@ our @valid_options = qw{
     define
     exec-prefix
     execcapable
+    fatal-step
     floatval
     gc
     help
@@ -122,6 +123,8 @@ General Options:
    --verbose=2          Output every setting change
    --verbose-step=N     Set verbose for step N only
    --verbose-step=regex Set verbose for step matching description
+   --fatal-step         Comma-delimited string of configuration steps
+                        which upon failure cause Configure.pl to halt
    --nomanicheck        Don't check the MANIFEST
    --step=(gen::languages)
                         Execute a single configure step
