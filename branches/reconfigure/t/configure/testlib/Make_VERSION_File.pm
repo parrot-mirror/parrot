@@ -6,7 +6,7 @@ package Make_VERSION_File;
 use strict;
 use warnings;
 
-our qw(@ISA @EXPORT_OK);
+our (@ISA, @EXPORT_OK);
 
 @ISA       = qw( Exporter );
 @EXPORT_OK = qw( make_VERSION_file );
