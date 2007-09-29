@@ -15,6 +15,7 @@ package inter::pmc;
 
 use strict;
 use warnings;
+use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
@@ -22,8 +23,8 @@ use File::Basename qw/basename/;
 
 use Parrot::Configure::Step ':inter';
 
-our $description = 'Determining what pmc files should be compiled in';
-our @args        = qw(ask pmc);
+$description = 'Determining what pmc files should be compiled in';
+@args        = qw(ask pmc);
 
 my %PMC_PARENTS;
 

@@ -15,13 +15,14 @@ package gen::languages;
 
 use strict;
 use warnings;
+use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':gen';
 
-our $description = 'Configuring languages';
-our @args        = qw(languages);
+$description = 'Configuring languages';
+@args        = qw(languages);
 
 sub runstep {
     my ( $self, $conf ) = @_;

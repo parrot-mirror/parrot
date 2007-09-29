@@ -16,14 +16,15 @@ package init::headers;
 
 use strict;
 use warnings;
+use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step;
 use ExtUtils::Manifest qw(maniread);
 
-our $description = 'Finding header files distributed with Parrot';
-our @args;
+$description = 'Finding header files distributed with Parrot';
+@args = ();
 
 sub runstep {
     my ( $self, $conf ) = @_;
