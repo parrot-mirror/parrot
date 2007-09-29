@@ -18,14 +18,15 @@ package auto::jit;
 
 use strict;
 use warnings;
+use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Config;
 use Parrot::Configure::Step qw(copy_if_diff cc_gen cc_clean cc_build cc_run);
 
-our $description = 'Determining architecture, OS and JIT capability';
-our @args        = qw(jitcapable miniparrot execcapable verbose);
+$description = 'Determining architecture, OS and JIT capability';
+@args        = qw(jitcapable miniparrot execcapable verbose);
 
 sub runstep {
     my ( $self, $conf ) = @_;

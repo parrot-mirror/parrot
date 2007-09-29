@@ -15,13 +15,14 @@ package gen::core_pmcs;
 
 use strict;
 use warnings;
+use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':gen';
 
-our $description = 'Generating core pmc list';
-our @args        = ();
+$description = 'Generating core pmc list';
+@args        = ();
 
 sub runstep {
     my ( $self, $conf ) = @_;
