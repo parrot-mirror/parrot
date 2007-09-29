@@ -16,8 +16,14 @@ use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step;
 
-$description = 'Determining if your computer does epsilon';
-@args        = ();
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining if your computer does epsilon};
+    $data{args}        = [ qw( ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
