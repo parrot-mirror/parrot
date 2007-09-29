@@ -404,6 +404,27 @@ init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
 }
 
 static PMC *
+get_vtable_override_for_class(PARROT_INTERP, PMC *classobj, STRING *name)
+{
+    if (VTABLE_isa(interp, classobj,
+            string_from_literal(interp, "Class"))) {
+        const Parrot_Class * const class_info = PARROT_CLASS(classobj);
+        if (VTABLE_exists_keyed_str(interp, class_info->vtable_overrides,
+                name)) {
+            /* Found it. */
+            PMC * const meth = VTABLE_get_pmc_keyed_str(interp,
+                class_info->vtable_overrides, name);
+            return meth;
+        }
+    }
+    /* This is the case where a class is of a type other than Class,
+     * but PMCProxy doesn't handle vtable overrides correctly yet. Will
+     * have to come back and add it later. */
+
+    return PMCNULL;
+}
+
+static PMC *
 find_vtable_override(PARROT_INTERP, PMC *parrot_class, STRING *name)
 {
     Parrot_Class * const _class = PARROT_CLASS(parrot_class);
@@ -423,24 +444,9 @@ find_vtable_override(PARROT_INTERP, PMC *parrot_class, STRING *name)
         PMC * const cur_class =
             VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
 
-        /* If it's from this universe or the class doesn't inherit from
-         * anything outside of it... */
-        if (VTABLE_isa(interp, cur_class,
-                string_from_literal(interp, "Class"))) {
-            const Parrot_Class * const class_info = PARROT_CLASS(cur_class);
-            if (VTABLE_exists_keyed_str(interp, class_info->vtable_overrides,
-                    name)) {
-                /* Found it; call. */
-                PMC * const meth = VTABLE_get_pmc_keyed_str(interp,
-                    class_info->vtable_overrides, name);
-                return meth;
-            }
-        }
-        else {
-            /* This is the case where a parent is of a type other than Class,
-             * but PMCProxy doesn't handle vtable overrides correctly yet. Will
-             * have to come back and add it later. */
-        }
+        PMC * const meth = get_vtable_override_for_class(interp, cur_class, name);
+        if (!PMC_IS_NULL(meth))
+            return meth;
     }
     return PMCNULL;
 }
@@ -456,7 +462,7 @@ initialize_parents(PARROT_INTERP, PMC *all_parents, PMC *object)
         PMC * const parent = VTABLE_get_pmc_keyed_int(interp,
             all_parents, parent_index);
 
-        PMC *meth = find_vtable_override(interp, parent, name);
+        PMC *meth = get_vtable_override_for_class(interp, parent, name);
         if (!PMC_IS_NULL(meth)) {
             Parrot_run_meth_fromc_args(interp, meth,
                     object, name, "v");
@@ -475,7 +481,7 @@ initialize_parents_pmc(PARROT_INTERP, PMC *all_parents, PMC *object, PMC *init)
         PMC * const parent = VTABLE_get_pmc_keyed_int(interp,
             all_parents, parent_index);
 
-        PMC *meth = find_vtable_override(interp, parent, name);
+        PMC *meth = get_vtable_override_for_class(interp, parent, name);
         if (!PMC_IS_NULL(meth)) {
             Parrot_run_meth_fromc_args(interp, meth,
                     object, name, "vP", init);
