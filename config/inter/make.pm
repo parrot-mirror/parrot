@@ -16,19 +16,23 @@ package inter::make;
 use strict;
 use warnings;
 
-use vars qw( $description @args $prompt $util );
-
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step qw( :inter capture_output check_progs );
 
-$util        = 'make';
-$description = "Determining whether $util is installed";
-$prompt      = "Do you have a make utility like 'gmake' or 'make'?";
-@args        = qw( make ask );
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining whether make is installed};
+    $data{args}        = [ qw( make ask ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
+    my $util        = 'make';
+    my $prompt      = "Do you have a make utility like 'gmake' or 'make'?";
 
     my $verbose = $conf->options->get('verbose');
 

@@ -21,8 +21,14 @@ use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':gen';
 
-$description = 'Configuring languages';
-@args        = qw(languages);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Configuring languages};
+    $data{args}        = [ qw( languages ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;

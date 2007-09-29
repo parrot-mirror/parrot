@@ -22,16 +22,21 @@ use base qw(Parrot::Configure::Step::Base);
 use Parrot::Configure::Step;
 use Carp;
 
-$description = 'Running CPU specific stuff';
-
-@args = qw(miniparrot verbose);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Running CPU specific stuff};
+    $data{args}        = [ qw( miniparrot verbose ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
 
     if ( $conf->options->get('miniparrot') ) {
         $self->set_result('skipped');
-        return 1;
+        return $self;
     }
 
     my $verbose = $conf->options->get('verbose');
@@ -50,7 +55,7 @@ sub runstep {
         print "(no cpu specific hints)" if $verbose;
     }
 
-    return 1;
+    return $self;
 }
 
 1;
