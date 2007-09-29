@@ -67,7 +67,6 @@ Parrot_oo_get_class(PARROT_INTERP, NOTNULL(PMC *key))
              classobj = pmc_new_init(interp, enum_class_PMCProxy, type_num);
         }
     }
-    PARROT_ASSERT(classobj);
     return classobj;
 }
 
