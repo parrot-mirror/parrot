@@ -10,7 +10,6 @@ t/configure/testlib/init/beta.pm - Module used in configuration tests
 package init::beta;
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
