@@ -11,7 +11,6 @@ package inter::theta;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use File::Basename qw/basename/;
 

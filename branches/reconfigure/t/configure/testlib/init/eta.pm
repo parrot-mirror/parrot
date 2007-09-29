@@ -10,7 +10,6 @@ t/configure/testlib/init/eta.pm - Module used in configuration tests
 package init::eta;
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 

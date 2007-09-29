@@ -10,7 +10,6 @@ t/configure/testlib/init/alpha.pm - Module used in configuration tests
 package init::alpha;
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
