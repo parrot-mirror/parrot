@@ -19,8 +19,14 @@ use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':inter';
 
-$description = 'Determining if your computer does theta';
-@args = qw(ask theta);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining if your computer does theta};
+    $data{args}        = [ qw( ask theta ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
