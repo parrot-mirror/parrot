@@ -16,13 +16,14 @@ package gen::revision;
 
 use strict;
 use warnings;
-use vars qw($description $result);
+use vars qw($description @args $result);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Revision;
 
 $description = "Determining Parrot's revision";
+@args = ();
 
 sub runstep {
     my ( $self, $conf ) = @_;
