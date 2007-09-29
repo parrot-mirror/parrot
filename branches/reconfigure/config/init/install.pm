@@ -15,15 +15,19 @@ package init::install;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step;
 
-$description = q{Setting up installation paths};
-
-@args = qw( prefix exec-prefix bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir );
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Setting up installation paths};
+    $data{args}        = [ qw( prefix exec-prefix bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;

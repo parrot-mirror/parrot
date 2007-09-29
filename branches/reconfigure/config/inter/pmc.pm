@@ -23,8 +23,14 @@ use File::Basename qw/basename/;
 
 use Parrot::Configure::Step ':inter';
 
-$description = 'Determining what pmc files should be compiled in';
-@args        = qw(ask pmc);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining what pmc files should be compiled in};
+    $data{args}        = [ qw( ask pmc ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 my %PMC_PARENTS;
 

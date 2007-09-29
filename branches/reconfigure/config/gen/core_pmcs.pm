@@ -21,8 +21,14 @@ use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':gen';
 
-$description = 'Generating core pmc list';
-@args        = ();
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Generating core pmc list};
+    $data{args}        = [ qw(  ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;

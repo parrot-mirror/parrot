@@ -23,8 +23,14 @@ use base qw(Parrot::Configure::Step::Base);
 use Parrot::Configure::Step;
 use ExtUtils::Manifest qw(maniread);
 
-$description = 'Finding header files distributed with Parrot';
-@args = ();
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Finding header files distributed with Parrot};
+    $data{args}        = [ qw(  ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;

@@ -22,16 +22,22 @@ use base qw(Parrot::Configure::Step::Base);
 use Parrot::Configure::Step ':auto';
 use Config;
 
-$description = 'Probing for C headers';
 
-@args = qw(miniparrot verbose);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Probing for C headers};
+    $data{args}        = [ qw( miniparrot verbose ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
 
     if ( $conf->options->get('miniparrot') ) {
         $self->set_result('skipped');
-        return 1;
+        return $self;
     }
 
     # perl5's Configure system doesn't call this by its full name, which may
@@ -96,7 +102,7 @@ sub runstep {
         $conf->data->set( $flag => $pass ? 'define' : undef );
     }
 
-    return 1;
+    return $self;
 }
 
 1;

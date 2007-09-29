@@ -46,7 +46,11 @@ Accepts no arguments and returns a L<Parrot::Configure::Step::> object.
 
 sub new {
     my $class = shift;
-    return bless {}, $class;
+#    return bless {}, $class;
+    my $self = bless {}, $class;
+    my $dataref = $self->_init($class);
+    %$self = %$dataref;
+    return $self;
 }
 
 =back
@@ -99,12 +103,14 @@ This method also works as an object method.
 =cut
 
 sub description {
-    my $class = shift;
-    $class = ( ref $class ) ? ref $class : $class;
-    {
-        no strict 'refs';
-        return ${ $class . "::description" };
-    }
+#    my $class = shift;
+#    $class = ( ref $class ) ? ref $class : $class;
+#    {
+#        no strict 'refs';
+#        return ${ $class . "::description" };
+#    }
+    my $self = shift;
+    return $self->{description};
 }
 
 =item * C<args()>
@@ -117,12 +123,14 @@ This method also works as an object method.
 =cut
 
 sub args {
-    my $class = shift;
-    $class = ( ref $class ) ? ref $class : $class;
-    {
-        no strict 'refs';
-        return @{ $class . "::args" };
-    }
+#    my $class = shift;
+#    $class = ( ref $class ) ? ref $class : $class;
+#    {
+#        no strict 'refs';
+#        return @{ $class . "::args" };
+#    }
+    my $self = shift;
+    return @{$self->{args}};
 }
 
 =back
