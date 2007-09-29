@@ -25,8 +25,7 @@ use Parrot::Configure::Step ':inter', ':auto';
 
 $description = 'Determining what C compiler and linker to use';
 
-@args = qw(ask cc cxx link ld ccflags ccwarn linkflags ldflags libs debugging
-    lex yacc maintainer);
+@args = qw(ask cc cxx link ld ccflags ccwarn linkflags ldflags libs debugging lex yacc maintainer);
 
 our $verbose;
 
