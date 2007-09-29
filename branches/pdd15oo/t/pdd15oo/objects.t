@@ -1395,6 +1395,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 1" );
   get_class $P0, "Integer"
   print "ok 1\n"
   subclass MyInt, $P0, "MyInt"
+  addattribute MyInt, 'intval'
   get_class $P1, "MyInt"
   subclass MyInt2, $P1, "MyInt2"
   print "ok 2\n"
@@ -1408,7 +1409,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 1" );
   print $I0
   print "\n"
   print "ok 3\n"
-  i = 42	# set_integer is inherited from Integer
+  i = 42	# set_integer is overridden below
   print "ok 4\n"
   $I0 = i	# get_integer is overridden below
   print $I0
@@ -1419,26 +1420,27 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 1" );
 .end
 
 .namespace ["MyInt"]
+.sub 'set_integer_native' :vtable :method
+    .param int val
+    $P1 = new 'Integer'
+    $P1 = val
+    setattribute self, "intval", $P1
+    .return ()
+.end
 .sub get_integer :vtable :method
-   $I0 = classoffset self, "MyInt"
-   $P0 = getattribute self, $I0
+   $P0 = getattribute self, 'intval'
    $I0 = $P0
-   .pcc_begin_return
-   .return $I0
-   .pcc_end_return
+   .return ($I0)
 .end
 .sub get_string :vtable :method
-   $I0 = classoffset self, "MyInt"
-   $P0 = getattribute self, $I0
+   $P0 = getattribute self, 'intval'
    $I0 = $P0
    $S1 = $I0
    $S0 = typeof self
    $S0 .= "("
    $S0 .= $S1
    $S0 .= ")"
-   .pcc_begin_return
-   .return $S0
-   .pcc_end_return
+   .return ($S0)
 .end
 CODE
 ok 1
@@ -1458,6 +1460,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 2" );
   get_class $P0, "Integer"
   print "ok 1\n"
   subclass MyInt, $P0, "MyInt"
+  addattribute MyInt, 'intval'
   get_class $P1, "MyInt"
   subclass MyInt2, $P1, "MyInt2"
   print "ok 2\n"
@@ -1471,7 +1474,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 2" );
   print $I0
   print "\n"
   print "ok 3\n"
-  i = 42	# set_integer is inherited from Integer
+  i = 42	# set_integer is overridden below
   print "ok 4\n"
   $I0 = i	# get_integer is overridden below
   print $I0
@@ -1485,35 +1488,33 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 2" );
 # subclassing methods from MyInt is ok
 # this one changes the value a bit
 .sub get_integer :vtable :method
-   $I0 = classoffset self, "MyInt"
-   $P0 = getattribute self, $I0
+   $P0 = getattribute self, 'intval'
    $I0 = $P0
    inc $I0            # <<<<<
-   .pcc_begin_return
-   .return $I0
-   .pcc_end_return
+   .return ($I0)
 .end
 .namespace ["MyInt"]
+.sub 'set_integer_native' :vtable :method
+    .param int val
+    $P1 = new 'Integer'
+    $P1 = val
+    setattribute self, "intval", $P1
+    .return ()
+.end
 .sub get_integer :vtable :method
-   $I0 = classoffset self, "MyInt"
-   $P0 = getattribute self, $I0
+   $P0 = getattribute self, 'intval'
    $I0 = $P0
-   .pcc_begin_return
-   .return $I0
-   .pcc_end_return
+   .return ($I0)
 .end
 .sub get_string :vtable :method
-   $I0 = classoffset self, "MyInt"
-   $P0 = getattribute self, $I0
+   $P0 = getattribute self, 'intval'
    $I0 = $P0
    $S1 = $I0
    $S0 = typeof self
    $S0 .= "("
    $S0 .= $S1
    $S0 .= ")"
-   .pcc_begin_return
-   .return $S0
-   .pcc_end_return
+   .return ($S0)
 .end
 CODE
 ok 1
@@ -1533,6 +1534,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 3" );
   get_class $P0, "Integer"
   print "ok 1\n"
   subclass MyInt, $P0, "MyInt"
+  addattribute MyInt, 'intval'
   get_class $P1, "MyInt"
   subclass MyInt2, $P1, "MyInt2"
   print "ok 2\n"
@@ -1546,7 +1548,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 3" );
   print $I0
   print "\n"
   print "ok 3\n"
-  i = 42	# set_integer is inherited from Integer
+  i = 42	# set_integer is overridden below
   print "ok 4\n"
   $I0 = i	# get_integer is overridden below
   print $I0
@@ -1558,25 +1560,27 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 3" );
 
 .namespace ["MyInt2"]
 .sub get_integer :vtable :method
-   $I0 = classoffset self, "MyInt"
-   $P0 = getattribute self, $I0
+   $P0 = getattribute self, 'intval'
    $I0 = $P0
-   .pcc_begin_return
-   .return $I0
-   .pcc_end_return
+   .return ($I0)
 .end
 .sub get_string :vtable :method
-   $I0 = classoffset self, "MyInt"
-   $P0 = getattribute self, $I0
+   $P0 = getattribute self, 'intval'
    $I0 = $P0
    $S1 = $I0
    $S0 = typeof self
    $S0 .= "("
    $S0 .= $S1
    $S0 .= ")"
-   .pcc_begin_return
-   .return $S0
-   .pcc_end_return
+   .return ($S0)
+.end
+.namespace ['MyInt']
+.sub 'set_integer_native' :vtable :method
+    .param int val
+    $P1 = new 'Integer'
+    $P1 = val
+    setattribute self, "intval", $P1
+    .return ()
 .end
 CODE
 ok 1
@@ -1599,8 +1603,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "subclassing Class" );
     .local pmc o
     o = new "Foo"
     print "ok 2\n"
-#    $S0 = classname o # deprecated
-    $S0 = o
+    $S0 = typeof o
     print $S0
     print "\n"
 .end
@@ -1807,7 +1810,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "init with and w/o arg" );
     $P0 = new 'String'
     $P0 = "ok 2\n"
     h['a'] = $P0
-    o  = cl.'new'(h)
+    o  = new cl, h
     a = getattribute o, "a"
     print a
 .end
@@ -1972,9 +1975,10 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "class name" );
 .sub main :main
-    .local pmc base, o1, o2
+    .local pmc base, o1
     base = subclass 'Hash', ['Perl6'; 'PAST'; 'Node']
-    $S0 = classname base
+    o1 = new base
+    $S0 = typeof o1
     print $S0
     print "\n"
 .end
@@ -1984,10 +1988,11 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "get_class" );
 .sub main :main
-    .local pmc base, o1, o2
+    .local pmc base, o1
     base = subclass 'Hash', ['Perl6'; 'PAST'; 'Node']
     $P0 = get_class ['Perl6'; 'PAST'; 'Node']
-    $S0 = classname $P0
+    o1 = new $P0
+    $S0 = typeof o1
     print $S0
     print "\n"
 .end
@@ -2076,19 +2081,18 @@ CODE
 foo constructor
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "Using key from classname op with new" );
+pir_output_is( <<'CODE', <<'OUTPUT', "Using class object from typeof op with new" );
 .sub main :main
     $P0 = newclass [ "Monkey" ; "Banana" ]
     $P0 = $P0.'new'()
     $P0.ook()
-    $P1 = class $P0
-    $P2 = classname $P0
+    $P2 = typeof $P0
     $P3 = new $P2
     $P3.ook()
 .end
 
 .namespace [ "Monkey" ; "Banana" ]
-.sub ook
+.sub ook :method
     print "Ook!\n"
 .end
 CODE
