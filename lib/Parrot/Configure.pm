@@ -245,7 +245,7 @@ sub runsteps {
             $/x
         ) {
             %steps_to_die_for = map {$_, 1} (split /,/, $fatal_step);
-            print STDERR Dumper \%steps_to_die_for;
+#            print STDERR Dumper \%steps_to_die_for;
         } else {
             die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps";
         }
