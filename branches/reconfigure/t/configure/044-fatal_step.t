@@ -1,12 +1,12 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 043-fatal_step.t
+# 044-fatal_step.t
 
 use strict;
 use warnings;
 
-use Test::More tests => 14;
+use Test::More tests => 12;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use Parrot::Configure;
@@ -18,7 +18,7 @@ is( $|, 1, "output autoflush is set" );
 
 my $args = process_options(
     {
-        argv => [ qw( --fatal-step=init::iota,init::manifest ) ],
+        argv => [ qw( --fatal-step=foo::iota ) ],
         mode => q{configure},
     }
 );
@@ -28,7 +28,7 @@ my %args = %$args;
 my $conf = Parrot::Configure->new;
 ok( defined $conf, "Parrot::Configure->new() returned okay" );
 
-my $step        = q{init::iota};
+my $step        = q{foo::iota};
 my $description = 'Determining if your computer does iota';
 
 $conf->add_steps($step);
@@ -52,32 +52,10 @@ is( $conf->options->{c}->{debugging},
     1, "command-line option '--debugging' has been stored in object" );
 
 my $rv;
-my ( $tie, @lines );
-my ( $errtie, @errlines );
-{
-    $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $errtie = tie *STDERR, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $rv    = $conf->runsteps;
-    @lines = $tie->READLINE;
-    @errlines = $errtie->READLINE;
-}
-ok(! defined $rv, 'runsteps() returned undef');
-my $bigmsg = join q{}, @lines;
-like(
-    $bigmsg,
-    qr/$description\.\.\./s,
-    "Got STDOUT message expected upon running $step"
-);
-my $errbigmsg = join q{}, @errlines;
-like(
-    $errbigmsg,
-    qr/step $step failed:/s,
-    "Got STDERR message expected upon running $step"
-);
-untie *STDOUT;
-untie *STDERR;
+eval { $rv = $conf->runsteps; };
+like($@, qr/^Argument to 'fatal-step' option/,
+    "Got expected error message when value to --fatal-step option was misspecified");
+
 
 pass("Completed all tests in $0");
 
@@ -85,19 +63,18 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-043-fatal_step.t - test bad step failure case in Parrot::Configure
+044-fatal_step.t - test bad step failure case in Parrot::Configure
 
 =head1 SYNOPSIS
 
-    % prove t/configure/043-fatal_step.t
+    % prove t/configure/044-fatal_step.t
 
 =head1 DESCRIPTION
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file examine what happens when you set the C<--fatal-step>
-option for multiple configuration steps and one of those steps returns an
-undefined value.
+The tests in this file examine what happens when you misspecify the value for
+the C<--fatal-step> option.
 
 =head1 AUTHOR
 
