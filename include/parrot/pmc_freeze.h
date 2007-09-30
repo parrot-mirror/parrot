@@ -28,10 +28,10 @@ typedef enum {
 
 struct _image_io;
 #define IMAGE_IO struct _image_io
-typedef void    (*push_integer_f)       (PARROT_INTERP, IMAGE_IO*, INTVAL);
-typedef void    (*push_pmc_f)           (PARROT_INTERP, IMAGE_IO*, PMC*);
-typedef void    (*push_string_f)        (PARROT_INTERP, IMAGE_IO*, STRING*);
-typedef void    (*push_number_f)        (PARROT_INTERP, IMAGE_IO*, FLOATVAL);
+typedef void (*push_integer_f)       (PARROT_INTERP, IMAGE_IO*, INTVAL);
+typedef void (*push_pmc_f)           (PARROT_INTERP, IMAGE_IO*, PMC*);
+typedef void (*push_string_f)        (PARROT_INTERP, IMAGE_IO*, STRING*);
+typedef void (*push_number_f)        (PARROT_INTERP, IMAGE_IO*, FLOATVAL);
 typedef INTVAL  (*shift_integer_f)      (PARROT_INTERP, IMAGE_IO*);
 typedef PMC*    (*shift_pmc_f)          (PARROT_INTERP, IMAGE_IO*);
 typedef STRING* (*shift_string_f)       (PARROT_INTERP, IMAGE_IO*);
@@ -90,35 +90,35 @@ typedef struct _visit_info {
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-PMC* Parrot_clone( PARROT_INTERP, NOTNULL(PMC* pmc) )
+PMC* Parrot_clone(PARROT_INTERP, NOTNULL(PMC* pmc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-STRING* Parrot_freeze( PARROT_INTERP, NOTNULL(PMC* pmc) )
+STRING* Parrot_freeze(PARROT_INTERP, NOTNULL(PMC* pmc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-STRING* Parrot_freeze_at_destruct( PARROT_INTERP, NOTNULL(PMC* pmc) )
+STRING* Parrot_freeze_at_destruct(PARROT_INTERP, NOTNULL(PMC* pmc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-PMC* Parrot_thaw( PARROT_INTERP, NOTNULL(STRING* image) )
+PMC* Parrot_thaw(PARROT_INTERP, NOTNULL(STRING* image))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-PMC* Parrot_thaw_constants( PARROT_INTERP, NOTNULL(STRING* image) )
+PMC* Parrot_thaw_constants(PARROT_INTERP, NOTNULL(STRING* image))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

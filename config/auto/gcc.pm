@@ -112,19 +112,29 @@ sub runstep {
                 . " -Wimplicit-function-declaration"
                 . " -Wimplicit-int"
                 . " -Wimport"
-                . " -Winit-self"
                 . " -Winline"
+                . " -Wmain"
+                . " -Wmissing-braces"
                 . " -Wmissing-declarations"
                 . " -Wmissing-prototypes"
+                . " -Wnested-externs"
                 . " -Wno-unused"
                 . " -Wnonnull"
                 . " -Wpacked"
                 . " -Wparentheses"
                 . " -Wpointer-arith"
+                . " -Wreturn-type"
+                . " -Wsequence-point"
                 . " -Wshadow"
+                . " -Wsign-compare"
+                . " -Wstrict-aliasing"
                 . " -Wstrict-prototypes"
+                . " -Wswitch"
+                #. " -Wswitch-default"
+                #. " -Wswitch-enum"
                 . " -Wnested-externs"
                 . " -Wundef"
+                . " -Wunknown-pragmas"
                 . " -Wwrite-strings"
                 . ( $maint ? " -Wlarger-than-4096" : "" ),
 
@@ -169,7 +179,10 @@ sub runstep {
                 . " -Wbad-function-cast"
                 . " -Wdeclaration-after-statement"
                 . " -Wextra"
+                . " -Winit-self"
+                . " -Winvalid-pch"
                 . " -Wold-style-definition"
+                . " -Wstrict-aliasing=2"
                 . "",
 
             # -Wsequence-point is part of -Wall
@@ -177,14 +190,20 @@ sub runstep {
             # We shouldn't be using __packed__, but I doubt -Wpacked will harm
             # us -Wpadded may prove interesting, or even noisy.
             # -Wunreachable-code might be useful in a non debugging version
-            4.0 => "-fvisibility=hidden",
+            4.0 => ""
+                . " -fvisibility=hidden"
+                . " -Wmissing-field-initializers"
+                . "",
 
             # Needed to prevent C++ compatibility issues
-            4.1 => " -Wc++-compat",
+            4.1 => ""
+                . " -Wc++-compat"
+                . "",
         );
 
         my @cage_opt_and_vers = (
-                  0 => " -std=c89"
+                  0 => ""
+                . " -std=c89"
                 . " -Wall"
                 . " -Waggregate-return"
                 . " -Wextra"
@@ -236,16 +255,15 @@ sub runstep {
                 . " -Wswitch-enum"
                 . " -Wsystem-headers"
                 . " -Wtrigraphs"
+                . " -Wundef"
                 . " -Wunknown-pragmas"
                 . " -Wunreachable-code"
-                . " -Wundef"
                 . " -Wunused-function"
                 . " -Wunused-label"
                 . " -Wunused-parameter"
                 . " -Wunused-value"
                 . " -Wunused-variable"
                 . " -Wwrite-strings"
-
                 #. "-fsyntax-only "
                 #. "-pedantic -pedantic-errors "
                 #. " -w "
@@ -254,22 +272,16 @@ sub runstep {
                 . " -Wno-div-by-zero"
                 . " -Wno-endif-labels"
                 . " -Werror-implicit-function-declaration"
-
                 #. " -Wfloat-equal"
                 . " -Wno-format-extra-args"
                 . " -Wno-import"
                 . " -Wno-multichar"
-
                 #. " -Wuninitialized "
                 #     requires -O
                 #."-Wmost (APPLE ONLY)"
-
                 #C-only Warning Options
-
                 #. " -Wtraditional "
                 . "",
-
-#"-Wall -Wstrict-prototypes -Wmissing-prototypes -Winline -Wshadow -Wpointer-arith -Wcast-qual -Wwrite-strings -Waggregate-return -Winline -W -Wno-unused",
 
             # others; ones we might like marked with ?
             # ? -Wundef for undefined idenfiers in #if
@@ -306,14 +318,19 @@ sub runstep {
             #    . "-Wdisabled-optimization -mno-accumulate-outgoing-args "
             #    . "-Wno-shadow -falign-functions=16 ",
             4.0 => ""
-
                 #. " -Wfatal-errors"
-                . " -Wmissing-field-initializers" . " -Wmissing-include-dirs" . " -Wvariadic-macros"
-
+                . " -Wmissing-field-initializers"
+                . " -Wmissing-include-dirs"
+                . " -Wvariadic-macros"
                 #. " -Wno-discard-qual"
-                . " -Wno-pointer-sign",
-            4.1 => " -Wc++-compat",
-            4.2 => "",
+                . " -Wno-pointer-sign"
+                . "",
+            4.1 => ""
+                . " -Wc++-compat"
+                . "",
+            4.2 => ""
+                . " -Wlogical-op"
+                . "",
 
             # -Wsequence-point is part of -Wall
             # -Wfloat-equal may not be what we want

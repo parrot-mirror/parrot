@@ -263,7 +263,7 @@ PIO_init(PARROT_INTERP)
     if (interp->piodata == NULL)
         real_exception(interp, NULL, PIO_ERROR, "PIO alloc piodata failure.");
     interp->piodata->default_stack = NULL;
-    interp->piodata->table = (PMC **)mem_sys_allocate_zeroed(PIO_NR_OPEN * sizeof(ParrotIO *));
+    interp->piodata->table = (PMC **)mem_sys_allocate_zeroed(PIO_NR_OPEN * sizeof (ParrotIO *));
     if (interp->piodata->table == NULL)
         real_exception(interp, NULL, PIO_ERROR, "PIO alloc table failure.");
 
@@ -1304,7 +1304,7 @@ PIO_poll(PARROT_INTERP, NOTNULL(PMC *pmc), INTVAL which, INTVAL sec, INTVAL usec
     ParrotIOLayer *l;
     ParrotIO *io;
 
-    if ( PMC_IS_NULL(pmc) ) {
+    if (PMC_IS_NULL(pmc)) {
         real_exception(interp, NULL, E_ValueError, "Can't poll NULL pmc");
     }
 

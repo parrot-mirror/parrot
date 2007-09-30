@@ -41,25 +41,25 @@ typedef struct parrot_prm_context {
 /* HEADERIZER HFILE: include/parrot/misc.h */
 /* HEADERIZER BEGIN: static */
 
-static FLOATVAL _drand48( void );
-static FLOATVAL _erand48( _rand_buf buf );
-static long _jrand48( _rand_buf buf );
-static long _lrand48( void );
-static long _mrand48( void );
-static long _nrand48( _rand_buf buf );
-static void _srand48( long seed );
-static void move_reg( int from, int dest, NOTNULL(parrot_prm_context* c) )
+static FLOATVAL _drand48(void);
+static FLOATVAL _erand48(_rand_buf buf);
+static long _jrand48(_rand_buf buf);
+static long _lrand48(void);
+static long _mrand48(void);
+static long _nrand48(_rand_buf buf);
+static void _srand48(long seed);
+static void move_reg(int from, int dest, NOTNULL(parrot_prm_context* c))
         __attribute__nonnull__(3);
 
-static void next_rand( _rand_buf X );
+static void next_rand(_rand_buf X);
 static void process_cycle_without_exit(
     int node_index,
-    NOTNULL(parrot_prm_context* c) )
+    NOTNULL(parrot_prm_context* c))
         __attribute__nonnull__(2);
 
 static void rec_climb_back_and_mark(
     int node_index,
-    NOTNULL(parrot_prm_context* c) )
+    NOTNULL(parrot_prm_context* c))
         __attribute__nonnull__(2);
 
 /* HEADERIZER END: static */
@@ -647,17 +647,32 @@ INTVAL
 Parrot_byte_index(SHIM_INTERP, NOTNULL(const STRING *base),
         NOTNULL(const STRING *search), UINTVAL start_offset)
 {
-    const INTVAL searchlen = search->strlen;
+    const INTVAL       searchlen    = search->strlen;
     const char * const search_start = search->strstart;
-    const INTVAL max_possible_offset = (base->strlen - search->strlen);
-    INTVAL current_offset;
+    const char * const base_start   = base->strstart;
+    const INTVAL       max_offset   = base->strlen - searchlen;
+    const char * const max_pos      = base_start + max_offset;
 
-    for (current_offset = start_offset; current_offset <= max_possible_offset;
-            current_offset++) {
-        const char * const base_start = (char *)base->strstart + current_offset;
-        if (memcmp(base_start, search_start, searchlen) == 0) {
-            return current_offset;
-        }
+    /* looking for the first character of the search string can avoid having to
+     * inch along, comparing everything.  However, if the base string has
+     * embedded nulls, index() will stop at the first one, so inching along is
+     * the only good solution */
+    char *start_pos = index(base_start + start_offset, *search_start);
+
+    /* index() returns NULL for no match, so start at the start position */
+    if (!start_pos)
+        start_pos = base_start + start_offset;
+
+    while (start_pos <= max_pos) {
+        /* only do the memcmp() if the first character matches */
+        if (  *start_pos == *search_start
+            && memcmp(start_pos, search_start, searchlen) == 0)
+
+            /* return the offset, not the pointer to the position */
+            return start_pos - base_start;
+
+        /* walking is necessary in case of embedded null bytes */
+        start_pos++;
     }
 
     return -1;

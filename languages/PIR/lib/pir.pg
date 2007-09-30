@@ -42,7 +42,9 @@ rule sub_def {
     [ <sub_id> | <syntax_error: sub identifier (id or string constant) expected> ]
     <sub_pragmas>?
     [ <?nl>    | <syntax_error: newline expected> ]
-    <body>
+    <param_decl>*
+    <labeled_pir_instr>*
+    [ <'.end'> | <syntax_error: '.end' expected to close method/sub body> ]
 }
 
 rule sub_id {
@@ -51,39 +53,23 @@ rule sub_id {
 
 =head3 sub_pragmas
 
-The comma to separate the sub pragmas is optional.
-
 =cut
 
 rule sub_pragmas {
-    <sub_pragma>
-    [
-      <','>?
-      <sub_pragma>
-    ]*
+    <sub_pragma>*
 }
 
-token sub_pragma {
+rule sub_pragma {
     | <':load'>
     | <':init'>
     | <':immediate'>
+    | <':postcomp'>
     | <':main'>
     | <':anon'>
     | <':lex'>
-    | <wrap_pragma>
     | <vtable_pragma>
     | <multi_pragma>
     | <outer_pragma>
-}
-
-=head3 wrap_pragma
-
-This one is not sure yet
-
-=cut
-
-rule wrap_pragma {
-    <':wrap'> <parenthesized_string>
 }
 
 rule vtable_pragma {
@@ -125,12 +111,6 @@ rule multi_type {
     | <string_constant>
 }
 
-rule body {
-    <param_decl>*
-    <labeled_pir_instr>*
-    [ <'.end'> | <syntax_error: '.end' expected to close method/sub body> ]
-}
-
 rule param_decl {
     <'.param'>
     [ [ <type> <id> ]
@@ -169,7 +149,6 @@ rule instr {
 
 token pir_instr {
     | <local_decl>
-    | <sym_decl>
     | <lexical_decl>
     | <const_def>
     | <globalconst_def>
@@ -191,9 +170,8 @@ rule macro_invocation {
 
 =head2 Local declarations
 
-Local declarations can be done using C<.sym> or C<.local> in normal context.
-In macro context however, only C<.sym> is allowed, and the C<.local> keyword
-indicates a label declaration.
+Local declarations can be done using C<.local> in normal context.
+TODO: how to declare locals in a macro? this needs to be fixed.
 
 =cut
 
@@ -203,13 +181,6 @@ rule local_decl {
     <local_id_list>
 }
 
-rule sym_decl {
-    <'.sym'>
-    [ <type> | <syntax_error: type for local symbol expected> ]
-    <local_id_list>
-}
-
-
 rule local_id_list {
     <local_id> [ <','> <local_id> ]*
 }
@@ -218,18 +189,28 @@ rule local_id {
     <id> <local_flag>?
 }
 
-rule local_flag {
+token local_flag {
     <':unique_reg'>
 }
 
 rule lexical_decl {
     <'.lex'>
-    [ <string_constant> | <syntax_error: string constant expected> ]
-    [ <','>             | <syntax_error: ',' expected> ]
-    [ <target>          | <syntax_error: register expected> ]
+    <string_constant1>
+    <comma>
+    <target1>
 }
 
+rule comma {
+    <','> | <syntax_error: ',' expected>
+}
 
+rule string_constant1 {
+    <string_constant> | <syntax_error: string constant expected>
+}
+
+rule target1 {
+    <target> | <syntax_error: register or identifier expected>
+}
 
 =head2 Const definition
 
@@ -328,11 +309,11 @@ rule assignment_stat {
     | <target> <'='> <'new'> <keylist>
     | <target> <'='> <'find_type'> [ <string_constant> | <string_reg> | <id> ]
     | <target> <'='> <heredoc>
-    | <target> <'='> <'global'> <string_constant> # deprecated?
     | <target> <assign_operator> <simple_expr>
     | <target> <keylist> <'='> <simple_expr>
-    | <'global'> <string_constant> <'='> <target> # deprecated?
-    | <result_var_list> [ <'='> | <syntax_error: '=' expected> ] <short_sub_call>
+    | <result_var_list>
+      [ <'='> | <syntax_error: '=' expected> ]
+      <short_sub_call>
 }
 
 
@@ -396,12 +377,32 @@ rule invocant {
     <'.invocant'> <target> <?nl>
 }
 
+#
+# in case of a method call, these options are allowed:
+# - foo.bar()
+# - foo. bar()
+# - foo .bar()
+#
+# where the method ('bar') can also be a quoted string.
+# it's important to recognize that the dot can NOT be written as
+# a separate token, it must be glued to either the invocant or the method.
+# otherwise it's recognized as a concatentation.
+#
 rule short_sub_call {
+    [
     [ <target>\.]?                   # optional invocant
     [ <target> | <string_constant> ] # method or sub name/id
+    |
+    <target> <method>
+    ]
     <parenthesized_args>             # sub args
     <process_heredocs>                           # process the list of heredoc labels, if any
     <clear_heredocs>
+}
+
+token method {
+    | \.<target>
+    | \.<string_constant>
 }
 
 rule sub_invocation {
@@ -493,9 +494,8 @@ token return_stat {
 }
 
 rule long_return_stat {
-    <'.pcc_begin_return'>
-    [ <?nl> | <syntax_error: newline expected after '.pcc_begin_return'> ]
-    [ <return_directive> ]*
+    <'.pcc_begin_return'> <?nl1>
+    [ <'.return'> <return_value> ]*
     [ <'.pcc_end_return'> | <syntax_error: '.pcc_end_return' expected> ]
 }
 
@@ -504,17 +504,21 @@ rule short_return_stat {
 }
 
 rule long_yield_stat {
-    <'.pcc_begin_yield'>
-    [ <?nl> | <syntax_error: newline expected after '.pcc_begin_yield'> ]
-    [ <return_directive> ]*
+    <'.pcc_begin_yield'> <?nl1>
+    [ <'.yield'> <return_value> ]*
     [ <'.pcc_end_yield'> | <syntax_error: '.pcc_end_yield' expected> ]
 }
 
-rule return_directive {
-    <'.return'>
+
+rule return_value {
     [ <simple_expr> | <syntax_error: simple expression expected> ]
     <set_flags>?
-    [ <?nl> | <syntax_error: newline expected after return directive> ]
+    <?nl1>
+}
+
+rule yield_directive {
+    <'.yield'>
+    <return_value>
 }
 
 rule short_yield_stat {
@@ -627,9 +631,9 @@ rule hll_specifier {
 
 rule hll_mapping {
     <'.HLL_map'>
-    [ <int_constant>    | <syntax_error: Parrot Core type expected> ]
+    [ <string_constant> | <syntax_error: Parrot Core type expected> ]
     [ <','>             | <syntax_error: ',' expected> ]
-    [ <int_constant>    | <syntax_error: HLL type expected> ]
+    [ <string_constant> | <syntax_error: HLL type expected> ]
 }
 
 rule namespace_id {
@@ -671,7 +675,7 @@ token macro_label {
 }
 
 rule macro_label_decl {
-    | <'.local'> [ <macro_label> | <syntax_error: $LABEL: expected> ]
+    | <'.label'> [ <macro_label> | <syntax_error: $LABEL: expected> ]
     | <normal_label>
 }
 
@@ -701,16 +705,16 @@ token charset_specifier {
 regex stringdouble { <PGE::Text::bracketed: "> }
 regex stringsingle { <PGE::Text::bracketed: '> }
 
-## TODO: add other built-in types
 token type {
+    | <pir_type>
+    | <macro_id>
+}
+
+token pir_type {
     | <'int'>
     | <'num'>
     | <'pmc'>
-    | <'object'>
     | <'string'>
-    | <macro_id>
-    | <'Array'>
-    | <'Hash'>
 }
 
 token normal_target {
@@ -779,6 +783,10 @@ token nl {
     [ \n <?ws> ]+
 }
 
+token nl1 {
+    <nl> | <syntax_error: newline expected>
+}
+
 regex pod_comment {
     ^^ = [ [ cut \h*: | end [\h\N*]? ]
          | for [ \h\N+: ] \n [ \N+\n ]*:
@@ -797,21 +805,17 @@ identifiers.
 =cut
 
 token keyword {
+    | <pir_type>
     | <pir_directive>
+    | <pir_keyword>
     | <pasm_instruction> # pasm instructions may be identifiers in IMCC
-    | <reserved>
-}
-
-token reserved {
-    | <'int'>
-    | <'num'>
-    | <'pmc'>
-    | <'string'>
-    | <'self'>
 }
 
 
-
+# TODO: find out if we need to do this: I think so..
+token pir_keyword {
+    <'goto'>
+}
 
 =head2 PIR directives
 
@@ -828,11 +832,11 @@ token pir_directive {
     | <'.eom'>
     | <'.get_results'>
     | <'.globalconst'>
-    | <'.global'>
     | <'.HLL_map'>
     | <'.HLL'>
     | <'.include'>
     | <'.invocant'>
+    | <'.label'>
     | <'.lex'>
     | <'.line'>
     | <'.loadlib'>
@@ -852,7 +856,6 @@ token pir_directive {
     | <'.pragma'>
     | <'.return'>
     | <'.sub'>
-    | <'.sym'>
     | <'.result'>
     | <'.yield'>
 }
