@@ -95,7 +95,7 @@ pass("Completed all tests in $0");
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file examine what happens when set the C<--fatal-step>
+The tests in this file examine what happens when you set the C<--fatal-step>
 option for a single configuration step and that step returns an undefined
 value.
 
