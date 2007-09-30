@@ -35,10 +35,8 @@ Paul Cochrane <paultcochrane at gmail dot com>
 my $DIST = Parrot::Distribution->new;
 my @files = @ARGV ? @ARGV : $DIST->get_c_language_files();
 my @missing_docs;
-my $docs_are_missing = 0;
 
 foreach my $file (@files) {
-    my $buf;
     my $path;
 
     ## get the full path of the file
@@ -52,23 +50,15 @@ foreach my $file (@files) {
         $path = $file->path;
     }
 
-    # slurp in the file
-    open( my $fh, '<', $path )
-        or die "Cannot open '$path' for reading: $!\n";
-    {
-        local $/;
-        $buf = <$fh>;
-    }
-    close $fh;
+    my $buf = $DIST->slurp( $path );
 
     # get rid of if's and for's etc]
     $buf =~ s/(if|for)\s+\(.*\)\s+{//g;
 
     # look for function definitions
-    my @function_names = $buf =~ m/[^\s(|]\s(\w+)\(.*\)\s+{/g;
+    my @function_names = $buf =~ m/[^\s(\|]\s(\w+)\(.*\s?.*\)\s+{/g;
 
     for my $function_name (@function_names) {
-
         # if the function name matches a known C construct, go to the next
         # one
         if ( $function_name =~ m/for|if|switch|NOTNULL/ ) {
@@ -78,37 +68,17 @@ foreach my $file (@files) {
         # look for matching documentation.  This means the text
         # '=item C<\w+\s+function_name'
         if ( $buf !~ m/=item .*$function_name/ ) {
-            # if passed in a single file at the command line, print out
-            # boilerplate docs for undocumented functions
-            if ( scalar @ARGV ) {
-                $docs_are_missing = 1;
-                print <<"END";
-/*
-
- =item C<$function_name>
-
-TODO: Not yet documented!!!
-
- =cut
-
-*/
-
-END
-            }
-            else {
-                push @missing_docs, "$path\n";
-                last;
-            }
+            push @missing_docs, "$path\n";
+            last;
         }
-    }
-    if ( scalar @ARGV and $docs_are_missing ) {
-        push @missing_docs, "$path\n";
     }
 }
 
 ok( !scalar(@missing_docs), 'Functions documented' )
     or
-    diag( "Functions lacking documentation in " . scalar @missing_docs . " files:\n@missing_docs" );
+    diag( "Functions lacking documentation in " . scalar @missing_docs .
+        " files:\n@missing_docs\n" .
+        "Use tools/docs/func_boilerplate.pl to add missing documentation\n");
 
 # Local Variables:
 #   mode: cperl

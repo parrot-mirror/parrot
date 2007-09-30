@@ -25,10 +25,6 @@
 #include "parser.h"
 #include "optimizer.h"
 
-/* HEADERIZER HFILE: compilers/imcc/imc.h */
-
-/* HEADERIZER BEGIN: static */
-
 #ifndef YYENABLE_NLS
 #  define YYENABLE_NLS 0
 #endif
@@ -37,38 +33,42 @@
 #  define YYLTYPE_IS_TRIVIAL 0
 #endif
 
-static void add_pcc_named_arg( PARROT_INTERP,
+/* HEADERIZER HFILE: compilers/imcc/imc.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void add_pcc_named_arg(PARROT_INTERP,
     NOTNULL(SymReg *cur_call),
     const char     *name,
-    SymReg         *value )
+    SymReg         *value)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void add_pcc_named_param( PARROT_INTERP,
+static void add_pcc_named_param(PARROT_INTERP,
     SymReg     *cur_call,
     const char *name,
-    SymReg     *value )
+    SymReg     *value)
         __attribute__nonnull__(1);
 
-static void add_pcc_named_result( PARROT_INTERP,
+static void add_pcc_named_result(PARROT_INTERP,
     SymReg     *cur_call,
     const char *name,
-    SymReg     *value )
+    SymReg     *value)
         __attribute__nonnull__(1);
 
-static void add_pcc_named_return( PARROT_INTERP,
+static void add_pcc_named_return(PARROT_INTERP,
     SymReg     *cur_call,
     const char *name,
-    SymReg     *value )
+    SymReg     *value)
         __attribute__nonnull__(1);
 
-static void begin_return_or_yield( PARROT_INTERP, int yield )
+static void begin_return_or_yield(PARROT_INTERP, int yield)
         __attribute__nonnull__(1);
 
-static void clear_state( PARROT_INTERP )
+static void clear_state(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static void do_loadlib( PARROT_INTERP, NOTNULL(const char *lib) )
+static void do_loadlib(PARROT_INTERP, NOTNULL(const char *lib))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -81,43 +81,43 @@ static Instruction* func_ins(
     NOTNULL(SymReg **r),
     int n,
     int keyv,
-    int emit )
+    int emit)
         __attribute__nonnull__(5);
 
-static Instruction * iINDEXFETCH( PARROT_INTERP,
+static Instruction * iINDEXFETCH(PARROT_INTERP,
     IMC_Unit *unit,
     SymReg *r0,
     SymReg *r1,
-    SymReg *r2 )
+    SymReg *r2)
         __attribute__nonnull__(1);
 
-static Instruction * iINDEXSET( PARROT_INTERP,
+static Instruction * iINDEXSET(PARROT_INTERP,
     IMC_Unit *unit,
     SymReg *r0,
     SymReg *r1,
-    SymReg *r2 )
+    SymReg *r2)
         __attribute__nonnull__(1);
 
-static Instruction * iLABEL( PARROT_INTERP, IMC_Unit *unit, SymReg *r0 )
+static Instruction * iLABEL(PARROT_INTERP, IMC_Unit *unit, SymReg *r0)
         __attribute__nonnull__(1);
 
-static const char * inv_op( const char *op );
-static Instruction * iSUBROUTINE( PARROT_INTERP,
+static const char * inv_op(const char *op);
+static Instruction * iSUBROUTINE(PARROT_INTERP,
     IMC_Unit *unit,
-    NOTNULL(SymReg *r) )
+    NOTNULL(SymReg *r))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static Instruction * MK_I( PARROT_INTERP,
+static Instruction * MK_I(PARROT_INTERP,
     IMC_Unit *unit,
     NOTNULL(const char *fmt),
     int n,
-    ... )
+    ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
-static Instruction* mk_pmc_const( PARROT_INTERP,
+static Instruction* mk_pmc_const(PARROT_INTERP,
     IMC_Unit *unit,
     NOTNULL(const char *type),
     NOTNULL(SymReg *left),
@@ -127,13 +127,13 @@ static Instruction* mk_pmc_const( PARROT_INTERP,
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-static SymReg * mk_sub_address_fromc( PARROT_INTERP, char *name )
+static SymReg * mk_sub_address_fromc(PARROT_INTERP, char *name)
         __attribute__nonnull__(1);
 
-static SymReg * mk_sub_address_u( PARROT_INTERP, char *name )
+static SymReg * mk_sub_address_u(PARROT_INTERP, char *name)
         __attribute__nonnull__(1);
 
-static void set_lexical( PARROT_INTERP, NOTNULL(SymReg *r), char *name )
+static void set_lexical(PARROT_INTERP, NOTNULL(SymReg *r), char *name)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -179,7 +179,7 @@ MK_I(PARROT_INTERP, IMC_Unit *unit, NOTNULL(const char *fmt), int n, ...)
     SymReg *r[IMCC_MAX_FIX_REGS];
     int i;
 
-    for (p = opname, q = fmt; *q && *q != ' '; )
+    for (p = opname, q = fmt; *q && *q != ' ';)
         *p++ = *q++;
     *p = 0;
     if (!*q)
@@ -220,7 +220,7 @@ mk_pmc_const(PARROT_INTERP, IMC_Unit *unit, NOTNULL(const char *type),
         left->set = 'P';
     }
     r[0] = left;
-    ascii = (*constant == '\'' || *constant == '"' );
+    ascii = (*constant == '\'' || *constant == '"');
     if (ascii) {
         /* strip delimiters */
         const size_t len  = strlen(constant);
@@ -304,7 +304,7 @@ iSUBROUTINE(PARROT_INTERP, IMC_Unit *unit, NOTNULL(SymReg *r)) {
     Instruction * const i =iLABEL(interp, unit, r);
 
     r->type    = (r->type & VT_ENCODED) ? VT_PCC_SUB|VT_ENCODED : VT_PCC_SUB;
-    r->pcc_sub = (pcc_sub_t*)calloc(1, sizeof(struct pcc_sub_t));
+    r->pcc_sub = (pcc_sub_t*)calloc(1, sizeof (struct pcc_sub_t));
 
     IMCC_INFO(interp)->cur_call = r;
     i->line                     = IMCC_INFO(interp)->line;
@@ -659,6 +659,23 @@ hll_def: HLL STRINGC COMMA STRINGC
                 CONTEXT(((Interp*)interp)->ctx)->current_HLL, atoi($2), atoi($4));
              $$ = 0;
          }
+   | HLL_MAP STRINGC COMMA STRINGC
+         {
+            int built_in_type = 0;
+            int language_type = 0;
+
+            STRING *built_in_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
+            STRING *language_name = string_unescape_cstring(interp, $4 + 1, '"', NULL);
+            built_in_type = pmc_type(interp, built_in_name);
+            language_type = pmc_type(interp, language_name);
+
+            /*
+            fprintf(stderr, "built in type is: %d, language type is: %d\n", built_in_type, language_type);
+            */
+            Parrot_register_HLL_type(interp,
+                 CONTEXT(((Interp *)interp)->ctx)->current_HLL, built_in_type, language_type);
+            $$ = 0;
+         }
    ;
 
 constdef:
@@ -805,7 +822,7 @@ sub_param_type_def:
 
 opt_comma:
      /* empty */              { $$ = 0;  }
-   | COMMA
+   | COMMA                    { $$ = 0; fprintf(stderr, "IMCC Warning: optional comma is deprecated.\n"); }
    ;
 
 
@@ -1046,7 +1063,7 @@ pcc_return:
 pcc_return_many:
     return_or_yield  '('
         {
-            if ( IMCC_INFO(interp)->asm_state == AsmDefault)
+            if (IMCC_INFO(interp)->asm_state == AsmDefault)
                 begin_return_or_yield(interp, $1);
         }
     var_returns  ')'
@@ -1154,7 +1171,7 @@ id_list :
 id_list_id :
      IDENTIFIER opt_unique_reg
      {
-         IdList* l = (IdList*)malloc(sizeof(IdList));
+         IdList* l = (IdList*)malloc(sizeof (IdList));
          l->id = $1;
          l->unique_reg = $2;
          $$ = l;
@@ -1229,7 +1246,7 @@ type:
 classname:
    IDENTIFIER
          {
-             if (( IMCC_INFO(interp)->cur_pmc_type = pmc_type(interp,
+             if ((IMCC_INFO(interp)->cur_pmc_type = pmc_type(interp,
                   string_from_cstring(interp, $1, 0))) <= 0) {
                 IMCC_fataly(interp, E_SyntaxError,
                    "Unknown PMC type '%s'\n", $1);
@@ -1613,7 +1630,7 @@ string:
 %%
 
 /* I need this prototype somewhere... */
-char *yyget_text (yyscan_t yyscanner );
+char *yyget_text(yyscan_t yyscanner);
 
 /* I do not like this function, but, atm, it is the only way I can
  * make the code in yyerror work without segfault on some specific

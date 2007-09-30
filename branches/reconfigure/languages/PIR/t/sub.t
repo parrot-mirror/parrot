@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 use lib qw(t . lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 22;
+use Parrot::Test tests => 20;
 use Test::More;
 
 language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'basic sub' );
@@ -102,20 +102,12 @@ language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'combine flags
 .end
 CODE
 
-
-
-language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'combine flags with commas' );
-.sub main :main, :load, :immediate, :init
-.end
-CODE
-
 language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'parameters' );
 .sub main
 	.param pmc pargs
 	.param int iarg
 	.param string sarg
 	.param num narg
-	.param object oargs
 .end
 CODE
 
@@ -137,16 +129,5 @@ language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'sub' );
   .param int has_x :opt_flag      # flag 0/1 x was passed
   .param pmc kw :slurpy :named    # slurpy hash
 .end
-CODE
-
-
-language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'wrap flag -- new!' );
-
-# This test makes sure pir.pbc is running, not IMCC, as :wrap is still unimplemented and undecided.
-.sub x :wrap('y')
-
-.end
-
-
 CODE
 

@@ -35,65 +35,65 @@ typedef struct pending_io_events {
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static opcode_t * do_event( PARROT_INTERP,
+static opcode_t * do_event(PARROT_INTERP,
     NOTNULL(parrot_event* event),
-    NULLOK(opcode_t *next) )
+    NULLOK(opcode_t *next))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
-static QUEUE_ENTRY* dup_entry( NOTNULL(const QUEUE_ENTRY *entry) )
+static QUEUE_ENTRY* dup_entry(NOTNULL(const QUEUE_ENTRY *entry))
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static QUEUE_ENTRY* dup_entry_interval(
     NOTNULL(QUEUE_ENTRY *entry),
-    FLOATVAL now )
+    FLOATVAL now)
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static void* event_thread( NOTNULL(void *data) )
+static void* event_thread(NOTNULL(void *data))
         __attribute__nonnull__(1);
 
-static void event_to_exception( PARROT_INTERP,
-    NOTNULL(const parrot_event* event) )
+static void event_to_exception(PARROT_INTERP,
+    NOTNULL(const parrot_event* event))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void init_events_all( PARROT_INTERP )
+static void init_events_all(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static void init_events_first( PARROT_INTERP )
+static void init_events_first(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_CAN_RETURN_NULL
-static void* io_thread( SHIM(void *data) );
+static void* io_thread(SHIM(void *data));
 
 static void io_thread_ready_rd(
     NOTNULL(pending_io_events *ios),
-    int ready_rd )
+    int ready_rd)
         __attribute__nonnull__(1);
 
-static void Parrot_sigaction( int sig, NULLOK(void (*handler)(int)) );
-static void Parrot_unblock_signal( int sig );
-static int process_events( NOTNULL(QUEUE *event_q) )
+static void Parrot_sigaction(int sig, NULLOK(void (*handler)(int)));
+static void Parrot_unblock_signal(int sig);
+static int process_events(NOTNULL(QUEUE *event_q))
         __attribute__nonnull__(1);
 
-static void schedule_signal_event( int signum );
-static void sig_handler( int signum );
-static void stop_io_thread( void );
+static void schedule_signal_event(int signum);
+static void sig_handler(int signum);
+static void stop_io_thread(void);
 static void store_io_event(
     NOTNULL(pending_io_events *ios),
-    NOTNULL(parrot_event *ev) )
+    NOTNULL(parrot_event *ev))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static opcode_t * wait_for_wakeup( PARROT_INTERP, NULLOK(opcode_t *next) )
+static opcode_t * wait_for_wakeup(PARROT_INTERP, NULLOK(opcode_t *next))
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
@@ -832,7 +832,7 @@ io_thread(SHIM(void *data))
                              * a command arrived
                              */
                             edebug((stderr, "msg arrived\n"));
-                            if (read(PIPE_READ_FD, &buf, sizeof(buf)) != sizeof(buf))
+                            if (read(PIPE_READ_FD, &buf, sizeof (buf)) != sizeof (buf))
                                 internal_exception(1,
                                         "read error from msg pipe");
                             switch (buf.command) {
@@ -902,9 +902,9 @@ stop_io_thread(void)
     /*
      * tell IO thread to stop
      */
-    memset(&buf, 0, sizeof(buf));
+    memset(&buf, 0, sizeof (buf));
     buf.command = IO_THR_MSG_TERMINATE;
-    if (write(PIPE_WRITE_FD, &buf, sizeof(buf)) != sizeof(buf))
+    if (write(PIPE_WRITE_FD, &buf, sizeof (buf)) != sizeof (buf))
         internal_exception(1, "msg pipe write failed");
 #endif
 }
@@ -931,7 +931,7 @@ Parrot_event_add_io_event(PARROT_INTERP,
     buf.command = which;
     buf.ev      = event;
 #ifndef WIN32
-    if (write(PIPE_WRITE_FD, &buf, sizeof(buf)) != sizeof(buf))
+    if (write(PIPE_WRITE_FD, &buf, sizeof (buf)) != sizeof (buf))
         real_exception(interp, NULL, 1, "msg pipe write failed");
 #endif
 }

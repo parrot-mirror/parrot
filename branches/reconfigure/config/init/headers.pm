@@ -16,7 +16,7 @@ package init::headers;
 
 use strict;
 use warnings;
-use vars qw($description @args);
+
 
 use base qw(Parrot::Configure::Step::Base);
 

@@ -923,14 +923,14 @@ OUTPUT
     #                running emts 'main'
 
     my $code = <<'CODE';
-.sub optc :immediate, :postcomp
+.sub optc :immediate :postcomp
     print "initial\n"
 .end
 .sub _main :main
     print "main\n"
 .end
 CODE
-    my $descr = ':immediate, :postcomp';
+    my $descr = ':immediate :postcomp';
     if ( exists $ENV{TEST_PROG_ARGS} and $ENV{TEST_PROG_ARGS} =~ m/-r/ ) {
         pir_output_is( $code, <<'OUT', $descr );
 initial
@@ -1027,7 +1027,7 @@ main 3
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "immediate code as const" );
-.sub make_pi :immediate, :anon
+.sub make_pi :immediate :anon
     $N0 = atan 1.0, 1.0
     $N0 *= 4
     $P0 = new 'Float'
@@ -1045,7 +1045,7 @@ CODE
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "immediate code as const - obj" );
-.sub make_obj :immediate, :anon
+.sub make_obj :immediate :anon
     .local pmc cl, o
     cl = newclass "Foo"
     addattribute cl, 'x'
