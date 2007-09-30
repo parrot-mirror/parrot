@@ -34,8 +34,10 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $verbose = $conf->options->get('verbose');
-    my $without = $conf->options->get('without-gmp');
+    my ( $verbose, $without ) = $conf->options->get( qw|
+        verbose
+        without-gmp
+    | );
 
     if ($without) {
         $conf->data->set( has_gmp => 0 );

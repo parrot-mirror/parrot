@@ -36,11 +36,15 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $verbose     = $conf->options->get('verbose');
-    my $icushared   = $conf->options->get('icushared');
-    my $icuheaders  = $conf->options->get('icushared');
-    my $icuconfig   = $conf->options->get('icu-config');
-    my $without     = $conf->options->get('without-icu');
+    my ( $verbose, $icushared, $icuheaders, $icuconfig, $without ) =
+        $conf->options->get( qw|
+            verbose
+            icushared
+            icuheaders
+            icu-config
+            without-icu
+        |
+    );
 
     my @icu_headers = qw(ucnv.h utypes.h uchar.h);
     my $autodetect  = !defined($icushared)
