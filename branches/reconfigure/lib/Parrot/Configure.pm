@@ -330,22 +330,20 @@ sub _run_this_step {
     # set per step verbosity
     if ( defined $args->{verbose_step} ) {
         if (
-            (
-
-                # by step number
-                ( $args->{verbose_step} =~ /^\d+$/ ) and ( $args->{n} == $args->{verbose_step} )
-            )
-            or (
-
-                # by step name
-                ( ${ $conf->{hash_of_steps} }{ $args->{verbose_step} } )
-                and ( $args->{verbose_step} eq $step_name )
-            )
-            or (
-
-                # by description
-                $step->description =~ /$args->{verbose_step}/
-            )
+                (
+                    # by step number
+                    ( $args->{verbose_step} =~ /^\d+$/ )
+                        and ( $args->{n} == $args->{verbose_step} )
+                )
+                or (
+                    # by step name
+                    ( ${ $conf->{hash_of_steps} }{ $args->{verbose_step} } )
+                        and ( $args->{verbose_step} eq $step_name )
+                )
+                or (
+                    # by description
+                    $step->description =~ /$args->{verbose_step}/
+                )
             )
         {
             $conf->options->set( verbose => 2 );
