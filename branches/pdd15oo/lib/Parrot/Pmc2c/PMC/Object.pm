@@ -34,10 +34,11 @@ sub pre_method_gen {
 
         my ( $return_prefix, $ret_suffix, $args, $sig, $return_type_char, $null_return ) =
             $new_default_method->signature;
-        my $void_return = $return_type_char eq 'v' ? 'return;' : '';
-        my $return      = $return_type_char eq 'v' ? ''        : $return_prefix;
-        my $superargs   = $args;
-        $superargs      =~ s/^,//;
+        my $void_return  = $return_type_char eq 'v' ? 'return;'    : '';
+        my $return       = $return_type_char eq 'v' ? ''           : $return_prefix;
+        my $super_return = $return_type_char eq 'v' ? $void_return : $null_return;
+        my $superargs    = $args;
+        $superargs       =~ s/^,//;
 
         $new_default_method->body( Parrot::Pmc2c::Emitter->text(<<"EOC") );
     Parrot_Object * const obj = PARROT_OBJECT(pmc);
@@ -70,8 +71,8 @@ sub pre_method_gen {
 
         }
     }
-    SUPER($superargs);
-    $null_return
+    ${return}SUPER($superargs);
+    $super_return
 EOC
         $self->add_method($new_default_method);
     }
