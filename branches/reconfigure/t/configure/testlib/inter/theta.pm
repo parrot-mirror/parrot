@@ -37,7 +37,7 @@ sub runstep {
     if ($ask) {
         $response = prompt( $question, q{Y/n} );
     }
-    return $self;
+    return 1;
 }
 
 1;
