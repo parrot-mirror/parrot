@@ -27,7 +27,7 @@ sub _init {
 sub runstep {
     my ( $self, $conf, @params ) = @_;
     print "\n@params\n";
-    return $self;
+    return 1;
 }
 
 1;
