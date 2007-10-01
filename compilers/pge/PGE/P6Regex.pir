@@ -165,7 +165,7 @@ needed for compiling regexes.
 .sub '__onload' :load
     .local pmc optable
 
-    optable = new 'PGE::OPTable'
+    optable = new ['PGE';'OPTable']
     set_global '$optable', optable
 
     $P0 = get_global 'parse_term'

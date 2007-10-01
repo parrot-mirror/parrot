@@ -60,7 +60,7 @@
 .sub "__onload" :load
     .local pmc optable
 
-    optable = new 'PGE::OPTable'
+    optable = new ['PGE';'OPTable']
     set_hll_global ["PGE::P5Regex"], "$optable", optable
 
     $P0 = get_hll_global ["PGE::P5Regex"], "parse_lit"
