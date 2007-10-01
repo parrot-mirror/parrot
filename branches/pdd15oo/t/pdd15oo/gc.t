@@ -55,8 +55,7 @@ CODE
 pasm_output_is( <<'CODE', '10', "sweep 0, with object that need destroy/destroy" );
       interpinfo I1, 2   # How many DOD runs have we done already?
       new P0, 'Undef'
-      needs_destroy P0
-      new P0, 'Undef' # kill object
+      new P0, 'Undef'    # kill object
       sweep 0
       interpinfo I2, 2   # Should be one more now
       sub I3, I2, I1
@@ -570,11 +569,11 @@ pir_output_is( <<'CODE', <<'OUTPUT', "verify deleg_pmc object marking" );
     $P0 = new 'String'
     $S0 = "ok" . " 3\n"
     $P0 = $S0
-    setattribute s, "X\0o3", $P0
+    setattribute s, "o3", $P0
     $P0 = new 'String'
     $S0 = "ok" . " 4\n"
     $P0 = $S0
-    setattribute s, "X\0o4", $P0
+    setattribute s, "o4", $P0
     null $P0
     null $S0
     null cl
@@ -590,9 +589,9 @@ lp:
     t = "ok 2\n"
     print s
     print t
-    $P0 = getattribute s, "X\0o3"
+    $P0 = getattribute s, "o3"
     print $P0
-    $P0 = getattribute s, "X\0o4"
+    $P0 = getattribute s, "o4"
     print $P0
 .end
 CODE
