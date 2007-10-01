@@ -132,7 +132,7 @@
     .local int pos, lastpos
     .local int litstart, litlen
     .local string initchar
-    newfrom = get_hll_global ["PGE::Match"], "newfrom"
+    newfrom = get_hll_global ["PGE";"Match"], "newfrom"
     (mob, target, $P0, $P1) = newfrom(mob, 0, "PGE::Exp::Literal")
     pos = $P0
     lastpos = length target
@@ -175,7 +175,7 @@
     mob.'result_object'($S0)
     goto end
   end:
-    $P0 = getattribute mob, "PGE::Match\x0$.pos"
+    $P0 = getattribute mob, ['PGE';'Match'], "$.pos"
     $P0 = pos
     .return (mob)
 .end
@@ -188,7 +188,7 @@
     .local pmc mfrom, mpos
     .local string key
     key = mob['KEY']
-    $P0 = get_hll_global ["PGE::Match"], "newfrom"
+    $P0 = get_hll_global ["PGE";"Match"], "newfrom"
     (mob, target, mfrom, mpos) = $P0(mob, 0, "PGE::Exp::Quant")
     pos = mfrom
     lastpos = length target
@@ -244,7 +244,7 @@
     .local string target
     .local pmc mfrom, mpos
     .local int pos, lastpos
-    $P0 = get_hll_global ["PGE::Match"], "newfrom"
+    $P0 = get_hll_global ["PGE";"Match"], "newfrom"
     (mob, target, mfrom, mpos) = $P0(mob, 0, "PGE::Exp::CGroup")
     pos = mfrom
     inc pos
@@ -267,7 +267,7 @@
     .local string charlist
     .local string key
     key = mob['KEY']
-    $P0 = get_hll_global ["PGE::Match"], "newfrom"
+    $P0 = get_hll_global ["PGE";"Match"], "newfrom"
     (mob, target, mfrom, mpos) = $P0(mob, 0, "PGE::Exp::EnumCharList")
     pos = mfrom
     if key == '.' goto dot

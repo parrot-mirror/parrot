@@ -80,7 +80,7 @@ or the resulting PIR code (target='PIR').
 
     ##   If we're passed the results of a previous parse,  use it.
     .local pmc match, exp
-    $I0 = isa source, 'PGE::Match'
+    $I0 = isa source, ['PGE';'Match']
     if $I0 == 0 goto parse
     $P0 = source['expr']
     if null $P0 goto parse
@@ -91,7 +91,7 @@ or the resulting PIR code (target='PIR').
 
   parse:
     ##   Let's parse the source as a regex
-    $P0 = get_hll_global ['PGE::Grammar'], 'regex'
+    $P0 = get_hll_global ['PGE';'Grammar'], 'regex'
     match = $P0(source, adverbs :flat :named)
     if source == '' goto err_null
     if target != 'parse' goto check
@@ -131,7 +131,7 @@ parse valid Perl 6 regular expressions.
 
 =cut
 
-.namespace [ 'PGE::Grammar' ]
+.namespace [ 'PGE';'Grammar' ]
 
 .sub 'regex'
     .param pmc mob
@@ -584,7 +584,7 @@ anchors, and match subscripts.
     .local int pos, lastpos
     .local pmc newfrom, mfrom, mpos
     .local string cname
-    newfrom = get_hll_global ['PGE::Match'], 'newfrom'
+    newfrom = get_hll_global ['PGE';'Match'], 'newfrom'
     $P0 = getattribute mob, '$.target'
     target = $P0
     $P0 = getattribute mob, '$.pos'
@@ -719,7 +719,7 @@ Parses a subrule token.
     inc pos
     mpos = pos
     .local pmc regex
-    regex = get_hll_global ['PGE::Grammar'], 'regex'
+    regex = get_hll_global ['PGE';'Grammar'], 'regex'
     $P1 = regex(mob, 'stop'=>'>')
     unless $P1 goto end
     $S0 = $P1
@@ -1008,7 +1008,7 @@ Parse a modifier.
     .local string target
     .local pmc mfrom, mpos
     .local int pos, len
-    $P0 = get_hll_global ["PGE::Match"], "newfrom"
+    $P0 = get_hll_global ["PGE";"Match"], "newfrom"
     (mob, target, mfrom, mpos) = $P0(mob, 0, "PGE::Exp::Closure")
     pos = mfrom
     len = 2
