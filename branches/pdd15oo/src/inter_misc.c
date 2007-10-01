@@ -58,12 +58,6 @@ register_nci_method(PARROT_INTERP, const int type, void *func,
     /* insert it into namespace */
     VTABLE_set_pmc_keyed_str(interp, interp->vtables[type]->_namespace,
             method_name, method);
-
-    /* Also need to list the method in the PMCProxy PMC's method list, so it
-     * can be introspected. */
-    proxy = VTABLE_get_pmc_keyed_int(interp, interp->pmc_proxies, type);
-    VTABLE_set_pmc_keyed_str(interp, PARROT_PMCPROXY(proxy)->methods,
-            method_name, method);
 }
 
 PARROT_API
@@ -81,12 +75,6 @@ register_raw_nci_method_in_ns(PARROT_INTERP, const int type, void *func,
 
     /* insert it into namespace */
     VTABLE_set_pmc_keyed_str(interp, interp->vtables[type]->_namespace,
-            method_name, method);
-
-    /* Also need to list the method in the PMCProxy PMC's method list, so it
-     * can be introspected. */
-    proxy = VTABLE_get_pmc_keyed_int(interp, interp->pmc_proxies, type);
-    VTABLE_set_pmc_keyed_str(interp, PARROT_PMCPROXY(proxy)->methods,
             method_name, method);
 }
 
