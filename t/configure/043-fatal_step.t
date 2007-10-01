@@ -18,7 +18,7 @@ is( $|, 1, "output autoflush is set" );
 
 my $args = process_options(
     {
-        argv => [ qw( --fatal-step=init::iota,init::manifest ) ],
+        argv => [ q{--fatal-step=init::iota,init::manifest} ],
         mode => q{configure},
     }
 );
