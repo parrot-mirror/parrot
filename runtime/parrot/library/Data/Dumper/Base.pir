@@ -212,9 +212,14 @@ NOT_IN_CACHE:
 
     #is _dump undef?
     func = "genericUndef"
-    $I0 = defined _dump
+    $I0  = defined _dump
     unless $I0 goto DUMP
 
+    func = "pmcDefault"
+    $I0  = isa _dump, "Object"
+    if $I0 goto DUMP
+
+  TEST_GENERIC:
     # does a generic helper method exist?
     func = "genericHash"
     $I0 = does _dump, "hash"

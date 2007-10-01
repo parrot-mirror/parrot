@@ -945,26 +945,22 @@ pir_output_is( <<'CODE', <<'OUTPUT', "custom dumper" );
 
     print " (size:"
     print value
-    print ") => {\n"
-  iter_loop:
-     unless iter goto iter_end
-     value = shift iter
-     print "\t"
-     print value
-     print ", "
-     goto iter_loop
-  iter_end:
-    print "\n}"
+    print ") => [\n"
+
+    .local string values
+    values = join ",\n    ", self
+    print "    "
+    print values
+    print "\n]"
 .end
 .namespace
 .include 'library/dumper.pir'
 
 CODE
-"VAR1" => 'bar' (size:2) [
+"VAR1" => PMC 'bar'  (size:2) => [
     1,
     2
 ]
-}
 OUTPUT
 
 # pir_output_is(<<'CODE', <<'OUTPUT', "dumping IntegerArray PMC");
