@@ -29,7 +29,7 @@ sub runstep {
     my $verbose = $conf->options->get('verbose');
     print "\nbeta is verbose\n" if $verbose;
     print "\nYou've got beta\n";
-    return $self;
+    return 1;
 }
 
 1;
