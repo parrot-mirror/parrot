@@ -206,7 +206,6 @@ Escape any characters in a string so we can re-use it as a literal.
     print "{ ... }"
     branch END
 CAN_DUMP:
-print "Dumping\n"
     dump."__dump"( self, name )
 END:
     .return ( 1 )

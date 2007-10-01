@@ -518,9 +518,9 @@ pir_output_is( <<'CODE', <<'OUT', "dumping objects" );
 
     load_bytecode "dumper.pbc"
 
-    temp = newclass "TestClass"
-
+    temp  = newclass "TestClass"
     array = new 'ResizablePMCArray'
+
     o = temp.'new'()
     push array, o
     o = temp.'new'()
@@ -546,7 +546,7 @@ pir_output_is( <<'CODE', <<'OUT', "dumping objects" );
 
     print subindent
     print "_"
-    name = self
+    name = typeof self
     print name
     print "::__dump\n"
 
@@ -559,11 +559,11 @@ pir_output_is( <<'CODE', <<'OUT', "dumping objects" );
 .end
 CODE
 "VAR1" => ResizablePMCArray (size:2) [
-    PMC 'Object' {
+    PMC 'TestClass' {
         this is
         _TestClass::__dump
     },
-    PMC 'Object' {
+    PMC 'TestClass' {
         this is
         _TestClass::__dump
     }
