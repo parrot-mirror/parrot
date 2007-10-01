@@ -1376,7 +1376,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'get_namespace()' );
 .end
 CODE
 parrot
-Foo;Bar
+parrot;Foo;Bar
 OUTPUT
 
 # Local Variables:
