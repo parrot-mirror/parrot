@@ -919,42 +919,48 @@ CODE
 ]
 OUTPUT
 
-# no. 26 - Deleted --leo
-
 # no. 27
 pir_output_is( <<'CODE', <<'OUTPUT', "custom dumper" );
 .sub main :main
     .local pmc o, cl
     cl = subclass 'ResizablePMCArray', 'bar'
-    .local int id
-    id = typeof cl
-    o = new id
+    o  = cl.'new'()
     _dumper(o)
 .end
 
 .namespace ["bar"]
-.sub __init :method
-    .local pmc ar
-    ar = getattribute self, '__value'
-    push ar, 1
-    push ar, 2
+.sub init :method :vtable
+    push self, 1
+    push self, 2
 .end
 
 .sub __dump :method
     .param pmc dumper
     .param string label
-    print " __value => {\n"
-    .local pmc ar
-    ar = getattribute self, '__value'
-    dumper.'dump'('attr', ar)
+
+    .local int value
+    .local pmc iter
+    iter  = new 'Iterator', self
+    value = self
+
+    print " (size:"
+    print value
+    print ") => {\n"
+  iter_loop:
+     unless iter goto iter_end
+     value = shift iter
+     print "\t"
+     print value
+     print ", "
+     goto iter_loop
+  iter_end:
     print "\n}"
 .end
 .namespace
 .include 'library/dumper.pir'
 
 CODE
-"VAR1" => PMC 'bar'  __value => {
-ResizablePMCArray (size:2) [
+"VAR1" => 'bar' (size:2) [
     1,
     2
 ]
