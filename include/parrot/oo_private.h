@@ -1,22 +1,24 @@
-/*
- * $Id$
- * Copyright (C) 2007, The Perl Foundation.
+/* oo_private.h
+ *  Copyright (C) 2007, The Perl Foundation.
+ *  SVN Info
+ *     $Id: oo.h 20040 2007-07-20 18:56:25Z petdance $
+ *  Overview:
+ *     Structs, typedefs and macros for the Class, Object, and PMCProxy PMCs.
+ *     This header file is only included by files within the OO subsystem.
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *  References:
  */
 
-/*
-** classobject.h
-**
-** structs, typedefs and macros for the Class and Object PMCs. This header
-** file is only included by the two PMCs, since they are allowed to know
-** about each other's internals, but all other usage should be through the
-** documented interface.
-*/
+#ifndef PARROT_OO_PRIVATE_H_GUARD
+#define PARROT_OO_PRIVATE_H_GUARD
 
-#ifndef PARROT_CLASSOBJECT_H_GUARD
-#define PARROT_CLASSOBJECT_H_GUARD
+#include "parrot/parrot.h"
 
 /* Class PMC's underlying struct. */
 typedef struct Parrot_Class {
+    int id;                /* The type number of the PMC. [To be deprecated] */
     STRING *name;          /* The name of the class. */
     PMC *_namespace;       /* The namespace it's linked to, if any. */
     int instantiated;      /* Any instantiations since last modification? */
@@ -53,8 +55,7 @@ STRING* Parrot_Class_get_fq_classname(Parrot_Interp interp, Parrot_Class *class_
 #define PObj_HasAlienParents_TEST(o) PObj_flag_TEST(HasAlienParents, o)
 #define PObj_HasAlienParents_SET(o) PObj_flag_SET(HasAlienParents, o)
 
-#endif /* PARROT_CLASSOBJECT_H_GUARD */
-
+#endif /* PARROT_OO_PRIVATE_H_GUARD */
 
 /*
  * Local variables:

@@ -15,7 +15,7 @@ PMCProxy is not derived from any other PMC.
 
 =head2 Structure
 
-This class stores its state in the Parrot_PMCProxy structure, which has the
+This class stores its state in the Parrot_Class structure, using the
 following fields.
 
 =over 4
@@ -50,6 +50,7 @@ NOTE: No doubt we will need other things later; this is a start.
 */
 
 #include "parrot/parrot.h"
+#include "parrot/oo_private.h"
 
 /*
 
@@ -75,7 +76,9 @@ Initializes a PMCProxy PMC.
 */
 
     void init() {
-        Parrot_PMCProxy *_pmc = mem_allocate_zeroed_typed(Parrot_PMCProxy);
+        Parrot_Class *_pmc = mem_allocate_zeroed_typed(Parrot_Class);
+        PMC * const new_attribute = pmc_new(interp, enum_class_Hash);
+        STRING *name = CONST_STRING(interp, "proxy");
         PMC_data(SELF)        = _pmc;
 
         /* Set flags for custom DOD mark and destroy. */
@@ -89,6 +92,15 @@ Initializes a PMCProxy PMC.
         _pmc->parents         = pmc_new(interp, enum_class_ResizablePMCArray);
         _pmc->all_parents     = pmc_new(interp, enum_class_ResizablePMCArray);
         _pmc->methods         = pmc_new(interp, enum_class_Hash);
+        _pmc->attrib_metadata = pmc_new(interp, enum_class_Hash);
+        _pmc->attrib_index    = PMCNULL;
+        _pmc->attrib_cache    = PMCNULL;
+
+        /* Set up the attribute storage for the proxy instance */
+        VTABLE_set_string_keyed_str(interp, new_attribute,
+                CONST_STRING(interp, "name"), name);
+        VTABLE_set_pmc_keyed_str(interp, _pmc->attrib_metadata,
+                name, new_attribute);
 
         /* We put ourself on the all parents list. */
         VTABLE_push_pmc(interp, _pmc->all_parents, SELF);
@@ -99,7 +111,7 @@ Initializes a PMCProxy PMC.
 
     void init_pmc(PMC *init_data) {
         INTVAL type_num = VTABLE_get_integer(interp, init_data);
-        Parrot_PMCProxy *proxy_info;
+        Parrot_Class *proxy_info;
 
         /* Ensure that it's a valid type number. */
         if (type_num > interp->n_vtable_max || type_num < 0) {
@@ -111,17 +123,15 @@ Initializes a PMCProxy PMC.
         SELF.init();
 
         /* Set up number, name and namespace. */
-        proxy_info = PARROT_PMCPROXY(SELF);
+        proxy_info = PARROT_CLASS(SELF);
         proxy_info->id = type_num;
         proxy_info->name = interp->vtables[type_num]->whoami;
         proxy_info->_namespace = interp->vtables[type_num]->_namespace;
 
         /* XXX Parents and MRO still todo. */
 
-        /* Enter it in the list of proxy objects. */
-        VTABLE_set_pmc_keyed_int(interp, interp->pmc_proxies, type_num, SELF);
-
-        /* Link namespace to this class, if there is one. */
+        /* Link the proxy and the namespace, caching the proxy object for later
+         * retrieval on class lookup. */
         if (!PMC_IS_NULL(proxy_info->_namespace))
             Parrot_PCCINVOKE(interp, proxy_info->_namespace,
                 string_from_literal(interp, "set_class"), "P->", SELF);
@@ -137,7 +147,7 @@ Creates an instance of the PMC.
 
 */
     PMC *instantiate(PMC *init) {
-        Parrot_PMCProxy *_pmc = PARROT_PMCPROXY(SELF);
+        Parrot_Class *_pmc = PARROT_CLASS(SELF);
 
         if (!PMC_IS_NULL(init))
             return pmc_new_init(interp, _pmc->id, init);
@@ -170,7 +180,7 @@ Mark any referenced strings and PMCs in the structure as live.
 */
 
     void mark() {
-        Parrot_PMCProxy * const _pmc = PARROT_PMCPROXY(SELF);
+        Parrot_Class * const _pmc = PARROT_CLASS(SELF);
 
         if (_pmc->name)
             pobject_lives(interp, (PObj*)_pmc->name);
@@ -180,8 +190,20 @@ Mark any referenced strings and PMCs in the structure as live.
             pobject_lives(interp, (PObj*)_pmc->parents);
         if (_pmc->all_parents)
             pobject_lives(interp, (PObj*)_pmc->all_parents);
+        if (_pmc->roles)
+            pobject_lives(interp, (PObj*)_pmc->roles);
         if (_pmc->methods)
             pobject_lives(interp, (PObj*)_pmc->methods);
+        if (_pmc->vtable_overrides)
+            pobject_lives(interp, (PObj*)_pmc->vtable_overrides);
+        if (_pmc->attrib_metadata)
+            pobject_lives(interp, (PObj*)_pmc->attrib_metadata);
+        if (_pmc->attrib_index)
+            pobject_lives(interp, (PObj*)_pmc->attrib_index);
+        if (_pmc->attrib_cache)
+            pobject_lives(interp, (PObj*)_pmc->attrib_cache);
+        if (_pmc->resolve_method)
+            pobject_lives(interp, (PObj*)_pmc->resolve_method);
     }
 
 /*
@@ -195,7 +217,7 @@ Returns whether the class is or inherits from C<*classname>.
 */
 
     INTVAL isa_pmc(PMC *lookup) {
-        Parrot_PMCProxy * const _proxy = PARROT_PMCPROXY(SELF);
+        Parrot_Class * const _proxy = PARROT_CLASS(SELF);
         INTVAL        i, num_classes;
         STRING       *classname;
         PMC          *classobj = PMCNULL;
@@ -270,7 +292,7 @@ Array of PMCProxy PMCs representing the direct parents of this class.
 */
     PMC *inspect_str(STRING *what)
     {
-        Parrot_PMCProxy *_pmc = PARROT_PMCPROXY(SELF);
+        Parrot_Class *_pmc = PARROT_CLASS(SELF);
 
         /* What should we return? */
         PMC          *found   = PMCNULL;
@@ -282,6 +304,9 @@ Array of PMCProxy PMCs representing the direct parents of this class.
         else if (string_equal(interp, what, CONST_STRING(interp, "namespace")) == 0) {
             /* Should not clone this. */
             return _pmc->_namespace;
+        }
+        else if (string_equal(interp, what, CONST_STRING(interp, "attributes")) == 0) {
+            found = _pmc->attrib_metadata;
         }
         else if (string_equal(interp, what, CONST_STRING(interp, "methods")) == 0) {
             found = _pmc->methods;
@@ -334,7 +359,7 @@ Gets the name of the PMC.
 
 */
     PCCMETHOD name() {
-        Parrot_PMCProxy *_pmc     = PARROT_PMCPROXY(SELF);
+        Parrot_Class *_pmc     = PARROT_CLASS(SELF);
         STRING          *ret_name = _pmc->name;
         PCCRETURN(STRING *ret_name);
     }
@@ -349,7 +374,7 @@ Gets the namespace that this class is attached to.
 
 */
     PCCMETHOD pmc_namespace() {
-        Parrot_PMCProxy *_pmc          = PARROT_PMCPROXY(SELF);
+        Parrot_Class *_pmc          = PARROT_CLASS(SELF);
         PMC             *ret_namespace = _pmc->_namespace;
         PCCRETURN(PMC *ret_namespace);
     }
@@ -430,7 +455,7 @@ Return the name of the low-level class (without the HLL namespace).
 */
 
     STRING *get_string() {
-        Parrot_PMCProxy * const proxy_info = PARROT_PMCPROXY(SELF);
+        Parrot_Class * const proxy_info = PARROT_CLASS(SELF);
 
         /* Copy the stored string name of the proxy. */
         return string_copy(interp, proxy_info->name);

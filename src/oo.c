@@ -20,7 +20,7 @@ Handles class and object manipulation.
 
 #define PARROT_IN_OO_C
 #include "parrot/parrot.h"
-#include "parrot/oo.h"
+#include "parrot/oo_private.h"
 
 #include "oo.str"
 
@@ -117,13 +117,33 @@ Parrot_oo_newclass_from_str(PARROT_INTERP, NOTNULL(STRING *name))
     return classobj;
 }
 
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+Parrot_oo_find_vtable_override_for_class(PARROT_INTERP, NOTNULL(PMC *classobj), NOTNULL(STRING *name))
+{
+    if (VTABLE_isa(interp, classobj, string_from_literal(interp, "Class"))) {
+        Parrot_Class * const class_info = PARROT_CLASS(classobj);
+        if (VTABLE_exists_keyed_str(interp, class_info->vtable_overrides,
+                name)) {
+            /* Found it. */
+            PMC * const meth = VTABLE_get_pmc_keyed_str(interp,
+                class_info->vtable_overrides, name);
+            return meth;
+        }
+    }
+
+    return PMCNULL;
+}
+
 /*
 
 =back
 
 =head1 SEE ALSO
 
-F<include/parrot/objects.h>, F<docs/pdds/pdd15_objects.pod>.
+F<include/parrot/oo.h>, F<include/parrot/oo_private.h>,
+F<docs/pdds/pdd15_objects.pod>.
 
 =cut
 
