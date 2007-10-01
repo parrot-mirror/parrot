@@ -463,10 +463,10 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "thaw class w attr same interp" );
     print "ok 3\n"
     new P6, 'String'
     set P6, "ok 5\n"
-    setattribute P5, "Foo\0.aa", P6
+    setattribute P5, [ "Foo"], ".aa", P6
     new P6, 'String'
     set P6, "ok 6\n"
-    setattribute P5, "Foo\0.bb", P6
+    setattribute P5, [ "Foo" ], ".bb", P6
     print "ok 4\n"
     getattribute P7, P5, ".aa"
     print P7
@@ -506,10 +506,10 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "thaw object w attr into same interpreter"
     print "ok 3\n"
     new P6, 'String'
     set P6, "ok 5\n"
-    setattribute P5, "Foo\0.aa", P6
+    setattribute P5, [ "Foo" ], ".aa", P6
     new P6, 'String'
     set P6, "ok 6\n"
-    setattribute P5, "Foo\0.bb", P6
+    setattribute P5, [ "Foo" ], ".bb", P6
     print "ok 4\n"
     getattribute P7, P5, ".aa"
     print P7
@@ -548,10 +548,10 @@ ok1:
     print "ok 3\n"
     new P6, 'String'
     set P6, "ok 5\n"
-    setattribute P5, "Foo\0.aa", P6
+    setattribute P5, [ "Foo" ], ".aa", P6
     new P6, 'String'
     set P6, "ok 6\n"
-    setattribute P5, "Foo\0.bb", P6
+    setattribute P5, [ "Foo" ], ".bb", P6
     print "ok 4\n"
     getattribute P7, P5, ".aa"
     print P7

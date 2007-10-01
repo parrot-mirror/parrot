@@ -901,9 +901,9 @@ pir_output_is( <<'CODE', <<'OUTPUT', "tailcallmeth" );
     o = new "Foo"
     n = new 'Integer'
     n = 2000
-    setattribute o, "Foo\0n", n
+    setattribute o, [ "Foo" ], "n", n
     o.go()
-    n = getattribute o, "Foo\0n"
+    n = getattribute o, [ "Foo" ], "n"
     print n
     print "\n"
 .end
@@ -911,7 +911,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "tailcallmeth" );
 .namespace ["Foo"]
 .sub go :method
     .local pmc n
-    n = getattribute self, "Foo\0n"
+    n = getattribute self, [ "Foo" ], "n"
     dec n
     unless n goto done
     .return self."go"()
