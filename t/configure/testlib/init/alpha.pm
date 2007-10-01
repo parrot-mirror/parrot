@@ -27,7 +27,7 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
     print "\nYou've got alpha\n";
-    return $self;
+    return 1;
 }
 
 1;
