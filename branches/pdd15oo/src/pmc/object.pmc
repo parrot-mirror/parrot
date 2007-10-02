@@ -400,6 +400,22 @@ Returns whether the class is or inherits from C<*classname>.
         return VTABLE_isa(interp, _class, classname);
     }
 
+
+/*
+
+=item C<INTVAL type()>
+
+Returns the integer type of the object's class.
+
+=cut
+
+*/
+
+    INTVAL type() {
+        PMC *class = VTABLE_get_class(interp, SELF);
+        return VTABLE_type(interp, class);
+    }
+
 }
 
 /*
