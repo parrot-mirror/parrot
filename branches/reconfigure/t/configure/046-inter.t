@@ -5,10 +5,9 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests => 11;
+use Test::More tests => 13;
 use Carp;
 use lib qw( lib t/configure/testlib );
-#use_ok('inter::theta');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::IO::Capture::Mini;
