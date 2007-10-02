@@ -1034,6 +1034,8 @@ currently selected namespace. Passing in a namespace object looks for the class
 in that namespace object. A key looks for the class in the namespace identified
 by the multilevel key relative to the currently selected HLL.
 
+If the class doesn't exist, it returns a null PMC.
+
 =item typeof
 
   $S1 = typeof $P2
