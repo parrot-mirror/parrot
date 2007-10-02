@@ -277,7 +277,7 @@ init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
         new_vtable = Parrot_clone_vtable(interp, self->vtable);
         new_vtable->base_type     = type_num;
         new_vtable->pmc_class     = self;
-        new_vtable->whoami        = new_name;
+        new_vtable->whoami        = VTABLE_get_string(interp, self);
         _class->id                = type_num;
 
         /* Store the class's vtable in the global table */
