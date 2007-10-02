@@ -180,10 +180,6 @@ inline op typeof(out PMC, invar PMC) {
 }
 
 inline op typeof(out INT, invar PMC) {
-  if (VTABLE_isa(interp, $2, string_from_literal(interp, "Object")))
-      real_exception(interp, NULL, INVALID_OPERATION,
-         "Numeric 'typeof' will not be supported in new object model");
-  else
       $1 = $2->vtable->type(interp, $2);
   goto NEXT();
 }

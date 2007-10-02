@@ -205,10 +205,9 @@ register_type(PARROT_INTERP, PMC *name) {
         parrot_realloc_vtables(interp);
 
     /* set entry in name->type hash */
-    item              = pmc_new(interp, enum_class_Integer);
-    PMC_int_val(item) = type;
+    VTABLE_set_integer_keyed_str(interp, classname_hash,
+            VTABLE_get_string(interp, name), type);
 
-    VTABLE_set_pmc_keyed(interp, classname_hash, name, item);
     UNLOCK_INTERPRETER(interp);
 
     return type;
@@ -277,6 +276,8 @@ init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
         new_vtable = Parrot_clone_vtable(interp, self->vtable);
         new_vtable->base_type     = type_num;
         new_vtable->pmc_class     = self;
+        new_vtable->whoami        = new_name;
+        _class->id                = type_num;
 
         /* Store the class's vtable in the global table */
         interp->vtables[type_num] = new_vtable;
@@ -519,6 +520,7 @@ arguments.  The class is attatched to the current HLL namespace.
 
         /* Set up the object. */
         PMC_data(SELF)          = _class;
+        _class->id              = 0;
         _class->name            = CONST_STRING(interp, "");
         _class->_namespace      = PMCNULL;
         _class->instantiated    = 0;
@@ -901,6 +903,10 @@ Array of Class PMCs representing the direct parents of this class.
             found = pmc_new(interp, enum_class_String);
             VTABLE_set_string_native(interp, found, _class->name);
         }
+        if (string_equal(interp, what, CONST_STRING(interp, "id")) == 0) {
+            found = pmc_new(interp, enum_class_Integer);
+            VTABLE_set_integer_native(interp, found, _class->id);
+        }
         else if (string_equal(interp, what, CONST_STRING(interp, "namespace")) == 0) {
             /* Should not clone this. */
             return _class->_namespace;
@@ -1239,6 +1245,23 @@ Returns whether the class is or inherits from C<*classname>.
 
         return VTABLE_isa_pmc(interp, SELF, string_pmc);
     }
+
+/*
+
+=item C<INTVAL type()>
+
+Returns the integer type of the class.
+
+=cut
+
+*/
+
+
+    INTVAL type() {
+        Parrot_Class *_class    = PARROT_CLASS(SELF);
+        return _class->id;
+    }
+
 
     /* **********************************************************************
      * Below here are non-vtable methods that eventually will go in a role
@@ -1599,6 +1622,7 @@ false otherwise.
 
         PCCRETURN(INTVAL isa);
     }
+
 } /* END pmclass */
 
 /*
