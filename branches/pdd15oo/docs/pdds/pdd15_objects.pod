@@ -946,7 +946,7 @@ as an attribute in the child class, pass an optional class object or namespace
 key $P3 for the parent class.
 
 If the attribute doesn't exist, it will throw an exception. If the attribute
-exists, but the value hasn't been set, it will return an C<Undef> PMC.
+exists, but the value hasn't been set, it will return a null PMC.
 
 =item setattribute
 
