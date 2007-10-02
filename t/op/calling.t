@@ -313,8 +313,10 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "flatten + slurpy param" );
     print S0
     set S0, P2[4]
     print S0
-    set S0, P2[5]
-    print S0
+    set P0, P2[5]
+    if_null P0, ok
+    print "not ok 7\n"
+ ok:
     returncc
 CODE
 ok 1
