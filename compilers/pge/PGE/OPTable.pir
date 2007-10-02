@@ -296,8 +296,7 @@ Adds (or replaces) a syntactic category's defaults.
     wspos = pos
     if pos >= lastpos goto oper_not_found
     ##   check for leading whitespace -- it may limit token candidates
-    $I0 = defined ws
-    unless $I0 goto token_next_ws
+    if null ws goto token_next_ws
     mpos = pos
     $P0 = ws(mob)
     unless $P0 goto token_next_1
