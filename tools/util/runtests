@@ -13,12 +13,12 @@ use FindBin;
 my $parrotDir = File::Spec->catdir( $FindBin::Bin, (File::Spec->updir) x 2 );
 $parrotDir = Cwd::realpath($parrotDir);
 
-my $parrot = File::Spec->catfile($parrotDir, 'parrot');
-
 my $prove = App::Prove->new;
 unshift @ARGV, qw(--harness Parrot::TAP::Harness);
 
 $prove->process_args(\@ARGV);
+
+$Parrot::TAP::Harness::parrot = File::Spec->catfile($parrotDir, 'parrot');
 
 my($run_exec, $running_make_test, $gc_debug, $make_html);
 my %options = (
@@ -90,7 +90,7 @@ BEGIN {
   use base 'TAP::Harness';
   use constant auto_inherit => 1;
 
-  my $parrot = './parrot'; # TODO pick a parrot
+  our $parrot = './parrot'; # TODO pick a parrot
 
   # This gets called just before running each test.  The return value
   # gets handed to a TAP::Parser->new().  Private -- yeah...whatever.
