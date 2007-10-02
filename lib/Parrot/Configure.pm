@@ -413,7 +413,7 @@ sub _finish_printing_result {
         print "...";
     }
     print "." x ( 71 - length($argsref->{description}) - length($result) );
-    unless ($argsref->{step_name} =~ m{^inter/} && $argsref->{args}->{ask}) {
+    unless ($argsref->{step_name} =~ m{^inter} && $argsref->{args}->{ask}) {
         print "$result.";
     }
     return 1;
