@@ -205,8 +205,9 @@ register_type(PARROT_INTERP, PMC *name) {
         parrot_realloc_vtables(interp);
 
     /* set entry in name->type hash */
-    VTABLE_set_integer_keyed_str(interp, classname_hash,
-            VTABLE_get_string(interp, name), type);
+    item              = pmc_new(interp, enum_class_Integer);
+    PMC_int_val(item) = type;
+    VTABLE_set_pmc_keyed(interp, classname_hash, name, item);
 
     UNLOCK_INTERPRETER(interp);
 
