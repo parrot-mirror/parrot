@@ -32,16 +32,16 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Integer_divide_PerlInt  10 / 3 = 1003", to
 
     .local  pmc lib_perl_group
     lib_perl_group    = loadlib 'perl_group'
-    .local  int type_perl_int
-    type_perl_int     = find_type 'PerlInt'
+    .local int type_perl_int
+    type_perl_int = find_type 'PerlInt'
 
     .local pmc divide
     divide = global "Integer_divide_PerlInt"
     mmdvtregister .MMD_DIVIDE, .Integer, type_perl_int, divide
 
-    $P0 = new 'type_perl_int'
+    $P0 = new 'PerlInt'
     $P1 = new 'Integer'
-    $P2 = new 'type_perl_int'
+    $P2 = new 'PerlInt'
     $P1 = 10
     $P2 = 3
     $P0 = $P1 / $P2
@@ -513,12 +513,10 @@ pir_output_is( <<'CODE', <<'OUT', 'MMD on PMC types', todo => 'RT #41374' );
 .sub 'test' :main
     .local  pmc  lib_perl_group
     lib_perl_group    = loadlib 'perl_group'
-    .local  int  type_perl_string
-    type_perl_string  = find_type 'PerlInt'
 
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'type_perl_string'
+    $P1 = new 'PerlInt'
     $P1 = "ok 2\n"
     p($P0)
     p($P1)
@@ -554,12 +552,10 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types quoted", todo => 'RT #41374'
 .sub main :main
     .local  pmc  lib_perl_group
     lib_perl_group    = loadlib 'perl_group'
-    .local  int  type_perl_string
-    type_perl_string  = find_type 'PerlInt'
 
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'type_perl_string'
+    $P1 = new 'PerlInt'
     $P1 = "ok 2\n"
     p($P0)
     p($P1)
@@ -595,12 +591,10 @@ pir_output_like( <<'CODE', <<'OUT', "MMD on PMC types, invalid", todo => 'RT #41
 .sub main :main
     .local  pmc  lib_perl_group
     lib_perl_group    = loadlib 'perl_group'
-    .local  int  type_perl_string
-    type_perl_string  = find_type 'PerlInt'
 
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'type_perl_string'
+    $P1 = new 'PerlInt'
     $P1 = "ok 2\n"
     p($P0)
     p($P1)
@@ -639,14 +633,10 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types 3", todo => 'RT #41374' );
 .sub main :main
     .local  pmc  lib_perl_group
     lib_perl_group    = loadlib 'perl_group'
-    .local  int  type_perl_string
-    type_perl_string  = find_type 'PerlInt'
-    .local  int  type_perl_int
-    type_perl_int     = find_type 'PerlInt'
 
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'type_perl_string'
+    $P1 = new 'PerlInt'
     $P1 = "ok 2\n"
     p($P0)
     p($P1)
@@ -658,7 +648,7 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types 3", todo => 'RT #41374' );
     $P1 = "ok 4\n"
     p($P0)
     p($P1)
-    $P0 = new 'type_perl_int'
+    $P0 = new 'PerlInt'
     $P0 = 42
     p($P0)
 .end
@@ -694,14 +684,10 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types, global namespace", todo => 
 .sub main :main
     .local  pmc  lib_perl_group
     lib_perl_group    = loadlib 'perl_group'
-    .local  int  type_perl_string
-    type_perl_string  = find_type 'PerlInt'
-    .local  int  type_perl_int
-    type_perl_int     = find_type 'PerlInt'
 
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'type_perl_string'
+    $P1 = new 'PerlInt'
     $P1 = "ok 2\n"
     p($P0)
     p($P1)
@@ -740,14 +726,10 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types, package namespace", todo =>
 .sub main :main
     .local  pmc  lib_perl_group
     lib_perl_group    = loadlib 'perl_group'
-    .local  int  type_perl_string
-    type_perl_string  = find_type 'PerlInt'
-    .local  int  type_perl_int
-    type_perl_int     = find_type 'PerlInt'
 
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'type_perl_string'
+    $P1 = new 'PerlInt'
     $P1 = "ok 2\n"
     p($P0)
     p($P1)
@@ -784,21 +766,17 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types - Any", todo => 'RT #41374' 
 .sub main :main
     .local  pmc  lib_perl_group
     lib_perl_group    = loadlib 'perl_group'
-    .local  int  type_perl_string
-    type_perl_string  = find_type 'PerlInt'
-    .local  int  type_perl_int
-    type_perl_int     = find_type 'PerlInt'
 
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'type_perl_string'
+    $P1 = new 'PerlInt'
     $P1 = "ok 2\n"
     p($P0)
     p($P1)
-    $P0 = new 'type_perl_int'
+    $P0 = new 'PerlInt'
     $P0 = 42
     p($P0)
-    $P0 = new 'type_perl_int'
+    $P0 = new 'PerlInt'
     $P0 = 43
     q($P0)
 .end
@@ -876,14 +854,10 @@ pir_output_is( <<'CODE', <<'OUTPUT', "__add as method - inherited", todo => 'RT 
 .sub main :main
     .local  pmc  lib_perl_group
     lib_perl_group    = loadlib 'perl_group'
-    .local  int  type_perl_string
-    type_perl_string  = find_type 'PerlInt'
-    .local  int  type_perl_int
-    type_perl_int     = find_type 'PerlInt'
 
     .local pmc d, l, r
-    l = new 'type_perl_int'
-    r = new 'type_perl_int'
+    l = new 'PerlInt'
+    r = new 'PerlInt'
     l = 3
     r = 39
     d = l."__add"(r)
@@ -1054,8 +1028,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "mmd bug reported by Jeff" );
 .sub main :main
     newclass $P0, 'Foo'
 
-    $I0 = find_type 'Foo'
-    $P0 = new $I0
+    $P0 = new 'Foo'
 
     $P0.'bar'('Bar!')
 
@@ -1258,11 +1231,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "keyed class name and multi" );
     .local pmc class
     newclass class, [ 'Some'; 'Class' ]
 
-    .local int class_type
-    class_type = find_type [ 'Some'; 'Class' ]
-
     .local pmc instance
-    instance = new class_type
+    instance = new [ 'Some'; 'Class' ]
 
     .local string name
     name = typeof instance
@@ -1281,11 +1251,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "keyed class name and multi" );
     .local pmc class
     newclass class, [ 'Some'; 'Class' ]
 
-    .local int class_type
-    class_type = find_type [ 'Some'; 'Class' ]
-
     .local pmc instance
-    instance = new class_type
+    instance = new [ 'Some'; 'Class' ]
 
     foo( instance )
     end
