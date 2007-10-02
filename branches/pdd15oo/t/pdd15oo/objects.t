@@ -242,27 +242,27 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "new object - classname" );
     newclass P1, "Foo"
     new P2, P1
-    set S0, P1	# class
+    set S0, P1    # class
     print S0
     print "\n"
-    set S0, P2	# object
+    typeof S0, P2 # object
     print S0
     print "\n"
 
     class P3, P1
-    set S0, P1	# class
+    set S0, P1    # class
     print S0
     print "\n"
     class P3, P1
-    set S0, P2	# object
+    typeof S0, P2 # object
     print S0
     print "\n"
     end
 CODE
 Foo
-
 Foo
-
+Foo
+Foo
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "isa subclass" );
