@@ -217,8 +217,7 @@ OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "new object" );
     newclass P1, "Foo"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
     print "ok 1\n"
     end
 CODE
@@ -227,8 +226,7 @@ OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "new object - type, isa" );
     newclass P1, "Foo"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
     print "ok 1\n"
     typeof I1, P2
     eq I0, I1, ok2
@@ -247,8 +245,7 @@ OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "new object - classname" );
     newclass P1, "Foo"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
     classname S0, P1	# class
     print S0
     print "\n"
@@ -312,10 +309,8 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "isa subclass - objects" );
     newclass P3, "Foo"
     subclass P4, P3, "Bar"
-    find_type I0, "Foo"
-    new P1, I0
-    find_type I0, "Bar"
-    new P2, I0
+    new P1, "Foo"
+    new P2, "Bar"
 
     isa I0, P1, "Foo"
     if I0, ok1
@@ -488,8 +483,7 @@ OUTPUT
 
 pasm_output_like( <<'CODE', <<'OUTPUT', "classoffset: normal operation" );
     newclass P1, "Foo"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
     classoffset I1, P2, "Foo"
     print I1
     end
@@ -499,8 +493,7 @@ OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "classoffset: invalid parent class" );
     newclass P1, "Foo"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
     classoffset I1, P2, "Bar"
     print I1
     end
@@ -522,8 +515,7 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "set/get object attribs" );
     newclass P1, "Foo"
     addattribute P1, "i"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
     classoffset I1, P2, "Foo"
 
     new P3, 'Integer'
@@ -571,8 +563,7 @@ OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "setting non-existent attribute" );
     newclass P1, "Foo"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
     classoffset I1, P2, "Foo"
 
     new P3, 'Integer'
@@ -584,8 +575,7 @@ OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "setting non-existent by name" );
     newclass P1, "Foo"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
 
     new P3, 'Integer'
     setattribute P2, "Foo\0no_such", P3
@@ -597,8 +587,7 @@ OUTPUT
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "getting NULL attribute" );
     newclass P1, "Foo"
     addattribute P1, "i"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
 
     getattribute P3, P2, "Foo\0i"
     print P3
@@ -609,8 +598,7 @@ OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "setting non-existent attribute - 1" );
     newclass P1, "Foo"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
     classoffset I1, P2, "Foo"
 
     new P3, 'Integer'
@@ -623,8 +611,7 @@ OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "getting non-existent attribute" );
     newclass P1, "Foo"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
     classoffset I1, P2, "Foo"
     add I2, I1, 6
 
@@ -637,10 +624,9 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values are specific to objects" );
     newclass P1, "Foo"
     addattribute P1, "i"
-    find_type I0, "Foo"
-    new P2, I0
+    new P2, "Foo"
     classoffset I1, P2, "Foo"
-    new P3, I0
+    new P3, "Foo"
     classoffset I2, P3, "Foo"
 
     new P4, 'Integer'
@@ -670,10 +656,9 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values and subclassing" );
     addattribute P2, "k"
     addattribute P2, "l"
 
-    find_type I0, "Bar"
-    new P2, I0
+    new P2, "Bar"
     classoffset I1, P2, "Foo"
-    new P3, I0
+    new P3, "Bar"
     classoffset I3, P3, "Foo"
 
 # Note that setattribute holds the actual PMC, not a copy, so
@@ -733,8 +718,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values and subclassing 2" );
     # which is suitable for adding multiple parents to one class
 
     # instantiate a Bar object
-    find_type I1, "Bar"
-    new P3, I1
+    new P3, "Bar"
 
     classoffset I3, P3, "Foo"   # The parent class
     # print I3                  # don't assume anything about this offset
@@ -807,8 +791,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values, subclassing access meth
     store_global "Bar", "Bar::get", P5
 
     # instantiate a Bar object
-    find_type I1, "Bar"
-    new P13, I1
+    new P13, "Bar"
 
     # Foo and Bar have attribute accessor methods
     new P5, 'String'		# set attribute values
@@ -937,8 +920,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values, inherited access meths"
     # which is suitable for adding multiple parents to one class
 
     # instantiate a Bar object
-    find_type I1, "Bar"
-    new P2, I1
+    new P2, "Bar"
 
     # Foo and Bar have attribute accessor methods
     new P5, 'String'		# set attribute values
@@ -1047,8 +1029,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "overridden vtables" );
     # must add attributes before object instantiation
     addattribute P1, ".i"
 
-    find_type I1, "Foo"
-    new P3, I1
+    new P3, "Foo"
     set P3, 1
     new P4, I1
     set P4, 1
@@ -1127,10 +1108,8 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "typeof objects" );
     newclass P0, "A"
     newclass P1, "B"
 
-    find_type I0, "A"
-    find_type I1, "B"
-    new P0, I0
-    new P1, I1
+    new P0, "A"
+    new P1, "B"
 
     typeof S0, P0
     typeof S1, P1
@@ -1154,8 +1133,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "multiple inheritance, with attributes" );
     subclass P3, P1, "Sun"
     addparent P3, P2
 
-    find_type I0, "Sun"
-    new P4, I0
+    new P4, "Sun"
 
     classoffset I1, P4, "Star"
     new P5, 'String'
@@ -1190,8 +1168,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "two levels of inheritance" );
     addparent P2, P1
     addparent P2, P0
 
-    find_type I0, "Sun"
-    new P4, I0
+    new P4, "Sun"
     classoffset I1, P4, "Astronomical Object"
 
     new P5, 'String'
@@ -1230,8 +1207,7 @@ OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "class op test" );
     newclass P0, "City"
-    find_type I0, "City"
-    new P1, I0
+    new P1, "City"
 
     class P2, P1
     classname S0, P2
@@ -1275,8 +1251,7 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "get attrib by name" );
     newclass P1, "Foo"
     addattribute P1, "i"
-    find_type I1, "Foo"
-    new P2, I1
+    new P2, "Foo"
     classoffset I2, P2, "Foo"
     new P3, 'String'
     set P3, "ok\n"
@@ -1294,8 +1269,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "get attrib by name subclass" );
     addattribute P0, "j"
     subclass P1, P0, "Foo"
     addattribute P1, "i"
-    find_type I1, "Foo"
-    new P2, I1
+    new P2, "Foo"
     classoffset I2, P2, "Foo"
     new P3, 'String'
     set P3, "foo i\n"
@@ -1320,8 +1294,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "set attrib by name subclass" );
     addattribute P0, "j"
     subclass P1, P0, "Foo"
     addattribute P1, "i"
-    find_type I1, "Foo"
-    new P2, I1
+    new P2, "Foo"
     new P3, 'String'
     set P3, "foo i\n"
     setattribute P2, "Foo\x0i", P3
@@ -1401,8 +1374,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - instantiate" );
   addattribute MyInt, ".i"
   print "ok 2\n"
   .local pmc i
-  $I0 = find_type "MyInt"
-  i = new $I0
+  i = new "MyInt"
   print "ok 3\n"
 .end
 CODE
@@ -1420,8 +1392,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - methods" );
   subclass MyInt, $P0, "MyInt"
   print "ok 2\n"
   .local pmc i
-  $I0 = find_type "MyInt"
-  i = new $I0
+  i = new "MyInt"
   print "ok 3\n"
   i = 42	# set_integer is inherited from Integer
   print "ok 4\n"
@@ -1473,8 +1444,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - mmd methods" );
   .local pmc i
   .local pmc j
   .local pmc k
-  $I0 = find_type "MyInt"
-  i = new $I0
+  i = new "MyInt"
   j = new $I0
   k = new $I0
   i = 6
@@ -1515,8 +1485,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - overridden mmd methods" )
   .local pmc i
   .local pmc j
   .local pmc k
-  $I0 = find_type "MyInt"
-  i = new $I0
+  i = new "MyInt"
   j = new $I0
   k = new $I0
   i = 6
@@ -1563,8 +1532,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 1" );
   subclass MyInt2, $P1, "MyInt2"
   print "ok 2\n"
   .local pmc i
-  $I0 = find_type "MyInt2"
-  i = new $I0
+  i = new "MyInt2"
   $I0 = isa i, "Integer"
   print $I0
   $I0 = isa i, "MyInt"
@@ -1627,8 +1595,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 2" );
   subclass MyInt2, $P1, "MyInt2"
   print "ok 2\n"
   .local pmc i
-  $I0 = find_type "MyInt2"
-  i = new $I0
+  i = new "MyInt2"
   $I0 = isa i, "Integer"
   print $I0
   $I0 = isa i, "MyInt"
@@ -1703,8 +1670,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - derived 3" );
   subclass MyInt2, $P1, "MyInt2"
   print "ok 2\n"
   .local pmc i
-  $I0 = find_type "MyInt2"
-  i = new $I0
+  i = new "MyInt2"
   $I0 = isa i, "Integer"
   print $I0
   $I0 = isa i, "MyInt"
@@ -1790,8 +1756,7 @@ SKIP: {
     end
 .namespace [ "Foo" ]
 .pcc_sub __instantiate:	# create object the hard way
-    find_type I0, "Foo"
-    new P10, I0			# should inspect passed arguments
+    new P10, "Foo"			# should inspect passed arguments
     classoffset I0, P10, "Foo"	# better should clone the argument
     setattribute P10, I0, P5	# the first attribute is the internal __value
     set P5, P10			# set return value
@@ -1816,9 +1781,8 @@ OUTPUT
 .namespace ["Foo"]
 .sub __instantiate :method
     .param int val		# in realiter check what is passed
-    $I0 = find_type "Foo"
     .local pmc obj
-    obj = new $I0
+    obj = new "Foo"
     $I1 = classoffset obj, "Foo"
     $P0 = new 'Integer'
     $P0 = val
@@ -1836,8 +1800,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "namespace vs name" );
 .sub main :main
     .local pmc o, cl, f
     newclass cl, "Foo"
-    $I0 = find_type "Foo"
-    o = new $I0
+    o = new "Foo"
     print o
     Foo()
     f = global "Foo"
@@ -1919,8 +1882,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "short name attributes" );
     addattribute P2, "k"
     addattribute P2, "l"
 
-    find_type I0, "Bar"
-    new P2, I0
+    new P2, "Bar"
 
     new P4, 'Integer'
     set P4, 10
@@ -1977,8 +1939,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "init with and w/o arg" );
     $P0 = new 'String'
     $P0 = "ok 2\n"
     h['a'] = $P0
-    $I0 = find_type 'Foo'
-    o  = new $I0, h
+    o  = new 'Foo', h
     a = getattribute o, "a"
     print a
 .end
