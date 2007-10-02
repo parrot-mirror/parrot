@@ -8,11 +8,12 @@ use Getopt::Long;
 
 use Cwd;
 use File::Spec;
+use FindBin;
 
-my $currentDir = getcwd();
-my @path_parts = File::Spec->splitdir( $currentDir );
-my $current_directory = pop @path_parts;
-my $parent_directory  = pop @path_parts;
+my $parrotDir = File::Spec->catdir( $FindBin::Bin, (File::Spec->updir) x 2 );
+$parrotDir = Cwd::realpath($parrotDir);
+
+my $parrot = File::Spec->catfile($parrotDir, 'parrot');
 
 my $prove = App::Prove->new;
 unshift @ARGV, qw(--harness Parrot::TAP::Harness);
@@ -42,8 +43,7 @@ GetOptions( \%options,
 );
 
 if ($options{RT1}) {
-    warn "Your parent directory is : ".$parent_directory."\n";
-    die "Your working directory is: ".$current_directory."\n";
+    die "Your parrot directory is: ".$parrotDir."\n";
 }
 
 $prove->{argv} = \@ARGV;
