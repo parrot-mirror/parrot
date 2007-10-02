@@ -1,7 +1,7 @@
-Index: t/200-prove.t
+Index: t/prove.t
 ===================================================================
---- t/200-prove.t	(revision 614)
-+++ t/200-prove.t	(working copy)
+--- t/prove.t	(revision 661)
++++ t/prove.t	(working copy)
 @@ -1164,7 +1164,7 @@
  
      # Optionally parse command args
@@ -13,9 +13,18 @@ Index: t/200-prove.t
          }
 Index: lib/App/Prove.pm
 ===================================================================
---- lib/App/Prove.pm	(revision 614)
+--- lib/App/Prove.pm	(revision 661)
 +++ lib/App/Prove.pm	(working copy)
-@@ -90,20 +90,18 @@
+@@ -80,7 +80,7 @@
+ 
+ =head3 C<process_args>
+ 
+-  $prove->process_args(@args);
++  $prove->process_args(\@args);
+ 
+ Processes the command-line arguments and stashes the remainders in the
+ C<$self->{args}> array-ref.
+@@ -90,19 +90,17 @@
  =cut
  
  sub process_args {
@@ -23,7 +32,7 @@ Index: lib/App/Prove.pm
 +    my ( $self, $args ) = @_;
  
 -    if ( my @bad = map {"-$_"} grep {/^-(man|help)$/} @args ) {
-+    if ( my @bad = map {"-$_"} grep {/^-(man|help)$/} @{$args} ) {
++    if ( my @bad = map {"-$_"} grep {/^-(man|help)$/} @${args} ) {
          die "Long options should be written with two dashes: ",
            join( ', ', @bad ), "\n";
      }
@@ -31,9 +40,8 @@ Index: lib/App/Prove.pm
 -    # Allow cuddling the paths with the -I
 -    @args = map { /^(-I)(.+)/ ? ( $1, $2 ) : $_ } @args;
 -
-     my $help_sub = sub { $self->_help; $self->_exit };
- 
      {
+         my $help_sub = sub { $self->_help; $self->_exit };
 -        local @ARGV = @args;
 +        # Allow cuddling the paths with the -I
 +        local @ARGV = map { /^(-I)(.+)/ ? ( $1, $2 ) : $_ } @{$args};
@@ -50,7 +58,7 @@ Index: lib/App/Prove.pm
  
 Index: bin/prove
 ===================================================================
---- bin/prove	(revision 614)
+--- bin/prove	(revision 661)
 +++ bin/prove	(working copy)
 @@ -4,7 +4,7 @@
  use App::Prove;
