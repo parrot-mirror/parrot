@@ -5,10 +5,9 @@
 
 use strict;
 use warnings;
-use Test::More tests => 12;
+use Test::More qw(no_plan); # tests => 12;
 use Carp;
 use lib qw( lib t/configure/testlib );
-use_ok('inter::theta');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::IO::Capture::Mini;
@@ -29,39 +28,54 @@ my %args = %$args;
 my $conf = Parrot::Configure->new;
 ok( defined $conf, "Parrot::Configure->new() returned okay" );
 
-my ( $task, $step_name, @step_params, $step, $ret );
-my $pkg = q{inter::theta};
+my $step        = q{inter::theta};
+my $description = 'Determining if your computer does theta';
 
-$conf->add_steps($pkg);
-$conf->options->set( %{$args} );
+$conf->add_steps($step);
+my @confsteps = @{ $conf->steps };
+isnt( scalar @confsteps, 0,
+    "Parrot::Configure object 'steps' key holds non-empty array reference" );
+is( scalar @confsteps, 1, "Parrot::Configure object 'steps' key holds ref to 1-element array" );
+my $nontaskcount = 0;
+foreach my $k (@confsteps) {
+    $nontaskcount++ unless $k->isa("Parrot::Configure::Task");
+}
+is( $nontaskcount, 0, "Each step is a Parrot::Configure::Task object" );
+is( $confsteps[0]->step, $step, "'step' element of Parrot::Configure::Task struct identified" );
+is( ref( $confsteps[0]->params ),
+    'ARRAY', "'params' element of Parrot::Configure::Task struct is array ref" );
+ok( !ref( $confsteps[0]->object ),
+    "'object' element of Parrot::Configure::Task struct is not yet a ref" );
 
-$task        = $conf->steps->[0];
-$step_name   = $task->step;
-@step_params = @{ $task->params };
+$conf->options->set(%args);
+is( $conf->options->{c}->{debugging},
+    1, "command-line option '--debugging' has been stored in object" );
 
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
 my ( @prompts, $object );
 @prompts = (q{n});
 $object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
 can_ok( 'Tie::Filehandle::Preempt::Stdin', ('READLINE') );
 isa_ok( $object, 'Tie::Filehandle::Preempt::Stdin' );
 
+my $rv;
+my ( $tie, @lines );
 {
-    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
+    $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";
-    $ret = $step->runstep($conf);
-    ok( defined $ret, "$step_name runstep() returned defined value" );
-    my $line = $tie_out->READLINE;
-    my $question = 'Will Perl 6 be out before Christmas?';
-    like($line, qr/$question/, "got expected prompt");
+    $rv    = $conf->runsteps;
+    @lines = $tie->READLINE;
+    undef $tie;
 }
+ok($rv, "runsteps() returned true value");
+my $bigmsg = join q{}, @lines;
+like(
+    $bigmsg,
+    qr/$description\.\.\./s,
+    "Got STDOUT message expected upon running $step"
+);
 
 $object = undef;
 untie *STDIN;
-untie *STDOUT;
 
 pass("Completed all tests in $0");
 
