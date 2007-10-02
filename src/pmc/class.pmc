@@ -1115,6 +1115,9 @@ Creates a new PMC object of the type of the class and calls init().
         PObj_custom_mark_SET(object);
         PObj_active_destroy_SET(object);
 
+        /* Flag that it is an object */
+        PObj_is_object_SET(object);
+
         /* Initialize the object's underlying structure, pointing it to this
          * class. */
         obj_guts               = mem_allocate_zeroed_typed(Parrot_Object);
