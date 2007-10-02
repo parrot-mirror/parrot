@@ -581,7 +581,6 @@ pir_output_is( <<'CODE', <<'OUT', "dumping 'null'" );
     new array, 'ResizablePMCArray'
 
     push array, 0
-
     push array, "0"
 
     null temp
@@ -602,7 +601,7 @@ CODE
 "array" => ResizablePMCArray (size:5) [
     0,
     "0",
-    undef,
+    null,
     0,
     "0"
 ]
