@@ -1034,17 +1034,17 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "mmd bug reported by Jeff" );
 .namespace ['Foo']
 
-.sub bar :method, :multi(Foo, string)
+.sub bar :method :multi(Foo, string)
     .param string arg
     print "string\n"
 .end
 
-.sub bar :method, :multi(Foo, pmc)
+.sub bar :method :multi(Foo, pmc)
     .param pmc arg
     print "PMC\n"
 .end
 
-.sub bar :method, :multi(Foo)
+.sub bar :method :multi(Foo)
     print "nothing\n"
 .end
 
@@ -1131,11 +1131,11 @@ pir_output_is( <<'CODE', <<'OUTPUT', "multisub vs find_name" );
     print $S0
     print "\n"
 .end
-.sub foo :method, :multi(string)
+.sub foo :method :multi(string)
     .param pmc x
     print "  foo\n"
 .end
-.sub foo :method, :multi(pmc)
+.sub foo :method :multi(pmc)
     .param pmc x
     print "  foo\n"
 .end
@@ -1275,7 +1275,6 @@ pir_output_is( <<'CODE', <<'OUTPUT', "keyed class name and multi" );
 .sub main :main
     .local pmc class
     newclass class, [ 'Some'; 'Class' ]
-
 
     .local pmc instance
     instance = new [ 'Some'; 'Class' ]
