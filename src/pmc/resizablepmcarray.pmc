@@ -208,7 +208,7 @@ Returns the PMC value of the element at index C<key>.
         data = PMC_data_typed(SELF, PMC **);
 
         if (PMC_IS_NULL(data[key]))
-            data[key] = PMCNULL;
+            return PMCNULL;
 
         return data[key];
     }
