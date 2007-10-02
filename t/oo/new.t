@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 15;
+use Parrot::Test tests => 18;
 
 =head1 NAME
 
@@ -469,6 +469,53 @@ foo blue
 bar blue
 OUT
 
+pir_output_is( <<'CODE', <<'OUT', 'get_class retrieves a high-level class object');
+.sub main :main
+    $P0 = newclass 'Foo'
+    $S1 = typeof $P0
+    say $S1
+
+    $P1 = get_class 'Foo'
+    $S1 = typeof $P1
+    say $S1
+
+    $P2 = new $P1
+    $S1 = typeof $P2
+    say $S1
+.end
+CODE
+Class
+Class
+Foo
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'get_class retrieves a proxy class object');
+.sub main :main
+    $P1 = get_class 'String'
+    $S1 = typeof $P1
+    say $S1
+
+    $P2 = new $P1
+    $S1 = typeof $P2
+    say $S1
+.end
+CODE
+PMCProxy
+String
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', "get_class retrieves a class object that doesn't exist");
+.sub main :main
+    $P1 = get_class 'Murple'
+    if null $P1 goto not_defined
+    say "Class is defined. Shouldn't be."
+    end
+  not_defined:
+    say "Class isn't defined."
+.end
+CODE
+Class isn't defined.
+OUT
 
 # Local Variables:
 #   mode: cperl

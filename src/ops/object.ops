@@ -398,35 +398,13 @@ Find the PMC for a class, by string name or by key.
 =cut
 
 inline op get_class(out PMC, in STR) :object_classes {
-  PMC *class_name, *classobj;
-  opcode_t *next = expr NEXT();
-
-  class_name = pmc_new(interp, enum_class_String);
-  VTABLE_set_string_native(interp, class_name, $2);
-  classobj = Parrot_oo_get_class(interp, class_name);
-
-  if (PMC_IS_NULL(classobj))
-      real_exception(interp, next, NO_CLASS, "Class '%Ss' doesn't exist", $2);
-
-  $1 = classobj;
-
-  goto ADDRESS(next);
+  $1 = Parrot_oo_get_class_str(interp, $2);
+  goto NEXT();
 }
 
 inline op get_class(out PMC, in PMC) :object_classes {
-  PMC *classobj;
-  opcode_t *next = expr NEXT();
-
-  classobj = Parrot_oo_get_class(interp, $2);
-
-  if (PMC_IS_NULL(classobj)) {
-      STRING *name = readable_name(interp, $2);
-      real_exception(interp, next, NO_CLASS, "Class '%Ss' doesn't exist", name);
-  }
-
-  $1 = classobj;
-
-  goto ADDRESS(next);
+  $1 = Parrot_oo_get_class(interp, $2);
+  goto NEXT();
 }
 
 ###############################################################################
