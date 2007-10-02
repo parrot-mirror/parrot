@@ -47,7 +47,6 @@ register_nci_method(PARROT_INTERP, const int type, void *func,
     PMC * const method = pmc_new(interp, enum_class_NCI);
     STRING * const method_name = string_make(interp, name, strlen(name),
         NULL, PObj_constant_FLAG|PObj_external_FLAG);
-    PMC *proxy;
 
     /* create call func */
     VTABLE_set_pointer_keyed_str(interp, method,
@@ -68,7 +67,6 @@ register_raw_nci_method_in_ns(PARROT_INTERP, const int type, void *func,
     PMC * const method = pmc_new(interp, enum_class_NCI);
     STRING * const method_name = string_make(interp, name, strlen(name),
         NULL, PObj_constant_FLAG|PObj_external_FLAG);
-    PMC *proxy;
 
     /* setup call func */
     Parrot_NCI_nci_make_raw_nci(interp, method, func);
