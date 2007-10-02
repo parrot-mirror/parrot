@@ -221,6 +221,28 @@ really a public API.
                 return;
         }
 
+        /* If it's a multi-sub... */
+        if (value->vtable->base_type == enum_class_MultiSub) {
+            Parrot_NSInfo *nsinfo    = PARROT_NSINFO(SELF);
+            
+            if (VTABLE_elements(interp, value) > 0) {
+                /* Extract the first alternate and check if it is a method */
+                Parrot_sub *sub = PMC_sub(VTABLE_get_pmc_keyed_int(interp, value, 0));
+
+                if (sub->comp_flags & SUB_COMP_FLAG_METHOD) {
+                    /* If we don't have a place to hang methods, make one. */
+                    if (PMC_IS_NULL(nsinfo->methods))
+                        nsinfo->methods = pmc_new(interp, enum_class_Hash);
+
+                    /* Insert it. */
+                    VTABLE_set_pmc_keyed_str(INTERP, nsinfo->methods, key, value);
+
+                    /* insert it in the parent temporarily until PDD 15 lands */
+                    SUPER(key, value);
+                }
+            }
+        }
+
         if (!b)
             SUPER(key, value);
         else {
