@@ -336,7 +336,7 @@ PARROT_CANNOT_RETURN_NULL
 static PMC *
 mmd_deref(PARROT_INTERP, NOTNULL(PMC *value))
 {
-    if (VTABLE_type(interp, value) != value->vtable->base_type)
+    if (!PObj_is_object_TEST(value) && VTABLE_type(interp, value) != value->vtable->base_type)
         return VTABLE_get_pmc(interp, value);
     else
         return value;
