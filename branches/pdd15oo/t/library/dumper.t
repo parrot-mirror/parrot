@@ -517,9 +517,8 @@ pir_output_is( <<'CODE', <<'OUT', "dumping objects" );
 
     newclass temp, "TestClass"
 
-    find_type I0, "TestClass"
     new array, 'ResizablePMCArray'
-    new temp, I0
+    temp = new "TestClass"
     push array, temp
     new temp, I0
     push array, temp
