@@ -551,10 +551,9 @@ not_okay:
 
     addThread = new 'ParrotThread'
     removeThread = new 'ParrotThread'
-    $I0 = find_type 'STMQueue'
     $P0 = new 'Integer'
     $P0 = SIZE
-    queue = new $I0, $P0
+    queue = new 'STMQueue', $P0
 
     # addThreadId = addThread
     # removeThreadId = removeThread
@@ -599,10 +598,9 @@ fail:
     $P0 = get_hll_global ['STMQueue'], '__onload'
     $P0()
 
-    $I0 = find_type 'STMQueue'
     $P0 = new 'Integer'
     $P0 = SIZE
-    queue = new $I0, $P0
+    queue = new 'STMQueue', $P0
 
     $P0 = get_hll_global ['STM'], 'transaction'
     $P1 = global '_test'
