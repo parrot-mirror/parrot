@@ -109,11 +109,9 @@ END:
 
 This method is normally called via the C<new> op:
 
-    .local int coro_class
-    coro_class = find_type 'Parrot::Coroutine'
     .local pmc coro
     .const .Sub coro_sub = "enumerate_tree"
-    coro = new coro_class, coro_sub
+    coro = new 'Parrot::Coroutine', coro_sub
 
 Given a sub, it initializes a new C<Parrot::Coroutine> object.
 
