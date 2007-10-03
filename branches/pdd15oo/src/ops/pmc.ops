@@ -64,11 +64,12 @@ op new(out PMC, in INT) {
                    "Illegal PMC enum (%d) in new", (int)$2);
   }
 
-  /* Why?? If we're creating a continuation, the continuation PMC
-   * needs to be in the destination register before its init method
-   * copies the registers. */
+  /* Why separate init from pmc_new_noinit, instead of calling pmc_new? If
+   * we're creating a continuation, the continuation PMC needs to be in the
+   * destination register before its init method copies the registers. */
   $1 = pmc_new_noinit(interp, $2);
-  $1->vtable->init(interp, $1);
+  if ($2 <  enum_class_core_max)
+      $1->vtable->init(interp, $1);
   goto NEXT();
 }
 
