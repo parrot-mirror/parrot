@@ -29,8 +29,8 @@ TBD
     .local pmc base
     .local pmc comb
 
-    find_type i, "Stream::Combiner"
-    if i > 1 goto END
+    $P0 = get_class 'Stream::Combiner'
+    unless null $P0 goto END
 
     load_bytecode "library/Stream/Base.pir"
 

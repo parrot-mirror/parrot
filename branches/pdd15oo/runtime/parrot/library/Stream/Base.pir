@@ -29,9 +29,8 @@ TBD
 .const int aBuffer = 2
 
 .sub onload :load :anon
-    find_type $I0, "Stream::Base"
-    if $I0 > 1 goto END
-
+    $P0 = get_class 'Stream::Base'
+    unless null $P0 goto END
     load_bytecode "library/Data/Escape.pir"
 
     newclass $P0, "Stream::Base"

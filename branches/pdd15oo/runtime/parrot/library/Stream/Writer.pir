@@ -11,8 +11,7 @@ version 0.1
 =head1 SYNOPSIS
 
     # create the stream
-    find_type $I0, "Stream::Writer"
-    new stream, $I0
+    new stream, "Stream::Writer"
 
     # set the source sub
     .const .Sub temp = "_reader"
@@ -35,8 +34,8 @@ version 0.1
 .namespace ["Stream::Writer"]
 
 .sub __onload :load
-    find_type $I0, "Stream::Writer"
-    if $I0 > 1 goto END
+    $P0 = get_class "Stream::Writer"
+    unless null $P0 goto END
 
     load_bytecode "library/Stream/Base.pir"
 

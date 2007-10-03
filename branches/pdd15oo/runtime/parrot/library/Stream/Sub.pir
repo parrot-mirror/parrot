@@ -11,8 +11,7 @@ version 0.1
 =head1 SYNOPSIS
 
     # create the stream
-    find_type $I0, "Stream::Sub"
-    new stream, $I0
+    new stream, "Stream::Sub"
 
     # set the source sub
     .const .Sub temp = "_test"
@@ -59,8 +58,8 @@ The stream will be disconnected automatically if the provided sub returns.
     .local pmc base
     .local pmc sub
 
-    find_type i, "Stream::Sub"
-    if i > 1 goto END
+    $P0 = get_class "Stream::Sub"
+    unless null $P0 goto END
 
     load_bytecode "library/Stream/Base.pir"
 

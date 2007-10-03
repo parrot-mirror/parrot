@@ -12,8 +12,7 @@ version 0.1
 
     load_bytecode "library/Stream/Replay.pir"
 
-    $I0 = find_type "Stream::Replay"
-    $P0 = new $I0
+    $p0 = new "Stream::Replay"
     assign $P0, other_stream
 
     # .. read from $P0 ..
@@ -38,11 +37,11 @@ By using C<clone>, you can read data from a stream as often as you want.
 .namespace ["Stream::Replay"]
 
 .sub onload :load :anon
-    find_type $I0, "Stream::Replay"
-    if $I0 > 1 goto END
-    
+    $P0 = get_class 'Stream::Replay'
+    unless null $P0 goto END
+
     load_bytecode "library/Stream/Base.pir"
-    
+
     # Stream::Replay
     getclass $P0, "Stream::Base"
     subclass $P0, $P0, "Stream::Replay"
@@ -112,8 +111,7 @@ END:
     val = val."source"()
     branch ASSIGN
 NOTA:
-    find_type $I0, "Stream::Replay::Buffer"
-    new buffer, $I0
+    $P0 = new "Stream::Replay::Buffer"
     classoffset $I0, self, "Stream::Replay"
     setattribute self, $I0, buffer
 ASSIGN:
@@ -156,8 +154,7 @@ END:
     .local pmc ret
     .local pmc temp
 
-    find_type $I0, "Stream::Replay"
-    ret = new $I0
+    ret = new "Stream::Replay"
     
     assign ret, self
     
