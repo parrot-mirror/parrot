@@ -15,8 +15,7 @@
 
     # Instantiate a new assembly class.
     loadlib $P0, "dotnet"
-    find_type $I0, "DotNetAssembly"
-    assembly = new $I0
+    assembly = new "DotNetAssembly"
 
     # Set filename and attempt to load.
     assembly = filename
