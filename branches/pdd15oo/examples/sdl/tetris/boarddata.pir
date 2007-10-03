@@ -5,8 +5,7 @@ boarddata.pir - a tetris board data class
 =head1 SYNOPSIS
 
     # create the board data
-    find_type $I0, "BoardData"
-    new data, $I0
+    data = new "BoardData"
     data."new"( 10, 20 )
 
     # fill the board
