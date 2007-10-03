@@ -442,8 +442,7 @@ ok1:
     print S10
     print "\n"
 
-    find_type I4, S10
-    new P5, I4
+    P5 = new S10
     print "ok 3\n"
     classoffset I5, P5, S10
     new P6, 'String'
@@ -483,8 +482,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "thaw class w attr same interp" );
     print S10
     print "\n"
 
-    find_type I4, S10
-    new P5, I4
+    P5 = new S10
     print "ok 3\n"
     classoffset I5, P5, S10
     new P6, 'String'
@@ -517,8 +515,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "thaw object w attr into same interpreter"
     newclass P10, "Foo"
     addattribute P10, ".aa"
     addattribute P10, ".bb"
-    find_type I4, "Foo"
-    new P10, I4
+    P10 = new "Foo"
     print S10
     freeze S3, P10
     open P3, "temp.fpmc", ">"
