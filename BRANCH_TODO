@@ -16,12 +16,52 @@ Steps:
     DONE: Figure out a way to use existing prove switches AND t/harness switches at the same time
         (Getopt::Long and --)
 
-2) Write a coding standard test to make sure that t/* tests call out a location
-   independent parrot/interpreter.
+2) Make TAP::Harness run top level and language harnesses cleanly, regardless of
+   test implementation.
     Fix shebang line issues in tests
 
-3) Make TAP::Harness run top level and language harnesses cleanly, regardless of
-   test implementation.
+Languages           Status
+-----------------------------------------------------------------------------
+abc                 DONE
+amber               NO TESTS
+APL                 parrot and pbc paths seem to be hardcoded
+BASIC               NO TESTS
+befunge             1 Test, needs a lot of work
+bf                  Tests run from languages, not from languages/bf
+c99                 Tests don't run
+cardinal            Most/all tests fail with method __get_bool not found
+cola
+dotnet
+ecmascript
+forth
+HQ9plus
+jako
+lazy-k
+lisp
+lua
+m4
+nqp                 DONE (fixed shebang)
+ook
+parrot_compiler
+perl5
+perl6
+pheme               DONE (added shebang, is that ok?)
+PIR
+plumhead
+pugs
+punie               DONE
+pynie               DONE (fixed shebang)
+regex
+scheme
+tap
+tcl
+unlambda
+urm
+WMLScript
+Zcode
+
+3) Write a coding standard test to make sure that t/* tests call out a location
+   independent parrot/interpreter.
 
 4) Extend coding standard to cover language level tests.
 
