@@ -57,10 +57,9 @@ Parrot::Coroutine - A pure PIR implementation of coroutines
         .param pmc tree
 
         .local int coro_class, idx
-        coro_class = find_type 'Parrot::Coroutine'
         .local pmc coro
         .const .Sub coro_sub = "enumerate_tree"
-        coro = new coro_class, coro_sub
+        coro = new 'Parrot::Coroutine', coro_sub
         ($P0 :optional, $I0 :opt_flag) = coro.'resume'(coro, tree)
         idx = 0
 
@@ -89,9 +88,9 @@ in pure PIR using continuations.
 .const int slot_resume_cont = 3 ## Continuation from which to resume.
 
 .sub __loadtime_create_class :load
-    find_type $I0, "Parrot::Coroutine"
-    if $I0 > 1 goto END
-    newclass $P0, "Parrot::Coroutine"
+    $P0 = get_class "Parrot::Coroutine"
+    unless null $P0 goto END
+    $P0 = newclass "Parrot::Coroutine"
     addattribute $P0, "state"
     addattribute $P0, "initial_sub"
     addattribute $P0, "yield_cont"
