@@ -27,8 +27,8 @@ TDB
     .local pmc base
     .local pmc io
 
-    find_type i, "Stream::ParrotIO"
-    if i > 1 goto END
+    $P0 = get_class 'Stream::ParrotIO'
+    unless null $P0 goto END
 
     load_bytecode "library/Stream/Base.pir"
 

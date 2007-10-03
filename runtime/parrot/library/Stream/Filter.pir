@@ -27,8 +27,8 @@ TBD
     .local pmc base
     .local pmc filter
 
-    find_type i, "Stream::Filter"
-    if i > 1 goto END
+    $P0 = get_class 'Stream::Filter'
+    unless null $P0 goto END
 
     load_bytecode "library/Stream/Base.pir"
 

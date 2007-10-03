@@ -29,8 +29,8 @@ TBD
     .local pmc base
     .local pmc lines
 
-    find_type i, "Stream::Lines"
-    if i > 1 goto END
+    $P0 = get_class 'Stream::Lines'
+    unless null $P0 goto END
 
     load_bytecode "library/Stream/Base.pir"
 
