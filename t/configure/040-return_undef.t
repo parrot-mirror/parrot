@@ -52,8 +52,9 @@ is($conf->options->{c}->{debugging}, 1,
     "command-line option '--debugging' has been stored in object");
 
 my $rv;
-my ($tie, @lines, $errtie, @errlines);
+my (@lines, @errlines);
 {
+    my ($tie, $errtie);
     $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";
     $errtie = tie *STDERR, "Parrot::IO::Capture::Mini"
