@@ -1,4 +1,3 @@
-#! pheme
 (write "1..4\n")
 
 (write "ok 1 - all in one line\n")

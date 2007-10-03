@@ -1,4 +1,3 @@
-#! pheme
 (include_file lib/PhemeTest.pir)
 
 (plan 2)
