@@ -535,8 +535,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "set/get multiple object attribs" );
     newclass P1, "Foo"
     addattribute P1, "i"
     addattribute P1, "j"
-    find_type I0, "Foo"
-    new P2, I0
+    P2 = new "Foo"
     classoffset I1, P2, "Foo"
 
     new P3, 'Integer'
