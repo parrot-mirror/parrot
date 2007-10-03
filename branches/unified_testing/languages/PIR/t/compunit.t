@@ -6,16 +6,8 @@
 use strict;
 use warnings;
 use lib qw(t . lib ../lib ../../lib ../../../lib);
-use Parrot::Test tests => 12;
+use Parrot::Test tests => 11;
 use Test::More;
-
-language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'global defs' );
-
-.global g_X
-
-.global g_Y
-
-CODE
 
 language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'const defs' );
 
@@ -83,7 +75,7 @@ CODE
 
 language_output_like( 'PIR_PGE', <<'CODE', qr/Parse successful!/, 'HLL map' );
 
-.HLL_map 42, 10
+.HLL_map "Integer", "FooNumber"
 
 CODE
 

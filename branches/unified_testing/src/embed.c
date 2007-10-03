@@ -12,6 +12,10 @@ This file implements the Parrot embedding interface.
 
 =head2 Functions
 
+=over 4
+
+=cut
+
 */
 
 #include "parrot/parrot.h"
@@ -22,26 +26,26 @@ This file implements the Parrot embedding interface.
 
 /* HEADERIZER BEGIN: static */
 
-static FLOATVAL calibrate( PARROT_INTERP )
+static FLOATVAL calibrate(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static const char * op_name( PARROT_INTERP, int k )
+static const char * op_name(PARROT_INTERP, int k)
         __attribute__nonnull__(1);
 
-static void print_debug( PARROT_INTERP, SHIM(int status), SHIM(void *p) )
+static void print_debug(PARROT_INTERP, SHIM(int status), SHIM(void *p))
         __attribute__nonnull__(1);
 
-static void print_profile( PARROT_INTERP, SHIM(int status), SHIM(void *p) )
+static void print_profile(PARROT_INTERP, SHIM(int status), SHIM(void *p))
         __attribute__nonnull__(1);
 
-static int prof_sort_f( NOTNULL(const void *a), NOTNULL(const void *b) )
+static int prof_sort_f(NOTNULL(const void *a), NOTNULL(const void *b))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static PMC* set_current_sub( PARROT_INTERP )
+static PMC* set_current_sub(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static PMC* setup_argv( PARROT_INTERP, int argc, char ** argv )
+static PMC* setup_argv(PARROT_INTERP, int argc, char ** argv)
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
@@ -50,12 +54,14 @@ extern int Parrot_exec_run;
 
 /*
 
-FUNCDOC: Parrot_new
+=item C<Parrot_new>
 
 Returns a new Parrot interpreter.
 
 The first created interpreter (C<parent> is C<NULL>) is the last one
 to get destroyed.
+
+=cut
 
 */
 
@@ -78,9 +84,9 @@ extern void Parrot_initialize_core_pmcs(PARROT_INTERP);
 
 /*
 
-FUNCDOC: Parrot_init
+=item C<Parrot_init>
 
-FUNCDOC: Parrot_init_stacktop
+=item C<Parrot_init_stacktop>
 
 Initializes the new interpreter when it hasn't been initialized before.
 
@@ -91,6 +97,8 @@ stack frame. All unanchored Parrot objects (PMCs) must live in inner stack
 frames so that they are not destroyed during DOD runs.
 
 Use this function when you call into Parrot before entering a run loop.
+
+=cut
 
 */
 
@@ -104,7 +112,7 @@ Parrot_init_stacktop(PARROT_INTERP, void *stack_top)
 
 /*
 
-FUNCDOC: Parrot_set_flag
+=item C<Parrot_set_flag>
 
 Sets a flag in the interpreter specified by C<flag>, any of
 C<PARROT_BOUNDS_FLAG>, or C<PARROT_PROFILE_FLAG> to enable profiling, and
@@ -113,13 +121,15 @@ C<PARROT_THR_TYPE_3> to disable thread communication and variable sharing,
 disable variable sharing but enable thread communication, or to enable variable
 sharing.
 
-FUNCDOC: Parrot_set_debug
+=item C<Parrot_set_debug>
 
 Set a debug flag: C<PARROT_DEBUG_FLAG>.
 
-FUNCDOC: Parrot_set_trace
+=item C<Parrot_set_trace>
 
 Set a trace flag: C<PARROT_TRACE_FLAG>
+
+=cut
 
 */
 
@@ -157,17 +167,19 @@ Parrot_set_trace(PARROT_INTERP, UINTVAL flag)
 
 /*
 
-FUNCDOC: Parrot_clear_flag
+=item C<Parrot_clear_flag>
 
 Clears a flag in the interpreter.
 
-FUNCDOC: Parrot_clear_debug
+=item C<Parrot_clear_debug>
 
 Clears a flag in the interpreter.
 
-FUNCDOC: Parrot_clear_trace
+=item C<Parrot_clear_trace>
 
 Clears a flag in the interpreter.
+
+=cut
 
 */
 
@@ -194,17 +206,19 @@ Parrot_clear_trace(PARROT_INTERP, UINTVAL flag)
 
 /*
 
-FUNCDOC: Parrot_test_flag
+=item C<Parrot_test_flag>
 
 Test the interpreter flags specified in C<flag>.
 
-FUNCDOC: Parrot_test_debug
+=item C<Parrot_test_debug>
 
 Test the interpreter flags specified in C<flag>.
 
-FUNCDOC: Parrot_test_trace
+=item C<Parrot_test_trace>
 
 Test the interpreter flags specified in C<flag>.
+
+=cut
 
 */
 
@@ -231,9 +245,11 @@ Parrot_test_trace(PARROT_INTERP, UINTVAL flag)
 
 /*
 
-FUNCDOC: Parrot_set_run_core
+=item C<Parrot_set_run_core>
 
 Sets the specified run core.
+
+=cut
 
 */
 
@@ -246,9 +262,11 @@ Parrot_set_run_core(PARROT_INTERP, Parrot_Run_core_t core)
 
 /*
 
-FUNCDOC: Parrot_setwarnings
+=item C<Parrot_setwarnings>
 
 Activates the given warnings.
+
+=cut
 
 */
 
@@ -262,9 +280,11 @@ Parrot_setwarnings(PARROT_INTERP, Parrot_warnclass wc)
 
 /*
 
-FUNCDOC: Parrot_readbc
+=item C<Parrot_readbc>
 
 Read in a bytecode, unpack it into a C<PackFile> structure, and do fixups.
+
+=cut
 
 */
 
@@ -428,9 +448,11 @@ again:
 
 /*
 
-FUNCDOC: Parrot_loadbc
+=item C<Parrot_loadbc>
 
 Loads the C<PackFile> returned by C<Parrot_readbc()>.
+
+=cut
 
 */
 
@@ -448,9 +470,11 @@ Parrot_loadbc(PARROT_INTERP, NOTNULL(PackFile *pf))
 
 /*
 
-FUNCDOC: setup_argv
+=item C<setup_argv>
 
 Creates and returns C<ARGS> array PMC.
+
+=cut
 
 */
 
@@ -489,9 +513,11 @@ setup_argv(PARROT_INTERP, int argc, char ** argv)
 
 /*
 
-FUNCDOC: prof_sort_f
+=item C<prof_sort_f>
 
 Sort function for profile data. Sorts by time.
+
+=cut
 
 */
 
@@ -510,9 +536,11 @@ prof_sort_f(NOTNULL(const void *a), NOTNULL(const void *b))
 
 /*
 
-FUNCDOC: op_name
+=item C<op_name>
 
 Returns the name of the opcode.
+
+=cut
 
 */
 
@@ -540,10 +568,12 @@ op_name(PARROT_INTERP, int k)
 
 /*
 
-FUNCDOC: calibrate
+=item C<calibrate>
 
 With this calibration, reported times of C<parrot -p> almost match those
 measured with time C<parrot -b>.
+
+=cut
 
 */
 
@@ -567,9 +597,11 @@ calibrate(PARROT_INTERP)
 
 /*
 
-FUNCDOC: print_profile
+=item C<print_profile>
 
 Prints out a profile listing.
+
+=cut
 
 */
 
@@ -640,9 +672,11 @@ print_profile(PARROT_INTERP, SHIM(int status), SHIM(void *p))
 
 /*
 
-FUNCDOC: print_debug
+=item C<print_debug>
 
 Prints GC info.
+
+=cut
 
 */
 
@@ -703,9 +737,11 @@ set_current_sub(PARROT_INTERP)
 
 /*
 
-FUNCDOC: Parrot_runcode
+=item C<Parrot_runcode>
 
 Sets up C<ARGV> and runs the ops.
+
+=cut
 
 */
 
@@ -793,9 +829,11 @@ Parrot_runcode(PARROT_INTERP, int argc, char *argv[])
 
 /*
 
-FUNCDOC: Parrot_debug
+=item C<Parrot_debug>
 
 Runs the interpreter's bytecode in debugging mode.
+
+=cut
 
 */
 
@@ -828,11 +866,13 @@ Parrot_debug(NOTNULL(Parrot_Interp debugger), opcode_t * pc)
 
 /*
 
-FUNCDOC: Parrot_disassemble
+=item C<Parrot_disassemble>
 
 Disassembles and prints out the interpreter's bytecode.
 
 This is used by the Parrot disassembler.
+
+=cut
 
 */
 
@@ -857,7 +897,7 @@ Parrot_disassemble(PARROT_INTERP)
 
     PIO_printf(interp, "%12s-%12s", "Seq_Op_Num", "Relative-PC");
 
-    if ( debugs ) {
+    if (debugs) {
         PIO_printf(interp, " %6s:\n","SrcLn#");
         num_mappings = interp->code->debugs->num_mappings;
     }
@@ -873,16 +913,18 @@ Parrot_disassemble(PARROT_INTERP)
          * interp->code->debugs->mappings[curr_mapping]->offset); */
 
         if (debugs && curr_mapping < num_mappings) {
-            if ( op_code_seq_num == interp->code->debugs->mappings[curr_mapping]->offset) {
-                const int filename_const_offset = interp->code->debugs->mappings[curr_mapping]->u.filename;
-                PIO_printf(interp, "Current Source Filename %Ss\n", interp->code->const_table->constants[filename_const_offset]->u.string);
+            if (op_code_seq_num == interp->code->debugs->mappings[curr_mapping]->offset) {
+                const int filename_const_offset =
+                    interp->code->debugs->mappings[curr_mapping]->u.filename;
+                PIO_printf(interp, "Current Source Filename %Ss\n",
+                        interp->code->const_table->constants[filename_const_offset]->u.string);
                 curr_mapping++;
             }
         }
 
         PIO_printf(interp, "%012i-%012i", op_code_seq_num, line->opcode - interp->code->base.data);
 
-        if ( debugs )
+        if (debugs)
             PIO_printf(interp, " %06i: ",interp->code->debugs->base.data[op_code_seq_num]);
 
         /* If it has a label print it */
@@ -906,7 +948,7 @@ Parrot_disassemble(PARROT_INTERP)
 
 /*
 
-FUNCDOC: Parrot_run_native
+=item C<Parrot_run_native>
 
 Run the C function C<func> through the program C<[enternative, end]>.
 This ensures that the function is run with the same setup as in other
@@ -914,6 +956,8 @@ run loops.
 
 This function is used in some of the source tests in F<t/src> which use
 the interpreter outside a runloop.
+
+=cut
 
 */
 
@@ -942,6 +986,8 @@ Parrot_run_native(PARROT_INTERP, native_func_t func)
 
 /*
 
+=back
+
 =head1 SEE ALSO
 
 F<include/parrot/embed.h> and F<docs/embed.pod>.
@@ -949,6 +995,8 @@ F<include/parrot/embed.h> and F<docs/embed.pod>.
 =head1 HISTORY
 
 Initial version by Brent Dax on 2002.1.28.
+
+=cut
 
 */
 

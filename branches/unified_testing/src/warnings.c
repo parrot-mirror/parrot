@@ -11,6 +11,10 @@ src/warnings.c - Warning and error reporting
 Parrot C<STRING> and C string versions of a function to print warning/error
 messages.
 
+=over 4
+
+=cut
+
 */
 
 #include "parrot/parrot.h"
@@ -21,16 +25,18 @@ messages.
 
 /* HEADERIZER BEGIN: static */
 
-static INTVAL print_warning( PARROT_INTERP, NULLOK(STRING *msg) )
+static INTVAL print_warning(PARROT_INTERP, NULLOK(STRING *msg))
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
 
 /*
 
-FUNCDOC: print_pbc_location
+=item C<print_pbc_location>
 
 Prints the bytecode location of the warning or error to C<PIO_STDERR>.
+
+=cut
 
 */
 
@@ -47,9 +53,11 @@ print_pbc_location(PARROT_INTERP)
 
 /*
 
-FUNCDOC: print_warning
+=item C<print_warning>
 
 Prints the warning message and the bytecode location.
+
+=cut
 
 */
 
@@ -69,15 +77,21 @@ print_warning(PARROT_INTERP, NULLOK(STRING *msg))
 
 /*
 
+=back
+
 =head2 Parrot Warnings Interface
 
-FUNCDOC: Parrot_warn
+=over 4
+
+=item C<Parrot_warn>
 
 The Parrot C string warning/error reporter.
 
 Returns 2 on error, 1 on success.
 
 C<message, ..> can be a C<Parrot_vsprintf_c()> format with arguments.
+
+=cut
 
 */
 
@@ -102,13 +116,15 @@ Parrot_warn(PARROT_INTERP, INTVAL warnclass,
 
 /*
 
-FUNCDOC: Parrot_warn_s
+=item C<Parrot_warn_s>
 
 The Parrot C<STRING> warning/error reporter.
 
 Returns 2 on error, 1 on success.
 
 C<message, ..> can be a C<Parrot_vsprintf_s()> format with arguments.
+
+=cut
 
 */
 
@@ -133,9 +149,13 @@ Parrot_warn_s(NULLOK_INTERP, INTVAL warnclass,
 
 /*
 
+=back
+
 =head1 SEE ALSO
 
 F<include/parrot/warnings.h>.
+
+=cut
 
 */
 

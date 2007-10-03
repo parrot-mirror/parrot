@@ -1,3 +1,4 @@
+# m4
 # $Id$
 
 use strict;

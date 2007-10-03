@@ -340,61 +340,61 @@ a sleep opcode.
 
 /* HEADERIZER BEGIN: static */
 
-static int collect_cb( PARROT_INTERP,
+static int collect_cb(PARROT_INTERP,
     NOTNULL(Small_Object_Pool *pool),
     int flag,
-    NOTNULL(void *arg) )
+    NOTNULL(void *arg))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(4);
 
-static void gc_ims_add_free_object( PARROT_INTERP,
+static void gc_ims_add_free_object(PARROT_INTERP,
     NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *to_add) )
+    NOTNULL(PObj *to_add))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static void gc_ims_alloc_objects( PARROT_INTERP,
-    NOTNULL(Small_Object_Pool *pool) )
+static void gc_ims_alloc_objects(PARROT_INTERP,
+    NOTNULL(Small_Object_Pool *pool))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-static PObj * gc_ims_get_free_object( PARROT_INTERP,
-    NOTNULL(Small_Object_Pool *pool) )
+static PObj * gc_ims_get_free_object(PARROT_INTERP,
+    NOTNULL(Small_Object_Pool *pool))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void gc_ims_pool_init( SHIM_INTERP, NOTNULL(Small_Object_Pool *pool) )
+static void gc_ims_pool_init(SHIM_INTERP, NOTNULL(Small_Object_Pool *pool))
         __attribute__nonnull__(2);
 
-static int parrot_gc_ims_collect( PARROT_INTERP, int check_only )
+static int parrot_gc_ims_collect(PARROT_INTERP, int check_only)
         __attribute__nonnull__(1);
 
-static void parrot_gc_ims_deinit( PARROT_INTERP )
+static void parrot_gc_ims_deinit(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static void parrot_gc_ims_mark( PARROT_INTERP )
+static void parrot_gc_ims_mark(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static void parrot_gc_ims_reinit( PARROT_INTERP )
+static void parrot_gc_ims_reinit(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static void parrot_gc_ims_run( PARROT_INTERP, int flags )
+static void parrot_gc_ims_run(PARROT_INTERP, int flags)
         __attribute__nonnull__(1);
 
-static void parrot_gc_ims_run_increment( PARROT_INTERP )
+static void parrot_gc_ims_run_increment(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static void parrot_gc_ims_sweep( PARROT_INTERP )
+static void parrot_gc_ims_sweep(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static int sweep_cb( PARROT_INTERP,
+static int sweep_cb(PARROT_INTERP,
     NOTNULL(Small_Object_Pool *pool),
     int flag,
-    NOTNULL(void *arg) )
+    NOTNULL(void *arg))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(4);
@@ -563,7 +563,7 @@ gc_ims_alloc_objects(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
 
 /*
 
-=item C<()>
+=item C<gc_ims_pool_init()>
 
 Not yet documented!!!
 
@@ -582,7 +582,7 @@ gc_ims_pool_init(SHIM_INTERP, NOTNULL(Small_Object_Pool *pool))
 
 /*
 
-=item C<()>
+=item C<parrot_gc_ims_deinit()>
 
 Not yet documented!!!
 
@@ -704,11 +704,9 @@ parrot_gc_ims_mark(PARROT_INTERP)
 
 /*
 
-=item C<parrot_gc_ims_sweep()>
+=item C<sweep_cb()>
 
-Free unused objects in all header pools.
-
-TODO split work per pool.
+Not yet documented!!!
 
 =cut
 
@@ -728,9 +726,11 @@ sweep_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void
 
 /*
 
-=item C<()>
+=item C<parrot_gc_ims_sweep()>
 
-Not yet documented!!!
+Free unused objects in all header pools.
+
+TODO split work per pool.
 
 =cut
 
@@ -761,6 +761,7 @@ parrot_gc_ims_sweep(PARROT_INTERP)
     n_objects = 0;
     ignored   = Parrot_forall_header_pools(interp, POOL_BUFFER | POOL_PMC,
             (void*)&n_objects, sweep_cb);
+    UNUSED(ignored);
 
     if (interp->profile)
         Parrot_dod_profile_end(interp, PARROT_PROF_DOD_cb);
@@ -772,7 +773,7 @@ parrot_gc_ims_sweep(PARROT_INTERP)
 
 /*
 
-=item C<()>
+=item C<collect_cb()>
 
 Not yet documented!!!
 

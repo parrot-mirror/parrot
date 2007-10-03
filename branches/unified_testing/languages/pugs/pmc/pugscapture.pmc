@@ -182,8 +182,8 @@ int_compare(Parrot_Interp interp, void *a, void *b)
 
 
 
-/* rhs and lhs versions needed to avoid the msg "warning: use of cast expressions as lvalues is deprecated"
-   Is there a better way?
+/* rhs and lhs versions needed to avoid the msg "warning: use of cast
+ * expressions as lvalues is deprecated" Is there a better way?
  */
 #define siva_int(a) ((INTVAL) PMC_struct_val(a))
 #define siva_set_int(a,v)  (PMC_struct_val(a) = (DPOINTER*) v)
@@ -197,9 +197,12 @@ int_compare(Parrot_Interp interp, void *a, void *b)
 
 #define siva_siva(a)  ((PMC*) PMC_pmc_val(a))
 #define siva_set_siva(a,v)  (PMC_pmc_val(a)) = ((PMC*) v)
-#define siva_ary_create_if_void(i,a) { if (!siva_ary(a)) siva_set_ary(a, list_new(i, enum_type_PMC)); }
-#define siva_hash_create_if_void(i,a) {  \
-    if (!siva_hash(a)) parrot_new_hash_x(i, &siva_hash(a), enum_type_ptr, Hash_key_type_int, int_compare, key_hash_int); \
+#define siva_ary_create_if_void(i,a) { \
+    if (!siva_ary(a)) siva_set_ary(a, list_new(i, enum_type_PMC)); \
+}
+#define siva_hash_create_if_void(i,a) { \
+    if (!siva_hash(a)) parrot_new_hash_x(i, &siva_hash(a), \
+            enum_type_ptr, Hash_key_type_int, int_compare, key_hash_int); \
 }
 #define siva_str_create_if_void(i,a) { \
 }
@@ -221,14 +224,14 @@ pmclass PugsCapture extends PugsAny
   void init() {
       PObj_custom_mark_SET(SELF);
       siva_set_int(SELF, 0);
-      siva_set_siva(SELF, mem_sys_allocate(sizeof(siva)));
+      siva_set_siva(SELF, mem_sys_allocate(sizeof (siva)));
       siva_set_ary(SELF, 0);
       siva_set_hash(SELF, 0);
       siva_set_str(SELF, 0);
 
   }
 
-    void destroy () {
+    void destroy() {
         mem_sys_free(siva_siva(SELF));
     }
 
@@ -260,42 +263,42 @@ pmclass PugsCapture extends PugsAny
 
   }
 
-  INTVAL get_integer () {
+  INTVAL get_integer() {
     return siva_int(SELF);
   }
 
-  void set_integer_native (INTVAL val) {
+  void set_integer_native(INTVAL val) {
     siva_set_int(SELF, val);
   }
 
-    FLOATVAL get_number () {
+    FLOATVAL get_number() {
       return PMC_num_val(SELF);
     }
 
-    INTVAL elements () {
+    INTVAL elements() {
       if (!siva_ary(SELF))
         return 0;
       return siva_ary(SELF)->length;
     }
 
-    void set_pmc_keyed_int (INTVAL i, PMC* src) {
+    void set_pmc_keyed_int(INTVAL i, PMC* src) {
        siva_ary_create_if_void(INTERP, SELF);
       list_assign(INTERP, siva_ary(SELF), i, src, enum_type_PMC);
     }
 
-    void push_integer (INTVAL value) {
+    void push_integer(INTVAL value) {
         INTVAL nextix = DYNSELF.elements();
         DYNSELF.set_integer_keyed_int(nextix, value);
     }
 
 
-    PMC* get_pmc_keyed_int (INTVAL i) {
+    PMC* get_pmc_keyed_int(INTVAL i) {
       siva_ary_create_if_void(INTERP, SELF);
       return retval(INTERP, list_get(INTERP, siva_ary(SELF), i, enum_type_PMC));
     }
 
 
-    PMC* get_pmc_keyed_str (STRING* key) {
+    PMC* get_pmc_keyed_str(STRING* key) {
         HashBucket *b = parrot_hash_get_bucket(INTERP, siva_hash(SELF),
                                         key);
         if (b == NULL) {
@@ -307,7 +310,7 @@ pmclass PugsCapture extends PugsAny
     }
 
 
-    PMC* get_pmc_keyed (PMC* key) {
+    PMC* get_pmc_keyed(PMC* key) {
         PMC* valpmc;
         STRING* keystr;
         Hash *hash = siva_hash(SELF);
@@ -349,7 +352,7 @@ pmclass PugsCapture extends PugsAny
 
 
 
-    void set_pmc_keyed (PMC* key, PMC* value) {
+    void set_pmc_keyed(PMC* key, PMC* value) {
         STRING* keystr;
         PMC* nextkey;
         PMC* box;
@@ -370,7 +373,7 @@ pmclass PugsCapture extends PugsAny
         VTABLE_set_pmc_keyed(INTERP, box, nextkey, value);
     }
 
-    PMC* get_pmc_keyed_str (STRING* key) {
+    PMC* get_pmc_keyed_str(STRING* key) {
         HashBucket *b = parrot_hash_get_bucket(INTERP, (Hash*) siva_hash(SELF),
                                         key);
         if (b == NULL) {
@@ -382,7 +385,7 @@ pmclass PugsCapture extends PugsAny
     }
 
 
-    STRING* get_string_keyed_str (STRING* key) {
+    STRING* get_string_keyed_str(STRING* key) {
         HashBucket *b = parrot_hash_get_bucket(INTERP, siva_hash(SELF),
                                         key);
         if (b == NULL) {
@@ -394,7 +397,7 @@ pmclass PugsCapture extends PugsAny
 
 
 
-    void set_string_keyed (PMC* key, STRING* value) {
+    void set_string_keyed(PMC* key, STRING* value) {
         STRING* keystr;
         PMC* nextkey;
         PMC* box;
@@ -419,7 +422,7 @@ pmclass PugsCapture extends PugsAny
     }
 
 
-    STRING* get_string_keyed (PMC* key) {
+    STRING* get_string_keyed(PMC* key) {
         PMC* valpmc;
         STRING* keystr;
         HashBucket *b;
@@ -449,7 +452,7 @@ pmclass PugsCapture extends PugsAny
         return VTABLE_get_string_keyed(INTERP, valpmc, nextkey);
     }
 
-    void set_integer_keyed (PMC* key, INTVAL value) {
+    void set_integer_keyed(PMC* key, INTVAL value) {
         INTVAL ix;
         PMC* nextkey;
         PMC* box;
@@ -470,7 +473,7 @@ pmclass PugsCapture extends PugsAny
         VTABLE_set_integer_keyed(INTERP, box, nextkey, value);
     }
 
-    void set_integer_keyed_int (INTVAL key, INTVAL value) {
+    void set_integer_keyed_int(INTVAL key, INTVAL value) {
         PMC * ptr;
         siva_ary_create_if_void(INTERP, SELF);
         ptr = Parrot_Array_set_pmc_ptr(INTERP, siva_ary(SELF), key);
@@ -478,7 +481,7 @@ pmclass PugsCapture extends PugsAny
     }
 
 
-    INTVAL get_integer_keyed_int (INTVAL key) {
+    INTVAL get_integer_keyed_int(INTVAL key) {
         PMC* value;
 
         if (!siva_ary(SELF)) return 0;
@@ -486,7 +489,7 @@ pmclass PugsCapture extends PugsAny
         return VTABLE_get_integer(INTERP, value);
     }
 
-    INTVAL get_integer_keyed (PMC* key) {
+    INTVAL get_integer_keyed(PMC* key) {
         INTVAL ix;
         PMC* nextkey;
         PMC* box;
@@ -501,18 +504,18 @@ pmclass PugsCapture extends PugsAny
         return VTABLE_get_integer_keyed(INTERP, box, nextkey);
     }
 
-    void push_pmc (PMC* value) {
+    void push_pmc(PMC* value) {
         INTVAL nextix = DYNSELF.elements();
         DYNSELF.set_pmc_keyed_int(nextix, value);
     }
 
-    PMC* pop_pmc () {
+    PMC* pop_pmc() {
         return Parrot_Array_pop_pmc_ptr(INTERP, siva_ary(SELF));
     }
 
     /*
 
-    void bitwise_or_int (INTVAL value, PMC* dest) {
+    void bitwise_or_int(INTVAL value, PMC* dest) {
         VTABLE_set_integer_native(INTERP, dest,
             siva_int(SELF) | value
         );

@@ -30,13 +30,13 @@ to the previous values and the allocated register memory is discarded.
 
 /* HEADERIZER BEGIN: static */
 
-static void clear_regs( PARROT_INTERP, NOTNULL(parrot_context_t *ctx) )
+static void clear_regs(PARROT_INTERP, NOTNULL(parrot_context_t *ctx))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void init_context( PARROT_INTERP,
+static void init_context(PARROT_INTERP,
     NOTNULL(parrot_context_t *ctx),
-    NULLOK(const parrot_context_t *old) )
+    NULLOK(const parrot_context_t *old))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -195,6 +195,7 @@ create_initial_context(PARROT_INTERP)
     /* For now create context with 32 regs each. Some src tests (and maybe
      * other extenders) assume the presence of these registers */
     ignored = Parrot_alloc_context(interp, num_regs);
+    UNUSED(ignored);
 }
 
 /*
@@ -326,8 +327,8 @@ Duplicate the passed context
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-Parrot_Context *
-Parrot_dup_context(PARROT_INTERP, NOTNULL(const Parrot_Context *old) )
+struct Parrot_Context *
+Parrot_dup_context(PARROT_INTERP, NOTNULL(const struct Parrot_Context *old))
 {
     size_t          diff;
     Parrot_Context *ctx;
@@ -373,7 +374,7 @@ C<Parrot_pop_context>.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-Parrot_Context *
+struct Parrot_Context *
 Parrot_push_context(PARROT_INTERP, NOTNULL(INTVAL *n_regs_used))
 {
     Parrot_Context * const old = CONTEXT(interp->ctx);
@@ -428,7 +429,7 @@ register usage C<n_regs_used> is copied.  The function returns the new context.
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-Parrot_Context *
+struct Parrot_Context *
 Parrot_alloc_context(PARROT_INTERP, NOTNULL(INTVAL *number_regs_used))
 {
     Parrot_Context *old, *ctx;
@@ -534,7 +535,7 @@ return continuation invoke, else from the destructor of a continuation.
 
 PARROT_API
 void
-Parrot_free_context(PARROT_INTERP, NOTNULL(Parrot_Context *ctxp), int re_use)
+Parrot_free_context(PARROT_INTERP, NOTNULL(struct Parrot_Context *ctxp), int re_use)
 {
     /*
      * The context structure has a reference count, initially 0.  This field is
@@ -550,7 +551,7 @@ Parrot_free_context(PARROT_INTERP, NOTNULL(Parrot_Context *ctxp), int re_use)
         int slot;
 
 #ifndef NDEBUG
-        if (   Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)
+        if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)
             && ctxp->current_sub) {
             /* can't probably PIO_eprintf here */
             const Parrot_sub * const doomed = PMC_sub(ctxp->current_sub);
@@ -588,7 +589,7 @@ Mark the context as possible threshold.
 
 PARROT_API
 void
-Parrot_set_context_threshold(PARROT_INTERP, NULLOK(Parrot_Context *ctxp))
+Parrot_set_context_threshold(PARROT_INTERP, NULLOK(struct Parrot_Context *ctxp))
 {
     UNUSED(interp);
     UNUSED(ctxp);

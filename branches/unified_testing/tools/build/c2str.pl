@@ -13,12 +13,20 @@ use warnings;
 use strict;
 use lib 'lib';
 
+use Fcntl qw( :DEFAULT :flock );
 use Text::Balanced qw(extract_delimited);
 use Math::BigInt;
 use Getopt::Long;
 
 my $outfile          = 'all_cstring.str';
 my $string_private_h = 'src/string_private_cstring.h';
+my $lockfile         = "$outfile.lck";
+
+sysopen( my $lock, $lockfile, O_CREAT ) or die "Can't write '$lockfile': $!\n";
+
+flock($lock, LOCK_EX) or die "Can't lock '$lockfile': $!\n";
+
+END { close $lock; unlink $lockfile; }
 
 my ( $result, $do_all, $do_init, $file );
 $result = GetOptions(
@@ -27,8 +35,8 @@ $result = GetOptions(
 );
 
 $do_all and do {
-    &read_all;
-    &create_c_include;
+    read_all();
+    create_c_include();
     exit;
 };
 $do_init and do {
@@ -44,7 +52,7 @@ die "$0: $infile: $!" unless -e $infile;
 my %known_strings = ();
 my @all_strings;
 
-&read_all;
+read_all();
 open my $ALL, '>>', $outfile or die "Can't write '$outfile': $!";
 process_cfile();
 close $ALL;

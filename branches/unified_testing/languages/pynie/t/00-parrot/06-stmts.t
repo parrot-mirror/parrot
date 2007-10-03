@@ -1,4 +1,4 @@
-#!./parrot
+#! pynie
 
 print '1..7'
 

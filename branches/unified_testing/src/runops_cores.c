@@ -15,6 +15,10 @@ the faster dispatch of operations.
 
 =head2 Functions
 
+=over 4
+
+=cut
+
 */
 
 #include "runops_cores.h"
@@ -32,7 +36,7 @@ the faster dispatch of operations.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static opcode_t * runops_trace_core( PARROT_INTERP, NOTNULL(opcode_t *pc) )
+static opcode_t * runops_trace_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -40,12 +44,14 @@ static opcode_t * runops_trace_core( PARROT_INTERP, NOTNULL(opcode_t *pc) )
 
 /*
 
-FUNCDOC: runops_fast_core
+=item C<runops_fast_core>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations.
 
 No bounds checking, profiling or tracing is performed.
+
+=cut
 
 */
 
@@ -62,7 +68,7 @@ runops_fast_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
 /*
 
-FUNCDOC: runops_cgoto_core
+=item C<runops_cgoto_core>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations, using the computed C<goto> core.
@@ -70,6 +76,8 @@ operations, using the computed C<goto> core.
 No bounds checking, profiling or tracing is performed.
 
 If computed C<goto> is not available then Parrot exits with exit code 1.
+
+=cut
 
 */
 
@@ -90,10 +98,12 @@ runops_cgoto_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
 /*
 
-FUNCDOC: runops_slow_core
+=item C<runops_slow_core>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations, with tracing and bounds checking enabled.
+
+=cut
 
 */
 
@@ -105,7 +115,7 @@ operations, with tracing and bounds checking enabled.
 #endif
 
 #define  code_start interp->code->base.data
-#define  code_end   (interp->code->base.data + interp->code->base.size)
+#define  code_end (interp->code->base.data + interp->code->base.size)
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
@@ -197,10 +207,12 @@ runops_slow_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
 /*
 
-FUNCDOC: runops_profile_core
+=item C<runops_profile_core>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations, with tracing, bounds checking and profiling enabled.
+
+=cut
 
 */
 

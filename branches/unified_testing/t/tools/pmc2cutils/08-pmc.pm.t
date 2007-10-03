@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2006-2007, The Perl Foundation.
 # $Id$
-# 01-pmc2cutils.t
+# 08-pmc.pm.t
 
 use strict;
 use warnings;
@@ -31,10 +31,10 @@ $self = Parrot::Pmc2c::PMC->new();
 isa_ok( $self, q{Parrot::Pmc2c::PMC} );
 
 can_ok( 'Parrot::Pmc2c::PMC', q{inherit_attrs} );
+
 #can_ok( 'Parrot::Pmc2c::PMC', q{gen_parent_lookup_info} );
 #can_ok( 'Parrot::Pmc2c::PMC', q{gen_parent_reverse_lookup_info} );
 can_ok( 'Parrot::Pmc2c::PMC', q{dump_is_current} );
-
 
 pass("Completed all tests in $0");
 

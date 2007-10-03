@@ -12,6 +12,10 @@ Open mmaps the file.
 
 =head2 mmap layer functions
 
+=over 4
+
+=cut
+
 */
 
 #include "parrot/parrot.h"
@@ -21,27 +25,27 @@ Open mmaps the file.
 
 /* HEADERIZER BEGIN: static */
 
-static INTVAL PIO_mmap_close( PARROT_INTERP,
+static INTVAL PIO_mmap_close(PARROT_INTERP,
     NOTNULL(ParrotIOLayer *layer),
-    NOTNULL(ParrotIO *io) )
+    NOTNULL(ParrotIO *io))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static ParrotIO * PIO_mmap_open( PARROT_INTERP,
+static ParrotIO * PIO_mmap_open(PARROT_INTERP,
     NOTNULL(ParrotIOLayer *layer),
     NOTNULL(const char *path),
-    INTVAL flags )
+    INTVAL flags)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static size_t PIO_mmap_read( PARROT_INTERP,
+static size_t PIO_mmap_read(PARROT_INTERP,
     NOTNULL(ParrotIOLayer *layer),
     NOTNULL(ParrotIO *io),
-    NOTNULL(STRING **buf) )
+    NOTNULL(STRING **buf))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -93,6 +97,16 @@ ParrotIOLayer pio_mmap_layer = {
     NULL, NULL
 };
 
+/*
+
+=item C<PIO_mmap_register_layer>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 ParrotIOLayer *
@@ -103,9 +117,11 @@ PIO_mmap_register_layer(void)
 
 /*
 
-FUNCDOC: PIO_mmap_open
+=item C<PIO_mmap_open>
 
 The buffer layer's C<Open> function.
+
+=cut
 
 */
 
@@ -150,10 +166,12 @@ PIO_mmap_open(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer),
 
 /*
 
-FUNCDOC: PIO_mmap_read
+=item C<PIO_mmap_read>
 
 Calls C<read()> to return up to C<len> bytes in the memory starting at
 C<buffer>.
+
+=cut
 
 */
 
@@ -185,9 +203,11 @@ PIO_mmap_read(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io
 
 /*
 
-FUNCDOC: PIO_mmap_close
+=item C<PIO_mmap_close>
 
 Closes C<*io>'s file descriptor.
+
+=cut
 
 */
 
@@ -203,6 +223,8 @@ PIO_mmap_close(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *i
 
 /*
 
+=back
+
 =head1 SEE ALSO
 
 F<src/io/io_passdown.c>,
@@ -213,6 +235,8 @@ F<src/io/io_private.h>.
 =head1 HISTORY
 
 Initially written by Leo.
+
+=cut
 
 */
 

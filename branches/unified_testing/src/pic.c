@@ -70,6 +70,10 @@ lookup of the cache has to be done in the opcode itself.
 
 =head2 Functions
 
+=over 4
+
+=cut
+
 */
 
 #include "parrot/parrot.h"
@@ -103,32 +107,32 @@ extern void Parrot_Integer_i_subtract_Integer(Interp* , PMC* pmc, PMC* value);
 
 /* HEADERIZER BEGIN: static */
 
-static int is_pic_func( PARROT_INTERP,
+static int is_pic_func(PARROT_INTERP,
     NOTNULL(void **pc),
     NOTNULL(Parrot_MIC *mic),
-    int core_type )
+    int core_type)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static int is_pic_param( PARROT_INTERP,
+static int is_pic_param(PARROT_INTERP,
     NOTNULL(void **pc),
     NOTNULL(Parrot_MIC* const mic),
-    opcode_t op )
+    opcode_t op)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static void parrot_pic_move( PARROT_INTERP, NOTNULL(Parrot_MIC *mic) )
+static void parrot_pic_move(PARROT_INTERP, NOTNULL(Parrot_MIC *mic))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static int pass_int( PARROT_INTERP,
+static int pass_int(PARROT_INTERP,
     NOTNULL(PMC *sig),
     NOTNULL(char *src_base),
     NOTNULL(void **src),
     NOTNULL(char *dest_base),
-    NOTNULL(void **dest) )
+    NOTNULL(void **dest))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -136,12 +140,12 @@ static int pass_int( PARROT_INTERP,
         __attribute__nonnull__(5)
         __attribute__nonnull__(6);
 
-static int pass_mixed( PARROT_INTERP,
+static int pass_mixed(PARROT_INTERP,
     NOTNULL(PMC *sig),
     NOTNULL(char *src_base),
     NOTNULL(void **src),
     NOTNULL(char *dest_base),
-    NOTNULL(void **dest) )
+    NOTNULL(void **dest))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -149,12 +153,12 @@ static int pass_mixed( PARROT_INTERP,
         __attribute__nonnull__(5)
         __attribute__nonnull__(6);
 
-static int pass_num( PARROT_INTERP,
+static int pass_num(PARROT_INTERP,
     NOTNULL(PMC *sig),
     NOTNULL(char *src_base),
     NOTNULL(void **src),
     NOTNULL(char *dest_base),
-    NOTNULL(void **dest) )
+    NOTNULL(void **dest))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -162,12 +166,12 @@ static int pass_num( PARROT_INTERP,
         __attribute__nonnull__(5)
         __attribute__nonnull__(6);
 
-static int pass_pmc( PARROT_INTERP,
+static int pass_pmc(PARROT_INTERP,
     NOTNULL(PMC *sig),
     NOTNULL(char *src_base),
     NOTNULL(void **src),
     NOTNULL(char *dest_base),
-    NOTNULL(void **dest) )
+    NOTNULL(void **dest))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -175,12 +179,12 @@ static int pass_pmc( PARROT_INTERP,
         __attribute__nonnull__(5)
         __attribute__nonnull__(6);
 
-static int pass_str( PARROT_INTERP,
+static int pass_str(PARROT_INTERP,
     NOTNULL(PMC *sig),
     NOTNULL(char *src_base),
     NOTNULL(void **src),
     NOTNULL(char *dest_base),
-    NOTNULL(void **dest) )
+    NOTNULL(void **dest))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -193,16 +197,18 @@ static int pass_str( PARROT_INTERP,
 
 /*
 
-FUNCDOC: parrot_PIC_alloc_store
+=item C<parrot_PIC_alloc_store>
 
 Initialize the PIC storage for the given code segment with the capacitiy of
 holding at least C<n> MIC entries. The PIC_store itself, room for C<n> MICs and
 some space for PICs is allocated as one piece. MICs are returned from the start
 of usable memory, PICs from the rear.
 
-FUNCDOC: parrot_PIC_destroy
+=item C<parrot_PIC_destroy>
 
 Free memory for the PIC storage.
+
+=cut
 
 */
 
@@ -248,9 +254,11 @@ parrot_PIC_destroy(NOTNULL(struct PackFile_ByteCode *cs))
 
 /*
 
-FUNCDOC: parrot_PIC_op_is_cached
+=item C<parrot_PIC_op_is_cached>
 
 Return true, if the opcode needs a PIC slot.
+
+=cut
 
 */
 
@@ -270,15 +278,17 @@ parrot_PIC_op_is_cached(int op_code)
 
 /*
 
-FUNCDOC: parrot_PIC_alloc_mic
+=item C<parrot_PIC_alloc_mic>
 
 Allocate a new MIC structure for the C<n>th cached opcode in this
 bytecode segement.
 
-FUNCDOC: parrot_PIC_alloc_pic
+=item C<parrot_PIC_alloc_pic>
 
 Allocate a new PIC structure for the C<n>th cached opcode in this
 bytecode segement.
+
+=cut
 
 */
 
@@ -627,10 +637,12 @@ is_pic_func(PARROT_INTERP, NOTNULL(void **pc), NOTNULL(Parrot_MIC *mic), int cor
 
 /*
 
-FUNCDOC: parrot_PIC_prederef
+=item C<parrot_PIC_prederef>
 
 Define either the normal prederef function or the PIC stub, if PIC for
 this opcode function is available. Called from C<do_prederef>.
+
+=cut
 
 */
 
@@ -787,6 +799,8 @@ parrot_pic_find_infix_v_pp(PARROT_INTERP, NOTNULL(PMC *left), NOTNULL(PMC *right
 
 /*
 
+=back
+
 =head1 AUTHOR
 
 Leopold Toetsch with many hints from Ken Fox.
@@ -795,6 +809,8 @@ Leopold Toetsch with many hints from Ken Fox.
 
 F<src/mmd.c>, F<src/object.c>, F<src/interpreter.c>, F<ops/core_ops_cgp.c>,
 F<include/parrot/pic.h>, F<ops/pic.ops>
+
+=cut
 
 */
 

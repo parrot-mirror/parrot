@@ -1,4 +1,4 @@
-#!./parrot
+#! pynie
 
 # check literals
 
