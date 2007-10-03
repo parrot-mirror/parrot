@@ -178,7 +178,7 @@ pir_output_is( <<'CODE', <<OUTPUT, "vanishing return continuation in method call
     .local pmc o, cl
     cl = newclass "Foo"
 
-    o= new "Foo"
+    o = new "Foo"
     print "ok\n"
     end
 .end
