@@ -62,8 +62,16 @@ PARROT_MALLOC
 PMC *
 pmc_new(PARROT_INTERP, INTVAL base_type)
 {
-    PMC * const pmc = pmc_new_noinit(interp, base_type);
-    VTABLE_init(interp, pmc);
+    PMC *pmc;
+    if (base_type < enum_class_core_max) {
+        pmc = get_new_pmc_header(interp, base_type, 0);
+        VTABLE_init(interp, pmc);
+    }
+    else
+    {
+        PMC *classobj = interp->vtables[base_type]->pmc_class;
+        pmc = VTABLE_instantiate(interp, classobj, PMCNULL);
+    }
     return pmc;
 }
 
@@ -268,8 +276,14 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 pmc_new_noinit(PARROT_INTERP, INTVAL base_type)
 {
-    PMC * const pmc = get_new_pmc_header(interp, base_type, 0);
-
+    PMC *pmc;
+    if (base_type < enum_class_core_max)
+        pmc = get_new_pmc_header(interp, base_type, 0);
+    else
+    {
+        PMC *classobj = interp->vtables[base_type]->pmc_class;
+        pmc = VTABLE_instantiate(interp, classobj, PMCNULL);
+    }
     return pmc;
 }
 
@@ -329,10 +343,16 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 pmc_new_init(PARROT_INTERP, INTVAL base_type, NULLOK(PMC *init))
 {
-    PMC * const pmc = pmc_new_noinit(interp, base_type);
-
-    VTABLE_init_pmc(interp, pmc, init);
-
+    PMC *pmc;
+    if (base_type < enum_class_core_max) {
+        pmc = get_new_pmc_header(interp, base_type, 0);
+        VTABLE_init_pmc(interp, pmc, init);
+    }
+    else
+    {
+        PMC *classobj = interp->vtables[base_type]->pmc_class;
+        pmc = VTABLE_instantiate(interp, classobj, init);
+    }
     return pmc;
 }
 
