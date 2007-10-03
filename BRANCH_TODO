@@ -30,35 +30,35 @@ befunge             1 Test, needs a lot of work
 bf                  Tests run from languages, not from languages/bf
 c99                 Tests don't run
 cardinal            Most/all tests fail with method __get_bool not found
-cola
-dotnet
-ecmascript
-forth
-HQ9plus
-jako
-lazy-k
-lisp
-lua
-m4
+cola                NO TESTS
+dotnet              Requires MCS compiler in path to build test assemblies
+ecmascript          NO TESTS
+forth               DONE
+HQ9plus             DONE
+jako                DONE
+lazy-k              tests only run from languages, not with runtests
+lisp                DONE (added perl shebang)
+lua                 Most tests pass with runtests, but not all.
+m4                  DONE? (make test reruns the suite.  Why?  runtests doesn't do this.)
 nqp                 DONE (fixed shebang)
-ook
-parrot_compiler
-perl5
-perl6
-pheme               DONE (added shebang, is that ok?)
-PIR
-plumhead
-pugs
+ook                 tests only run from languages, not with runtests
+parrot_compiler     tests only run from main parrot dir
+perl5               DONE
+perl6               1/2 DONE (added shebang to t/00-parrot and pass.  But the pugs tests don't have shebangs)
+pheme               Need to find a way to associate pheme.pbc with native pheme test files.  No Unix Shebang.
+PIR                 DONE
+plumhead            DONE (tests only run from languages)
+pugs                Does not build anymore
 punie               DONE
 pynie               DONE (fixed shebang)
-regex
-scheme
-tap
-tcl
-unlambda
-urm
-WMLScript
-Zcode
+regex               Library finding issues (FindBin).  Fixing that will probably make everything work.
+scheme              Library finding issues (FindBin).  Fixing that will probably make everything work.
+tap                 Blacklisted
+tcl                 Tests execute as perl, then are rerun as TCL.  Nothing works in runtests.
+unlambda            tests only run from languages, OK with runtests
+urm                 Library finding issues (FindBin).  Fixing that will probably make everything work.
+WMLScript           Need WMLScript compiler to build the test 
+Zcode               DONE
 
 3) Write a coding standard test to make sure that t/* tests call out a location
    independent parrot/interpreter.

@@ -104,7 +104,7 @@ BEGIN {
 
     my $args = $self->SUPER::_get_parser_args($test);
 
-    unless($shparts[0] eq 'perl') {
+    unless($shparts[0] eq '#' || $shparts[0] eq 'perl') {
       warn "shebang @shparts\n";
       # the compiler is either a pbc (currently with or without the .pbc)
       # or just parrot -- straight pir
@@ -116,7 +116,7 @@ BEGIN {
       unshift(@shparts, @args);  ##Add in the arguments for deliberate execution
 
       # warn "shebang @shparts";
-      # TODO interpreter-specific and/or parrot specific options
+      # TODO interpreter-specific options
       $args->{exec} = [$parrot, @shparts, $test];
       delete($args->{source});
     }
