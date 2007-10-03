@@ -15,6 +15,10 @@ called by C<Parrot_exit()> when the interpreter exits.
 
 =head2 Functions
 
+=over 4
+
+=cut
+
 */
 
 #include <stdlib.h>
@@ -24,9 +28,11 @@ called by C<Parrot_exit()> when the interpreter exits.
 
 /*
 
-FUNCDOC: Parrot_on_exit
+=item C<Parrot_on_exit>
 
 Register the specified function to be called on exit.
+
+=cut
 
 */
 
@@ -47,9 +53,11 @@ Parrot_on_exit(PARROT_INTERP, NOTNULL(exit_handler_f function), NULLOK(void *arg
 
 /*
 
-FUNCDOC: Parrot_exit
+=item C<Parrot_exit>
 
 Exit, calling any registered exit handlers.
+
+=cut
 
 */
 
@@ -87,6 +95,8 @@ Parrot_exit(PARROT_INTERP, int status)
 
 /*
 
+=back
+
 =head1 SEE ALSO
 
 F<include/parrot/exit.h> and F<t/src/exit.t>.
@@ -94,6 +104,8 @@ F<include/parrot/exit.h> and F<t/src/exit.t>.
 =head1 HISTORY
 
 Initial version by Josh Wilmes.
+
+=cut
 
 */
 

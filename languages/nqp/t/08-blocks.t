@@ -1,4 +1,4 @@
-#!./parrot
+#!nqp
 
 # check blocks and statement enders
 

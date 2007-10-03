@@ -10,6 +10,10 @@ src/dynext.c - Dynamic extensions to Parrot
 
 =head2 Functions
 
+=over 4
+
+=cut
+
 */
 
 #include "parrot/parrot.h"
@@ -21,11 +25,11 @@ src/dynext.c - Dynamic extensions to Parrot
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static STRING * get_path( PARROT_INTERP,
+static STRING * get_path(PARROT_INTERP,
     NOTNULL(STRING *lib),
     NOTNULL(void **handle),
     NOTNULL(STRING *wo_ext),
-    NOTNULL(STRING *ext) )
+    NOTNULL(STRING *ext))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -34,39 +38,39 @@ static STRING * get_path( PARROT_INTERP,
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static PMC* is_loaded( PARROT_INTERP, NOTNULL(STRING *path) )
+static PMC* is_loaded(PARROT_INTERP, NOTNULL(STRING *path))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static PMC * make_string_pmc( PARROT_INTERP, NOTNULL(STRING *string) )
+static PMC * make_string_pmc(PARROT_INTERP, NOTNULL(STRING *string))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static PMC * run_init_lib( PARROT_INTERP,
+static PMC * run_init_lib(PARROT_INTERP,
     NOTNULL(void *handle),
     NOTNULL(STRING *lib_name),
-    NOTNULL(STRING *wo_ext) )
+    NOTNULL(STRING *wo_ext))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static void set_cstring_prop( PARROT_INTERP,
+static void set_cstring_prop(PARROT_INTERP,
     NOTNULL(PMC *lib_pmc),
     NOTNULL(const char *what),
-    NOTNULL(STRING *name) )
+    NOTNULL(STRING *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static void store_lib_pmc( PARROT_INTERP,
+static void store_lib_pmc(PARROT_INTERP,
     NOTNULL(NOTNULL(PMC *lib_pmc)),
     NOTNULL(STRING *path),
     NOTNULL(STRING *type),
-    NOTNULL(STRING *lib_name) )
+    NOTNULL(STRING *lib_name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -80,10 +84,12 @@ static void store_lib_pmc( PARROT_INTERP,
 
 /*
 
-FUNCDOC: set_cstring_prop
+=item C<set_cstring_prop>
 
 Set a property C<name> with value C<what> on the C<ParrotLibrary>
 C<lib_pmc>.
+
+=cut
 
 */
 
@@ -101,9 +107,11 @@ set_cstring_prop(PARROT_INTERP, NOTNULL(PMC *lib_pmc), NOTNULL(const char *what)
 
 /*
 
-FUNCDOC: store_lib_pmc
+=item C<store_lib_pmc>
 
 Store a C<ParrotLibrary> PMC in the interpreter's C<iglobals>.
+
+=cut
 
 */
 
@@ -126,10 +134,12 @@ store_lib_pmc(PARROT_INTERP, NOTNULL(NOTNULL(PMC *lib_pmc)), NOTNULL(STRING *pat
 
 /*
 
-FUNCDOC: is_loaded
+=item C<is_loaded>
 
 Check if a C<ParrotLibrary> PMC with the filename path exists.
 If it does, return it. Otherwise, return NULL.
+
+=cut
 
 */
 
@@ -148,10 +158,12 @@ is_loaded(PARROT_INTERP, NOTNULL(STRING *path))
 
 /*
 
-FUNCDOC: get_path
+=item C<get_path>
 
 Return path and handle of a dynamic lib, setting lib_name to just the filestem
 (i.e. without path or extension) as a freshly-allocated C string.
+
+=cut
 
 */
 
@@ -252,7 +264,7 @@ get_path(PARROT_INTERP, NOTNULL(STRING *lib), NOTNULL(void **handle),
 
 /*
 
-FUNCDOC: Parrot_load_lib
+=item C<Parrot_load_lib>
 
 Dynamic library loader.
 
@@ -270,6 +282,8 @@ If either Parrot_lib_%s_load() or Parrot_lib_%s_init() detects an error
 condition, an exception should be thrown.
 
 TODO: fetch Parrot_lib load/init handler exceptions
+
+=cut
 
 */
 
@@ -488,6 +502,8 @@ Parrot_load_lib(PARROT_INTERP, NULLOK(STRING *lib), SHIM(PMC *initializer))
 
 /*
 
+=back
+
 =head1 SEE ALSO
 
 F<include/parrot/dynext.h> and F<src/pmc/parrotlibrary.pmc>.
@@ -495,6 +511,8 @@ F<include/parrot/dynext.h> and F<src/pmc/parrotlibrary.pmc>.
 =head1 HISTORY
 
 Initial rev by leo 2003.08.06.
+
+=cut
 
 */
 

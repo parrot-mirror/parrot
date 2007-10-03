@@ -105,7 +105,7 @@ FUNC_UNDEFINED:
   branch FUNC_END
 
 NOT_LOADED:
-  print "Could not load libnci_test\n" 
+  print "Could not load libnci_test\n"
   branch FUNC_END
 
 FUNC_END:
@@ -477,7 +477,7 @@ OUTPUT
     print " was successfully loaded\n"
     .local pmc twice
     twice = dlfunc libnci_test, "nci_dd", "dd"
-    .local float r
+    .local num r
     r = twice( -4.128 )
     print r
 NOT_LOADED:
@@ -2531,7 +2531,8 @@ CODE
 42
 OUTPUT
 
-pir_output_is( << 'CODE', << 'OUTPUT', 'nested structs should be independent', todo => 'RT #31292' );
+pir_output_is(
+    << 'CODE', << 'OUTPUT', 'nested structs should be independent', todo => 'RT #31292' );
 .include 'datatypes.pasm'
 
 .sub 'test' :main

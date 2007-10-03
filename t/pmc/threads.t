@@ -606,8 +606,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass not
 .end
 
 .sub thread_test_func
-    $I0 = find_type 'Bar'
-    $P0 = new $I0
+    $P0 = new 'Bar'
     print $P0
     print "\n"
     $P0.'barmeth'()
@@ -683,7 +682,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass bui
 .namespace [ 'main' ]
 
 .sub init
-    $P0 = getclass .Integer
+    $P0 = getclass 'Integer'
     $P1 = subclass $P0, 'Foo'
     addattribute $P1, 'foo1'
     addattribute $P1, 'foo2'
@@ -692,8 +691,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass bui
 .end
 
 .sub thread_test_func
-    $I0 = find_type 'Bar'
-    $P0 = new $I0
+    $P0 = new 'Bar'
     print $P0
     print "\n"
     $P0.'barmeth'()
@@ -806,10 +804,10 @@ OUTPUT
 
 my @todo;
 
-if ($ENV{TEST_PROG_ARGS}) {
+if ( $ENV{TEST_PROG_ARGS} ) {
     push @todo, ( todo => 'Broken with CGP' ) if $ENV{TEST_PROG_ARGS} =~ /-C/;
     push @todo, ( todo => 'Broken with JIT' ) if $ENV{TEST_PROG_ARGS} =~ /-j/;
-    push @todo, ( todo => 'Broken with -S'  ) if $ENV{TEST_PROG_ARGS} =~ /-S/;
+    push @todo, ( todo => 'Broken with -S' )  if $ENV{TEST_PROG_ARGS} =~ /-S/;
 }
 pir_output_unlike( <<'CODE', qr/not/, "globals + constant table subs issue", @todo );
 .namespace [ 'Foo' ]
@@ -952,10 +950,8 @@ pir_output_is(
 
 .sub test
     .param pmc passed_value
-    .local int PerlIntType
     .local pmc the_value
-    PerlIntType = find_type 'PerlInt'
-    the_value = new 'PerlIntType'
+    the_value = new 'PerlInt'
     the_value = 42
     store_global 'Foo', 'x', the_value
     $I0 = typeof passed_value
@@ -991,9 +987,7 @@ okay:
     bor flags, flags, .PARROT_CLONE_LIBRARIES
 
     .local pmc passed
-    .local int PerlIntType
-    PerlIntType = find_type 'PerlInt'
-    passed = new 'PerlIntType'
+    passed = new 'PerlInt'
     passed = 15
 
     .local pmc thread_func

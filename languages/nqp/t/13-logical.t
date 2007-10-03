@@ -1,4 +1,4 @@
-#!./parrot
+#!nqp
 
 # lists and for
 

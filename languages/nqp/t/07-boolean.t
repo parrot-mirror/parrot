@@ -1,4 +1,4 @@
-#!./parrot
+#!nqp
 
 # Testing boolean context operators, ! and ?
 

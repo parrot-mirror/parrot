@@ -36,9 +36,9 @@ L<docs/pdds/pdd07_codingstd.pod>
 my $DIST = Parrot::Distribution->new;
 
 my $skip_files = $DIST->generated_files();
-my @c_files = $DIST->get_c_language_files();
+my @c_files    = $DIST->get_c_language_files();
 my @perl_files = $DIST->get_perl_language_files();
-my @all_files = ( @c_files, @perl_files );
+my @all_files  = ( @c_files, @perl_files );
 
 my @files = @ARGV ? @ARGV : @all_files;
 my @no_id_files;
@@ -46,21 +46,13 @@ my @no_id_files;
 my $id_line = '\$Id.*\$';
 
 foreach my $file (@files) {
-    my $buf;
-
     # if we have command line arguments, the file is the full path
     # otherwise, use the relevant Parrot:: path method
     my $path = @ARGV ? $file : $file->path;
 
     next if exists $skip_files->{$path};
 
-    # slurp in the file
-    open( my $fh, '<', $path )
-        or die "Cannot open '$path' for reading: $!\n";
-    {
-        local $/;
-        $buf = <$fh>;
-    }
+    my $buf = $DIST->slurp( $path );
 
     if ( $buf !~ m{$id_line}m ) {
         push @no_id_files, $path;
@@ -71,10 +63,8 @@ foreach my $file (@files) {
 # run the tests
 ok( !scalar(@no_id_files), 'Id keyword line exists' )
     or diag(
-    join
-        $/ => "No Id keyword line found in " .
-        scalar @no_id_files . " files:",
-        @no_id_files
+    join $/ => "No Id keyword line found in " . scalar @no_id_files . " files:",
+    @no_id_files
     );
 
 # Local Variables:

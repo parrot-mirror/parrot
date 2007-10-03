@@ -42,7 +42,6 @@ my @files = @ARGV ? @ARGV : $DIST->get_c_language_files();
 my @paren_return;
 
 foreach my $file (@files) {
-    my $buf;
     my $path;
 
     ## get the full path of the file
@@ -56,23 +55,17 @@ foreach my $file (@files) {
         $path = $file->path;
     }
 
-    # slurp in the file
-    open( my $fh, '<', $path )
-        or die "Cannot open '$path' for reading: $!\n";
-    {
-        local $/;
-        $buf = <$fh>;
-    }
+    my $buf = $DIST->slurp( $path );
 
     # look for instances of return(
     push @paren_return => "$path\n"
-        if ($buf =~ m/[^_.]return\(/);
+        if ( $buf =~ m/[^_.]return\(/ );
 }
 
 ok( !scalar(@paren_return), 'Correctly formed return statement' )
-    or diag( "Possible use of C<return(foo);> rather than C<return foo;> in " .
-        scalar @paren_return . " files:\n@paren_return" );
-
+    or diag( "Possible use of C<return(foo);> rather than C<return foo;> in "
+        . scalar @paren_return
+        . " files:\n@paren_return" );
 
 # Local Variables:
 #   mode: cperl

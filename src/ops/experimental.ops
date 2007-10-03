@@ -207,17 +207,17 @@ Return a new Iterator PMC $1 for aggregate $2.
 
 =cut
 
-inline op slice (out PMC, invar PMC, in KEY) :base_core {
+inline op slice(out PMC, invar PMC, in KEY) :base_core {
     $1 = $2->vtable->slice(interp, $2, $3, 0);
     goto NEXT();
 }
 
-inline op slice (out PMC, invar PMC, in KEY, inconst INT) :python {
+inline op slice(out PMC, invar PMC, in KEY, inconst INT) :python {
     $1 = $2->vtable->slice(interp, $2, $3, $4);
     goto NEXT();
 }
 
-inline op iter (out PMC, invar PMC) :base_core {
+inline op iter(out PMC, invar PMC) :base_core {
     $1 = $2->vtable->get_iter(interp, $2);
     goto NEXT();
 }
@@ -226,12 +226,20 @@ inline op iter (out PMC, invar PMC) :base_core {
 
 =item B<morph>(invar PMC, in INT)
 
+=item B<morph>(invar PMC, in STR)
+
 Have $1 turn itself into a PMC of type $2.
 
 =cut
 
 inline op morph(invar PMC, in INT) {
   VTABLE_morph(interp, $1, $2);
+  goto NEXT();
+}
+
+inline op morph(invar PMC, in STR) {
+  INTVAL type = pmc_type(interp, $2);
+  VTABLE_morph(interp, $1, type);
   goto NEXT();
 }
 
@@ -600,6 +608,7 @@ op runinterp(invar PMC, in PMC) {
     opcode_t *pc;
     Interp_flags_SET(new_interp, PARROT_EXTERN_CODE_FLAG);
     pc = (opcode_t *)VTABLE_invoke(new_interp, $2, NULL);
+    UNUSED(pc);
     Parrot_runops_fromc_args(new_interp, $2, "P");
     goto NEXT();
 }
