@@ -116,7 +116,7 @@ is set or implied.
     unless $I0 goto with_grammar
     grammar = adverbs['grammar']
     $P0 = split '::', grammar
-    $P1 = get_namespace $P0
+    $P1 = get_hll_namespace $P0
     gclass = get_class $P1
   with_grammar:
   with_adverbs:

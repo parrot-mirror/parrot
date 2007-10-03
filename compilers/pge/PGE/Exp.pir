@@ -33,7 +33,7 @@ PGE::Exp - base class for expressions
     $P1 = subclass $P0, ['PGE';'Exp';'Alt']
     $P1 = subclass $P0, ['PGE';'Exp';'Conj']
     $P1 = subclass $P0, ['PGE';'Exp';'Group']
-    $P1 = subclass $P0, ['PGE';'Exp';'CGroup']
+    $P1 = subclass $P1, ['PGE';'Exp';'CGroup']
     $P1 = subclass $P0, ['PGE';'Exp';'Subrule']
     $P1 = subclass $P0, ['PGE';'Exp';'Cut']
     $P1 = subclass $P0, ['PGE';'Exp';'Quant']
@@ -52,8 +52,7 @@ according to the C<target> adverb.
 
 =cut
 
-.sub 'compile'
-    .param pmc source
+.sub 'compile' :method
     .param pmc adverbs         :slurpy :named
 
     .local string target
@@ -62,17 +61,26 @@ according to the C<target> adverb.
     if target == 'parse' goto return_exp
     if target == 'pge::exp' goto return_exp
 
-    .local string grammar
-    .local string nsformat
-    nsformat = '.namespace'
-    grammar = adverbs['grammar']
-    if grammar == '' goto pir
-    nsformat = ".namespace ['%0']"
-  pir:
     .local pmc code
     code = new 'CodeString'
-    code.'emit'(nsformat, grammar)
-    $P0 = source.'root_pir'(adverbs :flat :named)
+
+    .local string grammar
+
+    grammar = adverbs['grammar']
+    if grammar goto have_grammar
+    code.'emit'('.namespace')
+    goto done_grammar
+  have_grammar:
+    .local pmc grammar_key
+    grammar_key = split '::', grammar
+    $S0 = code.'key'(grammar_key :flat)
+    code.'emit'('.namespace %0', $S0)
+    push_eh done_grammar
+    $P0 = subclass ['PGE';'Grammar'], grammar_key
+    clear_eh
+  done_grammar:
+
+    $P0 = self.'root_pir'(adverbs :flat :named)
     code .= $P0
     if target != 'pir' goto bytecode
     .return (code)
@@ -80,15 +88,10 @@ according to the C<target> adverb.
   bytecode:
     $P0 = compreg 'PIR'
     $P1 = $P0(code)
-  make_grammar:
-    push_eh end
-    $P0 = subclass ['PGE';'Grammar'], grammar
-    clear_eh
-  end:
     .return ($P1)
 
   return_exp:
-    .return (source)
+    .return (self)
 .end
 
 

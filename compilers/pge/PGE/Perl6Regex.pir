@@ -156,8 +156,6 @@ needed for compiling regexes.
 
 .include 'cclass.pasm'
 
-.namespace ['PGE';'Perl6Regex']
-
 .sub '__onload' :load
     .local pmc optable
 
@@ -271,7 +269,7 @@ needed for compiling regexes.
 
     # Create an array for holding stop tokens
     $P0 = new 'ResizablePMCArray'
-    set_hll_global '@!stopstack', $P0
+    set_global '@!stopstack', $P0
 
     $P0 = get_global 'compile_perl6regex'
     compreg 'PGE::Perl6Regex', $P0
@@ -299,7 +297,7 @@ Return a failed match if the stoptoken is found.
     lastpos = length target
 
     .local string stop
-    $P0 = get_hll_global '@!stopstack'
+    $P0 = get_global '@!stopstack'
     stop = $P0[-1]
 
     $I0 = is_cclass .CCLASS_WHITESPACE, target, pos
@@ -491,7 +489,7 @@ combinations.
     .local pmc key
     .local int pos, lastpos
     key = mob['KEY']
-    (mob, pos) = mob.'new'(mob, 'grammar'=>'PGE::Exp::Quant')
+    (mob, pos, target) = mob.'new'(mob, 'grammar'=>'PGE::Exp::Quant')
     lastpos = length target
 
 
@@ -707,7 +705,7 @@ Parses a subrule token.
     .local string key
     key = mob['KEY']
     mobsave = mob
-    (mob, pos) = mob.'new'(mob, 'grammar'=>'PGE::Exp::Subrule')
+    (mob, pos, target) = mob.'new'(mob, 'grammar'=>'PGE::Exp::Subrule')
     lastpos = length target
 
     .local string subname
