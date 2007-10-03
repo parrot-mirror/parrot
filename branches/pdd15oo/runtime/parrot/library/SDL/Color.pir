@@ -92,11 +92,10 @@ is none and 255 is the maximum possible.
     layout = fetch_layout( 'Color' )
 
     .local pmc color
-    color     = new 'ManagedStruct', layout
-
-    set color['r'], red
-    set color['g'], green
-    set color['b'], blue
+    color      = new 'ManagedStruct', layout
+    color['r'] = red
+    color['g'] = green
+    color['b'] = blue
 
     setattribute self, 'color', color
 
@@ -123,7 +122,8 @@ is none and 255 is the maximum possible.
     .local int component
 
     component = color['r']
-    color_int = component << 16
+    component <<= 16
+    color_int = component
 
     component = color['g']
     component <<= 8
@@ -131,7 +131,6 @@ is none and 255 is the maximum possible.
 
     component = color['b']
     color_int += component
-    
     .return( color_int )
 .end
 

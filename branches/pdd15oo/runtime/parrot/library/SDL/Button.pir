@@ -1,4 +1,3 @@
-
 # $Id$
 
 =head1 NAME
@@ -46,9 +45,9 @@ An SDL::Button object has the following methods:
 
 .sub __onload :load
     .local pmc class
-    class = find_class 'SDL::Button'
+    class = get_class 'SDL::Button'
     if_null class, define_class
-    .return
+    .return()
 
   define_class:
     newclass     class, 'SDL::Button'

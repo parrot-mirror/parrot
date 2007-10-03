@@ -41,7 +41,7 @@ An SDL::LCD object has the following methods:
 .sub __onload :load
     .local pmc class
     class = get_class 'SDL::LCD'
-    is_null class, create_class
+    if_null class, create_class
     .return()
 
   create_class:

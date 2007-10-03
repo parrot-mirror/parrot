@@ -82,8 +82,8 @@ this directly, unless you're working with raw SDL calls.
 
 .sub event :method
     .param string name      :optional
-    .param int    have_name :opt_flag 
-    
+    .param int    have_name :opt_flag
+
     .local pmc event
     getattribute event, self, 'event'
 
@@ -96,12 +96,11 @@ this directly, unless you're working with raw SDL calls.
 
     .local pmc layout
     .local string ename
-    
+
     ename = 'Event::'
     concat ename, name
 
     layout = fetch_layout( ename )
-    #new event, .ManagedStruct, layout
     assign event, layout
 
     setattribute self, 'event', event
@@ -183,7 +182,6 @@ C<unknown> instead.
 =cut
 
 .sub event_keyname :method
-
     .local pmc event
     event = self.'event'( 'Keyboard' )
 
@@ -194,13 +192,14 @@ C<unknown> instead.
     find_global key_names, 'SDL::Constants', 'key_names'
 
     .local string key_name
-
     key_name = key_names[ key_sym ]
+    say key_name
+
     length $I0, key_name
     if $I0 > 0 goto return
     key_name = 'unknown'
 
-return:
+  return:
     .return( key_name )
 .end
 
@@ -256,7 +255,7 @@ loop:
 
     if continue goto dispatch
     unless polling goto loop
-    
+
     # give parrot a chance to process its own events
     sleep check_interval
     branch loop
