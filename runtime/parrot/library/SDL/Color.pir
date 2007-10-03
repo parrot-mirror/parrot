@@ -11,10 +11,7 @@ SDL::Color - Parrot class representing colors in Parrot SDL
 
     # create a new SDL::Color object
     .local pmc color
-    .local int color_type
-
-    find_type color_type, 'SDL::Color'
-    color = new color_type
+    color = new 'SDL::Color'
 
     # set the color values; this one's blue
     color.'init'( 'r' => 0, 'g' => 0, 'b' => 255 )
@@ -229,7 +226,7 @@ the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2006, The Perl Foundation.
+Copyright (C) 2004-2007, The Perl Foundation.
 
 =cut
 
