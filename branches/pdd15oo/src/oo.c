@@ -126,7 +126,7 @@ PMC *
 Parrot_oo_get_class(PARROT_INTERP, NOTNULL(PMC *key))
 {
     PMC *classobj = PMCNULL;
-    if (VTABLE_isa(interp, key, CONST_STRING(interp, "Class")) 
+    if (VTABLE_isa(interp, key, CONST_STRING(interp, "Class"))
             || VTABLE_isa(interp, key, CONST_STRING(interp, "PMCProxy"))) {
         classobj = key;
     }
