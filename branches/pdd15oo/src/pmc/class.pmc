@@ -521,6 +521,7 @@ arguments.  The class is attatched to the current HLL namespace.
             case enum_class_String:
             case enum_class_Key:
             case enum_class_NameSpace:
+            case enum_class_ResizableStringArray:
                 arg = pmc_new(interp, enum_class_Hash);
                 VTABLE_set_pmc_keyed_str(interp, arg, name_str, init_data);
                 break;
@@ -531,11 +532,9 @@ arguments.  The class is attatched to the current HLL namespace.
 
             /* slow attempt to determine init_data type */
             default:
-                if (VTABLE_isa(interp, init_data, CONST_STRING(interp, "String"))) {
-                    arg = pmc_new(interp, enum_class_Hash);
-                    VTABLE_set_pmc_keyed_str(interp, arg, name_str, init_data);
-                }
-                else if (VTABLE_isa(interp, init_data, CONST_STRING(interp, "Key"))) {
+                if (VTABLE_isa(interp, init_data, CONST_STRING(interp, "String"))
+                 || VTABLE_isa(interp, init_data, CONST_STRING(interp, "Key"))
+                 || VTABLE_isa(interp, init_data, CONST_STRING(interp, "ResizableStringArray"))) {
                     arg = pmc_new(interp, enum_class_Hash);
                     VTABLE_set_pmc_keyed_str(interp, arg, name_str, init_data);
                 }
@@ -544,8 +543,8 @@ arguments.  The class is attatched to the current HLL namespace.
                     arg = init_data;
                 }
                 else {
-                    arg = pmc_new(interp, enum_class_Hash);
-                    VTABLE_set_pmc_keyed_str(interp, arg, name_str, init_data);
+                    real_exception(INTERP, NULL, E_NameError,
+                            "Invalid class name key in init_pmc for Class");
                 }
                 break;
         }

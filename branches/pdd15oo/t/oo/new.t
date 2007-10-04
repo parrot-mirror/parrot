@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 18;
+use Parrot::Test tests => 21;
 
 =head1 NAME
 
@@ -224,10 +224,6 @@ pir_output_is( <<'CODE', <<'OUT', 'instantiate from key name' );
     $S1 = typeof $P2
     say $S1
 
-    $I3 = isa $P2, 'Bar'
-    print $I3
-    print "\n"
-
     $I3 = isa $P2, ['Foo';'Bar']
     print $I3
     print "\n"
@@ -240,7 +236,6 @@ CODE
 Class
 1
 Foo;Bar
-1
 1
 1
 OUT
@@ -278,6 +273,71 @@ Class
 Foo;Bar
 1
 1
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'create and instantiate from array of names' );
+.sub main :main
+    $P0 = split " ", "Foo Bar"
+    $P1 = newclass $P0
+    $S1 = typeof $P1
+    say $S1
+
+    $I3 = isa $P1, "Class"
+    print $I3
+    print "\n"
+
+    $P2 = new $P0
+
+    $S1 = typeof $P2
+    say $S1
+
+    $I3 = isa $P2, ['Foo';'Bar']
+    print $I3
+    print "\n"
+
+    $I3 = isa $P2, "Object"
+    print $I3
+    print "\n"
+.end
+CODE
+Class
+1
+Foo;Bar
+1
+1
+OUT
+
+pir_error_output_like( <<'CODE', <<'OUT', 'only string arrays work for creating classes' );
+.sub main :main
+    $P0 = new 'ResizablePMCArray'
+    $P10 = new 'String'
+    $P10 = 'Foo'
+    $P11 = new 'String'
+    $P11 = 'Bar'
+
+    $P1 = newclass $P0
+    $S1 = typeof $P1
+    say $S1
+
+    $I3 = isa $P1, "Class"
+    print $I3
+    print "\n"
+
+    $P2 = new $P0
+
+    $S1 = typeof $P2
+    say $S1
+
+    $I3 = isa $P2, ['Foo';'Bar']
+    print $I3
+    print "\n"
+
+    $I3 = isa $P2, "Object"
+    print $I3
+    print "\n"
+.end
+CODE
+/Invalid class name key/
 OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from class object with init' );
@@ -409,6 +469,39 @@ Foo
 1
 1
 data for Foo
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'instantiate from array of names with init' );
+.sub main :main
+    $P0 = split " ", "Foo Bar"
+    $P1 = newclass $P0
+    addattribute $P1, 'data'
+    $P3 = new 'Hash'
+    $P4 = new 'String'
+    $P4 = "data for Foo;Bar\n"
+    $P3['data'] = $P4
+
+    $P2 = new $P0, $P3
+
+    $S1 = typeof $P2
+    say $S1
+
+    $I3 = isa $P2, ["Foo";"Bar"]
+    print $I3
+    print "\n"
+
+    $I3 = isa $P2, "Object"
+    print $I3
+    print "\n"
+
+    $P5 = getattribute $P2, 'data'
+    print $P5
+.end
+CODE
+Foo;Bar
+1
+1
+data for Foo;Bar
 OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'instantiate from key name with init', todo => 'init keyed' );

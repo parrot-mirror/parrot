@@ -134,7 +134,8 @@ Parrot_oo_get_class(PARROT_INTERP, NOTNULL(PMC *key))
         classobj = VTABLE_get_class(interp, key);
     }
     else if (VTABLE_isa(interp, key, CONST_STRING(interp, "String"))
-            || VTABLE_isa(interp, key, CONST_STRING(interp, "Key"))) {
+          || VTABLE_isa(interp, key, CONST_STRING(interp, "Key"))
+          || VTABLE_isa(interp, key, CONST_STRING(interp, "ResizableStringArray"))) {
         PMC *hll_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
                 CONTEXT(interp->ctx)->current_HLL);
         PMC *ns = Parrot_get_namespace_keyed(interp, hll_ns, key);
