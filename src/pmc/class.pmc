@@ -249,7 +249,7 @@ init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
                     string_from_literal(interp, "NameSpace")))
             new_namespace = name_arg;
         else {
-            PMC *hll_ns = VTABLE_get_pmc_keyed_int(interp, 
+            PMC *hll_ns = VTABLE_get_pmc_keyed_int(interp,
                     interp->HLL_namespace, CONTEXT(interp->ctx)->current_HLL);
             new_namespace = Parrot_make_namespace_keyed(interp, hll_ns, name_arg);
         }
@@ -1142,9 +1142,9 @@ Creates a new PMC object of the type of the class and calls init().
 
         /* Check for overrides on the init or init_pmc vtable function and call
          * them if they exist */
-        if (PMC_IS_NULL(init)) 
+        if (PMC_IS_NULL(init))
             initialize_parents(interp, object, _class->all_parents);
-        else 
+        else
             initialize_parents_pmc(interp, object, _class->all_parents, init);
 
         return object;

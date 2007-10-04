@@ -224,7 +224,7 @@ really a public API.
         /* If it's a multi-sub... */
         if (value->vtable->base_type == enum_class_MultiSub) {
             Parrot_NSInfo *nsinfo    = PARROT_NSINFO(SELF);
-            
+
             if (VTABLE_elements(interp, value) > 0) {
                 /* Extract the first alternate and check if it is a method */
                 Parrot_sub *sub = PMC_sub(VTABLE_get_pmc_keyed_int(interp, value, 0));

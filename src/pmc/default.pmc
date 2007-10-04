@@ -1033,7 +1033,7 @@ the string name passed in.
     PMC *get_attr_keyed(PMC *key, STRING *name) {
         return VTABLE_get_attr_str(INTERP, SELF, name);
     }
-    
+
     void set_attr_keyed(PMC *key, STRING *name, PMC *value) {
         VTABLE_set_attr_str(INTERP, SELF, name, value);
     }
