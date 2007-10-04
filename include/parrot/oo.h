@@ -17,8 +17,10 @@
 
 /* HEADERIZER BEGIN: src/oo.c */
 
-void Parrot_oo_extract_methods_from_namespace(PARROT_INTERP, PMC *self)
-        __attribute__nonnull__(1);
+void Parrot_oo_extract_methods_from_namespace(PARROT_INTERP,
+    NOTNULL(PMC *self))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
@@ -38,6 +40,12 @@ PMC * Parrot_oo_get_class(PARROT_INTERP, NOTNULL(PMC *key))
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_oo_get_class_str(PARROT_INTERP, NOTNULL(STRING *name))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC * Parrot_oo_get_namespace(PARROT_INTERP, NOTNULL(PMC *classobj))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

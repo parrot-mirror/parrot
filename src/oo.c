@@ -90,6 +90,28 @@ Parrot_oo_extract_methods_from_namespace(PARROT_INTERP, NOTNULL(PMC *self))
 
 /*
 
+=item C<Parrot_oo_get_namespace>
+
+Lookup a namespace object from a class PMC.
+
+=cut
+
+*/
+
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+Parrot_oo_get_namespace(PARROT_INTERP, NOTNULL(PMC *classobj))
+{
+    Parrot_Class * const  _class     = PARROT_CLASS(classobj);
+    PMC                  *_namespace = _class->_namespace;
+    if (PMC_IS_NULL(_namespace))
+        return PMCNULL;
+    return _namespace;
+}
+
+/*
+
 =item C<Parrot_oo_get_class>
 
 Lookup a class object from a namespace, string, or key PMC.
