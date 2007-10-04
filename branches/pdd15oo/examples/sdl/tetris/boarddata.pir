@@ -24,8 +24,8 @@ This is the base class of the Board class.
 .const int bHeight = 2
 
 .sub __onload :load
-    find_type $I0, "Tetris::BoardData"
-    if $I0 > 1 goto END
+    $P0 = get_class "Tetris::BoardData"
+    unless null $P0 goto END
     newclass $P0, "Tetris::BoardData"
     addattribute $P0, "data"
     addattribute $P0, "width"

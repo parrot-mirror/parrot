@@ -7,8 +7,8 @@ blocks.pir - tetris block classes
 .namespace ["Tetris::Blocks"]
 
 .sub __onload :load
-    find_type $I0, "Tetris::Block::1"
-    if $I0 > 1 goto END
+    $P0 = get_class "Tetris::Block::1"
+    unless null $P0 goto END
 
     load_bytecode "examples/sdl/tetris/block.pir"
 

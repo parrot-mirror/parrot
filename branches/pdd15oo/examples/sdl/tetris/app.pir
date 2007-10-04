@@ -40,8 +40,8 @@ it parent classes nor is it subclassed.
 .const int tBoards            = 8
 
 .sub __onload :load
-    find_type $I0, "Tetris::App"
-    if $I0 > 1 goto END
+    $P0 = get_class "Tetris::App"
+    unless null $P0 goto END
 
     load_bytecode "library/SDL/App.pir"
     load_bytecode "library/SDL/Color.pir"
