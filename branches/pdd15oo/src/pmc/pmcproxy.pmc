@@ -62,6 +62,7 @@ NOTE: No doubt we will need other things later; this is a start.
 
 */
 
+
 pmclass PMCProxy
     need_ext {
 
@@ -135,6 +136,10 @@ Initializes a PMCProxy PMC.
         if (!PMC_IS_NULL(proxy_info->_namespace))
             Parrot_PCCINVOKE(interp, proxy_info->_namespace,
                 string_from_literal(interp, "set_class"), "P->", SELF);
+
+        /* Extract any methods from the namespace */
+        Parrot_oo_extract_methods_from_namespace(interp, SELF);
+
     }
 
 /*
@@ -262,6 +267,22 @@ Returns whether the class is or inherits from C<*classname>.
 
 /*
 
+=item C<INTVAL type()>
+
+Returns the integer type of the class.
+
+=cut
+
+*/
+
+
+    INTVAL type() {
+        Parrot_Class *_class    = PARROT_CLASS(SELF);
+        return _class->id;
+    }
+
+/*
+
 =item C<PMC *inspect_str(STRING *what)>
 
 Provides introspection of a specific piece of information about the PMC. The
@@ -273,7 +294,7 @@ available information is:
 
 String PMC containing the name of the PMC
 
-=item namespce
+=item namespace
 
 NameSpace PMC of the the namespace attached to the PMC
 

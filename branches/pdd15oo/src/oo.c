@@ -19,12 +19,74 @@ Handles class and object manipulation.
 */
 
 #define PARROT_IN_OO_C
+#define PARROT_IN_OBJECTS_C /* To get the vtable.h imports we want. */
 #include "parrot/parrot.h"
 #include "parrot/oo_private.h"
 
 #include "oo.str"
 
 /* HEADERIZER HFILE: include/parrot/oo.h */
+
+/*
+
+=item C<Parrot_oo_extract_methods_from_namespace>
+
+Extract methods an vtable overrides from the given namespace and insert them
+into the class.
+
+=cut
+
+*/
+
+void
+Parrot_oo_extract_methods_from_namespace(PARROT_INTERP, NOTNULL(PMC *self))
+{
+    Parrot_Class *_class      = PARROT_CLASS(self);
+
+    /* Pull in methods from the namespace, if any. */
+    if (!PMC_IS_NULL(_class->_namespace)) {
+        PMC *methods, *vtable_overrides;
+        PMC *ns = _class->_namespace;
+
+        /* Import any methods. */
+        Parrot_PCCINVOKE(interp, ns,
+            string_from_literal(interp, "get_associated_methods"), "->P", &methods);
+        if (!PMC_IS_NULL(methods)) {
+            PMC *iter = VTABLE_get_iter(interp, methods);
+            while (VTABLE_get_bool(interp, iter)) {
+                STRING *meth_name = VTABLE_shift_string(interp, iter);
+                PMC *meth_sub = VTABLE_get_pmc_keyed_str(interp, methods,
+                    meth_name);
+                VTABLE_add_method(interp, self, meth_name, meth_sub);
+            }
+        }
+
+        /* Import any vtable methods. */
+        Parrot_PCCINVOKE(interp, ns,
+            string_from_literal(interp, "get_associated_vtable_methods"), "->P", &vtable_overrides);
+        if (!PMC_IS_NULL(vtable_overrides)) {
+            PMC *iter = VTABLE_get_iter(interp, vtable_overrides);
+            while (VTABLE_get_bool(interp, iter)) {
+                STRING *vtable_index_str = VTABLE_shift_string(interp, iter);
+                PMC *vtable_sub = VTABLE_get_pmc_keyed_str(interp, vtable_overrides,
+                    vtable_index_str);
+                /* Look up the name of the vtable function from the index. */
+                INTVAL vtable_index = string_to_int(interp, vtable_index_str);
+                const char * const meth_c = Parrot_vtable_slot_names[vtable_index];
+                STRING *vtable_name = string_from_cstring(interp, meth_c, 0);
+
+                /* Strip leading underscores in the vtable name */
+                if (string_str_index(interp, vtable_name,
+                    string_from_literal(interp, "__"), 0) == 0) {
+                    vtable_name = string_substr(interp, vtable_name, 2,
+                        string_length(interp, vtable_name) - 2, NULL, 0);
+                }
+
+                VTABLE_add_vtable_override(interp, self, vtable_name, vtable_sub);
+            }
+        }
+    }
+}
 
 /*
 

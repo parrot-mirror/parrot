@@ -1404,6 +1404,8 @@ mmd_distance(PARROT_INTERP, NOTNULL(PMC *pmc), NOTNULL(PMC *arg_tuple))
             const PMC * const cl = VTABLE_get_pmc_keyed_int(interp, mro, j);
             if (cl->vtable->base_type == type_sig)
                 break;
+            if (VTABLE_type(interp, cl) == type_sig)
+                break;
             ++dist;
         }
         /*
