@@ -341,8 +341,8 @@ my $queue_test = <<'CODE';
 
 .sub __onload
     .local pmc class
-    $I0 = find_type 'STMQueue'
-    if $I0 goto done
+    $P0 = get_class 'STMQueue'
+    unless null $P0 goto done
     class = newclass 'STMQueue'
     addattribute class, 'head'
     addattribute class, 'tail'
