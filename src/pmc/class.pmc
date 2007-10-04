@@ -874,7 +874,7 @@ Array of Class PMCs representing the direct parents of this class.
             found = pmc_new(interp, enum_class_String);
             VTABLE_set_string_native(interp, found, _class->name);
         }
-        if (string_equal(interp, what, CONST_STRING(interp, "id")) == 0) {
+        else if (string_equal(interp, what, CONST_STRING(interp, "id")) == 0) {
             found = pmc_new(interp, enum_class_Integer);
             VTABLE_set_integer_native(interp, found, _class->id);
         }
