@@ -20,8 +20,8 @@ This is a simple SDL event handler class.
 
 .sub __onload :load
 
-    $I0 = find_type "Mines::EventHandler"
-    if $I0 > 1 goto END
+    $P0 = get_class "Mines::EventHandler"
+    unless null $P0 goto END
 
     newclass $P0, "Mines::EventHandler"
 

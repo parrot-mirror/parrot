@@ -1064,8 +1064,9 @@ This method is called automatically when this module is loaded.
 =cut
 
 .sub __onload :load
-    $I0 = find_type "Mines::Field"
-    if $I0 > 1 goto END
+    .local pmc class
+    class = get_class "Mines::Field"
+    unless null class goto END
 
     .local pmc tmp
     .local pmc size
