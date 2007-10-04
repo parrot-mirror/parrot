@@ -14,7 +14,7 @@ contain error handling and other issues unimportant for this PIR reference.
 For a bugs and issues, see the section KNOWN ISSUES AND BUGS.
 
 The grammar includes some constructs that B<are> in the IMCC parser,
-but are not implemented. An example of this is the C<.global> directive.
+but are not implemented.
 
 Please note that languages/PIR is B<not> the official definition of the
 PIR language. The reference implementation of PIR is IMCC, located
@@ -25,7 +25,7 @@ PIR in C (using Lex/Yacc).
 
 =head1 VERSION
 
-0.1.4
+0.2.0
 
 =head1 LEXICAL CONVENTIONS
 
@@ -37,18 +37,18 @@ identifiers (when using a macro, on expansion) also start with a dot
 (see below). Therefore, it is important not to use any of the PIR directives
 as a macro identifier. The PIR directives are:
 
-  .arg            .invocant          .pcc_call
-  .const          .lex               .pcc_end_return
-  .emit           .line              .pcc_end_yield
-  .end            .loadlib           .pcc_end
-  .endnamespace   .local             .pcc_sub
+  .arg            .invocant          .pcc_begin
+  .const          .lex               .pcc_call
+  .emit           .line              .pcc_end_return
+  .end            .loadlib           .pcc_end_yield
+  .endnamespace   .local             .pcc_end
   .eom            .meth_call         .pragma
   .get_results    .namespace         .return
-  .global         .nci_call          .result
-  .globalconst    .param             .sub
-  .HLL_map        .pcc_begin_return  .sym
-  .HLL            .pcc_begin_yield   .yield
-  .include        .pcc_begin
+  .globalconst    .nci_call          .result
+  .HLL_map        .param             .sub
+  .HLL            .pcc_begin_return  .yield
+  .include        .pcc_begin_yield
+
 
 
 =head2 Registers
@@ -133,14 +133,10 @@ document.
 
 
   sub_def:
-    [ ".sub" | ".pcc_sub" ] sub_id sub_pragmas nl body
+    ".sub" sub_id sub_pragmas* nl body
 
   sub_id:
     identifier | string_constant
-
-  sub_pragmas:
-    sub_pragma [ ","? sub_pragma ]*
-
 
   sub_pragma:
       ":load"
@@ -150,13 +146,9 @@ document.
     | ":main"
     | ":anon"
     | ":lex"
-    | wrap_pragma
     | vtable_pragma
     | multi_pragma
     | outer_pragma
-
-  wrap_pragma:
-    ":wrap" parenthesized_string
 
   vtable_pragma:
     ":vtable" parenthesized_string?
@@ -234,7 +226,8 @@ library is being loaded. To get both behaviours, use B<:init :load>.
 
  :postcomp
 
-Same as C<:immediate>.
+Same as C<:immediate>, except that the sub is not executed when compilation was
+triggered by a C<load_bytecode> instruction (in a different file).
 
 =item *
 
@@ -295,24 +288,12 @@ is not necessary if any lexical declarations are done (see below), the PIR
 compiler will figure this out by itself. The C<:lex> attribute
 is necessary to tell Parrot the subroutine will store or find lexicals.
 
-
-=item *
-
- :wrap('bar')
-
-This flag is not (yet?) implemented in IMCC. It would indicate that this sub
-is I<wrapping> the sub "bar". That means that when "bar" is invoked, this sub
-is called I<before> and I<after>. It is undecided yet whether this flag will
-be implemented. If so, its syntax may change.
-
-
 =back
 
-The sub flags are listed after the sub name. They may be separated by a comma,
-but this is not necessary. The subroutine name can also be a string instead of
-a bareword, as is shown in this example:
+The sub flags are listed after the sub name. The subroutine name can also be
+a string instead of a bareword, as is shown in this example:
 
-  .sub 'foo' :load, :init :anon
+  .sub 'foo' :load :init :anon
   # PIR body
   .end
 
@@ -409,7 +390,7 @@ pasm_instr defines the syntax for pure PASM instructions.
 =head2 Local declarations
 
   local_decl:
-    [ ".local" | ".sym" ] type local_id_list
+    ".local" type local_id_list
 
   local_id_list:
     local_id [ "," local_id ]*
@@ -420,14 +401,10 @@ pasm_instr defines the syntax for pure PASM instructions.
 
 =head3 Examples local declarations
 
-Local temporary variables can be declared by the directives C<.local> or
-C<.sym>. There is no difference between these directives, except within
-macro definitions. (See Macros).
+Local temporary variables can be declared by the directives C<.local>.
 
   .local int i
   .local num a, b, c
-  .sym string s1, s2
-  .sym pmc obj
 
 The optional C<:unique_reg> modifier will force the register allocator to
 associate the identifier with a unique register for the duration of the
@@ -450,7 +427,7 @@ indicates that the value in $P0 is stored as a lexical variable,
 named by 'i'. Once the above lexical declaration is written, and
 given the following statement:
 
-  $P1 = new .Integer
+  $P1 = new 'Integer'
 
 then the following two statements have an identical effect:
 
@@ -494,23 +471,6 @@ So, now it is also clear why C<.lex 'i', p> is B<not> a declaration of p:
 it needs a separate declaration, because it may either be a C<.local> or
 a C<.param>. The C<.lex> directive merely is a shortcut for saving and
 retrieving lexical variables.
-
-=head2 Global definitions
-
-  global_def:
-    ".global" identifier
-
-=head3 Example global declarations
-
-This syntax is defined in the parser of IMCC, but its functionality is not
-implemented. The goal is to allow for global definitions outside of
-subroutines. That way, the variable can be accessed by all subroutines without
-doing a global lookup. It is unclear whether this feature will be implemented.
-
-An example is:
-
-  .global my_global_var
-
 
 =head2 Constant definitions
 
@@ -646,14 +606,12 @@ only allowed on strings. These checks are B<not> done by the PIR parser.
       target "=" short_sub_call
     | target "=" target keylist
     | target "=" expression
-    | target "=" "new" [ int_constant | string_constant | macro_id ]
+    | target "=" "new" string_constant
     | target "=" "new" keylist
     | target "=" "find_type" [ string_constant | string_reg | id ]
     | target "=" heredoc
-    | target "=" "global" string_constant
     | target assign_op simple_expr
     | target keylist "=" simple_expr
-    | "global" string_constant "=" target
     | result_var_list "=" short_sub_call
 
 NOTE: the definition of assignment statements is B<not> complete yet.
@@ -675,7 +633,7 @@ As languages/PIR evolves, this will be completed.
     | simple_expr ".." simple_expr
 
   result_var_list:
-    "(" result_vars ")"
+    "(" result_vars? ")"
 
   result_vars:
     result_var [ "," result_var ]*
@@ -698,9 +656,6 @@ As languages/PIR evolves, this will be completed.
   $S0 = <<'HELLO'
   ...
   HELLO
-
-  $P0 = global "X"
-  global "X" = $P0
 
   .local int a, b, c
   (a, b, c) = foo()
@@ -770,17 +725,17 @@ B<Currently, this is not working.>
   long_sub_call:
     ".pcc_begin" nl
     arguments
-    [ method_call | non_method_call] target nl
+    [ method_call | non_method_call] nl
     [ local_decl nl ]*
     result_values
     ".pcc_end"
 
   non_method_call:
-    ".pcc_call" | ".nci_call"
+    [ ".pcc_call" | ".nci_call" ] target
 
   method_call:
     ".invocant" target nl
-    ".meth_call"
+    ".meth_call" [ target | string_constant ]
 
   parenthesized_args:
     "(" args ")"
@@ -889,7 +844,7 @@ it uses C<.nci_call> instead of C<.pcc_call>.
     invocant? [ target | string_constant ] parenthesized_args
 
   invocant:
-    [ target"." | target "->" ]
+    target"."
 
 
 =head3 Example short subroutine call
@@ -905,10 +860,7 @@ Or a method call:
   obj.x() # call the method whose name is stored in 'x'.
 
 Note that no spaces are allowed between the invocant and the dot;
-C<"obj . 'toString'"> is not valid. IMCC also allows the "->" instead of a dot,
-to make it readable for C++ programmers:
-
-  obj->'toString'()
+C<"obj . 'toString'"> is not valid, this will be interpreted as a concatenation.
 
 And of course, using the short version, passing arguments can be done as well,
 including all flags that were defined for the long version. The same example
@@ -1018,14 +970,6 @@ invoked again. Returning values is identical to I<normal> return statements.
   # when invoking twice:
   foo() # returns 42
   foo() # returns 43
-
-NOTE: IMCC allows for writing:
-
-  .pcc_begin_yield
-  ...
-  .pcc_end_return
-
-which is of course not consistent; languages/PIR does B<not> allow this.
 
 =head2 Short yield statements
 
@@ -1148,12 +1092,13 @@ not PIR instructions.
 
 
 Note that before a macro body will be parsed, some grammar rules
-will be changed. In a macro body, local variable declaration can
-B<only> be done using the C<.sym> directive. The C<.local> directive
-is only available for declaring labels.
+will be changed. In a macro body, local variable declarations are
+done using the C<.macro_local> directive. B<TODO: decide on keyword for this>.
+
+The C<.label> directive is available for declaring unique labels.
 
   macro_label:
-    ".local" "$"identifier":"
+    ".label" "$"identifier":"
 
 =head3 Example Macros
 
@@ -1196,7 +1141,7 @@ then one can write in a subroutine:
     ".HLL" string_constant "," string_constant
 
   hll_mapping:
-    ".HLL_map" int_constant "," int_constant
+    ".HLL_map" string_constant "," string_constant
 
   namespace_id:
     string_constant [ ";" string_constant ]*
@@ -1218,8 +1163,8 @@ includes the source from the file "myLib.pir" at the point of this directive.
 makes Parrot automatically create new PMCs when using arithmetic operators,
 like:
 
-  $P1 = new .Integer
-  $P2 = new .Integer
+  $P1 = new 'Integer'
+  $P2 = new 'Integer'
   $P1 = 42
   $P2 = 43
   $P0 = $P1 * $P2
@@ -1234,13 +1179,14 @@ See the PROPOSALS document for more information on this.
 
 
   .namespace ['Foo'] # namespace Foo
+
   .namespace ['Object';'Foo'] # nested namespace
 
   .namespace # no [ id ] means the root namespace is activated
 
-opens the namespace 'Foo'. When doing Object Oriented programming, this would
-indicate that sub or method definitions belong to the class 'Foo'. Of course,
-you can also define namespaces without doing OO-programming.
+The first line opens the namespace 'Foo'. When doing Object Oriented programming,
+this would indicate that sub or method definitions belong to the class 'Foo'.
+Of course, you can also define namespaces without doing OO-programming.
 
 Please note that this C<.namespace> directive is I<different> from the
 C<.namespace> directive
@@ -1252,7 +1198,7 @@ is an example of specifying the High Level Language (HLL) for which the PIR
 is being generated. It is a shortcut for setting the namespace to 'Lua', and
 for loading the PMCs in the lua_group library.
 
-  .HLL_map .Integer, .LuaNumber
+  .HLL_map "Integer", "LuaNumber"
 
 is a way of telling Parrot, that whenever an Integer is created somewhere
 in the system (C code), instead a LuaNumber object is created.
@@ -1286,10 +1232,7 @@ TODO: check flags and syntax for this.
       "int"
     | "num"
     | "pmc"
-    | "object"
     | "string"
-    | "Array"
-    | "Hash"
 
   target:
     identifier | register
@@ -1334,15 +1277,6 @@ Heredoc parsing
 
 =item *
 
-The rule 'type' does currently not include custom types (user defined).
-Probably it needs an alternative "identifier". Not sure yet at this point.
-
-=item *
-
-Clean up grammar, remove never-used features.
-
-=item *
-
 Test. A lot.
 
 Bugs or improvements may be sent to the author, and are of course greatly
@@ -1382,6 +1316,18 @@ docs/imcc/syntax.pod - official syntax for IMCC/PIR.
 
 =head1 CHANGES
 
+0.2.0
+
+=over 4
+
+=item *
+
+Many clean ups; remove experimental C<:wrap> flag, remove C<.global> directive,
+remove C<.sym> directive, add C<.label> directive for macros, remove C<.pcc_sub>;
+remove some comments that are not true any more. In all, it's getting much cleaner!
+
+=back
+
 0.1.4
 
 =over 4
@@ -1418,7 +1364,6 @@ Added some remarks at section for Macros.
 Added some remarks here and there, and fixed some style issues.
 
 =back
-
 
 0.1.2
 

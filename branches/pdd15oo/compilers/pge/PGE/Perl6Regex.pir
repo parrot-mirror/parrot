@@ -575,7 +575,7 @@ combinations.
 .end
 
 
-=item parse_quant_error(mob)
+=item C<parse_quant_error(mob)>
 
 Throw an exception for quantifiers in term position.
 
