@@ -123,7 +123,7 @@ Bar
 Baz
 OUTPUT
 
-pasm_error_output_like( <<'CODE', <<'OUTPUT', "get_class" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "get_class" );
     newclass P1, "Foo"
     get_class P2, "Foo"
     set S2, P2
@@ -137,11 +137,16 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "get_class" );
     print "\n"
 
     get_class P3, "NoSuch"
+    if_null P3, is_null
+    print "error, returned non-null value for 'NoSuch'\n"
+    end
+  is_null:
+    print "returned null, no class for 'NoSuch'\n"
     end
 CODE
-/Foo
+Foo
 FooBar
-Class 'NoSuch' doesn't exist/
+returned null, no class for 'NoSuch'
 OUTPUT
 
 # ' for vim
@@ -507,18 +512,16 @@ CODE
 OUTPUT
 #XXX
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "getting NULL attribute" );
+pasm_error_output_like( <<'CODE', <<'OUTPUT', "getting NULL attribute" );
     newclass P1, "Foo"
     addattribute P1, "i"
-    new P2, P1
+    new P2, "Foo"
 
     getattribute P3, P2, "i"
-    typeof S1, P3
-    print S1
-    print "\n"
+    print P3
     end
 CODE
-Undef
+/Null PMC access/
 OUTPUT
 
 pir_error_output_like( <<'CODE', <<'OUTPUT', "getting non-existent attribute" );
@@ -1373,8 +1376,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - overridden mmd methods" )
    .param pmc right
    .param pmc dest
    print "in add\n"
-   $I0 = classoffset self, "MyInt"
-   $P0 = getattribute self, $I0
+   $P0 = getattribute self, ['Integer'], 'proxy'
    $I0 = $P0
    $I1 = right
    $I2 = $I0 + $I1
