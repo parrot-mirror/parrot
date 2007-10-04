@@ -20,8 +20,9 @@ board.pir - a tetris board class.
 .namespace ["Tetris::Board"]
 
 .sub __onload :load
-    find_type $I0, "Tetris::Board"
-    if $I0 > 1 goto END
+    $P0 = get_class "Tetris::Board"
+    unless null $P0 goto END
+
     load_bytecode "examples/sdl/tetris/boarddata.pir"
     load_bytecode "examples/sdl/tetris/blocks.pir"
     getclass $P0, "Tetris::BoardData"

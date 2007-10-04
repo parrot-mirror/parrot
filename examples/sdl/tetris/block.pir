@@ -27,8 +27,8 @@ is not subclassed further.
 .const int Board     = 4
 
 .sub __onload :load
-    find_type $I0, "Tetris::Block"
-    if $I0 > 1 goto END
+    $P0 = get_class "Tetris::Block"
+    unless null $P0 goto END
     load_bytecode "examples/sdl/tetris/blockdata.pir"
     getclass $P0, "Tetris::BlockData"
     subclass $P0, $P0, "Tetris::Block"
