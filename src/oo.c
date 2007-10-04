@@ -146,7 +146,11 @@ Parrot_oo_get_class(PARROT_INTERP, NOTNULL(PMC *key))
     if (PMC_IS_NULL(classobj)) {
         /* Look up a low-level class and create a proxy */
         INTVAL type = pmc_type(interp, VTABLE_get_string(interp, key));
-        if (type) {
+        /* Reject invalid type numbers */
+        if (type > interp->n_vtable_max || type < 0) {
+            return PMCNULL;
+        }
+        else {
              PMC *type_num = pmc_new(interp, enum_class_Integer);
              VTABLE_set_integer_native(interp, type_num, type);
              classobj = pmc_new_init(interp, enum_class_PMCProxy, type_num);
