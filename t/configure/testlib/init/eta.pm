@@ -24,11 +24,10 @@ sub _init {
     return \%data;
 }
 
-my $result = q|Hello world|;
+my $result = q|Goodbye, cruel world|;
 
 sub runstep {
     my ( $self, $conf ) = @_;
-    $self->set_result( $result );
     return;
 }
 
