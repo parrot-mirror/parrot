@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 74;
+use Parrot::Test tests => 72;
 
 =head1 NAME
 
@@ -1586,60 +1586,6 @@ ok 1
 ok 2
 Foo
 OUTPUT
-
-SKIP: {
-    skip( "instantiate disabled", 2 );
-    pasm_output_is( <<'CODE', <<'OUTPUT', "instantiate", todo => 'needs super()' );
-    subclass P2, "Integer", "Foo"
-    set I0, 0
-    set I3, 1
-    new P5, 'Integer'
-    set P5, 42
-    instantiate P1
-    print P1
-    print "\n"
-    end
-.namespace [ "Foo" ]
-.pcc_sub __instantiate:	# create object the hard way
-    new P10, "Foo"		# should inspect passed arguments
-    classoffset I0, P10, "Foo"	# better should clone the argument
-    setattribute P10, I0, P5	# the first attribute is the internal __value
-    set P5, P10			# set return value
-    set I0, 0
-    set I3, 1
-    returncc
-CODE
-42
-OUTPUT
-
-    pir_output_is( <<'CODE', <<'OUTPUT', "instantiate - PIR", todo => 'needs super()' );
-
-.sub main :main
-    .local pmc cl
-    cl = subclass "Integer", "Foo"
-    .local pmc i
-    i = cl."instantiate"(42)
-    print i
-    print "\n"
-.end
-
-.namespace ["Foo"]
-.sub __instantiate :method
-    .param int val		# in realiter check what is passed
-    .local pmc obj
-    obj = new "Foo"
-    $I1 = classoffset obj, "Foo"
-    $P0 = new 'Integer'
-    $P0 = val
-    setattribute obj, $I1, $P0
-    .pcc_begin_return
-    .return obj
-    .pcc_end_return
-.end
-CODE
-42
-OUTPUT
-}
 
 pir_output_is( <<'CODE', <<'OUTPUT', "namespace vs name" );
 .sub main :main
