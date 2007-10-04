@@ -444,7 +444,7 @@ mmd_dispatch_p_pip(PARROT_INTERP,
 
     left = mmd_deref(interp, left);
 
-    left_type = left->vtable->base_type;
+    left_type = VTABLE_type(interp, left);
 
     real_function =
         (mmd_f_p_pip)get_mmd_dispatch_type(interp, func_nr,
@@ -477,7 +477,7 @@ mmd_dispatch_p_pnp(PARROT_INTERP,
 
     left = mmd_deref(interp, left);
 
-    left_type = left->vtable->base_type;
+    left_type = VTABLE_type(interp, left);
     real_function = (mmd_f_p_pnp)get_mmd_dispatch_type(interp,
             func_nr, left_type, enum_type_FLOATVAL, &is_pmc);
     if (is_pmc) {
@@ -502,7 +502,7 @@ mmd_dispatch_p_psp(PARROT_INTERP,
 {
     mmd_f_p_psp real_function;
     int is_pmc;
-    const UINTVAL left_type = left->vtable->base_type;
+    const UINTVAL left_type = VTABLE_type(interp, left);
 
     real_function = (mmd_f_p_psp)get_mmd_dispatch_type(interp,
             func_nr, left_type, enum_type_STRING, &is_pmc);
@@ -560,7 +560,7 @@ mmd_dispatch_v_pi(PARROT_INTERP,
     left = mmd_deref(interp, left);
     mmd_ensure_writable(interp, func_nr, left);
 
-    left_type = left->vtable->base_type;
+    left_type = VTABLE_type(interp, left);
     real_function = (mmd_f_v_pi)get_mmd_dispatch_type(interp,
             func_nr, left_type, enum_type_INTVAL, &is_pmc);
     if (is_pmc) {
@@ -584,7 +584,7 @@ mmd_dispatch_v_pn(PARROT_INTERP,
     left = mmd_deref(interp, left);
     mmd_ensure_writable(interp, func_nr, left);
 
-    left_type = left->vtable->base_type;
+    left_type = VTABLE_type(interp, left);
     real_function = (mmd_f_v_pn)get_mmd_dispatch_type(interp,
             func_nr, left_type, enum_type_FLOATVAL, &is_pmc);
     if (is_pmc) {
@@ -1266,14 +1266,15 @@ mmd_search_classes(PARROT_INTERP, NOTNULL(STRING *meth),
 
         for (i = start_at_parent; i < n; ++i) {
             PMC * const _class = VTABLE_get_pmc_keyed_int(interp, mro, i);
-            PMC * const pmc = Parrot_find_method_with_cache(interp, _class, meth);
-            if (!PMC_IS_NULL(pmc)) {
+            PMC * const ns = Parrot_oo_get_namespace(interp, _class);
+            PMC * const methodobj = VTABLE_get_pmc_keyed_str(interp, ns, meth);
+            if (!PMC_IS_NULL(methodobj)) {
                 /*
                  * mmd_is_hidden would consider all previous candidates
                  * XXX pass current n so that only candidates from this
                  *     mro are used?
                  */
-                if (mmd_maybe_candidate(interp, pmc, cl))
+                if (mmd_maybe_candidate(interp, methodobj, cl))
                     break;
             }
         }
