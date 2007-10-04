@@ -1,7 +1,7 @@
 /* oo_private.h
  *  Copyright (C) 2007, The Perl Foundation.
  *  SVN Info
- *     $Id: oo.h 20040 2007-07-20 18:56:25Z petdance $
+ *     $Id$
  *  Overview:
  *     Structs, typedefs and macros for the Class, Object, and PMCProxy PMCs.
  *     This header file is only included by files within the OO subsystem.

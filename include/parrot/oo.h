@@ -1,7 +1,7 @@
 /* objects.h
  *  Copyright (C) 2007, The Perl Foundation.
  *  SVN Info
- *     $Id: oo.h 20040 2007-07-20 18:56:25Z petdance $
+ *     $Id$
  *  Overview:
  *     Parrot class and object header stuff
  *  Data Structure and Algorithms:
