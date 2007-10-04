@@ -895,75 +895,47 @@ l
 m
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "overridden vtables" );
-.sub 'main' :main
-    newclass P1, "Foo"
-    # must add attributes before object instantiation
-    addattribute P1, ".i"
-
-    P3 = P1.'new'()
-    set P3, 1
-    P4 = P1.'new'()
-    set P4, 1
-    P5 = P1.'new'()
-
-    add P5, P3, P4
-    # the print below calls __get_string
-    print P5
-    print "\n"
-    set P4, 41
-    add P5, P3, P4
-    print P5
-    print "\n"
+pir_output_is( <<'CODE', <<'OUTPUT', "PMC as classes - overridden mmd methods" );
+.sub main :main
+  .local pmc myint
+  get_class $P0, "Integer"
+  subclass myint, $P0, "MyInt"
+  .local pmc i
+  .local pmc j
+  .local pmc k
+  $I0 = find_type "MyInt"
+  i = new $I0
+  j = new $I0
+  k = new $I0
+  i = 6
+  j = 7
+  k = i + j
+  print k
+  print "\n"
+  j = new 'Integer'
+  j = 100
+  k = i + j
+  print k
+  print "\n"
 .end
 
-.namespace [ 'Foo' ]
-
-.sub 'set_integer_native' :vtable :method
-    .param int val
-
-    print "in set_integer\n"
-    new P6, 'Integer'
-    set P6, val
-    setattribute self, ".i", P6
-
-    .return ()
-.end
-
-.sub 'add' :multi(PMC, PMC) :method
-    .param pmc left
-    .param pmc right
-
-    print "in add\n"
-    getattribute P10, self, ".i"
-    getattribute P11, left, ".i"
-    new P12, 'Integer'
-    add P12, P10, P11
-    setattribute P7, ".i", right
-
-    .return( P7 )
-.end
-
-.sub 'get_string' :vtable :method
-    print "in get_string\n"
-    getattribute P10, self, ".i"
-    set S5, P10
-    set I0, P10
-    ne I0, 2, no_2
-    set S5, "two"
-no_2:
-    .return( S5 )
+.namespace ["MyInt"]
+.sub __add :multi(MyInt, MyInt)
+   .param pmc self
+   .param pmc right
+   .param pmc dest
+   print "in add\n"
+   $P0 = getattribute self, ['Integer'], "proxy"
+   $I0 = $P0
+   $I1 = right
+   $I2 = $I0 + $I1
+   dest = $I2
+   .return(dest)
 .end
 CODE
-in set_integer
-in set_integer
 in add
-in get_string
-two
-in set_integer
-in add
-in get_string
-42
+13
+106
 OUTPUT
 
 # Not sure if this is right or not
