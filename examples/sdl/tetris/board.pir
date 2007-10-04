@@ -251,8 +251,8 @@ SKIP_SET_ID:
     getprop block, "nextblock", self
     
     # create a new 'next block'
-    $I0 = self."blockID"( id )
-    temp = new $I0, self
+    $P0 = self."blockID"( id )
+    temp = new $P0, self
     setprop self, "nextblock", temp
 
     # new currently falling block created, activate it
@@ -874,7 +874,7 @@ TDB
 .sub blockID :method
     .param int id
     .local pmc blocks
-    .local int ret
+    .local pmc ret
     
     blocks = find_global "Tetris::Block", "blocks"
     
