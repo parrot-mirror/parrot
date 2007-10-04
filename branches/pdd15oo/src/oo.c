@@ -1,6 +1,6 @@
 /*
 Copyright (C) 2007, The Perl Foundation.
-$Id: objects.c 21497 2007-09-23 21:40:15Z paultcochrane $
+$Id$
 
 =head1 NAME
 
