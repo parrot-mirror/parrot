@@ -1266,8 +1266,12 @@ mmd_search_classes(PARROT_INTERP, NOTNULL(STRING *meth),
 
         for (i = start_at_parent; i < n; ++i) {
             PMC * const _class = VTABLE_get_pmc_keyed_int(interp, mro, i);
-            PMC * const ns = Parrot_oo_get_namespace(interp, _class);
-            PMC * const methodobj = VTABLE_get_pmc_keyed_str(interp, ns, meth);
+            PMC *ns, *methodobj;
+            if (PObj_is_class_TEST(_class))
+                ns = Parrot_oo_get_namespace(interp, _class);
+            else
+                ns = VTABLE_pmc_namespace(interp, _class);
+            methodobj = VTABLE_get_pmc_keyed_str(interp, ns, meth);
             if (!PMC_IS_NULL(methodobj)) {
                 /*
                  * mmd_is_hidden would consider all previous candidates
