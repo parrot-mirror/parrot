@@ -283,7 +283,7 @@ Queries this object's class to find the method with the given name.
         /* Walk and search. One day, we'll use the cache first. */
         const int num_classes        = VTABLE_elements(interp,
                                                       _class->all_parents);
-        const int all_in_universe    = !PObj_HasAlienParents_TEST(obj->_class);
+        const int all_in_universe    = !CLASS_has_alien_parents_TEST(obj->_class);
         int       alien_parents_pos  = VTABLE_elements(interp,
                                                       _class->attrib_metadata);
         int i;
