@@ -318,6 +318,21 @@ really a public API.
             }
         }
 
+        if (key->vtable->base_type == enum_class_ResizableStringArray) {
+            INTVAL elements = VTABLE_elements(interp, key);
+            INTVAL i;
+            for (i = 0; i < elements; ++i)  {
+                part = VTABLE_get_string_keyed_int(interp, key, i);
+
+                if ((i + 1) >= elements) { /* Last entry in the array */
+                    Parrot_set_global(INTERP, ns, part, value);
+                    return;
+                }
+
+                ns = Parrot_make_namespace_keyed_str(INTERP, ns, part);
+            }
+        }
+
         real_exception(INTERP, NULL, E_NameError,
             "Invalid namespace key in set_pmc_keyed");
     }
@@ -425,6 +440,23 @@ TOTAL KLUDGE.  ON THE CHOPPING BLOCK.
                     return PMCNULL;
             }
 
+            return ns;
+        }
+
+        if (key->vtable->base_type == enum_class_ResizableStringArray) {
+            INTVAL elements = VTABLE_elements(interp, key);
+            INTVAL i;
+            for (i = 0; i < elements; ++i)  {
+                part = VTABLE_get_string_keyed_int(interp, key, i);
+
+                if ((i + 1) >= elements) /* Last entry in the array */
+                    return VTABLE_get_pointer_keyed_str(INTERP, ns, part);
+
+                ns = Parrot_get_namespace_keyed_str(INTERP, ns, part);
+
+                if (PMC_IS_NULL(ns))
+                    return PMCNULL;
+            }
             return ns;
         }
 
