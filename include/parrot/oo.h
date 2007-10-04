@@ -17,6 +17,9 @@
 
 /* HEADERIZER BEGIN: src/oo.c */
 
+void Parrot_oo_extract_methods_from_namespace(PARROT_INTERP, PMC *self)
+        __attribute__nonnull__(1);
+
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_oo_find_vtable_override_for_class(PARROT_INTERP,

@@ -48,10 +48,6 @@ void Parrot_create_mro(PARROT_INTERP, INTVAL type)
         __attribute__nonnull__(1);
 
 PARROT_API
-void Parrot_create_pmc_proxy(PARROT_INTERP, int type_num)
-        __attribute__nonnull__(1);
-
-PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PARROT_MALLOC
 PMC * pmc_new(PARROT_INTERP, INTVAL base_type)

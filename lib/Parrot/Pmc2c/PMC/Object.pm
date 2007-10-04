@@ -58,7 +58,7 @@ sub pre_method_gen {
             $void_return
         }
 
-        if (VTABLE_type(interp, cur_class) == enum_class_PMCProxy) {
+        if (cur_class->vtable->base_type == enum_class_PMCProxy) {
             
             /* Get the PMC instance and call the vtable method on that. */
             PMC * const del_object = VTABLE_get_attr_keyed(interp, SELF,
