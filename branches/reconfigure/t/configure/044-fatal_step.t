@@ -18,7 +18,7 @@ is( $|, 1, "output autoflush is set" );
 
 my $args = process_options(
     {
-        argv => [ qw( --fatal-step=foo::iota ) ],
+        argv => [ qw( --fatal-step=foo::zeta ) ],
         mode => q{configure},
     }
 );
@@ -28,8 +28,8 @@ my %args = %$args;
 my $conf = Parrot::Configure->new;
 ok( defined $conf, "Parrot::Configure->new() returned okay" );
 
-my $step        = q{foo::iota};
-my $description = 'Determining if your computer does iota';
+my $step        = q{foo::zeta};
+my $description = 'Determining if your computer does zeta';
 
 $conf->add_steps($step);
 my @confsteps = @{ $conf->steps };
