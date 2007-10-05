@@ -1,4 +1,4 @@
-#!./parrot
+#!perl6
 
 # check basic regex capabilities
 
