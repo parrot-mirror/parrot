@@ -28,7 +28,7 @@ Languages           Status
 -----------------------------------------------------------------------------
 abc                 DONE
 amber               NO TESTS
-APL                 parrot and pbc paths seem to be hardcoded
+APL                 DONE
 BASIC               NO TESTS
 befunge             1 Test, needs a lot of work
 bf                  Tests run from languages, not from languages/bf
