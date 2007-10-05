@@ -156,6 +156,8 @@ C<Parrot::Configure::Step::List::get_steps_list()>.
 
 sub get_list_of_steps {
     my $conf = shift;
+    die "list_of_steps not available until steps have been added"
+        unless defined $conf->{list_of_steps};
     return wantarray ? @{ $conf->{list_of_steps} } : $conf->{list_of_steps};
 }
 

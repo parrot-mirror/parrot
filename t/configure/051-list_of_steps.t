@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests =>  5;
+use Test::More tests =>  6;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use Parrot::Configure;
@@ -24,8 +24,16 @@ my $conf = Parrot::Configure->new;
 ok(defined $conf, "Parrot::Configure->new() returned okay");
 
 my $first_step = q{init::zeta};
-
 my @official_steps = get_steps_list();
+
+eval {
+    $conf->get_list_of_steps();
+};
+like ($@,
+    qr/^list_of_steps not available until steps have been added/,
+    "Got expected failure message when get_list_of_steps called too early"
+);
+
 $conf->add_steps( $first_step, @official_steps );
 my @list_of_steps = $conf->get_list_of_steps();
 is_deeply( [ ( $first_step, @official_steps ) ], [ @list_of_steps ],
