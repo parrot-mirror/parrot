@@ -9,14 +9,14 @@ a number of built-in rules.
 
 =cut
 
-.namespace ['PGE';'Match']
+.namespace [ 'PGE::Match' ]
 
 .include 'cclass.pasm'
 .include 'interpinfo.pasm'
 
 .sub '__onload' :load
     .local pmc base
-    $P0 = subclass ['PGE';'Match'] , ['PGE';'Grammar']
+    $P0 = subclass 'PGE::Match', 'PGE::Grammar'
     $P0 = new 'Hash'
     set_global '%!cache', $P0
     .return ()
@@ -37,6 +37,7 @@ Match an identifier.
     .param pmc mob
     .param pmc adverbs         :slurpy :named
     .local string target
+    .local pmc mfrom, mpos
     .local int pos, lastpos
 
     $P0 = get_hll_global ['PGE'], 'Match'

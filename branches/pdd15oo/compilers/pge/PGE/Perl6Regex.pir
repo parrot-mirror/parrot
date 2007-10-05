@@ -18,7 +18,7 @@ or the resulting PIR code (target='PIR').
 
 =cut
 
-.namespace ['PGE';'Perl6Regex']
+.namespace [ 'PGE::Perl6Regex' ]
 
 .sub 'compile_perl6regex'
     .param pmc source
@@ -80,11 +80,11 @@ or the resulting PIR code (target='PIR').
 
     ##   If we're passed the results of a previous parse,  use it.
     .local pmc match, exp
-    $I0 = isa source, ['PGE';'Match']
+    $I0 = isa source, 'PGE::Match'
     if $I0 == 0 goto parse
     $P0 = source['expr']
     if null $P0 goto parse
-    $I0 = isa $P0, ['PGE';'Exp']
+    $I0 = isa $P0, 'PGE::Exp'
     if $I0 == 0 goto parse
     match = source
     goto analyze
@@ -156,98 +156,100 @@ needed for compiling regexes.
 
 .include 'cclass.pasm'
 
+.namespace [ 'PGE::Perl6Regex' ]
+
 .sub '__onload' :load
     .local pmc optable
 
-    $P0 = subclass ['PGE';'Exp';'Subrule'], ['PGE';'Exp';'WS']
-    $P0 = subclass ['PGE';'Exp'], ['PGE';'Exp';'Alias']
+    $P0 = subclass 'PGE::Exp::Subrule', 'PGE::Exp::WS'
+    $P0 = subclass 'PGE::Exp', 'PGE::Exp::Alias'
 
-    optable = new ['PGE';'OPTable']
+    optable = new 'PGE::OPTable'
     set_global '$optable', optable
 
     $P0 = get_global 'parse_term'
-    optable.'newtok'('term:',    'precedence'=>'=', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('term:',    'precedence'=>'=', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_term_ws'
-    optable.'newtok'('term:#',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('term:#',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_term_backslash'
-    optable.'newtok'("term:\\",  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok("term:\\",  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
-    optable.'newtok'('term:^',   'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.'newtok'('term:^^',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.'newtok'('term:$$',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.'newtok'('term:\b',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.'newtok'('term:\B',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.'newtok'('term:<<',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.'newtok'('term:>>',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.'newtok'(unicode:"term:\xab", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.'newtok'(unicode:"term:\xbb", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok('term:^',   'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok('term:^^',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok('term:$$',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok('term:\b',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok('term:\B',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok('term:<<',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok('term:>>',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok(unicode:"term:\xab", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.newtok(unicode:"term:\xbb", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
 
-    optable.'newtok'('term:.',   'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.'newtok'('term:\d',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.'newtok'('term:\D',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.'newtok'('term:\s',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.'newtok'('term:\S',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.'newtok'('term:\w',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.'newtok'('term:\W',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.'newtok'('term:\N',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.'newtok'('term:\n',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Newline')
+    optable.newtok('term:.',   'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.newtok('term:\d',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.newtok('term:\D',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.newtok('term:\s',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.newtok('term:\S',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.newtok('term:\w',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.newtok('term:\W',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.newtok('term:\N',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.newtok('term:\n',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Newline')
 
     $P0 = get_global 'parse_dollar'
-    optable.'newtok'('term:$',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('term:$',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_subrule'
-    optable.'newtok'('term:<',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
-    optable.'newtok'('term:<?',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
-    optable.'newtok'('term:<!',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('term:<',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('term:<?',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('term:<!',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_enumcharclass'
-    optable.'newtok'('term:<[',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
-    optable.'newtok'('term:<+', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
-    optable.'newtok'('term:<-', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
-    optable.'newtok'('term:<![', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('term:<[',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('term:<+', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('term:<-', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('term:<![', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_quoted_literal'
-    optable.'newtok'("term:'",  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok("term:'",  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
-    optable.'newtok'('term:::',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
-    optable.'newtok'('term::::', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
-    optable.'newtok'('term:<cut>',    'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
-    optable.'newtok'('term:<commit>', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
+    optable.newtok('term:::',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
+    optable.newtok('term::::', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
+    optable.newtok('term:<cut>',    'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
+    optable.newtok('term:<commit>', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
 
     $P0 = get_global 'parse_closure'
-    optable.'newtok'("term:{{",       'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok("term:{{",       'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_action'
-    optable.'newtok'("term:{*}",      'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok("term:{*}",      'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
 
-    optable.'newtok'('circumfix:[ ]', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Group')
-    optable.'newtok'('circumfix:( )', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CGroup')
+    optable.newtok('circumfix:[ ]', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Group')
+    optable.newtok('circumfix:( )', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CGroup')
 
     $P0 = get_global 'parse_quant'
-    optable.'newtok'('postfix:*',  'looser'=>'term:', 'parsed'=>$P0)
-    optable.'newtok'('postfix:+',  'equiv'=>'postfix:*', 'parsed'=>$P0)
-    optable.'newtok'('postfix:?',  'equiv'=>'postfix:*', 'parsed'=>$P0)
-    optable.'newtok'('postfix::',  'equiv'=>'postfix:*', 'parsed'=>$P0)
-    optable.'newtok'('postfix:**', 'equiv'=>'postfix:*', 'parsed'=>$P0)
+    optable.newtok('postfix:*',  'looser'=>'term:', 'parsed'=>$P0)
+    optable.newtok('postfix:+',  'equiv'=>'postfix:*', 'parsed'=>$P0)
+    optable.newtok('postfix:?',  'equiv'=>'postfix:*', 'parsed'=>$P0)
+    optable.newtok('postfix::',  'equiv'=>'postfix:*', 'parsed'=>$P0)
+    optable.newtok('postfix:**', 'equiv'=>'postfix:*', 'parsed'=>$P0)
     $P0 = get_global 'parse_quant_error'
-    optable.'newtok'('term:*', 'equiv'=>'term:', 'parsed'=>$P0)
-    optable.'newtok'('term:+', 'equiv'=>'term:', 'parsed'=>$P0)
-    optable.'newtok'('term:?', 'equiv'=>'term:', 'parsed'=>$P0)
+    optable.newtok('term:*', 'equiv'=>'term:', 'parsed'=>$P0)
+    optable.newtok('term:+', 'equiv'=>'term:', 'parsed'=>$P0)
+    optable.newtok('term:?', 'equiv'=>'term:', 'parsed'=>$P0)
 
-    optable.'newtok'('infix:',   'looser'=>'postfix:*', 'assoc'=>'list', 'nows'=>1, 'match'=>'PGE::Exp::Concat')
-    optable.'newtok'('infix:&',  'looser'=>'infix:', 'nows'=>1, 'match'=>'PGE::Exp::Conj')
-    optable.'newtok'('infix:|',  'looser'=>'infix:&', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
-    optable.'newtok'('prefix:|', 'equiv'=>'infix:|', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
+    optable.newtok('infix:',   'looser'=>'postfix:*', 'assoc'=>'list', 'nows'=>1, 'match'=>'PGE::Exp::Concat')
+    optable.newtok('infix:&',  'looser'=>'infix:', 'nows'=>1, 'match'=>'PGE::Exp::Conj')
+    optable.newtok('infix:|',  'looser'=>'infix:&', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
+    optable.newtok('prefix:|', 'equiv'=>'infix:|', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
 
-    optable.'newtok'('infix::=', 'tighter'=>'infix:', 'assoc'=>'right', 'match'=>'PGE::Exp::Alias')
+    optable.newtok('infix::=', 'tighter'=>'infix:', 'assoc'=>'right', 'match'=>'PGE::Exp::Alias')
 
     $P0 = get_global 'parse_modifier'
-    optable.'newtok'('prefix::', 'looser'=>'infix:|', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('prefix::', 'looser'=>'infix:|', 'nows'=>1, 'parsed'=>$P0)
 
-    optable.'newtok'('close:}',  'precedence'=>'<', 'nows'=>1)
+    optable.newtok('close:}',  'precedence'=>'<', 'nows'=>1)
 
     .local pmc esclist
     esclist = new 'Hash'
@@ -263,13 +265,13 @@ needed for compiling regexes.
 
     # Create and store closure preprocessors in %closure_pp
     $P0 = new 'Hash'
-    set_global '%closure_pp', $P0
-    $P1 = get_global 'PIR_closure'
-    $P0['PIR'] = $P1
+    set_hll_global ['PGE::Perl6Regex'], '%closure_pp', $P0
+    $P1 = get_hll_global ['PGE::Perl6Regex'], 'PIR_closure'
+    $P0["PIR"] = $P1
 
     # Create an array for holding stop tokens
     $P0 = new 'ResizablePMCArray'
-    set_global '@!stopstack', $P0
+    set_hll_global ['PGE::Perl6Regex'], '@!stopstack', $P0
 
     $P0 = get_global 'compile_perl6regex'
     compreg 'PGE::Perl6Regex', $P0
@@ -297,7 +299,7 @@ Return a failed match if the stoptoken is found.
     lastpos = length target
 
     .local string stop
-    $P0 = get_global '@!stopstack'
+    $P0 = get_hll_global ['PGE::Perl6Regex'], '@!stopstack'
     stop = $P0[-1]
 
     $I0 = is_cclass .CCLASS_WHITESPACE, target, pos
@@ -331,7 +333,7 @@ Return a failed match if the stoptoken is found.
     .return 'parse_term_ws'(mob)
 
   end_noterm:
-    mob = mob.'new'(mob, 'grammar'=>'PGE::Exp::Literal')
+    (mob) = mob.'new'(mob, 'grammar'=>'PGE::Exp::Literal')
     .return (mob)
 .end
 
@@ -492,7 +494,6 @@ combinations.
     (mob, pos, target) = mob.'new'(mob, 'grammar'=>'PGE::Exp::Quant')
     lastpos = length target
 
-
     .local int min, max, suffixpos
     .local string suffix
     min = 1
@@ -614,12 +615,12 @@ anchors, and match subscripts.
     if $I0 > pos goto scalar
 
   eos_anchor:
-    mob = mob.'new'(mob, 'grammar' => 'PGE::Exp::Anchor')
+    mob = mob.'new'(mob, 'grammar'=>'PGE::Exp::Anchor')
     mob.'to'(pos)
     .return (mob)
 
   scalar:
-    mob = mob.'new'(mob, 'grammar' => 'PGE::Exp::Scalar')
+    mob = mob.'new'(mob, 'grammar'=>'PGE::Exp::Scalar')
     dec pos
     $I1 = $I0 - pos
     cname = substr target, pos, $I1
@@ -630,7 +631,7 @@ anchors, and match subscripts.
     .return (mob)
 
   numeric:
-    mob = mob.'new'(mob, 'grammar' => 'PGE::Exp::Scalar')
+    mob = mob.'new'(mob, 'grammar'=>'PGE::Exp::Scalar')
     $I1 = $I0 - pos
     cname = substr target, pos, $I1
     mob["cname"] = cname
@@ -639,7 +640,7 @@ anchors, and match subscripts.
 
   name:
     inc pos
-    mob = mob.'new'(mob, 'grammar' => 'PGE::Exp::Scalar')
+    mob = mob.'new'(mob, 'grammar'=>'PGE::Exp::Scalar')
     $I0 = index target, ">", pos
     if $I0 < pos goto err_close
   name_1:
@@ -1099,7 +1100,7 @@ Parse a modifier.
 
 
 
-.namespace ['PGE';'Exp']
+.namespace [ 'PGE::Exp' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1107,7 +1108,7 @@ Parse a modifier.
 .end
 
 
-.namespace ['PGE';'Exp';'Literal']
+.namespace [ 'PGE::Exp::Literal' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1117,7 +1118,7 @@ Parse a modifier.
 .end
 
 
-.namespace ['PGE';'Exp';'Concat']
+.namespace [ 'PGE::Exp::Concat' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1147,7 +1148,7 @@ Parse a modifier.
 .end
 
 
-.namespace ['PGE';'Exp';'Quant']
+.namespace [ 'PGE::Exp::Quant' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1173,7 +1174,7 @@ Parse a modifier.
 .end
 
 
-.namespace ['PGE';'Exp';'Group']
+.namespace [ 'PGE::Exp::Group' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1195,7 +1196,7 @@ Parse a modifier.
 .end
 
 
-.namespace ['PGE';'Exp';'CGroup']
+.namespace [ 'PGE::Exp::CGroup' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1274,7 +1275,7 @@ Parse a modifier.
 .end
 
 
-.namespace ['PGE';'Exp';'Subrule']
+.namespace [ 'PGE::Exp::Subrule' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1315,7 +1316,7 @@ Parse a modifier.
 .end
 
 
-.namespace ['PGE';'Exp';'WS']
+.namespace [ 'PGE::Exp::WS' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1331,7 +1332,7 @@ Parse a modifier.
 .end
 
 
-.namespace ['PGE';'Exp';'Alt']
+.namespace [ 'PGE::Exp::Alt' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1349,7 +1350,7 @@ Parse a modifier.
 
     ##   if lhs is whitespace, then this is a prefix-alt and
     ##   we ignore it (by simply returning its rhs)
-    $I0 = isa exp0, ['PGE';'Exp';'WS']
+    $I0 = isa exp0, 'PGE::Exp::WS'
     if $I0 == 0 goto with_lhs
     .return exp1.'perl6exp'(pad)
   with_lhs:
@@ -1382,7 +1383,7 @@ Parse a modifier.
 .end
 
 
-.namespace ['PGE';'Exp';'Alias']
+.namespace [ 'PGE::Exp::Alias' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1398,14 +1399,14 @@ Parse a modifier.
     ##   Otherwise, we need to create a capture group for this
     ##   alias and return that.
 
-    $I0 = isa exp1, ['PGE';'Exp';'CGroup']
+    $I0 = isa exp1, 'PGE::Exp::CGroup'
     if $I0 == 1 goto make_alias
-    $I0 = isa exp1, ['PGE';'Exp';'Subrule']
+    $I0 = isa exp1, 'PGE::Exp::Subrule'
     if $I0 == 1 goto make_alias
-    $I0 = isa exp1, ['PGE';'Exp';'Quant']
+    $I0 = isa exp1, 'PGE::Exp::Quant'
     if $I0 == 0 goto add_cgroup
     $P0 = exp1[0]
-    $I0 = isa $P0, ['PGE';'Exp';'CGroup']
+    $I0 = isa $P0, 'PGE::Exp::CGroup'
     if $I0 == 0 goto add_cgroup
     $P0['cname'] = cname
     goto end
@@ -1433,7 +1434,7 @@ Parse a modifier.
 .end
 
 
-.namespace ['PGE';'Exp';'Modifier']
+.namespace [ 'PGE::Exp::Modifier' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1462,7 +1463,7 @@ Parse a modifier.
     .return (exp)
 .end
 
-.namespace ['PGE';'Exp';'Conj']
+.namespace [ 'PGE::Exp::Conj' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1476,7 +1477,7 @@ Parse a modifier.
 .end
 
 
-.namespace ['PGE';'Exp';'Closure']
+.namespace [ 'PGE::Exp::Closure' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1486,7 +1487,7 @@ Parse a modifier.
     lang = pad['lang']
     self['lang'] = lang
     # see if we need to do any pre-processing of the closure
-    closure_pp = get_hll_global ['PGE';'Perl6Regex'], '%closure_pp'
+    closure_pp = get_hll_global ['PGE::Perl6Regex'], '%closure_pp'
     $I0 = defined closure_pp[lang]
     if $I0 == 0 goto end
     closure_fn = closure_pp[lang]
@@ -1512,7 +1513,7 @@ already present.
 =back
 =cut
 
-.namespace ['PGE';'Perl6Regex']
+.namespace [ 'PGE::Perl6Regex' ]
 
 .sub 'PIR_closure'
     .param string code
@@ -1525,7 +1526,7 @@ already present.
 .end
 
 
-.namespace ['PGE';'Exp';'Action']
+.namespace [ 'PGE::Exp::Action' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1535,7 +1536,7 @@ already present.
 .end
 
 
-.namespace ['PGE';'Exp';'Cut']
+.namespace [ 'PGE::Exp::Cut' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
