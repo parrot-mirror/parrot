@@ -182,6 +182,7 @@ really a public API.
             Parrot_NSInfo *nsinfo    = PARROT_NSINFO(SELF);
             PMC           *vtable    = nsinfo->vtable;
             Parrot_sub    *sub       = PMC_sub(value);
+            PMC * const classobj = VTABLE_get_class(interp, SELF);
 
             /* Handle vtable methods with two underscores at the start. */
             if (sub->vtable_index == -1) {
@@ -202,15 +203,24 @@ really a public API.
                 /* Insert it. */
                 VTABLE_set_pmc_keyed_int(INTERP, vtable,
                     sub->vtable_index, value);
+
+                /* Insert it in class, if there is a class */
+                if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
+                    VTABLE_add_vtable_override(interp, classobj, key, value);
             }
 
             if (sub->comp_flags & SUB_COMP_FLAG_METHOD) {
+
                 /* If we don't have a place to hang methods, make one. */
                 if (PMC_IS_NULL(nsinfo->methods))
                     nsinfo->methods = pmc_new(interp, enum_class_Hash);
 
                 /* Insert it. */
                 VTABLE_set_pmc_keyed_str(INTERP, nsinfo->methods, key, value);
+
+                /* Insert it in class, if there is a class */
+                if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
+                    VTABLE_add_method(interp, classobj, key, value);
 
                 /* insert it in the parent temporarily until PDD 15 lands */
                 SUPER(key, value);
@@ -223,9 +233,11 @@ really a public API.
 
         /* If it's a multi-sub... */
         if (value->vtable->base_type == enum_class_MultiSub) {
-            Parrot_NSInfo *nsinfo    = PARROT_NSINFO(SELF);
 
             if (VTABLE_elements(interp, value) > 0) {
+                Parrot_NSInfo *nsinfo    = PARROT_NSINFO(SELF);
+                PMC * const classobj = VTABLE_get_class(interp, SELF);
+
                 /* Extract the first alternate and check if it is a method */
                 Parrot_sub *sub = PMC_sub(VTABLE_get_pmc_keyed_int(interp, value, 0));
 
@@ -236,6 +248,10 @@ really a public API.
 
                     /* Insert it. */
                     VTABLE_set_pmc_keyed_str(INTERP, nsinfo->methods, key, value);
+
+                    /* Insert it in class, if there is a class */
+                    if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
+                        VTABLE_add_method(interp, classobj, key, value);
 
                     /* insert it in the parent temporarily until PDD 15 lands */
                     SUPER(key, value);
