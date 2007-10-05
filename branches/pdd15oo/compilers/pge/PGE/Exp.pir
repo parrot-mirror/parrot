@@ -133,13 +133,13 @@ tree as a PIR code object that can be compiled.
     .local string returnop
     returnop = '.yield'
     code.emit(<<"        CODE", name, .INTERPINFO_CURRENT_SUB)
-      .sub '%0'
-          .param pmc mob
+      .sub '%0' :method
           .param pmc adverbs   :slurpy :named
           .const .Sub corou = '%0_corou'
+          .local pmc mob
           $P0 = corou
           $P0 = clone $P0
-          mob = $P0(mob, adverbs)
+          mob = $P0(self, adverbs)
           .return (mob)
       .end
       .sub '%0_corou'
@@ -159,14 +159,13 @@ tree as a PIR code object that can be compiled.
     ##   Initial code for a rule that cannot be backtracked into.
     returnop = '.return'
     code.emit(<<"        CODE", name)
-      .sub '%0'
-          .param pmc mob          :unique_reg
+      .sub '%0' :method
           .param pmc adverbs      :unique_reg :slurpy :named
           .local string target    :unique_reg
-          .local pmc mfrom, mpos  :unique_reg
+          .local pmc mob, mfrom, mpos  :unique_reg
           .local int cpos, iscont :unique_reg
-          $P0 = get_global ['PGE'], 'Match'
-          (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(mob, adverbs :flat :named)
+          $P0 = get_hll_global ['PGE'], 'Match'
+          (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(self, adverbs :flat :named)
         CODE
 
   code_body:

@@ -133,8 +133,7 @@ parse valid Perl 6 regular expressions.
 
 .namespace [ 'PGE::Grammar' ]
 
-.sub 'regex'
-    .param pmc mob
+.sub 'regex' :method
     .param pmc adverbs         :slurpy :named
 
     .local string stop
@@ -145,7 +144,7 @@ parse valid Perl 6 regular expressions.
 
     stop = adverbs['stop']
     push stopstack, stop
-    match = optable.'parse'(mob, 'stop'=>stop)
+    match = optable.'parse'(self, 'stop'=>stop)
     $S0 = pop stopstack
 
     .return (match)
