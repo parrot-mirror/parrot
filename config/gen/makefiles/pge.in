@@ -12,7 +12,7 @@ CP       = @cp@
 PARROT_LIBRARY    = ../../runtime/parrot/library
 
 # the default target
-all: $(PARROT_LIBRARY)/PGE.pbc 
+all: $(PARROT_LIBRARY)/PGE.pbc
 
 SOURCES = PGE.pir \
   PGE/Exp.pir \
@@ -22,7 +22,8 @@ SOURCES = PGE.pir \
   PGE/Perl6Regex.pir \
   PGE/OPTable.pir \
   PGE/P5Regex.pir \
-  $(PARROT_LIBRARY)/PGE/Perl6Grammar.pir \
+  PGE/builtins.pg \
+  pgc.pir \
 
 $(PARROT_LIBRARY)/PGE.pbc: PGE.pbc
 	$(CP) PGE.pbc $(PARROT_LIBRARY)
@@ -30,6 +31,8 @@ $(PARROT_LIBRARY)/PGE.pbc: PGE.pbc
 PGE.pbc: $(PARROT) $(SOURCES)
 	$(RM_RF) PGE.pbc $(PARROT_LIBRARY)/PGE.pbc
 	$(PERL) -e "" >PGE/builtins_gen.pir
+	$(PARROT) -o PGE.pbc --output-pbc PGE.pir
+	$(PARROT) $(PARROT_LIBRARY)/PGE/Perl6Grammar.pir  --output=PGE/builtins_gen.pir PGE/builtins.pg
 	$(PARROT) -o PGE.pbc --output-pbc PGE.pir
 
 # This is a listing of all targets, that are meant to be called by users
@@ -67,7 +70,7 @@ clean: testclean
 	$(RM_RF) \
     PGE.pbc \
     $(PARROT_LIBRARY)/PGE.pbc \
-    PGE/builtins_gen.pir \
+    PGE/builtins_gen.pir
 
 realclean: clean
 	$(RM_RF) Makefile
