@@ -69,9 +69,8 @@ pass("Completed all tests in $0");
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file examine what happens when your configuration step
-module returns something other than the object but has some other defined
-result method.
+The tests in this file examine what happens when you require the failure of
+any configuration step to cause all configuration to cease.
 
 =head1 AUTHOR
 
