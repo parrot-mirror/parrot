@@ -21,7 +21,7 @@ PGE::Exp - base class for expressions
     .local pmc optable
     .local pmc term
 
-    $P0 = getclass "PGE::Match"
+    $P0 = get_class "PGE::Match"
     $P0 = subclass $P0, "PGE::Exp"
     $P1 = subclass $P0, "PGE::Exp::Literal"
     $P1 = subclass $P0, "PGE::Exp::Scalar"
@@ -45,15 +45,14 @@ PGE::Exp - base class for expressions
 
 =over 4
 
-=item C<compile(PMC source, PMC adverbs :slurpy :named)>
+=item C<compile(PMC adverbs :slurpy :named)>
 
-Compile the C<source> expression into PIR or a subroutine,
-according to the C<target> adverb.  
+Compile C<self> into PIR or a subroutine, according to the
+C<target> adverbs.
 
 =cut
 
-.sub 'compile'
-    .param pmc source
+.sub 'compile' :method
     .param pmc adverbs         :slurpy :named
 
     .local string target
@@ -72,7 +71,7 @@ according to the C<target> adverb.
     .local pmc code
     code = new 'CodeString'
     code.'emit'(nsformat, grammar)
-    $P0 = source.'root_pir'(adverbs :flat :named)
+    $P0 = self.'root_pir'(adverbs :flat :named)
     code .= $P0
     if target != 'pir' goto bytecode
     .return (code)
@@ -88,7 +87,7 @@ according to the C<target> adverb.
     .return ($P1)
 
   return_exp:
-    .return (source)
+    .return (self)
 .end
 
 
@@ -149,7 +148,7 @@ tree as a PIR code object that can be compiled.
           .local string target :unique_reg
           .local pmc mfrom, mpos :unique_reg
           .local int cpos, iscont :unique_reg
-          $P0 = getclass 'PGE::Match'
+          $P0 = get_hll_global ['PGE'], 'Match'
           (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(mob, adverbs :flat :named)
           $P0 = interpinfo %1
           setattribute mob, '&!corou', $P0
@@ -166,7 +165,7 @@ tree as a PIR code object that can be compiled.
           .local string target    :unique_reg
           .local pmc mfrom, mpos  :unique_reg
           .local int cpos, iscont :unique_reg
-          $P0 = getclass 'PGE::Match'
+          $P0 = get_global ['PGE'], 'Match'
           (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(mob, adverbs :flat :named)
         CODE
 
