@@ -36,7 +36,6 @@ package Parrot::Configure;
 
 use strict;
 use warnings;
-use Data::Dumper;
 
 use lib qw(config);
 use Carp qw(carp croak);
@@ -123,7 +122,7 @@ sub options {
 
 Provides a list of registered steps, where each step is represented by an
 L<Parrot::Configure::Task> object.  Steps are returned in the order in which
-they were registered in.
+they were registered.
 
 Accepts no arguments and returns a list in list context or an arrayref in
 scalar context.
@@ -134,6 +133,30 @@ sub steps {
     my $conf = shift;
 
     return wantarray ? @{ $conf->{steps} } : $conf->{steps};
+}
+
+=item * C<get_list_of_steps()>
+
+Provides a list of the B<names> of registered steps.
+
+C<steps()>, in contrast, provides a list of registered step B<objects>, of
+which the B<step name> is just a small part.  Step names are returned in the
+order in which their corresponding step objects were registered.
+
+Accepts no arguments and returns a list in list context or an arrayref in
+scalar context.
+
+B<Note:> The list of step names returned by C<get_list_of_steps()> will be the
+same as that returned by C<Parrot::Configure::Step::List::get_steps_list()>
+B<provided> that you have not used C<add_step()> or C<add_steps()> to add any
+configuration tasks other than those named in
+C<Parrot::Configure::Step::List::get_steps_list()>.
+
+=cut
+
+sub get_list_of_steps {
+    my $conf = shift;
+    return wantarray ? @{ $conf->{list_of_steps} } : $conf->{list_of_steps};
 }
 
 =item * C<add_step()>
@@ -152,8 +175,8 @@ sub add_step {
 
     push @{ $conf->{steps} },
         Parrot::Configure::Task->new(
-        step   => $step,
-        params => \@params,
+            step   => $step,
+            params => \@params,
         );
 
     return 1;
@@ -245,7 +268,8 @@ sub runsteps {
             $/x
         ) {
             %steps_to_die_for = map {$_, 1} (split /,/, $fatal_step);
-#            print STDERR Dumper \%steps_to_die_for;
+        } elsif ( $fatal_step == 1 ) {
+            %steps_to_die_for = map {$_, 1} @{ $conf->{list_of_steps} };
         } else {
             die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps";
         }
