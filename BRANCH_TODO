@@ -9,6 +9,10 @@ ability to look at results across versions to check when tests were injected.
 
 This will be done with a combination of Makefile and TAP::Harness 3.0 code.
 
+Each HLL is expected to run its tests inside of its own directory.  languages/Makefile
+will be changed to do this, instead of what it does now with gathering a list
+of files to run via a command line switch.
+
 Steps:
 
 1) Make TAP::Harness run top level (t/harness) tests cleanly with no shebang issues.
@@ -37,7 +41,7 @@ forth               DONE
 HQ9plus             DONE
 jako                DONE
 lazy-k              tests only run from languages, not with runtests
-lisp                DONE (added perl shebang)
+lisp                DONE
 lua                 Most tests pass with runtests, but not all.
 m4                  DONE? (make test reruns the suite.  Why?  runtests doesn't do this.)
 nqp                 DONE (fixed shebang)
