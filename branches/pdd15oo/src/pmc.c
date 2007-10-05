@@ -63,14 +63,12 @@ PMC *
 pmc_new(PARROT_INTERP, INTVAL base_type)
 {
     PMC *pmc;
-    if (base_type < enum_class_core_max) {
+    PMC *const classobj = interp->vtables[base_type]->pmc_class;
+    if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
+        pmc = VTABLE_instantiate(interp, classobj, PMCNULL);
+    else {
         pmc = get_new_pmc_header(interp, base_type, 0);
         VTABLE_init(interp, pmc);
-    }
-    else
-    {
-        PMC *classobj = interp->vtables[base_type]->pmc_class;
-        pmc = VTABLE_instantiate(interp, classobj, PMCNULL);
     }
     return pmc;
 }
@@ -277,13 +275,11 @@ PMC *
 pmc_new_noinit(PARROT_INTERP, INTVAL base_type)
 {
     PMC *pmc;
-    if (base_type < enum_class_core_max)
-        pmc = get_new_pmc_header(interp, base_type, 0);
-    else
-    {
-        PMC *classobj = interp->vtables[base_type]->pmc_class;
+    PMC *const classobj = interp->vtables[base_type]->pmc_class;
+    if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
         pmc = VTABLE_instantiate(interp, classobj, PMCNULL);
-    }
+    else
+        pmc = get_new_pmc_header(interp, base_type, 0);
     return pmc;
 }
 
@@ -344,14 +340,12 @@ PMC *
 pmc_new_init(PARROT_INTERP, INTVAL base_type, NULLOK(PMC *init))
 {
     PMC *pmc;
-    if (base_type < enum_class_core_max) {
+    PMC *const classobj = interp->vtables[base_type]->pmc_class;
+    if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
+        pmc = VTABLE_instantiate(interp, classobj, init);
+    else {
         pmc = get_new_pmc_header(interp, base_type, 0);
         VTABLE_init_pmc(interp, pmc, init);
-    }
-    else
-    {
-        PMC *classobj = interp->vtables[base_type]->pmc_class;
-        pmc = VTABLE_instantiate(interp, classobj, init);
     }
     return pmc;
 }

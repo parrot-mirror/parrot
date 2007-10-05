@@ -313,11 +313,11 @@ calls init().
 */
 
     PMC *instantiate(PMC *init) {
-        const INTVAL type = SELF->vtable->base_type;
+        const INTVAL type = VTABLE_type(INTERP, SELF);
 
         /* Ensure no looping, as pmc_new calls the instantiate vtable entry for
-         * non-core types. */
-        if (type >= enum_class_core_max)
+         * classes. */
+        if (PObj_is_class_TEST(SELF))
             real_exception(interp, NULL, 1,
                     "All high-level classes should override instantiate");
 
