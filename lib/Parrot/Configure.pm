@@ -268,7 +268,7 @@ sub runsteps {
             $/x
         ) {
             %steps_to_die_for = map {$_, 1} (split /,/, $fatal_step);
-        } elsif ( $fatal_step == 1 ) {
+        } elsif ( $fatal_step eq '1' ) {
             %steps_to_die_for = map {$_, 1} @{ $conf->{list_of_steps} };
         } else {
             die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps";
