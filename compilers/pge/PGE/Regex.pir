@@ -33,15 +33,14 @@ Match an identifier.
 
 =cut
 
-.sub 'ident'
-    .param pmc mob
+.sub 'ident' :method
     .param pmc adverbs         :slurpy :named
     .local string target
-    .local pmc mfrom, mpos
+    .local pmc mob, mfrom, mpos
     .local int pos, lastpos
 
     $P0 = get_hll_global ['PGE'], 'Match'
-    (mob, pos, target) = $P0.'new'(mob)
+    (mob, pos, target) = $P0.'new'(self)
 
     lastpos = length target
     $S0 = substr target, pos, 1
@@ -62,11 +61,11 @@ Match a null string (always returns true on first match).
 
 =cut
 
-.sub "null"
-    .param pmc mob
+.sub "null" :method
+    .local pmc mob
     .local int pos
     $P0 = get_hll_global ['PGE'], 'Match'
-    (mob, pos) = $P0.'new'(mob)
+    (mob, pos) = $P0.'new'(self)
     mob.'to'(pos)
     .return (mob)
 .end
@@ -268,17 +267,16 @@ Match whitespace between tokens.
 
 =cut
 
-.sub "ws"
-    .param pmc mob
+.sub "ws" :method
     .local string target
-    .local pmc mfrom, mpos
+    .local pmc mob, mfrom, mpos
     .local int rep, pos, lastpos
     .local string nextchars
     .const .Sub corou = "ws_corou"
     nextchars = ""
   ws_1:
     $P0 = get_hll_global ['PGE'], 'Match'
-    (mob, pos, target, mfrom, mpos) = $P0.'new'(mob)
+    (mob, pos, target, mfrom, mpos) = $P0.'new'(self)
     lastpos = length target
     pos = mfrom
     if pos >= lastpos goto found
