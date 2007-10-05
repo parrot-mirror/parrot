@@ -30,7 +30,7 @@ abc                 DONE
 amber               NO TESTS
 APL                 DONE
 BASIC               NO TESTS
-befunge             1 Test, needs a lot of work
+befunge             DONE
 bf                  Tests run from languages, not from languages/bf
 c99                 Tests don't run
 cardinal            Most/all tests fail with method __get_bool not found

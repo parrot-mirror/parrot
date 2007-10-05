@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+use lib qw( t . .. lib ../lib ../../lib ../../../lib ../../../../lib );
 use Test::More tests => 1;
 use Parrot::Test;
 
