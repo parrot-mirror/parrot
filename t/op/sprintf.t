@@ -241,9 +241,9 @@ tag 'all' is allowed for todo tests that should fail on any system
     print "'\n"
 
   eh_sprintf:
-    .sym pmc exception
-    .sym string message
-    get_results '(0,0)', exception, message
+    .local pmc exception
+    .local string message
+    get_results '0,0', exception, message
     $I0 = index message, 'is not a valid sprintf format'
     if $I0 == -1 goto other_error
     $I0 = index expected, ' INVALID'
