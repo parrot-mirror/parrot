@@ -1692,7 +1692,6 @@ END_PIR
     .local pmc comp
     comp = compreg "PIR"
     $P0 = comp(s)
-    cl.'add_method'('get_integer_keyed_int', $P0, 'vtable' => 1)
     o = new 'Foo'
     $I0 = o[12]
     print $I0
