@@ -725,7 +725,9 @@ Adds the given sub PMC as a method with the given name.
         if (VTABLE_exists_keyed_str(interp, _class->methods, name)) {
             /* RT46095 Need to handle multi methods here. */
             real_exception(interp, NULL, E_NotImplementedError,
-                "A method of this name already exists. It may have been supplied by a role.");
+                "A method named '%S' already exists in class '%S'. "
+                "It may have been supplied by a role.",
+                name, VTABLE_get_string(interp, SELF));
         }
 
         /* Enter it into the table. */
