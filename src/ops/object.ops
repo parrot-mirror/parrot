@@ -521,8 +521,8 @@ class name, namespace, or key PMC.
 =cut
 
 inline op getattribute(out PMC, invar PMC, in INT) :object_classes {
-    $1 = VTABLE_get_attr(interp, $2, $3);
-    goto NEXT();
+    real_exception(interp, NULL, UNIMPLEMENTED,
+            "Integer access to attributes has been deprecated, use named attribute access instead");
 }
 
 inline op getattribute(out PMC, invar PMC, in STR) :object_classes {
@@ -550,8 +550,8 @@ child class.) The parent $2 is a class name, namespace, or key PMC.
 =cut
 
 inline op setattribute(invar PMC, in INT, invar PMC) :object_classes {
-    VTABLE_set_attr(interp, $1, $2, $3);
-    goto NEXT();
+    real_exception(interp, NULL, UNIMPLEMENTED,
+            "Integer access to attributes has been deprecated, use named attribute access instead");
 }
 
 inline op setattribute(invar PMC, in STR, invar PMC) :object_classes {
@@ -572,15 +572,8 @@ Throws an exception if $3 isn't in $2's hierarchy.
 =cut
 
 op classoffset(out INT, invar PMC, in STR) :object_classes {
-    opcode_t *next = expr NEXT();
-    INTVAL offset;
-    offset = Parrot_class_offset(interp, $2, $3);
-    if (offset < 0) {
-        real_exception(interp, next, NO_CLASS,
-            "Class not parent of object");
-    }
-    $1 = offset;
-    goto ADDRESS(next);
+    real_exception(interp, NULL, UNIMPLEMENTED,
+            "The 'classoffset' opcode has been deprecated, use named attribute access instead");
 }
 
 
