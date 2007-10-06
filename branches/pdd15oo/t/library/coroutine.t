@@ -152,8 +152,8 @@ done:
 found:
 	.local pmc coro1, coro2
 	.const .Sub coro_sub = "coro_enumerate_tree"
-	coro1 = new coro_class, coro_sub
-	coro2 = new coro_class, coro_sub
+	coro1 = coro_class.'new'('initial_sub' => coro_sub)
+	coro2 = coro_class.'new'('initial_sub' => coro_sub)
 	($P0 :optional, $I0 :opt_flag) = coro1.'resume'(coro1, tree1)
 	($P1 :optional, $I1 :opt_flag) = coro2.'resume'(coro2, tree2)
 
