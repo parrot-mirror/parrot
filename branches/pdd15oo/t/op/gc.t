@@ -214,7 +214,7 @@ OUTPUT
 pasm_output_is( <<'CODE', <<OUTPUT, "failing if regsave is not marked" );
     newclass P9, "Source"
     newclass P10, "Source::Buffer"
-    P12 = new "Source"
+    new P12, "Source"
 
     set S20, P12
     print S20
@@ -228,7 +228,7 @@ pasm_output_is( <<'CODE', <<OUTPUT, "failing if regsave is not marked" );
     getprop P12, "buffer", P2
     sweep 1
     unless_null P12, buffer_ok
-    P12 = new "Source::Buffer"
+    new P12, "Source::Buffer"
     new P14, 'String'
     set P14, "hello\n"
     setprop P12, "buf", P14
@@ -570,11 +570,11 @@ pir_output_is( <<'CODE', <<'OUTPUT', "verify deleg_pmc object marking" );
     $P0 = new 'String'
     $S0 = "ok" . " 3\n"
     $P0 = $S0
-    setattribute s, "X\0o3", $P0
+    setattribute s, "o3", $P0
     $P0 = new 'String'
     $S0 = "ok" . " 4\n"
     $P0 = $S0
-    setattribute s, "X\0o4", $P0
+    setattribute s, "o4", $P0
     null $P0
     null $S0
     null cl
@@ -590,9 +590,9 @@ lp:
     t = "ok 2\n"
     print s
     print t
-    $P0 = getattribute s, "X\0o3"
+    $P0 = getattribute s, "o3"
     print $P0
-    $P0 = getattribute s, "X\0o4"
+    $P0 = getattribute s, "o4"
     print $P0
 .end
 CODE
