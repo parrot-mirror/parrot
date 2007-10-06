@@ -54,18 +54,16 @@ GRAMMAR
     say $S1
 
     # Add a POD comment and recompile
-    grammar = $P1.'compile'(<<'GRAMMAR')
-=head NAME
-  
-    TreeMin2
-
-=cut
+    .local string source
+    source = "=head NAME\n\n TreeMin2\n\n=cut\n\n"
+    source .= <<'GRAMMAR'
     grammar TreeMin2 is TGE::Grammar;
     transform min (Leaf) :language('PIR') {
         $P1 = getattribute node, "value"
        .return ($P1)
     }
 GRAMMAR
+    grammar = $P1.'compile'(source)
     $S1 = typeof grammar
     say $S1
 .end
