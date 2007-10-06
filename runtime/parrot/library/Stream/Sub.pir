@@ -63,7 +63,7 @@ The stream will be disconnected automatically if the provided sub returns.
 
     load_bytecode "library/Stream/Base.pir"
 
-    getclass base, "Stream::Base"
+    get_class base, "Stream::Base"
     subclass sub, base, "Stream::Sub"
 
     addattribute sub, "write_cont"
@@ -89,8 +89,7 @@ END:
     .local pmc _write
     .local pmc ret
 
-    classoffset $I0, self, "Stream::Sub"
-    getattribute _write, self, $I0
+    getattribute _write, self, 'write_cont'
 
     $P0 =self."_call_writer"(_write, str)
 .end
@@ -118,10 +117,9 @@ END:
     temp = self."source"()
     typeof $I0, temp
     if $I0 == .Undef goto END
-    classoffset $I0, self, "Stream::Sub"
     .include "interpinfo.pasm"
     $P0 = interpinfo .INTERPINFO_CURRENT_CONT
-    setattribute self, $I0, $P0
+    setattribute self, 'write_cont', $P0
 
     str = temp( self )
 
