@@ -363,9 +363,9 @@ sub _run_this_step {
                 )
                 or (
                     # by step name
-#                    ( ${ $conf->{hash_of_steps} }{ $args->{verbose_step} } )
-#                        and ( $args->{verbose_step} eq $step_name )
-                    ${ $conf->{hash_of_steps} }{ $step_name }
+                    ( ${ $conf->{hash_of_steps} }{ $args->{verbose_step} } )
+                        and ( $args->{verbose_step} eq $step_name )
+#                    ${ $conf->{hash_of_steps} }{ $step_name }
                 )
                 or (
                     # by description
