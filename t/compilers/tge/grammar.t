@@ -30,38 +30,49 @@ pir_output_is( <<'CODE', <<'OUT', 'test compiling anonymous and named grammars' 
 .sub _main :main
     load_bytecode 'TGE.pbc'
 
-    # Load the grammar in a string
-    .local string source
-    source = <<'GRAMMAR'
+    # Compile a grammar from the source
+    .local pmc grammar
+    $P1 = new 'TGE::Compiler'
+    grammar = $P1.'compile'(<<'GRAMMAR')
     transform min (Leaf) :language('PIR') {
         $P1 = getattribute node, "value"
        .return ($P1)
     }
 GRAMMAR
-
-    # Compile a grammar from the source
-    .local pmc grammar
-    $P1 = new 'TGE::Compiler'
-    grammar = $P1.'compile'(source)
     $S1 = typeof grammar
     say $S1
 
     # Add the grammar keyword and recompile
-    source = "grammar TreeMin is TGE::Grammar;\n\n" . source
-    grammar = $P1.'compile'(source)
+    grammar = $P1.'compile'(<<'GRAMMAR')
+    grammar TreeMin is TGE::Grammar;
+    transform min (Leaf) :language('PIR') {
+        $P1 = getattribute node, "value"
+       .return ($P1)
+    }
+GRAMMAR
     $S1 = typeof grammar
     say $S1
 
     # Add a POD comment and recompile
-    source = "=head NAME\n\n  TreeMin\n\n=cut\n\n" . source
-    grammar = $P1.'compile'(source)
+    grammar = $P1.'compile'(<<'GRAMMAR')
+=head NAME
+  
+    TreeMin2
+
+=cut
+    grammar TreeMin2 is TGE::Grammar;
+    transform min (Leaf) :language('PIR') {
+        $P1 = getattribute node, "value"
+       .return ($P1)
+    }
+GRAMMAR
     $S1 = typeof grammar
     say $S1
 .end
 CODE
 AnonGrammar
 TreeMin
-TreeMin
+TreeMin2
 OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'complete example: Branch/Leaf tree grammar' );
