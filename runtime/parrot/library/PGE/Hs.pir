@@ -58,8 +58,6 @@ whole thing may be taken out or refactored away at any moment.
     .local pmc load
     load_bytecode "Data/Escape.pir"
     $P0 = get_class 'PGE::Match'
-    $P1 = get_hll_global ['PGE::Match'], 'dump_hs'
-    $P0.'add_method'('dump_hs', $P1)
 .end
 
 .sub "add_rule"
@@ -77,7 +75,9 @@ whole thing may be taken out or refactored away at any moment.
 
     $I0 = exists adverbs["grammar"]
     if $I0 goto done
-    store_global "PGE::Grammar", name, rulesub
+    $P0 = get_class "PGE::Grammar"
+    if null $P0 goto done
+    addmethod $P0, name, rulesub
 
   done:
     .return (name)
