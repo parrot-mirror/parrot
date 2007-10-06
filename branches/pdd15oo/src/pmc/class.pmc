@@ -752,8 +752,9 @@ Adds the given sub PMC as a vtable override with the given name.
         /* If we have already added a vtable override with this name... */
         if (VTABLE_exists_keyed_str(interp, _class->vtable_overrides, name)) {
             real_exception(interp, NULL, E_NotImplementedError,
-                "A vtable override for '%s' already exists."
-                " It may have been supplied by a role.", c_name);
+                "A vtable override named '%S' already exists in class '%S'. "
+                "It may have been supplied by a role.",
+                name, VTABLE_get_string(interp, SELF));
         }
 
         /* Check name is a valid vtable method name. */
