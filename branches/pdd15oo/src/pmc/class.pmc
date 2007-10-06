@@ -752,8 +752,8 @@ Adds the given sub PMC as a vtable override with the given name.
         /* If we have already added a vtable override with this name... */
         if (VTABLE_exists_keyed_str(interp, _class->vtable_overrides, name)) {
             real_exception(interp, NULL, E_NotImplementedError,
-                "A vtable override of this name already exists."
-                "It may have been supplied by a role.");
+                "A vtable override for '%s' already exists."
+                " It may have been supplied by a role.", c_name);
         }
 
         /* Check name is a valid vtable method name. */
@@ -1421,7 +1421,6 @@ Walks the MRO of the class and finds the method with the given name.
 
     PCCMETHOD find_method(STRING *name) {
         Parrot_Class * const  _class    = PARROT_CLASS(SELF);
-        PMC                  *_namespace = _class->_namespace;
         int num_classes, i;
 
         /* Walk and search. One day, we'll use the cache first. */
