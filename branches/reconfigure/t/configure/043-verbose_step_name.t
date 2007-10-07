@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 052-verbose_step_name.t
+# 043-verbose_step_name.t
 
 use strict;
 use warnings;
@@ -73,11 +73,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-052-verbose_step_name.t - test bad step failure case in Parrot::Configure
+043-verbose_step_name.t - test bad step failure case in Parrot::Configure
 
 =head1 SYNOPSIS
 
-    % prove t/configure/052-verbose_step_name.t
+    % prove t/configure/043-verbose_step_name.t
 
 =head1 DESCRIPTION
 

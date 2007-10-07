@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 051-list_of_steps.t
+# 042-list_of_steps.t
 
 use strict;
 use warnings;
@@ -49,11 +49,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-051-list_of_steps.t - test C<Parrot::Configure::get_list_of_steps()>
+042-list_of_steps.t - test C<Parrot::Configure::get_list_of_steps()>
 
 =head1 SYNOPSIS
 
-    % prove t/configure/051-list_of_steps.t
+    % prove t/configure/042-list_of_steps.t
 
 =head1 DESCRIPTION
 
