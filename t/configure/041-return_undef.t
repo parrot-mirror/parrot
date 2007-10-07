@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 048-return_undef.t
+# 041-return_undef.t
 
 use strict;
 use warnings;
@@ -81,12 +81,12 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-048-return_undef.t - see what happens when configuration step returns an
+041-return_undef.t - see what happens when configuration step returns an
 undefined value
 
 =head1 SYNOPSIS
 
-    % prove t/configure/048-return_undef.t
+    % prove t/configure/041-return_undef.t
 
 =head1 DESCRIPTION
 
