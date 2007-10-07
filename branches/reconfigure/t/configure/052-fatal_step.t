@@ -62,7 +62,11 @@ my ( $errtie, @errlines );
     $rv    = $conf->runsteps;
     @lines = $tie->READLINE;
     @errlines = $errtie->READLINE;
+    $tie = undef;
+    $errtie = undef;
 }
+untie *STDOUT;
+untie *STDERR;
 ok(! defined $rv, 'runsteps() returned undef');
 my $bigmsg = join q{}, @lines;
 like(
@@ -76,8 +80,6 @@ like(
     qr/step $step failed:/s,
     "Got STDERR message expected upon running $step"
 );
-untie *STDOUT;
-untie *STDERR;
 
 pass("Completed all tests in $0");
 

@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 051-fatal_step.t
+# 056-fatal_step.t
 
 use strict;
 use warnings;
@@ -18,7 +18,7 @@ is( $|, 1, "output autoflush is set" );
 
 my $args = process_options(
     {
-        argv => [ qw( --fatal-step=init::zeta ) ],
+        argv => [ q{--fatal-step=1,init::manifest} ],
         mode => q{configure},
     }
 );
@@ -87,19 +87,19 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-051-fatal_step.t - test bad step failure case in Parrot::Configure
+056-fatal_step.t - test bad step failure case in Parrot::Configure
 
 =head1 SYNOPSIS
 
-    % prove t/configure/051-fatal_step.t
+    % prove t/configure/056-fatal_step.t
 
 =head1 DESCRIPTION
 
 The files in this directory test functionality used by F<Configure.pl>.
 
 The tests in this file examine what happens when you set the C<--fatal-step>
-option for a single configuration step and that step returns an undefined
-value.
+option for multiple configuration steps (some via step sequence number) and
+one of those steps returns an undefined value.
 
 =head1 AUTHOR
 

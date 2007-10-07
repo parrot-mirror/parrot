@@ -1,12 +1,12 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 051-fatal_step.t
+# 057-fatal_step.t
 
 use strict;
 use warnings;
 
-use Test::More tests => 14;
+use Test::More tests => 12;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use Parrot::Configure;
@@ -16,9 +16,10 @@ use Parrot::IO::Capture::Mini;
 $| = 1;
 is( $|, 1, "output autoflush is set" );
 
+my $fatal_step_sequence_number = 1079;
 my $args = process_options(
     {
-        argv => [ qw( --fatal-step=init::zeta ) ],
+        argv => [ qq{--fatal-step=$fatal_step_sequence_number} ],
         mode => q{configure},
     }
 );
@@ -52,34 +53,9 @@ is( $conf->options->{c}->{debugging},
     1, "command-line option '--debugging' has been stored in object" );
 
 my $rv;
-my ( $tie, @lines );
-my ( $errtie, @errlines );
-{
-    $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $errtie = tie *STDERR, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $rv    = $conf->runsteps;
-    @lines = $tie->READLINE;
-    @errlines = $errtie->READLINE;
-    $tie = undef;
-    $errtie = undef;
-}
-untie *STDOUT;
-untie *STDERR;
-ok(! defined $rv, 'runsteps() returned undef');
-my $bigmsg = join q{}, @lines;
-like(
-    $bigmsg,
-    qr/$description\.\.\./s,
-    "Got STDOUT message expected upon running $step"
-);
-my $errbigmsg = join q{}, @errlines;
-like(
-    $errbigmsg,
-    qr/step $step failed:/s,
-    "Got STDERR message expected upon running $step"
-);
+eval { $rv = $conf->runsteps; };
+like($@, qr/^No configuration step corresponding to $fatal_step_sequence_number/,
+    "Got expected error message when value to --fatal-step option was misspecified");
 
 pass("Completed all tests in $0");
 
@@ -87,19 +63,18 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-051-fatal_step.t - test bad step failure case in Parrot::Configure
+057-fatal_step.t - test bad step failure case in Parrot::Configure
 
 =head1 SYNOPSIS
 
-    % prove t/configure/051-fatal_step.t
+    % prove t/configure/057-fatal_step.t
 
 =head1 DESCRIPTION
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file examine what happens when you set the C<--fatal-step>
-option for a single configuration step and that step returns an undefined
-value.
+The tests in this file examine what happens when you misspecify the value for
+the C<--fatal-step> option.
 
 =head1 AUTHOR
 
