@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 050-fatal_step.t
+# 050-fatal.t
 
 use strict;
 use warnings;
@@ -18,7 +18,7 @@ $| = 1;
 is($|, 1, "output autoflush is set");
 
 my $args = process_options( {
-    argv    => [ q{--fatal-step} ],
+    argv    => [ q{--fatal} ],
     mode    => q{configure},
 } );
 ok(defined $args, "process_options returned successfully");
@@ -59,11 +59,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-050-fatal_step.t - see what happens when C<--fatal-step> is set for all configuration steps
+050-fatal.t - see what happens when C<--fatal-step> is set for all configuration steps
 
 =head1 SYNOPSIS
 
-    % prove t/configure/050-fatal_step.t
+    % prove t/configure/050-fatal.t
 
 =head1 DESCRIPTION
 

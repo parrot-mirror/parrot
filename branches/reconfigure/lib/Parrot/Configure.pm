@@ -220,8 +220,8 @@ sub runsteps {
     my $conf = shift;
 
     my $n = 0;    # step number
-    my ( $verbose, $verbose_step, $fatal_step, $ask ) =
-        $conf->options->get(qw( verbose verbose-step fatal-step ask ));
+    my ( $verbose, $verbose_step, $fatal, $fatal_step, $ask ) =
+        $conf->options->get(qw( verbose verbose-step fatal fatal-step ask ));
 
 #    $conf->{log} = [];
     # The way the options are currently structured, 'verbose' applies to all
@@ -259,22 +259,29 @@ sub runsteps {
     # before we run *any* steps.
 
     my %steps_to_die_for = ();
+    # If the --fatal option is true, then all config steps are mapped into
+    # %steps_to_die_for and there is no consideration of --fatal-step.
+    if ($fatal) {
+        %steps_to_die_for = map {$_, 1} @{ $conf->{list_of_steps} };
+    }
     # We make certain that argument to --fatal-step is a comma-delimited
     # string of configuration steps, each of which is a string delimited by
     # two colons, the first half of which is one of init|inter|auto|gen
-    my $step_pattern = qr/((?:init|inter|auto|gen)::[a-z]+)/;
-    if ( defined ( $fatal_step ) ) {
+    # (This will be modified to take a step sequence number.)
+    elsif ( defined ( $fatal_step ) ) {
+        my $step_pattern = qr/((?:init|inter|auto|gen)::[a-z]+)/;
         if ( $fatal_step =~ /^
             $step_pattern
             (, $step_pattern)*
             $/x
         ) {
             %steps_to_die_for = map {$_, 1} (split /,/, $fatal_step);
-        } elsif ( $fatal_step eq '1' ) {
-            %steps_to_die_for = map {$_, 1} @{ $conf->{list_of_steps} };
         } else {
             die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps";
         }
+    }
+    else {
+        # No action needed; this is the default case where no step is fatal
     }
 
     foreach my $task ( $conf->steps ) {

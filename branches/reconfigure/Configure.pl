@@ -44,6 +44,10 @@ changed.
 
 Run C<--verbose=2> for step number C<N> or matching description.
 
+=item C<--fatal>
+
+Tells Configure.pl to halt completely if any configuration step fails.
+
 =item C<--fatal-step={init::alpha,inter::beta,auto::gamma}>
 
 Tells Configure.pl to halt completely if any configuration step in
