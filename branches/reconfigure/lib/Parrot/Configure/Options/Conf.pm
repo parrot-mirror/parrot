@@ -84,10 +84,10 @@ our $script         = q{Configure.pl};
 our $parrot_version = Parrot::BuildUtil::parrot_version();
 our $svnid          = '$Id$',
 
-    my %short_circuits = (
+my %short_circuits = (
     help    => \&print_help,
     version => \&print_version,
-    );
+);
 
 our %options_components = (
     'valid_options'  => \@valid_options,
