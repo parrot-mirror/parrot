@@ -159,17 +159,6 @@ L_BadId:
     print I0
     print "\\n"
     end
-# delegate calls these 2 functions
-.namespace ["delegate"]
-.pcc_sub __name:
-   get_params '(0)', P2
-   set_returns '(0)', "delegate"
-   returncc
-.pcc_sub __type:
-   get_params '(0)', P2
-   find_type I5, "delegate"
-   set_returns '(0)', I5
-   returncc
 CODE
 /All names and ids ok/
 OUTPUT
