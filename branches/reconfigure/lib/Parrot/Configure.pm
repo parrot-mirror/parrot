@@ -269,7 +269,7 @@ sub runsteps {
     # two colons, the first half of which is one of init|inter|auto|gen
     # (This will be modified to take a step sequence number.)
     elsif ( defined ( $fatal_step ) ) {
-        my $step_pattern = qr/((?:init|inter|auto|gen)::[a-z]+)/;
+        my $step_pattern = qr/(?:init|inter|auto|gen)::[a-z]+/;
         if ( $fatal_step =~ /^
             $step_pattern
             (, $step_pattern)*
