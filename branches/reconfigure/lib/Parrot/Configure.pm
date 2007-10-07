@@ -269,31 +269,7 @@ sub runsteps {
     # two colons, the first half of which is one of init|inter|auto|gen
     # (This will be modified to take a step sequence number.)
     elsif ( defined ( $fatal_step ) ) {
-        my $named_step_pattern =    qr/(?:init|inter|auto|gen)::[a-z]+/;
-        my $unit_step_pattern = qr/\d+|$named_step_pattern/;
-        if ( $fatal_step =~ /^
-            $unit_step_pattern
-            (, $unit_step_pattern)*
-            $/x
-        ) {
-            my @fatal_steps = split /,/, $fatal_step;
-            for my $s (@fatal_steps) {
-                if ($s =~ /^\d+$/) {
-                    die "No configuration step corresponding to $fatal_step"
-                        unless defined $conf->{list_of_steps}->[$s - 1];
-                    my $step_name = $conf->{list_of_steps}->[$s - 1];
-                    if ($step_name =~ /$named_step_pattern/) {
-                        $steps_to_die_for{$step_name}++;
-                    } else {
-                        die "Configuration step corresponding to $s is invalid";
-                    }
-                } else {
-                    $steps_to_die_for{$s}++;
-                }
-            }
-        } else {
-            die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps or configuration step sequence numbers";
-        }
+        %steps_to_die_for = $conf->_handle_fatal_step_option( $fatal_step );
     }
     else {
         # No action needed; this is the default case where no step is fatal
@@ -321,6 +297,38 @@ sub runsteps {
         }
     }
     return 1;
+}
+
+sub _handle_fatal_step_option {
+    my $conf = shift;
+    my ($fatal_step) = @_;
+    my %steps_to_die_for = ();
+    my $named_step_pattern =    qr/(?:init|inter|auto|gen)::[a-z]+/;
+    my $unit_step_pattern = qr/\d+|$named_step_pattern/;
+    if ( $fatal_step =~ /^
+        $unit_step_pattern
+        (, $unit_step_pattern)*
+        $/x
+    ) {
+        my @fatal_steps = split /,/, $fatal_step;
+        for my $s (@fatal_steps) {
+            if ($s =~ /^\d+$/) {
+                die "No configuration step corresponding to $fatal_step"
+                    unless defined $conf->{list_of_steps}->[$s - 1];
+                my $step_name = $conf->{list_of_steps}->[$s - 1];
+                if ($step_name =~ /$named_step_pattern/) {
+                    $steps_to_die_for{$step_name}++;
+                } else {
+                    die "Configuration step corresponding to $s is invalid";
+                }
+            } else {
+                $steps_to_die_for{$s}++;
+            }
+        }
+    } else {
+        die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps or configuration step sequence numbers";
+    }
+    return %steps_to_die_for;
 }
 
 =item * C<run_single_step()>
