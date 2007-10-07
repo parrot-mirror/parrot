@@ -395,7 +395,6 @@ sub _run_this_step {
                     # by step name
                     ( ${ $conf->{hash_of_steps} }{ $args->{verbose_step} } )
                         and ( $args->{verbose_step} eq $step_name )
-#                    ${ $conf->{hash_of_steps} }{ $step_name }
                 )
                 or (
                     # by description
@@ -406,9 +405,6 @@ sub _run_this_step {
             $conf->options->set( verbose => 2 );
         }
     }
-
-    # RT#43673 cc_build uses this verbose setting, why?
-    $conf->data->set( verbose => $args->{verbose} ) if $args->{n} > 2;
 
     print "\n", $step->description, '...';
     print "\n" if $args->{verbose} && $args->{verbose} == 2;
