@@ -293,6 +293,15 @@ Queries this object's class to find the method with the given name.
             PMC * const cur_class =
                 VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
 
+            /* If there's a vtable override for 'find_method' in the current
+             * class, run that first. */
+            method = Parrot_oo_find_vtable_override_for_class(interp, cur_class,
+                    string_from_literal(interp, "find_method"));
+            if (!PMC_IS_NULL(method)) {
+                return (PMC*)Parrot_run_meth_fromc_args(interp, method, SELF,
+                        string_from_literal(interp, "find_method"), "PS", name);
+            
+            }
             /* If it's from this universe or the class doesn't inherit from
              * anything outside of it... */
             if (all_in_universe || VTABLE_isa(interp, cur_class, CONST_STRING(interp, "Class"))) {
