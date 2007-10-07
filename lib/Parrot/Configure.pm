@@ -223,7 +223,7 @@ sub runsteps {
     my ( $verbose, $verbose_step, $fatal, $fatal_step, $ask ) =
         $conf->options->get(qw( verbose verbose-step fatal fatal-step ask ));
 
-#    $conf->{log} = [];
+    $conf->{log} = [];
     # The way the options are currently structured, 'verbose' applies to all
     # steps; 'verbose-step' can only apply to a single step; and 'ask' applies
     # to all steps but has no relevance unless the step in an 'inter::' step.
@@ -292,8 +292,14 @@ sub runsteps {
             ask             => $ask,
             n               => $n,
         } );
-        if ( ( not defined ( $rv ) ) and $red_flag ) {
-            return;
+        if ( ! defined $rv ) {
+            if ( $red_flag ) {
+                return;
+            } else {
+                $conf->{log}->[$n] = {
+                    step    => $step_name,
+                };
+            }
         }
     }
     return 1;

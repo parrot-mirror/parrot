@@ -352,9 +352,10 @@ $conf->runsteps or exit(1);
 # as command-line option
 $opttest->run_build_tests();
 
+my $make = $conf->data->get('make');
 # from Parrot::Configure::Messages
-print_conclusion( $conf->data->get('make') );
-exit(0);
+my $rv = print_conclusion( $conf, $make );
+exit($rv);
 
 ################### DOCUMENTATION ###################
 
