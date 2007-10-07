@@ -67,7 +67,6 @@ like(
     "Got STDOUT message expected upon running $step"
 );
 
-
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

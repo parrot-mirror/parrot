@@ -269,15 +269,30 @@ sub runsteps {
     # two colons, the first half of which is one of init|inter|auto|gen
     # (This will be modified to take a step sequence number.)
     elsif ( defined ( $fatal_step ) ) {
-        my $step_pattern = qr/(?:init|inter|auto|gen)::[a-z]+/;
+        my $named_step_pattern =    qr/(?:init|inter|auto|gen)::[a-z]+/;
+        my $unit_step_pattern = qr/\d+|$named_step_pattern/;
         if ( $fatal_step =~ /^
-            $step_pattern
-            (, $step_pattern)*
+            $unit_step_pattern
+            (, $unit_step_pattern)*
             $/x
         ) {
-            %steps_to_die_for = map {$_, 1} (split /,/, $fatal_step);
+            my @fatal_steps = split /,/, $fatal_step;
+            for my $s (@fatal_steps) {
+                if ($s =~ /^\d+$/) {
+                    die "No configuration step corresponding to $fatal_step"
+                        unless defined $conf->{list_of_steps}->[$s - 1];
+                    my $step_name = $conf->{list_of_steps}->[$s - 1];
+                    if ($step_name =~ /$named_step_pattern/) {
+                        $steps_to_die_for{$step_name}++;
+                    } else {
+                        die "Configuration step corresponding to $s is invalid";
+                    }
+                } else {
+                    $steps_to_die_for{$s}++;
+                }
+            }
         } else {
-            die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps";
+            die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps or configuration step sequence numbers";
         }
     }
     else {
