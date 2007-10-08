@@ -32,7 +32,7 @@ APL                 DONE
 BASIC               NO TESTS
 befunge             DONE
 bf                  DONE
-c99                 Tests don't run
+c99                 Tests depend on having postgres installed?
 cardinal            Most/all tests fail with method __get_bool not found
 cola                NO TESTS
 dotnet              Requires MCS compiler in path to build test assemblies
