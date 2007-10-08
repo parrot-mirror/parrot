@@ -184,9 +184,20 @@ of the given name walking up the inheritance tree.
 */
     PMC *get_attr_str(STRING *name) {
         Parrot_Object * const obj = PARROT_OBJECT(SELF);
+        INTVAL index;
+
+        /* If there's a vtable override for 'get_attr_str' run that first. */
+        PMC * const method = Parrot_oo_find_vtable_override(interp,
+                VTABLE_get_class(interp, SELF),
+                string_from_literal(interp, "get_attr_str"));
+        if (!PMC_IS_NULL(method)) {
+            return (PMC*)Parrot_run_meth_fromc_args(interp, method, SELF,
+                    string_from_literal(interp, "get_attr_str"), "PS", name);
+        }
+        
 
         /* Look up the index. */
-        const INTVAL index = get_attrib_index(interp, obj->_class, name);
+        index = get_attrib_index(interp, obj->_class, name);
 
         /* If lookup failed, exception. */
         if (index == -1)
@@ -233,7 +244,18 @@ of the given name walking up the inheritance tree.
 */
     void set_attr_str(STRING *name, PMC *value) {
         Parrot_Object * const obj = PARROT_OBJECT(SELF);
-        const INTVAL index        = get_attrib_index(interp, obj->_class, name);
+        INTVAL index;
+
+        /* If there's a vtable override for 'set_attr_str' run that first. */
+        PMC * const method = Parrot_oo_find_vtable_override(interp,
+                VTABLE_get_class(interp, SELF),
+                string_from_literal(interp, "set_attr_str"));
+        if (!PMC_IS_NULL(method)) {
+            return (PMC*)Parrot_run_meth_fromc_args(interp, method, SELF,
+                    string_from_literal(interp, "set_attr_str"), "PSP", name, value);
+        }
+        
+        index = get_attrib_index(interp, obj->_class, name);
 
         /* If lookup failed, exception. */
         if (index == -1)
@@ -300,8 +322,8 @@ Queries this object's class to find the method with the given name.
             if (!PMC_IS_NULL(method)) {
                 return (PMC*)Parrot_run_meth_fromc_args(interp, method, SELF,
                         string_from_literal(interp, "find_method"), "PS", name);
-            
             }
+
             /* If it's from this universe or the class doesn't inherit from
              * anything outside of it... */
             if (all_in_universe || VTABLE_isa(interp, cur_class, CONST_STRING(interp, "Class"))) {
