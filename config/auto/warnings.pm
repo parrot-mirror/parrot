@@ -98,7 +98,7 @@ sub runstep {
     for my $maybe_warning (@potential_warnings) {
         $self->try_warning( $conf, $maybe_warning );
     }
-    return $self;
+    return 1;
 }
 
 =item C<try_warning>

@@ -181,7 +181,7 @@ EOF
     }
     $conf->data->set( TEMP_gen_pasm_includes => join( "\t\\\n\t", @generated ) );
 
-    return 1
+    return 1;
 }
 
 1;

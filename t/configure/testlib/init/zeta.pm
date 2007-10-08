@@ -26,6 +26,7 @@ sub _init {
 
 my $result = q|Goodbye, cruel world|;
 
+
 sub runstep {
     my ( $self, $conf ) = @_;
     $self->set_result($result);

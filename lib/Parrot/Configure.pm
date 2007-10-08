@@ -212,7 +212,8 @@ L<Parrot::Configure> object is passed as the first argument to each step's
 C<runstep()> method, followed by any parameters that were registered for that
 step.
 
-Accepts no arguments and modifies the data structure within the L<Parrot::Configure> object.
+Accepts no arguments and modifies the data structure within the 
+L<Parrot::Configure> object.
 
 =cut
 
