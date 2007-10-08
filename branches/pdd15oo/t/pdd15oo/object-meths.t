@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 43;
+use Parrot::Test tests => 40;
 
 =head1 NAME
 
@@ -140,49 +140,6 @@ pir_output_is( <<'CODE', <<'OUTPUT', "constructor" );
 CODE
 ok 1
 ok 2
-OUTPUT
-
-pasm_output_is( <<'CODE', <<'OUTPUT', "disabling the constructor" );
-    newclass P1, "Foo"
-    new P0, 'String'
-    setprop P1, "BUILD", P0
-    new P3, "Foo"
-    print "ok 1\n"
-    end
-.namespace ["Foo"]
-.pcc_sub __init:
-    print "nok ok!\n"
-    returncc
-CODE
-ok 1
-OUTPUT
-
-pasm_output_is( <<'CODE', <<'OUTPUT', "specified constructor method does not exist" );
-    newclass P1, "Foo"
-    new P0, 'String'
-    set P0, "bar"
-    setprop P1, "BUILD", P0
-
-    push_eh _handler
-
-    new P3, "Foo"
-    print "not ok 1\n"
-    end
-
-_handler:
-    get_results "0,0", P0, S0
-    print "catched it\n"
-    print S0
-    print "\n"
-    end
-
-.namespace ["Foo"]
-.pcc_sub __init:
-    print "nok ok 2!\n"
-    returncc
-CODE
-catched it
-Class BUILD method ('bar') not found
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "constructor - init attr" );
@@ -464,20 +421,14 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "find_method" );
     print "main\n"
     callmethodcc P2, P0
     print "back\n"
-    # check class
-    find_method P0, P3, S0
-    callmethodcc P3, P0
-    print "back\n"
     end
 
 .namespace ["Foo"]
-.pcc_sub meth:
+.pcc_sub :method meth:
     print "in meth\n"
     returncc
 CODE
 main
-in meth
-back
 in meth
 back
 OUTPUT
@@ -634,60 +585,6 @@ F init
 done
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "constructor - parents BUILD" );
-    new P10, 'String'
-    set P10, "_new"
-    newclass P1, "Foo"
-    setprop P1, "BUILD", P10
-    subclass P2, P1, "Bar"
-    setprop P2, "BUILD", P10
-    subclass P3, P2, "Baz"
-    setprop P3, "BUILD", P10
-    new P3, "Baz"
-    new P3, "Bar"
-    find_global P0, "_sub"
-    invokecc P0
-    print "done\n"
-    end
-
-    .namespace ["Foo"]
-.pcc_sub _new:
-    get_params "0", P2
-    print "foo_init\n"
-    classname S0, P2
-    print S0
-    print "\n"
-    returncc
-
-    .namespace ["Bar"]
-.pcc_sub _new:
-    get_params "0", P2
-    print "bar_init\n"
-    returncc
-
-    .namespace ["Baz"]
-.pcc_sub _new:
-    get_params "0", P2
-    print "baz_init\n"
-    returncc
-
-    .namespace	# main again
-.pcc_sub _sub:
-    print "in sub\n"
-    returncc
-
-CODE
-foo_init
-Baz
-bar_init
-baz_init
-foo_init
-Bar
-bar_init
-in sub
-done
-OUTPUT
-
 pir_output_is( <<'CODE', <<'OUTPUT', "constructor - vtable override" );
 .sub main :main
   $P0 = newclass 'Foo'
@@ -831,14 +728,14 @@ pir_output_is( <<'CODE', <<'OUTPUT', "method cache invalidation" );
     o = new "Bar"
     print o
     $P0 = global "ok2"
-    store_global "Bar", "__get_string", $P0
+    cl.'add_method'('get_string', $P0, 'vtable' => 1)
     print o
 .end
-.sub ok2 :method
+.sub ok2
     .return("ok 2\n")
 .end
 .namespace [ "Foo" ]
-.sub __get_string :method
+.sub get_string :vtable :method
     .return("ok 1\n")
 .end
 CODE
@@ -921,7 +818,7 @@ CODE
 0
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "kind of a super", todo => 'needs super()' );
+pir_output_is( <<'CODE', <<'OUTPUT', "kind of a super" );
 .sub main :main
     .local pmc cl, o
     cl = subclass "String", "MyString"
@@ -934,8 +831,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "kind of a super", todo => 'needs super()' 
 .namespace ["MyString"]
 .sub set_string_native :vtable :method
     .param string s
-    classoffset $I0, self, "MyString"
-    $P0 = getattribute self, $I0
+    $P0 = getattribute self, ["String"], 'proxy'
     s .= s
     $P0 = s
 .end
@@ -974,8 +870,6 @@ Parent foo
 Parent bar
 OUTPUT
 
-TODO: {
-    local $TODO = "3 class interitance, 4-class diamond inheritance";
     pir_output_is( <<'CODE', <<'OUTPUT', ".Super - dispatch on addparent-established heirarchy" );
 .sub main :main
     .local pmc o, p, c
@@ -1008,6 +902,8 @@ Parent foo
 Parent bar
 OUTPUT
 
+TODO: {
+    local $TODO = "3 class interitance, 4-class diamond inheritance";
     pir_output_is( <<'CODE', <<'OUTPUT', ".Super - subclass established, three levels deep" );
 .sub main :main
     .local pmc o, p, c, g
@@ -1190,7 +1086,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "delegate keyed_int PMC derived" );
     .param int key
     print "ikey\n"
     .local pmc ar
-    ar = getattribute self, "__value"
+    ar = getattribute self, ["ResizablePMCArray"], "proxy"
     $I0 = ar[key]
     .return ($I0)
 .end
@@ -1200,7 +1096,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "delegate keyed_int PMC derived" );
     .param int val
     print "pkey\n"
     .local pmc ar
-    ar = getattribute self, "__value"
+    ar = getattribute self, ["ResizablePMCArray"], "proxy"
     ar[key] = val
 .end
 
@@ -1228,7 +1124,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "delegate keyed_int PMC derived - inherit" 
     .param int key
     print "ikey\n"
     .local pmc ar
-    ar = getattribute self, "__value"
+    ar = getattribute self, ["ResizablePMCArray"], "proxy"
     $I0 = ar[key]
     .return ($I0)
 .end
@@ -1274,6 +1170,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "init calls" );
     .local pmc cl, o
     cl = newclass 'MyClass'
     o = new 'MyClass'
+    $P0 = new 'String'
     o = new 'MyClass', $P0
 .end
 
