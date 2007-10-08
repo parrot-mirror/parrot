@@ -31,9 +31,9 @@ use File::Spec();
 
 my $is_win32  = $^O eq 'MSWin32';
 
-my $parrot    = File::Spec->catfile( File::Spec->updir(), $PConfig{test_prog} );
-my $lazy_k    = $parrot . q{ } . File::Spec->catfile( 'lazy-k', 'lazy.pir' );
-my $source_fn = File::Spec->catfile( 'lazy-k', 'cat.lazy' ); 
+my $parrot    = File::Spec->catfile( (File::Spec->updir())x2, $PConfig{test_prog} );
+my $lazy_k    = $parrot . q{ } . 'lazy.pir';
+my $source_fn = 'cat.lazy'; 
 
 # XXX This does not look portable.
 my $cmd;

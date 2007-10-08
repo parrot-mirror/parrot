@@ -40,7 +40,7 @@ ecmascript          NO TESTS
 forth               DONE
 HQ9plus             DONE
 jako                DONE
-lazy-k              tests only run from languages, not with runtests
+lazy-k              DONE
 lisp                DONE
 lua                 Most tests pass with runtests, but not all.
 m4                  DONE? (make test reruns the suite.  Why?  runtests doesn't do this.)
