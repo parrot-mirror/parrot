@@ -206,6 +206,16 @@ Parrot_oo_newclass_from_str(PARROT_INTERP, NOTNULL(STRING *name))
     return classobj;
 }
 
+/*
+
+=item C<Parrot_oo_find_vable_override_for_class>
+
+Lookup a vtable override in a specific class object.
+
+=cut
+
+*/
+
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
@@ -222,6 +232,40 @@ Parrot_oo_find_vtable_override_for_class(PARROT_INTERP, NOTNULL(PMC *classobj), 
         }
     }
 
+    return PMCNULL;
+}
+
+/*
+
+=item C<Parrot_oo_find_vable_override>
+
+Lookup a vtable override in a class, including any vtable overrides inherited
+from parents.
+
+=cut
+
+*/
+
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+Parrot_oo_find_vtable_override(PARROT_INTERP, NOTNULL(PMC *classobj), NOTNULL(STRING *name))
+{
+    Parrot_Class * const _class = PARROT_CLASS(classobj);
+
+    /* Walk and search for the vtable method. */
+    const INTVAL num_classes = VTABLE_elements(interp, _class->all_parents);
+    INTVAL i;
+
+    for (i = 0; i < num_classes; i++) {
+        /* Get the class. */
+        PMC * const cur_class =
+            VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
+
+        PMC * const meth = Parrot_oo_find_vtable_override_for_class(interp, cur_class, name);
+        if (!PMC_IS_NULL(meth))
+            return meth;
+    }
     return PMCNULL;
 }
 
