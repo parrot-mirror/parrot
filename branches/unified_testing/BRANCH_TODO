@@ -31,7 +31,7 @@ amber               NO TESTS
 APL                 DONE
 BASIC               NO TESTS
 befunge             DONE
-bf                  Tests run from languages, not from languages/bf
+bf                  DONE
 c99                 Tests don't run
 cardinal            Most/all tests fail with method __get_bool not found
 cola                NO TESTS
