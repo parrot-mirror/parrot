@@ -60,9 +60,14 @@ sub runstep {
         $self->set_result('yes');
     }
     else {
-        # fall back to default
-        $self->set_result('no');
-        return 1;
+        $prog = check_progs( [ 'gmake', 'mingw32-make', 'nmake', 'make' ], $verbose );
+
+        unless ($prog) {
+
+            # fall back to default
+            $self->set_result('no');
+            return 1;
+        }
     }
 
     my ( $stdout, $stderr, $ret ) = capture_output( $prog, '--version' );

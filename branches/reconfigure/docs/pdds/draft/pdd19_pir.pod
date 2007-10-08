@@ -66,6 +66,8 @@ length.
 
 {{ REVIEW: identifier length limit }}
 
+{{ REVIEW: can op-names be used as identifiers? See #24251. }}
+
 Example:
 
     a
@@ -134,6 +136,17 @@ A heredoc as an argument:
  EOS
 
 Only one heredoc can be active per statement line.
+
+{{ REVIEW: it would be useful to have multiple heredocs per statement, 
+   which allows for writing:
+   
+   function(<<'INPUT', <<'OUTPUT', 'some test')
+   ...
+ INPUT
+   ...
+ OUTPUT
+ 
+}}
 
 =item charset:"string constant"
 
@@ -326,7 +339,21 @@ prefix in the outer namespace's global pad.
 
 =item .pcc_*
 
-Directives used for Parrot Calling Conventions.
+Directives used for Parrot Calling Conventions. These are:
+
+=over 4
+
+=item .pcc_begin and .pcc_end
+
+=item .pcc_begin_return and .pcc_end_return
+
+=item .pcc_begin_yield and .pcc_end_yield
+
+=item .pcc_call
+
+=back
+
+{{ REVIEW: Do we still want/need the "pcc_" prefix? See #45925. }}
 
 =back
 
@@ -400,6 +427,10 @@ This is short for:
 Function or method call. These notations are shorthand for a longer
 PCC function call with B<.pcc_*> directives. I<var> can denote a
 global subroutine, a local B<identifier> or a B<reg>.
+
+{{We should review the (currently inconsistent) specification of the 
+method name. Currently it can be a bare word, a quoted string or a 
+string register. See #45859.}}
 
 =item .return ([<var> [:<flag> ...], ...])
 
