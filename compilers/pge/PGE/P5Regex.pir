@@ -12,7 +12,12 @@
   adverbs_1:
     $I0 = exists adverbs['grammar']
     if $I0 goto adverbs_2
-    adverbs['grammar'] = 'PGE::Grammar'
+    $P0 = new 'Random'
+    $I0 = $P0
+    $S0 = $I0
+    $S0 = 'PGE::Grammar::Anon' . $S0
+    adverbs['grammar'] = $S0
+#    adverbs['grammar'] = 'PGE::Grammar'
   adverbs_2:
 
     .local string target
