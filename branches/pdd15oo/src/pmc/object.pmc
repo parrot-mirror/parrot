@@ -251,8 +251,9 @@ of the given name walking up the inheritance tree.
                 VTABLE_get_class(interp, SELF),
                 string_from_literal(interp, "set_attr_str"));
         if (!PMC_IS_NULL(method)) {
-            return (PMC*)Parrot_run_meth_fromc_args(interp, method, SELF,
-                    string_from_literal(interp, "set_attr_str"), "PSP", name, value);
+            (PMC*)Parrot_run_meth_fromc_args(interp, method, SELF,
+                    string_from_literal(interp, "set_attr_str"), "vSP", name, value);
+            return;
         }
         
         index = get_attrib_index(interp, obj->_class, name);
@@ -372,7 +373,15 @@ Get the class PMC representing the class that this object is an instance of.
 
 */
     PMC *get_class() {
-        return PARROT_OBJECT(SELF)->_class;
+        PMC * const classobj = PARROT_OBJECT(SELF)->_class;
+        /* If there's a vtable override for 'get_class' run that instead. */
+        PMC * const method = Parrot_oo_find_vtable_override(interp,
+                classobj, string_from_literal(interp, "get_class"));
+        if (!PMC_IS_NULL(method))
+            return (PMC*)Parrot_run_meth_fromc_args(interp, method, SELF,
+                    string_from_literal(interp, "get_class"), "P");
+
+        return classobj;
     }
 
 /*
