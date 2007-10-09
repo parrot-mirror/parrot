@@ -520,7 +520,8 @@ pir_output_is( <<'CODE', <<'OUT', "dumping objects" );
     new array, 'ResizablePMCArray'
     temp = new "TestClass"
     push array, temp
-    new temp, I0
+    $P0 = get_class 'TestClass'
+    temp = new $P0
     push array, temp
 
     _dumper( array )
