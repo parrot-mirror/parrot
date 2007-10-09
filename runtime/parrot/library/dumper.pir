@@ -145,16 +145,14 @@ Returns the global dumper instance used by the non object interface.
     .local pmc dd_class
     .local int is_defined
 
-    push_eh load_dd_pir
-        get_class dd_class, "Data::Dumper"
-    clear_eh
+    get_class dd_class, "Data::Dumper"
+    if null dd_class goto load_dd_pir
     goto TYPE_OK
 
   load_dd_pir:
-    push_eh no_class
-        load_bytecode "library/Data/Dumper.pir"
-        get_class dd_class, "Data::Dumper"
-    clear_eh
+    load_bytecode "library/Data/Dumper.pir"
+    get_class dd_class, "Data::Dumper"
+    if null dd_class goto no_class
     goto TYPE_OK
 
   no_class:

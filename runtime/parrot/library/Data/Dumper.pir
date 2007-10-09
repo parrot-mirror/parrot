@@ -1,8 +1,7 @@
 .sub __library_data_dumper_onload :load
-    push_eh load_library
-        .local pmc dd_class
-        dd_class = get_class "Data::Dumper"
-    clear_eh
+    .local pmc dd_class
+    dd_class = get_class "Data::Dumper"
+    if null dd_class goto load_library
 
     goto END
 
