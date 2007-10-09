@@ -724,29 +724,16 @@ Adds the given sub PMC as a vtable override with the given name.
 */
     void add_vtable_override(STRING *name, PMC *sub) {
         Parrot_Class * const _class = PARROT_CLASS(SELF);
-        char *c_name = string_to_cstring(interp, name);
-        int found = 0;
-        int i;
 
         /* If we have already added a vtable override with this name... */
-        if (VTABLE_exists_keyed_str(interp, _class->vtable_overrides, name)) {
+        if (VTABLE_exists_keyed_str(interp, _class->vtable_overrides, name))
             real_exception(interp, NULL, E_NotImplementedError,
                 "A vtable override named '%S' already exists in class '%S'. "
                 "It may have been supplied by a role.",
                 name, VTABLE_get_string(interp, SELF));
-        }
 
-        /* Check name is a valid vtable method name. */
-        for (i = PARROT_VTABLE_LOW; i < NUM_VTABLE_FUNCTIONS; i++) {
-            if (strcmp(c_name, Parrot_vtable_slot_names[i] + 2) == 0) {
-                found = 1;
-                break;
-            }
-        }
-
-        string_cstring_free(c_name);
-
-        if (!found)
+        /* Check that the name is actually valid as a vtable override */
+        if (Parrot_get_vtable_index(interp, name) == -1)
             real_exception(interp, NULL, METH_NOT_FOUND,
                 "'%S' is not a valid vtable function name.", name);
 
