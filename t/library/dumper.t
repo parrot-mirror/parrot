@@ -934,7 +934,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "custom dumper" );
 .namespace ["bar"]
 .sub __init :method
     .local pmc ar
-    ar = getattribute self, '__value'
+    ar = getattribute self, ['ResizablePMCArray'], 'proxy'
     push ar, 1
     push ar, 2
 .end
@@ -944,7 +944,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "custom dumper" );
     .param string label
     print " __value => {\n"
     .local pmc ar
-    ar = getattribute self, '__value'
+    ar = getattribute self, ['ResizablePMCArray'], 'proxy'
     dumper.'dump'('attr', ar)
     print "\n}"
 .end
