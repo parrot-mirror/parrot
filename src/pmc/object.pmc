@@ -194,7 +194,6 @@ of the given name walking up the inheritance tree.
             return (PMC*)Parrot_run_meth_fromc_args(interp, method, SELF,
                     string_from_literal(interp, "get_attr_str"), "PS", name);
         }
-        
 
         /* Look up the index. */
         index = get_attrib_index(interp, obj->_class, name);
@@ -255,7 +254,7 @@ of the given name walking up the inheritance tree.
                     string_from_literal(interp, "set_attr_str"), "vSP", name, value);
             return;
         }
-        
+
         index = get_attrib_index(interp, obj->_class, name);
 
         /* If lookup failed, exception. */
