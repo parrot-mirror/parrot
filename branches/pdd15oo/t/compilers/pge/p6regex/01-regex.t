@@ -52,7 +52,7 @@ Description of the test.
 
 =cut
 
-.const string TESTS = '542'
+.const string TESTS = 'no_plan'
 
 .sub main :main
     load_bytecode 'Test/Builder.pir'
