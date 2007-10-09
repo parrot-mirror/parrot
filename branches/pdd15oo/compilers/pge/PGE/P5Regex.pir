@@ -6,19 +6,10 @@
     .param pmc source
     .param pmc adverbs         :slurpy :named
 
-    $I0 = exists adverbs['name']
-    if $I0 goto adverbs_1
-    adverbs['name'] = '_p5regex'
-  adverbs_1:
     $I0 = exists adverbs['grammar']
-    if $I0 goto adverbs_2
-    $P0 = new 'Random'
-    $I0 = $P0
-    $S0 = $I0
-    $S0 = 'PGE::Grammar::Anon' . $S0
-    adverbs['grammar'] = $S0
-#    adverbs['grammar'] = 'PGE::Grammar'
-  adverbs_2:
+    if $I0 goto have_grammar
+    adverbs['grammar'] = 'PGE::Grammar'
+  have_grammar:
 
     .local string target
     target = adverbs['target']

@@ -101,11 +101,18 @@ tree as a PIR code object that can be compiled.
 .sub 'root_pir' :method
     .param pmc adverbs         :slurpy :named
 
-    .local string name
+    .local pmc code
+    code = new 'CodeString'
+
+    .local string name, namecorou
     name = adverbs['name']
-    if name > '' goto adverbs_1
-    name = 'exp'
-  adverbs_1:
+    namecorou = concat name, '_corou'
+    if name > '' goto have_name
+    name = code.'unique'('_regex')
+    namecorou = concat name, '_corou'
+  have_name:
+    name = code.'escape'(name)
+    namecorou = code.'escape'(namecorou)
 
     ##   Perform reduction/optimization on the
     ##   expression tree before generating PIR.
@@ -126,23 +133,21 @@ tree as a PIR code object that can be compiled.
     explabel = 'R'
     exp.pir(expcode, explabel, 'succeed')
 
-    .local pmc code
-    code = new 'CodeString'
     if cutrule goto code_cutrule
     ##   Generate the initial PIR code for a backtracking (uncut) rule.
     .local string returnop
     returnop = '.yield'
-    code.emit(<<"        CODE", name, .INTERPINFO_CURRENT_SUB)
-      .sub '%0' :method
+    code.emit(<<"        CODE", name, namecorou, .INTERPINFO_CURRENT_SUB)
+      .sub %0 :method
           .param pmc adverbs   :slurpy :named
-          .const .Sub corou = '%0_corou'
+          .const .Sub corou = %1
           .local pmc mob
           $P0 = corou
           $P0 = clone $P0
           mob = $P0(self, adverbs)
           .return (mob)
       .end
-      .sub '%0_corou'
+      .sub %1
           .param pmc mob       :unique_reg
           .param pmc adverbs   :unique_reg
           .local string target :unique_reg
@@ -150,7 +155,7 @@ tree as a PIR code object that can be compiled.
           .local int cpos, iscont :unique_reg
           $P0 = get_hll_global ['PGE'], 'Match'
           (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(mob, adverbs :flat :named)
-          $P0 = interpinfo %1
+          $P0 = interpinfo %2
           setattribute mob, '&!corou', $P0
         CODE
     goto code_body
@@ -159,7 +164,7 @@ tree as a PIR code object that can be compiled.
     ##   Initial code for a rule that cannot be backtracked into.
     returnop = '.return'
     code.emit(<<"        CODE", name)
-      .sub '%0' :method
+      .sub %0 :method
           .param pmc adverbs      :unique_reg :slurpy :named
           .local string target    :unique_reg
           .local pmc mob, mfrom, mpos  :unique_reg
