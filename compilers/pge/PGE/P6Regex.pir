@@ -36,21 +36,13 @@ or the resulting PIR code (target='PIR').
     adverbs['grammar'] = $S0
     goto with_grammar
   adverb_grammar_1:
-    $P0 = new 'Random'
-    $I0 = $P0
-    $S0 = $I0
-    $S0 = 'PGE::Grammar::Anon' . $S0
-    adverbs['grammar'] = $S0
-#    adverbs['grammar'] = 'PGE::Grammar'
+    adverbs['grammar'] = 'PGE::Grammar'
   with_grammar:
     $I0 = exists adverbs['name']
     if $I0 goto with_name
-    unless args goto adverb_name_1
+    unless args goto with_name
     $S0 = shift args
     adverbs['name'] = $S0
-    goto with_name
-  adverb_name_1:
-    adverbs['name'] = '_regex'
   with_name:
     $I0 = exists adverbs['lang']
     if $I0 goto with_lang
