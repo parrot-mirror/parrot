@@ -17,7 +17,7 @@ columns (separated by one *or more* tabs):
 
 =item pattern
 
-The Perl6 regex to test.
+The Perl 6 regex to test.
 
 =item target
 
@@ -52,7 +52,7 @@ Description of the test.
 
 =cut
 
-.const string TESTS = 'no_plan'
+.const string TESTS = '542'
 
 .sub main :main
     load_bytecode 'Test/Builder.pir'
@@ -119,7 +119,7 @@ Description of the test.
 
     # how many tests to run?
     # XXX: this should be summed automatically from test_files data
-    #      until then, it's set to no plan
+    #      until then, it's set to 542 manually...
     test.'plan'(TESTS)
 
 
