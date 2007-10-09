@@ -125,9 +125,9 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::read_bytes" );
     print "]\n"
 
     stream = clone stream
-    $P0 = clone stream
+    $P0    = clone stream
 
-    $S0 = stream."read_bytes"( 4 )
+    $S0    = stream."read_bytes"( 4 )
     print "2: ["
     print $S0
     print "] = "
@@ -190,7 +190,7 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::Combiner" );
     load_bytecode "library/Stream/Sub.pir"
 
     # create the counter stream
-    counter = "Stream::Sub"
+    counter = new "Stream::Sub"
     .const .Sub ct = "_counter"
     assign counter, ct
 
