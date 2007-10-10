@@ -6,6 +6,11 @@
 RM_F   = @rm_f@
 PERL   = @perl@
 PARROT = ../../parrot
+BUILD_DIR= @build_dir@
+RECONFIGURE= $(PERL) @build_dir@/tools/dev/reconfigure.pl
+
+Makefile: config/makefiles/root.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=urm
 
 default: build
 
