@@ -26,12 +26,6 @@ C<Continuation> PMCs.
 =cut
 
 my $temp       = "temp.pasm";
-my $load_types = <<'END_PASM';
-    loadlib P20, 'perl_group'
-    find_type I24, 'Integer'
-    find_type I25, 'Float'
-    find_type I28, 'Undef'
-END_PASM
 
 END {
     unlink( $temp, 'temp.pbc', 'temp.pasm' );
@@ -1123,9 +1117,9 @@ pir_output_like(
     _f1()
 .end
 .sub _f1
-$load_types
+    loadlib P20, 'perl_group'
 
-    P0 = new I28
+    P0 = new 'Undef'
     print P0
 .end
 CODE
@@ -1134,10 +1128,10 @@ OUTPUT
 
 pir_output_is( <<"CODE", <<'OUTPUT', 'warn on in sub' );
 .sub 'test' :main
-$load_types
+    loadlib P20, 'perl_group'
 .include "warnings.pasm"
     _f1()
-    P0 = new I28
+    P0 = new 'Undef'
     print P0
     print "ok\\n"
 .end
@@ -1151,19 +1145,19 @@ OUTPUT
 pir_output_like(
     <<"CODE", <<'OUTPUT', 'warn on in sub, turn off in f2', todo => "XXX core undef doesn't warn here. Should it?" );
 .sub 'test' :main
-$load_types
+    loadlib P20, 'perl_group'
 .include "warnings.pasm"
     _f1()
-    P0 = new I28
+    P0 = new 'Undef'
     print "back\\n"
     print P0
     print "ok\\n"
 .end
 .sub _f1
-$load_types
+    loadlib P20, 'perl_group'
     warningson .PARROT_WARNINGS_UNDEF_FLAG
     _f2()
-    P0 = new I28
+    P0 = new 'Undef'
     print P0
 .end
 .sub _f2
