@@ -45,7 +45,7 @@ lisp                DONE
 lua                 Most tests pass with runtests, but not all.
 m4                  DONE? (make test reruns the suite.  Why?  runtests doesn't do this.)
 nqp                 DONE (fixed shebang)
-ook                 tests only run from languages, not with runtests
+ook                 DONE
 parrot_compiler     tests only run from main parrot dir
 perl5               DONE
 perl6               1/2 DONE (added shebang to t/00-parrot and pass.  But the pugs tests don't have shebangs)

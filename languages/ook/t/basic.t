@@ -24,8 +24,7 @@ test executing test.ook
 
 use strict;
 use warnings;
-use FindBin;
-use lib "$FindBin::Bin/../../../lib";
+use lib qw{ ../../lib ../../../lib };
 
 use Test::More tests => 1;
 use Parrot::Test ();
@@ -33,13 +32,13 @@ use Parrot::Config qw(%PConfig);
 use File::Spec;
 
 # execute hello.ook
-my $parrot    = File::Spec->catfile( File::Spec->updir(),    $PConfig{test_prog} );
-my $ook       = $parrot . q{ } . File::Spec->catfile( 'ook', 'ook.pbc' );
-my $hello_ook = File::Spec->catfile( 'ook',                  'hello.ook' );
+my $parrot    = File::Spec->catfile( (File::Spec->updir())x2,    $PConfig{test_prog} );
+my $ook       = $parrot . q{ } . 'ook.pbc';
+my $hello_ook = 'hello.ook';
 
 # Test running hello.ook
 
-my $out_fn = File::Spec->catfile( 'ook', 'hello.out' );
+my $out_fn = 'hello.out';
 
 # STDERR is written into same output file
 my $exit_code = Parrot::Test::run_command(
