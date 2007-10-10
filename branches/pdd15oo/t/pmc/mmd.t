@@ -926,11 +926,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Integer subclasses" );
     add d, l, r
     print d
     print "\n"
-    # dispatches to Parrot_Integer_add_Integer
-    d = l."__add"(r)
-    print d
-    print "\n"
-    l."__i_add"(r)
+    add l, r
     print l
     print "\n"
 .end
@@ -938,7 +934,6 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Integer subclasses" );
 CODE
 4
 38
-42
 42
 42
 OUTPUT
