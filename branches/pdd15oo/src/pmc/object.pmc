@@ -243,15 +243,15 @@ of the given name walking up the inheritance tree.
 */
     void set_attr_str(STRING *name, PMC *value) {
         Parrot_Object * const obj = PARROT_OBJECT(SELF);
+        STRING *vtable_meth_name = string_from_literal(interp, "set_attr_str");
         INTVAL index;
 
         /* If there's a vtable override for 'set_attr_str' run that first. */
         PMC * const method = Parrot_oo_find_vtable_override(interp,
-                VTABLE_get_class(interp, SELF),
-                string_from_literal(interp, "set_attr_str"));
+                VTABLE_get_class(interp, SELF), vtable_meth_name);
         if (!PMC_IS_NULL(method)) {
             (PMC*)Parrot_run_meth_fromc_args(interp, method, SELF,
-                    string_from_literal(interp, "set_attr_str"), "vSP", name, value);
+                    vtable_meth_name, "vSP", name, value);
             return;
         }
 
