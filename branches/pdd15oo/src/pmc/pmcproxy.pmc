@@ -63,7 +63,7 @@ NOTE: No doubt we will need other things later; this is a start.
 */
 
 
-pmclass PMCProxy
+pmclass PMCProxy extends Class
     need_ext {
 
 /*
@@ -92,10 +92,13 @@ Initializes a PMCProxy PMC.
         _pmc->_namespace      = PMCNULL;
         _pmc->parents         = pmc_new(interp, enum_class_ResizablePMCArray);
         _pmc->all_parents     = pmc_new(interp, enum_class_ResizablePMCArray);
+        _pmc->roles           = pmc_new(interp, enum_class_ResizablePMCArray);
         _pmc->methods         = pmc_new(interp, enum_class_Hash);
+        _pmc->vtable_overrides = pmc_new(interp, enum_class_Hash);
         _pmc->attrib_metadata = pmc_new(interp, enum_class_Hash);
         _pmc->attrib_index    = PMCNULL;
         _pmc->attrib_cache    = PMCNULL;
+        _pmc->resolve_method  = pmc_new(interp, enum_class_ResizablePMCArray);
 
         /* Set up the attribute storage for the proxy instance */
         VTABLE_set_string_keyed_str(interp, new_attribute,
