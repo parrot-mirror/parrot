@@ -34,7 +34,7 @@ SDL::EventHandler - base class for application-specific SDL event handlers
     # create and populate some event_arguments
     .local pmc event_args
 
-    new event_args, .Hash
+    new event_args, 'Hash'
     event_args[ 'main_surface' ] = main_surface
     event_args[ 'sprite_list'  ] = sprites
 
@@ -192,7 +192,7 @@ types.
 =item * mouse_button_up
 
 Synopsis for mouse event handler:
-  
+
   .sub mouse_button_up :method
     .param pmc event
     .param pmc args
