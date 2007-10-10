@@ -78,12 +78,15 @@ Find the method for C<*name> in the parent class of the bound object.
         if (PMC_IS_NULL(obj))
             return;
 
-        classobj = VTABLE_get_class(interp, obj);
-
-        if (PMC_IS_NULL(classobj))
-            return;
-
-        mro = VTABLE_inspect_str(interp, classobj, CONST_STRING(interp, "all_parents"));
+        if (PObj_is_object_TEST(obj)) {
+            classobj = VTABLE_get_class(interp, obj);
+            if (PMC_IS_NULL(classobj))
+                return;
+            mro = VTABLE_inspect_str(interp, classobj, CONST_STRING(interp, "all_parents"));
+        }
+        else {
+            mro = obj->vtable->mro;
+        }
 
         if (PMC_IS_NULL(mro))
             return;
