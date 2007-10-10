@@ -22,6 +22,7 @@ CC         = @cc@
 
 BUILD_DIR   = @build_dir@
 RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+RUNTESTS    = /home/ckuskie/branches/unified_testing/tools/util/runtests
 
 PGE_DIR  = ../../compilers/pge
 TGE_DIR  = ../../compilers/tge
@@ -139,7 +140,8 @@ Makefile: config/makefiles/root.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=tcl
 
 test: tcl.pbc
-	prove -r t
+	$(RUNTESTS) -r t
+	
 
 # Can only run a few of these cleanly with test_more at the moment.
 # eventually, as the list of commented out tests is smaller, just
