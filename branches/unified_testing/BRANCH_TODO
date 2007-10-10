@@ -58,11 +58,13 @@ pynie               DONE (fixed shebang)
 regex               Library finding issues (FindBin).  Fixing that will probably make everything work.
 scheme              Library finding issues (FindBin).  Fixing that will probably make everything work.
 tap                 Blacklisted
-tcl                 Tests execute as perl, then are rerun as TCL.  Nothing works in runtests.
+tcl                 DONE (more cleanup needed)
 unlambda            tests only run from languages, OK with runtests
 urm                 Library finding issues (FindBin).  Fixing that will probably make everything work.
 WMLScript           Need WMLScript compiler to build the test 
 Zcode               DONE
+
+    *) Parrot::Test::HLL.pm should be local to the language.
 
 3) Write a coding standard test to make sure that t/* tests call out a location
    independent parrot/interpreter.
