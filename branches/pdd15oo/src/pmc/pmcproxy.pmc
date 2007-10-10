@@ -286,69 +286,6 @@ Returns the integer type of the class.
 
 /*
 
-=item C<PMC *inspect_str(STRING *what)>
-
-Provides introspection of a specific piece of information about the PMC. The
-available information is:
-
-=over 8
-
-=item name
-
-String PMC containing the name of the PMC
-
-=item namespace
-
-NameSpace PMC of the the namespace attached to the PMC
-
-=item methods
-
-Hash keyed on method name, value is an invokable PMC
-
-=item parents
-
-Array of PMCProxy PMCs representing the direct parents of this class.
-
-=back
-
-=cut
-
-*/
-    PMC *inspect_str(STRING *what)
-    {
-        Parrot_Class *_pmc = PARROT_CLASS(SELF);
-
-        /* What should we return? */
-        PMC          *found   = PMCNULL;
-
-        if (string_equal(interp, what, CONST_STRING(interp, "name")) == 0) {
-            found = pmc_new(interp, enum_class_String);
-            VTABLE_set_string_native(interp, found, _pmc->name);
-        }
-        else if (string_equal(interp, what, CONST_STRING(interp, "namespace")) == 0) {
-            /* Should not clone this. */
-            return _pmc->_namespace;
-        }
-        else if (string_equal(interp, what, CONST_STRING(interp, "attributes")) == 0) {
-            found = _pmc->attrib_metadata;
-        }
-        else if (string_equal(interp, what, CONST_STRING(interp, "methods")) == 0) {
-            found = _pmc->methods;
-        }
-        else if (string_equal(interp, what, CONST_STRING(interp, "parents")) == 0) {
-            found = _pmc->parents;
-        }
-        else {
-            real_exception(interp, NULL, INVALID_OPERATION,
-                "Unknown introspection value '%S'", what);
-        }
-
-        /* Clone and return. */
-        return PMC_IS_NULL(found) ? PMCNULL : VTABLE_clone(interp, found);
-    }
-
-/*
-
 =item C<PMC *inspect()>
 
 Returns a Hash describing the PMC, with key/value pairs as described in
