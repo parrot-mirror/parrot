@@ -44,7 +44,7 @@ CODE
 pasm_output_is( <<'CODE', '1', "sweep 0, with object that need destroy" );
       interpinfo I1, 2   # How many DOD runs have we done already?
       new P0, 'Undef'
-      needs_destroy P0
+      null P0
       sweep 0
       interpinfo I2, 2   # Should be one more now
       sub I3, I2, I1
@@ -55,7 +55,6 @@ CODE
 pasm_output_is( <<'CODE', '10', "sweep 0, with object that need destroy/destroy" );
       interpinfo I1, 2   # How many DOD runs have we done already?
       new P0, 'Undef'
-      needs_destroy P0
       new P0, 'Undef' # kill object
       sweep 0
       interpinfo I2, 2   # Should be one more now
