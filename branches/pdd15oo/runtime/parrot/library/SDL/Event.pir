@@ -66,7 +66,7 @@ away.
     layout = fetch_layout( 'Event::Generic' )
 
     .local pmc event
-    new event, .ManagedStruct, layout
+    new event, 'ManagedStruct', layout
 
     setattribute self, 'event', event
 
