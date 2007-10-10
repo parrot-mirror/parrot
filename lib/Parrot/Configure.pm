@@ -212,7 +212,7 @@ L<Parrot::Configure> object is passed as the first argument to each step's
 C<runstep()> method, followed by any parameters that were registered for that
 step.
 
-Accepts no arguments and modifies the data structure within the 
+Accepts no arguments and modifies the data structure within the
 L<Parrot::Configure> object.
 
 =cut
@@ -229,7 +229,7 @@ sub runsteps {
     # steps; 'verbose-step' can only apply to a single step; and 'ask' applies
     # to all steps but has no relevance unless the step in an 'inter::' step.
     #
-    # Suppose we made verbose-step a comma-delimited string of step names .  
+    # Suppose we made verbose-step a comma-delimited string of step names .
     # We could then split that string on the commas and build a hash of steps
     # which get verbose output.  As we go thru the steps, we could check to
     # see if the step_name were an element in this hash, then turn on verbose
@@ -246,7 +246,7 @@ sub runsteps {
     # flexibility in specifying the value for 'verbose-step'.  You can provide
     # a step name, a step number, and even a string to be pattern-matched
     # against the step's $description.  The latter approach was explicitly
-    # defended by Joshua Hoblit in RT 44353 as recently as Aug 02 2007.  
+    # defended by Joshua Hoblit in RT 44353 as recently as Aug 02 2007.
 
     # All this is done *within*
     # _run_this_step(), in part because it's only there that the step's
@@ -354,7 +354,7 @@ sub run_single_step {
 
     my ( $verbose, $verbose_step, $ask ) =
         $conf->options->get(qw( verbose verbose-step ask ));
- 
+
     my $task = ( $conf->steps() )[0];
     if ( $task->{"Parrot::Configure::Task::step"} eq $taskname ) {
         $conf->_run_this_step( {
@@ -442,7 +442,7 @@ sub _run_this_step {
             } );
             # reset verbose value for the next step
             $conf->options->set( verbose => $args->{verbose} );
-        
+  
             if ($conf->options->get(q{configure_trace}) ) {
                 _update_conftrace( {
                     conftrace   => $conftrace,
