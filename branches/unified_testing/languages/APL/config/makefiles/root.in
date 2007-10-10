@@ -6,6 +6,10 @@ CP     = @cp@
 PARROT = ../../parrot@exe@
 BUILD  = $(PERL) @build_dir@/tools/build/dynpmc.pl
 
+BUILD_DIR   = @build_dir@
+RUNTESTS    = @build_dir@/tools/util/runtests
+RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+
 # Directories
 PGE_DIR  = ../../compilers/pge
 TGE_DIR  = ../../compilers/tge
@@ -21,6 +25,8 @@ PMC_FILES = $(PMC_DIR)/aplvector.pmc
 O        = @o@
 LOAD_EXT = @load_ext@
 
+Makefile: config/makefiles/root.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=APL
 
 all: APL.pbc
 
@@ -78,7 +84,7 @@ help:
 	@echo ""
 
 test: all
-	$(PERL) -Ilib t/harness
+	$(RUNTESTS) t
 
 devtest: all
 	APLDEV=1 $(PERL) -Ilib t/harness
