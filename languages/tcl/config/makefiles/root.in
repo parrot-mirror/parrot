@@ -2,6 +2,8 @@ RM_F    = @rm_f@
 PERL    = @perl@
 PARROT  = ../../parrot@exe@
 
+
+
 C_BUILTIN = src/builtin
 TCL_LIB   = library
 PMCBUILD  = $(PERL) @build_dir@/tools/build/dynpmc.pl
@@ -18,6 +20,8 @@ CC_SHARED  = @cc_shared@
 CFLAGS     = $(CC_INC) @ccflags@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@ $(CC_SHARED)
 CC         = @cc@
 
+BUILD_DIR   = @build_dir@
+RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 
 PGE_DIR  = ../../compilers/pge
 TGE_DIR  = ../../compilers/tge
@@ -130,6 +134,9 @@ runtime/tcllib.pbc: $(PARROT) runtime/tcllib.pir runtime/builtins.pir $(CLASSES)
 
 tclsh: $(PARROT) tcl.pbc
 	$(PARROT) -G tcl.pbc
+
+Makefile: config/makefiles/root.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=tcl
 
 test: tcl.pbc
 	prove -r t
