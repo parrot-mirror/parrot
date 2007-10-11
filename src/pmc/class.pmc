@@ -1204,12 +1204,155 @@ Returns the integer type of the class.
 
 */
 
-
     INTVAL type() {
         Parrot_Class *_class    = PARROT_CLASS(SELF);
         return _class->id;
     }
 
+/*
+
+=item C<void visit(visit_info *info)>
+
+This is used by freeze/thaw to visit the contents of the class.
+
+C<*info> is the visit info, (see F<include/parrot/pmc_freeze.h>).
+
+=cut
+
+*/
+
+    void visit(visit_info *info) {
+        INTVAL i, n;
+        Parrot_Class * const class_data = PARROT_CLASS(SELF);
+        PMC **pos;
+
+        /* 1) visit the attribute description hash */
+        pos      = &class_data->attrib_metadata;
+        info->thaw_ptr = pos;
+        (info->visit_pmc_now)(INTERP, *pos, info);
+
+        /* 2) visit list of parents */
+        pos            = &class_data->parents;
+        info->thaw_ptr = pos;
+        (info->visit_pmc_now)(INTERP, *pos, info);
+
+        /* 3) visit list of roles */
+        pos            = &class_data->roles;
+        info->thaw_ptr = pos;
+        (info->visit_pmc_now)(INTERP, *pos, info);
+
+        /* 4) visit hash of methods */
+        pos            = &class_data->methods;
+        info->thaw_ptr = pos;
+        (info->visit_pmc_now)(INTERP, *pos, info);
+
+        /* 5) visit hash of vtable overrides */
+        pos            = &class_data->vtable_overrides;
+        info->thaw_ptr = pos;
+        (info->visit_pmc_now)(INTERP, *pos, info);
+
+        /* 5) visit list of resolve methods */
+        pos            = &class_data->resolve_method;
+        info->thaw_ptr = pos;
+        (info->visit_pmc_now)(INTERP, *pos, info);
+
+    }
+
+/*
+
+=item C<void freeze(visit_info *info)>
+
+Used to archive the class.
+
+=cut
+
+*/
+
+    void freeze(visit_info *info) {
+        IMAGE_IO *io = info->image_io;
+        Parrot_Class * const class_data = PARROT_CLASS(SELF);
+        STRING *serial_namespace = string_from_literal(interp, "");
+
+        /* 1) freeze class name */
+        VTABLE_push_string(INTERP, io, class_data->name);
+
+        /* 2) serialize namespace name, including HLL */
+        if (!PMC_IS_NULL(class_data->_namespace)) {
+            PMC *names = Parrot_NameSpace_nci_get_name(interp,
+                    class_data->_namespace);
+            if (!PMC_IS_NULL(names))
+                serial_namespace = string_join(interp, CONST_STRING(interp, ";"), names);
+        }
+        VTABLE_push_string(INTERP, io, serial_namespace);
+    }
+
+/*
+
+=item C<void thaw(visit_info *info)>
+
+Used to unarchive the class.
+
+=cut
+
+*/
+
+    void thaw(visit_info *info) {
+        IMAGE_IO *io = info->image_io;
+
+        /* The class might already exist in the interpreter, so create it as an
+         * anonymous class and later decide whether to link it into the
+         * namespace.
+         */
+
+        if (info->extra_flags == EXTRA_IS_PROP_HASH) {
+            SUPER(info);
+        }
+        else if (info->extra_flags == EXTRA_IS_NULL) {
+            STRING *name = VTABLE_shift_string(INTERP, io);
+            STRING *serial_namespace = VTABLE_shift_string(INTERP, io);
+            PMC    *namespace_array = string_split(INTERP,
+                    CONST_STRING(INTERP, ";"), serial_namespace);
+            PMC *ns = Parrot_get_namespace_keyed(interp,
+                    INTERP->root_namespace, namespace_array);
+
+            /* If the namespace doesn't exist, we create it, and initialize
+             * ourselves in it */
+            if (PMC_IS_NULL(ns)) {
+                ns = Parrot_make_namespace_keyed(interp,
+                        INTERP->root_namespace, namespace_array);
+                SELF.init_pmc(ns);
+            }
+            /* If the namespace exists already, we point to it, but otherwise
+             * act as an anonymous class. */
+            else {
+                SELF.init();
+                PARROT_CLASS(SELF)->_namespace = ns;
+            }
+
+            /* Set the class's short name to the frozen name */
+            PARROT_CLASS(SELF)->name = name;
+        }
+    }
+
+/*
+
+=item C<void thawfinish(visit_info *info)>
+
+Called after the class has been thawed.
+
+=cut
+
+*/
+
+    void thawfinish(visit_info *info) {
+        Parrot_Class  *_class    = PARROT_CLASS(SELF);
+
+        /* Recalculate full MRO from thawed parents */
+        _class->all_parents = Parrot_ComputeMRO_C3(interp, SELF);
+
+        /* Rebuild attribute index from thawed attribute metadata */
+        build_attrib_index(interp, SELF);
+    }
 
     /* **********************************************************************
      * Below here are non-vtable methods that eventually will go in a role
