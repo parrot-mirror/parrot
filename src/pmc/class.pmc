@@ -245,9 +245,10 @@ init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
 
         /* If we were passed a namespace PMC, set the namespace attribute
          * directly. Otherwise, lookup or create the appropriate namespace. */
-        if (VTABLE_isa(interp, name_arg,
-                    string_from_literal(interp, "NameSpace")))
+        if (name_arg->vtable->base_type == enum_class_NameSpace) {
             new_namespace = name_arg;
+            name_arg = Parrot_NameSpace_nci_get_name(interp, new_namespace);
+        }
         else {
             PMC *hll_ns = VTABLE_get_pmc_keyed_int(interp,
                     interp->HLL_namespace, CONTEXT(interp->ctx)->current_HLL);
