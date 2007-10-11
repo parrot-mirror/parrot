@@ -128,7 +128,7 @@ build_attrib_index(PARROT_INTERP, PMC *self)
 
                 /* Get attribute name and append it to the key. */
                 STRING *attrib_name = VTABLE_get_string_keyed_str(
-                    interp, cur_attrib, string_from_cstring(interp, "name", 4));
+                    interp, cur_attrib, string_from_literal(interp, "name"));
 
                 full_key = string_append(interp, full_key, attrib_name);
 
@@ -220,11 +220,11 @@ static void
 init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
 {
     Parrot_Class *_class      = PARROT_CLASS(self);
-    STRING       *name_str    = string_from_cstring(interp, "name",        4);
-    STRING       *parents_str = string_from_cstring(interp, "parents",     7);
-    STRING       *methods_str = string_from_cstring(interp, "methods",     7);
-    STRING       *roles_str   = string_from_cstring(interp, "roles",       5);
-    STRING       *attrs_str   = string_from_cstring(interp, "attributes", 10);
+    STRING       *name_str    = string_from_literal(interp, "name");
+    STRING       *parents_str = string_from_literal(interp, "parents");
+    STRING       *methods_str = string_from_literal(interp, "methods");
+    STRING       *roles_str   = string_from_literal(interp, "roles");
+    STRING       *attrs_str   = string_from_literal(interp, "attributes");
     PMC          *old_ns;
     INTVAL        i, type_num;
 
@@ -1000,7 +1000,7 @@ Creates a new PMC object of the type of the class and calls init().
     PMC *instantiate(PMC *init) {
         Parrot_Object *obj_guts  = NULL;
         Parrot_Class  *_class    = PARROT_CLASS(SELF);
-        STRING * const class_str = string_from_cstring(interp, "Class", 5);
+        STRING * const class_str = string_from_literal(interp, "Class");
         PMC           *iter, *object;
 
         INTVAL         i, mro_length;
