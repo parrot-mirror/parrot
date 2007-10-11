@@ -39,8 +39,8 @@ for my $a (@streams) {
 
     \$P0 = new "Stream::$a"
 
-    \$S0 = classname \$P0
-    print "classname: '"
+    \$S0 = typeof \$P0
+    print "class name: '"
     print \$S0
     print "'\\ndone\\n"
     end
@@ -48,7 +48,7 @@ for my $a (@streams) {
 CODE
 loading '$a'...
 loaded
-classname: 'Stream::$a'
+class name: 'Stream::$a'
 done
 OUT
 

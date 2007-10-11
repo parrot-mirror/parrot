@@ -522,7 +522,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "thaw object w attr into same interpreter"
 
     thaw P5, S3
     print "ok 2\n"
-    classname S10, P5
+    typeof S10, P5
     print S10
     print "\n"
 
@@ -563,7 +563,7 @@ ok1:
 
     thaw P5, S3
     print "ok 2\n"
-    classname S10, P5
+    typeof S10, P5
     print S10
     print "\n"
 
