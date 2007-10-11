@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 21;
+use Parrot::Test tests => 22;
 
 =head1 NAME
 
@@ -535,6 +535,26 @@ Foo;Bar
 1
 1
 data for Foo;Bar
+OUT
+
+#ANRXXX
+pir_output_is( <<'CODE', <<'OUT', 'create class namespace initializer');
+.sub main :main
+    .local pmc ns
+    ns = get_namespace ['Foo';'Bar']
+    $P0 = new 'Class', ns
+
+    $P1 = new ['Foo';'Bar']
+    $P1.'blue'()
+.end
+
+.namespace [ 'Foo';'Bar' ]
+.sub 'blue' :method
+    say 'foo blue'
+.end
+
+CODE
+foo blue
 OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'regression test, instantiate class within different namespace');
