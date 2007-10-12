@@ -530,6 +530,7 @@ EOC
         my $symbol_name = defined $method->symbol ? $method->symbol : $method->name;
 	push @nci_method_names, $symbol_name;
     }
+    my $nci_method_names = join ' ', @nci_method_names;
 
     # init vtable slot
     if ( $self->is_dynamic ) {
@@ -541,6 +542,8 @@ EOC
             PObj_constant_FLAG|PObj_external_FLAG);
         vt_clone->does_str = string_make(interp, "$does", @{[length($does)]}, "ascii",
             PObj_constant_FLAG|PObj_external_FLAG);
+        vt_clone->methods =  string_make(interp, "$nci_method_names", @{[length($nci_method_names)]}, "ascii",
+            PObj_constant_FLAG|PObj_external_FLAG);
 EOC
     }
     else {
@@ -548,12 +551,11 @@ EOC
         vt_clone->whoami = CONST_STRING(interp, "$classname");
         vt_clone->isa_str = CONST_STRING(interp, "$isa");
         vt_clone->does_str = CONST_STRING(interp, "$does");
+        vt_clone->methods = CONST_STRING(interp, "$nci_method_names");
 EOC
     }
 
-    my $nci_method_names = join ' ', @nci_method_names;
     $cout .= <<"EOC";
-        vt_clone->methods = CONST_STRING(interp, "$nci_method_names");
 EOC
 
 	
