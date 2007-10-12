@@ -235,6 +235,27 @@ really a public API.
                 return;
         }
 
+        /* If it's an NCI method */
+        if (value->vtable->base_type == enum_class_NCI) {
+            Parrot_NSInfo *nsinfo    = PARROT_NSINFO(SELF);
+            PMC * const classobj = VTABLE_get_class(interp, SELF);
+
+            /* Insert it in class, if there is a class */
+            if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
+                VTABLE_add_method(interp, classobj, key, value);
+
+            /* Otherwise, store it in the namespace for the class to
+             * retrieve later */
+            else {
+                /* If we don't have a place to hang methods, make one. */
+                if (PMC_IS_NULL(nsinfo->methods))
+                    nsinfo->methods = pmc_new(interp, enum_class_Hash);
+
+                /* Insert it. */
+                VTABLE_set_pmc_keyed_str(INTERP, nsinfo->methods, key, value);
+            }
+        }
+
         /* If it's a multi-sub... */
         if (value->vtable->base_type == enum_class_MultiSub) {
 
