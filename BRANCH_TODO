@@ -55,7 +55,7 @@ plumhead            DONE (tests only run from languages)
 pugs                Does not build anymore
 punie               DONE
 pynie               DONE (fixed shebang)
-regex               Library finding issues (FindBin).  Fixing that will probably make everything work.
+regex               DONE
 scheme              Library finding issues (FindBin).  Fixing that will probably make everything work.
 tap                 Blacklisted
 tcl                 DONE (more cleanup needed)

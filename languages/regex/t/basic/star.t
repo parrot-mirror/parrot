@@ -2,7 +2,7 @@
 
 use strict;
 use FindBin;
-use lib "$FindBin::Bin/../../lib";
+use lib qw{ lib ../../lib };
 
 use Parrot::Test::Regex;
 use Regex;
