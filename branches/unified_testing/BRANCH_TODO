@@ -46,7 +46,7 @@ lua                 Most tests pass with runtests, but not all.
 m4                  DONE? (make test reruns the suite.  Why?  runtests doesn't do this.)
 nqp                 DONE (fixed shebang)
 ook                 DONE
-parrot_compiler     tests only run from main parrot dir
+parrot_compiler     DONE
 perl5               DONE
 perl6               1/2 DONE (added shebang to t/00-parrot and pass.  But the pugs tests don't have shebangs)
 pheme               Need to find a way to associate pheme.pbc with native pheme test files.  No Unix Shebang.

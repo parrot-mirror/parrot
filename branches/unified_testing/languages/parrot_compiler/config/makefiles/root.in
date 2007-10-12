@@ -8,6 +8,10 @@ PERL     = @perl@
 RM_F     = @rm_f@
 PARROT   = ../../@test_prog@$(EXE)
 
+BUILD_DIR   = @build_dir@
+RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+RUNTESTS    = /home/ckuskie/branches/unified_testing/tools/util/runtests
+
 default: all
 all : parrot.pbc parrot_compiler.pbc parrot_compiler.pasm
 
@@ -26,8 +30,11 @@ help :
 	@echo ""
 	@echo "  help:              print this help message"
 
+Makefile: config/makefiles/root.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=parrot_compiler
+
 test :
-	cd .. && $(PERL) -I../lib parrot_compiler/t/harness
+	$(RUNTESTS) -r t
 
 clean :
 	$(RM_F) "*.pbc" parrot_compiler.pasm "t/*/*.pbc"

@@ -3,8 +3,7 @@
 
 use strict;
 use lib 'parrot_compiler/lib';
-use FindBin;
-use lib "$FindBin::Bin/../../lib", "$FindBin::Bin/../../../../lib";
+use lib qw{ ../../lib lib };
 
 use Parrot::Test tests => 8;
 use Test::More;

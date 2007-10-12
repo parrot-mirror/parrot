@@ -4,8 +4,8 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
 use File::Basename;
+use File::Spec;
 
 package Parrot::Test::ParrotCompiler;
 
@@ -45,7 +45,8 @@ sub gen_output {
     my $out_f  = Parrot::Test::per_test( '.out',  $test_no );
 
     my $test_prog_args = $ENV{TEST_PROG_ARGS} || '';
-    my $cmd = "$self->{parrot} languages/parrot_compiler/$test_prog_args < languages/$code_f";
+    my $parrot = File::Spec->catfile( (File::Spec->updir) x 2 , $self->{parrot} );
+    my $cmd = "$parrot $test_prog_args < $code_f";
 
     Parrot::Test::write_code_to_file( $code, $code_f );
 
@@ -53,7 +54,6 @@ sub gen_output {
     my $diag             = '';
     my $parrot_exit_code = Parrot::Test::run_command(
         $cmd,
-        CD     => $self->{relpath},
         STDOUT => $out_f,
         STDERR => $out_f
     );
