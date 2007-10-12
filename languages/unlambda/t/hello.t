@@ -22,14 +22,14 @@ Bernhard Schmalhofer - C<Bernhard.Schmalhofer@gmx.de>
 
 use strict;
 use FindBin;
-use lib "$FindBin::Bin/../../../lib";
+use lib "../../lib";
 
 use Test::More tests => 1;
 use Parrot::Config;
 use File::Spec();
 
-my $parrot    = File::Spec->catfile( File::Spec->updir(), $PConfig{test_prog} );
-my $unlamba   = $parrot . q{ } . File::Spec->catfile( 'unlambda', 'unl.pir' );
+my $parrot    = File::Spec->catfile( (File::Spec->updir())x2, $PConfig{test_prog} );
+my $unlamba   = $parrot . q{ } . 'unl.pir';
 
-my $hello_unl = File::Spec->catfile( 'unlambda', 'hello.unl' ); 
+my $hello_unl = 'hello.unl'; 
 is ( `$unlamba $hello_unl`, "Hello world\n", 'hello.unl' );

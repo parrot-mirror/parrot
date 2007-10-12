@@ -57,9 +57,9 @@ punie               DONE
 pynie               DONE (fixed shebang)
 regex               DONE
 scheme              Library finding issues (FindBin).  Fixing that will probably make everything work.
-tap                 Blacklisted
+tap                 PASS 
 tcl                 DONE (more cleanup needed)
-unlambda            tests only run from languages, OK with runtests
+unlambda            DONE (no makefile)
 urm                 Library finding issues (FindBin).  Fixing that will probably make everything work.
 WMLScript           Need WMLScript compiler to build the test 
 Zcode               DONE
