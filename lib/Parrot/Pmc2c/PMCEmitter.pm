@@ -447,7 +447,6 @@ sub vtable_decl {
         NULL,   /* isa_str */
         NULL,   /* class */
         NULL,   /* mro */
-        NULL,   /* methods */
         NULL,   /* ro_variant_vtable */
         $methlist
     };
@@ -522,15 +521,6 @@ EOC
         VTABLE *vt_${k}_clone = Parrot_clone_vtable(interp, &temp_${k}_vtable);
 EOC
     }
-    
-    my @nci_method_names;
-    # declare each nci method for this class
-    foreach my $method ( @{ $self->{methods} } ) {
-        next unless $method->type eq Parrot::Pmc2c::Method::NON_VTABLE;
-        my $symbol_name = defined $method->symbol ? $method->symbol : $method->name;
-	push @nci_method_names, $symbol_name;
-    }
-    my $nci_method_names = join ' ', @nci_method_names;
 
     # init vtable slot
     if ( $self->is_dynamic ) {
@@ -542,8 +532,6 @@ EOC
             PObj_constant_FLAG|PObj_external_FLAG);
         vt_clone->does_str = string_make(interp, "$does", @{[length($does)]}, "ascii",
             PObj_constant_FLAG|PObj_external_FLAG);
-        vt_clone->methods =  string_make(interp, "$nci_method_names", @{[length($nci_method_names)]}, "ascii",
-            PObj_constant_FLAG|PObj_external_FLAG);
 EOC
     }
     else {
@@ -551,14 +539,8 @@ EOC
         vt_clone->whoami = CONST_STRING(interp, "$classname");
         vt_clone->isa_str = CONST_STRING(interp, "$isa");
         vt_clone->does_str = CONST_STRING(interp, "$does");
-        vt_clone->methods = CONST_STRING(interp, "$nci_method_names");
 EOC
     }
-
-    $cout .= <<"EOC";
-EOC
-
-	
     for my $k ( keys %extra_vt ) {
         $cout .= <<"EOC";
         vt_${k}_clone->base_type = entry;

@@ -176,7 +176,6 @@ typedef struct _vtable {
     PMC    *pmc_class;      /* for PMCs: a PMC of that type
                                for objects: the class PMC */
     PMC    *mro;            /* array PMC of [class, parents ... ] */
-    STRING *methods;        /* space-separated list of compile time methods */
     struct _vtable *ro_variant_vtable; /* A variant of this vtable with the
                                    opposite IS_READONLY flag */
     /* Vtable Functions */
@@ -259,7 +258,6 @@ static const char * const Parrot_vtable_slot_names[] = {
     "",   /* space-separated list of classes */
     "",   /* class */
     "",   /* mro */
-    "",   /* space-separated list of compile time methods */
     "",   /* ro_variant_vtable */
 
     /* Vtable Functions */
