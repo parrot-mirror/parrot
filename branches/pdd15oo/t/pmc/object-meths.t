@@ -22,11 +22,11 @@ Tests PMC object methods.
 
 =cut
 
-pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethod - unknown method" );
+pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethodcc - unknown method" );
     newclass P2, "Foo"
     set S0, "nada"
     callmethodcc P2, S0
-    print "nope\n"
+    print "should never reach here\n"
     end
 CODE
 /Method 'nada' not found/
@@ -36,7 +36,7 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethod (STR) - unknown method
     newclass P2, "Foo"
     set S1, "nada"
     callmethod P2, S1, P1
-    print "nope\n"
+    print "should never reach here\n"
     end
 CODE
 /Method 'nada' not found/
@@ -46,7 +46,7 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethodcc - unknown method" );
     newclass P2, "Foo"
     set S0, "nada"
     callmethodcc P2, S0
-    print "nope\n"
+    print "should never reach here\n"
     end
 CODE
 /Method 'nada' not found/
@@ -56,7 +56,7 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethodcc (STR) - unknown meth
     newclass P2, "Foo"
     set S1, "nada"
     callmethodcc P2, S1
-    print "nope\n"
+    print "should never reach here\n"
     end
 CODE
 /Method 'nada' not found/
