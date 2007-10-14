@@ -41,9 +41,8 @@ ok( $step->description(), "$step_name has description" );
 ok(defined ($step->result), "result defined");
 ok(! ($step->result), "result not yet true");
 my $ret = $step->runstep($conf);
-ok(defined $ret, "$step_name runstep() returned defined value");
-is($step->result, q{skipped},
-    "Because of --nomanicheck, result is 'skipped'.");
+ok( defined $ret, "$step_name runstep() returned defined value" );
+is( $step->result, q{skipped}, "Because of --nomanicheck, result is 'skipped'." );
 
 pass("Completed all tests in $0");
 
