@@ -99,7 +99,7 @@ sub _save_1 {
 sub _restore {
     my $self = shift;
 
-    die "Nothing to restore" unless @_;
+    # die "Nothing to restore" unless @_;
 
     foreach my $reg (@_) {
         next if grep { $_ eq $reg } qw (none);
@@ -138,7 +138,7 @@ sub _num_arg {
     my $args = scalar @{ $node->{children} } - 1;
 
     confess "$name: Wrong number of arguments (expected $expected, got $args).\n"
-        if ( $args != $expected );
+        unless $args == $expected;
 }
 
 sub _get_arg {
@@ -183,8 +183,12 @@ sub _store_lex {
 sub _new_lex {
     my ( $self, $symbol, $value ) = @_;
 
-    $self->_add_inst( '', '# .lex', [ qq{"$symbol"}, $value ] );
+    $self->_add_comment( 'start of _new_lex' );
+
+    $self->_add_inst( '', 'store_lex', [ qq{"$symbol"}, $value ] );
     $self->{scope}->{$symbol} = $value;
+
+    $self->_add_comment( 'end of _new_lex' );
 
     return;
 }
@@ -408,9 +412,11 @@ sub _op_lambda {
     my $sub_name
         = join( q{_}, 'LAMBDA', $self->_gensym() );
 
+    my $sub_reg = $self->_save_1('P');
     my $return = $self->_save_1('P');
 
-    $self->_add_inst( '', '.const', [ qq{.Sub $return = "$sub_name"} ] );
+    $self->_add_inst( '', '.const', [ qq{.Sub $sub_reg = "$sub_name"} ] );
+    $self->_add_inst( '', 'newclosure', [ $return, $sub_reg ] );
 
     # caller saved => start a new frame
     push @{ $self->{frames} }, $self->{regs};
@@ -420,26 +426,31 @@ sub _op_lambda {
     my $oldscope = $self->{scope};
     $self->{scope} = { '*UP*' => $oldscope };
 
-    # parameters
-    my $num = 5;
-    # die Dumper( $node );
-    my @args = @{ _get_arg( $node, 1 )->{children} };
-    for (@args) {
-        my $arg = $_->{value};
-        $self->_store_lex( $arg, "P$num" );
-        $num++;
-    }
-
     # lambda body
     # Another ugly hack. Move the generated code to 'lambda_instructions'
     $self->_add_comment( "start: body of lambda is in $sub_name" );
     my $ins_count = scalar @{ $self->{instruction} };
     $self->_add_inst( '', '' );
+
     $self->_add_comment( 'generated for lambda' );
     my $outer = $self->{outer}->[-1];
     $self->_add_inst( '', '.sub', [ qq{$sub_name :outer('$outer') :lex} ] );
     push @{ $self->{outer} }, $sub_name;
 
+    # loop over parameters
+    my $cnt = 0;
+    my @store_lex;
+    for ( @{ _get_arg( $node, 1 )->{children} } ) {
+        my $param_name = "param_$cnt";
+        $self->_add_inst( '', '.param pmc', [ $param_name ] );
+        push @store_lex, [ '', '.lex', [ qq{"$_->{value}"}, $param_name ]]; 
+        $cnt++;
+    }
+    foreach ( @store_lex ) {
+        $self->_add_inst( @{$_} );
+    }
+  
+    # generate code for the body
     my $temp = 'none';
     for ( _get_args( $node, 2 ) ) {
         $self->_restore($temp);
@@ -490,13 +501,14 @@ sub _op_if {
 sub _op_define {
     my ( $self, $node ) = @_;
 
+    $self->_add_comment( 'start of _op_define()' );
+
     _num_arg( $node, 2, 'define' );
 
-    my ( $symbol, $lambda, $value );
+    my ( $symbol, $lambda );
 
     if ( exists _get_arg( $node, 1 )->{children} ) {
-        my @formals;
-        ( $symbol, @formals ) = @{ _get_arg( $node, 1 )->{children} };
+        ( $symbol, my @formals ) = @{ _get_arg( $node, 1 )->{children} };
         $symbol = $symbol->{value};
         $lambda =
             { children =>
@@ -514,9 +526,9 @@ sub _op_define {
         $self->{scope}->{$symbol} = '*unknown*';
     }
 
-    $value = $self->_generate($lambda);
+    my $value = $self->_generate($lambda);
 
-    if ( $value !~ /^P/ ) {
+    if ( $value !~ m/^P/ ) {
         my $pmc = $self->_save_1('P');
         $self->_morph( $pmc, $value );
         $self->_restore($value);
@@ -524,6 +536,8 @@ sub _op_define {
     }
 
     $self->_new_lex( $symbol, $value );
+
+    $self->_add_comment( 'end of _op_define()' );
 
     return $value;
 }
@@ -2087,7 +2101,6 @@ sub _call_function_obj {
     my $return = $self->_save_1('P');
     $self->_restore($return);    # dont need to save this
     $self->_save_set();
-            $self->_add_comment( 'OK1' );
 
     my $count = 5;
     my $empty = $return;
@@ -2096,43 +2109,35 @@ sub _call_function_obj {
         if ( $arg ne "P$count" ) {
             if ( $arg =~ m/^[INS]/ ) {
                 $self->_morph( "P$count", $arg );
-            $self->_add_comment( 'OK2' );
-                $count++;
-                next;
             }
-
-            # Check if any later argument needs the old value of P$count
-            my $moved;
-            for (@_) {
-                if ( $_ eq "P$count" ) {
-                    $moved = $_;
-                    $_     = $empty;
+            else {
+                # Check if any later argument needs the old value of P$count
+                my $moved;
+                for (@_) {
+                    if ( $_ eq "P$count" ) {
+                        $moved = $_;
+                        $_     = $empty;
+                    }
                 }
+                if ($moved) {
+                    $empty = $moved;
+                }
+                $self->_add_inst( '', 'set', [ "P$count", $arg ] );
             }
-            if ($moved) {
-                $empty = $moved;
-            }
-            $self->_add_inst( '', 'set', [ "P$count", $arg ] );
-            $self->_add_comment( 'OK3' );
-            push @args, $count;
         }
+        push @args, "P$count";
         $count++;
     }
 
-    if ( @args )
     {
-        $self->_add_inst( '', 'set_args', [ q{"} . join( q{,}, q{0} x scalar(@args) ) . q{"}, join( q{,}, map { "P$_" } @args ) ] );    
-    }
-    else
-    {
-            $self->_add_comment( 'OK4' );
-        $self->_add_inst( '', 'set_args', [ q{""} ] );
+        my $spec = q{"} . join( q{,}, ( q{0} ) x scalar(@args) ) . q{"};    
+        $self->_add_inst( '', 'set_args', [ $spec, @args ] );    
     }
     $self->_add_inst( '', 'get_results', [ q{"0"}, $return ] );
     $self->_add_inst( '', 'invokecc', [ $func_obj ] );
-    $self->_restore_set;
+    $self->_restore_set();
 
-    $return =~ /(\w)(\d+)/;
+    $return =~ m/(\w)(\d+)/;
     $self->{regs}->{$1}->{$2} = 1;
 
     $self->_add_comment( 'end of _call_function_obj' );
@@ -2245,7 +2250,6 @@ sub generate {
 
     $self->{scope} = {};
 
-    $self->_add_inst( '', ".include 'library/dumper.pir'" );
     $self->_add_inst( '', ".sub main :main :lex" );
 
     my $temp = $self->_generate($tree);
@@ -2253,7 +2257,6 @@ sub generate {
 
     $self->_add_inst( '', '.end' );
 
-    # die Dumper( $self );
     push @{ $self->{instruction} }, @{ $self->{lambda_instructions} };
     $self->_format_columns();
 
