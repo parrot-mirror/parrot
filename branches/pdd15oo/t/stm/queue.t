@@ -43,12 +43,13 @@ my $library = <<'CODE';
     addattribute class, 'tail'
     addattribute class, 'used'
     addattribute class, 'array'
+    addattribute class, 'length'
     .return()
 done:
 .end
 
 .sub init_pmc :vtable :method
-    .param int length
+    .param pmc args
 
     .local pmc tmpint
     .local pmc stmv
@@ -61,6 +62,11 @@ done:
     setattribute self, 'used', stmv
     stmv = new 'STMVar', tmpint
     setattribute self, 'tail', stmv
+
+    # Length is set during initialization
+    .local int length
+    $P0 = getattribute self, 'length'
+    length = $P0
 
     # create array
     .local pmc array
@@ -184,9 +190,9 @@ do_ret:
 
     $P0 = getattribute self, 'array'
     $I0 = $P0
-    length = new 'Integer'
-    length = $I0
-    result = new 'STMQueue', length
+
+    $P1 = get_class 'STMQueue'
+    result = $P1.'new'('length' => $I0)
 
     $P0 = getattribute self, 'array'
     $P1 = clone $P0
@@ -209,9 +215,8 @@ pir_output_is( $library . <<'CODE', <<'OUTPUT', "Single-threaded case" );
     $P0 = get_hll_global ['STMQueue'], '__onload'
     $P0()
 
-    $P0 = new 'Integer'
-    $P0 = 10
-    queue = new 'STMQueue', $P0
+    $P1 = get_class 'STMQueue'
+    queue = $P1.'new'('length' => 10)
 
 
     queue.'addTail'(0, 0)
@@ -290,9 +295,8 @@ not_okay:
 
     addThread = new 'ParrotThread'
     removeThread = new 'ParrotThread'
-    $P0 = new 'Integer'
-    $P0 = SIZE
-    queue = new 'STMQueue', $P0
+    $P0 = get_class 'STMQueue'
+    queue = $P0.'new'('length' => SIZE)
 
     addThreadId = addThread
     removeThreadId = removeThread
@@ -361,9 +365,8 @@ no_sleep:
 
     addThread = new 'ParrotThread'
     removeThread = new 'ParrotThread'
-    $P0 = new 'Integer'
-    $P0 = 2
-    queue = new 'STMQueue', $P0
+    $P0 = get_class 'STMQueue'
+    queue = $P0.'new'('length' => 2)
 
     addThreadId = addThread
     removeThreadId = removeThread
@@ -447,9 +450,8 @@ no_sleep:
 
     addThread = new 'ParrotThread'
     removeThread = new 'ParrotThread'
-    $P0 = new 'Integer'
-    $P0 = 2
-    queue = new 'STMQueue', $P0
+    $P0 = get_class 'STMQueue'
+    queue = $P0.'new'('length' => 2)
 
     addThreadId = addThread
     removeThreadId = removeThread
