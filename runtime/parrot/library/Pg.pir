@@ -74,7 +74,8 @@ A class method that returns a new connection object.
     .local pmc con, connectdb, o_con
     connectdb = get_global 'PQconnectdb' 
     con = connectdb(args)
-    o_con = new ['Pg';'Conn'], con
+    $P0 = get_class ['Pg';'Conn']
+    o_con = new $P0, con
     # verify success
     .local int ok
     ok = o_con.'status'()
@@ -165,7 +166,8 @@ Execute the SQL command and return a Pg;Result object.
 .sub mk_res
     .param pmc res
     .local pmc o_res
-    o_res = new ['Pg';'Result'], res
+    $P0 = get_class ['Pg';'Result']
+    o_res = new $P0, res
     .return (o_res)
 .end
 
