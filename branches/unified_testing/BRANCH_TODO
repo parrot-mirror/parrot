@@ -60,7 +60,7 @@ scheme              Library finding issues (FindBin).  Fixing that will probably
 tap                 PASS 
 tcl                 DONE (more cleanup needed)
 unlambda            DONE (no makefile)
-urm                 Library finding issues (FindBin).  Fixing that will probably make everything work.
+urm                 DONE
 WMLScript           Need WMLScript compiler to build the test 
 Zcode               DONE
 

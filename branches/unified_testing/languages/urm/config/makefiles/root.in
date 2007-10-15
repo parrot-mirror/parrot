@@ -8,6 +8,7 @@ PERL   = @perl@
 PARROT = ../../parrot
 BUILD_DIR= @build_dir@
 RECONFIGURE= $(PERL) @build_dir@/tools/dev/reconfigure.pl
+RUNTESTS    = /home/ckuskie/branches/unified_testing/tools/util/runtests
 
 Makefile: config/makefiles/root.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=urm
@@ -30,7 +31,7 @@ help :
 	@echo "  help:              print this help message"
 
 test: build
-	cd .. && $(PERL) -I../lib urm/t/harness 
+	$(RUNTESTS) t
 
 examples: build
 	$(PERL) urmc -c examples/biggerzero.urm

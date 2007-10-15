@@ -8,6 +8,7 @@ use strict;
 use warnings;
 use vars qw(@EXPORT @ISA);
 
+use lib '../../lib';
 use Parrot::Config;
 
 require Exporter;
@@ -46,14 +47,12 @@ foreach my $meth (qw(is isnt like)) {
         close LANG;                                                     # JMG
 
         Parrot::Test::run_command(
-            "$PConfig{perl} languages/urm/urmc -s languages/$lang_f",
-            CD     => '..',                                             # $self->{relpath},
+            "$PConfig{perl} urmc -s $lang_f",
             STDOUT => $pasm_f,
             STDERR => $pasm_f,
         );
         Parrot::Test::run_command(
-            "./parrot languages/$pasm_f @other",
-            CD     => '..',                                             # $self->{relpath},
+            "../../parrot $pasm_f @other",
             STDOUT => $out_f,
             STDERR => $out_f,
         );
@@ -77,7 +76,7 @@ my $run     = "-s";
 sub compile_test {
     my $file = shift;
 
-    my $ret = system("$urmc $compile $FindBin::RealBin$PConfig{slash}$file");
+    my $ret = system("$urmc $compile $file");
     if ($ret) {
         print STDERR "TEST FAILED: $file ($ret)\n";
         return;
@@ -87,7 +86,7 @@ sub compile_test {
 
 sub run_test {
     my ( $file, $expect ) = @_;
-    my $ret = `$urmc $run $FindBin::RealBin$PConfig{slash}$file`;
+    my $ret = `$urmc $run $file`;
     if ( !$ret ) {
         print STDERR "TEST FAILED: $file didn't return a value, Parrot crashed?\n";
         return;
