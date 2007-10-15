@@ -1,6 +1,6 @@
 #!perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: ops.t 21203 2007-09-12 03:16:55Z allison $
+# $Id$
 
 use strict;
 use warnings;
