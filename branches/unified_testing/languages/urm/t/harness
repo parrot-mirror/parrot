@@ -35,7 +35,7 @@ my $language = 'urm';
 
 if ( grep { m/^--files$/ } @ARGV ) {
     # Only the Makefile in 'parrot/languages' uses --files
-    my $dir = File::Spec->catfile( $language, 't' );
+    my $dir = File::Spec->catfile( 't' );
     my @files = glob( File::Spec->catfile( $dir, '*.t' ) );
     print join( "\n", @files );
     print "\n" if scalar(@files);
