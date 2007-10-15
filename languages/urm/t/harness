@@ -39,21 +39,15 @@ if ( grep { m/^--files$/ } @ARGV ) {
     my @files = glob( File::Spec->catfile( $dir, '*.t' ) );
     print join( "\n", @files );
     print "\n" if scalar(@files);
-} else { 
+}
+else { 
     my @files;
     if ( scalar(@ARGV) ) {
         # Someone specified tests for me to run.
         @files = grep { -f $_ } @ARGV
-  }
-  else 
-  {
-      ( undef, undef, my $current_dir ) = File::Spec->splitpath( Cwd::getcwd() );
-      if ( $current_dir eq 'languages' ) {
-          @files = glob( File::Spec->catfile( $language, 't', '*.t' ) );
-      }
-      elsif ( $current_dir eq $language ) {
-          @files = glob( File::Spec->catfile( 't', '*.t' ) );
-      }
-  }
+    }
+    else {
+        @files = glob( File::Spec->catfile( 't', '*.t' ) );
+    }
   Test::Harness::runtests( @files ) if scalar( @files );
 }
