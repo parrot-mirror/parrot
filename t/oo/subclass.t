@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 18;
+use Parrot::Test tests => 19;
 
 =head1 NAME
 
@@ -578,6 +578,17 @@ pir_output_is( <<'CODE', <<'OUT', 'set inherited attributes by parent key');
 CODE
 Bar init
 storage attribute value
+OUT
+
+pir_error_output_like( <<'CODE', <<'OUT', "the same parent can't be added twice");
+.sub main :main
+    $P0 = newclass 'Foo'
+    $P1 = newclass 'Bar'
+    addparent $P1, $P0
+    addparent $P1, $P0
+.end
+CODE
+/The class 'Bar' already has a parent class 'Foo'./
 OUT
 
 
