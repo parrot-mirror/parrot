@@ -543,14 +543,9 @@ pt_ns_clone(Parrot_Interp d, PMC *dest_ns, Parrot_Interp s, PMC *source_ns)
                 PMC *copy;
                 copy = make_local_copy(d, s, val);
                 /* Vtable overrides and methods were already cloned, so don't reclone them. */
-                if (val->vtable->base_type == enum_class_Sub
+                if (!(val->vtable->base_type == enum_class_Sub
                         && (PMC_sub(val)->vtable_index != -1
-                        || PMC_sub(val)->comp_flags & SUB_COMP_FLAG_METHOD)) {
-                    fprintf(stderr, "yo, we're skipping this sub %s!\n", string_to_cstring(s, VTABLE_get_string(s, val)));
-
-                    /* Do nothing */
-                }
-                else {
+                        || PMC_sub(val)->comp_flags & SUB_COMP_FLAG_METHOD))) {
                     VTABLE_set_pmc_keyed_str(d, dest_ns, key, copy);
                 }
             }
