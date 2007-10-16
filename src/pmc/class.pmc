@@ -704,7 +704,7 @@ Adds the given sub PMC as a method with the given name.
         /* If we have already added a method with this name... */
         if (VTABLE_exists_keyed_str(interp, _class->methods, name)) {
             /* RT46095 Need to handle multi methods here. */
-            real_exception(interp, NULL, E_NotImplementedError,
+            real_exception(interp, NULL, INVALID_OPERATION,
                 "A method named '%S' already exists in class '%S'. "
                 "It may have been supplied by a role.",
                 name, VTABLE_get_string(interp, SELF));
@@ -728,7 +728,7 @@ Adds the given sub PMC as a vtable override with the given name.
 
         /* If we have already added a vtable override with this name... */
         if (VTABLE_exists_keyed_str(interp, _class->vtable_overrides, name))
-            real_exception(interp, NULL, E_NotImplementedError,
+            real_exception(interp, NULL, INVALID_OPERATION,
                 "A vtable override named '%S' already exists in class '%S'. "
                 "It may have been supplied by a role.",
                 name, VTABLE_get_string(interp, SELF));
