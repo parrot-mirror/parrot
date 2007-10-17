@@ -33,14 +33,14 @@ L<docs/pdds/pdd07_codingstd.pod>
 =cut
 
 my $keywords = join '|' => sort { length $a cmp length $b } qw/
-    auto      double    int       struct
-    break     else      long      switch
-    case      enum      register  typedef
-    char      extern    return    union
+    auto      double    int       struct    INTVAL
+    break     else      long      switch    UINTVAL
+    case      enum      register  typedef   FLOATVAL
+    char      extern    return    union     PIOOFF_T
     const     float     short     unsigned
     continue  for       signed    void
-    default   goto      sizeof    volatile
-    do        if        static    while
+    default   goto      sizeof    volatile  opcode_t
+    do        if        static    while     size_t
     /;
 my $DIST = Parrot::Distribution->new;
 my @files = @ARGV ? @ARGV : $DIST->get_c_language_files();
@@ -57,7 +57,7 @@ sub check_parens {
     foreach my $file (@_) {
         my $path = @ARGV ? $file : $file->path();
 
-        my $buf = $DIST->slurp( $path );
+        my $buf = $DIST->slurp($path);
         $buf =~ s{ (?:
                        (?: (') (?: \\\\ | \\' | [^'] )* (') ) # remove ' string
                      | (?: (") (?: \\\\ | \\" | [^"] )* (") ) # remove " string
@@ -65,14 +65,21 @@ sub check_parens {
                    )
                 }{defined $1 ? "$1$2" : defined $3 ? "$3$4" : "$5$6"}egsx;
 
-        if ( $buf =~ m{ ( (?<!\w) (?:$keywords) (?: \( | \ \s+ \( ) ) }x ) {
-            push @keyword_paren => "$path: $1\n";
-        }
-        if ( $buf =~ m{ ( (?<!\w) (?!(?:$keywords)\W) \w+ \s+ \( ) }x ) {
-            push @non_keyword_paren => "$path: $1\n";
-        }
-        if ( $buf =~ m{ ( \( [ \t]+ [^\n] | [^\n] [ \t]+ \) ) }x ) {
-            push @space_between_parens => "$path: $1\n";
+        my @lines = split( /\n/, $buf );
+        for my $line (@lines) {
+            next if $line =~ m{#\s*define};    # skip #defines
+            if ( $line =~ m{ ( (?<!\w) (?:$keywords) (?: \( | \ \s+ \( ) ) }x ) {
+
+                # ops use the same names as some C keywords, so skip
+                next if $line =~ m{^op};
+                push @keyword_paren => "$path: $1\n";
+            }
+            if ( $line =~ m{ ( (?<!\w) (?!(?:$keywords)\W) \w+ \s+ \( ) }x ) {
+                push @non_keyword_paren => "$path: $1\n";
+            }
+            if ( $line =~ m{ ( \( [ \t]+ [^\n] | [^\n] [ \t]+ \) ) }x ) {
+                push @space_between_parens => "$path: $1\n";
+            }
         }
     }
 
@@ -80,19 +87,19 @@ sub check_parens {
     ok( !scalar(@keyword_paren), 'Spacing between C keyword and following open parenthesis' )
         or diag( "incorrect spacing between C keyword and following open parenthesis found in "
             . scalar @keyword_paren
-            . " files:\n@keyword_paren" );
+            . " instances:\n@keyword_paren" );
 
 ## L<PDD07/Code Formatting/"There should be no space between a function name and the following open parenthesis">
     ok( !scalar(@non_keyword_paren), 'Spacing between function name and following open parethesis' )
         or diag( "incorrect spacing between function name and following open parenthesis found in "
             . scalar @non_keyword_paren
-            . " files:\n@non_keyword_paren" );
+            . " instances:\n@non_keyword_paren" );
 
 ## L<PDD07/Code Formatting/"parentheses should not have space immediately after the opening parenthesis nor immediately before the closing parenthesis">
     ok( !scalar(@space_between_parens), 'Spacing between parentheses' )
         or diag( "incorrect spacing between parentheses found in "
             . scalar @space_between_parens
-            . " files:\n@space_between_parens" );
+            . " instances:\n@space_between_parens" );
 }
 
 # Local Variables:

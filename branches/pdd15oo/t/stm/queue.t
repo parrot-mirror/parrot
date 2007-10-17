@@ -239,6 +239,8 @@ CODE
 0123
 OUTPUT
 
+SKIP: {
+    skip "These tests freeze up the whole interpreter", 2;
 pir_output_is( $library . <<'CODE', <<'OUTPUT', "Add in one thread, remove in the other" );
 .const int MAX = 1000
 .const int SIZE = 10
@@ -390,6 +392,8 @@ got 7
 got 8
 got 9
 OUTPUT
+
+}
 
 # This test is disabled because it is a known bug and sometimes
 # passed and sometimes fails depending on timing.

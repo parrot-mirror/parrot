@@ -35,9 +35,6 @@ sub runstep {
         # Intel C++ compiler has the same name as its C compiler
         $link = $cc;
 
-        # don't allow icc to pretend it's gcc
-        $ccflags .= ' -no-gcc';
-
         # suppress sprintf warnings that don't apply
         $ccflags .= ' -wd269';
 
@@ -66,10 +63,6 @@ sub runstep {
         # (only done temporarily to reduce noise)
         $ccflags .= ' -wd117';
 
-        # ignore "missing return statement at end of non-void function"
-        # warnings (only done temporarily to reduce noise)
-        $ccflags .= ' -wd1011';
-
         # ignore "conversion from "" to "" may lose significant bits"
         # warnings (only done temporarily to reduce noise)
         $ccflags .= ' -wd810';
@@ -84,6 +77,23 @@ sub runstep {
         $ccflags .= ' -wd1296';
 
         $ccflags .= ' -Wall -Wcheck -w2';
+
+        $ccflags .= ' -Wabi';
+        $ccflags .= ' -Wcomment';
+        $ccflags .= ' -Wdeprecated';
+        $ccflags .= ' -Wmain';
+        $ccflags .= ' -Wmissing-prototypes';
+
+        #$ccflags .= ' -Wp64';
+        $ccflags .= ' -Wpointer-arith';
+        $ccflags .= ' -Wreturn-type';
+        $ccflags .= ' -Wstrict-prototypes';
+
+        #$ccflags .= ' -Wtrigraphs';
+        $ccflags .= ' -Wuninitialized';
+        $ccflags .= ' -Wunknown-pragmas';
+        $ccflags .= ' -Wunused-function';
+        $ccflags .= ' -Wunused-variable';
 
         $ld_share_flags = ' -shared -g -pipe -fexceptions -fPIC';
         $cc_shared .= ' -fPIC';
