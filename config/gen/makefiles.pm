@@ -71,7 +71,7 @@ sub runstep {
     $self->makefiles($conf);
     $self->cflags($conf);
 
-    return $self;
+    return 1;
 }
 
 sub cflags {
@@ -103,7 +103,7 @@ EOF
 sub makefiles {
     my ( $self, $conf ) = @_;
 
-    my $targets = $conf->options->get('targets');
+    my $targets = $conf->options->get('target');
     my @targets =
         defined $targets
         ? split ' ', $targets

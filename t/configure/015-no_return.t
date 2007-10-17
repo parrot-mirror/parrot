@@ -51,33 +51,28 @@ $conf->options->set(%args);
 is( $conf->options->{c}->{debugging},
     1, "command-line option '--debugging' has been stored in object" );
 
-my $rv;
-my ( $tie, @lines, $errstr );
 {
+    my $rv;
+    my ( $tie, @lines );
     $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
         or croak "Unable to tie";
-    local $SIG{__WARN__} = \&_capture;
     $rv    = $conf->runsteps;
     @lines = $tie->READLINE;
+    ok( $rv, "runsteps successfully ran $step" );
+    my $bigmsg = join q{}, @lines;
+    like( $bigmsg, qr/$description/s, "Got correct description for $step" );
+    like( $bigmsg, qr/done\.\z/,      "got 'done' in lieu of result set by step" );
 }
-ok( $rv, "runsteps successfully ran $step" );
-my $bigmsg = join q{}, @lines;
-like( $bigmsg, qr/$description/s, "Got message expected upon running $step" );
-like(
-    $errstr,
-    qr/step $step failed:\s*no result returned/s,
-    "Got error message expected when config module did not return object"
-);
+untie *STDOUT;
 
 pass("Completed all tests in $0");
-
-sub _capture { $errstr = $_[0]; }
 
 ################### DOCUMENTATION ###################
 
 =head1 NAME
 
-015-no_return.t - see what happens when configuration step does not return object
+015-no_return.t - see what happens when configuration step implicitly returns
+true value but does not set a result
 
 =head1 SYNOPSIS
 

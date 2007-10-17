@@ -30,15 +30,17 @@ $description = 'Determining if your platform supports gdbm';
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my ( $verbose, $without ) = $conf->options->get( qw|
-        verbose
-        without-gmp
-    | );
+    my ( $verbose, $without ) = $conf->options->get(
+        qw|
+            verbose
+            without-gmp
+            |
+    );
 
     if ($without) {
         $conf->data->set( has_gdbm => 0 );
         $self->set_result('no');
-        return $self;
+        return 1;
     }
 
     my $cc        = $conf->data->get('cc');
@@ -93,7 +95,7 @@ sub runstep {
     }
     $conf->data->set( has_gdbm => $has_gdbm );    # for gdbmhash.t and dynpmc.in
 
-    return $self;
+    return 1;
 }
 
 1;

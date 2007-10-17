@@ -12,8 +12,6 @@ use strict;
 use warnings;
 use vars qw($description @args);
 
-# use vars qw($description @args $step);
-
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step;
@@ -21,14 +19,12 @@ use Parrot::Configure::Step;
 $description = 'Determining if your computer does zeta';
 @args        = ();
 
-my $result = q|Hello world|;
+my $result = q|Goodbye, cruel world|;
 
 sub runstep {
     my ( $self, $conf ) = @_;
     $self->set_result($result);
-    return $self;
-
-    #    $self->result();
+    return;
 }
 
 1;
