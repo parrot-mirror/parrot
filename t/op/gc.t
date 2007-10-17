@@ -42,8 +42,8 @@ pasm_output_is( <<'CODE', '0', "sweep 0" );
 CODE
 
 pasm_output_is( <<'CODE', '1', "sweep 0, with object that need destroy" );
-      new P0, 'Undef'
       interpinfo I1, 2   # How many DOD runs have we done already?
+      new P0, 'Undef'
       needs_destroy P0
       sweep 0
       interpinfo I2, 2   # Should be one more now
@@ -53,10 +53,9 @@ pasm_output_is( <<'CODE', '1', "sweep 0, with object that need destroy" );
 CODE
 
 pasm_output_is( <<'CODE', '10', "sweep 0, with object that need destroy/destroy" );
-      new P0, 'Undef'
       interpinfo I1, 2   # How many DOD runs have we done already?
-      needs_destroy P0
-      new P0, 'Undef' # kill object
+      new P0, 'Undef'
+      new P0, 'Undef'    # kill object
       sweep 0
       interpinfo I2, 2   # Should be one more now
       sub I3, I2, I1
@@ -178,7 +177,7 @@ pir_output_is( <<'CODE', <<OUTPUT, "vanishing return continuation in method call
     .local pmc o, cl
     cl = newclass "Foo"
 
-    o = new "Foo"
+    new o, "Foo"
     print "ok\n"
     end
 .end
