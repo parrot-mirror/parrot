@@ -12,7 +12,7 @@ version 0.1
 
     load_bytecode "library/Stream/Replay.pir"
 
-    $p0 = new "Stream::Replay"
+    $P0 = new "Stream::Replay"
     assign $P0, other_stream
 
     # .. read from $P0 ..
@@ -45,7 +45,7 @@ By using C<clone>, you can read data from a stream as often as you want.
     # Stream::Replay
     get_class $P0, "Stream::Base"
     subclass $P0, $P0, "Stream::Replay"
-    addattribute $P0, "buffer"
+    addattribute $P0, "replay_buffer"
     addattribute $P0, "pos"
 
     # Stream::Replay::Buffer
@@ -55,7 +55,7 @@ By using C<clone>, you can read data from a stream as often as you want.
 END:
 .end
 
-=item __init
+=item init
 
 ...
 
@@ -77,33 +77,33 @@ END:
 .sub set_pmc :vtable :method
     .param pmc val
     .local pmc buffer
-    
+
     isa $I0, val, "Stream::Replay"
     unless $I0 goto NOTA
-    
+
     # get the buffer
-    getattribute buffer, val, 'buffer'
-    
+    getattribute buffer, val, 'replay_buffer'
+
     # add us to the buffer
     buffer."add"( self )
-    
+
     # store the buffer
-    setattribute self, 'buffer', buffer
+    setattribute self, 'replay_buffer', buffer
 
     # get the position
     getattribute $P0, val, 'pos'
-    
+
     $P0 = clone $P0
-    
+
     # set the position
     setattribute val, 'pos', $P0
-    
+
     # assign the source
     val = val."source"()
-    branch ASSIGN
+    goto ASSIGN
 NOTA:
-    $P0 = new "Stream::Replay::Buffer"
-    setattribute self, 'buffer', buffer
+    buffer = new "Stream::Replay::Buffer"
+    setattribute self, 'replay_buffer', buffer
 ASSIGN:
     self."setSource"( val )
 .end
@@ -119,14 +119,13 @@ ASSIGN:
     .local pmc buffer
     .local pmc pos
     .local string ret
-    
+
     null ret
     source = self."source"()
     if_null source, END
-    getattribute buffer, self, 'buffer'
+    getattribute buffer, self, 'replay_buffer'
     if_null buffer, END
-    inc $I0
-    getattribute pos, self, $I0
+    getattribute pos, self, 'pos'
 
     ret = buffer."read"( pos, source )
 END:
@@ -144,9 +143,9 @@ END:
     .local pmc temp
 
     ret = new "Stream::Replay"
-    
+
     assign ret, self
-    
+
     $P0 = self."byte_buffer"()
     if_null $P0, END
     $P0 = clone $P0
@@ -160,10 +159,10 @@ END:
 
 .sub init :vtable :method
     .local pmc temp
-    
+
     temp = new ResizableStringArray
     setattribute self, 'strings', temp
-    
+
     temp = new ResizablePMCArray
     setattribute self, 'clones', temp
 .end
@@ -179,14 +178,14 @@ END:
     .local string ret
     .local pmc strings
     .local pmc clones
-    
+
     null ret
     typeof $I0, source
     if $I0==.Undef goto END
-    
+
     getattribute strings, self, 'strings'
     getattribute clones, self, 'clones'
-    
+
     $I0 = clones
     if $I0 <= 1 goto READ_SOURCE
 
@@ -198,23 +197,23 @@ END:
     ret = strings[$I0]
     inc pos
     branch END
-    
+
 READ_SOURCE:
     ret = source."read"()
-    
+
     $I0 = clones
     if $I0 <= 1 goto END
     inc pos
     push strings, ret
-END:   
- 
+END:
+
     .return(ret)
 .end
 
 .sub add :method
     .param pmc stream
     .local pmc clones
-    
+
     getattribute clones, self, 'clones'
     push clones, stream
 .end
@@ -225,7 +224,7 @@ END:
     .local pmc entry
     .local int i
     .local int j
-    
+
     getattribute clones, self, 'clones'
 
     i = 0
