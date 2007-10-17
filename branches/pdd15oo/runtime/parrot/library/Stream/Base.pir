@@ -285,7 +285,7 @@ Reads the specified number of bytes from the stream.
     # unset buffer
     null $P0
     setattribute self, 'buffer', $P0
-    branch OK
+    goto OK
 
 CREATE:
     buffer = new 'String'
@@ -299,7 +299,7 @@ LOOP:
     $S0 = self."read"()
     if_null $S0, DONE
     concat ret, $S0
-    branch LOOP
+    goto LOOP
 DONE:
 
     $I0 = length ret
