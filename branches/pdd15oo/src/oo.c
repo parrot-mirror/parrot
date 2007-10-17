@@ -126,21 +126,26 @@ PMC *
 Parrot_oo_get_class(PARROT_INTERP, NOTNULL(PMC *key))
 {
     PMC *classobj = PMCNULL;
-    if (VTABLE_isa(interp, key, CONST_STRING(interp, "Class"))
-            || VTABLE_isa(interp, key, CONST_STRING(interp, "PMCProxy"))) {
+    PMC *hll_ns, *ns;
+
+    if (PObj_is_class_TEST(key)) {
         classobj = key;
     }
-    else if (VTABLE_isa(interp, key, CONST_STRING(interp, "NameSpace"))) {
-        classobj = VTABLE_get_class(interp, key);
-    }
-    else if (VTABLE_isa(interp, key, CONST_STRING(interp, "String"))
-          || VTABLE_isa(interp, key, CONST_STRING(interp, "Key"))
-          || VTABLE_isa(interp, key, CONST_STRING(interp, "ResizableStringArray"))) {
-        PMC *hll_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
-                CONTEXT(interp->ctx)->current_HLL);
-        PMC *ns = Parrot_get_namespace_keyed(interp, hll_ns, key);
-        if (!PMC_IS_NULL(ns))
-            classobj = VTABLE_get_class(interp, ns);
+
+    /* Fast select of behavior based on type of the lookup key */
+    switch (key->vtable->base_type) {
+        case enum_class_NameSpace:
+            classobj = VTABLE_get_class(interp, key);
+            break;
+
+        case enum_class_String:
+        case enum_class_Key:
+        case enum_class_ResizableStringArray:
+            hll_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
+                    CONTEXT(interp->ctx)->current_HLL);
+            ns = Parrot_get_namespace_keyed(interp, hll_ns, key);
+            if (!PMC_IS_NULL(ns))
+                classobj = VTABLE_get_class(interp, ns);
     }
 
     if (PMC_IS_NULL(classobj)) {
