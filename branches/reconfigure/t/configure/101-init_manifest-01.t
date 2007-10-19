@@ -78,3 +78,4 @@ config::init::manifest, F<Configure.pl>.
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
+

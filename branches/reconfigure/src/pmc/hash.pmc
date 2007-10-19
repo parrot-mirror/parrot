@@ -194,11 +194,10 @@ Creates and returns a clone of the hash.
 */
 
     PMC *clone() {
-        PMC * const dest = pmc_new_noinit(INTERP, SELF->vtable->base_type);
-        PObj_custom_mark_destroy_SETALL(dest);
+        PMC * const dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         parrot_hash_clone(INTERP, (Hash *)PMC_struct_val(SELF),
-                   (Hash **)&PMC_struct_val(dest));
+                   (Hash *)PMC_struct_val(dest));
 
         ((Hash *)PMC_struct_val(dest))->container = dest;
         return dest;
@@ -239,8 +238,18 @@ Returns the size of the hash.
     }
 
     INTVAL get_integer_keyed_int(INTVAL key) {
-        STRING * const s = string_from_int(INTERP, key);
-        return SELF.get_integer_keyed_str(s);
+        const Hash * const hash = (Hash *)PMC_struct_val(SELF);
+        HashBucket *b;
+
+        if (hash->key_type == Hash_key_type_STRING)
+            return SELF.get_integer_keyed_str(string_from_int(INTERP, key));
+
+        b = parrot_hash_get_bucket(INTERP, hash, (void *)key);
+
+        if (!b)
+            return 0;
+
+        return (INTVAL)b->value;
     }
 /*
 

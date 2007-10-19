@@ -40,12 +40,9 @@ or the resulting PIR code (target='PIR').
   with_grammar:
     $I0 = exists adverbs['name']
     if $I0 goto with_name
-    unless args goto adverb_name_1
+    unless args goto with_name
     $S0 = shift args
     adverbs['name'] = $S0
-    goto with_name
-  adverb_name_1:
-    adverbs['name'] = '_regex'
   with_name:
     $I0 = exists adverbs['lang']
     if $I0 goto with_lang
@@ -203,6 +200,7 @@ needed for compiling regexes.
     optable.newtok('term:<',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
     optable.newtok('term:<?',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
     optable.newtok('term:<!',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.newtok('term:<.',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_enumcharclass'
     optable.newtok('term:<[',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
@@ -717,6 +715,7 @@ Parses a subrule token.
     ##   see what type of subrule this is
     mob['iscapture'] = 1
     if key == '<?' goto nocapture
+    if key == '<.' goto nocapture
     if key == '<!' goto negated
 
     ##   if the next character is +/-, this is really an enumcharclass

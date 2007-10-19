@@ -1986,7 +1986,9 @@ sub_flags(parser_state *p) {
 
 =item *
 
-  parameters -> { '.param' (register | type IDENTIFIER) [param_flag] '\n' }
+  parameters -> { '.param' parameter[param_flag] '\n' }
+
+  parameter -> type [ STRING_CONSTANT '=>' ] IDENTIFIER
 
 =cut
 
@@ -2003,32 +2005,16 @@ parameters(parser_state *p) {
             case T_STRING:
                 emit_type(p, get_current_token(p->lexer));
                 next(p); /*we know what it is; just skip it! */
+                if (p->curtoken == T_STRING_CONSTANT) { /* [ STRING_CONSTANT '=>' ] */
+                    next(p);
+                    match(p, T_ARROW);
+                }
                 emit_name(p, get_current_token(p->lexer));
                 match(p, T_IDENTIFIER);
                 param_flags(p);
                 break;
-            case T_PREG:
-            case T_PASM_PREG:
-                next(p);
-                emit_type(p, "pmc");
-                break;
-            case T_NREG:
-            case T_PASM_NREG:
-                next(p);
-                emit_type(p, "num");
-                break;
-            case T_SREG:
-            case T_PASM_SREG:
-                next(p);
-                emit_type(p, "string");
-                break;
-            case T_IREG:
-            case T_PASM_IREG:
-                next(p);
-                emit_type(p, "int");
-                break;
             default:
-                syntax_error(p, 1, "type or register expected");
+                syntax_error(p, 1, "type expected");
                 break;
         }
         match(p, T_NEWLINE);

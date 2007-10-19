@@ -141,13 +141,15 @@ sub try_warning {
     my $output = Parrot::BuildUtil::slurp_file($output_file);
     $verbose and print "  output: $output$/";
 
-    if ( $output !~ /error|warning/i ) {
+    if ( $output !~ /error|warning|not supported/i ) {
         $conf->data->set( ccflags => $tryflags );
         my $ccflags = $conf->data->get("ccflags");
         $verbose and print "  ccflags: $ccflags$/";
+        return 1;
     }
-
-    return;
+    else {
+        return 0;
+    }
 }
 
 =back
