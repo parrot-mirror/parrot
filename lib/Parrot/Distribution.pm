@@ -349,9 +349,9 @@ This is to exclude automatically generated C-language files Parrot might have.
             languages/cola/lexer.c
             languages/cola/parser.c
             languages/cola/parser.h
-            languages/plumhead/lex.yy.c
-            languages/plumhead/y.tab.c
-            languages/plumhead/y.tab.h
+            languages/plumhead/src/yacc/plumhead_lexer.c
+            languages/plumhead/src/yacc/plumhead_parser.c
+            languages/plumhead/src/yacc/plumhead_parser.h
             src/malloc.c
             } unless @exemptions;
 

@@ -310,8 +310,11 @@ parrot_mark_hash(PARROT_INTERP, NOTNULL(Hash *hash))
                 real_exception(interp, NULL, 1,
                         "Detected hash corruption at hash %p entries %d",
                         hash, (int)hash->entries);
-            if (mark_key)
+
+            /* don't mark the key if it's not true */
+            if (mark_key && bucket->key)
                 pobject_lives(interp, (PObj *)bucket->key);
+
             if (mark_value)
                 pobject_lives(interp, (PObj *)bucket->value);
             bucket = bucket->next;
@@ -362,14 +365,12 @@ hash_thaw(PARROT_INTERP, NOTNULL(Hash *hash), NOTNULL(visit_info* info))
                 break;
         }
         switch (hash->entry_type) {
-            INTVAL i;
             case enum_hash_pmc:
                 info->thaw_ptr = (PMC**)&b->value;
                 (info->visit_pmc_now)(interp, NULL, info);
                 break;
             case enum_hash_int:
-                i        = VTABLE_shift_integer(interp, io);
-                b->value = (void *)i;
+                b->value = (void *)VTABLE_shift_integer(interp, io);
                 break;
             default:
                 real_exception(interp, NULL, 1, "unimplemented value type");
@@ -1062,12 +1063,9 @@ Clones C<hash> to C<dest>.
 
 PARROT_API
 void
-parrot_hash_clone(PARROT_INTERP, NOTNULL(Hash *hash), NOTNULL(Hash **dest))
+parrot_hash_clone(PARROT_INTERP, NOTNULL(Hash *hash), NOTNULL(Hash *dest))
 {
     UINTVAL i;
-
-    parrot_new_hash_x(dest, hash->entry_type,
-            hash->key_type, hash->compare, hash->hash_val);
 
     for (i = 0; i <= hash->mask; i++) {
         HashBucket *b = hash->bi[i];
@@ -1095,7 +1093,7 @@ parrot_hash_clone(PARROT_INTERP, NOTNULL(Hash *hash), NOTNULL(Hash **dest))
                 real_exception(interp, NULL, -1, "hash corruption: type = %d\n",
                                    hash->entry_type);
             };
-            parrot_hash_put(interp, *dest, key, valtmp);
+            parrot_hash_put(interp, dest, key, valtmp);
             b = b->next;
         }
     }

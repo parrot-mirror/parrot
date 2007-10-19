@@ -1,5 +1,6 @@
+#line 2 "src/yacc/plumhead_lexer.c"
 
-#line 3 "lex.yy.c"
+#line 4 "src/yacc/plumhead_lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -456,9 +457,13 @@ int yy_flex_debug = 0;
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
 #line 1 "src/yacc/plumhead.l"
-#line 2 "src/yacc/plumhead.l"
-#include "y.tab.h"
-#line 462 "lex.yy.c"
+/*
+ * $Id$
+ * Copyright (C) 2007, The Perl Foundation.
+ */
+#line 7 "src/yacc/plumhead.l"
+#include "plumhead_parser.h"
+#line 467 "src/yacc/plumhead_lexer.c"
 
 #define INITIAL 0
 
@@ -611,10 +616,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 5 "src/yacc/plumhead.l"
+#line 10 "src/yacc/plumhead.l"
 
 
-#line 618 "lex.yy.c"
+#line 623 "src/yacc/plumhead_lexer.c"
 
 	if ( !(yy_init) )
 		{
@@ -699,20 +704,20 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 7 "src/yacc/plumhead.l"
+#line 12 "src/yacc/plumhead.l"
 return HELLO;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 8 "src/yacc/plumhead.l"
+#line 13 "src/yacc/plumhead.l"
 /* eat up everything else */
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 10 "src/yacc/plumhead.l"
+#line 15 "src/yacc/plumhead.l"
 ECHO;
 	YY_BREAK
-#line 716 "lex.yy.c"
+#line 721 "src/yacc/plumhead_lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1698,7 +1703,14 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 10 "src/yacc/plumhead.l"
+#line 15 "src/yacc/plumhead.l"
 
 
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
 
