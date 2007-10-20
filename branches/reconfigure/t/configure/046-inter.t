@@ -51,12 +51,6 @@ $conf->options->set(%args);
 is( $conf->options->{c}->{debugging},
     1, "command-line option '--debugging' has been stored in object" );
 
-#my ( @prompts, $object );
-#@prompts = (q{n});
-#$object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
-#can_ok( 'Tie::Filehandle::Preempt::Stdin', ('READLINE') );
-#isa_ok( $object, 'Tie::Filehandle::Preempt::Stdin' );
-
 my $rv;
 my ( $tie, @lines );
 {
