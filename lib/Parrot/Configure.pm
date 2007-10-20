@@ -327,14 +327,17 @@ sub _handle_fatal_step_option {
                 my $step_name = $conf->{list_of_steps}->[$s - 1];
                 if ($step_name =~ /$named_step_pattern/) {
                     $steps_to_die_for{$step_name}++;
-                } else {
+                }
+                else {
                     die "Configuration step corresponding to $s is invalid";
                 }
-            } else {
+            }
+            else {
                 $steps_to_die_for{$s}++;
             }
         }
-    } else {
+    }
+    else {
         die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps or configuration step sequence numbers";
     }
     return %steps_to_die_for;
@@ -359,13 +362,15 @@ sub run_single_step {
 
     my $task = ( $conf->steps() )[0];
     if ( $task->{"Parrot::Configure::Task::step"} eq $taskname ) {
-        $conf->_run_this_step( {
-            task            => $task,
-            verbose         => $verbose,
-            verbose_step    => $verbose_step,
-            ask             => $ask,
-            n               => 1,
-        } );
+        $conf->_run_this_step(
+            {
+                task            => $task,
+                verbose         => $verbose,
+                verbose_step    => $verbose_step,
+                ask             => $ask,
+                n               => 1,
+            }
+        );
     }
     else {
         die "Mangled task in run_single_step";
