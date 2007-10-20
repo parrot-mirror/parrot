@@ -327,17 +327,14 @@ sub _handle_fatal_step_option {
                 my $step_name = $conf->{list_of_steps}->[$s - 1];
                 if ($step_name =~ /$named_step_pattern/) {
                     $steps_to_die_for{$step_name}++;
-                }
-                else {
+                } else {
                     die "Configuration step corresponding to $s is invalid";
                 }
-            }
-            else {
+            } else {
                 $steps_to_die_for{$s}++;
             }
         }
-    }
-    else {
+    } else {
         die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps or configuration step sequence numbers";
     }
     return %steps_to_die_for;
