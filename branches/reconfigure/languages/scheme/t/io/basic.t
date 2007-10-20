@@ -8,7 +8,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More tests => 9;
+use Test::More tests => 10;
 use Parrot::Test;
 
 language_output_is( 'Scheme', <<'CODE', '0', 'write, one integer' );
@@ -19,18 +19,13 @@ language_output_is( 'Scheme', <<'CODE', '01', 'write, two integers' );
 (write 0 1)
 CODE
 
-TODO:
-{
-  local $TODO = 'no support for strings yet';
-
-  language_output_is( 'Scheme', <<'CODE', 'asdf', 'write, one string' );
+language_output_is( 'Scheme', <<'CODE', q{"asdf"}, 'write, one string' );
 (write "asdf")
 CODE
 
-  language_output_is( 'Scheme', <<'CODE', 'hello world', 'write, three strings' );
-(write "hello", " ",  "world")
+language_output_is( 'Scheme', <<'CODE', q{" hello world ! "}, 'write, with spaces' );
+(write " hello world ! ")
 CODE
-}
 
 language_output_is( 'Scheme', <<'CODE', '0', 'display, one integer' );
 (display 0)
@@ -40,25 +35,23 @@ language_output_is( 'Scheme', <<'CODE', '01', 'display, two integers' );
 (display 0 1)
 CODE
 
-TODO:
-{
-  local $TODO = 'no support for strings yet';
-
-  language_output_is( 'Scheme', <<'CODE', 'asdf', 'display, one string' );
+language_output_is( 'Scheme', <<'CODE', 'asdf', 'display, one string' );
 (display "asdf")
 CODE
 
-  language_output_is( 'Scheme', <<'CODE', 'hello world', 'display, three strings' );
-(display "hello", " ",  "world")
+language_output_is( 'Scheme', <<'CODE', 'Hello World ! ', 'display, with spaces' );
+(display "Hello World ! ")
 CODE
 
-  language_output_is( 'Scheme', <<'CODE', "\n17\n", 'display, three strings' );
+language_output_is( 'Scheme', <<'CODE', "Hello World!\n", 'display, with newline' );
+(display "Hello World!\n")
+CODE
+
+language_output_is( 'Scheme', <<'CODE', "\n17\n", 'display, three strings' );
 (newline)
 (write 17)
 (newline)
 CODE
-}
-
 
 # Local Variables:
 #   mode: cperl
