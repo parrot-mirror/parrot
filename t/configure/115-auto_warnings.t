@@ -1,14 +1,14 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 114-auto_attributes.t
+# 115-auto_warnings.t
 
 use strict;
 use warnings;
 use Test::More tests =>  2;
 use Carp;
 use lib qw( lib );
-use_ok('config::auto::attributes');
+use_ok('config::auto::warnings');
 
 pass("Completed all tests in $0");
 
@@ -16,17 +16,17 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-114-auto_attributes.t - test config::auto::attributes
+115-auto_warnings.t - test config::auto::warnings
 
 =head1 SYNOPSIS
 
-    % prove t/configure/114-auto_attributes.t
+    % prove t/configure/115-auto_warnings.t
 
 =head1 DESCRIPTION
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::attributes.
+The tests in this file test subroutines exported by config::auto::warnings.
 
 =head1 AUTHOR
 
@@ -34,7 +34,7 @@ James E Keenan
 
 =head1 SEE ALSO
 
-config::auto::attributes, F<Configure.pl>.
+config::auto::warnings, F<Configure.pl>.
 
 =cut
 

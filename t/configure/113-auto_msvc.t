@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 112-auto_msvc.t
+# 113-auto_msvc.t
 
 use strict;
 use warnings;
@@ -50,11 +50,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-112-auto_msvc.t - test config::auto::msvc
+113-auto_msvc.t - test config::auto::msvc
 
 =head1 SYNOPSIS
 
-    % prove t/configure/112-auto_msvc.t
+    % prove t/configure/113-auto_msvc.t
 
 =head1 DESCRIPTION
 
