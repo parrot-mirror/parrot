@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 137-auto_socklen_t.t
+# 140-auto_socklen_t.t
 
 use strict;
 use warnings;
@@ -24,11 +24,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-137-auto_socklen_t.t - test config::auto::socklen_t
+140-auto_socklen_t.t - test config::auto::socklen_t
 
 =head1 SYNOPSIS
 
-    % prove t/configure/137-auto_socklen_t.t
+    % prove t/configure/140-auto_socklen_t.t
 
 =head1 DESCRIPTION
 

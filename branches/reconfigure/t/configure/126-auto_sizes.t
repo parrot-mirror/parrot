@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 123-auto_sizes.t
+# 126-auto_sizes.t
 
 use strict;
 use warnings;
@@ -23,11 +23,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-123-auto_sizes.t - test config::auto::sizes
+126-auto_sizes.t - test config::auto::sizes
 
 =head1 SYNOPSIS
 
-    % prove t/configure/123-auto_sizes.t
+    % prove t/configure/126-auto_sizes.t
 
 =head1 DESCRIPTION
 

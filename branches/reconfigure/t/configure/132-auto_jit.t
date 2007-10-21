@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 129-auto_jit.t
+# 132-auto_jit.t
 
 use strict;
 use warnings;
@@ -24,11 +24,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-129-auto_jit.t - test config::auto::jit
+132-auto_jit.t - test config::auto::jit
 
 =head1 SYNOPSIS
 
-    % prove t/configure/129-auto_jit.t
+    % prove t/configure/132-auto_jit.t
 
 =head1 DESCRIPTION
 

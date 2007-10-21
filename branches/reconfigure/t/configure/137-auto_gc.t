@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 134-auto_gc.t
+# 137-auto_gc.t
 
 use strict;
 use warnings;
@@ -24,11 +24,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-134-auto_gc.t - test config::auto::gc
+137-auto_gc.t - test config::auto::gc
 
 =head1 SYNOPSIS
 
-    % prove t/configure/134-auto_gc.t
+    % prove t/configure/137-auto_gc.t
 
 =head1 DESCRIPTION
 

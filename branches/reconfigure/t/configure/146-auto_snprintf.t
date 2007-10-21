@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 143-auto_snprintf.t
+# 146-auto_snprintf.t
 
 use strict;
 use warnings;
@@ -23,11 +23,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-143-auto_snprintf.t - test config::auto::snprintf
+146-auto_snprintf.t - test config::auto::snprintf
 
 =head1 SYNOPSIS
 
-    % prove t/configure/143-auto_snprintf.t
+    % prove t/configure/146-auto_snprintf.t
 
 =head1 DESCRIPTION
 

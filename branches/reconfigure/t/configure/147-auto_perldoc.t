@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 144-auto_perldoc.t
+# 147-auto_perldoc.t
 
 use strict;
 use warnings;
@@ -24,11 +24,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-144-auto_perldoc.t - test config::auto::perldoc
+147-auto_perldoc.t - test config::auto::perldoc
 
 =head1 SYNOPSIS
 
-    % prove t/configure/144-auto_perldoc.t
+    % prove t/configure/147-auto_perldoc.t
 
 =head1 DESCRIPTION
 

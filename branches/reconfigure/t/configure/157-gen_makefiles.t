@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 154-gen_makefiles.t
+# 157-gen_makefiles.t
 
 use strict;
 use warnings;
@@ -22,11 +22,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-154-gen_makefiles.t - test config::gen::makefiles
+157-gen_makefiles.t - test config::gen::makefiles
 
 =head1 SYNOPSIS
 
-    % prove t/configure/154-gen_makefiles.t
+    % prove t/configure/157-gen_makefiles.t
 
 =head1 DESCRIPTION
 

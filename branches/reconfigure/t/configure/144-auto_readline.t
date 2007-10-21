@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 141-auto_readline.t
+# 144-auto_readline.t
 
 use strict;
 use warnings;
@@ -24,11 +24,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-141-auto_readline.t - test config::auto::readline
+144-auto_readline.t - test config::auto::readline
 
 =head1 SYNOPSIS
 
-    % prove t/configure/141-auto_readline.t
+    % prove t/configure/144-auto_readline.t
 
 =head1 DESCRIPTION
 

@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 142-auto_gdbm.t
+# 145-auto_gdbm.t
 
 use strict;
 use warnings;
@@ -24,11 +24,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-142-auto_gdbm.t - test config::auto::gdbm
+145-auto_gdbm.t - test config::auto::gdbm
 
 =head1 SYNOPSIS
 
-    % prove t/configure/142-auto_gdbm.t
+    % prove t/configure/145-auto_gdbm.t
 
 =head1 DESCRIPTION
 

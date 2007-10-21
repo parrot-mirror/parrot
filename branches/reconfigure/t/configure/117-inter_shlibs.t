@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 114-inter_shlibs.t
+# 117-inter_shlibs.t
 
 use strict;
 use warnings;
@@ -26,11 +26,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-114-inter_shlibs.t - test config::inter::shlibs
+117-inter_shlibs.t - test config::inter::shlibs
 
 =head1 SYNOPSIS
 
-    % prove t/configure/114-inter_shlibs.t
+    % prove t/configure/117-inter_shlibs.t
 
 =head1 DESCRIPTION
 

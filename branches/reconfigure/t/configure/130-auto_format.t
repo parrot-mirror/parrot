@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 127-auto_format.t
+# 130-auto_format.t
 
 use strict;
 use warnings;
@@ -69,11 +69,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-127-auto_format.t - test config::auto::format
+130-auto_format.t - test config::auto::format
 
 =head1 SYNOPSIS
 
-    % prove t/configure/127-auto_format.t
+    % prove t/configure/130-auto_format.t
 
 =head1 DESCRIPTION
 

@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 119-inter_ops.t
+# 122-inter_ops.t
 
 use strict;
 use warnings;
@@ -23,11 +23,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-119-inter_ops.t - test config::inter::ops
+122-inter_ops.t - test config::inter::ops
 
 =head1 SYNOPSIS
 
-    % prove t/configure/119-inter_ops.t
+    % prove t/configure/122-inter_ops.t
 
 =head1 DESCRIPTION
 

@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 124-auto_byteorder.t
+# 127-auto_byteorder.t
 
 use strict;
 use warnings;
@@ -22,11 +22,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-124-auto_byteorder.t - test config::auto::byteorder
+127-auto_byteorder.t - test config::auto::byteorder
 
 =head1 SYNOPSIS
 
-    % prove t/configure/124-auto_byteorder.t
+    % prove t/configure/127-auto_byteorder.t
 
 =head1 DESCRIPTION
 

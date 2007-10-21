@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 132-auto_cgoto.t
+# 135-auto_cgoto.t
 
 use strict;
 use warnings;
@@ -22,11 +22,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-132-auto_cgoto.t - test config::auto::cgoto
+135-auto_cgoto.t - test config::auto::cgoto
 
 =head1 SYNOPSIS
 
-    % prove t/configure/132-auto_cgoto.t
+    % prove t/configure/135-auto_cgoto.t
 
 =head1 DESCRIPTION
 
