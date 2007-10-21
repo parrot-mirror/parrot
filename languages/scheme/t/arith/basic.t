@@ -44,7 +44,7 @@ CODE
 ### Subtract
 ###
 
-language_output_is( 'Scheme', <<'CODE', 0, 'write (-)' );
+language_error_output_like( 'Scheme', <<'CODE', qr{-: expects at least 1 argument, given 0}, 'write (-)' );
 (write (-))
 CODE
 
@@ -72,7 +72,7 @@ CODE
 ### Multiply
 ###
 
-language_output_is( 'Scheme', <<'CODE', 0, 'write (*)' );
+language_output_is( 'Scheme', <<'CODE', 1, 'neutral element of multiplication' );
 (write (*))
 CODE
 

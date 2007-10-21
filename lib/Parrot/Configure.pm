@@ -225,40 +225,6 @@ sub runsteps {
         $conf->options->get(qw( verbose verbose-step fatal fatal-step ask ));
 
     $conf->{log} = [];
-    # The way the options are currently structured, 'verbose' applies to all
-    # steps; 'verbose-step' can only apply to a single step; and 'ask' applies
-    # to all steps but has no relevance unless the step in an 'inter::' step.
-    #
-    # Suppose we made verbose-step a comma-delimited string of step names .
-    # We could then split that string on the commas and build a hash of steps
-    # which get verbose output.  As we go thru the steps, we could check to
-    # see if the step_name were an element in this hash, then turn on verbose
-    # output for that step.
-    #
-    # Analogously, we could create a 'fatal-step' option which also would be a
-    # comma-delimited string which would be parsed to create a hash which
-    # would be checked in the event a step did a bare return.  In non-fatal
-    # circumstances, a bare return would go on to a list of steps to be
-    # reported as having not DWIMmed.  In fatal circumstances, we would
-    # terminate configuration in an orderly manner.
-    #
-    # Only problem:  We currently allow users great (excessive, IMHO)
-    # flexibility in specifying the value for 'verbose-step'.  You can provide
-    # a step name, a step number, and even a string to be pattern-matched
-    # against the step's $description.  The latter approach was explicitly
-    # defended by Joshua Hoblit in RT 44353 as recently as Aug 02 2007.
-
-    # All this is done *within*
-    # _run_this_step(), in part because it's only there that the step's
-    # $description becomes knowable.
-    # IMO, the only reasonable way to handle
-    # a comma-delimited string is to require its components to be
-    # configuration step names.  We could check the components of this string
-    # against $conf->{hash_of_steps} for validity.  I'd rather know whether a
-    # step is going to have verbose output or be capable of fatalizing an
-    # error *before* we run that step -- which means having that info at hand
-    # before we run *any* steps.
-
     my %steps_to_die_for = ();
     # If the --fatal option is true, then all config steps are mapped into
     # %steps_to_die_for and there is no consideration of --fatal-step.
@@ -461,7 +427,7 @@ sub _run_this_step {
             }
             return 1;
         } else {
-            _failure_message($step, $step_name);
+            _failure_message( $step, $step_name );
             return;
         }
     }
