@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 136-auto_signal.t
+# 139-auto_signal.t
 
 use strict;
 use warnings;
@@ -23,11 +23,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-136-auto_signal.t - test config::auto::signal
+139-auto_signal.t - test config::auto::signal
 
 =head1 SYNOPSIS
 
-    % prove t/configure/136-auto_signal.t
+    % prove t/configure/139-auto_signal.t
 
 =head1 DESCRIPTION
 

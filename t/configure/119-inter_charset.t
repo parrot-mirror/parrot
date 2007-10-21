@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 116-inter_charset.t
+# 119-inter_charset.t
 
 use strict;
 use warnings;
@@ -23,11 +23,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-116-inter_charset.t - test config::inter::charset
+119-inter_charset.t - test config::inter::charset
 
 =head1 SYNOPSIS
 
-    % prove t/configure/116-inter_charset.t
+    % prove t/configure/119-inter_charset.t
 
 =head1 DESCRIPTION
 

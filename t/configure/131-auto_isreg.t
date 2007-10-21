@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 128-auto_isreg.t
+# 131-auto_isreg.t
 
 use strict;
 use warnings;
@@ -23,11 +23,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-128-auto_isreg.t - test config::auto::isreg
+131-auto_isreg.t - test config::auto::isreg
 
 =head1 SYNOPSIS
 
-    % prove t/configure/128-auto_isreg.t
+    % prove t/configure/131-auto_isreg.t
 
 =head1 DESCRIPTION
 

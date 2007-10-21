@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 126-auto_pack.t
+# 129-auto_pack.t
 
 use strict;
 use warnings;
@@ -26,11 +26,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-126-auto_pack.t - test config::auto::pack
+129-auto_pack.t - test config::auto::pack
 
 =head1 SYNOPSIS
 
-    % prove t/configure/126-auto_pack.t
+    % prove t/configure/129-auto_pack.t
 
 =head1 DESCRIPTION
 

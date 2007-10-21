@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 122-auto_headers.t
+# 125-auto_headers.t
 
 use strict;
 use warnings;
@@ -23,11 +23,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-122-auto_headers.t - test config::auto::headers
+125-auto_headers.t - test config::auto::headers
 
 =head1 SYNOPSIS
 
-    % prove t/configure/122-auto_headers.t
+    % prove t/configure/125-auto_headers.t
 
 =head1 DESCRIPTION
 

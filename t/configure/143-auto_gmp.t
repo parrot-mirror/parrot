@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 140-auto_gmp.t
+# 143-auto_gmp.t
 
 use strict;
 use warnings;
@@ -23,11 +23,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-140-auto_gmp.t - test config::auto::gmp
+143-auto_gmp.t - test config::auto::gmp
 
 =head1 SYNOPSIS
 
-    % prove t/configure/140-auto_gmp.t
+    % prove t/configure/143-auto_gmp.t
 
 =head1 DESCRIPTION
 

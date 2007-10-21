@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 120-inter_pmc.t
+# 123-inter_pmc.t
 
 use strict;
 use warnings;
@@ -24,11 +24,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-120-inter_pmc.t - test config::inter::pmc
+123-inter_pmc.t - test config::inter::pmc
 
 =head1 SYNOPSIS
 
-    % prove t/configure/120-inter_pmc.t
+    % prove t/configure/123-inter_pmc.t
 
 =head1 DESCRIPTION
 

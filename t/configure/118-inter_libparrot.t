@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 115-inter_libparrot.t
+# 118-inter_libparrot.t
 
 use strict;
 use warnings;
@@ -23,11 +23,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-115-inter_libparrot.t - test config::inter::libparrot
+118-inter_libparrot.t - test config::inter::libparrot
 
 =head1 SYNOPSIS
 
-    % prove t/configure/115-inter_libparrot.t
+    % prove t/configure/118-inter_libparrot.t
 
 =head1 DESCRIPTION
 
