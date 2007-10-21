@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 150-auto_cpu.t
+# 151-auto_cpu.t
 
 use strict;
 use warnings;
@@ -22,11 +22,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-150-auto_cpu.t - test config::auto::cpu
+151-auto_cpu.t - test config::auto::cpu
 
 =head1 SYNOPSIS
 
-    % prove t/configure/150-auto_cpu.t
+    % prove t/configure/151-auto_cpu.t
 
 =head1 DESCRIPTION
 

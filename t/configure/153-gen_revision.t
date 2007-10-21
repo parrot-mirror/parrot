@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 152-gen_revision.t
+# 153-gen_revision.t
 
 use strict;
 use warnings;
@@ -13,7 +13,7 @@ use_ok('config::gen::revision');
 =for hints_for_testing See also:
 t/configure/017-revision_no_DEVELOPING.t
 t/configure/018-revision.t
-t/configure/152-gen_revision.t
+t/configure/153-gen_revision.t
 t/postconfigure/02-revision_no_DEVELOPING.t
 t/postconfigure/03-revision.t
 
@@ -25,11 +25,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-152-gen_revision.t - test config::gen::revision
+153-gen_revision.t - test config::gen::revision
 
 =head1 SYNOPSIS
 
-    % prove t/configure/152-gen_revision.t
+    % prove t/configure/153-gen_revision.t
 
 =head1 DESCRIPTION
 
