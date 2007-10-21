@@ -5,12 +5,37 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  2;
+use Test::More;
+use Cwd;
 use Carp;
 use lib qw( lib );
+
+if ( $^O eq 'MSWin32' ) {
+    plan( skip_all => 'Not yet tested on Win32');
+}
+else {
+    plan( tests => 4 );
+}
+
+use_ok('Parrot::Configure');
+use_ok('Parrot::Configure::Step');
 use_ok('config::auto::warnings');
 
-pass("Completed all tests in $0");
+my $step = 'dummy';
+
+my $conf = Parrot::Configure->new;
+$conf->data->set('cc', 'cc');
+$conf->data->set('ccflags', '-I/usr/include');
+
+my $cwd = cwd();
+my $warning;
+
+$warning = "-Wall";
+{
+    my $verbose = 0;
+    my $rv      = auto::warnings::try_warning($step, $conf, $warning);
+    is( $rv, 1, "Got expected exit code of 1" );
+}
 
 ################### DOCUMENTATION ###################
 
@@ -30,7 +55,7 @@ The tests in this file test subroutines exported by config::auto::warnings.
 
 =head1 AUTHOR
 
-James E Keenan
+Paul Cochrane <paultcochrane at gmail dot com>
 
 =head1 SEE ALSO
 
