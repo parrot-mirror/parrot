@@ -96,6 +96,17 @@ transform post (PAST::Stmts) :language('PIR') {
 
 
 transform post (PAST::Op) :language('PIR') {
+    .local string pasttype
+    pasttype = node.'pasttype'()
+    unless pasttype goto post_pirop
+    .return tree.'get'(pasttype, node)
+
+  post_pirop:
+    .local string pirop
+    pirop = node.'pirop'()
+    if pirop goto have_pirop
+    node.'pirop'('call')
+  have_pirop:
     .return tree.'get'('pirop', node)
 }
 
@@ -109,6 +120,19 @@ transform pirop (PAST::Op) :language('PIR') {
     $P0 = get_hll_global ['POST'], 'Op'
     post = $P0.'new'('node'=>node, 'pirop'=>pirop)
 
+    if pirop == 'call' goto pirop_call
+    goto post_children
+
+  pirop_call:
+    .local string name
+    name = node.'name'()
+    unless name goto post_children
+    $P0 = get_hll_global ['POST'], 'Val'
+    $P1 = $P0.'new'('value'=>name)
+    post.'push'($P1)
+    goto post_children
+
+  post_children:
     .local pmc iter
     iter = node.'iterator'()
   iter_loop:
@@ -131,6 +155,12 @@ transform pirop (PAST::Op) :language('PIR') {
     ops.'push'(post)
     ops.'result'(post)
     .return (ops)
+}
+
+
+transform call (PAST::Op) :language('PIR') {
+    node.'pirop'('call')
+    .return tree.'get'('pirop', node)
 }
 
 
