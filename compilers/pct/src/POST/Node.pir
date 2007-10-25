@@ -32,6 +32,7 @@ for compiling programs in Parrot.
     pirsig['n_sub'] = 'PP+'
     pirsig['n_mul'] = 'PP+'
     pirsig['n_div'] = 'PP+'
+    pirsig['call']  = 'P****************'
     set_hll_global ['POST'], '%pirsig', pirsig
 
     .return ()
@@ -152,6 +153,9 @@ evaluating the C<POST::Op> node).
     goto iter_loop
   iter_end:
 
+    if pirop == 'call' goto pirop_call
+
+  pirop_opcode:
     # determine result
     .local string result
     result = ''
@@ -174,8 +178,15 @@ evaluating the C<POST::Op> node).
     unshift arglist, result
   have_result:
     self.'result'(result)
-
     code.'emit'("    %n %,", arglist :flat, 'n'=>pirop)
+    .return (code)
+
+  pirop_call:
+    result = code.'unique'('$P')
+    .local string name
+    name = shift arglist
+    self.'result'(result)
+    code.'emit'("    %r = %n(%,)", arglist :flat, 'r'=>result, 'n'=>name)
     .return (code)
 .end
 
@@ -221,6 +232,7 @@ Get/set the constant value for this node.
 
     unless has_argtype goto p_result
     if argtype == '+' goto nc_result
+    if argtype == '*' goto any_result
 
   p_result:
     .local string result, vtype
@@ -237,6 +249,15 @@ Get/set the constant value for this node.
   nc_result:
     $N0 = value
     .return ($N0, code)
+
+  any_result:
+    $I0 = isa value, 'String'
+    if $I0 goto any_result_esc
+    $S0 = value
+    .return ($S0, code)
+  any_result_esc:
+    $S0 = code.'escape'(value)
+    .return ($S0, code)
 .end
 
 
