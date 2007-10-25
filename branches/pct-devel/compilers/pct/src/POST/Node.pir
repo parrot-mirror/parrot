@@ -25,26 +25,14 @@ for compiling programs in Parrot.
     $P0  = protomaker.'new_subclass'(base, 'POST::Label')
     $P0  = protomaker.'new_subclass'(base, 'POST::Sub')
 
-    ##  initialize %pirtable with opcode argument types
-    .local pmc pirtable
-    pirtable = new 'Hash'
-    pirtable['add'] = '%tP+'
-    pirtable['sub'] = '%tP+'
-    pirtable['mul'] = '%tP+'
-    pirtable['div'] = '%tP+'
-    pirtable['n_add'] = '%rP+'
-    pirtable['n_sub'] = '%rP+'
-    pirtable['n_mul'] = '%rP+'
-    pirtable['n_div'] = '%rP+'
-    pirtable['n_mod'] = '%rP+'
-    pirtable['n_neg'] = '%rP'
-    pirtable['concat'] = '%tP~'
-    pirtable['abs'] = '%t'
-    pirtable['say'] = '%v'
-    pirtable['print'] = '%v'
-    pirtable['call'] = '%r*****************'                # FIXME:
-    pirtable['callmethod'] = '%r*****************'          # FIXME:
-    set_hll_global ['POST'], '%pirtable', pirtable
+    ##  initialize %pirsig with opcode argument types
+    .local pmc pirsig
+    pirsig = new 'Hash'
+    pirsig['n_add'] = 'PP+'
+    pirsig['n_sub'] = 'PP+'
+    pirsig['n_mul'] = 'PP+'
+    pirsig['n_div'] = 'PP+'
+    set_hll_global ['POST'], '%pirsig', pirsig
 
     .return ()
 .end
@@ -59,65 +47,41 @@ C<PAST::Node> (see F<compilers/pct/src/PAST/Node.pir>).
 
 =over 4
 
-=item result([value])
+=item result([value] [, argtype :named('argtype')])
 
-Get/set
+Get/set the result for this node.
 
 =cut
 
-.namespace [ 'POST::Node' ]
+.namespace ['POST::Node']
 
 .sub 'result' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
+    .param string argtype      :optional :named('argtype')
+    .param int has_argtype     :opt_flag
 
-    if has_value == 1 goto set_value
-    value = self['result']
-    unless null value goto end
-    value = self.'unique'('$P')
-    goto set_value_1
-  set_value:
-    $I0 = isa value, 'POST::Node'
-    if $I0 == 0 goto set_value_1
-    value = value.'result'()
-  set_value_1:
-    self['result'] = value
-  end:
-    .return (value)
+    .local pmc result
+    result = self.'attr'('result', value, has_value)
+    #  if setting the result, we're done
+    unless has_value goto coerce_result
+    .return (result)
+
+  coerce_result:
+    #  if querying result, see if we need to delegate call
+    $I0 = isa result, 'POST::Node'
+    if $I0 == 0 goto have_result
+    result = result.'result'()
+  have_result:
+    .return (result, '')
 .end
-
-
-.sub 'get_string' :vtable :method
-    $S0 = self.'result'()
-    .return ($S0)
-.end
-
-
-=item push_pirop(pirop [,arglist :slurpy] [,adverbs :slurpy :named])
-
-=cut
-
-.sub 'push_pirop' :method
-    .param pmc pirop
-    .param pmc arglist         :slurpy
-    .param pmc adverbs         :slurpy :named
-    if null adverbs goto no_adverbs
-    adverbs['pirop'] = pirop
-    $P0 = self.'push_new'('POST::Op', adverbs :flat :named)
-    goto end
-  no_adverbs:
-    $P0 = self.'push_new'('POST::Op', 'pirop'=>pirop)
-  end:
-    $P0.'arglist'(arglist :flat)
-    .return ($P0)
-.end
-
 
 =back
 
 =head2 POST::Ops
 
-C<POST::Ops> is a container of C<POST::Node>.
+C<POST::Ops> contains an array of POST nodes to be evaluated in
+sequence.
 
 =over 4
 
@@ -125,10 +89,9 @@ C<POST::Ops> is a container of C<POST::Node>.
 
 =cut
 
-.namespace [ 'POST::Ops' ]
+.namespace ['POST::Ops']
 
 .sub 'pir' :method
-    .param pmc options         :slurpy :named
     .local pmc code, iter
     code = new 'CodeString'
     iter = self.'iterator'()
@@ -143,22 +106,78 @@ C<POST::Ops> is a container of C<POST::Node>.
     .return (code)
 .end
 
-
 =back
 
 =head2 POST::Op
 
-C<POST::Op> nodes represents any PIR opcodes.
-
-=over 4
-
-=item pirop([opcode])
-
-Get/set
+C<POST::Op> node represent operations to be performed.
+Arguments to the operation are given by child nodes
+(which are assumed to have been evaluated prior to
+evaluating the C<POST::Op> node).
 
 =cut
 
-.namespace [ 'POST::Op' ]
+.namespace ['POST::Op']
+
+.sub 'pir' :method
+    .local string pirop
+    pirop = self.'pirop'()
+
+    .local pmc code
+    code = new 'CodeString'
+
+    #  get operation's signature
+    .local string pirsig
+    $P0 = get_hll_global ['POST'], '%pirsig'
+    pirsig = $P0[pirop]
+    if pirsig goto have_pirsig
+    pirsig = 'vPPPPPPPPPPPPPPPP'
+  have_pirsig:
+
+    # evaluate children nodes according to signature
+    .local pmc iter, arglist
+    .local int argindex
+    arglist = new 'ResizableStringArray'
+    argindex = 1
+    iter = self.'iterator'()
+  iter_loop:
+    unless iter goto iter_end
+    .local pmc cpost
+    cpost = shift iter
+    $S0 = substr pirsig, argindex, 1
+    ($S1, $P1) = cpost.'result'('argtype'=>$S0)
+    push arglist, $S1
+    code .= $P1
+    inc argindex
+    goto iter_loop
+  iter_end:
+
+    # determine result
+    .local string result
+    result = ''
+    $S0 = substr pirsig, 0, 1
+    $I0 = index "0123456789PSIN", $S0
+    if $I0 > 9 goto psin_result
+    if $I0 >= 0 goto arg_result
+    if $S0 == 'v' goto have_result
+    result = code.'unique'('$P')
+    unshift arglist, result
+    if $S0 != 'u' goto have_result
+    code.'emit'("    %r = new 'Undef'", 'r'=>result)
+    goto have_result
+  arg_result:
+    result = arglist[$I0]
+    goto have_result
+  psin_result:
+    $S0 = concat '$', $S0
+    result = code.'unique'($S0)
+    unshift arglist, result
+  have_result:
+    self.'result'(result)
+
+    code.'emit'("    %n %,", arglist :flat, 'n'=>pirop)
+    .return (code)
+.end
 
 .sub 'pirop' :method
     .param pmc value           :optional
@@ -166,137 +185,11 @@ Get/set
     .return self.'attr'('pirop', value, has_value)
 .end
 
-
-.sub 'inline' :method
-    .param pmc value           :optional
-    .param int has_value       :opt_flag
-    .return self.'attr'('inline', value, has_value)
-.end
-
-
-=item arglist(arglist)
-
-=cut
-
-.sub 'arglist' :method
-    .param pmc arglist         :slurpy
-    self['arglist'] = arglist
-    .return (arglist)
-.end
-
-
-=item pir()
-
-=cut
-
-.sub 'pir' :method
-    .param pmc options         :slurpy :named
-
-    ##  determine the type of operation
-    .local string pirop
-    pirop = self.'pirop'()
-
-    ##  get operation's signature
-    .local string signature
-    $P0 = get_hll_global [ 'POST' ], '%pirtable'
-    signature = $P0[pirop]
-    if signature goto have_signature
-    signature = '%vPPPPPPPPPPPPPPPP'
-  have_signature:
-
-    ##  evaluate children nodes
-    .local pmc code, iter
-    .local int argindex
-    code = new 'CodeString'
-    argindex = 2
-    iter = self.'iterator'()
-  iter_loop:
-    unless iter goto iter_end
-    .local pmc cpost
-    cpost = shift iter
-    $S0 = substr signature, argindex, 1
-    $P0 = cpost.'pir'('argtype' => $S0)
-    code .= $P0
-    inc argindex
-    goto iter_loop
-  iter_end:
-
-    .local pmc arglist
-    .local pmc result
-    arglist = self['arglist']
-    arglist = clone arglist
-
-    if pirop == 'inline' goto pir_inline
-    if pirop == 'call' goto pir_call
-    if pirop == 'callmethod' goto pir_callmethod
-
-  pir_opcode:
-    $S0 = substr signature, 0, 2
-    if $S0 == '%v' goto emit_pirop
-    result = self.'result'()
-    unshift arglist, result
-    if $S0 == '%r' goto emit_pirop
-    code.'emit'("    %r = new 'Undef'", 'r'=>result)
-  emit_pirop:
-    code.'emit'("    %n %,", arglist :flat, 'n'=>pirop)
-    .return (code)
-
-  pir_inline:
-    .local pmc inline
-    result = self.'result'()
-    inline = self.'inline'()
-    code.'emit'(inline, arglist :flat, 'r'=>result, 't'=>result, 'u'=>result)
-    .return (code)
-
-  pir_call:
-    .local pmc name, invocant
-    .local string fmt
-    name = shift arglist
-    null invocant
-    fmt = '    %r = %n(%,)'
-    goto pir_callgen
-
-  pir_callmethod:
-    name = shift arglist
-    invocant = shift arglist
-    fmt = '    %r = %i.%n(%,)'
-
-  pir_callgen:
-    .local pmc posargs, namedargs
-    posargs = new 'ResizableStringArray'
-    namedargs = new 'ResizableStringArray'
-  callargs_loop:
-    unless arglist goto callargs_end
-    .local pmc arg, named
-    arg = shift arglist
-    $I0 = isa arg, 'POST::Node'
-    unless $I0 goto callargs_pos
-    named = arg.'named'()
-    unless named goto callargs_pos
-  callargs_named:
-    $P0 = named.'pir'('argtype' => '*')
-    code .= $P0
-    $S1 = named
-    $S0 = arg
-    concat $S0, ' :named('
-    concat $S0, $S1
-    concat $S0, ')'
-    push namedargs, $S0
-    goto callargs_loop
-  callargs_pos:
-    push posargs, arg
-    goto callargs_loop
-  callargs_end:
-    result = self.'result'()
-    code.'emit'(fmt, posargs :flat, namedargs :flat, 'r'=>result, 'n'=>name, 'i'=>invocant)
-    .return (code)
-.end
-
 =back
 
 =head2 POST::Val
 
-C<POST::Val> nodes represent PIR constant values.
+C<POST::Val> nodes represent constant values in PIR.
 
 =over 4
 
@@ -314,123 +207,38 @@ Get/set the constant value for this node.
     .return self.'attr'('value', value, has_value)
 .end
 
-=item pir([ 'argtype' => argtype ])
-
-=cut
-
 .sub 'pir' :method
-    .param pmc options         :slurpy :named
-    .local pmc code, value
-    .local string pirconst, vtype, ctype
-    code = new 'CodeString'
-    value = self.'value'()
-    pirconst = value
-    vtype = typeof value
-    ctype = '*+'
-    $I0 = isa value, 'String'
-    unless $I0 goto have_pirconst
-    pirconst = code.'escape'(pirconst)
-    ctype = '*~s'
-  have_pirconst:
-    if null options goto result_pmc
-    .local string argtype
-    argtype = options['argtype']
-    unless argtype goto result_pmc
-    $I0 = index ctype, argtype
-    if $I0 < 0 goto result_pmc
-  result_pirconst:
-    self.'result'(pirconst)
-    .return (code)
-
-  result_pmc:
-    .local pmc result
-    result = self.'result'()
-    vtype = code.'escape'(vtype)
-    code.'emit'("    %r = new %0\n    assign %r, %1", vtype, pirconst, 'r'=>result)
-    .return (code)
+     .return ('')
 .end
-
-=back
-
-=head2 POST::Var
-
-C<POST::Var> nodes represent keyed values.
-
-=over 4
-
-=item pir()
-
-=cut
-
-.namespace [ 'POST::Var' ]
-
-.sub 'pir' :method
-    .param pmc options         :slurpy :named
-    .local pmc basepost, keypost, code
-    keypost = self[1]
-    code = keypost.'pir'('argtype'=>'*')
-    basepost = self[0]
-    $P0 = basepost.'pir'('argtype'=>'P')
-    code .= $P0
-    .local string result
-    result = basepost.'result'()
-    $S0 = keypost.'result'()
-    result = concat result, '['
-    concat result, $S0
-    concat result, ']'
-    self.'result'(result)
-    .return (code)
-.end
-
-
-=back
-
-=head2 POST::Label
-
-C<POST::Label> nodes represent PIR labels.
-
-=over 4
-
-=item result([value])
-
-Get/set
-
-=cut
-
-.namespace [ 'POST::Label' ]
 
 .sub 'result' :method
-    .param pmc value           :optional
-    .param int has_value       :opt_flag
-    if has_value goto set_value
-    value = self['value']
-    unless null value goto end
-    .local string name
-    name = self.'name'()
-    value = self.'unique'(name)
-  set_value:
-    self['value'] = value
-  end:
-    .return(value)
+    .param string argtype      :optional :named('argtype')
+    .param int has_argtype     :opt_flag
+
+    .local pmc code, value
+    code = new 'CodeString'
+    value = self.'value'()
+
+    unless has_argtype goto p_result
+    if argtype == '+' goto nc_result
+
+  p_result:
+    .local string result, vtype
+    result = code.'unique'('$P')
+    vtype = typeof value
+    $I0 = isa value, 'String'
+    unless $I0 goto esc_value
+    value = code.'escape'(value)
+  esc_value:
+    vtype = code.'escape'(vtype)
+    code.'emit'("    %r = new %0\n    assign %r, %1", vtype, value, 'r'=>result)
+    .return (result, code)
+
+  nc_result:
+    $N0 = value
+    .return ($N0, code)
 .end
 
-
-=item pir()
-
-=cut
-
-.sub 'pir' :method
-    .local string code
-    .local string value
-    value = self.'result'()
-    code = '  '
-    code .= value
-    code .= ":\n"
-    .return (code)
-.end
-
-
-=back
 
 =head2 POST::Sub
 
@@ -440,36 +248,35 @@ C<POST::Sub> nodes represent PIR subroutines.
 
 =item pir()
 
+Generate PIR for this subroutine.
+
 =cut
 
 .namespace [ 'POST::Sub' ]
 
 .sub 'pir' :method
-    $S0 = self.'compiler'()
-    unless $S0 goto post_pir
-    .return self.'hll_pir'()
-  post_pir:
+    .local pmc code
+    code = new 'CodeString'
+
     .local string name
     name = self.'name'()
-    name = self.'escape'(name)
-    .local pmc outerpost
+    name = code.'escape'(name)
+  have_name:
     .local string outer
+    .local pmc outerpost
     outer = ''
     outerpost = self.'outer'()
     if null outerpost goto have_outer
     unless outerpost goto have_outer
     outer = outerpost.'name'()
-    outer = outerpost.'escape'(outer)
+    outer = code.'escape'(outer)
     outer = concat ':outer(', outer
     outer = concat outer, ')'
   have_outer:
     .local string pragma
     pragma = self.'pragma'()
-    .local pmc code
-    code = new 'CodeString'
+  have_pragma:
     code.'emit'("\n.sub %0 %1 %2", name, outer, pragma)
-    $P0 = self.'paramcode'()
-    code .= $P0
     .local pmc iter, cpost
     iter = self.'iterator'()
   iter_loop:
@@ -479,11 +286,6 @@ C<POST::Sub> nodes represent PIR subroutines.
     code .= $P1
     goto iter_loop
   iter_end:
-    .local string value
-    value = self.'result'()
-    if value == '' goto no_return
-    code.'emit'("    .return (%0)\n", value)
-  no_return:
     code.'emit'(".end\n")
     $P0 = get_hll_global ['POST'], '$!subpir'
     code .= $P0
@@ -492,60 +294,15 @@ C<POST::Sub> nodes represent PIR subroutines.
     code = new 'CodeString'
     $S0 = self.'blocktype'()
     if $S0 == 'declaration' goto skip_declaration
-    code.'emit'("    %0 = find_name %1", value, name)
-    if $S0 == 'END'         goto add_end_block
+    code.'emit'("    $P0 = find_name %0", name)
   skip_declaration:
     .return (code)
-  add_end_block:
-    $S1 = code.'unique'('$P')
-    code.'emit'("    %0 = find_global '_perl6', '%BLOCKS'", $S1)
-    code.'emit'("    %0 = %0['END']", $S1)
-    code.'emit'("    push %0, %1", $S1, value)
-    .return (code)
 .end
-
-
-.sub 'hll_pir' :method
-    .local string compname, name
-    compname = self.'compiler'()
-    name = self.'name'()
-    .local pmc adverbs
-    adverbs = new 'Hash'
-    adverbs['target'] = 'pir'
-    adverbs['name'] = name
-    adverbs['grammar'] = ''
-    .local pmc outerpost
-    outerpost = self.'outer'()
-    unless outerpost goto have_outer
-    $S0 = outerpost.'name'()
-    adverbs['outer'] = $S0
-  have_outer:
-    .local pmc sourcecode, compiler, pircode
-    sourcecode = self[0]
-    compiler = compreg compname
-    $I0 = isa compiler, 'Sub'
-    if $I0 goto compile_sub
-    pircode = compiler.'compile'(sourcecode, adverbs :flat :named)
-    goto have_pircode
-  compile_sub:
-    pircode = compiler(sourcecode, adverbs :flat :named)
-  have_pircode:
-    $P0 = get_hll_global ['POST'], '$!subpir'
-    pircode .= $P0
-    set_hll_global ['POST'], '$!subpir', pircode
-    .local string result
-    result = self.'result'()
-    name = self.'escape'(name)
-    .local pmc code
-    code = new 'CodeString'
-    code.'emit'("    %0 = find_name %1", result, name)
-    .return (code)
-.end
-
 
 =item outer([outer])
 
-Get/set
+Get/set the C<POST::Sub> that is the outer lexical scope of the
+current sub.
 
 =cut
 
@@ -555,10 +312,9 @@ Get/set
     .return self.'attr'('outer', value, has_value)
 .end
 
-
 =item pragma([pragma])
 
-Get/set
+Get/set any pragmas for the current sub node.
 
 =cut
 
@@ -568,10 +324,7 @@ Get/set
     .return self.'attr'('pragma', value, has_value)
 .end
 
-
 =item blocktype([type])
-
-Get/set
 
 =cut
 
@@ -582,69 +335,3 @@ Get/set
 .end
 
 
-=item paramcode([paramcode])
-
-Get/set
-
-=cut
-
-.sub 'paramcode' :method
-    .param pmc value           :optional
-    .param int has_value       :opt_flag
-    .return self.'attr'('paramcode', value, has_value)
-.end
-
-
-=item compiler([name])
-
-Get/set
-
-=cut
-
-.sub 'compiler' :method
-    .param pmc value           :optional
-    .param int has_value       :opt_flag
-    .return self.'attr'('compiler', value, has_value)
-.end
-
-
-=item push_param(regtype, pname [, flags])
-
-=cut
-
-.sub 'push_param' :method
-    .param string regtype
-    .param string pname
-    .param string flags        :optional
-    .param int has_flags       :opt_flag
-
-    .local pmc paramcode
-    paramcode = self.'paramcode'()
-    if paramcode goto add_param
-    paramcode = new 'CodeString'
-    self.'paramcode'(paramcode)
-  add_param:
-    if has_flags goto have_flags
-    flags = ''
-  have_flags:
-    paramcode.'emit'('    .param %0 %1    %2', regtype, pname, flags)
-    .return ()
-.end
-
-
-=back
-
-=head1 AUTHOR
-
-Patrick Michaud <pmichaud@pobox.com> is the author and maintainer.
-Please send patches and suggestions to the Parrot porters or
-Perl 6 compilers mailing lists.
-
-=cut
-
-
-# Local Variables:
-#   mode: pir
-#   fill-column: 100
-# End:
-# vim: expandtab shiftwidth=4:
