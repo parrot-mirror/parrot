@@ -15,15 +15,20 @@ package auto::backtrace;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
 
-$description = 'Determining whether libc has the backtrace* functions (glibc only)';
 
-@args = qw(verbose);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining whether libc has the backtrace* functions (glibc only)};
+    $data{args}        = [ qw( verbose ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -32,27 +37,21 @@ sub runstep {
 
     cc_gen("config/auto/backtrace/test_c.in");
 
-    # If the program builds (e.g. the linker found backtrace* in libc) then we have
-    # the glibc backtrace symbols.  If the program fails to build for whatever
-    # reason we're just going to assume that the build failure is because these
-    # symbols are missing.
-    my $glibc_backtrace;
+    # If the program builds (e.g. the linker found backtrace* in libc)
+    # then we have the glibc backtrace symbols.  If the program fails to
+    # build for whatever reason we're just going to assume that the
+    # build failure is because these symbols are missing.
+
     eval { cc_build(); };
-    if ( not $@ ) {
-        $glibc_backtrace = 1;
+    if ( $@ ) {
+        $self->set_result("no");
+    } else {
+        $conf->data->set( glibc_backtrace => 1 );
+        $self->set_result("yes");
     }
     cc_clean();
 
-    $conf->data->set( glibc_backtrace => $glibc_backtrace, );
-
-    if ($glibc_backtrace) {
-        $self->set_result("yes");
-    }
-    else {
-        $self->set_result("no");
-    }
-
-    return $self;
+    return 1;
 }
 
 1;

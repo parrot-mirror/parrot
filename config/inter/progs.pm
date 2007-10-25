@@ -17,24 +17,26 @@ package inter::progs;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':inter', ':auto';
 
-$description = 'Determining what C compiler and linker to use';
 
-@args = qw(ask cc cxx link ld ccflags ccwarn linkflags ldflags libs debugging
-    lex yacc maintainer);
-
-our $verbose;
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining what C compiler and linker to use};
+    $data{args}        = [ qw( ask cc cxx link ld ccflags ccwarn linkflags ldflags libs debugging lex yacc maintainer ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    $verbose = $conf->options->get('verbose');
-    print $/ if $verbose;
+    my $verbose = $conf->options->get('verbose');
+    print "\n" if $verbose;
 
     my ( $cc, $cxx, $link, $ld, $ccflags, $ccwarn, $linkflags, $ldflags, $libs, $lex, $yacc );
 
@@ -126,7 +128,7 @@ END
 
     test_compiler($cc);
 
-    return $self;
+    return 1;
 }
 
 sub test_compiler {

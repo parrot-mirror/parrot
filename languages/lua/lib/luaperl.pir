@@ -33,7 +33,8 @@ It's a temporary work. Waiting for the real PIR compiler/interpreter.
 
 .sub '__onload' :load :init
     $P0 = newclass [ 'Lua::PerlCompiler' ]
-    compreg 'Lua', $P0
+    new $P1, $P0
+    compreg 'Lua', $P1
 .end
 
 .namespace [ 'Lua::PerlCompiler' ]

@@ -16,19 +16,23 @@ package inter::make;
 use strict;
 use warnings;
 
-use vars qw( $description @args $prompt $util );
-
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step qw( :inter capture_output check_progs );
 
-$util        = 'make';
-$description = "Determining whether $util is installed";
-$prompt      = "Do you have a make utility like 'gmake' or 'make'?";
-@args        = qw( make ask );
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining whether make is installed};
+    $data{args}        = [ qw( make ask ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
+    my $util        = 'make';
+    my $prompt      = "Do you have a make utility like 'gmake' or 'make'?";
 
     my $verbose = $conf->options->get('verbose');
 
@@ -37,11 +41,17 @@ sub runstep {
 
     my $prog;
 
-    # precedence of sources for the program:
-    # default -> probe -> environment -> option -> ask
-    $prog ||= $conf->data->get($util);
-    $prog ||= $conf->options->get($util);
+    # check the candidates for a 'make' program in this order:
+    # environment ; option ; probe ; ask ; default
+    # first pick wins.
     $prog ||= $ENV{ uc($util) };
+    $prog ||= $conf->options->get($util);
+    $prog ||= check_progs( ['gmake', 'mingw32-make', 'nmake', 'make'], $verbose );
+    if ( !$prog ) {
+        $prog = ( $conf->options->get('ask') )
+            ? prompt( $prompt, $prog ? $prog : $conf->data->get($util) )
+            : $conf->data->get($util);
+    }
 
     # never override the user.  If a non-existent program is specified then
     # the user is responsible for the consequences.
@@ -56,12 +66,8 @@ sub runstep {
 
             # fall back to default
             $self->set_result('no');
-            return $self;
+            return 1;
         }
-    }
-
-    if ( $conf->options->get('ask') ) {
-        $prog = prompt( $prompt, $prog ? $prog : $conf->data->get($util) );
     }
 
     my ( $stdout, $stderr, $ret ) = capture_output( $prog, '--version' );
@@ -69,10 +75,9 @@ sub runstep {
     # don't override the user even if the program they provided appears to be
     # broken
     if ( $ret == -1 and !$conf->options->get('ask') ) {
-
         # fall back to default
         $self->set_result('no');
-        return $self;
+        return 1;
     }
 
     # if '--version' returns a string assume that this is gmake.
@@ -100,7 +105,7 @@ sub runstep {
         $conf->data->set( make_c => $make_c );
     }
 
-    return $self;
+    return 1;
 }
 
 1;

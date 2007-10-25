@@ -15,15 +15,20 @@ package auto::signal;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
 
-$description = 'Determining some signal stuff';
 
-@args = qw(miniparrot verbose);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining some signal stuff};
+    $data{args}        = [ qw( miniparrot verbose ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -38,7 +43,7 @@ sub runstep {
     );
     if ( defined $conf->options->get('miniparrot') ) {
         $self->set_result('skipped');
-        return $self;
+        return 1;
     }
 
     cc_gen('config/auto/signal/test_1.in');
@@ -88,7 +93,7 @@ EOF
     }
     close $O;
 
-    return $self;
+    return 1;
 }
 
 1;

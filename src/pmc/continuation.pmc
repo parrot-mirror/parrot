@@ -64,7 +64,7 @@ Initializes the continuation.
         /* PANIC("don't do that"); */
         /*
          * Whenever we create a continuation, all return continuations
-         * up the call chain maybe reused due to invoking the
+         * up the call chain may be reused due to invoking the
          * continuation. To avoid that all return continuations are
          * converted to true continuations.
          */
@@ -262,6 +262,9 @@ destination to continue execution.
         if (! to_ctx)
             real_exception(interp, NULL, INVALID_OPERATION,
                            "Continuation invoked after deactivation.");
+        if (! stack_target)
+            real_exception(interp, NULL, INVALID_OPERATION,
+                           "Continuation invoked without initialization.");
 
         /*
          * Rewind the dynamic environment.

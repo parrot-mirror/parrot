@@ -38,7 +38,7 @@
 	push_eh return_list
 	function = find_global symbol_name
 	unless function goto return_list
-	clear_eh
+	pop_eh
 
 	.local pmc    result
 	result = function( args :flat )
@@ -54,11 +54,8 @@
 .sub __list_to_cons
 	.param pmc args :slurpy
 
-	.local int cons_type
-	cons_type = find_type [ 'Pheme'; 'Cons' ]
-
 	.local pmc result
-	result = new cons_type
+	result = new [ 'Pheme'; 'Cons' ]
 
 	.local int args_count
 	.local pmc arg
@@ -163,11 +160,8 @@
 	.param pmc l
 	.param pmc r
 
-	.local int cons_type
-	cons_type = find_type [ 'Pheme'; 'Cons' ]
-
 	.local pmc result
-	result = new cons_type
+	result = new [ 'Pheme'; 'Cons' ]
 
 	result.'head'( l )
 	result.'tail'( r )
@@ -416,11 +410,8 @@
 .sub '__make_empty_cons'
 	.local pmc result
 
-	.local int cons_type
-	cons_type = find_type [ 'Pheme'; 'Cons' ]
-
 	.local pmc result
-	result = new cons_type
+	result = new [ 'Pheme'; 'Cons' ]
 	.return( result )
 .end
 

@@ -8,8 +8,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-# use Test::More tests => 26;
-use Test::More skip_all => 'Using obsolete calling conventions';
+use Test::More tests => 26;
 use Parrot::Test;
 
 language_output_is( 'Scheme', <<'CODE', '(2 . 5)', 'cons' );
@@ -31,12 +30,12 @@ language_output_is( 'Scheme', <<'CODE', '((1 . 2) 3 . 4)', 'complex cons' );
     (cons 3 4)))
 CODE
 
-language_output_is( 'Scheme', <<'CODE', '1', 'pair?' );
+language_output_is( 'Scheme', <<'CODE', '#t', 'pair?' );
 (write
   (pair? (cons 1 3)))
 CODE
 
-language_output_is( 'Scheme', <<'CODE', '0', 'false pair?' );
+language_output_is( 'Scheme', <<'CODE', '#f', 'false pair?' );
 (write
   (pair? 12))
 CODE
@@ -46,7 +45,7 @@ language_output_is( 'Scheme', <<'CODE', '(3 2 1 0)', 'list' );
   (list 3 2 1 0))
 CODE
 
-language_output_is( 'Scheme', <<'CODE', '1', 'pair? list' );
+language_output_is( 'Scheme', <<'CODE', '#t', 'pair? list' );
 (write
   (pair? (list 3 2 1)))
 CODE
@@ -93,7 +92,7 @@ language_output_is( 'Scheme', <<'CODE', '(1 2 3 4)', 'quoted list' );
 (write '(1 2 3 4)) ; for emacs ')
 CODE
 
-language_output_is( 'Scheme', <<'CODE', '1', 'null?' );
+language_output_is( 'Scheme', <<'CODE', '#t', 'null?' );
 (write
   (null? (list)))
 CODE
@@ -102,7 +101,7 @@ language_output_is( 'Scheme', <<'CODE', '()', "'()" );
 (write '()) ; for emacs ')
 CODE
 
-language_output_is( 'Scheme', <<'CODE', '0', 'failed null?' );
+language_output_is( 'Scheme', <<'CODE', '#f', 'failed null?' );
 (write
   (null? (list 1)))
 CODE

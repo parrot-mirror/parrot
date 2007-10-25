@@ -213,7 +213,8 @@ BEGIN {
                 : ();
             my $method = join '_' => $type, $class;
             my $filter_ext = join '|' => map { "\\.${_}\$" } @exts;
-            my $filter_dir = join '|' => map { qr{\b$_\b} }
+            my $filter_dir = join
+                '|' => map { qr{\b$_\b} }
                 map { quotemeta($_) } @ignore_dirs,
                 @exceptions;
 
@@ -345,12 +346,19 @@ This is to exclude automatically generated C-language files Parrot might have.
             compilers/imcc/imclexer.c
             compilers/imcc/imcparser.c
             compilers/imcc/imcparser.h
+            compilers/pirc/new/pir.l
+            compilers/pirc/new/pir.y
+            compilers/pirc/new/pircompiler.h
+            compilers/pirc/new/pirlexer.c
+            compilers/pirc/new/pirlexer.h
+            compilers/pirc/new/pirparser.c
+            compilers/pirc/new/pirparser.h
             languages/cola/lexer.c
             languages/cola/parser.c
             languages/cola/parser.h
-            languages/plumhead/lex.yy.c
-            languages/plumhead/y.tab.c
-            languages/plumhead/y.tab.h
+            languages/plumhead/src/yacc/plumhead_lexer.c
+            languages/plumhead/src/yacc/plumhead_parser.c
+            languages/plumhead/src/yacc/plumhead_parser.h
             src/malloc.c
             } unless @exemptions;
 
@@ -709,8 +717,7 @@ Returns the text of the file at the given path
 
 =cut
 
-sub slurp
-{
+sub slurp {
     my $self = shift;
     my $path = shift;
     my $buf;
@@ -726,8 +733,6 @@ sub slurp
 
     return $buf;
 }
-
-
 
 1;
 

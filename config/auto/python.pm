@@ -19,15 +19,20 @@ package auto::python;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
 
-$description = 'Determining whether python is installed';
 
-@args = qw();
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining whether python is installed};
+    $data{args}        = [ qw(  ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -50,7 +55,7 @@ sub runstep {
     }
     $conf->data->set( has_python_2_4 => $has_python_2_4 );
 
-    return $self;
+    return 1;
 }
 
 1;

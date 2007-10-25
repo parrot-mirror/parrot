@@ -16,12 +16,19 @@ package gen::makefiles;
 use strict;
 use warnings;
 
+
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':gen';
 
-our $description = 'Generating makefiles and other build files';
-our @args        = qw(target);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Generating makefiles and other build files};
+    $data{args}        = [ qw( target ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 my %makefiles = (
     'Makefile' => { SOURCE => 'config/gen/makefiles/root.in' },
@@ -61,7 +68,7 @@ my %makefiles = (
         replace_slashes   => 0,
         conditioned_lines => 1,
     },
-    'parrot.pc'     => { SOURCE => 'config/gen/makefiles/parrot.pc.in' },
+    'parrot.pc'     => { SOURCE => 'config/gen/makefiles/parrot_pc.in' },
     'docs/Makefile' => { SOURCE => 'config/gen/makefiles/docs.in' },
 );
 
@@ -71,7 +78,7 @@ sub runstep {
     $self->makefiles($conf);
     $self->cflags($conf);
 
-    return $self;
+    return 1;
 }
 
 sub cflags {
@@ -103,7 +110,7 @@ EOF
 sub makefiles {
     my ( $self, $conf ) = @_;
 
-    my $targets = $conf->options->get('targets');
+    my $targets = $conf->options->get('target');
     my @targets =
         defined $targets
         ? split ' ', $targets

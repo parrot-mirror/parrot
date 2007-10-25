@@ -22,10 +22,10 @@ Tests C<Exception> and C<Exception_Handler> PMCs.
 
 =cut
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "push_eh - clear_eh" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "push_eh - pop_eh" );
     push_eh _handler
     print "ok 1\n"
-    clear_eh
+    pop_eh
     print "ok 2\n"
     end
 _handler:
@@ -159,7 +159,7 @@ OUTPUT
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "throw - no handler, no message" );
     push_eh _handler
     new P0, 'Exception'
-    clear_eh
+    pop_eh
     throw P0
     print "not reached\n"
     end
@@ -487,17 +487,17 @@ Error: something happened
 Outer value
 OUTPUT
 
-pir_error_output_like( <<'CODE', <<'OUTPUT', 'clear_eh out of context (1)' );
+pir_error_output_like( <<'CODE', <<'OUTPUT', 'pop_eh out of context (1)' );
 .sub main :main
     pushmark 1
-    clear_eh
+    pop_eh
     print "no exceptions.\n"
 .end
 CODE
 /No exception to pop./
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', 'clear_eh out of context (2)' );
+pir_output_is( <<'CODE', <<'OUTPUT', 'pop_eh out of context (2)' );
 .sub main :main
     .local pmc outer, cont
     push_eh handler
@@ -516,8 +516,8 @@ done:
 .sub test1
     .local pmc exit
     print "[in test1]\n"
-    ## clear_eh is illegal here, and signals an exception.
-    clear_eh
+    ## pop_eh is illegal here, and signals an exception.
+    pop_eh
     print "[cleared]\n"
 .end
 CODE
@@ -529,14 +529,14 @@ OUTPUT
 # stringification is handled by a vtable method, which runs in a second
 # runloop. when an error in the method tries to go to a Error_Handler defined
 # outside it, it winds up going to the inner runloop, giving strange results.
-pir_output_is( <<'CODE', <<'OUTPUT', 'clear_eh out of context (2)', todo => 'runloop shenanigans' );
+pir_output_is( <<'CODE', <<'OUTPUT', 'pop_eh out of context (2)', todo => 'runloop shenanigans' );
 .sub main :main
         $P0 = get_hll_global ['Foo'], 'load'
         $P0()
         $P0 = new 'Foo'
         push_eh catch
         $S0 = $P0
-        clear_eh
+        pop_eh
         say "huh?"
         .return()
 

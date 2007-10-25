@@ -152,7 +152,7 @@ tag 'all' is allowed for todo tests that should fail on any system
   parse_data:
     push_eh eh_bad_line
     ( template, data, expected, description ) = parse_data( test_line )
-    clear_eh
+    pop_eh
 
     # prepend test filename and line number to description
     description = 'build_test_desc'( description, template )
@@ -186,7 +186,7 @@ tag 'all' is allowed for todo tests that should fail on any system
   not_skip:
     push_eh eh_sprintf
     actual = 'sprintf'(template, data)
-    clear_eh
+    pop_eh
     unless_null actual, sprintf_ok
     $P1 = new 'Exception'
     $P1[0] = 'sprintf error'
@@ -241,9 +241,9 @@ tag 'all' is allowed for todo tests that should fail on any system
     print "'\n"
 
   eh_sprintf:
-    .sym pmc exception
-    .sym string message
-    get_results '(0,0)', exception, message
+    .local pmc exception
+    .local string message
+    get_results '0,0', exception, message
     $I0 = index message, 'is not a valid sprintf format'
     if $I0 == -1 goto other_error
     $I0 = index expected, ' INVALID'

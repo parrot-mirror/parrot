@@ -78,12 +78,19 @@
 
 
 ##    method TOP($/, $key) {
-##        return self.block($/, $key);
+##        self.block($/, $key);
+##        if ($key eq 'close') {
+##            $($/).blocktype('declaration');
+##        }
 ##    }
 .sub 'TOP' :method
     .param pmc match
     .param string key
-    .return self.'block'(match, key)
+    self.'block'(match, key)
+    if key != 'close' goto end
+    $P0 = match.'get_scalar'()
+    $P0.'blocktype'('declaration')
+  end:
 .end
 
 
@@ -94,12 +101,12 @@
 ##        for $<statement> {
 ##            $past.push($($_));
 ##        }
-##        return $past;
+##        make $past;
 ##    }
 .sub 'statement_list' :method
     .param pmc match
     .local pmc past
-    $P0 = getclass 'PAST::Stmts'
+    $P0 = get_hll_global ['PAST'], 'Stmts'
     past = $P0.'new'('node'=>match)
     $P1 = match['statement']
     if null $P1 goto iter_end
@@ -112,18 +119,19 @@
     past.'push'($P2)
     goto iter_loop
   iter_end:
-    .return (past)
+    match.'result_object'(past)
 .end
 
 
 ##    method statement($/, $key) {
-##        return $($/{$key});
+##        make $($/{$key});
 ##    }
 .sub 'statement' :method
     .param pmc match
     .param string key
     $P0 = match[key]
-    .return $P0.'get_scalar'()
+    $P1 = $P0.'get_scalar'()
+    match.'result_object'($P1)
 .end
 
 
@@ -135,7 +143,7 @@
 ##        if ($<block>[1]) {
 ##            $past.push($(<block>[1]));
 ##        }
-##        return $past;
+##        make $past;
 .sub 'if_statement' :method
     .param pmc match
     .local pmc block, past
@@ -144,7 +152,7 @@
     block = match['block']
     $P1 = block[0]
     $P1 = $P1.'get_scalar'()
-    $P2 = getclass 'PAST::Op'
+    $P2 = get_hll_global ['PAST'], 'Op'
     $S1 = match['sym']
     past = $P2.'new'($P0, $P1, 'pasttype'=>$S1, 'node'=>match)
     $I0 = exists block[1]
@@ -153,7 +161,7 @@
     $P1 = $P1.'get_scalar'()
     past.'push'($P1)
   end:
-    .return (past)
+    match.'result_object'(past)
 .end
 
 
@@ -167,7 +175,7 @@
 ##                                 $($<block>),
 ##                                 pasttype => $<sym>,
 ##                                 node => $/);
-##        return $past;
+##        make $past;
 .sub 'for_statement' :method
     .param pmc match
     .local pmc block, past
@@ -178,14 +186,14 @@
     block.'blocktype'('sub')
     .local pmc params, topic_var
     params = block[0]
-    $P3 = getclass 'PAST::Var'
+    $P3 = get_hll_global ['PAST'], 'Var'
     topic_var = $P3.'new'('name'=>'$_', 'scope'=>'parameter')
     params.'push'(topic_var)
     block.'symbol'('$_', 'scope'=>'lexical')
-    $P2  = getclass 'PAST::Op'
+    $P2  = get_hll_global ['PAST'], 'Op'
     $S1  = match['sym']
     past = $P2.'new'($P0, block, 'pasttype'=>$S1, 'node'=>match)
-    .return (past)
+    match.'result_object'(past)
 .end
 
 
@@ -201,7 +209,7 @@
 ##            my $past := shift @?BLOCK;
 ##            $?BLOCK := @?BLOCK[0];
 ##            $past.push($($<statement_list>));
-##            .return ($past);
+##            make $past;
 ##        }
 ##    }
 .sub 'block' :method
@@ -210,9 +218,9 @@
     if key == 'close' goto block_close
   block_open:
     .local pmc past
-    $P1 = getclass 'PAST::Stmts'
+    $P1 = get_hll_global ['PAST'], 'Stmts'
     $P2 = $P1.'new'()
-    $P0 = getclass 'PAST::Block'
+    $P0 = get_hll_global ['PAST'], 'Block'
     past = $P0.'new'($P2, 'blocktype'=>'immediate', 'node'=>match)
     set_global '$?BLOCK', past
     $P0 = get_global '@?BLOCK'
@@ -226,7 +234,7 @@
     $P2 = match['statement_list']
     $P3 = $P2.'get_scalar'()
     past.'push'($P3)
-    .return (past)
+    match.'result_object'(past)
 .end
 
 
@@ -244,7 +252,7 @@
 ##            $past.symbol($param_var.name(), :scope('lexical'));
 ##            $params.push($param_var);
 ##        }
-##        return $past;
+##        make $past;
 ##    }
 .sub 'routine_def' :method
     .param pmc match
@@ -277,20 +285,21 @@
     params.'push'(param_var)
     goto param_loop
   param_end:
-    .return (past)
+    match.'result_object'(past)
 .end
 
 
 ##    method param_var($/) {
-##        return PAST::Var.new(:name(~$/),
-##                             :scope('parameter'),
-##                             :node($/) );
+##        make PAST::Var.new(:name(~$/),
+##                           :scope('parameter'),
+##                           :node($/) );
 ##    }
 .sub 'param_var' :method
     .param pmc match
     $S0 = match
-    $P0 = getclass 'PAST::Var'
-    .return $P0.'new'('name'=>$S0, 'scope'=>'parameter', 'node'=>match)
+    $P0 = get_hll_global ['PAST'], 'Var'
+    $P1 = $P0.'new'('name'=>$S0, 'scope'=>'parameter', 'node'=>match)
+    match.'result_object'($P1)
 .end
 
 
@@ -303,7 +312,7 @@
 ##            $past := $($_);
 ##            $past.unshift($term);
 ##        }
-##        return $past;
+##        make $past;
 ##    }
 .sub 'term' :method
     .param pmc match
@@ -323,18 +332,19 @@
     past.'unshift'(term)
     goto iter_loop
   end:
-    .return (past)
+    match.'result_object'(past)
 .end
 
 
 ##    method postfix($/, $key) {
-##        return $($/{$key});
+##        make $($/{$key});
 ##    }
 .sub 'postfix' :method
     .param pmc match
     .param string key
     $P0 = match[key]
-    .return $P0.'get_scalar'()
+    $P1 = $P0.'get_scalar'()
+    match.'result_object'($P1)
 .end
 
 
@@ -343,7 +353,7 @@
 ##        $past.name(~$<ident>);
 ##        $past.pasttype('callmethod');
 ##        $past.node($/);
-##        return $past;
+##        make $past;
 ##    }
 .sub 'methodop' :method
     .param pmc match
@@ -355,7 +365,7 @@
     past.'name'($S0)
     past.'pasttype'('callmethod')
     past.'node'(match)
-    .return (past)
+    match.'result_object'(past)
 .end
 
 
@@ -364,18 +374,18 @@
 ##            my $past := $($<arglist>);
 ##            $past.pasttype('call');
 ##            $past.node($/);
-##            return $past;
+##            make $past;
 ##        }
 ##        if $key eq '< >' {
 ##            my $value := PAST::Val.new( :value( $($<string_literal>) ) );
-##            return PAST::Var.new( $value,
-##                                  :scope('keyed'),
-##                                  :viviself('Hash'),
-##                                  :node( $/ ) );
+##            make PAST::Var.new( $value,
+##                                :scope('keyed'),
+##                                :viviself('Hash'),
+##                                :node( $/ ) );
 ##        }
-##        return PAST::Var.new( $($<EXPR>),
-##                              :scope('keyed'),
-##                              :node($/) );
+##        make PAST::Var.new( $($<EXPR>),
+##                            :scope('keyed'),
+##                            :node($/) );
 ##    }
 .sub 'postcircumfix' :method
     .param pmc match
@@ -384,42 +394,46 @@
     if key == '( )' goto subcall
     if key == '< >' goto keyed_const
   keyed_var:
-    $P0 = getclass 'PAST::Var'
+    $P0 = get_hll_global ['PAST'], 'Var'
     $P1 = match['EXPR']
     $P2 = $P1.'get_scalar'()
-    .return $P0.'new'( $P2, 'scope'=>'keyed', 'node'=>match )
+    $P3 = $P0.'new'( $P2, 'scope'=>'keyed', 'node'=>match )
+    match.'result_object'($P3)
+    .return ()
   subcall:
     $P0 = match['arglist']
     past = $P0.'get_scalar'()
     past.'pasttype'('call')
     past.'node'(match)
-    .return (past)
+    match.'result_object'(past)
+    .return ()
   keyed_const:
-    $P0 = getclass 'PAST::Val'
+    $P0 = get_hll_global ['PAST'], 'Val'
     $P1 = match['string_literal']
     $P2 = $P1.'get_scalar'()
     .local pmc value
     value = $P0.'new'( 'value' => $P2, 'node'=> $P1 )
-    $P0 = getclass 'PAST::Var'
-    .return $P0.'new'( value, 'scope'=>'keyed', 'viviself'=>'Hash', 'node'=>match)
+    $P0 = get_hll_global ['PAST'], 'Var'
+    $P1 = $P0.'new'( value, 'scope'=>'keyed', 'viviself'=>'Hash', 'node'=>match)
+    match.'result_object'($P1)
 .end
 
 
 ##method circumfix($/, $key) {
 ##    my $expr := $($<EXPR>[0]);
 ##    if $key eq '@( )' {
-##        return PAST::Op.new( $expr,
-##                             :name('get_array'),
-##                             :pasttype('callmethod'),
-##                             :node($/) );
+##        make PAST::Op.new( $expr,
+##                           :name('get_array'),
+##                           :pasttype('callmethod'),
+##                           :node($/) );
 ##    }
 ##    if $key eq '$( )' {
-##        return PAST::Op.new( $expr,
-##                             :name('get_scalar'),
-##                             :pasttype('callmethod'),
-##                             :node($/) );
+##        make PAST::Op.new( $expr,
+##                           :name('get_scalar'),
+##                           :pasttype('callmethod'),
+##                           :node($/) );
 ##    }
-##    return $expr;
+##    make $expr;
 ##}
 .sub 'circumfix' :method
     .param pmc match
@@ -433,17 +447,19 @@
     $P1 = $P0[0]
   get_past:
     $P1 = $P1.'get_scalar'()
-    $P0 = getclass 'PAST::Op'
+    $P0 = get_hll_global ['PAST'], 'Op'
     if key == '@( )' goto list_context
     if key == '$( )' goto scalar_context
   parenthetical:
-    .return ($P1)
+    match.'result_object'($P1)
+    .return ()
   list_context:
     past = $P0.'new'($P1, 'name' => 'get_array',  'pasttype'=>'callmethod', 'node'=>match)
-    .return (past)
+    match.'result_object'(past)
+    .return ()
   scalar_context:
     past = $P0.'new'($P1, 'name' => 'get_scalar', 'pasttype'=>'callmethod', 'node'=>match)
-    .return (past)
+    match.'result_object'(past)
 .end
 
 
@@ -468,12 +484,12 @@
 ##                $past.push( callarg($expr) );
 ##            }
 ##        }
-##        return $past;
+##        make $past;
 ##    }
 .sub 'arglist' :method
     .param pmc match
     .local pmc past
-    $P0 = getclass 'PAST::Op'
+    $P0 = get_hll_global ['PAST'], 'Op'
     past = $P0.'new'( 'node'=>match )
     $P1 = match['EXPR']
     if null $P1 goto end
@@ -495,7 +511,7 @@
     $P0 = 'callarg'(expr)
     past.'push'($P0)
   end:
-    .return (past)
+    match.'result_object'(past)
 .end
 
 .sub 'callarg'
@@ -512,35 +528,37 @@
 
 
 ##    method noun($/, $key) {
-##        return $($/{$key});
+##        make $($/{$key});
 ##    }
 .sub 'noun' :method
     .param pmc match
     .param pmc key
     $P0 = match[key]
-    .return $P0.'get_scalar'()
+    $P1 = $P0.'get_scalar'()
+    match.'result_object'($P1)
 .end
 
 
 ##    method colonpair($/) {
-##        return PAST::Op.new( PAST::Val.new( :value(~$<ident>),
-##                                            :node($<ident>)),
-##                             $($<EXPR>),
-##                             :name('infix:=>'),
-##                             :returns('Pair'),
-##                             :node($/)
-##                           );
+##        make PAST::Op.new( PAST::Val.new( :value(~$<ident>),
+##                                          :node($<ident>)),
+##                           $($<EXPR>),
+##                           :name('infix:=>'),
+##                           :returns('Pair'),
+##                           :node($/)
+##                         );
 ##    }
 .sub 'colonpair' :method
     .param pmc match
     $S0 = match['ident']
     $P0 = match['ident']
-    $P9 = getclass 'PAST::Val'
+    $P9 = get_hll_global ['PAST'], 'Val'
     $P1 = $P9.'new'('value'=>$S0, 'node'=>$P0)
     $P2 = match['EXPR']
     $P2 = $P2.'get_scalar'()
-    $P9 = getclass 'PAST::Op'
-    .return $P9.'new'($P1, $P2, 'name'=>'infix:=>', 'returns'=>'Pair', 'node'=>match)
+    $P9 = get_hll_global ['PAST'], 'Op'
+    $P3 = $P9.'new'($P1, $P2, 'name'=>'infix:=>', 'returns'=>'Pair', 'node'=>match)
+    match.'result_object'($P3)
 .end
 
 
@@ -553,7 +571,7 @@
 ##            my $scope := ($<declarator> eq 'my') ? 'lexical' : 'package';
 ##            $?BLOCK.symbol($name, :scope($scope));
 ##        }
-##        .return ($past);
+##        make $past;
 ##   }
 .sub 'scope_declarator' :method
     .param pmc match
@@ -574,39 +592,44 @@
   have_scope:
     block.'symbol'(name, 'scope'=>scope)
   end:
-    .return (past)
+    match.'result_object'(past)
 .end
 
 
 ##    method variable($/, $key) {
 ##        if ($key eq '$< >') {
-##            return PAST::Var.new(
-##                       PAST::Var.new(scope=>'lexical', name=>'$/'),
-##                       PAST::Val.new(value=>~$[0]),
-##                       scope=>'keyed');
+##            make PAST::Var.new(
+##                     PAST::Var.new(scope=>'lexical', name=>'$/'),
+##                     PAST::Val.new(value=>~$[0]),
+##                     scope=>'keyed');
 ##        }
-##        return PAST::Var.new(node=>$/, name=>~$/)
+##        else {
+##            make PAST::Var.new(node=>$/, name=>~$/)
+##        }
 ##    }
 .sub 'variable' :method
     .param pmc match
     .param pmc key
     if key != '$< >' goto past_var
   past_match_keyed:
-    $P0 = getclass 'PAST::Var'
+    $P0 = get_hll_global ['PAST'], 'Var'
     $P1 = $P0.'new'('scope'=>'lexical', 'name'=>'$/')
-    $P2 = getclass 'PAST::Val'
+    $P2 = get_hll_global ['PAST'], 'Val'
     $S0 = match[0]
     $P3 = $P2.'new'('value'=>$S0)
-    .return $P0.'new'($P1, $P3, 'scope'=>'keyed')
+    $P4 = $P0.'new'($P1, $P3, 'scope'=>'keyed')
+    match.'result_object'($P4)
+    .return ()
   past_var:
     $S0 = match
-    $P0 = getclass 'PAST::Var'
-    .return $P0.'new'('node'=>match, 'name'=>$S0)
+    $P0 = get_hll_global ['PAST'], 'Var'
+    $P1 = $P0.'new'('node'=>match, 'name'=>$S0)
+    match.'result_object'($P1)
 .end
 
 
 ##    method quote($/, $key) {
-##        return PAST::Val.new(node=>$/, value=>~($<string_literal>))
+##        make PAST::Val.new(node=>$/, value=>~($<string_literal>))
 ##    }
 .sub 'quote' :method
     .param pmc match
@@ -614,22 +637,23 @@
     .local string value
     $P0 = match['string_literal']
     value = $P0.'get_scalar'()
-    $P0 = getclass 'PAST::Val'
-    .return $P0.'new'('node'=>match, 'value'=>value)
+    $P0 = get_hll_global ['PAST'], 'Val'
+    $P1 = $P0.'new'('node'=>match, 'value'=>value)
+    match.'result_object'($P1)
 .end
 
 
 ##    method number($/, $key?) {
-##        return PAST::Val.new(node=>$/, name=>~$/, vtype=>"Integer");
+##        make PAST::Val.new(node=>$/, name=>~$/, vtype=>"Integer");
 ##    }
 .sub 'number' :method
     .param pmc match
     .param pmc key             :optional
     .local pmc past
     $I0 = match
-    $P0 = getclass 'PAST::Val'
+    $P0 = get_hll_global ['PAST'], 'Val'
     past = $P0.'new'('node'=>match, 'value'=>$I0)
-    .return (past)
+    match.'result_object'(past)
 .end
 
 
@@ -638,7 +662,7 @@
 ##        $past.name(~$<name>);
 ##        $past.pasttype('call');
 ##        $past.node($/);
-##        return $past;
+##        make $past;
 ##    }
 .sub 'subcall' :method
     .param pmc match
@@ -650,14 +674,14 @@
     past.'name'($S0)
     past.'pasttype'('call')
     past.'node'(match)
-    .return (past)
+    match.'result_object'(past)
 .end
 
 
 #### Expressions and operators ####
 
 ##    method EXPR($/, $key) {
-##        if ($key eq 'end') { return $($<expr>); }
+##        if ($key eq 'end') { make $($<expr>); return; }
 ##        my $past := PAST::Op.new( :node($/),
 ##                                  :name($<type>),
 ##                                  :pasttype($<top><pasttype>),
@@ -668,7 +692,7 @@
 ##        for @($/) {
 ##            $past.push($($_));
 ##        }
-##        return $past;
+##        make $past;
 ##    }
 .sub 'EXPR' :method
     .param pmc match
@@ -676,7 +700,9 @@
     if key != 'end' goto expr_reduce
   expr_end:
     $P0 = match['expr']
-    .return $P0.'get_scalar'()
+    $P1 = $P0.'get_scalar'()
+    match.'result_object'($P1)
+    .return ()
   expr_reduce:
     .local pmc past
     .local string name, pirop, pasttype, inline, lvalue
@@ -685,7 +711,7 @@
     pasttype = match['top'; 'pasttype']
     inline = match['top'; 'inline']
     lvalue = match['top'; 'lvalue']
-    $P0 = getclass 'PAST::Op'
+    $P0 = get_hll_global ['PAST'], 'Op'
     past = $P0.'new'('node'=>match, 'name'=>name, 'pirop'=>pirop, 'pasttype'=>pasttype, 'inline'=>inline, 'islvalue'=>lvalue)
     $P1 = match.'get_array'()
     if null $P1 goto iter_end
@@ -698,7 +724,7 @@
     past.'push'($P2)
     goto iter_loop
   iter_end:
-    .return (past)
+    match.'result_object'(past)
 .end
 
 # Local Variables:

@@ -15,15 +15,20 @@ package auto::msvc;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
 
-$description = 'Determining if your C compiler is actually Visual C++';
 
-@args = qw(verbose);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining if your C compiler is actually Visual C++};
+    $data{args}        = [ qw( verbose ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = ( shift, shift );
@@ -45,7 +50,7 @@ sub runstep {
     unless ( defined $msvc{_MSC_VER} ) {
         $self->set_result('no');
         $conf->data->set( msvcversion => undef );
-        return $self;
+        return 1;
     }
 
     my $major = int( $msvc{_MSC_VER} / 100 );
@@ -54,7 +59,7 @@ sub runstep {
         print " (no) " if $verbose;
         $self->set_result('no');
         $conf->data->set( msvcversion => undef );
-        return $self;
+        return 1;
     }
 
     my $msvcversion = "$major.$minor";
@@ -75,7 +80,7 @@ sub runstep {
         $conf->data->add( " ", "ccflags", "-D_CRT_SECURE_NO_DEPRECATE" );
     }
 
-    return $self;
+    return 1;
 }
 
 1;

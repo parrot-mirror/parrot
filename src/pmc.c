@@ -62,8 +62,14 @@ PARROT_MALLOC
 PMC *
 pmc_new(PARROT_INTERP, INTVAL base_type)
 {
-    PMC * const pmc = pmc_new_noinit(interp, base_type);
-    VTABLE_init(interp, pmc);
+    PMC *pmc;
+    PMC *const classobj = interp->vtables[base_type]->pmc_class;
+    if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
+        pmc = VTABLE_instantiate(interp, classobj, PMCNULL);
+    else {
+        pmc = get_new_pmc_header(interp, base_type, 0);
+        VTABLE_init(interp, pmc);
+    }
     return pmc;
 }
 
@@ -268,8 +274,12 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 pmc_new_noinit(PARROT_INTERP, INTVAL base_type)
 {
-    PMC * const pmc = get_new_pmc_header(interp, base_type, 0);
-
+    PMC *pmc;
+    PMC *const classobj = interp->vtables[base_type]->pmc_class;
+    if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
+        pmc = VTABLE_instantiate(interp, classobj, PMCNULL);
+    else
+        pmc = get_new_pmc_header(interp, base_type, 0);
     return pmc;
 }
 
@@ -329,10 +339,14 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 pmc_new_init(PARROT_INTERP, INTVAL base_type, NULLOK(PMC *init))
 {
-    PMC * const pmc = pmc_new_noinit(interp, base_type);
-
-    VTABLE_init_pmc(interp, pmc, init);
-
+    PMC *pmc;
+    PMC *const classobj = interp->vtables[base_type]->pmc_class;
+    if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
+        pmc = VTABLE_instantiate(interp, classobj, init);
+    else {
+        pmc = get_new_pmc_header(interp, base_type, 0);
+        VTABLE_init_pmc(interp, pmc, init);
+    }
     return pmc;
 }
 
@@ -380,9 +394,16 @@ pmc_register(PARROT_INTERP, NOTNULL(STRING *name))
         return type;
     }
     if (type < enum_type_undef) {
-        real_exception(interp, NULL, 1, "native type with name '%s' already exists - "
-                "can't register PMC", data_types[type].name);
-        return 0;
+        char *type_name;
+        if (type < 0) {
+            strcpy(type_name, "undefined type");
+        }
+        else {
+            strcpy(type_name, data_types[type].name);
+        }
+        real_exception(interp, NULL, 1,
+                "native type with name '%s' already exists - "
+                "can't register PMC", type_name);
     }
 
     classname_hash = interp->class_hash;
@@ -592,50 +613,6 @@ dod_unregister_pmc(PARROT_INTERP, NOTNULL(PMC* pmc))
     if (!interp->DOD_registry)
         return; /* XXX or signal exception? */
     VTABLE_delete_keyed(interp, interp->DOD_registry, pmc);
-}
-
-
-/*
-
-=back
-
-=head2 PMC Proxy related things
-
-=over 4
-
-=item C<Parrot_create_pmc_proxy>
-
-Creates a PMC Proxy for the supplied class number and puts it into the array
-of proxies.
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_create_pmc_proxy(PARROT_INTERP, int type_num)
-{
-    PMC *proxy;
-    Parrot_PMCProxy *proxy_info;
-
-    /* Ensure that it's a valid type number. */
-    if (type_num > interp->n_vtable_max || type_num < 0) {
-        real_exception(interp, NULL, 1,
-            "Attempt to create PMC Proxy for invalid type number!");
-    }
-
-    /* Create PMC proxy object and set up number, name and namespcae. */
-    proxy = pmc_new(interp, enum_class_PMCProxy);
-    proxy_info = PARROT_PMCPROXY(proxy);
-    proxy_info->id = type_num;
-    proxy_info->name = interp->vtables[type_num]->whoami;
-    proxy_info->_namespace = interp->vtables[type_num]->_namespace;
-
-    /* XXX Parents and MRO still todo. */
-
-    /* Enter it in the list of proxy objects. */
-    VTABLE_set_pmc_keyed_int(interp, interp->pmc_proxies, type_num, proxy);
 }
 
 

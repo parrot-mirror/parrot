@@ -12,16 +12,16 @@
     
     # initialize the rstack
     .local pmc stack
-    stack = new .ResizablePMCArray
+    stack = new 'ResizablePMCArray'
     set_hll_global ' stack', stack
 
     # word dictionary - used for compilation
     .local pmc dict
-    dict = new .Hash
+    dict = new 'Hash'
     set_hll_global ' dict', dict
 
     .local pmc vars, vstack
-    vars   = new .Hash
+    vars   = new 'Hash'
     vstack = new 'VariableStack'
     set_hll_global ' variables', vars
     set_hll_global ' vstack', vstack
@@ -63,7 +63,7 @@ loop:
 #    push_eh exception
       $P0 = forth($S0)
       $P0()
-#    clear_eh
+#    pop_eh
 
     print " ok\n"
     goto loop
@@ -71,7 +71,7 @@ end:
     .return()
 
 exception:
-    get_results '(0, 0)', $P0, $S0
+    get_results '0, 0', $P0, $S0
     $S0 = $P0[0]
     print $S0
     print "\n"
@@ -84,10 +84,8 @@ exception:
 
     .local pmc code, stream, stack
     code   = new 'CodeString'
-    $I0    = find_type 'TokenStream'
-    stream = new $I0, input
-    $I0    = find_type 'VirtualStack'
-    stack  = new $I0
+    stream = new 'TokenStream', input
+    stack  = new 'VirtualStack'
 
     code.emit(<<"END_PIR")
 .sub code :anon
@@ -151,7 +149,7 @@ user_var:
     $I0 = vars[$S0]
     $S0 = code.unique('$P')
     code.emit(<<'END_PIR', $S0, $I0)
-    %0 = new .Integer
+    %0 = new 'Integer'
     %0 = %1
 END_PIR
     push stack, $S0
@@ -160,14 +158,14 @@ END_PIR
 undefined:
     $S0 = token
     $S0 = "undefined symbol: " . $S0
-    $P0 = new .Exception
+    $P0 = new 'Exception'
     $P0[0] = $S0
     throw $P0
 
 numeric:
     $S0 = code.unique('$P')
     code.emit(<<"END_PIR", $S0, token)
-    %0 = new .Integer
+    %0 = new 'Integer'
     %0 = %1
 END_PIR
     push stack, $S0

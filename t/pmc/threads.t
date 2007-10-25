@@ -72,7 +72,7 @@ ok 1
 ok 2
 OUTPUT
 
-# XXX FIXME rework tests since we don't really have thread types?
+# RT#46807 rework tests since we don't really have thread types?
 
 SKIP: {
     skip 'busted on win32' => 2 if $^O eq 'MSWin32';
@@ -416,7 +416,7 @@ okay:
     .local pmc thread_main
     thread_main = find_global 'thread_main'
     $P0.'run_clone'(thread_main)
-    $P0.'join'() # XXX
+    $P0.'join'() # RT#46813
 .end
 
 .sub thread_main
@@ -574,6 +574,9 @@ ok beta2
 ok beta3
 OUTPUT
 
+TODO: {
+        local $TODO = "vtable overrides aren't properly cloned RT# 46511";
+
 pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass not built-in" );
 .namespace [ 'Foo' ]
 
@@ -591,7 +594,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass not
     print "called Bar's barmeth\n"
 .end
 
-.sub __get_string :method
+.sub get_string :vtable :method
     .return ("A Bar")
 .end
 
@@ -675,14 +678,14 @@ pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass bui
     print "called Bar's barmeth\n"
 .end
 
-.sub __get_string :method
+.sub get_string :vtable :method
     .return ("A Bar")
 .end
 
 .namespace [ 'main' ]
 
 .sub init
-    $P0 = getclass 'Integer'
+    $P0 = get_class 'Integer'
     $P1 = subclass $P0, 'Foo'
     addattribute $P1, 'foo1'
     addattribute $P1, 'foo2'
@@ -742,6 +745,8 @@ Integer? 1
 Foo? 1
 Bar? 1
 OUTPUT
+
+}
 
 pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_GLOBALS| CLONE_HLL" );
 .HLL 'Test', ''

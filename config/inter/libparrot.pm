@@ -16,15 +16,20 @@ package inter::libparrot;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':inter';
 
-$description = 'Determine if parrot should be linked against a shared library';
 
-@args = qw(ask parrot_is_shared);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determine if parrot should be linked against a shared library};
+    $data{args}        = [ qw( ask parrot_is_shared ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -72,7 +77,7 @@ sub runstep {
 
     $self->set_result( $parrot_is_shared ? 'yes' : 'no' );
 
-    return $self;
+    return 1;
 }
 
 1;

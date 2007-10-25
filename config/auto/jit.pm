@@ -19,20 +19,27 @@ package auto::jit;
 use strict;
 use warnings;
 
+
 use base qw(Parrot::Configure::Step::Base);
 
 use Config;
 use Parrot::Configure::Step qw(copy_if_diff cc_gen cc_clean cc_build cc_run);
 
-our $description = 'Determining architecture, OS and JIT capability';
-our @args        = qw(jitcapable miniparrot execcapable verbose);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining architecture, OS and JIT capability};
+    $data{args}        = [ qw( jitcapable miniparrot execcapable verbose ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
 
     if ( $conf->options->get('miniparrot') ) {
         $self->set_result('skipped');
-        return $self;
+        return 1;
     }
 
     my $verbose = $conf->options->get('verbose');
@@ -232,7 +239,7 @@ sub runstep {
         );
     }
 
-    return $self;
+    return 1;
 }
 
 1;

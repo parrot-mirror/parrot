@@ -1,3 +1,5 @@
+# $Id$
+
 # experimental subproxy class test
 # the bytecode loading is deferred until the subproxy object is
 # invoked. Then the subproxy acts as a normal sub
@@ -9,17 +11,19 @@
 
 _main:
 	loadlib P1, "subproxy"
+
+        # set up which Sub should eventually be called 
 	new P3, 'Key'
 	set P3, "src/dynpmc/ext.pir"	# file - FIXME path handling
 	new P4, 'Key'
 	set P4, "_ext_main"	# sub label
 	push P3, P4
-	find_type I0, "SubProxy"
-	new P0, I0
+
+	new P0, "SubProxy"
 	assign P0, P3
 
-	invokecc
+	invokecc P0
 	print "back\n"
-	invokecc
+	invokecc P0
 	print "back\n"
-	end
+end

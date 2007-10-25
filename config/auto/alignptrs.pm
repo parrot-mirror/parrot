@@ -15,23 +15,28 @@ package auto::alignptrs;
 
 use strict;
 use warnings;
-use vars qw($description $result @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
 use Config;
 
-$description = 'Determining your minimum pointer alignment';
 
-@args = qw(miniparrot);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining your minimum pointer alignment};
+    $data{args}        = [ qw( miniparrot ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = ( shift, shift );
 
     if ( $conf->options->get('miniparrot') ) {
         $self->set_result('skipped');
-        return $self;
+        return 1;
     }
 
     $self->set_result('');
@@ -67,7 +72,7 @@ sub runstep {
     $self->set_result( $self->result . " $align byte" );
     $self->set_result( $self->result . 's' ) unless $align == 1;
 
-    return $self;
+    return 1;
 }
 
 1;

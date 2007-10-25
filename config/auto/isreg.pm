@@ -15,15 +15,20 @@ package auto::isreg;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
 
-$description = 'Determining if your C library has a working S_ISREG';
 
-@args = qw(verbose);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining if your C library has a working S_ISREG};
+    $data{args}        = [ qw( verbose ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -41,7 +46,7 @@ sub runstep {
     print( $test ? " (Yep) " : " (no) " ) if $conf->options->get('verbose');
     $self->set_result( $test ? 'yes' : 'no' );
 
-    return $self;
+    return 1;
 }
 
 1;

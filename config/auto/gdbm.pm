@@ -16,26 +16,36 @@ package auto::gdbm;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Config;
 use Parrot::Configure::Step ':auto';
 
-$description = 'Determining if your platform supports gdbm';
 
-@args = qw(verbose without-gmp);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining if your platform supports gdbm};
+    $data{args}        = [ qw( verbose without-gmp ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my ( $verbose, $without ) = $conf->options->get(@args);
+    my ( $verbose, $without ) = $conf->options->get(
+        qw|
+            verbose
+            without-gmp
+            |
+    );
 
     if ($without) {
         $conf->data->set( has_gdbm => 0 );
         $self->set_result('no');
-        return $self;
+        return 1;
     }
 
     my $cc        = $conf->data->get('cc');
@@ -90,7 +100,7 @@ sub runstep {
     }
     $conf->data->set( has_gdbm => $has_gdbm );    # for gdbmhash.t and dynpmc.in
 
-    return $self;
+    return 1;
 }
 
 1;

@@ -15,15 +15,20 @@ package auto::format;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step;
 
-$description = 'Figuring out what formats should be used for sprintf';
 
-@args = ();
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Figuring out what formats should be used for sprintf};
+    $data{args}        = [ qw(  ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -67,7 +72,7 @@ sub runstep {
         nvsize      => $nvsize
     );
 
-    return $self;
+    return 1;
 }
 
 1;

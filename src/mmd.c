@@ -336,7 +336,7 @@ PARROT_CANNOT_RETURN_NULL
 static PMC *
 mmd_deref(PARROT_INTERP, NOTNULL(PMC *value))
 {
-    if (VTABLE_type(interp, value) != value->vtable->base_type)
+    if (!PObj_is_object_TEST(value) && VTABLE_type(interp, value) != value->vtable->base_type)
         return VTABLE_get_pmc(interp, value);
     else
         return value;
@@ -444,7 +444,7 @@ mmd_dispatch_p_pip(PARROT_INTERP,
 
     left = mmd_deref(interp, left);
 
-    left_type = left->vtable->base_type;
+    left_type = VTABLE_type(interp, left);
 
     real_function =
         (mmd_f_p_pip)get_mmd_dispatch_type(interp, func_nr,
@@ -477,7 +477,7 @@ mmd_dispatch_p_pnp(PARROT_INTERP,
 
     left = mmd_deref(interp, left);
 
-    left_type = left->vtable->base_type;
+    left_type = VTABLE_type(interp, left);
     real_function = (mmd_f_p_pnp)get_mmd_dispatch_type(interp,
             func_nr, left_type, enum_type_FLOATVAL, &is_pmc);
     if (is_pmc) {
@@ -502,7 +502,7 @@ mmd_dispatch_p_psp(PARROT_INTERP,
 {
     mmd_f_p_psp real_function;
     int is_pmc;
-    const UINTVAL left_type = left->vtable->base_type;
+    const UINTVAL left_type = VTABLE_type(interp, left);
 
     real_function = (mmd_f_p_psp)get_mmd_dispatch_type(interp,
             func_nr, left_type, enum_type_STRING, &is_pmc);
@@ -560,7 +560,7 @@ mmd_dispatch_v_pi(PARROT_INTERP,
     left = mmd_deref(interp, left);
     mmd_ensure_writable(interp, func_nr, left);
 
-    left_type = left->vtable->base_type;
+    left_type = VTABLE_type(interp, left);
     real_function = (mmd_f_v_pi)get_mmd_dispatch_type(interp,
             func_nr, left_type, enum_type_INTVAL, &is_pmc);
     if (is_pmc) {
@@ -584,7 +584,7 @@ mmd_dispatch_v_pn(PARROT_INTERP,
     left = mmd_deref(interp, left);
     mmd_ensure_writable(interp, func_nr, left);
 
-    left_type = left->vtable->base_type;
+    left_type = VTABLE_type(interp, left);
     real_function = (mmd_f_v_pn)get_mmd_dispatch_type(interp,
             func_nr, left_type, enum_type_FLOATVAL, &is_pmc);
     if (is_pmc) {
@@ -1266,14 +1266,19 @@ mmd_search_classes(PARROT_INTERP, NOTNULL(STRING *meth),
 
         for (i = start_at_parent; i < n; ++i) {
             PMC * const _class = VTABLE_get_pmc_keyed_int(interp, mro, i);
-            PMC * const pmc = Parrot_find_method_with_cache(interp, _class, meth);
-            if (!PMC_IS_NULL(pmc)) {
+            PMC *ns, *methodobj;
+            if (PObj_is_class_TEST(_class))
+                ns = Parrot_oo_get_namespace(interp, _class);
+            else
+                ns = VTABLE_pmc_namespace(interp, _class);
+            methodobj = VTABLE_get_pmc_keyed_str(interp, ns, meth);
+            if (!PMC_IS_NULL(methodobj)) {
                 /*
                  * mmd_is_hidden would consider all previous candidates
                  * RT#45949 pass current n so that only candidates from this
                  *     mro are used?
                  */
-                if (mmd_maybe_candidate(interp, pmc, cl))
+                if (mmd_maybe_candidate(interp, methodobj, cl))
                     break;
             }
         }
@@ -1401,8 +1406,10 @@ mmd_distance(PARROT_INTERP, NOTNULL(PMC *pmc), NOTNULL(PMC *arg_tuple))
         mro = interp->vtables[type_call]->mro;
         m = VTABLE_elements(interp, mro);
         for (j = 0; j < m; ++j) {
-            const PMC * const cl = VTABLE_get_pmc_keyed_int(interp, mro, j);
+            PMC * const cl = VTABLE_get_pmc_keyed_int(interp, mro, j);
             if (cl->vtable->base_type == type_sig)
+                break;
+            if (VTABLE_type(interp, cl) == type_sig)
                 break;
             ++dist;
         }
@@ -1545,7 +1552,7 @@ mmd_is_hidden(PARROT_INTERP, NOTNULL(PMC *multi), NOTNULL(PMC *cl))
      * if the candidate list already has the a sub with the same
      * signature (long name), the outer multi is hidden
      *
-     * RT#45957 
+     * RT#45957
      */
     UNUSED(interp);
     UNUSED(multi);
@@ -1683,8 +1690,8 @@ mmd_create_builtin_multi_meth_2(PARROT_INTERP, NOTNULL(PMC *ns),
 
     PARROT_ASSERT(type != enum_class_Null && type != enum_class_delegate &&
             type != enum_class_Ref  && type != enum_class_SharedRef &&
-            type != enum_class_deleg_pmc && type != enum_class_ParrotClass &&
-            type != enum_class_ParrotObject);
+            type != enum_class_deleg_pmc && type != enum_class_Class &&
+            type != enum_class_Object);
     short_name = Parrot_MMD_method_name(interp, func_nr);
     /*
      * _int, _float, _str are just native variants of the base
@@ -1802,10 +1809,7 @@ Parrot_mmd_register_table(PARROT_INTERP, INTVAL type,
      * register default mmds for this type
      */
     for (i = 0; i < n; ++i) {
-        /* The following always fails for Intel C++ for unknown reasons,
-         * but I'm assuming it's optimizer related.
-         */
-#ifndef __INTEL_COMPILER
+#ifdef PARROT_HAS_ALIGNED_FUNCPTR
         PARROT_ASSERT((PTR2UINTVAL(mmd_table[i].func_ptr) & 3) == 0);
 #endif
         mmd_register(interp,

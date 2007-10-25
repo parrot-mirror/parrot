@@ -133,6 +133,7 @@ help(void)
     "    -h --help\n"
     "    -V --version\n"
     "   <Run core options>\n"
+    "    -R --runcore CORE\n"
     "    -b --bounds-checks|--slow-core\n"
     "    -C --CGP-core\n"
     "    -f --fast-core\n"
@@ -194,10 +195,10 @@ included in the Parrot source tree.\n\n");
     Parrot_exit(interp, 0);
 }
 
-#define SET_FLAG(flag)   Parrot_set_flag(interp, flag)
-#define SET_DEBUG(flag)  Parrot_set_debug(interp, flag)
-#define SET_TRACE(flag)  Parrot_set_trace(interp, flag)
-#define SET_CORE(core)   interp->run_core |= core
+#define SET_FLAG(flag)   Parrot_set_flag(interp, (flag))
+#define SET_DEBUG(flag)  Parrot_set_debug(interp, (flag))
+#define SET_TRACE(flag)  Parrot_set_trace(interp, (flag))
+#define SET_CORE(core)   interp->run_core |= (core)
 
 #define OPT_GC_DEBUG       128
 #define OPT_DESTROY_FLAG   129
@@ -212,6 +213,7 @@ static struct longopt_opt_decl options[] = {
     { 'E', 'E', (OPTION_flags)0, { "--pre-process-only" } },
     { 'G', 'G', (OPTION_flags)0, { "--no-gc" } },
     { 'O', 'O', OPTION_optional_FLAG, { "--optimize" } },
+    { 'R', 'R', OPTION_required_FLAG, { "--runcore" } },
     { 'S', 'S', (OPTION_flags)0, { "--switched-core" } },
     { 'V', 'V', (OPTION_flags)0, { "--version" } },
     { '\0', OPT_DESTROY_FLAG, (OPTION_flags)0,
@@ -265,6 +267,43 @@ parseflags(PARROT_INTERP, int *argc, char **argv[])
 
     while ((status = longopt_get(interp, *argc, *argv, options, &opt)) > 0) {
         switch (opt.opt_id) {
+            case 'R':
+                if (!strcmp(opt.opt_arg, "slow")
+                        || !strcmp(opt.opt_arg, "bounds"))
+                    SET_CORE(PARROT_SLOW_CORE);
+                else if (!strcmp(opt.opt_arg, "fast")
+                        || !strcmp(opt.opt_arg, "function"))
+                    SET_CORE(PARROT_FAST_CORE);
+                else if (!strcmp(opt.opt_arg, "switch"))
+                    SET_CORE(PARROT_SWITCH_CORE);
+                else if (!strcmp(opt.opt_arg, "cgp"))
+                    SET_CORE(PARROT_CGP_CORE);
+                else if (!strcmp(opt.opt_arg, "cgoto"))
+                    SET_CORE(PARROT_CGOTO_CORE);
+                else if (!strcmp(opt.opt_arg, "jit"))
+                    SET_CORE(PARROT_JIT_CORE);
+                else if (!strcmp(opt.opt_arg, "cgp-jit"))
+                    SET_CORE(PARROT_CGP_JIT_CORE);
+                else if (!strcmp(opt.opt_arg, "switch-jit"))
+                    SET_CORE(PARROT_SWITCH_JIT_CORE);
+                else if (!strcmp(opt.opt_arg, "exec"))
+                    SET_CORE(PARROT_EXEC_CORE);
+                else if (!strcmp(opt.opt_arg, "trace")) {
+                    SET_CORE(PARROT_SLOW_CORE);
+#ifdef HAVE_COMPUTED_GOTO
+                    SET_CORE(PARROT_CGP_CORE);
+#endif
+#if JIT_CAPABLE
+                    SET_CORE(PARROT_JIT_CORE);
+#endif
+                }
+                else if (!strcmp(opt.opt_arg, "gcdebug"))
+                    SET_CORE(PARROT_GC_DEBUG_CORE);
+                else
+                    real_exception(interp, NULL, 1,
+                            "main: Unrecognized runcore '%s' specified."
+                            "\n\nhelp: parrot -h\n", opt.opt_arg);
+                break;
             case 'b':
                 SET_FLAG(PARROT_BOUNDS_FLAG);
                 break;
@@ -285,6 +324,7 @@ parseflags(PARROT_INTERP, int *argc, char **argv[])
                 SET_CORE(PARROT_SWITCH_CORE);
                 break;
             case 'C':
+                SET_CORE(PARROT_CGP_CORE);
                 break;
             case 'f':
                 SET_CORE(PARROT_FAST_CORE);
@@ -461,7 +501,7 @@ do_pre_process(PARROT_INTERP)
             case ENDNAMESPACE:  printf(".endnamespace"); break;
             case CONST:         printf(".const "); break;
             case PARAM:         printf(".param "); break;
-            /* TODO: print out more information about the macro */
+            /* RT#46147: print out more information about the macro */
             /* case MACRO:         yylex(&val, interp, yyscanner);
                                 break; */ /* swallow nl */
             case MACRO:         printf(".macro "); break;
@@ -623,7 +663,7 @@ imcc_run_pbc(PARROT_INTERP, int obj_file, NOTNULL(const char *output_file),
     /* runs :init functions */
     PackFile_fixup_subs(interp, PBC_MAIN, NULL);
 
-    /* XXX no return value :-( */
+    /* RT#46149 no return value :-( */
     Parrot_runcode(interp, argc, argv);
 }
 
@@ -832,6 +872,10 @@ imcc_run(PARROT_INTERP, const char *sourcefile, int argc, char * argv[])
 
     /* Produce a PBC output file, if one was requested */
     if (write_pbc) {
+        if (!output_file) {
+            IMCC_fatal_standalone(interp, 1,
+                    "main: NULL output_file when trying to write .pbc\n");
+        }
         imcc_write_pbc(interp, output_file);
 
         /* If necessary, load the file written above */

@@ -54,30 +54,31 @@ TEST
     print $T $teststring;
     close $T or die "Unable to close dummy test file after writing";
 
-    my ( $tie, $errtie, @lines );
     no warnings 'once';
 
     my $reason = q{Devel::Cover gags on this test};
 
     @Parrot::Configure::Options::Test::preconfiguration_tests = ($test);
     {
-        $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
+        my $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
             or croak "Unable to tie";
     SKIP: {
             skip $reason, 1 if $ENV{PERL5OPT};
             ok( $opttest->run_configure_tests(), "Configuration tests are runnable" );
         }
     }
+    untie *STDOUT;
 
     @Parrot::Configure::Options::Test::postconfiguration_tests = ($test);
     {
-        $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
+        my $tie = tie *STDOUT, "Parrot::IO::Capture::Mini"
             or croak "Unable to tie";
     SKIP: {
             skip $reason, 1 if $ENV{PERL5OPT};
             ok( $opttest->run_build_tests(), "Build tests are runnable" );
         }
     }
+    untie *STDOUT;
 
     ok( ( chdir $cwd ), "Changed back to starting directory after testing" );
 }

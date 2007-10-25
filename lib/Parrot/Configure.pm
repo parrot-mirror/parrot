@@ -122,7 +122,7 @@ sub options {
 
 Provides a list of registered steps, where each step is represented by an
 L<Parrot::Configure::Task> object.  Steps are returned in the order in which
-they were registered in.
+they were registered.
 
 Accepts no arguments and returns a list in list context or an arrayref in
 scalar context.
@@ -133,6 +133,32 @@ sub steps {
     my $conf = shift;
 
     return wantarray ? @{ $conf->{steps} } : $conf->{steps};
+}
+
+=item * C<get_list_of_steps()>
+
+Provides a list of the B<names> of registered steps.
+
+C<steps()>, in contrast, provides a list of registered step B<objects>, of
+which the B<step name> is just a small part.  Step names are returned in the
+order in which their corresponding step objects were registered.
+
+Accepts no arguments and returns a list in list context or an arrayref in
+scalar context.
+
+B<Note:> The list of step names returned by C<get_list_of_steps()> will be the
+same as that returned by C<Parrot::Configure::Step::List::get_steps_list()>
+B<provided> that you have not used C<add_step()> or C<add_steps()> to add any
+configuration tasks other than those named in
+C<Parrot::Configure::Step::List::get_steps_list()>.
+
+=cut
+
+sub get_list_of_steps {
+    my $conf = shift;
+    die "list_of_steps not available until steps have been added"
+        unless defined $conf->{list_of_steps};
+    return wantarray ? @{ $conf->{list_of_steps} } : $conf->{list_of_steps};
 }
 
 =item * C<add_step()>
@@ -151,8 +177,8 @@ sub add_step {
 
     push @{ $conf->{steps} },
         Parrot::Configure::Task->new(
-        step   => $step,
-        params => \@params,
+            step   => $step,
+            params => \@params,
         );
 
     return 1;
@@ -186,7 +212,8 @@ L<Parrot::Configure> object is passed as the first argument to each step's
 C<runstep()> method, followed by any parameters that were registered for that
 step.
 
-Accepts no arguments and modifies the data structure within the L<Parrot::Configure> object.
+Accepts no arguments and modifies the data structure within the
+L<Parrot::Configure> object.
 
 =cut
 
@@ -194,21 +221,89 @@ sub runsteps {
     my $conf = shift;
 
     my $n = 0;    # step number
-    my ( $verbose, $verbose_step, $ask ) = $conf->options->get(qw( verbose verbose-step ask ));
+    my ( $verbose, $verbose_step, $fatal, $fatal_step, $ask ) =
+        $conf->options->get(qw( verbose verbose-step fatal fatal-step ask ));
+
+    $conf->{log} = [];
+    my %steps_to_die_for = ();
+    # If the --fatal option is true, then all config steps are mapped into
+    # %steps_to_die_for and there is no consideration of --fatal-step.
+    if ($fatal) {
+        %steps_to_die_for = map {$_, 1} @{ $conf->{list_of_steps} };
+    }
+    # We make certain that argument to --fatal-step is a comma-delimited
+    # string of configuration steps, each of which is a string delimited by
+    # two colons, the first half of which is one of init|inter|auto|gen
+    # (This will be modified to take a step sequence number.)
+    elsif ( defined ( $fatal_step ) ) {
+        %steps_to_die_for = $conf->_handle_fatal_step_option( $fatal_step );
+    }
+    else {
+        # No action needed; this is the default case where no step is fatal
+    }
 
     foreach my $task ( $conf->steps ) {
+        my $red_flag;
+        my $step_name   = $task->step;
+        if ( scalar ( keys ( %steps_to_die_for ) ) ) {
+            if ( $steps_to_die_for{$step_name} ) {
+                $red_flag++;
+            }
+        }
+
         $n++;
-        $conf->_run_this_step(
+        my $rv = $conf->_run_this_step(
             {
-                task         => $task,
-                verbose      => $verbose,
-                verbose_step => $verbose_step,
-                ask          => $ask,
-                n            => $n,
+                task            => $task,
+                verbose         => $verbose,
+                verbose_step    => $verbose_step,
+                ask             => $ask,
+                n               => $n,
             }
         );
+        if ( ! defined $rv ) {
+            if ( $red_flag ) {
+                return;
+            } else {
+                $conf->{log}->[$n] = {
+                    step    => $step_name,
+                };
+            }
+        }
     }
     return 1;
+}
+
+sub _handle_fatal_step_option {
+    my $conf = shift;
+    my ($fatal_step) = @_;
+    my %steps_to_die_for = ();
+    my $named_step_pattern =    qr/(?:init|inter|auto|gen)::[a-z]+/;
+    my $unit_step_pattern = qr/\d+|$named_step_pattern/;
+    if ( $fatal_step =~ /^
+        $unit_step_pattern
+        (, $unit_step_pattern)*
+        $/x
+    ) {
+        my @fatal_steps = split /,/, $fatal_step;
+        for my $s (@fatal_steps) {
+            if ($s =~ /^\d+$/) {
+                die "No configuration step corresponding to $fatal_step"
+                    unless defined $conf->{list_of_steps}->[$s - 1];
+                my $step_name = $conf->{list_of_steps}->[$s - 1];
+                if ($step_name =~ /$named_step_pattern/) {
+                    $steps_to_die_for{$step_name}++;
+                } else {
+                    die "Configuration step corresponding to $s is invalid";
+                }
+            } else {
+                $steps_to_die_for{$s}++;
+            }
+        }
+    } else {
+        die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps or configuration step sequence numbers";
+    }
+    return %steps_to_die_for;
 }
 
 =item * C<run_single_step()>
@@ -225,20 +320,23 @@ sub run_single_step {
     my $conf     = shift;
     my $taskname = shift;
 
-    my ( $verbose, $verbose_step, $ask ) = $conf->options->get(qw( verbose verbose-step ask ));
+    my ( $verbose, $verbose_step, $ask ) =
+        $conf->options->get(qw( verbose verbose-step ask ));
 
-    for my $task ( $conf->steps() ) {
-        if ( $task->{"Parrot::Configure::Task::step"} eq $taskname ) {
-            $conf->_run_this_step(
-                {
-                    task         => $task,
-                    verbose      => $verbose,
-                    verbose_step => $verbose_step,
-                    ask          => $ask,
-                    n            => 1,
-                }
-            );
-        }
+    my $task = ( $conf->steps() )[0];
+    if ( $task->{"Parrot::Configure::Task::step"} eq $taskname ) {
+        $conf->_run_this_step(
+            {
+                task            => $task,
+                verbose         => $verbose,
+                verbose_step    => $verbose_step,
+                ask             => $ask,
+                n               => 1,
+            }
+        );
+    }
+    else {
+        die "Mangled task in run_single_step";
     }
 }
 
@@ -262,40 +360,34 @@ sub _run_this_step {
     }
     my $step = $step_name->new();
 
-    my $description = $step->description() || q{};
-
     # set per step verbosity
     if ( defined $args->{verbose_step} ) {
         if (
-            (
-
-                # by step number
-                ( $args->{verbose_step} =~ /^\d+$/ ) and ( $args->{n} == $args->{verbose_step} )
-            )
-            or (
-
-                # by step name
-                ( ${ $conf->{hash_of_steps} }{ $args->{verbose_step} } )
-                and ( $args->{verbose_step} eq $step_name )
-            )
-            or (
-
-                # by description
-                $description =~ /$args->{verbose_step}/
-            )
+                (
+                    # by step number
+                    ( $args->{verbose_step} =~ /^\d+$/ )
+                        and ( $args->{n} == $args->{verbose_step} )
+                )
+                or (
+                    # by step name
+                    ( ${ $conf->{hash_of_steps} }{ $args->{verbose_step} } )
+                        and ( $args->{verbose_step} eq $step_name )
+                )
+                or (
+                    # by description
+                    $step->description =~ /$args->{verbose_step}/
+                )
             )
         {
             $conf->options->set( verbose => 2 );
         }
     }
 
-    # RT#43673 cc_build uses this verbose setting, why?
-    $conf->data->set( verbose => $args->{verbose} ) if $args->{n} > 2;
-
-    print "\n", $description, '...';
+    print "\n", $step->description, '...';
     print "\n" if $args->{verbose} && $args->{verbose} == 2;
 
-    my $ret;    # step return value
+    my $ret;
+    # When successful, a Parrot configuration step now returns 1
     eval {
         if (@step_params)
         {
@@ -309,41 +401,74 @@ sub _run_this_step {
         carp "\nstep $step_name died during execution: $@\n";
         return;
     }
-
-    # did the step return itself?
-    eval { $ret->can('result'); };
-
-    # if not, report the result and return
-    if ($@) {
-        my $result = $step->result || 'no result returned';
-        carp "\nstep $step_name failed: " . $result;
-        return;
-    }
-
-    my $result = $step->result || 'done';
-
-    print "..." if $args->{verbose} && $args->{verbose} == 2;
-    print "." x ( 71 - length($description) - length($result) );
-    print "$result." unless $step =~ m{^inter} && $args->{ask};
-
-    # reset verbose value for the next step
-    $conf->options->set( verbose => $args->{verbose} );
-
-    if ( $conf->options->get(q{configure_trace}) ) {
-        if ( !defined $conftrace->[0] ) {
-            $conftrace->[0] = [];
-        }
-        push @{ $conftrace->[0] }, $step_name;
-        my $evolved_data = {
-            options => $conf->{options},
-            data    => $conf->{data},
-        };
-        push @{$conftrace}, $evolved_data;
-        {
-            local $Storable::Deparse = 1;
-            nstore( $conftrace, $sto );
+    else {
+        # A Parrot configuration step can run successfully, but if it fails to
+        # achieve its objective it is supposed to return an undefined status.
+        if ( $ret ) {
+            _finish_printing_result(
+                {
+                    step        => $step,
+                    step_name   => $step_name,
+                    args        => $args,
+                    description => $step->description,
+                }
+            );
+            # reset verbose value for the next step
+            $conf->options->set( verbose => $args->{verbose} );
+            if ($conf->options->get(q{configure_trace}) ) {
+                _update_conftrace(
+                    {
+                        conftrace   => $conftrace,
+                        step_name   => $step_name,
+                        conf        => $conf,
+                        sto         => $sto,
+                    }
+                );
+            }
+            return 1;
+        } else {
+            _failure_message( $step, $step_name );
+            return;
         }
     }
+}
+
+sub _failure_message {
+    my ( $step, $step_name ) = @_;
+    my $result = $step->result || 'no result returned';
+    carp "\nstep $step_name failed: " . $result;
+}
+
+
+sub _finish_printing_result {
+    my $argsref = shift;
+    my $result = $argsref->{step}->result || 'done';
+    if ( $argsref->{args}->{verbose} && $argsref->{args}->{verbose} == 2 ) {
+        print "...";
+    }
+    print "." x ( 71 - length($argsref->{description}) - length($result) );
+    unless ( $argsref->{step_name} =~ m{^inter} && $argsref->{args}->{ask} ) {
+        print "$result.";
+    }
+    return 1;
+}
+
+sub _update_conftrace {
+    my $argsref = shift;
+    if (! defined $argsref->{conftrace}->[0]) {
+        $argsref->{conftrace}->[0] = [];
+    }
+    push @{ $argsref->{conftrace}->[0] }, $argsref->{step_name};
+    my $evolved_data = {
+        options => $argsref->{conf}->{options},
+        data    => $argsref->{conf}->{data},
+    };
+    push @{ $argsref->{conftrace} }, $evolved_data;
+    {
+        local $Storable::Deparse = 1;
+        nstore( $argsref->{conftrace}, $argsref->{sto} );
+    }
+    return 1;
 }
 
 =item * C<option_or_data($arg)>

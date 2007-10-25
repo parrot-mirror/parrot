@@ -37,7 +37,7 @@ Currently implemented only for Array type PMCs. Expect Hash support shortly.
 .namespace ['Iter']
 
 .sub '__onload' :load
-    $P0 = getclass 'Undef'
+    $P0 = get_class 'Undef'
     $P1 = subclass $P0, 'Iter'
     addattribute $P1, 'aggregate'
     addattribute $P1, 'exhausted'
@@ -100,14 +100,14 @@ attribute if the iterator is exhausted.
     ## TODO better handling for exhaustion
     push_eh eh_exhausted
     value = agg[index]
-    clear_eh
+    pop_eh
 
     setattribute self, 'value', value
     setattribute self, 'index', index
     goto return
 
   eh_exhausted:
-    get_results '(0,0)', $P0, $S0
+    get_results '0,0', $P0, $S0
   exhausted:
     $P99 = getattribute self, 'exhausted'
     inc $P99

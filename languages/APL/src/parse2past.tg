@@ -6,7 +6,7 @@ transform past (ROOT) :language('PIR') {
     past.'push_new'('PAST::Op', 'pirop'=>'inline', 'inline'=> <<'END_INLINE')
         goto trap_end
       trap:
-        get_results '(0,0)', $P0, $S0
+        get_results '0,0', $P0, $S0
         print $S0
         exit 1
       trap_end:
@@ -25,7 +25,7 @@ END_INLINE
     past.'push'(cpast)
     goto iter_loop
   iter_end:
-    $P0 = past.'push_new'('PAST::Op', 'pirop'=>'inline', 'inline'=> '    clear_eh # %r')
+    $P0 = past.'push_new'('PAST::Op', 'pirop'=>'inline', 'inline'=> '    pop_eh # %r')
     .return (past)
 }
 

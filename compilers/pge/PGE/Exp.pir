@@ -21,39 +21,41 @@ PGE::Exp - base class for expressions
     .local pmc optable
     .local pmc term
 
-    $P0 = getclass "PGE::Match"
-    $P0 = subclass $P0, "PGE::Exp"
-    $P1 = subclass $P0, "PGE::Exp::Literal"
-    $P1 = subclass $P0, "PGE::Exp::Scalar"
-    $P1 = subclass $P0, "PGE::Exp::CCShortcut"
-    $P1 = subclass $P0, 'PGE::Exp::Newline'
-    $P1 = subclass $P0, "PGE::Exp::EnumCharList"
-    $P1 = subclass $P0, "PGE::Exp::Anchor"
-    $P1 = subclass $P0, "PGE::Exp::Concat"
-    $P1 = subclass $P0, "PGE::Exp::Alt"
-    $P1 = subclass $P0, "PGE::Exp::Conj"
-    $P1 = subclass $P0, "PGE::Exp::Group"
-    $P1 = subclass $P1, "PGE::Exp::CGroup"
-    $P1 = subclass $P0, "PGE::Exp::Subrule"
-    $P1 = subclass $P0, "PGE::Exp::Cut"
-    $P1 = subclass $P0, "PGE::Exp::Quant"
-    $P1 = subclass $P0, "PGE::Exp::Modifier"
-    $P1 = subclass $P0, "PGE::Exp::Closure"
-    $P1 = subclass $P0, "PGE::Exp::Action"
+    .local pmc protomaker, matchclass, expclass
+
+    protomaker = new 'Protomaker'
+    matchclass = get_class 'PGE::Match'
+    expclass = protomaker.new_subclass(matchclass, 'PGE::Exp')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Literal')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Scalar')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::CCShortcut')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Newline')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::EnumCharList')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Anchor')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Concat')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Alt')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Conj')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Group')
+    $P1      = protomaker.new_subclass($P1     , 'PGE::Exp::CGroup')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Subrule')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Cut')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Quant')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Modifier')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Closure')
+    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Action')
 .end
 
 
 =over 4
 
-=item C<compile(PMC source, PMC adverbs :slurpy :named)>
+=item C<compile(PMC adverbs :slurpy :named)>
 
-Compile the C<source> expression into PIR or a subroutine,
-according to the C<target> adverb.  
+Compile C<self> into PIR or a subroutine, according to the
+C<target> adverbs.
 
 =cut
 
-.sub 'compile'
-    .param pmc source
+.sub 'compile' :method
     .param pmc adverbs         :slurpy :named
 
     .local string target
@@ -72,7 +74,7 @@ according to the C<target> adverb.
     .local pmc code
     code = new 'CodeString'
     code.'emit'(nsformat, grammar)
-    $P0 = source.'root_pir'(adverbs :flat :named)
+    $P0 = self.'root_pir'(adverbs :flat :named)
     code .= $P0
     if target != 'pir' goto bytecode
     .return (code)
@@ -83,12 +85,12 @@ according to the C<target> adverb.
   make_grammar:
     push_eh end
     $P0 = subclass 'PGE::Grammar', grammar
-    clear_eh
+    pop_eh
   end:
     .return ($P1)
 
   return_exp:
-    .return (source)
+    .return (self)
 .end
 
 
@@ -102,11 +104,18 @@ tree as a PIR code object that can be compiled.
 .sub 'root_pir' :method
     .param pmc adverbs         :slurpy :named
 
-    .local string name
+    .local pmc code
+    code = new 'CodeString'
+
+    .local string name, namecorou
     name = adverbs['name']
-    if name > '' goto adverbs_1
-    name = 'exp'
-  adverbs_1:
+    namecorou = concat name, '_corou'
+    if name > '' goto have_name
+    name = code.'unique'('_regex')
+    namecorou = concat name, '_corou'
+  have_name:
+    name = code.'escape'(name)
+    namecorou = code.'escape'(namecorou)
 
     ##   Perform reduction/optimization on the
     ##   expression tree before generating PIR.
@@ -127,32 +136,29 @@ tree as a PIR code object that can be compiled.
     explabel = 'R'
     exp.pir(expcode, explabel, 'succeed')
 
-    .local pmc code
-    code = new 'CodeString'
     if cutrule goto code_cutrule
     ##   Generate the initial PIR code for a backtracking (uncut) rule.
     .local string returnop
     returnop = '.yield'
-    code.emit(<<"        CODE", name, .INTERPINFO_CURRENT_SUB)
-      .sub '%0'
-          .param pmc mob
+    code.emit(<<"        CODE", name, namecorou, .INTERPINFO_CURRENT_SUB)
+      .sub %0 :method
           .param pmc adverbs   :slurpy :named
-          .const .Sub corou = '%0_corou'
+          .const .Sub corou = %1
+          .local pmc mob
           $P0 = corou
           $P0 = clone $P0
-          mob = $P0(mob, adverbs)
+          mob = $P0(self, adverbs)
           .return (mob)
       .end
-      .sub '%0_corou'
+      .sub %1
           .param pmc mob       :unique_reg
           .param pmc adverbs   :unique_reg
-          .local pmc newfrom   :unique_reg
           .local string target :unique_reg
           .local pmc mfrom, mpos :unique_reg
           .local int cpos, iscont :unique_reg
-          $P0 = getclass 'PGE::Match'
+          $P0 = get_hll_global ['PGE'], 'Match'
           (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(mob, adverbs :flat :named)
-          $P0 = interpinfo %1
+          $P0 = interpinfo %2
           setattribute mob, '&!corou', $P0
         CODE
     goto code_body
@@ -161,15 +167,13 @@ tree as a PIR code object that can be compiled.
     ##   Initial code for a rule that cannot be backtracked into.
     returnop = '.return'
     code.emit(<<"        CODE", name)
-      .sub '%0'
-          .param pmc mob          :unique_reg
+      .sub %0 :method
           .param pmc adverbs      :unique_reg :slurpy :named
-          .local pmc newfrom      :unique_reg
           .local string target    :unique_reg
-          .local pmc mfrom, mpos  :unique_reg
+          .local pmc mob, mfrom, mpos  :unique_reg
           .local int cpos, iscont :unique_reg
-          $P0 = getclass 'PGE::Match'
-          (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(mob, adverbs :flat :named)
+          $P0 = get_hll_global ['PGE'], 'Match'
+          (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(self, adverbs :flat :named)
         CODE
 
   code_body:
@@ -690,8 +694,7 @@ tree as a PIR code object that can be compiled.
     code.emit(<<"        CODE", captgen, captsave, captback, 'E'=>explabel, args :flat :named)
         %L: # capture 
           %0
-          (captob, $S99, $P1) = captscope.'newfrom'(pos)
-          $P1 = pos
+          captob = captscope.'new'(captscope, 'pos'=>pos)
           push gpad, captscope
           push gpad, captob
           %Xcaptscope = captob
@@ -771,8 +774,8 @@ tree as a PIR code object that can be compiled.
     grammar = substr subname, 0, $I0
     code.emit(<<"        CODE", grammar, rname, args :flat :named)
         %L: # grammar subrule %0::%1
-          (captob, $P9, $P9, $P0) = captscope.'newfrom'(pos, '%0')
-          $P0 = pos
+          captob = captscope.'new'(captscope, 'grammar'=>'%0')
+          captob.'to'(pos)
           $P0 = get_hll_global ['%0'], '%1'
         CODE
     goto subrule_match

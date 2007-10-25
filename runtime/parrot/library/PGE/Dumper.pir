@@ -123,7 +123,7 @@ An alternate dump output for a Match object and all of its subcaptures.
     $S0 = $I0
     out .= $S0
     out .= "\n"
-    capt = getattribute self, "PGE::Match\x0@!capt"
+    capt = getattribute self, '@!capt'
     if_null capt, subrules
     spi = 0
     spc = elements capt
@@ -328,7 +328,7 @@ obsoleted in favor of a Data::Dumper method.
     print "CharClass "
     $S0 = self["charmatch"]
     print $S0
-    print " <<" 
+    print " <<"
     $S0 = self["charclass"]
     print $S0
     print ">> "
@@ -437,7 +437,7 @@ obsoleted in favor of a Data::Dumper method.
     print " cscope"
   dump_3:
     print "\n"
-    exp = self["exp1"] 
+    exp = self["exp1"]
     indent += 4
     exp."dump"(indent)
     .return ()
@@ -481,11 +481,11 @@ This method enables Data::Dumper to work on PGE::OPTable objects.
     goto dump_hash
   dump_rest:
     print "\n"
-    $P0 = getattribute self, "PGE::OPTable\x0%!key"
+    $P0 = getattribute self, '%!key'
     print subindent
     dumper."dump"(label, $P0)
     print "\n"
-    $P0 = getattribute self, "PGE::OPTable\x0%!klen"
+    $P0 = getattribute self, '%!klen'
     print subindent
     dumper."dump"(label, $P0)
     print indent
@@ -494,6 +494,8 @@ This method enables Data::Dumper to work on PGE::OPTable objects.
 .end
 
 =back
+
+=cut
 
 # Local Variables:
 #   mode: pir

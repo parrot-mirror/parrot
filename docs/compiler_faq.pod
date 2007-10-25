@@ -396,14 +396,22 @@ property of the class PMC:
 
 =head2 How do I instantiate a class?
 
-You can do so either with an integer type identifier:
-
-    $I0 = find_type 'Dog'
-    new $P0, $I0    # creates a Dog object and stores it in register $P0
-
-or with the class name:
+You can do so either with the class name:
 
     new $P0, 'Dog'
+
+or with the class object:
+
+    $P1 = get_class 'Dog'	# find the 'Dog' class
+    unless null $P1 goto have_dog_class
+    printerr "Oops; can't find the 'Dog' class.\n"
+    .return ()
+  have_dog_class:
+    new $P0, $P1    # creates a Dog object and stores it in register $P0
+
+The chief difference is that using a string constant will produce the
+specific error "Class 'Dog' not found" if that happens to be the case;
+the other code has to check explicitly.
 
 During the C<new> opcode the constructor is called.
 
@@ -453,7 +461,7 @@ Use C<push_eh> to push an exception handler onto the stack.
     push_eh handler
       $P0 = new 'Exception'       # or any other code ...
       throw $P0                   # ... that might throw
-    clear_eh
+    pop_eh
     exit 0
 
 An exception handler is called with two arguments: the exception and the
@@ -486,7 +494,7 @@ Rethrow the exception if it has a severity of C<EXCEPT_EXIT>.
     $P0 = new 'Exception'
     $P0['_message'] = 'something happened'
     throw $P0
-    clear_eh
+    pop_eh
     exit 0
 
   handler:

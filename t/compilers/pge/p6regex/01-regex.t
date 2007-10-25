@@ -17,7 +17,7 @@ columns (separated by one *or more* tabs):
 
 =item pattern
 
-The Perl6 regex to test.
+The Perl 6 regex to test.
 
 =item target
 
@@ -119,7 +119,7 @@ Description of the test.
 
     # how many tests to run?
     # XXX: this should be summed automatically from test_files data
-    #      until then, it's set to no plan
+    #      until then, it's set to 542 manually...
     test.'plan'(TESTS)
 
 
@@ -157,7 +157,7 @@ Description of the test.
   parse_data:
     push_eh eh_bad_line
     ( pattern, target, result, description ) = parse_data( test_line )
-    clear_eh
+    pop_eh
 
     # prepend test filename and line number to description
     description = 'build_test_desc'( description, test_name, local_test_number )
@@ -181,7 +181,7 @@ Description of the test.
   not_skip:
     push_eh thrown
     match = 'match_p6regex'( pattern, target )
-    clear_eh
+    pop_eh
 
     if match goto matched
 
@@ -241,7 +241,7 @@ Description of the test.
   thrown:
     .sym pmc exception
     .sym string message
-    get_results '(0,0)', exception, message
+    get_results '0,0', exception, message
     # remove /'s
     $S0 = substr result, 0, 1
     if $S0 != "/" goto bad_error

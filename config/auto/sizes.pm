@@ -15,15 +15,20 @@ package auto::sizes;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
 
-$description = 'Determining some sizes';
 
-@args = qw(miniparrot);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining some sizes};
+    $data{args}        = [ qw( miniparrot ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -50,7 +55,7 @@ sub runstep {
             float8_t         => 'double',
         );
         $self->set_result('using miniparrot defaults');
-        return $self;
+        return 1;
     }
 
     cc_gen('config/auto/sizes/test_c.in');
@@ -198,7 +203,7 @@ END
 
     cc_clean();
 
-    return $self;
+    return 1;
 }
 
 1;

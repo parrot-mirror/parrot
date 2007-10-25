@@ -16,12 +16,19 @@ package gen::languages;
 use strict;
 use warnings;
 
+
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':gen';
 
-our $description = 'Configuring languages';
-our @args        = qw(languages);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Configuring languages};
+    $data{args}        = [ qw( languages ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -46,7 +53,7 @@ sub runstep {
         expand_gmake_syntax                      => 1,
     );
 
-    return $self;
+    return 1;
 }
 
 1;

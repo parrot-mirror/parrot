@@ -170,6 +170,7 @@ ParrotIOLayer pio_win32_layer = {
     0, 0
 };
 
+#  define PIO_TRACE 0
 
 /*
 
@@ -778,7 +779,7 @@ AGAIN:
         else {
             _close((SOCKET)io->fd);
         }
-        /* The charset should probably be 'binary', but right now httpd.imc
+        /* The charset should probably be 'binary', but right now httpd.pir
          * only works with 'ascii'
          */
         *s = string_make(interp, buf, bytesread, "ascii", 0);

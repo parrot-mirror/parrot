@@ -15,15 +15,20 @@ package auto::gcc;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
 
-$description = 'Determining if your C compiler is actually gcc';
 
-@args = qw(miniparrot verbose);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining if your C compiler is actually gcc};
+    $data{args}        = [ qw( miniparrot verbose ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -48,7 +53,7 @@ sub runstep {
     # which should have been caught by the 'die' above.
     unless ( exists $gnuc{__GNUC__} ) {
         $conf->data->set( gccversion => undef );
-        return $self;
+        return 1;
     }
 
     my $major = $gnuc{__GNUC__};
@@ -59,7 +64,7 @@ sub runstep {
         print " (no) " if $verbose;
         $self->set_result('no');
         $conf->data->set( gccversion => undef );
-        return $self;
+        return 1;
     }
     if ( $major =~ tr/0-9//c ) {
         undef $major;    # Don't use it
@@ -378,7 +383,7 @@ sub runstep {
             gccversion => undef
         );
 
-        return $self;
+        return 1;
     }
 
     $conf->data->set(
@@ -390,7 +395,7 @@ sub runstep {
     $conf->data->set( HAS_aligned_funcptr => 0 )
         if $^O eq 'hpux';
 
-    return $self;
+    return 1;
 }
 
 1;

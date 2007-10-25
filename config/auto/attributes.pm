@@ -16,16 +16,21 @@ package auto::attributes;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
 use Parrot::BuildUtil;
 
-$description = 'Detecting compiler attributes (-DHASATTRIBUTE_xxx)';
 
-@args = qw( cc verbose define );
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Detecting compiler attributes (-DHASATTRIBUTE_xxx)};
+    $data{args}        = [ qw( cc verbose define ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 our @potential_attributes = qw(
     HASATTRIBUTE_CONST
@@ -46,12 +51,12 @@ sub runstep {
     my ( $self, $conf ) = @_;
 
     $verbose = $conf->options->get('verbose');
-    print $/ if $verbose;
+    print "\n" if $verbose;
 
     for my $maybe_attr (@potential_attributes) {
         $self->try_attr( $conf, $maybe_attr );
     }
-    return $self;
+    return 1;
 }
 
 sub try_attr {
@@ -59,7 +64,7 @@ sub try_attr {
 
     my $output_file = 'test.cco';
 
-    $verbose and print "trying attribute '$attr'$/";
+    $verbose and print "trying attribute '$attr'\n";
 
     my $cc = $conf->option_or_data('cc');
     cc_gen('config/auto/attributes/test_c.in');
@@ -75,24 +80,24 @@ sub try_attr {
     my $tryflags = "$ccflags -D$attr $disable_warnings";
 
     my $command_line = Parrot::Configure::Step::_build_compile_command( $cc, $tryflags );
-    $verbose and print "  ", $command_line, $/;
+    $verbose and print "  ", $command_line, "\n";
 
     # Don't use cc_build, because failure is expected.
     my $exit_code =
         Parrot::Configure::Step::_run_command( $command_line, $output_file, $output_file );
-    $verbose and print "  exit code: $exit_code$/";
+    $verbose and print "  exit code: $exit_code\n";
 
     $conf->data->set( $attr => !$exit_code | 0 );
 
     return if $exit_code;
 
     my $output = Parrot::BuildUtil::slurp_file($output_file);
-    $verbose and print "  output: $output$/";
+    $verbose and print "  output: $output\n";
 
     if ( $output !~ /error|warning/i ) {
         $conf->data->set( ccflags => $tryflags );
         my $ccflags = $conf->data->get("ccflags");
-        $verbose and print "  ccflags: $ccflags$/";
+        $verbose and print "  ccflags: $ccflags\n";
     }
 
     return;

@@ -16,12 +16,19 @@ package gen::core_pmcs;
 use strict;
 use warnings;
 
+
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':gen';
 
-our $description = 'Generating core pmc list';
-our @args        = ();
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Generating core pmc list};
+    $data{args}        = [ qw(  ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -30,7 +37,7 @@ sub runstep {
     $self->generate_c($conf);
     $self->generate_pm($conf);
 
-    return $self;
+    return 1;
 }
 
 sub generate_h {
@@ -111,8 +118,13 @@ END_C
 
 /* This isn't strictly true, but the headerizer should not bother */
 
-void Parrot_register_core_pmcs(PARROT_INTERP, PMC* registry);
-extern void Parrot_initialize_core_pmcs(PARROT_INTERP);
+void Parrot_register_core_pmcs(PARROT_INTERP, NOTNULL(PMC *registry))
+    __attribute__nonnull__(1)
+    __attribute__nonnull__(2);
+
+extern void Parrot_initialize_core_pmcs(PARROT_INTERP)
+    __attribute__nonnull__(1);
+
 void Parrot_initialize_core_pmcs(PARROT_INTERP)
 {
     int pass;
@@ -133,14 +145,14 @@ END_C
     }
 }
 
-static void register_pmc(PARROT_INTERP, PMC* registry, int pmc_id)
+static void register_pmc(PARROT_INTERP, PMC *registry, int pmc_id)
 {
-    STRING* const key = interp->vtables[pmc_id]->whoami;
+    STRING * const key = interp->vtables[pmc_id]->whoami;
     VTABLE_set_integer_keyed_str(interp, registry, key, pmc_id);
 }
 
 void
-Parrot_register_core_pmcs(PARROT_INTERP, PMC* registry)
+Parrot_register_core_pmcs(PARROT_INTERP, NOTNULL(PMC *registry))
 {
 END_C
 

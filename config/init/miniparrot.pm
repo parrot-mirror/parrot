@@ -20,22 +20,27 @@ package init::miniparrot;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step;
 
-$description = 'Tweaking settings for miniparrot';
 
-@args = qw(miniparrot);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Tweaking settings for miniparrot};
+    $data{args}        = [ qw( miniparrot ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
 
     unless ( $conf->options->get('miniparrot') ) {
         $self->set_result('skipped');
-        return $self;
+        return 1;
     }
 
     $conf->data->set(
@@ -80,7 +85,7 @@ sub runstep {
         $conf->data->set( "i_$_" => 1 );
     }
 
-    return $self;
+    return 1;
 }
 
 1;

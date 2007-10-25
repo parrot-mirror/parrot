@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 037-run_single_step.t
+# 038-run_single_step.t
 
 use strict;
 use warnings;
@@ -37,11 +37,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-037-run_single_step.t - test C<run_single_step()> during configuration
+038-run_single_step.t - test C<run_single_step()> during configuration
 
 =head1 SYNOPSIS
 
-    % prove t/configure/037-run_single_step.t
+    % prove t/configure/038-run_single_step.t
 
 =head1 DESCRIPTION
 

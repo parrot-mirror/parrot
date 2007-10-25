@@ -15,15 +15,20 @@ package auto::memalign;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
 
-$description = 'Determining if your C library supports memalign';
 
-@args = qw(miniparrot verbose);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining if your C library supports memalign};
+    $data{args}        = [ qw( miniparrot verbose ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -33,14 +38,14 @@ sub runstep {
     if ( $conf->options->get('miniparrot') ) {
         $conf->data->set( memalign => '' );
         $self->set_result('skipped');
-        return $self;
+        return 1;
     }
 
     if ( defined $conf->data->get('memalign') ) {
 
         # already set; leave it alone
         $self->set_result('already set');
-        return $self;
+        return 1;
     }
     my $test = 0;
 
@@ -84,7 +89,7 @@ sub runstep {
     print( $test ? " (Yep:$f) " : " (no) " ) if $verbose;
     $self->set_result( $test ? 'yes' : 'no' );
 
-    return $self;
+    return 1;
 }
 
 1;

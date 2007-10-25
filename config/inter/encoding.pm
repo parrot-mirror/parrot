@@ -15,7 +15,6 @@ package inter::encoding;
 
 use strict;
 use warnings;
-use vars qw($description @args);
 
 use base qw(Parrot::Configure::Step::Base);
 
@@ -23,31 +22,39 @@ use File::Basename qw/basename/;
 
 use Parrot::Configure::Step ':inter';
 
-$description = 'Determining what encoding files should be compiled in';
 
-@args = qw(ask encoding);
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining what encoding files should be compiled in};
+    $data{args}        = [ qw( ask encoding ) ];
+    $data{result}      = q{};
+    return \%data;
+}
+
+my @encodings_defaults =
+    defined( $ENV{TEST_ENCODING} )
+    ? $ENV{TEST_ENCODING}
+    : sort map { basename($_) } glob "./src/encodings/*.c";
 
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my @encoding = (
-        sort
-            map { basename($_) } glob "./src/encodings/*.c"
-    );
+    my @encodings = @encodings_defaults;
 
-    my $encoding_list = $conf->options->get('encoding')
-        || join( ' ', grep { defined $_ } @encoding );
+    my $encoding_list = join( ' ', grep { defined $_ } @encodings );
 
     if ( $conf->options->get('ask') ) {
         print <<"END";
 
 
 The following encodings are available:
-  @encoding
+  @encodings
 END
-        {
-            $encoding_list = prompt( 'Which encodings would you like?', $encoding_list );
-        }
+        $encoding_list = prompt(
+            'Which encodings would you like?',
+            $encoding_list
+        );
     }
 
     # names of class files for src/pmc/Makefile
@@ -78,7 +85,7 @@ END
         TEMP_encoding_build => $TEMP_encoding_build,
     );
 
-    return $self;
+    return 1;
 }
 
 1;

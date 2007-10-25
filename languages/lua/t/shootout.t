@@ -23,8 +23,9 @@ use lib "$FindBin::Bin";
 
 use Parrot::Test tests => 18;
 use Test::More;
+use Parrot::Test::Lua;
 
-my $test_prog = $ENV{PARROT_LUA_TEST_PROG} || q{};
+my $test_prog = Parrot::Test::Lua::get_test_prog();
 my $code;
 my $out;
 my $in;
@@ -35,11 +36,11 @@ my @dir = ( 'lua', 't', 'shootout' );
 #       Hashtable update and k-nucleotide strings
 #
 
-TODO:
+SKIP:
 {
-    local $TODO = 'broken';
+    skip('PANIC: Out of mem!', 1) unless ($test_prog eq 'lua');
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'knucleotide.lua-2.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'knucleotide_lua-2.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'knucleotide-output.txt' ));
 $in = File::Spec->catfile( 'languages', @dir, 'knucleotide-input.txt' );
 language_output_is( 'lua', $code, $out, 'k-nucleotide', params => "< $in" );
@@ -50,7 +51,7 @@ language_output_is( 'lua', $code, $out, 'k-nucleotide', params => "< $in" );
 #       Naive iterative summation: power sin cos
 #
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'partialsums.lua-3.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'partialsums_lua-3.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'partialsums-output.txt' ));
 language_output_is( 'lua', $code, $out, 'partial-sums', params => '25000');
 
@@ -63,7 +64,7 @@ TODO:
 {
     local $TODO = 'broken';
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'fasta.lua-2.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'fasta_lua-2.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'fasta-output.txt' ));
 language_output_is( 'lua', $code, $out, 'fasta', params => '1000' );
 }
@@ -77,7 +78,7 @@ TODO:
 {
     local $TODO = 'pb with loadstring ?';
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'pidigits.lua-2.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'pidigits_lua-2.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'pidigits-output.txt' ));
 language_output_is( 'lua', $code, $out, 'pidigits', params => '27' );
 }
@@ -87,7 +88,7 @@ language_output_is( 'lua', $code, $out, 'pidigits', params => '27' );
 #       Indexed-access to boolean-sequence
 #
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'nsieve.lua-3.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'nsieve_lua-3.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'nsieve-output.txt' ));
 language_output_is( 'lua', $code, $out, 'nsieve' );
 
@@ -100,7 +101,7 @@ TODO:
 {
     local $TODO = 'pb with string.gsub ?';
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'regexdna.lua-3.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'regexdna_lua-3.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'regexdna-output.txt' ));
 $in = File::Spec->catfile( 'languages', @dir, 'regexdna-input.txt' );
 language_output_is( 'lua', $code, $out, 'regex-dna', params => "< $in" );
@@ -111,9 +112,14 @@ language_output_is( 'lua', $code, $out, 'regex-dna', params => "< $in" );
 #       Indexed-access to bit-values
 #
 
+SKIP:
+{
+    skip('PANIC: Out of mem!', 1) unless ($test_prog eq 'lua');
+
 $code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'nsievebits.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'nsievebits-output.txt' ));
 language_output_is( 'lua', $code, $out, 'nsieve-bits' );
+}
 
 #
 #   recursive
@@ -134,7 +140,7 @@ language_output_is( 'lua', $code, $out, 'recursive', params => '3' );
 #       Generate Mandelbrot set portable bitmap file
 #
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'mandelbrot.lua-2.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'mandelbrot_lua-2.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'mandelbrot-output.txt' ));
 language_output_is( 'lua', $code, $out, 'mandelbrot', params => '200' );
 
@@ -143,7 +149,7 @@ language_output_is( 'lua', $code, $out, 'mandelbrot', params => '200' );
 #       Double-precision N-body simulation
 #
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'nbody.lua-2.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'nbody_lua-2.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'nbody-output.txt' ));
 language_output_is( 'lua', $code, $out, 'n-body', params => '1000' );
 
@@ -156,7 +162,7 @@ SKIP:
 {
     skip('maximum recursion depth exceeded', 1) unless ($test_prog eq 'lua');
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'message.lua-2.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'message_lua-2.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'message-output.txt' ));
 language_output_is( 'lua', $code, $out, 'cheap-concurrency', params => '10' );
 }
@@ -166,9 +172,14 @@ language_output_is( 'lua', $code, $out, 'cheap-concurrency', params => '10' );
 #       Eigenvalue using the power method
 #
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'spectralnorm.lua-3.lua' ));
+SKIP:
+{
+    skip('PANIC: Out of mem!', 1) unless ($test_prog eq 'lua');
+
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'spectralnorm_lua-3.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'spectralnorm-output.txt' ));
 language_output_is( 'lua', $code, $out, 'spectral-norm', params => '100' );
+}
 
 #
 #   chameneos
@@ -188,7 +199,7 @@ SKIP:
 {
     skip('maximum recursion depth exceeded', 1) unless ($test_prog eq 'lua');
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'revcomp.lua-3.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'revcomp_lua-3.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'revcomp-output.txt' ));
 $in = File::Spec->catfile( 'languages', @dir, 'revcomp-input.txt' );
 language_output_is( 'lua', $code, $out, 'reverse-complement', params => "< $in" );
@@ -203,7 +214,7 @@ SKIP:
 {
     skip('low memory', 1) unless ($test_prog eq 'lua');
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'binarytrees.lua-3.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'binarytrees_lua-3.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'binarytrees-output.txt' ));
 language_output_is( 'lua', $code, $out, 'binary-trees', params => '10' );
 }
@@ -213,7 +224,7 @@ language_output_is( 'lua', $code, $out, 'binary-trees', params => '10' );
 #       Indexed-access to tiny integer-sequence
 #
 
-$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'fannkuch.lua-3.lua' ));
+$code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'fannkuch_lua-3.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'fannkuch-output.txt' ));
 language_output_is( 'lua', $code, $out, 'fannkuch', params => '7' );
 

@@ -94,7 +94,7 @@ pir_output_is( <<'CODE', <<'OUT', 'get_class_p_s' );
 
     push_eh nok_2
     $P2 = get_class 'Monkey'
-    clear_eh
+    pop_eh
     goto ok_2
 nok_2:
     print "not "
@@ -124,7 +124,7 @@ pir_output_is( <<'CODE', <<'OUT', 'get_class_p_p' );
 
     push_eh nok_2
     $P2 = get_class [ 'Monkey' ]
-    clear_eh
+    pop_eh
     goto ok_2
 nok_2:
     print "not "
@@ -138,7 +138,7 @@ ok_2:
     push_eh nok_4
     $P3 = get_namespace [ 'Monkey' ]
     $P2 = get_class $P3
-    clear_eh
+    pop_eh
     goto ok_4
 nok_4:
     print "not "
@@ -186,7 +186,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'new_p_s works with string register arg' );
 .sub main :main
-#    $P0 = newpdd15class "Foo"
+#    $P0 = newclass "Foo"
     $P0 = newclass "Foo"
     addattribute $P0, 'foo'
 
@@ -208,7 +208,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'can_i_p_s' );
 .sub main :main
-    $P0 = newpdd15class "Foo"
+    $P0 = newclass "Foo"
     $P1 = new $P0
 
     can $I0, $P1, "bar"

@@ -21,16 +21,21 @@ package auto::warnings;
 
 use strict;
 use warnings;
-use vars qw($description @args);
+
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step ':auto';
 use Parrot::BuildUtil;
 
-$description = 'Detecting supported compiler warnings (-Wxxx)';
-
-@args = qw( cc verbose define );
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Detecting supported compiler warnings (-Wxxx)};
+    $data{args}        = [ qw( cc verbose define  ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 our @potential_warnings = qw(
     -falign-functions=16
@@ -82,7 +87,6 @@ our @potential_warnings = qw(
     -Wwrite-strings
     -Wnot-a-real-warning
 );
-
 our $verbose;
 
 sub runstep {
@@ -94,7 +98,7 @@ sub runstep {
     for my $maybe_warning (@potential_warnings) {
         $self->try_warning( $conf, $maybe_warning );
     }
-    return $self;
+    return 1;
 }
 
 =item C<try_warning>
@@ -137,13 +141,15 @@ sub try_warning {
     my $output = Parrot::BuildUtil::slurp_file($output_file);
     $verbose and print "  output: $output$/";
 
-    if ( $output !~ /error|warning/i ) {
+    if ( $output !~ /error|warning|not supported/i ) {
         $conf->data->set( ccflags => $tryflags );
         my $ccflags = $conf->data->get("ccflags");
         $verbose and print "  ccflags: $ccflags$/";
+        return 1;
     }
-
-    return;
+    else {
+        return 0;
+    }
 }
 
 =back

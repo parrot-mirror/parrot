@@ -9,6 +9,7 @@ Command-line:
     parrot Perl6Grammar.pir [options] file ...
 
 From PIR:
+
     .local string grammar_source
     .local pmc pgc
 
@@ -25,7 +26,7 @@ From PIR:
 This program takes a set of parser rules (i.e., a parser grammar)
 specified in the input C<FILE>s, and compiles it into the PIR code
 needed to execute the grammar.  This PIR code is then suitable for
-inclusion or compilation into other larger programs. 
+inclusion or compilation into other larger programs.
 
 =head2 Options
 
@@ -76,9 +77,6 @@ the output to the correct output file.
     .local pmc p6regex
     p6regex = compreg 'PGE::Perl6Regex'
 
-    $P0 = get_hll_global ['PGE::Perl6Regex'], 'regex'
-    set_hll_global ['PGE::Perl6Grammar'], 'regex', $P0
-
     $S0 = "<?ident> [ '::' <?ident> ]*"
     p6regex($S0, 'grammar'=>'PGE::Perl6Grammar', 'name'=>'name')
 
@@ -108,7 +106,7 @@ the output to the correct output file.
 
     $S0 = <<'      STMT_PARSE'
         $<cmd>:=(grammar) <name> [ 'is' $<inherit>:=<name> ]? ';'?
-      | $<cmd>:=(regex|token|rule) 
+      | $<cmd>:=(regex|token|rule)
           $<name>:=<arg>
           $<optable>:=(is optable)?
           [ \{<regex>\} | <?PGE::Util::die: unable to parse regex> ]
@@ -120,6 +118,10 @@ the output to the correct output file.
       STMT_PARSE
     $P0 = p6regex($S0, 'grammar'=>'PGE::Perl6Grammar', 'name'=>'statement', 'w'=>1)
 
+    ##  Add the PGE::Perl6Regex's regex method to PGE::Perl6Grammar
+    $P0 = get_hll_global ['PGE::Perl6Regex'], 'regex'
+    $P1 = get_class ['PGE::Perl6Grammar']
+    $P1.'add_method'('regex', $P0)
 
     ##   create the PGE::Perl6Grammar compiler object
     .local pmc pgc
@@ -144,9 +146,9 @@ the output to the correct output file.
     nstable[''] = $P0
 
     # get our initial match object
-    .local pmc match 
-    $P0 = get_hll_global ['PGE::Match'], 'newfrom'
-    match = $P0(source, 0, 'PGE::Perl6Grammar')
+    .local pmc match
+    $P0 = get_hll_global ['PGE'], 'Match'
+    match = $P0.'new'(source, 'grammar'=>'PGE::Perl6Grammar')
 
     .local pmc stmtrule
     stmtrule = get_hll_global ['PGE::Perl6Grammar'], 'statement'
@@ -182,7 +184,7 @@ the output to the correct output file.
           ## namespace %0
           push_eh %2
           $P0 = subclass '%1', '%0'
-          clear_eh
+          pop_eh
         %2:
         CODE
   ns_optable:

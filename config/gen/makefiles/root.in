@@ -283,6 +283,7 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/PGE/Perl6Grammar.pbc \
     $(LIBRARY_DIR)/PGE/Text.pbc \
     $(LIBRARY_DIR)/PGE/Util.pbc \
+    $(LIBRARY_DIR)/Protoobject.pbc \
     $(LIBRARY_DIR)/Stream/Base.pbc \
     $(LIBRARY_DIR)/Stream/Combiner.pbc \
     $(LIBRARY_DIR)/Stream/Coroutine.pbc \
@@ -376,6 +377,8 @@ IO_O_FILES = \
 INTERP_O_FILES = \
     $(SRC_DIR)/string$(O) \
     \
+    $(OPS_DIR)/core_ops$(O) \
+    $(OPS_DIR)/core_ops_switch$(O) \
     $(SRC_DIR)/builtin$(O) \
     $(SRC_DIR)/byteorder$(O) \
     $(SRC_DIR)/charset$(O) \
@@ -416,6 +419,7 @@ INTERP_O_FILES = \
     $(SRC_DIR)/misc$(O) \
     $(SRC_DIR)/mmd$(O) \
     $(SRC_DIR)/nci$(O) \
+    $(SRC_DIR)/oo$(O) \
     $(SRC_DIR)/objects$(O) \
     $(SRC_DIR)/packfile$(O) \
     $(SRC_DIR)/packout$(O) \
@@ -440,8 +444,6 @@ INTERP_O_FILES = \
     $(SRC_DIR)/utils$(O) \
     $(SRC_DIR)/vtables$(O) \
     $(SRC_DIR)/warnings$(O) \
-    $(OPS_DIR)/core_ops$(O) \
-    $(OPS_DIR)/core_ops_switch$(O) \
     \
     $(PF_DIR)/pf_items$(O) \
     \
@@ -579,6 +581,7 @@ STR_FILES = \
     $(SRC_DIR)/library.str \
     $(SRC_DIR)/mmd.str \
     $(SRC_DIR)/pmc.str \
+    $(SRC_DIR)/oo.str \
     $(SRC_DIR)/objects.str \
     $(SRC_DIR)/spf_render.str \
     $(SRC_DIR)/spf_vtable.str \
@@ -634,7 +637,6 @@ help :
 	@echo "                     there are currently issues with the Parrot"
 	@echo "                     install system, this make target is used"
 	@echo "                     to go ahead with the install anyway."
-
 	@echo ""
 	@echo "Documentation:"
 	@echo "  help:              Print this help message."
@@ -704,6 +706,7 @@ help :
 	@echo "  splint:            code checking with splint."
 	@echo "  headerizer:        recreate header files for appropriate"
 	@echo "                     C-source files"
+	@echo "  cover:             run test suite coverage analysis."
 	@echo ""
 	@echo "Release:"
 	@echo "  release:           create a tarball."
@@ -1979,11 +1982,7 @@ cover-distro: cover.dummy
 	-@make@ distro_tests
 
 cover-clean:
-	for dir in $(COVER_DIRS); \
-	do \
-		pwd=$$PWD; cd $$dir; $(RM_F) *.gcda *.gcno *.gcov; cd $$pwd; \
-	done
-
+	$(PERL) -MCwd -e 'for my $$dir qw ( $(COVER_DIRS) ) {my $$cwd = cwd(); chdir $$dir; print "Deleting gcov-generated files in $$dir\n"; unlink glob( "*.gcda *.gcno *.gcov" ); chdir $$cwd;}'
 
 ###############################################################################
 #
@@ -2074,7 +2073,7 @@ $(LIBNCI_TEST_SO): $(SRC_DIR)/nci_test$(O)
 
 tags: tags.dummy
 	$(RM_F) tags
-	ctags \
+	@ctags@ \
 		--links=no --totals \
 		-R --exclude=blib --exclude=.svn  \
 		--exclude=res_lea.c \

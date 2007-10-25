@@ -14,6 +14,7 @@ running compilers from a command line.
 .namespace
 
 .sub '__onload' :load :init
+    load_bytecode 'Protoobject.pbc'
     load_bytecode 'Parrot/Exception.pbc'
     $P0 = newclass [ 'PCT::HLLCompiler' ]
     addattribute $P0, '$parsegrammar'
@@ -26,6 +27,9 @@ running compilers from a command line.
     addattribute $P0, '$commandline_banner'
     # the commandline_prompt is the prompt to show for input
     addattribute $P0, '$commandline_prompt'
+
+    $P1 = new 'Protomaker'
+    $P1.'new_proto'($P0)
 .end
 
 =head2 Methods
@@ -283,7 +287,7 @@ to any options and return the resulting parse tree.
     unless null top goto have_top
     top = get_hll_global parsegrammar_name, 'apply'    # FIXME: deprecated
     unless null top goto have_top                      # FIXME: deprecated
-    $P0 = getclass 'Exception'
+    $P0 = get_class 'Exception'
     $P1 = $P0.'new'('Cannot find rule TOP in ', parsegrammar_name)
     throw $P1
   have_top:
@@ -427,7 +431,7 @@ specifies the encoding to use for the input (e.g., "utf8").
     unless code goto interactive_loop
     push_eh interactive_trap
     $P0 = self.'eval'(code, adverbs :flat :named)
-    clear_eh
+    pop_eh
     if null $P0 goto interactive_loop
     unless target goto interactive_loop
     if target == 'pir' goto target_pir
@@ -436,7 +440,7 @@ specifies the encoding to use for the input (e.g., "utf8").
   target_pir:
     goto interactive_loop
   interactive_trap:
-    get_results '(0,0)', $P0, $S0
+    get_results '0,0', $P0, $S0
     $S1 = substr $S0, -1, 1
     $I0 = is_cclass .CCLASS_NEWLINE, $S1, 0
     if $I0 goto have_newline
@@ -630,8 +634,7 @@ resulting ost.
     .local pmc ostgrammar, ostbuilder
     ostgrammar_name = self.'ostgrammar'()
     unless ostgrammar_name goto default_ostgrammar
-    $I0 = find_type ostgrammar_name
-    ostgrammar = new $I0
+    ostgrammar = new ostgrammar_name
     ostbuilder = ostgrammar.'apply'(source)
     .return ostbuilder.'get'('post')
 

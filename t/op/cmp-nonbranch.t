@@ -190,9 +190,8 @@ Tests all non-branching conditional operators.
   test_it:
     res = 0
     push_eh fubar
-    $I1 = find_type $S0
-    new $P0, $I1
-    clear_eh
+    $P0 = new $S0
+    pop_eh
     goto test
 
   fubar:

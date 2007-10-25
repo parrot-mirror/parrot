@@ -17,16 +17,19 @@ package inter::lex;
 use strict;
 use warnings;
 
-use vars qw( $description @args $prompt $util );
 
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step qw( :inter capture_output check_progs );
 
-$util        = 'lex';
-$description = "Determining whether $util is installed";
-$prompt      = "Do you have a lexical analyzer generator like flex or lex?";
-@args        = qw( lex ask maintainer );
+sub _init {
+    my $self = shift;
+    my %data;
+    $data{description} = q{Determining whether lex is installed};
+    $data{args}        = [ qw( lex ask maintainer ) ];
+    $data{result}      = q{};
+    return \%data;
+}
 
 my @lex_defaults =
     defined( $ENV{TEST_LEX} )
@@ -37,6 +40,8 @@ my $default_required = '2.5.33';
 
 sub runstep {
     my ( $self, $conf ) = @_;
+    my $util    = 'lex';
+    my $prompt  = "Do you have a lexical analyzer generator like flex or lex?";
 
     my $verbose = $conf->options->get('verbose');
 
@@ -46,7 +51,7 @@ sub runstep {
     unless ( $conf->options->get('maintainer') ) {
         $conf->data->set( $util => 'echo' );
         $self->set_result('skipped');
-        return $self;
+        return 1;
     }
 
     # precedence of sources for the program:
@@ -61,7 +66,7 @@ sub runstep {
     if ( defined $prog ) {
         $conf->data->set( $util => $prog );
         $self->set_result('user defined');
-        return $self;
+        return 1;
     }
     else {
         $prog = check_progs( [@lex_defaults], $verbose );
@@ -125,7 +130,7 @@ sub runstep {
                 $conf->data->set( flex_version => $prog_version );
                 $self->set_result("flex $prog_version");
                 $conf->data->set( $util => $prog );
-                return $self;
+                return 1;
             }
             else {
                 $self->set_result('lex program does not exist or does not understand --version');
