@@ -32,34 +32,37 @@ sub _init {
 
 sub runstep {
     my ( $self, $conf ) = @_;
+    my $gnucref = _probe_for_gcc();
+    my $rv = $self->_evaluate_gcc($conf, $gnucref);
+    return $rv;
+}
 
-    my $verbose = $conf->options->get('verbose');
-    my $maint   = $conf->options->get('maintainer');
-
-    my %gnuc;
-
+sub _probe_for_gcc {
     cc_gen("config/auto/gcc/test_c.in");
     cc_build();
-    %gnuc = eval cc_run() or die "Can't run the test program: $!";
+    my %gnuc = eval cc_run() or die "Can't run the test program: $!";
     cc_clean();
+    return \%gnuc;
+}
 
-    my ( $gccversion, $warns, $ccwarn );
-    $ccwarn = $conf->data->get('ccwarn');
+sub _evaluate_gcc {
+    my ($self, $conf, $gnucref) = @_;
 
     # Set gccversion to undef.  This will also trigger any hints-file
     # callbacks that depend on knowing whether or not we're using gcc.
 
     # This key should always exist unless the program couldn't be run,
     # which should have been caught by the 'die' above.
-    unless ( exists $gnuc{__GNUC__} ) {
+    unless ( exists $gnucref->{__GNUC__} ) {
         $conf->data->set( gccversion => undef );
         return 1;
     }
 
-    my $major = $gnuc{__GNUC__};
-    my $minor = $gnuc{__GNUC_MINOR__};
-    my $intel = $gnuc{__INTEL_COMPILER};
+    my $major = $gnucref->{__GNUC__};
+    my $minor = $gnucref->{__GNUC_MINOR__};
+    my $intel = $gnucref->{__INTEL_COMPILER};
 
+    my $verbose = $conf->options->get('verbose');
     if ( defined $intel || !defined $major ) {
         print " (no) " if $verbose;
         $self->set_result('no');
@@ -72,12 +75,19 @@ sub runstep {
     if ( defined $minor and $minor =~ tr/0-9//c ) {
         undef $minor;    # Don't use it
     }
-    if ( defined $major ) {
-        $gccversion = $major;
-        $gccversion .= ".$minor" if defined $minor;
+    if ( ! defined $major ) {
+        print " (no) " if $verbose;
+        $self->set_result('no');
+        $conf->data->set( gccversion => undef );
+        return 1;
     }
+    my $gccversion = $major;
+    $gccversion .= ".$minor" if defined $minor;
     print " (yep: $gccversion )" if $verbose;
     $self->set_result('yes');
+
+    my $warns;
+    my $ccwarn = $conf->data->get('ccwarn');
 
     if ($gccversion) {
 
@@ -136,7 +146,11 @@ sub runstep {
                 . " -Wundef"
                 . " -Wunknown-pragmas"
                 . " -Wwrite-strings"
-                . ( $maint ? " -Wlarger-than-4096" : "" ),
+                . (
+                    $conf->options->get('maintainer')
+                    ? " -Wlarger-than-4096"
+                    : ""
+                  ),
 
             # others; ones we might like marked with ?
             # ? -Wundef for undefined idenfiers in #if
@@ -374,27 +388,22 @@ sub runstep {
         if $gccversion >= 4.0;
 
     if ( defined $conf->options->get('miniparrot') && $gccversion ) {
-
         # make the compiler act as ANSIish as possible, and avoid enabling
         # support for GCC-specific features.
-
         $conf->data->set(
             ccwarn     => "-ansi -pedantic",
             gccversion => undef
         );
-
-        return 1;
     }
-
-    $conf->data->set(
-        ccwarn              => "$warns $ccwarn",
-        gccversion          => $gccversion,
-        HAS_aligned_funcptr => 1
-    );
-
-    $conf->data->set( HAS_aligned_funcptr => 0 )
-        if $^O eq 'hpux';
-
+    else {
+        $conf->data->set(
+            ccwarn              => "$warns $ccwarn",
+            gccversion          => $gccversion,
+            HAS_aligned_funcptr => 1
+        );
+        $conf->data->set( HAS_aligned_funcptr => 0 )
+            if $^O eq 'hpux';
+    }
     return 1;
 }
 
