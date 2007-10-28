@@ -1,11 +1,11 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 111-auto_gcc-10.t
+# 111-auto_gcc-13.t
 
 use strict;
 use warnings;
-use Test::More tests => 14;
+use Test::More qw(no_plan); # tests => 14;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -38,12 +38,20 @@ isa_ok($step, $step_name);
 ok($step->description(), "$step_name has description");
 
 my $gnucref = {};
-$gnucref->{__GNUC__} = q{abc123};
-ok($step->_evaluate_gcc($conf, $gnucref),
-    "_evaluate_gcc() returned true value");
-ok(! defined $conf->data->get( 'gccversion' ),
-    "gccversion undef as expected");
-is($step->result(), q{no}, "Got expected result");
+$gnucref->{__GNUC__} = q{3};
+$gnucref->{__GNUC_MINOR__} = q{1};
+{
+    local $^O = 'hpux';
+    ok($step->_evaluate_gcc($conf, $gnucref),
+        "_evaluate_gcc() returned true value");
+    ok(defined $conf->data->get( 'gccversion' ),
+        "gccversion defined as expected");
+    is($conf->data->get( 'gccversion' ), q{3.1},
+        "Got expected value for gccversion");
+    is($conf->data->get( 'HAS_aligned_funcptr' ), 0,
+        "Got expected value for HAS_aligned_funcptr");
+    is($step->result(), q{yes}, "Got expected result");
+}
 
 pass("Keep Devel::Cover happy");
 pass("Completed all tests in $0");
@@ -52,11 +60,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-111-auto_gcc-10.t - test config::auto::gcc
+111-auto_gcc-13.t - test config::auto::gcc
 
 =head1 SYNOPSIS
 
-    % prove t/configure/111-auto_gcc-10.t
+    % prove t/configure/111-auto_gcc-13.t
 
 =head1 DESCRIPTION
 
