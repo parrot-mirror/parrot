@@ -1,0 +1,127 @@
+# Copyright (C) 2001-2007, The Perl Foundation.
+# $Id$
+
+=head1 NAME
+
+README.txt - Readme file for pirc/new compiler, a fresh implementation of
+the PIR language using Bison and Flex.
+
+=head1 AUTHOR
+
+kjs
+
+=head1 DESCRIPTION
+
+pirc/new is a fresh implementation of the PIR language. Maintaining the
+current default implementation (IMCC) is a bit of a pain, and I wanted to
+see how far I could come with a fresh implementation. A lot of ugly things
+could be removed.
+
+Of course, it is not finished yet. Currently only work is done on the parser.
+This needs a lot of testing, there are probably some dark corners that need
+to be updated, but fixing them should be rather easy. Once the parser is
+tested, semantic actions can be added, which can be copied or based on the
+actions in IMCC.
+
+Current shortcomings are:
+
+=over 4
+
+=item * Macro layer
+
+The whole macro layer needs more thought. The C<.include> and C<.macro_const> directives
+(the latter was formerly called C<.constant>) are implemented, but the macro definition and
+expansion functionality needs some redesign. I'm thinking of implementing a macro
+pre-processor. A big pro of that approach would be a much cleaner lexer specification.
+However, it might make the compilation process a bit slower.
+
+=back
+
+During reimplementing PIR using Bison/Flex, I learned a lot about the current
+implementation. Also, although the macro layer is not completed yet, it's quite clean
+and easier to read than the current implementation.
+
+Of course, besides shortcomings, the new implementation also has some unique features:
+
+=over 4
+
+=item * Multiple heredoc arguments
+
+In pirc/new (a new name is yet to be defined) it is allowed to use multiple
+heredocs as function arguments, like so:
+
+   ...
+   foo(<<'HI', <<'BYE')
+
+   ...
+ HI
+
+   ...
+ BYE
+
+=item * Reentrant
+
+The generated lexer and parser are fully re-entrant. (It does need to be tested, though).
+
+
+=item * Comments!
+
+The code is provided with comments, so you can actually understand what it does.
+
+=item * Pre-processing option
+
+Although IMCC does define the option '-E', it is not really working correctly. pirc/new's
+'-E' option is (as far as I have checked, but it should be fairly complete).
+
+
+=item * Multiple command line args
+
+You can specify a list of .pir files to be compiled; all of them will be processed.
+
+=item * Grammar cleanup
+
+This is a nice opportunity to clean up the grammar of the PIR language. Hacking on
+IMCC's grammar is possible, but not for the faint of heart.
+
+
+=back
+
+=head1 NOTES
+
+
+=head2 Cygwin processable lexer spec.
+
+The file C<pir.l> from which the lexer is generated is I<not> processable by Cygwin's
+default version of Flex. In order to make a reentrant lexer, a newer version is needed,
+which can be downloaded from the link below.
+
+L<http://sourceforge.net/project/downloading.php?groupname=flex&filename=flex-2.5.33.tar.gz&use_mirror=belnet>
+
+
+
+=head1 BUGS
+
+Having a look at this implementation would be greatly appreciated, and any resulting
+feedback even more :-)
+
+=head1 TODO
+
+Major issues that need work:
+
+=over 4
+
+=item * finish macro layer
+
+=item * possibly remove the macro layer and create a macro pre-processor
+
+=back
+
+=head1 SEE ALSO
+
+See also C<languages/PIR> for a PGE based implementation.
+See also C<compilers/pirc>, a hand-written, recursive-descent PIR parser.
+See also C<compilers/imcc>, the current I<standard> PIR implementation.
+See also C<docs/imcc/syntax.pod> for a description of PIR syntax.
+See also C<docs/imcc/> for more documentation about the PIR language.
+
+=cut
