@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests => 15;
+use Test::More tests => 14;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -16,7 +16,6 @@ use Parrot::Configure::Test qw( test_step_thru_runstep);
 #use Parrot::IO::Capture::Mini;
 
 my $args = process_options( {
-#    argv            => [ q{--verbose} ],
     argv            => [ ],
     mode            => q{configure},
 } );
@@ -39,20 +38,13 @@ ok(defined $step, "$step_name constructor returned defined value");
 isa_ok($step, $step_name);
 ok($step->description(), "$step_name has description");
 
-#{
-#    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-#        or croak "Unable to tie";
-    my $gnucref = {};
-    $gnucref->{__GNUC__} = q{abc123};
-    ok($step->_evaluate_gcc($conf, $gnucref),
-        "_evaluate_gcc() returned true value");
-#    my @more_lines = $tie_out->READLINE;
-#    ok( @more_lines, "verbose output captured" );
-    ok(! defined $conf->data->get( 'gccversion' ),
-        "gccversion undef as expected");
-    is($step->result(), q{no}, "Got expected result");
-#}
-#untie *STDOUT;
+my $gnucref = {};
+$gnucref->{__GNUC__} = q{abc123};
+ok($step->_evaluate_gcc($conf, $gnucref),
+    "_evaluate_gcc() returned true value");
+ok(! defined $conf->data->get( 'gccversion' ),
+    "gccversion undef as expected");
+is($step->result(), q{no}, "Got expected result");
 
 pass("Keep Devel::Cover happy");
 pass("Completed all tests in $0");
