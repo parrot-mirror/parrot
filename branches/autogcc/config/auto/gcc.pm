@@ -384,7 +384,7 @@ sub _evaluate_gcc {
     $conf->data->set( sym_export => '__attribute__ ((visibility("default")))' )
         if $gccversion >= 4.0;
 
-    if ( defined $conf->options->get('miniparrot') && $gccversion ) {
+    if ( defined $conf->options->get('miniparrot') ) {
         # make the compiler act as ANSIish as possible, and avoid enabling
         # support for GCC-specific features.
         $conf->data->set(
