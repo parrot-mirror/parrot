@@ -8,16 +8,20 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More tests => 21;
+use Test::More tests => 38;
 
 use Parrot::Test;
 
 ###
-### If
+### if
 ###
 
 language_output_is( 'Scheme', <<'CODE', 1, 'basic if - Fail' );
 (write (if (= 1 1) 1 0))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', '"0 is true"', '0 is true' );
+(write (if 0 "0 is true" "0 is false" ))
 CODE
 
 language_output_is( 'Scheme', <<'CODE', 1, 'basic if - Pass' );
@@ -72,9 +76,53 @@ language_output_is( 'Scheme', <<'CODE', 1, 'boolean? 0' );
 (write (if (boolean? (boolean? "hello")) 1 0))
 CODE
 
+###
+### number?
+###
+
+language_output_is( 'Scheme', <<'CODE', '#f', 'number? #t' );
+(write (number? #t))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', '#f', 'number? #f' );
+(write (number? #f))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', '#t', 'number? 0' );
+(write (number? 0))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', '#t', 'number? 1' );
+(write (number? 1))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', '#f', 'number? 0' );
+(write (number? (number? "hello")))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', 0, 'number? #t' );
+(write (if (number? #t) 1 0))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', 0, 'number? #f' );
+(write (if (number? #f) 1 0))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', 1, 'number? 0' );
+(write (if (number? 0) 1 0))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', 1, 'number? 1' );
+(write (if (number? 1) 1 0))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', 0, 'number? 0' );
+(write (if (number? (number? "hello")) 1 0))
+CODE
+
 
 ###
-### And
+### and
 ###
 
 language_output_is( 'Scheme', <<'CODE', 3, 'basic and' );
@@ -102,7 +150,7 @@ language_output_is( 'Scheme', <<'CODE', '#f', 'and, 0 is true' );
 CODE
 
 ###
-### Or
+### or
 ###
 
 language_output_is( 'Scheme', <<'CODE', 1, 'basic or - Pass' );
@@ -111,6 +159,34 @@ CODE
 
 language_output_is( 'Scheme', <<'CODE', 0, 'basic or - Fail' );
 (write (or 0 0))
+CODE
+
+###
+### not
+###
+
+language_output_is( 'Scheme', <<'CODE', '#f', 'not 1' );
+(write (not 1))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', '#t', 'not #f' );
+(write (not #f))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', '#f', 'not 0' );
+(write (not 0))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', '#f', 'not #t' );
+(write (not #t))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', '#f', 'not true expression' );
+(write (not (= 42 (* 21 2))))
+CODE
+
+language_output_is( 'Scheme', <<'CODE', '#t', 'not false expression' );
+(write (not (= 43 (* 21 2))))
 CODE
 
 # Local Variables:
