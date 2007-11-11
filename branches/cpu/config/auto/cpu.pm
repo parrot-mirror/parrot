@@ -44,6 +44,10 @@ sub runstep {
     $conf->data->add( ' ', TEMP_atomic_o => '' );    # assure a default
 
     my $hints = "auto::cpu::" . $conf->data->get('cpuarch') . "::auto";
+# config/auto/cpu/i386/auto.pm
+# config/auto/cpu/ppc/auto.pm
+# config/auto/cpu/sun4/auto.pm
+# config/auto/cpu/x86_64/auto.pm
 
     print "\t(cpu hints = '$hints') " if $verbose;
 
