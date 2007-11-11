@@ -42,6 +42,8 @@ sub runstep {
     my $verbose = $conf->options->get('verbose');
 
     my $hints = "gen::cpu::" . $conf->data->get('cpuarch') . "::auto";
+# config/gen/cpu/i386/auto.pm
+# config/gen/cpu/ppc/auto.pm
 
     print "\t(cpu hints = '$hints') " if $verbose;
 
