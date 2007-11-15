@@ -38,6 +38,7 @@ my @steps = qw(
     auto::pack
     auto::format
     auto::isreg
+    auto::arch
     auto::jit
     gen::cpu
     auto::funcptr
