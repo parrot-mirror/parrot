@@ -7,10 +7,10 @@ config/auto/jit - JIT Capability
 
 =head1 DESCRIPTION
 
-Determines the CPU architecture, the operating system, and whether there is JIT
-capability available.  Use the C<--jitcapable> and C<--execcapable> options to
-override the default value calculated specifically for your CPU architecture
-and operating system.
+Determines whether there is JIT capability available.  Use the
+C<--jitcapable> and C<--execcapable> options to override the default
+value calculated specifically for your CPU architecture and operating
+system.
 
 =cut
 
@@ -44,68 +44,20 @@ sub runstep {
     my $verbose = $conf->options->get('verbose');
     $verbose and print "\n";
 
-    my $jitbase  = 'src/jit';                      # base path for jit sources
     my $archname = $conf->data->get('archname');
-    my ( $cpuarch, $osname ) = split( /-/, $archname );
+    my $cpuarch = $conf->data->get('cpuarch');
+    my $osname = $conf->data->get('osname');
 
-    if ($verbose) {
-        print "determining operating system and cpu architecture\n";
-        print "archname: <$archname>\n";
-    }
-
-    if ( !defined $osname ) {
-        ( $osname, $cpuarch ) = ( $cpuarch, q{} );
-    }
-
-    # This was added to convert 9000/800 to 9000_800 on HP-UX
-    $cpuarch =~ s|/|_|g;
-
-    # On OS X if you are using the Perl that shipped with the system
-    # the above split fails because archname is "darwin-thread-multi-2level".
-    if ( $cpuarch =~ /darwin/ ) {
-        $osname = 'darwin';
-        if ( $conf->data->get('byteorder') == 1234 ) {
-            $cpuarch = 'i386';
-        }
-        else {
-            $cpuarch = 'ppc';
-        }
-    }
-
-    # cpuarch and osname are reversed in archname on windows
-    elsif ( $cpuarch =~ /MSWin32/ ) {
-        $cpuarch = ( $osname =~ /x64/ ) ? 'amd64' : 'i386';
-        $osname = 'MSWin32';
-    }
-    elsif ( $osname =~ /cygwin/i || $cpuarch =~ /cygwin/i ) {
-        $cpuarch = 'i386';
-        $osname  = 'cygwin';
-    }
-
-    if ( $archname =~ m/powerpc/ ) {
-        $cpuarch = 'ppc';
-    }
-
-    $cpuarch =~ s/armv[34]l?/arm/i;
-    $cpuarch =~ s/i[456]86/i386/i;
-    $cpuarch =~ s/x86_64/amd64/i;
-
-    warn "osname: $osname\ncpuarch: $cpuarch\n" if $verbose;
-
-    $conf->data->set(
-        archname => $archname,
-        cpuarch  => $cpuarch,
-        osname   => $osname
-    );
-
+    my $jitbase  = 'src/jit';               # base path for jit sources
     my $jitarchname = "$cpuarch-$osname";
     my ( $jitcapable, $execcapable ) = ( 0, 0 );
 
-    print( qq{-e "$jitbase/$cpuarch/core.jit" = },
-        -e "$jitbase/$cpuarch/core.jit" ? 'yes' : 'no', "\n" )
+    my $corejit = "$jitbase/$cpuarch/core.jit";
+    print( qq{-e $corejit = },
+        -e $corejit ? 'yes' : 'no', "\n" )
         if $verbose;
 
-    if ( -e "$jitbase/$cpuarch/core.jit" ) {
+    if ( -e $corejit ) {
 
         # Just because there is a "$jitbase/$cpuarch/core.jit" file,
         # doesn't mean the JIT is working on that platform.
@@ -127,12 +79,14 @@ sub runstep {
         }
     }
 
-    if ( -e "$jitbase/$cpuarch/$jitarchname.s" ) {
-        copy_if_diff( "$jitbase/$cpuarch/$jitarchname.s", "src/asmfun.s" );
+    my $sjit = "$jitbase/$cpuarch/$jitarchname.s";
+    my $asm = "$jitbase/$cpuarch/asm.s";
+    if ( -e $sjit ) {
+        copy_if_diff( $sjit, "src/asmfun.s" );
         $conf->data->set( asmfun_o => 'src/asmfun$(O)' );
     }
-    elsif ( -e "$jitbase/$cpuarch/asm.s" ) {
-        copy_if_diff( "$jitbase/$cpuarch/asm.s", "src/asmfun.s" );
+    elsif ( -e $asm ) {
+        copy_if_diff( $asm, "src/asmfun.s" );
         $conf->data->set( asmfun_o => 'src/asmfun$(O)' );
     }
     else {
