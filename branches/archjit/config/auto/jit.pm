@@ -30,6 +30,10 @@ sub _init {
     $data{description} = q{Determining architecture, OS and JIT capability};
     $data{args}        = [ qw( jitcapable miniparrot execcapable verbose ) ];
     $data{result}      = q{};
+    $data{jit_is_working} = {
+        i386 => 1,
+        ppc  => 1,
+    };
     return \%data;
 }
 
@@ -44,9 +48,9 @@ sub runstep {
     my $verbose = $conf->options->get('verbose');
     $verbose and print "\n";
 
-    my $archname = $conf->data->get('archname');
-    my $cpuarch = $conf->data->get('cpuarch');
-    my $osname = $conf->data->get('osname');
+    my $archname    = $conf->data->get('archname');
+    my $cpuarch     = $conf->data->get('cpuarch');
+    my $osname      = $conf->data->get('osname');
 
     my $jitbase  = 'src/jit';               # base path for jit sources
     my $jitarchname = "$cpuarch-$osname";
@@ -65,11 +69,7 @@ sub runstep {
         # to work. Building JIT on other platform most likely breaks the build.
         # Developer can always call: Configure.pl --jitcapable
         # See also RT#43145
-        my %jit_is_working = (
-            i386 => 1,
-            ppc  => 1,
-        );
-        if ( $jit_is_working{$cpuarch} ) {
+        if ( $self->{jit_is_working}->{$cpuarch} ) {
             $jitcapable = 1;
         }
 
