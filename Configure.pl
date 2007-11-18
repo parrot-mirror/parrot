@@ -304,6 +304,7 @@ use Parrot::Configure::Messages qw(
     print_conclusion
 );
 use Parrot::Configure::Step::List qw( get_steps_list );
+use Parrot::Configure::Interactive qw( get_data_from_prompts );
 
 $| = 1;    # $OUTPUT_AUTOFLUSH = 1;
 
@@ -325,6 +326,23 @@ my $args = process_options(
 );
 exit(1) unless defined $args;
 
+##########
+# If a user wanted to enter configuration data interactively, this would
+# be the place to do it.  It would then be available for merging into
+# $args (or something like it) so that all user-specified settings would
+# be available before $opttest->run_configure_tests();
+# It would later be folded into the Parrot::Configure object before
+# $conf->runsteps() below.
+#
+# Such a method would have to assemble all the data used to generate
+# prompt selections:  %Config, lists of charsets and encodings
+# available, lists of equivalents to make/lex/yacc, etc.
+#
+# my %argv_seen = map {$_, 1} @{$args->argv};
+# $args = Parrot::Configure::Interactive::get_data_from_prompts($args)
+#   if $argv_seen{'--ask'};
+##########
+
 my $opttest = Parrot::Configure::Options::Test->new($args);
 
 # configuration tests will only be run if you requested them
@@ -342,6 +360,10 @@ my $conf = Parrot::Configure->new;
 $conf->add_steps( get_steps_list() );
 
 # from Parrot::Configure::Data
+##########
+# I don't see any reason why data entered interactively could not be fed
+# into the options part of the Parrot::Configure object at this point.
+##########
 $conf->options->set( %{$args} );
 
 # Run the actual steps
