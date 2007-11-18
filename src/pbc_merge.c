@@ -150,9 +150,11 @@ static char * str_dup(NOTNULL(const char *old))
 
 /*
 
-static void help(Interp *)
+=item C<static void help(PARROT_INTERP)>
 
 Print out the user help info.
+
+=cut
 
 */
 
@@ -167,7 +169,10 @@ help(PARROT_INTERP)
 
 /*
 
-=item C<str_dup>
+=item C<PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+static char *
+str_dup(NOTNULL(const char *old))>
 
 Duplicate a C string
 
@@ -191,7 +196,10 @@ str_dup(NOTNULL(const char *old))
 
 /*
 
-=item C<pbc_merge_loadpbc>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PackFile*
+pbc_merge_loadpbc(PARROT_INTERP, NOTNULL(const char *fullname))>
 
 This function loads a PBC file and unpacks it. We can't
 use Parrot_readbc because that is specified to also
@@ -200,6 +208,7 @@ fixup the segments, which we don't want.
 =cut
 
 */
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static PackFile*
@@ -281,7 +290,11 @@ pbc_merge_loadpbc(PARROT_INTERP, NOTNULL(const char *fullname))
 
 /*
 
-=item C<pbc_merge_bytecode>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PackFile_ByteCode*
+pbc_merge_bytecode(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                   int num_inputs, NOTNULL(PackFile *pf))>
 
 This function merges the bytecode from the input packfiles, storing the
 offsets that each bit of bytecode now exists at.
@@ -289,6 +302,7 @@ offsets that each bit of bytecode now exists at.
 =cut
 
 */
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static PackFile_ByteCode*
@@ -346,13 +360,18 @@ pbc_merge_bytecode(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
 
 /*
 
-=item C<pbc_merge_constants>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PackFile_ConstTable*
+pbc_merge_constants(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                    int num_inputs, NOTNULL(PackFile *pf), NOTNULL(PackFile_ByteCode *bc))>
 
 This function merges the constants tables from the input PBC files.
 
 =cut
 
 */
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static PackFile_ConstTable*
@@ -421,6 +440,8 @@ pbc_merge_constants(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
                         sub->end_offs += inputs[i]->code_start;
                         }
                         break;
+                    default:
+                        break;
                 }
             }
 
@@ -441,13 +462,16 @@ pbc_merge_constants(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
 
 /*
 
-=item C<pbc_merge_fixups>
+=item C<static void
+pbc_merge_fixups(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                 int num_inputs, NOTNULL(PackFile *pf), NOTNULL(PackFile_ByteCode *bc))>
 
 This function merges the fixups tables from the input PBC files.
 
 =cut
 
 */
+
 static void
 pbc_merge_fixups(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
                  int num_inputs, NOTNULL(PackFile *pf), NOTNULL(PackFile_ByteCode *bc))
@@ -535,13 +559,16 @@ pbc_merge_fixups(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
 
 /*
 
-=item C<pbc_merge_debugs>
+=item C<static void
+pbc_merge_debugs(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                 int num_inputs, NOTNULL(PackFile *pf), NOTNULL(PackFile_ByteCode *bc))>
 
 This function merges the debug segments from the input PBC files.
 
 =cut
 
 */
+
 static void
 pbc_merge_debugs(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
                  int num_inputs, NOTNULL(PackFile *pf), NOTNULL(PackFile_ByteCode *bc))
@@ -603,7 +630,9 @@ pbc_merge_debugs(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
 
 /*
 
-=item C<pbc_merge_pic_index>
+=item C<static void
+pbc_merge_pic_index(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                 int num_inputs, NOTNULL(PackFile *pf), NOTNULL(PackFile_ByteCode *bc))>
 
 This function merges the pic_index segments from the input PBC files.
 
@@ -654,7 +683,9 @@ pbc_merge_pic_index(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
 
 /*
 
-=item C<pbc_merge_ctpointers>
+=item C<static void
+pbc_merge_ctpointers(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
+                     int num_inputs, NOTNULL(PackFile_ByteCode *bc))>
 
 This function corrects the pointers into the constants table found in the
 bytecode.
@@ -662,6 +693,7 @@ bytecode.
 =cut
 
 */
+
 static void
 pbc_merge_ctpointers(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
                      int num_inputs, NOTNULL(PackFile_ByteCode *bc))
@@ -698,6 +730,8 @@ pbc_merge_ctpointers(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
                 case PARROT_ARG_KC:
                     ops[cur_op] += inputs[cur_input]->const_start;
                     break;
+                default:
+                    break;
             }
 
             /* Move along the bytecode array. */
@@ -722,6 +756,8 @@ pbc_merge_ctpointers(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
                     case PARROT_ARG_KC:
                         ops[cur_op] += inputs[cur_input]->const_start;
                         break;
+                    default:
+                        break;
                 }
                 cur_op++;
             }
@@ -732,7 +768,10 @@ pbc_merge_ctpointers(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs),
 
 /*
 
-=item C<pbc_merge_begin>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PackFile*
+pbc_merge_begin(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs), int num_inputs)>
 
 This is the function that drives PBC merging process.
 
@@ -773,13 +812,15 @@ pbc_merge_begin(PARROT_INTERP, NOTNULL(pbc_merge_input **inputs), int num_inputs
 
 /*
 
-=item C<pbc_merge_write>
+=item C<static void
+pbc_merge_write(PARROT_INTERP, NOTNULL(PackFile *pf), NOTNULL(const char *filename))>
 
 This functions writes out the merged packfile.
 
 =cut
 
 */
+
 static void
 pbc_merge_write(PARROT_INTERP, NOTNULL(PackFile *pf), NOTNULL(const char *filename))
 {
@@ -812,7 +853,7 @@ pbc_merge_write(PARROT_INTERP, NOTNULL(PackFile *pf), NOTNULL(const char *filena
 
 /*
 
-=item C<main(int argc, char **argv)>
+=item C<int main(int argc, char **argv)>
 
 The main function that grabs console input, reads in the packfiles
 provided they exist, hands them to another function that runs the
@@ -854,6 +895,8 @@ main(int argc, char **argv)
                 break;
             case '?':
                 help(interp);
+                break;
+            default:
                 break;
         }
     }

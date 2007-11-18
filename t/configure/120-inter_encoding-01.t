@@ -13,7 +13,6 @@ use_ok('config::inter::encoding');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
-use Tie::Filehandle::Preempt::Stdin;
 
 my $args = process_options(
     {

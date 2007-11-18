@@ -2,9 +2,11 @@
 
 # setup of commands
 @make_set_make@
-PERL      = @perl@
-MAKE      = @make_c@
-RM_F      = @rm_f@
+PERL          = @perl@
+MAKE          = @make_c@
+RM_F          = @rm_f@
+BUILD_DIR     = @build_dir@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 
 # add new languages here
 # remove obsolete languages here
@@ -74,6 +76,10 @@ help:
 	@echo "For the status of individual languages see LANGUAGES.STATUS.pod"
 	@echo ""
 
+# regenerate the Makefile
+Makefile: ../config/gen/makefiles/languages.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=""
+
 test:   all
 	$(PERL) t/harness
 
@@ -120,6 +126,8 @@ clean: \
     urm.clean \
     smoke-clean
 
+realclean: \
+    jako.realclean
 
 #
 # Language specific targets
@@ -255,6 +263,8 @@ jako.test:
 	- $(MAKE) jako test
 jako.clean:
 	- $(MAKE) jako clean
+jako.realclean:
+	- $(MAKE) jako realclean
 
 lisp: lisp.dummy
 lisp.dummy:

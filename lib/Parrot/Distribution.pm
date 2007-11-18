@@ -342,17 +342,32 @@ This is to exclude automatically generated C-language files Parrot might have.
 
         push @exemptions => map { File::Spec->canonpath($_) } qw{
             config/gen/cpu/i386/memcpy_mmx.c
+            config/gen/cpu/i386/memcpy_mmx_in.c
             config/gen/cpu/i386/memcpy_sse.c
+            config/gen/cpu/i386/memcpy_sse_in.c
             compilers/imcc/imclexer.c
             compilers/imcc/imcparser.c
             compilers/imcc/imcparser.h
+            compilers/pirc/new/main.c
             compilers/pirc/new/pir.l
             compilers/pirc/new/pir.y
+            compilers/pirc/new/pasm.l
+            compilers/pirc/new/pasm.y
             compilers/pirc/new/pircompiler.h
             compilers/pirc/new/pirlexer.c
             compilers/pirc/new/pirlexer.h
             compilers/pirc/new/pirparser.c
             compilers/pirc/new/pirparser.h
+            compilers/pirc/macro/lexer.h
+            compilers/pirc/macro/macro.h
+            compilers/pirc/macro/macro.l
+            compilers/pirc/macro/macro.y
+            compilers/pirc/macro/macrolexer.c
+            compilers/pirc/macro/macrolexer.h
+            compilers/pirc/macro/macroparser.c
+            compilers/pirc/macro/macroparser.h
+            compilers/pirc/heredoc/hdocprep.l
+            compilers/pirc/heredoc/hdocprep.c
             languages/cola/lexer.c
             languages/cola/parser.c
             languages/cola/parser.h
@@ -362,7 +377,8 @@ This is to exclude automatically generated C-language files Parrot might have.
             src/malloc.c
             } unless @exemptions;
 
-        $file->path =~ /\Q$_\E$/ && return 1 for @exemptions;
+        my $path = -f $file ? $file : $file->path;
+        $path =~ /\Q$_\E$/ && return 1 for @exemptions;
         return;
     }
 }
@@ -516,7 +532,7 @@ sub file_for_perl_module {
     my $self = shift;
     my $module = shift || return;
 
-    my @path = split '::', $module;
+    my @path = split m/::/, $module;
 
     $module = pop @path;
     $module .= '.pm';

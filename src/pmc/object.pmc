@@ -250,8 +250,9 @@ of the given name walking up the inheritance tree.
         PMC * const method = Parrot_oo_find_vtable_override(interp,
                 VTABLE_get_class(interp, SELF), vtable_meth_name);
         if (!PMC_IS_NULL(method)) {
-            (PMC*)Parrot_run_meth_fromc_args(interp, method, SELF,
-                    vtable_meth_name, "vSP", name, value);
+            PMC *unused = (PMC *)Parrot_run_meth_fromc_args(interp, method,
+                SELF, vtable_meth_name, "vSP", name, value);
+            UNUSED(unused);
             return;
         }
 
@@ -475,10 +476,9 @@ Invokes the object (if this vtable function is overridden).
                 return VTABLE_invoke(interp, meth, next);
 
             if (cur_class->vtable->base_type == enum_class_PMCProxy) {
-                STRING *proxy_str = string_from_literal(interp, "proxy");
                 /* Get the PMC instance and call the vtable method on that. */
                 PMC * const del_object =
-                    VTABLE_get_attr_keyed(interp, pmc, cur_class, proxy_str);
+                    VTABLE_get_attr_keyed(interp, pmc, cur_class, proxy);
 
                 if (!PMC_IS_NULL(del_object))
                     return VTABLE_invoke(interp, del_object, next);

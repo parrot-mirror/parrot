@@ -28,8 +28,8 @@ my @steps = qw(
     inter::charset
     inter::encoding
     inter::types
-    inter::ops
-    inter::pmc
+    auto::ops
+    auto::pmc
     auto::alignptrs
     auto::headers
     auto::sizes
@@ -58,8 +58,8 @@ my @steps = qw(
     auto::m4
     auto::ctags
     auto::cpu
+    auto::revision
     gen::icu
-    gen::revision
     gen::config_h
     gen::core_pmcs
     gen::parrot_include

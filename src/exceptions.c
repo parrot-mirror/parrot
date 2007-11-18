@@ -66,7 +66,10 @@ static void run_cleanup_action(PARROT_INTERP, NOTNULL(Stack_Entry_t *e))
 
 /*
 
-=item C<internal_exception>
+=item C<PARROT_API
+PARROT_DOES_NOT_RETURN
+void
+internal_exception(int exitcode, NOTNULL(const char *format), ...)>
 
 Signal a fatal exception.  This involves printing an error message to stderr,
 and calling C<Parrot_exit> to invoke exit handlers and exit the process with the
@@ -110,7 +113,10 @@ internal_exception(int exitcode, NOTNULL(const char *format), ...)
 
 /*
 
-=item C<do_panic>
+=item C<PARROT_DOES_NOT_RETURN
+void
+do_panic(NULLOK_INTERP, NULLOK(const char *message),
+         NULLOK(const char *file), unsigned int line)>
 
 Panic handler.
 
@@ -162,21 +168,11 @@ describe them as well.\n\n");
 
 /*
 
-=item C<push_exception>
+=item C<PARROT_API
+void
+push_exception(PARROT_INTERP, NOTNULL(PMC *handler))>
 
 Add the exception handler on the stack.
-
-=item C<Parrot_push_action>
-
-Push an action handler onto the dynamic environment.
-
-=item C<Parrot_push_mark>
-
-Push a cleanup mark onto the dynamic environment.
-
-=item C<Parrot_pop_mark>
-
-Pop items off the dynamic environment up to the mark.
 
 =cut
 
@@ -192,6 +188,17 @@ push_exception(PARROT_INTERP, NOTNULL(PMC *handler))
                STACK_ENTRY_PMC, STACK_CLEANUP_NULL);
 }
 
+/*
+
+=item C<static void
+run_cleanup_action(PARROT_INTERP, NOTNULL(Stack_Entry_t *e))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
 run_cleanup_action(PARROT_INTERP, NOTNULL(Stack_Entry_t *e))
 {
@@ -202,6 +209,18 @@ run_cleanup_action(PARROT_INTERP, NOTNULL(Stack_Entry_t *e))
     PMC * const sub = UVal_pmc(e->entry);
     Parrot_runops_fromc_args(interp, sub, "vI", 0);
 }
+
+/*
+
+=item C<PARROT_API
+void
+Parrot_push_action(PARROT_INTERP, PMC *sub)>
+
+Push an action handler onto the dynamic environment.
+
+=cut
+
+*/
 
 PARROT_API
 void
@@ -215,6 +234,18 @@ Parrot_push_action(PARROT_INTERP, PMC *sub)
                STACK_ENTRY_ACTION, run_cleanup_action);
 }
 
+/*
+
+=item C<PARROT_API
+void
+Parrot_push_mark(PARROT_INTERP, INTVAL mark)>
+
+Push a cleanup mark onto the dynamic environment.
+
+=cut
+
+*/
+
 PARROT_API
 void
 Parrot_push_mark(PARROT_INTERP, INTVAL mark)
@@ -222,6 +253,18 @@ Parrot_push_mark(PARROT_INTERP, INTVAL mark)
     stack_push(interp, &interp->dynamic_env, &mark,
                STACK_ENTRY_MARK, STACK_CLEANUP_NULL);
 }
+
+/*
+
+=item C<PARROT_API
+void
+Parrot_pop_mark(PARROT_INTERP, INTVAL mark)>
+
+Pop items off the dynamic environment up to the mark.
+
+=cut
+
+*/
 
 PARROT_API
 void
@@ -244,7 +287,10 @@ Parrot_pop_mark(PARROT_INTERP, INTVAL mark)
 
 /*
 
-=item C<find_exception_handler>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static PMC *
+find_exception_handler(PARROT_INTERP, NOTNULL(PMC *exception))>
 
 Find the exception handler for C<exception>.
 
@@ -336,7 +382,121 @@ find_exception_handler(PARROT_INTERP, NOTNULL(PMC *exception))
 
 /*
 
-=item C<pop_exception>
+=item C<PARROT_WARN_UNUSED_RESULT
+INTVAL
+count_exception_handlers(PARROT_INTERP)>
+
+Return the number of exception handlers on the exeception handler stack.
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+INTVAL
+count_exception_handlers(PARROT_INTERP)
+{
+    char *m;
+    INTVAL stack_depth = 0;
+    INTVAL eh_depth = 0;
+    Stack_Entry_t *e;
+
+    /* Not all entries in the stack are exception handlers, so iterate over the
+     * stack, counting exception handler entries. */
+    while ((e = stack_entry(interp, interp->dynamic_env, stack_depth)) != NULL) {
+        if (e->entry_type == STACK_ENTRY_PMC) {
+            PMC * const handler = UVal_pmc(e->entry);
+            if (handler && handler->vtable->base_type ==
+                    enum_class_Exception_Handler) {
+                eh_depth++;
+            }
+        }
+        stack_depth++;
+    }
+
+    return eh_depth;
+}
+
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+PMC *
+get_exception_handler(PARROT_INTERP, INTVAL target_depth)>
+
+Return an exception handler by index into the exeception handler stack.
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PMC *
+get_exception_handler(PARROT_INTERP, INTVAL target_depth)
+{
+    char *m;
+    INTVAL stack_depth = 0;
+    INTVAL eh_depth = 0;
+    Stack_Entry_t *e;
+
+    /* Not all entries in the stack are exception handlers, so iterate over the
+     * stack, counting exception handler entries. */
+    while ((e = stack_entry(interp, interp->dynamic_env, stack_depth)) != NULL) {
+        if (e->entry_type == STACK_ENTRY_PMC) {
+            PMC * const handler = UVal_pmc(e->entry);
+            if (handler && handler->vtable->base_type ==
+                    enum_class_Exception_Handler) {
+                if (eh_depth == target_depth) {
+                    return handler;
+                }
+                eh_depth++;
+            }
+        }
+        stack_depth++;
+    }
+
+    return PMCNULL;
+}
+
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+PMC *
+get_all_exception_handlers(PARROT_INTERP)>
+
+Return an array of all exception handlers.
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PMC *
+get_all_exception_handlers(PARROT_INTERP)
+{
+    char *m;
+    int depth = 0;
+    Stack_Entry_t *e;
+    PMC *all_entries = pmc_new(interp, enum_class_ResizablePMCArray);
+
+    while ((e = stack_entry(interp, interp->dynamic_env, depth)) != NULL) {
+        if (e->entry_type == STACK_ENTRY_PMC) {
+            PMC * const handler = UVal_pmc(e->entry);
+            if (handler && handler->vtable->base_type ==
+                    enum_class_Exception_Handler) {
+                VTABLE_push_pmc(interp, all_entries, handler);
+            }
+        }
+        depth++;
+    }
+
+    return all_entries;
+}
+
+/*
+
+=item C<PARROT_API
+void
+pop_exception(PARROT_INTERP)>
 
 Pops the topmost exception handler off the stack.
 
@@ -371,7 +531,10 @@ pop_exception(PARROT_INTERP)
 
 /*
 
-=item C<new_c_exception_handler>
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PMC*
+new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)>
 
 Generate an exception handler, that catches PASM level exceptions inside
 a C function. This could be a separate class too, for now just a private
@@ -397,7 +560,9 @@ new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
 
 /*
 
-=item C<push_new_c_exception_handler>
+=item C<PARROT_API
+void
+push_new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)>
 
 Pushes an new C exception handler onto the stack.
 
@@ -414,7 +579,10 @@ push_new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
 
 /*
 
-=item C<throw_exception>
+=item C<PARROT_API
+PARROT_CAN_RETURN_NULL
+opcode_t *
+throw_exception(PARROT_INTERP, PMC *exception, SHIM(void *dest))>
 
 Throw the exception.
 
@@ -446,7 +614,10 @@ throw_exception(PARROT_INTERP, PMC *exception, SHIM(void *dest))
 
 /*
 
-=item C<rethrow_exception>
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+opcode_t *
+rethrow_exception(PARROT_INTERP, NOTNULL(PMC *exception))>
 
 Rethrow the exception.
 
@@ -472,7 +643,9 @@ rethrow_exception(PARROT_INTERP, NOTNULL(PMC *exception))
 
 /*
 
-=item C<rethrow_c_exception>
+=item C<PARROT_DOES_NOT_RETURN
+void
+rethrow_c_exception(PARROT_INTERP)>
 
 Return back to runloop, assumes exception is still in todo (see RT#45915) and
 that this is called from within a handler setup with C<new_c_exception>.
@@ -506,7 +679,9 @@ rethrow_c_exception(PARROT_INTERP)
 
 /*
 
-=item C<dest2offset>
+=item C<PARROT_WARN_UNUSED_RESULT
+static size_t
+dest2offset(PARROT_INTERP, NOTNULL(const opcode_t *dest))>
 
 Translate an absolute bytecode location to an offset used for resuming
 after an exception had occurred.
@@ -537,7 +712,9 @@ dest2offset(PARROT_INTERP, NOTNULL(const opcode_t *dest))
 
 /*
 
-=item C<create_exception>
+=item C<PARROT_WARN_UNUSED_RESULT
+static opcode_t *
+create_exception(PARROT_INTERP)>
 
 Create an exception.
 
@@ -584,7 +761,9 @@ create_exception(PARROT_INTERP)
 
 /*
 
-=item C<handle_exception>
+=item C<PARROT_API
+size_t
+handle_exception(PARROT_INTERP)>
 
 Handle an exception.
 
@@ -604,7 +783,9 @@ handle_exception(PARROT_INTERP)
 
 /*
 
-=item C<new_internal_exception>
+=item C<PARROT_API
+void
+new_internal_exception(PARROT_INTERP)>
 
 Create a new internal exception buffer, either by allocating it or by
 getting one from the free list.
@@ -633,7 +814,9 @@ new_internal_exception(PARROT_INTERP)
 
 /*
 
-=item C<free_internal_exception>
+=item C<PARROT_API
+void
+free_internal_exception(PARROT_INTERP)>
 
 Place internal exception buffer back on the free list.
 
@@ -651,12 +834,34 @@ free_internal_exception(PARROT_INTERP)
     interp->exc_free_list = e;
 }
 
+/*
+
+=item C<void
+destroy_exception_list(PARROT_INTERP)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
 destroy_exception_list(PARROT_INTERP)
 {
     really_destroy_exception_list(interp->exceptions);
     really_destroy_exception_list(interp->exc_free_list);
 }
+
+/*
+
+=item C<void
+really_destroy_exception_list(NULLOK(Parrot_exception *e))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 void
 really_destroy_exception_list(NULLOK(Parrot_exception *e))
@@ -670,7 +875,10 @@ really_destroy_exception_list(NULLOK(Parrot_exception *e))
 
 /*
 
-=item C<do_exception>
+=item C<PARROT_API
+PARROT_DOES_NOT_RETURN
+void
+do_exception(PARROT_INTERP, INTVAL severity, long error)>
 
 Called from interrupt code. Does a C<longjmp> in front of the runloop,
 which calls C<handle_exception()>, returning the handler address where
@@ -696,7 +904,11 @@ do_exception(PARROT_INTERP, INTVAL severity, long error)
 
 /*
 
-=item C<real_exception>
+=item C<PARROT_API
+PARROT_DOES_NOT_RETURN
+void
+real_exception(PARROT_INTERP, NULLOK(void *ret_addr),
+        int exitcode, NOTNULL(const char *format), ...)>
 
 Throws a real exception, with an error message constructed from the format
 string and arguments.  C<ret_addr> is the address from which to resume, if some
@@ -775,7 +987,8 @@ real_exception(PARROT_INTERP, NULLOK(void *ret_addr),
 
 /*
 
-=item C<Parrot_init_exceptions>
+=item C<void
+Parrot_init_exceptions(PARROT_INTERP)>
 
 Create exception objects.
 
@@ -784,7 +997,8 @@ Create exception objects.
 */
 
 void
-Parrot_init_exceptions(PARROT_INTERP) {
+Parrot_init_exceptions(PARROT_INTERP)
+{
     int i;
 
     interp->exception_list = (PMC **)mem_sys_allocate(
@@ -800,7 +1014,10 @@ Parrot_init_exceptions(PARROT_INTERP) {
 
 /*
 
-=item C<Parrot_confess>
+=item C<PARROT_API
+PARROT_DOES_NOT_RETURN
+void
+Parrot_confess(NOTNULL(const char *cond), NOTNULL(const char *file), unsigned int line)>
 
 A better version of assert() that gives a backtrace if possible.
 
@@ -817,6 +1034,17 @@ Parrot_confess(NOTNULL(const char *cond), NOTNULL(const char *file), unsigned in
     Parrot_print_backtrace();
     abort();
 }
+
+/*
+
+=item C<void
+Parrot_print_backtrace(void)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 void
 Parrot_print_backtrace(void)

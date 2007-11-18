@@ -1,6 +1,6 @@
 /*
 Copyright (C) 2002-2007, The Perl Foundation.
-License:  Artistic/GPL, see README and LICENSES for details
+License:  Artistic 2.0, see README and LICENSES for details
 $Id$
 
 =head1 NAME
@@ -288,7 +288,10 @@ static void split_chunk(PARROT_INTERP,
 
 /*
 
-=item C<allocate_chunk>
+=item C<PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+static List_chunk *
+allocate_chunk(PARROT_INTERP, NOTNULL(List *list), UINTVAL items, UINTVAL size)>
 
 Make a new chunk, size bytes big, holding items items.
 
@@ -326,7 +329,8 @@ allocate_chunk(PARROT_INTERP, NOTNULL(List *list), UINTVAL items, UINTVAL size)
 
 /*
 
-=item C<list_dump>
+=item C<static void
+list_dump(NOTNULL(const List *list), INTVAL type)>
 
 Only char and int are supported currently.
 
@@ -374,7 +378,8 @@ list_dump(NOTNULL(const List *list), INTVAL type)
 
 /*
 
-=item C<rebuild_chunk_ptrs>
+=item C<static void
+rebuild_chunk_ptrs(NOTNULL(List *list), int cut)>
 
 Rebuild chunk_list and update/optimize chunk usage, helper functions.
 
@@ -425,7 +430,8 @@ rebuild_chunk_ptrs(NOTNULL(List *list), int cut)
 
 /*
 
-=item C<rebuild_sparse>
+=item C<static void
+rebuild_sparse(NOTNULL(List *list))>
 
 Coalesce adjacent sparse chunks.
 
@@ -456,7 +462,8 @@ rebuild_sparse(NOTNULL(List *list))
 
 /*
 
-=item C<rebuild_other>
+=item C<static void
+rebuild_other(PARROT_INTERP, NOTNULL(List *list))>
 
 Coalesce adjacent irregular chunks.
 
@@ -523,7 +530,8 @@ rebuild_other(PARROT_INTERP, NOTNULL(List *list))
 
 /*
 
-=item C<rebuild_fix_ends>
+=item C<static void
+rebuild_fix_ends(NOTNULL(List *list))>
 
 Called by C<rebuild_chunk_list()>.
 
@@ -551,7 +559,8 @@ rebuild_fix_ends(NOTNULL(List *list))
 
 /*
 
-=item C<rebuild_chunk_list>
+=item C<static UINTVAL
+rebuild_chunk_list(PARROT_INTERP, NOTNULL(List *list))>
 
 Called to optimise the list when modifying it in some way.
 
@@ -662,7 +671,10 @@ rebuild_chunk_list(PARROT_INTERP, NOTNULL(List *list))
 
 /*
 
-=item C<alloc_next_size>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static List_chunk *
+alloc_next_size(PARROT_INTERP, NOTNULL(List *list), int where, UINTVAL idx)>
 
 Calculate size and items for next chunk and allocate it.
 
@@ -761,7 +773,10 @@ alloc_next_size(PARROT_INTERP, NOTNULL(List *list), int where, UINTVAL idx)
 
 /*
 
-=item C<add_chunk>
+=item C<PARROT_IGNORABLE_RESULT
+PARROT_CANNOT_RETURN_NULL
+static List_chunk *
+add_chunk(PARROT_INTERP, NOTNULL(List *list), int where, UINTVAL idx)>
 
 Add chunk at start or end.
 
@@ -796,7 +811,11 @@ add_chunk(PARROT_INTERP, NOTNULL(List *list), int where, UINTVAL idx)
 
 /*
 
-=item C<ld>
+=item C<PARROT_API
+PARROT_CONST_FUNCTION
+PARROT_WARN_UNUSED_RESULT
+UINTVAL
+ld(UINTVAL x)>
 
 Calculates log2(x).
 
@@ -843,7 +862,10 @@ ld(UINTVAL x)
 
 /*
 
-=item C<get_chunk>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static List_chunk *
+get_chunk(PARROT_INTERP, NOTNULL(List *list), NOTNULL(UINTVAL *idx))>
 
 Get the chunk for C<idx>, also update the C<idx> to point into the chunk.
 
@@ -993,7 +1015,8 @@ get_chunk(PARROT_INTERP, NOTNULL(List *list), NOTNULL(UINTVAL *idx))
 
 /*
 
-=item C<split_chunk>
+=item C<static void
+split_chunk(PARROT_INTERP, NOTNULL(List *list), NOTNULL(List_chunk *chunk), UINTVAL ix)>
 
 Split a sparse chunk, so that we have
 
@@ -1065,7 +1088,8 @@ split_chunk(PARROT_INTERP, NOTNULL(List *list), NOTNULL(List_chunk *chunk), UINT
 
 /*
 
-=item C<list_set>
+=item C<static void
+list_set(PARROT_INTERP, NOTNULL(List *list), NULLOK(void *item), INTVAL type, INTVAL idx)>
 
 Set C<item> of type C<type> in chunk at C<idx>.
 
@@ -1131,7 +1155,10 @@ list_set(PARROT_INTERP, NOTNULL(List *list), NULLOK(void *item), INTVAL type, IN
 
 /*
 
-=item C<list_item>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static void *
+list_item(PARROT_INTERP, NOTNULL(List *list), int type, INTVAL idx)>
 
 Get the pointer to the item of type C<type> in the chunk at C<idx>.
 
@@ -1158,30 +1185,32 @@ list_item(PARROT_INTERP, NOTNULL(List *list), int type, INTVAL idx)
     }
 
     switch (type) {
-    case enum_type_sized:
-        return (void *)&((char *)
-                         PObj_bufstart(&chunk->data))[idx * list->item_size];
-    case enum_type_char:
-        return (void *)&((char *) PObj_bufstart(&chunk->data))[idx];
-    case enum_type_short:
-        return (void *)&((short *) PObj_bufstart(&chunk->data))[idx];
-    case enum_type_int:
-        return (void *)&((int *) PObj_bufstart(&chunk->data))[idx];
-    case enum_type_INTVAL:
-        return (void *)&((INTVAL *) PObj_bufstart(&chunk->data))[idx];
-    case enum_type_FLOATVAL:
-        return (void *)&((FLOATVAL *) PObj_bufstart(&chunk->data))[idx];
-    case enum_type_PMC:
-        return (void *)&((PMC **) PObj_bufstart(&chunk->data))[idx];
-    case enum_type_STRING:
-        return (void *)&((STRING **) PObj_bufstart(&chunk->data))[idx];
+        case enum_type_sized:
+            return (void *)&((char *)
+                PObj_bufstart(&chunk->data))[idx * list->item_size];
+        case enum_type_char:
+            return (void *)&((char *) PObj_bufstart(&chunk->data))[idx];
+        case enum_type_short:
+            return (void *)&((short *) PObj_bufstart(&chunk->data))[idx];
+        case enum_type_int:
+            return (void *)&((int *) PObj_bufstart(&chunk->data))[idx];
+        case enum_type_INTVAL:
+            return (void *)&((INTVAL *) PObj_bufstart(&chunk->data))[idx];
+        case enum_type_FLOATVAL:
+            return (void *)&((FLOATVAL *) PObj_bufstart(&chunk->data))[idx];
+        case enum_type_PMC:
+            return (void *)&((PMC **) PObj_bufstart(&chunk->data))[idx];
+        case enum_type_STRING:
+            return (void *)&((STRING **) PObj_bufstart(&chunk->data))[idx];
+        default:
+            real_exception(interp, NULL, 1, "Unknown list entry type\n");
     }
-    real_exception(interp, NULL, 1, "Unknown list entry type\n");
 }
 
 /*
 
-=item C<list_append>
+=item C<static void
+list_append(PARROT_INTERP, NOTNULL(List *list), NULLOK(void *item), int type, UINTVAL idx)>
 
 Add one or more chunks to end of list.
 
@@ -1209,7 +1238,11 @@ list_append(PARROT_INTERP, NOTNULL(List *list), NULLOK(void *item), int type, UI
 
 =over 4
 
-=item C<list_new>
+=item C<PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+List *
+list_new(PARROT_INTERP, PARROT_DATA_TYPE type)>
 
 Returns a new list of type C<type>.
 
@@ -1258,7 +1291,9 @@ list_new(PARROT_INTERP, PARROT_DATA_TYPE type)
 
 /*
 
-=item C<list_pmc_new>
+=item C<PARROT_API
+void
+list_pmc_new(PARROT_INTERP, NOTNULL(PMC *container))>
 
 Create a new list containing PMC* values in PMC_data(container).
 
@@ -1277,7 +1312,11 @@ list_pmc_new(PARROT_INTERP, NOTNULL(PMC *container))
 
 /*
 
-=item C<list_new_init>
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+List *
+list_new_init(PARROT_INTERP, PARROT_DATA_TYPE type, NOTNULL(PMC *init))>
 
 C<list_new_init()> uses these initializers:
 
@@ -1300,20 +1339,24 @@ PARROT_CANNOT_RETURN_NULL
 List *
 list_new_init(PARROT_INTERP, PARROT_DATA_TYPE type, NOTNULL(PMC *init))
 {
-    List *list;
-    PMC * user_array, *multi_key;
-    INTVAL i, len, size, item_size, items_per_chunk;
+    List  *list;
+    PMC   *user_array;
+    PMC   *multi_key       = NULL;
+    INTVAL size            = 0;
+    INTVAL item_size       = 0;
+    INTVAL items_per_chunk = 0;
 
-    if (!init->vtable) {
+    INTVAL i, len;
+
+    if (!init->vtable)
         real_exception(interp, NULL, 1, "Illegal initializer for init\n");
-    }
-    len = VTABLE_elements(interp, init);
-    if (len & 1) {
-        real_exception(interp, NULL, 1, "Illegal initializer for init: odd elements\n");
-    }
 
-    size = item_size = items_per_chunk = 0;
-    multi_key = NULL;
+    len = VTABLE_elements(interp, init);
+
+    if (len & 1)
+        real_exception(interp, NULL, 1,
+            "Illegal initializer for init: odd elements\n");
+
     for (i = 0; i < len; i += 2) {
         const INTVAL key = VTABLE_get_integer_keyed_int(interp, init, i);
         const INTVAL val = i + 1;
@@ -1336,6 +1379,9 @@ list_new_init(PARROT_INTERP, PARROT_DATA_TYPE type, NOTNULL(PMC *init))
                 items_per_chunk = VTABLE_get_integer_keyed_int(
                         interp, init, val);
                 break;
+            default:
+                real_exception(interp, NULL, 1,
+                    "Invalid initializer for list\n");
         }
     }
     list = list_new(interp, type);
@@ -1363,7 +1409,9 @@ list_new_init(PARROT_INTERP, PARROT_DATA_TYPE type, NOTNULL(PMC *init))
 
 /*
 
-=item C<list_pmc_new_init>
+=item C<PARROT_API
+void
+list_pmc_new_init(PARROT_INTERP, NOTNULL(PMC *container), NOTNULL(PMC *init))>
 
 Create a new list containing PMC* values in PMC_data(container).
 
@@ -1386,7 +1434,11 @@ list_pmc_new_init(PARROT_INTERP, NOTNULL(PMC *container), NOTNULL(PMC *init))
 
 /*
 
-=item C<list_clone>
+=item C<PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+List *
+list_clone(PARROT_INTERP, NOTNULL(const List *other))>
 
 Return a clone of the list.
 
@@ -1464,7 +1516,9 @@ list_clone(PARROT_INTERP, NOTNULL(const List *other))
 
 /*
 
-=item C<list_mark>
+=item C<PARROT_API
+void
+list_mark(PARROT_INTERP, NOTNULL(List *list))>
 
 Mark the list and its contents as live.
 
@@ -1501,7 +1555,9 @@ list_mark(PARROT_INTERP, NOTNULL(List *list))
 
 /*
 
-=item C<list_visit>
+=item C<PARROT_API
+void
+list_visit(PARROT_INTERP, NOTNULL(List *list), NOTNULL(void *pinfo))>
 
 This is used by freeze/thaw to visit the contents of the list.
 
@@ -1540,7 +1596,11 @@ list_visit(PARROT_INTERP, NOTNULL(List *list), NOTNULL(void *pinfo))
 
 /*
 
-=item C<list_length>
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
+INTVAL
+list_length(SHIM_INTERP, NOTNULL(const List *list))>
 
 Returns the length of the list.
 
@@ -1559,7 +1619,9 @@ list_length(SHIM_INTERP, NOTNULL(const List *list))
 
 /*
 
-=item C<list_set_length>
+=item C<PARROT_API
+void
+list_set_length(PARROT_INTERP, NOTNULL(List *list), INTVAL len)>
 
 Sets the length of the list to C<len>.
 
@@ -1598,7 +1660,9 @@ list_set_length(PARROT_INTERP, NOTNULL(List *list), INTVAL len)
 
 /*
 
-=item C<list_insert>
+=item C<PARROT_API
+void
+list_insert(PARROT_INTERP, NOTNULL(List *list), INTVAL idx, INTVAL n_items)>
 
 Make room for C<n_items> at C<idx>.
 
@@ -1671,7 +1735,9 @@ list_insert(PARROT_INTERP, NOTNULL(List *list), INTVAL idx, INTVAL n_items)
 
 /*
 
-=item C<list_delete>
+=item C<PARROT_API
+void
+list_delete(PARROT_INTERP, NOTNULL(List *list), INTVAL idx, INTVAL n_items)>
 
 Delete C<n_items> at C<idx>.
 
@@ -1753,7 +1819,9 @@ list_delete(PARROT_INTERP, NOTNULL(List *list), INTVAL idx, INTVAL n_items)
 
 /*
 
-=item C<list_push>
+=item C<PARROT_API
+void
+list_push(PARROT_INTERP, NOTNULL(List *list), NULLOK(void *item), int type)>
 
 Pushes C<item> of type C<type> on to the end of the list.
 
@@ -1772,7 +1840,9 @@ list_push(PARROT_INTERP, NOTNULL(List *list), NULLOK(void *item), int type)
 
 /*
 
-=item C<list_unshift>
+=item C<PARROT_API
+void
+list_unshift(PARROT_INTERP, NOTNULL(List *list), NULLOK(void *item), int type)>
 
 Pushes C<item> of type C<type> on to the start of the list.
 
@@ -1798,7 +1868,10 @@ list_unshift(PARROT_INTERP, NOTNULL(List *list), NULLOK(void *item), int type)
 
 /*
 
-=item C<list_pop>
+=item C<PARROT_API
+PARROT_CAN_RETURN_NULL
+void *
+list_pop(PARROT_INTERP, NOTNULL(List *list), int type)>
 
 Removes and returns the last item of type C<type> from the end of the list.
 
@@ -1836,7 +1909,10 @@ list_pop(PARROT_INTERP, NOTNULL(List *list), int type)
 
 /*
 
-=item C<list_shift>
+=item C<PARROT_API
+PARROT_CAN_RETURN_NULL
+void *
+list_shift(PARROT_INTERP, NOTNULL(List *list), int type)>
 
 Removes and returns the first item of type C<type> from the start of the list.
 
@@ -1873,7 +1949,9 @@ list_shift(PARROT_INTERP, NOTNULL(List *list), int type)
 
 /*
 
-=item C<list_assign>
+=item C<PARROT_API
+void
+list_assign(PARROT_INTERP, NOTNULL(List *list), INTVAL idx, NULLOK(void *item), int type)>
 
 Assigns C<item> of type C<type> to index C<idx>.
 
@@ -1902,7 +1980,11 @@ list_assign(PARROT_INTERP, NOTNULL(List *list), INTVAL idx, NULLOK(void *item), 
 
 /*
 
-=item C<list_get>
+=item C<PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+void *
+list_get(PARROT_INTERP, NOTNULL(List *list), INTVAL idx, int type)>
 
 Returns the item of type C<type> at index C<idx>.
 
@@ -1930,7 +2012,10 @@ list_get(PARROT_INTERP, NOTNULL(List *list), INTVAL idx, int type)
 
 /*
 
-=item C<list_splice>
+=item C<PARROT_API
+void
+list_splice(PARROT_INTERP, NOTNULL(List *list), NULLOK(List *value_list),
+        INTVAL offset, INTVAL count)>
 
 Replaces C<count> items starting at C<offset> with the items in C<value>.
 

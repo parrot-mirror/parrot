@@ -185,11 +185,14 @@ Intersegment branch to location in fixup table named $1.
 =cut
 
 inline op branch_cs(in STR) :base_loop,check_event {
-    char * const label = string_to_cstring(interp, $1);
-    PackFile_FixupEntry *fe = PackFile_find_fixup_entry(interp,
+    char * const         label = string_to_cstring(interp, $1);
+    PackFile_FixupEntry *fe    = PackFile_find_fixup_entry(interp,
             enum_fixup_label, label);
-    if (!fe)
-        real_exception(interp, NULL, 1, "branch_cs: fixup for '%s' not found", label);
+    if (!fe) {
+        string_cstring_free(label);
+        real_exception(interp, NULL, 1, "branch_cs: fixup for '%Ss' not found",
+            $1);
+    }
     else {
         interp->resume_offset = fe->offset;
         Parrot_switch_to_cs(interp, fe->seg, 1);
@@ -687,9 +690,9 @@ the exception handler stack.
 
 Push an invokable PMC onto the exception handler stack.
 
-=item B<clear_eh>()
+=item B<pop_eh>()
 
-Clear out the most recently placed exception.
+Pop the most recently placed exception off the handler stack.
 
 =item B<throw>(invar PMC)
 
@@ -698,6 +701,19 @@ Throw the exception in $1.
 =item B<rethrow>(invar PMC)
 
 Only valid inside an exception handler. Rethrow the exception $1.
+
+=item B<count_eh>(out INT)
+
+Get a count of currently active exception handlers on the stack.
+
+=item B<get_eh>(out PMC, in INT)
+
+Return the exception handler at I<index>. The index is an offset from the top
+of the stack, with '0' being the top.
+
+=item B<get_all_eh>(out PMC)
+
+Return an array of all current exception handlers.
 
 =item B<die>(in INT, in INT)
 
@@ -739,11 +755,6 @@ inline op push_eh(invar PMC) {
     goto NEXT();
 }
 
-inline op clear_eh() {
-    pop_exception(interp);
-    goto NEXT();
-}
-
 inline op pop_eh() {
     pop_exception(interp);
     goto NEXT();
@@ -770,6 +781,22 @@ inline op rethrow(invar PMC) {
     opcode_t * const dest = (opcode_t *)rethrow_exception(interp, $1);
     goto ADDRESS(dest);
 }
+
+inline op count_eh(out INT) {
+    $1 = count_exception_handlers(interp);
+    goto NEXT();
+}
+
+inline op get_eh(out PMC, in INT) {
+    $1 = get_exception_handler(interp, $2);
+    goto NEXT();
+}
+
+inline op get_all_eh(out PMC) {
+    $1 = get_all_exception_handlers(interp);
+    goto NEXT();
+}
+
 
 inline op die(in INT, in INT) {
     if ($1 == EXCEPT_doomed)

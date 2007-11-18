@@ -48,7 +48,9 @@ Interp interpre;
 
 /*
 
-=item C<is_env_var_set>
+=item C<PARROT_WARN_UNUSED_RESULT
+static int
+is_env_var_set(NOTNULL(const char* var))>
 
 Checks whether the specified environment variable is set.
 
@@ -75,7 +77,8 @@ is_env_var_set(NOTNULL(const char* var))
 
 /*
 
-=item C<setup_default_compreg>
+=item C<static void
+setup_default_compreg(PARROT_INTERP)>
 
 Setup default compiler for PASM.
 
@@ -94,7 +97,10 @@ setup_default_compreg(PARROT_INTERP)
 
 /*
 
-=item C<make_interpreter>
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+Parrot_Interp
+make_interpreter(NULLOK(Interp *parent), INTVAL flags)>
 
 Create the Parrot interpreter. Allocate memory and clear the registers.
 
@@ -135,7 +141,7 @@ make_interpreter(NULLOK(Interp *parent), INTVAL flags)
     create_initial_context(interp);
     interp->resume_flag = RESUME_INITIAL;
     /* main is called as a Sub too - this will get depth 0 then */
-    CONTEXT(interp->ctx)->recursion_depth = -1;
+    CONTEXT(interp->ctx)->recursion_depth = (UINTVAL)-1;
     interp->recursion_limit = RECURSION_LIMIT;
 
     /* Must initialize flags here so the GC_DEBUG stuff is available before
@@ -272,7 +278,9 @@ make_interpreter(NULLOK(Interp *parent), INTVAL flags)
 
 /*
 
-=item C<Parrot_destroy>
+=item C<PARROT_API
+void
+Parrot_destroy(PARROT_INTERP)>
 
 Does nothing if C<ATEXIT_DESTROY> is defined. Otherwise calls
 C<Parrot_really_destroy()> with exit code 0.
@@ -296,7 +304,8 @@ Parrot_destroy(PARROT_INTERP)
 
 /*
 
-=item C<Parrot_really_destroy>
+=item C<void
+Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))>
 
 Waits for any threads to complete, then frees all allocated memory, and
 closes any open file handles, etc.
@@ -365,7 +374,7 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
      */
     if (!interp->parent_interpreter) {
         PIO_internal_shutdown(interp);
-        Parrot_kill_event_loop();
+        Parrot_kill_event_loop(interp);
     }
 
     /* we destroy all child interpreters and the last one too,

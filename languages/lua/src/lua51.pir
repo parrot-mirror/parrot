@@ -61,14 +61,13 @@ L<http://www.lua.org/manual/5.1/manual.html#2.1>.
 
 =cut
 
-.sub 'syntaxerror'
-    .param pmc mob
+.sub 'syntaxerror' :method
     .param string message :optional
     .param pmc adv :slurpy :named
     unless null message goto L1
     message = 'syntax error'
   L1:
-    lexerror(mob, message)
+    lexerror(self, message)
 .end
 
 
@@ -126,7 +125,7 @@ for internal global variables used by Lua.
 
 .include 'cclass.pasm'
 
-.sub 'name'
+.sub 'Name'
     .param pmc tgt
     .param pmc adverbs         :slurpy :named
     .local string target

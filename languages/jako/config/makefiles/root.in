@@ -4,13 +4,12 @@
 # $Id$
 #
 
-PERL = @perl@
-RM_F = @rm_f@
-
-DIR=languages/jako
-TOOL_DIR=../..
-JAKOC=$(PERL) -I lib jakoc
-INTERP=../../@test_prog@
+PERL          = @perl@
+RM_F          = @rm_f@
+JAKOC         = $(PERL) -I lib jakoc
+INTERP        = ../../@test_prog@
+BUILD_DIR     = @build_dir@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 
 .SUFFIXES: .jako .pir
 
@@ -20,21 +19,25 @@ INTERP=../../@test_prog@
 #
 
 all: \
-	examples/bench.pir      \
-	examples/board.pir      \
-	examples/euclid.pir     \
-	examples/fact.pir       \
-	examples/fib.pir        \
-	examples/hello.pir      \
-	examples/leibniz.pir    \
-	examples/life.pir       \
-	examples/mandelbrot.pir \
-	examples/mandelzoom.pir \
-	examples/mops.pir       \
-	examples/nci.pir        \
-	examples/primes.pir     \
-	examples/queens.pir     \
-	examples/sub.pir
+    examples/bench.pir      \
+    examples/board.pir      \
+    examples/euclid.pir     \
+    examples/fact.pir       \
+    examples/fib.pir        \
+    examples/hello.pir      \
+    examples/leibniz.pir    \
+    examples/life.pir       \
+    examples/mandelbrot.pir \
+    examples/mandelzoom.pir \
+    examples/mops.pir       \
+    examples/nci.pir        \
+    examples/primes.pir     \
+    examples/queens.pir     \
+    examples/sub.pir
+
+# regenerate the Makefile
+Makefile: config/makefiles/root.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=jako
 
 
 #
@@ -66,7 +69,11 @@ examples/sub.pir:        examples/sub.jako        jakoc
 #
 
 clean:
-	$(RM_F) "examples/*.pir" "examples/*.list"
+	$(RM_F) "examples/*.pir" "examples/*.list" "t/*.pir"
+
+realclean: clean
+	$(RM_F) Makefile
+
 
 over:
 	@$(MAKE) clean

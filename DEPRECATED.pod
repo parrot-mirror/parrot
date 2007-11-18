@@ -34,18 +34,7 @@ Currently no C APIs are deprecated.
 
 =head1 Deprecated methods
 
-=over 4
-
-=item C<newfrom> sub/method in PGE
-
-The C<newfrom> method in PGE is now deprecated.  Use C<new> instead.
-To get access to the C<new> method when a Match object isn't available,
-use the PGE::Match protoobject (available in the C<PGE> namespace):
-
-    $P0 = get_hll_global ['PGE'], 'Match'
-    object = $P0.'new'(...)
-
-=back
+No methods are known to be deprecated.
 
 =head1 Deprecated ops
 
@@ -53,10 +42,6 @@ From L<http://www.parrotcode.org/docs/ops/var.html>, the following ops are
 deprecated:
 
 =over 4
-
-=item B<clear_eh>.
-
-Use B<pop_eh> instead.
 
 =item B<store_global>
 
@@ -79,7 +64,9 @@ are deprecated:
 
 =over 4
 
-=item B<new>(out PMC, in INT, in STR)
+=item B<new>(out PMC, in INT, in STR) (RT #47011)
+
+The VTABLE method 'new_from_string' will be removed.
 
 =back
 
@@ -92,6 +79,17 @@ They will be removed in the 0.5.0 release.
 =item 1
 
 Type IDs will go away in 0.5.0.
+Instead of:
+
+  $P0 = new Integer
+
+or
+
+  $P0 = new .Integer # better, but ...
+
+we are moving to use:
+
+  $P0 = new 'Integer'
 
 =item 2
 
@@ -111,7 +109,7 @@ the "new" opcode for the PMCs that use it.)
   PMC* subclass(PMC *name)
 
 The subclass vtable method is deprecated and will be removed in the 0.5.0
-release. The subclass opcode stays.
+release. The subclass opcode stays. (RT #42969)
 
 =item 5
 
@@ -127,6 +125,18 @@ removed in the 0.5.0 release.
 
 The PMC union struct is deprecated and will be removed once all core PMCs have
 been updated.
+
+=back
+
+=head1 Deprecated Exception Features
+
+=over 4
+
+=item 1
+
+Attributes on exception objects will no longer be accessible by integer or
+string key, use C<getattribute> and C<setattribute> instead. Slated for removal
+in the 0.5.2 release.
 
 =back
 
@@ -174,6 +184,13 @@ This does not make sense, and this slicing syntax will be deprecated.
 
 See [RT#46715]
 
+=item .pcc_ prefix
+
+The C<.pcc_> prefix on the directives for subroutine invocation will be removed
+after the 0.5.0 release. C<.pcc_begin_return> will become C<.begin_return>.
+C<.pcc_{begin,end}> will become C<.{begin,end}_call>.
+
+See [RT#45925].
 
 =back
 
@@ -187,20 +204,6 @@ Not yet deprecated, but it's recommended to use the new syntax and
 gradually change the old.
 
 =over 4
-
-=item PMC Class name IDs
-
-Instead of:
-
-  $P0 = new Integer
-
-or
-
-  $P0 = new .Integer # better, but ...
-
-we are moving to use:
-
-  $P0 = new 'Integer'
 
 =item Assignment syntax with opcodes [RT#36283]
 

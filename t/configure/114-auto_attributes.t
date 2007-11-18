@@ -14,10 +14,9 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
 
-my $pkg = q{auto::attributes};
 
 my $args = process_options( {
-    argv            => [ qq{--verbose-step=$pkg} ],
+    argv            => [ qq{--verbose} ],
     mode            => q{configure},
 } );
 
@@ -26,6 +25,7 @@ my $conf = Parrot::Configure->new();
 test_step_thru_runstep($conf, q{init::defaults}, $args);
 
 my ($task, $step_name, @step_params, $step, $ret);
+my $pkg = q{auto::attributes};
 
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});

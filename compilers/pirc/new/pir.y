@@ -21,6 +21,7 @@ This is a complete rewrite of the parser for the PIR language.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "pirparser.h"
 #include "pircompiler.h"
@@ -29,23 +30,33 @@ This is a complete rewrite of the parser for the PIR language.
 #define YY_NO_UNISTD_H
 
 /* define YY_DECL, so that in "pirlexer.h" it won't be defined */
-#define YY_DECL int yylex(YYSTYPE *yylval,  yyscan_t yyscanner)
+#define YY_DECL int yylex(YYSTYPE *yylval, yyscan_t yyscanner)
 
 #include "pirlexer.h"
 
 
-
+extern int yyerror(yyscan_t yyscanner, lexer_state * const lexer, char const * const message);
 
 /* declare yylex() */
 extern YY_DECL;
 
-extern int yyerror(yyscan_t yyscanner, struct lexer_state *lexer, char *message);
+/*
+  experimental emit functions.
 
-extern struct lexer_state *new_lexer(char *filename);
+ */
+/*
+#define EMIT_EXPERIMENT
+*/
 
-
-
-
+#ifdef EMIT_EXPERIMENT
+#  define emit1(X)        fprintf(stderr, "%s\n", X)
+#  define emit2(X,Y)      fprintf(stderr, "%s %s\n", X,Y)
+#  define emit3(A,B,C)    fprintf(stderr, "%s %s, %s\n", A,B,C)
+#else
+#  define emit1(X)
+#  define emit2(X,Y)
+#  define emit3(A,B,C)
+#endif
 
 /* enable debugging of generated parser */
 #define YYDEBUG         1
@@ -64,15 +75,16 @@ extern struct lexer_state *new_lexer(char *filename);
 #endif
 
 
-
-
 %}
 
-%token TK_MACRO_PARAM
+%union {
+    double dval;
+    int    ival;
+    char  *sval;
+}
+
 
 %token TK_LABEL         "label"
-       TK_DOTDOT        ".."
-       TK_ENDM          ".endm"
        TK_NL            "\n"
 
 %token TK_HLL           ".HLL"
@@ -89,26 +101,25 @@ extern struct lexer_state *new_lexer(char *filename);
        TK_LEX           ".lex"
        TK_LOCAL         ".local"
        TK_NAMESPACE     ".namespace"
-       TK_ENDNAMESPACE  ".endnamespace"
        TK_INVOCANT      ".invocant"
        TK_METH_CALL     ".meth_call"
        TK_GLOBALCONST   ".globalconst"
        TK_CONST         ".const"
        TK_RETURN        ".return"
        TK_YIELD         ".yield"
-       TK_PCC_BEGIN_YIELD   ".pcc_begin_yield"
-       TK_PCC_END_YIELD     ".pcc_end_yield"
-       TK_PCC_BEGIN_RETURN  ".pcc_begin_return"
-       TK_PCC_END_RETURN    ".pcc_end_return"
-       TK_PCC_BEGIN     ".pcc_begin"
-       TK_PCC_END       ".pcc_end"
+       TK_BEGIN_YIELD   ".begin_yield"
+       TK_END_YIELD     ".end_yield"
+       TK_BEGIN_RETURN  ".begin_return"
+       TK_END_RETURN    ".end_return"
+       TK_BEGIN_CALL    ".begin_call"
+       TK_END_CALL      ".end_call"
        TK_GET_RESULTS   ".get_results"
-       TK_PCC_CALL      ".pcc_call"
+       TK_CALL          ".call"
        TK_ARG           ".arg"
        TK_RESULT        ".result"
        TK_NCI_CALL      ".nci_call"
 
-%token TK_IDENT         "identifier"
+%token <sval> TK_IDENT         "identifier"
        TK_STRINGC       "string constant"
        TK_INTC          "integer constant"
        TK_NUMC          "number constant"
@@ -120,7 +131,7 @@ extern struct lexer_state *new_lexer(char *filename);
        TK_SYM_NREG      "Symbolic number register"
        TK_SYM_SREG      "Symbolic string register"
        TK_SYM_IREG      "Symbolic integer register"
-       TK_PARROT_OP     "parrot op"
+       <sval> TK_PARROT_OP     "parrot op"
 
 %token TK_INT       "int"
        TK_NUM       "num"
@@ -128,6 +139,7 @@ extern struct lexer_state *new_lexer(char *filename);
        TK_STRING    "string"
        TK_IF        "if"
        TK_UNLESS    "unless"
+       TK_NULL      "null"
        TK_GOTO      "goto"
 
 %token TK_ARROW     "=>"
@@ -144,7 +156,7 @@ extern struct lexer_state *new_lexer(char *filename);
        TK_FDIV      "//"
        TK_OR        "||"
        TK_AND       "&&"
-       TK_XOR       "^"
+       TK_XOR       "~~"
        TK_CONC      "."
        TK_ASSIGN_USHIFT ">>>="
        TK_ASSIGN_RSHIFT ">>="
@@ -182,14 +194,11 @@ extern struct lexer_state *new_lexer(char *filename);
        TK_FLAG_OPT_FLAG     ":opt_flag"
 
 
-/*
- *
- */
-%union {
-    double dval;
-    int    ival;
-    char  *sval;
-}
+%type <sval> unop binop augmented_op rel_op target expression
+             condition identifier if_type if_null_type
+             constant reg pasm_reg
+
+%type <ival> has_unique_reg
 
 /* a pure parser */
 %pure-parser
@@ -222,6 +231,7 @@ extern struct lexer_state *new_lexer(char *filename);
 program: opt_nl
          compilation_units
          opt_nl
+         { emit1("end"); }
        ;
 
 opt_nl: /* empty */
@@ -278,9 +288,12 @@ parrot_statement: TK_PARROT_OP opt_parrot_op_args "\n"
 
 /* Namespaces */
 
-namespace_declaration: ".namespace"
-                     | ".namespace" '[' namespace_id ']'
+namespace_declaration: ".namespace" opt_namespace_id
                      ;
+
+opt_namespace_id: /* empty */
+                | '[' namespace_id ']'
+                ;
 
 namespace_id: TK_STRINGC
             | namespace_id separator TK_STRINGC
@@ -294,7 +307,7 @@ sub_definition: ".sub" sub_id sub_flags "\n"
                 ".end"
                 ;
 
-sub_id: TK_IDENT /* is TK_PARROT_OP allowed too? in that case, <identifier> */
+sub_id: identifier /* is TK_PARROT_OP allowed too? in that case, <identifier> */
       | TK_STRINGC
       ;
 
@@ -349,13 +362,11 @@ labeled_instruction: TK_LABEL "\n"
                    | instruction
                    ;
 
-instruction: if_statement
-           | unless_statement
+instruction: conditional_statement
            | goto_statement
            | local_declaration
            | lex_declaration
            | const_decl_statement
-           | namespace_statement
            | return_statement
            | yield_statement
            | invocation_statement
@@ -363,8 +374,13 @@ instruction: if_statement
            | methodcall_statement
            | parrot_statement
            | getresults_statement
+           | null_statement
            | error "\n" { yyerrok; }
            ;
+
+null_statement: "null" target "\n"       { emit2("null", $2); }
+              | target '=' "null" "\n"   { emit2("null", $1); }
+              ;
 
 getresults_statement: ".get_results" '(' opt_target_list ')' "\n"
                     ;
@@ -391,6 +407,15 @@ assignment_expression: unop expression
                      ;
 
 
+/*
+ * The case of a parrot instruction without arguments is covered by
+ * the rule assignment_expression : expression.
+ * This brings up the question, whether the check for "is_op()" should
+ * be done in the lexer or here, in the parser, because when
+ * reducing the rule "expression", we need to know whether it is
+ * an op. If the check is done in the parser, then the token
+ * TK_PARROT_OP can be removed.
+ */
 parrot_instruction: TK_PARROT_OP parrot_op_args
                   ;
 
@@ -402,40 +427,53 @@ parrot_op_args: parrot_op_arg
               | parrot_op_args ',' parrot_op_arg
               ;
 
-parrot_op_arg: expression
+parrot_op_arg: pasm_expression
              ;
 
 
 simple_invocation: invokable arguments
                  ;
 
-unop: '-'
-    | '!'
-    | '~'
+unop: '-'     { $$ = "neg"; }
+    | '!'     { $$ = "not"; }
+    | '~'     { $$ = "bnot"; }
     ;
 
-binop: '+'
-     | '-'
-     | '/'
-     | '*'
-     | '%'
-     | "."
+binop: '+'    { $$ = "add"; }
+     | '-'    { $$ = "sub"; }
+     | '/'    { $$ = "div"; }
+     | '*'    { $$ = "mul"; }
+     | '%'    { $$ = "mod"; }
+     | '|'    { $$ = "bor"; }
+     | '&'    { $$ = "band"; }
+     | '~'    { $$ = "bxor"; }
+     | "**"   { $$ = "pow"; }
+     | "."    { $$ = "concat"; }
+     | ">>>"  { $$ = "lsr"; }
+     | ">>"   { $$ = "shr"; }
+     | "<<"   { $$ = "shl"; }
+     | "||"   { $$ = "or";  }
+     | "&&"   { $$ = "and"; }
+     | "//"   { $$ = "fdiv"; }
+     | "~~"   { $$ = "xor"; }
+     | rel_op { $$ = $1; }
      ;
 
 
-augmented_op: "+="
-            | "-="
-            | "*="
-            | "**="
-            | "/="
-            | "//="
-            | "|="
-            | "&="
-            | "~="
-            | ".="
-            | ">>="
-            | "<<="
-            | ">>>="
+augmented_op: "+="   { $$ = "add"; }
+            | "-="   { $$ = "sub"; }
+            | "*="   { $$ = "mul"; }
+            | "%="   { $$ = "mod"; }
+            | "**="  { $$ = "pow"; }
+            | "/="   { $$ = "div"; }
+            | "//="  { $$ = "fdiv"; }
+            | "|="   { $$ = "bor"; }
+            | "&="   { $$ = "band" }
+            | "~="   { $$ = "bxor"; }
+            | ".="   { $$ = "concat"; }
+            | ">>="  { $$ = "shr"; }
+            | "<<="  { $$ = "shl"; }
+            | ">>>=" { $$ = "lsr"; }
             ;
 
 keylist: '[' keys ']'
@@ -446,9 +484,6 @@ keys: key
     ;
 
 key: expression
-   | expression ".."
-   | expression ".." expression
-   | ".." expression
    ;
 
 separator: ';'
@@ -456,13 +491,31 @@ separator: ';'
          ;
 
 
-if_statement: "if" condition goto_statement
+conditional_statement: if_type condition goto_or_comma identifier "\n"
+                       { emit3($1, $2, $4); }
+                     | if_null_type expression goto_or_comma identifier "\n"
+                       { emit3($1, $2, $4); }
+                     ;
+
+if_type: "if"      { $$ = "if"; }
+       | "unless"  { $$ = "unless"; }
+       ;
+
+
+if_null_type: "if" "null"     { $$ = "if_null"; }
+            | "unless" "null" { $$ = "unless_null"; }
             ;
 
-unless_statement: "unless" condition goto_statement
-                ;
+goto_or_comma: "goto" /* PIR mode */
+             | ','    /* PASM mode*/
+             ;
+
+condition: expression
+         | expression rel_op expression
+         ;
 
 goto_statement: "goto" identifier "\n"
+                { emit2("branch", $2); }
               ;
 
 local_declaration: ".local" type local_id_list "\n"
@@ -472,9 +525,12 @@ local_id_list: local_id
              | local_id_list ',' local_id
              ;
 
-local_id: identifier
-        | identifier ":unique_reg"
+local_id: identifier has_unique_reg
         ;
+
+has_unique_reg: /* empty */     { $$ = 0; }
+              | ":unique_reg"   { $$ = 1; }
+              ;
 
 identifier: TK_IDENT
           | TK_PARROT_OP
@@ -487,11 +543,15 @@ invocation_statement: long_invocation_statement
                     | short_invocation_statement
                     ;
 
-long_invocation_statement: ".pcc_begin" "\n"
+long_invocation_statement: ".begin_call" "\n"
                            long_arguments
                            long_invocation "\n"
                            long_results
-                           ".pcc_end" "\n"
+                           ".end_call" "\n"
+                           {
+
+
+                           }
                          ;
 
 long_arguments: /* empty */
@@ -501,11 +561,15 @@ long_arguments: /* empty */
 long_argument: ".arg" expression arg_flags "\n"
              ;
 
-long_invocation: ".pcc_call" invokable
+long_invocation: ".call" invokable opt_return_continuation
                | ".nci_call" invokable
                | ".invocant" invokable "\n"
                  ".meth_call" method
                ;
+
+opt_return_continuation: /* empty */
+                       | ',' invokable
+                       ;
 
 long_results: /* empty */
             | long_results long_result
@@ -556,21 +620,23 @@ methodcall: invokable '.' method arguments
 
 method: identifier
       | TK_STRINGC
+      | TK_SYM_SREG
+      | TK_PASM_SREG
       | TK_PASM_PREG
       | TK_SYM_PREG
       ;
-
-namespace_statement: ".namespace" identifier "\n"
-                   | ".endnamespace" identifier "\n"
-                   ;
 
 return_statement: short_return_statement
                 | long_return_statement
                 ;
 
-long_return_statement: ".pcc_begin_return" "\n"
+long_return_statement: ".begin_return" "\n"
                        return_expressions
-                       ".pcc_end_return" "\n"
+                       ".end_return" "\n"
+                       {
+                            emit1("set_returns");
+                            emit1("returncc");
+                       }
                      ;
 
 
@@ -579,10 +645,17 @@ yield_statement: short_yield_statement
                ;
 
 short_return_statement: ".return" arguments "\n"
+                        {
+                            emit1("set_returns");
+                            emit1("returncc");
+                        }
                       | ".return" invocation_expression "\n"
                       ;
 
 short_yield_statement: ".yield" arguments "\n"
+                       {
+                           emit1("yield");
+                       }
                      ;
 
 arguments: '(' opt_arguments_list ')'
@@ -600,9 +673,9 @@ argument: expression arg_flags
         | TK_STRINGC "=>" expression
         ;
 
-long_yield_statement: ".pcc_begin_yield" "\n"
+long_yield_statement: ".begin_yield" "\n"
                       yield_expressions
-                      ".pcc_end_yield" "\n"
+                      ".end_yield" "\n"
                     ;
 
 yield_expressions: /* empty */
@@ -628,11 +701,8 @@ arg_flag: ":flat"
         ;
 
 opt_paren_string: /* empty */
-                | paren_string
+                | '(' TK_STRINGC ')'
                 ;
-
-paren_string: '(' TK_STRINGC ')'
-            ;
 
 const_declaration: ".const" const_tail
                  ;
@@ -647,20 +717,15 @@ const_tail: "int" identifier '=' TK_INTC
           | "string" identifier '=' TK_STRINGC
           ;
 
-condition: "null" expression
-         | expression
-         | conditional_expression
-         ;
-
-conditional_expression: expression rel_op expression
-
+pasm_expression: constant
+               | pasm_reg
+               ;
 
 expression: target
           | constant
           ;
 
-
-constant: TK_STRINGC { fprintf(stderr, "TK_STRINGC: [%s]\n", yylval.sval); }
+constant: TK_STRINGC
         | TK_INTC
         | TK_NUMC
         ;
@@ -679,12 +744,12 @@ pasm_reg: TK_PASM_PREG
         | TK_PASM_SREG
         ;
 
-rel_op: "!="
-      | "=="
-      | "<"
-      | "<="
-      | ">="
-      | ">"
+rel_op: "!="  { $$ = "isne"; }
+      | "=="  { $$ = "iseq"; }
+      | "<"   { $$ = "islt"; }
+      | "<="  { $$ = "isle"; }
+      | ">="  { $$ = "isge"; }
+      | ">"   { $$ = "isgt"; }
       ;
 
 type: "int"
@@ -699,252 +764,6 @@ target: reg
 
 %%
 
-#include <string.h>
-#include <assert.h>
-
-
-/*
-
-wrapper function for yyerror.
-
-*/
-void
-syntax_error(yyscan_t yyscanner, struct lexer_state *lexer, char *message) {
-    yyerror(yyscanner, lexer, message);
-}
-
-
-/*
-
-Pre-process the file only. Don't do any analysis.
-This function does a bit of pretty-printing. Future improvement includes keeping track
-of the amount of indention, for instance for labels and conditional blocks.
-
-*/
-static void
-do_pre_process(yyscan_t yyscanner, struct lexer_state *lexer) {
-    int token;
-    YYSTYPE val;
-    int in_sub_body   = 0; /* flag to keep track whether we're in a sub body */
-    int just_print_nl = 0; /* flag to keep track whether we just printed a newline */
-    int indention     = 0; /* amount of indention */
-
-    do {
-
-        token = yylex(&val, yyscanner);
-
-
-        if (token == TK_END) { /* ".end" must be printed at column 1 */
-            in_sub_body = 0;
-        }
-
-        /* if we just printed a newline, and we're in a sub body ... */
-        if (in_sub_body == 1 && just_print_nl) {
-            /* ... and the current token is a non-indented token, (which needs to be printed
-             * at column 1, print an indention.
-             */
-
-            if (token == TK_LABEL)
-                indention = 1;
-            else
-                indention = 2;
-        }
-        else {
-            indention = 0;
-        }
-
-        /* print <indention> number of spaces before printing the token */
-        fprintf(stderr, "%*s%s", indention, indention > 0 ? " " : "", yyget_text(yyscanner));
-
-        /* don't print a space after one of these: [() */
-        switch (token) {
-            case '[': case ']':
-            case '(': case ')':
-                /* do nothin' */
-                break;
-            default:
-                fprintf(stderr, " ");
-                break;
-        }
-
-
-        if (token == TK_SUB) { /* we're entering a sub body, next lines must be indented. */
-            in_sub_body = 1;
-        }
-
-        /* if we just printed a newline character, the trailing space should be removed:
-         * do a carriage-return. Always clear flag of having read a newline.
-         */
-        just_print_nl = 0;
-        if (strchr(yyget_text(yyscanner), '\n') != NULL) {
-            fprintf(stderr, "\r");
-            just_print_nl = 1;
-        }
-    }
-    while (token > 0);
-}
-
-/*
-
-*/
-static void
-print_help(char const * const program_name) {
-
-    fprintf(stderr, "Usage: %s [options] <files>\n", program_name);
-    fprintf(stderr, "Options:\n\n");
-    fprintf(stderr, "  -E   pre-process\n");
-    fprintf(stderr, "  -d   show debug messages of parser\n");
-    fprintf(stderr, "  -h   show this help message\n");
-
-}
-
-/*
- * Main compiler driver.
- */
-int
-main(int argc, char *argv[]) {
-
-    char const * const program_name = argv[0];
-    int total_errors  = 0;
-    int pre_process   = 0;
-    yyscan_t yyscanner;
-
-    if (argc < 2) {
-        print_help(program_name);
-        exit(EXIT_FAILURE);
-    }
-
-    /* skip program name */
-    argc--;
-    argv++;
-
-    /* very basic argument handling; I'm too lazy to check out
-     * the standard funtion for that, right now. This is a TODO. */
-    while (argc > 0 && argv[0][0] == '-') {
-        switch (argv[0][1]) {
-            case 'E':
-                pre_process = 1;
-                break;
-            /* Only allow for debug flag if the generated parser supports it */
-#ifdef YYDEBUG
-            case 'd':
-                yydebug = 1;
-                break;
-#endif
-            case 'h':
-                print_help(program_name);
-                exit(EXIT_SUCCESS); /* asking for help doesn't make you a failure */
-                /* break; */
-            default:
-                fprintf(stderr, "Unknown option: '%c'\n", argv[0][1]);
-                break;
-        }
-        /* goto next command line argument */
-        argv++;
-        argc--;
-    }
-
-    if (argc < 1) {
-        fprintf(stderr, "No input file specified\n");
-        exit(EXIT_FAILURE);
-    }
-
-
-    /* compile all files specified on the command line */
-    while (argc > 0) {
-        FILE *infile = NULL;
-        struct lexer_state *lexer = NULL;
-        int parse_errors = 0;
-
-        fprintf(stderr, "Processing file '%s'\n", argv[0]);
-
-        /* done handling arguments, open the file */
-        infile = fopen(argv[0], "r");
-
-        if (infile == NULL) {
-            fprintf(stderr, "Failed to open file '%s'\n", argv[0]);
-            exit(EXIT_FAILURE);
-        }
-
-        /* create a yyscan_t object */
-        yylex_init(&yyscanner);
-        /* set the input file */
-        yyset_in(infile, yyscanner);
-
-        /* set the extra parameter in the yyscan_t structure */
-        lexer = new_lexer(argv[0]);
-        yyset_extra(lexer, yyscanner);
-
-
-        if (pre_process) {
-            fprintf(stderr, "pre-processing %s\n", argv[0]);
-            do_pre_process(yyscanner, lexer);
-        }
-        else {
-            fprintf(stderr, "compiling %s\n", argv[0]);
-            yyparse(yyscanner, lexer);
-
-            /* get parse errors for this file */
-            parse_errors = get_parse_errors(lexer);
-            /* update total error count */
-            total_errors += parse_errors;
-
-            if (parse_errors == 0) {
-                fprintf(stderr, "Parse successful!\n");
-            }
-            else {
-                fprintf(stderr, "There %s %d %s in file '%s'\n", parse_errors > 1 ? "were" :
-                        "was", parse_errors, parse_errors > 1 ? "errors" : "error",
-                        get_current_file(lexer));
-            }
-        }
-
-        /* clean up after playing */
-        yylex_destroy(yyscanner);
-
-        argc--;
-        argv++;
-    }
-
-    if (total_errors > 0)
-        fprintf(stderr, "There were %d parse errors in all files\n", total_errors);
-
-
-    /* go home! */
-    return 0;
-}
-
-
-
-/*
-
-*/
-int
-yyerror(yyscan_t yyscanner, struct lexer_state * lexer, char * message) {
-
-    char *text = yyget_text(yyscanner);
-
-    /* increment parse errors in the lexer structure */
-    parse_error(lexer);
-    /* emit an error */
-    fprintf(stderr, "\nError in file '%s' (line %d): %s ",
-            get_current_file(lexer), get_line_nr(lexer), message);
-
-    /* print current token if it's not a newline (or \r\n on windows) */
-
-    /* the following should be fixed; the point is not to print the token if
-     * it's a newline, that looks silly.
-     */
-    if (strcmp(text, "\r\n") != 0 || strcmp(text, "\n") == 0) {
-        fprintf(stderr, "('%s')\n\n", text);
-    }
-    else {
-        fprintf(stderr, "\n\n");
-    }
-
-
-    return 0;
-}
 
 
 /*
