@@ -1,6 +1,6 @@
 # Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
-package Parrot::Configure::Interactive;
+package Parrot::Configure::Initialize;
 use strict;
 use warnings;
 use base qw( Exporter );
@@ -254,41 +254,44 @@ sub find_perl_headers {
 
 =head1 NAME
 
-Parrot::Configure::Interactive - Specify configuration settings via prompts to user
+Parrot::Configure::Initialize - Gather initial configuration data from
+command-line options, Perl 5 configuration and other system data
 
 =head1 SYNOPSIS
 
-    use Parrot::Configure::Interactive qw(
-        get_data_from_prompts
-    );
+    use Parrot::Configure::Initialize;
 
-    $args = get_data_from_prompts($args);
-    
+    my $init = Parrot::Configure::Initialize->new($args);
+
 =head1 DESCRIPTION
 
-Parrot::Configure::Interactive exports on demand one subroutine which
-prompts the user to enter configuration data selections.
+Parrot::Configure::Initialize gathers initial configuration data from
+command-line options, Perl 5 c<%Config> and other readily available
+sources.  It makes this data available to other packages such as
+Parrot::Configure::Interactive (so that correct prompts can be offered
+to the user) and to config::init::defaults.
 
 =head1 SUBROUTINES
 
-=head2 C<get_data_from_prompts()>
+=head2 C<new()>
 
 =over 4
 
 =item * Purpose
 
-During C<Configure.pl> (or its test equivalents), prompt the user to
-enter customized configuration settings.
+Parrot::Configure::Initialize constructor.
 
 =item * Arguments
 
 One argument:  The hash reference which is the output of
-C<Parrot::Configure::Options::process_options>.
+C<Parrot::Configure::Options::process_options>.  This is a list of
+key-value pairs reflecting the results of processing of command-line
+options.
 
 =item * Return Value
 
-Hash reference which is an augmented version of the hash ref supplied to
-the function as an argument.
+Hash reference holding list of key-value pairs suitable for insertion
+into Parrot::Configure object via C<$conf->data->set()>.
 
 =item * Comment
 
@@ -297,11 +300,11 @@ the function as an argument.
 =head1 NOTES
 
 The functionality in this package was transferred from the former
-C<inter::*> configuration steps by Jim Keenan.
+C<init::defaults> configuration steps by Jim Keenan.
 
 =head1 SEE ALSO
 
-F<Configure.pl>.
+F<Configure.pl>.  Parrot::Configure.  Parrot::Configure::Interactive.
 
 =cut
 
