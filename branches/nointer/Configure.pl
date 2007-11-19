@@ -1,7 +1,103 @@
 #! perl
-
 # Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
+
+use 5.008_000;
+use strict;
+use warnings;
+use lib 'lib';
+
+use Parrot::Configure;
+use Parrot::Configure::Options qw( process_options );
+use Parrot::Configure::Options::Test;
+use Parrot::Configure::Messages qw(
+    print_introduction
+    print_conclusion
+);
+use Parrot::Configure::Step::List qw( get_steps_list );
+use Parrot::Configure::Interactive qw( get_data_from_prompts );
+use Parrot::Configure::Initialize;
+use Data::Dumper;
+
+$| = 1;    # $OUTPUT_AUTOFLUSH = 1;
+
+# Install Option text was taken from:
+#
+# autoconf (GNU Autoconf) 2.59
+# Written by David J. MacKenzie and Akim Demaille.
+#
+# Copyright (C) 2003 Free Software Foundation, Inc.
+# This is free software; see the source for copying conditions.  There is NO
+# warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+# from Parrot::Configure::Options
+my $args = process_options(
+    {
+        mode => 'configure',
+        argv => [@ARGV],
+    }
+);
+exit(1) unless defined $args;
+
+##########
+# If a user wanted to enter configuration data interactively, this would
+# be the place to do it.  It would then be available for merging into
+# $args (or something like it) so that all user-specified settings would
+# be available before $opttest->run_configure_tests();
+# It would later be folded into the Parrot::Configure object before
+# $conf->runsteps() below.
+#
+# Such a method would have to assemble all the data used to generate
+# prompt selections:  %Config, lists of charsets and encodings
+# available, lists of equivalents to make/lex/yacc, etc.
+#
+# my %argv_seen = map {$_, 1} @{$args->argv};
+# $args = Parrot::Configure::Interactive::get_data_from_prompts($args)
+#   if $argv_seen{'--ask'};
+##########
+
+
+my $init = Parrot::Configure::Initialize->new($args);
+$init->init_all();
+print Dumper $init;
+
+__END__
+
+# configuration tests will only be run if you requested them
+# as command-line option
+my $opttest = Parrot::Configure::Options::Test->new($args);
+$opttest->run_configure_tests();
+
+my $parrot_version = $Parrot::Configure::Options::Conf::parrot_version;
+
+# from Parrot::Configure::Messages
+print_introduction($parrot_version);
+
+my $conf = Parrot::Configure->new;
+
+# from Parrot::Configure::Step::List
+$conf->add_steps( get_steps_list() );
+
+# from Parrot::Configure::Data
+##########
+# I don't see any reason why data entered interactively could not be fed
+# into the options part of the Parrot::Configure object at this point.
+##########
+$conf->options->set( %{$args} );
+
+# Run the actual steps
+# from Parrot::Configure
+$conf->runsteps or exit(1);
+
+# build tests will only be run if you requested them
+# as command-line option
+$opttest->run_build_tests();
+
+my $make = $conf->data->get('make');
+# from Parrot::Configure::Messages
+( print_conclusion( $conf, $make ) ) ? exit 0 : exit 1;
+
+################### DOCUMENTATION ###################
 
 =head1 NAME
 
@@ -290,95 +386,6 @@ F<config/init/data.pl>, F<lib/Parrot/Configure/RunSteps.pm>,
 F<lib/Parrot/Configure/Step.pm>, F<docs/configuration.pod>
 
 =cut
-
-use 5.008_000;
-use strict;
-use warnings;
-use lib 'lib';
-
-use Parrot::Configure;
-use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Options::Test;
-use Parrot::Configure::Messages qw(
-    print_introduction
-    print_conclusion
-);
-use Parrot::Configure::Step::List qw( get_steps_list );
-use Parrot::Configure::Interactive qw( get_data_from_prompts );
-
-$| = 1;    # $OUTPUT_AUTOFLUSH = 1;
-
-# Install Option text was taken from:
-#
-# autoconf (GNU Autoconf) 2.59
-# Written by David J. MacKenzie and Akim Demaille.
-#
-# Copyright (C) 2003 Free Software Foundation, Inc.
-# This is free software; see the source for copying conditions.  There is NO
-# warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-# from Parrot::Configure::Options
-my $args = process_options(
-    {
-        mode => 'configure',
-        argv => [@ARGV],
-    }
-);
-exit(1) unless defined $args;
-
-##########
-# If a user wanted to enter configuration data interactively, this would
-# be the place to do it.  It would then be available for merging into
-# $args (or something like it) so that all user-specified settings would
-# be available before $opttest->run_configure_tests();
-# It would later be folded into the Parrot::Configure object before
-# $conf->runsteps() below.
-#
-# Such a method would have to assemble all the data used to generate
-# prompt selections:  %Config, lists of charsets and encodings
-# available, lists of equivalents to make/lex/yacc, etc.
-#
-# my %argv_seen = map {$_, 1} @{$args->argv};
-# $args = Parrot::Configure::Interactive::get_data_from_prompts($args)
-#   if $argv_seen{'--ask'};
-##########
-
-my $opttest = Parrot::Configure::Options::Test->new($args);
-
-# configuration tests will only be run if you requested them
-# as command-line option
-$opttest->run_configure_tests();
-
-my $parrot_version = $Parrot::Configure::Options::Conf::parrot_version;
-
-# from Parrot::Configure::Messages
-print_introduction($parrot_version);
-
-my $conf = Parrot::Configure->new;
-
-# from Parrot::Configure::Step::List
-$conf->add_steps( get_steps_list() );
-
-# from Parrot::Configure::Data
-##########
-# I don't see any reason why data entered interactively could not be fed
-# into the options part of the Parrot::Configure object at this point.
-##########
-$conf->options->set( %{$args} );
-
-# Run the actual steps
-# from Parrot::Configure
-$conf->runsteps or exit(1);
-
-# build tests will only be run if you requested them
-# as command-line option
-$opttest->run_build_tests();
-
-my $make = $conf->data->get('make');
-# from Parrot::Configure::Messages
-( print_conclusion( $conf, $make ) ) ? exit 0 : exit 1;
-
-################### DOCUMENTATION ###################
 
 # Local Variables:
 #   mode: cperl

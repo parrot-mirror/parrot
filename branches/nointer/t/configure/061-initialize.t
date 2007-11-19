@@ -1,12 +1,12 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 060-initialize.t
+# 061-initialize.t
 
 use strict;
 use warnings;
 
-use Test::More tests =>  4;
+use Test::More qw(no_plan); # tests => 12;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use Parrot::Configure;
@@ -15,7 +15,7 @@ use Parrot::Configure::Initialize;
 
 my $args = process_options(
     {
-        argv => [],
+        argv => [q{--debugging=0}, q{--profile}, q{--m=32}],
         mode => q{configure},
     }
 );
@@ -25,24 +25,29 @@ ok(defined $init,
 isa_ok($init, "Parrot::Configure::Initialize");
 ok($init->init_defaults(), 'init_defaults() completed okay');
 
+# Next 3 tests cheat by breaking encapsulation.
+is($init->{debugging}, 0, "Got expected value for 'debugging'");
+is($init->{cc_debug}, q{ -pg }, "Got expected value for 'cc_debug'");
+is($init->{options}->{m}, 32, "Got expected value for 'm'");
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 
 =head1 NAME
 
-060-initialize.t - Test Parrot::Configure::Initialize.
+061-initialize.t - Test Parrot::Configure::Initialize.
 
 =head1 SYNOPSIS
 
-    % prove t/configure/060-initialize.t
+    % prove t/configure/061-initialize.t
 
 =head1 DESCRIPTION
 
 The files in this directory test functionality used by F<Configure.pl>.
 
 The tests in this file test Parrot::Configure::Initialize::Defaults in the
-case where no command-line options have been provided.
+case where command-line options have been provided.
 
 =head1 AUTHOR
 
