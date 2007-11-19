@@ -169,23 +169,6 @@ sub _init_version {
     $self->{DEVEL} = ( -e 'DEVELOPING' ? '-devel' : '' );
 }
 
-
-#    );
-#    # add profiling if needed
-#    # RT#41497 gcc syntax
-#    # we should have this in the hints files e.g. cc_profile
-#    # RT#41496 move profiling to it's own step
-#    if ( $conf->options->get('profile') ) {
-#      $conf->data->set(
-#          cc_debug => " -pg ",
-#          ld_debug => " -pg ",
-#      );
-#    }
-
-
-#    return 1;
-#}
-
 sub _init_misc {
     my $self = shift;
     $self->{optimize}   = '';
@@ -220,35 +203,35 @@ sub _init_archname {
     my $self = shift;
     # adjust archname, cc and libs for e.g. --m=32
     # RT#41499 this is maybe gcc only
-    my $m        = $conf->options->get('m');
+    my $m        = $self->{options}->{'m'};
     my $archname = $Config{archname};
     if ($m) {
-      if ( $archname =~ /x86_64/ && $m eq '32' ) {
-          $archname =~ s/x86_64/i386/;
+        if ( $archname =~ /x86_64/ && $m eq '32' ) {
+            $archname =~ s/x86_64/i386/;
 
-          # adjust gcc?
-          for my $cc qw(cc cxx link ld) {
-              $self->{$cc} .= '-m32';
-          }
+            # adjust gcc?
+            for my $cc qw(cc cxx link ld) {
+                $self->{$cc} .= '-m32';
+            }
 
-          # and lib flags
-          for my $lib qw(
-            ld_load_flags
-            ld_share_flags
-            ldflags
-            linkflags
-          ) {
-              my $item = $self->{$lib};
-              ( my $ni = $item ) =~ s/lib64/lib/g;
-              $self->{$lib} = $ni;
-          }
-      }
-  }
-#    }
+            # and lib flags
+            for my $lib qw(
+                ld_load_flags
+                ld_share_flags
+                ldflags
+                linkflags
+            ) {
+                my $item = $self->{$lib};
+                ( my $ni = $item ) =~ s/lib64/lib/g;
+                $self->{$lib} = $ni;
+            }
+        }
+    }
+    # RT#41500 adjust lib install-path /lib64 vs. lib
+    # remember corrected archname - jit.pm was using $Config('archname')
+    $self->{archname} = $archname;
+}
 
-#    # RT#41500 adjust lib install-path /lib64 vs. lib
-#    # remember corrected archname - jit.pm was using $Config('archname')
-#    $conf->data->set( 'archname', $archname );
 sub _find_perl_headers {
     my $self = shift;
     return File::Spec->catdir( $Config::Config{archlib}, 'CORE' );
