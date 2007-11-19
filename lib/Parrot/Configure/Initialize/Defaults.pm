@@ -13,6 +13,16 @@ use Parrot::BuildUtil;
 
 ################### SUBROUTINES ###################
 
+sub init_defaults {
+    my $self = shift;
+    $self->_init_from_options();
+    $self->_init_from_Config();
+    $self->_init_version();
+    $self->_init_misc();
+    $self->_init_profile();
+    $self->_init_archname();
+}
+
 sub _init_from_options {
     my $self = shift;
     $self->{debugging} = $self->{options}->{debugging} ? 1 : 0;
@@ -203,7 +213,7 @@ sub _init_archname {
     my $self = shift;
     # adjust archname, cc and libs for e.g. --m=32
     # RT#41499 this is maybe gcc only
-    my $m        = $self->{options}->{'m'};
+    my $m        = $self->{options}->{m};
     my $archname = $Config{archname};
     if ($m) {
         if ( $archname =~ /x86_64/ && $m eq '32' ) {

@@ -5,7 +5,10 @@ use strict;
 use warnings;
 use Carp;
 use lib ( "./lib" );
-use base qw| Parrot::Configure::Initialize::Defaults |;
+use base qw|
+    Parrot::Configure::Initialize::Defaults
+    Parrot::Configure::Initialize::Install
+|;
 
 ################### SUBROUTINES ###################
 
@@ -20,20 +23,10 @@ sub new {
     return $self;
 }
 
-sub init_defaults {
-    my $self = shift;
-    # from Parrot::Configure::Initialize::Defaults
-    $self->_init_from_options();
-    $self->_init_from_Config();
-    $self->_init_version();
-    $self->_init_misc();
-    $self->_init_profile();
-    $self->_init_archname();
-}
-
 sub init_all {
     my $self = shift;
     $self->init_defaults();
+    $self->init_install();
 }
 
 1;
@@ -50,6 +43,8 @@ command-line options, Perl 5 configuration and other system data
     use Parrot::Configure::Initialize;
 
     my $init = Parrot::Configure::Initialize->new($args);
+
+    $init->init_all();
 
 =head1 DESCRIPTION
 
