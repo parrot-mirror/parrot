@@ -28,6 +28,7 @@ sub init_defaults {
     $self->_init_version();
     $self->_init_misc();
     $self->_init_profile();
+    $self->_init_archname();
 }
 
 sub init_all {
