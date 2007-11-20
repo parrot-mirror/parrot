@@ -44,6 +44,12 @@ to executable code (but not executed).
     .param pmc past
     .param pmc options         :slurpy :named
 
+    .local pmc blockpast
+    blockpast = get_global '@?BLOCK'
+    unless null blockpast goto have_blockpast
+    blockpast = new 'ResizablePMCArray'
+    set_global '@?BLOCK', blockpast
+  have_blockpast:
     .return self.'post'(past)
 .end
 
@@ -131,6 +137,11 @@ to executable code (but not executed).
     .param pmc node
     .param pmc options         :slurpy :named
 
+    ##  add current block node to @?BLOCK
+    .local pmc blockpast
+    blockpast = get_global '@?BLOCK'
+    unshift blockpast, node
+
     .local string name
     name = node.'name'()
     if name goto have_name
@@ -169,7 +180,10 @@ to executable code (but not executed).
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     name = bpost.'escape'(name)
     bpost.'push_pirop'('call', name, 'result'=>result)
+
   block_done:
+    ##  remove current block from @?BLOCK
+    $P99 = shift blockpast
     .return (bpost)
 .end
     
@@ -299,6 +313,25 @@ to executable code (but not executed).
 .end
 
 
+.sub 'bind' :method :multi(_, ['PAST::Op'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+
+    .local pmc ops, lpast, rpast, lpost, rpost
+    lpast = node[0]
+    rpast = node[1]
+
+    $P0 = get_hll_global ['POST'], 'Ops'
+    ops = $P0.'new'('node'=>node)
+    rpost = self.'post'(rpast, 'rtype'=>'P')
+    ops.'push'(rpost)
+    lpost = self.'bindop'(lpast, rpost)
+    ops.'push'(lpost)
+    ops.'result'(lpost)
+    .return (ops)
+.end
+    
+
 .sub 'inline' :method :multi(_, ['PAST::Op'])
     .param pmc node
     .param pmc options         :slurpy :named
@@ -323,6 +356,135 @@ to executable code (but not executed).
     .return (ops)
 .end
 
+
+.sub 'scope' :method :multi(_, ['PAST::Var'])
+    .param pmc node
+    .local pmc scope
+    scope = node.'scope'()
+    if scope goto end
+
+    .local string name
+    name = node.'name'()
+    .local pmc iter, bpast
+    $P0 = get_global '@?BLOCK'
+    iter = new 'Iterator', $P0
+  iter_loop:
+    unless iter goto end
+    .local pmc bpast, symbol
+    bpast = shift iter
+    symbol = bpast.'symbol'(name)
+    unless symbol goto iter_loop
+    scope = symbol['scope']
+    unless scope goto iter_loop
+  end:
+    .return (scope)
+.end
+
+
+
+.sub 'post' :method :multi(_, ['PAST::Var'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+
+    ##  get post for any vivification
+    ##  get a result register
+    .local string result
+    result = node.'unique'('$P')
+    .local pmc viviself, vivipost
+    viviself = node.'viviself'()
+    $I0 = isa viviself, 'PAST::Node'
+    if $I0 goto viviself_past
+    if viviself goto viviself_string
+    $P0 = get_hll_global ['POST'], 'Ops'
+    vivipost = $P0.'new'('result'=>result)
+    goto vivipost_done
+  viviself_past:
+    vivipost = self.'post'(viviself, 'rtype'=>'P')
+    goto vivipost_done
+  viviself_string:
+    $P0 = get_hll_global ['POST'], 'Op'
+    $S0 = $P0.'escape'(viviself)
+    vivipost = $P0.'new'(result, $S1, 'pirop'=>'new', 'result'=>result, 'node'=>node)
+  vivipost_done:
+    
+    ##  create a node for this lookup
+    .local pmc ops
+    $P0 = get_hll_global ['POST'], 'Ops'
+    ops = $P0.'new'('result'=>vivipost, 'node'=>node)
+
+    ##  determine variable scope
+    .local string scope, name
+    scope = self.'scope'(node)
+    name = node.'name'()
+    name = ops.'escape'(name)
+
+    .local string fetchop, storeop
+    if scope == 'package' goto post_package
+
+  post_lexical:
+    $I0 = node.'isdecl'()
+    if $I0 goto post_lexical_decl
+    fetchop = 'find_lex'
+    storeop = 'store_lex'
+    goto post_scope
+
+  post_lexical_decl:
+    ops.'push'(vivipost)
+    ops.'push_pirop'('.lex', name, vivipost)
+    .return (ops)
+
+  post_package:
+    fetchop = 'get_global'
+    storeop = 'set_global'
+    goto post_scope
+
+  post_scope:
+    ops.'push_pirop'(fetchop, ops, name)
+    unless viviself goto post_done
+    .local pmc vivilabel
+    $P0 = get_hll_global ['POST'], 'Label'
+    vivilabel = $P0.'new'('name'=>'vivify_')
+    ops.'push_pirop'('unless_null', ops, vivilabel)
+    ops.'push'(vivipost)
+    .local int islvalue
+    islvalue = node.'islvalue'()
+    unless islvalue goto post_lvalue_done
+    ops.'push_pirop'(storeop, name, ops)
+  post_lvalue_done:
+    ops.'push'(vivilabel)
+  post_done:
+    .return (ops)
+.end
+ 
+
+.sub 'bindop' :method :multi(_, ['PAST::Var'], _)
+    .param pmc node
+    .param pmc bpost
+
+    .local string scope
+    scope = self.'scope'(node)
+
+    .local string name
+    name = node.'name'()
+    name = bpost.'escape'(name)
+
+    .local pmc pirop
+    pirop = get_hll_global ['POST'], 'Op'
+
+    if scope == 'lexical' goto bind_lexical
+
+  bind_package:
+    .return pirop.'new'(name, bpost, 'pirop'=>'set_global', 'result'=>bpost)
+
+  bind_lexical:
+    $I0 = node.'isdecl'()
+    if $I0 goto bind_lexical_isdecl
+    .return pirop.'new'(name, bpost, 'pirop'=>'store_lex', 'result'=>bpost)
+
+  bind_lexical_isdecl:
+    .return pirop.'new'(name, bpost, 'pirop'=>'.lex', 'result'=>bpost)
+.end
+    
 
 .sub 'post' :method :multi(_, ['PAST::Val'])
     .param pmc node
