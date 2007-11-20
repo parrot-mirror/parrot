@@ -27,6 +27,7 @@ sub init_all {
     my $self = shift;
     $self->init_defaults();
     $self->init_install();
+    $self->init_miniparrot();
 }
 
 1;

@@ -11,7 +11,7 @@ sub init_install {
     my $self = shift;
     my $prefix = $self->{options}->{prefix} || "/usr/local";
     $prefix =~ s{/\z}{};
-    my $ep = $self->{options}->{exec-prefix};
+    my $ep = $self->{options}->{'exec-prefix'};
     $ep =~ s{/\z}{} if defined $ep;
     my $eprefix = $ep ? $ep : $prefix;
 
