@@ -299,6 +299,31 @@ to executable code (but not executed).
 .end
 
 
+.sub 'inline' :method :multi(_, ['PAST::Op'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+
+    .local pmc ops
+    ops = self.'post_children'(node, 'signature'=>'vP')
+
+    .local string inline
+    inline = node.'inline'()
+
+    .local string result
+    result = ''
+    $I0 = index inline, '%r'
+    unless $I0 goto have_result
+    result = ops.'unique'('$P')
+    ops.'result'(result)
+  have_result:
+
+    .local pmc arglist
+    arglist = ops.'get_array'()
+    ops.'push_pirop'('inline', arglist :flat, 'inline'=>inline, 'result'=>result)
+    .return (ops)
+.end
+
+
 .sub 'post' :method :multi(_, ['PAST::Val'])
     .param pmc node
     .param pmc options         :slurpy :named

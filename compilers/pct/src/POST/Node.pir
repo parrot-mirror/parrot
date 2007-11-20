@@ -137,6 +137,12 @@ Get/set the opcode type for this node.
     .return self.'attr'('pirop', value, has_value)
 .end
 
+.sub 'inline' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('inline', value, has_value)
+.end
+
 
 .namespace [ 'POST::Label' ]
 
