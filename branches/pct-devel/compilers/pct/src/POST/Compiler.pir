@@ -203,7 +203,19 @@ the sub.
     name = node.'name'()
     name = code.'escape'(name)
 
-    code.'emit'("\n.sub %0", name)
+    .local pmc outerpost
+    .local string outer
+    outer = ''
+    outerpost = node.'outer'()
+    if null outerpost goto have_outer
+    unless outerpost goto have_outer
+    outer = outerpost.'name'()
+    outer = code.'escape'(outer)
+    outer = concat ' :outer(', outer
+    outer = concat outer, ')'
+  have_outer:
+
+    code.'emit'("\n.sub %0 %1", name, outer)
     $P0 = self.'pir_children'(node)
     code .= $P0
     code.'emit'(".end\n")
