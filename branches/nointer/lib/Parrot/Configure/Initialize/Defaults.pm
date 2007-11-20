@@ -21,6 +21,7 @@ sub init_defaults {
     $self->_init_misc();
     $self->_init_profile();
     $self->_init_archname();
+    return 1;
 }
 
 sub _init_from_options {
