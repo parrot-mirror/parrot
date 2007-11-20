@@ -30,6 +30,33 @@ sub init_all {
     $self->init_miniparrot();
 }
 
+sub set {
+    my $self = shift;
+    while ( my ( $key, $val ) = splice @_, 0, 2 ) {
+        $self->{data}->{$key} = $val;
+    }
+}
+
+sub add {
+    my $self = shift;
+    my $delim = shift;
+    while ( my ( $key, $val ) = splice @_, 0, 2 ) {
+        my ($old) = $self->{$key};
+        if ( defined $old ) {
+            $self->set( $key, "$old$delim$val" );
+        }
+        else {
+            $self->set( $key, $val );
+        }
+    }
+}
+
+sub get {
+    my $self = shift;
+    my $data = $self->{data};
+    return @$data{@_};
+}
+
 1;
 
 #################### DOCUMENTATION ####################
