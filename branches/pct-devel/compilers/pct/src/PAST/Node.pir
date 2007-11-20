@@ -300,43 +300,6 @@ unique number.
 .end
 
 
-=item escape(STR name)
-
-Returns C<name> in a format that can be compiled by PIR.
-
-=cut
-
-.sub 'escape' :method
-    .param string str
-    str = escape str
-    str = concat '"', str
-    str = concat str, '"'
-    $I0 = index str, '\x'
-    if $I0 >= 0 goto unicode
-    $I0 = index str, '\u'
-    if $I0 >= 0 goto unicode
-    .return (str)
-  unicode:
-    str = concat 'unicode:', str
-    .return (str)
-.end
-
-
-=item compile(code [, adverbs :slurpy :named])
-
-(Deprecated.)  Compile the given PAST tree according to C<adverbs>.
-
-=cut
-
-.sub 'compile'
-    .param pmc source
-    .param pmc adverbs         :slurpy :named
-
-    $P0 = compreg 'PAST'
-    .return $P0.'compile'(source, adverbs :flat :named)
-.end
-
-
 =back
 
 =head2 PAST::Val
