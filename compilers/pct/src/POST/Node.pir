@@ -171,3 +171,10 @@ Get/set the opcode type for this node.
 .end
 
 
+.sub 'outer' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('outer', value, has_value)
+.end
+
+

@@ -148,13 +148,17 @@ to executable code (but not executed).
     name = node.'unique'('_block')
   have_name:
 
+    ##  determine the outer POST::Sub for the new one
+    .local pmc outerpost
+    outerpost = get_global '$?SUB'
+    
+    ##  create a POST::Sub node for this block
     .local string blocktype
     blocktype = node.'blocktype'()
-
-    ##  create a POST::Sub node for this block
     .local pmc bpost
     $P0 = get_hll_global ['POST'], 'Sub'
-    bpost = $P0.'new'('node'=>node, 'name'=>name, 'blocktype'=>blocktype)
+    bpost = $P0.'new'('node'=>node, 'name'=>name, 'outer'=>outerpost, 'blocktype'=>blocktype)
+    set_global '$?SUB', bpost
 
     ##  all children but last can return anything, last returns PMC
     $P0 = node.'get_array'()
@@ -169,6 +173,10 @@ to executable code (but not executed).
     $P0 = ops[-1]
     bpost.'push_pirop'('return', $P0)
 
+    ##  restore previous outer scope
+    set_global '$?SUB', outerpost
+
+    ##  handle calls to immediate blocks
     unless blocktype == 'immediate' goto block_done
     .local string rtype, result
     result = ''
@@ -386,10 +394,13 @@ to executable code (but not executed).
     .param pmc node
     .param pmc options         :slurpy :named
 
+    .local pmc code
+    code = new 'CodeString'
+
     ##  get post for any vivification
     ##  get a result register
     .local string result
-    result = node.'unique'('$P')
+    result = code.'unique'('$P')
     .local pmc viviself, vivipost
     viviself = node.'viviself'()
     $I0 = isa viviself, 'PAST::Node'
@@ -412,20 +423,21 @@ to executable code (but not executed).
     $P0 = get_hll_global ['POST'], 'Ops'
     ops = $P0.'new'('result'=>vivipost, 'node'=>node)
 
-    ##  determine variable scope
+    ##  determine variable scope and variable name
     .local string scope, name
     scope = self.'scope'(node)
     name = node.'name'()
-    name = ops.'escape'(name)
+    name = code.'escape'(name)
 
-    .local string fetchop, storeop
+    .local pmc piropc, fetchop, storeop
+    piropc = get_hll_global ['POST'], 'Op'
     if scope == 'package' goto post_package
 
   post_lexical:
     $I0 = node.'isdecl'()
     if $I0 goto post_lexical_decl
-    fetchop = 'find_lex'
-    storeop = 'store_lex'
+    fetchop = piropc.'new'(ops, name, 'pirop'=>'find_lex')
+    storeop = piropc.'new'(name, ops, 'pirop'=>'store_lex')
     goto post_scope
 
   post_lexical_decl:
@@ -434,12 +446,21 @@ to executable code (but not executed).
     .return (ops)
 
   post_package:
-    fetchop = 'get_global'
-    storeop = 'set_global'
+    .local pmc ns
+    ns = node.'namespace'()
+    if ns goto post_package_ns
+    fetchop = piropc.'new'(ops, name, 'pirop'=>'get_global')
+    storeop = piropc.'new'(name, ops, 'pirop'=>'set_global')
+    goto post_scope
+
+  post_package_ns:
+    ns = code.'key'(ns)
+    fetchop = piropc.'new'(ops, ns, name, 'pirop'=>'get_hll_global')
+    storeop = piropc.'new'(ns, name, ops, 'pirop'=>'get_hll_global')
     goto post_scope
 
   post_scope:
-    ops.'push_pirop'(fetchop, ops, name)
+    ops.'push'(fetchop)
     unless viviself goto post_done
     .local pmc vivilabel
     $P0 = get_hll_global ['POST'], 'Label'
@@ -449,7 +470,7 @@ to executable code (but not executed).
     .local int islvalue
     islvalue = node.'islvalue'()
     unless islvalue goto post_lvalue_done
-    ops.'push_pirop'(storeop, name, ops)
+    ops.'push'(storeop)
   post_lvalue_done:
     ops.'push'(vivilabel)
   post_done:

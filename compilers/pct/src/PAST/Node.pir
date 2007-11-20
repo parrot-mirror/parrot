@@ -368,6 +368,36 @@ Otherwise, the node refers to a lexical variable from an outer scope.
     .return self.'attr'('isdecl', value, has_value)
 .end
 
+
+=item islvalue([flag])
+
+Get/set the C<islvalue> attribute, which indicates whether this
+variable is being used in an lvalue context.
+
+=cut
+
+.sub 'islvalue' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('islvalue', value, has_value)
+.end
+
+
+=item namespace([namespace])
+
+Get/set the variable's namespace attribute to the array of strings
+given by C<namespace>.  Useful only for variables with a C<scope>
+of 'package'.
+
+=cut
+
+.sub 'namespace' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('namespace', value, has_value)
+.end
+
+
 =item isslurpy([flag])
 
 Get/set the node's C<isslurpy> attribute (for parameter variables) to C<flag>.
@@ -399,32 +429,9 @@ implementation) a PAST tree to create the value.
 .end
 
 
-=item islvalue([flag])
-
-Get/set the C<islvalue> attribute, which indicates whether this
-variable is being used in an lvalue context.
-
-=cut
-
-.sub 'islvalue' :method
-    .param pmc value           :optional
-    .param int has_value       :opt_flag
-    .return self.'attr'('islvalue', value, has_value)
-.end
 
 
-=item bindvalue([value])
 
-Private PAST attribute that indicates the value to be bound to this
-variable at runtime (e.g., for binding or assignment).
-
-=cut
-
-.sub 'bindvalue' :method
-    .param pmc value           :optional
-    .param int has_value       :opt_flag
-    .return self.'attr'('bindvalue', value, has_value)
-.end
 
 =back
 
