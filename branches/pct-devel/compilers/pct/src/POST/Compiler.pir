@@ -133,6 +133,7 @@ Return pir for an operation node.
     if pirop == 'call' goto pirop_call
     if pirop == 'callmethod' goto pirop_callmethod
     if pirop == 'return' goto pirop_return
+    if pirop == 'inline' goto pirop_inline
 
   pirop_opcode:
     fmt = "    %n %,"
@@ -152,6 +153,11 @@ Return pir for an operation node.
 
   pirop_return:
     fmt = "    .return (%,)"
+    goto pirop_emit
+
+  pirop_inline:
+    fmt = node.'inline'()
+    result = node.'result'()
     goto pirop_emit
 
   pirop_emit:
