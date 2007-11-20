@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 062-initialize.t
+# 063-initialize.t
 
 use strict;
 use warnings;
@@ -16,7 +16,9 @@ use Parrot::Configure::Initialize;
 
 my $cwd = cwd();
 {
-    my $tdir  = tempdir();
+    my $tdir      = tempdir();
+    my $tdir_orig = $tdir;
+    $tdir .= q{/};
     my $tdir1 = tempdir();
     my $args  = process_options(
         {
@@ -38,8 +40,10 @@ my $cwd = cwd();
     isa_ok($init, "Parrot::Configure::Initialize");
     ok($init->init_install(), 'init_install() completed okay');
 
-    is( $init->{prefix},         $tdir,  "--prefix option confirmed" );
-    is( $init->{exec_prefix},    $tdir,  "--exec-prefix option confirmed" );
+    is( $init->{prefix},
+        $tdir_orig, "--prefix option confirmed; trailing slash stripped" );
+    is( $init->{exec_prefix},
+        $tdir_orig, "--exec-prefix option confirmed; trailing slash stripped" );
     is( $init->{bindir},         $tdir1, "--bindir option confirmed" );
     is( $init->{sbindir},        $tdir1, "--sbindir option confirmed" );
     is( $init->{libexecdir},     $tdir1, "--libexecdir option confirmed" );
@@ -61,18 +65,18 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-062-initialize.t - Test Parrot::Configure::Initialize
+063-initialize.t - Test Parrot::Configure::Initialize
 
 =head1 SYNOPSIS
 
-    % prove t/configure/062-initialize.t
+    % prove t/configure/063-initialize.t
 
 =head1 DESCRIPTION
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test Parrot::Configure::Initialize::Install in the
-case where command-line options have been provided.
+The tests in this file test Parrot::Configure::Initialize::Install and
+demonstrates the stripping of the trailing slash in two attributes.
 
 =head1 AUTHOR
 
