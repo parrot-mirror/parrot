@@ -216,6 +216,19 @@ the sub.
   have_outer:
 
     code.'emit'("\n.sub %0 %1", name, outer)
+    .local pmc paramlist
+    paramlist = node['paramlist']
+    if null paramlist goto paramlist_done
+    .local pmc iter
+    iter = new 'Iterator', paramlist
+  param_loop:
+    unless iter goto paramlist_done
+    $P0 = shift iter
+    if null $P0 goto param_loop
+    code .= $P0
+    goto param_loop
+  paramlist_done:
+
     $P0 = self.'pir_children'(node)
     code .= $P0
     code.'emit'(".end\n")
