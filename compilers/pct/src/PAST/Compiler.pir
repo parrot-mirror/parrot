@@ -572,7 +572,7 @@ blocks to determine the scope.
 
     ##  get the current sub
     .local pmc subpost
-    subpost = get_global '$!SUB'
+    subpost = get_global '$?SUB'
 
     ##  determine lexical, register, and parameter names
     .local string name, named, pname, has_pname
@@ -600,6 +600,7 @@ blocks to determine the scope.
     ops.'push'(vivilabel)
 
   param_required:
+    subpost.'add_param'(pname, 'named'=>named)
     name = ops.'escape'(name)
     ops.'push_pirop'('.lex', name, ops)
     .return (ops)

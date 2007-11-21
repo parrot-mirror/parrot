@@ -22,6 +22,15 @@ for compiling programs in Parrot.
     $P0  = protomaker.'new_subclass'(base, 'POST::Ops')
     $P0  = protomaker.'new_subclass'(base, 'POST::Label')
     $P0  = protomaker.'new_subclass'(base, 'POST::Sub')
+
+    $P0 = new 'ResizableStringArray'
+    $P0[0] = "    .param pmc %0"
+    $P0[1] = "    .param pmc %0 :optional\n    .param int has_%0 :opt_flag"
+    $P0[2] = "    .param pmc %0 :slurpy"
+    $P0[4] = "    .param pmc %0 :named(%1)"
+    $P0[5] = "    .param pmc %0 :optional :named(%1)\n    .param int has_%0 :opt_flag"
+    $P0[6] = "    .param pmc %0 :slurpy :named"
+    set_hll_global ['POST::Sub'], '%!paramfmt', $P0
     .return ()
 .end
 
@@ -177,4 +186,46 @@ Get/set the opcode type for this node.
     .return self.'attr'('outer', value, has_value)
 .end
 
+
+.sub 'add_param' :method
+    .param pmc pname
+    .param pmc adverbs         :slurpy :named
+
+    .local int optional, slurpy
+    .local string named
+    optional = adverbs['optional']
+    slurpy = adverbs['slurpy']
+    named = adverbs['named']
+
+    .local int paramseq
+    paramseq = isne optional, 0
+    unless slurpy goto slurpy_done
+    paramseq += 2
+  slurpy_done:
+    unless named goto named_done
+    paramseq += 4
+  named_done:
+
+    .local pmc paramlist
+    paramlist = self['paramlist']
+    unless null paramlist goto have_paramlist
+    paramlist = new 'ResizablePMCArray'
+    self['paramlist'] = paramlist
+  have_paramlist:
+
+    .local pmc code
+    code = paramlist[paramseq]
+    unless null code goto have_code
+    code = new 'CodeString'
+    paramlist[paramseq] = code
+  have_code:
+    
+    .local pmc paramfmt
+    paramfmt = get_hll_global ['POST::Sub'], '%!paramfmt'
+    $S0 = paramfmt[paramseq]
+    named = code.'escape'(named)
+    code.'emit'($S0, pname, named)
+
+    .return ()
+.end
 
