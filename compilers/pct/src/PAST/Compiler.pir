@@ -51,7 +51,7 @@ to executable code (but not executed).
     blockpast = new 'ResizablePMCArray'
     set_global '@?BLOCK', blockpast
   have_blockpast:
-    .return self.'post'(past)
+    .return self.'post'(past, 'rtype'=>'*')
 .end
 
 =item post_children(node [, 'signature'=>signature] )
@@ -254,17 +254,25 @@ Return the POST representation of a C<PAST::Block>.
     ##  restore previous outer scope
     set_global '$?SUB', outerpost
 
-    ##  handle calls to immediate blocks
-    unless blocktype == 'immediate' goto block_done
+    ##  get a result register if we need it
     .local string rtype, result
     result = ''
     rtype = options['rtype']
     if rtype == '*' goto have_result
     result = bpost.'unique'('$P')
   have_result:
+    name = bpost.'escape'(name)
+
+    if blocktype == 'immediate' goto block_immediate
+    if rtype == '*' goto block_done
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
-    name = bpost.'escape'(name)
+    bpost.'push_pirop'('find_name', result, name, 'result'=>result)
+    goto block_done
+
+  block_immediate:
+    $P0 = get_hll_global ['POST'], 'Ops'
+    bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     bpost.'push_pirop'('call', name, 'result'=>result)
 
   block_done:
@@ -298,7 +306,13 @@ the node's "pasttype" attribute.
     .return self.$P0(node, options :flat :named)
  
   post_pirop:
+    .local pmc pirop
+    pirop = node.'pirop'()
+    unless pirop goto post_call
     .return self.'pirop'(node, options :flat :named)
+
+  post_call:
+    .return self.'call'(node, options :flat :named)
 .end
 
 
@@ -433,6 +447,55 @@ a 'pasttype' of if/unless.
     .param pmc node
     .param pmc options         :slurpy :named
     .return self.'if'(node, options :flat :named)
+.end
+
+
+=item for(PAST::Op node)
+
+Return the PAST representation of the C<for> loop given
+by C<node>.
+
+=cut
+
+.sub 'for' :method :multi(_, ['PAST::Op'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+
+    .local pmc ops
+    $P0 = get_hll_global ['POST'], 'Ops'
+    ops = $P0.'new'('node'=>node)
+
+    .local pmc looplabel, endlabel
+    $P0 = get_hll_global ['POST'], 'Label'
+    $S0 = ops.'unique'('for_')
+    looplabel = $P0.'new'('result'=>$S0)
+    $S0 = concat $S0, 'end'
+    endlabel = $P0.'new'('result'=>$S0)
+
+    .local pmc collpast, collpost
+    collpast = node[0]
+    collpost = self.'post'(collpast, 'rtype'=>'P')
+    ops.'push'(collpost)
+
+    .local string iter
+    iter = ops.'unique'('$P')
+    ops.'result'(iter)
+    ops.'push_pirop'('new', iter, '"Iterator"', collpost)
+    ops.'push'(looplabel)
+    ops.'push_pirop'('unless', iter, endlabel)
+
+    .local string nextval
+    nextval = ops.'unique'('$P')
+    ops.'push_pirop'('shift', nextval, iter)
+
+    .local pmc subpast, subpost
+    subpast = node[1]
+    subpost = self.'post'(subpast, 'rtype'=>'P')
+    ops.'push'(subpost)
+    ops.'push_pirop'('call', subpost, nextval)
+    ops.'push_pirop'('goto', looplabel)
+    ops.'push'(endlabel)
+    .return (ops)
 .end
 
 
