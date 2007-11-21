@@ -8,8 +8,6 @@ PAST::Compiler implements a basic compiler for PAST nodes.
 By default PAST::Compiler transforms a PAST tree into POST,
 and then invokes POST::Compiler on the resulting POST tree.
 
-=over
-
 =cut
 
 .namespace [ 'PAST::Compiler' ]
@@ -30,6 +28,9 @@ and then invokes POST::Compiler on the resulting POST tree.
     .return ()
 .end
 
+=head2 Compiler methods
+
+=over 4
 
 =item compile(node, ['target'=>target, ...])
 
@@ -53,6 +54,25 @@ to executable code (but not executed).
     .return self.'post'(past)
 .end
 
+=item post_children(node [, 'signature'=>signature] )
+
+Return the POST representation of evaluating all of C<node>'s
+children in sequence.  The C<signature> option is a string of
+characters that allow the caller to suggest the type of
+result that should be returned by each child:
+
+    *     Anything
+    P     PMC register
+    +     PMC, numeric register, or numeric constant
+    ~     PMC, string register, or string constant
+    :     Argument (same as '*'), possibly with :named or :flat
+
+The first character of C<signature> is ignored (return type),
+thus C<v~P*> says that the first child needs to be something
+in string context, the second child should be a PMC, and the
+third and subsequent children can be any value they wish.
+
+=cut
 
 .sub 'post_children' :method
     .param pmc node
@@ -117,21 +137,79 @@ to executable code (but not executed).
     .return (ops, posargs, namedargs)
 .end
 
+=back
+
+=head2 Methods on C<PAST::Node> arguments
+
+The methods below are used to transform PAST nodes into their
+POST equivalents.
+
+=head3 Defaults
+
+=over 4
+
+=item post(node)
+
+Return a POST representation of C<node>.  Note that C<post> is
+a multimethod based on the type of its first argument, this is
+the method that is called when no other methods match.
+
+If C<node> is an instance of C<PAST::Node>  (meaning that none
+of the other C<post> multimethods were invoked), then return
+the POST representation of C<node>'s children, with the result
+of the node being the result of the last child.
+
+If C<node> revaluates to false, return an empty POST node.
+
+Otherwise, C<node> is treated as a string, and a POST node
+is returned to create a new object of the type given by C<node>.
+This is useful for vivifying values with a simple type name
+instead of an entire PAST structure.
+
+=cut
 
 .sub 'post' :method :multi(_, _)
     .param pmc node
     .param pmc options         :slurpy :named
+
+    .local pmc ops
+    $I0 = isa node, 'PAST::Node'
+    if $I0 goto from_past
+    unless node goto from_nothing
+  from_string:
+    .local string result
+    $P0 = get_hll_global ['PAST'], 'Op'
+    result = $P0.'unique'('$P')
+    $S0 = $P0.'escape'(node)
+    .return $P0.'new'(result, $S0, 'pirop'=>'new', 'result'=>result)
+
+  from_nothing:
+    $P0 = get_hll_global ['PAST'], 'Ops'
+    result = $P0.'unique'('$P')
+    .return $P0.'new'('node'=>node, 'result'=>result)
+
+  from_past:
     $P0 = node.'get_array'()
     $I0 = elements $P0
     $S0 = repeat '*', $I0
     concat $S0, 'P'
-    .local pmc ops
     ops = self.'post_children'(node, 'signature'=>$S0)
     $P0 = ops[-1]
     ops.'result'($P0)
     .return (ops)
 .end
 
+=back
+
+=head3 C<PAST::Block>
+
+=over 4
+
+=item post(PAST::Block node)
+
+Return the POST representation of a C<PAST::Block>.
+
+=cut
 
 .sub 'post' :method :multi(_, ['PAST::Block'])
     .param pmc node
@@ -194,7 +272,20 @@ to executable code (but not executed).
     $P99 = shift blockpast
     .return (bpost)
 .end
-    
+
+=back
+
+=head3 C<PAST::Op>
+
+=over 4
+
+=item post(PAST::Op node)
+
+Return the POST representation of a C<PAST::Op> node.  Normally
+this is handled by redispatching to a method corresponding to
+the node's "pasttype" attribute.
+
+=cut
 
 .sub 'post' :method :multi(_, ['PAST::Op'])
     .param pmc node
@@ -210,6 +301,13 @@ to executable code (but not executed).
     .return self.'pirop'(node, options :flat :named)
 .end
 
+
+=item pirop(PAST::Op node)
+
+Return the POST representation of a C<PAST::Op> node with
+a 'pasttype' of 'pirop'.
+
+=cut
 
 .sub 'pirop' :method :multi(_, ['PAST::Op'])
     .param pmc node
@@ -236,6 +334,15 @@ to executable code (but not executed).
     .return (ops)
 .end
 
+
+=item call(PAST::Op node)
+
+=item callmethod(PAST::Op node)
+
+Return the POST representation of a C<PAST::Op> node
+with a 'pasttype' attribute of either 'call' or 'callmethod'.
+
+=cut
 
 .sub 'call' :method :multi(_, ['PAST::Op'])
     .param pmc node
@@ -265,6 +372,15 @@ to executable code (but not executed).
     .return (ops)
 .end
 
+
+=item if(PAST::Op node)
+
+=item unless(PAST::Op node)
+
+Return the POST representation of C<PAST::Op> nodes with
+a 'pasttype' of if/unless.
+
+=cut
 
 .sub 'if' :method :multi(_,['PAST::Op'])
     .param pmc node
@@ -313,13 +429,19 @@ to executable code (but not executed).
     .return (ops)
 .end
 
-
 .sub 'unless' :method :multi(_, ['PAST::Op'])
     .param pmc node
     .param pmc options         :slurpy :named
     .return self.'if'(node, options :flat :named)
 .end
 
+
+=item bind(PAST::Op node)
+
+Return the POST representation of a C<PAST::Op>
+node with a 'pasttype' of bind.
+
+=cut
 
 .sub 'bind' :method :multi(_, ['PAST::Op'])
     .param pmc node
@@ -339,6 +461,13 @@ to executable code (but not executed).
     .return (ops)
 .end
     
+
+=item inline(PAST::Op node)
+
+Return the POST representation of a C<PAST::Op>
+node with a 'pasttype' of inline.
+
+=cut
 
 .sub 'inline' :method :multi(_, ['PAST::Op'])
     .param pmc node
@@ -364,6 +493,18 @@ to executable code (but not executed).
     .return (ops)
 .end
 
+=back
+
+=head3 C<PAST::Var>
+
+=item scope(PAST::Var node)
+
+Helper function to return the scope of a variable given by C<node>.
+The scope is determined by the node's C<scope> attribute if set,
+otherwise search outward through the symbol tables of any lexical
+blocks to determine the scope.
+
+=cut
 
 .sub 'scope' :method :multi(_, ['PAST::Var'])
     .param pmc node
