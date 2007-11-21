@@ -178,15 +178,15 @@ instead of an entire PAST structure.
     unless node goto from_nothing
   from_string:
     .local string result
-    $P0 = get_hll_global ['PAST'], 'Op'
+    $P0 = get_hll_global ['POST'], 'Op'
     result = $P0.'unique'('$P')
     $S0 = $P0.'escape'(node)
     .return $P0.'new'(result, $S0, 'pirop'=>'new', 'result'=>result)
 
   from_nothing:
-    $P0 = get_hll_global ['PAST'], 'Ops'
+    $P0 = get_hll_global ['POST'], 'Ops'
     result = $P0.'unique'('$P')
-    .return $P0.'new'('node'=>node, 'result'=>result)
+    .return $P0.'new'('result'=>result)
 
   from_past:
     $P0 = node.'get_array'()
@@ -530,94 +530,138 @@ blocks to determine the scope.
 .end
 
 
+.sub 'vivify' :method
+    .param pmc node
+    .param pmc ops
+    .param pmc fetchop
+    .param pmc storeop
+
+    .local pmc viviself, vivipost, vivilabel
+    viviself = node.'viviself'()
+    vivipost = self.'post'(viviself)
+    ops.'result'(vivipost)
+    ops.'push'(fetchop)
+    unless viviself goto vivipost_done
+    $P0 = get_hll_global ['POST'], 'Label'
+    vivilabel = $P0.'new'('name'=>'vivify_')
+    ops.'push_pirop'('unless_null', ops, vivilabel)
+    ops.'push'(vivipost)
+    $I0 = node.'isdecl'()
+    unless $I0 goto vivipost_decl
+    ops.'push'(storeop)
+  vivipost_decl:
+    ops.'push'(vivilabel)
+  vivipost_done:
+    .return (ops)
+.end
+
 
 .sub 'post' :method :multi(_, ['PAST::Var'])
     .param pmc node
     .param pmc options         :slurpy :named
 
-    .local pmc code
-    code = new 'CodeString'
-
-    ##  get post for any vivification
-    ##  get a result register
-    .local string result
-    result = code.'unique'('$P')
-    .local pmc viviself, vivipost
-    viviself = node.'viviself'()
-    $I0 = isa viviself, 'PAST::Node'
-    if $I0 goto viviself_past
-    if viviself goto viviself_string
-    $P0 = get_hll_global ['POST'], 'Ops'
-    vivipost = $P0.'new'('result'=>result)
-    goto vivipost_done
-  viviself_past:
-    vivipost = self.'post'(viviself, 'rtype'=>'P')
-    goto vivipost_done
-  viviself_string:
-    $P0 = get_hll_global ['POST'], 'Op'
-    $S0 = $P0.'escape'(viviself)
-    vivipost = $P0.'new'(result, $S1, 'pirop'=>'new', 'result'=>result, 'node'=>node)
-  vivipost_done:
+    .local string scope
+    scope = self.'scope'(node)
+    $P0 = find_method self, scope
+    .return self.$P0(node)
+.end
     
-    ##  create a node for this lookup
+    
+.sub 'parameter' :method :multi(_, ['PAST::Var'])
+    .param pmc node
+
+    ##  get the current sub
+    .local pmc subpost
+    subpost = get_global '$!SUB'
+
+    ##  determine lexical, register, and parameter names
+    .local string name, named, pname, has_pname
+    name = node.'name'()
+    named = node.'named'()
+    pname = subpost.'unique'('param_')
+    has_pname = concat 'has_', pname
+
+    ##  returned post node
     .local pmc ops
     $P0 = get_hll_global ['POST'], 'Ops'
-    ops = $P0.'new'('result'=>vivipost, 'node'=>node)
+    ops = $P0.'new'('node'=>node, 'result'=>pname)
 
-    ##  determine variable scope and variable name
-    .local string scope, name
-    scope = self.'scope'(node)
-    name = node.'name'()
-    name = code.'escape'(name)
-
-    .local pmc piropc, fetchop, storeop
-    piropc = get_hll_global ['POST'], 'Op'
-    if scope == 'package' goto post_package
-
-  post_lexical:
-    $I0 = node.'isdecl'()
-    if $I0 goto post_lexical_decl
-    fetchop = piropc.'new'(ops, name, 'pirop'=>'find_lex')
-    storeop = piropc.'new'(name, ops, 'pirop'=>'store_lex')
-    goto post_scope
-
-  post_lexical_decl:
-    ops.'push'(vivipost)
-    ops.'push_pirop'('.lex', name, vivipost)
-    .return (ops)
-
-  post_package:
-    .local pmc ns
-    ns = node.'namespace'()
-    if ns goto post_package_ns
-    fetchop = piropc.'new'(ops, name, 'pirop'=>'get_global')
-    storeop = piropc.'new'(name, ops, 'pirop'=>'set_global')
-    goto post_scope
-
-  post_package_ns:
-    ns = code.'key'(ns)
-    fetchop = piropc.'new'(ops, ns, name, 'pirop'=>'get_hll_global')
-    storeop = piropc.'new'(ns, name, ops, 'pirop'=>'get_hll_global')
-    goto post_scope
-
-  post_scope:
-    ops.'push'(fetchop)
-    unless viviself goto post_done
-    .local pmc vivilabel
+    ##  handle optional params
+    .local pmc viviself, vivipost, vivilabel
+    viviself = node.'viviself'()
+    unless viviself goto param_required
+    vivipost = self.'post'(viviself)
     $P0 = get_hll_global ['POST'], 'Label'
-    vivilabel = $P0.'new'('name'=>'vivify_')
-    ops.'push_pirop'('unless_null', ops, vivilabel)
+    vivilabel = $P0.'new'('name'=>'optparam_')
+    subpost.'add_param'(pname, 'named'=>named, 'optional'=>1)
+    ops.'push_pirop'('if', has_pname, vivilabel)
     ops.'push'(vivipost)
-    .local int islvalue
-    islvalue = node.'islvalue'()
-    unless islvalue goto post_lvalue_done
-    ops.'push'(storeop)
-  post_lvalue_done:
+    ops.'push_pirop'('set', ops, vivipost)
     ops.'push'(vivilabel)
-  post_done:
+
+  param_required:
+    name = ops.'escape'(name)
+    ops.'push_pirop'('.lex', name, ops)
     .return (ops)
 .end
- 
+
+
+.sub 'package' :method :multi(_, ['PAST::Var'])
+    .param pmc node
+
+    .local pmc ops, fetchop, storeop
+    $P0 = get_hll_global ['POST'], 'Ops'
+    ops = $P0.'new'('node'=>node)
+
+    .local string name
+    name = node.'name'()
+    name = ops.'escape'(name)
+
+    .local pmc ns
+    ns = node.'namespace'()
+    if ns goto package_ns
+    $P0 = get_hll_global ['POST'], 'Op'
+    fetchop = $P0.'new'(ops, name, 'pirop'=>'get_global')
+    storeop = $P0.'new'(name, ops, 'pirop'=>'set_global')
+    .return self.'vivify'(node, ops, fetchop, storeop)
+
+  package_ns:
+    $P0 = new 'CodeString'
+    ns = $P0.'key'(ns)
+    $P0 = get_hll_global ['POST'], 'Op'
+    fetchop = $P0.'new'(ops, ns, name, 'pirop'=>'get_hll_global')
+    storeop = $P0.'new'(ns, name, ops, 'pirop'=>'set_hll_global')
+    .return self.'vivify'(node, ops, fetchop, storeop)
+.end
+
+
+.sub 'lexical' :method :multi(_, ['PAST::Var'])
+    .param pmc node
+
+    .local string name
+    $P0 = get_hll_global ['POST'], 'Ops'
+    name = node.'name'()
+    name = $P0.'escape'(name)
+   
+    $I0 = node.'isdecl'()
+    if $I0 goto lexical_decl
+
+  lexical_nodecl:
+    .local pmc ops, fetchop, storeop
+    ops = $P0.'new'('node'=>node)
+    $P0 = get_hll_global ['POST'], 'Op'
+    fetchop = $P0.'new'(ops, name, 'pirop'=>'find_lex')
+    storeop = $P0.'new'(name, ops, 'pirop'=>'store_lex')
+    .return self.'vivify'(node, ops, fetchop, storeop)
+
+  lexical_decl:
+    .local pmc viviself
+    viviself = node.'viviself'()
+    ops = self.'post'(viviself, 'rtype'=>'P')
+    ops.'push_pirop'('.lex', name, ops)
+    .return (ops)
+.end
+    
 
 .sub 'bindop' :method :multi(_, ['PAST::Var'], _)
     .param pmc node
@@ -646,7 +690,22 @@ blocks to determine the scope.
   bind_lexical_isdecl:
     .return pirop.'new'(name, bpost, 'pirop'=>'.lex', 'result'=>bpost)
 .end
-    
+
+
+=back
+
+=head3 C<PAST::Val>
+
+=over 4
+
+=item post(PAST::Val node [, 'rtype'=>rtype])
+
+Return the POST representation of the constant value given
+by C<node>.  The C<rtype> parameter advises the method whether
+the value may be returned directly as a PIR constant or needs
+to have a PMC generated containing the constant value.
+
+=cut
 
 .sub 'post' :method :multi(_, ['PAST::Val'])
     .param pmc node
