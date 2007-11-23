@@ -9,11 +9,11 @@ use lib ( "./lib" );
 
 sub init_hints {
     my $self = shift;
-    my $verbose = $self->{verbose};
+    my $verbose = $self->get('verbose');
 
     my $hints_used = 0;
 
-    my $hints = "Initialize::Hints::" . lc($^O);
+    my $hints = "Parrot::Configure::Initialize::Hints::" . lc($^O);
 
     print "[ $hints " if $verbose;
 
@@ -22,15 +22,15 @@ sub init_hints {
 
     # Call the runstep method if it exists.
     # Otherwise the step must have done its work when it was loaded.
-    $hints->runstep( $self, @_ ) if $hints->can('runstep');
+    $hints->runstep( $self ) if $hints->can('runstep');
     $hints_used++;
 
-    $hints = "Initialize::Hints::Local";
+    $hints = "Parrot::Configure::Initialize::Hints::Local";
     print "$hints " if $verbose;
     eval "use $hints";
 
     unless ($@) {
-        $hints->runstep( $self, @_ ) if $hints->can('runstep');
+        $hints->runstep( $self ) if $hints->can('runstep');
         $hints_used++;
     }
 
@@ -39,6 +39,7 @@ sub init_hints {
     }
 
     print "]" if $verbose;
+    return 1;
 }
 
 1;
