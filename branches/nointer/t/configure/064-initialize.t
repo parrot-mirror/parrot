@@ -27,35 +27,35 @@ ok(defined $init,
 isa_ok($init, "Parrot::Configure::Initialize");
 ok($init->init_install(), 'init_install() completed okay');
 
-is( $init->{prefix},         qq{/usr/local},
+is( $init->get('prefix'),         qq{/usr/local},
     "--prefix option confirmed" );
-is( $init->{exec_prefix},    qq{/usr/local},
+is( $init->get('exec_prefix'),    qq{/usr/local},
     "--exec-prefix option confirmed" );
-is( $init->{bindir},         qq{/usr/local/bin},
+is( $init->get('bindir'),         qq{/usr/local/bin},
     "--bindir option confirmed" );
-is( $init->{sbindir},        qq{/usr/local/sbin},
+is( $init->get('sbindir'),        qq{/usr/local/sbin},
     "--sbindir option confirmed" );
-is( $init->{libexecdir},     qq{/usr/local/libexec},
+is( $init->get('libexecdir'),     qq{/usr/local/libexec},
     "--libexecdir option confirmed" );
-is( $init->{datadir},        qq{/usr/local/share},
+is( $init->get('datadir'),        qq{/usr/local/share},
     "--datadir option confirmed" );
-is( $init->{doc_dir},        qq{/usr/local/share/doc/parrot},
+is( $init->get('doc_dir'),        qq{/usr/local/share/doc/parrot},
     "--doc_dir option confirmed" );
-is( $init->{sysconfdir},     qq{/usr/local/etc},
+is( $init->get('sysconfdir'),     qq{/usr/local/etc},
     "--sysconfdir option confirmed" );
-is( $init->{sharedstatedir}, qq{/usr/local/com},
+is( $init->get('sharedstatedir'), qq{/usr/local/com},
     "--sharedstatedir option confirmed" );
-is( $init->{localstatedir},  qq{/usr/local/var},
+is( $init->get('localstatedir'),  qq{/usr/local/var},
     "--localstatedir option confirmed" );
-is( $init->{libdir},         qq{/usr/local/lib},
+is( $init->get('libdir'),         qq{/usr/local/lib},
     "--libdir option confirmed" );
-is( $init->{includedir},     qq{/usr/local/include},
+is( $init->get('includedir'),     qq{/usr/local/include},
     "--includedir option confirmed" );
-is( $init->{oldincludedir},  qq{/usr/include},
+is( $init->get('oldincludedir'),  qq{/usr/include},
     "--oldincludedir option confirmed" );
-is( $init->{infodir},        qq{/usr/local/info},
+is( $init->get('infodir'),        qq{/usr/local/info},
     "--infodir option confirmed" );
-is( $init->{mandir},         qq{/usr/local/man},
+is( $init->get('mandir'),         qq{/usr/local/man},
     "--mandir option confirmed" );
 
 pass("Completed all tests in $0");
