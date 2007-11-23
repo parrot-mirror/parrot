@@ -62,6 +62,20 @@ sub get {
     return @$data{@_};
 }
 
+sub get_options {
+    my $self = shift;
+    my $data = $self->{options};
+    return @$data{@_};
+}
+
+sub option_or_data {
+    my $self = shift;
+    my $arg  = shift;
+
+    my $opt = $self->options->get($arg);
+    return defined $opt ? $opt : $self->get($arg);
+}
+
 1;
 
 #################### DOCUMENTATION ####################

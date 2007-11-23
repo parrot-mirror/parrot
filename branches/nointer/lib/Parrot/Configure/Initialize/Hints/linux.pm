@@ -11,24 +11,24 @@ use Config;
 our $verbose;
 
 sub runstep {
-    my ( $self, $conf ) = @_;
+    my ($step, $init) = @_;
 
-    my $libs      = $conf->option_or_data('libs');
-    my $ccflags   = $conf->option_or_data('ccflags');
-    my $cc        = $conf->option_or_data('cc');
-    my $linkflags = $conf->option_or_data('linkflags');
+    my $libs      = $init->option_or_data('libs');
+    my $ccflags   = $init->option_or_data('ccflags');
+    my $cc        = $init->option_or_data('cc');
+    my $linkflags = $init->option_or_data('linkflags');
 
-    $verbose = $conf->options->get('verbose');
+    $verbose = $init->get_options('verbose');
     print $/ if $verbose;
 
     # should find g++ in most cases
-    my $link = $conf->data->get('link') || 'c++';
+    my $link = $init->get('link') || 'c++';
 
     if ( $libs !~ /-lpthread/ ) {
         $libs .= ' -lpthread';
     }
-    my $ld_share_flags = $conf->data->get('ld_share_flags');
-    my $cc_shared      = $conf->data->get('cc_shared');
+    my $ld_share_flags = $init->get('ld_share_flags');
+    my $cc_shared      = $init->get('cc_shared');
 
     if ( $cc =~ /icc/ ) {
 
@@ -129,7 +129,7 @@ sub runstep {
         $ccflags .= ' -D_GNU_SOURCE';
     }
 
-    $conf->data->set(
+    $init->set(
         ccflags        => $ccflags,
         libs           => $libs,
         ld_share_flags => $ld_share_flags,
@@ -148,7 +148,7 @@ sub runstep {
     );
 
     if ( ( split( '-', $Config{archname} ) )[0] eq 'ia64' ) {
-        $conf->data->set( platform_asm => 1 );
+        $init->set( platform_asm => 1 );
     }
     return;
 }

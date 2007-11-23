@@ -9,7 +9,7 @@ use lib ( "./lib" );
 
 sub init_hints {
     my $self = shift;
-    my $verbose = $self->get('verbose');
+    my $verbose = $self->get_options('verbose');
 
     my $hints_used = 0;
 

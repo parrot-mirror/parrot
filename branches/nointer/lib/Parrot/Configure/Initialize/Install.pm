@@ -9,9 +9,9 @@ use lib ( "./lib" );
 
 sub init_install {
     my $self = shift;
-    my $prefix = $self->{options}->{prefix} || "/usr/local";
+    my $prefix = $self->get_options('prefix') || "/usr/local";
     $prefix =~ s{/\z}{};
-    my $ep = $self->{options}->{'exec-prefix'};
+    my $ep = $self->get_options('exec-prefix');
     $ep =~ s{/\z}{} if defined $ep;
     my $eprefix = $ep ? $ep : $prefix;
 
@@ -72,7 +72,7 @@ sub init_install {
 sub _assign_dir {
     my $self = shift;
     my ( $dir_str, $fix, $ext ) = @_;
-    my $d = $self->{options}->{$dir_str};
+    my $d = $self->get_options($dir_str);
     return $d ? $d : $fix . $ext;
 }
 

@@ -9,7 +9,7 @@ use lib ( "./lib" );
 
 sub init_miniparrot {
     my $self = shift;
-    unless ( $self->{options}->{miniparrot} ) {
+    unless ( $self->get_options('miniparrot') ) {
         return 1;
     }
 
