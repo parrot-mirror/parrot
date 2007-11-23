@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 060-initialize.t
+# 062-init_defaults-01.t
 
 use strict;
 use warnings;
@@ -31,11 +31,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-060-initialize.t - Test Parrot::Configure::Initialize.
+062-init_defaults-01.t - Test Parrot::Configure::Initialize.
 
 =head1 SYNOPSIS
 
-    % prove t/configure/060-initialize.t
+    % prove t/configure/062-init_defaults-01.t
 
 =head1 DESCRIPTION
 
