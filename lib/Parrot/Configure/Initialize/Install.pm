@@ -15,53 +15,58 @@ sub init_install {
     $ep =~ s{/\z}{} if defined $ep;
     my $eprefix = $ep ? $ep : $prefix;
 
-    $self->{prefix} = $prefix;
-    $self->{exec_prefix} = $eprefix;
+    $self->set(
+        prefix => $prefix,
+        exec_prefix => $eprefix,
 
-    #  --bindir=DIR           user executables [EPREFIX/bin]
-    $self->{bindir} = $self->_assign_dir( 'bindir', $eprefix, '/bin' );
+        #  --bindir=DIR           user executables [EPREFIX/bin]
+        bindir => $self->_assign_dir( 'bindir', $eprefix, '/bin' ),
 
-    #  --sbindir=DIR          system admin executables [EPREFIX/sbin]
-    $self->{sbindir} = $self->_assign_dir( 'sbindir', $eprefix, '/sbin' );
+        #  --sbindir=DIR          system admin executables [EPREFIX/sbin]
+        sbindir => $self->_assign_dir( 'sbindir', $eprefix, '/sbin' ),
 
-    #  --libexecdir=DIR       program executables [EPREFIX/libexec]
-    $self->{libexecdir} = $self->_assign_dir( 'libexecdir', $eprefix, '/libexec' );
+        #  --libexecdir=DIR       program executables [EPREFIX/libexec]
+        libexecdir => $self->_assign_dir( 'libexecdir', $eprefix, '/libexec' ),
 
-    #  --datadir=DIR          read-only architecture-independent data 
-    #                         [PREFIX/share]
-    $self->{datadir} = $self->_assign_dir( 'datadir', $prefix, '/share' );
-    # parrot internal use only
-    $self->{doc_dir} = $self->{datadir} . "/doc/parrot";
+        #  --datadir=DIR          read-only architecture-independent data 
+        #                         [PREFIX/share]
+        datadir => $self->_assign_dir( 'datadir', $prefix, '/share' ),
 
-    #  --sysconfdir=DIR       read-only single-machine data [PREFIX/etc]
-    $self->{sysconfdir} = $self->_assign_dir( 'sysconfdir', $prefix, '/etc' );
+        #  --sysconfdir=DIR       read-only single-machine data [PREFIX/etc]
+        sysconfdir => $self->_assign_dir( 'sysconfdir', $prefix, '/etc' ),
 
-    #  --sharedstatedir=DIR   modifiable architecture-independent data
-    #                         [PREFIX/com]
-    $self->{sharedstatedir} = $self->_assign_dir( 'sharedstatedir', $prefix, '/com' );
+        #  --sharedstatedir=DIR   modifiable architecture-independent data
+        #                         [PREFIX/com]
+        sharedstatedir => $self->_assign_dir( 'sharedstatedir', $prefix, '/com' ),
 
-    #  --localstatedir=DIR    modifiable single-machine data [PREFIX/var]
-    $self->{localstatedir} = $self->_assign_dir( 'localstatedir', $prefix, '/var' );
+        #  --localstatedir=DIR    modifiable single-machine data [PREFIX/var]
+        localstatedir => $self->_assign_dir( 'localstatedir', $prefix, '/var' ),
 
-    #  --libdir=DIR           object code libraries [EPREFIX/lib]
-    $self->{libdir} = $self->_assign_dir( 'libdir', $eprefix, '/lib' );
+        #  --libdir=DIR           object code libraries [EPREFIX/lib]
+        libdir => $self->_assign_dir( 'libdir', $eprefix, '/lib' ),
 
-    #  --includedir=DIR       C header files [PREFIX/include]
-    $self->{includedir} = $self->_assign_dir( 'includedir', $prefix, '/include' );
+        #  --includedir=DIR       C header files [PREFIX/include]
+        includedir => $self->_assign_dir( 'includedir', $prefix, '/include' ),
 
-    #  --oldincludedir=DIR    C header files f|| non-gcc [/usr/include]
-    $self->{oldincludedir} = $self->_assign_dir( 'oldincludedir', q{}, '/usr/include' );
+        #  --oldincludedir=DIR    C header files f|| non-gcc [/usr/include]
+        oldincludedir => $self->_assign_dir( 'oldincludedir', q{}, '/usr/include' ),
 
-    #  --infodir=DIR          info documentation [PREFIX/info]
-    $self->{infodir} = $self->_assign_dir( 'infodir', $prefix, '/info' );
+        #  --infodir=DIR          info documentation [PREFIX/info]
+        infodir => $self->_assign_dir( 'infodir', $prefix, '/info' ),
 
-    #  --mandir=DIR           man documentation [PREFIX/man]
-    $self->{mandir} = $self->_assign_dir( 'mandir', $prefix, '/man' );
+        #  --mandir=DIR           man documentation [PREFIX/man]
+        mandir => $self->_assign_dir( 'mandir', $prefix, '/man' ),
 
-    # deprecated
-    $self->{bin_dir} = $self->{bindir};
-    $self->{lib_dir} = $self->{libdir};
-    $self->{include_dir} = $self->{includedir};
+    );
+    $self->set(
+        # parrot internal use only
+        doc_dir => $self->get('datadir') . "/doc/parrot",
+        # deprecated
+        bin_dir => $self->get('bindir'),
+        lib_dir => $self->get('libdir'),
+        include_dir => $self->get('includedir'),
+    );
+    return 1;
 }
 
 sub _assign_dir {

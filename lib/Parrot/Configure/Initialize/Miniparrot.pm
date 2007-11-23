@@ -13,36 +13,38 @@ sub init_miniparrot {
         return 1;
     }
 
-    $self->{miniparrot}         = 1;
-    $self->{DEVEL}              = $self->{DEVEL} . '-miniparrot';
-    $self->{TEMP_cg_h}          = '';
-    $self->{TEMP_cg_c}          = '';
-    $self->{TEMP_cg_o}          = '';
-    $self->{TEMP_cg_r}          = '';
-    $self->{cg_flag}            = '';
-    $self->{archname}           = 'miniparrot';
-    $self->{cpuarch}            = 'unknown';
-    $self->{osname}             = 'ANSI';
-    $self->{jitarchname}        = 'nojit';
-    $self->{jitcpuarch}         = 'i386';
-    $self->{jitcpu}             = 'I386';
-    $self->{jitosname}          = 'nojit';
-    $self->{jitcapable}         = 0;
-    $self->{execcapable}        = 0;
-    $self->{cc_hasjit}          = '';
-    $self->{TEMP_jit_o}         = '';
-    $self->{TEMP_exec_h}        = '';
-    $self->{TEMP_exec_o}        = '';
-    $self->{TEMP_atomic_o}      = '';
-    $self->{asmfun_o}           = '';
-    $self->{has___sighandler_t} = undef;
-    $self->{has_sigatomic_t}    = undef;
-    $self->{has_sigaction}      = undef;
-    $self->{has_setitimer}      = undef;
+    $self->set(
+        miniparrot          => 1,
+        DEVEL               => $self->get('DEVEL') . '-miniparrot',
+        TEMP_cg_h           => '',
+        TEMP_cg_c           => '',
+        TEMP_cg_o           => '',
+        TEMP_cg_r           => '',
+        cg_flag             => '',
+        archname            => 'miniparrot',
+        cpuarch             => 'unknown',
+        osname              => 'ANSI',
+        jitarchname         => 'nojit',
+        jitcpuarch          => 'i386',
+        jitcpu              => 'I386',
+        jitosname           => 'nojit',
+        jitcapable          => 0,
+        execcapable         => 0,
+        cc_hasjit           => '',
+        TEMP_jit_o          => '',
+        TEMP_exec_h         => '',
+        TEMP_exec_o         => '',
+        TEMP_atomic_o       => '',
+        asmfun_o            => '',
+        has___sighandler_t  => undef,
+        has_sigatomic_t     => undef,
+        has_sigaction       => undef,
+        has_setitimer       => undef,
 
     # we can't guarantee anything about pointer alignment under ANSI C89.
     # so we will have to check every byte.
-    $self->{ptr_alignment}      = 1;
+        ptr_alignment       => 1,
+    );
     #Allow ANSI headers only
     foreach ( qw|
         assert
@@ -60,8 +62,9 @@ sub init_miniparrot {
         time
     | )
     {
-        $self->{"i_$_"} = 1;
+        $self->set("i_$_" => 1);
     }
+    return 1;
 }
 
 1;
