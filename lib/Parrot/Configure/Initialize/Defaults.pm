@@ -27,8 +27,10 @@ sub init_defaults {
 sub _init_from_options {
     my $self = shift;
     $self->set(
-        debugging => $self->{options}->{debugging} ? 1 : 0,
-        verbose   => $self->{options}->{verbose},
+#        debugging => $self->{options}->{debugging} ? 1 : 0,
+#        verbose   => $self->{options}->{verbose},
+        debugging => $self->get_options('debugging') ? 1 : 0,
+        verbose   => $self->get_options('verbose'),
     );
 }
 
@@ -212,7 +214,8 @@ sub _init_profile {
     # RT#41497 gcc syntax
     # we should have this in the hints files e.g. cc_profile
     # RT#41496 move profiling to it's own step
-    if ( $self->{options}->{profile} ) {
+#    if ( $self->{options}->{profile} ) {
+    if ( $self->get_options('profile') ) {
         $self->set(
             cc_debug => " -pg ",
             ld_debug => " -pg ",
@@ -224,7 +227,8 @@ sub _init_archname {
     my $self = shift;
     # adjust archname, cc and libs for e.g. --m=32
     # RT#41499 this is maybe gcc only
-    my $m        = $self->{options}->{m};
+#    my $m        = $self->{options}->{m};
+    my $m        = $self->get_options('m');
     my $archname = $Config{archname};
     if ($m) {
         if ( $archname =~ /x86_64/ && $m eq '32' ) {
