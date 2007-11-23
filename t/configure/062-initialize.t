@@ -38,21 +38,21 @@ my $cwd = cwd();
     isa_ok($init, "Parrot::Configure::Initialize");
     ok($init->init_install(), 'init_install() completed okay');
 
-    is( $init->{prefix},         $tdir,  "--prefix option confirmed" );
-    is( $init->{exec_prefix},    $tdir,  "--exec-prefix option confirmed" );
-    is( $init->{bindir},         $tdir1, "--bindir option confirmed" );
-    is( $init->{sbindir},        $tdir1, "--sbindir option confirmed" );
-    is( $init->{libexecdir},     $tdir1, "--libexecdir option confirmed" );
-    is( $init->{datadir},        $tdir1, "--datadir option confirmed" );
-    is( $init->{doc_dir},        qq{$tdir1/doc/parrot}, "--datadir option confirmed" );
-    is( $init->{sysconfdir},     $tdir1, "--syscondir option confirmed" );
-    is( $init->{sharedstatedir}, $tdir1, "--sharedstatedir option confirmed" );
-    is( $init->{localstatedir},  $tdir1, "--localstatedir option confirmed" );
-    is( $init->{libdir},         $tdir1, "--libdir option confirmed" );
-    is( $init->{includedir},     $tdir1, "--includedir option confirmed" );
-    is( $init->{oldincludedir},  $tdir1, "--oldincludedir option confirmed" );
-    is( $init->{infodir},        $tdir1, "--infodir option confirmed" );
-    is( $init->{mandir},         $tdir1, "--mandir option confirmed" );
+    is( $init->get('prefix'),         $tdir,  "--prefix option confirmed" );
+    is( $init->get('exec_prefix'),    $tdir,  "--exec-prefix option confirmed" );
+    is( $init->get('bindir'),         $tdir1, "--bindir option confirmed" );
+    is( $init->get('sbindir'),        $tdir1, "--sbindir option confirmed" );
+    is( $init->get('libexecdir'),     $tdir1, "--libexecdir option confirmed" );
+    is( $init->get('datadir'),        $tdir1, "--datadir option confirmed" );
+    is( $init->get('doc_dir'),        qq{$tdir1/doc/parrot}, "--datadir option confirmed" );
+    is( $init->get('sysconfdir'),     $tdir1, "--syscondir option confirmed" );
+    is( $init->get('sharedstatedir'), $tdir1, "--sharedstatedir option confirmed" );
+    is( $init->get('localstatedir'),  $tdir1, "--localstatedir option confirmed" );
+    is( $init->get('libdir'),         $tdir1, "--libdir option confirmed" );
+    is( $init->get('includedir'),     $tdir1, "--includedir option confirmed" );
+    is( $init->get('oldincludedir'),  $tdir1, "--oldincludedir option confirmed" );
+    is( $init->get('infodir'),        $tdir1, "--infodir option confirmed" );
+    is( $init->get('mandir'),         $tdir1, "--mandir option confirmed" );
 }
 
 pass("Completed all tests in $0");

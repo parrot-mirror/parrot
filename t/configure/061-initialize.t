@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More qw(no_plan); # tests =>  7;
+use Test::More tests =>  6;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use Parrot::Configure;
@@ -25,10 +25,9 @@ ok(defined $init,
 isa_ok($init, "Parrot::Configure::Initialize");
 ok($init->init_defaults(), 'init_defaults() completed okay');
 
-# Next 3 tests cheat by breaking encapsulation.
+# Next 2 tests cheat by breaking encapsulation.
 is($init->get('debugging'), 0, "Got expected value for 'debugging'");
 is($init->get('cc_debug'), q{ -pg }, "Got expected value for 'cc_debug'");
-#is($init->{options}->{m}, 32, "Got expected value for 'm'");
 
 pass("Completed all tests in $0");
 
