@@ -8,6 +8,9 @@ use lib ( "./lib" );
 use base qw|
     Parrot::Configure::Initialize::Defaults
     Parrot::Configure::Initialize::Install
+    Parrot::Configure::Initialize::Miniparrot
+    Parrot::Configure::Initialize::Hints
+    Parrot::Configure::Initialize::Headers
 |;
 
 ################### SUBROUTINES ###################
@@ -28,6 +31,8 @@ sub init_all {
     $self->init_defaults();
     $self->init_install();
     $self->init_miniparrot();
+    $self->init_hints();
+    $self->init_headers();
 }
 
 sub set {
