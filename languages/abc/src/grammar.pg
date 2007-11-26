@@ -18,12 +18,18 @@ rule statement {
     # | <while_statement> {*}                    #= while_statement
     # | <for_statement> {*}                      #= for_statement
     # | <compound_statement> {*}                 #= compound_statement
-    # | '"' <string> '"'
+    | <string> {*}                               #= string
     # | 'break'
     # | 'continue'
     # | 'halt'
     # | 'return' [ '(' <expression> ')' ]?
     | <expression> {*}                           #= expression
+}
+
+
+token string {
+    '"' <string_literal: "> '"'
+    {*}
 }
 
 
