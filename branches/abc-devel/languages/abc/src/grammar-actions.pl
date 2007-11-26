@@ -30,7 +30,15 @@ method statement($/, $key) {
                                :name('saynum'),
                                :pasttype('call') );
     }
+    if ($key eq 'string') {
+        $past := PAST::Op.new( $past, :pirop('print'));
+    }
     make $past;
+}
+
+
+method string($/) {
+    make PAST::Val.new( :value( ~$<string_literal> ), :node($/) );
 }
 
 
