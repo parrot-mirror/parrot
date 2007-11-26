@@ -19,10 +19,18 @@ method statement_list($/) {
 
 method statement($/, $key) {
     my $past := $( $/{$key} );
-    make PAST::Op.new( $past,
-                       :name('saynum'),
-                       :pasttype('call')
-                     );
+    if ($key eq 'expression' && ~$past.name() ne 'infix:=') {
+        my $last := PAST::Var.new( :name('last'),
+                                   :scope('package'),
+                                   :lvalue(1) );
+        $past := PAST::Op.new( $last,
+                               $past,
+                               :pasttype('bind') );
+        $past := PAST::Op.new( $past,
+                               :name('saynum'),
+                               :pasttype('call') );
+    }
+    make $past;
 }
 
 
@@ -34,6 +42,7 @@ method expression($/, $key) {
         my $past := PAST::Op.new( :name($<type>),
                                   :pasttype($<top><pasttype>),
                                   :pirop($<top><pirop>),
+                                  :lvalue($<top><lvalue>),
                                   :node($/)
                                 );
         for @($/) {
@@ -48,8 +57,18 @@ method term($/, $key) {
     make $( $/{$key} );
 }
 
+method float($/) {
+    make PAST::Val.new( :value( +$/ ), :node( $/ ) );
+}
 
 method integer($/) {
     make PAST::Val.new( :value( +$/ ), :node( $/ ) );
 }
 
+method variable($/) {
+    make PAST::Var.new( :name( ~$/ ),
+                        :scope('package'),
+                        :viviself('Float'),
+                        :node( $/ )
+                      );
+}

@@ -32,13 +32,26 @@ rule 'expression'   is optable { ... }
 
 ## recognize terms
 token term {
-    # | <float> {*}                                #= float
+    | <float> {*}                                #= float
     | <integer> {*}                              #= integer
-    # | <variable> {*}                             #= variable
+    | <variable> {*}                             #= variable
+}
+
+token float {
+    [
+    | \d+ '.' \d*
+    | '.' \d+
+    ]
+    {*}
 }
 
 token integer {
     \d+
+    {*}
+}
+
+token variable {
+    <[a..z]> <[_a..z0..9]>*
     {*}
 }
 
@@ -90,7 +103,7 @@ proto prefix:<-->   is equiv(postfix:<++>) is lvalue(1) { ... }
 
 ## negation
 proto prefix:<->    is looser(postfix:<++>)
-    is pirop('neg')
+    is pirop('n_neg')
     { ... }
 
 ## exponentiation
@@ -121,7 +134,7 @@ proto infix:<->     is equiv(infix:<+>)
 ## assignment
 proto infix:<=>     is looser(infix:<+>)
     is assoc('right')
-    is past('assign')
+    is pasttype('bind')
     is lvalue(1)
     { ... }
 
@@ -134,7 +147,7 @@ proto infix:«>»     is equiv(infix:<==>) { ... }
 proto infix:«>=»    is equiv(infix:<==>) { ... }
 
 ## boolean
-proto prefix:<!>    is looser(infix:<==>) is pirop('not') is returns('.Integer') { ... }
+proto prefix:<!>    is looser(infix:<==>) is pirop('n_not') { ... }
 proto infix:<&&>    is looser(prefix:<!>) is assoc('left') { ... }
 proto infix:<||>    is looser(infix:<&&>) is assoc('left') { ... }
 
