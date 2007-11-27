@@ -22,7 +22,7 @@ CC         = @cc@
 
 BUILD_DIR   = @build_dir@
 RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-RUNTESTS    = /home/ckuskie/branches/unified_testing/tools/util/runtests
+RUNTESTS    = @build_dir@/tools/util/runtests
 
 PGE_DIR  = ../../compilers/pge
 TGE_DIR  = ../../compilers/tge

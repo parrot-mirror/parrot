@@ -8,7 +8,7 @@ PERL   = @perl@
 PARROT = ../../parrot
 BUILD_DIR= @build_dir@
 RECONFIGURE= $(PERL) @build_dir@/tools/dev/reconfigure.pl
-RUNTESTS    = /home/ckuskie/branches/unified_testing/tools/util/runtests
+RUNTESTS    = @build_dir@/tools/util/runtests
 
 Makefile: config/makefiles/root.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=urm
