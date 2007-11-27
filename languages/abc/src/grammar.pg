@@ -15,9 +15,9 @@ rule statement_list {
 
 rule statement {
     | <if_statement> {*}                       #= if_statement
-    # | <while_statement> {*}                    #= while_statement
+    | <while_statement> {*}                    #= while_statement
     | <for_statement> {*}                      #= for_statement
-    # | <compound_statement> {*}                 #= compound_statement
+    | <compound_statement> {*}                 #= compound_statement
     | <string> {*}                               #= string
     # | 'break'
     # | 'continue'
@@ -33,8 +33,20 @@ rule if_statement {
 }
 
 
+rule while_statement {
+    'while' '(' <expression> ')' <statement>
+    {*}
+}
+
+
 rule for_statement {
     'for' '(' <expression> ';' <expression> ';' <expression> ')' <statement>
+    {*}
+}
+
+
+rule compound_statement {
+    '{' <statement_list> '}'
     {*}
 }
 
@@ -84,13 +96,7 @@ token variable {
 #    print [ <string> | <expression> ] [ ',' [ <string> | <expression> ] ]*
 #}
 #
-#rule compound_statement {
-#    '{' <statement_list> '}'
-#}
 #
-#rule while_statement {
-#    'while' '(' <expression> ')' <statement>
-#}
 #
 #
 #rule pseudo_statement { 'limits' | 'quit' | 'warranty' }

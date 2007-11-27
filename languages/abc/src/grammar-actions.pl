@@ -48,12 +48,25 @@ method if_statement($/) {
 }
 
 
+method while_statement($/) {
+    make PAST::Op.new( $($<expression>),
+                       $($<statement>),
+                       :pasttype('while'),
+                       :node($/) );
+}
+
+
 method for_statement($/) {
     my $past := PAST::Stmts.new( :node($/) );
     my $body := PAST::Stmts.new( $($<statement>), $($<expression>[2]) );
     $past.push( $( $<expression>[0] ) );
     $past.push( PAST::Op.new( $($<expression>[1]), $body, :pasttype('while')));
     make $past;
+}
+
+
+method compound_statement($/) {
+    make $($<statement_list>);
 }
 
 
