@@ -10,7 +10,7 @@ PARROT   = ../../@test_prog@$(EXE)
 
 BUILD_DIR   = @build_dir@
 RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-RUNTESTS    = /home/ckuskie/branches/unified_testing/tools/util/runtests
+RUNTESTS    = @build_dir@/tools/util/runtests
 
 default: all
 all : parrot.pbc parrot_compiler.pbc parrot_compiler.pasm

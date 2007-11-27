@@ -16,7 +16,7 @@ BUILD_DYNPMC  = $(PERL) @build_dir@/tools/build/dynpmc.pl
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
 
 RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-RUNTESTS    = /home/ckuskie/branches/unified_testing/tools/util/runtests
+RUNTESTS    = @build_dir@/tools/util/runtests
 
 PMCS = match matchrange
 
