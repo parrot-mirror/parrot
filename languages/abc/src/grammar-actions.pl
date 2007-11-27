@@ -36,6 +36,16 @@ method statement($/, $key) {
     make $past;
 }
 
+method if_statement($/) {
+    my $past := PAST::Op.new( $($<expression>),
+                              $( $<statement>[0] ),
+                              :pasttype('if'),
+                              :node( $/ ) );
+    if ( $<statement>[1] ) {
+        $past.push( $( $<statement>[1] ) );
+    }
+    make $past;
+}
 
 method string($/) {
     make PAST::Val.new( :value( ~$<string_literal> ), :node($/) );
