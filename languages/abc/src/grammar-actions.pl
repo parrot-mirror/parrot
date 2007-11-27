@@ -99,11 +99,11 @@ method term($/, $key) {
 }
 
 method float($/) {
-    make PAST::Val.new( :value( +$/ ), :node( $/ ) );
+    make PAST::Val.new( :value( ~$/ ), :returns('Float'), :node( $/ ) );
 }
 
 method integer($/) {
-    make PAST::Val.new( :value( +$/ ), :node( $/ ) );
+    make PAST::Val.new( :value( ~$/ ), :returns('Integer'), :node( $/ ) );
 }
 
 method variable($/, $key) {
