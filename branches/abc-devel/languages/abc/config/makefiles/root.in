@@ -29,7 +29,7 @@ SOURCES = abc.pir \
 # the default target
 abc.pbc: $(PARROT) $(PGE_LIBRARY)/Perl6Grammar.pir $(SOURCES)
 	$(PARROT) $(PGE_LIBRARY)/Perl6Grammar.pir --output=src/gen_grammar.pir src/grammar.pg
-	$(PARROT) ../nqp/nqp.pbc --target=pir --output=src/gen_grammar-actions.pir src/grammar-actions.pl
+	$(PARROT) ../../compilers/nqp/nqp.pbc --target=pir --output=src/gen_grammar-actions.pir src/grammar-actions.pl
 	$(PARROT) -o abc.pbc abc.pir
 
 # This is a listing of all targets, that are meant to be called by users
