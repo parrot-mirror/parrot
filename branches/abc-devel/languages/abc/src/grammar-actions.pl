@@ -106,10 +106,21 @@ method integer($/) {
     make PAST::Val.new( :value( +$/ ), :node( $/ ) );
 }
 
-method variable($/) {
-    make PAST::Var.new( :name( ~$/ ),
-                        :scope('package'),
-                        :viviself('Float'),
-                        :node( $/ )
-                      );
+method variable($/, $key) {
+    my $past;
+    if ($key eq 'var') {
+        $past := PAST::Var.new( :name( ~$<name> ),
+                                :scope('package'),
+                                :viviself('Float'),
+                                :node( $/ )
+                              );
+    }
+    if ($key eq 'call') {
+        $past := PAST::Op.new( $($<expression>),
+                               :name( ~$<name> ),
+                               :pasttype('call'),
+                               :node( $/ )
+                             );
+    }
+    make $past;
 }
