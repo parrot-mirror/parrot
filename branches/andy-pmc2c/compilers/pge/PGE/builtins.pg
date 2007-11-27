@@ -1,4 +1,0 @@
-grammar PGE::Regex;
-
-rule name { <ident> [ \:\: <ident> ]* }
-
