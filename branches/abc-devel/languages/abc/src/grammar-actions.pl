@@ -47,6 +47,16 @@ method if_statement($/) {
     make $past;
 }
 
+
+method for_statement($/) {
+    my $past := PAST::Stmts.new( :node($/) );
+    my $body := PAST::Stmts.new( $($<statement>), $($<expression>[2]) );
+    $past.push( $( $<expression>[0] ) );
+    $past.push( PAST::Op.new( $($<expression>[1]), $body, :pasttype('while')));
+    make $past;
+}
+
+
 method string($/) {
     make PAST::Val.new( :value( ~$<string_literal> ), :node($/) );
 }
