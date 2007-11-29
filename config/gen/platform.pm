@@ -41,7 +41,7 @@ sub runstep {
     $platform = "win32" if $platform =~ /^mingw/;
     $platform =~ s/^ms//;
 
-    if ( ( split m/-/, $conf->data->get('p5Config_archname'), 2 )[0] eq 'ia64' ) {
+    if ( ( split m/-/, $conf->data->get_p5('archname'), 2 )[0] eq 'ia64' ) {
         $platform = 'ia64';
     }
 

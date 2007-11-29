@@ -61,7 +61,7 @@ sub runstep {
         $conf->data->add( ' ', libs => '-lgmp' );
     }
 
-    my $osname = $conf->data->get('p5Config_osname');
+    my $osname = $conf->data->get_p5('osname');
 
     # On OS X check the presence of the gmp header in the standard
     # Fink location.

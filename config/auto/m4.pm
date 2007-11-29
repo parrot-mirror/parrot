@@ -39,7 +39,7 @@ sub runstep {
     $verbose = $conf->options->get( 'verbose' );
     print $/ if $verbose;
 
-    my $archname = $conf->data->get('p5Config_archname');
+    my $archname = $conf->data->get_p5('archname');
     my ( $cpuarch, $osname ) = split m/-/, $archname, 2;
     if ( !defined $osname ) {
         ( $osname, $cpuarch ) = ( $cpuarch, "" );

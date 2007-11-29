@@ -43,7 +43,7 @@ sub runstep {
         $align = $conf->data->get('ptr_alignment');
         $result_str .= "configured: ";
     }
-    elsif ( $^O eq 'hpux' && $conf->data->get('p5Config_ccflags') !~ /DD64/ ) {
+    elsif ( $^O eq 'hpux' && $conf->data->get_p5('ccflags') !~ /DD64/ ) {
 
         # HP-UX 10.20/32 hangs in this test.
         $align = 4;
