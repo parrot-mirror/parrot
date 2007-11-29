@@ -41,6 +41,34 @@ my @parrot_version = Parrot::BuildUtil::parrot_version();
 sub runstep {
     my ( $self, $conf ) = @_;
 
+    # Later configuration steps need access to values from the Perl 5
+    # %Config.  However, other later configuration steps may change
+    # the corresponding values in the Parrot::Configure object.  In
+    # order to provide access to the original values from Perl 5
+    # %Config, we grab those settings we need now and store them in 
+    # special keys within the Parrot::Configure object.
+    # This is a two-stage process.
+
+    # Stage 1:
+    foreach my $orig ( qw|
+        archname
+        ccflags
+        d_socklen_t
+        longsize
+        optimize
+        osname
+        sig_name
+        use64bitint
+    | ) {
+        $conf->data->set( qq{p5Config_$orig} => $Config{$orig} );
+    }
+
+    # Stage 2 (anticipating needs of config/auto/headers.pm):
+    $conf->data->set(
+        map { q|p5Config_| . $_ => $Config{$_} }
+            grep { /^i_/ } keys %Config
+    );
+
     # We need a Glossary somewhere!
     $conf->data->set(
         debugging => $conf->options->get('debugging') ? 1 : 0,

@@ -18,9 +18,7 @@ use warnings;
 
 use base qw(Parrot::Configure::Step::Base);
 
-use Config;
 use Parrot::Configure::Step ':auto';
-
 
 sub _init {
     my $self = shift;
@@ -63,7 +61,7 @@ sub runstep {
         $conf->data->add( ' ', libs => '-lgmp' );
     }
 
-    my $osname = $Config{osname};
+    my $osname = $conf->data->get('p5Config_osname');
 
     # On OS X check the presence of the gmp header in the standard
     # Fink location.

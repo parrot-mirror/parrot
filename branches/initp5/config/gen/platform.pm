@@ -19,8 +19,6 @@ use warnings;
 
 use base qw(Parrot::Configure::Step::Base);
 
-use Config;
-
 use Parrot::Configure::Step qw(copy_if_diff);
 
 sub _init {
@@ -43,7 +41,7 @@ sub runstep {
     $platform = "win32" if $platform =~ /^mingw/;
     $platform =~ s/^ms//;
 
-    if ( ( split m/-/, $Config{archname}, 2 )[0] eq 'ia64' ) {
+    if ( ( split m/-/, $conf->data->get('p5Config_archname'), 2 )[0] eq 'ia64' ) {
         $platform = 'ia64';
     }
 
