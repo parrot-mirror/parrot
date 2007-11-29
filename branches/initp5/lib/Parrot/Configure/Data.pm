@@ -25,15 +25,23 @@ Parrot::Configure::Data - Configuration data container
 
 =head1 DESCRIPTION
 
-This module contains configuration data for use by the other
-Parrot::Configure::* modules.
+This module provides methods by which other Parrot::Configure::* modules
+can access configuration data.
+
+The module supplies a constructor for Parrot::Configure::Data objects
+and three kinds of accessors:
+
+=over 4
+
+=item 1  Main configuration data
+
+=item 2  Triggers
+
+=item 3  Data read from Perl 5's C<%Config> or Perl 5 special variables.
+
+=back
 
 =head1 USAGE
-
-=head2 Import Parameters
-
-This module accepts no arguments to its C<import> method and exports no
-I<symbols>.
 
 =cut
 
@@ -44,9 +52,7 @@ use warnings;
 
 use Data::Dumper;
 
-=head2 Methods
-
-=head3 Constructors
+=head2 Constructor
 
 =over 4
 
@@ -68,6 +74,8 @@ Parrot::Configure::Data object.
 
 =back
 
+=back
+
 =cut
 
 sub new {
@@ -76,15 +84,14 @@ sub new {
     my $self = {
         c        => {},
         triggers => {},
+        p5       => {},
     };
 
     bless $self, ref $class || $class;
     return $self;
 }
 
-=back
-
-=head3 Object Methods
+=head2 Methods for Main Configuration Data
 
 =over 4
 
@@ -378,6 +385,8 @@ Parrot::Configure::Data object.
 
 =back
 
+=back
+
 =cut
 
 sub clean {
@@ -387,6 +396,10 @@ sub clean {
 
     return $self;
 }
+
+=head2 Triggers
+
+=over 4
 
 =item * C<settrigger($key, $trigger, $cb)>
 
@@ -532,6 +545,103 @@ sub deltrigger {
 }
 
 =back
+
+=head2 Methods for Perl 5 Data
+
+
+=over 4
+
+=item * C<get_p5($key, ...)>
+
+=over 4
+
+=item * Purpose
+
+Retrieve data originally derived from the Perl 5 environment during
+configuration step C<init::defaults> and stored in a special part of the
+Parrot::Configure::Data object.
+
+=item * Arguments
+
+List of elements found in the Perl 5-related part of the
+Parrot::Configure object's data structure.
+
+=item * Return Value
+
+List of values associated with corresponding arguments.
+
+=item * Note
+
+Once data from Perl 5's C<%Config> or special variables has been stored
+in configuration step C<init::defaults>, C<%Config> and the special
+variables should not be further accessed.  Use this method instead.
+
+=back
+
+=cut
+
+sub get_p5 {
+    my $self = shift;
+
+    my $p5 = $self->{p5};
+
+    return @$p5{@_};
+}
+
+=item * C<set_p5($key => $val, ...)>
+
+=over 4
+
+=item * Purpose
+
+Looks up values from either (a) the C<%Config>, located in Config.pm
+and imported via C<use Config;>, associated with the instance of Perl
+(C<$^X>) used to run I<Configure.pl> and assigns those values to a
+special part of the Parrot::Configure::Data object.
+
+=item * Arguments
+
+List of C<< key => value >> pairs.  If the key being set is from
+C<%Config>, the corresponding value should have the same name.  If,
+however, the key being set is a Perl 5 special variable (I<e.g.>,
+C<%^O>), the corresponding value should be the 'English' name of that
+special variable as documented in L<perlvar> (less the initial C<$>, of
+course).
+
+=item * Return Value
+
+Parrot::Configure::Data object.
+
+=item * Examples
+
+=item * Note
+
+This method should B<only> be used in configuration step
+C<init::defaults>.  It is B<not> the method used to assign values to the
+main Parrot::Configure data structure; use C<set()> (above) instead.
+
+=back
+
+=cut
+
+sub set_p5 {
+    my $self = shift;
+
+    my $verbose = defined $self->get('verbose') && $self->get('verbose') == 2;
+
+    print "\nSetting Configuration Data:\n(\n" if $verbose;
+
+    while ( my ( $key, $val ) = splice @_, 0, 2 ) {
+        print "\t$key => ", defined($val) ? "'$val'" : 'undef', ",\n"
+            if $verbose;
+        $self->{p5}{$key} = $val;
+
+    }
+
+    print ");\n" if $verbose;
+
+    return $self;
+}
 
 =head1 CREDITS
 
