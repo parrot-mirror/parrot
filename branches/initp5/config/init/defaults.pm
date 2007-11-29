@@ -60,13 +60,12 @@ sub runstep {
         sig_name
         use64bitint
     | ) {
-        $conf->data->set( qq{p5Config_$orig} => $Config{$orig} );
+        $conf->data->set_p5( $orig => $Config{$orig} );
     }
 
     # Stage 2 (anticipating needs of config/auto/headers.pm):
-    $conf->data->set(
-        map { q|p5Config_| . $_ => $Config{$_} }
-            grep { /^i_/ } keys %Config
+    $conf->data->set_p5(
+        map { $_ => $Config{$_} } grep { /^i_/ } keys %Config
     );
 
     # We need a Glossary somewhere!

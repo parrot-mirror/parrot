@@ -71,7 +71,6 @@ sub runstep {
 EOF
 
     for ( sort( $conf->data->keys() ) ) {
-        next if /^p5Config_/;
         next unless /i_(\w+)/;
         if ( $conf->data->get($_) ) {
             print {$HH} "#define PARROT_HAS_HEADER_\U$1 1\n";
@@ -108,7 +107,6 @@ EOF
 
 EOF
     for ( sort( $conf->data->keys() ) ) {
-        next if /^p5Config_/;
         next unless /HAS_(\w+)/;
         if ( $conf->data->get($_) ) {
             print {$HH} "#define PARROT_HAS_\U$1 1\n";
@@ -122,7 +120,6 @@ EOF
 
 EOF
     for ( sort( $conf->data->keys() ) ) {
-        next if /^p5Config_/;
         next unless /D_(\w+)/;
         my $val;
         if ( $val = $conf->data->get($_) ) {

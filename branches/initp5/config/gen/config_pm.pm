@@ -38,13 +38,6 @@ sub runstep {
 
     $conf->data->clean;
 
-    my @p5Config_keys;
-    foreach my $key (keys %{$conf->data->{c}}) {
-        my $del = delete $conf->data->{c}->{$key}
-            if $key =~ /^p5Config_/; 
-        push @p5Config_keys, $del; 
-    }
-
     genfile( 'config/gen/config_pm/myconfig.in', 'myconfig' );
 
     open( my $IN, "<", "config/gen/config_pm/Config_pm.in" )

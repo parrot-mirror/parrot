@@ -48,7 +48,7 @@ sub runstep {
         if (    
             ( $] >= 5.006 ) &&
             ( $size == $longsize ) &&
-            ( $size == $conf->data->get('p5Config_longsize') )
+            ( $size == $conf->data->get_p5('longsize') )
         ) {
             $format = 'l!';
         }
@@ -56,7 +56,7 @@ sub runstep {
             $format = 'l';
         }
        elsif ( $size == 8 ||
-            $conf->data->get('p5Config_use64bitint') eq 'define' ) {
+            $conf->data->get_p5('use64bitint') eq 'define' ) {
             # pp_pack is annoying, and this won't work unless sizeof(UV) >= 8
             $format = 'q';
         }

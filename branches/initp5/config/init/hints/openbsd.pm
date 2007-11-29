@@ -21,7 +21,7 @@ sub runstep {
     }
     $conf->data->set( libs => $libs );
 
-    if ( ( split( m/-/, $conf->data->get('p5Config_archname'), 2 ) )[0] eq 'powerpc' ) {
+    if ( ( split( m/-/, $conf->data->get_p5('archname'), 2 ) )[0] eq 'powerpc' ) {
         $conf->data->set( as => 'as -mregnames' );
     }
 
