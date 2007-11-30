@@ -41,7 +41,7 @@ sub runstep {
     }
     _set_from_Config($conf, \%Config);
 
-    my @extra_headers = _list_extra_headers();
+    my @extra_headers = _list_extra_headers($conf);
 
     my @found_headers;
     foreach my $header (@extra_headers) {
@@ -94,6 +94,7 @@ sub _set_from_Config {
 }
 
 sub _list_extra_headers {
+    my $conf = shift;
     # some headers may not be probed-for by perl 5, or might not be
     # properly reflected in %Config (i_fcntl seems to be wrong on my machine,
     # for instance).
@@ -110,7 +111,7 @@ sub _list_extra_headers {
         sys/stat.h sysexit.h limits.h);
 
     # more extra_headers needed on mingw/msys; *BSD fails if they are present
-    if ( $^O eq "msys" ) {
+    if ( $conf->data->get_p5('OSNAME') eq "msys" ) {
         push @extra_headers, qw(sysmman.h netdb.h);
     }
     return @extra_headers;

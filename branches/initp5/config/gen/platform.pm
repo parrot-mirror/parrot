@@ -34,7 +34,7 @@ sub runstep {
     my ( $self, $conf ) = @_;
 
     my $verbose  = $conf->options->get('verbose');
-    my $platform = lc $^O;
+    my $platform = lc ( $conf->data->get_p5('OSNAME') );
 
     $platform = "ansi"  if defined( $conf->options->get('miniparrot') );
     $platform = "win32" if $platform =~ /^msys/;
