@@ -16,12 +16,8 @@ package auto::headers;
 use strict;
 use warnings;
 
-
 use base qw(Parrot::Configure::Step::Base);
-
 use Parrot::Configure::Step ':auto';
-use Config;
-
 
 sub _init {
     my $self = shift;
@@ -39,7 +35,8 @@ sub runstep {
         $self->set_result('skipped');
         return 1;
     }
-    _set_from_Config($conf, \%Config);
+
+    _set_from_Config($conf);
 
     my @extra_headers = _list_extra_headers($conf);
 
@@ -81,15 +78,14 @@ sub runstep {
 }
 
 sub _set_from_Config {
-    my ($conf, $Configref) = @_;
+    my $conf = shift;
     # perl5's Configure system doesn't call this by its full name, which may
     # confuse use later, particularly once we break free and start doing all
     # probing ourselves
     my %mapping = ( i_niin => "i_netinetin" );
 
-    for ( keys %{$Configref} ) {
-        next unless /^i_/;
-        $conf->data->set( $mapping{$_} || $_ => $Configref->{$_} );
+    for ( grep { /^i_/ } $conf->data->keys_p5() ) {
+        $conf->data->set( $mapping{$_} || $_ => $conf->data->get_p5($_) );
     }
 }
 
