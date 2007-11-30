@@ -47,7 +47,7 @@ sub runstep {
     # order to provide access to the original values from Perl 5
     # %Config, we grab those settings we need now and store them in 
     # special keys within the Parrot::Configure object.
-    # This is a two-stage process.
+    # This is a multi-stage process.
 
     # Stage 1:
     foreach my $orig ( qw|
@@ -56,7 +56,6 @@ sub runstep {
         d_socklen_t
         longsize
         optimize
-        osname
         sig_name
         use64bitint
     | ) {
@@ -67,6 +66,11 @@ sub runstep {
     $conf->data->set_p5(
         map { $_ => $Config{$_} } grep { /^i_/ } keys %Config
     );
+
+    # Stage 3 (Along similar lines, look up values from Perl 5 special
+    # variables and stash them for later lookups.  Name them according
+    # to their 'use English' names as documented in 'perlvar'.)
+    $conf->data->set_p5( OSNAME => $^O );
 
     # We need a Glossary somewhere!
     $conf->data->set(
