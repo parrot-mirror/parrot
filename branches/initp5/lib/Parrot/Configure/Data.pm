@@ -643,6 +643,34 @@ sub set_p5 {
     return $self;
 }
 
+=item * C<keys_p5()>
+
+=over 4
+
+=item * Purpose
+
+Provides a list of names of elements in the Parrot::Configure object's
+main data structure.
+
+=item * Arguments
+
+None.
+
+=item * Return Value
+
+List of elements in the part of the Parrot::Configure object's data
+structure storing Perl 5 configuration data.
+
+=back
+
+=cut
+
+sub keys_p5 {
+    my $self = shift;
+
+    return CORE::keys %{ $self->{p5} };
+}
+
 =head1 CREDITS
 
 Based largely on code written by Brent Royal-Gordon C<brent@brentdax.com>.
