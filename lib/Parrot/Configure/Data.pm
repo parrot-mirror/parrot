@@ -663,6 +663,8 @@ structure storing Perl 5 configuration data.
 
 =back
 
+=back
+
 =cut
 
 sub keys_p5 {
