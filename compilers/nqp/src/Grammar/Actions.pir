@@ -311,6 +311,37 @@
 .end
 
 
+##    method inline_pir_statement($/, $key) {
+##        my $inline;
+##        if ($key eq 'quote')   { $inline := ~$($<quote><string_literal>) }
+##        if ($key eq 'heredoc') { $inline := ~$/<text> }
+##
+##        make PAST::Op.new( :inline( $inline ),
+##                           :pasttype('inline'),
+##                           :node( $/ )
+##                         );
+##    }
+.sub 'inline_pir_statement' :method
+    .param pmc match
+    .param pmc key
+    .local pmc inline
+    if key != 'quote' goto not_quote
+    $P0 = match['quote']
+    $P0 = $P0['string_literal']
+    inline = $P0.'get_scalar'()
+    goto make
+  not_quote:
+    if key != 'heredoc' goto not_heredoc
+    $P0 = match['text']
+    inline = $P0.'get_scalar'()
+  not_heredoc:
+  make:
+    $P1 = get_hll_global ['PAST'], 'Op'
+    $P2 = $P1.'new'( 'inline'=>inline, 'pasttype'=>'inline', 'node'=>match)
+    match.'result_object'($P2)
+.end
+
+
 ##    method block($/, $key) {
 ##        make $($<statement_block>);
 ##    }
@@ -662,6 +693,9 @@
 ##    method package_declarator($/, $key) {
 ##        my $past := $($/{$key});
 ##        $past.namespace($<name><ident>);
+##        $past.blocktype('declaration');
+##        $past.pirflags(':init :load');
+##        if ($<sym> eq 'class') { ...code to make class... }
 ##        make $past;
 ##    }
 .sub 'package_declarator' :method
@@ -673,6 +707,28 @@
     $P1 = match['name']
     $P1 = $P1['ident']
     past.'namespace'($P1)
+    past.'blocktype'('declaration')
+    past.'pirflags'(':init :load')
+    past.'lexical'(0)
+    $S0 = match['sym']
+    if $S0 != 'class' goto class_done
+    .local string inline
+    inline = <<'        INLINE'
+        $P0 = get_hll_global 'Protomaker'
+        $P1 = split '::', '%s'
+        push_eh subclass_done
+        $P2 = $P0.'new_subclass'('Protoobject', $P1)
+        pop_eh
+      subclass_done:
+        INLINE
+    $S0 = match['name']
+    $I0 = index inline, '%s'
+    substr inline, $I0, 2, $S0
+    $P0 = get_hll_global ['PAST'], 'Op'
+    $P1 = $P0.'new'('inline'=>inline, 'pasttype'=>'inline')
+    $P2 = past[0]
+    $P2.'push'($P1)
+  class_done:
     match.'result_object'(past)
 .end
 
