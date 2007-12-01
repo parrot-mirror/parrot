@@ -12,18 +12,15 @@ for compiling programs in Parrot.
 .namespace [ 'PAST' ]
 
 .sub '__onload' :load :init
-    load_bytecode 'TGE.pbc'
-    $P0 = get_class 'TGE::Grammar'
-    $P1 = subclass $P0, 'POST::Grammar'
-
     ##   create the PAST::Node base class
     ##   XXX: Eventually we want this to be a subclass of
     ##   Capture, but as of now Capture isn't working.
     ##   So, we'll simulate it for now.
     .local pmc base, protomaker
-    load_bytecode 'Parrot/Capture_PIR.pir'
-    base = subclass 'Capture_PIR', 'PAST::Node'
-    protomaker = new 'Protomaker'
+    load_bytecode 'Parrot/Capture_PIR.pbc'
+    protomaker = get_hll_global 'Protomaker'
+
+    base = protomaker.'new_subclass'('Capture_PIR', 'PAST::Node')
 
     $P0 = protomaker.'new_subclass'(base, 'PAST::Op')
     $P0 = protomaker.'new_subclass'(base, 'PAST::Stmts')
@@ -265,11 +262,16 @@ the invocant's value of C<attrname> to C<value>.  Returns the
     .param string attrname
     .param pmc value
     .param int has_value
+    .param pmc default         :optional
+    .param int has_default     :opt_flag
     if has_value goto setattr
     value = self[attrname]
-    unless null value goto getattr
+    unless null value goto value_done
+    unless has_default goto value_undef
+    .return (default)
+  value_undef:
     value = new 'Undef'
-  getattr:
+  value_done:
     .return (value)
   setattr:
     self[attrname] = value
@@ -698,6 +700,22 @@ favor of the C<symbol> method above.
 .end
 
 
+=item lexical([flag])
+
+Get/set whether the block is a lexical block.  A block
+with this attribute set to false is not lexically scoped
+inside of its parent, and will not act as an outer lexical
+scope for any nested blocks within it.
+
+=cut
+
+.sub 'lexical' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('lexical', value, has_value, 1)
+.end
+
+
 =item compiler([name])
 
 Indicate that the children nodes of this block are to be
@@ -713,16 +731,16 @@ PAST compiler.
 .end
 
 
-=item pragma([pragma])
+=item pirflags([pirflags])
 
-Get/set any pragmas (PIR) for this block.
+Get/set any pirflags for this block.
 
 =cut
 
-.sub 'pragma' :method
+.sub 'pirflags' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('pragma', value, has_value)
+    .return self.'attr'('pirflags', value, has_value)
 .end
 
 

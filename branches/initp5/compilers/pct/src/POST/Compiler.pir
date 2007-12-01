@@ -16,10 +16,11 @@ either PIR or executable bytecode.
 .namespace [ 'POST::Compiler' ]
 
 .sub '__onload' :load :init
-    $P99 = subclass 'PCT::HLLCompiler', 'POST::Compiler'
-    addattribute $P99, '$!code'
-    $P0 = new 'POST::Compiler'
-    $P0.'language'('POST')
+    $P0 = get_hll_global 'Protomaker'
+    ($P1, $P2) = $P0.'new_subclass'('PCT::HLLCompiler', 'POST::Compiler', '$!code')
+    $P2.'language'('POST')
+    $P0 = new 'String'
+    set_global '$?NAMESPACE', $P0
     .return ()
 .end
 
@@ -204,35 +205,55 @@ the sub.
     name = node.'name'()
     name = code.'escape'(name)
 
-    .local string flags
-    flags = ''
+    .local string pirflags
+    pirflags = node.'pirflags'()
+
+  pirflags_method:
+    ##  FIXME: RT#47794 - Parrot currently doesn't allow both
+    ##  :method and :outer flags on a sub, so if we have :method
+    ##  we automatically skip :outer processing.
+    $I0 = index pirflags, ':method'
+    if $I0 >= 0 goto pirflags_done
+    $S0 = node.'blocktype'()
+    if $S0 != 'method' goto pirflags_method_done
+    pirflags = concat pirflags, ' :method'
+    goto pirflags_done
+  pirflags_method_done:
 
     .local pmc outerpost
-    .local string outer
-    outer = ''
     outerpost = node.'outer'()
-    if null outerpost goto have_outer
-    unless outerpost goto have_outer
-    outer = outerpost.'name'()
-    outer = code.'escape'(outer)
-    flags = concat ' :outer(', outer
-    concat flags, ')'
-  have_outer:
+    if null outerpost goto pirflags_done
+    unless outerpost goto pirflags_done
+    ##  FIXME: RT#47956
+    ##  PIR doesn't compile properly if :outer points to a sub
+    ##  with :init/:load flags on it.
+    $I0 = index pirflags, ':init'
+    if $I0 >= 0 goto pirflags_done
+    $I0 = index pirflags, ':load'
+    if $I0 >= 0 goto pirflags_done
+    $S0 = outerpost.'pirflags'()
+    $I0 = index $S0, ':init'
+    if $I0 >= 0 goto pirflags_done
+    $I0 = index $S0, ':load'
+    if $I0 >= 0 goto pirflags_done
+    $S0 = outerpost.'name'()
+    $S0 = code.'escape'($S0)
+    pirflags = concat pirflags, ' :outer('
+    concat pirflags, $S0
+    concat pirflags, ')'
+  pirflags_done:
 
-    $S0 = node.'blocktype'()
-    if $S0 != 'method' goto have_method
-    flags = ' :method'                           # FIXME: RT#47794
-    # concat flags, ' :method'                   # FIXME: RT#47794
-  have_method:
-
-    .local pmc ns
-    ns = node.'namespace'()
-    unless ns goto namespace_done
-    ns = code.'key'(ns)
+    .local pmc ns, outerns
+    outerns = get_global '$?NAMESPACE'
+    ns = outerns
+    $P0 = node.'namespace'()
+    unless $P0 goto have_ns
+    ns = code.'key'($P0)
+    set_global '$?NAMESPACE', ns
+  have_ns:
     code.'emit'("\n.namespace %0", ns)
-  namespace_done:
 
-    code.'emit'("\n.sub %0%1", name, flags)
+    code.'emit'(".sub %0 %1", name, pirflags)
     .local pmc paramlist
     paramlist = node['paramlist']
     if null paramlist goto paramlist_done
@@ -252,6 +273,8 @@ the sub.
     $P0 = self.'code'()
     code .= $P0
     self.'code'(code)
+
+    set_global '$?NAMESPACE', outerns
 
     code = new 'CodeString'
     .return (code)
