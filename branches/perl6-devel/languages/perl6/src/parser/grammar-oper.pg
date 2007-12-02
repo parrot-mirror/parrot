@@ -1,0 +1,45 @@
+# Copyright (C) 2007, The Perl Foundation.
+# $Id$
+
+## exponentiation
+proto infix:<**> is precedence('w=') { ... }
+
+## symbolic unary
+proto prefix:<+> is precedence('v=') { ... }
+proto prefix:<-> is equiv(prefix:<+>) { ... }
+
+## multiplicative operators
+proto infix:<*> is precedence('u=')
+    is pirop('n_mul')
+    { ... }
+proto infix:</> is equiv(infix:<*>)
+    is pirop('n_div')
+    { ... }
+proto infix:<%> is equiv(infix:<*>)
+    is pirop('n_mod')
+    { ... }
+proto infix:<+&> is equiv(infix:<*>) { ... }
+proto infix:«+<» is equiv(infix:<*>) { ... }
+proto infix:«+>» is equiv(infix:<*>) { ... }
+proto infix:<~&> is equiv(infix:<*>) { ... }
+proto infix:«~<» is equiv(infix:<*>) { ... }
+proto infix:«~>» is equiv(infix:<*>) { ... }
+proto infix:<?&> is equiv(infix:<*>) { ... }
+proto infix:<div> is equiv(infix:<*>) { ... }
+proto infix:<mod> is equiv(infix:<*>) { ... }
+
+## additive operators
+proto infix:<+> is precedence('t=')
+    is pirop('n_add')
+    { ... }
+proto infix:<-> is equiv(infix:<+>)
+    is pirop('n_sub')
+    { ... }
+proto infix:<+|> is equiv(infix:<+>) { ... }
+proto infix:<+^> is equiv(infix:<+>) { ... }
+proto infix:<~|> is equiv(infix:<+>) { ... }
+proto infix:<~^> is equiv(infix:<+>) { ... }
+proto infix:<?|> is equiv(infix:<+>) { ... }
+proto infix:<?^> is equiv(infix:<+>) { ... }
+
+
