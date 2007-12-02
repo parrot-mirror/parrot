@@ -53,8 +53,24 @@ method value($/, $key) {
 }
 
 
-method number($/) {
-    make PAST::Val.new( :value( ~$/ ), :node( $/ ) );
+method number($/, $key) {
+    make $( $/{$key} );
+}
+
+
+##  for a variety of reasons, this is easier in PIR than NQP for now.
+##  NQP doesn't have assign yet, and Perl6Str is lighter-weight than Str.
+method integer($/) {
+    my $str;
+    PIR q<  $P0 = find_lex '$/'   >;
+    PIR q<  $S0 = $P0             >;
+    PIR q<  $P1 = new 'Perl6Str'  >;
+    PIR q<  assign $P1, $S0       >;
+    PIR q<  store_lex '$str', $P1 >;
+    make PAST::Val.new( :value( +$str ),
+                        :returns('Integer'),
+                        :node( $/ )
+                      );
 }
 
 
@@ -66,12 +82,16 @@ method quote($/) {
 
 
 method listop($/) {
-    make PAST::Op.new( $( $<arglist> ),
-                       :name( ~$<sym> ),
-                       :pasttype('call'),
-                       :node( $/ )
-                     );
+    my $past := $( $<arglist> );
+    if (~$past.name() ne 'infix:,') {
+        $past := PAST::Op.new($past);
+    }
+    $past.name( ~$<sym> );
+    $past.pasttype('call');
+    $past.node($/);
+    make $past;
 }
+
 
 method arglist($/) {
     make $( $<EXPR> );
