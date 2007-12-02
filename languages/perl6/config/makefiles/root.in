@@ -9,7 +9,6 @@ BUILD_DIR     = @build_dir@
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 TOOL_DIR      = ../..
-TGE_DIR       = ../../compilers/tge
 CAT           = $(PERL) -MExtUtils::Command -e cat
 CP            = @cp@
 O             = @o@
@@ -20,50 +19,25 @@ PMC_DIR       = src/pmc
 
 all: perl6.pbc
 
+
 SOURCES = perl6.pir \
-  src/parser/grammar_rules.pg \
-  src/parser/grammar_optok.pg \
-  src/parser/expression.pir \
-  src/parser/quote.pir \
-  src/parser/regex.pir \
-  src/PAST/Grammar.tg \
-  src/PAST/Perl6.pir \
-  src/builtins_gen.pir \
-  $(PMC_DIR)/perl6_group$(LOAD_EXT)
+  src/parser/grammar.pg \
+  src/parser/grammar-oper.pg \
+  src/parser/actions.pl \
+  src/gen_builtins.pir \
 
 BUILTINS_PIR = \
-  src/builtins/assign.pir \
-  src/builtins/cmp.pir \
-  src/builtins/control.pir \
-  src/builtins/hash.pir \
   src/builtins/io.pir \
-  src/builtins/list.pir \
-  src/builtins/match.pir \
-  src/builtins/math.pir \
-  src/builtins/misc.pir \
-  src/builtins/named-unary.pir \
   src/builtins/op.pir \
-  src/builtins/parrot.pir \
-  src/builtins/range.pir \
-  src/builtins/string.pir \
-  src/classes/Bool.pir \
-  src/classes/Code.pir \
-  src/classes/List.pir \
-  src/classes/Num.pir \
-  src/classes/Str.pir \
-  src/classes/Undef.pir
-
-PMCS = perl6str perl6bool perl6undef
-PMC_SOURCES = $(PMC_DIR)/perl6str.pmc
 
 PARROT_ARGS =
 
 # the default target
 perl6.pbc: $(PARROT) $(PGE_LIBRARY)/Perl6Grammar.pir $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) $(PGE_LIBRARY)/Perl6Grammar.pir \
-	    --output=src/parser/grammar_gen.pir \
-	    src/parser/grammar_rules.pg src/parser/grammar_optok.pg
-	$(PARROT) $(TGE_DIR)/tgc.pir --output=src/PAST/Grammar_gen.pir src/PAST/Grammar.tg
+	    --output=src/gen_grammar.pir \
+	    src/parser/grammar.pg src/parser/grammar-oper.pg
+	$(PARROT) $(PARROT_ARGS) $(BUILD_DIR)/compilers/nqp/nqp.pbc --output=src/gen_actions.pir --target=pir src/parser/actions.pl
 	$(PARROT) -o perl6.pbc perl6.pir
 
 $(PMC_DIR)/perl6_group$(LOAD_EXT): $(PARROT) $(PMC_SOURCES)
@@ -72,8 +46,8 @@ $(PMC_DIR)/perl6_group$(LOAD_EXT): $(PARROT) $(PMC_SOURCES)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
 
-src/builtins_gen.pir: $(BUILTINS_PIR)
-	$(CAT) $(BUILTINS_PIR) >src/builtins_gen.pir
+src/gen_builtins.pir: $(BUILTINS_PIR)
+	$(CAT) $(BUILTINS_PIR) >src/gen_builtins.pir
 
 #	cd $(BUILD_DIR) && $(CONFIGURE) --step=gen::languages --languages=perl6
 
@@ -103,7 +77,7 @@ help:
 	@echo ""
 
 test: all
-	$(PERL) t/harness t/00-parrot t/01-sanity
+	$(PERL) t/harness t/00-parrot
 
 # this target has nothing to do
 testclean:
@@ -119,24 +93,7 @@ t/spec:
 
 CLEANUPS = \
   perl6.pbc \
-  perl6-orig.pbc \
-  src/parser/grammar_gen.pir \
-  src/parse2past_gen.pir \
-  src/pge2past_gen.pir \
-  src/past2post_gen.pir \
-  src/builtins_gen.pir \
-  src/PAST/Grammar_gen.pir \
-  $(PMC_DIR)/*.h \
-  $(PMC_DIR)/*.c \
-  $(PMC_DIR)/*.dump \
-  $(PMC_DIR)/*$(O) \
-  $(PMC_DIR)/*$(LOAD_EXT) \
-  $(PMC_DIR)/*.exp \
-  $(PMC_DIR)/*.ilk \
-  $(PMC_DIR)/*.manifest \
-  $(PMC_DIR)/*.pdb \
-  $(PMC_DIR)/*.lib \
-  t/spec
+  src/parser/gen_grammar.pir \
 
 clean: 
 	$(RM_RF) $(CLEANUPS)
