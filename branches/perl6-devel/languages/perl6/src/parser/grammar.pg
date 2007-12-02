@@ -46,7 +46,7 @@ grammar Perl6::Grammar is PCT::Grammar;
 
 token TOP {
     <.MARK_STATEMENT_END>
-    <statementlist>
+    <statement_block>
     [ $ | <panic: Syntax error> ]
     {*}
 }
@@ -84,7 +84,17 @@ token unv {
     || '#' \N*
 }
 
-##  Here we deviate from S05 a fair bit on the handling of
+##  STD.pm doesn't have a statement_block rule -- we have one
+##  to distinguish lists of statements that produce blocks
+##  from those that don't.
+
+rule statement_block {
+    {*}                                          #= open
+    <statementlist>
+    {*}                                          #= close
+}
+
+##  Here we deviate from STD.pm a fair bit on the handling of
 ##  statementlist and statement_end, if only because this
 ##  version (first prototyped in NQP) seems a bit more
 ##  straightforward.  We may discover that it won't work.
@@ -156,15 +166,27 @@ token term {
 }
 
 token noun {
+    | <scope_declarator> {*}                     #= scope_declarator
     | <circumfix> {*}                            #= circumfix
+    | <variable> {*}                             #= variable
     | <value> {*}                                #= value
 }
 
+rule scope_declarator {
+    $<declarator>:=[my|our]
+    <variable>
+    {*}
+}
 
 token circumfix {
     | '(' <statementlist> ')' {*}                #= ( )
 }
 
+token variable {
+    | <sigil> <ident> {*}                        #= $var
+}
+
+token sigil { '$' }
 
 token value {
     | <quote> {*}                                #= quote
