@@ -27,6 +27,7 @@ SOURCES = perl6.pir \
   src/gen_builtins.pir \
 
 BUILTINS_PIR = \
+  src/builtins/cmp.pir \
   src/builtins/io.pir \
   src/builtins/op.pir \
 
