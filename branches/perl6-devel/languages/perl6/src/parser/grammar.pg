@@ -156,7 +156,13 @@ token term {
 }
 
 token noun {
+    | <circumfix> {*}                            #= circumfix
     | <value> {*}                                #= value
+}
+
+
+token circumfix {
+    | '(' <statementlist> ')' {*}                #= ( )
 }
 
 
