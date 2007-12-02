@@ -69,7 +69,9 @@ proto infix:<&&> is precedence('l=')
 proto infix:<||> is precedence('k=')
     is pasttype('unless')
     { ... }
-proto infix:<^^> is equiv(infix:<||>) { ... }
+proto infix:<^^> is equiv(infix:<||>)
+    is pasttype('xor')
+    { ... }
 proto infix:<//> is equiv(infix:<||>) { ... }
 proto infix:<min> is equiv(infix:<||>) { ... }
 proto infix:<max> is equiv(infix:<||>) { ... }
@@ -84,5 +86,7 @@ proto infix:<andthen> is equiv(infix:<and>) { ... }
 proto infix:<or> is precedence('c=')
     is pasttype('unless')
     { ... }
-proto infix:<xor> is equiv(infix:<or>) { ... }
+proto infix:<xor> is equiv(infix:<or>)
+    is pasttype('xor')
+    { ... }
 proto infix:<orelse> is equiv(infix:<or>) { ... }
