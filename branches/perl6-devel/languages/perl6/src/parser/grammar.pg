@@ -1,34 +1,60 @@
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
 
+=begin Introduction
 
-=begin overview
+This is the rules portion of the grammar for the perl6 compiler,
+an implementation of Perl 6 on Parrot.  This grammar is modeled
+after the STD.pm grammar that Larry Wall and others are developing,
+available from L<http://svn.pugscode.org/pugs/src/perl6/STD.pm>.
 
-The following is the grammar for nqp written as a sequence of
-Perl 6 rules.  In each of the rules, the special notation C<{*}>
-marks a point in the rule where the corresponding action in
-NQP::Grammar::Actions is to be invoked (see F<src/Grammar/Actions.pir>).
-These actions are then used to construct the AST nodes for
-the program.
+Our ultimate goal is to have this grammar and STD.pm converge
+with each other, to form an "official" Perl 6 grammar.  But
+there's a lot to do between here and that goal.  For one, Parrot
+doesn't yet have a rules engine that understands all of the
+constructs that appear in STD.pm, such as protoregexes .
+Another challenge is that the language specification itself
+changes from time to time as the various implementations progress.
+So, we can't just blindly copy STD.pm .
 
-The C<#=> markers at the ends of lines are used to distinguish
-among multiple C<{*}> actions within a rule, by passing the value
-after the marker as a 'key' argument to the action method.
+When adding a new construct or feature to this grammar,
+be sure to look at STD.pm first to see how it achieves the
+result.  If STD.pm's approach can be copied directly, do that.
+If not, then try to get a close as possible (e.g., by using
+STD.pm's names).  And yes, there are times when STD.pm may
+adopt things done here.  But we want to keep them as close
+as we can.
+
+In each of the rules below, the special notation C<{*}>
+marks a point in the rule where a corresponding method
+from Perl6::Grammar::Actions (F<src/parser/actions.pl>)
+is invoked.  These actions will then construct the abstract
+syntax tree nodes as the source program is being parsed.
+
+The C<#=> markers at the ends of lines look like comments,
+but they're used to distinguish multiple C<{*}> actions
+within a rule.  (This is how STD.pm is organized, also.)
+The value following any C<#=> marker is passed as a
+'key' argument to the action method invoked by C<{*}>
+earlier in the line.
+
+Rules with only one action need no #= comment.
 
 =end overview
 
-grammar NQP::Grammar is PCT::Grammar;
-
+grammar Perl6::Grammar is PCT::Grammar;
 
 token TOP {
-  <statement_block>
+  <statementlist>
   [ $ | <panic: Syntax error> ]
   {*}
 }
 
-##  The <ws> and <pod_comment> rules handle whitespace and comments.
-##  These are taken from an earlier draft of Perl 6, so they do not
-##  yet handle all valid forms of Perl 6 whitespace.
+
+##  The <ws> token is used to match "whitespace", which includes
+##  things like spaces, comments, and pod comments.  The rule
+##  memoizes the last ws token matched into C<$!ws>, and use
+##  this to avoid checking for more.
 token ws {
     {{  $P0 = match.'to'()
         $P1 = get_hll_global [ 'NQP::Grammar' ], '$!ws'
