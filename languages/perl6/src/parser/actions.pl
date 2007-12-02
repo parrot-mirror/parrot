@@ -34,12 +34,21 @@ method term($/, $key) {
 }
 
 
-method value($/, $key) {
+method noun($/, $key) {
     make $( $/{$key} );
 }
 
 
-method noun($/, $key) {
+method circumfix($/, $key) {
+    my $past;
+    if ($key eq '( )') {
+        $past := $( $<statementlist> );
+    }
+    make $past;
+}
+
+
+method value($/, $key) {
     make $( $/{$key} );
 }
 

@@ -38,7 +38,7 @@ print 'ok ';
 say 25 % 13;
 
 # 13
-#print 'ok ';
-#say -(-13);
+print 'ok ';
+say -(-13);
 #print 'ok ';
 # say abs -14;
