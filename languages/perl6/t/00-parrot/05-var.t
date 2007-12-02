@@ -16,11 +16,11 @@ my $b; $b = 4; print 'ok '; say $b;
 
 our $x = 5;  say 'ok ', $x;
 
-# { my $x = 6; say 'ok ', $x; };
+{ my $x = 6; say 'ok ', $x; };
 
 # if ($x + 2 == 7)  { say 'ok ', $x + 2; }
 
-# { my $x = 999; { our $x; say 'ok ', $x + 3; } }
+{ my $x = 999; { our $x; say 'ok ', $x + 3; } }
 
 
 ##   variable interpolation in strings
@@ -34,5 +34,5 @@ $b = "0x0b";  "ok $b" eq 'ok 0x0b' and say 'ok 11';
 
 ##   nested 'our' declarations
 
-# our $x = 'not ok 12';  { our $x = 'ok 12'; };  say $x;
+our $x = 'not ok 12';  { our $x = 'ok 12'; };  say $x;
 

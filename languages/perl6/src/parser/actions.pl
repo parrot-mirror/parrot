@@ -33,6 +33,11 @@ method statement_block($/, $key) {
 }
 
 
+method block($/) {
+    make $( $<statement_block> );
+}
+
+
 method statementlist($/) {
     my $past := PAST::Stmts.new( :node($/) );
     for $<statement> {
@@ -79,14 +84,19 @@ method scope_declarator($/) {
     make $past;
 }
 
+
 method variable($/, $key) {
     make PAST::Var.new( :node($/), :name( ~$/ ), :viviself('Undef') );
 }
+
 
 method circumfix($/, $key) {
     my $past;
     if ($key eq '( )') {
         $past := $( $<statementlist> );
+    }
+    if ($key eq '{ }') {
+        $past := $( $<block> );
     }
     make $past;
 }

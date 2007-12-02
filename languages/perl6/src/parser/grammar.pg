@@ -94,6 +94,19 @@ rule statement_block {
     {*}                                          #= close
 }
 
+
+##  Blocks can also have an implied statement end if the
+##  closing brace is the last non-ws thing on the line.
+
+token block {
+    '{'
+    <statement_block>
+    [ '}' | <panic: Missing '}'> ]
+    [ \h* <.unv>? \n <.MARK_STATEMENT_END> ]?
+    {*}
+}
+
+
 ##  Here we deviate from STD.pm a fair bit on the handling of
 ##  statementlist and statement_end, if only because this
 ##  version (first prototyped in NQP) seems a bit more
@@ -165,6 +178,7 @@ token term {
     | <listop> {*}                               #= listop
 }
 
+
 token noun {
     | <scope_declarator> {*}                     #= scope_declarator
     | <circumfix> {*}                            #= circumfix
@@ -180,6 +194,7 @@ rule scope_declarator {
 
 token circumfix {
     | '(' <statementlist> ')' {*}                #= ( )
+    | <block> {*}                                #= { }
 }
 
 token variable {
