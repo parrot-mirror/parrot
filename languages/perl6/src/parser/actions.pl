@@ -1,7 +1,35 @@
 class Perl6::Grammar::Actions ;
 
 method TOP($/) {
-    make $( $<statementlist> );
+    my $past := $( $<statement_block> );
+    $past.blocktype('declaration');
+    make $past;
+}
+
+
+method statement_block($/, $key) {
+    ##  FIXME: $?BLOCK, @?BLOCK
+    our $BLOCK;
+    our $aBLOCK;
+    if ($key eq 'open') {
+       $BLOCK := PAST::Block.new( PAST::Stmts.new(),
+                                  :blocktype('immediate'),
+                                  :node($/)
+                                );
+       PIR q<  $P0 = get_global '$BLOCK'   >;    # FIXME: @?BLOCK.unshift(...)
+       PIR q<  $P1 = get_global '$aBLOCK'  >;
+       PIR q<  unshift $P1, $P0            >;
+    }
+    if ($key eq 'close') {
+       my $past;
+       PIR q<  $P0 = get_global '$aBLOCK'  >;
+       PIR q<  $P0 = shift $P0             >;
+       PIR q<  store_lex '$past', $P0      >;
+       $BLOCK := $aBLOCK[0];
+       $past.push($($<statementlist>));
+       make $past;
+    }
+    PIR q<  .return () >;  # FIXME:  shouldn't need this
 }
 
 
@@ -38,6 +66,22 @@ method noun($/, $key) {
     make $( $/{$key} );
 }
 
+method scope_declarator($/) {
+    my $past := $( $<variable> );
+    my $name := $past.name();
+    our $BLOCK;                                  # FIXME: $?BLOCK
+    unless $BLOCK.symbol($name) {
+        $past.isdecl(1);
+        my $scope := 'lexical';
+        if (~$<declarator> eq 'our') { $scope := 'package'; }
+        $BLOCK.symbol($name, :scope($scope));
+    }
+    make $past;
+}
+
+method variable($/, $key) {
+    make PAST::Var.new( :node($/), :name( ~$/ ), :viviself('Undef') );
+}
 
 method circumfix($/, $key) {
     my $past;

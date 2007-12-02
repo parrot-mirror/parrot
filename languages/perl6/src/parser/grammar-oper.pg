@@ -76,6 +76,13 @@ proto infix:<//> is equiv(infix:<||>) { ... }
 proto infix:<min> is equiv(infix:<||>) { ... }
 proto infix:<max> is equiv(infix:<||>) { ... }
 
+## item assignment
+proto infix:<=> is precedence('j=')
+    is pasttype('copy')
+    is assoc('right')
+    is lvalue(1)
+    { ... }
+
 ## comma
 proto infix:<,> is precedence('g=')
     is assoc('list')
