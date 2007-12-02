@@ -180,7 +180,30 @@ token quote {
     {*}
 }
 
-token number { \d+ {*} }
+token number {
+    [ <integer> {*}                              #= integer
+    | <dec_number> {*}                           #= dec_number
+    ]
+}
+
+token integer {
+    [
+    | 0 [ b <[01]>+           [ _ <[01]>+ ]*
+        | o <[0..7]>+         [ _ <[0..7]>+ ]*
+        | x <[0..9a..fA..F]>+ [ _ <[0..9a..fA..F]>+ ]*
+        | d \d+               [ _ \d+]*
+        | \d+[_\d+]*
+            {{ say "Leading 0 does not indicate octal in Perl 6" }}  # FIXME
+        ]
+    | \d+[_\d+]*
+    ]
+    {*}
+}
+
+token dec_number {
+    \d+[_\d+]* [ '.' \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]? ]
+    {*}
+}
 
 token name {
     <ident> [ '::' <ident> ]*
