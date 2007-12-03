@@ -159,11 +159,18 @@ rule statement {
     | $<expr>=<EXPR> {*}                         #= expr
 }
 
-
 rule statement_control {
+    | <if_statement> {*}                         #= if_statement
     | <use_statement> {*}                        #= use_statement
 }
 
+rule if_statement {
+    $<sym>=[if|unless]
+    <EXPR> <block>
+    [ 'elsif' <EXPR> <block> ]*
+    [ 'else' $<else>=<block> ]?
+    {*}
+}
 
 rule use_statement {
     $<sym>=[use] <name>
