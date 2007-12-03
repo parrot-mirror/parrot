@@ -39,11 +39,13 @@ SOURCES = perl6.pir \
   $(PERL6_GROUP)
 
 BUILTINS_PIR = \
+  src/classes/Object.pir \
+  src/classes/Str.pir \
+  src/classes/List.pir \
   src/builtins/cmp.pir \
   src/builtins/io.pir \
   src/builtins/list.pir \
   src/builtins/op.pir \
-  src/classes/Str.pir \
 
 PMCS = perl6str
 PMC_SOURCES = $(PMC_DIR)/perl6str.pmc
