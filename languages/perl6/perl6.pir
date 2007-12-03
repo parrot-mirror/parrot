@@ -36,7 +36,7 @@ object.
     $P1.'parseactions'($P2)
 
     $P0 = new 'ResizablePMCArray'
-    set_hll_global ['Perl6';'Grammar';'Actions'], '$aBLOCK', $P0
+    set_hll_global ['Perl6';'Grammar';'Actions'], '@?BLOCK', $P0
 .end
 
 
