@@ -48,6 +48,11 @@ proto infix:<x> is precedence('s=') { ... }
 ## concatenation
 proto infix:<~> is precedence('r=') { ... }
 
+## named unary
+proto prefix:<rand> is precedence('o=') { ... }
+proto prefix:<sleep> is equiv(prefix:<rand>) { ... }
+proto prefix:<abs> is equiv(prefix:<rand>) { ... }
+
 ## chaining
 proto infix:<==>  is precedence('m=') is pasttype('chain') { ... }
 proto infix:<!=>  is equiv(infix:<==>) is pasttype('chain') { ... }
