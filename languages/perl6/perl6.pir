@@ -21,6 +21,8 @@ object.
 
 =cut
 
+.include 'src/gen_builtins.pir'
+
 .namespace [ 'Perl6::Compiler' ]
 
 .loadlib 'perl6_group'
@@ -35,10 +37,14 @@ object.
     $P2 = split '::', 'Perl6::Grammar::Actions'
     $P1.'parseactions'($P2)
 
-    $P0 = new 'ResizablePMCArray'
+    $P0 = new 'List'
     set_hll_global ['Perl6';'Grammar';'Actions'], '@?BLOCK', $P0
 .end
 
+.include 'src/gen_grammar.pir'
+.include 'src/gen_actions.pir'
+
+.namespace ['Perl6::Compiler']
 
 =item main(args :slurpy)  :main
 
@@ -54,11 +60,6 @@ to the Perl6 compiler.
     $P1 = $P0.'command_line'(args)
 .end
 
-.include 'src/gen_grammar.pir'
-
-.include 'src/gen_actions.pir'
-
-.include 'src/gen_builtins.pir'
 
 =back
 

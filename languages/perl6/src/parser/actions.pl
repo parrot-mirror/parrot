@@ -16,15 +16,10 @@ method statement_block($/, $key) {
                                   :blocktype('immediate'),
                                   :node($/)
                                   );
-       PIR q<  $P0 = get_global '$?BLOCK'  >;    # FIXME: @?BLOCK.unshift(...)
-       PIR q<  $P1 = get_global '@?BLOCK'  >;
-       PIR q<  unshift $P1, $P0            >;
+       @?BLOCK.unshift($?BLOCK);
     }
     if ($key eq 'close') {
-       my $past;
-       PIR q<  $P0 = get_global '@?BLOCK'  >;
-       PIR q<  $P0 = shift $P0             >;
-       PIR q<  store_lex '$past', $P0      >;
+       my $past := @?BLOCK.shift();
        $?BLOCK := @?BLOCK[0];
        $past.push($($<statementlist>));
        make $past;
