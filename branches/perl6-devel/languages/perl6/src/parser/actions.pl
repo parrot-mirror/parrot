@@ -52,6 +52,38 @@ method statement_control($/, $key) {
 }
 
 
+method if_statement($/) {
+    my $cond;
+    ##  FIXME:  $cond := +$<EXPR> - 1;
+    PIR q<  $P0 = find_lex '$/'  >;
+    PIR q<  $P0 = $P0['EXPR']    >;
+    PIR q<  $I0 = elements $P0   >;
+    PIR q<  dec $I0              >;
+    PIR q<  $P0 = new 'Integer'  >;
+    PIR q<  $P0 = $I0            >;
+    PIR q<  store_lex '$cond', $P0  >;
+    my $past := PAST::Op.new( $( $<EXPR>[$cond] ),
+                              $( $<block>[$cond] ),
+                              :pasttype('if'),
+                              :node( $/ )
+                            );
+    if ( $<else> ) {
+        $past.push( $( $<else>[0] ) );
+    }
+    while ($cond != 0) {
+        $cond := $cond - 1;
+        $past := PAST::Op.new( $( $<EXPR>[$cond] ),
+                               $( $<block>[$cond] ),
+                               $past,
+                               :pasttype('if'),
+                               :node( $/ )
+                             );
+    }
+    $past.pasttype( ~$<sym> );
+    make $past;
+}
+
+
 method use_statement($/) {
     make PAST::Stmts.new( :node($/) );
 }

@@ -18,7 +18,7 @@ our $x = 5;  say 'ok ', $x;
 
 { my $x = 6; say 'ok ', $x; };
 
-# if ($x + 2 == 7)  { say 'ok ', $x + 2; }
+if ($x + 2 == 7)  { say 'ok ', $x + 2; }
 
 { my $x = 999; { our $x; say 'ok ', $x + 3; } }
 
