@@ -42,6 +42,12 @@ proto infix:<~^> is equiv(infix:<+>) { ... }
 proto infix:<?|> is equiv(infix:<+>) { ... }
 proto infix:<?^> is equiv(infix:<+>) { ... }
 
+## replication
+proto infix:<x> is precedence('s=') { ... }
+
+## concatenation
+proto infix:<~> is precedence('r=') { ... }
+
 ## chaining
 proto infix:<==>  is precedence('m=') is pasttype('chain') { ... }
 proto infix:<!=>  is equiv(infix:<==>) is pasttype('chain') { ... }
@@ -82,6 +88,12 @@ proto infix:<=> is precedence('j=')
     is assoc('right')
     is lvalue(1)
     { ... }
+proto infix:<:=> is equiv(infix:<=>) is pasttype('bind') { ... }
+proto infix:<~=> is equiv(infix:<=>) { ... }
+proto infix:<~&=> is equiv(infix:<=>) { ... }
+proto infix:<~|=> is equiv(infix:<=>) { ... }
+proto infix:<~^=> is equiv(infix:<=>) { ... }
+proto infix:<x=> is equiv(infix:<=>) { ... }
 
 ## comma
 proto infix:<,> is precedence('g=')
