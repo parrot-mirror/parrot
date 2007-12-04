@@ -41,9 +41,6 @@ object.
     set_hll_global ['Perl6';'Grammar';'Actions'], '@?BLOCK', $P0
 .end
 
-.include 'src/gen_grammar.pir'
-.include 'src/gen_actions.pir'
-
 .namespace ['Perl6::Compiler']
 
 =item main(args :slurpy)  :main
@@ -60,6 +57,10 @@ to the Perl6 compiler.
     $P1 = $P0.'command_line'(args)
 .end
 
+
+.include 'src/gen_grammar.pir'
+.include 'src/parser/quote_expression.pir'
+.include 'src/gen_actions.pir'
 
 =back
 

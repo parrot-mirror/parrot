@@ -148,9 +148,35 @@ method integer($/) {
 
 
 method quote($/) {
-    make PAST::Val.new( :value( $($<string_literal>) ),
-                        :node( $/ )
-                      );
+    make $( $<quote_expression> );
+}
+
+
+method quote_concat($/) {
+    my $terms := +$<quote_term>;
+    my $count := 1;
+    my $past := $( $<quote_term>[0] );
+    while ($count != $terms) {
+        $past := PAST::Op.new( $past,
+                               $( $<quote_term>[$count] ),
+                               :pirop('n_concat'),
+                               :pasttype('pirop')
+                             );
+        $count := $count + 1;
+    }
+    make $past;
+}
+
+
+method quote_term($/, $key) {
+    my $past;
+    if ($key eq 'literal') {
+        $past := PAST::Val.new( :value( ~$<quote_literal> ), :node($/) );
+    }
+    if ($key eq 'variable') {
+        $past := $( $<variable> );
+    }
+    make $past;
 }
 
 
