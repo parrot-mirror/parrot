@@ -181,9 +181,13 @@ rule use_statement {
 
 #### Subroutine and method definitions ####
 
+rule routine_declarator {
+    | $<sym>='sub' <routine_def> {*}             #= sub
+    # | $<sym>='method' <method_def> {*}           #= method
+}
+
 rule routine_def {
-    $<declarator>:=['sub'|'method']
-    <ident>
+    <ident>?
     '(' <signature> ')'
     <block>
     {*}
@@ -191,15 +195,11 @@ rule routine_def {
 
 rule signature {
     ( <param_var> ( ',' | <?before ')'> ) )*
-#    ( <colonpair> ( ',' | <?before ')'> ) )*
     {*}
 }
 
 token param_var {
-    [
-    | '$/'
-    | <sigil> <ident>
-    ]
+    <sigil> <ident>
     {*}
 }
 
@@ -283,7 +283,7 @@ token name {
 }
 
 token subcall {
-    <ident> '(' <arglist> ')'
+    <ident> '(' <semilist> ')'
     {*}
 }
 
@@ -298,7 +298,7 @@ token listop {
 }
 
 token arglist {
-    <EXPR>?
+    <EXPR>   # FIXME: need to parse only to list prefix priority
     {*}
 }
 
