@@ -179,6 +179,31 @@ rule use_statement {
 }
 
 
+#### Subroutine and method definitions ####
+
+rule routine_def {
+    $<declarator>:=['sub'|'method']
+    <ident>
+    '(' <signature> ')'
+    <block>
+    {*}
+}
+
+rule signature {
+    ( <param_var> ( ',' | <?before ')'> ) )*
+#    ( <colonpair> ( ',' | <?before ')'> ) )*
+    {*}
+}
+
+token param_var {
+    [
+    | '$/'
+    | <sigil> <ident>
+    ]
+    {*}
+}
+
+
 #### Terms ####
 
 token term {
@@ -189,8 +214,10 @@ token term {
 
 token noun {
     | <scope_declarator> {*}                     #= scope_declarator
+    | <routine_def> {*}                          #= routine_def
     | <circumfix> {*}                            #= circumfix
     | <variable> {*}                             #= variable
+    | <subcall> {*}                              #= subcall
     | <value> {*}                                #= value
 }
 
@@ -255,6 +282,11 @@ token name {
     {*}
 }
 
+token subcall {
+    <ident> '(' <arglist> ')'
+    {*}
+}
+
 ##  S05 has this as prefix:listop... but since the operand (arglist)
 ##  is part of the prefix token, PGE's operator precedence parser
 ##  is left without an argument to parse.  So, for now we treat
@@ -266,7 +298,7 @@ token listop {
 }
 
 token arglist {
-    <EXPR>
+    <EXPR>?
     {*}
 }
 
@@ -274,7 +306,7 @@ token arglist {
 
 ##  The EXPR rule is our entry point into the operator
 ##  precedence parser.  At the moment the operator
-##  tokens are defined in F<src/parser/grammar-tokens.pg>,
+##  tokens are defined in F<src/parser/grammar-oper.pg>,
 ##  using a prototype function syntax (because PGE doesn't
 ##  yet support protoregexes).  When the operator precedence
 ##  parser needs a term, it gets it by calling the 'term'
