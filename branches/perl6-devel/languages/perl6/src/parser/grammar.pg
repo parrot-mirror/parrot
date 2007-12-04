@@ -244,13 +244,15 @@ token value {
     # | <typename> {*}                                       #= typename
 }
 
+##  Quoting is tricky -- the <quote_concat> subrule is in
+##  F<src/parser/quote_expression.pir> .
 token quote {
-    [ \'  <string_literal: '> \'
-    | '"' <string_literal: "> '"'
-    | 'q' <.ws> '<' <string_literal: \>> '>'
+    [ <.before \'> $<quote_expression>=<quote_concat: :q>
+    | <.before \"> $<quote_expression>=<quote_concat: :qq>
     ]
     {*}
 }
+
 
 token number {
     [ <integer> {*}                              #= integer

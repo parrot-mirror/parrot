@@ -35,6 +35,7 @@ SOURCES = perl6.pir \
   src/parser/grammar.pg \
   src/parser/grammar-oper.pg \
   src/parser/actions.pl \
+  src/parser/quote_expression.pir \
   src/gen_builtins.pir \
   $(PERL6_GROUP)
 
