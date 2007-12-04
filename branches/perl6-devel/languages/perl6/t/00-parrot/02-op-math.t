@@ -18,8 +18,8 @@ say 2 * 2;
 # 5
 print 'ok ';
 say 4 +| 1;
-# print 'ok ';
-# say 7 +& +^1;
+print 'ok ';
+say 7 +& +^1;
 
 print 'ok ';
 say 15 +^ 8;
