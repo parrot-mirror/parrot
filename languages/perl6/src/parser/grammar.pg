@@ -247,8 +247,11 @@ token value {
 ##  Quoting is tricky -- the <quote_concat> subrule is in
 ##  F<src/parser/quote_expression.pir> .
 token quote {
-    [ <.before \'> $<quote_expression>=<quote_concat: :q>
-    | <.before \"> $<quote_expression>=<quote_concat: :qq>
+    [
+    | <.before \'>   <quote_expression: :q>
+    | <.before '"' > <quote_expression: :qq>
+    | <.before '<' > <quote_expression: :w :q>
+    # | <.before '«' > <quote_expression: :ww :qq>  FIXME: unicode
     ]
     {*}
 }
