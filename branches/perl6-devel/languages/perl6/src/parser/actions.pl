@@ -152,6 +152,23 @@ method quote($/) {
 }
 
 
+method quote_expression($/) {
+    my $past;
+    if ( +$<quote_concat> == 1 ) {
+        $past := $( $<quote_concat>[0] );
+    }
+    else {
+        $past := PAST::Op.new( :name('list'),
+                               :pasttype('call'),
+                               :node( $/ ) );
+        for $<quote_concat> {
+            $past.push( $($_) );
+        }
+    }
+    make $past;
+}
+
+
 method quote_concat($/) {
     my $terms := +$<quote_term>;
     my $count := 1;
