@@ -71,7 +71,16 @@ method if_statement($/) {
                                :node( $/ )
                              );
     }
-    $past.pasttype( ~$<sym> );
+    make $past;
+}
+
+
+method unless_statement($/) {
+    my $past := PAST::Op.new( $( $<EXPR> ),
+                              $( $<block> ),
+                              :pasttype('unless'),
+                              :node( $/ )
+                            );
     make $past;
 }
 
