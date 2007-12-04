@@ -53,8 +53,7 @@ method statement_control($/, $key) {
 
 
 method if_statement($/) {
-    my $cond;
-    $cond := +$<EXPR> - 1;
+    my $cond := +$<EXPR> - 1;
     my $past := PAST::Op.new( $( $<EXPR>[$cond] ),
                               $( $<block>[$cond] ),
                               :pasttype('if'),
