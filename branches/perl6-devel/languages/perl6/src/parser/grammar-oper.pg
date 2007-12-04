@@ -1,6 +1,12 @@
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
 
+## autoincrement
+proto postfix:<++> is precedence('20=') is lvalue(1) { ... }
+proto postfix:<--> is equiv(postfix:<++>) is lvalue(1) { ... }
+proto prefix:<++> is equiv(postfix:<++>) is lvalue(1) { ... }
+proto prefix:<--> is equiv(postfix:<++>) is lvalue(1) { ... }
+
 ## exponentiation
 proto infix:<**> is precedence('w=') { ... }
 
@@ -100,11 +106,36 @@ proto infix:<=> is precedence('j=')
     is lvalue(1)
     { ... }
 proto infix:<:=> is equiv(infix:<=>) is pasttype('bind') { ... }
+proto infix:<::=> is equiv(infix:<=>) { ... }
+proto infix:<.=> is equiv(infix:<=>) { ... }
 proto infix:<~=> is equiv(infix:<=>) { ... }
-proto infix:<~&=> is equiv(infix:<=>) { ... }
-proto infix:<~|=> is equiv(infix:<=>) { ... }
-proto infix:<~^=> is equiv(infix:<=>) { ... }
+proto infix:<+=> is equiv(infix:<=>) { ... }
+proto infix:<-=> is equiv(infix:<=>) { ... }
+proto infix:<*=> is equiv(infix:<=>) { ... }
+proto infix:</=> is equiv(infix:<=>) { ... }
+proto infix:<%=> is equiv(infix:<=>) { ... }
 proto infix:<x=> is equiv(infix:<=>) { ... }
+proto infix:<Y=> is equiv(infix:<=>) { ... }
+proto infix:<**=> is equiv(infix:<=>) { ... }
+proto infix:<xx=> is equiv(infix:<=>) { ... }
+proto infix:<||=> is equiv(infix:<=>) { ... }
+proto infix:<&&=> is equiv(infix:<=>) { ... }
+proto infix:<//=> is equiv(infix:<=>) { ... }
+proto infix:<^^=> is equiv(infix:<=>) { ... }
+proto infix:«+<=» is equiv(infix:<=>) { ... }
+proto infix:«+>=» is equiv(infix:<=>) { ... }
+proto infix:<+|=> is equiv(infix:<=>) { ... }
+proto infix:<+&=> is equiv(infix:<=>) { ... }
+proto infix:<+^=> is equiv(infix:<=>) { ... }
+proto infix:<~|=> is equiv(infix:<=>) { ... }
+proto infix:<~&=> is equiv(infix:<=>) { ... }
+proto infix:<~^=> is equiv(infix:<=>) { ... }
+proto infix:<?|=> is equiv(infix:<=>) { ... }
+proto infix:<?&=> is equiv(infix:<=>) { ... }
+proto infix:<?^=> is equiv(infix:<=>) { ... }
+proto infix:<|=> is equiv(infix:<=>) { ... }
+proto infix:<&=> is equiv(infix:<=>) { ... }
+proto infix:<^=> is equiv(infix:<=>) { ... }
 
 ## comma
 proto infix:<,> is precedence('g=')
