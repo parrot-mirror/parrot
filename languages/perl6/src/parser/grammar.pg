@@ -193,10 +193,13 @@ rule routine_declarator {
 }
 
 rule routine_def {
-    <ident>?
-    '(' <signature> ')'
+    <ident>? <multisig>?
     <block>
     {*}
+}
+
+rule multisig {
+    '(' <signature> ')'
 }
 
 rule signature {
