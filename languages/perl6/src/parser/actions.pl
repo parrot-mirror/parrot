@@ -239,10 +239,41 @@ method quote_term($/, $key) {
 }
 
 
-method listop($/) {
-    my $past := $( $<arglist> );
-    if (~$past.name() ne 'infix:,') {
-        $past := PAST::Op.new($past);
+method subcall($/) {
+    my $past := $($<semilist>);
+    $past.name( ~$<ident> );
+    $past.pasttype('call');
+    $past.node($/);
+    make $past;
+}
+
+
+method semilist($/) {
+    my $past := PAST::Op.new( :node($/) );
+    if ($<EXPR>) {
+        my $expr := $($<EXPR>[0]);
+        if (~$expr.name() eq 'infix:,') {
+            for @($expr) {
+                $past.push( $_ );
+            }
+        }
+        else {
+            $past.push( $expr );
+        }
+    }
+    make $past;
+}
+
+
+method listop($/, $key) {
+    PIR q< $P0 = find_lex '$key' >;
+    PIR q< say $P0               >;
+    my $past;
+    if ($key eq 'arglist') {
+        $past := $( $<arglist> );
+    }
+    if ($key eq 'noarg') {
+        $past := PAST::Op.new( );
     }
     $past.name( ~$<sym> );
     $past.pasttype('call');
@@ -252,7 +283,17 @@ method listop($/) {
 
 
 method arglist($/) {
-    make $( $<EXPR> );
+    my $past := PAST::Op.new( :node($/) );
+    my $expr := $($<EXPR>);
+    if (~$expr.name() eq 'infix:,') {
+        for @($expr) {
+            $past.push( $_ );
+        }
+    }
+    else {
+        $past.push( $expr );
+    }
+    make $past;
 }
 
 
