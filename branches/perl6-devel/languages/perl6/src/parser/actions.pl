@@ -106,10 +106,12 @@ method routine_def($/) {
     if $<ident> {
         $past.name( ~$<ident>[0] );
     }
-    for $<signature>[0] {
-        my $param_var := $($_<param_var>);
-        $past.symbol($param_var.name(), :scope('lexical'));
-        $params.push($param_var);
+    if ($<multisig>) {
+        for $<multisig>[0]<signature>[0] {
+            my $param_var := $($_<param_var>);
+            $past.symbol($param_var.name(), :scope('lexical'));
+            $params.push($param_var);
+        }
     }
     make $past;
 }
@@ -266,8 +268,6 @@ method semilist($/) {
 
 
 method listop($/, $key) {
-    PIR q< $P0 = find_lex '$key' >;
-    PIR q< say $P0               >;
     my $past;
     if ($key eq 'arglist') {
         $past := $( $<arglist> );
