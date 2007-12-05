@@ -32,11 +32,12 @@ It's a temporary work. Waiting for the real PIR compiler/interpreter.
 .namespace
 
 .sub '__onload' :load :init
-    $P0 = newclass [ 'Lua::PerlCompiler' ]
-    compreg 'Lua', $P0
+    $P0 = newclass [ 'Lua'; 'PerlCompiler' ]
+    new $P1, $P0
+    compreg 'Lua', $P1
 .end
 
-.namespace [ 'Lua::PerlCompiler' ]
+.namespace [ 'Lua'; 'PerlCompiler' ]
 
 .sub 'unlink' :anon
     .param string filename
@@ -109,7 +110,9 @@ It's a temporary work. Waiting for the real PIR compiler/interpreter.
     unlink(out)  # cleaning up the temporary file
     .local pmc ex
     new ex, 'Exception'
-    ex['_message'] = $S0
+    new $P0, 'String'
+    set $P0, $S0
+    setattribute ex, 'message', $P0
     throw ex
   L1:
     unlink(out)  # cleaning up the temporary file

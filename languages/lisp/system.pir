@@ -10,7 +10,7 @@ Used in bootstrapping.
 
 =cut
 
-.sub _init_system
+.sub _init_system :init
 
     .local pmc package
 
@@ -18,13 +18,6 @@ Used in bootstrapping.
 
      store_global "PACKAGES", "SYSTEM", package
      store_global "PACKAGES", "SYS",    package
-
-    # strange things happening here
-    # removing one of these lines breaks Lisp in r20981
-    .local pmc dummy_1
-    .local pmc dummy_2
-    .local pmc dummy_3
-    .local pmc dummy_4
 
     _init_reader_macros( package )
 
@@ -202,7 +195,7 @@ DONE:
      .local pmc retv
      retv = find_global "PACKAGES", pkgname_str
      if_null retv, PACKAGE_NOT_FOUND
-     clear_eh
+     pop_eh
 
      goto DONE
 

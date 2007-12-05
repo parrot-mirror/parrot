@@ -8,6 +8,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More tests => 1;
 use Parrot::Distribution;
+use Parrot::Headerizer;
 
 =head1 NAME
 
@@ -34,52 +35,68 @@ Paul Cochrane <paultcochrane at gmail dot com>
 
 my $DIST = Parrot::Distribution->new;
 my @files = @ARGV ? @ARGV : $DIST->get_c_language_files();
+my $headerizer = Parrot::Headerizer->new;
 my @missing_docs;
+my @extra_docs;
 
 foreach my $file (@files) {
-    my $path;
-
-    ## get the full path of the file
-    # if we have command line arguments, the file is the full path
-    if (@ARGV) {
-        $path = $file;
-    }
-
-    # otherwise, use the relevant Parrot:: path method
-    else {
-        $path = $file->path;
-    }
+    my $path = @ARGV ? $file : $file->path;
+    next unless $path =~ m/\.c|\.h$/;  # can't handle .ops or .pmc files yet
 
     my $buf = $DIST->slurp($path);
 
-    # get rid of if's and for's etc]
-    $buf =~ s/(if|for)\s+\(.*\)\s+{//g;
+    my @function_decls = $headerizer->extract_function_declarations($buf);
 
-    # look for function definitions
-    my @function_names = $buf =~ m/[^\s(\|]\s(\w+)\(.*\s?.*\)\s+{/g;
+    for my $function_decl (@function_decls) {
 
-    for my $function_name (@function_names) {
+        my $escaped_decl = $function_decl;
 
-        # if the function name matches a known C construct, go to the next
-        # one
-        if ( $function_name =~ m/for|if|switch|NOTNULL/ ) {
-            next;
+        # escape [, ], (, ), and *
+        $escaped_decl =~ s/\[/\\[/g;
+        $escaped_decl =~ s/\]/\\]/g;
+        $escaped_decl =~ s/\(/\\(/g;
+        $escaped_decl =~ s/\)/\\)/g;
+        $escaped_decl =~ s/\*/\\*/g;
+
+        # don't worry if the function declaration has embedded newlines in
+        # it and the documented function doesn't.
+        $escaped_decl =~ s/\s+/\\s+/g;
+
+        my $decl_rx = qr/=item C<$escaped_decl>/;
+
+        # if we're sent just a single file, output all function declarations
+        # which aren't yet documented, otherwise just report the files
+        # without docs.
+        if ( @ARGV == 1 ) {
+            if ( $buf !~ m/$decl_rx/g ) {
+                push @missing_docs, "$function_decl\n";
+            }
         }
-
-        # look for matching documentation.  This means the text
-        # '=item C<\w+\s+function_name'
-        if ( $buf !~ m/=item .*$function_name/ ) {
-            push @missing_docs, "$path\n";
-            last;
+        else {
+            # look for matching documentation.  This means the text
+            # '=item C<function_declaration>'
+            if ( $buf !~ m/$decl_rx/g ) {
+                push @missing_docs, "$path\n";
+                last;
+            }
         }
     }
 }
 
-ok( !scalar(@missing_docs), 'Functions documented' )
-    or diag( "Functions lacking documentation in "
-        . scalar @missing_docs
-        . " files:\n@missing_docs\n"
-        . "Use tools/docs/func_boilerplate.pl to add missing documentation\n" );
+if ( @ARGV == 1 ) {
+    ok( !scalar(@missing_docs), 'Functions documented' )
+        or diag( "Number of functions lacking documentation = "
+            . scalar @missing_docs
+            . "\n Functions lacking documentation:\n"
+            . join "#" x 70 . "\n", @missing_docs, "\n");
+}
+else {
+    ok( !scalar(@missing_docs), 'Functions documented' )
+        or diag( "Functions lacking documentation in "
+            . scalar @missing_docs
+            . " files:\n@missing_docs\n"
+            . "Use tools/docs/func_boilerplate.pl to add missing documentation\n" );
+}
 
 # Local Variables:
 #   mode: cperl

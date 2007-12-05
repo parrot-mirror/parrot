@@ -17,18 +17,8 @@ Tests the Range class.
 =cut
 
 .sub main :main
-    # load this library
-    load_bytecode 'library/Test/More.pir'
-
-    # get the testing functions
-    .local pmc exports, curr_namespace, test_namespace
-    curr_namespace = get_namespace
-    test_namespace = get_namespace [ 'Test'; 'More' ]
-    exports = split " ", "plan diag ok is is_deeply like isa_ok"
-
-    test_namespace."export_to"(curr_namespace, exports)
-
-    load_bytecode 'Range.pir' # XXX eventually convert to pbc.
+    .include 'include/test_more.pir'
+    load_bytecode 'Range.pir'
 
     plan(78)
 
@@ -74,7 +64,7 @@ Tests the Range class.
       $I0 = $P0.'shift'()
       ok(0,'1 - exhausted')
       goto finally
-    clear_eh
+    pop_eh
 
 catch:
     # XXX should have more thorough exception check
@@ -111,7 +101,7 @@ finally:
       $I0 = $P0.'shift'()
       ok(0,'2 - exhausted')
       goto finally
-    clear_eh
+    pop_eh
 
 catch:
     # XXX should have more thorough exception check
@@ -147,7 +137,7 @@ finally:
       $I0 = $P0.'shift'()
       ok(0,'3 - exhausted')
       goto finally
-    clear_eh
+    pop_eh
 
 catch:
     # XXX should have more thorough exception check
@@ -180,7 +170,7 @@ finally:
       $I0 = $P0.'pop'()
       ok(0,'4 - exhausted')
       goto finally
-    clear_eh
+    pop_eh
 
 catch:
     # XXX should have more thorough exception check
@@ -216,7 +206,7 @@ finally:
       $I0 = $P0.'pop'()
       ok(0,'5 - exhausted')
       goto finally
-    clear_eh
+    pop_eh
 
 catch:
     # XXX should have more thorough exception check
@@ -252,7 +242,7 @@ finally:
       $I0 = $P0.'pop'()
       ok(0,'6 - exhausted')
       goto finally
-    clear_eh
+    pop_eh
 
 catch:
     # XXX should have more thorough exception check
@@ -316,7 +306,7 @@ finally:
       $I0 = $P0.'shift'()
       ok(0,'8 - exhausted')
       goto finally
-    clear_eh
+    pop_eh
 
 catch:
     # XXX should have more thorough exception check
@@ -353,7 +343,7 @@ finally:
       $I0 = $P0.'pop'()
       ok(0,'9 - exhausted')
       goto finally
-    clear_eh
+    pop_eh
 
 catch:
     # XXX should have more thorough exception check

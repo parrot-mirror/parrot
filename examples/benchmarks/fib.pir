@@ -26,12 +26,12 @@ unspecified).
     $S0 = argv[1]
     N = $S0
 noarg:
-    .sym float start
+    .sym num start
     .sym pmc fib
     .sym int r
     time start
     r = _fib(N)
-    .sym float fin
+    .sym num fin
     time fin
     print "fib("
     print N
@@ -54,9 +54,9 @@ noarg:
     r2 = _fib(n2)
     n = r1 + r2
 ret:
-    .pcc_begin_return
+    .begin_return
     .return n
-    .pcc_end_return
+    .end_return
 .end
 
 =head1 SEE ALSO

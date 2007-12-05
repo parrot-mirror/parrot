@@ -49,7 +49,7 @@ static Builtins builtins[] = {
     { "cwd",    "SJO",          "OS",           NULL, NULL },
     { "exp",    "PJO",          "Float",        NULL, NULL },
     { "index",  "IJSS.I",       "String",       NULL, NULL },
-    { "is_integer","IJS",       "String",       NULL, NULL },
+    { "is_integer", "IJS",      "String",       NULL, NULL },
     { "link",   "vJOSS",        "OS",           NULL, NULL },
     { "ln",     "PJO",          "Float",        NULL, NULL },
     { "log10",  "PJO",          "Float",        NULL, NULL },
@@ -60,7 +60,7 @@ static Builtins builtins[] = {
     { "open",   "PJS.S",        "ParrotIO",     NULL, NULL },
     { "puts",   "IJOS",         "ParrotIO",     NULL, NULL },
     { "rename", "vJOSS",        "File",         NULL, NULL },
-    { "reverse","vJS",          "String",       NULL, NULL },
+    { "reverse", "vJS",         "String",       NULL, NULL },
     { "rm",     "vJOS",         "OS",           NULL, NULL },
     { "say",    "IJOS",         "ParrotIO",     NULL, NULL },
     { "say",    "IJS",          "ParrotIO",     NULL, NULL },
@@ -73,7 +73,7 @@ static Builtins builtins[] = {
     { "sinh",   "PJO",          "Float",        NULL, NULL },
     { "sin",    "PJO",          "Float",        NULL, NULL },
     { "sqrt",   "PJO",          "Float",        NULL, NULL },
-    { "symlink","vJOSS",        "OS",           NULL, NULL },
+    { "symlink", "vJOSS",       "OS",           NULL, NULL },
     { "tanh",   "PJO",          "Float",        NULL, NULL },
     { "tan",    "PJO",          "Float",        NULL, NULL },
     { "trans",  "vJSP",         "String",       NULL, NULL },
@@ -107,17 +107,10 @@ static int find_builtin_s(PARROT_INTERP, NOTNULL(STRING *func))
 
 /*
 
-=item C<Parrot_init_builtins>
+=item C<void
+Parrot_init_builtins(PARROT_INTERP)>
 
 Initialize the builtins structure.
-
-=item C<Parrot_is_builtin>
-
-Return the index of the builtin or -1 on failure.
-
-=item C<Parrot_find_builtin>
-
-Return the NCI PMC of the builtin or NULL.
 
 =cut
 
@@ -133,6 +126,18 @@ Parrot_init_builtins(PARROT_INTERP)
         builtins[i]._namespace = const_string(interp, builtins[i].c_ns);
     }
 }
+
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+static int
+find_builtin(NOTNULL(const char *func))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_WARN_UNUSED_RESULT
 static int
@@ -162,6 +167,18 @@ find_builtin(NOTNULL(const char *func))
     return -1;
 }
 
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+static int
+find_builtin_s(PARROT_INTERP, NOTNULL(STRING *func))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_WARN_UNUSED_RESULT
 static int
 find_builtin_s(PARROT_INTERP, NOTNULL(STRING *func))
@@ -183,6 +200,18 @@ find_builtin_s(PARROT_INTERP, NOTNULL(STRING *func))
     }
     return -1;
 }
+
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+static int
+check_builtin_sig(size_t i, NOTNULL(const char *sig), int convert_pmcs)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_WARN_UNUSED_RESULT
 static int
@@ -209,6 +238,8 @@ check_builtin_sig(size_t i, NOTNULL(const char *sig), int convert_pmcs)
                 /* fall through */
             case 'J':   /* interpreter */
                 ++p;
+            default:
+                break;
         }
         if (*p == 'O' && *sig == 'P')
             continue;
@@ -229,6 +260,18 @@ check_builtin_sig(size_t i, NOTNULL(const char *sig), int convert_pmcs)
 
     return 0;
 }
+
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+int
+Parrot_is_builtin(NOTNULL(const char *func), NULLOK(const char *sig))>
+
+Return the index of the builtin or -1 on failure.
+
+=cut
+
+*/
 
 PARROT_WARN_UNUSED_RESULT
 int
@@ -264,6 +307,19 @@ again:
     return -1;
 }
 
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC*
+Parrot_find_builtin(PARROT_INTERP, NOTNULL(STRING *func))>
+
+Return the NCI PMC of the builtin or NULL.
+
+=cut
+
+*/
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
@@ -282,6 +338,20 @@ Parrot_find_builtin(PARROT_INTERP, NOTNULL(STRING *func))
                                     builtins[i].meth_name);
 }
 
+/*
+
+=item C<PARROT_CONST_FUNCTION
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+const char *
+Parrot_builtin_get_c_namespace(int bi)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_CONST_FUNCTION
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -292,6 +362,19 @@ Parrot_builtin_get_c_namespace(int bi)
     return builtins[bi].c_ns;
 }
 
+/*
+
+=item C<PARROT_CONST_FUNCTION
+PARROT_WARN_UNUSED_RESULT
+int
+Parrot_builtin_is_class_method(int bi)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_CONST_FUNCTION
 PARROT_WARN_UNUSED_RESULT
 int
@@ -300,6 +383,19 @@ Parrot_builtin_is_class_method(int bi)
     PARROT_ASSERT(bi >= 0 && bi < N_BUILTINS);
     return builtins[bi].signature[2] != 'O';
 }
+
+/*
+
+=item C<PARROT_CONST_FUNCTION
+PARROT_WARN_UNUSED_RESULT
+int
+Parrot_builtin_is_void(int bi)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_CONST_FUNCTION
 PARROT_WARN_UNUSED_RESULT

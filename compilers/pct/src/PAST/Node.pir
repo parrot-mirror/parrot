@@ -12,24 +12,22 @@ for compiling programs in Parrot.
 .namespace [ 'PAST' ]
 
 .sub '__onload' :load :init
-    load_bytecode 'TGE.pbc'
-    $P0 = getclass 'TGE::Grammar'
-    $P1 = subclass $P0, 'POST::Grammar'
-
     ##   create the PAST::Node base class
     ##   XXX: Eventually we want this to be a subclass of
     ##   Capture, but as of now Capture isn't working.
     ##   So, we'll simulate it for now.
-    .local pmc base
-    load_bytecode 'Parrot/Capture_PIR.pir'
-    base = subclass 'Capture_PIR', 'PAST::Node'
+    .local pmc base, protomaker
+    load_bytecode 'Parrot/Capture_PIR.pbc'
+    protomaker = get_hll_global 'Protomaker'
 
-    $P0 = subclass base, 'PAST::Op'
-    $P0 = subclass base, 'PAST::Stmts'
-    $P0 = subclass base, 'PAST::Val'
-    $P0 = subclass base, 'PAST::Var'
-    $P0 = subclass base, 'PAST::Block'
-    $P0 = subclass base, 'PAST::VarList'
+    base = protomaker.'new_subclass'('Capture_PIR', 'PAST::Node')
+
+    $P0 = protomaker.'new_subclass'(base, 'PAST::Op')
+    $P0 = protomaker.'new_subclass'(base, 'PAST::Stmts')
+    $P0 = protomaker.'new_subclass'(base, 'PAST::Val')
+    $P0 = protomaker.'new_subclass'(base, 'PAST::Var')
+    $P0 = protomaker.'new_subclass'(base, 'PAST::Block')
+    $P0 = protomaker.'new_subclass'(base, 'PAST::VarList')
 
     $P0 = new 'Integer'
     $P0 = 10
@@ -108,8 +106,8 @@ children and attributes.  Returns the newly created node.
     .param pmc children        :slurpy
     .param pmc adverbs         :slurpy :named
 
-    $S0 = classname self                                   # FIXME
-    $P1 = new $S0                                          # FIXME
+    $P0 = typeof self
+    $P1 = new $P0
     $P1.'init'(children :flat, adverbs :flat :named)
     .return ($P1)
 .end
@@ -264,11 +262,16 @@ the invocant's value of C<attrname> to C<value>.  Returns the
     .param string attrname
     .param pmc value
     .param int has_value
+    .param pmc default         :optional
+    .param int has_default     :opt_flag
     if has_value goto setattr
     value = self[attrname]
-    unless null value goto getattr
+    unless null value goto value_done
+    unless has_default goto value_undef
+    .return (default)
+  value_undef:
     value = new 'Undef'
-  getattr:
+  value_done:
     .return (value)
   setattr:
     self[attrname] = value
@@ -299,43 +302,6 @@ unique number.
 .end
 
 
-=item escape(STR name)
-
-Returns C<name> in a format that can be compiled by PIR.
-
-=cut
-
-.sub 'escape' :method
-    .param string str
-    str = escape str
-    str = concat '"', str
-    str = concat str, '"'
-    $I0 = index str, '\x'
-    if $I0 >= 0 goto unicode
-    $I0 = index str, '\u'
-    if $I0 >= 0 goto unicode
-    .return (str)
-  unicode:
-    str = concat 'unicode:', str
-    .return (str)
-.end
-
-
-=item compile(code [, adverbs :slurpy :named])
-
-(Deprecated.)  Compile the given PAST tree according to C<adverbs>.
-
-=cut
-
-.sub 'compile'
-    .param pmc source
-    .param pmc adverbs         :slurpy :named
-
-    $P0 = compreg 'PAST'
-    .return $P0.'compile'(source, adverbs :flat :named)
-.end
-
-
 =back
 
 =head2 PAST::Val
@@ -350,6 +316,10 @@ node.
 
 Get/set the constant value for this node.
 
+=item returns([typename])
+
+Get/set the type of PMC to be generated from this node.
+
 =cut
 
 .namespace [ 'PAST::Val' ]
@@ -360,6 +330,11 @@ Get/set the constant value for this node.
     .return self.'attr'('value', value, has_value)
 .end
 
+.sub 'returns' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('returns', value, has_value)
+.end
 
 =back
 
@@ -404,19 +379,49 @@ Otherwise, the node refers to a lexical variable from an outer scope.
     .return self.'attr'('isdecl', value, has_value)
 .end
 
-=item isslurpy([flag])
 
-Get/set the node's C<isslurpy> attribute (for parameter variables) to C<flag>.
-A true value of C<isslurpy> indicates that the parameter variable given by this
+=item lvalue([flag])
+
+Get/set the C<lvalue> attribute, which indicates whether this
+variable is being used in an lvalue context.
+
+=cut
+
+.sub 'lvalue' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('lvalue', value, has_value)
+.end
+
+
+=item namespace([namespace])
+
+Get/set the variable's namespace attribute to the array of strings
+given by C<namespace>.  Useful only for variables with a C<scope>
+of 'package'.
+
+=cut
+
+.sub 'namespace' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('namespace', value, has_value)
+.end
+
+
+=item slurpy([flag])
+
+Get/set the node's C<slurpy> attribute (for parameter variables) to C<flag>.
+A true value of C<slurpy> indicates that the parameter variable given by this
 node is to be created as a slurpy parameter (consuming all remaining arguments
 passed in).
 
 =cut
 
-.sub 'isslurpy' :method
+.sub 'slurpy' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('isslurpy', value, has_value)
+    .return self.'attr'('slurpy', value, has_value)
 .end
 
 
@@ -435,32 +440,20 @@ implementation) a PAST tree to create the value.
 .end
 
 
-=item islvalue([flag])
+=item vivibase([type])
 
-Get/set the C<islvalue> attribute, which indicates whether this
-variable is being used in an lvalue context.
-
-=cut
-
-.sub 'islvalue' :method
-    .param pmc value           :optional
-    .param int has_value       :opt_flag
-    .return self.'attr'('islvalue', value, has_value)
-.end
-
-
-=item bindvalue([value])
-
-Private PAST attribute that indicates the value to be bound to this
-variable at runtime (e.g., for binding or assignment).
+For keyed nodes, C<type> indicates the type of aggregate to
+create for the base if the base doesn't specify its own 'viviself'
+attribute.
 
 =cut
 
-.sub 'bindvalue' :method
+.sub 'vivibase' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('bindvalue', value, has_value)
+    .return self.'attr'('vivibase', value, has_value)
 .end
+
 
 =back
 
@@ -564,17 +557,17 @@ PIR opcodes that PAST "knows" about is in F<POST.pir>.
 .end
 
 
-=item islvalue([flag])
+=item lvalue([flag])
 
 Get/set whether this node is an lvalue, or treats its first
 child as an lvalue (e.g., for assignment).
 
 =cut
 
-.sub 'islvalue' :method
+.sub 'lvalue' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('islvalue', value, has_value)
+    .return self.'attr'('lvalue', value, has_value)
 .end
 
 =item inline([STRING code])
@@ -646,6 +639,20 @@ blocks in Perl6 C<if>, C<while>, and other similar statements).
 .end
 
 
+=item namespace([namespace])
+
+Get/set the namespace for this block.  The C<namespace> argument
+can be either a string or an array of strings.
+
+=cut
+
+.sub 'namespace' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('namespace', value, has_value)
+.end
+
+
 =item symbol(name, [attr1 => val, attr2 => val2, ...])
 
 If called with named arguments, sets the symbol hash corresponding
@@ -693,6 +700,22 @@ favor of the C<symbol> method above.
 .end
 
 
+=item lexical([flag])
+
+Get/set whether the block is a lexical block.  A block
+with this attribute set to false is not lexically scoped
+inside of its parent, and will not act as an outer lexical
+scope for any nested blocks within it.
+
+=cut
+
+.sub 'lexical' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('lexical', value, has_value, 1)
+.end
+
+
 =item compiler([name])
 
 Indicate that the children nodes of this block are to be
@@ -708,16 +731,16 @@ PAST compiler.
 .end
 
 
-=item pragma([pragma])
+=item pirflags([pirflags])
 
-Get/set any pragmas (PIR) for this block.
+Get/set any pirflags for this block.
 
 =cut
 
-.sub 'pragma' :method
+.sub 'pirflags' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('pragma', value, has_value)
+    .return self.'attr'('pirflags', value, has_value)
 .end
 
 
@@ -741,10 +764,11 @@ Perl 6 compilers mailing lists.
 =head1 HISTORY
 
 2006-11-20  Patrick Michaud added first draft of POD documentation.
+2007-11-21  Re-implementation with pdd26 compliance, compiler toolkit
 
 =head1 COPYRIGHT
 
-Copyright (C) 2006, The Perl Foundation.
+Copyright (C) 2006-2007, The Perl Foundation.
 
 =cut
 

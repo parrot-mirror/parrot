@@ -84,9 +84,9 @@ struct _IMC_Unit;
  * please use INS
  */
 #ifdef _PARSER
-Instruction * _mk_instruction(const char *,const char *, int n, SymReg **, int);
+Instruction * _mk_instruction(const char *, const char *, int n, SymReg **, int);
 #else
-#  define _mk_instruction(a,b,n,c,d) dont_use(a,b)
+#  define _mk_instruction(a, b, n, c, d) dont_use(a, b)
 #endif
 
 /* Globals */
@@ -119,6 +119,7 @@ int emit_open(PARROT_INTERP, int type, NULLOK(void *param))
         __attribute__nonnull__(1);
 
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Instruction * _mk_instruction(
     NOTNULL(const char *op),
     NOTNULL(const char *fmt),

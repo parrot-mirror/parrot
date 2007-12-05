@@ -63,7 +63,7 @@ loop:
 #    push_eh exception
       $P0 = forth($S0)
       $P0()
-#    clear_eh
+#    pop_eh
 
     print " ok\n"
     goto loop
@@ -80,7 +80,7 @@ exception:
 
 
 .sub ' compile'
-    .param string input
+    .param pmc input
 
     .local pmc code, stream, stack
     code   = new 'CodeString'

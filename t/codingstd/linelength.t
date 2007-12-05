@@ -91,8 +91,9 @@ sub info_for_first_long_line {
     open my $fh, '<', $file or die "Can't open file '$file'";
     while ( my $line = <$fh> ) {
         chomp $line;
-        $line =~ s/\t/' ' x (1 + length($`) % 8)/eg;    # expand \t
-        next if $line =~ m/https?:\/\//;                # skip long web addresses
+        $line =~ s/\t/' ' x (1 + length($`) % 8)/eg;  # expand \t
+        next if $line =~ m/https?:\/\//;              # skip long web addresses
+        next if $line =~ m/\$Id:/;
         return sprintf '%s:%d: %d cols', $file, $., length($line)
             if length($line) > $num_col_limit;
     }
@@ -132,8 +133,21 @@ compilers/ast/astlexer.c
 compilers/ast/astparser.c
 compilers/imcc/imclexer.c
 compilers/imcc/imcparser.c
-compilers/pirc/src/pirlexer.c
-compilers/pirc/src/pirparser.c
+compilers/pirc/new/main.c
+compilers/pirc/new/pirlexer.c
+compilers/pirc/new/pirlexer.h
+compilers/pirc/new/pirparser.c
+compilers/pirc/new/pircompunit.h
+compilers/pirc/new/pircompunit.c
+compilers/pirc/new/pasm.l
+compilers/pirc/new/pasm.y
+compilers/pirc/macro/macro.h
+compilers/pirc/macro/macrolexer.c
+compilers/pirc/macro/macrolexer.h
+compilers/pirc/macro/macroparser.c
+compilers/pirc/macro/macroparser.h
+compilers/pirc/heredoc/hdocprep.l
+compilers/pirc/heredoc/hdocprep.c
 languages/plumhead/src/yacc/plumhead_lexer.c
 languages/plumhead/src/yacc/plumhead_parser.c
 languages/plumhead/src/yacc/plumhead_parser.h

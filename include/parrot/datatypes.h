@@ -1,7 +1,7 @@
 /*
  * datatypes.h
  *  Copyright (C) 2002, The Perl Foundation.
- *  License:  Artistic/GPL, see README and LICENSES for details
+ *  License:  Artistic 2.0, see README and LICENSES for details
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -82,7 +82,7 @@ const struct _data_types data_types[] = {
     { "PMC",    sizeof (void *) },           /* actual PMCs have positive class numbers */
     { "BIGINT", sizeof (void *) },
     { "BIGNUM", sizeof (void *) },          /* might be different */
-    { "DPOINTER",sizeof (void *) },
+    { "DPOINTER", sizeof (void *) },
 
     { "char",   sizeof (char) },          /* native integer types */
     { "short",  sizeof (short) },

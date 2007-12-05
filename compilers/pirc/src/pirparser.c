@@ -19,36 +19,19 @@ Add error correcting stuff, so parsing can continue after simple errors.
 
 =item *
 
-Maybe use #define's to implement small functions. Effectively, these routines
-will be inlined in compilation_unit() or instruction(), but when using #define's
-it's still code that looks good.
+Maybe use #define's to implement small functions. Effectively, these
+routines will be inlined in compilation_unit() or instruction(), but when
+using #define's it's still code that looks good.
 
 =item *
 
-Skip first token of statements if it's sure that the token has already been checked by the caller.
-For instance, no need to match 'goto' again, if it was already checked in compilation_unit().
+Skip first token of statements if it's sure that the token has already been
+checked by the caller.  For instance, no need to match 'goto' again, if it
+was already checked in compilation_unit().
 
 =item *
 
 Maybe use compilers/bcg for back-end, if that would fit well.
-
-=item *
-
-Clean up grammar after discussion.
-
-=over 4
-
-=item + For instance, why have :postcomp and :immediate, having same meaning?, and why ".sub" and ".pcc_sub"?
-
-=item + why "object" as type? Why custom names as type, such as '.local Array x' --
-        this is not needed, and makes the code look more like a HLL. Just stick to 'pmc', which works fine.
-
-=item + why allow an optional comma between sub pragmas? param pragmas don't have that
-        so remove this opt. comma as well for consistency.
-
-=item + unify '.sym' and '.local'. Just allow one, and think of something else for local labels in macros.
-
-=back
 
 =back
 
@@ -73,12 +56,12 @@ Clean up grammar after discussion.
 The parser_state structure has the following fields:
 
  typedef struct parser_state {
-    struct     lexer_state *lexer;     -- the lexer
-    token      curtoken;               -- the current token as returned by the lexer
-    char     **heredoc_ids;            -- array for holding heredoc arguments
-    unsigned   heredoc_index;          -- index to keep track of heredoc ids in the array
-    unsigned   parse_errors;           -- counter for parse_errors
-    pirvtable *vtable;                 -- vtable holding pointers for output routines
+   struct     lexer_state *lexer; -- the lexer
+   token      curtoken;           -- the current token as returned by the lexer
+   char     **heredoc_ids;        -- array for holding heredoc arguments
+   unsigned   heredoc_index;      -- index to keep track of heredoc ids in the array
+   unsigned   parse_errors;       -- counter for parse_errors
+   pirvtable *vtable;             -- vtable holding pointers for output routines
  }
 
 =cut
@@ -117,7 +100,7 @@ static void program(parser_state *p);
 
 =over 4
 
-=item * void exit_parser()
+=item C<void exit_parser(parser_state *p)>
 
 Clean up and exit the program normally.
 
@@ -125,7 +108,8 @@ Clean up and exit the program normally.
 
 */
 void
-exit_parser(parser_state *p) {
+exit_parser(parser_state *p)
+{
     emit_destroy(p); /* call destructor for emit_data */
     destroy_lexer(p->lexer); /* destroy the lexer */
     free(p->heredoc_ids);
@@ -135,11 +119,9 @@ exit_parser(parser_state *p) {
     exit(EXIT_SUCCESS);
 }
 
-
-
 /*
 
-=item * get_parse_errors()
+=item C<int get_parse_errors(parser_state *p)>
 
 return the number of parse errors.
 
@@ -147,13 +129,14 @@ return the number of parse errors.
 
 */
 int
-get_parse_errors(parser_state *p) {
+get_parse_errors(parser_state *p)
+{
     return p->parse_errors;
 }
 
 /*
 
-=item * new_parser()
+=item C<parser_state * new_parser(char const * filename, pirvtable *vtable)>
 
 constructor for a parser_state object. The specified filename
 is parsed. The semantic actions in vtable are called at certain
@@ -164,7 +147,8 @@ client code.
 
 */
 parser_state *
-new_parser(char const * filename, pirvtable *vtable) {
+new_parser(char const * filename, pirvtable *vtable)
+{
 
     parser_state *p = (parser_state *)malloc(sizeof (parser_state));
 
@@ -186,7 +170,7 @@ new_parser(char const * filename, pirvtable *vtable) {
 
 /*
 
-=item * struct lexer_state const *get_lexer()
+=item C<struct lexer_state const * get_lexer(parser_state *p)>
 
 returns the specified parser's lexer
 
@@ -194,20 +178,22 @@ returns the specified parser's lexer
 
 */
 struct lexer_state const *
-get_lexer(parser_state *p) {
+get_lexer(parser_state *p)
+{
     return p->lexer;
 }
 
 /*
 
-=item * token get_token()
+=item C<token get_token(parser_state *p)>
 
 returns the specified parser's current token
 
 =cut
 
 */
-token get_token(parser_state *p) {
+token get_token(parser_state *p)
+{
     return p->curtoken;
 }
 
@@ -220,17 +206,19 @@ token get_token(parser_state *p) {
 
 =over 4
 
-=item * static void resize_heredoc_args()
+=item C<static void resize_heredoc_args(parser_state *p)>
 
-Reallocate memory for the array holding heredoc arguments. If needed, the array is resized
-to twice its previous size. So, initially it's MAX_HEREDOC_ARGS, after the first resize(),
-it's 2 times MAX_HEREDOC_ARGS, after the second time it's 2 * 2 * MAX_HEREDOC_ARGS, etc.
+Reallocate memory for the array holding heredoc arguments. If needed, the array
+is resized to twice its previous size. So, initially it's MAX_HEREDOC_ARGS,
+after the first resize(), it's 2 times MAX_HEREDOC_ARGS, after the second time
+it's 2 * 2 * MAX_HEREDOC_ARGS, etc.
 
 =cut
 
 */
 static void
-resize_heredoc_args(parser_state *p) {
+resize_heredoc_args(parser_state *p)
+{
     /* allocate a new buffer*/
     char **newbuffer = (char **)calloc(p->heredoc_ids_size << 1, sizeof (char **));
     if (newbuffer == NULL) {
@@ -251,7 +239,7 @@ resize_heredoc_args(parser_state *p) {
 
 /*
 
-=item * static void syntax_error()
+=item C<static void syntax_error(parser_state *p, int numargs, ...)>
 
 Handle all syntax error through this function.
 numargs is the number of variable arguments.
@@ -261,7 +249,8 @@ All arguments should be of type "char *" !!!
 
 */
 static void
-syntax_error(parser_state *p, int numargs, ...) {
+syntax_error(parser_state *p, int numargs, ...)
+{
     va_list arg_ptr;
     int count;
     long line = get_current_line(p->lexer);
@@ -294,7 +283,7 @@ syntax_error(parser_state *p, int numargs, ...) {
 
 /*
 
-=item * static void match()
+=item C<static void match(parser_state *p, token expected)>
 
 checks whether the current token is the same
 as the expected token. If so, all is ok, and the
@@ -305,7 +294,8 @@ is reported.
 
 */
 static void
-match(parser_state *p, token expected) {
+match(parser_state *p, token expected)
+{
     if (p->curtoken == expected) { /* if all is fine, get next token */
         next(p);
     }
@@ -315,12 +305,14 @@ match(parser_state *p, token expected) {
             exit_parser(p);     /* no use to continue when having read end of file */
         }
         else { /* 'normal' error; not end of file yet */
-            syntax_error(p, 4, "expected '", find_keyword(expected), "' but got: ", find_keyword(p->curtoken));
+            syntax_error(p, 4, "expected '", find_keyword(expected),
+                    "' but got: ", find_keyword(p->curtoken));
 
-            /* XXX
-            * exiting here right away gives a much nicer error report. Suggestion for later: try to read tokens
-            * up to end of line where syntax_error() is called, at >that< point, we know what the next token should
-            * be, probably making it possible to continue without too many errors.
+            /* XXX exiting here right away gives a much nicer error report.
+             * Suggestion for later: try to read tokens up to end of line
+             * where syntax_error() is called, at >that< point, we know what
+             * the next token should be, probably making it possible to
+             * continue without too many errors.
             */
             exit_parser(p);
 
@@ -345,10 +337,6 @@ match(parser_state *p, token expected) {
     }
 }
 
-
-
-
-
 /*
 
 =back
@@ -372,7 +360,7 @@ The following conventions are used:
 
 =over 4
 
-=item *
+=item C<static token expression(parser_state *p)>
 
   expression -> ( IDENTIFIER | INTC | NUMC | STRINGC | register )
 
@@ -380,7 +368,8 @@ The following conventions are used:
 
 */
 static token
-expression(parser_state *p) {
+expression(parser_state *p)
+{
     /* Parse a simple expression. Returns the type of the expression. */
     token exprtok = T_ERROR;
 
@@ -409,7 +398,7 @@ expression(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void string_value(parser_state *p)>
 
   string_value -> SREG | PASM_SREG | STRINGC
 
@@ -417,7 +406,8 @@ expression(parser_state *p) {
 
 */
 static void
-string_value(parser_state *p) {
+string_value(parser_state *p)
+{
     /* also allow string registers, but /no/ identifiers! */
     switch (p->curtoken) {
         case T_SREG:
@@ -433,7 +423,7 @@ string_value(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void method(parser_state *p)>
 
   method -> IDENTIFIER | STRINGC
 
@@ -441,7 +431,8 @@ string_value(parser_state *p) {
 
 */
 static void
-method(parser_state *p) {
+method(parser_state *p)
+{
     switch (p->curtoken) {
         case T_IDENTIFIER:
         case T_STRING_CONSTANT:
@@ -458,7 +449,7 @@ method(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void target(parser_state *p)>
 
   target   -> register | IDENTIFIER
 
@@ -466,7 +457,8 @@ method(parser_state *p) {
 
 */
 static void
-target(parser_state *p) {
+target(parser_state *p)
+{
     switch (p->curtoken) {
         case T_PASM_PREG: case T_PREG: case T_PASM_IREG: case T_IREG:
         case T_PASM_NREG: case T_NREG: case T_PASM_SREG: case T_SREG:
@@ -482,7 +474,7 @@ target(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void type(parser_state *p)>
 
   type -> 'int' | 'num' | 'pmc' | 'string'
 
@@ -490,7 +482,8 @@ target(parser_state *p) {
 
 */
 static void
-type(parser_state *p) {
+type(parser_state *p)
+{
     switch (p->curtoken) {
         case T_INT:
         case T_NUM:
@@ -507,7 +500,7 @@ type(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void key(parser_state *p)>
 
   key -> '-' expression | '..' expression | expression [ '..' [ expression ] ]
 
@@ -515,7 +508,8 @@ type(parser_state *p) {
 
 */
 static void
-key(parser_state *p) {
+key(parser_state *p)
+{
     switch (p->curtoken) {
         case T_MINUS:
         case T_DOTDOT: /* key -> '..' expression */
@@ -536,7 +530,7 @@ key(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void keylist(parser_state *p)>
 
   keylist -> '[' key { (';'|',') key } ']'
 
@@ -544,7 +538,8 @@ key(parser_state *p) {
 
 */
 static void
-keylist(parser_state *p) {
+keylist(parser_state *p)
+{
     match(p, T_LBRACKET); /* skip '[' */
     key(p);
     while (p->curtoken == T_SEMICOLON || p->curtoken == T_COMMA) {
@@ -558,7 +553,7 @@ keylist(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void arg_flags(parser_state *p)>
 
   arg_flags -> { arg_flag }
 
@@ -568,7 +563,8 @@ keylist(parser_state *p) {
 
 */
 static void
-arg_flags(parser_state *p) {
+arg_flags(parser_state *p)
+{
     int ok = 1;
 
     emit_list_start(p);
@@ -605,7 +601,7 @@ arg_flags(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void argument(parser_state *p)>
 
   argument -> HEREDOCID | expression arg_flags | STRINGC ('=>' expression | arg_flags)
 
@@ -613,7 +609,8 @@ arg_flags(parser_state *p) {
 
 */
 static void
-argument(parser_state *p) {
+argument(parser_state *p)
+{
     /* argument -> heredoc_ident | expression */
     if (p->curtoken == T_HEREDOC_ID) { /* heredoc argument */
 
@@ -645,7 +642,7 @@ argument(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void argument_list(parser_state *p)>
 
   argument_list -> argument { ',' argument }
 
@@ -653,7 +650,8 @@ argument(parser_state *p) {
 
 */
 static void
-argument_list(parser_state *p) {
+argument_list(parser_state *p)
+{
     /* argument_list -> argument { ',' argument } */
     argument(p);
     while (p->curtoken == T_COMMA) {
@@ -666,7 +664,7 @@ argument_list(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void arguments(parser_state *p)>
 
   arguments -> '(' [argument_list] ')' heredoc_arguments
 
@@ -676,7 +674,8 @@ argument_list(parser_state *p) {
 
 */
 static void
-arguments(parser_state *p) {
+arguments(parser_state *p)
+{
     emit_args_start(p);
     match(p, T_LPAREN);
     if (p->curtoken != T_RPAREN) argument_list(p);
@@ -718,7 +717,7 @@ arguments(parser_state *p) {
 
 =over 4
 
-=item *
+=item C<static void methodcall(parser_state *p)>
 
   methodcall -> INVOCANT_IDENT method arguments
 
@@ -726,7 +725,8 @@ arguments(parser_state *p) {
 
 */
 static void
-methodcall(parser_state *p) {
+methodcall(parser_state *p)
+{
     emit_invocation_start(p);
     emit_invocant(p, get_current_token(p->lexer));
     match(p, T_INVOCANT_IDENT);
@@ -738,9 +738,7 @@ methodcall(parser_state *p) {
 
 /*
 
-=item *
-
-
+=item C<static void arith_expression(parser_state *p)>
 
   arith_expr -> [ binop expression ]
 
@@ -751,7 +749,8 @@ methodcall(parser_state *p) {
 
 */
 static void
-arith_expression(parser_state *p) {
+arith_expression(parser_state *p)
+{
     /* If the current token is a binary operator, then this operator
      * together with its right operand is parsed. If no operator,
      * just return.
@@ -784,7 +783,7 @@ arith_expression(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void parrot_instruction(parser_state *p)>
 
   parrot_instruction -> PARROT_OP [ expression {',' expression } ]
 
@@ -792,7 +791,8 @@ arith_expression(parser_state *p) {
 
 */
 static void
-parrot_instruction(parser_state *p) {
+parrot_instruction(parser_state *p)
+{
     emit_op_start(p, get_current_token(p->lexer));
 
     match(p, T_PARROT_OP);
@@ -815,7 +815,7 @@ parrot_instruction(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void assignment(parser_state *p)>
 
   assignment -> '=' ( unop expression
                     | expression arith_expr
@@ -834,7 +834,8 @@ parrot_instruction(parser_state *p) {
 
 */
 static void
-assignment(parser_state *p) {
+assignment(parser_state *p)
+{
     emit_assign_start(p); /* should this be here?? */
     match(p, T_ASSIGN);
     emit_assign(p);
@@ -915,11 +916,9 @@ assignment(parser_state *p) {
 }
 
 
-
-
 /*
 
-=item *
+=item C<static void return_statement(parser_state *p)>
 
   return_statement -> '.return' ( arguments
                                 | target arguments
@@ -931,7 +930,8 @@ assignment(parser_state *p) {
 
 */
 static void
-return_statement(parser_state *p) {
+return_statement(parser_state *p)
+{
     emit_op_start(p, ".return");
     match(p, T_RETURN);
     switch (p->curtoken) {
@@ -952,7 +952,7 @@ return_statement(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void yield_statement(parser_state *p)>
 
   yield_statement -> '.yield' arguments '\n'
 
@@ -960,7 +960,8 @@ return_statement(parser_state *p) {
 
 */
 static void
-yield_statement(parser_state *p) {
+yield_statement(parser_state *p)
+{
     emit_op_start(p, ".yield");
     match(p, T_YIELD);
     arguments(p);
@@ -970,7 +971,7 @@ yield_statement(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void close_ns(parser_state *p)>
 
   close_ns -> '.endnamespace' IDENTIFIER '\n'
 
@@ -978,7 +979,8 @@ yield_statement(parser_state *p) {
 
 */
 static void
-close_ns(parser_state *p) {
+close_ns(parser_state *p)
+{
     emit_op_start(p, ".namespace");
     match(p, T_ENDNAMESPACE);
     emit_expr(p, get_current_token(p->lexer));
@@ -989,7 +991,7 @@ close_ns(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void open_ns(parser_state *p)>
 
   open_ns -> '.namespace' IDENTIFIER '\n'
 
@@ -997,7 +999,8 @@ close_ns(parser_state *p) {
 
 */
 static void
-open_ns(parser_state *p) {
+open_ns(parser_state *p)
+{
     emit_op_start(p, ".endnamespace");
     match(p, T_NAMESPACE);
 
@@ -1009,7 +1012,7 @@ open_ns(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void local_id_list(parser_state *p)>
 
   local_id_list -> local_id { ',' local_id }
 
@@ -1019,7 +1022,8 @@ open_ns(parser_state *p) {
 
 */
 static void
-local_id_list(parser_state *p) {
+local_id_list(parser_state *p)
+{
     emit_name(p, get_current_token(p->lexer));
     match(p, T_IDENTIFIER);
 
@@ -1043,7 +1047,7 @@ local_id_list(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void declaration_list(parser_state *p)>
 
   declaration_list -> type local_id_list '\n'
 
@@ -1052,7 +1056,8 @@ local_id_list(parser_state *p) {
 */
 
 static void
-declaration_list(parser_state *p) {
+declaration_list(parser_state *p)
+{
     type(p);
     local_id_list(p);
     match(p, T_NEWLINE);
@@ -1062,7 +1067,7 @@ declaration_list(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void local_declaration(parser_state *p)>
 
   local_declaration -> '.local' declaration_list
 
@@ -1070,7 +1075,8 @@ declaration_list(parser_state *p) {
 
 */
 static void
-local_declaration(parser_state *p) {
+local_declaration(parser_state *p)
+{
     emit_op_start(p, ".local");
     match(p, T_LOCAL);
     declaration_list(p);
@@ -1080,7 +1086,7 @@ local_declaration(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void lex_declaration(parser_state *p)>
 
   lex_declaration -> '.lex' STRINGC ',' target '\n'
 
@@ -1088,7 +1094,8 @@ local_declaration(parser_state *p) {
 
 */
 static void
-lex_declaration(parser_state *p) {
+lex_declaration(parser_state *p)
+{
     emit_op_start(p, ".lex");
     match(p, T_LEX);
     emit_expr(p, get_current_token(p->lexer));
@@ -1099,11 +1106,9 @@ lex_declaration(parser_state *p) {
     emit_op_end(p);
 }
 
-
-
 /*
 
-=item *
+=item C<static void conditional_expression(parser_state *p)>
 
   conditional_expression -> expression [cond_op expression]
 
@@ -1113,7 +1118,8 @@ lex_declaration(parser_state *p) {
 
 */
 static void
-conditional_expression(parser_state *p) {
+conditional_expression(parser_state *p)
+{
     expression(p);
 
     switch (p->curtoken) { /* optional */
@@ -1128,12 +1134,9 @@ conditional_expression(parser_state *p) {
     }
 }
 
-
-
-
 /*
 
-=item *
+=item C<static void jump_statement(parser_state *p)>
 
   jump_statement -> 'goto' IDENTIFIER '\n'
 
@@ -1141,7 +1144,8 @@ conditional_expression(parser_state *p) {
 
 */
 static void
-jump_statement(parser_state *p) {
+jump_statement(parser_state *p)
+{
     match(p, T_GOTO);
     emit_expr(p, get_current_token(p->lexer));
     match(p, T_IDENTIFIER);
@@ -1151,7 +1155,7 @@ jump_statement(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void goto_statement(parser_state *p)>
 
   goto_statement -> jump_statement
 
@@ -1159,7 +1163,8 @@ jump_statement(parser_state *p) {
 
 */
 static void
-goto_statement(parser_state *p) {
+goto_statement(parser_state *p)
+{
     emit_op_start(p, "goto");
     jump_statement(p);
 }
@@ -1167,7 +1172,7 @@ goto_statement(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void unless_statement(parser_state *p)>
 
   unless_statement -> 'unless' (['null'] expression | conditional_expression) jump_statement
 
@@ -1175,7 +1180,8 @@ goto_statement(parser_state *p) {
 
 */
 static void
-unless_statement(parser_state *p) {
+unless_statement(parser_state *p)
+{
     next(p); /* skip 'unless' */
     if (p->curtoken == T_NULL) { /* if null expr goto LABEL */
         emit_op_start(p, "unless_null");
@@ -1191,7 +1197,7 @@ unless_statement(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void if_statement(parser_state *p)>
 
   if_statement -> 'if' (['null'] expression | conditional_expression) jump_statement
 
@@ -1199,7 +1205,8 @@ unless_statement(parser_state *p) {
 
 */
 static void
-if_statement(parser_state *p) {
+if_statement(parser_state *p)
+{
     next(p); /* skip 'if' */
     if (p->curtoken == T_NULL) { /* if null expr goto LABEL */
         emit_op_start(p, "if_null");
@@ -1215,7 +1222,7 @@ if_statement(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void const_definition(parser_state *p)>
 
   const_definition -> 'int' IDENTIFIER '=' INTC
                     | 'num' IDENTIFIER '=' NUMC
@@ -1226,7 +1233,8 @@ if_statement(parser_state *p) {
 
 */
 static void
-const_definition(parser_state *p) {
+const_definition(parser_state *p)
+{
     token type = p->curtoken; /* save type for check later */
     switch (type) {
         case T_INT:
@@ -1266,7 +1274,7 @@ const_definition(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void param_flags(parser_state *p)>
 
   param_flags -> { param_flag }
 
@@ -1280,7 +1288,8 @@ const_definition(parser_state *p) {
 
 */
 static void
-param_flags(parser_state *p) {
+param_flags(parser_state *p)
+{
     int ok = 1;
     emit_list_start(p);
     while (ok) {
@@ -1319,7 +1328,7 @@ param_flags(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void invokable(parser_state *p)>
 
   invokable -> IDENTIFIER | PREG
 
@@ -1327,7 +1336,8 @@ param_flags(parser_state *p) {
 
 */
 static void
-invokable(parser_state *p) {
+invokable(parser_state *p)
+{
     switch (p->curtoken) {
         case T_IDENTIFIER:
         case T_PREG:
@@ -1343,27 +1353,28 @@ invokable(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void long_invocation(parser_state *p)>
 
-  long-invocation -> '.pcc_begin' '\n'
+  long-invocation -> '.begin_call' '\n'
                      { '.arg' expression arg_flags }
-                     ( '.pcc_call'|'.nci_call') invokable '\n'
+                     ( '.call'|'.nci_call') invokable '\n'
                      | '.invocant' invokable '\n'
                        '.meth_call' method '\n'
                      )
                      { (local_declaration | '.result' target param_flags '\n') }
-                     '.pcc_end' '\n'
+                     '.end_call' '\n'
 
 =cut
 
 */
 static void
-long_invocation(parser_state *p) {
+long_invocation(parser_state *p)
+{
     int more_results = 1; /* flag for while loop */
 
     emit_invocation_start(p);
 
-    match(p, T_PCC_BEGIN);               /* '.pcc_begin '\n' */
+    match(p, T_PCC_BEGIN);               /* '.begin_call' '\n' */
     match(p, T_NEWLINE);
 
     /* arguments */
@@ -1378,7 +1389,7 @@ long_invocation(parser_state *p) {
 
     /* the invocant and/or sub to be called */
     switch (p->curtoken) {
-        case T_PCC_CALL:                /* '.pcc_call' invokable '\n' */
+        case T_PCC_CALL:                /* '.call' invokable '\n' */
         case T_NCI_CALL:                /* '.nci_call' invokable '\n' */
             next(p);
             invokable(p);
@@ -1393,7 +1404,7 @@ long_invocation(parser_state *p) {
             match(p, T_NEWLINE);
             break;
         default:
-            syntax_error(p, 1, ".pcc_call, .nci_call or .invocant expected");
+            syntax_error(p, 1, ".call, .nci_call or .invocant expected");
             break;
     }
 
@@ -1411,12 +1422,12 @@ long_invocation(parser_state *p) {
                 param_flags(p);
                 match(p, T_NEWLINE);
                 break;
-            case T_PCC_END: /* we encountered '.pcc_end', so stop looking for more results */
+            case T_PCC_END: /* we encountered '.end_call', so stop looking for more results */
                 more_results = 0; /* no more results, break loop */
                 break;
             default:
                 syntax_error(p, 3,
-                    "'.local', '.result' or '.pcc_end' expected, but got '",
+                    "'.local', '.result' or '.end_call' expected, but got '",
                     get_current_token(p->lexer), "'");
                 more_results = 0; /* stop loop */
                 break;
@@ -1424,7 +1435,7 @@ long_invocation(parser_state *p) {
     }
     emit_results_end(p);
 
-    match(p, T_PCC_END); /* '.pcc_end' '\n' */
+    match(p, T_PCC_END); /* '.end_call' '\n' */
     match(p, T_NEWLINE);
 
     emit_invocation_end(p);
@@ -1433,18 +1444,19 @@ long_invocation(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void long_return_statement(parser_state *p)>
 
-  long_return_statement -> '.pcc_begin_return' '\n'
+  long_return_statement -> '.begin_return' '\n'
                            { '.return' expression arg_flags '\n' }
-                           '.pcc_end_return' '\n'
+                           '.end_return' '\n'
 
 =cut
 
 */
 static void
-long_return_statement(parser_state *p) {
-    emit_op_start(p, ".pcc_begin_return");
+long_return_statement(parser_state *p)
+{
+    emit_op_start(p, ".begin_return");
     match(p, T_PCC_BEGIN_RETURN);
     match(p, T_NEWLINE);
 
@@ -1454,25 +1466,26 @@ long_return_statement(parser_state *p) {
         arg_flags(p);
         match(p, T_NEWLINE);
     }
-    match(p, T_PCC_END_RETURN); /* ... '.pcc_end_return' '\n' */
+    match(p, T_PCC_END_RETURN); /* ... '.end_return' '\n' */
     match(p, T_NEWLINE);
     emit_op_end(p);
 }
 
 /*
 
-=item *
+=item C<static void long_yield_statement(parser_state *p)>
 
-  long_yield_statement -> '.pcc_begin_yield' '\n'
+  long_yield_statement -> '.begin_yield' '\n'
                           { '.return' expression arg_flags '\n' }
-                          '.pcc_end_yield' '\n'
+                          '.end_yield' '\n'
 
 =cut
 
 */
 static void
-long_yield_statement(parser_state *p) {
-    emit_op_start(p, ".pcc_begin_yield");
+long_yield_statement(parser_state *p)
+{
+    emit_op_start(p, ".begin_yield");
     match(p, T_PCC_BEGIN_YIELD);
     match(p, T_NEWLINE);
 
@@ -1482,14 +1495,14 @@ long_yield_statement(parser_state *p) {
         arg_flags(p);
         match(p, T_NEWLINE);
     }
-    match(p, T_PCC_END_YIELD); /* '.pcc_end_yield' '\n' */
+    match(p, T_PCC_END_YIELD); /* '.end_yield' '\n' */
     match(p, T_NEWLINE);
     emit_op_end(p);
 }
 
 /*
 
-=item *
+=item C<static void target_statement(parser_state *p)>
 
   target_statement -> target ( '=' assignment
                              | augmented_op expression
@@ -1505,7 +1518,8 @@ long_yield_statement(parser_state *p) {
 
 */
 static void
-target_statement(parser_state *p) {
+target_statement(parser_state *p)
+{
     target(p);
 
     switch (p->curtoken) {
@@ -1543,12 +1557,9 @@ target_statement(parser_state *p) {
     match(p, T_NEWLINE);
 }
 
-
-
-
 /*
 
-=item *
+=item C<static void target_list(parser_state *p)>
 
   target_list -> '(' target param_flags {',' target param_flags } ')'
 
@@ -1556,7 +1567,8 @@ target_statement(parser_state *p) {
 
 */
 static void
-target_list(parser_state *p) {
+target_list(parser_state *p)
+{
     match(p, T_LPAREN);
     target(p);
     while (p->curtoken == T_COMMA) {
@@ -1569,7 +1581,7 @@ target_list(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void multi_result_invocation(parser_state *p)>
 
   multi-result-invocation -> target_list '=' (invokable arguments | methodcall) '\n'
 
@@ -1579,7 +1591,8 @@ target_list(parser_state *p) {
 
 */
 static void
-multi_result_invocation(parser_state *p) {
+multi_result_invocation(parser_state *p)
+{
     emit_invocation_start(p);
     target_list(p);
     match(p, T_ASSIGN);
@@ -1608,7 +1621,7 @@ multi_result_invocation(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void macro_expansion(parser_state *p)>
 
   macro_expansion -> MACRO_IDENT [ '(' [ expression { ',' expression } ')' ] '\n'
 
@@ -1616,7 +1629,8 @@ multi_result_invocation(parser_state *p) {
 
 */
 static void
-macro_expansion(parser_state *p) {
+macro_expansion(parser_state *p)
+{
     match(p, T_MACRO_IDENT);
 
     if (p->curtoken == T_LPAREN) { /* parentheses are optional if no arguments */
@@ -1639,7 +1653,7 @@ macro_expansion(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void get_results_instruction(parser_state *p)>
 
   get_results_instr -> '.get_results' target_list '\n'
 
@@ -1647,7 +1661,8 @@ macro_expansion(parser_state *p) {
 
 */
 static void
-get_results_instruction(parser_state *p) {
+get_results_instruction(parser_state *p)
+{
     emit_op_start(p, ".get_results");
     match(p, T_GET_RESULTS);
     target_list(p);
@@ -1655,11 +1670,9 @@ get_results_instruction(parser_state *p) {
     emit_op_end(p);
 }
 
-
-
 /*
 
-=item *
+=item C<static void global_assignment(parser_state *p)>
 
   global_assignment -> 'global' string_value '=' (IDENTIFIER|PREG) '\n'
 
@@ -1667,7 +1680,8 @@ get_results_instruction(parser_state *p) {
 
 */
 static void
-global_assignment(parser_state *p) {
+global_assignment(parser_state *p)
+{
     emit_op_start(p, "global");
     match(p, T_GLOBAL);
     string_value(p);
@@ -1691,12 +1705,9 @@ global_assignment(parser_state *p) {
     emit_op_end(p);
 }
 
-
-
-
 /*
 
-=item *
+=item C<static void instructions(parser_state *p)>
 
   instructions -> {instruction}
 
@@ -1728,7 +1739,8 @@ global_assignment(parser_state *p) {
 
 */
 static void
-instructions(parser_state *p) {
+instructions(parser_state *p)
+{
     int ok = 1;
 
     emit_stmts_start(p); /* open stmts block */
@@ -1846,7 +1858,7 @@ instructions(parser_state *p) {
 
 =over 4
 
-=item *
+=item C<static void multi_type_list(parser_state *p)>
 
   multi-type-list -> '(' [multi-type {',' multi-type } ] ')'
 
@@ -1856,7 +1868,8 @@ instructions(parser_state *p) {
 
 */
 static void
-multi_type_list(parser_state *p) {
+multi_type_list(parser_state *p)
+{
     int wantmore = 1;
 
     emit_list_start(p);
@@ -1899,7 +1912,7 @@ multi_type_list(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void sub_flags(parser_state *p)>
 
   sub_flags -> [sub_flag { sub_flag } ]
 
@@ -1919,7 +1932,8 @@ multi_type_list(parser_state *p) {
 
 */
 static void
-sub_flags(parser_state *p) {
+sub_flags(parser_state *p)
+{
     int ok = 1;
 
     emit_sub_flag_start(p);
@@ -1979,12 +1993,9 @@ sub_flags(parser_state *p) {
     emit_sub_flag_end(p);
 }
 
-
-
-
 /*
 
-=item *
+=item C<static void parameters(parser_state *p)>
 
   parameters -> { '.param' parameter[param_flag] '\n' }
 
@@ -1994,7 +2005,8 @@ sub_flags(parser_state *p) {
 
 */
 static void
-parameters(parser_state *p) {
+parameters(parser_state *p)
+{
     while (p->curtoken == T_PARAM) {
         next(p); /* skip '.param */
         emit_param_start(p);
@@ -2024,7 +2036,7 @@ parameters(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void sub_definition(parser_state *p)>
 
   sub_definition -> '.sub' (IDENTIFIER | STRINGC) subflags '\n' parameters instructions '.end'
 
@@ -2032,7 +2044,8 @@ parameters(parser_state *p) {
 
 */
 static void
-sub_definition(parser_state *p) {
+sub_definition(parser_state *p)
+{
     /* call emit method */
     emit_sub_start(p);
     next(p); /* skip '.sub' */
@@ -2061,7 +2074,7 @@ sub_definition(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void emit_block(parser_state *p)>
 
   emit_block -> '.emit' '\n' { parrot_instruction '\n' } '.eom'
 
@@ -2069,7 +2082,8 @@ sub_definition(parser_state *p) {
 
 */
 static void
-emit_block(parser_state *p) {
+emit_block(parser_state *p)
+{
     /* Note that a PASM instruction looks like an identifier. This is checked for in the lexer. */
     match(p, T_EMIT);
     match(p, T_NEWLINE);
@@ -2084,7 +2098,7 @@ emit_block(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void macro_parameters(parser_state *p)>
 
   macro_parameters -> [ '(' [ id {',' id} ] ')' ]
 
@@ -2092,7 +2106,8 @@ emit_block(parser_state *p) {
 
 */
 static void
-macro_parameters(parser_state *p) {
+macro_parameters(parser_state *p)
+{
     if (p->curtoken == T_LPAREN) next(p);
     else return; /* no parameters apparently */
 
@@ -2108,7 +2123,7 @@ macro_parameters(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void macro_definition(parser_state *p)>
 
  macro-definition -> '.macro' IDENTIFIER macro_parameters '\n' macro_body '.endm'
 
@@ -2116,7 +2131,8 @@ macro_parameters(parser_state *p) {
 
 */
 static void
-macro_definition(parser_state *p) {
+macro_definition(parser_state *p)
+{
     match(p, T_MACRO);
     match(p, T_IDENTIFIER);
     macro_parameters(p);
@@ -2135,7 +2151,7 @@ macro_definition(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void include(parser_state *p)>
 
   include -> '.include' STRINGC
 
@@ -2143,7 +2159,8 @@ macro_definition(parser_state *p) {
 
 */
 static void
-include(parser_state *p) {
+include(parser_state *p)
+{
     next(p); /* skip '.include '*/
 
     /* only check, don't skip filename */
@@ -2170,7 +2187,7 @@ include(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void pragma(parser_state *p)>
 
   pragma -> '.pragma' 'n_operators' INTC
 
@@ -2179,7 +2196,8 @@ include(parser_state *p) {
 */
 
 static void
-pragma(parser_state *p) {
+pragma(parser_state *p)
+{
     match(p, T_PRAGMA);
     match(p, T_N_OPERATORS);
     match(p, T_INTEGER_CONSTANT);
@@ -2187,7 +2205,7 @@ pragma(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void hll_specifier(parser_state *p)>
 
   hll_specifier -> '.HLL' STRINGC ',' STRINGC
 
@@ -2195,7 +2213,8 @@ pragma(parser_state *p) {
 
 */
 static void
-hll_specifier(parser_state *p) {
+hll_specifier(parser_state *p)
+{
     match(p, T_HLL);
     match(p, T_STRING_CONSTANT);
     match(p, T_COMMA);
@@ -2204,7 +2223,7 @@ hll_specifier(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void hll_mapping(parser_state *p)>
 
   hll_mapping -> '.HLL_map' STRINGC ',' STRINGC
 
@@ -2212,7 +2231,8 @@ hll_specifier(parser_state *p) {
 
 */
 static void
-hll_mapping(parser_state *p) {
+hll_mapping(parser_state *p)
+{
     match(p, T_HLL_MAP);
     match(p, T_STRING_CONSTANT);
     match(p, T_COMMA);
@@ -2221,7 +2241,7 @@ hll_mapping(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void namespace_declaration(parser_state *p)>
 
   namespace_declaration -> '.namespace' [ '[' STRINGC { (','|';') STRINGC ']' ]
 
@@ -2229,7 +2249,8 @@ hll_mapping(parser_state *p) {
 
 */
 static void
-namespace_declaration(parser_state *p) {
+namespace_declaration(parser_state *p)
+{
     match(p, T_NAMESPACE);
     if (p->curtoken == T_LBRACKET) {
         next(p); /* skip '[' */
@@ -2245,7 +2266,7 @@ namespace_declaration(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void loadlib(parser_state *p)>
 
   loadlib -> '.loadlib' STRINGC
 
@@ -2253,7 +2274,8 @@ namespace_declaration(parser_state *p) {
 
 */
 static void
-loadlib(parser_state *p) {
+loadlib(parser_state *p)
+{
     match(p, T_LOADLIB);
     match(p, T_STRING_CONSTANT);
 }
@@ -2261,7 +2283,7 @@ loadlib(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void compilation_unit(parser_state *p)>
 
   compilation_unit -> sub_definition
                     | '.const' const_definition
@@ -2278,7 +2300,8 @@ loadlib(parser_state *p) {
 
 */
 static void
-compilation_unit(parser_state *p) {
+compilation_unit(parser_state *p)
+{
     switch (p->curtoken) {
         case T_SUB: /* compilation_unit -> sub_definition */
             sub_definition(p);
@@ -2322,7 +2345,7 @@ compilation_unit(parser_state *p) {
 
 /*
 
-=item *
+=item C<static void program(parser_state *p)>
 
   program -> {'\n'} compilation_unit { '\n' compilation_unit } EOF
 
@@ -2330,7 +2353,8 @@ compilation_unit(parser_state *p) {
 
 */
 static void
-program(parser_state *p) {
+program(parser_state *p)
+{
     /* the file may have some initial newlines; eat them */
     if (p->curtoken == T_NEWLINE) next(p);
 
@@ -2349,7 +2373,7 @@ program(parser_state *p) {
 
 /*
 
-=item *
+=item C<void TOP(parser_state *p)>
 
   TOP -> program
 
@@ -2357,7 +2381,8 @@ program(parser_state *p) {
 
 */
 void
-TOP(parser_state *p) {
+TOP(parser_state *p)
+{
     /* file -> program EOF */
     emit_init(p); /* initialize emitter */
     program(p);

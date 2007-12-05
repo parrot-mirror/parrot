@@ -20,12 +20,17 @@ The base vtable calling functions.
 
 #include "parrot/parrot.h"
 #include "parrot/key.h"
+#include "key.str"
 
 /* HEADERIZER HFILE: include/parrot/key.h */
 
 /*
 
-=item C<key_new>
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+key_new(PARROT_INTERP)>
 
 Returns a new C<Key> PMC.
 
@@ -46,7 +51,11 @@ key_new(PARROT_INTERP)
 
 /*
 
-=item C<key_new_integer>
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+key_new_integer(PARROT_INTERP, INTVAL value)>
 
 Returns a new integer C<Key> PMC with value C<value>.
 
@@ -70,7 +79,11 @@ key_new_integer(PARROT_INTERP, INTVAL value)
 
 /*
 
-=item C<key_new_number>
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+key_new_number(PARROT_INTERP, FLOATVAL value)>
 
 Returns a new number C<Key> PMC with value C<value>.
 
@@ -94,7 +107,11 @@ key_new_number(PARROT_INTERP, FLOATVAL value)
 
 /*
 
-=item C<key_new_string>
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+key_new_string(PARROT_INTERP, NOTNULL(STRING *value))>
 
 Returns a new string C<Key> PMC with value C<value>.
 
@@ -118,7 +135,11 @@ key_new_string(PARROT_INTERP, NOTNULL(STRING *value))
 
 /*
 
-=item C<key_new_cstring>
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+key_new_cstring(PARROT_INTERP, NULLOK(const char *value))>
 
 Returns a new string C<Key> PMC with value C<value> converted to a
 C<STRING>.
@@ -139,7 +160,11 @@ key_new_cstring(PARROT_INTERP, NULLOK(const char *value))
 
 /*
 
-=item C<key_new_pmc>
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+key_new_pmc(PARROT_INTERP, NOTNULL(PMC *value))>
 
 Returns a new PMC C<Key> PMC with value C<value>.
 
@@ -161,7 +186,9 @@ key_new_pmc(PARROT_INTERP, NOTNULL(PMC *value))
 
 /*
 
-=item C<key_set_integer>
+=item C<PARROT_API
+void
+key_set_integer(SHIM_INTERP, NOTNULL(PMC *key), INTVAL value)>
 
 Set the integer C<value> in C<key>.
 
@@ -182,7 +209,10 @@ key_set_integer(SHIM_INTERP, NOTNULL(PMC *key), INTVAL value)
 
 /*
 
-=item C<key_set_register>
+=item C<PARROT_API
+void
+key_set_register(SHIM_INTERP, NOTNULL(PMC *key), INTVAL value,
+                 INTVAL flag)>
 
 Set the register C<value> in C<key>.
 
@@ -204,7 +234,9 @@ key_set_register(SHIM_INTERP, NOTNULL(PMC *key), INTVAL value,
 
 /*
 
-=item C<key_set_number>
+=item C<PARROT_API
+void
+key_set_number(SHIM_INTERP, NOTNULL(PMC *key), FLOATVAL value)>
 
 Set the number C<value> in C<key>.
 
@@ -225,7 +257,9 @@ key_set_number(SHIM_INTERP, NOTNULL(PMC *key), FLOATVAL value)
 
 /*
 
-=item C<key_set_string>
+=item C<PARROT_API
+void
+key_set_string(SHIM_INTERP, NOTNULL(PMC *key), NOTNULL(STRING *value))>
 
 Set the string C<value> in C<key>.
 
@@ -246,7 +280,9 @@ key_set_string(SHIM_INTERP, NOTNULL(PMC *key), NOTNULL(STRING *value))
 
 /*
 
-=item C<key_set_pmc>
+=item C<PARROT_API
+void
+key_set_pmc(PARROT_INTERP, NOTNULL(PMC *key), NOTNULL(PMC *value))>
 
 Set the PMC C<value> in C<key>.
 
@@ -269,7 +305,10 @@ key_set_pmc(PARROT_INTERP, NOTNULL(PMC *key), NOTNULL(PMC *value))
 
 /*
 
-=item C<key_type>
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+INTVAL
+key_type(SHIM_INTERP, NOTNULL(const PMC *key))>
 
 Returns the type of C<key>.
 
@@ -284,6 +323,19 @@ key_type(SHIM_INTERP, NOTNULL(const PMC *key))
 {
     return (PObj_get_FLAGS(key) & KEY_type_FLAGS) & ~KEY_register_FLAG;
 }
+
+/*
+
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+INTVAL
+key_integer(PARROT_INTERP, NOTNULL(PMC *key))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
@@ -314,6 +366,19 @@ key_integer(PARROT_INTERP, NOTNULL(PMC *key))
     }
 }
 
+/*
+
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+FLOATVAL
+key_number(PARROT_INTERP, NOTNULL(PMC *key))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 FLOATVAL
@@ -336,6 +401,20 @@ key_number(PARROT_INTERP, NOTNULL(PMC *key))
         real_exception(interp, NULL, INVALID_OPERATION, "Key not a number!\n");
     }
 }
+
+/*
+
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+STRING *
+key_string(PARROT_INTERP, NOTNULL(PMC *key))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
@@ -366,7 +445,11 @@ key_string(PARROT_INTERP, NOTNULL(PMC *key))
 
 /*
 
-=item C<key_pmc>
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+key_pmc(PARROT_INTERP, NOTNULL(PMC *key))>
 
 These functions return the integer/number/string/PMC values of C<key> if
 possible. Otherwise they throws an exceptions.
@@ -391,7 +474,11 @@ key_pmc(PARROT_INTERP, NOTNULL(PMC *key))
 
 /*
 
-=item C<key_next>
+=item C<PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+key_next(SHIM_INTERP, NOTNULL(PMC *key))>
 
 Returns the next key if C<key> is in a sequence of linked keys.
 
@@ -410,7 +497,11 @@ key_next(SHIM_INTERP, NOTNULL(PMC *key))
 
 /*
 
-=item C<key_append>
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_IGNORABLE_RESULT
+PMC *
+key_append(SHIM_INTERP, NOTNULL(PMC *key1), NOTNULL(PMC *key2))>
 
 Appends C<key2> to C<key1>.
 
@@ -442,7 +533,9 @@ key_append(SHIM_INTERP, NOTNULL(PMC *key1), NOTNULL(PMC *key2))
 
 /*
 
-=item C<key_mark>
+=item C<PARROT_API
+void
+key_mark(PARROT_INTERP, NOTNULL(PMC *key))>
 
 Marks C<key> as live.
 
@@ -470,6 +563,20 @@ key_mark(PARROT_INTERP, NOTNULL(PMC *key))
         pobject_lives(interp, (PObj *)PMC_data(key));
 
 }
+
+/*
+
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+STRING *
+key_set_to_string(PARROT_INTERP, NULLOK(PMC *key))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
@@ -511,7 +618,7 @@ key_set_to_string(PARROT_INTERP, NULLOK(PMC *key))
                 break;
             default:
                 value = string_append(interp, value,
-                        string_from_literal(interp, "Key type unknown"));
+                        CONST_STRING(interp, "Key type unknown"));
                 break;
         }
 

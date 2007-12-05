@@ -90,7 +90,7 @@ src/builtins/op.pir - Perl6 builtin operators
     .param pmc a
 
     .local pmc bool
-    bool = new .Perl6Bool
+    bool = new 'Perl6Bool'
     $I0 = istrue a
     assign bool, $I0
     .return (bool)
@@ -146,7 +146,7 @@ src/builtins/op.pir - Perl6 builtin operators
 .sub 'infix:xx'
     .param string a
     .param int b
-    $P0 = new ResizablePMCArray
+    $P0 = new 'ResizablePMCArray'
   lp:
     unless b, ex
     push $P0, a

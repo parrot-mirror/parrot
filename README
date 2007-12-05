@@ -1,4 +1,4 @@
-This is Parrot, version 0.4.17
+This is Parrot, version 0.5.0
 ------------------------------
 
 Parrot is Copyright (C) 2001-2007, The Perl Foundation.
@@ -66,18 +66,9 @@ On windows systems, 'nmake' is used
 
 On other systems, just try 'make'
 
-NOTE: do *NOT* use the '-j' option to make. The dependencies in the generated
-Makefile work if you do them sequentially, but running with -j will almost
-certainly cause a build error. Patches welcome.
-
 Now, the interpreter should build.  If you are building the ICU library
 (this is the default on most systems), you need to use GNU make instead
 (or something compatible with it).
-
-As of the 0.4.15 release you may see a large number of compiler
-warnings throughout the make process -- this is normal.  The configure
-system now enables a lot of additional compiler warning options, and
-we're still in the process of reviewing/cleaning up the warnings.
 
 NOTE: If you have trouble linking parrot, this *may* be due to a pre-existing
 parrot version installed via 'make install'. Until this issue is resolved,
@@ -104,7 +95,7 @@ This installs a bunch of files in /usr/local. The parrot executable is in
 
 If you want to install Parrot into a non-standard location use:
 
-    perl Configure.pl --prefix=/Users/foo/parrot-0.4.17
+    perl Configure.pl --prefix=/Users/foo/parrot-0.5.0
     make install
 
 But please note that dynamic libs will not be found for non-standard
@@ -147,7 +138,7 @@ WEB SITES
 The following web sites have all the Parrot information you need:
     http://www.parrotcode.org/
     http://dev.perl.org/perl6/
-    http://bugs6.perl.org/
+    http://bugs6.perl.org/perl6/
     http://pugscode.org/
 
 Have fun,

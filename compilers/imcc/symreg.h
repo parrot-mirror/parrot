@@ -21,7 +21,7 @@ enum VARTYPE {              /* variable type can be */
     VT_FLAT         = VARTYPE_BIT(8),   /* var :flat */
     VT_OPTIONAL     = VARTYPE_BIT(9),   /* var :optional */
     /* include/parrot/packfile.h */
-    VT_START_SLICE  = PF_VT_START_SLICE,/* x .. y slice range */
+    VT_START_SLICE  = PF_VT_START_SLICE, /* x .. y slice range */
     VT_END_SLICE    = PF_VT_END_SLICE,
     VT_START_ZERO   = PF_VT_START_ZERO, /* .. y 0..start */
     VT_END_INF      = PF_VT_END_INF,    /* x..  start..inf */
@@ -133,6 +133,7 @@ SymReg * _get_sym(NOTNULL(SymHash *hsh), NOTNULL(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CANNOT_RETURN_NULL
 SymReg * _mk_address(PARROT_INTERP,
     NOTNULL(SymHash *hsh),
     NOTNULL(char *name),
@@ -228,8 +229,10 @@ SymReg * link_keys(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-SymReg * mk_address(PARROT_INTERP, char *name, int uniq)
-        __attribute__nonnull__(1);
+PARROT_CANNOT_RETURN_NULL
+SymReg * mk_address(PARROT_INTERP, NOTNULL(char *name), int uniq)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 SymReg * mk_const(PARROT_INTERP, NOTNULL(const char *name), int t)
         __attribute__nonnull__(1)
@@ -263,21 +266,25 @@ SymReg * mk_label_address(PARROT_INTERP, NOTNULL(char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CANNOT_RETURN_NULL
 SymReg * mk_local_label(PARROT_INTERP, NOTNULL(char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-SymReg * mk_pasm_reg(PARROT_INTERP, char *name)
-        __attribute__nonnull__(1);
+SymReg * mk_pasm_reg(PARROT_INTERP, NOTNULL(char *name))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 SymReg * mk_pcc_sub(PARROT_INTERP, NOTNULL(char *name), int proto)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CANNOT_RETURN_NULL
 SymReg * mk_sub_address(PARROT_INTERP, NOTNULL(char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CANNOT_RETURN_NULL
 SymReg * mk_sub_label(PARROT_INTERP, NOTNULL(char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);

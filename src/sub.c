@@ -25,7 +25,8 @@ Subroutines, continuations, co-routines and other fun stuff...
 
 /*
 
-=item C<mark_context>
+=item C<void
+mark_context(PARROT_INTERP, NOTNULL(parrot_context_t* ctx))>
 
 Marks the context C<*ctx>.
 
@@ -37,31 +38,40 @@ void
 mark_context(PARROT_INTERP, NOTNULL(parrot_context_t* ctx))
 {
     PObj *obj;
-    int i;
+    int   i;
 
     mark_stack(interp, ctx->user_stack);
     mark_register_stack(interp, ctx->reg_stack);
-    obj = (PObj*)ctx->current_sub;
+
+    obj = (PObj *)ctx->current_sub;
     if (obj)
         pobject_lives(interp, obj);
-    obj = (PObj*)ctx->current_object;
+
+    obj = (PObj *)ctx->current_object;
     if (obj)
         pobject_lives(interp, obj);
+
     /* the current continuation in the interpreter has
      * to be marked too in the call sequence currently
      * as e.g. a MMD search could need resources
      * and GC the continuation
      */
-    obj = (PObj*)interp->current_cont;
-    if (obj && obj != (PObj*)NEED_CONTINUATION)
+    obj = (PObj *)interp->current_cont;
+    if (obj && obj != (PObj *)NEED_CONTINUATION)
         pobject_lives(interp, obj);
-    obj = (PObj*)ctx->current_cont;
+
+    obj = (PObj *)ctx->current_cont;
     if (obj && !PObj_live_TEST(obj))
         pobject_lives(interp, obj);
-    obj = (PObj*)ctx->current_namespace;
+
+    if (ctx->caller_ctx)
+        mark_context(interp, ctx->caller_ctx);
+
+    obj = (PObj *)ctx->current_namespace;
     if (obj)
         pobject_lives(interp, obj);
-    obj = (PObj*)ctx->lex_pad;
+
+    obj = (PObj *)ctx->lex_pad;
     if (obj)
         pobject_lives(interp, obj);
 
@@ -69,12 +79,13 @@ mark_context(PARROT_INTERP, NOTNULL(parrot_context_t* ctx))
         return;
 
     for (i = 0; i < ctx->n_regs_used[REGNO_PMC]; ++i) {
-        obj = (PObj*) CTX_REG_PMC(ctx, i);
+        obj = (PObj *)CTX_REG_PMC(ctx, i);
         if (obj)
             pobject_lives(interp, obj);
     }
+
     for (i = 0; i < ctx->n_regs_used[REGNO_STR]; ++i) {
-        obj = (PObj*) CTX_REG_STR(ctx, i);
+        obj = (PObj *)CTX_REG_STR(ctx, i);
         if (obj)
             pobject_lives(interp, obj);
     }
@@ -82,7 +93,10 @@ mark_context(PARROT_INTERP, NOTNULL(parrot_context_t* ctx))
 
 /*
 
-=item C<new_sub>
+=item C<PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+Parrot_sub *
+new_sub(PARROT_INTERP)>
 
 Returns a new C<Parrot_sub>.
 
@@ -103,7 +117,10 @@ new_sub(PARROT_INTERP)
 
 /*
 
-=item C<new_closure>
+=item C<PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+Parrot_sub *
+new_closure(PARROT_INTERP)>
 
 Returns a new C<Parrot_sub> with its own sctatchpad.
 
@@ -124,7 +141,10 @@ new_closure(PARROT_INTERP)
 
 /*
 
-=item C<new_continuation>
+=item C<PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+Parrot_cont *
+new_continuation(PARROT_INTERP, NULLOK(Parrot_cont *to))>
 
 Returns a new C<Parrot_cont> to the context of C<to> with its own copy of the
 current interpreter context.  If C<to> is C<NULL>, then the C<to_ctx> is set
@@ -161,7 +181,10 @@ new_continuation(PARROT_INTERP, NULLOK(Parrot_cont *to))
 
 /*
 
-=item C<new_ret_continuation>
+=item C<PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+Parrot_cont *
+new_ret_continuation(PARROT_INTERP)>
 
 Returns a new C<Parrot_cont> pointing to the current context.
 
@@ -188,7 +211,10 @@ new_ret_continuation(PARROT_INTERP)
 
 /*
 
-=item C<new_coroutine>
+=item C<PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+Parrot_coro *
+new_coroutine(PARROT_INTERP)>
 
 Returns a new C<Parrot_coro>.
 
@@ -213,7 +239,11 @@ new_coroutine(PARROT_INTERP)
 
 /*
 
-=item C<new_ret_continuation_pmc>
+=item C<PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+PMC *
+new_ret_continuation_pmc(PARROT_INTERP, NULLOK(opcode_t *address))>
 
 Returns a new C<RetContinuation> PMC. Uses one from the cache,
 if possible; otherwise, creates a new one.
@@ -235,9 +265,10 @@ new_ret_continuation_pmc(PARROT_INTERP, NULLOK(opcode_t *address))
 
 /*
 
-=item C<invalidate_retc_context>
+=item C<void
+invalidate_retc_context(PARROT_INTERP, NOTNULL(PMC *cont))>
 
-Make true Continuation from all RetContinuations up the call chain.
+Make true Continuations from all RetContinuations up the call chain.
 
 =cut
 
@@ -272,7 +303,11 @@ extern PMC* Parrot_NameSpace_nci_get_name(PARROT_INTERP, PMC* pmc);
 
 /*
 
-=item C<Parrot_full_sub_name>
+=item C<PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+STRING*
+Parrot_full_sub_name(PARROT_INTERP, NULLOK(PMC* sub))>
 
 Return namespace, name, and location of subroutine.
 
@@ -310,6 +345,19 @@ Parrot_full_sub_name(PARROT_INTERP, NULLOK(PMC* sub))
     }
     return NULL;
 }
+
+/*
+
+=item C<PARROT_API
+int
+Parrot_Context_get_info(PARROT_INTERP, NOTNULL(parrot_context_t *ctx),
+                    NOTNULL(Parrot_Context_info *info))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_API
 int
@@ -392,6 +440,20 @@ Parrot_Context_get_info(PARROT_INTERP, NOTNULL(parrot_context_t *ctx),
     return 1;
 }
 
+/*
+
+=item C<PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+STRING*
+Parrot_Context_infostr(PARROT_INTERP, NOTNULL(parrot_context_t *ctx))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_API
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
@@ -427,7 +489,10 @@ Parrot_Context_infostr(PARROT_INTERP, NOTNULL(parrot_context_t *ctx))
 
 /*
 
-=item C<Parrot_find_pad>
+=item C<PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC*
+Parrot_find_pad(PARROT_INTERP, NOTNULL(STRING *lex_name), NOTNULL(parrot_context_t *ctx))>
 
 Locate the LexPad containing the given name. Return NULL on failure.
 
@@ -465,6 +530,20 @@ Parrot_find_pad(PARROT_INTERP, NOTNULL(STRING *lex_name), NOTNULL(parrot_context
         ctx = outer;
     }
 }
+
+/*
+
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC*
+parrot_new_closure(PARROT_INTERP, NOTNULL(PMC *sub_pmc))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_API
 PARROT_CANNOT_RETURN_NULL

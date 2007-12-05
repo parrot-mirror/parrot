@@ -16,12 +16,8 @@ package auto::headers;
 use strict;
 use warnings;
 
-
 use base qw(Parrot::Configure::Step::Base);
-
 use Parrot::Configure::Step ':auto';
-use Config;
-
 
 sub _init {
     my $self = shift;
@@ -40,35 +36,10 @@ sub runstep {
         return 1;
     }
 
-    # perl5's Configure system doesn't call this by its full name, which may
-    # confuse use later, particularly once we break free and start doing all
-    # probing ourselves
-    my %mapping = ( i_niin => "i_netinetin" );
+    _set_from_Config($conf);
 
-    for ( keys %Config ) {
-        next unless /^i_/;
-        $conf->data->set( $mapping{$_} || $_ => $Config{$_} );
-    }
+    my @extra_headers = _list_extra_headers($conf);
 
-    # some headers may not be probed-for by perl 5, or might not be
-    # properly reflected in %Config (i_fcntl seems to be wrong on my machine,
-    # for instance).
-    #
-    # FreeBSD wants this order:
-    #include <sys/types.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
-    # hence add sys/types.h to the reprobe list, and have 2 goes at getting
-    # the header.
-    my @extra_headers = qw(malloc.h fcntl.h setjmp.h pthread.h signal.h
-        sys/types.h sys/socket.h netinet/in.h arpa/inet.h
-        sys/stat.h sysexit.h limits.h);
-
-    # more extra_headers needed on mingw/msys; *BSD fails if they are present
-    if ( $^O eq "msys" ) {
-        push @extra_headers, qw(sysmman.h netdb.h);
-    }
     my @found_headers;
     foreach my $header (@extra_headers) {
         my $pass = 0;
@@ -78,7 +49,8 @@ sub runstep {
         # work on *BSD where some headers are documented as relying on others
         # being included first.
         foreach my $use_headers ( [$header], [ @found_headers, $header ] ) {
-            $conf->data->set( testheaders => join( '', map { "#include <$_>\n" } @$use_headers ) );
+            $conf->data->set( testheaders =>
+                join( '', map { "#include <$_>\n" } @$use_headers ) );
             $conf->data->set( testheader => $header );
 
             cc_gen('config/auto/headers/test_c.in');
@@ -104,6 +76,43 @@ sub runstep {
 
     return 1;
 }
+
+sub _set_from_Config {
+    my $conf = shift;
+    # perl5's Configure system doesn't call this by its full name, which may
+    # confuse use later, particularly once we break free and start doing all
+    # probing ourselves
+    my %mapping = ( i_niin => "i_netinetin" );
+
+    for ( grep { /^i_/ } $conf->data->keys_p5() ) {
+        $conf->data->set( $mapping{$_} || $_ => $conf->data->get_p5($_) );
+    }
+}
+
+sub _list_extra_headers {
+    my $conf = shift;
+    # some headers may not be probed-for by perl 5, or might not be
+    # properly reflected in %Config (i_fcntl seems to be wrong on my machine,
+    # for instance).
+    #
+    # FreeBSD wants this order:
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    # hence add sys/types.h to the reprobe list, and have 2 goes at getting
+    # the header.
+    my @extra_headers = qw(malloc.h fcntl.h setjmp.h pthread.h signal.h
+        sys/types.h sys/socket.h netinet/in.h arpa/inet.h
+        sys/stat.h sysexit.h limits.h);
+
+    # more extra_headers needed on mingw/msys; *BSD fails if they are present
+    if ( $conf->data->get_p5('OSNAME') eq "msys" ) {
+        push @extra_headers, qw(sysmman.h netdb.h);
+    }
+    return @extra_headers;
+}
+
 
 1;
 

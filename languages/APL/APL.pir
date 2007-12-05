@@ -69,7 +69,7 @@ Initializes the compiling subsystem.
     load_bytecode 'Parrot/HLLCompiler.pbc'
     load_bytecode 'PAST-pm.pbc'
 
-    $P0 = getclass 'TGE::Grammar'
+    $P0 = get_class 'TGE::Grammar'
     $P1 = subclass $P0, 'APL::PAST::Grammar'
 
     $P0 = new [ 'HLLCompiler' ]
@@ -97,7 +97,7 @@ executing program statements.
     # Load the pmc library
     $P1 = loadlib 'apl_group'
     if $P1 goto pmcs_ok
-    $P2 = new .Exception
+    $P2 = new 'Exception'
     $P2[0] = "unable to load APL's dynpmc library"
     throw $P2
 pmcs_ok:

@@ -22,7 +22,7 @@ See original on L<http://luaforge.net/projects/luafilesystem/>
 =cut
 
 .HLL 'Lua', 'lua_group'
-.namespace [ 'Lua::lfs'; 'Lua' ]
+.namespace [ 'Lua'; 'lfs' ]
 
 .sub '__onload' :anon :load
 #    print "__onload lfs\n"
@@ -234,7 +234,7 @@ optimal file system I/O blocksize; (Unix only)
     new $P0, 'OS'
     push_eh _handler
     $P1 = $P0.'stat'($S1)
-    clear_eh
+    pop_eh
     if null aname goto L1
     $I0 = isa aname, 'LuaString'
     unless $I0 goto L2

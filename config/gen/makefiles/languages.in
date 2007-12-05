@@ -2,9 +2,11 @@
 
 # setup of commands
 @make_set_make@
-PERL      = @perl@
-MAKE      = @make_c@
-RM_F      = @rm_f@
+PERL          = @perl@
+MAKE          = @make_c@
+RM_F          = @rm_f@
+BUILD_DIR     = @build_dir@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 
 # add new languages here
 # remove obsolete languages here
@@ -23,12 +25,12 @@ LANGUAGES = \
     cola \
     dotnet \
     ecmascript \
+    eclectus \
     forth \
     jako \
     lisp \
     lua \
     m4 \
-    nqp \
     ook \
     parrot_compiler \
     perl5 \
@@ -74,6 +76,10 @@ help:
 	@echo "For the status of individual languages see LANGUAGES.STATUS.pod"
 	@echo ""
 
+# regenerate the Makefile
+Makefile: ../config/gen/makefiles/languages.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=""
+
 test:   all
 	$(PERL) t/harness
 
@@ -104,7 +110,6 @@ clean: \
     lisp.clean \
     lua.clean \
     m4.clean \
-    nqp.clean \
     ook.clean \
     parrot_compiler.clean \
     perl5.clean \
@@ -120,6 +125,10 @@ clean: \
     urm.clean \
     smoke-clean
 
+realclean: \
+    dotnet.realclean \
+    eclectus.realclean \
+    jako.realclean
 
 #
 # Language specific targets
@@ -213,7 +222,7 @@ cola.dummy:
 cola.test:
 	- $(MAKE) cola test
 cola.clean:
-# don't clean cola, as files in MANIFEST are removed
+	- $(MAKE) cola clean
 
 dotnet : dotnet.dummy
 dotnet.dummy:
@@ -223,6 +232,18 @@ dotnet.test:
 	- $(MAKE) dotnet test
 dotnet.clean:
 	- $(MAKE) dotnet clean
+dotnet.realclean:
+	- $(MAKE) dotnet realclean
+
+eclectus: eclectus.dummy
+eclectus.dummy:
+	- $(MAKE) eclectus test
+eclectus.test :
+	- $(MAKE) eclectus test
+eclectus.clean :
+	- $(MAKE) eclectus clean
+eclectus.realclean :
+	- $(MAKE) eclectus realclean
 
 ecmascript : ecmascript.dummy
 ecmascript.dummy:
@@ -255,6 +276,8 @@ jako.test:
 	- $(MAKE) jako test
 jako.clean:
 	- $(MAKE) jako clean
+jako.realclean:
+	- $(MAKE) jako realclean
 
 lisp: lisp.dummy
 lisp.dummy:
@@ -279,14 +302,6 @@ m4.test:
 	- $(MAKE) m4 test
 m4.clean:
 	- $(MAKE) m4 clean
-
-nqp : nqp.dummy
-nqp.dummy:
-	- $(MAKE) nqp
-nqp.test:
-	- $(MAKE) nqp test
-nqp.clean:
-	- $(MAKE) nqp clean
 
 ook : ook.dummy
 ook.dummy:

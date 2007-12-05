@@ -3,14 +3,40 @@
  * Copyright (C) 2004-2006, The Perl Foundation.
  */
 
+/*
+
+=head1 NAME
+
+config\gen\platform\win32\exec.c
+
+=head1 DESCRIPTION
+
+TODO
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
 #include <process.h>
 
 /*
- * Spawn a subprocess
- *
- */
+
+=item C<INTVAL
+Parrot_Run_OS_Command(Parrot_Interp interp, STRING *command)>
+
+Spawn a subprocess
+
+=cut
+
+*/
+
 INTVAL
-Parrot_Run_OS_Command(Parrot_Interp interp, STRING *command) {
+Parrot_Run_OS_Command(Parrot_Interp interp, STRING *command)
+{
     DWORD status = 0;
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -47,6 +73,17 @@ Parrot_Run_OS_Command(Parrot_Interp interp, STRING *command) {
     /* Return exit code left shifted by 8 for POSIX emulation. */
     return status << 8;
 }
+
+/*
+
+=item C<INTVAL
+Parrot_Run_OS_Command_Argv(Parrot_Interp interp, PMC *cmdargs)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 INTVAL
 Parrot_Run_OS_Command_Argv(Parrot_Interp interp, PMC *cmdargs)
@@ -106,13 +143,24 @@ Parrot_Run_OS_Command_Argv(Parrot_Interp interp, PMC *cmdargs)
     return status << 8;
 }
 
+/*
+
+=item C<void
+Parrot_Exec_OS_Command(Parrot_Interp interp, STRING *command)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
 Parrot_Exec_OS_Command(Parrot_Interp interp, STRING *command)
 {
     int status;
     char *in = string_to_cstring(interp, command);
     char *cmd = NULL;
-    char **argv = mem_sys_allocate_zeroed(2 * sizeof (int));
+    const char **argv = mem_sys_allocate_zeroed(2 * sizeof (int));
 
     /* Grab string, extract command and parameters. */
     char *curPos  = in;
@@ -184,6 +232,13 @@ Parrot_Exec_OS_Command(Parrot_Interp interp, STRING *command)
     }
 }
 
+/*
+
+=back
+
+=cut
+
+*/
 
 /*
  * Local variables:

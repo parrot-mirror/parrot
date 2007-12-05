@@ -35,12 +35,14 @@ gen_pir_past
         + "                                                                  \n"
         + ".sub 'php_init' :load :init                                       \n"
         + "                                                                  \n"
+        + "  load_bytecode 'PGE.pbc'                                         \n"
+        + "  load_bytecode 'PGE/Text.pbc'                                    \n"
+        + "  load_bytecode 'PGE/Util.pbc'                                    \n"
+        + "  load_bytecode 'PGE/Dumper.pbc'                                  \n"
+        + "  load_bytecode 'PCT.pbc'                                         \n"
         + "  load_bytecode 'languages/plumhead/src/common/plumheadlib.pbc'   \n"
-        + "  load_bytecode 'PAST-pm.pbc'                                     \n"
-        + "  load_bytecode 'Parrot/HLLCompiler.pbc'                          \n"
         + "  load_bytecode 'MIME/Base64.pbc'                                 \n"
         + "  load_bytecode 'dumper.pbc'                                      \n"
-        + "  load_bytecode 'PGE.pbc'                                         \n"
         + "  load_bytecode 'CGI/QueryHash.pbc'                               \n"
         + "                                                                  \n"
         + ".end                                                              \n"
@@ -69,9 +71,9 @@ gen_pir_past
         + "    .local pmc past_stmts                                         \n"
         + "    past_stmts = new 'PAST::Stmts'                                \n"
         + "                                                                  \n"
-        + "    .sym pmc past_temp                                            \n"
-        + "    .sym pmc past_name                                            \n"
-        + "    .sym pmc past_if_op                                           \n"
+        + "    .local pmc past_temp                                          \n"
+        + "    .local pmc past_name                                          \n"
+        + "    .local pmc past_if_op                                         \n"
         + "                                                                  \n"
       );
     }
@@ -94,11 +96,11 @@ gen_pir_past
         + "    # pir = past_root.'compile'( 'target' => 'pir' )              \n"
         + "    # print pir                                                   \n"
         + "                                                                  \n"
-        + "    .local pmc pastcompiler, eval_past                            \n"
-        + "    pastcompiler = new 'HLLCompiler'                              \n"
-        + "    pastcompiler.'removestage'('parse')                           \n"
-        + "    pastcompiler.'removestage'('past')                            \n"
-        + "    eval_past = pastcompiler.'compile'(past_root)                 \n"
+        + "    .local pmc plumhead_compiler, eval_past                       \n"
+        + "    plumhead_compiler = new [ 'PCT::HLLCompiler' ]                \n"
+        + "    plumhead_compiler.'removestage'('parse')                      \n"
+        + "    plumhead_compiler.'removestage'('past')                       \n"
+        + "    eval_past = plumhead_compiler.'compile'(past_root)            \n"
         + "    eval_past()                                                   \n"
         + "                                                                  \n"
         + ".end                                                              \n"
@@ -155,7 +157,7 @@ node[String reg_mother]
         + "  .local pmc code_string                                          \n"
         + "  code_string = new 'CodeString'                                  \n"
         + "  ( val ) = code_string.'escape'( val )                           \n"
-        + "      past_temp.'init'( 'name' => val, 'vtype' => '.Undef' )      \n"
+        + "      past_temp.'init'( 'value' => val, 'returns' => 'Undef' )    \n"
         + "  " + $node.reg_mother + ".'push'( past_temp )                    \n"
         + "  # end of NOQUOTE_STRING                                         \n"
         + "                                                                  \n"
@@ -174,9 +176,9 @@ node[String reg_mother]
         + "  .local pmc code_string                                          \n"
         + "  code_string = new 'CodeString'                                  \n"
         + "  ( val ) = code_string.'escape'( val )                           \n"
-        + "      past_temp.'init'( 'name' => val, 'vtype' => '.Undef' )      \n"
+        + "      past_temp.'init'( 'value' => val, 'returns' => 'Undef' )    \n"
         + "  " + $node.reg_mother + ".'push'( past_temp )                    \n"
-        + "  # end of SINGLEQUOTE_STRING                                                 \n"
+        + "  # end of SINGLEQUOTE_STRING                                     \n"
         + "                                                                  \n"
       );
     }
@@ -193,9 +195,9 @@ node[String reg_mother]
         + "  .local pmc code_string                                          \n"
         + "  code_string = new 'CodeString'                                  \n"
         + "  ( val ) = code_string.'escape'( val )                           \n"
-        + "      past_temp.'init'( 'name' => val, 'vtype' => '.Undef' )      \n"
+        + "      past_temp.'init'( 'value' => val, 'returns' => 'Undef' )    \n"
         + "  " + $node.reg_mother + ".'push'( past_temp )                    \n"
-        + "  # end of DOUBLEQUOTE_STRING                                                 \n"
+        + "  # end of DOUBLEQUOTE_STRING                                     \n"
         + "                                                                  \n"
       );
     }
@@ -205,9 +207,8 @@ node[String reg_mother]
           "                                                                  \n"
         + "  # start of NUMBER                                               \n"
         + "  past_temp = new 'PAST::Val'                                     \n"
-        + "      past_temp.'attr'( 'name', '" + $NUMBER.text + "', 1 )       \n"
-        + "      past_temp.'attr'( 'ctype', 'n+', 1 )                        \n"
-        + "      past_temp.'attr'( 'vtype', '.Float', 1 )                    \n"
+        + "      past_temp.'attr'( 'value', '" + $NUMBER.text + "', 1 )      \n"
+        + "      past_temp.'attr'( 'returns', 'Float', 1 )                   \n"
         + "  " + $node.reg_mother + ".'push'( past_temp )                    \n"
         + "  # end of NUMBER                                                 \n"
       );
@@ -218,9 +219,8 @@ node[String reg_mother]
           "                                                                  \n"
         + "  # start of INTEGER                                              \n"
         + "  past_temp = new 'PAST::Val'                                     \n"
-        + "      past_temp.'attr'( 'name', '" + $INTEGER.text + "', 1 )      \n"
-        + "      past_temp.'attr'( 'ctype', 'i+', 1 )                        \n"
-        + "      past_temp.'attr'( 'vtype', '.Integer', 1 )                  \n"
+        + "      past_temp.'attr'( 'value', '" + $INTEGER.text + "', 1 )     \n"
+        + "      past_temp.'attr'( 'returns', 'Integer', 1 )                 \n"
         + "  " + $node.reg_mother + ".'push'( past_temp )                    \n"
         + "  # end of INTEGER                                                \n"
       );
@@ -231,7 +231,7 @@ node[String reg_mother]
       System.out.print( 
           "                                                                   \n"
         + "    # entering PLUS | MINUS | MUL_OP | BITWISE_OP                  \n"
-        + "      .sym pmc " + reg + "                                         \n"
+        + "      .local pmc " + reg + "                                       \n"
         + "      " + reg + " = new 'PAST::Op'                                 \n"
       );
     }
@@ -255,7 +255,7 @@ node[String reg_mother]
       System.out.print( 
           "  " + reg + ".'attr'( 'pirop', '" + pirop + "', 1 )                \n"
         + "  " + reg + ".'attr'( 'name',  '" + name + "' , 1 )                \n"
-        + "  " + reg + ".'attr'( 'islvalue',  0 , 1 )                \n"
+        + "  " + reg + ".'attr'( 'lvalue',  0 , 1 )                           \n"
         + "  " + $node.reg_mother + ".'push'( " + reg + " )                   \n"
         + "    # leaving PLUS | MINUS | MUL_OP | BITWISE_OP                   \n"
       );
@@ -266,7 +266,7 @@ node[String reg_mother]
       System.out.print( 
           "                                                                   \n"
         + "    # entering PREFIX                                              \n"
-        + "      .sym pmc " + reg + "                                         \n"
+        + "      .local pmc " + reg + "                                       \n"
         + "      " + reg + " = new 'PAST::Op'                                 \n"
       );
     }
@@ -290,7 +290,7 @@ node[String reg_mother]
       System.out.print( 
           "                                                                   \n"
         + "    # entering REL_OP                                              \n"
-        + "      .sym pmc " + reg + "                                         \n"
+        + "      .local pmc " + reg + "                                       \n"
         + "      " + reg + " = new 'PAST::Op'                                 \n"
       );
     }
@@ -316,7 +316,7 @@ node[String reg_mother]
         + "  # entering IF                                                    \n"
         + "      past_if_op = new 'PAST::Op'                                  \n"
         + "      past_if_op.'attr'( 'pasttype', 'if' , 1 )                    \n"
-        + "        .sym pmc " + reg_exp + "                                   \n"
+        + "        .local pmc " + reg_exp + "                                 \n"
         + "        " + reg_exp + " = new 'PAST::Block'                        \n"
         + "                                                                   \n"
       );
@@ -335,7 +335,7 @@ node[String reg_mother]
       System.out.print( 
           "                                                                   \n"
         + "    # entering STMTS                                               \n"
-        + "        .sym pmc " + reg_stmts + "                                 \n"
+        + "        .local pmc " + reg_stmts + "                               \n"
         + "        " + reg_stmts + " = new 'PAST::Stmts'                      \n"
       );
     }
@@ -352,7 +352,7 @@ node[String reg_mother]
       System.out.print( 
           "                                                                   \n"
         + "    # entering ASSIGN_OP                                           \n"
-        + "    .sym pmc " + reg_assign + "                                    \n"
+        + "    .local pmc " + reg_assign + "                                  \n"
         + "    " + reg_assign + " = new 'PAST::Op'                            \n"
         + "    " + reg_assign + ".init( 'name' => 'infix:=', 'pasttype' => 'assign' ) \n"
       );
@@ -370,7 +370,7 @@ node[String reg_mother]
           "                                                                  \n"
         + "  # entering SCALAR                                               \n"
         + "  past_temp = new 'PAST::Var'                                     \n"
-        + "      past_temp.'init'( 'name' => '" + $SCALAR.text + "', 'viviself' => '.Undef', 'islvalue' => 1 )      \n"
+        + "      past_temp.'init'( 'name' => '" + $SCALAR.text + "', 'scope' => 'package', 'viviself' => 'Undef', 'lvalue' => 1 )      \n"
         + "  " + $node.reg_mother + ".'push'( past_temp )                    \n"
         + "  # leaving SCALAR                                                \n"
       );
@@ -381,9 +381,9 @@ node[String reg_mother]
       System.out.print( 
           "                                                                  \n"
         + "    # entering ARRAY                                              \n"
-        + "    .sym pmc " + reg_array + "                                    \n"
+        + "    .local pmc " + reg_array + "                                  \n"
         + "    " + reg_array + " = new 'PAST::Var'                           \n"
-        + "    " + reg_array + ".init( 'scope' => 'keyed', 'viviself' => '.Undef', 'islvalue' => 1 ) \n"
+        + "    " + reg_array + ".init( 'scope' => 'keyed', 'viviself' => 'Undef', 'lvalue' => 1 ) \n"
       );
     }
     ^( ARRAY node[reg_array] )
@@ -391,7 +391,7 @@ node[String reg_mother]
       System.out.println( 
           "                                                                  \n"
         + "  past_name = new 'PAST::Var'                                     \n"
-        + "  past_name.'init'( 'name' => '" + $ARRAY.text + "', 'viviself' => '.Hash', 'islvalue' => 1 )      \n"
+        + "  past_name.'init'( 'name' => '" + $ARRAY.text + "', 'scope' => 'package', 'viviself' => 'Hash', 'lvalue' => 1 )      \n"
         + "  # PAST-pm has no unshift yet                                    \n"
         + "  \$P0 = " + reg_array + ".'get_array'()                          \n"
         + "  unshift \$P0, past_name                                         \n"

@@ -71,16 +71,12 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
     .local pmc pmc1
     pmc1 = new 'LuaTable'
     .local string str1
-    str1 = classname pmc1
-    print str1
-    print "\n"
     str1 = typeof pmc1
     print str1
     print "\n"
     end
 .end
 CODE
-table
 table
 OUTPUT
 
@@ -146,7 +142,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check key PMC' );
     val1 = new 'LuaString'
     val1 = "value1"
     .local pmc val2
-    val2 = new $I0
+    val2 = new 'LuaString'
     val2 = "value2"
     pmc1[val1] = val1
     pmc1[val2] = val2
@@ -194,7 +190,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check deletion by assignment of nil' );
     val1 = new 'LuaString'
     val1 = "value1"
     .local pmc val2
-    val2 = new $I0
+    val2 = new 'LuaString'
     val2 = "value2"
     .local int nb1
     nb1 = elements pmc1

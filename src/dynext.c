@@ -24,6 +24,15 @@ src/dynext.c - Dynamic extensions to Parrot
 /* HEADERIZER BEGIN: static */
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static STRING * clone_string_into(
+    NOTNULL(Interp *d),
+    NOTNULL(Interp *s),
+    PMC *value)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static STRING * get_path(PARROT_INTERP,
     NOTNULL(STRING *lib),
@@ -48,6 +57,7 @@ static PMC * make_string_pmc(PARROT_INTERP, NOTNULL(STRING *string))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CANNOT_RETURN_NULL
 static PMC * run_init_lib(PARROT_INTERP,
     NOTNULL(void *handle),
     NOTNULL(STRING *lib_name),
@@ -67,7 +77,7 @@ static void set_cstring_prop(PARROT_INTERP,
         __attribute__nonnull__(4);
 
 static void store_lib_pmc(PARROT_INTERP,
-    NOTNULL(NOTNULL(PMC *lib_pmc)),
+    NOTNULL(PMC *lib_pmc),
     NOTNULL(STRING *path),
     NOTNULL(STRING *type),
     NOTNULL(STRING *lib_name))
@@ -84,7 +94,9 @@ static void store_lib_pmc(PARROT_INTERP,
 
 /*
 
-=item C<set_cstring_prop>
+=item C<static void
+set_cstring_prop(PARROT_INTERP, NOTNULL(PMC *lib_pmc), NOTNULL(const char *what),
+        NOTNULL(STRING *name))>
 
 Set a property C<name> with value C<what> on the C<ParrotLibrary>
 C<lib_pmc>.
@@ -107,7 +119,9 @@ set_cstring_prop(PARROT_INTERP, NOTNULL(PMC *lib_pmc), NOTNULL(const char *what)
 
 /*
 
-=item C<store_lib_pmc>
+=item C<static void
+store_lib_pmc(PARROT_INTERP, NOTNULL(NOTNULL(PMC *lib_pmc)), NOTNULL(STRING *path),
+        NOTNULL(STRING *type), NOTNULL(STRING *lib_name))>
 
 Store a C<ParrotLibrary> PMC in the interpreter's C<iglobals>.
 
@@ -116,7 +130,7 @@ Store a C<ParrotLibrary> PMC in the interpreter's C<iglobals>.
 */
 
 static void
-store_lib_pmc(PARROT_INTERP, NOTNULL(NOTNULL(PMC *lib_pmc)), NOTNULL(STRING *path),
+store_lib_pmc(PARROT_INTERP, NOTNULL(PMC *lib_pmc), NOTNULL(STRING *path),
         NOTNULL(STRING *type), NOTNULL(STRING *lib_name))
 {
     PMC * const iglobals = interp->iglobals;
@@ -134,7 +148,10 @@ store_lib_pmc(PARROT_INTERP, NOTNULL(NOTNULL(PMC *lib_pmc)), NOTNULL(STRING *pat
 
 /*
 
-=item C<is_loaded>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static PMC*
+is_loaded(PARROT_INTERP, NOTNULL(STRING *path))>
 
 Check if a C<ParrotLibrary> PMC with the filename path exists.
 If it does, return it. Otherwise, return NULL.
@@ -158,7 +175,11 @@ is_loaded(PARROT_INTERP, NOTNULL(STRING *path))
 
 /*
 
-=item C<get_path>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static STRING *
+get_path(PARROT_INTERP, NOTNULL(STRING *lib), NOTNULL(void **handle),
+        NOTNULL(STRING *wo_ext), NOTNULL(STRING *ext))>
 
 Return path and handle of a dynamic lib, setting lib_name to just the filestem
 (i.e. without path or extension) as a freshly-allocated C string.
@@ -264,34 +285,25 @@ get_path(PARROT_INTERP, NOTNULL(STRING *lib), NOTNULL(void **handle),
 
 /*
 
-=item C<Parrot_load_lib>
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PMC *
+Parrot_init_lib(PARROT_INTERP,
+                NULLOK(PMC *(*load_func)(PARROT_INTERP)),
+                NULLOK(void (*init_func)(PARROT_INTERP, NULLOK(PMC *))))>
 
-Dynamic library loader.
-
-C<initializer> is currently unused.
-
-Calls C<Parrot_lib_%s_load()> which performs the registration of the lib
-once C<Parrot_lib_%s_init()> gets called (if exists) to perform thread
-specific setup. In both functions C<%s> is the name of the library.
-
-If Parrot_lib_%s_load() succeeds, it should either return a
-ParrotLibrary PMC, which is then used as the handle for this library
-or NULL, in which case parrot creates a handle for the library.
-
-If either Parrot_lib_%s_load() or Parrot_lib_%s_init() detects an error
-condition, an exception should be thrown.
-
-TODO: fetch Parrot_lib load/init handler exceptions
+TODO: Not yet documented!!!
 
 =cut
 
 */
 
 PARROT_API
+PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_init_lib(PARROT_INTERP,
-                PMC *(*load_func)(PARROT_INTERP),
-                void (*init_func)(PARROT_INTERP, NULLOK(PMC *)))
+                NULLOK(PMC *(*load_func)(PARROT_INTERP)),
+                NULLOK(void (*init_func)(PARROT_INTERP, NULLOK(PMC *))))
 {
     NOTNULL(PMC *lib_pmc) = NULL;
 
@@ -317,6 +329,20 @@ Parrot_init_lib(PARROT_INTERP,
     return lib_pmc;
 }
 
+/*
+
+=item C<PARROT_CANNOT_RETURN_NULL
+static PMC *
+run_init_lib(PARROT_INTERP, NOTNULL(void *handle),
+            NOTNULL(STRING *lib_name), NOTNULL(STRING *wo_ext))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
 static PMC *
 run_init_lib(PARROT_INTERP, NOTNULL(void *handle),
             NOTNULL(STRING *lib_name), NOTNULL(STRING *wo_ext))
@@ -377,10 +403,24 @@ run_init_lib(PARROT_INTERP, NOTNULL(void *handle),
     return lib_pmc;
 }
 
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static STRING *
+clone_string_into(NOTNULL(Interp *d), NOTNULL(Interp *s), PMC *value)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING *
-clone_string_into(NOTNULL(Interp *d), NOTNULL(Interp *s), PMC *value) {
+clone_string_into(NOTNULL(Interp *d), NOTNULL(Interp *s), PMC *value)
+{
     STRING * const orig = VTABLE_get_string(s, value);
     char * const raw_str = string_to_cstring(s, orig);
     STRING * const ret =
@@ -390,6 +430,19 @@ clone_string_into(NOTNULL(Interp *d), NOTNULL(Interp *s), PMC *value) {
     string_cstring_free(raw_str);
     return ret;
 }
+
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PMC *
+make_string_pmc(PARROT_INTERP, NOTNULL(STRING *string))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -401,6 +454,20 @@ make_string_pmc(PARROT_INTERP, NOTNULL(STRING *string))
         string, PObj_constant_FLAG);
     return ret;
 }
+
+/*
+
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC *
+Parrot_clone_lib_into(NOTNULL(Interp *d), NOTNULL(Interp *s), NOTNULL(PMC *lib_pmc))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
@@ -417,15 +484,14 @@ Parrot_clone_lib_into(NOTNULL(Interp *d), NOTNULL(Interp *s), NOTNULL(PMC *lib_p
         VTABLE_getprop(s, lib_pmc, const_string(s, "_type")));
 
     if (0 == string_equal(s, type, const_string(s, "Ops"))) {
-        PMC *new_lib_pmc;
-
         /* we can't clone oplibs in the normal way, since they're actually
          * shared between interpreters dynop_register modifies the (statically
          * allocated) op_lib_t structure from core_ops.c, for example.
          * Anyways, if we hope to share bytecode at runtime, we need to have
          * them have identical opcodes anyways.
          */
-        new_lib_pmc = constant_pmc_new(d, enum_class_ParrotLibrary);
+        PMC * const new_lib_pmc = constant_pmc_new(d, enum_class_ParrotLibrary);
+
         PMC_data(new_lib_pmc) = handle;
         VTABLE_setprop(d, new_lib_pmc, const_string(d, "_filename"),
             make_string_pmc(d, wo_ext));
@@ -454,6 +520,35 @@ Parrot_clone_lib_into(NOTNULL(Interp *d), NOTNULL(Interp *s), NOTNULL(PMC *lib_p
         return run_init_lib(d, handle, lib_name, wo_ext);
     }
 }
+
+/*
+
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC *
+Parrot_load_lib(PARROT_INTERP, NULLOK(STRING *lib), SHIM(PMC *initializer))>
+
+Dynamic library loader.
+
+C<initializer> is currently unused.
+
+Calls C<Parrot_lib_%s_load()> which performs the registration of the lib
+once C<Parrot_lib_%s_init()> gets called (if exists) to perform thread
+specific setup. In both functions C<%s> is the name of the library.
+
+If Parrot_lib_%s_load() succeeds, it should either return a
+ParrotLibrary PMC, which is then used as the handle for this library
+or NULL, in which case parrot creates a handle for the library.
+
+If either Parrot_lib_%s_load() or Parrot_lib_%s_init() detects an error
+condition, an exception should be thrown.
+
+TODO: fetch Parrot_lib load/init handler exceptions
+
+=cut
+
+*/
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT

@@ -353,7 +353,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "addattribute" );
 # Check that addattribute doesn't blow up
     addattribute P1, "foo_i"
     print "ok 1\n"
-# Check that P1 is still the same ParrotClass PMC
+# Check that P1 is still the same Class PMC
     set S0, P1
     eq S0, "Foo", ok2
     print "not "
@@ -408,8 +408,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "addattribute subclass - same name" );
     print $P0
     print ' '
     $P0 = getattribute o, 'k'
-    print $P0
-    print_newline
+    say $P0
+
     $P0 = getattribute o, 'i'
     print $P0
     print ' '
@@ -420,8 +420,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "addattribute subclass - same name" );
     print $P0
     print ' '
     $P0 = getattribute o, 'k'
-    print $P0
-    print_newline
+    say $P0
 .end
 .namespace ['Bar']
 .sub init :vtable :method
@@ -510,7 +509,8 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "setting non-existent by name" );
 CODE
 /No such attribute 'no_such' in class 'Foo'/
 OUTPUT
-#XXX
+
+# RT#46845
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "getting NULL attribute" );
     newclass P1, "Foo"
@@ -1056,7 +1056,6 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "class op test" );
     new P1, "City"
 
     class P2, P1
-#    classname S0, P2 # deprecated
     set S0, P2
     print S0
     print "\n"
@@ -1087,7 +1086,6 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "anon. subclass has no name" );
     newclass P0, "City"
     subclass P1, P0
-#    classname S0, P1 # deprecated
     set S0, P1
     print "'"
     print S0
@@ -1617,10 +1615,10 @@ ok 3
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "Wrong way to create new objects" );
-    new P0, 'ParrotObject'
+    new P0, 'Object'
     end
 CODE
-/Can't create new ParrotObject/
+/Object must be created by a class./
 OUTPUT
 
 #' for vim
@@ -1665,7 +1663,7 @@ CODE
 1 * 1 = 1
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', 'equality of subclassed Integer', todo => 'RT #46541' );
+pir_output_is( <<'CODE', <<'OUTPUT', 'equality of subclassed Integer' );
 .sub main :main
   .local pmc class
   class = subclass "Integer", "LispInteger"

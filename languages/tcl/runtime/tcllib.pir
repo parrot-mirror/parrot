@@ -88,7 +88,7 @@ env_loop_done:
   # set tcl_interactive
   push_eh non_interactive
     $P1 = get_root_global ['tcl'], '$tcl_interactive'
-  clear_eh
+  pop_eh
   goto set_tcl_library 
  non_interactive:
   $P1 = new 'TclInt'
@@ -281,11 +281,12 @@ env_loop_done:
   $S0 .= slash
   $S0 .= 'parray.tcl'
 
-  .local pmc io, script
-  io = getclass 'ParrotIO'
-  $S0 = io.'slurp'($S0)
+  .local pmc script
+  $P99 = open $S0, '<'
+  $S0 = $P99.'slurp'('')
 
   script = get_root_global ['_tcl'], '__script'
+  
   $P1 = script($S0)
   $P1()
 .end

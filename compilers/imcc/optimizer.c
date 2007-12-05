@@ -4,13 +4,71 @@
  */
 
 /*
- * optimizer.c
- *
- * Optimization occurs in three stages:
- *  1) pre_optimizer -- runs before control flow graph (CFG) is built
- *  2) optimizer     -- runs after CFG is built, but before register allocation
- *  3) post_optimizer -- runs after register allocation
- */
+
+=head1 NAME
+
+compilers/imcc/optimizer.c
+
+=head1 DESCRIPTION
+
+Optimization occurs in three stages:
+  1) pre_optimizer -- runs before control flow graph (CFG) is built
+  2) optimizer     -- runs after CFG is built, but before register allocation
+  3) post_optimizer -- runs after register allocation
+
+pre_optimizer
+-------------
+
+During pre-optimization we perform optimizations which don't require
+full knowledge of the control flow graph and the life ranges of each
+variable. This phase is handled by two functions: pre_optimize() and
+cfg_optimize().
+
+pre_optimize() runs before the construction of the CFG begins. It calls
+strength_reduce() to perform simple strength reduction, and if_branch()
+to rewrite certain if/branch/label constructs (for details, see
+if_branch() below).
+
+[pre_optimize() may also be called later, during the main optimization
+ phase, but this is not guaranteed.]
+
+cfg_optimize() runs during the construction of the CFG. It calls
+branch_branch() to perform jump optimization (i.e. branches to
+branch statements or jumps to jumps are converted into single
+branches/jumps to the final destination), unused_label() to remove
+unused labels and dead_code_remove() to remove unreachable code
+(e.g. basic blocks which are never entered or instructions after
+ and unconditional branch which are never branched to).
+
+cfg_optimize may be called multiple times during the construction of the
+CFG depending on whether or not it finds anything to optimize.
+
+RT#46277: subst_constants ... rewrite e.g. add_i_ic_ic -- where does this happen?
+
+optimizer
+---------
+
+runs with CFG and life info
+
+used_once ... deletes assignments, when LHS is unused
+loop_optimization ... pulls invariants out of loops
+RT#46279 e.g. constant_propagation
+
+post_optimizer: currently pcc_optimize in pcc.c
+---------------
+
+runs after register alloocation
+
+e.g. eliminate new Px .PerlUndef because Px where different before
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
 #include <string.h>
 #include "imc.h"
 #include "pbc.h"
@@ -18,55 +76,6 @@
 
 /* HEADERIZER HFILE: compilers/imcc/optimizer.h */
 
-
-/*
- * pre_optimizer
- * -------------
- *
- * During pre-optimization we perform optimizations which don't require
- * full knowledge of the control flow graph and the life ranges of each
- * variable. This phase is handled by two functions: pre_optimize() and
- * cfg_optimize().
- *
- * pre_optimize() runs before the construction of the CFG begins. It calls
- * strength_reduce() to perform simple strength reduction, and if_branch()
- * to rewrite certain if/branch/label constructs (for details, see
- * if_branch() below).
- *
- * [pre_optimize() may also be called later, during the main optimization
- *  phase, but this is not guaranteed.]
- *
- * cfg_optimize() runs during the construction of the CFG. It calls
- * branch_branch() to perform jump optimization (i.e. branches to
- * branch statements or jumps to jumps are converted into single
- * branches/jumps to the final destination), unused_label() to remove
- * unused labels and dead_code_remove() to remove unreachable code
- * (e.g. basic blocks which are never entered or instructions after
- *  and unconditional branch which are never branched to).
- *
- * cfg_optimize may be called multiple times during the construction of the
- * CFG depending on whether or not it finds anything to optimize.
- *
- * RT#46277: subst_constants ... rewrite e.g. add_i_ic_ic -- where does this happen?
- *
- * optimizer
- * ---------
- *
- * runs with CFG and life info
- *
- * used_once ... deletes assignments, when LHS is unused
- * loop_optimization ... pulls invariants out of loops
- * RT#46279 e.g. constant_propagation
- *
- * post_optimizer: currently pcc_optimize in pcc.c
- * ---------------
- *
- *  runs after register alloocation
- *
- *  e.g. eliminate new Px .PerlUndef
- *  because Px where different before
- *
- */
 
 /* buggy - turned off */
 #define  DO_LOOP_OPTIMIZATION 0
@@ -139,8 +148,16 @@ int loop_optimization(Interp *, IMC_Unit *);
 #endif
 
 /*
- * Handles optimizations occuring before the construction of the CFG.
- */
+
+=item C<int
+pre_optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))>
+
+Handles optimizations occuring before the construction of the CFG.
+
+=cut
+
+*/
+
 int
 pre_optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 {
@@ -157,10 +174,18 @@ pre_optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 }
 
 /*
- * Handles optimizations occuring during the construction of the CFG.
- * Returns TRUE if any optimization was performed. Otherwise, returns
- * FALSE.
- */
+
+=item C<int
+cfg_optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))>
+
+Handles optimizations occuring during the construction of the CFG.
+Returns TRUE if any optimization was performed. Otherwise, returns
+FALSE.
+
+=cut
+
+*/
+
 int
 cfg_optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 {
@@ -183,6 +208,17 @@ cfg_optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
     return 0;
 }
 
+/*
+
+=item C<int
+optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 int
 optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 {
@@ -201,8 +237,16 @@ optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 }
 
 /*
- * Get negated form of operator. If no negated form is known, return 0.
- */
+
+=item C<const char *
+get_neg_op(NOTNULL(const char *op), NOTNULL(int *n))>
+
+Get negated form of operator. If no negated form is known, return 0.
+
+=cut
+
+*/
+
 const char *
 get_neg_op(NOTNULL(const char *op), NOTNULL(int *n))
 {
@@ -228,17 +272,27 @@ get_neg_op(NOTNULL(const char *op), NOTNULL(int *n))
 }
 
 /*
- * Convert if/branch/label constructs of the form:
- *
- *   if cond L1
- *   branch L2
- *   L1
- *
- * to the simpler negated form:
- *
- *   unless cond L2
- *
+*
  */
+/*
+
+=item C<static int
+if_branch(PARROT_INTERP, NOTNULL(IMC_Unit *unit))>
+
+Convert if/branch/label constructs of the form:
+
+  if cond L1
+  branch L2
+  L1
+
+to the simpler negated form:
+
+  unless cond L2
+
+=cut
+
+*/
+
 static int
 if_branch(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 {
@@ -262,7 +316,7 @@ if_branch(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
                 SymReg * const go = get_branch_reg(ins);
                 int args;
 
-                IMCC_debug(interp, DEBUG_OPT1,"if_branch %s ... %s\n",
+                IMCC_debug(interp, DEBUG_OPT1, "if_branch %s ... %s\n",
                         last->op, br_dest->name);
                 /* find the negated op (e.g if->unless, ne->eq ... */
                 if ((neg_op = get_neg_op(last->op, &args)) != 0) {
@@ -291,11 +345,19 @@ if_branch(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 }
 
 /*
- * strength_reduce ... rewrites e.g add Ix, Ix, y => add Ix, y
- *
- * These are run after constant simplification, so it is
- * guaranteed that one operand is non constant if opsize == 4
- */
+
+=item C<static int
+strength_reduce(PARROT_INTERP, IMC_Unit * unit)>
+
+strength_reduce ... rewrites e.g add Ix, Ix, y => add Ix, y
+
+These are run after constant simplification, so it is
+guaranteed that one operand is non constant if opsize == 4
+
+=cut
+
+*/
+
 static int
 strength_reduce(PARROT_INTERP, IMC_Unit * unit)
 {
@@ -527,12 +589,18 @@ strength_reduce(PARROT_INTERP, IMC_Unit * unit)
     return changes;
 }
 
-
 /*
- * Does conservative constant propagation.
- * This code will not propagate constants past labels or saves,
- * even though sometimes it may be safe.
- */
+
+=item C<static int
+constant_propagation(PARROT_INTERP, IMC_Unit * unit)>
+
+Does conservative constant propagation.
+This code will not propagate constants past labels or saves,
+even though sometimes it may be safe.
+
+=cut
+
+*/
 
 static int
 constant_propagation(PARROT_INTERP, IMC_Unit * unit)
@@ -576,9 +644,9 @@ constant_propagation(PARROT_INTERP, IMC_Unit * unit)
                  */
                 for (i = ins2->n_r - 1; i >= 0; i--) {
                     if (!strcmp(o->name, ins2->r[i]->name)) {
-                        if (instruction_writes(ins2,ins2->r[i]))
+                        if (instruction_writes(ins2, ins2->r[i]))
                             goto next_constant;
-                        else if (instruction_reads(ins2,ins2->r[i])) {
+                        else if (instruction_reads(ins2, ins2->r[i])) {
                             IMCC_debug(interp, DEBUG_OPT2,
                                     "\tpropagating into %I register %i",
                                     ins2, i);
@@ -626,10 +694,18 @@ next_constant:;
     return any;
 }
 
-
 /*
- * rewrite e.g. add_n_ic => add_n_nc
- */
+
+=item C<Instruction *
+IMCC_subst_constants_umix(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
+        SymReg **r, int n)>
+
+rewrite e.g. add_n_ic => add_n_nc
+
+=cut
+
+*/
+
 Instruction *
 IMCC_subst_constants_umix(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
         SymReg **r, int n)
@@ -659,10 +735,18 @@ IMCC_subst_constants_umix(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *na
 }
 
 /*
- * Run one parrot instruction, registers are filled with the
- * according constants. Thus the result is always ok as the function
- * core evaluates the constants.
- */
+
+=item C<static int
+eval_ins(PARROT_INTERP, char *op, size_t ops, SymReg **r)>
+
+Run one parrot instruction, registers are filled with the
+according constants. Thus the result is always ok as the function
+core evaluates the constants.
+
+=cut
+
+*/
+
 static int
 eval_ins(PARROT_INTERP, char *op, size_t ops, SymReg **r)
 {
@@ -705,6 +789,8 @@ eval_ins(PARROT_INTERP, char *op, size_t ops, SymReg **r)
                             REG_STR(interp, i) =
                                 IMCC_string_from_reg(interp, r[i]);
                             break;
+                        default:
+                            break;
                     }
                 }
                 break;
@@ -731,11 +817,21 @@ eval_ins(PARROT_INTERP, char *op, size_t ops, SymReg **r)
 }
 
 /*
- * rewrite e.g. add_n_nc_nc => set_n_nc
- *              abs_i_ic    => set_i_ic
- *              eq_ic_ic_ic => branch_ic / delete
- *              if_ic_ic    => branch_ic / delete
- */
+
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+Instruction *
+IMCC_subst_constants(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
+        SymReg **r, int n, NOTNULL(int *ok))>
+
+rewrite e.g. add_n_nc_nc => set_n_nc
+             abs_i_ic    => set_i_ic
+             eq_ic_ic_ic => branch_ic / delete
+             if_ic_ic    => branch_ic / delete
+
+=cut
+
+*/
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
@@ -888,6 +984,8 @@ IMCC_subst_constants(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
             case 'N':
                 sprintf(b, fmt, REG_NUM(interp, 0));
                 break;
+            default:
+                break;
         }
         r[1] = mk_const(interp, str_dup(b), r[0]->set);
         tmp = INS(interp, unit, "set", "", r,
@@ -904,14 +1002,22 @@ IMCC_subst_constants(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
 /* optimizations with CFG built */
 
 /*
- * if I0 goto L1  => if IO goto L2
- * ...
- * L1:
- * branch L2
- *
- * Returns TRUE if any optimizations were performed. Otherwise, returns
- * FALSE.
- */
+
+=item C<static int
+branch_branch(PARROT_INTERP, NOTNULL(IMC_Unit * unit))>
+
+if I0 goto L1  => if IO goto L2
+...
+L1:
+branch L2
+
+Returns TRUE if any optimizations were performed. Otherwise, returns
+FALSE.
+
+=cut
+
+*/
+
 static int
 branch_branch(PARROT_INTERP, NOTNULL(IMC_Unit * unit))
 {
@@ -953,18 +1059,26 @@ branch_branch(PARROT_INTERP, NOTNULL(IMC_Unit * unit))
 }
 
 /*
- * branch L2  => ...
- * L1:           branch L4
- * ...           L1:
- * branch L3     ...
- * L2:           branch L3
- * ...           L5:
- * branch L4
- * L5:
- *
- * Returns TRUE if any optimizations were performed. Otherwise, returns
- * FALSE.
- */
+
+=item C<static int
+branch_reorg(PARROT_INTERP, IMC_Unit * unit)>
+
+branch L2  => ...
+L1:           branch L4
+...           L1:
+branch L3     ...
+L2:           branch L3
+...           L5:
+branch L4
+L5:
+
+Returns TRUE if any optimizations were performed. Otherwise, returns
+FALSE.
+
+=cut
+
+*/
+
 static int
 branch_reorg(PARROT_INTERP, IMC_Unit * unit)
 {
@@ -1026,6 +1140,18 @@ branch_reorg(PARROT_INTERP, IMC_Unit * unit)
     }
     return changed;
 }
+
+/*
+
+=item C<static int
+branch_cond_loop_swap(PARROT_INTERP, IMC_Unit *unit, Instruction *branch,
+        Instruction *start, Instruction *cond)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static int
 branch_cond_loop_swap(PARROT_INTERP, IMC_Unit *unit, Instruction *branch,
@@ -1097,20 +1223,28 @@ branch_cond_loop_swap(PARROT_INTERP, IMC_Unit *unit, Instruction *branch,
 }
 
 /*
- * start:           => start:
- * if cond goto end    if cond goto end
- * ...
- * branch start        start_post1:
- * end:                ...
- *                     unless cond goto start_post562
- *                     end:
- *
- * The basic premise is "branch (A) to conditional (B), where B goes to
- * just after A."
- *
- * Returns TRUE if any optimizations were performed. Otherwise, returns
- * FALSE.
- */
+
+=item C<static int
+branch_cond_loop(PARROT_INTERP, IMC_Unit * unit)>
+
+start:           => start:
+if cond goto end    if cond goto end
+...
+branch start        start_post1:
+end:                ...
+                    unless cond goto start_post562
+                    end:
+
+The basic premise is "branch (A) to conditional (B), where B goes to
+just after A."
+
+Returns TRUE if any optimizations were performed. Otherwise, returns
+FALSE.
+
+=cut
+
+*/
+
 static int
 branch_cond_loop(PARROT_INTERP, IMC_Unit * unit)
 {
@@ -1171,11 +1305,19 @@ branch_cond_loop(PARROT_INTERP, IMC_Unit * unit)
 }
 
 /*
- * Removes unused labels. A label is unused if ... [RT#46287: finish this].
- *
- * Returns TRUE if any optimizations were performed. Otherwise, returns
- * FALSE.
- */
+
+=item C<static int
+unused_label(PARROT_INTERP, IMC_Unit * unit)>
+
+Removes unused labels. A label is unused if ... [RT#46287: finish this].
+
+Returns TRUE if any optimizations were performed. Otherwise, returns
+FALSE.
+
+=cut
+
+*/
+
 static int
 unused_label(PARROT_INTERP, IMC_Unit * unit)
 {
@@ -1239,6 +1381,17 @@ unused_label(PARROT_INTERP, IMC_Unit * unit)
     }
     return changed;
 }
+
+/*
+
+=item C<static int
+dead_code_remove(PARROT_INTERP, IMC_Unit * unit)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static int
 dead_code_remove(PARROT_INTERP, IMC_Unit * unit)
@@ -1308,6 +1461,17 @@ dead_code_remove(PARROT_INTERP, IMC_Unit * unit)
 }
 
 /* optimizations with CFG & life info built */
+/*
+
+=item C<static int
+used_once(PARROT_INTERP, NOTNULL(IMC_Unit *unit))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static int
 used_once(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 {
@@ -1338,6 +1502,18 @@ used_once(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 static int reason;
 enum check_t { CHK_INV_NEW, CHK_INV_SET, CHK_CLONE };
 
+/*
+
+=item C<static int
+_is_ins_save(NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *check_ins),
+        NOTNULL(SymReg *r), int what)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static int
 _is_ins_save(NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *check_ins),
         NOTNULL(SymReg *r), int what)
@@ -1355,13 +1531,15 @@ _is_ins_save(NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *check_ins),
         case CHK_INV_NEW:
         case CHK_INV_SET:
             if (r->set == 'P' && r->lhs_use_count != 2)
-                return reason=1,0;
+                return reason=1, 0;
             if (r->set != 'P' && r->lhs_use_count != 1)
-                return reason=2,0;
+                return reason=2, 0;
             break;
         case CHK_CLONE:
             if (r->set == 'P' && r->lhs_use_count != 2)
-                return reason=1,0;
+                return reason=1, 0;
+            break;
+        default:
             break;
     }
 
@@ -1398,23 +1576,23 @@ _is_ins_save(NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *check_ins),
 
             /* now look for dangerous ops */
             if (!strcmp(ins->op, "find_global"))
-                return reason=4,0;
+                return reason=4, 0;
             if (!strcmp(ins->op, "store_global"))
-                return reason=4,0;
+                return reason=4, 0;
             if (!strcmp(ins->op, "push"))
-                return reason=4,0;
+                return reason=4, 0;
             if (!strcmp(ins->op, "pop"))
-                return reason=4,0;
+                return reason=4, 0;
             if (!strcmp(ins->op, "clone"))
-                return reason=4,0;
+                return reason=4, 0;
             /* indexed set/get ??? RT#46289, as index is ok */
             if (0 && ! strcmp(ins->op, "set") && nregs != 2)
-                return reason=5,0;
+                return reason=5, 0;
             /*
              * set P, P  - dangerous?
              */
             if (ins->type & ITALIAS)
-                return reason=6,0;
+                return reason=6, 0;
             /* we saw all occurencies of reg, so fine */
             if (lhs_use_count == 0 && use_count == 0) {
                 if (what == CHK_INV_SET && new_bl != set_bl)
@@ -1424,8 +1602,21 @@ _is_ins_save(NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *check_ins),
         }
         /* we have finished this life range */
     } /* for bb */
-    return what == CHK_CLONE ? 1 : (reason=10,0);
+    return what == CHK_CLONE ? 1 : (reason=10, 0);
 }
+
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+static int
+is_ins_save(PARROT_INTERP, NOTNULL(IMC_Unit *unit),
+            NOTNULL(Instruction *ins), NOTNULL(SymReg *r), int what)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_WARN_UNUSED_RESULT
 static int
@@ -1444,6 +1635,17 @@ is_ins_save(PARROT_INTERP, NOTNULL(IMC_Unit *unit),
 }
 
 #if DO_LOOP_OPTIMIZATION
+/*
+
+=item C<int
+max_loop_depth(NOTNULL(IMC_Unit *unit))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 int
 max_loop_depth(NOTNULL(IMC_Unit *unit))
 {
@@ -1455,6 +1657,17 @@ max_loop_depth(NOTNULL(IMC_Unit *unit))
             d = unit->bb_list[i]->loop_depth;
     return d;
 }
+
+/*
+
+=item C<int
+is_invariant(PARROT_INTERP, NOTNULL(IMC_Unit * unit), NOTNULL(Instruction *ins))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 int
 is_invariant(PARROT_INTERP, NOTNULL(IMC_Unit * unit), NOTNULL(Instruction *ins))
@@ -1479,6 +1692,17 @@ is_invariant(PARROT_INTERP, NOTNULL(IMC_Unit * unit), NOTNULL(Instruction *ins))
 
 #  define MOVE_INS_1_BL
 #  ifdef MOVE_INS_1_BL
+/*
+
+=item C<Basic_block *
+find_outer(NOTNULL(IMC_Unit *unit), NOTNULL(Basic_block *blk))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 Basic_block *
 find_outer(NOTNULL(IMC_Unit *unit), NOTNULL(Basic_block *blk))
 {
@@ -1496,7 +1720,18 @@ find_outer(NOTNULL(IMC_Unit *unit), NOTNULL(Basic_block *blk))
 }
 #  endif
 
-/* move the instruction ins before loop in bb */
+/*
+
+=item C<int
+move_ins_out(PARROT_INTERP, NOTNULL(IMC_Unit *unit),
+        NOTNULL(Instruction **ins), NOTNULL(Basic_block *bb))>
+
+move the instruction ins before loop in bb
+
+=cut
+
+*/
+
 int
 move_ins_out(PARROT_INTERP, NOTNULL(IMC_Unit *unit),
         NOTNULL(Instruction **ins), NOTNULL(Basic_block *bb))
@@ -1527,7 +1762,7 @@ move_ins_out(PARROT_INTERP, NOTNULL(IMC_Unit *unit),
         Instruction * tmp;
 
         regs[0] = 0;
-        sprintf(buf, "# Invar moved: %s",out->next->op);
+        sprintf(buf, "# Invar moved: %s", out->next->op);
         tmp = INS(interp, unit, "", buf, regs, 0, 0, 0);
         insert_ins(unit, (*ins)->prev, tmp);
     }
@@ -1537,6 +1772,17 @@ move_ins_out(PARROT_INTERP, NOTNULL(IMC_Unit *unit),
      * so, currently we calc CFG and life again */
     return 1;
 }
+
+/*
+
+=item C<int
+loop_one(PARROT_INTERP, NOTNULL(IMC_Unit *unit), int bnr)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 int
 loop_one(PARROT_INTERP, NOTNULL(IMC_Unit *unit), int bnr)
@@ -1566,6 +1812,17 @@ loop_one(PARROT_INTERP, NOTNULL(IMC_Unit *unit), int bnr)
 
 }
 
+/*
+
+=item C<int
+loop_optimization(PARROT_INTERP, NOTNULL(IMC_Unit *unit))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 int
 loop_optimization(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 {
@@ -1586,7 +1843,7 @@ loop_optimization(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
          * inner loop is changed, but outer loops too */
         if (changed) {
             prev_depth = l-1;
-            IMCC_debug(interp, DEBUG_OPT2,"after loop_opt\n");
+            IMCC_debug(interp, DEBUG_OPT2, "after loop_opt\n");
             if (IMCC_INFO(interp)->debug>1)
                 dump_instructions(interp, unit);
             return changed;
@@ -1596,6 +1853,14 @@ loop_optimization(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
     return 0;
 }
 #endif
+
+/*
+
+=back
+
+=cut
+
+*/
 
 /*
  * Local variables:

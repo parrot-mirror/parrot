@@ -35,7 +35,7 @@
 
 #define IMCC_MAX_FIX_REGS PARROT_MAX_ARGS
 #if IMCC_MAX_FIX_REGS > 16
-#  error: flags wont fit
+ #  error: flags wont fit
 #endif
 
 #ifdef MAIN
@@ -56,11 +56,11 @@
 #include "unit.h"
 #include "debug.h"
 
-#define IMCC_TRY(a,e)     do{ e=0; switch (setjmp(a)){ case 0:
+#define IMCC_TRY(a, e)     do{ e=0; switch (setjmp(a)){ case 0:
 #define IMCC_CATCH(x)     break; case x:
-#define IMCC_END_TRY      } }while (0)
+#define IMCC_END_TRY      default: break; } }while (0)
 
-#define IMCC_THROW(a,x)  longjmp(a,x)
+#define IMCC_THROW(a, x)  longjmp(a, x)
 
 #define IMCC_FATAL_EXCEPTION      1
 #define IMCC_FATALY_EXCEPTION     2

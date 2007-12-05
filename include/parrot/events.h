@@ -75,6 +75,13 @@ typedef struct parrot_event {
     } u;
 } parrot_event;
 
+typedef struct parrot_eventhandler {
+    STRING *type;          /* the type of the event to handle */
+    PMC    *code;          /* the code object to execute */
+    PMC    *interp;        /* the registered interpreter */
+    INTVAL  priority;      /* the minimum priority threshhold of events */
+} Parrot_EventHandler;
+
 struct QUEUE_ENTRY;
 
 #define CHECK_EVENTS(i, n)  (opcode_t *)Parrot_do_check_events(i, n)
@@ -117,7 +124,8 @@ PARROT_API
 void Parrot_init_signals(void);
 
 PARROT_API
-void Parrot_kill_event_loop(void);
+void Parrot_kill_event_loop(PARROT_INTERP)
+        __attribute__nonnull__(1);
 
 PARROT_API
 void Parrot_new_cb_event(PARROT_INTERP,
@@ -137,14 +145,13 @@ void Parrot_new_terminate_event(PARROT_INTERP)
 
 PARROT_API
 void Parrot_new_timer_event(PARROT_INTERP,
-    NOTNULL(PMC *timer),
+    NULLOK(PMC *timer),
     FLOATVAL diff,
     FLOATVAL interval,
     int repeat,
     NULLOK(PMC *sub),
     parrot_event_type_enum typ)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(1);
 
 PARROT_API
 void Parrot_schedule_event(PARROT_INTERP, NOTNULL(parrot_event* ev))

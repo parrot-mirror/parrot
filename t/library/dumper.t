@@ -544,7 +544,7 @@ pir_output_is( <<'CODE', <<'OUT', "dumping objects" );
 
     print subindent
     print "_"
-    classname name, self
+    typeof name, self
     print name
     print "::__dump\n"
 
@@ -553,8 +553,8 @@ pir_output_is( <<'CODE', <<'OUT', "dumping objects" );
 
     dumper."deleteIndent"()
 
-    .pcc_begin_return
-    .pcc_end_return
+    .begin_return
+    .end_return
 .end
 .namespace
 .include "library/dumper.pir"
@@ -926,14 +926,12 @@ pir_output_is( <<'CODE', <<'OUTPUT', "custom dumper" );
 .sub main :main
     .local pmc o, cl
     cl = subclass 'ResizablePMCArray', 'bar'
-    .local int id
-    id = typeof cl
-    o = new id
+    o = new cl
     _dumper(o)
 .end
 
 .namespace ["bar"]
-.sub __init :method
+.sub init :vtable :method
     .local pmc ar
     ar = getattribute self, ['ResizablePMCArray'], 'proxy'
     push ar, 1

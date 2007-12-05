@@ -39,7 +39,7 @@ my $fp_equality_macro = <<'ENDOFMACRO';
     restore    N1
     restore    N0
     branch    .L
-.local $FPEQNOK:
+.label $FPEQNOK:
     restore N2
     restore    N1
     restore    N0
@@ -59,7 +59,7 @@ my $fp_equality_macro = <<'ENDOFMACRO';
     restore    N1
     restore    N0
     branch    .L
-.local $FPNENOK:
+.label $FPNENOK:
     restore    N2
     restore    N1
     restore    N0
@@ -180,7 +180,7 @@ ok 2
 ok 3
 OUTPUT
 
-# TODO: Rewrite these properly when we have exceptions
+# RT#46823: Rewrite these properly when we have exceptions
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "Setting out-of-bounds elements" );
     new P0, 'ResizableFloatArray'

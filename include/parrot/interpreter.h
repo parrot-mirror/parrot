@@ -61,16 +61,17 @@ typedef enum {
 
 /* &gen_from_enum(interpcores.pasm) */
 typedef enum {
-    PARROT_SLOW_CORE,                         /* slow bounds/trace/profile core */
-    PARROT_FUNCTION_CORE = PARROT_SLOW_CORE,
-    PARROT_FAST_CORE      = 0x01,             /* fast DO_OP core */
-    PARROT_SWITCH_CORE    = 0x02,             /*   P   = prederef   */
-    PARROT_CGP_CORE       = 0x06,             /*  CP                */
-    PARROT_CGOTO_CORE     = 0x04,             /*  C    = cgoto      */
-    PARROT_JIT_CORE       = 0x10,             /* J     = JIT        */
-    PARROT_CGP_JIT_CORE   = 0x16,             /* JCP                */
-    PARROT_SWITCH_JIT_CORE  = 0x12,           /* J P                */
-    PARROT_EXEC_CORE      = 0x20          /* TODO Parrot_exec_run variants */
+    PARROT_SLOW_CORE,                       /* slow bounds/trace/profile core */
+    PARROT_FUNCTION_CORE    = PARROT_SLOW_CORE,
+    PARROT_FAST_CORE        = 0x01,         /* fast DO_OP core */
+    PARROT_SWITCH_CORE      = 0x02,         /*   P   = prederef   */
+    PARROT_CGP_CORE         = 0x06,         /*  CP                */
+    PARROT_CGOTO_CORE       = 0x04,         /*  C    = cgoto      */
+    PARROT_JIT_CORE         = 0x10,         /* J     = JIT        */
+    PARROT_CGP_JIT_CORE     = 0x16,         /* JCP                */
+    PARROT_SWITCH_JIT_CORE  = 0x12,         /* J P                */
+    PARROT_EXEC_CORE        = 0x20,         /* TODO Parrot_exec_run variants */
+    PARROT_GC_DEBUG_CORE    = 0x40          /* run GC before each op */
 } Parrot_Run_core_t;
 /* &end_gen */
 
@@ -81,7 +82,7 @@ typedef enum {
                                      */
     PARROT_CLONE_GLOBALS = 0x2,     /* global stash */
     PARROT_CLONE_RUNOPS = 0x4,      /* runops choice */
-    PARROT_CLONE_INTERP_FLAGS = 0x8,/* bounds checking and
+    PARROT_CLONE_INTERP_FLAGS = 0x8, /* bounds checking and
                                      * debugging flags */
     PARROT_CLONE_HLL = 0x10,        /* clone HLL setting */
     PARROT_CLONE_CLASSES = 0x20,    /* clone usermade classes */
@@ -307,7 +308,6 @@ struct parrot_interp_t {
 
     PMC    *class_hash;                       /* Hash of classes */
     VTABLE **vtables;                         /* array of vtable ptrs */
-    PMC    *pmc_proxies;                      /* PMC array of PMC Proxy objects */
     int    n_vtable_max;                      /* highest used type */
     int    n_vtable_alloced;                  /* alloced vtable space */
 
@@ -386,6 +386,7 @@ struct parrot_interp_t {
 
     STRING **const_cstring_table;             /* CONST_STRING(x) items */
 
+    PMC *scheduler;                           /* concurrency scheduler */
     struct QUEUE* task_queue;                 /* per interpreter queue */
     struct _handler_node_t *exit_handler_list;   /* exit.c */
     int sleeping;                             /* used during sleep in events */
@@ -708,8 +709,9 @@ PARROT_WARN_UNUSED_RESULT
 PMC* Parrot_make_cb(PARROT_INTERP,
     PMC* sub,
     PMC* user_data,
-    STRING *cb_signature)
-        __attribute__nonnull__(1);
+    NOTNULL(STRING *cb_signature))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(4);
 
 PARROT_API
 void Parrot_run_callback(PARROT_INTERP, PMC* user_data, char* external_data)
@@ -758,9 +760,11 @@ PMC * Parrot_compile_string(PARROT_INTERP,
 
 PARROT_API
 void Parrot_compreg(PARROT_INTERP,
-    STRING *type,
-    Parrot_compiler_func_t func)
-        __attribute__nonnull__(1);
+    NOTNULL(STRING *type),
+    NOTNULL(Parrot_compiler_func_t func))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_API
 void Parrot_mark_method_writes(PARROT_INTERP,
@@ -772,17 +776,22 @@ void Parrot_mark_method_writes(PARROT_INTERP,
 PARROT_API
 void register_nci_method(PARROT_INTERP,
     const int type,
-    void *func,
-    const char *name,
-    const char *proto)
-        __attribute__nonnull__(1);
+    NOTNULL(void *func),
+    NOTNULL(const char *name),
+    NOTNULL(const char *proto))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5);
 
 PARROT_API
 void register_raw_nci_method_in_ns(PARROT_INTERP,
     const int type,
-    void *func,
-    const char *name)
-        __attribute__nonnull__(1);
+    NOTNULL(void *func),
+    NOTNULL(const char *name))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 PARROT_WARN_UNUSED_RESULT
 INTVAL sysinfo_i(SHIM_INTERP, INTVAL info_wanted);

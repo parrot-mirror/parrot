@@ -169,6 +169,7 @@ void internal_exception(int exitcode, NOTNULL(const char *format), ...)
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC* new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
         __attribute__nonnull__(1);
 
@@ -190,8 +191,9 @@ void Parrot_pop_mark(PARROT_INTERP, INTVAL mark)
         __attribute__nonnull__(1);
 
 PARROT_API
-void Parrot_push_action(PARROT_INTERP, PMC *sub)
-        __attribute__nonnull__(1);
+void Parrot_push_action(PARROT_INTERP, NOTNULL(PMC *sub))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 void Parrot_push_mark(PARROT_INTERP, INTVAL mark)
@@ -231,6 +233,10 @@ PARROT_CAN_RETURN_NULL
 opcode_t * throw_exception(PARROT_INTERP, PMC *exception, SHIM(void *dest))
         __attribute__nonnull__(1);
 
+PARROT_WARN_UNUSED_RESULT
+INTVAL count_exception_handlers(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
 void destroy_exception_list(PARROT_INTERP)
         __attribute__nonnull__(1);
 
@@ -240,6 +246,15 @@ void do_panic(
     NULLOK(const char *message),
     NULLOK(const char *file),
     unsigned int line);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * get_all_exception_handlers(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+PMC * get_exception_handler(PARROT_INTERP, INTVAL target_depth)
+        __attribute__nonnull__(1);
 
 void Parrot_init_exceptions(PARROT_INTERP)
         __attribute__nonnull__(1);

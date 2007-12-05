@@ -102,7 +102,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'macro, one used parameter, label' );
     ne    I0,42,.$done
     print    .A
     print    "\n"
-.local $done:
+.label $done:
 .endm
     set    I0,42
     .answer(I0)
@@ -118,7 +118,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'macro, one used parameter run thrice, labe
     ne    I0,42,.$done
     print    .A
     print    "\n"
-.local $done:
+.label $done:
 .endm
     set    I0,42
     .answer(I0)
@@ -204,7 +204,7 @@ unlink('macro.tempfile');
 pir_output_is( <<'CODE', <<'OUTPUT', '.newid' );
 .sub test :main
 .macro newid(ID, CLASS)
-    .sym .CLASS .ID
+    .local .CLASS .ID
     .ID = new .CLASS
 .endm
     .newid(var, Undef)
@@ -220,7 +220,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', '.newlex' );
 .sub test :main
 .macro newlex(ID, CLASS)
-    .sym .CLASS .ID
+    .local .CLASS .ID
     .ID = new .CLASS
     # store_lex -1, .ID , .ID    # how to stringify .ID
 .endm
@@ -415,7 +415,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'test that macros labels names can have the
 .macro test_label_names()
     branch .$jump
     print 'do not print this'
-  .local $jump:
+  .label $jump:
     print 'print this'
     print "\n"
 .endm
@@ -428,7 +428,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', 'test that macros labels names can have the prefix $' );
 .sub test :main
 .macro SpinForever (Count)
-    .local $LOOP: dec .COUNT # ".local $LOOP" defines a local label.
+    .label $LOOP: dec .COUNT # ".label $LOOP" defines a local label.
     branch .$LOOP # Jump to said label.
 .endm
 .end

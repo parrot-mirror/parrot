@@ -72,7 +72,7 @@ ok 1
 ok 2
 OUTPUT
 
-# XXX FIXME rework tests since we don't really have thread types?
+# RT#46807 rework tests since we don't really have thread types?
 
 SKIP: {
     skip 'busted on win32' => 2 if $^O eq 'MSWin32';
@@ -237,14 +237,14 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "join, get retval" );
 .sub _main
     .const int MAX = 1000
-    .sym pmc kid
-    .sym pmc Adder
+    .local pmc kid
+    .local pmc Adder
     Adder = global '_add'
     kid = new 'ParrotThread'
-    .sym pmc from
+    .local pmc from
     from = new 'Integer'
     from = 0
-    .sym pmc to
+    .local pmc to
     to = new 'Integer'
     to = MAX
     kid.'run_clone'(Adder, Adder, from, to)
@@ -254,7 +254,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "join, get retval" );
     print result
     print "\n"
     # sum = n * (n + 1)/2
-    .sym pmc Mul
+    .local pmc Mul
     Mul = new 'Integer'
     assign Mul, to
     inc Mul
@@ -269,16 +269,16 @@ pir_output_is( <<'CODE', <<'OUTPUT', "join, get retval" );
    .param pmc sub
    .param pmc from
    .param pmc to
-   .sym   pmc sum
+   .local pmc sum
    sum = new 'Integer'
 loop:
     add sum, from
     inc from
     le from, to, loop
 
-    .pcc_begin_return
+    .begin_return
     .return sum
-    .pcc_end_return
+    .end_return
 .end
 CODE
 500500
@@ -416,7 +416,7 @@ okay:
     .local pmc thread_main
     thread_main = find_global 'thread_main'
     $P0.'run_clone'(thread_main)
-    $P0.'join'() # XXX
+    $P0.'join'() # RT#46813
 .end
 
 .sub thread_main
@@ -575,9 +575,9 @@ ok beta3
 OUTPUT
 
 TODO: {
-        local $TODO = "vtable overrides aren't properly cloned RT# 46511";
+    local $TODO = "vtable overrides aren't properly cloned RT# 46511";
 
-pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass not built-in" );
+    pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass not built-in" );
 .namespace [ 'Foo' ]
 
 .sub foometh :method
@@ -661,7 +661,7 @@ Foo? 1
 Bar? 1
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass built-in" );
+    pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_CLASSES; superclass built-in" );
 .namespace [ 'Foo' ]
 
 .sub foometh :method

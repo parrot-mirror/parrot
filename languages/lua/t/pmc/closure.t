@@ -79,9 +79,6 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
     .local pmc pmc1
     pmc1 = new 'LuaClosure'
     .local string str1
-    str1 = classname pmc1
-    print str1
-    print "\n"
     str1 = typeof pmc1
     print str1
     print "\n"
@@ -92,7 +89,6 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
     end
 .end
 CODE
-function
 function
 OUTPUT
 
@@ -278,7 +274,7 @@ OUTPUT
 
 pir_output_like( << 'CODE', << 'OUTPUT', 'from pir' );
 .HLL 'Lua', 'lua_group'
-.namespace [ 'Lua::basic' ]
+.namespace [ 'Lua'; 'basic' ]
 .sub _main
     collectoff
     luaopen_basic()

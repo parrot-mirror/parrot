@@ -201,7 +201,7 @@ while (<>) {
     s/\s*$//;
     next unless $_;
 
-    my ( $ret, $args ) = split /\s+/, $_;
+    my ( $ret, $args ) = split m/\s+/, $_;
 
     $args = '' if not defined $args;
     warn "Removed deprecated 'v' argument signature on line $. of $ARGV\n"
@@ -225,7 +225,7 @@ while (<>) {
     my $sig     = '';
 
     if ( defined $args and not $args =~ m/^\s*$/ ) {
-        foreach ( split //, $args ) {
+        foreach ( split m//, $args ) {
             die "Invalid argument signature char '$_' on line $. of $ARGV"
                 unless exists $sig_char{$_};
             push @arg,
@@ -242,8 +242,8 @@ while (<>) {
         $ret_type{$ret},         $ret_type_decl{$ret},
         $func_call_assign{$ret}, $other_decl{$ret},
         $ret_assign{$ret},       \@temps,
-        \@extra_preamble,        \@extra_postamble,
-        \@put_pointer,           \%proto_type
+        \@extra_preamble, \@extra_postamble,
+        \@put_pointer,    \%proto_type
     );
 }
 
@@ -527,9 +527,9 @@ sub make_arg {
 
 sub print_function {
     my (
-        $sig,             $return,        $params,             $args,
-        $ret_type,        $ret_type_decl, $return_assign,      $other_decl,
-        $final_assign,    $temps_ref,     $extra_preamble_ref, $extra_postamble_ref,
+        $sig,          $return,        $params,             $args,
+        $ret_type,     $ret_type_decl, $return_assign,      $other_decl,
+        $final_assign, $temps_ref,     $extra_preamble_ref, $extra_postamble_ref,
         $put_pointer_ref, $proto_type_ref
     ) = @_;
 
@@ -540,13 +540,13 @@ sub print_function {
     my $extra_preamble  = join( "\n    ", @{$extra_preamble_ref} );
     my $extra_postamble = join( "\n    ", @{$extra_postamble_ref} );
     my $return_data =
-          "$return_assign $final_assign" =~ /return_data/
+        "$return_assign $final_assign" =~ /return_data/
         ? qq{$ret_type_decl return_data;}
         : q{};
-    my $fix_params = join '', map { $fix_name{$_} || $_ } split //, $params;
+    my $fix_params = join '', map { $fix_name{$_} || $_ } split m//, $params;
 
     if ( length $params ) {
-        my $proto = join ', ', map { $proto_type_ref->{$_} } split( '', $params );
+        my $proto = join ', ', map { $proto_type_ref->{$_} } split( m//, $params );
 
         # This is an after-the-fact hack: real fix would be in make_arg
         # or somewhere at that level.  The main point being that one cannot

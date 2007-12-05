@@ -14,18 +14,11 @@ running compilers from a command line.
 .namespace
 
 .sub '__onload' :load :init
+    load_bytecode 'Protoobject.pbc'
     load_bytecode 'Parrot/Exception.pbc'
-    $P0 = newclass [ 'PCT::HLLCompiler' ]
-    addattribute $P0, '$parsegrammar'
-    addattribute $P0, '$parseactions'
-    addattribute $P0, '$astgrammar'
-    addattribute $P0, '$ostgrammar'
-    addattribute $P0, '@stages'
-
-    # the commandline_banner is the welcome message for interactive mode
-    addattribute $P0, '$commandline_banner'
-    # the commandline_prompt is the prompt to show for input
-    addattribute $P0, '$commandline_prompt'
+    $P0 = get_hll_global 'Protomaker'
+    $P1 = split ' ', '$parsegrammar $parseactions $astgrammar $ostgrammar @stages $commandline_banner $commandline_prompt'
+    $P2 = $P0.'new_subclass'('Protoobject', 'PCT::HLLCompiler', $P1 :flat)
 .end
 
 =head2 Methods
@@ -82,7 +75,7 @@ C<compreg> opcode.
 
 Accessor for the C<parsegrammar> attribute.
 
-=item parseactions([string actions])
+=item parseactions([actions])
 
 Accessor for the C<parseactions> attribute.
 
@@ -104,7 +97,7 @@ Accessor for the 'ostgrammar' attribute.
 
 
 .sub 'parseactions' :method
-    .param string value        :optional
+    .param pmc value           :optional
     .param int has_value       :opt_flag
     .return self.'attr'('$parseactions', value, has_value)
 .end
@@ -283,16 +276,16 @@ to any options and return the resulting parse tree.
     unless null top goto have_top
     top = get_hll_global parsegrammar_name, 'apply'    # FIXME: deprecated
     unless null top goto have_top                      # FIXME: deprecated
-    $P0 = getclass 'Exception'
+    $P0 = get_class 'Exception'
     $P1 = $P0.'new'('Cannot find rule TOP in ', parsegrammar_name)
     throw $P1
   have_top:
     .local pmc parseactions
     null parseactions
     if target == 'parse' goto have_parseactions
-    $S0 = self.'parseactions'()
-    unless $S0 goto have_parseactions
-    parseactions = new $S0
+    $P0 = self.'parseactions'()
+    unless $P0 goto have_parseactions
+    parseactions = new $P0
   have_parseactions:
     .local pmc match
     match = top(source, 'grammar' => parsegrammar_name, 'action' => parseactions)
@@ -310,7 +303,7 @@ to any options and return the resulting parse tree.
 .end
 
 
-=item ast(source [, "option" => value, ...])
+=item past(source [, "option" => value, ...])
 
 Transform C<source> into an AST using the compiler's
 C<astgrammar> according to any options, and return the
@@ -427,7 +420,7 @@ specifies the encoding to use for the input (e.g., "utf8").
     unless code goto interactive_loop
     push_eh interactive_trap
     $P0 = self.'eval'(code, adverbs :flat :named)
-    clear_eh
+    pop_eh
     if null $P0 goto interactive_loop
     unless target goto interactive_loop
     if target == 'pir' goto target_pir
@@ -615,7 +608,7 @@ based on double-colon separators.
     .return ($P0)
 .end
 
-=item ost(source [, adverbs :slurpy :named])
+=item post(source [, adverbs :slurpy :named])
 
 Transform C<source> using the compiler's C<ostgrammar>
 according to any options given by C<adverbs>, and return the

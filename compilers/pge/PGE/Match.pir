@@ -11,78 +11,15 @@ This file implements match objects returned by the Parrot Grammar Engine.
 .namespace [ 'PGE::Match' ]
 
 .sub '__onload' :load
-    .local pmc base
+    load_bytecode 'Protoobject.pbc'
     load_bytecode 'PGE/Dumper.pir'                 # FIXME, XXX, etc.
-    base = subclass 'Hash', 'PGE::Match'
-    addattribute base, '$.target'                  # target
-    addattribute base, '$.from'                    # start of match
-    addattribute base, '$.pos'                     # current match position
-    addattribute base, '&!corou'                   # match's corou
-    addattribute base, '@!capt'                    # subpattern captures
-    addattribute base, '$!result'                  # result object
-
-    $P0 = new 'PGE::Match'
-    set_hll_global ['PGE'], 'Match', $P0
+    .local pmc protomaker, hashclass, base
+    protomaker = new 'Protomaker'
+    hashclass = get_class 'Hash'
+    base = protomaker.'new_subclass'(hashclass, 'PGE::Match', '$.target', '$.from', '$.pos', '&!corou', '@!capt', '$!result')
 
     .return ()
 .end
-
-=head2 Functions
-
-=over 4
-
-=item C<newfrom(PMC mob [, int from [, string grammar]])>
-
-Creates a new Match object, based on C<mob>.  If C<grammar> is
-specified then the newly created object is an instance of that class,
-otherwise if C<isa mob, 'PGE::Match'> then the new object is the
-same class as C<mob>, otherwise the new object is a 'PGE::Match'
-object.  The optional C<from> parameter says how to initialize
-the C<$.from> attribute of the new object if it can't start from
-the current position of C<mob>.
-
-=cut
-
-.sub 'newfrom'
-    .param pmc mob
-    .param int fromd           :optional           # default from for new
-    .param int has_fromd       :opt_flag
-    .param string grammar      :optional           # grammar to use
-    .param int has_grammar     :opt_flag
-    .local pmc me, target, from, pos
-
-  newfrom_1:
-    $I0 = isa mob, 'PGE::Match'
-    if $I0 goto newfrom_mob
-    target = new 'String'
-    assign target, mob
-    from = new 'Integer'
-    from = -1
-    if has_grammar goto new_me
-    grammar = 'PGE::Match'
-    goto new_me
-  newfrom_mob:
-    if has_grammar goto newfrom_2
-    grammar = classname mob
-  newfrom_2:
-    target = getattribute mob, '$.target'
-    from = getattribute mob, '$.pos'
-    from = clone from
-  new_me:
-    me = new grammar
-    setattribute me, '$.target', target
-    setattribute me, '$.from', from
-    pos = new 'Integer'
-    pos = -1
-    setattribute me, '$.pos', pos
-    if has_fromd == 0 goto end
-    if from >= 0 goto end
-    from = fromd
-  end:
-    .return (me, target, from, pos)
-.end
-
-=back
 
 =head2 Methods
 
@@ -130,14 +67,14 @@ is set or implied.
     target = src
     pos = 0
     iscont = 1
-    grammar = classname self
+    grammar = typeof self
     goto adverb_pos
   target_from_src:
     target = getattribute src, '$.target'
     $P0 = getattribute src, '$.pos'
     pos = $P0
     iscont = 0
-    grammar = classname src
+    grammar = typeof src
     if pos >= 0 goto adverb_pos
     pos = 0
 

@@ -33,31 +33,35 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $verbose = $conf->options->get('verbose');
+    my $anyerror = _probe_for_backtrace();
 
-    cc_gen("config/auto/backtrace/test_c.in");
-
-    # If the program builds (e.g. the linker found backtrace* in libc) then we have
-    # the glibc backtrace symbols.  If the program fails to build for whatever
-    # reason we're just going to assume that the build failure is because these
-    # symbols are missing.
-    my $glibc_backtrace;
-    eval { cc_build(); };
-    if ( not $@ ) {
-        $glibc_backtrace = 1;
-    }
-    cc_clean();
-
-    $conf->data->set( glibc_backtrace => $glibc_backtrace, );
-
-    if ($glibc_backtrace) {
-        $self->set_result("yes");
-    }
-    else {
-        $self->set_result("no");
-    }
+    $self->_evaluate_backtrace($conf, $anyerror);
 
     return 1;
+}
+
+sub _probe_for_backtrace {
+    cc_gen("config/auto/backtrace/test_c.in");
+
+    # If the program builds (e.g. the linker found backtrace* in libc)
+    # then we have the glibc backtrace symbols.  If the program fails to
+    # build for whatever reason we're just going to assume that the
+    # build failure is because these symbols are missing.
+
+    eval { cc_build(); };
+    my $anyerror = $@;
+    cc_clean();
+    return $anyerror;
+}
+
+sub _evaluate_backtrace {
+    my ($self, $conf, $anyerror) = @_;
+    if ( $anyerror ) {
+        $self->set_result("no");
+    } else {
+        $conf->data->set( glibc_backtrace => 1 );
+        $self->set_result("yes");
+    }
 }
 
 1;

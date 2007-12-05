@@ -4,10 +4,25 @@
  * Intermediate Code Compiler for Parrot.
  *
  * Copyright (C) 2002 Melvin Smith <melvin.smith@mindspring.com>
- *
- * main program
- *
  */
+
+/*
+
+=head1 NAME
+
+compilers/imcc/main.c
+
+=head1 DESCRIPTION
+
+main program
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
 
 #include <string.h>
 #include <stdio.h>
@@ -81,6 +96,17 @@ static void usage(NOTNULL(FILE* fp))
 
 static int load_pbc, run_pbc, write_pbc, pre_process_only, pasm_file;
 
+/*
+
+=item C<static void
+usage(NOTNULL(FILE* fp))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
 usage(NOTNULL(FILE* fp))
 {
@@ -88,6 +114,17 @@ usage(NOTNULL(FILE* fp))
             "parrot -[abcCEfgGhjprStvVwy.] [-d [FLAGS]] [-D [FLAGS]]"
             "[-O [level]] [-o FILE] <file>\n");
 }
+
+/*
+
+=item C<static void
+help_debug(void)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 help_debug(void)
@@ -122,6 +159,17 @@ help_debug(void)
     "    0002    find_method\n"
     "    0004    function calls\n");
 }
+
+/*
+
+=item C<static void
+help(void)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 help(void)
@@ -167,6 +215,17 @@ help(void)
     "see docs/running.pod for more\n");
 }
 
+
+/*
+
+=item C<static void
+Parrot_version(PARROT_INTERP)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 Parrot_version(PARROT_INTERP)
@@ -240,6 +299,19 @@ static struct longopt_opt_decl options[] = {
     { 0, 0, (OPTION_flags)0, { NULL } }
 };
 
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
+static int
+is_all_hex_digits(NOTNULL(const char *s))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
 static int
@@ -252,6 +324,19 @@ is_all_hex_digits(NOTNULL(const char *s))
 }
 
 /* most stolen from test_main.c */
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+char *
+parseflags(PARROT_INTERP, int *argc, char **argv[])>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 char *
@@ -297,6 +382,8 @@ parseflags(PARROT_INTERP, int *argc, char **argv[])
                     SET_CORE(PARROT_JIT_CORE);
 #endif
                 }
+                else if (!strcmp(opt.opt_arg, "gcdebug"))
+                    SET_CORE(PARROT_GC_DEBUG_CORE);
                 else
                     real_exception(interp, NULL, 1,
                             "main: Unrecognized runcore '%s' specified."
@@ -476,6 +563,17 @@ parseflags(PARROT_INTERP, int *argc, char **argv[])
     return (*argv)[0];
 }
 
+/*
+
+=item C<static void
+do_pre_process(PARROT_INTERP)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
 do_pre_process(PARROT_INTERP)
 {
@@ -485,7 +583,8 @@ do_pre_process(PARROT_INTERP)
     const yyscan_t yyscanner = IMCC_INFO(interp)->yyscanner;
 
     IMCC_push_parser_state(interp);
-    while ((c = yylex(&val, yyscanner, interp))) {
+    c = yylex(&val, yyscanner, interp); /* is reset at end of while loop */
+    while (c) {
         switch (c) {
             case EMIT:          printf(".emit\n"); break;
             case EOM:           printf(".eom\n"); break;
@@ -531,14 +630,14 @@ do_pre_process(PARROT_INTERP)
             case POW:           printf(" ** ");break;
             case COMMA:         printf(", ");break;
             case LABEL:         printf("%s:\t", val.s); break;
-            case PCC_BEGIN:     printf(".pcc_begin "); break;
-            case PCC_END:       printf(".pcc_end"); break;
-            case PCC_SUB:       printf(".pcc_sub "); break;
-            case PCC_CALL:      printf(".pcc_call "); break;
-            case PCC_BEGIN_RETURN:    printf(".pcc_begin_return"); break;
-            case PCC_END_RETURN:      printf(".pcc_end_return"); break;
-            case PCC_BEGIN_YIELD:     printf(".pcc_begin_yield"); break;
-            case PCC_END_YIELD:       printf(".pcc_end_yield"); break;
+            case PCC_BEGIN:     printf(".begin_call "); break;
+            case PCC_END:       printf(".end_call"); break;
+            case PCC_SUB:       printf(".pccsub "); break;
+            case PCC_CALL:      printf(".call "); break;
+            case PCC_BEGIN_RETURN:    printf(".begin_return"); break;
+            case PCC_END_RETURN:      printf(".end_return"); break;
+            case PCC_BEGIN_YIELD:     printf(".begin_yield"); break;
+            case PCC_END_YIELD:       printf(".end_yield"); break;
             case FILECOMMENT:   printf("setfile \"%s\"\n", val.s); break;
             case LINECOMMENT:   printf("setline %d\n", val.t); break;
 
@@ -581,12 +680,24 @@ do_pre_process(PARROT_INTERP)
                     printf("%s ", val.s);
                 break;
         }
+        c = yylex(&val, yyscanner, interp);
     }
     printf("\n");
     fflush(stdout);
 
     return;
 }
+
+/*
+
+=item C<static void
+imcc_get_optimization_description(const PARROT_INTERP, int opt_level, NOTNULL(char *opt_desc))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 imcc_get_optimization_description(const PARROT_INTERP, int opt_level, NOTNULL(char *opt_desc))
@@ -614,6 +725,17 @@ imcc_get_optimization_description(const PARROT_INTERP, int opt_level, NOTNULL(ch
     return;
 }
 
+/*
+
+=item C<void
+imcc_initialize(PARROT_INTERP)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
 imcc_initialize(PARROT_INTERP)
 {
@@ -638,6 +760,18 @@ imcc_initialize(PARROT_INTERP)
 #endif
     }
 }
+
+/*
+
+=item C<static void
+imcc_run_pbc(PARROT_INTERP, int obj_file, NOTNULL(const char *output_file),
+             int argc, NOTNULL(char *argv[]))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 imcc_run_pbc(PARROT_INTERP, int obj_file, NOTNULL(const char *output_file),
@@ -664,6 +798,17 @@ imcc_run_pbc(PARROT_INTERP, int obj_file, NOTNULL(const char *output_file),
     /* RT#46149 no return value :-( */
     Parrot_runcode(interp, argc, argv);
 }
+
+/*
+
+=item C<static void
+imcc_write_pbc(PARROT_INTERP, NOTNULL(const char *output_file))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 imcc_write_pbc(PARROT_INTERP, NOTNULL(const char *output_file))
@@ -692,6 +837,17 @@ imcc_write_pbc(PARROT_INTERP, NOTNULL(const char *output_file))
     IMCC_info(interp, 1, "%s written.\n", output_file);
     free(packed);
 }
+
+/*
+
+=item C<static void determine_input_file_type(PARROT_INTERP,
+                                      NOTNULL(const char * const sourcefile))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void determine_input_file_type(PARROT_INTERP,
                                       NOTNULL(const char * const sourcefile))
@@ -723,6 +879,17 @@ static void determine_input_file_type(PARROT_INTERP,
     }
 }
 
+/*
+
+=item C<static void determine_output_file_type(PARROT_INTERP,
+    NOTNULL(int *obj_file), NOTNULL(const char *output_file))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void determine_output_file_type(PARROT_INTERP,
     NOTNULL(int *obj_file), NOTNULL(const char *output_file))
 {
@@ -745,6 +912,19 @@ static void determine_output_file_type(PARROT_INTERP,
         }
     }
 }
+
+/*
+
+=item C<static void
+compile_to_bytecode(PARROT_INTERP,
+                    NOTNULL(const char * const sourcefile),
+                    NOTNULL(const char * const output_file))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 compile_to_bytecode(PARROT_INTERP,
@@ -787,7 +967,7 @@ compile_to_bytecode(PARROT_INTERP,
                                                    IMCC_INFO(interp)->error_message);
 
         IMCC_INFO(interp)->error_code=IMCC_FATAL_EXCEPTION;
-        fprintf(stderr,"error:imcc:%s", error_str);
+        fprintf(stderr, "error:imcc:%s", error_str);
         IMCC_print_inc(interp);
         string_cstring_free(error_str);
         Parrot_exit(interp, IMCC_FATAL_EXCEPTION);
@@ -797,7 +977,7 @@ compile_to_bytecode(PARROT_INTERP,
                                                    IMCC_INFO(interp)->error_message);
 
         IMCC_INFO(interp)->error_code=IMCC_FATALY_EXCEPTION;
-        fprintf(stderr,"error:imcc:%s", error_str);
+        fprintf(stderr, "error:imcc:%s", error_str);
         IMCC_print_inc(interp);
         string_cstring_free(error_str);
         Parrot_exit(interp, IMCC_FATALY_EXCEPTION);
@@ -812,6 +992,17 @@ compile_to_bytecode(PARROT_INTERP,
     if (per_pbc)
         PackFile_fixup_subs(interp, PBC_POSTCOMP, NULL);
 }
+
+/*
+
+=item C<int
+imcc_run(PARROT_INTERP, const char *sourcefile, int argc, char * argv[])>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 int
 imcc_run(PARROT_INTERP, const char *sourcefile, int argc, char * argv[])
@@ -851,8 +1042,8 @@ imcc_run(PARROT_INTERP, const char *sourcefile, int argc, char * argv[])
     IMCC_INFO(interp)->write_pbc = write_pbc;
 
     if (IMCC_INFO(interp)->verbose) {
-        IMCC_info(interp, 1,"debug = 0x%x\n", IMCC_INFO(interp)->debug);
-        IMCC_info(interp, 1,"Reading %s\n",
+        IMCC_info(interp, 1, "debug = 0x%x\n", IMCC_INFO(interp)->debug);
+        IMCC_info(interp, 1, "Reading %s\n",
                   imc_yyin_get(yyscanner) == stdin ? "stdin":sourcefile);
     }
 
@@ -898,6 +1089,14 @@ imcc_run(PARROT_INTERP, const char *sourcefile, int argc, char * argv[])
     IMCC_INFO(interp)->yyscanner = NULL;
     return 0;
 }
+
+/*
+
+=back
+
+=cut
+
+*/
 
 /*
  * Local variables:

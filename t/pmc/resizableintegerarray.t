@@ -39,7 +39,7 @@ my $fp_equality_macro = <<'ENDOFMACRO';
     restore    N1
     restore    N0
     branch    .L
-.local $FPEQNOK:
+.label $FPEQNOK:
     restore N2
     restore    N1
     restore    N0
@@ -59,7 +59,7 @@ my $fp_equality_macro = <<'ENDOFMACRO';
     restore    N1
     restore    N0
     branch    .L
-.local $FPNENOK:
+.label $FPNENOK:
     restore    N2
     restore    N1
     restore    N0
@@ -164,7 +164,7 @@ ok 2
 ok 3
 OUTPUT
 
-# TODO: Rewrite these properly when we have exceptions
+# RT#46823: Rewrite these properly when we have exceptions
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "Setting out-of-bounds elements" );
     new P0, 'ResizableIntegerArray'
@@ -412,8 +412,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', "shift integer" );
     print $I0
     print ' '
     $I0 = elements ar
-    print $I0
-    print_newline
+    say $I0
 .end
 CODE
 2 10 1 20 0
@@ -432,8 +431,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', "unshift integer" );
     print $I0
     print ' '
     $I0 = ar[1]
-    print $I0
-    print_newline
+    say $I0
 .end
 CODE
 2 20 10

@@ -71,16 +71,12 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
     .local pmc pmc1
     pmc1 = new 'LuaString'
     .local string str1
-    str1 = classname pmc1
-    print str1
-    print "\n"
     str1 = typeof pmc1
     print str1
     print "\n"
     end
 .end
 CODE
-string
 string
 OUTPUT
 
@@ -197,9 +193,6 @@ simple string
 1
 OUTPUT
 
-TODO: {
-    local $TODO = 'empty string not handled by PIR.';
-
     pir_output_is( << 'CODE', << 'OUTPUT', '.const & empty string' );
 .HLL 'Lua', 'lua_group'
 .sub _main
@@ -215,7 +208,6 @@ CODE
 
 1
 OUTPUT
-}
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tostring' );
 .HLL 'Lua', 'lua_group'

@@ -30,6 +30,10 @@
 
 =head1 NAME
 
+compilers/imcc/parser_util.c
+
+=head1 DESCRIPTION
+
 ParserUtil - Parser support functions.
 
 =cut
@@ -126,7 +130,10 @@ static INTVAL eval_nr = 0;
 
 =over 4
 
-=item iNew()
+=item C<PARROT_CAN_RETURN_NULL
+Instruction *
+iNEW(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0),
+        NOTNULL(char *type), NULLOK(SymReg *init), int emit)>
 
  * P = new type, [init]
  * PASM like:
@@ -169,12 +176,14 @@ iNEW(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0),
     }
     else
         nargs = 2;
-    return INS(interp, unit, "new", fmt, regs, nargs,0, emit);
+    return INS(interp, unit, "new", fmt, regs, nargs, 0, emit);
 }
 
 /*
 
-=item op_fullname()
+=item C<void
+op_fullname(NOTNULL(char *dest), NOTNULL(const char *name), NOTNULL(SymReg *args[]),
+        int narg, int keyvec)>
 
 Lookup the full opcode given the short name
 
@@ -249,7 +258,10 @@ op_fullname(NOTNULL(char *dest), NOTNULL(const char *name), NOTNULL(SymReg *args
 
 /*
 
-=item C<check_op()>
+=item C<PARROT_WARN_UNUSED_RESULT
+int
+check_op(PARROT_INTERP, NOTNULL(char *fullname),
+        NOTNULL(const char *name), NOTNULL(SymReg *r[]), int narg, int keyvec)>
 
 Return opcode value for op name
 
@@ -271,9 +283,13 @@ check_op(PARROT_INTERP, NOTNULL(char *fullname),
 
 /*
 
-=item C<maybe_builtin()>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static Instruction *
+maybe_builtin(PARROT_INTERP, NOTNULL(const char *name),
+        NOTNULL(SymReg **r), int n)>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -338,7 +354,9 @@ maybe_builtin(PARROT_INTERP, NOTNULL(const char *name),
 
 /*
 
-=item C<is_op()>
+=item C<PARROT_WARN_UNUSED_RESULT
+int
+is_op(PARROT_INTERP, NOTNULL(const char *name))>
 
 Is instruction a parrot opcode?
 
@@ -360,9 +378,11 @@ is_op(PARROT_INTERP, NOTNULL(const char *name))
 
 /*
 
-=item C<to_infix()>
-
-Needs to be documented!!!
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static const char *
+to_infix(PARROT_INTERP, NOTNULL(const char *name), NOTNULL(SymReg **r),
+        NOTNULL(int *n), int mmd_op)>
 
 sub x, y, z  => infix .MMD_SUBTRACT, x, y, z
 
@@ -406,9 +426,11 @@ to_infix(PARROT_INTERP, NOTNULL(const char *name), NOTNULL(SymReg **r),
 
 /*
 
-=item C<is_infix()>
+=item C<PARROT_WARN_UNUSED_RESULT
+static int
+is_infix(NOTNULL(const char *name), int n, NOTNULL(SymReg **r))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -479,9 +501,12 @@ is_infix(NOTNULL(const char *name), int n, NOTNULL(SymReg **r))
 
 /*
 
-=item C<var_arg_ins()>
+=item C<PARROT_WARN_UNUSED_RESULT
+static Instruction *
+var_arg_ins(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
+        NOTNULL(SymReg **r), int n, int emit)>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -515,7 +540,10 @@ var_arg_ins(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
 
 /*
 
-=item C<INS()>
+=item C<PARROT_CAN_RETURN_NULL
+Instruction *
+INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
+        NULLOK(const char *fmt), NOTNULL(SymReg **r), int n, int keyvec, int emit)>
 
 Make an instruction.
 
@@ -664,7 +692,7 @@ INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
         format[sizeof (format) - 1] = '\0';
     }
 #if 1
-    IMCC_debug(interp, DEBUG_PARSER,"%s %s\t%s\n", name, format, fullname);
+    IMCC_debug(interp, DEBUG_PARSER, "%s %s\t%s\n", name, format, fullname);
 #endif
     /* make the instruction */
 
@@ -732,9 +760,11 @@ extern void* yy_scan_string(const char *);
 
 /*
 
-=item C<do_yylex_init()>
+=item C<PARROT_API
+int
+do_yylex_init(PARROT_INTERP, NOTNULL(yyscan_t* yyscanner))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -754,7 +784,11 @@ do_yylex_init(PARROT_INTERP, NOTNULL(yyscan_t* yyscanner))
 
 /*
 
-=item C<PMC* imcc_compile(interp*, const char*)>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC *
+imcc_compile(PARROT_INTERP, NOTNULL(const char *s), int pasm_file,
+             NOTNULL(STRING **error_message))>
 
 Compile a pasm or imcc string
 
@@ -779,7 +813,7 @@ imcc_compile(PARROT_INTERP, NOTNULL(const char *s), int pasm_file,
     struct _imc_info_t *imc_info = NULL;
     struct parser_state_t *next;
     DECL_CONST_CAST;
-    INTVAL regs_used[4] = {3,3,3,3};
+    INTVAL regs_used[4] = {3, 3, 3, 3};
     void *yyscanner;
     Parrot_Context *ignored;
 
@@ -878,9 +912,10 @@ imcc_compile(PARROT_INTERP, NOTNULL(const char *s), int pasm_file,
 
 /*
 
-=item C<imcc_compile_pasm()>
+=item C<PMC *
+imcc_compile_pasm(PARROT_INTERP, NOTNULL(const char *s))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
  * Note: This function is provided for backward compatibility. This
  * function can go away in future.
@@ -898,9 +933,10 @@ imcc_compile_pasm(PARROT_INTERP, NOTNULL(const char *s))
 
 /*
 
-=item C<imcc_compile_pir()>
+=item C<PMC *
+imcc_compile_pir(PARROT_INTERP, NOTNULL(const char *s))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
  * Note: This function is provided for backward compatibility. This
  * function can go away in future.
@@ -918,9 +954,11 @@ imcc_compile_pir(PARROT_INTERP, NOTNULL(const char *s))
 
 /*
 
-=item C<IMCC_compile_pir_s()>
+=item C<PMC *
+IMCC_compile_pir_s(PARROT_INTERP, NOTNULL(const char *s),
+                   NOTNULL(STRING **error_message))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -935,9 +973,11 @@ IMCC_compile_pir_s(PARROT_INTERP, NOTNULL(const char *s),
 
 /*
 
-=item C<IMCC_compile_pasm_s()>
+=item C<PMC *
+IMCC_compile_pasm_s(PARROT_INTERP, NOTNULL(const char *s),
+                    NOTNULL(STRING **error_message))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -952,9 +992,10 @@ IMCC_compile_pasm_s(PARROT_INTERP, NOTNULL(const char *s),
 
 /*
 
-=item C<imcc_compile_pasm_ex()>
+=item C<PMC *
+imcc_compile_pasm_ex(PARROT_INTERP, NOTNULL(const char *s))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -967,18 +1008,18 @@ imcc_compile_pasm_ex(PARROT_INTERP, NOTNULL(const char *s))
 
     PMC * const sub = imcc_compile(interp, s, 1, &error_message);
     if (sub == NULL) {
-        char * const error_str = string_to_cstring(interp, error_message);
-        real_exception(interp, NULL, E_Exception, error_str);
-        string_cstring_free(error_str);
+        real_exception(interp, NULL, E_Exception,
+                string_to_cstring(interp, error_message));
     }
     return sub;
 }
 
 /*
 
-=item C<imcc_compile_pir_ex()>
+=item C<PMC *
+imcc_compile_pir_ex(PARROT_INTERP, NOTNULL(const char *s))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -991,16 +1032,18 @@ imcc_compile_pir_ex(PARROT_INTERP, NOTNULL(const char *s))
 
     PMC * const sub = imcc_compile(interp, s, 0, &error_message);
     if (sub == NULL) {
-        char * const  error_str = string_to_cstring(interp, error_message);
-        real_exception(interp, NULL, E_Exception, error_str);
-        string_cstring_free(error_str);
+        real_exception(interp, NULL, E_Exception,
+                string_to_cstring(interp, error_message));
     }
     return sub;
 }
 
 /*
 
-=item C<imcc_compile_file()>
+=item C<PARROT_CANNOT_RETURN_NULL
+static void *
+imcc_compile_file(PARROT_INTERP, NOTNULL(const char *fullname),
+                   NOTNULL(STRING **error_message))>
 
 Compile a file by filename (can be either PASM or IMCC code)
 
@@ -1024,7 +1067,7 @@ imcc_compile_file(PARROT_INTERP, NOTNULL(const char *fullname),
     /* need at least 3 regs for compilation of constant math e.g.
      * add_i_ic_ic - see also IMCC_subst_constants()
      */
-    INTVAL regs_used[4] = {3,3,3,3};
+    INTVAL regs_used[4] = {3, 3, 3, 3};
 
     if (IMCC_INFO(interp)->last_unit) {
         /* got a reentrant compile */
@@ -1106,9 +1149,11 @@ imcc_compile_file(PARROT_INTERP, NOTNULL(const char *fullname),
 
 /*
 
-=item C<IMCC_compile_file()>
+=item C<PARROT_CANNOT_RETURN_NULL
+void *
+IMCC_compile_file(PARROT_INTERP, NOTNULL(const char *s))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
  * Note: This function is provided for backward compatibility. This
  * function can go away in future.
@@ -1127,9 +1172,12 @@ IMCC_compile_file(PARROT_INTERP, NOTNULL(const char *s))
 
 /*
 
-=item C<IMCC_compile_file_s()>
+=item C<PARROT_CANNOT_RETURN_NULL
+void *
+IMCC_compile_file_s(PARROT_INTERP, NOTNULL(const char *s),
+                   NOTNULL(STRING **error_message))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -1145,7 +1193,8 @@ IMCC_compile_file_s(PARROT_INTERP, NOTNULL(const char *s),
 
 /*
 
-=item C<register_compilers()>
+=item C<void
+register_compilers(PARROT_INTERP)>
 
 Register additional compilers with the interpreter
 
@@ -1167,9 +1216,11 @@ register_compilers(PARROT_INTERP)
 
 /*
 
-=item C<change_op()>
+=item C<PARROT_WARN_UNUSED_RESULT
+static int
+change_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg **r), int num, int emit)>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -1214,7 +1265,10 @@ change_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg **r), int num, 
 
 /*
 
-=item C<try_find_op()>
+=item C<PARROT_WARN_UNUSED_RESULT
+int
+try_find_op(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
+        SymReg ** r, int n, int keyvec, int emit)>
 
 Try to find valid op doing the same operation e.g.
 
@@ -1313,9 +1367,12 @@ try_find_op(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
 
 /*
 
-=item C<try_rev_cmp()>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static const char *
+try_rev_cmp(NOTNULL(const char *name), NOTNULL(SymReg **r))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -1356,9 +1413,11 @@ try_rev_cmp(NOTNULL(const char *name), NOTNULL(SymReg **r))
 
 /*
 
-=item C<multi_keyed()>
+=item C<Instruction *
+multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
+            NOTNULL(SymReg **r), int nr, int keyvec, int emit)>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -1370,7 +1429,7 @@ multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
 {
     int i, keyf, kv, n;
     static int p = 0;
-    SymReg *preg[3];    /* px,py,pz */
+    SymReg *preg[3];    /* px, py, pz */
     SymReg *nreg[3];
     Instruction *ins = 0;
 
@@ -1420,7 +1479,7 @@ multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
                 nreg[2] = preg[n];
                 /* set p_k px */
                 ins = INS(interp, unit, str_dup("set"),
-                          0, nreg, 3,KEY_BIT(1),0);
+                          0, nreg, 3, KEY_BIT(1), 0);
             }
             else {
                 nreg[0] = preg[n];
@@ -1461,9 +1520,10 @@ multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
 
 /*
 
-=item C<imcc_fprintf()>
+=item C<int
+imcc_fprintf(PARROT_INTERP, NOTNULL(FILE *fd), NOTNULL(const char *fmt), ...)>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -1483,9 +1543,10 @@ imcc_fprintf(PARROT_INTERP, NOTNULL(FILE *fd), NOTNULL(const char *fmt), ...)
 
 /*
 
-=item C<imcc_vfprintf()>
+=item C<int
+imcc_vfprintf(PARROT_INTERP, NOTNULL(FILE *fd), NOTNULL(const char *format), va_list ap)>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -1578,6 +1639,8 @@ imcc_vfprintf(PARROT_INTERP, NOTNULL(FILE *fd), NOTNULL(const char *format), va_
                 len += ins_print(interp, fd, _ins);
                 }
                 break;
+            default:
+                break;
         }
     }
     return len;
@@ -1589,9 +1652,12 @@ imcc_vfprintf(PARROT_INTERP, NOTNULL(FILE *fd), NOTNULL(const char *format), va_
 
 /*
 
-=item C<str_dup()>
+=item C<PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
+char *
+str_dup(NOTNULL(const char *old))>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -1606,16 +1672,18 @@ str_dup(NOTNULL(const char *old))
     char * const copy  = (char *)mem_sys_allocate(bytes);
     memcpy(copy, old, bytes);
 #ifdef MEMDEBUG
-    debug(interp, 1,"line %d str_dup %s [%x]\n", line, old, copy);
+    debug(interp, 1, "line %d str_dup %s [%x]\n", line, old, copy);
 #endif
     return copy;
 }
 
 /*
 
-=item C<imcc_init()>
+=item C<PARROT_API
+void
+imcc_init(PARROT_INTERP)>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 
@@ -1632,9 +1700,11 @@ imcc_init(PARROT_INTERP)
 
 /*
 
-=item C<imcc_destroy()>
+=item C<PARROT_API
+void
+imcc_destroy(PARROT_INTERP)>
 
-Needs to be documented!!!
+TODO: Needs to be documented!!!
 
 =cut
 

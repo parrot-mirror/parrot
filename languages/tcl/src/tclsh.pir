@@ -13,19 +13,19 @@
 
 .macro set_tcl_argv()
   argc = argv # update
-  .sym pmc tcl_argv
+  .local pmc tcl_argv
   tcl_argv = new 'TclList'
-  .sym int ii,jj
+  .local int ii,jj
   ii = 1
   jj = 0
-.local $argv_loop:
+.label $argv_loop:
   if ii >= argc  goto .$argv_loop_done
   $P0 = argv[ii]
   tcl_argv[jj] = $P0
   inc ii
   inc jj
   goto .$argv_loop
-.local $argv_loop_done:
+.label $argv_loop_done:
   store_global '$argv', tcl_argv
 .endm
 
@@ -96,7 +96,7 @@ execute_line:
   push_eh loop_error
     $P2 = __script(input_line)
     retval = $P2()
-  clear_eh
+  pop_eh
   # print out the result of the evaluation.
   if_null retval, input_loop_continue
   if retval == '' goto input_loop_continue
@@ -132,16 +132,15 @@ open_file:
  
 file:
   filename = shift argv
-  .local pmc parrotIO
   .local string contents
-  parrotIO = getclass 'ParrotIO'
-  contents = parrotIO.'slurp'(filename)
+  $P99 = open filename, '<'
+  contents = $P99.'slurp'('')
 
   .set_tcl_argv()
   unless dump_only goto run_file  
   push_eh file_error
     ($S0,$I0) = __script(contents, 'pir_only'=>1, 'bsnl'=>1, 'wrapper'=>1)
-  clear_eh
+  pop_eh
   print $S0
   goto done
 
@@ -149,7 +148,7 @@ run_file:
   push_eh file_error
     $P2 = __script(contents, 'bsnl' => 1)
     $P2()
-  clear_eh
+  pop_eh
   goto done
 
 badfile:
@@ -167,7 +166,7 @@ oneliner:
   $P3 = __script(tcl_code)
   push_eh file_error
     $P3()
-  clear_eh
+  pop_eh
   goto done
 
 oneliner_dump:
@@ -232,7 +231,7 @@ got_prompt:
     $P0 = find_global varname
     $P2 = __script($P0)
     $P2()
-  clear_eh
+  pop_eh
 
   STDOUT.'flush'()
   .return STDIN.'readline'('')

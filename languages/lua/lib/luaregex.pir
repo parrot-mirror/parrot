@@ -187,13 +187,13 @@ Francois Perrad
 .sub '__onload' :anon :load :init
     load_bytecode 'PGE.pbc'
 
-    $P0 = getclass 'PGE::Exp::CCShortcut'
+    $P0 = get_class 'PGE::Exp::CCShortcut'
     $P1 = subclass $P0, 'PGE::Exp::LuaCCShortcut'
 
-    $P0 = getclass 'PGE::Exp::CGroup'
+    $P0 = get_class 'PGE::Exp::CGroup'
     $P1 = subclass $P0, 'PGE::Exp::LuaCGroup'
 
-    $P0 = getclass 'PGE::Exp'
+    $P0 = get_class 'PGE::Exp'
     $P1 = subclass $P0, 'PGE::Exp::LuaBalanced'
 .end
 
@@ -203,14 +203,10 @@ Francois Perrad
     .param pmc source
     .param pmc adverbs         :slurpy :named
 
-    $I0 = exists adverbs['name']
-    if $I0 goto adverbs_1
-    adverbs['name'] = '_luaregex'
-  adverbs_1:
     $I0 = exists adverbs['grammar']
-    if $I0 goto adverbs_2
+    if $I0 goto have_grammar
     adverbs['grammar'] = 'PGE::Grammar'
-  adverbs_2:
+  have_grammar:
 
     .local string target
     target = adverbs['target']
@@ -338,7 +334,9 @@ Francois Perrad
     $S1 = substr $S1, pos, 1
     $S0 .= $S1
     $S0 .= "'"
-    ex['_message'] = $S0
+    new $P0, 'String'
+    set $P0, $S0
+    setattribute ex, 'message', $P0
     throw ex
     .return ()
 .end

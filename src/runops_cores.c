@@ -44,7 +44,10 @@ static opcode_t * runops_trace_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
 /*
 
-=item C<runops_fast_core>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+opcode_t *
+runops_fast_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations.
@@ -68,7 +71,10 @@ runops_fast_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
 /*
 
-=item C<runops_cgoto_core>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+opcode_t *
+runops_cgoto_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations, using the computed C<goto> core.
@@ -96,17 +102,6 @@ runops_cgoto_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 #endif
 }
 
-/*
-
-=item C<runops_slow_core>
-
-Runs the Parrot operations starting at C<pc> until there are no more
-operations, with tracing and bounds checking enabled.
-
-=cut
-
-*/
-
 #ifdef code_start
 #  undef code_start
 #endif
@@ -116,6 +111,19 @@ operations, with tracing and bounds checking enabled.
 
 #define  code_start interp->code->base.data
 #define  code_end (interp->code->base.data + interp->code->base.size)
+
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static opcode_t *
+runops_trace_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
@@ -179,6 +187,20 @@ runops_trace_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
     return pc;
 }
 
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+opcode_t *
+runops_slow_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
+
+Runs the Parrot operations starting at C<pc> until there are no more
+operations, with tracing and bounds checking enabled.
+
+=cut
+
+*/
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *
@@ -200,14 +222,52 @@ runops_slow_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
         DO_OP(pc, interp);
     }
-#undef code_start
-#undef code_end
     return pc;
 }
 
 /*
 
-=item C<runops_profile_core>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+opcode_t *
+runops_gc_debug_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
+
+Runs the Parrot operations starting at C<pc> until there are no more
+operations, performing a full GC run before each op.  This is very slow, but
+it's also a very quick way to find GC problems.
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+opcode_t *
+runops_gc_debug_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
+{
+    while (pc) {
+        if (pc < code_start || pc >= code_end) {
+            real_exception(interp, NULL, 1,
+                    "attempt to access code outside of current code segment");
+        }
+        Parrot_do_dod_run(interp, 0);
+        CONTEXT(interp->ctx)->current_pc = pc;
+
+        DO_OP(pc, interp);
+    }
+
+    return pc;
+}
+
+#undef code_start
+#undef code_end
+
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+opcode_t *
+runops_profile_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations, with tracing, bounds checking and profiling enabled.
@@ -254,7 +314,11 @@ runops_profile_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
     return pc;
 }
 
+/*
 
+=back
+
+*/
 
 /*
  * Local variables:

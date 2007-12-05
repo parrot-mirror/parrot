@@ -21,22 +21,13 @@ Tests the Object PMC.
 ## TODO add more tests as this is documented and implemented
 
 .sub main :main
-    # load this library
-    load_bytecode 'library/Test/More.pir'
-
-    # get the testing functions
-    .local pmc exports, curr_namespace, test_namespace
-    curr_namespace = get_namespace
-    test_namespace = get_namespace [ 'Test'; 'More' ]
-    exports = split " ", "plan diag ok is is_deeply like isa_ok"
-
-    test_namespace."export_to"(curr_namespace, exports)
+    .include 'include/test_more.pir'
 
     plan(1)
 
     push_eh cant_instantiate
       new P0, 'Object'
-    clear_eh
+    pop_eh
     ok(0, 'Able to instantiate Object')
     goto done_1
 cant_instantiate:

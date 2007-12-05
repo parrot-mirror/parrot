@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-t/pmc/parrotclass.t - test the ParrotClass PMC
+t/pmc/parrotclass.t - test the Class PMC
 
 =head1 SYNOPSIS
 
@@ -12,26 +12,17 @@ t/pmc/parrotclass.t - test the ParrotClass PMC
 
 =head1 DESCRIPTION
 
-Tests the ParrotClass PMC.
+Tests the Class PMC.
 
 =cut
 
 .sub main :main
-    # load this library
-    load_bytecode 'library/Test/More.pir'
-
-    # get the testing functions
-    .local pmc exports, curr_namespace, test_namespace
-    curr_namespace = get_namespace
-    test_namespace = get_namespace [ 'Test'; 'More' ]
-    exports = split " ", "plan diag ok is is_deeply like isa_ok"
-
-    test_namespace."export_to"(curr_namespace, exports)
+    .include 'include/test_more.pir'
 
     plan(1)
 
-    new P0, 'ParrotClass'
-    ok(1, 'Instantiated .ParrotClass')
+    new P0, 'Class'
+    ok(1, 'Instantiated .Class')
 .end
 
 # Local Variables:

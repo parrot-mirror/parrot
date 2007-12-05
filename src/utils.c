@@ -66,7 +66,9 @@ static void rec_climb_back_and_mark(
 
 /*
 
-=item C<intval_mod>
+=item C<PARROT_CONST_FUNCTION
+INTVAL
+intval_mod(INTVAL i2, INTVAL i3)>
 
 NOTE: This "corrected mod" algorithm is based on the C code on page 70
 of [1]. Assuming correct behavior of the built-in mod operator (%) with
@@ -115,6 +117,7 @@ intval_mod(INTVAL i2, INTVAL i3)
             case 1: r = r - z; break;
             case 2: r = z - r; break;
             case 3: r = -r;    break;
+            default:           break;
         }
     }
 
@@ -123,7 +126,9 @@ intval_mod(INTVAL i2, INTVAL i3)
 
 /*
 
-=item C<floatval_mod>
+=item C<PARROT_CONST_FUNCTION
+FLOATVAL
+floatval_mod(FLOATVAL n2, FLOATVAL n3)>
 
 Returns C<n2 mod n3>.
 
@@ -192,7 +197,7 @@ static unsigned short c = C;
 
 /*
 
-=item C<next_rand>
+=item C<static void next_rand(_rand_buf X)>
 
 Returns the next random number in C<X>.
 
@@ -224,7 +229,7 @@ next_rand(_rand_buf X)
 
 /*
 
-=item C<_erand48>
+=item C<static FLOATVAL _erand48(_rand_buf buf)>
 
 Returns a C<double> in the interval C<[0.0, 1.0)>.
 
@@ -243,7 +248,7 @@ _erand48(_rand_buf buf)
 
 /*
 
-=item C<_drand48>
+=item C<static FLOATVAL _drand48(void)>
 
 Returns a C<double> in the interval C<[0.0, 1.0)>.
 
@@ -259,7 +264,7 @@ _drand48(void)
 
 /*
 
-=item C<_jrand48>
+=item C<static long _jrand48(_rand_buf buf)>
 
 Returns a C<long> in the interval C<[-2^31, 2^31)>.
 
@@ -278,7 +283,7 @@ _jrand48(_rand_buf buf)
 
 /*
 
-=item C<_nrand48>
+=item C<static long _nrand48(_rand_buf buf)>
 
 Returns a C<long> in the interval C<[0, 2^31)>.
 
@@ -294,7 +299,7 @@ _nrand48(_rand_buf buf)
 
 /*
 
-=item C<_lrand48>
+=item C<static long _lrand48(void)>
 
 Returns a C<long> in the interval C<[0, 2^31)>.
 
@@ -310,7 +315,7 @@ _lrand48(void)
 
 /*
 
-=item C<_mrand48>
+=item C<static long _mrand48(void)>
 
 Returns a C<long> in the interval C<[-2^31, 2^31)>.
 
@@ -326,7 +331,7 @@ _mrand48(void)
 
 /*
 
-=item C<_srand48>
+=item C<static void _srand48(long seed)>
 
 Sets the high order 32 bits to the argument C<seed>. The low order 16
 bits are set to the arbitrary value 0x330e.
@@ -368,7 +373,9 @@ _srand48(long seed)
 
 /*
 
-=item C<Parrot_float_rand>
+=item C<PARROT_API
+FLOATVAL
+Parrot_float_rand(INTVAL how_random)>
 
 Returns a C<FLOATVAL> in the interval C<[0.0, 1.0)>.
 
@@ -389,7 +396,9 @@ Parrot_float_rand(INTVAL how_random)
 
 /*
 
-=item C<Parrot_uint_rand>
+=item C<PARROT_API
+INTVAL
+Parrot_uint_rand(INTVAL how_random)>
 
 Returns an C<INTVAL> in the interval C<[0, 2^31)>.
 
@@ -410,7 +419,9 @@ Parrot_uint_rand(INTVAL how_random)
 
 /*
 
-=item C<Parrot_int_rand>
+=item C<PARROT_API
+INTVAL
+Parrot_int_rand(INTVAL how_random)>
 
 Returns an C<INTVAL> in the interval C<[-2^31, 2^31)>.
 
@@ -431,7 +442,9 @@ Parrot_int_rand(INTVAL how_random)
 
 /*
 
-=item C<Parrot_range_rand>
+=item C<PARROT_API
+INTVAL
+Parrot_range_rand(INTVAL from, INTVAL to, INTVAL how_random)>
 
 Returns an C<INTVAL> in the range C<[from, to]>.
 
@@ -451,8 +464,7 @@ Parrot_range_rand(INTVAL from, INTVAL to, INTVAL how_random)
 
 /*
 
-=item C<Parrot_srand>
-
+=item C<PARROT_API void Parrot_srand(INTVAL seed)>
 Seeds the random number generator with C<seed>.
 
 =cut
@@ -474,7 +486,11 @@ Parrot_srand(INTVAL seed)
 
 =over 4
 
-=item C<Parrot_make_la>
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+void *
+Parrot_make_la(PARROT_INTERP, NOTNULL(PMC *array))>
 
 Creates a C array of C<long>s with one more element than the number of
 elements in C<*array>. The elements are then copied from C<*array> to
@@ -512,7 +528,9 @@ Parrot_make_la(PARROT_INTERP, NOTNULL(PMC *array))
 
 /*
 
-=item C<Parrot_destroy_la>
+=item C<PARROT_API
+void
+Parrot_destroy_la(NULLOK(long *array))>
 
 Use this to destroy an array created with C<Parrot_make_la()>.
 
@@ -522,13 +540,18 @@ Use this to destroy an array created with C<Parrot_make_la()>.
 
 PARROT_API
 void
-Parrot_destroy_la(NULLOK(long *array)) {
+Parrot_destroy_la(NULLOK(long *array))
+{
     mem_sys_free(array);
 }
 
 /*
 
-=item C<Parrot_make_cpa>
+=item C<PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+void *
+Parrot_make_cpa(PARROT_INTERP, NOTNULL(PMC *array))>
 
 Creates a C array of C<char *>s with one more element than the number of
 elements in C<*array>. The elements are then copied from C<*array> to
@@ -574,7 +597,9 @@ Parrot_make_cpa(PARROT_INTERP, NOTNULL(PMC *array))
 
 /*
 
-=item C<Parrot_destroy_cpa>
+=item C<PARROT_API
+void
+Parrot_destroy_cpa(NOTNULL(char **array))>
 
 Use this to destroy an array created with C<Parrot_make_cpa()>.
 
@@ -611,7 +636,10 @@ typedef enum {
 
 /*
 
-=item C<tm_to_array>
+=item C<PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PMC*
+tm_to_array(PARROT_INTERP, NOTNULL(const struct tm *tm))>
 
 Helper to convert a B<struct tm *> to an Array
 
@@ -641,6 +669,19 @@ tm_to_array(PARROT_INTERP, NOTNULL(const struct tm *tm))
 
     return Array;
 }
+
+/*
+
+=item C<PARROT_API
+INTVAL
+Parrot_byte_index(SHIM_INTERP, NOTNULL(const STRING *base),
+        NOTNULL(const STRING *search), UINTVAL start_offset)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 PARROT_API
 INTVAL
@@ -675,6 +716,20 @@ Parrot_byte_index(SHIM_INTERP, NOTNULL(const STRING *base),
     return -1;
 }
 
+/*
+
+=item C<PARROT_API
+PARROT_WARN_UNUSED_RESULT
+INTVAL
+Parrot_byte_rindex(SHIM_INTERP, NOTNULL(const STRING *base),
+        NOTNULL(const STRING *search), UINTVAL start_offset)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
@@ -702,7 +757,8 @@ Parrot_byte_rindex(SHIM_INTERP, NOTNULL(const STRING *base),
 
 /*
 
-=item C<rec_climb_back_and_mark>
+=item C<static void
+rec_climb_back_and_mark(int node_index, NOTNULL(parrot_prm_context* c))>
 
 Recursive function, used by Parrot_register_move to
 climb back the graph of register moves operations.
@@ -751,7 +807,8 @@ rec_climb_back_and_mark(int node_index, NOTNULL(parrot_prm_context* c))
 
 /*
 
-=item C<process_cycle_without_exit>
+=item C<static void
+process_cycle_without_exit(int node_index, NOTNULL(parrot_prm_context* c))>
 
 Recursive function, used by Parrot_register_move to handle the case
 of cycles without exits, that are cycles of move ops between registers
@@ -778,7 +835,7 @@ process_cycle_without_exit(int node_index, NOTNULL(parrot_prm_context* c))
             : 0;
 
     if (0 == alt) { /* use temp reg */
-        move_reg(c->dest_regs[node_index],c->temp_reg, c);
+        move_reg(c->dest_regs[node_index], c->temp_reg, c);
         c->backup[node_index] = c->temp_reg;
     }
     else
@@ -788,18 +845,35 @@ process_cycle_without_exit(int node_index, NOTNULL(parrot_prm_context* c))
 }
 
 /*
- should be self-speaking
+
+=item C<static void
+move_reg(int from, int dest, NOTNULL(parrot_prm_context* c))>
+
+should be self-speaking
+
+=cut
+
  */
 
 static void
 move_reg(int from, int dest, NOTNULL(parrot_prm_context* c))
 {
-   /* fprintf(stderr,"move %i ==> %i\n",from,dest);*/
+   /* fprintf(stderr, "move %i ==> %i\n", from, dest);*/
     c->mov(c->interp, dest, from, c->info);
 }
 
 
 /*
+
+=item C<PARROT_API
+void
+Parrot_register_move(PARROT_INTERP, int n_regs,
+                     NOTNULL(unsigned char *dest_regs),
+                     NOTNULL(unsigned char *src_regs),
+                     unsigned char temp_reg,
+                     reg_move_func mov,
+                     reg_move_func mov_alt,
+                     NOTNULL(void *info))>
 
 Move C<n_regs> from the given register list C<src_regs> to C<dest_regs>.
 
@@ -846,14 +920,20 @@ Talked to Leo and he said those cases are not likely (Vishal Soni).
 
 TODO: Add tests for the above conditions.
 
+=cut
+
 */
 
 PARROT_API
 void
-Parrot_register_move(PARROT_INTERP, int n_regs,
-                     NOTNULL(unsigned char *dest_regs), NOTNULL(unsigned char *src_regs),
-                     unsigned char temp_reg,
-                     reg_move_func mov, reg_move_func mov_alt, NOTNULL(void *info))
+Parrot_register_move(PARROT_INTERP,
+        int n_regs,
+        NOTNULL(unsigned char *dest_regs),
+        NOTNULL(unsigned char *src_regs),
+        unsigned char temp_reg,
+        reg_move_func mov,
+        reg_move_func mov_alt,
+        NOTNULL(void *info))
 {
     int i;
     int max_reg = 0;

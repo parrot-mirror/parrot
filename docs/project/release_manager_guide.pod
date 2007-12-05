@@ -41,8 +41,7 @@ F<VERSION>, F<parrot.spec>, F<MANIFEST.generated>, F<META.yml>,
 F<README>.
 
 Also update the version number, date, and your name in the
-following files: F<DEVELOPING>, F<docs/parrothist.pod>,
-and F<docs/ROADMAP.pod>
+the files: F<DEVELOPING> and F<docs/parrothist.pod>.
 
 =item b
 
@@ -85,15 +84,10 @@ what those tests complain about, or fix them so they don't complain.
 
 =item f
 
-Update F<PBC_COMPAT>, perhaps by collapsing intra-release entries
-into a single entry naming the release.
-
-=item g
-
 Run C<perl tools/dev/pbc_header.pl --upd t/native_pbc/*.pbc>
 to update version and fingerprint in the native tests.
 
-=item h
+=item g
 
 Make sure everything works:
 

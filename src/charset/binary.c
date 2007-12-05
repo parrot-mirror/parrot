@@ -31,6 +31,7 @@ static INTVAL compare(PARROT_INTERP,
     SHIM(const STRING *rhs))
         __attribute__nonnull__(1);
 
+PARROT_CANNOT_RETURN_NULL
 static STRING* compose(PARROT_INTERP, SHIM(STRING *source_string))
         __attribute__nonnull__(1);
 
@@ -46,6 +47,7 @@ static INTVAL cs_rindex(PARROT_INTERP,
     UINTVAL offset)
         __attribute__nonnull__(1);
 
+PARROT_CANNOT_RETURN_NULL
 static STRING* decompose(PARROT_INTERP, SHIM(STRING *source_string))
         __attribute__nonnull__(1);
 
@@ -86,6 +88,7 @@ static void set_graphemes(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(5);
 
+PARROT_CANNOT_RETURN_NULL
 static STRING * string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)
         __attribute__nonnull__(1);
 
@@ -95,6 +98,7 @@ static void titlecase(PARROT_INTERP, SHIM(STRING *source_string))
 static void titlecase_first(PARROT_INTERP, SHIM(STRING *source_string))
         __attribute__nonnull__(1);
 
+PARROT_CANNOT_RETURN_NULL
 static STRING* to_charset(PARROT_INTERP,
     NOTNULL(STRING *src),
     NOTNULL(STRING *dest))
@@ -122,7 +126,9 @@ static UINTVAL validate(PARROT_INTERP, SHIM(STRING *source_string))
 
 /*
 
-=item C<set_graphemes>
+=item C<static void
+set_graphemes(PARROT_INTERP, NOTNULL(STRING *source_string),
+        UINTVAL offset, UINTVAL replace_count, NOTNULL(STRING *insert_string))>
 
 TODO: Not yet documented!!!
 
@@ -140,7 +146,9 @@ set_graphemes(PARROT_INTERP, NOTNULL(STRING *source_string),
 
 /*
 
-=item C<to_charset>
+=item C<PARROT_CANNOT_RETURN_NULL
+static STRING*
+to_charset(PARROT_INTERP, NOTNULL(STRING *src), NOTNULL(STRING *dest))>
 
 TODO: Not yet documented!!!
 
@@ -148,6 +156,7 @@ TODO: Not yet documented!!!
 
 */
 
+PARROT_CANNOT_RETURN_NULL
 static STRING*
 to_charset(PARROT_INTERP, NOTNULL(STRING *src), NOTNULL(STRING *dest))
 {
@@ -161,7 +170,9 @@ to_charset(PARROT_INTERP, NOTNULL(STRING *src), NOTNULL(STRING *dest))
 
 /*
 
-=item C<compose>
+=item C<PARROT_CANNOT_RETURN_NULL
+static STRING*
+compose(PARROT_INTERP, SHIM(STRING *source_string))>
 
 TODO: Not yet documented!!!
 
@@ -170,6 +181,7 @@ TODO: Not yet documented!!!
 */
 
 /* A err. can't compose binary */
+PARROT_CANNOT_RETURN_NULL
 static STRING*
 compose(PARROT_INTERP, SHIM(STRING *source_string))
 {
@@ -178,7 +190,9 @@ compose(PARROT_INTERP, SHIM(STRING *source_string))
 
 /*
 
-=item C<decompose>
+=item C<PARROT_CANNOT_RETURN_NULL
+static STRING*
+decompose(PARROT_INTERP, SHIM(STRING *source_string))>
 
 TODO: Not yet documented!!!
 
@@ -187,6 +201,7 @@ TODO: Not yet documented!!!
 */
 
 /* A err. can't decompose binary */
+PARROT_CANNOT_RETURN_NULL
 static STRING*
 decompose(PARROT_INTERP, SHIM(STRING *source_string))
 {
@@ -195,7 +210,8 @@ decompose(PARROT_INTERP, SHIM(STRING *source_string))
 
 /*
 
-=item C<upcase>
+=item C<static void
+upcase(PARROT_INTERP, SHIM(STRING *source_string))>
 
 TODO: Not yet documented!!!
 
@@ -211,7 +227,8 @@ upcase(PARROT_INTERP, SHIM(STRING *source_string))
 
 /*
 
-=item C<downcase>
+=item C<static void
+downcase(PARROT_INTERP, SHIM(STRING *source_string))>
 
 TODO: Not yet documented!!!
 
@@ -227,7 +244,8 @@ downcase(PARROT_INTERP, SHIM(STRING *source_string))
 
 /*
 
-=item C<titlecase>
+=item C<static void
+titlecase(PARROT_INTERP, SHIM(STRING *source_string))>
 
 TODO: Not yet documented!!!
 
@@ -243,7 +261,8 @@ titlecase(PARROT_INTERP, SHIM(STRING *source_string))
 
 /*
 
-=item C<upcase_first>
+=item C<static void
+upcase_first(PARROT_INTERP, SHIM(STRING *source_string))>
 
 TODO: Not yet documented!!!
 
@@ -259,7 +278,8 @@ upcase_first(PARROT_INTERP, SHIM(STRING *source_string))
 
 /*
 
-=item C<downcase_first>
+=item C<static void
+downcase_first(PARROT_INTERP, SHIM(STRING *source_string))>
 
 TODO: Not yet documented!!!
 
@@ -275,7 +295,8 @@ downcase_first(PARROT_INTERP, SHIM(STRING *source_string))
 
 /*
 
-=item C<titlecase_first>
+=item C<static void
+titlecase_first(PARROT_INTERP, SHIM(STRING *source_string))>
 
 TODO: Not yet documented!!!
 
@@ -291,7 +312,8 @@ titlecase_first(PARROT_INTERP, SHIM(STRING *source_string))
 
 /*
 
-=item C<compare>
+=item C<static INTVAL
+compare(PARROT_INTERP, SHIM(const STRING *lhs), SHIM(const STRING *rhs))>
 
 TODO: Not yet documented!!!
 
@@ -307,7 +329,9 @@ compare(PARROT_INTERP, SHIM(const STRING *lhs), SHIM(const STRING *rhs))
 
 /*
 
-=item C<cs_index>
+=item C<static INTVAL
+cs_index(PARROT_INTERP, SHIM(STRING *source_string),
+        SHIM(STRING *search_string), UINTVAL offset)>
 
 TODO: Not yet documented!!!
 
@@ -324,7 +348,9 @@ cs_index(PARROT_INTERP, SHIM(STRING *source_string),
 
 /*
 
-=item C<cs_rindex>
+=item C<static INTVAL
+cs_rindex(PARROT_INTERP, SHIM(STRING *source_string),
+        SHIM(STRING *search_string), UINTVAL offset)>
 
 TODO: Not yet documented!!!
 
@@ -341,7 +367,8 @@ cs_rindex(PARROT_INTERP, SHIM(STRING *source_string),
 
 /*
 
-=item C<validate>
+=item C<static UINTVAL
+validate(PARROT_INTERP, SHIM(STRING *source_string))>
 
 TODO: Not yet documented!!!
 
@@ -358,7 +385,8 @@ validate(PARROT_INTERP, SHIM(STRING *source_string))
 
 /*
 
-=item C<is_cclass>
+=item C<static INTVAL
+is_cclass(PARROT_INTERP, INTVAL flags, SHIM(STRING *source_string), UINTVAL offset)>
 
 TODO: Not yet documented!!!
 
@@ -374,7 +402,9 @@ is_cclass(PARROT_INTERP, INTVAL flags, SHIM(STRING *source_string), UINTVAL offs
 
 /*
 
-=item C<find_cclass>
+=item C<static INTVAL
+find_cclass(PARROT_INTERP, INTVAL flags,
+            NOTNULL(STRING *source_string), UINTVAL offset, UINTVAL count)>
 
 TODO: Not yet documented!!!
 
@@ -391,7 +421,9 @@ find_cclass(PARROT_INTERP, INTVAL flags,
 
 /*
 
-=item C<find_not_cclass>
+=item C<static INTVAL
+find_not_cclass(PARROT_INTERP, INTVAL flags,
+                NOTNULL(STRING *source_string), UINTVAL offset, UINTVAL count)>
 
 TODO: Not yet documented!!!
 
@@ -408,7 +440,9 @@ find_not_cclass(PARROT_INTERP, INTVAL flags,
 
 /*
 
-=item C<string_from_codepoint>
+=item C<PARROT_CANNOT_RETURN_NULL
+static STRING *
+string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)>
 
 TODO: Not yet documented!!!
 
@@ -416,6 +450,7 @@ TODO: Not yet documented!!!
 
 */
 
+PARROT_CANNOT_RETURN_NULL
 static STRING *
 string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)
 {
@@ -428,7 +463,9 @@ string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)
 
 /*
 
-=item C<Parrot_charset_binary_init>
+=item C<PARROT_CANNOT_RETURN_NULL
+const CHARSET *
+Parrot_charset_binary_init(PARROT_INTERP)>
 
 TODO: Not yet documented!!!
 
@@ -473,6 +510,14 @@ Parrot_charset_binary_init(PARROT_INTERP)
     return return_set;
 
 }
+
+/*
+
+=back
+
+=cut
+
+*/
 
 
 /*

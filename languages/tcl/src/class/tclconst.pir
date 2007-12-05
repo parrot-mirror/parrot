@@ -6,6 +6,8 @@
 
 .cloneable()
 
+=head1 TclConst
+
 =head2 __class_init
 
 Define the attributes required for the class.
@@ -13,7 +15,7 @@ Define the attributes required for the class.
 =cut
 
 .sub __class_init :anon :load
-  $P0 = getclass 'String'
+  $P0 = get_class 'String'
   $P1 = subclass $P0, 'TclConst'
   
   $P0 = new 'Hash'
@@ -247,8 +249,8 @@ special:
   goto loop
   
 done:
-  $I0 = classoffset self, 'TclConst'
-  $P0 = getattribute self, $I0
+  # Finally, delegate to our parent's set_string
+  $P0 = getattribute self, ['String'], 'proxy'
   $P0 = value
 .end
 
@@ -260,16 +262,26 @@ Generate PIR code which can be used to generate our value
 
 .sub compile :method
    .param int argnum
-  
-   .local pmc value
-   $I0 = classoffset self, 'TclConst'
-   value = getattribute self, $I0
 
    .local pmc compiler
   compiler = get_root_global ['_tcl'], 'compile_dispatch'
 
-   .return compiler(argnum, value)
+   .return compiler(argnum, self)
 .end
+
+=head2 _dump
+
+This method enables Data::Dumper to work on us; shouldn't need it, because
+we're subclassing String...
+
+=cut
+
+.sub '__dump' :method
+  .param pmc dumper
+  .param string label
+  print self
+.end
+
 
 # Local Variables:
 #   mode: pir

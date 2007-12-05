@@ -10,7 +10,8 @@ use Parrot::Test;
 
 plan tests => 4;
 
-my @TODO = ( todo => 'Symbols not exported; see RT #43056' );
+my @TODO = $^O =~ /darwin/
+    ? () : ( todo => 'Symbols not exported; see RT #43056' );
 
 =head1 NAME
 

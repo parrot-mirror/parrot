@@ -4,20 +4,32 @@
  */
 
 /*
- * reg_alloc.c - by Bill Coffman
- *
- * Register allocator:
- *
- * This is a brute force register allocator. It uses a graph-coloring
- * algorithm, but the implementation is very kludgy.
- *
- * It is a partial implementation of a Briggs-style register allocator
- * The following parts are just missing:
- *
- * - Renumbering
- * - Coaelesceing
- *
- */
+
+=head1 NAME
+
+compilers/imcc/reg_alloc_bc.c - by Bill Coffman
+
+=head1 DESCRIPTION
+
+Register allocator:
+
+This is a brute force register allocator. It uses a graph-coloring
+algorithm, but the implementation is very kludgy.
+
+It is a partial implementation of a Briggs-style register allocator
+The following parts are just missing:
+
+ - Renumbering
+ - Coaelesceing
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
 
 #include <string.h>
 #include "imc.h"
@@ -76,6 +88,16 @@ static int spill_registers(Interp *, IMC_Unit *, graph*);
 #define Bits_per_int() ((BITS_PER_INT) ? BITS_PER_INT : bits_per_int())
 /*#define VALIDATE_COLORING*/
 
+/*
+
+=item C<static unsigned int bits_per_int(void)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static unsigned int bits_per_int(void)
 {
     unsigned int x = ~0;
@@ -83,6 +105,17 @@ static unsigned int bits_per_int(void)
     while (x) { j++; x >>= 1; }
     return j;
 }
+
+/*
+
+=item C<static unsigned int* ig_get_word(int i, int j, int N, unsigned int* edgebits,
+                                 int* bit_ofs)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static unsigned int* ig_get_word(int i, int j, int N, unsigned int* edgebits,
                                  int* bit_ofs)
@@ -93,6 +126,16 @@ static unsigned int* ig_get_word(int i, int j, int N, unsigned int* edgebits,
     *bit_ofs = bit % sizeofint;
     return &edgebits[bit / sizeofint];
 }
+
+/*
+
+=item C<static void ig_set(int i, int j, int N, unsigned int* edgebits)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void ig_set(int i, int j, int N, unsigned int* edgebits)
 {
@@ -111,12 +154,33 @@ static void ig_clear(int i, int j, int N, unsigned int* edgebits)
 */
 
 int ig_test(int i, int j, int N, unsigned int* edgebits);
+
+/*
+
+=item C<int ig_test(int i, int j, int N, unsigned int* edgebits)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 int ig_test(int i, int j, int N, unsigned int* edgebits)
 {
     int bit_ofs;
     unsigned int* word = ig_get_word(i, j, N, edgebits, &bit_ofs);
     return *word & (1 << bit_ofs);
 }
+
+/*
+
+=item C<static unsigned int* ig_allocate(int N)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static unsigned int* ig_allocate(int N)
 {
@@ -129,14 +193,23 @@ static unsigned int* ig_allocate(int N)
     return (unsigned int*) mem_sys_allocate_zeroed(num_words * sizeof (int));
 }
 
-/* imc_reg_alloc is the main loop of the allocation algorithm. It operates
- * on a single compilation unit at a time.
- */
+/*
+
+=item C<void
+imc_reg_alloc(PARROT_INTERP, IMC_Unit * unit)>
+
+imc_reg_alloc is the main loop of the allocation algorithm. It operates
+on a single compilation unit at a time.
+
+=cut
+
+*/
+
 void
 imc_reg_alloc(PARROT_INTERP, IMC_Unit * unit)
 {
     int todo, first, loop_counter;
-    graph G={0,0,NULL,NULL};
+    graph G={0, 0, NULL, NULL};
     char *function;
 
     if (!unit)
@@ -220,16 +293,16 @@ imc_reg_alloc(PARROT_INTERP, IMC_Unit * unit)
 
 #ifdef VALIDATE_COLORING
     {
-        int x,y;
+        int x, y;
         for (x = 0; x < unit->n_symbols; x++) {
             SymReg* r = unit->reglist[x];
             for (y = 0; y < unit->n_symbols; y++) {
                 if (ig_test(x, y, unit->n_symbols, unit->interference_graph)) {
                     if (r->color!=-1 && r->color == unit->reglist[y]->color)
-                        fprintf(stderr,"node %d = %s(%c) is colored %d and "
+                        fprintf(stderr, "node %d = %s(%c) is colored %d and "
                                 "neighbor %d = %s(%c) is colored %d\n",
-                                x,r->name,r->set,r->color,
-                                y,unit->reglist[y]->name,unit->reglist[y]->set,
+                                x, r->name, r->set, r->color,
+                                y, unit->reglist[y]->name, unit->reglist[y]->set,
                                 unit->reglist[y]->color);
                     PARROT_ASSERT(r->color==-1 || r->color != unit->reglist[y]->color);
                 }
@@ -276,6 +349,17 @@ imc_reg_alloc(PARROT_INTERP, IMC_Unit * unit)
         print_stat(interp, unit);
 }
 
+/*
+
+=item C<void
+free_reglist(IMC_Unit * unit)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
 free_reglist(IMC_Unit * unit)
 {
@@ -293,9 +377,18 @@ free_reglist(IMC_Unit * unit)
     }
 }
 
-/* some statistics about register usage
- * printed with --verbose --verbose
- */
+/*
+
+=item C<static void
+make_stat(IMC_Unit * unit, int *sets, int *cols)>
+
+some statistics about register usage
+printed with --verbose --verbose
+
+=cut
+
+*/
+
 static void
 make_stat(IMC_Unit * unit, int *sets, int *cols)
 {
@@ -314,21 +407,46 @@ make_stat(IMC_Unit * unit, int *sets, int *cols)
                 }
     }
 }
+
 static int imcsets[4]; /*FIXME global*/
 /* register usage of .imc */
+
+/*
+
+=item C<static void
+imc_stat_init(IMC_Unit * unit)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
-imc_stat_init(IMC_Unit * unit) {
+imc_stat_init(IMC_Unit * unit)
+{
     imcsets[0] = imcsets[1] = imcsets[2] = imcsets[3] = 0;
     make_stat(unit, imcsets, 0);
     memset(&ostat, 0, sizeof (ostat));
 }
 
 /* and final */
+/*
+
+=item C<static void
+print_stat(Parrot_Interp interp, IMC_Unit * unit)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
 print_stat(Parrot_Interp interp, IMC_Unit * unit)
 {
-    int sets[4] = {0,0,0,0};
-    int cols[4] = {-1,-1,-1,-1};
+    int sets[4] = {0, 0, 0, 0};
+    int cols[4] = {-1, -1, -1, -1};
     char *function = unit->instructions->r[0]->name;
 
     make_stat(unit, sets, cols);
@@ -356,7 +474,17 @@ print_stat(Parrot_Interp interp, IMC_Unit * unit)
               unit->n_basic_blocks, edge_count(unit));
 }
 
-/* sort list by line  nr */
+/*
+
+=item C<static int
+reg_sort_f(const void *a, const void *b)>
+
+sort list by line  nr
+
+=cut
+
+*/
+
 static int
 reg_sort_f(const void *a, const void *b)
 {
@@ -373,6 +501,17 @@ reg_sort_f(const void *a, const void *b)
     }
 }
 
+/*
+
+=item C<static void
+sort_reglist(IMC_Unit *unit)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
 sort_reglist(IMC_Unit *unit)
 {
@@ -380,12 +519,20 @@ sort_reglist(IMC_Unit *unit)
 }
 
 
-/* make a linear list of IDENTs and VARs, set n_symbols
- * TODO
- *   split the whole life analysis into 4, one per register kind
- *   registers of different kind never interfer, but the reglist
- *   has them all
- */
+/*
+
+=item C<static void
+build_reglist(Parrot_Interp interp, IMC_Unit * unit, int first)>
+
+make a linear list of IDENTs and VARs, set n_symbols
+TODO
+  split the whole life analysis into 4, one per register kind
+  registers of different kind never interfer, but the reglist
+  has them all
+
+=cut
+
+*/
 
 static void
 build_reglist(Parrot_Interp interp, IMC_Unit * unit, int first)
@@ -444,15 +591,23 @@ build_reglist(Parrot_Interp interp, IMC_Unit * unit, int first)
     if (first) {}
 }
 
-/* creates the interference graph between the variables.
- *
- * data structure is a 2-d array 'interference_graph' bitmap where
- * row/column indices represent the same index in the list of all
- * symbols (unit->reglist) in the current compilation unit.
- *
- * two variables interfere when they are alive at the
- * same time
- */
+/*
+
+=item C<static void
+build_interference_graph(Parrot_Interp interp, IMC_Unit* unit, graph* G)>
+
+creates the interference graph between the variables.
+
+data structure is a 2-d array 'interference_graph' bitmap where
+row/column indices represent the same index in the list of all
+symbols (unit->reglist) in the current compilation unit.
+
+two variables interfere when they are alive at the
+same time
+
+=cut
+
+*/
 
 static void
 build_interference_graph(Parrot_Interp interp, IMC_Unit* unit, graph* G)
@@ -469,7 +624,7 @@ build_interference_graph(Parrot_Interp interp, IMC_Unit* unit, graph* G)
      */
     interference_graph = ig_allocate(n_symbols);
     if (interference_graph == NULL)
-        IMCC_fatal(interp, 1, "build_interference_graph","Out of mem\n");
+        IMCC_fatal(interp, 1, "build_interference_graph", "Out of mem\n");
     unit->interference_graph = interference_graph;
 
     /* Calculate interferences between each chain and populate the the Y-axis */
@@ -493,9 +648,17 @@ build_interference_graph(Parrot_Interp interp, IMC_Unit* unit, graph* G)
         dump_interference_graph(unit);
 }
 
+/*
 
-/* Compute a DU-chain for each symbolic in a compilation unit
- */
+=item C<static void
+compute_du_chain(IMC_Unit * unit)>
+
+Compute a DU-chain for each symbolic in a compilation unit
+
+=cut
+
+*/
+
 static void
 compute_du_chain(IMC_Unit * unit)
 {
@@ -523,6 +686,17 @@ compute_du_chain(IMC_Unit * unit)
             r->last_ins = lastbranch;
     }
 }
+
+/*
+
+=item C<static void
+compute_one_du_chain(SymReg * r, IMC_Unit * unit)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 static void
 compute_one_du_chain(SymReg * r, IMC_Unit * unit)
@@ -559,8 +733,17 @@ compute_one_du_chain(SymReg * r, IMC_Unit * unit)
     }
 }
 
-/* Computes the cost of spilling each symbol. This is estimated by the number
- * of times the symbol appears, weighted by X*loop_depth */
+/*
+
+=item C<static void
+compute_spilling_costs(Parrot_Interp interp, IMC_Unit * unit)>
+
+Computes the cost of spilling each symbol. This is estimated by the number
+of times the symbol appears, weighted by X*loop_depth
+
+=cut
+
+*/
 
 static void
 compute_spilling_costs(Parrot_Interp interp, IMC_Unit * unit)
@@ -617,11 +800,20 @@ done:
         dump_symreg(unit);
 }
 
-/* See if r0's chain interferes with r1. */
-/* We currently decide that two vars interfere if they are both alive
- * at any point. This could be improved, requiring that one is alive
- * at the point of _definition_ of the other.
- */
+/*
+
+=item C<static int
+interferes(PARROT_INTERP, IMC_Unit * unit, SymReg * r0, SymReg * r1)>
+
+See if r0's chain interferes with r1.
+
+We currently decide that two vars interfere if they are both alive
+at any point. This could be improved, requiring that one is alive
+at the point of _definition_ of the other.
+
+=cut
+
+*/
 
 static int
 interferes(PARROT_INTERP, IMC_Unit * unit, SymReg * r0, SymReg * r1)
@@ -695,10 +887,17 @@ interferes(PARROT_INTERP, IMC_Unit * unit, SymReg * r0, SymReg * r1)
     return 0;
 }
 
-
 /*
- * try to allocate as much as possible, an optimization ...
- */
+
+=item C<static void
+allocate_wanted_regs(IMC_Unit * unit)>
+
+try to allocate as much as possible, an optimization ...
+
+=cut
+
+*/
+
 static void
 allocate_wanted_regs(IMC_Unit * unit)
 {
@@ -727,12 +926,21 @@ allocate_wanted_regs(IMC_Unit * unit)
     }
 }
 
-/* update bb and life_info after spilling
- * this saves 4 costy routines
- * NOTE {lhs_,}use_count are not set again, this is save, when no
- *      further optimization pass follows
- *
- */
+/*
+
+=item C<static void
+update_life(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
+        SymReg *r, int needs_fetch, int needs_store, int add)>
+
+update bb and life_info after spilling
+this saves 4 costy routines
+NOTE {lhs_, }use_count are not set again, this is save, when no
+     further optimization pass follows
+
+=cut
+
+*/
+
 static void
 update_life(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
         SymReg *r, int needs_fetch, int needs_store, int add)
@@ -787,17 +995,20 @@ update_life(Parrot_Interp interp, IMC_Unit * unit, Instruction *ins,
     }
 }
 
+/*
 
+=item C<PARROT_INLINE static void
+spill(PARROT_INTERP, IMC_Unit * unit, int spilled)>
 
-/* Rewrites the unit instructions, inserting spill code in every ocurrence
- * of the symbol.  XXX this has tremendous potential for optimization.
- * Spilling multiple variables would help tremendously.
- */
+Rewrites the unit instructions, inserting spill code in every ocurrence
+of the symbol.  XXX this has tremendous potential for optimization.
+Spilling multiple variables would help tremendously.
 
-#ifdef HAS_INLINE
-inline
-#endif
-static void
+=cut
+
+*/
+
+PARROT_INLINE static void
 spill(PARROT_INTERP, IMC_Unit * unit, int spilled)
 {
     Instruction * tmp, *ins;
@@ -824,7 +1035,7 @@ spill(PARROT_INTERP, IMC_Unit * unit, int spilled)
 
 
     if (!unit->p31)
-        IMCC_fatal(interp, 1,"spill","unitialized spill array");
+        IMCC_fatal(interp, 1, "spill", "unitialized spill array");
     p31 = unit->p31;
 
     for (ins = unit->instructions; ins; ins = ins->next) {
@@ -892,8 +1103,16 @@ spill(PARROT_INTERP, IMC_Unit * unit, int spilled)
 }
 
 /*
- * Use colors from G to allocate registers and spill the high colors.
- */
+
+=item C<static int
+spill_registers(Parrot_Interp interp, IMC_Unit* unit, graph* G)>
+
+Use colors from G to allocate registers and spill the high colors.
+
+=cut
+
+*/
+
 static int
 spill_registers(Parrot_Interp interp, IMC_Unit* unit, graph* G)
 {
@@ -941,9 +1160,19 @@ spill_registers(Parrot_Interp interp, IMC_Unit* unit, graph* G)
     return spilled;
 }
 
-/* Computes the cost of spilling each symbol. This is estimated by the number
- * of times the symbol appears, weighted by X*loop_depth */
 #if 0
+/*
+
+=item C<static void
+compute_spill_benefit(Parrot_Interp interp, IMC_Unit * unit, graph* G)>
+
+Computes the cost of spilling each symbol. This is estimated by the number
+of times the symbol appears, weighted by X*loop_depth
+
+=cut
+
+*/
+
 static void
 compute_spill_benefit(Parrot_Interp interp, IMC_Unit * unit, graph* G)
 {
@@ -951,16 +1180,16 @@ compute_spill_benefit(Parrot_Interp interp, IMC_Unit * unit, graph* G)
     SymReg *r;
     Instruction * ins;
     char avail[1000];  /* XXX - lazily use bytes for avail colors */
-    if (G->k >= 1000) IMCC_fatal(interp, 1,"ig_color_node",
+    if (G->k >= 1000) IMCC_fatal(interp, 1, "ig_color_node",
             "more than 1000 colors required");
-    memset(avail,1,G->k+1);
+    memset(avail, 1, G->k+1);
 
     for (j = 0; j < G->n; j++) {
         int x = G->V[j].id;
         int maxcol = MAX_COLOR;
         int reg_pressure = 0;
         if (unit->reglist[x]->set == 'P') maxcol--; /* for spilling into P31 */
-        memset(avail,1,G->k+1);
+        memset(avail, 1, G->k+1);
 
         r = unit->reglist[x];
         r->score = 0;
@@ -1033,30 +1262,38 @@ done:
 #endif
 
 /*
- * Use colors from G to allocate registers and spill the high colors.
- */
+
+=item C<static void
+apply_coloring(PARROT_INTERP, IMC_Unit* unit, graph* G)>
+
+Use colors from G to allocate registers and spill the high colors.
+
+=cut
+
+*/
+
 static void
 apply_coloring(PARROT_INTERP, IMC_Unit* unit, graph* G)
 {
-    int j,x=0;
+    int j, x=0;
     SymReg ** reglist = unit->reglist;
     int maxcol = MAX_COLOR;
-    IMCC_debug(interp, DEBUG_REG,"apply_coloring n=%d\n", G->n);
+    IMCC_debug(interp, DEBUG_REG, "apply_coloring n=%d\n", G->n);
 
     /*
      * apply coloring backwards
      */
     for (j = G->n-1; j >=0; j--) {
         x = G->V[j].id;
-        IMCC_debug(interp, DEBUG_REG2,"APPLY_COLORING to %snode %d\n",
+        IMCC_debug(interp, DEBUG_REG2, "APPLY_COLORING to %snode %d\n",
                 (unit->reglist[x]->usage & U_SPILL?"spilled ":""), x);
         if (G->V[j].col <= maxcol) {
             reglist[x]->color = G->V[j].col - 1;
-            IMCC_debug(interp, DEBUG_REG2,"APPLY node %d, reg=%ld\n",
+            IMCC_debug(interp, DEBUG_REG2, "APPLY node %d, reg=%ld\n",
                     x, reglist[x]->color);
         }
         else {
-            IMCC_fatal(interp, 1,"apply_coloring",
+            IMCC_fatal(interp, 1, "apply_coloring",
                     "wants to use too high reg num");
         }
     }
@@ -1069,12 +1306,12 @@ apply_coloring(PARROT_INTERP, IMC_Unit* unit, graph* G)
             PARROT_ASSERT(reglist[x]->color >= 0);
             PARROT_ASSERT(reglist[x]->color < MAX_COLOR);
             PARROT_ASSERT(reglist[x]->color == G->V[j].col-1);
-            IMCC_debug(interp, DEBUG_REG,"%d (reg==%ld):", x,
+            IMCC_debug(interp, DEBUG_REG, "%d (reg==%ld):", x,
                        reglist[x]->color);
             for (k = 0; k < G->n; k++) {
                 int y=G->V[k].id;
                 if (ig_test(x, y, G->n, G->E)) {
-                    IMCC_debug(interp, DEBUG_REG," %d(c=%ld)",y,
+                    IMCC_debug(interp, DEBUG_REG, " %d(c=%ld)", y,
                                reglist[y]->color);
                     PARROT_ASSERT(reglist[x]->color != reglist[y]->color);
                 }
@@ -1092,13 +1329,36 @@ apply_coloring(PARROT_INTERP, IMC_Unit* unit, graph* G)
            G.V[*(int*)x].deg == G.V[*(int*)y].deg ? 0 : 1;
 }*/
 
-static int degree_comparator(const void * u, const void * v) {
+/*
+
+=item C<static int degree_comparator(const void * u, const void * v)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
+static int degree_comparator(const void * u, const void * v)
+{
     return ((node*)u)->deg - ((node*)v)->deg;
 }
 
+/*
+
+=item C<static int
+ig_init_graph(PARROT_INTERP, IMC_Unit* unit, graph* G)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static int
-ig_init_graph(PARROT_INTERP, IMC_Unit* unit, graph* G) {
-    int x,y;
+ig_init_graph(PARROT_INTERP, IMC_Unit* unit, graph* G)
+{
+    int x, y;
     int num_nodes = unit->n_symbols;
 
     G->k = 0;
@@ -1106,7 +1366,7 @@ ig_init_graph(PARROT_INTERP, IMC_Unit* unit, graph* G) {
     G->E = unit->interference_graph;
     G->V = (node*)mem_sys_allocate_zeroed(G->n * sizeof (node));
     if (!G->V)
-        IMCC_fatal(interp, 1,"ig_init_graph",
+        IMCC_fatal(interp, 1, "ig_init_graph",
                 "cannot allocate memory for coloring registers");
 
     for (x = 0; x < num_nodes; x++) {
@@ -1143,6 +1403,17 @@ ig_init_graph(PARROT_INTERP, IMC_Unit* unit, graph* G) {
 }
 
 
+/*
+
+=item C<static void
+ig_clear_graph(IMC_Unit* unit, graph* G)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
 ig_clear_graph(IMC_Unit* unit, graph* G)
 {
@@ -1156,12 +1427,20 @@ ig_clear_graph(IMC_Unit* unit, graph* G)
 }
 
 /*
- * Set colors in G to pre-allocated values, from allocate_wanted_regs
- */
+
+=item C<static void
+ig_precolor(PARROT_INTERP, IMC_Unit* unit, graph* G)>
+
+Set colors in G to pre-allocated values, from allocate_wanted_regs
+
+=cut
+
+*/
+
 static void
 ig_precolor(PARROT_INTERP, IMC_Unit* unit, graph* G)
 {
-    int j,x;
+    int j, x;
     SymReg ** reglist = unit->reglist;
     IMCC_debug(interp, DEBUG_REG, "PRECOLORING GRAPH n=%d *****\n", G->n);
     for (j = 0; j < G->n; j++) {
@@ -1181,7 +1460,7 @@ ig_precolor(PARROT_INTERP, IMC_Unit* unit, graph* G)
             }
             u->col=c;
             IMCC_debug(interp, DEBUG_REG, "PRECOLORing spilled node %d, "
-                       "%s, as color %d\n", x,unit->reglist[x]->name,c);
+                       "%s, as color %d\n", x, unit->reglist[x]->name, c);
         }
         PARROT_ASSERT(0<=u->col && u->col<=MAX_COLOR); /*uncolored is okay*/
         if (u->col>G->k)
@@ -1193,8 +1472,16 @@ ig_precolor(PARROT_INTERP, IMC_Unit* unit, graph* G)
 }
 
 /*
- * find available color for register #x in available colors
- */
+
+=item C<static int
+ig_find_color(SHIM_INTERP, IMC_Unit *unit, int x, const char *avail)>
+
+find available color for register #x in available colors
+
+=cut
+
+*/
+
 static int
 ig_find_color(SHIM_INTERP, IMC_Unit *unit, int x, const char *avail)
 {
@@ -1237,11 +1524,21 @@ ig_find_color(SHIM_INTERP, IMC_Unit *unit, int x, const char *avail)
     return 0;
 }
 
-/* select first available color, over 17 */
+/*
+
+=item C<static int
+ig_color_node(PARROT_INTERP, IMC_Unit* unit, graph* G, int j)>
+
+select first available color, over 17
+
+=cut
+
+*/
+
 static int
 ig_color_node(PARROT_INTERP, IMC_Unit* unit, graph* G, int j)
 {
-    int c,k;
+    int c, k;
     node* u = &G->V[j];
     int x = u->id;
     /*
@@ -1259,9 +1556,9 @@ ig_color_node(PARROT_INTERP, IMC_Unit* unit, graph* G, int j)
      */
     char avail[1000];  /* XXX - lazily use bytes for avail colors */
     if (G->k >= 1000)
-        IMCC_fatal(interp, 1,"ig_color_node",
+        IMCC_fatal(interp, 1, "ig_color_node",
                 "more than 1000 colors required");
-    memset(avail,1,G->k+41);
+    memset(avail, 1, G->k+41);
 
     if (unit->reglist[x]->set == 'P')
         avail[32] = 0; /*reserve spot for spill reg, p31 */
@@ -1296,9 +1593,21 @@ ig_color_node(PARROT_INTERP, IMC_Unit* unit, graph* G, int j)
     return c;
 }
 
+/*
+
+=item C<static void
+ig_remove_node(PARROT_INTERP, IMC_Unit *unit, graph* G, int j)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
-ig_remove_node(PARROT_INTERP, IMC_Unit *unit, graph* G, int j) {
-    int i,k;
+ig_remove_node(PARROT_INTERP, IMC_Unit *unit, graph* G, int j)
+{
+    int i, k;
     node* u = &G->V[j], tmpnode;
     int x = u->id;
 
@@ -1340,17 +1649,26 @@ ig_remove_node(PARROT_INTERP, IMC_Unit *unit, graph* G, int j) {
     }
 }
 
-/* The Matula Maximum Minimum Degree coloring algorithm (Degeneracy Coloring).
- *
- * Sort by degrees, remove lowest degree nodes, adjust other degrees, iterate.
- * This algorithm for coloring, was adapted by Chaitin for register allocation.
- * Briggs later made more modifications.  The interesting part is spilling,
- * which really has nothing to do with theoretical graph coloring.  Stay tuned
- * to this channel as the saga continues ...
- */
+/*
+
+=item C<static void
+ig_color_graph(PARROT_INTERP, IMC_Unit* unit, graph* G)>
+
+The Matula Maximum Minimum Degree coloring algorithm (Degeneracy Coloring).
+
+Sort by degrees, remove lowest degree nodes, adjust other degrees, iterate.
+This algorithm for coloring, was adapted by Chaitin for register allocation.
+Briggs later made more modifications.  The interesting part is spilling,
+which really has nothing to do with theoretical graph coloring.  Stay tuned
+to this channel as the saga continues ...
+
+=cut
+
+*/
 
 static void
-ig_color_graph(PARROT_INTERP, IMC_Unit* unit, graph* G) {
+ig_color_graph(PARROT_INTERP, IMC_Unit* unit, graph* G)
+{
     int j;
 
     IMCC_debug(interp, DEBUG_REG, "ig_color_graph n=%d\n", G->n);
@@ -1381,6 +1699,14 @@ ig_color_graph(PARROT_INTERP, IMC_Unit* unit, graph* G) {
     }
     IMCC_debug(interp, DEBUG_REG, "finished coloring, k=%d\n", G->k);
 }
+
+/*
+
+=back
+
+=cut
+
+*/
 
 /*
  * Local variables:

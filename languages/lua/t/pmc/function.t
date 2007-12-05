@@ -79,9 +79,6 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
     .local pmc pmc1
     pmc1 = new 'LuaFunction'
     .local string str1
-    str1 = classname pmc1
-    print str1
-    print "\n"
     str1 = typeof pmc1
     print str1
     print "\n"
@@ -92,7 +89,6 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
     end
 .end
 CODE
-function
 function
 OUTPUT
 
@@ -238,7 +234,7 @@ pir_output_like( << 'CODE', << 'OUTPUT', 'load from pbc' );
 .sub __start :main
     load_bytecode 'languages/lua/lib/luaaux.pbc'
     load_bytecode 'languages/lua/lib/luabasic.pbc'
-    $P0 = get_hll_global ['Lua::basic'], 'luaopen_basic'
+    $P0 = get_hll_global ['Lua'; 'basic'], 'luaopen_basic'
     $P0()
     _main()
 .end

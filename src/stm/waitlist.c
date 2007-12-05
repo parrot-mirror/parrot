@@ -7,6 +7,24 @@
 #include "stm_internal.h"
 #include "stm_waitlist.h"
 
+/*
+
+=head1 NAME
+
+src/stm/waitlist.c
+
+=head1 DESCRIPTION
+
+TODO: Not yet documented!!!
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
 /* HEADERIZER HFILE: src/stm/stm_waitlist.h */
 
 /* HEADERIZER BEGIN: static */
@@ -17,18 +35,22 @@ static void add_entry(
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static struct waitlist_entry * alloc_entry(PARROT_INTERP)
         __attribute__nonnull__(1);
 
+PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static struct waitlist_thread_data * get_thread(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static struct waitlist_thread_data * get_thread_noalloc(PARROT_INTERP)
         __attribute__nonnull__(1);
 
+PARROT_CANNOT_RETURN_NULL
 static STM_tx_log * Parrot_STM_tx_log_alloc(PARROT_INTERP, size_t size)
         __attribute__nonnull__(1);
 
@@ -39,20 +61,39 @@ static int remove_first(
         __attribute__nonnull__(2);
 
 static void waitlist_remove(
-    STM_waitlist *waitlist,
-    struct waitlist_entry *what);
+    NULLOK(STM_waitlist *waitlist),
+    NOTNULL(struct waitlist_entry *what))
+        __attribute__nonnull__(2);
 
 static void waitlist_remove_check(
-    STM_waitlist *waitlist,
-    struct waitlist_entry *what);
+    NULLOK(STM_waitlist *waitlist),
+    NOTNULL(struct waitlist_entry *what))
+        __attribute__nonnull__(2);
 
-static void waitlist_signal_all(STM_waitlist *list);
-static void waitlist_signal_one(struct waitlist_entry *who);
+static void waitlist_signal_all(NOTNULL(STM_waitlist *list))
+        __attribute__nonnull__(1);
+
+static void waitlist_signal_one(NOTNULL(struct waitlist_entry *who))
+        __attribute__nonnull__(1);
+
 /* HEADERIZER END: static */
 
 #define WAITLIST_REMOVE_CHECK 0 /* if set, make sure removes really
                                  * remove -- for debugging */
 
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+static struct waitlist_thread_data *
+get_thread(PARROT_INTERP)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static struct waitlist_thread_data *
 get_thread(PARROT_INTERP)
@@ -71,7 +112,20 @@ get_thread(PARROT_INTERP)
     return txlog->waitlist_data;
 }
 
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+static struct waitlist_thread_data *
+get_thread_noalloc(PARROT_INTERP)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static struct waitlist_thread_data *
 get_thread_noalloc(PARROT_INTERP)
 {
@@ -79,14 +133,26 @@ get_thread_noalloc(PARROT_INTERP)
     return txlog->waitlist_data;
 }
 
+/*
+
+=item C<PARROT_WARN_UNUSED_RESULT
+static struct waitlist_entry *
+alloc_entry(PARROT_INTERP)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static struct waitlist_entry *
 alloc_entry(PARROT_INTERP)
 {
-    struct waitlist_thread_data *thr;
     size_t i;
 
-    thr = get_thread(interp);
+    struct waitlist_thread_data * const thr = get_thread(interp);
 
     if (!thr->entries) {
         thr->entries = (waitlist_entry**)mem_sys_allocate_zeroed(sizeof (*thr->entries) * 4);
@@ -112,6 +178,17 @@ alloc_entry(PARROT_INTERP)
     return thr->entries[i];
 }
 
+/*
+
+=item C<static void
+add_entry(NOTNULL(STM_waitlist *waitlist), NOTNULL(struct waitlist_entry *entry))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
 add_entry(NOTNULL(STM_waitlist *waitlist), NOTNULL(struct waitlist_entry *entry))
 {
@@ -131,6 +208,17 @@ add_entry(NOTNULL(STM_waitlist *waitlist), NOTNULL(struct waitlist_entry *entry)
 #endif
 }
 
+/*
+
+=item C<static int
+remove_first(NOTNULL(STM_waitlist *waitlist), NOTNULL(struct waitlist_entry *expect_first))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static int
 remove_first(NOTNULL(STM_waitlist *waitlist), NOTNULL(struct waitlist_entry *expect_first))
 {
@@ -146,8 +234,19 @@ remove_first(NOTNULL(STM_waitlist *waitlist), NOTNULL(struct waitlist_entry *exp
     return successp;
 }
 
+/*
+
+=item C<static void
+waitlist_remove(STM_waitlist *waitlist, struct waitlist_entry *what)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
-waitlist_remove(STM_waitlist *waitlist, struct waitlist_entry *what)
+waitlist_remove(NULLOK(STM_waitlist *waitlist), NOTNULL(struct waitlist_entry *what))
 {
     struct waitlist_entry *cur;
     void *result;
@@ -194,8 +293,19 @@ waitlist_remove(STM_waitlist *waitlist, struct waitlist_entry *what)
 
 #if WAITLIST_REMOVE_CHECK
 /* this function is here to facilitate debugging */
+/*
+
+=item C<static void
+waitlist_remove_check(STM_waitlist *waitlist, struct waitlist_entry *what)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
-waitlist_remove_check(STM_waitlist *waitlist, struct waitlist_entry *what)
+waitlist_remove_check(NULLOK(STM_waitlist *waitlist), NOTNULL(struct waitlist_entry *what))
 {
     struct waitlist_entry *cur;
 
@@ -212,8 +322,19 @@ waitlist_remove_check(STM_waitlist *waitlist, struct waitlist_entry *what)
 }
 #endif
 
+/*
+
+=item C<static void
+waitlist_signal_one(struct waitlist_entry *who)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
-waitlist_signal_one(struct waitlist_entry *who)
+waitlist_signal_one(NOTNULL(struct waitlist_entry *who))
 {
     struct waitlist_thread_data *thread;
 
@@ -230,8 +351,19 @@ waitlist_signal_one(struct waitlist_entry *who)
     who->head = NULL;
 }
 
+/*
+
+=item C<static void
+waitlist_signal_all(STM_waitlist *list)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 static void
-waitlist_signal_all(STM_waitlist *list)
+waitlist_signal_all(NOTNULL(STM_waitlist *list))
 {
     int successp;
     struct waitlist_entry *cur;
@@ -266,8 +398,19 @@ waitlist_signal_all(STM_waitlist *list)
     UNLOCK(list->remove_mutex);
 }
 
+/*
+
+=item C<void
+Parrot_STM_waitlist_add_self(PARROT_INTERP, STM_waitlist *waitlist)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
-Parrot_STM_waitlist_add_self(PARROT_INTERP, STM_waitlist *waitlist) {
+Parrot_STM_waitlist_add_self(PARROT_INTERP, NOTNULL(STM_waitlist *waitlist)) {
     struct waitlist_entry *entry;
 
 
@@ -280,14 +423,36 @@ Parrot_STM_waitlist_add_self(PARROT_INTERP, STM_waitlist *waitlist) {
     add_entry(waitlist, entry);
 }
 
+/*
+
+=item C<void
+Parrot_STM_waitlist_signal(PARROT_INTERP, STM_waitlist *waitlist)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
-Parrot_STM_waitlist_signal(PARROT_INTERP, STM_waitlist *waitlist)
+Parrot_STM_waitlist_signal(PARROT_INTERP, NOTNULL(STM_waitlist *waitlist))
 {
 #if WAITLIST_DEBUG
     fprintf(stderr, "%p: signal %p\n", interp, waitlist);
 #endif
     waitlist_signal_all(waitlist);
 }
+
+/*
+
+=item C<void
+Parrot_STM_waitlist_remove_all(PARROT_INTERP)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 void
 Parrot_STM_waitlist_remove_all(PARROT_INTERP)
@@ -318,6 +483,17 @@ Parrot_STM_waitlist_remove_all(PARROT_INTERP)
 }
 
 /* TODO handle events here */
+/*
+
+=item C<void
+Parrot_STM_waitlist_wait(PARROT_INTERP)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
 Parrot_STM_waitlist_wait(PARROT_INTERP)
 {
@@ -339,6 +515,17 @@ Parrot_STM_waitlist_wait(PARROT_INTERP)
 #endif
 }
 
+/*
+
+=item C<void
+Parrot_STM_waitlist_init(PARROT_INTERP, NOTNULL(STM_waitlist *waitlist))>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
 void
 Parrot_STM_waitlist_init(PARROT_INTERP, NOTNULL(STM_waitlist *waitlist))
 {
@@ -346,6 +533,17 @@ Parrot_STM_waitlist_init(PARROT_INTERP, NOTNULL(STM_waitlist *waitlist))
     PARROT_ATOMIC_PTR_SET(waitlist->first, NULL);
     MUTEX_INIT(waitlist->remove_mutex);
 }
+
+/*
+
+=item C<void
+Parrot_STM_waitlist_destroy_thread(PARROT_INTERP)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
 
 void
 Parrot_STM_waitlist_destroy_thread(PARROT_INTERP)
@@ -368,6 +566,18 @@ Parrot_STM_waitlist_destroy_thread(PARROT_INTERP)
     mem_sys_free(thr);
 }
 
+/*
+
+=item C<static STM_tx_log *
+Parrot_STM_tx_log_alloc(PARROT_INTERP, size_t size)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
 static STM_tx_log *
 Parrot_STM_tx_log_alloc(PARROT_INTERP, size_t size)
 {
@@ -401,6 +611,18 @@ Parrot_STM_tx_log_alloc(PARROT_INTERP, size_t size)
     return log;
 }
 
+/*
+
+=item C<STM_tx_log *
+Parrot_STM_tx_log_get(PARROT_INTERP)>
+
+TODO: Not yet documented!!!
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
 STM_tx_log *
 Parrot_STM_tx_log_get(PARROT_INTERP)
 {
@@ -412,6 +634,14 @@ Parrot_STM_tx_log_get(PARROT_INTERP)
     PARROT_ASSERT(log->depth >= 0);
     return log;
 }
+
+/*
+
+=back
+
+=cut
+
+*/
 
 /*
  * Local variables:

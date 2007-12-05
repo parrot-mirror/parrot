@@ -7,8 +7,8 @@ src/lua51.pir -- The compiler for Lua 5.1
 
 =head1 DESCRIPTION
 
-This compiler extends C<HLLCompiler>
-(see F<runtime/parrot/library/Parrot/HLLCompiler.pir>)
+This compiler extends C<PCT::HLLCompiler>
+(see F<compilers/pct/src/HLLCompiler.pir>)
 
 This compiler defines the following stages:
 
@@ -33,9 +33,9 @@ Used by F<languages/lua/lua.pir>.
     load_bytecode 'PGE/Util.pbc'
     load_bytecode 'PGE/Text.pbc'
     load_bytecode 'PAST-pm.pbc'
-    load_bytecode 'Parrot/HLLCompiler.pbc'
+    load_bytecode 'PCT/HLLCompiler.pbc'
 
-    $P0 = subclass 'HLLCompiler', 'Lua::Compiler'
+    $P0 = subclass 'PCT::HLLCompiler', 'Lua::Compiler'
     new $P0, 'Lua::Compiler'
     $P0.'language'('Lua')
     $P0.'parsegrammar'('Lua::Grammar')
@@ -61,14 +61,13 @@ L<http://www.lua.org/manual/5.1/manual.html#2.1>.
 
 =cut
 
-.sub 'syntaxerror'
-    .param pmc mob
+.sub 'syntaxerror' :method
     .param string message :optional
     .param pmc adv :slurpy :named
     unless null message goto L1
     message = 'syntax error'
   L1:
-    lexerror(mob, message)
+    lexerror(self, message)
 .end
 
 
@@ -96,7 +95,9 @@ L<http://www.lua.org/manual/5.1/manual.html#2.1>.
   L1:
     .local pmc ex
     new ex, 'Exception'
-    ex['_message'] = $S0
+    new $P0, 'String'
+    set $P0, $S0
+    setattribute ex, 'message', $P0
     throw ex
 .end
 
@@ -126,7 +127,7 @@ for internal global variables used by Lua.
 
 .include 'cclass.pasm'
 
-.sub 'name'
+.sub 'Name'
     .param pmc tgt
     .param pmc adverbs         :slurpy :named
     .local string target

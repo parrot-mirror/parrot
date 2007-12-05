@@ -88,7 +88,7 @@ my $fp_equality_macro = <<'ENDOFMACRO';
 	restore	N1
 	restore	N0
 	branch	.L
-.local $FPEQNOK:
+.label $FPEQNOK:
 	restore N2
 	restore	N1
 	restore	N0
@@ -108,7 +108,7 @@ my $fp_equality_macro = <<'ENDOFMACRO';
 	restore	N1
 	restore	N0
 	branch	.L
-.local $FPNENOK:
+.label $FPNENOK:
 	restore	N2
 	restore	N1
 	restore	N0
@@ -457,7 +457,7 @@ for my $op ( "/", "%" ) {
     push_eh OK
     P1 = P0 $op P2
     print "fail\\n"
-    clear_eh
+    pop_eh
 OK:
     get_results '0,0', \$P0, \$S0
     print "ok\\n"

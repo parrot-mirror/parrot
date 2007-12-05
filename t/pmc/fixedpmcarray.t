@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use lib qw(lib . ../lib ../../lib);
-use Parrot::Test tests => 14;
+use Parrot::Test tests => 15;
 use Test::More;
 
 =head1 NAME
@@ -24,45 +24,45 @@ out-of-bounds test. Checks INT and PMC keys.
 =cut
 
 my $fp_equality_macro = <<'ENDOFMACRO';
-.macro fp_eq (	J, K, L )
-    save	N0
-    save	N1
-    save	N2
+.macro fp_eq (  J, K, L )
+    save    N0
+    save    N1
+    save    N2
 
-    set	N0, .J
-    set	N1, .K
-    sub	N2, N1,N0
-    abs	N2, N2
-    gt	N2, 0.000001, .$FPEQNOK
+    set N0, .J
+    set N1, .K
+    sub N2, N1,N0
+    abs N2, N2
+    gt  N2, 0.000001, .$FPEQNOK
 
     restore N2
-    restore	N1
-    restore	N0
-    branch	.L
-.local $FPEQNOK:
+    restore N1
+    restore N0
+    branch  .L
+.label $FPEQNOK:
     restore N2
-    restore	N1
-    restore	N0
+    restore N1
+    restore N0
 .endm
-.macro fp_ne(	J,K,L)
-    save	N0
-    save	N1
-    save	N2
+.macro fp_ne(   J,K,L)
+    save    N0
+    save    N1
+    save    N2
 
-    set	N0, .J
-    set	N1, .K
-    sub	N2, N1,N0
-    abs	N2, N2
-    lt	N2, 0.000001, .$FPNENOK
+    set N0, .J
+    set N1, .K
+    sub N2, N1,N0
+    abs N2, N2
+    lt  N2, 0.000001, .$FPNENOK
 
-    restore	N2
-    restore	N1
-    restore	N0
-    branch	.L
-.local $FPNENOK:
-    restore	N2
-    restore	N1
-    restore	N0
+    restore N2
+    restore N1
+    restore N0
+    branch  .L
+.label $FPNENOK:
+    restore N2
+    restore N1
+    restore N0
 .endm
 ENDOFMACRO
 
@@ -190,7 +190,7 @@ ok 2
 ok 3
 OUTPUT
 
-# TODO: Rewrite these properly when we have exceptions
+# RT#46823: Rewrite these properly when we have exceptions
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "Setting out-of-bounds elements" );
         new P0, 'FixedPMCArray'
@@ -303,7 +303,7 @@ pir_output_like(
 
 .sub main :main
      .local pmc compares, cmp_fun
-     # XXX doesnt work wit prederef of JIT
+     # RT#46855 doesnt work wit prederef of JIT
      bounds 1
      compares = new 'Integer'
      compares = 0
@@ -350,9 +350,9 @@ done:
     .local pmc compares
     compares = global "compares"
     inc compares
-    .pcc_begin_return
+    .begin_return
     .return $I0
-    .pcc_end_return
+    .end_return
 .end
 CODE
 
@@ -539,6 +539,60 @@ pir_output_is( <<'CODE', <<'OUTPUT', "defined" );
 .end
 CODE
 010
+OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', "elements, get_integer, get_number" );
+.sub 'test' :main
+    .local pmc arr1
+    .local int elems_i
+    .local num elems_f
+    arr1 = new 'FixedPMCArray'
+    arr1 = 0
+    elems_i = elements arr1
+    if elems_i == 0 goto ok_1
+    print 'not '
+  ok_1:
+    say 'ok 1'
+
+    elems_i = arr1
+    if elems_i == 0 goto ok_2
+    print 'not '
+  ok_2:
+    say 'ok 2'
+
+    elems_f = arr1
+    if elems_f == 0 goto ok_3
+    print 'not '
+  ok_3:
+    say 'ok 3'
+
+    arr1 = new 'FixedPMCArray'
+    arr1 = 2048
+    elems_i = elements arr1
+    if elems_i == 2048 goto ok_4
+    print 'not '
+  ok_4:
+    say 'ok 4'
+
+    elems_i = arr1
+    if elems_i == 2048 goto ok_5
+    print 'not '
+  ok_5:
+    say 'ok 5'
+
+    elems_f = arr1
+    if elems_f == 2048 goto ok_6
+    print 'not '
+  ok_6:
+    say 'ok 6'
+.end
+CODE
+ok 1
+ok 2
+ok 3
+ok 4
+ok 5
+ok 6
 OUTPUT
 
 # Local Variables:

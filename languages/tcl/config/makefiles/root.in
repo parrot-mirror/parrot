@@ -318,6 +318,7 @@ $(GENERATED_INLINES) \
 "$(OPSDIR)/*.h" \
 "src/*$(O)" \
 "$(OPSDIR)/*$(O)" \
+"$(OPSDIR)/*$(LOAD_EXT)" \
 "$(OPSDIR)/*.bundle" \
 "$(OPSDIR)/*.exp" \
 "$(OPSDIR)/*.ilk" \
@@ -331,6 +332,8 @@ lib/*.pre_c
 clean:
 	$(RM_F) $(CLEANERS)
 
-distclean: clean
+realclean: clean
 	$(RM_F) Makefile
+
+distclean: realclean
 

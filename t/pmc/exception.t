@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 29;
+use Parrot::Test tests => 35;
 
 =head1 NAME
 
@@ -22,14 +22,32 @@ Tests C<Exception> and C<Exception_Handler> PMCs.
 
 =cut
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "push_eh - clear_eh" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "push_eh - pop_eh" );
     push_eh _handler
     print "ok 1\n"
-    clear_eh
+    pop_eh
     print "ok 2\n"
     end
 _handler:
     end
+CODE
+ok 1
+ok 2
+OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', "push_eh - pop_eh, PMC exception handler" );
+.sub main :main
+    $P0 = new "Exception_Handler"
+    set_addr $P0, _handler
+    push_eh $P0
+    print "ok 1\n"
+    pop_eh
+    print "ok 2\n"
+    end
+_handler:
+    print "caught it\n"
+    end
+.end
 CODE
 ok 1
 ok 2
@@ -50,11 +68,30 @@ main
 caught it
 OUTPUT
 
+pasm_output_is( <<'CODE', <<'OUTPUT', "push_eh - throw, PMC exception handler" );
+    print "main\n"
+    new P20, "Exception_Handler"
+    set_addr P20, _handler
+    push_eh P20
+    new P30, 'Exception'
+    throw P30
+    print "not reached\n"
+    end
+_handler:
+    print "caught it\n"
+    end
+CODE
+main
+caught it
+OUTPUT
+
 pasm_output_is( <<'CODE', <<'OUTPUT', "get_results" );
     print "main\n"
     push_eh handler
     new P1, 'Exception'
-    set P1[0], "just pining"
+    new P2, 'String'
+    set P2, "just pining"
+    setattribute P1, 'message', P2
     throw P1
     print "not reached\n"
     end
@@ -76,13 +113,55 @@ Exception
 just pining
 OUTPUT
 
+pasm_output_is( <<'CODE', <<'OUTPUT', "exception attributes" );
+    print "main\n"
+    push_eh handler
+    new P1, 'Exception'
+    new P2, 'String'
+    set P2, "just pining"
+    setattribute P1, 'message', P2
+    new P3, 'Integer'
+    set P3, 5
+    setattribute P1, 'severity', P3
+    new P4, 'String'
+    set P4, "additional payload"
+    setattribute P1, 'payload', P4
+
+    throw P1
+    print "not reached\n"
+    end
+handler:
+    get_results "0,0", P0, S0
+    print "caught it\n"
+    getattribute P16, P0, 'message'
+    print P16
+    print "\n"
+    getattribute P17, P0, 'severity'
+    print P17
+    print "\n"
+    getattribute P18, P0, 'payload'
+    print P18
+    print "\n"
+    null P5
+    end
+
+CODE
+main
+caught it
+just pining
+5
+additional payload
+OUTPUT
+
 pasm_output_is( <<'CODE', <<'OUTPUT', "get_results - be sure registers are ok" );
 # see also #38459
     print "main\n"
     new P0, 'Integer'
     push_eh handler
     new P1, 'Exception'
-    set P1[0], "just pining"
+    new P2, 'String'
+    set P2, "just pining"
+    setattribute P1, 'message', P2
     throw P1
     print "not reached\n"
     end
@@ -102,7 +181,9 @@ pir_output_is( <<'CODE', <<'OUTPUT', ".get_results() - PIR" );
     print "main\n"
     push_eh _handler
     new P1, 'Exception'
-    set P1[0], "just pining"
+    new P2, 'String'
+    set P2, "just pining"
+    setattribute P1, 'message', P2
     throw P1
     print "not reached\n"
     end
@@ -130,7 +211,9 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "push_eh - throw - message" );
     push_eh _handler
 
     new P30, 'Exception'
-    set P30["_message"], "something happend"
+    new P20, 'String'
+    set P20, "something happened"
+    setattribute P30, "message", P20
     throw P30
     print "not reached\n"
     end
@@ -143,23 +226,25 @@ _handler:
 CODE
 main
 caught it
-something happend
+something happened
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "throw - no handler" );
     new P0, 'Exception'
-    set P0["_message"], "something happend"
+    new P20, 'String'
+    set P20, "something happened"
+    setattribute P0, "message", P20
     throw P0
     print "not reached\n"
     end
 CODE
-/something happend/
+/something happened/
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "throw - no handler, no message" );
     push_eh _handler
     new P0, 'Exception'
-    clear_eh
+    pop_eh
     throw P0
     print "not reached\n"
     end
@@ -184,7 +269,9 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers" );
     push_eh _handler2
 
     new P30, 'Exception'
-    set P30["_message"], "something happend"
+    new P20, 'String'
+    set P20, "something happened"
+    setattribute P30, "message", P20
     throw P30
     print "not reached\n"
     end
@@ -203,7 +290,7 @@ _handler2:
 CODE
 main
 caught it in 2
-something happend
+something happened
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next" );
@@ -212,7 +299,9 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next" );
     push_eh _handler2
 
     new P30, 'Exception'
-    set P30["_message"], "something happend"
+    new P20, 'String'
+    set P20, "something happened"
+    setattribute P30, "message", P20
     throw P30
     print "not reached\n"
     end
@@ -232,9 +321,9 @@ _handler2:
 CODE
 main
 caught it in 2
-something happend
+something happened
 caught it in 1
-something happend
+something happened
 OUTPUT
 
 pasm_output_is( <<'CODE', <<OUT, "die" );
@@ -470,7 +559,9 @@ last:
     store_global "Foo::Bar", "test", test2_binding
     show_value()
     exit = new 'Exception'
-    exit["_message"] = "something happened"
+    new P2, 'String'
+    set P2, "something happened"
+    setattribute exit, "message", P2
     throw exit
 .end
 .sub show_value
@@ -487,17 +578,17 @@ Error: something happened
 Outer value
 OUTPUT
 
-pir_error_output_like( <<'CODE', <<'OUTPUT', 'clear_eh out of context (1)' );
+pir_error_output_like( <<'CODE', <<'OUTPUT', 'pop_eh out of context (1)' );
 .sub main :main
     pushmark 1
-    clear_eh
+    pop_eh
     print "no exceptions.\n"
 .end
 CODE
 /No exception to pop./
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', 'clear_eh out of context (2)' );
+pir_output_is( <<'CODE', <<'OUTPUT', 'pop_eh out of context (2)' );
 .sub main :main
     .local pmc outer, cont
     push_eh handler
@@ -516,8 +607,8 @@ done:
 .sub test1
     .local pmc exit
     print "[in test1]\n"
-    ## clear_eh is illegal here, and signals an exception.
-    clear_eh
+    ## pop_eh is illegal here, and signals an exception.
+    pop_eh
     print "[cleared]\n"
 .end
 CODE
@@ -529,14 +620,14 @@ OUTPUT
 # stringification is handled by a vtable method, which runs in a second
 # runloop. when an error in the method tries to go to a Error_Handler defined
 # outside it, it winds up going to the inner runloop, giving strange results.
-pir_output_is( <<'CODE', <<'OUTPUT', 'clear_eh out of context (2)', todo => 'runloop shenanigans' );
+pir_output_is( <<'CODE', <<'OUTPUT', 'pop_eh out of context (2)', todo => 'runloop shenanigans' );
 .sub main :main
         $P0 = get_hll_global ['Foo'], 'load'
         $P0()
         $P0 = new 'Foo'
         push_eh catch
         $S0 = $P0
-        clear_eh
+        pop_eh
         say "huh?"
         .return()
 
@@ -572,8 +663,7 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', "pushaction - throw in main" );
 .sub exit_handler
     .param int flag
     print "at_exit, flag = "
-    print flag
-    print_newline
+    say flag
 .end
 CODE
 /^main
@@ -601,8 +691,7 @@ h:
 .sub exit_handler :outer(main)
     .param int flag
     print "at_exit, flag = "
-    print flag
-    print_newline
+    say flag
     $P2 = new 'Exception'
     throw $P2
     print "never 2\n"
@@ -657,7 +746,9 @@ handler:
 
 .sub broken
     $P0 = new 'Exception'
-    $P0["_message"] = "something broke"
+    new $P2, 'String'
+    set $P2, "something broke"
+    setattribute $P0, "message", $P2
     throw $P0
 .end
 CODE
@@ -665,6 +756,84 @@ CODE
 something broke
 something broke
 current inst/
+OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', "get_all_eh" );
+.sub main :main
+    push_eh _handler1
+    push_eh _handler2
+    print "ok 1\n"
+    $P0 = get_all_eh
+    $I0 = elements $P0
+    unless $I0 == 2 goto wrong_number
+    print "ok 2\n"
+    wrong_number:
+    pop_eh
+    pop_eh
+    print "ok 3\n"
+    end
+_handler1:
+    print "never printed\n"
+    end
+_handler2:
+    print "never printed\n"
+    end
+.end
+CODE
+ok 1
+ok 2
+ok 3
+OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', "get_eh" );
+.sub main :main
+    push_eh _handler1
+    push_eh _handler2
+    print "ok 1\n"
+    $P0 = get_eh 0
+    pop_eh
+    pop_eh
+    print "ok 2\n"
+    $P0()
+    end
+_handler1:
+    print "not ok 3\n"
+    end
+_handler2:
+    print "ok 3\n"
+    end
+.end
+CODE
+ok 1
+ok 2
+ok 3
+OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', "get_eh" );
+.sub main :main
+    push_eh _handler1
+    push_eh _handler2
+    print "ok 1\n"
+    $I0 = count_eh
+    if $I0 == 2 goto right_number
+        print "not "
+    right_number:
+    print "ok 2\n"
+    pop_eh
+    pop_eh
+    print "ok 3\n"
+    end
+_handler1:
+    print "first handler\n"
+    end
+_handler2:
+    print "second handler\n"
+    end
+.end
+CODE
+ok 1
+ok 2
+ok 3
 OUTPUT
 
 # Local Variables:
