@@ -221,7 +221,7 @@ token term {
 
 token noun {
     | <scope_declarator> {*}                     #= scope_declarator
-    | <routine_def> {*}                          #= routine_def
+    | <routine_declarator> {*}                   #= routine_declarator
     | <circumfix> {*}                            #= circumfix
     | <variable> {*}                             #= variable
     | <subcall> {*}                              #= subcall
