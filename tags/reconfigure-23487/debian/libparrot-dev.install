@@ -1,0 +1,3 @@
+usr/include/*
+usr/bin/parrot-config
+usr/lib/libparrot.a
