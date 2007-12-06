@@ -41,7 +41,7 @@ and logic ops.
     $P0 = new [ 'PCT::HLLCompiler' ]
     $P0.'language'('Punie')
     $P0.'parsegrammar'('Punie::Grammar')
-    $P1 = split '::' Punie::Grammar::Actions'
+    $P1 = split '::', 'Punie::Grammar::Actions'
     $P0.'parseactions'($P1)
 .end
 
@@ -51,7 +51,9 @@ and logic ops.
     .return $P0.'command_line'(args)
 .end
 
-.include 'lib/PunieBuiltins.pir'
+.include 'lib/builtins.pir'
+.include 'lib/gen_punie.pir'
+.include 'lib/gen_punie-actions.pir'
 
 =head1 LICENSE
 
