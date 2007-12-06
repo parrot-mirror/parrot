@@ -15,13 +15,14 @@ rule lineseq {
 
 token line {
     <label>
-    [ <cond>
-    | <subroutine>
-    | <expr> ';'
+    [ <cond> {*}                                 #= cond
+    | <subroutine> {*}                           #= subroutine
+    | <expr> ';' {*}                             #= expr
     ] \s*
+    {*}
 }
 
-rule label { [<word>\:]? }
+rule label { [<word>\:]? {*} }
 
 token word { [\w|_][\w|\d|_]* }
 
@@ -47,31 +48,33 @@ rule gprint  { (print) <expr> }
 rule 'oexpr' is optable { ... }
 
 regex term {
-      \( <expr> \)
-    | <number>
-    | <integer>
-    | <stringdouble>
-    | <stringsingle>
-    | do <block>
-    | <subcall>
-    | <variable>
+    | \( <expr> \) {*}
+    | <number> {*}
+    | <integer> {*}
+    | <stringdouble> {*}
+    | <stringsingle> {*}
+    | do <block> {*}
+    | <subcall> {*}
+    | <variable> {*}
 }
-rule variable { <sigil>? <word> <key>? }
-token sigil { <[$@]> }
+rule variable { <sigil>? <word> <key>? {*} }
+token sigil { <[$@]> {*} }
 token key {
-    $<KEY>:=[\[] <?ws> <expr> <?ws> $<KEY_CLOSE>:=[\]]
+    | $<KEY>:=[\[] <?ws> <expr> <?ws> $<KEY_CLOSE>:=[\]]
     | $<KEY>:=[\{] <?ws> <expr> <?ws> $<KEY_CLOSE>:=[\}]
+    {*}
 }
-token integer { \d+ }
-token number { \d+\.\d+ }
-token stringdouble { '"' <string_literal: "> '"' }
-token stringsingle { \' <string_literal: '> \' }
-rule subcall { do <word> \( <expr>? \) }
+token integer { \d+ {*} }
+token number { \d+\.\d+ {*} }
+token stringdouble { '"' <string_literal: "> '"' {*} }
+token stringsingle { \' <string_literal: '> \' {*} }
+rule subcall { do <word> \( <expr>? \) {*} }
 
 token ws {
     [ \s+
     | \# \N*
     ]*
+    {*}
 }
 
 proto infix:<+> is precedence('=')
