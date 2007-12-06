@@ -6,5 +6,12 @@ method TOP($/) {
     make $($<lineseq>);
 }
 
+method lineseq ($/) {
+    my $past := PAST::Stmts.new( :node($/) );
+    for $<line> {
+        $past.push( $($_) );
+    }
+    make $past;
+}
 
 
