@@ -44,6 +44,8 @@ rule expr    { <gprint> | <oexpr> }
 
 rule gprint  { (print) <expr> }
 
+rule 'oexpr' is optable { ... }
+
 regex term {
       \( <expr> \)
     | <number>
