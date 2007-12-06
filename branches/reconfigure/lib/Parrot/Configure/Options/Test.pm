@@ -23,14 +23,14 @@ sub new {
     my ( $run_configure_tests, $run_build_tests );
     if ( defined $argsref->{test} ) {
         if ( $argsref->{test} eq '1' ) {
-            $self->{run_configure_tests} = 1;
-            $self->{run_build_tests}     = 1;
+            $self->set_run('run_configure_tests', 1);
+            $self->set_run('run_build_tests', 1);
         }
         elsif ( $argsref->{test} eq 'configure' ) {
-            $self->{run_configure_tests} = 1;
+            $self->set_run('run_configure_tests', 1);
         }
         elsif ( $argsref->{test} eq 'build' ) {
-            $self->{run_build_tests} = 1;
+            $self->set_run('run_build_tests', 1);
         }
         else {
             die "'$argsref->{test}' is a bad value for command-line option 'test'";
@@ -48,10 +48,43 @@ sub new {
         verbose-step
     |;
     for my $k (grep { ! $excluded_options{$_} } keys %{$argsref}) {
-        $self->{$k} = $argsref->{$k};
+        $self->set($k, $argsref->{$k});
     }
     return bless $self, $class;
 }
+
+sub set {
+    my $self = shift;
+    die "Need 2 arguments to Parrot::Configure::Options::Test::set()"
+        unless @_ == 2;
+    my ($option, $value) = @_;
+    $self->{options}{$option} = $value;
+}
+
+sub get {
+    my $self = shift;
+    die "Need 1 argument to Parrot::Configure::Options::Test::get()"
+        unless @_ == 1;
+    my $option = shift;
+    return $self->{options}{$option} || undef;
+}
+
+sub set_run {
+    my $self = shift;
+    die "Need 2 arguments to Parrot::Configure::Options::Test::set_run()"
+        unless @_ == 2;
+    my ($option, $value) = @_;
+    $self->{run}{$option} = $value;
+}
+
+sub get_run {
+    my $self = shift;
+    die "Need 1 argument to Parrot::Configure::Options::Test::get_run()"
+        unless @_ == 1;
+    my $option = shift;
+    return $self->{run}{$option} || undef;
+}
+
 
 sub run_configure_tests {
     my $self = shift;
