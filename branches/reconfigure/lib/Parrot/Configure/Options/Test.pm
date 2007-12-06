@@ -36,6 +36,20 @@ sub new {
             die "'$argsref->{test}' is a bad value for command-line option 'test'";
         }
     }
+    my %excluded_options = map {$_ => 1} qw|
+        ask
+        configure_trace
+        debugging
+        fatal
+        fatal-step
+        help
+        silent
+        verbose
+        verbose-step
+    |;
+    for my $k (grep { ! $excluded_options{$_} } keys %{$argsref}) {
+        $self->{$k} = $argsref->{$k};
+    }
     return bless $self, $class;
 }
 
