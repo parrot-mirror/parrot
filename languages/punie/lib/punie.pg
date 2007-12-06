@@ -1,17 +1,21 @@
-grammar PunieGrammar;
+grammar Punie::Grammar is PCT::Grammar;
 
-token TOP    { ^<lineseq>$ }
+rule TOP    {
+    ^ <lineseq>
+    [ $ | <panic: parse error> ]
+    {*}
+}
 
 rule block { \s* \{ <lineseq> \} \s* }
 
-rule lineseq { <line>* }
+rule lineseq { <line>* {*} }
 
-token line { 
+token line {
     <label>
-    [ <cond> 
+    [ <cond>
     | <subroutine>
     | <expr>;
-    ] \s* 
+    ] \s*
 }
 
 rule label { [<word>\:]? }
@@ -31,7 +35,7 @@ rule cond {
     (if|unless) \( <expr> \)
               <block>
               <else>?
-} 
+}
 
 rule expr    { <gprint> | <oexpr> }
 
