@@ -64,8 +64,8 @@ token key {
 }
 token integer { \d+ }
 token number { \d+\.\d+ }
-regex stringdouble { <PGE::Text::bracketed: "> }
-regex stringsingle { <PGE::Text::bracketed: '> }
+token stringdouble { '"' <string_literal: "> '"' }
+token stringsingle { \' <string_literal: '> \' }
 rule subcall { do <word> \( <expr>? \) }
 
 token ws {
