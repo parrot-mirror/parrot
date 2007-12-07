@@ -77,7 +77,7 @@ static void set_cstring_prop(PARROT_INTERP,
         __attribute__nonnull__(4);
 
 static void store_lib_pmc(PARROT_INTERP,
-    NOTNULL(NOTNULL(PMC *lib_pmc)),
+    NOTNULL(PMC *lib_pmc),
     NOTNULL(STRING *path),
     NOTNULL(STRING *type),
     NOTNULL(STRING *lib_name))
@@ -130,7 +130,7 @@ Store a C<ParrotLibrary> PMC in the interpreter's C<iglobals>.
 */
 
 static void
-store_lib_pmc(PARROT_INTERP, NOTNULL(NOTNULL(PMC *lib_pmc)), NOTNULL(STRING *path),
+store_lib_pmc(PARROT_INTERP, NOTNULL(PMC *lib_pmc), NOTNULL(STRING *path),
         NOTNULL(STRING *type), NOTNULL(STRING *lib_name))
 {
     PMC * const iglobals = interp->iglobals;
@@ -292,7 +292,7 @@ Parrot_init_lib(PARROT_INTERP,
                 NULLOK(PMC *(*load_func)(PARROT_INTERP)),
                 NULLOK(void (*init_func)(PARROT_INTERP, NULLOK(PMC *))))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -336,7 +336,7 @@ static PMC *
 run_init_lib(PARROT_INTERP, NOTNULL(void *handle),
             NOTNULL(STRING *lib_name), NOTNULL(STRING *wo_ext))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -410,7 +410,7 @@ PARROT_CANNOT_RETURN_NULL
 static STRING *
 clone_string_into(NOTNULL(Interp *d), NOTNULL(Interp *s), PMC *value)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -438,7 +438,7 @@ PARROT_CANNOT_RETURN_NULL
 static PMC *
 make_string_pmc(PARROT_INTERP, NOTNULL(STRING *string))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -463,7 +463,7 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_clone_lib_into(NOTNULL(Interp *d), NOTNULL(Interp *s), NOTNULL(PMC *lib_pmc))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -484,15 +484,14 @@ Parrot_clone_lib_into(NOTNULL(Interp *d), NOTNULL(Interp *s), NOTNULL(PMC *lib_p
         VTABLE_getprop(s, lib_pmc, const_string(s, "_type")));
 
     if (0 == string_equal(s, type, const_string(s, "Ops"))) {
-        PMC *new_lib_pmc;
-
         /* we can't clone oplibs in the normal way, since they're actually
          * shared between interpreters dynop_register modifies the (statically
          * allocated) op_lib_t structure from core_ops.c, for example.
          * Anyways, if we hope to share bytecode at runtime, we need to have
          * them have identical opcodes anyways.
          */
-        new_lib_pmc = constant_pmc_new(d, enum_class_ParrotLibrary);
+        PMC * const new_lib_pmc = constant_pmc_new(d, enum_class_ParrotLibrary);
+
         PMC_data(new_lib_pmc) = handle;
         VTABLE_setprop(d, new_lib_pmc, const_string(d, "_filename"),
             make_string_pmc(d, wo_ext));

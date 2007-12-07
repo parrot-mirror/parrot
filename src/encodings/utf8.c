@@ -50,6 +50,7 @@ static STRING * get_bytes(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CANNOT_RETURN_NULL
 static STRING * get_bytes_inplace(PARROT_INTERP,
     SHIM(STRING *src),
     UINTVAL offset,
@@ -136,6 +137,7 @@ static UINTVAL utf8_decode_and_advance(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CANNOT_RETURN_NULL
 static void * utf8_encode(PARROT_INTERP, NOTNULL(void *ptr), UINTVAL c)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -154,6 +156,7 @@ static void utf8_set_position(SHIM_INTERP,
 static const void * utf8_skip_backward(NOTNULL(const void *ptr), UINTVAL n)
         __attribute__nonnull__(1);
 
+PARROT_CANNOT_RETURN_NULL
 static const void * utf8_skip_forward(NOTNULL(const void *ptr), UINTVAL n)
         __attribute__nonnull__(1);
 
@@ -266,12 +269,16 @@ Returns the UTF-8 encoding of integer C<c>.
 
 */
 
+PARROT_CANNOT_RETURN_NULL
 static void *
 utf8_encode(PARROT_INTERP, NOTNULL(void *ptr), UINTVAL c)
 {
-    utf8_t *u8ptr = (utf8_t *)ptr;
-    UINTVAL len = UNISKIP(c);
-    utf8_t *u8end = u8ptr + len - 1;
+    const UINTVAL        len   = UNISKIP(c);
+
+    /* the const is good on u8ptr, but using ptr on other variables avoids the
+     * need to do a yucky cast to remove constness */
+    const utf8_t * const u8ptr = (utf8_t *)ptr;
+    utf8_t              *u8end = (utf8_t *)ptr + len - 1;
 
     if (c > 0x10FFFF || UNICODE_IS_SURROGATE(c)) {
         real_exception(interp, NULL, INVALID_CHARACTER,
@@ -285,7 +292,7 @@ utf8_encode(PARROT_INTERP, NOTNULL(void *ptr), UINTVAL c)
     }
     *u8end = (utf8_t)((c & UTF8_START_MASK(len)) | UTF8_START_MARK(len));
 
-    return u8ptr + len;
+    return (utf8_t *)ptr + len;
 }
 
 /*
@@ -299,6 +306,7 @@ Moves C<ptr> C<n> characters forward.
 
 */
 
+PARROT_CANNOT_RETURN_NULL
 static const void *
 utf8_skip_forward(NOTNULL(const void *ptr), UINTVAL n)
 {
@@ -448,7 +456,7 @@ utf8_set_position(SHIM_INTERP, NOTNULL(String_iter *i), UINTVAL pos)
 =item C<static STRING *
 to_encoding(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -534,7 +542,7 @@ to_encoding(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
 =item C<static UINTVAL
 get_codepoint(PARROT_INTERP, NOTNULL(const STRING *src), UINTVAL offset)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -553,7 +561,7 @@ get_codepoint(PARROT_INTERP, NOTNULL(const STRING *src), UINTVAL offset)
 set_codepoint(PARROT_INTERP, NOTNULL(STRING *src),
         UINTVAL offset, UINTVAL codepoint)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -577,7 +585,7 @@ set_codepoint(PARROT_INTERP, NOTNULL(STRING *src),
 =item C<static UINTVAL
 get_byte(SHIM_INTERP, NOTNULL(const STRING *src), UINTVAL offset)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -602,7 +610,7 @@ get_byte(SHIM_INTERP, NOTNULL(const STRING *src), UINTVAL offset)
 set_byte(PARROT_INTERP, NOTNULL(const STRING *src),
         UINTVAL offset, UINTVAL byte)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -626,7 +634,7 @@ set_byte(PARROT_INTERP, NOTNULL(const STRING *src),
 static STRING *
 get_codepoints(PARROT_INTERP, NOTNULL(STRING *src), UINTVAL offset, UINTVAL count)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -656,7 +664,7 @@ get_codepoints(PARROT_INTERP, NOTNULL(STRING *src), UINTVAL offset, UINTVAL coun
 static STRING *
 get_bytes(PARROT_INTERP, NOTNULL(STRING *src), UINTVAL offset, UINTVAL count)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -687,7 +695,7 @@ static STRING *
 get_codepoints_inplace(PARROT_INTERP, NOTNULL(STRING *src),
         UINTVAL offset, UINTVAL count, NOTNULL(STRING *return_string))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -718,12 +726,13 @@ get_codepoints_inplace(PARROT_INTERP, NOTNULL(STRING *src),
 get_bytes_inplace(PARROT_INTERP, SHIM(STRING *src),
         UINTVAL offset, UINTVAL count, SHIM(STRING *return_string))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
+PARROT_CANNOT_RETURN_NULL
 static STRING *
 get_bytes_inplace(PARROT_INTERP, SHIM(STRING *src),
         UINTVAL offset, UINTVAL count, SHIM(STRING *return_string))
@@ -737,7 +746,7 @@ get_bytes_inplace(PARROT_INTERP, SHIM(STRING *src),
 set_codepoints(PARROT_INTERP, SHIM(STRING *src),
         UINTVAL offset, UINTVAL count, SHIM(STRING *new_codepoints))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -756,7 +765,7 @@ set_codepoints(PARROT_INTERP, SHIM(STRING *src),
 set_bytes(PARROT_INTERP, SHIM(STRING *src),
         UINTVAL offset, UINTVAL count, SHIM(STRING *new_bytes))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -792,7 +801,7 @@ become_encoding(PARROT_INTERP, SHIM(STRING *src))
 =item C<static UINTVAL
 codepoints(PARROT_INTERP, NOTNULL(STRING *src))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -818,7 +827,7 @@ codepoints(PARROT_INTERP, NOTNULL(STRING *src))
 static UINTVAL
 bytes(SHIM_INTERP, NOTNULL(STRING *src))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -836,7 +845,7 @@ bytes(SHIM_INTERP, NOTNULL(STRING *src))
 =item C<static void
 iter_init(SHIM_INTERP, NOTNULL(const STRING *src), NOTNULL(String_iter *iter))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -858,7 +867,7 @@ iter_init(SHIM_INTERP, NOTNULL(const STRING *src), NOTNULL(String_iter *iter))
 =item C<ENCODING *
 Parrot_encoding_utf8_init(PARROT_INTERP)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

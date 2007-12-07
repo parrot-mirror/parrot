@@ -26,6 +26,9 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     $S1 = narg
     new $P0, 'Lua'
     $S0 = $P0.'caller'()
+    $I0 = index $S0, ':'
+    inc $I0
+    $S0 = substr $S0, $I0
     lua_error("bad argument #", $S1, " to '", $S0, "' (", extramsg :flat, ")")
 .end
 
@@ -175,7 +178,9 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     $S0 = join '', message
     .local pmc ex
     new ex, 'Exception'
-    ex['_message'] =  $S0
+    new $P0, 'String'
+    set $P0, $S0
+    setattribute ex, 'message', $P0
     throw ex
 .end
 
@@ -598,9 +603,11 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     .local pmc ex
     .local string msg
     .get_results (ex, msg)
-    .local int severity
-    severity = ex[2]
-    if severity == .EXCEPT_EXIT goto L1
+    $P0 = getattribute ex, 'severity'
+    if null $P0 goto L1
+    $I0 = $P0
+    if $I0 == .EXCEPT_EXIT goto L2
+  L1:
     .local int lineno
     $S1 = where
     $S0 = $S1
@@ -610,7 +617,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     $S1 = traceback
     $S0 .= $S1
     .return (1, $S0)
-  L1:
+  L2:
     rethrow ex
 .end
 
@@ -647,7 +654,9 @@ Support variable number of arguments function call.
 .sub 'not_implemented'
     .local pmc ex
     new ex, 'Exception'
-    ex['_message'] =  "not implemented"
+    new $P0, 'String'
+    set $P0, "not implemented"
+    setattribute ex, 'message', $P0
     throw ex
 .end
 

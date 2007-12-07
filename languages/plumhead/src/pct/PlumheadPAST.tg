@@ -33,7 +33,6 @@ transform past (Plumhead::Grammar::gen_past) :language('PIR') {
     .local pmc past_mult, past_string, past_adding
     .local pmc past_unary, multiplicand, multiplicand_0, past_multiplicand_0
     .local pmc past_expression
-    .local pmc code_string
     .local pmc past_var, past_val, past_sea, past_code 
     .local pmc past_else_block, past_condition
     .local pmc past_array_elem, past_assign, past_rel_expression
@@ -132,7 +131,7 @@ transform past (Plumhead::Grammar::gen_past) :language('PIR') {
                     past_var     = tree.'get'('past', $P2, 'Plumhead::Grammar::gen_past')
                     past_expression = tree.'get'('past', $P3, 'Plumhead::Grammar::gen_past')
                     past_assign = new 'PAST::Op'
-                    past_assign.'init'( past_var, past_expression, 'node'=> node, 'name' => 'infix:=', 'pasttype' => 'assign' )  
+                    past_assign.'init'( past_var, past_expression, 'node'=> node, 'name' => 'infix:=', 'pasttype' => 'bind' )  
                     past.'push'(past_assign)
                     goto iter_loop_1
             no_scalar_assign:
@@ -145,7 +144,7 @@ transform past (Plumhead::Grammar::gen_past) :language('PIR') {
                     past_array_elem     = tree.'get'('past', $P1, 'Plumhead::Grammar::gen_past')
                     past_expression = tree.'get'('past', $P3, 'Plumhead::Grammar::gen_past')
                     past_assign = new 'PAST::Op'
-                    past_assign.'init'( past_array_elem, past_expression, 'node'=> node, 'name' => 'infix:=', 'pasttype' => 'assign' )  
+                    past_assign.'init'( past_array_elem, past_expression, 'node'=> node, 'name' => 'infix:=', 'pasttype' => 'copy' )  
                     past.'push'(past_assign)
                     goto iter_loop_1
             no_array_assign:
@@ -195,7 +194,7 @@ transform past (Plumhead::Grammar::gen_past) :language('PIR') {
             var = dummy_1
             past = new 'PAST::Var'
             past_expression_1 = tree.'get'('past', $P0, 'Plumhead::Grammar::gen_past')
-            past.'init'( past_expression_1, 'name' => var, 'viviself' => 'Hash', 'lvalue' => 1 )
+            past.'init'( past_expression_1, 'scope' => 'package', 'name' => var, 'viviself' => 'Hash', 'lvalue' => 1 )
             goto handled_expression
         no_var_name_1:
             past = tree.'get'('past', $P0, 'Plumhead::Grammar::gen_past')
@@ -209,6 +208,7 @@ transform past (Plumhead::Grammar::gen_past) :language('PIR') {
         var = $P1
         past_var_name = tree.'get'('past', $P0, 'Plumhead::Grammar::gen_past')
         past_var_name.'attr'('viviself', 'Hash', 1 )
+        past_var_name.'attr'('scope', 'package', 1 )
         past_key      = tree.'get'('past', $P2, 'Plumhead::Grammar::gen_past')
         past = new 'PAST::Var'
         past.'init'( past_var_name, past_key, 'scope' => 'keyed', 'viviself' => 'Undef', 'lvalue' => 1 )
@@ -250,18 +250,19 @@ transform past (Plumhead::Grammar::gen_past) :language('PIR') {
 
     $P0 = node['DOUBLEQUOTE_STRING']
     if null $P0 goto no_DOUBLEQUOTE_STRING
-        past = new 'PAST::Val'
-        val = $P0['string_literal']                             
-        past.'init'( 'value' => val, 'returns' => 'String' )                              
-        goto handled_expression
+        goto QUOTED_STRING
     no_DOUBLEQUOTE_STRING:
 
     $P0 = node['SINGLEQUOTE_STRING']
     if null $P0 goto no_SINGLEQUOTE_STRING
-        past = new 'PAST::Val'                             
-        val = node
+        goto QUOTED_STRING
+
+    QUOTED_STRING:
+        past = new 'PAST::Val'
+        val = $P0['string_literal']                             
         past.'init'( 'value' => val, 'returns' => 'String' )                              
         goto handled_expression
+
     no_SINGLEQUOTE_STRING:
 
     $P0 = node['NUMBER']
@@ -390,7 +391,7 @@ transform past (Plumhead::Grammar::gen_past) :language('PIR') {
     if null $P0 goto no_var_name
         var = $P0
         past = new 'PAST::Var'
-        past.'init'( 'name' => var, 'viviself' => 'Undef', 'lvalue' => 1 )                              
+        past.'init'( 'scope' => 'package', 'name' => var, 'viviself' => 'Undef', 'lvalue' => 1 )                              
         goto handled_expression
     no_var_name:
 
@@ -406,11 +407,8 @@ transform past (Plumhead::Grammar::gen_past) :language('PIR') {
     $P0 = node['SEA_empty_allowed']
     if null $P0 goto no_SEA
     SEA:
-        val = $P0
-        code_string = new 'CodeString'
-        ( val ) = code_string.'escape'( val )
         past_val = new 'PAST::Val'                             
-        past_val.'init'( 'name' => val, 'returns' => 'String' )                              
+        past_val.'init'( 'value' => $P0, 'returns' => 'String' )                              
 
         past = new 'PAST::Op'
         past.'init'( past_val, 'node'=> node, 'pasttype' => 'call', 'name' => 'echo' )  

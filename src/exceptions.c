@@ -41,6 +41,7 @@ Define the internal interpreter exceptions.
 
 /* HEADERIZER BEGIN: static */
 
+PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static opcode_t * create_exception(PARROT_INTERP)
         __attribute__nonnull__(1);
@@ -193,7 +194,7 @@ push_exception(PARROT_INTERP, NOTNULL(PMC *handler))
 =item C<static void
 run_cleanup_action(PARROT_INTERP, NOTNULL(Stack_Entry_t *e))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -224,7 +225,7 @@ Push an action handler onto the dynamic environment.
 
 PARROT_API
 void
-Parrot_push_action(PARROT_INTERP, PMC *sub)
+Parrot_push_action(PARROT_INTERP, NOTNULL(PMC *sub))
 {
     if (!VTABLE_isa(interp, sub,
                 const_string(interp, "Sub"))) {
@@ -468,6 +469,7 @@ Return an array of all exception handlers.
 */
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
 get_all_exception_handlers(PARROT_INTERP)
 {
@@ -543,6 +545,7 @@ flag bit is set.
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC*
 new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
 {
@@ -719,6 +722,7 @@ Create an exception.
 
 */
 
+PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static opcode_t *
 create_exception(PARROT_INTERP)
@@ -836,7 +840,7 @@ free_internal_exception(PARROT_INTERP)
 =item C<void
 destroy_exception_list(PARROT_INTERP)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -854,7 +858,7 @@ destroy_exception_list(PARROT_INTERP)
 =item C<void
 really_destroy_exception_list(NULLOK(Parrot_exception *e))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -1037,7 +1041,7 @@ Parrot_confess(NOTNULL(const char *cond), NOTNULL(const char *file), unsigned in
 =item C<void
 Parrot_print_backtrace(void)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

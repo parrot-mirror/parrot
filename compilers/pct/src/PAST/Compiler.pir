@@ -19,14 +19,16 @@ By default PAST::Compiler transforms a PAST tree into POST.
 
     .local pmc piropsig
     piropsig = new 'Hash'
+    piropsig['n_abs']    = 'PP'
     piropsig['n_add']    = 'PP+'
-    piropsig['n_sub']    = 'PP+'
-    piropsig['n_mul']    = 'PP+'
+    piropsig['n_bnot']   = 'PP'
+    piropsig['n_concat'] = 'PP~'
     piropsig['n_div']    = 'PP+'
     piropsig['n_mod']    = 'PP+'
+    piropsig['n_mul']    = 'PP+'
     piropsig['n_neg']    = 'PP'
     piropsig['n_not']    = 'PP'
-    piropsig['n_concat'] = 'PP~'
+    piropsig['n_sub']    = 'PP+'
     piropsig['print']    = 'v*'
     piropsig['set']      = 'PP'
     set_global '%piropsig', piropsig
@@ -357,8 +359,14 @@ the node's "pasttype" attribute.
   post_pirop:
     .local pmc pirop
     pirop = node.'pirop'()
-    unless pirop goto post_call
+    unless pirop goto post_inline
     .return self.'pirop'(node, options :flat :named)
+
+  post_inline:
+    .local pmc inline
+    inline = node.'inline'()
+    unless inline goto post_call
+    .return self.'inline'(node, options :flat :named)
 
   post_call:
     .return self.'call'(node, options :flat :named)
@@ -663,7 +671,9 @@ by C<node>.
     .local string iter
     iter = ops.'unique'('$P')
     ops.'result'(iter)
-    ops.'push_pirop'('if_null', collpost, endlabel)        ## FIXME
+    $S0 = ops.'unique'('$I')
+    ops.'push_pirop'('defined', $S0, collpost)
+    ops.'push_pirop'('unless', $S0, endlabel)
     ops.'push_pirop'('new', iter, '"Iterator"', collpost)
     ops.'push'(looplabel)
     ops.'push_pirop'('unless', iter, endlabel)
@@ -715,6 +725,7 @@ handler.
     ops.'push_pirop'('push_eh', catchlabel)
     ops.'push'(trypost)
     ops.'push_pirop'('pop_eh')
+    ops.'push_pirop'('goto', endlabel)
     ops.'push'(catchlabel)
     .local pmc catchpast, catchpost
     catchpast = node[1]
@@ -724,6 +735,70 @@ handler.
   catch_done:
     ops.'push'(endlabel)
     ops.'result'(trypost)
+    .return (ops)
+.end
+
+
+=item chain(PAST::Op node)
+
+A short-circuiting chain of operations.  In a sequence of nodes
+with pasttype 'chain', the right operand of a node serves as
+the left operand of its parent.  Each node is evaluated only
+once, and the first false result short-circuits the chain.
+In other words,  C<<  $x < $y < $z >>  is true only if
+$x < $y and $y < $z, but $y only gets evaluated once.
+
+=cut
+
+.sub 'chain' :method :multi(_, ['PAST::Op'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+    .local pmc clist, cpast
+
+    ##  first, we build up the list of nodes in the chain
+    clist = new 'ResizablePMCArray'
+    cpast = node
+  chain_loop:
+    $I0 = isa cpast, 'PAST::Op'
+    if $I0 == 0 goto chain_end
+    .local string pasttype
+    pasttype = cpast.'pasttype'()
+    if pasttype != 'chain' goto chain_end
+    push clist, cpast
+    cpast = cpast[0]
+    goto chain_loop
+  chain_end:
+
+    .local pmc ops, endlabel
+    $P0 = get_hll_global ['POST'], 'Ops'
+    ops = $P0.'new'('node'=>node)
+    $S0 = ops.'unique'('$P')
+    ops.'result'($S0)
+    $P0 = get_hll_global ['POST'], 'Label'
+    endlabel = $P0.'new'('name'=>'chain_end_')
+
+    .local pmc apast, apost
+    cpast = pop clist
+    apast = cpast[0]
+    apost = self.'post'(apast, 'rtype'=>'P')
+    ops.'push'(apost)
+
+  clist_loop:
+    .local pmc bpast, bpost
+    bpast = cpast[1]
+    bpost = self.'post'(bpast, 'rtype'=>'P')
+    ops.'push'(bpost)
+    .local string name
+    name = cpast.'name'()
+    name = ops.'escape'(name)
+    ops.'push_pirop'('call', name, apost, bpost, 'result'=>ops)
+    unless clist goto clist_end
+    ops.'push_pirop'('unless', ops, endlabel)
+    cpast = pop clist
+    apost = bpost
+    goto clist_loop
+  clist_end:
+    ops.'push'(endlabel)
     .return (ops)
 .end
 

@@ -29,6 +29,12 @@
 #define out stderr
 
 
+void *
+panic(char *msg) {
+    printf("Uh oh! %s\n", msg);
+    return NULL;
+}
+
 void
 parse_error(struct lexer_state *lexer, char *message, ...) {
     va_list arg_ptr;
@@ -42,6 +48,7 @@ parse_error(struct lexer_state *lexer, char *message, ...) {
 target *
 find_target(struct lexer_state *lexer, char * const name) {
     target *t = find_symbol(lexer, name);
+
     if (t == NULL) { /* not declared */
         parse_error(lexer, "symbol '%s' was not declared\n", name);
     }
@@ -80,6 +87,11 @@ void
 set_sub_flag(struct lexer_state *lexer, sub_flag flag) {
     /* set the specified flag in the current subroutine */
     SET_FLAG(lexer->subs->flags, flag);
+
+    /* if the sub is a method or a :vtable method, then also add a "self" parameter */
+    if (TEST_FLAG(flag, SUB_FLAG_VTABLE) || TEST_FLAG(flag, SUB_FLAG_METHOD)) {
+        add_param(lexer, PMC_TYPE, "self");
+    }
 }
 
 /*
@@ -98,7 +110,7 @@ new_subr(struct lexer_state *lexer, char *subname) {
     newsub->sub_name = subname;
     newsub->parameters = NULL;
     newsub->statements = NULL;
-    newsub->stat_tail  = NULL;
+
 
     if (lexer->subs == NULL) { /* no subroutine yet */
         lexer->subs  = newsub;
@@ -143,26 +155,39 @@ new_target(pir_type type, char *name) {
 
 /*
 
-Add
+Add a new target to the list pointed to by t1. t1 points to
+the last element, t1->next points to the first. The list is
+circular linked.
 
 */
 target *
-add_target(struct lexer_state *lexer, target *t, target *t2) {
+add_target(struct lexer_state *lexer, target *t1, target *t) {
     assert(t);
-    assert(t2);
 
-    t->next = t2;
-    t2->next = t;
-
+    t->next = t1->next;
+    t1->next = t;
+    t1 = t;
     return t;
 }
 
 target *
 add_param(struct lexer_state *lexer, pir_type type, char *name) {
     target *t = new_target(type, name);
-    t->next = lexer->subs->parameters;
-    lexer->subs->parameters = t;
+
+    assert(lexer->subs);
+    if (lexer->subs->parameters == NULL) {
+        lexer->subs->parameters = t;
+        t->next = t;
+    }
+    else {
+
+        assert(lexer->subs->parameters);
+        t->next = lexer->subs->parameters->next;
+        lexer->subs->parameters->next = t;
+        lexer->subs->parameters = t;
+    }
     return t;
+
 }
 
 target *
@@ -204,8 +229,9 @@ add_arg(argument *arg1, argument *arg2) {
     assert(arg1);
     assert(arg2);
 
+    arg2->next = arg1->next;
     arg1->next = arg2;
-    arg2->next = arg1;
+    arg1 = arg2;
 
     return arg1;
 }
@@ -268,12 +294,12 @@ void
 invert_instr(struct lexer_state *lexer) {
     char *instr = lexer->subs->statements->instr.ins->opname;
     if (strcmp(instr, "if") == 0) instr = "unless"; /* it's never 'unless' by default. */
-    else if (strcmp(instr, "isgt") == 0) instr = "isle";
-    else if (strcmp(instr, "isge") == 0) instr = "islt";
-    else if (strcmp(instr, "isle") == 0) instr = "isgt";
-    else if (strcmp(instr, "islt") == 0) instr = "isge";
-    else if (strcmp(instr, "isne") == 0) instr = "iseq";
-    else if (strcmp(instr, "iseq") == 0) instr = "isne";
+    else if (strcmp(instr, "gt") == 0) instr = "le";
+    else if (strcmp(instr, "ge") == 0) instr = "lt";
+    else if (strcmp(instr, "le") == 0) instr = "gt";
+    else if (strcmp(instr, "lt") == 0) instr = "ge";
+    else if (strcmp(instr, "ne") == 0) instr = "eq";
+    else if (strcmp(instr, "eq") == 0) instr = "ne";
     /* and set the new instruction */
     lexer->subs->statements->instr.ins->opname = instr;
 }
@@ -345,6 +371,38 @@ set_invocation_object(struct lexer_state *lexer, target *object) {
     lexer->subs->statements->instr.inv->object = object;
 }
 
+int
+same_types(expression *e1, expression *e2) {
+    if ((e1->type == e2->type) && (e1->type == INT_TYPE || e1->type == NUM_TYPE))
+        return 1;
+    return 0;
+}
+
+/* this sucks: */
+expression *
+fold_constants(char *opname, expression *left, expression *right) {
+
+    switch (left->type) {
+        case INT_TYPE: {
+            int leftval = left->expr.c->val.ival;
+            int rightval = right->expr.c->val.ival;
+            if (strcmp(opname, "add") == 0) left->expr.c->val.ival = leftval + rightval;
+            else if (strcmp(opname, "sub") == 0) left->expr.c->val.ival = leftval - rightval;
+            /* other ops */
+            break;
+        }
+        case NUM_TYPE: {
+            double leftval = left->expr.c->val.nval;
+            double rightval = right->expr.c->val.nval;
+            if (strcmp(opname, "add") == 0) left->expr.c->val.nval = leftval + rightval;
+            else if (strcmp(opname, "sub") == 0) left->expr.c->val.nval = leftval - rightval;
+            break;
+        }
+    }
+
+    return left;
+}
+
 
 void
 assign(struct lexer_state *lexer, rhs_type type, ...) {
@@ -357,12 +415,24 @@ assign(struct lexer_state *lexer, rhs_type type, ...) {
             /* x = a binop b -> binop x, a, b */
             expression *left_op, *right_op;
             /* get instruction */
-            lexer->subs->statements->instr.ins = new_instruction(va_arg(arg_ptr, char *));
+            char *opname = va_arg(arg_ptr, char *);
+            lexer->subs->statements->instr.ins = new_instruction(opname);
             /* get 2 operands */
             left_op  = va_arg(arg_ptr, expression *);
-            add_operand(lexer, left_op);
             right_op = va_arg(arg_ptr, expression *);
-            add_operand(lexer, right_op);
+
+            /*
+            if (same_types(left_op, right_op)) {
+                left_op = fold_constants(opname, left_op, right_op);
+                add_operand(lexer, left_op);
+                lexer->subs->statements->instr.ins->opname = "set";
+            }
+            else*/
+            {
+
+                add_operand(lexer, left_op);
+                add_operand(lexer, right_op);
+            }
             break;
         }
         case RHS_SIMPLE: {
@@ -375,7 +445,8 @@ assign(struct lexer_state *lexer, rhs_type type, ...) {
         case RHS_UNOP: {
             /* x = unop y -> unop x, y */
             expression *operand;
-            lexer->subs->statements->instr.ins = new_instruction(va_arg(arg_ptr, char *));
+            char *opname = va_arg(arg_ptr, char *);
+            lexer->subs->statements->instr.ins = new_instruction(opname);
             /* get 1 operand */
             operand = va_arg(arg_ptr, expression *);
             add_operand(lexer, operand);
@@ -540,10 +611,31 @@ set_hll_map(char *stdtype, char *maptype) {
     /* TODO */
 }
 
+void print_expr(expression *e);
+
+/*
+
+Add the specified expression as the first operand of the current
+instruction.
+
+*/
+void
+add_first_operand(struct lexer_state *lexer, expression *operand) {
+    expression *last = lexer->subs->statements->instr.ins->operands;
+    if (last) {
+        expression *first = last->next;
+        operand->next = first;
+        last->next = operand;
+    }
+    else {
+        lexer->subs->statements->instr.ins->operands = operand;
+    }
+}
 
 void
 add_operand(struct lexer_state *lexer, expression *operand) {
     assert(lexer->subs->statements->instr.ins);
+
     if (lexer->subs->statements->instr.ins->operands == NULL) {
         lexer->subs->statements->instr.ins->operands = operand;
     }
@@ -552,6 +644,7 @@ add_operand(struct lexer_state *lexer, expression *operand) {
         lexer->subs->statements->instr.ins->operands->next = operand;
         lexer->subs->statements->instr.ins->operands = operand;
     }
+
 }
 
 expression *
@@ -600,7 +693,23 @@ print_target(target *t) {
 
 void
 print_constant(constant *c) {
-
+    switch (c->type) {
+        case INT_TYPE:
+            printf("%d", c->val.ival);
+            break;
+        case NUM_TYPE:
+            printf("%f", c->val.nval);
+            break;
+        case STRING_TYPE:
+            printf("\"%s\"", c->val.sval);
+            break;
+        case PMC_TYPE:
+            printf("\"%s\"", c->val.pval);
+            break;
+        default:
+            printf("error: unknown constant type\n");
+            break;
+    }
 }
 
 void
@@ -615,8 +724,6 @@ print_expr(expression *expr) {
         case EXPR_IDENT:
             printf("%s", expr->expr.id);
             break;
-        case EXPR_INT:
-            break;
         default:
             fprintf(stderr, "Fatal error: unknown expression type\n");
             break;
@@ -624,53 +731,81 @@ print_expr(expression *expr) {
 }
 
 void
-print_args(argument *args) {
-    if (args == NULL) {
-        return;
+print_expressions(expression *expr) {
+    if (expr) {
+
+        expression *iter = expr->next;
+
+        do {
+            print_expr(iter);
+            iter = iter->next;
+            if (iter != expr->next) printf(", ");
+        }
+        while (iter != expr->next);
     }
-    else {
+}
+
+
+
+void
+print_arguments(char *opname, argument *args) {
+    if (args != NULL) {
         argument *iter = args->next;
-        fprintf(stderr, "print args\n");
+        if (opname) {
+            printf("   %s '", opname);
+
+            do {
+                printf("0");
+                iter = iter->next;
+                if (iter != args->next) printf(",");
+                else printf("', ");
+            }
+            while (iter != args->next);
+        }
+
+        iter = args->next;
         do {
             print_expr(iter->value);
             iter = iter->next;
+            if (iter != args->next) printf(", ");
+            else printf("\n");
         }
         while (iter != args->next);
     }
-    printf("\n");
-}
 
-void
-print_expressions(expression *expr) {
-    expression *iter;
-
-    if (expr == NULL)
-        return;
-
-    /* set iterator to first item */
-    iter = expr->next;
-    /* do something with the iterator while it doesn't point
-     * to the first item.
-     */
-    do {
-        print_expr(iter);
-        iter = iter->next;
-    }
-    while (iter != expr->next);
-
-    puts("");
 }
 
 void
 print_instruction(instruction *ins) {
     assert(ins != NULL);
-
     if (ins->opname) {
         printf("   %s ", ins->opname);
+        print_expressions( ins->operands);
+        printf("\n");
+    }
+}
 
-        print_expressions(ins->operands);
+void
+print_targets(char *opname, target *parameters) {
+    if (parameters != NULL) {
+        target *iter = parameters->next;
+        printf("   %s '", opname);
+        do {
+            printf("0");
+            iter = iter->next;
+            if (iter != parameters->next) printf(",");
+            else printf("', ");
+        }
+        while (iter != parameters->next);
 
-
+        iter = parameters->next;
+        do {
+            print_target(iter);
+            iter = iter->next;
+            if (iter != parameters->next) printf(", ");
+            else printf("\n");
+        }
+        while (iter != parameters->next);
     }
 }
 
@@ -680,60 +815,54 @@ print_invocation(invocation *inv) {
     switch (inv->type) {
 
         case CALL_PCC:
-            printf("   set_args");
-            printf("\n");
-            printf("   set_p_pc P%d, %s\n", 0, inv->sub->name);
-            printf("   invokecc");
+            print_arguments("set_args", inv->arguments);
+            print_targets("get_results", inv->results);
+            printf("   find_name P%d, '%s'\n", 0, inv->sub->name);
+            printf("   invokecc P%d", 0);
             break;
         case CALL_RET:
-            printf("   set_returns");
-            printf("\n");
+            print_arguments("set_returns", inv->arguments);
             printf("   returncc");
             break;
         case CALL_NCI:
-            printf("   invokecc");
+            printf("   invokecc P0");
             break;
         case CALL_YIELD:
-            printf("   set_returns");
-            printf("\n");
+            print_arguments("set_returns", inv->arguments);
             printf("   yield");
             break;
         case CALL_TAIL:
-            printf("   set_args");
-            printf("\n");
+            print_arguments("set_args", inv->arguments);
             printf("   tailcall");
             break;
         case CALL_METH:
-            printf("   set_args");
-            printf("\n");
+            print_arguments("set_args", inv->arguments);
+            print_targets("get_results", inv->results);
             printf("   callmethod");
             break;
         case CALL_METH_TAIL:
-            printf("   set_args");
-            printf("\n");
+            print_arguments("set_args", inv->arguments);
             printf("   tailcallmethod");
             break;
         default:
             fprintf(stderr, "Unknown invocation type (%d)\n", inv->type);
             exit(EXIT_FAILURE);
     }
-/*
-    if (inv->results) print_target(inv->results);
-    if (inv->arguments) print_args(inv->arguments);
-*/
+
     puts("");
 
 }
 
 void
 print_statement(subroutine *sub) {
-    if (sub->statements == NULL) {
-        return;
-    }
-    else {
+    if (sub->statements != NULL) {
         statement *statiter = sub->statements->next;
 
         do {
+            /* print label if there is one */
+            if (statiter->label) {
+                printf(" %s:\n", statiter->label);
+            }
             switch (statiter->type) {
                 case STAT_TYPE_INSTRUCTION:
                     if (statiter->instr.ins)
@@ -751,7 +880,14 @@ print_statement(subroutine *sub) {
         }
         while (statiter != sub->statements->next);
     }
+
+    /* each subroutine must have a return statement.
+       By default, return nothing. */
+    printf("   set_returns ''\n");
+    printf("   returncc\n");
 }
+
+
 
 void
 print_subs(struct lexer_state *lexer) {
@@ -764,23 +900,13 @@ print_subs(struct lexer_state *lexer) {
 
         do {
             printf(".pcc_sub %s:\n", subiter->sub_name);
+            print_targets("get_params", subiter->parameters);
             print_statement(subiter);
             subiter = subiter->next;
         }
         while (subiter != lexer->subs->next);
     }
 
-    printf("   end\n");
-
-
-
- /*
-    printf("size of a target:     %d\n", sizeof (target));
-    printf("size of a expression: %d\n", sizeof (expression));
-    printf("size of a constant:   %d\n", sizeof (constant));
-    printf("size of a statement:  %d\n", sizeof (statement));
-    printf("size of a invocation: %d\n", sizeof (invocation));
-    printf("size of a instruction: %d\n", sizeof (instruction));     */
 
 }
 
