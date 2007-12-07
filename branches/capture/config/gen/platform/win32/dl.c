@@ -11,7 +11,7 @@ config\gen\platform\win32\dl.c
 
 =head1 DESCRIPTION
 
-TODO
+RT#48264
 
 =head2 Functions
 
@@ -25,7 +25,7 @@ TODO
 
 =item C<void * Parrot_dlopen(const char *filename)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -41,7 +41,7 @@ Parrot_dlopen(const char *filename)
 
 =item C<const char * Parrot_dlerror(void)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -57,7 +57,7 @@ Parrot_dlerror(void)
 
 =item C<void * Parrot_dlsym(void *handle, const char *symbol)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -73,7 +73,7 @@ Parrot_dlsym(void *handle, const char *symbol)
 
 =item C<int Parrot_dlclose(void *handle)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

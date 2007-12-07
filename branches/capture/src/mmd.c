@@ -207,7 +207,7 @@ static void mmd_sort_candidates(PARROT_INTERP,
 =item C<static void
 dump_mmd(PARROT_INTERP, INTVAL function)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -262,7 +262,7 @@ funcptr_t
 get_mmd_dispatch_type(PARROT_INTERP, INTVAL func_nr, INTVAL left_type,
         INTVAL right_type, NOTNULL(int *is_pmc))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -343,7 +343,7 @@ static funcptr_t
 get_mmd_dispatcher(PARROT_INTERP, NOTNULL(PMC *left), NOTNULL(PMC *right),
         INTVAL function, NOTNULL(int *is_pmc))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -800,15 +800,14 @@ mmd_add_function(PARROT_INTERP,
 {
     if (func_nr >= (INTVAL)interp->n_binop_mmd_funcs) {
         INTVAL i;
+        const size_t bytes = (func_nr + 1) * sizeof (MMD_table);
 
         if (interp->binop_mmd_funcs) {
             interp->binop_mmd_funcs =
-                (MMD_table *)mem_sys_realloc(interp->binop_mmd_funcs,
-                                (func_nr + 1) * sizeof (MMD_table));
+                (MMD_table *)mem_sys_realloc(interp->binop_mmd_funcs, bytes);
         }
         else {
-            interp->binop_mmd_funcs =
-                (MMD_table *)mem_sys_allocate((func_nr + 1) * sizeof (MMD_table));
+            interp->binop_mmd_funcs = (MMD_table *)mem_sys_allocate(bytes);
         }
 
         for (i = interp->n_binop_mmd_funcs; i <= func_nr; ++i)  {
@@ -1040,7 +1039,7 @@ mmd_register_sub(PARROT_INTERP,
              INTVAL left_type, INTVAL right_type,
              NOTNULL(PMC *sub))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -1139,7 +1138,7 @@ PMC *
 Parrot_MMD_search_default_infix(PARROT_INTERP, NOTNULL(STRING *meth),
         INTVAL left_type, INTVAL right_type)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -1481,7 +1480,7 @@ mmd_search_classes(PARROT_INTERP, NOTNULL(STRING *meth),
 =item C<static INTVAL
 distance_cmp(SHIM_INTERP, INTVAL a, INTVAL b)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -1512,7 +1511,7 @@ PARROT_WARN_UNUSED_RESULT
 static PMC*
 mmd_cvt_to_types(PARROT_INTERP, NOTNULL(PMC *multi_sig))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -1858,7 +1857,7 @@ PARROT_WARN_UNUSED_RESULT
 static PMC*
 mmd_get_ns(PARROT_INTERP)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -1882,7 +1881,7 @@ PARROT_WARN_UNUSED_RESULT
 static PMC*
 mmd_make_ns(PARROT_INTERP)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -1925,7 +1924,7 @@ mmd_search_builtin(PARROT_INTERP, NOTNULL(STRING *meth), NOTNULL(PMC *cl))
 =item C<void
 mmd_create_builtin_multi_stub(PARROT_INTERP, NOTNULL(PMC *ns), INTVAL func_nr)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -1949,7 +1948,7 @@ mmd_create_builtin_multi_stub(PARROT_INTERP, NOTNULL(PMC *ns), INTVAL func_nr)
 mmd_create_builtin_multi_meth_2(PARROT_INTERP, NOTNULL(PMC *ns),
         INTVAL func_nr, INTVAL type, INTVAL right, funcptr_t func_ptr)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -2049,7 +2048,7 @@ mmd_create_builtin_multi_meth_2(PARROT_INTERP, NOTNULL(PMC *ns),
 mmd_create_builtin_multi_meth(PARROT_INTERP, NOTNULL(PMC *ns), INTVAL type,
         NOTNULL(const MMD_init *entry))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

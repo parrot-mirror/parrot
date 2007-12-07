@@ -385,10 +385,10 @@ sub_id: identifier
       ;
 
 sub_flags: /* empty */                                     { $$ = 0; }
-         | sub_flags sub_flag                              { SET_FLAG($$, $1); }
+         | sub_flags sub_flag                              { $$ |= $2; }
          ;
 
-sub_flag: ":anon"                                          { $$ = SUB_FLAG_ANON; }
+sub_flag: ":anon"                                          { $$ = SUB_FLAG_ANON;}
         | ":init"                                          { $$ = SUB_FLAG_INIT; }
         | ":load"                                          { $$ = SUB_FLAG_LOAD; }
         | ":main"                                          { $$ = SUB_FLAG_MAIN; }
@@ -477,7 +477,7 @@ getresults_statement: ".get_results" opt_target_list "\n"  { set_instr(lexer, "g
 parrot_statement: parrot_instruction "\n"
                 ;
 
-assignment_statement: target assignment_tail "\n"          { add_operand(lexer, expr_from_target($1)); }
+assignment_statement: target assignment_tail "\n"          { add_first_operand(lexer, expr_from_target($1)); }
                     ;
 
 /* possible assignment statements:
@@ -503,7 +503,7 @@ assignment_expression: unop expression                     { assign(lexer, RHS_U
                      | expression1                         { assign(lexer, RHS_SIMPLE, $1); }
                      | expression binop expression         { assign(lexer, RHS_BINOP, $2, $1, $3); }
                      | target keylist                      { assign(lexer, RHS_GETKEYED, $1, $2); }
-                     | parrot_instruction                  {  }
+                     | parrot_instruction                  { /* nothing to do */ }
                      ;
 
 
@@ -523,7 +523,7 @@ first_op_arg: pasm_expression                              { add_operand(lexer, 
             ;
 
 /* later arguments can be either an expression or a keylist. */
-other_op_args: /* empty */                                 {  }
+other_op_args: /* empty */                                 { /* nothing to do */}
              | other_op_args ',' other_op_arg              { add_operand(lexer, $3); }
              ;
 
@@ -549,7 +549,6 @@ separator: ';'                                             { $$ = 0; }
 conditional_statement: if_type condition then identifier "\n"
                                                            { /* it was "unless", so "invert" the opcode */
                                                              if ($1 > 0) {
-
                                                                 invert_instr(lexer);
                                                              }
                                                              add_operand(lexer, expr_from_ident($4));
@@ -693,7 +692,7 @@ method: invokable
       | string_object
       ;
 
-invokable: identifier                                      { $$ = target_from_ident($1); find_target(lexer, $1);}
+invokable: identifier                                      { $$ = target_from_ident($1); }
          | TK_SYM_PREG                                     { $$ = reg(PMC_TYPE, $1, !IS_PASM_REG); }
          | TK_PASM_PREG                                    { $$ = reg(PMC_TYPE, $1, IS_PASM_REG); }
          ;

@@ -233,6 +233,21 @@ Returns the number of elements in the array.
 
 /*
 
+=item C<FLOATVAL get_number()>
+
+Returns the number of elements in the array.
+
+=cut
+
+*/
+
+    FLOATVAL get_number() {
+        INTVAL e = DYNSELF.elements();
+        return (FLOATVAL)e;
+    }
+
+/*
+
 =item C<STRING *get_string()>
 
 Returns the number of elements in the array as a Parrot string. (??? -leo)
