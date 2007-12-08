@@ -36,7 +36,7 @@ exit(1) unless defined $args;
 
 my @steps = get_steps_list();
 
-my $opttest = Parrot::Configure::Options::Test->new($args, \@steps);
+my $opttest = Parrot::Configure::Options::Test->new($args);
 
 # configuration tests will only be run if you requested them
 # as command-line option
