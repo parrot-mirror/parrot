@@ -3,11 +3,47 @@
 package Parrot::Configure::Options::Test;
 use strict;
 use warnings;
+use Carp;
 use Config;        # to find the correct $Config{scriptdir}/prove
 use File::Spec;    # to construct the path to the correct 'prove'
+use lib qw(lib);
+use Parrot::Configure::Step::List qw( get_steps_list );
 
-our @preconfiguration_tests = qw(
-    t/configure/*.t
+my @framework_tests;
+my $config_dir = q{t/configure};
+opendir my $DIRH, $config_dir or croak "Unable to open $config_dir";
+for my $t (sort grep { /0\d{2}-\w+\.t$/ } readdir $DIRH) {
+    push @framework_tests, qq{$config_dir/$t};
+}
+closedir $DIRH or croak "Unable to close $config_dir";
+
+my $steps_dir = q{t/steps};
+my %steps_tests;
+my @steps_tests;
+opendir my $DIRH2, $steps_dir or croak "Unable to open $steps_dir";
+for my $t (grep { /\.t$/ } readdir $DIRH2) {
+    my ($type, $class, $num);
+    if ($t =~ m/(init|inter|auto|gen)_(\w+)-(\d{2})\.t$/) {
+        ($type, $class, $num) = ($1,$2,$3);
+        $steps_tests{$type}{$class}{$num}++;
+    } else {
+        carp "Unable to match $t";
+    }
+}
+closedir $DIRH2 or croak "Unable to close $steps_dir";
+
+my @steps = get_steps_list();
+foreach my $step (@steps) {
+    my @temp = split /::/, $step;
+    my %these_tests = %{ $steps_tests{$temp[0]}{$temp[1]} };
+    foreach my $k (sort keys %these_tests) {
+        push @steps_tests, qq{$steps_dir/$temp[0]_$temp[1]-$k.t};
+    }
+}
+
+our @preconfiguration_tests = (
+    @framework_tests,
+    @steps_tests,
 );
 
 our @postconfiguration_tests = qw(
