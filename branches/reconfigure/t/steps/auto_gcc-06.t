@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 111-auto_gcc-06.t
+# auto_gcc-06.t
 
 use strict;
 use warnings;
@@ -59,11 +59,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-111-auto_gcc-06.t - test config::auto::gcc
+auto_gcc-06.t - test config::auto::gcc
 
 =head1 SYNOPSIS
 
-    % prove t/configure/111-auto_gcc-06.t
+    % prove t/steps/auto_gcc-06.t
 
 =head1 DESCRIPTION
 

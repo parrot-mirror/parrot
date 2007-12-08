@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 133-gen_cpu.t
+# gen_cpu-00.t
 
 use strict;
 use warnings;
@@ -24,11 +24,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-133-gen_cpu.t - test config::gen::cpu
+gen_cpu-00.t - test config::gen::cpu
 
 =head1 SYNOPSIS
 
-    % prove t/configure/133-gen_cpu.t
+    % prove t/steps/gen_cpu-00.t
 
 =head1 DESCRIPTION
 

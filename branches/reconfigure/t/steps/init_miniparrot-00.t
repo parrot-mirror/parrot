@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 104-init_miniparrot.t
+# init_miniparrot-00.t
 
 use strict;
 use warnings;
@@ -46,11 +46,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-104-init_miniparrot.t - test config::init::miniparrot
+init_miniparrot-00.t - test config::init::miniparrot
 
 =head1 SYNOPSIS
 
-    % prove t/configure/104-init_miniparrot.t
+    % prove t/steps/init_miniparrot-00.t
 
 =head1 DESCRIPTION
 

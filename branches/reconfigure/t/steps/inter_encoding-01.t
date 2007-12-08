@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 120-inter_encoding-01.t
+# inter_encoding-01.t
 
 use strict;
 use warnings;
@@ -52,11 +52,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-120-inter_encoding-01.t - test config::inter::encoding
+inter_encoding-01.t - test config::inter::encoding
 
 =head1 SYNOPSIS
 
-    % prove t/configure/120-inter_encoding-01.t
+    % prove t/steps/inter_encoding-01.t
 
 =head1 DESCRIPTION
 
