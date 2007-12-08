@@ -20,6 +20,7 @@ our @postconfiguration_tests = qw(
 sub new {
     my ( $class, $argsref ) = @_;
     my $self = {};
+    bless $self, $class;
     my ( $run_configure_tests, $run_build_tests );
     if ( defined $argsref->{test} ) {
         if ( $argsref->{test} eq '1' ) {
@@ -50,7 +51,7 @@ sub new {
     for my $k (grep { ! $excluded_options{$_} } keys %{$argsref}) {
         $self->set($k, $argsref->{$k});
     }
-    return bless $self, $class;
+    return $self;
 }
 
 sub set {
