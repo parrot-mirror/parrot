@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use Carp;
 use Cwd;
-use Test::More qw(no_plan); # tests => 21;
+use Test::More tests => 21;
 use lib qw( lib );
 use_ok(
     'Parrot::Configure::Options', qw|
@@ -36,15 +36,22 @@ ok( defined $args, "process_options() returned successfully" );
 
 $opttest = Parrot::Configure::Options::Test->new($args);
 ok( defined $opttest, "Constructor returned successfully" );
-%data = %$opttest;
-is($data{cc}, q{/usr/bin/gcc-3.3}, "Option included in P::C::O::Test as expected");
-ok($data{run_configure_tests}, "Option included in P::C::O::Test as expected");
-ok(! exists $data{run_build_tests}, "Option excluded from P::C::O::Test as expected");
-ok(! exists $data{ask}, "Option excluded from P::C::O::Test as expected");
-ok(! exists $data{configure_trace}, "Option excluded from P::C::O::Test as expected");
-ok(! exists $data{debugging}, "Option excluded from P::C::O::Test as expected");
-ok(! exists $data{fatal}, "Option excluded from P::C::O::Test as expected");
-ok(! exists $data{verbose}, "Option excluded from P::C::O::Test as expected");
+is($opttest->get('cc'), q{/usr/bin/gcc-3.3},
+    "Option included in P::C::O::Test as expected");
+ok($opttest->get_run('run_configure_tests'),
+    "Option included in P::C::O::Test as expected");
+ok(! $opttest->get_run('run_build_tests'),
+    "Option excluded from P::C::O::Test as expected");
+ok(! $opttest->get('ask'),
+    "Option excluded from P::C::O::Test as expected");
+ok(! $opttest->get('configure_trace'),
+    "Option excluded from P::C::O::Test as expected");
+ok(! $opttest->get('debugging'),
+    "Option excluded from P::C::O::Test as expected");
+ok(! $opttest->get('fatal'),
+    "Option excluded from P::C::O::Test as expected");
+ok(! $opttest->get('verbose'),
+    "Option excluded from P::C::O::Test as expected");
 
 $args = process_options(
     {
@@ -62,14 +69,18 @@ ok( defined $args, "process_options() returned successfully" );
 
 $opttest = Parrot::Configure::Options::Test->new($args);
 ok( defined $opttest, "Constructor returned successfully" );
-%data = %$opttest;
-ok(! exists $data{run_configure_tests},
+ok(! $opttest->get_run('run_configure_tests'),
     "Option excluded from P::C::O::Test as expected");
-ok($data{run_build_tests}, "Option included in P::C::O::Test as expected");
-ok($data{nomanicheck}, "Option included in P::C::O::Test as expected");
-ok(! exists $data{silent}, "Option excluded from P::C::O::Test as expected");
-ok(! exists $data{'fatal-step'}, "Option excluded from P::C::O::Test as expected");
-ok(! exists $data{'verbose-step'}, "Option excluded from P::C::O::Test as expected");
+ok($opttest->get_run('run_build_tests'),
+   "Option included in P::C::O::Test as expected");
+ok($opttest->get('nomanicheck'),
+    "Option included in P::C::O::Test as expected");
+ok(! $opttest->get('silent'),
+    "Option excluded from P::C::O::Test as expected");
+ok(! $opttest->get('fatal-step'),
+    "Option excluded from P::C::O::Test as expected");
+ok(! $opttest->get('verbose-step'),
+    "Option excluded from P::C::O::Test as expected");
 
 pass("Completed all tests in $0");
 
