@@ -51,6 +51,7 @@ sub new {
     for my $k (grep { ! $excluded_options{$_} } keys %{$argsref}) {
         $self->set($k, $argsref->{$k});
     }
+    $self->{steps} = $stepsref;
     return $self;
 }
 
