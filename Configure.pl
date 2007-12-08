@@ -34,7 +34,9 @@ my $args = process_options(
 );
 exit(1) unless defined $args;
 
-my $opttest = Parrot::Configure::Options::Test->new($args);
+my @steps = get_steps_list();
+
+my $opttest = Parrot::Configure::Options::Test->new($args, \@steps);
 
 # configuration tests will only be run if you requested them
 # as command-line option
@@ -48,7 +50,7 @@ print_introduction($parrot_version);
 my $conf = Parrot::Configure->new;
 
 # from Parrot::Configure::Step::List
-$conf->add_steps( get_steps_list() );
+$conf->add_steps( @steps );
 
 # from Parrot::Configure::Data
 $conf->options->set( %{$args} );
