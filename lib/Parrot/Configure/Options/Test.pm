@@ -12,7 +12,7 @@ use Parrot::Configure::Step::List qw( get_steps_list );
 my @framework_tests;
 my $config_dir = q{t/configure};
 opendir my $DIRH, $config_dir or croak "Unable to open $config_dir";
-for my $t (sort grep { /0\d{2}-\w+\.t$/ } readdir $DIRH) {
+for my $t (sort grep { /\d{3}-\w+\.t$/ } readdir $DIRH) {
     push @framework_tests, qq{$config_dir/$t};
 }
 closedir $DIRH or croak "Unable to close $config_dir";
