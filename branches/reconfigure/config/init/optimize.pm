@@ -26,7 +26,6 @@ sub _init {
     my $self = shift;
     my %data;
     $data{description} = q{Enabling optimization};
-    $data{args}        = [ qw( verbose optimize ) ];
     $data{result}      = q{};
     return \%data;
 }

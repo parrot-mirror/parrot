@@ -24,7 +24,6 @@ sub _init {
     my $self = shift;
     my %data;
     $data{description} = q{Determining if your platform supports GMP};
-    $data{args}        = [ qw( verbose without-gmp ) ];
     $data{result}      = q{};
     return \%data;
 }
