@@ -11,7 +11,7 @@ config\gen\platform\win32\exec.c
 
 =head1 DESCRIPTION
 
-TODO
+RT#48264
 
 =head2 Functions
 
@@ -61,7 +61,7 @@ Parrot_Run_OS_Command(Parrot_Interp interp, STRING *command)
     WaitForSingleObject(pi.hProcess, INFINITE);
 
     if (!GetExitCodeProcess(pi.hProcess, &status)) {
-        /* XXX njs Should call GetLastError for failure message? */
+        /* RT#48278 njs Should call GetLastError for failure message? */
         Parrot_warn(interp, PARROT_WARNINGS_PLATFORM_FLAG,
             "Process completed: Failed to get exit code.");
     }
@@ -79,7 +79,7 @@ Parrot_Run_OS_Command(Parrot_Interp interp, STRING *command)
 =item C<INTVAL
 Parrot_Run_OS_Command_Argv(Parrot_Interp interp, PMC *cmdargs)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -129,7 +129,7 @@ Parrot_Run_OS_Command_Argv(Parrot_Interp interp, PMC *cmdargs)
 
     /* Get exit code. */
     if (!GetExitCodeProcess(pi.hProcess, &status)) {
-        /* XXX njs Should call GetLastError for failure message? */
+        /* RT#48278 njs Should call GetLastError for failure message? */
         Parrot_warn(interp, PARROT_WARNINGS_PLATFORM_FLAG,
             "Process completed: Failed to get exit code.");
     }
@@ -148,7 +148,7 @@ Parrot_Run_OS_Command_Argv(Parrot_Interp interp, PMC *cmdargs)
 =item C<void
 Parrot_Exec_OS_Command(Parrot_Interp interp, STRING *command)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

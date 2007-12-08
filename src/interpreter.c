@@ -550,7 +550,7 @@ Initializes JIT function for the specified opcode and returns it.
 */
 
 PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
+PARROT_CAN_RETURN_NULL
 void *
 init_jit(PARROT_INTERP, NULLOK(opcode_t *pc))
 {
@@ -1174,7 +1174,7 @@ dynop_register_xx(PARROT_INTERP,
 =item C<static void
 dynop_register_switch(size_t n_old, size_t n_new)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

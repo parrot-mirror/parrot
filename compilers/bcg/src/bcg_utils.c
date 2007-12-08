@@ -11,7 +11,7 @@ bcg_utils.c
 
 =head1 DESCRIPTION
 
-TODO
+RT#48264
 
 =head2 Methods
 
@@ -30,7 +30,7 @@ TODO
 =item C<bcg_hash *
 bcg_hash_create(BCG_info * bcg_info)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -50,7 +50,7 @@ bcg_hash_create(BCG_info * bcg_info)
 =item C<void
 bcg_hash_destroy(BCG_info * bcg_info, bcg_hash * hash)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -67,7 +67,7 @@ bcg_hash_destroy(BCG_info * bcg_info, bcg_hash * hash)
 =item C<void
 bcg_hash_put(BCG_info * bcg_info, bcg_hash * hash, char *key, void *value)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -84,7 +84,7 @@ bcg_hash_put(BCG_info * bcg_info, bcg_hash * hash, char *key, void *value)
 =item C<void *
 bcg_hash_get(BCG_info * bcg_info, bcg_hash * hash, char *key)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

@@ -33,10 +33,9 @@ my $pkg = q{auto::pmc};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my ( $task, $step_name, @step_params, $step);
+my ( $task, $step_name, $step);
 $task        = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
@@ -140,7 +139,7 @@ pass("Completed all tests in $0");
 The files in this directory test functionality used by F<Configure.pl>.
 
 The tests in this file test subroutines found in config::auto::pmc
-called within that class's C<runstep() method.
+called within that class's C<runstep()> method.
 
 =head1 AUTHOR
 

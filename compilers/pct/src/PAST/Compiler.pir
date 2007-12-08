@@ -24,10 +24,13 @@ By default PAST::Compiler transforms a PAST tree into POST.
     piropsig['n_bnot']   = 'PP'
     piropsig['n_concat'] = 'PP~'
     piropsig['n_div']    = 'PP+'
+    piropsig['n_fdiv']   = 'PP+'
     piropsig['n_mod']    = 'PP+'
     piropsig['n_mul']    = 'PP+'
     piropsig['n_neg']    = 'PP'
     piropsig['n_not']    = 'PP'
+    piropsig['n_shl']    = 'PP+'
+    piropsig['n_shr']    = 'PP+'
     piropsig['n_sub']    = 'PP+'
     piropsig['print']    = 'v*'
     piropsig['set']      = 'PP'
@@ -359,8 +362,14 @@ the node's "pasttype" attribute.
   post_pirop:
     .local pmc pirop
     pirop = node.'pirop'()
-    unless pirop goto post_call
+    unless pirop goto post_inline
     .return self.'pirop'(node, options :flat :named)
+
+  post_inline:
+    .local pmc inline
+    inline = node.'inline'()
+    unless inline goto post_call
+    .return self.'inline'(node, options :flat :named)
 
   post_call:
     .return self.'call'(node, options :flat :named)
@@ -719,6 +728,7 @@ handler.
     ops.'push_pirop'('push_eh', catchlabel)
     ops.'push'(trypost)
     ops.'push_pirop'('pop_eh')
+    ops.'push_pirop'('goto', endlabel)
     ops.'push'(catchlabel)
     .local pmc catchpast, catchpost
     catchpast = node[1]
