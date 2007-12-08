@@ -89,7 +89,7 @@ sub get_run {
 
 sub run_configure_tests {
     my $self = shift;
-    if ( $self->{run_configure_tests} ) {
+    if ( $self->get_run('run_configure_tests') ) {
         print "As you requested, we'll start with some tests of the configuration tools.\n\n";
 
         # Find the 'prove' command associated with *this* version of perl.
@@ -109,7 +109,7 @@ TEST
 
 sub run_build_tests {
     my $self = shift;
-    if ( $self->{run_build_tests} ) {
+    if ( $self->get_run('run_build_tests') ) {
         print "\n\n";
         print "As you requested, I will now run some tests of the build tools.\n\n";
         my $prove = File::Spec->catfile( $Config{'scriptdir'}, 'prove' );

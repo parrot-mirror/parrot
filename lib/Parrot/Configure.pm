@@ -47,7 +47,6 @@ use Class::Struct;
 struct(
     'Parrot::Configure::Task' => {
         step   => '$',
-        params => '@',
         object => 'Parrot::Configure::Step',
     },
 );
@@ -173,12 +172,11 @@ Accepts a list and modifies the data structure within the L<Parrot::Configure> o
 =cut
 
 sub add_step {
-    my ( $conf, $step, @params ) = @_;
+    my ( $conf, $step ) = @_;
 
     push @{ $conf->{steps} },
         Parrot::Configure::Task->new(
             step   => $step,
-            params => \@params,
         );
 
     return 1;
@@ -350,7 +348,6 @@ sub _run_this_step {
     my $args = shift;
 
     my $step_name   = $args->{task}->step;
-    my @step_params = @{ $args->{task}->params };
 
     eval "use $step_name;";
     die $@ if $@;
@@ -396,13 +393,7 @@ sub _run_this_step {
     my $ret;
     # When successful, a Parrot configuration step now returns 1
     eval {
-        if (@step_params)
-        {
-            $ret = $step->runstep( $conf, @step_params );
-        }
-        else {
-            $ret = $step->runstep($conf);
-        }
+        $ret = $step->runstep($conf);
     };
     if ($@) {
         carp "\nstep $step_name died during execution: $@\n";
