@@ -18,7 +18,7 @@ our @postconfiguration_tests = qw(
 );
 
 sub new {
-    my ( $class, $argsref ) = @_;
+    my ( $class, $argsref, $stepsref ) = @_;
     my $self = {};
     bless $self, $class;
     my ( $run_configure_tests, $run_build_tests );
