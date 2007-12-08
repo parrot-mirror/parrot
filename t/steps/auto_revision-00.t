@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 152-auto_revision.t
+# auto_revision-00.t
 
 use strict;
 use warnings;
@@ -84,11 +84,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-152-auto_revision.t - test config::auto::revision
+auto_revision-00.t - test config::auto::revision
 
 =head1 SYNOPSIS
 
-    % prove t/configure/152-auto_revision.t
+    % prove t/steps/auto_revision-00.t
 
 =head1 DESCRIPTION
 

@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 149-auto_m4.t
+# auto_m4-00.t
 
 use strict;
 use warnings;
@@ -23,11 +23,11 @@ is.
 
 =head1 NAME
 
-149-auto_m4.t - test config::auto::m4
+auto_m4-00.t - test config::auto::m4
 
 =head1 SYNOPSIS
 
-    % prove t/configure/149-auto_m4.t
+    % prove t/steps/auto_m4-00.t
 
 =head1 DESCRIPTION
 

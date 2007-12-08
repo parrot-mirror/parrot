@@ -1,7 +1,7 @@
 #!perl
 # Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
-# 150-auto_ctags-03.t
+# auto_ctags-03.t
 
 use strict;
 use warnings;
@@ -52,11 +52,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-t/configure/150-auto_ctags-03.t - tests Parrot::Configure::Step::auto::ctags
+t/steps/auto_ctags-03.t - tests Parrot::Configure::Step::auto::ctags
 
 =head1 SYNOPSIS
 
-    prove t/configure/150-auto_ctags-03.t
+    prove t/steps/auto_ctags-03.t
 
 =head1 DESCRIPTION
 

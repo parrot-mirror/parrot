@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 128-auto_va_ptr.t
+# auto_va_ptr-00.t
 
 use strict;
 use warnings;
@@ -24,11 +24,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-128-auto_va_ptr.t - test config::auto::va_ptr
+auto_va_ptr-00.t - test config::auto::va_ptr
 
 =head1 SYNOPSIS
 
-    % prove t/configure/128-auto_va_ptr.t
+    % prove t/steps/auto_va_ptr-00.t
 
 =head1 DESCRIPTION
 
