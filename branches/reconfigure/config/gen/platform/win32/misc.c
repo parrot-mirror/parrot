@@ -11,7 +11,7 @@ config\gen\platform\win32\misc.c
 
 =head1 DESCRIPTION
 
-TODO
+RT#48264
 
 =head2 Functions
 
@@ -25,7 +25,7 @@ TODO
 
 =item C<void Parrot_platform_init_code(void)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

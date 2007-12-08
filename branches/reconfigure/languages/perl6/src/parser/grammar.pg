@@ -220,6 +220,12 @@ token param_var {
 }
 
 
+#### Special variables ####
+
+token special_variable {
+    $<sym>=['$!'|'$¢'] <!before \w> {*}
+}
+
 #### Terms ####
 
 token term {
@@ -246,14 +252,16 @@ rule scope_declarator {
 
 token circumfix {
     | '(' <statementlist> ')' {*}                #= ( )
+    | '[' <statementlist> ']' {*}                #= [ ]
     | <block> {*}                                #= { }
 }
 
 token variable {
+    | <special_variable> {*}                     #= special_variable
     | <sigil> <ident> {*}                        #= $var
 }
 
-token sigil { '$' }
+token sigil { '$' | '@' }
 
 token value {
     | <quote> {*}                                #= quote

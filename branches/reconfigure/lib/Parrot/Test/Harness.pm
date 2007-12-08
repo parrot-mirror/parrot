@@ -7,8 +7,8 @@ Parrot::Test::Harness - a test harness for languages built on Parrot
 
 =head1 SYNOPSIS
 
-Tell the harness which language (and optionally, compiler) you want to use in a
-file called F<t/harness>:
+Tell the harness which language, and optionally compiler or other executable,
+you want to use in a file called F<t/harness>:
 
   use Parrot::Test::Harness language => 'punie';
 
@@ -16,20 +16,30 @@ file called F<t/harness>:
 
   use Parrot::Test::Harness language => 'perl6', compiler => 'perl6.pbc';
 
-That's it.  Seriously.
+  # or
+
+  use Parrot::Test::Harness language => 'perl6', compiler => 'perl6.pbc';
+
+  # or
+
+  use Parrot::Test::Harness language => 'eclectus', exec => [ 'petite', '--script' ], files => [ 't/*.pl' ];
+
+That's it. Seriously.
 
 =head1 DESCRIPTION
 
-This module provides a basic test harness for Parrot-hosted languages.  Right
-now it parameterizes the two parameters that at least three language
+This module provides a basic test harness for Parrot-hosted languages. Right
+now it parameterizes the three parameters that at least four language
 implementations need.
 
 If you really want, you can pass a third option to the C<use> line.
 C<arguments> should be an array reference containing additional arguments (as
 you might find on the command line).
 
-If you don't pass a C<compiler> argument pair, the harness will run the tests
-with C<perl>.  If you I<do> pass the pair, the harness will run the tests with
+If you don't pass a C<compiler> or C<exec> argument pair, the harness will run the tests
+with C<perl>.  If you I<do> pass one of these pairs, the harness can use another executable.
+For C<exec> a reference to a an array of string is expected.
+For C<compiler> the harness will run the tests with
 C<parrot>, calling the C<compiler> file as the first argument.
 
 This means that you can write your tests in your language itself and run them
@@ -38,7 +48,7 @@ language, you can even use the existing PIR testing tools.
 
 =head1 AUTHOR
 
-written by chromatic with most of the intelligence stolen from the Punie
+Written by chromatic with most of the intelligence stolen from the Punie
 harness and most of that probably stolen from Test::Harness
 
 Please send patches and bug reports via Parrot's RT queue or to the mailing
@@ -58,53 +68,70 @@ use Test::Harness;
 sub set_flags {
     my %options = @_;
     $ENV{HARNESS_VERBOSE} = 1;
-    $ENV{HARNESS_PERL} ||= '../../parrot ./' . $options{compiler}
-        if $options{compiler};
-
-    # Per Leo on 18APR2005, run the test suite with --gc-debug
-    if ( $ENV{TEST_PROG_ARGS} && $ENV{TEST_PROG_ARGS} !~ /\b--gc-debug\b/ ) {
-        $ENV{TEST_PROG_ARGS} .= " --gc-debug";
+    if ( $options{exec} ) {
+        $ENV{HARNESS_PERL} ||= join q{ }, @{$options{exec}};
     }
+    elsif ( $options{compiler} ) {
+        $ENV{HARNESS_PERL} ||= join q{}, "../../parrot ./$options{compiler}";
+    }
+
+    return;
 }
 
+# return a list of test files
 sub get_files {
     my %options = @_;
 
 =pod
 
-Conformant to a recent post on p6i, if called with a single argument of
-C<--files>, return a list of files to process.  This list is one per line, and
-is relative to the languages dir.
+The option '--files' is used for supporting unified testing of language implementations.
+It is used by F<languages/t/harness> for collecting a list testfiles from
+many language implementations.
 
-If called with no args, run the suite.
+When that option is passed, a list of pathes to test files is printed.
+Currently these test files need to Perl 5 scripts.
+The file pathes are relative to a language implementation dir.
+
+When there is no '--files' option, then things are saner.
+Nothing is printed. An array of file pathes is returned to the caller.
 
 =cut
 
     if ( grep { /^--files$/ } @{ $options{arguments} } ) {
 
         # --files indicates the 'languages/t/harness' wants a list of test files
-        my $dir = File::Spec->catfile( $options{language}, 't' );
-        my @files = (
-            glob( File::Spec->catfile( $dir, '*.t' ) ),
-            glob( File::Spec->catfile( $dir, '*/*.t' ) )
-        );
+        my @files;
+        {
+            # file patterns are either passed from a <language>/t/harness,
+            # or a default is used
+            my @file_patterns =
+                ( $options{files} && ref $options{files} eq 'ARRAY' ) ? 
+                    @{ $options{files} }
+                    :
+                    ( 't/*.t', 't/*/*.t' );
+            foreach ( @file_patterns ) {
+                push @files, glob( File::Spec->catfile( $options{language}, $_  ) ),
+            }
+        }
         print join( "\n", @files );
         print "\n" if @files;
+
         exit;
     }
     elsif ( @{ $options{arguments} } ) {
 
         # Someone specified tests for me to run.
-        my @files = ();
+        my @files;
         foreach my $arg ( @{ $options{arguments} } ) {
             -f $arg && push @files, glob $arg;
             -d $arg && push @files, glob( File::Spec->catfile( $arg, '*.t' ) );
         }
+
         return @files;
     }
     else {
 
-        # I must be running out of languages/$language
+        # I must be running out of languages/$language.
         # You may want a deeper search than this.
         return (
             glob( File::Spec->catfile( 't', '*.t' ) ),
@@ -123,11 +150,12 @@ sub import {
     exit unless my @files = get_files(%options);
 
     if (eval { require TAP::Harness; 1 }) {
-        my %options = $options{compiler}
-            ? ( exec => [ '../../parrot', './' . $options{compiler} ] )
-            : ();
-        my $harness = TAP::Harness->new( \%options );
-        $harness->runtests( @files );
+        my %options =
+              $options{exec}     ? ( exec => $options{exec} )
+            : $options{compiler} ? ( exec => [ '../../parrot', './' . $options{compiler} ] )
+            :                      ();
+        TAP::Harness->new( \%options )->runtests( @files );
+
         return;
     }
 

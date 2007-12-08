@@ -1,3 +1,7 @@
+# $Id$
+#
+# Copyright (C) 2007, The Perl Foundation.
+
 class Perl6::Grammar::Actions ;
 
 method TOP($/) {
@@ -11,18 +15,28 @@ method statement_block($/, $key) {
     ##  FIXME: $?BLOCK, @?BLOCK
     our $?BLOCK;
     our @?BLOCK;
+    ## when creating a block, create an empty first child node (PAST::Stmts)
+    ## for special varible initialization and parameter handling. also,
+    ## register the special variables in the block's symbol table
     if ($key eq 'open') {
-       $?BLOCK := PAST::Block.new( PAST::Stmts.new(),
-                                  :blocktype('immediate'),
-                                  :node($/)
+        my $init := PAST::Stmts.new();
+        $init.push( PAST::Var.new(:name('$!'), :isdecl(1)));
+        $init.push( PAST::Var.new(:name('$/'), :isdecl(1)));
+        $init.push( PAST::Var.new(:name('$_'), :isdecl(1)));
+        $?BLOCK := PAST::Block.new( PAST::Stmts.new( $init ),
+                                    :blocktype('immediate'),
+                                    :node($/)
                                   );
-       @?BLOCK.unshift($?BLOCK);
+        $?BLOCK.symbol( '$!', :scope('lexical') );
+        $?BLOCK.symbol( '$/', :scope('lexical') );
+        $?BLOCK.symbol( '$_', :scope('lexical') );
+        @?BLOCK.unshift($?BLOCK);
     }
     if ($key eq 'close') {
-       my $past := @?BLOCK.shift();
-       $?BLOCK := @?BLOCK[0];
-       $past.push($($<statementlist>));
-       make $past;
+        my $past := @?BLOCK.shift();
+        $?BLOCK := @?BLOCK[0];
+        $past.push($($<statementlist>));
+        make $past;
     }
     PIR q<  .return () >;  # FIXME:  ought to eliminate this somehow
 }
@@ -96,9 +110,20 @@ method statement_prefix($/) {
     if ($sym eq 'do') {
         # fall through, just use the statement itself
     }
+    ## after the code in the try block is executed, bind $! to Undef,
+    ## and set up the code to catch an exception, in case one is thrown
     elsif ($sym eq 'try') {
-        $past := PAST::Op.new( $past, :pasttype('try') );
-        # TODO: set result to $!
+        ##  Set up code to execute <statement> as a try node, and
+        ##  set $! to Undef if successful.
+        my $exitpir  := "    new %r, 'Undef'\n    store_lex '$!', %r";
+        my $try := PAST::Stmts.new( $past ,
+                                    PAST::Op.new( :inline( $exitpir ) ) );
+        $past := PAST::Op.new( $try, :pasttype('try') );
+
+        ##  Add a catch node to the try op that captures the
+        ##  exception object into $!.
+        my $catchpir := "    .get_results (%r, $S0)\n    store_lex '$!', %r";
+        $past.push( PAST::Op.new( :inline( $catchpir ) ) );
     }
     elsif ($sym eq 'gather') {
         $/.panic($sym ~ ' not implemented');
@@ -151,6 +176,11 @@ method param_var($/) {
 }
 
 
+method special_variable($/) {
+    make PAST::Var.new( :node($/), :name(~$/), :scope('lexical') );
+}
+
+
 method term($/, $key) {
     make $( $/{$key} );
 }
@@ -184,7 +214,10 @@ method circumfix($/, $key) {
     if ($key eq '( )') {
         $past := $( $<statementlist> );
     }
-    if ($key eq '{ }') {
+    if ($key eq '[ ]') {
+        $past := $( $<statementlist> );
+    }
+    elsif ($key eq '{ }') {
         $past := $( $<block> );
     }
     make $past;
@@ -342,4 +375,9 @@ method EXPR($/, $key) {
 }
 
 
-
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:
