@@ -5,19 +5,27 @@
 
 use strict;
 use warnings;
-use Test::More tests => 19;
+use Test::More tests => 21;
 use Carp;
 use Cwd;
 use Data::Dumper;
 use File::Temp qw(tempdir);
-use lib qw( lib t/configure/testlib );
+use lib qw( lib t/configure/testlib t/steps/testlib );
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use_ok('config::init::install');
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Auxiliary qw(
+    get_step_name
+    store_this_step_pure
+    get_previous_state
+);
 
 my $cwd = cwd();
 {
+    my $pkg = get_step_name($0);
+    ok($pkg, "Step name has true value");
+    ok(store_this_step_pure($pkg), "State stored");
+
     my $tdir  = tempdir();
     my $tdir1 = tempdir();
     my $args  = process_options(
@@ -36,7 +44,20 @@ my $cwd = cwd();
     );
 
     my $conf = Parrot::Configure->new;
-    test_step_thru_runstep( $conf, q{init::install}, $args );
+    $conf->refresh(get_previous_state($pkg));
+    $conf->add_steps($pkg);
+    $conf->options->set( %{$args} );
+
+    my $task        = $conf->steps->[-1];
+    my $step_name   = $task->step;
+
+    my $step = $step_name->new();
+    ok( defined $step, "$step_name constructor returned defined value" );
+    isa_ok( $step, $step_name );
+    ok( $step->description(), "$step_name has description" );
+
+    my $ret = $step->runstep($conf);
+    ok( defined $ret, "$step_name runstep() returned defined value" );
 
     is( $conf->data->get('prefix'),         $tdir,  "--prefix option confirmed" );
     is( $conf->data->get('exec_prefix'),    $tdir,  "--exec-prefix option confirmed" );
