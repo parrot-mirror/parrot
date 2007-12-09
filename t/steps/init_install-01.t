@@ -45,6 +45,7 @@ my $cwd = cwd();
 
     my $conf = Parrot::Configure->new;
     $conf->refresh(get_previous_state($pkg));
+    print STDERR Dumper $conf;
     $conf->add_steps($pkg);
     $conf->options->set( %{$args} );
 
