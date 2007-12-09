@@ -12,7 +12,6 @@ our (@ISA, @EXPORT_OK);
     retrieve_state
     dump_state
     get_previous_state
-    refresh_from_previous_state
     store_this_step_pure
     update_state
 );
@@ -23,7 +22,7 @@ use File::Basename;
 use Storable qw( nstore retrieve );
 use lib qw( lib );
 use Parrot::Configure::Step::List qw( get_steps_list );
-use Parrot::Configure;
+use Parrot::Configure::Parallel;
 use Parrot::Configure::Options qw( process_options );
 
 our $sto = q{.pseudo_configure.sto};
@@ -33,7 +32,6 @@ my @steps_list = get_steps_list();
 for (my $i=0; $i<=$#steps_list; $i++) {
     $steps_position{$steps_list[$i]} = $i+1;
 }
-#print STDERR Dumper \%steps_position;
 
 sub get_step_name {
     my $script = shift;
@@ -70,7 +68,7 @@ sub get_previous_state {
     my $step_position = get_step_position($pkg);
     if ( (defined($state->[$step_position - 1]))
             and
-         (ref($state->[$step_position - 1]) eq 'Parrot::Configure')
+         (ref($state->[$step_position - 1]) =~ /Parrot::Configure/)
      ) {
          return $state->[$step_position - 1];
      } else {
@@ -78,32 +76,17 @@ sub get_previous_state {
      }
 }
 
-sub refresh_from_previous_state {
-    # This really should be a Parrot::Configure method,
-    # but then lib/Parrot/Configure.pm would have to import
-    # get_previous_state() from somewhere better than
-    # t/steps/testlib/Auxiliary.pm.
-    my ($conf, $pkg) = @_;
-    my $previous_state = get_previous_state($pkg);
-    if (defined($previous_state)) {
-        foreach my $k (keys %{$previous_state}) {
-            $conf->{$k} = $previous_state->{$k};
-        }
-    }
-    return $conf;
-}
-
 sub store_this_step_pure {
     my $pkg = shift;
     my $state = retrieve_state();
     my $step_position = get_step_position($pkg);
-    return if $state->[$step_position];
+    return 2 if $state->[$step_position];
     my $args = process_options( {
         argv => [q{--silent}],
         mode => q{configure},
     } );
 
-    my $conf = Parrot::Configure->new;
+    my $conf = Parrot::Configure::Parallel->new;
     $conf->add_steps($pkg);
     $conf->options->set( %{$args} );
     
