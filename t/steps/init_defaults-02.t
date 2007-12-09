@@ -5,17 +5,22 @@
 
 use strict;
 use warnings;
-use Test::More tests => 12;
+use Test::More tests => 14;
 use Carp;
 use_ok('Cwd');
 use_ok('File::Copy');
 use_ok( 'File::Temp', qw| tempdir | );
-use lib qw( lib );
+use lib qw( lib t/steps/testlib );
 use_ok('config::init::defaults');
 use Parrot::Configure;
 use Parrot::Configure::Step;
 use Parrot::Configure::Options qw( process_options );
 use base qw(Parrot::Configure::Step::Base);
+use Auxiliary qw(
+    get_step_name
+    store_this_step_pure
+    get_previous_state
+);
 
 # DEVELOPING non-existence is faked by working in a tempdir which lacks it
 
@@ -25,7 +30,10 @@ my $cwd = cwd();
     ok( chdir $tdir, "Changed to temporary directory for testing" );
     ok( copy( "$cwd/VERSION", "$tdir/VERSION" ), "Able to copy VERSION for testing" );
 
-    my $pkg  = q{init::defaults};
+    my $pkg = get_step_name($0);
+    ok($pkg, "Step name has true value");
+    ok(store_this_step_pure($pkg), "State stored");
+
     my $args = process_options(
         {
             argv => [],
@@ -34,10 +42,11 @@ my $cwd = cwd();
     );
 
     my $conf = Parrot::Configure->new;
+    $conf->refresh(get_previous_state($pkg));
     $conf->add_steps($pkg);
     $conf->options->set( %{$args} );
 
-    my $task        = $conf->steps->[0];
+    my $task        = $conf->steps->[-1];
     my $step_name   = $task->step;
 
     my $step = $step_name->new();
