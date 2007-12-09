@@ -5,24 +5,38 @@
 
 use strict;
 use warnings;
-use Test::More tests => 6;
+use Test::More tests => 10;
 use Carp;
 use Cwd;
 use Data::Dumper;
 use File::Copy;
 use File::Temp qw(tempdir);
-use lib qw( lib );
+use lib qw( lib t/steps/testlib );
 use_ok('config::init::manifest');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::IO::Capture::Mini;
+use IO::CaptureOutput qw| capture |;
+use Auxiliary qw(
+    get_step_name
+    get_step_position
+    retrieve_state
+    dump_state
+    get_previous_state
+    refresh_from_previous_state
+    store_this_step_pure
+    update_state
+);
 
-=for hints_for_testing See if you can get the program to 'ack' when it
-thinks there are files missing from those listed in the MANIFEST.
+my $pkg = get_step_name($0);
+ok($pkg, "Step name has true value");
+my $step_position = get_step_position($pkg);
+like($step_position, qr/^\d+$/, "Step position is numeric");
+my $state = retrieve_state();
+is(ref($state), q{ARRAY}, "State is an array reference");
 
-=cut
+ok(! defined(store_this_step_pure($pkg)),
+    "Other than first test file for current step:  state stored");
 
-my $pkg  = q{init::manifest};
 my $args = process_options(
     {
         argv => [],
@@ -31,10 +45,11 @@ my $args = process_options(
 );
 
 my $conf = Parrot::Configure->new;
+$conf = refresh_from_previous_state($conf, $pkg);
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my $task        = $conf->steps->[0];
+my $task        = $conf->steps->[-1];
 my $step_name   = $task->step;
 
 my $step = $step_name->new();
@@ -51,19 +66,16 @@ my $cwd = cwd();
     copy( qq{$cwd/MANIFEST}, qq{$tdir/MANIFEST} )
         or croak "Unable to copy MANIFEST";
     {
-        my $tie_err = tie *STDERR, "Parrot::IO::Capture::Mini"
-            or croak "Unable to tie";
-        my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-            or croak "Unable to tie";
-        my $ret        = $step->runstep($conf);
-        my @lines      = $tie_err->READLINE;
-        my @more_lines = $tie_out->READLINE;
+        my ($ret, $stdout, $stderr);
+        capture(
+            sub { $ret = $step->runstep($conf); },
+            \$stdout,
+            \$stderr,
+        );
         is( $ret, undef, "$step_name runstep returned undef" );
     }
     chdir $cwd or croak "Unable to change back";
 }
-untie *STDERR;
-untie *STDOUT;
 
 pass("Completed all tests in $0");
 

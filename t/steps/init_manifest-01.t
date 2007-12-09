@@ -5,32 +5,45 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  9;
-use Carp;
-use Data::Dumper;
-use lib qw( lib );
+use Test::More tests => 13;
+use lib qw( lib t/steps/testlib );
 use_ok('config::init::manifest');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
+use Auxiliary qw(
+    get_step_name
+    get_step_position
+    retrieve_state
+    dump_state
+    get_previous_state
+    refresh_from_previous_state
+    store_this_step_pure
+    update_state
+);
 
-=for hints_for_testing See if you can get the program to 'ack' when it
-thinks there are files missing from those listed in the MANIFEST.
+my $pkg = get_step_name($0);
+ok($pkg, "Step name has true value");
+my $step_position = get_step_position($pkg);
+like($step_position, qr/^\d+$/, "Step position is numeric");
+my $state = retrieve_state();
+is(ref($state), q{ARRAY}, "State is an array reference");
 
-=cut
+ok(store_this_step_pure($pkg),
+    "First test file for current step:  state stored");
 
-my $pkg  = q{init::manifest};
 my $args = process_options(
     {
-        argv => [q{--nomanicheck}],
+        argv => [ q{--nomanicheck} ],
         mode => q{configure},
     }
 );
 
 my $conf = Parrot::Configure->new;
+$conf = refresh_from_previous_state($conf, $pkg);
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my $task        = $conf->steps->[0];
+my $task        = $conf->steps->[-1];
 my $step_name   = $task->step;
 
 my $step = $step_name->new();
@@ -41,9 +54,11 @@ ok(defined ($step->result), "result defined");
 ok(! ($step->result), "result not yet true");
 my $ret = $step->runstep($conf);
 ok( defined $ret, "$step_name runstep() returned defined value" );
-is( $step->result, q{skipped}, "Because of --nomanicheck, result is 'skipped'." );
+is( $step->result, q{skipped},
+    "Because of --nomanicheck, result is 'skipped'." );
 
 pass("Completed all tests in $0");
+
 
 ################### DOCUMENTATION ###################
 
