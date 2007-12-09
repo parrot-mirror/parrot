@@ -64,7 +64,7 @@ sub dump_state {
 
 sub get_previous_state {
     my $pkg = shift;
-    my $state = retrieve_state();
+    my $state = shift || retrieve_state();
     my $step_position = get_step_position($pkg);
     if ( (defined($state->[$step_position - 1]))
             and
@@ -87,6 +87,9 @@ sub store_this_step_pure {
     } );
 
     my $conf = Parrot::Configure::Parallel->new;
+#print STDERR Dumper $conf;
+    $conf->refresh(get_previous_state($pkg,$state));
+print STDERR Dumper $conf;
     $conf->add_steps($pkg);
     $conf->options->set( %{$args} );
     
@@ -94,6 +97,7 @@ sub store_this_step_pure {
     my $step_name   = $task->step;
     my $step = $step_name->new();
     my $ret = $step->runstep($conf);
+print STDERR Dumper $conf;
     if (defined $ret) {
         update_state(
             {

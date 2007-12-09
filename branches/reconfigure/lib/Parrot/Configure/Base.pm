@@ -128,10 +128,11 @@ Accepts a list of new steps and modifies the data structure within the L<Parrot:
 sub add_steps {
     my ( $conf, @new_steps ) = @_;
 
-    $conf->{list_of_steps} = [@new_steps];
+    #$conf->{list_of_steps} = [@new_steps];
 
     for ( my $i = 0 ; $i <= $#new_steps ; $i++ ) {
         $conf->add_step( $new_steps[$i] );
+        push @{ $conf->{list_of_steps} }, $new_steps[$i];
         $conf->{hash_of_steps}->{ $new_steps[$i] } = $i + 1;
     }
 
