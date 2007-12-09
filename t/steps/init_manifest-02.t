@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 10;
+use Test::More tests =>  8;
 use Carp;
 use Cwd;
 use Data::Dumper;
@@ -18,24 +18,14 @@ use Parrot::Configure::Options qw( process_options );
 use IO::CaptureOutput qw| capture |;
 use Auxiliary qw(
     get_step_name
-    get_step_position
-    retrieve_state
-    dump_state
-    get_previous_state
-    refresh_from_previous_state
     store_this_step_pure
-    update_state
+    get_previous_state
 );
 
 my $pkg = get_step_name($0);
 ok($pkg, "Step name has true value");
-my $step_position = get_step_position($pkg);
-like($step_position, qr/^\d+$/, "Step position is numeric");
-my $state = retrieve_state();
-is(ref($state), q{ARRAY}, "State is an array reference");
 
-ok(! defined(store_this_step_pure($pkg)),
-    "Other than first test file for current step:  state stored");
+ok(store_this_step_pure($pkg), "State stored");
 
 my $args = process_options(
     {
@@ -45,7 +35,7 @@ my $args = process_options(
 );
 
 my $conf = Parrot::Configure->new;
-$conf = refresh_from_previous_state($conf, $pkg);
+$conf->refresh(get_previous_state($pkg));
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 

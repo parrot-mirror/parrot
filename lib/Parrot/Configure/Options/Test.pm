@@ -54,7 +54,7 @@ our @postconfiguration_tests = qw(
 );
 
 sub new {
-    my ( $class, $argsref, $stepsref ) = @_;
+    my ( $class, $argsref ) = @_;
     my $self = {};
     bless $self, $class;
     my ( $run_configure_tests, $run_build_tests );
@@ -87,7 +87,6 @@ sub new {
     for my $k (grep { ! $excluded_options{$_} } keys %{$argsref}) {
         $self->set($k, $argsref->{$k});
     }
-    $self->{steps} = $stepsref;
     return $self;
 }
 
