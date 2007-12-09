@@ -437,8 +437,6 @@ sub refresh {
     my $conf = shift;
     my $arg  = shift;
     return unless defined $arg;
-    die "Argument to Parrot::Configure::Refresh must be hash ref"
-        unless ref($arg) eq q{HASH};
     foreach my $k (keys %{$arg}) {
         $conf->{$k} = $arg->{$k};
     }

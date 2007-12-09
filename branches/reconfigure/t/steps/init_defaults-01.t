@@ -5,14 +5,22 @@
 
 use strict;
 use warnings;
-use Test::More tests => 6;
+use Test::More qw(no_plan); # tests => 6;
 use Carp;
-use lib qw( lib );
+use lib qw( lib t/steps/testlib );
 use_ok('config::init::defaults');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
+use Auxiliary qw(
+    get_step_name
+    store_this_step_pure
+    get_previous_state
+);
 
-my $pkg  = q{init::defaults};
+my $pkg = get_step_name($0);
+ok($pkg, "Step name has true value");
+ok(store_this_step_pure($pkg), "State stored");
+
 my $args = process_options(
     {
         argv => [ q{--debugging=0}, q{--profile}, q{--m=32} ],
@@ -29,10 +37,11 @@ my $args = process_options(
 );
 
 my $conf = Parrot::Configure->new;
+$conf->refresh(get_previous_state($pkg));
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my $task        = $conf->steps->[0];
+my $task        = $conf->steps->[-1];
 my $step_name   = $task->step;
 
 my $step = $step_name->new();
