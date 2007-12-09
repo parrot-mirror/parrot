@@ -25,7 +25,7 @@ use Parrot::Configure::Step::List qw( get_steps_list );
 use Parrot::Configure::Parallel;
 use Parrot::Configure::Options qw( process_options );
 
-our $sto = q{.pseudo_configure.sto};
+our $sto = q{.configure_parallel.sto};
 
 our %steps_position;
 my @steps_list = get_steps_list();
