@@ -35,7 +35,7 @@ and logic ops.
 
 .include "errors.pasm"
 
-.sub '__onload' :load :init
+.sub 'onload' :load :init :anon
     load_bytecode 'PCT.pbc'
 
     $P0 = new [ 'PCT::HLLCompiler' ]

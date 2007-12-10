@@ -21,7 +21,7 @@ method line ($/, $key) {
 }
 
 method gprint ($/) {
-    my $past := PAST::Op.new();
+    my $past := PAST::Op.new( $($<expr>) );
     $past.name('print');
     $past.pasttype('call');
     $past.node($/);

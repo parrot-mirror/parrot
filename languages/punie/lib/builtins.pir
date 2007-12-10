@@ -1,3 +1,5 @@
+.namespace
+
 .sub 'print'
     .param pmc list            :slurpy
     .local pmc iter
