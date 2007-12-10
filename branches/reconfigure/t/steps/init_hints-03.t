@@ -5,19 +5,26 @@
 
 use strict;
 use warnings;
-use Test::More tests => 17;
+use Test::More tests =>  9;
 use Carp;
 use Cwd;
 use File::Path ();
 use File::Temp qw(tempdir);
-use lib qw( lib t/configure/testlib );
-use_ok('config::init::defaults');
-use_ok('config::init::install');
+use lib qw( lib t/configure/testlib t/steps/testlib );
 use_ok('config::init::hints');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::IO::Capture::Mini;
 use Parrot::Configure::Test qw( test_step_thru_runstep);
+use IO::CaptureOutput qw| capture |;
+use Auxiliary qw(
+    get_step_name
+    store_this_step_pure
+    get_previous_state
+);
+
+my $pkg = get_step_name($0);
+ok($pkg, "Step name has true value");
+ok(store_this_step_pure($pkg), "State stored");
 
 my $args = process_options(
     {
@@ -27,17 +34,14 @@ my $args = process_options(
 );
 
 my $conf = Parrot::Configure->new;
-
-test_step_thru_runstep( $conf, q{init::defaults}, $args );
-test_step_thru_runstep( $conf, q{init::install},  $args );
+$conf->refresh(get_previous_state($pkg));
 
 my ( $task, $step_name, $step, $ret );
-my $pkg = q{init::hints};
 
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-$task        = $conf->steps->[2];
+$task        = $conf->steps->[-1];
 $step_name   = $task->step;
 
 $step = $step_name->new();
@@ -64,16 +68,16 @@ END
     # because the fact that it does not end
     # in a newline confuses Test::Harness
     {
-        my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-            or croak "Unable to tie";
-        $ret = $step->runstep($conf);
-        my @more_lines = $tie_out->READLINE;
-        ok( @more_lines, "verbose output:  hints were captured" );
+        my ($ret, $stdout);
+        capture(
+            sub { $ret = $step->runstep($conf); },
+            \$stdout,
+        );
+        ok( $stdout, "verbose output:  hints were captured" );
         ok( defined $ret, "$step_name runstep() returned defined value" );
     }
     unlink $localhints or croak "Unable to delete $localhints";
 }
-untie *STDOUT;
 
 pass("Completed all tests in $0");
 
