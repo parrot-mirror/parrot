@@ -42,21 +42,24 @@ rule cond {
               <else>?
 }
 
-rule expr    { <gprint> | <oexpr> }
+rule expr    {
+    | <gprint>                                   #= gprint
+    | <oexpr>                                    #= oexpr
+}
 
 rule gprint  { (print) <expr> }
 
 rule 'oexpr' is optable { ... }
 
 regex term {
-    | \( <expr> \) {*}
-    | <number> {*}
-    | <integer> {*}
-    | <stringdouble> {*}
-    | <stringsingle> {*}
-    | do <block> {*}
-    | <subcall> {*}
-    | <variable> {*}
+    | \( <expr> \) {*}                           #= expr
+    | <number> {*}                               #= number
+    | <integer> {*}                              #= integer
+    | <stringdouble> {*}                         #= stringdouble
+    | <stringsingle> {*}                         #= stringsingle
+    | do <block> {*}                             #= do_block
+    | <subcall> {*}                              #= subcall
+    | <variable> {*}                             #= variable
 }
 rule variable { <sigil>? <word> <key>? {*} }
 token sigil { <[$@]> {*} }

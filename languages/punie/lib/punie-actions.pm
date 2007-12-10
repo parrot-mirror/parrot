@@ -40,4 +40,30 @@ method stringsingle($/) {
     make PAST::Val.new( :value( ~$<string_literal> ), :node($/) );
 }
 
+method expr($/, $key) {
+    make $( $/{$key} );
+}
+
+method oexpr($/, $key) {
+    if ($key eq 'end') {
+        make $($<expr>);
+    }
+    else {
+        my $past := PAST::Op.new( :name($<type>),
+                                  :pasttype($<top><pasttype>),
+                                  :pirop($<top><pirop>),
+                                  :lvalue($<top><lvalue>),
+                                  :node($/)
+                                );
+        for @($/) {
+            $past.push( $($_) );
+        }
+        make $past;
+    }
+
+}
+
+method term($/, $key) {
+    make $( $/{$key} );
+}
 
