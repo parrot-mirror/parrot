@@ -20,7 +20,24 @@ method line ($/, $key) {
     make $( $/{$key} );
 }
 
+method gprint ($/) {
+    my $past := PAST::Op.new();
+    $past.name('print');
+    $past.pasttype('call');
+    $past.node($/);
+    make $past;
+}
+
 method integer($/) {
     make PAST::Val.new( :value( ~$/ ), :returns('Integer'), :node( $/ ) );
 }
+
+method stringdouble($/) {
+    make PAST::Val.new( :value( ~$<string_literal> ), :node($/) );
+}
+
+method stringsingle($/) {
+    make PAST::Val.new( :value( ~$<string_literal> ), :node($/) );
+}
+
 
