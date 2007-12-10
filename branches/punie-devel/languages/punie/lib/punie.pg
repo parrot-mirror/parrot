@@ -1,8 +1,9 @@
 grammar Punie::Grammar is PCT::Grammar;
 
 rule TOP    {
-    ^ <lineseq>
-    [ $ | <panic: parse error> ]
+    [  ^ <lineseq> $
+    || <panic: parse error>
+    ]
     {*}
 }
 
