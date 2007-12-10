@@ -8,7 +8,6 @@ use warnings;
 use Test::More tests =>  8;
 use Carp;
 use Cwd;
-use Data::Dumper;
 use File::Copy;
 use File::Temp qw(tempdir);
 use lib qw( lib t/steps/testlib );

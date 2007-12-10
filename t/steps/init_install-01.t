@@ -8,7 +8,6 @@ use warnings;
 use Test::More tests => 21;
 use Carp;
 use Cwd;
-use Data::Dumper;
 use File::Temp qw(tempdir);
 use lib qw( lib t/configure/testlib t/steps/testlib );
 use Parrot::Configure;
@@ -45,7 +44,6 @@ my $cwd = cwd();
 
     my $conf = Parrot::Configure->new;
     $conf->refresh(get_previous_state($pkg));
-    print STDERR Dumper $conf;
     $conf->add_steps($pkg);
     $conf->options->set( %{$args} );
 

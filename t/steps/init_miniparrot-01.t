@@ -7,12 +7,10 @@ use strict;
 use warnings;
 use Test::More tests => 14;
 use Carp;
-use Data::Dumper;
 use lib qw( lib t/configure/testlib t/steps/testlib );
 use_ok('config::init::miniparrot');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-#use Parrot::Configure::Test qw( test_step_thru_runstep);
 use Auxiliary qw(
     get_step_name
     store_this_step_pure
@@ -32,7 +30,6 @@ my $args = process_options(
 
 my $conf = Parrot::Configure->new;
 $conf->refresh(get_previous_state($pkg));
-    print STDERR Dumper $conf;
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 

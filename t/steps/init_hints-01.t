@@ -5,14 +5,14 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests => 17;
+use Test::More tests =>  9;
 use Carp;
 use Data::Dumper;
 use lib qw( lib t/configure/testlib t/steps/testlib );
 use_ok('config::init::hints');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::IO::Capture::Mini;
+use IO::CaptureOutput qw| capture |;
 use Auxiliary qw(
     get_step_name
     store_this_step_pure
@@ -49,14 +49,17 @@ ok( $step->description(), "$step_name has description" );
 # need to capture the --verbose output, because the fact that it does not end
 # in a newline confuses Test::Harness
 {
-    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $ret = $step->runstep($conf);
-    my @more_lines = $tie_out->READLINE;
-    ok( @more_lines, "verbose output:  hints were captured" );
+#    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
+#        or croak "Unable to tie";
+    my ($ret, $stdout);
+    capture(
+        sub { $ret = $step->runstep($conf); },
+        \$stdout,
+    );
+    ok( $stdout, "verbose output:  hints were captured" );
     ok( defined $ret, "$step_name runstep() returned defined value" );
 }
-untie *STDOUT;
+#untie *STDOUT;
 
 pass("Completed all tests in $0");
 

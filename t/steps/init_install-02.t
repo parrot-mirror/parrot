@@ -8,7 +8,6 @@ use warnings;
 use Test::More tests => 21;
 use Carp;
 use Cwd;
-use Data::Dumper;
 use File::Temp qw(tempdir);
 use lib qw( lib t/configure/testlib t/steps/testlib );
 use Parrot::Configure;
