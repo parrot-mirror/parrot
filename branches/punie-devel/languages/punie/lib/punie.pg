@@ -36,6 +36,7 @@ rule cond {
     \( <expr> \) <block>
     [ 'elsif' \( <expr> \) <block> ]*
     [ 'else' $<else>=<block> ]?
+    {*}
 }
 
 rule expr    {
