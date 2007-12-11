@@ -139,6 +139,51 @@
     .return ($S0)
 .end
 
+.sub 'infix:<<'
+    .param int a
+    .param int b
+    $I0 = shl a, b
+    $P0 = new 'Integer'
+    $P0 = $I0
+    .return ($P0)
+.end
+
+.sub 'infix:>>'
+    .param int a
+    .param int b
+    $I0 = shr a, b
+    $P0 = new 'Integer'
+    $P0 = $I0
+    .return ($P0)
+.end
+
+.sub 'infix:&'
+    .param int a
+    .param int b
+    $I0 = band a, b
+    $P0 = new 'Integer'
+    $P0 = $I0
+    .return ($P0)
+.end
+
+.sub 'infix:|'
+    .param int a
+    .param int b
+    $I0 = bor a, b
+    $P0 = new 'Integer'
+    $P0 = $I0
+    .return ($P0)
+.end
+
+.sub 'infix:^'
+    .param int a
+    .param int b
+    $I0 = bxor a, b
+    $P0 = new 'Integer'
+    $P0 = $I0
+    .return ($P0)
+.end
+
 .sub 'print'
     .param pmc list            :slurpy
     .local pmc iter
