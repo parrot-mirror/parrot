@@ -83,7 +83,6 @@ method stringsingle($/) {
 
 method subcall($/) {
     my $past := PAST::Op.new( :node($/) );
-    ## XXX this if block is broken
     if $<expr> {
         my $expr := $($<expr>[0]);
         if ~$expr.name() eq 'infix:,' {
