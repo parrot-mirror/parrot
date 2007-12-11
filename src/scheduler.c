@@ -1,6 +1,6 @@
 /*
 Copyright (C) 2007, The Perl Foundation.
-$Id: $
+$Id$
 
 =head1 NAME
 
@@ -29,6 +29,7 @@ exceptions, async I/O, and concurrent tasks (threads).
 
 /* HEADERIZER BEGIN: static */
 
+PARROT_WARN_UNUSED_RESULT
 static int Parrot_cx_handle_tasks(PARROT_INTERP, NOTNULL(PMC *scheduler))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -52,13 +53,21 @@ Initalize the concurrency scheduler for the interpreter.
 
 */
 
-PARROT_API
+typedef void *(pt_start_routine_f)(void *);
+
 void
 Parrot_cx_init_scheduler(PARROT_INTERP)
 {
+#if CX_DEBUG
+        fprintf(stderr, "call to Parrot_cx_init_scheduler\n");
+#endif
     if (!interp->parent_interpreter) {
         PMC *scheduler;
         Parrot_Scheduler *sched_struct;
+
+#if CX_DEBUG
+        fprintf(stderr, "initializing scheduler runloop\n");
+#endif
 
         scheduler = pmc_new(interp, enum_class_Scheduler);
         scheduler = VTABLE_share_ro(interp, scheduler);
@@ -70,7 +79,7 @@ Parrot_cx_init_scheduler(PARROT_INTERP)
 
         /* Start the scheduler runloop */
         THREAD_CREATE_JOINABLE(sched_struct->runloop_handle,
-                        scheduler_runloop, (void *) scheduler);
+            (pt_start_routine_f *)scheduler_runloop, (void *) scheduler);
 
     }
 }
@@ -80,7 +89,7 @@ Parrot_cx_init_scheduler(PARROT_INTERP)
 =item C<PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static void*
-scheduler_runloop(NOTNULL(PMC *data))>
+scheduler_runloop(NOTNULL(PMC *scheduler))>
 
 The scheduler runloop is started by the interpreter. It manages the flow of
 concurrent scheduling for the parent interpreter, and for lightweight
@@ -137,7 +146,8 @@ scheduler_runloop(NOTNULL(PMC *scheduler))
 
 /*
 
-=item C<static int
+=item C<PARROT_WARN_UNUSED_RESULT
+static int
 Parrot_cx_handle_tasks(PARROT_INTERP, NOTNULL(PMC *scheduler))>
 
 Handle the pending tasks in the scheduler's task list. Returns when there are
@@ -148,12 +158,13 @@ continue the runloop.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static int
 Parrot_cx_handle_tasks(PARROT_INTERP, NOTNULL(PMC *scheduler))
 {
     while (VTABLE_get_integer(interp, scheduler) > 0) {
         PMC *task = VTABLE_pop_pmc(interp, scheduler);
-        INTVAL tid = VTABLE_get_integer(interp, task);
+        const INTVAL tid = VTABLE_get_integer(interp, task);
 
         /* When sent a terminate task, notify the scheduler */
         if (TASK_terminate_runloop_TEST(task)) {
@@ -176,7 +187,7 @@ Parrot_cx_handle_tasks(PARROT_INTERP, NOTNULL(PMC *scheduler))
 
 /*
 
-=item C<void Parrot_cx_runloop_sleep(PARROT_INTERP, NOTNULL(PMC *scheduler))>
+=item C<void Parrot_cx_runloop_sleep(NOTNULL(PMC *scheduler))>
 
 Pause the scheduler runloop. Called when there are no more pending tasks in the
 scheduler's task list, to freeze the runloop until there are tasks to handle.
@@ -227,13 +238,21 @@ PARROT_API
 void
 Parrot_cx_runloop_end(PARROT_INTERP)
 {
-    Parrot_Scheduler * const sched_struct = PARROT_SCHEDULER(interp->scheduler);
-    void *raw_retval = NULL;
-    PMC *term_event = pmc_new(interp, enum_class_Task);
-    TASK_terminate_runloop_SET(term_event);
-    Parrot_cx_schedule_task(interp, term_event);
+#if CX_DEBUG
+        fprintf(stderr, "call to Parrot_cx_runloop_end\n");
+#endif
+    if (!interp->parent_interpreter) {
+        Parrot_Scheduler * const sched_struct = PARROT_SCHEDULER(interp->scheduler);
+        void *raw_retval = NULL;
+        PMC * const term_event = pmc_new(interp, enum_class_Task);
+#if CX_DEBUG
+        fprintf(stderr, "terminating scheduler runloop\n");
+#endif
+        TASK_terminate_runloop_SET(term_event);
+        Parrot_cx_schedule_task(interp, term_event);
 
-    JOIN(sched_struct->runloop_handle, raw_retval);
+        JOIN(sched_struct->runloop_handle, raw_retval);
+    }
 }
 
 /*

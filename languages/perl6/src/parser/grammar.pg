@@ -47,7 +47,7 @@ grammar Perl6::Grammar is PCT::Grammar;
 token TOP {
     <.MARK_STATEMENT_END>
     <statement_block>
-    [ $ | <panic: Syntax error> ]
+    [ $ || <panic: Syntax error> ]
     {*}
 }
 
@@ -72,10 +72,15 @@ token ws {
         set_global '$!ws', match
     }}
     [
-    # | <unsp>
+    | <.unsp>
     | \v+
-    | <unv>
+    | <.unv>
     ]*
+}
+
+token unsp {
+    \\ <.before [\s|'#']>
+    [ \v | <.unv> ]*
 }
 
 token unv {
@@ -83,6 +88,24 @@ token unv {
     # || ^^ <.pod_comment>
     || '#' \N*
 }
+
+##  The <afterws> rule returns true if we're immediate after
+##  a set of whitespace.
+
+token afterws {
+    ##  <?{ $¢ == $!ws_to != $!ws_from }>
+    {{  $P0 = match.'to'()
+        $P1 = get_global '$!ws'
+        $P2 = $P1.'to'()
+        if $P0 != $P2 goto end
+        $P2 = $P1.'from'()
+        if $P0 == $P1 goto end
+        .return (1)
+      end:
+    }}
+    <fail>
+}
+
 
 ##  STD.pm doesn't have a statement_block rule -- we have one
 ##  to distinguish lists of statements that produce blocks
@@ -101,7 +124,7 @@ rule statement_block {
 token block {
     '{'
     <statement_block>
-    [ '}' | <panic: Missing '}'> ]
+    [ '}' || <panic: Missing '}'> ]
     [ \h* <.unv>? \n <.MARK_STATEMENT_END> ]?
     {*}
 }
@@ -155,7 +178,11 @@ token MARK_STATEMENT_END {
 ##  the calling rule.
 rule statement {
     | <statement_control> {*}                    #= statement_control
-    | $<expr>=<EXPR> {*}                         #= expr
+    | $<expr>=<EXPR>
+        [
+        || <statement_mod_cond> {*}              #= statement_mod_cond
+        || {*}                                   #= expr
+        ]
 }
 
 rule statement_control {
@@ -184,12 +211,16 @@ rule use_statement {
     {*}
 }
 
+rule statement_mod_cond {
+    $<sym>=[if|unless] <EXPR> {*}
+}
 
 rule statement_prefix {
     $<sym>=[do|try|gather|contend|async|lazy]
     <statement>
     {*}
 }
+
 
 
 #### Subroutine and method definitions ####
@@ -229,8 +260,34 @@ token special_variable {
 #### Terms ####
 
 token term {
-    | <noun> {*}                                 #= noun
+    | <noun> <postfix>* {*}                      #= noun
     | <listop> {*}                               #= listop
+}
+
+
+token postfix {
+    <!afterws>
+    [
+    | <methodop> {*}                             #= methodop
+    | <postcircumfix> {*}                        #= postcircumfix
+    ]
+}
+
+
+token methodop {
+    '.' <ident>
+    [
+    | <.unsp>? '(' <semilist> ')' {*}       #= semilist
+    | ':' <?before \s> <arglist> {*}             #= arglist
+    | {*}                                        #= null
+    ]
+}
+
+
+token postcircumfix {
+    | '(' <semilist> ')' {*}                     #= ( )
+    | '[' <semilist> ']' {*}                     #= [ ]
+    | '{' <semilist> '}' {*}                     #= { }
 }
 
 

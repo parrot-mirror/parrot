@@ -116,6 +116,7 @@ static void set_codepoints(PARROT_INTERP,
     SHIM(STRING *new_codepoints))
         __attribute__nonnull__(1);
 
+PARROT_CAN_RETURN_NULL
 static STRING * to_encoding(PARROT_INTERP,
     NOTNULL(STRING *src),
     NULLOK(STRING *dest))
@@ -153,6 +154,8 @@ static void utf8_set_position(SHIM_INTERP,
     UINTVAL pos)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static const void * utf8_skip_backward(NOTNULL(const void *ptr), UINTVAL n)
         __attribute__nonnull__(1);
 
@@ -260,7 +263,8 @@ utf8_decode(PARROT_INTERP, NOTNULL(const utf8_t *ptr))
 
 /*
 
-=item C<static void *
+=item C<PARROT_CANNOT_RETURN_NULL
+static void *
 utf8_encode(PARROT_INTERP, NOTNULL(void *ptr), UINTVAL c)>
 
 Returns the UTF-8 encoding of integer C<c>.
@@ -297,7 +301,8 @@ utf8_encode(PARROT_INTERP, NOTNULL(void *ptr), UINTVAL c)
 
 /*
 
-=item C<static const void *
+=item C<PARROT_CANNOT_RETURN_NULL
+static const void *
 utf8_skip_forward(NOTNULL(const void *ptr), UINTVAL n)>
 
 Moves C<ptr> C<n> characters forward.
@@ -321,7 +326,9 @@ utf8_skip_forward(NOTNULL(const void *ptr), UINTVAL n)
 
 /*
 
-=item C<static const void *
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static const void *
 utf8_skip_backward(NOTNULL(const void *ptr), UINTVAL n)>
 
 Moves C<ptr> C<n> characters back.
@@ -330,6 +337,8 @@ Moves C<ptr> C<n> characters back.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static const void *
 utf8_skip_backward(NOTNULL(const void *ptr), UINTVAL n)
 {
@@ -453,7 +462,8 @@ utf8_set_position(SHIM_INTERP, NOTNULL(String_iter *i), UINTVAL pos)
 
 /*
 
-=item C<static STRING *
+=item C<PARROT_CAN_RETURN_NULL
+static STRING *
 to_encoding(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))>
 
 RT#48260: Not yet documented!!!
@@ -462,6 +472,7 @@ RT#48260: Not yet documented!!!
 
 */
 
+PARROT_CAN_RETURN_NULL
 static STRING *
 to_encoding(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
 {
@@ -722,7 +733,8 @@ get_codepoints_inplace(PARROT_INTERP, NOTNULL(STRING *src),
 
 /*
 
-=item C<static STRING *
+=item C<PARROT_CANNOT_RETURN_NULL
+static STRING *
 get_bytes_inplace(PARROT_INTERP, SHIM(STRING *src),
         UINTVAL offset, UINTVAL count, SHIM(STRING *return_string))>
 
@@ -864,7 +876,8 @@ iter_init(SHIM_INTERP, NOTNULL(const STRING *src), NOTNULL(String_iter *iter))
 
 /*
 
-=item C<ENCODING *
+=item C<PARROT_CANNOT_RETURN_NULL
+ENCODING *
 Parrot_encoding_utf8_init(PARROT_INTERP)>
 
 RT#48260: Not yet documented!!!
@@ -873,6 +886,7 @@ RT#48260: Not yet documented!!!
 
 */
 
+PARROT_CANNOT_RETURN_NULL
 ENCODING *
 Parrot_encoding_utf8_init(PARROT_INTERP)
 {

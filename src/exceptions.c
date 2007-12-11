@@ -215,7 +215,7 @@ run_cleanup_action(PARROT_INTERP, NOTNULL(Stack_Entry_t *e))
 
 =item C<PARROT_API
 void
-Parrot_push_action(PARROT_INTERP, PMC *sub)>
+Parrot_push_action(PARROT_INTERP, NOTNULL(PMC *sub))>
 
 Push an action handler onto the dynamic environment.
 
@@ -420,6 +420,7 @@ count_exception_handlers(PARROT_INTERP)
 /*
 
 =item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PMC *
 get_exception_handler(PARROT_INTERP, INTVAL target_depth)>
 
@@ -430,6 +431,7 @@ Return an exception handler by index into the exeception handler stack.
 */
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PMC *
 get_exception_handler(PARROT_INTERP, INTVAL target_depth)
 {
@@ -459,6 +461,7 @@ get_exception_handler(PARROT_INTERP, INTVAL target_depth)
 /*
 
 =item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
 get_all_exception_handlers(PARROT_INTERP)>
 
@@ -532,8 +535,9 @@ pop_exception(PARROT_INTERP)
 
 =item C<PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC*
-new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)>
+new_c_exception_handler(PARROT_INTERP, NOTNULL(Parrot_exception *jb))>
 
 Generate an exception handler, that catches PASM level exceptions inside
 a C function. This could be a separate class too, for now just a private
@@ -547,7 +551,7 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
-new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
+new_c_exception_handler(PARROT_INTERP, NOTNULL(Parrot_exception *jb))
 {
     PMC * const handler = pmc_new(interp, enum_class_Exception_Handler);
     /*
@@ -562,7 +566,7 @@ new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
 
 =item C<PARROT_API
 void
-push_new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)>
+push_new_c_exception_handler(PARROT_INTERP, NOTNULL(Parrot_exception *jb))>
 
 Pushes an new C exception handler onto the stack.
 
@@ -572,7 +576,7 @@ Pushes an new C exception handler onto the stack.
 
 PARROT_API
 void
-push_new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
+push_new_c_exception_handler(PARROT_INTERP, NOTNULL(Parrot_exception *jb))
 {
     push_exception(interp, new_c_exception_handler(interp, jb));
 }
@@ -582,7 +586,7 @@ push_new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
 =item C<PARROT_API
 PARROT_CAN_RETURN_NULL
 opcode_t *
-throw_exception(PARROT_INTERP, PMC *exception, SHIM(void *dest))>
+throw_exception(PARROT_INTERP, NOTNULL(PMC *exception), SHIM(void *dest))>
 
 Throw the exception.
 
@@ -593,7 +597,7 @@ Throw the exception.
 PARROT_API
 PARROT_CAN_RETURN_NULL
 opcode_t *
-throw_exception(PARROT_INTERP, PMC *exception, SHIM(void *dest))
+throw_exception(PARROT_INTERP, NOTNULL(PMC *exception), SHIM(void *dest))
 {
     opcode_t *address;
     PMC * const handler = find_exception_handler(interp, exception);
@@ -616,6 +620,7 @@ throw_exception(PARROT_INTERP, PMC *exception, SHIM(void *dest))
 
 =item C<PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 opcode_t *
 rethrow_exception(PARROT_INTERP, NOTNULL(PMC *exception))>
 
@@ -627,6 +632,7 @@ Rethrow the exception.
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 opcode_t *
 rethrow_exception(PARROT_INTERP, NOTNULL(PMC *exception))
 {
@@ -712,7 +718,8 @@ dest2offset(PARROT_INTERP, NOTNULL(const opcode_t *dest))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
+=item C<PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static opcode_t *
 create_exception(PARROT_INTERP)>
 

@@ -183,14 +183,20 @@ void * IMCC_compile_file_s(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC * imcc_compile_pasm(PARROT_INTERP, NOTNULL(const char *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC * imcc_compile_pasm_ex(PARROT_INTERP, NOTNULL(const char *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC * IMCC_compile_pasm_s(PARROT_INTERP,
     NOTNULL(const char *s),
     NOTNULL(STRING **error_message))
@@ -198,14 +204,20 @@ PMC * IMCC_compile_pasm_s(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC * imcc_compile_pir(PARROT_INTERP, NOTNULL(const char *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC * imcc_compile_pir_ex(PARROT_INTERP, NOTNULL(const char *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC * IMCC_compile_pir_s(PARROT_INTERP,
     NOTNULL(const char *s),
     NOTNULL(STRING **error_message))
@@ -229,6 +241,7 @@ int imcc_vfprintf(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 Instruction * iNEW(PARROT_INTERP,
     NOTNULL(IMC_Unit *unit),
@@ -260,6 +273,7 @@ int is_op(PARROT_INTERP, NOTNULL(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CAN_RETURN_NULL
 Instruction * multi_keyed(PARROT_INTERP,
     NOTNULL(IMC_Unit *unit),
     NOTNULL(char *name),
@@ -287,19 +301,22 @@ void register_compilers(PARROT_INTERP)
 
 PARROT_MALLOC
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 char * str_dup(NOTNULL(const char *old))
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
 int try_find_op(PARROT_INTERP,
-    IMC_Unit * unit,
+    NOTNULL(IMC_Unit *unit),
     NOTNULL(const char *name),
-    SymReg ** r,
+    NOTNULL(SymReg **r),
     int n,
     int keyvec,
     int emit)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 /* HEADERIZER END: compilers/imcc/parser_util.c */
 
@@ -331,11 +348,17 @@ void expand_pcc_sub_ret(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-SymReg* get_const(PARROT_INTERP, const char *name, int type)
-        __attribute__nonnull__(1);
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+SymReg* get_const(PARROT_INTERP, NOTNULL(const char *name), int type)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
-SymReg* get_pasm_reg(PARROT_INTERP, const char *name)
-        __attribute__nonnull__(1);
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+SymReg* get_pasm_reg(PARROT_INTERP, NOTNULL(const char *name))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 /* HEADERIZER END: compilers/imcc/pcc.c */
 
