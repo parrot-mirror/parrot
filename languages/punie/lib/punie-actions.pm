@@ -140,8 +140,8 @@ method variable($/) {
     my $sigil := ~$<sigil>[0];
     if    ~$<sigil>[0] eq '@'    { $viviself := 'Array'; }
     elsif ~$<sigil>[0] eq '%'    { $viviself := 'Hash'; }
-    if    ~$<key>[0]<KEY> eq '[' { $sigil := '@'; }
-    elsif ~$<key>[0]<KEY> eq '{' { $sigil := '%'; }
+    if    ~$<key>[0]<KEY> eq '[' { $viviself := 'Array'; $sigil := '@'; }
+    elsif ~$<key>[0]<KEY> eq '{' { $viviself := 'Hash';  $sigil := '%'; }
     if $<key> {
         my $base := PAST::Var.new(
             :name( $sigil ~ $<word> ),
