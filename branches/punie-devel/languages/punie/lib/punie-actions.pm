@@ -81,6 +81,27 @@ method stringsingle($/) {
     make PAST::Val.new( :value( ~$<string_literal> ), :node($/) );
 }
 
+method subcall($/) {
+    my $past := PAST::Op.new( :node($/) );
+    ## XXX this if block is broken
+    if 0 {
+#    if $<expr> {
+        my $expr := $($<expr>[0]);
+        if ~$expr.name() eq 'infix:,' {
+            for @($expr) {
+                $past.push( $_ );
+            }
+        }
+        else {
+            $past.push( $($<expr>) );
+        }
+    }
+    $past.name( ~$<word> );
+    $past.pasttype('call');
+    $past.node($/);
+    make $past;
+}
+
 method expr($/, $key) {
     make $( $/{$key} );
 }
