@@ -84,8 +84,7 @@ method stringsingle($/) {
 method subcall($/) {
     my $past := PAST::Op.new( :node($/) );
     ## XXX this if block is broken
-    if 0 {
-#    if $<expr> {
+    if $<expr> {
         my $expr := $($<expr>[0]);
         if ~$expr.name() eq 'infix:,' {
             for @($expr) {
@@ -93,7 +92,7 @@ method subcall($/) {
             }
         }
         else {
-            $past.push( $($<expr>) );
+            $past.push( $expr );
         }
     }
     $past.name( ~$<word> );
