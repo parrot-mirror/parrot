@@ -8,6 +8,10 @@ method TOP($/) {
     make $past;
 }
 
+method block ($/) {
+    make $( $<lineseq> );
+}
+
 method lineseq ($/) {
     my $past := PAST::Stmts.new( :node($/) );
     for $<line> {

@@ -10,7 +10,7 @@ token ws {
     || '#' \N*
 }
 
-token block { \{ <lineseq> \} }
+token block { \{ <lineseq> \} {*} }
 
 rule lineseq {
     <line>*
