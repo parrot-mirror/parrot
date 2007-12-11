@@ -29,7 +29,7 @@ rule label { [<word>\:]? {*} }
 
 token word { [\w|_][\w|\d|_]* }
 
-rule subroutine { sub <word> <block> }
+rule subroutine { sub <word> <block> {*} }
 
 rule cond {
     $<sym>=[if|unless]
@@ -54,7 +54,7 @@ regex term {
     | <integer> {*}                              #= integer
     | <stringdouble> {*}                         #= stringdouble
     | <stringsingle> {*}                         #= stringsingle
-    | do <block> {*}                             #= do_block
+    | do <block> {*}                             #= block
     | <subcall> {*}                              #= subcall
     | <variable> {*}                             #= variable
 }
