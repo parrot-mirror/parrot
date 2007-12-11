@@ -9,7 +9,9 @@ method TOP($/) {
 }
 
 method block ($/) {
-    make $( $<lineseq> );
+    my $past := PAST::Block.new( :node($/), :blocktype('immediate') );
+    $past.push( $( $<lineseq> ) );
+    make $past;
 }
 
 method lineseq ($/) {
@@ -22,6 +24,14 @@ method lineseq ($/) {
 
 method line ($/, $key) {
     make $( $/{$key} );
+}
+
+method subroutine($/) {
+    my $past := $($<block>);
+    $past.name( ~$<word> );
+    $past.blocktype('declaration');
+    $past.node($/);
+    make $past;
 }
 
 method gprint ($/) {
@@ -57,6 +67,10 @@ method cond($/) {
 
 method integer($/) {
     make PAST::Val.new( :value( ~$/ ), :returns('Integer'), :node( $/ ) );
+}
+
+method number($/) {
+    make PAST::Val.new( :value( ~$/ ), :returns('Float'), :node( $/ ) );
 }
 
 method stringdouble($/) {
