@@ -127,10 +127,8 @@ proto infix:<==> is looser(infix:«<») is assoc('non') {...}
 proto infix:<!=> is equiv(infix:<==>) is assoc('non') {...}
 
 proto infix:<eq> is equiv(infix:<==>) is assoc('non')
-    is past('chain')
     {...}
 proto infix:<ne> is equiv(infix:<==>) is assoc('non')
-    is past('chain')
     {...}
 
 proto infix:<&> is looser(infix:<==>) is assoc('left')
@@ -146,14 +144,14 @@ proto infix:<^> is equiv(infix:<|>)   is assoc('left')
     {...}
 
 proto infix:<&&> is looser(infix:<|>)  is assoc('left')
-    is past('if')
+    is pasttype('if')
     {...}
 proto infix:<||> is looser(infix:<&&>) is assoc('left')
-    is past('unless')
+    is pasttype('unless')
     {...}
 
 proto infix:<=> is looser(infix:<||>)
-    is past('assign')
+    is pirop('assign')
     is lvalue(1)
     {...}
 
