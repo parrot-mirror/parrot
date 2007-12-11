@@ -132,6 +132,13 @@
     .return($P1)
 .end
 
+.sub 'infix:x'
+    .param string a
+    .param int b
+    $S0 = repeat a, b
+    .return ($S0)
+.end
+
 .sub 'print'
     .param pmc list            :slurpy
     .local pmc iter
