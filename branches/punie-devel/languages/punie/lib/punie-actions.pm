@@ -35,10 +35,18 @@ method subroutine($/) {
 }
 
 method gprint ($/) {
-    my $past := PAST::Op.new( $($<expr>) );
+    my $past := PAST::Op.new( :node($/) );
+    my $expr := $($<expr>);
+    if ~$expr.name() eq 'infix:,' {
+        for @($expr) {
+            $past.push( $_ );
+        }
+    }
+    else {
+        $past.push( $expr );
+    }
     $past.name('print');
     $past.pasttype('call');
-    $past.node($/);
     make $past;
 }
 
