@@ -1119,24 +1119,14 @@ A Segment Header has these entries:
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
+PARROT_CANNOT_RETURN_NULL
 PackFile *
 PackFile_new(PARROT_INTERP, INTVAL is_mapped)
 {
     PackFile * const pf = mem_allocate_zeroed_typed(PackFile);
 
-    if (!pf) {
-        PIO_eprintf(NULL, "PackFile_new: Unable to allocate!\n");
-        return NULL;
-    }
     pf->is_mmap_ped = is_mapped;
-
     pf->header = mem_allocate_zeroed_typed(PackFile_Header);
-    if (!pf->header) {
-        PIO_eprintf(NULL, "PackFile_new: Unable to allocate header!\n");
-        PackFile_destroy(interp, pf);
-        return NULL;
-    }
     /*
      * fill header with system specific data
      */
@@ -3290,7 +3280,7 @@ find_fixup_iter(PARROT_INTERP, NOTNULL(PackFile_Segment *seg), NOTNULL(void *use
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PackFile_FixupEntry *
-PackFile_find_fixup_entry(PARROT_INTERP, INTVAL type, char *name)>
+PackFile_find_fixup_entry(PARROT_INTERP, INTVAL type, NOTNULL(char *name))>
 
 I<What does this do?>
 

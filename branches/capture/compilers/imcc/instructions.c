@@ -83,9 +83,10 @@ static int emitter;     /* XXX */
 /*
 
 =item C<PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Instruction *
 _mk_instruction(NOTNULL(const char *op), NOTNULL(const char *fmt), int n,
-        SymReg ** r, int flags)>
+        SymReg **r, int flags)>
 
 Creates a new instruction
 
@@ -97,7 +98,7 @@ PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 Instruction *
 _mk_instruction(NOTNULL(const char *op), NOTNULL(const char *fmt), int n,
-        SymReg ** r, int flags)
+        SymReg **r, int flags)
 {
     int i, reg_space;
     Instruction * ins;
@@ -399,6 +400,8 @@ Get the register corresponding to an address which is a branch target
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 SymReg *
 get_branch_reg(NOTNULL(const Instruction *ins))
 {
@@ -422,6 +425,7 @@ The instruction following ins is returned.
 
 */
 
+PARROT_CAN_RETURN_NULL
 Instruction *
 delete_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins), int needs_freeing)
 {
@@ -565,6 +569,7 @@ initial position of ins.
 
 */
 
+PARROT_CAN_RETURN_NULL
 Instruction *
 move_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins), NOTNULL(Instruction *to))
 {
@@ -576,7 +581,8 @@ move_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins), NOTNULL(Ins
 
 /*
 
-=item C<Instruction *
+=item C<PARROT_CAN_RETURN_NULL
+Instruction *
 emitb(PARROT_INTERP, NULLOK(struct _IMC_Unit *unit), NULLOK(Instruction *i))>
 
 Emit a single instruction into the current unit buffer.
@@ -585,6 +591,7 @@ Emit a single instruction into the current unit buffer.
 
 */
 
+PARROT_CAN_RETURN_NULL
 Instruction *
 emitb(PARROT_INTERP, NULLOK(struct _IMC_Unit *unit), NULLOK(Instruction *i))
 {

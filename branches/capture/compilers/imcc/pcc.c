@@ -47,33 +47,47 @@ static void insert_tail_call(PARROT_INTERP,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static Instruction * insINS(PARROT_INTERP,
-    IMC_Unit * unit,
+    NOTNULL(IMC_Unit *unit),
     NOTNULL(Instruction *ins),
-    char *name,
-    SymReg **regs,
+    NOTNULL(const char *name),
+    NOTNULL(SymReg **regs),
     int n)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static Instruction * move_regs(PARROT_INTERP,
-    IMC_Unit * unit,
+    NOTNULL(IMC_Unit *unit),
     NOTNULL(Instruction *ins),
     int n,
-    SymReg **dest,
-    SymReg **src)
+    NOTNULL(SymReg **dest),
+    NOTNULL(SymReg **src))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(5)
+        __attribute__nonnull__(6);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static Instruction* pcc_get_args(PARROT_INTERP,
-    IMC_Unit * unit,
+    NOTNULL(IMC_Unit *unit),
     NOTNULL(Instruction *ins),
-    char *op_name,
+    NOTNULL(const char *op_name),
     int n,
-    SymReg **args,
-    int *arg_flags)
+    NULLOK(SymReg **args),
+    NULLOK(const int *arg_flags))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 static int pcc_reg_mov(PARROT_INTERP,
     unsigned char d,
@@ -91,8 +105,9 @@ static int recursive_tail_call(PARROT_INTERP,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static void unshift_self(NOTNULL(SymReg *sub), SymReg *obj)
-        __attribute__nonnull__(1);
+static void unshift_self(NOTNULL(SymReg *sub), NOTNULL(SymReg *obj))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 /* HEADERIZER END: static */
 
@@ -100,7 +115,7 @@ static void unshift_self(NOTNULL(SymReg *sub), SymReg *obj)
 
 =item C<static Instruction *
 insINS(PARROT_INTERP, IMC_Unit * unit, NOTNULL(Instruction *ins),
-        char *name, SymReg **regs, int n)>
+        NOTNULL(const char *name), SymReg **regs, int n)>
 
 Utility instruction routine. Creates and inserts an instruction
 into the current block in one call.
@@ -109,10 +124,13 @@ into the current block in one call.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static Instruction *
-insINS(PARROT_INTERP, IMC_Unit * unit, NOTNULL(Instruction *ins),
-        char *name, SymReg **regs, int n)
+insINS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *ins),
+        NOTNULL(const char *name), NOTNULL(SymReg **regs), int n)
 {
+    /* XXX INS can return NULL, but insert_ins() cannot take one */
     Instruction * const tmp = INS(interp, unit, name, NULL, regs, n, 0, 0);
     insert_ins(unit, ins, tmp);
     return tmp;
@@ -120,8 +138,10 @@ insINS(PARROT_INTERP, IMC_Unit * unit, NOTNULL(Instruction *ins),
 
 /*
 
-=item C<SymReg*
-get_pasm_reg(PARROT_INTERP, const char *name)>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+SymReg*
+get_pasm_reg(PARROT_INTERP, NOTNULL(const char *name))>
 
 get or create the SymReg
 
@@ -129,22 +149,25 @@ get or create the SymReg
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 SymReg*
-get_pasm_reg(PARROT_INTERP, const char *name)
+get_pasm_reg(PARROT_INTERP, NOTNULL(const char *name))
 {
     SymReg * const r = _get_sym(&IMCC_INFO(interp)->cur_unit->hash, name);
 
     if (r)
         return r;
+
     return mk_pasm_reg(interp, str_dup(name));
 }
 
 /*
- */
-/*
 
-=item C<SymReg*
-get_const(PARROT_INTERP, const char *name, int type)>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+SymReg*
+get_const(PARROT_INTERP, NOTNULL(const char *name), int type)>
 
 get or create a constant
 
@@ -152,8 +175,10 @@ get or create a constant
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 SymReg*
-get_const(PARROT_INTERP, const char *name, int type)
+get_const(PARROT_INTERP, NOTNULL(const char *name), int type)
 {
     SymReg * const r = _get_sym(&IMCC_INFO(interp)->ghash, name);
 
@@ -177,9 +202,12 @@ used by expand_pcc_sub_call and expand_pcc_sub
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static Instruction*
-pcc_get_args(PARROT_INTERP, IMC_Unit * unit, NOTNULL(Instruction *ins),
-        char *op_name, int n, SymReg **args, int *arg_flags)
+pcc_get_args(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *ins),
+        NOTNULL(const char *op_name), int n,
+        NULLOK(SymReg **args), NULLOK(const int *arg_flags))
 {
     int i, flags;
     char buf[1024], s[16];
@@ -235,7 +263,7 @@ pcc_get_args(PARROT_INTERP, IMC_Unit * unit, NOTNULL(Instruction *ins),
 /*
 
 =item C<static void
-unshift_self(NOTNULL(SymReg *sub), SymReg *obj)>
+unshift_self(NOTNULL(SymReg *sub), NOTNULL(SymReg *obj))>
 
 prepend the object to args or self to params
 
@@ -244,24 +272,23 @@ prepend the object to args or self to params
 */
 
 static void
-unshift_self(NOTNULL(SymReg *sub), SymReg *obj)
+unshift_self(NOTNULL(SymReg *sub), NOTNULL(SymReg *obj))
 {
+    struct pcc_sub_t * const pcc_sub = sub->pcc_sub;
+    const int n = pcc_sub->nargs;
     int i;
-    const int n = sub->pcc_sub->nargs;
 
-    sub->pcc_sub->args      = (SymReg **)realloc(sub->pcc_sub->args,
-            (n + 1) * sizeof (SymReg *));
-    sub->pcc_sub->arg_flags = (int *)realloc(sub->pcc_sub->arg_flags,
-            (n + 1) * sizeof (int));
+    pcc_sub->args      = (SymReg **)realloc(pcc_sub->args, (n + 1) * sizeof (SymReg *));
+    pcc_sub->arg_flags = (int *)realloc(pcc_sub->arg_flags, (n + 1) * sizeof (int));
 
     for (i = n; i; --i) {
-        sub->pcc_sub->args[i]      = sub->pcc_sub->args[i - 1];
-        sub->pcc_sub->arg_flags[i] = sub->pcc_sub->arg_flags[i - 1];
+        pcc_sub->args[i]      = pcc_sub->args[i - 1];
+        pcc_sub->arg_flags[i] = pcc_sub->arg_flags[i - 1];
     }
 
-    sub->pcc_sub->args[0]      = obj;
-    sub->pcc_sub->arg_flags[0] = 0;
-    sub->pcc_sub->nargs++;
+    pcc_sub->args[0]      = obj;
+    pcc_sub->arg_flags[0] = 0;
+    pcc_sub->nargs++;
 }
 
 /*
@@ -469,8 +496,10 @@ pcc_reg_mov(PARROT_INTERP, unsigned char d, unsigned char s, NOTNULL(void *vinfo
 
 /*
 
-=item C<static Instruction *
-move_regs(PARROT_INTERP, IMC_Unit * unit,
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static Instruction *
+move_regs(PARROT_INTERP, IMC_Unit *unit,
         NOTNULL(Instruction *ins), int n, SymReg **dest, SymReg **src)>
 
 RT#48260: Not yet documented!!!
@@ -479,9 +508,11 @@ RT#48260: Not yet documented!!!
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static Instruction *
-move_regs(PARROT_INTERP, IMC_Unit * unit,
-        NOTNULL(Instruction *ins), int n, SymReg **dest, SymReg **src)
+move_regs(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *ins),
+        int n, NOTNULL(SymReg **dest), NOTNULL(SymReg **src))
 {
     unsigned char *move_list;
     int i;
@@ -500,10 +531,10 @@ move_regs(PARROT_INTERP, IMC_Unit * unit,
     memset(move_list, -1, 2 * n);
 
     for (i = 0; i < 2 * n; ++i) {
-        SymReg * const ri = i < n ? dest[i] : src[i - n];
+        const SymReg * const ri = i < n ? dest[i] : src[i - n];
         int j;
         for (j = 0; j < i; ++j) {
-            SymReg * const rj = j < n ? dest[j] : src[j - n];
+            const SymReg * const rj = j < n ? dest[j] : src[j - n];
             if (ri == rj) {
                 PARROT_ASSERT(j < 255);
                 move_list[i] = (unsigned char)j;

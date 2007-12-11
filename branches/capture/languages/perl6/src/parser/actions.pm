@@ -38,7 +38,6 @@ method statement_block($/, $key) {
         $past.push($($<statementlist>));
         make $past;
     }
-    PIR q<  .return () >;  # FIXME:  ought to eliminate this somehow
 }
 
 
@@ -57,7 +56,18 @@ method statementlist($/) {
 
 
 method statement($/, $key) {
-    make $( $/{$key} );
+    my $past;
+    if $key eq 'statement_control' {
+        $past := $( $<statement_control> );
+    }
+    elsif $key eq 'statement_mod_cond' {
+        $past := $( $<statement_mod_cond> );
+        $past.push( $( $<expr> ) );
+    }
+    else {
+        $past := $( $<expr> );
+    }
+    make $past;
 }
 
 
@@ -101,6 +111,14 @@ method unless_statement($/) {
 
 method use_statement($/) {
     make PAST::Stmts.new( :node($/) );
+}
+
+
+method statement_mod_cond($/) {
+    make PAST::Op.new( $( $<EXPR> ),
+                       :pasttype( ~$<sym> ),
+                       :node( $/ )
+                     );
 }
 
 
@@ -182,7 +200,44 @@ method special_variable($/) {
 
 
 method term($/, $key) {
+    my $past := $( $/{$key} );
+    if $<postfix> {
+        for $<postfix> {
+            my $term := $past;
+            $past := $($_);
+            $past.unshift($term);
+        }
+    }
+    make $past;
+}
+
+method postfix($/, $key) {
     make $( $/{$key} );
+}
+
+method methodop($/, $key) {
+    my $past;
+    if ($key eq 'null') {
+        $past := PAST::Op.new();
+    }
+    else {
+        $past := $( $/{$key} );
+    }
+    $past.name(~$<ident>);
+    $past.pasttype('callmethod');
+    $past.node($/);
+    make $past;
+}
+
+method postcircumfix($/, $key) {
+    my $semilist := $( $<semilist> );
+    my $past := PAST::Var.new( $semilist[0],
+                               :scope('keyed'),
+                               :vivibase('List'),
+                               :viviself('Undef'),
+                               :node( $/ )
+                             );
+    make $past;
 }
 
 
@@ -205,7 +260,9 @@ method scope_declarator($/) {
 
 
 method variable($/, $key) {
-    make PAST::Var.new( :node($/), :name( ~$/ ), :viviself('Undef') );
+    my $viviself := 'Undef';
+    if (~$<sigil> eq '@') { $viviself := 'List'; }
+    make PAST::Var.new( :node($/), :name( ~$/ ), :viviself($viviself) );
 }
 
 

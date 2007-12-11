@@ -57,6 +57,23 @@ by C<attrname> based on C<has_value>.
 .end
 
 
+=item panic(message :slurpy)
+
+Helper method to throw an exception (with a message).
+
+=cut
+
+.sub 'panic' :method
+    .param pmc args            :slurpy
+    $S0 = join '', args
+    $P0 = new 'String'
+    $P0 = $S0
+    $P1 = new 'Exception'
+    setattribute $P1, 'message', $P0
+    throw $P1
+.end
+
+
 =item language(string name)
 
 Register this object as the compiler for C<name> using the
@@ -314,27 +331,32 @@ resulting ast.
 .sub 'past' :method
     .param pmc source
     .param pmc adverbs         :slurpy :named
-    .local pmc ast
-    ast = source
-    $I0 = isa ast, 'PAST::Node'
-    if $I0 goto return_ast
-    ast = source.'get_scalar'()
-    $I0 = isa ast, 'PAST::Node'
-    if $I0 goto return_ast
+
+    $I0 = isa source, 'PAST::Node'
+    unless $I0 goto compile_astgrammar
+    .return (source)
+
+  compile_astgrammar:
     .local string astgrammar_name
-    .local pmc astgrammar, astbuilder
     astgrammar_name = self.'astgrammar'()
-    unless astgrammar_name goto err_no_astgrammar
+    unless astgrammar_name goto compile_match
+    .local pmc astgrammar, astbuilder
     astgrammar = new astgrammar_name
     astbuilder = astgrammar.'apply'(source)
     .return astbuilder.'get'('past')
-  return_ast:
+
+  compile_match:
+    push_eh err_past
+    .local pmc ast
+    ast = source.'get_scalar'()
+    pop_eh
+    $I0 = isa ast, 'PAST::Node'
+    unless $I0 goto err_past
     .return (ast)
 
-  err_no_astgrammar:
-    $P0 = new 'Exception'
-    $P0['_message'] = 'Missing astgrammar in compiler'
-    throw $P0
+  err_past:
+    $S0 = typeof source
+    .return self.'panic'('Unable to obtain PAST from ', $S0)
 .end
 
 
@@ -498,13 +520,7 @@ options are passed to the evaluator.
     .return ($P0)
 
   err_infile:
-    $P0 = new 'Exception'
-    $S0 = 'Error: file cannot be read: '
-    $S0 .= iname
-    $S0 .= "\n"
-    $P0['_message'] = $S0
-    throw $P0
-    .return ()
+    .return self.'panic'('Error: file cannot be read: ', iname)
 .end
 
 
@@ -584,13 +600,7 @@ Generic method for compilers invoked from a shell command line.
     .return ()
 
   err_output:
-    $P0 = new 'Exception'
-    $S0 = 'Error: file cannot be written: '
-    $S0 .= output
-    $S0 .= "\n"
-    $P0['_message'] = $S0
-    throw $P0
-    .return ()
+    .return self.'panic'('Error: file cannot be written: ', output)
 .end
 
 
