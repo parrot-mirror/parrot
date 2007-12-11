@@ -28,6 +28,29 @@ method gprint ($/) {
     make $past;
 }
 
+method cond($/) {
+    my $cond := +$<expr> - 1;
+    my $past := PAST::Op.new( $( $<expr>[$cond] ),
+                              $( $<block>[$cond] ),
+                              :pasttype( 'if' ),
+                              :node( $/ )
+                            );
+    if ( $<else> ) {
+        $past.push( $( $<else>[0] ) );
+    }
+    while ($cond != 0) {
+        $cond := $cond - 1;
+        $past := PAST::Op.new( $( $<expr>[$cond] ),
+                               $( $<block>[$cond] ),
+                               $past,
+                               :pasttype('if'),
+                               :node( $/ )
+                             );
+    }
+    $past.pasttype( ~$<sym> );
+    make $past;
+}
+
 method integer($/) {
     make PAST::Val.new( :value( ~$/ ), :returns('Integer'), :node( $/ ) );
 }
@@ -67,3 +90,13 @@ method term($/, $key) {
     make $( $/{$key} );
 }
 
+method variable($/) {
+    my $viviself := 'Undef';
+    if ($<sigil> && ~$<sigil> eq '@') { $viviself := 'List'; }
+    make PAST::Var.new(
+        :node($/),
+        :name( ~$/ ),
+        :viviself($viviself),
+        :scope('package')
+    );
+}
