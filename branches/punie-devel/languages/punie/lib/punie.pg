@@ -103,7 +103,6 @@ proto infix:<%> is equiv(infix:<*>)
     {...}
 
 proto infix:<x> is equiv(infix:<*>)
-    is pirop('n_repeat')
     {...}
 
 proto infix:«<<» is looser(infix:<+>)
