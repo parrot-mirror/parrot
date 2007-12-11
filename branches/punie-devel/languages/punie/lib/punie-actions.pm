@@ -137,11 +137,31 @@ method term($/, $key) {
 
 method variable($/) {
     my $viviself := 'Undef';
-    if ($<sigil> && ~$<sigil> eq '@') { $viviself := 'List'; }
-    make PAST::Var.new(
-        :node($/),
-        :name( ~$/ ),
-        :viviself($viviself),
-        :scope('package')
-    );
+    my $sigil := ~$<sigil>[0];
+    if    ~$<sigil>[0] eq '@'    { $viviself := 'Array'; }
+    elsif ~$<sigil>[0] eq '%'    { $viviself := 'Hash'; }
+    if    ~$<key>[0]<KEY> eq '[' { $sigil := '@'; }
+    elsif ~$<key>[0]<KEY> eq '{' { $sigil := '%'; }
+    if $<key> {
+        my $base := PAST::Var.new(
+            :name( $sigil ~ $<word> ),
+            :scope('package'),
+            :viviself($viviself)
+        );
+        make PAST::Var.new(
+            $base,
+            $( $<key>[0]<expr> ),
+            :scope('keyed'),
+            :viviself('Undef')
+        );
+    }
+    else {
+        make PAST::Var.new(
+            :node($/),
+            :name( $sigil ~ $<word> ),
+            :viviself($viviself),
+            :scope('package')
+        );
+    }
+
 }

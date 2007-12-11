@@ -59,7 +59,7 @@ regex term {
     | <variable> {*}                             #= variable
 }
 rule variable { <sigil>? <word> <key>? {*} }
-token sigil { <[$@]> {*} }
+token sigil { <[$@%]> {*} }
 token key {
     | $<KEY>:=[\[] <?ws> <expr> <?ws> $<KEY_CLOSE>:=[\]]
     | $<KEY>:=[\{] <?ws> <expr> <?ws> $<KEY_CLOSE>:=[\}]
