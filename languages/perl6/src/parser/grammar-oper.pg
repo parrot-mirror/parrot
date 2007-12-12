@@ -11,10 +11,12 @@ proto prefix:<--> is equiv(postfix:<++>) is lvalue(1) { ... }
 proto infix:<**> is precedence('w=') { ... }
 
 ## symbolic unary
-proto prefix:<!> is precedence('v=') { ... }
-proto prefix:<+> is equiv(prefix:<!>) { ... }
-proto prefix:<-> is equiv(prefix:<!>) { ... }
-proto prefix:<+^> is equiv(prefix:<!>)
+proto prefix:<+> is precedence('v=') { ... }
+proto prefix:<-> is equiv(prefix:<+>) { ... }
+proto prefix:<~> is equiv(prefix:<+>) { ... }
+proto prefix:<?> is equiv(prefix:<+>) { ... }
+proto prefix:<!> is equiv(prefix:<+>) { ... }
+proto prefix:<+^> is equiv(prefix:<+>)
     is pirop('n_bnot')
     { ... }
 
@@ -65,6 +67,9 @@ proto prefix:<sleep> is equiv(prefix:<rand>) { ... }
 proto prefix:<abs> is equiv(prefix:<rand>)
     is pirop('n_abs')
     { ... }
+
+## nonchaining
+proto infix:<..> is precedence('n=') { ... }
 
 ## chaining
 proto infix:<==>  is precedence('m=') is pasttype('chain') { ... }

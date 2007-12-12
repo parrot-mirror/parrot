@@ -522,7 +522,7 @@ void* Parrot_run_meth_fromc_arglist(PARROT_INTERP,
     NOTNULL(PMC *sub),
     NOTNULL(PMC *obj),
     NOTNULL(STRING *meth),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     va_list args)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -536,7 +536,7 @@ FLOATVAL Parrot_run_meth_fromc_arglist_retf(PARROT_INTERP,
     NOTNULL(PMC *sub),
     NOTNULL(PMC *obj),
     NOTNULL(STRING *meth),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     va_list args)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -551,7 +551,7 @@ INTVAL Parrot_run_meth_fromc_arglist_reti(PARROT_INTERP,
     NOTNULL(PMC *sub),
     NOTNULL(PMC *obj),
     NOTNULL(STRING *meth),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     va_list args)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -566,7 +566,7 @@ void* Parrot_run_meth_fromc_args(PARROT_INTERP,
     NOTNULL(PMC *sub),
     NOTNULL(PMC *obj),
     NOTNULL(STRING *meth),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -580,7 +580,7 @@ FLOATVAL Parrot_run_meth_fromc_args_retf(PARROT_INTERP,
     NOTNULL(PMC *sub),
     NOTNULL(PMC *obj),
     NOTNULL(STRING *meth),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -594,7 +594,7 @@ INTVAL Parrot_run_meth_fromc_args_reti(PARROT_INTERP,
     NOTNULL(PMC *sub),
     NOTNULL(PMC *obj),
     NOTNULL(STRING *meth),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -614,7 +614,7 @@ PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 void * Parrot_runops_fromc_arglist(PARROT_INTERP,
     NOTNULL(PMC *sub),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     va_list args)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -624,7 +624,7 @@ PARROT_API
 PARROT_IGNORABLE_RESULT
 FLOATVAL Parrot_runops_fromc_arglist_retf(PARROT_INTERP,
     NOTNULL(PMC *sub),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     va_list args)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -634,7 +634,7 @@ PARROT_API
 PARROT_IGNORABLE_RESULT
 INTVAL Parrot_runops_fromc_arglist_reti(PARROT_INTERP,
     NOTNULL(PMC *sub),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     va_list args)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -645,7 +645,7 @@ PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_runops_fromc_args(PARROT_INTERP,
     NOTNULL(PMC *sub),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -656,7 +656,7 @@ PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 void * Parrot_runops_fromc_args_event(PARROT_INTERP,
     NOTNULL(PMC *sub),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -666,7 +666,7 @@ PARROT_API
 PARROT_IGNORABLE_RESULT
 FLOATVAL Parrot_runops_fromc_args_retf(PARROT_INTERP,
     NOTNULL(PMC *sub),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -676,7 +676,7 @@ PARROT_API
 PARROT_IGNORABLE_RESULT
 INTVAL Parrot_runops_fromc_args_reti(PARROT_INTERP,
     NOTNULL(PMC *sub),
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -746,7 +746,7 @@ STRING* interpinfo_s(PARROT_INTERP, INTVAL what)
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
 void * Parrot_compile_file(PARROT_INTERP,
-    NOTNULL(const char *fullname),
+    ARGIN(const char *fullname),
     NOTNULL(STRING **error))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -757,7 +757,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_compile_string(PARROT_INTERP,
     NOTNULL(STRING *type),
-    NOTNULL(const char *code),
+    ARGIN(const char *code),
     NOTNULL(STRING **error))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -775,7 +775,7 @@ void Parrot_compreg(PARROT_INTERP,
 PARROT_API
 void Parrot_mark_method_writes(PARROT_INTERP,
     int type,
-    NOTNULL(const char *name))
+    ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
@@ -783,8 +783,8 @@ PARROT_API
 void register_nci_method(PARROT_INTERP,
     const int type,
     NOTNULL(void *func),
-    NOTNULL(const char *name),
-    NOTNULL(const char *proto))
+    ARGIN(const char *name),
+    ARGIN(const char *proto))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
@@ -794,7 +794,7 @@ PARROT_API
 void register_raw_nci_method_in_ns(PARROT_INTERP,
     const int type,
     NOTNULL(void *func),
-    NOTNULL(const char *name))
+    ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);

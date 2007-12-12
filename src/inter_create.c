@@ -29,7 +29,7 @@ Create or destroy a Parrot interpreter
 /* HEADERIZER BEGIN: static */
 
 PARROT_WARN_UNUSED_RESULT
-static int is_env_var_set(NOTNULL(const char* var))
+static int is_env_var_set(ARGIN(const char* var))
         __attribute__nonnull__(1);
 
 static void setup_default_compreg(PARROT_INTERP)
@@ -51,7 +51,7 @@ Interp interpre;
 
 =item C<PARROT_WARN_UNUSED_RESULT
 static int
-is_env_var_set(NOTNULL(const char* var))>
+is_env_var_set(ARGIN(const char* var))>
 
 Checks whether the specified environment variable is set.
 
@@ -61,7 +61,7 @@ Checks whether the specified environment variable is set.
 
 PARROT_WARN_UNUSED_RESULT
 static int
-is_env_var_set(NOTNULL(const char* var))
+is_env_var_set(ARGIN(const char* var))
 {
     int free_it, retval;
     char* const value = Parrot_getenv(var, &free_it);
@@ -263,7 +263,7 @@ make_interpreter(NULLOK(Interp *parent), INTVAL flags)
     interp->thread_data = NULL;
 
     Parrot_init_events(interp);
-    Parrot_cx_init_scheduler(interp);
+/*    Parrot_cx_init_scheduler(interp); */
 
 #ifdef ATEXIT_DESTROY
     /*
@@ -327,7 +327,7 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
      */
     if (!interp->parent_interpreter) {
         pt_join_threads(interp);
-        Parrot_cx_runloop_end(interp);
+/*        Parrot_cx_runloop_end(interp); */
     }
 
     /* if something needs destruction (e.g. closing PIOs)

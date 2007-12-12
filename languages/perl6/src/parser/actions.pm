@@ -12,25 +12,37 @@ method TOP($/) {
 
 
 method statement_block($/, $key) {
-    ##  FIXME: $?BLOCK, @?BLOCK
     our $?BLOCK;
     our @?BLOCK;
-    ## when creating a block, create an empty first child node (PAST::Stmts)
-    ## for special varible initialization and parameter handling. also,
-    ## register the special variables in the block's symbol table
+    our $?BLOCK_PROLOGUE;
+    ## when entering a block, pop the existing $?BLOCK_PROLOGUE from
+    ## any previous <block> or <pblock> rule if it exists, otherwise
+    ## create a new one.  The first child of the block is where we
+    ## store parameter and other block-entry tasks.
     if ($key eq 'open') {
-        my $init := PAST::Stmts.new();
-        $init.push( PAST::Var.new(:name('$!'), :isdecl(1)));
-        $init.push( PAST::Var.new(:name('$/'), :isdecl(1)));
-        $init.push( PAST::Var.new(:name('$_'), :isdecl(1)));
-        $?BLOCK := PAST::Block.new( PAST::Stmts.new( $init ),
-                                    :blocktype('immediate'),
-                                    :node($/)
-                                  );
-        $?BLOCK.symbol( '$!', :scope('lexical') );
-        $?BLOCK.symbol( '$/', :scope('lexical') );
-        $?BLOCK.symbol( '$_', :scope('lexical') );
+        if $?BLOCK_PROLOGUE {
+            $?BLOCK := $?BLOCK_PROLOGUE;
+            $?BLOCK_PROLOGUE := 0;
+        }
+        else {
+            $?BLOCK := PAST::Block.new( PAST::Stmts.new(),
+                                        :blocktype('immediate'),
+                                        :node($/)
+                                      );
+        }
         @?BLOCK.unshift($?BLOCK);
+        my $init := $?BLOCK[0];
+        unless $?BLOCK.symbol('$_') {
+            $init.push( PAST::Var.new( :name('$_'), :isdecl(1) ) );
+            $?BLOCK.symbol( '$_', :scope('lexical') );
+        }
+        unless $?BLOCK.symbol('$/') {
+            $init.push( PAST::Var.new( :name('$/'), :isdecl(1) ) );
+            $?BLOCK.symbol( '$/', :scope('lexical') );
+        }
+        unless $?BLOCK.symbol('$!') {
+            $init.push( PAST::Var.new( :name('$!'), :isdecl(1) ) );
+            $?BLOCK.symbol( '$!', :scope('lexical') ); }
     }
     if ($key eq 'close') {
         my $past := @?BLOCK.shift();
@@ -110,7 +122,19 @@ method unless_statement($/) {
 
 
 method use_statement($/) {
-    make PAST::Stmts.new( :node($/) );
+    my $name := ~$<name>;
+    my $past;
+    if $name eq 'v6' || $name eq 'lib' {
+        $past := PAST::Stmts.new( :node($/) );
+    }
+    else {
+        $past := PAST::Op.new( PAST::Val.new( :value( $name ) ),
+                               :name('use'),
+                               :pasttype('call'),
+                               :node( $/ )
+                             );
+    }
+    make $past;
 }
 
 
@@ -354,6 +378,22 @@ method quote_term($/, $key) {
         $past := $( $<variable> );
     }
     make $past;
+}
+
+
+method typename($/) {
+    my $ns := $<name><ident>;
+    my $shortname;
+    PIR q<    $P0 = find_lex '$ns'         >;
+    PIR q<    $P0 = clone $P0              >;
+    PIR q<    $P1 = pop $P0                >;
+    PIR q<    store_lex '$ns', $P0         >;
+    PIR q<    store_lex '$shortname', $P1  >;
+    make PAST::Var.new( :name($shortname),
+                        :namespace($ns),
+                        :scope('package'),
+                        :node($/)
+                      );
 }
 
 

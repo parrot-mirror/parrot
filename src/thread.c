@@ -50,7 +50,7 @@ static PMC * make_local_copy(PARROT_INTERP,
 static void mutex_unlock(NOTNULL(void *arg))
         __attribute__nonnull__(1);
 
-static Parrot_Interp pt_check_tid(UINTVAL tid, NOTNULL(const char *from))
+static Parrot_Interp pt_check_tid(UINTVAL tid, ARGIN(const char *from))
         __attribute__nonnull__(2);
 
 static int pt_gc_count_threads(PARROT_INTERP)
@@ -803,7 +803,7 @@ pt_thread_yield(void)
 /*
 
 =item C<static Parrot_Interp
-pt_check_tid(UINTVAL tid, NOTNULL(const char *from))>
+pt_check_tid(UINTVAL tid, ARGIN(const char *from))>
 
 Helper function. Check if C<tid> is valid. The caller holds the mutex.
 Returns the interpreter for C<tid>.
@@ -813,7 +813,7 @@ Returns the interpreter for C<tid>.
 */
 
 static Parrot_Interp
-pt_check_tid(UINTVAL tid, NOTNULL(const char *from))
+pt_check_tid(UINTVAL tid, ARGIN(const char *from))
 {
     if (tid >= n_interpreters) {
         UNLOCK(interpreter_array_mutex);

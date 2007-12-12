@@ -120,16 +120,16 @@ struct _IMC_Unit;
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 SymReg * _find_sym(PARROT_INTERP,
-    NULLOK(const Namespace *nspace),
+    ARGIN_NULLOK(const Namespace *nspace),
     NOTNULL(SymHash *hsh),
-    NOTNULL(const char *name))
+    ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-SymReg * _get_sym(NOTNULL(const SymHash *hsh), NOTNULL(const char *name))
+SymReg * _get_sym(ARGIN(const SymHash *hsh), ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -145,13 +145,15 @@ SymReg * _mk_address(PARROT_INTERP,
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-SymReg * _mk_const(NOTNULL(SymHash *hsh), NOTNULL(const char *name), int t)
+SymReg * _mk_const(NOTNULL(SymHash *hsh), ARGIN(const char *name), int t)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-char * _mk_fullname(NULLOK(const Namespace *ns), NOTNULL(const char *name))
+char * _mk_fullname(
+    ARGIN_NULLOK(const Namespace *ns),
+    ARGIN(const char *name))
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
@@ -210,12 +212,12 @@ void debug_dump_sym_hash(NOTNULL(SymHash *hsh))
 
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
-SymReg * dup_sym(NOTNULL(const SymReg *r))
+SymReg * dup_sym(ARGIN(const SymReg *r))
         __attribute__nonnull__(1);
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-SymReg * find_sym(PARROT_INTERP, NOTNULL(const char *name))
+SymReg * find_sym(PARROT_INTERP, ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -224,12 +226,12 @@ void free_sym(NOTNULL(SymReg *r))
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-SymReg * get_sym(PARROT_INTERP, NOTNULL(const char *name))
+SymReg * get_sym(PARROT_INTERP, ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_PURE_FUNCTION
-unsigned int hash_str(NOTNULL(const char *str))
+unsigned int hash_str(ARGIN(const char *str))
         __attribute__nonnull__(1);
 
 PARROT_CANNOT_RETURN_NULL
@@ -248,7 +250,7 @@ SymReg * mk_address(PARROT_INTERP, NOTNULL(char *name), int uniq)
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-SymReg * mk_const(PARROT_INTERP, NOTNULL(const char *name), int t)
+SymReg * mk_const(PARROT_INTERP, ARGIN(const char *name), int t)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -265,7 +267,7 @@ SymReg * mk_const_ident(PARROT_INTERP,
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-char * mk_fullname(NOTNULL(const char *name))
+char * mk_fullname(ARGIN(const char *name))
         __attribute__nonnull__(1);
 
 PARROT_CANNOT_RETURN_NULL
@@ -338,7 +340,7 @@ void store_symreg(PARROT_INTERP, NOTNULL(SymReg *r))
 PARROT_MALLOC
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-char * symreg_to_str(NOTNULL(const SymReg *s))
+char * symreg_to_str(ARGIN(const SymReg *s))
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: compilers/imcc/symreg.c */

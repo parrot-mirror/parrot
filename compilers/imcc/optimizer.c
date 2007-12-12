@@ -126,7 +126,7 @@ static int dead_code_remove(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 
 PARROT_WARN_UNUSED_RESULT
 static int eval_ins(PARROT_INTERP,
-    NOTNULL(const char *op),
+    ARGIN(const char *op),
     size_t ops,
     NOTNULL(SymReg **r))
         __attribute__nonnull__(1)
@@ -196,7 +196,8 @@ pre_optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 
 /*
 
-=item C<int
+=item C<PARROT_WARN_UNUSED_RESULT
+int
 cfg_optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))>
 
 Handles optimizations occuring during the construction of the CFG.
@@ -260,8 +261,10 @@ optimize(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 
 /*
 
-=item C<const char *
-get_neg_op(NOTNULL(const char *op), NOTNULL(int *n))>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+const char *
+get_neg_op(ARGIN(const char *op), NOTNULL(int *n))>
 
 Get negated form of operator. If no negated form is known, return NULL.
 
@@ -272,7 +275,7 @@ Get negated form of operator. If no negated form is known, return NULL.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 const char *
-get_neg_op(NOTNULL(const char *op), NOTNULL(int *n))
+get_neg_op(ARGIN(const char *op), NOTNULL(int *n))
 {
     static struct br_pairs {
         const char * const op;
@@ -371,7 +374,7 @@ if_branch(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 /*
 
 =item C<static int
-strength_reduce(PARROT_INTERP, IMC_Unit * unit)>
+strength_reduce(PARROT_INTERP, NOTNULL(IMC_Unit *unit))>
 
 strength_reduce ... rewrites e.g add Ix, Ix, y => add Ix, y
 
@@ -719,8 +722,10 @@ next_constant:;
 
 /*
 
-=item C<Instruction *
-IMCC_subst_constants_umix(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+Instruction *
+IMCC_subst_constants_umix(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
         NOTNULL(SymReg **r), int n)>
 
 rewrite e.g. add_n_ic => add_n_nc
@@ -732,7 +737,7 @@ rewrite e.g. add_n_ic => add_n_nc
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 Instruction *
-IMCC_subst_constants_umix(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
+IMCC_subst_constants_umix(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
         NOTNULL(SymReg **r), int n)
 {
     Instruction *tmp;
@@ -763,7 +768,7 @@ IMCC_subst_constants_umix(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const 
 
 =item C<PARROT_WARN_UNUSED_RESULT
 static int
-eval_ins(PARROT_INTERP, NOTNULL(const char *op), size_t ops, NOTNULL(SymReg **r))>
+eval_ins(PARROT_INTERP, ARGIN(const char *op), size_t ops, NOTNULL(SymReg **r))>
 
 Run one parrot instruction, registers are filled with the
 according constants. Thus the result is always ok as the function
@@ -775,7 +780,7 @@ core evaluates the constants.
 
 PARROT_WARN_UNUSED_RESULT
 static int
-eval_ins(PARROT_INTERP, NOTNULL(const char *op), size_t ops, NOTNULL(SymReg **r))
+eval_ins(PARROT_INTERP, ARGIN(const char *op), size_t ops, NOTNULL(SymReg **r))
 {
     opcode_t eval[4], *pc;
     int opnum;
@@ -848,8 +853,8 @@ eval_ins(PARROT_INTERP, NOTNULL(const char *op), size_t ops, NOTNULL(SymReg **r)
 =item C<PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 Instruction *
-IMCC_subst_constants(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
-        SymReg **r, int n, NOTNULL(int *ok))>
+IMCC_subst_constants(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
+        NOTNULL(SymReg **r), int n, NOTNULL(int *ok))>
 
 rewrite e.g. add_n_nc_nc => set_n_nc
              abs_i_ic    => set_i_ic
@@ -863,7 +868,7 @@ rewrite e.g. add_n_nc_nc => set_n_nc
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 Instruction *
-IMCC_subst_constants(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
+IMCC_subst_constants(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
         NOTNULL(SymReg **r), int n, NOTNULL(int *ok))
 {
     Instruction *tmp;
@@ -1087,8 +1092,9 @@ branch_branch(PARROT_INTERP, NOTNULL(IMC_Unit * unit))
 
 /*
 
-=item C<static int
-branch_reorg(PARROT_INTERP, IMC_Unit * unit)>
+=item C<PARROT_WARN_UNUSED_RESULT
+static int
+branch_reorg(PARROT_INTERP, NOTNULL(IMC_Unit *unit))>
 
 branch L2  => ...
 L1:           branch L4
@@ -1256,7 +1262,7 @@ branch_cond_loop_swap(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instructio
 /*
 
 =item C<static int
-branch_cond_loop(PARROT_INTERP, IMC_Unit * unit)>
+branch_cond_loop(PARROT_INTERP, NOTNULL(IMC_Unit *unit))>
 
 start:           => start:
 if cond goto end    if cond goto end
@@ -1337,8 +1343,9 @@ branch_cond_loop(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
 
 /*
 
-=item C<static int
-unused_label(PARROT_INTERP, IMC_Unit * unit)>
+=item C<PARROT_WARN_UNUSED_RESULT
+static int
+unused_label(PARROT_INTERP, NOTNULL(IMC_Unit *unit))>
 
 Removes unused labels. A label is unused if ... [RT#46287: finish this].
 
@@ -1723,7 +1730,9 @@ is_invariant(PARROT_INTERP, NOTNULL(IMC_Unit * unit), NOTNULL(Instruction *ins))
 #  ifdef MOVE_INS_1_BL
 /*
 
-=item C<Basic_block *
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+Basic_block *
 find_outer(NOTNULL(IMC_Unit *unit), NOTNULL(Basic_block *blk))>
 
 RT#48260: Not yet documented!!!

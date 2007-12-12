@@ -23,7 +23,7 @@ Basic_block * find_outer(NOTNULL(IMC_Unit *unit), NOTNULL(Basic_block *blk))
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-const char * get_neg_op(NOTNULL(const char *op), NOTNULL(int *n))
+const char * get_neg_op(ARGIN(const char *op), NOTNULL(int *n))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -31,7 +31,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 Instruction * IMCC_subst_constants(PARROT_INTERP,
     NOTNULL(IMC_Unit *unit),
-    NOTNULL(const char *name),
+    ARGIN(const char *name),
     NOTNULL(SymReg **r),
     int n,
     NOTNULL(int *ok))
@@ -45,7 +45,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 Instruction * IMCC_subst_constants_umix(PARROT_INTERP,
     NOTNULL(IMC_Unit *unit),
-    NOTNULL(const char *name),
+    ARGIN(const char *name),
     NOTNULL(SymReg **r),
     int n)
         __attribute__nonnull__(1)

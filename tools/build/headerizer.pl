@@ -91,6 +91,7 @@ main();
 sub extract_function_declarations {
     my $text = shift;
 
+    # Drop all text after HEADERIZER STOP
     $text =~ s[/\*\s*HEADERIZER STOP.+][]s;
 
     # Strip blocks of comments
@@ -163,7 +164,7 @@ sub function_components_from_declaration {
     }
 
     my $return_type = shift @lines;
-    my $args = join( " ", @lines );
+    my $args = join( ' ', @lines );
 
     $args =~ s/\s+/ /g;
     $args =~ s{([^(]+)\s*\((.+)\);?}{$2}
@@ -227,13 +228,13 @@ sub attrs_from_args {
     my $n = 0;
     for my $arg (@args) {
         ++$n;
-        if ( $arg =~ m{(ARGOUT|ARGINOUT|NOTNULL)\(} || $arg eq 'PARROT_INTERP' ) {
+        if ( $arg =~ m{(ARGIN|ARGOUT|ARGINOUT|NOTNULL)\(} || $arg eq 'PARROT_INTERP' ) {
             push( @attrs, "__attribute__nonnull__($n)" );
         }
-        if ( ( $arg =~ m{\*} ) && ( $arg !~ /\b(SHIM|NOTNULL|NULLOK|ARGIN|ARGOUT|ARGINOUT)/ ) ) {
+        if ( ( $arg =~ m{\*} ) && ( $arg !~ /\b(SHIM|((ARGIN|ARGOUT|ARGINOUT)(_NULLOK)?))/ ) ) {
             my $name = $func->{name};
             my $file = $func->{file};
-            squawk( $file, $name, qq{"$arg" isn't protected with NOTNULL or NULLOK} );
+            squawk( $file, $name, qq{"$arg" isn't protected with an ARGIN, ARGOUT or ARGINOUT (or a _NULLOK variant)} );
         }
     }
 
@@ -304,6 +305,54 @@ sub squawk {
     push( @{ $warnings{$file}->{$func} }, $error );
 }
 
+sub read_file {
+    my $filename = shift;
+
+    open my $fh, '<', $filename or die "couldn't read '$filename': $!";
+    my $text = do { local $/ = undef; <$fh> };
+    close $fh;
+
+    return $text;
+}
+
+sub write_file {
+    my $filename = shift;
+    my $text     = shift;
+
+    open my $fh, '>', $filename or die "couldn't write '$filename': $!";
+    print {$fh} $text;
+    close $fh;
+}
+
+sub replace_headerized_declarations {
+    my $source_code = shift;
+    my $cfile       = shift;
+    my $hfile       = shift;
+    my @funcs       = @_;
+
+    # Allow a way to not headerize statics
+    if ( $source_code =~ m{/\*\s*HEADERIZER NONE:\s*$cfile\s*\*/} ) {
+        return $source_code;
+    }
+
+    @funcs = sort api_first_then_alpha @funcs;
+
+    my @function_decls = make_function_decls(@funcs);
+
+    my $function_decls = join( "\n", @function_decls );
+    my $STARTMARKER    = qr#/\* HEADERIZER BEGIN: $cfile \*/\n#;
+    my $ENDMARKER      = qr#/\* HEADERIZER END: $cfile \*/\n?#;
+    $source_code =~ s#($STARTMARKER)(?:.*?)($ENDMARKER)#$1\n$function_decls\n$2#s
+        or die "Need begin/end HEADERIZER markers for $cfile in $hfile\n";
+
+    return $source_code;
+}
+
+sub api_first_then_alpha {
+    return ( ( $b->{is_api} || 0 ) <=> ( $a->{is_api} || 0 ) )
+        || ( lc $a->{name} cmp lc $b->{name} );
+}
+
 sub main {
     GetOptions( 'verbose' => \$opt{verbose}, ) or exit(1);
 
@@ -328,19 +377,22 @@ sub main {
         my $pmcfile = $ofile;
         $pmcfile =~ s/\Q$PConfig{o}\E$/.pmc/;
 
-        my $sourcefile = -f $pmcfile ? $pmcfile : $cfile;
-
-        my $source = read_file($cfile);
-
+        my $csource = read_file($cfile);
         die "can't find HEADERIZER HFILE directive in '$cfile'"
-            unless $source =~ m#/\*\s+HEADERIZER HFILE:\s+([^*]+?)\s+\*/#s;
+            unless $csource =~ m{ /\* \s+ HEADERIZER\ HFILE: \s+ ([^*]+?) \s+ \*/ }sx;
         my $hfile = $1;
-
         if ( ( $hfile ne 'none' ) && ( not -f $hfile ) ) {
             die "'$hfile' not found (referenced from '$cfile')";
         }
 
-        my @decls = extract_function_declarations($source);
+        my @decls;
+        if ( -f $pmcfile ) {
+            @decls = extract_function_declarations( $csource );
+        }
+        else {
+            @decls = extract_function_declarations( $csource );
+        }
+
         for my $decl (@decls) {
             my $components = function_components_from_declaration( $cfile, $decl );
             push( @{ $cfiles{$hfile}->{$cfile} }, $components ) unless $hfile eq 'none';
@@ -396,54 +448,6 @@ sub main {
     }
 
     return;
-}
-
-sub read_file {
-    my $filename = shift;
-
-    open my $fh, '<', $filename or die "couldn't read '$filename': $!";
-    my $text = do { local $/ = undef; <$fh> };
-    close $fh;
-
-    return $text;
-}
-
-sub write_file {
-    my $filename = shift;
-    my $text     = shift;
-
-    open my $fh, '>', $filename or die "couldn't write '$filename': $!";
-    print {$fh} $text;
-    close $fh;
-}
-
-sub replace_headerized_declarations {
-    my $source_code = shift;
-    my $cfile       = shift;
-    my $hfile       = shift;
-    my @funcs       = @_;
-
-    # Allow a way to not headerize statics
-    if ( $source_code =~ m{/\*\s*HEADERIZER NONE:\s*$cfile\s*\*/} ) {
-        return $source_code;
-    }
-
-    @funcs = sort api_first_then_alpha @funcs;
-
-    my @function_decls = make_function_decls(@funcs);
-
-    my $function_decls = join( "\n", @function_decls );
-    my $STARTMARKER    = qr#/\* HEADERIZER BEGIN: $cfile \*/\n#;
-    my $ENDMARKER      = qr#/\* HEADERIZER END: $cfile \*/\n?#;
-    $source_code =~ s#($STARTMARKER)(?:.*?)($ENDMARKER)#$1\n$function_decls\n$2#s
-        or die "Need begin/end HEADERIZER markers for $cfile in $hfile\n";
-
-    return $source_code;
-}
-
-sub api_first_then_alpha {
-    return ( ( $b->{is_api} || 0 ) <=> ( $a->{is_api} || 0 ) )
-        || ( lc $a->{name} cmp lc $b->{name} );
 }
 
 =head1 NAME

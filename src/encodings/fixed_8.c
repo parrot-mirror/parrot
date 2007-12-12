@@ -50,7 +50,7 @@ static void fixed8_set_position(SHIM_INTERP,
 
 PARROT_WARN_UNUSED_RESULT
 static UINTVAL get_byte(PARROT_INTERP,
-    NOTNULL(const STRING *source_string),
+    ARGIN(const STRING *source_string),
     UINTVAL offset)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -77,7 +77,7 @@ static STRING * get_bytes_inplace(PARROT_INTERP,
 
 PARROT_WARN_UNUSED_RESULT
 static UINTVAL get_codepoint(PARROT_INTERP,
-    NOTNULL(const STRING *source_string),
+    ARGIN(const STRING *source_string),
     UINTVAL offset)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -103,13 +103,13 @@ static STRING * get_codepoints_inplace(PARROT_INTERP,
         __attribute__nonnull__(5);
 
 static void iter_init(SHIM_INTERP,
-    NOTNULL(const STRING *src),
+    ARGIN(const STRING *src),
     NOTNULL(String_iter *iter))
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 static void set_byte(PARROT_INTERP,
-    NOTNULL(const STRING *source_string),
+    ARGIN(const STRING *source_string),
     UINTVAL offset,
     UINTVAL byte)
         __attribute__nonnull__(1)
@@ -177,7 +177,7 @@ to_encoding(PARROT_INTERP, SHIM(STRING *src), SHIM(STRING *dest))
 
 =item C<PARROT_WARN_UNUSED_RESULT
 static UINTVAL
-get_codepoint(PARROT_INTERP, NOTNULL(const STRING *source_string),
+get_codepoint(PARROT_INTERP, ARGIN(const STRING *source_string),
         UINTVAL offset)>
 
 codepoints are bytes, so delegate
@@ -188,7 +188,7 @@ codepoints are bytes, so delegate
 
 PARROT_WARN_UNUSED_RESULT
 static UINTVAL
-get_codepoint(PARROT_INTERP, NOTNULL(const STRING *source_string),
+get_codepoint(PARROT_INTERP, ARGIN(const STRING *source_string),
         UINTVAL offset)
 {
     return get_byte(interp, source_string, offset);
@@ -217,7 +217,7 @@ set_codepoint(PARROT_INTERP, NOTNULL(STRING *source_string),
 
 =item C<PARROT_WARN_UNUSED_RESULT
 static UINTVAL
-get_byte(PARROT_INTERP, NOTNULL(const STRING *source_string), UINTVAL offset)>
+get_byte(PARROT_INTERP, ARGIN(const STRING *source_string), UINTVAL offset)>
 
 RT#48260: Not yet documented!!!
 
@@ -227,7 +227,7 @@ RT#48260: Not yet documented!!!
 
 PARROT_WARN_UNUSED_RESULT
 static UINTVAL
-get_byte(PARROT_INTERP, NOTNULL(const STRING *source_string), UINTVAL offset)
+get_byte(PARROT_INTERP, ARGIN(const STRING *source_string), UINTVAL offset)
 {
     unsigned char *contents = (unsigned char *)source_string->strstart;
     if (offset >= source_string->bufused) {
@@ -242,7 +242,7 @@ get_byte(PARROT_INTERP, NOTNULL(const STRING *source_string), UINTVAL offset)
 /*
 
 =item C<static void
-set_byte(PARROT_INTERP, NOTNULL(const STRING *source_string),
+set_byte(PARROT_INTERP, ARGIN(const STRING *source_string),
         UINTVAL offset, UINTVAL byte)>
 
 RT#48260: Not yet documented!!!
@@ -252,7 +252,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-set_byte(PARROT_INTERP, NOTNULL(const STRING *source_string),
+set_byte(PARROT_INTERP, ARGIN(const STRING *source_string),
         UINTVAL offset, UINTVAL byte)
 {
     unsigned char *contents;
@@ -533,7 +533,7 @@ fixed8_set_position(SHIM_INTERP, NOTNULL(String_iter *iter), UINTVAL pos)
 /*
 
 =item C<static void
-iter_init(SHIM_INTERP, NOTNULL(const STRING *src), NOTNULL(String_iter *iter))>
+iter_init(SHIM_INTERP, ARGIN(const STRING *src), NOTNULL(String_iter *iter))>
 
 RT#48260: Not yet documented!!!
 
@@ -542,7 +542,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-iter_init(SHIM_INTERP, NOTNULL(const STRING *src), NOTNULL(String_iter *iter))
+iter_init(SHIM_INTERP, ARGIN(const STRING *src), NOTNULL(String_iter *iter))
 {
     iter->str = src;
     iter->bytepos = iter->charpos = 0;

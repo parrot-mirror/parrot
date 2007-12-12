@@ -1,3 +1,4 @@
+; $Id$
 
 (define all-tests '())
 
@@ -19,7 +20,6 @@
 (define (execute)
   (unless (zero? (system "./stst > stst.out"))
     (error 'make "produced program exited abnormally")))
-
 
 (define (build-program expr)
    (run-compile expr)
@@ -51,15 +51,14 @@
     (flush-output-port)
     (case type
      [(string) (test-with-string-output test-id expr out)]
-     [else (error 'test "invalid test type ~s" type)])
-    (printf "ok ~s - ~s ~s\n" ( + test-id 1 ) test-name expr )))
+     [else (error 'test "invalid test type ~s" type)])))
  
-(define (plan num_tests)
-  ( printf "~s..~s\n" 1 num_tests))
+(define (plan all-tests)
+  ( printf "~s..~s\n" 1 ( length (cdar all-tests))))
 
 (define (test-all)
   ;; there has to be an easy way of getting the number of tests
-  (plan 9)
+  (plan all-tests)
 
   ;; run the tests
   (let f ([i 0] [ls (reverse all-tests)])
@@ -128,9 +127,9 @@
    (run-compile expr)
    (build)
    (execute)
-   (unless (string=? expected-output (get-string))
-     (error 'test "output mismatch for test ~s, expected ~s, got ~s"
-        test-id expected-output (get-string))))
+   (if (string=? expected-output (get-string))
+     (printf "ok ~s - ~s ~s\n" ( + test-id 1 ) test-id expr )
+     (printf "not ok ~s - ~s expected ~s, got ~s\n" ( + test-id 1 ) test-id expr (get-string) )))
 
 (define (emit . args)
   (apply fprintf (compile-port) args)
