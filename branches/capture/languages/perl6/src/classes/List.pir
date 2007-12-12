@@ -13,15 +13,16 @@ src/classes/List.pir - Perl 6 List class
 .namespace
 
 .sub '__onload' :load :init
-    $P0 = subclass 'ResizablePMCArray', 'List'
-    $P1 = get_class 'Perl6Object'
-    $P0.add_parent($P1)
-
-    $P1 = new $P0
-    set_hll_global 'List', $P1
+    $P0 = get_hll_global ['Perl6Object'], 'make_class'
+    $P0('List', 'super'=>'ResizablePMCArray')
 .end
 
 .namespace ['List']
+
+.sub 'get_string' :vtable :method
+    $S0 = join ' ', self
+    .return ($S0)
+.end
 
 .sub 'elems' :method
     $I0 = elements self

@@ -69,7 +69,7 @@ static oplib_init_f get_core_op_lib_init(PARROT_INTERP, int which)
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static oplib_init_f get_dynamic_op_lib_init(PARROT_INTERP,
-    NOTNULL(const PMC *lib))
+    ARGIN(const PMC *lib))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -89,7 +89,7 @@ static void prederef_args(
     NOTNULL(void **pc_prederef),
     PARROT_INTERP,
     NOTNULL(opcode_t *pc),
-    NOTNULL(const op_info_t *opinfo))
+    ARGIN(const op_info_t *opinfo))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -135,7 +135,7 @@ static void turn_ev_check(PARROT_INTERP, int on)
 
 =item C<static void
 prederef_args(NOTNULL(void **pc_prederef), PARROT_INTERP,
-        NOTNULL(opcode_t *pc), NOTNULL(const op_info_t *opinfo))>
+        NOTNULL(opcode_t *pc), ARGIN(const op_info_t *opinfo))>
 
 Called from C<do_prederef()> to deal with any arguments.
 
@@ -147,7 +147,7 @@ C<pc_prederef> is the current opcode.
 
 static void
 prederef_args(NOTNULL(void **pc_prederef), PARROT_INTERP,
-        NOTNULL(opcode_t *pc), NOTNULL(const op_info_t *opinfo))
+        NOTNULL(opcode_t *pc), ARGIN(const op_info_t *opinfo))
 {
     const PackFile_ConstTable * const const_table = interp->code->const_table;
 
@@ -393,7 +393,7 @@ get_core_op_lib_init(PARROT_INTERP, int which)
 =item C<PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static oplib_init_f
-get_dynamic_op_lib_init(PARROT_INTERP, NULLOK(PMC *lib))>
+get_dynamic_op_lib_init(PARROT_INTERP, ARGIN(const PMC *lib))>
 
 Returns an dynamic oplib's opcode's library C<op_lib> init function.
 
@@ -406,7 +406,7 @@ C<lib> will be a C<ParrotLibrary> PMC.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static oplib_init_f
-get_dynamic_op_lib_init(PARROT_INTERP, NOTNULL(const PMC *lib))
+get_dynamic_op_lib_init(PARROT_INTERP, ARGIN(const PMC *lib))
 {
     return (oplib_init_f) D2FPTR(PMC_struct_val(lib));
 }

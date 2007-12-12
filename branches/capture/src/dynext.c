@@ -70,7 +70,7 @@ static PMC * run_init_lib(PARROT_INTERP,
 
 static void set_cstring_prop(PARROT_INTERP,
     NOTNULL(PMC *lib_pmc),
-    NOTNULL(const char *what),
+    ARGIN(const char *what),
     NOTNULL(STRING *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -96,7 +96,7 @@ static void store_lib_pmc(PARROT_INTERP,
 /*
 
 =item C<static void
-set_cstring_prop(PARROT_INTERP, NOTNULL(PMC *lib_pmc), NOTNULL(const char *what),
+set_cstring_prop(PARROT_INTERP, NOTNULL(PMC *lib_pmc), ARGIN(const char *what),
         NOTNULL(STRING *name))>
 
 Set a property C<name> with value C<what> on the C<ParrotLibrary>
@@ -107,7 +107,7 @@ C<lib_pmc>.
 */
 
 static void
-set_cstring_prop(PARROT_INTERP, NOTNULL(PMC *lib_pmc), NOTNULL(const char *what),
+set_cstring_prop(PARROT_INTERP, NOTNULL(PMC *lib_pmc), ARGIN(const char *what),
         NOTNULL(STRING *name))
 {
     STRING *key;

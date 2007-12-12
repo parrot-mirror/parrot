@@ -47,7 +47,7 @@ static opcode_t * create_exception(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
-static size_t dest2offset(PARROT_INTERP, NOTNULL(const opcode_t *dest))
+static size_t dest2offset(PARROT_INTERP, ARGIN(const opcode_t *dest))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -70,7 +70,7 @@ static void run_cleanup_action(PARROT_INTERP, NOTNULL(Stack_Entry_t *e))
 =item C<PARROT_API
 PARROT_DOES_NOT_RETURN
 void
-internal_exception(int exitcode, NOTNULL(const char *format), ...)>
+internal_exception(int exitcode, ARGIN(const char *format), ...)>
 
 Signal a fatal exception.  This involves printing an error message to stderr,
 and calling C<Parrot_exit> to invoke exit handlers and exit the process with the
@@ -86,7 +86,7 @@ environment.
 PARROT_API
 PARROT_DOES_NOT_RETURN
 void
-internal_exception(int exitcode, NOTNULL(const char *format), ...)
+internal_exception(int exitcode, ARGIN(const char *format), ...)
 {
     va_list arglist;
     va_start(arglist, format);
@@ -116,8 +116,8 @@ internal_exception(int exitcode, NOTNULL(const char *format), ...)
 
 =item C<PARROT_DOES_NOT_RETURN
 void
-do_panic(NULLOK_INTERP, NULLOK(const char *message),
-         NULLOK(const char *file), unsigned int line)>
+do_panic(NULLOK_INTERP, ARGIN_NULLOK(const char *message),
+         ARGIN_NULLOK(const char *file), unsigned int line)>
 
 Panic handler.
 
@@ -127,8 +127,8 @@ Panic handler.
 
 PARROT_DOES_NOT_RETURN
 void
-do_panic(NULLOK_INTERP, NULLOK(const char *message),
-         NULLOK(const char *file), unsigned int line)
+do_panic(NULLOK_INTERP, ARGIN_NULLOK(const char *message),
+         ARGIN_NULLOK(const char *file), unsigned int line)
 {
     /* Note: we can't format any floats in here--Parrot_sprintf
     ** may panic because of floats.
@@ -687,7 +687,7 @@ rethrow_c_exception(PARROT_INTERP)
 
 =item C<PARROT_WARN_UNUSED_RESULT
 static size_t
-dest2offset(PARROT_INTERP, NOTNULL(const opcode_t *dest))>
+dest2offset(PARROT_INTERP, ARGIN(const opcode_t *dest))>
 
 Translate an absolute bytecode location to an offset used for resuming
 after an exception had occurred.
@@ -698,7 +698,7 @@ after an exception had occurred.
 
 PARROT_WARN_UNUSED_RESULT
 static size_t
-dest2offset(PARROT_INTERP, NOTNULL(const opcode_t *dest))
+dest2offset(PARROT_INTERP, ARGIN(const opcode_t *dest))
 {
     size_t offset;
     /* translate an absolute location in byte_code to an offset
@@ -916,7 +916,7 @@ do_exception(PARROT_INTERP, INTVAL severity, long error)
 PARROT_DOES_NOT_RETURN
 void
 real_exception(PARROT_INTERP, NULLOK(void *ret_addr),
-        int exitcode, NOTNULL(const char *format), ...)>
+        int exitcode, ARGIN(const char *format), ...)>
 
 Throws a real exception, with an error message constructed from the format
 string and arguments.  C<ret_addr> is the address from which to resume, if some
@@ -934,7 +934,7 @@ PARROT_API
 PARROT_DOES_NOT_RETURN
 void
 real_exception(PARROT_INTERP, NULLOK(void *ret_addr),
-        int exitcode, NOTNULL(const char *format), ...)
+        int exitcode, ARGIN(const char *format), ...)
 {
     STRING *msg;
     Parrot_exception * const the_exception = interp->exceptions;
@@ -1025,7 +1025,7 @@ Parrot_init_exceptions(PARROT_INTERP)
 =item C<PARROT_API
 PARROT_DOES_NOT_RETURN
 void
-Parrot_confess(NOTNULL(const char *cond), NOTNULL(const char *file), unsigned int line)>
+Parrot_confess(ARGIN(const char *cond), ARGIN(const char *file), unsigned int line)>
 
 A better version of assert() that gives a backtrace if possible.
 
@@ -1036,7 +1036,7 @@ A better version of assert() that gives a backtrace if possible.
 PARROT_API
 PARROT_DOES_NOT_RETURN
 void
-Parrot_confess(NOTNULL(const char *cond), NOTNULL(const char *file), unsigned int line)
+Parrot_confess(ARGIN(const char *cond), ARGIN(const char *file), unsigned int line)
 {
     fprintf(stderr, "%s:%u: failed assertion '%s'\n", file, line, cond);
     Parrot_print_backtrace();

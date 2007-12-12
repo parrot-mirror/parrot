@@ -38,7 +38,7 @@ static UINTVAL codepoints(PARROT_INTERP, NOTNULL(STRING *src))
         __attribute__nonnull__(2);
 
 static UINTVAL get_byte(SHIM_INTERP,
-    NOTNULL(const STRING *src),
+    ARGIN(const STRING *src),
     UINTVAL offset)
         __attribute__nonnull__(2);
 
@@ -59,7 +59,7 @@ static STRING * get_bytes_inplace(PARROT_INTERP,
         __attribute__nonnull__(1);
 
 static UINTVAL get_codepoint(PARROT_INTERP,
-    NOTNULL(const STRING *src),
+    ARGIN(const STRING *src),
     UINTVAL offset)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -83,13 +83,13 @@ static STRING * get_codepoints_inplace(PARROT_INTERP,
         __attribute__nonnull__(5);
 
 static void iter_init(SHIM_INTERP,
-    NOTNULL(const STRING *src),
+    ARGIN(const STRING *src),
     NOTNULL(String_iter *iter))
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 static void set_byte(PARROT_INTERP,
-    NOTNULL(const STRING *src),
+    ARGIN(const STRING *src),
     UINTVAL offset,
     UINTVAL byte)
         __attribute__nonnull__(1)
@@ -124,12 +124,12 @@ static STRING * to_encoding(PARROT_INTERP,
         __attribute__nonnull__(2);
 
 static UINTVAL utf8_characters(PARROT_INTERP,
-    NOTNULL(const utf8_t *ptr),
+    ARGIN(const utf8_t *ptr),
     UINTVAL byte_len)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static UINTVAL utf8_decode(PARROT_INTERP, NOTNULL(const utf8_t *ptr))
+static UINTVAL utf8_decode(PARROT_INTERP, ARGIN(const utf8_t *ptr))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -156,11 +156,11 @@ static void utf8_set_position(SHIM_INTERP,
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static const void * utf8_skip_backward(NOTNULL(const void *ptr), UINTVAL n)
+static const void * utf8_skip_backward(ARGIN(const void *ptr), UINTVAL n)
         __attribute__nonnull__(1);
 
 PARROT_CANNOT_RETURN_NULL
-static const void * utf8_skip_forward(NOTNULL(const void *ptr), UINTVAL n)
+static const void * utf8_skip_forward(ARGIN(const void *ptr), UINTVAL n)
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
@@ -193,7 +193,7 @@ typedef unsigned char utf8_t;
 /*
 
 =item C<static UINTVAL
-utf8_characters(PARROT_INTERP, NOTNULL(const utf8_t *ptr), UINTVAL byte_len)>
+utf8_characters(PARROT_INTERP, ARGIN(const utf8_t *ptr), UINTVAL byte_len)>
 
 Returns the number of characters in the C<byte_len> bytes from C<*ptr>.
 
@@ -202,7 +202,7 @@ Returns the number of characters in the C<byte_len> bytes from C<*ptr>.
 */
 
 static UINTVAL
-utf8_characters(PARROT_INTERP, NOTNULL(const utf8_t *ptr), UINTVAL byte_len)
+utf8_characters(PARROT_INTERP, ARGIN(const utf8_t *ptr), UINTVAL byte_len)
 {
     const utf8_t *u8ptr = ptr;
     const utf8_t *u8end = u8ptr + byte_len;
@@ -223,7 +223,7 @@ utf8_characters(PARROT_INTERP, NOTNULL(const utf8_t *ptr), UINTVAL byte_len)
 /*
 
 =item C<static UINTVAL
-utf8_decode(PARROT_INTERP, NOTNULL(const utf8_t *ptr))>
+utf8_decode(PARROT_INTERP, ARGIN(const utf8_t *ptr))>
 
 Returns the integer for the UTF-8 character found at C<*ptr>.
 
@@ -232,7 +232,7 @@ Returns the integer for the UTF-8 character found at C<*ptr>.
 */
 
 static UINTVAL
-utf8_decode(PARROT_INTERP, NOTNULL(const utf8_t *ptr))
+utf8_decode(PARROT_INTERP, ARGIN(const utf8_t *ptr))
 {
     const utf8_t *u8ptr = ptr;
     UINTVAL c = *u8ptr;
@@ -303,7 +303,7 @@ utf8_encode(PARROT_INTERP, NOTNULL(void *ptr), UINTVAL c)
 
 =item C<PARROT_CANNOT_RETURN_NULL
 static const void *
-utf8_skip_forward(NOTNULL(const void *ptr), UINTVAL n)>
+utf8_skip_forward(ARGIN(const void *ptr), UINTVAL n)>
 
 Moves C<ptr> C<n> characters forward.
 
@@ -313,7 +313,7 @@ Moves C<ptr> C<n> characters forward.
 
 PARROT_CANNOT_RETURN_NULL
 static const void *
-utf8_skip_forward(NOTNULL(const void *ptr), UINTVAL n)
+utf8_skip_forward(ARGIN(const void *ptr), UINTVAL n)
 {
     const utf8_t *u8ptr = (const utf8_t *)ptr;
 
@@ -329,7 +329,7 @@ utf8_skip_forward(NOTNULL(const void *ptr), UINTVAL n)
 =item C<PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static const void *
-utf8_skip_backward(NOTNULL(const void *ptr), UINTVAL n)>
+utf8_skip_backward(ARGIN(const void *ptr), UINTVAL n)>
 
 Moves C<ptr> C<n> characters back.
 
@@ -340,7 +340,7 @@ Moves C<ptr> C<n> characters back.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static const void *
-utf8_skip_backward(NOTNULL(const void *ptr), UINTVAL n)
+utf8_skip_backward(ARGIN(const void *ptr), UINTVAL n)
 {
     const utf8_t *u8ptr = (const utf8_t *)ptr;
 
@@ -551,7 +551,7 @@ to_encoding(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
 /*
 
 =item C<static UINTVAL
-get_codepoint(PARROT_INTERP, NOTNULL(const STRING *src), UINTVAL offset)>
+get_codepoint(PARROT_INTERP, ARGIN(const STRING *src), UINTVAL offset)>
 
 RT#48260: Not yet documented!!!
 
@@ -560,7 +560,7 @@ RT#48260: Not yet documented!!!
 */
 
 static UINTVAL
-get_codepoint(PARROT_INTERP, NOTNULL(const STRING *src), UINTVAL offset)
+get_codepoint(PARROT_INTERP, ARGIN(const STRING *src), UINTVAL offset)
 {
     const utf8_t * const start = (const utf8_t *)utf8_skip_forward(src->strstart, offset);
     return utf8_decode(interp, start);
@@ -594,7 +594,7 @@ set_codepoint(PARROT_INTERP, NOTNULL(STRING *src),
 /*
 
 =item C<static UINTVAL
-get_byte(SHIM_INTERP, NOTNULL(const STRING *src), UINTVAL offset)>
+get_byte(SHIM_INTERP, ARGIN(const STRING *src), UINTVAL offset)>
 
 RT#48260: Not yet documented!!!
 
@@ -603,7 +603,7 @@ RT#48260: Not yet documented!!!
 */
 
 static UINTVAL
-get_byte(SHIM_INTERP, NOTNULL(const STRING *src), UINTVAL offset)
+get_byte(SHIM_INTERP, ARGIN(const STRING *src), UINTVAL offset)
 {
     unsigned char *contents = (unsigned char *)src->strstart;
     if (offset >= src->bufused) {
@@ -618,7 +618,7 @@ get_byte(SHIM_INTERP, NOTNULL(const STRING *src), UINTVAL offset)
 /*
 
 =item C<static void
-set_byte(PARROT_INTERP, NOTNULL(const STRING *src),
+set_byte(PARROT_INTERP, ARGIN(const STRING *src),
         UINTVAL offset, UINTVAL byte)>
 
 RT#48260: Not yet documented!!!
@@ -628,7 +628,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-set_byte(PARROT_INTERP, NOTNULL(const STRING *src),
+set_byte(PARROT_INTERP, ARGIN(const STRING *src),
         UINTVAL offset, UINTVAL byte)
 {
     unsigned char *contents;
@@ -855,7 +855,7 @@ bytes(SHIM_INTERP, NOTNULL(STRING *src))
 /*
 
 =item C<static void
-iter_init(SHIM_INTERP, NOTNULL(const STRING *src), NOTNULL(String_iter *iter))>
+iter_init(SHIM_INTERP, ARGIN(const STRING *src), NOTNULL(String_iter *iter))>
 
 RT#48260: Not yet documented!!!
 
@@ -864,7 +864,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-iter_init(SHIM_INTERP, NOTNULL(const STRING *src), NOTNULL(String_iter *iter))
+iter_init(SHIM_INTERP, ARGIN(const STRING *src), NOTNULL(String_iter *iter))
 {
     iter->str = src;
     iter->bytepos = 0;

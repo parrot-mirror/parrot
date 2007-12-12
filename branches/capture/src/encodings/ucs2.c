@@ -61,7 +61,7 @@ static STRING * get_bytes_inplace(PARROT_INTERP,
         __attribute__nonnull__(1);
 
 static UINTVAL get_codepoint(PARROT_INTERP,
-    NOTNULL(const STRING *src),
+    ARGIN(const STRING *src),
     UINTVAL offset)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -85,7 +85,7 @@ static STRING * get_codepoints_inplace(PARROT_INTERP,
         __attribute__nonnull__(1);
 
 static void iter_init(PARROT_INTERP,
-    NOTNULL(const STRING *src),
+    ARGIN(const STRING *src),
     NOTNULL(String_iter *iter))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -188,7 +188,7 @@ to_encoding(PARROT_INTERP, NOTNULL(STRING *src), NOTNULL(STRING *dest))
 /*
 
 =item C<static UINTVAL
-get_codepoint(PARROT_INTERP, NOTNULL(const STRING *src), UINTVAL offset)>
+get_codepoint(PARROT_INTERP, ARGIN(const STRING *src), UINTVAL offset)>
 
 RT#48260: Not yet documented!!!
 
@@ -197,7 +197,7 @@ RT#48260: Not yet documented!!!
 */
 
 static UINTVAL
-get_codepoint(PARROT_INTERP, NOTNULL(const STRING *src), UINTVAL offset)
+get_codepoint(PARROT_INTERP, ARGIN(const STRING *src), UINTVAL offset)
 {
 #if PARROT_HAS_ICU
     UChar * const s = (UChar*) src->strstart;
@@ -545,7 +545,7 @@ ucs2_set_position(SHIM_INTERP, NOTNULL(String_iter *i), UINTVAL n)
 /*
 
 =item C<static void
-iter_init(PARROT_INTERP, NOTNULL(const STRING *src), NOTNULL(String_iter *iter))>
+iter_init(PARROT_INTERP, ARGIN(const STRING *src), NOTNULL(String_iter *iter))>
 
 RT#48260: Not yet documented!!!
 
@@ -554,7 +554,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-iter_init(PARROT_INTERP, NOTNULL(const STRING *src), NOTNULL(String_iter *iter))
+iter_init(PARROT_INTERP, ARGIN(const STRING *src), NOTNULL(String_iter *iter))
 {
 #if PARROT_HAS_ICU
     iter->str = src;
