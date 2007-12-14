@@ -29,12 +29,17 @@ By default PAST::Compiler transforms a PAST tree into POST.
     piropsig['n_mul']    = 'PP+'
     piropsig['n_neg']    = 'PP'
     piropsig['n_not']    = 'PP'
-    piropsig['n_shl']    = 'PP+'
-    piropsig['n_shr']    = 'PP+'
     piropsig['n_sub']    = 'PP+'
     piropsig['print']    = 'v*'
     piropsig['set']      = 'PP'
     set_global '%piropsig', piropsig
+
+    .local pmc valflags
+    valflags = new 'Hash'
+    valflags['String']   = '~*:e'
+    valflags['Integer']  = '+*:'
+    valflags['Float']    = '+*:'
+    set_global '%valflags', valflags
 
     .return ()
 .end
@@ -1250,19 +1255,19 @@ to have a PMC generated containing the constant value.
     returns = $S0
   have_returns:
 
-    .local int isstr
-    $I0 = cmp_str returns, 'String'
-    isstr = iseq $I0, 0
+    .local string valflags
+    $P0 = get_global '%valflags'
+    valflags = $P0[returns]
+
+    $I0 = index valflags, 'e'
+    if $I0 < 0 goto escape_done
+    value = ops.'escape'(value)
+  escape_done:
 
     .local string rtype
     rtype = options['rtype']
-    if rtype == '+' goto result_num
-    if rtype == 'P' goto result_pmc
-    if rtype == '~' goto result_string
-    unless isstr goto result_num
-  result_string:
-    value = ops.'escape'(value)
-  result_num:
+    $I0 = index valflags, rtype
+    if $I0 < 0 goto result_pmc
     ops.'result'(value)
     .return (ops)
 
@@ -1270,9 +1275,6 @@ to have a PMC generated containing the constant value.
     .local string result
     result = ops.'unique'('$P')
     returns = ops.'escape'(returns)
-    unless isstr goto have_value
-    value = ops.'escape'(value)
-  have_value:
     ops.'push_pirop'('new', result, returns)
     ops.'push_pirop'('assign', result, value)
     ops.'result'(result)

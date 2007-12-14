@@ -10,7 +10,7 @@ src/pmc/scheduler.pmc - The concurrency scheduler
 
 Implements the core concurrency scheduler.
 
-=head2 Functions
+=head2 Vtable Functions
 
 =over 4
 
@@ -117,12 +117,13 @@ current maximum.
 
         core_struct->max_tid++;
         VTABLE_set_integer_native(INTERP, task, core_struct->max_tid);
-
         task_id_str = string_from_int(INTERP, core_struct->max_tid);
-        VTABLE_set_pmc_keyed_str(INTERP, core_struct->task_list, task_id_str, task);
 
+        LOCK(core_struct->lock);
+        VTABLE_set_pmc_keyed_str(INTERP, core_struct->task_list, task_id_str, task);
         VTABLE_push_integer(INTERP, core_struct->task_index, core_struct->max_tid);
         Parrot_cx_runloop_wake(core_struct->interp, SELF);
+        UNLOCK(core_struct->lock);
     }
 
 /*
@@ -165,6 +166,7 @@ Retrieve the number of pending tasks in the scheduler's task list.
         Parrot_Scheduler * core_struct = PARROT_SCHEDULER(SELF);
         return VTABLE_elements(INTERP, core_struct->task_index);
     }
+
 
 /*
 
@@ -338,6 +340,64 @@ Called after the scheduler has been thawed.
         Parrot_Scheduler * const core_struct = PARROT_SCHEDULER(SELF);
 
         /* TODO: Rebuild the task index. */
+    }
+
+/*
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+/*
+
+=item C<PCCMETHOD add_handler(PMC *handler)>
+
+Add a handler to the scheduler.
+
+=cut
+
+*/
+
+    PCCMETHOD add_handler(PMC *handler) {
+        Parrot_Scheduler * core_struct = PARROT_SCHEDULER(SELF);
+        VTABLE_push_pmc(INTERP, core_struct->handlers, handler);
+    }
+/*
+
+=item C<PCCMETHOD find_handler(PMC *task)>
+
+Search for a handler for the given task. If no handler is found, return
+PMCNULL.
+
+=cut
+
+*/
+
+    PCCMETHOD find_handler(PMC *task) {
+        Parrot_Scheduler * core_struct = PARROT_SCHEDULER(SELF);
+        INTVAL elements = VTABLE_elements(INTERP, core_struct->handlers);
+        INTVAL counter;
+
+        for (counter = 0; counter < elements; ++counter) {
+            PMC *handler = VTABLE_get_pmc_keyed_int(interp,
+                    core_struct->handlers, counter);
+            INTVAL valid_handler = 0;
+            if (!PMC_IS_NULL(handler)) {
+                (INTVAL valid_handler) = PCCINVOKE(interp, handler, "can_handle", PMC *task);
+                if (valid_handler) {
+                    PCCRETURN(PMC *handler);
+                }
+            }
+        }
+
+        PCCRETURN(PMC *PMCNULL);
+
     }
 
 }

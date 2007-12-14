@@ -155,6 +155,18 @@ void do_exception(PARROT_INTERP, INTVAL severity, long error)
         __attribute__nonnull__(1);
 
 PARROT_API
+PARROT_DOES_NOT_RETURN
+void do_pmc_exception(PARROT_INTERP, ARGIN(PMC *msg))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_DOES_NOT_RETURN
+void do_str_exception(PARROT_INTERP, ARGIN(STRING *msg))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
 void free_internal_exception(PARROT_INTERP)
         __attribute__nonnull__(1);
 
@@ -192,7 +204,7 @@ void Parrot_pop_mark(PARROT_INTERP, INTVAL mark)
         __attribute__nonnull__(1);
 
 PARROT_API
-void Parrot_push_action(PARROT_INTERP, NOTNULL(PMC *sub))
+void Parrot_push_action(PARROT_INTERP, ARGIN(PMC *sub))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -205,7 +217,7 @@ void pop_exception(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_API
-void push_exception(PARROT_INTERP, NOTNULL(PMC *handler))
+void push_exception(PARROT_INTERP, ARGIN(PMC *handler))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -218,7 +230,7 @@ void push_new_c_exception_handler(PARROT_INTERP,
 PARROT_API
 PARROT_DOES_NOT_RETURN
 void real_exception(PARROT_INTERP,
-    NULLOK(void *ret_addr),
+    ARGIN_NULLOK(void *ret_addr),
     int exitcode,
     ARGIN(const char *format),
     ...)

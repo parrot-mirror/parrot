@@ -692,6 +692,16 @@ inline op schedule(invar PMC) {
     goto NEXT();
 }
 
+=item B<addhandler>(invar PMC)
+
+Add an event or exception handler to the concurrency scheduler. Details about
+the handler are stored within the handler PMC.
+
+inline op addhandler(invar PMC) {
+    Parrot_cx_add_handler(interp, $1);
+    goto NEXT();
+}
+
 =back
 
 =cut
@@ -735,6 +745,11 @@ of the stack, with '0' being the top.
 =item B<get_all_eh>(out PMC)
 
 Return an array of all current exception handlers.
+
+=item B<die>(in STR)
+=item B<die>(in PMC)
+
+Die with message $1
 
 =item B<die>(in INT, in INT)
 
@@ -818,6 +833,14 @@ inline op get_all_eh(out PMC) {
     goto NEXT();
 }
 
+
+inline op die(in STR) {
+    do_str_exception(interp, $1);
+}
+
+inline op die(in PMC) {
+    do_pmc_exception(interp, $1);
+}
 
 inline op die(in INT, in INT) {
     if ($1 == EXCEPT_doomed)

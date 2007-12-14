@@ -6,6 +6,19 @@ use strict;
 use warnings;
 use Carp qw( confess );
 
+# While I work on files individually to make sure headerizing and
+# rewriting doesn't stomp on them.
+my @experimental_files = qw(
+    exceptions.c
+    objects.c
+    string.c
+    string_primitives.c
+    sub.c
+    tsq.c
+    utils.c
+);
+my %experimental_files = map { ("src/$_", 1) } @experimental_files;
+
 =head1 NAME
 
 tools/build/headerizer.pl - Generates the function header parts of .h
@@ -86,6 +99,10 @@ main();
 
 =head1 FUNCTIONS
 
+=head2 extract_function_declarations( $source_file_text )
+
+Rips apart a C file to get the function declarations.
+
 =cut
 
 sub extract_function_declarations {
@@ -139,6 +156,39 @@ sub extract_function_declarations {
     chomp @funcs;
 
     return @funcs;
+}
+
+=head2 extract_function_declaration_and_update_source( $cfile_name )
+
+Extract all the function declarations from the C file specified by
+I<$cfile_name>, and update the comment blocks within.
+
+=cut
+
+sub extract_function_declarations_and_update_source {
+    my $cfile_name = shift;
+
+    open( my $fhin, '<', $cfile_name ) or die "Can't open $cfile_name: $!";
+    my $text = join( '', <$fhin> );
+    close $fhin;
+
+    my @func_declarations = extract_function_declarations( $text );
+
+    for my $decl ( @func_declarations ) {
+        my $specs = function_components_from_declaration( $cfile_name, $decl );
+        my $name = $specs->{name};
+        my $return_type = $specs->{return_type};
+        my $heading = "$return_type $name";
+        $heading = "static $heading" if $specs->{is_static};
+
+        $text =~ s/=item C<[^>]*\b$name\b[^>]*>\n/=item C<$heading>\n/sm or
+            warn "Couldn't replace $name\n";
+    }
+    open( my $fhout, '>', $cfile_name ) or die "Can't create $cfile_name: $!";
+    print {$fhout} $text;
+    close $fhout;
+
+    return @func_declarations;
 }
 
 sub function_components_from_declaration {
@@ -386,11 +436,11 @@ sub main {
         }
 
         my @decls;
-        if ( -f $pmcfile ) {
+        if ( -f $pmcfile || !$experimental_files{$cfile} ) {
             @decls = extract_function_declarations( $csource );
         }
         else {
-            @decls = extract_function_declarations( $csource );
+            @decls = extract_function_declarations_and_update_source( $cfile );
         }
 
         for my $decl (@decls) {
