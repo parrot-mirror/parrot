@@ -14,7 +14,6 @@ use_ok(
         print_conclusion
         |
 );
-#use_ok("Parrot::IO::Capture::Mini");
 use IO::CaptureOutput qw| capture |;
 
 my $parrot_version = '0.4.10';
