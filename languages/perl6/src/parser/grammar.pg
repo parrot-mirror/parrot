@@ -71,6 +71,7 @@ token ws {
       end:
         set_global '$!ws', match
     }}
+    <!ww>
     [
     | <.unsp>
     | \v+
@@ -116,6 +117,11 @@ rule statement_block {
     <statementlist>
     {*}                                          #= close
 }
+
+
+token lambda { '->' | '<->' }
+
+token pblock { [ <lambda> <signature> ]? {*} <block> }
 
 
 ##  Blocks can also have an implied statement end if the
@@ -188,7 +194,9 @@ rule statement {
 rule statement_control {
     | <if_statement> {*}                         #= if_statement
     | <unless_statement> {*}                     #= unless_statement
+    | <for_statement> {*}                        #= for_statement
     | <use_statement> {*}                        #= use_statement
+    | <end_statement> {*}                        #= end_statement
 }
 
 rule if_statement {
@@ -205,10 +213,22 @@ rule unless_statement {
     {*}
 }
 
+rule for_statement {
+    $<sym>=[for]
+    <EXPR> <pblock>
+    {*}
+}
+
 rule use_statement {
     $<sym>=[use] <name>
     [ '-' <ident> ]?     # e.g. 'v6-alpha'
     <EXPR>?
+    {*}
+}
+
+rule end_statement {
+    $<sym>=[END]
+    <block>
     {*}
 }
 
@@ -226,7 +246,11 @@ rule statement_prefix {
 
 #### Subroutine and method definitions ####
 
-rule routine_declarator {
+rule plurality_declarator {
+    $<sym>=[multi|proto|only] <routine_declarator> {*}
+}
+
+token routine_declarator {
     | $<sym>='sub' <routine_def> {*}             #= sub
     # | $<sym>='method' <method_def> {*}           #= method
 }
@@ -242,7 +266,7 @@ rule multisig {
 }
 
 rule signature {
-    ( <param_var> ( ',' | <?before ')'> ) )*
+    ( <param_var> ( ',' | <?before ')' | '{'> ) )*
     {*}
 }
 
@@ -294,6 +318,7 @@ token postcircumfix {
 
 token noun {
     | <scope_declarator> {*}                     #= scope_declarator
+    | <plurality_declarator> {*}                 #= plurality_declarator
     | <routine_declarator> {*}                   #= routine_declarator
     | <circumfix> {*}                            #= circumfix
     | <variable> {*}                             #= variable
@@ -303,7 +328,7 @@ token noun {
 }
 
 rule scope_declarator {
-    $<declarator>:=[my|our]
+    $<declarator>=[my|our]
     <variable>
     {*}
 }
@@ -316,10 +341,14 @@ token circumfix {
 
 token variable {
     | <special_variable> {*}                     #= special_variable
-    | <sigil> <ident> {*}                        #= $var
+    | <sigil> <name> {*}                         #= $var
 }
 
 token sigil { '$' | '@' }
+
+token name {
+    | <ident> [ '::' <ident> ]*
+}
 
 token value {
     | <quote> {*}                                #= quote
@@ -335,14 +364,15 @@ token quote {
     | <.before '"' > <quote_expression: :qq>
     | <.before '<' > <quote_expression: :w :q>
     # | <.before '«' > <quote_expression: :ww :qq>  FIXME: unicode
+    | <.before '/'>  <quote_expression: :regex>
     ]
     {*}
 }
 
 
 token number {
-    [ <integer> {*}                              #= integer
-    | <dec_number> {*}                           #= dec_number
+    [ <dec_number> {*}                           #= dec_number
+    | <integer> {*}                              #= integer
     ]
 }
 

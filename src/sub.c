@@ -25,8 +25,7 @@ Subroutines, continuations, co-routines and other fun stuff...
 
 /*
 
-=item C<void
-mark_context(PARROT_INTERP, NOTNULL(parrot_context_t* ctx))>
+=item C<void mark_context>
 
 Marks the context C<*ctx>.
 
@@ -35,7 +34,7 @@ Marks the context C<*ctx>.
 */
 
 void
-mark_context(PARROT_INTERP, NOTNULL(parrot_context_t* ctx))
+mark_context(PARROT_INTERP, ARGINOUT(parrot_context_t* ctx))
 {
     PObj *obj;
     int   i;
@@ -93,10 +92,7 @@ mark_context(PARROT_INTERP, NOTNULL(parrot_context_t* ctx))
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-Parrot_sub *
-new_sub(PARROT_INTERP)>
+=item C<Parrot_sub * new_sub>
 
 Returns a new C<Parrot_sub>.
 
@@ -117,10 +113,7 @@ new_sub(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-Parrot_sub *
-new_closure(PARROT_INTERP)>
+=item C<Parrot_sub * new_closure>
 
 Returns a new C<Parrot_sub> with its own sctatchpad.
 
@@ -141,10 +134,7 @@ new_closure(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-Parrot_cont *
-new_continuation(PARROT_INTERP, NULLOK(Parrot_cont *to))>
+=item C<Parrot_cont * new_continuation>
 
 Returns a new C<Parrot_cont> to the context of C<to> with its own copy of the
 current interpreter context.  If C<to> is C<NULL>, then the C<to_ctx> is set
@@ -157,7 +147,7 @@ to the current context.
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 Parrot_cont *
-new_continuation(PARROT_INTERP, NULLOK(Parrot_cont *to))
+new_continuation(PARROT_INTERP, ARGIN(const Parrot_cont *to))
 {
     Parrot_cont    * const cc     = mem_allocate_typed(Parrot_cont);
     Parrot_Context * const to_ctx = to ? to->to_ctx : CONTEXT(interp->ctx);
@@ -181,10 +171,7 @@ new_continuation(PARROT_INTERP, NULLOK(Parrot_cont *to))
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-Parrot_cont *
-new_ret_continuation(PARROT_INTERP)>
+=item C<Parrot_cont * new_ret_continuation>
 
 Returns a new C<Parrot_cont> pointing to the current context.
 
@@ -211,10 +198,7 @@ new_ret_continuation(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-Parrot_coro *
-new_coroutine(PARROT_INTERP)>
+=item C<Parrot_coro * new_coroutine>
 
 Returns a new C<Parrot_coro>.
 
@@ -239,11 +223,7 @@ new_coroutine(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_API
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-PMC *
-new_ret_continuation_pmc(PARROT_INTERP, NULLOK(opcode_t *address))>
+=item C<PMC * new_ret_continuation_pmc>
 
 Returns a new C<RetContinuation> PMC. Uses one from the cache,
 if possible; otherwise, creates a new one.
@@ -256,7 +236,7 @@ PARROT_API
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 PMC *
-new_ret_continuation_pmc(PARROT_INTERP, NULLOK(opcode_t *address))
+new_ret_continuation_pmc(PARROT_INTERP, ARGIN_NULLOK(opcode_t *address))
 {
     PMC* const continuation = pmc_new(interp, enum_class_RetContinuation);
     VTABLE_set_pointer(interp, continuation, address);
@@ -265,8 +245,7 @@ new_ret_continuation_pmc(PARROT_INTERP, NULLOK(opcode_t *address))
 
 /*
 
-=item C<void
-invalidate_retc_context(PARROT_INTERP, NOTNULL(PMC *cont))>
+=item C<void invalidate_retc_context>
 
 Make true Continuations from all RetContinuations up the call chain.
 
@@ -275,7 +254,7 @@ Make true Continuations from all RetContinuations up the call chain.
 */
 
 void
-invalidate_retc_context(PARROT_INTERP, NOTNULL(PMC *cont))
+invalidate_retc_context(PARROT_INTERP, ARGINOUT(PMC *cont))
 {
     Parrot_Context *ctx = PMC_cont(cont)->from_ctx;
 
@@ -303,11 +282,7 @@ extern PMC* Parrot_NameSpace_nci_get_name(PARROT_INTERP, PMC* pmc);
 
 /*
 
-=item C<PARROT_API
-PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-STRING*
-Parrot_full_sub_name(PARROT_INTERP, NULLOK(PMC* sub))>
+=item C<STRING* Parrot_full_sub_name>
 
 Return namespace, name, and location of subroutine.
 
@@ -319,7 +294,7 @@ PARROT_API
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING*
-Parrot_full_sub_name(PARROT_INTERP, NULLOK(PMC* sub))
+Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
 {
     if (sub && VTABLE_defined(interp, sub)) {
         Parrot_sub * const s = PMC_sub(sub);
@@ -348,10 +323,7 @@ Parrot_full_sub_name(PARROT_INTERP, NULLOK(PMC* sub))
 
 /*
 
-=item C<PARROT_API
-int
-Parrot_Context_get_info(PARROT_INTERP, NOTNULL(parrot_context_t *ctx),
-                    NOTNULL(Parrot_Context_info *info))>
+=item C<int Parrot_Context_get_info>
 
 RT#48260: Not yet documented!!!
 
@@ -361,8 +333,8 @@ RT#48260: Not yet documented!!!
 
 PARROT_API
 int
-Parrot_Context_get_info(PARROT_INTERP, NOTNULL(parrot_context_t *ctx),
-                    NOTNULL(Parrot_Context_info *info))
+Parrot_Context_get_info(PARROT_INTERP, ARGIN(const parrot_context_t *ctx),
+                    ARGOUT(Parrot_Context_info *info))
 {
     Parrot_sub *sub;
     DECL_CONST_CAST;
@@ -442,11 +414,7 @@ Parrot_Context_get_info(PARROT_INTERP, NOTNULL(parrot_context_t *ctx),
 
 /*
 
-=item C<PARROT_API
-PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-STRING*
-Parrot_Context_infostr(PARROT_INTERP, NOTNULL(parrot_context_t *ctx))>
+=item C<STRING* Parrot_Context_infostr>
 
 RT#48260: Not yet documented!!!
 
@@ -458,24 +426,26 @@ PARROT_API
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING*
-Parrot_Context_infostr(PARROT_INTERP, NOTNULL(parrot_context_t *ctx))
+Parrot_Context_infostr(PARROT_INTERP, ARGIN(const parrot_context_t *ctx))
 {
     Parrot_Context_info info;
     const char* const msg = (CONTEXT(interp->ctx) == ctx)
-        ?  "current instr.:"
+        ? "current instr.:"
         : "called from Sub";
     STRING *res;
 
     Parrot_block_DOD(interp);
     if (Parrot_Context_get_info(interp, ctx, &info)) {
+        static const char unknown_file[] = "(unknown file)";
         DECL_CONST_CAST;
         const char *file = info.file;
-        res        = Parrot_sprintf_c(interp,
+
+        res = Parrot_sprintf_c(interp,
             "%s '%Ss' pc %d (%s:%d)", msg,
             info.fullname, info.pc, file, info.line);
 
         /* free the non-constant string, but not the constant one */
-        if (strncmp("(unknown file)", file, 14) < 0)
+        if (strncmp(unknown_file, file, sizeof(unknown_file)-1) < 0)
             string_cstring_free((char *)const_cast(info.file));
         /* XXX This is probably a source of mis-freeing. */
     }
@@ -489,10 +459,7 @@ Parrot_Context_infostr(PARROT_INTERP, NOTNULL(parrot_context_t *ctx))
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-PMC*
-Parrot_find_pad(PARROT_INTERP, NOTNULL(STRING *lex_name), NOTNULL(parrot_context_t *ctx))>
+=item C<PMC* Parrot_find_pad>
 
 Locate the LexPad containing the given name. Return NULL on failure.
 
@@ -500,14 +467,14 @@ Locate the LexPad containing the given name. Return NULL on failure.
 
 */
 
-PARROT_CANNOT_RETURN_NULL
+PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC*
-Parrot_find_pad(PARROT_INTERP, NOTNULL(STRING *lex_name), NOTNULL(parrot_context_t *ctx))
+Parrot_find_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(const parrot_context_t *ctx))
 {
     while (1) {
         PMC * const lex_pad = ctx->lex_pad;
-        parrot_context_t * const outer = ctx->outer_ctx;
+        const parrot_context_t * const outer = ctx->outer_ctx;
 
         if (!outer)
             return lex_pad;
@@ -533,11 +500,7 @@ Parrot_find_pad(PARROT_INTERP, NOTNULL(STRING *lex_name), NOTNULL(parrot_context
 
 /*
 
-=item C<PARROT_API
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-PMC*
-parrot_new_closure(PARROT_INTERP, NOTNULL(PMC *sub_pmc))>
+=item C<PMC* parrot_new_closure>
 
 RT#48260: Not yet documented!!!
 
@@ -549,7 +512,7 @@ PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC*
-parrot_new_closure(PARROT_INTERP, NOTNULL(PMC *sub_pmc))
+parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
 {
     PMC *cont;
 

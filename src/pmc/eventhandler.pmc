@@ -11,7 +11,7 @@ src/pmc/eventhandler.pmc - a handler for events
 A PMC that captures the state of the interpreter to invoke when handling an
 Event.
 
-=head2 Methods
+=head2 Vtable Functions
 
 =over 4
 
@@ -162,7 +162,7 @@ Frees any memory held by this PMC.
 
 =item C<void set_string(STRING *type)>
 
-Sets the C<type> parameter of this event handler to the passed-in string.
+Sets the C<type> attribute of this event handler to the passed-in string.
 
 =cut
 
@@ -173,6 +173,25 @@ Sets the C<type> parameter of this event handler to the passed-in string.
 
         if (e)
             e->type = type;
+    }
+
+/*
+
+=item C<STRING *get_string()>
+
+Retrieves the C<type> attribute of this event handler.
+
+=cut
+
+*/
+
+    STRING *get_string() {
+        Parrot_EventHandler *e = PMC_data_typed(SELF, Parrot_EventHandler *);
+
+        if (e)
+            return string_copy(INTERP, e->type);
+
+        return CONST_STRING(INTERP, "");
     }
 
 /*
@@ -210,6 +229,25 @@ handle the registered events.
 
 /*
 
+=item C<PMC *get_attr_str(STRING *name)>
+
+=cut
+
+*/
+
+    PMC *get_attr_str(STRING *name) {
+        Parrot_EventHandler *core_struct  = PMC_data_typed(SELF, Parrot_EventHandler *);
+        PMC *value = PMCNULL;
+
+        if (string_equal(interp, name, CONST_STRING(interp, "code")) == 0) {
+            value = core_struct->code;
+        }
+
+        return value;
+    }
+
+/*
+
 =item C<opcode_t *invoke(void *next)>
 
 Runs the contained code, if any; this is what handles the event.
@@ -231,6 +269,48 @@ Runs the contained code, if any; this is what handles the event.
 
         return (opcode_t *)next;
     }
+
+/*
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+/*
+
+=item C<PCCMETHOD can_handle(PMC *event)>
+
+Report whether the event handler can handle a particular type of event.
+
+=cut
+
+*/
+
+    PCCMETHOD can_handle(PMC *event) {
+        Parrot_EventHandler *handler_struct = PMC_data_typed(SELF, Parrot_EventHandler *);
+        if (event->vtable->base_type == enum_class_Task) {
+            PMC *type = VTABLE_get_attr_str(interp, event, CONST_STRING(interp, "type"));
+            STRING *type_str = VTABLE_get_string(interp, type);
+
+            if (string_equal(interp, type_str, CONST_STRING(interp, "event")) == 0) {
+                PMC *subtype = VTABLE_get_attr_str(interp, event, CONST_STRING(interp, "subtype"));
+                STRING *subtype_str = VTABLE_get_string(interp, subtype);
+
+                if (string_equal(interp, subtype_str, handler_struct->type) == 0) {
+                    PCCRETURN(INTVAL 1);
+                }
+            }
+        }
+
+        PCCRETURN(INTVAL 0);
+    }
+
 }
 
 /*
