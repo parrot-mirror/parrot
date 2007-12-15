@@ -160,12 +160,12 @@ HELP
     my $header = "unicode/ucnv.h";
     $conf->data->set( testheaders => "#include <$header>\n" );
     $conf->data->set( testheader  => "$header" );
-    cc_gen('config/auto/headers/test_c.in');
+    cc_gen($conf, 'config/auto/headers/test_c.in');
 
     $conf->data->set( testheaders => undef );    # Clean up.
     $conf->data->set( testheader  => undef );
-    eval { cc_build(); };
-    if ( !$@ && cc_run() =~ /^$header OK/ ) {
+    eval { cc_build($conf); };
+    if ( !$@ && cc_run($conf) =~ /^$header OK/ ) {
 
         # Ok, we don't need anything more.
         print "Your compiler found the icu headers... good!\n" if $verbose;
@@ -174,7 +174,7 @@ HELP
         print "Adding -I $icuheaders to ccflags for icu headers.\n" if $verbose;
         $conf->data->add( ' ', ccflags => "-I $icuheaders" );
     }
-    cc_clean();
+    cc_clean($conf);
 
     $self->set_result("yes");
 

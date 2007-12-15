@@ -75,11 +75,11 @@ sub runstep {
         }
     }
 
-    cc_gen('config/auto/gmp/gmp.in');
-    eval { cc_build(); };
+    cc_gen($conf, 'config/auto/gmp/gmp.in');
+    eval { cc_build($conf); };
     my $has_gmp = 0;
     if ( !$@ ) {
-        my $test = cc_run();
+        my $test = cc_run($conf);
         if ( $test eq
 "6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151 0\n"
             )

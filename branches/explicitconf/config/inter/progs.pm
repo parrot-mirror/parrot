@@ -127,12 +127,13 @@ END
     $ccwarn = integrate( $conf->data->get('ccwarn'), $conf->options->get('ccwarn') );
     $conf->data->set( ccwarn => $ccwarn );
 
-    test_compiler($cc);
+    test_compiler($conf, $cc);
 
     return 1;
 }
 
 sub test_compiler {
+    my $conf = shift;
     my $cc = shift;
 
     open( my $out_fh, '>', 'test.c' ) or die "Unable to open 'test.c': $@\n";
@@ -143,12 +144,12 @@ int main() {
 END_C
     close $out_fh;
 
-    unless ( eval { cc_build(); 1 } ) {
+    unless ( eval { cc_build($conf); 1 } ) {
         warn "Compilation failed with '$cc'\n";
         exit 1;
     }
 
-    unless ( eval { cc_run(); 1 } ) {
+    unless ( eval { cc_run($conf); 1 } ) {
         warn $@ if $@;
         exit 1;
     }

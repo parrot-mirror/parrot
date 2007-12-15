@@ -28,13 +28,13 @@ sub runstep {
         print " $f " if $verbose;
         my ($suffix) = $f =~ /test_(\w+)/;
         $f = "config/auto/cpu/i386/$f";
-        cc_gen($f);
-        eval { cc_build("-DPARROT_CONFIG_TEST") };
+        cc_gen($conf, $f);
+        eval { cc_build($conf, "-DPARROT_CONFIG_TEST") };
         if ($@) {
             print " $@ " if $verbose;
         }
         else {
-            if ( cc_run() =~ /ok/ ) {
+            if ( cc_run($conf) =~ /ok/ ) {
                 $conf->data->set(
                     "i386_has_$suffix" => '1',
                     "HAS_i386_$suffix" => '1',
@@ -43,7 +43,7 @@ sub runstep {
                 $conf->data->add( ' ', TEMP_generated => $f );
             }
         }
-        cc_clean();
+        cc_clean($conf);
     }
     return;
 }

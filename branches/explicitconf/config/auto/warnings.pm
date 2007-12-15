@@ -166,7 +166,7 @@ sub try_warning {
     $verbose and print "trying attribute '$warning'$/";
 
     my $cc = $conf->option_or_data('cc');
-    cc_gen('config/auto/warnings/test_c.in');
+    cc_gen($conf, 'config/auto/warnings/test_c.in');
 
     my $ccflags  = $conf->data->get('ccflags');
     my $tryflags = "$ccflags $warning";

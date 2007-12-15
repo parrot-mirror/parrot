@@ -46,32 +46,32 @@ sub runstep {
         return 1;
     }
 
-    cc_gen('config/auto/signal/test_1.in');
-    eval { cc_build(); };
-    unless ( $@ || cc_run() !~ /ok/ ) {
+    cc_gen($conf, 'config/auto/signal/test_1.in');
+    eval { cc_build($conf); };
+    unless ( $@ || cc_run($conf) !~ /ok/ ) {
         $conf->data->set( has___sighandler_t => 'define' );
         print " (__sighandler_t)" if $verbose;
     }
-    cc_clean();
+    cc_clean($conf);
 
-    cc_gen('config/auto/signal/test_2.in');
-    eval { cc_build(); };
-    unless ( $@ || cc_run() !~ /ok/ ) {
+    cc_gen($conf, 'config/auto/signal/test_2.in');
+    eval { cc_build($conf); };
+    unless ( $@ || cc_run($conf) !~ /ok/ ) {
         $conf->data->set( has_sigaction => 'define' );
         print " (sigaction)" if $verbose;
     }
-    cc_clean();
+    cc_clean($conf);
 
-    cc_gen('config/auto/signal/test_itimer.in');
-    eval { cc_build(); };
-    unless ( $@ || cc_run() !~ /ok/ ) {
+    cc_gen($conf, 'config/auto/signal/test_itimer.in');
+    eval { cc_build($conf); };
+    unless ( $@ || cc_run($conf) !~ /ok/ ) {
         $conf->data->set(
             has_setitimer    => 'define',
             has_sig_atomic_t => 'define'
         );
         print " (setitimer) " if $verbose;
     }
-    cc_clean();
+    cc_clean($conf);
 
     # now generate signal constants
     open my $O, ">", "runtime/parrot/include/signal.pasm"

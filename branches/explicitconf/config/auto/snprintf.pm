@@ -33,7 +33,7 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $res = _probe_for_snprintf();
+    my $res = _probe_for_snprintf($conf);
 
     $self->_evaluate_snprintf($conf, $res);
 
@@ -41,10 +41,11 @@ sub runstep {
 }
 
 sub _probe_for_snprintf {
-    cc_gen('config/auto/snprintf/test.in');
-    cc_build();
-    my $res = cc_run() or die "Can't run the snprintf testing program: $!";
-    cc_clean();
+    my $conf = shift;
+    cc_gen($conf, 'config/auto/snprintf/test.in');
+    cc_build($conf);
+    my $res = cc_run($conf) or die "Can't run the snprintf testing program: $!";
+    cc_clean($conf);
     return $res;
 }
 

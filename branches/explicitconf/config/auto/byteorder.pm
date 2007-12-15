@@ -32,7 +32,7 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $byteorder = _probe_for_byteorder();
+    my $byteorder = _probe_for_byteorder($conf);
 
     $self->_evaluate_byteorder($conf, $byteorder);
 
@@ -40,11 +40,12 @@ sub runstep {
 }
 
 sub _probe_for_byteorder {
-    cc_gen('config/auto/byteorder/test_c.in');
-    cc_build();
-    my $byteorder = cc_run()
+    my $conf = shift;
+    cc_gen($conf, 'config/auto/byteorder/test_c.in');
+    cc_build($conf);
+    my $byteorder = cc_run($conf)
         or die "Can't run the byteorder testing program: $!";
-    cc_clean();
+    cc_clean($conf);
     chomp $byteorder;
     return $byteorder;
 }

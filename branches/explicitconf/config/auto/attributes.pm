@@ -65,7 +65,7 @@ sub try_attr {
     $verbose and print "trying attribute '$attr'\n";
 
     my $cc = $conf->option_or_data('cc');
-    cc_gen('config/auto/attributes/test_c.in');
+    cc_gen($conf, 'config/auto/attributes/test_c.in');
 
     my $disable_warnings = '';
 

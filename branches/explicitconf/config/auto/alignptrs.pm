@@ -53,15 +53,15 @@ sub runstep {
     else {
 
         # Now really test by compiling some code
-        cc_gen('config/auto/alignptrs/test_c.in');
-        cc_build();
+        cc_gen($conf, 'config/auto/alignptrs/test_c.in');
+        cc_build($conf);
         for my $try_align ( 64, 32, 16, 8, 4, 2, 1 ) {
-            my $results = cc_run_capture($try_align);
+            my $results = cc_run_capture($conf, $try_align);
             if ( $results =~ /OK/ && $results !~ /align/i ) {
                 $align = $try_align;
             }
         }
-        cc_clean();
+        cc_clean($conf);
 
         die "Can't determine alignment!\n" unless defined $align;
         $conf->data->set( ptr_alignment => $align );

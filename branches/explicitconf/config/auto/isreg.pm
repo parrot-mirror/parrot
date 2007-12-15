@@ -33,27 +33,29 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $errormsg = _first_probe_for_isreg();
+    my $errormsg = _first_probe_for_isreg($conf);
 
     if (! $errormsg) {
-        $errormsg = _second_probe_for_isreg();
+        $errormsg = _second_probe_for_isreg($conf);
     }
-    cc_clean();
+    cc_clean($conf);
     $self->_evaluate_isreg($conf, $errormsg);
     return 1;
 }
 
 sub _first_probe_for_isreg {
+    my $conf = shift;
     my $errormsg;
-    cc_gen('config/auto/isreg/test_c.in');
-    eval { cc_build(); };
+    cc_gen($conf, 'config/auto/isreg/test_c.in');
+    eval { cc_build($conf); };
     $errormsg = 1 if  $@;
     return $errormsg;
 }
 
 sub _second_probe_for_isreg {
+    my $conf = shift;
     my $ccrunfailure;
-    $ccrunfailure++ if ( cc_run() !~ /ok/ );
+    $ccrunfailure++ if ( cc_run($conf) !~ /ok/ );
     return $ccrunfailure;
 }
 
