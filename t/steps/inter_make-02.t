@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# inter_make-01.t
+# 108-inter_make-02.t
 
 use strict;
 use warnings;
@@ -31,7 +31,6 @@ my $args = process_options(
 
 my $conf = Parrot::Configure->new();
 $conf->refresh(get_previous_state($pkg));
-
 
 my ( $task, $step_name, $step, $ret );
 
@@ -64,11 +63,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_make-01.t - test config::inter::make
+108-inter_make-02.t - test config::inter::make
 
 =head1 SYNOPSIS
 
-    % prove t/steps/inter_make-01.t
+    % prove t/configure/108-inter_make-02.t
 
 =head1 DESCRIPTION
 

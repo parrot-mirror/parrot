@@ -10,15 +10,21 @@ use warnings;
 use Test::More qw(no_plan);    # tests => 24;
 use Carp;
 use Data::Dumper;
-use lib qw( lib t/configure/testlib );
-use_ok('config::init::defaults');
-use_ok('config::init::install');
-use_ok('config::init::hints');
+use lib qw( lib t/configure/testlib t/steps/testlib );
 use_ok('config::inter::progs');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
 use Tie::Filehandle::Preempt::Stdin;
+use IO::CaptureOutput qw| capture |;
+use Auxiliary qw(
+    get_step_name
+    store_this_step_pure
+    get_previous_state
+);
+
+my $pkg = get_step_name($0);
+ok($pkg, "Step name has true value");
+ok(store_this_step_pure($pkg), "State stored");
 
 =for hints_for_testing Testing and refactoring of inter::progs should
 entail understanding of issues discussed in the following RT tickets:
@@ -37,18 +43,14 @@ my $args = process_options(
 );
 
 my $conf = Parrot::Configure->new;
-
-test_step_thru_runstep( $conf, q{init::defaults}, $args );
-test_step_thru_runstep( $conf, q{init::install},  $args );
-test_step_thru_runstep( $conf, q{init::hints},    $args );
+$conf->refresh(get_previous_state($pkg));
 
 my ( $task, $step_name, $step, $ret );
-my $pkg = q{inter::progs};
 
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-$task        = $conf->steps->[3];
+$task        = $conf->steps->[-1];
 $step_name   = $task->step;
 
 $step = $step_name->new();
@@ -79,9 +81,11 @@ can_ok( 'Tie::Filehandle::Preempt::Stdin', ('READLINE') );
 isa_ok( $object, 'Tie::Filehandle::Preempt::Stdin' );
 
 {
-    open STDOUT, '>', "/dev/null" or croak "Unable to open to myout";
-    $ret = $step->runstep($conf);
-    close STDOUT or croak "Unable to close after myout";
+    my ($ret, $stdout);
+    capture(
+        sub { $ret = $step->runstep($conf); },
+        \$stdout,
+    );
     ok( defined $ret, "$step_name runstep() returned defined value" );
 }
 
