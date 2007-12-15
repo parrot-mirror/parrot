@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 14;
+use Test::More tests => 13;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -13,7 +13,7 @@ use_ok('config::auto::headers');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
-use Parrot::IO::Capture::Mini;
+use IO::CaptureOutput qw | capture |;
 
 my $args = process_options(
     {
@@ -40,19 +40,13 @@ ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
 ok( $step->description(), "$step_name has description" );
 
-{
-    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    my $ret = $step->runstep($conf);
-    my @more_lines = $tie_out->READLINE;
-    ok( @more_lines, "verbose output captured" );
-    ok( $ret, "$step_name runstep() returned true value" );
-    is($step->result(), q{}, "Result is empty string as expected");
+my $rv;
+my $stdout;
+capture ( sub {$rv = $step->runstep($conf) }, \$stdout);
+ok( $stdout, "verbose output captured" );
+ok( $rv, "$step_name runstep() returned true value" );
+is($step->result(), q{}, "Result is empty string as expected");
 
-}
-untie *STDOUT;
-
-pass("Keep Devel::Cover happy");
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

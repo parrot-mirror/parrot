@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 25;
+use Test::More tests => 22;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -13,7 +13,7 @@ use_ok('config::auto::cgoto');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
-use Parrot::IO::Capture::Mini;
+use IO::CaptureOutput qw| capture |;
 
 my $args = process_options(
     {
@@ -40,37 +40,29 @@ ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
 ok( $step->description(), "$step_name has description" );
 
-{
-    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $step->_evaluate_cgoto($conf, 1);
-    my @more_lines = $tie_out->READLINE;
-    ok( @more_lines, "verbose output captured" );
-    ok($conf->data->get('TEMP_cg_h'), "An attribute was set to true value");
-    ok($conf->data->get('TEMP_cg_c'), "An attribute was set to true value");
-    ok($conf->data->get('TEMP_cg_o'), "An attribute was set to true value");
-    ok($conf->data->get('TEMP_cg_r'), "An attribute was set to true value");
-    ok($conf->data->get('cg_flag'), "An attribute was set to true value");
-    is($step->result(), q{yes}, "Expected result was set");
-}
-untie *STDOUT;
+my $stdout;
+capture(
+    sub { $step->_evaluate_cgoto($conf, 1) },
+    \$stdout
+);
+ok($conf->data->get('TEMP_cg_h'), "An attribute was set to true value");
+ok($conf->data->get('TEMP_cg_c'), "An attribute was set to true value");
+ok($conf->data->get('TEMP_cg_o'), "An attribute was set to true value");
+ok($conf->data->get('TEMP_cg_r'), "An attribute was set to true value");
+ok($conf->data->get('cg_flag'), "An attribute was set to true value");
+is($step->result(), q{yes}, "Expected result was set");
 
-{
-    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $step->_evaluate_cgoto($conf, 0);
-    my @more_lines = $tie_out->READLINE;
-    ok( @more_lines, "verbose output captured" );
-    is($conf->data->get('TEMP_cg_h'), q{}, "An attribute was set to empty string");
-    is($conf->data->get('TEMP_cg_c'), q{}, "An attribute was set to empty string");
-    is($conf->data->get('TEMP_cg_o'), q{}, "An attribute was set to empty string");
-    is($conf->data->get('TEMP_cg_r'), q{}, "An attribute was set to empty string");
-    is($conf->data->get('cg_flag'), q{}, "An attribute was set to empty string");
-    is($step->result(), q{no}, "Expected result was set");
-}
-untie *STDOUT;
+capture(
+    sub { $step->_evaluate_cgoto($conf, 0) },
+    \$stdout
+);
+is($conf->data->get('TEMP_cg_h'), q{}, "An attribute was set to empty string");
+is($conf->data->get('TEMP_cg_c'), q{}, "An attribute was set to empty string");
+is($conf->data->get('TEMP_cg_o'), q{}, "An attribute was set to empty string");
+is($conf->data->get('TEMP_cg_r'), q{}, "An attribute was set to empty string");
+is($conf->data->get('cg_flag'), q{}, "An attribute was set to empty string");
+is($step->result(), q{no}, "Expected result was set");
 
-pass("Keep Devel::Cover happy");
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
