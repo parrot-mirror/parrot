@@ -194,13 +194,13 @@ sub runstep {
         # test for executable malloced memory
         if ( -e "config/auto/jit/test_exec_$osname.in" ) {
             print " (has_exec_protect " if $verbose;
-            cc_gen("config/auto/jit/test_exec_$osname.in");
-            eval { cc_build(); };
+            cc_gen($conf, "config/auto/jit/test_exec_$osname.in");
+            eval { cc_build($conf); };
             if ($@) {
                 print " $@) " if $verbose;
             }
             else {
-                if ( cc_run(0) !~ /ok/ && cc_run(1) =~ /ok/ ) {
+                if ( cc_run($conf, 0) !~ /ok/ && cc_run($conf, 1) =~ /ok/ ) {
                     $conf->data->set( has_exec_protect => 1 );
                     print "yes) " if $verbose;
                 }
@@ -208,19 +208,19 @@ sub runstep {
                     print "no) " if $verbose;
                 }
             }
-            cc_clean();
+            cc_clean($conf);
         }
 
         # RT#43146 use executable memory for this test if needed
         #
         # test for some instructions
         if ( $jitcpuarch eq 'i386' ) {
-            cc_gen('config/auto/jit/test_c.in');
-            eval { cc_build(); };
-            unless ( $@ || cc_run() !~ /ok/ ) {
+            cc_gen($conf, 'config/auto/jit/test_c.in');
+            eval { cc_build($conf); };
+            unless ( $@ || cc_run($conf) !~ /ok/ ) {
                 $conf->data->set( jit_i386 => 'fcomip' );
             }
-            cc_clean();
+            cc_clean($conf);
         }
     }
     else {

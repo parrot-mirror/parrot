@@ -38,7 +38,7 @@ sub runstep {
 
     $conf->data->clean;
 
-    genfile( 'config/gen/config_pm/myconfig.in', 'myconfig' );
+    genfile( $conf,  'config/gen/config_pm/myconfig.in', 'myconfig' );
 
     open( my $IN, "<", "config/gen/config_pm/Config_pm.in" )
         or die "Can't open Config_pm.in: $!";

@@ -36,10 +36,10 @@ sub runstep {
     my $jitcapable = $conf->data->get('jitcapable');
 
     if ($jitcapable) {
-        cc_gen('config/auto/funcptr/test_c.in');
-        eval { cc_build(); };
+        cc_gen($conf, 'config/auto/funcptr/test_c.in');
+        eval { cc_build($conf); };
 
-        if ( $@ || cc_run() !~ /OK/ ) {
+        if ( $@ || cc_run($conf) !~ /OK/ ) {
             print <<"END";
 Although it is not required by the ANSI C standard,
 Parrot requires the ability to cast from void pointers to function
@@ -54,7 +54,7 @@ With the '--jitcapable=0' argument.
 END
             exit(-1);
         }
-        cc_clean();
+        cc_clean($conf);
         print " (yes) " if $conf->options->get('verbose');
         $self->set_result('yes');
     }

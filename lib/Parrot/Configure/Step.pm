@@ -158,7 +158,7 @@ sub move_if_diff {    ## no critic Subroutines::RequireFinalReturn
     unlink $from;
 }
 
-=item C<genfile($source, $target, %options)>
+=item C<genfile($conf, $source, $target, %options)>
 
 Takes the specified source file, replacing entries like C<@FOO@> with
 C<FOO>'s value from the configuration system's data, and writes the results
@@ -249,7 +249,7 @@ syntax works ok.
 =cut
 
 sub genfile {
-    my ( $source, $target, %options ) = @_;
+    my ( $conf, $source, $target, %options ) = @_;
 
     open my $in,  '<', $source       or die "Can't open $source: $!";
     open my $out, '>', "$target.tmp" or die "Can't open $target.tmp: $!";
@@ -483,19 +483,19 @@ sub _build_compile_command {
     return "$cc $ccflags $cc_args -I./include -c test.c";
 }
 
-=item C<cc_gen($source)>
+=item C<cc_gen($conf, $source)>
 
 Generates F<test.c> from the specified source file.
 
 =cut
 
 sub cc_gen {
-    my ($source) = @_;
+    my ($conf, $source) = @_;
 
-    genfile( $source, "test.c" );
+    genfile( $conf, $source, "test.c" );
 }
 
-=item C<cc_build($cc_args, $link_args)>
+=item C<cc_build($conf, $cc_args, $link_args)>
 
 These items are used from current config settings:
 
@@ -506,7 +506,7 @@ Calls the compiler and linker on F<test.c>.
 =cut
 
 sub cc_build {
-    my ( $cc_args, $link_args ) = @_;
+    my ( $conf, $cc_args, $link_args ) = @_;
 
     $cc_args   = '' unless defined $cc_args;
     $link_args = '' unless defined $link_args;
@@ -532,7 +532,7 @@ sub cc_build {
     }
 }
 
-=item C<cc_run()>
+=item C<cc_run($conf)>
 
 Calls the F<test> (or F<test.exe>) executable. Any output is directed to
 F<test.out>.
@@ -540,6 +540,7 @@ F<test.out>.
 =cut
 
 sub cc_run {
+    my $conf = shift;
     my $exe      = $conf->data->get('exe');
     my $slash    = $conf->data->get('slash');
     my $verbose  = $conf->options->get('verbose');
@@ -559,7 +560,7 @@ sub cc_run {
     return $output;
 }
 
-=item C<cc_run_capture()>
+=item C<cc_run_capture($conf)>
 
 Same as C<cc_run()> except that warnings and errors are also directed to
 F<test.out>.
@@ -567,6 +568,7 @@ F<test.out>.
 =cut
 
 sub cc_run_capture {
+    my $conf    = shift;
     my $exe     = $conf->data->get('exe');
     my $slash   = $conf->data->get('slash');
     my $verbose = $conf->options->get('verbose');
@@ -584,13 +586,14 @@ sub cc_run_capture {
     return $output;
 }
 
-=item C<cc_clean()>
+=item C<cc_clean($conf)>
 
 Cleans up all files in the root folder that match the glob F<test.*>.
 
 =cut
 
 sub cc_clean {    ## no critic Subroutines::RequireFinalReturn
+    my $conf = shift;
     unlink map "test$_", qw( .c .cco .ldo .out), $conf->data->get(qw( o exe ));
 }
 

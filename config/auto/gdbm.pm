@@ -66,21 +66,21 @@ sub runstep {
         }
     }
 
-    cc_gen('config/auto/gdbm/gdbm.in');
+    cc_gen($conf, 'config/auto/gdbm/gdbm.in');
     if ( $conf->data->get_p5('OSNAME') =~ /mswin32/i ) {
         if ( $cc =~ /^gcc/i ) {
-            eval { cc_build( '', '-llibgdbm' ); };
+            eval { cc_build($conf,  '', '-llibgdbm' ); };
         }
         else {
-            eval { cc_build( '', 'gdbm.lib' ); };
+            eval { cc_build($conf,  '', 'gdbm.lib' ); };
         }
     }
     else {
-        eval { cc_build( '', '-lgdbm' ); };
+        eval { cc_build($conf,  '', '-lgdbm' ); };
     }
     my $has_gdbm = 0;
     if ( !$@ ) {
-        my $test = cc_run();
+        my $test = cc_run($conf);
         unlink "gdbm_test_db";
         if ( $test eq "gdbm is working.\n" ) {
             $has_gdbm = 1;

@@ -53,17 +53,17 @@ sub runstep {
                 join( '', map { "#include <$_>\n" } @$use_headers ) );
             $conf->data->set( testheader => $header );
 
-            cc_gen('config/auto/headers/test_c.in');
+            cc_gen($conf, 'config/auto/headers/test_c.in');
 
             $conf->data->set( testheaders => undef );
             $conf->data->set( testheader  => undef );
 
-            eval { cc_build(); };
-            if ( !$@ && cc_run() =~ /^$header OK/ ) {
+            eval { cc_build($conf); };
+            if ( !$@ && cc_run($conf) =~ /^$header OK/ ) {
                 $pass = 1;
                 push @found_headers, $header;
             }
-            cc_clean();
+            cc_clean($conf);
             last if $pass;
         }
 
