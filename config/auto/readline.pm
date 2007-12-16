@@ -70,11 +70,11 @@ sub runstep {
         }
     }
 
-    cc_gen($conf, 'config/auto/readline/readline.in');
+    $conf->cc_gen('config/auto/readline/readline.in');
     my $has_readline = 0;
-    eval { cc_build($conf) };
+    eval { $conf->cc_build() };
     if ( !$@ ) {
-        if ( cc_run($conf) ) {
+        if ( $conf->cc_run() ) {
             $has_readline = 1;
             print " (yes) " if $verbose;
             $self->set_result('yes');

@@ -44,7 +44,7 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    genfile( $conf,  'config/gen/makefiles/languages.in' => 'languages/Makefile' );
+    $conf->genfile('config/gen/makefiles/languages.in' => 'languages/Makefile' );
 
     my $languages = $conf->options->get('languages');
     $languages = qq{
@@ -75,17 +75,14 @@ sub runstep {
         elsif ( $language eq 'tcl' ) {
             # tcl has more than one Makefile
             # currently this is handled as a special case
-            genfile( $conf, 
-                "languages/$language/config/makefiles/examples.in" => "languages/$language/examples/Makefile"
+            $conf->genfile("languages/$language/config/makefiles/examples.in" => "languages/$language/examples/Makefile"
             );
-            genfile( $conf, 
-                "languages/$language/config/makefiles/root.in"     => "languages/$language/Makefile",
+            $conf->genfile("languages/$language/config/makefiles/root.in"     => "languages/$language/Makefile",
                 expand_gmake_syntax                                => 1,
             );
         }
         else {
-            genfile( $conf, 
-                "languages/$language/config/makefiles/root.in"     => "languages/$language/Makefile"
+            $conf->genfile("languages/$language/config/makefiles/root.in"     => "languages/$language/Makefile"
             );
         }
     }

@@ -51,13 +51,13 @@ sub runstep {
         print " $f " if $verbose;
         my ($suffix) = $f =~ /test_(\w+)/;
         $f = "config/auto/cpu/sun4/$f";
-        cc_gen($conf, $f);
-        eval { cc_build($conf, "-DPARROT_CONFIG_TEST", "sparcasm" . $conf->data->get('o') ) };
+        $conf->cc_gen($f);
+        eval { $conf->cc_build("-DPARROT_CONFIG_TEST", "sparcasm" . $conf->data->get('o') ) };
         if ($@) {
             print " $@ " if $verbose;
         }
         else {
-            if ( cc_run($conf) =~ /ok/ ) {
+            if ( $conf->cc_run() =~ /ok/ ) {
                 $conf->data->set(
                     "sparc_has_$suffix" => '1',
                     "HAS_SPARC_$suffix" => '1',
@@ -66,7 +66,7 @@ sub runstep {
                 $conf->data->add( ' ', TEMP_atomic_o => 'src/atomic/sparc_v9.o' );
             }
         }
-        cc_clean($conf);
+        $conf->cc_clean();
     }
 
     cleanup( $self, $conf );

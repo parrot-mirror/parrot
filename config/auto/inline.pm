@@ -52,13 +52,13 @@ sub _first_probe_for_inline {
     my $self = shift;
     my $conf = shift;
     my $test;
-    cc_gen($conf, 'config/auto/inline/test_1.in');
-    eval { cc_build($conf); };
+    $conf->cc_gen('config/auto/inline/test_1.in');
+    eval { $conf->cc_build(); };
     if ( !$@ ) {
-        $test = cc_run($conf);
+        $test = $conf->cc_run();
         chomp $test if $test;
     }
-    cc_clean($conf);
+    $conf->cc_clean();
     return $test;
 }
 
@@ -67,13 +67,13 @@ sub _second_probe_for_inline {
     my $conf = shift;
     my $test = shift;
     if ( !$test ) {
-        cc_gen($conf, 'config/auto/inline/test_2.in');
-        eval { cc_build($conf); };
+        $conf->cc_gen('config/auto/inline/test_2.in');
+        eval { $conf->cc_build(); };
         if ( !$@ ) {
-            $test = cc_run($conf);
+            $test = $conf->cc_run();
             chomp $test if $test;
         }
-        cc_clean($conf);
+        $conf->cc_clean();
     }
     return $test;
 }

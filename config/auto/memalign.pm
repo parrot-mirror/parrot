@@ -63,21 +63,21 @@ sub runstep {
         $conf->data->set( ptrcast => 'long' );
     }
 
-    cc_gen($conf, 'config/auto/memalign/test_c.in');
-    eval { cc_build($conf); };
-    unless ( $@ || cc_run_capture($conf) !~ /ok/ ) {
+    $conf->cc_gen('config/auto/memalign/test_c.in');
+    eval { $conf->cc_build(); };
+    unless ( $@ || $conf->cc_run_capture() !~ /ok/ ) {
         $test = 1;
     }
-    cc_clean($conf);
+    $conf->cc_clean();
 
     my $test2 = 0;
 
-    cc_gen($conf, 'config/auto/memalign/test_c2.in');
-    eval { cc_build($conf); };
-    unless ( $@ || cc_run_capture($conf) !~ /ok/ ) {
+    $conf->cc_gen('config/auto/memalign/test_c2.in');
+    eval { $conf->cc_build(); };
+    unless ( $@ || $conf->cc_run_capture() !~ /ok/ ) {
         $test2 = 1;
     }
-    cc_clean($conf);
+    $conf->cc_clean();
 
     $conf->data->set( malloc_header => undef );
 

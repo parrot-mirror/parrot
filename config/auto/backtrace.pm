@@ -42,16 +42,16 @@ sub runstep {
 
 sub _probe_for_backtrace {
     my $conf = shift;
-    cc_gen($conf, "config/auto/backtrace/test_c.in");
+    $conf->cc_gen("config/auto/backtrace/test_c.in");
 
     # If the program builds (e.g. the linker found backtrace* in libc)
     # then we have the glibc backtrace symbols.  If the program fails to
     # build for whatever reason we're just going to assume that the
     # build failure is because these symbols are missing.
 
-    eval { cc_build($conf); };
+    eval { $conf->cc_build(); };
     my $anyerror = $@;
-    cc_clean($conf);
+    $conf->cc_clean();
     return $anyerror;
 }
 

@@ -31,7 +31,7 @@ sub runstep {
         my ( $key, $cc ) = @_;
         my %gnuc;
         my $link = $conf->data->get('link');
-        cc_gen($conf, "config/auto/gcc/test_c.in");
+        $conf->cc_gen("config/auto/gcc/test_c.in");
 
         # Can't call cc_build since we haven't set all the flags yet.
         # This should suffice for this test.
@@ -39,7 +39,7 @@ sub runstep {
         Parrot::Configure::Step::_run_command( "$cc -o test test.c $cc_inc",
             'test.cco', 'test.cco' )
             and confess "C compiler failed (see test.cco)";
-        %gnuc = eval cc_run($conf) or die "Can't run the test program: $!";
+        %gnuc = eval $conf->cc_run() or die "Can't run the test program: $!";
         if ( defined $gnuc{__GNUC__} ) {
             $link = 'g++';
         }

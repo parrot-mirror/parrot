@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More qw(no_plan); # tests => 15;
+use Test::More tests => 13;
 use Carp;
 use Cwd;
 use File::Temp 0.13 qw/ tempdir /;
@@ -13,17 +13,11 @@ use lib qw( lib t/configure/testlib );
 use Parrot::Configure;
 use IO::CaptureOutput qw | capture |;
 
-BEGIN { use_ok('Parrot::Configure::Step'); }
-
-Parrot::Configure::Step->import(@Parrot::Configure::Step::EXPORT_OK);
-
-can_ok( __PACKAGE__, @Parrot::Configure::Step::EXPORT_OK );
-
 my $cwd = cwd();
 my $conf = Parrot::Configure->new;
 
 my $nonexistent = 'config/gen/makefiles/foobar';
-eval { genfile($conf,  $nonexistent => 'CFLAGS', comment_type => '#', ); };
+eval { $conf->genfile(  $nonexistent => 'CFLAGS', comment_type => '#', ); };
 like(
     $@, qr/Can't open $nonexistent/,    #'
     "Got expected error message when non-existent file provided as argument to genfile()."
@@ -37,7 +31,7 @@ like(
     print $IN qq{Hello world\n};
     close $IN or croak "Unable to close temp file";
     ok(
-        genfile($conf, 
+        $conf->genfile( 
             $dummy   => 'CFLAGS',
             makefile => 1,
         ),
@@ -54,7 +48,7 @@ like(
     open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
     print $IN qq{Hello world\n};
     close $IN or croak "Unable to close temp file";
-    eval { genfile($conf,  $dummy => 'CFLAGS', makefile => 1, comment_type => q{<!--}, ); };
+    eval { $conf->genfile(  $dummy => 'CFLAGS', makefile => 1, comment_type => q{<!--}, ); };
     like(
         $@,
         qr/^Unknown comment type/,
@@ -72,7 +66,7 @@ like(
     print $IN qq{#perl Hello world\n};
     close $IN or croak "Unable to close temp file";
     ok(
-        genfile($conf, 
+        $conf->genfile( 
             $dummy       => 'CFLAGS',
             makefile     => 1,
             feature_file => 0,
@@ -95,7 +89,7 @@ if (@miniparrot@) { sprint "Hello world\n"; }
 END_DUMMY
     close $IN or croak "Unable to close temp file";
     my ($stdout, $stderr);
-    capture ( sub { eval { genfile($conf, $dummy => 'CFLAGS', feature_file => 1, ) } },
+    capture ( sub { eval { $conf->genfile( $dummy => 'CFLAGS', feature_file => 1, ) } },
         \$stdout, \$stderr );
     ok( $stderr, "Error message caught" );
     ok( $@,     "Bad Perl code caught by genfile()" );
@@ -113,7 +107,7 @@ END_DUMMY
     close $IN or croak "Unable to close temp file";
     my ($rv, $stdout, $stderr) ;
     capture (
-        sub { $rv = genfile( $conf, $dummy => 'CFLAGS' ) }, 
+        sub { $rv = $conf->genfile( $dummy => 'CFLAGS' ) }, 
         \$stdout,
         \$stderr
     );
@@ -131,7 +125,7 @@ END_DUMMY
     open my $IN, '>', $dummy or croak "Unable to open temp file for writing";
     print $IN q{This line ends in a slash/}, qq{\n};
     close $IN or croak "Unable to close temp file";
-    eval { genfile($conf,  $dummy => 'CFLAGS', replace_slashes => 1, ); };
+    eval { $conf->genfile(  $dummy => 'CFLAGS', replace_slashes => 1, ); };
     like( $@, qr//,
         "genfile() died as expected with replace_slashes option and line ending in trailing slash"
     );
@@ -149,7 +143,7 @@ END_DUMMY
     print $IN $line, "\n";
     close $IN or croak "Unable to close temp file";
     ok(
-        genfile($conf, 
+        $conf->genfile( 
             $dummy              => 'CFLAGS',
             expand_gmake_syntax => 1,
         ),
@@ -169,7 +163,7 @@ END_DUMMY
     print $IN $line, "\n";
     close $IN or croak "Unable to close temp file";
     ok(
-        genfile($conf, 
+        $conf->genfile( 
             $dummy              => 'CFLAGS',
             expand_gmake_syntax => 1,
         ),
@@ -189,7 +183,7 @@ END_DUMMY
     print $IN $line, "\n";
     close $IN or croak "Unable to close temp file";
     ok(
-        genfile($conf, 
+        $conf->genfile( 
             $dummy              => 'CFLAGS',
             expand_gmake_syntax => 1,
         ),
@@ -209,7 +203,7 @@ END_DUMMY
     print $IN $line, "\n";
     close $IN or croak "Unable to close temp file";
     ok(
-        genfile($conf, 
+        $conf->genfile( 
             $dummy              => 'CFLAGS',
             expand_gmake_syntax => 1,
         ),
