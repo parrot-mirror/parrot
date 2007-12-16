@@ -39,10 +39,10 @@ sub runstep {
 
 sub _probe_for_gcc {
     my $conf = shift;
-    cc_gen($conf, "config/auto/gcc/test_c.in");
-    cc_build($conf);
-    my %gnuc = eval cc_run($conf) or die "Can't run the test program: $!";
-    cc_clean($conf);
+    $conf->cc_gen("config/auto/gcc/test_c.in");
+    $conf->cc_build();
+    my %gnuc = eval $conf->cc_run() or die "Can't run the test program: $!";
+    $conf->cc_clean();
     return \%gnuc;
 }
 

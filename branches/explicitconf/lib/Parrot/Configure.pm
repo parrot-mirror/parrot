@@ -41,6 +41,7 @@ use lib qw(config);
 use Carp qw(carp);
 use Storable qw(nstore retrieve);
 use Parrot::Configure::Data;
+use base qw(Parrot::Configure::Compiler);
 
 use Class::Struct;
 

@@ -52,9 +52,9 @@ sub _probe_for_cgoto {
         $test = $cgoto;
     }
     else {
-        cc_gen($conf,'config/auto/cgoto/test_c.in');
-        $test = eval { cc_build($conf); 1; } || 0;
-        cc_clean($conf);
+        $conf->cc_gen('config/auto/cgoto/test_c.in');
+        $test = eval { $conf->cc_build(); 1; } || 0;
+        $conf->cc_clean();
     }
     return $test;
 }

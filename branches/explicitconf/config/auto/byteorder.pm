@@ -41,11 +41,11 @@ sub runstep {
 
 sub _probe_for_byteorder {
     my $conf = shift;
-    cc_gen($conf, 'config/auto/byteorder/test_c.in');
-    cc_build($conf);
-    my $byteorder = cc_run($conf)
+    $conf->cc_gen('config/auto/byteorder/test_c.in');
+    $conf->cc_build();
+    my $byteorder = $conf->cc_run()
         or die "Can't run the byteorder testing program: $!";
-    cc_clean($conf);
+    $conf->cc_clean();
     chomp $byteorder;
     return $byteorder;
 }

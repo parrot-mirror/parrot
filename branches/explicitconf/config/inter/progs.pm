@@ -144,12 +144,12 @@ int main() {
 END_C
     close $out_fh;
 
-    unless ( eval { cc_build($conf); 1 } ) {
+    unless ( eval { $conf->cc_build(); 1 } ) {
         warn "Compilation failed with '$cc'\n";
         exit 1;
     }
 
-    unless ( eval { cc_run($conf); 1 } ) {
+    unless ( eval { $conf->cc_run(); 1 } ) {
         warn $@ if $@;
         exit 1;
     }

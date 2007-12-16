@@ -42,10 +42,10 @@ sub runstep {
 
 sub _probe_for_msvc {
     my $conf = shift;
-    cc_gen($conf, "config/auto/msvc/test_c.in");
-    cc_build($conf);
-    my %msvc = eval cc_run($conf) or die "Can't run the test program: $!";
-    cc_clean($conf);
+    $conf->cc_gen("config/auto/msvc/test_c.in");
+    $conf->cc_build();
+    my %msvc = eval $conf->cc_run() or die "Can't run the test program: $!";
+    $conf->cc_clean();
     return \%msvc;
 }
 

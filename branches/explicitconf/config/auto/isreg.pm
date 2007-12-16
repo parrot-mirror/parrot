@@ -38,7 +38,7 @@ sub runstep {
     if (! $errormsg) {
         $errormsg = _second_probe_for_isreg($conf);
     }
-    cc_clean($conf);
+    $conf->cc_clean();
     $self->_evaluate_isreg($conf, $errormsg);
     return 1;
 }
@@ -46,8 +46,8 @@ sub runstep {
 sub _first_probe_for_isreg {
     my $conf = shift;
     my $errormsg;
-    cc_gen($conf, 'config/auto/isreg/test_c.in');
-    eval { cc_build($conf); };
+    $conf->cc_gen('config/auto/isreg/test_c.in');
+    eval { $conf->cc_build(); };
     $errormsg = 1 if  $@;
     return $errormsg;
 }
@@ -55,7 +55,7 @@ sub _first_probe_for_isreg {
 sub _second_probe_for_isreg {
     my $conf = shift;
     my $ccrunfailure;
-    $ccrunfailure++ if ( cc_run($conf) !~ /ok/ );
+    $ccrunfailure++ if ( $conf->cc_run() !~ /ok/ );
     return $ccrunfailure;
 }
 
