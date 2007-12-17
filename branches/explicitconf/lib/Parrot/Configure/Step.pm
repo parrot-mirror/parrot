@@ -7,13 +7,18 @@ Parrot::Configure::Step - Configuration Step Utilities
 
 =head1 DESCRIPTION
 
-The C<Parrot::Configure::Step> module contains utility functions for steps to
-use.
+The C<Parrot::Configure::Step> module contains utility functions for use by
+the configuration step classes found under F<config/>.
 
 Note that the actual configuration step itself is NOT an instance of this
 class, rather it is defined to be in the C<package> C<Configure::Step>. See
 F<docs/configuration.pod> for more information on how to create new
 configuration steps.
+
+The subroutines found in this module do B<not> require the Parrot::Configure
+object as an argument.  Those subroutines formerly found in this module which
+B<do> require the Parrot::Configure object as an argument have been moved into
+Parrot::Configure::Compiler.
 
 =head2 Functions
 
@@ -34,23 +39,7 @@ use File::Copy ();
 use File::Spec;
 use File::Which;
 use lib ("lib");
-#use Parrot::Configure;
-
-#my $conf = Parrot::Configure->new();
-
 our @EXPORT    = ();
-#our @EXPORT_OK = qw(prompt genfile copy_if_diff move_if_diff integrate
-#    cc_gen cc_build cc_run cc_clean cc_run_capture
-#    capture_output check_progs);
-#our %EXPORT_TAGS = (
-#    inter => [qw(prompt integrate)],
-#    auto  => [
-#        qw(cc_gen cc_build cc_run cc_clean cc_run_capture
-#            capture_output check_progs)
-#    ],
-#    gen => [qw(genfile copy_if_diff move_if_diff)]
-#);
-
 our @EXPORT_OK = qw(prompt copy_if_diff move_if_diff integrate
     capture_output check_progs _slurp);
 our %EXPORT_TAGS = (
