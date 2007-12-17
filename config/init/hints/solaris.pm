@@ -6,8 +6,6 @@ package init::hints::solaris;
 use strict;
 use warnings;
 
-use Parrot::Configure::Step qw(cc_gen cc_run);
-
 sub runstep {
     my ( $self, $conf ) = @_;
 

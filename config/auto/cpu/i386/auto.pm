@@ -16,8 +16,6 @@ package auto::cpu::i386::auto;
 use strict;
 use warnings;
 
-use Parrot::Configure::Step qw(cc_gen cc_build cc_run cc_clean);
-
 sub runstep {
     my ( $self, $conf ) = @_;
 

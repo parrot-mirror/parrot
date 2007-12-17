@@ -8,6 +8,7 @@ use warnings;
 use Test::More tests =>  9;
 use Carp;
 use Cwd;
+use File::Temp 0.13 qw/ tempdir /;
 use lib qw( lib t/configure/testlib );
 use IO::CaptureOutput qw| capture |;
 

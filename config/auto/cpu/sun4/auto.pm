@@ -16,8 +16,6 @@ package auto::cpu::sun4::auto;
 use strict;
 use warnings;
 
-use Parrot::Configure::Step qw(cc_gen cc_build cc_run cc_clean);
-
 sub build_asm {
     my ( $self, $conf ) = @_;
     my $file = 'src/atomic/sparc_v9.s';
