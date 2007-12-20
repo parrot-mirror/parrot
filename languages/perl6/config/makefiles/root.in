@@ -43,13 +43,17 @@ BUILTINS_PIR = \
   src/classes/Bool.pir \
   src/classes/Str.pir \
   src/classes/Num.pir \
+  src/classes/Int.pir \
   src/classes/List.pir \
   src/classes/Code.pir \
+  src/classes/Sub.pir \
+  src/classes/Junction.pir \
   src/builtins/assign.pir \
   src/builtins/cmp.pir \
   src/builtins/control.pir \
   src/builtins/hash.pir \
   src/builtins/io.pir \
+  src/builtins/junction.pir \
   src/builtins/list.pir \
   src/builtins/match.pir \
   src/builtins/math.pir \
@@ -115,6 +119,9 @@ test: all
 
 # this target has nothing to do
 testclean:
+
+testtest: all test
+	$(PERL) t/harness t/02-test-pm
 
 spectest: all t/spec
 # XXX when tests pass, run more here.

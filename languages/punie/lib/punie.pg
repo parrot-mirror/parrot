@@ -55,7 +55,7 @@ token term {
     | <stringdouble> {*}                         #= stringdouble
     | <stringsingle> {*}                         #= stringsingle
     | <stringbacktick> {*}                       #= stringbacktick
-    | do <block> {*}                             #= block
+    | do <.ws> <block> {*}                       #= block
     | <opcall> {*}                               #= subcall
     | <subcall> {*}                              #= subcall
     | <variable> {*}                             #= variable
@@ -65,7 +65,7 @@ rule variable {
     | <special_variable> <key>? {*}
 }
 
-token special_variable { '$_' | '$#' | '$ ' }
+token special_variable { '$_' | '$#' | '$ ' '_' }
 
 token sigil { '$#' | <[$@%]> {*} }
 token key {

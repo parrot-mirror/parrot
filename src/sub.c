@@ -147,7 +147,7 @@ to the current context.
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 Parrot_cont *
-new_continuation(PARROT_INTERP, ARGIN(const Parrot_cont *to))
+new_continuation(PARROT_INTERP, ARGIN_NULLOK(const Parrot_cont *to))
 {
     Parrot_cont    * const cc     = mem_allocate_typed(Parrot_cont);
     Parrot_Context * const to_ctx = to ? to->to_ctx : CONTEXT(interp->ctx);
@@ -445,7 +445,7 @@ Parrot_Context_infostr(PARROT_INTERP, ARGIN(const parrot_context_t *ctx))
             info.fullname, info.pc, file, info.line);
 
         /* free the non-constant string, but not the constant one */
-        if (strncmp(unknown_file, file, sizeof(unknown_file)-1) < 0)
+        if (strncmp(unknown_file, file, sizeof (unknown_file) - 1) < 0)
             string_cstring_free((char *)const_cast(info.file));
         /* XXX This is probably a source of mis-freeing. */
     }

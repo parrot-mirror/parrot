@@ -11,9 +11,17 @@ as the Perl 6 C<Str> class.
 
 =cut
 
+.namespace ['Perl6Str']
+
 .sub 'onload' :anon :init :load
     $P0 = get_hll_global ['Perl6Object'], 'make_proto'
     $P0('Perl6Str', 'Str')
+.end
+
+
+.sub 'ACCEPTS' :method
+    .param string topic
+    .return 'infix:eq'(topic, self)
 .end
 
 # Local Variables:

@@ -5,7 +5,7 @@
 
 =head1 NAME
 
-docs/dev/wranglers.pod - Tips for Ticket Wranglers
+docs/project/ticket_wrangler_guide.pod - Tips for Ticket Wranglers
 
 =head1 ABSTRACT
 

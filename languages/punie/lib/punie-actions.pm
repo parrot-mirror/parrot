@@ -1,3 +1,6 @@
+# Copyright (C) 2007, The Perl Foundation.
+# $Id $
+
 class Punie::Grammar::Actions;
 
 ##  The ast of the entire program is the ast of the
@@ -22,7 +25,13 @@ method TOP($/) {
 }
 
 method block ($/) {
+    my $init := PAST::Stmts.new();
+    $init.push(
+        PAST::Var.new(:name('@_'), :scope('parameter'), :slurpy(1))
+    );
     my $past := PAST::Block.new( :node($/), :blocktype('immediate') );
+    $past.symbol( '@_', :scope('lexical') );
+    $past.push( $init );
     $past.push( $( $<lineseq> ) );
     make $past;
 }
@@ -155,14 +164,16 @@ method term($/, $key) {
 method variable($/) {
     my $viviself := 'Undef';
     my $sigil := ~$<sigil>[0];
-    if    ~$<sigil>[0] eq '@'    { $viviself := 'Array'; }
-    elsif ~$<sigil>[0] eq '%'    { $viviself := 'Hash'; }
-    if    ~$<key>[0]<KEY> eq '[' { $viviself := 'Array'; $sigil := '@'; }
+    if    ~$sigil eq '@' { $viviself := 'ResizablePMCArray'; }
+    elsif ~$sigil eq '%' { $viviself := 'Hash'; }
+    if    ~$<key>[0]<KEY> eq '[' { $viviself := 'ResizablePMCArray'; $sigil := '@'; }
     elsif ~$<key>[0]<KEY> eq '{' { $viviself := 'Hash';  $sigil := '%'; }
     if $<key> {
+        my $scope := 'package';
+        if ~$sigil ~ ~$<word> eq '@_' { $scope := 'lexical' }
         my $base := PAST::Var.new(
             :name( $sigil ~ $<word> ),
-            :scope('package'),
+            :scope($scope),
             :viviself($viviself)
         );
         make PAST::Var.new(

@@ -170,8 +170,23 @@ method use_statement($/) {
     make $past;
 }
 
+method begin_statement($/) {
+    my $past := $( $<block> );
+    $past.blocktype('declaration');
+    my $sub := PAST::Compiler.compile( $past );
+    $sub();
+    # XXX - should emit BEGIN side-effects, and do a proper return()
+    make PAST::Block.new();
+}
+
 method end_statement($/) {
-    $/.panic( ~$<sym> ~ ' not implemented');
+    my $past := $( $<block> );
+    $past.blocktype('declaration');
+    my $sub := PAST::Compiler.compile( $past );
+    PIR q<  $P0 = get_hll_global ['Perl6'], '@?END_BLOCKS' >;
+    PIR q<  $P1 = find_lex '$sub' >;
+    PIR q<  push $P0, $P1 >;
+    make $past;
 }
 
 method statement_mod_cond($/) {
@@ -246,6 +261,8 @@ method routine_def($/) {
     my $past := $( $<block> );
     if $<ident> {
         $past.name( ~$<ident>[0] );
+        our $?BLOCK;
+        $?BLOCK.symbol(~$<ident>[0], :scope('package'));
     }
     make $past;
 }
@@ -310,18 +327,41 @@ method methodop($/, $key) {
 
 method postcircumfix($/, $key) {
     my $semilist := $( $<semilist> );
-    my $past := PAST::Var.new( $semilist[0],
-                               :scope('keyed'),
-                               :vivibase('List'),
-                               :viviself('Undef'),
-                               :node( $/ )
-                             );
+    my $past;
+    if ($key eq '[ ]') {
+        $past := PAST::Var.new( $semilist[0],
+                                :scope('keyed'),
+                                :vivibase('List'),
+                                :viviself('Undef'),
+                                :node( $/ )
+                              );
+    } elsif ($key eq '( )') {
+        $past := PAST::Op.new( :node($/), :pasttype('call') );
+        for @($semilist) {
+            $past.push( $_ );
+        }
+    } else {
+        $past := PAST::Var.new( $semilist[0],
+                                :scope('keyed'),
+                                :vivibase('Hash'),
+                                :viviself('Undef'),
+                                :node( $/ )
+                              );
+    }
     make $past;
 }
 
 
 method noun($/, $key) {
     make $( $/{$key} );
+}
+
+method package_declarator($/, $key) {
+    my $past := $( $/{$key} );
+    $past.namespace($<name><ident>);
+    $past.blocktype('declaration');
+    $past.pirflags(':init :load');
+    make $past;
 }
 
 method scope_declarator($/) {
@@ -339,9 +379,32 @@ method scope_declarator($/) {
 
 
 method variable($/, $key) {
-    my $viviself := 'Undef';
-    if ($<sigil> eq '@') { $viviself := 'List'; }
-    make PAST::Var.new( :node($/), :name( ~$/ ), :viviself($viviself) );
+    my $past;
+    if $key eq 'special_variable' {
+        $past := $( $<special_variable> );
+    }
+    else {
+        my $viviself := 'Undef';
+        if $<sigil> eq '@' { $viviself := 'List'; }
+        if $<sigil> eq '%' { $viviself := 'Hash'; }
+        my @ident := $<name><ident>;
+        my $name;
+        PIR q<  $P0 = find_lex '@ident'  >;
+        PIR q<  $P0 = clone $P0          >;
+        PIR q<  store_lex '@ident', $P0  >;
+        PIR q<  $P1 = pop $P0            >;
+        PIR q<  store_lex '$name', $P1   >;
+        if $<sigil> ne '&' { $name := ~$<sigil> ~ ~$name; }
+        $past := PAST::Var.new( :name( $name ),
+                                :viviself($viviself),
+                                :node($/)
+                              );
+        if @ident {
+            $past.namespace(@ident);
+            $past.scope('package');
+        }
+    }
+    make $past;
 }
 
 
