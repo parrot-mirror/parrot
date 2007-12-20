@@ -49,7 +49,7 @@ Instantiate a new object from a string PMC or key name, or from a class object.
 For strings and keys, first check the namespace for a class object, then fall
 back to the type ID if no class object is stored in the namespace.
 
-Creating a new PMC by type ID is deprecated.
+Creating a new PMC by type ID is deprecated. See RT #48014.
 
   new P0, 'ResizableBooleanArray'
 
@@ -307,7 +307,8 @@ op find_method(out PMC, invar PMC, in STR) {
     $1 = $2->vtable->find_method(interp, $2, $3);
     if (PMC_IS_NULL($1) || !VTABLE_defined(interp, $1)) {
         real_exception(interp, resume, METH_NOT_FOUND,
-            "Method '%Ss' not found", $3);
+            "Method '%Ss' not found for invocant of class '%Ss'", $3,
+            VTABLE_get_string(interp, VTABLE_get_class(interp, $2)));
     }
     restart ADDRESS(resume);
 }

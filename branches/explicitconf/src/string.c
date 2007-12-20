@@ -448,9 +448,9 @@ So make sure to _use_ the return value.
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
+PARROT_CAN_RETURN_NULL
 STRING *
-string_append(PARROT_INTERP, NULLOK(STRING *a), NULLOK(STRING *b))
+string_append(PARROT_INTERP, ARGINOUT_NULLOK(STRING *a), ARGIN_NULLOK(STRING *b))
 {
     UINTVAL a_capacity;
     UINTVAL total_length;
@@ -712,7 +712,7 @@ Grows the Parrot string's buffer by the specified number of characters.
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_grow(PARROT_INTERP, NOTNULL(STRING *s), INTVAL addlen)
+string_grow(PARROT_INTERP, ARGINOUT(STRING *s), INTVAL addlen)
 {
     Parrot_unmake_COW(interp, s);
 
@@ -2201,7 +2201,7 @@ C<< s->hashval >>.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 size_t
-string_hash(PARROT_INTERP, NULLOK(STRING *s), size_t seed)
+string_hash(PARROT_INTERP, ARGINOUT_NULLOK(STRING *s), size_t seed)
 {
     register size_t h;
 

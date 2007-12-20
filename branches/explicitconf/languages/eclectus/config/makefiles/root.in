@@ -22,11 +22,15 @@ ECLECTUS_GROUP  = $(PMC_DIR)/eclectus_group@load_ext@
 PMCS            = \
     eclectusboolean \
     eclectuscharacter \
-    eclectusemptylist
+    eclectusemptylist \
+    eclectusfixnum \
+    eclectusstring
 PMC_SOURCES     = \
     $(PMC_DIR)/eclectusboolean.pmc \
     $(PMC_DIR)/eclectuscharacter.pmc \
-    $(PMC_DIR)/eclectusemptylist.pmc
+    $(PMC_DIR)/eclectusemptylist.pmc \
+    $(PMC_DIR)/eclectusfixnum.pmc \
+    $(PMC_DIR)/eclectusstring.pmc
 
 
 # The default target
@@ -36,8 +40,8 @@ help :
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  build:             Does nothing currently."
-	@echo "                     This is the default."
+	@echo "  build:             Builds the dynamic PMCSs needed by Eclectus."
+	@echo "                     This is the default target."
 	@echo ""
 	@echo "  test:              Run the test suite."
 	@echo ""
@@ -85,10 +89,6 @@ dynext-clean:
 realclean: clean
 	$(RM_F) Makefile
 
-over:
-	@$(MAKE) clean
-	@$(MAKE) all
-
 # testing
-test:
+test: build
 	$(PERL) t/harness

@@ -10,54 +10,19 @@
            '(test-name [expr string  output-string] ...)
             all-tests))]))
 
-(define (run-compile expr)
-  (let ([p (open-output-file "stst.pir" 'replace)])
-    (compile-program expr p)
-    (close-output-port p)))
-
-(define (build) () )
-
-(define (execute)
-  (unless (zero? (system "./stst > stst.out"))
-    (error 'make "produced program exited abnormally")))
-
-(define (build-program expr)
-   (run-compile expr)
-   (build))
-
-(define (get-string)
-  (with-output-to-string
-    (lambda ()
-      (with-input-from-file "stst.out"
-        (lambda ()
-          (let f ()
-            (let ([c (read-char)])
-              (cond
-               [(eof-object? c) (void)]
-               [else (display c) (f)]))))))))
-
-(define (test-with-string-output test-id expr expected-output)
-   (run-compile expr)
-   (build)
-   (execute)
-   (unless (string=? expected-output (get-string))
-     (error 'test "output mismatch for test ~s, expected ~s, got ~s"
-        test-id expected-output (get-string))))
-
 (define (test-one test-id test test-name)
   (let ([expr (car test)]
         [type (cadr test)]
         [out  (caddr test)])
     (flush-output-port)
     (case type
-     [(string) (test-with-string-output test-id expr out)]
+     [(string) (test-with-string-output test-id expr out test-name)]
      [else (error 'test "invalid test type ~s" type)])))
  
 (define (test-plan num-tests)
   ( printf "~s..~s\n" 1 num-tests ))
 
 (define (test-all)
-  ;; there has to be an easy way of getting the number of tests
   (test-plan (length (cdar all-tests)))
 
   ;; run the tests
@@ -75,22 +40,6 @@
                  (test-one i (car tests) test-name)
                  (g (add1 i) (cdr tests))])))))))
 
-
-(define input-filter 
-  (make-parameter (lambda (x) x)
-    (lambda (x)
-      (unless (procedure? x)
-        (error 'input-filter "not a procedure ~s" x))
-      x)))
-
-(define runtime-file 
-  (make-parameter
-    "runtime.c"
-    (lambda (fname)
-      (unless (string? fname) (error 'runtime-file "not a string" fname))
-      fname)))
-
-
 (define compile-port
   (make-parameter
     (current-output-port)
@@ -99,14 +48,11 @@
          (error 'compile-port "not an output port ~s" p))
        p)))
 
-(define show-compiler-output (make-parameter #f))
-
 (define (run-compile expr)
   (let ([p (open-output-file "stst.pir" 'replace)])
     (parameterize ([compile-port p])
        (compile-program expr))
     (close-output-port p)))
-
 
 (define (execute)
   (unless (fxzero? (system "../../parrot stst.pir > stst.out"))
@@ -123,13 +69,12 @@
                [(eof-object? c) (void)]
                [else (display c) (f)]))))))))
 
-(define (test-with-string-output test-id expr expected-output)
+(define (test-with-string-output test-id expr expected-output test-name)
    (run-compile expr)
-   (build)
    (execute)
    (if (string=? expected-output (get-string))
-     (printf "ok ~s - ~s ~s\n" ( + test-id 1 ) test-id expr )
-     (printf "not ok ~s - ~s expected ~s, got ~s\n" ( + test-id 1 ) test-id expr (get-string) )))
+     (printf     "ok ~s - ~s: ~s\n" ( + test-id 1 ) test-name expr )
+     (printf "not ok ~s - ~s: expected ~s, got ~s\n" ( + test-id 1 ) test-name expr (get-string) )))
 
 (define (emit . args)
   (apply fprintf (compile-port) args)
