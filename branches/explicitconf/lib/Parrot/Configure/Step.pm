@@ -40,8 +40,11 @@ use File::Spec;
 use File::Which;
 use lib ("lib");
 our @EXPORT    = ();
-our @EXPORT_OK = qw(prompt copy_if_diff move_if_diff integrate
-    capture_output check_progs _slurp);
+our @EXPORT_OK = qw(
+    prompt copy_if_diff move_if_diff integrate
+    capture_output check_progs _slurp 
+    _run_command _build_compile_command
+);
 our %EXPORT_TAGS = (
     inter => [qw(prompt integrate)],
     auto  => [
@@ -49,6 +52,79 @@ our %EXPORT_TAGS = (
     ],
     gen => [qw(copy_if_diff move_if_diff)]
 );
+
+=item C<_run_command($command, $out, $err)>
+
+Runs the specified command. Output is directed to the file specified by
+C<$out>, warnings and errors are directed to the file specified by C<$err>.
+
+=cut
+
+sub _run_command {
+    my ( $command, $out, $err, $verbose ) = @_;
+
+    if ($verbose) {
+        print "$command\n";
+    }
+
+    # Mostly copied from Parrot::Test.pm
+    foreach ( $out, $err ) {
+        $_ = File::Spec->devnull
+            if $_ and $_ eq '/dev/null';
+    }
+
+    if ( $out and $err and $out eq $err ) {
+        $err = "&STDOUT";
+    }
+
+    # Save the old filehandles; we must not let them get closed.
+    open my $OLDOUT, '>&', \*STDOUT or die "Can't save     stdout" if $out;
+    open my $OLDERR, '>&', \*STDERR or die "Can't save     stderr" if $err;
+
+    open STDOUT, '>', $out or die "Can't redirect stdout" if $out;
+
+    # See 'Obscure Open Tricks' in perlopentut
+    open STDERR, ">$err"    ## no critic InputOutput::ProhibitTwoArgOpen
+        or die "Can't redirect stderr"
+        if $err;
+
+    system $command;
+    my $exit_code = $? >> 8;
+
+    close STDOUT or die "Can't close    stdout" if $out;
+    close STDERR or die "Can't close    stderr" if $err;
+
+    open STDOUT, '>&', $OLDOUT or die "Can't restore  stdout" if $out;
+    open STDERR, '>&', $OLDERR or die "Can't restore  stderr" if $err;
+
+    if ($verbose) {
+        foreach ( $out, $err ) {
+            if (   ( defined($_) )
+                && ( $_ ne File::Spec->devnull )
+                && ( !m/^&/ ) )
+            {
+                open( my $verbose_handle, '<', $_ );
+                print <$verbose_handle>;
+                close $verbose_handle;
+            }
+        }
+    }
+
+    return $exit_code;
+}
+
+=item C<_build_compile_command( $cc, $ccflags, $cc_args )>
+
+Constructs a command-line to do the compile.
+
+=cut
+
+sub _build_compile_command {
+    my ( $cc, $ccflags, $cc_args ) = @_;
+    $_ ||= '' for ( $cc, $ccflags, $cc_args );
+
+    return "$cc $ccflags $cc_args -I./include -c test.c";
+}
 
 =item C<integrate($orig, $new)>
 
