@@ -25,9 +25,8 @@ use warnings;
 
 use base qw(Parrot::Configure::Step::Base);
 
-use Parrot::Configure::Step ':auto';
+use Parrot::Configure::Step ();
 use Parrot::BuildUtil;
-use Parrot::Configure::Compiler ();
 
 sub _init {
     my $self = shift;
@@ -172,12 +171,12 @@ sub try_warning {
     my $ccflags  = $conf->data->get('ccflags');
     my $tryflags = "$ccflags $warning";
 
-    my $command_line = Parrot::Configure::Compiler::_build_compile_command( $cc, $tryflags );
+    my $command_line = Parrot::Configure::Step::_build_compile_command( $cc, $tryflags );
     $verbose and print "  ", $command_line, "\n";
 
     # Don't use cc_build, because failure is expected.
     my $exit_code =
-        Parrot::Configure::Compiler::_run_command( $command_line, $output_file, $output_file );
+        Parrot::Configure::Step::_run_command( $command_line, $output_file, $output_file );
     $verbose and print "  exit code: $exit_code\n";
 
     $conf->data->set( $warning => !$exit_code | 0 );
