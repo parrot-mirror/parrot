@@ -63,7 +63,7 @@ static INTVAL PIO_buf_init(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer))
 PARROT_CAN_RETURN_NULL
 static ParrotIO * PIO_buf_open(PARROT_INTERP,
     NOTNULL(ParrotIOLayer *layer),
-    NOTNULL(const char *path),
+    ARGIN(const char *path),
     INTVAL flags)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -126,9 +126,9 @@ static PIOOFF_T PIO_buf_tell(SHIM_INTERP,
         __attribute__nonnull__(3);
 
 static size_t PIO_buf_write(PARROT_INTERP,
-    NOTNULL(ParrotIOLayer *layer),
-    NOTNULL(ParrotIO *io),
-    NOTNULL(STRING *s))
+    ARGINOUT(ParrotIOLayer *layer),
+    ARGINOUT(ParrotIO *io),
+    ARGIN(STRING *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -186,7 +186,7 @@ PIO_buf_init(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer))
 =item C<PARROT_CAN_RETURN_NULL
 static ParrotIO *
 PIO_buf_open(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer),
-        NOTNULL(const char *path), INTVAL flags)>
+        ARGIN(const char *path), INTVAL flags)>
 
 The buffer layer's C<Open> function.
 
@@ -197,7 +197,7 @@ The buffer layer's C<Open> function.
 PARROT_CAN_RETURN_NULL
 static ParrotIO *
 PIO_buf_open(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer),
-        NOTNULL(const char *path), INTVAL flags)
+        ARGIN(const char *path), INTVAL flags)
 {
     ParrotIOLayer * const l = PIO_DOWNLAYER(layer);
     ParrotIO * const io = PIO_open_down(interp, l, path, flags);
@@ -729,8 +729,8 @@ The buffer layer's C<Write> function.
 */
 
 static size_t
-PIO_buf_write(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer),
-        NOTNULL(ParrotIO *io), NOTNULL(STRING *s))
+PIO_buf_write(PARROT_INTERP, ARGINOUT(ParrotIOLayer *layer),
+        ARGINOUT(ParrotIO *io), ARGIN(STRING *s))
 {
     size_t avail;
     void * const buffer = s->strstart;

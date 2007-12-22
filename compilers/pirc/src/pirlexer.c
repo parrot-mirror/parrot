@@ -81,10 +81,10 @@ lexer.
 
 =head1 DIRECTIVES
 
-The following are PIR directives.
+The following are PIR directives. (this should be re-ordered)
 
-  .arg               .const      .constant         .emit              .end
-  .endnamespace      .endm       .eom              .get_results       .globalconst
+  .arg               .const      .macro_const      .end
+  .endnamespace      .endm       .get_results      .globalconst
   .HLL               .HLL_map    .include          .invocant          .lex
   .loadlib           .local      .macro            .meth_call         .namespace
   .nci_call          .param      .begin_call       .begin_return      .begin_yield
@@ -141,12 +141,9 @@ static char const * dictionary[] = {
    /* NULL,  */                 /*                          */
     ".arg",                     /* T_ARG                    */
     ".const",                   /* T_CONST,                 */
-    ".constant",                /* T_CONSTANT,              */
-    ".emit",                    /* T_EMIT,                  */
+    ".macro_const",             /* T_CONSTANT,              */
     ".end",                     /* T_END,                   */
-    ".endnamespace",            /* T_ENDNAMESPACE,          */
     ".endm",                    /* T_ENDM,                  */
-    ".eom",                     /* T_EOM,                   */
     ".get_results",             /* T_GET_RESULTS            */
     ".globalconst",             /* T_GLOBALCONST            */
     ".HLL",                     /* T_HLL                    */
@@ -1035,7 +1032,7 @@ token
 next_token(lexer_state *lexer)
 {
     int ok    = 1;
-    int count = 0;
+    /* int count = 0; */
 
     /* before reading a new token, first clear the buffer */
     clear_buffer(lexer);

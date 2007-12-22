@@ -12,25 +12,33 @@ method TOP($/) {
 
 
 method statement_block($/, $key) {
-    ##  FIXME: $?BLOCK, @?BLOCK
     our $?BLOCK;
     our @?BLOCK;
-    ## when creating a block, create an empty first child node (PAST::Stmts)
-    ## for special varible initialization and parameter handling. also,
-    ## register the special variables in the block's symbol table
+    our $?BLOCK_SIGNATURED;
+    ##  when entering a block, use any $?BLOCK_SIGNATURED if it exists,
+    ##  otherwise create an empty block with an empty first child to
+    ##  hold any parameters we might encounter inside the block.
     if ($key eq 'open') {
-        my $init := PAST::Stmts.new();
-        $init.push( PAST::Var.new(:name('$!'), :isdecl(1)));
-        $init.push( PAST::Var.new(:name('$/'), :isdecl(1)));
-        $init.push( PAST::Var.new(:name('$_'), :isdecl(1)));
-        $?BLOCK := PAST::Block.new( PAST::Stmts.new( $init ),
-                                    :blocktype('immediate'),
-                                    :node($/)
-                                  );
-        $?BLOCK.symbol( '$!', :scope('lexical') );
-        $?BLOCK.symbol( '$/', :scope('lexical') );
-        $?BLOCK.symbol( '$_', :scope('lexical') );
+        if $?BLOCK_SIGNATURED {
+            $?BLOCK := $?BLOCK_SIGNATURED;
+            $?BLOCK_SIGNATURED := 0;
+        }
+        else {
+            $?BLOCK := PAST::Block.new( PAST::Stmts.new(), :node($/));
+        }
         @?BLOCK.unshift($?BLOCK);
+        my $init := $?BLOCK[0];
+        unless $?BLOCK.symbol('$_') {
+            $init.push( PAST::Var.new( :name('$_'), :isdecl(1) ) );
+            $?BLOCK.symbol( '$_', :scope('lexical') );
+        }
+        unless $?BLOCK.symbol('$/') {
+            $init.push( PAST::Var.new( :name('$/'), :isdecl(1) ) );
+            $?BLOCK.symbol( '$/', :scope('lexical') );
+        }
+        unless $?BLOCK.symbol('$!') {
+            $init.push( PAST::Var.new( :name('$!'), :isdecl(1) ) );
+            $?BLOCK.symbol( '$!', :scope('lexical') ); }
     }
     if ($key eq 'close') {
         my $past := @?BLOCK.shift();
@@ -38,7 +46,6 @@ method statement_block($/, $key) {
         $past.push($($<statementlist>));
         make $past;
     }
-    PIR q<  .return () >;  # FIXME:  ought to eliminate this somehow
 }
 
 
@@ -57,7 +64,24 @@ method statementlist($/) {
 
 
 method statement($/, $key) {
-    make $( $/{$key} );
+    my $past;
+    if $key eq 'statement_control' {
+        $past := $( $<statement_control> );
+    }
+    else {
+        my $expr := $( $<expr> );
+        if $expr.WHAT() eq 'Block' && !$expr.blocktype() {
+            $expr.blocktype('immediate');
+        }
+        if $key eq 'statement_mod_cond' {
+            $past := $( $<statement_mod_cond> );
+            $past.push( $expr );
+        }
+        else {
+            $past := $expr;
+        }
+    }
+    make $past;
 }
 
 
@@ -67,20 +91,25 @@ method statement_control($/, $key) {
 
 
 method if_statement($/) {
-    my $cond := +$<EXPR> - 1;
-    my $past := PAST::Op.new( $( $<EXPR>[$cond] ),
-                              $( $<block>[$cond] ),
+    my $count := +$<EXPR> - 1;
+    my $expr  := $( $<EXPR>[$count] );
+    my $then  := $( $<block>[$count] );
+    $then.blocktype('immediate');
+    my $past := PAST::Op.new( $expr, $then,
                               :pasttype('if'),
                               :node( $/ )
                             );
     if ( $<else> ) {
-        $past.push( $( $<else>[0] ) );
+        my $else := $( $<else>[0] );
+        $else.blocktype('immediate');
+        $past.push( $else );
     }
-    while ($cond != 0) {
-        $cond := $cond - 1;
-        $past := PAST::Op.new( $( $<EXPR>[$cond] ),
-                               $( $<block>[$cond] ),
-                               $past,
+    while ($count != 0) {
+        $count := $count - 1;
+        $expr  := $( $<EXPR>[$count] );
+        $then  := $( $<block>[$count] );
+        $then.blocktype('immediate');
+        $past  := PAST::Op.new( $expr, $then, $past,
                                :pasttype('if'),
                                :node( $/ )
                              );
@@ -90,17 +119,81 @@ method if_statement($/) {
 
 
 method unless_statement($/) {
-    my $past := PAST::Op.new( $( $<EXPR> ),
-                              $( $<block> ),
+    my $then := $( $<block> );
+    $then.blocktype('immediate');
+    my $past := PAST::Op.new( $( $<EXPR> ), $then,
                               :pasttype('unless'),
                               :node( $/ )
                             );
     make $past;
 }
 
+method for_statement($/) {
+    my $block := $( $<pblock> );
+    $block.blocktype('declaration');
+    my $past := PAST::Op.new( $( $<EXPR> ), $block,
+                            :pasttype($<sym>),
+                            :node( $/ )
+                            );
+    make $past;
+}
+
+method pblock($/) {
+    our $?BLOCK_SIGNATURED;
+    unless $<signature> {
+        $?BLOCK_SIGNATURED :=
+            PAST::Block.new(
+                PAST::Stmts.new(
+                    PAST::Var.new( :name('$_'), :scope('parameter') )
+                ),
+                :blocktype('declaration'),
+                :node( $/ )
+            );
+        $?BLOCK_SIGNATURED.symbol( '$_', :scope('lexical') );
+    }
+    make $?BLOCK_SIGNATURED;
+}
 
 method use_statement($/) {
-    make PAST::Stmts.new( :node($/) );
+    my $name := ~$<name>;
+    my $past;
+    if $name eq 'v6' || $name eq 'lib' {
+        $past := PAST::Stmts.new( :node($/) );
+    }
+    else {
+        $past := PAST::Op.new( PAST::Val.new( :value( $name ) ),
+                               :name('use'),
+                               :pasttype('call'),
+                               :node( $/ )
+                             );
+    }
+    make $past;
+}
+
+method begin_statement($/) {
+    my $past := $( $<block> );
+    $past.blocktype('declaration');
+    my $sub := PAST::Compiler.compile( $past );
+    $sub();
+    # XXX - should emit BEGIN side-effects, and do a proper return()
+    make PAST::Block.new();
+}
+
+method end_statement($/) {
+    my $past := $( $<block> );
+    $past.blocktype('declaration');
+    my $sub := PAST::Compiler.compile( $past );
+    PIR q<  $P0 = get_hll_global ['Perl6'], '@?END_BLOCKS' >;
+    PIR q<  $P1 = find_lex '$sub' >;
+    PIR q<  push $P0, $P1 >;
+    make $past;
+}
+
+method statement_mod_cond($/) {
+    make PAST::Op.new( $( $<EXPR> ),
+                       :pasttype( ~$<sym> ),
+                       :node( $/ )
+                     );
 }
 
 
@@ -125,17 +218,30 @@ method statement_prefix($/) {
         my $catchpir := "    .get_results (%r, $S0)\n    store_lex '$!', %r";
         $past.push( PAST::Op.new( :inline( $catchpir ) ) );
     }
-    elsif ($sym eq 'gather') {
-        $/.panic($sym ~ ' not implemented');
+    else {
+        $/.panic( $sym ~ ' not implemented');
     }
-    elsif ($sym eq  'contend') {
-        $/.panic($sym ~ ' not implemented');
-    }
-    elsif ($sym eq 'async') {
-        $/.panic($sym ~ ' not implemented');
-    }
-    elsif ($sym eq 'lazy') {
-        $/.panic($sym ~ ' not implemented');
+    make $past;
+}
+
+
+method plurality_declarator($/) {
+    my $past := $( $<routine_declarator> );
+    if $<sym> eq 'multi' {
+        my $pirflags := ~ $past.pirflags();
+        my $arity := $past.arity();
+        if    $arity == 0 { $pirflags := $pirflags ~ ' :multi()'; }
+        elsif $arity == 1 { $pirflags := $pirflags ~ ' :multi(_)'; }
+        else {
+            $pirflags := $pirflags ~ ' :multi(_';
+            my $count := 1;
+            while $count != $arity {
+                $pirflags := $pirflags ~ ',_';
+                $count := $count + 1;
+            }
+            $pirflags := $pirflags ~ ')';
+        }
+        $past.pirflags($pirflags);
     }
     make $past;
 }
@@ -152,18 +258,26 @@ method routine_declarator($/, $key) {
 
 
 method routine_def($/) {
-    my $past := $($<block>);
-    my $params := $past[0];
+    my $past := $( $<block> );
     if $<ident> {
         $past.name( ~$<ident>[0] );
+        our $?BLOCK;
+        $?BLOCK.symbol(~$<ident>[0], :scope('package'));
     }
-    if ($<multisig>) {
-        for $<multisig>[0]<signature>[0] {
-            my $param_var := $($_<param_var>);
-            $past.symbol($param_var.name(), :scope('lexical'));
-            $params.push($param_var);
-        }
+    make $past;
+}
+
+
+method signature($/) {
+    my $params := PAST::Stmts.new( :node($/) );
+    my $past := PAST::Block.new( $params, :blocktype('declaration') );
+    for $/[0] {
+        my $param_var := $($_<param_var>);
+        $past.symbol($param_var.name(), :scope('lexical'));
+        $params.push($param_var);
     }
+    $past.arity( +$/[0] );
+    our $?BLOCK_SIGNATURED := $past;
     make $past;
 }
 
@@ -171,7 +285,7 @@ method routine_def($/) {
 method param_var($/) {
     make PAST::Var.new( :name(~$/),
                         :scope('parameter'),
-                        :node($/) 
+                        :node($/)
                       );
 }
 
@@ -182,12 +296,72 @@ method special_variable($/) {
 
 
 method term($/, $key) {
+    my $past := $( $/{$key} );
+    if $<postfix> {
+        for $<postfix> {
+            my $term := $past;
+            $past := $($_);
+            $past.unshift($term);
+        }
+    }
+    make $past;
+}
+
+method postfix($/, $key) {
     make $( $/{$key} );
+}
+
+method methodop($/, $key) {
+    my $past;
+    if ($key eq 'null') {
+        $past := PAST::Op.new();
+    }
+    else {
+        $past := $( $/{$key} );
+    }
+    $past.name(~$<ident>);
+    $past.pasttype('callmethod');
+    $past.node($/);
+    make $past;
+}
+
+method postcircumfix($/, $key) {
+    my $semilist := $( $<semilist> );
+    my $past;
+    if ($key eq '[ ]') {
+        $past := PAST::Var.new( $semilist[0],
+                                :scope('keyed'),
+                                :vivibase('List'),
+                                :viviself('Undef'),
+                                :node( $/ )
+                              );
+    } elsif ($key eq '( )') {
+        $past := PAST::Op.new( :node($/), :pasttype('call') );
+        for @($semilist) {
+            $past.push( $_ );
+        }
+    } else {
+        $past := PAST::Var.new( $semilist[0],
+                                :scope('keyed'),
+                                :vivibase('Hash'),
+                                :viviself('Undef'),
+                                :node( $/ )
+                              );
+    }
+    make $past;
 }
 
 
 method noun($/, $key) {
     make $( $/{$key} );
+}
+
+method package_declarator($/, $key) {
+    my $past := $( $/{$key} );
+    $past.namespace($<name><ident>);
+    $past.blocktype('declaration');
+    $past.pirflags(':init :load');
+    make $past;
 }
 
 method scope_declarator($/) {
@@ -197,7 +371,7 @@ method scope_declarator($/) {
     unless $?BLOCK.symbol($name) {
         $past.isdecl(1);
         my $scope := 'lexical';
-        if (~$<declarator> eq 'our') { $scope := 'package'; }
+        if ($<declarator> eq 'our') { $scope := 'package'; }
         $?BLOCK.symbol($name, :scope($scope));
     }
     make $past;
@@ -205,7 +379,32 @@ method scope_declarator($/) {
 
 
 method variable($/, $key) {
-    make PAST::Var.new( :node($/), :name( ~$/ ), :viviself('Undef') );
+    my $past;
+    if $key eq 'special_variable' {
+        $past := $( $<special_variable> );
+    }
+    else {
+        my $viviself := 'Undef';
+        if $<sigil> eq '@' { $viviself := 'List'; }
+        if $<sigil> eq '%' { $viviself := 'Hash'; }
+        my @ident := $<name><ident>;
+        my $name;
+        PIR q<  $P0 = find_lex '@ident'  >;
+        PIR q<  $P0 = clone $P0          >;
+        PIR q<  store_lex '@ident', $P0  >;
+        PIR q<  $P1 = pop $P0            >;
+        PIR q<  store_lex '$name', $P1   >;
+        if $<sigil> ne '&' { $name := ~$<sigil> ~ ~$name; }
+        $past := PAST::Var.new( :name( $name ),
+                                :viviself($viviself),
+                                :node($/)
+                              );
+        if @ident {
+            $past.namespace(@ident);
+            $past.scope('package');
+        }
+    }
+    make $past;
 }
 
 
@@ -250,26 +449,40 @@ method integer($/) {
 }
 
 
+method dec_number($/) {
+    make PAST::Val.new( :value( +$/ ), :returns('Float'), :node( $/ ) );
+}
+
+
 method quote($/) {
     make $( $<quote_expression> );
 }
 
 
-method quote_expression($/) {
+method quote_expression($/, $key) {
     my $past;
-    if ( +$<quote_concat> == 1 ) {
-        $past := $( $<quote_concat>[0] );
+    if ($key eq 'quote_regex') {
+        $past := PAST::Block.new( $<quote_regex>,
+                                  :compiler('PGE::Perl6Regex'),
+                                  :blocktype('declaration'),
+                                  :node( $/ )
+                                )
     }
-    else {
-        $past := PAST::Op.new( :name('list'),
-                               :pasttype('call'),
-                               :node( $/ ) );
-        for $<quote_concat> {
-            $past.push( $($_) );
+    elsif ($key eq 'quote_concat') {
+        if ( +$<quote_concat> == 1 ) {
+            $past := $( $<quote_concat>[0] );
+        }
+        else {
+            $past := PAST::Op.new( :name('list'),
+                                   :pasttype('call'),
+                                   :node( $/ ) );
+            for $<quote_concat> {
+                $past.push( $($_) );
+            }
         }
     }
     make $past;
-}
+    }
 
 
 method quote_concat($/) {
@@ -291,12 +504,28 @@ method quote_concat($/) {
 method quote_term($/, $key) {
     my $past;
     if ($key eq 'literal') {
-        $past := PAST::Val.new( :value( ~$<quote_literal> ), :node($/) );
+        $past := PAST::Val.new( :value( ~$<quote_literal> ), :returns('Perl6Str'), :node($/) );
     }
     if ($key eq 'variable') {
         $past := $( $<variable> );
     }
     make $past;
+}
+
+
+method typename($/) {
+    my $ns := $<name><ident>;
+    my $shortname;
+    PIR q<    $P0 = find_lex '$ns'         >;
+    PIR q<    $P0 = clone $P0              >;
+    PIR q<    $P1 = pop $P0                >;
+    PIR q<    store_lex '$ns', $P0         >;
+    PIR q<    store_lex '$shortname', $P1  >;
+    make PAST::Var.new( :name($shortname),
+                        :namespace($ns),
+                        :scope('package'),
+                        :node($/)
+                      );
 }
 
 
@@ -313,7 +542,7 @@ method semilist($/) {
     my $past := PAST::Op.new( :node($/) );
     if ($<EXPR>) {
         my $expr := $($<EXPR>[0]);
-        if (~$expr.name() eq 'infix:,') {
+        if ($expr.name() eq 'infix:,') {
             for @($expr) {
                 $past.push( $_ );
             }
@@ -344,7 +573,7 @@ method listop($/, $key) {
 method arglist($/) {
     my $past := PAST::Op.new( :node($/) );
     my $expr := $($<EXPR>);
-    if (~$expr.name() eq 'infix:,') {
+    if ($expr.name() eq 'infix:,') {
         for @($expr) {
             $past.push( $_ );
         }

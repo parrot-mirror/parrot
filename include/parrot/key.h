@@ -68,7 +68,7 @@ PMC * key_new(PARROT_INTERP)
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-PMC * key_new_cstring(PARROT_INTERP, NULLOK(const char *value))
+PMC * key_new_cstring(PARROT_INTERP, ARGIN_NULLOK(const char *value))
         __attribute__nonnull__(1);
 
 PARROT_API
@@ -157,7 +157,7 @@ STRING * key_string(PARROT_INTERP, NOTNULL(PMC *key))
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
-INTVAL key_type(SHIM_INTERP, NOTNULL(const PMC *key))
+INTVAL key_type(SHIM_INTERP, ARGIN(const PMC *key))
         __attribute__nonnull__(2);
 
 /* HEADERIZER END: src/key.c */

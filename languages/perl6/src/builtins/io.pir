@@ -13,14 +13,14 @@ src/builtins/io.pir - Perl6 builtins for I/O
 .namespace
 
 .sub 'print'
-    .param pmc list            :slurpy
+    .param pmc args            :slurpy
     .local pmc iter
-
-    iter = new 'Iterator', list
+    args = 'list'(args)
+    iter = new 'Iterator', args
   iter_loop:
     unless iter goto iter_end
-    $P0 = shift iter
-    print $P0
+    $S0 = shift iter
+    print $S0
     goto iter_loop
   iter_end:
     .return (1)
@@ -29,10 +29,11 @@ src/builtins/io.pir - Perl6 builtins for I/O
 
 .sub 'say'
     .param pmc list            :slurpy
-    'print'(list :flat)
+    'print'(list)
     print "\n"
     .return (1)
 .end
+
 
 .sub 'use'
     .param pmc module
@@ -48,7 +49,8 @@ src/builtins/io.pir - Perl6 builtins for I/O
     file_string = join '/', path
 
     .local pmc filename
-    filename  = new 'Perl6Str'
+    $P0 = get_hll_global 'Str'
+    filename  = $P0.'new'()
     filename  = file_string
     filename .= '.pm'
 

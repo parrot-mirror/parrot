@@ -41,17 +41,21 @@ extern int yydebug;
 
 /* HEADERIZER BEGIN: static */
 
-static void determine_input_file_type(PARROT_INTERP,  NOTNULL(
-    const char * const sourcefile));
+static void compile_to_bytecode(PARROT_INTERP,
+    ARGIN(const char * const sourcefile),
+    ARGIN(const char * const output_file))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
-static void determine_output_file_type(PARROT_INTERP,  NOTNULL(
-    int *obj_file),
-    NOTNULL(const char *output_file))
+static void determine_input_file_type(PARROT_INTERP,
+    ARGIN(const char * const sourcefile))
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void compile_to_bytecode(PARROT_INTERP,
-    NOTNULL(const char * const sourcefile),
-    NOTNULL(const char * const output_file))
+static void determine_output_file_type(PARROT_INTERP,
+    NOTNULL(int *obj_file),
+    ARGIN(const char *output_file))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -69,20 +73,20 @@ static void imcc_get_optimization_description(
 
 static void imcc_run_pbc(PARROT_INTERP,
     int obj_file,
-    NOTNULL(const char *output_file),
+    ARGIN(const char *output_file),
     int argc,
     NOTNULL(char *argv[]))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         __attribute__nonnull__(5);
 
-static void imcc_write_pbc(PARROT_INTERP, NOTNULL(const char *output_file))
+static void imcc_write_pbc(PARROT_INTERP, ARGIN(const char *output_file))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
-static int is_all_hex_digits(NOTNULL(const char *s))
+static int is_all_hex_digits(ARGIN(const char *s))
         __attribute__nonnull__(1);
 
 static void Parrot_version(PARROT_INTERP)
@@ -304,7 +308,7 @@ static struct longopt_opt_decl options[] = {
 =item C<PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
 static int
-is_all_hex_digits(NOTNULL(const char *s))>
+is_all_hex_digits(ARGIN(const char *s))>
 
 RT#48260: Not yet documented!!!
 
@@ -315,7 +319,7 @@ RT#48260: Not yet documented!!!
 PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
 static int
-is_all_hex_digits(NOTNULL(const char *s))
+is_all_hex_digits(ARGIN(const char *s))
 {
     for (; *s; s++)
         if (!isxdigit(*s))
@@ -764,7 +768,7 @@ imcc_initialize(PARROT_INTERP)
 /*
 
 =item C<static void
-imcc_run_pbc(PARROT_INTERP, int obj_file, NOTNULL(const char *output_file),
+imcc_run_pbc(PARROT_INTERP, int obj_file, ARGIN(const char *output_file),
              int argc, NOTNULL(char *argv[]))>
 
 RT#48260: Not yet documented!!!
@@ -774,7 +778,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-imcc_run_pbc(PARROT_INTERP, int obj_file, NOTNULL(const char *output_file),
+imcc_run_pbc(PARROT_INTERP, int obj_file, ARGIN(const char *output_file),
              int argc, NOTNULL(char *argv[]))
 {
     if (IMCC_INFO(interp)->imcc_warn)
@@ -802,7 +806,7 @@ imcc_run_pbc(PARROT_INTERP, int obj_file, NOTNULL(const char *output_file),
 /*
 
 =item C<static void
-imcc_write_pbc(PARROT_INTERP, NOTNULL(const char *output_file))>
+imcc_write_pbc(PARROT_INTERP, ARGIN(const char *output_file))>
 
 RT#48260: Not yet documented!!!
 
@@ -811,7 +815,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-imcc_write_pbc(PARROT_INTERP, NOTNULL(const char *output_file))
+imcc_write_pbc(PARROT_INTERP, ARGIN(const char *output_file))
 {
     size_t    size;
     opcode_t *packed;
@@ -841,7 +845,7 @@ imcc_write_pbc(PARROT_INTERP, NOTNULL(const char *output_file))
 /*
 
 =item C<static void determine_input_file_type(PARROT_INTERP,
-                                      NOTNULL(const char * const sourcefile))>
+                                      ARGIN(const char * const sourcefile))>
 
 RT#48260: Not yet documented!!!
 
@@ -849,8 +853,8 @@ RT#48260: Not yet documented!!!
 
 */
 
-static void determine_input_file_type(PARROT_INTERP,
-                                      NOTNULL(const char * const sourcefile))
+static void
+determine_input_file_type(PARROT_INTERP, ARGIN(const char * const sourcefile))
 {
     yyscan_t yyscanner = IMCC_INFO(interp)->yyscanner;
 
@@ -882,7 +886,7 @@ static void determine_input_file_type(PARROT_INTERP,
 /*
 
 =item C<static void determine_output_file_type(PARROT_INTERP,
-    NOTNULL(int *obj_file), NOTNULL(const char *output_file))>
+    NOTNULL(int *obj_file), ARGIN(const char *output_file))>
 
 RT#48260: Not yet documented!!!
 
@@ -890,8 +894,9 @@ RT#48260: Not yet documented!!!
 
 */
 
-static void determine_output_file_type(PARROT_INTERP,
-    NOTNULL(int *obj_file), NOTNULL(const char *output_file))
+static void
+determine_output_file_type(PARROT_INTERP,
+    NOTNULL(int *obj_file), ARGIN(const char *output_file))
 {
     const char * const ext = strrchr(output_file, '.');
 
@@ -917,8 +922,8 @@ static void determine_output_file_type(PARROT_INTERP,
 
 =item C<static void
 compile_to_bytecode(PARROT_INTERP,
-                    NOTNULL(const char * const sourcefile),
-                    NOTNULL(const char * const output_file))>
+                    ARGIN(const char * const sourcefile),
+                    ARGIN(const char * const output_file))>
 
 RT#48260: Not yet documented!!!
 
@@ -928,8 +933,8 @@ RT#48260: Not yet documented!!!
 
 static void
 compile_to_bytecode(PARROT_INTERP,
-                    NOTNULL(const char * const sourcefile),
-                    NOTNULL(const char * const output_file))
+                    ARGIN(const char * const sourcefile),
+                    ARGIN(const char * const output_file))
 {
     yyscan_t  yyscanner = IMCC_INFO(interp)->yyscanner;
     const int per_pbc   = (write_pbc | run_pbc) != 0;

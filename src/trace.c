@@ -31,7 +31,7 @@ src/test_main.c
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static STRING* trace_class_name(NOTNULL(const PMC* pmc))
+static STRING* trace_class_name(ARGIN(const PMC* pmc))
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
@@ -42,7 +42,7 @@ static STRING* trace_class_name(NOTNULL(const PMC* pmc))
 =item C<PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING*
-trace_class_name(NOTNULL(const PMC* pmc))>
+trace_class_name(ARGIN(const PMC* pmc))>
 
 Obtains the class name of the PMC.
 
@@ -53,7 +53,7 @@ Obtains the class name of the PMC.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING*
-trace_class_name(NOTNULL(const PMC* pmc))
+trace_class_name(ARGIN(const PMC* pmc))
 {
     STRING *class_name;
     if (PObj_is_class_TEST(pmc)) {
@@ -78,7 +78,7 @@ Prints a PMC to C<stderr>.
 */
 
 void
-trace_pmc_dump(PARROT_INTERP, NOTNULL(PMC *pmc))
+trace_pmc_dump(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc))
 {
     Interp * const debugger = interp->debugger;
 
@@ -158,7 +158,7 @@ trace_pmc_dump(PARROT_INTERP, NOTNULL(PMC *pmc))
 
 /*
 
-=item C<int trace_key_dump(PARROT_INTERP, NOTNULL(const PMC *key))>
+=item C<int trace_key_dump(PARROT_INTERP, ARGIN(const PMC *key))>
 
 Prints a key to C<stderr>, returns the length of the output.
 
@@ -167,7 +167,7 @@ Prints a key to C<stderr>, returns the length of the output.
 */
 
 int
-trace_key_dump(PARROT_INTERP, NOTNULL(const PMC *key))
+trace_key_dump(PARROT_INTERP, ARGIN(const PMC *key))
 {
     Interp * const debugger = interp->debugger;
 
@@ -238,8 +238,8 @@ trace_key_dump(PARROT_INTERP, NOTNULL(const PMC *key))
 
 =item C<void
 trace_op_dump(PARROT_INTERP,
-        NOTNULL(const opcode_t *code_start),
-        NOTNULL(const opcode_t *pc))>
+        ARGIN(const opcode_t *code_start),
+        ARGIN(const opcode_t *pc))>
 
 TODO: This isn't really part of the API, but here's its documentation.
 
@@ -251,8 +251,8 @@ Prints the PC, OP and ARGS. Used by C<trace_op()>.
 
 void
 trace_op_dump(PARROT_INTERP,
-        NOTNULL(const opcode_t *code_start),
-        NOTNULL(const opcode_t *pc))
+        ARGIN(const opcode_t *code_start),
+        ARGIN(const opcode_t *pc))
 {
     INTVAL s, n;
     int more = 0, var_args;
@@ -452,9 +452,9 @@ done:
 
 =item C<void
 trace_op(PARROT_INTERP,
-        NOTNULL(const opcode_t *code_start),
-        NOTNULL(const opcode_t *code_end),
-        NULLOK(const opcode_t *pc))>
+        ARGIN(const opcode_t *code_start),
+        ARGIN(const opcode_t *code_end),
+        ARGIN_NULLOK(const opcode_t *pc))>
 
 TODO: This isn't really part of the API, but here's its documentation.
 
@@ -467,9 +467,9 @@ checking.
 
 void
 trace_op(PARROT_INTERP,
-        NOTNULL(const opcode_t *code_start),
-        NOTNULL(const opcode_t *code_end),
-        NULLOK(const opcode_t *pc))
+        ARGIN(const opcode_t *code_start),
+        ARGIN(const opcode_t *code_end),
+        ARGIN_NULLOK(const opcode_t *pc))
 {
     if (!pc) {
         return;

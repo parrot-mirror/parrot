@@ -1,11 +1,24 @@
+## $Id$
+
+=head1 TITLE
+
+Num - Perl 6 numbers
+
+=cut
 
 .namespace [ 'Float' ]
 
-.sub 'isa' :method
-    .param string x
-    $I0 = iseq x, 'Num'
-    .return ($I0)
+.sub 'onload' :anon :init :load
+    $P0 = get_hll_global ['Perl6Object'], 'make_proto'
+    $P0('Float', 'Num')
 .end
+
+
+.sub 'ACCEPTS' :method
+    .param num topic
+    .return 'infix:=='(topic, self)
+.end
+
 
 # Local Variables:
 #   mode: pir

@@ -27,10 +27,7 @@ F<include/parrot/datatypes.h>.
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-INTVAL
-Parrot_get_datatype_enum(PARROT_INTERP, NOTNULL(const STRING *type_name))>
+=item C<INTVAL Parrot_get_datatype_enum>
 
 Return datatype C<enum> for C<STRING*> type_name.
 
@@ -41,7 +38,7 @@ Return datatype C<enum> for C<STRING*> type_name.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_get_datatype_enum(PARROT_INTERP, NOTNULL(const STRING *type_name))
+Parrot_get_datatype_enum(PARROT_INTERP, ARGIN(const STRING *type_name))
 {
     char * const type = string_to_cstring(interp, type_name);
     int i;
@@ -60,11 +57,7 @@ Parrot_get_datatype_enum(PARROT_INTERP, NOTNULL(const STRING *type_name))
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-STRING *
-Parrot_get_datatype_name(PARROT_INTERP, INTVAL type)>
+=item C<STRING * Parrot_get_datatype_name>
 
 Return datatype name for C<type>.
 

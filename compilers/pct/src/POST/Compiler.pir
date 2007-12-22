@@ -5,7 +5,7 @@ POST::Compiler - Compiler for POST trees
 =head1 DESCRIPTION
 
 POST::Compiler defines a compiler that converts a POST tree into
-either PIR or executable bytecode.
+PIR or an Eval PMC (bytecode).
 
 =head1 METHODS
 
@@ -17,25 +17,30 @@ either PIR or executable bytecode.
 
 .sub '__onload' :load :init
     $P0 = get_hll_global 'Protomaker'
-    ($P1, $P2) = $P0.'new_subclass'('PCT::HLLCompiler', 'POST::Compiler', '$!code')
-    $P2.'language'('POST')
+    $P1 = $P0.'new_subclass'('PCT::HLLCompiler', 'POST::Compiler', '$!code')
+
+    $P0 = get_hll_global ['POST'], 'Compiler'
+    $P0.'language'('POST')
+    $P1 = split ' ', 'pir evalpmc'
+    $P0.'stages'($P1)
+
     $P0 = new 'String'
     set_global '$?NAMESPACE', $P0
     .return ()
 .end
 
 
-.sub 'compile' :method
+.sub 'to_pir' :method
     .param pmc post
     .param pmc adverbs         :slurpy :named
 
-    ##  create a separate instance for this compilation
-    $P0 = new 'POST::Compiler'
+    .local pmc newself
+    newself = new 'POST::Compiler'
 
     ##  start with empty code
     .local pmc code
     code = new 'CodeString'
-    self.'code'(code)
+    newself.'code'(code)
 
     ##  if the root node isn't a Sub, wrap it
     $I0 = isa post, 'POST::Sub'
@@ -45,11 +50,12 @@ either PIR or executable bytecode.
   have_sub:
 
     ##  now generate the pir
-    self.'pir'(post)
+    newself.'pir'(post)
 
     ##  and return whatever code was generated
-    .return self.'code'()
+    .return newself.'code'()
 .end
+
 
 =item code([str])
 
@@ -201,11 +207,8 @@ the sub.
     .local pmc code
     code = new 'CodeString'
 
-    .local string name
+    .local string name, pirflags
     name = node.'name'()
-    name = code.'escape'(name)
-
-    .local string pirflags
     pirflags = node.'pirflags'()
 
   pirflags_method:
@@ -220,7 +223,8 @@ the sub.
     goto pirflags_done
   pirflags_method_done:
 
-    .local pmc outerpost
+    .local pmc outerpost, outername
+    outername = new 'Undef'
     outerpost = node.'outer'()
     if null outerpost goto pirflags_done
     unless outerpost goto pirflags_done
@@ -236,24 +240,34 @@ the sub.
     if $I0 >= 0 goto pirflags_done
     $I0 = index $S0, ':load'
     if $I0 >= 0 goto pirflags_done
-    $S0 = outerpost.'name'()
-    $S0 = code.'escape'($S0)
+    outername = outerpost.'name'()
+    $S0 = code.'escape'(outername)
     pirflags = concat pirflags, ' :outer('
     concat pirflags, $S0
     concat pirflags, ')'
   pirflags_done:
 
-    .local pmc ns, outerns
+    .local pmc outerns, ns, nskey
     outerns = get_global '$?NAMESPACE'
-    ns = outerns
-    $P0 = node.'namespace'()
-    unless $P0 goto have_ns
-    ns = code.'key'($P0)
-    set_global '$?NAMESPACE', ns
+    nskey = outerns
+    ns = node.'namespace'()
+    unless ns goto have_ns
+    nskey = code.'key'(ns)
+    set_global '$?NAMESPACE', nskey
   have_ns:
-    code.'emit'("\n.namespace %0", ns)
 
-    code.'emit'(".sub %0 %1", name, pirflags)
+  subpir_start:
+    $P0 = node.'compiler'()
+    unless $P0 goto subpir_post
+  subpir_compiler:
+    $P0 = self.'hll_pir'(node, 'name'=>name, 'namespace'=>ns, 'pirflags'=>pirflags)
+    code .= $P0
+    goto subpir_done
+
+  subpir_post:
+    code.'emit'("\n.namespace %0", nskey)
+    $S0 = code.'escape'(name)
+    code.'emit'(".sub %0 %1", $S0, pirflags)
     .local pmc paramlist
     paramlist = node['paramlist']
     if null paramlist goto paramlist_done
@@ -269,7 +283,9 @@ the sub.
 
     $P0 = self.'pir_children'(node)
     code .= $P0
-    code.'emit'(".end\n")
+    code.'emit'(".end\n\n")
+
+  subpir_done:
     $P0 = self.'code'()
     code .= $P0
     self.'code'(code)
@@ -278,6 +294,23 @@ the sub.
 
     code = new 'CodeString'
     .return (code)
+.end
+
+.sub 'hll_pir' :method
+    .param pmc node
+    .param pmc options         :slurpy :named
+
+    options['target'] = 'pir'
+    options['grammar'] = ''
+    .local pmc source, compiler, pir
+    source = node[0]
+    $S0 = node.'compiler'()
+    compiler = compreg $S0
+    $I0 = isa compiler, 'Sub'
+    if $I0 goto compiler_sub
+    .return compiler.'compile'(source, options :flat :named)
+  compiler_sub:
+    .return compiler(source, options :flat :named)
 .end
 
 =back

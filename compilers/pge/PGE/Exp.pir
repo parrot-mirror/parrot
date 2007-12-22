@@ -64,16 +64,26 @@ C<target> adverbs.
     if target == 'parse' goto return_exp
     if target == 'pge::exp' goto return_exp
 
-    .local string grammar
-    .local string nsformat
-    nsformat = '.namespace'
-    grammar = adverbs['grammar']
-    if grammar == '' goto pir
-    nsformat = ".namespace [ '%0' ]"
-  pir:
     .local pmc code
     code = new 'CodeString'
-    code.'emit'(nsformat, grammar)
+
+    .local pmc ns
+    ns = adverbs['namespace']
+    if null ns goto ns_grammar
+    unless ns goto ns_grammar
+    $P0 = code.'key'(ns)
+    code.'emit'('.namespace %0', $P0)
+    goto ns_done
+  ns_grammar:
+    .local string grammar
+    grammar = adverbs['grammar']
+    if grammar == '' goto ns_root
+    code.'emit'(".namespace [ '%0' ]", grammar)
+    goto ns_done
+  ns_root:
+    code.'emit'('.namespace')
+  ns_done:
+
     $P0 = self.'root_pir'(adverbs :flat :named)
     code .= $P0
     if target != 'pir' goto bytecode
@@ -143,8 +153,8 @@ tree as a PIR code object that can be compiled.
     code.emit(<<"        CODE", name, namecorou, .INTERPINFO_CURRENT_SUB)
       .sub %0 :method
           .param pmc adverbs   :slurpy :named
-          .const .Sub corou = %1
           .local pmc mob
+          .const .Sub corou = %1
           $P0 = corou
           $P0 = clone $P0
           mob = $P0(self, adverbs)
@@ -169,8 +179,9 @@ tree as a PIR code object that can be compiled.
     code.emit(<<"        CODE", name)
       .sub %0 :method
           .param pmc adverbs      :unique_reg :slurpy :named
+          .local pmc mob
           .local string target    :unique_reg
-          .local pmc mob, mfrom, mpos  :unique_reg
+          .local pmc mfrom, mpos  :unique_reg
           .local int cpos, iscont :unique_reg
           $P0 = get_hll_global ['PGE'], 'Match'
           (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(self, adverbs :flat :named)
@@ -1430,15 +1441,8 @@ tree as a PIR code object that can be compiled.
           $I1 = can $P1, %2
           if $I1 == 0 goto %1
           mpos = pos
-          ($P0 :optional, $I0 :opt_flag) = $P1.%2(mob%3)
-          if $I0 == 0 goto %1
-          mob.'result_object'($P0)
-          push ustack, pos
-          bsr succeed
-          pos = pop ustack
-          null $P0
-          mob.'result_object'($P0)
-          goto fail
+          $P1.%2(mob%3)
+          goto %1
         CODE
   end:
     .return ()

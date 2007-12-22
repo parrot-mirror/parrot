@@ -43,16 +43,18 @@
 
     optable['infix:eq'; 'inline'] = <<"        END"
         ##  inline infix:eq
-        $I0 = cmp_str %0, %1
-        $I0 = iseq $I0, 0
+        $S0 = %0
+        $S1 = %1
+        $I0 = iseq $S0, $S1
         %r = new 'Integer'
         %r = $I0
         END
 
     optable['infix:ne'; 'inline'] = <<"        END"
         ##  inline infix:ne
-        $I0 = cmp_str %0, %1
-        $I0 = isne $I0, 0
+        $S0 = %0
+        $S1 = %1
+        $I0 = isne $S0, $S1
         %r = new 'Integer'
         %r = $I0
         END
@@ -79,11 +81,6 @@
 
 ##    method TOP($/, $key) {
 ##        my $past := $($<statement_block>);
-##        my $stmts := $past[1];
-##        #  if the top block is really only a single block, return it
-##        if (@($stmts) == 1 && $stmts[0].WHAT == 'PAST::Block') {
-##            $past := $stmts[0];
-##        }
 ##        $past.blocktype('declaration');
 ##        make $past;
 ##    }
@@ -92,16 +89,6 @@
     .local pmc past
     $P0 = match['statement_block']
     past = $P0.'get_scalar'()
-    .local pmc stmts
-    stmts = past[1]
-    $P0 = stmts.get_array()
-    $I0 = elements $P0
-    if $I0 != 1 goto have_past
-    $P0 = stmts[0]
-    $I0 = isa $P0, 'PAST::Block'
-    unless $I0 goto have_past
-    past = stmts[0]
-  have_past:
     past.'blocktype'('declaration')
     match.'result_object'(past)
 .end
@@ -390,7 +377,7 @@
   not_quote:
     if key != 'heredoc' goto not_heredoc
     $P0 = match['text']
-    inline = $P0.'get_scalar'()
+    inline = $P0.'text'()
   not_heredoc:
   make:
     $P1 = get_hll_global ['PAST'], 'Op'
@@ -422,9 +409,9 @@
 ##            $past.blocktype('method');
 ##        }
 ##        for $<signature>[0] {
-##            my $param_var := $($_<param_var>);
-##            $past.symbol($param_var.name(), :scope('lexical'));
-##            $params.push($param_var);
+##            my $parameter := $($_<parameter>);
+##            $past.symbol($parameter.name(), :scope('lexical'));
+##            $params.push($parameter);
 ##        }
 ##        make $past;
 ##    }
@@ -451,14 +438,70 @@
   param_loop:
     unless iter goto param_end
     $P1 = shift iter
-    .local pmc param_var
-    $P2 = $P1['param_var']
-    param_var = $P2.'get_scalar'()
-    $S0 = param_var['name']
+    .local pmc parameter
+    $P2 = $P1['parameter']
+    parameter = $P2.'get_scalar'()
+    $S0 = parameter.'name'()
     past.'symbol'($S0, 'scope'=>'lexical')
-    params.'push'(param_var)
+    params.'push'(parameter)
     goto param_loop
   param_end:
+    match.'result_object'(past)
+.end
+
+
+##    method parameter($/, $key) {
+##        my $past := $( $<param_var> );
+##        my $sigil := $<param_var><sigil>;
+##        if $key eq 'slurp' {              # slurpy
+##            $past.slurpy( $sigil eq '@' || $sigil eq '%' );
+##            $past.named( $sigil eq '%' );
+##        }
+##        else {
+##            if $<named> eq ':' {          # named
+##                $past.named(~$<param_var><ident>);
+##                if $<quant> ne '!' {      #  required (optional is default)
+##                    $past.viviself('Undef');
+##                }
+##            }
+##            else {                        # positional
+##                if $<quant> eq '?' {      #  optional (required is default)
+##                    $past.viviself('Undef');
+##                }
+##            }
+##        }
+##        make $past;
+##    }
+.sub 'parameter' :method
+    .param pmc match
+    .param pmc key
+    .local pmc past, sigil
+    past = match['param_var']
+    past = past.'get_scalar'()
+    sigil = match['param_var';'sigil']
+    if key != 'slurp' goto not_slurp
+    if sigil != '@' goto not_slurpy_array
+    past.'slurpy'(1)
+  not_slurpy_array:
+    if sigil != '%' goto not_slurpy_hash
+    past.'slurpy'(1)
+  not_slurpy_hash:
+    if sigil != '%' goto not_slurp
+    past.'named'(1)
+    goto make_past
+  not_slurp:
+    $S0 = match['named']
+    if $S0 != ':' goto not_named
+    $S0 = match['param_var';'ident']
+    past.'named'($S0)
+    $S0 = match['quant']
+    if $S0 == '!' goto not_named
+    past.'viviself'('Undef')
+  not_named:
+    $S0 = match['quant']
+    if $S0 != '?' goto make_past
+    past.'viviself'('Undef')
+  make_past:
     match.'result_object'(past)
 .end
 

@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 12;
+use Test::More tests =>  9;
 use Carp;
 use lib qw( lib t/configure/testlib t/steps/testlib );
 $ENV{TEST_LEX} = 'foobar';

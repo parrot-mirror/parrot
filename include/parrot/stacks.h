@@ -52,7 +52,7 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
 Stack_entry_type get_entry_type(SHIM_INTERP,
-    NOTNULL(const Stack_Entry_t *entry))
+    ARGIN(const Stack_Entry_t *entry))
         __attribute__nonnull__(2);
 
 PARROT_API
@@ -63,7 +63,7 @@ void mark_stack(PARROT_INTERP, NOTNULL(Stack_Chunk_t *chunk))
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-Stack_Chunk_t * new_stack(PARROT_INTERP, NOTNULL(const char *name))
+Stack_Chunk_t * new_stack(PARROT_INTERP, ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -100,7 +100,7 @@ Stack_Entry_t * stack_entry(PARROT_INTERP,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
-size_t stack_height(SHIM_INTERP, NOTNULL(const Stack_Chunk_t *chunk))
+size_t stack_height(SHIM_INTERP, ARGIN(const Stack_Chunk_t *chunk))
         __attribute__nonnull__(2);
 
 PARROT_API
@@ -138,7 +138,7 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 Stack_Chunk_t * cst_new_stack_chunk(PARROT_INTERP,
-    NOTNULL(const Stack_Chunk_t *chunk))
+    ARGIN(const Stack_Chunk_t *chunk))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -146,7 +146,7 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 Stack_Chunk_t * register_new_stack(PARROT_INTERP,
-    NOTNULL(const char *name),
+    ARGIN(const char *name),
     size_t item_size)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -154,14 +154,14 @@ Stack_Chunk_t * register_new_stack(PARROT_INTERP,
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-void* stack_prepare_pop(PARROT_INTERP, NOTNULL(Stack_Chunk_t **stack_p))
+void* stack_prepare_pop(PARROT_INTERP, ARGINOUT(Stack_Chunk_t **stack_p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-void* stack_prepare_push(PARROT_INTERP, NOTNULL(Stack_Chunk_t **stack_p))
+void* stack_prepare_push(PARROT_INTERP, ARGINOUT(Stack_Chunk_t **stack_p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

@@ -70,7 +70,7 @@ PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void * mem__internal_allocate(
     size_t size,
-    NOTNULL(const char *file),
+    ARGIN(const char *file),
     int line)
         __attribute__nonnull__(2);
 
@@ -78,13 +78,13 @@ PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void * mem__internal_allocate_zeroed(
     size_t size,
-    NOTNULL(const char *file),
+    ARGIN(const char *file),
     int line)
         __attribute__nonnull__(2);
 
 void mem__internal_free(
     NULLOK(void *from),
-    NOTNULL(const char *file),
+    ARGIN(const char *file),
     int line)
         __attribute__nonnull__(2);
 
@@ -93,7 +93,7 @@ PARROT_CANNOT_RETURN_NULL
 void * mem__internal_realloc(
     NOTNULL(void *from),
     size_t size,
-    NOTNULL(const char *file),
+    ARGIN(const char *file),
     int line)
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);

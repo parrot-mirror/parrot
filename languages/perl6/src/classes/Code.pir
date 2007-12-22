@@ -1,10 +1,21 @@
+## $Id$
 
-.namespace [ 'Sub' ]
+=head1 TITLE
 
-.sub 'isa' :method
-    .param string x
-    $I0 = iseq x, 'Code'
-    .return ($I0)
+Code - Perl 6 Code class
+
+=head1 DESCRIPTION
+
+This file sets up the Perl 6 C<Code> class, the base class
+for executable objects.
+
+=cut
+
+
+.sub 'onload' :anon :init :load
+    $P0 = get_hll_global ['Perl6Object'], 'make_proto'
+    $P0('Sub', 'Code')
+    $P0('Closure', 'Code')
 .end
 
 # Local Variables:

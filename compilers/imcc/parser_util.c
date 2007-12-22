@@ -26,6 +26,8 @@
 #include "parser.h"
 #include "optimizer.h"
 
+#define STREQ(x, y) (strcmp((x), (y))==0)
+
 /*
 
 =head1 NAME
@@ -56,21 +58,21 @@ static int change_op(PARROT_INTERP,
 
 PARROT_CANNOT_RETURN_NULL
 static void * imcc_compile_file(PARROT_INTERP,
-    NOTNULL(const char *fullname),
+    ARGIN(const char *fullname),
     NOTNULL(STRING **error_message))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
-static int is_infix(NOTNULL(const char *name), int n, NOTNULL(SymReg **r))
+static int is_infix(ARGIN(const char *name), int n, NOTNULL(SymReg **r))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static Instruction * maybe_builtin(PARROT_INTERP,
-    NOTNULL(const char *name),
+    ARGIN(const char *name),
     NOTNULL(SymReg **r),
     int n)
         __attribute__nonnull__(1)
@@ -80,7 +82,7 @@ static Instruction * maybe_builtin(PARROT_INTERP,
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static const char * to_infix(PARROT_INTERP,
-    NOTNULL(const char *name),
+    ARGIN(const char *name),
     NOTNULL(SymReg **r),
     NOTNULL(int *n),
     int mmd_op)
@@ -92,15 +94,17 @@ static const char * to_infix(PARROT_INTERP,
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static const char * try_rev_cmp(
-    NOTNULL(const char *name),
+    ARGIN(const char *name),
     NOTNULL(SymReg **r))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static Instruction * var_arg_ins(PARROT_INTERP,
     NOTNULL(IMC_Unit *unit),
-    NOTNULL(const char *name),
+    ARGIN(const char *name),
     NOTNULL(SymReg **r),
     int n,
     int emit)
@@ -130,7 +134,8 @@ static INTVAL eval_nr = 0;
 
 =over 4
 
-=item C<PARROT_CAN_RETURN_NULL
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 Instruction *
 iNEW(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0),
         NOTNULL(char *type), NULLOK(SymReg *init), int emit)>
@@ -145,6 +150,7 @@ iNEW(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0),
 
  */
 
+PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 Instruction *
 iNEW(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0),
@@ -165,7 +171,7 @@ iNEW(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0),
                 "Unknown PMC type '%s'\n", type);
     sprintf(fmt, "%%s, %d\t # .%s", pmc_num, type);
     r0->usage |= U_NEW;
-    if (strcmp(type, "Hash") == 0)
+    if (STREQ(type, "Hash"))
         r0->usage |= U_KEYED;
     free(type); /* XXX This terrifies me that we're passing in C<type> so it can get freed */
     regs[0] = r0;
@@ -182,7 +188,7 @@ iNEW(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0),
 /*
 
 =item C<void
-op_fullname(NOTNULL(char *dest), NOTNULL(const char *name), NOTNULL(SymReg *args[]),
+op_fullname(NOTNULL(char *dest), ARGIN(const char *name), NOTNULL(SymReg *args[]),
         int narg, int keyvec)>
 
 Lookup the full opcode given the short name
@@ -201,7 +207,7 @@ if you don't like the looks of it, stay out, but please don't remove it. :)
 
  */
 void
-op_fullname(NOTNULL(char *dest), NOTNULL(const char *name), NOTNULL(SymReg *args[]),
+op_fullname(NOTNULL(char *dest), ARGIN(const char *name), NOTNULL(SymReg *args[]),
         int narg, int keyvec)
 {
     int i;
@@ -261,7 +267,7 @@ op_fullname(NOTNULL(char *dest), NOTNULL(const char *name), NOTNULL(SymReg *args
 =item C<PARROT_WARN_UNUSED_RESULT
 int
 check_op(PARROT_INTERP, NOTNULL(char *fullname),
-        NOTNULL(const char *name), NOTNULL(SymReg *r[]), int narg, int keyvec)>
+        ARGIN(const char *name), NOTNULL(SymReg *r[]), int narg, int keyvec)>
 
 Return opcode value for op name
 
@@ -272,7 +278,7 @@ Return opcode value for op name
 PARROT_WARN_UNUSED_RESULT
 int
 check_op(PARROT_INTERP, NOTNULL(char *fullname),
-        NOTNULL(const char *name), NOTNULL(SymReg *r[]), int narg, int keyvec)
+        ARGIN(const char *name), NOTNULL(SymReg *r[]), int narg, int keyvec)
 {
     int op;
 
@@ -286,7 +292,7 @@ check_op(PARROT_INTERP, NOTNULL(char *fullname),
 =item C<PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static Instruction *
-maybe_builtin(PARROT_INTERP, NOTNULL(const char *name),
+maybe_builtin(PARROT_INTERP, ARGIN(const char *name),
         NOTNULL(SymReg **r), int n)>
 
 TODO: Needs to be documented!!!
@@ -298,7 +304,7 @@ TODO: Needs to be documented!!!
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static Instruction *
-maybe_builtin(PARROT_INTERP, NOTNULL(const char *name),
+maybe_builtin(PARROT_INTERP, ARGIN(const char *name),
         NOTNULL(SymReg **r), int n)
 {
     Instruction *ins;
@@ -356,7 +362,7 @@ maybe_builtin(PARROT_INTERP, NOTNULL(const char *name),
 
 =item C<PARROT_WARN_UNUSED_RESULT
 int
-is_op(PARROT_INTERP, NOTNULL(const char *name))>
+is_op(PARROT_INTERP, ARGIN(const char *name))>
 
 Is instruction a parrot opcode?
 
@@ -366,7 +372,7 @@ Is instruction a parrot opcode?
 
 PARROT_WARN_UNUSED_RESULT
 int
-is_op(PARROT_INTERP, NOTNULL(const char *name))
+is_op(PARROT_INTERP, ARGIN(const char *name))
 {
     return interp->op_lib->op_code(name, 0) >= 0
         || interp->op_lib->op_code(name, 1) >= 0
@@ -381,7 +387,7 @@ is_op(PARROT_INTERP, NOTNULL(const char *name))
 =item C<PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static const char *
-to_infix(PARROT_INTERP, NOTNULL(const char *name), NOTNULL(SymReg **r),
+to_infix(PARROT_INTERP, ARGIN(const char *name), NOTNULL(SymReg **r),
         NOTNULL(int *n), int mmd_op)>
 
 sub x, y, z  => infix .MMD_SUBTRACT, x, y, z
@@ -393,7 +399,7 @@ sub x, y, z  => infix .MMD_SUBTRACT, x, y, z
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static const char *
-to_infix(PARROT_INTERP, NOTNULL(const char *name), NOTNULL(SymReg **r),
+to_infix(PARROT_INTERP, ARGIN(const char *name), NOTNULL(SymReg **r),
         NOTNULL(int *n), int mmd_op)
 {
     SymReg *mmd;
@@ -428,7 +434,7 @@ to_infix(PARROT_INTERP, NOTNULL(const char *name), NOTNULL(SymReg **r),
 
 =item C<PARROT_WARN_UNUSED_RESULT
 static int
-is_infix(NOTNULL(const char *name), int n, NOTNULL(SymReg **r))>
+is_infix(ARGIN(const char *name), int n, NOTNULL(SymReg **r))>
 
 TODO: Needs to be documented!!!
 
@@ -438,60 +444,60 @@ TODO: Needs to be documented!!!
 
 PARROT_WARN_UNUSED_RESULT
 static int
-is_infix(NOTNULL(const char *name), int n, NOTNULL(SymReg **r))
+is_infix(ARGIN(const char *name), int n, NOTNULL(SymReg **r))
 {
     if (n < 2 || r[0]->set != 'P')
         return -1;
     /* TODO use a generic Parrot interface function,
      *      which handles user infix extensions too
      */
-    if (strcmp(name, "add") == 0)
+    if (STREQ(name, "add"))
         return MMD_ADD;
-    if (strcmp(name, "sub") == 0)
+    if (STREQ(name, "sub"))
         return MMD_SUBTRACT;
-    if (strcmp(name, "mul") == 0)
+    if (STREQ(name, "mul"))
         return MMD_MULTIPLY;
-    if (strcmp(name, "div") == 0)
+    if (STREQ(name, "div"))
         return MMD_DIVIDE;
-    if (strcmp(name, "fdiv") == 0)
+    if (STREQ(name, "fdiv"))
         return MMD_FLOOR_DIVIDE;
-    if (strcmp(name, "mod") == 0)
+    if (STREQ(name, "mod"))
         return MMD_MOD;
-    if (strcmp(name, "cmod") == 0)
+    if (STREQ(name, "cmod"))
         return MMD_CMOD;
-    if (strcmp(name, "pow") == 0)
+    if (STREQ(name, "pow"))
         return MMD_POW;
 
-    if (strcmp(name, "bor") == 0)
+    if (STREQ(name, "bor"))
         return MMD_BOR;
-    if (strcmp(name, "band") == 0)
+    if (STREQ(name, "band"))
         return MMD_BAND;
-    if (strcmp(name, "bxor") == 0)
+    if (STREQ(name, "bxor"))
         return MMD_BXOR;
-    if (strcmp(name, "bors") == 0)
+    if (STREQ(name, "bors"))
         return MMD_SOR;
-    if (strcmp(name, "bands") == 0)
+    if (STREQ(name, "bands"))
         return MMD_SAND;
-    if (strcmp(name, "bxors") == 0)
+    if (STREQ(name, "bxors"))
         return MMD_SXOR;
 
-    if (strcmp(name, "shl") == 0)
+    if (STREQ(name, "shl"))
         return MMD_BSL;
-    if (strcmp(name, "shr") == 0)
+    if (STREQ(name, "shr"))
         return MMD_BSR;
-    if (strcmp(name, "lsr") == 0)
+    if (STREQ(name, "lsr"))
         return MMD_LSR;
 
-    if (strcmp(name, "concat") == 0)
+    if (STREQ(name, "concat"))
         return MMD_CONCAT;
-    if (strcmp(name, "repeat") == 0)
+    if (STREQ(name, "repeat"))
         return MMD_REPEAT;
 
-    if (strcmp(name, "or") == 0)
+    if (STREQ(name, "or"))
         return MMD_LOR;
-    if (strcmp(name, "and") == 0)
+    if (STREQ(name, "and"))
         return MMD_LAND;
-    if (strcmp(name, "xor") == 0)
+    if (STREQ(name, "xor"))
         return MMD_LXOR;
     /* now try n_<op> */
     if (name[0] == 'n' && name[1] == '_')
@@ -501,9 +507,11 @@ is_infix(NOTNULL(const char *name), int n, NOTNULL(SymReg **r))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
+=item C<PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static Instruction *
-var_arg_ins(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
+var_arg_ins(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
         NOTNULL(SymReg **r), int n, int emit)>
 
 TODO: Needs to be documented!!!
@@ -512,9 +520,11 @@ TODO: Needs to be documented!!!
 
 */
 
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static Instruction *
-var_arg_ins(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
+var_arg_ins(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
         NOTNULL(SymReg **r), int n, int emit)
 {
     int op;
@@ -542,8 +552,8 @@ var_arg_ins(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
 
 =item C<PARROT_CAN_RETURN_NULL
 Instruction *
-INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
-        NULLOK(const char *fmt), NOTNULL(SymReg **r), int n, int keyvec, int emit)>
+INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
+        ARGIN_NULLOK(const char *fmt), NOTNULL(SymReg **r), int n, int keyvec, int emit)>
 
 Make an instruction.
 
@@ -562,8 +572,8 @@ s. e.g. imc.c for usage
 
 PARROT_CAN_RETURN_NULL
 Instruction *
-INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
-        NULLOK(const char *fmt), NOTNULL(SymReg **r), int n, int keyvec, int emit)
+INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
+        ARGIN_NULLOK(const char *fmt), NOTNULL(SymReg **r), int n, int keyvec, int emit)
 {
     char fullname[64];
     int i;
@@ -574,10 +584,10 @@ INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
     char format[128], buf[10];
     int len;
 
-    if ((strcmp(name, "set_args") == 0) ||
-        (strcmp(name, "get_results") == 0) ||
-        (strcmp(name, "get_params") == 0) ||
-        (strcmp(name, "set_returns") == 0)) {
+    if ((STREQ(name, "set_args")) ||
+        (STREQ(name, "get_results")) ||
+        (STREQ(name, "get_params")) ||
+        (STREQ(name, "set_returns"))) {
         return var_arg_ins(interp, unit, name, r, n, emit);
     }
 
@@ -587,11 +597,11 @@ INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
         name = to_infix(interp, name, r, &n, op);
     }
     else if ((IMCC_INFO(interp)->state->pragmas & PR_N_OPERATORS) &&
-            ((strcmp(name, "abs") == 0) ||
-             (strcmp(name, "neg") == 0) ||
-             (strcmp(name, "not") == 0) ||
-             (strcmp(name, "bnot") == 0) ||
-             (strcmp(name, "bnots") == 0))) {
+            ((STREQ(name, "abs")) ||
+             (STREQ(name, "neg")) ||
+             (STREQ(name, "not")) ||
+             (STREQ(name, "bnot")) ||
+             (STREQ(name, "bnots")))) {
         strcpy(buf, "n_");
         strcat(buf, name);
         name = buf;
@@ -702,14 +712,14 @@ INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
     ins->opnum = op;
     ins->opsize = n + 1;
     /* mark end as absolute branch */
-    if (!strcmp(name, "end") || !strcmp(name, "ret")) {
+    if (STREQ(name, "end") || STREQ(name, "ret")) {
         ins->type |= ITBRANCH | IF_goto;
     }
-    else if (!strcmp(name, "warningson")) {
+    else if (STREQ(name, "warningson")) {
         /* emit a debug seg, if this op is seen */
         PARROT_WARNINGS_on(interp, PARROT_WARNINGS_ALL_FLAG);
     }
-    else if (!strcmp(name, "yield")) {
+    else if (STREQ(name, "yield")) {
         IMCC_INFO(interp)->cur_unit->instructions->r[0]->pcc_sub->calls_a_sub |= 1 |ITPCCYIELD;
     }
     else if (!strncmp(name, "invoke", 6) ||
@@ -733,22 +743,22 @@ INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(const char *name),
     if (op_info->jump && op_info->jump != PARROT_JUMP_ENEXT) {
         ins->type |= ITBRANCH;
         /* TODO use opnum constants */
-        if (!strcmp(name, "branch") ||
-            !strcmp(name, "tailcall") ||
-            !strcmp(name, "returncc"))
+        if (STREQ(name, "branch") ||
+            STREQ(name, "tailcall") ||
+            STREQ(name, "returncc"))
             ins->type |= IF_goto;
-        else if (!strcmp(fullname, "jump_i") ||
-                !strcmp(fullname, "jsr_i") ||
-                !strcmp(fullname, "branch_i") ||
-                !strcmp(fullname, "bsr_i"))
+        else if (STREQ(fullname, "jump_i") ||
+                STREQ(fullname, "jsr_i") ||
+                STREQ(fullname, "branch_i") ||
+                STREQ(fullname, "bsr_i"))
             IMCC_INFO(interp)->dont_optimize = 1;
     }
-    else if (!strcmp(name, "set") && n == 2) {
+    else if (STREQ(name, "set") && n == 2) {
         /* set Px, Py: both PMCs have the same address */
         if (r[0]->set == r[1]->set && REG_NEEDS_ALLOC(r[1]))
             ins->type |= ITALIAS;
     }
-    else if (!strcmp(name, "compile"))
+    else if (STREQ(name, "compile"))
         ++IMCC_INFO(interp)->has_compile;
 found_ins:
     if (emit)
@@ -787,7 +797,7 @@ do_yylex_init(PARROT_INTERP, NOTNULL(yyscan_t* yyscanner))
 =item C<PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
-imcc_compile(PARROT_INTERP, NOTNULL(const char *s), int pasm_file,
+imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
              NOTNULL(STRING **error_message))>
 
 Compile a pasm or imcc string
@@ -801,7 +811,7 @@ FIXME as we have separate constants, the old constants in ghash must be deleted.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
-imcc_compile(PARROT_INTERP, NOTNULL(const char *s), int pasm_file,
+imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
              NOTNULL(STRING **error_message))
 {
     /* imcc always compiles to interp->code
@@ -912,8 +922,10 @@ imcc_compile(PARROT_INTERP, NOTNULL(const char *s), int pasm_file,
 
 /*
 
-=item C<PMC *
-imcc_compile_pasm(PARROT_INTERP, NOTNULL(const char *s))>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC *
+imcc_compile_pasm(PARROT_INTERP, ARGIN(const char *s))>
 
 TODO: Needs to be documented!!!
 
@@ -924,8 +936,10 @@ TODO: Needs to be documented!!!
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
-imcc_compile_pasm(PARROT_INTERP, NOTNULL(const char *s))
+imcc_compile_pasm(PARROT_INTERP, ARGIN(const char *s))
 {
     STRING *error_message;
     return imcc_compile(interp, s, 1, &error_message);
@@ -933,8 +947,10 @@ imcc_compile_pasm(PARROT_INTERP, NOTNULL(const char *s))
 
 /*
 
-=item C<PMC *
-imcc_compile_pir(PARROT_INTERP, NOTNULL(const char *s))>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC *
+imcc_compile_pir(PARROT_INTERP, ARGIN(const char *s))>
 
 TODO: Needs to be documented!!!
 
@@ -945,8 +961,10 @@ TODO: Needs to be documented!!!
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
-imcc_compile_pir(PARROT_INTERP, NOTNULL(const char *s))
+imcc_compile_pir(PARROT_INTERP, ARGIN(const char *s))
 {
     STRING *error_message;
     return imcc_compile(interp, s, 0, &error_message);
@@ -954,8 +972,10 @@ imcc_compile_pir(PARROT_INTERP, NOTNULL(const char *s))
 
 /*
 
-=item C<PMC *
-IMCC_compile_pir_s(PARROT_INTERP, NOTNULL(const char *s),
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC *
+IMCC_compile_pir_s(PARROT_INTERP, ARGIN(const char *s),
                    NOTNULL(STRING **error_message))>
 
 TODO: Needs to be documented!!!
@@ -964,8 +984,10 @@ TODO: Needs to be documented!!!
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
-IMCC_compile_pir_s(PARROT_INTERP, NOTNULL(const char *s),
+IMCC_compile_pir_s(PARROT_INTERP, ARGIN(const char *s),
                    NOTNULL(STRING **error_message))
 {
     return imcc_compile(interp, s, 0, error_message);
@@ -973,8 +995,10 @@ IMCC_compile_pir_s(PARROT_INTERP, NOTNULL(const char *s),
 
 /*
 
-=item C<PMC *
-IMCC_compile_pasm_s(PARROT_INTERP, NOTNULL(const char *s),
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC *
+IMCC_compile_pasm_s(PARROT_INTERP, ARGIN(const char *s),
                     NOTNULL(STRING **error_message))>
 
 TODO: Needs to be documented!!!
@@ -983,8 +1007,10 @@ TODO: Needs to be documented!!!
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
-IMCC_compile_pasm_s(PARROT_INTERP, NOTNULL(const char *s),
+IMCC_compile_pasm_s(PARROT_INTERP, ARGIN(const char *s),
                     NOTNULL(STRING **error_message))
 {
     return imcc_compile(interp, s, 1, error_message);
@@ -992,8 +1018,10 @@ IMCC_compile_pasm_s(PARROT_INTERP, NOTNULL(const char *s),
 
 /*
 
-=item C<PMC *
-imcc_compile_pasm_ex(PARROT_INTERP, NOTNULL(const char *s))>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC *
+imcc_compile_pasm_ex(PARROT_INTERP, ARGIN(const char *s))>
 
 TODO: Needs to be documented!!!
 
@@ -1001,8 +1029,10 @@ TODO: Needs to be documented!!!
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
-imcc_compile_pasm_ex(PARROT_INTERP, NOTNULL(const char *s))
+imcc_compile_pasm_ex(PARROT_INTERP, ARGIN(const char *s))
 {
     STRING *error_message;
 
@@ -1016,8 +1046,10 @@ imcc_compile_pasm_ex(PARROT_INTERP, NOTNULL(const char *s))
 
 /*
 
-=item C<PMC *
-imcc_compile_pir_ex(PARROT_INTERP, NOTNULL(const char *s))>
+=item C<PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC *
+imcc_compile_pir_ex(PARROT_INTERP, ARGIN(const char *s))>
 
 TODO: Needs to be documented!!!
 
@@ -1025,8 +1057,10 @@ TODO: Needs to be documented!!!
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC *
-imcc_compile_pir_ex(PARROT_INTERP, NOTNULL(const char *s))
+imcc_compile_pir_ex(PARROT_INTERP, ARGIN(const char *s))
 {
     STRING *error_message;
 
@@ -1042,7 +1076,7 @@ imcc_compile_pir_ex(PARROT_INTERP, NOTNULL(const char *s))
 
 =item C<PARROT_CANNOT_RETURN_NULL
 static void *
-imcc_compile_file(PARROT_INTERP, NOTNULL(const char *fullname),
+imcc_compile_file(PARROT_INTERP, ARGIN(const char *fullname),
                    NOTNULL(STRING **error_message))>
 
 Compile a file by filename (can be either PASM or IMCC code)
@@ -1053,7 +1087,7 @@ Compile a file by filename (can be either PASM or IMCC code)
 
 PARROT_CANNOT_RETURN_NULL
 static void *
-imcc_compile_file(PARROT_INTERP, NOTNULL(const char *fullname),
+imcc_compile_file(PARROT_INTERP, ARGIN(const char *fullname),
                    NOTNULL(STRING **error_message))
 {
     PackFile_ByteCode * const cs_save = interp->code;
@@ -1106,7 +1140,7 @@ imcc_compile_file(PARROT_INTERP, NOTNULL(const char *fullname),
     ignored = Parrot_push_context(interp, regs_used);
     UNUSED(ignored);
 
-    if (ext && strcmp(ext, ".pasm") == 0) {
+    if (ext && STREQ(ext, ".pasm")) {
         void *yyscanner;
         do_yylex_init(interp, &yyscanner);
 
@@ -1151,7 +1185,7 @@ imcc_compile_file(PARROT_INTERP, NOTNULL(const char *fullname),
 
 =item C<PARROT_CANNOT_RETURN_NULL
 void *
-IMCC_compile_file(PARROT_INTERP, NOTNULL(const char *s))>
+IMCC_compile_file(PARROT_INTERP, ARGIN(const char *s))>
 
 TODO: Needs to be documented!!!
 
@@ -1164,7 +1198,7 @@ TODO: Needs to be documented!!!
 
 PARROT_CANNOT_RETURN_NULL
 void *
-IMCC_compile_file(PARROT_INTERP, NOTNULL(const char *s))
+IMCC_compile_file(PARROT_INTERP, ARGIN(const char *s))
 {
     STRING *error_message;
     return imcc_compile_file(interp, s, &error_message);
@@ -1174,7 +1208,7 @@ IMCC_compile_file(PARROT_INTERP, NOTNULL(const char *s))
 
 =item C<PARROT_CANNOT_RETURN_NULL
 void *
-IMCC_compile_file_s(PARROT_INTERP, NOTNULL(const char *s),
+IMCC_compile_file_s(PARROT_INTERP, ARGIN(const char *s),
                    NOTNULL(STRING **error_message))>
 
 TODO: Needs to be documented!!!
@@ -1185,7 +1219,7 @@ TODO: Needs to be documented!!!
 
 PARROT_CANNOT_RETURN_NULL
 void *
-IMCC_compile_file_s(PARROT_INTERP, NOTNULL(const char *s),
+IMCC_compile_file_s(PARROT_INTERP, ARGIN(const char *s),
                    NOTNULL(STRING **error_message))
 {
     return imcc_compile_file(interp, s , error_message);
@@ -1267,8 +1301,8 @@ change_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg **r), int num, 
 
 =item C<PARROT_WARN_UNUSED_RESULT
 int
-try_find_op(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
-        SymReg ** r, int n, int keyvec, int emit)>
+try_find_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
+        NOTNULL(SymReg **r), int n, int keyvec, int emit)>
 
 Try to find valid op doing the same operation e.g.
 
@@ -1284,8 +1318,8 @@ Try to find valid op doing the same operation e.g.
 
 PARROT_WARN_UNUSED_RESULT
 int
-try_find_op(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
-        SymReg ** r, int n, int keyvec, int emit)
+try_find_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
+        NOTNULL(SymReg **r), int n, int keyvec, int emit)
 {
     char fullname[64];
     int changed = 0;
@@ -1294,40 +1328,33 @@ try_find_op(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
      * ...
      */
     if (n == 3 && r[2]->type == VTADDRESS) {
-        if (!strcmp(name, "eq_str") ||
-                !strcmp(name, "eq_num")) {
+        if (STREQ(name, "eq_str") || STREQ(name, "eq_num")) {
             name = "eq";
             changed = 1;
         }
-        else if (!strcmp(name, "ne_str") ||
-                !strcmp(name, "ne_num")) {
+        else if (STREQ(name, "ne_str") || STREQ(name, "ne_num")) {
             name = "ne";
             changed = 1;
         }
-        else if (!strcmp(name, "le_str") ||
-                !strcmp(name, "le_num")) {
+        else if (STREQ(name, "le_str") || STREQ(name, "le_num")) {
             name = "le";
             changed = 1;
         }
-        else if (!strcmp(name, "lt_str") ||
-                !strcmp(name, "lt_num")) {
+        else if (STREQ(name, "lt_str") || STREQ(name, "lt_num")) {
             name = "lt";
             changed = 1;
         }
-        else if (!strcmp(name, "ge_str") ||
-                !strcmp(name, "ge_num")) {
+        else if (STREQ(name, "ge_str") || STREQ(name, "ge_num")) {
             name = "ge";
             changed = 1;
         }
-        else if (!strcmp(name, "gt_str") ||
-                !strcmp(name, "gt_num")) {
+        else if (STREQ(name, "gt_str") || STREQ(name, "gt_num")) {
             name = "gt";
             changed = 1;
         }
     }
     else if (n == 3 &&
-            (!strcmp(name, "cmp_str") ||
-             !strcmp(name, "cmp_num"))) {
+            (STREQ(name, "cmp_str") || STREQ(name, "cmp_num"))) {
         name = "cmp";
         changed = 1;
     }
@@ -1355,7 +1382,7 @@ try_find_op(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
         /*
          * transcendentals  e.g. acos N, I
          */
-        if (strcmp(name, "fact"))
+        if (!STREQ(name, "fact"))
             changed = change_op(interp, unit, r, 1, emit);
     }
     if (changed) {
@@ -1370,7 +1397,7 @@ try_find_op(PARROT_INTERP, IMC_Unit * unit, NOTNULL(const char *name),
 =item C<PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static const char *
-try_rev_cmp(NOTNULL(const char *name), NOTNULL(SymReg **r))>
+try_rev_cmp(ARGIN(const char *name), NOTNULL(SymReg **r))>
 
 TODO: Needs to be documented!!!
 
@@ -1381,11 +1408,11 @@ TODO: Needs to be documented!!!
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static const char *
-try_rev_cmp(NOTNULL(const char *name), NOTNULL(SymReg **r))
+try_rev_cmp(ARGIN(const char *name), NOTNULL(SymReg **r))
 {
     static struct br_pairs {
-        NOTNULL(const char * const op);
-        NOTNULL(const char * const nop);
+        ARGIN(const char * const op);
+        ARGIN(const char * const nop);
         const int to_swap;
     } br_pairs[] = {
         { "gt", "lt", 0 },
@@ -1396,7 +1423,7 @@ try_rev_cmp(NOTNULL(const char *name), NOTNULL(SymReg **r))
     unsigned int i;
 
     for (i = 0; i < N_ELEMENTS(br_pairs); i++) {
-        if (strcmp(name, br_pairs[i].op) == 0) {
+        if (STREQ(name, br_pairs[i].op)) {
             const int to_swap =  br_pairs[i].to_swap;
             SymReg *t;
 
@@ -1413,7 +1440,8 @@ try_rev_cmp(NOTNULL(const char *name), NOTNULL(SymReg **r))
 
 /*
 
-=item C<Instruction *
+=item C<PARROT_CAN_RETURN_NULL
+Instruction *
 multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
             NOTNULL(SymReg **r), int nr, int keyvec, int emit)>
 
@@ -1423,6 +1451,7 @@ TODO: Needs to be documented!!!
 
 */
 
+PARROT_CAN_RETURN_NULL
 Instruction *
 multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
             NOTNULL(SymReg **r), int nr, int keyvec, int emit)
@@ -1432,6 +1461,7 @@ multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
     SymReg *preg[3];    /* px, py, pz */
     SymReg *nreg[3];
     Instruction *ins = 0;
+    Instruction *unused_ins = 0;
 
     /* count keys in keyvec */
     kv = keyvec;
@@ -1439,7 +1469,7 @@ multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
         if (kv & 1)
             keyf++;
     if (keyf <= 1)
-        return 0;
+        return NULL;
     /* XXX what to do, if we don't emit instruction? */
     PARROT_ASSERT(emit);
     UNUSED(emit);
@@ -1461,7 +1491,7 @@ multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
         /* make a new P symbol */
         while (1) {
             sprintf(buf, "$P%d", ++p);
-            if (get_sym(interp, buf) == 0)
+            if (!get_sym(interp, buf))
                 break;
         }
         preg[n] = mk_symreg(interp, str_dup(buf), 'P');
@@ -1510,7 +1540,8 @@ multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
         }
     }
     /* make a new undef */
-    iNEW(interp, unit, preg[0], str_dup("Undef"), NULL, 1);
+    unused_ins = iNEW(interp, unit, preg[0], str_dup("Undef"), NULL, 1);
+    UNUSED(unused_ins);
     /* emit the operand */
     INS(interp, unit, name, 0, preg, 3, 0, 1);
     /* emit the LHS op */
@@ -1521,7 +1552,7 @@ multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
 /*
 
 =item C<int
-imcc_fprintf(PARROT_INTERP, NOTNULL(FILE *fd), NOTNULL(const char *fmt), ...)>
+imcc_fprintf(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const char *fmt), ...)>
 
 TODO: Needs to be documented!!!
 
@@ -1530,7 +1561,7 @@ TODO: Needs to be documented!!!
 */
 
 int
-imcc_fprintf(PARROT_INTERP, NOTNULL(FILE *fd), NOTNULL(const char *fmt), ...)
+imcc_fprintf(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const char *fmt), ...)
 {
     va_list ap;
     int len;
@@ -1544,7 +1575,7 @@ imcc_fprintf(PARROT_INTERP, NOTNULL(FILE *fd), NOTNULL(const char *fmt), ...)
 /*
 
 =item C<int
-imcc_vfprintf(PARROT_INTERP, NOTNULL(FILE *fd), NOTNULL(const char *format), va_list ap)>
+imcc_vfprintf(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const char *format), va_list ap)>
 
 TODO: Needs to be documented!!!
 
@@ -1553,7 +1584,7 @@ TODO: Needs to be documented!!!
 */
 
 int
-imcc_vfprintf(PARROT_INTERP, NOTNULL(FILE *fd), NOTNULL(const char *format), va_list ap)
+imcc_vfprintf(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const char *format), va_list ap)
 {
     int len = 0;
     const char *cp;
@@ -1654,8 +1685,9 @@ imcc_vfprintf(PARROT_INTERP, NOTNULL(FILE *fd), NOTNULL(const char *format), va_
 
 =item C<PARROT_MALLOC
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 char *
-str_dup(NOTNULL(const char *old))>
+str_dup(ARGIN(const char *old))>
 
 TODO: Needs to be documented!!!
 
@@ -1665,8 +1697,9 @@ TODO: Needs to be documented!!!
 
 PARROT_MALLOC
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 char *
-str_dup(NOTNULL(const char *old))
+str_dup(ARGIN(const char *old))
 {
     const size_t bytes = strlen(old) + 1;
     char * const copy  = (char *)mem_sys_allocate(bytes);

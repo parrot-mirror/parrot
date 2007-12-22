@@ -1,14 +1,28 @@
-.namespace
+## $Id$
 
-.sub __onload :init :load
-    $P0 = subclass 'Perl6Str', 'Str'
-    $P1 = get_class ['Perl6Object']
-    $P0.'add_parent'($P1)
+=head1 TITLE
 
-    $P1 = new $P0
-    set_hll_global 'Str', $P1
+Str - Perl 6 strings
+
+=head1 DESCRIPTION
+
+This file sets up the C<Perl6Str> PMC type (from F<src/pmc/perl6str.pmc>)
+as the Perl 6 C<Str> class.
+
+=cut
+
+.namespace ['Perl6Str']
+
+.sub 'onload' :anon :init :load
+    $P0 = get_hll_global ['Perl6Object'], 'make_proto'
+    $P0('Perl6Str', 'Str')
 .end
 
+
+.sub 'ACCEPTS' :method
+    .param string topic
+    .return 'infix:eq'(topic, self)
+.end
 
 # Local Variables:
 #   mode: pir

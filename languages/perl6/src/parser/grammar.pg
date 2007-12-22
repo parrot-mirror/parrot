@@ -47,7 +47,7 @@ grammar Perl6::Grammar is PCT::Grammar;
 token TOP {
     <.MARK_STATEMENT_END>
     <statement_block>
-    [ $ | <panic: Syntax error> ]
+    [ $ || <panic: Syntax error> ]
     {*}
 }
 
@@ -71,18 +71,52 @@ token ws {
       end:
         set_global '$!ws', match
     }}
+    <!ww>
     [
-    # | <unsp>
+    | <.unsp>
     | \v+
-    | <unv>
+    | <.unv>
     ]*
+}
+
+token unsp {
+    \\ <.before [\s|'#']>
+    [ \v | <.unv> ]*
 }
 
 token unv {
     || \h+
-    # || ^^ <.pod_comment>
+    || ^^ <.pod_comment>
     || '#' \N*
 }
+
+##  The <afterws> rule returns true if we're immediate after
+##  a set of whitespace.
+
+token afterws {
+    ##  <?{ $¢ == $!ws_to != $!ws_from }>
+    {{  $P0 = match.'to'()
+        $P1 = get_global '$!ws'
+        $P2 = $P1.'to'()
+        if $P0 != $P2 goto end
+        $P2 = $P1.'from'()
+        if $P0 == $P1 goto end
+        .return (1)
+      end:
+    }}
+    <fail>
+}
+
+token pod_comment {
+    ^^ '=' <.unsp>?
+    [
+    | begin <.ws> <ident> .*? \n
+      '=' <.unsp>? 'end' <.ws> $<ident> \N*         {*}         #= block
+    | \N*                                           {*}         #= misc
+    ]
+    {*}
+}
+
 
 ##  STD.pm doesn't have a statement_block rule -- we have one
 ##  to distinguish lists of statements that produce blocks
@@ -95,13 +129,18 @@ rule statement_block {
 }
 
 
+token lambda { '->' | '<->' }
+
+token pblock { [ <lambda> <signature> ]? {*} <block> }
+
+
 ##  Blocks can also have an implied statement end if the
 ##  closing brace is the last non-ws thing on the line.
 
 token block {
     '{'
     <statement_block>
-    [ '}' | <panic: Missing '}'> ]
+    [ '}' || <panic: Missing '}'> ]
     [ \h* <.unv>? \n <.MARK_STATEMENT_END> ]?
     {*}
 }
@@ -155,13 +194,20 @@ token MARK_STATEMENT_END {
 ##  the calling rule.
 rule statement {
     | <statement_control> {*}                    #= statement_control
-    | $<expr>=<EXPR> {*}                         #= expr
+    | $<expr>=<EXPR>
+        [
+        || <statement_mod_cond> {*}              #= statement_mod_cond
+        || {*}                                   #= expr
+        ]
 }
 
 rule statement_control {
     | <if_statement> {*}                         #= if_statement
     | <unless_statement> {*}                     #= unless_statement
+    | <for_statement> {*}                        #= for_statement
     | <use_statement> {*}                        #= use_statement
+    | <begin_statement> {*}                      #= begin_statement
+    | <end_statement> {*}                        #= end_statement
 }
 
 rule if_statement {
@@ -178,12 +224,34 @@ rule unless_statement {
     {*}
 }
 
-rule use_statement {
-    $<sym>=[use] <name>
-    [ '-' <ident> ]?     # e.g. 'v6-alpha'
+rule for_statement {
+    $<sym>=[for]
+    <EXPR> <pblock>
     {*}
 }
 
+rule use_statement {
+    $<sym>=[use] <name>
+    [ '-' <ident> ]?     # e.g. 'v6-alpha'
+    <EXPR>?
+    {*}
+}
+
+rule begin_statement {
+    $<sym>=[BEGIN]
+    <block>
+    {*}
+}
+
+rule end_statement {
+    $<sym>=[END]
+    <block>
+    {*}
+}
+
+rule statement_mod_cond {
+    $<sym>=[if|unless] <EXPR> {*}
+}
 
 rule statement_prefix {
     $<sym>=[do|try|gather|contend|async|lazy]
@@ -192,9 +260,14 @@ rule statement_prefix {
 }
 
 
+
 #### Subroutine and method definitions ####
 
-rule routine_declarator {
+rule plurality_declarator {
+    $<sym>=[multi|proto|only] <routine_declarator> {*}
+}
+
+token routine_declarator {
     | $<sym>='sub' <routine_def> {*}             #= sub
     # | $<sym>='method' <method_def> {*}           #= method
 }
@@ -210,7 +283,7 @@ rule multisig {
 }
 
 rule signature {
-    ( <param_var> ( ',' | <?before ')'> ) )*
+    ( <param_var> ( ',' | <?before ')' | '{'> ) )*
     {*}
 }
 
@@ -223,19 +296,47 @@ token param_var {
 #### Special variables ####
 
 token special_variable {
-    $<sym>=['$!'|'$¢'] <!before \w> {*}
+    $<sym>=[ '$/' | '$!' | '$¢' ] <!before \w> {*}
 }
 
 #### Terms ####
 
 token term {
-    | <noun> {*}                                 #= noun
+    | <noun> <postfix>* {*}                      #= noun
     | <listop> {*}                               #= listop
 }
 
 
+token postfix {
+    <!afterws>
+    [
+    | <methodop> {*}                             #= methodop
+    | <postcircumfix> {*}                        #= postcircumfix
+    ]
+}
+
+
+token methodop {
+    '.' <ident>
+    [
+    | <.unsp>? '(' <semilist> ')' {*}       #= semilist
+    | ':' <?before \s> <arglist> {*}             #= arglist
+    | {*}                                        #= null
+    ]
+}
+
+
+token postcircumfix {
+    | '(' <semilist> ')' {*}                     #= ( )
+    | '[' <semilist> ']' {*}                     #= [ ]
+    | '{' <semilist> '}' {*}                     #= { }
+}
+
+
 token noun {
+    | <package_declarator> {*}                   #= package_declarator
     | <scope_declarator> {*}                     #= scope_declarator
+    | <plurality_declarator> {*}                 #= plurality_declarator
     | <routine_declarator> {*}                   #= routine_declarator
     | <circumfix> {*}                            #= circumfix
     | <variable> {*}                             #= variable
@@ -244,8 +345,19 @@ token noun {
     | <statement_prefix> {*}                     #= statement_prefix
 }
 
+
+rule package_declarator {
+    $<sym>=[module]
+    <name>
+    [
+    || ';' <statement_block> {*}                 #= statement_block
+    || <block> {*}                               #= block
+    ]
+}
+
+
 rule scope_declarator {
-    $<declarator>:=[my|our]
+    $<declarator>=[my|our]
     <variable>
     {*}
 }
@@ -258,15 +370,21 @@ token circumfix {
 
 token variable {
     | <special_variable> {*}                     #= special_variable
-    | <sigil> <ident> {*}                        #= $var
+    | <sigil> <twigil>? <name> {*}               #= $var
 }
 
-token sigil { '$' | '@' }
+token sigil { '$' | '@' | '%' | '&' }
+
+token twigil { <[.!^*+?=]> }
+
+token name {
+    | <ident> [ '::' <ident> ]*
+}
 
 token value {
     | <quote> {*}                                #= quote
     | <number> {*}                               #= number
-    # | <typename> {*}                                       #= typename
+    | <typename> {*}                                       #= typename
 }
 
 ##  Quoting is tricky -- the <quote_concat> subrule is in
@@ -277,14 +395,15 @@ token quote {
     | <.before '"' > <quote_expression: :qq>
     | <.before '<' > <quote_expression: :w :q>
     # | <.before '«' > <quote_expression: :ww :qq>  FIXME: unicode
+    | <.before '/'>  <quote_expression: :regex>
     ]
     {*}
 }
 
 
 token number {
-    [ <integer> {*}                              #= integer
-    | <dec_number> {*}                           #= dec_number
+    [ <dec_number> {*}                           #= dec_number
+    | <integer> {*}                              #= integer
     ]
 }
 
@@ -304,6 +423,11 @@ token integer {
 
 token dec_number {
     \d+[_\d+]* [ '.' \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]? ]
+    {*}
+}
+
+token typename {
+    <?before <.upper> > <name>
     {*}
 }
 

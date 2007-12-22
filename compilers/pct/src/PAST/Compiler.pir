@@ -11,11 +11,15 @@ By default PAST::Compiler transforms a PAST tree into POST.
 
 .namespace [ 'PAST::Compiler' ]
 
-.sub '__onload' :load :init
+.sub 'onload' :anon :load :init
     load_bytecode 'PCT/HLLCompiler.pbc'
-    $P99 = subclass 'PCT::HLLCompiler', 'PAST::Compiler'
-    $P0 = new 'PAST::Compiler'
+    $P0 = get_hll_global 'Protomaker'
+    $P1 = $P0.'new_subclass'('PCT::HLLCompiler', 'PAST::Compiler')
+
+    $P0 = get_hll_global ['PAST'], 'Compiler'
     $P0.'language'('PAST')
+    $P1 = split ' ', 'post pir evalpmc'
+    $P0.'stages'($P1)
 
     .local pmc piropsig
     piropsig = new 'Hash'
@@ -36,6 +40,13 @@ By default PAST::Compiler transforms a PAST tree into POST.
     piropsig['set']      = 'PP'
     set_global '%piropsig', piropsig
 
+    .local pmc valflags
+    valflags = new 'Hash'
+    valflags['String']   = '~*:e'
+    valflags['Integer']  = '+*:'
+    valflags['Float']    = '+*:'
+    set_global '%valflags', valflags
+
     .return ()
 .end
 
@@ -43,16 +54,13 @@ By default PAST::Compiler transforms a PAST tree into POST.
 
 =over 4
 
-=item compile(node, ['target'=>target, ...])
+=item to_post(node [, 'option'=>option, ...])
 
-Compile the abstract syntax tree given by C<past> into the form
-given by C<target>.  Current targets include "past", "post", "pir";
-if no C<target> is supplied then the abstract syntax tree is compiled
-to executable code (but not executed).
+Compile the abstract syntax tree given by C<past> into POST.
 
 =cut
 
-.sub 'compile' :method
+.sub 'to_post' :method
     .param pmc past
     .param pmc options         :slurpy :named
 
@@ -62,7 +70,7 @@ to executable code (but not executed).
     blockpast = new 'ResizablePMCArray'
     set_global '@?BLOCK', blockpast
   have_blockpast:
-    .return self.'post'(past, 'rtype'=>'v')
+    .return self.'as_post'(past, 'rtype'=>'v')
 .end
 
 =item post_children(node [, 'signature'=>signature] )
@@ -125,7 +133,7 @@ third and subsequent children can be any value they wish.
     unless iter goto iter_end
     .local pmc cpast, cpost
     cpast = shift iter
-    cpost = self.'post'(cpast, 'rtype'=>rtype)
+    cpost = self.'as_post'(cpast, 'rtype'=>rtype)
     ops.'push'(cpost)
     if null posargs goto iter_rtype
     if rtype != ':' goto iter_pos
@@ -133,7 +141,7 @@ third and subsequent children can be any value they wish.
     npast = cpast.'named'()
     unless npast goto iter_pos
   iter_named:
-    npost = self.'post'(npast, 'rtype'=>'~')
+    npost = self.'as_post'(npast, 'rtype'=>'~')
     ops.'push'(npost)
     $S0 = cpost
     $S1 = npost
@@ -184,7 +192,7 @@ instead of an entire PAST structure.
 
 =cut
 
-.sub 'post' :method :multi(_, _)
+.sub 'as_post' :method :multi(_, _)
     .param pmc node
     .param pmc options         :slurpy :named
 
@@ -227,7 +235,7 @@ Return the POST representation of a C<PAST::Block>.
 
 =cut
 
-.sub 'post' :method :multi(_, ['PAST::Block'])
+.sub 'as_post' :method :multi(_, ['PAST::Block'])
     .param pmc node
     .param pmc options         :slurpy :named
 
@@ -265,6 +273,11 @@ Return the POST representation of a C<PAST::Block>.
     set_global '$?SUB', bpost
   outer_done:
 
+    .local pmc compiler
+    compiler = node.'compiler'()
+    if compiler goto children_compiler
+
+  children_past:
     ##  all children but last can return anything, last returns PMC
     $P0 = node.'get_array'()
     $I0 = elements $P0
@@ -277,7 +290,16 @@ Return the POST representation of a C<PAST::Block>.
     ##  result of last child is return from block
     $P0 = ops[-1]
     bpost.'push_pirop'('return', $P0)
+    goto children_done
 
+  children_compiler:
+    ##  set the compiler to use for the POST::Sub node, and
+    ##  add this block's child to it.
+    bpost.'compiler'(compiler)
+    $P0 = node[0]
+    bpost.'push'($P0)
+
+  children_done:
     ##  restore previous outer scope
     set_global '$?SUB', outerpost
 
@@ -341,7 +363,7 @@ the node's "pasttype" attribute.
 
 =cut
 
-.sub 'post' :method :multi(_, ['PAST::Op'])
+.sub 'as_post' :method :multi(_, ['PAST::Op'])
     .param pmc node
     .param pmc options         :slurpy :named
 
@@ -501,13 +523,13 @@ a 'pasttype' of if/unless.
     $S0 = concat $S0, '_end'
     endlabel = $P0.'new'('result'=>$S0)
 
-    exprpost = self.'post'(exprpast, 'rtype'=>'P')
+    exprpost = self.'as_post'(exprpast, 'rtype'=>'P')
     ops.'push'(exprpost)
     ops.'result'(exprpost)
     ops.'push_pirop'(pasttype, exprpost, thenlabel)
     $I0 = defined elsepast
     unless $I0 goto else_done
-    elsepost = self.'post'(elsepast, 'rtype'=>'P')
+    elsepost = self.'as_post'(elsepast, 'rtype'=>'P')
     ops.'push'(elsepost)
     if rtype == 'v' goto else_done
     ops.'push_pirop'('set', ops, elsepost)
@@ -516,7 +538,7 @@ a 'pasttype' of if/unless.
     ops.'push'(thenlabel)
     $I0 = defined thenpast
     unless $I0 goto then_done
-    thenpost = self.'post'(thenpast, 'rtype'=>'P')
+    thenpost = self.'as_post'(thenpast, 'rtype'=>'P')
     ops.'push'(thenpost)
     if rtype == 'v' goto then_done
     ops.'push_pirop'('set', ops, thenpost)
@@ -536,7 +558,7 @@ a 'pasttype' of if/unless.
 
 =item until(PAST::Op node)
 
-Return the PAST representation of a C<while> or C<until> loop.
+Return the POST representation of a C<while> or C<until> loop.
 
 =cut
 
@@ -573,10 +595,10 @@ Return the PAST representation of a C<while> or C<until> loop.
   have_iftype:
 
     ops.'push'(looplabel)
-    exprpost = self.'post'(exprpast, 'rtype'=>'P')
+    exprpost = self.'as_post'(exprpast, 'rtype'=>'P')
     ops.'push'(exprpost)
     ops.'push_pirop'(iftype, exprpost, endlabel)
-    bodypost = self.'post'(bodypast, 'rtype'=>'v')
+    bodypost = self.'as_post'(bodypast, 'rtype'=>'v')
     ops.'push'(bodypost)
     ops.'push_pirop'('goto', looplabel)
     ops.'push'(endlabel)
@@ -594,7 +616,7 @@ Return the PAST representation of a C<while> or C<until> loop.
 
 =item repeat_until(PAST::Op node)
 
-Return the PAST representation of a C<repeat_while> or C<repeat_until> loop.
+Return the POST representation of a C<repeat_while> or C<repeat_until> loop.
 
 =cut
 
@@ -628,9 +650,9 @@ Return the PAST representation of a C<repeat_while> or C<repeat_until> loop.
   have_iftype:
 
     ops.'push'(looplabel)
-    bodypost = self.'post'(bodypast, 'rtype'=>'v')
+    bodypost = self.'as_post'(bodypast, 'rtype'=>'v')
     ops.'push'(bodypost)
-    exprpost = self.'post'(exprpast, 'rtype'=>'P')
+    exprpost = self.'as_post'(exprpast, 'rtype'=>'P')
     ops.'push'(exprpost)
     ops.'push_pirop'(iftype, exprpost, looplabel)
     ops.'result'(exprpost)
@@ -646,7 +668,7 @@ Return the PAST representation of a C<repeat_while> or C<repeat_until> loop.
 
 =item for(PAST::Op node)
 
-Return the PAST representation of the C<for> loop given
+Return the POST representation of the C<for> loop given
 by C<node>.
 
 =cut
@@ -668,7 +690,7 @@ by C<node>.
 
     .local pmc collpast, collpost
     collpast = node[0]
-    collpost = self.'post'(collpast, 'rtype'=>'P')
+    collpost = self.'as_post'(collpast, 'rtype'=>'P')
     ops.'push'(collpost)
 
     .local string iter
@@ -687,7 +709,7 @@ by C<node>.
 
     .local pmc subpast, subpost
     subpast = node[1]
-    subpost = self.'post'(subpast, 'rtype'=>'P')
+    subpost = self.'as_post'(subpast, 'rtype'=>'P')
     ops.'push'(subpost)
     ops.'push_pirop'('newclosure', subpost, subpost)
     ops.'push_pirop'('call', subpost, nextval)
@@ -724,7 +746,7 @@ handler.
 
     .local pmc trypast, trypost
     trypast = node[0]
-    trypost = self.'post'(trypast, 'rtype'=>'P')
+    trypost = self.'as_post'(trypast, 'rtype'=>'P')
     ops.'push_pirop'('push_eh', catchlabel)
     ops.'push'(trypost)
     ops.'push_pirop'('pop_eh')
@@ -733,7 +755,7 @@ handler.
     .local pmc catchpast, catchpost
     catchpast = node[1]
     if null catchpast goto catch_done
-    catchpost = self.'post'(catchpast, 'rtype'=>'v')
+    catchpost = self.'as_post'(catchpast, 'rtype'=>'v')
     ops.'push'(catchpost)
   catch_done:
     ops.'push'(endlabel)
@@ -783,13 +805,13 @@ $x < $y and $y < $z, but $y only gets evaluated once.
     .local pmc apast, apost
     cpast = pop clist
     apast = cpast[0]
-    apost = self.'post'(apast, 'rtype'=>'P')
+    apost = self.'as_post'(apast, 'rtype'=>'P')
     ops.'push'(apost)
 
   clist_loop:
     .local pmc bpast, bpost
     bpast = cpast[1]
-    bpost = self.'post'(bpast, 'rtype'=>'P')
+    bpost = self.'as_post'(bpast, 'rtype'=>'P')
     ops.'push'(bpost)
     .local string name
     name = cpast.'name'()
@@ -836,14 +858,14 @@ a second child is found that evaluates as true.
     u = ops.'unique'('$I')
     iter = node.'iterator'()
     apast = shift iter
-    apost = self.'post'(apast, 'rtype'=>'P')
+    apost = self.'as_post'(apast, 'rtype'=>'P')
     ops.'push'(apost)
     ops.'push_pirop'('set', ops, apost)
     ops.'push_pirop'('istrue', t, apost)
   middle_child:
     .local pmc bpast, bpost
     bpast = shift iter
-    bpost = self.'post'(bpast, 'rtype'=>'P')
+    bpost = self.'as_post'(bpast, 'rtype'=>'P')
     ops.'push'(bpost)
     ops.'push_pirop'('istrue', u, bpost)
     ops.'push_pirop'('and', i, t, u)
@@ -884,7 +906,7 @@ node with a 'pasttype' of bind.
 
     $P0 = get_hll_global ['POST'], 'Ops'
     ops = $P0.'new'('node'=>node)
-    rpost = self.'post'(rpast, 'rtype'=>'P')
+    rpost = self.'as_post'(rpast, 'rtype'=>'P')
     ops.'push'(rpost)
 
     .local string scope
@@ -911,8 +933,8 @@ opcode -- see RT#47828).
     .local pmc rpast, rpost, lpast, lpost
     rpast = node[1]
     lpast = node[0]
-    rpost = self.'post'(rpast, 'rtype'=>'P')
-    lpost = self.'post'(lpast, 'rtype'=>'P')
+    rpost = self.'as_post'(rpast, 'rtype'=>'P')
+    lpost = self.'as_post'(lpast, 'rtype'=>'P')
     .local pmc ops, alabel
     $P0 = get_hll_global ['POST'], 'Ops'
     ops = $P0.'new'(rpost, lpost, 'node'=>node, 'result'=>lpost)
@@ -1004,7 +1026,7 @@ blocks to determine the scope.
 
     .local pmc viviself, vivipost, vivilabel
     viviself = node.'viviself'()
-    vivipost = self.'post'(viviself)
+    vivipost = self.'as_post'(viviself)
     ops.'result'(vivipost)
     ops.'push'(fetchop)
     unless viviself goto vivipost_done
@@ -1022,14 +1044,19 @@ blocks to determine the scope.
 .end
 
 
-.sub 'post' :method :multi(_, ['PAST::Var'])
+.sub 'as_post' :method :multi(_, ['PAST::Var'])
     .param pmc node
     .param pmc options         :slurpy :named
 
     .local string scope
     scope = self.'scope'(node)
+    push_eh scope_error
     $P0 = find_method self, scope
+    pop_eh
     .return self.$P0(node)
+  scope_error:
+    $S0 = node.'name'()
+    .return self.'panic'("No scope found for PAST::Var '", $S0, "'")
 .end
 
 
@@ -1056,7 +1083,7 @@ blocks to determine the scope.
     .local pmc viviself, vivipost, vivilabel
     viviself = node.'viviself'()
     unless viviself goto param_required
-    vivipost = self.'post'(viviself)
+    vivipost = self.'as_post'(viviself)
     $P0 = get_hll_global ['POST'], 'Label'
     vivilabel = $P0.'new'('name'=>'optparam_')
     subpost.'add_param'(pname, 'named'=>named, 'optional'=>1)
@@ -1064,9 +1091,12 @@ blocks to determine the scope.
     ops.'push'(vivipost)
     ops.'push_pirop'('set', ops, vivipost)
     ops.'push'(vivilabel)
+    .return (ops)
 
   param_required:
-    subpost.'add_param'(pname, 'named'=>named)
+    .local int slurpy
+    slurpy = node.'slurpy'()
+    subpost.'add_param'(pname, 'named'=>named, 'slurpy'=>slurpy)
     name = ops.'escape'(name)
     ops.'push_pirop'('.lex', name, ops)
     .return (ops)
@@ -1147,7 +1177,7 @@ blocks to determine the scope.
     ops = $P0.'new'('node'=>node)
     .local pmc viviself, vivipost
     viviself = node.'viviself'()
-    vivipost = self.'post'(viviself, 'rtype'=>'P')
+    vivipost = self.'as_post'(viviself, 'rtype'=>'P')
     ops.'push'(vivipost)
     ops.'push_pirop'('.lex', name, vivipost)
     ops.'result'(vivipost)
@@ -1173,7 +1203,7 @@ blocks to determine the scope.
 
     .local pmc keypast, keypost
     keypast = node[1]
-    keypost = self.'post'(keypast, 'rtype'=>'*')
+    keypost = self.'as_post'(keypast, 'rtype'=>'*')
     ops.'push'(keypost)
 
     .local pmc basepast, basepost
@@ -1194,7 +1224,7 @@ blocks to determine the scope.
     basepast.lvalue($I0)
   have_lvalue:
 
-    basepost = self.'post'(basepast, 'rtype'=>'P')
+    basepost = self.'as_post'(basepast, 'rtype'=>'P')
     ops.'push'(basepost)
     .local string name
     $S0 = basepost.'result'()
@@ -1229,7 +1259,7 @@ to have a PMC generated containing the constant value.
 
 =cut
 
-.sub 'post' :method :multi(_, ['PAST::Val'])
+.sub 'as_post' :method :multi(_, ['PAST::Val'])
     .param pmc node
     .param pmc options         :slurpy :named
 
@@ -1245,19 +1275,19 @@ to have a PMC generated containing the constant value.
     returns = $S0
   have_returns:
 
-    .local int isstr
-    $I0 = cmp_str returns, 'String'
-    isstr = iseq $I0, 0
+    .local string valflags
+    $P0 = get_global '%valflags'
+    valflags = $P0[returns]
+
+    $I0 = index valflags, 'e'
+    if $I0 < 0 goto escape_done
+    value = ops.'escape'(value)
+  escape_done:
 
     .local string rtype
     rtype = options['rtype']
-    if rtype == '+' goto result_num
-    if rtype == 'P' goto result_pmc
-    if rtype == '~' goto result_string
-    unless isstr goto result_num
-  result_string:
-    value = ops.'escape'(value)
-  result_num:
+    $I0 = index valflags, rtype
+    if $I0 < 0 goto result_pmc
     ops.'result'(value)
     .return (ops)
 
@@ -1265,9 +1295,6 @@ to have a PMC generated containing the constant value.
     .local string result
     result = ops.'unique'('$P')
     returns = ops.'escape'(returns)
-    unless isstr goto have_value
-    value = ops.'escape'(value)
-  have_value:
     ops.'push_pirop'('new', result, returns)
     ops.'push_pirop'('assign', result, value)
     ops.'result'(result)
