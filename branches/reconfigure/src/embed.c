@@ -39,7 +39,7 @@ static void print_debug(PARROT_INTERP, SHIM(int status), SHIM(void *p))
 static void print_profile(PARROT_INTERP, SHIM(int status), SHIM(void *p))
         __attribute__nonnull__(1);
 
-static int prof_sort_f(NOTNULL(const void *a), NOTNULL(const void *b))
+static int prof_sort_f(ARGIN(const void *a), ARGIN(const void *b))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -347,7 +347,7 @@ Parrot_setwarnings(PARROT_INTERP, Parrot_warnclass wc)
 =item C<PARROT_API
 PARROT_CAN_RETURN_NULL
 PackFile *
-Parrot_readbc(PARROT_INTERP, NULLOK(const char *fullname))>
+Parrot_readbc(PARROT_INTERP, ARGIN_NULLOK(const char *fullname))>
 
 Read in a bytecode, unpack it into a C<PackFile> structure, and do fixups.
 
@@ -358,7 +358,7 @@ Read in a bytecode, unpack it into a C<PackFile> structure, and do fixups.
 PARROT_API
 PARROT_CAN_RETURN_NULL
 PackFile *
-Parrot_readbc(PARROT_INTERP, NULLOK(const char *fullname))
+Parrot_readbc(PARROT_INTERP, ARGIN_NULLOK(const char *fullname))
 {
     INTVAL program_size, wanted;
     char *program_code;
@@ -593,7 +593,7 @@ setup_argv(PARROT_INTERP, int argc, NOTNULL(char ** argv))
 /*
 
 =item C<static int
-prof_sort_f(NOTNULL(const void *a), NOTNULL(const void *b))>
+prof_sort_f(ARGIN(const void *a), ARGIN(const void *b))>
 
 Sort function for profile data. Sorts by time.
 
@@ -602,7 +602,7 @@ Sort function for profile data. Sorts by time.
 */
 
 static int
-prof_sort_f(NOTNULL(const void *a), NOTNULL(const void *b))
+prof_sort_f(ARGIN(const void *a), ARGIN(const void *b))
 {
     const FLOATVAL timea = ((const ProfData *)a)->time;
     const FLOATVAL timeb = ((const ProfData *)b)->time;

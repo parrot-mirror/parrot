@@ -15,9 +15,13 @@ Class is not derived from any other PMC.
 
 =head2 Structure
 
-The Role PMC structure (C<Parrot_Role>) consists of five items:
+The Class PMC structure (C<Parrot_Class>) consists of twelve items:
 
 =over 4
+
+=item C<id>
+
+The type number of the PMC. [deprecated: See RT #48024]
 
 =item C<name>
 
@@ -74,6 +78,10 @@ A Null PMC is allocated during initialization.
 
 A cache of visible attribute names to attribute indexes.
 A Null PMC is allocated during initialization.
+
+=item C<vtable_cache>
+
+Cache of the vtable used for objects (only STM).
 
 =item C<resolve_method>
 
@@ -593,15 +601,14 @@ Return the name of the class (without the HLL namespace).
 
     STRING *get_string() {
         Parrot_Class * const  _class    = PARROT_CLASS(SELF);
-        PMC                  *_namespace = _class->_namespace;
-        PMC                  *names;
+        PMC          * const _namespace = _class->_namespace;
 
         if (!PMC_IS_NULL(_namespace)) {
             /* Call the 'get_name' method on the class's associated namespace
              * to retrieve a fully qualified list of names, then join the list
              * with a semicolon.
              */
-            names = Parrot_NameSpace_nci_get_name(interp, _namespace);
+            PMC * const names = Parrot_NameSpace_nci_get_name(interp, _namespace);
 
             if (!PMC_IS_NULL(names))
                 /* remove the HLL namespace name */

@@ -77,7 +77,6 @@ my $result = GetOptions( 'html'          => \$do_gen_html,
 #
 # BASIC                No t/harness, two implementations
 # cola                 not maintained
-# eclectus             soon, with Perl5 wrappers for test files
 # ecmascript           No t/harness
 # forth                No t/harness
 # perl6                test scripts are written in Perl 6, not Perl 5
@@ -93,8 +92,8 @@ my @unified_testable_languages
               APL
               befunge
               bf
-              cardinal
               dotnet
+              eclectus
               HQ9plus
               jako
               lazy-k

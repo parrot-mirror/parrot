@@ -4,24 +4,38 @@
 
 src/classes/List.pir - Perl 6 List class
 
-=head1 Functions
+=head1 Methods
 
 =over 4
 
 =cut
 
-.namespace
+.namespace ['List']
 
-.sub '__onload' :load :init
+.sub 'onload' :anon :load :init
     $P0 = subclass 'ResizablePMCArray', 'List'
-    $P1 = get_class 'Perl6Object'
-    $P0.add_parent($P1)
-
-    $P1 = new $P0
-    set_hll_global 'List', $P1
+    $P1 = get_hll_global ['Perl6Object'], 'make_proto'
+    $P1($P0, 'List')
 .end
 
-.namespace ['List']
+
+=item get_string()    (vtable method)
+
+Return the elements of the list joined by spaces.
+
+=cut
+
+.sub 'get_string' :vtable :method
+    $S0 = join ' ', self
+    .return ($S0)
+.end
+
+
+=item elems()
+
+Return the number of elements in the list.
+
+=cut
 
 .sub 'elems' :method
     $I0 = elements self

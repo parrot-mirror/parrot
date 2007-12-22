@@ -155,6 +155,18 @@ void do_exception(PARROT_INTERP, INTVAL severity, long error)
         __attribute__nonnull__(1);
 
 PARROT_API
+PARROT_DOES_NOT_RETURN
+void do_pmc_exception(PARROT_INTERP, ARGIN(PMC *msg))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_DOES_NOT_RETURN
+void do_str_exception(PARROT_INTERP, ARGIN(STRING *msg))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
 void free_internal_exception(PARROT_INTERP)
         __attribute__nonnull__(1);
 
@@ -164,14 +176,15 @@ size_t handle_exception(PARROT_INTERP)
 
 PARROT_API
 PARROT_DOES_NOT_RETURN
-void internal_exception(int exitcode, NOTNULL(const char *format), ...)
+void internal_exception(int exitcode, ARGIN(const char *format), ...)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-PMC* new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
-        __attribute__nonnull__(1);
+PMC* new_c_exception_handler(PARROT_INTERP, NOTNULL(Parrot_exception *jb))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 void new_internal_exception(PARROT_INTERP)
@@ -180,8 +193,8 @@ void new_internal_exception(PARROT_INTERP)
 PARROT_API
 PARROT_DOES_NOT_RETURN
 void Parrot_confess(
-    NOTNULL(const char *cond),
-    NOTNULL(const char *file),
+    ARGIN(const char *cond),
+    ARGIN(const char *file),
     unsigned int line)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -191,7 +204,7 @@ void Parrot_pop_mark(PARROT_INTERP, INTVAL mark)
         __attribute__nonnull__(1);
 
 PARROT_API
-void Parrot_push_action(PARROT_INTERP, NOTNULL(PMC *sub))
+void Parrot_push_action(PARROT_INTERP, ARGIN(PMC *sub))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -204,34 +217,40 @@ void pop_exception(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_API
-void push_exception(PARROT_INTERP, NOTNULL(PMC *handler))
+void push_exception(PARROT_INTERP, ARGIN(PMC *handler))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
-void push_new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb)
-        __attribute__nonnull__(1);
+void push_new_c_exception_handler(PARROT_INTERP,
+    NOTNULL(Parrot_exception *jb))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_DOES_NOT_RETURN
 void real_exception(PARROT_INTERP,
-    NULLOK(void *ret_addr),
+    ARGIN_NULLOK(void *ret_addr),
     int exitcode,
-    NOTNULL(const char *format),
+    ARGIN(const char *format),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(4);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 opcode_t * rethrow_exception(PARROT_INTERP, NOTNULL(PMC *exception))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_CAN_RETURN_NULL
-opcode_t * throw_exception(PARROT_INTERP, PMC *exception, SHIM(void *dest))
-        __attribute__nonnull__(1);
+opcode_t * throw_exception(PARROT_INTERP,
+    NOTNULL(PMC *exception),
+    SHIM(void *dest))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 INTVAL count_exception_handlers(PARROT_INTERP)
@@ -243,8 +262,8 @@ void destroy_exception_list(PARROT_INTERP)
 PARROT_DOES_NOT_RETURN
 void do_panic(
     NULLOK_INTERP,
-    NULLOK(const char *message),
-    NULLOK(const char *file),
+    ARGIN_NULLOK(const char *message),
+    ARGIN_NULLOK(const char *file),
     unsigned int line);
 
 PARROT_WARN_UNUSED_RESULT
@@ -253,6 +272,7 @@ PMC * get_all_exception_handlers(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 PMC * get_exception_handler(PARROT_INTERP, INTVAL target_depth)
         __attribute__nonnull__(1);
 

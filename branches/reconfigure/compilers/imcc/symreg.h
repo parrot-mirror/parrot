@@ -120,19 +120,20 @@ struct _IMC_Unit;
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 SymReg * _find_sym(PARROT_INTERP,
-    NULLOK(const Namespace *nspace),
+    ARGIN_NULLOK(const Namespace *nspace),
     NOTNULL(SymHash *hsh),
-    NOTNULL(const char *name))
+    ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-SymReg * _get_sym(NOTNULL(SymHash *hsh), NOTNULL(const char *name))
+SymReg * _get_sym(ARGIN(const SymHash *hsh), ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 SymReg * _mk_address(PARROT_INTERP,
     NOTNULL(SymHash *hsh),
@@ -142,13 +143,21 @@ SymReg * _mk_address(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-SymReg * _mk_const(NOTNULL(SymHash *hsh), NOTNULL(const char *name), int t)
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+SymReg * _mk_const(NOTNULL(SymHash *hsh), ARGIN(const char *name), int t)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-char * _mk_fullname(NULLOK(const Namespace *ns), NOTNULL(const char *name))
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+char * _mk_fullname(
+    ARGIN_NULLOK(const Namespace *ns),
+    ARGIN(const char *name))
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 SymReg * _mk_symreg(NOTNULL(SymHash* hsh), NOTNULL(char *name), int t)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -165,10 +174,11 @@ void add_pcc_arg(NOTNULL(SymReg *r), NOTNULL(SymReg *arg))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void add_pcc_cc(NOTNULL(SymReg *r), SymReg *arg)
-        __attribute__nonnull__(1);
+void add_pcc_cc(NOTNULL(SymReg *r), NOTNULL(SymReg *arg))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
-void add_pcc_multi(NOTNULL(SymReg *r), SymReg *arg)
+void add_pcc_multi(NOTNULL(SymReg *r), NULLOK(SymReg *arg))
         __attribute__nonnull__(1);
 
 void add_pcc_param(NOTNULL(SymReg *r), NOTNULL(SymReg *arg))
@@ -183,8 +193,9 @@ void add_pcc_return(NOTNULL(SymReg *r), NOTNULL(SymReg *arg))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void add_pcc_sub(NOTNULL(SymReg *r), SymReg * arg)
-        __attribute__nonnull__(1);
+void add_pcc_sub(NOTNULL(SymReg *r), NOTNULL(SymReg *arg))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 void clear_globals(PARROT_INTERP)
         __attribute__nonnull__(1);
@@ -200,12 +211,13 @@ void debug_dump_sym_hash(NOTNULL(SymHash *hsh))
         __attribute__nonnull__(1);
 
 PARROT_MALLOC
-SymReg * dup_sym(NOTNULL(const SymReg *r))
+PARROT_CANNOT_RETURN_NULL
+SymReg * dup_sym(ARGIN(const SymReg *r))
         __attribute__nonnull__(1);
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-SymReg * find_sym(PARROT_INTERP, NOTNULL(const char *name))
+SymReg * find_sym(PARROT_INTERP, ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -214,14 +226,15 @@ void free_sym(NOTNULL(SymReg *r))
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-SymReg * get_sym(PARROT_INTERP, NOTNULL(const char *name))
+SymReg * get_sym(PARROT_INTERP, ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_PURE_FUNCTION
-unsigned int hash_str(NOTNULL(const char *str))
+unsigned int hash_str(ARGIN(const char *str))
         __attribute__nonnull__(1);
 
+PARROT_CANNOT_RETURN_NULL
 SymReg * link_keys(PARROT_INTERP,
     int nargs,
     NOTNULL(SymReg * keys[]),
@@ -229,15 +242,20 @@ SymReg * link_keys(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 SymReg * mk_address(PARROT_INTERP, NOTNULL(char *name), int uniq)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-SymReg * mk_const(PARROT_INTERP, NOTNULL(const char *name), int t)
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+SymReg * mk_const(PARROT_INTERP, ARGIN(const char *name), int t)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 SymReg * mk_const_ident(PARROT_INTERP,
     NOTNULL(char *name),
     int t,
@@ -247,7 +265,9 @@ SymReg * mk_const_ident(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(4);
 
-char * mk_fullname(NOTNULL(const char *name))
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+char * mk_fullname(ARGIN(const char *name))
         __attribute__nonnull__(1);
 
 PARROT_CANNOT_RETURN_NULL
@@ -262,48 +282,65 @@ SymReg* mk_ident_ur(PARROT_INTERP, NOTNULL(char *name), int t)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 SymReg * mk_label_address(PARROT_INTERP, NOTNULL(char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 SymReg * mk_local_label(PARROT_INTERP, NOTNULL(char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 SymReg * mk_pasm_reg(PARROT_INTERP, NOTNULL(char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 SymReg * mk_pcc_sub(PARROT_INTERP, NOTNULL(char *name), int proto)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 SymReg * mk_sub_address(PARROT_INTERP, NOTNULL(char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 SymReg * mk_sub_label(PARROT_INTERP, NOTNULL(char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 SymReg * mk_symreg(PARROT_INTERP, NOTNULL(char *name), int t)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 SymReg * mk_temp_reg(PARROT_INTERP, int t)
         __attribute__nonnull__(1);
 
 void pop_namespace(NULLOK(char *name));
-void push_namespace(char * name);
+void push_namespace(NOTNULL(char *name))
+        __attribute__nonnull__(1);
+
 void store_symreg(PARROT_INTERP, NOTNULL(SymReg *r))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_MALLOC
-char * symreg_to_str(NOTNULL(const SymReg *s))
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+char * symreg_to_str(ARGIN(const SymReg *s))
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: compilers/imcc/symreg.c */

@@ -192,7 +192,7 @@ void Parrot_mmd_rebuild_table(PARROT_INTERP, INTVAL type, INTVAL func_nr)
 PARROT_API
 void Parrot_mmd_register_table(PARROT_INTERP,
     INTVAL type,
-    NOTNULL(const MMD_init *mmd_table),
+    ARGIN(const MMD_init *mmd_table),
     INTVAL n)
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);

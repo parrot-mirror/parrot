@@ -26,8 +26,8 @@ This file implements the charset functions for unicode data
 /* HEADERIZER BEGIN: static */
 
 static INTVAL compare(PARROT_INTERP,
-    NOTNULL(const STRING *lhs),
-    NOTNULL(const STRING *rhs))
+    ARGIN(const STRING *lhs),
+    ARGIN(const STRING *rhs))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -38,7 +38,7 @@ static STRING* compose(PARROT_INTERP, NOTNULL(STRING *src))
         __attribute__nonnull__(2);
 
 static size_t compute_hash(PARROT_INTERP,
-    NOTNULL(const STRING *src),
+    ARGIN(const STRING *src),
     size_t seed)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -584,7 +584,7 @@ titlecase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
 /*
 
 =item C<static INTVAL
-compare(PARROT_INTERP, NOTNULL(const STRING *lhs), NOTNULL(const STRING *rhs))>
+compare(PARROT_INTERP, ARGIN(const STRING *lhs), ARGIN(const STRING *rhs))>
 
 RT#48260: Not yet documented!!!
 
@@ -593,7 +593,7 @@ RT#48260: Not yet documented!!!
 */
 
 static INTVAL
-compare(PARROT_INTERP, NOTNULL(const STRING *lhs), NOTNULL(const STRING *rhs))
+compare(PARROT_INTERP, ARGIN(const STRING *lhs), ARGIN(const STRING *rhs))
 {
     String_iter l_iter, r_iter;
     UINTVAL offs, cl, cr, min_len, l_len, r_len;
@@ -881,7 +881,7 @@ string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)
 /*
 
 =item C<static size_t
-compute_hash(PARROT_INTERP, NOTNULL(const STRING *src), size_t seed)>
+compute_hash(PARROT_INTERP, ARGIN(const STRING *src), size_t seed)>
 
 RT#48260: Not yet documented!!!
 
@@ -890,7 +890,7 @@ RT#48260: Not yet documented!!!
 */
 
 static size_t
-compute_hash(PARROT_INTERP, NOTNULL(const STRING *src), size_t seed)
+compute_hash(PARROT_INTERP, ARGIN(const STRING *src), size_t seed)
 {
     String_iter iter;
     size_t hashval = seed;

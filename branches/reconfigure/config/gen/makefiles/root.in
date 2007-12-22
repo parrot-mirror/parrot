@@ -621,7 +621,7 @@ PMC2CV = $(PERL) $(BUILD_TOOLS_DIR)/pmc2c.pl --vtable
 #src/pmc/pmc_%.h : src/pmc/%.c
 #	$(PMC2CC) $<
 
-vtable.dump : vtable.tbl
+vtable.dump : src/vtable.tbl
 	$(PMC2CV)
 
 # This is a listing of all targets, that are meant to be called by users
@@ -987,7 +987,7 @@ $(SRC_DIR)/exec$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
 
 $(SRC_DIR)/exec_cpu$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
 
-$(INC_DIR)/extend_vtable.h $(SRC_DIR)/extend_vtable.c $(SRC_DIR)/vtable.h : vtable.tbl $(BUILD_TOOLS_DIR)/vtable_extend.pl lib/Parrot/Vtable.pm
+$(INC_DIR)/extend_vtable.h $(SRC_DIR)/extend_vtable.c $(SRC_DIR)/vtable.h : src/vtable.tbl $(BUILD_TOOLS_DIR)/vtable_extend.pl lib/Parrot/Vtable.pm
 	$(PERL) $(BUILD_TOOLS_DIR)/vtable_extend.pl
 
 $(SRC_DIR)/exec_start$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@
@@ -1169,7 +1169,7 @@ $(OPS_DIR)/core_ops_switch.c : $(OPS_FILES) $(BUILD_TOOLS_DIR)/ops2c.pl lib/Parr
 # $(STICKY_FILES) : Configure.pl
 #	$(PERL) Configure.pl
 
-$(INC_DIR)/vtable.h : vtable.tbl $(BUILD_TOOLS_DIR)/vtable_h.pl lib/Parrot/Vtable.pm
+$(INC_DIR)/vtable.h : src/vtable.tbl $(BUILD_TOOLS_DIR)/vtable_h.pl lib/Parrot/Vtable.pm
 	$(PERL) $(BUILD_TOOLS_DIR)/vtable_h.pl
 
 $(SRC_DIR)/jit_emit.h : $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h
@@ -1788,16 +1788,20 @@ SPLINT_TMP = $(TMP)/splint
 
 # Splint flags: http://splint.org/manual/html/appB.html
 SPLINTFLAGS  = \
-    -standard \
-    -tmpdir $(SPLINT_TMP) \
-    -message-stream-stdout \
-    -declundef \
-    -show-summary \
-    -exportlocal \
-    +linelen 120 \
-    +showdeephistory \
-    -showfunc \
+    +checks \
     -hints \
+    \
+    +indentspaces 4 \
+    +locindentspaces 4 \
+    +linelen 120 \
+    -message-stream-stdout \
+    +showdeephistory \
+    -show-func \
+    -tmpdir $(SPLINT_TMP) \
+    \
+    -show-summary \
+    +show-scan \
+    +time-dist \
     \
     -abstract \
     +aliasunique \
@@ -1816,6 +1820,7 @@ SPLINTFLAGS  = \
     +declundef \
     -distinctinternalnames \
     +evalorder \
+    -exportlocal \
     -fcnuse \
     +fielduse \
     +forcehints \
@@ -1837,7 +1842,7 @@ SPLINTFLAGS  = \
     +nullderef \
     +nullret \
     +nullpass \
-    -nullstate \
+    +nullstate \
     -paramuse \
     +posixstrictlib \
     -predboolint \
@@ -1853,37 +1858,33 @@ SPLINTFLAGS  = \
     -shiftimplementation \
     -shiftnegative \
     +showscan \
-    +showsummary \
     -skipposixheaders \
     -type \
     \
-    \
-    \
-    -nullstate \
-    -usereleased \
-    -mustfreefresh \
-    -mustfreeonly \
-    -compdestroy \
     -branchstate \
+    -compdef \
+    -compdestroy \
     -compmempass \
     -globstate \
-    -compdef \
     -modobserver \
-    -retalias \
+    -mustfreefresh \
+    -mustfreeonly \
+    -nullstate \
     -redecl \
+    -retalias \
+    -usereleased \
     \
-    -readonlytrans \
-    -onlytrans \
-    -unqualifiedtrans \
-    -observertrans \
-    -kepttrans \
-    -statictrans \
     -immediatetrans \
+    -kepttrans \
+    -observertrans \
+    -onlytrans \
+    -readonlytrans \
+    -statictrans \
     -temptrans \
+    -unqualifiedtrans \
 
 # Other options we'd like to add back
 # +paramuse: As soon as we get SHIM()s in the ops
-# +nullstate, +nullpass: This is one of the great things about splint, so it's tops on my list
 # -includedepth 8 : Let's investigate why we do so many includes.
 # +initallelements : Right now, the *.ops files don't initialize all values of the arrays
 # +casebreak: Auto-generated ops have way too case fallthrus right now
@@ -1906,12 +1907,10 @@ splint-andy :
 	$(MKPATH) $(SPLINT_TMP)
 	splint $(CC_INC) @cc_hasjit@ "-Isrc/pmc" "-Icompilers/ast" $(SPLINTFLAGS) $(SPLINTFLAGS_TEST) \
     +fcnpost \
-    +showscan \
-    +stats \
-    -showsummary \
+    +showsourceloc \
     +partial \
-    src/nci.c \
-    src/inte*.c \
+    src/hash.c \
+    src/string.c \
 
 COVER_FLAGS = -fprofile-arcs -ftest-coverage
 COVER_DIRS = \
@@ -2093,7 +2092,7 @@ tags: tags.dummy
         -R --exclude=blib --exclude=.svn  \
         --exclude=res_lea.c \
         --languages=c,perl --langmap=c:+.h,c:+.pmc,c:+.ops \
-        -I NOTNULL,NULLOK \
+        -I NOTNULL,NULLOK,ARGIN,ARGOUT,ARGINOUT,ARGIN_NULLOK,ARGOUT_NULLOK,ARGINOUT_NULLOK \
         $(CUR_DIR)
 	$(PERL) $(BUILD_TOOLS_DIR)/addopstags.pl $(OPS_FILES)
 

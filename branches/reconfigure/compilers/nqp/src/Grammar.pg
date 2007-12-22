@@ -22,7 +22,7 @@ grammar NQP::Grammar is PCT::Grammar;
 
 token TOP {
   <statement_block>
-  [ $ | <panic: Syntax error> ]
+  [ $ || <panic: Syntax error> ]
   {*}
 }
 
@@ -143,7 +143,7 @@ token MARK_STATEMENT_END {
 ##  'unless'.
 
 rule if_statement {
-    $<sym>:=['if']
+    $<sym>=['if']
     <EXPR> <block>
     [ 'elsif' <EXPR> <block> ]*
     [ 'else' $<else>=<block> ]?
@@ -151,36 +151,36 @@ rule if_statement {
 }
 
 rule unless_statement {
-    $<sym>:=['unless']
+    $<sym>=['unless']
     <EXPR> <block>
     {*}
 }
 
 rule while_statement {
-    $<sym>:=['while'|'until'] <EXPR> <block>
+    $<sym>=['while'|'until'] <EXPR> <block>
     {*}
 }
 
 rule repeat_statement {
-    'repeat' <block> $<sym>:=['while'|'until'] <EXPR>
+    'repeat' <block> $<sym>=['while'|'until'] <EXPR>
     {*}
 }
 
 rule for_statement {
-    $<sym>:=['for'] <EXPR> <block>
+    $<sym>=['for'] <EXPR> <block>
     {*}
 }
 
 
 rule return_statement {
-    $<sym>:=['return']
-    [ <EXPR> | <panic: Unable to parse argument to 'return'> ]
+    $<sym>=['return']
+    [ <EXPR> || <panic: Unable to parse argument to 'return'> ]
     {*}
 }
 
 rule make_statement {
-    $<sym>:=['make']
-    [ <EXPR> | <panic: Unable to parse argument to 'make'> ]
+    $<sym>=['make']
+    [ <EXPR> || <panic: Unable to parse argument to 'make'> ]
     {*}
 }
 
@@ -190,7 +190,7 @@ rule inline_pir_statement {
     | 'q:to:' [ \' (<-['\n]>+) \' | \" (<-["\n]>+) \" | \< (<-[\>\n]>+) \> ]
       [:sigspace(0):ratchet(0)
         ';' \h*: \n
-        $<text>:=[ [\N*:\n]*? ]
+        $<text>=[ [\N*:\n]*? ]
         ^^ \h*: $0 \h*: \n
         <.MARK_STATEMENT_END>
       ] {*}                                    #= heredoc
@@ -205,7 +205,7 @@ rule inline_pir_statement {
 token block {
     '{'
     <statement_block>
-    [ '}' | <panic: Missing '}'> ]
+    [ '}' || <panic: Missing '}'> ]
     [ \h* [ \# \N* ]? \n  <.MARK_STATEMENT_END> ]?
     {*}
 }
@@ -214,7 +214,7 @@ token block {
 #### Subroutine and method definitions ####
 
 rule routine_def {
-    $<declarator>:=['sub'|'method']
+    $<declarator>=['sub'|'method']
     <ident>
     '(' <signature> ')'
     <block>
@@ -222,9 +222,17 @@ rule routine_def {
 }
 
 rule signature {
-    ( <param_var> ( ',' | <?before ')'> ) )*
-    ( <colonpair> ( ',' | <?before ')'> ) )*
+    ( <parameter> ( ',' | <?before ')'> ) )*
     {*}
+}
+
+token parameter {
+    | [
+        $<named>=[':'?]
+        <param_var>
+        $<quant>=[ <[ ? ! ]>? ]
+      ] {*}                                                #= non-slurp
+    | $<quant>=['*'?] <param_var> {*}                      #= slurp
 }
 
 token param_var {
@@ -254,7 +262,7 @@ token postfix {
 token methodop {
     '.' <ident>
     '(' <arglist>
-    [ <.ws> ')' | <panic: Missing ')'> ]
+    [ <.ws> ')' || <panic: Missing ')'> ]
     {*}                                                    #= methodop
 }
 
@@ -289,7 +297,7 @@ token colonpair {
 
 
 rule package_declarator {
-    $<sym>:=[module|class]
+    $<sym>=[module|class]
     <name>
     [
     || ';' <statement_block> {*}                           #= statement_block
@@ -299,7 +307,7 @@ rule package_declarator {
 
 
 rule scope_declarator {
-    $<declarator>:=[my|our]
+    $<declarator>=[my|our]
     <variable>
     {*}
 }

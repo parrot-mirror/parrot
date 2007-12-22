@@ -83,6 +83,9 @@ TEST
             ok( $rv, "Build tests are runnable" );
         }
     }
+    unlink $test or croak "Unable to delete $test";
+    @Parrot::Configure::Options::Test::preconfiguration_tests = ();
+    @Parrot::Configure::Options::Test::postconfiguration_tests = ();
 
     ok( ( chdir $cwd ), "Changed back to starting directory after testing" );
 }

@@ -262,15 +262,6 @@ SP              [ ]
         return '\n';
     }
 
-^".emit"\n {
-    BEGIN(emit);
-    return EMIT;
-    }
-
-<emit>^".eom"\n {
-    BEGIN(INITIAL);
-    return EOM;
-    }
 
 <*>[ISNP]{DIGIT}{DIGIT}? {
     valp->s = str_dup(yytext);
@@ -385,7 +376,7 @@ SP              [ ]
         return read_macro(valp, interp, yyscanner);
     }
 
-<emit>".constant" {
+<emit>".macro_const" {
     int c;
     int start_line;
 

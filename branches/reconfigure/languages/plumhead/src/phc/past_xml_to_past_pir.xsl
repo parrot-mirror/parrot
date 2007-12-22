@@ -10,7 +10,7 @@ $Id$
 
 This transformation takes an abstract syntax tree as generated 
 by phc_xml_to_past_xml.xsl. It generates a PIR-script that creates
-a PAST-pm data structure and runs it with the help of a HLLCompiler.
+a PAST data structure and runs it with the help of a PCT::HLLCompiler.
 
 -->
 <xsl:output method='text' />
@@ -59,12 +59,11 @@ a PAST-pm data structure and runs it with the help of a HLLCompiler.
     # pir = past_node_<xsl:value-of select="generate-id(.)" />.'compile'( 'target' => 'pir' )
     # print pir
                                                                   
-    .local pmc plumhead_compiler, eval_past
-    plumhead_compiler = new [ 'PCT::HLLCompiler' ]
-    plumhead_compiler.'removestage'('parse')
-    plumhead_compiler.'removestage'('past')
-    eval_past = plumhead_compiler.'compile'(past_node_<xsl:value-of select="generate-id(.)" />)
-    eval_past()
+    .local pmc past_compiler
+    past_compiler = new [ 'PCT::HLLCompiler' ]
+    $P0 = split ' ', 'post pir evalpmc'
+    past_compiler.'stages'( $P0 )
+    past_compiler.'eval'(past_node_<xsl:value-of select="generate-id(.)" />)
 
 .end                                                              
                                                                   

@@ -43,7 +43,7 @@ static opcode_t * do_event(PARROT_INTERP,
 
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
-static QUEUE_ENTRY* dup_entry(NOTNULL(const QUEUE_ENTRY *entry))
+static QUEUE_ENTRY* dup_entry(ARGIN(const QUEUE_ENTRY *entry))
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
@@ -59,7 +59,7 @@ static void* event_thread(NOTNULL(void *data))
         __attribute__nonnull__(1);
 
 static void event_to_exception(PARROT_INTERP,
-    NOTNULL(const parrot_event* event))
+    ARGIN(const parrot_event* event))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -1046,7 +1046,7 @@ Parrot_event_add_io_event(PARROT_INTERP,
 =item C<PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 static QUEUE_ENTRY*
-dup_entry(NOTNULL(const QUEUE_ENTRY *entry))>
+dup_entry(ARGIN(const QUEUE_ENTRY *entry))>
 
 Duplicate queue entry.
 
@@ -1057,7 +1057,7 @@ Duplicate queue entry.
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 static QUEUE_ENTRY*
-dup_entry(NOTNULL(const QUEUE_ENTRY *entry))
+dup_entry(ARGIN(const QUEUE_ENTRY *entry))
 {
     QUEUE_ENTRY * const new_entry = mem_allocate_typed(QUEUE_ENTRY);
 
@@ -1378,7 +1378,7 @@ Parrot_do_check_events(PARROT_INTERP, NULLOK(opcode_t *next))
 /*
 
 =item C<static void
-event_to_exception(PARROT_INTERP, NOTNULL(const parrot_event* event))>
+event_to_exception(PARROT_INTERP, ARGIN(const parrot_event* event))>
 
 Convert event to exception and throw it.
 
@@ -1387,7 +1387,7 @@ Convert event to exception and throw it.
 */
 
 static void
-event_to_exception(PARROT_INTERP, NOTNULL(const parrot_event* event))
+event_to_exception(PARROT_INTERP, ARGIN(const parrot_event* event))
 {
     const int exit_code = -event->u.signal;
 
@@ -1461,7 +1461,7 @@ do_event(PARROT_INTERP, NOTNULL(parrot_event* event), NULLOK(opcode_t *next))
             pt_suspend_self_for_gc(interp);
             break;
         default:
-            fprintf(stderr, "Unhandled event type %d\n", event->type);
+            fprintf(stderr, "Unhandled event type %d\n", (int)event->type);
             break;
     }
     mem_sys_free(event);

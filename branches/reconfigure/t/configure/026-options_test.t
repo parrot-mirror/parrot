@@ -8,7 +8,6 @@ use warnings;
 use Carp;
 use Cwd;
 use Data::Dumper;
-use File::Temp qw( tempdir );
 use Test::More tests => 13;
 use lib qw( lib );
 use IO::CaptureOutput qw| capture |;

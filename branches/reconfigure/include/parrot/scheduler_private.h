@@ -1,7 +1,7 @@
 /* scheduler.h
  *  Copyright (C) 2007, The Perl Foundation.
  *  SVN Info
- *     $Id: scheduler_private.h 23490 2007-12-05 12:06:10Z allison $
+ *     $Id$
  *  Overview:
  *     Parrot concurrency scheduler private core structs and flags
  *  Data Structure and Algorithms:
@@ -41,6 +41,7 @@ typedef struct Parrot_Task {
     int     priority;     /* The priority of the task. */
     int     birthtime;    /* A time stamp marking the creation of the task. */
     STRING *type;         /* The type of the task. */
+    STRING *subtype;      /* The subtype of the task. */
     STRING *status;       /* The status of the task. */
     PMC    *codeblock;    /* An (optional) codeblock for the task. */
     PMC    *interp;       /* An (optional) interpreter structure for the task. */

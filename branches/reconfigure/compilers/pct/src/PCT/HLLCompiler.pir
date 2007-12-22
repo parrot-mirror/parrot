@@ -11,13 +11,11 @@ running compilers from a command line.
 
 =cut
 
-.namespace
-
-.sub '__onload' :load :init
+.sub 'onload' :anon :load :init
     load_bytecode 'Protoobject.pbc'
     load_bytecode 'Parrot/Exception.pbc'
     $P0 = get_hll_global 'Protomaker'
-    $P1 = split ' ', '$parsegrammar $parseactions $astgrammar $ostgrammar @stages $commandline_banner $commandline_prompt'
+    $P1 = split ' ', '@stages $parsegrammar $parseactions $astgrammar $commandline_banner $commandline_prompt'
     $P2 = $P0.'new_subclass'('Protoobject', 'PCT::HLLCompiler', $P1 :flat)
 .end
 
@@ -37,7 +35,7 @@ by C<attrname> based on C<has_value>.
 .include 'cclass.pasm'
 
 .sub 'init' :vtable :method
-    $P0 = split ' ', 'parse past post pir run'
+    $P0 = split ' ', 'parse past post pir evalpmc'
     setattribute self, '@stages', $P0
 .end
 
@@ -57,6 +55,19 @@ by C<attrname> based on C<has_value>.
 .end
 
 
+=item panic(message :slurpy)
+
+Helper method to throw an exception (with a message).
+
+=cut
+
+.sub 'panic' :method
+    .param pmc args            :slurpy
+    $S0 = join '', args
+    die $S0
+.end
+
+
 =item language(string name)
 
 Register this object as the compiler for C<name> using the
@@ -70,6 +81,9 @@ C<compreg> opcode.
     .return ()
 .end
 
+=item stages([stages])
+
+Accessor for the C<stages> attribute.
 
 =item parsegrammar([string grammar])
 
@@ -83,11 +97,13 @@ Accessor for the C<parseactions> attribute.
 
 Accessor for the C<astgrammar> attribute.
 
-=item ostgrammar([string grammar])
-
-Accessor for the 'ostgrammar' attribute.
-
 =cut
+
+.sub 'stages' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('@stages', value, has_value)
+.end
 
 .sub 'parsegrammar' :method
     .param string value        :optional
@@ -95,24 +111,16 @@ Accessor for the 'ostgrammar' attribute.
     .return self.'attr'('$parsegrammar', value, has_value)
 .end
 
-
 .sub 'parseactions' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
     .return self.'attr'('$parseactions', value, has_value)
 .end
 
-
 .sub 'astgrammar' :method
     .param string value        :optional
     .param int has_value       :opt_flag
     .return self.'attr'('$astgrammar', value, has_value)
-.end
-
-.sub 'ostgrammar' :method
-    .param string value        :optional
-    .param int has_value       :opt_flag
-    .return self.'attr'('$ostgrammar', value, has_value)
 .end
 
 .sub 'commandline_banner' :method
@@ -274,38 +282,49 @@ to any options and return the resulting parse tree.
     unless parsegrammar_name goto err_no_parsegrammar
     top = get_hll_global parsegrammar_name, 'TOP'
     unless null top goto have_top
-    top = get_hll_global parsegrammar_name, 'apply'    # FIXME: deprecated
-    unless null top goto have_top                      # FIXME: deprecated
-    $P0 = get_class 'Exception'
-    $P1 = $P0.'new'('Cannot find rule TOP in ', parsegrammar_name)
-    throw $P1
+    self.'panic'('Cannot find TOP regex in ', parsegrammar_name)
   have_top:
-    .local pmc parseactions
-    null parseactions
-    if target == 'parse' goto have_parseactions
-    $P0 = self.'parseactions'()
-    unless $P0 goto have_parseactions
-    parseactions = new $P0
-  have_parseactions:
+    .local pmc parseactions, action
+    null action
+    if target == 'parse' goto have_action
+    parseactions = self.'parseactions'()
+    unless parseactions goto have_action
+    ##  if parseactions is a Class or array, make action directly from that
+    $I0 = isa parseactions, 'Class'
+    if $I0 goto action_make
+    $I0 = does parseactions, 'array'
+    if $I0 goto action_make
+    ##  if parseactions is not a String, use it directly.
+    $I0 = isa parseactions, 'String'
+    if $I0 goto action_string
+    action = parseactions
+    goto have_action
+  action_string:
+    ##  Try the string itself, if that fails try splitting on '::'
+    $P0 = get_class parseactions
+    unless null $P0 goto action_make
+    $S0 = parseactions
+    parseactions = split '::', $S0
+  action_make:
+    action = new parseactions
+  have_action:
     .local pmc match
-    match = top(source, 'grammar' => parsegrammar_name, 'action' => parseactions)
+    match = top(source, 'grammar' => parsegrammar_name, 'action' => action)
     unless match goto err_failedparse
     .return (match)
 
   err_no_parsegrammar:
-    $P0 = new 'Exception'
-    $P0['_message'] = 'Missing parsegrammar in compiler'
-    throw $P0
+    self.'panic'('Missing parsegrammar in compiler')
+    .return ()
   err_failedparse:
-    $P0 = new 'Exception'
-    $P0['_message'] = 'Failed to parse source'
-    throw $P0
+    self.'panic'('Failed to parse source')
+    .return ()
 .end
 
 
 =item past(source [, "option" => value, ...])
 
-Transform C<source> into an AST using the compiler's
+Transform C<source> into PAST using the compiler's
 C<astgrammar> according to any options, and return the
 resulting ast.
 
@@ -314,28 +333,64 @@ resulting ast.
 .sub 'past' :method
     .param pmc source
     .param pmc adverbs         :slurpy :named
-    .local pmc ast
-    ast = source
-    $I0 = isa ast, 'PAST::Node'
-    if $I0 goto return_ast
-    ast = source.'get_scalar'()
-    $I0 = isa ast, 'PAST::Node'
-    if $I0 goto return_ast
+
+  compile_astgrammar:
     .local string astgrammar_name
-    .local pmc astgrammar, astbuilder
     astgrammar_name = self.'astgrammar'()
-    unless astgrammar_name goto err_no_astgrammar
+    unless astgrammar_name goto compile_match
+    .local pmc astgrammar, astbuilder
     astgrammar = new astgrammar_name
     astbuilder = astgrammar.'apply'(source)
     .return astbuilder.'get'('past')
-  return_ast:
+
+  compile_match:
+    push_eh err_past
+    .local pmc ast
+    ast = source.'get_scalar'()
+    pop_eh
+    $I0 = isa ast, 'PAST::Node'
+    unless $I0 goto err_past
     .return (ast)
 
-  err_no_astgrammar:
-    $P0 = new 'Exception'
-    $P0['_message'] = 'Missing astgrammar in compiler'
-    throw $P0
+  err_past:
+    $S0 = typeof source
+    .return self.'panic'('Unable to obtain PAST from ', $S0)
 .end
+
+
+=item post(source [, adverbs :slurpy :named])
+
+Transform PAST C<source> into POST.
+
+=cut
+
+.sub 'post' :method
+    .param pmc source
+    .param pmc adverbs         :slurpy :named
+    $P0 = compreg 'PAST'
+    .return $P0.'to_post'(source, adverbs :flat :named)
+.end
+
+
+.sub 'pir' :method
+    .param pmc source
+    .param pmc adverbs         :slurpy :named
+
+    $P0 = compreg 'POST'
+    $P1 = $P0.'to_pir'(source, adverbs :flat :named)
+    .return ($P1)
+.end
+
+
+.sub 'evalpmc' :method
+    .param pmc source
+    .param pmc adverbs         :slurpy :named
+
+    $P0 = compreg 'PIR'
+    $P1 = $P0(source)
+    .return ($P1)
+.end
+
 
 
 =item eval(code [, "option" => value, ...])
@@ -427,6 +482,7 @@ specifies the encoding to use for the input (e.g., "utf8").
     '_dumper'($P0, target)
     goto interactive_loop
   target_pir:
+    say $P0
     goto interactive_loop
   interactive_trap:
     get_results '0,0', $P0, $S0
@@ -498,13 +554,7 @@ options are passed to the evaluator.
     .return ($P0)
 
   err_infile:
-    $P0 = new 'Exception'
-    $S0 = 'Error: file cannot be read: '
-    $S0 .= iname
-    $S0 .= "\n"
-    $P0['_message'] = $S0
-    throw $P0
-    .return ()
+    .return self.'panic'('Error: file cannot be read: ', iname)
 .end
 
 
@@ -584,13 +634,7 @@ Generic method for compilers invoked from a shell command line.
     .return ()
 
   err_output:
-    $P0 = new 'Exception'
-    $S0 = 'Error: file cannot be written: '
-    $S0 .= output
-    $S0 .= "\n"
-    $P0['_message'] = $S0
-    throw $P0
-    .return ()
+    .return self.'panic'('Error: file cannot be written: ', output)
 .end
 
 
@@ -607,50 +651,6 @@ based on double-colon separators.
     $P0 = split '::', name
     .return ($P0)
 .end
-
-=item post(source [, adverbs :slurpy :named])
-
-Transform C<source> using the compiler's C<ostgrammar>
-according to any options given by C<adverbs>, and return the
-resulting ost.
-
-=cut
-
-.sub 'post' :method
-    .param pmc source
-    .param pmc adverbs         :slurpy :named
-    .local string ostgrammar_name
-    .local pmc ostgrammar, ostbuilder
-    ostgrammar_name = self.'ostgrammar'()
-    unless ostgrammar_name goto default_ostgrammar
-    ostgrammar = new ostgrammar_name
-    ostbuilder = ostgrammar.'apply'(source)
-    .return ostbuilder.'get'('post')
-
-  default_ostgrammar:
-    $P0 = compreg 'PAST'
-    .return $P0.'compile'(source, adverbs :flat :named)
-.end
-
-
-.sub 'pir' :method
-    .param pmc source
-    .param pmc adverbs         :slurpy :named
-
-    $P0 = compreg 'POST'
-    $P1 = $P0.'compile'(source, adverbs :flat :named)
-    .return ($P1)
-.end
-
-.sub 'run' :method
-    .param pmc source
-    .param pmc adverbs         :slurpy :named
-
-    $P0 = compreg 'PIR'
-    $P1 = $P0(source)
-    .return ($P1)
-.end
-
 
 =back
 

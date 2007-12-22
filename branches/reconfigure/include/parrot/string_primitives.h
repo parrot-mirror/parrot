@@ -22,14 +22,14 @@ PARROT_CONST_FUNCTION
 UINTVAL Parrot_char_digit_value(SHIM_INTERP, UINTVAL character);
 
 PARROT_API
-void string_set_data_directory(PARROT_INTERP, NOTNULL(const char *dir))
+void string_set_data_directory(PARROT_INTERP, ARGIN(const char *dir))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 Parrot_UInt4 string_unescape_one(PARROT_INTERP,
-    NOTNULL(UINTVAL *offset),
-    NOTNULL(STRING *string))
+    ARGINOUT(UINTVAL *offset),
+    ARGINOUT(STRING *string))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);

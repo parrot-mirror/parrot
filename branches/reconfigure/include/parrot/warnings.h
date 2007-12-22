@@ -58,7 +58,7 @@ typedef enum {
 PARROT_API
 INTVAL Parrot_warn(PARROT_INTERP,
     INTVAL warnclass,
-    NOTNULL(const char *message),
+    ARGIN(const char *message),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
@@ -67,7 +67,7 @@ PARROT_API
 INTVAL Parrot_warn_s(
     NULLOK_INTERP,
     INTVAL warnclass,
-    NOTNULL(STRING *message),
+    ARGIN(STRING *message),
     ...)
         __attribute__nonnull__(3);
 

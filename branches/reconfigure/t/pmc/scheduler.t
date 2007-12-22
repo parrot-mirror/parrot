@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 2;
+use Parrot::Test tests => 3;
 
 =head1 NAME
 
@@ -22,7 +22,12 @@ Tests the concurrency scheduler PMC.
 
 =cut
 
-pir_output_is( <<'CODE', <<'OUT', "create a concurrency scheduler and set attributes" );
+my @TODO = ();
+if ($^O =~ /Win32/) {
+    @TODO = ( todo => 'Not working on Win32 yet.' );
+}
+
+pir_output_is( <<'CODE', <<'OUT', "create a concurrency scheduler and set attributes", @TODO );
   .sub main :main
     $P0 = new "Scheduler"
     $P1 = new "Task"
@@ -51,7 +56,7 @@ created
 1
 OUT
 
-pir_output_is( <<'CODE', <<'OUT', "create a concurrency scheduler with initializer" );
+pir_output_is( <<'CODE', <<'OUT', "create a concurrency scheduler with initializer", @TODO );
   .sub main :main
     .local pmc data
     data       = new 'Hash'
@@ -94,6 +99,36 @@ CODE
 created
 1
 Caught exception on bad initializer
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', "add event handler and corresponding event to scheduler" );
+.sub main :main
+    .local pmc handler, handler_init, handler_sub
+    .local pmc event, event_init
+    handler_init = new 'Hash'
+    handler_init['type'] = 'myevent'
+    handler_sub = get_global 'my_event_handler'
+    handler_init['code'] = handler_sub
+    handler = new 'EventHandler', handler_init
+
+    addhandler handler
+
+    event_init = new 'Hash'
+    event_init['type'] = 'event'
+    event_init['subtype'] = 'myevent'
+    event = new 'Task', event_init
+
+    schedule event
+
+.end
+
+.sub my_event_handler
+    .param pmc handler
+    .param pmc handledtask
+    print "called event handler\n"
+.end
+CODE
+called event handler
 OUT
 
 # Local Variables:

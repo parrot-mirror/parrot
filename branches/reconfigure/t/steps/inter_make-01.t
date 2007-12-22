@@ -5,10 +5,11 @@
 
 use strict;
 use warnings;
-use Test::More tests => 10;
+use Test::More qw(no_plan); # tests => 10;
 use Carp;
 use lib qw( lib t/configure/testlib t/steps/testlib );
-use_ok('config::inter::make');
+#use_ok('config::inter::make');
+use config::inter::make;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Tie::Filehandle::Preempt::Stdin;
