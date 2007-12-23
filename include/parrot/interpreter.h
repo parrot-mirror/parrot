@@ -104,8 +104,8 @@ struct parrot_interp_t;
  * gets its own macro.
  */
 
-#define PARROT_INTERP /*@notnull@*/ Parrot_Interp interp
-#define NULLOK_INTERP /*@null@*/    Parrot_Interp interp
+#define PARROT_INTERP /*@notnull@*/ /*@in@*/ /*@out@*/ Parrot_Interp interp
+#define NULLOK_INTERP /*@null@*/    /*@in@*/ /*@out@*/ Parrot_Interp interp
 #define SHIM_INTERP   /*@unused@*/ /*@null@*/ Parrot_Interp interp_unused __attribute__unused__
 
 
@@ -489,7 +489,7 @@ typedef PMC *(*Parrot_compiler_func_t)(Parrot_Interp interp,
 
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
-Parrot_Interp make_interpreter(NULLOK(Interp *parent), INTVAL flags);
+Parrot_Interp make_interpreter(ARGIN_NULLOK(Interp *parent), INTVAL flags);
 
 PARROT_API
 void Parrot_destroy(PARROT_INTERP)

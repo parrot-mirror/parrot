@@ -65,14 +65,14 @@ INTVAL Parrot_int_rand(INTVAL how_random);
 PARROT_API
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
-void * Parrot_make_cpa(PARROT_INTERP, NOTNULL(PMC *array))
+void * Parrot_make_cpa(PARROT_INTERP, ARGIN(PMC *array))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-void * Parrot_make_la(PARROT_INTERP, NOTNULL(PMC *array))
+void * Parrot_make_la(PARROT_INTERP, ARGIN(PMC *array))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -87,7 +87,7 @@ void Parrot_register_move(PARROT_INTERP,
     unsigned char temp_reg,
     reg_move_func mov,
     reg_move_func mov_alt,
-    NOTNULL(void *info))
+    ARGIN(void *info))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
@@ -237,8 +237,8 @@ STRING * Parrot_vsprintf_s(PARROT_INTERP, ARGIN(STRING *pat), va_list args)
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING * Parrot_sprintf_format(PARROT_INTERP,
-    NOTNULL(STRING *pat),
-    NOTNULL(SPRINTF_OBJ *obj))
+    ARGIN(STRING *pat),
+    ARGIN(SPRINTF_OBJ *obj))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);

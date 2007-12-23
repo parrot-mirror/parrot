@@ -6,27 +6,6 @@ use strict;
 use warnings;
 use Carp qw( confess );
 
-# While I work on files individually to make sure headerizing and
-# rewriting doesn't stomp on them.
-my @experimental_files = qw(
-    builtin.c
-    byteorder.c
-    charset.c
-    datatypes.c
-    exceptions.c
-    gc/resources.c
-    hash.c
-    hll.c
-    objects.c
-    stacks.c
-    string.c
-    string_primitives.c
-    sub.c
-    tsq.c
-    utils.c
-);
-my %experimental_files = map { ("src/$_", 1) } @experimental_files;
-
 =head1 NAME
 
 tools/build/headerizer.pl - Generates the function header parts of .h
@@ -444,7 +423,7 @@ sub main {
         }
 
         my @decls;
-        if ( -f $pmcfile || !$experimental_files{$cfile} ) {
+        if ( -f $pmcfile ) {
             @decls = extract_function_declarations( $csource );
         }
         else {

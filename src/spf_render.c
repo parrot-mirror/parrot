@@ -57,28 +57,28 @@ enum {
 /* HEADERIZER BEGIN: static */
 
 static void gen_sprintf_call(
-    NOTNULL(char *out),
-    NOTNULL(SpfInfo *info),
+    ARGOUT(char *out),
+    ARGINOUT(SpfInfo *info),
     int thingy)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_CANNOT_RETURN_NULL
 static STRING * handle_flags(PARROT_INTERP,
-    NOTNULL(SpfInfo *info),
-    NOTNULL(STRING *str),
+    ARGIN(const SpfInfo *info),
+    ARGINOUT(STRING *str),
     INTVAL is_int_type,
-    NULLOK(STRING* prefix))
+    ARGIN_NULLOK(STRING* prefix))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
 PARROT_CANNOT_RETURN_NULL
 static STRING* str_append_w_flags(PARROT_INTERP,
-    NOTNULL(STRING* dest),
-    NOTNULL(SpfInfo *info),
-    NOTNULL(STRING* src),
-    NULLOK(STRING *prefix))
+    ARGOUT(STRING* dest),
+    ARGIN(const SpfInfo *info),
+    ARGIN(STRING* src),
+    ARGIN_NULLOK(STRING *prefix))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -96,10 +96,7 @@ static STRING* str_append_w_flags(PARROT_INTERP,
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-static STRING *
-handle_flags(PARROT_INTERP, NOTNULL(SpfInfo *info), NOTNULL(STRING *str),
-        INTVAL is_int_type, NULLOK(STRING* prefix))>
+=item C<static STRING * handle_flags>
 
 Handles C<+>, C<->, C<0>, C<#>, space, width, and prec.
 
@@ -109,8 +106,8 @@ Handles C<+>, C<->, C<0>, C<#>, space, width, and prec.
 
 PARROT_CANNOT_RETURN_NULL
 static STRING *
-handle_flags(PARROT_INTERP, NOTNULL(SpfInfo *info), NOTNULL(STRING *str),
-        INTVAL is_int_type, NULLOK(STRING* prefix))
+handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGINOUT(STRING *str),
+        INTVAL is_int_type, ARGIN_NULLOK(STRING* prefix))
 {
     UINTVAL len = string_length(interp, str);
 
@@ -125,12 +122,12 @@ handle_flags(PARROT_INTERP, NOTNULL(SpfInfo *info), NOTNULL(STRING *str),
         if (!len || string_ord(interp, str, 0) != '-') {
             if (info->flags & FLAG_PLUS) {
                 STRING * const cs = CONST_STRING(interp, "+");
-                str = string_concat(interp, cs , str, 0);
+                str = string_concat(interp, cs, str, 0);
                 len++;
             }
             else if (info->flags & FLAG_SPACE) {
                 STRING * const cs = CONST_STRING(interp, " ");
-                str = string_concat(interp, cs , str, 0);
+                str = string_concat(interp, cs, str, 0);
                 len++;
             }
         }
@@ -202,10 +199,7 @@ handle_flags(PARROT_INTERP, NOTNULL(SpfInfo *info), NOTNULL(STRING *str),
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-static STRING*
-str_append_w_flags(PARROT_INTERP, NOTNULL(STRING* dest), NOTNULL(SpfInfo *info),
-        NOTNULL(STRING* src), NULLOK(STRING *prefix))>
+=item C<static STRING* str_append_w_flags>
 
 RT#48260: Not yet documented!!!
 
@@ -215,8 +209,8 @@ RT#48260: Not yet documented!!!
 
 PARROT_CANNOT_RETURN_NULL
 static STRING*
-str_append_w_flags(PARROT_INTERP, NOTNULL(STRING* dest), NOTNULL(SpfInfo *info),
-        NOTNULL(STRING* src), NULLOK(STRING *prefix))
+str_append_w_flags(PARROT_INTERP, ARGOUT(STRING* dest), ARGIN(const SpfInfo *info),
+        ARGIN(STRING* src), ARGIN_NULLOK(STRING *prefix))
 {
     src = handle_flags(interp, info, src, 1, prefix);
     dest = string_append(interp, dest, src);
@@ -225,8 +219,7 @@ str_append_w_flags(PARROT_INTERP, NOTNULL(STRING* dest), NOTNULL(SpfInfo *info),
 
 /*
 
-=item C<static void
-gen_sprintf_call(NOTNULL(char *out), NOTNULL(SpfInfo *info), int thingy)>
+=item C<static void gen_sprintf_call>
 
 Turn the info structure back into an sprintf format. Far from being
 pointless, this is used to call C<snprintf()> when we're confronted with
@@ -237,7 +230,7 @@ a float.
 */
 
 static void
-gen_sprintf_call(NOTNULL(char *out), NOTNULL(SpfInfo *info), int thingy)
+gen_sprintf_call(ARGOUT(char *out), ARGINOUT(SpfInfo *info), int thingy)
 {
     int i = 0;
 
@@ -288,11 +281,7 @@ gen_sprintf_call(NOTNULL(char *out), NOTNULL(SpfInfo *info), int thingy)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-STRING *
-Parrot_sprintf_format(PARROT_INTERP,
-        NOTNULL(STRING *pat), NOTNULL(SPRINTF_OBJ *obj))>
+=item C<STRING * Parrot_sprintf_format>
 
 This is the engine that does all the formatting.
 
@@ -304,7 +293,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
 Parrot_sprintf_format(PARROT_INTERP,
-        NOTNULL(STRING *pat), NOTNULL(SPRINTF_OBJ *obj))
+        ARGIN(STRING *pat), ARGIN(SPRINTF_OBJ *obj))
 {
     INTVAL i, len, old;
     /*
@@ -577,8 +566,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             {
                             STRING * const ts = string_chr(interp,
                                  (UINTVAL)obj->getint(interp, info.type, obj));
-                            targ = str_append_w_flags(interp, targ,
-                                    &info, ts, NULL);
+                            targ = str_append_w_flags(interp, targ, &info, ts, NULL);
                             }
                             break;
 
@@ -589,8 +577,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             STRING * const prefix = CONST_STRING(interp, "0");
                             /* unsigned conversion - no plus */
                             info.flags &= ~FLAG_PLUS;
-                            targ = str_append_w_flags(interp, targ,
-                                    &info, ts, prefix);
+                            targ = str_append_w_flags(interp, targ, &info, ts, prefix);
                             }
                             break;
 
@@ -601,8 +588,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             STRING * const prefix = CONST_STRING(interp, "0x");
                             /* unsigned conversion - no plus */
                             info.flags &= ~FLAG_PLUS;
-                            targ = str_append_w_flags(interp, targ,
-                                    &info, ts, prefix);
+                            targ = str_append_w_flags(interp, targ, &info, ts, prefix);
                             }
                             break;
 
@@ -615,8 +601,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             string_upcase_inplace(interp, ts);
                             /* unsigned conversion - no plus */
                             info.flags &= ~FLAG_PLUS;
-                            targ = str_append_w_flags(interp, targ,
-                                    &info, ts, prefix);
+                            targ = str_append_w_flags(interp, targ, &info, ts, prefix);
                             }
                             break;
 
@@ -628,8 +613,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             STRING * const ts = uint_to_str(interp, tc, theuint, 2, 0);
                             /* unsigned conversion - no plus */
                             info.flags &= ~FLAG_PLUS;
-                            targ = str_append_w_flags(interp, targ,
-                                    &info, ts, prefix);
+                            targ = str_append_w_flags(interp, targ, &info, ts, prefix);
                             }
                             break;
 
@@ -640,8 +624,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             STRING * const ts = int_to_str(interp, tc, theint, 2);
                             /* unsigned conversion - no plus */
                             info.flags &= ~FLAG_PLUS;
-                            targ = str_append_w_flags(interp, targ,
-                                    &info, ts, prefix);
+                            targ = str_append_w_flags(interp, targ, &info, ts, prefix);
                             }
                             break;
 
@@ -689,8 +672,7 @@ do_sprintf:
                             STRING * const ts = uint_to_str(interp, tc,
                                        (HUGEINTVAL) (size_t) ptr, 16, 0);
 
-                            targ = str_append_w_flags(interp, targ,
-                                    &info, ts, prefix);
+                            targ = str_append_w_flags(interp, targ, &info, ts, prefix);
                             }
                             break;
 
@@ -780,11 +762,9 @@ do_sprintf:
                                 obj->index++;
                                 string = (VTABLE_get_repr(interp, tmp));
 
-                                ts = handle_flags(interp, &info, string,
-                                    0, NULL);
+                                ts = handle_flags(interp, &info, string, 0, NULL);
 
                                 targ = string_append(interp, targ, ts);
-
                                 break;
                             }
 
@@ -792,10 +772,7 @@ do_sprintf:
                           CASE_s:
                             {
                             STRING * const string = obj->getstring(interp, info.type, obj);
-
-                            STRING * const ts = handle_flags(interp, &info, string,
-                                    0, NULL);
-
+                            STRING * const ts = handle_flags(interp, &info, string, 0, NULL);
                             targ = string_append(interp, targ, ts);
                             }
                             break;
