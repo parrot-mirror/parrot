@@ -29,7 +29,7 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethodcc - unknown method" );
     print "should never reach here\n"
     end
 CODE
-/Method 'nada' not found/
+/Method 'nada' not found for invocant of class 'Foo'/
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethod (STR) - unknown method" );
@@ -39,7 +39,7 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethod (STR) - unknown method
     print "should never reach here\n"
     end
 CODE
-/Method 'nada' not found/
+/Method 'nada' not found for invocant of class 'Foo'/
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethodcc - unknown method" );
@@ -49,7 +49,7 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethodcc - unknown method" );
     print "should never reach here\n"
     end
 CODE
-/Method 'nada' not found/
+/Method 'nada' not found for invocant of class 'Foo'/
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethodcc (STR) - unknown method" );
@@ -59,7 +59,7 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "callmethodcc (STR) - unknown meth
     print "should never reach here\n"
     end
 CODE
-/Method 'nada' not found/
+/Method 'nada' not found for invocant of class 'Foo'/
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "callmethod 1" );
@@ -185,7 +185,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "constructor - parents" );
 .pcc_sub __init:
     get_params "0", P2
     print "foo_init\n"
-    classname S0, P2
+    typeof S0, P2
     print S0
     print "\n"
     returncc
@@ -202,7 +202,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "constructor - parents" );
     print "baz_init\n"
     returncc
 
-    .namespace	# main again
+    .namespace  # main again
 .pcc_sub _sub:
     print "in sub\n"
     returncc
@@ -355,9 +355,9 @@ pir_output_is( <<'CODE', <<'OUTPUT', "methods: self w arg and ret" );
     self."blah"()
     B."blah"()
     self."blah"()
-    .pcc_begin_return
+    .begin_return
     .return B
-    .pcc_end_return
+    .end_return
 
 .end
 
@@ -440,7 +440,7 @@ pasm_error_output_like( <<'CODE', <<'OUTPUT', "find_method - unknown method" );
     print "nope\n"
     end
 CODE
-/Method 'nada' not found/
+/Method 'nada' not found for invocant of class 'Foo'/
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "constructor - diamond parents" );
@@ -613,16 +613,16 @@ pir_output_is( <<'CODE', <<'OUTPUT', "same method name in two namespaces" );
 .sub foo :method
     .param int i
 
-    .pcc_begin_return
-    .pcc_end_return
+    .begin_return
+    .end_return
 .end
 
 .namespace ["B"]
 .sub foo :method
     .param int i
 
-    .pcc_begin_return
-    .pcc_end_return
+    .begin_return
+    .end_return
 .end
 
 .namespace

@@ -7,7 +7,6 @@ use strict;
 use warnings;
 use Test::More tests => 6;
 use Carp;
-use Data::Dumper;
 use lib qw( lib );
 use_ok('config::init::defaults');
 use Parrot::Configure;
@@ -35,7 +34,6 @@ $conf->options->set( %{$args} );
 
 my $task        = $conf->steps->[0];
 my $step_name   = $task->step;
-my @step_params = @{ $task->params };
 
 my $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );

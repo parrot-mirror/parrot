@@ -40,7 +40,7 @@ or
 
 =item Per Language Harness
 
-For well behaved languages you can do something like:
+For almost all languages you can do something like:
 
     cd languages/tcl && make test
 
@@ -53,7 +53,7 @@ For well behaved languages you can do something like:
 =head1 TODO
 
 It should be possible to use non-Perl5 test files,
-like for languages/perl6 or languages/pheme.
+like for languages/perl6, languages/pheme or languages/eclectus.
 
 =cut
 
@@ -92,8 +92,8 @@ my @unified_testable_languages
               APL
               befunge
               bf
-              cardinal
               dotnet
+              eclectus
               HQ9plus
               jako
               lazy-k

@@ -3,9 +3,9 @@
 .sub _init :load
     # print "loaded STM runtime library\n"
     # Create globals
-    $P0 = new ResizablePMCArray
+    $P0 = new 'ResizablePMCArray'
     store_global 'STM', 'ends', $P0
-    $P0 = new ResizableIntegerArray
+    $P0 = new 'ResizableIntegerArray'
     store_global 'STM', 'statuses', $P0
 .end
 
@@ -15,7 +15,7 @@
 .const int STATUS_COMMIT_MERGE= 3
 .const int STATUS_EXTRACT = 4
 .const int STATUS_ABORT = 5
-.const int STATUS_NONE_SUCH = 0xf 
+.const int STATUS_NONE_SUCH = 0xf
 
 .const int STATUS_MASK = 0xf
 
@@ -33,28 +33,28 @@
     .param pmc args :slurpy
     .lex 'closure', closure
     .lex 'args', args
-    
+
     .local pmc the_result
 
 restart_tx:
     .local pmc statuses
     statuses = global 'statuses'
     tx_flags = bor tx_flags, STATUS_COMMIT
-    push statuses, tx_flags 
+    push statuses, tx_flags
 
     #print "ENTER TX\n"
 
-    the_result = new Undef
-    
+    the_result = new 'Undef'
+
     .local pmc _thelper
     _thelper = global '_transaction_helper'
 
     $P0 = newclosure _thelper
     stm_start
-    .pcc_begin
-    .pcc_call $P0
+    .begin_call
+    .call $P0
     .result the_result :slurpy
-    .pcc_end
+    .end_call
 done_tx:
     #stm_depth $I0
     #print "at depth "
@@ -80,12 +80,12 @@ do_redo:
     goto restart_tx
 do_extract:
     #print "EXTRACT\n"
-    $P0 = new STMLog
+    $P0 = new 'STMLog'
     stm_abort
     .return (STATUS_EXTRACT, $P0, the_result)
 do_commit:
     #print "COMMIT\n"
-    stm_commit restart_tx 
+    stm_commit restart_tx
     stm_validate kill_outer
     goto do_return
 do_retry:
@@ -111,7 +111,7 @@ do_return:
     #print "at depth "
     #print $I0
     #print "\n"
-    $P0 = new Undef
+    $P0 = new 'Undef'
     .return (status, $P0, the_result)
 .end
 
@@ -132,7 +132,7 @@ do_return:
 .sub _end_tx
     .local pmc ends
     ends = global 'ends'
-    .local pmc end 
+    .local pmc end
     end = ends[-1]
     $P0 = end() # workaround?
     .return (42)
@@ -141,7 +141,7 @@ do_return:
 .sub _cur_status
     .local pmc statuses
     statuses = global 'statuses'
-    $I0 = statuses 
+    $I0 = statuses
     if $I0 == 0 goto none_such
     $I0 = $I0 - 1
     $I0 = statuses[$I0]
@@ -177,8 +177,8 @@ inner_choice_part:
     .local pmc this_end
     .local int i
     statuses = global 'statuses'
-    
-    i = statuses 
+
+    i = statuses
     dec i
 loop:
     status = statuses[i]
@@ -195,25 +195,25 @@ choice_part:
     _end_tx()
 .end
 
-.sub choice 
+.sub choice
     .param pmc choices :slurpy
-    
+
     .const .Sub _choice_internal = "_choice_internal"
 
-    .local pmc result 
+    .local pmc result
     result = transaction(_choice_internal, choices)
     .return (result)
 .end
 
-.sub _choice_internal 
+.sub _choice_internal
     .param pmc choices
     .local pmc save
     .local pmc save_one
     .local pmc the_result
-    .local int status 
+    .local int status
     .local int i
 
-    save = new FixedPMCArray
+    save = new 'FixedPMCArray'
     $I0 = choices
     save = $I0
     i = 0
@@ -227,7 +227,7 @@ loop:
     inc i
     branch loop
 done:
-    
+
     i = 0
 replay_loop:
     if $I0 <= i goto done_replay
@@ -262,7 +262,7 @@ is_invalid:
     _end_tx()
 .end
 
-.sub give_up 
+.sub give_up
     # print "STM::give_up()\n"
     _set_status(STATUS_ABORT)
 .end

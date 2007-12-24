@@ -39,7 +39,7 @@ my $fp_equality_macro = <<'ENDOFMACRO';
     restore    N1
     restore    N0
     branch    .L
-.local $FPEQNOK:
+.label $FPEQNOK:
     restore N2
     restore    N1
     restore    N0
@@ -59,7 +59,7 @@ my $fp_equality_macro = <<'ENDOFMACRO';
     restore    N1
     restore    N0
     branch    .L
-.local $FPNENOK:
+.label $FPNENOK:
     restore    N2
     restore    N1
     restore    N0
@@ -476,7 +476,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', "shift float" );
     print ' '
     $I0 = elements ar
     print $I0
-    print_newline
+    print "\n"
 .end
 CODE
 2 10.100000 1 20.200000 0
@@ -496,7 +496,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', "unshift float" );
     print ' '
     $N0 = ar[1]
     print $N0
-    print_newline
+    print "\n"
 .end
 CODE
 2 20.200000 10.100000

@@ -186,8 +186,9 @@ Intersegment branch to location in fixup table named $1.
 
 inline op branch_cs(in STR) :base_loop,check_event {
     char * const         label = string_to_cstring(interp, $1);
-    PackFile_FixupEntry *fe    = PackFile_find_fixup_entry(interp,
-            enum_fixup_label, label);
+    PackFile_FixupEntry * const fe =
+        PackFile_find_fixup_entry(interp, enum_fixup_label, label);
+
     if (!fe) {
         string_cstring_free(label);
         real_exception(interp, NULL, 1, "branch_cs: fixup for '%Ss' not found",
@@ -269,7 +270,7 @@ Internal opcode used to jump from normal bytecode into a JITted version.
 =cut
 
 op enternative() {
-    opcode_t *addr = run_native(interp, CUR_OPCODE,
+    opcode_t * const addr = run_native(interp, CUR_OPCODE,
             interp->code->base.data);
     goto ADDRESS(addr);
 }
@@ -677,6 +678,36 @@ inline op get_addr(out INT, invar PMC) {
 
 ########################################
 
+=head2 Concurrency operations
+
+=over 4
+
+=item B<schedule>(invar PMC)
+
+Register a task with the concurrency scheduler. Details about the task are
+stored within the task PMC.
+
+inline op schedule(invar PMC) {
+    Parrot_cx_schedule_task(interp, $1);
+    goto NEXT();
+}
+
+=item B<addhandler>(invar PMC)
+
+Add an event or exception handler to the concurrency scheduler. Details about
+the handler are stored within the handler PMC.
+
+inline op addhandler(invar PMC) {
+    Parrot_cx_add_handler(interp, $1);
+    goto NEXT();
+}
+
+=back
+
+=cut
+
+########################################
+
 =head2 Exception handling
 
 =over 4
@@ -714,6 +745,11 @@ of the stack, with '0' being the top.
 =item B<get_all_eh>(out PMC)
 
 Return an array of all current exception handlers.
+
+=item B<die>(in STR)
+=item B<die>(in PMC)
+
+Die with message $1
 
 =item B<die>(in INT, in INT)
 
@@ -797,6 +833,14 @@ inline op get_all_eh(out PMC) {
     goto NEXT();
 }
 
+
+inline op die(in STR) {
+    do_str_exception(interp, $1);
+}
+
+inline op die(in PMC) {
+    do_pmc_exception(interp, $1);
+}
 
 inline op die(in INT, in INT) {
     if ($1 == EXCEPT_doomed)

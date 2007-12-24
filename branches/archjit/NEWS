@@ -1,14 +1,49 @@
 # $Id$
 
-New through r22830
+New in 0.5.1
+- Documentation
+  + PDD19 (PIR) - reflect state on the ground; incorporate old IMCC docs
+  + PDD25 (Concurrency) - launch out of draft
+  + Improve documentation of deprecated parrot features.
+- Compilers
+  + PCT: Parrot Compiler Toolkit redesigned and updated
+  + NQP: major updates, including support for namespaces,
+    module/class declarations, methods
+  + IMCC: remove .sym as alias for .local. Remove .pcc_
+    prefix for calling directives (.pcc_begin became .begin_call).
+  + PIRC: creates an AST during the parse.
+  + PGE: more updates to match S05 syntax.
+- Languages
+  + perl6: re-implemented using PCT and NQP, new object subsystem
+  + abc: re-implemented using PCT and NQP
+  + eclectus: initial implementation
+  + plumhead: add PCT variant
+  + punie: re-implemented using PCT and NQP, extended to handle subroutines
+    Happy 20th Birthday, Perl!
+  + pynie: re-implemented using PCT and NQP
+  + PIR: start conversion to NQP (under construction)
 - Implementation
-  + PDD15 (OO) branch merged with trunk
+  + new opcodes: 'die', 'addhandler', 'copy'
+  + Initial implementation of Concurrency PDD
+  + Add 'arity' method to Sub and NCI PMCs
+- Miscellaneous
+  + Bug cleanup
+  + consting, attribute marking, warnings cleanup, memory leaks, GC...
+  + dead code removal (includes some defunct languages)
+
+
+New in 0.5.0
+- Implementation
+  + PDD15 (OO) branch merged with trunk; this release contains a working,
+    tested implementation of the latest OO model
   + Added pop_eh/push_eh_p/count_eh opcodes
   + Add --runcore command line option
   + Add gcdebug runcore to help track down GC bugs
+  + minor improvements to IA-32 JIT
 - Documentation
   + PDD19 (PIR): updates to macros, .pcc* directives
-  + PDD25 (AST):  draft approved
+  + PDD25 (Concurrency): updated
+  + PDD26 (AST):  draft approved
   + PDD23 (Exceptions): draft approved
   + Copyright cleanups
 - Languages/Compilers
@@ -32,7 +67,8 @@ New through r22830
   + Improve test coverage
   + Improve reporting when a step fails; allow abort on failure
 - Miscellaneous
-  + More coding standard conformance, tests, cleanup, speedups
+  + More coding standard conformance, tests, cleanup, speedups,
+    warnings cleanup
   + Bug cleanup, esp. GC bugs
   + Eliminate .imc extension (use .pir)
   + Simplify some core config steps to not allow interactive prompting
@@ -43,7 +79,7 @@ New in 0.4.17
 - Implementation
  + Bug fixes (including Coverity IDs 20, 22, 30, 119-122, 124-126, 129-131)
    Also various GC, memory, and segfault issues
- + Fix & reenable CGP core  
+ + Fix & reenable CGP core
  + Parrot's -r flag now works again (compile to and execute bytecode)
  + Updates to pmc2c & PIR syntaxes
  + Fix Complex PMC

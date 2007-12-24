@@ -5,12 +5,12 @@
 ## working. It's shamelessly stolen & adapted from MiniPerl6 in the pugs repo.
 
 # globals to keep track of our tests
-my $num_of_tests_run = 0;
-my $num_of_tests_failed = 0;
-my $num_of_tests_planned;
+our $num_of_tests_run = 0;
+our $num_of_tests_failed = 0;
+our $num_of_tests_planned;
 
 # for running the test suite multiple times in the same process
-my $testing_started;
+our $testing_started;
 
 
 ## test functions
@@ -45,6 +45,18 @@ multi sub isnt($got, $expected, $desc) {
 
 multi sub isnt($got, $expected) { isnt($got, $expected, ''); }
 
+multi sub skip()                { proclaim(1, "skip "); }
+multi sub skip($reason)         { proclaim(1, "skip $reason"); }
+multi sub skip($count, $reason) { skip($reason); }
+
+multi sub skip_rest() {
+    skip($num_of_tests_planned - $num_of_tests_run, "");
+}
+
+multi sub skip_rest($reason) {
+    skip($num_of_tests_planned - $num_of_tests_run, $reason);
+}
+
 sub diag($message) { say '# '~$message; }
 
 ## 'private' subs
@@ -64,6 +76,13 @@ sub proclaim($cond, $desc) {
 }
 
 END {
+    # until END blocks can access compile-time symbol tables of outer scopes,
+    #  we need these declarations
+    our $testing_started;
+    our $num_of_tests_planned;
+    our $num_of_tests_run;
+    our $num_of_tests_failed;
+
     if ($testing_started and $num_of_tests_planned != $num_of_tests_run) {  ##Wrong quantity of tests
         diag("Looks like you planned $num_of_tests_planned tests, but ran $num_of_tests_run");
     }

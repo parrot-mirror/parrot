@@ -64,7 +64,7 @@ void * Parrot_call_method(PARROT_INTERP,
     Parrot_PMC sub,
     Parrot_PMC obj,
     Parrot_String method,
-    NOTNULL(const char *signature),
+    ARGIN(const char *signature),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(5);
@@ -74,7 +74,7 @@ Parrot_Float Parrot_call_method_ret_float(PARROT_INTERP,
     Parrot_PMC sub,
     Parrot_PMC obj,
     Parrot_String method,
-    NOTNULL(const char *signature),
+    ARGIN(const char *signature),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(5);
@@ -84,7 +84,7 @@ Parrot_Int Parrot_call_method_ret_int(PARROT_INTERP,
     Parrot_PMC sub,
     Parrot_PMC obj,
     Parrot_String method,
-    NOTNULL(const char *signature),
+    ARGIN(const char *signature),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(5);
@@ -94,7 +94,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 void* Parrot_call_sub(PARROT_INTERP,
     Parrot_PMC sub,
-    NOTNULL(const char *signature),
+    ARGIN(const char *signature),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
@@ -102,7 +102,7 @@ void* Parrot_call_sub(PARROT_INTERP,
 PARROT_API
 Parrot_Float Parrot_call_sub_ret_float(PARROT_INTERP,
     Parrot_PMC sub,
-    NOTNULL(const char *signature),
+    ARGIN(const char *signature),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
@@ -110,7 +110,7 @@ Parrot_Float Parrot_call_sub_ret_float(PARROT_INTERP,
 PARROT_API
 Parrot_Int Parrot_call_sub_ret_int(PARROT_INTERP,
     Parrot_PMC sub,
-    NOTNULL(const char *signature),
+    ARGIN(const char *signature),
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
@@ -155,7 +155,7 @@ PARROT_CANNOT_RETURN_NULL
 Parrot_String Parrot_new_string(PARROT_INTERP,
     NULLOK(char *buffer),
     int length,
-    NULLOK(const char * const encoding_name),
+    ARGIN_NULLOK(const char * const encoding_name),
     Parrot_Int flags)
         __attribute__nonnull__(1);
 
@@ -262,20 +262,20 @@ void Parrot_PMC_push_numval(PARROT_INTERP,
 PARROT_API
 void Parrot_PMC_set_cstring(PARROT_INTERP,
     Parrot_PMC pmc,
-    NULLOK(const char *value))
+    ARGIN_NULLOK(const char *value))
         __attribute__nonnull__(1);
 
 PARROT_API
 void Parrot_PMC_set_cstring_intkey(PARROT_INTERP,
     Parrot_PMC pmc,
     Parrot_Int key,
-    NULLOK(const char *value))
+    ARGIN_NULLOK(const char *value))
         __attribute__nonnull__(1);
 
 PARROT_API
 void Parrot_PMC_set_cstringn(PARROT_INTERP,
     Parrot_PMC pmc,
-    NULLOK(const char *value),
+    ARGIN_NULLOK(const char *value),
     Parrot_Int length)
         __attribute__nonnull__(1);
 
@@ -283,7 +283,7 @@ PARROT_API
 void Parrot_PMC_set_cstringn_intkey(PARROT_INTERP,
     Parrot_PMC pmc,
     Parrot_Int key,
-    NULLOK(const char *value),
+    ARGIN_NULLOK(const char *value),
     Parrot_Int length)
         __attribute__nonnull__(1);
 
@@ -351,7 +351,8 @@ void Parrot_PMC_set_vtable(SHIM_INTERP,
     Parrot_VTABLE vtable);
 
 PARROT_API
-Parrot_Int Parrot_PMC_typenum(PARROT_INTERP, NULLOK(const char *_class))
+Parrot_Int Parrot_PMC_typenum(PARROT_INTERP,
+    ARGIN_NULLOK(const char *_class))
         __attribute__nonnull__(1);
 
 PARROT_API

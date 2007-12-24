@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 31;
+use Parrot::Test tests => 33;
 
 =head1 NAME
 
@@ -601,8 +601,7 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', "pushaction - throw in main" );
 .sub exit_handler
     .param int flag
     print "at_exit, flag = "
-    print flag
-    print_newline
+    say flag
 .end
 CODE
 /^main
@@ -630,8 +629,7 @@ h:
 .sub exit_handler :outer(main)
     .param int flag
     print "at_exit, flag = "
-    print flag
-    print_newline
+    say flag
     $P2 = new 'Exception'
     throw $P2
     print "never 2\n"
@@ -694,6 +692,24 @@ CODE
 something broke
 something broke
 current inst/
+OUTPUT
+
+pir_error_output_like( <<'CODE', <<'OUTPUT', 'die_s' );
+.sub main :main
+    die 'We are dying str!'
+.end
+CODE
+/We are dying str!/
+OUTPUT
+pir_error_output_like( <<'CODE', <<'OUTPUT', 'die_p' );
+.sub main :main
+    .local pmc msg
+    msg = new 'String'
+    msg = 'We are dying pmc!'
+    die msg
+.end
+CODE
+/We are dying pmc!/
 OUTPUT
 
 # Local Variables:

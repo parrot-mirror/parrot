@@ -358,6 +358,8 @@ This is to exclude automatically generated C-language files Parrot might have.
             compilers/pirc/new/pirlexer.h
             compilers/pirc/new/pirparser.c
             compilers/pirc/new/pirparser.h
+            compilers/pirc/new/pircompunit.c
+            compilers/pirc/new/pircompunit.h
             compilers/pirc/macro/lexer.h
             compilers/pirc/macro/macro.h
             compilers/pirc/macro/macro.l
@@ -453,6 +455,7 @@ sub get_perl_exemption_regexp {
         lib/Class/
         lib/Digest/Perl/
         lib/File/
+        lib/IO/
         lib/Parse/
         lib/Pod/
         lib/SmartLink.pm
@@ -532,7 +535,7 @@ sub file_for_perl_module {
     my $self = shift;
     my $module = shift || return;
 
-    my @path = split '::', $module;
+    my @path = split m/::/, $module;
 
     $module = pop @path;
     $module .= '.pm';

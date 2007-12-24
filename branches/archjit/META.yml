@@ -1,6 +1,6 @@
 ---
 name: parrot
-version: 0.4.17
+version: 0.5.1
 author: ~
 abstract: ~
 license: artistic2
@@ -19,6 +19,7 @@ no_index:
         - t
         - tools
     file:
+        - lib/IO/CaptureOutput.pm
         - lib/SmartLink.pm
     package:
         - DB

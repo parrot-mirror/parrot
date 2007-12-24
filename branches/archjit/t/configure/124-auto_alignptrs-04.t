@@ -30,10 +30,9 @@ my $pkg = q{auto::alignptrs};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my ( $task, $step_name, @step_params, $step);
+my ( $task, $step_name, $step);
 $task        = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
@@ -41,18 +40,17 @@ isa_ok( $step, $step_name );
 ok( $step->description(), "$step_name has description" );
 
 {
-    use Config;
-    local $^O = q{hpux};
+    $conf->data->set_p5( OSNAME => 'hpux' );
     my $ret = $step->runstep($conf);
     ok( $ret, "$step_name runstep() returned true value" );
-    if ( $Config{ccflags} !~ /DD64/ ) {
+    if ( $conf->data->get_p5('ccflags') !~ /DD64/ ) {
         is($conf->data->get('ptr_alignment'), 4,
             "Got expected pointer alignment for HP Unix");
         is($step->result(), qq{for hpux:  4 bytes},
             "Expected result was set");
     } else {
-        pass("Cannot mock %Config");
-        pass("Cannot mock %Config");
+        pass("Cannot mock \%Config");
+        pass("Cannot mock \%Config");
     }
 }
 

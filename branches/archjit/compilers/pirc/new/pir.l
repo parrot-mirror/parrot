@@ -192,6 +192,9 @@ new_lexer(char * const filename) {
     lexer->line_pos      = 1;
     lexer->parse_errors  = 0;
 
+    lexer->subs          = NULL;
+    lexer->is_instr      = 0;
+
     printdebug(stderr, "Constructing new lexer\n");
 
     return lexer;
@@ -334,10 +337,8 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
 
 ".arg"            { return TK_ARG; }
 ".const"          { return TK_CONST; }
-".emit"           { return TK_EMIT; }
 ".end"            { return TK_END; }
 
-".eom"            { return TK_EOM; }
 ".get_results"    { return TK_GET_RESULTS; }
 ".globalconst"    { return TK_GLOBALCONST; }
 ".HLL"            { return TK_HLL; }
@@ -389,15 +390,15 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
                return TK_STRINGC;
              }
 
-"P"{DIGIT}+  { return TK_PASM_PREG; }
-"S"{DIGIT}+  { return TK_PASM_SREG; }
-"N"{DIGIT}+  { return TK_PASM_NREG; }
-"I"{DIGIT}+  { return TK_PASM_IREG; }
+"P"{DIGIT}+  { yylval->ival = atoi(yytext + 1); return TK_PASM_PREG; }
+"S"{DIGIT}+  { yylval->ival = atoi(yytext + 1); return TK_PASM_SREG; }
+"N"{DIGIT}+  { yylval->ival = atoi(yytext + 1); return TK_PASM_NREG; }
+"I"{DIGIT}+  { yylval->ival = atoi(yytext + 1); return TK_PASM_IREG; }
 
-"$P"{DIGIT}+  { return TK_SYM_PREG; }
-"$S"{DIGIT}+  { return TK_SYM_SREG; }
-"$N"{DIGIT}+  { return TK_SYM_NREG; }
-"$I"{DIGIT}+  { return TK_SYM_IREG; }
+"$P"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_SYM_PREG; }
+"$S"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_SYM_SREG; }
+"$N"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_SYM_NREG; }
+"$I"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_SYM_IREG; }
 
 {IDENT}":"    { /* make the label Id available in the parser. remove the ":" first. */
                 yylval->sval = dupstrn(yytext, yyleng - 1);
@@ -410,11 +411,11 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
               }
 
 
-{FLOATNUM}        { return TK_NUMC; }
-{SIGN}?{DIGITS}   { return TK_INTC; }
-{HEX}             { return TK_INTC; }
-{BIN}             { return TK_INTC; }
-{OCT}             { return TK_INTC; }
+{FLOATNUM}        { yylval->dval = atof(yytext); return TK_NUMC; }
+{SIGN}?{DIGITS}   { yylval->ival = atoi(yytext); return TK_INTC; }
+{HEX}             { yylval->ival = atoi(yytext); return TK_INTC; }
+{BIN}             { yylval->ival = atoi(yytext); return TK_INTC; }
+{OCT}             { yylval->ival = atoi(yytext); return TK_INTC; }
 
 
 

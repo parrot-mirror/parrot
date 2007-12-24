@@ -30,10 +30,7 @@ void Parrot_NCI_nci_make_raw_nci(PARROT_INTERP, PMC *method, void *func);
 
 /*
 
-=item C<PARROT_API
-void
-register_nci_method(PARROT_INTERP, const int type, void *func,
-                    const char *name, const char *proto)>
+=item C<void register_nci_method>
 
 Create an entry in the C<nci_method_table> for the given NCI method of PMC
 class C<type>.
@@ -44,8 +41,8 @@ class C<type>.
 
 PARROT_API
 void
-register_nci_method(PARROT_INTERP, const int type, void *func,
-                    const char *name, const char *proto)
+register_nci_method(PARROT_INTERP, const int type, NOTNULL(void *func),
+                    ARGIN(const char *name), ARGIN(const char *proto))
 {
     PMC * const method = pmc_new(interp, enum_class_NCI);
     STRING * const method_name = string_make(interp, name, strlen(name),
@@ -64,12 +61,9 @@ register_nci_method(PARROT_INTERP, const int type, void *func,
 
 /*
 
-=item C<PARROT_API
-void
-register_raw_nci_method_in_ns(PARROT_INTERP, const int type, void *func,
-        const char *name)>
+=item C<void register_raw_nci_method_in_ns>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -77,8 +71,8 @@ TODO: Not yet documented!!!
 
 PARROT_API
 void
-register_raw_nci_method_in_ns(PARROT_INTERP, const int type, void *func,
-        const char *name)
+register_raw_nci_method_in_ns(PARROT_INTERP, const int type, NOTNULL(void *func),
+        ARGIN(const char *name))
 {
     PMC * const method = pmc_new(interp, enum_class_NCI);
     STRING * const method_name = string_make(interp, name, strlen(name),
@@ -94,9 +88,7 @@ register_raw_nci_method_in_ns(PARROT_INTERP, const int type, void *func,
 
 /*
 
-=item C<PARROT_API
-void
-Parrot_mark_method_writes(PARROT_INTERP, int type, NOTNULL(const char *name))>
+=item C<void Parrot_mark_method_writes>
 
 Mark the method C<name> on PMC type C<type> as one that modifies the PMC.
 
@@ -106,7 +98,7 @@ Mark the method C<name> on PMC type C<type> as one that modifies the PMC.
 
 PARROT_API
 void
-Parrot_mark_method_writes(PARROT_INTERP, int type, NOTNULL(const char *name))
+Parrot_mark_method_writes(PARROT_INTERP, int type, ARGIN(const char *name))
 {
     STRING *const str_name = const_string(interp, name);
     PMC *const pmc_true = pmc_new(interp, enum_class_Integer);
@@ -119,10 +111,7 @@ Parrot_mark_method_writes(PARROT_INTERP, int type, NOTNULL(const char *name))
 
 /*
 
-=item C<PARROT_API
-void
-Parrot_compreg(PARROT_INTERP, STRING *type,
-                    Parrot_compiler_func_t func)>
+=item C<void Parrot_compreg>
 
 Register a parser/compiler function.
 
@@ -132,8 +121,8 @@ Register a parser/compiler function.
 
 PARROT_API
 void
-Parrot_compreg(PARROT_INTERP, STRING *type,
-                    Parrot_compiler_func_t func)
+Parrot_compreg(PARROT_INTERP, NOTNULL(STRING *type),
+                    NOTNULL(Parrot_compiler_func_t func))
 {
     PMC* const iglobals = interp->iglobals;
     PMC *hash, *nci;
@@ -156,12 +145,7 @@ Parrot_compreg(PARROT_INTERP, STRING *type,
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-PMC *
-Parrot_compile_string(PARROT_INTERP, NOTNULL(STRING *type),
-        NOTNULL(const char *code), NOTNULL(STRING **error))>
+=item C<PMC * Parrot_compile_string>
 
 Compile code string.
 
@@ -174,12 +158,12 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_compile_string(PARROT_INTERP, NOTNULL(STRING *type),
-        NOTNULL(const char *code), NOTNULL(STRING **error))
+        ARGIN(const char *code), NOTNULL(STRING **error))
 {
     if (string_compare(interp, const_string(interp, "PIR"), type) == 0)
         return IMCC_compile_pir_s(interp, code, error);
 
-    if (string_compare(interp,const_string(interp, "PASM"), type) == 0)
+    if (string_compare(interp, const_string(interp, "PASM"), type) == 0)
         return IMCC_compile_pasm_s(interp, code, error);
 
     *error=const_string(interp, "Invalid interpreter type");
@@ -188,10 +172,7 @@ Parrot_compile_string(PARROT_INTERP, NOTNULL(STRING *type),
 
 /*
 
-=item C<PARROT_API
-PARROT_CANNOT_RETURN_NULL
-void *
-Parrot_compile_file(PARROT_INTERP, NOTNULL(const char *fullname), NOTNULL(STRING **error))>
+=item C<void * Parrot_compile_file>
 
 Compile code file.
 
@@ -202,7 +183,7 @@ Compile code file.
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
 void *
-Parrot_compile_file(PARROT_INTERP, NOTNULL(const char *fullname), NOTNULL(STRING **error))
+Parrot_compile_file(PARROT_INTERP, ARGIN(const char *fullname), NOTNULL(STRING **error))
 {
     return IMCC_compile_file_s(interp, fullname, error);
 }
@@ -228,9 +209,7 @@ extern struct mallinfo mallinfo(void);
 
 /*
 
-=item C<PARROT_API
-INTVAL
-interpinfo(PARROT_INTERP, INTVAL what)>
+=item C<INTVAL interpinfo>
 
 C<what> specifies the type of information you want about the
 interpreter.
@@ -315,11 +294,7 @@ interpinfo(PARROT_INTERP, INTVAL what)
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-PMC*
-interpinfo_p(PARROT_INTERP, INTVAL what)>
+=item C<PMC* interpinfo_p>
 
 C<what> specifies the type of information you want about the
 interpreter.
@@ -357,13 +332,9 @@ interpinfo_p(PARROT_INTERP, INTVAL what)
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-STRING*
-interpinfo_s(PARROT_INTERP, INTVAL what)>
+=item C<STRING* interpinfo_s>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -413,9 +384,7 @@ interpinfo_s(PARROT_INTERP, INTVAL what)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-INTVAL
-sysinfo_i(SHIM_INTERP, INTVAL info_wanted)>
+=item C<INTVAL sysinfo_i>
 
 Returns the system info.
 
@@ -449,10 +418,7 @@ sysinfo_i(SHIM_INTERP, INTVAL info_wanted)
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-STRING *
-sysinfo_s(PARROT_INTERP, INTVAL info_wanted)>
+=item C<STRING * sysinfo_s>
 
 Returns the system info string.
 
@@ -477,6 +443,7 @@ sysinfo_s(PARROT_INTERP, INTVAL info_wanted)
 {
     switch (info_wanted) {
     case PARROT_OS:
+        /*  XXX Can't use CONST_STRING here yet, as it needs literal strings*/
         return string_from_literal(interp, BUILD_OS_NAME);
     case PARROT_OS_VERSION:
     case PARROT_OS_VERSION_NUMBER:

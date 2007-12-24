@@ -25,7 +25,7 @@ File stat stuff
 
 =item C<PMC * Parrot_stat_file(Parrot_Interp interp, STRING *filename)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -42,7 +42,7 @@ Parrot_stat_file(Parrot_Interp interp, STRING *filename)
 =item C<PMC *
 Parrot_stat_info_pmc(Parrot_Interp interp, STRING *filename, INTVAL thing)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -59,7 +59,7 @@ Parrot_stat_info_pmc(Parrot_Interp interp, STRING *filename, INTVAL thing)
 =item C<INTVAL
 Parrot_stat_info_intval(Parrot_Interp interp, STRING *file, INTVAL thing)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -134,6 +134,8 @@ Parrot_stat_info_intval(Parrot_Interp interp, STRING *file, INTVAL thing)
   case STAT_PLATFORM_BLOCKS:
     real_exception(interp, NULL, 1, "STAT_PLATFORM_BLOCKS not supported");
     break;
+  default:
+    break;
   }
 
   string_cstring_free(filename);
@@ -145,7 +147,7 @@ Parrot_stat_info_intval(Parrot_Interp interp, STRING *file, INTVAL thing)
 =item C<INTVAL
 Parrot_fstat_info_intval(Parrot_Interp interp, INTVAL file, INTVAL thing)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -216,6 +218,8 @@ Parrot_fstat_info_intval(Parrot_Interp interp, INTVAL file, INTVAL thing)
   case STAT_PLATFORM_BLOCKS:
     real_exception(interp, NULL, 1, "STAT_PLATFORM_BLOCKS not supported");
     break;
+  default:
+    break;
   }
 
   return result;
@@ -226,7 +230,7 @@ Parrot_fstat_info_intval(Parrot_Interp interp, INTVAL file, INTVAL thing)
 =item C<FLOATVAL
 Parrot_stat_info_floatval(Parrot_Interp interp, STRING *filename, INTVAL thing)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -243,7 +247,7 @@ Parrot_stat_info_floatval(Parrot_Interp interp, STRING *filename, INTVAL thing)
 =item C<STRING *
 Parrot_stat_info_string(Parrot_Interp interp, STRING *filename, INTVAL thing)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

@@ -27,7 +27,7 @@
 #  endif
 #endif
 #ifdef HASATTRIBUTE_FORMAT
-#  define __attribute__format__(x,y,z)      __attribute__((__format__(x,y,z)))
+#  define __attribute__format__(x, y, z)      __attribute__((__format__(x, y, z)))
 #endif
 #ifdef HASATTRIBUTE_MALLOC
 #  define __attribute__malloc__             __attribute__((__malloc__))
@@ -60,7 +60,7 @@
 #  define __attribute__deprecated__
 #endif
 #ifndef __attribute__format__
-#  define __attribute__format__(x,y,z)
+#  define __attribute__format__(x, y, z)
 #endif
 #ifndef __attribute__malloc__
 #  define __attribute__malloc__
@@ -114,9 +114,12 @@
 #define NOTNULL(x)                  /*@notnull@*/ x
 #define NULLOK(x)                   /*@null@*/ x
 
+#define ARGIN(x)                    /*@notnull@*/ /*@in@*/ x
 #define ARGOUT(x)                   /*@notnull@*/ /*@out@*/ x
 #define ARGINOUT(x)                 /*@notnull@*/ /*@in@*/ /*@out@*/ x
-#define ARGOUT_NULLOK(x)            /*@out@*/ x
+#define ARGIN_NULLOK(x)             /*@null@*/ /*@in@*/ x
+#define ARGOUT_NULLOK(x)            /*@null@*/ /*@out@*/ x
+#define ARGINOUT_NULLOK(x)          /*@null@*/ /*@in@*/ /*@out@*/ x
 
 
 #endif /* PARROT_COMPILER_H_GUARD */

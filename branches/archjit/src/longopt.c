@@ -28,7 +28,7 @@ This is used by C<parrot>.
 static int longopt_get_longopt(PARROT_INTERP,
     int argc,
     NOTNULL(char* argv[]),
-    NOTNULL(const struct longopt_opt_decl options[]),
+    ARGIN(const struct longopt_opt_decl options[]),
     NOTNULL(struct longopt_opt_info* info_buf))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
@@ -38,7 +38,7 @@ static int longopt_get_longopt(PARROT_INTERP,
 static int longopt_get_shortopt(PARROT_INTERP,
     int argc,
     NOTNULL(char* argv[]),
-    NOTNULL(const struct longopt_opt_decl options[]),
+    ARGIN(const struct longopt_opt_decl options[]),
     NOTNULL(struct longopt_opt_info* info_buf))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
@@ -51,11 +51,7 @@ static char longopt_error_buffer[512];
 
 /*
 
-=item C<PARROT_API
-int
-longopt_get(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
-            NOTNULL(const struct longopt_opt_decl options[]),
-            NOTNULL(struct longopt_opt_info* info_buf))>
+=item C<int longopt_get>
 
 Gets long or short options, specified in C<options[]> (see
 F<docs/dev/longopt.dev>).
@@ -75,7 +71,7 @@ Any other value is a valid option identifier.
 PARROT_API
 int
 longopt_get(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
-            NOTNULL(const struct longopt_opt_decl options[]),
+            ARGIN(const struct longopt_opt_decl options[]),
             NOTNULL(struct longopt_opt_info* info_buf))
 {
     const int dex = info_buf->opt_index;
@@ -109,10 +105,7 @@ longopt_get(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
 
 /*
 
-=item C<static int
-longopt_get_longopt(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
-                    NOTNULL(const struct longopt_opt_decl options[]),
-                    NOTNULL(struct longopt_opt_info* info_buf))>
+=item C<static int longopt_get_longopt>
 
 Find the option identifier of a long option.
 
@@ -127,7 +120,7 @@ characters and start with C<-->.
 
 static int
 longopt_get_longopt(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
-                    NOTNULL(const struct longopt_opt_decl options[]),
+                    ARGIN(const struct longopt_opt_decl options[]),
                     NOTNULL(struct longopt_opt_info* info_buf))
 {
     const int dex = info_buf->opt_index;
@@ -205,10 +198,7 @@ longopt_get_longopt(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
 
 /*
 
-=item C<static int
-longopt_get_shortopt(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
-                     NOTNULL(const struct longopt_opt_decl options[]),
-                     NOTNULL(struct longopt_opt_info* info_buf))>
+=item C<static int longopt_get_shortopt>
 
 Find the option identifier of the next short option.
 
@@ -224,7 +214,7 @@ characters long and start with a dash.
 
 static int
 longopt_get_shortopt(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
-                     NOTNULL(const struct longopt_opt_decl options[]),
+                     ARGIN(const struct longopt_opt_decl options[]),
                      NOTNULL(struct longopt_opt_info* info_buf))
 {
     const int dex = info_buf->opt_index;

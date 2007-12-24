@@ -52,15 +52,14 @@ sub runstep {
     my $cpuarch     = $conf->data->get('cpuarch');
     my $osname      = $conf->data->get('osname');
 
-    my $jitbase  = 'src/jit';               # base path for jit sources
-    my $jitarchname = "$cpuarch-$osname";
-    my ( $jitcapable, $execcapable ) = ( 0, 0 );
+    my $jitbase  = 'src/jit';   # base path for jit sources
 
     my $corejit = "$jitbase/$cpuarch/core.jit";
     print( qq{-e $corejit = },
         -e $corejit ? 'yes' : 'no', "\n" )
         if $verbose;
 
+    my $jitcapable = 0;
     if ( -e $corejit ) {
 
         # Just because there is a "$jitbase/$cpuarch/core.jit" file,
@@ -68,7 +67,7 @@ sub runstep {
         # So build JIT per default only on platforms where JIT in known
         # to work. Building JIT on other platform most likely breaks the build.
         # Developer can always call: Configure.pl --jitcapable
-        # See also RT#43145
+        # This was discussed in RT #43145 (which has been resolved).
         if ( $self->{jit_is_working}->{$cpuarch} ) {
             $jitcapable = 1;
         }
@@ -79,6 +78,7 @@ sub runstep {
         }
     }
 
+    my $jitarchname = "$cpuarch-$osname";
     my $sjit = "$jitbase/$cpuarch/$jitarchname.s";
     my $asm = "$jitbase/$cpuarch/asm.s";
     if ( -e $sjit ) {
@@ -111,10 +111,12 @@ sub runstep {
 '$(SRC_DIR)/jit$(O) $(SRC_DIR)/jit_cpu$(O) $(SRC_DIR)/jit_debug$(O) $(SRC_DIR)/jit_debug_xcoff$(O)'
         );
 
+        my $execcapable = 0;
         if (   ( $jitcpuarch eq 'i386' )
             || ( $jitcpuarch eq 'ppc' )
             || ( $jitcpuarch eq 'arm' ) )
         {
+#        if ( $jitcpuarch =~ /^(i386|ppc|arm)$/ ) {
             $execcapable = 1;
             unless ( ( $osname eq 'openbsd' )
                 || ( $osname eq 'freebsd' )

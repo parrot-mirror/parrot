@@ -30,10 +30,9 @@ my $pkg = q{auto::revision};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my ( $task, $step_name, @step_params, $step);
+my ( $task, $step_name, $step);
 $task        = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
@@ -74,7 +73,7 @@ my ($testrev, $ret);
     local $Parrot::Revision::current = $testrev;
     $ret = $step->runstep($conf);
     ok( $ret, "$step_name runstep() returned true value" );
-    ok(! defined($conf->data->get('revision')), 
+    ok(! defined($conf->data->get('revision')),
         "'revision' element is undefined as expected");
     is($step->result(), q{done}, "Expected result was set");
 }

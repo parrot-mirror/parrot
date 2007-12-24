@@ -5,9 +5,13 @@ Test::More's subs.
 
 Imports several subs into the current namespace from Test::More.
 
+This is intended to be broadly usable. Feel free to use Test::More
+directly, of course, but this provides a handy shortcut for setting up
+simple test file written in parrot.
+
 =cut
 
-    load_bytecode 'library/Test/More.pir'
+    load_bytecode 'library/Test/More.pbc'
 
     # get the testing functions
     .local pmc exports, curr_namespace, test_namespace

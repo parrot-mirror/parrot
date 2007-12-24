@@ -5,16 +5,14 @@
 
 use strict;
 use warnings;
-use Test::More tests => 15;
+use Test::More tests => 14;
 use Carp;
-use Config;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::auto::headers');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
-use Parrot::IO::Capture::Mini;
 
 my $args = process_options(
     {
@@ -32,23 +30,22 @@ my $pkg = q{auto::headers};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my ( $task, $step_name, @step_params, $step);
+my ( $task, $step_name, $step);
 $task        = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
 ok( $step->description(), "$step_name has description" );
 
-auto::headers::_set_from_Config($conf, \%Config);
-ok($conf->data->get('i_netinetin'), "Mapping made correctly");
+auto::headers::_set_from_Config($conf);
 ok(! $conf->data->get('i_niin'), "Mapping made correctly");
 
 {
-    local $^O = "msys";
-    my %extra_headers = map {$_, 1} auto::headers::_list_extra_headers();
+    $conf->data->set_p5( OSNAME => "msys" );
+    my %extra_headers =
+        map {$_, 1} auto::headers::_list_extra_headers($conf);
     ok($extra_headers{'sysmman.h'}, "Special header set for msys");
     ok($extra_headers{'netdb.h'}, "Special header set for msys");
 }

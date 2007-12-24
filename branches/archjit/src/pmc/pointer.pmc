@@ -136,8 +136,8 @@ Returns the pointer value as a Parrot string.
         /* XXX Dangerous if you have a 196-bit system or above
         (and if you do, you have too comfortable a life and
         deserve to be tormented by coredumps). */
-        sprintf(target, "Pointer=0x%p", PMC_data(SELF));
-        ret = string_make(INTERP, target, strlen(target), "iso-8859-1", 0);
+        const size_t len = sprintf(target, "Pointer=0x%p", PMC_data(SELF));
+        ret = string_make(INTERP, target, len, "iso-8859-1", 0);
 
         mem_sys_free(target);
         return ret;
@@ -159,7 +159,7 @@ Returns whether the pointer is not C<NULL>.
 
 /*
 
-=item C<INTVAL is_same(PMC *pmc2)>
+=item C<INTVAL is_same(const PMC *pmc2)>
 
 Returns whether the pointer has the same value as C<*pmc2>.
 
@@ -167,7 +167,7 @@ Returns whether the pointer has the same value as C<*pmc2>.
 
 */
 
-    INTVAL is_same(PMC *pmc2) {
+    INTVAL is_same(const PMC *pmc2) {
         return (INTVAL)(SELF->vtable   == pmc2->vtable &&
                         PMC_data(SELF) == PMC_data(pmc2));
     }
