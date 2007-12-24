@@ -84,11 +84,10 @@ sub runstep {
 # Any changes made here will be lost.
 #
 EOF
-    use Config;
     my ( $i, $name );
     $i = 0;
-    foreach $name ( split( ' ', $Config{sig_name} ) ) {
-        print {$O} ".constant SIG$name\t$i\n" if $i;
+    foreach $name ( split( ' ', $conf->data->get_p5('sig_name') ) ) {
+        print {$O} ".macro_const SIG$name\t$i\n" if $i;
         $i++;
     }
     close $O;

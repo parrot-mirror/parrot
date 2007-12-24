@@ -81,14 +81,14 @@ lexer.
 
 =head1 DIRECTIVES
 
-The following are PIR directives.
+The following are PIR directives. (this should be re-ordered)
 
-  .arg               .const      .constant         .emit              .end
-  .endnamespace      .endm       .eom              .get_results       .globalconst
+  .arg               .const      .macro_const      .end
+  .endnamespace      .endm       .get_results      .globalconst
   .HLL               .HLL_map    .include          .invocant          .lex
   .loadlib           .local      .macro            .meth_call         .namespace
-  .nci_call          .param      .pcc_begin        .pcc_begin_return  .pcc_begin_yield
-  .pcc_call          .pcc_end    .pcc_end_return   .pcc_end_yield     .pragma
+  .nci_call          .param      .begin_call       .begin_return      .begin_yield
+  .call              .end_call   .end_return       .end_yield         .pragma
   .result            .return     .sub              .yield
 
 
@@ -141,12 +141,9 @@ static char const * dictionary[] = {
    /* NULL,  */                 /*                          */
     ".arg",                     /* T_ARG                    */
     ".const",                   /* T_CONST,                 */
-    ".constant",                /* T_CONSTANT,              */
-    ".emit",                    /* T_EMIT,                  */
+    ".macro_const",             /* T_CONSTANT,              */
     ".end",                     /* T_END,                   */
-    ".endnamespace",            /* T_ENDNAMESPACE,          */
     ".endm",                    /* T_ENDM,                  */
-    ".eom",                     /* T_EOM,                   */
     ".get_results",             /* T_GET_RESULTS            */
     ".globalconst",             /* T_GLOBALCONST            */
     ".HLL",                     /* T_HLL                    */
@@ -161,13 +158,13 @@ static char const * dictionary[] = {
     ".namespace",               /* T_NAMESPACE,             */
     ".nci_call",                /* T_NCI_CALL               */
     ".param",                   /* T_PARAM,                 */
-    ".pcc_begin",               /* T_PCC_BEGIN              */
-    ".pcc_begin_return",        /* T_PCC_BEGIN_RETURN       */
-    ".pcc_begin_yield",         /* T_PCC_BEGIN_YIELD        */
-    ".pcc_call",                /* T_PCC_CALL               */
-    ".pcc_end",                 /* T_PCC_END                */
-    ".pcc_end_return",          /* T_PCC_END_RETURN         */
-    ".pcc_end_yield",           /* T_PCC_END_YIELD          */
+    ".begin_call",              /* T_PCC_BEGIN              */
+    ".begin_return",            /* T_PCC_BEGIN_RETURN       */
+    ".begin_yield",             /* T_PCC_BEGIN_YIELD        */
+    ".call",                    /* T_PCC_CALL               */
+    ".end_call",                /* T_PCC_END                */
+    ".end_return",          /* T_PCC_END_RETURN         */
+    ".end_yield",           /* T_PCC_END_YIELD          */
     ".pragma",                  /* T_PRAGMA                 */
     ".result",                  /* T_RESULT,                */
     ".return",                  /* T_RETURN,                */
@@ -1035,7 +1032,7 @@ token
 next_token(lexer_state *lexer)
 {
     int ok    = 1;
-    int count = 0;
+    /* int count = 0; */
 
     /* before reading a new token, first clear the buffer */
     clear_buffer(lexer);

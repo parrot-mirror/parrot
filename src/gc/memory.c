@@ -28,11 +28,7 @@ setup function to initialize the memory pools.
 
 /*
 
-=item C<PARROT_API
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-void *
-mem_sys_allocate(size_t size)>
+=item C<void * mem_sys_allocate>
 
 Uses C<malloc> to allocate system memory.
 
@@ -46,7 +42,7 @@ PARROT_CANNOT_RETURN_NULL
 void *
 mem_sys_allocate(size_t size)
 {
-    void * const ptr = malloc((size_t)size);
+    void * const ptr = malloc(size);
 #ifdef DETAIL_MEMORY_DEBUG
     fprintf(stderr, "Allocated %i at %p\n", size, ptr);
 #endif
@@ -57,12 +53,9 @@ mem_sys_allocate(size_t size)
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-void *
-mem__internal_allocate(size_t size, NOTNULL(const char *file), int line)>
+=item C<void * mem__internal_allocate>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -71,7 +64,7 @@ TODO: Not yet documented!!!
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void *
-mem__internal_allocate(size_t size, NOTNULL(const char *file), int line)
+mem__internal_allocate(size_t size, ARGIN(const char *file), int line)
 {
     void * const ptr = malloc((size_t)size);
 #ifdef DETAIL_MEMORY_DEBUG
@@ -88,11 +81,7 @@ mem__internal_allocate(size_t size, NOTNULL(const char *file), int line)
 
 /*
 
-=item C<PARROT_API
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-void *
-mem_sys_allocate_zeroed(size_t size)>
+=item C<void * mem_sys_allocate_zeroed>
 
 Uses C<calloc> to allocate system memory.
 
@@ -117,12 +106,9 @@ mem_sys_allocate_zeroed(size_t size)
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-void *
-mem__internal_allocate_zeroed(size_t size, NOTNULL(const char *file), int line)>
+=item C<void * mem__internal_allocate_zeroed>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -131,7 +117,7 @@ TODO: Not yet documented!!!
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void *
-mem__internal_allocate_zeroed(size_t size, NOTNULL(const char *file), int line)
+mem__internal_allocate_zeroed(size_t size, ARGIN(const char *file), int line)
 {
     void * const ptr = calloc(1, (size_t)size);
 #ifdef DETAIL_MEMORY_DEBUG
@@ -148,11 +134,7 @@ mem__internal_allocate_zeroed(size_t size, NOTNULL(const char *file), int line)
 
 /*
 
-=item C<PARROT_API
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-void *
-mem__sys_realloc(NULLOK(void *from), size_t size)>
+=item C<void * mem__sys_realloc>
 
 Resize a chunk of system memory.
 
@@ -182,11 +164,7 @@ mem__sys_realloc(NULLOK(void *from), size_t size)
 
 /*
 
-=item C<PARROT_API
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-void *
-mem__sys_realloc_zeroed(NULLOK(void *from), size_t size, size_t old_size)>
+=item C<void * mem__sys_realloc_zeroed>
 
 Resize a chunk of system memory. Fill the newly allocated space with zeroes.
 
@@ -219,13 +197,9 @@ mem__sys_realloc_zeroed(NULLOK(void *from), size_t size, size_t old_size)
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-void *
-mem__internal_realloc(NOTNULL(void *from), size_t size,
-        NOTNULL(const char *file), int line)>
+=item C<void * mem__internal_realloc>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -235,7 +209,7 @@ PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void *
 mem__internal_realloc(NOTNULL(void *from), size_t size,
-        NOTNULL(const char *file), int line)
+        ARGIN(const char *file), int line)
 {
     void * const ptr = realloc(from, size);
 #ifdef DETAIL_MEMORY_DEBUG
@@ -254,9 +228,7 @@ mem__internal_realloc(NOTNULL(void *from), size_t size,
 
 /*
 
-=item C<PARROT_API
-void
-mem_sys_free(NULLOK(void *from))>
+=item C<void mem_sys_free>
 
 Free a chunk of memory back to the system.
 
@@ -277,17 +249,16 @@ mem_sys_free(NULLOK(void *from))
 
 /*
 
-=item C<void
-mem__internal_free(NULLOK(void *from), NOTNULL(const char *file), int line)>
+=item C<void mem__internal_free>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
 void
-mem__internal_free(NULLOK(void *from), NOTNULL(const char *file), int line)
+mem__internal_free(NULLOK(void *from), ARGIN(const char *file), int line)
 {
 #ifdef DETAIL_MEMORY_DEBUG
     fprintf(stderr, "Internal free of %p (%s/%d)\n", from, file, line);
@@ -300,8 +271,7 @@ mem__internal_free(NULLOK(void *from), NOTNULL(const char *file), int line)
 
 /*
 
-=item C<void
-mem_setup_allocator(PARROT_INTERP)>
+=item C<void mem_setup_allocator>
 
 Initializes the allocator.
 

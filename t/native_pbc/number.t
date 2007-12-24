@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2005, The Perl Foundation.
+# Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -7,9 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
 
-# use Parrot::Test tests => 1;
-use Parrot::Test;
-plan skip_all => 'Ongoing PBC format changes';
+use Parrot::Test skip_all => 'ongoing PBC format changes';
 
 =head1 NAME
 
@@ -85,7 +83,8 @@ END_OUTPUT
 #         no endianize, no opcode, no numval transform
 #         dirformat = 1
 # ]
-pbc_output_is( undef, $output, "i386 double float 32 bit opcode_t" );
+pbc_output_is( undef, $output, "i386 double float 32 bit opcode_t" )
+    or diag "May need to regenerate t/native_pbc/number_1.pbc; see test file";
 
 # Formerly there were tests for:
 # pbc_output_is(undef, <<OUTPUT, "i386 long double float 32 bit opcode_t");

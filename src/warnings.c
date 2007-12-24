@@ -25,15 +25,14 @@ messages.
 
 /* HEADERIZER BEGIN: static */
 
-static INTVAL print_warning(PARROT_INTERP, NULLOK(STRING *msg))
+static INTVAL print_warning(PARROT_INTERP, ARGIN_NULLOK(STRING *msg))
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
 
 /*
 
-=item C<void
-print_pbc_location(PARROT_INTERP)>
+=item C<void print_pbc_location>
 
 Prints the bytecode location of the warning or error to C<PIO_STDERR>.
 
@@ -54,8 +53,7 @@ print_pbc_location(PARROT_INTERP)
 
 /*
 
-=item C<static INTVAL
-print_warning(PARROT_INTERP, NULLOK(STRING *msg))>
+=item C<static INTVAL print_warning>
 
 Prints the warning message and the bytecode location.
 
@@ -64,7 +62,7 @@ Prints the warning message and the bytecode location.
 */
 
 static INTVAL
-print_warning(PARROT_INTERP, NULLOK(STRING *msg))
+print_warning(PARROT_INTERP, ARGIN_NULLOK(STRING *msg))
 {
     if (!msg)
         PIO_puts(interp, PIO_STDERR(interp), "Unknown warning\n");
@@ -85,10 +83,7 @@ print_warning(PARROT_INTERP, NULLOK(STRING *msg))
 
 =over 4
 
-=item C<PARROT_API
-INTVAL
-Parrot_warn(PARROT_INTERP, INTVAL warnclass,
-            NOTNULL(const char *message), ...)>
+=item C<INTVAL Parrot_warn>
 
 The Parrot C string warning/error reporter.
 
@@ -103,7 +98,7 @@ C<message, ..> can be a C<Parrot_vsprintf_c()> format with arguments.
 PARROT_API
 INTVAL
 Parrot_warn(PARROT_INTERP, INTVAL warnclass,
-            NOTNULL(const char *message), ...)
+            ARGIN(const char *message), ...)
 {
     STRING *targ;
 
@@ -121,10 +116,7 @@ Parrot_warn(PARROT_INTERP, INTVAL warnclass,
 
 /*
 
-=item C<PARROT_API
-INTVAL
-Parrot_warn_s(NULLOK_INTERP, INTVAL warnclass,
-              NOTNULL(STRING *message), ...)>
+=item C<INTVAL Parrot_warn_s>
 
 The Parrot C<STRING> warning/error reporter.
 
@@ -139,7 +131,7 @@ C<message, ..> can be a C<Parrot_vsprintf_s()> format with arguments.
 PARROT_API
 INTVAL
 Parrot_warn_s(NULLOK_INTERP, INTVAL warnclass,
-              NOTNULL(STRING *message), ...)
+              ARGIN(STRING *message), ...)
 {
     STRING *targ;
 

@@ -95,7 +95,7 @@ void list_assign(PARROT_INTERP,
 PARROT_API
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
-List * list_clone(PARROT_INTERP, NOTNULL(const List *other))
+List * list_clone(PARROT_INTERP, ARGIN(const List *other))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -125,7 +125,7 @@ void list_insert(PARROT_INTERP,
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
-INTVAL list_length(SHIM_INTERP, NOTNULL(const List *list))
+INTVAL list_length(SHIM_INTERP, ARGIN(const List *list))
         __attribute__nonnull__(2);
 
 PARROT_API

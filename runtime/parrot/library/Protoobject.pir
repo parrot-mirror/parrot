@@ -7,16 +7,15 @@ Protoobject.pir - PIR implementation for creating protoobjects
     load_bytecode 'Protoobject.pbc'
     .local pmc protomaker, fooclass, fooproto
 
-    # create a protoobject for class Foo
-    protomaker = new 'Protomaker'
+    # create a protoobject for existing class Foo
+    protomaker = get_hll_global 'Protomaker'
     fooclass = get_class 'Foo'
-    fooproto = protoobj.'new_proto'(fooclass)
+    fooproto = protomaker.'new_proto'(fooclass)
 
     # create a subclass 'NS::Bar' from 'Foo' with attributes
-    .local pmc barclass, barproto
-    protoobj = new 'Protomaker'
+    .local pmc bclass, bproto
     fooclass = get_class 'Foo'
-    (barclass, barproto) = protoobj.'new_subclass'(fooclass, 'NS::Bar', '$attr')
+    (bclass, bproto) = protomaker.'new_subclass'(fooclass, 'NS::Bar', '$attr')
 
 =head1 DESCRIPTION
 
@@ -46,14 +45,29 @@ the appropriate namespace and returned.
 .namespace [ 'Protomaker' ]
 
 .sub '__onload' :init :load
-    $P0 = newclass 'Protomaker'
+    $P0 = newclass 'Protoobject'
+
+    $P0 = subclass $P0, 'Protomaker'
     $P1 = new 'Protomaker'
-    $P1.'new_proto'($P0)
+    set_hll_global 'Protomaker', $P1
 .end
 
 
 .sub 'new_proto' :method
     .param pmc class
+
+    ##  make sure we really have a class
+    $I0 = isa class, 'Class'
+    if $I0 goto have_class
+    class = get_class class
+  have_class:
+
+    ##  add Protoobject as a parent class
+    $I0 = isa class, 'Protoobject'
+    if $I0 goto protoclass_done
+    $P0 = get_class 'Protoobject'
+    class.'add_parent'($P0)
+  protoclass_done:
 
     #  create a protoobject
     .local pmc protoobject
@@ -115,6 +129,23 @@ protoobject.
     .local pmc subp
     subp = self.'new_proto'(subc)
     .return (subc, subp)
+.end
+
+
+.namespace ['Protoobject']
+
+.sub 'new' :method
+    $P0 = typeof self
+    $P1 = new $P0
+    .return ($P1)
+.end
+
+.sub 'WHAT' :method
+    $P0 = typeof self
+    $S0 = $P0.'name'()
+    $P0 = split '::', $S0
+    $S0 = pop $P0
+    .return ($S0)
 .end
 
 # Local Variables:

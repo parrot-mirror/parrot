@@ -54,8 +54,12 @@ src/builtins/op.pir - Perl6 builtin operators
 ## symbolic unary
 .sub 'prefix:!'
     .param pmc a
-    $I0 = isfalse a
-    .return ($I0)
+    if a goto a_true
+    $P0 = get_hll_global ['Bool'], 'True'
+    .return ($P0)
+  a_true:
+    $P0 = get_hll_global ['Bool'], 'False'
+    .return ($P0)
 .end
 
 
@@ -88,12 +92,12 @@ src/builtins/op.pir - Perl6 builtin operators
 
 .sub 'prefix:?'
     .param pmc a
-
-    .local pmc bool
-    bool = new .Perl6Bool
-    $I0 = istrue a
-    assign bool, $I0
-    .return (bool)
+    if a goto a_true
+    $P0 = get_hll_global ['Bool'], 'False'
+    .return ($P0)
+  a_true:
+    $P0 = get_hll_global ['Bool'], 'True'
+    .return ($P0)
 .end
 
 
@@ -146,7 +150,7 @@ src/builtins/op.pir - Perl6 builtin operators
 .sub 'infix:xx'
     .param string a
     .param int b
-    $P0 = new ResizablePMCArray
+    $P0 = new 'ResizablePMCArray'
   lp:
     unless b, ex
     push $P0, a

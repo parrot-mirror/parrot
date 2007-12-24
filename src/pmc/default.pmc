@@ -11,7 +11,7 @@ src/pmc/default.pmc - Abstract root class
 These are the vtable functions for the default PMC class.
 
 All methods which are not defined here get a default implementation
-generated from F<vtable.tbl> by F<tools/build/pmc2c.pl>.
+generated from F<src/vtable.tbl> by F<tools/build/pmc2c.pl>.
 
 =head2 Functions
 
@@ -23,7 +23,7 @@ generated from F<vtable.tbl> by F<tools/build/pmc2c.pl>.
 
 #include "parrot/parrot.h"
 
-#define INT2KEY(i,k) key_new_integer((i), (k))
+#define INT2KEY(i, k) key_new_integer((i), (k))
 
 /* undef 'interface', because msvc is craptastic */
 #undef interface
@@ -100,7 +100,7 @@ check_set_std_props(PARROT_INTERP, PMC *pmc, STRING *key, PMC *value)
     /*
      * s2 in string_compare is freed here
      */
-    if (!string_compare(interp, key, string_from_literal(interp, "_ro"))) {
+    if (!string_compare(interp, key, CONST_STRING(interp, "_ro"))) {
 #endif
         /* pmc should set/clear readonly */
         const INTVAL on = VTABLE_get_bool(interp, value);
@@ -141,8 +141,7 @@ propagate_std_props(PARROT_INTERP, PMC *self, PMC *prop_hash) {
     if (self->vtable->flags & (VTABLE_IS_CONST_FLAG | VTABLE_IS_READONLY_FLAG)){
         PMC * const pmc_true  = pmc_new(interp, enum_class_Integer);
         PMC_int_val(pmc_true) = 1;
-        VTABLE_set_pmc_keyed_str(interp, prop_hash,
-            string_from_literal(interp, "_ro"), pmc_true);
+        VTABLE_set_pmc_keyed_str(interp, prop_hash, CONST_STRING(interp, "_ro"), pmc_true);
     }
 }
 
@@ -180,7 +179,7 @@ looking at its prophash. Returns C<PMCNULL> if not, returns the value otherwise.
 static PMC*
 check_get_std_props(PARROT_INTERP, PMC *self, STRING *key) {
     if ((self->vtable->flags & (VTABLE_IS_CONST_FLAG | VTABLE_IS_READONLY_FLAG))
-        &&!string_compare(interp, key, string_from_literal(interp, "_ro"))) {
+        &&!string_compare(interp, key, CONST_STRING(interp, "_ro"))) {
         PMC * const ret_val  = pmc_new(interp, enum_class_Integer);
         PMC_int_val(ret_val) = 1;
         return ret_val;
@@ -615,7 +614,7 @@ Returns the address of the PMC.
 
 /*
 
-=item C<INTVAL is_same(PMC *value)>
+=item C<INTVAL is_same(const PMC *value)>
 
 Returns whether the PMC is numerically equal to C<value>.
 
@@ -623,7 +622,7 @@ Returns whether the PMC is numerically equal to C<value>.
 
 */
 
-    INTVAL is_same(PMC *value) {
+    INTVAL is_same(const PMC *value) {
         return SELF == value;
     }
 
@@ -640,7 +639,7 @@ Defaults fall back to C<set_pmc> and C<set_string_native>.
 */
 
     void assign_pmc(PMC *value) {
-        STRING * const undef = string_from_literal(INTERP, "Undef");
+        STRING * const undef = CONST_STRING(INTERP, "Undef");
 
         if (VTABLE_isa(INTERP, value, undef))
             pmc_reuse(INTERP, SELF, value->vtable->base_type, 0);
@@ -982,7 +981,7 @@ Look for NCI methods and properties.
          */
         if (SELF->pmc_ext && PMC_metadata(SELF)) {
              const HashBucket * const b =
-                parrot_hash_get_bucket(INTERP, (Hash *)PMC_metadata(SELF),name);
+                parrot_hash_get_bucket(INTERP, (Hash *)PMC_metadata(SELF), name);
 
              if (b)
                  p = (PMC *)b->value;

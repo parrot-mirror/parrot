@@ -1,21 +1,27 @@
-.namespace
+## $Id$
 
-.sub __onload :init :load
-    $P0 = get_class 'Perl6Str'
-    set_global 'Str', $P0
+=head1 TITLE
+
+Str - Perl 6 strings
+
+=head1 DESCRIPTION
+
+This file sets up the C<Perl6Str> PMC type (from F<src/pmc/perl6str.pmc>)
+as the Perl 6 C<Str> class.
+
+=cut
+
+.namespace ['Perl6Str']
+
+.sub 'onload' :anon :init :load
+    $P0 = get_hll_global ['Perl6Object'], 'make_proto'
+    $P0('Perl6Str', 'Str')
 .end
 
-.namespace [ 'Perl6Str' ]
 
-.sub 'isa' :method
-    .param string x
-    $I0 = iseq x, 'Str'
-    .return ($I0)
-.end
-
-.sub 'WHAT' :method
-    $P0 = get_class 'Perl6Str'
-    .return ($P0)
+.sub 'ACCEPTS' :method
+    .param string topic
+    .return 'infix:eq'(topic, self)
 .end
 
 # Local Variables:

@@ -73,6 +73,7 @@ Description of the test.
 
     # populate the list of test files
     push test_files, 'rx_metachars'
+    push test_files, 'rx_quantifiers'
     push test_files, 'rx_backtrack'
     push test_files, 'rx_charclass'
     push test_files, 'rx_subrules'
@@ -270,8 +271,8 @@ Description of the test.
     print "'\n"
 
   thrown:
-    .sym pmc exception
-    .sym string message
+    .local pmc exception
+    .local string message
     get_results '0,0', exception, message
     say message
     # remove /'s

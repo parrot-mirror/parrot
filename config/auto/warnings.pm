@@ -37,6 +37,8 @@ sub _init {
     return \%data;
 }
 
+# potential addition? -fvisibility=hidden
+
 our @potential_warnings = qw(
     -falign-functions=16
     -mno-accumulate-outgoing-args
@@ -62,12 +64,17 @@ our @potential_warnings = qw(
     -Winit-self
     -Winline
     -Winvalid-pch
+    -Wlogical-op
     -Wmain
     -Wmissing-braces
     -Wmissing-declarations
     -Wmissing-field-initializers
+    -Wmissing-include-dirs
     -Wmissing-prototypes
     -Wnested-externs
+    -Wno-accumulate-outgoing-args
+    -Wno-endif-labels
+    -Wno-shadow
     -Wno-unused
     -Wnonnull
     -Wold-style-definition
@@ -81,20 +88,58 @@ our @potential_warnings = qw(
     -Wstrict-aliasing=2
     -Wstrict-prototypes
     -Wswitch
-    -Wnested-externs
+    -Wswitch-default
+    -Wtrigraphs
     -Wundef
     -Wunknown-pragmas
+    -Wvariadic-macros
     -Wwrite-strings
     -Wnot-a-real-warning
 );
+
+our @cage_warnings = qw(
+    -std=c89
+    -Wconversion
+    -Werror-implicit-function-declaration
+    -Wformat=2
+    -Wlarger-than-4096
+    -Wlong-long
+    -Wmissing-format-attribute
+    -Wmissing-noreturn
+    -Wno-deprecated-declarations
+    -Wno-div-by-zero
+    -Wno-format-extra-args
+    -Wno-import
+    -Wno-multichar
+    -Wno-pointer-sign
+    -Wpadded
+    -Wredundant-decls
+    -Wswitch-enum
+    -Wsystem-headers
+    -Wunreachable-code
+    -Wunused-function
+    -Wunused-label
+    -Wunused-parameter
+    -Wunused-value
+    -Wunused-variable
+    );
+
 our $verbose;
 
 sub runstep {
     my ( $self, $conf ) = @_;
 
     $verbose = $conf->options->get('verbose');
-    print $/ if $verbose;
+    print "\n" if $verbose;
 
+    # add on some extra warnings if requested
+    push @potential_warnings, @cage_warnings
+        if $conf->options->get('cage');
+
+    push @potential_warnings, '-Wlarger-than-4096'
+        if $conf->options->get('maintainer');
+
+    # now try out our warnings
     for my $maybe_warning (@potential_warnings) {
         $self->try_warning( $conf, $maybe_warning );
     }
@@ -118,7 +163,7 @@ sub try_warning {
 
     my $output_file = 'test.cco';
 
-    $verbose and print "trying attribute '$warning'$/";
+    $verbose and print "trying attribute '$warning'\n";
 
     my $cc = $conf->option_or_data('cc');
     cc_gen('config/auto/warnings/test_c.in');
@@ -127,24 +172,24 @@ sub try_warning {
     my $tryflags = "$ccflags $warning";
 
     my $command_line = Parrot::Configure::Step::_build_compile_command( $cc, $tryflags );
-    $verbose and print "  ", $command_line, $/;
+    $verbose and print "  ", $command_line, "\n";
 
     # Don't use cc_build, because failure is expected.
     my $exit_code =
         Parrot::Configure::Step::_run_command( $command_line, $output_file, $output_file );
-    $verbose and print "  exit code: $exit_code$/";
+    $verbose and print "  exit code: $exit_code\n";
 
     $conf->data->set( $warning => !$exit_code | 0 );
 
     return if $exit_code;
 
     my $output = Parrot::BuildUtil::slurp_file($output_file);
-    $verbose and print "  output: $output$/";
+    $verbose and print "  output: $output\n";
 
     if ( $output !~ /error|warning|not supported/i ) {
         $conf->data->set( ccflags => $tryflags );
         my $ccflags = $conf->data->get("ccflags");
-        $verbose and print "  ccflags: $ccflags$/";
+        $verbose and print "  ccflags: $ccflags\n";
         return 1;
     }
     else {

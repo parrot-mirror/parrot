@@ -47,10 +47,7 @@ See "WMLScript Standard Libraries Specification".
 .end
 
 .sub 'not_implemented'
-    .local pmc ex
-    new ex, 'Exception'
-    ex['_message'] =  "not implemented"
-    throw ex
+    die "not implemented"
 .end
 
 =head2 Helpers
@@ -85,7 +82,6 @@ helper for CALL_URL* opcodes.
 .sub 'find_lib_url'
     .param string url
     .param string function
-    .local pmc ex
     .local string content
     content = load_script(url)
     unless content goto L1
@@ -118,26 +114,19 @@ helper for CALL_URL* opcodes.
     .get_results (e, s)
     print s
     print "\n"
-    new ex, 'Exception'
     $S0 = "verification failed (can't translate '"
     $S0 .= url
     $S0 .= "')"
-    ex['_message'] = $S0
-    throw ex
+    die $S0
   _handler_2:
-    new ex, 'Exception'
     $S0 = "external function '"
     $S0 .= function
     $S0 .= "' not found in '"
     $S0 .= url
     $S0 .= "'"
-    ex['_message'] = $S0
-    throw ex
+    die $S0
   L1:
-    new ex, 'Exception'
-    $S0 = "unable to load compilation unit"
-    ex['_message'] = $S0
-    throw ex
+    die "unable to load compilation unit"
 .end
 
 .sub 'load_script'

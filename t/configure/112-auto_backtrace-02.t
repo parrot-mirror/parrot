@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 12;
+use Test::More tests => 15;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -23,14 +23,13 @@ my $conf = Parrot::Configure->new();
 
 test_step_thru_runstep($conf, q{init::defaults}, $args);
 
-my ($task, $step_name, @step_params, $step, $ret);
+my ($task, $step_name, $step, $ret);
 my $pkg = q{auto::backtrace};
 
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
 $task = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok(defined $step, "$step_name constructor returned defined value");
@@ -40,8 +39,14 @@ ok($step->description(), "$step_name has description");
 my $error = q{mock_error};
 ok($step->_evaluate_backtrace($conf, $error),
     "_evaluate_backtrace returned true value");
-
 is($step->result, 'no', "Got expected result");
+
+$error = q{};
+ok($step->_evaluate_backtrace($conf, $error),
+    "_evaluate_backtrace returned true value");
+is($step->result, 'yes', "Got expected result");
+ok($conf->data->get('glibc_backtrace'),
+    "glibc_backtrace set as expected");
 
 pass("Completed all tests in $0");
 

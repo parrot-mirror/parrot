@@ -10,7 +10,7 @@ $Id$
 
 This transformation takes an abstract syntax tree as generated 
 by phc_xml_to_past_xml.xsl. It generates a PIR-script that creates
-a PAST-pm data structure and runs it with the help of a HLLCompiler.
+a PAST data structure and runs it with the help of a PCT::HLLCompiler.
 
 -->
 <xsl:output method='text' />
@@ -59,12 +59,11 @@ a PAST-pm data structure and runs it with the help of a HLLCompiler.
     # pir = past_node_<xsl:value-of select="generate-id(.)" />.'compile'( 'target' => 'pir' )
     # print pir
                                                                   
-    .local pmc pastcompiler, eval_past
-    pastcompiler = new 'HLLCompiler'
-    pastcompiler.'removestage'('parse')
-    pastcompiler.'removestage'('past')
-    eval_past = pastcompiler.'compile'(past_node_<xsl:value-of select="generate-id(.)" />)
-    eval_past()
+    .local pmc past_compiler
+    past_compiler = new [ 'PCT::HLLCompiler' ]
+    $P0 = split ' ', 'post pir evalpmc'
+    past_compiler.'stages'( $P0 )
+    past_compiler.'eval'(past_node_<xsl:value-of select="generate-id(.)" />)
 
 .end                                                              
                                                                   
@@ -95,16 +94,15 @@ a PAST-pm data structure and runs it with the help of a HLLCompiler.
   # start of past:Val
   .local pmc past_node_<xsl:value-of select="generate-id(.)" />
   past_node_<xsl:value-of select="generate-id(.)" /> = new 'PAST::Val'                             
-  <xsl:apply-templates select="@name"/>
-  <xsl:apply-templates select="@ctype"/>
-  <xsl:apply-templates select="@vtype"/>
+  <xsl:apply-templates select="@value"/>
+  <xsl:apply-templates select="@returns"/>
   past_node_<xsl:value-of select="generate-id(..)" />.'push'( past_node_<xsl:value-of select="generate-id(.)" /> )      
   # end of past:Val
 
 </xsl:template>
 
 <!-- handle attributes -->
-<xsl:template match="@name">
+<xsl:template match="@value">
   <xsl:choose>
     <xsl:when test="../@encoding = 'base64'" >
       .local string decoded
@@ -126,12 +124,15 @@ a PAST-pm data structure and runs it with the help of a HLLCompiler.
 
 .sub 'php_init' :load :init
 
-  load_bytecode 'languages/plumhead/src/common/plumheadlib.pbc'
-  load_bytecode 'PAST-pm.pbc'                                        
-  load_bytecode 'Parrot/HLLCompiler.pbc'
-  load_bytecode 'MIME/Base64.pbc'              
-  load_bytecode 'dumper.pbc'
-  load_bytecode 'CGI/QueryHash.pbc'
+    load_bytecode 'PGE.pbc'
+    load_bytecode 'PGE/Text.pbc'
+    load_bytecode 'PGE/Util.pbc'
+    load_bytecode 'PGE/Dumper.pbc'
+    load_bytecode 'PCT.pbc'
+    load_bytecode 'languages/plumhead/src/common/plumheadlib.pbc'
+    load_bytecode 'MIME/Base64.pbc'              
+    load_bytecode 'dumper.pbc'
+    load_bytecode 'CGI/QueryHash.pbc'
 
 .end
 

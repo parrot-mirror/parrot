@@ -121,7 +121,7 @@ main(int argc, char *argv[])
                 break;
             default:
                 fprintf(stderr, "Unknown option: '%c'\n", argv[0][1]);
-                break;
+                exit(EXIT_FAILURE);
         }
         /* goto next command line argument */
         argv++;
@@ -162,6 +162,8 @@ main(int argc, char *argv[])
     else {
         fprintf(stderr, "There were %d errors\n", lexer->parse_errors);
     }
+
+    print_subs(lexer);
 
     /* clean up after playing */
     yylex_destroy(yyscanner);

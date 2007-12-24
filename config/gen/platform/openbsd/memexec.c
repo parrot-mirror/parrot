@@ -11,7 +11,7 @@ memexec.c
 
 =head1 DESCRIPTION
 
-TODO
+RT#48264
 
 =head2 Functions
 
@@ -53,7 +53,7 @@ mem_alloc_executable(size_t size)
 =item C<void
 mem_free_executable(void *p)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

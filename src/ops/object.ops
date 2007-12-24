@@ -62,7 +62,8 @@ op callmethodcc(invar PMC, in STR) :object_base {
   method_pmc = VTABLE_find_method(interp, object, meth);
   if (PMC_IS_NULL(method_pmc)) {
     real_exception(interp, next, METH_NOT_FOUND,
-        "Method '%Ss' not found", meth);
+        "Method '%Ss' not found for invocant of class '%Ss'", meth,
+        VTABLE_get_string(interp, VTABLE_get_class(interp, object)));
   }
   interp->current_object = object;
   interp->current_cont = NEED_CONTINUATION;
@@ -98,7 +99,8 @@ op callmethod(invar PMC, in STR, invar PMC) :object_base {
   method_pmc = VTABLE_find_method(interp, object, meth);
   if (PMC_IS_NULL(method_pmc)) {
     real_exception(interp, next, METH_NOT_FOUND,
-        "Method '%Ss' not found", meth);
+        "Method '%Ss' not found for invocant of class '%Ss'", meth,
+        VTABLE_get_string(interp, VTABLE_get_class(interp, object)));
   }
   interp->current_object = object;
   interp->current_cont = $3;
@@ -132,7 +134,8 @@ op tailcallmethod(invar PMC, in STR) :object_base {
   method_pmc = VTABLE_find_method(interp, object, meth);
   if (PMC_IS_NULL(method_pmc)) {
     real_exception(interp, next, METH_NOT_FOUND,
-        "Method '%Ss' not found", meth);
+        "Method '%Ss' not found for invocant of class '%Ss'", meth,
+        VTABLE_get_string(interp, VTABLE_get_class(interp, object)));
   }
   interp->current_cont = CONTEXT(interp->ctx)->current_cont;
   PObj_get_FLAGS(interp->current_cont) |= SUB_FLAG_TAILCALL;
@@ -365,7 +368,7 @@ inline op getclass(out PMC, in STR) :object_classes {
 
   goto ADDRESS(next);
 /*  real_exception(interp, NULL, UNIMPLEMENTED,
-        "The 'getclass' opcode has been deprecated, use 'get_class'");*/
+        "The 'getclass' opcode has been deprecated, use 'get_class'. See RT #47972.");*/
 }
 
 inline op getclass(out PMC, in PMC) :object_classes {
@@ -380,7 +383,7 @@ inline op getclass(out PMC, in PMC) :object_classes {
     $1 = _class;
   goto ADDRESS(next);
 /*  real_exception(interp, NULL, UNIMPLEMENTED,
-        "The 'getclass' opcode has been deprecated, use 'get_class'");*/
+        "The 'getclass' opcode has been deprecated, use 'get_class'. See RT #47972.");*/
 }
 
 ###############################################################################
@@ -415,18 +418,6 @@ inline op class(out PMC, invar PMC) :object_classes {
     $1 = VTABLE_get_class(interp, $2);
     goto NEXT();
 }
-
-=item B<classname>(out STR, invar PMC)
-
-Get the class name for the class in $2 and put it in $1.
-
-=cut
-
-inline op classname(out STR, invar PMC) :object_base {
-    $1 = VTABLE_name(interp, $2);
-    goto NEXT();
-}
-
 
 ##################################################
 
@@ -518,7 +509,8 @@ class name, namespace, or key PMC.
 
 inline op getattribute(out PMC, invar PMC, in INT) :object_classes {
     real_exception(interp, NULL, UNIMPLEMENTED,
-            "Integer access to attributes has been deprecated, use named attribute access instead");
+            "Integer access to attributes has been deprecated, "
+            "use named attribute access instead. See RT #48729");
 }
 
 inline op getattribute(out PMC, invar PMC, in STR) :object_classes {
@@ -547,7 +539,8 @@ child class.) The parent $2 is a class name, namespace, or key PMC.
 
 inline op setattribute(invar PMC, in INT, invar PMC) :object_classes {
     real_exception(interp, NULL, UNIMPLEMENTED,
-            "Integer access to attributes has been deprecated, use named attribute access instead");
+            "Integer access to attributes has been deprecated, "
+            "use named attribute access instead. See RT #48729");
 }
 
 inline op setattribute(invar PMC, in STR, invar PMC) :object_classes {
@@ -569,7 +562,8 @@ Throws an exception if $3 isn't in $2's hierarchy.
 
 op classoffset(out INT, invar PMC, in STR) :object_classes {
     real_exception(interp, NULL, UNIMPLEMENTED,
-            "The 'classoffset' opcode has been deprecated, use named attribute access instead");
+            "The 'classoffset' opcode has been deprecated, "
+            "use named attribute access instead. See RT #48727");
 }
 
 

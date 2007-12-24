@@ -262,7 +262,6 @@ use strict;
 use warnings;
 
 use Cwd;
-use Data::Dumper;
 use File::Basename;
 use File::Spec;
 use Memoize ();
@@ -415,7 +414,7 @@ sub slurp_file {
     open( my $SLURP, '<', $file_name ) or die "open '$file_name': $!";
     local $/ = undef;
     my $file = <$SLURP> . '';
-    $file =~ s/\cM\cJ/\n/g;
+    $file    =~ s/\cM\cJ/\n/g;
     close $SLURP;
 
     return $file;
@@ -452,7 +451,8 @@ sub generate_languages_functions {
     foreach my $func ( keys %test_map ) {
 
         my $test_sub = sub {
-            my $self = shift;
+            local *__ANON__ = $func;
+            my $self        = shift;
             my ( $code, $expected, $desc, %options ) = @_;
 
             # set a todo-item for Test::Builder to find
@@ -628,12 +628,6 @@ sub _run_test_file {
         }
     }
 
-    if ( $func =~ /^pbc_output_/ && $args =~ /-r / ) {
-
-        # native tests with --run-pbc don't make sense
-        return $builder->skip("no native tests with -r");
-    }
-
     my ( $exit_code, $cmd );
     unless ($run_exec) {
         if ( $args =~ s/--run-pbc// || $args =~ s/-r // ) {
@@ -693,7 +687,15 @@ sub _generate_test_functions {
         push @EXPORT, $func;
 
         my $test_sub = sub {
+            local *__ANON__                        = $func;
             my ( $code, $expected, $desc, %extra ) = @_;
+            my $args                               = $ENV{TEST_PROG_ARGS} || '';
+
+            if ( $func =~ /^pbc_output_/ && $args =~ /-r / ) {
+                # native tests with --run-pbc don't make sense
+                return $builder->skip("no native tests with -r");
+            }
+
             my ( $out_f, $cmd, $exit_code ) = _run_test_file( $func, @_ );
 
             my $meth        = $parrot_test_map{$func};
@@ -745,6 +747,7 @@ sub _generate_test_functions {
         no strict 'refs';
 
         my $test_sub = sub {
+            local *__ANON__                        = $func;
             my ( $code, $expected, $desc, %extra ) = @_;
 
             # Strange Win line endings
@@ -833,6 +836,7 @@ sub _generate_test_functions {
         push @EXPORT, $func;
 
         my $test_sub = sub {
+            local *__ANON__              = $func;
             my ( $language, @remaining ) = @_;
 
             my $meth = $language_test_map{$func};
@@ -891,6 +895,7 @@ sub _generate_test_functions {
         push @EXPORT, $func;
 
         my $test_sub = sub {
+            local *__ANON__                        = $func;
             my ( $example_f, $expected, @options ) = @_;
 
             my %lang_for_extension = (
@@ -933,6 +938,7 @@ sub _generate_test_functions {
         push @EXPORT, $func;
 
         my $test_sub = sub {
+            local *__ANON__                            = $func;
             my ( $source, $expected, $desc, %options ) = @_;
 
             # $test_no will be part of temporary files

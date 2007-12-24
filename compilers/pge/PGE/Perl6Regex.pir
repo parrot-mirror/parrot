@@ -241,8 +241,11 @@ needed for compiling regexes.
     optable.newtok('infix:&',  'looser'=>'infix:', 'nows'=>1, 'match'=>'PGE::Exp::Conj')
     optable.newtok('infix:|',  'looser'=>'infix:&', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
     optable.newtok('prefix:|', 'equiv'=>'infix:|', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
+    optable.newtok('infix:||', 'equiv'=>'infix:|', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
+    optable.newtok('prefix:||', 'equiv'=>'infix:|', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
 
     optable.newtok('infix::=', 'tighter'=>'infix:', 'assoc'=>'right', 'match'=>'PGE::Exp::Alias')
+    optable.newtok('infix:=', 'tighter'=>'infix:', 'assoc'=>'right', 'match'=>'PGE::Exp::Alias')
 
     $P0 = get_global 'parse_modifier'
     optable.newtok('prefix::', 'looser'=>'infix:|', 'nows'=>1, 'parsed'=>$P0)
@@ -368,7 +371,10 @@ Parses terms beginning with backslash.
   term_metachar:
     .local int isnegated
     isnegated = is_cclass .CCLASS_UPPERCASE, initchar, 0
-    $S0 = downcase initchar
+    ## $S0 = downcase     FIXME: RT# 48108
+            $I0 = ord initchar
+            $S0 = chr $I0
+            $S0 = downcase $S0
     if $S0 == 'x' goto scan_xdo
     if $S0 == 'o' goto scan_xdo
     $P0 = get_global '%esclist'
@@ -498,50 +504,26 @@ combinations.
     max = 1
     suffixpos = find_not_cclass .CCLASS_WHITESPACE, target, pos, lastpos
 
-    #   The postfix:<::> operator may bring us here when it's really a
-    #   term:<::> term.  So, we check for that here and fail this match
-    #   if we really have a cut term.
-    if key != ':' goto quant
-    $S0 = substr target, pos, 1
-    if $S0 == ':' goto end
-    mob['backtrack'] = PGE_BACKTRACK_NONE
-    goto quant_suffix_1
-
-  quant:
-    if key == '**' goto quant_closure
+    if key == '**' goto quant_suffix
+    if key == ':' goto quant_cut
     if key == '+' goto quant_max
+    ##  quantifier is '?' or '*'
     min = 0
   quant_max:
     if key == '?' goto quant_suffix
+    ##  quantifier is '+' or '*'
     max = PGE_INF
     goto quant_suffix
-  quant_closure:
-    pos = find_not_cclass .CCLASS_WHITESPACE, target, pos, lastpos
+
+  quant_cut:
+    #   The postfix:<:> operator may bring us here when it's really a
+    #   term:<::> term.  So, we check for that here and fail this match
+    #   if we really have a cut term.
+    if key != ':' goto quant_suffix
     $S0 = substr target, pos, 1
-    if $S0 != "{" goto err_closure
-    inc pos
-    $I1 = find_not_cclass .CCLASS_NUMERIC, target, pos, lastpos
-    if $I1 <= pos goto err_closure
-    $S0 = substr target, pos
-    min = $S0
-    max = $S0
-    pos = $I1
-    $S0 = substr target, pos, 2
-    if $S0 != '..' goto quant_closure_end
-    pos += 2
-    max = PGE_INF
-    $S0 = substr target, pos, 1
-    if $S0 == '.' goto quant_closure_end
-    $I1 = find_not_cclass .CCLASS_NUMERIC, target, pos, lastpos
-    if $I1 <= pos goto err_closure
-    $S0 = substr target, pos
-    max = $S0
-    pos = $I1
-  quant_closure_end:
-    $S0 = substr target, pos, 1
-    if $S0 != "}" goto err_closure
-    inc pos
-    suffixpos = find_not_cclass .CCLASS_WHITESPACE, target, pos, lastpos
+    if $S0 == ':' goto end
+    mob['backtrack'] = PGE_BACKTRACK_NONE
+
   quant_suffix:
     suffix = substr target, suffixpos, 2
     if suffix == ':?' goto quant_eager
@@ -550,7 +532,7 @@ combinations.
     suffix = substr target, suffixpos, 1
     if suffix == '?' goto quant_eager
     if suffix == '!' goto quant_greedy
-    if suffix != ':' goto quant_set
+    if suffix != ':' goto quant
   quant_none:
     mob['backtrack'] = PGE_BACKTRACK_NONE
     goto quant_skip_suffix
@@ -562,6 +544,46 @@ combinations.
   quant_skip_suffix:
     $I0 = length suffix
     pos = suffixpos + $I0
+
+  quant:
+    if key != '**' goto quant_set
+  quant_closure:
+    pos = find_not_cclass .CCLASS_WHITESPACE, target, pos, lastpos
+    .local int isconst
+    isconst = is_cclass .CCLASS_NUMERIC, target, pos
+    if isconst goto brace_skip
+    $S0 = substr target, pos, 1
+    if $S0 != "{" goto err_closure
+    inc pos
+  brace_skip:
+    $I1 = find_not_cclass .CCLASS_NUMERIC, target, pos, lastpos
+    if $I1 <= pos goto err_closure
+    $S0 = substr target, pos
+    min = $S0
+    max = $S0
+    pos = $I1
+    $S0 = substr target, pos, 2
+    if $S0 != '..' goto quant_closure_end
+    pos += 2
+    max = PGE_INF
+    $S0 = substr target, pos, 1
+    if $S0 != '*' goto quant_range_end
+    inc pos
+    goto quant_closure_end
+  quant_range_end:
+    $I1 = find_not_cclass .CCLASS_NUMERIC, target, pos, lastpos
+    if $I1 <= pos goto err_closure
+    $S0 = substr target, pos
+    max = $S0
+    pos = $I1
+  quant_closure_end:
+    if isconst goto brace_skip2
+    $S0 = substr target, pos, 1
+    if $S0 != "}" goto err_closure
+    inc pos
+  brace_skip2:
+    suffixpos = find_not_cclass .CCLASS_WHITESPACE, target, pos, lastpos
+
   quant_set:
     mob['min'] = min
     mob['max'] = max

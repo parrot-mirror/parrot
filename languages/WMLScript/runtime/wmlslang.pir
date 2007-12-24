@@ -528,11 +528,7 @@ None (this function aborts the interpretation).
 
 .sub '_lang_abort' :anon
     .param pmc value
-    .local pmc ex
-    new ex, 'Exception'
-    $S0 = value
-    ex['_message'] = $S0
-    throw ex
+    die value
 .end
 
 

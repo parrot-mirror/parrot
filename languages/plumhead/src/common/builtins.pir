@@ -21,8 +21,8 @@
 # TODO: put that into php_builtins.pir
 .sub 'echo'
     .param pmc list            :slurpy
-    .local pmc iter
 
+    .local pmc iter
     iter = new .Iterator, list
   iter_loop:
     unless iter goto iter_end

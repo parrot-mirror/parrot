@@ -35,7 +35,7 @@ whichever is more convenient.
 
 =item C<void Parrot_setenv(const char *name, const char *value)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -59,7 +59,7 @@ Parrot_setenv(const char *name, const char *value)
                     + 1);        /* string terminator */
 
             if (envstring == NULL) {
-                /* TODO: Shouldn't we tell anyone that we failed? */
+                /* RT#48276: Shouldn't we tell anyone that we failed? */
                 return;
             }
 
@@ -73,7 +73,7 @@ Parrot_setenv(const char *name, const char *value)
                 /* success */
             }
             else {
-                /* TODO: Shouldn't we tell anyone that we failed? */
+                /* RT#48276: Shouldn't we tell anyone that we failed? */
             }
             free(envstring);
         }
@@ -83,16 +83,16 @@ Parrot_setenv(const char *name, const char *value)
 /*
 
 =item C<char *
-Parrot_getenv(NOTNULL(const char *name), NOTNULL(int *free_it))>
+Parrot_getenv(ARGIN(const char *name), NOTNULL(int *free_it))>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
 char *
-Parrot_getenv(NOTNULL(const char *name), NOTNULL(int *free_it))
+Parrot_getenv(ARGIN(const char *name), NOTNULL(int *free_it))
 {
     const DWORD size = GetEnvironmentVariable(name, NULL, 0);
     char *buffer     = NULL;
@@ -114,7 +114,7 @@ Parrot_getenv(NOTNULL(const char *name), NOTNULL(int *free_it))
 
 =item C<void Parrot_unsetenv(const char *name)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

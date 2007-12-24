@@ -48,27 +48,25 @@ static long _lrand48(void);
 static long _mrand48(void);
 static long _nrand48(_rand_buf buf);
 static void _srand48(long seed);
-static void move_reg(int from, int dest, NOTNULL(parrot_prm_context* c))
+static void move_reg(int from, int dest, ARGIN(const parrot_prm_context* c))
         __attribute__nonnull__(3);
 
 static void next_rand(_rand_buf X);
 static void process_cycle_without_exit(
     int node_index,
-    NOTNULL(parrot_prm_context* c))
+    ARGIN(parrot_prm_context* c))
         __attribute__nonnull__(2);
 
 static void rec_climb_back_and_mark(
     int node_index,
-    NOTNULL(parrot_prm_context* c))
+    ARGIN(parrot_prm_context* c))
         __attribute__nonnull__(2);
 
 /* HEADERIZER END: static */
 
 /*
 
-=item C<PARROT_CONST_FUNCTION
-INTVAL
-intval_mod(INTVAL i2, INTVAL i3)>
+=item C<INTVAL intval_mod>
 
 NOTE: This "corrected mod" algorithm is based on the C code on page 70
 of [1]. Assuming correct behavior of the built-in mod operator (%) with
@@ -126,9 +124,7 @@ intval_mod(INTVAL i2, INTVAL i3)
 
 /*
 
-=item C<PARROT_CONST_FUNCTION
-FLOATVAL
-floatval_mod(FLOATVAL n2, FLOATVAL n3)>
+=item C<FLOATVAL floatval_mod>
 
 Returns C<n2 mod n3>.
 
@@ -197,7 +193,7 @@ static unsigned short c = C;
 
 /*
 
-=item C<static void next_rand(_rand_buf X)>
+=item C<static void next_rand>
 
 Returns the next random number in C<X>.
 
@@ -229,7 +225,7 @@ next_rand(_rand_buf X)
 
 /*
 
-=item C<static FLOATVAL _erand48(_rand_buf buf)>
+=item C<static FLOATVAL _erand48>
 
 Returns a C<double> in the interval C<[0.0, 1.0)>.
 
@@ -248,7 +244,7 @@ _erand48(_rand_buf buf)
 
 /*
 
-=item C<static FLOATVAL _drand48(void)>
+=item C<static FLOATVAL _drand48>
 
 Returns a C<double> in the interval C<[0.0, 1.0)>.
 
@@ -264,7 +260,7 @@ _drand48(void)
 
 /*
 
-=item C<static long _jrand48(_rand_buf buf)>
+=item C<static long _jrand48>
 
 Returns a C<long> in the interval C<[-2^31, 2^31)>.
 
@@ -283,7 +279,7 @@ _jrand48(_rand_buf buf)
 
 /*
 
-=item C<static long _nrand48(_rand_buf buf)>
+=item C<static long _nrand48>
 
 Returns a C<long> in the interval C<[0, 2^31)>.
 
@@ -299,7 +295,7 @@ _nrand48(_rand_buf buf)
 
 /*
 
-=item C<static long _lrand48(void)>
+=item C<static long _lrand48>
 
 Returns a C<long> in the interval C<[0, 2^31)>.
 
@@ -315,7 +311,7 @@ _lrand48(void)
 
 /*
 
-=item C<static long _mrand48(void)>
+=item C<static long _mrand48>
 
 Returns a C<long> in the interval C<[-2^31, 2^31)>.
 
@@ -331,7 +327,7 @@ _mrand48(void)
 
 /*
 
-=item C<static void _srand48(long seed)>
+=item C<static void _srand48>
 
 Sets the high order 32 bits to the argument C<seed>. The low order 16
 bits are set to the arbitrary value 0x330e.
@@ -373,9 +369,7 @@ _srand48(long seed)
 
 /*
 
-=item C<PARROT_API
-FLOATVAL
-Parrot_float_rand(INTVAL how_random)>
+=item C<FLOATVAL Parrot_float_rand>
 
 Returns a C<FLOATVAL> in the interval C<[0.0, 1.0)>.
 
@@ -396,9 +390,7 @@ Parrot_float_rand(INTVAL how_random)
 
 /*
 
-=item C<PARROT_API
-INTVAL
-Parrot_uint_rand(INTVAL how_random)>
+=item C<INTVAL Parrot_uint_rand>
 
 Returns an C<INTVAL> in the interval C<[0, 2^31)>.
 
@@ -419,9 +411,7 @@ Parrot_uint_rand(INTVAL how_random)
 
 /*
 
-=item C<PARROT_API
-INTVAL
-Parrot_int_rand(INTVAL how_random)>
+=item C<INTVAL Parrot_int_rand>
 
 Returns an C<INTVAL> in the interval C<[-2^31, 2^31)>.
 
@@ -442,9 +432,7 @@ Parrot_int_rand(INTVAL how_random)
 
 /*
 
-=item C<PARROT_API
-INTVAL
-Parrot_range_rand(INTVAL from, INTVAL to, INTVAL how_random)>
+=item C<INTVAL Parrot_range_rand>
 
 Returns an C<INTVAL> in the range C<[from, to]>.
 
@@ -464,7 +452,7 @@ Parrot_range_rand(INTVAL from, INTVAL to, INTVAL how_random)
 
 /*
 
-=item C<PARROT_API void Parrot_srand(INTVAL seed)>
+=item C<void Parrot_srand>
 Seeds the random number generator with C<seed>.
 
 =cut
@@ -486,11 +474,7 @@ Parrot_srand(INTVAL seed)
 
 =over 4
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-void *
-Parrot_make_la(PARROT_INTERP, NOTNULL(PMC *array))>
+=item C<void * Parrot_make_la>
 
 Creates a C array of C<long>s with one more element than the number of
 elements in C<*array>. The elements are then copied from C<*array> to
@@ -506,7 +490,7 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 void *
-Parrot_make_la(PARROT_INTERP, NOTNULL(PMC *array))
+Parrot_make_la(PARROT_INTERP, ARGIN(PMC *array))
 {
     const INTVAL arraylen = VTABLE_elements(interp, array);
     INTVAL cur;
@@ -528,9 +512,7 @@ Parrot_make_la(PARROT_INTERP, NOTNULL(PMC *array))
 
 /*
 
-=item C<PARROT_API
-void
-Parrot_destroy_la(NULLOK(long *array))>
+=item C<void Parrot_destroy_la>
 
 Use this to destroy an array created with C<Parrot_make_la()>.
 
@@ -540,18 +522,14 @@ Use this to destroy an array created with C<Parrot_make_la()>.
 
 PARROT_API
 void
-Parrot_destroy_la(NULLOK(long *array))
+Parrot_destroy_la(ARGINOUT(long *array))
 {
     mem_sys_free(array);
 }
 
 /*
 
-=item C<PARROT_API
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-void *
-Parrot_make_cpa(PARROT_INTERP, NOTNULL(PMC *array))>
+=item C<void * Parrot_make_cpa>
 
 Creates a C array of C<char *>s with one more element than the number of
 elements in C<*array>. The elements are then copied from C<*array> to
@@ -569,7 +547,7 @@ PARROT_API
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void *
-Parrot_make_cpa(PARROT_INTERP, NOTNULL(PMC *array))
+Parrot_make_cpa(PARROT_INTERP, ARGIN(PMC *array))
 {
     const INTVAL arraylen = VTABLE_elements(interp, array);
     INTVAL cur;
@@ -597,9 +575,7 @@ Parrot_make_cpa(PARROT_INTERP, NOTNULL(PMC *array))
 
 /*
 
-=item C<PARROT_API
-void
-Parrot_destroy_cpa(NOTNULL(char **array))>
+=item C<void Parrot_destroy_cpa>
 
 Use this to destroy an array created with C<Parrot_make_cpa()>.
 
@@ -609,7 +585,7 @@ Use this to destroy an array created with C<Parrot_make_cpa()>.
 
 PARROT_API
 void
-Parrot_destroy_cpa(NOTNULL(char **array))
+Parrot_destroy_cpa(ARGINOUT(char **array))
 {
     UINTVAL offset = 0;
     /* Free each piece */
@@ -636,10 +612,7 @@ typedef enum {
 
 /*
 
-=item C<PARROT_API
-PARROT_CANNOT_RETURN_NULL
-PMC*
-tm_to_array(PARROT_INTERP, NOTNULL(const struct tm *tm))>
+=item C<PMC* tm_to_array>
 
 Helper to convert a B<struct tm *> to an Array
 
@@ -650,7 +623,7 @@ Helper to convert a B<struct tm *> to an Array
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PMC*
-tm_to_array(PARROT_INTERP, NOTNULL(const struct tm *tm))
+tm_to_array(PARROT_INTERP, ARGIN(const struct tm *tm))
 {
     PMC * const Array = pmc_new(interp, enum_class_Array);
 
@@ -672,12 +645,9 @@ tm_to_array(PARROT_INTERP, NOTNULL(const struct tm *tm))
 
 /*
 
-=item C<PARROT_API
-INTVAL
-Parrot_byte_index(SHIM_INTERP, NOTNULL(const STRING *base),
-        NOTNULL(const STRING *search), UINTVAL start_offset)>
+=item C<INTVAL Parrot_byte_index>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -685,8 +655,8 @@ TODO: Not yet documented!!!
 
 PARROT_API
 INTVAL
-Parrot_byte_index(SHIM_INTERP, NOTNULL(const STRING *base),
-        NOTNULL(const STRING *search), UINTVAL start_offset)
+Parrot_byte_index(SHIM_INTERP, ARGIN(const STRING *base),
+        ARGIN(const STRING *search), UINTVAL start_offset)
 {
     const char * const str_start  = base->strstart;
     const INTVAL       str_len    = base->strlen;
@@ -718,13 +688,9 @@ Parrot_byte_index(SHIM_INTERP, NOTNULL(const STRING *base),
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-INTVAL
-Parrot_byte_rindex(SHIM_INTERP, NOTNULL(const STRING *base),
-        NOTNULL(const STRING *search), UINTVAL start_offset)>
+=item C<INTVAL Parrot_byte_rindex>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -733,8 +699,8 @@ TODO: Not yet documented!!!
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_byte_rindex(SHIM_INTERP, NOTNULL(const STRING *base),
-        NOTNULL(const STRING *search), UINTVAL start_offset)
+Parrot_byte_rindex(SHIM_INTERP, ARGIN(const STRING *base),
+        ARGIN(const STRING *search), UINTVAL start_offset)
 {
     const INTVAL searchlen = search->strlen;
     const char * const search_start = search->strstart;
@@ -757,8 +723,7 @@ Parrot_byte_rindex(SHIM_INTERP, NOTNULL(const STRING *base),
 
 /*
 
-=item C<static void
-rec_climb_back_and_mark(int node_index, NOTNULL(parrot_prm_context* c))>
+=item C<static void rec_climb_back_and_mark>
 
 Recursive function, used by Parrot_register_move to
 climb back the graph of register moves operations.
@@ -782,7 +747,7 @@ case marks it, and set node_index as its backup.
 */
 
 static void
-rec_climb_back_and_mark(int node_index, NOTNULL(parrot_prm_context* c))
+rec_climb_back_and_mark(int node_index, ARGIN(parrot_prm_context* c))
 {
     const int node = c->dest_regs[node_index];
     const int pred = c->src_regs[node_index];
@@ -807,8 +772,7 @@ rec_climb_back_and_mark(int node_index, NOTNULL(parrot_prm_context* c))
 
 /*
 
-=item C<static void
-process_cycle_without_exit(int node_index, NOTNULL(parrot_prm_context* c))>
+=item C<static void process_cycle_without_exit>
 
 Recursive function, used by Parrot_register_move to handle the case
 of cycles without exits, that are cycles of move ops between registers
@@ -824,7 +788,7 @@ For instance: 1-->2, 2-->3, 3-->1
 */
 
 static void
-process_cycle_without_exit(int node_index, NOTNULL(parrot_prm_context* c))
+process_cycle_without_exit(int node_index, ARGIN(parrot_prm_context* c))
 {
     const int pred = c->src_regs[node_index];
 
@@ -835,7 +799,7 @@ process_cycle_without_exit(int node_index, NOTNULL(parrot_prm_context* c))
             : 0;
 
     if (0 == alt) { /* use temp reg */
-        move_reg(c->dest_regs[node_index],c->temp_reg, c);
+        move_reg(c->dest_regs[node_index], c->temp_reg, c);
         c->backup[node_index] = c->temp_reg;
     }
     else
@@ -846,8 +810,7 @@ process_cycle_without_exit(int node_index, NOTNULL(parrot_prm_context* c))
 
 /*
 
-=item C<static void
-move_reg(int from, int dest, NOTNULL(parrot_prm_context* c))>
+=item C<static void move_reg>
 
 should be self-speaking
 
@@ -856,24 +819,16 @@ should be self-speaking
  */
 
 static void
-move_reg(int from, int dest, NOTNULL(parrot_prm_context* c))
+move_reg(int from, int dest, ARGIN(const parrot_prm_context* c))
 {
-   /* fprintf(stderr,"move %i ==> %i\n",from,dest);*/
+   /* fprintf(stderr, "move %i ==> %i\n", from, dest);*/
     c->mov(c->interp, dest, from, c->info);
 }
 
 
 /*
 
-=item C<PARROT_API
-void
-Parrot_register_move(PARROT_INTERP, int n_regs,
-                     NOTNULL(unsigned char *dest_regs),
-                     NOTNULL(unsigned char *src_regs),
-                     unsigned char temp_reg,
-                     reg_move_func mov,
-                     reg_move_func mov_alt,
-                     NOTNULL(void *info))>
+=item C<void Parrot_register_move>
 
 Move C<n_regs> from the given register list C<src_regs> to C<dest_regs>.
 
@@ -928,12 +883,12 @@ PARROT_API
 void
 Parrot_register_move(PARROT_INTERP,
         int n_regs,
-        NOTNULL(unsigned char *dest_regs),
-        NOTNULL(unsigned char *src_regs),
+        ARGOUT(unsigned char *dest_regs),
+        ARGIN(unsigned char *src_regs),
         unsigned char temp_reg,
         reg_move_func mov,
         reg_move_func mov_alt,
-        NOTNULL(void *info))
+        ARGIN(void *info))
 {
     int i;
     int max_reg = 0;

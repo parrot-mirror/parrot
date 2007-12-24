@@ -127,7 +127,7 @@ sub extract_function_declarations {
 =item C<function_components_from_declaration($file, $proto)>
 
 $file => the filename
-$proto => the function declaration 
+$proto => the function declaration
 
 Returns an anonymous hash of function components:
 
@@ -240,5 +240,11 @@ sub squawk {
     push( @{ $warnings{$file}->{$func} }, $error );
 }
 
-
 1;
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:

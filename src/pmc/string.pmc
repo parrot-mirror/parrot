@@ -89,7 +89,7 @@ Creates a copy of the string.
     PMC *clone() {
         PMC * const dest = pmc_new_noinit(INTERP, SELF->vtable->base_type);
         PObj_custom_mark_SET(dest);
-        PMC_str_val(dest) = string_copy(INTERP,VTABLE_get_string(INTERP, SELF));
+        PMC_str_val(dest) = string_copy(INTERP, VTABLE_get_string(INTERP, SELF));
         return dest;
     }
 
@@ -216,7 +216,7 @@ Sets the value of the string to that of the specified C<string>.
 */
 
     void set_string_native(STRING *value) {
-        /* COW doesn't work well with constant strings; workaround this */
+        /* COW doesn't work well with constant strings; work around this */
         if (PObj_constant_TEST(SELF) && PObj_COW_TEST(value)) {
             const char *copy = string_to_cstring(INTERP, value);
             value            = const_string(INTERP, copy);
@@ -487,7 +487,7 @@ Compares the string with C<value>; returns FALSE if they match.
 
 /*
 
-=item C<INTVAL is_same(PMC *value)>
+=item C<INTVAL is_same(const PMC *value)>
 
 Compares the string in this PMC with the one in the C<value> PMC.
 Returns true if this PMC and the one in C<value> are of the same PMC
@@ -498,9 +498,9 @@ class and their strings are aliases of the same internal string.
 =cut
 
 */
-    INTVAL is_same(PMC *value) {
-        STRING * const s = VTABLE_get_string(INTERP, SELF);
-        STRING * const v = VTABLE_get_string(INTERP, value);
+    INTVAL is_same(const PMC *value) {
+        const STRING * const s = VTABLE_get_string(INTERP, SELF);
+        const STRING * const v = VTABLE_get_string(INTERP, value);
         return (INTVAL)(value->vtable == SELF->vtable && s == v);
     }
 
@@ -731,7 +731,7 @@ TODO Currently overflow to BigInt is B<not> handled nor detected.
 
         if (start < end)
             real_exception(INTERP, NULL, E_ValueError,
-                    "invalid conversion to int - bad char %c",*start);
+                    "invalid conversion to int - bad char %c", *start);
 
         VTABLE_set_integer_native(INTERP, result, i);
         return result;
