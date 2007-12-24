@@ -14,14 +14,6 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
 
-=for hints_for_testing Check latest reports of Parrot configuration
-tools testing coverage to see where your time available for writing
-tests is spent.  You will have to determine a way to test a user
-response to a prompt. In the course of writing tests, you should try
-to resolve RT 43146.
-
-=cut
-
 my $args = process_options(
     {
         argv => [ q{--miniparrot} ],
@@ -39,7 +31,7 @@ $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
 my ( $task, $step_name, $step);
-$task        = $conf->steps->[1];
+$task        = $conf->steps->[-1];
 $step_name   = $task->step;
 
 $step = $step_name->new();

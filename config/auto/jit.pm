@@ -48,7 +48,6 @@ sub runstep {
     my $verbose = $conf->options->get('verbose');
     $verbose and print "\n";
 
-    my $archname    = $conf->data->get('archname');
     my $cpuarch     = $conf->data->get('cpuarch');
     my $osname      = $conf->data->get('osname');
 
