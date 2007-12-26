@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-config/auto/cpu/sun4/auto.pm
+config/gen/cpu/sun4/auto.pm
 
 =head1 DESCRIPTION
 
@@ -11,7 +11,7 @@ Test
 
 =cut
 
-package auto::cpu::sun4::auto;
+package gen::cpu::sun4::auto;
 
 use strict;
 use warnings;
@@ -50,7 +50,7 @@ sub runstep {
     for my $f (@files) {
         print " $f " if $verbose;
         my ($suffix) = $f =~ /test_(\w+)/;
-        $f = "config/auto/cpu/sun4/$f";
+        $f = "config/gen/cpu/sun4/$f";
         cc_gen($f);
         eval { cc_build( "-DPARROT_CONFIG_TEST", "sparcasm" . $conf->data->get('o') ) };
         if ($@) {

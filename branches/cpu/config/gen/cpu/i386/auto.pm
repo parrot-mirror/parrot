@@ -53,7 +53,7 @@ sub runstep {
     for my $f (@files) {
         print " $f " if $verbose;
         my ($suffix) = $f =~ /test_(\w+)/;
-        $f = "config/auto/cpu/i386/$f";
+        $f = "config/gen/cpu/i386/$f";
         cc_gen($f);
         eval { cc_build("-DPARROT_CONFIG_TEST") };
         if ($@) {
