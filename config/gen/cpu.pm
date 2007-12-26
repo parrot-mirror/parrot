@@ -41,6 +41,8 @@ sub runstep {
 
     my $verbose = $conf->options->get('verbose');
 
+    $conf->data->add( ' ', TEMP_atomic_o => '' );    # assure a default
+
     my $hints = "gen::cpu::" . $conf->data->get('cpuarch') . "::auto";
 # config/gen/cpu/i386/auto.pm
 # config/gen/cpu/ppc/auto.pm
