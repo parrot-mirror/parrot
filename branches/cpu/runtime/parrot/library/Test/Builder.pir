@@ -5,12 +5,12 @@ Test::Builder - Parrot extension for building test modules
 =head1 SYNOPSIS
 
     # load this library
-    load_bytecode 'library/Test/Builder.pir'
+    load_bytecode 'library/Test/Builder.pbc'
 
     # create a new Test::Builder object
     .local pmc test
 
-    test = new Test::Builder'
+    test = new 'Test::Builder'
 
     # plan to run ten tests
     test.'plan'( 10 )
@@ -46,9 +46,9 @@ This class defines the following methods:
 .namespace [ 'Test::Builder' ]
 
 .sub _initialize :load
-    load_bytecode 'library/Test/Builder/Test.pir'
-    load_bytecode 'library/Test/Builder/Output.pir'
-    load_bytecode 'library/Test/Builder/TestPlan.pir'
+    load_bytecode 'library/Test/Builder/Test.pbc'
+    load_bytecode 'library/Test/Builder/Output.pbc'
+    load_bytecode 'library/Test/Builder/TestPlan.pbc'
 
     .local pmc tb_class
 
@@ -195,7 +195,7 @@ This probably doesn't work correctly yet, but you will probably never use it.
   CREATE_OUTPUT:
     # create a Test::Builder::Output object
     .local pmc args_hash
-    args_hash  = new Hash
+    args_hash  = new 'Hash'
     output     = new 'Test::Builder::Output', args_hash
 
   OUTPUT_DEFINED:
@@ -585,7 +585,7 @@ also calls C<exit>.
     .local pmc test
 
     .local pmc number
-    number = new Integer
+    number = new 'Integer'
     
     .local int count
     count  = results

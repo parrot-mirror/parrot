@@ -19,8 +19,6 @@ use warnings;
 
 use base qw(Parrot::Configure::Step::Base);
 
-use Config;
-
 use Parrot::Configure::Step qw(copy_if_diff);
 
 sub _init {
@@ -36,14 +34,14 @@ sub runstep {
     my ( $self, $conf ) = @_;
 
     my $verbose  = $conf->options->get('verbose');
-    my $platform = lc $^O;
+    my $platform = lc ( $conf->data->get_p5('OSNAME') );
 
     $platform = "ansi"  if defined( $conf->options->get('miniparrot') );
     $platform = "win32" if $platform =~ /^msys/;
     $platform = "win32" if $platform =~ /^mingw/;
     $platform =~ s/^ms//;
 
-    if ( ( split( '-', $Config{archname} ) )[0] eq 'ia64' ) {
+    if ( ( split m/-/, $conf->data->get_p5('archname'), 2 )[0] eq 'ia64' ) {
         $platform = 'ia64';
     }
 
@@ -135,7 +133,7 @@ END_HERE
     }
 
     # finally append generated
-    @headers = grep { /\.h$/ } split( ',', $generated );
+    @headers = grep { /\.h$/ } split( m/,/, $generated );
     for (@headers) {
         if ( -e $_ ) {
             local $/ = undef;
@@ -251,7 +249,7 @@ END_HERE
     }
 
     # append generated c files
-    @impls = grep { /\.c$/ } split( ',', $generated );
+    @impls = grep { /\.c$/ } split( m/,/, $generated );
     for (@impls) {
         if ( -e $_ ) {
             local $/ = undef;

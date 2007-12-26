@@ -4,78 +4,56 @@
 
 src/classes/List.pir - Perl 6 List class
 
-=head1 Functions
+=head1 Methods
 
 =over 4
 
 =cut
 
-.namespace
+.namespace ['List']
 
-.sub '__onload' :load :init
+.sub 'onload' :anon :load :init
     $P0 = subclass 'ResizablePMCArray', 'List'
-.end
-
-# FIXME:  The 'clone' opcode doesn't seem to naturally work
-# for subclasses of ResizablePMCArray, so we write our own here.
-# FIXME:  #2 - iterators don't properly work for subclasses
-# of ResizablePMCArray (RT #40958), so we have to enumerate the
-# elements by index.
-
-.namespace [ 'List' ]
-
-.sub 'clone' :vtable :method
-    $P0 = new 'List'
-    $I1 = elements self
-    $I0 = 0
-  loop:
-    if $I0 >= $I1 goto end
-    $P1 = self[$I0]
-    $P0[$I0] = $P1
-    inc $I0
-    goto loop
-  end:
-    .return ($P0)
+    $P1 = get_hll_global ['Perl6Object'], 'make_proto'
+    $P1($P0, 'List')
 .end
 
 
-.sub 'set_pmc' :vtable :method
-    .param pmc value
-    self = 0
-    $P0 = new 'Iterator', value
-  iter_loop:
-    unless $P0 goto iter_end
-    $P1 = shift $P0
-    push self, $P1
-    goto iter_loop
-  iter_end:
-    .return ()
-.end
+=item get_string()    (vtable method)
 
+Return the elements of the list joined by spaces.
+
+=cut
 
 .sub 'get_string' :vtable :method
-    $S0 = ''
-    $I1 = elements self
-    if $I1 < 1 goto end
-    $I0 = 1
-    $S0 = self[0]
-  loop:
-    if $I0 >= $I1 goto end
-    $S1 = self[$I0]
-    $S0 = concat $S0, ' '
-    $S0 .= $S1
-    inc $I0
-    goto loop
-  end:
+    $S0 = join ' ', self
     .return ($S0)
 .end
 
+
+=item elems()
+
+Return the number of elements in the list.
+
+=cut
 
 .sub 'elems' :method
     $I0 = elements self
     .return ($I0)
 .end
 
+
+.sub 'unshift' :method
+    .param pmc x
+    unshift self, x
+.end
+
+
+.sub 'shift' :method
+    .local pmc x
+    x = shift self
+    .return (x)
+.end
 
 =back
 

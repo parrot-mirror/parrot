@@ -32,7 +32,6 @@ $conf->options->set( %{$args} );
 
 my $task        = $conf->steps->[0];
 my $step_name   = $task->step;
-my @step_params = @{ $task->params };
 
 my $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
@@ -60,7 +59,7 @@ pass("Completed all tests in $0");
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::init::manifest.
+The tests in this file test methods found in config::init::manifest.
 
 =head1 AUTHOR
 

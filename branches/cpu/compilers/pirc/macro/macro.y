@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 #include "macroparser.h"
 #include "macro.h"
 #include "lexer.h"
@@ -73,8 +74,8 @@ char *concat(char *str1, char *str2);
        TK_INCLUDE           ".include"
        TK_MACRO_CONST       ".macro_const"
        TK_MACRO_LOCAL       ".macro_local"
+       TK_MACRO_LABEL       ".macro_label"
        TK_LINE              ".line"
-       TK_LABEL             ".label"
 
 %token <sval> TK_INT        "int"
        <sval> TK_NUM        "num"
@@ -85,11 +86,13 @@ char *concat(char *str1, char *str2);
        <sval> TK_ANY        "any token"
        <sval> TK_BODY       "macro body"
        <mval> TK_DOT_IDENT  ".identifier"
-       <sval> TK_LABEL_ID   "$LABEL:"
-       <sval> TK_LOCAL_ID   "$IDENT"
+       <sval> TK_LABEL_ID   "label"
+       <sval> TK_LOCAL_ID   "$identifier"
 
-%token <sval> TK_VAR_EXPANSION          "var expansion"
-       <sval> TK_LABEL_TARGET_EXPANSION "label target expansion"
+%token <sval> TK_VAR_EXPANSION      "var expansion"
+       <sval> TK_LABEL_EXPANSION    "label target expansion"
+       <sval> TK_UNIQUE_LABEL       "unique label"
+       <sval> TK_UNIQUE_LOCAL       "unique local"
 
 %token <sval> TK_STRINGC    "string constant"
        <sval> TK_NUMC       "number constant"
@@ -172,9 +175,15 @@ anything: any
 
 any: TK_ANY                          { emit($1); }
    | TK_DOT_IDENT arguments          { expand($1, $2, lexer); }
-   | TK_LABEL_TARGET_EXPANSION       { char *label = munge_id($1, 1, lexer);
+   | TK_LABEL_EXPANSION              { char *label = munge_id($1, 1, lexer);
                                        emit(label);
                                      } /* LABEL: */
+   | TK_UNIQUE_LABEL                 { char *label = munge_id($1, 1, lexer);
+                                       emit(label);
+                                     }
+   | TK_UNIQUE_LOCAL                 { char *local = munge_id($1, 0, lexer);
+                                       emit(local);
+                                     }
    | TK_VAR_EXPANSION                { char *label = munge_id($1, 0, lexer);
                                        emit(label);
                                      } /* .$VAR */
@@ -192,11 +201,10 @@ macro_const_definition: ".macro_const" TK_IDENT expression
 
 
 macro_definition: ".macro" TK_IDENT
-                  { /* store the id as the current macro */ lexer->macro_id = $2; }
                   parameters "\n"
                   opt_macro_body
                   ".endm"
-                  { define_macro(lexer->globaldefinitions, $2, $4, $6); }
+                  { define_macro(lexer->globaldefinitions, $2, $3, $5); }
                 ;
 
 opt_macro_body: /* empty, make sure the macro body is a valid string. */ { $$ = ""; }
@@ -212,7 +220,7 @@ body_token: TK_ANY                   { $$ = $1; }
           | local_declaration        { $$ = $1; }
           ;
 
-label_declaration: ".label" TK_LABEL_ID
+label_declaration: ".macro_label" TK_LABEL_ID
                    { $$ = $2; }
                  ;
 
@@ -362,12 +370,12 @@ include_file(char *filename, lexer_state *lexer) {
 static void
 update_unique_id(lexer_state *lexer) {
     /* each expansion has a unique id that is used for label/local munging */
-    lexer->unique_id++;
+    lexer->id_gen++;
     /* Count number of digits:
      * log10 returns a double, get the part before the dot (so, "3.14" -> "3")
      * log10(1000) -> 3, so add 1 more digit.
      */
-    lexer->num_digits = floor(log10(lexer->unique_id)) + 1;
+    lexer->num_digits = floor(log10(lexer->id_gen)) + 1;
 }
 
 
@@ -387,6 +395,9 @@ expand(macro_def *macro, list *args, lexer_state *lexer) {
     constant_table *macro_params = new_constant_table(lexer->globaldefinitions, lexer);
     list *params = macro->parameters;
 
+    int current_scope_nr;
+    char *current_macro_id;
+
     while (params && args) {
         define_constant(macro_params, params->item, args->item);
         params = params->next;
@@ -397,10 +408,10 @@ expand(macro_def *macro, list *args, lexer_state *lexer) {
      * If both are null, then all went ok.
      */
     if (params != NULL) { /* args must be null, so too few arguments */
-        fprintf(stderr, "Too few arguments for macro expansion.\n");
+        fprintf(stderr, "Too few arguments for macro expansion %s.\n", macro->name);
     }
     if (args != NULL) { /* params must be null, so too many arguments */
-        fprintf(stderr, "Too many arguments for macro expansion.\n");
+        fprintf(stderr, "Too many arguments for macro expansion %s.\n", macro->name);
     }
 /*
     fprintf(stderr, "expanding '%s'\n", macro->name);
@@ -411,12 +422,17 @@ expand(macro_def *macro, list *args, lexer_state *lexer) {
 /*
     fprintf(stderr, "expansion '%s' starting\n", macro->name);
 */
+    current_macro_id = lexer->macro_id;
+    lexer->macro_id  = macro->name;
+    /* save current scope id */
+    current_scope_nr = lexer->unique_id;
     update_unique_id(lexer);
-
+    lexer->unique_id = lexer->id_gen;
     process_string(macro->body, lexer);
 
-    /* this unique id stuff needs more thought. */
-    lexer->unique_id--;
+    /* restore current scope id */
+    lexer->unique_id = current_scope_nr;
+    lexer->macro_id  = current_macro_id;
 /*
     fprintf(stderr, "expansion '%s' done\n", macro->name);
 */
@@ -710,7 +726,8 @@ munge_id(char *id, int is_label_declaration, lexer_state *lexer) {
     munged_id = (char *)calloc(length + 1, sizeof (char));
     assert(munged_id != NULL);
     /* generate the identifier; if it's a declaration, then add the colon. */
-    sprintf(munged_id, format, lexer->macro_id, id, lexer->unique_id, is_label_declaration ? ":" : "");
+    sprintf(munged_id, format, lexer->macro_id, id, lexer->unique_id,
+            is_label_declaration ? ":" : "");
     return munged_id;
 }
 

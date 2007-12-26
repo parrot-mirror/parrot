@@ -39,7 +39,7 @@ my $fp_equality_macro = <<'ENDOFMACRO';
     restore    N1
     restore    N0
     branch    .L
-.local $FPEQNOK:
+.label $FPEQNOK:
     restore N2
     restore    N1
     restore    N0
@@ -59,7 +59,7 @@ my $fp_equality_macro = <<'ENDOFMACRO';
     restore    N1
     restore    N0
     branch    .L
-.local $FPNENOK:
+.label $FPNENOK:
     restore    N2
     restore    N1
     restore    N0
@@ -582,7 +582,7 @@ pasm_output_is( <<'CODE', <<'OUT', "get_mro" );
     null I0
 loop:
     set P2, P1[I0]
-    classname S0, P2
+    typeof S0, P2
     print S0
     print "\n"
     inc I0
@@ -913,9 +913,9 @@ pir_output_is( <<'CODE', <<'OUTPUT', '$P1.append()' );
     .local pmc plan
     .local pmc ok
     .local pmc is
-    plan = find_global [ 'Test'; 'More' ], 'plan'
-    ok   = find_global [ 'Test'; 'More' ], 'ok'
-    is   = find_global [ 'Test'; 'More' ], 'is'
+    plan = get_global [ 'Test'; 'More' ], 'plan'
+    ok   = get_global [ 'Test'; 'More' ], 'ok'
+    is   = get_global [ 'Test'; 'More' ], 'is'
 
     $P1 = new 'ResizablePMCArray'
     push $P1, 'a'

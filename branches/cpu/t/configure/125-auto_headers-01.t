@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 12;
+use Test::More tests => 13;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -30,10 +30,9 @@ my $pkg = q{auto::headers};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my ( $task, $step_name, @step_params, $step);
+my ( $task, $step_name, $step);
 $task        = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
@@ -44,6 +43,7 @@ my $ret = $step->runstep($conf);
 ok( $ret, "$step_name runstep() returned true value" );
 is($step->result(), q{skipped}, "Expected result was set");
 
+pass("Keep Devel::Cover happy");
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
@@ -60,7 +60,8 @@ pass("Completed all tests in $0");
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::headers.
+The tests in this file test config::auto::headers with the C<miniparrot>
+option set.
 
 =head1 AUTHOR
 

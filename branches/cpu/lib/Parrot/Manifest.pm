@@ -5,7 +5,6 @@ package Parrot::Manifest;
 use strict;
 use warnings;
 use Carp;
-use Data::Dumper;
 
 sub new {
     my $class   = shift;
@@ -170,7 +169,7 @@ sub _get_special {
         tools/build/ops2pm.pl                           [devel]
         tools/build/pbc2c.pl                            [devel]
         tools/build/revision_c.pl                       [devel]
-        vtable.tbl                                      [devel]
+        src/vtable.tbl                                  [devel]
     );
     return \%special;
 }

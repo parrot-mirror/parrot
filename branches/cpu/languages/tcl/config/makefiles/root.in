@@ -2,6 +2,9 @@ RM_F    = @rm_f@
 PERL    = @perl@
 PARROT  = ../../parrot@exe@
 
+BUILD_DIR   = @build_dir@
+RECONFIGURE = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
+
 C_BUILTIN = src/builtin
 TCL_LIB   = library
 PMCBUILD  = $(PERL) @build_dir@/tools/build/dynpmc.pl
@@ -318,6 +321,7 @@ $(GENERATED_INLINES) \
 "$(OPSDIR)/*.h" \
 "src/*$(O)" \
 "$(OPSDIR)/*$(O)" \
+"$(OPSDIR)/*$(LOAD_EXT)" \
 "$(OPSDIR)/*.bundle" \
 "$(OPSDIR)/*.exp" \
 "$(OPSDIR)/*.ilk" \
@@ -331,6 +335,11 @@ lib/*.pre_c
 clean:
 	$(RM_F) $(CLEANERS)
 
-distclean: clean
+realclean: clean
 	$(RM_F) Makefile
 
+distclean: realclean
+
+# regenerate the Makefile
+Makefile: config/makefiles/root.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=tcl

@@ -123,7 +123,7 @@ Create and returns a clone of a PAST node.
 
 .sub 'clone' :vtable :method
     .local pmc res
-    $S0 = classname self
+    $S0 = typeof self
     res = new $S0
     .local pmc iter
     iter = self.'iterator'()
@@ -235,7 +235,7 @@ the invocant's value of C<attrname> to C<value>.  Returns the
     if has_value goto setattr
     value = self[attrname]
     unless null value goto getattr
-    value = new .Undef
+    value = new 'Undef'
   getattr:
     .return (value)
   setattr:

@@ -13,9 +13,9 @@ use_ok('config::init::defaults');
 use_ok('config::inter::lex');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::IO::Capture::Mini;
 use Parrot::Configure::Test qw( test_step_thru_runstep);
 use Tie::Filehandle::Preempt::Stdin;
+use IO::CaptureOutput qw | capture |;
 
 my $args = process_options(
     {
@@ -34,7 +34,7 @@ $object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
 can_ok( 'Tie::Filehandle::Preempt::Stdin', ('READLINE') );
 isa_ok( $object, 'Tie::Filehandle::Preempt::Stdin' );
 
-my ( $task, $step_name, @step_params, $step, $ret );
+my ( $task, $step_name, $step, $ret );
 my $pkg = q{inter::lex};
 
 $conf->add_steps($pkg);
@@ -42,7 +42,6 @@ $conf->options->set( %{$args} );
 
 $task        = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
@@ -50,10 +49,9 @@ isa_ok( $step, $step_name );
 ok( $step->description(), "$step_name has description" );
 
 {
-    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $ret = $step->runstep($conf);
-    my @more_lines       = $tie_out->READLINE;
+    my $rv;
+    my $stdout;
+    capture ( sub {$rv = $step->runstep($conf)}, \$stdout);
     my $possible_results = qr/^(
         no\slex\sprogram\swas\sfound
       | lex\sprogram\sdoes\snot\sexist\sor\sdoes\snot\sunderstand\s--version
@@ -65,15 +63,14 @@ ok( $step->description(), "$step_name has description" );
     like( $step->result(), $possible_results,
         "Response to prompt led to acceptable result:  " . $dump_msg[0] );
     if ( $dump_msg[0] eq q{no lex program was found} ) {
-        ok( !@more_lines, "No lex program => no prompts" );
+        ok( !$stdout, "No lex program => no prompts" );
     }
     else {
-        ok( @more_lines, "prompts were captured" );
+        ok( $stdout, "prompts were captured" );
     }
 }
 
 $object = undef;
-untie *STDIN;
 
 pass("Completed all tests in $0");
 

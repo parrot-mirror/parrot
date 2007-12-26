@@ -244,10 +244,11 @@ TODO:
     fail('12_math_ops_pasm.pir');
 }
 
-TODO:
-{
-    local $TODO = 'RT#45209 parrot considers -0.0 true';
-    example_output_is( "examples/tutorial/51_if_unless.pir", << 'END_EXPECTED' );
+my @TODO_35 = ();
+if ($^O =~ /Win32/) {
+    @TODO_35 = ( todo => 'Failing on Win32' );
+}
+example_output_is( "examples/tutorial/51_if_unless.pir", << 'END_EXPECTED', @TODO_35 );
 before if
 after if
 
@@ -256,7 +257,6 @@ is printed
 after unless
 -0.0 was false
 END_EXPECTED
-}
 
 # cleanup
 {

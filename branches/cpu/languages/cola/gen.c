@@ -46,7 +46,7 @@ int ival, nval, sval, pval;
 
 =item C<void gen_ast(AST * ast)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -81,7 +81,7 @@ void gen_ast(AST * ast)
 
 =item C<void gen_namespace_decl(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -98,7 +98,7 @@ void gen_namespace_decl(AST * p)
 
 =item C<void gen_class_decl(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -116,7 +116,7 @@ void gen_class_decl(AST * p)
 
 =item C<void gen_class_body(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -147,7 +147,7 @@ void gen_class_body(AST * p)
 
 =item C<void gen_constant_decl(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -156,14 +156,15 @@ TODO: Not yet documented!!!
 void gen_constant_decl(AST * p)
 {
     /* Just to generate the comment */
-    printf("#.constant %s = %s\n", p->arg1->sym->name, p->arg1->sym->literal->name);
+    /* NOTE: the '=' should probably not be there... */
+    printf("#.macro_const %s = %s\n", p->arg1->sym->name, p->arg1->sym->literal->name);
 }
 
 /*
 
 =item C<void gen_field_decl(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -179,7 +180,7 @@ void gen_field_decl(AST * p)
 
 =item C<void gen_block(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -208,7 +209,7 @@ void gen_block(AST * p)
 
 =item C<void gen_statement(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -308,7 +309,7 @@ END:
 
 =item C<void gen_var_decl(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -328,7 +329,7 @@ void gen_var_decl(AST * p)
 
 =item C<void gen_param_list(Symbol * paramlist)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -345,7 +346,7 @@ void gen_param_list(Symbol * paramlist)
 
 =item C<void gen_method_decl(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -384,7 +385,7 @@ void gen_method_decl(AST * p)
 
 =item C<void gen_assign(AST * ast)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -727,7 +728,7 @@ void gen_expr(AST * p, Symbol * lval, Type * type)
 
 =item C<void gen_arg_list_expr(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -737,7 +738,7 @@ void gen_arg_list_expr(AST * p)
 {
     if (p == NULL)
         return;
-    /* FIXME: Here we should check the method signature and find out
+    /* RT#48204: Here we should check the method signature and find out
      * what type is expected.
      */
     if (!eval_expr(p))
@@ -765,7 +766,7 @@ void gen_arg_list(AST * p)
 {
     if (p == NULL)
         return;
-    /* FIXME: Here we should check the method signature and find out
+    /* RT#48204: Here we should check the method signature and find out
      * what type is expected.
      */
     if (p->targ)
@@ -784,7 +785,7 @@ void gen_arg_list(AST * p)
 
 =item C<void gen_method_call(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -792,7 +793,7 @@ TODO: Not yet documented!!!
 
 void gen_method_call(AST * p)
 {
-    /* FIXME: Should check that expression evaluates to a method */
+    /* RT#48206: Should check that expression evaluates to a method */
     if (!eval_expr(p->arg1))
         gen_expr(p->arg1, NULL, NULL);
 
@@ -837,7 +838,7 @@ void gen_method_call(AST * p)
 
 =item C<void gen_if(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -885,7 +886,7 @@ void gen_if(AST * p)
 
 =item C<void gen_while(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -910,7 +911,7 @@ void gen_while(AST * p)
 
 =item C<void gen_for(AST * p)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1046,7 +1047,7 @@ void gen_boolean(AST * p, const char * true_label, const char * false_label, int
 
 =item C<void coerce_operands(Type ** t1, Type ** t2)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1087,7 +1088,7 @@ void coerce_operands(Type ** t1, Type ** t2)
 
 =item C<char * op_name(int operator)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1137,7 +1138,7 @@ char * op_name(int operator)
 
 =item C<int op_inverse(int operator)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1161,7 +1162,7 @@ int op_inverse(int operator)
 
 =item C<char * new_itemp()>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1178,7 +1179,7 @@ char * new_itemp()
 
 =item C<char * new_ntemp()>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1195,7 +1196,7 @@ char * new_ntemp()
 
 =item C<char * new_stemp()>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1212,7 +1213,7 @@ char * new_stemp()
 
 =item C<char * new_ptemp()>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1269,7 +1270,7 @@ Symbol * new_temp(Type * type)
 
 =item C<void reset_temps()>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1287,7 +1288,7 @@ void reset_temps()
 
 =item C<char * get_label()>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1305,7 +1306,7 @@ char * get_label()
 
 =item C<char * make_label()>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1320,7 +1321,7 @@ char * make_label()
 
 =item C<void emit_op_expr(Symbol * r, Symbol * a1, char * op, Symbol * a2)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 
@@ -1343,7 +1344,7 @@ void emit_op_expr(Symbol * r, Symbol * a1, char * op, Symbol * a2)
 
 =item C<void emit_unary_expr(Symbol * res, Symbol * arg1, char * op)>
 
-TODO: Not yet documented!!!
+RT#48200: Not yet documented!!!
 
 =cut
 

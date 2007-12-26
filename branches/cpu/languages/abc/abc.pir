@@ -24,22 +24,12 @@ and registers the "compile" subroutine as the "ABC" compiler.
 .namespace [ 'ABC' ]
 
 .sub '__onload' :load :init
-    load_bytecode 'PGE.pbc'
-    load_bytecode 'PGE/Text.pbc'
-    load_bytecode 'PGE/Util.pbc'
-    load_bytecode 'PGE/Dumper.pbc'
-    load_bytecode 'Parrot/HLLCompiler.pbc'
-    load_bytecode 'PAST-pm.pbc'
+    load_bytecode 'PCT.pbc'
 
-    # import PGE::Util::die into ABC::Grammar
-    $P0 = get_hll_global ['PGE::Util'], 'die'
-    set_hll_global ['ABC::Grammar'], 'die', $P0
-
-    $P0 = new [ 'HLLCompiler' ]
+    $P0 = new [ 'PCT::HLLCompiler' ]
     $P0.'language'('ABC')
     $P0.'parsegrammar'('ABC::Grammar')
-    $P0.'astgrammar'('ABC::PAST::Grammar')
-
+    $P0.'parseactions'('ABC::Grammar::Actions')
 .end
 
 
@@ -60,10 +50,9 @@ method (inherited from C<HLLCompiler>).
 
 .include 'src/builtins.pir'
 
-.namespace [ 'ABC::Grammar' ]
-.include 'src/abc_gen.pir'
+.include 'src/gen_grammar.pir'
 
-.include 'src/PASTGrammar_gen.pir'
+.include 'src/gen_grammar-actions.pir'
 
 =back
 

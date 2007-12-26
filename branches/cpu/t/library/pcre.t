@@ -26,28 +26,53 @@ the installed PCRE library, and matches patterns successfully.
 # if we keep pcre, we need a config test
 my $cmd = ( $^O =~ /MSWin32/ ) ? "pcregrep --version" : "pcre-config --version";
 my $has_pcre = !Parrot::Test::run_command( $cmd, STDERR => File::Spec->devnull, );
+my $pcre_libpath = "";
+
+# It's possible that libpcre is installed in some non-standard path...
+if ($has_pcre && ($^O !~ /MSWin32/)) {
+    # Extract the library path for non-windows platforms (in case it isn't in
+    # the normal lookup locations)
+    my $outfile = "pcre-config.out";
+    Parrot::Test::run_command("pcre-config --prefix", STDOUT => $outfile);
+    my $out = Parrot::Test::slurp_file($outfile);
+    unlink $outfile;
+    chomp $out;
+    $pcre_libpath="$out/lib";
+}
 
 SKIP: {
     skip( "no pcre-config", Test::Builder->new()->expected_tests() )
         unless $has_pcre;
 
 ## 1
-    pir_output_is( <<'CODE', <<'OUT', 'soup to nuts' );
+    pir_output_is( <<"CODE", <<'OUT', 'soup to nuts' );
 
+.include 'iglobals.pasm'
 
 .sub main :main
+    .local pmc interp
+    getinterp interp
+
+    .local pmc lib_paths
+    lib_paths = interp[.IGLOBALS_LIB_PATHS]
+
+    # XXX - hard-coded magic constant (should be PARROT_LIB_PATH_DYNEXT)
+    .local pmc include_paths
+    include_paths = lib_paths[2]
+    unshift include_paths, '$pcre_libpath'
+
     load_bytecode "library/pcre.pir"
     .local pmc func
     .local pmc lib
 
 
-    find_global func, 'PCRE', 'init'
+    get_global func, ['PCRE'], 'init'
     if_null func, NOK1
     branch OK1
 NOK1:
     print 'not '
 OK1:
-    print "ok 1\n"
+    say "ok 1"
 
     lib= func()
     if_null lib, NOK2
@@ -55,7 +80,7 @@ OK1:
 NOK2:
     print 'not '
 OK2:
-    print "ok 2\n"
+    say "ok 2"
 
 
     .local string s
@@ -68,7 +93,7 @@ OK2:
     .local string error
     .local int errptr
 
-    func= find_global 'PCRE', 'compile'
+    func= get_global ['PCRE'], 'compile'
     ( code, error, errptr )= func( pat, 0 )
 
     .local int is_code_defined
@@ -76,29 +101,29 @@ OK2:
     if is_code_defined goto OK3
     print 'not '
 OK3:
-    print "ok 3\n"
+    say "ok 3"
 
     .local int ok
     .local pmc result
 
-    func= find_global 'PCRE', 'match'
+    func= get_global ['PCRE'], 'match'
     ( ok, result )= func( code, s, 0, 0 )
 
     unless ok < 0 goto OK4
     print 'not '
 OK4:
-    print "ok 4\n"
+    say "ok 4"
 
     .local int i
     i= 0
     .local string match
 
-    func= find_global 'PCRE', 'dollar'
+    func= get_global ['PCRE'], 'dollar'
     match= func( s, ok, result, i )
     if 'a' == match goto OK5
     print 'not '
 OK5:
-    print "ok 5\n"
+    say "ok 5"
 
 .end
 CODE

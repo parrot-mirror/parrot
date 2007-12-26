@@ -82,7 +82,7 @@ Adds a new timer event to the event queue.
 */
 
 static void
-add_timer(PARROT_INTERP, PMC *pmc)
+add_timer(PARROT_INTERP, NOTNULL(PMC *pmc))
 {
     const parrot_timer_event * const t = (parrot_timer_event *)PMC_data(pmc);
 
@@ -103,7 +103,7 @@ Deletes the timer event.
 */
 
 static void
-del_timer(PARROT_INTERP, PMC *pmc)
+del_timer(PARROT_INTERP, NOTNULL(PMC *pmc))
 {
    Parrot_del_timer_event(interp, pmc);
 }
@@ -172,6 +172,8 @@ See F<docs/pdds/pdd02_vtables.pod> for initializers.
                     SELF.set_pmc_keyed_int(key, pval);
                     }
                     break;
+                default:
+                    break;
             }
         }
     }
@@ -203,7 +205,7 @@ Returns the timer info for C<key>.
 */
 
     INTVAL get_integer_keyed_int(INTVAL key) {
-        parrot_timer_event * const t = (parrot_timer_event *)PMC_data(SELF);
+        const parrot_timer_event * const t = (parrot_timer_event *)PMC_data(SELF);
 
         switch (key) {
             case PARROT_TIMER_SEC:
@@ -214,9 +216,9 @@ Returns the timer info for C<key>.
                 return (INTVAL) t->repeat;
             case PARROT_TIMER_RUNNING:
                 return 0;
+            default:
+                return -1;
         }
-
-        return -1;
     }
 
 /*
@@ -230,7 +232,7 @@ Returns the PMC associated with C<key>.
 */
 
     PMC *get_pmc_keyed_int(INTVAL key) {
-        parrot_timer_event * const t = (parrot_timer_event *)PMC_data(SELF);
+        const parrot_timer_event * const t = (parrot_timer_event *)PMC_data(SELF);
 
         if (key == PARROT_TIMER_HANDLER)
             return t->sub;
@@ -249,7 +251,7 @@ Returns the number associated with C<key>.
 */
 
     FLOATVAL get_number_keyed_int(INTVAL key) {
-        parrot_timer_event * const t = (parrot_timer_event *)PMC_data(SELF);
+        const parrot_timer_event * const t = (parrot_timer_event *)PMC_data(SELF);
 
         if (key == PARROT_TIMER_NSEC)
             return t->abs_time;
@@ -286,6 +288,10 @@ Sets the value associated with C<key> to C<value>.
                 else
                     del_timer(INTERP, SELF);
                 break;
+            default:
+                real_exception(INTERP, NULL, INVALID_OPERATION,
+                    "Unknown timer type in Timer.set_integer_keyed_int: %d",
+                    key);
         }
     }
 
@@ -342,14 +348,6 @@ Sets the floating-point value associated with C<key> to C<value>.
 /*
 
 =back
-
-=head1 HISTORY
-
-Initial proposal by leo 2003.07.15
-
-Initial revision 2003.07.17
-
-Switch to events 2004.01.07
 
 =cut
 

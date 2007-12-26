@@ -20,7 +20,7 @@ transform past (ROOT) :language('PIR') {
     lists = node['list']
 
     .local pmc iter
-    iter = new Iterator, lists
+    iter = new 'Iterator', lists
 
     .local pmc elem
 
@@ -38,7 +38,7 @@ transform past (ROOT) :language('PIR') {
 
 transform past (list) :language('PIR') {
     .local pmc iter
-    iter = new Iterator, node
+    iter = new 'Iterator', node
 
     .local string key_name
     key_name = shift iter
@@ -81,7 +81,7 @@ transform past (list) :language('PIR') {
     list = elem['list_item']
 
     .local pmc iter
-    iter = new Iterator, list
+    iter = new 'Iterator', list
 
     .local pmc item
   iter_loop:
@@ -104,7 +104,7 @@ transform past (list) :language('PIR') {
 
 transform past (list_item) :language('PIR') {
     .local pmc iter
-    iter = new Iterator, node
+    iter = new 'Iterator', node
 
     .local string key_name
     key_name = shift iter
@@ -191,7 +191,7 @@ transform cons (PAST::Op) :language('PIR') {
 
 transform make_cons (list) :language('PIR') {
     .local pmc iter
-    iter = new .Iterator, node
+    iter = new 'Iterator', node
 
     .local pmc cons
     cons = new 'PAST::Op'
@@ -367,7 +367,7 @@ transform lambda (PAST::Op) :language('PIR') {
     args_iter = args.'iterator'()
 
     .local pmc    rewrite_args
-    rewrite_args = new .Hash
+    rewrite_args = new 'Hash'
 
     .local string arg_name
     .local pmc    arg
@@ -389,7 +389,7 @@ transform lambda (PAST::Op) :language('PIR') {
     have_stack = defined arg_names_stack
     if have_stack goto add_names_to_stack
 
-    arg_names_stack = new .ResizablePMCArray
+    arg_names_stack = new 'ResizablePMCArray'
     store_global 'arg_names_stack', arg_names_stack
 
   add_names_to_stack:

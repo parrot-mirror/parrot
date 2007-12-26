@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 11;
+use Test::More tests => 12;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -30,10 +30,9 @@ my $pkg = q{auto::inline};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my ( $task, $step_name, @step_params, $step);
+my ( $task, $step_name, $step);
 $task        = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
@@ -43,7 +42,7 @@ ok( $step->description(), "$step_name has description" );
 my $ret = $step->runstep($conf);
 ok( $ret, "$step_name runstep() returned true value" );
 
-# pass("Keep Devel::Cover happy");
+pass("Keep Devel::Cover happy");
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

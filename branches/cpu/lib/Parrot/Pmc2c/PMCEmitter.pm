@@ -22,7 +22,6 @@ C<Parrot::Pmc2c::PMCEmitter> is used by F<tools/build/pmc2c.pl> to generate C co
 package Parrot::Pmc2c::PMC;
 use strict;
 use warnings;
-use Data::Dumper;
 use Parrot::Pmc2c::Emitter;
 use Parrot::Pmc2c::Method;
 use Parrot::Pmc2c::MethodEmitter;
@@ -64,8 +63,8 @@ sub generate_c_file {
 
     $c->emit( dont_edit( $self->filename ) );
     $c->emit("#define PARROT_IN_EXTENSION\n") if ( $self->is_dynamic );
-    $c->emit( $self->preamble );
     $self->gen_includes;
+    $c->emit( $self->preamble );
     $self->gen_methods;
     my $ro = $self->ro;
     if ($ro) {
@@ -569,15 +568,21 @@ EOC
     if ( $self->{flags}{hll} && $self->{flags}{maps} ) {
 
         my $hll  = $self->{flags}{hll};
-        my $maps = ( keys %{ $self->{flags}{maps} } )[0];
         $cout .= <<"EOC";
 
         {
             /* Register this PMC as a HLL mapping */
             INTVAL pmc_id = Parrot_get_HLL_id( interp, const_string(interp, "$hll")
             );
-            if (pmc_id > 0)
+            if (pmc_id > 0) {
+EOC
+        foreach my $maps ( sort keys %{ $self->{flags}{maps} } ) {
+            $cout .= <<"EOC";
                 Parrot_register_HLL_type( interp, pmc_id, enum_class_$maps, entry);
+EOC
+        }
+        $cout .= <<"EOC";
+            }
         } /* Register */
 EOC
     }

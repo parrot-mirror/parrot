@@ -28,7 +28,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "Coroutine 1" );
     .const .Sub P0 = "_coro"
     new P10, 'Integer'
     set P10, 2
-    store_global "i", P10
+    set_global "i", P10
 lp:
     invokecc P0
     print "back "
@@ -39,7 +39,7 @@ lp:
     end
 .pcc_sub _coro:
 loop:
-    find_global P11, "i"
+    get_global P11, "i"
     dec P11
     yield
     branch loop
@@ -63,10 +63,10 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Coroutines - M. Wallace yield example" );
     new return, 'Continuation'
     set_addr return, return_here
     loop:
-        .pcc_begin
-            .pcc_call itr, return
+        .begin_call
+            .call itr, return
             .result counter
-        .pcc_end
+        .end_call
 
         print counter
         print " "
@@ -85,9 +85,9 @@ return_here:
     x = new 'Integer'
     x = 0
     iloop:
-        .pcc_begin_yield
+        .begin_yield
         .return x
-        .pcc_end_yield
+        .end_yield
         x = x + 1
     if x <= 10 goto iloop
     returncc
@@ -113,14 +113,14 @@ _main:
     push_eh _catchm
     new P16, 'Integer'
     set P16, 2
-    store_global "i", P16
+    set_global "i", P16
 lp:
     invokecc P0
     print "back "
     print P16
     print "\n"
     null S0
-    find_global P17, S0
+    get_global P17, S0
     if P16, lp
     print "done\n"
     end
@@ -132,7 +132,7 @@ _catchm:
 .pcc_sub _coro:
     push_eh _catchc
 corolp:
-    find_global P17, "i"
+    get_global P17, "i"
     dec P17
     yield
     branch corolp
@@ -152,7 +152,7 @@ _main:
     push_eh _catchm
     new P16, 'Integer'
     set P16, 2
-    store_global "i", P16
+    set_global "i", P16
 lp:
     invokecc P0
     print "back "
@@ -169,11 +169,11 @@ _catchm:
 .pcc_sub _coro:
     push_eh _catchc
 corolp:
-    find_global P17, "i"
+    get_global P17, "i"
     dec P17
     yield
     null S0
-    find_global P17, S0
+    get_global P17, S0
     branch corolp
 _catchc:
     get_results '0, 0' , P5, S0
@@ -191,7 +191,7 @@ _main:
     push_eh _catchm
     new P16, 'Integer'
     set P16, 2
-    store_global "i", P16
+    set_global "i", P16
 lp:
     invokecc P0
     print "back "
@@ -206,11 +206,11 @@ _catchm:
     end
 .pcc_sub _coro:
 corolp:
-    find_global P17, "i"
+    get_global P17, "i"
     dec P17
     yield
     null S0
-    find_global P17, S0
+    get_global P17, S0
     branch corolp
 _catchc:
     print "catch coro\n"
@@ -227,7 +227,7 @@ _main:
     push_eh _catchm
     new P16, 'Integer'
     set P16, 2
-    store_global "i", P16
+    set_global "i", P16
 lp:
     invokecc P0
     print "back "
@@ -244,11 +244,11 @@ _catchm:
 .pcc_sub _coro:
     push_eh _catchc
 corolp:
-    find_global P17, "i"
+    get_global P17, "i"
     dec P17
     yield
     null S0
-    find_global P17, S0
+    get_global P17, S0
     branch corolp
 _catchc:
     get_results '0, 0' , P5, S0
@@ -286,11 +286,11 @@ pir_output_is( <<'CODE', '01234', "Coro new - yield" );
     .local pmc c
     c = global "coro"
 loop:
-    .pcc_begin
-    .pcc_call c
+    .begin_call
+    .call c
     .result   $P0 :optional
     .result   $I0 :opt_flag
-    .pcc_end
+    .end_call
     unless $I0,  ex
     print $P0
     goto loop

@@ -27,7 +27,7 @@ File stat stuff
 =item C<PMC *
 Parrot_stat_file(PARROT_INTERP, STRING *filename)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -44,7 +44,7 @@ Parrot_stat_file(PARROT_INTERP, STRING *filename)
 =item C<PMC *
 Parrot_stat_info_pmc(PARROT_INTERP, STRING *filename, INTVAL thing)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -59,27 +59,25 @@ Parrot_stat_info_pmc(PARROT_INTERP, STRING *filename, INTVAL thing)
 /*
 
 =item C<static INTVAL
-stat_common(PARROT_INTERP, struct stat *statbuf,
-        INTVAL thing, int status)>
+stat_common(PARROT_INTERP, struct stat *statbuf, INTVAL thing, int status)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
 static INTVAL
-stat_common(PARROT_INTERP, struct stat *statbuf,
-        INTVAL thing, int status)
+stat_common(PARROT_INTERP, struct stat *statbuf, INTVAL thing, int status)
 {
     INTVAL result = -1;
 
     if (thing == STAT_EXISTS)
         return status == 0;
+
     if (status == -1) {
         const char *err = strerror(errno);
-        real_exception(interp, NULL, E_IOError,
-                "stat failed: %s", err);
+        real_exception(interp, NULL, E_IOError, "stat failed: %s", err);
     }
 
     switch (thing) {
@@ -134,6 +132,8 @@ stat_common(PARROT_INTERP, struct stat *statbuf,
         case STAT_PLATFORM_BLOCKS:
             result = statbuf->st_blocks;
             break;
+        default:
+            break;
     }
 
     return result;
@@ -144,7 +144,7 @@ stat_common(PARROT_INTERP, struct stat *statbuf,
 =item C<INTVAL
 Parrot_stat_info_intval(PARROT_INTERP, STRING *file, INTVAL thing)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -171,7 +171,7 @@ Parrot_stat_info_intval(PARROT_INTERP, STRING *file, INTVAL thing)
 =item C<INTVAL
 Parrot_fstat_info_intval(PARROT_INTERP, INTVAL file, INTVAL thing)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -193,7 +193,7 @@ Parrot_fstat_info_intval(PARROT_INTERP, INTVAL file, INTVAL thing)
 =item C<FLOATVAL
 Parrot_stat_info_floatval(PARROT_INTERP, STRING *filename, INTVAL thing)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -210,7 +210,7 @@ Parrot_stat_info_floatval(PARROT_INTERP, STRING *filename, INTVAL thing)
 =item C<STRING *
 Parrot_stat_info_string(PARROT_INTERP, STRING *filename, INTVAL thing)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

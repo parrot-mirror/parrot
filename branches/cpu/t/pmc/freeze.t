@@ -241,7 +241,7 @@ ok
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "freeze/thaw a Sub" );
-    find_global P1, "_foo"
+    get_global P1, "_foo"
     freeze S0, P1
 
     thaw P0, S0
@@ -824,8 +824,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "freeze/thaw obj of class w Hash attrs" );
     print $I0
     print ' '
     $I0 = klentable['foobar']
-    print $I0
-    print_newline
+    say $I0
 .end
 CODE
 1 2 3 6

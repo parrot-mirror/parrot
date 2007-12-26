@@ -45,7 +45,8 @@ sub make_re {
 
 my $ident_re   = make_re('[A-Za-z_][A-Za-z0-9_]*');
 my $type_re    = make_re( '(?:(?:struct\s+)|(?:union\s+))?' . $ident_re . '\**' );
-my $param_re   = make_re( $type_re . '\s+' . $ident_re );
+my $const_re   = make_re( '(?:const\s+)?' );
+my $param_re   = make_re( $const_re . $type_re . '\s+' . $ident_re );
 my $arglist_re = make_re( '(?:' . $param_re . '(?:\s*,\s*' . $param_re . ')*)?' );
 my $method_re =
     make_re( '^\s*(' . $type_re . ')\s+(' . $ident_re . ')\s*\((' . $arglist_re . ')\)\s*$' );
@@ -68,13 +69,13 @@ Returns a reference to an array containing
   [ return_type method_name parameters section MMD_type attributes ]
 
 for each vtable method defined in C<$file>. If C<$file> is unspecified it
-defaults to F<vtable.tbl>.  If it is not an MMD method, C<MMD_type> is -1.
+defaults to F<src/vtable.tbl>.  If it is not an MMD method, C<MMD_type> is -1.
 
 =cut
 
 sub parse_vtable {
 
-    my $file    = defined $_[0] ? shift() : 'vtable.tbl';
+    my $file    = defined $_[0] ? shift() : 'src/vtable.tbl';
     my $vtable  = [];
     my $mmd     = [];
     my $fh      = FileHandle->new( $file, O_RDONLY ) or die "Can't open $file for reading: $!\n";
@@ -84,7 +85,8 @@ sub parse_vtable {
     while (<$fh>) {
         chomp;
 
-        next if /^\s*#/ or /^\s*$/;
+        s/\s+$//;
+        next if /^\s*#/ or /^$/;
 
         if (/^\[(\w+)\]\s*($attrs_re)/) {
             $section       = $1;
@@ -115,7 +117,7 @@ sub parse_vtable {
 
     # We probably should sort on insert, but this is easier for now. And it's
     # compile time, so it's not all that important.
-    return [ @$mmd, sort { $a->[1] cmp $b->[1] } @$vtable ];
+    return [ @{$mmd}, sort { $a->[1] cmp $b->[1] } @{$vtable} ];
 }
 
 =item C<vtbl_defs($vtable)>
@@ -133,7 +135,7 @@ sub vtbl_defs {
 
     for $entry ( @{$vtable} ) {
         next if ( $entry->[4] =~ /MMD_/ );
-        my $args = join( ", ", 'Interp *interp', 'PMC* pmc', split( /\s*,\s*/, $entry->[2] ) );
+        my $args = join( ", ", 'PARROT_INTERP', 'PMC* pmc', split( /\s*,\s*/, $entry->[2] ) );
         $defs .= "typedef $entry->[0] (*$entry->[1]_method_t)($args);\n";
     }
 
@@ -214,7 +216,7 @@ EOM
         next if ( $entry->[4] =~ /MMD_/ );
         my @args = split /,\s*/, $entry->[2];
         unshift @args, "i interp", "p pmc";
-        my $args = join ', ', map { ( split / /, $args[$_] )[1] } ( 0 .. $#args );
+        my $args = join ', ', map { ( split / /, $args[$_] )[-1] } ( 0 .. $#args );
         $macros .= <<"EOM";
 #define VTABLE_$entry->[1]($args) \\
     (pmc)->vtable->$entry->[1]($args)

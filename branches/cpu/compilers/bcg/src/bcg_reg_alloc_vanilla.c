@@ -11,7 +11,7 @@ bcg_reg_alloc_vanilla.c
 
 =head1 DESCRIPTION
 
-TODO
+RT#48264
 
 =head2 Methods
 
@@ -31,7 +31,7 @@ static int assig_reg_num(int reg_count[], char data_type, int reg_num);
 =item C<void
 reg_alloc_vanilla(BCG_info * bcg_info, bcg_unit * unit)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -70,7 +70,7 @@ reg_alloc_vanilla(BCG_info * bcg_info, bcg_unit * unit)
 =item C<static int
 assig_reg_num(int *reg_count, char data_type, int reg_num)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

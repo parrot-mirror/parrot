@@ -101,13 +101,13 @@ static PMC* retval(Interp *interp, void *ret)
     if (ret == 0) {
         real_exception(interp, NULL, OUT_OF_BOUNDS, "Array index out of bounds!\n");
     }
-    /* XXX getting non existent value, exception or undef?
+    /* RT#48172 getting non existent value, exception or undef?
      * current is for perlarray */
     if (ret == (void*) -1)
         value = undef(interp);
     else {
         value = *(PMC**) ret;
-        if (value == NULL)  /* XXX same here */
+        if (value == NULL)  /* RT#48172 same here */
             value = undef(interp);
     }
     return value;
@@ -186,25 +186,25 @@ int_compare(Parrot_Interp interp, void *a, void *b)
  * expressions as lvalues is deprecated" Is there a better way?
  */
 #define siva_int(a) ((INTVAL) PMC_struct_val(a))
-#define siva_set_int(a,v)  (PMC_struct_val(a) = (DPOINTER*) v)
+#define siva_set_int(a, v)  (PMC_struct_val(a) = (DPOINTER*) v)
 #define siva_ary(a)   ((List*) PMC_data(a))
-#define siva_set_ary(a,v)   PMC_data(a) = ((List*) v)
+#define siva_set_ary(a, v)   PMC_data(a) = ((List*) v)
 #define siva_hash(a)  ((siva*) PMC_pmc_val(a))->hash
-#define siva_set_hash(a,v)  (((siva*) PMC_pmc_val(a))->hash) =((Hash*) v)
+#define siva_set_hash(a, v)  (((siva*) PMC_pmc_val(a))->hash) =((Hash*) v)
 #define siva_str(a)  ((siva*) PMC_pmc_val(a))->s
-#define siva_set_str(a,v)  (((siva*) PMC_pmc_val(a))->s) =((STRING*) v)
+#define siva_set_str(a, v)  (((siva*) PMC_pmc_val(a))->s) =((STRING*) v)
 
 
 #define siva_siva(a)  ((PMC*) PMC_pmc_val(a))
-#define siva_set_siva(a,v)  (PMC_pmc_val(a)) = ((PMC*) v)
-#define siva_ary_create_if_void(i,a) { \
+#define siva_set_siva(a, v)  (PMC_pmc_val(a)) = ((PMC*) v)
+#define siva_ary_create_if_void(i, a) { \
     if (!siva_ary(a)) siva_set_ary(a, list_new(i, enum_type_PMC)); \
 }
-#define siva_hash_create_if_void(i,a) { \
+#define siva_hash_create_if_void(i, a) { \
     if (!siva_hash(a)) parrot_new_hash_x(i, &siva_hash(a), \
             enum_type_ptr, Hash_key_type_int, int_compare, key_hash_int); \
 }
-#define siva_str_create_if_void(i,a) { \
+#define siva_str_create_if_void(i, a) { \
 }
 
 
@@ -302,7 +302,7 @@ pmclass PugsCapture extends PugsAny
         HashBucket *b = parrot_hash_get_bucket(INTERP, siva_hash(SELF),
                                         key);
         if (b == NULL) {
-            /* XXX should store the undef for consistency */
+            /* RT#48174 should store the undef for consistency */
             PMC *new_undef = pmc_new(INTERP, enum_class_Undef);
             return new_undef;
         }
@@ -339,7 +339,7 @@ pmclass PugsCapture extends PugsAny
         b = parrot_hash_get_bucket(INTERP, siva_hash(SELF),
                                         keystr);
         if (b == NULL) {
-            /* XXX should store the undef for consistency */
+            /* RT#48174 should store the undef for consistency */
             PMC *new_undef = pmc_new(INTERP, enum_class_Undef);
             return new_undef;
         }
@@ -377,7 +377,7 @@ pmclass PugsCapture extends PugsAny
         HashBucket *b = parrot_hash_get_bucket(INTERP, (Hash*) siva_hash(SELF),
                                         key);
         if (b == NULL) {
-            /* XXX should store the undef for consistency */
+            /* RT#48174 should store the undef for consistency */
             PMC *new_undef = pmc_new(INTERP, enum_class_Undef);
             return new_undef;
         }
@@ -389,7 +389,7 @@ pmclass PugsCapture extends PugsAny
         HashBucket *b = parrot_hash_get_bucket(INTERP, siva_hash(SELF),
                                         key);
         if (b == NULL) {
-            /* XXX Warning: use of uninitialized value */
+            /* RT#48176 Warning: use of uninitialized value */
             return VTABLE_get_string(INTERP, pmc_new(INTERP, enum_class_Undef));
         }
         return VTABLE_get_string(INTERP, (PMC*) b->value);
@@ -442,7 +442,7 @@ pmclass PugsCapture extends PugsAny
         }
         b = parrot_hash_get_bucket(INTERP, hash, keystr);
         if (b == NULL) {
-            /* XXX Warning: use of uninitialized value */
+            /* RT#48176 Warning: use of uninitialized value */
             return VTABLE_get_string(INTERP, undef_pmc);
         }
         nextkey = key_next(INTERP, key);

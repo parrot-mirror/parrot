@@ -19,8 +19,7 @@ use warnings;
 
 use base qw(Parrot::Configure::Step::Base);
 
-use Config;
-use Parrot::Configure::Step ':auto', 'capture_output';
+use Parrot::Configure::Step ':auto';
 
 
 sub _init {
@@ -38,10 +37,10 @@ sub runstep {
     my ( $self, $conf ) = @_;
 
     $verbose = $conf->options->get( 'verbose' );
-    print $/ if $verbose;
+    print "\n" if $verbose;
 
-    my $archname = $Config{archname};
-    my ( $cpuarch, $osname ) = split( '-', $archname );
+    my $archname = $conf->data->get_p5('archname');
+    my ( $cpuarch, $osname ) = split m/-/, $archname, 2;
     if ( !defined $osname ) {
         ( $osname, $cpuarch ) = ( $cpuarch, "" );
     }

@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 15;
+use Test::More tests => 14;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -14,7 +14,7 @@ use_ok('config::auto::ctags');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
-use Parrot::IO::Capture::Mini;
+use IO::CaptureOutput qw| capture |;
 
 my $args = process_options(
     {
@@ -32,10 +32,9 @@ my $pkg = q{auto::ctags};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my ( $task, $step_name, @step_params, $step);
+my ( $task, $step_name, $step);
 $task        = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
@@ -43,17 +42,16 @@ isa_ok( $step, $step_name );
 ok( $step->description(), "$step_name has description" );
 
 {
-    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    my $ret = $step->runstep($conf);
+    my $stdout;
+    my $ret = capture(
+        sub { $step->runstep($conf) },
+        \$stdout
+    );
     ok( $ret, "$step_name runstep() returned true value" );
-    my @more_lines = $tie_out->READLINE;
-    ok( @more_lines, "verbose output captured" );
     is($step->result(), q{no}, "Got expected result");
     is($conf->data->get('ctags'), 'ctags',
         "Correct value for 'ctags' attribute was set");
 }
-untie *STDOUT;
 
 pass("Keep Devel::Cover happy");
 pass("Completed all tests in $0");

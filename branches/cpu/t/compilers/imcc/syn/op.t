@@ -304,7 +304,7 @@ OUT
 
 pir_output_is( <<'CODE', <<'OUT', "x = invoke" );
 .sub test :main
-    $P0 = find_global "_s"
+    $P0 = get_global "_s"
     $P0 = invokecc
     $S0 = "done\n"
     $S0 = print
@@ -324,8 +324,8 @@ pir_output_is( <<'CODE', '', "empty sub" );
 .sub _foo
 .end
 
-.emit
-.eom
+.sub _foo :anon
+.end
 CODE
 
 pir_output_is( <<'CODE', <<'OUT', "if null X goto Y" );

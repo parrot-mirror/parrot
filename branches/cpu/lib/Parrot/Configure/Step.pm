@@ -182,7 +182,11 @@ defaults to true.
 If conditioned_lines is true, then lines in the file that begin with:
 C<#CONDITIONED_LINE(var):> are skipped if the var condition is false. Lines
 that begin with C<#INVERSE_CONDITIONED_LINE(var):> are skipped if
-the var condition is true.
+the var condition is true.  For instance:
+
+  #CONDITIONED_LINE(win32): $(SRC_DIR)/atomic/gcc_x86$(O)
+
+will be processed if the platform is win32.
 
 =item comment_type
 
@@ -510,10 +514,7 @@ sub cc_build {
     my $verbose = $conf->options->get('verbose');
 
     my ( $cc, $ccflags, $ldout, $o, $link, $linkflags, $cc_exe_out, $exe, $libs ) =
-        $conf->data->get(
-        qw(cc ccflags ld_out o link linkflags
-            cc_exe_out exe libs)
-        );
+        $conf->data->get(qw(cc ccflags ld_out o link linkflags cc_exe_out exe libs));
 
     my $compile_command = _build_compile_command( $cc, $ccflags, $cc_args );
     my $compile_result = _run_command( $compile_command, 'test.cco', 'test.cco', $verbose )
@@ -523,7 +524,7 @@ sub cc_build {
     }
 
     my $link_result =
-        _run_command( "$link $linkflags test$o $link_args ${cc_exe_out}test$exe $libs",
+        _run_command( "$link $linkflags test$o $link_args ${cc_exe_out}test$exe  $libs",
         'test.ldo', 'test.ldo', $verbose )
         and confess "Linker failed (see test.ldo)";
     if ($link_result) {

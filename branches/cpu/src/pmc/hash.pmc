@@ -374,7 +374,7 @@ Return a representation of the hash contents.
     STRING *get_repr() {
         /* RT#44643 use freeze */
         PMC * const  iter = VTABLE_get_iter(INTERP, SELF);
-        STRING      *res  = string_from_literal(INTERP, "{");
+        STRING      *res  = CONST_STRING(INTERP, "{");
         const INTVAL n    = VTABLE_elements(INTERP, SELF);
         INTVAL       j;
 
@@ -587,7 +587,7 @@ Returns the PMC value for the element at C<*key>.
         if ((PObj_get_FLAGS(key) & KEY_type_FLAGS) == KEY_hash_iterator_FLAGS) {
             /* check if we really have Hash_key_type_int */
             if (hash->key_type == Hash_key_type_int) {
-                void *idx           = parrot_hash_get_idx(INTERP, hash,key);
+                void *idx           = parrot_hash_get_idx(INTERP, hash, key);
                 const INTVAL i      = (INTVAL)idx;
                 result              = pmc_new(INTERP, enum_class_Integer);
                 PMC_int_val(result) = i;
@@ -617,7 +617,7 @@ Returns the PMC value for the element at C<*key>.
 
 /*
 
-=item C<INTVAL is_same(PMC *other)>
+=item C<INTVAL is_same(const PMC *other)>
 
 Returns whether the hash is the same as C<*other>.
 
@@ -625,7 +625,7 @@ Returns whether the hash is the same as C<*other>.
 
 */
 
-    INTVAL is_same(PMC *other) {
+    INTVAL is_same(const PMC *other) {
         return (INTVAL)(other->vtable == SELF->vtable &&
             PMC_struct_val(other) == PMC_struct_val(SELF));
     }
@@ -1086,6 +1086,11 @@ Used to unarchive the hash.
              */
             if (k_type == Hash_key_type_int && v_type == enum_hash_int) {
                 PMC * const dummy     = Parrot_new_INTVAL_hash(INTERP, 0);
+
+                /* don't leak the hash if we're going to overwrite it anyway */
+                if (PMC_struct_val(SELF))
+                    parrot_hash_destroy(INTERP, (Hash *)PMC_struct_val(SELF));
+
                 PMC_struct_val(SELF)  = PMC_struct_val(dummy);
                 PMC_struct_val(dummy) = NULL;
             }

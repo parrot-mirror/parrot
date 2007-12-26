@@ -11,7 +11,7 @@ compilers/imcc/sets.c
 
 =head1 DESCRIPTION
 
-TODO
+RT#48264
 
 =head2 Functions
 
@@ -38,17 +38,16 @@ TODO
 
 /*
 
-=item C<PARROT_MALLOC
-Set*
-set_make(int length)>
+=item C<Set* set_make>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Set*
 set_make(int length)
 {
@@ -60,17 +59,16 @@ set_make(int length)
 
 /*
 
-=item C<PARROT_MALLOC
-Set*
-set_make_full(int length)>
+=item C<Set* set_make_full>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Set*
 set_make_full(int length)
 {
@@ -85,10 +83,9 @@ set_make_full(int length)
 
 /*
 
-=item C<void
-set_free(NOTNULL(Set *s))>
+=item C<void set_free>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -104,10 +101,9 @@ set_free(NOTNULL(Set *s))
 
 /*
 
-=item C<void
-set_clear(NOTNULL(Set *s))>
+=item C<void set_clear>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -121,17 +117,16 @@ set_clear(NOTNULL(Set *s))
 
 /*
 
-=item C<PARROT_MALLOC
-Set*
-set_copy(NOTNULL(Set *s))>
+=item C<Set* set_copy>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Set*
 set_copy(NOTNULL(Set *s))
 {
@@ -143,17 +138,16 @@ set_copy(NOTNULL(Set *s))
 
 /*
 
-=item C<int
-set_equal(NOTNULL(const Set *s1), NOTNULL(const Set *s2))>
+=item C<int set_equal>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
 int
-set_equal(NOTNULL(const Set *s1), NOTNULL(const Set *s2))
+set_equal(ARGIN(const Set *s1), ARGIN(const Set *s2))
 {
     int mask;
     const int bytes = s1->length / 8;
@@ -179,10 +173,9 @@ set_equal(NOTNULL(const Set *s1), NOTNULL(const Set *s2))
 
 /*
 
-=item C<void
-set_add(NOTNULL(Set *s), int element)>
+=item C<void set_add>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -205,12 +198,9 @@ set_add(NOTNULL(Set *s), int element)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_PURE_FUNCTION
-int
-set_first_zero(NOTNULL(const Set *s))>
+=item C<int set_first_zero>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -219,7 +209,7 @@ TODO: Not yet documented!!!
 PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
 int
-set_first_zero(NOTNULL(const Set *s))
+set_first_zero(ARGIN(const Set *s))
 {
     int i, j;
 
@@ -240,12 +230,9 @@ set_first_zero(NOTNULL(const Set *s))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_PURE_FUNCTION
-int
-set_contains(NOTNULL(const Set *s), int element)>
+=item C<int set_contains>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -254,7 +241,7 @@ TODO: Not yet documented!!!
 PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
 int
-set_contains(NOTNULL(const Set *s), int element)
+set_contains(ARGIN(const Set *s), int element)
 {
     /* workaround for another lcc bug.. */
     const int byte_in_set = element >> 3;
@@ -268,19 +255,18 @@ set_contains(NOTNULL(const Set *s), int element)
 
 /*
 
-=item C<PARROT_MALLOC
-Set *
-set_union(NOTNULL(const Set *s1), NOTNULL(const Set *s2))>
+=item C<Set * set_union>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Set *
-set_union(NOTNULL(const Set *s1), NOTNULL(const Set *s2))
+set_union(ARGIN(const Set *s1), ARGIN(const Set *s2))
 {
     int i;
     Set * const s = set_make(s1->length);
@@ -298,19 +284,18 @@ set_union(NOTNULL(const Set *s1), NOTNULL(const Set *s2))
 
 /*
 
-=item C<PARROT_MALLOC
-Set *
-set_intersec(NOTNULL(const Set *s1), NOTNULL(const Set *s2))>
+=item C<Set * set_intersec>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Set *
-set_intersec(NOTNULL(const Set *s1), NOTNULL(const Set *s2))
+set_intersec(ARGIN(const Set *s1), ARGIN(const Set *s2))
 {
     int i;
     Set * const s = set_make(s1->length);
@@ -328,17 +313,16 @@ set_intersec(NOTNULL(const Set *s1), NOTNULL(const Set *s2))
 
 /*
 
-=item C<void
-set_intersec_inplace(NOTNULL(Set *s1), NOTNULL(const Set *s2))>
+=item C<void set_intersec_inplace>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
 void
-set_intersec_inplace(NOTNULL(Set *s1), NOTNULL(const Set *s2))
+set_intersec_inplace(NOTNULL(Set *s1), ARGIN(const Set *s2))
 {
     int i;
 

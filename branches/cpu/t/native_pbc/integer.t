@@ -7,9 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
 
-# use Parrot::Test tests => 1;
-use Parrot::Test;
-plan skip_all => 'Ongoing PBC format changes';
+use Parrot::Test skip_all => 'ongoing PBC format changes';
 
 =head1 NAME
 
@@ -55,7 +53,8 @@ should be included for reference.
 #         no endianize, no opcode, no numval transform
 #         dirformat = 1
 # ]
-pbc_output_is( undef, '270544960', "i386 32 bit opcode_t, 32 bit intval" );
+pbc_output_is( undef, '270544960', "i386 32 bit opcode_t, 32 bit intval" )
+    or diag "May need to regenerate t/native_pbc/integer_1.pbc; read test file";
 
 # Formerly following tests had been set up:
 # pasm_output_is(undef, '270544960', "PPC BE 32 bit opcode_t, 32 bit intval");

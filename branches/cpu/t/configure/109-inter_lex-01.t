@@ -12,7 +12,6 @@ use_ok('config::init::defaults');
 use_ok('config::inter::lex');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::IO::Capture::Mini;
 use Parrot::Configure::Test qw( test_step_thru_runstep);
 
 my $args = process_options(
@@ -26,14 +25,13 @@ my $conf = Parrot::Configure->new();
 
 test_step_thru_runstep( $conf, q{init::defaults}, $args );
 
-my ( $task, $step_name, @step_params, $step, $ret );
+my ( $task, $step_name, $step, $ret );
 my $pkg = q{inter::lex};
 
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 $task        = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );

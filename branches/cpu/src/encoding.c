@@ -24,7 +24,7 @@ These are parrot's generic encoding handling functions
 /* HEADERIZER BEGIN: static */
 
 static INTVAL register_encoding(PARROT_INTERP,
-    NOTNULL(const char *encodingname),
+    ARGIN(const char *encodingname),
     NOTNULL(ENCODING *encoding))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -52,10 +52,9 @@ static All_encodings *all_encodings;
 
 /*
 
-=item C<void
-parrot_init_encodings_2(void)>
+=item C<void parrot_init_encodings_2>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -74,10 +73,9 @@ parrot_init_encodings_2(void)
 
 /*
 
-=item C<void
-parrot_deinit_encodings(void)>
+=item C<void parrot_deinit_encodings>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -99,12 +97,9 @@ parrot_deinit_encodings(void)
 
 /*
 
-=item C<PARROT_API
-PARROT_MALLOC
-ENCODING *
-Parrot_new_encoding(SHIM_INTERP)>
+=item C<ENCODING * Parrot_new_encoding>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -112,6 +107,7 @@ TODO: Not yet documented!!!
 
 PARROT_API
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 ENCODING *
 Parrot_new_encoding(SHIM_INTERP)
 {
@@ -120,13 +116,9 @@ Parrot_new_encoding(SHIM_INTERP)
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-const ENCODING *
-Parrot_find_encoding(SHIM_INTERP, NOTNULL(const char *encodingname))>
+=item C<const ENCODING * Parrot_find_encoding>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -136,7 +128,7 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 const ENCODING *
-Parrot_find_encoding(SHIM_INTERP, NOTNULL(const char *encodingname))
+Parrot_find_encoding(SHIM_INTERP, ARGIN(const char *encodingname))
 {
     const int n = all_encodings->n_encodings;
     int i;
@@ -149,12 +141,9 @@ Parrot_find_encoding(SHIM_INTERP, NOTNULL(const char *encodingname))
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-const ENCODING *
-Parrot_load_encoding(PARROT_INTERP, NOTNULL(const char *encodingname))>
+=item C<const ENCODING * Parrot_load_encoding>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -166,8 +155,9 @@ TODO: Not yet documented!!!
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 const ENCODING *
-Parrot_load_encoding(PARROT_INTERP, NOTNULL(const char *encodingname))
+Parrot_load_encoding(PARROT_INTERP, ARGIN(const char *encodingname))
 {
     UNUSED(encodingname);
     real_exception(interp, NULL, UNIMPLEMENTED, "Can't load encodings yet");
@@ -175,10 +165,7 @@ Parrot_load_encoding(PARROT_INTERP, NOTNULL(const char *encodingname))
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-INTVAL
-Parrot_encoding_number(PARROT_INTERP, NOTNULL(STRING *encodingname))>
+=item C<INTVAL Parrot_encoding_number>
 
 Return the number of the encoding or -1 if not found.
 
@@ -189,7 +176,7 @@ Return the number of the encoding or -1 if not found.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_encoding_number(PARROT_INTERP, NOTNULL(STRING *encodingname))
+Parrot_encoding_number(PARROT_INTERP, ARGIN(const STRING *encodingname))
 {
     const int n = all_encodings->n_encodings;
     int i;
@@ -204,10 +191,7 @@ Parrot_encoding_number(PARROT_INTERP, NOTNULL(STRING *encodingname))
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-INTVAL
-Parrot_encoding_number_of_str(SHIM_INTERP, NOTNULL(const STRING *src))>
+=item C<INTVAL Parrot_encoding_number_of_str>
 
 Return the number of the encoding of the given string or -1 if not found.
 
@@ -218,7 +202,7 @@ Return the number of the encoding of the given string or -1 if not found.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_encoding_number_of_str(SHIM_INTERP, NOTNULL(const STRING *src))
+Parrot_encoding_number_of_str(SHIM_INTERP, ARGIN(const STRING *src))
 {
     const int n = all_encodings->n_encodings;
     int i;
@@ -232,13 +216,9 @@ Parrot_encoding_number_of_str(SHIM_INTERP, NOTNULL(const STRING *src))
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-STRING*
-Parrot_encoding_name(SHIM_INTERP, INTVAL number_of_encoding)>
+=item C<STRING* Parrot_encoding_name>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -257,13 +237,9 @@ Parrot_encoding_name(SHIM_INTERP, INTVAL number_of_encoding)
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-const ENCODING*
-Parrot_get_encoding(PARROT_INTERP, INTVAL number_of_encoding)>
+=item C<const ENCODING* Parrot_get_encoding>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -282,13 +258,9 @@ Parrot_get_encoding(PARROT_INTERP, INTVAL number_of_encoding)
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-const char *
-Parrot_encoding_c_name(PARROT_INTERP, INTVAL number_of_encoding)>
+=item C<const char * Parrot_encoding_c_name>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -307,18 +279,16 @@ Parrot_encoding_c_name(PARROT_INTERP, INTVAL number_of_encoding)
 
 /*
 
-=item C<static INTVAL
-register_encoding(PARROT_INTERP, NOTNULL(const char *encodingname),
-        NOTNULL(ENCODING *encoding))>
+=item C<static INTVAL register_encoding>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
 static INTVAL
-register_encoding(PARROT_INTERP, NOTNULL(const char *encodingname),
+register_encoding(PARROT_INTERP, ARGIN(const char *encodingname),
         NOTNULL(ENCODING *encoding))
 {
     const int n = all_encodings->n_encodings;
@@ -347,12 +317,9 @@ register_encoding(PARROT_INTERP, NOTNULL(const char *encodingname),
 
 /*
 
-=item C<PARROT_API
-INTVAL
-Parrot_register_encoding(PARROT_INTERP, NOTNULL(const char *encodingname),
-        NOTNULL(ENCODING *encoding))>
+=item C<INTVAL Parrot_register_encoding>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -360,7 +327,7 @@ TODO: Not yet documented!!!
 
 PARROT_API
 INTVAL
-Parrot_register_encoding(PARROT_INTERP, NOTNULL(const char *encodingname),
+Parrot_register_encoding(PARROT_INTERP, ARGIN(const char *encodingname),
         NOTNULL(ENCODING *encoding))
 {
     if (!all_encodings) {
@@ -393,12 +360,9 @@ Parrot_register_encoding(PARROT_INTERP, NOTNULL(const char *encodingname),
 
 /*
 
-=item C<PARROT_API
-INTVAL
-Parrot_make_default_encoding(SHIM_INTERP, SHIM(const char *encodingname),
-        NOTNULL(ENCODING *encoding))>
+=item C<INTVAL Parrot_make_default_encoding>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -415,16 +379,16 @@ Parrot_make_default_encoding(SHIM_INTERP, SHIM(const char *encodingname),
 
 /*
 
-=item C<PARROT_API
-const ENCODING *
-Parrot_default_encoding(SHIM_INTERP)>
+=item C<const ENCODING * Parrot_default_encoding>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PARROT_API
 const ENCODING *
 Parrot_default_encoding(SHIM_INTERP)
@@ -434,11 +398,9 @@ Parrot_default_encoding(SHIM_INTERP)
 
 /*
 
-=item C<PARROT_API
-encoding_converter_t
-Parrot_find_encoding_converter(PARROT_INTERP, ENCODING *lhs, ENCODING *rhs)>
+=item C<encoding_converter_t Parrot_find_encoding_converter>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -446,7 +408,7 @@ TODO: Not yet documented!!!
 
 PARROT_API
 encoding_converter_t
-Parrot_find_encoding_converter(PARROT_INTERP, ENCODING *lhs, ENCODING *rhs)
+Parrot_find_encoding_converter(PARROT_INTERP, NOTNULL(ENCODING *lhs), NOTNULL(ENCODING *rhs))
 {
     UNUSED(interp);
     UNUSED(lhs);
