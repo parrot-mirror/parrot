@@ -38,12 +38,13 @@ sub runstep {
         }
         else {
             if ( cc_run() =~ /ok/ ) {
-                $conf->data->set(
-                    "i386_has_$suffix" => '1',
-                    "HAS_i386_$suffix" => '1',
-                );
-                print " (\U$suffix) " if ($verbose);
-                $conf->data->add( ' ', TEMP_generated => $f );
+#                $conf->data->set(
+#                    "i386_has_$suffix" => '1',
+#                    "HAS_i386_$suffix" => '1',
+#                );
+#                print " (\U$suffix) " if ($verbose);
+#                $conf->data->add( ' ', TEMP_generated => $f );
+                _handle_cc_run_ok($conf, $suffix, $f, $verbose);
             }
         }
         cc_clean();
@@ -61,17 +62,28 @@ sub runstep {
         }
         else {
             if ( cc_run() =~ /ok/ ) {
-                $conf->data->set(
-                    "i386_has_$suffix" => '1',
-                    "HAS_i386_$suffix" => '1',
-                );
-                print " (\U$suffix) " if ($verbose);
-                $conf->data->add( ' ', TEMP_generated => $f );
+#                $conf->data->set(
+#                    "i386_has_$suffix" => '1',
+#                    "HAS_i386_$suffix" => '1',
+#                );
+#                print " (\U$suffix) " if ($verbose);
+#                $conf->data->add( ' ', TEMP_generated => $f );
+                _handle_cc_run_ok($conf, $suffix, $f, $verbose);
             }
         }
         cc_clean();
     }
     return;
+}
+
+sub _handle_cc_run_ok {
+    my ($conf, $suffix, $f, $verbose) = @_;
+    $conf->data->set(
+        "i386_has_$suffix" => '1',
+        "HAS_i386_$suffix" => '1',
+    );
+    print " (\U$suffix) " if ($verbose);
+    $conf->data->add( ' ', TEMP_generated => $f );
 }
 
 1;

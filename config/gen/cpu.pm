@@ -7,7 +7,7 @@ config/gen/cpu.pm - CPU specific Files
 
 =head1 DESCRIPTION
 
-Runs C<&run_cpu()> in F<config/gen/cpu/${cpuarch}/auto.pm> if it exists.
+Runs C<runstep()> in F<config/gen/cpu/${cpuarch}/auto.pm> if it exists.
 
 =cut
 
@@ -44,8 +44,6 @@ sub runstep {
     $conf->data->add( ' ', TEMP_atomic_o => '' );    # assure a default
 
     my $hints = "gen::cpu::" . $conf->data->get('cpuarch') . "::auto";
-# config/gen/cpu/i386/auto.pm
-# config/gen/cpu/ppc/auto.pm
 
     print "\t(cpu hints = '$hints') " if $verbose;
 
