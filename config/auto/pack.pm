@@ -19,8 +19,6 @@ use warnings;
 use base qw(Parrot::Configure::Step::Base);
 
 use Parrot::Configure::Step;
-use Config;
-
 
 sub _init {
     my $self = shift;
@@ -47,14 +45,18 @@ sub runstep {
         my $which = $_ eq 'intvalsize' ? 'packtype_i' : 'packtype_op';
         my $size = $conf->data->get($_);
         my $format;
-        if ( ( $] >= 5.006 ) && ( $size == $longsize ) && ( $size == $Config{longsize} ) ) {
+        if (
+            ( $] >= 5.006 ) &&
+            ( $size == $longsize ) &&
+            ( $size == $conf->data->get_p5('longsize') )
+        ) {
             $format = 'l!';
         }
         elsif ( $size == 4 ) {
             $format = 'l';
         }
-        elsif ( $size == 8 || $Config{use64bitint} eq 'define' ) {
-
+       elsif ( $size == 8 ||
+            $conf->data->get_p5('use64bitint') eq 'define' ) {
             # pp_pack is annoying, and this won't work unless sizeof(UV) >= 8
             $format = 'q';
         }
@@ -83,16 +85,25 @@ AARGH
         $conf->data->set( $which => $format );
     }
 
+    _set_packtypes($conf);
+
+    # Find out what integer constant type we can use
+    # for pointers.
+    _set_ptrconst($conf, $ptrsize, $intsize, $longsize);
+
+    return 1;
+}
+
+sub _set_packtypes {
+    my $conf = shift;
     $conf->data->set(
         packtype_b => 'C',
         packtype_n => ( $conf->data->get('numvalsize') == 12 ? 'D' : 'd' )
     );
+}
 
-    #
-    # Find out what integer constant type we can use
-    # for pointers.
-    #
-
+sub _set_ptrconst {
+    my ($conf, $ptrsize, $intsize, $longsize) = @_;
     if ( $intsize == $ptrsize ) {
         $conf->data->set( ptrconst => "u" );
     }
@@ -104,8 +115,6 @@ AARGH
 Configure.pl:  Unable to find an integer type that fits a pointer.
 AARGH
     }
-
-    return 1;
 }
 
 1;

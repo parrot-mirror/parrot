@@ -102,9 +102,7 @@ LINK       = @link@
 LINKFLAGS  = @linkflags@ @link_debug@ @ld_debug@
 LD         = @ld@
 LDFLAGS    = @ldflags@ @ld_debug@
-
 RECONFIGURE  = $(PERL) tools/dev/reconfigure.pl
-
 INNO_SETUP = iscc
 
 JIT_BUILD_TOOL = $(BUILD_TOOLS_DIR)/jit2c.pl
@@ -141,10 +139,10 @@ NONGEN_HEADERS  = @TEMP_nongen_headers@
 GEN_MAKEFILES = \
     Makefile \
 #CONDITIONED_LINE(has_perldoc):    docs/Makefile \
+    compilers/nqp/Makefile \
     compilers/past-pm/Makefile \
     compilers/pct/Makefile \
     compilers/pge/Makefile \
-    compilers/pirc/Makefile \
     compilers/tge/Makefile \
     compilers/bcg/Makefile \
     compilers/json/Makefile \
@@ -154,7 +152,6 @@ GEN_MAKEFILES = \
     languages/abc/Makefile \
     languages/amber/Makefile \
     languages/APL/Makefile \
-    languages/bc/Makefile \
     languages/befunge/Makefile \
     languages/bf/Makefile \
     languages/c99/Makefile \
@@ -167,15 +164,17 @@ GEN_MAKEFILES = \
     languages/lisp/Makefile \
     languages/lua/Makefile \
     languages/m4/Makefile \
-    languages/miniperl/Makefile \
     languages/nqp/Makefile \
     languages/ook/Makefile \
     languages/parrot_compiler/Makefile \
+    languages/perl5/Makefile \
     languages/perl6/Makefile \
     languages/pheme/Makefile \
+    languages/PIR/Makefile \
     languages/plumhead/Makefile \
     languages/pugs/Makefile \
     languages/punie/Makefile \
+    languages/pynie/Makefile \
     languages/regex/Makefile \
     languages/scheme/Makefile \
     languages/tap/Makefile \
@@ -218,7 +217,12 @@ GEN_PASM_INCLUDES = \
     runtime/parrot/include/signal.pasm \
     @TEMP_gen_pasm_includes@
 
-STICKY_FILES = $(GEN_CONFIGS) $(GEN_MAKEFILES) myconfig $(GEN_PASM_INCLUDES)
+STICKY_FILES = \
+    $(GEN_CONFIGS) \
+    $(GEN_MAKEFILES) \
+    ext/Parrot-Embed/Makefile.PL \
+    myconfig  \
+    $(GEN_PASM_INCLUDES)
 
 
 ###############################################################################
@@ -294,6 +298,12 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/Stream/Sub.pbc \
     $(LIBRARY_DIR)/Stream/Writer.pbc \
     $(LIBRARY_DIR)/String/Utils.pbc \
+    $(LIBRARY_DIR)/Test/Builder/Output.pbc \
+    $(LIBRARY_DIR)/Test/Builder/Test.pbc \
+    $(LIBRARY_DIR)/Test/Builder/Tester.pbc \
+    $(LIBRARY_DIR)/Test/Builder/TestPlan.pbc \
+    $(LIBRARY_DIR)/Test/Builder.pbc \
+    $(LIBRARY_DIR)/Test/More.pbc \
     $(LIBRARY_DIR)/Tcl/Glob.pbc \
     $(LIBRARY_DIR)/YAML/Parser/Syck.pbc \
     $(LIBRARY_DIR)/STM.pbc \
@@ -379,6 +389,7 @@ INTERP_O_FILES = \
     \
     $(OPS_DIR)/core_ops$(O) \
     $(OPS_DIR)/core_ops_switch$(O) \
+#CONDITIONED_LINE(i386_has_gcc_cmpxchg):    $(SRC_DIR)/atomic/gcc_x86$(O) \
     $(SRC_DIR)/builtin$(O) \
     $(SRC_DIR)/byteorder$(O) \
     $(SRC_DIR)/charset$(O) \
@@ -430,6 +441,7 @@ INTERP_O_FILES = \
     $(SRC_DIR)/pmc$(O) \
     $(SRC_DIR)/revision$(O) \
     $(SRC_DIR)/runops_cores$(O) \
+    $(SRC_DIR)/scheduler$(O) \
     $(SRC_DIR)/spf_render$(O) \
     $(SRC_DIR)/spf_vtable$(O) \
     $(SRC_DIR)/stack_common$(O) \
@@ -575,13 +587,16 @@ STR_FILES = \
     $(SRC_DIR)/builtin.str \
     $(SRC_DIR)/inter_call.str \
     $(SRC_DIR)/inter_cb.str \
+    $(SRC_DIR)/inter_create.str \
     $(SRC_DIR)/inter_misc.str \
     $(SRC_DIR)/global.str \
     $(SRC_DIR)/global_setup.str \
+    $(SRC_DIR)/key.str \
     $(SRC_DIR)/library.str \
     $(SRC_DIR)/mmd.str \
     $(SRC_DIR)/pmc.str \
     $(SRC_DIR)/oo.str \
+    $(SRC_DIR)/scheduler.str \
     $(SRC_DIR)/objects.str \
     $(SRC_DIR)/spf_render.str \
     $(SRC_DIR)/spf_vtable.str \
@@ -605,7 +620,7 @@ PMC2CV = $(PERL) $(BUILD_TOOLS_DIR)/pmc2c.pl --vtable
 #src/pmc/pmc_%.h : src/pmc/%.c
 #	$(PMC2CC) $<
 
-vtable.dump : vtable.tbl
+vtable.dump : src/vtable.tbl
 	$(PMC2CV)
 
 # This is a listing of all targets, that are meant to be called by users
@@ -645,10 +660,11 @@ help :
 	@echo "  html-clean:        Remove the HTML documentation."
 	@echo ""
 	@echo "Testing:"
-	@echo "  test:              Run the test suite."
-	@echo "  fulltest:          Run test suite with various options."
-	@echo "  test<core>:        Run the test suite with a specified core."
-	@echo "                     Valid cores are b, C, f, g, j, r, S."
+	@echo "  test:              Run the standard test suite."
+	@echo "  coretest:          Run the minimal 'core functionality' suite."
+	@echo "  fulltest:          Run the full test suite under many runcores."
+	@echo "  test<runcore>:     Run the test suite with a specified runcore."
+	@echo "                     Valid runcores are b, C, f, g, j, r, S."
 	@echo "  src_tests:         Run test in C-file."
 	@echo "  perl_tests:        Test the Perl modules in the distribution."
 	@echo "  codingstd_tests:   Test pdd07_codingstd."
@@ -725,8 +741,6 @@ parrot_utils : $(PDUMP) $(DIS) $(PINFO) $(PDB) $(PBCMERGE)
 
 installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPINFO) $(INSTALLABLEPDB) $(INSTALLABLEPBCMERGE)
 
-Makefile : config/gen/makefiles/root.in
-	$(RECONFIGURE) --step=gen::makefiles --target=Makefile
 
 flags_dummy :
 	@echo "Compiling with:"
@@ -972,7 +986,7 @@ $(SRC_DIR)/exec$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
 
 $(SRC_DIR)/exec_cpu$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
 
-$(INC_DIR)/extend_vtable.h $(SRC_DIR)/extend_vtable.c $(SRC_DIR)/vtable.h : vtable.tbl $(BUILD_TOOLS_DIR)/vtable_extend.pl lib/Parrot/Vtable.pm
+$(INC_DIR)/extend_vtable.h $(SRC_DIR)/extend_vtable.c $(SRC_DIR)/vtable.h : src/vtable.tbl $(BUILD_TOOLS_DIR)/vtable_extend.pl lib/Parrot/Vtable.pm
 	$(PERL) $(BUILD_TOOLS_DIR)/vtable_extend.pl
 
 $(SRC_DIR)/exec_start$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@
@@ -1154,7 +1168,7 @@ $(OPS_DIR)/core_ops_switch.c : $(OPS_FILES) $(BUILD_TOOLS_DIR)/ops2c.pl lib/Parr
 # $(STICKY_FILES) : Configure.pl
 #	$(PERL) Configure.pl
 
-$(INC_DIR)/vtable.h : vtable.tbl $(BUILD_TOOLS_DIR)/vtable_h.pl lib/Parrot/Vtable.pm
+$(INC_DIR)/vtable.h : src/vtable.tbl $(BUILD_TOOLS_DIR)/vtable_h.pl lib/Parrot/Vtable.pm
 	$(PERL) $(BUILD_TOOLS_DIR)/vtable_h.pl
 
 $(SRC_DIR)/jit_emit.h : $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h
@@ -1266,6 +1280,7 @@ compilers.dummy : $(PARROT)
 	$(MAKE) compilers/tge
 	$(MAKE) compilers/past-pm
 	$(MAKE) compilers/pct
+	$(MAKE) compilers/nqp
 	$(MAKE) compilers/json
 
 languages : languages.dummy
@@ -1282,6 +1297,9 @@ languages-smoke :
 languages-clean :
 	$(MAKE) languages clean
 
+languages-realclean :
+	$(MAKE) languages realclean
+
 ###############################################################################
 #
 # compiler implementation targets:
@@ -1293,7 +1311,9 @@ compilers-clean :
 	$(MAKE) compilers/pct clean
 	$(MAKE) compilers/pge clean
 	$(MAKE) compilers/tge clean
+	$(MAKE) compilers/nqp clean
 	$(MAKE) compilers/json clean
+	$(MAKE) compilers/pirc clean
 
 ###############################################################################
 #
@@ -1326,19 +1346,7 @@ CODINGSTD_TEST_FILES = \
 RUN_TEST_FILES = \
     t/run/*.t
 RUNCORE_TEST_FILES = \
-    t/compilers/imcc/*/*.t \
-    t/op/*.t \
-    t/pmc/*.t \
-    t/native_pbc/*.t \
-    t/dynpmc/*.t \
-    t/dynoplibs/*.t \
-    t/compilers/json/*.t \
-    t/compilers/pge/*.t \
-    t/compilers/pge/p5regexp/*.t \
-    t/compilers/pge/p6rules/*.t \
-    t/compilers/tge/*.t \
-    t/library/*.t \
-    t/examples/*.t
+    --runcore-tests
 SRC_TEST_FILES = \
     t/src/*.t
 TOOLS_TEST_FILES = \
@@ -1391,9 +1399,14 @@ test_prep : all
 # Run test cases with a single call of t/harness. Users have to look at only
 # one report. The default set of tests to run is contained in t/harness,
 # make any edits there.
-# Normal core
+# Normal test package
 test : test_prep
 	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS)
+
+# "core tests" -- test basic functionality but not ancillaries
+coretest : test_prep
+	$(PERL) t/harness $(EXTRA_TEST_ARGS) $(PARROT_ARGS) --core-tests
+
 
 # automake compatibility
 check : test
@@ -1403,10 +1416,10 @@ check : test
 # when the needed runcores are available
 fulltest : \
     testb \
-#CONDITIONED_LINE(cg_flag): testC \
+#CONDITIONED_LINE(cg_flag):    testC \
     testf \
-#CONDITIONED_LINE(cg_flag): testg \
-#CONDITIONED_LINE(jitcapable): testj \
+#CONDITIONED_LINE(cg_flag):    testg \
+#CONDITIONED_LINE(jitcapable):    testj \
     testr \
     testS \
     src_tests \
@@ -1515,15 +1528,15 @@ clean : \
     prog-clean \
     dynext-clean \
     languages-clean \
-#CONDITIONED_LINE(has_perldoc): docs-clean \
-#CONDITIONED_LINE(has_perldoc): html-clean \
+#CONDITIONED_LINE(has_perldoc):    docs-clean \
+#CONDITIONED_LINE(has_perldoc):    html-clean \
     dynpmc-clean \
     dynoplibs-clean \
     examples-clean \
     imcc-clean \
     compilers-clean \
     smoke-clean \
-#INVERSE_CONDITIONED_LINE(win32): cover-clean \
+#INVERSE_CONDITIONED_LINE(win32):    cover-clean \
     editor-clean
 	@TEMP_cg_r@
 	$(RM_F) chartypes "*.s" "*~" $(FLUID_FILES)
@@ -1546,6 +1559,7 @@ prog-clean :
     $(PDB) $(SRC_DIR)/pdb$(O) \
     $(PBCMERGE) $(SRC_DIR)/pbc_merge$(O) \
     $(DIS) $(SRC_DIR)/disassemble$(O) \
+    $(SRC_DIR)/main$(O) \
     $(SRC_DIR)/null_config$(O) \
     $(SRC_DIR)/parrot_config$(O) \
     $(SRC_DIR)/install_config$(O) \
@@ -1628,9 +1642,6 @@ test-clean :
     "t/compilers/*/*/*.pir" \
     "t/compilers/*/*/*.stabs.s"
 	$(RM_F) \
-    "t/dynoplibs/*.pbc" \
-    "t/examples/*.pbc" \
-    "t/examples/*_pbcexe*" \
     "t/examples/*.past"
 	$(RM_F) \
     "t/*/*$(O)" \
@@ -1641,6 +1652,7 @@ test-clean :
     "t/*/*.stabs.s"
 	$(RM_F) \
     "t/library/*.pbc" \
+    "t/dynoplibs/*.pbc" \
     "t/op/*.pbc" \
     "t/pmc/*.pbc" \
     "t/stress/*.pbc" \
@@ -1651,8 +1663,7 @@ test-clean :
     "t/src/*.manifest"
 	$(RM_F) \
     "t/tools/pmc2c.t_*" \
-    "t/tools/pmc2c.pmc_t_*"
-	$(RM_F) \
+    "t/tools/pmc2c.pmc_t_*" \
     "t/tools/pdb.t.*"
 
 imcc-clean:
@@ -1661,7 +1672,8 @@ imcc-clean:
     "$(IMCC_DIR)/*$(O)" \
     $(IMCC_DIR)/imcparser.output
 
-realclean : clean
+realclean : clean languages-realclean
+	$(MAKE) compilers/pirc realclean
 	$(RM_RF) \
     $(STICKY_FILES) \
     blib \
@@ -1675,7 +1687,7 @@ svnclobber : .svn
 	$(PERL) -MFile::Find -e 'find(sub{unlink $$_ if -f and not $$File::Find::name =~ m[/\.svn/] and not -e ".svn/text-base/$$_.svn-base";},".")'
 
 reconfig : clean
-	$(PERL) Configure.pl --reconfig
+	$(PERL) Configure.pl
 
 manitest :
 	$(PERL) tools/dev/manicheck.pl
@@ -1775,16 +1787,20 @@ SPLINT_TMP = $(TMP)/splint
 
 # Splint flags: http://splint.org/manual/html/appB.html
 SPLINTFLAGS  = \
-    -standard \
-    -tmpdir $(SPLINT_TMP) \
-    -message-stream-stdout \
-    -declundef \
-    -show-summary \
-    -exportlocal \
+    +checks \
+    -hints \
+    \
+    +indentspaces 4 \
+    +locindentspaces 4 \
     +linelen 120 \
+    -message-stream-stdout \
     +showdeephistory \
     -showfunc \
-    -hints \
+    -tmpdir $(SPLINT_TMP) \
+    \
+    -show-summary \
+    +show-scan \
+    +time-dist \
     \
     -abstract \
     +aliasunique \
@@ -1803,6 +1819,7 @@ SPLINTFLAGS  = \
     +declundef \
     -distinctinternalnames \
     +evalorder \
+    -exportlocal \
     -fcnuse \
     +fielduse \
     +forcehints \
@@ -1824,7 +1841,7 @@ SPLINTFLAGS  = \
     +nullderef \
     +nullret \
     +nullpass \
-    -nullstate \
+    +nullstate \
     -paramuse \
     +posixstrictlib \
     -predboolint \
@@ -1839,38 +1856,35 @@ SPLINTFLAGS  = \
     +shadow \
     -shiftimplementation \
     -shiftnegative \
-    +showscan \
-    +showsummary \
+    -showsourceloc \
+    +show-scan \
     -skipposixheaders \
     -type \
     \
-    \
-    \
-    -nullstate \
-    -usereleased \
-    -mustfreefresh \
-    -mustfreeonly \
-    -compdestroy \
     -branchstate \
+    -compdef \
+    -compdestroy \
     -compmempass \
     -globstate \
-    -compdef \
     -modobserver \
-    -retalias \
+    -mustfreefresh \
+    -mustfreeonly \
+    -nullstate \
     -redecl \
+    -retalias \
+    -usereleased \
     \
-    -readonlytrans \
-    -onlytrans \
-    -unqualifiedtrans \
-    -observertrans \
-    -kepttrans \
-    -statictrans \
     -immediatetrans \
+    -kepttrans \
+    -observertrans \
+    -onlytrans \
+    -readonlytrans \
+    -statictrans \
     -temptrans \
+    -unqualifiedtrans \
 
 # Other options we'd like to add back
 # +paramuse: As soon as we get SHIM()s in the ops
-# +nullstate, +nullpass: This is one of the great things about splint, so it's tops on my list
 # -includedepth 8 : Let's investigate why we do so many includes.
 # +initallelements : Right now, the *.ops files don't initialize all values of the arrays
 # +casebreak: Auto-generated ops have way too case fallthrus right now
@@ -1882,7 +1896,7 @@ SPLINTFLAGS  = \
 
 # added to splint target to simplify experimentation,
 # ex: make SPLINTFLAGS_TEST='-posixstrictlib +posixlib' splint
-SPLINTFLAGS_TEST   =
+SPLINTFLAGS_TEST =
 
 splint : $(PARROT)
 	$(MKPATH) $(SPLINT_TMP)
@@ -1892,13 +1906,81 @@ splint : $(PARROT)
 splint-andy :
 	$(MKPATH) $(SPLINT_TMP)
 	splint $(CC_INC) @cc_hasjit@ "-Isrc/pmc" "-Icompilers/ast" $(SPLINTFLAGS) $(SPLINTFLAGS_TEST) \
-    	+fcnpost \
-    	+showscan \
-        +stats \
-        -showsummary \
-        +partial \
-        src/nci.c \
-        src/inte*.c \
+    +fcnpost \
+    +partial \
+    -bufferoverflow \
+    +enumindex \
+    src/builtin.c \
+    src/byteorder.c \
+    src/charset.c \
+    src/core_pmcs.c \
+    src/cpu_dep.c \
+    src/datatypes.c \
+    src/debug.c \
+    src/dynext.c \
+    src/embed.c \
+    src/encoding.c \
+    src/events.c \
+    src/exceptions.c \
+    src/exit.c \
+    src/extend.c \
+    src/extend_vtable.c \
+    src/fingerprint.c \
+    src/global.c \
+    src/global_setup.c \
+    src/hash.c \
+    src/headers.c \
+    src/hll.c \
+    src/inter_call.c \
+    src/inter_cb.c \
+    src/inter_create.c \
+    src/inter_misc.c \
+    src/interpreter.c \
+    src/inter_run.c \
+    src/intlist.c \
+    src/key.c \
+    src/library.c \
+    src/list.c \
+    src/longopt.c \
+    src/main.c \
+    src/malloc.c \
+    src/misc.c \
+    src/mmd.c \
+    src/nci.c \
+    src/nci_test.c \
+    src/null_config.c \
+    src/objects.c \
+    src/oo.c \
+    src/packdump.c \
+    src/packfile.c \
+    src/packout.c \
+    src/parrot.c \
+    src/parrot_config.c \
+    src/pbc_info.c \
+    src/pbc_merge.c \
+    src/pdb.c \
+    src/pdump.c \
+    src/pic.c \
+    src/pic_jit.c \
+    src/platform.c \
+    src/pmc.c \
+    src/pmc_freeze.c \
+    src/revision.c \
+    src/runops_cores.c \
+    src/scheduler.c \
+    src/spf_render.c \
+    src/spf_vtable.c \
+    src/stack_common.c \
+    src/stacks.c \
+    src/string.c \
+    src/string_primitives.c \
+    src/sub.c \
+    src/thread.c \
+    src/trace.c \
+    src/tsq.c \
+    src/utils.c \
+    src/vtables.c \
+    src/warnings.c
 
 COVER_FLAGS = -fprofile-arcs -ftest-coverage
 COVER_DIRS = \
@@ -1918,10 +2000,10 @@ COVER_DIRS = \
 cover: \
     cover.dummy \
     cover-testb \
-#CONDITIONED_LINE(cg_flag): cover-testC \
+#CONDITIONED_LINE(cg_flag):    cover-testC \
     cover-testf \
-#CONDITIONED_LINE(cg_flag): cover-testg \
-#CONDITIONED_LINE(jitcapable): cover-testj \
+#CONDITIONED_LINE(cg_flag):    cover-testg \
+#CONDITIONED_LINE(jitcapable):    cover-testj \
     cover-testr \
     cover-testS \
     cover-src \
@@ -1942,7 +2024,7 @@ cover: \
 
 cover.dummy:
 	$(PERL) Configure.pl --ccflags="$(CC_FLAGS) $(COVER_FLAGS)" \
-        --linkflags="$(COVER_FLAGS)" --ldflags="$(COVER_FLAGS)"
+    --linkflags="$(COVER_FLAGS)" --ldflags="$(COVER_FLAGS)"
 
 cover-testb: cover.dummy
 	-@make@ testb
@@ -2080,7 +2162,7 @@ tags: tags.dummy
         -R --exclude=blib --exclude=.svn  \
         --exclude=res_lea.c \
         --languages=c,perl --langmap=c:+.h,c:+.pmc,c:+.ops \
-        -I NOTNULL,NULLOK \
+        -I NOTNULL,NULLOK,ARGIN,ARGOUT,ARGINOUT,ARGIN_NULLOK,ARGOUT_NULLOK,ARGINOUT_NULLOK \
         $(CUR_DIR)
 	$(PERL) $(BUILD_TOOLS_DIR)/addopstags.pl $(OPS_FILES)
 

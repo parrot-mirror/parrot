@@ -75,6 +75,13 @@ typedef struct parrot_event {
     } u;
 } parrot_event;
 
+typedef struct parrot_eventhandler {
+    STRING *type;          /* the type of the event to handle */
+    PMC    *code;          /* the code object to execute */
+    PMC    *interp;        /* the registered interpreter */
+    INTVAL  priority;      /* the minimum priority threshhold of events */
+} Parrot_EventHandler;
+
 struct QUEUE_ENTRY;
 
 #define CHECK_EVENTS(i, n)  (opcode_t *)Parrot_do_check_events(i, n)
@@ -83,14 +90,15 @@ struct QUEUE_ENTRY;
 /* HEADERIZER BEGIN: src/events.c */
 
 PARROT_API
-void Parrot_del_timer_event(PARROT_INTERP, NOTNULL(PMC *timer))
+void Parrot_del_timer_event(PARROT_INTERP, ARGIN(const PMC *timer))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-opcode_t * Parrot_do_check_events(PARROT_INTERP, NULLOK(opcode_t *next))
+opcode_t * Parrot_do_check_events(PARROT_INTERP,
+    ARGIN_NULLOK(opcode_t *next))
         __attribute__nonnull__(1);
 
 PARROT_API
@@ -98,14 +106,14 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t * Parrot_do_handle_events(PARROT_INTERP,
     int restore,
-    NULLOK(opcode_t *next))
+    ARGIN_NULLOK(opcode_t *next))
         __attribute__nonnull__(1);
 
 PARROT_API
 void Parrot_event_add_io_event(PARROT_INTERP,
-    NULLOK(PMC *pio),
-    NULLOK(PMC *sub),
-    NULLOK(PMC *data),
+    ARGIN_NULLOK(PMC *pio),
+    ARGIN_NULLOK(PMC *sub),
+    ARGIN_NULLOK(PMC *data),
     INTVAL which)
         __attribute__nonnull__(1);
 
@@ -117,12 +125,11 @@ PARROT_API
 void Parrot_init_signals(void);
 
 PARROT_API
-void Parrot_kill_event_loop(void);
+void Parrot_kill_event_loop(PARROT_INTERP)
+        __attribute__nonnull__(1);
 
 PARROT_API
-void Parrot_new_cb_event(PARROT_INTERP,
-    NOTNULL(PMC *cbi),
-    NOTNULL(char *ext))
+void Parrot_new_cb_event(PARROT_INTERP, ARGIN(PMC *cbi), ARGIN(char *ext))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -137,23 +144,22 @@ void Parrot_new_terminate_event(PARROT_INTERP)
 
 PARROT_API
 void Parrot_new_timer_event(PARROT_INTERP,
-    NOTNULL(PMC *timer),
+    ARGIN_NULLOK(PMC *timer),
     FLOATVAL diff,
     FLOATVAL interval,
     int repeat,
-    NULLOK(PMC *sub),
+    ARGIN_NULLOK(PMC *sub),
     parrot_event_type_enum typ)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(1);
 
 PARROT_API
-void Parrot_schedule_event(PARROT_INTERP, NOTNULL(parrot_event* ev))
+void Parrot_schedule_event(PARROT_INTERP, ARGINOUT(parrot_event* ev))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 void Parrot_schedule_interp_qentry(PARROT_INTERP,
-    NOTNULL(struct QUEUE_ENTRY *entry))
+    ARGIN(struct QUEUE_ENTRY *entry))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -162,10 +168,10 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t * Parrot_sleep_on_event(PARROT_INTERP,
     FLOATVAL t,
-    NULLOK(opcode_t *next))
+    ARGIN_NULLOK(opcode_t *next))
         __attribute__nonnull__(1);
 
-void Parrot_schedule_broadcast_qentry(NOTNULL(struct QUEUE_ENTRY *entry))
+void Parrot_schedule_broadcast_qentry(ARGIN(struct QUEUE_ENTRY *entry))
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: src/events.c */

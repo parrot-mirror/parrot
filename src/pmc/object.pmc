@@ -250,8 +250,9 @@ of the given name walking up the inheritance tree.
         PMC * const method = Parrot_oo_find_vtable_override(interp,
                 VTABLE_get_class(interp, SELF), vtable_meth_name);
         if (!PMC_IS_NULL(method)) {
-            (PMC*)Parrot_run_meth_fromc_args(interp, method, SELF,
-                    vtable_meth_name, "vSP", name, value);
+            PMC *unused = (PMC *)Parrot_run_meth_fromc_args(interp, method,
+                SELF, vtable_meth_name, "vSP", name, value);
+            UNUSED(unused);
             return;
         }
 
@@ -515,8 +516,7 @@ C<*info> is the visit info, (see F<include/parrot/pmc_freeze.h>).
 */
 
     void visit(visit_info *info) {
-        INTVAL i, n;
-        Parrot_Object * obj_data = PARROT_OBJECT(SELF);
+        Parrot_Object * const obj_data = PARROT_OBJECT(SELF);
         PMC **pos;
 
         /* 1) visit class */
@@ -559,7 +559,6 @@ Used to unarchive the object.
 */
 
     void thaw(visit_info *info) {
-        IMAGE_IO *io = info->image_io;
         if (info->extra_flags == EXTRA_IS_PROP_HASH) {
             SUPER(info);
         }
@@ -580,7 +579,7 @@ Called after the object has been thawed.
 */
 
     void thawfinish(visit_info *info) {
-        Parrot_Object * obj_data = PARROT_OBJECT(SELF);
+        Parrot_Object * const obj_data = PARROT_OBJECT(SELF);
 
         /* Set custom DOD mark and destroy on the object. */
         PObj_custom_mark_SET(SELF);

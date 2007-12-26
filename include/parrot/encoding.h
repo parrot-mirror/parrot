@@ -38,7 +38,7 @@ typedef void (*encoding_iter_init_t)(PARROT_INTERP, const STRING *src,
         struct string_iterator_t *);
 
 struct _encoding {
-    NOTNULL(const char *name);
+    ARGIN(const char *name);
     UINTVAL max_bytes_per_codepoint;
     encoding_to_encoding_t              to_encoding;
     encoding_get_codepoint_t            get_codepoint;
@@ -75,6 +75,8 @@ typedef INTVAL (*encoding_converter_t)(PARROT_INTERP, ENCODING *lhs, ENCODING *r
 
 /* HEADERIZER BEGIN: src/encoding.c */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PARROT_API
 const ENCODING * Parrot_default_encoding(SHIM_INTERP);
 
@@ -92,28 +94,30 @@ STRING* Parrot_encoding_name(SHIM_INTERP, INTVAL number_of_encoding);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
-INTVAL Parrot_encoding_number(PARROT_INTERP, NOTNULL(STRING *encodingname))
+INTVAL Parrot_encoding_number(PARROT_INTERP,
+    ARGIN(const STRING *encodingname))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
-INTVAL Parrot_encoding_number_of_str(SHIM_INTERP,
-    NOTNULL(const STRING *src))
+INTVAL Parrot_encoding_number_of_str(SHIM_INTERP, ARGIN(const STRING *src))
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 const ENCODING * Parrot_find_encoding(SHIM_INTERP,
-    NOTNULL(const char *encodingname))
+    ARGIN(const char *encodingname))
         __attribute__nonnull__(2);
 
 PARROT_API
 encoding_converter_t Parrot_find_encoding_converter(PARROT_INTERP,
-    ENCODING *lhs,
-    ENCODING *rhs)
-        __attribute__nonnull__(1);
+    NOTNULL(ENCODING *lhs),
+    NOTNULL(ENCODING *rhs))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
@@ -124,8 +128,9 @@ const ENCODING* Parrot_get_encoding(PARROT_INTERP,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 const ENCODING * Parrot_load_encoding(PARROT_INTERP,
-    NOTNULL(const char *encodingname))
+    ARGIN(const char *encodingname))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -137,11 +142,12 @@ INTVAL Parrot_make_default_encoding(SHIM_INTERP,
 
 PARROT_API
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 ENCODING * Parrot_new_encoding(SHIM_INTERP);
 
 PARROT_API
 INTVAL Parrot_register_encoding(PARROT_INTERP,
-    NOTNULL(const char *encodingname),
+    ARGIN(const char *encodingname),
     NOTNULL(ENCODING *encoding))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)

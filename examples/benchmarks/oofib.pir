@@ -2,16 +2,16 @@
 
 .sub bench :main
     .param pmc argv
-    .sym int argc
+    .local int argc
     argc = argv
-    .sym pmc N
+    .local pmc N
     N = new 'Integer'
     N = 28
     if argc <= 1 goto noarg
     $S0 = argv[1]
     N = $S0
 noarg:
-    .sym float start
+    .local num start
     time start
 
     .local pmc A
@@ -23,10 +23,10 @@ noarg:
 
     b = new "B"
 
-    .sym pmc r
+    .local pmc r
     r = b."fib"(N)
 
-    .sym float fin
+    .local num fin
     time fin
     print "fib("
     print N
@@ -44,14 +44,14 @@ noarg:
 .sub fib :method
     .param pmc n
     if n >= 2 goto rec
-    .pcc_begin_return
+    .begin_return
     .return n
-    .pcc_end_return
+    .end_return
 rec:
-    .sym pmc n1
-    .sym pmc n2
-    .sym pmc r1
-    .sym pmc r2
+    .local pmc n1
+    .local pmc n2
+    .local pmc r1
+    .local pmc r2
     n1 = new 'Integer'
     n2 = new 'Integer'
     n1 = n - 1
@@ -60,22 +60,22 @@ rec:
     r2 = self."fibB"(n2)
     n = new 'Integer'
     n = r1 + r2
-    .pcc_begin_return
+    .begin_return
     .return n
-    .pcc_end_return
+    .end_return
 .end
 
 .sub fibA :method
     .param pmc n
     if n >= 2 goto rec
-    .pcc_begin_return
+    .begin_return
     .return n
-    .pcc_end_return
+    .end_return
 rec:
-    .sym pmc n1
-    .sym pmc n2
-    .sym pmc r1
-    .sym pmc r2
+    .local pmc n1
+    .local pmc n2
+    .local pmc r1
+    .local pmc r2
     n1 = new 'Integer'
     n2 = new 'Integer'
     n1 = n - 1
@@ -84,9 +84,9 @@ rec:
     r2 = self."fibB"(n2)
     n = new 'Integer'
     n = r1 + r2
-    .pcc_begin_return
+    .begin_return
     .return n
-    .pcc_end_return
+    .end_return
 .end
 
 .namespace ["B"]
@@ -94,14 +94,14 @@ rec:
 .sub fibB :method
     .param pmc n
     if n >= 2 goto rec
-    .pcc_begin_return
+    .begin_return
     .return n
-    .pcc_end_return
+    .end_return
 rec:
-    .sym pmc n1
-    .sym pmc n2
-    .sym pmc r1
-    .sym pmc r2
+    .local pmc n1
+    .local pmc n2
+    .local pmc r1
+    .local pmc r2
     n1 = new 'Integer'
     n2 = new 'Integer'
     n1 = n - 1
@@ -110,9 +110,9 @@ rec:
     r2 = self."fibA"(n2)
     n = new 'Integer'
     n = r1 + r2
-    .pcc_begin_return
+    .begin_return
     .return n
-    .pcc_end_return
+    .end_return
 .end
 
 # Local Variables:

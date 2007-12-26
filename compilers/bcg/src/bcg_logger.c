@@ -11,7 +11,7 @@ bcg_logger.c
 
 =head1 DESCRIPTION
 
-TODO
+RT#48264
 
 =head2 Methods
 
@@ -30,7 +30,7 @@ TODO
 bcg_throw_exception(BCG_info * bcg_info,
         const int code, const char *format, ...)>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

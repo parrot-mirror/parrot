@@ -26,6 +26,9 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     $S1 = narg
     new $P0, 'Lua'
     $S0 = $P0.'caller'()
+    $I0 = index $S0, ':'
+    inc $I0
+    $S0 = substr $S0, $I0
     lua_error("bad argument #", $S1, " to '", $S0, "' (", extramsg :flat, ")")
 .end
 
@@ -173,10 +176,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
 .sub 'lua_error'
     .param pmc message :slurpy
     $S0 = join '', message
-    .local pmc ex
-    new ex, 'Exception'
-    ex['_message'] =  $S0
-    throw ex
+    die $S0
 .end
 
 
@@ -398,23 +398,23 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
 =cut
 
 .sub 'lua_openlibs'
-    $P0 = get_hll_global ['Lua::basic'], 'luaopen_basic'
+    $P0 = get_hll_global ['Lua'; 'basic'], 'luaopen_basic'
     $P0()
-    $P0 = get_hll_global ['Lua::coroutine'], 'luaopen_coroutine'
+    $P0 = get_hll_global ['Lua'; 'coroutine'], 'luaopen_coroutine'
     $P0()
-    $P0 = get_hll_global ['Lua::package'], 'luaopen_package'
+    $P0 = get_hll_global ['Lua'; 'package'], 'luaopen_package'
     $P0()
-    $P0 = get_hll_global ['Lua::table'], 'luaopen_table'
+    $P0 = get_hll_global ['Lua'; 'table'], 'luaopen_table'
     $P0()
-    $P0 = get_hll_global ['Lua::io'], 'luaopen_io'
+    $P0 = get_hll_global ['Lua'; 'io'], 'luaopen_io'
     $P0()
-    $P0 = get_hll_global ['Lua::os'], 'luaopen_os'
+    $P0 = get_hll_global ['Lua'; 'os'], 'luaopen_os'
     $P0()
-    $P0 = get_hll_global ['Lua::string'], 'luaopen_string'
+    $P0 = get_hll_global ['Lua'; 'string'], 'luaopen_string'
     $P0()
-    $P0 = get_hll_global ['Lua::math'], 'luaopen_math'
+    $P0 = get_hll_global ['Lua'; 'math'], 'luaopen_math'
     $P0()
-    $P0 = get_hll_global ['Lua::debug'], 'luaopen_debug'
+    $P0 = get_hll_global ['Lua'; 'debug'], 'luaopen_debug'
     $P0()
 .end
 
@@ -598,9 +598,11 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     .local pmc ex
     .local string msg
     .get_results (ex, msg)
-    .local int severity
-    severity = ex[2]
-    if severity == .EXCEPT_EXIT goto L1
+    $P0 = getattribute ex, 'severity'
+    if null $P0 goto L1
+    $I0 = $P0
+    if $I0 == .EXCEPT_EXIT goto L2
+  L1:
     .local int lineno
     $S1 = where
     $S0 = $S1
@@ -610,7 +612,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
     $S1 = traceback
     $S0 .= $S1
     .return (1, $S0)
-  L1:
+  L2:
     rethrow ex
 .end
 
@@ -645,10 +647,7 @@ Support variable number of arguments function call.
 =cut
 
 .sub 'not_implemented'
-    .local pmc ex
-    new ex, 'Exception'
-    ex['_message'] =  "not implemented"
-    throw ex
+    die "not implemented"
 .end
 
 

@@ -13,7 +13,7 @@ use_ok('config::init::optimize');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
-use Parrot::IO::Capture::Mini;
+use IO::CaptureOutput qw | capture |;
 
 my $args = process_options(
     {
@@ -26,14 +26,13 @@ my $conf = Parrot::Configure->new();
 
 test_step_thru_runstep( $conf, q{init::defaults}, $args );
 
-my ( $task, $step_name, @step_params, $step, $ret );
+my ( $task, $step_name, $step, $ret );
 my $pkg = q{init::optimize};
 
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 $task        = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
@@ -46,14 +45,12 @@ $conf->data->set('gccversion' => '4.1');
 # because the fact that it does not end
 # in a newline confuses Test::Harness
 {
-    my $tie_out = tie *STDOUT, "Parrot::IO::Capture::Mini"
-        or croak "Unable to tie";
-    $ret = $step->runstep($conf);
-    ok( defined $ret, "$step_name runstep() returned defined value" );
-    my @more_lines = $tie_out->READLINE;
-    ok( @more_lines, "verbose output captured" );
+      my $rv;
+      my $stdout;
+      capture ( sub {$rv = $step->runstep($conf) }, \$stdout);
+      ok( defined $rv, "$step_name runstep() returned defined value" );
+      ok( $stdout, "verbose output captured" );
 }
-untie *STDOUT;
 
 pass("Keep Devel::Cover happy");
 pass("Completed all tests in $0");

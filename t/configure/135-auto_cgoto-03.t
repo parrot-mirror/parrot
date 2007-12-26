@@ -30,10 +30,9 @@ my $pkg = q{auto::cgoto};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my ( $task, $step_name, @step_params, $step);
+my ( $task, $step_name, $step);
 $task        = $conf->steps->[1];
 $step_name   = $task->step;
-@step_params = @{ $task->params };
 
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
@@ -47,7 +46,7 @@ $conf->options->set(cgoto => 0);
 is(auto::cgoto::_probe_for_cgoto($conf->options->get('cgoto')), 0,
     "Got expected return value");
 $conf->options->set(cgoto => undef);
-ok(defined(auto::cgoto::_probe_for_cgoto($conf->options->get('cgoto'))), 
+ok(defined(auto::cgoto::_probe_for_cgoto($conf->options->get('cgoto'))),
     "Probe returned a defined value");
 
 $step->_evaluate_cgoto($conf, 1);

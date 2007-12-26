@@ -408,8 +408,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "addattribute subclass - same name" );
     print $P0
     print ' '
     $P0 = getattribute o, 'k'
-    print $P0
-    print_newline
+    say $P0
+
     $P0 = getattribute o, 'i'
     print $P0
     print ' '
@@ -420,8 +420,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "addattribute subclass - same name" );
     print $P0
     print ' '
     $P0 = getattribute o, 'k'
-    print $P0
-    print_newline
+    say $P0
 .end
 .namespace ['Bar']
 .sub init :vtable :method
@@ -671,17 +670,17 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values, subclassing access meth
     addattribute P1, "i"
     addattribute P1, "j"
     # define attrib access functions in Foo namespace
-    find_global P5, "Foo::set"
+    get_global P5, "Foo::set"
     addmethod P1, "Foo::set", P5
-    find_global P5, "Foo::get"
+    get_global P5, "Foo::get"
     addmethod P1, "Foo::get", P5
 
     subclass P2, P1, "Bar"
     addattribute P2, "k"
     addattribute P2, "l"
-    find_global P5, "Bar::set"
+    get_global P5, "Bar::set"
     addmethod P2, "Bar::set", P5
-    find_global P5, "Bar::get"
+    get_global P5, "Bar::get"
     addmethod P2, "Bar::get", P5
 
     # instantiate a Bar object
@@ -789,9 +788,9 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "attribute values, inherited access meths"
     addattribute P1, "i"
     addattribute P1, "j"
     # define attrib access functions
-    find_global P5, "set"
+    get_global P5, "set"
     addmethod P1, "set", P5
-    find_global P5, "get"
+    get_global P5, "get"
     addmethod P1, "get", P5
 
     subclass P2, P1, "Bar"
@@ -1057,7 +1056,6 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "class op test" );
     new P1, "City"
 
     class P2, P1
-#    classname S0, P2 # deprecated
     set S0, P2
     print S0
     print "\n"
@@ -1088,7 +1086,6 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "anon. subclass has no name" );
     newclass P0, "City"
     subclass P1, P0
-#    classname S0, P1 # deprecated
     set S0, P1
     print "'"
     print S0
@@ -1597,7 +1594,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "namespace vs name" );
     Foo()
     f = global "Foo"
     f()
-    f = find_global "Foo", "Foo"
+    f = get_global ["Foo"], "Foo"
     f()
 .end
 .sub Foo

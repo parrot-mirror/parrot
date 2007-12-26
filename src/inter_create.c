@@ -22,13 +22,14 @@ Create or destroy a Parrot interpreter
 #include "parrot/parrot.h"
 #include "parrot/oplib/core_ops.h"
 #include "../compilers/imcc/imc.h"
+#include "inter_create.str"
 
 /* HEADERIZER HFILE: include/parrot/interpreter.h */
 
 /* HEADERIZER BEGIN: static */
 
 PARROT_WARN_UNUSED_RESULT
-static int is_env_var_set(NOTNULL(const char* var))
+static int is_env_var_set(ARGIN(const char* var))
         __attribute__nonnull__(1);
 
 static void setup_default_compreg(PARROT_INTERP)
@@ -48,9 +49,7 @@ Interp interpre;
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-static int
-is_env_var_set(NOTNULL(const char* var))>
+=item C<static int is_env_var_set>
 
 Checks whether the specified environment variable is set.
 
@@ -60,7 +59,7 @@ Checks whether the specified environment variable is set.
 
 PARROT_WARN_UNUSED_RESULT
 static int
-is_env_var_set(NOTNULL(const char* var))
+is_env_var_set(ARGIN(const char* var))
 {
     int free_it, retval;
     char* const value = Parrot_getenv(var, &free_it);
@@ -77,8 +76,7 @@ is_env_var_set(NOTNULL(const char* var))
 
 /*
 
-=item C<static void
-setup_default_compreg(PARROT_INTERP)>
+=item C<static void setup_default_compreg>
 
 Setup default compiler for PASM.
 
@@ -89,7 +87,7 @@ Setup default compiler for PASM.
 static void
 setup_default_compreg(PARROT_INTERP)
 {
-    STRING * const pasm1 = string_from_literal(interp, "PASM1");
+    STRING * const pasm1 = CONST_STRING(interp, "PASM1");
 
     /* register the nci compiler object */
     Parrot_compreg(interp, pasm1, (Parrot_compiler_func_t)PDB_compile);
@@ -97,10 +95,7 @@ setup_default_compreg(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_API
-PARROT_CANNOT_RETURN_NULL
-Parrot_Interp
-make_interpreter(NULLOK(Interp *parent), INTVAL flags)>
+=item C<Parrot_Interp make_interpreter>
 
 Create the Parrot interpreter. Allocate memory and clear the registers.
 
@@ -111,7 +106,7 @@ Create the Parrot interpreter. Allocate memory and clear the registers.
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
 Parrot_Interp
-make_interpreter(NULLOK(Interp *parent), INTVAL flags)
+make_interpreter(ARGIN_NULLOK(Interp *parent), INTVAL flags)
 {
     Interp *interp;
 
@@ -262,6 +257,7 @@ make_interpreter(NULLOK(Interp *parent), INTVAL flags)
     interp->thread_data = NULL;
 
     Parrot_init_events(interp);
+    Parrot_cx_init_scheduler(interp);
 
 #ifdef ATEXIT_DESTROY
     /*
@@ -278,9 +274,7 @@ make_interpreter(NULLOK(Interp *parent), INTVAL flags)
 
 /*
 
-=item C<PARROT_API
-void
-Parrot_destroy(PARROT_INTERP)>
+=item C<void Parrot_destroy>
 
 Does nothing if C<ATEXIT_DESTROY> is defined. Otherwise calls
 C<Parrot_really_destroy()> with exit code 0.
@@ -304,8 +298,7 @@ Parrot_destroy(PARROT_INTERP)
 
 /*
 
-=item C<void
-Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))>
+=item C<void Parrot_really_destroy>
 
 Waits for any threads to complete, then frees all allocated memory, and
 closes any open file handles, etc.
@@ -319,12 +312,15 @@ Note that C<exit_code> is ignored.
 void
 Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
 {
+
     /*
-     * wait for threads to complete if needed
+     * wait for threads to complete if needed; terminate the event loop
      */
     if (!interp->parent_interpreter) {
         pt_join_threads(interp);
+        Parrot_cx_runloop_end(interp);
     }
+
     /* if something needs destruction (e.g. closing PIOs)
      * we must destroy it now:
      *
@@ -344,7 +340,7 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
     }
 
     /* Destroys all PMCs, even constants and the ParrotIO objects for
-     * std{in,out,err}, so don't be verbose about DOD'ing. */
+     * std{in, out, err}, so don't be verbose about DOD'ing. */
     Parrot_do_dod_run(interp, DOD_finish_FLAG);
 
 #if STM_PROFILE
@@ -374,7 +370,7 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
      */
     if (!interp->parent_interpreter) {
         PIO_internal_shutdown(interp);
-        Parrot_kill_event_loop();
+        Parrot_kill_event_loop(interp);
     }
 
     /* we destroy all child interpreters and the last one too,

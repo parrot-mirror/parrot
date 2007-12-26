@@ -9,7 +9,7 @@
 $Id$
 
 This transformation takes a XML abstract syntax tree as generated 
-by phc from PHP source. It generates a PAST-pm data structure in XML.
+by phc from PHP source. It generates a PAST data structure in XML.
 
 -->
 <xsl:output method='xml' indent='yes' />
@@ -117,20 +117,20 @@ by phc from PHP source. It generates a PAST-pm data structure in XML.
 </xsl:template>
 
 <xsl:template match="phc:AST_assignment" >
-  <past:Op name='infix:=' pasttype='assign' >
+  <past:Op name='infix:=' pasttype='bind' >
     <xsl:apply-templates select="phc:AST_variable" />
     <xsl:apply-templates select="phc:Token_string | phc:Token_int | phc:AST_bin_op" />
   </past:Op>
 </xsl:template>
 
 <xsl:template match="phc:AST_variable" >
-  <past:Var viviself=".Undef" islvalue="1" >
+  <past:Var scope="package" viviself="Undef" lvalue="1" >
     <xsl:attribute name="name" ><xsl:value-of select="phc:Token_variable_name/phc:value" /></xsl:attribute>
   </past:Var>
 </xsl:template>
 
 <xsl:template match="phc:AST_variable[phc:AST_expr_list/phc:Token_string | phc:AST_expr_list/phc:Token_int]" >
-  <past:Var scope="keyed" viviself= ".Undef" islvalue="1" >
+  <past:Var scope="keyed" viviself="Undef" lvalue="1" >
     <xsl:choose>
       <xsl:when test="phc:Token_variable_name/phc:value = '_GET' or phc:Token_variable_name/phc:value = '_POST'" >
         <past:Var scope="package" >
@@ -138,7 +138,7 @@ by phc from PHP source. It generates a PAST-pm data structure in XML.
         </past:Var>
       </xsl:when>
       <xsl:otherwise>
-        <past:Var viviself=".Hash" islvalue="1" >
+        <past:Var viviself="Hash" scope="package" lvalue="1" >
           <xsl:attribute name="name" ><xsl:value-of select="phc:Token_variable_name/phc:value" /></xsl:attribute>
         </past:Var>
       </xsl:otherwise>
@@ -148,22 +148,22 @@ by phc from PHP source. It generates a PAST-pm data structure in XML.
 </xsl:template>
 
 <xsl:template match="phc:Token_string" >
-  <past:Val ctype="s~" vtype=".String" >
+  <past:Val returns="String" >
     <xsl:attribute name="encoding" ><xsl:value-of select="phc:value/@encoding" /></xsl:attribute>
-    <xsl:attribute name="name" ><xsl:value-of select="phc:value" /></xsl:attribute>
+    <xsl:attribute name="value" ><xsl:value-of select="phc:value" /></xsl:attribute>
   </past:Val>
 </xsl:template>
 
 <xsl:template match="phc:Token_int" >
-  <past:Val ctype="i+" vtype=".Integer" >
-    <xsl:attribute name="name" ><xsl:value-of select="phc:value" /></xsl:attribute>
+  <past:Val returns="Integer" >
+    <xsl:attribute name="value" ><xsl:value-of select="phc:value" /></xsl:attribute>
   </past:Val>
 </xsl:template>
 
 <!-- looks like phc is running into a floating point issue -->
 <xsl:template match="phc:Token_real" >
-  <past:Val ctype='n+' vtype='.Float' >
-    <xsl:attribute name="name" ><xsl:value-of select="phc:source_rep" /></xsl:attribute>
+  <past:Val returns='Float' >
+    <xsl:attribute name="value" ><xsl:value-of select="phc:source_rep" /></xsl:attribute>
   </past:Val>
 </xsl:template>
 

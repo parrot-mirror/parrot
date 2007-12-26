@@ -18,7 +18,7 @@
 
 /* Class PMC's underlying struct. */
 typedef struct Parrot_Class {
-    int id;                /* The type number of the PMC. [To be deprecated] */
+    int id;                /* The type number of the PMC. [deprecated: See RT #48024] */
     STRING *name;          /* The name of the class. */
     PMC *_namespace;       /* The namespace it's linked to, if any. */
     int instantiated;      /* Any instantiations since last modification? */
@@ -56,7 +56,7 @@ STRING* Parrot_Class_get_fq_classname(Parrot_Interp interp, Parrot_Class *class_
 typedef enum {
     CLASS_instantiated_FLAG      = PObj_private0_FLAG,
     CLASS_is_anon_FLAG           = PObj_private1_FLAG,
-    CLASS_has_alien_parents_FLAG = PObj_private2_FLAG,
+    CLASS_has_alien_parents_FLAG = PObj_private2_FLAG
 } class_flags_enum;
 
 #define CLASS_get_FLAGS(o) (PObj_get_FLAGS(o))

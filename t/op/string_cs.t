@@ -458,9 +458,9 @@ pir_output_is( <<'CODE', <<'OUTPUT', "todo #34660 hash" );
 .sub main :main
     $P0 = new 'Integer'
     $P0 = 42
-    store_global "Foo", unicode:"Bar", $P0
+    set_global ['Foo'], unicode:"Bar", $P0
     print "ok 1\n"
-    $P1 = find_global "Foo", "Bar"
+    $P1 = get_global ['Foo'], "Bar"
     print "ok 2\n"
     print $P1
     print "\n"
@@ -567,7 +567,7 @@ OUTPUT
     .include "stringinfo.pasm"
     stringinfo I0, S1, .STRINGINFO_BUFUSED
     print I0
-    print_newline
+    print "\n"
     end
 CODE
 TT 2 2
@@ -586,7 +586,7 @@ OUTPUT
     .include "stringinfo.pasm"
     stringinfo I0, S1, .STRINGINFO_BUFUSED
     print I0
-    print_newline
+    print "\n"
     find_encoding I0, "utf8"
     trans_encoding S2, S1, I0
     print S2
@@ -610,7 +610,7 @@ OUTPUT
     .include "stringinfo.pasm"
     stringinfo I0, S2, .STRINGINFO_BUFUSED
     print I0
-    print_newline
+    print "\n"
     find_encoding I0, "utf8"
     trans_encoding S2, S2, I0
     print S2
@@ -778,7 +778,7 @@ OUTPUT
     print I2
     print ' '
     print I3
-    print_newline
+    print "\n"
     end
 CODE
 ___\x{c7}\x{b0}___

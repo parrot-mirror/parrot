@@ -17,8 +17,8 @@
 /* Use these macros instead of calling the functions listed below. */
 /* They protect against things like passing null to mem__sys_realloc, */
 /* which is not portable. */
-#define mem_sys_realloc(x,y) (assert(x!=NULL), mem__sys_realloc(x,y))
-#define mem_sys_realloc_zeroed(x,y,z) (assert(x!=NULL), mem__sys_realloc_zeroed(x,y,z))
+#define mem_sys_realloc(x, y) (assert(x!=NULL), mem__sys_realloc(x, y))
+#define mem_sys_realloc_zeroed(x, y, z) (assert(x!=NULL), mem__sys_realloc_zeroed(x, y, z))
 #define mem_internal_allocate(x) mem__internal_allocate(x, __FILE__, __LINE__)
 #define mem_internal_allocate_typed(t) \
     (t *)mem__internal_allocate(sizeof (t), __FILE__, __LINE__)
@@ -70,7 +70,7 @@ PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void * mem__internal_allocate(
     size_t size,
-    NOTNULL(const char *file),
+    ARGIN(const char *file),
     int line)
         __attribute__nonnull__(2);
 
@@ -78,13 +78,13 @@ PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void * mem__internal_allocate_zeroed(
     size_t size,
-    NOTNULL(const char *file),
+    ARGIN(const char *file),
     int line)
         __attribute__nonnull__(2);
 
 void mem__internal_free(
     NULLOK(void *from),
-    NOTNULL(const char *file),
+    ARGIN(const char *file),
     int line)
         __attribute__nonnull__(2);
 
@@ -93,7 +93,7 @@ PARROT_CANNOT_RETURN_NULL
 void * mem__internal_realloc(
     NOTNULL(void *from),
     size_t size,
-    NOTNULL(const char *file),
+    ARGIN(const char *file),
     int line)
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);

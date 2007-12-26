@@ -84,9 +84,9 @@ struct _IMC_Unit;
  * please use INS
  */
 #ifdef _PARSER
-Instruction * _mk_instruction(const char *,const char *, int n, SymReg **, int);
+Instruction * _mk_instruction(const char *, const char *, int n, SymReg **, int);
 #else
-#  define _mk_instruction(a,b,n,c,d) dont_use(a,b)
+#  define _mk_instruction(a, b, n, c, d) dont_use(a, b)
 #endif
 
 /* Globals */
@@ -119,15 +119,17 @@ int emit_open(PARROT_INTERP, int type, NULLOK(void *param))
         __attribute__nonnull__(1);
 
 PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
 Instruction * _mk_instruction(
-    NOTNULL(const char *op),
-    NOTNULL(const char *fmt),
+    ARGIN(const char *op),
+    ARGIN(const char *fmt),
     int n,
-    SymReg ** r,
+    SymReg **r,
     int flags)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CAN_RETURN_NULL
 Instruction * delete_ins(
     NOTNULL(struct _IMC_Unit *unit),
     NOTNULL(Instruction *ins),
@@ -135,6 +137,7 @@ Instruction * delete_ins(
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CAN_RETURN_NULL
 Instruction * emitb(PARROT_INTERP,
     NULLOK(struct _IMC_Unit *unit),
     NULLOK(Instruction *i))
@@ -143,10 +146,12 @@ Instruction * emitb(PARROT_INTERP,
 void free_ins(NOTNULL(Instruction *ins))
         __attribute__nonnull__(1);
 
-SymReg * get_branch_reg(NOTNULL(const Instruction *ins))
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+SymReg * get_branch_reg(ARGIN(const Instruction *ins))
         __attribute__nonnull__(1);
 
-int get_branch_regno(NOTNULL(const Instruction *ins))
+int get_branch_regno(ARGIN(const Instruction *ins))
         __attribute__nonnull__(1);
 
 void imcc_init_tables(PARROT_INTERP)
@@ -154,15 +159,15 @@ void imcc_init_tables(PARROT_INTERP)
 
 int ins_print(PARROT_INTERP,
     NOTNULL(FILE *fd),
-    NOTNULL(const Instruction *ins))
+    ARGIN(const Instruction *ins))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-int ins_reads2(NOTNULL(const Instruction *ins), int t)
+int ins_reads2(ARGIN(const Instruction *ins), int t)
         __attribute__nonnull__(1);
 
-int ins_writes2(NOTNULL(const Instruction *ins), int t)
+int ins_writes2(ARGIN(const Instruction *ins), int t)
         __attribute__nonnull__(1);
 
 void insert_ins(
@@ -172,18 +177,17 @@ void insert_ins(
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-int instruction_reads(
-    NOTNULL(const Instruction *ins),
-    NOTNULL(const SymReg *r))
+int instruction_reads(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 int instruction_writes(
-    NOTNULL(const Instruction *ins),
-    NOTNULL(const SymReg *r))
+    ARGIN(const Instruction *ins),
+    ARGIN(const SymReg *r))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CAN_RETURN_NULL
 Instruction * move_ins(
     NOTNULL(struct _IMC_Unit *unit),
     NOTNULL(Instruction *ins),

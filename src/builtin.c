@@ -24,11 +24,11 @@ src/builtin.c - Builtin Methods
 
 
 typedef struct _builtin {
-    NOTNULL(const char * const c_name);       /* short name 'cos' */
-    NOTNULL(const char * const signature);    /* e.g. PP */
-    NOTNULL(const char * const c_ns);         /* namespace */
-    NULLOK(STRING *meth_name);               /* internal name e.g. '__cos' */
-    NULLOK(STRING *_namespace);              /* same */
+    ARGIN(const char * const c_name);       /* short name 'cos' */
+    ARGIN(const char * const signature);    /* e.g. PP */
+    ARGIN(const char * const c_ns);         /* namespace */
+    ARGIN_NULLOK(STRING *meth_name);        /* internal name e.g. '__cos' */
+    ARGIN_NULLOK(STRING *_namespace);       /* same */
 } Builtins;
 
 #define N_BUILTINS (int)(sizeof (builtins) / sizeof (builtins[0]))
@@ -49,7 +49,7 @@ static Builtins builtins[] = {
     { "cwd",    "SJO",          "OS",           NULL, NULL },
     { "exp",    "PJO",          "Float",        NULL, NULL },
     { "index",  "IJSS.I",       "String",       NULL, NULL },
-    { "is_integer","IJS",       "String",       NULL, NULL },
+    { "is_integer", "IJS",      "String",       NULL, NULL },
     { "link",   "vJOSS",        "OS",           NULL, NULL },
     { "ln",     "PJO",          "Float",        NULL, NULL },
     { "log10",  "PJO",          "Float",        NULL, NULL },
@@ -60,7 +60,7 @@ static Builtins builtins[] = {
     { "open",   "PJS.S",        "ParrotIO",     NULL, NULL },
     { "puts",   "IJOS",         "ParrotIO",     NULL, NULL },
     { "rename", "vJOSS",        "File",         NULL, NULL },
-    { "reverse","vJS",          "String",       NULL, NULL },
+    { "reverse", "vJS",         "String",       NULL, NULL },
     { "rm",     "vJOS",         "OS",           NULL, NULL },
     { "say",    "IJOS",         "ParrotIO",     NULL, NULL },
     { "say",    "IJS",          "ParrotIO",     NULL, NULL },
@@ -73,7 +73,7 @@ static Builtins builtins[] = {
     { "sinh",   "PJO",          "Float",        NULL, NULL },
     { "sin",    "PJO",          "Float",        NULL, NULL },
     { "sqrt",   "PJO",          "Float",        NULL, NULL },
-    { "symlink","vJOSS",        "OS",           NULL, NULL },
+    { "symlink", "vJOSS",       "OS",           NULL, NULL },
     { "tanh",   "PJO",          "Float",        NULL, NULL },
     { "tan",    "PJO",          "Float",        NULL, NULL },
     { "trans",  "vJSP",         "String",       NULL, NULL },
@@ -90,16 +90,16 @@ static Builtins builtins[] = {
 PARROT_WARN_UNUSED_RESULT
 static int check_builtin_sig(
     size_t i,
-    NOTNULL(const char *sig),
+    ARGIN(const char *sig),
     int convert_pmcs)
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
-static int find_builtin(NOTNULL(const char *func))
+static int find_builtin(ARGIN(const char *func))
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
-static int find_builtin_s(PARROT_INTERP, NOTNULL(STRING *func))
+static int find_builtin_s(PARROT_INTERP, ARGIN(const STRING *func))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -107,8 +107,7 @@ static int find_builtin_s(PARROT_INTERP, NOTNULL(STRING *func))
 
 /*
 
-=item C<void
-Parrot_init_builtins(PARROT_INTERP)>
+=item C<void Parrot_init_builtins>
 
 Initialize the builtins structure.
 
@@ -129,11 +128,9 @@ Parrot_init_builtins(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-static int
-find_builtin(NOTNULL(const char *func))>
+=item C<static int find_builtin>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -141,7 +138,7 @@ TODO: Not yet documented!!!
 
 PARROT_WARN_UNUSED_RESULT
 static int
-find_builtin(NOTNULL(const char *func))
+find_builtin(ARGIN(const char *func))
 {
     int low  = 0;
     int high = N_BUILTINS - 1;
@@ -169,11 +166,9 @@ find_builtin(NOTNULL(const char *func))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-static int
-find_builtin_s(PARROT_INTERP, NOTNULL(STRING *func))>
+=item C<static int find_builtin_s>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -181,7 +176,7 @@ TODO: Not yet documented!!!
 
 PARROT_WARN_UNUSED_RESULT
 static int
-find_builtin_s(PARROT_INTERP, NOTNULL(STRING *func))
+find_builtin_s(PARROT_INTERP, ARGIN(const STRING *func))
 {
     int low  = 0;
     int high = N_BUILTINS - 1;
@@ -203,11 +198,9 @@ find_builtin_s(PARROT_INTERP, NOTNULL(STRING *func))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-static int
-check_builtin_sig(size_t i, NOTNULL(const char *sig), int convert_pmcs)>
+=item C<static int check_builtin_sig>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -215,7 +208,7 @@ TODO: Not yet documented!!!
 
 PARROT_WARN_UNUSED_RESULT
 static int
-check_builtin_sig(size_t i, NOTNULL(const char *sig), int convert_pmcs)
+check_builtin_sig(size_t i, ARGIN(const char *sig), int convert_pmcs)
 {
     const Builtins * const b = builtins + i;
     const char *p;
@@ -238,6 +231,8 @@ check_builtin_sig(size_t i, NOTNULL(const char *sig), int convert_pmcs)
                 /* fall through */
             case 'J':   /* interpreter */
                 ++p;
+            default:
+                break;
         }
         if (*p == 'O' && *sig == 'P')
             continue;
@@ -261,9 +256,7 @@ check_builtin_sig(size_t i, NOTNULL(const char *sig), int convert_pmcs)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-int
-Parrot_is_builtin(NOTNULL(const char *func), NULLOK(const char *sig))>
+=item C<int Parrot_is_builtin>
 
 Return the index of the builtin or -1 on failure.
 
@@ -273,7 +266,7 @@ Return the index of the builtin or -1 on failure.
 
 PARROT_WARN_UNUSED_RESULT
 int
-Parrot_is_builtin(NOTNULL(const char *func), NULLOK(const char *sig))
+Parrot_is_builtin(ARGIN(const char *func), ARGIN_NULLOK(const char *sig))
 {
     int bi, i, convert_pmcs;
 
@@ -307,10 +300,7 @@ again:
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC*
-Parrot_find_builtin(PARROT_INTERP, NOTNULL(STRING *func))>
+=item C<PMC* Parrot_find_builtin>
 
 Return the NCI PMC of the builtin or NULL.
 
@@ -319,7 +309,7 @@ Return the NCI PMC of the builtin or NULL.
 */
 
 PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
+PARROT_CAN_RETURN_NULL
 PMC*
 Parrot_find_builtin(PARROT_INTERP, NOTNULL(STRING *func))
 {
@@ -338,13 +328,9 @@ Parrot_find_builtin(PARROT_INTERP, NOTNULL(STRING *func))
 
 /*
 
-=item C<PARROT_CONST_FUNCTION
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-const char *
-Parrot_builtin_get_c_namespace(int bi)>
+=item C<const char * Parrot_builtin_get_c_namespace>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -362,12 +348,9 @@ Parrot_builtin_get_c_namespace(int bi)
 
 /*
 
-=item C<PARROT_CONST_FUNCTION
-PARROT_WARN_UNUSED_RESULT
-int
-Parrot_builtin_is_class_method(int bi)>
+=item C<int Parrot_builtin_is_class_method>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 
@@ -384,12 +367,9 @@ Parrot_builtin_is_class_method(int bi)
 
 /*
 
-=item C<PARROT_CONST_FUNCTION
-PARROT_WARN_UNUSED_RESULT
-int
-Parrot_builtin_is_void(int bi)>
+=item C<int Parrot_builtin_is_void>
 
-TODO: Not yet documented!!!
+RT#48260: Not yet documented!!!
 
 =cut
 

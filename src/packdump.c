@@ -28,8 +28,8 @@ This is only used by the PBC dumper C<pdump>.
 /* HEADERIZER BEGIN: static */
 
 static void PackFile_Constant_dump(PARROT_INTERP,
-    NOTNULL(PackFile_ConstTable *ct),
-    NOTNULL(PackFile_Constant *self))
+    ARGIN(const PackFile_ConstTable *ct),
+    ARGIN(const PackFile_Constant *self))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -39,9 +39,7 @@ static void PackFile_Constant_dump(PARROT_INTERP,
 
 /*
 
-=item C<PARROT_API
-void
-PackFile_ConstTable_dump(PARROT_INTERP, NOTNULL(const PackFile_ConstTable *self))>
+=item C<void PackFile_ConstTable_dump>
 
 Dumps the constant table C<self>.
 
@@ -51,7 +49,7 @@ Dumps the constant table C<self>.
 
 PARROT_API
 void
-PackFile_ConstTable_dump(PARROT_INTERP, NOTNULL(const PackFile_ConstTable *self))
+PackFile_ConstTable_dump(PARROT_INTERP, ARGIN(const PackFile_ConstTable *self))
 {
     opcode_t i;
 
@@ -63,9 +61,7 @@ PackFile_ConstTable_dump(PARROT_INTERP, NOTNULL(const PackFile_ConstTable *self)
 
 /*
 
-=item C<static void
-PackFile_Constant_dump(PARROT_INTERP, NOTNULL(PackFile_ConstTable *ct),
-                       NOTNULL(PackFile_Constant *self))>
+=item C<static void PackFile_Constant_dump>
 
 Dumps the constant C<self>.
 
@@ -74,8 +70,8 @@ Dumps the constant C<self>.
 */
 
 static void
-PackFile_Constant_dump(PARROT_INTERP, NOTNULL(PackFile_ConstTable *ct),
-                       NOTNULL(PackFile_Constant *self))
+PackFile_Constant_dump(PARROT_INTERP, ARGIN(const PackFile_ConstTable *ct),
+                       ARGIN(const PackFile_Constant *self))
 {
     PMC *key;
     size_t i;
@@ -197,7 +193,7 @@ PackFile_Constant_dump(PARROT_INTERP, NOTNULL(PackFile_ConstTable *ct),
         {
             PMC * const pmc = self->u.key;
             Parrot_sub *sub;
-            STRING *null = const_string(interp, "(null)");
+            STRING * const null = const_string(interp, "(null)");
             STRING *namespace_description;
 
             switch (pmc->vtable->base_type) {
@@ -212,7 +208,7 @@ PackFile_Constant_dump(PARROT_INTERP, NOTNULL(PackFile_ConstTable *ct),
                 case enum_class_ResizableStringArray:
                     {
                     const int n = VTABLE_get_integer(interp, pmc);
-                    STRING* out_buffer = VTABLE_get_repr(interp, pmc);
+                    STRING* const out_buffer = VTABLE_get_repr(interp, pmc);
                     PIO_printf(interp,
                             "\tclass => %Ss,\n"
                             "\telement count => %d,\n"
@@ -285,9 +281,7 @@ PackFile_Constant_dump(PARROT_INTERP, NOTNULL(PackFile_ConstTable *ct),
 
 /*
 
-=item C<PARROT_API
-void
-PackFile_Fixup_dump(PARROT_INTERP, NOTNULL(const PackFile_FixupTable *ft))>
+=item C<void PackFile_Fixup_dump>
 
 Dumps the fix-up table C<ft>.
 
@@ -297,12 +291,12 @@ Dumps the fix-up table C<ft>.
 
 PARROT_API
 void
-PackFile_Fixup_dump(PARROT_INTERP, NOTNULL(const PackFile_FixupTable *ft))
+PackFile_Fixup_dump(PARROT_INTERP, ARGIN(const PackFile_FixupTable *ft))
 {
     opcode_t i;
 
     for (i = 0; i < ft->fixup_count; i++) {
-        PIO_printf(interp,"\t#%d\n", (int) i);
+        PIO_printf(interp, "\t#%d\n", (int) i);
         switch (ft->fixups[i]->type) {
             case enum_fixup_label:
             case enum_fixup_sub:
@@ -313,7 +307,7 @@ PackFile_Fixup_dump(PARROT_INTERP, NOTNULL(const PackFile_FixupTable *ft))
                         ft->fixups[i]->name);
                     break;
             default:
-                PIO_printf(interp,"\ttype => %d ???,\n",
+                PIO_printf(interp, "\ttype => %d ???,\n",
                         (int) ft->fixups[i]->type);
                 break;
         }
