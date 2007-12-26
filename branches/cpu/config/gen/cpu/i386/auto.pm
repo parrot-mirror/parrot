@@ -38,12 +38,6 @@ sub runstep {
         }
         else {
             if ( cc_run() =~ /ok/ ) {
-#                $conf->data->set(
-#                    "i386_has_$suffix" => '1',
-#                    "HAS_i386_$suffix" => '1',
-#                );
-#                print " (\U$suffix) " if ($verbose);
-#                $conf->data->add( ' ', TEMP_generated => $f );
                 _handle_cc_run_ok($conf, $suffix, $f, $verbose);
             }
         }
@@ -62,12 +56,6 @@ sub runstep {
         }
         else {
             if ( cc_run() =~ /ok/ ) {
-#                $conf->data->set(
-#                    "i386_has_$suffix" => '1',
-#                    "HAS_i386_$suffix" => '1',
-#                );
-#                print " (\U$suffix) " if ($verbose);
-#                $conf->data->add( ' ', TEMP_generated => $f );
                 _handle_cc_run_ok($conf, $suffix, $f, $verbose);
             }
         }
