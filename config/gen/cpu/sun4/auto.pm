@@ -7,7 +7,7 @@ config/gen/cpu/sun4/auto.pm
 
 =head1 DESCRIPTION
 
-Test
+sun4-specific CPU hints.
 
 =cut
 
@@ -17,27 +17,6 @@ use strict;
 use warnings;
 
 use Parrot::Configure::Step qw(cc_gen cc_build cc_run cc_clean);
-
-sub build_asm {
-    my ( $self, $conf ) = @_;
-    my $file = 'src/atomic/sparc_v9.s';
-    my $successp;
-
-    # borrowed from cc_build
-    my ( $cc, $ccflags, $ldout, $o, $link, $linkflags, $cc_exe_out, $exe, $libs ) =
-        $conf->data->get(qw(cc ccflags ld_out o link linkflags cc_exe_out exe libs));
-
-    $successp =
-        Parrot::Configure::Step::_run_command( "$cc -c $ccflags -I./include -o sparcasm$o $file",
-        'test.cco', 'test.cco', $conf->options->get('verbose') );
-
-    return $successp;
-}
-
-sub cleanup {
-    my ( $self, $conf ) = @_;
-    unlink "sparcasm" . $conf->data->get('o');
-}
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -70,6 +49,27 @@ sub runstep {
     }
 
     cleanup( $self, $conf );
+}
+
+sub build_asm {
+    my ( $self, $conf ) = @_;
+    my $file = 'src/atomic/sparc_v9.s';
+    my $successp;
+
+    # borrowed from cc_build
+    my ( $cc, $ccflags, $ldout, $o, $link, $linkflags, $cc_exe_out, $exe, $libs ) =
+        $conf->data->get(qw(cc ccflags ld_out o link linkflags cc_exe_out exe libs));
+
+    $successp =
+        Parrot::Configure::Step::_run_command( "$cc -c $ccflags -I./include -o sparcasm$o $file",
+        'test.cco', 'test.cco', $conf->options->get('verbose') );
+
+    return $successp;
+}
+
+sub cleanup {
+    my ( $self, $conf ) = @_;
+    unlink "sparcasm" . $conf->data->get('o');
 }
 
 1;
