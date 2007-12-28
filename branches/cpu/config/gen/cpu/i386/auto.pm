@@ -30,15 +30,15 @@ sub runstep {
     for my $f (@files) {
         print " $f " if $verbose;
         my ($suffix) = $f =~ /memcpy_(\w+)/;
-        $f = "config/gen/cpu/i386/$f";
-        cc_gen($f);
+        my $path_f = "config/gen/cpu/i386/$f";
+        cc_gen($path_f);
         eval( cc_build("-DPARROT_CONFIG_TEST") );
         if ($@) {
             print " $@ " if $verbose;
         }
         else {
             if ( cc_run() =~ /ok/ ) {
-                _handle_cc_run_ok($conf, $suffix, $f, $verbose);
+                _handle_cc_run_ok($conf, $suffix, $path_f, $verbose);
             }
         }
         cc_clean();
@@ -48,15 +48,15 @@ sub runstep {
     for my $f (@files) {
         print " $f " if $verbose;
         my ($suffix) = $f =~ /test_(\w+)/;
-        $f = "config/gen/cpu/i386/$f";
-        cc_gen($f);
+        my $path_f = "config/gen/cpu/i386/$f";
+        cc_gen($path_f);
         eval { cc_build("-DPARROT_CONFIG_TEST") };
         if ($@) {
             print " $@ " if $verbose;
         }
         else {
             if ( cc_run() =~ /ok/ ) {
-                _handle_cc_run_ok($conf, $suffix, $f, $verbose);
+                _handle_cc_run_ok($conf, $suffix, $path_f, $verbose);
             }
         }
         cc_clean();
@@ -65,13 +65,13 @@ sub runstep {
 }
 
 sub _handle_cc_run_ok {
-    my ($conf, $suffix, $f, $verbose) = @_;
+    my ($conf, $suffix, $path_f, $verbose) = @_;
     $conf->data->set(
         "i386_has_$suffix" => '1',
         "HAS_i386_$suffix" => '1',
     );
     print " (\U$suffix) " if ($verbose);
-    $conf->data->add( ' ', TEMP_generated => $f );
+    $conf->data->add( ' ', TEMP_generated => $path_f );
 }
 
 1;
