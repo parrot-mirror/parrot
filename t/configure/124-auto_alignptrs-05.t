@@ -35,7 +35,7 @@ $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
 my ( $task, $step_name, $step);
-$task        = $conf->steps->[3];
+$task        = $conf->steps->[-1];
 $step_name   = $task->step;
 
 $step = $step_name->new();
@@ -43,24 +43,10 @@ ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
 ok( $step->description(), "$step_name has description" );
 
-TODO: {
-    # http://rt.perl.org/rt3/Ticket/Display.html?id=47391
-    local $TODO =
-        q<Reported failing where vendor-supplied Perl 5 Config.pm does not match true state of system available for Parrot configuration>;
-    {
-        $conf->data->set('ptr_alignment' => undef);
-        local $^O = q{linux} if $^O eq q{hpux};  ## no critic Variables::ProhibitConditionalDeclarations
-        my $ret;
-        eval { $ret = $step->runstep($conf); };
-        if ($@) {
-            like($@, qr/Can't determine alignment/, #'
-                "Got expected error message when runstep() failed");
-        } else {
-            like($step->result(), qr/bytes?/,
-                "Expected result was set");
-        }
-    }
-}
+my $align = 2;
+auto::alignptrs::_evaluate_ptr_alignment($conf, $align);
+is($conf->data->get( 'ptr_alignment' ), 2,
+    "Got expected pointer alignment");
 
 pass("Completed all tests in $0");
 

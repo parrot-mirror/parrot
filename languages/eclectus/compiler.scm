@@ -4,6 +4,12 @@
 
 ;; Helpers that emit PIR
 
+; unique ids for registers
+(define counter 1000)
+(define (gen-unique-id)
+  (set! counter (+ 1 counter))
+  counter)
+
 ; Emit PIR that loads libs
 (define (emit-init)
   (emit "
@@ -156,20 +162,20 @@
 (define (primcall? expr)
   (and (pair? expr) (primitive? (car expr))))
 
-; a unary function is a symbol with the properties
+; a primitive function is a symbol with the properties
 ; *is-prim*, *arg-count* and *emitter*
 ; implementatus of primitive functions are added
 ; with 'define-primitive'
 (define-syntax define-primitive
   (syntax-rules ()
-    [(_ (prim-name arg) b b* ...)
+    [(_ (prim-name arg* ...) b b* ...)
      (begin
         (putprop 'prim-name '*is-prim*
           #t)
         (putprop 'prim-name '*arg-count*
-          (length '(arg)))
+          (length '(arg* ...)))
         (putprop 'prim-name '*emitter*
-          (lambda (arg) b b* ...)))]))
+          (lambda (arg* ...) b b* ...)))]))
 
 ; implementation of fxadd1
 (define-primitive (fxadd1 arg)
@@ -288,11 +294,11 @@
 
 (define (emit-function-header function-name)
   (emit (string-append ".sub " function-name))
-  (emit ".local pmc val_true, val_false, val_x")
+  (emit "    .local pmc val_true, val_false, val_x")
   (emit-immediate #t)
-  (emit "val_true = val_x")
+  (emit "    val_true = val_x")
   (emit-immediate #f)
-  (emit "val_false = val_x")
+  (emit "    val_false = val_x")
 )
 
 (define (emit-function-footer)
@@ -308,30 +314,59 @@
 (define (emit-immediate expr)
   (emit (immediate-rep expr)))
 
-(define (emit-if expr)
+(define (emit-if expr uid)
+  (emit "    .local pmc tmp_if_test_~a, tmp_if_conseq_~a, tmp_if_altern_~a" uid uid uid)
   (emit-expr (if-test expr))
-  (emit "$P0 = val_x")
+  (emit "tmp_if_test_~a = val_x" uid)
   (emit-expr (if-conseq expr))
-  (emit "$P1 = val_x")
+  (emit "tmp_if_conseq_~a = val_x" uid)
   (emit-expr (if-altern expr))
-  (emit "$P2 = val_x")
+  (emit "tmp_if_altern_~a = val_x" uid)
   (emit "
         val_x = new 'PAST::Op'
-        val_x.init( $P0, $P1, $P2, 'pasttype' => 'if'  )
-        "))
+        val_x.init( tmp_if_test_~a, tmp_if_conseq_~a, tmp_if_altern_~a, 'pasttype' => 'if'  )
+        " uid uid uid))
  
 ; emir PIR for an expression
 (define (emit-expr expr)
+  ; (display "# ")(write expr) (newline)
   (cond
     [(immediate? expr) (emit-immediate expr)]
-    [(if? expr)        (emit-if expr)]
-    [(primcall? expr)  (emit-primcall expr)])) 
+    [(if? expr)        (emit-if expr (gen-unique-id))]
+    [(primcall? expr)  (emit-primcall expr)]
+  )) 
+
+; transverse the program and rewrite
+; "and" can be supported by transformation before compiling
+; So "and" is implemented if terms of "if"
+;
+; Currently a new S-expression is generated,
+; as I don't know how to manipulate S-expressions while traversing it
+(define transform-and-or
+  (lambda (tree)
+    (cond [(atom? tree) tree]
+          [(eqv? (car tree) 'and) 
+            ( cond [(null? (cdr tree)) #t]
+                   [(= (length (cdr tree)) 1) (transform-and-or (cadr tree))]
+                   [else (quasiquote
+                           (if
+                            (unquote (transform-and-or (cadr tree)))
+                            (unquote (transform-and-or (quasiquote (and (unquote-splicing (cddr tree))))))
+                            #f))])]
+          [(eqv? (car tree) 'or) 
+            ( cond [(null? (cdr tree)) #f]
+                   [(= (length (cdr tree)) 1) (transform-and-or (cadr tree))]
+                   [else (quasiquote
+                           (if
+                            (unquote (transform-and-or (cadr tree)))
+                            (unquote (transform-and-or (cadr tree)))
+                            (unquote (transform-and-or (quasiquote (or (unquote-splicing (cddr tree))))))))])][else  (map transform-and-or tree)]))) 
 
 ; the actual compiler
-(define (compile-program x)
+(define (compile-program program)
   (emit-init)
   (emit-driver)
   (emit-builtins)
   (emit-function-header "scheme_entry")
-  (emit-expr x) 
+  (emit-expr (transform-and-or program)) 
   (emit-function-footer))

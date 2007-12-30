@@ -67,7 +67,7 @@ sub runstep {
     }
 
     $conf->cc_gen('config/auto/gdbm/gdbm.in');
-    if ( $conf->data->get_p5('OSNAME') =~ /mswin32/i ) {
+    if ( $osname =~ /mswin32/i ) {
         if ( $cc =~ /^gcc/i ) {
             eval { $conf->cc_build( '', '-llibgdbm' ); };
         }
