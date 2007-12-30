@@ -39,8 +39,9 @@ my @steps = qw(
     auto::pack
     auto::format
     auto::isreg
+    auto::arch
     auto::jit
-    gen::cpu
+    auto::cpu
     auto::funcptr
     auto::cgoto
     auto::inline
@@ -58,7 +59,6 @@ my @steps = qw(
     auto::python
     auto::m4
     auto::ctags
-    auto::cpu
     auto::revision
     gen::icu
     gen::config_h

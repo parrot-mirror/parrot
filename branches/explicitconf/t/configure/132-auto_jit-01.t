@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 12;
+use Test::More tests => 13;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -13,14 +13,6 @@ use_ok('config::auto::jit');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
-
-=for hints_for_testing Check latest reports of Parrot configuration
-tools testing coverage to see where your time available for writing
-tests is spent.  You will have to determine a way to test a user
-response to a prompt. In the course of writing tests, you should try
-to resolve RT 43146.
-
-=cut
 
 my $args = process_options(
     {
@@ -39,7 +31,7 @@ $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
 my ( $task, $step_name, $step);
-$task        = $conf->steps->[1];
+$task        = $conf->steps->[-1];
 $step_name   = $task->step;
 
 $step = $step_name->new();
@@ -51,7 +43,7 @@ my $ret = $step->runstep($conf);
 ok( $ret, "$step_name runstep() returned true value" );
 is($step->result(), q{skipped}, "Expected result was set");
 
-
+pass("Keep Devel::Cover happy");
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
@@ -68,7 +60,8 @@ pass("Completed all tests in $0");
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::jit.
+The tests in this file tests config::auto::jit with the C<--miniparrot>
+option.
 
 =head1 AUTHOR
 
