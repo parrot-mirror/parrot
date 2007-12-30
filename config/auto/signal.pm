@@ -44,6 +44,8 @@ sub runstep {
         return 1;
     }
 
+    my $verbose = $conf->options->get('verbose');
+
     $conf->cc_gen('config/auto/signal/test_1.in');
     eval { $conf->cc_build(); };
     unless ( $@ || $conf->cc_run() !~ /ok/ ) {
