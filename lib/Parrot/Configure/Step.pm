@@ -5,22 +5,22 @@
 
 =head1 NAME
 
-Parrot::Configure::Step::Base - Configuration Step Base Class
+Parrot::Configure::Step - Configuration step base class
 
 =head1 SYNOPSIS
 
-    use base qw(Parrot::Configure::Step::Base);
+    use base qw(Parrot::Configure::Step);
 
 =head1 DESCRIPTION
 
-The C<Parrot::Configure::Step::Base> module contains the constructor and
+The C<Parrot::Configure::Step> module contains the constructor and
 utility methods that should be inherited by all configuration steps.
 
 =head1 USAGE
 
 =cut
 
-package Parrot::Configure::Step::Base;
+package Parrot::Configure::Step;
 
 use strict;
 use warnings;

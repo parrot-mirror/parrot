@@ -26,7 +26,7 @@ Parrot::Configure::Compiler.
 
 =cut
 
-package Parrot::Configure::Step;
+package Parrot::Configure::Utils;
 
 use strict;
 use warnings;
