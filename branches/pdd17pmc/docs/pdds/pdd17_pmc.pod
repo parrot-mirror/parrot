@@ -235,8 +235,8 @@ This declaration is used to generate the data struct for the PMC
 attributes declared in a composed role. The declaration is also used to
 generate accessor macros for the class, in the form of
 GET_ATTR_<attrname> and SET_ATTR_<attrname>, and to set up helper
-information for the C<inspect> vtable function, and to provide attribue
-access throught the default C<get_attr> and C<set_attr> vtable functions.
+information for the C<inspect> vtable function, and to provide attribute
+access through the default C<get_attr> and C<set_attr> vtable functions.
 
 It's also possible to define and store the PMC's data struct manually,
 but the standard declaration syntax must be used in roles, in PMCs that
@@ -261,22 +261,20 @@ The current interpreter object.
 
 =item SELF
 
-The current static invocant.
+The current invocant by dynamic type.
 
-=item DYNSELF
+=item STATICSELF
 
-The current dynamic invocant. [NOTE: it seems that this is actually what
-most people mean when they say C<SELF>.]
+The current invocant by static type.
 
 =item SUPER
 
-Calls the current method in the nearest superclass, using the static
-type of C<SELF>. [NOTE: again, seems that this should be the dynamic
-type, not static type.]
-
-=item DYNSUPER
-
 Calls the current method in the nearest superclass, using the dynamic
+type of C<SELF>.
+
+=item STATICSUPER
+
+Calls the current method in the nearest superclass, using the static
 type of C<SELF>.
 
 =back
