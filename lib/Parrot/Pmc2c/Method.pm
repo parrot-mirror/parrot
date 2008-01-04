@@ -23,8 +23,9 @@ sub new {
             %{ $self_hash || {} }
         )
     };
-    bless $self, ( ref($class) || $class );
-    $self;
+
+    # this is usually wrong, but *something* calls new on an object somewhere
+    bless $self, ref $class || $class;
 }
 
 sub clone {
@@ -79,14 +80,16 @@ Used in C<signature()> to normalize argument types.
 sub trans {
     my ( $self, $type ) = @_;
 
-    return "v" if ( !$type );
+    return 'v' unless $type;
+
     my $char = substr $type, 0, 1;
-    return $1 if ( $char =~ /([ISP])/ );
-    return 'N' if ( $char eq 'F' );
-    return 'v' if ( $type eq 'void' );
-    return 'V' if ( $type =~ /void\s*\*\s*/ );
-    return 'P' if ( $type =~ /opcode_t\*/ );
-    return "I" if ( $type =~ /int(val)?/i );
+
+    return $1  if $char =~ /([ISP])/;
+    return 'N' if $char eq 'F';
+    return 'v' if $type eq 'void';
+    return 'V' if $type =~ /void\s*\*\s*/;
+    return 'P' if $type =~ /opcode_t\*/;
+    return 'I' if $type =~ /int(val)?/i;
     return '?';
 }
 
@@ -100,7 +103,7 @@ sub signature {
     my ($self) = @_;
 
     my $args             = passable_args_from_parameter_list( $self->parameters );
-    my ($types,$vars)    = args_from_parameter_list( $self->parameters );
+    my ($types, $vars)   = args_from_parameter_list( $self->parameters );
     my $return_type      = $self->return_type;
     my $return_type_char = $self->trans($return_type);
     my $sig              = $self->trans($return_type) . join '', map { $self->trans($_) } @{$types};
