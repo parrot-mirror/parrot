@@ -36,12 +36,11 @@ sub create {
 
     my $classname = ref($this) || $this;
 
-    #test to see if specific subclass exists
+    # test to see if specific subclass exists
     eval "use ${classname}::$pmc_classname";
     $classname = $@ ? "$classname" : "${classname}::${pmc_classname}";
     my $self = Parrot::Pmc2c::PMC->new;
     bless $self, $classname;
-    $self;
 }
 
 sub new {
@@ -56,23 +55,22 @@ sub new {
             %{$self}
         )
     };
-    bless $self, ( ref($class) || $class );
-    $self;
+    bless $self, $class;
 }
 
 sub dump {
     my ($self) = @_;
 
-    #gen_parent_lookup_info( $self, $pmc2cMain, $pmcs );
-    #gen_parent_reverse_lookup_info( $self, $pmcs, $vtable_dump );
+    # gen_parent_lookup_info( $self, $pmc2cMain, $pmcs );
+    # gen_parent_reverse_lookup_info( $self, $pmcs, $vtable_dump );
 
     store( $self, $self->filename('.dump') );
 }
 
-#methods
+# methods
 sub add_method {
     my ( $self, $method ) = @_;
-    $self->{has_method}->{ $method->name } = scalar @{ $self->{methods} };
+    $self->{has_method}{ $method->name } = @{ $self->{methods} };
     push @{ $self->{methods} }, $method;
 }
 
@@ -103,7 +101,7 @@ sub parent_has_method {
     return exists $self->{'has_parent'}{$parent_name}{$vt_meth};
 }
 
-#parents
+# parents
 sub is_parent {
     my ( $self, $parent_name ) = @_;
     return grep /$parent_name/, @{ $self->{parents} };
@@ -169,7 +167,7 @@ sub is_dynamic {
 sub implements_vtable {
     my ( $self, $vt_meth ) = @_;
     return 0 unless $self->has_method($vt_meth);
-    return get_method( $self, $vt_meth )->is_vtable;
+    return $self->get_method( $vt_meth )->is_vtable;
 }
 
 sub unimplemented_vtable {
@@ -187,7 +185,7 @@ sub normal_unimplemented_vtable {
     return 1;
 }
 
-#getters
+# getters
 sub parents {
     my ($self) = @_;
     return $self->{parents};
@@ -214,8 +212,8 @@ sub get_flags {
     return $self->{flags};
 }
 
-#setters
-#should only be called once by the pmc parser
+# setters
+# should only be called once by the pmc parser
 sub set_parents {
     my ( $self, $value ) = @_;
     $value = [] unless $value;
@@ -242,7 +240,7 @@ sub set_filename {
     return 1;
 }
 
-#getters/setters
+# getters/setters
 sub name {
     my ( $self, $value ) = @_;
     $self->{name} = $value if $value;
@@ -278,17 +276,17 @@ sub super_attrs {
     return $self->{super_attrs}{$vt_name};
 }
 
-#applies to vtable entires only
+# applies to vtable entries only
 sub method_attrs {
     my ( $self, $methodname ) = @_;
     my $attrs;
 
-    #try self
+    # try self
     if ( $self->has_method($methodname) ) {
         $attrs = $self->get_method($methodname)->attrs;
     }
 
-    #try parent
+    # try parent
     elsif ( $self->inherits_method($methodname) ) {
         $attrs = $self->super_attrs($methodname);
     }

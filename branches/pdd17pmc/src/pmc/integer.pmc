@@ -175,7 +175,7 @@ Returns the integer value of the Integer.
 =cut
 
 */
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return PMC_int_val(SELF);
     }
 
