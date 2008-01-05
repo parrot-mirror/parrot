@@ -18,7 +18,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.3>.
 =cut
 
 .HLL 'Lua', 'lua_group'
-.namespace [ 'Lua', 'package' ]
+.namespace [ 'Lua::package' ]
 
 .sub 'luaopen_package'
 #    print "init Lua Package\n"
@@ -253,7 +253,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.3>.
     .return ($S0)
 .end
 
-.sub 'loadfunc'
+.sub 'loadfunc' :anon
     .param string path
     .param string sym
     load_bytecode path

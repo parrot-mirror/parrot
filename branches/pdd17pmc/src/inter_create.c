@@ -317,8 +317,8 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
      * wait for threads to complete if needed; terminate the event loop
      */
     if (!interp->parent_interpreter) {
-        pt_join_threads(interp);
         Parrot_cx_runloop_end(interp);
+        pt_join_threads(interp);
     }
 
     /* if something needs destruction (e.g. closing PIOs)
@@ -341,6 +341,9 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
 
     /* Destroys all PMCs, even constants and the ParrotIO objects for
      * std{in, out, err}, so don't be verbose about DOD'ing. */
+    if (interp->thread_data)
+        interp->thread_data->state |= THREAD_STATE_SUSPENDED_GC;
+
     Parrot_do_dod_run(interp, DOD_finish_FLAG);
 
 #if STM_PROFILE

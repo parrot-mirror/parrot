@@ -31,6 +31,8 @@ PMC_DIR       = src/pmc
 
 all: perl6.pbc
 
+xmas: all
+
 PERL6_GROUP   = $(PMC_DIR)/perl6_group$(LOAD_EXT)
 
 SOURCES = perl6.pir \
@@ -51,6 +53,7 @@ BUILTINS_PIR = \
   src/classes/Code.pir \
   src/classes/Sub.pir \
   src/classes/Junction.pir \
+  src/classes/Undef.pir \
   src/builtins/assign.pir \
   src/builtins/cmp.pir \
   src/builtins/control.pir \
@@ -72,7 +75,7 @@ PMC_SOURCES = $(PMC_DIR)/perl6str.pmc
 
 # targets for building a standalone perl6.
 # (We're not quite ready to make this a default target.)
-perl6: perl6.pbc $(PBC_TO_EXE)
+perl6@exe@: perl6.pbc $(PBC_TO_EXE)
 	$(PBC_TO_EXE) perl6.pbc
 $(PBC_TO_EXE):
 	$(MAKE) $(BUILD_DIR) pbc_to_exe
@@ -134,16 +137,19 @@ testtest: all test
 	$(PERL) t/harness t/02-test-pm
 
 spectest: all t/spec
-# XXX when tests pass, run more here.
-	@echo "only running sanity tests..."
-	$(PERL) t/harness t/spec/01-sanity t/spec/S03-operators
+	cd t/spec && svn up
+	$(PERL) t/harness \
+            t/spec/S02-literals \
+            t/spec/S03-operators\
+
+fulltest: all testtest spectest
 
 t/spec:
-	$(PERL) t/fetchspec
+	svn co http:////svn.pugscode.org//pugs//t//spec t/spec
 
 CLEANUPS = \
   perl6.pbc \
-  perl6 \
+  perl6@exe@ \
   perl6.c \
   src/gen_grammar.pir \
   src/gen_actions.pir \

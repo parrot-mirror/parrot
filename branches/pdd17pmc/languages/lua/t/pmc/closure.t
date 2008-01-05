@@ -269,7 +269,7 @@ OUTPUT
 
 pir_output_like( << 'CODE', << 'OUTPUT', 'from pir' );
 .HLL 'Lua', 'lua_group'
-.namespace [ 'Lua'; 'basic' ]
+.namespace [ 'Lua::basic' ]
 .sub _main
     collectoff
     luaopen_basic()
@@ -361,7 +361,7 @@ f1\n
 /x
 OUTPUT
 
-system("parrot -o ../foo.pbc ../foo.pir");
+system("../parrot -o ../foo.pbc ../foo.pir");
 
 pir_output_like( << 'CODE', << 'OUTPUT', 'from PBC load_bytecode' );
 .HLL 'Lua', 'lua_group'

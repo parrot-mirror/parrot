@@ -1135,12 +1135,14 @@ blocks to determine the scope.
     ops.'push'(vivipost)
     ops.'push_pirop'('set', ops, vivipost)
     ops.'push'(vivilabel)
-    .return (ops)
+    goto param_done
 
   param_required:
     .local int slurpy
     slurpy = node.'slurpy'()
     subpost.'add_param'(pname, 'named'=>named, 'slurpy'=>slurpy)
+
+  param_done:
     name = ops.'escape'(name)
     ops.'push_pirop'('.lex', name, ops)
     .return (ops)
