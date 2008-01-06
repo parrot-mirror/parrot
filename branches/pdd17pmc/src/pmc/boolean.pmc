@@ -35,7 +35,7 @@ C<bool> object according to the passed PMC value.
 =cut
 
 */
-    PMC *instantiate(PMC *sig) {
+    VTABLE PMC *instantiate(PMC *sig) {
         /* XXX other types */
         const int argcP = REG_INT(interp, 3);
         PMC * const res = pmc_new(interp, enum_class_Boolean);

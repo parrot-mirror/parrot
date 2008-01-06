@@ -1029,7 +1029,7 @@ Creates a new PMC object of the type of the class and calls init().
 
 */
 
-    PMC *instantiate(PMC *init) {
+    VTABLE PMC *instantiate(PMC *init) {
         Parrot_Object *obj_guts  = NULL;
         Parrot_Class  *_class    = PARROT_CLASS(SELF);
         STRING * const class_str = CONST_STRING(interp, "Class");

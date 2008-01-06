@@ -311,7 +311,7 @@ calls init().
 
 */
 
-    PMC *instantiate(PMC *init) {
+    VTABLE PMC *instantiate(PMC *init) {
         const INTVAL type = VTABLE_type(INTERP, SELF);
 
         /* Ensure no looping, as pmc_new calls the instantiate vtable entry for

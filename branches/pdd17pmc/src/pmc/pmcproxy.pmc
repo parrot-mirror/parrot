@@ -154,7 +154,7 @@ Creates an instance of the PMC.
 =cut
 
 */
-    PMC *instantiate(PMC *init) {
+    VTABLE PMC *instantiate(PMC *init) {
         Parrot_Class *_pmc = PARROT_CLASS(SELF);
 
         if (!PMC_IS_NULL(init))
