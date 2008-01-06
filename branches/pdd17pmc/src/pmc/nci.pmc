@@ -71,7 +71,7 @@ Initializes the NCI with a C<NULL> function pointer.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PMC_struct_val(SELF) = NULL;
         PMC_pmc_val(SELF)    = PMCNULL;
         PMC_data(SELF)       = mem_allocate_zeroed_typed(Parrot_NCI);

@@ -363,7 +363,7 @@ Creates an identical copy of the complex number.
 
 */
 
-    void init() {
+    VTABLE void init() {
         /* XXX should check if mem_sys_allocate failed */
         FLOATVAL *data       =
             (FLOATVAL *)mem_sys_allocate(2 * sizeof (FLOATVAL));

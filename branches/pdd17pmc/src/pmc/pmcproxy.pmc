@@ -76,7 +76,7 @@ Initializes a PMCProxy PMC.
 
 */
 
-    void init() {
+    VTABLE void init() {
         Parrot_Class *_pmc = mem_allocate_zeroed_typed(Parrot_Class);
         PMC * const new_attribute = pmc_new(interp, enum_class_Hash);
         STRING *name = CONST_STRING(interp, "proxy");

@@ -278,7 +278,7 @@ Does nothing.
 
 */
 
-    void init() {
+    VTABLE void init() {
     }
 
 /*

@@ -648,7 +648,7 @@ Initializes the C<struct> with a default value of C<NULL>.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PMC_pmc_val(SELF) = NULL;
     }
 

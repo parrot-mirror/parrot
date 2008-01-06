@@ -76,7 +76,7 @@ other fields.
 
 */
 
-    void init() {
+    VTABLE void init() {
         SUPER();                             /* _struct_val := Hash */
         PMC_pmc_val(SELF)           = NULL;  /* parent */
         PMC_data(SELF)              = mem_allocate_zeroed_typed(Parrot_NSInfo);

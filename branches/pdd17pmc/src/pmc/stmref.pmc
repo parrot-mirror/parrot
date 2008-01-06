@@ -38,7 +38,7 @@ Sets the referenced PMC to C<PMCNULL>.
 
 */
 
-    void init() {
+    VTABLE void init() {
         SELF.init_pmc(PMCNULL);
     }
 

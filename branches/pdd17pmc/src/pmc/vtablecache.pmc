@@ -19,7 +19,7 @@ vtable is freed.
 
 pmclass VtableCache {
 
-    void init() {
+    VTABLE void init() {
         PMC_struct_val(SELF) = NULL;
         PObj_active_destroy_SET(SELF);
     }

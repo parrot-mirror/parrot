@@ -121,7 +121,7 @@ Initializes the exception with default values.
 
 */
 
-    void init() {
+    VTABLE void init() {
         SUPER();
         /* pre-fill 11 slots with PMCNULL */
         DYNSELF.set_integer_native(11);

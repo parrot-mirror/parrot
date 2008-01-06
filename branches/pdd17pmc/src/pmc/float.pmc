@@ -32,7 +32,7 @@ Initializes the number to zero.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PMC_num_val(SELF) = 0.0;
     }
 

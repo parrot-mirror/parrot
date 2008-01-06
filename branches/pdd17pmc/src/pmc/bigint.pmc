@@ -528,7 +528,7 @@ BigInt object.
         pmc_reuse(INTERP, SELF, new_type, 0);
     }
 
-    void init() {
+    VTABLE void init() {
         bigint_init(INTERP, SELF);
         PObj_active_destroy_SET(SELF);
     }

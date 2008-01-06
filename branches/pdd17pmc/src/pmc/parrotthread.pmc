@@ -124,7 +124,7 @@ Initializes the thread.
 
 */
 
-    void init() {
+    VTABLE void init() {
         /* protect interpreter creation and list handling */
         LOCK(interpreter_array_mutex);
 

@@ -34,7 +34,7 @@ do anything.
 
 */
 
-    void init() {
+    VTABLE void init() {
         Parrot_EventHandler *e = mem_allocate_zeroed_typed(Parrot_EventHandler);
 
         PObj_custom_mark_SET(SELF);

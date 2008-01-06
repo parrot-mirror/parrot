@@ -34,7 +34,7 @@ Initializes an empty struct.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PObj_active_destroy_SET(SELF);
         PMC_pmc_val(SELF) = NULL;
         PMC_int_val(SELF) = 0;

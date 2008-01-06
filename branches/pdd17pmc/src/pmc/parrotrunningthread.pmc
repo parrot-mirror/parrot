@@ -43,7 +43,7 @@ Create a new, invalid handle to a running thread.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PMC_int_val(SELF) = -1;
     }
 

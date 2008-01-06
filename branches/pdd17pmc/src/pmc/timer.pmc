@@ -70,7 +70,7 @@ Initializes the timer.
 
 */
 
-    void init() {
+    VTABLE void init() {
         Parrot_Timer * const core_struct = mem_allocate_zeroed_typed(Parrot_Timer);
 
         /* Set flags for custom DOD mark and destroy. */

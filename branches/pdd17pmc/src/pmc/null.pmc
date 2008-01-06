@@ -33,7 +33,7 @@ Overrides the default to do nothing.
 
 */
 
-    void init() {
+    VTABLE void init() {
     }
 
     PARROT_CAN_RETURN_NULL

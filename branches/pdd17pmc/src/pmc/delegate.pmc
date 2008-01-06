@@ -76,7 +76,7 @@ useful defaults and don't throw exceptions.
 */
 
 
-    void init() {
+    VTABLE void init() {
         STRING * const meth     = CONST_STRING(interp, "init");
         PMC    * const classobj = Parrot_oo_get_class_str(interp, VTABLE_name(interp, SELF));
         PMC    * const sub      = Parrot_oo_find_vtable_override(interp, classobj, meth);

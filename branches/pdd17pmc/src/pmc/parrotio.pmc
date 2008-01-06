@@ -363,7 +363,7 @@ Initializes the IO PMC.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PObj_active_destroy_SET(SELF);
     }
 
