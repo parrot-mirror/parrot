@@ -237,7 +237,7 @@ Sets the integer value for C<*key>.
 
 */
 
-    void set_integer_keyed(PMC *key, INTVAL value) {
+    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         STRING *s = key_string(INTERP, key);
 
         if (!string_compare(INTERP, s, CONST_STRING(INTERP, "_type")))

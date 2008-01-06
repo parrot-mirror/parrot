@@ -138,7 +138,7 @@ reaches 0, delete the entry.
             parrot_hash_put(INTERP, hash, key, (void *)1);
     }
 
-    void set_integer_keyed(PMC *key, INTVAL value) {
+    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         Hash *hash = (Hash *)PMC_struct_val(SELF);
         parrot_hash_put(INTERP, hash, key, (void *)value);
     }

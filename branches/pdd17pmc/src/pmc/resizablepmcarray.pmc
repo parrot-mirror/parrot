@@ -34,7 +34,7 @@ Resizes the array to C<size> elements.
 
 */
 
-    void set_integer_native(INTVAL size) {
+    VTABLE void set_integer_native(INTVAL size) {
         if (size < 0)
             real_exception(INTERP, NULL, E_IndexError,
                     "ResizablePMCArray: Can't resize!");

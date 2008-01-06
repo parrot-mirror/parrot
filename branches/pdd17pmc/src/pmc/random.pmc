@@ -64,7 +64,7 @@ Sets the random number seed to C<seed>.
 
 */
 
-    void set_integer_native(INTVAL seed) {
+    VTABLE void set_integer_native(INTVAL seed) {
         Parrot_srand(seed);
     }
 

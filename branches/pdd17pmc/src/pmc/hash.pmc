@@ -638,7 +638,7 @@ Returns whether the hash is the same as C<*other>.
 
 */
 
-    void set_integer_keyed(PMC *key, INTVAL value) {
+    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         STRING *keystr;
         PMC    *nextkey;
         PMC    *box;

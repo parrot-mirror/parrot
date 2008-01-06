@@ -121,7 +121,7 @@ Set the message ID.
 
 */
 
-    void set_integer_native(INTVAL value) {
+    VTABLE void set_integer_native(INTVAL value) {
         Parrot_SchedulerMessage * core_struct = PARROT_SCHEDULERMESSAGE(SELF);
         core_struct->id = value;
     }

@@ -520,7 +520,7 @@ Sets the length of the array to C<size>.
 
 */
 
-    void set_integer_native(INTVAL size) {
+    VTABLE void set_integer_native(INTVAL size) {
         list_set_length(INTERP, (List *)PMC_data(SELF), size);
     }
 /*
@@ -533,7 +533,7 @@ Sets the length of the array to the number of elements in C<*value>.
 
 */
 
-    void set_integer_same(PMC *value) {
+    VTABLE void set_integer_same(PMC *value) {
         const INTVAL size = VTABLE_elements(INTERP, value);
         list_set_length(INTERP, (List *)PMC_data(SELF), size);
     }
@@ -565,7 +565,7 @@ Sets the integer value of the PMC at element C<key> to C<value>.
 
 */
 
-    void set_integer_keyed(PMC *key, INTVAL value) {
+    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         INTVAL ix;
         PMC   *nextkey, *box;
 

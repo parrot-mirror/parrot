@@ -203,7 +203,7 @@ Sets the minimum interesting priority for this event handler.
 =cut
 
 */
-    void set_integer_native(INTVAL priority) {
+    VTABLE void set_integer_native(INTVAL priority) {
         Parrot_EventHandler *e = PMC_data_typed(SELF, Parrot_EventHandler *);
 
         if (e)

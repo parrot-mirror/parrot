@@ -552,7 +552,7 @@ BigInt object.
 
 */
 
-    void set_integer_native(INTVAL value) {
+    VTABLE void set_integer_native(INTVAL value) {
         bigint_set_long(INTERP, SELF, (long)value);
     }
 

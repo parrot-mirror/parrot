@@ -182,7 +182,7 @@ Sets the value of the string to the integer C<value>.
 
 */
 
-    void set_integer_native(INTVAL value) {
+    VTABLE void set_integer_native(INTVAL value) {
         DYNSELF.set_string_native(string_from_int(INTERP, value));
     }
 
@@ -650,7 +650,7 @@ Replace the string at C<key> with the chr of C<value>.
         string_replace(INTERP, s, key_integer(INTERP, key), len, value, NULL);
     }
 
-    void set_integer_keyed(PMC *key, INTVAL value) {
+    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         STRING * const s = PMC_str_val(SELF);
         STRING * const c = string_chr(INTERP, (UINTVAL) value);
         string_replace(INTERP, s, key_integer(INTERP, key), 1, c, NULL);
