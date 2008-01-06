@@ -501,7 +501,7 @@ BigInt object.
 =cut
 
 */
-    PMC *instantiate(PMC *sig) {
+    VTABLE PMC *instantiate(PMC *sig) {
         return PMCNULL;
 
         /* TODO -- actually build this thing */

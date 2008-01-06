@@ -48,7 +48,7 @@ Class method to construct an Integer according to passed arguments.
         PObj_custom_mark_SET(SELF);
     }
 
-    PMC *instantiate(PMC *sig) {
+    VTABLE PMC *instantiate(PMC *sig) {
         return PMCNULL;
 
         /* TODO -- really create this thing */

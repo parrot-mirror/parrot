@@ -256,7 +256,7 @@ Create a new complex PMC with passed arguments according to pdd03.
 
 */
 
-    PMC *instantiate(PMC *sig) {
+    VTABLE PMC *instantiate(PMC *sig) {
         return PMCNULL;
 
         /* TODO -- really build this thing */
