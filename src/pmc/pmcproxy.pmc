@@ -111,7 +111,7 @@ Initializes a PMCProxy PMC.
         PObj_is_class_SET(SELF);
     }
 
-    void init_pmc(PMC *init_data) {
+    VTABLE void init_pmc(PMC *init_data) {
         INTVAL type_num = VTABLE_get_integer(interp, init_data);
         Parrot_Class *proxy_info;
 

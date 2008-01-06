@@ -291,7 +291,7 @@ With a null C<initializer>, calls C<init()>, else throws an exception.
 
 */
 
-    void init_pmc(PMC *initializer) {
+    VTABLE void init_pmc(PMC *initializer) {
         if (PMC_IS_NULL(initializer))
             DYNSELF.init();
         else

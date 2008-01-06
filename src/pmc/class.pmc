@@ -498,7 +498,7 @@ arguments.  The class is attatched to the current HLL namespace.
         CLASS_is_anon_SET(SELF);
     }
 
-    void init_pmc(PMC *init_data) {
+    VTABLE void init_pmc(PMC *init_data) {
         PMC           *arg;
         const INTVAL   arg_type = VTABLE_type(interp, init_data);
         STRING * const name_str = CONST_STRING(interp, "name");

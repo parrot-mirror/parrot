@@ -77,7 +77,7 @@ Return the LexInfo PMC, if any or a Null PMC.
 =cut
 
 */
-    void init_pmc(PMC *lexinfo) {
+    VTABLE void init_pmc(PMC *lexinfo) {
         PMC_pmc_val(SELF) = lexinfo;
     }
 

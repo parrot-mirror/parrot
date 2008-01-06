@@ -105,7 +105,7 @@ See F<docs/pdds/pdd02_vtables.pod> for initializers.
 
 */
 
-    void init_pmc(PMC *init) {
+    VTABLE void init_pmc(PMC *init) {
         const INTVAL n = VTABLE_get_integer(INTERP, init);
         INTVAL       i;
 

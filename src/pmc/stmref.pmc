@@ -52,7 +52,7 @@ Sets the referenced PMC to C<initializer>.
 
 */
 
-    void init_pmc(PMC *initializer) {
+    VTABLE void init_pmc(PMC *initializer) {
         PMC_struct_val(SELF) = Parrot_STM_alloc(INTERP, initializer);
         PObj_custom_mark_SET(SELF);
     }

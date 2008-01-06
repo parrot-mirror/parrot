@@ -22,7 +22,7 @@ This is an Iterator which returns [idx, item] tuples.
 
 pmclass Enumerate extends Iterator no_ro {
 
-    void init_pmc(PMC *iterable) {
+    VTABLE void init_pmc(PMC *iterable) {
         SUPER(iterable);
         PMC_struct_val(SELF) = key_new_integer(INTERP, 0);
         PMC_pmc_val(SELF)    = VTABLE_get_iter(INTERP, iterable);

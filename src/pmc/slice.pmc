@@ -234,7 +234,7 @@ pmclass Slice need_ext extends Key {
         }
     }
 
-    void init_pmc(PMC *key) {
+    VTABLE void init_pmc(PMC *key) {
         SELF.init();
 
         /*

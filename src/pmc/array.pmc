@@ -158,7 +158,7 @@ size, number of dimensions, etc.
 
 */
 
-    void init_pmc(PMC *init) {
+    VTABLE void init_pmc(PMC *init) {
         list_pmc_new_init(INTERP, SELF, init);
         PObj_custom_mark_SET(SELF);
     }

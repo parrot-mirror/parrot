@@ -72,7 +72,7 @@ An C<PMC> representing the data passed in this scheduler message.
 
 */
 
-    void init_pmc(PMC *data) {
+    VTABLE void init_pmc(PMC *data) {
         PMC              *elem;
         Parrot_SchedulerMessage *core_struct;
 

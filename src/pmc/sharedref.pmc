@@ -70,7 +70,7 @@ shouldn't leak unshared PMCs into different threads.
 
 */
 
-    void init_pmc(PMC *initializer) {
+    VTABLE void init_pmc(PMC *initializer) {
         SUPER(initializer);
         PObj_active_destroy_SET(SELF);
     }

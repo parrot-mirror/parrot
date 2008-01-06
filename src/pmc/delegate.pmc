@@ -85,7 +85,7 @@ useful defaults and don't throw exceptions.
             Parrot_run_meth_fromc(interp, sub, SELF, meth);
     }
 
-    void init_pmc(PMC *initializer) {
+    VTABLE void init_pmc(PMC *initializer) {
         STRING * const meth     = CONST_STRING(interp, "init_pmc");
         PMC    * const classobj = Parrot_oo_get_class_str(interp, VTABLE_name(interp, SELF));
         PMC    * const sub      = Parrot_oo_find_vtable_override(interp, classobj, meth);

@@ -100,7 +100,7 @@ Defaults iteration mode to iterate from start.
 
 */
 
-    void init_pmc(PMC *aggregate) {
+    VTABLE void init_pmc(PMC *aggregate) {
         PMC_pmc_val(SELF)    = aggregate;
         PMC_struct_val(SELF) = NULL;
         PObj_custom_mark_SET(SELF);
