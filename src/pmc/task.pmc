@@ -362,7 +362,7 @@ Free the task's underlying struct.
 =cut
 
 */
-    void destroy() {
+    VTABLE void destroy() {
         mem_sys_free(PMC_data(SELF));
     }
 
@@ -375,7 +375,7 @@ Mark any referenced strings and PMCs.
 =cut
 
 */
-    void mark() {
+    VTABLE void mark() {
         if (PARROT_TASK(SELF)) {
             Parrot_Task * const core_struct = PARROT_TASK(SELF);
 

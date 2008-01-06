@@ -65,7 +65,7 @@ Marks the list as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         intlist_mark(INTERP, (IntList *)PMC_struct_val(SELF));
     }
 

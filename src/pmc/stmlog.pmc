@@ -29,11 +29,11 @@ pmclass STMLog {
         PObj_custom_mark_SET(SELF);
     }
 
-    void destroy() {
+    VTABLE void destroy() {
         Parrot_STM_destroy_extracted(INTERP, PMC_struct_val(SELF));
     }
 
-    void mark() {
+    VTABLE void mark() {
         Parrot_STM_mark_extracted(INTERP, PMC_struct_val(SELF));
     }
 

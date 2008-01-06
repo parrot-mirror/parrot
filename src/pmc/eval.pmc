@@ -142,7 +142,7 @@ Invokes the first subroutine in the eval code.
         return VTABLE_invoke(INTERP, sub, next);
     }
 
-    void destroy() {
+    VTABLE void destroy() {
         /*
          * If the compiled code contained any .sub (or .pcc.sub)
          * subroutines, these subs got installed in the globals
@@ -202,7 +202,7 @@ Invokes the first subroutine in the eval code.
         SUPER();
     }
 
-    void mark() {
+    VTABLE void mark() {
         SUPER();
         mark_subs(INTERP, SELF);
     }

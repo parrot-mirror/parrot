@@ -39,7 +39,7 @@ Sets the referenced PMC to C<PMCNULL>.
         SELF.init_pmc(PMCNULL);
     }
 
-    void destroy() {
+    VTABLE void destroy() {
         SELF.init_pmc(NULL);
         /* don't pass it on */
     }
@@ -116,7 +116,7 @@ Marks the referenced PMC as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         pobject_lives(INTERP, (PObj *)PMC_pmc_val(SELF));
     }
 

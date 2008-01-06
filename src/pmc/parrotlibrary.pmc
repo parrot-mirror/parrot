@@ -61,7 +61,7 @@ Destroys the library, closing the shared library.
 
 */
 
-    void destroy() {
+    VTABLE void destroy() {
         if (PMC_data(SELF))
             Parrot_dlclose(PMC_data(SELF));
     }

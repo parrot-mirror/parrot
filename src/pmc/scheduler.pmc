@@ -221,7 +221,7 @@ Free the scheduler's underlying struct.
 =cut
 
 */
-    void destroy() {
+    VTABLE void destroy() {
         Parrot_Scheduler * const core_struct = PARROT_SCHEDULER(SELF);
         MUTEX_DESTROY(core_struct->msg_lock);
         mem_sys_free(core_struct);
@@ -236,7 +236,7 @@ Mark any referenced strings and PMCs.
 =cut
 
 */
-    void mark() {
+    VTABLE void mark() {
         if (PARROT_SCHEDULER(SELF)) {
             Parrot_Scheduler * const core_struct = PARROT_SCHEDULER(SELF);
 

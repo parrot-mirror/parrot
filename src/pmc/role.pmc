@@ -257,7 +257,7 @@ Free the memory associated with the object's underlying struct.
 
 */
 
-    void destroy() {
+    VTABLE void destroy() {
             mem_sys_free(PMC_data(SELF));
     }
 
@@ -271,7 +271,7 @@ Mark referenced strings and PMCs in the structure as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         Parrot_Role *role = PARROT_ROLE(SELF);
 
         if (role->name)

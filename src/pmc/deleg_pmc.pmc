@@ -41,7 +41,7 @@ pmclass deleg_pmc no_ro {
     VTABLE void init_pmc(PMC *_class) {
     }
 
-    void mark() {
+    VTABLE void mark() {
         /* don't pass that on
          *
          * NB objects have the flag PObj_data_is_PMC_array_FLAG set,
@@ -49,7 +49,7 @@ pmclass deleg_pmc no_ro {
          */
     }
 
-    void destroy() {
+    VTABLE void destroy() {
         /* don't pass that on */
     }
 

@@ -710,7 +710,7 @@ Marks the C<struct> as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         if (PMC_pmc_val(SELF))
             pobject_lives(INTERP, (PObj *)PMC_pmc_val(SELF));
     }

@@ -84,7 +84,7 @@ Destroys the subroutine.
 
 */
 
-    void destroy() {
+    VTABLE void destroy() {
         Parrot_sub * const sub = PMC_sub(SELF);
 
         if (!sub)
@@ -379,7 +379,7 @@ Marks the sub as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         const Parrot_sub * const sub = PMC_sub(SELF);
 
         if (!sub)

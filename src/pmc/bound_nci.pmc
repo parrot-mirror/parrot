@@ -93,7 +93,7 @@ Set the bound object live.
         return (opcode_t *)next;
     }
 
-    void mark() {
+    VTABLE void mark() {
         if (PMC_pmc_val(SELF))
             pobject_lives(INTERP, (PObj *)PMC_pmc_val(SELF));
         if (PObj_get_FLAGS(SELF) & PObj_private0_FLAG) {

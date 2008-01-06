@@ -106,11 +106,11 @@ useful defaults and don't throw exceptions.
         return (PMC *)Parrot_run_meth_fromc(INTERP, sub, SELF, meth);
     }
 
-    void destroy() {
+    VTABLE void destroy() {
         /* don't delegate destroy */
     }
 
-    void mark() {
+    VTABLE void mark() {
         /* don't delegate mark */
     }
 

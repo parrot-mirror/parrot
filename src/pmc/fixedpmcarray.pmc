@@ -158,7 +158,7 @@ Destroys the array.
 
 */
 
-    void destroy() {
+    VTABLE void destroy() {
         if (PMC_data(SELF)) {
             mem_sys_free(PMC_data(SELF));
             PMC_data(SELF) = NULL;

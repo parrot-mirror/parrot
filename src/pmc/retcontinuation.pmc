@@ -48,7 +48,7 @@ Initializes the continuation.
      *     have to set ref_count initially to 1
      */
 
-    void destroy() {
+    VTABLE void destroy() {
         Parrot_cont *cc = PMC_cont(SELF);
 
         if (cc)
