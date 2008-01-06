@@ -80,7 +80,7 @@ Invokes the closure.
 
 */
 
-    void set_pointer(void *value) {
+    VTABLE void set_pointer(void *value) {
         Parrot_sub *sub  = PMC_sub(SELF);
         opcode_t   *addr = (opcode_t *)value;
         sub->start_offs  = addr -  sub->seg->base.data;

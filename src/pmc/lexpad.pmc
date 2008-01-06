@@ -81,7 +81,7 @@ Return the LexInfo PMC, if any or a Null PMC.
         PMC_pmc_val(SELF) = lexinfo;
     }
 
-    void set_pointer(void *ctx) {
+    VTABLE void set_pointer(void *ctx) {
         PMC_struct_val(SELF) = ctx;
     }
 

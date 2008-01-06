@@ -260,7 +260,7 @@ Sets C<struct_val> to C<*value>.
 
 */
 
-    void set_pointer(void *value) {
+    VTABLE void set_pointer(void *value) {
         PMC_struct_val(SELF) = value;
     }
 

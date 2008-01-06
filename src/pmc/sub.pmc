@@ -130,7 +130,7 @@ Sets the pointer to the actual subroutine.
 
 */
 
-    void set_pointer(void *value) {
+    VTABLE void set_pointer(void *value) {
         real_exception(INTERP, NULL, E_NotImplementedError,
                 "Don't set the address of a sub\nuse .Sub constants instead");
     }
