@@ -1234,7 +1234,7 @@ Returns the integer type of the class.
 
 */
 
-    INTVAL type() {
+    VTABLE INTVAL type() {
         Parrot_Class *_class    = PARROT_CLASS(SELF);
         return _class->id;
     }

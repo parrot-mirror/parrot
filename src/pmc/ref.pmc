@@ -102,7 +102,7 @@ Returns the PMC's type.
 
 */
 
-    INTVAL type() {
+    VTABLE INTVAL type() {
         return VTABLE_type(interp, PMC_pmc_val(SELF));
     }
 
