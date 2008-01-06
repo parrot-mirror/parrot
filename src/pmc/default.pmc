@@ -492,7 +492,7 @@ Store the method as a global in the namespace of this class.
     }
 
 
-    PMC *find_method(STRING *method_name) {
+    VTABLE PMC *find_method(STRING *method_name) {
         return Parrot_find_method_with_cache(INTERP, SELF, method_name);
     }
 
