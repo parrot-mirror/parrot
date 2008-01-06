@@ -608,7 +608,7 @@ Returns the address of the PMC.
 
 */
 
-    void *get_pointer() {
+    VTABLE void *get_pointer() {
         return SELF;
     }
 

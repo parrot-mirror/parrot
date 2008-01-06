@@ -274,7 +274,7 @@ Returns C<struct_val>.
 
 */
 
-    void *get_pointer() {
+    VTABLE void *get_pointer() {
         return PMC_struct_val(SELF);
     }
 

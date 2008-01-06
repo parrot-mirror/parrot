@@ -910,7 +910,7 @@ Returns the pointer to the actual C C<struct>.
 
 */
 
-    void *get_pointer() {
+    VTABLE void *get_pointer() {
         return PMC_data(SELF);
     }
 
