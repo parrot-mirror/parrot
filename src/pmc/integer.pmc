@@ -527,7 +527,7 @@ Subtracts C<value> from C<SELF> inplace.
 
 */
 
-    void i_subtract(PMC *value) {
+    VTABLE void i_subtract(PMC *value) {
 MMD_Integer: {
             const INTVAL a = DYNSELF.get_integer();
             const INTVAL b = VTABLE_get_integer(INTERP, value);
@@ -554,7 +554,7 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_subtract_int(INTVAL b) {
+    VTABLE void i_subtract_int(INTVAL b) {
         const INTVAL a = DYNSELF.get_integer();
         const INTVAL c = a - b;
 
@@ -564,7 +564,7 @@ MMD_DEFAULT: {
             overflow(INTERP, SELF, b, SELF, MMD_SUBTRACT);
     }
 
-    void i_subtract_float(FLOATVAL value) {
+    VTABLE void i_subtract_float(FLOATVAL value) {
         const INTVAL a = DYNSELF.get_integer();
         VTABLE_set_number_native(INTERP, SELF, a - value);
     }
@@ -666,7 +666,7 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_multiply_int(INTVAL b) {
+    VTABLE void i_multiply_int(INTVAL b) {
         const INTVAL a  = DYNSELF.get_integer();
         const double cf = (double)a * (double)b;
         const INTVAL c  = a * b;
@@ -677,7 +677,7 @@ MMD_DEFAULT: {
             overflow(INTERP, SELF, b, SELF, MMD_MULTIPLY);
     }
 
-    void i_multiply_float(FLOATVAL value) {
+    VTABLE void i_multiply_float(FLOATVAL value) {
         const INTVAL a = DYNSELF.get_integer();
         VTABLE_set_number_native(INTERP, SELF, a * value);
     }

@@ -299,7 +299,7 @@ Subtracts C<value> from C<SELF> inplace.
 
 */
 
-    PMC *subtract(PMC *value, PMC *dest) {
+    VTABLE PMC *subtract(PMC *value, PMC *dest) {
 MMD_Complex: {
             const FLOATVAL a = DYNSELF.get_number();
             if (dest)
@@ -322,7 +322,7 @@ MMD_DEFAULT: {
         }
     }
 
-    PMC *subtract_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *subtract_int(INTVAL value, PMC *dest) {
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -331,7 +331,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    PMC *subtract_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *subtract_float(FLOATVAL value, PMC *dest) {
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -340,7 +340,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    void i_subtract(PMC *value) {
+    VTABLE void i_subtract(PMC *value) {
 MMD_Complex: {
             const FLOATVAL a = DYNSELF.get_number();
 
@@ -356,12 +356,12 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_subtract_int(INTVAL value) {
+    VTABLE void i_subtract_int(INTVAL value) {
         VTABLE_set_number_native(INTERP, SELF,
             DYNSELF.get_number() - (FLOATVAL)value);
     }
 
-    void i_subtract_float(FLOATVAL value) {
+    VTABLE void i_subtract_float(FLOATVAL value) {
         VTABLE_set_number_native(INTERP, SELF,
             DYNSELF.get_number() - value);
     }
@@ -380,7 +380,7 @@ Multiplies the number by C<value> and returns the result in C<*dest>.
 
 */
 
-    PMC *multiply(PMC *value, PMC *dest) {
+    VTABLE PMC *multiply(PMC *value, PMC *dest) {
 MMD_Complex: {
             real_exception(INTERP, NULL, E_NotImplementedError,
                     "TODO mul<Float, Complex>");
@@ -395,7 +395,7 @@ MMD_DEFAULT: {
         }
     }
 
-    PMC *multiply_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *multiply_int(INTVAL value, PMC *dest) {
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -404,7 +404,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    PMC *multiply_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *multiply_float(FLOATVAL value, PMC *dest) {
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -413,7 +413,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    void i_multiply(PMC *value) {
+    VTABLE void i_multiply(PMC *value) {
 MMD_Complex: {
             real_exception(INTERP, NULL, E_NotImplementedError,
                     "TODO i_mul<Float, Complex>");
@@ -424,12 +424,12 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_multiply_int(INTVAL value) {
+    VTABLE void i_multiply_int(INTVAL value) {
         VTABLE_set_number_native(INTERP, SELF,
             DYNSELF.get_number() * (FLOATVAL)value);
     }
 
-    void i_multiply_float(FLOATVAL value) {
+    VTABLE void i_multiply_float(FLOATVAL value) {
         VTABLE_set_number_native(INTERP, SELF, DYNSELF.get_number() * value);
     }
 
@@ -455,7 +455,7 @@ Divides C<SELF> by C<value> inplace.
 
 */
 
-    PMC *divide(PMC *value, PMC *dest) {
+    VTABLE PMC *divide(PMC *value, PMC *dest) {
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
@@ -469,7 +469,7 @@ Divides C<SELF> by C<value> inplace.
         return dest;
     }
 
-    PMC *divide_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *divide_int(INTVAL value, PMC *dest) {
         if (value == 0)
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float division by zero");
@@ -481,7 +481,7 @@ Divides C<SELF> by C<value> inplace.
         return dest;
     }
 
-    PMC *divide_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *divide_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float division by zero");
@@ -493,7 +493,7 @@ Divides C<SELF> by C<value> inplace.
         return dest;
     }
 
-    void i_divide(PMC *value) {
+    VTABLE void i_divide(PMC *value) {
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
@@ -503,7 +503,7 @@ Divides C<SELF> by C<value> inplace.
         VTABLE_set_number_native(INTERP, SELF, DYNSELF.get_number() / d);
     }
 
-    void i_divide_int(INTVAL value) {
+    VTABLE void i_divide_int(INTVAL value) {
         if (value == 0)
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float division by zero");
@@ -511,7 +511,7 @@ Divides C<SELF> by C<value> inplace.
         VTABLE_set_number_native(INTERP, SELF, DYNSELF.get_number() / value);
     }
 
-    void i_divide_float(FLOATVAL value) {
+    VTABLE void i_divide_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float division by zero");
@@ -541,7 +541,7 @@ Divides C<SELF> by C<value> inplace.
 
 */
 
-    PMC *floor_divide(PMC *value, PMC *dest) {
+    VTABLE PMC *floor_divide(PMC *value, PMC *dest) {
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
@@ -556,7 +556,7 @@ Divides C<SELF> by C<value> inplace.
         return dest;
     }
 
-    PMC *floor_divide_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *floor_divide_int(INTVAL value, PMC *dest) {
         if (value == 0)
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float division by zero");
@@ -569,7 +569,7 @@ Divides C<SELF> by C<value> inplace.
         return dest;
     }
 
-    PMC *floor_divide_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *floor_divide_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float division by zero");
@@ -582,7 +582,7 @@ Divides C<SELF> by C<value> inplace.
         return dest;
     }
 
-    void i_floor_divide(PMC *value) {
+    VTABLE void i_floor_divide(PMC *value) {
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
@@ -593,7 +593,7 @@ Divides C<SELF> by C<value> inplace.
                 floor(DYNSELF.get_number() / d));
     }
 
-    void i_floor_divide_int(INTVAL value) {
+    VTABLE void i_floor_divide_int(INTVAL value) {
         if (value == 0)
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float division by zero");
@@ -602,7 +602,7 @@ Divides C<SELF> by C<value> inplace.
                 floor(DYNSELF.get_number() / value));
     }
 
-    void i_floor_divide_float(FLOATVAL value) {
+    VTABLE void i_floor_divide_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float division by zero");
@@ -635,7 +635,7 @@ the result in C<dest>.
 
 */
 
-    PMC *cmodulus(PMC *value, PMC *dest) {
+    VTABLE PMC *cmodulus(PMC *value, PMC *dest) {
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
@@ -650,7 +650,7 @@ the result in C<dest>.
         return dest;
     }
 
-    PMC *cmodulus_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *cmodulus_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float cmodulus by zero");
@@ -663,7 +663,7 @@ the result in C<dest>.
         return dest;
     }
 
-    PMC *cmodulus_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *cmodulus_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float cmodulus by zero");
@@ -676,7 +676,7 @@ the result in C<dest>.
         return dest;
     }
 
-    void i_cmodulus(PMC *value) {
+    VTABLE void i_cmodulus(PMC *value) {
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
@@ -687,7 +687,7 @@ the result in C<dest>.
                 fmod(DYNSELF.get_number() , d));
     }
 
-    void i_cmodulus_int(INTVAL value) {
+    VTABLE void i_cmodulus_int(INTVAL value) {
         if (value == 0)
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float cmodulus by zero");
@@ -696,7 +696,7 @@ the result in C<dest>.
                 fmod(DYNSELF.get_number() , value));
     }
 
-    void i_cmodulus_float(FLOATVAL value) {
+    VTABLE void i_cmodulus_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float cmodulus by zero");
@@ -728,7 +728,7 @@ Calculates modulus inplace
 
 */
 
-    PMC *modulus(PMC *value, PMC *dest) {
+    VTABLE PMC *modulus(PMC *value, PMC *dest) {
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
@@ -743,7 +743,7 @@ Calculates modulus inplace
         return dest;
     }
 
-    PMC *modulus_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *modulus_int(INTVAL value, PMC *dest) {
         if (value == 0)
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float modulus by zero");
@@ -756,7 +756,7 @@ Calculates modulus inplace
         return dest;
     }
 
-    PMC *modulus_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *modulus_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float modulus by zero");
@@ -769,7 +769,7 @@ Calculates modulus inplace
         return dest;
     }
 
-    void i_modulus(PMC *value) {
+    VTABLE void i_modulus(PMC *value) {
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
@@ -780,7 +780,7 @@ Calculates modulus inplace
                 floatval_mod(DYNSELF.get_number() , d));
     }
 
-    void i_modulus_int(INTVAL value) {
+    VTABLE void i_modulus_int(INTVAL value) {
         if (value == 0)
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float modulus by zero");
@@ -789,7 +789,7 @@ Calculates modulus inplace
                 floatval_mod(DYNSELF.get_number() , value));
     }
 
-    void i_modulus_float(FLOATVAL value) {
+    VTABLE void i_modulus_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
             real_exception(INTERP, NULL, E_ZeroDivisionError,
                     "float modulus by zero");
@@ -821,7 +821,7 @@ Calculates pow inplace
 
 */
 
-    PMC *pow(PMC *value, PMC *dest) {
+    VTABLE PMC *pow(PMC *value, PMC *dest) {
         const FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (!dest)
@@ -831,7 +831,7 @@ Calculates pow inplace
         return dest;
     }
 
-    PMC *pow_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *pow_int(INTVAL value, PMC *dest) {
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -841,7 +841,7 @@ Calculates pow inplace
         return dest;
     }
 
-    PMC *pow_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *pow_float(FLOATVAL value, PMC *dest) {
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -850,19 +850,19 @@ Calculates pow inplace
         return dest;
     }
 
-    void i_pow(PMC *value) {
+    VTABLE void i_pow(PMC *value) {
         const FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         VTABLE_set_number_native(INTERP, SELF,
                 pow(DYNSELF.get_number(), d));
     }
 
-    void i_pow_int(INTVAL value) {
+    VTABLE void i_pow_int(INTVAL value) {
         VTABLE_set_number_native(INTERP, SELF,
                 pow(DYNSELF.get_number(), value));
     }
 
-    void i_pow_float(FLOATVAL value) {
+    VTABLE void i_pow_float(FLOATVAL value) {
         VTABLE_set_number_native(INTERP, SELF,
                 pow(DYNSELF.get_number(), value));
     }
