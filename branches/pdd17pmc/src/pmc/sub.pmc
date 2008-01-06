@@ -145,7 +145,7 @@ Returns the address of the actual subroutine.
 
 */
 
-    void *get_pointer() {
+    VTABLE void *get_pointer() {
         const Parrot_sub * const sub = PMC_sub(SELF);
         return sub->seg->base.data + sub->start_offs;
     }

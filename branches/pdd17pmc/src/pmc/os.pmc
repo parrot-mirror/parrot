@@ -50,7 +50,7 @@ information see F<src/pmc.c>.
 
 */
 
-    void *get_pointer() {
+    VTABLE void *get_pointer() {
         return OS_PMC;
     }
 

@@ -34,7 +34,7 @@ pmclass Random singleton {
 
 */
 
-    void *get_pointer() {
+    VTABLE void *get_pointer() {
         return Rand_PMC;
     }
 

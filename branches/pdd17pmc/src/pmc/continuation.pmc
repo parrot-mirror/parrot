@@ -190,7 +190,7 @@ Returns the pointer to the return instruction.
 
 */
 
-    void *get_pointer() {
+    VTABLE void *get_pointer() {
         return PMC_cont(SELF)->address;
     }
 /*

@@ -447,7 +447,7 @@ TOTAL KLUDGE.  ON THE CHOPPING BLOCK.
 
 */
 
-    void *get_pointer_keyed_str(STRING *key) {
+    VTABLE void *get_pointer_keyed_str(STRING *key) {
         PMC *ns = (PMC *)parrot_hash_get(INTERP, NS_HASH(SELF), key);
 
         if (PMC_IS_NULL(ns))
@@ -460,7 +460,7 @@ TOTAL KLUDGE.  ON THE CHOPPING BLOCK.
         return ns;
     }
 
-    void *get_pointer_keyed(PMC *key) {
+    VTABLE void *get_pointer_keyed(PMC *key) {
         PMC    *ns = SELF;
         STRING *part;
 
