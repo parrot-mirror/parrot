@@ -118,7 +118,7 @@ useful defaults and don't throw exceptions.
         SUPER(method_name, sub_pmc);
     }
 
-    STRING *name() {
+    VTABLE STRING *name() {
         return SELF->vtable->whoami;
     }
 
