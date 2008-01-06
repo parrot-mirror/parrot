@@ -247,7 +247,7 @@ Returns the boolean value of the pointer.
 
 */
 
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         Parrot_NCI * const nci_info = PARROT_NCI(SELF);
         return (0 != (INTVAL)nci_info->func);
     }

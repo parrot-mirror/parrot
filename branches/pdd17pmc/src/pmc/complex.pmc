@@ -437,7 +437,7 @@ Returns true if the complex number is non-zero.
         return Parrot_sprintf_c(INTERP, "%vg%+vgi", RE(SELF), IM(SELF));
     }
 
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         return !(FLOAT_IS_ZERO(RE(SELF)) && FLOAT_IS_ZERO(IM(SELF)));
     }
 

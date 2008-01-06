@@ -189,7 +189,7 @@ Returns 0.
 
 */
 
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         return 0;
     }
 

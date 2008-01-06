@@ -500,7 +500,7 @@ Returns true if the hash size is not zero.
 
 */
 
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         return parrot_hash_size(INTERP, (Hash *)PMC_struct_val(SELF)) != 0;
     }
 

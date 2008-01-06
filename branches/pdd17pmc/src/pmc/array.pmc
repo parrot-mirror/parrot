@@ -259,7 +259,7 @@ Returns true if the array has one or more elements.
 
 */
 
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         const INTVAL size = DYNSELF.elements();
         return (INTVAL)(size != 0);
     }

@@ -273,7 +273,7 @@ Returns true if the idx/key is not C<-1>.
 
 */
 
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         PMC * const key = (PMC *)PMC_struct_val(SELF);
         return key && PMC_int_val(key) != -1;
     }
