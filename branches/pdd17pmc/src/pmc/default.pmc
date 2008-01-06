@@ -351,7 +351,7 @@ NULL PMC is returned.
 
 */
 
-    PMC *getprop(STRING *key) {
+    VTABLE PMC *getprop(STRING *key) {
         if (SELF->pmc_ext && PMC_metadata(SELF))
             return VTABLE_get_pmc_keyed_str(INTERP, PMC_metadata(SELF), key);
         else
@@ -368,7 +368,7 @@ Sets the property for C<*key> to C<*value>.
 
 */
 
-    void setprop(STRING *key, PMC *value) {
+    VTABLE void setprop(STRING *key, PMC *value) {
         if (check_set_std_props(INTERP, SELF, key, value))
             return;
 
@@ -409,7 +409,7 @@ Returns the PMC's properties or the NULL PMC if no properties exist.
 
 */
 
-    PMC *getprops() {
+    VTABLE PMC *getprops() {
         if (!SELF->pmc_ext)
             add_pmc_ext(INTERP, SELF);
 
