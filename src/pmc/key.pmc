@@ -142,7 +142,7 @@ Returns the Parrot string value of the key.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         /* key_string() is only useful if this PMC has a key type */
         if (PObj_get_FLAGS(SELF) & KEY_type_FLAGS)
             return key_string(INTERP, SELF);
@@ -160,7 +160,7 @@ Returns the PMC value of the key.
 
 */
 
-    PMC *get_pmc() {
+    VTABLE PMC *get_pmc() {
         return key_pmc(INTERP, SELF);
     }
 
@@ -268,7 +268,7 @@ Returns the key itself.
 
 */
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         return key;
     }
 

@@ -433,7 +433,7 @@ Returns true if the complex number is non-zero.
         return sqrt(RE(SELF) * RE(SELF) + IM(SELF) * IM(SELF));
     }
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         return Parrot_sprintf_c(INTERP, "%vg%+vgi", RE(SELF), IM(SELF));
     }
 
@@ -484,12 +484,12 @@ Returns the requested number (real part for C<real> and imaginary for C<imag>).
         return 0.0;
     }
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         STRING * const s = VTABLE_get_string(INTERP, key);
         return DYNSELF.get_pmc_keyed_str(s);
     }
 
-    PMC *get_pmc_keyed_str(STRING *key) {
+    VTABLE PMC *get_pmc_keyed_str(STRING *key) {
         PMC * const    ret = pmc_new(INTERP, enum_class_Float);
         const FLOATVAL val = DYNSELF.get_number_keyed_str(key);
         VTABLE_set_number_native(INTERP, ret, val);
@@ -506,7 +506,7 @@ Returns the requested number (real part for C<0> and imaginary for C<1>).
 
 */
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         PMC * const    ret = pmc_new(INTERP, enum_class_Float);
         const FLOATVAL val = DYNSELF.get_number_keyed_int(key);
         VTABLE_set_number_native(INTERP, ret, val);

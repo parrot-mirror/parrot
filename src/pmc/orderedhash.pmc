@@ -56,7 +56,7 @@ pmclass OrderedHash extends Hash need_ext does array does hash {
 
 */
 
-    PMC *get_pmc_keyed_int(INTVAL idx) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL idx) {
         Hash * const h = (Hash *)PMC_struct_val(SELF);
         const INTVAL n = h->entries;
         HashBucket *b;
@@ -77,7 +77,7 @@ pmclass OrderedHash extends Hash need_ext does array does hash {
                 "OrderedHash: No such key");
     }
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         if ((PObj_get_FLAGS(key) & KEY_type_FLAGS) == KEY_integer_FLAG) {
             PMC * const item = SELF.get_pmc_keyed_int(key_integer(INTERP, key));
             PMC * const next = key_next(INTERP, key);
@@ -103,7 +103,7 @@ pmclass OrderedHash extends Hash need_ext does array does hash {
 
 */
 
-    STRING *get_string_keyed_int(INTVAL idx) {
+    VTABLE STRING *get_string_keyed_int(INTVAL idx) {
         Hash * const h = (Hash *)PMC_struct_val(SELF);
         const INTVAL n = h->entries;
 
@@ -125,7 +125,7 @@ pmclass OrderedHash extends Hash need_ext does array does hash {
                 "OrderedHash: No such key");
     }
 
-    STRING *get_string_keyed(PMC *key) {
+    VTABLE STRING *get_string_keyed(PMC *key) {
         if ((PObj_get_FLAGS(key) & KEY_type_FLAGS) == KEY_integer_FLAG) {
             PMC * const item = SELF.get_pmc_keyed_int(key_integer(INTERP, key));
             PMC * const next = key_next(INTERP, key);

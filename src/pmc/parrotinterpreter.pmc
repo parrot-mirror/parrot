@@ -329,7 +329,7 @@ Returns the PMC global value for C<key>.
 
 */
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         Interp * const new_interp = PMC_data_typed(SELF, Interp *);
 
         if (key >= 0 && key < IGLOBALS_SIZE)
@@ -363,7 +363,7 @@ Introspection interface. C<key> can be:
 
 */
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         PMC    *nextkey, *cont;
         STRING *outer = NULL;
         STRING *item  = key_string(interp, key);

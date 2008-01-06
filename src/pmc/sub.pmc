@@ -108,7 +108,7 @@ Sets the name of the subroutine.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         const Parrot_sub * const sub = PMC_sub(SELF);
         return string_copy(INTERP, sub->name);
     }

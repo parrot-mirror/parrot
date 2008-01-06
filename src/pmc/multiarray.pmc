@@ -120,7 +120,7 @@ Returns the Parrot string value for C<*key>.
 
 */
 
-    STRING *get_string_keyed(PMC *key) {
+    VTABLE STRING *get_string_keyed(PMC *key) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
         return DYNSELF.get_string_keyed_int(ix);
     }
@@ -135,7 +135,7 @@ Returns the PMC value for C<*key>.
 
 */
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
         return DYNSELF.get_pmc_keyed_int(ix);
     }

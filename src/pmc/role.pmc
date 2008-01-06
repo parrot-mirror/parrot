@@ -457,7 +457,7 @@ Return the name of the role (without the HLL namespace).
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         Parrot_Role * const role  = PARROT_ROLE(SELF);
         PMC         * const _namespace = role->_namespace;
 

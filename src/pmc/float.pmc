@@ -113,11 +113,11 @@ Returns a Parrot string representation of the number.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         return string_from_num(INTERP, PMC_num_val(SELF));
     }
 
-    STRING *get_repr() {
+    VTABLE STRING *get_repr() {
         double d                = (double)PMC_num_val(SELF);
         const char * const sign = signbit(PMC_num_val(SELF)) ? "-" : "";
         d                       = fabs(d);

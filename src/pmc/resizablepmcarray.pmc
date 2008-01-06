@@ -192,7 +192,7 @@ Returns the PMC value of the element at index C<key>.
 
 */
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         PMC **data;
 
         if (key < 0)
@@ -653,7 +653,7 @@ Returns the Parrot string representation C<ResizablePMCArray>.
 
 */
 
-    STRING *get_repr() {
+    VTABLE STRING *get_repr() {
         INTVAL  j;
         INTVAL  n   = VTABLE_elements(INTERP, SELF);
         STRING *res = CONST_STRING(INTERP, "[ ");

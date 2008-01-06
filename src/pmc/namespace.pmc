@@ -381,7 +381,7 @@ really a public API.
             "Invalid namespace key in set_pmc_keyed");
     }
 
-    PMC *get_pmc_keyed_str(STRING *key) {
+    VTABLE PMC *get_pmc_keyed_str(STRING *key) {
         PMC *ns = (PMC *)parrot_hash_get(INTERP, NS_HASH(SELF), key);
 
         if (!ns)
@@ -394,7 +394,7 @@ really a public API.
         return ns;
     }
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         PMC    *ns = SELF;
         STRING *part;
 
@@ -422,7 +422,7 @@ really a public API.
             "Invalid namespace key in get_pmc_keyed_str");
     }
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         Parrot_NSInfo *nsinfo = PARROT_NSINFO(SELF);
         PMC           *vtable = nsinfo->vtable;
 
@@ -518,7 +518,7 @@ Return the name of this namespace part.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         Parrot_NSInfo *nsinfo = PARROT_NSINFO(SELF);
         return nsinfo->name;
     }

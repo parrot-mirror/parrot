@@ -101,12 +101,12 @@ Marks the hash as live.
 
 */
 
-    PMC *get_pmc_keyed_str(STRING *key) {
+    VTABLE PMC *get_pmc_keyed_str(STRING *key) {
         /* check key ? */
         return PMC_pmc_val(SELF);
     }
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         /* check key ? */
         return PMC_pmc_val(SELF);
     }

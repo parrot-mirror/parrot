@@ -648,7 +648,7 @@ Returns SELF
 
 */
 
-    PMC *get_bignum() {
+    VTABLE PMC *get_bignum() {
         return SELF;
     }
 
@@ -685,21 +685,21 @@ appended.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         char   *s  = bigint_get_string(INTERP, SELF, 10);
         STRING *ps = string_from_cstring(INTERP, s, 0);
         mem_sys_free(s);
         return ps;
     }
 
-    STRING *get_string_keyed_int(INTVAL base) {
+    VTABLE STRING *get_string_keyed_int(INTVAL base) {
         char   *s  = bigint_get_string(INTERP, SELF, base);
         STRING *ps = string_from_cstring(INTERP, s, 0);
         mem_sys_free(s);
         return ps;
     }
 
-    STRING *get_repr() {
+    VTABLE STRING *get_repr() {
         STRING *s = SELF.get_string();
         return string_append(INTERP, s, const_string(INTERP, "L"));
     }

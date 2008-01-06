@@ -367,11 +367,11 @@ Return a representation of the hash contents.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         return Parrot_sprintf_c(INTERP, "Hash[0x%x]", SELF);
     }
 
-    STRING *get_repr() {
+    VTABLE STRING *get_repr() {
         /* RT#44643 use freeze */
         PMC * const  iter = VTABLE_get_iter(INTERP, SELF);
         STRING      *res  = CONST_STRING(INTERP, "{");
@@ -423,7 +423,7 @@ Return a representation of the hash contents.
 
 */
 
-    STRING *get_string_keyed_str(STRING *key) {
+    VTABLE STRING *get_string_keyed_str(STRING *key) {
         HashBucket * const b =
             parrot_hash_get_bucket(INTERP, (Hash *)PMC_struct_val(SELF), key);
 
@@ -438,7 +438,7 @@ Return a representation of the hash contents.
         return VTABLE_get_string(INTERP, (PMC*) b->value);
     }
 
-    STRING *get_string_keyed_int(INTVAL key) {
+    VTABLE STRING *get_string_keyed_int(INTVAL key) {
         STRING * const s = string_from_int(INTERP, key);
         return SELF.get_string_keyed_str(s);
     }
@@ -453,7 +453,7 @@ Returns the string value for the element at C<*key>.
 
 */
 
-    STRING *get_string_keyed(PMC *key) {
+    VTABLE STRING *get_string_keyed(PMC *key) {
         PMC         *valpmc;
         STRING      *keystr;
         HashBucket  *b;
@@ -528,7 +528,7 @@ Returns the number of elements in the hash.
 
 */
 
-    PMC *get_pmc_keyed_str(STRING *key) {
+    VTABLE PMC *get_pmc_keyed_str(STRING *key) {
         HashBucket * const b =
             parrot_hash_get_bucket(INTERP, (Hash*) PMC_struct_val(SELF), key);
 
@@ -538,7 +538,7 @@ Returns the number of elements in the hash.
         return (PMC *)b->value;
     }
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         STRING * const s = string_from_int(INTERP, key);
         return SELF.get_pmc_keyed_str(s);
     }
@@ -576,7 +576,7 @@ Returns the PMC value for the element at C<*key>.
         return PMCNULL;
     }
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         Hash   * const hash = (Hash *)PMC_struct_val(SELF);
         STRING        *keystr;
         HashBucket    *b;

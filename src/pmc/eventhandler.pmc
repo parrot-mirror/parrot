@@ -185,7 +185,7 @@ Retrieves the C<type> attribute of this event handler.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         Parrot_EventHandler *e = PMC_data_typed(SELF, Parrot_EventHandler *);
 
         if (e)
