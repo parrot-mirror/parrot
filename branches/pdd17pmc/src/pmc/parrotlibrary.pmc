@@ -142,7 +142,7 @@ Set the pointer to the shared library handle.
 
 */
 
-    void set_pointer(void *handle) {
+    VTABLE void set_pointer(void *handle) {
         PMC_data(SELF) = handle;
     }
 }

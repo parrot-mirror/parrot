@@ -166,7 +166,7 @@ dynamic state, and the descriptor address for any returned values.
 
 */
 
-    void set_pointer(void *value) {
+    VTABLE void set_pointer(void *value) {
         opcode_t    *pos  = (opcode_t *)value;
         Parrot_cont *cc   = PMC_cont(SELF);
 

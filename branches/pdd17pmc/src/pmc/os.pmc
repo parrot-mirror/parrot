@@ -54,7 +54,7 @@ information see F<src/pmc.c>.
         return OS_PMC;
     }
 
-    void set_pointer(void *ptr) {
+    VTABLE void set_pointer(void *ptr) {
         OS_PMC = (PMC *)ptr;
     }
 

@@ -47,7 +47,7 @@ information see F<src/pmc.c>.
         return File_PMC;
     }
 
-    void set_pointer(void *ptr) {
+    VTABLE void set_pointer(void *ptr) {
         File_PMC = (PMC *)ptr;
     }
 

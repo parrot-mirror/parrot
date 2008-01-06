@@ -49,7 +49,7 @@ information see F<src/pmc.c>.
 
 */
 
-    void set_pointer(void *ptr) {
+    VTABLE void set_pointer(void *ptr) {
         PARROT_ASSERT(!Rand_PMC);
         Rand_PMC = (PMC *)ptr;
     }

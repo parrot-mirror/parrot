@@ -924,7 +924,7 @@ Set the pointer to the actual C C<struct>.
 
 */
 
-    void set_pointer(void *value) {
+    VTABLE void set_pointer(void *value) {
         PMC_data(SELF) = value;
     }
 

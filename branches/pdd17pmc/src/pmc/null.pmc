@@ -41,7 +41,7 @@ Overrides the default to do nothing.
         return PMCNULL;
     }
 
-    void set_pointer(void *p) {
+    VTABLE void set_pointer(void *p) {
         PMCNULL = (PMC *)p;
     }
 
