@@ -483,11 +483,11 @@ Pops a layer off the PIO's layer stack and returns its name.
 
 */
 
-    void push_string(STRING *value) {
+    VTABLE void push_string(STRING *value) {
         PIO_push_layer_str(INTERP, SELF, value);
     }
 
-    STRING *pop_string() {
+    VTABLE STRING *pop_string() {
         return PIO_pop_layer_str(INTERP, SELF);
     }
 

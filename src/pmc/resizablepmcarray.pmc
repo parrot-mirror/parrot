@@ -97,7 +97,7 @@ TODO: Check whether there is already an element that can be shifted
 
 */
 
-    FLOATVAL shift_float() {
+    VTABLE FLOATVAL shift_float() {
         INTVAL    size = PMC_int_val(SELF);
         PMC      *data;
         PMC     **item;
@@ -119,7 +119,7 @@ TODO: Check whether there is already an element that can be shifted
         return value;
     }
 
-    INTVAL shift_integer() {
+    VTABLE INTVAL shift_integer() {
         INTVAL    size = PMC_int_val(SELF);
         PMC      *data;
         PMC     **item;
@@ -140,7 +140,7 @@ TODO: Check whether there is already an element that can be shifted
         return value;
     }
 
-    PMC *shift_pmc() {
+    VTABLE PMC *shift_pmc() {
         INTVAL  size = PMC_int_val(SELF);
         PMC    *data;
         PMC   **item;
@@ -159,7 +159,7 @@ TODO: Check whether there is already an element that can be shifted
         return data;
     }
 
-    STRING *shift_string() {
+    VTABLE STRING *shift_string() {
         INTVAL   size = PMC_int_val(SELF);
         PMC     *data;
         PMC    **item;
@@ -334,7 +334,7 @@ the array.
 
 */
 
-    void push_float(FLOATVAL value) {
+    VTABLE void push_float(FLOATVAL value) {
         INTVAL size = PMC_int_val(SELF);
         PMC   *val  = pmc_new(INTERP, enum_class_Float);
 
@@ -346,7 +346,7 @@ the array.
         return;
     }
 
-    void push_integer(INTVAL value) {
+    VTABLE void push_integer(INTVAL value) {
         INTVAL size = PMC_int_val(SELF);
         PMC   *val  = pmc_new(INTERP, enum_class_Integer);
 
@@ -368,7 +368,7 @@ the array.
         return;
     }
 
-    void push_string(STRING *value) {
+    VTABLE void push_string(STRING *value) {
         INTVAL size = PMC_int_val(SELF);
         PMC   *val  = pmc_new(INTERP, enum_class_String);
 
@@ -396,7 +396,7 @@ Removes and returns the last element in the array.
 
 */
 
-    FLOATVAL pop_float() {
+    VTABLE FLOATVAL pop_float() {
         INTVAL   size = PMC_int_val(SELF);
         PMC     *data;
 
@@ -410,7 +410,7 @@ Removes and returns the last element in the array.
         return VTABLE_get_number(INTERP, data);
     }
 
-    INTVAL pop_integer() {
+    VTABLE INTVAL pop_integer() {
         INTVAL  size = PMC_int_val(SELF);
         PMC    *data;
 
@@ -424,7 +424,7 @@ Removes and returns the last element in the array.
         return VTABLE_get_integer(INTERP, data);
     }
 
-    PMC *pop_pmc() {
+    VTABLE PMC *pop_pmc() {
         INTVAL size = PMC_int_val(SELF);
         PMC   *data;
 
@@ -438,7 +438,7 @@ Removes and returns the last element in the array.
         return data;
     }
 
-    STRING *pop_string() {
+    VTABLE STRING *pop_string() {
         INTVAL  size = PMC_int_val(SELF);
         PMC    *data;
 
@@ -469,7 +469,7 @@ the array.
 
 */
 
-    void unshift_float(FLOATVAL value) {
+    VTABLE void unshift_float(FLOATVAL value) {
         INTVAL  size = PMC_int_val(SELF);
         PMC    *val  = pmc_new(INTERP, enum_class_Float);
         PMC   **data;
@@ -491,7 +491,7 @@ the array.
         return;
     }
 
-    void unshift_integer(INTVAL value) {
+    VTABLE void unshift_integer(INTVAL value) {
         INTVAL  size = PMC_int_val(SELF);
         PMC    *val  = pmc_new(INTERP, enum_class_Integer);
         PMC    **data;
@@ -532,7 +532,7 @@ the array.
         return;
     }
 
-    void unshift_string(STRING *value) {
+    VTABLE void unshift_string(STRING *value) {
         INTVAL  size = PMC_int_val(SELF);
         PMC    *val  = pmc_new(INTERP, enum_class_String);
         PMC   **data;

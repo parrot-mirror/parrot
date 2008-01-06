@@ -100,7 +100,7 @@ the array.
 
 */
 
-    void push_string(STRING *value) {
+    VTABLE void push_string(STRING *value) {
         INTVAL nextix = DYNSELF.elements();
         DYNSELF.set_string_keyed_int(nextix, value);
     }
@@ -115,7 +115,7 @@ Removes and returns the last element in the array.
 
 */
 
-    STRING *pop_string() {
+    VTABLE STRING *pop_string() {
         INTVAL  size = PMC_int_val(SELF);
         STRING *value;
 
@@ -139,7 +139,7 @@ Removes and returns the last element in the array.
 
 */
 
-    PMC *pop_pmc() {
+    VTABLE PMC *pop_pmc() {
         STRING *strval = DYNSELF.pop_string();
         PMC    *value  = pmc_new(INTERP, enum_class_String);
 
@@ -158,7 +158,7 @@ Removes and returns the last element in the array.
 
 */
 
-    INTVAL pop_integer() {
+    VTABLE INTVAL pop_integer() {
         PMC *pmcval = DYNSELF.pop_pmc();
         return VTABLE_get_integer(INTERP, pmcval);
     }
@@ -173,7 +173,7 @@ Removes and returns the last element in the array.
 
 */
 
-    FLOATVAL pop_float() {
+    VTABLE FLOATVAL pop_float() {
         PMC *pmcval = DYNSELF.pop_pmc();
         return VTABLE_get_number(INTERP, pmcval);
     }
@@ -269,7 +269,7 @@ Removes and returns an item from the start of the array.
 
 */
 
-    STRING *shift_string() {
+    VTABLE STRING *shift_string() {
         INTVAL  size = PMC_int_val(SELF);
         STRING *value;
 
@@ -292,7 +292,7 @@ Removes and returns the first element in the array.
 
 */
 
-    PMC *shift_pmc() {
+    VTABLE PMC *shift_pmc() {
         STRING *strval = DYNSELF.shift_string();
         PMC    *value  = pmc_new(INTERP, enum_class_String);
 
@@ -311,7 +311,7 @@ Removes and returns the first element in the array.
 
 */
 
-    INTVAL shift_integer() {
+    VTABLE INTVAL shift_integer() {
         PMC *pmcval = DYNSELF.shift_pmc();
         return VTABLE_get_integer(INTERP, pmcval);
     }
@@ -326,7 +326,7 @@ Removes and returns the first element in the array.
 
 */
 
-    FLOATVAL shift_float() {
+    VTABLE FLOATVAL shift_float() {
         PMC *pmcval = DYNSELF.shift_pmc();
         return VTABLE_get_number(INTERP, pmcval);
     }
@@ -359,7 +359,7 @@ the array.
 
 */
 
-    void push_integer(INTVAL value) {
+    VTABLE void push_integer(INTVAL value) {
         PMC    *ret = pmc_new(INTERP, enum_class_String);
         STRING *val;
 
@@ -379,7 +379,7 @@ the array.
 
 */
 
-    void push_float(FLOATVAL value) {
+    VTABLE void push_float(FLOATVAL value) {
         PMC    *ret = pmc_new(INTERP, enum_class_String);
         STRING *val;
 
@@ -398,7 +398,7 @@ Removes and returns a String PMC from the start of the array.
 
 */
 
-    PMC *shift_pmc() {
+    VTABLE PMC *shift_pmc() {
         INTVAL  size = PMC_int_val(SELF);
         PMC    *ret;
         STRING *value;
@@ -427,7 +427,7 @@ of the array.
 
 */
 
-    void unshift_string(STRING *value) {
+    VTABLE void unshift_string(STRING *value) {
         STRING **data = PMC_data_typed(SELF, STRING **);
         INTVAL   size = PMC_int_val(SELF);
         INTVAL   i;
@@ -471,7 +471,7 @@ the array.
 
 */
 
-    void unshift_integer(INTVAL value) {
+    VTABLE void unshift_integer(INTVAL value) {
         PMC    *ret = pmc_new(INTERP, enum_class_String);
         STRING *val;
 
@@ -491,7 +491,7 @@ the array.
 
 */
 
-    void unshift_float(FLOATVAL value) {
+    VTABLE void unshift_float(FLOATVAL value) {
         PMC    *ret = pmc_new(INTERP, enum_class_String);
         STRING *val;
 

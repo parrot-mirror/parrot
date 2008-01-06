@@ -224,7 +224,7 @@ fixed sized array).
 
 */
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         return PMC_int_val(SELF);
     }
 

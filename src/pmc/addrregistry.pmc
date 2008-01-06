@@ -100,7 +100,7 @@ Returns true if the hash size is not zero.
         return 0;
     }
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         return parrot_hash_size(INTERP, (Hash *)PMC_struct_val(SELF));
     }
 

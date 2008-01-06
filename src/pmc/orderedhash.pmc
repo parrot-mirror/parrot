@@ -318,17 +318,17 @@ The created key = "\1idx".
         SELF.set_pmc_keyed_int(n, value);
     }
 
-    void push_float(FLOATVAL value) {
+    VTABLE void push_float(FLOATVAL value) {
         const INTVAL n = DYNSELF.elements();
         SELF.set_number_keyed_int(n, value);
     }
 
-    void push_integer(INTVAL value) {
+    VTABLE void push_integer(INTVAL value) {
         const INTVAL n = DYNSELF.elements();
         SELF.set_integer_keyed_int(n, value);
     }
 
-    void push_string(STRING *value) {
+    VTABLE void push_string(STRING *value) {
         const INTVAL n = DYNSELF.elements();
         SELF.set_string_keyed_int(n, value);
     }

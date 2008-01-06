@@ -50,7 +50,7 @@ the next one.
         return ok;
     }
 
-    PMC *shift_pmc() {
+    VTABLE PMC *shift_pmc() {
         PMC *item, *tupl, *val;
         PMC *key  = (PMC *)PMC_struct_val(SELF);
         PMC *iter = (PMC *)PMC_pmc_val(SELF);

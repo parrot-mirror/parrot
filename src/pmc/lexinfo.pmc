@@ -89,7 +89,7 @@ Returns the number of elements in the LexInfo hash.
         parrot_hash_put(INTERP, (Hash*)PMC_struct_val(SELF), name, (void*)preg);
     }
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         return parrot_hash_size(INTERP, (Hash *)PMC_struct_val(SELF));
     }
 
