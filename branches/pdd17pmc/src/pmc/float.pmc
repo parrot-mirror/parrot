@@ -212,7 +212,7 @@ Morphs the scalar to the specified type.
 
 */
 
-    void morph(INTVAL type) {
+    VTABLE void morph(INTVAL type) {
         pmc_reuse(INTERP, SELF, type, 0);
     }
 

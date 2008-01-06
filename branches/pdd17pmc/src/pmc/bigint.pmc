@@ -524,7 +524,7 @@ BigInt object.
 #endif
     }
 
-    void morph(INTVAL new_type) {
+    VTABLE void morph(INTVAL new_type) {
         pmc_reuse(INTERP, SELF, new_type, 0);
     }
 

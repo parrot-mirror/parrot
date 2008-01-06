@@ -384,7 +384,7 @@ Creates an identical copy of the complex number.
         PMC_struct_val(SELF) = NULL;
     }
 
-    void morph(INTVAL type) {
+    VTABLE void morph(INTVAL type) {
         if (SELF->vtable->base_type == type)
             return;
         SUPER(type);

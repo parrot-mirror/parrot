@@ -661,7 +661,7 @@ Changes the PMC to a PMC of a new type
 
 */
 
-    void morph(INTVAL type) {
+    VTABLE void morph(INTVAL type) {
         pmc_reuse(INTERP, SELF, type, 0);
     }
 
