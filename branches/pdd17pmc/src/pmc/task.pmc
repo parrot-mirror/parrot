@@ -102,7 +102,7 @@ An interpreter in which to execute this task.
 
 */
 
-    void init_pmc(PMC *data) {
+    VTABLE void init_pmc(PMC *data) {
         PMC         *elem;
         Parrot_Task *core_struct;
 

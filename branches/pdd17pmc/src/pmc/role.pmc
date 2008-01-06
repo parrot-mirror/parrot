@@ -239,7 +239,7 @@ C<init_data>.
         role->attrib_metadata = pmc_new(interp, enum_class_Hash);
     }
 
-    void init_pmc(PMC *init_data) {
+    VTABLE void init_pmc(PMC *init_data) {
         /* Create the role. */
         SELF.init();
 

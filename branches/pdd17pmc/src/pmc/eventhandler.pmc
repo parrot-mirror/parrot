@@ -75,7 +75,7 @@ handler to care
 
 */
 
-    void init_pmc(PMC *data) {
+    VTABLE void init_pmc(PMC *data) {
         PMC                 *code        = NULL;
         PMC                 *interpreter = PMCNULL;
         STRING              *type        = NULL;

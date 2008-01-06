@@ -38,7 +38,7 @@ pmclass deleg_pmc no_ro {
     VTABLE void init() {
     }
 
-    void init_pmc(PMC *_class) {
+    VTABLE void init_pmc(PMC *_class) {
     }
 
     void mark() {

@@ -69,7 +69,7 @@ An C<Integer> representing the unique identifier for this scheduler.
 
 */
 
-    void init_pmc(PMC *data) {
+    VTABLE void init_pmc(PMC *data) {
         PMC              *elem;
         Parrot_Scheduler *core_struct;
 

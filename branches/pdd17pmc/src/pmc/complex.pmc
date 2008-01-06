@@ -374,7 +374,7 @@ Creates an identical copy of the complex number.
         PObj_active_destroy_SET(SELF);
     }
 
-    void init_pmc(PMC *initializer) {
+    VTABLE void init_pmc(PMC *initializer) {
         /* XXX not implemented */
         DYNSELF.init();
     }

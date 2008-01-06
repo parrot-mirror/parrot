@@ -241,7 +241,7 @@ C<parent> and uses that thread.
 
 */
 
-    void init_pmc(PMC *parent) {
+    VTABLE void init_pmc(PMC *parent) {
         Parrot_Interp p = PMC_data_typed(parent, Parrot_Interp);
 
         if (!PMC_data(SELF))

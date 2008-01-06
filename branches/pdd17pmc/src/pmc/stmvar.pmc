@@ -46,7 +46,7 @@ pmclass STMVar is_shared need_ext no_ro {
         PObj_custom_mark_SET(SELF);
     }
 
-    void init_pmc(PMC *value) {
+    VTABLE void init_pmc(PMC *value) {
         PMC_struct_val(SELF) = NULL;
 
         if (value->vtable->base_type == enum_class_STMRef ||

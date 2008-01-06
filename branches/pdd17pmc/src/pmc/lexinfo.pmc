@@ -59,7 +59,7 @@ subroutine.
                 "Cannot create a LexInfo PMC without an initializer");
     }
 
-    void init_pmc(PMC *sub) {
+    VTABLE void init_pmc(PMC *sub) {
         PARROT_ASSERT(PObj_constant_TEST(SELF));
         PMC_pmc_val(SELF) = sub;
 
