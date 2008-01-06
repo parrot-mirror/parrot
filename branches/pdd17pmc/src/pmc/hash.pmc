@@ -1051,7 +1051,7 @@ Used to archive the hash.
 
 */
 
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO * const io   = info->image_io;
         Hash * const     hash = (Hash *)PMC_struct_val(SELF);;
 

@@ -454,7 +454,7 @@ Archives the subroutine.
         SUPER(info);
     }
 
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO   * const io  = info->image_io;
         Parrot_sub * const sub = PMC_sub(SELF);
         STRING            *hll_name;

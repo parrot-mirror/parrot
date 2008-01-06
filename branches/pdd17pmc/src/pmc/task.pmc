@@ -418,7 +418,7 @@ Used to archive the task.
 
 */
 
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
         Parrot_Task * const core_struct = PARROT_TASK(SELF);
 

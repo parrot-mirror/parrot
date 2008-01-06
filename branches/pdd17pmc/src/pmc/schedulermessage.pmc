@@ -247,7 +247,7 @@ Used to archive the scheduler message.
 
 */
 
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO *io = info->image_io;
         Parrot_SchedulerMessage * const core_struct = PARROT_SCHEDULERMESSAGE(SELF);
 

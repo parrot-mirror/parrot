@@ -806,7 +806,7 @@ Used to archive the string.
 =cut
 
 */
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
         SUPER(info);
         VTABLE_push_string(INTERP, io, VTABLE_get_string(INTERP, SELF));

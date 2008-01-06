@@ -336,7 +336,7 @@ Used to archive the string.
 =cut
 
 */
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         /* XXX Dino - I'm concerned about freezing the entire
             allocated block of memory, it's dependent on the
             BITS_PER_CHAR value.

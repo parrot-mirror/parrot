@@ -574,7 +574,7 @@ Used to unarchive the array.
         SUPER(info);
     }
 
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO *io = info->image_io;
         INTVAL   *ar;
         INTVAL    i, n;

@@ -474,7 +474,7 @@ Used to archive the string.
 =cut
 
 */
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO *io = info->image_io;
         STRING   *s  = string_from_cstring(INTERP,
                                 PMC_data_typed(SELF, char *),

@@ -540,7 +540,7 @@ Used to archive the object.
 
 */
 
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO *io = info->image_io;
 /*        INTVAL num_attributes = VTABLE_elements(interp, SELF);
         PMC_int_val(SELF) = num_attributes;

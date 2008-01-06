@@ -486,7 +486,7 @@ Used to archive the string.
 =cut
 
 */
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO *  const io   = info->image_io;
         STRING   ** const data = (STRING**)PMC_data(SELF);
         const INTVAL n         = PMC_int_val(SELF);
