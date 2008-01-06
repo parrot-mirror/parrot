@@ -546,7 +546,7 @@ C<value>.
 
 */
 
-    void set_number_keyed(PMC *key, FLOATVAL value) {
+    VTABLE void set_number_keyed(PMC *key, FLOATVAL value) {
         const INTVAL k        = key_integer(INTERP, key);
         PMC   * const nextkey = key_next(INTERP, key);
 

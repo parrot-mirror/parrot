@@ -616,7 +616,7 @@ Sets the numeric value of the PMC at element C<key> to C<value>.
 
 */
 
-    void set_number_keyed(PMC *key, FLOATVAL value) {
+    VTABLE void set_number_keyed(PMC *key, FLOATVAL value) {
         INTVAL ix;
         PMC   *nextkey, *box;
 

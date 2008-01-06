@@ -165,7 +165,7 @@ Sets the floating-point number value C<value> at C<*key>.
 
 */
 
-    void set_number_keyed(PMC *key, FLOATVAL value) {
+    VTABLE void set_number_keyed(PMC *key, FLOATVAL value) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
         DYNSELF.set_number_keyed_int(ix, value);
     }

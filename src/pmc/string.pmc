@@ -200,7 +200,7 @@ Sets the value of the string to the floating-point C<value>.
 
 */
 
-    void set_number_native(FLOATVAL value) {
+    VTABLE void set_number_native(FLOATVAL value) {
         DYNSELF.set_string_native(string_from_num(INTERP, value));
     }
 

@@ -597,7 +597,7 @@ part to C<0.0>
         DYNSELF.set_number_native(value);
     }
 
-    void set_number_native(FLOATVAL value) {
+    VTABLE void set_number_native(FLOATVAL value) {
         RE(SELF) = value;
         IM(SELF) = 0.0;
     }
@@ -631,7 +631,7 @@ to C<value>.
         DYNSELF.set_number_keyed_str(key, value);
     }
 
-    void set_number_keyed(PMC *key, FLOATVAL value) {
+    VTABLE void set_number_keyed(PMC *key, FLOATVAL value) {
         STRING *s = VTABLE_get_string(INTERP, key);
         DYNSELF.set_number_keyed_str(s, value);
     }

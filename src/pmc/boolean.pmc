@@ -89,7 +89,7 @@ Sets the value to C<value> evaluated in a boolean context.
 
 */
 
-    void set_number_native(FLOATVAL value) {
+    VTABLE void set_number_native(FLOATVAL value) {
         PMC_int_val(SELF) = !FLOAT_IS_ZERO(value);
     }
 

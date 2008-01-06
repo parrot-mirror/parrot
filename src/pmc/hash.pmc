@@ -689,7 +689,7 @@ Returns whether the hash is the same as C<*other>.
 
 */
 
-    void set_number_keyed(PMC *key, FLOATVAL value) {
+    VTABLE void set_number_keyed(PMC *key, FLOATVAL value) {
         STRING *keystr;
         PMC    *nextkey;
         PMC    *box;

@@ -304,7 +304,7 @@ Sets the birthtime of the task.
 
 */
 
-    void set_number_native(FLOATVAL value) {
+    VTABLE void set_number_native(FLOATVAL value) {
         Parrot_Task * const core_struct = PARROT_TASK(SELF);
         core_struct->birthtime = value;
     }

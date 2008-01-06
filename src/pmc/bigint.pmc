@@ -566,7 +566,7 @@ Sets the value of the bigint to C<value>.
 
 */
 
-    void set_number_native(FLOATVAL value) {
+    VTABLE void set_number_native(FLOATVAL value) {
         bigint_set_double(INTERP, SELF, (double)value);
     }
 
