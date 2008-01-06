@@ -298,7 +298,7 @@ Queries this object's class to find the method with the given name.
 =cut
 
 */
-    PMC *find_method(STRING *name) {
+    VTABLE PMC *find_method(STRING *name) {
         Parrot_Object * const obj    = PARROT_OBJECT(SELF);
         Parrot_Class  * const _class = PARROT_CLASS(obj->_class);
         PMC           *method        = PMCNULL;

@@ -109,7 +109,7 @@ Find the method for C<*name> in the parent class of the bound object.
             pobject_lives(INTERP, (PObj *)PMC_struct_val(SELF));
     }
 
-    PMC *find_method(STRING *name) {
+    VTABLE PMC *find_method(STRING *name) {
         PMC *mro, *classobj, *parent_class, *parent_methods;
         PMC *method = PMCNULL;
 
