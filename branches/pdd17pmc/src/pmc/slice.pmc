@@ -279,7 +279,7 @@ Get the next string key from the current slice range.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         const parrot_range_t * const r = (parrot_range_t *)PMC_struct_val(SELF);
 
         if (!VALID_RANGE(r))
@@ -333,7 +333,7 @@ This is used for implementing Pythons xrange()
         return RVal_int(r->start) - RVal_int(r->end);
     }
 
-    INTVAL get_integer_keyed(PMC *key) {
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
         parrot_range_t * const r = (parrot_range_t *)PMC_struct_val(key);
         return RVal_int(r->cur);
     }

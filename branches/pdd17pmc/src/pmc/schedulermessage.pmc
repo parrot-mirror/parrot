@@ -106,7 +106,7 @@ Retrieve the message ID.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         Parrot_SchedulerMessage * core_struct = PARROT_SCHEDULERMESSAGE(SELF);
         return core_struct->id;
     }

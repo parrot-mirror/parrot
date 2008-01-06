@@ -213,7 +213,7 @@ Returns the size of the hash.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return parrot_hash_size(INTERP, (Hash *)PMC_struct_val(SELF));
     }
 
@@ -227,7 +227,7 @@ Returns the size of the hash.
 
 */
 
-    INTVAL get_integer_keyed_str(STRING *key) {
+    VTABLE INTVAL get_integer_keyed_str(STRING *key) {
         HashBucket * const b =
             parrot_hash_get_bucket(INTERP, (Hash *)PMC_struct_val(SELF), key);
 
@@ -237,7 +237,7 @@ Returns the size of the hash.
         return VTABLE_get_integer(INTERP, (PMC*) b->value);
     }
 
-    INTVAL get_integer_keyed_int(INTVAL key) {
+    VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
         const Hash * const hash = (Hash *)PMC_struct_val(SELF);
         HashBucket *b;
 
@@ -261,7 +261,7 @@ Returns the integer value for the element at C<*key>.
 
 */
 
-    INTVAL get_integer_keyed(PMC *key) {
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
         PMC        *valpmc;
         STRING     *keystr;
         HashBucket *b;
@@ -308,7 +308,7 @@ Returns the integer value for the element at C<*key>.
 
 */
 
-    FLOATVAL get_number_keyed_str(STRING *key) {
+    VTABLE FLOATVAL get_number_keyed_str(STRING *key) {
         HashBucket * const b =
             parrot_hash_get_bucket(INTERP, (Hash*) PMC_struct_val(SELF), key);
 
@@ -318,7 +318,7 @@ Returns the integer value for the element at C<*key>.
         return VTABLE_get_number(INTERP, (PMC *)b->value);
     }
 
-    FLOATVAL get_number_keyed_int(INTVAL key) {
+    VTABLE FLOATVAL get_number_keyed_int(INTVAL key) {
         STRING * const s = string_from_int(INTERP, key);
         return SELF.get_number_keyed_str(s);
     }
@@ -332,7 +332,7 @@ Returns the floating-point value for the element at C<*key>.
 
 */
 
-    FLOATVAL get_number_keyed(PMC *key) {
+    VTABLE FLOATVAL get_number_keyed(PMC *key) {
         PMC               *nextkey;
         PMC               *valpmc;
         STRING     * const keystr = make_hash_key(INTERP, key);

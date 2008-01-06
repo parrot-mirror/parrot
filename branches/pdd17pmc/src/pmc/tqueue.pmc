@@ -146,7 +146,7 @@ Returns whether there are any threads in the queue.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return PMC_int_val(SELF);
     }
 

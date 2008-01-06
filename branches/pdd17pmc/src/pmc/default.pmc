@@ -511,7 +511,7 @@ C<get_integer_keyed()> with it.
 
 */
 
-    INTVAL get_integer_keyed_int(INTVAL key) {
+    VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
         PMC *const r_key = INT2KEY(INTERP, key);
         return DYNSELF.get_integer_keyed(r_key);
     }
@@ -527,7 +527,7 @@ C<get_number_keyed()> with it.
 
 */
 
-    FLOATVAL get_number_keyed_int(INTVAL key) {
+    VTABLE FLOATVAL get_number_keyed_int(INTVAL key) {
         PMC *const r_key = INT2KEY(INTERP, key);
         return DYNSELF.get_number_keyed(r_key);
     }

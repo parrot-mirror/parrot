@@ -88,7 +88,7 @@ Returns 0.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return 0;
     }
 
@@ -131,7 +131,7 @@ Returns 0.0.
 
 */
 
-    FLOATVAL get_number() {
+    VTABLE FLOATVAL get_number() {
         return 0.0;
     }
 

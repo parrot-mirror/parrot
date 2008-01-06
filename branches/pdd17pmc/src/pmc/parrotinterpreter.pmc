@@ -288,7 +288,7 @@ Returns the thread id of the interpreter.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         const Parrot_Interp i = PMC_data_typed(SELF, Parrot_Interp);
         return (INTVAL)i->thread_data->tid;
     }
@@ -460,7 +460,7 @@ Returns the interpreter info for C<key>.
 
 */
 
-    INTVAL get_integer_keyed_int(INTVAL key) {
+    VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
         Interp * const new_interp = PMC_data_typed(SELF, Interp *);
 
         if (key == -1)

@@ -245,7 +245,7 @@ Returns the number of elements in the array.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return DYNSELF.elements();
     }
 
@@ -288,7 +288,7 @@ Returns the number of elements in the array.
 
 */
 
-    FLOATVAL get_number() {
+    VTABLE FLOATVAL get_number() {
         INTVAL e = DYNSELF.elements();
         return (FLOATVAL)e;
     }
@@ -317,7 +317,7 @@ Returns the integer value of the element at index C<key>.
 
 */
 
-    INTVAL get_integer_keyed_int(INTVAL key) {
+    VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
         PMC * const value = DYNSELF.get_pmc_keyed_int(key);
 
         return VTABLE_get_integer(INTERP, value);
@@ -347,7 +347,7 @@ Returns the integer value of the element at index C<key>.
 
 */
 
-    INTVAL get_integer_keyed(PMC *key) {
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
         INTVAL ix;
         PMC   *nextkey, *box;
 
@@ -378,7 +378,7 @@ Returns the float value of the element at index C<key>.
 
 */
 
-    FLOATVAL get_number_keyed_int(INTVAL key) {
+    VTABLE FLOATVAL get_number_keyed_int(INTVAL key) {
         PMC * const value = DYNSELF.get_pmc_keyed_int(key);
 
         return VTABLE_get_number(INTERP, value);
@@ -395,7 +395,7 @@ Returns the float value of the element at index C<key>.
 
 */
 
-    FLOATVAL get_number_keyed(PMC *key) {
+    VTABLE FLOATVAL get_number_keyed(PMC *key) {
         INTVAL ix;
         PMC *nextkey, *box;
 

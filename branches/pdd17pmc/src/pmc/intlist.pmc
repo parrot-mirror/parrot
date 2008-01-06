@@ -116,7 +116,7 @@ Returns the number of elements in the list.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return intlist_length(INTERP, (IntList *)PMC_struct_val(SELF));
     }
 
@@ -134,7 +134,7 @@ Returns the value of the element at index C<key>.
 
 */
 
-    INTVAL get_integer_keyed_int(INTVAL key) {
+    VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
         return intlist_get(INTERP, (IntList *)PMC_struct_val(SELF), key);
     }
 
@@ -148,7 +148,7 @@ Returns the value of the element at index C<*key>.
 
 */
 
-    INTVAL get_integer_keyed(PMC *key) {
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
         INTVAL ix;
         if (!key) return 0;
         ix = key_integer(INTERP, key);

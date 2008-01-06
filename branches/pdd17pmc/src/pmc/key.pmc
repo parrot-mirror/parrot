@@ -114,7 +114,7 @@ Returns the integer value of the key.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return key_integer(INTERP, SELF);
     }
 
@@ -128,7 +128,7 @@ Returns the floating-point number value of the key.
 
 */
 
-    FLOATVAL get_number() {
+    VTABLE FLOATVAL get_number() {
         return key_number(INTERP, SELF);
     }
 

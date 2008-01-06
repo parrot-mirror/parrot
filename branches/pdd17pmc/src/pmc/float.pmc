@@ -68,7 +68,7 @@ Returns the value of the number.
 
 */
 
-    FLOATVAL get_number() {
+    VTABLE FLOATVAL get_number() {
         return PMC_num_val(SELF);
     }
 
@@ -82,7 +82,7 @@ Returns an integer representation of the number (by casting).
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return (INTVAL) PMC_num_val(SELF);
     }
 

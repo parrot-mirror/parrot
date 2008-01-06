@@ -160,7 +160,7 @@ Retrieve the number of pending tasks in the scheduler's task list.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         Parrot_Scheduler * core_struct = PARROT_SCHEDULER(SELF);
         return VTABLE_elements(INTERP, core_struct->task_index);
     }

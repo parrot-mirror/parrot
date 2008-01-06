@@ -620,7 +620,7 @@ Returns the value of the integer as a floating point number.
 
 */
 
-    FLOATVAL get_number() {
+    VTABLE FLOATVAL get_number() {
         return bigint_get_double(INTERP, SELF);
     }
 
@@ -634,7 +634,7 @@ Returns the value of the integer.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return bigint_get_long(INTERP, SELF);
     }
 

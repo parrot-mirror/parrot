@@ -162,7 +162,7 @@ now.> -DRS
 
 */
 
-    INTVAL get_integer_keyed(PMC *key) {
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
         return (INTVAL) ((PMC_sub(SELF))->seg->base.data);
     }
 

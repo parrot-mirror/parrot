@@ -72,7 +72,7 @@ Return the thread ID of this thread.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return PMC_int_val(SELF);
     }
 

@@ -90,7 +90,7 @@ Returns true if the hash size is not zero.
 
 */
 
-    INTVAL get_integer_keyed(PMC *key) {
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
         Hash       *hash = (Hash *)PMC_struct_val(SELF);
         HashBucket *b    = parrot_hash_get_bucket(INTERP, hash, key);
 
