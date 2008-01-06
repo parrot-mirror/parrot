@@ -85,7 +85,7 @@ Return the LexInfo PMC, if any or a Null PMC.
         PMC_struct_val(SELF) = ctx;
     }
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         PMC *info = PMC_pmc_val(SELF);
         return parrot_hash_size(INTERP, (Hash *)PMC_struct_val(info));
     }

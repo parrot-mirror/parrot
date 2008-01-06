@@ -325,7 +325,7 @@ This is used for implementing Pythons xrange()
         return iter;
     }
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         parrot_range_t * const r = (parrot_range_t *)PMC_struct_val(SELF);
         /* only start .. end supported so:
          * TODO check flags somewhere

@@ -288,7 +288,7 @@ Returns the number of remaining elements in the aggregate. TODO.
 
 */
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         return VTABLE_elements(INTERP, (PMC *)PMC_pmc_val(SELF));
     }
 
@@ -369,7 +369,7 @@ Reset the Iterator. C<value> must be one of
 
 */
 
-    INTVAL pop_integer() {
+    VTABLE INTVAL pop_integer() {
         PMC * const key      = (PMC *)PMC_struct_val(SELF);
         PMC * const agg      = (PMC *)PMC_pmc_val(SELF);
         const INTVAL ret     = VTABLE_get_integer_keyed(INTERP, agg, key);
@@ -387,7 +387,7 @@ Reset the Iterator. C<value> must be one of
 
 */
 
-    FLOATVAL pop_float() {
+    VTABLE FLOATVAL pop_float() {
         PMC * const key      = (PMC *)PMC_struct_val(SELF);
         PMC * const agg      = (PMC *)PMC_pmc_val(SELF);
         const FLOATVAL ret   = VTABLE_get_number_keyed(INTERP, agg, key);
@@ -405,7 +405,7 @@ Reset the Iterator. C<value> must be one of
 
 */
 
-    STRING *pop_string() {
+    VTABLE STRING *pop_string() {
         PMC * const key      = (PMC *)PMC_struct_val(SELF);
         PMC * const agg      = (PMC *)PMC_pmc_val(SELF);
         STRING * const ret   = VTABLE_get_string_keyed(INTERP, agg, key);
@@ -425,7 +425,7 @@ the previous one.
 
 */
 
-    PMC *pop_pmc() {
+    VTABLE PMC *pop_pmc() {
         PMC * const key      = (PMC *)PMC_struct_val(SELF);
         PMC * const agg      = (PMC *)PMC_pmc_val(SELF);
         PMC * const ret      = VTABLE_get_pmc_keyed(INTERP, agg, key);
@@ -446,7 +446,7 @@ the next one.
 
 */
 
-    INTVAL shift_integer() {
+    VTABLE INTVAL shift_integer() {
         PMC * const key      = (PMC *)PMC_struct_val(SELF);
         PMC * const agg      = (PMC *)PMC_pmc_val(SELF);
         const INTVAL ret     = VTABLE_get_integer_keyed(INTERP, agg, key);
@@ -520,7 +520,7 @@ See F<docs/pdds/pdd03_calling_conventions.pod>.
 
 */
 
-    FLOATVAL shift_float() {
+    VTABLE FLOATVAL shift_float() {
         PMC * const key      = (PMC *)PMC_struct_val(SELF);
         PMC * const agg      = (PMC *)PMC_pmc_val(SELF);
         const FLOATVAL ret   = VTABLE_get_number_keyed(INTERP, agg, key);
@@ -538,7 +538,7 @@ See F<docs/pdds/pdd03_calling_conventions.pod>.
 
 */
 
-    STRING *shift_string() {
+    VTABLE STRING *shift_string() {
         PMC * const key      = (PMC *)PMC_struct_val(SELF);
         PMC * const agg      = (PMC *)PMC_pmc_val(SELF);
         STRING * const ret   = VTABLE_get_string_keyed(INTERP, agg, key);
@@ -558,7 +558,7 @@ the next one.
 
 */
 
-    PMC *shift_pmc() {
+    VTABLE PMC *shift_pmc() {
         PMC * const key = (PMC *)PMC_struct_val(SELF);
         PMC * const agg = (PMC *)PMC_pmc_val(SELF);
         PMC        *ret;

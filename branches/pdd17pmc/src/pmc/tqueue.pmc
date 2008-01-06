@@ -160,7 +160,7 @@ Returns the number of threads in the queue.
 
 */
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         return SELF.get_integer();
     }
 
@@ -220,7 +220,7 @@ Removes the first thread from the start of the queue.
 
 */
 
-    PMC *shift_pmc() {
+    VTABLE PMC *shift_pmc() {
         QUEUE       *queue = PMC_data_typed(SELF, QUEUE *);
         QUEUE_ENTRY *entry;
         PMC         *ret;

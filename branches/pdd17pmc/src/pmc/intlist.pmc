@@ -120,7 +120,7 @@ Returns the number of elements in the list.
         return intlist_length(INTERP, (IntList *)PMC_struct_val(SELF));
     }
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         return intlist_length(INTERP, (IntList *)PMC_struct_val(SELF));
     }
 
@@ -165,7 +165,7 @@ Adds C<value> to the end of the list.
 
 */
 
-    void push_integer(INTVAL value) {
+    VTABLE void push_integer(INTVAL value) {
         intlist_push(INTERP, (IntList *)PMC_struct_val(SELF), value);
     }
 
@@ -179,7 +179,7 @@ Removes and returns the last element in the list.
 
 */
 
-    INTVAL pop_integer() {
+    VTABLE INTVAL pop_integer() {
         return intlist_pop(INTERP, (IntList *)PMC_struct_val(SELF));
     }
 
@@ -193,7 +193,7 @@ Adds C<value> to the start of the list.
 
 */
 
-    void unshift_integer(INTVAL value) {
+    VTABLE void unshift_integer(INTVAL value) {
         IntList **list = (IntList **)PMC_struct_val(SELF);
         intlist_unshift(INTERP, list, value);
     }
@@ -208,7 +208,7 @@ Removes and returns the first element in the list.
 
 */
 
-    INTVAL shift_integer() {
+    VTABLE INTVAL shift_integer() {
         IntList **list = (IntList **)PMC_struct_val(SELF);
         return intlist_shift(INTERP, list);
     }

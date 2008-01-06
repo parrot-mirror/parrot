@@ -405,7 +405,7 @@ Returns whether the array has any elements.
 
 */
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         HashEntry *e;
 
         if (!PMC_data(SELF))
@@ -485,7 +485,7 @@ Removes the first element from the array and returns its integer value.
 
 */
 
-    INTVAL shift_integer() {
+    VTABLE INTVAL shift_integer() {
         HashEntry *ret = shift_entry(INTERP, SELF);
         return ret_int(INTERP, ret);
     }
@@ -531,7 +531,7 @@ value.
 
 */
 
-    FLOATVAL shift_float() {
+    VTABLE FLOATVAL shift_float() {
         HashEntry *ret = shift_entry(INTERP, SELF);
         return ret_num(INTERP, ret);
     }
@@ -577,7 +577,7 @@ value.
 
 */
 
-    STRING *shift_string() {
+    VTABLE STRING *shift_string() {
         HashEntry *ret = shift_entry(INTERP, SELF);
         return ret_string(INTERP, ret);
     }
@@ -622,7 +622,7 @@ Removes the first element from the array and returns its PMC value.
 
 */
 
-    PMC *shift_pmc() {
+    VTABLE PMC *shift_pmc() {
         HashEntry *ret = shift_entry(INTERP, SELF);
         return ret_pmc(INTERP, ret);
     }
@@ -689,7 +689,7 @@ Adds an element with integer value C<value> to the end of the array.
 
 */
 
-    void push_integer(INTVAL value) {
+    VTABLE void push_integer(INTVAL value) {
         HashEntry *e;
         INTVAL     nextix;
 
@@ -740,7 +740,7 @@ Adds an element with floating-point value C<value> to the end of the array.
 
 */
 
-    void push_float(FLOATVAL value) {
+    VTABLE void push_float(FLOATVAL value) {
         HashEntry *e;
         INTVAL     nextix;
 
@@ -791,7 +791,7 @@ array.
 
 */
 
-    void push_string(STRING *value) {
+    VTABLE void push_string(STRING *value) {
         HashEntry *e;
         INTVAL     nextix;
 

@@ -158,7 +158,7 @@ Adds C<value> to the end of the array.
 
 */
 
-    void push_float(FLOATVAL value) {
+    VTABLE void push_float(FLOATVAL value) {
         INTVAL nextix = DYNSELF.elements();
         DYNSELF.set_number_keyed_int(nextix, value);
     }
@@ -173,7 +173,7 @@ Removes and returns the last element in the array.
 
 */
 
-    FLOATVAL pop_float() {
+    VTABLE FLOATVAL pop_float() {
         FLOATVAL value;
         INTVAL size = PMC_int_val(SELF);
 
@@ -195,7 +195,7 @@ Removes and returns an item from the start of the array.
 
 */
 
-    FLOATVAL shift_float() {
+    VTABLE FLOATVAL shift_float() {
         FLOATVAL value, *data;
         INTVAL size = PMC_int_val(SELF);
 
@@ -221,7 +221,7 @@ Add and integer to the start of the array.
 
 */
 
-    void unshift_float(FLOATVAL value) {
+    VTABLE void unshift_float(FLOATVAL value) {
         INTVAL    size = PMC_int_val(SELF);
         FLOATVAL *data;
 

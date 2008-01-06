@@ -329,22 +329,22 @@ These methods are silently ignored.
 =cut
 
 */
-    PMC *shift_pmc() {
+    VTABLE PMC *shift_pmc() {
         /* fprintf(stderr, "don't do that then\n"); RT#46691 */
         return PMCNULL;
     }
 
-    FLOATVAL shift_float() {
+    VTABLE FLOATVAL shift_float() {
         (void) SELF.shift_pmc();
         return 0.0;
     }
 
-    INTVAL shift_integer() {
+    VTABLE INTVAL shift_integer() {
         (void) SELF.shift_pmc();
         return 0;
     }
 
-    STRING *shift_string() {
+    VTABLE STRING *shift_string() {
         (void) SELF.shift_pmc();
         return NULL;
     }
@@ -353,15 +353,15 @@ These methods are silently ignored.
         /* fprintf(stderr, "don't do that then\n"); RT#46691 */
     }
 
-    void unshift_float(FLOATVAL value) {
+    VTABLE void unshift_float(FLOATVAL value) {
         SELF.unshift_pmc(NULL);
     }
 
-    void unshift_integer(INTVAL value) {
+    VTABLE void unshift_integer(INTVAL value) {
         SELF.unshift_pmc(NULL);
     }
 
-    void unshift_string(STRING *value) {
+    VTABLE void unshift_string(STRING *value) {
         SELF.unshift_pmc(NULL);
     }
 
@@ -369,34 +369,34 @@ These methods are silently ignored.
         /* fprintf(stderr, "don't do that then\n"); RT#46691 */
     }
 
-    void push_float(FLOATVAL value) {
+    VTABLE void push_float(FLOATVAL value) {
         SELF.push_pmc(PMCNULL);
     }
 
-    void push_integer(INTVAL value) {
+    VTABLE void push_integer(INTVAL value) {
         SELF.push_pmc(PMCNULL);
     }
 
-    void push_string(STRING *value) {
+    VTABLE void push_string(STRING *value) {
         SELF.push_pmc(PMCNULL);
     }
 
-    PMC *pop_pmc() {
+    VTABLE PMC *pop_pmc() {
         /* fprintf(stderr, "don't do that then\n"); RT#46691 */
         return PMCNULL;
     }
 
-    FLOATVAL pop_float() {
+    VTABLE FLOATVAL pop_float() {
         (void) SELF.pop_pmc();
         return 0.0;
     }
 
-    INTVAL pop_integer() {
+    VTABLE INTVAL pop_integer() {
         (void) SELF.pop_pmc();
         return 0;
     }
 
-    STRING *pop_string() {
+    VTABLE STRING *pop_string() {
         (void) SELF.pop_pmc();
         return NULL;
     }

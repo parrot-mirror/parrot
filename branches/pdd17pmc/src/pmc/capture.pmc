@@ -166,12 +166,12 @@ Unshift a value onto the array component of the Capture.
 
 */
 
-    void push_float(FLOATVAL value) {
+    VTABLE void push_float(FLOATVAL value) {
         CAPTURE_array_CREATE(INTERP, SELF);
         VTABLE_push_float(INTERP, CAPTURE_array(SELF), value);
     }
 
-    void push_integer(INTVAL value) {
+    VTABLE void push_integer(INTVAL value) {
         CAPTURE_array_CREATE(INTERP, SELF);
         VTABLE_push_integer(INTERP, CAPTURE_array(SELF), value);
     }
@@ -181,17 +181,17 @@ Unshift a value onto the array component of the Capture.
         VTABLE_push_pmc(INTERP, CAPTURE_array(SELF), value);
     }
 
-    void push_string(STRING *value) {
+    VTABLE void push_string(STRING *value) {
         CAPTURE_array_CREATE(INTERP, SELF);
         VTABLE_push_string(INTERP, CAPTURE_array(SELF), value);
     }
 
-    void unshift_float(FLOATVAL value) {
+    VTABLE void unshift_float(FLOATVAL value) {
         CAPTURE_array_CREATE(INTERP, SELF);
         VTABLE_unshift_float(INTERP, CAPTURE_array(SELF), value);
     }
 
-    void unshift_integer(INTVAL value) {
+    VTABLE void unshift_integer(INTVAL value) {
         CAPTURE_array_CREATE(INTERP, SELF);
         VTABLE_unshift_integer(INTERP, CAPTURE_array(SELF), value);
     }
@@ -201,7 +201,7 @@ Unshift a value onto the array component of the Capture.
         VTABLE_unshift_pmc(INTERP, CAPTURE_array(SELF), value);
     }
 
-    void unshift_string(STRING *value) {
+    VTABLE void unshift_string(STRING *value) {
         CAPTURE_array_CREATE(INTERP, SELF);
         VTABLE_unshift_string(INTERP, CAPTURE_array(SELF), value);
     }
@@ -232,42 +232,42 @@ Shift a value from the array component of the Capture.
 
 */
 
-    FLOATVAL pop_float() {
+    VTABLE FLOATVAL pop_float() {
         CAPTURE_array_CREATE(INTERP, SELF);
         return VTABLE_pop_float(INTERP, CAPTURE_array(SELF));
     }
 
-    INTVAL pop_integer() {
+    VTABLE INTVAL pop_integer() {
         CAPTURE_array_CREATE(INTERP, SELF);
         return VTABLE_pop_integer(INTERP, CAPTURE_array(SELF));
     }
 
-    PMC *pop_pmc() {
+    VTABLE PMC *pop_pmc() {
         CAPTURE_array_CREATE(INTERP, SELF);
         return VTABLE_pop_pmc(INTERP, CAPTURE_array(SELF));
     }
 
-    STRING *pop_string() {
+    VTABLE STRING *pop_string() {
         CAPTURE_array_CREATE(INTERP, SELF);
         return VTABLE_pop_string(INTERP, CAPTURE_array(SELF));
     }
 
-    FLOATVAL shift_float() {
+    VTABLE FLOATVAL shift_float() {
         CAPTURE_array_CREATE(INTERP, SELF);
         return VTABLE_shift_float(INTERP, CAPTURE_array(SELF));
     }
 
-    INTVAL shift_integer() {
+    VTABLE INTVAL shift_integer() {
         CAPTURE_array_CREATE(INTERP, SELF);
         return VTABLE_shift_integer(INTERP, CAPTURE_array(SELF));
     }
 
-    PMC *shift_pmc() {
+    VTABLE PMC *shift_pmc() {
         CAPTURE_array_CREATE(INTERP, SELF);
         return VTABLE_shift_pmc(INTERP, CAPTURE_array(SELF));
     }
 
-    STRING *shift_string() {
+    VTABLE STRING *shift_string() {
         CAPTURE_array_CREATE(INTERP, SELF);
         return VTABLE_shift_string(INTERP, CAPTURE_array(SELF));
     }
@@ -294,7 +294,7 @@ Delete the element corresponding to C<key> in the array component.
 
 */
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         if (!CAPTURE_array(SELF)) return 0;
         return VTABLE_elements(INTERP, CAPTURE_array(SELF));
     }

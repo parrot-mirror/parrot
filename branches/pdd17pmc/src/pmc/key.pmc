@@ -248,7 +248,7 @@ chain.
 
 */
 
-    PMC *shift_pmc() {
+    VTABLE PMC *shift_pmc() {
         return key_next(INTERP, SELF);
     }
 

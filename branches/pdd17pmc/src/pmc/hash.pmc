@@ -514,7 +514,7 @@ Returns the number of elements in the hash.
 
 */
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         return parrot_hash_size(INTERP, (Hash *)PMC_struct_val(SELF));
     }
 

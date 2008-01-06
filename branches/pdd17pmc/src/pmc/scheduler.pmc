@@ -135,7 +135,7 @@ recalculate it before retrieving the next task.
 
 */
 
-    PMC *pop_pmc() {
+    VTABLE PMC *pop_pmc() {
         Parrot_Scheduler * core_struct = PARROT_SCHEDULER(SELF);
         PMC *task = PMCNULL;
 

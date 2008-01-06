@@ -167,7 +167,7 @@ Extends the array by adding an element of value C<value> to the end.
 
 */
 
-    void push_integer(INTVAL value) {
+    VTABLE void push_integer(INTVAL value) {
         const INTVAL size = PMC_int_val(SELF) - PMC_int_val2(SELF);
         DYNSELF.set_integer_native(size + 1);
         DYNSELF.set_integer_keyed_int(size, value);
@@ -183,7 +183,7 @@ Removes and returns the last element.
 
 */
 
-    INTVAL pop_integer() {
+    VTABLE INTVAL pop_integer() {
         INTVAL size, value;
 
         if (DYNSELF.elements() < 1)
@@ -208,7 +208,7 @@ beginning.
 
 */
 
-    void unshift_integer(INTVAL value) {
+    VTABLE void unshift_integer(INTVAL value) {
         /* If the current head position offset is 0, size this thing up by one
          * allocation unit */
         if (PMC_int_val2(SELF) <= 0) {
@@ -253,7 +253,7 @@ Removes and returns the first element.
 
 */
 
-    INTVAL shift_integer() {
+    VTABLE INTVAL shift_integer() {
         INTVAL value;
 
         if (DYNSELF.elements() < 1)
@@ -303,7 +303,7 @@ Removes and returns the first element.
 
 */
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         return PMC_int_val(SELF) - PMC_int_val2(SELF);
     }
 

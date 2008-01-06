@@ -274,7 +274,7 @@ Returns the number of elements in the array.
 
 */
 
-    INTVAL elements() {
+    VTABLE INTVAL elements() {
         return ((List *) PMC_data(SELF))->length;
     }
 
@@ -753,7 +753,7 @@ the array.
 
 */
 
-    void push_integer(INTVAL value) {
+    VTABLE void push_integer(INTVAL value) {
         const INTVAL nextix = DYNSELF.elements();
         DYNSELF.set_integer_keyed_int(nextix, value);
     }
@@ -769,7 +769,7 @@ the array.
 
 */
 
-    void push_float(FLOATVAL value) {
+    VTABLE void push_float(FLOATVAL value) {
         const INTVAL nextix = DYNSELF.elements();
         DYNSELF.set_number_keyed_int(nextix, value);
     }
@@ -785,7 +785,7 @@ the array.
 
 */
 
-    void push_string(STRING *value) {
+    VTABLE void push_string(STRING *value) {
         const INTVAL nextix = DYNSELF.elements();
         DYNSELF.set_string_keyed_int(nextix, value);
     }
@@ -817,7 +817,7 @@ of the array.
 
 */
 
-    void unshift_integer(INTVAL value) {
+    VTABLE void unshift_integer(INTVAL value) {
         PMC * const val = undef(INTERP);
 
         list_unshift(INTERP, (List *)PMC_data(SELF), val, enum_type_PMC);
@@ -835,7 +835,7 @@ of the array.
 
 */
 
-    void unshift_float(FLOATVAL value) {
+    VTABLE void unshift_float(FLOATVAL value) {
         PMC * const val = undef(INTERP);
 
         list_unshift(INTERP, (List *)PMC_data(SELF), val, enum_type_PMC);
@@ -853,7 +853,7 @@ of the array.
 
 */
 
-    void unshift_string(STRING *value) {
+    VTABLE void unshift_string(STRING *value) {
         PMC * const val = undef(INTERP);
         list_unshift(INTERP, (List *)PMC_data(SELF), val, enum_type_PMC);
         VTABLE_set_string_native(INTERP, val, value);
@@ -884,7 +884,7 @@ Removes and returns an integer from the end of the array.
 
 */
 
-    INTVAL pop_integer() {
+    VTABLE INTVAL pop_integer() {
         PMC * const ptr = DYNSELF.pop_pmc();
         return VTABLE_get_integer(INTERP, ptr);
     }
@@ -899,7 +899,7 @@ Removes and returns a float value from the end of the array.
 
 */
 
-    FLOATVAL pop_float() {
+    VTABLE FLOATVAL pop_float() {
         PMC * const ptr = DYNSELF.pop_pmc();
         return VTABLE_get_number(INTERP, ptr);
     }
@@ -914,7 +914,7 @@ Removes and returns a string from the end of the array.
 
 */
 
-    STRING *pop_string() {
+    VTABLE STRING *pop_string() {
         PMC * const ptr = DYNSELF.pop_pmc();
         return VTABLE_get_string(INTERP, ptr);
     }
@@ -929,7 +929,7 @@ Removes and returns a PMC from the end of the array.
 
 */
 
-    PMC *pop_pmc() {
+    VTABLE PMC *pop_pmc() {
         return retval(INTERP,
             list_pop(INTERP, (List *)PMC_data(SELF), enum_type_PMC));
     }
@@ -944,7 +944,7 @@ Removes and returns an integer from the start of the array.
 
 */
 
-    INTVAL shift_integer() {
+    VTABLE INTVAL shift_integer() {
         PMC * const ptr = DYNSELF.shift_pmc();
         return VTABLE_get_integer(INTERP, ptr);
     }
@@ -959,7 +959,7 @@ Removes and returns a float from the start of the array.
 
 */
 
-    FLOATVAL shift_float() {
+    VTABLE FLOATVAL shift_float() {
         PMC * const ptr = DYNSELF.shift_pmc();
         return VTABLE_get_number(INTERP, ptr);
     }
@@ -974,7 +974,7 @@ Removes and returns a string from the start of the array.
 
 */
 
-    STRING *shift_string() {
+    VTABLE STRING *shift_string() {
         PMC * const ptr = DYNSELF.shift_pmc();
         return VTABLE_get_string(INTERP, ptr);
     }
@@ -989,7 +989,7 @@ Removes and returns a PMC from the start of the array.
 
 */
 
-    PMC *shift_pmc() {
+    VTABLE PMC *shift_pmc() {
         return retval(INTERP,
             list_shift(INTERP, (List *)PMC_data(SELF), enum_type_PMC));
     }
