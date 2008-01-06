@@ -64,7 +64,7 @@ pmclass deleg_pmc no_ro {
         return res;
     }
 
-    STRING *name() {
+    VTABLE STRING *name() {
         return SELF->vtable->whoami;
     }
 

@@ -145,7 +145,7 @@ Returns the fully qualified name of the object's class.
 
 */
 
-    STRING *name() {
+    VTABLE STRING *name() {
         PMC    * const _class     = VTABLE_get_class(interp, SELF);
         STRING * const class_name = VTABLE_get_string(interp, _class);
 

@@ -463,7 +463,7 @@ Returns the name of the PMC.
 
 */
 
-    STRING *name() {
+    VTABLE STRING *name() {
         return SELF->vtable->whoami;
     }
 
