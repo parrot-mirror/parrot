@@ -538,7 +538,7 @@ the clone via integers has different indices, if items were deleted.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC  * const dest   = pmc_new(INTERP, SELF->vtable->base_type);
         Hash * const hash   = (Hash *)PMC_struct_val(SELF);
         Hash * const h_dest = (Hash *)PMC_struct_val(dest);

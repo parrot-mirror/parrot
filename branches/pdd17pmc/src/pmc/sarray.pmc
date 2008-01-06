@@ -331,7 +331,7 @@ Creates and returns a copy of the array.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         HashEntry *e, *d;
         int i, start, end;
         INTVAL size;

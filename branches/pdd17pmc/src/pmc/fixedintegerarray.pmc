@@ -173,7 +173,7 @@ Creates and returns a copy of the array.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         INTVAL size;
         PMC   *dest;
         /* a quick hack to create a clone in the constant PMC arena

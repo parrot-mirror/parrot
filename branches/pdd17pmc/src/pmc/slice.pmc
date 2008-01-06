@@ -261,7 +261,7 @@ pmclass Slice need_ext extends Key {
         }
     }
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         real_exception(INTERP, NULL, E_NotImplementedError, "Unimplemented");
     }
 

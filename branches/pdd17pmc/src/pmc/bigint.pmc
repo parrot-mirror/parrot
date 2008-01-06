@@ -533,7 +533,7 @@ BigInt object.
         PObj_active_destroy_SET(SELF);
     }
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC *res = pmc_new(INTERP, SELF->vtable->base_type);
         bigint_set(INTERP, res, SELF);
         return res;

@@ -79,7 +79,7 @@ Return ourself.
 =cut
 
 */
-    PMC *clone() {
+    VTABLE PMC *clone() {
         return SELF;
     }
 

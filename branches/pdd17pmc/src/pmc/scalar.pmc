@@ -163,7 +163,7 @@ Creates and returns a clone of the scalar.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC * const dest = pmc_new(INTERP, SELF->vtable->base_type);
         memcpy(&PMC_union(dest), &PMC_union(SELF), sizeof (UnionVal));
         return dest;

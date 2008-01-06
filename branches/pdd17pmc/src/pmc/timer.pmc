@@ -151,7 +151,7 @@ Create a copy of the timer, resetting status, id, and birthtime.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC *copy = SUPER();
         Parrot_Timer *new_struct        = PARROT_TIMER(copy);
         Parrot_Timer * const old_struct = PARROT_TIMER(SELF);

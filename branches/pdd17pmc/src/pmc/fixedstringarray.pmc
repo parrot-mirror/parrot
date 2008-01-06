@@ -87,7 +87,7 @@ Creates and returns a copy of the array.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC * const dest     = pmc_new(INTERP, SELF->vtable->base_type);
         INTVAL      mem_size, size;
 

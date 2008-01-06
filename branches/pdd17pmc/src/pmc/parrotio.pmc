@@ -405,7 +405,7 @@ IO layers, we might copy C<data> and C<struct_val>.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC *dest            = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_data(dest)       = PMC_data(SELF);
         PMC_struct_val(dest) = PMC_struct_val(SELF);

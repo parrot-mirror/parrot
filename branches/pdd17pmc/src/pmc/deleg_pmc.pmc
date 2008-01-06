@@ -53,7 +53,7 @@ pmclass deleg_pmc no_ro {
         /* don't pass that on */
     }
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC      *res          = pmc_new(INTERP, SELF->vtable->base_type);
         SLOTTYPE *attrib_array = PMC_data_typed(res, SLOTTYPE *);
         INTVAL    i;

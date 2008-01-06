@@ -69,7 +69,7 @@ the GC gets at them.
 =cut
 
 */
-    PMC *clone() {
+    VTABLE PMC *clone() {
         invalidate_retc_context(INTERP, SELF);
         return SUPER();
     }

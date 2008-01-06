@@ -193,7 +193,7 @@ Creates and returns a clone of the hash.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC * const dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         parrot_hash_clone(INTERP, (Hash *)PMC_struct_val(SELF),

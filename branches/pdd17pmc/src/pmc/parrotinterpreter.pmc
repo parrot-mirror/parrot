@@ -504,7 +504,7 @@ XXX this should of course call C<Parrot_clone()> and use freeze/thaw.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC * const dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         clone_interpreter((Parrot_Interp)PMC_data(dest),
