@@ -107,7 +107,7 @@ Free hash structure.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PMC_struct_val(SELF) = NULL;
         PObj_custom_mark_destroy_SETALL(SELF);
         parrot_new_pmc_hash(INTERP, SELF);

@@ -33,7 +33,7 @@ Initialize a concurrency scheduler message object.
 
 */
 
-    void init() {
+    VTABLE void init() {
         Parrot_SchedulerMessage * const core_struct
             = mem_allocate_zeroed_typed(Parrot_SchedulerMessage);
 

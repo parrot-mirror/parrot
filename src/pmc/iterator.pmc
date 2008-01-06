@@ -84,7 +84,7 @@ Raises an exception. Use C<init_pmc()>.
 
 */
 
-    void init() {
+    VTABLE void init() {
         real_exception(INTERP, NULL, E_Exception,
                 "Iterator init without aggregate");
     }

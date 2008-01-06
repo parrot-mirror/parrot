@@ -33,7 +33,7 @@ Initializes the closure.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PMC_struct_val(SELF) = new_closure(INTERP);
         PMC_pmc_val(SELF)    = PMCNULL;
         PObj_custom_mark_destroy_SETALL(SELF);

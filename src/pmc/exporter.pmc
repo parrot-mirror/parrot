@@ -114,7 +114,7 @@ Initializes an Exporter PMC.
 
 */
 
-    void init() {
+    VTABLE void init() {
         Parrot_Exporter *exp = NULL;
 
         /* Set up the object. */

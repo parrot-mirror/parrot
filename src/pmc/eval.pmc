@@ -119,7 +119,7 @@ mark_subs(PARROT_INTERP, PMC *self)
 
 pmclass Eval extends Sub need_ext {
 
-    void init() {
+    VTABLE void init() {
         Parrot_sub *sub_data;
         SUPER();
 

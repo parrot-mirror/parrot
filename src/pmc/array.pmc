@@ -140,7 +140,7 @@ Initializes the PMC by calling the underlying C<list_new()> function.
 
 */
 
-    void init() {
+    VTABLE void init() {
         list_pmc_new(INTERP, SELF);
         PObj_custom_mark_SET(SELF);
     }

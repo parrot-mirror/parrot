@@ -223,7 +223,7 @@ C<init_data>.
 
 */
 
-    void init() {
+    VTABLE void init() {
         Parrot_Role *role     = mem_allocate_zeroed_typed(Parrot_Role);
         PMC_data(SELF)        = role;
 

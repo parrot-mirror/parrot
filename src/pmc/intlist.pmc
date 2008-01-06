@@ -50,7 +50,7 @@ Initializes the list.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PMC_struct_val(SELF) = intlist_new(INTERP);
         PObj_custom_mark_SET(SELF);
     }

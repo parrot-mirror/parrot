@@ -34,7 +34,7 @@ Initializes the pointer.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PObj_custom_mark_SET(SELF);
     }
 

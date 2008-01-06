@@ -44,7 +44,7 @@ Initializes the queue.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PMC_int_val(SELF) = 0;
         PMC_data(SELF)    = queue_init(0);
         PObj_custom_mark_destroy_SETALL(SELF);

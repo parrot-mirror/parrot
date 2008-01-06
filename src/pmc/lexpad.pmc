@@ -30,7 +30,7 @@ These are the vtable functions for the lexpad PMC.
 
 pmclass LexPad does hash no_ro {
 
-    void init() {
+    VTABLE void init() {
         real_exception(INTERP, NULL, INVALID_OPERATION,
                 "Cannot create a LexPad PMC without an initializer");
     }

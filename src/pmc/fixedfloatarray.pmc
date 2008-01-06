@@ -39,7 +39,7 @@ Initializes the array.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PMC_int_val(SELF) = 0;
         PMC_data(SELF)    = NULL;
     }

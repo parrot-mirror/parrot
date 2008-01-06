@@ -76,7 +76,7 @@ Overrides the default in C<Array>. There is no initialization.
 
 */
 
-    void init() {
+    VTABLE void init() {
         /* override default in Array - no init */
     }
 

@@ -68,7 +68,7 @@ Initializes the subroutine.
      *   PMC_struct_val ... Parrot_sub structure
      *   PMC_pmc_val    ... unused / bound object in Bound_Meth PMC
      */
-    void init() {
+    VTABLE void init() {
         PMC_struct_val(SELF) = new_sub(INTERP);
         PMC_pmc_val(SELF)    = NULL;
         PObj_custom_mark_destroy_SETALL(SELF);

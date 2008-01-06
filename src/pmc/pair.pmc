@@ -42,7 +42,7 @@ Class method to construct an Integer according to passed arguments.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PMC_struct_val(SELF) = NULL;  /* key */
         PMC_pmc_val(SELF)    = NULL;  /* value */
         PObj_custom_mark_SET(SELF);

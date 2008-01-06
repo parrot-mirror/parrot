@@ -54,7 +54,7 @@ subroutine.
 
     }
 
-    void init() {
+    VTABLE void init() {
         real_exception(INTERP, NULL, INVALID_OPERATION,
                 "Cannot create a LexInfo PMC without an initializer");
     }

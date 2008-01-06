@@ -40,7 +40,7 @@ pmclass STMVar is_shared need_ext no_ro {
 =cut
 
 */
-    void init() {
+    VTABLE void init() {
         PMC_struct_val(SELF) = NULL;
         PMC_struct_val(SELF) = Parrot_STM_alloc(INTERP, PMCNULL);
         PObj_custom_mark_SET(SELF);

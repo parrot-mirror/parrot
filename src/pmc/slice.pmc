@@ -209,7 +209,7 @@ next_range:
 
 pmclass Slice need_ext extends Key {
 
-    void init() {
+    VTABLE void init() {
         PMC_struct_val(SELF) = NULL;
         PMC_pmc_val(SELF)    = NULL;
     }

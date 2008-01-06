@@ -33,7 +33,7 @@ Initialize a concurrency scheduler object.
 
 */
 
-    void init() {
+    VTABLE void init() {
         Parrot_Scheduler * const core_struct = mem_allocate_zeroed_typed(Parrot_Scheduler);
 
         /* Set flags for custom DOD mark and destroy. */

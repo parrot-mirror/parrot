@@ -37,7 +37,7 @@ we can relax that a bit.
 
 pmclass SharedRef does ref need_ext is_shared extends Ref {
 
-    void init() {
+    VTABLE void init() {
         SUPER();
     }
 

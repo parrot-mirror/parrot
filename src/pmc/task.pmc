@@ -33,7 +33,7 @@ Initialize a concurrency task object.
 
 */
 
-    void init() {
+    VTABLE void init() {
         Parrot_Task * const core_struct = mem_allocate_zeroed_typed(Parrot_Task);
 
         /* Set flags for custom DOD mark and destroy. */

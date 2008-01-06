@@ -214,7 +214,7 @@ Initializes the interpreter.
 
 */
 
-    void init() {
+    VTABLE void init() {
         /*
          * init/init_pmc may be called internally (from thread creation in
          * ParrotThread::init_pmc() or stand-alone

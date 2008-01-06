@@ -46,7 +46,7 @@ Initializes the library with a C<NULL> oplib init function.
 
 */
 
-    void init() {
+    VTABLE void init() {
         PObj_active_destroy_SET(SELF);
         PMC_struct_val(SELF) = NULL;
     }

@@ -464,7 +464,7 @@ arguments.  The class is attatched to the current HLL namespace.
 
 */
 
-    void init() {
+    VTABLE void init() {
         Parrot_Class *_class    = mem_allocate_zeroed_typed(Parrot_Class);
 
         /* Set flags for custom DOD mark and destroy. */
