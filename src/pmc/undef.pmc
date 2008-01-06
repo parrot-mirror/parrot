@@ -234,7 +234,7 @@ Clones the current Undef PMC.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         return pmc_new(INTERP, SELF->vtable->base_type);
     }
 

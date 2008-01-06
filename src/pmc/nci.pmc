@@ -139,7 +139,7 @@ Creates and returns a clone of the NCI.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         Parrot_NCI * const nci_info_self = PARROT_NCI(SELF);
         Parrot_NCI *nci_info_ret;
 

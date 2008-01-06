@@ -564,7 +564,7 @@ Creates and returns a copy of the array.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC *copy = SUPER();
 
         /* copy trimmed extra space */

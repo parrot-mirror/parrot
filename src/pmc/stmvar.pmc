@@ -67,7 +67,7 @@ Return the STMVar PMC.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         return SELF;
     }
 

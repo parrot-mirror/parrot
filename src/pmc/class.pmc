@@ -970,7 +970,7 @@ namespace). Unsets the instantiated flag, allowing modifications.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         Parrot_Class *_class = PARROT_CLASS(SELF);
 
         /* Create the new class PMC, of the same type of this one (we may
@@ -1010,7 +1010,7 @@ unset to allow further modifications.
 
 */
 
-    PMC *clone_pmc(PMC *args) {
+    VTABLE PMC *clone_pmc(PMC *args) {
         /* Do the standard clone. */
         PMC *copy = DYNSELF.clone();
 

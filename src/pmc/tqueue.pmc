@@ -60,7 +60,7 @@ Returns the queue itself. No copy is made.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         /* XXX fake a shared PMC */
         return SELF;
     }

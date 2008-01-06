@@ -93,7 +93,7 @@ Destroys the coroutine.
         SUPER();
     }
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         Parrot_coro *sub    = mem_allocate_typed(Parrot_coro);
         PMC         *ret    = pmc_new_noinit(INTERP, SELF->vtable->base_type);
 

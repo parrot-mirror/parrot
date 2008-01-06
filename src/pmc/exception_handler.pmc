@@ -78,7 +78,7 @@ Initializes the exception handler.
         }
     }
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC *result = SUPER();
         PObj_custom_mark_CLEAR(result);
         return result;

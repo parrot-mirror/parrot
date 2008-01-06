@@ -90,7 +90,7 @@ Creates and returns a clone of the library.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC *dest            = pmc_new_noinit(INTERP, SELF->vtable->base_type);
         PMC_struct_val(dest) = PMC_struct_val(SELF);
         PMC_data(dest)       = PMC_data(SELF);

@@ -139,7 +139,7 @@ Make a clone of the iterator.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC * const key     = (PMC *)PMC_struct_val(SELF);
         PMC * const res     = pmc_new_init(INTERP, SELF->vtable->base_type,
                                            PMC_pmc_val(SELF));

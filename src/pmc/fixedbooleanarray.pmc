@@ -99,7 +99,7 @@ Creates and returns a copy of the array.
 
 */
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC *dest          = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_int_val(dest)  = PMC_int_val(SELF);
         PMC_int_val2(dest) = PMC_int_val2(SELF);

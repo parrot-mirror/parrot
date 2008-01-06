@@ -390,7 +390,7 @@ Creates an identical copy of the complex number.
         SUPER(type);
     }
 
-    PMC *clone() {
+    VTABLE PMC *clone() {
         PMC           *dest  = pmc_new_noinit(INTERP, SELF->vtable->base_type);
         FLOATVAL      *data  =
             (FLOATVAL *)mem_sys_allocate(2 * sizeof (FLOATVAL));
