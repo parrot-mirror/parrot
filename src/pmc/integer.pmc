@@ -419,7 +419,7 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_add_int(INTVAL b) {
+    VTABLE void i_add_int(INTVAL b) {
         const INTVAL a = DYNSELF.get_integer();
         const INTVAL c = a + b;
 
@@ -429,7 +429,7 @@ MMD_DEFAULT: {
             overflow(INTERP, SELF, b, SELF, MMD_SUBTRACT);
     }
 
-    void i_add_float(FLOATVAL value) {
+    VTABLE void i_add_float(FLOATVAL value) {
         const INTVAL a = DYNSELF.get_integer();
         VTABLE_set_number_native(INTERP, SELF, a + value);
     }

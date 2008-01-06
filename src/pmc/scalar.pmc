@@ -207,7 +207,7 @@ Adds C<value> to C<SELF> inplace.
 
 */
 
-    PMC *add(PMC *value, PMC *dest) {
+    VTABLE PMC *add(PMC *value, PMC *dest) {
 MMD_Complex: {
             const FLOATVAL a = DYNSELF.get_number();
 
@@ -232,7 +232,7 @@ MMD_DEFAULT: {
         }
     }
 
-    PMC *add_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *add_int(INTVAL value, PMC *dest) {
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -241,7 +241,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    PMC *add_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *add_float(FLOATVAL value, PMC *dest) {
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -250,7 +250,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    void i_add(PMC *value) {
+    VTABLE void i_add(PMC *value) {
 MMD_Complex: {
             const FLOATVAL a = DYNSELF.get_number();
 
@@ -266,12 +266,12 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_add_int(INTVAL value) {
+    VTABLE void i_add_int(INTVAL value) {
         VTABLE_set_number_native(INTERP, SELF,
             DYNSELF.get_number() + (FLOATVAL)value);
     }
 
-    void i_add_float(FLOATVAL value) {
+    VTABLE void i_add_float(FLOATVAL value) {
         VTABLE_set_number_native(INTERP, SELF,
             DYNSELF.get_number() + value);
     }

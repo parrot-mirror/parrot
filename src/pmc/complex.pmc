@@ -666,7 +666,7 @@ Adds C<value> to the complex number, placing the result in C<dest>.
 
 */
 
-    PMC *add(PMC *value, PMC *dest) {
+    VTABLE PMC *add(PMC *value, PMC *dest) {
 MMD_Complex: {
             if (dest)
                 VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
@@ -691,7 +691,7 @@ MMD_DEFAULT: {
         }
     }
 
-    PMC *add_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *add_int(INTVAL value, PMC *dest) {
         if (dest)
             VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
         else
@@ -703,7 +703,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    PMC *add_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *add_float(FLOATVAL value, PMC *dest) {
         if (dest)
             VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
         else
@@ -716,7 +716,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    void i_add(PMC *value) {
+    VTABLE void i_add(PMC *value) {
 MMD_Complex: {
             RE(SELF) += RE(value);
             IM(SELF) += IM(value);
@@ -726,11 +726,11 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_add_int(INTVAL value) {
+    VTABLE void i_add_int(INTVAL value) {
         RE(SELF) += (FLOATVAL)value;
     }
 
-    void i_add_float(FLOATVAL value) {
+    VTABLE void i_add_float(FLOATVAL value) {
         RE(SELF) += value;
     }
 
