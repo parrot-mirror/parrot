@@ -139,7 +139,7 @@ Returns a Parrot string representation of the number.
         DYNSELF.set_integer_native(value);
     }
 
-    void set_bool(INTVAL value) {
+    VTABLE void set_bool(INTVAL value) {
         DYNSELF.morph(enum_class_Boolean);
         DYNSELF.set_bool(value);
     }
