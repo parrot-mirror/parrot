@@ -144,7 +144,7 @@ Returns the type of the element for C<*key>.
 
 */
 
-    INTVAL type_keyed_str(STRING *key) {
+    VTABLE INTVAL type_keyed_str(STRING *key) {
         HashBucket * const b =
             parrot_hash_get_bucket(INTERP, (Hash *)PMC_struct_val(SELF), key);
 
@@ -164,7 +164,7 @@ Returns the type of the element for C<*key>.
 
 */
 
-    INTVAL type_keyed(PMC *key) {
+    VTABLE INTVAL type_keyed(PMC *key) {
         PMC               *valpmc;
         PMC               *nextkey;
         STRING     * const keystr = make_hash_key(INTERP, key);

@@ -433,7 +433,7 @@ Returns the PMC's type.
 
 */
 
-    INTVAL type() {
+    VTABLE INTVAL type() {
         return SELF->vtable->base_type;
     }
 
@@ -448,7 +448,7 @@ C<type_keyed()> with it.
 
 */
 
-    INTVAL type_keyed_int(INTVAL key) {
+    VTABLE INTVAL type_keyed_int(INTVAL key) {
         PMC *const r_key = INT2KEY(INTERP, key);
         return DYNSELF.type_keyed(r_key);
     }

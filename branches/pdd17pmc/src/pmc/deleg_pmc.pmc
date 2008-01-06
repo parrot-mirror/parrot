@@ -68,7 +68,7 @@ pmclass deleg_pmc no_ro {
         return SELF->vtable->whoami;
     }
 
-    INTVAL type() {
+    VTABLE INTVAL type() {
         return SELF->vtable->base_type;
     }
 

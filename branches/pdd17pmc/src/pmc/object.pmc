@@ -498,7 +498,7 @@ Returns the integer type of the object's class.
 
 */
 
-    INTVAL type() {
+    VTABLE INTVAL type() {
         PMC *class = VTABLE_get_class(interp, SELF);
         return VTABLE_type(interp, class);
     }

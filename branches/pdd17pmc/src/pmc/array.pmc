@@ -331,7 +331,7 @@ Returns the integer value of the element at index C<key>.
 
 */
 
-    INTVAL type_keyed_int(INTVAL key) {
+    VTABLE INTVAL type_keyed_int(INTVAL key) {
         PMC * const value = DYNSELF.get_pmc_keyed_int(key);
 
         return VTABLE_type(INTERP, value);

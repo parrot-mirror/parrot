@@ -126,7 +126,7 @@ useful defaults and don't throw exceptions.
         return SELF->vtable->_namespace;
     }
 
-    INTVAL type() {
+    VTABLE INTVAL type() {
         return SUPER();
     }
 

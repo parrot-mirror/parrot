@@ -656,7 +656,7 @@ Returns the result of calling C<type_keyed(key)> on the aggregate.
 
 */
 
-    INTVAL type_keyed(PMC *key) {
+    VTABLE INTVAL type_keyed(PMC *key) {
         return VTABLE_type_keyed(INTERP, (PMC *)PMC_pmc_val(SELF), key);
     }
 
@@ -670,7 +670,7 @@ Returns the result of calling C<type_keyed(key)> on the aggregate.
 
 */
 
-    INTVAL type_keyed_int(INTVAL idx) {
+    VTABLE INTVAL type_keyed_int(INTVAL idx) {
         PMC * const key = (PMC *)PMC_struct_val(SELF);
         PMC * const agg = (PMC *)PMC_pmc_val(SELF);
         return VTABLE_type_keyed_int(INTERP, agg, PMC_int_val(key) + idx);
