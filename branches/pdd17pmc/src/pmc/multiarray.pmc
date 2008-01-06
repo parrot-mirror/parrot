@@ -180,7 +180,7 @@ Sets the Parrot string value C<value> at C<*key>.
 
 */
 
-    void set_string_keyed(PMC *key, STRING *value) {
+    VTABLE void set_string_keyed(PMC *key, STRING *value) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
         DYNSELF.set_string_keyed_int(ix, value);
     }

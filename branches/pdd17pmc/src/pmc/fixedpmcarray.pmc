@@ -593,7 +593,7 @@ C<value>.
 
 */
 
-    void set_string_keyed(PMC *key, STRING *value) {
+    VTABLE void set_string_keyed(PMC *key, STRING *value) {
         PMC * const val = pmc_new(INTERP, Parrot_get_ctx_HLL_type(INTERP,
                     enum_class_String));
 

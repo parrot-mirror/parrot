@@ -667,7 +667,7 @@ Sets the string value of the PMC at element C<key> to C<value>.
 
 */
 
-    void set_string_keyed(PMC *key, STRING *value) {
+    VTABLE void set_string_keyed(PMC *key, STRING *value) {
         INTVAL ix;
         PMC   *nextkey, *box;
 

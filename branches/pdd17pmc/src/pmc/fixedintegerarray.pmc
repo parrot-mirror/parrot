@@ -515,7 +515,7 @@ Sets the string value of the element at index C<key> to C<value>.
 
 */
 
-    void set_string_keyed(PMC *key, STRING *value) {
+    VTABLE void set_string_keyed(PMC *key, STRING *value) {
         INTVAL k = key_integer(INTERP, key);
         DYNSELF.set_string_keyed_int(k, value);
     }

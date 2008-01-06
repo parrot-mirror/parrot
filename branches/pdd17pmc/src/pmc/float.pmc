@@ -184,7 +184,7 @@ Note that this method morphs the number into a C<String>.
 
 */
 
-    void set_string_native(STRING *value) {
+    VTABLE void set_string_native(STRING *value) {
         DYNSELF.morph(enum_class_String);
         DYNSELF.set_string_native(value);
     }

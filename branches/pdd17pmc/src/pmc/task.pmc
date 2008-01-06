@@ -319,7 +319,7 @@ Sets the type of the task.
 
 */
 
-    void set_string_native(STRING *value) {
+    VTABLE void set_string_native(STRING *value) {
         Parrot_Task * const core_struct = PARROT_TASK(SELF);
         core_struct->type = value;
     }
