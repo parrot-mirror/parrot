@@ -152,7 +152,7 @@ Returns the integer value associated with C<key>.
 
 */
 
-    INTVAL get_integer_keyed_int(INTVAL idx) {
+    VTABLE INTVAL get_integer_keyed_int(INTVAL idx) {
         Hash * const h = (Hash *)PMC_struct_val(SELF);
         const INTVAL n = h->entries;
         HashBucket *b;
@@ -173,7 +173,7 @@ Returns the integer value associated with C<key>.
                 "OrderedHash: No such key");
     }
 
-    INTVAL get_integer_keyed(PMC *key) {
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
 
         if ((PObj_get_FLAGS(key) & KEY_type_FLAGS) == KEY_integer_FLAG) {
             PMC * const item = SELF.get_pmc_keyed_int(key_integer(INTERP, key));
@@ -202,7 +202,7 @@ Returns the floating-point value for the element at C<key>.
 
 */
 
-    FLOATVAL get_number_keyed_int(INTVAL idx) {
+    VTABLE FLOATVAL get_number_keyed_int(INTVAL idx) {
         Hash * const h = (Hash *)PMC_struct_val(SELF);
         const INTVAL n = h->entries;
         HashBucket *b;
@@ -223,7 +223,7 @@ Returns the floating-point value for the element at C<key>.
                 "OrderedHash: No such key");
     }
 
-    FLOATVAL get_number_keyed(PMC *key) {
+    VTABLE FLOATVAL get_number_keyed(PMC *key) {
         if ((PObj_get_FLAGS(key) & KEY_type_FLAGS) == KEY_integer_FLAG) {
             PMC * const item = SELF.get_pmc_keyed_int(key_integer(INTERP, key));
             PMC * const next = key_next(INTERP, key);

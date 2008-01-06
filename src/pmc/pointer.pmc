@@ -101,7 +101,7 @@ Returns the pointer value as an integer.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return (INTVAL)PMC_data(SELF);
     }
 
@@ -115,7 +115,7 @@ Returns the pointer value as a floating-point number.
 
 */
 
-    FLOATVAL get_number() {
+    VTABLE FLOATVAL get_number() {
         return (FLOATVAL)(INTVAL)PMC_data(SELF);
     }
 

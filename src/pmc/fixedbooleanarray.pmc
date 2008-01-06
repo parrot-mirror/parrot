@@ -152,7 +152,7 @@ Returns the number of elements in the array.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return SELF.elements();
     }
 
@@ -166,7 +166,7 @@ Returns the integer value of the element at index C<key>.
 
 */
 
-    INTVAL get_integer_keyed_int(INTVAL key) {
+    VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
         Parrot_UInt1 *sd = PMC_data_typed(SELF, Parrot_UInt1 *);
 
         if (key < 0 || key >= PMC_int_val(SELF))
@@ -186,7 +186,7 @@ Returns the integer value of the element at index C<*key>.
 
 */
 
-    INTVAL get_integer_keyed(PMC *key) {
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
         /* simple int keys only */
         INTVAL k = key_integer(INTERP, key);
         return SELF.get_integer_keyed_int(k);
@@ -203,7 +203,7 @@ Returns the floating-point value of the element at index C<key>.
 
 */
 
-    FLOATVAL get_number_keyed_int(INTVAL key) {
+    VTABLE FLOATVAL get_number_keyed_int(INTVAL key) {
         INTVAL i = DYNSELF.get_integer_keyed_int(key);
         return (FLOATVAL)i;
     }
@@ -218,7 +218,7 @@ Returns the floating-point value of the element at index C<*key>.
 
 */
 
-    FLOATVAL get_number_keyed(PMC *key) {
+    VTABLE FLOATVAL get_number_keyed(PMC *key) {
         INTVAL k = key_integer(INTERP, key);
         return DYNSELF.get_number_keyed_int(k);
     }

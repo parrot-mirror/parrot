@@ -424,12 +424,12 @@ Returns true if the complex number is non-zero.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         FLOATVAL f = DYNSELF.get_number();
         return (INTVAL)f;
     }
 
-    FLOATVAL get_number() {
+    VTABLE FLOATVAL get_number() {
         return sqrt(RE(SELF) * RE(SELF) + IM(SELF) * IM(SELF));
     }
 
@@ -461,22 +461,22 @@ Returns the requested number (real part for C<real> and imaginary for C<imag>).
 
 */
 
-    INTVAL get_integer_keyed(PMC *key) {
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
         STRING * const s = VTABLE_get_string(INTERP, key);
         return DYNSELF.get_integer_keyed_str(s);
     }
 
-    INTVAL get_integer_keyed_str(STRING *key) {
+    VTABLE INTVAL get_integer_keyed_str(STRING *key) {
         FLOATVAL f = DYNSELF.get_number_keyed_str(key);
         return (INTVAL)f;
     }
 
-    FLOATVAL get_number_keyed(PMC *key) {
+    VTABLE FLOATVAL get_number_keyed(PMC *key) {
         STRING * const s = VTABLE_get_string(INTERP, key);
         return DYNSELF.get_number_keyed_str(s);
     }
 
-    FLOATVAL get_number_keyed_str(STRING *key) {
+    VTABLE FLOATVAL get_number_keyed_str(STRING *key) {
         const FLOATVAL * const num = complex_locate_keyed_num(INTERP, SELF, key);
         if (num)
             return *num;
@@ -530,7 +530,7 @@ Set real or imag depending on key
 
 */
 
-    FLOATVAL get_number_keyed_int(INTVAL key) {
+    VTABLE FLOATVAL get_number_keyed_int(INTVAL key) {
         switch (key) {
             case 0:
                 return RE(SELF);

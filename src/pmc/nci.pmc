@@ -232,7 +232,7 @@ Returns the function pointer as an integer.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         Parrot_NCI * const nci_info = PARROT_NCI(SELF);
         return (INTVAL)nci_info->func;
     }

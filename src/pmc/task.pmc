@@ -274,7 +274,7 @@ Retrieves the task ID for this task.
 =cut
 
 */
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         Parrot_Task * const core_struct = PARROT_TASK(SELF);
         return core_struct->id;
     }

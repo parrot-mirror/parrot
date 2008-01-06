@@ -52,7 +52,7 @@ Returns the integer value of the element at index C<key>.
 
 */
 
-    INTVAL get_integer_keyed_int(INTVAL key) {
+    VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
         INTVAL offsetkey;
 
         /* Try to make negative index into a real index */
@@ -317,7 +317,7 @@ Returns the number of elements in the array.
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return SELF.elements();
     }
 

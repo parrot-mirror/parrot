@@ -120,12 +120,12 @@ Retrieves a value in the array component of the Capture.
 
 */
 
-    FLOATVAL get_number_keyed_int(INTVAL key) {
+    VTABLE FLOATVAL get_number_keyed_int(INTVAL key) {
         CAPTURE_array_CREATE(INTERP, SELF);
         return VTABLE_get_number_keyed_int(INTERP, CAPTURE_array(SELF), key);
     }
 
-    INTVAL get_integer_keyed_int(INTVAL key) {
+    VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
         CAPTURE_array_CREATE(INTERP, SELF);
         return VTABLE_get_integer_keyed_int(INTERP, CAPTURE_array(SELF), key);
     }
@@ -367,12 +367,12 @@ Retrieves a value from the hash component of the Capture.
 
 */
 
-    FLOATVAL get_number_keyed(PMC *key) {
+    VTABLE FLOATVAL get_number_keyed(PMC *key) {
         CAPTURE_hash_CREATE(INTERP, SELF);
         return VTABLE_get_number_keyed(INTERP, CAPTURE_hash(SELF), key);
     }
 
-    INTVAL get_integer_keyed(PMC *key) {
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
         CAPTURE_hash_CREATE(INTERP, SELF);
         return VTABLE_get_integer_keyed(INTERP, CAPTURE_hash(SELF), key);
     }

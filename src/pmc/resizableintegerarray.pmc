@@ -35,7 +35,7 @@ Returns the integer value of the element at index C<key>.
 
 */
 
-    INTVAL get_integer_keyed_int(INTVAL key) {
+    VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
         INTVAL *data;
 
         if (key < 0)
