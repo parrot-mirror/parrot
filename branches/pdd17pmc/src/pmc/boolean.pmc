@@ -54,7 +54,7 @@ Return "1" or "0".
 =cut
 
 */
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         return SUPER();
     }
 

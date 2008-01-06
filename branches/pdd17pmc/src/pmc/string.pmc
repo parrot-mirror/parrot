@@ -133,7 +133,7 @@ Returns the big numbers representation of the string.
 
 */
 
-    PMC *get_bignum() {
+    VTABLE PMC *get_bignum() {
         STRING * const s   = VTABLE_get_string(INTERP, SELF);
         PMC           *ret = pmc_new(INTERP, enum_class_BigInt);
         VTABLE_set_string_native(INTERP, ret, s);
@@ -150,7 +150,7 @@ Returns the string itself.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         STRING * const s = PMC_str_val(SELF);
         return s ? string_copy(INTERP, s) : NULL;
     }
@@ -633,7 +633,7 @@ Replace the string at C<key> with the chr of C<value>.
 
 */
 
-    STRING *get_string_keyed(PMC *key) {
+    VTABLE STRING *get_string_keyed(PMC *key) {
         STRING * const s = PMC_str_val(SELF);
         const INTVAL   k = key_integer(INTERP, key);
         return string_substr(INTERP, s, k, 1, NULL, 0);

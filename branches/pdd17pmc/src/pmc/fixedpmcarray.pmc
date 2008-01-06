@@ -261,11 +261,11 @@ RT#46673 implement freeze/thaw and use that instead.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         return string_from_int(INTERP, DYNSELF.elements());
     }
 
-    STRING *get_repr() {
+    VTABLE STRING *get_repr() {
         STRING *res = CONST_STRING(INTERP, "(");
         INTVAL  n   = VTABLE_elements(INTERP, SELF);
         INTVAL  i;
@@ -357,7 +357,7 @@ Returns the Parrot string value of the element at index C<key>.
 
 */
 
-    STRING *get_string_keyed_int(INTVAL key) {
+    VTABLE STRING *get_string_keyed_int(INTVAL key) {
         PMC * const tempPMC = DYNSELF.get_pmc_keyed_int(key);
 
         if (PMC_IS_NULL(tempPMC))
@@ -376,7 +376,7 @@ Returns the Parrot string value of the element at index C<*key>.
 
 */
 
-    STRING *get_string_keyed(PMC *key) {
+    VTABLE STRING *get_string_keyed(PMC *key) {
         PMC * const tempPMC = DYNSELF.get_pmc_keyed(key);
         return VTABLE_get_string(INTERP, tempPMC);
     }
@@ -391,7 +391,7 @@ Returns the PMC value of the element at index C<key>.
 
 */
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         PMC **data;
 
         if (key < 0 || key >= PMC_int_val(SELF))
@@ -412,7 +412,7 @@ Returns the PMC value of the element at index C<*key>.
 
 */
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         const INTVAL k        = key_integer(INTERP, key);
         PMC   * const nextkey = key_next(INTERP, key);
         PMC   *box;

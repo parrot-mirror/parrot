@@ -173,7 +173,7 @@ If called from iteration, return the key PMC, else PMCNULL is returned.
         return Parrot_Hash_get_iter(INTERP, SELF);
     }
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         Hash * const hash = (Hash *)PMC_struct_val(SELF);
 
         if (KEY_IS_HASH_ITERATOR(key))

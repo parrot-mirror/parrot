@@ -438,7 +438,7 @@ non-existent layers, returns an empty string.
 
 */
 
-    STRING *get_string_keyed_int(INTVAL n) {
+    VTABLE STRING *get_string_keyed_int(INTVAL n) {
         ParrotIO      *io = (ParrotIO *)PMC_data(SELF);
         ParrotIOLayer *layer;
 

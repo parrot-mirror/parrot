@@ -218,7 +218,7 @@ for writing to disc and later loading via C<load_bytecode>.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         PackFile          *pf  = PackFile_new(INTERP, 0);
         PackFile_ByteCode *seg = PMC_sub(SELF)->seg;
         STRING            *res;
@@ -291,7 +291,7 @@ Returns the Sub PMC of the element at index C<key> or PMCNULL.
 
 */
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         return get_sub(INTERP, SELF, key);
     }
 

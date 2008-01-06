@@ -121,7 +121,7 @@ Catch dereferencing. This would unshare the referred PMC.
         PObj_active_destroy_SET(SELF);
     }
 
-    PMC *get_pmc() {
+    VTABLE PMC *get_pmc() {
         real_exception(INTERP, NULL, E_ReferenceError, "deref not allowed");
     }
 

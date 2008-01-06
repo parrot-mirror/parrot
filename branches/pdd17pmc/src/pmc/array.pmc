@@ -303,7 +303,7 @@ Returns a string representation of the array.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         return Parrot_sprintf_c(INTERP, "array[%p]", SELF);
     }
 
@@ -426,7 +426,7 @@ Returns the string value of the element at index C<key>.
 
 */
 
-    STRING *get_string_keyed_int(INTVAL key) {
+    VTABLE STRING *get_string_keyed_int(INTVAL key) {
         PMC * const value = DYNSELF.get_pmc_keyed_int(key);
 
         return VTABLE_get_string(INTERP, value);
@@ -442,7 +442,7 @@ Returns the string value of the element at index C<key>.
 
 */
 
-    STRING *get_string_keyed(PMC *key) {
+    VTABLE STRING *get_string_keyed(PMC *key) {
         INTVAL ix;
         PMC   *nextkey, *box;
 
@@ -473,7 +473,7 @@ Returns the PMC value of the element at index C<key>.
 
 */
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
 
         return retval(INTERP,
             list_get(INTERP, (List *)PMC_data(SELF), key, enum_type_PMC));
@@ -489,7 +489,7 @@ Returns the PMC value of the element at index C<key>.
 
 */
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         INTVAL ix;
         PMC   *nextkey, *box;
 

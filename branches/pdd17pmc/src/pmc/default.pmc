@@ -544,7 +544,7 @@ C<get_string_keyed()> with it.
 
 */
 
-    STRING *get_string_keyed_int(INTVAL key) {
+    VTABLE STRING *get_string_keyed_int(INTVAL key) {
         PMC *const r_key = INT2KEY(INTERP, key);
         return DYNSELF.get_string_keyed(r_key);
     }
@@ -593,7 +593,7 @@ C<get_pmc_keyed()> with it.
 
 */
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         PMC *const r_key = INT2KEY(INTERP, key);
         return DYNSELF.get_pmc_keyed(r_key);
     }

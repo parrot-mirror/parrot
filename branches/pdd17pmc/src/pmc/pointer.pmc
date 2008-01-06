@@ -129,7 +129,7 @@ Returns the pointer value as a Parrot string.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         STRING *ret;
         char   *target = (char *)mem_sys_allocate(64);
 

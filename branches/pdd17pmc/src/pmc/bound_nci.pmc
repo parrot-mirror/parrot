@@ -51,7 +51,7 @@ Set the bound object live.
             PObj_custom_mark_SET(SELF);
     }
 
-    PMC *get_pmc() {
+    VTABLE PMC *get_pmc() {
         return PMC_pmc_val(SELF);
     }
 

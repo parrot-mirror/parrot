@@ -249,7 +249,7 @@ Returns the Parrot string value of the element at index C<key>.
 
 */
 
-    STRING *get_string_keyed_int(INTVAL key) {
+    VTABLE STRING *get_string_keyed_int(INTVAL key) {
         STRING **data;
 
         if (key < 0 || key >= PMC_int_val(SELF))
@@ -270,7 +270,7 @@ Returns the Parrot string value of the element at index C<*key>.
 
 */
 
-    STRING *get_string_keyed(PMC *key) {
+    VTABLE STRING *get_string_keyed(PMC *key) {
         const INTVAL k = key_integer(INTERP, key);
         return DYNSELF.get_string_keyed_int(k);
     }
@@ -286,7 +286,7 @@ Returns the PMC value of the element at index C<key>.
 
 */
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         PMC    * const ret = pmc_new(INTERP, enum_class_String);
         STRING * const val = DYNSELF.get_string_keyed_int(key);
 
@@ -304,7 +304,7 @@ Returns the PMC value of the element at index C<*key>.
 
 */
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         const INTVAL k = key_integer(INTERP, key);
         return DYNSELF.get_pmc_keyed_int(k);
     }

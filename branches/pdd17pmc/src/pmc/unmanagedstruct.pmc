@@ -846,7 +846,7 @@ Returns the Parrot string value at index C<ix>.
 
 */
 
-    STRING *get_string_keyed_int(INTVAL key) {
+    VTABLE STRING *get_string_keyed_int(INTVAL key) {
         int   type;
         char *p = char_offset_int(INTERP, pmc, key, &type);
         return ret_string(INTERP, p, type);
@@ -862,7 +862,7 @@ Returns the Parrot string value associated with C<*key>.
 
 */
 
-    STRING *get_string_keyed(PMC *key) {
+    VTABLE STRING *get_string_keyed(PMC *key) {
         int   type;
         char *p = char_offset_key(INTERP, pmc, key, &type);
         return ret_string(INTERP, p, type);
@@ -878,7 +878,7 @@ Returns the PMC value at index C<ix>.
 
 */
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         int   type;
         char *p = char_offset_int(INTERP, pmc, key, &type);
         return ret_pmc(INTERP, pmc, p, type, key);
@@ -894,7 +894,7 @@ Returns the PMC value associated with C<*key>.
 
 */
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         int   type;
         char *p = char_offset_key(INTERP, pmc, key, &type);
         return ret_pmc(INTERP, pmc, p, type, key_2_idx(INTERP, pmc, key));

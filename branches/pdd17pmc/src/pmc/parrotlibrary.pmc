@@ -125,7 +125,7 @@ Returns the name of the loaded library.
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         STRING *key  = const_string(INTERP, "_filename");
         PMC    *prop = VTABLE_getprop(INTERP, SELF, key);
 

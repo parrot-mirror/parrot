@@ -546,7 +546,7 @@ Returns the Parrot string value of the element at index C<key>.
 
 */
 
-    STRING *get_string_keyed_int(INTVAL key) {
+    VTABLE STRING *get_string_keyed_int(INTVAL key) {
         HashEntry *e = get_entry(INTERP, SELF, key);
         return ret_string(INTERP, e);
     }
@@ -561,7 +561,7 @@ Returns the Parrot string value of the element at index C<*key>.
 
 */
 
-    STRING *get_string_keyed(PMC *key) {
+    VTABLE STRING *get_string_keyed(PMC *key) {
         INTVAL k = key_integer(INTERP, key);
         return SELF.get_string_keyed_int(k);
     }
@@ -592,7 +592,7 @@ Returns the PMC value of the element at index C<key>.
 
 */
 
-    PMC *get_pmc_keyed_int(INTVAL key) {
+    VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         HashEntry *e = get_entry(INTERP, SELF, key);
         return ret_pmc(INTERP, e);
     }
@@ -607,7 +607,7 @@ Returns the PMC value of the element at index C<*key>.
 
 */
 
-    PMC *get_pmc_keyed(PMC *key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         INTVAL k = key_integer(INTERP, key);
         return SELF.get_pmc_keyed_int(k);
     }

@@ -88,7 +88,7 @@ Get the referenced PMC.
         SELF.set_pmc(other);
     }
 
-    PMC *get_pmc() {
+    VTABLE PMC *get_pmc() {
         return PMC_pmc_val(SELF);
     }
 

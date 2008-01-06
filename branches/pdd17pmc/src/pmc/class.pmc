@@ -599,7 +599,7 @@ Return the name of the class (without the HLL namespace).
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         Parrot_Class * const  _class    = PARROT_CLASS(SELF);
         PMC          * const _namespace = _class->_namespace;
 
