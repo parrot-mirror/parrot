@@ -48,7 +48,7 @@ Class method to construct an Integer from the string representation C<rep>.
 =cut
 
 */
-    PMC *new_from_string(STRING *rep, INTVAL flags) {
+    VTABLE PMC *new_from_string(STRING *rep, INTVAL flags) {
         PMC *res;
         const INTVAL type = SELF->vtable->base_type;
 

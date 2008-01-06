@@ -56,7 +56,7 @@ in the constant PMC pool.
 =cut
 
 */
-    PMC *new_from_string(STRING *rep, INTVAL flags) {
+    VTABLE PMC *new_from_string(STRING *rep, INTVAL flags) {
         INTVAL type = SELF->vtable->base_type;
         INTVAL  n, elem, i, l;
         char   *p, *start;
