@@ -153,7 +153,7 @@ Returns whether the pointer is not C<NULL>.
 
 */
 
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         return (INTVAL)(PMC_data(SELF) != NULL);
     }
 

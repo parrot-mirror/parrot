@@ -209,7 +209,7 @@ Returns whether the subroutine is defined.
         return PMC_cont(SELF)->address != NULL;
     }
 
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         return PMC_cont(SELF)->address != NULL;
     }
 

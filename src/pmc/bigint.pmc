@@ -662,7 +662,7 @@ Returns the boolean value of the integer.
 
 */
 
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         return bigint_get_bool(INTERP, SELF);
     }
 

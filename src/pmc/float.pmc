@@ -96,7 +96,7 @@ Evaluates the number as a boolean, i.e. it's true if it's not zero.
 
 */
 
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         FLOATVAL f = PMC_num_val(SELF);
         return !FLOAT_IS_ZERO(f);
     }

@@ -126,7 +126,7 @@ fixed sized array).
 =cut
 
 */
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         return SELF.elements() ? 1 : 0;
     }
 
