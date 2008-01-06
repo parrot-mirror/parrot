@@ -704,7 +704,7 @@ Return a new iterator for SELF.
 
 */
 
-    PMC *slice(PMC *key, INTVAL f) {
+    VTABLE PMC *slice(PMC *key, INTVAL f) {
         if (f == 0) {
             PMC * const iter = pmc_new_init(INTERP, enum_class_Iterator, SELF);
             PMC_struct_val(iter) = key;

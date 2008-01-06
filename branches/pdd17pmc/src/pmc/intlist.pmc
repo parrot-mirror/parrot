@@ -222,7 +222,7 @@ Removes and returns the first element in the list.
             (List *)PMC_struct_val(value), offset, count);
     }
 
-    PMC *slice(PMC *key, INTVAL f) {
+    VTABLE PMC *slice(PMC *key, INTVAL f) {
         if (f) {
             real_exception(INTERP, NULL, E_IndexError,
                 "IntList: Unknown slice type");
