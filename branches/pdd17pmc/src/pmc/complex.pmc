@@ -379,7 +379,7 @@ Creates an identical copy of the complex number.
         DYNSELF.init();
     }
 
-    void destroy() {
+    VTABLE void destroy() {
         mem_sys_free(PMC_struct_val(SELF));
         PMC_struct_val(SELF) = NULL;
     }

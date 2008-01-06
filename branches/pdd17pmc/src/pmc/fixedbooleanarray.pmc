@@ -79,7 +79,7 @@ Destroys the array.
 
 */
 
-    void destroy() {
+    VTABLE void destroy() {
         PMC_int_val(SELF)  = 0;
         PMC_int_val2(SELF) = 0;
 

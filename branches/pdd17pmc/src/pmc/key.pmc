@@ -100,7 +100,7 @@ Marks the key as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         key_mark(INTERP, SELF);
     }
 

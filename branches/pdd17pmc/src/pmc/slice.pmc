@@ -214,7 +214,7 @@ pmclass Slice need_ext extends Key {
         PMC_pmc_val(SELF)    = NULL;
     }
 
-    void mark() {
+    VTABLE void mark() {
         parrot_range_t * const r = (parrot_range_t *)PMC_struct_val(SELF);
 
         if (PMC_pmc_val(SELF))
@@ -247,7 +247,7 @@ pmclass Slice need_ext extends Key {
         set_slice_start(INTERP, SELF, key, SELF);
     }
 
-    void destroy() {
+    VTABLE void destroy() {
         parrot_range_t *r = (parrot_range_t *)PMC_struct_val(SELF);
 
         /* iteration ended - all is freed */

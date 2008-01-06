@@ -377,7 +377,7 @@ Destroys the IO PMC, flushing and closing as necessary.
 
 */
 
-    void destroy() {
+    VTABLE void destroy() {
         ParrotIO *io = (ParrotIO *)PMC_data(SELF);
 
         if (!io)

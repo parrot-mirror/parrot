@@ -81,7 +81,7 @@ Mark data associated with this transactional variable.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         PARROT_ASSERT(PObj_is_PMC_shared_TEST(SELF));
         PARROT_ASSERT(PMC_sync(SELF)->owner == INTERP);
 

@@ -119,7 +119,7 @@ Marks the current idx/key and the aggregate as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         /* the KEY */
         if (PMC_struct_val(SELF))
              pobject_lives(INTERP, (PObj *)PMC_struct_val(SELF));

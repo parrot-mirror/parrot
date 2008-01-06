@@ -585,7 +585,7 @@ Free the memory associated with the class's underlying struct.
 
 */
 
-    void destroy() {
+    VTABLE void destroy() {
         mem_sys_free(PMC_data(SELF));
     }
 
@@ -630,7 +630,7 @@ Mark any referenced strings and PMCs in the structure as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         Parrot_Class * const _class = PARROT_CLASS(SELF);
         if (_class->name)
             pobject_lives(interp, (PObj*)_class->name);

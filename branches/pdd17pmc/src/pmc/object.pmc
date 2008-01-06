@@ -131,7 +131,7 @@ Free the object's underlying struct.
 =cut
 
 */
-    void destroy() {
+    VTABLE void destroy() {
         mem_sys_free(PMC_data(SELF));
     }
 
@@ -161,7 +161,7 @@ Mark any referenced strings and PMCs.
 =cut
 
 */
-    void mark() {
+    VTABLE void mark() {
         if (PARROT_OBJECT(SELF)) {
             Parrot_Object * const obj = PARROT_OBJECT(SELF);
 

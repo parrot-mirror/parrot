@@ -69,7 +69,7 @@ Initializes the exception handler.
      * have to convert all RetContinuations to real Continuations
      */
 
-    void destroy() {
+    VTABLE void destroy() {
         Parrot_cont *cc = PMC_cont(SELF);
 
         if (cc) {

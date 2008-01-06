@@ -336,7 +336,7 @@ Panics with a "no custom mark routine defined" error message.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         PANIC(INTERP, "custom_mark flag set but no custom mark routine defined");
     }
 

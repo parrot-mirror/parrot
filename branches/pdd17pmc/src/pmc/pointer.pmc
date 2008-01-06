@@ -61,7 +61,7 @@ Marks the pointer as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         void (*mark_function)(Interp *, void *) =
             (void (*)(Interp *, void *))D2FPTR(PMC_struct_val(SELF));
 

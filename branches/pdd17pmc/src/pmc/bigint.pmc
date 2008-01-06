@@ -539,7 +539,7 @@ BigInt object.
         return res;
     }
 
-    void destroy() {
+    VTABLE void destroy() {
         bigint_clear(INTERP, SELF);
         mem_sys_free(PMC_struct_val(SELF));
     }

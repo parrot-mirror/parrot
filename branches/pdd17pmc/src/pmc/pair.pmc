@@ -83,7 +83,7 @@ Marks the hash as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         if (PMC_struct_val(SELF))
             pobject_lives(INTERP, (PObj *)PMC_struct_val(SELF));
 

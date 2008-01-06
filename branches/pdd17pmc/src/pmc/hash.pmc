@@ -113,7 +113,7 @@ Free hash structure.
         parrot_new_pmc_hash(INTERP, SELF);
     }
 
-    void destroy() {
+    VTABLE void destroy() {
         if (PMC_struct_val(SELF)) {
             parrot_hash_destroy(INTERP, (Hash *)PMC_struct_val(SELF));
             PMC_struct_val(SELF) = NULL;
@@ -129,7 +129,7 @@ Marks the hash as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         if (PMC_struct_val(SELF))
             parrot_mark_hash(INTERP, (Hash *)PMC_struct_val(SELF));
     }

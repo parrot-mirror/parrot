@@ -126,7 +126,7 @@ Marks this PMC and any of its contents as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         Parrot_EventHandler *e = PMC_data_typed(SELF, Parrot_EventHandler *);
 
         if (e) {
@@ -149,7 +149,7 @@ Frees any memory held by this PMC.
 
 */
 
-    void destroy() {
+    VTABLE void destroy() {
         Parrot_EventHandler *e = PMC_data_typed(SELF, Parrot_EventHandler *);
 
         if (e) {

@@ -98,7 +98,7 @@ Marks the reference as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         SUPER();
     }
 
@@ -136,7 +136,7 @@ or at least a detection if the referred PMC is already destroyed.
 
 */
 
-    void destroy() {
+    VTABLE void destroy() {
         PMC * const ref = PMC_pmc_val(SELF);
 
         if (PObj_active_destroy_TEST(ref))

@@ -209,7 +209,7 @@ Mark the array and its contents as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         list_mark(INTERP, (List *)PMC_data(SELF));
     }
 

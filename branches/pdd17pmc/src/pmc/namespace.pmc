@@ -92,7 +92,7 @@ Marks the namespace as live.
 =cut
 
 */
-    void mark() {
+    VTABLE void mark() {
         Parrot_NSInfo * const nsinfo = PARROT_NSINFO(SELF);
         SUPER();
         if (PMC_pmc_val(SELF))
@@ -116,7 +116,7 @@ Frees the namespace info struct.
 =cut
 
 */
-    void destroy() {
+    VTABLE void destroy() {
         mem_sys_free(PARROT_NSINFO(SELF));
         SUPER();
     }

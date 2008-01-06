@@ -84,7 +84,7 @@ Destroys the coroutine.
 
 */
 
-    void destroy() {
+    VTABLE void destroy() {
         Parrot_coro *sub = PMC_coro(SELF);
 
         if (sub->ctx)
@@ -241,7 +241,7 @@ Marks the coroutine as live.
 
 */
 
-    void mark() {
+    VTABLE void mark() {
         Parrot_coro *c = PMC_coro(SELF);
 
         if (c && c->ctx)
