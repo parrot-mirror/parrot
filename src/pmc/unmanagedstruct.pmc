@@ -768,7 +768,7 @@ Sets the size of the C<struct>.
 
 */
 
-    void set_integer_native(INTVAL size) {
+    VTABLE void set_integer_native(INTVAL size) {
         PMC_int_val(SELF) = size;
     }
 
@@ -956,7 +956,7 @@ May cause segfaults if value is out of bounds.
 
 */
 
-    void set_integer_keyed(PMC *key, INTVAL value) {
+    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         int   type;
         char *p = char_offset_key(INTERP, pmc, key, &type);
         set_int(INTERP, p, type, value);

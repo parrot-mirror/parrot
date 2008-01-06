@@ -593,7 +593,7 @@ part to C<0.0>
         }
     }
 
-    void set_integer_native(INTVAL value) {
+    VTABLE void set_integer_native(INTVAL value) {
         DYNSELF.set_number_native(value);
     }
 
@@ -623,7 +623,7 @@ to C<value>.
 
 */
 
-    void set_integer_keyed(PMC *key, INTVAL value) {
+    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         DYNSELF.set_number_keyed(key, value);
     }
 

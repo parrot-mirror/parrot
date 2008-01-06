@@ -134,7 +134,7 @@ Returns a Parrot string representation of the number.
 
 */
 
-    void set_integer_native(INTVAL value) {
+    VTABLE void set_integer_native(INTVAL value) {
         DYNSELF.morph(enum_class_Integer);
         DYNSELF.set_integer_native(value);
     }

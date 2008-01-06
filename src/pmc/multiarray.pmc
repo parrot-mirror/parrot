@@ -150,7 +150,7 @@ Sets the integer value C<value> at C<*key>.
 
 */
 
-    void set_integer_keyed(PMC *key, INTVAL value) {
+    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
         DYNSELF.set_integer_keyed_int(ix, value);
     }

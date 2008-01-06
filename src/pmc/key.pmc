@@ -172,7 +172,7 @@ Returns the PMC value of the key.
 
 */
 
-    void set_integer_native(INTVAL value) {
+    VTABLE void set_integer_native(INTVAL value) {
         key_set_integer(INTERP, SELF, value);
     }
 

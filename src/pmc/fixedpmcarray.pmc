@@ -439,7 +439,7 @@ array.
 
 */
 
-    void set_integer_native(INTVAL size) {
+    VTABLE void set_integer_native(INTVAL size) {
         int i;
         PMC **data;
 
@@ -506,7 +506,7 @@ Sets the integer value of the element at index C<key> to C<value>.
 
 */
 
-    void set_integer_keyed(PMC *key, INTVAL value) {
+    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         PMC * const val = pmc_new(INTERP, Parrot_get_ctx_HLL_type(INTERP,
                     enum_class_Integer));
 

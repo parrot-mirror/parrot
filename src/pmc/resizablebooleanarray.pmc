@@ -116,7 +116,7 @@ Resizes the array to C<size> elements.
 
 */
 
-    void set_integer_native(INTVAL size) {
+    VTABLE void set_integer_native(INTVAL size) {
         /* Size respects any existing head position offset from unshift */
         INTVAL newsize = size + PMC_int_val2(SELF);
         INTVAL oldsize = PMC_int_val(SELF);

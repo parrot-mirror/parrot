@@ -289,7 +289,7 @@ Sets the task ID of the task.
 
 */
 
-    void set_integer_native(INTVAL value) {
+    VTABLE void set_integer_native(INTVAL value) {
         Parrot_Task * const core_struct = PARROT_TASK(SELF);
         core_struct->id = value;
     }

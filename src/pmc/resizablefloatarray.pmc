@@ -91,7 +91,7 @@ equal to three quarters of the old size).
 
 */
 
-    void set_integer_native(INTVAL size) {
+    VTABLE void set_integer_native(INTVAL size) {
         if (size < 0)
             real_exception(interp, NULL, E_IndexError,
                     "ResizableFloatArray: Can't resize to negative value!");

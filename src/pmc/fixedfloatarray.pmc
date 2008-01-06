@@ -290,7 +290,7 @@ Resizes the array to C<size> elements.
 
 */
 
-    void set_integer_native(INTVAL size) {
+    VTABLE void set_integer_native(INTVAL size) {
         if (PMC_int_val(SELF) || size < 1)
             real_exception(INTERP, NULL, E_IndexError,
                     "FixedFloatArray: Can't resize!");
@@ -324,7 +324,7 @@ Sets the integer value of the element at index C<key> to C<value>.
 
 */
 
-    void set_integer_keyed(PMC *key, INTVAL value) {
+    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         INTVAL k = key_integer(INTERP, key);
         DYNSELF.set_integer_keyed_int(k, value);
     }

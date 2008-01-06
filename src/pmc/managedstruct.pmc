@@ -80,7 +80,7 @@ Destroys the struct, freeing the allocated memory.
 
 */
 
-    void set_integer_native(INTVAL value) {
+    VTABLE void set_integer_native(INTVAL value) {
         if (PMC_data(SELF) && !value) {
             mem_sys_free(PMC_data(SELF));
             PMC_data(SELF)    = NULL;
