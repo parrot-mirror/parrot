@@ -748,7 +748,7 @@ Subtracts C<value> from the complex number, placing the result in C<dest>.
 
 */
 
-    PMC *subtract(PMC *value, PMC *dest) {
+    VTABLE PMC *subtract(PMC *value, PMC *dest) {
 MMD_Complex: {
             if (dest)
                 VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
@@ -773,7 +773,7 @@ MMD_DEFAULT: {
         }
     }
 
-    PMC *subtract_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *subtract_int(INTVAL value, PMC *dest) {
         if (dest)
             VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
         else
@@ -785,7 +785,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    PMC *subtract_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *subtract_float(FLOATVAL value, PMC *dest) {
         if (dest)
             VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
         else
@@ -797,7 +797,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    void i_subtract(PMC *value) {
+    VTABLE void i_subtract(PMC *value) {
 MMD_Complex: {
             RE(SELF) -= RE(value);
             IM(SELF) -= IM(value);
@@ -807,11 +807,11 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_subtract_int(INTVAL value) {
+    VTABLE void i_subtract_int(INTVAL value) {
         RE(SELF) -= (FLOATVAL)value;
     }
 
-    void i_subtract_float(FLOATVAL value) {
+    VTABLE void i_subtract_float(FLOATVAL value) {
         RE(SELF) -= value;
     }
 /*
@@ -844,7 +844,7 @@ Multiplies the complex number SELF inplace with C<value>.
   (a+bi)(c+di)=(ac-bd)+i(ad+bc)
 
 */
-    PMC *multiply(PMC *value, PMC *dest) {
+    VTABLE PMC *multiply(PMC *value, PMC *dest) {
 MMD_Complex: {
             FLOATVAL re = RE(SELF) * RE(value) - IM(SELF) * IM(value);
             FLOATVAL im = IM(SELF) * RE(value) + RE(SELF) * IM(value);
@@ -873,7 +873,7 @@ MMD_DEFAULT: {
         }
     }
 
-    PMC *multiply_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *multiply_int(INTVAL value, PMC *dest) {
         if (dest)
             VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
         else
@@ -885,7 +885,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    PMC *multiply_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *multiply_float(FLOATVAL value, PMC *dest) {
         if (dest)
             VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
         else
@@ -897,7 +897,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    void i_multiply(PMC *value) {
+    VTABLE void i_multiply(PMC *value) {
 MMD_Complex: {
             FLOATVAL re = RE(SELF) * RE(value) - IM(SELF) * IM(value);
             FLOATVAL im = IM(SELF) * RE(value) + RE(SELF) * IM(value);
@@ -910,12 +910,12 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_multiply_int(INTVAL value) {
+    VTABLE void i_multiply_int(INTVAL value) {
         RE(SELF) *= value;
         IM(SELF) *= value;
     }
 
-    void i_multiply_float(FLOATVAL value) {
+    VTABLE void i_multiply_float(FLOATVAL value) {
         RE(SELF) *= value;
         IM(SELF) *= value;
     }
@@ -950,7 +950,7 @@ http://docs.sun.com/source/806-3568/ncg_goldberg.html
 
 */
 
-    PMC *divide(PMC *value, PMC *dest) {
+    VTABLE PMC *divide(PMC *value, PMC *dest) {
 MMD_Complex: {
             FLOATVAL mod, re, im;
 
@@ -991,7 +991,7 @@ MMD_DEFAULT: {
         }
     }
 
-    PMC *divide_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *divide_int(INTVAL value, PMC *dest) {
         int_check_divide_zero(INTERP, value);
         if (dest)
             VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
@@ -1004,7 +1004,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    PMC *divide_float(FLOATVAL value, PMC *dest) {
+    VTABLE PMC *divide_float(FLOATVAL value, PMC *dest) {
         float_check_divide_zero(INTERP, value);
         if (dest)
             VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
@@ -1017,7 +1017,7 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    void i_divide(PMC *value) {
+    VTABLE void i_divide(PMC *value) {
 MMD_Complex: {
             FLOATVAL mod, re, im;
 
@@ -1045,13 +1045,13 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_divide_int(INTVAL value) {
+    VTABLE void i_divide_int(INTVAL value) {
         int_check_divide_zero(INTERP, value);
         RE(SELF) /= value;
         IM(SELF) /= value;
     }
 
-    void i_divide_float(FLOATVAL value) {
+    VTABLE void i_divide_float(FLOATVAL value) {
         float_check_divide_zero(INTERP, value);
         RE(SELF) /= value;
         IM(SELF) /= value;
@@ -1684,7 +1684,7 @@ x ^ y = exp(y * ln x))
 
 */
 
-    PMC *pow(PMC *value, PMC *dest) {
+    VTABLE PMC *pow(PMC *value, PMC *dest) {
 MMD_Complex: {
                  PMC *l = pmc_new(INTERP, SELF->vtable->base_type);
 
