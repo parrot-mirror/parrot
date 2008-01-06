@@ -215,7 +215,7 @@ Sets the value of the string to that of the specified C<string>.
 
 */
 
-    void set_string_native(STRING *value) {
+    VTABLE void set_string_native(STRING *value) {
         /* COW doesn't work well with constant strings; work around this */
         if (PObj_constant_TEST(SELF) && PObj_COW_TEST(value)) {
             const char *copy = string_to_cstring(INTERP, value);
@@ -235,7 +235,7 @@ Sets the value of the string to a copy of the specified C<string>.
 
 */
 
-    void assign_string_native(STRING *value) {
+    VTABLE void assign_string_native(STRING *value) {
         PMC_str_val(SELF) = string_set(INTERP, PMC_str_val(SELF), value);
     }
 
@@ -250,7 +250,7 @@ the specified C<String> PMC.
 
 */
 
-    void set_string_same(PMC *value) {
+    VTABLE void set_string_same(PMC *value) {
         PMC_str_val(SELF) =
             string_set(INTERP, PMC_str_val(SELF), PMC_str_val(value));
     }

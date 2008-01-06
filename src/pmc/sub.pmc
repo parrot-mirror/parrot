@@ -113,7 +113,7 @@ Sets the name of the subroutine.
         return string_copy(INTERP, sub->name);
     }
 
-    void set_string_native(STRING *subname) {
+    VTABLE void set_string_native(STRING *subname) {
         Parrot_sub * const sub = PMC_sub(SELF);
         sub->name              = string_copy(INTERP, subname);
     }

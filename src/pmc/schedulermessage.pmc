@@ -152,7 +152,7 @@ Set the message type.
 
 */
 
-    void set_string_native(STRING *value) {
+    VTABLE void set_string_native(STRING *value) {
         Parrot_SchedulerMessage * core_struct = PARROT_SCHEDULERMESSAGE(SELF);
         core_struct->type = value;
     }

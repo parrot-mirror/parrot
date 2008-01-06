@@ -579,7 +579,7 @@ part to C<0.0>
 
 */
 
-    void set_string_native(STRING *value) {
+    VTABLE void set_string_native(STRING *value) {
         complex_parse_string(INTERP, &RE(SELF), &IM(SELF), value);
     }
 

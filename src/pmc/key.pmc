@@ -199,7 +199,7 @@ Sets the value of the key to C<value>.
 
 */
 
-    void set_string_native(STRING *value) {
+    VTABLE void set_string_native(STRING *value) {
         key_set_string(INTERP, SELF, value);
     }
 

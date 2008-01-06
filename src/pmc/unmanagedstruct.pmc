@@ -1020,7 +1020,7 @@ Sets the value of the element associated with key C<*key> to C<*value>.
 
 */
 
-    void set_string_keyed(PMC *key, STRING *value) {
+    VTABLE void set_string_keyed(PMC *key, STRING *value) {
         int   type;
         char *p = char_offset_key(INTERP, pmc, key, &type);
         set_string(INTERP, p, type, value);

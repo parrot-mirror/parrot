@@ -174,7 +174,7 @@ Morphs the current PMC to a C<String> and sets the value from C<value>.
 
 */
 
-    void set_string_native(STRING *value) {
+    VTABLE void set_string_native(STRING *value) {
         VTABLE_morph(INTERP, SELF, UNDEF_STRING_CLASS);
         VTABLE_set_string_native(INTERP, SELF, value);
     }

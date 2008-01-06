@@ -585,7 +585,7 @@ Same assume number base C<base>.
 
 */
 
-    void set_string_native(STRING *value) {
+    VTABLE void set_string_native(STRING *value) {
         char *s = string_to_cstring(INTERP, value);
         bigint_set_str(INTERP, SELF, s, 10);
         string_cstring_free(s);
