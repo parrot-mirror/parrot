@@ -394,7 +394,7 @@ Deletes the property for C<*key>.
 
 */
 
-    void delprop(STRING *key) {
+    VTABLE void delprop(STRING *key) {
         if (SELF->pmc_ext && PMC_metadata(SELF))
             VTABLE_delete_keyed_str(INTERP, PMC_metadata(SELF), key);
     }
