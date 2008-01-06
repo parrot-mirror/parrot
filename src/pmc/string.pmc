@@ -186,7 +186,7 @@ Sets the value of the string to the integer C<value>.
         DYNSELF.set_string_native(string_from_int(INTERP, value));
     }
 
-    void set_bool(INTVAL value) {
+    VTABLE void set_bool(INTVAL value) {
         DYNSELF.set_string_native(string_from_int(INTERP, value));
     }
 
