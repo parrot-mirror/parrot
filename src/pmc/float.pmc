@@ -380,7 +380,7 @@ Used to archive the number.
 =cut
 
 */
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
         SUPER(info);
         VTABLE_push_float(INTERP, io, PMC_num_val(SELF));

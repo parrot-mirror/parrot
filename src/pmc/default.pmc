@@ -1089,7 +1089,7 @@ Does nothing.
 
 */
 
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         /* default - no action */
     }
 

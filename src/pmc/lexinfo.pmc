@@ -112,7 +112,7 @@ The implementation of the Hash PMC is called.
         Parrot_Hash_visit(INTERP, SELF, info);
     }
 
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         Parrot_Hash_freeze(INTERP, SELF, info);
     }
 

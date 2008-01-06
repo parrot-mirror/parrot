@@ -290,7 +290,7 @@ Used to archive the scheduler.
 
 */
 
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO *io = info->image_io;
         Parrot_Scheduler * const core_struct = PARROT_SCHEDULER(SELF);
 

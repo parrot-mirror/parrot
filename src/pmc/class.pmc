@@ -1297,7 +1297,7 @@ Used to archive the class.
 
 */
 
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO     * const io         = info->image_io;
         Parrot_Class * const class_data = PARROT_CLASS(SELF);
         STRING       *serial_namespace  = CONST_STRING(interp, "");

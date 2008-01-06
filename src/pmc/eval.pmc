@@ -309,7 +309,7 @@ Unarchives the code.
 
 */
 
-    void freeze(visit_info *info) {
+    VTABLE void freeze(visit_info *info) {
         IMAGE_IO *io     = info->image_io;
         STRING   *packed = SELF.get_string();
         VTABLE_push_string(INTERP, io, packed);
