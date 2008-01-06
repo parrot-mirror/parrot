@@ -74,7 +74,7 @@ Changes the current PMC's type to C<new_type>.
 
 */
 
-     void morph(INTVAL new_type) {
+     VTABLE void morph(INTVAL new_type) {
         pmc_reuse(INTERP, SELF, new_type, 0);
     }
 

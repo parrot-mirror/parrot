@@ -76,7 +76,7 @@ Morphs to C<type>.
 
 */
 
-    void morph(INTVAL type) {
+    VTABLE void morph(INTVAL type) {
         SUPER(type);
     }
 

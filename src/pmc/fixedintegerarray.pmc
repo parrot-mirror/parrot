@@ -140,7 +140,7 @@ Const PMCs must have a C<morph()>.
 
 */
 
-    void morph(INTVAL type) {
+    VTABLE void morph(INTVAL type) {
         SUPER(type);
     }
 
