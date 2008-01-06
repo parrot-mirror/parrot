@@ -213,7 +213,7 @@ Sets the value of the key to C<*value>.
 
 */
 
-    void set_pmc(PMC *value) {
+    VTABLE void set_pmc(PMC *value) {
         key_set_pmc(INTERP, SELF, value);
     }
 

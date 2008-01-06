@@ -245,7 +245,7 @@ If key is a slice, do a splice as set that item.
         data[key] = src;
     }
 
-    void set_pmc_keyed(PMC *key, PMC *src) {
+    VTABLE void set_pmc_keyed(PMC *key, PMC *src) {
         SUPER(key, src);
     }
 

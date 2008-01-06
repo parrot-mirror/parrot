@@ -78,13 +78,13 @@ Get the referenced PMC.
 
 */
 
-    void set_pmc(PMC *other) {
+    VTABLE void set_pmc(PMC *other) {
         PObj_active_destroy_CLEAR(SELF);
         DOD_WRITE_BARRIER(INTERP, SELF, PMC_pmc_val(SELF), other);
         SELF.init_pmc(other);
     }
 
-    void assign_pmc(PMC *other) {
+    VTABLE void assign_pmc(PMC *other) {
         SELF.set_pmc(other);
     }
 

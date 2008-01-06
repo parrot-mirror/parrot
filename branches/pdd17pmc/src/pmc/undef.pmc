@@ -39,7 +39,7 @@ appropriate type.
 
 */
 
-    void set_pmc(PMC *other) {
+    VTABLE void set_pmc(PMC *other) {
         VTABLE_morph(INTERP, SELF, enum_class_Ref);
         VTABLE_set_pmc(INTERP, SELF, other);
     }
@@ -55,7 +55,7 @@ appropriate type.
 
 */
 
-    void assign_pmc(PMC *other) {
+    VTABLE void assign_pmc(PMC *other) {
         if (!PObj_is_object_TEST(other))
             VTABLE_morph(INTERP, SELF, other->vtable->base_type);
 

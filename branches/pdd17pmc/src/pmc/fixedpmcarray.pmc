@@ -458,7 +458,7 @@ array.
         PMC_data(SELF) = data;
     }
 
-    void set_pmc(PMC *value) {
+    VTABLE void set_pmc(PMC *value) {
         INTVAL size;
 
         if (SELF == value)
@@ -635,7 +635,7 @@ Sets the PMC at index C<key> to C<value>.
 
 */
 
-    void set_pmc_keyed(PMC *key, PMC *value) {
+    VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         INTVAL k       = key_integer(INTERP, key);
         PMC   *nextkey = key_next(INTERP, key);
 

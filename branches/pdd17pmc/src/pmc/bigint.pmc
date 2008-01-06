@@ -606,7 +606,7 @@ Sets the value of the integer to the integer value of C<*value>.
 
 */
 
-    void set_pmc(PMC *value) {
+    VTABLE void set_pmc(PMC *value) {
         bigint_set_self(INTERP, SELF, bigint_get_self(INTERP, value));
     }
 

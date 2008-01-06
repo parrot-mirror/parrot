@@ -127,7 +127,7 @@ Set the value of the Pair.
 
 */
 
-    void set_pmc_keyed(PMC *key, PMC *value) {
+    VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         if (PMC_struct_val(SELF))
             real_exception(INTERP, NULL, E_IndexError,
                     "attempt to set existing Pair key");
@@ -145,7 +145,7 @@ Set the value of the Pair.
         PMC_pmc_val(SELF)    = value;
     }
 
-    void assign_pmc(PMC *value) {
+    VTABLE void assign_pmc(PMC *value) {
         PMC_pmc_val(SELF) = value;
     }
 

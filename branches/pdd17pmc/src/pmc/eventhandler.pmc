@@ -220,7 +220,7 @@ handle the registered events.
 =cut
 
 */
-    void set_pmc(PMC *interpreter) {
+    VTABLE void set_pmc(PMC *interpreter) {
         Parrot_EventHandler *e = PMC_data_typed(SELF, Parrot_EventHandler *);
 
         if (e)

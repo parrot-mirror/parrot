@@ -136,7 +136,7 @@ Return the LexInfo PMC, if any or a Null PMC.
         CTX_REG_PMC(ctx, regno) = value;
     }
 
-    void set_pmc_keyed(PMC *name, PMC *value) {
+    VTABLE void set_pmc_keyed(PMC *name, PMC *value) {
         STRING * const s = key_string(INTERP, name);
         SELF.set_pmc_keyed_str(s, value);
     }

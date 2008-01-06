@@ -265,7 +265,7 @@ the specified C<PMC>.
 =cut
 
 */
-    void set_pmc(PMC *value) {
+    VTABLE void set_pmc(PMC *value) {
         DYNSELF.set_string_native(VTABLE_get_string(INTERP, value));
     }
 

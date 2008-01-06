@@ -113,7 +113,7 @@ according to the type of C<*value>.
 
 */
 
-    void assign_pmc(PMC *value) {
+    VTABLE void assign_pmc(PMC *value) {
         STRING * const s_int = CONST_STRING(INTERP, "Integer");
         STRING        *s_num;
         STRING        *s_str;

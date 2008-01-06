@@ -128,7 +128,7 @@ reaches 0, delete the entry.
 
 */
 
-    void set_pmc_keyed(PMC *key, PMC *value) {
+    VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         Hash       * const hash = (Hash *)PMC_struct_val(SELF);
         HashBucket * const b    = parrot_hash_get_bucket(INTERP, hash, key);
 

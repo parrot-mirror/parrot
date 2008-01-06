@@ -339,7 +339,7 @@ really a public API.
         }
     }
 
-    void set_pmc_keyed(PMC *key, PMC *value) {
+    VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         PMC    *ns = SELF;
         STRING *part;
 

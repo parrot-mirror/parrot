@@ -350,11 +350,11 @@ Set SELF to the data in other.
 
 */
 
-    void set_pmc(PMC *other) {
+    VTABLE void set_pmc(PMC *other) {
         DYNSELF.assign_pmc(other);
     }
 
-    void assign_pmc(PMC *other) {
+    VTABLE void assign_pmc(PMC *other) {
         /* only handle the case where the other PMC is the same type */
         if (other->vtable->base_type == SELF->vtable->base_type) {
             /* copy the sub struct */

@@ -257,7 +257,7 @@ Sets the PMC value for C<*key>.
 
 */
 
-    void set_pmc_keyed(PMC *key, PMC *value) {
+    VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         STRING *s = key_string(INTERP, key);
         DYNSELF.setprop(s, value);
     }
