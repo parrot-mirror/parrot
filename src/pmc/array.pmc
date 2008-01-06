@@ -173,7 +173,7 @@ Copy the contents of other to self.
 
 */
 
-    void assign_pmc(PMC *other) {
+    VTABLE void assign_pmc(PMC *other) {
         const INTVAL size = VTABLE_elements(INTERP, other);
         INTVAL       i;
 
@@ -195,7 +195,7 @@ Currently, an alias to C<assign_pmc>.  Expected to go away soon.
 
 */
 
-    void set_pmc(PMC *other) {
+    VTABLE void set_pmc(PMC *other) {
         DYNSELF.assign_pmc(other);
     }
 
@@ -722,7 +722,7 @@ Sets the PMC at index C<key> to C<value>.
 
 */
 
-    void set_pmc_keyed(PMC *key, PMC *value) {
+    VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         PMC *box;
 
         const INTVAL ix      = key_integer(INTERP, key);

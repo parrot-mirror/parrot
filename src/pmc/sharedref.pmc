@@ -116,7 +116,7 @@ Catch dereferencing. This would unshare the referred PMC.
 
 */
 
-    void set_pmc(PMC *other) {
+    VTABLE void set_pmc(PMC *other) {
         SUPER(other);
         PObj_active_destroy_SET(SELF);
     }

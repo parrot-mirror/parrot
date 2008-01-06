@@ -195,7 +195,7 @@ Unimplemented.
 
 */
 
-    void set_pmc_keyed(PMC *dest_key, PMC *src) {
+    VTABLE void set_pmc_keyed(PMC *dest_key, PMC *src) {
         /* XXX array ??? */
     }
 }

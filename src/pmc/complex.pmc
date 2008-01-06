@@ -583,7 +583,7 @@ part to C<0.0>
         complex_parse_string(INTERP, &RE(SELF), &IM(SELF), value);
     }
 
-    void set_pmc(PMC *value) {
+    VTABLE void set_pmc(PMC *value) {
         if (value->vtable->base_type == enum_class_Complex) {
             RE(SELF) = RE(value);
             IM(SELF) = IM(value);
@@ -642,7 +642,7 @@ to C<value>.
             *num = value;
     }
 
-    void set_pmc_keyed(PMC *key, PMC *value) {
+    VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         const FLOATVAL f = VTABLE_get_number(INTERP, value);
         DYNSELF.set_number_keyed(key, f);
     }

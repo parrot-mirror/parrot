@@ -148,7 +148,7 @@ Assign context.
 =cut
 
 */
-    void set_pmc(PMC *src) {
+    VTABLE void set_pmc(PMC *src) {
         Parrot_cont * const cc_self = PMC_cont(SELF);
         Parrot_cont * const cc_src  = PMC_cont(src);
 

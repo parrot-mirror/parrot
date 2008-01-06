@@ -791,7 +791,7 @@ Sets C<value> as the value for C<*key>.
 
 */
 
-    void set_pmc_keyed(PMC *key, PMC *value) {
+    VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         STRING *keystr;
         PMC    *nextkey;
         PMC    *box;
