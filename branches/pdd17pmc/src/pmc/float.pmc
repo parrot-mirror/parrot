@@ -154,7 +154,7 @@ Sets the value of the number to C<value>.
 
 */
 
-    void set_number_native(FLOATVAL value) {
+    VTABLE void set_number_native(FLOATVAL value) {
         PMC_num_val(SELF) = value;
     }
 
@@ -168,7 +168,7 @@ Sets the value of the number to the value of C<*value>.
 
 */
 
-    void set_number_same(PMC *value) {
+    VTABLE void set_number_same(PMC *value) {
         PMC_num_val(SELF) = PMC_num_val(value);
     }
 

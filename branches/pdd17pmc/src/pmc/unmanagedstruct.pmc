@@ -988,7 +988,7 @@ Sets the value of the element associated with key C<*key> to C<value>.
 
 */
 
-    void set_number_keyed(PMC *key, FLOATVAL value) {
+    VTABLE void set_number_keyed(PMC *key, FLOATVAL value) {
         int type;
         char *p = char_offset_key(INTERP, pmc, key, &type);
         set_float(INTERP, p, type, value);
