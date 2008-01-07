@@ -973,7 +973,7 @@ Look for NCI methods and properties.
         return pmc_new_init(interp, enum_class_PMCProxy, type_num);
     }
 
-    PMC *get_attr_str(STRING *name) {
+    VTABLE PMC *get_attr_str(STRING *name) {
         PMC *p = NULL;
 
         /* let's look for props first
@@ -1029,11 +1029,11 @@ the string name passed in.
 =cut
 
 */
-    PMC *get_attr_keyed(PMC *key, STRING *name) {
+    VTABLE PMC *get_attr_keyed(PMC *key, STRING *name) {
         return VTABLE_get_attr_str(INTERP, SELF, name);
     }
 
-    void set_attr_keyed(PMC *key, STRING *name, PMC *value) {
+    VTABLE void set_attr_keyed(PMC *key, STRING *name, PMC *value) {
         VTABLE_set_attr_str(INTERP, SELF, name, value);
     }
 

@@ -289,7 +289,7 @@ Retrieve an attribute value for the exception object.
 =cut
 
 */
-    PMC *get_attr_str(STRING *name) {
+    VTABLE PMC *get_attr_str(STRING *name) {
         INTVAL index = get_attrib_index(interp, SELF, name);
 
         /* If lookup failed, exception. */
@@ -309,7 +309,7 @@ Set an attribute value for the exception object.
 =cut
 
 */
-    void set_attr_str(STRING *name, PMC *value) {
+    VTABLE void set_attr_str(STRING *name, PMC *value) {
         INTVAL index = get_attrib_index(interp, SELF, name);
 
         /* If lookup failed, exception. */
