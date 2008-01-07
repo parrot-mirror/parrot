@@ -74,7 +74,7 @@ the next one.
         return tupl;
     }
 
-    PMC *get_iter() {
+    VTABLE PMC *get_iter() {
         return SELF;
     }
 

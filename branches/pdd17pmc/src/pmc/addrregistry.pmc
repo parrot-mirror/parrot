@@ -169,7 +169,7 @@ If called from iteration, return the key PMC, else PMCNULL is returned.
 
 */
 
-    PMC *get_iter() {
+    VTABLE PMC *get_iter() {
         return Parrot_Hash_get_iter(INTERP, SELF);
     }
 

@@ -234,7 +234,7 @@ Removes and returns the first element in the list.
         }
     }
 
-    PMC *get_iter() {
+    VTABLE PMC *get_iter() {
         PMC * const iter     = pmc_new_init(INTERP, enum_class_Iterator, SELF);
         PMC * const key      = pmc_new(INTERP, enum_class_Key);
 

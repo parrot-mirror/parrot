@@ -676,7 +676,7 @@ Returns the result of calling C<type_keyed(key)> on the aggregate.
         return VTABLE_type_keyed_int(INTERP, agg, PMC_int_val(key) + idx);
     }
 
-    PMC *get_iter() {
+    VTABLE PMC *get_iter() {
         return SELF;
     }
 }
