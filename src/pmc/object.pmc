@@ -397,7 +397,7 @@ non-zero value if it does.
 =cut
 
 */
-    INTVAL can(STRING *method_name) {
+    VTABLE INTVAL can(STRING *method_name) {
         /* Just use find_method and see it if finds anything. */
         const PMC * const method = VTABLE_find_method(interp, SELF, method_name);
         return !PMC_IS_NULL(method);
@@ -413,7 +413,7 @@ Returns whether the object's class is or inherits from C<*classname>.
 
 */
 
-    INTVAL isa_pmc(PMC *lookup) {
+    VTABLE INTVAL isa_pmc(PMC *lookup) {
         if (PMC_IS_NULL(lookup))
             return 0;
 
@@ -434,7 +434,7 @@ Returns whether the class is or inherits from C<*classname>.
 
 */
 
-    INTVAL isa(STRING *classname) {
+    VTABLE INTVAL isa(STRING *classname) {
         PMC   *_class;
 
         if (SUPER(classname))
