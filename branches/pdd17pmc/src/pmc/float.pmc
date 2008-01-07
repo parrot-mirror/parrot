@@ -240,7 +240,7 @@ Set C<dest> to the negated value of C<SELF>.
         return dest;
     }
 
-    void i_neg() {
+    VTABLE void i_neg() {
         const FLOATVAL a = -DYNSELF.get_number();
         VTABLE_set_number_native(INTERP, SELF, a);
     }
@@ -327,7 +327,7 @@ Increments the number.
 
 */
 
-    void increment() {
+    VTABLE void increment() {
         PMC_num_val(SELF)++;
     }
 
@@ -341,7 +341,7 @@ Decrements the number.
 
 */
 
-    void decrement() {
+    VTABLE void decrement() {
         PMC_num_val(SELF)--;
     }
 /*
@@ -366,7 +366,7 @@ Sets C<dest> to the absolute value of SELF.
         return dest;
     }
 
-    void i_absolute() {
+    VTABLE void i_absolute() {
         const FLOATVAL a = fabs(DYNSELF.get_number());
         VTABLE_set_number_native(INTERP, SELF, a);
     }

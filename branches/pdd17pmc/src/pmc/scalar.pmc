@@ -889,7 +889,7 @@ Set C<dest> to the negated value of C<SELF>.
         return dest;
     }
 
-    void i_neg() {
+    VTABLE void i_neg() {
         VTABLE_set_integer_native(INTERP, SELF, -DYNSELF.get_integer());
     }
 

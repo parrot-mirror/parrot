@@ -713,7 +713,7 @@ Increments the integer.
 
 */
 
-    void increment() {
+    VTABLE void increment() {
         bigint_add_bigint_int(INTERP, SELF, 1, SELF);
     }
 
@@ -727,7 +727,7 @@ Decrements the integer.
 
 */
 
-    void decrement() {
+    VTABLE void decrement() {
         bigint_sub_bigint_int(INTERP, SELF, 1, SELF);
     }
 
@@ -1123,7 +1123,7 @@ Sets C<dest> to the absolute value of SELF.
         return dest;
     }
 
-    void i_absolute() {
+    VTABLE void i_absolute() {
         bigint_abs(INTERP, SELF, SELF);
     }
 
@@ -1148,7 +1148,7 @@ Set C<dest> to the negated value of C<SELF>.
         return dest;
     }
 
-    void i_neg() {
+    VTABLE void i_neg() {
         bigint_neg(INTERP, SELF, SELF);
     }
 
