@@ -1069,7 +1069,7 @@ Set C<dest> to the negated value of C<SELF>.
 
 */
 
-    PMC *neg(PMC *dest) {
+    VTABLE PMC *neg(PMC *dest) {
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
         else
@@ -1132,7 +1132,7 @@ Sets C<dest> to the absolute value of SELF that is the distance from (0.0).
 
 */
 
-    PMC *absolute(PMC *dest) {
+    VTABLE PMC *absolute(PMC *dest) {
         FLOATVAL d = sqrt(RE(SELF)*RE(SELF) + IM(SELF)*IM(SELF));
 
         if (!dest)
