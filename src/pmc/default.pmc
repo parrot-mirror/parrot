@@ -965,7 +965,7 @@ Look for NCI methods and properties.
 =cut
 
 */
-    PMC *get_class() {
+    VTABLE PMC *get_class() {
         /* Create a proxy */
         INTVAL type = VTABLE_type(interp, SELF);
         PMC *type_num = pmc_new(interp, enum_class_Integer);
@@ -1047,7 +1047,7 @@ Add class C<parent> to the list of our parents.
 
 */
 
-    void add_parent(PMC *parent) {
+    VTABLE void add_parent(PMC *parent) {
         if (!PObj_is_class_TEST(SELF))
             real_exception(interp, NULL, 1, "Only classes can be subclassed");
 
