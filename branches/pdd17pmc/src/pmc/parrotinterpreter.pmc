@@ -526,7 +526,7 @@ have the same thread id.
 
 */
 
-    INTVAL is_equal(PMC *val) {
+    VTABLE INTVAL is_equal(PMC *val) {
         Parrot_Interp self  = PMC_data_typed(SELF, Parrot_Interp);
         Parrot_Interp other = PMC_data_typed(val, Parrot_Interp);
 

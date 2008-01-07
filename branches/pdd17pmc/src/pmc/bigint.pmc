@@ -1079,7 +1079,7 @@ MMD_DEFAULT: {
     }
 
 
-    INTVAL cmp(PMC *value) {
+    VTABLE INTVAL cmp(PMC *value) {
 MMD_BigInt: {
         return bigint_cmp(INTERP, SELF, value);
             }
@@ -1091,7 +1091,7 @@ MMD_DEFAULT: {
         }
     }
 
-    INTVAL is_equal(PMC *value) {
+    VTABLE INTVAL is_equal(PMC *value) {
 MMD_BigInt: {
         return bigint_cmp(INTERP, SELF, value) == 0;
             }

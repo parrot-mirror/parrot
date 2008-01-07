@@ -1096,7 +1096,7 @@ Compares the complex number with C<value> and returns true if they are equal.
 
 */
 
-    INTVAL is_equal(PMC *value) {
+    VTABLE INTVAL is_equal(PMC *value) {
 MMD_Complex: {
             return (INTVAL)(RE(SELF) == RE(value) && IM(SELF) == IM(value));
         }

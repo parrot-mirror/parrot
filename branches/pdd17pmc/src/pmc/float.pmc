@@ -255,7 +255,7 @@ The C<==> operation.
 
 */
 
-    INTVAL is_equal(PMC *value) {
+    VTABLE INTVAL is_equal(PMC *value) {
 MMD_Float: {
         return (INTVAL)(PMC_num_val(SELF) == PMC_num_val(value));
         }
@@ -264,7 +264,7 @@ MMD_DEFAULT: {
         }
     }
 
-    INTVAL is_equal_num(PMC *value) {
+    VTABLE INTVAL is_equal_num(PMC *value) {
 MMD_Float: {
         return (INTVAL)(PMC_num_val(SELF) == PMC_num_val(value));
         }
@@ -283,7 +283,7 @@ The C<cmp> operation.
 
 */
 
-    INTVAL cmp(PMC *value) {
+    VTABLE INTVAL cmp(PMC *value) {
 MMD_Float: {
             const FLOATVAL diff = PMC_num_val(SELF) - PMC_num_val(value);
             return diff > 0 ? 1 : diff < 0 ? -1 : 0;
@@ -305,7 +305,7 @@ Returns the result of comparing the number with C<*value>.
 
 */
 
-    INTVAL cmp_num(PMC *value) {
+    VTABLE INTVAL cmp_num(PMC *value) {
 MMD_Float: {
             const FLOATVAL diff = PMC_num_val(SELF) - PMC_num_val(value);
             return diff > 0 ? 1 : diff < 0 ? -1 : 0;

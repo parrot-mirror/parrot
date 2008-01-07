@@ -445,7 +445,7 @@ they match.
 =cut
 
 */
-    INTVAL is_equal(PMC *value) {
+    VTABLE INTVAL is_equal(PMC *value) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
         return (INTVAL)(0 == string_equal(INTERP, s, v));
@@ -462,7 +462,7 @@ C<value>; returns true if they match.
 
 */
 
-    INTVAL is_equal_num(PMC *value) {
+    VTABLE INTVAL is_equal_num(PMC *value) {
         const FLOATVAL sf = string_to_num(INTERP,
             VTABLE_get_string(INTERP, SELF));
         const FLOATVAL vf = VTABLE_get_number(INTERP, value);
@@ -479,7 +479,7 @@ Compares the string with C<value>; returns FALSE if they match.
 
 */
 
-    INTVAL is_equal_string(PMC *value) {
+    VTABLE INTVAL is_equal_string(PMC *value) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
         return string_equal(INTERP, s, v) == 0;
@@ -498,7 +498,7 @@ class and their strings are aliases of the same internal string.
 =cut
 
 */
-    INTVAL is_same(const PMC *value) {
+    VTABLE INTVAL is_same(const PMC *value) {
         const STRING * const s = VTABLE_get_string(INTERP, SELF);
         const STRING * const v = VTABLE_get_string(INTERP, value);
         return (INTVAL)(value->vtable == SELF->vtable && s == v);
@@ -515,7 +515,7 @@ is smaller.
 =cut
 
 */
-    INTVAL cmp(PMC *value) {
+    VTABLE INTVAL cmp(PMC *value) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
         return string_compare(INTERP, s, v);
@@ -532,7 +532,7 @@ are equal, and 1 if C<value> is smaller.
 =cut
 
 */
-    INTVAL cmp_num(PMC *value) {
+    VTABLE INTVAL cmp_num(PMC *value) {
         FLOATVAL sf = string_to_num(INTERP, VTABLE_get_string(INTERP, SELF));
         FLOATVAL vf = VTABLE_get_number(INTERP, value);
 
@@ -556,7 +556,7 @@ is smaller.
 =cut
 
 */
-    INTVAL cmp_string(PMC *value) {
+    VTABLE INTVAL cmp_string(PMC *value) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
         return string_compare(INTERP, s, v);

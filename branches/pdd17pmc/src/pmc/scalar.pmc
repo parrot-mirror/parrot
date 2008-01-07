@@ -1338,7 +1338,7 @@ and C<*value>.
 
 */
 
-    INTVAL cmp_num(PMC *value) {
+    VTABLE INTVAL cmp_num(PMC *value) {
         /* XXX - Floating-point precision errors possible? */
         FLOATVAL diff = VTABLE_get_number(INTERP, value) -
                         DYNSELF.get_number();
@@ -1357,7 +1357,7 @@ C<*value>.
 
 */
 
-    INTVAL cmp_string(PMC *value) {
+    VTABLE INTVAL cmp_string(PMC *value) {
         return string_compare(INTERP, DYNSELF.get_string(),
             VTABLE_get_string(INTERP, value));
     }
