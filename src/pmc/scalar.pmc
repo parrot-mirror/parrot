@@ -1231,7 +1231,7 @@ Concatenate the string C<value> in place.
 
 */
 
-    PMC *concatenate(PMC *value,  PMC *dest) {
+    VTABLE PMC *concatenate(PMC *value, PMC *dest) {
         STRING * const s = string_concat(INTERP, DYNSELF.get_string(),
             VTABLE_get_string(INTERP, value), 0);
 
@@ -1242,7 +1242,7 @@ Concatenate the string C<value> in place.
         return dest;
     }
 
-    PMC *concatenate_str(STRING *value,  PMC *dest) {
+    VTABLE PMC *concatenate_str(STRING *value, PMC *dest) {
         STRING * const s = string_concat(INTERP,
             DYNSELF.get_string(), value, 0);
 
@@ -1253,13 +1253,13 @@ Concatenate the string C<value> in place.
         return dest;
     }
 
-    void i_concatenate(PMC *value) {
+    VTABLE void i_concatenate(PMC *value) {
         STRING * const s = DYNSELF.get_string();
         STRING * const v = VTABLE_get_string(INTERP, value);
         DYNSELF.set_string_native(string_append(INTERP, s, v));
     }
 
-    void i_concatenate_str(STRING *value) {
+    VTABLE void i_concatenate_str(STRING *value) {
         STRING * const s = DYNSELF.get_string();
         DYNSELF.set_string_native(string_append(INTERP, s, value));
     }
@@ -1282,7 +1282,7 @@ Repeat the string C<SELF> in place C<value> times.
 
 */
 
-    PMC *repeat(PMC *value,  PMC *dest) {
+    VTABLE PMC *repeat(PMC *value, PMC *dest) {
         STRING * const s = DYNSELF.get_string();
         const UINTVAL  n = (UINTVAL)VTABLE_get_integer(INTERP, value);
 
@@ -1294,7 +1294,7 @@ Repeat the string C<SELF> in place C<value> times.
         return dest;
     }
 
-    PMC *repeat_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *repeat_int(INTVAL value, PMC *dest) {
         STRING * const s = DYNSELF.get_string();
         const UINTVAL  n = value;
 
@@ -1307,13 +1307,13 @@ Repeat the string C<SELF> in place C<value> times.
     }
 
 
-    void i_repeat(PMC *value) {
+    VTABLE void i_repeat(PMC *value) {
         STRING * const s = DYNSELF.get_string();
         const UINTVAL  n = (UINTVAL)VTABLE_get_integer(INTERP, value);
         DYNSELF.set_string_native(string_repeat(INTERP, s, n, NULL));
     }
 
-    void i_repeat_int(INTVAL value) {
+    VTABLE void i_repeat_int(INTVAL value) {
         STRING * const s = DYNSELF.get_string();
         const UINTVAL  n = value;
         DYNSELF.set_string_native(string_repeat(INTERP, s, n, NULL));
