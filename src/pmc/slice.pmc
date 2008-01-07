@@ -319,7 +319,7 @@ This is used for implementing Pythons xrange()
         return iter;
     }
 
-    PMC *get_iter() {
+    VTABLE PMC *get_iter() {
         PMC * const iter     = pmc_new_init(INTERP, enum_class_Iterator, SELF);
         PMC_struct_val(iter) = SELF;
         return iter;
@@ -360,7 +360,7 @@ advance to next position in the range, depending on what.
 =cut
 
 */
-    PMC *nextkey_keyed(PMC *agg, INTVAL what) {
+    VTABLE PMC *nextkey_keyed(PMC *agg, INTVAL what) {
         PMC *ret = SELF;
 
         switch (what) {

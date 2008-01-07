@@ -865,7 +865,7 @@ C<nextkey_keyed()> with it.
 
 */
 
-    PMC *nextkey_keyed_int(INTVAL key, INTVAL w) {
+    VTABLE PMC *nextkey_keyed_int(INTVAL key, INTVAL w) {
         PMC *const r_key = INT2KEY(INTERP, key);
         return DYNSELF.nextkey_keyed(r_key, w);
     }
