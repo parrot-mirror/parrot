@@ -230,7 +230,7 @@ Set C<dest> to the negated value of C<SELF>.
 
 */
 
-    PMC *neg(PMC *dest) {
+    VTABLE PMC *neg(PMC *dest) {
         const FLOATVAL a = -DYNSELF.get_number();
 
         if (!dest)
@@ -356,7 +356,7 @@ Sets C<dest> to the absolute value of SELF.
 
 */
 
-    PMC *absolute(PMC *dest) {
+    VTABLE PMC *absolute(PMC *dest) {
         const FLOATVAL a = fabs(DYNSELF.get_number());
 
         if (!dest)
