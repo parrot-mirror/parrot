@@ -625,7 +625,7 @@ Returns whether the hash is the same as C<*other>.
 
 */
 
-    INTVAL is_same(const PMC *other) {
+    VTABLE INTVAL is_same(const PMC *other) {
         return (INTVAL)(other->vtable == SELF->vtable &&
             PMC_struct_val(other) == PMC_struct_val(SELF));
     }
@@ -842,7 +842,7 @@ Check if two hashes hold the same keys and values.
 
 */
 
-    INTVAL is_equal(PMC *value) {
+    VTABLE INTVAL is_equal(PMC *value) {
         PMC * const iter = VTABLE_get_iter(INTERP, SELF);
         INTVAL      j, n;
 

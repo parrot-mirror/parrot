@@ -622,7 +622,7 @@ Returns whether the PMC is numerically equal to C<value>.
 
 */
 
-    INTVAL is_same(const PMC *value) {
+    VTABLE INTVAL is_same(const PMC *value) {
         return SELF == value;
     }
 
@@ -755,7 +755,7 @@ Returns whether the PMC is equal to C<*value>.
 
 */
 
-    INTVAL is_equal(PMC *value) {
+    VTABLE INTVAL is_equal(PMC *value) {
         return (SELF->vtable         == value->vtable
             &&  PMC_struct_val(SELF) == PMC_struct_val(value)
             &&  PMC_data(SELF)       == PMC_data(value));
@@ -771,7 +771,7 @@ Returns whether the PMC is numerically equal to C<*value>.
 
 */
 
-    INTVAL is_equal_num(PMC *value) {
+    VTABLE INTVAL is_equal_num(PMC *value) {
         return (VTABLE_get_number(INTERP, SELF) ==
                 VTABLE_get_number(INTERP, value));
     }
@@ -786,7 +786,7 @@ Returns whether the PMC is numerically equal to C<*value>.
 
 */
 
-    INTVAL is_equal_str(PMC *value) {
+    VTABLE INTVAL is_equal_str(PMC *value) {
         return (0 == string_equal(INTERP, VTABLE_get_string(INTERP, SELF),
                                           VTABLE_get_string(INTERP, value)));
     }

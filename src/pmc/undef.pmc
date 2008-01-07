@@ -248,7 +248,7 @@ Returns 1 if the C<*value> is an Undef PMC, 0 otherwise.
 
 */
 
-    INTVAL is_equal(PMC *value) {
+    VTABLE INTVAL is_equal(PMC *value) {
         MMD_Undef: {
             return 1;
         }
