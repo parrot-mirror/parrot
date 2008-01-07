@@ -1480,7 +1480,7 @@ C<offset>.
 
 */
 
-    STRING *substr_str(INTVAL offset, INTVAL length) {
+    VTABLE STRING *substr_str(INTVAL offset, INTVAL length) {
         return string_substr(INTERP, VTABLE_get_string(INTERP, SELF),
             offset, length, NULL, 0);
     }
