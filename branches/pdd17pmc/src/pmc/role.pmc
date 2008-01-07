@@ -350,7 +350,7 @@ conflicts.
 
 */
 
-    void add_role(PMC *role) {
+    VTABLE void add_role(PMC *role) {
         Parrot_Role *this_role = PARROT_ROLE(SELF);
 
         /* Do the composition. */

@@ -758,7 +758,7 @@ Adds the supplied PMC to the list of parents for the class.
 =cut
 
 */
-    void add_parent(PMC *parent) {
+    VTABLE void add_parent(PMC *parent) {
         Parrot_Class * const _class = PARROT_CLASS(SELF);
         /* get name of the parent being added */
         STRING *parent_name  = VTABLE_get_string(interp, parent);
@@ -821,7 +821,7 @@ no conflicts.
 =cut
 
 */
-    void add_role(PMC *role) {
+    VTABLE void add_role(PMC *role) {
         Parrot_Class * const _class = PARROT_CLASS(SELF);
 
         /* Do the composition. */
