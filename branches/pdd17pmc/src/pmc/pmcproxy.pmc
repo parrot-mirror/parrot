@@ -224,7 +224,7 @@ Returns whether the class is or inherits from C<*classname>.
 
 */
 
-    INTVAL isa_pmc(PMC *lookup) {
+    VTABLE INTVAL isa_pmc(PMC *lookup) {
         Parrot_Class * const _proxy = PARROT_CLASS(SELF);
         INTVAL        i, num_classes;
         STRING       *classname;

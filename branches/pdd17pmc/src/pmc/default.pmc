@@ -882,7 +882,7 @@ true (1) is returned; otherwise, false (0) is returned.
 
 */
 
-    INTVAL can(STRING *method) {
+    VTABLE INTVAL can(STRING *method) {
         return !PMC_IS_NULL(VTABLE_find_method(INTERP, SELF, method));
     }
 
@@ -898,7 +898,7 @@ true (1) is returned; otherwise, false (0) is returned.
 
 */
 
-    INTVAL does(STRING *_interface) {
+    VTABLE INTVAL does(STRING *_interface) {
         return does_isa(INTERP, _interface, SELF->vtable->does_str);
     }
 
@@ -914,7 +914,7 @@ true (1) is returned; otherwise, false (0) is returned.
 
 */
 
-    INTVAL isa_pmc(PMC *lookup) {
+    VTABLE INTVAL isa_pmc(PMC *lookup) {
         /* RT#46665 - walk mro */
         return does_isa(INTERP, VTABLE_get_string(INTERP, lookup),
                 SELF->vtable->isa_str);
@@ -932,7 +932,7 @@ true (1) is returned; otherwise, false (0) is returned.
 
 */
 
-    INTVAL isa(STRING *_class) {
+    VTABLE INTVAL isa(STRING *_class) {
         /* RT#46665 - walk mro */
         return does_isa(INTERP, _class, SELF->vtable->isa_str);
     }
