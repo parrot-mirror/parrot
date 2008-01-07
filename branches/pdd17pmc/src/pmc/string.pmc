@@ -417,7 +417,7 @@ strings in place.
         DYNSELF.set_string_native(string_bitwise_xor(INTERP, s, value, &s));
     }
 
-    PMC *bitwise_nots(PMC *dest) {
+    VTABLE PMC *bitwise_nots(PMC *dest) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
 
         if (!dest)
@@ -429,7 +429,7 @@ strings in place.
         return dest;
     }
 
-    void i_bitwise_nots() {
+    VTABLE void i_bitwise_nots() {
         STRING *s = VTABLE_get_string(INTERP, SELF);
         VTABLE_set_string_native(
             INTERP, SELF, string_bitwise_not(INTERP, s, &s));
