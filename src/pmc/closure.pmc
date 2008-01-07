@@ -86,7 +86,7 @@ Invokes the closure.
         sub->start_offs  = addr -  sub->seg->base.data;
     }
 
-    opcode_t *invoke(void *in_next) {
+    VTABLE opcode_t *invoke(void *in_next) {
         Parrot_sub *sub       = PMC_sub(SELF);
         opcode_t   *next      = SUPER(in_next);
         PMC        *outer_sub = sub->outer_sub;

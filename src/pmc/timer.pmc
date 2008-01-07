@@ -318,7 +318,7 @@ Adds the timer to the event queue.
 
 */
 
-    opcode_t *invoke(void *next) {
+    VTABLE opcode_t *invoke(void *next) {
         Parrot_cx_schedule_task(INTERP, SELF);
         return (opcode_t *)next;
     }

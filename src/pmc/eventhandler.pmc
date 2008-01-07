@@ -255,7 +255,7 @@ Runs the contained code, if any; this is what handles the event.
 =cut
 
 */
-    opcode_t *invoke(void *next) {
+    VTABLE opcode_t *invoke(void *next) {
         Parrot_EventHandler *e = PMC_data_typed(SELF, Parrot_EventHandler *);
         void                *unused;
 

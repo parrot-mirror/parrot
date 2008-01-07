@@ -119,7 +119,7 @@ Swaps the "context".
 
 */
 
-    opcode_t *invoke(void *next) {
+    VTABLE opcode_t *invoke(void *next) {
         parrot_context_t   *caller_ctx;
         PackFile_ByteCode  *wanted_seg;
         struct Stack_Chunk *state;

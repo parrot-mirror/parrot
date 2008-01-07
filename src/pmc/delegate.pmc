@@ -147,7 +147,7 @@ Invokes a subroutine.
 
 */
 
-    opcode_t *invoke(void *next) {
+    VTABLE opcode_t *invoke(void *next) {
         STRING * const meth     = CONST_STRING(interp, "invoke");
         PMC    * const classobj = Parrot_oo_get_class_str(interp, VTABLE_name(interp, SELF));
         PMC    * const sub      = Parrot_oo_find_vtable_override(interp, classobj, meth);

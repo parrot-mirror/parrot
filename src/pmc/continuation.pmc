@@ -224,7 +224,7 @@ destination to continue execution.
 
 */
 
-    opcode_t *invoke(void *next) {
+    VTABLE opcode_t *invoke(void *next) {
         Parrot_cont      *cc           = PMC_cont(SELF);
         Stack_Chunk_t    *stack_target = cc->dynamic_state;
         int               stack_delta  = 0;

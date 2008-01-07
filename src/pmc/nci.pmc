@@ -188,7 +188,7 @@ shifted down.
 
 */
 
-    opcode_t *invoke(void *next) {
+    VTABLE opcode_t *invoke(void *next) {
         Parrot_NCI * const nci_info = PARROT_NCI(SELF);
 
         typedef INTVAL (*nci_sub_t)(PARROT_INTERP, PMC *);

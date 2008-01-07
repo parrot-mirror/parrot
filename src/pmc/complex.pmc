@@ -313,7 +313,7 @@ C<complex> object according to 2.1. Built-in Functions.
 =cut
 
 */
-    opcode_t *invoke(void *next) {
+    VTABLE opcode_t *invoke(void *next) {
         const int   argcP = REG_INT(interp, 3);
         PMC * const res   = pmc_new(INTERP, enum_class_Complex);
 

@@ -137,7 +137,7 @@ Invokes the first subroutine in the eval code.
 
 */
 
-    opcode_t *invoke(void *next) {
+    VTABLE opcode_t *invoke(void *next) {
         PMC *sub = SELF.get_pmc_keyed_int(0);
         return VTABLE_invoke(INTERP, sub, next);
     }
