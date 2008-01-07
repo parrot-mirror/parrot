@@ -303,7 +303,7 @@ Runs the interpreter's byte code.
 
 */
 
-    opcode_t *invoke(void *next) {
+    VTABLE opcode_t *invoke(void *next) {
         Interp * const new_interp = PMC_data_typed(SELF, Interp *);
 
         /* setup code */

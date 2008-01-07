@@ -468,7 +468,7 @@ See F<docs/pdds/pdd03_calling_conventions.pod>.
 =cut
 
 */
-    opcode_t *invoke(void *next) {
+    VTABLE opcode_t *invoke(void *next) {
         PMC *agg;
 
         /* iterator constructor */

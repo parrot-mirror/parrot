@@ -196,7 +196,7 @@ Invokes the subroutine.
 
 */
 
-    opcode_t *invoke(void *next) {
+    VTABLE opcode_t *invoke(void *next) {
         Parrot_sub     * const sub = PMC_sub(SELF);
         Parrot_Context        *caller_ctx;
         Parrot_Context        *context;
