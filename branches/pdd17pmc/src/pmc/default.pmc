@@ -1064,7 +1064,7 @@ Used by DOD to mark the PMC.
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         /* default - mark prop hash */
         if (SELF->pmc_ext && PMC_metadata(SELF) &&
             info->extra_flags != EXTRA_IS_PROP_HASH) {
@@ -1103,7 +1103,7 @@ Initializes the PMC during unarchiving.
 
 */
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         /* default - initialize the PMC */
         if (info->extra_flags == EXTRA_IS_PROP_HASH) {
             if (!SELF->pmc_ext)

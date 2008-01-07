@@ -576,7 +576,7 @@ preserve key/value order.
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         info->container  = SELF;
 
         switch (info->what) {

@@ -193,7 +193,7 @@ Set this PMC as shared.
 
 */
 
-    PMC *share_ro() {
+    VTABLE PMC *share_ro() {
         PMC *shared_self;
         Parrot_Scheduler *shared_struct;
 
@@ -265,7 +265,7 @@ C<*info> is the visit info, (see F<include/parrot/pmc_freeze.h>).
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         Parrot_Scheduler * const core_struct = PARROT_SCHEDULER(SELF);
         PMC **pos;
 
@@ -311,7 +311,7 @@ Used to unarchive the scheduler.
 
 */
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
 
         /* 1. thaw scheduler id */

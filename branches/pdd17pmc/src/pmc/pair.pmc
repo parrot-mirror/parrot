@@ -220,7 +220,7 @@ Used to unarchive the Pair.
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
         PMC **pos;
 
@@ -252,7 +252,7 @@ Used to unarchive the Pair.
             VTABLE_push_string(INTERP, io, (STRING *)PMC_struct_val(SELF));
     }
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
 
         SUPER(info);

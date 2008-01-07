@@ -1494,7 +1494,7 @@ Sets this PMC as shared and read-only.
 =cut
 
 */
-    PMC *share_ro() {
+    VTABLE PMC *share_ro() {
         PMC         *ret  = pt_shared_fixup(INTERP, SELF);
         PMC * const _true = pmc_new(INTERP, enum_class_Integer);
 

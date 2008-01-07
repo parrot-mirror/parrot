@@ -108,7 +108,7 @@ The implementation of the Hash PMC is called.
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         Parrot_Hash_visit(INTERP, SELF, info);
     }
 
@@ -116,7 +116,7 @@ The implementation of the Hash PMC is called.
         Parrot_Hash_freeze(INTERP, SELF, info);
     }
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
 
         if (info->extra_flags == EXTRA_IS_NULL) {

@@ -774,7 +774,7 @@ Used to unarchive the array.
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         INTVAL  i;
         const INTVAL n = VTABLE_elements(INTERP, SELF);
         PMC   **pos    = (PMC **)PMC_data(SELF);
@@ -793,7 +793,7 @@ Used to unarchive the array.
         VTABLE_push_integer(INTERP, io, VTABLE_elements(INTERP, SELF));
     }
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
         SUPER(info);
         if (info->extra_flags == EXTRA_IS_NULL)

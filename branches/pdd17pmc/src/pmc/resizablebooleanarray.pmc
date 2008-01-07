@@ -365,7 +365,7 @@ Used to unarchive the string.
 =cut
 
 */
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         IMAGE_IO * const io      = info->image_io;
         const INTVAL     headPos = VTABLE_shift_integer(INTERP, io);
         const INTVAL     tailPos = VTABLE_shift_integer(INTERP, io);

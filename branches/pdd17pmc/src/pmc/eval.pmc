@@ -317,7 +317,7 @@ Unarchives the code.
         SUPER(info);
     }
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         IMAGE_IO         *io     = info->image_io;
         STRING           *packed = VTABLE_shift_string(INTERP, io);
         PackFile         *pf;

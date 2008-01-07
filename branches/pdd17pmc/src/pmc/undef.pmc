@@ -203,7 +203,7 @@ Unknown. (TODO)
 
 */
 
-    void share() {
+    VTABLE void share() {
         /* see src/pmc/integer.pmc */
     }
 
@@ -217,7 +217,7 @@ Unknown. (TODO)
 
 */
 
-    PMC *share_ro() {
+    VTABLE PMC *share_ro() {
         if (PObj_is_PMC_shared_TEST(SELF))
             return SELF;
         else

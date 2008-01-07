@@ -1230,7 +1230,7 @@ C<*info> is the visit info, (see F<include/parrot/pmc_freeze.h>).
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         list_visit(INTERP, (List *)PMC_data(SELF), info);
         SUPER(info);
     }
@@ -1261,7 +1261,7 @@ Used to unarchive the array.
 
 */
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
 
         SUPER(info);
@@ -1279,7 +1279,7 @@ Recursively make the array read-only and shared.
 =cut
 
 */
-    PMC *share_ro() {
+    VTABLE PMC *share_ro() {
         PMC *_true, *ret;
 
         /* prevent infinite recursion */

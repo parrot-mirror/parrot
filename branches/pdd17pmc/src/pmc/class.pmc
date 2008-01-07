@@ -1251,7 +1251,7 @@ C<*info> is the visit info, (see F<include/parrot/pmc_freeze.h>).
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         Parrot_Class * const class_data = PARROT_CLASS(SELF);
         PMC **pos;
 
@@ -1328,7 +1328,7 @@ Used to unarchive the class.
 
 */
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         /* The class might already exist in the interpreter, so create it as an
          * anonymous class and later decide whether to link it into the
          * namespace.

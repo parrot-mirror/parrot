@@ -493,7 +493,7 @@ Used to unarchive the string.
 =cut
 
 */
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         IMAGE_IO *io = info->image_io;
         SUPER(info);
 
