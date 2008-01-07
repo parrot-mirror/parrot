@@ -1101,21 +1101,21 @@ than zero).
 
 */
 
-    PMC *bitwise_shr(PMC *value, PMC *dest) {
+    VTABLE PMC *bitwise_shr(PMC *value, PMC *dest) {
         return bitwise_left_shift_internal(INTERP, SELF, dest,
                                            -VTABLE_get_integer(INTERP, value));
     }
 
-    PMC *bitwise_shr_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *bitwise_shr_int(INTVAL value, PMC *dest) {
         return bitwise_left_shift_internal(INTERP, SELF, dest, -value);
     }
 
-    void i_bitwise_shr(PMC *value) {
+    VTABLE void i_bitwise_shr(PMC *value) {
         bitwise_left_shift_internal(INTERP, SELF, SELF,
                                     -VTABLE_get_integer(INTERP, value));
     }
 
-    void i_bitwise_shr_int(INTVAL value) {
+    VTABLE void i_bitwise_shr_int(INTVAL value) {
         bitwise_left_shift_internal(INTERP, SELF, SELF, -value);
     }
 
@@ -1137,7 +1137,7 @@ Inplace shift right.
 
 */
 
-    PMC *bitwise_lsr(PMC *value, PMC *dest) {
+    VTABLE PMC *bitwise_lsr(PMC *value, PMC *dest) {
         const INTVAL result = (UINTVAL)DYNSELF.get_integer() >>
             VTABLE_get_integer(INTERP, value);
 
@@ -1148,7 +1148,7 @@ Inplace shift right.
         return dest;
     }
 
-    PMC *bitwise_lsr_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *bitwise_lsr_int(INTVAL value, PMC *dest) {
         const INTVAL result = (UINTVAL)DYNSELF.get_integer() >> value;
 
         if (!dest)
@@ -1158,13 +1158,13 @@ Inplace shift right.
         return dest;
     }
 
-    void i_bitwise_lsr(PMC *value) {
+    VTABLE void i_bitwise_lsr(PMC *value) {
         const INTVAL result = (UINTVAL)DYNSELF.get_integer() >>
                 VTABLE_get_integer(INTERP, value);
         DYNSELF.set_integer_native(result);
     }
 
-    void i_bitwise_lsr_int(INTVAL value) {
+    VTABLE void i_bitwise_lsr_int(INTVAL value) {
         const INTVAL result = (UINTVAL)DYNSELF.get_integer() >> value;
         DYNSELF.set_integer_native(result);
     }
@@ -1189,21 +1189,21 @@ C<BigInt> as a result.
 
 */
 
-    PMC *bitwise_shl(PMC *value, PMC *dest) {
+    VTABLE PMC *bitwise_shl(PMC *value, PMC *dest) {
         return bitwise_left_shift_internal(INTERP, SELF, dest,
                                            VTABLE_get_integer(INTERP, value));
     }
 
-    PMC *bitwise_shl_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *bitwise_shl_int(INTVAL value, PMC *dest) {
         return bitwise_left_shift_internal(INTERP, SELF, dest, value);
     }
 
-    void i_bitwise_shl(PMC *value) {
+    VTABLE void i_bitwise_shl(PMC *value) {
         bitwise_left_shift_internal(INTERP, SELF, SELF,
                                     VTABLE_get_integer(INTERP, value));
     }
 
-    void i_bitwise_shl_int(INTVAL value) {
+    VTABLE void i_bitwise_shl_int(INTVAL value) {
         bitwise_left_shift_internal(INTERP, SELF, SELF, value);
     }
 

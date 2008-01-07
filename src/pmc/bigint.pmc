@@ -1170,7 +1170,7 @@ Inplace shift left.
 
 */
 
-    PMC *bitwise_shl(PMC *value, PMC *dest) {
+    VTABLE PMC *bitwise_shl(PMC *value, PMC *dest) {
 MMD_BigInt: {
             if (dest)
                 VTABLE_morph(interp, dest, SELF->vtable->base_type);
@@ -1197,7 +1197,7 @@ MMD_DEFAULT: {
          }
     }
 
-    PMC *bitwise_shl_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *bitwise_shl_int(INTVAL value, PMC *dest) {
         if (dest)
             VTABLE_morph(interp, dest, SELF->vtable->base_type);
         else
@@ -1208,7 +1208,7 @@ MMD_DEFAULT: {
     }
 
 
-    void i_bitwise_shl(PMC *value) {
+    VTABLE void i_bitwise_shl(PMC *value) {
 MMD_BigInt: {
             bigint_bitwise_shl_bigint_int(INTERP, SELF,
                                           VTABLE_get_integer(INTERP, value),
@@ -1223,7 +1223,7 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_bitwise_shl_int(INTVAL value) {
+    VTABLE void i_bitwise_shl_int(INTVAL value) {
         bigint_bitwise_shl_bigint_int(INTERP, SELF, value, SELF);
     }
 
@@ -1245,7 +1245,7 @@ Inplace shift left.
 
 */
 
-    PMC *bitwise_shr(PMC *value, PMC *dest) {
+    VTABLE PMC *bitwise_shr(PMC *value, PMC *dest) {
 MMD_BigInt: {
             if (dest)
                 VTABLE_morph(interp, dest, SELF->vtable->base_type);
@@ -1272,7 +1272,7 @@ MMD_DEFAULT: {
          }
     }
 
-    PMC *bitwise_shr_int(INTVAL value, PMC *dest) {
+    VTABLE PMC *bitwise_shr_int(INTVAL value, PMC *dest) {
         if (dest)
             VTABLE_morph(interp, dest, SELF->vtable->base_type);
         else
@@ -1283,7 +1283,7 @@ MMD_DEFAULT: {
     }
 
 
-    void i_bitwise_shr(PMC *value) {
+    VTABLE void i_bitwise_shr(PMC *value) {
 MMD_BigInt: {
             bigint_bitwise_shr_bigint_int(INTERP, SELF,
                                           VTABLE_get_integer(INTERP, value),
@@ -1298,7 +1298,7 @@ MMD_DEFAULT: {
         }
     }
 
-    void i_bitwise_shr_int(INTVAL value) {
+    VTABLE void i_bitwise_shr_int(INTVAL value) {
         bigint_bitwise_shr_bigint_int(INTERP, SELF, value, SELF);
     }
 }
