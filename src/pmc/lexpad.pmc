@@ -90,13 +90,13 @@ Return the LexInfo PMC, if any or a Null PMC.
         return parrot_hash_size(INTERP, (Hash *)PMC_struct_val(info));
     }
 
-    INTVAL exists_keyed_str(STRING *name) {
+    VTABLE INTVAL exists_keyed_str(STRING *name) {
         PMC * const info = PMC_pmc_val(SELF);
         return parrot_hash_get_bucket(INTERP,
             (Hash *)PMC_struct_val(info), name) != 0;
     }
 
-    INTVAL exists_keyed(PMC *name) {
+    VTABLE INTVAL exists_keyed(PMC *name) {
         STRING * const s = key_string(INTERP, name);
         return SELF.exists_keyed_str(s);
     }

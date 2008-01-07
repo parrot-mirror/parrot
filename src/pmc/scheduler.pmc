@@ -176,7 +176,7 @@ Removes the task with the given task ID from the task list.
 
 */
 
-    void delete_keyed_int(INTVAL key) {
+    VTABLE void delete_keyed_int(INTVAL key) {
         Parrot_Scheduler * core_struct = PARROT_SCHEDULER(SELF);
         STRING *task_id_str = string_from_int(INTERP, key);
         VTABLE_delete_keyed_str(INTERP, core_struct->task_list, task_id_str);

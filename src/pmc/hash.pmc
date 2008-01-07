@@ -882,7 +882,7 @@ Check if two hashes hold the same keys and values.
 
 */
 
-    INTVAL exists_keyed_str(STRING *key) {
+    VTABLE INTVAL exists_keyed_str(STRING *key) {
         HashBucket * const b =
             parrot_hash_get_bucket(INTERP, (Hash *)PMC_struct_val(SELF), key);
         return b != NULL;
@@ -898,7 +898,7 @@ Returns whether a key C<*key> exists in the hash.
 
 */
 
-    INTVAL exists_keyed(PMC *key) {
+    VTABLE INTVAL exists_keyed(PMC *key) {
         Hash   * const h  = (Hash *)PMC_struct_val(SELF);
         STRING * const sx = key_string(INTERP, key);
         HashBucket    *b;
@@ -925,7 +925,7 @@ Returns whether a key C<*key> exists in the hash.
 
 */
 
-    INTVAL defined_keyed_str(STRING *key) {
+    VTABLE INTVAL defined_keyed_str(STRING *key) {
         HashBucket * const b =
             parrot_hash_get_bucket(INTERP, (Hash*) PMC_struct_val(SELF), key);
 
@@ -946,7 +946,7 @@ Returns whether the value for C<*key> is defined.
 
 */
 
-    INTVAL defined_keyed(PMC *key) {
+    VTABLE INTVAL defined_keyed(PMC *key) {
         Hash   * const h  = (Hash *)PMC_struct_val(SELF);
         STRING * const sx = key_string(INTERP, key);
         HashBucket    *b;
@@ -972,7 +972,7 @@ Returns whether the value for C<*key> is defined.
 
 */
 
-    void delete_keyed_str(STRING *key) {
+    VTABLE void delete_keyed_str(STRING *key) {
         parrot_hash_delete(INTERP, (Hash *)PMC_struct_val(SELF), key);
     }
 
@@ -986,7 +986,7 @@ Deletes the element associated with C<*key>.
 
 */
 
-    void delete_keyed(PMC *key) {
+    VTABLE void delete_keyed(PMC *key) {
         Hash   * const h  = (Hash *)PMC_struct_val(SELF);
         STRING * const sx = key_string(INTERP, key);
         HashBucket    *b;

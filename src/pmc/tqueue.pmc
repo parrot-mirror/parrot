@@ -134,7 +134,7 @@ Returns whether there are any threads in the queue.
 
 */
 
-    INTVAL defined() {
+    VTABLE INTVAL defined() {
         return SELF.get_integer() != 0;
     }
 

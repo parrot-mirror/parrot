@@ -103,7 +103,7 @@ Returns the name of the PMC, not the name of the referenced PMC.
         return SUPER();
     }
 
-    INTVAL defined() {
+    VTABLE INTVAL defined() {
         Parrot_STM_PMC_handle  handle = PMC_STM_handle(pmc);
         PMC                   *value  = Parrot_STM_read(INTERP, handle);
 

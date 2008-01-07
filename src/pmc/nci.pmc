@@ -171,7 +171,7 @@ Returns whether the NCI is defined.
 
 */
 
-    INTVAL defined() {
+    VTABLE INTVAL defined() {
         Parrot_NCI * const nci_info = PARROT_NCI(SELF);
         return nci_info->func != NULL;
     }

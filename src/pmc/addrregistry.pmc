@@ -143,7 +143,7 @@ reaches 0, delete the entry.
         parrot_hash_put(INTERP, hash, key, (void *)value);
     }
 
-    void delete_keyed(PMC *key) {
+    VTABLE void delete_keyed(PMC *key) {
         Hash       * const hash = (Hash *)PMC_struct_val(SELF);
         HashBucket * const b    = parrot_hash_get_bucket(INTERP, hash, key);
 

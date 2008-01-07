@@ -739,7 +739,7 @@ Returns TRUE is the element at C<key> exists; otherwise returns false.
 =cut
 
 */
-    INTVAL exists_keyed_int(INTVAL key) {
+    VTABLE INTVAL exists_keyed_int(INTVAL key) {
         PMC **data;
         if (key < 0 || key >= PMC_int_val(SELF))
             real_exception(INTERP, NULL, E_IndexError,
@@ -749,7 +749,7 @@ Returns TRUE is the element at C<key> exists; otherwise returns false.
         return !PMC_IS_NULL(data[key]);
     }
 
-    INTVAL exists_keyed(PMC *key) {
+    VTABLE INTVAL exists_keyed(PMC *key) {
         INTVAL ix = key_integer(INTERP, key);
         return SELF.exists_keyed_int(ix);
     }
@@ -810,7 +810,7 @@ Returns TRUE is the element at C<key> is defined; otherwise returns false.
 
 */
 
-    INTVAL defined_keyed_int(INTVAL key) {
+    VTABLE INTVAL defined_keyed_int(INTVAL key) {
         PMC * const val = DYNSELF.get_pmc_keyed_int(key);
 
         if (PMC_IS_NULL(val))

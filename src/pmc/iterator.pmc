@@ -584,7 +584,7 @@ Returns whether an element for C<*key> exists in the aggregate.
 
 */
 
-    INTVAL exists_keyed(PMC *key) {
+    VTABLE INTVAL exists_keyed(PMC *key) {
         return VTABLE_exists_keyed(INTERP, (PMC *)PMC_pmc_val(SELF), key);
     }
 
@@ -598,7 +598,7 @@ Returns whether an element for C<idx> exists in the aggregate.
 
 */
 
-    INTVAL exists_keyed_int(INTVAL idx) {
+    VTABLE INTVAL exists_keyed_int(INTVAL idx) {
         PMC * const key = (PMC *)PMC_struct_val(SELF);
         PMC * const agg = (PMC *)PMC_pmc_val(SELF);
         return VTABLE_exists_keyed_int(INTERP, agg, PMC_int_val(key) + idx);
@@ -614,7 +614,7 @@ Returns whether the iterator contains an aggregate.
 
 */
 
-    INTVAL defined() {
+    VTABLE INTVAL defined() {
         return (INTVAL)(PMC_pmc_val(SELF) != 0);
     }
 
@@ -626,7 +626,7 @@ Returns whether the iterator contains an aggregate.
 
 */
 
-    INTVAL defined_keyed(PMC *key) {
+    VTABLE INTVAL defined_keyed(PMC *key) {
         return VTABLE_defined_keyed(INTERP, (PMC *)PMC_pmc_val(SELF), key);
     }
 
@@ -640,7 +640,7 @@ Returns the result of calling C<defined_keyed(key)> on the aggregate.
 
 */
 
-    INTVAL defined_keyed_int(INTVAL idx) {
+    VTABLE INTVAL defined_keyed_int(INTVAL idx) {
         PMC * const key = (PMC *)PMC_struct_val(SELF);
         PMC * const agg = (PMC *)PMC_pmc_val(SELF);
         return VTABLE_defined_keyed_int(INTERP, agg, PMC_int_val(key) + idx);

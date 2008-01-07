@@ -1027,7 +1027,7 @@ Returns TRUE is the element at C<key> is defined; otherwise returns false.
 
 */
 
-    INTVAL defined_keyed_int(INTVAL key) {
+    VTABLE INTVAL defined_keyed_int(INTVAL key) {
         PMC  *value;
         void * const ret =
             list_get(INTERP, (List *)PMC_data(pmc), key, enum_type_PMC);
@@ -1053,7 +1053,7 @@ Returns TRUE is the element at C<key> is defined; otherwise returns false.
 
 */
 
-    INTVAL defined_keyed(PMC *key) {
+    VTABLE INTVAL defined_keyed(PMC *key) {
         PMC *box;
 
         const INTVAL ix      = key_integer(INTERP, key);
@@ -1080,7 +1080,7 @@ Returns TRUE is the element at C<key> exists; otherwise returns false.
 
 */
 
-    INTVAL exists_keyed_int(INTVAL key) {
+    VTABLE INTVAL exists_keyed_int(INTVAL key) {
         void * ret = list_get(INTERP,
             (List *)PMC_data(pmc), key, enum_type_PMC);
 
@@ -1100,7 +1100,7 @@ Returns TRUE is the element at C<key> exists; otherwise returns false.
 
 */
 
-    INTVAL exists_keyed(PMC *key) {
+    VTABLE INTVAL exists_keyed(PMC *key) {
         PMC *box;
 
         const INTVAL ix      = key_integer(INTERP, key);
@@ -1127,7 +1127,7 @@ Removes the element at C<key>.
 
 */
 
-    void delete_keyed_int(INTVAL key) {
+    VTABLE void delete_keyed_int(INTVAL key) {
         list_splice(INTERP, (List *)PMC_data(pmc), NULL, key, 1);
     }
 
@@ -1141,7 +1141,7 @@ Removes the element at C<*key>.
 
 */
 
-    void delete_keyed(PMC *key) {
+    VTABLE void delete_keyed(PMC *key) {
         const INTVAL ix = key_integer(INTERP, key);
         list_splice(INTERP, (List *)PMC_data(pmc), NULL, ix, 1);
     }
