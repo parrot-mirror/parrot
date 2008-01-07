@@ -572,7 +572,7 @@ C<length>, and places it in C<dest>.
 =cut
 
 */
-    void substr(INTVAL offset, INTVAL length, PMC *dest) {
+    VTABLE void substr(INTVAL offset, INTVAL length, PMC *dest) {
         STRING * const s  = VTABLE_get_string(INTERP, SELF);
         STRING * const s2 = string_substr(INTERP, s, offset, length, NULL, 0);
         VTABLE_set_string_native(INTERP, dest, s2);
@@ -588,7 +588,7 @@ C<length>, and returns it.
 =cut
 
 */
-    STRING *substr_str(INTVAL offset, INTVAL length) {
+    VTABLE STRING *substr_str(INTVAL offset, INTVAL length) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
         return string_substr(INTERP, s, offset, length, NULL, 0);
     }
