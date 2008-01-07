@@ -108,7 +108,7 @@ Mark data associated with this transactional variable.
         Parrot_freeze_STM_PMC_handle(INTERP, io, PMC_STM_handle(SELF));
     }
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
 
         SUPER(info);
@@ -123,7 +123,7 @@ Mark data associated with this transactional variable.
        ways -- we are always a reference to the same transactional
        variable.
      */
-    PMC *share_ro() {
+    VTABLE PMC *share_ro() {
         return pt_shared_fixup(INTERP, SELF);
     }
 }

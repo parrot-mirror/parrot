@@ -85,7 +85,7 @@ We already share, so just ignore.
 
 */
 
-    void share() {
+    VTABLE void share() {
     }
 
 /*

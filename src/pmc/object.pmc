@@ -515,7 +515,7 @@ C<*info> is the visit info, (see F<include/parrot/pmc_freeze.h>).
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         Parrot_Object * const obj_data = PARROT_OBJECT(SELF);
         PMC **pos;
 
@@ -558,7 +558,7 @@ Used to unarchive the object.
 
 */
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         if (info->extra_flags == EXTRA_IS_PROP_HASH) {
             SUPER(info);
         }
@@ -598,7 +598,7 @@ Used to mark a PMC as read-only shared.
 =cut
 
 */
-    PMC *share_ro() {
+    VTABLE PMC *share_ro() {
         PMC   *ret, *_true, *data;
         INTVAL i, n;
         PMC *classobj;

@@ -374,7 +374,7 @@ Called after the Key has been thawed: convert last PMC_NULL key to NULL.
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         /*
          * at end a PMCNULL is written during thaw,
          * which should stop visiting the key

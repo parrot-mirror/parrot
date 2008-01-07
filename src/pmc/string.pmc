@@ -821,7 +821,7 @@ Used to unarchive the string.
 =cut
 
 */
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
         SUPER(info);
         if (info->extra_flags == EXTRA_IS_NULL)
@@ -958,7 +958,7 @@ Checks if the ascii STRING C<str> is just an integer.
             return (INTVAL)(0);
     }
 
-    PMC *share_ro() {
+    VTABLE PMC *share_ro() {
         PMC *ret = SUPER();
 
         /* prevent wrong garbage collection */

@@ -567,7 +567,7 @@ Finish thawing.
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         PMC **pos;
         /*
          * the information frozen here is part of all PBCs
@@ -603,7 +603,7 @@ Finish thawing.
         (info->visit_pmc_now)(INTERP, *pos, info);
     }
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         if (info->extra_flags == EXTRA_IS_PROP_HASH) {
             SUPER(info);
         }

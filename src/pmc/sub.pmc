@@ -429,7 +429,7 @@ Archives the subroutine.
 
 */
 
-    void visit(visit_info *info) {
+    VTABLE void visit(visit_info *info) {
         Parrot_sub * const sub = PMC_sub(SELF);
 
         info->thaw_ptr = &sub->namespace_name;
@@ -506,7 +506,7 @@ Unarchives the subroutine.
 
 */
 
-    void thaw(visit_info *info) {
+    VTABLE void thaw(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
         SUPER(info);
 
