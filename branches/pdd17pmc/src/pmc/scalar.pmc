@@ -1465,7 +1465,7 @@ Always returns true.
 
 */
 
-    INTVAL defined() {
+    VTABLE INTVAL defined() {
         return 1;
     }
 

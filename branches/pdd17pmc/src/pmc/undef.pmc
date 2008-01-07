@@ -102,7 +102,7 @@ Returns 0.
 
 */
 
-    INTVAL defined() {
+    VTABLE INTVAL defined() {
         return 0;
     }
 

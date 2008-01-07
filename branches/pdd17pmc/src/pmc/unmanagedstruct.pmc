@@ -740,7 +740,7 @@ Returns whether the C<struct> is defined.
 
 */
 
-    INTVAL defined() {
+    VTABLE INTVAL defined() {
         return PMC_data(SELF) != NULL;
     }
 

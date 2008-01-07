@@ -804,7 +804,7 @@ C<exists_keyed()> with it.
 
 */
 
-    INTVAL exists_keyed_int(INTVAL key) {
+    VTABLE INTVAL exists_keyed_int(INTVAL key) {
         PMC *const r_key = INT2KEY(INTERP, key);
         return DYNSELF.exists_keyed(r_key);
     }
@@ -819,7 +819,7 @@ Returns true.
 
 */
 
-    INTVAL defined() {
+    VTABLE INTVAL defined() {
         return 1;
     }
 
@@ -834,7 +834,7 @@ C<defined_keyed()> with it.
 
 */
 
-    INTVAL defined_keyed_int(INTVAL key) {
+    VTABLE INTVAL defined_keyed_int(INTVAL key) {
         PMC *const r_key = INT2KEY(INTERP, key);
         return DYNSELF.defined_keyed(r_key);
     }
@@ -849,7 +849,7 @@ Converts C<key> to a PMC key and calls C<delete_keyed()> with it.
 
 */
 
-    void delete_keyed_int(INTVAL key) {
+    VTABLE void delete_keyed_int(INTVAL key) {
         PMC *const r_key = INT2KEY(INTERP, key);
         DYNSELF.delete_keyed(r_key);
     }

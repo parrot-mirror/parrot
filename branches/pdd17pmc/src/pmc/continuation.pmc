@@ -205,7 +205,7 @@ Returns whether the subroutine is defined.
 
 */
 
-    INTVAL defined() {
+    VTABLE INTVAL defined() {
         return PMC_cont(SELF)->address != NULL;
     }
 

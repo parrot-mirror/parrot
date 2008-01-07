@@ -345,7 +345,7 @@ The created key = "\1idx".
 
 */
 
-    INTVAL exists_keyed_int(INTVAL idx) {
+    VTABLE INTVAL exists_keyed_int(INTVAL idx) {
         Hash * const h = (Hash *)PMC_struct_val(SELF);
         const INTVAL n = h->entries;
         HashBucket *b;
@@ -364,7 +364,7 @@ The created key = "\1idx".
         return 0;
     }
 
-    INTVAL exists_keyed(PMC *key) {
+    VTABLE INTVAL exists_keyed(PMC *key) {
         if (PObj_get_FLAGS(key) & KEY_integer_FLAG) {
             PMC        *item, *next;
             HashBucket *b;
@@ -395,7 +395,7 @@ The created key = "\1idx".
         return SUPER(key);
     }
 
-    INTVAL exists_keyed_str(STRING *key) {
+    VTABLE INTVAL exists_keyed_str(STRING *key) {
         const Hash * const       h = (Hash *)PMC_struct_val(SELF);
         const HashBucket * const b = parrot_hash_get_bucket(INTERP, h, key);
 
@@ -414,7 +414,7 @@ The created key = "\1idx".
 
 */
 
-    INTVAL defined_keyed(PMC *key) {
+    VTABLE INTVAL defined_keyed(PMC *key) {
         if (PObj_get_FLAGS(key) & KEY_integer_FLAG) {
             Hash * const h   = (Hash *)PMC_struct_val(SELF);
             INTVAL       idx = key_integer(INTERP, key);
@@ -447,7 +447,7 @@ The created key = "\1idx".
         return SUPER(key);
     }
 
-    INTVAL defined_keyed_int(INTVAL idx) {
+    VTABLE INTVAL defined_keyed_int(INTVAL idx) {
         Hash * const h = (Hash *)PMC_struct_val(SELF);
         const INTVAL n = h->entries;
         HashBucket *b;
@@ -480,7 +480,7 @@ Deletes the key C<*key> from the hash.
 
 */
 
-    void delete_keyed(PMC *key) {
+    VTABLE void delete_keyed(PMC *key) {
         PMC * const next = key_next(INTERP, key);
 
         if (PObj_get_FLAGS(key) & KEY_integer_FLAG) {
@@ -502,7 +502,7 @@ Deletes the key C<*key> from the hash.
         }
     }
 
-    void delete_keyed_int(INTVAL idx) {
+    VTABLE void delete_keyed_int(INTVAL idx) {
         Hash * const h = (Hash *)PMC_struct_val(SELF);
         const INTVAL n = h->entries;
         HashBucket *b;
@@ -519,7 +519,7 @@ Deletes the key C<*key> from the hash.
             b->key = NULL;
     }
 
-    void delete_keyed_str(STRING *key) {
+    VTABLE void delete_keyed_str(STRING *key) {
         const Hash * const h = (Hash *)PMC_struct_val(SELF);
         HashBucket * const b = parrot_hash_get_bucket(INTERP, h, key);
 

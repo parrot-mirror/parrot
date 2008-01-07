@@ -510,7 +510,7 @@ Converts C<key> to a PMC key and calls C<delete_keyed()> with it.
 
 */
 
-    void delete_keyed_int(INTVAL key) {
+    VTABLE void delete_keyed_int(INTVAL key) {
         STRING **data = PMC_data_typed(SELF, STRING **);
         INTVAL   size = PMC_int_val(SELF);
         INTVAL   i;
@@ -531,7 +531,7 @@ Removes the element at C<*key>.
 
 */
 
-    void delete_keyed(PMC *key) {
+    VTABLE void delete_keyed(PMC *key) {
         INTVAL   idx  = key_integer(INTERP, key);
         STRING **data = PMC_data_typed(SELF, STRING **);
         INTVAL   size = PMC_int_val(SELF);

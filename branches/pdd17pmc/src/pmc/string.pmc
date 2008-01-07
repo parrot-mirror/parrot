@@ -604,7 +604,7 @@ numbers count from the end.
 
 */
 
-    INTVAL exists_keyed(PMC *key) {
+    VTABLE INTVAL exists_keyed(PMC *key) {
         INTVAL n = string_length(INTERP, VTABLE_get_string(INTERP, SELF));
         INTVAL k = VTABLE_get_integer(INTERP, key);
         return (INTVAL)((k>=0 && k<=n) || (k<0 && -k<=n));
