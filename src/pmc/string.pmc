@@ -308,7 +308,7 @@ strings in place.
 =cut
 
 */
-    PMC *bitwise_ors(PMC *value, PMC *dest) {
+    VTABLE PMC *bitwise_ors(PMC *value, PMC *dest) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
 
@@ -321,7 +321,7 @@ strings in place.
         return dest;
     }
 
-    PMC *bitwise_ors_str(STRING *value, PMC *dest) {
+    VTABLE PMC *bitwise_ors_str(STRING *value, PMC *dest) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
 
         if (!dest)
@@ -333,18 +333,18 @@ strings in place.
         return dest;
     }
 
-    void i_bitwise_ors(PMC *value) {
+    VTABLE void i_bitwise_ors(PMC *value) {
         STRING        *s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
         DYNSELF.set_string_native(string_bitwise_or(INTERP, s, v, &s));
     }
 
-    void i_bitwise_ors_str(STRING *value) {
+    VTABLE void i_bitwise_ors_str(STRING *value) {
         STRING *s = VTABLE_get_string(INTERP, SELF);
         DYNSELF.set_string_native(string_bitwise_or(INTERP, s, value, &s));
     }
 
-    PMC *bitwise_ands(PMC *value, PMC *dest) {
+    VTABLE PMC *bitwise_ands(PMC *value, PMC *dest) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
 
@@ -357,7 +357,7 @@ strings in place.
         return dest;
     }
 
-    PMC *bitwise_ands_str(STRING *value, PMC *dest) {
+    VTABLE PMC *bitwise_ands_str(STRING *value, PMC *dest) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
 
         if (!dest)
@@ -370,18 +370,18 @@ strings in place.
     }
 
 
-    void i_bitwise_ands(PMC *value) {
+    VTABLE void i_bitwise_ands(PMC *value) {
         STRING        *s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
         DYNSELF.set_string_native(string_bitwise_and(INTERP, s, v, &s));
     }
 
-    void i_bitwise_ands_str(STRING *value) {
+    VTABLE void i_bitwise_ands_str(STRING *value) {
         STRING *s = VTABLE_get_string(INTERP, SELF);
         DYNSELF.set_string_native(string_bitwise_and(INTERP, s, value, &s));
     }
 
-    PMC *bitwise_xors(PMC *value, PMC *dest) {
+    VTABLE PMC *bitwise_xors(PMC *value, PMC *dest) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
 
@@ -394,7 +394,7 @@ strings in place.
         return dest;
     }
 
-    PMC *bitwise_xors_str(STRING *value, PMC *dest) {
+    VTABLE PMC *bitwise_xors_str(STRING *value, PMC *dest) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
 
         if (!dest)
@@ -406,13 +406,13 @@ strings in place.
         return dest;
     }
 
-    void i_bitwise_xors(PMC *value) {
+    VTABLE void i_bitwise_xors(PMC *value) {
         STRING        *s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
         DYNSELF.set_string_native(string_bitwise_xor(INTERP, s, v, &s));
     }
 
-    void i_bitwise_xors_str(STRING *value) {
+    VTABLE void i_bitwise_xors_str(STRING *value) {
         STRING *s = VTABLE_get_string(INTERP, SELF);
         DYNSELF.set_string_native(string_bitwise_xor(INTERP, s, value, &s));
     }
