@@ -670,7 +670,7 @@ Returns an error if an attribute of C<name> already exists.
 
 */
 
-    void add_attribute(STRING *name, PMC *type) {
+    VTABLE void add_attribute(STRING *name, PMC *type) {
         Parrot_Class * const _class        = PARROT_CLASS(SELF);
         PMC          * const new_attribute = pmc_new(interp, enum_class_Hash);
 
@@ -705,7 +705,7 @@ Adds the given sub PMC as a method with the given name.
 =cut
 
 */
-    void add_method(STRING *name, PMC *sub) {
+    VTABLE void add_method(STRING *name, PMC *sub) {
         Parrot_Class * const _class = PARROT_CLASS(SELF);
 
         /* If we have already added a method with this name... */
@@ -730,7 +730,7 @@ Adds the given sub PMC as a vtable override with the given name.
 =cut
 
 */
-    void add_vtable_override(STRING *name, PMC *sub) {
+    VTABLE void add_vtable_override(STRING *name, PMC *sub) {
         Parrot_Class * const _class = PARROT_CLASS(SELF);
 
         /* If we have already added a vtable override with this name... */
@@ -869,7 +869,7 @@ Array of Class PMCs representing the direct parents of this class.
 =cut
 
 */
-    PMC *inspect_str(STRING *what) {
+    VTABLE PMC *inspect_str(STRING *what) {
         Parrot_Class *_class = PARROT_CLASS(SELF);
 
         /* What should we return? */
@@ -927,7 +927,7 @@ inspect_str.
 =cut
 
 */
-    PMC *inspect() {
+    VTABLE PMC *inspect() {
         /* Create a hash, then use inspect_str to get all of the data to
          * fill it up with. */
         PMC    *metadata           = pmc_new(interp, enum_class_Hash);

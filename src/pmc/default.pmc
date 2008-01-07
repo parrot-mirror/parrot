@@ -496,7 +496,7 @@ Store the method as a global in the namespace of this class.
         return Parrot_find_method_with_cache(INTERP, SELF, method_name);
     }
 
-    void add_method(STRING *method_name, PMC *sub_pmc) {
+    VTABLE void add_method(STRING *method_name, PMC *sub_pmc) {
         VTABLE_set_pmc_keyed_str(INTERP, SELF->vtable->_namespace,
                                  method_name, sub_pmc);
     }

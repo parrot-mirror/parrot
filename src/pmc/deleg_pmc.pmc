@@ -72,7 +72,7 @@ pmclass deleg_pmc no_ro {
         return SELF->vtable->base_type;
     }
 
-    void add_method(STRING *method_name, PMC *sub_pmc) {
+    VTABLE void add_method(STRING *method_name, PMC *sub_pmc) {
         SUPER(method_name, sub_pmc);
     }
 

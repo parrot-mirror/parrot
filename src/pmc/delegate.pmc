@@ -114,7 +114,7 @@ useful defaults and don't throw exceptions.
         /* don't delegate mark */
     }
 
-    void add_method(STRING *method_name, PMC *sub_pmc) {
+    VTABLE void add_method(STRING *method_name, PMC *sub_pmc) {
         SUPER(method_name, sub_pmc);
     }
 
