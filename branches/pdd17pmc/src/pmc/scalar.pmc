@@ -1064,7 +1064,7 @@ Returns in C<*dest> the bitwise negation of the scalar and C<value>.
 
 */
 
-    PMC *bitwise_not(PMC *dest) {
+    VTABLE PMC *bitwise_not(PMC *dest) {
         const INTVAL a = ~DYNSELF.get_integer();
 
         if (!dest)
@@ -1074,7 +1074,7 @@ Returns in C<*dest> the bitwise negation of the scalar and C<value>.
         return dest;
     }
 
-    void i_bitwise_not() {
+    VTABLE void i_bitwise_not() {
         VTABLE_set_integer_native(INTERP, SELF, ~DYNSELF.get_integer());
     }
 
