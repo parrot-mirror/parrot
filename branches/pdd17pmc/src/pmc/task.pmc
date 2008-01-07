@@ -195,7 +195,7 @@ Gets the value of an attribute for this task.
 =cut
 
 */
-    PMC *get_attr_str(STRING *name) {
+    VTABLE PMC *get_attr_str(STRING *name) {
         Parrot_Task * const core_struct = PARROT_TASK(SELF);
         PMC *value = PMCNULL;
 
@@ -236,7 +236,7 @@ Sets the value of an attribute for this task.
 =cut
 
 */
-    void set_attr_str(STRING *name, PMC *value) {
+    VTABLE void set_attr_str(STRING *name, PMC *value) {
         Parrot_Task * const core_struct = PARROT_TASK(SELF);
 
         if (string_equal(interp, name, CONST_STRING(interp, "id")) == 0) {

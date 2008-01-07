@@ -235,7 +235,7 @@ handle the registered events.
 
 */
 
-    PMC *get_attr_str(STRING *name) {
+    VTABLE PMC *get_attr_str(STRING *name) {
         Parrot_EventHandler *core_struct  = PMC_data_typed(SELF, Parrot_EventHandler *);
         PMC *value = PMCNULL;
 

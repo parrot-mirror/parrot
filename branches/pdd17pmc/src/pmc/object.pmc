@@ -182,7 +182,7 @@ of the given name walking up the inheritance tree.
 =cut
 
 */
-    PMC *get_attr_str(STRING *name) {
+    VTABLE PMC *get_attr_str(STRING *name) {
         Parrot_Object * const obj      = PARROT_OBJECT(SELF);
         STRING        * const get_attr = CONST_STRING(interp, "get_attr_str");
         INTVAL index;
@@ -216,7 +216,7 @@ defined in the parent identified by the given key.
 =cut
 
 */
-    PMC *get_attr_keyed(PMC *key, STRING *name) {
+    VTABLE PMC *get_attr_keyed(PMC *key, STRING *name) {
         Parrot_Object * const obj = PARROT_OBJECT(SELF);
 
         /* Look up the index. */
@@ -241,7 +241,7 @@ of the given name walking up the inheritance tree.
 =cut
 
 */
-    void set_attr_str(STRING *name, PMC *value) {
+    VTABLE void set_attr_str(STRING *name, PMC *value) {
         Parrot_Object * const obj       = PARROT_OBJECT(SELF);
         STRING        *vtable_meth_name = CONST_STRING(interp, "set_attr_str");
         INTVAL         index;
@@ -276,7 +276,7 @@ defined in the parent identified by the given key.
 =cut
 
 */
-    void set_attr_keyed(PMC *key, STRING *name, PMC *value) {
+    VTABLE void set_attr_keyed(PMC *key, STRING *name, PMC *value) {
         Parrot_Object * const obj = PARROT_OBJECT(SELF);
         const INTVAL index        = get_attrib_index_keyed(interp, obj->_class, key, name);
 
