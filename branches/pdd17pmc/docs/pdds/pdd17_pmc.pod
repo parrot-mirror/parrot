@@ -1690,10 +1690,6 @@ A true/false value. Returns 0 for false, 1 for true when fetched as an
 integer or float, empty string for false and '1' for true when fetched
 as a string.
 
-{{ IMPLEMENTATION NOTE: move the definitions of the Python constants
-"True" and "False" out of src/pmc/boolean.pmc. They belong in
-HLL-specific code, not in the core boolean type. }}
-
 =item BigInt
 
 An arbitrary precision integer.
