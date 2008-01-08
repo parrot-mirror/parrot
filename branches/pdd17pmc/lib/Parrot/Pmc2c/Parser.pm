@@ -71,6 +71,22 @@ sub parse_pmc {
     my $lineno = count_newlines($preamble) + $chewed_lines + 1;
     my $class_init;
 
+    ($lineno, $class_init) = find_methods($pmc, $pmcbody, $lineno,  $filename);
+
+    $pmc->postamble( Parrot::Pmc2c::Emitter->text( $post, $filename, $lineno ) );
+
+    # ensure class_init is the last method in the method list
+    $pmc->add_method($class_init) if $class_init;
+    $pmc->vtable( $pmc2cMain->read_dump("vtable.pmc") );
+    $pmc->pre_method_gen();
+
+    return $pmc;
+}
+
+sub find_methods {
+    my ($pmc, $pmcbody, $lineno, $filename) = @_;
+    my $class_init                          = 0;
+
     # backreferences here are all +1 because below the qr is wrapped in quotes
     my $signature_re = qr{
         ^
@@ -160,14 +176,7 @@ sub parse_pmc {
         $lineno += count_newlines($methodblock);
     }
 
-    $pmc->postamble( Parrot::Pmc2c::Emitter->text( $post, $filename, $lineno ) );
-
-    # ensure class_init is the last method in the method list
-    $pmc->add_method($class_init) if $class_init;
-    $pmc->vtable( $pmc2cMain->read_dump("vtable.pmc") );
-    $pmc->pre_method_gen();
-
-    return $pmc;
+    return ($lineno, $class_init);
 }
 
 sub parse_mmds {
