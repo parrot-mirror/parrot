@@ -90,7 +90,7 @@ L<Vtable Functions> that implement the basic behaviour of the PMC
 (i.e. how it behaves under addition, subtraction, cloning etc.)
 
 C<data> holds a pointer to the core data associated with the PMC. This
-may be NULL.
+may be null.
 
 C<pmc_ext> points to an extended PMC structure. This has the form:
 
@@ -458,7 +458,7 @@ turns it into a PMC of the appropriate class.
 Alternative entry point called when a PMC is first instantiated.  Accepts a PMC
 parameter used to initialize the given object.  Interpretation of the PMC
 initializer is left open, each PMC is free to choose its own implemention. A
-NULL value passed as the initializer parameter is allowed.
+null value passed as the initializer parameter is allowed.
 
 NOTE: It is strongly suggested that init_pmc(PMCNULL) be equivalent to
 init(), though there will of necessity be exceptions.
@@ -628,21 +628,21 @@ merged.]
   PMC* getprop(INTERP, PMC* self, STRING* key)
 
 Return the value from the property hash of I<self> keyed by I<key>. The key
-should not be NULL.
+should not be null.
 
 =item setprop
 
   void setprop(INTERP, PMC* self, STRING* key, PMC* value)
 
 Set the value in the property hash of I<self> that is keyed by I<key> to the
-value of I<value>. The key should not be NULL.
+value of I<value>. The key should not be null.
 
 =item delprop
 
   void delprop(INTERP, PMC* self, STRING* key)
 
 Delete the value from the property hash of I<self> keyed by I<key>. The key
-should not be NULL.
+should not be null.
 
 =item getprops
 
@@ -828,13 +828,13 @@ PMC.
 
 Many of the following functions have a *_keyed form, a *_keyed_int form, and a
 *_keyed_str form. The keyed forms take a PMC*, INTVAL, or STRING* key as a
-parameter. The PMC* parameter is NULL if there is no key for that
+parameter. The PMC* parameter is null (PMCNULL) if there is no key for that
 PMC; this means that that argument is unkeyed.
 
-In some cases, the caller must provide a non-NULL key.  Those cases are
+In some cases, the caller must provide a non-null key.  Those cases are
 explicitly stated below.  In the other cases, you may have to implement the
-keyed vtable functions and check for a NULL I<self> key even if you are
-implementing a non-aggregate type.  If the I<self> key is non-NULL and the PMC
+keyed vtable functions and check for a null I<self> key even if you are
+implementing a non-aggregate type.  If the I<self> key is non-null and the PMC
 class is a non-aggregate type, the _keyed_* methods should throw an exception.
 
 If you do not implement the *_keyed_int and *_keyed_str functions, the default
@@ -856,7 +856,7 @@ Return the number of elements in the PMC.
   INTVAL get_integer_keyed_str(INTERP, PMC* self, STRING* key)
 
 Return the integer value for the element indexed by a PMC, integer, or string
-key. The key is guaranteed not to be NULL for this function.
+key. The key is guaranteed not to be null for this function.
 
 =item get_number_keyed
 
@@ -865,7 +865,7 @@ key. The key is guaranteed not to be NULL for this function.
   FLOATVAL get_number_keyed_str(INTERP, PMC* self, STRING* key)
 
 Return the native floating-point value for the element indexed by a PMC,
-integer, or string key. The key is guaranteed not to be NULL for this
+integer, or string key. The key is guaranteed not to be null for this
 function.
 
 =item get_string_keyed
@@ -875,7 +875,7 @@ function.
   STRING* get_string_keyed_str(INTERP, PMC* self, STRING* key)
 
 Return the string value for the element indexed by a PMC, integer, or string
-key. The key is guaranteed not to be NULL for this function.
+key. The key is guaranteed not to be null for this function.
 
 =item get_bool_keyed [deprecated: See RT #48571]
 
@@ -896,7 +896,7 @@ Return the boolean value for the element indexed by a string key.
   PMC* get_pmc_keyed_str(INTERP, PMC* self, STRING* key)
 
 Return the PMC value for the element indexed by a PMC, integer, or
-string key. The key is guaranteed not to be NULL for this function.
+string key. The key is guaranteed not to be null for this function.
 
 =item get_pointer_keyed
 
@@ -915,7 +915,7 @@ PMC.
   void set_integer_keyed_str(INTERP, PMC* self, STRING* key, INTVAL value)
 
 Set the integer value of the element indexed by a PMC, integer, or
-string key. The key is guaranteed not to be NULL for this function.
+string key. The key is guaranteed not to be null for this function.
 
 =item set_number_keyed
 
@@ -924,7 +924,7 @@ string key. The key is guaranteed not to be NULL for this function.
   void set_number_keyed_str(INTERP, PMC* self, STRING* key, FLOATVAL value)
 
 Set the floating-point value of the element indexed by a PMC, integer,
-or string key. The key is guaranteed not to be NULL for this function.
+or string key. The key is guaranteed not to be null for this function.
 
 =item set_string_keyed
 
@@ -933,7 +933,7 @@ or string key. The key is guaranteed not to be NULL for this function.
   void set_string_keyed_str(INTERP, PMC* self, STRING* key, STRING* value)
 
 Set the string value of the element indexed by a PMC, integer, or string
-key. The key is guaranteed not to be NULL for this function.
+key. The key is guaranteed not to be null for this function.
 
 =item set_pmc_keyed
 
@@ -959,7 +959,7 @@ Set the pointer value of the element indexed by a PMC, integer, or string key.
   INTVAL type_keyed_str(INTERP, PMC* self, STRING* key) [RT #48581]
 
 Return the type number of the PMC indexed by a PMC, integer, or string key.
-The I<key> parameter is guaranteed not to be NULL for this method.
+The I<key> parameter is guaranteed not to be null for this method.
 
 =item pop_integer
 
@@ -1133,7 +1133,7 @@ I<self>.
   void i_subtract_float(INTERP, PMC* self, FLOATVAL value)
 
 Subtract the value of a PMC, native integer, or native floating-point number
-from a PMC and store the result in I<dest>. If I<dest> is NULL create a result
+from a PMC and store the result in I<dest>. If I<dest> is null create a result
 PMC of an appropriate type.  Note that I<dest> may be the same PMC as I<self>;
 in that case optimizations may be made. The C<i_> variants perform an
 inplace operation, modifying the value of I<self>.
