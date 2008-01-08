@@ -45,16 +45,19 @@ sub create {
 
 sub new {
     my ( $class, $self ) = @_;
-    $self = {} unless $self;
-    $self = {
+
+    $self ||= {};
+    $self   = {
         (
-            methods => [],
-            super   => {},
-            variant => '',
-            mixins  => [],
+            attributes => [],
+            methods    => [],
+            super      => {},
+            variant    => '',
+            mixins     => [],
             %{$self}
         )
     };
+
     bless $self, $class;
 }
 
@@ -117,6 +120,12 @@ sub add_parent {
 sub add_mixin {
     my ( $self, $mixin_name ) = @_;
     push @{ $self->{mixins} }, $mixin_name unless grep /$mixin_name/, @{ $self->{mixins} };
+}
+
+sub add_attribute {
+    my ( $self, $attribute ) = @_;
+    $self->{has_attribute}{ $attribute->name } = @{ $self->{attributes} };
+    push @{ $self->{attributes} }, $attribute;
 }
 
 =item C<is_dynpmc>
