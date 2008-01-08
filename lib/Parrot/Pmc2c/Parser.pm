@@ -1,11 +1,17 @@
-# Copyright (C) 2004-2007, The Perl Foundation.
+# Copyright (C) 2004-2008, The Perl Foundation.
 # $Id$
+
 package Parrot::Pmc2c::Parser;
+
 use strict;
 use warnings;
+
 use base qw( Exporter );
+
 our @EXPORT_OK = qw( parse_pmc extract_balanced );
+
 use Parrot::Pmc2c::PMC;
+use Parrot::Pmc2c::Attribute;
 use Parrot::Pmc2c::Method;
 use Parrot::Pmc2c::Emitter;
 use Parrot::Pmc2c::UtilFunctions qw(count_newlines filename slurp);
@@ -71,7 +77,8 @@ sub parse_pmc {
     my $lineno = count_newlines($preamble) + $chewed_lines + 1;
     my $class_init;
 
-    ($lineno, $class_init) = find_methods($pmc, $pmcbody, $lineno,  $filename);
+    $lineno                = find_attrs(  $pmc, $pmcbody, $lineno, $filename);
+    ($lineno, $class_init) = find_methods($pmc, $pmcbody, $lineno, $filename);
 
     $pmc->postamble( Parrot::Pmc2c::Emitter->text( $post, $filename, $lineno ) );
 
@@ -81,6 +88,52 @@ sub parse_pmc {
     $pmc->pre_method_gen();
 
     return $pmc;
+}
+
+sub find_attrs {
+    my ($pmc, $pmcbody, $lineno, $filename) = @_;
+
+    # backreferences here are all +1 because below the qr is wrapped in quotes
+    my $attr_re = qr{
+        ^
+        (?:
+          [;\n\s]*            # blank spaces and spurious semicolons
+          (?:/\*.*?\*/)?      # C comments
+        )*
+
+        # attribute marker
+        ATTR
+
+        # type
+        \s+
+        (INTVAL|FLOATVAL|STRING\s+\*|PMC\s+\*)
+
+        # name
+        \s+
+        (\w+)
+
+        # modifiers
+        \s*
+        (:\w+(?:\(\w+\))?\s*)*
+
+        # and that's it
+        ;$
+    }sx;
+
+    while ( $pmcbody =~ /ATTR\s+\w+.*;/ ) {
+        my ($type, $name, @modifiers) = $pmcbody =~ s/($attr_re)//;
+        $lineno++;
+
+        $pmc->add_attribute(Parrot::Pmc2c::Attribute->new(
+            {
+                name      => $name,
+                type      => $type,
+                modifiers => \@modifiers,
+            }
+        ));
+    }
+
+    return $lineno;
 }
 
 sub find_methods {
