@@ -208,10 +208,35 @@ sub rewrite_nci_method {
         sub { "pmc->real_self->vtable->$1(" . full_arguments( $2, 'pmc->real_self' ) . ')' }
     );
 
+# SELF will be changed to this:
+    # Rewrite SELF.other_method(args...)
+#    $body->subst(
+#        qr{
+#    \bSELF\b       # Macro: SELF
+#      \.(\w+)           # other_method
+#      \(\s*(.*?)\)      # capture argument list
+#      }x,
+#        sub { "pmc->vtable->$1(" . full_arguments($2) . ')' }
+#    );
+
     # Rewrite SELF.other_method(args...)
     $body->subst(
         qr{
       \bSELF\b          # Macro SELF
+      \.(\w+)           # other_method
+      \(\s*(.*?)\)      # capture argument list
+      }x,
+        sub {
+            "Parrot_${pmcname}"
+                . ( $pmc->is_vtable_method($1) ? "" : "_nci" ) . "_$1("
+                . full_arguments($2) . ")";
+        }
+    );
+
+    # Rewrite STATICSELF.other_method(args...)
+    $body->subst(
+        qr{
+      \bSTATICSELF\b          # Macro STATICSELF
       \.(\w+)           # other_method
       \(\s*(.*?)\)      # capture argument list
       }x,
