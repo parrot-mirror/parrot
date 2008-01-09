@@ -323,6 +323,21 @@ sub rewrite_vtable_method {
         }
     );
 
+    # Rewrite OtherClass.STATICSELF.other_method(args...)
+    $body->subst(
+        qr{
+        (\w+)             # OtherClass
+        \.\bSTATICSELF\b  # Macro STATICSELF
+        \.(\w+)           # other_method
+        \(\s*(.*?)\)      # capture argument list
+      }x,
+        sub {
+            "Parrot_${1}"
+                . ( $pmc->is_vtable_method($2) ? "" : "_nci" ) . "_$2("
+                . full_arguments($3) . ')';
+        }
+    );
+
     # Rewrite OtherClass.object.other_method(args...)
     $body->subst(
         qr{
@@ -342,6 +357,20 @@ sub rewrite_vtable_method {
     $body->subst(
         qr{
         \bSELF\b          # Macro SELF
+        \.(\w+)           # other_method
+        \(\s*(.*?)\)      # capture argument list
+      }x,
+        sub {
+            "Parrot_${pmcname}"
+                . ( $pmc->is_vtable_method($1) ? "" : "_nci" ) . "_$1("
+                . full_arguments($2) . ")";
+        }
+    );
+
+    # Rewrite STATICSELF.other_method(args...)
+    $body->subst(
+        qr{
+        \bSTATICSELF\b    # Macro STATICSELF
         \.(\w+)           # other_method
         \(\s*(.*?)\)      # capture argument list
       }x,
