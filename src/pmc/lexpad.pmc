@@ -121,7 +121,7 @@ Return the LexInfo PMC, if any or a Null PMC.
         return SELF.get_pmc_keyed_str(s);
     }
 
-    void set_pmc_keyed_str(STRING *name, PMC *value) {
+    VTABLE void set_pmc_keyed_str(STRING *name, PMC *value) {
         PMC              * const info  = PMC_pmc_val(SELF);
         Hash             * const hash  = (Hash *)PMC_struct_val(info);
         parrot_context_t * const ctx   = (parrot_context_t *)PMC_struct_val(SELF);

@@ -938,7 +938,7 @@ Sets the value of the element at index C<ix> to C<value>.
 
 */
 
-    void set_integer_keyed_int(INTVAL ix, INTVAL value) {
+    VTABLE void set_integer_keyed_int(INTVAL ix, INTVAL value) {
         int   type;
         char *p = char_offset_int(INTERP, pmc, ix, &type);
         set_int(INTERP, p, type, value);
@@ -972,7 +972,7 @@ Sets the value of the element at index C<ix> to C<value>.
 
 */
 
-    void set_number_keyed_int(INTVAL key, FLOATVAL value) {
+    VTABLE void set_number_keyed_int(INTVAL key, FLOATVAL value) {
         int   type;
         char *p = char_offset_int(INTERP, pmc, key, &type);
         set_float(INTERP, p, type, value);
@@ -1004,7 +1004,7 @@ Sets the value of the element at index C<key> to C<*value>.
 
 */
 
-    void set_string_keyed_int(INTVAL key, STRING *value) {
+    VTABLE void set_string_keyed_int(INTVAL key, STRING *value) {
         int   type;
         char *p = char_offset_int(INTERP, pmc, key, &type);
         set_string(INTERP, p, type, value);

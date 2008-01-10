@@ -542,7 +542,7 @@ Set real or imag depending on key
         }
     }
 
-    void set_number_keyed_int(INTVAL key, FLOATVAL v) {
+    VTABLE void set_number_keyed_int(INTVAL key, FLOATVAL v) {
         switch (key) {
             case 0:
                 RE(SELF) = v;
@@ -627,7 +627,7 @@ to C<value>.
         DYNSELF.set_number_keyed(key, value);
     }
 
-    void set_integer_keyed_str(STRING *key, INTVAL value) {
+    VTABLE void set_integer_keyed_str(STRING *key, INTVAL value) {
         DYNSELF.set_number_keyed_str(key, value);
     }
 
@@ -636,7 +636,7 @@ to C<value>.
         DYNSELF.set_number_keyed_str(s, value);
     }
 
-    void set_number_keyed_str(STRING *key, FLOATVAL value) {
+    VTABLE void set_number_keyed_str(STRING *key, FLOATVAL value) {
         FLOATVAL * const num = complex_locate_keyed_num(INTERP, SELF, key);
         if (num)
             *num = value;
@@ -647,7 +647,7 @@ to C<value>.
         DYNSELF.set_number_keyed(key, f);
     }
 
-    void set_pmc_keyed_str(STRING *key, PMC *value) {
+    VTABLE void set_pmc_keyed_str(STRING *key, PMC *value) {
         const FLOATVAL f = VTABLE_get_number(INTERP, value);
         DYNSELF.set_number_keyed_str(key, f);
     }

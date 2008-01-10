@@ -432,7 +432,7 @@ Sets the integer value of the element at index C<key> to C<value>.
 
 */
 
-    void set_integer_keyed_int(INTVAL key, INTVAL value) {
+    VTABLE void set_integer_keyed_int(INTVAL key, INTVAL value) {
         INTVAL *data;
 
         if (key < 0 || key >= PMC_int_val(SELF))
@@ -468,7 +468,7 @@ Sets the floating-point value of the element at index C<key> to C<value>.
 
 */
 
-    void set_number_keyed_int(INTVAL key, FLOATVAL value) {
+    VTABLE void set_number_keyed_int(INTVAL key, FLOATVAL value) {
         DYNSELF.set_integer_keyed_int(key, (INTVAL)value);
     }
 
@@ -497,7 +497,7 @@ Sets the Parrot string value of the element at index C<key> to C<value>.
 
 */
 
-    void set_string_keyed_int(INTVAL key, STRING *value) {
+    VTABLE void set_string_keyed_int(INTVAL key, STRING *value) {
         INTVAL tempInt;
         PMC   *tempPMC = pmc_new(INTERP, enum_class_Integer);
         VTABLE_set_string_native(INTERP, tempPMC, value);
@@ -530,7 +530,7 @@ Sets the PMC value of the element at index C<key> to C<*src>.
 
 */
 
-    void set_pmc_keyed_int(INTVAL key, PMC *src) {
+    VTABLE void set_pmc_keyed_int(INTVAL key, PMC *src) {
         INTVAL tempInt = VTABLE_get_integer(INTERP, src);
         DYNSELF.set_integer_keyed_int(key, tempInt);
     }

@@ -342,7 +342,7 @@ Sets the integer value of the element at index C<key> to C<value>.
 
 */
 
-    void set_integer_keyed_int(INTVAL key, INTVAL value) {
+    VTABLE void set_integer_keyed_int(INTVAL key, INTVAL value) {
         PMC    * const ret = pmc_new(INTERP, enum_class_String);
         STRING *val;
 
@@ -377,7 +377,7 @@ C<value>.
 
 */
 
-    void set_number_keyed_int(INTVAL key, FLOATVAL value) {
+    VTABLE void set_number_keyed_int(INTVAL key, FLOATVAL value) {
         PMC    * const ret = pmc_new(INTERP, enum_class_String);
         STRING *val;
 
@@ -412,7 +412,7 @@ Sets the Parrot string value of the element at index C<key> to C<value>.
 
 */
 
-    void set_string_keyed_int(INTVAL key, STRING *value) {
+    VTABLE void set_string_keyed_int(INTVAL key, STRING *value) {
         STRING **data;
 
         if (key < 0 || key >= PMC_int_val(SELF))
@@ -450,7 +450,7 @@ Sets the PMC value of the element at index C<key> to C<*src>.
 
 */
 
-    void set_pmc_keyed_int(INTVAL key, PMC *src) {
+    VTABLE void set_pmc_keyed_int(INTVAL key, PMC *src) {
         STRING * const temp = VTABLE_get_string(INTERP, src);
         DYNSELF.set_string_keyed_int(key, temp);
     }

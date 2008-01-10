@@ -79,7 +79,7 @@ Sets C<value> at index C<key>.
 
 */
 
-    void set_integer_keyed_int(INTVAL key, INTVAL value) {
+    VTABLE void set_integer_keyed_int(INTVAL key, INTVAL value) {
         intlist_assign(INTERP, (IntList *)PMC_struct_val(SELF), key, value);
     }
 

@@ -676,7 +676,7 @@ and C<value>.
 
 */
 
-    void set_integer_keyed_int(INTVAL key, INTVAL value) {
+    VTABLE void set_integer_keyed_int(INTVAL key, INTVAL value) {
         PMC *const r_key = INT2KEY(INTERP, key);
         DYNSELF.set_integer_keyed(r_key, value);
     }
@@ -692,7 +692,7 @@ and C<value>.
 
 */
 
-    void set_number_keyed_int(INTVAL key, FLOATVAL value) {
+    VTABLE void set_number_keyed_int(INTVAL key, FLOATVAL value) {
         PMC *const r_key = INT2KEY(INTERP, key);
         DYNSELF.set_number_keyed(r_key, value);
     }
@@ -708,7 +708,7 @@ and C<value>.
 
 */
 
-    void set_string_keyed_int(INTVAL key, STRING *string) {
+    VTABLE void set_string_keyed_int(INTVAL key, STRING *string) {
         PMC *const r_key = INT2KEY(INTERP, key);
         DYNSELF.set_string_keyed(r_key, string);
     }
@@ -740,7 +740,7 @@ and C<value>.
 
 */
 
-    void set_pmc_keyed_int(INTVAL key, PMC *value) {
+    VTABLE void set_pmc_keyed_int(INTVAL key, PMC *value) {
         PMC *const r_key = INT2KEY(INTERP, key);
         DYNSELF.set_pmc_keyed(r_key, value);
     }

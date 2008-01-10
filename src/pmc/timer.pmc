@@ -262,7 +262,7 @@ Sets the value associated with C<key> to C<value>.
 
 */
 
-    void set_integer_keyed_int(INTVAL key, INTVAL value) {
+    VTABLE void set_integer_keyed_int(INTVAL key, INTVAL value) {
         Parrot_Timer * const core_struct = PARROT_TIMER(SELF);
 
         switch (key) {
@@ -301,7 +301,7 @@ Sets the PMC associated with C<key> to C<*value>.
 
 */
 
-    void set_pmc_keyed_int(INTVAL key, PMC *value) {
+    VTABLE void set_pmc_keyed_int(INTVAL key, PMC *value) {
         Parrot_Timer * const core_struct = PARROT_TIMER(SELF);
 
         if (key == PARROT_TIMER_HANDLER)
@@ -333,7 +333,7 @@ Sets the floating-point value associated with C<key> to C<value>.
 
 */
 
-    void set_number_keyed_int(INTVAL key, FLOATVAL value) {
+    VTABLE void set_number_keyed_int(INTVAL key, FLOATVAL value) {
         Parrot_Timer * const core_struct = PARROT_TIMER(SELF);
 
         switch (key) {

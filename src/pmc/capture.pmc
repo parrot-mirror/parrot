@@ -84,22 +84,22 @@ Sets a value in the array component of the Capture.
 
 */
 
-    void set_number_keyed_int(INTVAL key, FLOATVAL value) {
+    VTABLE void set_number_keyed_int(INTVAL key, FLOATVAL value) {
         CAPTURE_array_CREATE(INTERP, SELF);
         VTABLE_set_number_keyed_int(INTERP, CAPTURE_array(SELF), key, value);
     }
 
-    void set_integer_keyed_int(INTVAL key, INTVAL value) {
+    VTABLE void set_integer_keyed_int(INTVAL key, INTVAL value) {
         CAPTURE_array_CREATE(INTERP, SELF);
         VTABLE_set_integer_keyed_int(INTERP, CAPTURE_array(SELF), key, value);
     }
 
-    void set_pmc_keyed_int(INTVAL key, PMC *value) {
+    VTABLE void set_pmc_keyed_int(INTVAL key, PMC *value) {
         CAPTURE_array_CREATE(INTERP, SELF);
         VTABLE_set_pmc_keyed_int(INTERP, CAPTURE_array(SELF), key, value);
     }
 
-    void set_string_keyed_int(INTVAL key, STRING *value) {
+    VTABLE void set_string_keyed_int(INTVAL key, STRING *value) {
         CAPTURE_array_CREATE(INTERP, SELF);
         VTABLE_set_string_keyed_int(INTERP, CAPTURE_array(SELF), key, value);
     }

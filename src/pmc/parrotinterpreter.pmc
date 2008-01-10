@@ -479,7 +479,7 @@ Sets the interpreter info for C<key> to C<val>.
 
 */
 
-    void set_integer_keyed_int(INTVAL key, INTVAL val) {
+    VTABLE void set_integer_keyed_int(INTVAL key, INTVAL val) {
         Interp * const new_interp = PMC_data_typed(SELF, Interp *);
 
         /* set interpreter flags */
