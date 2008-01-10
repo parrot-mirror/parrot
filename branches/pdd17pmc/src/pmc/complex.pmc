@@ -1151,7 +1151,7 @@ Sets C<dest> to the absolute value of SELF that is the distance from (0.0).
 
 /*
 
-=item C<METHOD PMC *ln()>
+=item C<PCCMETHOD PMC *ln()>
 
 Returns the natural logorithm of SELF.
 
@@ -1170,7 +1170,7 @@ ln(+-i) = +- (pi i)/2
 
 */
 
-    METHOD PMC *ln() {
+    PCCMETHOD ln() {
         PMC     *d  = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL re = RE(SELF);
         FLOATVAL im = IM(SELF);
@@ -1182,12 +1182,12 @@ ln(+-i) = +- (pi i)/2
         RE(d) = log(sqrt(re*re + im*im));
         IM(d) = atan2(im, re);
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
 /*
 
-=item C<METHOD PMC *exp()>
+=item C<PCCMETHOD PMC *exp()>
 
 Returns e ^ SELF.
 
@@ -1197,7 +1197,7 @@ exp(a + bi) = exp(a) * (cos(b) + i * sin(b))
 
 */
 
-    METHOD PMC *exp() {
+    PCCMETHOD exp() {
         PMC     *d  = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL re = RE(SELF);
         FLOATVAL im = IM(SELF);
@@ -1211,22 +1211,22 @@ exp(a + bi) = exp(a) * (cos(b) + i * sin(b))
         else
             IM(d) = f * sin(im);
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
 /*
 
-=item C<METHOD PMC *sin()>
+=item C<PCCMETHOD PMC *sin()>
 
-=item C<METHOD PMC *cos()>
+=item C<PCCMETHOD PMC *cos()>
 
-=item C<METHOD PMC *tan()>
+=item C<PCCMETHOD PMC *tan()>
 
-=item C<METHOD PMC *csc()>
+=item C<PCCMETHOD PMC *csc()>
 
-=item C<METHOD PMC *sec()>
+=item C<PCCMETHOD PMC *sec()>
 
-=item C<METHOD PMC *cot()>
+=item C<PCCMETHOD PMC *cot()>
 
 Returns C<FUNC>(SELF).
 
@@ -1247,7 +1247,7 @@ Returns C<FUNC>(SELF).
 
 */
 
-    METHOD PMC *sin() {
+    PCCMETHOD sin() {
         PMC     *d  = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL re = RE(SELF);
         FLOATVAL im = IM(SELF);
@@ -1255,13 +1255,13 @@ Returns C<FUNC>(SELF).
         if (FLOAT_IS_ZERO(im)) {
             RE(d) = sin(re);
             IM(d) = 0.0;
-            return d;
+            PCCRETURN(PMC *d);
         }
 
         if (FLOAT_IS_ZERO(re)) {
             RE(d) = 0.0;
             IM(d) = sinh(im);
-            return d;
+            PCCRETURN(PMC *d);
         }
 
         RE(d) = sin(re) * cosh(im);
@@ -1271,10 +1271,10 @@ Returns C<FUNC>(SELF).
         else
             IM(d) = cos(re) * sinh(im);
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
-    METHOD PMC *cos() {
+    PCCMETHOD cos() {
         PMC     *d  = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL re = RE(SELF);
         FLOATVAL im = IM(SELF);
@@ -1282,80 +1282,81 @@ Returns C<FUNC>(SELF).
         if (FLOAT_IS_ZERO(re)) {
             RE(d) = cosh(im);
             IM(d) = 0.0;
-            return d;
+            PCCRETURN(PMC *d);
         }
 
         if (FLOAT_IS_ZERO(im)) {
             RE(d) = cos(re);
             IM(d) = 0.0;
-            return d;
+            PCCRETURN(PMC *d);
         }
 
         RE(d) = cos(re) * cosh(im);
         IM(d) = -1.0 * sin(re) * sinh(im);
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
-    METHOD PMC *tan() {
+    PCCMETHOD tan() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
-        d      = Parrot_Complex_nci_sin(INTERP, SELF);
-        e      = Parrot_Complex_nci_cos(INTERP, SELF);
+
+        (PMC *d) = PCCINVOKE(INTERP, SELF, "sin");
+        (PMC *e) = PCCINVOKE(INTERP, SELF, "cos");
 
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
-    METHOD PMC *cot() {
+    PCCMETHOD cot() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
-        d      = Parrot_Complex_nci_cos(INTERP, SELF);
-        e      = Parrot_Complex_nci_sin(INTERP, SELF);
+        (PMC *d) = PCCINVOKE(INTERP, SELF, "cos");
+        (PMC *e) = PCCINVOKE(INTERP, SELF, "sin");
 
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
-    METHOD PMC *sec() {
-        PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
-        PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
-        RE(d)  = 1.0;
-        IM(d)  = 0.0;
-        e      = Parrot_Complex_nci_cos(INTERP, SELF);
-
-        Parrot_Complex_i_divide_Complex(INTERP, d, e);
-
-        return d;
-    }
-
-    METHOD PMC *csc() {
+    PCCMETHOD sec() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
         RE(d)  = 1.0;
         IM(d)  = 0.0;
-        e      = Parrot_Complex_nci_sin(INTERP, SELF);
+        (PMC *e) = PCCINVOKE(INTERP, SELF, "cos");
 
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
 
-        return d;
+        PCCRETURN(PMC *d);
+    }
+
+    PCCMETHOD csc() {
+        PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
+        PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
+        RE(d)  = 1.0;
+        IM(d)  = 0.0;
+        (PMC *e) = PCCINVOKE(INTERP, SELF, "sin");
+
+        Parrot_Complex_i_divide_Complex(INTERP, d, e);
+
+        PCCRETURN(PMC *d);
     }
 
 /*
 
-=item C<METHOD PMC *asin()>
+=item C<PCCMETHOD PMC *asin()>
 
-=item C<METHOD PMC *acos()>
+=item C<PCCMETHOD PMC *acos()>
 
-=item C<METHOD PMC *atan()>
+=item C<PCCMETHOD PMC *atan()>
 
-=item C<METHOD PMC *acsc()>
+=item C<PCCMETHOD PMC *acsc()>
 
-=item C<METHOD PMC *asec()>
+=item C<PCCMETHOD PMC *asec()>
 
-=item C<METHOD PMC *acot()>
+=item C<PCCMETHOD PMC *acot()>
 
 Returns the inverse function of SELF.
 
@@ -1376,7 +1377,7 @@ Returns the inverse function of SELF.
 
 */
 
-    METHOD PMC *asin() {
+    PCCMETHOD asin() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1384,18 +1385,18 @@ Returns the inverse function of SELF.
         RE(e)  = 1.0 - RE(e);
         IM(e)  = -IM(e);
 
-        d      = Parrot_Complex_nci_sqrt(INTERP, e);
+        (PMC *d) = PCCINVOKE(INTERP, e, "sqrt");
         RE(d) -= IM(SELF);
         IM(d) += RE(SELF);
 
-        d      = Parrot_Complex_nci_ln(INTERP, d);
+        (PMC *d) = PCCINVOKE(INTERP, d, "ln");
         RE(e)  = IM(d);
         IM(e)  = RE(d) ? -RE(d) : 0.0;
 
-        return e;
+        PCCRETURN(PMC *e);
     }
 
-    METHOD PMC *acos() {
+    PCCMETHOD acos() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1403,18 +1404,18 @@ Returns the inverse function of SELF.
         RE(e)  = 1.0 - RE(e);
         IM(e)  = -IM(e);
 
-        d      = Parrot_Complex_nci_sqrt(INTERP, e);
+        (PMC *d) = PCCINVOKE(INTERP, e, "sqrt");
         RE(d) += IM(SELF);
         IM(d) -= RE(SELF);
 
-        e      = Parrot_Complex_nci_ln(INTERP, d);
+        (PMC *e) = PCCINVOKE(INTERP, d, "ln");
         RE(d)  = IM(e) + 2.0 * atan(1);
         IM(d)  = RE(e) ? -RE(e) : 0.0;
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
-    METHOD PMC *atan() {
+    PCCMETHOD atan() {
         PMC     *d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC     *e  = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL re = RE(SELF);
@@ -1427,56 +1428,63 @@ Returns the inverse function of SELF.
 
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
 
-        d           = Parrot_Complex_nci_ln(INTERP, d);
+        (PMC *d) = PCCINVOKE(INTERP, d, "ln");
         RE(e)       = (IM(d) ? IM(d) : -0.0) / -2.0;
         IM(e)       = RE(d) / 2.0;
 
-        return e;
+        PCCRETURN(PMC *e);
     }
 
-    METHOD PMC *acot() {
+    PCCMETHOD acot() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
-        FLOATVAL a = RE(SELF);
-        FLOATVAL b = IM(SELF);
-
-        RE(d)      =  a / (a * a + b * b);
-        IM(d)      = -b / (a * a + b * b);
-        return Parrot_Complex_nci_atan(INTERP, d);
-    }
-
-    METHOD PMC *acsc() {
-        PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
+        PMC     *e;
         FLOATVAL a = RE(SELF);
         FLOATVAL b = IM(SELF);
 
         RE(d)      =  a / (a * a + b * b);
         IM(d)      = -b / (a * a + b * b);
 
-        return Parrot_Complex_nci_asin(INTERP, d);
+        (PMC *e) = PCCINVOKE(INTERP, d, "atan");
+        PCCRETURN(PMC *e);
     }
 
-    METHOD PMC *asec() {
+    PCCMETHOD acsc() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
+        PMC     *e;
         FLOATVAL a = RE(SELF);
         FLOATVAL b = IM(SELF);
 
         RE(d)      =  a / (a * a + b * b);
         IM(d)      = -b / (a * a + b * b);
 
-        return Parrot_Complex_nci_acos(INTERP, d);
+        (PMC *e) = PCCINVOKE(INTERP, d, "asin");
+        PCCRETURN(PMC *e);
+    }
+
+    PCCMETHOD asec() {
+        PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
+        PMC     *e;
+        FLOATVAL a = RE(SELF);
+        FLOATVAL b = IM(SELF);
+
+        RE(d)      =  a / (a * a + b * b);
+        IM(d)      = -b / (a * a + b * b);
+
+        (PMC *e) = PCCINVOKE(INTERP, d, "acos");
+        PCCRETURN(PMC *e);
     }
 
 /*
 
-=item C<METHOD PMC *sinh()>
+=item C<PCCMETHOD PMC *sinh()>
 
 Returns the arctangent of SELF.
 
-=item C<METHOD PMC *cosh()>
+=item C<PCCMETHOD PMC *cosh()>
 
 Returns the arcsine of SELF.
 
-=item C<METHOD PMC *tanh()>
+=item C<PCCMETHOD PMC *tanh()>
 
 Returns the arccosine of SELF.
 
@@ -1486,7 +1494,7 @@ tanh(z) = sinh(z) / cosh(z)
 
 */
 
-    METHOD PMC *sinh() {
+    PCCMETHOD sinh() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL a = RE(SELF);
         FLOATVAL b = IM(SELF);
@@ -1494,10 +1502,10 @@ tanh(z) = sinh(z) / cosh(z)
         RE(d) = sinh(a) * cos(b);
         IM(d) = b ? cosh(a) * sin(b) : 0.0;
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
-    METHOD PMC *cosh() {
+    PCCMETHOD cosh() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL a = RE(SELF);
         FLOATVAL b = IM(SELF);
@@ -1508,76 +1516,76 @@ tanh(z) = sinh(z) / cosh(z)
         else
             IM(d)  = sinh(a) * sin(b);
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
-    METHOD PMC *tanh() {
+    PCCMETHOD tanh() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
-        d      = Parrot_Complex_nci_sinh(INTERP, SELF);
-        e      = Parrot_Complex_nci_cosh(INTERP, SELF);
+        (PMC *d) = PCCINVOKE(INTERP, SELF, "sinh");
+        (PMC *e) = PCCINVOKE(INTERP, SELF, "cosh");
 
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
-    METHOD PMC *coth() {
+    PCCMETHOD coth() {
         FLOATVAL a, b;
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
 
-        d      = Parrot_Complex_nci_tanh(INTERP, SELF);
+        (PMC *d) = PCCINVOKE(INTERP, SELF, "tanh");
         a      = RE(d);
         b      = IM(d);
 
         RE(d)  = a ?  a / (a * a + b * b) : 0.0;
         IM(d)  = b ? -b / (a * a + b * b) : 0.0;
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
-    METHOD PMC *csch() {
+    PCCMETHOD csch() {
         FLOATVAL a, b;
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
 
-        d      = Parrot_Complex_nci_sinh(INTERP, SELF);
+        (PMC *d) = PCCINVOKE(INTERP, SELF, "sinh");
         a      = RE(d);
         b      = IM(d);
 
         RE(d)  = a ?  a / (a * a + b * b) : 0.0;
         IM(d)  = b ? -b / (a * a + b * b) : 0.0;
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
-    METHOD PMC *sech() {
+    PCCMETHOD sech() {
         FLOATVAL a, b;
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
 
-        d      = Parrot_Complex_nci_cosh(INTERP, SELF);
+        (PMC *d) = PCCINVOKE(INTERP, SELF, "cosh");
         a      = RE(d);
         b      = IM(d);
 
         RE(d)  = a ?  a / (a * a + b * b) : 0.0;
         IM(d)  = b ? -b / (a * a + b * b) : 0.0;
 
-        return d;
+        PCCRETURN(PMC *d);
     }
 
 /*
 
-=item C<METHOD PMC *asinh()>
+=item C<PCCMETHOD PMC *asinh()>
 
-=item C<METHOD PMC *acosh()>
+=item C<PCCMETHOD PMC *acosh()>
 
-=item C<METHOD PMC *atanh()>
+=item C<PCCMETHOD PMC *atanh()>
 
-=item C<METHOD PMC *acsch()>
+=item C<PCCMETHOD PMC *acsch()>
 
-=item C<METHOD PMC *asech()>
+=item C<PCCMETHOD PMC *asech()>
 
-=item C<METHOD PMC *acoth()>
+=item C<PCCMETHOD PMC *acoth()>
 
 The inverse hyperbolic functions.  Currently all broken, but for
 C<func(a+bi) = c+di>, C<|c|> and C<|d|> will be correct, confusingly enough.
@@ -1593,76 +1601,82 @@ atanh = i atan(-ix)
 
 */
 
-    METHOD PMC *asinh() {
+    PCCMETHOD asinh() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
         RE(d)  = IM(SELF);
         IM(d)  = -RE(SELF);
 
-        d      = Parrot_Complex_nci_asin(INTERP, d);
+        (PMC *d) = PCCINVOKE(INTERP, d, "asin");
         RE(e)  = -IM(d);
         IM(e)  = RE(d);
 
-        return e;
+        PCCRETURN(PMC *e);
     }
 
-    METHOD PMC *acosh() {
+    PCCMETHOD acosh() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
-        d      = Parrot_Complex_nci_acos(INTERP, SELF);
+        (PMC *d) = PCCINVOKE(INTERP, SELF, "acos");
         RE(e)  = -IM(d);
         IM(e)  = RE(d);
 
-        return e;
+        PCCRETURN(PMC *e);
     }
 
-    METHOD PMC *atanh() {
+    PCCMETHOD atanh() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
         RE(d)  = IM(SELF);
         IM(d)  = -RE(SELF);
 
-        d      = Parrot_Complex_nci_atan(INTERP, d);
+        (PMC *d) = PCCINVOKE(INTERP, d, "atan");
         RE(e)  = -IM(d);
         IM(e)  = RE(d);
 
-        return e;
+        PCCRETURN(PMC *e);
     }
 
-    METHOD PMC *acoth() {
+    PCCMETHOD acoth() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
+        PMC     *e;
         FLOATVAL a = RE(SELF);
         FLOATVAL b = IM(SELF);
 
         RE(d)      =  a / (a * a + b * b);
         IM(d)      = -b / (a * a + b * b);
 
-        return Parrot_Complex_nci_atanh(INTERP, d);
+        (PMC *e) = PCCINVOKE(INTERP, d, "atanh");
+        PCCRETURN(PMC *e);
     }
 
-    METHOD PMC *acsch() {
+    PCCMETHOD acsch() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
+        PMC     *e;
         FLOATVAL a = RE(SELF);
         FLOATVAL b = IM(SELF);
 
         RE(d)      =  a / (a * a + b * b);
         IM(d)      = -b / (a * a + b * b);
 
-        return Parrot_Complex_nci_asinh(INTERP, d);
+        (PMC *e) = PCCINVOKE(INTERP, d, "asinh");
+        PCCRETURN(PMC *e);
     }
 
-    METHOD PMC *asech() {
+    PCCMETHOD asech() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
+        PMC     *e;
         FLOATVAL a = RE(SELF);
         FLOATVAL b = IM(SELF);
 
         RE(d)      =  a / (a * a + b * b);
         IM(d)      = -b / (a * a + b * b);
 
-        return Parrot_Complex_nci_acosh(INTERP, d);
+        (PMC *e) = PCCINVOKE(INTERP, d, "acosh");
+        PCCRETURN(PMC *e);
     }
 
 /*
@@ -1671,7 +1685,7 @@ atanh = i atan(-ix)
 
 Return SELF to the C<value>th power and return result in C<dest>.
 
-=item C<METHOD PMC *sqrt()>
+=item C<PCCMETHOD PMC *sqrt()>
 
 Return the square root of SELF.
 
@@ -1687,43 +1701,55 @@ x ^ y = exp(y * ln x))
     VTABLE PMC *pow(PMC *value, PMC *dest) {
 MMD_Complex: {
                  PMC *l = pmc_new(INTERP, SELF->vtable->base_type);
+                 PMC *log;
 
                  if (dest)
                      VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
                  else
                      dest = pmc_new(INTERP, SELF->vtable->base_type);
 
-                 l    = Parrot_Complex_multiply_Complex(INTERP,
-                         Parrot_Complex_nci_ln(INTERP, SELF), value, l);
-                 dest = Parrot_Complex_nci_exp(INTERP, l);
+
+                 Parrot_PCCINVOKE(interp, SELF, CONST_STRING(interp, "ln"),
+                         "->P", &log);
+
+                 l = Parrot_Complex_multiply_Complex(INTERP,
+                        log, value, l);
+
+                 Parrot_PCCINVOKE(interp, l, CONST_STRING(interp, "exp"),
+                         "->P", &dest);
 
                  return dest;
              }
 MMD_DEFAULT: {
                  PMC *l = pmc_new(INTERP, SELF->vtable->base_type);
+                 PMC *log;
 
                  if (dest)
                      VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
                  else
                      dest = pmc_new(INTERP, SELF->vtable->base_type);
 
-                 l    = Parrot_Complex_multiply(INTERP,
-                         Parrot_Complex_nci_ln(INTERP, SELF), value, l);
-                 dest = Parrot_Complex_nci_exp(INTERP, l);
+                 Parrot_PCCINVOKE(interp, SELF, CONST_STRING(interp, "ln"),
+                         "->P", &log);
+                 l = Parrot_Complex_multiply(INTERP, log, value, l);
+                 Parrot_PCCINVOKE(interp, l, CONST_STRING(interp, "exp"),
+                         "->P", &dest);
 
                  return dest;
              }
     }
 
     /* sqrt(x) = exp(ln(x)/2) */
-    METHOD PMC *sqrt() {
+    PCCMETHOD sqrt() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
+        PMC *e;
 
-        d      = Parrot_Complex_nci_ln(INTERP, SELF);
+        (PMC *d) = PCCINVOKE(INTERP, SELF, "ln");
         RE(d) *= 0.5;
         IM(d) *= 0.5;
 
-        return Parrot_Complex_nci_exp(INTERP, d);
+        (PMC *e) = PCCINVOKE(INTERP, d, "exp");
+        PCCRETURN(PMC *e);
     }
 
 }

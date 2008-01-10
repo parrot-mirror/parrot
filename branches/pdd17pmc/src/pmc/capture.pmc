@@ -430,7 +430,8 @@ Delete the element corresponding to C<key> in the hash component.
 
 */
 
-    METHOD PMC *get_array() {
+    PCCMETHOD get_array() {
+        PMC *capt_array;
         PMC *capt = SELF;
         /* XXX:  This workaround is for when we get here as
                  part of a subclass of Capture */
@@ -440,10 +441,13 @@ Delete the element corresponding to C<key> in the hash component.
             capt = VTABLE_get_attr_keyed(interp, SELF, classobj, CONST_STRING(interp, "proxy"));
         }
         CAPTURE_array_CREATE(INTERP, capt);
-        return CAPTURE_array(capt);
+        capt_array = CAPTURE_array(capt);
+
+        PCCRETURN(PMC *capt_array);
     }
 
-    METHOD PMC *get_hash() {
+    PCCMETHOD get_hash() {
+        PMC *capt_hash;
         PMC *capt = SELF;
         /* XXX:  This workaround is for when we get here as
                  part of a subclass of Capture */
@@ -453,7 +457,8 @@ Delete the element corresponding to C<key> in the hash component.
             capt = VTABLE_get_attr_keyed(interp, SELF, classobj, CONST_STRING(interp, "proxy"));
         }
         CAPTURE_hash_CREATE(INTERP, capt);
-        return CAPTURE_hash(capt);
+        capt_hash = CAPTURE_hash(capt);
+        PCCRETURN(PMC *capt_hash);
     }
 
 }

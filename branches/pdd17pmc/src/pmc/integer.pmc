@@ -1279,21 +1279,23 @@ Sets C<dest> to the absolute value of SELF.
 =item C<STRING *get_as_base(INTVAL base)>
 
 Converts and returns the integer in base C<base>.
-C<base> must be between 2 and 36, inclusize.
+C<base> must be between 2 and 36, inclusive.
 
 =cut
 
 */
 
-    METHOD STRING *get_as_base(INTVAL base) {
+    PCCMETHOD get_as_base(INTVAL base) {
         char buf[128];
+        STRING *result;
 
         if ((base < 2) || (base > 36))
             real_exception(interp, NULL, E_RuntimeError,
                     "get_as_base: base out of bounds");
 
-        return int_to_str(interp, buf,
+        result = int_to_str(interp, buf,
                 (HUGEINTVAL)VTABLE_get_integer(INTERP, SELF), (char)base);
+        PCCRETURN(STRING *result);
     }
 
 /*

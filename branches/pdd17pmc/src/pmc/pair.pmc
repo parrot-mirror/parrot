@@ -273,36 +273,56 @@ Used to unarchive the Pair.
 
 =over 4
 
-=item C<METHOD PMC *key()>
+=item C<PCCMETHOD PMC *key()>
 
-=item C<METHOD PMC *value()>
-
-=item C<METHOD PMC *kv()>
-
-Return the key, the value, or a tuple of (key, value) respectively.
+Return the key of the pair.
 
 =cut
 
 */
 
-    METHOD PMC *key() {
+    PCCMETHOD key() {
+        PMC *key;
         if (PObj_key_is_string_TEST(SELF)) {
-            PMC * const k  = pmc_new(INTERP,
+            key = pmc_new(INTERP,
                 Parrot_get_ctx_HLL_type(INTERP, enum_class_String));
 
-            PMC_str_val(k) = (STRING *)PMC_struct_val(SELF);
+            PMC_str_val(key) = (STRING *)PMC_struct_val(SELF);
 
-            return k;
+        }
+        else {
+            key = PMC_struct_val(SELF);
         }
 
-        return (PMC *)PMC_struct_val(SELF);
+        PCCRETURN(PMC *key);
     }
 
-    METHOD PMC *value() {
-        return PMC_pmc_val(SELF);
+/*
+
+=item C<PCCMETHOD PMC *value()>
+
+Return the value of the pair.
+
+=cut
+
+*/
+
+    PCCMETHOD value() {
+        PMC *value = PMC_pmc_val(SELF);
+        PCCRETURN(PMC *value);
     }
 
-    METHOD PMC *kv() {
+/*
+
+=item C<PCCMETHOD PMC *kv()>
+
+Return a tuple of (key, value) for the pair.
+
+=cut
+
+*/
+
+    PCCMETHOD kv() {
         PMC * const t = pmc_new(INTERP,
             Parrot_get_ctx_HLL_type(INTERP, enum_class_FixedPMCArray));
 
@@ -315,7 +335,7 @@ Return the key, the value, or a tuple of (key, value) respectively.
             VTABLE_set_pmc_keyed_int(INTERP, t, 0, (PMC *)PMC_struct_val(SELF));
 
         VTABLE_set_pmc_keyed_int(INTERP, t, 1, PMC_pmc_val(SELF));
-        return t;
+        PCCRETURN(PMC *t);
     }
 }
 
