@@ -12,7 +12,7 @@ $Revision$
 =head1 ABSTRACT
 
 This PDD describes the internal structure and behavior of the Parrot Magic
-Cookie (PMC) data type. 
+Cookie (PMC) data type.
 
 =head1 DESCRIPTION
 
@@ -81,7 +81,7 @@ pointer, but is useful for PMCs which hold only a single piece of data (e.g.
 C<PerlInts>).
 
 C<flags> holds a set of flags associated with the PMC; these are documented  in
-F<include/parrot/pobj.h>, and are generally only used within the Parrot 
+F<include/parrot/pobj.h>, and are generally only used within the Parrot
 internals.
 
 C<vtable> holds a pointer to the B<vtable> associated with the PMC. This points
@@ -105,7 +105,7 @@ yet been finalized.
 
 C<_synchronize> is for access synchronization between shared PMCs.
 
-C<_next_for_GC> determines the next PMC in the 'used' list during dead object 
+C<_next_for_GC> determines the next PMC in the 'used' list during dead object
 detection in the GC.
 
 PMCs are not required to have a C<PMC_EXT> structure (i.e. C<pmc_ext> can be
