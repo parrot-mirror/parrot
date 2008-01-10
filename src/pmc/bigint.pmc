@@ -475,7 +475,7 @@ pmclass BigInt {
 
 =over 4
 
-=item C<METHOD STRING *version()>
+=item C<PCCMETHOD STRING *version()>
 
 Return GMP version string "x.y.z".
 
@@ -483,12 +483,14 @@ Return GMP version string "x.y.z".
 
 */
 
-    METHOD STRING *version() {
+    PCCMETHOD version() {
+        STRING *version;
 #ifdef PARROT_HAS_GMP
-        return string_from_cstring(INTERP, gmp_version, 0);
+        version = string_from_cstring(INTERP, gmp_version, 0);
 #else
-        return const_string(INTERP, "0.0.0");
+        version = const_string(INTERP, "0.0.0");
 #endif
+        PCCRETURN(STRING *version);
     }
 
 /*
