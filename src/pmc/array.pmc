@@ -100,7 +100,7 @@ static PMC *Parrot_Array_set_pmc_ptr(PARROT_INTERP, List *list, INTVAL key) {
 }
 
 
-pmclass Array need_ext does array {
+pmclass Array need_ext provides array {
 
 /*
 

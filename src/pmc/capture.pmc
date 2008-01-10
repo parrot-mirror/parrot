@@ -34,7 +34,7 @@ typedef struct Capture_data {
     if (!CAPTURE_hash(obj)) CAPTURE_hash(obj) = pmc_new(i, enum_class_Hash);
 
 
-pmclass Capture need_ext does array does hash {
+pmclass Capture need_ext provides array provides hash {
 
 /*
 

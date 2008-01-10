@@ -21,7 +21,7 @@ stores Parrot strings.
 
 #include "parrot/parrot.h"
 
-pmclass FixedStringArray need_ext does array {
+pmclass FixedStringArray need_ext provides array {
 
 /*
 

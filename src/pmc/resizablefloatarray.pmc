@@ -22,7 +22,7 @@ which stores FLOATVALs. It uses Float PMCs to do all necessary conversions.
 
 #include "parrot/parrot.h"
 
-pmclass ResizableFloatArray extends FixedFloatArray need_ext does array {
+pmclass ResizableFloatArray extends FixedFloatArray need_ext provides array {
 
 
 /*

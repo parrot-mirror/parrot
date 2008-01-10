@@ -28,7 +28,7 @@ C<Parrot_register_pmc> if it isn't visible to Parrot.
 #include "parrot/parrot.h"
 #include "pmc_hash.h"
 
-pmclass AddrRegistry need_ext does hash {
+pmclass AddrRegistry need_ext provides hash {
 /*
 
 =item C<void init()>

@@ -22,7 +22,7 @@ It puts things into Integer, Float, or String PMCs as appropriate.
 #include "parrot/parrot.h"
 
 
-pmclass ResizablePMCArray extends FixedPMCArray need_ext does array {
+pmclass ResizablePMCArray extends FixedPMCArray need_ext provides array {
 
 /*
 

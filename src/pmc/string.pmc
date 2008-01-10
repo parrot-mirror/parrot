@@ -22,7 +22,7 @@ functions in F<src/string.c>.
 
 #include "parrot/parrot.h"
 
-pmclass String extends scalar does string does scalar {
+pmclass String extends scalar provides string provides scalar {
 
 /*
 

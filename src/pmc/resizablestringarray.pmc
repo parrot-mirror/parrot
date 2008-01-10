@@ -24,7 +24,7 @@ method called.
 
 #include "parrot/parrot.h"
 
-pmclass ResizableStringArray extends FixedStringArray need_ext does array {
+pmclass ResizableStringArray extends FixedStringArray need_ext provides array {
 
 /*
 

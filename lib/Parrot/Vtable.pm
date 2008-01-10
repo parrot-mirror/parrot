@@ -173,7 +173,7 @@ typedef struct _vtable {
     INTVAL  base_type;      /* 'type' value for MMD */
     STRING *whoami;         /* Name of class this vtable is for */
     UINTVAL flags;          /* Flags. Duh */
-    STRING *does_str;       /* space-separated list of interfaces */
+    STRING *provides_str;   /* space-separated list of interfaces */
     STRING *isa_str;        /* space-separated list of classes */
     PMC    *pmc_class;      /* for PMCs: a PMC of that type
                                for objects: the class PMC */

@@ -34,7 +34,7 @@ objects with other strings outside of the C<emit> method.
 
 #include "parrot/parrot.h"
 
-pmclass CodeString extends String does string {
+pmclass CodeString extends String provides string {
 
 /*
 

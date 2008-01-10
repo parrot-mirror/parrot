@@ -30,7 +30,7 @@ PMC>.
 
 #define BITS_PER_CHAR 8
 
-pmclass FixedBooleanArray need_ext does array {
+pmclass FixedBooleanArray need_ext provides array {
 
 /*
 

@@ -33,7 +33,7 @@ C<ResizableBooleanArray PMC> extends the C<FixedBooleanArray PMC>.
 /* Convert a size in bits to a size in bytes */
 #define BITS_TO_BYTES(size) ((size) / BITS_PER_CHAR)
 
-pmclass ResizableBooleanArray extends FixedBooleanArray need_ext does array {
+pmclass ResizableBooleanArray extends FixedBooleanArray need_ext provides array {
 
 
 /*
