@@ -60,7 +60,7 @@ C<value>.
 
 */
 
-    void set_number_keyed_int(INTVAL key, FLOATVAL value) {
+    VTABLE void set_number_keyed_int(INTVAL key, FLOATVAL value) {
         FLOATVAL *data;
 
         if (key < 0)

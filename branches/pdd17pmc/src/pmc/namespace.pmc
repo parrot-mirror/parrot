@@ -170,7 +170,7 @@ really a public API.
 
 */
 
-    void set_pmc_keyed_str(STRING *key, PMC *value) {
+    VTABLE void set_pmc_keyed_str(STRING *key, PMC *value) {
         const int   val_is_NS =
             value->vtable->base_type == enum_class_NameSpace;
         PMC        *new_tuple = NULL;

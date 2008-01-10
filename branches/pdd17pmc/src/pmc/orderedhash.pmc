@@ -254,7 +254,7 @@ The created key = "\1idx".
 
 */
 
-    void set_pmc_keyed_int(INTVAL idx, PMC *val) {
+    VTABLE void set_pmc_keyed_int(INTVAL idx, PMC *val) {
         Hash * const     h = (Hash *)PMC_struct_val(SELF);
         const INTVAL     n = h->entries;
         STRING * const fmt = CONST_STRING(INTERP, "\1%d");
@@ -279,21 +279,21 @@ The created key = "\1idx".
         }
     }
 
-    void set_integer_keyed_int(INTVAL idx, INTVAL value) {
+    VTABLE void set_integer_keyed_int(INTVAL idx, INTVAL value) {
         PMC * const v = pmc_new(INTERP, Parrot_get_ctx_HLL_type(INTERP,
                     enum_class_Integer));
         VTABLE_set_integer_native(INTERP, v, value);
         SELF.set_pmc_keyed_int(idx, v);
     }
 
-    void set_number_keyed_int(INTVAL idx, FLOATVAL value) {
+    VTABLE void set_number_keyed_int(INTVAL idx, FLOATVAL value) {
         PMC * const v = pmc_new(INTERP, Parrot_get_ctx_HLL_type(INTERP,
                     enum_class_Float));
         VTABLE_set_number_native(INTERP, v, value);
         SELF.set_pmc_keyed_int(idx, v);
     }
 
-    void set_string_keyed_int(INTVAL idx, STRING *value) {
+    VTABLE void set_string_keyed_int(INTVAL idx, STRING *value) {
         PMC * const v = pmc_new(INTERP, Parrot_get_ctx_HLL_type(INTERP,
                     enum_class_String));
         VTABLE_set_string_native(INTERP, v, value);

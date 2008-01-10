@@ -91,7 +91,7 @@ Sets the specified function pointer and signature (C<*key>).
 
 */
 
-    void set_pointer_keyed_str(STRING *key, void *func) {
+    VTABLE void set_pointer_keyed_str(STRING *key, void *func) {
         Parrot_NCI * const nci_info = PARROT_NCI(SELF);
 
         /* Store the original function and signature. */

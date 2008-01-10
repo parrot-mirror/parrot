@@ -69,7 +69,7 @@ Sets the Parrot string value of the element at index C<key> to C<value>.
 
 */
 
-    void set_string_keyed_int(INTVAL key, STRING *value) {
+    VTABLE void set_string_keyed_int(INTVAL key, STRING *value) {
         STRING **data;
 
         if (key < 0) {
