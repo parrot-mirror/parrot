@@ -899,7 +899,7 @@ true (1) is returned; otherwise, false (0) is returned.
 */
 
     VTABLE INTVAL does(STRING *_interface) {
-        return does_isa(INTERP, _interface, SELF->vtable->does_str);
+        return does_isa(INTERP, _interface, SELF->vtable->provides_str);
     }
 
 /*

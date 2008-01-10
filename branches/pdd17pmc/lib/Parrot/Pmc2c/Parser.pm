@@ -323,7 +323,7 @@ the name of the pmc
 =item *
 
 a hash ref containing the flags associated with the pmc (such as
-C<extends> and C<does>).
+C<extends> and C<provides>).
 
 =item *
 
@@ -379,7 +379,7 @@ sub parse_top_level {
 }
 
 our %has_value  = map { $_ => 1 } qw(group hll);
-our %has_values = map { $_ => 1 } qw(does extends maps lib);
+our %has_values = map { $_ => 1 } qw(provides extends maps lib);
 
 =head2 C<parse_flags()>
 
@@ -396,7 +396,7 @@ B<Return Values:>  List of two elements:
 =item *
 
 a hash ref containing the flags associated with the pmc (such as
-C<extends> and C<does>).
+C<extends> and C<provides>).
 
 =item *
 
@@ -439,7 +439,7 @@ sub parse_flags {
     # setup some defaults
     if ( $pmcname ne 'default' ) {
         push @parents, 'default' unless @parents;
-        $flags->{does}{scalar} = 1 unless $flags->{does};
+        $flags->{provides}{scalar} = 1 unless $flags->{provides};
     }
 
     return ( $flags, \@parents );

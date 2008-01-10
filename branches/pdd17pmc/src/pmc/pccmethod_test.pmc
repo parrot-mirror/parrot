@@ -12,7 +12,7 @@ src/pmc/pmethod_test.pmc - PCCMETHOD_Test PMC
 
 #include "parrot/parrot.h"
 
-pmclass PCCMETHOD_Test need_ext does hash {
+pmclass PCCMETHOD_Test need_ext provides hash {
 
 
     METHOD void test_method()

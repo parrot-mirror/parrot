@@ -23,7 +23,7 @@ conversions.
 #include "parrot/parrot.h"
 
 
-pmclass ResizableIntegerArray extends FixedIntegerArray need_ext does array {
+pmclass ResizableIntegerArray extends FixedIntegerArray need_ext provides array {
 
 /*
 

@@ -230,7 +230,7 @@ get_entry(PARROT_INTERP, PMC *self, INTVAL key)
     return (HashEntry *)PMC_data(self) + (2 + key);
 }
 
-pmclass SArray need_ext does array {
+pmclass SArray need_ext provides array {
 
 /*
 

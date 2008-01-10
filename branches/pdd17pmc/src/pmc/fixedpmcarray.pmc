@@ -90,7 +90,7 @@ quicksort(PARROT_INTERP, void **data, UINTVAL n, PMC *cmp)
     }
 }
 
-pmclass FixedPMCArray need_ext does array {
+pmclass FixedPMCArray need_ext provides array {
 
 /*
 

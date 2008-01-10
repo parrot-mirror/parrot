@@ -91,7 +91,7 @@ static STRING *make_hash_key(PARROT_INTERP, NOTNULL(PMC *key))
 /* Albeit the Hash PMC doesn't use PMC_data, it needs the next_for_GC pointer
  * We would get recursive marking of a deeply nested HoHoH...
  */
-pmclass Hash need_ext does hash {
+pmclass Hash need_ext provides hash {
 
 /*
 

@@ -63,7 +63,7 @@ typedef struct Parrot_NSInfo {
 /* Macro for easy access to the namespace info. */
 #define PARROT_NSINFO(o) ((Parrot_NSInfo *) PMC_data(o))
 
-pmclass NameSpace extends Hash does hash need_ext no_ro {
+pmclass NameSpace extends Hash provides hash need_ext no_ro {
 
 /*
 

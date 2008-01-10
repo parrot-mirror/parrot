@@ -442,7 +442,7 @@ sub vtable_decl {
         $enum_name, /* base_type */
         NULL,   /* whoami */
         $vtbl_flag, /* flags */
-        NULL,   /* does_str */
+        NULL,   /* provides_str */
         NULL,   /* isa_str */
         NULL,   /* class */
         NULL,   /* mro */
@@ -474,7 +474,7 @@ sub init_func {
         join( ",\n        ", map { "{ $_->[0], $_->[1], $_->[2], (funcptr_t) $_->[3] }" } @$mmds );
     my $isa = join( " ", $classname, @{ $self->parents } );
     $isa =~ s/\s?default$//;
-    my $does = join( " ", keys( %{ $self->{flags}{does} } ) );
+    my $provides = join( " ", keys( %{ $self->{flags}{provides} } ) );
     my $class_init_code = "";
     $class_init_code = $self->get_method('class_init')->body if $self->has_method('class_init');
     $class_init_code =~ s/INTERP/interp/g;
@@ -529,7 +529,7 @@ EOC
             PObj_constant_FLAG|PObj_external_FLAG);
         vt_clone->isa_str = string_make(interp, "$isa", @{[length($isa)]}, "ascii",
             PObj_constant_FLAG|PObj_external_FLAG);
-        vt_clone->does_str = string_make(interp, "$does", @{[length($does)]}, "ascii",
+        vt_clone->provides_str = string_make(interp, "$provides", @{[length($provides)]}, "ascii",
             PObj_constant_FLAG|PObj_external_FLAG);
 EOC
     }
@@ -537,7 +537,7 @@ EOC
         $cout .= <<"EOC";
         vt_clone->whoami = CONST_STRING(interp, "$classname");
         vt_clone->isa_str = CONST_STRING(interp, "$isa");
-        vt_clone->does_str = CONST_STRING(interp, "$does");
+        vt_clone->provides_str = CONST_STRING(interp, "$provides");
 EOC
     }
     for my $k ( keys %extra_vt ) {
@@ -545,7 +545,7 @@ EOC
         vt_${k}_clone->base_type = entry;
         vt_${k}_clone->whoami = vt_clone->whoami;
         vt_${k}_clone->isa_str = vt_clone->isa_str;
-        vt_${k}_clone->does_str = vt_clone->does_str;
+        vt_${k}_clone->provides_str = vt_clone->provides_str;
 EOC
     }
 

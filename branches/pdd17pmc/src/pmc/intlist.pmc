@@ -20,7 +20,7 @@ C<IntList> provides an integer-only array.
 
 #include "parrot/parrot.h"
 
-pmclass IntList does array {
+pmclass IntList provides array {
 
 /*
 

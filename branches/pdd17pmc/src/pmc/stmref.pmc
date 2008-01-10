@@ -26,7 +26,7 @@ C<Parrot::Pmc2c>.
 
 #define PMC_STM_handle(o) ((Parrot_STM_PMC_handle)PMC_struct_val(o))
 
-pmclass STMRef does ref is_shared need_ext {
+pmclass STMRef provides ref is_shared need_ext {
 
 /*
 

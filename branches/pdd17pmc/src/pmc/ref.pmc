@@ -23,7 +23,7 @@ C<Parrot::Pmc2c>.
 
 #include "parrot/parrot.h"
 
-pmclass Ref does ref {
+pmclass Ref provides ref {
 
 /*
 
