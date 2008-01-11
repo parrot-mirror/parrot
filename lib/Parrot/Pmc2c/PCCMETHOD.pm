@@ -222,13 +222,25 @@ sub rewrite_PCCRETURNs {
         $qty_returns++;
         $matched =~ /$signature_re/;
         my ( $match, $returns ) = ( $1, $2 );
+
+        my $e = Parrot::Pmc2c::Emitter->new( $pmc->filename );
+
+        if ($returns eq 'void') {
+            $e->emit( <<"END", __FILE__, __LINE__ + 1 );
+    /*BEGIN PCCRETURN $returns */
+    goto no_return;
+    /*END PCCRETURN $returns */
+END
+            $matched->replace( $match, $e );
+            next;
+        }
+
         my $goto_string = "goto ${method_name}_returns;";
         my ( $returns_n_regs_used, $returns_indexes, $returns_flags, $returns_accessors ) =
             process_pccmethod_args( parse_p_args_string($returns), 'return' );
         $returns_indexes = "0" unless $returns_indexes;
 
         push @$regs_used, $returns_n_regs_used;
-        my $e = Parrot::Pmc2c::Emitter->new( $pmc->filename );
 
         $e->emit( <<"END", __FILE__, __LINE__ + 1 );
     {

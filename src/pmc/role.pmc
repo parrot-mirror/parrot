@@ -466,7 +466,7 @@ Return the name of the role (without the HLL namespace).
              * to retrieve a fully qualified list of names, then join the list
              * with a semicolon.
              */
-            PMC * const names = Parrot_NameSpace_nci_get_name(interp, _namespace);
+            PMC * const names = Parrot_ns_get_name(interp, _namespace);
 
             if (!PMC_IS_NULL(names))
                 /* remove the HLL namespace name */

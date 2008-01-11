@@ -537,7 +537,7 @@ Return the name of this namespace part.
 
 /*
 
-=item C<METHOD void PMC *add_namespace(STRING *name, PMC *namespace)>
+=item C<PCCMETHOD add_namespace(STRING *name, PMC *namespace)>
 
 Stores the given namespace under this namespace, with the given name.  Throws
 an invalid type exception if C<namespace> is not a NameSpace PMC or subclass.
@@ -546,7 +546,7 @@ an invalid type exception if C<namespace> is not a NameSpace PMC or subclass.
 
 */
 
-    METHOD void add_namespace(STRING *name, PMC *_namespace) {
+    PCCMETHOD add_namespace(STRING *name, PMC *_namespace) {
         STRING *s_ns = CONST_STRING(INTERP, "NameSpace");
 
         if (!VTABLE_isa(INTERP, _namespace, s_ns))
@@ -561,7 +561,7 @@ an invalid type exception if C<namespace> is not a NameSpace PMC or subclass.
 
 /*
 
-=item C<METHOD void PMC *add_sub(STRING *name, PMC *sub)>
+=item C<PCCMETHOD add_sub(STRING *name, PMC *sub)>
 
 Stores the given sub under this namespace, with the given name.  Throws an
 invalid type exception if C<sub> is not a Sub PMC or subclass.
@@ -570,7 +570,7 @@ invalid type exception if C<sub> is not a Sub PMC or subclass.
 
 */
 
-    METHOD void add_sub(STRING *name, PMC *sub) {
+    PCCMETHOD add_sub(STRING *name, PMC *sub) {
         STRING *s_sub = CONST_STRING(INTERP, "Sub");
 
         if (!VTABLE_isa(INTERP, sub, s_sub))
@@ -584,7 +584,7 @@ invalid type exception if C<sub> is not a Sub PMC or subclass.
 
 /*
 
-=item C<METHOD void PMC *add_var(STRING *name, PMC *var)>
+=item C<PCCMETHOD add_var(STRING *name, PMC *var)>
 
 Stores the given sub under this namespace, with the given name.
 
@@ -592,13 +592,13 @@ Stores the given sub under this namespace, with the given name.
 
 */
 
-    METHOD void add_var(STRING *name, PMC *var) {
+    PCCMETHOD add_var(STRING *name, PMC *var) {
         VTABLE_set_pmc_keyed_str(INTERP, SELF, name, var);
     }
 
 /*
 
-=item C<METHOD PMC *get_name()>
+=item C<PCCMETHOD get_name()>
 
 Returns the name of the namespace as an array of strings.
 
@@ -609,7 +609,7 @@ Returns the name of the namespace as an array of strings.
 
 */
 
-    METHOD PMC *get_name() {
+    PCCMETHOD get_name() {
         PMC *ar = pmc_new(INTERP, enum_class_ResizableStringArray);
         PMC *ns = SELF;
 
@@ -622,11 +622,11 @@ Returns the name of the namespace as an array of strings.
         /* remove the NULL string of the namespace root */
         VTABLE_shift_string(INTERP, ar);
 
-        return ar;
+        PCCRETURN(PMC *ar);
     }
 /*
 
-=item C<METHOD PMC *find_namespace(STRING *name)>
+=item C<PCCMETHOD find_namespace(STRING *name)>
 
 Return the namespace with the given name.
 
@@ -634,23 +634,23 @@ Return the namespace with the given name.
 
 */
 
-    METHOD PMC *find_namespace(STRING *key) {
+    PCCMETHOD find_namespace(STRING *key) {
         STRING *s_ns = CONST_STRING(INTERP, "NameSpace");
         PMC    *ns   = (PMC *)parrot_hash_get(INTERP, NS_HASH(SELF), key);
 
         if (!ns)
-            return PMCNULL;
+            PCCRETURN(PMC *PMCNULL);
 
         /* it's a NameSpace */
         if (VTABLE_isa(INTERP, ns, s_ns))
-            return ns;
+            PCCRETURN(PMC *ns);
 
-        return PMCNULL;
+        PCCRETURN(PMC *PMCNULL);
     }
 
 /*
 
-=item C<METHOD PMC *find_sub(STRING *name)>
+=item C<PCCMETHOD find_sub(STRING *name)>
 
 Return the Sub PMC with the given name.
 
@@ -658,23 +658,23 @@ Return the Sub PMC with the given name.
 
 */
 
-    METHOD PMC *find_sub(STRING *key) {
+    PCCMETHOD find_sub(STRING *key) {
         STRING *s_sub = CONST_STRING(INTERP, "Sub");
         PMC    *sub   = (PMC *)parrot_hash_get(INTERP, NS_HASH(SELF), key);
 
         if (!sub)
-            return PMCNULL;
+            PCCRETURN(PMC *PMCNULL);
 
         /* it's a Sub */
         if (VTABLE_isa(INTERP, sub, s_sub))
-            return sub;
+            PCCRETURN(PMC *sub);
 
-        return PMCNULL;
+        PCCRETURN(PMC *PMCNULL);
     }
 
 /*
 
-=item C<METHOD PMC *find_var(STRING *name)>
+=item C<PCCMETHOD find_var(STRING *name)>
 
 Return the PMC with the given name.
 
@@ -682,18 +682,18 @@ Return the PMC with the given name.
 
 */
 
-    METHOD PMC *find_var(STRING *key) {
+    PCCMETHOD find_var(STRING *key) {
         PMC *val = (PMC *)parrot_hash_get(INTERP, NS_HASH(SELF), key);
 
         if (!val)
-            return PMCNULL;
+            PCCRETURN(PMC *PMCNULL);
 
-        return val;
+        PCCRETURN(PMC *val);
     }
 
 /*
 
-=item C<METHOD PMC *del_namespace(STRING *name)>
+=item C<PCCMETHOD del_namespace(STRING *name)>
 
 Deletes the contained NameSpace PMC with the given name.  Throws an invalid
 type exception if the item to delete is not a NameSpace PMC or subclass, and
@@ -703,13 +703,13 @@ does not delete the PMC.
 
 */
 
-    METHOD void del_namespace(STRING *name) {
+    PCCMETHOD del_namespace(STRING *name) {
         Hash   *hash = NS_HASH(SELF);
         PMC    *ns   = (PMC *)parrot_hash_get(INTERP, hash, name);
         STRING *s_ns = CONST_STRING(INTERP, "NameSpace");
 
         if (PMC_IS_NULL(ns))
-            return;
+            PCCRETURN(void);
 
         if (!VTABLE_isa(INTERP, ns, s_ns)) {
             real_exception(INTERP, NULL, E_TypeError,
@@ -722,7 +722,7 @@ does not delete the PMC.
 
 /*
 
-=item C<METHOD PMC *del_sub(STRING *name)>
+=item C<PCCMETHOD del_sub(STRING *name)>
 
 Deletes the contained Sub PMC with the given name.  Throws an invalid type
 exception if the item to delete is not a Sub PMC or subclass, and does not
@@ -732,13 +732,13 @@ delete the PMC.
 
 */
 
-    METHOD void del_sub(STRING *name) {
+    PCCMETHOD del_sub(STRING *name) {
         Hash   *hash  = NS_HASH(SELF);
         PMC    *sub   = (PMC *)parrot_hash_get(INTERP, hash, name);
         STRING *s_sub = CONST_STRING(INTERP, "Sub");
 
         if (PMC_IS_NULL(sub))
-            return;
+            PCCRETURN(void);
 
         if (!VTABLE_isa(INTERP, sub, s_sub)) {
             real_exception(INTERP, NULL, E_TypeError,
@@ -751,7 +751,7 @@ delete the PMC.
 
 /*
 
-=item C<METHOD PMC *del_var(STRING *name)>
+=item C<PCCMETHOD del_var(STRING *name)>
 
 Deletes the contained variable-like PMC with the given name.
 
@@ -759,13 +759,13 @@ Deletes the contained variable-like PMC with the given name.
 
 */
 
-    METHOD void del_var(STRING *name) {
+    PCCMETHOD del_var(STRING *name) {
         parrot_hash_delete(INTERP, NS_HASH(SELF), name);
     }
 
 /*
 
-=item C<METHOD PMC *get_sym(STRING *name)>
+=item C<PCCMETHOD get_sym(STRING *name)>
 
 Return the symbol (var or sub) with the given name. This can be used
 to retrieve symbols, if a NameSpace with the same name exists.
@@ -774,26 +774,26 @@ to retrieve symbols, if a NameSpace with the same name exists.
 
 */
 
-    METHOD PMC *get_sym(STRING *key) {
+    PCCMETHOD get_sym(STRING *key) {
         PMC *ns = (PMC *)parrot_hash_get(INTERP, NS_HASH(SELF), key);
 
         if (!ns)
-            return PMCNULL;
+            PCCRETURN(PMC *PMCNULL);
 
         /* it's a NameSpace */
         if (ns->vtable == SELF->vtable)
-            return PMCNULL;
+            PCCRETURN(PMC *PMCNULL);
 
         if ((PObj_get_FLAGS(ns) & FPA_is_ns_ext) &&
                 ns->vtable->base_type == enum_class_FixedPMCArray)
             ns = VTABLE_get_pmc_keyed_int(INTERP, ns, NS_slot_var_sub);
 
-        return ns;
+        PCCRETURN(PMC *ns);
     }
 
 /*
 
-=item C<METHOD void export_to(PMC *dest, PMC *what)>
+=item C<PCCMETHOD export_to(PMC *dest, PMC *what)>
 
 Export items from this NameSpace into the C<dest> NameSpace. The items to
 export are named in C<what>, which may be an array of strings, a hash, or null.
@@ -811,20 +811,20 @@ NOTE: exporting 'default' set of items is not yet implemented.
 
 */
 
-    METHOD void export_to(PMC *dest, PMC *what) {
+    PCCMETHOD export_to(PMC *dest, PMC *what) {
         STRING *s_hash  = CONST_STRING(interp, "hash");
         STRING *s_array = CONST_STRING(interp, "array");
 
         if (PMC_IS_NULL(dest)) {
             real_exception(interp, NULL, 0,
                     "destination namespace not specified");
-            return;
+            PCCRETURN(void);
         }
 
         if (PMC_IS_NULL(what) || !VTABLE_elements(interp, what)) {
             real_exception(interp, NULL, 0,
                     "exporting default object set not yet implemented");
-            return;
+            PCCRETURN(void);
         }
 
         /* if "what" does "hash", we extract string key/value pairs,
@@ -843,7 +843,7 @@ NOTE: exporting 'default' set of items is not yet implemented.
                 if (STRING_IS_NULL(src_name) || STRING_IS_EMPTY(src_name)) {
                     real_exception(interp, NULL, 0,
                         "source object name not specified");
-                    return;
+                    PCCRETURN(void);
                 }
 
                 if (PMC_IS_NULL(VTABLE_get_pmc_keyed_str(interp, what, src_name))) {
@@ -861,7 +861,7 @@ NOTE: exporting 'default' set of items is not yet implemented.
                     real_exception(interp, NULL, 0,
                             "object '%s' not found in current namespace",
                             string_to_cstring(interp, src_name));
-                    return;
+                    PCCRETURN(void);
                 }
 
                 VTABLE_set_pmc_keyed_str(interp, dest, dest_name, object);
@@ -877,7 +877,7 @@ NOTE: exporting 'default' set of items is not yet implemented.
 
                 if (STRING_IS_NULL(name) || STRING_IS_EMPTY(name)) {
                     real_exception(interp, NULL, 0, "object name not specified");
-                    return;
+                    PCCRETURN(void);
                 }
 
                 object = VTABLE_get_pmc_keyed_str(interp, SELF, name);
@@ -886,7 +886,7 @@ NOTE: exporting 'default' set of items is not yet implemented.
                     real_exception(interp, NULL, 0,
                             "object '%s' not found in current namespace",
                             string_to_cstring(interp, name));
-                    return;
+                    PCCRETURN(void);
                 }
 
                 VTABLE_set_pmc_keyed_str(interp, dest, name, object);
@@ -900,7 +900,7 @@ NOTE: exporting 'default' set of items is not yet implemented.
 
 /*
 
-=item C<METHOD PMC *get_parent()>
+=item C<PCCMETHOD get_parent()>
 
 Return the parent NameSpace or PMCNULL, if none.
 
@@ -908,8 +908,11 @@ Return the parent NameSpace or PMCNULL, if none.
 
 */
 
-    METHOD PMC *get_parent() {
-        return PMC_pmc_val(SELF) ? PMC_pmc_val(SELF) : PMCNULL;
+    PCCMETHOD get_parent() {
+        PMC *parent = PMCNULL;
+        if (PMC_pmc_val(SELF))
+            parent = PMC_pmc_val(SELF);
+        PCCRETURN(PMC *parent);
     }
 
 /*
