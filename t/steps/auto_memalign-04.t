@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 138-auto_memalign-04.t
+# auto_memalign-04.t
 
 use strict;
 use warnings;
@@ -118,11 +118,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-138-auto_memalign-04.t - test config::auto::memalign
+auto_memalign-04.t - test config::auto::memalign
 
 =head1 SYNOPSIS
 
-    % prove t/configure/138-auto_memalign-04.t
+    % prove t/steps/auto_memalign-04.t
 
 =head1 DESCRIPTION
 

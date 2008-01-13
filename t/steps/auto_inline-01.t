@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 136-auto_inline-01.t
+# auto_inline-01.t
 
 use strict;
 use warnings;
@@ -49,11 +49,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-136-auto_inline-01.t - test config::auto::inline
+auto_inline-01.t - test config::auto::inline
 
 =head1 SYNOPSIS
 
-    % prove t/configure/136-auto_inline-01.t
+    % prove t/steps/auto_inline-01.t
 
 =head1 DESCRIPTION
 

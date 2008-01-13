@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 148-auto_python-01.t
+# auto_python-01.t
 
 use strict;
 use warnings;
@@ -21,11 +21,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-148-auto_python-01.t - test config::auto::python
+auto_python-01.t - test config::auto::python
 
 =head1 SYNOPSIS
 
-    % prove t/configure/148-auto_python-01.t
+    % prove t/steps/auto_python-01.t
 
 =head1 DESCRIPTION
 

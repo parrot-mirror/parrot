@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 108-inter_make-02.t
+# inter_make-02.t
 
 use strict;
 use warnings;
@@ -60,11 +60,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-108-inter_make-02.t - test config::inter::make
+inter_make-02.t - test config::inter::make
 
 =head1 SYNOPSIS
 
-    % prove t/configure/108-inter_make-02.t
+    % prove t/steps/inter_make-02.t
 
 =head1 DESCRIPTION
 

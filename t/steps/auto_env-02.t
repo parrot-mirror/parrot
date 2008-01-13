@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 141-auto_env-02.t
+# auto_env-02.t
 
 use strict;
 use warnings;
@@ -65,11 +65,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-141-auto_env-02.t - test config::auto::env
+auto_env-02.t - test config::auto::env
 
 =head1 SYNOPSIS
 
-    % prove t/configure/141-auto_env-02.t
+    % prove t/steps/auto_env-02.t
 
 =head1 DESCRIPTION
 

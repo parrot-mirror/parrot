@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 116-init_optimize-03.t
+# init_optimize-03.t
 
 use strict;
 use warnings;
@@ -56,7 +56,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-116-init_optimize-03.t - test config::init::optimize
+init_optimize-03.t - test config::init::optimize
 
 =head1 SYNOPSIS
 
