@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 114-auto_attributes-01.t
+# auto_attributes-01.t
 
 use strict;
 use warnings;
@@ -57,11 +57,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-114-auto_attributes-01.t - test config::auto::attributes
+auto_attributes-01.t - test config::auto::attributes
 
 =head1 SYNOPSIS
 
-    % prove t/configure/114-auto_attributes-01.t
+    % prove t/steps/auto_attributes-01.t
 
 =head1 DESCRIPTION
 

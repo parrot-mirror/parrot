@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 115-auto_warnings-01.t
+# auto_warnings-01.t
 
 use strict;
 use warnings;
@@ -45,11 +45,11 @@ TODO: {
 
 =head1 NAME
 
-115-auto_warnings-01.t - test config::auto::warnings
+auto_warnings-01.t - test config::auto::warnings
 
 =head1 SYNOPSIS
 
-    % prove t/configure/115-auto_warnings-01.t
+    % prove t/steps/auto_warnings-01.t
 
 =head1 DESCRIPTION
 

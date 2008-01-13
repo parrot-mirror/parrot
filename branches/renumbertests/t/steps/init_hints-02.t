@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 105-init_hints-02.t
+# init_hints-02.t
 
 use strict;
 use warnings;
@@ -82,11 +82,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-105-init_hints-02.t - test config::init::hints
+init_hints-02.t - test config::init::hints
 
 =head1 SYNOPSIS
 
-    % prove t/configure/105-init_hints-02.t
+    % prove t/steps/init_hints-02.t
 
 =head1 DESCRIPTION
 

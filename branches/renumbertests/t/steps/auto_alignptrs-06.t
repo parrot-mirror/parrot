@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 124-auto_alignptrs-06.t
+# auto_alignptrs-06.t
 
 use strict;
 use warnings;
@@ -52,11 +52,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-124-auto_alignptrs-06.t - test config::auto::alignptrs
+auto_alignptrs-06.t - test config::auto::alignptrs
 
 =head1 SYNOPSIS
 
-    % prove t/configure/124-auto_alignptrs-06.t
+    % prove t/steps/auto_alignptrs-06.t
 
 =head1 DESCRIPTION
 

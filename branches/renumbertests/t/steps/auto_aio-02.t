@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 142-auto_aio-02.t
+# auto_aio-02.t
 
 use strict;
 use warnings;
@@ -63,11 +63,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-142-auto_aio-02.t - test config::auto::aio
+auto_aio-02.t - test config::auto::aio
 
 =head1 SYNOPSIS
 
-    % prove t/configure/142-auto_aio-02.t
+    % prove t/steps/auto_aio-02.t
 
 =head1 DESCRIPTION
 

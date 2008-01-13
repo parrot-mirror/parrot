@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 132-auto_arch-03.t
+# auto_arch-03.t
 
 use strict;
 use warnings;
@@ -61,11 +61,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-132-auto_arch-03.t - test config::auto::arch
+auto_arch-03.t - test config::auto::arch
 
 =head1 SYNOPSIS
 
-    % prove t/configure/132-auto_arch-03.t
+    % prove t/steps/auto_arch-03.t
 
 =head1 DESCRIPTION
 

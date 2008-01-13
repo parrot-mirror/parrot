@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 132-auto_arch-02.t
+# auto_arch-02.t
 
 use strict;
 use warnings;
@@ -72,11 +72,11 @@ sub _capture { $errstr = $_[0]; }
 
 =head1 NAME
 
-132-auto_arch-02.t - test config::auto::arch
+auto_arch-02.t - test config::auto::arch
 
 =head1 SYNOPSIS
 
-    % prove t/configure/132-auto_arch-02.t
+    % prove t/steps/auto_arch-02.t
 
 =head1 DESCRIPTION
 

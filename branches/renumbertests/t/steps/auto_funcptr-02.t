@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 134-auto_funcptr-02.t
+# auto_funcptr-02.t
 
 use strict;
 use warnings;
@@ -66,11 +66,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-134-auto_funcptr-02.t - test config::auto::funcptr
+auto_funcptr-02.t - test config::auto::funcptr
 
 =head1 SYNOPSIS
 
-    % prove t/configure/134-auto_funcptr-02.t
+    % prove t/steps/auto_funcptr-02.t
 
 =head1 DESCRIPTION
 

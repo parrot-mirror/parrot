@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 110-inter_yacc-02.t
+# inter_yacc-02.t
 
 use strict;
 use warnings;
@@ -51,11 +51,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-110-inter_yacc-02.t - test config::inter::yacc
+inter_yacc-02.t - test config::inter::yacc
 
 =head1 SYNOPSIS
 
-    % prove t/configure/110-inter_yacc-02.t
+    % prove t/steps/inter_yacc-02.t
 
 =head1 DESCRIPTION
 
