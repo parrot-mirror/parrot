@@ -61,7 +61,7 @@ Returns a true value (1) if the supplied file or directory exists.
 
 */
 
-    METHOD INTVAL exists(STRING *path) {
+    PCCMETHOD exists(STRING *path) {
         struct stat info;
         char *cpath = string_to_cstring(interp, path);
 #ifdef WIN32
@@ -72,9 +72,9 @@ Returns a true value (1) if the supplied file or directory exists.
         string_cstring_free(cpath);
 
         if (error)
-            return 0;
+            PCCRETURN(INTVAL 0);
 
-        return 1;
+        PCCRETURN(INTVAL 1);
     }
 
 /*
@@ -87,7 +87,7 @@ Returns a true value (1) if the supplied path is a directory.
 
 */
 
-    METHOD INTVAL is_dir(STRING *path) {
+    PCCMETHOD is_dir(STRING *path) {
         struct stat info;
         char *cpath = string_to_cstring(interp, path);
 #ifdef WIN32
@@ -103,9 +103,9 @@ Returns a true value (1) if the supplied path is a directory.
         }
 
         if (S_ISDIR(info.st_mode))
-            return 1;
+            PCCRETURN(INTVAL 1);
         else
-            return 0;
+            PCCRETURN(INTVAL 0);
     }
 
 /*
@@ -118,7 +118,7 @@ Returns a true value (1) if the supplied path is a plain file.
 
 */
 
-    METHOD INTVAL is_file(STRING *path) {
+    PCCMETHOD is_file(STRING *path) {
         struct stat info;
         char *cpath = string_to_cstring(interp, path);
 #ifdef WIN32
@@ -134,9 +134,9 @@ Returns a true value (1) if the supplied path is a plain file.
         }
 
         if (S_ISREG(info.st_mode))
-            return 1;
+            PCCRETURN(INTVAL 1);
         else
-            return 0;
+            PCCRETURN(INTVAL 0);
     }
 
 /*
@@ -149,10 +149,10 @@ Returns a true value (1) if the supplied path is a link.
 
 */
 
-    METHOD INTVAL is_link(STRING *path) {
+    PCCMETHOD is_link(STRING *path) {
 #ifdef WIN32
         /* I love win32 implementations */
-        return 0;
+        PCCRETURN(INTVAL 0);
 #else
         struct stat info;
 
@@ -167,9 +167,9 @@ Returns a true value (1) if the supplied path is a link.
         }
 
         if (S_ISLNK(info.st_mode))
-            return 1;
+            PCCRETURN(INTVAL 1);
         else
-            return 0;
+            PCCRETURN(INTVAL 0);
 #endif
     }
 
@@ -189,7 +189,7 @@ free to change or give me hints on how to change it. -- ambs
 
 */
 
-    METHOD void copy(STRING *from, STRING *to) {
+    PCCMETHOD copy(STRING *from, STRING *to) {
 #define CHUNK_SIZE 1024
 
         char *cfrom  = string_to_cstring(interp, from);
@@ -242,7 +242,7 @@ Rename a file C<from> to the path C<to>.
 
 */
 
-    METHOD void rename(STRING *from, STRING *to) {
+    PCCMETHOD rename(STRING *from, STRING *to) {
         char *cfrom = string_to_cstring(interp, from);
         char *cto   = string_to_cstring(interp, to);
         int error   = rename(cfrom, cto);
