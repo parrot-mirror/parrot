@@ -670,7 +670,7 @@ Finish thawing.
         }
     }
 
-    METHOD void run_gc() {
+    PCCMETHOD run_gc() {
         Parrot_do_dod_run(PMC_data_typed(SELF, Parrot_Interp), 0);
     }
 }
