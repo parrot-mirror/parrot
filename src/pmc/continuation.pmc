@@ -403,42 +403,42 @@ Experimental: return caller info as a STRING.
 
 /*
 
-=item C<METHOD PMC *"caller"()>
+=item C<PMC *caller()>
 
-Experimental: return caller PMC or Undef if none.
+Experimental: return caller PMC or PMCNULL if none.
 
 =cut
 
 */
 
-    METHOD PMC *caller() {
+    PCCMETHOD caller() {
         Parrot_cont *cc     = PMC_cont(SELF);
         PMC         *caller = cc->to_ctx->current_sub;
 
         if (!caller || !PMC_sub(caller)->seg)
-            caller = pmc_new(INTERP, enum_class_Undef);
+            caller = PMCNULL;
 
-        return caller;
+        PCCRETURN(PMC *caller);
 
     }
 /*
 
-=item C<METHOD PMC *"continuation"()>
+=item C<PMC *continuation()>
 
-Experimental: return continuation PMC of this Continuation or Undef if none.
+Experimental: return continuation PMC of this Continuation or PMCNULL if none.
 
 =cut
 
 */
 
-    METHOD PMC *continuation() {
+    PCCMETHOD continuation() {
         Parrot_cont *cc   = PMC_cont(SELF);
         PMC         *cont = cc->to_ctx->current_cont;
 
         if (cont)
-            return cont;
+            PCCRETURN(PMC *cont);
 
-        return pmc_new(INTERP, enum_class_Undef);
+        PCCRETURN(PMC *PMCNULL);
     }
 }
 
