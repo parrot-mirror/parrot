@@ -67,7 +67,7 @@ static STRING* make_hash_key(PARROT_INTERP, NOTNULL(PMC * key))
 }
 
 
-pmclass GDBMHash does hash dynpmc lib gdbm {
+pmclass GDBMHash provides hash dynpmc lib gdbm {
 
 /*
 
