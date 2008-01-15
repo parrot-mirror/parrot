@@ -70,7 +70,7 @@ lexical doesn't exist.
 Set the lexical with the given name to value. If the lexical name
 doesn't exist, it is created.
 
-=item C<METHOD PMC *get_lexinfo()>
+=item C<PMC *get_lexinfo()>
 
 Return the LexInfo PMC, if any or a Null PMC.
 
@@ -141,8 +141,9 @@ Return the LexInfo PMC, if any or a Null PMC.
         SELF.set_pmc_keyed_str(s, value);
     }
 
-    METHOD PMC *get_lexinfo() {
-        return PMC_pmc_val(SELF);
+    PCCMETHOD get_lexinfo() {
+        PMC *lexinfo = PMC_pmc_val(SELF);
+        PCCRETURN(PMC *lexinfo);
     }
 }
 
