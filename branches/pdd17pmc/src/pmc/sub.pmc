@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -541,33 +541,33 @@ Unarchives the subroutine.
 
 =over 4
 
-=item C<METHOD PMC *get_namespace()>
+=item C<PMC *get_namespace()>
 
 Return the namespace PMC, where the Sub is defined.
 
 TODO return C<namespace_stash> instead.
 
-=item C<METHOD INTVAL __get_regs_used(char *kind)>
+=item C<INTVAL __get_regs_used(char *kind)>
 
 Return amount of used registers for register kinds "I", "S", "P", "N".
 
-=item C<METHOD PMC *get_lexinfo()>
+=item C<PMC *get_lexinfo()>
 
 Return the LexInfo PMC, if any or a Null PMC.
 
-=item C<METHOD PMC *get_multisig()>
+=item C<PMC *get_multisig()>
 
 Return the MMD signature PMC, if any or a Null PMC.
 
-=item C<METHOD PMC *get_outer()>
+=item C<PMC *get_outer()>
 
 Gets the sub that is the outer of this one, if any or a Null PMC.
 
-=item C<METHOD void set_outer(PMC *outer)>
+=item C<void set_outer(PMC *outer)>
 
 Sets the sub that is the outer of this one.
 
-=item C<METHOD INTVAL arity()>
+=item C<INTVAL arity()>
 
 Return the arity of the Sub (the number of arugments, excluding optional and
 slurpy arguments).
@@ -576,13 +576,16 @@ slurpy arguments).
 
 */
 
-    METHOD PMC *get_namespace() {
+    PCCMETHOD get_namespace() {
         Parrot_sub * const sub = PMC_sub(SELF);
-        return sub->namespace_stash;
+        PMC *namespace = sub->namespace_stash;
+        PCCRETURN(PMC *namespace);
     }
 
-    METHOD INTVAL __get_regs_used(char *kind) {
+    PCCMETHOD __get_regs_used(STRING *reg) {
         Parrot_sub * const sub = PMC_sub(SELF);
+        char *kind = string_to_cstring(interp, reg);
+        INTVAL regs_used;
 
         /* TODO switch to canonical NiSP order
          * see also imcc/reg_alloc.c */
@@ -601,20 +604,23 @@ slurpy arguments).
             real_exception(INTERP, NULL, E_ValueError,
                 "illegal register kind '%s'", kind);
 
-        return sub->n_regs_used[p - types];
+        regs_used = sub->n_regs_used[p - types];
+        PCCRETURN(INTVAL regs_used);
     }
 
-    METHOD PMC *get_lexinfo() {
+    PCCMETHOD get_lexinfo() {
         const Parrot_sub * const sub = PMC_sub(SELF);
-        return sub->lex_info ? sub->lex_info : PMCNULL;
+        PMC *lexinfo = sub->lex_info ? sub->lex_info : PMCNULL;
+        PCCRETURN(PMC *lexinfo);
     }
 
-    METHOD PMC *get_outer() {
+    PCCMETHOD get_outer() {
         const Parrot_sub * const sub = PMC_sub(SELF);
-        return sub->outer_sub ? sub->outer_sub : PMCNULL;
+        PMC *outersub = sub->outer_sub ? sub->outer_sub : PMCNULL;
+        PCCRETURN(PMC *outersub);
     }
 
-    METHOD void set_outer(PMC *outer) {
+    PCCMETHOD set_outer(PMC *outer) {
         /* Set outer sub. */
         Parrot_sub * const sub = PMC_sub(SELF);
         sub->outer_sub = outer;
@@ -634,12 +640,13 @@ slurpy arguments).
         SELF->vtable = interp->vtables[enum_class_Closure];
     }
 
-    METHOD PMC *get_multisig() {
+    PCCMETHOD get_multisig() {
         const Parrot_sub * const sub = PMC_sub(SELF);
-        return sub->multi_signature ? sub->multi_signature : PMCNULL;
+        PMC *multisig = sub->multi_signature ? sub->multi_signature : PMCNULL;
+        PCCRETURN(PMC *multisig);
     }
 
-    METHOD INTVAL arity() {
+    PCCMETHOD arity() {
         /* Get pointer into the bytecode where this sub starts. */
         Parrot_sub * const sub = PMC_sub(SELF);
         opcode_t *pc = sub->seg->base.data + sub->start_offs;
@@ -663,26 +670,14 @@ slurpy arguments).
                     PARROT_ARG_OPTIONAL | PARROT_ARG_OPT_FLAG)) == 0)
                     arity++;
 
-            return arity;
+            PCCRETURN(INTVAL arity);
         }
         else {
             /* No parameters taken. */
-            return 0;
+            PCCRETURN(INTVAL 0);
         }
     }
 }
-
-/*
-
-=back
-
-=head1 HISTORY
-
-Initial version by Melvin on 2002/06/06.
-
-=cut
-
-*/
 
 /*
  * Local variables:
