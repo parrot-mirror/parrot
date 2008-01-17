@@ -10,7 +10,6 @@ Parrot::Revision - SVN Revision
     use Parrot::Revision;
 
     print $Parrot::Revision::current;
-    print $Parrot::Revision::config;
 
 =head1 DESCRIPTION
 
@@ -61,7 +60,7 @@ sub _get_revision {
 }
 
 our $current = _get_revision();
-our $config  = $current;
+# our $config  = $current;
 
 1;
 
