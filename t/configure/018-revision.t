@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 7;
+use Test::More tests => 5;
 use Carp;
 use_ok('Cwd');
 use_ok('File::Copy');
@@ -20,13 +20,10 @@ my ( $current, $config );
 my $reason =
 'Either file DEVELOPING does not exist, or configuration has completed (because Parrot::Config::Generated exists).';
 SKIP: {
-    skip $reason, 3 if ( ( not -e 'DEVELOPING' )
+    skip $reason, 1 if ( ( not -e 'DEVELOPING' )
         or ( -e q{lib/Parrot/Config/Generated.pm} ) );
     $current = $Parrot::Revision::current;
     like( $current, qr/^\d+$/, "current revision is all numeric" );
-    $config = $Parrot::Revision::config;
-    like( $config, qr/^\d+$/, "current revision is all numeric" );
-    is( $current, $config, "current and config are identical" );
 }    # end SKIP block
 
 pass("Completed all tests in $0");

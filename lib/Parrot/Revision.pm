@@ -24,8 +24,7 @@ use strict;
 use warnings;
 use File::Spec;
 
-sub __get_revision {
-    return 0 unless ( -e 'DEVELOPING' );
+sub _get_revision {
 
     my $revision;
 
@@ -61,11 +60,8 @@ sub __get_revision {
     return ( $revision || 0 );
 }
 
-our $current = __get_revision();
+our $current = _get_revision();
 our $config  = $current;
-
-# check if Parrot::Config is available
-eval 'use Parrot::Config; $config = $PConfig{revision};';
 
 1;
 

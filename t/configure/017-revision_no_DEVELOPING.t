@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 13;
+use Test::More tests => 11;
 use Carp;
 use_ok('Cwd');
 use_ok('File::Copy');
@@ -21,7 +21,7 @@ my $reason =
 'Either file DEVELOPING does not exist or configuration has completed (as evidenced by existence of Parrot::Config::Generated';
 
 SKIP: {
-    skip $reason, 9 if ( ( not -e 'DEVELOPING' )
+    skip $reason, 7 if ( ( not -e 'DEVELOPING' )
         or ( -e q{lib/Parrot/Config/Generated.pm} ) );
     my $tdir = tempdir( CLEANUP => 1 );
     ok( chdir $tdir, "Changed to temporary directory for testing" );
@@ -36,10 +36,7 @@ SKIP: {
     no warnings qw(once);
     $current = $Parrot::Revision::current;
     like( $current, qr/^\d+$/, "current revision is all numeric" );
-    $config = $Parrot::Revision::config;
     use warnings;
-    like( $config, qr/^\d+$/, "current revision is all numeric" );
-    is( $current, $config, "current and config are identical" );
     is( $current, 0, 'current is zero as expected' );
     ok( chdir $cwd, "Able to change back to directory after testing" );
 }
