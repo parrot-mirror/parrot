@@ -358,6 +358,7 @@ F<lib/Parrot/Configure/Step.pm>, F<docs/configuration.pod>
 
 =cut
 
+
 # Local Variables:
 #   mode: cperl
 #   cperl-indent-level: 4
