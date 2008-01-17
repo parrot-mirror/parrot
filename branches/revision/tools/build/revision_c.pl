@@ -23,10 +23,15 @@ use warnings;
 use strict;
 use lib qw{lib . ../lib ../../ lib};
 use Parrot::Revision;
+use Parrot::Config;
 
-if ( ${Parrot::Revision::current} != ${Parrot::Revision::config} ) {
-    exit 1;
+my $current = 0;
+my $config = 0;
+if (-e 'DEVELOPING') {
+    $current = ${Parrot::Revision::current};
+    eval 'use Parrot::Config; $config = $PConfig{revision};';
 }
+exit 1 unless ( $current == $config );
 
 print <<"EOF";
 /* ex: set ro:
@@ -50,12 +55,12 @@ PARROT_API int Parrot_config_revision(void);
 
 int Parrot_revision(void)
 {
-    return ${Parrot::Revision::current};
+    return $current;
 }
 
 int Parrot_config_revision(void)
 {
-    return ${Parrot::Revision::config};
+    return $config;
 }
 
 /*
