@@ -14,7 +14,6 @@ use File::Temp qw( tempdir );
 use lib qw( lib );
 use Parrot::Revision::Utils qw(
     get_revision_numbers
-    print_src_revision_c
 );
 
 my $cwd = cwd();
