@@ -23,9 +23,19 @@ use strict;
 use warnings;
 use File::Spec;
 
+my $cache = q{.parrot_current_rev};
+
 sub _get_revision {
 
     my $revision;
+    if (-f $cache) {
+        eval {
+            open my $FH, "<", $cache;
+            chomp($revision = <$FH>);
+            close $FH;
+        };
+        return $revision unless $@;
+    }
 
     # code taken from pugs/util/version_h.pl rev 14410
     my $nul = File::Spec->devnull;
@@ -56,11 +66,18 @@ sub _get_revision {
             }
         }
     }
-    return ( $revision || 0 );
+    $revision ||= 0;
+    unless (-f $cache) {
+        eval {
+            open my $FH, ">", $cache;
+            print $FH "$revision\n";
+            close $FH;
+        };
+    }
+    return $revision;
 }
 
 our $current = _get_revision();
-# our $config  = $current;
 
 1;
 
