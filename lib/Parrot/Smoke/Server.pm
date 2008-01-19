@@ -3,331 +3,357 @@
 
 =head1 NAME
 
-Parrot::Configure::Step - Configuration Step Utilities
+Parrot::Smoke::Server - Subroutines used in F<tools/util/smokeserve-server.pl>.
 
 =head1 DESCRIPTION
 
-The C<Parrot::Configure::Step> module contains utility functions for use by
-the configuration step classes found under F<config/>.
-
-Note that the actual configuration step itself is NOT an instance of this
-class, rather it is defined to be in the C<package> C<Configure::Step>. See
-F<docs/configuration.pod> for more information on how to create new
-configuration steps.
-
-The subroutines found in this module do B<not> require the Parrot::Configure
-object as an argument.  Those subroutines formerly found in this module which
-B<do> require the Parrot::Configure object as an argument have been moved into
-Parrot::Configure::Compiler.
-
-=head2 Functions
-
-=over 4
-
 =cut
 
-package Parrot::Configure::Utils;
+package Parrot::Smoke::Server;
 
 use strict;
 use warnings;
 
 use base qw( Exporter );
-
-use Carp;
-use File::Basename qw( basename );
-use File::Copy ();
-use File::Spec;
-use File::Which;
-use lib ("lib");
+use Algorithm::TokenBucket;
+use CGI;
+use CGI::Carp qw<fatalsToBrowser>;
+use Digest::MD5 qw<md5_hex>;
+use Fcntl qw<:DEFAULT :flock>;
+use HTML::Template;
+use Storable qw<store_fd fd_retrieve freeze>;
+use Time::Piece;
+use Time::Seconds;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
-    prompt copy_if_diff move_if_diff integrate
-    capture_output check_progs _slurp
-    _run_command _build_compile_command
+    require_compression_modules
+    process_upload
+    process_list
 );
-our %EXPORT_TAGS = (
-    inter => [qw(prompt integrate)],
-    auto  => [
-        qw(capture_output check_progs)
-    ],
-    gen => [qw(copy_if_diff move_if_diff)]
-);
+our %EXPORT_TAGS = ();
 
-=item C<_run_command($command, $out, $err)>
+#    BASEHTTPDIR                 => "/",  used both in script and subs
+#
+use constant {
+    VERSION                     => 0.4,
+    BASEHTTPDIR                 => "/",
+    BUCKET                      => "bucket.dat",
+    MAX_RATE                    => 1 / 30,                  # Allow a new smoke all 30s
+    BURST                       => 5,                       # Set max burst to 5
+    MAX_SMOKES_OF_SAME_CATEGORY => 5,
+};
 
-Runs the specified command. Output is directed to the file specified by
-C<$out>, warnings and errors are directed to the file specified by C<$err>.
+##### PUBLICLY AVAILABLE SUBROUTINES #####
 
-=cut
+sub require_compression_modules {
+    no strict 'refs';
+    eval { require Compress::Zlib }
+        or *Compress::Zlib::memGunzip = sub { return };
+    eval { require Compress::Bzip2 }
+        or *Compress::Bzip2::memBunzip = sub { return };
+}
 
-sub _run_command {
-    my ( $command, $out, $err, $verbose ) = @_;
+sub process_upload {
+    my $CGI = shift;
 
-    if ($verbose) {
-        print "$command\n";
+    print $CGI->header;
+
+    limit_rate();
+    validate_params($CGI);
+    add_smoke($CGI);
+    clean_obsolete_smokes();
+
+    print "ok";
+}
+
+sub process_list {
+    my $CGI = shift;
+    my $t = shift;
+    my $tmpl = HTML::Template->new( scalarref => \$t, die_on_bad_params => 0 );
+
+    print $CGI->header;
+
+    my $category = sub {
+        return sprintf "%s / %s runcore on %s-%s-%s",
+            $_[0]->{DEVEL} eq "devel" ? "repository snapshot" : "release",
+            runcore2human( $_[0]->{runcore} ), $_[0]->{cpuarch}, $_[0]->{osname}, $_[0]->{cc},;
+    };
+
+    my @smokes = map { unpack_smoke($_) } glob "parrot-smoke-*.html";
+    my %branches;
+    push @{ $branches{ $_->{branch} }{ $category->($_) } }, $_ for @smokes;
+
+    foreach my $branch ( keys %branches ) {
+        foreach my $cat ( keys %{ $branches{$branch} } ) {
+            $branches{$branch}{$cat} = [
+                map {
+                    { %$_, timestamp => $_->{timestamp}[1] }
+                    }
+                    sort {
+                    $b->{revision} <=> $a->{revision}
+                        || lc $a->{osname} cmp lc $b->{osname}
+                        || $b->{timestamp}[0] <=> $a->{timestamp}[0]
+                    } @{ $branches{$branch}{$cat} }
+            ];
+        }
+
+        $branches{$branch} = [
+            map { { catname => $_, smokes => $branches{$branch}{$_}, } }
+                sort { lc $a cmp lc $b } keys %{ $branches{$branch} }
+        ];
     }
 
-    # Mostly copied from Parrot::Test.pm
-    foreach ( $out, $err ) {
-        $_ = File::Spec->devnull
-            if $_ and $_ eq '/dev/null';
+    $tmpl->param(
+        branches => my $p = [
+            map { { name => $_, categories => $branches{$_}, } }
+                sort { ( $a eq "trunk" ? -1 : 0 ) || ( $b eq "trunk" ? 1 : 0 ) || ( $a cmp $b ) }
+                keys %branches
+            ]
+    );
+    print $tmpl->output;
+}
+
+##### INTERNAL SUBROUTINES #####
+
+# Rate limiting
+sub limit_rate {
+
+    # Open the DB and lock it exclusively. See perldoc -q lock.
+    sysopen my $fh, BUCKET, O_RDWR | O_CREAT
+        or die "Couldn't open \"@{[ BUCKET ]}\": $!\n";
+    flock $fh, LOCK_EX
+        or die "Couldn't flock \"@{[ BUCKET ]}\": $!\n";
+
+    my $data = eval { fd_retrieve $fh };
+    $data ||= [ MAX_RATE, BURST ];
+    my $bucket = Algorithm::TokenBucket->new(@$data);
+
+    my $exit;
+    unless ( $bucket->conform(1) ) {
+        print "Rate limiting -- please wait a bit and try again, thanks.";
+        $exit++;
+    }
+    $bucket->count(1);
+
+    seek $fh, 0, 0 or die "Couldn't rewind \"@{[ BUCKET ]}\": $!\n";
+    truncate $fh, 0 or die "Couldn't truncate \"@{[ BUCKET ]}\": $!\n";
+
+    store_fd [ $bucket->state ] => $fh
+        or die "Couldn't serialize bucket to \"@{[ BUCKET ]}\": $!\n";
+
+    exit if $exit;
+}
+
+sub validate_params {
+    my $CGI = shift;
+
+    if ( not $CGI->param("version") or $CGI->param("version") != VERSION ) {
+        print "Versions do not match!";
+        exit;
     }
 
-    if ( $out and $err and $out eq $err ) {
-        $err = "&STDOUT";
+    if ( not $CGI->param("smoke") ) {
+        print "No smoke given!";
+        exit;
     }
 
-    # Save the old filehandles; we must not let them get closed.
-    open my $OLDOUT, '>&', \*STDOUT or die "Can't save     stdout" if $out;
-    open my $OLDERR, '>&', \*STDERR or die "Can't save     stderr" if $err;
+    uncompress_smoke($CGI);
+    unless ( $CGI->param("smoke") =~ /^<!DOCTYPE html/ ) {
+        print "The submitted smoke does not look like a smoke!";
+        exit;
+    }
+}
 
-    open STDOUT, '>', $out or die "Can't redirect stdout" if $out;
+sub uncompress_smoke {
+    my $CGI = shift;
+    $CGI->param( "smoke",
+        Compress::Zlib::memGunzip( $CGI->param("smoke") )
+            || Compress::Bzip2::memBunzip( $CGI->param("smoke") )
+            || $CGI->param("smoke") );
+}
 
-    # See 'Obscure Open Tricks' in perlopentut
-    open STDERR, ">$err"    ## no critic InputOutput::ProhibitTwoArgOpen
-        or die "Can't redirect stderr"
-        if $err;
+sub add_smoke {
+    my $CGI  = shift;
+    my $html = $CGI->param("smoke");
 
-    system $command;
-    my $exit_code = $? >> 8;
+    my $id = md5_hex $html;
+    if ( glob "parrot-smoke-*-$id.html" ) {
+        print "The submitted smoke was already submitted!";
+        exit;
+    }
 
-    close STDOUT or die "Can't close    stdout" if $out;
-    close STDERR or die "Can't close    stderr" if $err;
+    my %smoke;
+    $html =~ /revision: (\d+)/      and $smoke{revision}     = $1;
+    $html =~ /duration: (\d+)/      and $smoke{duration}     = $1;
+    $html =~ /VERSION: ([\d\.]+)/   and $smoke{VERSION}      = $1;
+    $html =~ /branch: ([\w\-]+)/    and $smoke{branch}       = $1;
+    $html =~ /cpuarch: ([\w\d]+)/   and $smoke{cpuarch}      = $1;
+    $html =~ /osname: ([\w\d]+)/    and $smoke{osname}       = $1;
+    $html =~ /cc: ([\w\d]+)/        and $smoke{cc}           = $1;
+    $html =~ /DEVEL: -?(\w+)/       and $smoke{DEVEL}        = $1;
+    $html =~ /harness_args: (.+)$/m and $smoke{harness_args} = $1;
+    $html =~ /build_dir: (.+)$/m    and $smoke{build_dir}    = $1;
+    $html =~
+/summary="(\d+) test cases: (\d+) ok, (\d+) failed, (\d+) todo, (\d+) skipped and (\d+) unexpectedly succeeded"/
+        and $smoke{summary} = {
+        total    => $1,
+        ok       => $2,
+        failed   => $3,
+        todo     => $4,
+        skipped  => $5,
+        unexpect => $6,
+        };
 
-    open STDOUT, '>&', $OLDOUT or die "Can't restore  stdout" if $out;
-    open STDERR, '>&', $OLDERR or die "Can't restore  stderr" if $err;
+    if ( grep { not $smoke{$_} } qw<harness_args revision> ) {
+        print "The submitted smoke has an invalid format!";
+        exit;
+    }
 
-    if ($verbose) {
-        foreach ( $out, $err ) {
-            if (   ( defined($_) )
-                && ( $_ ne File::Spec->devnull )
-                && ( !m/^&/ ) )
+    $smoke{runcore} = runcore_from_args( $smoke{harness_args} );
+    $smoke{revision} ||= 0;
+    $smoke{timestamp} = time;
+    $smoke{id}        = $id;
+    my $filename = pack_smoke(%smoke);
+
+    open my $fh, ">", $filename
+        or die "Couldn't open \"$filename\" for writing: $!\n";
+    print $fh $html
+        or die "Couldn't write to \"$filename\": $!\n";
+    close $fh
+        or die "Couldn't close \"$filename\": $!\n";
+}
+
+sub runcore_from_args {
+    local $_ = shift;
+
+    /\b-g\b/ and return "goto";
+    /\b-j\b/ and return "jit";
+    /\b-C\b/ and return "cgp";
+    /\b-S\b/ and return "switch";
+    /\b-f\b/ and return "fast";
+    return "default";
+}
+
+sub pack_smoke {
+    my %smoke = @_;
+
+    my $summary = join( "-", map { $smoke{summary}{$_} }
+        qw<total ok failed todo skipped unexpect> );
+    my $args = unpack( "H*", $smoke{harness_args} );
+
+#                           1       2          3        4         5        6         7      8           9        10          ...
+    my $str =
+"parrot-smoke-<VERSION>-<DEVEL>-r<revision>-<branch>--<cpuarch>-<osname>-<cc>-<runcore>--<timestamp>-<duration>--$summary--$args--<id>.html";
+
+    $str =~ s/<(.+?)>/$smoke{$1}/g;
+
+    $str;
+}
+
+sub clean_obsolete_smokes {
+    my $category = sub {
+        return join "-", ( map { $_[0]->{$_} }
+            qw<branch cpuarch osname cc runcore harness_args> ),
+            $_[0]->{DEVEL} eq "devel" ? "dev" : "release",;
+    };
+
+    my %cats;
+    my @smokes = map { unpack_smoke($_) } glob "parrot-smoke-*.html";
+    push @{ $cats{ $category->($_) } }, $_ for @smokes;
+
+    $cats{$_} = [
+        (
+            sort { $b->{revision} <=> $a->{revision} || $b->{timestamp}[0] <=> $a->{timestamp}[0] }
+                @{ $cats{$_} }
+        )[ 0 .. MAX_SMOKES_OF_SAME_CATEGORY- 1 ]
+        ]
+        for keys %cats;
+
+    my %delete = map { $_->{filename} => 1 } @smokes;
+    for ( map { @$_ } values %cats ) {
+        next unless $_;
+
+        delete $delete{ $_->{filename} };
+    }
+
+    unlink keys %delete;
+}
+
+sub unpack_smoke {
+    my $name = shift;
+
+    /^parrot-smoke-([\d\.]+)    #  1 VERSION
+                -(\w+)          #  2 DEVEL
+                -r(\d+)         #  3 revision
+                -([\w\-]+)      #  4 branch
+               --([\w\d]+)      #  5 cpuarch
+                -([\w\d]+)      #  6 osname
+                -([\w\d]+)      #  7 cc
+                -(\w+)          #  8 runcore
+               --(\d+)          #  9 timestamp
+                -(\d+)          # 10 duration
+               --(\d+)          # 11 total
+                -(\d+)          # 12 ok
+                -(\d+)          # 13 failed
+                -(\d+)          # 14 todo
+                -(\d+)          # 15 skipped
+                -(\d+)          # 16 unexpected
+               --([a-f0-9]+)    # 17 harness_args
+               --([a-f0-9]+)    # 18 id
+   .html$/x
+        and return {
+        VERSION   => $1,
+        DEVEL     => $2,
+        revision  => $3,
+        branch    => $4,
+        cpuarch   => $5,
+        osname    => $6,
+        cc        => $7,
+        runcore   => $8,
+        timestamp => [
+            $9,
+            do {
+                my $str = localtime($9)->strftime("%d %b %Y %H:%M %a");
+                $str =~ s/ /&nbsp;/g;
+
+                # hack, to make the timestamps not break so the 
+                # smoke reports look good even on 640x480
+                $str;
+            },
+        ],
+        duration => sprintf( "%.02f",
+            Time::Seconds->new($10)->minutes ) . "&nbsp;min",
+        summary => [
             {
-                open( my $verbose_handle, '<', $_ );
-                print <$verbose_handle>;
-                close $verbose_handle;
+                total    => $11,
+                ok       => $12,
+                failed   => $13,
+                todo     => $14,
+                skipped  => $15,
+                unexpect => $16,
             }
-        }
-    }
-
-    return $exit_code;
+        ],
+        percentage   => sprintf( "%.02f", $12 / ( $11 || 1 ) * 100 ),
+        harness_args => pack( "H*", $17 ),
+        id           => $18,
+        filename     => $name,
+        link         => BASEHTTPDIR . $name,
+        };
+    return ();
 }
 
-=item C<_build_compile_command( $cc, $ccflags, $cc_args )>
+sub runcore2human {
+    my %runcore = (
+        goto    => "computed goto",
+        jit     => "JIT",
+        cgp     => "CGP",
+        switch  => "switch",
+        fast    => "fast",
+        default => "default",
+    );
 
-Constructs a command-line to do the compile.
-
-=cut
-
-sub _build_compile_command {
-    my ( $cc, $ccflags, $cc_args ) = @_;
-    $_ ||= '' for ( $cc, $ccflags, $cc_args );
-
-    return "$cc $ccflags $cc_args -I./include -c test.c";
+    $runcore{ $_[0] };
 }
-
-=item C<integrate($orig, $new)>
-
-Integrates C<$new> into C<$orig>.  Returns C<$orig> if C<$new> is undefined.
-
-=cut
-
-sub integrate {
-    my ( $orig, $new ) = @_;
-
-    # Rather than sprinkling "if defined(...)", everywhere,
-    # various inter::* steps (coded in config/inter/*.pm) permit simply
-    # passing in potentially undefined strings.
-    # In these instances, we simply pass back the original string without
-    # generating a warning.
-    return $orig unless defined $new;
-
-    if ( $new =~ /\S/ ) {
-        $orig = $new;
-    }
-
-    return $orig;
-}
-
-=item C<prompt($message, $value)>
-
-Prints out "message [default] " and waits for the user's response. Returns the
-response, or the default if the user just hit C<ENTER>.
-
-=cut
-
-sub prompt {
-    my ( $message, $value ) = @_;
-
-    print("$message [$value] ");
-
-    chomp( my $input = <STDIN> );
-
-    if ($input) {
-        $value = $input;
-    }
-
-    return integrate( $value, $input );
-}
-
-=item C<file_checksum($filename, $ignore_pattern)>
-
-Creates a checksum for the specified file. This is used to compare files.
-
-Any lines matching the regular expression specified by C<$ignore_pattern> are
-not included in the checksum.
-
-=cut
-
-sub file_checksum {
-    my ( $filename, $ignore_pattern ) = @_;
-    open( my $file, '<', $filename ) or die "Can't open $filename: $!";
-    my $sum = 0;
-    while (<$file>) {
-        next if defined($ignore_pattern) && /$ignore_pattern/;
-        $sum += unpack( "%32C*", $_ );
-    }
-    close($file) or die "Can't close $filename: $!";
-    return $sum;
-}
-
-=item C<copy_if_diff($from, $to, $ignore_pattern)>
-
-Copies the file specified by C<$from> to the location specified by C<$to> if
-its contents have changed.
-
-The regular expression specified by C<$ignore_pattern> is passed to
-C<file_checksum()> when comparing the files.
-
-=cut
-
-sub copy_if_diff {
-    my ( $from, $to, $ignore_pattern ) = @_;
-
-    # Don't touch the file if it didn't change (avoid unnecessary rebuilds)
-    if ( -r $to ) {
-        my $from_sum = file_checksum( $from, $ignore_pattern );
-        my $to_sum   = file_checksum( $to,   $ignore_pattern );
-        return if $from_sum == $to_sum;
-    }
-
-    File::Copy::copy( $from, $to );
-
-    # Make sure the timestamp is updated
-    my $now = time;
-    utime $now, $now, $to;
-
-    return 1;
-}
-
-=item C<move_if_diff($from, $to, $ignore_pattern)>
-
-Moves the file specified by C<$from> to the location specified by C<$to> if
-its contents have changed.
-
-=cut
-
-sub move_if_diff {    ## no critic Subroutines::RequireFinalReturn
-    my ( $from, $to, $ignore_pattern ) = @_;
-    copy_if_diff( $from, $to, $ignore_pattern );
-    unlink $from;
-}
-
-=item C<capture_output($command)>
-
-Executes the given command. The command's output (both stdout and stderr), and
-its return status is returned as a 3-tuple. B<STDERR> is redirected to
-F<test.err> during the execution, and deleted after the command's run.
-
-=cut
-
-sub capture_output {
-    my $command = join ' ', @_;
-
-    # disable STDERR
-    open my $OLDERR, '>&', \*STDERR;
-    open STDERR, '>', 'test.err';
-
-    my $output = `$command`;
-    my $retval = ( $? == -1 ) ? -1 : ( $? >> 8 );
-
-    # reenable STDERR
-    close STDERR;
-    open STDERR, '>&', $OLDERR;
-
-    # slurp stderr
-    my $out_err = _slurp('./test.err');
-
-    # cleanup
-    unlink "test.err";
-
-    return ( $output, $out_err, $retval ) if wantarray;
-    return $output;
-}
-
-=item C<check_progs([$programs])>
-
-Where C<$programs> may be either a scalar with the name of a single program or
-an array ref of programs to search the current C<PATH> for.  The first matching
-program name is returned or C<undef> on failure.  Note: this function only
-returns the name of the program and not its complete path.
-
-This function is similar to C<autoconf>'s C<AC_CHECK_PROGS> macro.
-
-=cut
-
-sub check_progs {
-    my ( $progs, $verbose ) = @_;
-
-    $progs = [$progs] unless ref $progs eq 'ARRAY';
-
-    print "checking for program: ", join( " or ", @$progs ), "\n" if $verbose;
-    foreach my $prog (@$progs) {
-        my $util = $prog;
-
-        # use the first word in the string to ignore any options
-        ($util) = $util =~ /(\S+)/;
-        my $path = which($util);
-
-        if ($verbose) {
-            print "$path is executable\n" if $path;
-        }
-
-        return $prog if $path;
-    }
-
-    return;
-}
-
-=item C<_slurp($filename)>
-
-Slurps C<$filename> into memory and returns it as a string.
-
-=cut
-
-sub _slurp {
-    my $filename = shift;
-
-    open( my $fh, '<', $filename ) or die "Can't open $filename: $!";
-    my $text = do { local $/; <$fh> };
-    close($fh) or die "Can't close $filename: $!";
-
-    return $text;
-}
-
-=back
-
-=head1 SEE ALSO
-
-=over 4
-
-=item C<Parrot::Configure::RunSteps>
-
-=item F<docs/configuration.pod>
-
-=back
-
-=cut
 
 1;
 
