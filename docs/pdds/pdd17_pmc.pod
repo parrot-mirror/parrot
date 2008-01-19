@@ -322,7 +322,7 @@ roles aren't complete stand-alone PMCs, they are just bundles of behavior and
 state that can be used within the composing PMC. As such, roles are never
 instantiated directly, and are never translated to C directly. They have no
 core structs, though they define attributes to be added to the PMC they are
-composed into. 
+composed into.
 
 When a PMC that uses a role is translated to C, the role provides vtable
 functions, methods, and attributes that will be added to the generated C
@@ -334,7 +334,7 @@ the same name as inherited vtable functions, methods, or attributes, the
 composed feature overrides the inherited feature, just as it would if
 defined in the composing PMC.
 
-Roles are defined using the C<prole> keyword. 
+Roles are defined using the C<prole> keyword.
 
   prole <name> <modifiers> {
   }
@@ -429,7 +429,7 @@ interface.
 
 =head2 Vtable Functions
 
-Vtables decouple the interface and implementation of various object functions. 
+Vtables decouple the interface and implementation of various object functions.
 The actual vtable structure contains pointers to functions that implement the
 methods for that particular PMC.  All pointers must point to valid functions
 with appropriate prototypes.
@@ -565,7 +565,7 @@ this returns a C<PMCProxy> object.
 
   INTVAL class_type(INTERP, PMC* self)
 
-Return the integer type of the PMC. 
+Return the integer type of the PMC.
 
 =item pmc_namespace [deprecated: See RT# 48144]
 
@@ -656,7 +656,7 @@ Return the entire property hash for I<self>.
 
 Return the type of the PMC. Type is a unique number associated with the PMC when
 the PMC's class is loaded. Negative numbers are considered
-interpreter-specific, non-public types. 
+interpreter-specific, non-public types.
 
 =item subtype [deprecated: See RT #48569]
 
@@ -1707,7 +1707,7 @@ numbers? }}
 
 =item Class
 
-The PMC for Parrot's class. 
+The PMC for Parrot's class.
 
 =item Object
 
@@ -1721,8 +1721,8 @@ the referred-to PMC.
 =item AggregateElementRef
 
 This PMC represents a reference to an element contained in an aggregate PMC
-type, such as an array or hash. It is initialized with the key being 
-referenced and the aggregate PMC containing that key. 
+type, such as an array or hash. It is initialized with the key being
+referenced and the aggregate PMC containing that key.
 
 Note that assigning to the reference PMC will be equivalent to a keyed set on
 the referenced aggregate PMC - that is, it modifies the element rather than
@@ -1775,7 +1775,7 @@ singleton PMCNULL.
 The base class for all array types (a statically sized array for any
 arbitrary type). New array types can be derived from the base Array.
 In user code it is recommended to use one of the specific array types
-below, rather than the base type. 
+below, rather than the base type.
 
 =item FixedBooleanArray
 
@@ -1902,7 +1902,7 @@ A native call interface wrapper around a C function.
 
 =item Bound_NCI
 
-An internal NCI method call bound to a particular call instance. 
+An internal NCI method call bound to a particular call instance.
 
 =item Compiler
 
