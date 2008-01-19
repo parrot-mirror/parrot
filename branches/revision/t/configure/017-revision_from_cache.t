@@ -6,7 +6,10 @@
 use strict;
 use warnings;
 
-use Test::More tests =>  7;
+use Test::More;
+plan( skip_all => 'Relevant only when working in checkout from repository' )
+    unless (-e 'DEVELOPING');
+plan( tests =>  7 );
 use Carp;
 use Cwd;
 use File::Copy;
