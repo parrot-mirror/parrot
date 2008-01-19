@@ -28,7 +28,6 @@ use Parrot::Revision::Utils qw(
 );
 
 my ($current, $config) = get_revision_numbers();
-exit 1 unless ( $current == $config );
 
 print_src_revision_c($current, $config, $0);
 
