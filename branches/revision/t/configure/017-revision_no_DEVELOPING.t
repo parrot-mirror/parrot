@@ -6,42 +6,39 @@
 use strict;
 use warnings;
 
-use Test::More tests => 11;
+use Test::More tests =>  7;
 use Carp;
-use_ok('Cwd');
-use_ok('File::Copy');
-use_ok( 'File::Temp', qw| tempdir | );
+use Cwd;
+use File::Copy;
+use File::Path ();
+use File::Temp qw| tempdir |;
 use lib qw( lib );
 
-my ( $current, $config );
-
-# Case 2:  DEVELOPING's non-existence is faked;  Parrot::Config not yet available. #'
 my $cwd = cwd();
-my $reason =
-'Either file DEVELOPING does not exist or configuration has completed (as evidenced by existence of Parrot::Config::Generated';
-
-SKIP: {
-    skip $reason, 7 if ( ( not -e 'DEVELOPING' )
-        or ( -e q{lib/Parrot/Config/Generated.pm} ) );
+{
+    my $rev = 16000;
     my $tdir = tempdir( CLEANUP => 1 );
     ok( chdir $tdir, "Changed to temporary directory for testing" );
-    ok( ( mkdir "lib" ),        "Able to make directory lib" );
-    ok( ( mkdir "lib/Parrot" ), "Able to make directory lib/Parrot" );
-    ok(
-        copy( "$cwd/lib/Parrot/Revision.pm", "lib/Parrot/" ),
-        "Able to copy Parrot::Revision for testing"
-    );
-    unshift( @INC, "lib" );
+    my $libdir = qq{$tdir/lib};
+    ok( (File::Path::mkpath( $libdir )), "Able to make libdir");
+    local @INC;
+    unshift @INC, $libdir;
+    ok( (File::Path::mkpath( qq{$libdir/Parrot} )), "Able to make Parrot dir");
+    ok( (copy qq{$cwd/lib/Parrot/Revision.pm},
+            qq{$libdir/Parrot}), "Able to copy Parrot::Revision");
+    my $cache = q{.parrot_current_rev};
+    open my $FH, ">", $cache
+        or croak "Unable to open $cache for writing";
+    print $FH qq{$rev\n};
+    close $FH or croak "Unable to close $cache after writing";
     require Parrot::Revision;
-    no warnings qw(once);
-    $current = $Parrot::Revision::current;
-    like( $current, qr/^\d+$/, "current revision is all numeric" );
+    no warnings 'once';
+    is($Parrot::Revision::current, $rev,
+        "Got expected revision number from cache");
     use warnings;
-    is( $current, 0, 'current is zero as expected' );
-    ok( chdir $cwd, "Able to change back to directory after testing" );
+    ok( chdir $cwd, "Able to change back to starting directory");
 }
 
-# Case 3:  DEVELOPING exists; Parrot::Config available.
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

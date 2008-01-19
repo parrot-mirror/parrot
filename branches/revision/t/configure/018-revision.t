@@ -6,25 +6,34 @@
 use strict;
 use warnings;
 
-use Test::More tests => 5;
+use Test::More tests =>  8;
 use Carp;
-use_ok('Cwd');
-use_ok('File::Copy');
-use_ok( 'File::Temp', qw| tempdir | );
+use Cwd;
+use File::Copy;
+use File::Path ();
+use File::Temp qw| tempdir |;
 use lib qw( lib );
-use Parrot::Revision;
 
-my ( $current, $config );
-
-# Case 1:  DEVELOPING exists; Parrot::Config not yet available.
-my $reason =
-'Either file DEVELOPING does not exist, or configuration has completed (because Parrot::Config::Generated exists).';
-SKIP: {
-    skip $reason, 1 if ( ( not -e 'DEVELOPING' )
-        or ( -e q{lib/Parrot/Config/Generated.pm} ) );
-    $current = $Parrot::Revision::current;
-    like( $current, qr/^\d+$/, "current revision is all numeric" );
-}    # end SKIP block
+my $cwd = cwd();
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    ok( chdir $tdir, "Changed to temporary directory for testing" );
+    my $libdir = qq{$tdir/lib};
+    ok( (File::Path::mkpath( $libdir )), "Able to make libdir");
+    local @INC;
+    unshift @INC, $libdir;
+    ok( (File::Path::mkpath( qq{$libdir/Parrot} )), "Able to make Parrot dir");
+    ok( (copy qq{$cwd/lib/Parrot/Revision.pm},
+            qq{$libdir/Parrot}), "Able to copy Parrot::Revision");
+    require Parrot::Revision;
+    no warnings 'once';
+    like($Parrot::Revision::current, qr/^\d+$/,
+        "Got numeric value for reversion number");
+    use warnings;
+    my $cache = q{.parrot_current_rev};
+    ok( ( -e $cache ), "Cache for revision number was created");
+    ok( chdir $cwd, "Able to change back to starting directory");
+}
 
 pass("Completed all tests in $0");
 

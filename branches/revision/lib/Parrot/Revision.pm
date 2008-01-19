@@ -23,10 +23,11 @@ use strict;
 use warnings;
 use File::Spec;
 
-my $cache = q{.parrot_current_rev};
+our $cache = q{.parrot_current_rev};
+
+our $current = _get_revision();
 
 sub _get_revision {
-
     my $revision;
     if (-f $cache) {
         eval {
@@ -37,6 +38,20 @@ sub _get_revision {
         return $revision unless $@;
     }
 
+    $revision = _analyze_sandbox();
+
+    unless (-f $cache) {
+        eval {
+            open my $FH, ">", $cache;
+            print $FH "$revision\n";
+            close $FH;
+        };
+    }
+    return $revision;
+}
+
+sub _analyze_sandbox {
+    my $revision = 0;
     # code taken from pugs/util/version_h.pl rev 14410
     my $nul = File::Spec->devnull;
     if ( my @svn_info = qx/svn --xml info 2>$nul/ and $? == 0 ) {
@@ -66,18 +81,8 @@ sub _get_revision {
             }
         }
     }
-    $revision ||= 0;
-    unless (-f $cache) {
-        eval {
-            open my $FH, ">", $cache;
-            print $FH "$revision\n";
-            close $FH;
-        };
-    }
     return $revision;
 }
-
-our $current = _get_revision();
 
 1;
 
