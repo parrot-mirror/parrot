@@ -7,9 +7,11 @@ use strict;
 use warnings;
 
 use Test::More;
-plan( skip_all => "\nRelevant only when working in checkout from repository and during configuration" )
-    unless (-e 'DEVELOPING' and ! -e 'Makefile');
-plan( tests =>  7 );
+unless (-e 'DEVELOPING' and ! -e 'Makefile') {
+    plan skip_all => "Relevant only when working in checkout from repository and during configuration";
+} else {
+    plan tests =>  7;
+}
 use Carp;
 use Cwd;
 use File::Copy;
