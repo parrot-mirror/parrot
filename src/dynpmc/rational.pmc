@@ -20,7 +20,7 @@ Not implemented yet. 'LispRational' will subclass this.
 
 pmclass Rational dynpmc provides scalar extends Integer {
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         return 43;
     }
 }
