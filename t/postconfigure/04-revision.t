@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 03-revision.t
+# 04-revision.t
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ use warnings;
 use Test::More;
 plan( skip_all => "\nRelevant only when working in checkout from repository and after  configuration" )
     unless (-e 'DEVELOPING' and -e 'Makefile');
-plan( tests =>  8 );
+plan( tests =>  7 );
 use Carp;
 use Cwd;
 use File::Copy;
@@ -19,22 +19,15 @@ use lib qw( lib );
 
 my $cwd = cwd();
 {
-    my $rev = 16000;
-    my $tdir = tempdir( CLEANUP => 1 );
-    ok( chdir $tdir, "Changed to temporary directory for testing" );
-    my $libdir = qq{$tdir/lib};
+    my $tdir2 = tempdir( CLEANUP => 1 );
+    ok( chdir $tdir2, "Changed to temporary directory for testing" );
+    my $libdir = qq{$tdir2/lib};
     ok( (File::Path::mkpath( $libdir )), "Able to make libdir");
     local @INC;
     unshift @INC, $libdir;
     ok( (File::Path::mkpath( qq{$libdir/Parrot} )), "Able to make Parrot dir");
     ok( (copy qq{$cwd/lib/Parrot/Revision.pm},
             qq{$libdir/Parrot}), "Able to copy Parrot::Revision");
-    my $cache = q{.parrot_current_rev};
-    open my $FH, ">", $cache
-        or croak "Unable to open $cache for writing";
-    print $FH qq{$rev\n};
-    close $FH or croak "Unable to close $cache after writing";
-    my $mtime_before = (stat($rev))[9];
     my $mkfl = 'Makefile';
     open my $MK, ">", $mkfl
         or croak "Unable to open $mkfl for writing";
@@ -45,9 +38,6 @@ my $cwd = cwd();
     like($Parrot::Revision::current, qr/^\d+$/,
         "Got numeric value for reversion number");
     use warnings;
-    my $mtime_after = (stat($rev))[9];
-    is($mtime_before, $mtime_after,
-        "Revision number cache file correctly untouched");
 
     ok( chdir $cwd, "Able to change back to starting directory");
 }
@@ -58,11 +48,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-03-revision.t - test Parrot::Revision
+04-revision.t - test Parrot::Revision
 
 =head1 SYNOPSIS
 
-    % prove t/configure/03-revision.t
+    % prove t/configure/04-revision.t
 
 =head1 DESCRIPTION
 
