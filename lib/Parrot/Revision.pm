@@ -29,7 +29,7 @@ our $current = _get_revision();
 
 sub _get_revision {
     my $revision;
-    if (-f $cache) {
+    if (-f $cache and ! -f 'Makefile') {
         eval {
             open my $FH, "<", $cache;
             chomp($revision = <$FH>);
@@ -40,7 +40,7 @@ sub _get_revision {
 
     $revision = _analyze_sandbox();
 
-    unless (-f $cache) {
+    if (! -f $cache and ! -f 'Makefile') {
         eval {
             open my $FH, ">", $cache;
             print $FH "$revision\n";
