@@ -30,9 +30,6 @@ strings.
 #include "string_private_cstring.h"
 #include "parrot/resources.h"
 
-
-
-
 /*
  * this extra size is in the hope that some concat ops might
  * follow in a sequence.
