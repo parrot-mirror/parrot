@@ -1,14 +1,14 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 017-revision_no_DEVELOPING.t
+# 017-revision_from_cache.t
 
 use strict;
 use warnings;
 
 use Test::More;
-plan( skip_all => 'Relevant only when working in checkout from repository' )
-    unless (-e 'DEVELOPING');
+plan( skip_all => "\nRelevant only when working in checkout from repository and during configuration" )
+    unless (-e 'DEVELOPING' and ! -e 'Makefile');
 plan( tests =>  7 );
 use Carp;
 use Cwd;
@@ -48,11 +48,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-017-revision_no_DEVELOPING.t - test Parrot::Revision
+017-revision_from_cache.t - test Parrot::Revision
 
 =head1 SYNOPSIS
 
-    % prove t/configure/017-revision_no_DEVELOPING.t
+    % prove t/configure/017-revision_from_cache.t
 
 =head1 DESCRIPTION
 
