@@ -7,9 +7,9 @@ use strict;
 use warnings;
 
 use Test::More;
-plan( skip_all => "\nRelevant only when working in checkout from repository and during configuration" )
-    unless (-e 'DEVELOPING' and ! -e 'Makefile');
-plan( tests =>  7 );
+plan( skip_all => "\nRelevant only when working in checkout from repository and after  configuration" )
+    unless (-e 'DEVELOPING' and -e 'Makefile');
+plan( tests =>  8 );
 use Carp;
 use Cwd;
 use File::Copy;
@@ -34,11 +34,21 @@ my $cwd = cwd();
         or croak "Unable to open $cache for writing";
     print $FH qq{$rev\n};
     close $FH or croak "Unable to close $cache after writing";
+    my $mtime_before = (stat($rev))[9];
+    my $mkfl = 'Makefile';
+    open my $MK, ">", $mkfl
+        or croak "Unable to open $mkfl for writing";
+    print $MK qq{'make' is your friend\n};
+    close $MK or croak "Unable to close $mkfl after writing";
     require Parrot::Revision;
     no warnings 'once';
-    is($Parrot::Revision::current, $rev,
-        "Got expected revision number from cache");
+    like($Parrot::Revision::current, qr/^\d+$/,
+        "Got numeric value for reversion number");
     use warnings;
+    my $mtime_after = (stat($rev))[9];
+    is($mtime_before, $mtime_after,
+        "Revision number cache file correctly untouched");
+
     ok( chdir $cwd, "Able to change back to starting directory");
 }
 
