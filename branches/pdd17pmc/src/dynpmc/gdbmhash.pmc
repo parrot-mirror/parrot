@@ -94,7 +94,7 @@ So we do a bit of cheating here, and load it during class initialization.
         }
     }
 
-    void init() {
+    VTABLE void init() {
         PMC_struct_val(SELF) = NULL;
     }
 
@@ -138,7 +138,7 @@ RT#46395: This can be optimized by keeping track of number of elements
 
 */
 
-    INTVAL get_integer() {
+    VTABLE INTVAL get_integer() {
         GDBM_FILE dbf = (GDBM_FILE)PMC_struct_val(SELF);
         if (! dbf) {
             return 0;
@@ -166,7 +166,7 @@ Returns true if the hash size is not zero.
 
 */
 
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         GDBM_FILE dbf = (GDBM_FILE)PMC_struct_val(SELF);
         if (! dbf) {
             return 0;
