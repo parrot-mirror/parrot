@@ -48,24 +48,27 @@ ParserUtil - Parser support functions.
 
 PARROT_WARN_UNUSED_RESULT
 static int change_op(PARROT_INTERP,
-    NOTNULL(IMC_Unit *unit),
-    NOTNULL(SymReg **r),
+    ARGMOD(IMC_Unit *unit),
+    ARGMOD(SymReg **r),
     int num,
     int emit)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*unit)
+        FUNC_MODIFIES(*r);
 
 PARROT_CANNOT_RETURN_NULL
 static void * imcc_compile_file(PARROT_INTERP,
     ARGIN(const char *fullname),
-    NOTNULL(STRING **error_message))
+    ARGOUT(STRING **error_message))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*error_message);
 
 PARROT_WARN_UNUSED_RESULT
-static int is_infix(ARGIN(const char *name), int n, NOTNULL(SymReg **r))
+static int is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
@@ -73,7 +76,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static Instruction * maybe_builtin(PARROT_INTERP,
     ARGIN(const char *name),
-    NOTNULL(SymReg **r),
+    ARGIN(SymReg * const *r),
     int n)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -83,21 +86,22 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static const char * to_infix(PARROT_INTERP,
     ARGIN(const char *name),
-    NOTNULL(SymReg **r),
-    NOTNULL(int *n),
+    ARGMOD(SymReg **r),
+    ARGMOD(int *n),
     int mmd_op)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*r)
+        FUNC_MODIFIES(*n);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static const char * try_rev_cmp(
-    ARGIN(const char *name),
-    NOTNULL(SymReg **r))
+static const char * try_rev_cmp(ARGIN(const char *name), ARGMOD(SymReg **r))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*r);
 
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
@@ -150,8 +154,8 @@ static INTVAL eval_nr = 0;
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 Instruction *
-iNEW(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0),
-        NOTNULL(char *type), NULLOK(SymReg *init), int emit)
+iNEW(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(SymReg *r0),
+        ARGMOD(char *type), ARGIN_NULLOK(SymReg *init), int emit)
 {
     char fmt[256];
     SymReg *regs[3];
@@ -202,7 +206,7 @@ if you don't like the looks of it, stay out, but please don't remove it. :)
 
  */
 void
-op_fullname(NOTNULL(char *dest), ARGIN(const char *name), NOTNULL(SymReg *args[]),
+op_fullname(ARGOUT(char *dest), ARGIN(const char *name), ARGIN(SymReg * const *args),
         int narg, int keyvec)
 {
     int i;
@@ -269,8 +273,8 @@ Return opcode value for op name
 
 PARROT_WARN_UNUSED_RESULT
 int
-check_op(PARROT_INTERP, NOTNULL(char *fullname),
-        ARGIN(const char *name), NOTNULL(SymReg *r[]), int narg, int keyvec)
+check_op(PARROT_INTERP, ARGOUT(char *fullname), ARGIN(const char *name),
+        ARGIN(SymReg * const * r), int narg, int keyvec)
 {
     int op;
 
@@ -293,7 +297,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static Instruction *
 maybe_builtin(PARROT_INTERP, ARGIN(const char *name),
-        NOTNULL(SymReg **r), int n)
+        ARGIN(SymReg * const *r), int n)
 {
     Instruction *ins;
     char sig[16];
@@ -381,8 +385,8 @@ sub x, y, z  => infix .MMD_SUBTRACT, x, y, z
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static const char *
-to_infix(PARROT_INTERP, ARGIN(const char *name), NOTNULL(SymReg **r),
-        NOTNULL(int *n), int mmd_op)
+to_infix(PARROT_INTERP, ARGIN(const char *name), ARGMOD(SymReg **r),
+        ARGMOD(int *n), int mmd_op)
 {
     SymReg *mmd;
     int is_n;
@@ -424,7 +428,7 @@ TODO: Needs to be documented!!!
 
 PARROT_WARN_UNUSED_RESULT
 static int
-is_infix(ARGIN(const char *name), int n, NOTNULL(SymReg **r))
+is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
 {
     if (n < 2 || r[0]->set != 'P')
         return -1;
@@ -542,9 +546,10 @@ s. e.g. imc.c for usage
 
 */
 
+PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 Instruction *
-INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
+INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
         ARGIN_NULLOK(const char *fmt), ARGIN(SymReg **r), int n, int keyvec, int emit)
 {
     char fullname[64];
@@ -752,7 +757,7 @@ TODO: Needs to be documented!!!
 
 PARROT_API
 int
-do_yylex_init(PARROT_INTERP, NOTNULL(yyscan_t* yyscanner))
+do_yylex_init(PARROT_INTERP, ARGOUT(yyscan_t* yyscanner))
 {
     const int retval = yylex_init(yyscanner);
     /* This way we can get the interpreter via yyscanner */
@@ -778,7 +783,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
-             NOTNULL(STRING **error_message))
+        ARGOUT(STRING **error_message))
 {
     /* imcc always compiles to interp->code
      * save old cs, make new
@@ -944,7 +949,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 IMCC_compile_pir_s(PARROT_INTERP, ARGIN(const char *s),
-                   NOTNULL(STRING **error_message))
+        ARGOUT(STRING **error_message))
 {
     return imcc_compile(interp, s, 0, error_message);
 }
@@ -963,7 +968,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 IMCC_compile_pasm_s(PARROT_INTERP, ARGIN(const char *s),
-                    NOTNULL(STRING **error_message))
+        ARGOUT(STRING **error_message))
 {
     return imcc_compile(interp, s, 1, error_message);
 }
@@ -1031,7 +1036,7 @@ Compile a file by filename (can be either PASM or IMCC code)
 PARROT_CANNOT_RETURN_NULL
 static void *
 imcc_compile_file(PARROT_INTERP, ARGIN(const char *fullname),
-                   NOTNULL(STRING **error_message))
+        ARGOUT(STRING **error_message))
 {
     PackFile_ByteCode * const cs_save = interp->code;
     PackFile_ByteCode *cs=NULL;
@@ -1158,9 +1163,9 @@ TODO: Needs to be documented!!!
 PARROT_CANNOT_RETURN_NULL
 void *
 IMCC_compile_file_s(PARROT_INTERP, ARGIN(const char *s),
-                   NOTNULL(STRING **error_message))
+        ARGOUT(STRING **error_message))
 {
-    return imcc_compile_file(interp, s , error_message);
+    return imcc_compile_file(interp, s, error_message);
 }
 
 /*
@@ -1197,7 +1202,7 @@ TODO: Needs to be documented!!!
 
 PARROT_WARN_UNUSED_RESULT
 static int
-change_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg **r), int num, int emit)
+change_op(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(SymReg **r), int num, int emit)
 {
     int changed = 0;
 
@@ -1250,8 +1255,8 @@ Try to find valid op doing the same operation e.g.
 
 PARROT_WARN_UNUSED_RESULT
 int
-try_find_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
-        NOTNULL(SymReg **r), int n, int keyvec, int emit)
+try_find_op(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
+        ARGMOD(SymReg **r), int n, int keyvec, int emit)
 {
     char fullname[64];
     int changed = 0;
@@ -1337,7 +1342,7 @@ TODO: Needs to be documented!!!
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static const char *
-try_rev_cmp(ARGIN(const char *name), NOTNULL(SymReg **r))
+try_rev_cmp(ARGIN(const char *name), ARGMOD(SymReg **r))
 {
     static struct br_pairs {
         ARGIN(const char * const op);
@@ -1379,8 +1384,8 @@ TODO: Needs to be documented!!!
 
 PARROT_CAN_RETURN_NULL
 Instruction *
-multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
-            NOTNULL(SymReg **r), int nr, int keyvec, int emit)
+multi_keyed(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
+            ARGIN(SymReg **r), int nr, int keyvec, int emit)
 {
     int i, keyf, kv, n;
     static int p = 0;
@@ -1486,7 +1491,7 @@ TODO: Needs to be documented!!!
 */
 
 int
-imcc_fprintf(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const char *fmt), ...)
+imcc_fprintf(PARROT_INTERP, ARGMOD(FILE *fd), ARGIN(const char *fmt), ...)
 {
     va_list ap;
     int len;
@@ -1508,7 +1513,7 @@ TODO: Needs to be documented!!!
 */
 
 int
-imcc_vfprintf(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const char *format), va_list ap)
+imcc_vfprintf(PARROT_INTERP, ARGMOD(FILE *fd), ARGIN(const char *format), va_list ap)
 {
     int len = 0;
     const char *cp;

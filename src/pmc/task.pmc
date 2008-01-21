@@ -56,6 +56,7 @@ Initialize a concurrency task object.
         TASK_terminate_runloop_CLEAR(SELF);
 
     }
+
 /*
 
 =item C<void init_pmc(PMC *data)>
@@ -99,6 +100,8 @@ A C<Sub> or descendent PMC related to this task.
 An interpreter in which to execute this task.
 
 =back
+
+=cut
 
 */
 
@@ -165,7 +168,7 @@ An interpreter in which to execute this task.
 
 =item C<PMC *clone()>
 
-Create a copy of the task, resetting status, id, and birthtime.
+Create a copy of the task, resetting status, ID, and birthtime.
 
 =cut
 
@@ -174,8 +177,8 @@ Create a copy of the task, resetting status, id, and birthtime.
     VTABLE PMC *clone() {
         /* Create the new task PMC, of the same type of this one (we may
          * have been subclassed). */
-        PMC *copy  = pmc_new(interp, SELF->vtable->base_type);
-        Parrot_Task *new_struct        = PARROT_TASK(copy);
+        PMC * const copy  = pmc_new(interp, SELF->vtable->base_type);
+        Parrot_Task * const new_struct = PARROT_TASK(copy);
         Parrot_Task * const old_struct = PARROT_TASK(SELF);
 
         new_struct->codeblock = VTABLE_clone(interp, old_struct->codeblock);
@@ -197,7 +200,7 @@ Gets the value of an attribute for this task.
 */
     VTABLE PMC *get_attr_str(STRING *name) {
         Parrot_Task * const core_struct = PARROT_TASK(SELF);
-        PMC *value = PMCNULL;
+        PMC *value;
 
         if (string_equal(interp, name, CONST_STRING(interp, "id")) == 0) {
             value = pmc_new(interp, enum_class_Integer);
@@ -222,6 +225,9 @@ Gets the value of an attribute for this task.
         else if (string_equal(interp, name, CONST_STRING(interp, "birthtime")) == 0) {
             value = pmc_new(interp, enum_class_Float);
             VTABLE_set_number_native(interp, value, core_struct->birthtime);
+        }
+        else {
+            value = PMCNULL;
         }
 
         return value;
@@ -275,7 +281,7 @@ Retrieves the task ID for this task.
 
 */
     VTABLE INTVAL get_integer() {
-        Parrot_Task * const core_struct = PARROT_TASK(SELF);
+        const Parrot_Task * const core_struct = PARROT_TASK(SELF);
         return core_struct->id;
     }
 
@@ -420,7 +426,7 @@ Used to archive the task.
 
     VTABLE void freeze(visit_info *info) {
         IMAGE_IO * const io = info->image_io;
-        Parrot_Task * const core_struct = PARROT_TASK(SELF);
+        const Parrot_Task * const core_struct = PARROT_TASK(SELF);
 
         /* 1) freeze task id */
         VTABLE_push_integer(INTERP, io, core_struct->id);
@@ -508,7 +514,7 @@ Called after the task has been thawed.
     void thawfinish(visit_info *info) {
         Parrot_Task * core_struct = PARROT_TASK(SELF);
 
-        /* TODO: Rebuild the task index. */
+        UNUSED(core_struct); /* TODO: Rebuild the task index. */
     }
 
 }

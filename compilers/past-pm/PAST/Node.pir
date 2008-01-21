@@ -13,7 +13,7 @@ for compiling programs in Parrot.
 
 .sub '__onload' :load :init
     load_bytecode 'TGE.pbc'
-    $P0 = getclass 'TGE::Grammar'
+    $P0 = get_class 'TGE::Grammar'
     $P1 = subclass $P0, 'POST::Grammar'
 
     ##   create the PAST::Node base class
@@ -31,7 +31,7 @@ for compiling programs in Parrot.
     $P0 = subclass base, 'PAST::Block'
     $P0 = subclass base, 'PAST::VarList'
 
-    $P0 = new .Integer
+    $P0 = new 'Integer'
     $P0 = 10
     set_hll_global ['PAST::Node'], '$!serno', $P0
 

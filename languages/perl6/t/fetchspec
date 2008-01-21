@@ -19,25 +19,40 @@ use strict;
 use File::Path;
 use File::Basename qw(dirname);
 
+my @specutils = qw(
+    util/fudge
+    util/fudgeall
+);
 my @spectests = qw(
     t/01-sanity
-    t/spec/S03-operators
     t/spec/S02-literals
+    t/spec/S03-operators
+    t/spec/S04-statements
+    t/spec/S29-str
 );
 
-foreach my $srcfile (@spectests) {
-    my $tgtfile = $srcfile;
-    $tgtfile =~ s!^t/(spec/)?!!;
-
-    my $dirname = dirname($tgtfile);
-    mkpath "t/spec/$dirname";
-    my $svncmd = 
-      "svn export --force http://svn.pugscode.org/pugs/$srcfile t/spec/$tgtfile";
-    print "$svncmd\n";
-    system($svncmd);
-}
+svn_export('.', @specutils);
+svn_export('t/spec', @spectests);
 
 exit(0);
+
+
+sub svn_export {
+    my $tgtdir = shift;
+    my $spec_repo = 'http://svn.pugscode.org/pugs';
+
+    foreach my $srcfile (@_) {
+        my $tgtfile = $srcfile;
+        $tgtfile =~ s!^t/(spec/)?!!;
+
+        my $dirname = dirname($tgtfile);
+        mkpath "$tgtdir/$dirname";
+        my $cmd = "svn export --force $spec_repo/$srcfile $tgtdir/$tgtfile";
+        print "$cmd\n";
+        system($cmd);
+    }
+}
+
 
 # Local Variables:
 #   mode: cperl

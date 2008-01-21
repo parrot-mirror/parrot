@@ -31,7 +31,7 @@
               load_bytecode 'PGE/Dumper.pbc'
               load_bytecode 'PCT.pbc'
           .end
-          " )))
+          ")))
 
 ; Emit PIR that prints the value returned by scheme_entry()
 (define emit-driver
@@ -39,17 +39,9 @@
     (emit "
           .sub drive :main
           
-              .local pmc val_ret
-              ( val_ret ) = scheme_entry()
-              # _dumper( val_ret, 'val_ret' )
-          
-              .local pmc op_say
-              op_say = new 'PAST::Op'
-              op_say.init( val_ret, 'name' => 'say', 'pasttype' => 'call' )
-          
               .local pmc stmts
-              stmts = new 'PAST::Stmts'
-              stmts.'init'( op_say, 'name' => 'stmts' )
+              ( stmts ) = scheme_entry()
+              # _dumper( stmts, 'stmts' )
           
               # compile and evaluate
               .local pmc past_compiler
@@ -123,22 +115,7 @@
 
           ")))
 
-;; recognition of forms
-
-; forms represented by a scalar PMC
-(define immediate?
-  (lambda (x)
-    (or (fixnum? x)
-      (boolean? x)
-      (char? x)
-      (and (list? x) (= (length x) 0)))))
-
-(define variable?
-  (lambda (x) 
-    (and (atom? x)
-         (or (eq? x 'var-a)
-             (eq? x 'var-b)))))
-
+; recognition of forms
 (define make-combination-predicate
   (lambda (name)
     (lambda (form)
@@ -151,6 +128,8 @@
 (define let?
   (make-combination-predicate 'let))
 
+(define lambda?
+  (make-combination-predicate 'lambda))
 
 (define if-test
   (lambda (form)
@@ -169,12 +148,14 @@
 ; is x a primitive?
 (define primitive?
   (lambda (x)
-    (and (symbol? x) (getprop x '*is-prim*))))
+    (and (symbol? x)
+         (getprop x '*is-prim*))))
 
 ; is x a call to a primitive? 
 (define primcall?
   (lambda (x)
-    (and (pair? x) (primitive? (car x)))))
+    (and (pair? x)
+         (primitive? (car x)))))
 
 ; a primitive function is a symbol with the properties
 ; *is-prim*, *arg-count* and *emitter*
@@ -182,359 +163,169 @@
 ; with 'define-primitive'
 (define-syntax define-primitive
   (syntax-rules ()
-    [(_ (prim-name uid arg* ...) b b* ...)
+    [(_ (prim-name arg* ...) b b* ...)
      (begin
         (putprop 'prim-name '*is-prim*
           #t)
         (putprop 'prim-name '*arg-count*
           (length '(arg* ...)))
         (putprop 'prim-name '*emitter*
-          (lambda (uid arg* ...) b b* ...)))]))
+          (lambda (arg* ...) b b* ...)))]))
 
 ; implementation of fxadd1
-(define-primitive (fxadd1 uid arg)
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( 'pirop' => 'n_add' )
-        " uid uid uid)
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg))
-  (emit "reg_~a.push( ~a )" uid (emit-expr 1))
-  (format "reg_~a" uid))
+(define-primitive (fxadd1 arg)
+  (list
+    (string->symbol "PAST::Op")
+    '(@ (pirop "n_add"))
+    (emit-expr arg)
+    (emit-expr 1)))
 
 ; implementation of fx+
-(define-primitive (fx+ uid arg1 arg2)
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( 'pirop' => 'n_add' )
-        " uid uid uid)
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg2))
-  (format "reg_~a" uid))
+(define-primitive (fx+ arg1 arg2)
+  (list
+    (string->symbol "PAST::Op")
+    '(@ (pirop "n_add"))
+    (emit-expr arg1)
+    (emit-expr arg2)))
 
 ; implementation of fxsub1
-(define-primitive (fxsub1 uid arg)
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( 'pirop' => 'n_sub' )
-        " uid uid uid)
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg))
-  (emit "reg_~a.push( ~a )" uid (emit-expr 1))
-  (format "reg_~a" uid))
+(define-primitive (fxsub1 arg)
+  (list
+    (string->symbol "PAST::Op")
+    '(@ (pirop "n_sub"))
+    (emit-expr arg)
+    (emit-expr 1)))
 
 ; implementation of fx-
-(define-primitive (fx- uid arg1 arg2)
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( 'pirop' => 'n_sub' )
-        " uid uid uid)
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg2))
-  (format "reg_~a" uid))
+(define-primitive (fx- arg1 arg2)
+  (list
+    (string->symbol "PAST::Op")
+    '(@ (pirop "n_sub"))
+    (emit-expr arg1)
+    (emit-expr arg2)))
 
 ; implementation of fxlogand
-(define-primitive (fxlogand uid arg1 arg2)
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( 'pirop' => 'n_band' )
-        " uid uid uid)
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg2))
-  (format "reg_~a" uid))
+(define-primitive (fxlogand arg1 arg2)
+  (list
+    (string->symbol "PAST::Op")
+    '(@ (pirop "n_band"))
+    (emit-expr arg1)
+    (emit-expr arg2)))
 
 ; implementation of fxlogor
-(define-primitive (fxlogor uid arg1 arg2)
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( 'pirop' => 'n_bor' )
-        " uid uid uid)
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg2))
-  (format "reg_~a" uid))
+(define-primitive (fxlogor arg1 arg2)
+  (list
+    (string->symbol "PAST::Op")
+    '(@ (pirop "n_bor"))
+    (emit-expr arg1)
+    (emit-expr arg2)))
 
 ; implementation of char->fixnum
-(define-primitive (char->fixnum uid arg)
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( 'pasttype' => 'inline', 'inline' => \"new %r, 'EclectusFixnum'\\nassign %r, %0\\n\" )
-        " uid uid uid)
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg))
-  (format "reg_~a" uid))
+(define-primitive (char->fixnum arg)
+  (list
+    (string->symbol "PAST::Op")
+    '(@ (pasttype "inline")
+                   (inline "new %r, 'EclectusFixnum'\\nassign %r, %0\\n"))
+    (emit-expr arg)))
 
 ; implementation of fixnum->char
-(define-primitive (fixnum->char uid arg)
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( 'pasttype' => 'inline', 'inline' => \"new %r, 'EclectusCharacter'\\nassign %r, %0\\n\" )
-        " uid uid uid)
-  (emit "reg_~a.push( ~a )" uid (emit-expr arg))
-  (format "reg_~a" uid))
+(define-primitive (fixnum->char arg)
+  (list
+    (string->symbol "PAST::Op")
+    '(@ (pasttype "inline")
+                   (inline "new %r, 'EclectusCharacter'\\nassign %r, %0\\n"))
+    (emit-expr arg)))
+
+(define emit-comparison
+  (lambda (builtin arg1 arg2)
+    (list
+      (string->symbol "PAST::Op")
+      '(@ (pasttype "if"))
+      (list
+        (string->symbol "PAST::Op")
+        (quasiquote (@ (pasttype "chain")
+                       (name (unquote builtin))))
+        (emit-expr arg1)
+        (emit-expr arg2))
+      (emit-expr #t)
+      (emit-expr #f))))
 
 ; implementation of char<
-(define-primitive (char< uid arg1 arg2)
-  (emit "
-        .local pmc reg_cmp_~a
-        reg_cmp_~a = new 'PAST::Op'
-        reg_cmp_~a.init( 'pasttype' => 'chain', 'name' => 'infix:<' ) 
-        " uid uid uid)
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg2))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_cmp_~a, val_true, val_false, 'pasttype' => 'if'  )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (char< arg1 arg2)
+  (emit-comparison "infix:<" arg1 arg2))
 
 ; implementation of char<=
-(define-primitive (char<= uid arg1 arg2)
-  (emit "
-        .local pmc reg_cmp_~a
-        reg_cmp_~a = new 'PAST::Op'
-        reg_cmp_~a.init( 'pasttype' => 'chain', 'name' => 'infix:<=' ) 
-        " uid uid uid)
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg2))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_cmp_~a, val_true, val_false, 'pasttype' => 'if'  )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (char<= arg1 arg2)
+  (emit-comparison "infix:<=" arg1 arg2))
 
 ; implementation of char=
-(define-primitive (char= uid arg1 arg2)
-  (emit "
-        .local pmc reg_cmp_~a
-        reg_cmp_~a = new 'PAST::Op'
-        reg_cmp_~a.init( 'pasttype' => 'chain', 'name' => 'infix:==' ) 
-        " uid uid uid)
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg2))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_cmp_~a, val_true, val_false, 'pasttype' => 'if'  )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (char= arg1 arg2)
+  (emit-comparison "infix:==" arg1 arg2))
 
 ; implementation of char>
-(define-primitive (char> uid arg1 arg2)
-  (emit "
-        .local pmc reg_cmp_~a
-        reg_cmp_~a = new 'PAST::Op'
-        reg_cmp_~a.init( 'pasttype' => 'chain', 'name' => 'infix:>' ) 
-        " uid uid uid)
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg2))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_cmp_~a, val_true, val_false, 'pasttype' => 'if'  )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (char> arg1 arg2)
+  (emit-comparison "infix:>" arg1 arg2))
 
 ; implementation of char>=
-(define-primitive (char>= uid arg1 arg2)
-  (emit "
-        .local pmc reg_cmp_~a
-        reg_cmp_~a = new 'PAST::Op'
-        reg_cmp_~a.init( 'pasttype' => 'chain', 'name' => 'infix:>=' ) 
-        " uid uid uid)
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg2))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_cmp_~a, val_true, val_false, 'pasttype' => 'if'  )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (char>= arg1 arg2)
+  (emit-comparison "infix:>=" arg1 arg2))
 
 ; implementation of fxzero?
-(define-primitive (fxzero? uid arg)
-  (emit "
-        .local pmc reg_cmp_~a
-        reg_cmp_~a = new 'PAST::Op'
-        reg_cmp_~a.init( 'pasttype' => 'chain', 'name' => 'infix:==' ) 
-        " uid uid uid)
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg))
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr 0))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_cmp_~a, val_true, val_false, 'pasttype' => 'if'  )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
-
-; implementation of fx=
-(define-primitive (fx= uid arg1 arg2)
-  (emit "
-        .local pmc reg_cmp_~a
-        reg_cmp_~a = new 'PAST::Op'
-	reg_cmp_~a.init( 'pasttype' => 'chain', 'name' => 'infix:==' ) 
-        " uid uid uid)
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg2))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_cmp_~a, val_true, val_false, 'pasttype' => 'if'  )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (fxzero? arg)
+  (emit-comparison "infix:==" arg 0))
 
 ; implementation of fx<
-(define-primitive (fx< uid arg1 arg2)
-  (emit "
-        .local pmc reg_cmp_~a
-        reg_cmp_~a = new 'PAST::Op'
-        reg_cmp_~a.init( 'pasttype' => 'chain', 'name' => 'infix:<' ) 
-        " uid uid uid)
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg2))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_cmp_~a, val_true, val_false, 'pasttype' => 'if'  )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (fx< arg1 arg2)
+  (emit-comparison "infix:<" arg1 arg2))
 
 ; implementation of fx<=
-(define-primitive (fx<= uid arg1 arg2)
-  (emit "
-        .local pmc reg_cmp_~a
-        reg_cmp_~a = new 'PAST::Op'
-        reg_cmp_~a.init( 'pasttype' => 'chain', 'name' => 'infix:<=' ) 
-        " uid uid uid)
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg2))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_cmp_~a, val_true, val_false, 'pasttype' => 'if'  )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (fx<= arg1 arg2)
+  (emit-comparison "infix:<=" arg1 arg2))
+
+; implementation of fx=
+(define-primitive (fx= arg1 arg2)
+  (emit-comparison "infix:==" arg1 arg2))
 
 ; implementation of fx>=
-(define-primitive (fx>= uid arg1 arg2)
-  (emit "
-        .local pmc reg_cmp_~a
-        reg_cmp_~a = new 'PAST::Op'
-        reg_cmp_~a.init( 'pasttype' => 'chain', 'name' => 'infix:>=' ) 
-        " uid uid uid)
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg2))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_cmp_~a, val_true, val_false, 'pasttype' => 'if'  )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (fx>= arg1 arg2)
+  (emit-comparison "infix:>=" arg1 arg2))
 
 ; implementation of fx>
-(define-primitive (fx> uid arg1 arg2)
-  (emit "
-        .local pmc reg_cmp_~a
-        reg_cmp_~a = new 'PAST::Op'
-        reg_cmp_~a.init( 'pasttype' => 'chain', 'name' => 'infix:>' ) 
-        " uid uid uid)
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg1))
-  (emit "reg_cmp_~a.push( ~a )" uid (emit-expr arg2))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_cmp_~a, val_true, val_false, 'pasttype' => 'if'  )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (fx> arg1 arg2)
+  (emit-comparison "infix:>" arg1 arg2))
 
-; implementation of null?
-(define-primitive (null? uid arg)
-  (emit "
-        .local pmc reg_inline_~a
-        reg_inline_~a = new 'PAST::Op'
-        reg_inline_~a.init( 'pasttype' => 'inline', 'inline' => \"new %r, 'EclectusBoolean'\\n isa $I1, %0, 'EclectusEmptyList'\\n %r = $I1\" )
-        " uid uid uid)
-  (emit "reg_inline_~a.push( ~a )" uid (emit-expr arg))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_inline_~a, val_true, val_false, 'pasttype' => 'if' )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
 
-; implementation of fixnum?
-(define-primitive (fixnum? uid arg)
-  (emit "
-        .local pmc reg_inline_~a
-        reg_inline_~a = new 'PAST::Op'
-        reg_inline_~a.init( 'pasttype' => 'inline', 'inline' => \"new %r, 'EclectusBoolean'\\n isa $I1, %0, 'EclectusFixnum'\\n %r = $I1\" )
-        " uid uid uid)
-  (emit "reg_inline_~a.push( ~a )" uid (emit-expr arg))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_inline_~a, val_true, val_false, 'pasttype' => 'if' )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
 
-; implementation of boolean?
-(define-primitive (boolean? uid arg)
-  (emit "
-        .local pmc reg_inline_~a
-        reg_inline_~a = new 'PAST::Op'
-        reg_inline_~a.init( 'pasttype' => 'inline', 'inline' => \"new %r, 'EclectusBoolean'\\n isa $I1, %0, 'EclectusBoolean'\\n %r = $I1\" )
-        " uid uid uid)
-  (emit "reg_inline_~a.push( ~a )" uid (emit-expr arg))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_inline_~a, val_true, val_false, 'pasttype' => 'if' )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+; asking for the type of an object
+(define emit-typequery
+  (lambda (typename arg)
+    (list
+      (string->symbol "PAST::Op")
+      '(@ (pasttype "if"))
+      (list
+        (string->symbol "PAST::Op")
+        (quasiquote (@ (pasttype "inline")
+                       (inline (unquote (format "new %r, 'EclectusBoolean'\\nisa $I1, %0, '~a'\\n %r = $I1" typename)))))
+        (emit-expr arg))
+      (emit-expr #t)
+      (emit-expr #f))))
+   
+(define-primitive (boolean? arg)
+  (emit-typequery "EclectusBoolean" arg))
 
-; implementation of char?
-(define-primitive (char? uid arg)
-  (emit "
-        .local pmc reg_inline_~a
-        reg_inline_~a = new 'PAST::Op'
-        reg_inline_~a.init( 'pasttype' => 'inline', 'inline' => \"new %r, 'EclectusBoolean'\\n isa $I1, %0, 'EclectusCharacter'\\n %r = $I1\" )
-        " uid uid uid)
-  (emit "reg_inline_~a.push( ~a )" uid (emit-expr arg))
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_inline_~a, val_true, val_false, 'pasttype' => 'if' )
-        " uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (char? arg)
+  (emit-typequery "EclectusCharacter" arg))
 
-; implementation of not?
-; first check boolean? and then the inverse truthiness
-(define-primitive (not? uid arg)
-  (emit "
-        .local pmc reg_inline_~a
-        .local pmc reg_arg_~a
-        reg_arg_~a = ~a
-        reg_inline_~a = new 'PAST::Op'
-        reg_inline_~a.init( 'pasttype' => 'inline', 'inline' => \"new %r, 'EclectusBoolean'\\n isa $I1, %0, 'EclectusBoolean'\\n %r = $I1\" )
-        " uid uid uid (emit-expr arg) uid uid)
-  (emit "reg_inline_~a.push( reg_arg_~a )" uid uid)
-  (emit "
-        .local pmc reg_negate_1_~a
-        reg_negate_1_~a = new 'PAST::Op'
-        reg_negate_1_~a.init( reg_arg_~a, val_false, val_true, 'pasttype' => 'if' )
-        " uid uid uid uid)
-  (emit "
-        .local pmc reg_~a
-        reg_~a = new 'PAST::Op'
-        reg_~a.init( reg_inline_~a, reg_negate_1_~a, val_false, 'pasttype' => 'if' )
-        " uid uid uid uid uid)
-  (format "reg_~a" uid))
+(define-primitive (null? arg)
+  (emit-typequery "EclectusEmptyList" arg))
+
+(define-primitive (fixnum? arg)
+  (emit-typequery "EclectusFixnum" arg))
+
+(define-primitive (pair? arg)
+  (emit-typequery "EclectusPair" arg))
+
+
 
 ; a getter of '*emitter*'
 (define primitive-emitter
@@ -543,60 +334,61 @@
 
 (define emit-function-header
   (lambda (function-name)
-    (emit (string-append ".sub " function-name))
-    (emit "    .local pmc val_true, val_false")
-    (emit "    val_true  = ~a" (car (emit-immediate #t)))
-    (emit "    val_false = ~a" (car (emit-immediate #f)))))
+    (emit (string-append ".sub " function-name))))
 
 (define emit-function-footer
   (lambda (reg)
     (emit "
-            .return( ~a )
+            .return( reg_~a )
           .end
           " reg)))
 
 (define emit-primcall
   (lambda (x)
     (let ([prim (car x)] [args (cdr x)])
-      (apply (primitive-emitter prim) (gen-unique-id) args))))
+      (apply (primitive-emitter prim) args))))
+
+(define emit-functional-application
+  (lambda (x)
+    (append
+      (list  
+        (string->symbol "PAST::Op")
+        '(@ (pasttype "call"))
+        (emit-expr (car x)))
+      (map
+        (lambda (arg)
+          (emit-expr arg))
+        (cdr x)))))
+
 
 ; emit PIR for a scalar
-(define emit-immediate
+(define emit-atom
   (lambda (x)
-    (let ([uid (gen-unique-id)])
-      (emit ".local pmc reg_~a" uid)
+    (list
+      (string->symbol (if (symbol? x) "PAST::Var" "PAST::Val"))
       (cond
         [(fixnum? x)
-         (emit "
-               reg_~a = new 'PAST::Val'
-               reg_~a.init( 'value' => ~a, 'returns' => 'EclectusFixnum' )
-               " uid uid x)]
+         (quasiquote (@ (value (unquote x))
+                        (returns "EclectusFixnum")))]
         [(char? x)
-         (emit "
-               reg_~a = new 'PAST::Val'
-               reg_~a.init( 'value' => ~a, 'returns' => 'EclectusCharacter' )
-               " uid uid (char->integer x) )]
-        [(and (list? x) (= (length x) 0 ))
-         (emit "
-               reg_~a = new 'PAST::Val'
-               reg_~a.init( 'value' => 0, 'returns' => 'EclectusEmptyList' )
-               " uid uid) ]
+         (quasiquote (@ (value (unquote (char->integer x)))
+                        (returns "EclectusCharacter")))]
+        [(null? x)
+         '(@ (value 0)
+             (returns "EclectusEmptyList"))]
         [(boolean? x)
-           (if x 
-             (emit "
-                   reg_~a = new 'PAST::Val'
-                   reg_~a.init( 'value' => 1, 'returns' => 'EclectusBoolean' )
-                   " uid uid)
-             (emit "
-                   reg_~a = new 'PAST::Val'
-                   reg_~a.init( 'value' => 0, 'returns' => 'EclectusBoolean' )
-                   " uid uid))]
+         (quasiquote (@ (value (unquote (if x 1 0)))
+                        (returns "EclectusBoolean")))]
+        [(symbol? x)
+         (quasiquote (@ (name (unquote x))
+                        (scope "lexical")
+                        (viviself "Undef")))]
         [(string? x)
-         (emit "
-               reg_~a = new 'PAST::Val'
-               reg_~a.init( 'value' => \"'~a'\", 'returns' => 'EclectusString' )
-               " uid uid x)])
-        (list (format "reg_~a" uid)))))
+         (quasiquote (@ (value (unquote (format "'~a'" x)))
+                        (returns "EclectusString")))]
+        [(vector? x)
+         (quasiquote (@ (value "'#0()'")
+                        (returns "EclectusString")))]))))
 
 (define bindings
   (lambda (x)
@@ -607,56 +399,81 @@
     (caddr x)))
 
 (define emit-variable
-  (lambda (x uid)
-    (emit-expr 13)))
+  (lambda (x)
+    (list
+      (string->symbol "PAST::Var")
+      (quasiquote (@ (name (unquote x))
+                     (scope "lexical")
+                     (viviself "Undef"))))))
 
 (define emit-let
-  (lambda (binds body uid )
-     (if (null? binds)
-       (emit-expr body)
-       (begin
-         (emit "
-               .local pmc reg_let_var_~a
-               reg_let_var_~a = new 'PAST::Var'
-               reg_let_var_~a.init( 'name' => '~a', 'scope' => 'lexical', 'viviself' => 'Undef', 'isdecl' => 1 )
-
-               .local pmc reg_let_copy_~a 
-               reg_let_copy_~a = new 'PAST::Op'
-               reg_let_copy_~a.init( 'pasttype' => 'copy', 'lvalue' => 1 )
-               " uid uid uid (caar binds) uid uid uid)
-         (emit "reg_let_copy_~a.push( ~a )" uid (format "reg_let_var_~a" uid ))
-         (emit "reg_let_copy_~a.push( ~a )" uid (emit-expr (cadar binds)))
-         (emit "
-               .local pmc reg_~a
-               reg_~a = new 'PAST::Stmts'
-               reg_~a.init( reg_let_copy_~a )
-               " uid uid uid uid)
-         (emit "reg_~a.push( ~a )" uid (emit-expr body))
-         (format "reg_~a" uid)))))
+  (lambda (binds body)
+    (if (null? binds)
+      (emit-expr body)
+      (begin
+        (append
+          (cons
+            (string->symbol "PAST::Stmts")
+            (map 
+              (lambda (decl)
+                (list
+                  (string->symbol "PAST::Op")
+                  '(@ (pasttype "copy")
+                      (lvalue "1"))
+                  (list
+                    (string->symbol "PAST::Var")
+                    (quasiquote (@ (name (unquote (car decl)))
+                                   (scope "lexical")
+                                   (viviself "Undef")
+                                   (isdecl 1))))
+                  (emit-expr (cadr decl))))
+              binds))
+          (list
+            (emit-expr body)))))))
 
 (define emit-if
-  (lambda (x uid)
-    (emit "
-          .local pmc reg_~a
-          reg_~a = new 'PAST::Op'
-          reg_~a.init( 'pasttype' => 'if'  )
-          " uid uid uid )
-    (emit "reg_~a.push( ~a )" uid (emit-expr (if-test x)))
-    (emit "reg_~a.push( ~a )" uid (emit-expr (if-conseq x)))
-    (emit "reg_~a.push( ~a )" uid (emit-expr (if-altern x)))
-    (format "reg_~a" uid)))
- 
+  (lambda (x)
+    (list
+      (string->symbol "PAST::Op")
+      '(@ (pasttype "if"))
+      (emit-expr (if-test x))
+      (emit-expr (if-conseq x))
+      (emit-expr (if-altern x)))))
+
+(define emit-lambda
+  (lambda (x)  
+    ; (write (list "all" x "decl" (cadr x) "stmts" (cddr x) ))(newline)
+    (list
+      (string->symbol "PAST::Block")
+      (quasiquote (@ (blocktype "declaration")
+                     (arity (unquote (length (cadr x))))))
+      (cons
+        (string->symbol "PAST::Stmts")
+        (map
+          (lambda (decl)
+            (list
+              (string->symbol "PAST::Var")
+              (quasiquote (@ (name (unquote decl))
+                             (scope "parameter")))))
+          (cadr x)))
+      (cons
+        (string->symbol "PAST::Stmts")
+        (map
+          (lambda (stmt)
+            (emit-expr stmt))
+          (cddr x))))))
+
 ; emir PIR for an expression
 (define emit-expr
   (lambda (x)
-    ;(display "# ")(write x) (newline)
+    ;(diag (format "emit-expr: ~s" x))
     (cond
-      [(immediate? x) (car (emit-immediate x))]
-      [(variable? x)  (emit-variable x (gen-unique-id))]
-      [(let? x)       (emit-let (bindings x) (body x) (gen-unique-id))]
-      [(if? x)        (emit-if x (gen-unique-id))]
+      [(atom? x)      (emit-atom x)]
+      [(let? x)       (emit-let (bindings x) (body x))]
+      [(if? x)        (emit-if x)]
+      [(lambda? x)    (emit-lambda x)]
       [(primcall? x)  (emit-primcall x)]
-    ))) 
+      [else           (emit-functional-application x)]))) 
 
 ; transverse the program and rewrite
 ; "and" can be supported by transformation before compiling
@@ -664,32 +481,78 @@
 ;
 ; Currently a new S-expression is generated,
 ; as I don't know how to manipulate S-expressions while traversing it
-(define transform-and-or
+(define preprocess
   (lambda (tree)
-    (cond [(atom? tree) tree]
+    (cond [(atom? tree)
+           tree]
           [(eqv? (car tree) 'and) 
-            ( cond [(null? (cdr tree)) #t]
-                   [(= (length (cdr tree)) 1) (transform-and-or (cadr tree))]
-                   [else (quasiquote
-                           (if
-                            (unquote (transform-and-or (cadr tree)))
-                            (unquote (transform-and-or (quasiquote (and (unquote-splicing (cddr tree))))))
-                            #f))])]
+           (preprocess
+             (cond [(null? (cdr tree)) #t]
+                   [(= (length (cdr tree)) 1) (cadr tree)]
+                   [else (list
+                           'if
+                           (cadr tree)
+                           (cons 'and (cddr tree))
+                            #f)]))]
           [(eqv? (car tree) 'or) 
-            ( cond [(null? (cdr tree)) #f]
-                   [(= (length (cdr tree)) 1) (transform-and-or (cadr tree))]
-                   [else (quasiquote
-                           (if
-                            (unquote (transform-and-or (cadr tree)))
-                            (unquote (transform-and-or (cadr tree)))
-                            (unquote (transform-and-or (quasiquote (or (unquote-splicing (cddr tree))))))))])][else  (map transform-and-or tree)]))) 
+           (preprocess
+             (cond [(null? (cdr tree)) #f]
+                   [(= (length (cdr tree)) 1) (cadr tree)]
+                   [else (list
+                           'if
+                           (cadr tree)
+                           (cadr tree)
+                           (cons 'or (cddr tree)))]))]
+          [(eqv? (car tree) 'not) 
+           (preprocess
+             (list 'if (cadr tree) #f #t))]
+          [(eqv? (car tree) 'let*) 
+           (preprocess
+             (if (null? (cadr tree))
+                 (cons 'let (cdr tree))
+                 (list
+                   'let
+                   (list (caadr tree))
+                   (append
+                     (list 'let* (cdadr tree))
+                     (cddr tree)))))]
+          [else
+           (map preprocess tree)]))) 
 
 ; eventually this will become a PIR generator
 ; for PAST as SXML
 ; currently it only handles the pushes
-(define emit-pushes
-  (lambda (reg)
-    (if (list? reg) (car reg) reg)))
+(define past-sxml->past-pir
+  (lambda (past)
+    (let ([uid (gen-unique-id)])
+      ;(diag (format "to_pir: ~a" past))
+      (emit "
+            .local pmc reg_~a
+            reg_~a = new '~a'
+            " uid uid (car past))
+      (for-each
+        (lambda (daughter)
+          (if (eq? '@ (car daughter))
+            (for-each
+              (lambda (key_val)
+                (emit "
+                      reg_~a.init( '~a' => \"~a\" )
+                      " uid (car key_val) (cadr key_val)))
+                (cdr daughter))
+              (emit "
+                    reg_~a.push( reg_~a )
+                    " uid (past-sxml->past-pir daughter))))
+        (cdr past))
+      uid)))
+
+; print the result of the evaluation
+(define wrap-say
+  (lambda (past)
+    (list
+      (string->symbol "PAST::Op")
+      '(@ (pasttype "call")
+          (name "say"))
+      past)))
 
 ; the actual compiler
 (define compile-program
@@ -699,6 +562,7 @@
     (emit-builtins)
     (emit-function-header "scheme_entry")
     (emit-function-footer
-      (emit-pushes
-        (emit-expr
-          (transform-and-or program))))))
+      (past-sxml->past-pir
+        (wrap-say
+          (emit-expr
+            (preprocess program)))))))

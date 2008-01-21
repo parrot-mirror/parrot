@@ -34,45 +34,56 @@ flow of execution between blocks.
 
 /* HEADERIZER BEGIN: static */
 
-static void analyse_life_block(NOTNULL(Basic_block* bb), NOTNULL(SymReg* r))
+static void analyse_life_block(
+    ARGIN(const Basic_block* bb),
+    ARGMOD(SymReg *r))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*r);
 
 static void analyse_life_symbol(
     ARGIN(const struct _IMC_Unit *unit),
-    NOTNULL(SymReg* r))
+    ARGMOD(SymReg* r))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(* r);
 
 static void bb_add_edge(
-    NOTNULL(IMC_Unit *unit),
-    NOTNULL(Basic_block *from),
-    NOTNULL(Basic_block *to))
+    ARGMOD(IMC_Unit *unit),
+    ARGIN(Basic_block *from),
+    ARGMOD(Basic_block *to))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*unit)
+        FUNC_MODIFIES(*to);
 
 static void bb_check_set_addr(PARROT_INTERP,
-    NOTNULL(IMC_Unit * unit),
-    NOTNULL(Basic_block *bb),
-    NOTNULL(SymReg *label))
+    ARGMOD(IMC_Unit *unit),
+    ARGMOD(Basic_block *bb),
+    ARGIN(const SymReg *label))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*unit)
+        FUNC_MODIFIES(*bb);
 
 static void bb_findadd_edge(PARROT_INTERP,
-    NOTNULL(IMC_Unit * unit),
-    NOTNULL(Basic_block *from),
-    NOTNULL(SymReg *label))
+    ARGMOD(IMC_Unit *unit),
+    ARGIN(Basic_block *from),
+    ARGIN(const SymReg *label))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*unit);
 
-static void bb_remove_edge(NOTNULL(IMC_Unit *unit), NOTNULL(Edge *edge))
+static void bb_remove_edge(ARGMOD(IMC_Unit *unit), ARGMOD(Edge *edge))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*unit)
+        FUNC_MODIFIES(*edge);
 
 PARROT_WARN_UNUSED_RESULT
 static int check_invoke_type(PARROT_INTERP,
@@ -82,45 +93,54 @@ static int check_invoke_type(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static void free_dominance_frontiers(NOTNULL(IMC_Unit *unit))
-        __attribute__nonnull__(1);
+static void free_dominance_frontiers(ARGMOD(IMC_Unit *unit))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*unit);
 
-static void free_dominators(NOTNULL(IMC_Unit *unit))
-        __attribute__nonnull__(1);
+static void free_dominators(ARGMOD(IMC_Unit *unit))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*unit);
 
-static void free_edge(NOTNULL(IMC_Unit *unit))
-        __attribute__nonnull__(1);
+static void free_edge(ARGMOD(IMC_Unit *unit))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*unit);
 
-static void free_loops(NOTNULL(IMC_Unit *unit))
-        __attribute__nonnull__(1);
+static void free_loops(ARGMOD(IMC_Unit *unit))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*unit);
 
-static void init_basic_blocks(NOTNULL(IMC_Unit *unit))
-        __attribute__nonnull__(1);
+static void init_basic_blocks(ARGMOD(IMC_Unit *unit))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*unit);
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static Basic_block* make_basic_block(PARROT_INTERP,
-    NOTNULL(IMC_Unit *unit),
-    NOTNULL(Instruction* ins))
+    ARGMOD(IMC_Unit *unit),
+    ARGMOD(Instruction* ins))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*unit)
+        FUNC_MODIFIES(* ins);
 
 static void mark_loop(PARROT_INTERP,
-    NOTNULL(IMC_Unit *unit),
+    ARGMOD(IMC_Unit *unit),
     ARGIN(const Edge *e))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*unit);
 
 static void propagate_need(
-    NOTNULL(Basic_block *bb),
-    NOTNULL(SymReg* r),
+    ARGMOD(Basic_block *bb),
+    ARGIN(const SymReg* r),
     int i)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*bb);
 
-static void sort_loops(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
+static void sort_loops(PARROT_INTERP, ARGIN(IMC_Unit *unit))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -179,7 +199,7 @@ RT#48260: Not yet documented!!!
 */
 
 void
-find_basic_blocks(PARROT_INTERP, NOTNULL(struct _IMC_Unit *unit), int first)
+find_basic_blocks(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit), int first)
 {
     Basic_block *bb;
     Instruction *ins;
@@ -283,8 +303,8 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-bb_check_set_addr(PARROT_INTERP, NOTNULL(IMC_Unit * unit),
-        NOTNULL(Basic_block *bb), NOTNULL(SymReg *label))
+bb_check_set_addr(PARROT_INTERP, ARGMOD(IMC_Unit *unit),
+        ARGMOD(Basic_block *bb), ARGIN(const SymReg *label))
 {
     const Instruction *ins;
 
@@ -318,16 +338,16 @@ the dependencies between them.
 */
 
 void
-build_cfg(PARROT_INTERP, NOTNULL(struct _IMC_Unit *unit))
+build_cfg(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit))
 {
     int i, changes;
-    SymReg * addr;
-    Basic_block *last = NULL, *bb;
-    Edge *pred;
+    Basic_block *last = NULL;
 
     IMCC_info(interp, 2, "build_cfg\n");
     for (i = 0; i < unit->n_basic_blocks; i++) {
-        bb = unit->bb_list[i];
+        Edge *pred;
+        SymReg *addr;
+        Basic_block * const bb = unit->bb_list[i];
 
         /* if the block can fall-through */
         if (i > 0 && ! (last->end->type & IF_goto))
@@ -425,9 +445,10 @@ invok:
      * predecessors) from the CFG
      */
     do {
+        int i;
         changes = 0;
         for (i = 1; i < unit->n_basic_blocks; i++) {
-            bb = unit->bb_list[i];
+            Basic_block * const bb = unit->bb_list[i];
             if (!bb->pred_list) {
                 /* Remove all successor edges of block bb */
                 while (bb->succ_list) {
@@ -455,8 +476,8 @@ find the placement of the label, and link the two nodes
 */
 
 static void
-bb_findadd_edge(PARROT_INTERP, NOTNULL(IMC_Unit * unit),
-        NOTNULL(Basic_block *from), NOTNULL(SymReg *label))
+bb_findadd_edge(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Basic_block *from),
+        ARGIN(const SymReg *label))
 {
     Instruction *ins;
     const SymReg * const r = find_sym(interp, label->name);
@@ -465,8 +486,7 @@ bb_findadd_edge(PARROT_INTERP, NOTNULL(IMC_Unit * unit),
         bb_add_edge(unit, from,
                 unit->bb_list[r->first_ins->bbindex]);
     else {
-        IMCC_debug(interp, DEBUG_CFG, "register branch %I ",
-                from->end);
+        IMCC_debug(interp, DEBUG_CFG, "register branch %I ", from->end);
         /* RT#48282 is probably only ok, if the invoke is "near" the
          *     set_addr ins
          */
@@ -520,7 +540,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-bb_add_edge(NOTNULL(IMC_Unit *unit), NOTNULL(Basic_block *from), NOTNULL(Basic_block *to))
+bb_add_edge(ARGMOD(IMC_Unit *unit), ARGIN(Basic_block *from), ARGMOD(Basic_block *to))
 {
     Edge *e;
     if (blocks_are_connected(from, to))
@@ -541,7 +561,7 @@ bb_add_edge(NOTNULL(IMC_Unit *unit), NOTNULL(Basic_block *from), NOTNULL(Basic_b
     to->pred_list = from->succ_list = e;
 
     /* memory housekeeping */
-    e->next = 0;
+    e->next = NULL;
 
     if (unit->edge_list == 0)
         unit->edge_list = e;
@@ -562,7 +582,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-bb_remove_edge(NOTNULL(IMC_Unit *unit), NOTNULL(Edge *edge))
+bb_remove_edge(ARGMOD(IMC_Unit *unit), ARGMOD(Edge *edge))
 {
     if (edge->from->succ_list == edge) {
         edge->from->succ_list = edge->succ_next;
@@ -617,7 +637,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-free_edge(NOTNULL(IMC_Unit *unit))
+free_edge(ARGMOD(IMC_Unit *unit))
 {
     Edge *e;
 
@@ -626,7 +646,7 @@ free_edge(NOTNULL(IMC_Unit *unit))
         free(e);
         e = next;
     }
-    unit->edge_list = 0;
+    unit->edge_list = NULL;
 }
 
 /*
@@ -685,8 +705,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-analyse_life_symbol(ARGIN(const struct _IMC_Unit *unit),
-        NOTNULL(SymReg* r))
+analyse_life_symbol(ARGIN(const struct _IMC_Unit *unit), ARGMOD(SymReg* r))
 {
     int i;
 
@@ -751,7 +770,7 @@ RT#48260: Not yet documented!!!
 */
 
 void
-free_life_info(ARGIN(const struct _IMC_Unit *unit), NOTNULL(SymReg *r))
+free_life_info(ARGIN(const struct _IMC_Unit *unit), ARGMOD(SymReg *r))
 {
     int i;
 #if IMC_TRACE_HIGH
@@ -783,7 +802,7 @@ the var is alive.
 */
 
 static void
-analyse_life_block(NOTNULL(Basic_block* bb), NOTNULL(SymReg* r))
+analyse_life_block(ARGIN(const Basic_block* bb), ARGMOD(SymReg *r))
 {
     Life_range* const l = make_life_range(r, bb->index);
 
@@ -866,14 +885,11 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-propagate_need(NOTNULL(Basic_block *bb), NOTNULL(SymReg* r), int i)
+propagate_need(ARGMOD(Basic_block *bb), ARGIN(const SymReg* r), int i)
 {
     Edge *edge;
     Basic_block *pred;
     Life_range *l;
-
-    l = r->life_info[bb->index]; /* RT#48284 Will never get used */
-    /* l->last_ins = bb->end; RT#48284:leo why? */
 
     /* every predecessor of a LF_lv_in block must be in LF_lv_out
        and, unless itself is LV_def, this should be propagated to
@@ -936,7 +952,7 @@ s. gcc:flow.c compute_dominators
 */
 
 void
-compute_dominators(PARROT_INTERP, NOTNULL(struct _IMC_Unit *unit))
+compute_dominators(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit))
 {
 #define USE_BFS 0
 
@@ -1069,7 +1085,7 @@ Algorithm to find dominance frontiers described in paper
 */
 
 void
-compute_dominance_frontiers(PARROT_INTERP, NOTNULL(struct _IMC_Unit *unit))
+compute_dominance_frontiers(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit))
 {
     int i, b;
 
@@ -1086,7 +1102,7 @@ compute_dominance_frontiers(PARROT_INTERP, NOTNULL(struct _IMC_Unit *unit))
 
     /* for all nodes, b */
     for (b = 1; b < n; b++) {
-        Edge *edge = unit->bb_list[b]->pred_list;
+        const Edge *edge = unit->bb_list[b]->pred_list;
         /* if the number of predecessors of b >= 2 */
         if (edge && edge->pred_next) {
             /* for all predecessors, p, of b */
@@ -1122,18 +1138,18 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-free_dominators(NOTNULL(IMC_Unit *unit))
+free_dominators(ARGMOD(IMC_Unit *unit))
 {
-    int i;
+    if (unit->dominators) {
+        int i;
 
-    if (!unit->dominators)
-        return;
-    for (i=0; i < unit->n_basic_blocks; i++) {
-        set_free(unit->dominators[i]);
+        for (i=0; i < unit->n_basic_blocks; i++) {
+            set_free(unit->dominators[i]);
+        }
+        free(unit->dominators);
+        unit->dominators = 0;
+        free(unit->idoms);
     }
-    free(unit->dominators);
-    unit->dominators = 0;
-    free(unit->idoms);
 }
 
 /*
@@ -1147,17 +1163,17 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-free_dominance_frontiers(NOTNULL(IMC_Unit *unit))
+free_dominance_frontiers(ARGMOD(IMC_Unit *unit))
 {
-    int i;
+    if (unit->dominance_frontiers) {
+        int i;
 
-    if (!unit->dominance_frontiers)
-        return;
-    for (i=0; i < unit->n_basic_blocks; i++) {
-        set_free(unit->dominance_frontiers[i]);
+        for (i=0; i < unit->n_basic_blocks; i++) {
+            set_free(unit->dominance_frontiers[i]);
+        }
+        free(unit->dominance_frontiers);
+        unit->dominance_frontiers = NULL;
     }
-    free(unit->dominance_frontiers);
-    unit->dominance_frontiers = 0;
 }
 
 
@@ -1172,7 +1188,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-sort_loops(PARROT_INTERP, NOTNULL(IMC_Unit *unit))
+sort_loops(PARROT_INTERP, ARGIN(IMC_Unit *unit))
 {
     int i, j, changed;
     Loop_info *li;
@@ -1242,7 +1258,7 @@ go from a node to one of its dominators.
 */
 
 void
-find_loops(PARROT_INTERP, NOTNULL(struct _IMC_Unit *unit))
+find_loops(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit))
 {
     int i;
 
@@ -1251,11 +1267,8 @@ find_loops(PARROT_INTERP, NOTNULL(struct _IMC_Unit *unit))
         const Set * const dom = unit->dominators[i];
         const Edge *edge;
 
-        for (edge=unit->bb_list[i]->succ_list;
-                edge != NULL; edge=edge->succ_next) {
-            const int succ_index = edge->to->index;
-
-            if (set_contains(dom, succ_index)) {
+        for (edge=unit->bb_list[i]->succ_list; edge; edge=edge->succ_next) {
+            if (set_contains(dom, edge->to->index)) {
                 mark_loop(interp, unit, edge);
             }
         }
@@ -1316,7 +1329,7 @@ Increases the loop_depth of all the nodes in a loop
 */
 
 static void
-mark_loop(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const Edge *e))
+mark_loop(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const Edge *e))
 {
     Set* loop;
     Set* exits;
@@ -1408,7 +1421,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-free_loops(NOTNULL(IMC_Unit *unit))
+free_loops(ARGMOD(IMC_Unit *unit))
 {
     int i;
     for (i = 0; i < unit->n_loops; i++) {
@@ -1433,7 +1446,7 @@ RT#48260: Not yet documented!!!
 */
 
 void
-search_predecessors_not_in(ARGIN(const Basic_block *node), NOTNULL(Set* s))
+search_predecessors_not_in(ARGIN(const Basic_block *node), ARGMOD(Set* s))
 {
    Edge *edge;
 
@@ -1462,7 +1475,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-init_basic_blocks(NOTNULL(IMC_Unit *unit))
+init_basic_blocks(ARGMOD(IMC_Unit *unit))
 {
     if (unit->bb_list != NULL)
         clear_basic_blocks(unit);
@@ -1471,7 +1484,7 @@ init_basic_blocks(NOTNULL(IMC_Unit *unit))
             sizeof (Basic_block *));
 
     unit->n_basic_blocks = 0;
-    unit->edge_list      = 0;
+    unit->edge_list      = NULL;
 }
 
 /*
@@ -1485,10 +1498,11 @@ RT#48260: Not yet documented!!!
 */
 
 void
-clear_basic_blocks(NOTNULL(struct _IMC_Unit *unit))
+clear_basic_blocks(ARGMOD(struct _IMC_Unit *unit))
 {
-    int i;
     if (unit->bb_list) {
+        int i;
+
         for (i=0; i < unit->n_basic_blocks; i++)
             free(unit->bb_list[i]);
         free(unit->bb_list);
@@ -1513,7 +1527,7 @@ RT#48260: Not yet documented!!!
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static Basic_block*
-make_basic_block(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction* ins))
+make_basic_block(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(Instruction* ins))
 {
     int n;
     Basic_block * const bb = mem_allocate_typed(Basic_block);
@@ -1558,12 +1572,13 @@ RT#48260: Not yet documented!!!
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 Life_range *
-make_life_range(NOTNULL(SymReg *r), int idx)
+make_life_range(ARGMOD(SymReg *r), int idx)
 {
-   Life_range * const l = mem_allocate_zeroed_typed(Life_range);
-   r->life_info[idx]    = l;
+    Life_range * const l = mem_allocate_zeroed_typed(Life_range);
 
-   return l;
+    r->life_info[idx]    = l;
+
+    return l;
 }
 
 /*

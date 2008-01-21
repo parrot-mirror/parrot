@@ -32,7 +32,7 @@ linux-x86_64-gcc4.1.0         4   Y    -    -     Y   Y   Y    Y/2   ?  20060807
 linux-x86_64-gcc4.1.2         8   Y    -    -     Y   Y   Y    Y     ?  20070822
 openbsd-zaurus-gcc3.3.5           Y    -    -     Y   Y   Y    ?     ?  20070309
 sol8-sparc-cc                B    -    -    -     -   -   -    Y/13*4 ? 20071218
-sol8-sparc-gcc_4.1.0         B    -    -    -     -   -   -    Y/36*4 ? 20071218
+sol8-sparc-gcc_4.1.0         B    -    -    -     -   -   -    Y/171 ?  20080109
 sol10-sparc-cc_5.8           B    Y    -    -     Y   Y   Y    Y/9   ?  20060807
 sol10-sparc-gcc_4.0.2        B    Y    -    -     Y   Y   Y    Y/9   ?  20060807
 sol10-x86-cc_5.9              4   -    -    -     -   -   Y    Y     ?  20071010
@@ -43,8 +43,8 @@ cygwin1.5.24-x86-gcc3.4.4     4   Y    Y    -     -   -   Y    Y/6*1 ?  20071016
 win32-x86-mingw_gcc3.4.2          Y    Y    -     -   -   Y    Y/5   Y  20071218
 win32-x86-mingw_gcc4.2.1          Y    Y    -     -   -   Y    Y/8   ?  20071016
 win32-x86-msvc_7.1                -    Y    -     -   -   Y    Y/8   ?  20071218
-win32-x86-msvc_8.0                -    Y    -     -   -   Y    Y*2   ?  20071016
-win32-x86_64-msvc_8.0             -    N    -     -   -   N    N     ?  20071016
+win32-x86-msvc_8.0                -    Y    -     -   -   Y    Y*2   ?  20080114
+win32-x86_64-msvc_8.0             -    N    -     -   -   N    N     ?  20080114
 win32-x86-msvc_9.0                -    Y    -     -   -   Y    Y     ?  20071016
 
 ?   ... unknown or untested

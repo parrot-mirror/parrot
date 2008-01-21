@@ -10,6 +10,10 @@ config/auto/gdbm.pm - Test for GNU dbm (gdbm) library
 Determines whether the platform supports gdbm. This is needed for the dynamic
 GDBMHash PMC.
 
+From L<http://www.gnu.org/software/gdbm/>:  "GNU dbm is a set of database
+routines that use extensible hashing. It works similar to the standard Unix
+dbm routines."
+
 =cut
 
 package auto::gdbm;
@@ -26,7 +30,6 @@ sub _init {
     my $self = shift;
     my %data;
     $data{description} = q{Determining if your platform supports gdbm};
-    $data{args}        = [ qw( verbose without-gdbm ) ];
     $data{result}      = q{};
     return \%data;
 }
@@ -38,7 +41,7 @@ sub runstep {
         qw|
             verbose
             without-gdbm
-            |
+        |
     );
 
     if ($without) {
@@ -56,15 +59,7 @@ sub runstep {
 
     # On OS X check the presence of the gdbm header in the standard
     # Fink location.
-    if ( $osname =~ /darwin/ ) {
-        my $fink_lib_dir        = $conf->data->get('fink_lib_dir');
-        my $fink_include_dir    = $conf->data->get('fink_include_dir');
-        if ( -f "$fink_include_dir/gdbm.h" ) {
-            $conf->data->add( ' ', linkflags => "-L$fink_lib_dir" );
-            $conf->data->add( ' ', dflags    => "-L$fink_lib_dir" );
-            $conf->data->add( ' ', cflags    => "-I$fink_include_dir" );
-        }
-    }
+    $self->_handle_darwin_for_fink($conf, $osname, 'gdbm.h');
 
     $conf->cc_gen('config/auto/gdbm/gdbm.in');
     if ( $osname =~ /mswin32/i ) {
@@ -82,24 +77,26 @@ sub runstep {
     if ( !$@ ) {
         my $test = $conf->cc_run();
         unlink "gdbm_test_db";
-        if ( $test eq "gdbm is working.\n" ) {
-            $has_gdbm = 1;
-            print " (yes) " if $verbose;
-            $self->set_result('yes');
-        }
+        $has_gdbm = $self->_evaluate_cc_run($test, $has_gdbm, $verbose);
     }
     unless ($has_gdbm) {
-
-        # The Config::Data settings might have changed for the test
-        $conf->data->set( libs      => $libs );
-        $conf->data->set( ccflags   => $ccflags );
-        $conf->data->set( linkflags => $linkflags );
-        print " (no) " if $verbose;
-        $self->set_result('no');
+        # The Parrot::Configure settings might have changed while class ran
+        $self->_recheck_settings($conf, $libs, $ccflags, $linkflags, $verbose);
     }
     $conf->data->set( has_gdbm => $has_gdbm );    # for gdbmhash.t and dynpmc.in
 
     return 1;
+}
+
+sub _evaluate_cc_run {
+    my $self = shift;
+    my ($test, $has_gdbm, $verbose) = @_;
+    if ( $test eq "gdbm is working.\n" ) {
+        $has_gdbm = 1;
+        print " (yes) " if $verbose;
+        $self->set_result('yes');
+    }
+    return $has_gdbm;
 }
 
 1;

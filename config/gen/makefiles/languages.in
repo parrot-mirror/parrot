@@ -29,6 +29,7 @@ LANGUAGES = \
     forth \
     jako \
     lisp \
+    lolcode \
     lua \
     m4 \
     ook \
@@ -43,6 +44,7 @@ LANGUAGES = \
     scheme \
     tap \
     tcl \
+    unlambda \
     urm
 
 # the default target
@@ -108,6 +110,7 @@ clean: \
     forth.clean \
     jako.clean \
     lisp.clean \
+    lolcode.clean \
     lua.clean \
     m4.clean \
     ook.clean \
@@ -128,6 +131,7 @@ clean: \
 realclean: \
     dotnet.realclean \
     eclectus.realclean \
+    unlambda.realclean \
     jako.realclean
 
 #
@@ -287,6 +291,14 @@ lisp.test:
 lisp.clean:
 	- $(MAKE) lisp clean
 
+lolcode: lolcode.dummy
+lolcode.dummy:
+	- $(MAKE) lolcode
+lolcode.test:
+	- $(MAKE) lolcode test
+lolcode.clean:
+	- $(MAKE) lolcode clean
+
 lua: lua.dummy
 lua.dummy:
 	- $(MAKE) lua
@@ -398,6 +410,16 @@ tcl.test:
 	- $(MAKE) tcl test
 tcl.clean:
 	- $(MAKE) tcl clean
+
+unlambda: unlambda.dummy
+unlambda.dummy:
+	- $(MAKE) unlambda
+unlambda.test :
+	- $(MAKE) unlambda test
+unlambda.clean :
+	- $(MAKE) unlambda clean
+unlambda.realclean :
+	- $(MAKE) unlambda realclean
 
 urm: urm.dummy
 urm.dummy:

@@ -30,7 +30,6 @@ sub _init {
     my $self = shift;
     my %data;
     $data{description} = q{Setting up Configure's default values};
-    $data{args}        = [ qw( debugging optimize profile verbose m ) ];
     $data{result}      = q{};
     return \%data;
 }
@@ -207,6 +206,7 @@ sub runstep {
         as           => 'as',    # assembler
 
         cp    => '$(PERL) -MExtUtils::Command -e cp',
+        mv    => '$(PERL) -MExtUtils::Command -e mv',
         lns   => $Config{lns},                          # soft link
         slash => '/',
 

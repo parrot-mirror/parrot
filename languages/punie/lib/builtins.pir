@@ -184,6 +184,66 @@
     .return ($P0)
 .end
 
+.sub 'infix:..'
+    .param pmc a
+    .param pmc b
+    $P0 = a
+    .return ($P0)
+.end
+
+## autoincrement
+.sub 'postfix:++'
+    .param pmc a
+    $P0 = clone a
+    inc a
+    .return ($P0)
+.end
+
+.sub 'postfix:--'
+    .param pmc a
+    $P0 = clone a
+    dec a
+    .return ($P0)
+.end
+
+
+.sub 'prefix:++'
+    .param pmc a
+    inc a
+    .return (a)
+.end
+
+
+.sub 'prefix:--'
+    .param pmc a
+    dec a
+    .return (a)
+.end
+
+.sub 'prefix:-'
+    .param pmc a
+    $N0 = a
+    $N0 = neg $N0
+    .return ($N0)
+.end
+
+## not implemented yet!
+.sub 'prefix:~'
+    .param pmc a
+    .return (a)
+.end
+
+.sub 'prefix:!'
+    .param pmc a
+    not $P0, a
+    .return ($P0)
+.end
+
+.sub 'infix:,'
+    .param pmc args            :slurpy
+    .return (args)
+.end
+
 .sub 'print'
     .param pmc list            :slurpy
     .local pmc iter
@@ -198,9 +258,165 @@
     .return (1)
 .end
 
-.sub 'infix:,'
-    .param pmc args            :slurpy
-    .return (args)
+.sub 'printf'
+.end
+
+.sub 'system'
+.end
+
+.sub'unlink'
+.end
+
+.sub 'kill'
+.end
+
+.sub 'exec'
+.end
+
+
+.sub 'chop'
+    .param pmc expr
+    $S0 = expr
+    chopn $S0, 1
+    .return ($S0)
+.end
+
+.sub 'pop'
+    .param pmc arr
+    $P0 = pop arr
+    .return ($P0)
+.end
+
+.sub 'push'
+    .param pmc arr
+    .param pmc exp
+    push arr, exp
+.end
+
+.sub 'unshift'
+    .param pmc arr
+    .param pmc exp
+    unshift arr, exp
+.end
+
+
+.sub 'shift'
+    .param pmc arr
+    $P0 = shift arr
+    .return ($P0)
+.end
+
+.sub 'die'
+    .param pmc expr
+    die expr
+.end
+
+.sub 'exit'
+    .param int expr
+    exit expr
+.end
+
+.sub 'eval'
+    .param pmc expr
+
+.end
+
+
+## func0 built-in functions
+
+.sub 'fork'
+.end
+
+.sub 'time'
+.end
+
+.sub 'times'
+.end
+
+## func1 built-in functions
+
+.sub 'exp'
+    .param num arg
+    exp $N0, arg
+    .return ($N0)
+.end
+
+.sub 'gmtime'
+    .param pmc arg
+.end
+
+.sub 'hex'
+    .param pmc arg
+.end
+
+.sub 'int'
+    .param num arg
+    floor $I0, arg
+    .return ($I0)
+.end
+
+.sub 'length'
+    .param string arg
+    length $I0, arg
+    .return ($I0)
+.end
+
+.sub 'localtime'
+    .param pmc arg
+.end
+
+.sub 'log'
+    .param num arg
+    ln $N0, arg
+    .return ($N0)
+.end
+
+.sub 'ord'
+    .param pmc arg
+.end
+
+.sub 'oct'
+    .param pmc arg
+.end
+
+.sub 'sqrt'
+    .param num arg
+    sqrt $N0, arg
+    .return ($N0)
+.end
+
+.sub 'umask'
+    .param pmc arg
+.end
+
+## func2 built-in functions
+
+.sub 'crypt'
+    .param pmc arg1
+    .param pmc arg2
+.end
+
+.sub 'index'
+    .param pmc arg1
+    .param pmc arg2
+.end
+
+.sub 'link'
+    .param pmc arg1
+    .param pmc arg2
+.end
+
+.sub 'rename'
+    .param pmc arg1
+    .param pmc arg2
+.end
+
+## func3 built-in functions
+
+.sub 'substr'
+    .param pmc arg1
+    .param pmc arg2
+    .param pmc arg3
 .end
 
 # Local Variables:

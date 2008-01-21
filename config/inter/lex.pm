@@ -26,7 +26,6 @@ sub _init {
     my $self = shift;
     my %data;
     $data{description} = q{Determining whether lex is installed};
-    $data{args}        = [ qw( lex ask maintainer ) ];
     $data{result}      = q{};
     return \%data;
 }
@@ -76,8 +75,6 @@ sub runstep {
         }
         else {
 
-            # RT#43170 should --ask be handled like the other user defines or
-            # checked for version requirements?
             if ( $conf->options->get('ask') ) {
                 $prog = prompt( $prompt, $prog ? $prog : $conf->data->get($util) );
             }

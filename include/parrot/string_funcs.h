@@ -39,7 +39,8 @@ STRING * int_to_str(PARROT_INTERP,
     HUGEINTVAL num,
     char base)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*tc);
 
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
@@ -56,7 +57,8 @@ STRING * Parrot_reuse_COW_reference(SHIM_INTERP,
     ARGOUT(STRING *d))
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        FUNC_MODIFIES(*s);
+        FUNC_MODIFIES(*s)
+        FUNC_MODIFIES(*d);
 
 PARROT_API
 PARROT_PURE_FUNCTION
@@ -295,12 +297,11 @@ size_t string_hash(PARROT_INTERP, ARGMOD_NULLOK(STRING *s), size_t seed)
         __attribute__nonnull__(1);
 
 PARROT_API
-PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-STRING * string_increment(PARROT_INTERP, ARGMOD(const STRING *s))
+PARROT_CANNOT_RETURN_NULL
+STRING * string_increment(PARROT_INTERP, ARGIN(const STRING *s))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*s);
+        __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
@@ -368,7 +369,8 @@ STRING * string_nprintf(PARROT_INTERP,
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*dest);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
@@ -403,7 +405,8 @@ const CHARSET * string_rep_compatible(SHIM_INTERP,
     ARGOUT(const ENCODING **e))
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*e);
 
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
@@ -532,7 +535,8 @@ STRING* uint_to_str(PARROT_INTERP,
     char base,
     int minus)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*tc);
 
 /* HEADERIZER END: src/string.c */
 

@@ -6,13 +6,7 @@
 use strict;
 use warnings;
 
-(my $compile  = shift) =~ s/\\\n/ /gm;
-
-$compile = `$^X tools/dev/cc_flags.pl --return-only $compile`;
-$compile =~ s/\s-I\.\S+//g;
-my $template = do { local $/; <DATA> };
-
-printf( $template, $compile );
+print do { local $/; <DATA> };
 
 __END__
 #! parrot
@@ -23,11 +17,12 @@ __END__
     .param pmc    argv
     .local string infile
     .local string cfile
+    .local string objfile
     .local string exefile
     .local string out
 
-    (infile, cfile, exefile) = 'handle_args'(argv)
-    $I0                      = length infile
+    (infile, cfile, objfile, exefile) = 'handle_args'(argv)
+    $I0                               = length infile
     if $I0 goto open_outfile
     die "infile not specified"
 
@@ -44,7 +39,8 @@ __END__
     print outfh, out
     close outfh
 
-    compile_file(cfile, exefile)
+    'compile_file'(cfile, objfile)
+    'link_file'(objfile, exefile)
 .end
 
 
@@ -61,9 +57,10 @@ __END__
     .return ()
 
 proper_args:
-    .local string infile, cfile, exefile, exe
+    .local string infile, cfile, objfile, obj, exefile, exe
 
     $P0    = '_config'()
+    obj    = $P0['o']
     exe    = $P0['exe']
 
     $P0    = shift args
@@ -77,6 +74,8 @@ proper_args:
     cfile      .= 'c'
 
     dec infile_len
+    objfile     = substr infile, 0, infile_len
+    objfile    .= obj
     exefile     = substr infile, 0, infile_len
     exefile    .= exe
 
@@ -84,7 +83,7 @@ proper_args:
     # remove .c for executable
 
     # TODO this should complain about results/returns mismatch
-    .return(infile, cfile, exefile)
+    .return(infile, cfile, objfile, exefile)
 .end
 
 
@@ -104,7 +103,7 @@ proper_args:
     buffer_size = $P0['longsize']  # sizeof (opcode_t)
 
     .local string bytecode
-                  bytecode = '    '
+                  bytecode = ''
     .local int    size
                   size = 0
     .local pmc    data
@@ -115,6 +114,9 @@ proper_args:
     .local int    string_length
     .local string byte_string
     .local int    byte
+    .local int    bytes_per_line
+                  bytes_per_line=64
+
 
   loop:
     at_eof = infh.'eof'()
@@ -131,8 +133,11 @@ proper_args:
     $S0 = byte
     # add string for the byte
     bytecode .= $S0
-    bytecode .= ",\n    "
+    bytecode .= ','
     size += 1
+    $I0 = size % bytes_per_line
+    if $I0 != 0 goto loop
+    bytecode .= "\n"
     goto loop
   end_loop:
 
@@ -161,11 +166,11 @@ proper_args:
     out = 'header'()
 
     $S0 = <<'END_PC'
-unsigned char program_code[] = {
+const Parrot_UInt1 program_code[] = {
 @BYTECODE@
 };
 
-int bytecode_size = @SIZE@;
+const int bytecode_size = @SIZE@;
 
 END_PC
 
@@ -191,7 +196,9 @@ END_HEADER
     $S0 = <<'END_BODY'
 int main(int argc, const char *argv[])
 {
-    PackFile *pf;
+    PackFile     *pf;
+    STRING       *executable_name;
+    PMC          *executable_name_pmc;
     Parrot_Interp interp;
 
     Parrot_set_config_hash();
@@ -201,9 +208,11 @@ int main(int argc, const char *argv[])
     if (!interp)
         return 1;
 
+    Parrot_set_executable_name(interp, string_from_cstring(interp, argv[0], 0));
+
     pf = PackFile_new(interp, 0);
 
-    if (!PackFile_unpack(interp, pf, (opcode_t *)program_code, bytecode_size))
+    if (!PackFile_unpack(interp, pf, (const opcode_t *)program_code, bytecode_size))
         return 1;
 
     do_sub_pragmas(interp, pf->cur_cs, PBC_PBC, NULL);
@@ -214,8 +223,6 @@ int main(int argc, const char *argv[])
     Parrot_runcode(interp, argc, argv);
     Parrot_destroy(interp);
     Parrot_exit(interp, 0);
-
-    return 0;
 }
 END_BODY
     .return ($S0)
@@ -263,26 +270,117 @@ END_BODY
 # util functions
 .sub 'compile_file'
     .param string cfile
-    .param string exefile
+    .param string objfile
+
+    $P0 = '_config'()
+    .local string cc, ccflags, osname, build_dir, slash
+    cc        = $P0['cc']
+    ccflags   = $P0['ccflags']
+    osname    = $P0['osname']
+    build_dir = $P0['build_dir']
+    slash     = $P0['slash']
+
+    .local string includedir, pathquote
+    includedir = concat build_dir, slash
+    includedir = concat includedir, 'include'
+    pathquote  = ''
+    unless osname == 'MSWin32' goto not_windows
+    pathquote  = '"'
+  not_windows:
 
     .local string compile
-    compile  = '%s '
+    compile  = cc
+    compile .= ' -Fo'
+    compile .= objfile
+    compile .= ' -I'
+    compile .= pathquote
+    compile .= includedir
+    compile .= pathquote
+    compile .= ' '
+    compile .= ccflags
+    compile .= ' -c '
     compile .= cfile
-    compile .= ' -o '
-    compile .= exefile
 
+    say compile
     .local int status
     status = spawnw compile
     unless status goto compiled
 
-    say compile
     die "compilation failed"
 
   compiled:
     print "Compiled: "
+    say objfile
+    .return()
+.end
+
+.sub 'link_file'
+    .param string objfile
+    .param string exefile
+
+    $P0 = '_config'()
+    .local string cc, ld, linkflags, ld_out, libparrot, libs, o, rpath
+    .local string osname, build_dir, slash
+    cc        = $P0['cc']
+    ld        = $P0['ld']
+    linkflags = $P0['linkflags']
+    ld_out    = $P0['ld_out']
+    libparrot = $P0['libparrot_ldflags']
+    libs      = $P0['libs']
+    o         = $P0['o']
+    rpath     = $P0['rpath_blib']
+    osname    = $P0['osname']
+    build_dir = $P0['build_dir']
+    slash     = $P0['slash']
+
+    .local string config, pathquote
+    config     = concat build_dir, slash
+    config    .= 'src'
+    config    .= slash
+    config    .= 'parrot_config'
+    config    .= o
+    pathquote  = ''
+    unless osname == 'MSWin32' goto not_windows
+    pathquote  = '"'
+    $I0 = index cc, 'gcc'
+    if $I0 > -1 goto not_windows
+    libparrot  = concat slash, libparrot
+    libparrot  = concat build_dir, libparrot
+  not_windows:
+
+    .local string link
+    link  = ld
+    link .= ' '
+    link .= ld_out
+    link .= exefile
+    link .= ' '
+    link .= pathquote
+    link .= objfile
+    link .= pathquote
+    link .= ' '
+    link .= linkflags
+    link .= ' '
+    link .= libparrot
+    link .= ' '
+    link .= rpath
+    link .= ' '
+    link .= libs
+    link .= ' '
+    link .= config
+
+    say link
+    .local int status
+    status = spawnw link
+    unless status goto linked
+
+    die "linking failed"
+
+  linked:
+    print "Linked: "
     say exefile
     .return()
 .end
+
 
 # Local Variables:
 #   mode: cperl

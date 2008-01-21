@@ -15,30 +15,21 @@ running compilers from a command line.
     load_bytecode 'Protoobject.pbc'
     load_bytecode 'Parrot/Exception.pbc'
     $P0 = get_hll_global 'Protomaker'
-    $P1 = split ' ', '@stages $parsegrammar $parseactions $astgrammar $commandline_banner $commandline_prompt @cmdoptions $usage'
+    $P1 = split ' ', '@stages $parsegrammar $parseactions $astgrammar $commandline_banner $commandline_prompt @cmdoptions $usage $version'
     $P2 = $P0.'new_subclass'('Protoobject', 'PCT::HLLCompiler', $P1 :flat)
 .end
-
-=head2 Methods
-
-=over 4
-
-=item attr(string attrname, pmc value, int has_value)
-
-Helper method for accessors -- gets/sets an attribute given
-by C<attrname> based on C<has_value>.
-
-=cut
 
 .namespace [ 'PCT::HLLCompiler' ]
 
 .include 'cclass.pasm'
 
 .sub 'init' :vtable :method
+    load_bytecode 'config.pir'
+
     $P0 = split ' ', 'parse past post pir evalpmc'
     setattribute self, '@stages', $P0
 
-    $P0 = split ' ', 'help|h target=s trace|t=s encoding|e=s output|o=s combine each'
+    $P0 = split ' ', 'e=s help|h target=s trace|t=s encoding=s output|o=s combine each version|v'
     setattribute self, '@cmdoptions', $P0
 
     $P1 = new String
@@ -59,7 +50,30 @@ by C<attrname> based on C<has_value>.
     goto options_loop
   options_end:
     setattribute self, '$usage', $P1
+
+    $S0  = '???'
+    push_eh _handler
+    $P0  = _config()    # currently works in the build tree, but not in the install tree
+    $S0  = $P0['revision']
+  _handler:
+    $P2 = new 'String'
+    $P2  = 'This compiler is built with the Parrot Compiler Toolkit, parrot revision '
+    $P2 .= $S0
+    $P2 .= '.'
+    setattribute self, '$version', $P2
 .end
+
+
+=head2 Methods
+
+=over 4
+
+=item attr(string attrname, pmc value, int has_value)
+
+Helper method for accessors -- gets/sets an attribute given
+by C<attrname> based on C<has_value>.
+
+=cut
 
 .sub 'attr' :method
     .param string attrname
@@ -580,21 +594,17 @@ options are passed to the evaluator.
 .end
 
 
-=item command_line(PMC args)
+=item process_args(PMC args)
 
-Generic method for compilers invoked from a shell command line.
+Performs option processing of command-line args
 
 =cut
 
-.sub 'command_line' :method
+.sub 'process_args' :method
     .param pmc args
-    .param pmc adverbs         :slurpy :named
 
     load_bytecode 'Getopt/Obj.pbc'
-    load_bytecode 'dumper.pbc'
-    load_bytecode 'PGE/Dumper.pbc'
 
-    ##   perform option processing of command-line args
     .local string arg0
     arg0 = shift args
     .local pmc getopts, opts
@@ -611,6 +621,31 @@ Generic method for compilers invoked from a shell command line.
   getopts_end:
     opts = getopts.'get_options'(args)
 
+    .return (opts)
+.end
+
+
+=item command_line(PMC args)
+
+Generic method for compilers invoked from a shell command line.
+
+=cut
+
+.sub 'command_line' :method
+    .param pmc args
+    .param pmc adverbs         :slurpy :named
+
+    load_bytecode 'dumper.pbc'
+    load_bytecode 'PGE/Dumper.pbc'
+
+    ##  get the name of the program
+    .local string arg0
+    arg0 = args[0]
+
+    ##   perform option processing of command-line args
+    .local pmc opts
+    opts = self.'process_args'(args)
+
     ##   merge command-line args with defaults passed in from caller
     .local pmc iter
     iter = new 'Iterator', opts
@@ -624,6 +659,12 @@ Generic method for compilers invoked from a shell command line.
 
     $I0 = adverbs['help']
     if $I0 goto usage
+
+    $I0 = adverbs['version']
+    if $I0 goto version
+
+    $S0 = adverbs['e']
+    if $S0 goto eval_line
 
     .local pmc result
     result = new 'String'
@@ -665,6 +706,12 @@ Generic method for compilers invoked from a shell command line.
     .return self.'panic'('Error: file cannot be written: ', output)
   usage:
     self.'usage'(arg0)
+    goto end
+  version:
+    self.'version'()
+    goto end
+  eval_line:
+    self.'eval'($S0, adverbs :flat :named)
 .end
 
 
@@ -697,6 +744,19 @@ A usage method.
     say name
   no_name:
     $P0 = getattribute self, '$usage'
+    say $P0
+    exit 0
+.end
+
+
+=item version()
+
+Display compiler version information.
+
+=cut
+
+.sub 'version' :method
+    $P0 = getattribute self, '$version'
     say $P0
     exit 0
 .end

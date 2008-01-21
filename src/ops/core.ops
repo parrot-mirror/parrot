@@ -730,6 +730,15 @@ Pop the most recently placed exception off the handler stack.
 
 Throw the exception in $1.
 
+=item B<throwcc>(invar PMC)
+
+Throw the exception in $1 with current continuation. Identical to
+B<throw> in its one-argument form.
+
+=item B<throwcc>(invar PMC, invar PMC)
+
+Throw the exception in $1 with continuation from $2.
+
 =item B<rethrow>(invar PMC)
 
 Only valid inside an exception handler. Rethrow the exception $1.
@@ -971,7 +980,7 @@ The valid constants for each return value are:
 .TOTAL_MEM_ALLOC, .DOD_RUNS, .COLLECT_RUNS, .ACTIVE_PMCS, .ACTIVE_BUFFERS,
 .TOTAL_PMCS, .TOTAL_BUFFERS, .HEADER_ALLOCS_SINCE_COLLECT,
 .MEM_ALLOCS_SINCE_COLLECT, .TOTAL_COPIED, .IMPATIENT_PMCS, .LAZY_DOD_RUNS,
-.EXTENDED_PMCS
+.EXTENDED_PMCS, .RUNCORE
 
 =item B<interpinfo>(out PMC, in INT)
 

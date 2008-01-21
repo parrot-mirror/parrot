@@ -103,6 +103,7 @@ continue the runloop.
 
 */
 
+PARROT_API
 void
 Parrot_cx_handle_tasks(PARROT_INTERP, ARGMOD(PMC *scheduler))
 {
@@ -231,7 +232,7 @@ Parrot_cx_schedule_task(PARROT_INTERP, ARGIN(PMC *task))
 
 /*
 
-=item C<void Parrot_schedule_timer>
+=item C<void Parrot_cx_schedule_timer>
 
 Create a new timer event due at C<diff> from now, repeated at C<interval>
 and running the passed C<sub>.
@@ -246,7 +247,7 @@ Parrot_cx_schedule_timer(PARROT_INTERP,
         ARGIN_NULLOK(STRING *type), FLOATVAL duration, FLOATVAL interval,
         INTVAL repeat, ARGIN_NULLOK(PMC *sub))
 {
-    PMC *timer = pmc_new(interp, enum_class_Timer);
+    PMC * const timer = pmc_new(interp, enum_class_Timer);
 
     VTABLE_set_number_keyed_int(interp, timer, PARROT_TIMER_NSEC, duration);
     VTABLE_set_number_keyed_int(interp, timer, PARROT_TIMER_INTERVAL, interval);
@@ -296,7 +297,7 @@ Parrot_cx_schedule_repeat(PARROT_INTERP, ARGIN(PMC *task))
 
 /*
 
-=item C<void Parrot_schedule_callback>
+=item C<void Parrot_cx_schedule_callback>
 
 Create a new callback event, with an argument for the call.
 

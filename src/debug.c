@@ -65,13 +65,15 @@ static const char * parse_command(
     ARGIN(const char *command),
     ARGOUT(unsigned long *cmdP))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*cmdP);
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static const char * parse_int(ARGIN(const char *str), ARGOUT(int *intP))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*intP);
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
@@ -80,7 +82,8 @@ static const char* parse_key(PARROT_INTERP,
     ARGOUT(PMC **keyP))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*keyP);
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
@@ -89,7 +92,8 @@ static const char * parse_string(PARROT_INTERP,
     ARGOUT(STRING **strP))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*strP);
 
 PARROT_CANNOT_RETURN_NULL
 static const char * skip_command(ARGIN(const char *str))
@@ -1785,6 +1789,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
                                      " :named",
                                      NULL
         };
+
         /* Register decoding.  It would be good to abstract this, too. */
         const char *regs = "ISPN";
 
@@ -1806,8 +1811,10 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
                 int flags = sig_value;
 
                 /* End when we run out of flags, off the end of flag_names, or
-                   get too close to the end of buf. */
-                while (flags && idx < sizeof (buf)-100) {
+                 * get too close to the end of buf.
+                 * 100 is just an estimate of all buf lengths added together.
+                 */
+                while (flags && idx < sizeof (buf) - 100) {
                     const char * const flag_string = flag_names[flag_idx];
                     if (! flag_string)
                         break;

@@ -18,13 +18,16 @@ value of the comment is passed as the second argument to the method.
 class lolcode::Grammar::Actions;
 
 method TOP($/) {
-    make $( $<block> );
+    my $block := $( $<block> );
+    my $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'), :viviself('Undef'), :isdecl(1));
+    $block.unshift($it);
+    make $block;
 }
 
 
 method statement ($/, $key) {
     if ($key eq 'bare_expression') {
-        my $it := PAST::Var.new( :name( 'IT' ), :scope('package'), :viviself('Undef'));
+        my $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'), :viviself('Undef'));
         my $past := PAST::Op.new( :pasttype('bind'), :node( $/ ) );
         $past.push( $it );
         $past.push( $( $<expression> ) );
@@ -47,8 +50,8 @@ method visible($/) {
 }
 
 method declare($/) {
-    $($<variable>).isdecl(1);
     if ($<expression>) {
+        $($<variable>).isdecl(1);
         # XXX Someone clever needs to refactor this into C<assign>
         my $past := PAST::Op.new( :pasttype('bind'), :node( $/ ) );
         $past.push( $( $<variable> ) );
@@ -81,10 +84,53 @@ method function($/) {
         }
     }
 
+    my $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'), :viviself('Undef'), :isdecl(1));
+    $block.unshift($it);
+
+    $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'));
+    $block.push($it);
+
     my $past := PAST::Op.new( :pasttype('bind'), :node( $/ ) );
     $($<variable>).isdecl(1);
     $past.push( $( $<variable> ) );
     $past.push( $block );
+    make $past;
+}
+
+# Because we must bind the first <expression> to IT, we can't immediately
+# add $expr to $past. The code would probably be more clear if PAST::Node
+# supported shift() in addition to unshift().
+method ifthen($/) {
+    my $count := +$<expression> - 1;
+    my $expr  := $( $<expression>[$count] );
+    my $then  := $( $<block>[$count] );
+    $then.blocktype('immediate');
+    my $past := PAST::Op.new( $then,
+                              :pasttype('if'),
+                              :node( $/ )
+                            );
+    if ( $<else> ) {
+        my $else := $( $<else>[0] );
+        $else.blocktype('immediate');
+        $past.push( $else );
+    }
+    while ($count != 0) {
+        $past.unshift( $expr );
+        $count := $count - 1;
+        $expr  := $( $<expression>[$count] );
+        $then  := $( $<block>[$count] );
+        $then.blocktype('immediate');
+        $past  := PAST::Op.new( $then, $past,
+                               :pasttype('if'),
+                               :node( $/ )
+                             );
+    }
+    my $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'), :viviself('Undef'));
+    $past.unshift( $it );
+    my $bind := PAST::Op.new( :pasttype('bind'), :node( $/ ) );
+    $bind.push( $it );
+    $bind.push( $expr );
+    my $past := PAST::Stmts.new( $bind, $past, :node( $/ ) );
     make $past;
 }
 
@@ -114,6 +160,17 @@ method integer($/) {
     make PAST::Val.new( :value( ~$/ ), :returns('Integer'), :node($/) );
 }
 
+method float($/) {
+    make PAST::Val.new( :value( ~$/ ), :returns('Float'), :node($/) );
+}
+
+method boolean($/) {
+    if (~$/ eq 'FAIL' ) {
+        make PAST::Val.new( :value( 0 ), :returns('Boolean'), :node($/) );
+    } else {
+        make PAST::Val.new( :value( 1 ), :returns('Boolean'), :node($/) );
+    }
+}
 
 method quote($/) {
     make PAST::Val.new( :value( $($<string_literal>) ), :node($/) );
@@ -126,7 +183,7 @@ method identifier($/) {
 
 method variable ($/) {
     if ($<identifier><name> eq 'IT') {
-        make PAST::Var.new( :name( 'IT' ), :scope('package'), :viviself('Undef'));
+        make PAST::Var.new( :name( 'IT' ), :scope('lexical'), :viviself('Undef'));
     } else {
         make PAST::Var.new( :name( ~$<identifier><name> ),
                             :scope('lexical'),

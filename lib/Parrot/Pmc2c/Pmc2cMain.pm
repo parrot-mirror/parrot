@@ -4,24 +4,21 @@ package Parrot::Pmc2c::Pmc2cMain;
 use strict;
 use warnings;
 use FindBin;
-use Storable;
-use Parrot::Vtable;
-use Parrot::PMC;
-use Parrot::Pmc2c::VTable;
+use Storable ();
+use Parrot::PMC ();
+use Parrot::Pmc2c::VTable ();
 use Parrot::Pmc2c::Dumper;
-use Parrot::Pmc2c::Library;
+use Parrot::Pmc2c::Library ();
 use Parrot::Pmc2c::UtilFunctions qw( slurp spew filename );
-use Parrot::Pmc2c::PCCMETHOD;
-use Parrot::Pmc2c::PMC::default;
-use Parrot::Pmc2c::PMC::delegate;
-use Parrot::Pmc2c::PMC::deleg_pmc;
-use Parrot::Pmc2c::PMC::Null;
-use Parrot::Pmc2c::PMC::Ref;
-use Parrot::Pmc2c::PMC::SharedRef;
-use Parrot::Pmc2c::PMC::STMRef;
-use Parrot::Pmc2c::PMC::Object;
-use Cwd qw(cwd realpath);
-use File::Basename;
+use Parrot::Pmc2c::PCCMETHOD ();
+use Parrot::Pmc2c::PMC::default ();
+use Parrot::Pmc2c::PMC::delegate ();
+use Parrot::Pmc2c::PMC::deleg_pmc ();
+use Parrot::Pmc2c::PMC::Null ();
+use Parrot::Pmc2c::PMC::Ref ();
+use Parrot::Pmc2c::PMC::SharedRef ();
+use Parrot::Pmc2c::PMC::STMRef ();
+use Parrot::Pmc2c::PMC::Object ();
 use Carp;
 
 $SIG{'__WARN__'} = sub { use Carp; warn $_[0]; Carp::confess; };
@@ -196,10 +193,8 @@ sub print_tree {
         # constructor.
     }
     else {
-        if ( @{ $self->{args} } ) {
-            @files = @{ $self->{args} };
-        }
-        else {
+        @files = @{ $self->{args} };
+        if ( !@files ) {
             die "print_tree() lacked files to print; nothing in constructor's 'args' key";
         }
     }
@@ -248,7 +243,7 @@ sub read_dump {
     $filename = $self->find_file( filename( $filename, '.dump' ), 1 );
 
     return unless -f $filename;
-    return retrieve($filename);
+    return Storable::retrieve($filename);
 }
 
 =head3 C<gen_c()>

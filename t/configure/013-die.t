@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 13;
+use Test::More tests => 12;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use Parrot::Configure;
@@ -42,8 +42,6 @@ foreach my $k (@confsteps) {
 }
 is( $nontaskcount, 0, "Each step is a Parrot::Configure::Task object" );
 is( $confsteps[0]->step, $step, "'step' element of Parrot::Configure::Task struct identified" );
-is( ref( $confsteps[0]->params ),
-    'ARRAY', "'params' element of Parrot::Configure::Task struct is array ref" );
 ok( !ref( $confsteps[0]->object ),
     "'object' element of Parrot::Configure::Task struct is not yet a ref" );
 
@@ -54,7 +52,7 @@ is( $conf->options->{c}->{debugging},
 my $errstr;
 {
     my $rv;
-    my ($stdout, $stderr); 
+    my ($stdout, $stderr);
     capture ( sub {eval {$rv    = $conf->runsteps } }, \$stdout, \$stderr );
     like(
         $stdout,

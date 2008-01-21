@@ -75,7 +75,9 @@ static void pt_ns_clone(
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(d)
+        FUNC_MODIFIES(*dest_ns);
 
 static void pt_suspend_all_for_gc(PARROT_INTERP)
         __attribute__nonnull__(1);
@@ -182,6 +184,28 @@ static Shared_gc_info *
 get_pool(PARROT_INTERP)
 {
     return shared_gc_info;
+}
+
+/*
+
+=item C<void pt_free_pool>
+
+Frees the shared gc information.  This clears any global data hen joining all
+threads at parent interpreter destruction.
+
+=cut
+
+*/
+
+void
+pt_free_pool(PARROT_INTERP)
+{
+    if (shared_gc_info) {
+        COND_DESTROY(shared_gc_info->gc_cond);
+        PARROT_ATOMIC_INT_DESTROY(shared_gc_info->gc_block_level);
+        mem_sys_free(shared_gc_info);
+        shared_gc_info = NULL;
+    }
 }
 
 /*
@@ -560,7 +584,7 @@ pt_ns_clone(ARGOUT(Parrot_Interp d), ARGOUT(PMC *dest_ns),
 
 =item C<void pt_clone_globals>
 
-RT#48260: Not yet documented!!!
+Copy global namespace when cloning new interpreter
 
 =cut
 
@@ -857,9 +881,8 @@ is_suspended_for_gc(PARROT_INTERP)
 
 =item C<static QUEUE_ENTRY * remove_queued_suspend_gc>
 
-XXX should this function be in a different file?
-
-RT#48260: Not yet documented!!!
+Remove an event requesting that the interpreter suspend itself for a
+garbage-collection run from the event queue.
 
 =cut
 
@@ -1008,6 +1031,10 @@ pt_gc_wakeup_check(PARROT_INTERP)
 {
     Shared_gc_info *info = shared_gc_info;
     int             thread_count;
+
+    /* XXX: maybe a little hack; see RT #49532 */
+    if (!info)
+        return;
 
     thread_count = pt_gc_count_threads(interp);
 
@@ -1296,19 +1323,14 @@ void
 pt_join_threads(PARROT_INTERP)
 {
     size_t          i;
-    Shared_gc_info *info = get_pool(interp);
-
-    if (info) {
-        COND_DESTROY(info->gc_cond);
-        PARROT_ATOMIC_INT_DESTROY(shared_gc_info->gc_block_level);
-        mem_sys_free(info);
-    }
+    pt_free_pool(interp);
 
     /*
      * if no threads were started - fine
      */
     LOCK(interpreter_array_mutex);
     if (n_interpreters <= 1) {
+        n_interpreters = 0;
         UNLOCK(interpreter_array_mutex);
         return;
     }
@@ -1430,7 +1452,7 @@ holds LOCK.
 */
 
 void
-pt_add_to_interpreters(PARROT_INTERP, Parrot_Interp new_interp)
+pt_add_to_interpreters(PARROT_INTERP, ARGIN_NULLOK(Parrot_Interp new_interp))
 {
     size_t i;
     DEBUG_ONLY(fprintf(stderr, "interp = %p\n", interp));
