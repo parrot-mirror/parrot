@@ -27,7 +27,6 @@ sub _init {
     my $self = shift;
     return {
         description => 'Determining what pmc files should be compiled in',
-        args        => [qw( ask pmc )],
         result      => '',
         PMC_PARENTS => {},
         srcpmc      => [ sort map { basename($_) } glob "./src/pmc/*.pmc" ],

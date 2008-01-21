@@ -171,7 +171,8 @@ PARROT_API
 void Parrot_shared_DOD_unblock(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-void pt_add_to_interpreters(PARROT_INTERP, Parrot_Interp new_interp)
+void pt_add_to_interpreters(PARROT_INTERP,
+    ARGIN_NULLOK(Parrot_Interp new_interp))
         __attribute__nonnull__(1);
 
 void pt_clone_code(Parrot_Interp d, Parrot_Interp s);
@@ -183,6 +184,9 @@ void pt_DOD_start_mark(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 void pt_DOD_stop_mark(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+void pt_free_pool(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 void pt_join_threads(PARROT_INTERP)
@@ -211,7 +215,8 @@ int pt_thread_run(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(* dest_interp);
 
 int pt_thread_run_1(PARROT_INTERP,
     ARGOUT(PMC* dest_interp),
@@ -220,7 +225,8 @@ int pt_thread_run_1(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(* dest_interp);
 
 int pt_thread_run_2(PARROT_INTERP,
     ARGOUT(PMC* dest_interp),
@@ -229,7 +235,8 @@ int pt_thread_run_2(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(* dest_interp);
 
 int pt_thread_run_3(PARROT_INTERP,
     ARGOUT(PMC* dest_interp),
@@ -238,7 +245,8 @@ int pt_thread_run_3(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(* dest_interp);
 
 void pt_thread_wait_with(PARROT_INTERP, ARGMOD(Parrot_mutex *mutex))
         __attribute__nonnull__(1)
@@ -253,7 +261,8 @@ PMC * pt_transfer_sub(
     ARGIN(PMC *sub))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(d);
 
 /* HEADERIZER END: src/thread.c */
 

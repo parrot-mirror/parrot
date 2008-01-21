@@ -3,11 +3,15 @@
 
 =head1 NAME
 
-config/auto/readline.pm - Test for readline lib
+config/auto/readline.pm - Probe for readline library
 
 =head1 DESCRIPTION
 
-Determines whether the platform supports readline.
+Determines whether the platform supports readline.  The GNU Project describes
+its version of the readline library as providing "... a set of functions for
+use by applications that allow users to edit command lines as they are typed
+in" (L<http://directory.fsf.org/project/readline/>).  Other readline libraries
+are, however, available and usable with Parrot.
 
 =cut
 
@@ -15,6 +19,7 @@ package auto::readline;
 
 use strict;
 use warnings;
+use File::Spec;
 
 use base qw(Parrot::Configure::Step);
 
@@ -24,8 +29,8 @@ sub _init {
     my $self = shift;
     my %data;
     $data{description} = q{Determining if your platform supports readline};
-    $data{args}        = [ qw( verbose ) ];
     $data{result}      = q{};
+    $data{macports_root} = File::Spec->catdir( '/', 'opt', 'local' );
     return \%data;
 }
 
@@ -38,7 +43,41 @@ sub runstep {
     my $libs      = $conf->data->get('libs');
     my $linkflags = $conf->data->get('linkflags');
     my $ccflags   = $conf->data->get('ccflags');
-    if ( $conf->data->get_p5('OSNAME') =~ /mswin32/i ) {
+
+    my $osname = $conf->data->get_p5('OSNAME');
+
+    _handle_mswin32($conf, $osname, $cc);
+
+    # On OS X check the presence of the readline header in the standard
+    # Fink/macports locations.
+    $self->_handle_darwin_for_fink($conf, $osname, 'readline/readline.h');
+    # Since this config step class is the only one that checks for a
+    # macports-installed program, we have not yet had need to create an
+    # 'auto::macports' config step and do not yet have enough basis to extract
+    # this code into a Parrot::Configure::Step::Methods method analogous to
+    # _handle_darwin_for_fink().
+    $self->_handle_darwin_for_macports($conf, $osname, q{readline/readline.h});
+
+    $conf->cc_gen('config/auto/readline/readline.in');
+    my $has_readline = 0;
+    eval { $conf->cc_build() };
+    if ( !$@ ) {
+        if ( $conf->cc_run() ) {
+            $has_readline = $self->_evaluate_cc_run($verbose);
+        }
+        _handle_readline($conf, $has_readline);
+    }
+    unless ($has_readline) {
+        # The Parrot::Configure settings might have changed while class ran
+        $self->_recheck_settings($conf, $libs, $ccflags, $linkflags, $verbose);
+    }
+
+    return 1;
+}
+
+sub _handle_mswin32 {
+    my ($conf, $osname, $cc) = @_;
+    if ( $osname =~ /mswin32/i ) {
         if ( $cc =~ /^gcc/i ) {
             $conf->data->add( ' ',
                 libs => '-lreadline -lgw32c -lole32 -luuid -lwsock32 -lmsvcp60' );
@@ -50,50 +89,39 @@ sub runstep {
     else {
         $conf->data->add( ' ', libs => '-lreadline' );
     }
+    return 1;
+}
 
-    my $osname = $conf->data->get_p5('OSNAME');
-
-    # On OS X check the presence of the readline header in the standard
-    # Fink/macports location.
+sub _handle_darwin_for_macports {
+    my $self = shift;
+    my ($conf, $osname, $file) = @_;
     if ( $osname =~ /darwin/ ) {
-        my $fink_lib_dir        = $conf->data->get('fink_lib_dir');
-        my $fink_include_dir    = $conf->data->get('fink_include_dir');
-        if ( -f "$fink_include_dir/readline/readline.h" ) {
-            $conf->data->add( ' ', linkflags => "-L$fink_lib_dir" );
-            $conf->data->add( ' ', ldflags   => "-L$fink_lib_dir" );
-            $conf->data->add( ' ', ccflags   => "-I$fink_include_dir" );
-        }
-        if ( -f "/opt/local/include/readline/readline.h" ) {
-            $conf->data->add( ' ', linkflags => '-L/opt/local/lib' );
-            $conf->data->add( ' ', ldflags   => '-L/opt/local/lib' );
-            $conf->data->add( ' ', ccflags   => '-I/opt/local/include' );
+        my $macports_root = $self->{macports_root};
+        my $macports_lib_dir = qq{$macports_root/lib};
+        my $macports_include_dir = qq{$macports_root/include};
+        if ( -f qq{$macports_include_dir/$file} ) {
+            $conf->data->add( ' ', linkflags => "-L$macports_lib_dir" );
+            $conf->data->add( ' ', ldflags   => "-L$macports_lib_dir" );
+            $conf->data->add( ' ', ccflags   => "-I$macports_include_dir" );
         }
     }
+    return 1;
+}
 
-    $conf->cc_gen('config/auto/readline/readline.in');
-    my $has_readline = 0;
-    eval { $conf->cc_build() };
-    if ( !$@ ) {
-        if ( $conf->cc_run() ) {
-            $has_readline = 1;
-            print " (yes) " if $verbose;
-            $self->set_result('yes');
-        }
-        $conf->data->set(
-            readline     => 'define',
-            HAS_READLINE => $has_readline,
-        );
-    }
-    unless ($has_readline) {
+sub _evaluate_cc_run {
+    my ($self, $verbose) = @_;
+    my $has_readline = 1;
+    print " (yes) " if $verbose;
+    $self->set_result('yes');
+    return $has_readline;
+}
 
-        # The Config::Data settings might have changed for the test
-        $conf->data->set( 'libs',      $libs );
-        $conf->data->set( 'ccflags',   $ccflags );
-        $conf->data->set( 'linkflags', $linkflags );
-        print " (no) " if $verbose;
-        $self->set_result('no');
-    }
-
+sub _handle_readline {
+    my ($conf, $has_readline) = @_;
+    $conf->data->set(
+        readline     => 'define',
+        HAS_READLINE => $has_readline,
+    );
     return 1;
 }
 

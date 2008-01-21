@@ -537,7 +537,7 @@ ILOOP:
     goto OBJ_TYPE
 
 INT_TYPE:
-    init_body = concat "$P0 = new .Integer\n$P0 = 0\nsetattribute self, \""
+    init_body = concat "$P0 = new 'Integer'\n$P0 = 0\nsetattribute self, \""
     init_body = concat name
     init_body = concat "\", $P0\n"
     goto DONE_INIT
@@ -593,7 +593,7 @@ PIR
 .sub __set_integer_native
     .param pmc s
     .param int i
-    $P0 = new Integer
+    $P0 = new 'Integer'
     $P0 = i
     setattribute s, "value__", $P0
 .end

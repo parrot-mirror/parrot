@@ -1,10 +1,10 @@
 =head1 TITLE
 
-perl6.pir - A Perl 6 compiler.
+perl6.pir - The Rakudo Perl 6 compiler.
 
 =head2 Description
 
-This is the base file for the Perl 6 compiler.
+This is the base file for the Rakudo Perl 6 compiler.
 
 This file includes the parsing and grammar rules from
 the src/ directory, loads the relevant PGE libraries,
@@ -14,10 +14,9 @@ and registers the compiler under the name 'Perl6'.
 
 =over 4
 
-=item __onload()
+=item onload()
 
-Creates the Perl6 compiler using a C<PCT::HLLCompiler>
-object.
+Creates the Perl6 compiler by subclassing a C<PCT::HLLCompiler> object.
 
 =cut
 
@@ -27,24 +26,67 @@ object.
 
 .loadlib 'perl6_group'
 
-.sub '__onload' :load :init
+.sub 'onload' :load :init :anon
     load_bytecode 'PCT.pbc'
+    load_bytecode 'Protoobject.pbc'
 
-    $P0 = get_hll_global ['PCT'], 'HLLCompiler'
-    $P1 = $P0.'new'()
-    $P1.'language'('Perl6')
-    $P1.'parsegrammar'('Perl6::Grammar')
-    $P1.'parseactions'('Perl6::Grammar::Actions')
+    $P0 = get_hll_global 'Protomaker'
+    $P1 = get_class ['PCT::HLLCompiler']
+    $P0.'new_subclass'($P1, 'Perl6::Compiler')
+.end
 
+
+.sub 'init' :vtable :method
+    load_bytecode 'config.pbc'
+
+    self.'language'('Perl6')
+    self.'parsegrammar'('Perl6::Grammar')
+    self.'parseactions'('Perl6::Grammar::Actions')
+
+    ##  set the compilation stages in the @stages attribute
+    $P0 = split ' ', 'parse past check_syntax post pir evalpmc'
+    setattribute self, '@stages', $P0
+
+    ##  set the command line options
+    $P0 = split ' ', 'c e=s help|h target=s trace|t=s encoding=s output|o=s combine each version|v'
+    setattribute self, '@cmdoptions', $P0
+
+    ##  set the $usage attribute
     $P0 = new 'String'
-    $P0 = <<'    USAGE'
-    -h                   display help text
-    --target=[stage]     specify compilation stage to emit
-    -t, --trace=[flags]  enable trace flags
-    --encoding=[mode]    specify string encoding mode
-    -o, --output=[name]  specify name of output file
-    USAGE
-    setattribute $P1, '$usage', $P0
+    $P0 = <<'USAGE'
+Usage: perl6 [switches] [--] [programfile] [arguments]
+  -c                   check syntax only (runs BEGIN and CHECK blocks)
+  -e program           one line of program
+  -h, --help           display this help text
+  --target=[stage]     specify compilation stage to emit
+  -t, --trace=[flags]  enable trace flags
+  --encoding=[mode]    specify string encoding mode
+  -o, --output=[name]  specify name of output file
+  -v, --version        display version information
+USAGE
+    setattribute self, '$usage', $P0
+
+    ##  set the $version attribute
+    .local pmc cfg
+    $P0  = new 'String'
+    $P0  = 'This is Rakudo Perl 6'
+    push_eh _handler
+    cfg  = _config()    # currently works in the build tree, but not in the install tree
+    $P0 .= ', revision '
+    $S0  = cfg['revision']
+    $P0 .= $S0
+    $P0 .= ' built on parrot '
+    $S0  = cfg['VERSION']
+    $P0 .= $S0
+    $S0  = cfg['DEVEL']
+    $P0 .= $S0
+    $P0 .= "\n"
+    $P0 .= 'for '
+    $S0  = cfg['archname']
+    $P0 .= $S0
+  _handler:
+    $P0 .= ".\n\nCopyright 2006-2008, The Perl Foundation.\n"
+    setattribute self, '$version', $P0
 
     ##  create a list for holding the stack of nested blocks
     $P0 = new 'List'
@@ -60,7 +102,29 @@ object.
     $P0['Str'] = 'e'
 .end
 
+
 .namespace ['Perl6::Compiler']
+
+=item check_syntax(source [, "option" => value, ...])
+
+Check the syntax of C<source> after PAST tree has been built,
+to ensure C<BEGIN> and C<CHECK> blocks have been executed.
+
+=cut
+
+.sub 'check_syntax' :method
+    .param pmc source
+    .param pmc adverbs      :slurpy :named
+
+    $I0 = adverbs['c']
+    if $I0 goto check_syntax
+    .return ()
+  check_syntax:
+    ## if we're here, then syntax is OK
+    say 'syntax OK'
+    exit 0
+.end
+
 
 =item main(args :slurpy)  :main
 
@@ -104,23 +168,10 @@ to the Perl6 compiler.
 .end
 
 
-.sub 'usage' :method
-    .param string name     :optional
-    .param int    has_name :opt_flag
-
-    unless has_name goto got_name
-    name = 'perl6'
-  got_name:
-    print 'Usage: '
-    print name
-    $P0 = getattribute self, '$usage'
-    say $P0
-    exit 0
-.end
-
 .include 'src/gen_grammar.pir'
 .include 'src/parser/quote_expression.pir'
 .include 'src/gen_actions.pir'
+
 
 =back
 

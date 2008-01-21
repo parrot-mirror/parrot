@@ -1,11 +1,11 @@
 #! perl
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 use strict;
 use warnings;
 
-use Test::More tests => 22;
+use Test::More tests => 24;
 
 =head1 NAME
 
@@ -44,6 +44,10 @@ $out = `$exe`;
 ok($out =~ /^pdump/, "check pdump");
 
 ok(system("$parrot -V") == 0, "display parrot version");
+
+$exe = catfile('bin', 'perl6');
+$out = `$exe -v`;
+ok($out =~ /Rakudo/, "check rakudo");
 
 #
 # some compiler tools
@@ -133,6 +137,19 @@ ok($out eq "Hello, World!\n", "check lisp");
 unlink($filename);
 }
 
+$filename = 'test.lolcode';
+open $FH, '>', $filename
+        or die "Can't open $filename ($!).\n";
+print $FH q{
+HAI 1.2
+    VISIBLE "HAI WORLD!"
+KTHXBYE
+};
+close $FH;
+$out = `$parrot languages/lolcode/lolcode.pbc $filename`;
+ok($out eq "HAI WORLD!\n", "check lolcode");
+unlink($filename);
+
 $out = `$parrot --no-gc languages/lua/lua.pbc -e "print(nil)"`;
 ok($out eq "nil\n", "check lua");
 
@@ -142,14 +159,8 @@ ok($out =~ /^Usage/, "check m4");
 $out = `$parrot languages/ook/ook.pbc`;
 ok($out eq q{}, "check ook");
 
-$filename = 'test.p6';
-open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
-print $FH "say 'hello world!'\n";
-close $FH;
-$out = `$parrot languages/perl6/perl6.pbc $filename`;
-ok($out eq "hello world!\n", "check perl6");
-unlink($filename);
+$out = `$parrot --no-gc languages/perl6/perl6.pbc -e "say 'hello world'"`;
+ok($out eq "hello world\n", "check rakudo");
 
 TODO: {
     local $TODO = "couldn't find file 'lib/PhemeObjects.pir'";

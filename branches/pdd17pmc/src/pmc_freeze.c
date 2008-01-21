@@ -48,7 +48,8 @@ static void add_pmc_next_for_GC(SHIM_INTERP,
     ARGIN(PMC *pmc),
     ARGOUT(visit_info *info))
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*info);
 
 static void add_pmc_todo_list(PARROT_INTERP,
     ARGIN_NULLOK(PMC *pmc),
@@ -108,7 +109,8 @@ static int next_for_GC_seen(PARROT_INTERP,
     ARGOUT(UINTVAL *id))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*id);
 
 static void op_append(PARROT_INTERP,
     ARGIN(STRING *s),
@@ -245,11 +247,14 @@ static int thaw_pmc(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
-        FUNC_MODIFIES(*info);
+        FUNC_MODIFIES(*info)
+        FUNC_MODIFIES(*id)
+        FUNC_MODIFIES(*type);
 
 static void todo_list_init(PARROT_INTERP, ARGOUT(visit_info *info))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*info);
 
 PARROT_INLINE
 static int todo_list_seen(PARROT_INTERP,
@@ -260,7 +265,8 @@ static int todo_list_seen(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
-        FUNC_MODIFIES(*info);
+        FUNC_MODIFIES(*info)
+        FUNC_MODIFIES(*id);
 
 static void visit_loop_next_for_GC(PARROT_INTERP,
     ARGIN(PMC *current),
@@ -769,7 +775,7 @@ shift_opcode_number(SHIM_INTERP, ARGIN(IMAGE_IO *io))
 {
     const char * const start = (const char*)io->image->strstart;
     const FLOATVAL f =
-        PF_fetch_number(io->pf, (opcode_t**) &io->image->strstart);
+        PF_fetch_number(io->pf, (const opcode_t**) &io->image->strstart);
 
     io->image->bufused -= ((char*)io->image->strstart - start);
     PARROT_ASSERT((int)io->image->bufused >= 0);
@@ -793,7 +799,7 @@ shift_opcode_string(PARROT_INTERP, ARGIN(IMAGE_IO *io))
 {
     char * const start = (char*)io->image->strstart;
     STRING * const s =
-        PF_fetch_string(interp, io->pf, (opcode_t**) &io->image->strstart);
+        PF_fetch_string(interp, io->pf, (const opcode_t**) &io->image->strstart);
 
     io->image->bufused -= ((char*)io->image->strstart - start);
     PARROT_ASSERT((int)io->image->bufused >= 0);
@@ -1522,6 +1528,7 @@ visit_loop_todo_list(PARROT_INTERP, ARGIN_NULLOK(PMC *current),
 {
     List * const todo = (List *)PMC_data(info->todo);
     PMC *finish_list_pmc;
+    PMC **list_item;
     int i, n;
     List *finish_list = NULL;   /* gcc -O3 warning */
     int finished_first = 0;
@@ -1543,8 +1550,9 @@ visit_loop_todo_list(PARROT_INTERP, ARGIN_NULLOK(PMC *current),
      * can't cache upper limit, visit may append items
      */
 again:
-    for (; (int)list_length(interp, todo);) {
-        current = *(PMC**)list_shift(interp, todo, enum_type_PMC);
+    while ((list_item = (PMC**)list_shift(interp, todo, enum_type_PMC))) {
+        /* XXX list_shift can return NULL and we're dereferencing it without checking */
+        current = *list_item;
         if (!current) {
             real_exception(interp, NULL, 1,
                     "NULL current PMC in visit_loop_todo_list");

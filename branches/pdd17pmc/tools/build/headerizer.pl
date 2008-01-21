@@ -169,7 +169,7 @@ sub extract_function_declarations_and_update_source {
         $heading = "static $heading" if $specs->{is_static};
 
         $text =~ s/=item C<[^>]*\b$name\b[^>]*>\n/=item C<$heading>\n/sm or
-            warn "Couldn't replace $name\n";
+            warn "$name has no POD\n";
     }
     open( my $fhout, '>', $cfile_name ) or die "Can't create $cfile_name: $!";
     print {$fhout} $text;
@@ -263,23 +263,29 @@ sub attrs_from_args {
     my @attrs = ();
     my @mods  = ();
 
+    my $name = $func->{name};
+    my $file = $func->{file};
     my $n = 0;
     for my $arg (@args) {
         ++$n;
-        if ( $arg =~ m{ARGMOD(?:_NOTNULL)?\((.+?)\)} ) {
+        if ( $arg =~ m{ARG(?:MOD|OUT)(?:_NOTNULL)?\((.+?)\)} ) {
             my $modified = $1;
-            $modified =~ s/ //g;
-            $modified =~ s/[^*]+//;
-            $modified =~ s/\*+/*/;
+            if ( $modified =~ s/.*\*/*/ ) {
+                # We're OK
+            }
+            else {
+                $modified =~ s/.* (\w+)$/$1/ or die qq{Unable to figure out the modified parm out of "$modified"};
+            }
             push( @mods, "FUNC_MODIFIES($modified)" );
         }
         if ( $arg =~ m{(ARGIN|ARGOUT|ARGMOD|NOTNULL)\(} || $arg eq 'PARROT_INTERP' ) {
             push( @attrs, "__attribute__nonnull__($n)" );
         }
         if ( ( $arg =~ m{\*} ) && ( $arg !~ /\b(SHIM|((ARGIN|ARGOUT|ARGMOD)(_NULLOK)?))\b/ ) ) {
-            my $name = $func->{name};
-            my $file = $func->{file};
             squawk( $file, $name, qq{"$arg" isn't protected with an ARGIN, ARGOUT or ARGMOD (or a _NULLOK variant)} );
+        }
+        if ( ($arg =~ /\bconst\b/) && ($arg =~ /\*/) && ($arg !~ /\*\*/) && ($arg =~ /\b(ARG(MOD|OUT))\b/) ) {
+            squawk( $file, $name, qq{"$arg" is const, but that $1 conflicts with const} );
         }
     }
 

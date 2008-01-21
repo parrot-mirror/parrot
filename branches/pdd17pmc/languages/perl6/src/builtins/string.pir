@@ -26,8 +26,10 @@ form, if uppercase.
 
 .sub 'lc'
     .param string a
-    downcase a
-    .return (a)
+    .local pmc s
+    s = new 'Perl6Str'
+    s = a
+    .return s.'lc'()
 .end
 
 
@@ -41,29 +43,10 @@ Like C<lc>, but only affects the first character.
 
 .sub 'lcfirst'
     .param string a
-    .local int pos, is_ws, is_uc
-    pos = 0
-    $S0 = a
-    $I0 = length $S0
-  next_grapheme:
-    if pos == $I0 goto end
-    is_ws = is_cclass .CCLASS_WHITESPACE, $S0, pos
-    if is_ws goto ws
-  advance:
-    pos += 1
-    goto next_grapheme
-  ws:
-    pos += 1
-    is_uc = is_cclass .CCLASS_UPPERCASE, $S0, pos
-    unless is_uc goto advance
-    $S1 = substr $S0, pos, 1
-    downcase $S1
-    substr $S0, pos, 1, $S1
-    ## the length may have changed after replacement, so measure it again
-    $I0 = length $S0
-    goto advance
-  end:
-    .return ($S0)
+    .local pmc s
+    s = new 'Perl6Str'
+    s = a
+    .return s.'lcfirst'()
 .end
 
 
@@ -79,8 +62,10 @@ full "uppercase".
 
 .sub 'uc'
     .param string a
-    upcase a
-    .return (a)
+    .local pmc s
+    s = new 'Perl6Str'
+    s = a
+    .return s.'uc'()
 .end
 
 
@@ -94,8 +79,10 @@ Performs a Unicode "titlecase" operation on the first character of the string.
 
 .sub 'ucfirst'
     .param string a
-    titlecase a
-    .return (a)
+    .local pmc s
+    s = new 'Perl6Str'
+    s = a
+    .return s.'ucfirst'()
 .end
 
 
@@ -110,9 +97,10 @@ C<s:g/(\w+)/{ucfirst $1}/> on it.
 
 .sub 'capitalize'
     .param string a
-    downcase a
-    titlecase a
-    .return (a)
+    .local pmc s
+    s = new 'Perl6Str'
+    s = a
+    .return s.'capitalize'()
 .end
 
 
@@ -136,9 +124,15 @@ B<Note:> partial implementation only
 .sub 'split'
     .param string sep
     .param string target
-    $P0 = split sep, target
-    $P0 = 'list'($P0 :flat)
-    .return ($P0)
+    .local pmc a, b
+
+    a = new 'Perl6Str'
+    b = new 'Perl6Str'
+
+    a = target
+    b = sep
+
+    .return a.'split'(b)
 .end
 
 
@@ -192,11 +186,35 @@ B<Note:> partial implementation only
 .sub 'substr'
     .param string x
     .param int start
-    .param int len
+    .param int len     :optional
+    .param int has_len :opt_flag
+    .local pmc s
+
+    if has_len goto end
+    s = new 'Perl6Str'
+    s = x
+    len = s.'chars'()
+
+  end:
     $S0 = substr x, start, len
     .return ($S0)
 .end
 
+=item chop
+
+ our Str method Str::chop ( Str  $string: )
+
+Returns string with one Char removed from the end.
+
+=cut
+
+.sub 'chop'
+    .param string a
+    .local pmc s
+    s = new 'Perl6Str'
+    s = a
+    .return s.'chop'()
+.end
 
 =back
 
@@ -212,12 +230,6 @@ B<Note:> partial implementation only
 Trims the last character from C<$string>, and returns it. Called with a
 list, it chops each item in turn, and returns the last character
 chopped.
-
-=item chop
-
- our Str method Str::chop ( Str  $string: )
-
-Returns string with one Char removed from the end.
 
 =item p5chomp
 

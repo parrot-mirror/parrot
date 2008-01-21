@@ -58,7 +58,7 @@ static void hash_freeze(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        FUNC_MODIFIES(*info);
+        FUNC_MODIFIES(* info);
 
 static void hash_thaw(PARROT_INTERP,
     ARGMOD(Hash *hash),
@@ -67,7 +67,7 @@ static void hash_thaw(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*hash)
-        FUNC_MODIFIES(*info);
+        FUNC_MODIFIES(* info);
 
 static void init_hash(
     ARGOUT(Hash *hash),
@@ -75,7 +75,8 @@ static void init_hash(
     Hash_key_type hkey_type,
     hash_comp_fn compare,
     hash_hash_key_fn keyhash)
-        __attribute__nonnull__(1);
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*hash);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
@@ -90,12 +91,10 @@ static size_t key_hash_pointer(SHIM_INTERP, ARGIN(void *value), size_t seed)
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
-static size_t key_hash_STRING(PARROT_INTERP,
-    ARGMOD(STRING *value),
-    size_t seed)
+static size_t key_hash_STRING(PARROT_INTERP, ARGMOD(STRING *s), size_t seed)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        FUNC_MODIFIES(*value);
+        FUNC_MODIFIES(*s);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
@@ -128,10 +127,8 @@ Return the hashed value of the key C<value>.  See also string.c.
 
 PARROT_WARN_UNUSED_RESULT
 static size_t
-key_hash_STRING(PARROT_INTERP, ARGMOD(STRING *value), size_t seed)
+key_hash_STRING(PARROT_INTERP, ARGMOD(STRING *s), size_t seed)
 {
-    STRING * const s = value;
-
     if (s->hashval) {
         return s->hashval;
     }
@@ -351,7 +348,6 @@ hash_thaw(PARROT_INTERP, ARGMOD(Hash *hash), ARGMOD(visit_info* info))
 {
     size_t           entry_index;
     IMAGE_IO * const io = info->image_io;
-    HashBucket      *b  = NULL;
 
     /* during thaw info->extra is the key/value count */
     const size_t num_entries = (size_t) hash->entries;
@@ -359,6 +355,8 @@ hash_thaw(PARROT_INTERP, ARGMOD(Hash *hash), ARGMOD(visit_info* info))
     hash->entries = 0;
 
     for (entry_index = 0; entry_index < num_entries; ++entry_index) {
+        HashBucket *b;
+
         switch (hash->key_type) {
             case Hash_key_type_STRING:
                 {
@@ -375,23 +373,24 @@ hash_thaw(PARROT_INTERP, ARGMOD(Hash *hash), ARGMOD(visit_info* info))
             default:
                 real_exception(interp, NULL, 1, "unimplemented key type");
                 break;
-        }
+        } /* switch key_type */
+
         switch (hash->entry_type) {
             case enum_hash_pmc:
                 info->thaw_ptr = (PMC**)&b->value;
                 (info->visit_pmc_now)(interp, NULL, info);
                 break;
             case enum_hash_int:
-            {
+                {
                 const INTVAL i = VTABLE_shift_integer(interp, io);
                 b->value = (void *)i;
                 break;
-            }
+                }
             default:
                 real_exception(interp, NULL, 1, "unimplemented value type");
                 break;
-        }
-    }
+        } /* switch entry_type */
+    } /* for */
 }
 
 /*

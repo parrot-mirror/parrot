@@ -37,7 +37,7 @@ static STRING * clone_string_into(
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static STRING * get_path(PARROT_INTERP,
-    ARGIN(STRING *lib),
+    ARGMOD(STRING *lib),
     ARGOUT(void **handle),
     ARGIN(STRING *wo_ext),
     ARGIN(STRING *ext))
@@ -45,7 +45,9 @@ static STRING * get_path(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
-        __attribute__nonnull__(5);
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*lib)
+        FUNC_MODIFIES(*handle);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
@@ -183,7 +185,7 @@ Return path and handle of a dynamic lib, setting lib_name to just the filestem
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static STRING *
-get_path(PARROT_INTERP, ARGIN(STRING *lib), ARGOUT(void **handle),
+get_path(PARROT_INTERP, ARGMOD(STRING *lib), ARGOUT(void **handle),
         ARGIN(STRING *wo_ext), ARGIN(STRING *ext))
 {
     STRING *path, *full_name;
@@ -289,8 +291,8 @@ PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_init_lib(PARROT_INTERP,
-                ARGIN(PMC *(*load_func)(PARROT_INTERP)),
-                ARGIN(void (*init_func)(PARROT_INTERP, ARGIN_NULLOK(PMC *))))
+                ARGIN_NULLOK(PMC *(*load_func)(PARROT_INTERP)),
+                ARGIN_NULLOK(void (*init_func)(PARROT_INTERP, ARGIN_NULLOK(PMC *))))
 {
     PMC *lib_pmc = NULL;
 

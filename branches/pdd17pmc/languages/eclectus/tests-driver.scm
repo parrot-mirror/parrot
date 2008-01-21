@@ -58,11 +58,17 @@
          (compile-program expr))
       (close-output-port p))))
 
+; TODO: can I use (directory-separator) in petite?
+(define *path-to-parrot*
+  (if (fxzero? (system "perl -e \"exit($^O eq q{MSWin32} ? 1 : 0)\""))
+    "../../parrot"
+    "..\\..\\parrot"))
+
 (define (execute)
   (if run-with-petite
     (unless (fxzero? (system "petite --script stst.scm > stst.out"))
       (error 'execute "produced program exited abnormally"))
-    (unless (fxzero? (system "../../parrot stst.pir > stst.out"))
+    (unless (fxzero? (system (string-append *path-to-parrot* " stst.pir > stst.out")))
       (error 'execute "produced program exited abnormally"))))
 
 (define (get-string)

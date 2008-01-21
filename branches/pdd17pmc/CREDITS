@@ -215,6 +215,9 @@ W: http://eric.lubow.org/
 N: Felix Gallo
 D: delegate.pmc patch
 
+N: Flavio Poletti
+D: SmartLink patch for Moose after 0.43
+
 N: Florian Ragwitz
 E: rafl@debianforum.de
 W: http://www.tu-chemnitz.de/~rafl/
@@ -222,6 +225,7 @@ D: Debian packaging
 S: Chemnitz, Germany
 
 N: François Perrad
+W: http://fperrad.googlepages.com/home
 D: build fixes for MinGW
 D: a patch to remove slash_exec from config
 D: language Lua
@@ -229,6 +233,9 @@ D: language WMLScript (PIR translator)
 
 N: Garrett Rooney
 D: Fix typo in PARROT_BIGENDIAN case
+
+N: Geoff Broadwell
+D: examples fixes
 
 N: Gerard Goossen
 D: Documentation patch for Parrot_PMC_get_pointer_intkey()
@@ -586,6 +593,9 @@ S: Winterthur, Switzerland
 N: Stig Brautaset
 D: Patch to repair 'make clean'
 
+N: Stuart Jansen
+D: lolcode patches
+
 N: Thilo Planz
 D: partcl tests and inspiration
 
@@ -626,3 +636,7 @@ D: Bug fixes in IMCC, ECMAScript
 N: Alek Storm
 E: alek.storm@gmail.com
 D: Fixed object vtable method overrides in PIR
+
+N: Jeff Horwitz
+E: jeff@smashing.org
+D: Various bug fixes and tests
