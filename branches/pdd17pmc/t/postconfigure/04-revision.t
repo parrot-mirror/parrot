@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
-# $Id: 04-revision.t 25031 2008-01-20 06:23:36Z chromatic $
+# $Id$
 # 04-revision.t
 
 use strict;
