@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -393,7 +393,7 @@ Returns whether the array has any elements.
 */
 
     VTABLE INTVAL get_bool() {
-        INTVAL size = DYNSELF.elements();
+        INTVAL size = SELF.elements();
         return (INTVAL)(size != 0);
     }
 
@@ -426,7 +426,7 @@ Returns the number of elements in the array.
 */
 
     VTABLE INTVAL get_integer() {
-        return DYNSELF.elements();
+        return SELF.elements();
     }
 
 /*
@@ -700,7 +700,7 @@ Adds an element with integer value C<value> to the end of the array.
         e      = (HashEntry *)PMC_data(SELF) + 1;
         nextix = UVal_int(e->val);
 
-        DYNSELF.set_integer_keyed_int(nextix, value);
+        SELF.set_integer_keyed_int(nextix, value);
     }
 
 /*
@@ -751,7 +751,7 @@ Adds an element with floating-point value C<value> to the end of the array.
         e      = (HashEntry *) PMC_data(SELF) + 1;
         nextix = UVal_int(e->val);
 
-        DYNSELF.set_number_keyed_int(nextix, value);
+        SELF.set_number_keyed_int(nextix, value);
     }
 
 /*
@@ -802,7 +802,7 @@ array.
         e      = (HashEntry *)PMC_data(SELF) + 1;
         nextix = UVal_int(e->val);
 
-        DYNSELF.set_string_keyed_int(nextix, value);
+        SELF.set_string_keyed_int(nextix, value);
     }
 
 /*
@@ -854,7 +854,7 @@ Adds an element with PMC value C<*value> to the end of the array.
         e      = (HashEntry *)PMC_data(SELF) + 1;
         nextix = UVal_int(e->val);
 
-        DYNSELF.set_pmc_keyed_int(nextix, value);
+        SELF.set_pmc_keyed_int(nextix, value);
     }
 
 }

@@ -1,5 +1,5 @@
 /* rubyobject.pmc
- *  Copyright (C) 2001-2003, The Perl Foundation.
+ *  Copyright (C) 2001-2008, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -58,17 +58,17 @@ pmclass RubyObject
     }
 
     void set_integer_native(INTVAL value) {
-        DYNSELF.morph(dynpmc_RubyInteger);
+        SELF.morph(dynpmc_RubyInteger);
         PMC_int_val(SELF) = value;
     }
 
     void set_number_native(FLOATVAL value) {
-        DYNSELF.morph(dynpmc_RubyFloat);
+        SELF.morph(dynpmc_RubyFloat);
         PMC_num_val(SELF) = value;
     }
 
     void set_string_native(STRING* value) {
-        DYNSELF.morph(dynpmc_RubyString);
+        SELF.morph(dynpmc_RubyString);
         PMC_str_val(SELF) = string_copy(INTERP, value);
     }
 }

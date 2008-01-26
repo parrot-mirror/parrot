@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2003, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -192,17 +192,17 @@ Copy the contents of other to self.
             INTVAL i;
 
             size = VTABLE_elements(INTERP, other);
-            DYNSELF.set_integer_native(size);
+            SELF.set_integer_native(size);
             for (i = 0; i < size; i++) {
                 PMC* elem = VTABLE_get_pmc_keyed_int(INTERP, other, i);
-                DYNSELF.set_pmc_keyed_int(i, elem);
+                SELF.set_pmc_keyed_int(i, elem);
             }
         }
         else if (VTABLE_isa(INTERP, other, string))
         {
             STRING *v = VTABLE_get_string(INTERP, other);
             pmc_reuse(INTERP, SELF, other->vtable->base_type, 0);
-            DYNSELF.set_string_native(v);
+            SELF.set_string_native(v);
         }
         else if (VTABLE_isa(INTERP, other, undef))
         {

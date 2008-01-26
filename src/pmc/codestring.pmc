@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2007, The Perl Foundation.
+Copyright (C) 2007-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -113,13 +113,13 @@ A newline is automatically added to the end of the fmt.
         replen = string_length(INTERP, repl);
     }
 
-    S1 = string_concat(INTERP, DYNSELF.get_string(), fmt, 0);
+    S1 = string_concat(INTERP, SELF.get_string(), fmt, 0);
     VTABLE_set_string_native(INTERP, SELF, S1);
 
     /* Add a newline if necessary */
     S0 = string_substr(interp, fmt, -1, 1, &S0, 0);
     if (0 != string_equal(INTERP, S0, newline)) {
-        S1 = DYNSELF.get_string();
+        S1 = SELF.get_string();
         S1 = string_concat(INTERP, S1, newline, 0);
         VTABLE_set_string_native(INTERP, SELF, S1);
     }

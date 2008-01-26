@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2004-2007, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -376,7 +376,7 @@ Creates an identical copy of the complex number.
 
     VTABLE void init_pmc(PMC *initializer) {
         /* XXX not implemented */
-        DYNSELF.init();
+        SELF.init();
     }
 
     VTABLE void destroy() {
@@ -425,7 +425,7 @@ Returns true if the complex number is non-zero.
 */
 
     VTABLE INTVAL get_integer() {
-        FLOATVAL f = DYNSELF.get_number();
+        FLOATVAL f = SELF.get_number();
         return (INTVAL)f;
     }
 
@@ -463,17 +463,17 @@ Returns the requested number (real part for C<real> and imaginary for C<imag>).
 
     VTABLE INTVAL get_integer_keyed(PMC *key) {
         STRING * const s = VTABLE_get_string(INTERP, key);
-        return DYNSELF.get_integer_keyed_str(s);
+        return SELF.get_integer_keyed_str(s);
     }
 
     VTABLE INTVAL get_integer_keyed_str(STRING *key) {
-        FLOATVAL f = DYNSELF.get_number_keyed_str(key);
+        FLOATVAL f = SELF.get_number_keyed_str(key);
         return (INTVAL)f;
     }
 
     VTABLE FLOATVAL get_number_keyed(PMC *key) {
         STRING * const s = VTABLE_get_string(INTERP, key);
-        return DYNSELF.get_number_keyed_str(s);
+        return SELF.get_number_keyed_str(s);
     }
 
     VTABLE FLOATVAL get_number_keyed_str(STRING *key) {
@@ -486,12 +486,12 @@ Returns the requested number (real part for C<real> and imaginary for C<imag>).
 
     VTABLE PMC *get_pmc_keyed(PMC *key) {
         STRING * const s = VTABLE_get_string(INTERP, key);
-        return DYNSELF.get_pmc_keyed_str(s);
+        return SELF.get_pmc_keyed_str(s);
     }
 
     VTABLE PMC *get_pmc_keyed_str(STRING *key) {
         PMC * const    ret = pmc_new(INTERP, enum_class_Float);
-        const FLOATVAL val = DYNSELF.get_number_keyed_str(key);
+        const FLOATVAL val = SELF.get_number_keyed_str(key);
         VTABLE_set_number_native(INTERP, ret, val);
         return ret;
     }
@@ -508,7 +508,7 @@ Returns the requested number (real part for C<0> and imaginary for C<1>).
 
     VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         PMC * const    ret = pmc_new(INTERP, enum_class_Float);
-        const FLOATVAL val = DYNSELF.get_number_keyed_int(key);
+        const FLOATVAL val = SELF.get_number_keyed_int(key);
         VTABLE_set_number_native(INTERP, ret, val);
         return ret;
     }
@@ -589,12 +589,12 @@ part to C<0.0>
             IM(SELF) = IM(value);
         }
         else {
-            DYNSELF.set_string_native(VTABLE_get_string(INTERP, value));
+            SELF.set_string_native(VTABLE_get_string(INTERP, value));
         }
     }
 
     VTABLE void set_integer_native(INTVAL value) {
-        DYNSELF.set_number_native(value);
+        SELF.set_number_native(value);
     }
 
     VTABLE void set_number_native(FLOATVAL value) {
@@ -624,16 +624,16 @@ to C<value>.
 */
 
     VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
-        DYNSELF.set_number_keyed(key, value);
+        SELF.set_number_keyed(key, value);
     }
 
     VTABLE void set_integer_keyed_str(STRING *key, INTVAL value) {
-        DYNSELF.set_number_keyed_str(key, value);
+        SELF.set_number_keyed_str(key, value);
     }
 
     VTABLE void set_number_keyed(PMC *key, FLOATVAL value) {
         STRING *s = VTABLE_get_string(INTERP, key);
-        DYNSELF.set_number_keyed_str(s, value);
+        SELF.set_number_keyed_str(s, value);
     }
 
     VTABLE void set_number_keyed_str(STRING *key, FLOATVAL value) {
@@ -644,12 +644,12 @@ to C<value>.
 
     VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         const FLOATVAL f = VTABLE_get_number(INTERP, value);
-        DYNSELF.set_number_keyed(key, f);
+        SELF.set_number_keyed(key, f);
     }
 
     VTABLE void set_pmc_keyed_str(STRING *key, PMC *value) {
         const FLOATVAL f = VTABLE_get_number(INTERP, value);
-        DYNSELF.set_number_keyed_str(key, f);
+        SELF.set_number_keyed_str(key, f);
     }
 
 /*

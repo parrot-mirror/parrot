@@ -198,12 +198,12 @@ sub rewrite_nci_method {
     my $pmcname = $pmc->name;
     my $body    = $self->body;
 
-    # Rewrite DYNSELF.other_method(args...)
+    # Rewrite SELF.other_method(args...)
     $body->subst(
         qr{
-    \bDYNSELF\b       # Macro: DYNSELF
-      \.(\w+)           # other_method
-      \(\s*(.*?)\)      # capture argument list
+    \bSELF\b         # Macro: SELF
+      \.(\w+)        # other_method
+      \(\s*(.*?)\)   # capture argument list
       }x,
         sub { "pmc->real_self->vtable->$1(" . full_arguments( $2, 'pmc->real_self' ) . ')' }
     );
@@ -211,9 +211,9 @@ sub rewrite_nci_method {
     # Rewrite SELF.other_method(args...)
     $body->subst(
         qr{
-    \bSELF\b       # Macro: SELF
-      \.(\w+)           # other_method
-      \(\s*(.*?)\)      # capture argument list
+    \bSELF\b         # Macro: SELF
+      \.(\w+)        # other_method
+      \(\s*(.*?)\)   # capture argument list
       }x,
         sub { "pmc->vtable->$1(" . full_arguments($2) . ')' }
     );
@@ -289,21 +289,21 @@ sub rewrite_vtable_method {
         );
     }
 
-    # Rewrite DYNSELF.other_method(args...)
+    # Rewrite SELF.other_method(args...)
     $body->subst(
         qr{
-        \bDYNSELF\b       # Macro: DYNSELF
-        \.(\w+)           # other_method
-        \(\s*(.*?)\)      # capture argument list
+        \bSELF\b       # Macro: SELF
+        \.(\w+)        # other_method
+        \(\s*(.*?)\)   # capture argument list
       }x,
         sub { "pmc->vtable->$1(" . full_arguments($2) . ')' }
     );
 
-    # Rewrite DYNSELF(args...). See comments above.
+    # Rewrite SELF(args...). See comments above.
     $body->subst(
         qr{
-        \bDYNSELF\b       # Macro: DYNSELF
-        \(\s*(.*?)\)      # capture argument list
+        \bSELF\b       # Macro: SELF
+        \(\s*(.*?)\)   # capture argument list
       }x,
         sub { "pmc->vtable->$name(" . full_arguments($1) . ')' }
     );

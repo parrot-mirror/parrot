@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -40,7 +40,7 @@ Returns the Parrot string value of the element at index C<key>.
         STRING **data;
 
         if (key < 0) {
-            INTVAL size = DYNSELF.elements();
+            INTVAL size = SELF.elements();
             if (key < -size)
                 real_exception(INTERP, NULL, E_IndexError,
                     "ResizableStringArray: index out of bounds!");
@@ -49,7 +49,7 @@ Returns the Parrot string value of the element at index C<key>.
         }
 
         if (key >= PMC_int_val(SELF))
-            DYNSELF.set_integer_native(key+1);
+            SELF.set_integer_native(key+1);
 
         data = (STRING**)PMC_data(SELF);
 
@@ -73,7 +73,7 @@ Sets the Parrot string value of the element at index C<key> to C<value>.
         STRING **data;
 
         if (key < 0) {
-            INTVAL size = DYNSELF.elements();
+            INTVAL size = SELF.elements();
             if (key < -size)
                 real_exception(INTERP, NULL, E_IndexError,
                     "ResizableStringArray: index out of bounds!");
@@ -82,7 +82,7 @@ Sets the Parrot string value of the element at index C<key> to C<value>.
         }
 
         if (key >= PMC_int_val(SELF))
-            DYNSELF.set_integer_native(key+1);
+            SELF.set_integer_native(key+1);
 
         data      = (STRING **)PMC_data(SELF);
         DOD_WRITE_BARRIER(INTERP, SELF, data[key], value);
@@ -101,8 +101,8 @@ the array.
 */
 
     VTABLE void push_string(STRING *value) {
-        INTVAL nextix = DYNSELF.elements();
-        DYNSELF.set_string_keyed_int(nextix, value);
+        INTVAL nextix = SELF.elements();
+        SELF.set_string_keyed_int(nextix, value);
     }
 
 /*
@@ -124,8 +124,8 @@ Removes and returns the last element in the array.
                     "ResizableStringArray: Can't pop from an empty array!");
         }
 
-        value = DYNSELF.get_string_keyed_int(size - 1);
-        DYNSELF.set_integer_native(size - 1);
+        value = SELF.get_string_keyed_int(size - 1);
+        SELF.set_integer_native(size - 1);
         return value;
     }
 
@@ -140,7 +140,7 @@ Removes and returns the last element in the array.
 */
 
     VTABLE PMC *pop_pmc() {
-        STRING *strval = DYNSELF.pop_string();
+        STRING *strval = SELF.pop_string();
         PMC    *value  = pmc_new(INTERP, enum_class_String);
 
         VTABLE_set_string_native(INTERP, value, strval);
@@ -159,7 +159,7 @@ Removes and returns the last element in the array.
 */
 
     VTABLE INTVAL pop_integer() {
-        PMC *pmcval = DYNSELF.pop_pmc();
+        PMC *pmcval = SELF.pop_pmc();
         return VTABLE_get_integer(INTERP, pmcval);
     }
 
@@ -174,7 +174,7 @@ Removes and returns the last element in the array.
 */
 
     VTABLE FLOATVAL pop_float() {
-        PMC *pmcval = DYNSELF.pop_pmc();
+        PMC *pmcval = SELF.pop_pmc();
         return VTABLE_get_number(INTERP, pmcval);
     }
 
@@ -277,8 +277,8 @@ Removes and returns an item from the start of the array.
             real_exception(INTERP, NULL, E_IndexError,
                     "ResizableStringArray: Can't shift from an empty array!");
 
-        value = DYNSELF.get_string_keyed_int(0);
-        DYNSELF.delete_keyed_int(0);
+        value = SELF.get_string_keyed_int(0);
+        SELF.delete_keyed_int(0);
         return value;
     }
 
@@ -293,7 +293,7 @@ Removes and returns the first element in the array.
 */
 
     VTABLE PMC *shift_pmc() {
-        STRING *strval = DYNSELF.shift_string();
+        STRING *strval = SELF.shift_string();
         PMC    *value  = pmc_new(INTERP, enum_class_String);
 
         VTABLE_set_string_native(INTERP, value, strval);
@@ -312,7 +312,7 @@ Removes and returns the first element in the array.
 */
 
     VTABLE INTVAL shift_integer() {
-        PMC *pmcval = DYNSELF.shift_pmc();
+        PMC *pmcval = SELF.shift_pmc();
         return VTABLE_get_integer(INTERP, pmcval);
     }
 
@@ -327,7 +327,7 @@ Removes and returns the first element in the array.
 */
 
     VTABLE FLOATVAL shift_float() {
-        PMC *pmcval = DYNSELF.shift_pmc();
+        PMC *pmcval = SELF.shift_pmc();
         return VTABLE_get_number(INTERP, pmcval);
     }
 
@@ -345,7 +345,7 @@ the array.
 
     void push_pmc(PMC *value) {
         STRING *strvalue = VTABLE_get_string(INTERP, value);
-        DYNSELF.push_string(strvalue);
+        SELF.push_string(strvalue);
     }
 
 /*
@@ -365,7 +365,7 @@ the array.
 
         VTABLE_set_integer_native(INTERP, ret, value);
         val = VTABLE_get_string(INTERP, ret);
-        DYNSELF.push_string(val);
+        SELF.push_string(val);
     }
 
 /*
@@ -385,7 +385,7 @@ the array.
 
         VTABLE_set_number_native(INTERP, ret, value);
         val = VTABLE_get_string(INTERP, ret);
-        DYNSELF.push_string(val);
+        SELF.push_string(val);
     }
 
 /*
@@ -407,11 +407,11 @@ Removes and returns a String PMC from the start of the array.
             real_exception(INTERP, NULL, E_IndexError,
                     "ResizableStringArray: Can't shift from an empty array!");
 
-        value = DYNSELF.get_string_keyed_int(0);
+        value = SELF.get_string_keyed_int(0);
         ret   = pmc_new(INTERP, enum_class_String);
 
         VTABLE_set_string_native(INTERP, ret, value);
-        DYNSELF.delete_keyed_int(0);
+        SELF.delete_keyed_int(0);
 
         return ret;
     }
@@ -433,14 +433,14 @@ of the array.
         INTVAL   i;
 
 
-        DYNSELF.set_integer_native(size + 1);
+        SELF.set_integer_native(size + 1);
 
         data = PMC_data_typed(SELF, STRING **);
 
         for (i = size; i; --i)
             data[i] = data[i - 1];
 
-        DYNSELF.set_string_keyed_int(0, value);
+        SELF.set_string_keyed_int(0, value);
     }
 
 
@@ -457,7 +457,7 @@ the array.
 
     void unshift_pmc(PMC *value) {
         STRING *strvalue = VTABLE_get_string(INTERP, value);
-        DYNSELF.unshift_string(strvalue);
+        SELF.unshift_string(strvalue);
     }
 
 /*
@@ -477,7 +477,7 @@ the array.
 
         VTABLE_set_integer_native(INTERP, ret, value);
         val = VTABLE_get_string(INTERP, ret);
-        DYNSELF.unshift_string(val);
+        SELF.unshift_string(val);
     }
 
 /*
@@ -497,7 +497,7 @@ the array.
 
         VTABLE_set_number_native(INTERP, ret, value);
         val = VTABLE_get_string(INTERP, ret);
-        DYNSELF.unshift_string(val);
+        SELF.unshift_string(val);
     }
 
 /*
@@ -518,7 +518,7 @@ Converts C<key> to a PMC key and calls C<delete_keyed()> with it.
         for (i = key; i < size - 1; ++i)
             data[i] = data[i + 1];
 
-        DYNSELF.set_integer_native(size - 1);
+        SELF.set_integer_native(size - 1);
     }
 
 /*
@@ -540,7 +540,7 @@ Removes the element at C<*key>.
         for (i = idx; i < size - 1; ++i)
             data[i] = data[i + 1];
 
-        DYNSELF.set_integer_native(size - 1);
+        SELF.set_integer_native(size - 1);
     }
 
 /*
@@ -586,12 +586,12 @@ everything via the VTABLE api.
                 VTABLE_set_pmc_keyed_int(INTERP, SELF, i + shift,
                     VTABLE_get_pmc_keyed_int(INTERP, SELF, i));
 
-            DYNSELF.set_integer_native(length + shift);
+            SELF.set_integer_native(length + shift);
         }
 
         /* grow the array */
         else if (shift > 0) {
-            DYNSELF.set_integer_native(length + shift);
+            SELF.set_integer_native(length + shift);
 
             /* move the existing values */
             /* start at length-1 so we don't overwrite values we'll need */

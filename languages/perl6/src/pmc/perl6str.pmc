@@ -1,6 +1,6 @@
 /*
 $Id$
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 
 =head1 NAME
 
@@ -43,7 +43,7 @@ we just call C<get_number()> and return that as an integer.
 */
 
     INTVAL get_integer() {
-        FLOATVAL f = DYNSELF.get_number();
+        FLOATVAL f = SELF.get_number();
         return (INTVAL)f;
     }
 

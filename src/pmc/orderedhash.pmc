@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -267,7 +267,7 @@ The created key = "\1idx".
         if (idx >= n) {
             /* TODO warn or fill if there are holes */
             STRING * const key = Parrot_sprintf_s(INTERP, fmt, idx);
-            DYNSELF.set_pmc_keyed_str(key, val);
+            SELF.set_pmc_keyed_str(key, val);
         }
         else {
             HashBucket * const b = h->bs + idx;
@@ -314,22 +314,22 @@ The created key = "\1idx".
 */
 
     void push_pmc(PMC *value) {
-        const INTVAL n = DYNSELF.elements();
+        const INTVAL n = SELF.elements();
         SELF.set_pmc_keyed_int(n, value);
     }
 
     VTABLE void push_float(FLOATVAL value) {
-        const INTVAL n = DYNSELF.elements();
+        const INTVAL n = SELF.elements();
         SELF.set_number_keyed_int(n, value);
     }
 
     VTABLE void push_integer(INTVAL value) {
-        const INTVAL n = DYNSELF.elements();
+        const INTVAL n = SELF.elements();
         SELF.set_integer_keyed_int(n, value);
     }
 
     VTABLE void push_string(STRING *value) {
-        const INTVAL n = DYNSELF.elements();
+        const INTVAL n = SELF.elements();
         SELF.set_string_keyed_int(n, value);
     }
 
@@ -494,7 +494,7 @@ Deletes the key C<*key> from the hash.
         }
         else {
             if (next) {
-                PMC * const item = DYNSELF.get_pmc_keyed_str(key_string(INTERP, key));
+                PMC * const item = SELF.get_pmc_keyed_str(key_string(INTERP, key));
                 VTABLE_delete_keyed(INTERP, item, next);
                 return;
             }

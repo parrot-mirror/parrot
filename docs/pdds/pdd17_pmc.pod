@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -414,11 +414,6 @@ invocant is always the PDD 15 object. Any method or vtable calls made
 within the low-level PMC are dispatched on the PDD 15 object invocant.
 This allows the PDD 15 object to intelligently handle method and vtable
 overrides within multiple parents and itself.
-
-(This will likely require changing the C<SELF> shortcut to be equivalent
-to C<DYNSELF>, which is what it probably should have been in the first
-place. We can create an alternative C<STATICSELF> for the rare cases
-when we really need it.)
 
 If a low-level PMC expects to be overridden by high-level classes (which
 means all the core low-level PMC types), it must respect the standard

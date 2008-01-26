@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -92,7 +92,7 @@ Returns the integer value for C<*key>.
 
     VTABLE INTVAL get_integer_keyed(PMC *key) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
-        return DYNSELF.get_integer_keyed_int(ix);
+        return SELF.get_integer_keyed_int(ix);
     }
 
 /*
@@ -107,7 +107,7 @@ Returns the floating-point number value for C<*key>.
 
     VTABLE FLOATVAL get_number_keyed(PMC *key) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
-        return DYNSELF.get_number_keyed_int(ix);
+        return SELF.get_number_keyed_int(ix);
     }
 
 /*
@@ -122,7 +122,7 @@ Returns the Parrot string value for C<*key>.
 
     VTABLE STRING *get_string_keyed(PMC *key) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
-        return DYNSELF.get_string_keyed_int(ix);
+        return SELF.get_string_keyed_int(ix);
     }
 
 /*
@@ -137,7 +137,7 @@ Returns the PMC value for C<*key>.
 
     VTABLE PMC *get_pmc_keyed(PMC *key) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
-        return DYNSELF.get_pmc_keyed_int(ix);
+        return SELF.get_pmc_keyed_int(ix);
     }
 
 /*
@@ -152,7 +152,7 @@ Sets the integer value C<value> at C<*key>.
 
     VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
-        DYNSELF.set_integer_keyed_int(ix, value);
+        SELF.set_integer_keyed_int(ix, value);
     }
 
 /*
@@ -167,7 +167,7 @@ Sets the floating-point number value C<value> at C<*key>.
 
     VTABLE void set_number_keyed(PMC *key, FLOATVAL value) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
-        DYNSELF.set_number_keyed_int(ix, value);
+        SELF.set_number_keyed_int(ix, value);
     }
 
 /*
@@ -182,7 +182,7 @@ Sets the Parrot string value C<value> at C<*key>.
 
     VTABLE void set_string_keyed(PMC *key, STRING *value) {
         INTVAL ix = calc_offset(INTERP, (List *)PMC_data(SELF), key);
-        DYNSELF.set_string_keyed_int(ix, value);
+        SELF.set_string_keyed_int(ix, value);
     }
 
 /*

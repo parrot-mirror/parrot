@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -69,7 +69,7 @@ Returns the integer value of the element at index C<key>.
         offsetkey = key + PMC_int_val2(SELF);
 
         if (offsetkey >= PMC_int_val(SELF))
-            DYNSELF.set_integer_native(key+1);
+            SELF.set_integer_native(key+1);
 
         return SUPER(offsetkey);
     }
@@ -101,7 +101,7 @@ Sets the integer value of the element at index C<key> to C<value>.
         offsetkey = key + PMC_int_val2(SELF);
 
         if (offsetkey >= PMC_int_val(SELF))
-            DYNSELF.set_integer_native(key+1);
+            SELF.set_integer_native(key+1);
 
         SUPER(offsetkey, value);
     }
@@ -169,8 +169,8 @@ Extends the array by adding an element of value C<value> to the end.
 
     VTABLE void push_integer(INTVAL value) {
         const INTVAL size = PMC_int_val(SELF) - PMC_int_val2(SELF);
-        DYNSELF.set_integer_native(size + 1);
-        DYNSELF.set_integer_keyed_int(size, value);
+        SELF.set_integer_native(size + 1);
+        SELF.set_integer_keyed_int(size, value);
     }
 
 /*
@@ -186,13 +186,13 @@ Removes and returns the last element.
     VTABLE INTVAL pop_integer() {
         INTVAL size, value;
 
-        if (DYNSELF.elements() < 1)
+        if (SELF.elements() < 1)
             real_exception(interp, NULL, E_IndexError,
                 "ResizableBooleanArray: Can't pop from an empty array!");
 
         size  = PMC_int_val(SELF) - PMC_int_val2(SELF);
-        value = DYNSELF.get_integer_keyed_int(size - 1);
-        DYNSELF.set_integer_native(size - 1);
+        value = SELF.get_integer_keyed_int(size - 1);
+        SELF.set_integer_native(size - 1);
 
         return value;
     }
@@ -240,7 +240,7 @@ beginning.
         PMC_int_val2(SELF)--;
 
         /* Assign the new value as the first item */
-        DYNSELF.set_integer_keyed_int(0, value);
+        SELF.set_integer_keyed_int(0, value);
     }
 
 /*
@@ -256,12 +256,12 @@ Removes and returns the first element.
     VTABLE INTVAL shift_integer() {
         INTVAL value;
 
-        if (DYNSELF.elements() < 1)
+        if (SELF.elements() < 1)
             real_exception(interp, NULL, E_IndexError,
                 "ResizableBooleanArray: Can't shift from an empty array!");
 
         /* Get head value */
-        value = DYNSELF.get_integer_keyed_int(0);
+        value = SELF.get_integer_keyed_int(0);
 
         /* Move the head position */
         PMC_int_val2(SELF)++;

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -661,7 +661,7 @@ Returns whether the hash is the same as C<*other>.
 
         /* autovivify an Hash */
         if (!box)
-            box = pmc_new(INTERP, DYNSELF.type());
+            box = pmc_new(INTERP, SELF.type());
 
         VTABLE_set_integer_keyed(INTERP, box, nextkey, value);
     }
@@ -711,7 +711,7 @@ Returns whether the hash is the same as C<*other>.
 
         /* autovivify an Hash */
         if (!box)
-            box = pmc_new(INTERP, DYNSELF.type());
+            box = pmc_new(INTERP, SELF.type());
 
         VTABLE_set_number_keyed(INTERP, box, nextkey, value);
     }
@@ -763,7 +763,7 @@ Sets C<value> as the value for C<*key>.
 
         /* autovivify an Hash */
         if (!box)
-            box = pmc_new(INTERP, DYNSELF.type());
+            box = pmc_new(INTERP, SELF.type());
 
         VTABLE_set_string_keyed(INTERP, box, nextkey, value);
     }
@@ -811,7 +811,7 @@ Sets C<value> as the value for C<*key>.
 
         /* autovivify an Hash */
         if (!box)
-            box = pmc_new(INTERP, DYNSELF.type());
+            box = pmc_new(INTERP, SELF.type());
 
         VTABLE_set_pmc_keyed(INTERP, box, nextkey, value);
     }
