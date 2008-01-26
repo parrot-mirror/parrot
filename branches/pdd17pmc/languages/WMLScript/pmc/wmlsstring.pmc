@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2006-2007, The Perl Foundation.
+Copyright (C) 2006-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -62,19 +62,19 @@ pmclass WmlsString
     void increment() {
         PMC * trans = SELF.parseNumber();
         if (trans->vtable->base_type == dynpmc_WmlsInvalid) {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
         else if (trans->vtable->base_type == dynpmc_WmlsInteger) {
             const INTVAL a = VTABLE_get_integer(INTERP, trans);
-            DYNSELF.morph(dynpmc_WmlsInteger);
-            DYNSELF.set_integer_native(a);
+            SELF.morph(dynpmc_WmlsInteger);
+            SELF.set_integer_native(a);
         }
         else if (trans->vtable->base_type == dynpmc_WmlsFloat) {
             const FLOATVAL a = VTABLE_get_number(INTERP, trans);
-            DYNSELF.morph(dynpmc_WmlsFloat);
-            DYNSELF.set_number_native(a);
+            SELF.morph(dynpmc_WmlsFloat);
+            SELF.set_number_native(a);
         }
-        DYNSELF.increment();
+        SELF.increment();
     }
 
 /*
@@ -87,19 +87,19 @@ pmclass WmlsString
     void decrement() {
         PMC * trans = SELF.parseNumber();
         if (trans->vtable->base_type == dynpmc_WmlsInvalid) {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
         else if (trans->vtable->base_type == dynpmc_WmlsInteger) {
             const INTVAL a = VTABLE_get_integer(INTERP, trans);
-            DYNSELF.morph(dynpmc_WmlsInteger);
-            DYNSELF.set_integer_native(a);
+            SELF.morph(dynpmc_WmlsInteger);
+            SELF.set_integer_native(a);
         }
         else if (trans->vtable->base_type == dynpmc_WmlsFloat) {
             const FLOATVAL a = VTABLE_get_number(INTERP, trans);
-            DYNSELF.morph(dynpmc_WmlsFloat);
-            DYNSELF.set_number_native(a);
+            SELF.morph(dynpmc_WmlsFloat);
+            SELF.set_number_native(a);
         }
-        DYNSELF.decrement();
+        SELF.decrement();
     }
 
 /*
@@ -116,7 +116,7 @@ pmclass WmlsString
     }
 
     void i_absolute() {
-        DYNSELF.morph(dynpmc_WmlsInvalid);
+        SELF.morph(dynpmc_WmlsInvalid);
     }
 
 /*
@@ -146,15 +146,15 @@ pmclass WmlsString
     void i_neg() {
         PMC *trans = SELF.parseNumber();
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
-            DYNSELF.morph(dynpmc_WmlsInteger);
-            DYNSELF.set_integer_native(- VTABLE_get_integer(INTERP, trans));
+            SELF.morph(dynpmc_WmlsInteger);
+            SELF.set_integer_native(- VTABLE_get_integer(INTERP, trans));
         }
         else if (trans->vtable->base_type == dynpmc_WmlsFloat) {
-            DYNSELF.morph(dynpmc_WmlsFloat);
-            DYNSELF.set_number_native(- VTABLE_get_number(INTERP, trans));
+            SELF.morph(dynpmc_WmlsFloat);
+            SELF.set_number_native(- VTABLE_get_number(INTERP, trans));
         }
         else {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -180,11 +180,11 @@ pmclass WmlsString
     void i_bitwise_not() {
         PMC *trans = SELF.parseInt();
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
-            DYNSELF.morph(dynpmc_WmlsInteger);
-            DYNSELF.set_integer_native(~ VTABLE_get_integer(INTERP, trans));
+            SELF.morph(dynpmc_WmlsInteger);
+            SELF.set_integer_native(~ VTABLE_get_integer(INTERP, trans));
         }
         else {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -199,14 +199,14 @@ pmclass WmlsString
 */
     PMC* logical_not(PMC* dest) {
         dest = pmc_new(INTERP, dynpmc_WmlsBoolean);
-        VTABLE_set_bool(INTERP, dest, ! DYNSELF.get_bool());
+        VTABLE_set_bool(INTERP, dest, ! SELF.get_bool());
         return dest;
     }
 
     void i_logical_not() {
-        INTVAL result = ! DYNSELF.get_bool();
-        DYNSELF.morph(dynpmc_WmlsBoolean);
-        DYNSELF.set_integer_native(result);
+        INTVAL result = ! SELF.get_bool();
+        SELF.morph(dynpmc_WmlsBoolean);
+        SELF.set_integer_native(result);
     }
 
 /*
@@ -227,28 +227,28 @@ pmclass WmlsString
     PMC* add(PMC* value, PMC* dest) {
 MMD_WmlsString: {
             STRING* result = string_concat(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value), 0);
+                SELF.get_string(), VTABLE_get_string(INTERP, value), 0);
             dest = pmc_new(INTERP, dynpmc_WmlsString);
             VTABLE_set_string_native(INTERP, dest, result);
             return dest;
         }
 MMD_WmlsInteger: {
             STRING* result = string_concat(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value), 0);
+                SELF.get_string(), VTABLE_get_string(INTERP, value), 0);
             dest = pmc_new(INTERP, dynpmc_WmlsString);
             VTABLE_set_string_native(INTERP, dest, result);
             return dest;
         }
 MMD_WmlsBoolean: {
             STRING* result = string_concat(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value), 0);
+                SELF.get_string(), VTABLE_get_string(INTERP, value), 0);
             dest = pmc_new(INTERP, dynpmc_WmlsString);
             VTABLE_set_string_native(INTERP, dest, result);
             return dest;
         }
 MMD_WmlsFloat: {
             STRING* result = string_concat(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value), 0);
+                SELF.get_string(), VTABLE_get_string(INTERP, value), 0);
             dest = pmc_new(INTERP, dynpmc_WmlsString);
             VTABLE_set_string_native(INTERP, dest, result);
             return dest;
@@ -261,26 +261,26 @@ MMD_DEFAULT: {
     void i_add(PMC* value) {
 MMD_WmlsString: {
             STRING* result = string_append(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
-            DYNSELF.set_string_native(result);
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
+            SELF.set_string_native(result);
         }
 MMD_WmlsInteger: {
             STRING* result = string_append(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
-            DYNSELF.set_string_native(result);
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
+            SELF.set_string_native(result);
         }
 MMD_WmlsBoolean: {
             STRING* result = string_append(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
-            DYNSELF.set_string_native(result);
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
+            SELF.set_string_native(result);
         }
 MMD_WmlsFloat: {
             STRING* result = string_append(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
-            DYNSELF.set_string_native(result);
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
+            SELF.set_string_native(result);
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -361,18 +361,18 @@ MMD_WmlsString: {
               && trans2->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans1)
                               - VTABLE_get_integer(INTERP, trans2);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else if (trans1->vtable->base_type != dynpmc_WmlsInvalid
                    && trans2->vtable->base_type != dynpmc_WmlsInvalid) {
                 FLOATVAL result = VTABLE_get_number(INTERP, trans1)
                                 - VTABLE_get_number(INTERP, trans2);
-                DYNSELF.morph(dynpmc_WmlsFloat);
-                DYNSELF.set_number_native(result);
+                SELF.morph(dynpmc_WmlsFloat);
+                SELF.set_number_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsInteger: {
@@ -380,11 +380,11 @@ MMD_WmlsInteger: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               - VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsBoolean: {
@@ -392,11 +392,11 @@ MMD_WmlsBoolean: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               - VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsFloat: {
@@ -404,15 +404,15 @@ MMD_WmlsFloat: {
             if (trans->vtable->base_type == dynpmc_WmlsFloat) {
                 FLOATVAL result = VTABLE_get_number(INTERP, trans)
                                 - VTABLE_get_number(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsFloat);
-                DYNSELF.set_number_native(result);
+                SELF.morph(dynpmc_WmlsFloat);
+                SELF.set_number_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -493,18 +493,18 @@ MMD_WmlsString: {
               && trans2->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans1)
                               * VTABLE_get_integer(INTERP, trans2);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else if (trans1->vtable->base_type != dynpmc_WmlsInvalid
                    && trans2->vtable->base_type != dynpmc_WmlsInvalid) {
                 FLOATVAL result = VTABLE_get_number(INTERP, trans1)
                                 * VTABLE_get_number(INTERP, trans2);
-                DYNSELF.morph(dynpmc_WmlsFloat);
-                DYNSELF.set_number_native(result);
+                SELF.morph(dynpmc_WmlsFloat);
+                SELF.set_number_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsInteger: {
@@ -512,11 +512,11 @@ MMD_WmlsInteger: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               * VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsBoolean: {
@@ -524,11 +524,11 @@ MMD_WmlsBoolean: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               * VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsFloat: {
@@ -536,15 +536,15 @@ MMD_WmlsFloat: {
             if (trans->vtable->base_type == dynpmc_WmlsFloat) {
                 FLOATVAL result = VTABLE_get_number(INTERP, trans)
                                 * VTABLE_get_number(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsFloat);
-                DYNSELF.set_number_native(result);
+                SELF.morph(dynpmc_WmlsFloat);
+                SELF.set_number_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -626,15 +626,15 @@ MMD_WmlsString: {
                 FLOATVAL d = VTABLE_get_number(INTERP, trans2);
                 if (d != 0.0) {
                     FLOATVAL result = VTABLE_get_number(INTERP, trans1) / d;
-                    DYNSELF.morph(dynpmc_WmlsFloat);
-                    DYNSELF.set_number_native(result);
+                    SELF.morph(dynpmc_WmlsFloat);
+                    SELF.set_number_native(result);
                 }
                 else {
-                    DYNSELF.morph(dynpmc_WmlsInvalid);
+                    SELF.morph(dynpmc_WmlsInvalid);
                 }
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsInteger: {
@@ -643,15 +643,15 @@ MMD_WmlsInteger: {
                 FLOATVAL d = VTABLE_get_number(INTERP, value);
                 if (d != 0.0) {
                     FLOATVAL result = VTABLE_get_number(INTERP, trans) / d;
-                    DYNSELF.morph(dynpmc_WmlsFloat);
-                    DYNSELF.set_number_native(result);
+                    SELF.morph(dynpmc_WmlsFloat);
+                    SELF.set_number_native(result);
                 }
                 else {
-                    DYNSELF.morph(dynpmc_WmlsInvalid);
+                    SELF.morph(dynpmc_WmlsInvalid);
                 }
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsBoolean: {
@@ -660,15 +660,15 @@ MMD_WmlsBoolean: {
                 FLOATVAL d = VTABLE_get_number(INTERP, value);
                 if (d != 0.0) {
                     FLOATVAL result = VTABLE_get_number(INTERP, trans) / d;
-                    DYNSELF.morph(dynpmc_WmlsFloat);
-                    DYNSELF.set_number_native(result);
+                    SELF.morph(dynpmc_WmlsFloat);
+                    SELF.set_number_native(result);
                 }
                 else {
-                    DYNSELF.morph(dynpmc_WmlsInvalid);
+                    SELF.morph(dynpmc_WmlsInvalid);
                 }
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsFloat: {
@@ -677,19 +677,19 @@ MMD_WmlsFloat: {
                 FLOATVAL d = VTABLE_get_number(INTERP, value);
                 if (d != 0.0) {
                     FLOATVAL result = VTABLE_get_number(INTERP, trans) / d;
-                    DYNSELF.morph(dynpmc_WmlsFloat);
-                    DYNSELF.set_number_native(result);
+                    SELF.morph(dynpmc_WmlsFloat);
+                    SELF.set_number_native(result);
                 }
                 else {
-                    DYNSELF.morph(dynpmc_WmlsInvalid);
+                    SELF.morph(dynpmc_WmlsInvalid);
                 }
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -758,15 +758,15 @@ MMD_WmlsString: {
                 INTVAL d = VTABLE_get_integer(INTERP, trans2);
                 if (d != 0) {
                     INTVAL result = VTABLE_get_integer(INTERP, trans1) / d;
-                    DYNSELF.morph(dynpmc_WmlsInteger);
-                    DYNSELF.set_integer_native(result);
+                    SELF.morph(dynpmc_WmlsInteger);
+                    SELF.set_integer_native(result);
                 }
                 else {
-                    DYNSELF.morph(dynpmc_WmlsInvalid);
+                    SELF.morph(dynpmc_WmlsInvalid);
                 }
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsInteger: {
@@ -775,15 +775,15 @@ MMD_WmlsInteger: {
                 INTVAL d = VTABLE_get_number(INTERP, value);
                 if (d != 0) {
                     INTVAL result = VTABLE_get_integer(INTERP, trans) / d;
-                    DYNSELF.morph(dynpmc_WmlsInteger);
-                    DYNSELF.set_number_native(result);
+                    SELF.morph(dynpmc_WmlsInteger);
+                    SELF.set_number_native(result);
                 }
                 else {
-                    DYNSELF.morph(dynpmc_WmlsInvalid);
+                    SELF.morph(dynpmc_WmlsInvalid);
                 }
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsBoolean: {
@@ -792,19 +792,19 @@ MMD_WmlsBoolean: {
                 INTVAL d = VTABLE_get_number(INTERP, value);
                 if (d != 0) {
                     INTVAL result = VTABLE_get_integer(INTERP, trans) / d;
-                    DYNSELF.morph(dynpmc_WmlsInteger);
-                    DYNSELF.set_number_native(result);
+                    SELF.morph(dynpmc_WmlsInteger);
+                    SELF.set_number_native(result);
                 }
                 else {
-                    DYNSELF.morph(dynpmc_WmlsInvalid);
+                    SELF.morph(dynpmc_WmlsInvalid);
                 }
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -873,15 +873,15 @@ MMD_WmlsString: {
                 INTVAL d = VTABLE_get_integer(INTERP, trans2);
                 if (d != 0) {
                     INTVAL result = VTABLE_get_integer(INTERP, trans1) % d;
-                    DYNSELF.morph(dynpmc_WmlsInteger);
-                    DYNSELF.set_integer_native(result);
+                    SELF.morph(dynpmc_WmlsInteger);
+                    SELF.set_integer_native(result);
                 }
                 else {
-                    DYNSELF.morph(dynpmc_WmlsInvalid);
+                    SELF.morph(dynpmc_WmlsInvalid);
                 }
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsInteger: {
@@ -890,15 +890,15 @@ MMD_WmlsInteger: {
                 INTVAL d = VTABLE_get_number(INTERP, value);
                 if (d != 0) {
                     INTVAL result = VTABLE_get_integer(INTERP, trans) % d;
-                    DYNSELF.morph(dynpmc_WmlsInteger);
-                    DYNSELF.set_number_native(result);
+                    SELF.morph(dynpmc_WmlsInteger);
+                    SELF.set_number_native(result);
                 }
                 else {
-                    DYNSELF.morph(dynpmc_WmlsInvalid);
+                    SELF.morph(dynpmc_WmlsInvalid);
                 }
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsBoolean: {
@@ -907,19 +907,19 @@ MMD_WmlsBoolean: {
                 INTVAL d = VTABLE_get_number(INTERP, value);
                 if (d != 0) {
                     INTVAL result = VTABLE_get_integer(INTERP, trans) % d;
-                    DYNSELF.morph(dynpmc_WmlsInteger);
-                    DYNSELF.set_number_native(result);
+                    SELF.morph(dynpmc_WmlsInteger);
+                    SELF.set_number_native(result);
                 }
                 else {
-                    DYNSELF.morph(dynpmc_WmlsInvalid);
+                    SELF.morph(dynpmc_WmlsInvalid);
                 }
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -981,11 +981,11 @@ MMD_WmlsString: {
               && trans2->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans1)
                               | VTABLE_get_integer(INTERP, trans2);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsInteger: {
@@ -993,11 +993,11 @@ MMD_WmlsInteger: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               | VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsBoolean: {
@@ -1005,15 +1005,15 @@ MMD_WmlsBoolean: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               | VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -1075,11 +1075,11 @@ MMD_WmlsString: {
               && trans2->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans1)
                               & VTABLE_get_integer(INTERP, trans2);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsInteger: {
@@ -1087,11 +1087,11 @@ MMD_WmlsInteger: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               & VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsBoolean: {
@@ -1099,15 +1099,15 @@ MMD_WmlsBoolean: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               & VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -1169,11 +1169,11 @@ MMD_WmlsString: {
               && trans2->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans1)
                               ^ VTABLE_get_integer(INTERP, trans2);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsInteger: {
@@ -1181,11 +1181,11 @@ MMD_WmlsInteger: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               ^ VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsBoolean: {
@@ -1193,15 +1193,15 @@ MMD_WmlsBoolean: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               ^ VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -1263,11 +1263,11 @@ MMD_WmlsString: {
               && trans2->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans1)
                               >> VTABLE_get_integer(INTERP, trans2);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsInteger: {
@@ -1275,11 +1275,11 @@ MMD_WmlsInteger: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               >> VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsBoolean: {
@@ -1287,15 +1287,15 @@ MMD_WmlsBoolean: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               >> VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -1357,11 +1357,11 @@ MMD_WmlsString: {
               && trans2->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans1)
                               >> VTABLE_get_integer(INTERP, trans2);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsInteger: {
@@ -1369,11 +1369,11 @@ MMD_WmlsInteger: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               >> VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsBoolean: {
@@ -1381,15 +1381,15 @@ MMD_WmlsBoolean: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               >> VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -1451,11 +1451,11 @@ MMD_WmlsString: {
               && trans2->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans1)
                               << VTABLE_get_integer(INTERP, trans2);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsInteger: {
@@ -1463,11 +1463,11 @@ MMD_WmlsInteger: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               << VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_WmlsBoolean: {
@@ -1475,15 +1475,15 @@ MMD_WmlsBoolean: {
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = VTABLE_get_integer(INTERP, trans)
                               << VTABLE_get_integer(INTERP, value);
-                DYNSELF.morph(dynpmc_WmlsInteger);
-                DYNSELF.set_integer_native(result);
+                SELF.morph(dynpmc_WmlsInteger);
+                SELF.set_integer_native(result);
             }
             else {
-                DYNSELF.morph(dynpmc_WmlsInvalid);
+                SELF.morph(dynpmc_WmlsInvalid);
             }
         }
 MMD_DEFAULT: {
-            DYNSELF.morph(dynpmc_WmlsInvalid);
+            SELF.morph(dynpmc_WmlsInvalid);
         }
     }
 
@@ -1497,19 +1497,19 @@ MMD_DEFAULT: {
     INTVAL is_equal(PMC* value) {
 MMD_WmlsString: {
             return !string_equal(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
         }
 MMD_WmlsInteger: {
             return !string_equal(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
         }
 MMD_WmlsBoolean: {
             return !string_equal(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
         }
 MMD_WmlsFloat: {
             return !string_equal(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
         }
 MMD_DEFAULT: {
             return 4;
@@ -1526,19 +1526,19 @@ MMD_DEFAULT: {
     INTVAL cmp(PMC* value) {
 MMD_WmlsString: {
             return string_compare(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
         }
 MMD_WmlsInteger: {
             return string_compare(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
         }
 MMD_WmlsBoolean: {
             return string_compare(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
         }
 MMD_WmlsFloat: {
             return string_compare(INTERP,
-                DYNSELF.get_string(), VTABLE_get_string(INTERP, value));
+                SELF.get_string(), VTABLE_get_string(INTERP, value));
         }
 MMD_DEFAULT: {
             return 4;
@@ -1564,7 +1564,7 @@ MMD_DEFAULT: {
         char *s1;
         char *s2;
 
-        rep = DYNSELF.get_string();
+        rep = SELF.get_string();
         s1 = string_to_cstring(INTERP, rep);
         d = strtol(s1, &s2, 10);
         if (s1 != s2 && (*s2 == '\0' || isspace((unsigned char)*s2))) {
@@ -1588,7 +1588,7 @@ MMD_DEFAULT: {
         char *s1;
         char *s2;
 
-        rep = DYNSELF.get_string();
+        rep = SELF.get_string();
         s1 = string_to_cstring(INTERP, rep);
         d = strtod(s1, &s2);
         if (s1 != s2 && (*s2 == '\0' || isspace((unsigned char)*s2))) {

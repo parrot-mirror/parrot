@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -159,7 +159,7 @@ Returns the integer value of the element at index C<key>.
 */
 
     VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
-        FLOATVAL f = DYNSELF.get_number_keyed_int(key);
+        FLOATVAL f = SELF.get_number_keyed_int(key);
         return (INTVAL)f;
     }
 
@@ -176,7 +176,7 @@ Returns the integer value of the element at index C<*key>.
     VTABLE INTVAL get_integer_keyed(PMC *key) {
         /* simple int keys only */
         INTVAL k = key_integer(INTERP, key);
-        return DYNSELF.get_integer_keyed_int(k);
+        return SELF.get_integer_keyed_int(k);
     }
 
 
@@ -213,7 +213,7 @@ Returns the floating-point value of the element at index C<*key>.
 
     VTABLE FLOATVAL get_number_keyed(PMC *key) {
         INTVAL k = key_integer(INTERP, key);
-        return DYNSELF.get_number_keyed_int(k);
+        return SELF.get_number_keyed_int(k);
     }
 
 /*
@@ -227,7 +227,7 @@ Returns the Parrot string value of the element at index C<key>.
 */
 
     VTABLE STRING *get_string_keyed_int(INTVAL key) {
-        PMC *e = DYNSELF.get_pmc_keyed_int(key);
+        PMC *e = SELF.get_pmc_keyed_int(key);
         return VTABLE_get_string(INTERP, e);
     }
 
@@ -243,7 +243,7 @@ Returns the Parrot string value of the element at index C<*key>.
 
     VTABLE STRING *get_string_keyed(PMC *key) {
         INTVAL k = key_integer(INTERP, key);
-        return DYNSELF.get_string_keyed_int(k);
+        return SELF.get_string_keyed_int(k);
     }
 
 
@@ -259,7 +259,7 @@ Returns the PMC value of the element at index C<key>.
 
     VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
         PMC     *ret = pmc_new(INTERP, enum_class_Float);
-        FLOATVAL val = DYNSELF.get_number_keyed_int(key);
+        FLOATVAL val = SELF.get_number_keyed_int(key);
 
         VTABLE_set_number_native(INTERP, ret, val);
         return ret;
@@ -277,7 +277,7 @@ Returns the PMC value of the element at index C<*key>.
 
     VTABLE PMC *get_pmc_keyed(PMC *key) {
         INTVAL k = key_integer(INTERP, key);
-        return DYNSELF.get_pmc_keyed_int(k);
+        return SELF.get_pmc_keyed_int(k);
     }
 
 /*
@@ -311,7 +311,7 @@ Sets the integer value of the element at index C<key> to C<value>.
 */
 
     VTABLE void set_integer_keyed_int(INTVAL key, INTVAL value) {
-        DYNSELF.set_number_keyed_int(key, (FLOATVAL)value);
+        SELF.set_number_keyed_int(key, (FLOATVAL)value);
     }
 
 /*
@@ -326,7 +326,7 @@ Sets the integer value of the element at index C<key> to C<value>.
 
     VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         INTVAL k = key_integer(INTERP, key);
-        DYNSELF.set_integer_keyed_int(k, value);
+        SELF.set_integer_keyed_int(k, value);
     }
 
 /*
@@ -363,7 +363,7 @@ C<value>.
 
     VTABLE void set_number_keyed(PMC *key, FLOATVAL value) {
         INTVAL k = key_integer(INTERP, key);
-        DYNSELF.set_number_keyed_int(k, value);
+        SELF.set_number_keyed_int(k, value);
     }
 
 /*
@@ -382,7 +382,7 @@ Sets the Parrot string value of the element at index C<key> to C<value>.
 
         VTABLE_set_string_native(INTERP, tempPMC, value);
         tempNum = VTABLE_get_number(INTERP, tempPMC);
-        DYNSELF.set_number_keyed_int(key, tempNum);
+        SELF.set_number_keyed_int(key, tempNum);
     }
 
 /*
@@ -398,7 +398,7 @@ C<value>.
 
     VTABLE void set_string_keyed(PMC *key, STRING *value) {
         INTVAL k = key_integer(INTERP, key);
-        DYNSELF.set_string_keyed_int(k, value);
+        SELF.set_string_keyed_int(k, value);
     }
 
 /*
@@ -413,7 +413,7 @@ Sets the PMC value of the element at index C<key> to C<*src>.
 
     VTABLE void set_pmc_keyed_int(INTVAL key, PMC *src) {
         FLOATVAL tempNum = VTABLE_get_number(INTERP, src);
-        DYNSELF.set_number_keyed_int(key, tempNum);
+        SELF.set_number_keyed_int(key, tempNum);
     }
 
 /*
@@ -429,7 +429,7 @@ C<value>.
 
     VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         INTVAL k = key_integer(INTERP, key);
-        DYNSELF.set_pmc_keyed_int(k, value);
+        SELF.set_pmc_keyed_int(k, value);
     }
 
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2006-2007, The Perl Foundation.
+Copyright (C) 2006-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -109,7 +109,7 @@ Returns the address of the PMC.
     void assign_pmc(PMC* value) {
         VTABLE_morph(INTERP, SELF, PMC_type(value));
         if (PMC_type(value) != dynpmc_LuaNil)
-            DYNSELF.set_pmc(value);
+            SELF.set_pmc(value);
     }
 
 /*
@@ -139,7 +139,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to index a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
         return NULL;
     }
 
@@ -167,7 +167,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to index a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
     }
 
 /*
@@ -192,7 +192,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
         return NULL;
     }
 
@@ -207,7 +207,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
     }
 
 /*
@@ -221,7 +221,7 @@ Common implementation
 */
     PMC* logical_not(PMC* dest) {
         dest = pmc_new(INTERP, dynpmc_LuaBoolean);
-        VTABLE_set_bool(INTERP, dest, ! DYNSELF.get_bool());
+        VTABLE_set_bool(INTERP, dest, ! SELF.get_bool());
         return dest;
     }
 
@@ -263,7 +263,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to call a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
         return NULL;
     }
 
@@ -319,7 +319,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
         return NULL;
     }
 
@@ -334,7 +334,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
     }
 
     PMC* subtract(PMC* value, PMC* dest) {
@@ -348,7 +348,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
         return NULL;
     }
 
@@ -363,7 +363,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
     }
 
     PMC* multiply(PMC* value, PMC* dest) {
@@ -377,7 +377,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
         return NULL;
     }
 
@@ -392,7 +392,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
     }
 
     PMC* divide(PMC* value, PMC* dest) {
@@ -406,7 +406,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
         return NULL;
     }
 
@@ -421,7 +421,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
     }
 
     PMC* modulus(PMC* value, PMC* dest) {
@@ -435,7 +435,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
         return NULL;
     }
 
@@ -450,7 +450,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
     }
 
     PMC* pow(PMC* value, PMC* dest) {
@@ -464,7 +464,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
         return NULL;
     }
 
@@ -479,7 +479,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to perform arithmetic on a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
     }
 
     PMC* concatenate(PMC* value,  PMC* dest) {
@@ -493,7 +493,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to concatenate a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
         return NULL;
     }
 
@@ -508,7 +508,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to concatenate a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
     }
 
 /*
@@ -530,7 +530,7 @@ Throws an exception.
 
 */
     INTVAL cmp(PMC* value) {
-        char * s = string_to_cstring(INTERP, DYNSELF.name());
+        char * s = string_to_cstring(INTERP, SELF.name());
         char * v = string_to_cstring(INTERP, VTABLE_name(INTERP, value));
 
         if (strcmp(s, v) != 0) {
@@ -580,7 +580,7 @@ Throws an exception.
         }
         real_exception(INTERP, NULL, ILL_INHERIT,
                 "attempt to get length of a %s value",
-                string_to_cstring(INTERP, DYNSELF.name()));
+                string_to_cstring(INTERP, SELF.name()));
         return NULL;
     }
 
@@ -620,7 +620,7 @@ Common implementation (use C<__tostring> or C<get_string>).
         }
         else {
             retval = pmc_new(INTERP, dynpmc_LuaString);
-            PMC_str_val(retval) = DYNSELF.get_string();
+            PMC_str_val(retval) = SELF.get_string();
         }
         return retval;
     }

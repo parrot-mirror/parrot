@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2003-2007, The Perl Foundation.
+Copyright (C) 2003-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -183,11 +183,11 @@ Sets the value of the string to the integer C<value>.
 */
 
     VTABLE void set_integer_native(INTVAL value) {
-        DYNSELF.set_string_native(string_from_int(INTERP, value));
+        SELF.set_string_native(string_from_int(INTERP, value));
     }
 
     VTABLE void set_bool(INTVAL value) {
-        DYNSELF.set_string_native(string_from_int(INTERP, value));
+        SELF.set_string_native(string_from_int(INTERP, value));
     }
 
 /*
@@ -201,7 +201,7 @@ Sets the value of the string to the floating-point C<value>.
 */
 
     VTABLE void set_number_native(FLOATVAL value) {
-        DYNSELF.set_string_native(string_from_num(INTERP, value));
+        SELF.set_string_native(string_from_num(INTERP, value));
     }
 
 
@@ -266,7 +266,7 @@ the specified C<PMC>.
 
 */
     VTABLE void set_pmc(PMC *value) {
-        DYNSELF.set_string_native(VTABLE_get_string(INTERP, value));
+        SELF.set_string_native(VTABLE_get_string(INTERP, value));
     }
 
 /*
@@ -336,12 +336,12 @@ strings in place.
     VTABLE void i_bitwise_ors(PMC *value) {
         STRING        *s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
-        DYNSELF.set_string_native(string_bitwise_or(INTERP, s, v, &s));
+        SELF.set_string_native(string_bitwise_or(INTERP, s, v, &s));
     }
 
     VTABLE void i_bitwise_ors_str(STRING *value) {
         STRING *s = VTABLE_get_string(INTERP, SELF);
-        DYNSELF.set_string_native(string_bitwise_or(INTERP, s, value, &s));
+        SELF.set_string_native(string_bitwise_or(INTERP, s, value, &s));
     }
 
     VTABLE PMC *bitwise_ands(PMC *value, PMC *dest) {
@@ -373,12 +373,12 @@ strings in place.
     VTABLE void i_bitwise_ands(PMC *value) {
         STRING        *s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
-        DYNSELF.set_string_native(string_bitwise_and(INTERP, s, v, &s));
+        SELF.set_string_native(string_bitwise_and(INTERP, s, v, &s));
     }
 
     VTABLE void i_bitwise_ands_str(STRING *value) {
         STRING *s = VTABLE_get_string(INTERP, SELF);
-        DYNSELF.set_string_native(string_bitwise_and(INTERP, s, value, &s));
+        SELF.set_string_native(string_bitwise_and(INTERP, s, value, &s));
     }
 
     VTABLE PMC *bitwise_xors(PMC *value, PMC *dest) {
@@ -409,12 +409,12 @@ strings in place.
     VTABLE void i_bitwise_xors(PMC *value) {
         STRING        *s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
-        DYNSELF.set_string_native(string_bitwise_xor(INTERP, s, v, &s));
+        SELF.set_string_native(string_bitwise_xor(INTERP, s, v, &s));
     }
 
     VTABLE void i_bitwise_xors_str(STRING *value) {
         STRING *s = VTABLE_get_string(INTERP, SELF);
-        DYNSELF.set_string_native(string_bitwise_xor(INTERP, s, value, &s));
+        SELF.set_string_native(string_bitwise_xor(INTERP, s, value, &s));
     }
 
     VTABLE PMC *bitwise_nots(PMC *dest) {
@@ -825,7 +825,7 @@ Used to unarchive the string.
         IMAGE_IO * const io = info->image_io;
         SUPER(info);
         if (info->extra_flags == EXTRA_IS_NULL)
-            DYNSELF.set_string_native(VTABLE_shift_string(INTERP, io));
+            SELF.set_string_native(VTABLE_shift_string(INTERP, io));
     }
 /*
 

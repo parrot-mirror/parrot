@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -201,7 +201,7 @@ fixed sized array).
 
 */
     VTABLE INTVAL get_bool() {
-        INTVAL size = DYNSELF.elements();
+        INTVAL size = SELF.elements();
         return (INTVAL)(size != 0);
     }
 
@@ -228,7 +228,7 @@ Returns the number of elements in the array.
 */
 
     VTABLE INTVAL get_integer() {
-        return DYNSELF.elements();
+        return SELF.elements();
     }
 
 /*
@@ -242,7 +242,7 @@ Returns the number of elements in the array.
 */
 
     VTABLE FLOATVAL get_number() {
-        INTVAL e = DYNSELF.elements();
+        INTVAL e = SELF.elements();
         return (FLOATVAL)e;
     }
 
@@ -262,7 +262,7 @@ RT#46673 implement freeze/thaw and use that instead.
 */
 
     VTABLE STRING *get_string() {
-        return string_from_int(INTERP, DYNSELF.elements());
+        return string_from_int(INTERP, SELF.elements());
     }
 
     VTABLE STRING *get_repr() {
@@ -296,7 +296,7 @@ Returns the integer value of the element at index C<key>.
 */
 
     VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
-        PMC * const tempPMC = DYNSELF.get_pmc_keyed_int(key);
+        PMC * const tempPMC = SELF.get_pmc_keyed_int(key);
         if (PMC_IS_NULL(tempPMC))
                 return 0;
         return VTABLE_get_integer(INTERP, tempPMC);
@@ -313,7 +313,7 @@ Returns the integer value of the element at index C<*key>.
 */
 
     VTABLE INTVAL get_integer_keyed(PMC *key) {
-        PMC * const tempPMC = DYNSELF.get_pmc_keyed(key);
+        PMC * const tempPMC = SELF.get_pmc_keyed(key);
         return VTABLE_get_integer(INTERP, tempPMC);
     }
 
@@ -328,7 +328,7 @@ Returns the floating-point value of the element at index C<key>.
 */
 
     VTABLE FLOATVAL get_number_keyed_int(INTVAL key) {
-        PMC * const tempPMC = DYNSELF.get_pmc_keyed_int(key);
+        PMC * const tempPMC = SELF.get_pmc_keyed_int(key);
         return VTABLE_get_number(INTERP, tempPMC);
     }
 
@@ -343,7 +343,7 @@ Returns the floating-point value of the element at index C<*key>.
 */
 
     VTABLE FLOATVAL get_number_keyed(PMC *key) {
-        PMC * const tempPMC = DYNSELF.get_pmc_keyed(key);
+        PMC * const tempPMC = SELF.get_pmc_keyed(key);
         return VTABLE_get_number(INTERP, tempPMC);
     }
 
@@ -358,7 +358,7 @@ Returns the Parrot string value of the element at index C<key>.
 */
 
     VTABLE STRING *get_string_keyed_int(INTVAL key) {
-        PMC * const tempPMC = DYNSELF.get_pmc_keyed_int(key);
+        PMC * const tempPMC = SELF.get_pmc_keyed_int(key);
 
         if (PMC_IS_NULL(tempPMC))
             return CONST_STRING(interp, "");
@@ -377,7 +377,7 @@ Returns the Parrot string value of the element at index C<*key>.
 */
 
     VTABLE STRING *get_string_keyed(PMC *key) {
-        PMC * const tempPMC = DYNSELF.get_pmc_keyed(key);
+        PMC * const tempPMC = SELF.get_pmc_keyed(key);
         return VTABLE_get_string(INTERP, tempPMC);
     }
 
@@ -418,7 +418,7 @@ Returns the PMC value of the element at index C<*key>.
         PMC   *box;
 
         if (!nextkey)
-            return DYNSELF.get_pmc_keyed_int(k);
+            return SELF.get_pmc_keyed_int(k);
 
         box = SELF.get_pmc_keyed_int(k);
 
@@ -493,7 +493,7 @@ Sets the integer value of the element at index C<key> to C<value>.
                     enum_class_Integer));
 
         VTABLE_set_integer_native(INTERP, val, value);
-        DYNSELF.set_pmc_keyed_int(key, val);
+        SELF.set_pmc_keyed_int(key, val);
     }
 
 /*
@@ -513,7 +513,7 @@ Sets the integer value of the element at index C<key> to C<value>.
         VTABLE_set_integer_native(INTERP, val, value);
 
         /* Let set_pmc_keyed worry about multi keys */
-        DYNSELF.set_pmc_keyed(key, val);
+        SELF.set_pmc_keyed(key, val);
     }
 
 /*
@@ -532,7 +532,7 @@ C<value>.
                     enum_class_Float));
 
         VTABLE_set_number_native(INTERP, val, value);
-        DYNSELF.set_pmc_keyed_int(key, val);
+        SELF.set_pmc_keyed_int(key, val);
     }
 
 /*
@@ -551,14 +551,14 @@ C<value>.
         PMC   * const nextkey = key_next(INTERP, key);
 
         if (nextkey == NULL) {
-            DYNSELF.set_number_keyed_int(k, value);
+            SELF.set_number_keyed_int(k, value);
         }
         else {
             PMC *box = SELF.get_pmc_keyed_int(k);
 
             /* RT#46675: autovivify an Array and insert it in SELF */
             if (!box)
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
 
             VTABLE_set_number_keyed(INTERP, box, nextkey, value);
         }
@@ -579,7 +579,7 @@ Sets the Parrot string value of the element at index C<key> to C<value>.
                     enum_class_String));
 
         VTABLE_set_string_native(INTERP, val, value);
-        DYNSELF.set_pmc_keyed_int(key, val);
+        SELF.set_pmc_keyed_int(key, val);
     }
 
 /*
@@ -600,7 +600,7 @@ C<value>.
         VTABLE_set_string_native(INTERP, val, value);
 
         /* Let set_pmc_keyed worry about multi keys */
-        DYNSELF.set_pmc_keyed(key, val);
+        SELF.set_pmc_keyed(key, val);
     }
 
 /*
@@ -640,14 +640,14 @@ Sets the PMC at index C<key> to C<value>.
         PMC   *nextkey = key_next(INTERP, key);
 
         if (!nextkey) {
-            DYNSELF.set_pmc_keyed_int(k, value);
+            SELF.set_pmc_keyed_int(k, value);
         }
         else {
             PMC *box = SELF.get_pmc_keyed_int(k);
 
             /* RT#46675: autovivify an Array and insert it in SELF */
             if (!box)
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
 
             VTABLE_set_pmc_keyed(INTERP, box, nextkey, value);
         }
@@ -797,7 +797,7 @@ Used to unarchive the array.
         IMAGE_IO * const io = info->image_io;
         SUPER(info);
         if (info->extra_flags == EXTRA_IS_NULL)
-            DYNSELF.set_integer_native(VTABLE_shift_integer(INTERP, io));
+            SELF.set_integer_native(VTABLE_shift_integer(INTERP, io));
     }
 
 /*
@@ -811,7 +811,7 @@ Returns TRUE is the element at C<key> is defined; otherwise returns false.
 */
 
     VTABLE INTVAL defined_keyed_int(INTVAL key) {
-        PMC * const val = DYNSELF.get_pmc_keyed_int(key);
+        PMC * const val = SELF.get_pmc_keyed_int(key);
 
         if (PMC_IS_NULL(val))
             return 0;

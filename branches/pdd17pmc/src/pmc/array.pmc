@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -177,10 +177,10 @@ Copy the contents of other to self.
         const INTVAL size = VTABLE_elements(INTERP, other);
         INTVAL       i;
 
-        DYNSELF.set_integer_native(size);
+        SELF.set_integer_native(size);
         for (i = 0; i < size; i++) {
             PMC * const elem = VTABLE_get_pmc_keyed_int(INTERP, other, i);
-            DYNSELF.set_pmc_keyed_int(i, elem);
+            SELF.set_pmc_keyed_int(i, elem);
         }
     }
 
@@ -196,7 +196,7 @@ Implemented as an alias to C<assign_pmc> since the behavior is the same.
 */
 
     VTABLE void set_pmc(PMC *other) {
-        DYNSELF.assign_pmc(other);
+        SELF.assign_pmc(other);
     }
 
 /*
@@ -246,7 +246,7 @@ Returns the number of elements in the array.
 */
 
     VTABLE INTVAL get_integer() {
-        return DYNSELF.elements();
+        return SELF.elements();
     }
 
 /*
@@ -260,7 +260,7 @@ Returns true if the array has one or more elements.
 */
 
     VTABLE INTVAL get_bool() {
-        const INTVAL size = DYNSELF.elements();
+        const INTVAL size = SELF.elements();
         return (INTVAL)(size != 0);
     }
 
@@ -289,7 +289,7 @@ Returns the number of elements in the array.
 */
 
     VTABLE FLOATVAL get_number() {
-        INTVAL e = DYNSELF.elements();
+        INTVAL e = SELF.elements();
         return (FLOATVAL)e;
     }
 
@@ -318,7 +318,7 @@ Returns the integer value of the element at index C<key>.
 */
 
     VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
-        PMC * const value = DYNSELF.get_pmc_keyed_int(key);
+        PMC * const value = SELF.get_pmc_keyed_int(key);
 
         return VTABLE_get_integer(INTERP, value);
     }
@@ -332,7 +332,7 @@ Returns the integer value of the element at index C<key>.
 */
 
     VTABLE INTVAL type_keyed_int(INTVAL key) {
-        PMC * const value = DYNSELF.get_pmc_keyed_int(key);
+        PMC * const value = SELF.get_pmc_keyed_int(key);
 
         return VTABLE_type(INTERP, value);
     }
@@ -379,7 +379,7 @@ Returns the float value of the element at index C<key>.
 */
 
     VTABLE FLOATVAL get_number_keyed_int(INTVAL key) {
-        PMC * const value = DYNSELF.get_pmc_keyed_int(key);
+        PMC * const value = SELF.get_pmc_keyed_int(key);
 
         return VTABLE_get_number(INTERP, value);
 
@@ -427,7 +427,7 @@ Returns the string value of the element at index C<key>.
 */
 
     VTABLE STRING *get_string_keyed_int(INTVAL key) {
-        PMC * const value = DYNSELF.get_pmc_keyed_int(key);
+        PMC * const value = SELF.get_pmc_keyed_int(key);
 
         return VTABLE_get_string(INTERP, value);
     }
@@ -576,7 +576,7 @@ Sets the integer value of the PMC at element C<key> to C<value>.
         nextkey = key_next(INTERP, key);
 
         if (!nextkey) {
-            DYNSELF.set_integer_keyed_int(ix, value);
+            SELF.set_integer_keyed_int(ix, value);
             return;
         }
 
@@ -584,7 +584,7 @@ Sets the integer value of the PMC at element C<key> to C<value>.
 
         /* autovivify an Array */
         if (!box)
-            box = pmc_new(INTERP, DYNSELF.type());
+            box = pmc_new(INTERP, SELF.type());
 
         VTABLE_set_integer_keyed(INTERP, box, nextkey, value);
     }
@@ -635,7 +635,7 @@ Sets the numeric value of the PMC at element C<key> to C<value>.
 
         /* autovivify an Array */
         if (!box)
-            box = pmc_new(INTERP, DYNSELF.type());
+            box = pmc_new(INTERP, SELF.type());
 
         VTABLE_set_number_keyed(INTERP, box, nextkey, value);
     }
@@ -686,7 +686,7 @@ Sets the string value of the PMC at element C<key> to C<value>.
 
         /* autovivify an Array */
         if (!box)
-            box = pmc_new(INTERP, DYNSELF.type());
+            box = pmc_new(INTERP, SELF.type());
 
         VTABLE_set_string_keyed(INTERP, box, nextkey, value);
     }
@@ -737,7 +737,7 @@ Sets the PMC at index C<key> to C<value>.
 
         /* autovivify an Array */
         if (!box)
-            box = pmc_new(INTERP, DYNSELF.type());
+            box = pmc_new(INTERP, SELF.type());
 
         VTABLE_set_pmc_keyed(INTERP, box, nextkey, value);
     }
@@ -754,8 +754,8 @@ the array.
 */
 
     VTABLE void push_integer(INTVAL value) {
-        const INTVAL nextix = DYNSELF.elements();
-        DYNSELF.set_integer_keyed_int(nextix, value);
+        const INTVAL nextix = SELF.elements();
+        SELF.set_integer_keyed_int(nextix, value);
     }
 
 /*
@@ -770,8 +770,8 @@ the array.
 */
 
     VTABLE void push_float(FLOATVAL value) {
-        const INTVAL nextix = DYNSELF.elements();
-        DYNSELF.set_number_keyed_int(nextix, value);
+        const INTVAL nextix = SELF.elements();
+        SELF.set_number_keyed_int(nextix, value);
     }
 
 /*
@@ -786,8 +786,8 @@ the array.
 */
 
     VTABLE void push_string(STRING *value) {
-        const INTVAL nextix = DYNSELF.elements();
-        DYNSELF.set_string_keyed_int(nextix, value);
+        const INTVAL nextix = SELF.elements();
+        SELF.set_string_keyed_int(nextix, value);
     }
 
 /*
@@ -802,8 +802,8 @@ the array.
 */
 
     void push_pmc(PMC *value) {
-        const INTVAL nextix = DYNSELF.elements();
-        DYNSELF.set_pmc_keyed_int(nextix, value);
+        const INTVAL nextix = SELF.elements();
+        SELF.set_pmc_keyed_int(nextix, value);
     }
 
 /*
@@ -885,7 +885,7 @@ Removes and returns an integer from the end of the array.
 */
 
     VTABLE INTVAL pop_integer() {
-        PMC * const ptr = DYNSELF.pop_pmc();
+        PMC * const ptr = SELF.pop_pmc();
         return VTABLE_get_integer(INTERP, ptr);
     }
 
@@ -900,7 +900,7 @@ Removes and returns a float value from the end of the array.
 */
 
     VTABLE FLOATVAL pop_float() {
-        PMC * const ptr = DYNSELF.pop_pmc();
+        PMC * const ptr = SELF.pop_pmc();
         return VTABLE_get_number(INTERP, ptr);
     }
 
@@ -915,7 +915,7 @@ Removes and returns a string from the end of the array.
 */
 
     VTABLE STRING *pop_string() {
-        PMC * const ptr = DYNSELF.pop_pmc();
+        PMC * const ptr = SELF.pop_pmc();
         return VTABLE_get_string(INTERP, ptr);
     }
 
@@ -945,7 +945,7 @@ Removes and returns an integer from the start of the array.
 */
 
     VTABLE INTVAL shift_integer() {
-        PMC * const ptr = DYNSELF.shift_pmc();
+        PMC * const ptr = SELF.shift_pmc();
         return VTABLE_get_integer(INTERP, ptr);
     }
 
@@ -960,7 +960,7 @@ Removes and returns a float from the start of the array.
 */
 
     VTABLE FLOATVAL shift_float() {
-        PMC * const ptr = DYNSELF.shift_pmc();
+        PMC * const ptr = SELF.shift_pmc();
         return VTABLE_get_number(INTERP, ptr);
     }
 
@@ -975,7 +975,7 @@ Removes and returns a string from the start of the array.
 */
 
     VTABLE STRING *shift_string() {
-        PMC * const ptr = DYNSELF.shift_pmc();
+        PMC * const ptr = SELF.shift_pmc();
         return VTABLE_get_string(INTERP, ptr);
     }
 
@@ -1266,7 +1266,7 @@ Used to unarchive the array.
 
         SUPER(info);
         if (info->extra_flags == EXTRA_IS_NULL) {
-            DYNSELF.set_integer_native(VTABLE_shift_integer(INTERP, io));
+            SELF.set_integer_native(VTABLE_shift_integer(INTERP, io));
     }
 }
 

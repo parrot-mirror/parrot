@@ -351,7 +351,7 @@ Set SELF to the data in other.
 */
 
     VTABLE void set_pmc(PMC *other) {
-        DYNSELF.assign_pmc(other);
+        SELF.assign_pmc(other);
     }
 
     VTABLE void assign_pmc(PMC *other) {

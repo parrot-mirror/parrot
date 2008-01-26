@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -1020,7 +1020,7 @@ unset to allow further modifications.
 
     VTABLE PMC *clone_pmc(PMC *args) {
         /* Do the standard clone. */
-        PMC *copy = DYNSELF.clone();
+        PMC *copy = SELF.clone();
 
         init_class_from_hash(interp, copy, args);
 
@@ -1511,7 +1511,7 @@ providing a set of key/value pairs describing the attribute.
 */
     PCCMETHOD attributes() {
         STRING * const attr_str = CONST_STRING(interp, "attributes");
-        PMC * const ret_attrib_metadata = DYNSELF.inspect_str(attr_str);
+        PMC * const ret_attrib_metadata = SELF.inspect_str(attr_str);
 
         PCCRETURN(PMC *ret_attrib_metadata);
     }
@@ -1528,7 +1528,7 @@ Add an attribute to the class. Requires a name and, optionally, a type.
     PCCMETHOD add_attribute(STRING *attribute_name,
             PMC *attribute_type :optional, int has_type :opt_flag) {
         PMC * const type = has_type ? attribute_type : PMCNULL;
-        DYNSELF.add_attribute(attribute_name, type);
+        SELF.add_attribute(attribute_name, type);
     }
 
 /*
@@ -1541,7 +1541,7 @@ Return a hash where the keys are method names and the values are methods.
 
 */
     PCCMETHOD methods() {
-        PMC * const ret_methods = DYNSELF.inspect_str(CONST_STRING(interp, "methods"));
+        PMC * const ret_methods = SELF.inspect_str(CONST_STRING(interp, "methods"));
 
         PCCRETURN(PMC *ret_methods);
     }
@@ -1569,7 +1569,7 @@ C<add_method> vtable method.
 
         /* Provided it's not anonymous, add it to the methods list. */
         if (!has_anon || !anon)
-            DYNSELF.add_method(name, sub);
+            SELF.add_method(name, sub);
     }
 
 /*
@@ -1614,7 +1614,7 @@ Return the parents array PMC.
 
 */
     PCCMETHOD parents() {
-        PMC * const ret_parents = DYNSELF.inspect_str(CONST_STRING(interp, "parents"));
+        PMC * const ret_parents = SELF.inspect_str(CONST_STRING(interp, "parents"));
 
         PCCRETURN(PMC *ret_parents);
     }
@@ -1629,7 +1629,7 @@ Adds the supplied PMC to the list of parents for the class.
 
 */
     PCCMETHOD add_parent(PMC *parent) {
-        DYNSELF.add_parent(parent);
+        SELF.add_parent(parent);
     }
 
 /*
@@ -1642,7 +1642,7 @@ Return the roles array PMC.
 
 */
     PCCMETHOD roles() {
-        PMC * const ret_roles = DYNSELF.inspect_str(CONST_STRING(interp, "roles"));
+        PMC * const ret_roles = SELF.inspect_str(CONST_STRING(interp, "roles"));
 
         PCCRETURN(PMC *ret_roles);
     }
@@ -1706,9 +1706,9 @@ parameter is supplied, a particular item of introspection data.
 
         /* Just delegate to the appropriate vtable method. */
         if (has_what)
-            found = DYNSELF.inspect_str(what);
+            found = SELF.inspect_str(what);
         else
-            found = DYNSELF.inspect();
+            found = SELF.inspect();
 
         PCCRETURN(PMC *found);
     }
@@ -1724,7 +1724,7 @@ C<class_name>, false otherwise.
 
 */
     PCCMETHOD isa(STRING *class_name) {
-        const INTVAL isa = DYNSELF.isa(class_name);
+        const INTVAL isa = SELF.isa(class_name);
 
         PCCRETURN(INTVAL isa);
     }

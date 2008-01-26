@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2003-2007, The Perl Foundation.
+Copyright (C) 2003-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -135,13 +135,13 @@ Returns a Parrot string representation of the number.
 */
 
     VTABLE void set_integer_native(INTVAL value) {
-        DYNSELF.morph(enum_class_Integer);
-        DYNSELF.set_integer_native(value);
+        SELF.morph(enum_class_Integer);
+        SELF.set_integer_native(value);
     }
 
     VTABLE void set_bool(INTVAL value) {
-        DYNSELF.morph(enum_class_Boolean);
-        DYNSELF.set_bool(value);
+        SELF.morph(enum_class_Boolean);
+        SELF.set_bool(value);
     }
 
 /*
@@ -185,8 +185,8 @@ Note that this method morphs the number into a C<String>.
 */
 
     VTABLE void set_string_native(STRING *value) {
-        DYNSELF.morph(enum_class_String);
-        DYNSELF.set_string_native(value);
+        SELF.morph(enum_class_String);
+        SELF.set_string_native(value);
     }
 
 /*
@@ -231,7 +231,7 @@ Set C<dest> to the negated value of C<SELF>.
 */
 
     VTABLE PMC *neg(PMC *dest) {
-        const FLOATVAL a = -DYNSELF.get_number();
+        const FLOATVAL a = -SELF.get_number();
 
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
@@ -241,7 +241,7 @@ Set C<dest> to the negated value of C<SELF>.
     }
 
     VTABLE void i_neg() {
-        const FLOATVAL a = -DYNSELF.get_number();
+        const FLOATVAL a = -SELF.get_number();
         VTABLE_set_number_native(INTERP, SELF, a);
     }
 
@@ -357,7 +357,7 @@ Sets C<dest> to the absolute value of SELF.
 */
 
     VTABLE PMC *absolute(PMC *dest) {
-        const FLOATVAL a = fabs(DYNSELF.get_number());
+        const FLOATVAL a = fabs(SELF.get_number());
 
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
@@ -367,7 +367,7 @@ Sets C<dest> to the absolute value of SELF.
     }
 
     VTABLE void i_absolute() {
-        const FLOATVAL a = fabs(DYNSELF.get_number());
+        const FLOATVAL a = fabs(SELF.get_number());
         VTABLE_set_number_native(INTERP, SELF, a);
     }
 

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -106,7 +106,7 @@ Defaults iteration mode to iterate from start.
         PObj_custom_mark_SET(SELF);
 
         /* by default, iterate from start */
-        DYNSELF.set_integer_native(ITERATE_FROM_START);
+        SELF.set_integer_native(ITERATE_FROM_START);
     }
 
 /*
@@ -499,13 +499,13 @@ See F<docs/pdds/pdd03_calling_conventions.pod>.
         agg        = (PMC *)PMC_pmc_val(SELF);
 
         if (agg->vtable->base_type == enum_class_IntList) {
-            const INTVAL ires  = DYNSELF.shift_integer();
+            const INTVAL ires  = SELF.shift_integer();
             REG_INT(interp, 1) = 1;
             REG_INT(interp, 5) = ires;
             return (opcode_t *)next;
         }
         else {
-            PMC * const res    = DYNSELF.shift_pmc();
+            PMC * const res    = SELF.shift_pmc();
             REG_INT(interp, 3) = 1;
             REG_PMC(interp, 5) = res;
             return (opcode_t *)next;

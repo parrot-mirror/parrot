@@ -910,7 +910,7 @@ MMD_DEFAULT: {
     VTABLE PMC *pow(PMC *value, PMC *dest) {
         /* XXX only Integer RHS currently */
         INTVAL r = VTABLE_get_integer(INTERP, value);
-        return SELF.pow_int(r, dest);
+        return STATICSELF.pow_int(r, dest);
     }
 
     VTABLE PMC *divide(PMC *value, PMC *dest) {

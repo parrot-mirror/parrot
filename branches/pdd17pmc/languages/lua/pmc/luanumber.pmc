@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2007, The Perl Foundation.
+Copyright (C) 2005-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -170,8 +170,8 @@ Returns a Parrot string representation of the number.
 
 */
     void set_string_native(STRING *value) {
-        DYNSELF.morph(dynpmc_LuaString);
-        DYNSELF.set_string_native(value);
+        SELF.morph(dynpmc_LuaString);
+        SELF.set_string_native(value);
     }
 
 /*

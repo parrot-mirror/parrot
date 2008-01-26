@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -140,8 +140,8 @@ Morphs to a C<PerlInt> with value C<value>.
 
         dynpmc_PerlInt = pmc_type(interp,
             string_from_literal(interp, "PerlInt"));
-        DYNSELF.morph(dynpmc_PerlInt);
-        DYNSELF.set_integer_native(value);
+        SELF.morph(dynpmc_PerlInt);
+        SELF.set_integer_native(value);
     }
 
 /*
@@ -173,8 +173,8 @@ Morphs to a C<PerlString> with the value of C<*value>.
 
         dynpmc_PerlString = pmc_type(interp,
             string_from_literal(interp, "PerlString"));
-        DYNSELF.morph(dynpmc_PerlString);
-        DYNSELF.set_string_native(value);
+        SELF.morph(dynpmc_PerlString);
+        SELF.set_string_native(value);
     }
 
 /*
@@ -529,7 +529,7 @@ Morphs to a C<PerlInt> with value C<1>.
 
         dynpmc_PerlInt = pmc_type(interp,
             string_from_literal(interp, "PerlInt"));
-        DYNSELF.morph(dynpmc_PerlInt);
+        SELF.morph(dynpmc_PerlInt);
         PMC_int_val(SELF) = 1;
     }
 
@@ -548,7 +548,7 @@ Morphs to a C<PerlInt> with value C<-1>.
 
         dynpmc_PerlInt = pmc_type(interp,
             string_from_literal(interp, "PerlInt"));
-        DYNSELF.morph(dynpmc_PerlInt);
+        SELF.morph(dynpmc_PerlInt);
         PMC_int_val(SELF) = -1;
     }
 }

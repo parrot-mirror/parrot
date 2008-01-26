@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -117,7 +117,7 @@ Assigns C<value> to the array at index C<*key>.
         INTVAL ix;
 
         ix = key_integer(INTERP, key);
-        if (ix >= DYNSELF.elements() || ix < -DYNSELF.elements())
+        if (ix >= SELF.elements() || ix < -SELF.elements())
         list_set_length(INTERP, (List *) PMC_data(SELF), ix+1);
         SUPER(key, value);
     }
@@ -152,7 +152,7 @@ Assigns C<value> to the array at index C<*key>.
         INTVAL ix;
 
         ix = key_integer(INTERP, key);
-        if (ix >= DYNSELF.elements() || ix < -DYNSELF.elements())
+        if (ix >= SELF.elements() || ix < -SELF.elements())
         list_set_length(INTERP, (List *) PMC_data(SELF), ix+1);
         SUPER(key, value);
     }
@@ -187,7 +187,7 @@ Assigns C<*value> to the array at index C<*key>.
         INTVAL ix;
 
         ix = key_integer(INTERP, key);
-        if (ix >= DYNSELF.elements() || ix < -DYNSELF.elements())
+        if (ix >= SELF.elements() || ix < -SELF.elements())
         list_set_length(INTERP, (List *) PMC_data(SELF), ix+1);
         SUPER(key, value);
     }
@@ -220,7 +220,7 @@ Assigns C<*value> to the array at index C<*key>.
         INTVAL ix;
 
         ix = key_integer(INTERP, key);
-        if (ix >= DYNSELF.elements() || ix < -DYNSELF.elements())
+        if (ix >= SELF.elements() || ix < -SELF.elements())
         list_set_length(INTERP, (List *) PMC_data(SELF), ix+1);
         SUPER(key, value);
     }
@@ -236,7 +236,7 @@ Returns the integer value of the element at index C<key>.
 */
 
     INTVAL get_integer_keyed_int(INTVAL key) {
-        if (key >= DYNSELF.elements() || key < -DYNSELF.elements()) {
+        if (key >= SELF.elements() || key < -SELF.elements()) {
             if (PARROT_WARNINGS_test(INTERP,
                                      PARROT_WARNINGS_UNDEF_FLAG)) {
                 Parrot_warn(INTERP, PARROT_WARNINGS_UNDEF_FLAG,
@@ -259,7 +259,7 @@ Returns the floating-point value of the element at index C<key>.
 */
 
     FLOATVAL get_number_keyed_int(INTVAL key) {
-        if (key >= DYNSELF.elements() || key < -DYNSELF.elements()) {
+        if (key >= SELF.elements() || key < -SELF.elements()) {
             if (PARROT_WARNINGS_test(INTERP,
                                      PARROT_WARNINGS_UNDEF_FLAG)) {
                 Parrot_warn(INTERP, PARROT_WARNINGS_UNDEF_FLAG,
@@ -282,7 +282,7 @@ Returns the number of elements in the array as a Parrot string.
 */
 
     STRING* get_string() {
-        return string_from_int(INTERP, DYNSELF.elements());
+        return string_from_int(INTERP, SELF.elements());
     }
 
 /*
@@ -296,7 +296,7 @@ Returns the Parrot string value of the element at index C<key>.
 */
 
     STRING* get_string_keyed_int(INTVAL key) {
-        if (key >= DYNSELF.elements() || key < -DYNSELF.elements()) {
+        if (key >= SELF.elements() || key < -SELF.elements()) {
             if (PARROT_WARNINGS_test(INTERP,
                                      PARROT_WARNINGS_UNDEF_FLAG)) {
                 Parrot_warn(INTERP, PARROT_WARNINGS_UNDEF_FLAG,
@@ -319,7 +319,7 @@ Returns the PMC value of the element at index C<key>.
 */
 
     PMC* get_pmc_keyed_int(INTVAL key) {
-        if (key >= DYNSELF.elements() || key < -DYNSELF.elements()) {
+        if (key >= SELF.elements() || key < -SELF.elements()) {
             if (PARROT_WARNINGS_test(INTERP,
                                      PARROT_WARNINGS_UNDEF_FLAG)) {
                 Parrot_warn(INTERP, PARROT_WARNINGS_UNDEF_FLAG,

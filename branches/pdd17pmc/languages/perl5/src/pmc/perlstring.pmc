@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -44,7 +44,7 @@ See t/pmc/perlstring_13    set P0, "1.23e2" ; set I0, P0
 
 */
     INTVAL get_integer() {
-        double f = DYNSELF.get_number();
+        double f = SELF.get_number();
         return (INTVAL)f;
     }
 
@@ -61,7 +61,7 @@ Returns pythons string repr (w/o any escaping, just single quotes around)
     STRING* get_repr() {
         STRING *start, *s, *q, *repr;
         q = const_string(INTERP, "'");
-        s = DYNSELF.get_string();
+        s = SELF.get_string();
         if (PObj_get_FLAGS(s) & PObj_private7_FLAG)
             start = const_string(INTERP, "u'");
         else
@@ -87,8 +87,8 @@ Morphs the string to a C<PerlInt> and sets its value to C<value>.
 
         dynpmc_PerlInt = pmc_type(interp,
             string_from_literal(interp, "PerlInt"));
-        DYNSELF.morph(dynpmc_PerlInt);
-        DYNSELF.set_integer_native(value);
+        SELF.morph(dynpmc_PerlInt);
+        SELF.set_integer_native(value);
     }
 
 /*
@@ -106,8 +106,8 @@ Morphs the string to a C<PerlNum> and sets its value to C<value>.
 
         dynpmc_PerlNum = pmc_type(interp,
             string_from_literal(interp, "PerlNum"));
-        DYNSELF.morph(dynpmc_PerlNum);
-        DYNSELF.set_number_native(value);
+        SELF.morph(dynpmc_PerlNum);
+        SELF.set_number_native(value);
     }
 
 /*

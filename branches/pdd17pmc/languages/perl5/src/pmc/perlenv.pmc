@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -73,7 +73,7 @@ Returns the result of C<get_string_keyed(key)> as a C<PerlString>.
         dynpmc_PerlString = pmc_type(interp,
             string_from_literal(interp, "PerlString"));
         ret = pmc_new(INTERP, dynpmc_PerlString);
-        string = DYNSELF.get_string_keyed(key);
+        string = SELF.get_string_keyed(key);
         VTABLE_set_string_native(INTERP, ret, string);
 
         return ret;
@@ -91,7 +91,7 @@ converted to a Parrot string.
 */
 
     void set_pmc_keyed(PMC* key, PMC* value) {
-        DYNSELF.set_string_keyed(key, VTABLE_get_string(INTERP, value));
+        SELF.set_string_keyed(key, VTABLE_get_string(INTERP, value));
     }
 }
 

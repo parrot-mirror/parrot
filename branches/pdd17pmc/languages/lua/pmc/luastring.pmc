@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2007, The Perl Foundation.
+Copyright (C) 2005-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -133,8 +133,8 @@ Return the string "string".
 
 */
     void set_integer_native(INTVAL value) {
-        DYNSELF.morph(dynpmc_LuaNumber);
-        DYNSELF.set_integer_native(value);
+        SELF.morph(dynpmc_LuaNumber);
+        SELF.set_integer_native(value);
     }
 
 /*
@@ -145,8 +145,8 @@ Return the string "string".
 
 */
     void set_number_native(FLOATVAL value) {
-        DYNSELF.morph(dynpmc_LuaNumber);
-        DYNSELF.set_number_native(value);
+        SELF.morph(dynpmc_LuaNumber);
+        SELF.set_number_native(value);
     }
 
 /*
