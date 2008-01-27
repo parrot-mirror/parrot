@@ -42,6 +42,9 @@ sub handle_long_options {
     $longopts{use_test_run} = grep { $_ eq '--tr' } @argv;
     @argv = grep { $_ ne '--tr' } @argv;
 
+    $longopts{help} = grep { $_ eq '--help' } @argv;
+    @argv = grep { $_ ne '--help' } @argv;
+    
     return (\%longopts, @argv);
 }
 
