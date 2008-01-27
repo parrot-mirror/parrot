@@ -92,8 +92,10 @@ use lib qw( . lib ../lib ../../lib );
 use Getopt::Std;
 use Test::Harness();
 use Parrot::Harness::DefaultTests;
-use Parrot::Harness::Smoke qw(
+use Parrot::Harness::Options qw(
     get_test_prog_args
+);
+use Parrot::Harness::Smoke qw(
     generate_html_smoke_report
 );
 
