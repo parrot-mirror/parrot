@@ -15,6 +15,7 @@ Currently, only one such subroutine is supported:
     generate_html_smoke_report (
         tests       => \@tests,
         args        => $args,
+        file        => 'smoke.html',
     );
 
 =cut
@@ -29,6 +30,7 @@ our @EXPORT_OK = qw( generate_html_smoke_report );
 
 sub generate_html_smoke_report {
     my $argsref = shift;
+    my $html_fn = $argsref->{file};
     my @smoke_config_vars = qw(
         osname archname cc build_dir cpuarch revision VERSION optimize DEVEL
     );
@@ -46,7 +48,7 @@ sub generate_html_smoke_report {
         my $self = shift;
 
         $self->_init;
-        $self->{meat}{start_time} = time;
+        $self->{meat}{start_time} = time();
 
         my %stats;
 
@@ -63,7 +65,7 @@ sub generate_html_smoke_report {
             $stats{tests},
             $stats{ok} / $stats{tests} * 100;
 
-        $self->{meat}{end_time} = time;
+        $self->{meat}{end_time} = time();
       };
 
       my $start = time();
@@ -81,15 +83,15 @@ sub generate_html_smoke_report {
              "branch: unknown",
              "harness_args: " . (($argsref->{args}) ? $argsref->{args} : "N/A"),
              map { "$_: $PConfig{$_}" } sort @smoke_config_vars),
-                   );
+      );
 
       $v->has_inline_css(1); # no separate css file
 
-      open HTML, ">", "smoke.html";
-      print HTML $v->html;
+      open HTML, '>', $html_fn;
+      print HTML $v->html();
       close HTML;
 
-      print "smoke.html has been generated.\n";
+      print "$html_fn has been generated.\n";
     }
 }
 

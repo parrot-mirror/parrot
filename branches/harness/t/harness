@@ -186,6 +186,7 @@ elsif (!$html) {
     generate_html_smoke_report ( {
         tests       => \@tests,
         args        => $args,
+        file        => 'smoke.html',
     } );
 }
 
