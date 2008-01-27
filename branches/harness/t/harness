@@ -111,7 +111,7 @@ getopts('wgjPCSefbvdr?hO:D:', \%opts);
 $ENV{RUNNING_MAKE_TEST} = $longopts->{running_make_test};
 $longopts->{use_test_run} ||= $ENV{'PARROT_USE_TEST_RUN'};
 
-if ($opts{'?'} || $opts{h}) {
+if ($opts{'?'} || $opts{h} || $longopts->{help}) {
     print <<"EOF";
 perl t/harness [options] [testfiles]
     -w         ... warnings on
