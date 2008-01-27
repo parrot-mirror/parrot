@@ -92,7 +92,10 @@ use lib qw( . lib ../lib ../../lib );
 use Getopt::Std;
 use Test::Harness();
 use Parrot::Harness::DefaultTests;
-use Parrot::Harness::Smoke qw( generate_html_smoke_report );
+use Parrot::Harness::Smoke qw(
+    get_test_prog_args
+    generate_html_smoke_report
+);
 
 # handle the long options
 
@@ -151,12 +154,13 @@ EOF
 # add -D40;  merge it with any existing -D argument
 $opts{D} = sprintf( '%x', hex(40) | (exists $opts{D} ? hex($opts{D}) : 0));
 
-my $args = join(' ', map { "-$_" } keys %opts );
-$args =~ s/-O/-O$opts{O}/ if exists $opts{O};
-$args =~ s/-D/-D$opts{D}/;
-$args .= ' --gc-debug'    if $gc_debug;
-# XXX find better way for passing run_exec to Parrot::Test
-$args .= ' --run-exec'    if $run_exec;
+#my $args = join(' ', map { "-$_" } keys %opts );
+#$args =~ s/-O/-O$opts{O}/ if exists $opts{O};
+#$args =~ s/-D/-D$opts{D}/;
+#$args .= ' --gc-debug'    if $gc_debug;
+## XXX find better way for passing run_exec to Parrot::Test
+#$args .= ' --run-exec'    if $run_exec;
+my $args = get_test_prog_args(\%opts, $gc_debug, $run_exec);
 $ENV{TEST_PROG_ARGS} = $args;
 
 # now build the list of tests to run, either from the command
