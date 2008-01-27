@@ -126,9 +126,9 @@ write_types(FILE *stabs, PARROT_INTERP)
                 "strstart:15,%d,%d;"        /* fake a char* */
                 ";\""
                 ",0," C_DECL ",0\n", i++, BYTE_SIZE(STRING),
-                BIT_OFFSET(STRING, obj.u._b._bufstart), BIT_SIZE(void*),
-                BIT_OFFSET(STRING, obj.u._b._buflen), BIT_SIZE(size_t),
-                BIT_OFFSET(STRING, obj.flags), BIT_SIZE(UINTVAL),
+                BIT_OFFSET(STRING, cache._b._bufstart), BIT_SIZE(void*),
+                BIT_OFFSET(STRING, cache._b._buflen), BIT_SIZE(size_t),
+                BIT_OFFSET(STRING, flags), BIT_SIZE(UINTVAL),
                 BIT_OFFSET(STRING, bufused), BIT_SIZE(UINTVAL),
                 BIT_OFFSET(STRING, strstart), BIT_SIZE(void*));
 
