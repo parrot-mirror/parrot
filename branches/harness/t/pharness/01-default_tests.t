@@ -7,19 +7,17 @@ use strict;
 use warnings;
 
 use lib qw( lib );
-#use Test::More;
-#eval {
-#    use Parrot::Config qw( %PConfig );
-#};
-#plan( skip_all => 't/harness only runs once configuration has completed' )
-#    if $@;
-#plan( tests => 2 );
-use Test::More qw( no_plan );
+use Test::More;
+eval {
+    use Parrot::Config qw( %PConfig );
+};
+plan( skip_all => 't/harness only runs once configuration has completed' )
+    if $@;
+plan( tests => 30 );
 use Carp;
 use Cwd;
 use File::Temp qw( tempdir );
 use Parrot::Harness::DefaultTests;
-use FindBin qw/$Bin/;
 
 @Parrot::Harness::DefaultTests::runcore_tests = qw( alpha.t );
 @Parrot::Harness::DefaultTests::core_tests = qw( beta.t );
@@ -134,6 +132,7 @@ pass("Completed all tests in $0");
 
 =head1 DESCRIPTION
 
+This file holds tests for Parrot::Harness::DefaultTests::get_default_tests().
 
 =head1 AUTHOR
 
@@ -151,11 +150,3 @@ Parrot::Harness::DefaultTests, F<t/harness>.
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
-
-####
-
-#( -e "$Bin/../DEVELOPING" ) ? print STDERR "Exists\n"
-#    : print STDERR "with bin Does not exist\n";
-#( -e "DEVELOPING" ) ? print STDERR "Exists\n"
-#    : print STDERR "Does not exist\n";
-
