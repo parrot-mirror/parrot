@@ -13,7 +13,7 @@ Parrot::Harness::Options - Handle options and argument processing in F<t/harness
 package Parrot::Harness::Options;
 use strict;
 use base qw( Exporter );
-our @EXPORT = qw(
+our @EXPORT_OK = qw(
     handle_long_options
     get_test_prog_args
 );

@@ -15,7 +15,7 @@ plan( skip_all => 't/harness only runs once configuration has completed' )
     if $@;
 plan( tests => 16 );
 use Carp;
-use Parrot::Harness::Options;
+use Parrot::Harness::Options qw( get_test_prog_args );
 
 my ($args, $optsref);
 my ($gc_debug, $run_exec);
