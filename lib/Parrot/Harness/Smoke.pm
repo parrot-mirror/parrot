@@ -25,8 +25,22 @@ use strict;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::Config qw/%PConfig/;
 use base qw( Exporter );
-our @EXPORT_OK = qw( generate_html_smoke_report );
+our @EXPORT_OK = qw(
+    get_test_prog_args
+    generate_html_smoke_report
+);
 
+sub get_test_prog_args {
+    my ($optsref, $gc_debug, $run_exec) = @_;
+    my %opts = %{ $optsref };
+    my $args = join(' ', map { "-$_" } keys %opts );
+    $args =~ s/-O/-O$opts{O}/ if exists $opts{O};
+    $args =~ s/-D/-D$opts{D}/;
+    $args .= ' --gc-debug'    if $gc_debug;
+    # XXX find better way for passing run_exec to Parrot::Test
+    $args .= ' --run-exec'    if $run_exec;
+    return $args;
+}
 
 sub generate_html_smoke_report {
     my $argsref = shift;
