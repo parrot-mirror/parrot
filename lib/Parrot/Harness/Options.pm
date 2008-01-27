@@ -14,8 +14,36 @@ package Parrot::Harness::Options;
 use strict;
 use base qw( Exporter );
 our @EXPORT = qw(
+    handle_long_options
     get_test_prog_args
 );
+
+sub handle_long_options {
+    my @argv = @_;
+    my %longopts;
+    $longopts{running_make_test} = grep { $_ eq '--running-make-test' } @argv;
+    @argv = grep { $_ ne '--running-make-test' } @argv;
+    
+    $longopts{gc_debug} = grep { $_ eq '--gc-debug' } @argv;
+    @argv = grep { $_ ne '--gc-debug' } @argv;
+    
+    $longopts{core_tests_only} = grep { $_ eq '--core-tests' } @argv;
+    @argv = grep { $_ ne '--core-tests' } @argv;
+    
+    $longopts{runcore_tests_only} = grep { $_ eq '--runcore-tests' } @argv;
+    @argv = grep { $_ ne '--runcore-tests' } @argv;
+    
+    $longopts{html} = grep { $_ eq '--html' } @argv;
+    @argv = grep { $_ ne '--html' } @argv;
+    
+    $longopts{run_exec} = grep { $_ eq '--run-exec' } @argv;
+    @argv = grep { $_ ne '--run-exec' } @argv;
+    
+    $longopts{use_test_run} = grep { $_ eq '--tr' } @argv;
+    @argv = grep { $_ ne '--tr' } @argv;
+
+    return (\%longopts, @argv);
+}
 
 sub get_test_prog_args {
     my ($optsref, $gc_debug, $run_exec) = @_;
