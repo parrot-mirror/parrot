@@ -291,7 +291,7 @@ Return the key of the pair.
 
         }
         else {
-            key = PMC_struct_val(SELF);
+            key = (PMC *)PMC_struct_val(SELF);
         }
 
         PCCRETURN(PMC *key);
