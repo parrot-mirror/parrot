@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -189,13 +189,6 @@ write_types(FILE *stabs, PARROT_INTERP)
     fprintf(stabs, ";\"");
     fprintf(stabs, "," N_LSYM ",0,0,0\n");
 
-    fprintf(stabs, ".stabs \"pobj_t:T(0,%d)=s%d"
-                "u:(0,%d),%d,%d;"
-                "flags:(0,12),%d,%d;"
-                ";\""
-                "," N_LSYM ",0,0,0\n", i + 1, (int)(sizeof (pobj_t)),
-                i + 2, BIT_OFFSET(pobj_t, u), BIT_SIZE(UnionVal),
-                BIT_OFFSET(pobj_t, flags), BIT_SIZE(Parrot_UInt));
     fprintf(stabs, ".stabs \"UnionVal:T(0,%d)=u%d"
                 "int_val:(0,12),%d,%d;"
                 "pmc_val:*(0,%d),%d,%d;"
