@@ -7,16 +7,15 @@ use strict;
 use warnings;
 
 use lib qw( lib );
-#use Test::More;
-#eval {
-#    use Parrot::Config qw( %PConfig );
-#};
-#plan( skip_all => 't/harness only runs once configuration has completed' )
-#    if $@;
-#plan( tests => 16 );
-use Test::More qw( no_plan );
+use Test::More;
+eval {
+    use Parrot::Config qw( %PConfig );
+};
+plan( skip_all => 't/harness only runs once configuration has completed' )
+    if $@;
+plan( tests =>  6 );
 use Carp;
-use Parrot::Harness::Options;
+use Parrot::Harness::Options qw( handle_long_options );
 
 my (@argv, $longopts);
 @argv = qw(
