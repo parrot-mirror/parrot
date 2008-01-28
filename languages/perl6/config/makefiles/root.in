@@ -57,10 +57,7 @@ BUILTINS_PIR = \
   src/builtins/assign.pir \
   src/builtins/cmp.pir \
   src/builtins/control.pir \
-  src/builtins/hash.pir \
   src/builtins/io.pir \
-  src/builtins/junction.pir \
-  src/builtins/list.pir \
   src/builtins/match.pir \
   src/builtins/math.pir \
   src/builtins/misc.pir \
@@ -68,7 +65,6 @@ BUILTINS_PIR = \
   src/builtins/op.pir \
   src/builtins/parrot.pir \
   src/builtins/range.pir \
-  src/builtins/string.pir \
 
 PMCS = perl6str
 PMC_SOURCES = $(PMC_DIR)/perl6str.pmc
