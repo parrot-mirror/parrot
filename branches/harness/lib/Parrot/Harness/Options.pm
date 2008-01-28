@@ -16,6 +16,7 @@ use base qw( Exporter );
 our @EXPORT_OK = qw(
     handle_long_options
     get_test_prog_args
+    Usage
 );
 
 sub handle_long_options {
@@ -58,6 +59,31 @@ sub get_test_prog_args {
     # XXX find better way for passing run_exec to Parrot::Test
     $args .= ' --run-exec'    if $run_exec;
     return $args;
+}
+
+sub Usage {
+    print <<"EOF";
+perl t/harness [options] [testfiles]
+    -w         ... warnings on
+    -g         ... run CGoto
+    -j         ... run JIT
+    -C         ... run CGP
+    -S         ... run Switched
+    -b         ... run bounds checked
+    --run-exec ... run exec core
+    -f         ... run fast core
+    -v         ... run verbose
+    -d         ... run debug
+    -r         ... assemble to PBC run PBC
+    -O[012]    ... optimize
+    -D[number] ... pass debug flags to parrot interpreter
+    --running-make-test
+    --gc-debug
+    --core-tests
+    --runcore-tests
+    --html
+    --tr       ... run using Test::Run
+EOF
 }
 
 1;

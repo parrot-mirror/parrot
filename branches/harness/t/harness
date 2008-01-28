@@ -95,6 +95,7 @@ use Parrot::Harness::DefaultTests;
 use Parrot::Harness::Options qw(
     handle_long_options
     get_test_prog_args
+    Usage
 );
 use Parrot::Harness::Smoke qw(
     generate_html_smoke_report
@@ -104,43 +105,23 @@ local @ARGV = @ARGV;
 my $longopts;
 ($longopts, @ARGV) = handle_long_options(@ARGV);
 
+$ENV{RUNNING_MAKE_TEST} = $longopts->{running_make_test};
+$longopts->{use_test_run} ||= $ENV{'PARROT_USE_TEST_RUN'};
+
 # Suck the short options into the TEST_PROG_ARGS evar:
 my %opts;
 getopts('wgjPCSefbvdr?hO:D:', \%opts);
 
-$ENV{RUNNING_MAKE_TEST} = $longopts->{running_make_test};
-$longopts->{use_test_run} ||= $ENV{'PARROT_USE_TEST_RUN'};
-
 if ($opts{'?'} || $opts{h} || $longopts->{help}) {
-    print <<"EOF";
-perl t/harness [options] [testfiles]
-    -w         ... warnings on
-    -g         ... run CGoto
-    -j         ... run JIT
-    -C         ... run CGP
-    -S         ... run Switched
-    -b         ... run bounds checked
-    --run-exec ... run exec core
-    -f         ... run fast core
-    -v         ... run verbose
-    -d         ... run debug
-    -r         ... assemble to PBC run PBC
-    -O[012]    ... optimize
-    -D[number] ... pass debug flags to parrot interpreter
-    --running-make-test
-    --gc-debug
-    --core-tests
-    --runcore-tests
-    --html
-    --tr       ... run using Test::Run
-EOF
+    Usage();
     exit;
 }
 
 # add -D40;  merge it with any existing -D argument
 $opts{D} = sprintf( '%x', hex(40) | (exists $opts{D} ? hex($opts{D}) : 0));
 
-my $args = get_test_prog_args(\%opts, $longopts->{gc_debug}, $longopts->{run_exec});
+my $args = get_test_prog_args(
+    \%opts, $longopts->{gc_debug}, $longopts->{run_exec});
 $ENV{TEST_PROG_ARGS} = $args;
 
 # now build the list of tests to run, either from the command
