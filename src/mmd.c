@@ -1602,15 +1602,16 @@ mmd_sort_candidates(PARROT_INTERP, ARGIN(PMC *arg_tuple), ARGIN(PMC *cl))
      */
     nci = pmc_new(interp, enum_class_NCI);
     PMC_struct_val(nci) = F2DPTR(distance_cmp);
-    /*
-     * sort it
-     */
-    Parrot_FixedPMCArray_nci_sort(interp, sort, nci);
+
+    /* sort it */
+    Parrot_PCCINVOKE(interp, sort, CONST_STRING(interp, "sort"), "P", nci);
+
     /*
      * now helper has a sorted list of indices in the upper 16 bits
      * fill helper with sorted candidates
      */
     data = (PMC **)PMC_data(cl);
+
     for (i = 0; i < n; ++i) {
         const INTVAL idx = helper[i] >> 16;
         /*
