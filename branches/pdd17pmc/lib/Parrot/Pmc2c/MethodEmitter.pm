@@ -28,11 +28,9 @@ use Parrot::Pmc2c::UtilFunctions
     qw( gen_ret dont_edit count_newlines dynext_load_code c_code_coda );
 use Parrot::Pmc2c::PCCMETHOD;
 
-=item C<body($method, $line, $out_name)>
+=item C<generate_body($pmc)>
 
-Returns the C code for the method body. C<$line> is used to accumulate
-the number of lines, C<$out_name> is the name of the output file we are
-generating.
+Generate and emit the C code for the method body.
 
 =cut
 

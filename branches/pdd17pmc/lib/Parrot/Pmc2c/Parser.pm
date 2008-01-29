@@ -108,19 +108,29 @@ sub find_attrs {
         (INTVAL|FLOATVAL|STRING\s+\*|PMC\s+\*)
 
         # name
-        \s+
+        \s*
         (\w+)
 
         # modifiers
         \s*
-        (:\w+(?:\(\w+\))?\s*)*
+        ((?::\w+\s*)*)
 
-        # and that's it
-        ;$
+        # declaration terminator
+        ;
+
+	# optional comment
+	\s*
+	(/\*.*?\*/)?
     }sx;
 
     while ( $pmcbody =~ /ATTR\s+\w+.*;/ ) {
-        my ($type, $name, @modifiers) = $pmcbody =~ s/($attr_re)//;
+        my ($type, $name, @modifiers, $comment);
+        if ($pmcbody =~ s/($attr_re)//) {
+            $type = $2;
+            $name = $3;
+            @modifiers = split /\s/, $4;
+            $comment = $5;
+        }
         $lineno++;
 
         $pmc->add_attribute(Parrot::Pmc2c::Attribute->new(

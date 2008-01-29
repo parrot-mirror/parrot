@@ -1,6 +1,5 @@
 # Copyright (C) 2004-2006, The Perl Foundation.
 # $Id$
-# PMC.pm 18503 2007-05-11 07:39:22Z paultcochrane $
 #
 
 =head1 NAME
@@ -208,6 +207,11 @@ sub mixins {
 sub methods {
     my ($self) = @_;
     return $self->{methods};
+}
+
+sub attributes {
+    my ($self) = @_;
+    return $self->{attributes};
 }
 
 sub filename {
