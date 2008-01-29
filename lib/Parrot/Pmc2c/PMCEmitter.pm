@@ -99,6 +99,7 @@ EOH
     $h->emit("#define PARROT_IN_EXTENSION\n") if ( $self->is_dynamic );
     $h->emit( $self->hdecls );
     $h->emit( $self->{ro}->hdecls ) if ( $self->{ro} );
+    $self->gen_attributes;
     $h->emit(<<"EOH");
 
 #endif /* PARROT_PMC_${name}_H_GUARD */
@@ -300,6 +301,30 @@ sub gen_methods {
         next if $method->is_vtable;
         $method->generate_body($self);
     }
+}
+
+=item C<gen_attributes()>
+
+Returns the C code for the attribute struct definition.
+
+=cut
+
+sub gen_attributes {
+    my ($self) = @_;
+
+    my $attributes = $self->attributes;
+
+    if (scalar @{ $attributes } ) {
+
+        Parrot::Pmc2c::Attribute::generate_start($attributes->[0], $self);
+
+        foreach my $attribute ( @{ $attributes } ) {
+            $attribute->generate_declaration($self);
+        }
+
+        Parrot::Pmc2c::Attribute::generate_end($attributes->[0], $self);
+    }
+
 }
 
 # RT#43737 quick hack - to get MMD variants
