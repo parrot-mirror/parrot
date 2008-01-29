@@ -969,6 +969,70 @@ Parrot_register_move(PARROT_INTERP,
     mem_sys_free(backup);
 }
 
+static void
+swap(void **x, void **y)
+{
+    void *t = *x;
+    *x      = *y;
+    *y      =  t;
+}
+
+typedef INTVAL (*sort_func_t)(PARROT_INTERP, void*, void*);
+
+static INTVAL
+COMPARE(PARROT_INTERP, void *a, void *b, PMC *cmp)
+{
+    if (PMC_IS_NULL(cmp))
+        return mmd_dispatch_i_pp(interp, (PMC *)a, (PMC *)b, MMD_CMP);
+
+    if (cmp->vtable->base_type == enum_class_NCI) {
+        sort_func_t f = (sort_func_t)D2FPTR(PMC_struct_val(cmp));
+        return f(interp, a, b);
+    }
+
+    return Parrot_runops_fromc_args_reti(interp, cmp, "IPP", a, b);
+}
+
+
+void
+Parrot_quicksort(PARROT_INTERP, void **data, UINTVAL n, PMC *cmp)
+{
+    UINTVAL i, j, ln, rn;
+
+    while (n > 1) {
+        swap(&data[0], &data[n/2]);
+
+        for (i = 0, j = n; ;) {
+            do
+                --j;
+            while (COMPARE(interp, data[j], data[0], cmp) > 0);
+
+            do
+                ++i;
+            while (i < j && COMPARE(interp, data[i], data[0], cmp) < 0);
+
+            if (i >= j)
+                break;
+
+            swap(&data[i], &data[j]);
+        }
+
+        swap(&data[j], &data[0]);
+
+        ln = j;
+        rn = n - ++j;
+
+        if (ln < rn) {
+            Parrot_quicksort(interp, data, ln, cmp);
+            data += j;
+            n = rn;
+        }
+        else {
+            Parrot_quicksort(interp, data + j, rn, cmp);
+            n = ln;
+        }
+    }
+}
 
 /*
 
