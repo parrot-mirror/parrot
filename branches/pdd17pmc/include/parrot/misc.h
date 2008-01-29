@@ -114,6 +114,8 @@ FLOATVAL floatval_mod(FLOATVAL n2, FLOATVAL n3);
 PARROT_CONST_FUNCTION
 INTVAL intval_mod(INTVAL i2, INTVAL i3);
 
+void Parrot_quicksort(PARROT_INTERP, void **, UINTVAL, PMC *);
+
 /* HEADERIZER END: src/utils.c */
 
 
