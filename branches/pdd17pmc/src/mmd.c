@@ -1409,8 +1409,6 @@ distance_cmp(SHIM_INTERP, INTVAL a, INTVAL b)
     return da > db ? 1 : da < db ? -1 : 0;
 }
 
-extern void Parrot_FixedPMCArray_nci_sort(Interp* , PMC* pmc, PMC *cmp_func);
-
 /*
 
 =item C<static PMC* mmd_cvt_to_types>
