@@ -40,9 +40,6 @@ sub handle_long_options {
     $longopts{run_exec} = grep { $_ eq '--run-exec' } @argv;
     @argv = grep { $_ ne '--run-exec' } @argv;
     
-    $longopts{use_test_run} = grep { $_ eq '--tr' } @argv;
-    @argv = grep { $_ ne '--tr' } @argv;
-
     $longopts{help} = grep { $_ eq '--help' } @argv;
     @argv = grep { $_ ne '--help' } @argv;
     
@@ -82,7 +79,6 @@ perl t/harness [options] [testfiles]
     --core-tests
     --runcore-tests
     --html
-    --tr       ... run using Test::Run
 EOF
 }
 
