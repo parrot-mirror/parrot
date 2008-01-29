@@ -165,6 +165,7 @@ GEN_MAKEFILES = \
     languages/forth/Makefile \
     languages/HQ9plus/Makefile \
     languages/jako/Makefile \
+    languages/lazy-k/Makefile \
     languages/lisp/Makefile \
     languages/lolcode/Makefile \
     languages/lua/Makefile \
@@ -172,7 +173,6 @@ GEN_MAKEFILES = \
     languages/nqp/Makefile \
     languages/ook/Makefile \
     languages/parrot_compiler/Makefile \
-    languages/perl5/Makefile \
     languages/perl6/Makefile \
     languages/pheme/Makefile \
     languages/PIR/Makefile \
@@ -439,7 +439,6 @@ INTERP_O_FILES = \
     $(SRC_DIR)/mmd$(O) \
     $(SRC_DIR)/nci$(O) \
     $(SRC_DIR)/oo$(O) \
-    $(SRC_DIR)/objects$(O) \
     $(SRC_DIR)/packfile$(O) \
     $(SRC_DIR)/packout$(O) \
     $(SRC_DIR)/pic_jit$(O) \
@@ -610,7 +609,6 @@ STR_FILES = \
     $(SRC_DIR)/pmc.str \
     $(SRC_DIR)/oo.str \
     $(SRC_DIR)/scheduler.str \
-    $(SRC_DIR)/objects.str \
     $(SRC_DIR)/spf_render.str \
     $(SRC_DIR)/spf_vtable.str \
     $(CLASS_STR_FILES)
@@ -1128,8 +1126,6 @@ $(SRC_DIR)/mmd$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/mmd.str
 
 $(SRC_DIR)/builtin$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/builtin.str
 
-$(SRC_DIR)/objects$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/objects.str
-
 $(SRC_DIR)/packfile$(O) : $(GENERAL_H_FILES)
 
 $(PF_DIR)/pf_items$(O) : $(GENERAL_H_FILES)
@@ -1575,7 +1571,8 @@ prog-clean :
     $(INSTALLABLEPINFO) \
     $(INSTALLABLEPBCMERGE) \
     $(INSTALLABLEPDB) \
-    pbc_to_exe.pir pbc_to_exe.pbc pbc_to_exe.c pbc_to_exe$(EXE) \
+    pbc_to_exe.pir pbc_to_exe.pbc pbc_to_exe.c pbc_to_exe$(O) pbc_to_exe$(EXE) \
+    $(PERL6) \
     $(IMCC_DIR)/main$(O) \
     $(PDUMP) $(SRC_DIR)/pdump$(O) $(SRC_DIR)/packdump$(O) \
     $(SRC_DIR)/pbc_info$(O) $(PINFO) \
@@ -1974,7 +1971,6 @@ splint-andy :
     src/nci.c \
     src/nci_test.c \
     src/null_config.c \
-    src/objects.c \
     src/oo.c \
     src/packdump.c \
     src/packfile.c \

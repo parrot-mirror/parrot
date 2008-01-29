@@ -128,6 +128,23 @@ method unless_statement($/) {
     make $past;
 }
 
+
+method while_statement($/) {
+    my $cond  := $( $<EXPR> );
+    my $block := $( $<block> );
+    $block.blocktype('immediate');
+    make PAST::Op.new( $cond, $block, :pasttype(~$<sym>), :node($/) );
+}
+
+method repeat_statement($/) {
+    my $cond  := $( $<EXPR> );
+    my $block := $( $<block> );
+    $block.blocktype('immediate');
+    # pasttype is 'repeat_while' or 'repeat_until'
+    my $pasttype := 'repeat_' ~ ~$<loop>;
+    make PAST::Op.new( $cond, $block, :pasttype($pasttype), :node($/) );
+}
+
 method given_statement($/) {
     my $past := $( $<block> );
     $past.blocktype('immediate');
@@ -453,46 +470,127 @@ method noun($/, $key) {
 
 
 method package_declarator($/, $key) {
-    my $past := $( $/{$key} );
-    if $<sym> eq 'class' {
-        # Declare the namespace and that this is something we do
-        # "on load".
-        $past.namespace($<name><ident>);
-        $past.blocktype('declaration');
-        $past.pirflags(':init :load');
+    our $?CLASS;
 
-        # Set it as the current class. XXX need array to support nested classes
-        our $?CLASS;
-        $?CLASS := $past;
-
-        # We'll create a new statement list where we'll store the class
-        # declaration code.
+    if $key eq 'open' {
+        # Start of the block; if it's a class, need to make $?CLASS available
+        # for storing current class definition in.
+        # XXX need array to support nested classes
         my $decl_past := PAST::Stmts.new();
-        $past.unshift($decl_past);
-        
+
         # Code to create the class.
-        my $pir := "    $P0 = subclass 'Perl6Object', '" ~ $<name> ~ "'\n" ~
-                   "    $P1 = get_hll_global ['Perl6Object'], 'make_proto'\n" ~
-                   "    $P1($P0, '" ~ $<name> ~ "')\n";
+        my $pir := "    $P0 = subclass 'Perl6Object', '" ~ $<name> ~ "'\n";
         $decl_past.push(PAST::Op.new( :inline($pir) ));
+
+        $?CLASS := $decl_past;
     }
     else {
-        $past.namespace($<name><ident>);
-        $past.blocktype('declaration');
-        $past.pirflags(':init :load');
+        my $past := $( $/{$key} );
+        if $<sym> eq 'class' {
+            # Declare the namespace and that this is something we do
+            # "on load".
+            $past.namespace($<name><ident>);
+            $past.blocktype('declaration');
+            $past.pirflags(':init :load');
+
+            my $pir := "    $P1 = get_hll_global ['Perl6Object'], 'make_proto'\n" ~
+                       "    $P1($P0, '" ~ $<name> ~ "')\n";
+            $?CLASS.push(PAST::Op.new( :inline($pir) ));
+
+            $past.unshift( $?CLASS );
+        }
+        else {
+            $past.namespace($<name><ident>);
+            $past.blocktype('declaration');
+            $past.pirflags(':init :load');
+        }
+        make $past;
+    }
+}
+
+
+method variable_decl($/) {
+    my $past := $( $<variable> );
+    if $<trait> {
+        for $<trait> {
+            my $trait := $_;
+            if $trait<trait_auxiliary> {
+                my $aux := $trait<trait_auxiliary>;
+                my $sym := $aux<sym>;
+                if $sym eq 'is' {
+                    if $aux<postcircumfix> {
+                        $/.panic("'" ~ ~$trait ~ "' not implemented");
+                    }
+                    else {
+                        $past.viviself($aux<ident>);
+                    }
+                }
+                else {
+                    $/.panic("'" ~ $sym ~ "' not implemented");
+                }
+            }
+            elsif $trait<trait_verb> {
+                my $verb := $trait<trait_verb>;
+                my $sym := $verb<sym>;
+                $/.panic("'" ~ $sym ~ "' not implemented");
+            }
+        }
     }
     make $past;
 }
 
 
+method scoped($/) {
+    my $past := $( $<variable_decl> );
+    make $past;
+}
+
+
 method scope_declarator($/) {
-    my $past := $( $<variable> );
+    my $past := $( $<scoped> );
     my $name := $past.name();
     our $?BLOCK;
     unless $?BLOCK.symbol($name) {
         $past.isdecl(1);
         my $scope := 'lexical';
-        if ($<declarator> eq 'our') { $scope := 'package'; }
+        my $declarator := $<declarator>;
+        if $declarator eq 'my' {
+        }
+        elsif $declarator eq 'our' {
+            $scope := 'package';
+        }
+        elsif $declarator eq 'has' {
+            # Set that it's attribute scope.
+            $scope := 'attribute';
+
+            # The class needs to declare it.
+            our $?CLASS;
+            my $class_def := $?CLASS;
+            unless ?$class_def {
+                $/.panic("attempt to define attribute '" ~ $name ~ "' outside of class");
+            }
+            my $pir := "    addattribute $P0, '" ~ $name ~ "'\n";
+            $class_def.push( PAST::Op.new( :inline($pir) ) );
+
+            my $variable := $<variable_decl><variable>;
+
+            # If we have a . twigil, we need to generate an accessor.
+            if $variable<twigil>[0] eq '.' {
+                my $accessor := PAST::Block.new(
+                    PAST::Stmts.new(
+                        PAST::Var.new( :name($name), :scope('attribute') )
+                    ),
+                    :name($variable<name>),
+                    :blocktype('declaration'),
+                    :pirflags(':method'),
+                    :node( $/ )
+                );
+                $?CLASS.unshift($accessor);
+            }
+        }
+        else {
+            $/.panic("scope declarator '" ~ $declarator ~ "' not implemented");
+        }
         $?BLOCK.symbol($name, :scope($scope));
     }
     make $past;

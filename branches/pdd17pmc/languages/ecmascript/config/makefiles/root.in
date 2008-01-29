@@ -37,7 +37,7 @@ SOURCES = \
   js.pir \
   src/gen_grammar.pir \
   src/gen_actions.pir \
-#  src/gen_builtins.pir \
+  src/builtin/builtins.pir \
 
 #PMCS = \
 #  jsobject \
@@ -85,10 +85,10 @@ js@exe@: js.pbc
 js.pbc: $(PARROT) $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o js.pbc js.pir
 
-src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg src/parser/grammar-oper.pg
+src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg 
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
 	    --output=src/gen_grammar.pir \
-	    src/parser/grammar.pg src/parser/grammar-oper.pg
+	    src/parser/grammar.pg 
 
 src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 	$(PARROT) $(PARROT_ARGS) $(NQP) --output=src/gen_actions.pir \
@@ -124,7 +124,7 @@ help:
 	@echo ""
 
 test: all
-	$(PERL) -Isrc -I../../src t/harness
+	$(PERL) t/harness t
 
 testclean:
 	$(RM_F) "t/*.js" "t/*.out"

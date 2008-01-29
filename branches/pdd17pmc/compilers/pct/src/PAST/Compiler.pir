@@ -1011,9 +1011,16 @@ node with a 'pasttype' of inline.
 
     .local string result
     result = ''
+    $I0 = index inline, '%t'
+    if $I0 >= 0 goto result_new
     $I0 = index inline, '%r'
-    unless $I0 goto have_result
+    unless $I0 >= 0 goto have_result
     result = ops.'unique'('$P')
+    ops.'result'(result)
+    goto have_result
+  result_new:
+    result = ops.'unique'('$P')
+    ops.'push_pirop'('new', result, "'Undef'")
     ops.'result'(result)
   have_result:
 
@@ -1288,6 +1295,43 @@ blocks to determine the scope.
     ops.'result'(bindpost)
     ops.'push_pirop'('set', name, ops)
     .return (ops)
+.end
+
+
+.sub 'attribute' :method :multi(_, ['PAST::Var'])
+    .param pmc node
+    .param pmc bindpost        :optional
+    .param int has_bindpost    :opt_flag
+
+    .local string name
+    $P0 = get_hll_global ['POST'], 'Ops'
+    name = node.'name'()
+    name = $P0.'escape'(name)
+
+    .local int isdecl
+    isdecl = node.'isdecl'()
+
+    if has_bindpost goto attribute_bind
+
+  attribute_post:
+    if isdecl goto attribute_decl
+    .local pmc ops, fetchop, storeop
+    ops = $P0.'new'('node'=>node)
+    $P0 = get_hll_global ['POST'], 'Op'
+    fetchop = $P0.'new'(ops, 'self', name, 'pirop'=>'getattribute')
+    storeop = $P0.'new'('self', name, ops, 'pirop'=>'setattribute')
+    .return self.'vivify'(node, ops, fetchop, storeop)
+
+  attribute_decl:
+    ops = $P0.'new'('node'=>node)
+    .return (ops)
+
+  attribute_bind:
+    $P0 = get_hll_global ['POST'], 'Op'
+    if isdecl goto attribute_bind_decl
+    .return $P0.'new'('self', name, bindpost, 'pirop'=>'setattribute', 'result'=>bindpost)
+  attribute_bind_decl:
+    .return $P0.'new'('self', name, bindpost, 'pirop'=>'setattribute', 'result'=>bindpost)
 .end
 
 

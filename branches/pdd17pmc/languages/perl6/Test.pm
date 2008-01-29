@@ -17,6 +17,13 @@ our $testing_started;
 
 ## test functions
 
+# Compare numeric values with approximation
+sub approx ($x, $y) {
+    my $epsilon = 0.00001;
+    my $diff = abs($x - $y);
+    ($diff < $epsilon);
+}
+
 sub plan($number_of_tests) {
     $testing_started      = 1;
     $num_of_tests_planned = $number_of_tests;
@@ -47,14 +54,30 @@ multi sub isnt($got, $expected, $desc) {
 
 multi sub isnt($got, $expected) { isnt($got, $expected, ''); }
 
+multi sub is_approx($got, $expected, $desc) {
+    my $test = abs($got - $expected) <= 0.00001;
+    proclaim($test, $desc);
+}
+
+multi sub is_approx($got, $expected) { is_approx($got, $expected, ''); }
+
 multi sub todo($reason, $count) {
     $todo_upto_test_num = $num_of_tests_run + $count;
     $todo_reason = 'TODO ' ~ $reason;
 }
 
+multi sub todo($reason) {
+    $todo_upto_test_num = $num_of_tests_run + 1;
+    $todo_reason = 'TODO ' ~ $reason;
+}
+
 multi sub skip()                { proclaim(1, "skip "); }
 multi sub skip($reason)         { proclaim(1, "skip $reason"); }
-multi sub skip($count, $reason) { skip($reason); }
+multi sub skip($count, $reason) {
+    for 1..$count {
+        proclaim(1, "skip $reason");
+    }
+}
 
 multi sub skip_rest() {
     skip($num_of_tests_planned - $num_of_tests_run, "");

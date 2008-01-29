@@ -8,22 +8,48 @@ js -- A compiler for js ECMAScript-262
 
 =head1 DESCRIPTION
 
-js is a compiler for ECMAScript-262, running on Parrot. Its parser is
-a PGE grammar (a subclass of PGE::Grammar). The compilation is a series of
-tree transformations using TGE: from match tree to abstract syntax tree
-(AST), from AST to opcode syntax tree (OST), and finally from OST to
-bytecode (actually to PIR, at first).
+js is a compiler for ECMAScript-262 (3rd edition) running on Parrot.
 
 =cut
 
 
 #.include 'src/gen_builtins.pir'
 
+## Create a 'List' class; stolen from Rakudo.
+## At some point, this should be refactored/reused.
+##
+.namespace
+
+.sub '__onload' :load :init
+    $P0 = subclass 'ResizablePMCArray', 'List'
+.end
+
+## Methods for the List class
+##
+.namespace ['List']
+
+.sub 'elems' :method
+    $I0 = elements self
+    .return ($I0)
+.end
+
+.sub 'unshift' :method
+    .param pmc x
+    unshift self, x
+.end
+
+.sub 'shift' :method
+    .local pmc x
+    x = shift self
+    .return (x)
+.end
+
+
+
 
 .namespace ['JS::Compiler']
 
 .loadlib 'js_group'
-
 
 .sub 'onload' :load :init :anon
     load_bytecode 'PCT.pbc'
@@ -32,6 +58,12 @@ bytecode (actually to PIR, at first).
     $P0 = get_hll_global 'Protomaker'
     $P1 = get_class ['PCT::HLLCompiler']
     $P0.'new_subclass'($P1, 'JS::Compiler')
+
+    ## Create a list called '@?BLOCK' and store it, so it can
+    ## be used in the parse actions.
+    ##
+    $P0 = new 'List'
+    set_hll_global ['JS';'Grammar';'Actions'], '@?BLOCK', $P0
 .end
 
 
@@ -44,7 +76,6 @@ bytecode (actually to PIR, at first).
 
 .sub 'main' :main
     .param pmc args
-
     $P0 = compreg 'JS'
     $P1 = $P0.'command_line'(args)
 .end
@@ -52,6 +83,11 @@ bytecode (actually to PIR, at first).
 
 .include 'src/gen_grammar.pir'
 .include 'src/gen_actions.pir'
+
+
+.namespace
+
+.include 'src/builtin/builtins.pir'
 
 
 # Local Variables:

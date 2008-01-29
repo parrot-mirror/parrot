@@ -47,11 +47,6 @@ static opcode_t * create_exception(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
-static size_t dest2offset(PARROT_INTERP, ARGIN(const opcode_t *dest))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC * find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
         __attribute__nonnull__(1)
@@ -600,6 +595,8 @@ rethrow_exception(PARROT_INTERP, ARGIN(PMC *exception))
     if (exception->vtable->base_type != enum_class_Exception)
         PANIC(interp, "Illegal rethrow");
     handler = find_exception_handler(interp, exception);
+    if (!handler)
+        PANIC(interp, "No exception handler found");
     address = VTABLE_invoke(interp, handler, exception);
     /* return the address of the handler */
     return address;
@@ -637,37 +634,6 @@ rethrow_c_exception(PARROT_INTERP)
             exception, 2);
     the_exception->msg = VTABLE_get_string_keyed_int(interp, exception, 0);
     longjmp(the_exception->destination, 1);
-}
-
-/*
-
-=item C<static size_t dest2offset>
-
-Translate an absolute bytecode location to an offset used for resuming
-after an exception had occurred.
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-static size_t
-dest2offset(PARROT_INTERP, ARGIN(const opcode_t *dest))
-{
-    size_t offset;
-    /* translate an absolute location in byte_code to an offset
-     * used for resuming after an exception had occurred
-     */
-    switch (interp->run_core) {
-        case PARROT_SWITCH_CORE:
-        case PARROT_SWITCH_JIT_CORE:
-        case PARROT_CGP_CORE:
-        case PARROT_CGP_JIT_CORE:
-            offset = dest - (const opcode_t *)interp->code->prederef.code;
-        default:
-            offset = dest - interp->code->base.data;
-    }
-    return offset;
 }
 
 /*
@@ -735,10 +701,11 @@ handle_exception(PARROT_INTERP)
     /* absolute address of handler */
     const opcode_t * const dest = create_exception(interp);
 
-    /* XXX We don't know that dest will be non-NULL, and it's not legal */
-    /* to pass NULL to dest2offset. */
+    if (!dest)
+        PANIC(interp,"Unable to create exception");
 
-    return dest2offset(interp, dest);
+    /* return the *offset* of the handler */
+    return dest - interp->code->base.data;
 }
 
 /*

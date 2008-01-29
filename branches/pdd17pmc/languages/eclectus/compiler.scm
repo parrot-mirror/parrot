@@ -236,6 +236,34 @@
                    (inline "new %r, 'EclectusCharacter'\\nassign %r, %0\\n"))
     (emit-expr arg)))
 
+; implementation of cons
+(define-primitive (cons arg1 arg2)
+  (list
+    (string->symbol "PAST::Var")
+    '(@ (viviself "EclectusPair")
+        (name "%dummy")
+        (isdecl 1)
+        (scope "lexical"))
+    (list
+      (string->symbol "PAST::Op")
+      '(@ (name "infix:,"))
+      (emit-expr arg1)
+      (emit-expr arg2))))
+
+; implementation of car
+(define-primitive (car arg)
+  (list
+    (string->symbol "PAST::Val")
+    '(@ (value 30)
+        (returns "EclectusFixnum"))))
+
+; implementation of cdr
+(define-primitive (cdr arg)
+  (list
+    (string->symbol "PAST::Val")
+    '(@ (value 31)
+        (returns "EclectusFixnum"))))
+
 (define emit-comparison
   (lambda (builtin arg1 arg2)
     (list
