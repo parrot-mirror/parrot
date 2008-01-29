@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2007, The Perl Foundation.
+# Copyright (C) 2004-2008, The Perl Foundation.
 # $Id$
 
 package Parrot::Pmc2c::PCCMETHOD;
@@ -97,11 +97,6 @@ our $reg_type_info = {
     +(REGNO_STR) => { s => "STRING*",  ss => "STR", at => PARROT_ARG_STRING, },
     +(REGNO_PMC) => { s => "PMC*",     ss => "PMC", at => PARROT_ARG_PMC, },
 };
-
-# Declare the subroutines
-sub trim($);
-sub ltrim($);
-sub rtrim($);
 
 # Perl trim function to remove whitespace from the start and end of the string
 sub trim($) {
@@ -210,10 +205,11 @@ sub rewrite_PCCRETURNs {
     }sx;
 
     croak "return not allowed in pccmethods, use PCCRETURN instead $body"
-        if ( $body and $body =~ m/\breturn\b/ );
+        if $body and $body =~ m/\breturn\b.*?;\z/s;
 
     while ($body) {
-        my $matched = undef;
+        my $matched;
+
         if ($body) {
             $matched = $body->find($signature_re);
             last unless $matched;
@@ -273,7 +269,8 @@ END
 
 sub parse_p_args_string {
     my ($parameters) = @_;
-    my $linear_args = [];
+    my $linear_args  = [];
+
     for my $x ( split /,/, $parameters ) {
         my ( $type, $name, $rest ) = split / /, trim($x), 3;
         if ( !defined($name) ) {
@@ -301,10 +298,11 @@ sub is_named {
 
 sub process_pccmethod_args {
     my ( $linear_args, $arg_type ) = @_;
-    my $n_regs_used_a = [ 0, 0, 0, 0 ];    # INT, FLOAT, STRING, PMC
-    my $args           = [ [], [], [], [] ];    # actual INT, FLOAT, STRING, PMC arg stuctures
-    my $args_indexes_a = [];                    # arg index into the interpreter context
-    my $args_flags_a   = [];                    # arg flags
+
+    my $n_regs_used_a  = [ 0, 0, 0, 0 ];     # INT, FLOAT, STRING, PMC
+    my $args           = [ [], [], [], [] ]; # actual INT, FLOAT, STRING, PMC arg stuctures
+    my $args_indexes_a = [];                 # arg index into the interpreter context
+    my $args_flags_a   = [];                 # arg flags
     my $args_accessors = "";
     my $named_names    = "";
 
