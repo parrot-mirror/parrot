@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 24;
+use Test::More tests => 25;
 
 =head1 NAME
 
@@ -109,11 +109,20 @@ ok($out =~ /^usage/, "check bfc");
 $out = `$parrot languages/bf/bfco.pbc`;
 ok($out =~ /^usage/, "check bfco");
 
+$out = `$parrot --no-gc languages/cardinal/cardinal.pbc -e "say 'hello world';"`;
+ok($out eq "hello world\n", "check cardinal");
+
 $out = `$parrot languages/dotnet/net2pbc.pbc`;
 ok($out =~ /^Usage/, "check dotnet");
 
-$out = `$parrot languages/ecmascript/js.pbc`;
+$filename = 'test.js';
+open $FH, '>', $filename
+        or die "Can't open $filename ($!).\n";
+print $FH "print(\"Hello World from JS\\n\")";
+close $FH;
+$out = `$parrot languages/ecmascript/js.pbc $filename`;
 ok($out eq "Hello World from JS\n", "check ecmascript");
+unlink($filename);
 
 $filename = 'test.HQ9Plus';
 open $FH, '>', $filename
@@ -124,9 +133,6 @@ $out = `$parrot languages/HQ9Plus/HQ9Plus.pbc $filename`;
 ok($out eq "Hello, world!\n", "check HQ9Plus");
 unlink($filename);
 
-TODO: {
-    local $TODO = "Class 'Rational' doesn't exist";
-
 $filename = 'test.l';
 open $FH, '>', $filename
         or die "Can't open $filename ($!).\n";
@@ -135,7 +141,6 @@ close $FH;
 $out = `$parrot languages/lisp/lisp.pbc $filename`;
 ok($out eq "Hello, World!\n", "check lisp");
 unlink($filename);
-}
 
 $filename = 'test.lolcode';
 open $FH, '>', $filename
@@ -162,18 +167,14 @@ ok($out eq q{}, "check ook");
 $out = `$parrot --no-gc languages/perl6/perl6.pbc -e "say 'hello world'"`;
 ok($out eq "hello world\n", "check rakudo");
 
-TODO: {
-    local $TODO = "couldn't find file 'lib/PhemeObjects.pir'";
-
 $filename = 'test.l';
 open $FH, '>', $filename
         or die "Can't open $filename ($!).\n";
-print $FH "( print \"Hello, World!\" )\n";
+print $FH "( write \"Hello, World!\\n\" )\n";
 close $FH;
 $out = `$parrot languages/pheme/pheme.pbc $filename`;
 ok($out eq "Hello, World!\n", "check pheme");
 unlink($filename);
-}
 
 $out = `$parrot languages/plumhead/plumhead.pbc`;
 ok($out =~ /^usage/, "check plumhead");

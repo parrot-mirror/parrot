@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 This program is free software. It is subject to the same license as
 Parrot itself.
 $Id$
@@ -286,8 +286,7 @@ static const opcode_t * pf_debug_unpack(PARROT_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*self);
 
-static INTVAL pf_register_standard_funcs(PARROT_INTERP,
-    ARGMOD(PackFile *pf))
+static void pf_register_standard_funcs(PARROT_INTERP, ARGMOD(PackFile *pf))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pf);
@@ -965,7 +964,7 @@ PackFile_find_segment(PARROT_INTERP, ARGIN_NULLOK(PackFile_Directory *dir),
         for (i=0; i < dir->num_segments; i++) {
             PackFile_Segment *seg = dir->segments[i];
             if (seg) {
-                if (strcmp(seg->name, name) == 0)
+                if (STREQ(seg->name, name))
                     return seg;
                 if (sub_dir && seg->type == PF_DIR_SEG) {
                     seg = PackFile_find_segment(interp, (PackFile_Directory *)seg, name, sub_dir);
@@ -1002,7 +1001,7 @@ PackFile_remove_segment_by_name(SHIM_INTERP, ARGMOD(PackFile_Directory *dir),
 
     for (i=0; i < dir->num_segments; i++) {
         PackFile_Segment * const seg = dir->segments[i];
-        if (strcmp(seg->name, name) == 0) {
+        if (STREQ(seg->name, name)) {
             dir->num_segments--;
             if (i != dir->num_segments) {
                 /* We're not the last segment, so we need to move things */
@@ -1126,6 +1125,7 @@ PackFile_new(PARROT_INTERP, INTVAL is_mapped)
     pf->fetch_op = (packfile_fetch_op_t)NULL;
     pf->fetch_iv = (packfile_fetch_iv_t)NULL;
     pf->fetch_nv = (packfile_fetch_nv_t)NULL;
+
     return pf;
 }
 
@@ -1285,7 +1285,7 @@ default_dump(PARROT_INTERP, ARGIN(const PackFile_Segment *self))
 
 /*
 
-=item C<static INTVAL pf_register_standard_funcs>
+=item C<static void pf_register_standard_funcs>
 
 Called from within C<PackFile_new()> register the standard functions.
 
@@ -1293,7 +1293,7 @@ Called from within C<PackFile_new()> register the standard functions.
 
 */
 
-static INTVAL
+static void
 pf_register_standard_funcs(PARROT_INTERP, ARGMOD(PackFile *pf))
 {
     PackFile_funcs dirf = {
@@ -1350,7 +1350,8 @@ pf_register_standard_funcs(PARROT_INTERP, ARGMOD(PackFile *pf))
     PackFile_funcs_register(interp, pf, PF_CONST_SEG, constf);
     PackFile_funcs_register(interp, pf, PF_BYTEC_SEG, bytef);
     PackFile_funcs_register(interp, pf, PF_DEBUG_SEG, debugf);
-    return 1;
+
+    return;
 }
 
 /*
@@ -1371,7 +1372,7 @@ PackFile_Segment_new_seg(PARROT_INTERP, ARGMOD(PackFile_Directory *dir),
         UINTVAL type, ARGIN(const char *name), int add)
 {
     PackFile * const pf = dir->base.pf;
-    PackFile_Segment_new_func_t f = pf->PackFuncs[type].new_seg;
+    const PackFile_Segment_new_func_t f = pf->PackFuncs[type].new_seg;
     PackFile_Segment * const seg = (f)(interp, pf, name, add);
 
     segment_init(seg, pf, name);
@@ -1940,9 +1941,7 @@ segment_init(ARGOUT(PackFile_Segment *self), ARGIN(PackFile *pf),
     self->size        = 0;
     self->data        = NULL;
     self->id          = 0;
-    self->name        = (char *)mem_sys_allocate(strlen(name) + 1);
-
-    strcpy(self->name, name);
+    self->name        = str_dup(name);
 }
 
 /*
@@ -2589,7 +2588,7 @@ PARROT_API
 void
 Parrot_switch_to_cs_by_nr(PARROT_INTERP, opcode_t seg)
 {
-    PackFile_Directory * const dir = interp->code->base.dir;
+    const PackFile_Directory * const dir = interp->code->base.dir;
     const size_t num_segs = dir->num_segments;
     size_t i;
     opcode_t n;
@@ -3089,7 +3088,7 @@ find_fixup(ARGMOD(PackFile_FixupTable *ft), INTVAL type, ARGIN(const char *name)
     opcode_t i;
     for (i = 0; i < ft->fixup_count; i++) {
         if ((INTVAL)((enum_fixup_t)ft->fixups[i]->type) == type &&
-                (strcmp(ft->fixups[i]->name, name) == 0)) {
+                STREQ(ft->fixups[i]->name, name)) {
             ft->fixups[i]->seg = ft->code;
             return ft->fixups[i];
         }
@@ -3114,7 +3113,7 @@ find_fixup_iter(PARROT_INTERP, ARGIN(PackFile_Segment *seg), ARGIN(void *user_da
 {
     if (seg->type == PF_DIR_SEG) {
         if (PackFile_map_segments(interp, (PackFile_Directory *)seg,
-                find_fixup_iter, user_data))
+                    find_fixup_iter, user_data))
             return 1;
     }
     else if (seg->type == PF_FIXUP_SEG) {
@@ -3185,11 +3184,11 @@ PackFile_ConstTable_clear(PARROT_INTERP, ARGMOD(PackFile_ConstTable *self))
         self->constants[i] = NULL;
     }
 
-    if (self->const_count) {
+    if (self->constants) {
         mem_sys_free(self->constants);
+        self->constants = NULL;
     }
 
-    self->constants = NULL;
     self->const_count = 0;
 
     return;

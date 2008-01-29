@@ -257,11 +257,13 @@ See also L<http://en.wikipedia.org/wiki/Cola_programming_language>.
 
 =item Status
 
-Functioning, all samples working, lacks IO routines
+Somewhat functioning, some samples working, lacks IO routines.
+Not longer actively developed.
+Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.0.11
+0.5.2
 
 =item Location
 
@@ -690,33 +692,15 @@ C<languages/parrot_compiler>
 =back
 
 
-=head2 Perl 5
+
+=head2 Rakudo
 
 =over 4
 
 =item Description
 
-Primarily a repository for some perl5-specific functionality that was
-heavily used in early parrot development. This code is not slated for use
-with the Perl 6 implementation, and core parrot PMCs exist that provide
-much of the functionality here.
-
-This directory may be removed in a future release.
-
-=back
-
-
-=head2 Perl 6 parser/compiler
-
-=over 4
-
-=item Description
-
-This is a Perl 6 parser/compiler, an early version (no version numbers
-yet).  It's still very early, only simple expressions and functions are
-available.  If you're in a hurry to write "real Perl 6" programs,
-you might try looking at Pugs -- L<http://www.pugscode.org>.  Or, you
-can send patches and contributions to the one being built here!
+This is a PCT based implementation of Perl 6.
+Actively developed,
 
 =item Status
 
@@ -729,6 +713,7 @@ Part of languages smoke testing.
 =item Location
 
 C<languages/perl6>
+L<http://rakudo.org>
 
 =back
 
@@ -1161,6 +1146,11 @@ C<languages/BASIC/interpreter> prior to 0.5.1.
 
 The version at L<http://rubyforge.org/projects/cardinal/> has been superseded
 by the one in the repository. (See above)
+
+=head2 Perl 5
+
+From r16836 up to r25231 F<languages/perl5> served as a repository 
+for some Perl 5 - specific functionality that was heavily used in early parrot development.
 
 =head2 Pint
 

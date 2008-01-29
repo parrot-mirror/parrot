@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -54,13 +54,18 @@ static const char* GDB_P(PARROT_INTERP, ARGIN(const char *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static const char* GDB_print_reg(PARROT_INTERP, int t, int n)
+        __attribute__nonnull__(1);
+
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static const char * nextarg(ARGIN(const char *command))
         __attribute__nonnull__(1);
 
 PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
+PARROT_IGNORABLE_RESULT
 static const char * parse_command(
     ARGIN(const char *command),
     ARGOUT(unsigned long *cmdP))
@@ -322,12 +327,16 @@ that can be used as a switch key for fast lookup.
 */
 
 PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
+PARROT_IGNORABLE_RESULT
 static const char *
 parse_command(ARGIN(const char *command), ARGOUT(unsigned long *cmdP))
 {
     int           i;
     unsigned long c = 0;
+
+    /* Skip leading whitespace. */
+    while (isspace(*command))
+        command++;
 
     if (*command == '\0') {
         *cmdP = c;
@@ -1436,6 +1445,7 @@ Escapes C<">, C<\r>, C<\n>, C<\t>, C<\a> and C<\\>.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
+PARROT_MALLOC
 char *
 PDB_escape(ARGIN(const char *string), INTVAL length)
 {
@@ -1577,7 +1587,6 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
         char      buf[256];
         INTVAL    i = 0;
         FLOATVAL  f;
-        PMC      *k;
 
         PARROT_ASSERT(size + 2 < space);
 
@@ -1627,8 +1636,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
             /* If this is a constant dispatch arg to an "infix" op, then show
                the corresponding symbolic op name. */
             if (j == 1 && info->types[j-1] == PARROT_ARG_IC
-                && (strcmp(info->name, "infix") == 0
-                    || strcmp(info->name, "n_infix") == 0)) {
+                && (STREQ(info->name, "infix") || STREQ(info->name, "n_infix"))) {
                 PARROT_ASSERT(size + 20 < space);
 
                 size += sprintf(&dest[size], " [%s]",
@@ -1646,9 +1654,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
             break;
         case PARROT_ARG_SC:
             dest[size++] = '"';
-            if (interp->code->const_table->constants[op[j]]->
-                    u.string->strlen)
-            {
+            if (interp->code->const_table->constants[op[j]]-> u.string->strlen) {
                 char * const escaped =
                     PDB_escape(interp->code->const_table->
                            constants[op[j]]->u.string->strstart,
@@ -1675,6 +1681,9 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
             dest[size++] = ']';
             break;
         case PARROT_ARG_KC:
+            {
+            PMC *k;
+
             dest[size-1] = '[';
             k            = interp->code->const_table->constants[op[j]]->u.key;
             while (k) {
@@ -1737,6 +1746,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
                     dest[size++] = ';';
             }
             dest[size++] = ']';
+            }
             break;
         case PARROT_ARG_KI:
             dest[size - 1] = '[';
@@ -2490,9 +2500,11 @@ void
 PDB_help(PARROT_INTERP, ARGIN(const char *command))
 {
     unsigned long c;
-    const char   *temp = command;
 
-    command = parse_command(command, &c);
+    /* Extract the command after leading whitespace (for error messages). */
+    while (*command && isspace(*command))
+        command++;
+    parse_command(command, &c);
 
     switch (c) {
         case c_disassemble:
@@ -2577,7 +2589,9 @@ This is the same as the information you get when running Parrot with\n\
 the -t option.\n");
             break;
         case c_print:
-            PIO_eprintf(interp, "Print register: e.g. p I2\n");
+            PIO_eprintf(interp, "Print register: e.g. \"p i2\"\n\
+Note that the register type is case-insensitive.  If no digits appear\n\
+after the register type, all registers of that type are printed.\n");
             break;
         case c_info:
             PIO_eprintf(interp,
@@ -2616,7 +2630,7 @@ List of commands:\n\
 Type \"help\" followed by a command name for full documentation.\n\n");
             break;
         default:
-            PIO_eprintf(interp, "Unknown command: \"%s\".", temp);
+            PIO_eprintf(interp, "Unknown command: \"%s\".", command);
             break;
     }
 }
@@ -2705,7 +2719,7 @@ PDB_backtrace(PARROT_INTERP)
 
 /*
 
-=item C<static const char* GDB_P>
+=item C<static const char* GDB_print_reg>
 
 RT#48260: Not yet documented!!!
 
@@ -2716,20 +2730,8 @@ RT#48260: Not yet documented!!!
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static const char*
-GDB_P(PARROT_INTERP, ARGIN(const char *s))
+GDB_print_reg(PARROT_INTERP, int t, int n)
 {
-    int t, n;
-    switch (*s) {
-        case 'I': t = REGNO_INT; break;
-        case 'N': t = REGNO_NUM; break;
-        case 'S': t = REGNO_STR; break;
-        case 'P': t = REGNO_PMC; break;
-        default: return "no such reg";
-    }
-    if (s[1] && isdigit((unsigned char)s[1]))
-        n = atoi(s + 1);
-    else
-        return "no such reg";
 
     if (n >= 0 && n < CONTEXT(interp->ctx)->n_regs_used[t]) {
         switch (t) {
@@ -2748,6 +2750,57 @@ GDB_P(PARROT_INTERP, ARGIN(const char *s))
         }
     }
     return "no such reg";
+}
+
+/*
+
+=item C<static const char* GDB_P>
+
+RT#48260: Not yet documented!!!
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static const char*
+GDB_P(PARROT_INTERP, ARGIN(const char *s))
+{
+    int t;
+    char reg_type;
+
+    /* Skip leading whitespace. */
+    while (isspace(*s))
+        s++;
+
+    reg_type = (unsigned char) toupper((unsigned char)*s);
+    switch (reg_type) {
+        case 'I': t = REGNO_INT; break;
+        case 'N': t = REGNO_NUM; break;
+        case 'S': t = REGNO_STR; break;
+        case 'P': t = REGNO_PMC; break;
+        default: return "Need a register.";
+    }
+    if (! s[1]) {
+        /* Print all registers of this type. */
+        const int max_reg = CONTEXT(interp->ctx)->n_regs_used[t];
+        int n;
+
+        for (n = 0; n < max_reg; n++) {
+            /* this must be done in two chunks because PMC's print directly. */
+            PIO_eprintf(interp, "\n  %c%d = ", reg_type, n);
+            PIO_eprintf(interp, "%s", GDB_print_reg(interp, t, n));
+        }
+        return "";
+    }
+    else if (s[1] && isdigit((unsigned char)s[1])) {
+        const int n = atoi(s + 1);
+        return GDB_print_reg(interp, t, n);
+    }
+    else
+        return "no such reg";
+
 }
 
 /* RT#46141 move these to debugger interpreter

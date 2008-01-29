@@ -89,7 +89,7 @@ Parrot_exec(PARROT_INTERP, ARGIN(opcode_t *pc),
     Parrot_exec_objfile_t * const obj =
         mem_allocate_zeroed_typed(Parrot_exec_objfile_t);
     exec_init(obj);
-    Parrot_exec_rel_addr = (char **)mem_sys_allocate_zeroed(4 * sizeof (char *));
+    Parrot_exec_rel_addr = mem_allocate_n_zeroed_typed(4, char *);
     obj->bytecode_header_size =
         (interp->code->base.file_offset + 4) * sizeof (opcode_t);
     jit_info = parrot_build_asm(interp, code_start, code_end,
@@ -363,7 +363,7 @@ symbol_list_find(ARGIN(const Parrot_exec_objfile_t *obj), ARGIN(const char *symb
     int i;
 
     for (i = 0; i < obj->symbol_count; i++)
-        if (strcmp(symbol, obj->symbol_table[i].symbol) == 0)
+        if (STREQ(symbol, obj->symbol_table[i].symbol))
             return i;
     return -1;
 }

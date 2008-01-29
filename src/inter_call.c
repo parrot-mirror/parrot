@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -251,23 +251,25 @@ Parrot_init_arg_indexes_and_sig_pmc(SHIM_INTERP, ARGIN(parrot_context_t *ctx),
         ++indexes;
     }
 
-    sti->used = 1;
-    sti->i = 0;
-    sti->n = 0;
-    sti->mode = CALL_STATE_OP;
-    sti->ctx = ctx;
-    sti->sig = 0;
+    sti->used  = 1;
+    sti->i     = 0;
+    sti->n     = 0;
+    sti->mode  = CALL_STATE_OP;
+    sti->ctx   = ctx;
+    sti->sig   = 0;
+    sti->slurp = NULL;
 
     if (indexes) {
         ASSERT_SIG_PMC(sig_pmc);
         sti->u.op.signature = sig_pmc;
-        sti->u.op.pc = indexes;
-        sti->n = SIG_ELEMS(sig_pmc);
+        sti->u.op.pc        = indexes;
+        sti->n              = SIG_ELEMS(sig_pmc);
+
         /* initialize sti->sig */
         if (sti->n)
             next_arg_sig(sti);
-
     }
+
     return sti->n > 0;
 }
 
@@ -348,9 +350,8 @@ start_flatten(PARROT_INTERP, ARGMOD(call_state *st), ARGIN(PMC *p_arg))
 {
     if (PARROT_ARG_NAME_ISSET(st->src.sig)) {
         /* src ought to be an hash */
-        if (!VTABLE_does(interp, p_arg, CONST_STRING(interp, "hash"))) {
+        if (!VTABLE_does(interp, p_arg, CONST_STRING(interp, "hash")))
             real_exception(interp, NULL, E_ValueError, "argument doesn't hash");
-        }
 
         /* create key needed to iterate the hash */
         st->key              = pmc_new(interp, enum_class_Key);
@@ -365,10 +366,11 @@ start_flatten(PARROT_INTERP, ARGMOD(call_state *st), ARGIN(PMC *p_arg))
         }
     }
 
-    st->src.mode |= CALL_STATE_FLATTEN;
-    st->src.slurp = p_arg;
+    st->src.mode   |= CALL_STATE_FLATTEN;
+    st->src.slurp   = p_arg;
     st->src.slurp_i = 0;
     st->src.slurp_n = VTABLE_elements(interp, p_arg);
+
     /* the -1 is because the :flat PMC itself doesn't count. */
     st->n_actual_args += st->src.slurp_n - 1;
 }
@@ -442,8 +444,10 @@ fetch_arg_sig(PARROT_INTERP, ARGMOD(call_state *st))
         case PARROT_ARG_PMC:
             if (st->src.u.sig.sig[st->src.i] == 'O')
                 UVal_pmc(st->val) = CONTEXT(interp->ctx)->current_object;
-            else
+            else {
                 UVal_pmc(st->val) = va_arg(*ap, PMC*);
+                dod_register_pmc(interp, UVal_pmc(st->val));
+            }
 
             if (st->src.sig & PARROT_ARG_FLATTEN) {
                 int retval;
@@ -1202,7 +1206,7 @@ PARROT_API
 void
 Parrot_process_args(PARROT_INTERP, ARGMOD(call_state *st), arg_pass_t param_or_result)
 {
-    int has_arg, n_named;
+    int n_named;
     int err_check = 1;
     call_state_item *src, *dest;
 
@@ -1229,6 +1233,7 @@ Parrot_process_args(PARROT_INTERP, ARGMOD(call_state *st), arg_pass_t param_or_r
      */
     for (; dest->i < dest->n; dest->i++) {
         INTVAL idx;
+        int has_arg;
 
         /* check if the next dest arg is :slurpy */
         next_arg_sig(dest);
@@ -1241,8 +1246,7 @@ Parrot_process_args(PARROT_INTERP, ARGMOD(call_state *st), arg_pass_t param_or_r
         has_arg = Parrot_fetch_arg(interp, st);
 
         /* if the src arg is named, we're done here */
-        if (st->name)
-        {
+        if (st->name) {
             /* but first, take care of any :optional arguments */
             while (dest->sig & PARROT_ARG_OPTIONAL) {
                 null_val(st->dest.sig, st);
@@ -1373,8 +1377,10 @@ Parrot_process_args(PARROT_INTERP, ARGMOD(call_state *st), arg_pass_t param_or_r
     }
 
     check_named(interp, st);
+
     /* we may or may not have registered this pmc */
-    dod_unregister_pmc(interp, dest->slurp);
+    if (dest->slurp)
+        dod_unregister_pmc(interp, dest->slurp);
 }
 
 /*
@@ -1448,29 +1454,33 @@ parrot_pass_args(PARROT_INTERP,
         arg_pass_t param_or_result)
 {
     call_state st;
-    PMC* src_signature;
-    PMC* dest_signature;
+    PMC *src_signature, *dest_signature;
 
     if (param_or_result == PARROT_PASS_PARAMS) {
-        src_signature = interp->args_signature;
-        dest_signature = interp->params_signature;
-        interp->args_signature = NULL;
+        src_signature            = interp->args_signature;
+        dest_signature           = interp->params_signature;
+        interp->args_signature   = NULL;
         interp->params_signature = NULL;
     }
     else /* (param_or_result == PARROT_PASS_RESULTS) */ {
-        src_signature = interp->returns_signature;
-        dest_signature = dest_ctx->results_signature;
-        interp->returns_signature = NULL;
+        src_signature               = interp->returns_signature;
+        dest_signature              = dest_ctx->results_signature;
+        interp->returns_signature   = NULL;
         dest_ctx->results_signature = NULL;
     }
 
-    Parrot_init_arg_indexes_and_sig_pmc(interp, src_ctx, src_indexes, src_signature, &st.src);
-    Parrot_init_arg_indexes_and_sig_pmc(interp, dest_ctx, dest_indexes, dest_signature, &st.dest);
+    Parrot_init_arg_indexes_and_sig_pmc(interp, src_ctx, src_indexes,
+        src_signature, &st.src);
+
+    Parrot_init_arg_indexes_and_sig_pmc(interp, dest_ctx, dest_indexes,
+        dest_signature, &st.dest);
+
     Parrot_process_args(interp, &st, param_or_result);
 
     /* If we created a slurpy, we had to DOD register it so it did not get
      * collected during arg processing; we'll now unregister it. */
-    dod_unregister_pmc(interp, st.dest.slurp);
+    if (st.dest.slurp)
+        dod_unregister_pmc(interp, st.dest.slurp);
 }
 
 /*
@@ -1553,8 +1563,11 @@ set_retval(PARROT_INTERP, int sig_ret, ARGIN(parrot_context_t *ctx))
             if (set_retval_util(interp, "S", ctx, &st))
                 return UVal_str(st.val);
         case 'P':
-            if (set_retval_util(interp, "P", ctx, &st))
-                return UVal_pmc(st.val);
+            if (set_retval_util(interp, "P", ctx, &st)) {
+                PMC *retval = UVal_pmc(st.val);
+                dod_unregister_pmc(interp, retval);
+                return (void *)retval;
+            }
         default:
             return NULL;
     }
@@ -1777,9 +1790,9 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     opcode_t arg_indexes[PCC_ARG_MAX];
     opcode_t result_indexes[PCC_ARG_MAX];
 
-    PMC* args_sig    = pmc_new(interp, enum_class_FixedIntegerArray);
-    PMC* results_sig = pmc_new(interp, enum_class_FixedIntegerArray);
-    PMC* ret_cont    = new_ret_continuation_pmc(interp, NULL);
+    PMC* const args_sig    = pmc_new(interp, enum_class_FixedIntegerArray);
+    PMC* const results_sig = pmc_new(interp, enum_class_FixedIntegerArray);
+    PMC* const ret_cont    = new_ret_continuation_pmc(interp, NULL);
 
     parrot_context_t *ctx;
     PMC              *pccinvoke_meth;
