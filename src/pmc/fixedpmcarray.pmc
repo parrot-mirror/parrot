@@ -38,7 +38,7 @@ Sort this array, optionally using the provided cmp_func
 
 */
 
-    METHOD void sort(PMC *cmp_func) {
+    METHOD void sort(PMC *cmp_func :optional) {
         UINTVAL n = (UINTVAL) PMC_int_val(SELF);
 
         if (n > 1)
