@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2004-2007, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -475,7 +475,7 @@ pmclass BigInt {
 
 =over 4
 
-=item C<PCCMETHOD STRING *version()>
+=item C<METHOD version()>
 
 Return GMP version string "x.y.z".
 
@@ -483,7 +483,7 @@ Return GMP version string "x.y.z".
 
 */
 
-    PCCMETHOD version() {
+    METHOD version() {
         STRING *version;
 #ifdef PARROT_HAS_GMP
         version = string_from_cstring(INTERP, gmp_version, 0);

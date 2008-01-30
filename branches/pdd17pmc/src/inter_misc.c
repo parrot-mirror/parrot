@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -23,8 +23,7 @@ NCI function setup, compiler registration, C<interpinfo>, and C<sysinfo> opcodes
 #include "inter_misc.str"
 #include "../compilers/imcc/imc.h"
 
-/* XXX Put me somewhere else */
-void Parrot_NCI_nci_make_raw_nci(PARROT_INTERP, PMC *method, void *func);
+void Parrot_NCI_make_raw_nci_actual(PARROT_INTERP, PMC *, void *);
 
 /* HEADERIZER HFILE: include/parrot/interpreter.h */
 
@@ -79,7 +78,7 @@ register_raw_nci_method_in_ns(PARROT_INTERP, const int type, ARGIN(void *func),
         NULL, PObj_constant_FLAG|PObj_external_FLAG);
 
     /* setup call func */
-    Parrot_NCI_nci_make_raw_nci(interp, method, func);
+    Parrot_NCI_make_raw_nci_actual(interp, method, func);
 
     /* insert it into namespace */
     VTABLE_set_pmc_keyed_str(interp, interp->vtables[type]->_namespace,

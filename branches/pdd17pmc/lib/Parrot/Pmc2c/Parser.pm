@@ -163,20 +163,24 @@ sub find_methods {
         (?:(ATTR|VTABLE|(PCC)?METHOD)\s+)?
 
         # return type (no return type for PCCMETHOD)
-        (?(4) | (\w+\s*?\**))
+        ((?:\w+\s*?\**\s*)?\w+) # method name
         \s*
-        (\w+)                 # method name
+        \( ([^\(]*) \)          # parameters
         \s*
-        \( ([^\(]*) \)        # parameters
-        \s*
-        ((?::(\w+)\s*)*)      # method attrs
+        ((?::(\w+)\s*)*)        # method attrs
         \s*
     }sx;
 
     while ( $pmcbody =~ s/($signature_re)// ) {
-        my ( $decorators, $marker, $pcc, $return_type, $methodname, $parameters, $attrs ) =
-            ( $2, $3, $4, $5, $6, $7, parse_method_attrs($8) );
+        my ( $decorators, $marker, $pcc, $methodname, $parameters, $attrs ) =
+            ( $2, $3, $4, $5, $6, parse_method_attrs($7) );
         $lineno += count_newlines($1);
+
+        my $return_type = '';
+
+        if ($methodname =~ /(.*\s+\*?)(\w+)/) {
+            ($return_type, $methodname) = ($1, $2);
+        }
 
         ( my $methodblock, $pmcbody ) = extract_balanced($pmcbody);
 
@@ -208,7 +212,7 @@ sub find_methods {
         );
 
         # PCCMETHOD needs FixedIntegerArray header
-        if ( $marker and $marker =~ /PCCMETHOD/ ) {
+        if ( $marker and $marker =~ /METHOD/ ) {
             Parrot::Pmc2c::PCCMETHOD::rewrite_pccmethod( $method, $pmc );
             $pmc->set_flag('need_fia_header');
         }

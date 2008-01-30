@@ -509,7 +509,7 @@ Used to unarchive the string.
 
 /*
 
-=item C<PCCMETHOD void fill(INTVAL fill)>
+=item C<METHOD fill(INTVAL fill)>
 
 Sets all of the entires to true if fill is a true value, otherwise
 sets them all to false.
@@ -518,7 +518,7 @@ sets them all to false.
 
 */
 
-    PCCMETHOD fill(INTVAL fill) {
+    METHOD fill(INTVAL fill) {
         Parrot_UInt1 *sd = PMC_data_typed(SELF, Parrot_UInt1 *);
         INTVAL        j  = PMC_int_val(SELF) / BITS_PER_CHAR + 1;
 

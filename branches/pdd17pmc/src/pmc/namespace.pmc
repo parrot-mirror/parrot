@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2007, The Perl Foundation.
+Copyright (C) 2005-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -534,7 +534,7 @@ Return the name of this namespace part.
 
 /*
 
-=item C<PCCMETHOD add_namespace(STRING *name, PMC *namespace)>
+=item C<METHOD add_namespace(STRING *name, PMC *namespace)>
 
 Stores the given namespace under this namespace, with the given name.  Throws
 an invalid type exception if C<namespace> is not a NameSpace PMC or subclass.
@@ -543,7 +543,7 @@ an invalid type exception if C<namespace> is not a NameSpace PMC or subclass.
 
 */
 
-    PCCMETHOD add_namespace(STRING *name, PMC *_namespace) {
+    METHOD add_namespace(STRING *name, PMC *_namespace) {
         STRING * const s_ns = CONST_STRING(INTERP, "NameSpace");
 
         if (!VTABLE_isa(INTERP, _namespace, s_ns))
@@ -558,7 +558,7 @@ an invalid type exception if C<namespace> is not a NameSpace PMC or subclass.
 
 /*
 
-=item C<PCCMETHOD add_sub(STRING *name, PMC *sub)>
+=item C<METHOD add_sub(STRING *name, PMC *sub)>
 
 Stores the given sub under this namespace, with the given name.  Throws an
 invalid type exception if C<sub> is not a Sub PMC or subclass.
@@ -567,7 +567,7 @@ invalid type exception if C<sub> is not a Sub PMC or subclass.
 
 */
 
-    PCCMETHOD add_sub(STRING *name, PMC *sub) {
+    METHOD add_sub(STRING *name, PMC *sub) {
         STRING * const s_sub = CONST_STRING(INTERP, "Sub");
 
         if (!VTABLE_isa(INTERP, sub, s_sub))
@@ -581,7 +581,7 @@ invalid type exception if C<sub> is not a Sub PMC or subclass.
 
 /*
 
-=item C<PCCMETHOD add_var(STRING *name, PMC *var)>
+=item C<METHOD add_var(STRING *name, PMC *var)>
 
 Stores the given sub under this namespace, with the given name.
 
@@ -589,13 +589,13 @@ Stores the given sub under this namespace, with the given name.
 
 */
 
-    PCCMETHOD add_var(STRING *name, PMC *var) {
+    METHOD add_var(STRING *name, PMC *var) {
         VTABLE_set_pmc_keyed_str(INTERP, SELF, name, var);
     }
 
 /*
 
-=item C<PCCMETHOD get_name()>
+=item C<METHOD get_name()>
 
 Returns the name of the namespace as an array of strings.
 
@@ -606,7 +606,7 @@ Returns the name of the namespace as an array of strings.
 
 */
 
-    PCCMETHOD get_name() {
+    METHOD get_name() {
         PMC * const ar = pmc_new(INTERP, enum_class_ResizableStringArray);
         PMC *ns        = SELF;
 
@@ -623,7 +623,7 @@ Returns the name of the namespace as an array of strings.
     }
 /*
 
-=item C<PCCMETHOD find_namespace(STRING *name)>
+=item C<METHOD find_namespace(STRING *name)>
 
 Return the namespace with the given name.
 
@@ -631,7 +631,7 @@ Return the namespace with the given name.
 
 */
 
-    PCCMETHOD find_namespace(STRING *key) {
+    METHOD find_namespace(STRING *key) {
         STRING * const s_ns = CONST_STRING(INTERP, "NameSpace");
         PMC    * const ns   = (PMC *)parrot_hash_get(INTERP, NS_HASH(SELF), key);
 
@@ -647,7 +647,7 @@ Return the namespace with the given name.
 
 /*
 
-=item C<PCCMETHOD find_sub(STRING *name)>
+=item C<METHOD find_sub(STRING *name)>
 
 Return the Sub PMC with the given name.
 
@@ -655,7 +655,7 @@ Return the Sub PMC with the given name.
 
 */
 
-    PCCMETHOD find_sub(STRING *key) {
+    METHOD find_sub(STRING *key) {
         STRING * const s_sub = CONST_STRING(INTERP, "Sub");
         PMC    * const sub   = (PMC *)parrot_hash_get(INTERP, NS_HASH(SELF), key);
 
@@ -671,7 +671,7 @@ Return the Sub PMC with the given name.
 
 /*
 
-=item C<PCCMETHOD find_var(STRING *name)>
+=item C<METHOD find_var(STRING *name)>
 
 Return the PMC with the given name.
 
@@ -679,7 +679,7 @@ Return the PMC with the given name.
 
 */
 
-    PCCMETHOD find_var(STRING *key) {
+    METHOD find_var(STRING *key) {
         PMC * const val = (PMC *)parrot_hash_get(INTERP, NS_HASH(SELF), key);
 
         if (!val)
@@ -690,7 +690,7 @@ Return the PMC with the given name.
 
 /*
 
-=item C<PCCMETHOD del_namespace(STRING *name)>
+=item C<METHOD del_namespace(STRING *name)>
 
 Deletes the contained NameSpace PMC with the given name.  Throws an invalid
 type exception if the item to delete is not a NameSpace PMC or subclass, and
@@ -700,7 +700,7 @@ does not delete the PMC.
 
 */
 
-    PCCMETHOD del_namespace(STRING *name) {
+    METHOD del_namespace(STRING *name) {
         Hash   * const hash = NS_HASH(SELF);
         PMC    * const ns   = (PMC *)parrot_hash_get(INTERP, hash, name);
         STRING * const s_ns = CONST_STRING(INTERP, "NameSpace");
@@ -719,7 +719,7 @@ does not delete the PMC.
 
 /*
 
-=item C<PCCMETHOD del_sub(STRING *name)>
+=item C<METHOD del_sub(STRING *name)>
 
 Deletes the contained Sub PMC with the given name.  Throws an invalid type
 exception if the item to delete is not a Sub PMC or subclass, and does not
@@ -729,7 +729,7 @@ delete the PMC.
 
 */
 
-    PCCMETHOD del_sub(STRING *name) {
+    METHOD del_sub(STRING *name) {
         Hash   * const hash  = NS_HASH(SELF);
         PMC    * const sub   = (PMC *)parrot_hash_get(INTERP, hash, name);
         STRING * const s_sub = CONST_STRING(INTERP, "Sub");
@@ -748,7 +748,7 @@ delete the PMC.
 
 /*
 
-=item C<PCCMETHOD del_var(STRING *name)>
+=item C<METHOD del_var(STRING *name)>
 
 Deletes the contained variable-like PMC with the given name.
 
@@ -756,13 +756,13 @@ Deletes the contained variable-like PMC with the given name.
 
 */
 
-    PCCMETHOD del_var(STRING *name) {
+    METHOD del_var(STRING *name) {
         parrot_hash_delete(INTERP, NS_HASH(SELF), name);
     }
 
 /*
 
-=item C<PCCMETHOD get_sym(STRING *name)>
+=item C<METHOD get_sym(STRING *name)>
 
 Return the symbol (var or sub) with the given name. This can be used
 to retrieve symbols, if a NameSpace with the same name exists.
@@ -771,7 +771,7 @@ to retrieve symbols, if a NameSpace with the same name exists.
 
 */
 
-    PCCMETHOD get_sym(STRING *key) {
+    METHOD get_sym(STRING *key) {
         PMC *ns = (PMC *)parrot_hash_get(INTERP, NS_HASH(SELF), key);
 
         if (!ns)
@@ -790,7 +790,7 @@ to retrieve symbols, if a NameSpace with the same name exists.
 
 /*
 
-=item C<PCCMETHOD export_to(PMC *dest, PMC *what)>
+=item C<METHOD export_to(PMC *dest, PMC *what)>
 
 Export items from this NameSpace into the C<dest> NameSpace. The items to
 export are named in C<what>, which may be an array of strings, a hash, or null.
@@ -808,7 +808,7 @@ NOTE: exporting 'default' set of items is not yet implemented.
 
 */
 
-    PCCMETHOD export_to(PMC *dest, PMC *what) {
+    METHOD export_to(PMC *dest, PMC *what) {
         STRING * const s_hash  = CONST_STRING(interp, "hash");
         STRING * const s_array = CONST_STRING(interp, "array");
 
@@ -897,7 +897,7 @@ NOTE: exporting 'default' set of items is not yet implemented.
 
 /*
 
-=item C<PCCMETHOD get_parent()>
+=item C<METHOD get_parent()>
 
 Return the parent NameSpace or PMCNULL, if none.
 
@@ -905,7 +905,7 @@ Return the parent NameSpace or PMCNULL, if none.
 
 */
 
-    PCCMETHOD get_parent() {
+    METHOD get_parent() {
         PMC *parent = PMCNULL;
         if (PMC_pmc_val(SELF))
             parent = PMC_pmc_val(SELF);
@@ -914,7 +914,7 @@ Return the parent NameSpace or PMCNULL, if none.
 
 /*
 
-=item C<PCCMETHOD get_class()>
+=item C<METHOD get_class()>
 
 Returns the class or role PMC that is associated with this namespace.
 
@@ -922,7 +922,7 @@ Returns the class or role PMC that is associated with this namespace.
 
 */
 
-    PCCMETHOD get_class() {
+    METHOD get_class() {
         Parrot_NSInfo * const nsinfo = PARROT_NSINFO(SELF);
         PMC           *ret_class     = nsinfo->_class;
 
@@ -934,7 +934,7 @@ Returns the class or role PMC that is associated with this namespace.
 
 /*
 
-=item C<PCCMETHOD set_class(PMC *class_or_role)>
+=item C<METHOD set_class(PMC *class_or_role)>
 
 Sets the class or role PMC that is associated with this namespace.
 
@@ -942,7 +942,7 @@ Sets the class or role PMC that is associated with this namespace.
 
 */
 
-    PCCMETHOD set_class(PMC *class_or_role) {
+    METHOD set_class(PMC *class_or_role) {
         Parrot_NSInfo * const nsinfo = PARROT_NSINFO(SELF);
 
         nsinfo->_class = class_or_role;
@@ -950,7 +950,7 @@ Sets the class or role PMC that is associated with this namespace.
 
 /*
 
-=item C<PCCMETHOD get_associated_methods()>
+=item C<METHOD get_associated_methods()>
 
 Gets the Hash of methods associated with this namespace and removes it from
 the namespace.
@@ -959,7 +959,7 @@ the namespace.
 
 */
 
-    PCCMETHOD get_associated_methods() {
+    METHOD get_associated_methods() {
         Parrot_NSInfo * const nsinfo      = PARROT_NSINFO(SELF);
         PMC           * const ret_methods = nsinfo->methods;
 
@@ -970,7 +970,7 @@ the namespace.
 
 /*
 
-=item C<PCCMETHOD get_associated_vtable_methods()>
+=item C<METHOD get_associated_vtable_methods()>
 
 Gets the Hash of vtable methods associated with this namespace and removes it
 from the namespace.
@@ -979,7 +979,7 @@ from the namespace.
 
 */
 
-    PCCMETHOD get_associated_vtable_methods() {
+    METHOD get_associated_vtable_methods() {
         Parrot_NSInfo * const nsinfo      = PARROT_NSINFO(SELF);
         PMC           * const ret_methods = nsinfo->vtable;
 

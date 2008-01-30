@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -358,7 +358,7 @@ Called after the scheduler has been thawed.
 
 /*
 
-=item C<PCCMETHOD add_handler(PMC *handler)>
+=item C<METHOD add_handler(PMC *handler)>
 
 Add a handler to the scheduler.
 
@@ -366,14 +366,14 @@ Add a handler to the scheduler.
 
 */
 
-    PCCMETHOD add_handler(PMC *handler) {
+    METHOD add_handler(PMC *handler) {
         Parrot_Scheduler * core_struct = PARROT_SCHEDULER(SELF);
         VTABLE_push_pmc(INTERP, core_struct->handlers, handler);
     }
 
 /*
 
-=item C<PCCMETHOD find_handler(PMC *task)>
+=item C<METHOD find_handler(PMC *task)>
 
 Search for a handler for the given task. If no handler is found, return
 PMCNULL.
@@ -382,7 +382,7 @@ PMCNULL.
 
 */
 
-    PCCMETHOD find_handler(PMC *task) {
+    METHOD find_handler(PMC *task) {
         Parrot_Scheduler * core_struct = PARROT_SCHEDULER(SELF);
         INTVAL elements = VTABLE_elements(INTERP, core_struct->handlers);
         INTVAL counter;

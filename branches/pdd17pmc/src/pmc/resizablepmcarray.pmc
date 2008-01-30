@@ -610,7 +610,7 @@ The C<==> operation. Compares two array to hold equal elements.
 
 /*
 
-=item METHOD void append(PMC *other)
+=item METHOD append(PMC *other)
 
 Append the other array to this array.
 
@@ -618,13 +618,13 @@ Append the other array to this array.
 
 */
 
-    METHOD void append(PMC *other) {
+    METHOD append(PMC *other) {
         INTVAL i;
         INTVAL n = VTABLE_elements(INTERP, SELF);
         INTVAL m = VTABLE_elements(INTERP, other);
 
         if (!m)
-            return;
+            PCCRETURN(void);
 
         /* pre-size it */
         VTABLE_set_integer_native(INTERP, SELF, n + m);

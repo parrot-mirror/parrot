@@ -105,22 +105,27 @@ sub signature {
     my ($types, $vars)   = args_from_parameter_list( $self->parameters );
     my $return_type      = $self->return_type;
     my $return_type_char = $self->trans($return_type);
-    my $sig              = $self->trans($return_type) . join '', map { $self->trans($_) } @{$types};
+    my $sig              = $self->trans($return_type) .
+                           join '', map { $self->trans($_) } @{$types};
     my $return_prefix    = '';
     my $method_suffix    = '';
 
     if ( $return_type ne 'void' ) {
         $return_prefix = "return ($return_type)";
-        if ( $return_type !~ /\*/ ) {    # PMC* and STRING* don't need a special suffix
+
+        # PMC* and STRING* don't need a special suffix
+        if ( $return_type !~ /\*/ ) {
             $method_suffix = "_ret" . lc substr $return_type, 0, 1;
-            $method_suffix =~ s/_retu/_reti/;    #change UINTVAl type to reti
+
+            # change UINTVAl type to reti
+            $method_suffix =~ s/_retu/_reti/;
         }
     }
 
     my $null_return = '';
-    $null_return = "return ($return_type) NULL;" if ( $return_type_char =~ /P|I|S|V/ );
-    $null_return = 'return (FLOATVAL) 0;'        if ( $return_type_char =~ /N/ );
-    $null_return = 'return;'                     if ( $return_type_char =~ /v/ );
+    $null_return = "return ($return_type) NULL;" if $return_type_char =~ /P|I|S|V/;
+    $null_return = 'return (FLOATVAL) 0;'        if $return_type_char =~ /N/;
+    $null_return = 'return;'                     if $return_type_char =~ /v/;
 
     return ( $return_prefix, $method_suffix, $args, $sig, $return_type_char, $null_return );
 }

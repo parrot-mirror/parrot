@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -411,7 +411,7 @@ Experimental: return caller PMC or PMCNULL if none.
 
 */
 
-    PCCMETHOD caller() {
+    METHOD caller() {
         Parrot_cont *cc     = PMC_cont(SELF);
         PMC         *caller = cc->to_ctx->current_sub;
 
@@ -431,7 +431,7 @@ Experimental: return continuation PMC of this Continuation or PMCNULL if none.
 
 */
 
-    PCCMETHOD continuation() {
+    METHOD continuation() {
         Parrot_cont *cc   = PMC_cont(SELF);
         PMC         *cont = cc->to_ctx->current_cont;
 

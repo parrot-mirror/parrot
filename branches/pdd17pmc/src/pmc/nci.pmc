@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -30,11 +30,16 @@ typedef struct Parrot_NCI {
 /* Macro to access underlying structure of an NCI PMC. */
 #define PARROT_NCI(o) ((Parrot_NCI *) PMC_data(o))
 
+void Parrot_NCI_make_raw_nci_actual(PARROT_INTERP, PMC *SELF, void *func) {
+    PMC_struct_val(SELF) = (void *)func;
+    PObj_flag_SET(private2, SELF);
+}
+
 pmclass NCI need_ext {
 
 /*
 
-=item C<METHOD PMC *get_multisig()>
+=item C<METHOD get_multisig()>
 
 Return the MMD signature PMC, if any or a Null PMC.
 
@@ -42,13 +47,14 @@ Return the MMD signature PMC, if any or a Null PMC.
 
 */
 
-    METHOD PMC *get_multisig() {
-        return PMC_pmc_val(SELF) ? PMC_pmc_val(SELF) : PMCNULL;
+    METHOD get_multisig() {
+        PMC *sig = PMC_pmc_val(SELF) ? PMC_pmc_val(SELF) : PMCNULL;
+        PCCRETURN(PMC *sig);
     }
 
 /*
 
-=item C<METHOD PMC *set_raw_nci_ptr(void *func)>
+=item C<METHOD set_raw_nci_ptr(void *func)>
 
 Sets the specified function pointer and raw flag.
 
@@ -56,9 +62,8 @@ Sets the specified function pointer and raw flag.
 
 */
 
-    METHOD void make_raw_nci(void *func) {
-        PMC_struct_val(SELF) = func;
-        PObj_flag_SET(private2, SELF);
+    METHOD make_raw_nci(PMC *func) {
+        Parrot_NCI_make_raw_nci_actual(interp, SELF, (void *)func);
     }
 
 /*
@@ -254,23 +259,26 @@ Returns the boolean value of the pointer.
 
 /*
 
-=item C<METHOD INTVAL arity()>
+=item C<METHOD arity()>
 
 Return the arity of the NCI (the number of arugments).
 
 =cut
 
 */
-    METHOD INTVAL arity() {
+    METHOD arity() {
         Parrot_NCI * const nci_info = PARROT_NCI(SELF);
-        if (nci_info && nci_info->func)
-            return nci_info->arity;
+
+        if (nci_info && nci_info->func) {
+            INTVAL arity = nci_info->arity;
+            PCCRETURN(INTVAL arity);
+        }
         else
             real_exception(INTERP, NULL, INVALID_OPERATION,
                     "You cannot get the arity of an undefined NCI.");
-        return 0; /* Unreachable; avoids warning. */
-    }
 
+        PCCRETURN(INTVAL 0);
+    }
 }
 
 /*

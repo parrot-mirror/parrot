@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2007, The Perl Foundation.
+Copyright (C) 2007-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -175,7 +175,7 @@ Mark referenced strings and PMCs in the structure as live.
 
 =over 4
 
-=item C<PCCMETHOD
+=item C<METHOD
 source(PMC *src :optional, int got_src :opt_flag)>
 
 Accessor for the source NameSpace object (C<ns_src>.)
@@ -186,7 +186,7 @@ Throws an exception if a non-NameSpace PMC is passed.
 
 */
 
-    PCCMETHOD source(PMC *src :optional, int got_src :opt_flag) {
+    METHOD source(PMC *src :optional, int got_src :opt_flag) {
         Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
 
         if (got_src) {
@@ -205,7 +205,7 @@ Throws an exception if a non-NameSpace PMC is passed.
 
 /*
 
-=item C<PCCMETHOD
+=item C<METHOD
     destination(PMC *dest :optional, int got_dest :opt_flag)>
 
 Accessor for the destination NameSpace object (C<ns_dest>.)
@@ -216,7 +216,7 @@ Throws an exception if a non-NameSpace PMC is passed.
 
 */
 
-    PCCMETHOD destination(PMC *dest :optional, int got_dest :opt_flag) {
+    METHOD destination(PMC *dest :optional, int got_dest :opt_flag) {
         Parrot_Exporter *exp = PARROT_EXPORTER(SELF);
 
         if (got_dest) {
@@ -235,7 +235,7 @@ Throws an exception if a non-NameSpace PMC is passed.
 
 /*
 
-=item C<PCCMETHOD
+=item C<METHOD
     globals(PMC *glb :optional, int got_glb :opt_flag)>
 
 Accessor for the globals to export (C<globals>.)
@@ -251,7 +251,7 @@ Throws an exception if an unknown PMC type is passed.
 
 */
 
-    PCCMETHOD globals(PMC *glb :optional, int got_glb :opt_flag) {
+    METHOD globals(PMC *glb :optional, int got_glb :opt_flag) {
         Parrot_Exporter *exp    = PARROT_EXPORTER(SELF);
         STRING          *s_str  = CONST_STRING(interp, "String");
         STRING          *s_arr  = CONST_STRING(interp, "array");
@@ -312,7 +312,7 @@ Throws an exception if an unknown PMC type is passed.
 
 /*
 
-=item C<PCCMETHOD
+=item C<METHOD
     import(PMC *dest    :optional :named["destination"], int got_dest :opt_flag,
         PMC    *src     :optional :named["source"],      int got_src  :opt_flag,
         PMC    *globals :optional :named["globals"], int got_globals  :opt_flag)>
@@ -328,7 +328,7 @@ Throws an exception upon error.
 
 */
 
-    PCCMETHOD import(PMC *dest :optional :named["destination"], int got_dest :opt_flag,
+    METHOD import(PMC *dest :optional :named["destination"], int got_dest :opt_flag,
             PMC *src     :optional :named["source"],  int got_src     :opt_flag,
             PMC *globals :optional :named["globals"], int got_globals :opt_flag) {
 

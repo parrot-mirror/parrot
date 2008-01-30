@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2003-2007, The Perl Foundation.
+Copyright (C) 2003-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -1579,7 +1579,9 @@ mmd_sort_candidates(PARROT_INTERP, ARGIN(PMC *arg_tuple), ARGIN(PMC *cl))
     INTVAL *helper;
     PMC **data;
 
-    const INTVAL n = VTABLE_elements(interp, cl);
+    const INTVAL n    = VTABLE_elements(interp, cl);
+    PMC * const  sort = pmc_new(interp, enum_class_FixedIntegerArray);
+
     /*
      * create a helper structure:
      * bits 0..15  = distance
@@ -1587,22 +1589,22 @@ mmd_sort_candidates(PARROT_INTERP, ARGIN(PMC *arg_tuple), ARGIN(PMC *cl))
      *
      * RT#45955 use half of available INTVAL bits
      */
-    PMC * const sort = pmc_new(interp, enum_class_FixedIntegerArray);
+
     VTABLE_set_integer_native(interp, sort, n);
     helper = (INTVAL *)PMC_data(sort);
+
     for (i = 0; i < n; ++i) {
-        PMC * const pmc = VTABLE_get_pmc_keyed_int(interp, cl, i);
-        const INTVAL d = mmd_distance(interp, pmc, arg_tuple);
-        helper[i] = i << 16 | (d & 0xffff);
+        PMC * const  pmc = VTABLE_get_pmc_keyed_int(interp, cl, i);
+        const INTVAL d   = mmd_distance(interp, pmc, arg_tuple);
+        helper[i]        = i << 16 | (d & 0xffff);
     }
-    /*
-     * need an NCI function pointer
-     */
-    nci = pmc_new(interp, enum_class_NCI);
+
+    /* need an NCI function pointer */
+    nci                 = pmc_new(interp, enum_class_NCI);
     PMC_struct_val(nci) = F2DPTR(distance_cmp);
 
     /* sort it */
-    Parrot_PCCINVOKE(interp, sort, CONST_STRING(interp, "sort"), "P", nci);
+    Parrot_quicksort(interp, helper, n, nci);
 
     /*
      * now helper has a sorted list of indices in the upper 16 bits
@@ -1612,19 +1614,18 @@ mmd_sort_candidates(PARROT_INTERP, ARGIN(PMC *arg_tuple), ARGIN(PMC *cl))
 
     for (i = 0; i < n; ++i) {
         const INTVAL idx = helper[i] >> 16;
-        /*
-         * if the distance is big stop
-         */
+
+        /* if the distance is big stop */
         if ((helper[i] & 0xffff) == MMD_BIG_DISTANCE) {
             PMC_int_val(cl) = i;
             break;
         }
+
         helper[i] = (INTVAL)data[idx];
     }
-    /*
-     * use helper structure
-     */
-    PMC_data(cl) = helper;
+
+    /* use helper structure */
+    PMC_data(cl)   = helper;
     PMC_data(sort) = data;
 }
 
