@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -430,7 +430,7 @@ Delete the element corresponding to C<key> in the hash component.
 
 */
 
-    PCCMETHOD get_array() {
+    METHOD get_array() {
         PMC *capt_array;
         PMC *capt = SELF;
         /* XXX:  This workaround is for when we get here as
@@ -446,7 +446,7 @@ Delete the element corresponding to C<key> in the hash component.
         PCCRETURN(PMC *capt_array);
     }
 
-    PCCMETHOD get_hash() {
+    METHOD get_hash() {
         PMC *capt_hash;
         PMC *capt = SELF;
         /* XXX:  This workaround is for when we get here as

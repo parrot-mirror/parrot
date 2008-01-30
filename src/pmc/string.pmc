@@ -665,7 +665,7 @@ Replace every occurrence of C<orig> with C<_new>.
 
 */
 
-    PCCMETHOD replace(STRING *orig, STRING *_new) {
+    METHOD replace(STRING *orig, STRING *_new) {
         const INTVAL   old_len = string_length(INTERP, orig);
         const INTVAL   new_len = string_length(INTERP, _new);
         STRING * const s       = VTABLE_get_string(INTERP, SELF);
@@ -695,7 +695,7 @@ TODO Currently overflow to BigInt is B<not> handled nor detected.
 
 */
 
-    PCCMETHOD to_int(INTVAL base) {
+    METHOD to_int(INTVAL base) {
         PMC *result = pmc_new(INTERP, Parrot_get_ctx_HLL_type(interp,
                         enum_class_Integer));
 
@@ -843,7 +843,7 @@ Downcase this string
 
 */
 
-    PCCMETHOD lower() {
+    METHOD lower() {
         STRING * const s   = string_downcase(INTERP,
             VTABLE_get_string(INTERP, SELF));
         PMC * const    ret = pmc_new_noinit(INTERP, SELF->vtable->base_type);
@@ -864,7 +864,7 @@ Translate ascii string C<src> with entries from C<trans_table>.
 
 */
 
-    PCCMETHOD trans(STRING *src, PMC *table) {
+    METHOD trans(STRING *src, PMC *table) {
         unsigned char *p;
         INTVAL        *tr_data;
         INTVAL         i;
@@ -900,7 +900,7 @@ Reverse the ascii STRING C<src> in place.
 
 */
 
-    PCCMETHOD reverse(STRING *src) {
+    METHOD reverse(STRING *src) {
         INTVAL         i;
         unsigned char *p;
         INTVAL         len = string_length(interp, src);
@@ -932,7 +932,7 @@ Checks if the ascii STRING C<str> is just an integer.
 
 */
 
-    PCCMETHOD is_integer(STRING *src) {
+    METHOD is_integer(STRING *src) {
         INTVAL         i;
         unsigned char *p;
         const INTVAL   len = string_length(interp, src);

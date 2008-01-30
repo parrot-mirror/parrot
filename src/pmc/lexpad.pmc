@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2007, The Perl Foundation.
+Copyright (C) 2007-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -141,7 +141,7 @@ Return the LexInfo PMC, if any or a Null PMC.
         SELF.set_pmc_keyed_str(s, value);
     }
 
-    PCCMETHOD get_lexinfo() {
+    METHOD get_lexinfo() {
         PMC *lexinfo = PMC_pmc_val(SELF);
         PCCRETURN(PMC *lexinfo);
     }

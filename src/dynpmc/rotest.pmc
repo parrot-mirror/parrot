@@ -1,6 +1,6 @@
 /*
  * $Id$
- * Copyright (C) 2006, The Perl Foundation.
+ * Copyright (C) 2006-2008, The Perl Foundation.
  */
 
 /*
@@ -15,11 +15,11 @@ pmclass ROTest dynpmc provides scalar extends Integer {
         return 42;
     }
 
-    METHOD INTVAL reader() {
+    METHOD reader() {
         return 43;
     }
 
-    METHOD INTVAL writer(INTVAL ignored) :write {
+    METHOD writer(INTVAL ignored) :write {
         UNUSED(ignored);
         return 44;
     }

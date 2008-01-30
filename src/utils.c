@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -48,6 +48,9 @@ static long _lrand48(void);
 static long _mrand48(void);
 static long _nrand48(_rand_buf buf);
 static void _srand48(long seed);
+static INTVAL COMPARE(PARROT_INTERP, void *a, void *b, PMC *cmp)
+        __attribute__nonnull__(1);
+
 static void move_reg(int from, int dest, ARGIN(const parrot_prm_context* c))
         __attribute__nonnull__(3);
 
@@ -62,6 +65,7 @@ static void rec_climb_back_and_mark(
     ARGIN(parrot_prm_context* c))
         __attribute__nonnull__(2);
 
+static void swap(void **x, void **y);
 /* HEADERIZER END: static */
 
 /*

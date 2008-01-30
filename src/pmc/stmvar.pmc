@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -88,15 +88,17 @@ Mark data associated with this transactional variable.
         Parrot_STM_mark_pmc_handle(INTERP, PMC_STM_handle(SELF));
     }
 
-    METHOD PMC *get_read() {
-        return Parrot_STM_read(INTERP, PMC_STM_handle(SELF));
+    METHOD get_read() {
+        PMC *read = Parrot_STM_read(INTERP, PMC_STM_handle(SELF));
+        PCCRETURN(PMC *read);
     }
 
-    METHOD PMC *get_update() {
-        return Parrot_STM_begin_update(INTERP, PMC_STM_handle(SELF));
+    METHOD get_update() {
+        PMC *update = Parrot_STM_begin_update(INTERP, PMC_STM_handle(SELF));
+        PCCRETURN(PMC *update);
     }
 
-    METHOD void set(PMC *new_value) {
+    METHOD set(PMC *new_value) {
         Parrot_STM_write(INTERP, PMC_STM_handle(SELF), new_value);
     }
 

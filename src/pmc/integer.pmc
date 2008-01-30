@@ -1285,7 +1285,7 @@ C<base> must be between 2 and 36, inclusive.
 
 */
 
-    PCCMETHOD get_as_base(INTVAL base) {
+    METHOD get_as_base(INTVAL base) {
         char buf[128];
         STRING *result;
 

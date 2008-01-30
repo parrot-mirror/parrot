@@ -1151,9 +1151,9 @@ Sets C<dest> to the absolute value of SELF that is the distance from (0.0).
 
 /*
 
-=item C<PCCMETHOD PMC *ln()>
+=item C<METHOD ln()>
 
-Returns the natural logorithm of SELF.
+Returns the natural logarithm of SELF as a PMC.
 
 =cut
 
@@ -1170,7 +1170,7 @@ ln(+-i) = +- (pi i)/2
 
 */
 
-    PCCMETHOD ln() {
+    METHOD ln() {
         PMC     *d  = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL re = RE(SELF);
         FLOATVAL im = IM(SELF);
@@ -1190,9 +1190,9 @@ ln(+-i) = +- (pi i)/2
 
 /*
 
-=item C<PCCMETHOD PMC *exp()>
+=item C<METHOD exp()>
 
-Returns e ^ SELF.
+Returns e ^ SELF as a PMC.
 
 =cut
 
@@ -1200,7 +1200,7 @@ exp(a + bi) = exp(a) * (cos(b) + i * sin(b))
 
 */
 
-    PCCMETHOD exp() {
+    METHOD exp() {
         PMC     *d  = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL re = RE(SELF);
         FLOATVAL im = IM(SELF);
@@ -1219,17 +1219,17 @@ exp(a + bi) = exp(a) * (cos(b) + i * sin(b))
 
 /*
 
-=item C<PCCMETHOD PMC *sin()>
+=item C<METHOD PMC *sin()>
 
-=item C<PCCMETHOD PMC *cos()>
+=item C<METHOD PMC *cos()>
 
-=item C<PCCMETHOD PMC *tan()>
+=item C<METHOD PMC *tan()>
 
-=item C<PCCMETHOD PMC *csc()>
+=item C<METHOD PMC *csc()>
 
-=item C<PCCMETHOD PMC *sec()>
+=item C<METHOD PMC *sec()>
 
-=item C<PCCMETHOD PMC *cot()>
+=item C<METHOD PMC *cot()>
 
 Returns C<FUNC>(SELF).
 
@@ -1250,7 +1250,7 @@ Returns C<FUNC>(SELF).
 
 */
 
-    PCCMETHOD sin() {
+    METHOD sin() {
         PMC     *d  = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL re = RE(SELF);
         FLOATVAL im = IM(SELF);
@@ -1277,7 +1277,7 @@ Returns C<FUNC>(SELF).
         PCCRETURN(PMC *d);
     }
 
-    PCCMETHOD cos() {
+    METHOD cos() {
         PMC     *d  = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL re = RE(SELF);
         FLOATVAL im = IM(SELF);
@@ -1300,7 +1300,7 @@ Returns C<FUNC>(SELF).
         PCCRETURN(PMC *d);
     }
 
-    PCCMETHOD tan() {
+    METHOD tan() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1312,7 +1312,7 @@ Returns C<FUNC>(SELF).
         PCCRETURN(PMC *d);
     }
 
-    PCCMETHOD cot() {
+    METHOD cot() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
         (PMC *d) = PCCINVOKE(INTERP, SELF, "cos");
@@ -1323,7 +1323,7 @@ Returns C<FUNC>(SELF).
         PCCRETURN(PMC *d);
     }
 
-    PCCMETHOD sec() {
+    METHOD sec() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
         RE(d)  = 1.0;
@@ -1335,7 +1335,7 @@ Returns C<FUNC>(SELF).
         PCCRETURN(PMC *d);
     }
 
-    PCCMETHOD csc() {
+    METHOD csc() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
         RE(d)  = 1.0;
@@ -1349,17 +1349,17 @@ Returns C<FUNC>(SELF).
 
 /*
 
-=item C<PCCMETHOD PMC *asin()>
+=item C<METHOD PMC *asin()>
 
-=item C<PCCMETHOD PMC *acos()>
+=item C<METHOD PMC *acos()>
 
-=item C<PCCMETHOD PMC *atan()>
+=item C<METHOD PMC *atan()>
 
-=item C<PCCMETHOD PMC *acsc()>
+=item C<METHOD PMC *acsc()>
 
-=item C<PCCMETHOD PMC *asec()>
+=item C<METHOD PMC *asec()>
 
-=item C<PCCMETHOD PMC *acot()>
+=item C<METHOD PMC *acot()>
 
 Returns the inverse function of SELF.
 
@@ -1380,7 +1380,7 @@ Returns the inverse function of SELF.
 
 */
 
-    PCCMETHOD asin() {
+    METHOD asin() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1399,7 +1399,7 @@ Returns the inverse function of SELF.
         PCCRETURN(PMC *e);
     }
 
-    PCCMETHOD acos() {
+    METHOD acos() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1418,7 +1418,7 @@ Returns the inverse function of SELF.
         PCCRETURN(PMC *d);
     }
 
-    PCCMETHOD atan() {
+    METHOD atan() {
         PMC     *d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC     *e  = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL re = RE(SELF);
@@ -1438,7 +1438,7 @@ Returns the inverse function of SELF.
         PCCRETURN(PMC *e);
     }
 
-    PCCMETHOD acot() {
+    METHOD acot() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC     *e;
         FLOATVAL a = RE(SELF);
@@ -1451,7 +1451,7 @@ Returns the inverse function of SELF.
         PCCRETURN(PMC *e);
     }
 
-    PCCMETHOD acsc() {
+    METHOD acsc() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC     *e;
         FLOATVAL a = RE(SELF);
@@ -1464,7 +1464,7 @@ Returns the inverse function of SELF.
         PCCRETURN(PMC *e);
     }
 
-    PCCMETHOD asec() {
+    METHOD asec() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC     *e;
         FLOATVAL a = RE(SELF);
@@ -1479,15 +1479,15 @@ Returns the inverse function of SELF.
 
 /*
 
-=item C<PCCMETHOD PMC *sinh()>
+=item C<METHOD PMC *sinh()>
 
 Returns the arctangent of SELF.
 
-=item C<PCCMETHOD PMC *cosh()>
+=item C<METHOD PMC *cosh()>
 
 Returns the arcsine of SELF.
 
-=item C<PCCMETHOD PMC *tanh()>
+=item C<METHOD PMC *tanh()>
 
 Returns the arccosine of SELF.
 
@@ -1497,7 +1497,7 @@ tanh(z) = sinh(z) / cosh(z)
 
 */
 
-    PCCMETHOD sinh() {
+    METHOD sinh() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL a = RE(SELF);
         FLOATVAL b = IM(SELF);
@@ -1508,7 +1508,7 @@ tanh(z) = sinh(z) / cosh(z)
         PCCRETURN(PMC *d);
     }
 
-    PCCMETHOD cosh() {
+    METHOD cosh() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
         FLOATVAL a = RE(SELF);
         FLOATVAL b = IM(SELF);
@@ -1522,7 +1522,7 @@ tanh(z) = sinh(z) / cosh(z)
         PCCRETURN(PMC *d);
     }
 
-    PCCMETHOD tanh() {
+    METHOD tanh() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1534,7 +1534,7 @@ tanh(z) = sinh(z) / cosh(z)
         PCCRETURN(PMC *d);
     }
 
-    PCCMETHOD coth() {
+    METHOD coth() {
         FLOATVAL a, b;
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1548,7 +1548,7 @@ tanh(z) = sinh(z) / cosh(z)
         PCCRETURN(PMC *d);
     }
 
-    PCCMETHOD csch() {
+    METHOD csch() {
         FLOATVAL a, b;
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1562,7 +1562,7 @@ tanh(z) = sinh(z) / cosh(z)
         PCCRETURN(PMC *d);
     }
 
-    PCCMETHOD sech() {
+    METHOD sech() {
         FLOATVAL a, b;
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1578,17 +1578,17 @@ tanh(z) = sinh(z) / cosh(z)
 
 /*
 
-=item C<PCCMETHOD PMC *asinh()>
+=item C<METHOD PMC *asinh()>
 
-=item C<PCCMETHOD PMC *acosh()>
+=item C<METHOD PMC *acosh()>
 
-=item C<PCCMETHOD PMC *atanh()>
+=item C<METHOD PMC *atanh()>
 
-=item C<PCCMETHOD PMC *acsch()>
+=item C<METHOD PMC *acsch()>
 
-=item C<PCCMETHOD PMC *asech()>
+=item C<METHOD PMC *asech()>
 
-=item C<PCCMETHOD PMC *acoth()>
+=item C<METHOD PMC *acoth()>
 
 The inverse hyperbolic functions.  Currently all broken, but for
 C<func(a+bi) = c+di>, C<|c|> and C<|d|> will be correct, confusingly enough.
@@ -1604,7 +1604,7 @@ atanh = i atan(-ix)
 
 */
 
-    PCCMETHOD asinh() {
+    METHOD asinh() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1618,7 +1618,7 @@ atanh = i atan(-ix)
         PCCRETURN(PMC *e);
     }
 
-    PCCMETHOD acosh() {
+    METHOD acosh() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1629,7 +1629,7 @@ atanh = i atan(-ix)
         PCCRETURN(PMC *e);
     }
 
-    PCCMETHOD atanh() {
+    METHOD atanh() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e = pmc_new(INTERP, SELF->vtable->base_type);
 
@@ -1643,7 +1643,7 @@ atanh = i atan(-ix)
         PCCRETURN(PMC *e);
     }
 
-    PCCMETHOD acoth() {
+    METHOD acoth() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC     *e;
         FLOATVAL a = RE(SELF);
@@ -1656,7 +1656,7 @@ atanh = i atan(-ix)
         PCCRETURN(PMC *e);
     }
 
-    PCCMETHOD acsch() {
+    METHOD acsch() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC     *e;
         FLOATVAL a = RE(SELF);
@@ -1669,7 +1669,7 @@ atanh = i atan(-ix)
         PCCRETURN(PMC *e);
     }
 
-    PCCMETHOD asech() {
+    METHOD asech() {
         PMC     *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC     *e;
         FLOATVAL a = RE(SELF);
@@ -1688,7 +1688,7 @@ atanh = i atan(-ix)
 
 Return SELF to the C<value>th power and return result in C<dest>.
 
-=item C<PCCMETHOD PMC *sqrt()>
+=item C<METHOD PMC *sqrt()>
 
 Return the square root of SELF.
 
@@ -1743,7 +1743,7 @@ MMD_DEFAULT: {
     }
 
     /* sqrt(x) = exp(ln(x)/2) */
-    PCCMETHOD sqrt() {
+    METHOD sqrt() {
         PMC *d = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *e;
 

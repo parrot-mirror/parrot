@@ -576,13 +576,13 @@ slurpy arguments).
 
 */
 
-    PCCMETHOD get_namespace() {
+    METHOD get_namespace() {
         Parrot_sub * const sub = PMC_sub(SELF);
         PMC *namespace = sub->namespace_stash;
         PCCRETURN(PMC *namespace);
     }
 
-    PCCMETHOD __get_regs_used(STRING *reg) {
+    METHOD __get_regs_used(STRING *reg) {
         Parrot_sub * const sub = PMC_sub(SELF);
         char *kind = string_to_cstring(interp, reg);
         INTVAL regs_used;
@@ -608,19 +608,19 @@ slurpy arguments).
         PCCRETURN(INTVAL regs_used);
     }
 
-    PCCMETHOD get_lexinfo() {
+    METHOD get_lexinfo() {
         const Parrot_sub * const sub = PMC_sub(SELF);
         PMC *lexinfo = sub->lex_info ? sub->lex_info : PMCNULL;
         PCCRETURN(PMC *lexinfo);
     }
 
-    PCCMETHOD get_outer() {
+    METHOD get_outer() {
         const Parrot_sub * const sub = PMC_sub(SELF);
         PMC *outersub = sub->outer_sub ? sub->outer_sub : PMCNULL;
         PCCRETURN(PMC *outersub);
     }
 
-    PCCMETHOD set_outer(PMC *outer) {
+    METHOD set_outer(PMC *outer) {
         /* Set outer sub. */
         Parrot_sub * const sub = PMC_sub(SELF);
         sub->outer_sub = outer;
@@ -640,13 +640,13 @@ slurpy arguments).
         SELF->vtable = interp->vtables[enum_class_Closure];
     }
 
-    PCCMETHOD get_multisig() {
+    METHOD get_multisig() {
         const Parrot_sub * const sub = PMC_sub(SELF);
         PMC *multisig = sub->multi_signature ? sub->multi_signature : PMCNULL;
         PCCRETURN(PMC *multisig);
     }
 
-    PCCMETHOD arity() {
+    METHOD arity() {
         /* Get pointer into the bytecode where this sub starts. */
         Parrot_sub * const sub = PMC_sub(SELF);
         opcode_t *pc = sub->seg->base.data + sub->start_offs;

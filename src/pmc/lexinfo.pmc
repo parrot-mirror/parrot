@@ -102,7 +102,7 @@ Returns the number of elements in the LexInfo hash.
 
 */
 
-    PCCMETHOD declare_lex_preg(STRING *name, INTVAL preg) {
+    METHOD declare_lex_preg(STRING *name, INTVAL preg) {
         parrot_hash_put(INTERP, (Hash*)PMC_struct_val(SELF), name, (void*)preg);
     }
 

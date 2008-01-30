@@ -1,5 +1,5 @@
 /* misc.h
- *  Copyright (C) 2001-2007, The Perl Foundation.
+ *  Copyright (C) 2001-2008, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -114,7 +114,8 @@ FLOATVAL floatval_mod(FLOATVAL n2, FLOATVAL n3);
 PARROT_CONST_FUNCTION
 INTVAL intval_mod(INTVAL i2, INTVAL i3);
 
-void Parrot_quicksort(PARROT_INTERP, void **, UINTVAL, PMC *);
+void Parrot_quicksort(PARROT_INTERP, void **data, UINTVAL n, PMC *cmp)
+        __attribute__nonnull__(1);
 
 /* HEADERIZER END: src/utils.c */
 

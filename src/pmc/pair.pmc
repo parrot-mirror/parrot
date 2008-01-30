@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2007, The Perl Foundation.
+Copyright (C) 2005-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -273,7 +273,7 @@ Used to unarchive the Pair.
 
 =over 4
 
-=item C<PCCMETHOD PMC *key()>
+=item C<METHOD key()>
 
 Return the key of the pair.
 
@@ -281,7 +281,7 @@ Return the key of the pair.
 
 */
 
-    PCCMETHOD key() {
+    METHOD key() {
         PMC *key;
         if (PObj_key_is_string_TEST(SELF)) {
             key = pmc_new(INTERP,
@@ -299,7 +299,7 @@ Return the key of the pair.
 
 /*
 
-=item C<PCCMETHOD PMC *value()>
+=item C<METHOD value()>
 
 Return the value of the pair.
 
@@ -307,14 +307,14 @@ Return the value of the pair.
 
 */
 
-    PCCMETHOD value() {
+    METHOD value() {
         PMC *value = PMC_pmc_val(SELF);
         PCCRETURN(PMC *value);
     }
 
 /*
 
-=item C<PCCMETHOD PMC *kv()>
+=item C<METHOD kv()>
 
 Return a tuple of (key, value) for the pair.
 
@@ -322,7 +322,7 @@ Return a tuple of (key, value) for the pair.
 
 */
 
-    PCCMETHOD kv() {
+    METHOD kv() {
         PMC * const t = pmc_new(INTERP,
             Parrot_get_ctx_HLL_type(INTERP, enum_class_FixedPMCArray));
 

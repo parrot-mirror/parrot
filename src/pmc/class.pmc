@@ -1419,7 +1419,7 @@ Sets the name of the class, and updates the namespace accoringly.
 =cut
 
 */
-    PCCMETHOD name(STRING *name :optional, int has_name :opt_flag) {
+    METHOD name(STRING *name :optional, int has_name :opt_flag) {
         Parrot_Class * const _class = PARROT_CLASS(SELF);
         STRING       *ret_name = NULL;
 
@@ -1446,7 +1446,7 @@ Gets the namespace that this class is attached to.
 =cut
 
 */
-    PCCMETHOD pmc_namespace(PMC *_namespace :optional, int has_name :opt_flag) {
+    METHOD pmc_namespace(PMC *_namespace :optional, int has_name :opt_flag) {
         Parrot_Class * const _class        = PARROT_CLASS(SELF);
         PMC          * const ret_namespace = _class->_namespace;
         UNUSED(_namespace);
@@ -1464,7 +1464,7 @@ methods from roles. When called with no parameter, returns the list.
 =cut
 
 */
-    PCCMETHOD resolve_method(PMC *resolve_list :optional,
+    METHOD resolve_method(PMC *resolve_list :optional,
                                   int has_list :opt_flag) {
         Parrot_Class * const _class   = PARROT_CLASS(SELF);
         PMC          *ret_list = NULL;
@@ -1487,7 +1487,7 @@ parameter list.
 =cut
 
 */
-    PCCMETHOD new(PMC *args :slurpy :named) {
+    METHOD new(PMC *args :slurpy :named) {
         PMC *obj;
         /* Check if any arguments are in the slurpy hash, don't pass an empty
          * hash to instantiate */
@@ -1509,7 +1509,7 @@ providing a set of key/value pairs describing the attribute.
 =cut
 
 */
-    PCCMETHOD attributes() {
+    METHOD attributes() {
         STRING * const attr_str = CONST_STRING(interp, "attributes");
         PMC * const ret_attrib_metadata = SELF.inspect_str(attr_str);
 
@@ -1525,7 +1525,7 @@ Add an attribute to the class. Requires a name and, optionally, a type.
 =cut
 
 */
-    PCCMETHOD add_attribute(STRING *attribute_name,
+    METHOD add_attribute(STRING *attribute_name,
             PMC *attribute_type :optional, int has_type :opt_flag) {
         PMC * const type = has_type ? attribute_type : PMCNULL;
         SELF.add_attribute(attribute_name, type);
@@ -1540,7 +1540,7 @@ Return a hash where the keys are method names and the values are methods.
 =cut
 
 */
-    PCCMETHOD methods() {
+    METHOD methods() {
         PMC * const ret_methods = SELF.inspect_str(CONST_STRING(interp, "methods"));
 
         PCCRETURN(PMC *ret_methods);
@@ -1556,7 +1556,7 @@ C<add_method> vtable method.
 =cut
 
 */
-    PCCMETHOD add_method(STRING *name, PMC *sub,
+    METHOD add_method(STRING *name, PMC *sub,
                               int vtable :optional :named["vtable"],
                               int has_vtable :opt_flag,
                               int anon :optional :named["anon"],
@@ -1580,7 +1580,7 @@ Walks the MRO of the class and finds the method with the given name.
 
 */
 
-    PCCMETHOD find_method(STRING *name) {
+    METHOD find_method(STRING *name) {
         Parrot_Class * const  _class    = PARROT_CLASS(SELF);
         int num_classes, i;
 
@@ -1613,7 +1613,7 @@ Return the parents array PMC.
 =cut
 
 */
-    PCCMETHOD parents() {
+    METHOD parents() {
         PMC * const ret_parents = SELF.inspect_str(CONST_STRING(interp, "parents"));
 
         PCCRETURN(PMC *ret_parents);
@@ -1628,7 +1628,7 @@ Adds the supplied PMC to the list of parents for the class.
 =cut
 
 */
-    PCCMETHOD add_parent(PMC *parent) {
+    METHOD add_parent(PMC *parent) {
         SELF.add_parent(parent);
     }
 
@@ -1641,7 +1641,7 @@ Return the roles array PMC.
 =cut
 
 */
-    PCCMETHOD roles() {
+    METHOD roles() {
         PMC * const ret_roles = SELF.inspect_str(CONST_STRING(interp, "roles"));
 
         PCCRETURN(PMC *ret_roles);
@@ -1657,7 +1657,7 @@ Compose a role into a class with the given exclusions and aliases.
 =cut
 
 */
-    PCCMETHOD add_role(PMC *role,
+    METHOD add_role(PMC *role,
             PMC *exclude_method     :optional :named["exclude_method"],
             int has_exclude_method  :opt_flag,
             PMC *alias_method       :optional :named["alias_method"],
@@ -1701,7 +1701,7 @@ parameter is supplied, a particular item of introspection data.
 =cut
 
 */
-    PCCMETHOD inspect(STRING *what :optional, int has_what :opt_flag) {
+    METHOD inspect(STRING *what :optional, int has_what :opt_flag) {
         PMC *found;
 
         /* Just delegate to the appropriate vtable method. */
@@ -1723,7 +1723,7 @@ C<class_name>, false otherwise.
 =cut
 
 */
-    PCCMETHOD isa(STRING *class_name) {
+    METHOD isa(STRING *class_name) {
         const INTVAL isa = SELF.isa(class_name);
 
         PCCRETURN(INTVAL isa);
@@ -1739,7 +1739,7 @@ false otherwise.
 =cut
 
 */
-    PCCMETHOD does(STRING *role_name) {
+    METHOD does(STRING *role_name) {
         INTVAL i, role_count, isa;
         PMC * const role_list = (PMC_data_typed(SELF, Parrot_Class *))->roles;
 

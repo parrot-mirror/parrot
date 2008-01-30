@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -64,7 +64,7 @@ Returns a true value (1) if the supplied file or directory exists.
 
 */
 
-    PCCMETHOD exists(STRING *path) {
+    METHOD exists(STRING *path) {
         struct stat info;
         char *cpath = string_to_cstring(interp, path);
 #ifdef WIN32
@@ -90,7 +90,7 @@ Returns a true value (1) if the supplied path is a directory.
 
 */
 
-    PCCMETHOD is_dir(STRING *path) {
+    METHOD is_dir(STRING *path) {
         struct stat info;
         char *cpath = string_to_cstring(interp, path);
 #ifdef WIN32
@@ -121,7 +121,7 @@ Returns a true value (1) if the supplied path is a plain file.
 
 */
 
-    PCCMETHOD is_file(STRING *path) {
+    METHOD is_file(STRING *path) {
         struct stat info;
         char *cpath = string_to_cstring(interp, path);
 #ifdef WIN32
@@ -152,7 +152,7 @@ Returns a true value (1) if the supplied path is a link.
 
 */
 
-    PCCMETHOD is_link(STRING *path) {
+    METHOD is_link(STRING *path) {
 #ifdef WIN32
         /* I love win32 implementations */
         PCCRETURN(INTVAL 0);
@@ -192,7 +192,7 @@ free to change or give me hints on how to change it. -- ambs
 
 */
 
-    PCCMETHOD copy(STRING *from, STRING *to) {
+    METHOD copy(STRING *from, STRING *to) {
 #define CHUNK_SIZE 1024
 
         char *cfrom  = string_to_cstring(interp, from);
@@ -245,7 +245,7 @@ Rename a file C<from> to the path C<to>.
 
 */
 
-    PCCMETHOD rename(STRING *from, STRING *to) {
+    METHOD rename(STRING *from, STRING *to) {
         char *cfrom = string_to_cstring(interp, from);
         char *cto   = string_to_cstring(interp, to);
         int error   = rename(cfrom, cto);

@@ -550,7 +550,7 @@ Sets the string value of the element at index C<key> to C<value>.
         SELF.set_pmc_keyed_int(k, value);
     }
 
-    METHOD void sort(PMC *cmp_func) {
+    METHOD sort(PMC *cmp_func) {
         UINTVAL n = (UINTVAL)PMC_int_val(SELF);
 
         if (n > 1)
