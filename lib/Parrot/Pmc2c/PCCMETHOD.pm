@@ -487,19 +487,20 @@ sub isquoted {
 
 sub rewrite_pccinvoke {
     my ( $method, $pmc ) = @_;
-    my $body         = $method->body;
-    my $signature_re = qr{
+    my $body             = $method->body;
+
+    my $signature_re     = qr{
       (
       (
-      \( ([^\(]*) \)   #results
-      \s*              #optional whitespace
-      =                #results equals PCCINVOKE invocation
-      \s*              #optional whitespace
-      )?               #results are optional
-      PCCINVOKE        #method name
-      \s*              #optional whitespace
-      \( ([^\(]*) \)   #parameters
-      ;?               #optional semicolon
+      \( ([^\(]*) \)   # results
+      \s*              # optional whitespace
+      =                # results equals PCCINVOKE invocation
+      \s*              # optional whitespace
+      )?               # results are optional
+      PCCINVOKE        # method name
+      \s*              # optional whitespace
+      \( ([^\(]*) \)   # parameters
+      ;?               # optional semicolon
       )
     }sx;
 
@@ -513,95 +514,122 @@ sub rewrite_pccinvoke {
         $matched =~ /$signature_re/;
         my ( $match, $result_clause, $results, $parameters ) = ( $1, $2, $3, $4 );
 
-        #optional results portion of pccinvoke statement
-        my ( $result_n_regs_used, $result_indexes, $result_flags, $result_accessors ) =
-            ( defined $results )
-            ? process_pccmethod_args( parse_p_args_string($results), 'result' )
-            : ( [ 0, 0, 0, 0 ], "0", [], "" );
+        my ($out_vars, $out_types)
+            = process_pccmethod_results( $results );
 
-        #parameters portion of pccinvoke statement
-        my ( $interp, $invocant, $method_name, $arguments ) =
-            map { $_ = trim($_) } split( /,/, $parameters, 4 );
-        $arguments = "PMC* $invocant" . ( $arguments ? ", $arguments" : "" );
-        my ( $args_n_regs_used, $arg_indexes, $arg_flags, $arg_accessors, $named_names ) =
-            process_pccmethod_args( parse_p_args_string($arguments), 'param' );
+        my ($fixed_params, $in_types, $in_vars)
+            = process_pccmethod_parameters( $parameters );
 
-        my $n_regs_used = find_max_regs( [ $result_n_regs_used, $args_n_regs_used ] );
+        my $signature = $in_types . '->' . $out_types;
 
-        $method_name = "string_from_literal(interp, $method_name)"
-            if isquoted($method_name);
-
-        my $args_set    = make_arg_pmc($arg_flags,    'args_sig');
-        my $results_set = make_arg_pmc($result_flags, 'results_sig');
+        # I know this is ugly....
+        my $vars      = '';
+        if ($in_vars) {
+            $vars .= $in_vars;
+            $vars .= ', ' if $out_vars;
+        }
+        $vars .= $out_vars;
 
         my $e = Parrot::Pmc2c::Emitter->new( $pmc->filename );
-        $e->emit( <<"END", __FILE__, __LINE__ + 1 );
-
-    /*BEGIN PCCINVOKE $invocant */
-    {
-      INTVAL   n_regs_used[]    = { $n_regs_used };
-      opcode_t arg_indexes[]    = { $arg_indexes };
-      opcode_t result_indexes[] = { $result_indexes };
-
-      PMC *args_sig         = pmc_new(interp, enum_class_FixedIntegerArray);
-      PMC *results_sig      = pmc_new(interp, enum_class_FixedIntegerArray);
-      PMC *ret_cont         = new_ret_continuation_pmc(interp, NULL);
-
-      parrot_context_t *ctx = Parrot_push_context(interp, n_regs_used);
-      PMC              *pccinvoke_meth;
-
-      opcode_t *save_current_args   = interp->current_args;
-      PMC      *save_args_signature = interp->args_signature;
-      PMC      *save_current_object = interp->current_object;
-
-$args_set
-$results_set
-      interp->current_args        = arg_indexes;
-      interp->args_signature      = args_sig;
-      ctx->current_results        = result_indexes;
-      ctx->results_signature      = results_sig;
-
-END
-        $e->emit(<<"END");
-$named_names
-
-$arg_accessors
-END
-        $e->emit( <<"END", __FILE__, __LINE__ + 1 );
-
-      interp->current_object       = $invocant;
-      interp->current_cont         = NEED_CONTINUATION;
-      ctx->current_cont            = ret_cont;
-      PMC_cont(ret_cont)->from_ctx = ctx;
-
-      pccinvoke_meth = VTABLE_find_method(interp, $invocant, $method_name);
-      if (PMC_IS_NULL(pccinvoke_meth)) {
-          real_exception(interp, NULL, METH_NOT_FOUND,
-            "Method '%Ss' not found", $method_name);
-      }
-      else
-          VTABLE_invoke(interp, pccinvoke_meth, NULL);
-
-END
-        $e->emit(<<"END");
-$result_accessors
-END
-        $e->emit( <<"END", __FILE__, __LINE__ + 1 );
-
-      PObj_live_CLEAR(args_sig);
-      PObj_live_CLEAR(results_sig);
-      Parrot_pop_context(interp);
-
-      interp->current_args   = save_current_args;
-      interp->args_signature = save_args_signature;
-      interp->current_object = save_current_object;
-    }
-    /*END PCCINVOKE $method_name */
-END
+        $e->emit(qq|Parrot_PCCINVOKE($fixed_params, "$signature", $vars);\n|);
 
         $matched->replace( $match, $e );
     }
+
     return 1;
+}
+
+sub process_pccmethod_results {
+    my $results = shift;
+
+    return ('', '') unless $results;
+
+    my @params  = split /,\s*/, $results;
+
+    my (@out_vars, @out_types);
+
+    for my $param (@params) {
+        my ($type, @names) = process_parameter($param);
+        push @out_types, $type;
+        push @out_vars, map { "&$_" } @names;
+    }
+
+    my $out_types = join '',   @out_types;
+    my $out_vars  = join ', ', @out_vars;
+
+    return ($out_vars, $out_types);
+}
+
+sub process_pccmethod_parameters {
+    my $parameters                       = shift;
+    my ($interp, $pmc, $method, @params) = split /,\s*/, $parameters;
+
+    $method = 'CONST_STRING(interp, ' . $method . ')';
+
+    my $fixed_params = join ', ', $interp, $pmc, $method;
+
+    my (@in_types, @in_vars);
+
+    for my $param (@params) {
+        # @var is an array because named parameters are two variables
+        my ($type, @var) = process_parameter($param);
+        push @in_types, $type;
+        push @in_vars, @var;
+    }
+
+    my $in_types = join '',   @in_types;
+    my $in_vars  = join ', ', @in_vars;
+
+    return ($fixed_params, $in_types, $in_vars);
+}
+
+sub process_parameter {
+    my $param    = shift;
+
+    my $param_re = qr{
+        (STRING\s\*|INTVAL|FLOATVAL|PMC\s\*) # type
+        \s*                                  # optional whitespace
+        (\w+)                                # name
+        \s*                                  # optional whitespace
+        (.*)?                                # adverbs
+    }sx;
+
+    my ($type, $name, $adverbs) = $param =~ /$param_re/;
+
+    # the first letter of the type is the type in the signature
+    $type = substr $type, 0, 1;
+
+    my $adverb_re = qr{
+        :        # leading colon
+        (\w+)    # name
+        (?:      # optional argument
+            \("
+            (\w+)
+            "\)
+        )
+        \s*
+    }sx;
+
+    my %allowed_adverbs = (
+        named      => 'n',
+        flatten    => 'f',
+        slurpy     => 's',
+        optional   => 'o',
+        positional => 'p',
+    );
+
+    my @arg_names = ($name);
+
+    while (my ($name, $argument) = $adverbs =~ /$adverb_re/g) {
+        next unless my $type_mod = $allowed_adverbs{$name};
+
+        $type .= $type_mod;
+
+        next unless $type eq 'named';
+        push @arg_names, qq|CONST_STRING(interp, "$argument")|;
+    }
+
+    return ($type, @arg_names);
 }
 
 sub make_arg_pmc {
