@@ -129,9 +129,9 @@ pmc2c_output_like( <<'END_PMC', <<'END_C', 'need_ext' );
 pmclass a need_ext { }
 END_PMC
    const VTABLE temp_ro_vtable = {
-        NULL,   /* namespace */
+        NULL,       /* namespace */
         enum_class_a, /* base_type */
-        NULL,   /* whoami */
+        NULL,       /* whoami */
         0|VTABLE_PMC_NEEDS_EXT|VTABLE_IS_READONLY_FLAG, /* flags */
 END_C
 
