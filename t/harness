@@ -24,7 +24,8 @@ my $longopts;
 
 $ENV{RUNNING_MAKE_TEST} = $longopts->{running_make_test};
 
-# Suck the short options into the TEST_PROG_ARGS evar:
+# Suck the short options into the TEST_PROG_ARGS 
+# environmental variable.
 my %opts;
 getopts('wgjPCSefbvdr?hO:D:', \%opts);
 
