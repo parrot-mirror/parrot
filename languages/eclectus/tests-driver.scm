@@ -1,6 +1,11 @@
 ; $Id$
 
+(load "tap_helpers.scm")
+
 (define all-tests '())
+
+(define run-with-petite #f)
+;(define run-with-petite #t)
 
 (define-syntax add-tests-with-string-output
   (syntax-rules (=>)
@@ -19,11 +24,8 @@
      [(string) (test-with-string-output test-id expr out test-name)]
      [else (error 'test "invalid test type ~s" type)])))
  
-(define (test-plan num-tests)
-  ( printf "~s..~s\n" 1 num-tests ))
-
 (define (test-all)
-  (test-plan (length (cdar all-tests)))
+  (plan (length (cdar all-tests)))
 
   ;; run the tests
   (let f ([i 0] [ls (reverse all-tests)])
@@ -49,14 +51,19 @@
        p)))
 
 (define (run-compile expr)
-  (let ([p (open-output-file "stst.pir" 'replace)])
-    (parameterize ([compile-port p])
-       (compile-program expr))
-    (close-output-port p)))
+  (if run-with-petite
+    (with-output-to-file "stst.scm" (lambda () (write expr)))
+    (let ([p (open-output-file "stst.pir" 'replace)])
+      (parameterize ([compile-port p])
+         (compile-program expr))
+      (close-output-port p))))
 
 (define (execute)
-  (unless (fxzero? (system "../../parrot stst.pir > stst.out"))
-    (error 'execute "produced program exited abnormally")))
+  (if run-with-petite
+    (unless (fxzero? (system "petite --script stst.scm > stst.out"))
+      (error 'execute "produced program exited abnormally"))
+    (unless (fxzero? (system "../../parrot stst.pir > stst.out"))
+      (error 'execute "produced program exited abnormally"))))
 
 (define (get-string)
   (with-output-to-string
@@ -73,8 +80,8 @@
    (run-compile expr)
    (execute)
    (if (string=? expected-output (get-string))
-     (printf     "ok ~s - ~s: ~s\n" ( + test-id 1 ) test-name expr )
-     (printf "not ok ~s - ~s: expected ~s, got ~s\n" ( + test-id 1 ) test-name expr (get-string) )))
+     (pass ( + test-id 1 ) (format "~a: ~a" test-name expr))
+     (fail ( + test-id 1 ) (format "~a: expected ~s, got ~a" test-name expr (get-string) ))))
 
 (define (emit . args)
   (apply fprintf (compile-port) args)

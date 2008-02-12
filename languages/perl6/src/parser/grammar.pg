@@ -204,6 +204,9 @@ rule statement {
 rule statement_control {
     | <if_statement> {*}                         #= if_statement
     | <unless_statement> {*}                     #= unless_statement
+    | <given_statement> {*}                      #= given_statement
+    | <when_statement> {*}                       #= when_statement
+    | <default_statement> {*}                    #= default_statement
     | <for_statement> {*}                        #= for_statement
     | <use_statement> {*}                        #= use_statement
     | <begin_statement> {*}                      #= begin_statement
@@ -221,6 +224,24 @@ rule if_statement {
 rule unless_statement {
     $<sym>=[unless]
     <EXPR> <block>
+    {*}
+}
+
+rule given_statement {
+    $<sym>=[given]
+    <EXPR> <block>
+    {*}
+}
+
+rule when_statement {
+    $<sym>=[when]
+    <EXPR> <block>
+    {*}
+}
+
+rule default_statement {
+    $<sym>=[default]
+    <block>
     {*}
 }
 
@@ -269,7 +290,7 @@ rule plurality_declarator {
 
 token routine_declarator {
     | $<sym>='sub' <routine_def> {*}             #= sub
-    # | $<sym>='method' <method_def> {*}           #= method
+    # | $<sym>='method' <method_def> {*}         #= method
 }
 
 rule routine_def {
@@ -283,8 +304,17 @@ rule multisig {
 }
 
 rule signature {
-    ( <param_var> ( ',' | <?before ')' | '{'> ) )*
+    ( <parameter> ( ',' | <?before ')' | '{'> ) )*
     {*}
+}
+
+token parameter {
+    | [
+        $<named>=[':'?]
+        <param_var>
+        $<quant>=[ <[ ? ! ]>? ]
+      ] {*}                                      #= non-slurp
+    | $<quant>=['*'?] <param_var> {*}            #= slurp
 }
 
 token param_var {
@@ -319,7 +349,7 @@ token postfix {
 token methodop {
     '.' <ident>
     [
-    | <.unsp>? '(' <semilist> ')' {*}       #= semilist
+    | <.unsp>? '(' <semilist> ')' {*}            #= semilist
     | ':' <?before \s> <arglist> {*}             #= arglist
     | {*}                                        #= null
     ]
@@ -384,7 +414,7 @@ token name {
 token value {
     | <quote> {*}                                #= quote
     | <number> {*}                               #= number
-    | <typename> {*}                                       #= typename
+    | <typename> {*}                             #= typename
 }
 
 ##  Quoting is tricky -- the <quote_concat> subrule is in
@@ -404,6 +434,7 @@ token quote {
 token number {
     [ <dec_number> {*}                           #= dec_number
     | <integer> {*}                              #= integer
+    | <rad_number> {*}                           #= rad_number
     ]
 }
 
@@ -423,6 +454,34 @@ token integer {
 
 token dec_number {
     \d+[_\d+]* [ '.' \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]? ]
+    {*}
+}
+
+token radint {
+    [
+    | <integer> {*}                              #= integer
+    | # this alternation is a subset of rad_number
+      ':' $<radix>=[\d+] <.unsp>+
+      ::  '<'
+          $<intpart>=[<[0..9 a..z A..Z]>]+
+          [ '*' $<base>=<radint> '**' $<exp>=<radint> ]?
+          '>'
+      {*}                                        #= rad_number
+    ]
+}
+
+token rad_number {
+    ':' $<radix>=[\d+] <.unsp>?
+    ::
+    [
+    ||  '<'
+        $<intpart>=[<[0..9 a..z A..Z]>]+
+        $<fracpart>=[ '.' <[0..9 a..z A..Z ]>+ ]?
+        [ '*' $<base>=<radint> '**' $<exp>=<radint> ]?
+        '>'
+    || <?before '['> <postcircumfix>
+    || <?before '('> <postcircumfix>
+    ]
     {*}
 }
 

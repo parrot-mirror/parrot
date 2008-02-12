@@ -16,9 +16,9 @@ package auto::sizes;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
-use Parrot::Configure::Step ':auto';
+use Parrot::Configure::Utils ':auto';
 
 
 sub _init {
@@ -57,75 +57,25 @@ sub runstep {
         return 1;
     }
 
-    cc_gen('config/auto/sizes/test_c.in');
-    cc_build();
-    my %results = eval cc_run();
-    cc_clean();
+    $conf->cc_gen('config/auto/sizes/test_c.in');
+    $conf->cc_build();
+    my %results = eval $conf->cc_run();
+    $conf->cc_clean();
 
     for ( keys %results ) {
         $conf->data->set( $_ => $results{$_} );
     }
 
-    if ( $results{ptrsize} != $results{intvalsize} ) {
-        print <<"END";
-
-Hmm, I see your chosen INTVAL isn't the same size as your pointers.  Parrot
-should still compile and run, but you may see a ton of warnings.
-END
-    }
+    _handle_intval_ptrsize_discrepancy(\%results);
 
     # set fixed sized types
-    if ( $results{shortsize} == 2 ) {
-        $conf->data->set( int2_t => 'short' );
-    }
-    else {
-        $conf->data->set( int2_t => 'int' );
-        print <<'END';
+    _set_int2($conf, \%results);
 
-Can't find a int type with size 2, conversion ops might fail!
+    _set_int4($conf, \%results);
 
-END
-    }
-    if ( $results{shortsize} == 4 ) {
-        $conf->data->set( int4_t => 'short' );
-    }
-    elsif ( $results{intsize} == 4 ) {
-        $conf->data->set( int4_t => 'int' );
-    }
-    elsif ( $results{longsize} == 4 ) {
-        $conf->data->set( int4_t => 'long' );
-    }
-    else {
-        $conf->data->set( int4_t => 'int' );
-        print <<'END';
+    _set_float4($conf, \%results);
 
-Can't find a int type with size 4, conversion ops might fail!
-
-END
-    }
-
-    if ( $results{floatsize} == 4 ) {
-        $conf->data->set( float4_t => 'float' );
-    }
-    else {
-        $conf->data->set( float4_t => 'double' );
-        print <<'END';
-
-Can't find a float type with size 4, conversion ops might fail!
-
-END
-    }
-    if ( $results{doublesize} == 8 ) {
-        $conf->data->set( float8_t => 'double' );
-    }
-    else {
-        $conf->data->set( float8_t => 'double' );
-        print <<'END';
-
-Can't find a float type with size 8, conversion ops might fail!
-
-END
-    }
+    _set_float8($conf, \%results);
 
     my %hugeintval;
     my $intval     = $conf->data->get('iv');
@@ -136,10 +86,10 @@ END
 
         $conf->data->set( int8_t => $type );
         eval {
-            cc_gen('config/auto/sizes/test2_c.in');
-            cc_build();
-            %hugeintval = eval cc_run();
-            cc_clean();
+            $conf->cc_gen('config/auto/sizes/test2_c.in');
+            $conf->cc_build();
+            %hugeintval = eval $conf->cc_run();
+            $conf->cc_clean();
         };
 
         # clear int8_t on error
@@ -166,7 +116,7 @@ END
         );
     }
 
-    cc_clean();
+    $conf->cc_clean();
 
     #get HUGEFLOATVAL
     if (
@@ -183,8 +133,8 @@ int main() {
 END
             close $TEST;
 
-            cc_build();
-            cc_run();
+            $conf->cc_build();
+            $conf->cc_run();
         }
         )
     {
@@ -200,9 +150,86 @@ END
         );
     }
 
-    cc_clean();
+    $conf->cc_clean();
 
     return 1;
+}
+
+sub _handle_intval_ptrsize_discrepancy {
+    my $resultsref = shift;
+    if ( $resultsref->{ptrsize} != $resultsref->{intvalsize} ) {
+        print <<"END";
+
+Hmm, I see your chosen INTVAL isn't the same size as your pointers.  Parrot
+should still compile and run, but you may see a ton of warnings.
+END
+    }
+}
+
+sub _set_int2 {
+    my ($conf, $resultsref) = @_;
+    if ( $resultsref->{shortsize} == 2 ) {
+        $conf->data->set( int2_t => 'short' );
+    }
+    else {
+        $conf->data->set( int2_t => 'int' );
+        print <<'END';
+
+Can't find a int type with size 2, conversion ops might fail!
+
+END
+    }
+}
+
+sub _set_int4 {
+    my ($conf, $resultsref) = @_;
+    if ( $resultsref->{shortsize} == 4 ) {
+        $conf->data->set( int4_t => 'short' );
+    }
+    elsif ( $resultsref->{intsize} == 4 ) {
+        $conf->data->set( int4_t => 'int' );
+    }
+    elsif ( $resultsref->{longsize} == 4 ) {
+        $conf->data->set( int4_t => 'long' );
+    }
+    else {
+        $conf->data->set( int4_t => 'int' );
+        print <<'END';
+
+Can't find a int type with size 4, conversion ops might fail!
+
+END
+    }
+}
+
+sub _set_float4 {
+    my ($conf, $resultsref) = @_;
+    if ( $resultsref->{floatsize} == 4 ) {
+        $conf->data->set( float4_t => 'float' );
+    }
+    else {
+        $conf->data->set( float4_t => 'double' );
+        print <<'END';
+
+Can't find a float type with size 4, conversion ops might fail!
+
+END
+    }
+}
+
+sub _set_float8 {
+    my ($conf, $resultsref) = @_;
+    if ( $resultsref->{doublesize} == 8 ) {
+        $conf->data->set( float8_t => 'double' );
+    }
+    else {
+        $conf->data->set( float8_t => 'double' );
+        print <<'END';
+
+Can't find a float type with size 8, conversion ops might fail!
+
+END
+    }
 }
 
 1;

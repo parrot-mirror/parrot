@@ -55,6 +55,8 @@ $conf->add_steps( @steps );
 # from Parrot::Configure::Data
 $conf->options->set( %{$args} );
 
+use Data::Dumper;$Data::Dumper::Indent=1;
+print Dumper $conf;
 # Run the actual steps
 # from Parrot::Configure
 $conf->runsteps or exit(1);

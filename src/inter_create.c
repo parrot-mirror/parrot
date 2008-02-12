@@ -49,9 +49,7 @@ Interp interpre;
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-static int
-is_env_var_set(ARGIN(const char* var))>
+=item C<static int is_env_var_set>
 
 Checks whether the specified environment variable is set.
 
@@ -78,8 +76,7 @@ is_env_var_set(ARGIN(const char* var))
 
 /*
 
-=item C<static void
-setup_default_compreg(PARROT_INTERP)>
+=item C<static void setup_default_compreg>
 
 Setup default compiler for PASM.
 
@@ -98,10 +95,7 @@ setup_default_compreg(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_API
-PARROT_CANNOT_RETURN_NULL
-Parrot_Interp
-make_interpreter(NULLOK(Interp *parent), INTVAL flags)>
+=item C<Parrot_Interp make_interpreter>
 
 Create the Parrot interpreter. Allocate memory and clear the registers.
 
@@ -112,7 +106,7 @@ Create the Parrot interpreter. Allocate memory and clear the registers.
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
 Parrot_Interp
-make_interpreter(NULLOK(Interp *parent), INTVAL flags)
+make_interpreter(ARGIN_NULLOK(Interp *parent), INTVAL flags)
 {
     Interp *interp;
 
@@ -262,7 +256,7 @@ make_interpreter(NULLOK(Interp *parent), INTVAL flags)
     interp->task_queue = NULL;
     interp->thread_data = NULL;
 
-    Parrot_init_events(interp);
+/*    Parrot_init_events(interp); */
     Parrot_cx_init_scheduler(interp);
 
 #ifdef ATEXIT_DESTROY
@@ -280,9 +274,7 @@ make_interpreter(NULLOK(Interp *parent), INTVAL flags)
 
 /*
 
-=item C<PARROT_API
-void
-Parrot_destroy(PARROT_INTERP)>
+=item C<void Parrot_destroy>
 
 Does nothing if C<ATEXIT_DESTROY> is defined. Otherwise calls
 C<Parrot_really_destroy()> with exit code 0.
@@ -306,8 +298,7 @@ Parrot_destroy(PARROT_INTERP)
 
 /*
 
-=item C<void
-Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))>
+=item C<void Parrot_really_destroy>
 
 Waits for any threads to complete, then frees all allocated memory, and
 closes any open file handles, etc.
@@ -350,6 +341,9 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
 
     /* Destroys all PMCs, even constants and the ParrotIO objects for
      * std{in, out, err}, so don't be verbose about DOD'ing. */
+    if (interp->thread_data)
+        interp->thread_data->state |= THREAD_STATE_SUSPENDED_GC;
+
     Parrot_do_dod_run(interp, DOD_finish_FLAG);
 
 #if STM_PROFILE
@@ -379,7 +373,7 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
      */
     if (!interp->parent_interpreter) {
         PIO_internal_shutdown(interp);
-        Parrot_kill_event_loop(interp);
+/*        Parrot_kill_event_loop(interp); */
     }
 
     /* we destroy all child interpreters and the last one too,

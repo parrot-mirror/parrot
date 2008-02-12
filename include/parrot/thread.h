@@ -189,9 +189,10 @@ void pt_join_threads(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_CAN_RETURN_NULL
-PMC * pt_shared_fixup(PARROT_INTERP, NOTNULL(PMC *pmc))
+PMC * pt_shared_fixup(PARROT_INTERP, ARGMOD(PMC *pmc))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
 
 void pt_suspend_self_for_gc(PARROT_INTERP)
         __attribute__nonnull__(1);
@@ -204,40 +205,55 @@ PMC* pt_thread_join(NOTNULL(Parrot_Interp parent), UINTVAL tid)
 void pt_thread_kill(UINTVAL tid);
 void pt_thread_prepare_for_run(Parrot_Interp d, Parrot_Interp s);
 int pt_thread_run(PARROT_INTERP,
-    NOTNULL(PMC* dest_interp),
-    NULLOK(PMC* sub),
-    NULLOK(PMC *arg))
+    ARGOUT(PMC* dest_interp),
+    ARGIN(PMC* sub),
+    ARGIN(PMC *arg))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 int pt_thread_run_1(PARROT_INTERP,
-    NOTNULL(PMC* dest_interp),
-    NULLOK(PMC* sub),
-    NULLOK(PMC *arg))
+    ARGOUT(PMC* dest_interp),
+    ARGIN(PMC* sub),
+    ARGIN(PMC *arg))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 int pt_thread_run_2(PARROT_INTERP,
-    NOTNULL(PMC* dest_interp),
-    NULLOK(PMC* sub),
-    NULLOK(PMC *arg))
+    ARGOUT(PMC* dest_interp),
+    ARGIN(PMC* sub),
+    ARGIN(PMC *arg))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 int pt_thread_run_3(PARROT_INTERP,
-    NOTNULL(PMC* dest_interp),
-    NULLOK(PMC* sub),
-    NULLOK(PMC *arg))
+    ARGOUT(PMC* dest_interp),
+    ARGIN(PMC* sub),
+    ARGIN(PMC *arg))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
-void pt_thread_wait_with(PARROT_INTERP, NOTNULL(Parrot_mutex *mutex))
+void pt_thread_wait_with(PARROT_INTERP, ARGMOD(Parrot_mutex *mutex))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*mutex);
 
 void pt_thread_yield(void);
 PARROT_CAN_RETURN_NULL
-PMC * pt_transfer_sub(Parrot_Interp d, Parrot_Interp s, NULLOK(PMC *sub));
+PMC * pt_transfer_sub(
+    ARGOUT(Parrot_Interp d),
+    ARGIN(Parrot_Interp s),
+    ARGIN(PMC *sub))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 /* HEADERIZER END: src/thread.c */
 

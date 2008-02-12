@@ -16,9 +16,9 @@ package gen::parrot_include;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
-use Parrot::Configure::Step ':gen';
+use Parrot::Configure::Utils ':gen';
 
 
 sub _init {
@@ -125,6 +125,7 @@ my @files = qw(
     include/parrot/datatypes.h
     include/parrot/enums.h
     include/parrot/events.h
+    include/parrot/scheduler.h
     include/parrot/exceptions.h
     include/parrot/interpreter.h
     include/parrot/io.h

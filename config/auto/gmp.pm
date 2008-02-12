@@ -16,9 +16,9 @@ package auto::gmp;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
-use Parrot::Configure::Step ':auto';
+use Parrot::Configure::Utils ':auto';
 
 sub _init {
     my $self = shift;
@@ -48,7 +48,10 @@ sub runstep {
     my $libs      = $conf->data->get('libs');
     my $linkflags = $conf->data->get('linkflags');
     my $ccflags   = $conf->data->get('ccflags');
-    if ( $conf->data->get_p5('OSNAME') =~ /mswin32/i ) {
+
+    my $osname    = $conf->data->get_p5('OSNAME');
+
+    if ( $osname =~ /mswin32/i ) {
         if ( $cc =~ /^gcc/i ) {
             $conf->data->add( ' ', libs => '-lgmp' );
         }
@@ -60,25 +63,23 @@ sub runstep {
         $conf->data->add( ' ', libs => '-lgmp' );
     }
 
-    my $osname = $conf->data->get_p5('OSNAME');
-
     # On OS X check the presence of the gmp header in the standard
     # Fink location.
-    # RT#43134: Need a more generalized way for finding
-    # where Fink lives.
     if ( $osname =~ /darwin/ ) {
-        if ( -f "/sw/include/gmp.h" ) {
-            $conf->data->add( ' ', linkflags => '-L/sw/lib' );
-            $conf->data->add( ' ', ldflags   => '-L/sw/lib' );
-            $conf->data->add( ' ', ccflags   => '-I/sw/include' );
+        my $fink_lib_dir        = $conf->data->get('fink_lib_dir');
+        my $fink_include_dir    = $conf->data->get('fink_include_dir');
+        if ( -f "$fink_include_dir/gmp.h" ) {
+            $conf->data->add( ' ', linkflags => "-L$fink_lib_dir" );
+            $conf->data->add( ' ', ldflags   => "-L$fink_lib_dir" );
+            $conf->data->add( ' ', ccflags   => "-I$fink_include_dir" );
         }
     }
 
-    cc_gen('config/auto/gmp/gmp.in');
-    eval { cc_build(); };
+    $conf->cc_gen('config/auto/gmp/gmp.in');
+    eval { $conf->cc_build(); };
     my $has_gmp = 0;
     if ( !$@ ) {
-        my $test = cc_run();
+        my $test = $conf->cc_run();
         if ( $test eq
 "6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151 0\n"
             )

@@ -6,23 +6,6 @@ use strict;
 use warnings;
 use Carp qw( confess );
 
-# While I work on files individually to make sure headerizing and
-# rewriting doesn't stomp on them.
-my @experimental_files = qw(
-    datatypes.c
-    exceptions.c
-    gc/resources.c
-    hash.c
-    hll.c
-    objects.c
-    string.c
-    string_primitives.c
-    sub.c
-    tsq.c
-    utils.c
-);
-my %experimental_files = map { ("src/$_", 1) } @experimental_files;
-
 =head1 NAME
 
 tools/build/headerizer.pl - Generates the function header parts of .h
@@ -278,21 +261,29 @@ sub attrs_from_args {
     my @args = @_;
 
     my @attrs = ();
+    my @mods  = ();
 
     my $n = 0;
     for my $arg (@args) {
         ++$n;
-        if ( $arg =~ m{(ARGIN|ARGOUT|ARGINOUT|NOTNULL)\(} || $arg eq 'PARROT_INTERP' ) {
+        if ( $arg =~ m{ARGMOD(?:_NOTNULL)?\((.+?)\)} ) {
+            my $modified = $1;
+            $modified =~ s/ //g;
+            $modified =~ s/[^*]+//;
+            $modified =~ s/\*+/*/;
+            push( @mods, "FUNC_MODIFIES($modified)" );
+        }
+        if ( $arg =~ m{(ARGIN|ARGOUT|ARGMOD|NOTNULL)\(} || $arg eq 'PARROT_INTERP' ) {
             push( @attrs, "__attribute__nonnull__($n)" );
         }
-        if ( ( $arg =~ m{\*} ) && ( $arg !~ /\b(SHIM|((ARGIN|ARGOUT|ARGINOUT)(_NULLOK)?))/ ) ) {
+        if ( ( $arg =~ m{\*} ) && ( $arg !~ /\b(SHIM|((ARGIN|ARGOUT|ARGMOD)(_NULLOK)?))\b/ ) ) {
             my $name = $func->{name};
             my $file = $func->{file};
-            squawk( $file, $name, qq{"$arg" isn't protected with an ARGIN, ARGOUT or ARGINOUT (or a _NULLOK variant)} );
+            squawk( $file, $name, qq{"$arg" isn't protected with an ARGIN, ARGOUT or ARGMOD (or a _NULLOK variant)} );
         }
     }
 
-    return @attrs;
+    return (@attrs,@mods);
 }
 
 sub make_function_decls {
@@ -440,7 +431,7 @@ sub main {
         }
 
         my @decls;
-        if ( -f $pmcfile || !$experimental_files{$cfile} ) {
+        if ( -f $pmcfile ) {
             @decls = extract_function_declarations( $csource );
         }
         else {

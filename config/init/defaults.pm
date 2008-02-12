@@ -16,7 +16,7 @@ package init::defaults;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
 use Config;
 use FindBin;    # see build_dir
@@ -56,6 +56,7 @@ sub runstep {
         longsize
         optimize
         sig_name
+        scriptdir
         use64bitint
     | ) {
         $conf->data->set_p5( $orig => $Config{$orig} );
@@ -240,11 +241,26 @@ sub runstep {
         );
     }
 
+    $conf->data->set( 'archname', $Config{archname});
     # adjust archname, cc and libs for e.g. --m=32
     # RT#41499 this is maybe gcc only
-    my $m        = $conf->options->get('m');
-    my $archname = $Config{archname};
+    # RT#41500 adjust lib install-path /lib64 vs. lib
+    # remember corrected archname - jit.pm was using $Config('archname')
+    _64_bit_adjustments($conf);
+
+    return 1;
+}
+
+sub find_perl_headers {
+    my $self = shift;
+    return File::Spec->catdir( $Config::Config{archlib}, 'CORE' );
+}
+
+sub _64_bit_adjustments {
+    my $conf = shift;
+    my $m = $conf->options->get('m');
     if ($m) {
+        my $archname = $conf->data->get('archname');
         if ( $archname =~ /x86_64/ && $m eq '32' ) {
             $archname =~ s/x86_64/i386/;
 
@@ -260,18 +276,9 @@ sub runstep {
                 $conf->data->set( $lib, $ni );
             }
         }
+        $conf->data->set( 'archname', $archname );
     }
-
-    # RT#41500 adjust lib install-path /lib64 vs. lib
-    # remember corrected archname - jit.pm was using $Config('archname')
-    $conf->data->set( 'archname', $archname );
-
     return 1;
-}
-
-sub find_perl_headers {
-    my $self = shift;
-    return File::Spec->catdir( $Config::Config{archlib}, 'CORE' );
 }
 
 1;

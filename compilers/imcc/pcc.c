@@ -38,14 +38,17 @@ PCC Implementation by Leopold Toetsch
 /* HEADERIZER BEGIN: static */
 
 static void insert_tail_call(PARROT_INTERP,
-    NOTNULL(IMC_Unit * unit),
-    NOTNULL(NOTNULL(Instruction *ins)),
-    NOTNULL(SymReg *sub),
-    NULLOK(SymReg *meth))
+    ARGIN(IMC_Unit *unit),
+    ARGMOD(Instruction *ins),
+    ARGMOD(SymReg *sub),
+    ARGIN(SymReg *meth))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*ins)
+        FUNC_MODIFIES(*sub);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
@@ -97,9 +100,9 @@ static int pcc_reg_mov(PARROT_INTERP,
         __attribute__nonnull__(4);
 
 static int recursive_tail_call(PARROT_INTERP,
-    NOTNULL(NOTNULL(IMC_Unit *unit)),
-    NOTNULL(NOTNULL(Instruction *ins)),
-    NOTNULL(SymReg *sub))
+    ARGIN(IMC_Unit *unit),
+    ARGIN(Instruction *ins),
+    ARGIN(SymReg *sub))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -113,11 +116,7 @@ static void unshift_self(NOTNULL(SymReg *sub), NOTNULL(SymReg *obj))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static Instruction *
-insINS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *ins),
-        ARGIN(const char *name), NOTNULL(SymReg **regs), int n)>
+=item C<static Instruction * insINS>
 
 Utility instruction routine. Creates and inserts an instruction
 into the current block in one call.
@@ -140,10 +139,7 @@ insINS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *ins),
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-SymReg*
-get_pasm_reg(PARROT_INTERP, ARGIN(const char *name))>
+=item C<SymReg* get_pasm_reg>
 
 get or create the SymReg
 
@@ -166,10 +162,7 @@ get_pasm_reg(PARROT_INTERP, ARGIN(const char *name))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-SymReg*
-get_const(PARROT_INTERP, ARGIN(const char *name), int type)>
+=item C<SymReg* get_const>
 
 get or create a constant
 
@@ -192,12 +185,7 @@ get_const(PARROT_INTERP, ARGIN(const char *name), int type)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static Instruction*
-pcc_get_args(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *ins),
-        ARGIN(const char *op_name), int n,
-        NULLOK(SymReg **args), ARGIN_NULLOK(const int *arg_flags))>
+=item C<static Instruction* pcc_get_args>
 
 set arguments or return values
 get params or results
@@ -267,8 +255,7 @@ pcc_get_args(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *ins),
 
 /*
 
-=item C<static void
-unshift_self(NOTNULL(SymReg *sub), NOTNULL(SymReg *obj))>
+=item C<static void unshift_self>
 
 prepend the object to args or self to params
 
@@ -298,8 +285,7 @@ unshift_self(NOTNULL(SymReg *sub), NOTNULL(SymReg *obj))
 
 /*
 
-=item C<void
-expand_pcc_sub(PARROT_INTERP, NOTNULL(NOTNULL(IMC_Unit *unit)), NOTNULL(NOTNULL(Instruction *ins)))>
+=item C<void expand_pcc_sub>
 
 Expand a PCC (Parrot Calling Convention) subroutine
 by generating the appropriate prologue and epilogue
@@ -383,8 +369,7 @@ expand_pcc_sub(PARROT_INTERP, NOTNULL(NOTNULL(IMC_Unit *unit)), NOTNULL(NOTNULL(
 
 /*
 
-=item C<void
-expand_pcc_sub_ret(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *ins))>
+=item C<void expand_pcc_sub_ret>
 
 Expand a PCC sub return directive into its PASM instructions
 
@@ -431,8 +416,7 @@ struct move_info_t {
 
 /*
 
-=item C<static int
-pcc_reg_mov(PARROT_INTERP, unsigned char d, unsigned char s, NOTNULL(void *vinfo))>
+=item C<static int pcc_reg_mov>
 
 RT#48260: Not yet documented!!!
 
@@ -503,11 +487,7 @@ pcc_reg_mov(PARROT_INTERP, unsigned char d, unsigned char s, NOTNULL(void *vinfo
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static Instruction *
-move_regs(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *ins),
-        int n, NOTNULL(SymReg **dest), NOTNULL(SymReg **src))>
+=item C<static Instruction * move_regs>
 
 RT#48260: Not yet documented!!!
 
@@ -562,9 +542,7 @@ done:
 
 /*
 
-=item C<static int
-recursive_tail_call(PARROT_INTERP, NOTNULL(NOTNULL(IMC_Unit *unit)),
-        NOTNULL(NOTNULL(Instruction *ins)), NOTNULL(SymReg *sub))>
+=item C<static int recursive_tail_call>
 
 convert a recursive tailcall into a loop
 
@@ -573,8 +551,8 @@ convert a recursive tailcall into a loop
 */
 
 static int
-recursive_tail_call(PARROT_INTERP, NOTNULL(NOTNULL(IMC_Unit *unit)),
-        NOTNULL(NOTNULL(Instruction *ins)), NOTNULL(SymReg *sub))
+recursive_tail_call(PARROT_INTERP, ARGIN(IMC_Unit *unit),
+        ARGIN(Instruction *ins), ARGIN(SymReg *sub))
 {
     SymReg *called_sub, *this_sub, *label;
     SymReg *regs[2];
@@ -628,9 +606,7 @@ recursive_tail_call(PARROT_INTERP, NOTNULL(NOTNULL(IMC_Unit *unit)),
 
 /*
 
-=item C<static void
-insert_tail_call(PARROT_INTERP, NOTNULL(IMC_Unit * unit),
-        NOTNULL(NOTNULL(Instruction *ins)), NOTNULL(SymReg *sub), NULLOK(SymReg *meth))>
+=item C<static void insert_tail_call>
 
 RT#48260: Not yet documented!!!
 
@@ -639,8 +615,8 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-insert_tail_call(PARROT_INTERP, NOTNULL(IMC_Unit * unit),
-        NOTNULL(NOTNULL(Instruction *ins)), NOTNULL(SymReg *sub), NULLOK(SymReg *meth))
+insert_tail_call(PARROT_INTERP, ARGIN(IMC_Unit *unit), ARGMOD(Instruction *ins),
+        ARGMOD(SymReg *sub), ARGIN(SymReg *meth))
 {
     SymReg *regs[2];
 
@@ -661,8 +637,7 @@ insert_tail_call(PARROT_INTERP, NOTNULL(IMC_Unit * unit),
 
 /*
 
-=item C<void
-expand_pcc_sub_call(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction *ins))>
+=item C<void expand_pcc_sub_call>
 
 Expand a PCC subroutine call (IMC) into its PASM instructions
 This is the nuts and bolts of pdd03 routine call style
@@ -714,7 +689,7 @@ expand_pcc_sub_call(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(Instruction 
     get_name = NULL;
 
     if (ins->type & ITCALL) {
-        SymReg * the_sub = sub->pcc_sub->sub;
+        SymReg * const the_sub = sub->pcc_sub->sub;
 
         if (!meth_call && (the_sub->type & VTADDRESS)) {
             /*

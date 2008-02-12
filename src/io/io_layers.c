@@ -30,11 +30,7 @@ is found for that particular slot.
 
 /*
 
-=item C<PARROT_API
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-ParrotIOLayer *
-PIO_base_new_layer(NULLOK(ParrotIOLayer *proto))>
+=item C<ParrotIOLayer * PIO_base_new_layer>
 
 The default IO layer constructor. Creates and returns a new
 C<ParrotIOLayer>. If a prototype C<*proto> is supplied then its values
@@ -48,7 +44,7 @@ PARROT_API
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 ParrotIOLayer *
-PIO_base_new_layer(NULLOK(ParrotIOLayer *proto))
+PIO_base_new_layer(ARGIN_NULLOK(const ParrotIOLayer *proto))
 {
     ParrotIOLayer * const new_layer = mem_allocate_typed(ParrotIOLayer);
 
@@ -74,9 +70,7 @@ PIO_base_new_layer(NULLOK(ParrotIOLayer *proto))
 
 /*
 
-=item C<PARROT_API
-void
-PIO_base_delete_layer(NULLOK(ParrotIOLayer *layer))>
+=item C<void PIO_base_delete_layer>
 
 The default IO layer destructor. Frees the memory associated with
 C<*layer>.
@@ -87,7 +81,7 @@ C<*layer>.
 
 PARROT_API
 void
-PIO_base_delete_layer(NULLOK(ParrotIOLayer *layer))
+PIO_base_delete_layer(ARGIN_NULLOK(ParrotIOLayer *layer))
 {
     if (layer != NULL)
         mem_sys_free(layer);
@@ -95,9 +89,7 @@ PIO_base_delete_layer(NULLOK(ParrotIOLayer *layer))
 
 /*
 
-=item C<PARROT_API
-INTVAL
-PIO_push_layer(PARROT_INTERP, NULLOK(PMC *pmc), NULLOK(ParrotIOLayer *layer))>
+=item C<INTVAL PIO_push_layer>
 
 Push a layer onto an IO object (C<*pmc>) or the default stack.
 
@@ -107,7 +99,7 @@ Push a layer onto an IO object (C<*pmc>) or the default stack.
 
 PARROT_API
 INTVAL
-PIO_push_layer(PARROT_INTERP, NULLOK(PMC *pmc), NULLOK(ParrotIOLayer *layer))
+PIO_push_layer(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(ParrotIOLayer *layer))
 {
     if (layer == NULL)
         return -1;
@@ -173,11 +165,7 @@ PIO_push_layer(PARROT_INTERP, NULLOK(PMC *pmc), NULLOK(ParrotIOLayer *layer))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-PARROT_API
-ParrotIOLayer *
-PIO_get_layer(SHIM_INTERP, ARGIN(const char *name))>
+=item C<ParrotIOLayer * PIO_get_layer>
 
 RT#48260: Not yet documented!!!
 
@@ -201,8 +189,7 @@ PIO_get_layer(SHIM_INTERP, ARGIN(const char *name))
 
 /*
 
-=item C<void
-PIO_push_layer_str(PARROT_INTERP, NOTNULL(PMC *pmc), NULLOK(STRING *ls))>
+=item C<void PIO_push_layer_str>
 
 Push a layer onto an IO object (C<*pmc>).
 
@@ -211,7 +198,7 @@ Push a layer onto an IO object (C<*pmc>).
 */
 
 void
-PIO_push_layer_str(PARROT_INTERP, NOTNULL(PMC *pmc), NULLOK(STRING *ls))
+PIO_push_layer_str(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN_NULLOK(const STRING *ls))
 {
     char * const cls = string_to_cstring(interp, ls);
     ParrotIOLayer * const l = PIO_get_layer(interp, cls);
@@ -229,11 +216,7 @@ PIO_push_layer_str(PARROT_INTERP, NOTNULL(PMC *pmc), NULLOK(STRING *ls))
 
 /*
 
-=item C<PARROT_API
-PARROT_IGNORABLE_RESULT
-PARROT_CAN_RETURN_NULL
-ParrotIOLayer *
-PIO_pop_layer(PARROT_INTERP, NULLOK(PMC *pmc))>
+=item C<ParrotIOLayer * PIO_pop_layer>
 
 Pop a layer from an IO object (C<*pmc>) or the default stack.
 
@@ -245,7 +228,7 @@ PARROT_API
 PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 ParrotIOLayer *
-PIO_pop_layer(PARROT_INTERP, NULLOK(PMC *pmc))
+PIO_pop_layer(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc))
 {
     ParrotIO * const io = PMC_data_typed(pmc, ParrotIO *);
 
@@ -296,10 +279,7 @@ PIO_pop_layer(PARROT_INTERP, NULLOK(PMC *pmc))
 
 /*
 
-=item C<PARROT_IGNORABLE_RESULT
-PARROT_CANNOT_RETURN_NULL
-STRING *
-PIO_pop_layer_str(PARROT_INTERP, NOTNULL(PMC *pmc))>
+=item C<STRING * PIO_pop_layer_str>
 
 Pop a layer from an IO object (C<*pmc>) and return the name of the
 popped layer. The layer gets freed.
@@ -311,7 +291,7 @@ popped layer. The layer gets freed.
 PARROT_IGNORABLE_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-PIO_pop_layer_str(PARROT_INTERP, NOTNULL(PMC *pmc))
+PIO_pop_layer_str(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc))
 {
     ParrotIOLayer * const layer = PIO_pop_layer(interp, pmc);
     STRING * const ls = string_make(interp, layer->name,
@@ -322,11 +302,7 @@ PIO_pop_layer_str(PARROT_INTERP, NOTNULL(PMC *pmc))
 
 /*
 
-=item C<PARROT_API
-PARROT_IGNORABLE_RESULT
-PARROT_CANNOT_RETURN_NULL
-ParrotIOLayer *
-PIO_copy_stack(NULLOK(ParrotIOLayer *stack))>
+=item C<ParrotIOLayer * PIO_copy_stack>
 
 Primarily used to copy the default IO stack for a new IO object. Later
 we will do some funky copy-on-write stuff.
@@ -339,7 +315,7 @@ PARROT_API
 PARROT_IGNORABLE_RESULT
 PARROT_CANNOT_RETURN_NULL
 ParrotIOLayer *
-PIO_copy_stack(NULLOK(ParrotIOLayer *stack))
+PIO_copy_stack(ARGIN_NULLOK(ParrotIOLayer *stack))
 {
     ParrotIOLayer *ptr_new = NULL;
     ParrotIOLayer *ptr_last = NULL;

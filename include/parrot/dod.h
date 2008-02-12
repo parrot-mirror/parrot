@@ -52,13 +52,15 @@
 /* HEADERIZER BEGIN: src/gc/dod.c */
 
 PARROT_API
-void pobject_lives(PARROT_INTERP, NOTNULL(PObj *obj))
+void pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*obj);
 
-void clear_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)
+void clear_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pool);
 
 void Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
@@ -67,32 +69,39 @@ void Parrot_dod_clear_live_bits(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 void Parrot_dod_free_buffer(PARROT_INTERP,
-    NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *b))
+    ARGMOD(Small_Object_Pool *pool),
+    ARGMOD(PObj *b))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*pool)
+        FUNC_MODIFIES(*b);
 
 void Parrot_dod_free_buffer_malloc(PARROT_INTERP,
-    NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *b))
+    ARGIN(Small_Object_Pool *pool),
+    ARGMOD(PObj *b))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*b);
 
 void Parrot_dod_free_pmc(PARROT_INTERP,
-    NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *p))
+    ARGMOD(Small_Object_Pool *pool),
+    ARGMOD(PObj *p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*pool)
+        FUNC_MODIFIES(*p);
 
 void Parrot_dod_free_sysmem(PARROT_INTERP,
-    NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *b))
+    ARGMOD(Small_Object_Pool *pool),
+    ARGMOD(PObj *b))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*pool)
+        FUNC_MODIFIES(*b);
 
 void Parrot_dod_ms_run(PARROT_INTERP, int flags)
         __attribute__nonnull__(1);
@@ -106,30 +115,33 @@ void Parrot_dod_profile_end(PARROT_INTERP, int what)
 void Parrot_dod_profile_start(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-void Parrot_dod_sweep(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
+void Parrot_dod_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pool);
 
 int Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
         __attribute__nonnull__(1);
 
-void Parrot_dod_trace_pmc_data(PARROT_INTERP, NOTNULL(PMC * const p))
+void Parrot_dod_trace_pmc_data(PARROT_INTERP, ARGIN(PMC *p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 int Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
         __attribute__nonnull__(1);
 
-void Parrot_free_pmc_ext(PARROT_INTERP, NOTNULL(PMC *p))
+void Parrot_free_pmc_ext(PARROT_INTERP, ARGMOD(PMC *p))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*p);
 
 void trace_mem_block(PARROT_INTERP, size_t lo_var_ptr, size_t hi_var_ptr)
         __attribute__nonnull__(1);
 
-void used_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)
+void used_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pool);
 
 /* HEADERIZER END: src/gc/dod.c */
 
@@ -156,25 +168,26 @@ void Parrot_gc_gms_init(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_API
-void parrot_gc_gms_pobject_lives(PARROT_INTERP, NOTNULL(PObj *obj))
+void parrot_gc_gms_pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*obj);
 
 void parrot_gc_gms_wb(PARROT_INTERP,
-    NOTNULL(PMC *agg),
-    NOTNULL(void *old),
-    NOTNULL(void *new))
+    ARGIN(PMC *agg),
+    ARGIN(void *old),
+    ARGIN(void *new))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
 void parrot_gc_gms_wb_key(PARROT_INTERP,
-    NOTNULL(PMC *agg),
-    NOTNULL(void *old),
-    NOTNULL(void *old_key),
-    NOTNULL(void *new),
-    NOTNULL(void *new_key))
+    ARGIN(PMC *agg),
+    ARGIN(void *old),
+    ARGIN(void *old_key),
+    ARGIN(void *new),
+    ARGIN(void *new_key))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -186,10 +199,12 @@ void parrot_gc_gms_wb_key(PARROT_INTERP,
 
 /* HEADERIZER BEGIN: src/gc/gc_ims.c */
 
-void Parrot_dod_ims_wb(PARROT_INTERP, NOTNULL(PMC *agg), NOTNULL(PMC *_new))
+void Parrot_dod_ims_wb(PARROT_INTERP, ARGMOD(PMC *agg), ARGMOD(PMC *_new))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*agg)
+        FUNC_MODIFIES(*_new);
 
 void Parrot_gc_ims_init(PARROT_INTERP)
         __attribute__nonnull__(1);

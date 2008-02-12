@@ -28,22 +28,26 @@ representation.
 /* HEADERIZER BEGIN: static */
 
 static size_t PIO_utf8_read(PARROT_INTERP,
-    NOTNULL(ParrotIOLayer *layer),
-    NOTNULL(ParrotIO *io),
-    NOTNULL(STRING **buf))
+    ARGMOD(ParrotIOLayer *layer),
+    ARGMOD(ParrotIO *io),
+    ARGOUT(STRING **buf))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*layer)
+        FUNC_MODIFIES(*io);
 
 static size_t PIO_utf8_write(PARROT_INTERP,
-    NOTNULL(ParrotIOLayer *l),
-    NOTNULL(ParrotIO *io),
-    NOTNULL(STRING *s))
+    ARGIN(ParrotIOLayer *l),
+    ARGMOD(ParrotIO *io),
+    ARGMOD(STRING *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*io)
+        FUNC_MODIFIES(*s);
 
 /* HEADERIZER END: static */
 
@@ -92,10 +96,7 @@ ParrotIOLayer pio_utf8_layer = {
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-ParrotIOLayer *
-PIO_utf8_register_layer(void)>
+=item C<ParrotIOLayer * PIO_utf8_register_layer>
 
 RT#48260: Not yet documented!!!
 
@@ -113,9 +114,7 @@ PIO_utf8_register_layer(void)
 
 /*
 
-=item C<static size_t
-PIO_utf8_read(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer),
-        NOTNULL(ParrotIO *io), NOTNULL(STRING **buf))>
+=item C<static size_t PIO_utf8_read>
 
 RT#48260: Not yet documented!!!
 
@@ -124,8 +123,8 @@ RT#48260: Not yet documented!!!
 */
 
 static size_t
-PIO_utf8_read(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer),
-        NOTNULL(ParrotIO *io), NOTNULL(STRING **buf))
+PIO_utf8_read(PARROT_INTERP, ARGMOD(ParrotIOLayer *layer),
+        ARGMOD(ParrotIO *io), ARGOUT(STRING **buf))
 {
     STRING *s, *s2;
     String_iter iter;
@@ -142,7 +141,7 @@ PIO_utf8_read(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer),
         if (iter.bytepos + 4 > s->bufused) {
             const utf8_t *u8ptr = (utf8_t *)((char *)s->strstart +
                     iter.bytepos);
-            UINTVAL c = *u8ptr;
+            const UINTVAL c = *u8ptr;
 
             if (UTF8_IS_START(c)) {
                 UINTVAL len2 = UTF8SKIP(u8ptr);
@@ -179,8 +178,7 @@ ok:
 
 /*
 
-=item C<static size_t
-PIO_utf8_write(PARROT_INTERP, NOTNULL(ParrotIOLayer *l), NOTNULL(ParrotIO *io), NOTNULL(STRING *s))>
+=item C<static size_t PIO_utf8_write>
 
 RT#48260: Not yet documented!!!
 
@@ -189,7 +187,7 @@ RT#48260: Not yet documented!!!
 */
 
 static size_t
-PIO_utf8_write(PARROT_INTERP, NOTNULL(ParrotIOLayer *l), NOTNULL(ParrotIO *io), NOTNULL(STRING *s))
+PIO_utf8_write(PARROT_INTERP, ARGIN(ParrotIOLayer *l), ARGMOD(ParrotIO *io), ARGMOD(STRING *s))
 {
     STRING *dest;
 

@@ -16,9 +16,9 @@ package auto::gcc;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
-use Parrot::Configure::Step ':auto';
+use Parrot::Configure::Utils ':auto';
 
 
 sub _init {
@@ -31,16 +31,17 @@ sub _init {
 
 sub runstep {
     my ( $self, $conf ) = @_;
-    my $gnucref = _probe_for_gcc();
+    my $gnucref = _probe_for_gcc($conf);
     my $rv = $self->_evaluate_gcc($conf, $gnucref);
     return $rv;
 }
 
 sub _probe_for_gcc {
-    cc_gen("config/auto/gcc/test_c.in");
-    cc_build();
-    my %gnuc = eval cc_run() or die "Can't run the test program: $!";
-    cc_clean();
+    my $conf = shift;
+    $conf->cc_gen("config/auto/gcc/test_c.in");
+    $conf->cc_build();
+    my %gnuc = eval $conf->cc_run() or die "Can't run the test program: $!";
+    $conf->cc_clean();
     return \%gnuc;
 }
 

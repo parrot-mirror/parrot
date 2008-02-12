@@ -16,9 +16,9 @@ package auto::alignptrs;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
-use Parrot::Configure::Step ':auto';
+use Parrot::Configure::Utils ':auto';
 
 sub _init {
     my $self = shift;
@@ -52,25 +52,55 @@ sub runstep {
     else {
 
         # Now really test by compiling some code
-        cc_gen('config/auto/alignptrs/test_c.in');
-        cc_build();
-        for my $try_align ( 64, 32, 16, 8, 4, 2, 1 ) {
-            my $results = cc_run_capture($try_align);
-            if ( $results =~ /OK/ && $results !~ /align/i ) {
-                $align = $try_align;
+        $conf->cc_gen('config/auto/alignptrs/test_c.in');
+        $conf->cc_build();
+        my $minimum_valid_align;
+        my @aligns = (1, 2, 4, 8, 16, 32, 64);
+        TRY_ALIGN: while ( defined( my $try_align = shift(@aligns) ) ) {
+            my $results = $conf->cc_run_capture($try_align);
+            $align = _evaluate_results($results, $try_align);
+            if (defined $align) {
+                $minimum_valid_align = $align;
+                last TRY_ALIGN;
+            } else {
+                next TRY_ALIGN;
             }
         }
-        cc_clean();
+        $conf->cc_clean();
 
-        die "Can't determine alignment!\n" unless defined $align;
-        $conf->data->set( ptr_alignment => $align );
+        _evaluate_ptr_alignment($conf, $minimum_valid_align);
+
+        # If at this point we haven't died, then we can assign
+        # $minimum_valid_align to $align.
+        $align = $minimum_valid_align;
     }
 
+    $self->_finalize_result_str($align, $result_str);
+
+    return 1;
+}
+
+sub _evaluate_results {
+    my ($results, $try_align) = @_;
+    my $align;
+    if ( $results =~ /OK/ && $results !~ /align/i ) {
+        $align = $try_align;
+    }
+    return $align;
+}
+
+sub _evaluate_ptr_alignment {
+    my ($conf, $minimum_valid_align) = @_;
+    die "Can't determine alignment!\n" unless defined $minimum_valid_align;
+    $conf->data->set( ptr_alignment => $minimum_valid_align );
+}
+
+sub _finalize_result_str {
+    my $self = shift;
+    my ($align, $result_str) = @_;
     $result_str .= " $align byte";
     $result_str .= "s" unless $align == 1;
     $self->set_result($result_str);
-
-    return 1;
 }
 
 1;

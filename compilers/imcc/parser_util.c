@@ -103,15 +103,16 @@ PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static Instruction * var_arg_ins(PARROT_INTERP,
-    NOTNULL(IMC_Unit *unit),
+    ARGMOD(IMC_Unit *unit),
     ARGIN(const char *name),
-    NOTNULL(SymReg **r),
+    ARGIN(SymReg **r),
     int n,
     int emit)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*unit);
 
 /* HEADERIZER END: static */
 
@@ -134,11 +135,7 @@ static INTVAL eval_nr = 0;
 
 =over 4
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-Instruction *
-iNEW(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0),
-        NOTNULL(char *type), NULLOK(SymReg *init), int emit)>
+=item C<Instruction * iNEW>
 
  * P = new type, [init]
  * PASM like:
@@ -187,9 +184,7 @@ iNEW(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg *r0),
 
 /*
 
-=item C<void
-op_fullname(NOTNULL(char *dest), ARGIN(const char *name), NOTNULL(SymReg *args[]),
-        int narg, int keyvec)>
+=item C<void op_fullname>
 
 Lookup the full opcode given the short name
 
@@ -264,10 +259,7 @@ op_fullname(NOTNULL(char *dest), ARGIN(const char *name), NOTNULL(SymReg *args[]
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-int
-check_op(PARROT_INTERP, NOTNULL(char *fullname),
-        ARGIN(const char *name), NOTNULL(SymReg *r[]), int narg, int keyvec)>
+=item C<int check_op>
 
 Return opcode value for op name
 
@@ -289,11 +281,7 @@ check_op(PARROT_INTERP, NOTNULL(char *fullname),
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static Instruction *
-maybe_builtin(PARROT_INTERP, ARGIN(const char *name),
-        NOTNULL(SymReg **r), int n)>
+=item C<static Instruction * maybe_builtin>
 
 TODO: Needs to be documented!!!
 
@@ -360,9 +348,7 @@ maybe_builtin(PARROT_INTERP, ARGIN(const char *name),
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-int
-is_op(PARROT_INTERP, ARGIN(const char *name))>
+=item C<int is_op>
 
 Is instruction a parrot opcode?
 
@@ -384,11 +370,7 @@ is_op(PARROT_INTERP, ARGIN(const char *name))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static const char *
-to_infix(PARROT_INTERP, ARGIN(const char *name), NOTNULL(SymReg **r),
-        NOTNULL(int *n), int mmd_op)>
+=item C<static const char * to_infix>
 
 sub x, y, z  => infix .MMD_SUBTRACT, x, y, z
 
@@ -432,9 +414,7 @@ to_infix(PARROT_INTERP, ARGIN(const char *name), NOTNULL(SymReg **r),
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-static int
-is_infix(ARGIN(const char *name), int n, NOTNULL(SymReg **r))>
+=item C<static int is_infix>
 
 TODO: Needs to be documented!!!
 
@@ -507,12 +487,7 @@ is_infix(ARGIN(const char *name), int n, NOTNULL(SymReg **r))
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static Instruction *
-var_arg_ins(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
-        NOTNULL(SymReg **r), int n, int emit)>
+=item C<static Instruction * var_arg_ins>
 
 TODO: Needs to be documented!!!
 
@@ -524,8 +499,8 @@ PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static Instruction *
-var_arg_ins(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
-        NOTNULL(SymReg **r), int n, int emit)
+var_arg_ins(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
+        ARGIN(SymReg **r), int n, int emit)
 {
     int op;
     Instruction *ins;
@@ -550,10 +525,7 @@ var_arg_ins(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
 
 /*
 
-=item C<PARROT_CAN_RETURN_NULL
-Instruction *
-INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
-        ARGIN_NULLOK(const char *fmt), NOTNULL(SymReg **r), int n, int keyvec, int emit)>
+=item C<Instruction * INS>
 
 Make an instruction.
 
@@ -573,7 +545,7 @@ s. e.g. imc.c for usage
 PARROT_CAN_RETURN_NULL
 Instruction *
 INS(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
-        ARGIN_NULLOK(const char *fmt), NOTNULL(SymReg **r), int n, int keyvec, int emit)
+        ARGIN_NULLOK(const char *fmt), ARGIN(SymReg **r), int n, int keyvec, int emit)
 {
     char fullname[64];
     int i;
@@ -770,9 +742,7 @@ extern void* yy_scan_string(const char *);
 
 /*
 
-=item C<PARROT_API
-int
-do_yylex_init(PARROT_INTERP, NOTNULL(yyscan_t* yyscanner))>
+=item C<int do_yylex_init>
 
 TODO: Needs to be documented!!!
 
@@ -794,11 +764,7 @@ do_yylex_init(PARROT_INTERP, NOTNULL(yyscan_t* yyscanner))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC *
-imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
-             NOTNULL(STRING **error_message))>
+=item C<PMC * imcc_compile>
 
 Compile a pasm or imcc string
 
@@ -922,10 +888,7 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC *
-imcc_compile_pasm(PARROT_INTERP, ARGIN(const char *s))>
+=item C<PMC * imcc_compile_pasm>
 
 TODO: Needs to be documented!!!
 
@@ -947,10 +910,7 @@ imcc_compile_pasm(PARROT_INTERP, ARGIN(const char *s))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC *
-imcc_compile_pir(PARROT_INTERP, ARGIN(const char *s))>
+=item C<PMC * imcc_compile_pir>
 
 TODO: Needs to be documented!!!
 
@@ -972,11 +932,7 @@ imcc_compile_pir(PARROT_INTERP, ARGIN(const char *s))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC *
-IMCC_compile_pir_s(PARROT_INTERP, ARGIN(const char *s),
-                   NOTNULL(STRING **error_message))>
+=item C<PMC * IMCC_compile_pir_s>
 
 TODO: Needs to be documented!!!
 
@@ -995,11 +951,7 @@ IMCC_compile_pir_s(PARROT_INTERP, ARGIN(const char *s),
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC *
-IMCC_compile_pasm_s(PARROT_INTERP, ARGIN(const char *s),
-                    NOTNULL(STRING **error_message))>
+=item C<PMC * IMCC_compile_pasm_s>
 
 TODO: Needs to be documented!!!
 
@@ -1018,10 +970,7 @@ IMCC_compile_pasm_s(PARROT_INTERP, ARGIN(const char *s),
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC *
-imcc_compile_pasm_ex(PARROT_INTERP, ARGIN(const char *s))>
+=item C<PMC * imcc_compile_pasm_ex>
 
 TODO: Needs to be documented!!!
 
@@ -1046,10 +995,7 @@ imcc_compile_pasm_ex(PARROT_INTERP, ARGIN(const char *s))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC *
-imcc_compile_pir_ex(PARROT_INTERP, ARGIN(const char *s))>
+=item C<PMC * imcc_compile_pir_ex>
 
 TODO: Needs to be documented!!!
 
@@ -1074,10 +1020,7 @@ imcc_compile_pir_ex(PARROT_INTERP, ARGIN(const char *s))
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-static void *
-imcc_compile_file(PARROT_INTERP, ARGIN(const char *fullname),
-                   NOTNULL(STRING **error_message))>
+=item C<static void * imcc_compile_file>
 
 Compile a file by filename (can be either PASM or IMCC code)
 
@@ -1183,9 +1126,7 @@ imcc_compile_file(PARROT_INTERP, ARGIN(const char *fullname),
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-void *
-IMCC_compile_file(PARROT_INTERP, ARGIN(const char *s))>
+=item C<void * IMCC_compile_file>
 
 TODO: Needs to be documented!!!
 
@@ -1206,10 +1147,7 @@ IMCC_compile_file(PARROT_INTERP, ARGIN(const char *s))
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-void *
-IMCC_compile_file_s(PARROT_INTERP, ARGIN(const char *s),
-                   NOTNULL(STRING **error_message))>
+=item C<void * IMCC_compile_file_s>
 
 TODO: Needs to be documented!!!
 
@@ -1227,8 +1165,7 @@ IMCC_compile_file_s(PARROT_INTERP, ARGIN(const char *s),
 
 /*
 
-=item C<void
-register_compilers(PARROT_INTERP)>
+=item C<void register_compilers>
 
 Register additional compilers with the interpreter
 
@@ -1250,9 +1187,7 @@ register_compilers(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-static int
-change_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg **r), int num, int emit)>
+=item C<static int change_op>
 
 TODO: Needs to be documented!!!
 
@@ -1299,10 +1234,7 @@ change_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(SymReg **r), int num, 
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-int
-try_find_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
-        NOTNULL(SymReg **r), int n, int keyvec, int emit)>
+=item C<int try_find_op>
 
 Try to find valid op doing the same operation e.g.
 
@@ -1394,10 +1326,7 @@ try_find_op(PARROT_INTERP, NOTNULL(IMC_Unit *unit), ARGIN(const char *name),
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static const char *
-try_rev_cmp(ARGIN(const char *name), NOTNULL(SymReg **r))>
+=item C<static const char * try_rev_cmp>
 
 TODO: Needs to be documented!!!
 
@@ -1440,10 +1369,7 @@ try_rev_cmp(ARGIN(const char *name), NOTNULL(SymReg **r))
 
 /*
 
-=item C<PARROT_CAN_RETURN_NULL
-Instruction *
-multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
-            NOTNULL(SymReg **r), int nr, int keyvec, int emit)>
+=item C<Instruction * multi_keyed>
 
 TODO: Needs to be documented!!!
 
@@ -1551,8 +1477,7 @@ multi_keyed(PARROT_INTERP, NOTNULL(IMC_Unit *unit), NOTNULL(char *name),
 
 /*
 
-=item C<int
-imcc_fprintf(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const char *fmt), ...)>
+=item C<int imcc_fprintf>
 
 TODO: Needs to be documented!!!
 
@@ -1574,8 +1499,7 @@ imcc_fprintf(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const char *fmt), ...)
 
 /*
 
-=item C<int
-imcc_vfprintf(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const char *format), va_list ap)>
+=item C<int imcc_vfprintf>
 
 TODO: Needs to be documented!!!
 
@@ -1683,11 +1607,7 @@ imcc_vfprintf(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const char *format), va_li
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-char *
-str_dup(ARGIN(const char *old))>
+=item C<char * str_dup>
 
 TODO: Needs to be documented!!!
 
@@ -1712,9 +1632,7 @@ str_dup(ARGIN(const char *old))
 
 /*
 
-=item C<PARROT_API
-void
-imcc_init(PARROT_INTERP)>
+=item C<void imcc_init>
 
 TODO: Needs to be documented!!!
 
@@ -1733,9 +1651,7 @@ imcc_init(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_API
-void
-imcc_destroy(PARROT_INTERP)>
+=item C<void imcc_destroy>
 
 TODO: Needs to be documented!!!
 

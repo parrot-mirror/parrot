@@ -34,7 +34,6 @@ use warnings;
 
 use ExtUtils::Manifest;
 use File::Spec;
-use Parrot::Configure::Step qw(capture_output);
 
 use Parrot::Docs::Directory;
 use base qw(Parrot::Docs::Directory);
@@ -341,10 +340,10 @@ This is to exclude automatically generated C-language files Parrot might have.
         my ( $self, $file ) = @_;
 
         push @exemptions => map { File::Spec->canonpath($_) } qw{
-            config/gen/cpu/i386/memcpy_mmx.c
-            config/gen/cpu/i386/memcpy_mmx_in.c
-            config/gen/cpu/i386/memcpy_sse.c
-            config/gen/cpu/i386/memcpy_sse_in.c
+            config/auto/cpu/i386/memcpy_mmx.c
+            config/auto/cpu/i386/memcpy_mmx_in.c
+            config/auto/cpu/i386/memcpy_sse.c
+            config/auto/cpu/i386/memcpy_sse_in.c
             compilers/imcc/imclexer.c
             compilers/imcc/imcparser.c
             compilers/imcc/imcparser.h

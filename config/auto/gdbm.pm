@@ -17,9 +17,9 @@ package auto::gdbm;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
-use Parrot::Configure::Step ':auto';
+use Parrot::Configure::Utils ':auto';
 
 
 sub _init {
@@ -55,31 +55,31 @@ sub runstep {
 
     # On OS X check the presence of the gdbm header in the standard
     # Fink location.
-    # RT#43134: Need a more generalized way for finding
-    # where Fink lives.
     if ( $osname =~ /darwin/ ) {
-        if ( -f "/sw/include/gdbm.h" ) {
-            $conf->data->add( ' ', linkflags => '-L/sw/lib' );
-            $conf->data->add( ' ', dflags    => '-L/sw/lib' );
-            $conf->data->add( ' ', cflags    => '-I/sw/include' );
+        my $fink_lib_dir        = $conf->data->get('fink_lib_dir');
+        my $fink_include_dir    = $conf->data->get('fink_include_dir');
+        if ( -f "$fink_include_dir/gdbm.h" ) {
+            $conf->data->add( ' ', linkflags => "-L$fink_lib_dir" );
+            $conf->data->add( ' ', dflags    => "-L$fink_lib_dir" );
+            $conf->data->add( ' ', cflags    => "-I$fink_include_dir" );
         }
     }
 
-    cc_gen('config/auto/gdbm/gdbm.in');
-    if ( $conf->data->get_p5('OSNAME') =~ /mswin32/i ) {
+    $conf->cc_gen('config/auto/gdbm/gdbm.in');
+    if ( $osname =~ /mswin32/i ) {
         if ( $cc =~ /^gcc/i ) {
-            eval { cc_build( '', '-llibgdbm' ); };
+            eval { $conf->cc_build( '', '-llibgdbm' ); };
         }
         else {
-            eval { cc_build( '', 'gdbm.lib' ); };
+            eval { $conf->cc_build( '', 'gdbm.lib' ); };
         }
     }
     else {
-        eval { cc_build( '', '-lgdbm' ); };
+        eval { $conf->cc_build( '', '-lgdbm' ); };
     }
     my $has_gdbm = 0;
     if ( !$@ ) {
-        my $test = cc_run();
+        my $test = $conf->cc_run();
         unlink "gdbm_test_db";
         if ( $test eq "gdbm is working.\n" ) {
             $has_gdbm = 1;

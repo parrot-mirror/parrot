@@ -18,9 +18,8 @@ package gen::config_pm;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
-use Parrot::Configure::Step qw(genfile);
 use Cwd qw(cwd);
 use File::Spec::Functions qw(catdir);
 
@@ -37,7 +36,7 @@ sub runstep {
 
     $conf->data->clean;
 
-    genfile( 'config/gen/config_pm/myconfig.in', 'myconfig' );
+    $conf->genfile('config/gen/config_pm/myconfig.in', 'myconfig' );
 
     open( my $IN, "<", "config/gen/config_pm/Config_pm.in" )
         or die "Can't open Config_pm.in: $!";

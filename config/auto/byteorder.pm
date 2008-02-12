@@ -17,7 +17,7 @@ use strict;
 use warnings;
 
 use Parrot::Configure::Step qw(:auto);
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
 
 sub _init {
@@ -31,7 +31,7 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $byteorder = _probe_for_byteorder();
+    my $byteorder = _probe_for_byteorder($conf);
 
     $self->_evaluate_byteorder($conf, $byteorder);
 
@@ -39,11 +39,12 @@ sub runstep {
 }
 
 sub _probe_for_byteorder {
-    cc_gen('config/auto/byteorder/test_c.in');
-    cc_build();
-    my $byteorder = cc_run()
+    my $conf = shift;
+    $conf->cc_gen('config/auto/byteorder/test_c.in');
+    $conf->cc_build();
+    my $byteorder = $conf->cc_run()
         or die "Can't run the byteorder testing program: $!";
-    cc_clean();
+    $conf->cc_clean();
     chomp $byteorder;
     return $byteorder;
 }

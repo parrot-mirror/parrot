@@ -36,7 +36,7 @@ the faster dispatch of operations.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static opcode_t * runops_trace_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
+static opcode_t * runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -44,10 +44,7 @@ static opcode_t * runops_trace_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-opcode_t *
-runops_fast_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
+=item C<opcode_t * runops_fast_core>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations.
@@ -61,7 +58,7 @@ No bounds checking, profiling or tracing is performed.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *
-runops_fast_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
+runops_fast_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
     while (pc) {
         DO_OP(pc, interp);
@@ -71,10 +68,7 @@ runops_fast_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-opcode_t *
-runops_cgoto_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
+=item C<opcode_t * runops_cgoto_core>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations, using the computed C<goto> core.
@@ -90,7 +84,7 @@ If computed C<goto> is not available then Parrot exits with exit code 1.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *
-runops_cgoto_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
+runops_cgoto_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
 #ifdef HAVE_COMPUTED_GOTO
     pc = cg_core(pc, interp);
@@ -114,10 +108,7 @@ runops_cgoto_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static opcode_t *
-runops_trace_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
+=item C<static opcode_t * runops_trace_core>
 
 RT#48260: Not yet documented!!!
 
@@ -128,7 +119,7 @@ RT#48260: Not yet documented!!!
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static opcode_t *
-runops_trace_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
+runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
     static size_t dod, gc;
     Arenas * const arena_base = interp->arena_base;
@@ -189,10 +180,7 @@ runops_trace_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-opcode_t *
-runops_slow_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
+=item C<opcode_t * runops_slow_core>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations, with tracing and bounds checking enabled.
@@ -204,7 +192,7 @@ operations, with tracing and bounds checking enabled.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *
-runops_slow_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
+runops_slow_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
 
     if (Interp_trace_TEST(interp, PARROT_TRACE_OPS_FLAG)) {
@@ -227,10 +215,7 @@ runops_slow_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-opcode_t *
-runops_gc_debug_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
+=item C<opcode_t * runops_gc_debug_core>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations, performing a full GC run before each op.  This is very slow, but
@@ -243,7 +228,7 @@ it's also a very quick way to find GC problems.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *
-runops_gc_debug_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
+runops_gc_debug_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
     while (pc) {
         if (pc < code_start || pc >= code_end) {
@@ -264,10 +249,7 @@ runops_gc_debug_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-opcode_t *
-runops_profile_core(PARROT_INTERP, NOTNULL(opcode_t *pc))>
+=item C<opcode_t * runops_profile_core>
 
 Runs the Parrot operations starting at C<pc> until there are no more
 operations, with tracing, bounds checking and profiling enabled.
@@ -279,9 +261,8 @@ operations, with tracing, bounds checking and profiling enabled.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *
-runops_profile_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
+runops_profile_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
-    opcode_t cur_op;
     RunProfile * const profile = interp->profile;
 
     const opcode_t old_op = profile->cur_op;
@@ -295,6 +276,7 @@ runops_profile_core(PARROT_INTERP, NOTNULL(opcode_t *pc))
     }
 
     while (pc) {/* && pc >= code_start && pc < code_end) */
+        opcode_t cur_op;
         CONTEXT(interp->ctx)->current_pc = pc;
         profile->cur_op = cur_op = *pc + PARROT_PROF_EXTRA;
         profile->data[cur_op].numcalls++;

@@ -58,6 +58,10 @@ E: debolaz@gmail.com
 N: Andrew Rodland
 D: vim syntax files and editor doc
 
+N: Andrew Sweger
+D: typo squisher
+E: yDNA@cpan.org
+
 N: Andy Dougherty
 D: Config and building.
 
@@ -464,6 +468,9 @@ E: mestre.smash@gmail.com
 
 N: OOLLEY kj
 D: Miscellaneous cleanup and PDD07-conformance
+
+N: Ovid
+D: Rename 'pbc_to_c' to 'pbc_to_exe'
 
 N: Pancake
 D: Fixes for pdb, the Parrot debugger
