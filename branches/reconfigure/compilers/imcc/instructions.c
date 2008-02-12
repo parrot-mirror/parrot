@@ -82,11 +82,7 @@ static int emitter;     /* XXX */
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-Instruction *
-_mk_instruction(ARGIN(const char *op), ARGIN(const char *fmt), int n,
-        SymReg **r, int flags)>
+=item C<Instruction * _mk_instruction>
 
 Creates a new instruction
 
@@ -99,6 +95,7 @@ PARROT_CANNOT_RETURN_NULL
 Instruction *
 _mk_instruction(ARGIN(const char *op), ARGIN(const char *fmt), int n,
         SymReg **r, int flags)
+/* XXX The r option cannot get an ARGIN for some reason */
 {
     int i, reg_space;
     Instruction * ins;
@@ -136,8 +133,7 @@ static int w_special[1+4*3];
 
 /*
 
-=item C<void
-imcc_init_tables(PARROT_INTERP)>
+=item C<void imcc_init_tables>
 
 RT#48260: Not yet documented!!!
 
@@ -173,8 +169,7 @@ imcc_init_tables(PARROT_INTERP)
 
 /*
 
-=item C<int
-ins_reads2(ARGIN(const Instruction *ins), int t)>
+=item C<int ins_reads2>
 
 Returns TRUE if instruction ins reads from a register of type t
 
@@ -203,8 +198,7 @@ ins_reads2(ARGIN(const Instruction *ins), int t)
 
 /*
 
-=item C<int
-ins_writes2(ARGIN(const Instruction *ins), int t)>
+=item C<int ins_writes2>
 
 Returns TRUE if instruction ins writes to a register of type t
 
@@ -233,8 +227,7 @@ ins_writes2(ARGIN(const Instruction *ins), int t)
 
 /*
 
-=item C<int
-instruction_reads(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))>
+=item C<int instruction_reads>
 
 next 2 functions are called very often, says gprof
 they should be fast
@@ -295,8 +288,7 @@ instruction_reads(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
 
 /*
 
-=item C<int
-instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))>
+=item C<int instruction_writes>
 
 RT#48260: Not yet documented!!!
 
@@ -370,8 +362,7 @@ instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
 
 /*
 
-=item C<int
-get_branch_regno(ARGIN(const Instruction *ins))>
+=item C<int get_branch_regno>
 
 Get the register number of an address which is a branch target
 
@@ -391,10 +382,7 @@ get_branch_regno(ARGIN(const Instruction *ins))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-SymReg *
-get_branch_reg(ARGIN(const Instruction *ins))>
+=item C<SymReg * get_branch_reg>
 
 Get the register corresponding to an address which is a branch target
 
@@ -417,9 +405,7 @@ get_branch_reg(ARGIN(const Instruction *ins))
 
 /*
 
-=item C<PARROT_CAN_RETURN_NULL
-Instruction *
-delete_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins), int needs_freeing)>
+=item C<Instruction * delete_ins>
 
 Delete instruction ins. Also free it if needs_freeing is true.
 The instruction following ins is returned.
@@ -450,8 +436,7 @@ delete_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins), int needs
 
 /*
 
-=item C<void
-insert_ins(NOTNULL(struct _IMC_Unit *unit), NULLOK(Instruction *ins), NOTNULL(Instruction *tmp))>
+=item C<void insert_ins>
 
 insert tmp after ins
 
@@ -492,8 +477,7 @@ insert_ins(NOTNULL(struct _IMC_Unit *unit), NULLOK(Instruction *ins), NOTNULL(In
 
 /*
 
-=item C<void
-prepend_ins(NOTNULL(struct _IMC_Unit *unit), NULLOK(Instruction *ins), NOTNULL(Instruction *tmp))>
+=item C<void prepend_ins>
 
 insert tmp before ins
 
@@ -527,9 +511,7 @@ prepend_ins(NOTNULL(struct _IMC_Unit *unit), NULLOK(Instruction *ins), NOTNULL(I
 
 /*
 
-=item C<void
-subst_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins),
-          NOTNULL(Instruction *tmp), int needs_freeing)>
+=item C<void subst_ins>
 
 Substitute tmp for ins. Free ins if needs_freeing is true.
 
@@ -561,9 +543,7 @@ subst_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins),
 
 /*
 
-=item C<PARROT_CAN_RETURN_NULL
-Instruction *
-move_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins), NOTNULL(Instruction *to))>
+=item C<Instruction * move_ins>
 
 Move instruction ins from its current position to the position
 following instruction to. Returns the instruction following the
@@ -585,9 +565,7 @@ move_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins), NOTNULL(Ins
 
 /*
 
-=item C<PARROT_CAN_RETURN_NULL
-Instruction *
-emitb(PARROT_INTERP, NULLOK(struct _IMC_Unit *unit), NULLOK(Instruction *i))>
+=item C<Instruction * emitb>
 
 Emit a single instruction into the current unit buffer.
 
@@ -597,7 +575,7 @@ Emit a single instruction into the current unit buffer.
 
 PARROT_CAN_RETURN_NULL
 Instruction *
-emitb(PARROT_INTERP, NULLOK(struct _IMC_Unit *unit), NULLOK(Instruction *i))
+emitb(PARROT_INTERP, ARGMOD_NULLOK(struct _IMC_Unit *unit), ARGIN_NULLOK(Instruction *i))
 {
 
     if (!unit || !i)
@@ -615,8 +593,7 @@ emitb(PARROT_INTERP, NULLOK(struct _IMC_Unit *unit), NULLOK(Instruction *i))
 
 /*
 
-=item C<void
-free_ins(NOTNULL(Instruction *ins))>
+=item C<void free_ins>
 
 Free the Instruction structure ins.
 
@@ -634,8 +611,7 @@ free_ins(NOTNULL(Instruction *ins))
 
 /*
 
-=item C<int
-ins_print(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const Instruction *ins))>
+=item C<int ins_print>
 
 Print details of instruction ins in file fd.
 
@@ -743,8 +719,7 @@ static char *output;
 
 /*
 
-=item C<static int
-e_file_open(SHIM_INTERP, NOTNULL(void *param))>
+=item C<static int e_file_open>
 
 RT#48260: Not yet documented!!!
 
@@ -767,8 +742,7 @@ e_file_open(SHIM_INTERP, NOTNULL(void *param))
 
 /*
 
-=item C<static int
-e_file_close(PARROT_INTERP, SHIM(void *param))>
+=item C<static int e_file_close>
 
 RT#48260: Not yet documented!!!
 
@@ -787,11 +761,7 @@ e_file_close(PARROT_INTERP, SHIM(void *param))
 
 /*
 
-=item C<static int
-e_file_emit(PARROT_INTERP,
-    SHIM(void *param),
-    SHIM(IMC_Unit *unit),
-    ARGIN(const Instruction *ins))>
+=item C<static int e_file_emit>
 
 RT#48260: Not yet documented!!!
 
@@ -819,9 +789,7 @@ e_file_emit(PARROT_INTERP,
 
 /*
 
-=item C<PARROT_API
-int
-emit_open(PARROT_INTERP, int type, NULLOK(void *param))>
+=item C<int emit_open>
 
 RT#48260: Not yet documented!!!
 
@@ -841,9 +809,7 @@ emit_open(PARROT_INTERP, int type, NULLOK(void *param))
 
 /*
 
-=item C<PARROT_API
-int
-emit_flush(PARROT_INTERP, NULLOK(void *param), NOTNULL(struct _IMC_Unit *unit))>
+=item C<int emit_flush>
 
 RT#48260: Not yet documented!!!
 
@@ -870,9 +836,7 @@ emit_flush(PARROT_INTERP, NULLOK(void *param), NOTNULL(struct _IMC_Unit *unit))
 
 /*
 
-=item C<PARROT_API
-int
-emit_close(PARROT_INTERP, NULLOK(void *param))>
+=item C<int emit_close>
 
 RT#48260: Not yet documented!!!
 

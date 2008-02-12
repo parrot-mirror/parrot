@@ -23,11 +23,7 @@ src/vtables.c - Functions to build and manipulate vtables
 
 /*
 
-=item C<PARROT_API
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-VTABLE *
-Parrot_new_vtable(SHIM_INTERP)>
+=item C<VTABLE * Parrot_new_vtable>
 
 Creates and returns a pointer to the new C<VTABLE>.
 
@@ -46,11 +42,7 @@ Parrot_new_vtable(SHIM_INTERP)
 
 /*
 
-=item C<PARROT_API
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-VTABLE *
-Parrot_clone_vtable(SHIM_INTERP, ARGIN(const VTABLE *base_vtable))>
+=item C<VTABLE * Parrot_clone_vtable>
 
 Clones C<*base_vtable> and returns a pointer to the new C<VTABLE>.
 
@@ -75,9 +67,7 @@ Parrot_clone_vtable(SHIM_INTERP, ARGIN(const VTABLE *base_vtable))
 
 /*
 
-=item C<PARROT_API
-void
-Parrot_destroy_vtable(SHIM_INTERP, NULLOK(VTABLE *vtable))>
+=item C<void Parrot_destroy_vtable>
 
 Destroys C<*vtable>.
 
@@ -87,7 +77,7 @@ Destroys C<*vtable>.
 
 PARROT_API
 void
-Parrot_destroy_vtable(SHIM_INTERP, ARGINOUT(VTABLE *vtable))
+Parrot_destroy_vtable(SHIM_INTERP, ARGMOD(VTABLE *vtable))
 {
     /* We sometimes get a type number allocated without any corresponding
      * vtable. E.g. if you load perl_group, perlscalar is this way.  */
@@ -101,8 +91,7 @@ Parrot_destroy_vtable(SHIM_INTERP, ARGINOUT(VTABLE *vtable))
 
 /*
 
-=item C<void
-parrot_alloc_vtables(PARROT_INTERP)>
+=item C<void parrot_alloc_vtables>
 
 RT#48260: Not yet documented!!!
 
@@ -117,13 +106,12 @@ parrot_alloc_vtables(PARROT_INTERP)
         sizeof (VTABLE *) * PARROT_MAX_CLASSES);
 
     interp->n_vtable_max     = enum_class_core_max;
-    interp->n_vtable_alloced = PARROT_MAX_CLASSES;
+    interp->n_vtable_alloced = PARROT_MAX_CLASSES - 1;
 }
 
 /*
 
-=item C<void
-parrot_realloc_vtables(PARROT_INTERP)>
+=item C<void parrot_realloc_vtables>
 
 RT#48260: Not yet documented!!!
 
@@ -140,15 +128,16 @@ parrot_realloc_vtables(PARROT_INTERP)
     const INTVAL new_max     = interp->n_vtable_alloced + 16;
     const INTVAL new_size    = new_max              * sizeof (VTABLE *);
     const INTVAL old_size    = interp->n_vtable_max * sizeof (VTABLE *);
-    interp->n_vtable_alloced = new_max;
+
+    /* arrays start at zero, but we compare type numbers starting at 1 */
+    interp->n_vtable_alloced = new_max - 1;
     interp->vtables          = (VTABLE **)mem_sys_realloc_zeroed(
         interp->vtables, new_size, old_size);
 }
 
 /*
 
-=item C<void
-parrot_free_vtables(PARROT_INTERP)>
+=item C<void parrot_free_vtables>
 
 RT#48260: Not yet documented!!!
 
@@ -169,8 +158,7 @@ parrot_free_vtables(PARROT_INTERP)
 
 /*
 
-=item C<void
-mark_vtables(PARROT_INTERP)>
+=item C<void mark_vtables>
 
 RT#48260: Not yet documented!!!
 

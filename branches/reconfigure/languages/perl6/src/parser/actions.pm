@@ -128,6 +128,57 @@ method unless_statement($/) {
     make $past;
 }
 
+method given_statement($/) {
+    my $past := $( $<block> );
+    $past.blocktype('immediate');
+
+    # Node to assign expression to $_.
+    my $expr := $( $<EXPR> );
+    my $assign := PAST::Op.new( :name('infix::='),
+                                :pasttype('bind'),
+                                :node($/)
+                              );
+    $assign.push( PAST::Var.new( :node($/), :name('$_'), :scope('lexical') ) );
+    $assign.push( $expr );
+
+    # Put as first instruction in block (but after .lex $_).
+    my $statements := $past[1];
+    $statements.unshift( $assign );
+
+    make $past;
+}
+
+method when_statement($/) {
+    my $block := $( $<block> );
+    $block.blocktype('immediate');
+
+    # XXX TODO: push a control exception throw onto the end of the block so we
+    # exit the innermost block in which $_ was set.
+
+    # Invoke smartmatch of the expression.
+    my $expr := $( $<EXPR> );
+    my $match_past := PAST::Op.new( :name('infix:~~'),
+                                    :pasttype('call'),
+                                    :node($/)
+                                  );
+    $match_past.push( PAST::Var.new( :node($/), :name('$_'), :scope('lexical') ) );
+    $match_past.push( $expr );
+
+    # Use the smartmatch result as the condition.
+    my $past := PAST::Op.new( $match_past, $block,
+                              :pasttype('if'),
+                              :node( $/ )
+                            );
+    make $past;
+}
+
+method default_statement($/) {
+    # Always executed if reached, so just produce the block.
+    my $past := $( $<block> );
+    $past.blocktype('immediate');
+    make $past;
+}
+
 method for_statement($/) {
     my $block := $( $<pblock> );
     $block.blocktype('declaration');
@@ -272,12 +323,36 @@ method signature($/) {
     my $params := PAST::Stmts.new( :node($/) );
     my $past := PAST::Block.new( $params, :blocktype('declaration') );
     for $/[0] {
-        my $param_var := $($_<param_var>);
-        $past.symbol($param_var.name(), :scope('lexical'));
-        $params.push($param_var);
+        my $parameter := $($_<parameter>);
+        $past.symbol($parameter.name(), :scope('lexical'));
+        $params.push($parameter);
     }
     $past.arity( +$/[0] );
     our $?BLOCK_SIGNATURED := $past;
+    make $past;
+}
+
+
+method parameter($/, $key) {
+    my $past := $( $<param_var> );
+    my $sigil := $<param_var><sigil>;
+    if $key eq 'slurp' {              # slurpy
+        $past.slurpy( $sigil eq '@' || $sigil eq '%' );
+        $past.named( $sigil eq '%' );
+    }
+    else {
+        if $<named> eq ':' {          # named
+            $past.named(~$<param_var><ident>);
+            if $<quant> ne '!' {      #  required (optional is default)
+                $past.viviself('Undef');
+            }
+        }
+        else {                        # positional
+            if $<quant> eq '?' {      #  optional (required is default)
+                $past.viviself('Undef');
+            }
+        }
+    }
     make $past;
 }
 
@@ -299,9 +374,15 @@ method term($/, $key) {
     my $past := $( $/{$key} );
     if $<postfix> {
         for $<postfix> {
+            # Check if it's a call; if so, need special handling.
             my $term := $past;
             $past := $($_);
-            $past.unshift($term);
+            if $past.WHAT() eq 'Op' && $past.pasttype() eq 'call' {
+                $past := make_call_past($/, $term, $past);
+            }
+            else {
+                $past.unshift($term);
+            }
         }
     }
     make $past;
@@ -399,7 +480,7 @@ method variable($/, $key) {
                                 :viviself($viviself),
                                 :node($/)
                               );
-        if @ident {
+        if @ident || $<twigil>[0] eq '*' {
             $past.namespace(@ident);
             $past.scope('package');
         }
@@ -453,11 +534,42 @@ method dec_number($/) {
     make PAST::Val.new( :value( +$/ ), :returns('Float'), :node( $/ ) );
 }
 
+method radint($/, $key) {
+    make $( $/{$key} );
+}
+
+method rad_number($/) {
+    my $radix    := ~$<radix>;
+    my $intpart  := ~$<intpart>;
+    my $fracpart := ~$<fracpart>;
+    my $base;
+    my $exp;
+    if defined( $<base>[0] ) { $base := $<base>[0].text(); }
+    if defined( $<exp>[0] ) { $exp := $<exp>[0].text(); }
+    if ~$<postcircumfix> {
+        my $radcalc := $( $<postcircumfix> );
+        $radcalc.name('radcalc');
+        $radcalc.pasttype('call');
+        $radcalc.unshift( PAST::Val.new( :value( $radix ), :node( $/ ) ) );
+        make $radcalc;
+    }
+    else{
+        my $return_type := 'Integer';
+        if $fracpart { $return_type := 'Float'; }
+        make PAST::Val.new(
+            :value(
+                radcalc( $radix, $intpart, $fracpart, ~$base, ~$exp )
+            ),
+            :returns($return_type),
+            :node( $/ )
+        );
+    }
+}
+
 
 method quote($/) {
     make $( $<quote_expression> );
 }
-
 
 method quote_expression($/, $key) {
     my $past;
@@ -530,10 +642,7 @@ method typename($/) {
 
 
 method subcall($/) {
-    my $past := $($<semilist>);
-    $past.name( ~$<ident> );
-    $past.pasttype('call');
-    $past.node($/);
+    my $past := make_call_past($/, PAST::Val.new(:value(~$<ident>)), $($<semilist>));
     make $past;
 }
 
@@ -563,9 +672,7 @@ method listop($/, $key) {
     if ($key eq 'noarg') {
         $past := PAST::Op.new( );
     }
-    $past.name( ~$<sym> );
-    $past.pasttype('call');
-    $past.node($/);
+    $past := make_call_past($/, PAST::Val.new(:value(~$<sym>)), $past);
     make $past;
 }
 
@@ -601,6 +708,86 @@ method EXPR($/, $key) {
         }
         make $past;
     }
+}
+
+
+# Builds the PAST for a sub or method call, including auto-threading of
+# junctions.
+sub make_call_past($/, $callee_past, $args_past) {
+    my $past;
+
+    # Build non-junctional call.
+    my $call := PAST::Op.new( :node($/),
+                              :pasttype('call')
+                            );
+    if $callee_past.WHAT() eq 'Val' {
+        $call.name( $callee_past.value() );
+    }
+    else {
+        $call.push( $callee_past );
+    }
+    for @($args_past) {
+        $call.push( $_ );
+    }
+
+    # Build short-circuiting OR to look for junctional parameters.
+    my $unless_list;
+    my $num_args := 0;
+    for @($args_past) {
+        # If it's a value, we need not check it.
+        unless $_.WHAT() eq 'Val' {
+            # Build "is it a junction" check code.
+            my $check := PAST::Op.new( :name('infix:eq'),
+                                       :pasttype('call'),
+                                       :node($/)
+                                     );
+            my $what := PAST::Op.new( :name('WHAT'),
+                                      :pasttype('callmethod'),
+                                      :node($/),
+                                      $_
+                                    );
+            $check.push( $what );
+            $check.push( PAST::Val.new( :value( "Junction" ) ) );
+
+            if $num_args == 0 {
+                $unless_list := $check
+            }
+            else {
+                # Need to upgrade to an unless statement.
+                $unless_list := PAST::Op.new( :pasttype('unless'),
+                                              :node($/),
+                                              $check,
+                                              $unless_list
+                                            );
+            }
+
+            $num_args := $num_args + 1;
+        }
+    }
+
+    # If we had no args we need to check, it's easy.
+    if $num_args == 0 {
+        $past := $call;
+    }
+    else {
+        # Need to build if statement to do the check.
+        $past := PAST::Op.new( :pasttype('if'),
+                               :node( $/ ),
+                               $unless_list
+                             );
+        my $junc_disp := PAST::Op.new( :pasttype('call'),
+                                       :node( $/ ),
+                                       :name( '!junction_dispatcher' )
+                                     );
+        $junc_disp.push( $callee_past );
+        for @($args_past) {
+            $junc_disp.push( $_ );
+        }
+        $past.push( $junc_disp );   # then - when we have junctions
+        $past.push( $call );        # else - when we don't.
+    }
+
+    $past
 }
 
 

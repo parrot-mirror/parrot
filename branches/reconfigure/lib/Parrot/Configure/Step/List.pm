@@ -7,7 +7,6 @@ use base qw( Exporter );
 our @EXPORT_OK = qw( get_steps_list );
 
 # EDIT HERE TO ADD NEW TESTS
-#my @steps = qw(
 my @steps = (
     'init::manifest',
     'init::defaults',
@@ -70,7 +69,6 @@ my @steps = (
 #    'gen::platform',
 #    'gen::config_pm',
 );
-
 sub get_steps_list { return @steps; }
 
 1;

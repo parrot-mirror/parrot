@@ -44,7 +44,7 @@ extern void imcc_init(PARROT_INTERP);
 static void dump_string(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
         __attribute__nonnull__(1);
 
-static int GDB_B(PARROT_INTERP, NOTNULL(char *s))
+static int GDB_B(PARROT_INTERP, ARGIN(const char *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -54,16 +54,16 @@ static const char* GDB_P(PARROT_INTERP, ARGIN(const char *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_CAN_RETURN_NULL
+PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-static char const * nextarg(NOTNULL(char const *command))
+static const char * nextarg(ARGIN(const char *command))
         __attribute__nonnull__(1);
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static const char * parse_command(
     ARGIN(const char *command),
-    NOTNULL(unsigned long *cmdP))
+    ARGOUT(unsigned long *cmdP))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -105,10 +105,7 @@ static const char * skip_ws(ARGIN(const char *str))
 
 /*
 
-=item C<PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static char const *
-nextarg(NOTNULL(char const *command))>
+=item C<static const char * nextarg>
 
 Returns the position just past the current argument in the PASM instruction
 C<command>. This is not the same as C<skip_command()>, which is intended for
@@ -118,18 +115,17 @@ debugger commands. This function is used for C<eval>.
 
 */
 
-PARROT_CAN_RETURN_NULL
+PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-static char const *
-nextarg(NOTNULL(char const *command))
+static const char *
+nextarg(ARGIN(const char *command))
 {
     /* as long as the character pointed to by command is not NULL,
      * and it is either alphanumeric, a comma or a closing bracket,
      * continue looking for the next argument.
      */
-    while (*command && (isalnum((unsigned char) *command) || *command == ',' ||
-        *command == ']'))
-            command++;
+    while (*command && (isalnum((unsigned char) *command) || *command == ',' || *command == ']'))
+        command++;
 
     /* eat as much space as possible */
     while (*command && isspace((unsigned char) *command))
@@ -140,10 +136,7 @@ nextarg(NOTNULL(char const *command))
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static const char *
-skip_ws(ARGIN(const char *str))>
+=item C<static const char * skip_ws>
 
 Returns the pointer past any whitespace.
 
@@ -165,9 +158,7 @@ skip_ws(ARGIN(const char *str))
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-static const char *
-skip_command(ARGIN(const char *str))>
+=item C<static const char * skip_command>
 
 Returns the pointer past the current debugger command. (This is an
 alternative to the C<skip_command()> macro above.)
@@ -195,10 +186,7 @@ skip_command(ARGIN(const char *str))
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static const char *
-parse_int(ARGIN(const char *str), ARGOUT(int *intP))>
+=item C<static const char * parse_int>
 
 Parse an C<int> out of a string and return a pointer to just after the C<int>.
 The output parameter C<intP> contains the parsed value.
@@ -221,10 +209,7 @@ parse_int(ARGIN(const char *str), ARGOUT(int *intP))
 
 /*
 
-=item C<PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static const char *
-parse_string(PARROT_INTERP, ARGIN(const char *str), ARGOUT(STRING **strP))>
+=item C<static const char * parse_string>
 
 Parse a double-quoted string out of a C string and return a pointer to
 just after the string. The parsed string is converted to a Parrot
@@ -271,10 +256,7 @@ parse_string(PARROT_INTERP, ARGIN(const char *str), ARGOUT(STRING **strP))
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static const char*
-parse_key(PARROT_INTERP, ARGIN(const char *str), ARGOUT(PMC **keyP))>
+=item C<static const char* parse_key>
 
 Parse an aggregate key out of a string and return a pointer to just
 after the key. Currently only string and integer keys are allowed.
@@ -326,10 +308,7 @@ parse_key(PARROT_INTERP, ARGIN(const char *str), ARGOUT(PMC **keyP))
 
 /*
 
-=item C<PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static const char *
-parse_command(ARGIN(const char *command), NOTNULL(unsigned long *cmdP))>
+=item C<static const char * parse_command>
 
 Convert the command at the beginning of a string into a numeric value
 that can be used as a switch key for fast lookup.
@@ -341,7 +320,7 @@ that can be used as a switch key for fast lookup.
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static const char *
-parse_command(ARGIN(const char *command), NOTNULL(unsigned long *cmdP))
+parse_command(ARGIN(const char *command), ARGOUT(unsigned long *cmdP))
 {
     int           i;
     unsigned long c = 0;
@@ -365,8 +344,7 @@ parse_command(ARGIN(const char *command), NOTNULL(unsigned long *cmdP))
 
 /*
 
-=item C<void
-PDB_get_command(PARROT_INTERP)>
+=item C<void PDB_get_command>
 
 Get a command from the user input to execute.
 
@@ -447,8 +425,7 @@ PDB_get_command(PARROT_INTERP)
 
 /*
 
-=item C<void
-PDB_script_file(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_script_file>
 
 Interprets the contents of a file as user input commands
 
@@ -503,9 +480,7 @@ PDB_script_file(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<PARROT_IGNORABLE_RESULT
-int
-PDB_run_command(PARROT_INTERP, ARGIN(const char *command))>
+=item C<int PDB_run_command>
 
 Run a command.
 
@@ -615,8 +590,7 @@ PDB_run_command(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<void
-PDB_next(PARROT_INTERP, ARGIN_NULLOK(const char *command))>
+=item C<void PDB_next>
 
 Execute the next N operation(s).
 
@@ -662,8 +636,7 @@ PDB_next(PARROT_INTERP, ARGIN_NULLOK(const char *command))
 
 /*
 
-=item C<void
-PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))>
+=item C<void PDB_trace>
 
 Execute the next N operations; if no number is specified, it defaults to 1.
 
@@ -711,9 +684,7 @@ PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))
 
 /*
 
-=item C<PARROT_CAN_RETURN_NULL
-PDB_condition_t *
-PDB_cond(PARROT_INTERP, ARGIN(const char *command))>
+=item C<PDB_condition_t * PDB_cond>
 
 Analyzes a condition from the user input.
 
@@ -906,8 +877,7 @@ WRONG_REG:      PIO_eprintf(interp, "Register types don't agree\n");
 
 /*
 
-=item C<void
-PDB_watchpoint(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_watchpoint>
 
 Set a watchpoint.
 
@@ -933,8 +903,7 @@ PDB_watchpoint(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<void
-PDB_set_break(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_set_break>
 
 Set a break point, the source code file must be loaded.
 
@@ -1044,8 +1013,7 @@ PDB_set_break(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<void
-PDB_init(PARROT_INTERP, SHIM(const char *command))>
+=item C<void PDB_init>
 
 Init the program.
 
@@ -1068,8 +1036,7 @@ PDB_init(PARROT_INTERP, SHIM(const char *command))
 
 /*
 
-=item C<void
-PDB_continue(PARROT_INTERP, ARGIN_NULLOK(const char *command))>
+=item C<void PDB_continue>
 
 Continue running the program. If a number is specified, skip that many
 breakpoints.
@@ -1103,10 +1070,7 @@ PDB_continue(PARROT_INTERP, ARGIN_NULLOK(const char *command))
 
 /*
 
-=item C<PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-PDB_breakpoint_t *
-PDB_find_breakpoint(PARROT_INTERP, ARGIN(const char *command))>
+=item C<PDB_breakpoint_t * PDB_find_breakpoint>
 
 Find breakpoint number N; returns C<NULL> if the breakpoint doesn't
 exist or if no breakpoint was specified.
@@ -1148,8 +1112,7 @@ PDB_find_breakpoint(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<void
-PDB_disable_breakpoint(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_disable_breakpoint>
 
 Disable a breakpoint; it can be reenabled with the enable command.
 
@@ -1169,8 +1132,7 @@ PDB_disable_breakpoint(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<void
-PDB_enable_breakpoint(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_enable_breakpoint>
 
 Reenable a disabled breakpoint; if the breakpoint was not disabled, has
 no effect.
@@ -1191,8 +1153,7 @@ PDB_enable_breakpoint(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<void
-PDB_delete_breakpoint(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_delete_breakpoint>
 
 Delete a breakpoint.
 
@@ -1240,8 +1201,7 @@ PDB_delete_breakpoint(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<void
-PDB_delete_condition(SHIM_INTERP, NOTNULL(PDB_breakpoint_t *breakpoint))>
+=item C<void PDB_delete_condition>
 
 Delete a condition associated with a breakpoint.
 
@@ -1250,7 +1210,7 @@ Delete a condition associated with a breakpoint.
 */
 
 void
-PDB_delete_condition(SHIM_INTERP, NOTNULL(PDB_breakpoint_t *breakpoint))
+PDB_delete_condition(SHIM_INTERP, ARGMOD(PDB_breakpoint_t *breakpoint))
 {
     if (breakpoint->condition->value) {
         if (breakpoint->condition->type & PDB_cond_str) {
@@ -1273,8 +1233,7 @@ PDB_delete_condition(SHIM_INTERP, NOTNULL(PDB_breakpoint_t *breakpoint))
 
 /*
 
-=item C<void
-PDB_skip_breakpoint(PARROT_INTERP, long i)>
+=item C<void PDB_skip_breakpoint>
 
 Skip C<i> times all breakpoints.
 
@@ -1290,8 +1249,7 @@ PDB_skip_breakpoint(PARROT_INTERP, long i)
 
 /*
 
-=item C<char
-PDB_program_end(PARROT_INTERP)>
+=item C<char PDB_program_end>
 
 End the program.
 
@@ -1313,9 +1271,7 @@ PDB_program_end(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-char
-PDB_check_condition(PARROT_INTERP, NOTNULL(PDB_condition_t *condition))>
+=item C<char PDB_check_condition>
 
 Returns true if the condition was met.
 
@@ -1325,7 +1281,7 @@ Returns true if the condition was met.
 
 PARROT_WARN_UNUSED_RESULT
 char
-PDB_check_condition(PARROT_INTERP, NOTNULL(PDB_condition_t *condition))
+PDB_check_condition(PARROT_INTERP, ARGIN(const PDB_condition_t *condition))
 {
     if (condition->type & PDB_cond_int) {
         INTVAL   i,  j;
@@ -1401,9 +1357,7 @@ PDB_check_condition(PARROT_INTERP, NOTNULL(PDB_condition_t *condition))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-char
-PDB_break(PARROT_INTERP)>
+=item C<char PDB_break>
 
 Returns true if we have to stop running.
 
@@ -1468,10 +1422,7 @@ PDB_break(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-char *
-PDB_escape(ARGIN(const char *string), INTVAL length)>
+=item C<char * PDB_escape>
 
 Escapes C<">, C<\r>, C<\n>, C<\t>, C<\a> and C<\\>.
 
@@ -1539,8 +1490,7 @@ PDB_escape(ARGIN(const char *string), INTVAL length)
 
 /*
 
-=item C<int
-PDB_unescape(NOTNULL(char *string))>
+=item C<int PDB_unescape>
 
 Do inplace unescape of C<\r>, C<\n>, C<\t>, C<\a> and C<\\>.
 
@@ -1549,7 +1499,7 @@ Do inplace unescape of C<\r>, C<\n>, C<\t>, C<\a> and C<\\>.
 */
 
 int
-PDB_unescape(NOTNULL(char *string))
+PDB_unescape(ARGMOD(char *string))
 {
     int l = 0;
 
@@ -1594,10 +1544,7 @@ PDB_unescape(NOTNULL(char *string))
 
 /*
 
-=item C<size_t
-PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
-                   NOTNULL(op_info_t *info), NOTNULL(opcode_t *op),
-                   NULLOK(PDB_file_t *file), NULLOK(opcode_t *code_start), int full_name)>
+=item C<size_t PDB_disassemble_op>
 
 Disassembles C<op>.
 
@@ -1607,8 +1554,9 @@ Disassembles C<op>.
 
 size_t
 PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
-                   NOTNULL(op_info_t *info), NOTNULL(opcode_t *op),
-                   NULLOK(PDB_file_t *file), NULLOK(opcode_t *code_start), int full_name)
+        ARGIN(const op_info_t *info), ARGIN(const opcode_t *op),
+        ARGMOD_NULLOK(PDB_file_t *file), ARGIN_NULLOK(const opcode_t *code_start),
+        int full_name)
 {
     int         j;
     int         size = 0;
@@ -1646,8 +1594,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
             /* If the opcode jumps and this is the last argument,
                that means this is a label */
             if ((j == info->op_count - 1) &&
-                (info->jump & PARROT_JUMP_RELATIVE))
-            {
+                (info->jump & PARROT_JUMP_RELATIVE)) {
                 if (file) {
                     dest[size++] = 'L';
                     i            = PDB_add_label(file, op, op[j]);
@@ -1671,8 +1618,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
 
             PARROT_ASSERT(size + 20 < space);
 
-            sprintf(&dest[size], INTVAL_FMT, i);
-            size += strlen(&dest[size]);
+            size += sprintf(&dest[size], INTVAL_FMT, i);
 
             /* If this is a constant dispatch arg to an "infix" op, then show
                the corresponding symbolic op name. */
@@ -1681,11 +1627,10 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
                     || strcmp(info->name, "n_infix") == 0)) {
                 PARROT_ASSERT(size + 20 < space);
 
-                sprintf(&dest[size], " [%s]",
+                size += sprintf(&dest[size], " [%s]",
                         /* [kludge: the "2+" skips the leading underscores.  --
                            rgr, 6-May-07.] */
                         2 + Parrot_MMD_method_name(interp, op[j]));
-                size += strlen(&dest[size]);
             }
             break;
         case PARROT_ARG_NC:
@@ -1811,14 +1756,85 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
             dest[size++] = ',';
     }
 
+    /* Special decoding for the signature used in args/returns.  Such ops have
+       one fixed parameter (the signature vector), plus a varying number of
+       registers/constants.  For each arg/return, we show the register and its
+       flags using PIR syntax. */
+    if (*(op) == PARROT_OP_set_args_pc ||
+            *(op) == PARROT_OP_get_results_pc ||
+            *(op) == PARROT_OP_get_params_pc ||
+            *(op) == PARROT_OP_set_returns_pc) {
+        char buf[1000];
+        PMC * const sig = interp->code->const_table->constants[op[1]]->u.key;
+        int n_values = SIG_ELEMS(sig);
+        /* The flag_names strings come from Call_bits_enum_t (with which it
+           should probably be colocated); they name the bits from LSB to MSB.
+           The two least significant bits are not flags; they are the register
+           type, which is decoded elsewhere.  We also want to show unused bits,
+           which could indicate problems.
+        */
+        const char *flag_names[] = { "",
+                                     "",
+                                     " :unused004",
+                                     " :unused008",
+                                     " :const",
+                                     " :flat",	/* should be :slurpy for args */
+                                     " :unused040",
+                                     " :optional",
+                                     " :opt_flag",
+                                     " :named",
+                                     NULL
+        };
+        /* Register decoding.  It would be good to abstract this, too. */
+        const char *regs = "ISPN";
+
+        for (j = 0; j < n_values; j++) {
+            unsigned int idx = 0;
+            const int sig_value = VTABLE_get_integer_keyed_int(interp, sig, j);
+
+            /* Print the register name, e.g. P37. */
+            buf[idx++] = ',';
+            buf[idx++] = ' ';
+            buf[idx++] = regs[sig_value & PARROT_ARG_TYPE_MASK];
+            Parrot_snprintf(interp, &buf[idx], sizeof (buf)-idx,
+                            INTVAL_FMT, op[j+2]);
+            idx = strlen(buf);
+
+            /* Add flags, if we have any. */
+            {
+                int flag_idx = 0;
+                int flags = sig_value;
+
+                /* End when we run out of flags, off the end of flag_names, or
+                   get too close to the end of buf. */
+                while (flags && idx < sizeof (buf)-100) {
+                    const char * const flag_string = flag_names[flag_idx];
+                    if (! flag_string)
+                        break;
+                    if (flags & 1 && *flag_string) {
+                        const size_t n = strlen(flag_string);
+                        strcpy(&buf[idx], flag_string);
+                        idx += n;
+                    }
+                    flags >>= 1;
+                    flag_idx++;
+                }
+            }
+
+            /* Add it to dest. */
+            buf[idx++] = '\0';
+            strcpy(&dest[size], buf);
+            size += strlen(buf);
+        }
+    }
+
     dest[size] = '\0';
     return ++size;
 }
 
 /*
 
-=item C<void
-PDB_disassemble(PARROT_INTERP, SHIM(const char *command))>
+=item C<void PDB_disassemble>
 
 Disassemble the bytecode.
 
@@ -1848,6 +1864,7 @@ PDB_disassemble(PARROT_INTERP, SHIM(const char *command))
         PDB_free_file(interp);
 
     pline->number        = 1;
+    pline->label         = NULL;
     pfile->line          = pline;
     pfile->label         = NULL;
     pfile->size          = 0;
@@ -1916,8 +1933,7 @@ PDB_disassemble(PARROT_INTERP, SHIM(const char *command))
 
 /*
 
-=item C<long
-PDB_add_label(NOTNULL(PDB_file_t *file), NOTNULL(opcode_t *cur_opcode), opcode_t offset)>
+=item C<long PDB_add_label>
 
 Add a label to the label list.
 
@@ -1926,7 +1942,8 @@ Add a label to the label list.
 */
 
 long
-PDB_add_label(NOTNULL(PDB_file_t *file), NOTNULL(opcode_t *cur_opcode), opcode_t offset)
+PDB_add_label(ARGMOD(PDB_file_t *file), ARGIN(const opcode_t *cur_opcode),
+        opcode_t offset)
 {
     PDB_label_t *_new;
     PDB_label_t *label = file->label;
@@ -1961,8 +1978,7 @@ PDB_add_label(NOTNULL(PDB_file_t *file), NOTNULL(opcode_t *cur_opcode), opcode_t
 
 /*
 
-=item C<void
-PDB_free_file(PARROT_INTERP)>
+=item C<void PDB_free_file>
 
 Frees any allocated source files.
 
@@ -2015,8 +2031,7 @@ PDB_free_file(PARROT_INTERP)
 
 /*
 
-=item C<void
-PDB_load_source(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_load_source>
 
 Load a source code file.
 
@@ -2100,10 +2115,7 @@ PDB_load_source(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_PURE_FUNCTION
-char
-PDB_hasinstruction(ARGIN(const char *c))>
+=item C<char PDB_hasinstruction>
 
 Return true if the line has an instruction.
 
@@ -2149,8 +2161,7 @@ PDB_hasinstruction(ARGIN(const char *c))
 
 /*
 
-=item C<void
-PDB_list(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_list>
 
 Show lines from the source code file.
 
@@ -2231,8 +2242,7 @@ PDB_list(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<void
-PDB_eval(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_eval>
 
 C<eval>s an instruction.
 
@@ -2252,9 +2262,7 @@ PDB_eval(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<PARROT_CAN_RETURN_NULL
-opcode_t *
-PDB_compile(PARROT_INTERP, ARGIN(const char *command))>
+=item C<opcode_t * PDB_compile>
 
 Compiles instructions with the PASM compiler.
 
@@ -2290,8 +2298,7 @@ PDB_compile(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<int
-PDB_extend_const_table(PARROT_INTERP)>
+=item C<int PDB_extend_const_table>
 
 Extend the constant table.
 
@@ -2324,8 +2331,7 @@ PDB_extend_const_table(PARROT_INTERP)
 
 /*
 
-=item C<static void
-dump_string(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))>
+=item C<static void dump_string>
 
 Dumps the buflen, flags, bufused, strlen, and offset associated with a string
 and the string itself.
@@ -2351,8 +2357,7 @@ dump_string(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
 
 /*
 
-=item C<void
-PDB_print_user_stack(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_print_user_stack>
 
 Print an entry from the user stack.
 
@@ -2406,8 +2411,7 @@ PDB_print_user_stack(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<void
-PDB_print(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_print>
 
 Print interp registers.
 
@@ -2425,8 +2429,7 @@ PDB_print(PARROT_INTERP, ARGIN(const char *command))
 
 /*
 
-=item C<void
-PDB_info(PARROT_INTERP)>
+=item C<void PDB_info>
 
 Print the interpreter info.
 
@@ -2467,8 +2470,7 @@ PDB_info(PARROT_INTERP)
 
 /*
 
-=item C<void
-PDB_help(PARROT_INTERP, ARGIN(const char *command))>
+=item C<void PDB_help>
 
 Print the help text. "Help" with no arguments prints a list of commands.
 "Help xxx" prints information on command xxx.
@@ -2614,8 +2616,7 @@ Type \"help\" followed by a command name for full documentation.\n\n");
 
 /*
 
-=item C<void
-PDB_backtrace(PARROT_INTERP)>
+=item C<void PDB_backtrace>
 
 Prints a backtrace of the interp's call chain.
 
@@ -2697,10 +2698,7 @@ PDB_backtrace(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static const char*
-GDB_P(PARROT_INTERP, ARGIN(const char *s))>
+=item C<static const char* GDB_P>
 
 RT#48260: Not yet documented!!!
 
@@ -2760,8 +2758,7 @@ static PDB_breakpoint_t *gdb_bps;
  */
 /*
 
-=item C<static int
-GDB_B(PARROT_INTERP, NOTNULL(char *s))>
+=item C<static int GDB_B>
 
 RT#48260: Not yet documented!!!
 
@@ -2770,7 +2767,7 @@ RT#48260: Not yet documented!!!
 */
 
 static int
-GDB_B(PARROT_INTERP, NOTNULL(char *s)) {
+GDB_B(PARROT_INTERP, ARGIN(const char *s)) {
     int               nr;
     opcode_t         *pc;
     PDB_breakpoint_t *bp, *newbreak;

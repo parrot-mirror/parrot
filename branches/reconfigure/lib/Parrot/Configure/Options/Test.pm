@@ -10,6 +10,7 @@ use Storable qw( nstore retrieve );
 use lib qw(lib);
 use Parrot::Configure::Parallel;
 use Parrot::Configure::Step::List qw( get_steps_list );
+use Data::Dumper;$Data::Dumper::Indent=1;
 
 my @framework_tests;
 my $config_dir = q{t/configure};
@@ -38,6 +39,7 @@ for my $t (grep { /\.t$/ } readdir $DIRH2) {
 closedir $DIRH2 or croak "Unable to close $steps_dir";
 
 my @steps = get_steps_list();
+print Dumper (\%steps_tests, \@steps);
 foreach my $step (@steps) {
     my @temp = split /::/, $step;
     my %these_tests = %{ $steps_tests{$temp[0]}{$temp[1]} };
@@ -51,11 +53,11 @@ our @preconfiguration_tests = (
     @steps_tests,
 );
 
-our @postconfiguration_tests = qw(
-    t/postconfigure/*.t
-    t/tools/pmc2cutils/*.t
-    t/tools/ops2cutils/*.t
-    t/tools/ops2pmutils/*.t
+our @postconfiguration_tests = (
+    glob("t/postconfigure/*.t"),
+    glob("t/tools/pmc2cutils/*.t"),
+    glob("t/tools/ops2cutils/*.t"),
+    glob("t/tools/ops2pmutils/*.t"),
 );
 
 sub new {
@@ -187,10 +189,8 @@ sub run_build_tests {
     if ( $self->get_run('run_build_tests') ) {
         print "\n\n";
         print "As you requested, I will now run some tests of the build tools.\n\n";
-        my $prove = File::Spec->catfile( $Config{'scriptdir'}, 'prove' );
-        system(qq{$prove @postconfiguration_tests})
-            and die
-"Post-configuration and build tools tests did not complete successfully; running 'make' might be dubious.";
+        runtests(@postconfiguration_tests) or die
+            "Post-configuration and build tools tests did not complete successfully; running 'make' might be dubious.";
     }
     return 1;
 }

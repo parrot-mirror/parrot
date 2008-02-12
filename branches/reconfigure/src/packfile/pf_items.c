@@ -36,42 +36,42 @@ C<opcode_t> units.
 /* HEADERIZER BEGIN: static */
 
 static void cvt_num12_num8(
-    NOTNULL(unsigned char *dest),
+    ARGOUT(unsigned char *dest),
     ARGIN(const unsigned char *src))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static void cvt_num12_num8_be(
-    NOTNULL(unsigned char *dest),
+    ARGOUT(unsigned char *dest),
     ARGIN(const unsigned char *src))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static void cvt_num12_num8_le(
-    NOTNULL(unsigned char *dest),
-    NOTNULL(unsigned char *src))
+    ARGOUT(unsigned char *dest),
+    ARGIN(unsigned char *src))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static opcode_t fetch_op_be_4(NOTNULL(unsigned char *b))
+static opcode_t fetch_op_be_4(ARGIN(const unsigned char *b))
         __attribute__nonnull__(1);
 
-static opcode_t fetch_op_be_8(NOTNULL(unsigned char *b))
+static opcode_t fetch_op_be_8(ARGIN(const unsigned char *b))
         __attribute__nonnull__(1);
 
-static opcode_t fetch_op_le_4(NOTNULL(unsigned char *b))
+static opcode_t fetch_op_le_4(ARGIN(const unsigned char *b))
         __attribute__nonnull__(1);
 
-static opcode_t fetch_op_le_8(NOTNULL(unsigned char *b))
+static opcode_t fetch_op_le_8(ARGIN(const unsigned char *b))
         __attribute__nonnull__(1);
 
-static opcode_t fetch_op_mixed_be(NOTNULL(unsigned char *b))
+static opcode_t fetch_op_mixed_be(ARGIN(const unsigned char *b))
         __attribute__nonnull__(1);
 
-static opcode_t fetch_op_mixed_le(NOTNULL(unsigned char *b))
+static opcode_t fetch_op_mixed_le(ARGIN(const unsigned char *b))
         __attribute__nonnull__(1);
 
-static opcode_t fetch_op_test(NOTNULL(unsigned char *b))
+static opcode_t fetch_op_test(ARGIN(const unsigned char *b))
         __attribute__nonnull__(1);
 
 /* HEADERIZER END: static */
@@ -97,8 +97,7 @@ static opcode_t fetch_op_test(NOTNULL(unsigned char *b))
 
 /*
 
-=item C<static void
-cvt_num12_num8(NOTNULL(unsigned char *dest), ARGIN(const unsigned char *src))>
+=item C<static void cvt_num12_num8>
 
 convert i386 LE 12 byte long double to IEEE 754 8 byte double
 
@@ -107,7 +106,7 @@ convert i386 LE 12 byte long double to IEEE 754 8 byte double
 */
 
 static void
-cvt_num12_num8(NOTNULL(unsigned char *dest), ARGIN(const unsigned char *src))
+cvt_num12_num8(ARGOUT(unsigned char *dest), ARGIN(const unsigned char *src))
 {
     int expo, i, s;
 #ifdef __LCC__
@@ -156,8 +155,7 @@ nul:
 
 /*
 
-=item C<static void
-cvt_num12_num8_be(NOTNULL(unsigned char *dest), ARGIN(const unsigned char *src))>
+=item C<static void cvt_num12_num8_be>
 
 RT#48260: Not yet documented!!!
 
@@ -166,7 +164,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-cvt_num12_num8_be(NOTNULL(unsigned char *dest), ARGIN(const unsigned char *src))
+cvt_num12_num8_be(ARGOUT(unsigned char *dest), ARGIN(const unsigned char *src))
 {
     cvt_num12_num8(dest, src);
     /* TODO endianize */
@@ -175,8 +173,7 @@ cvt_num12_num8_be(NOTNULL(unsigned char *dest), ARGIN(const unsigned char *src))
 
 /*
 
-=item C<static void
-cvt_num12_num8_le(NOTNULL(unsigned char *dest), NOTNULL(unsigned char *src))>
+=item C<static void cvt_num12_num8_le>
 
 RT#48260: Not yet documented!!!
 
@@ -185,7 +182,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-cvt_num12_num8_le(NOTNULL(unsigned char *dest), NOTNULL(unsigned char *src))
+cvt_num12_num8_le(ARGOUT(unsigned char *dest), ARGIN(unsigned char *src))
 {
     unsigned char b[8];
     cvt_num12_num8(b, src);
@@ -194,8 +191,7 @@ cvt_num12_num8_le(NOTNULL(unsigned char *dest), NOTNULL(unsigned char *src))
 
 /*
 
-=item C<static opcode_t
-fetch_op_test(NOTNULL(unsigned char *b))>
+=item C<static opcode_t fetch_op_test>
 
 RT#48260: Not yet documented!!!
 
@@ -204,7 +200,7 @@ RT#48260: Not yet documented!!!
 */
 
 static opcode_t
-fetch_op_test(NOTNULL(unsigned char *b))
+fetch_op_test(ARGIN(const unsigned char *b))
 {
     union {
         unsigned char buf[4];
@@ -216,8 +212,7 @@ fetch_op_test(NOTNULL(unsigned char *b))
 
 /*
 
-=item C<static opcode_t
-fetch_op_mixed_le(NOTNULL(unsigned char *b))>
+=item C<static opcode_t fetch_op_mixed_le>
 
 opcode fetch helper function
 
@@ -230,7 +225,7 @@ Fetch an opcode and convert to LE
 */
 
 static opcode_t
-fetch_op_mixed_le(NOTNULL(unsigned char *b))
+fetch_op_mixed_le(ARGIN(const unsigned char *b))
 {
 #if OPCODE_T_SIZE == 4
     union {
@@ -255,8 +250,7 @@ fetch_op_mixed_le(NOTNULL(unsigned char *b))
 
 /*
 
-=item C<static opcode_t
-fetch_op_mixed_be(NOTNULL(unsigned char *b))>
+=item C<static opcode_t fetch_op_mixed_be>
 
 Fetch an opcode and convert to BE
 
@@ -265,7 +259,7 @@ Fetch an opcode and convert to BE
 */
 
 static opcode_t
-fetch_op_mixed_be(NOTNULL(unsigned char *b))
+fetch_op_mixed_be(ARGIN(const unsigned char *b))
 {
 #if OPCODE_T_SIZE == 4
     union {
@@ -289,8 +283,7 @@ fetch_op_mixed_be(NOTNULL(unsigned char *b))
 
 /*
 
-=item C<static opcode_t
-fetch_op_be_4(NOTNULL(unsigned char *b))>
+=item C<static opcode_t fetch_op_be_4>
 
 RT#48260: Not yet documented!!!
 
@@ -299,7 +292,7 @@ RT#48260: Not yet documented!!!
 */
 
 static opcode_t
-fetch_op_be_4(NOTNULL(unsigned char *b))
+fetch_op_be_4(ARGIN(const unsigned char *b))
 {
     union {
         unsigned char buf[4];
@@ -323,8 +316,7 @@ fetch_op_be_4(NOTNULL(unsigned char *b))
 
 /*
 
-=item C<static opcode_t
-fetch_op_be_8(NOTNULL(unsigned char *b))>
+=item C<static opcode_t fetch_op_be_8>
 
 RT#48260: Not yet documented!!!
 
@@ -333,7 +325,7 @@ RT#48260: Not yet documented!!!
 */
 
 static opcode_t
-fetch_op_be_8(NOTNULL(unsigned char *b))
+fetch_op_be_8(ARGIN(const unsigned char *b))
 {
     union {
         unsigned char buf[8];
@@ -353,8 +345,7 @@ fetch_op_be_8(NOTNULL(unsigned char *b))
 
 /*
 
-=item C<static opcode_t
-fetch_op_le_4(NOTNULL(unsigned char *b))>
+=item C<static opcode_t fetch_op_le_4>
 
 RT#48260: Not yet documented!!!
 
@@ -363,7 +354,7 @@ RT#48260: Not yet documented!!!
 */
 
 static opcode_t
-fetch_op_le_4(NOTNULL(unsigned char *b))
+fetch_op_le_4(ARGIN(const unsigned char *b))
 {
     union {
         unsigned char buf[4];
@@ -387,8 +378,7 @@ fetch_op_le_4(NOTNULL(unsigned char *b))
 
 /*
 
-=item C<static opcode_t
-fetch_op_le_8(NOTNULL(unsigned char *b))>
+=item C<static opcode_t fetch_op_le_8>
 
 RT#48260: Not yet documented!!!
 
@@ -397,7 +387,7 @@ RT#48260: Not yet documented!!!
 */
 
 static opcode_t
-fetch_op_le_8(NOTNULL(unsigned char *b))
+fetch_op_le_8(ARGIN(const unsigned char *b))
 {
     union {
         unsigned char buf[8];
@@ -417,9 +407,7 @@ fetch_op_le_8(NOTNULL(unsigned char *b))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-opcode_t
-PF_fetch_opcode(NULLOK(PackFile *pf), NOTNULL(opcode_t **stream))>
+=item C<opcode_t PF_fetch_opcode>
 
 Fetch an C<opcode_t> from the stream, converting byteorder if needed.
 
@@ -429,7 +417,7 @@ Fetch an C<opcode_t> from the stream, converting byteorder if needed.
 
 PARROT_WARN_UNUSED_RESULT
 opcode_t
-PF_fetch_opcode(NULLOK(PackFile *pf), NOTNULL(opcode_t **stream))
+PF_fetch_opcode(ARGIN_NULLOK(const PackFile *pf), ARGMOD(opcode_t **stream))
 {
     opcode_t o;
     if (!pf || !pf->fetch_op)
@@ -444,10 +432,7 @@ PF_fetch_opcode(NULLOK(PackFile *pf), NOTNULL(opcode_t **stream))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-opcode_t*
-PF_store_opcode(NOTNULL(opcode_t *cursor), opcode_t val)>
+=item C<opcode_t* PF_store_opcode>
 
 Store an C<opcode_t> to stream as is.
 
@@ -458,7 +443,7 @@ Store an C<opcode_t> to stream as is.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 opcode_t*
-PF_store_opcode(NOTNULL(opcode_t *cursor), opcode_t val)
+PF_store_opcode(ARGOUT(opcode_t *cursor), opcode_t val)
 {
     *cursor++ = val;
     return cursor;
@@ -466,9 +451,7 @@ PF_store_opcode(NOTNULL(opcode_t *cursor), opcode_t val)
 
 /*
 
-=item C<PARROT_CONST_FUNCTION
-size_t
-PF_size_opcode(void)>
+=item C<size_t PF_size_opcode>
 
 Return size of an item in C<opcode_t> units, which is 1 I<per
 definitionem>.
@@ -486,9 +469,7 @@ PF_size_opcode(void)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-INTVAL
-PF_fetch_integer(NULLOK(PackFile *pf), NOTNULL(opcode_t **stream))>
+=item C<INTVAL PF_fetch_integer>
 
 Fetch an C<INTVAL> from the stream, converting byteorder if needed.
 
@@ -501,7 +482,7 @@ C<INTVAL> size in the PackFile header.
 
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-PF_fetch_integer(NULLOK(PackFile *pf), NOTNULL(opcode_t **stream))
+PF_fetch_integer(ARGIN_NULLOK(PackFile *pf), ARGIN(opcode_t **stream))
 {
     INTVAL i;
     if (!pf || pf->fetch_iv == NULL)
@@ -517,10 +498,7 @@ PF_fetch_integer(NULLOK(PackFile *pf), NOTNULL(opcode_t **stream))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-opcode_t*
-PF_store_integer(NOTNULL(opcode_t *cursor), INTVAL val)>
+=item C<opcode_t* PF_store_integer>
 
 Store an C<INTVAL> to stream as is.
 
@@ -531,7 +509,7 @@ Store an C<INTVAL> to stream as is.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 opcode_t*
-PF_store_integer(NOTNULL(opcode_t *cursor), INTVAL val)
+PF_store_integer(ARGOUT(opcode_t *cursor), INTVAL val)
 {
     *cursor++ = (opcode_t)val; /* XXX */
     return cursor;
@@ -539,9 +517,7 @@ PF_store_integer(NOTNULL(opcode_t *cursor), INTVAL val)
 
 /*
 
-=item C<PARROT_CONST_FUNCTION
-size_t
-PF_size_integer(void)>
+=item C<size_t PF_size_integer>
 
 Return store size of C<INTVAL> in C<opcode_t> units.
 
@@ -559,9 +535,7 @@ PF_size_integer(void)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-FLOATVAL
-PF_fetch_number(NULLOK(PackFile *pf), NOTNULL(opcode_t **stream))>
+=item C<FLOATVAL PF_fetch_number>
 
 Fetch a C<FLOATVAL> from the stream, converting byteorder if needed.
 Then advance stream pointer by amount of packfile float size.
@@ -572,7 +546,7 @@ Then advance stream pointer by amount of packfile float size.
 
 PARROT_WARN_UNUSED_RESULT
 FLOATVAL
-PF_fetch_number(NULLOK(PackFile *pf), NOTNULL(opcode_t **stream))
+PF_fetch_number(ARGIN_NULLOK(PackFile *pf), ARGIN(opcode_t **stream))
 {
     /* When we have alignment all squared away we don't need
      * to use memcpy() for native byteorder.
@@ -608,10 +582,7 @@ PF_fetch_number(NULLOK(PackFile *pf), NOTNULL(opcode_t **stream))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-opcode_t*
-PF_store_number(NOTNULL(opcode_t *cursor), ARGIN(const FLOATVAL *val))>
+=item C<opcode_t* PF_store_number>
 
 Write a C<FLOATVAL> to the opcode stream as is.
 
@@ -622,7 +593,7 @@ Write a C<FLOATVAL> to the opcode stream as is.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 opcode_t*
-PF_store_number(NOTNULL(opcode_t *cursor), ARGIN(const FLOATVAL *val))
+PF_store_number(ARGOUT(opcode_t *cursor), ARGIN(const FLOATVAL *val))
 {
     opcode_t padded_size  = (sizeof (FLOATVAL) + sizeof (opcode_t) - 1) /
         sizeof (opcode_t);
@@ -633,9 +604,7 @@ PF_store_number(NOTNULL(opcode_t *cursor), ARGIN(const FLOATVAL *val))
 
 /*
 
-=item C<PARROT_CONST_FUNCTION
-size_t
-PF_size_number(void)>
+=item C<size_t PF_size_number>
 
 Return store size of FLOATVAL in opcode_t units.
 
@@ -652,10 +621,7 @@ PF_size_number(void)
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-STRING *
-PF_fetch_string(PARROT_INTERP, NULLOK(PackFile *pf), NOTNULL(opcode_t **cursor))>
+=item C<STRING * PF_fetch_string>
 
 Fetch a C<STRING> from bytecode and return a new C<STRING>.
 
@@ -674,7 +640,7 @@ Opcode format is:
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-PF_fetch_string(PARROT_INTERP, NULLOK(PackFile *pf), NOTNULL(opcode_t **cursor))
+PF_fetch_string(PARROT_INTERP, ARGIN_NULLOK(PackFile *pf), ARGIN(opcode_t **cursor))
 {
     UINTVAL flags;
     opcode_t charset_nr;
@@ -720,10 +686,7 @@ PF_fetch_string(PARROT_INTERP, NULLOK(PackFile *pf), NOTNULL(opcode_t **cursor))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-opcode_t*
-PF_store_string(NOTNULL(opcode_t *cursor), NOTNULL(STRING *s))>
+=item C<opcode_t* PF_store_string>
 
 Write a STRING to the opcode stream.
 
@@ -734,11 +697,10 @@ Write a STRING to the opcode stream.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 opcode_t*
-PF_store_string(NOTNULL(opcode_t *cursor), NOTNULL(STRING *s))
+PF_store_string(ARGOUT(opcode_t *cursor), ARGIN(const STRING *s))
 {
     opcode_t padded_size = s->bufused;
     char *charcursor;
-    size_t i;
 
 /*    PIO_eprintf(NULL, "PF_store_string(): size is %ld...\n", s->bufused); */
 
@@ -763,6 +725,7 @@ PF_store_string(NOTNULL(opcode_t *cursor), NOTNULL(STRING *s))
     charcursor = (char *)cursor;
 
     if (s->strstart) {
+        size_t i;
         mem_sys_memcopy(charcursor, s->strstart, s->bufused);
         charcursor += s->bufused;
 
@@ -781,9 +744,7 @@ PF_store_string(NOTNULL(opcode_t *cursor), NOTNULL(STRING *s))
 
 /*
 
-=item C<PARROT_PURE_FUNCTION
-size_t
-PF_size_string(ARGIN(const STRING *s))>
+=item C<size_t PF_size_string>
 
 Report store size of C<STRING> in C<opcode_t> units.
 
@@ -807,10 +768,7 @@ PF_size_string(ARGIN(const STRING *s))
 
 /*
 
-=item C<PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-char *
-PF_fetch_cstring(NOTNULL(PackFile *pf), NOTNULL(opcode_t **cursor))>
+=item C<char * PF_fetch_cstring>
 
 Fetch a cstring from bytecode and return an allocated copy
 
@@ -821,7 +779,7 @@ Fetch a cstring from bytecode and return an allocated copy
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 char *
-PF_fetch_cstring(NOTNULL(PackFile *pf), NOTNULL(opcode_t **cursor))
+PF_fetch_cstring(ARGIN(PackFile *pf), ARGIN(opcode_t **cursor))
 {
     const size_t str_len = strlen((char *)(*cursor)) + 1;
     char * const p = (char *)mem_sys_allocate(str_len);
@@ -836,10 +794,7 @@ PF_fetch_cstring(NOTNULL(PackFile *pf), NOTNULL(opcode_t **cursor))
 
 /*
 
-=item C<PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-opcode_t*
-PF_store_cstring(NOTNULL(opcode_t *cursor), ARGIN(const char *s))>
+=item C<opcode_t* PF_store_cstring>
 
 Write a 0-terminated string to the stream.
 
@@ -850,7 +805,7 @@ Write a 0-terminated string to the stream.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 opcode_t*
-PF_store_cstring(NOTNULL(opcode_t *cursor), ARGIN(const char *s))
+PF_store_cstring(ARGOUT(opcode_t *cursor), ARGIN(const char *s))
 {
     strcpy((char *) cursor, s);
     return cursor + PF_size_cstring(s);
@@ -858,9 +813,7 @@ PF_store_cstring(NOTNULL(opcode_t *cursor), ARGIN(const char *s))
 
 /*
 
-=item C<PARROT_PURE_FUNCTION
-size_t
-PF_size_cstring(ARGIN(const char *s))>
+=item C<size_t PF_size_cstring>
 
 Return store size of a C-string in C<opcode_t> units.
 
@@ -881,8 +834,7 @@ PF_size_cstring(ARGIN(const char *s))
 
 /*
 
-=item C<void
-PackFile_assign_transforms(NOTNULL(PackFile *pf))>
+=item C<void PackFile_assign_transforms>
 
 Assign transform functions to vtable.
 
@@ -891,7 +843,7 @@ Assign transform functions to vtable.
 */
 
 void
-PackFile_assign_transforms(NOTNULL(PackFile *pf))
+PackFile_assign_transforms(ARGMOD(PackFile *pf))
 {
     const int need_endianize = pf->header->byteorder != PARROT_BIGENDIAN;
     const int need_wordsize  = pf->header->wordsize != sizeof (opcode_t);

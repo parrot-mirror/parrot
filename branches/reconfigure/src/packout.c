@@ -30,9 +30,7 @@ contiguous region of memory.
 
 /*
 
-=item C<PARROT_API
-opcode_t
-PackFile_pack_size(PARROT_INTERP, NOTNULL(PackFile *self))>
+=item C<opcode_t PackFile_pack_size>
 
 RT#48260: Not yet documented!!!
 
@@ -42,7 +40,7 @@ RT#48260: Not yet documented!!!
 
 PARROT_API
 opcode_t
-PackFile_pack_size(PARROT_INTERP, NOTNULL(PackFile *self))
+PackFile_pack_size(PARROT_INTERP, ARGMOD(PackFile *self))
 {
     size_t size;
     size_t header_size = 0;
@@ -65,11 +63,7 @@ PackFile_pack_size(PARROT_INTERP, NOTNULL(PackFile *self))
 
 /*
 
-=item C<PARROT_API
-void
-PackFile_pack(PARROT_INTERP,
-        NOTNULL(PackFile *self),
-        NOTNULL(opcode_t *cursor))>
+=item C<void PackFile_pack>
 
 Pack the PackFile into a contiguous region of memory.
 
@@ -87,9 +81,7 @@ Other pack routines are in F<src/packfile.c>.
 
 PARROT_API
 void
-PackFile_pack(PARROT_INTERP,
-        NOTNULL(PackFile *self),
-        NOTNULL(opcode_t *cursor))
+PackFile_pack(PARROT_INTERP, ARGMOD(PackFile *self), ARGOUT(opcode_t *cursor))
 {
     opcode_t *ret;
 
@@ -145,9 +137,7 @@ PackFile_pack(PARROT_INTERP,
 
 /*
 
-=item C<PARROT_API
-size_t
-PackFile_ConstTable_pack_size(PARROT_INTERP, NOTNULL(PackFile_Segment *seg))>
+=item C<size_t PackFile_ConstTable_pack_size>
 
 Determine the size of the buffer needed in order to pack the PackFile
 constant table into a contiguous region of memory.
@@ -158,10 +148,10 @@ constant table into a contiguous region of memory.
 
 PARROT_API
 size_t
-PackFile_ConstTable_pack_size(PARROT_INTERP, NOTNULL(PackFile_Segment *seg))
+PackFile_ConstTable_pack_size(PARROT_INTERP, ARGIN(PackFile_Segment *seg))
 {
     opcode_t i;
-    PackFile_ConstTable* const self = (PackFile_ConstTable *) seg;
+    const PackFile_ConstTable* const self = (const PackFile_ConstTable *) seg;
     size_t size = 1;    /* const_count */
 
     for (i = 0; i < self->const_count; i++)
@@ -171,12 +161,7 @@ PackFile_ConstTable_pack_size(PARROT_INTERP, NOTNULL(PackFile_Segment *seg))
 
 /*
 
-=item C<PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-opcode_t *
-PackFile_ConstTable_pack(PARROT_INTERP,
-        NOTNULL(PackFile_Segment *seg), NOTNULL(opcode_t *cursor))>
+=item C<opcode_t * PackFile_ConstTable_pack>
 
 Pack the PackFile ConstTable into a contiguous region of memory.
 
@@ -195,9 +180,9 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 opcode_t *
 PackFile_ConstTable_pack(PARROT_INTERP,
-        NOTNULL(PackFile_Segment *seg), NOTNULL(opcode_t *cursor))
+        ARGIN(PackFile_Segment *seg), ARGMOD(opcode_t *cursor))
 {
-    PackFile_ConstTable * const self = (PackFile_ConstTable *)seg;
+    const PackFile_ConstTable * const self = (const PackFile_ConstTable *)seg;
     opcode_t i;
 
     *cursor++ = self->const_count;
@@ -210,10 +195,7 @@ PackFile_ConstTable_pack(PARROT_INTERP,
 
 /*
 
-=item C<PARROT_API
-int
-PackFile_find_in_const(PARROT_INTERP,
-        ARGIN(const PackFile_ConstTable *ct), ARGIN(const PMC *key), int type)>
+=item C<int PackFile_find_in_const>
 
 This is really ugly, we don't know where our C<PARROT_ARG_SC> key
 constant is in constant table, so we have to search for it.
@@ -241,13 +223,7 @@ PackFile_find_in_const(PARROT_INTERP,
 
 /*
 
-=item C<PARROT_API
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-opcode_t *
-PackFile_Constant_pack(PARROT_INTERP,
-        ARGIN(const PackFile_ConstTable *const_table),
-        ARGIN(const PackFile_Constant *self), NOTNULL(opcode_t *cursor))>
+=item C<opcode_t * PackFile_Constant_pack>
 
 Pack a PackFile Constant into a contiguous region of memory.
 
@@ -270,7 +246,7 @@ PARROT_WARN_UNUSED_RESULT
 opcode_t *
 PackFile_Constant_pack(PARROT_INTERP,
         ARGIN(const PackFile_ConstTable *const_table),
-        ARGIN(const PackFile_Constant *self), NOTNULL(opcode_t *cursor))
+        ARGIN(const PackFile_Constant *self), ARGOUT(opcode_t *cursor))
 {
     PMC *key;
     size_t i;

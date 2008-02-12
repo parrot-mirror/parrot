@@ -18,9 +18,9 @@ use strict;
 use warnings;
 
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
-use Parrot::Configure::Step qw( :inter capture_output check_progs );
+use Parrot::Configure::Utils qw( :inter capture_output check_progs );
 
 sub _init {
     my $self = shift;
@@ -69,7 +69,6 @@ sub runstep {
     }
     else {
 
-        #    $prog = check_progs( [ 'bison -v -y', 'yacc', 'byacc' ], $verbose );
         $prog = check_progs( [@yacc_defaults], $verbose );
         if ( !$prog ) {
             $self->set_result('no yacc program was found');
@@ -114,8 +113,6 @@ sub runstep {
                         return;
                     }
                     elsif (
-
-                        #                            $prog_major >= $rmajor
                         $prog_major < $rmajor
                         or (    $prog_major == $rmajor
                             and $prog_minor < $rminor )

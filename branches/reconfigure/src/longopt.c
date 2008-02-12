@@ -27,23 +27,25 @@ This is used by C<parrot>.
 
 static int longopt_get_longopt(PARROT_INTERP,
     int argc,
-    NOTNULL(char* argv[]),
+    ARGIN(const char* argv[]),
     ARGIN(const struct longopt_opt_decl options[]),
-    NOTNULL(struct longopt_opt_info* info_buf))
+    ARGMOD(struct longopt_opt_info* info_buf))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
-        __attribute__nonnull__(5);
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*info_buf);
 
 static int longopt_get_shortopt(PARROT_INTERP,
     int argc,
-    NOTNULL(char* argv[]),
+    ARGIN(const char* argv[]),
     ARGIN(const struct longopt_opt_decl options[]),
-    NOTNULL(struct longopt_opt_info* info_buf))
+    ARGMOD(struct longopt_opt_info* info_buf))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
-        __attribute__nonnull__(5);
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*info_buf);
 
 /* HEADERIZER END: static */
 
@@ -51,11 +53,7 @@ static char longopt_error_buffer[512];
 
 /*
 
-=item C<PARROT_API
-int
-longopt_get(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
-            ARGIN(const struct longopt_opt_decl options[]),
-            NOTNULL(struct longopt_opt_info* info_buf))>
+=item C<int longopt_get>
 
 Gets long or short options, specified in C<options[]> (see
 F<docs/dev/longopt.dev>).
@@ -74,9 +72,9 @@ Any other value is a valid option identifier.
 
 PARROT_API
 int
-longopt_get(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
+longopt_get(PARROT_INTERP, int argc, ARGIN(const char* argv[]),
             ARGIN(const struct longopt_opt_decl options[]),
-            NOTNULL(struct longopt_opt_info* info_buf))
+            ARGMOD(struct longopt_opt_info* info_buf))
 {
     const int dex = info_buf->opt_index;
 
@@ -86,8 +84,7 @@ longopt_get(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
     if (dex >= argc || argv[dex] == NULL)
         return 0;
 
-    if (argv[dex][0] != '-'
-     || argv[dex][1] == '\0')
+    if (argv[dex][0] != '-' || argv[dex][1] == '\0')
         return 0;
 
     if (info_buf->_shortopt_pos)
@@ -109,10 +106,7 @@ longopt_get(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
 
 /*
 
-=item C<static int
-longopt_get_longopt(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
-                    ARGIN(const struct longopt_opt_decl options[]),
-                    NOTNULL(struct longopt_opt_info* info_buf))>
+=item C<static int longopt_get_longopt>
 
 Find the option identifier of a long option.
 
@@ -126,9 +120,9 @@ characters and start with C<-->.
 */
 
 static int
-longopt_get_longopt(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
+longopt_get_longopt(PARROT_INTERP, int argc, ARGIN(const char* argv[]),
                     ARGIN(const struct longopt_opt_decl options[]),
-                    NOTNULL(struct longopt_opt_info* info_buf))
+                    ARGMOD(struct longopt_opt_info* info_buf))
 {
     const int dex = info_buf->opt_index;
     int optlen = 0;
@@ -205,10 +199,7 @@ longopt_get_longopt(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
 
 /*
 
-=item C<static int
-longopt_get_shortopt(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
-                     ARGIN(const struct longopt_opt_decl options[]),
-                     NOTNULL(struct longopt_opt_info* info_buf))>
+=item C<static int longopt_get_shortopt>
 
 Find the option identifier of the next short option.
 
@@ -223,9 +214,9 @@ characters long and start with a dash.
 */
 
 static int
-longopt_get_shortopt(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
+longopt_get_shortopt(PARROT_INTERP, int argc, ARGIN(const char* argv[]),
                      ARGIN(const struct longopt_opt_decl options[]),
-                     NOTNULL(struct longopt_opt_info* info_buf))
+                     ARGMOD(struct longopt_opt_info* info_buf))
 {
     const int dex = info_buf->opt_index;
     const struct longopt_opt_decl* dptr;
@@ -253,8 +244,7 @@ longopt_get_shortopt(PARROT_INTERP, int argc, NOTNULL(char* argv[]),
                     else {
                         Parrot_snprintf(interp, longopt_error_buffer,
                                         sizeof (longopt_error_buffer),
-                                        "Option -%c expects an argument",
-                                                 *pos);
+                                        "Option -%c expects an argument", *pos);
                         info_buf->opt_error = longopt_error_buffer;
                         return -1;
                     }

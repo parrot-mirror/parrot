@@ -26,7 +26,7 @@ This file implements the charset functions for iso-8859-1 data
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-static STRING* compose(PARROT_INTERP, NOTNULL(STRING *src))
+static STRING* compose(PARROT_INTERP, ARGIN(STRING *src))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -34,17 +34,17 @@ PARROT_CANNOT_RETURN_NULL
 static STRING* decompose(PARROT_INTERP, SHIM(STRING *src))
         __attribute__nonnull__(1);
 
-static void downcase(PARROT_INTERP, NOTNULL(STRING *source_string))
+static void downcase(PARROT_INTERP, ARGIN(STRING *source_string))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void downcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
+static void downcase_first(PARROT_INTERP, ARGIN(STRING *source_string))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static INTVAL find_cclass(PARROT_INTERP,
     INTVAL flags,
-    NOTNULL(STRING *source_string),
+    ARGIN(STRING *source_string),
     UINTVAL offset,
     UINTVAL count)
         __attribute__nonnull__(1)
@@ -52,7 +52,7 @@ static INTVAL find_cclass(PARROT_INTERP,
 
 static INTVAL find_not_cclass(PARROT_INTERP,
     INTVAL flags,
-    NOTNULL(STRING *source_string),
+    ARGIN(STRING *source_string),
     UINTVAL offset,
     UINTVAL count)
         __attribute__nonnull__(1)
@@ -60,64 +60,66 @@ static INTVAL find_not_cclass(PARROT_INTERP,
 
 static INTVAL is_cclass(PARROT_INTERP,
     INTVAL flags,
-    NOTNULL(STRING *source_string),
+    ARGIN(const STRING *source_string),
     UINTVAL offset)
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
 static void set_graphemes(PARROT_INTERP,
-    NOTNULL(STRING *source_string),
+    ARGIN(STRING *source_string),
     UINTVAL offset,
     UINTVAL replace_count,
-    NOTNULL(STRING *insert_string))
+    ARGMOD(STRING *insert_string))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(5);
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*insert_string);
 
 PARROT_CANNOT_RETURN_NULL
 static STRING * string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)
         __attribute__nonnull__(1);
 
-static void titlecase(PARROT_INTERP, NOTNULL(STRING *source_string))
+static void titlecase(PARROT_INTERP, ARGIN(STRING *source_string))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void titlecase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
+static void titlecase_first(PARROT_INTERP, ARGIN(STRING *source_string))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static STRING * to_charset(PARROT_INTERP,
-    NOTNULL(STRING *src),
-    NOTNULL(STRING *dest))
+    ARGIN(STRING *src),
+    ARGMOD(STRING *dest))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*dest);
 
 PARROT_CANNOT_RETURN_NULL
 static STRING * to_latin1(PARROT_INTERP,
-    NOTNULL(STRING *src),
-    NULLOK(STRING *dest))
+    ARGIN(STRING *src),
+    ARGMOD_NULLOK(STRING *dest))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_CANNOT_RETURN_NULL
 static STRING * to_unicode(PARROT_INTERP,
-    NOTNULL(STRING *src),
-    NULLOK(STRING *dest))
+    ARGIN(STRING *src),
+    ARGMOD_NULLOK(STRING *dest))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void upcase(PARROT_INTERP, NOTNULL(STRING *source_string))
+static void upcase(PARROT_INTERP, ARGIN(STRING *source_string))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void upcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
+static void upcase_first(PARROT_INTERP, ARGIN(STRING *source_string))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static UINTVAL validate(PARROT_INTERP, NOTNULL(STRING *src))
+static UINTVAL validate(PARROT_INTERP, ARGIN(STRING *src))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -127,9 +129,7 @@ static UINTVAL validate(PARROT_INTERP, NOTNULL(STRING *src))
 
 /*
 
-=item C<static void
-set_graphemes(PARROT_INTERP, NOTNULL(STRING *source_string),
-        UINTVAL offset, UINTVAL replace_count, NOTNULL(STRING *insert_string))>
+=item C<static void set_graphemes>
 
 RT#48260: Not yet documented!!!
 
@@ -138,8 +138,8 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-set_graphemes(PARROT_INTERP, NOTNULL(STRING *source_string),
-        UINTVAL offset, UINTVAL replace_count, NOTNULL(STRING *insert_string))
+set_graphemes(PARROT_INTERP, ARGIN(STRING *source_string),
+        UINTVAL offset, UINTVAL replace_count, ARGMOD(STRING *insert_string))
 {
     ENCODING_SET_BYTES(interp, source_string, offset,
             replace_count, insert_string);
@@ -147,9 +147,7 @@ set_graphemes(PARROT_INTERP, NOTNULL(STRING *source_string),
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-static STRING *
-to_latin1(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))>
+=item C<static STRING * to_latin1>
 
 RT#48260: Not yet documented!!!
 
@@ -159,7 +157,7 @@ RT#48260: Not yet documented!!!
 
 PARROT_CANNOT_RETURN_NULL
 static STRING *
-to_latin1(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
+to_latin1(PARROT_INTERP, ARGIN(STRING *src), ARGMOD_NULLOK(STRING *dest))
 {
     UINTVAL offs, src_len;
     String_iter iter;
@@ -188,9 +186,7 @@ to_latin1(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-static STRING *
-to_unicode(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))>
+=item C<static STRING * to_unicode>
 
 RT#48260: Not yet documented!!!
 
@@ -200,7 +196,7 @@ RT#48260: Not yet documented!!!
 
 PARROT_CANNOT_RETURN_NULL
 static STRING *
-to_unicode(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
+to_unicode(PARROT_INTERP, ARGIN(STRING *src), ARGMOD_NULLOK(STRING *dest))
 {
     if (dest) {
         UINTVAL offs;
@@ -232,10 +228,7 @@ to_unicode(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static STRING *
-to_charset(PARROT_INTERP, NOTNULL(STRING *src), NOTNULL(STRING *dest))>
+=item C<static STRING * to_charset>
 
 RT#48260: Not yet documented!!!
 
@@ -246,7 +239,7 @@ RT#48260: Not yet documented!!!
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static STRING *
-to_charset(PARROT_INTERP, NOTNULL(STRING *src), NOTNULL(STRING *dest))
+to_charset(PARROT_INTERP, ARGIN(STRING *src), ARGMOD(STRING *dest))
 {
     const charset_converter_t conversion_func =
         Parrot_find_charset_converter(interp, src->charset, Parrot_iso_8859_1_charset_ptr);
@@ -260,10 +253,7 @@ to_charset(PARROT_INTERP, NOTNULL(STRING *src), NOTNULL(STRING *dest))
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static STRING*
-compose(PARROT_INTERP, NOTNULL(STRING *src))>
+=item C<static STRING* compose>
 
 RT#48260: Not yet documented!!!
 
@@ -275,16 +265,14 @@ RT#48260: Not yet documented!!!
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static STRING*
-compose(PARROT_INTERP, NOTNULL(STRING *src))
+compose(PARROT_INTERP, ARGIN(STRING *src))
 {
     return string_copy(interp, src);
 }
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-static STRING*
-decompose(PARROT_INTERP, SHIM(STRING *src))>
+=item C<static STRING* decompose>
 
 RT#48260: Not yet documented!!!
 
@@ -302,8 +290,7 @@ decompose(PARROT_INTERP, SHIM(STRING *src))
 
 /*
 
-=item C<static void
-upcase(PARROT_INTERP, NOTNULL(STRING *source_string))>
+=item C<static void upcase>
 
 RT#48260: Not yet documented!!!
 
@@ -312,7 +299,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-upcase(PARROT_INTERP, NOTNULL(STRING *source_string))
+upcase(PARROT_INTERP, ARGIN(STRING *source_string))
 {
     unsigned char *buffer;
     UINTVAL offset = 0;
@@ -334,8 +321,7 @@ upcase(PARROT_INTERP, NOTNULL(STRING *source_string))
 
 /*
 
-=item C<static void
-downcase(PARROT_INTERP, NOTNULL(STRING *source_string))>
+=item C<static void downcase>
 
 RT#48260: Not yet documented!!!
 
@@ -344,7 +330,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-downcase(PARROT_INTERP, NOTNULL(STRING *source_string))
+downcase(PARROT_INTERP, ARGIN(STRING *source_string))
 {
     if (source_string->strlen) {
         UINTVAL offset;
@@ -365,8 +351,7 @@ downcase(PARROT_INTERP, NOTNULL(STRING *source_string))
 
 /*
 
-=item C<static void
-titlecase(PARROT_INTERP, NOTNULL(STRING *source_string))>
+=item C<static void titlecase>
 
 RT#48260: Not yet documented!!!
 
@@ -375,7 +360,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-titlecase(PARROT_INTERP, NOTNULL(STRING *source_string))
+titlecase(PARROT_INTERP, ARGIN(STRING *source_string))
 {
     unsigned char *buffer;
     unsigned int c;
@@ -405,8 +390,7 @@ titlecase(PARROT_INTERP, NOTNULL(STRING *source_string))
 
 /*
 
-=item C<static void
-upcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))>
+=item C<static void upcase_first>
 
 RT#48260: Not yet documented!!!
 
@@ -415,7 +399,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-upcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
+upcase_first(PARROT_INTERP, ARGIN(STRING *source_string))
 {
     if (source_string->strlen) {
         unsigned char *buffer;
@@ -434,8 +418,7 @@ upcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
 
 /*
 
-=item C<static void
-downcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))>
+=item C<static void downcase_first>
 
 RT#48260: Not yet documented!!!
 
@@ -444,7 +427,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-downcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
+downcase_first(PARROT_INTERP, ARGIN(STRING *source_string))
 {
     if (source_string->strlen) {
         unsigned char *buffer;
@@ -463,8 +446,7 @@ downcase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
 
 /*
 
-=item C<static void
-titlecase_first(PARROT_INTERP, NOTNULL(STRING *source_string))>
+=item C<static void titlecase_first>
 
 RT#48260: Not yet documented!!!
 
@@ -473,7 +455,7 @@ RT#48260: Not yet documented!!!
 */
 
 static void
-titlecase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
+titlecase_first(PARROT_INTERP, ARGIN(STRING *source_string))
 {
     upcase_first(interp, source_string);
 }
@@ -481,8 +463,7 @@ titlecase_first(PARROT_INTERP, NOTNULL(STRING *source_string))
 
 /*
 
-=item C<static UINTVAL
-validate(PARROT_INTERP, NOTNULL(STRING *src))>
+=item C<static UINTVAL validate>
 
 RT#48260: Not yet documented!!!
 
@@ -491,7 +472,7 @@ RT#48260: Not yet documented!!!
 */
 
 static UINTVAL
-validate(PARROT_INTERP, NOTNULL(STRING *src))
+validate(PARROT_INTERP, ARGIN(STRING *src))
 {
     UINTVAL offset;
 
@@ -505,9 +486,7 @@ validate(PARROT_INTERP, NOTNULL(STRING *src))
 
 /*
 
-=item C<static INTVAL
-is_cclass(PARROT_INTERP, INTVAL flags,
-          NOTNULL(STRING *source_string), UINTVAL offset)>
+=item C<static INTVAL is_cclass>
 
 RT#48260: Not yet documented!!!
 
@@ -517,7 +496,7 @@ RT#48260: Not yet documented!!!
 
 static INTVAL
 is_cclass(PARROT_INTERP, INTVAL flags,
-          NOTNULL(STRING *source_string), UINTVAL offset)
+          ARGIN(const STRING *source_string), UINTVAL offset)
 {
     UINTVAL codepoint;
 
@@ -533,9 +512,7 @@ is_cclass(PARROT_INTERP, INTVAL flags,
 
 /*
 
-=item C<static INTVAL
-find_cclass(PARROT_INTERP, INTVAL flags,
-            NOTNULL(STRING *source_string), UINTVAL offset, UINTVAL count)>
+=item C<static INTVAL find_cclass>
 
 RT#48260: Not yet documented!!!
 
@@ -545,7 +522,7 @@ RT#48260: Not yet documented!!!
 
 static INTVAL
 find_cclass(PARROT_INTERP, INTVAL flags,
-            NOTNULL(STRING *source_string), UINTVAL offset, UINTVAL count)
+            ARGIN(STRING *source_string), UINTVAL offset, UINTVAL count)
 {
     UINTVAL pos = offset;
     UINTVAL end = offset + count;
@@ -564,9 +541,7 @@ find_cclass(PARROT_INTERP, INTVAL flags,
 
 /*
 
-=item C<static INTVAL
-find_not_cclass(PARROT_INTERP, INTVAL flags,
-                NOTNULL(STRING *source_string), UINTVAL offset, UINTVAL count)>
+=item C<static INTVAL find_not_cclass>
 
 RT#48260: Not yet documented!!!
 
@@ -576,7 +551,7 @@ RT#48260: Not yet documented!!!
 
 static INTVAL
 find_not_cclass(PARROT_INTERP, INTVAL flags,
-                NOTNULL(STRING *source_string), UINTVAL offset, UINTVAL count)
+                ARGIN(STRING *source_string), UINTVAL offset, UINTVAL count)
 {
     UINTVAL pos = offset;
     UINTVAL end = offset + count;
@@ -595,9 +570,7 @@ find_not_cclass(PARROT_INTERP, INTVAL flags,
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-static STRING *
-string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)>
+=item C<static STRING * string_from_codepoint>
 
 RT#48260: Not yet documented!!!
 
@@ -617,9 +590,7 @@ string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-const CHARSET *
-Parrot_charset_iso_8859_1_init(PARROT_INTERP)>
+=item C<const CHARSET * Parrot_charset_iso_8859_1_init>
 
 RT#48260: Not yet documented!!!
 
@@ -666,10 +637,7 @@ Parrot_charset_iso_8859_1_init(PARROT_INTERP)
 
 /*
 
-=item C<PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-STRING *
-charset_cvt_iso_8859_1_to_ascii(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))>
+=item C<STRING * charset_cvt_iso_8859_1_to_ascii>
 
 RT#48260: Not yet documented!!!
 
@@ -680,7 +648,8 @@ RT#48260: Not yet documented!!!
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING *
-charset_cvt_iso_8859_1_to_ascii(PARROT_INTERP, NOTNULL(STRING *src), NULLOK(STRING *dest))
+charset_cvt_iso_8859_1_to_ascii(PARROT_INTERP, ARGIN(STRING *src),
+        ARGMOD_NULLOK(STRING *dest))
 {
     UINTVAL offs;
     if (dest) {

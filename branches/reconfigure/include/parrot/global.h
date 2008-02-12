@@ -18,15 +18,16 @@
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-PMC * Parrot_find_global_cur(PARROT_INTERP, NULLOK(STRING *globalname))
+PMC * Parrot_find_global_cur(PARROT_INTERP,
+    ARGIN_NULLOK(STRING *globalname))
         __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_find_global_k(PARROT_INTERP,
-    NULLOK(PMC *pmc_key),
-    NOTNULL(STRING *globalname))
+    ARGIN_NULLOK(PMC *pmc_key),
+    ARGIN(STRING *globalname))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
@@ -34,17 +35,17 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_find_global_n(PARROT_INTERP,
-    NULLOK(PMC *ns),
-    NULLOK(STRING *globalname))
+    ARGIN_NULLOK(PMC *ns),
+    ARGIN_NULLOK(STRING *globalname))
         __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC * Parrot_find_global_op(PARROT_INTERP,
-    NOTNULL(PMC *ns),
-    NOTNULL(STRING *globalname),
-    NULLOK(void *next))
+    ARGIN(PMC *ns),
+    ARGIN(STRING *globalname),
+    ARGIN_NULLOK(void *next))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -53,15 +54,15 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_find_global_s(PARROT_INTERP,
-    NULLOK(STRING *str_key),
-    NULLOK(STRING *globalname))
+    ARGIN_NULLOK(STRING *str_key),
+    ARGIN_NULLOK(STRING *globalname))
         __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_find_name_op(PARROT_INTERP,
-    NOTNULL(STRING *name),
+    ARGIN(STRING *name),
     SHIM(void *next))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -70,22 +71,22 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_get_global(PARROT_INTERP,
-    NULLOK(PMC *ns),
-    NULLOK(STRING *globalname))
+    ARGIN_NULLOK(PMC *ns),
+    ARGIN_NULLOK(STRING *globalname))
         __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-PMC * Parrot_get_namespace_autobase(PARROT_INTERP, NULLOK(PMC *key))
+PMC * Parrot_get_namespace_autobase(PARROT_INTERP, ARGIN_NULLOK(PMC *key))
         __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_get_namespace_keyed(PARROT_INTERP,
-    NOTNULL(PMC *base_ns),
-    NULLOK(PMC *pmc_key))
+    ARGIN(PMC *base_ns),
+    ARGIN_NULLOK(PMC *pmc_key))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -93,23 +94,23 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_get_namespace_keyed_str(PARROT_INTERP,
-    NOTNULL(PMC *base_ns),
-    NULLOK(STRING *str_key))
+    ARGIN(PMC *base_ns),
+    ARGIN_NULLOK(STRING *str_key))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-PMC * Parrot_make_namespace_autobase(PARROT_INTERP, NULLOK(PMC *key))
+PMC * Parrot_make_namespace_autobase(PARROT_INTERP, ARGIN_NULLOK(PMC *key))
         __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_make_namespace_keyed(PARROT_INTERP,
-    NOTNULL(PMC *base_ns),
-    NULLOK(PMC *pmc_key))
+    ARGIN(PMC *base_ns),
+    ARGIN_NULLOK(PMC *pmc_key))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -117,48 +118,48 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_make_namespace_keyed_str(PARROT_INTERP,
-    NOTNULL(PMC *base_ns),
-    NULLOK(STRING *str_key))
+    ARGIN(PMC *base_ns),
+    ARGIN_NULLOK(STRING *str_key))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 void Parrot_set_global(PARROT_INTERP,
-    NULLOK(PMC *ns),
-    NULLOK(STRING *globalname),
-    NULLOK(PMC *val))
+    ARGIN_NULLOK(PMC *ns),
+    ARGIN_NULLOK(STRING *globalname),
+    ARGIN_NULLOK(PMC *val))
         __attribute__nonnull__(1);
 
 PARROT_API
 void Parrot_store_global_cur(PARROT_INTERP,
-    NULLOK(STRING *globalname),
-    NULLOK(PMC *val))
+    ARGIN_NULLOK(STRING *globalname),
+    ARGIN_NULLOK(PMC *val))
         __attribute__nonnull__(1);
 
 PARROT_API
 void Parrot_store_global_k(PARROT_INTERP,
-    NOTNULL(PMC *pmc_key),
-    NULLOK(STRING *globalname),
-    NULLOK(PMC *val))
+    ARGIN(PMC *pmc_key),
+    ARGIN_NULLOK(STRING *globalname),
+    ARGIN_NULLOK(PMC *val))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
 void Parrot_store_global_n(PARROT_INTERP,
-    NULLOK(PMC *ns),
-    NULLOK(STRING *globalname),
-    NULLOK(PMC *val))
+    ARGIN_NULLOK(PMC *ns),
+    ARGIN_NULLOK(STRING *globalname),
+    ARGIN_NULLOK(PMC *val))
         __attribute__nonnull__(1);
 
 PARROT_API
 void Parrot_store_global_s(PARROT_INTERP,
-    NULLOK(STRING *str_key),
-    NULLOK(STRING *globalname),
-    NULLOK(PMC *val))
+    ARGIN_NULLOK(STRING *str_key),
+    ARGIN_NULLOK(STRING *globalname),
+    ARGIN_NULLOK(PMC *val))
         __attribute__nonnull__(1);
 
 PARROT_API
-void Parrot_store_sub_in_namespace(PARROT_INTERP, NOTNULL(PMC *sub))
+void Parrot_store_sub_in_namespace(PARROT_INTERP, ARGIN(PMC *sub))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

@@ -7,7 +7,11 @@ config/auto/perldoc - Check whether perldoc works
 
 =head1 DESCRIPTION
 
-Determines whether perldoc exists on the system.
+Determines whether F<perldoc> exists on the system and, if so, which
+version of F<perldoc> it is.
+
+More specifically, we look for the F<perldoc> associated with the
+instance of F<perl> with which F<Configure.pl> was invoked.
 
 =cut
 
@@ -16,9 +20,9 @@ package auto::perldoc;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
-use Parrot::Configure::Step ':auto';
+use Parrot::Configure::Utils ':auto';
 
 
 sub _init {
@@ -32,42 +36,78 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $version = 0;
-    my $content = capture_output('perldoc -ud c99da7c4.tmp perldoc') || undef;
+    my $cmd = $conf->data->get_p5('scriptdir') . q{/perldoc};
+    my $tmpfile = q{c99da7c4.tmp};
+    my $content = capture_output("$cmd -ud $tmpfile perldoc") || undef;
 
-    if ( defined $content ) {
-        if ( $content =~ m/^Unknown option:/ ) {
-            $content = capture_output('perldoc perldoc') || '';
-            $version = 1;
-            $self->set_result('yes, old version');
+    return 1 unless defined( $self->_initial_content_check($conf, $content) );
+
+    my $version = $self->_analyze_perldoc($cmd, $tmpfile, $content);
+
+    _handle_version($conf, $version);
+
+    return 1;
+}
+
+sub _initial_content_check {
+    my $self = shift;
+    my ($conf, $content) = @_;
+    if (! defined $content) {
+        $conf->data->set(
+            has_perldoc => 0,
+            new_perldoc => 0,
+        );
+        $self->set_result('no');
+        return;
+    } else {
+        return 1;
+    }
+}
+
+sub _analyze_perldoc {
+    my $self = shift;
+    my ($cmd, $tmpfile, $content) = @_;
+    my $version;
+    if ( $content =~ m/^Unknown option:/ ) {
+        $content = capture_output("$cmd perldoc") || '';
+        if ($content =~ m/perldoc/) {
+            $version = $self->_handle_old_perldoc();
+        } else {
+            $version = $self->_handle_no_perldoc();
         }
-        else {
-            if ( open my $FH, '<', 'c99da7c4.tmp' ) {
-                local $/;
-                $content = <$FH>;
-                close $FH;
-                $version = 2;
-                $self->set_result('yes');
-            }
-            else {
-                $content = undef;
-            }
-        }
-        unless ( defined $content && $content =~ m/perldoc/ ) {
-            $version = 0;
-            $self->set_result('failed');
-        }
+    }
+    elsif ( open my $FH, '<', $tmpfile ) {
+        local $/;
+        $content = <$FH>;
+        close $FH;
+        $version = 2;
+        $self->set_result('yes');
     }
     else {
-        $self->set_result('no');
+        $version = $self->_handle_no_perldoc();
     }
-    unlink 'c99da7c4.tmp';
+    unlink $tmpfile;
+    return $version;
+}
 
+sub _handle_old_perldoc {
+    my $self = shift;
+    $self->set_result('yes, old version');
+    return 1;
+}
+
+sub _handle_no_perldoc {
+    my $self = shift;
+    $self->set_result('failed');
+    return 0;
+}
+
+sub _handle_version {
+    my ($conf, $version) = @_;
     $conf->data->set(
         has_perldoc => $version != 0 ? 1 : 0,
         new_perldoc => $version == 2 ? 1 : 0
     );
-
     return 1;
 }
 

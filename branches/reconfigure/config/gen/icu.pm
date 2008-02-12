@@ -16,11 +16,11 @@ package gen::icu;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
 use Cwd qw(cwd);
 use File::Basename;
-use Parrot::Configure::Step qw(capture_output cc_gen cc_clean);
+use Parrot::Configure::Utils qw(capture_output);
 
 
 sub _init {
@@ -159,12 +159,12 @@ HELP
     my $header = "unicode/ucnv.h";
     $conf->data->set( testheaders => "#include <$header>\n" );
     $conf->data->set( testheader  => "$header" );
-    cc_gen('config/auto/headers/test_c.in');
+    $conf->cc_gen('config/auto/headers/test_c.in');
 
     $conf->data->set( testheaders => undef );    # Clean up.
     $conf->data->set( testheader  => undef );
-    eval { cc_build(); };
-    if ( !$@ && cc_run() =~ /^$header OK/ ) {
+    eval { $conf->cc_build(); };
+    if ( !$@ && $conf->cc_run() =~ /^$header OK/ ) {
 
         # Ok, we don't need anything more.
         print "Your compiler found the icu headers... good!\n" if $verbose;
@@ -173,7 +173,7 @@ HELP
         print "Adding -I $icuheaders to ccflags for icu headers.\n" if $verbose;
         $conf->data->add( ' ', ccflags => "-I $icuheaders" );
     }
-    cc_clean();
+    $conf->cc_clean();
 
     $self->set_result("yes");
 

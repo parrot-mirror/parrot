@@ -20,9 +20,9 @@ package auto::ctags;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
-use Parrot::Configure::Step ':auto';
+use Parrot::Configure::Utils ':auto';
 
 sub _init {
     my $self = shift;
@@ -44,12 +44,13 @@ sub runstep {
     print "\n" if $verbose;
 
     my ($ctags, $has_ctags) =
-        _probe_for_ctags([ @ctags_variations ], $verbose);
+        _probe_for_ctags($conf, [ @ctags_variations ], $verbose);
     $self->_evaluate_ctags($conf, $ctags, $has_ctags);
     return 1;
 }
 
 sub _probe_for_ctags {
+    my $conf = shift;
     my $variations_ref = shift;
     my $verbose = shift;
     my ($ctags, $has_ctags);

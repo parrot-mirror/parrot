@@ -2,7 +2,9 @@
 
 (load "tests-driver.scm") ; this should come first
 
-(add-tests-with-string-output "integers"      
+(skip-all "strings are not supported yet")
+
+(add-tests-with-string-output "strings"      
 )
 
 (load "compiler.scm")

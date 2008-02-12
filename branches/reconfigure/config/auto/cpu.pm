@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2006, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -7,7 +7,7 @@ config/auto/cpu.pm - CPU specific Files
 
 =head1 DESCRIPTION
 
-Runs C<&run_cpu()> in F<config/auto/cpu/${cpuarch}/auto.pm> if it exists.
+Runs C<runstep()> in F<config/auto/cpu/${cpuarch}/auto.pm> if it exists.
 
 =cut
 
@@ -16,16 +16,17 @@ package auto::cpu;
 use strict;
 use warnings;
 
+use base qw(Parrot::Configure::Step);
 
-use base qw(Parrot::Configure::Step::Base);
-
-use Parrot::Configure::Step;
+use Parrot::Configure::Utils qw(copy_if_diff);
 use Carp;
+
 
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Running CPU specific stuff};
+    $data{description} = q{Generating CPU specific stuff};
+    $data{args}        = [ qw( miniparrot verbose ) ];
     $data{result}      = q{};
     return \%data;
 }

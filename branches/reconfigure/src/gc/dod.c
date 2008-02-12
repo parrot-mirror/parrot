@@ -32,24 +32,26 @@ There's also a verbose mode for garbage collection.
 
 /* HEADERIZER BEGIN: static */
 
-static void clear_live_bits(NOTNULL(Small_Object_Pool *pool))
-        __attribute__nonnull__(1);
+static void clear_live_bits(ARGMOD(Small_Object_Pool *pool))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*pool);
 
 PARROT_CONST_FUNCTION
 static size_t find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
         __attribute__nonnull__(1);
 
-static void mark_special(PARROT_INTERP, NOTNULL(PMC *obj))
+static void mark_special(PARROT_INTERP, ARGIN(PMC *obj))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 static int sweep_cb(PARROT_INTERP,
-    NOTNULL(Small_Object_Pool *pool),
+    ARGMOD(Small_Object_Pool *pool),
     int flag,
-    NOTNULL(void *arg))
+    ARGIN(void *arg))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*pool);
 
 static int trace_active_PMCs(PARROT_INTERP, int trace_stack)
         __attribute__nonnull__(1);
@@ -69,8 +71,7 @@ int CONSERVATIVE_POINTER_CHASING = 0;
 
 /*
 
-=item C<static void
-mark_special(PARROT_INTERP, NOTNULL(PMC *obj))>
+=item C<static void mark_special>
 
 Mark a special PMC. If it has a C<PMC_EXT> structure, append or prepend
 the C<next_for_GC> pointer; otherwise, do the custom mark directly.
@@ -83,7 +84,7 @@ be better if it were a macro.
 */
 
 static void
-mark_special(PARROT_INTERP, NOTNULL(PMC *obj))
+mark_special(PARROT_INTERP, ARGIN(PMC *obj))
 {
     int     hi_prio;
     Arenas *arena_base;
@@ -162,9 +163,7 @@ mark_special(PARROT_INTERP, NOTNULL(PMC *obj))
 
 /*
 
-=item C<PARROT_API
-void
-pobject_lives(PARROT_INTERP, NOTNULL(PObj *obj))>
+=item C<void pobject_lives>
 
 RT#48260: Not yet documented!!!
 
@@ -174,7 +173,7 @@ RT#48260: Not yet documented!!!
 
 PARROT_API
 void
-pobject_lives(PARROT_INTERP, NOTNULL(PObj *obj))
+pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
 {
 #if PARROT_GC_GMS
     do {
@@ -241,8 +240,7 @@ pobject_lives(PARROT_INTERP, NOTNULL(PObj *obj))
 
 /*
 
-=item C<int
-Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)>
+=item C<int Parrot_dod_trace_root>
 
 Trace the root set. Returns 0 if it's a lazy DOD run and all objects
 that need timely destruction were found.
@@ -313,7 +311,6 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
     if (interp->scheduler)
         pobject_lives(interp, (PObj *)interp->scheduler);
 
-
     /* s. packfile.c */
     mark_const_subs(interp);
 
@@ -353,8 +350,7 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
 
 /*
 
-=item C<static int
-trace_active_PMCs(PARROT_INTERP, int trace_stack)>
+=item C<static int trace_active_PMCs>
 
 Do a full trace run and mark all the PMCs as active if they are. Returns
 whether the run completed, that is, whether it's safe to proceed with GC.
@@ -376,8 +372,7 @@ trace_active_PMCs(PARROT_INTERP, int trace_stack)
 
 /*
 
-=item C<int
-Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)>
+=item C<int Parrot_dod_trace_children>
 
 Returns whether the tracing process completed.
 
@@ -465,8 +460,7 @@ Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
 
 /*
 
-=item C<void
-Parrot_dod_trace_pmc_data(PARROT_INTERP, NOTNULL(PMC * const p))>
+=item C<void Parrot_dod_trace_pmc_data>
 
 RT#48260: Not yet documented!!!
 
@@ -475,18 +469,16 @@ RT#48260: Not yet documented!!!
 */
 
 void
-Parrot_dod_trace_pmc_data(PARROT_INTERP, NOTNULL(PMC * const p))
+Parrot_dod_trace_pmc_data(PARROT_INTERP, ARGIN(PMC *p))
 {
     /* malloced array of PMCs */
     PMC ** const data = PMC_data_typed(p, PMC **);
-    INTVAL i;
 
-    if (!data)
-        return;
-
-    for (i = 0; i < PMC_int_val(p); i++) {
-        if (data[i])
-            pobject_lives(interp, (PObj *)data[i]);
+    if (data) {
+        INTVAL i;
+        for (i = 0; i < PMC_int_val(p); i++)
+            if (data[i])
+                pobject_lives(interp, (PObj *)data[i]);
     }
 }
 
@@ -494,8 +486,7 @@ Parrot_dod_trace_pmc_data(PARROT_INTERP, NOTNULL(PMC * const p))
 
 /*
 
-=item C<void
-clear_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)>
+=item C<void clear_cow>
 
 Clear the COW ref count.
 
@@ -504,9 +495,9 @@ Clear the COW ref count.
 */
 
 void
-clear_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)
+clear_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
 {
-    const UINTVAL       object_size = pool->object_size;
+    const UINTVAL object_size = pool->object_size;
     Small_Object_Arena *cur_arena;
 
     /* clear refcount for COWable objects. */
@@ -540,8 +531,7 @@ clear_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)
 
 /*
 
-=item C<void
-used_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)>
+=item C<void used_cow>
 
 Find other users of COW's C<bufstart>.
 
@@ -550,9 +540,9 @@ Find other users of COW's C<bufstart>.
 */
 
 void
-used_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)
+used_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
 {
-    UINTVAL             object_size = pool->object_size;
+    const UINTVAL object_size = pool->object_size;
     Small_Object_Arena *cur_arena;
 
     for (cur_arena = pool->last_Arena;
@@ -583,8 +573,7 @@ used_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)
 
 /*
 
-=item C<void
-Parrot_dod_sweep(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))>
+=item C<void Parrot_dod_sweep>
 
 Put any buffers/PMCs that are now unused onto the pool's free list. If
 C<GC_IS_MALLOC>, bufstart gets freed too, if possible. Avoid buffers that
@@ -595,18 +584,18 @@ are immune from collection (i.e. constant).
 */
 
 void
-Parrot_dod_sweep(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))
+Parrot_dod_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
 {
     UINTVAL i;
-    UINTVAL total_used    = 0;
-    UINTVAL object_size   = pool->object_size;
+    UINTVAL total_used        = 0;
+    const UINTVAL object_size = pool->object_size;
 
     Small_Object_Arena *cur_arena;
     dod_object_fn_type dod_object = pool->dod_object;
 
 #if GC_VERBOSE
     if (Interp_trace_TEST(interp, 1)) {
-        Interp *tracer = interp->debugger;
+        Interp * const tracer = interp->debugger;
         PMC *pio       = PIO_STDERR(interp);
 
         PIO_flush(interp, pio);
@@ -673,9 +662,7 @@ next:
 
 /*
 
-=item C<void
-Parrot_dod_free_pmc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *p))>
+=item C<void Parrot_dod_free_pmc>
 
 RT#48260: Not yet documented!!!
 
@@ -684,10 +671,10 @@ RT#48260: Not yet documented!!!
 */
 
 void
-Parrot_dod_free_pmc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *p))
+Parrot_dod_free_pmc(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool),
+        ARGMOD(PObj *p))
 {
-    PMC           *pmc        = (PMC *)p;
+    PMC    * const pmc        = (PMC *)p;
     Arenas * const arena_base = interp->arena_base;
 
     /* TODO collect objects with finalizers */
@@ -712,8 +699,7 @@ Parrot_dod_free_pmc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
 
 /*
 
-=item C<void
-Parrot_free_pmc_ext(PARROT_INTERP, NOTNULL(PMC *p))>
+=item C<void Parrot_free_pmc_ext>
 
 Frees the PMC_EXT structure attached to a PMC, if it exists.
 
@@ -722,7 +708,7 @@ Frees the PMC_EXT structure attached to a PMC, if it exists.
 */
 
 void
-Parrot_free_pmc_ext(PARROT_INTERP, NOTNULL(PMC *p))
+Parrot_free_pmc_ext(PARROT_INTERP, ARGMOD(PMC *p))
 {
     /* if the PMC has a PMC_EXT structure, return it to the pool/arena */
     Arenas            * const arena_base = interp->arena_base;
@@ -742,9 +728,7 @@ Parrot_free_pmc_ext(PARROT_INTERP, NOTNULL(PMC *p))
 
 /*
 
-=item C<void
-Parrot_dod_free_sysmem(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *b))>
+=item C<void Parrot_dod_free_sysmem>
 
 RT#48260: Not yet documented!!!
 
@@ -753,8 +737,8 @@ RT#48260: Not yet documented!!!
 */
 
 void
-Parrot_dod_free_sysmem(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *b))
+Parrot_dod_free_sysmem(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool),
+        ARGMOD(PObj *b))
 {
     /* has sysmem allocated, e.g. string_pin */
     if (PObj_sysmem_TEST(b) && PObj_bufstart(b))
@@ -766,9 +750,7 @@ Parrot_dod_free_sysmem(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
 
 /*
 
-=item C<void
-Parrot_dod_free_buffer_malloc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *b))>
+=item C<void Parrot_dod_free_buffer_malloc>
 
 RT#48260: Not yet documented!!!
 
@@ -777,8 +759,8 @@ RT#48260: Not yet documented!!!
 */
 
 void
-Parrot_dod_free_buffer_malloc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *b))
+Parrot_dod_free_buffer_malloc(PARROT_INTERP, ARGIN(Small_Object_Pool *pool),
+        ARGMOD(PObj *b))
 {
 
     /* free allocated space at (int *)bufstart - 1, but not if it used COW or is
@@ -789,11 +771,10 @@ Parrot_dod_free_buffer_malloc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
         return;
 
     if (PObj_COW_TEST(b)) {
-        INTVAL *refcount = PObj_bufrefcountptr(b);
+        INTVAL * const refcount = PObj_bufrefcountptr(b);
 
-        if (!--(*refcount)) {
+        if (--(*refcount) == 0) {
             free(refcount); /* the actual bufstart */
-            refcount = NULL;
         }
     }
     else
@@ -802,9 +783,7 @@ Parrot_dod_free_buffer_malloc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
 
 /*
 
-=item C<void
-Parrot_dod_free_buffer(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *b))>
+=item C<void Parrot_dod_free_buffer>
 
 RT#48260: Not yet documented!!!
 
@@ -813,10 +792,10 @@ RT#48260: Not yet documented!!!
 */
 
 void
-Parrot_dod_free_buffer(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
-    NOTNULL(PObj *b))
+Parrot_dod_free_buffer(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool),
+        ARGMOD(PObj *b))
 {
-    Memory_Pool *mem_pool = (Memory_Pool *)pool->mem_pool;
+    Memory_Pool * const mem_pool = (Memory_Pool *)pool->mem_pool;
 
     /* XXX Jarkko reported that on irix pool->mem_pool was NULL, which really
      * shouldn't happen */
@@ -834,9 +813,7 @@ Parrot_dod_free_buffer(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool),
 
 /*
 
-=item C<PARROT_CONST_FUNCTION
-static size_t
-find_common_mask(PARROT_INTERP, size_t val1, size_t val2)>
+=item C<static size_t find_common_mask>
 
 Find a mask covering the longest common bit-prefix of C<val1> and C<val2>.
 
@@ -873,8 +850,7 @@ find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
 
 /*
 
-=item C<void
-trace_mem_block(PARROT_INTERP, size_t lo_var_ptr, size_t hi_var_ptr)>
+=item C<void trace_mem_block>
 
 Traces the memory block between C<lo_var_ptr> and C<hi_var_ptr>.
 
@@ -943,8 +919,7 @@ trace_mem_block(PARROT_INTERP, size_t lo_var_ptr, size_t hi_var_ptr)
 
 /*
 
-=item C<static void
-clear_live_bits(NOTNULL(Small_Object_Pool *pool))>
+=item C<static void clear_live_bits>
 
 Run through all PMC arenas and clear live bits.
 
@@ -953,10 +928,10 @@ Run through all PMC arenas and clear live bits.
 */
 
 static void
-clear_live_bits(NOTNULL(Small_Object_Pool *pool))
+clear_live_bits(ARGMOD(Small_Object_Pool *pool))
 {
     Small_Object_Arena *arena;
-    const UINTVAL       object_size = pool->object_size;
+    const UINTVAL object_size = pool->object_size;
 
     for (arena = pool->last_Arena; arena; arena = arena->prev) {
         Buffer *b = (Buffer *)arena->start_objects;
@@ -972,8 +947,7 @@ clear_live_bits(NOTNULL(Small_Object_Pool *pool))
 
 /*
 
-=item C<void
-Parrot_dod_clear_live_bits(PARROT_INTERP)>
+=item C<void Parrot_dod_clear_live_bits>
 
 RT#48260: Not yet documented!!!
 
@@ -990,8 +964,7 @@ Parrot_dod_clear_live_bits(PARROT_INTERP)
 
 /*
 
-=item C<void
-Parrot_dod_profile_start(PARROT_INTERP)>
+=item C<void Parrot_dod_profile_start>
 
 Records the start time of a DOD run when profiling is enabled.
 
@@ -1008,8 +981,7 @@ Parrot_dod_profile_start(PARROT_INTERP)
 
 /*
 
-=item C<void
-Parrot_dod_profile_end(PARROT_INTERP, int what)>
+=item C<void Parrot_dod_profile_end>
 
 Records the end time of the DOD part C<what> run when profiling is enabled.
 Also record start time of next part.
@@ -1043,8 +1015,7 @@ Parrot_dod_profile_end(PARROT_INTERP, int what)
 
 /*
 
-=item C<void
-Parrot_dod_ms_run_init(PARROT_INTERP)>
+=item C<void Parrot_dod_ms_run_init>
 
 Prepare for a mark & sweep DOD run.
 
@@ -1065,9 +1036,7 @@ Parrot_dod_ms_run_init(PARROT_INTERP)
 
 /*
 
-=item C<static int
-sweep_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag,
-    NOTNULL(void *arg))>
+=item C<static int sweep_cb>
 
 RT#48260: Not yet documented!!!
 
@@ -1076,8 +1045,8 @@ RT#48260: Not yet documented!!!
 */
 
 static int
-sweep_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag,
-    NOTNULL(void *arg))
+sweep_cb(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int flag,
+    ARGIN(void *arg))
 {
     int * const total_free = (int *) arg;
 
@@ -1103,8 +1072,7 @@ sweep_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag,
 
 /*
 
-=item C<void
-Parrot_dod_ms_run(PARROT_INTERP, int flags)>
+=item C<void Parrot_dod_ms_run>
 
 Run the stop-the-world mark & sweep collector.
 
@@ -1139,8 +1107,7 @@ Parrot_dod_ms_run(PARROT_INTERP, int flags)
      * the live bits are cleared
      */
     if (flags & DOD_finish_FLAG) {
-        /* XXX */
-        Parrot_dod_clear_live_bits(interp);
+        clear_live_bits(interp->arena_base->pmc_pool);
         clear_live_bits(interp->arena_base->constant_pmc_pool);
 
         Parrot_dod_sweep(interp, interp->arena_base->pmc_pool);
@@ -1195,8 +1162,7 @@ Parrot_dod_ms_run(PARROT_INTERP, int flags)
 
 /*
 
-=item C<void
-Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)>
+=item C<void Parrot_do_dod_run>
 
 Call the configured garbage collector to reclaim unused headers.
 

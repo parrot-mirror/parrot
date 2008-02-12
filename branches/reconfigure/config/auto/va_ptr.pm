@@ -16,9 +16,9 @@ package auto::va_ptr;
 use strict;
 use warnings;
 
-use base qw(Parrot::Configure::Step::Base);
+use base qw(Parrot::Configure::Step);
 
-use Parrot::Configure::Step ':auto';
+use Parrot::Configure::Utils ':auto';
 
 
 sub _init {
@@ -34,12 +34,12 @@ sub runstep {
     my ( $self, $conf ) = @_;
 
     my $va_type;
-    cc_gen('config/auto/va_ptr/test_c.in');
-    eval { cc_build('-DVA_TYPE_STACK'); };
+    $conf->cc_gen('config/auto/va_ptr/test_c.in');
+    eval { $conf->cc_build('-DVA_TYPE_STACK'); };
 
-    if ( $@ || cc_run() !~ /^ok/ ) {
-        eval { cc_build('-DVA_TYPE_REGISTER'); };
-        if ( $@ || cc_run() !~ /^ok/ ) {
+    if ( $@ || $conf->cc_run() !~ /^ok/ ) {
+        eval { $conf->cc_build('-DVA_TYPE_REGISTER'); };
+        if ( $@ || $conf->cc_run() !~ /^ok/ ) {
             die "Unknown va_ptr type";
         }
         $va_type = 'register';
@@ -47,7 +47,7 @@ sub runstep {
     else {
         $va_type = 'stack';
     }
-    cc_clean();
+    $conf->cc_clean();
     $self->set_result($va_type);
     $conf->data->set( va_ptr_type => $va_type );
 

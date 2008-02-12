@@ -5,19 +5,16 @@
 use strict;
 use warnings;
 
-use Test::More tests => 10;
+use Test::More tests =>  9;
 use Carp;
 use Cwd;
 use File::Temp 0.13 qw/ tempdir /;
-use IO::Handle;
 use lib qw( lib t/configure/testlib );
 use IO::CaptureOutput qw| capture |;
 
-BEGIN { use_ok('Parrot::Configure::Step'); }
-
-Parrot::Configure::Step->import(@Parrot::Configure::Step::EXPORT_OK);
-
-can_ok( __PACKAGE__, @Parrot::Configure::Step::EXPORT_OK );
+BEGIN {
+    use_ok('Parrot::Configure::Utils');
+}
 
 my $cwd = cwd();
 my $command;
@@ -29,7 +26,7 @@ $command = q{echo Hello world};
     my $out     = q{out};
     my $err     = q{err};
     my $verbose = 0;
-    my $rv      = Parrot::Configure::Step::_run_command( $command, $out, $err, $verbose );
+    my $rv      = Parrot::Configure::Utils::_run_command( $command, $out, $err, $verbose );
     is( $rv, 0, "Got expected exit code of 0" );
 
     chdir $cwd or croak "Unable to change back to starting directory";
@@ -45,7 +42,7 @@ $command = q{echo Hello world};
 
     my ($rv, $stdout);
     capture(
-        sub { $rv = Parrot::Configure::Step::_run_command(
+        sub { $rv = Parrot::Configure::Utils::_run_command(
                 $command, $out, $err, $verbose ); },
         \$stdout,
     );
@@ -62,7 +59,7 @@ $command = q{echo Hello world};
     my $out     = q{out};
     my $err     = $out;
     my $verbose = 0;
-    my $rv      = Parrot::Configure::Step::_run_command( $command, $out, $err, $verbose );
+    my $rv      = Parrot::Configure::Utils::_run_command( $command, $out, $err, $verbose );
     is( $rv, 0, "Got expected exit code of 0" );
 
     chdir $cwd or croak "Unable to change back to starting directory";
@@ -75,7 +72,7 @@ $command = q{echo Hello world};
     my $out     = q{out};
     my $err     = q{/dev/null};
     my $verbose = 0;
-    my $rv      = Parrot::Configure::Step::_run_command( $command, $out, $err, $verbose );
+    my $rv      = Parrot::Configure::Utils::_run_command( $command, $out, $err, $verbose );
     is( $rv, 0, "Got expected exit code of 0" );
 
     chdir $cwd or croak "Unable to change back to starting directory";
@@ -90,7 +87,7 @@ $command = $^O eq 'MSWin32' ? q{dir} : q{date};
     my $verbose = 0;
     my ($rv, $stdout);
     capture(
-        sub { $rv = Parrot::Configure::Step::_run_command(
+        sub { $rv = Parrot::Configure::Utils::_run_command(
                 $command, $out, $err, $verbose );
         },
         \$stdout,
@@ -109,7 +106,7 @@ $command = $^O eq 'MSWin32' ? q{dir} : q{date};
     my $verbose = 1;
     my ($rv, $stdout, $stderr);
     capture(
-        sub { $rv = Parrot::Configure::Step::_run_command(
+        sub { $rv = Parrot::Configure::Utils::_run_command(
                 $command, $out, $err, $verbose );
         },
         \$stdout,
@@ -129,7 +126,7 @@ $command = $^O eq 'MSWin32' ? q{dir} : q{date};
     my $verbose = 1;
     my ($rv, $stdout, $stderr);
     capture(
-        sub { $rv = Parrot::Configure::Step::_run_command(
+        sub { $rv = Parrot::Configure::Utils::_run_command(
                 $command, $out, $err, $verbose );
         },
         \$stdout,
@@ -149,7 +146,7 @@ $command = $^O eq 'MSWin32' ? q{dir} : q{date};
     my $verbose = 1;
     my ($rv, $stdout, $stderr);
     capture(
-        sub { $rv = Parrot::Configure::Step::_run_command(
+        sub { $rv = Parrot::Configure::Utils::_run_command(
                 $command, $out, $err, $verbose );
         },
         \$stdout,
@@ -164,7 +161,7 @@ $command = $^O eq 'MSWin32' ? q{dir} : q{date};
 
 =head1 NAME
 
-t/configure/035-step.t - tests Parrot::Configure::Step
+t/configure/035-step.t - tests Parrot::Configure::Utils
 
 =head1 SYNOPSIS
 
@@ -172,8 +169,8 @@ t/configure/035-step.t - tests Parrot::Configure::Step
 
 =head1 DESCRIPTION
 
-Regression tests for the L<Parrot::Configure::Step> module.  This file holds
-tests for Parrot::Configure::Step::_run_command() (a non-exported subroutine).
+Regression tests for the L<Parrot::Configure::Utils> module.  This file holds
+tests for Parrot::Configure::Utils::_run_command().
 
 =cut
 
