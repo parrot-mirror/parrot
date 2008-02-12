@@ -6,7 +6,9 @@ use warnings;
 use Carp;
 use Config;        # to find the correct $Config{scriptdir}/prove
 use File::Spec;    # to construct the path to the correct 'prove'
+use Storable qw( nstore retrieve );
 use lib qw(lib);
+use Parrot::Configure::Parallel;
 use Parrot::Configure::Step::List qw( get_steps_list );
 
 my @framework_tests;
@@ -18,10 +20,13 @@ for my $t (sort grep { /\d{3}-\w+\.t$/ } readdir $DIRH) {
 closedir $DIRH or croak "Unable to close $config_dir";
 
 my $steps_dir = q{t/steps};
-my %steps_tests;
+#my @steps_tests = qq{$steps_dir/00-prepare_parallel.t};
 my @steps_tests;
+my %steps_tests;
+
 opendir my $DIRH2, $steps_dir or croak "Unable to open $steps_dir";
 for my $t (grep { /\.t$/ } readdir $DIRH2) {
+#    next if $t =~ /^00/;
     my ($type, $class, $num);
     if ($t =~ m/(init|inter|auto|gen)_(\w+)-(\d{2})\.t$/) {
         ($type, $class, $num) = ($1,$2,$3);
@@ -42,7 +47,7 @@ foreach my $step (@steps) {
 }
 
 our @preconfiguration_tests = (
-    @framework_tests,
+#    @framework_tests,
     @steps_tests,
 );
 
@@ -55,8 +60,29 @@ our @postconfiguration_tests = qw(
 
 sub new {
     my ( $class, $argsref ) = @_;
+    # $argsref is the return value of
+    # Parrot::Configure::Options::process_options() and is a hash ref with two
+    # elements:  'mode' and 'argv'.
     my $self = {};
     bless $self, $class;
+
+    # We're testing by building an object which parallels the later
+    # Parrot::Configure object.
+    # First, we have to clearn out any stored object in our top directory.
+    my $sto = '.configure_parallel.sto';
+    if (-e $sto) {
+        unlink $sto or die "Unable to unlink $sto: $!";
+    }
+    # Next, we construct a Parrot::Configure::Parallel object.
+    my $conf = Parrot::Configure::Parallel->new;
+    $conf->options->set( %{$argsref} );
+    my @state;
+    push @state, $conf;
+    {
+        local $Storable::Deparse = 1;
+        nstore( \@state, $sto );
+    }
+
     my ( $run_configure_tests, $run_build_tests );
     if ( defined $argsref->{test} ) {
         if ( $argsref->{test} eq '1' ) {
@@ -87,10 +113,10 @@ sub new {
     for my $k (grep { ! $excluded_options{$_} } keys %{$argsref}) {
         $self->set($k, $argsref->{$k});
     }
-    my $sto = '.configure_parallel.sto';
-    if (-e $sto) {
-        unlink $sto or die "Unable to unlink $sto: $!";
-    }
+#    my $sto = '.configure_parallel.sto';
+#    if (-e $sto) {
+#        unlink $sto or die "Unable to unlink $sto: $!";
+#    }
     return $self;
 }
 
@@ -110,6 +136,15 @@ sub get {
     return $self->{options}{$option} || undef;
 }
 
+sub get_all_options {
+    my $self = shift;
+    my $optstr = q{};
+    while ( my ($k, $v) = each %{ $self->{options} } ) {
+        $optstr .= qq{ $k $v};
+    }
+    return $optstr;
+}
+
 sub set_run {
     my $self = shift;
     die "Need 2 arguments to Parrot::Configure::Options::Test::set_run()"
@@ -126,7 +161,6 @@ sub get_run {
     return $self->{run}{$option} || undef;
 }
 
-
 sub run_configure_tests {
     my $self = shift;
     if ( $self->get_run('run_configure_tests') ) {
@@ -134,7 +168,8 @@ sub run_configure_tests {
 
         # Find the 'prove' command associated with *this* version of perl.
         my $prove = File::Spec->catfile( $Config{'scriptdir'}, 'prove' );
-        system(qq{$prove @preconfiguration_tests})
+        my $optstr = $self->get_all_options(); 
+        system(qq{$prove -v @preconfiguration_tests :: $optstr})
             and die
 "Pre-configuration tests did not complete successfully; Configure.pl will not continue.";
         print <<"TEST";
