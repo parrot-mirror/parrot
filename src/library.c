@@ -531,6 +531,7 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, ARGMOD(STRING *file),
     prefix_c = Parrot_get_runtime_prefix(interp);
     prefix   = string_from_cstring(interp, prefix_c, 0);
     n        = VTABLE_elements(interp, paths);
+    mem_sys_free(prefix_c);
 
     for (i = 0; i < n; ++i) {
         STRING * const path = VTABLE_get_string_keyed_int(interp, paths, i);
@@ -616,15 +617,13 @@ Parrot_get_runtime_prefix(PARROT_INTERP)
         PMC    * const config_hash =
             VTABLE_get_pmc_keyed_int(interp, interp->iglobals, (INTVAL) IGLOBALS_CONFIG_HASH);
 
-        STRING * const key         =
-            CONST_STRING(interp, "prefix");
-
-        if (!VTABLE_elements(interp, config_hash))
-            return str_dup( '.' );
-        else {
-            STRING * const s = VTABLE_get_string_keyed_str(interp, config_hash, key);
+        if (VTABLE_elements(interp, config_hash)) {
+            STRING * const key = CONST_STRING(interp, "prefix");
+            STRING * const s   = VTABLE_get_string_keyed_str(interp, config_hash, key);
             return string_to_cstring(interp, s);
         }
+        else
+            return str_dup( "." );
     }
 }
 
