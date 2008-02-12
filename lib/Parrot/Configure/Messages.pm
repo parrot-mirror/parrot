@@ -30,7 +30,7 @@ END
 
 sub print_conclusion {
     my $conf = shift;
-    my $make = shift;
+    my $make = shift || q{};
     my @failed_steps = @{ $conf->{log} };
     my @logged_failed_steps = ();
     for (my $i = 1; $i <= $#failed_steps; $i++) {

@@ -87,7 +87,7 @@ sub store_this_step_pure {
     } );
 
     my $conf = Parrot::Configure::Parallel->new;
-    my $pv = get_previous_state($pkg,$state);
+#    my $pv = get_previous_state($pkg,$state);
     $conf->refresh(get_previous_state($pkg,$state));
     $conf->add_steps($pkg);
     $conf->options->set( %{$args} );
@@ -100,7 +100,7 @@ sub store_this_step_pure {
         update_state(
             {
                 state       => $state,
-                step_name   => $step_name,
+#                step_name   => $step_name,
                 conf        => $conf,
                 sto         => $sto,
             }
@@ -112,13 +112,12 @@ sub store_this_step_pure {
     return 1;
 }
 
-
 sub update_state {
     my $argsref = shift;
-    if (! defined $argsref->{state}->[0]) {
-        $argsref->{state}->[0] = [];
-    }
-    push @{ $argsref->{state}->[0] }, $argsref->{step_name};
+#    if (! defined $argsref->{state}->[0]) {
+#        $argsref->{state}->[0] = [];
+#    }
+#    push @{ $argsref->{state}->[0] }, $argsref->{step_name};
     push @{ $argsref->{state} }, $argsref->{conf};
     {
         local $Storable::Deparse = 1;
