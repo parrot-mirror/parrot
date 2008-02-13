@@ -1408,6 +1408,8 @@ MANIFEST_TEST_FILES = \
 CONFIGURE_TEST_FILES = \
     t/configure/*.t \
 	t/steps/*.t
+POSTCONFIGURE_TEST_FILES = \
+    t/postconfigure/*.t
 
 # Common prep for all test targets.
 # We probably need a complete build before running the tests.
@@ -1529,9 +1531,9 @@ mopsbench : test_prep
 distro_tests : test_prep
 	$(PERL) t/harness $(DISTRO_TEST_FILES)
 
-# configure tests
-configure_tests :
-	$(PERL) t/harness $(CONFIGURE_TEST_FILES)
+# post-configuration tests
+postconfigure_tests :
+	$(PERL) t/harness $(POSTCONFIGURE_TEST_FILES)
 
 ###############################################################################
 #
