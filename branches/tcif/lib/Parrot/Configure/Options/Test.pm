@@ -3,9 +3,18 @@
 package Parrot::Configure::Options::Test;
 use strict;
 use warnings;
+BEGIN {
+    eval { use TAP::Harness 3.05 (); };
+    if ($@) {
+        print STDERR "$@.  Must have modern 'prove' tests using Parrot::Configure::Options::Test\n";
+        exit;
+    }
+}
 use Carp;
-use Test::Harness;
+use Config;
+use Storable qw( nstore retrieve );
 use lib qw(lib);
+use Parrot::Configure::Parallel;
 use Parrot::Configure::Step::List qw( get_steps_list );
 
 my @framework_tests;
@@ -17,8 +26,9 @@ for my $t (sort grep { /\d{3}-\w+\.t$/ } readdir $DIRH) {
 closedir $DIRH or croak "Unable to close $config_dir";
 
 my $steps_dir = q{t/steps};
-my %steps_tests;
 my @steps_tests;
+my %steps_tests;
+
 opendir my $DIRH2, $steps_dir or croak "Unable to open $steps_dir";
 for my $t (grep { /\.t$/ } readdir $DIRH2) {
     my ($type, $class, $num);
@@ -56,8 +66,31 @@ our @postconfiguration_tests = (
 
 sub new {
     my ( $class, $argsref ) = @_;
+    # $argsref is the return value of
+    # Parrot::Configure::Options::process_options() and is a hash ref with two
+    # elements:  'mode' and 'argv'.
+
     my $self = {};
     bless $self, $class;
+
+    # We're testing by building an object which parallels the later
+    # Parrot::Configure object. 
+    # First, we have to clearn out any stored object in our top directory.
+    my $sto = '.configure_parallel.sto';
+    if (-e $sto) {
+        unlink $sto or die "Unable to unlink $sto: $!";
+    }
+    # Next, we construct a Parrot::Configure::Parallel object.
+    my $conf = Parrot::Configure::Parallel->new;
+    $conf->options->set( %{$argsref} );
+    my @state;
+    push @state, $conf;
+    {
+        local $Storable::Deparse = 1;
+        nstore( \@state, $sto );
+    }
+
+
     my ( $run_configure_tests, $run_build_tests );
     if ( defined $argsref->{test} ) {
         if ( $argsref->{test} eq '1' ) {
@@ -88,10 +121,6 @@ sub new {
     for my $k (grep { ! $excluded_options{$_} } keys %{$argsref}) {
         $self->set($k, $argsref->{$k});
     }
-    my $sto = '.configure_parallel.sto';
-    if (-e $sto) {
-        unlink $sto or die "Unable to unlink $sto: $!";
-    }
     return $self;
 }
 
@@ -109,6 +138,15 @@ sub get {
         unless @_ == 1;
     my $option = shift;
     return $self->{options}{$option} || undef;
+}
+
+sub get_all_options {
+    my $self = shift;
+    my $optstr = q{};
+    while ( my ($k, $v) = each %{ $self->{options} } ) {
+        $optstr .= qq{ $k $v};
+    }
+    return $optstr;
 }
 
 sub set_run {
@@ -133,8 +171,12 @@ sub run_configure_tests {
     if ( $self->get_run('run_configure_tests') ) {
         print "As you requested, we'll start with some tests of the configuration tools.\n\n";
 
-        runtests(@preconfiguration_tests) or die
-            "Pre-configuration tests did not complete successfully; Configure.pl will not continue.";
+        # Find the 'prove' command associated with *this* version of perl.
+        my $prove = File::Spec->catfile( $Config{'scriptdir'}, 'prove' );
+        my $optstr = $self->get_all_options(); 
+        system(qq{$prove @preconfiguration_tests :: $optstr})
+             and die
+ "Pre-configuration tests did not complete successfully; Configure.pl will not continue.";
         print <<"TEST";
 
 I just ran some tests to demonstrate that
@@ -150,7 +192,7 @@ sub run_build_tests {
     if ( $self->get_run('run_build_tests') ) {
         print "\n\n";
         print "As you requested, I will now run some tests of the build tools.\n\n";
-        runtests(@postconfiguration_tests) or die
+        TAP::Harness::runtests(@postconfiguration_tests) or die
             "Post-configuration and build tools tests did not complete successfully; running 'make' might be dubious.";
     }
     return 1;
