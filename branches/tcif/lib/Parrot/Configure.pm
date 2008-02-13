@@ -1,6 +1,43 @@
 # Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
 
+package Parrot::Configure;
+
+use strict;
+use warnings;
+
+use lib qw(config);
+use Carp qw(carp);
+use Storable qw(nstore retrieve);
+use Parrot::Configure::Data;
+use base qw( Parrot::Configure::Base );
+use base qw(Parrot::Configure::Compiler);
+
+use Class::Struct;
+
+struct(
+    'Parrot::Configure::Task' => {
+        step   => '$',
+        object => 'Parrot::Configure::Step',
+    },
+);
+
+my $singleton;
+
+BEGIN {
+    $singleton = {
+        steps   => [],
+        data    => Parrot::Configure::Data->new,
+        options => Parrot::Configure::Data->new,
+    };
+    bless $singleton, "Parrot::Configure";
+}
+
+sub new {
+    my $class = shift;
+    return $singleton;
+}
+
 =head1 NAME
 
 Parrot::Configure - Conducts the execution of Configuration Steps
@@ -32,27 +69,6 @@ I<symbols>.
 
 =cut
 
-package Parrot::Configure;
-
-use strict;
-use warnings;
-
-use lib qw(config);
-use Carp qw(carp);
-use Storable qw(nstore retrieve);
-use Parrot::Configure::Data;
-use base qw( Parrot::Configure::Base );
-use base qw(Parrot::Configure::Compiler);
-
-use Class::Struct;
-
-struct(
-    'Parrot::Configure::Task' => {
-        step   => '$',
-        object => 'Parrot::Configure::Step',
-    },
-);
-
 =head2 Methods
 
 =head3 Constructor
@@ -66,22 +82,6 @@ Basic constructor.
 Accepts no arguments and returns a Parrot::Configure object.
 
 =cut
-
-my $singleton;
-
-BEGIN {
-    $singleton = {
-        steps   => [],
-        data    => Parrot::Configure::Data->new,
-        options => Parrot::Configure::Data->new,
-    };
-    bless $singleton, "Parrot::Configure";
-}
-
-sub new {
-    my $class = shift;
-    return $singleton;
-}
 
 =back
 
