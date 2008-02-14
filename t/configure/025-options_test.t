@@ -7,7 +7,6 @@ use strict;
 use warnings;
 use Carp;
 use Cwd;
-use Data::Dumper;
 use File::Temp qw( tempdir );
 use Test::More 
 qw( no_plan );
@@ -29,7 +28,8 @@ $args = process_options(
         mode => q{configure},
     }
 );
-ok( defined $args, "process_options() returned successfully when options were specified" );
+ok( defined $args,
+    "process_options() returned successfully when options were specified" );
 
 $opttest = Parrot::Configure::Options::Test->new($args);
 ok( defined $opttest, "Constructor returned successfully" );
@@ -76,16 +76,16 @@ TEST
     @Parrot::Configure::Options::Test::postconfiguration_tests = ($test);
     {
         my ($rv, $stdout);
-#    SKIP: {
-#            skip $reason, 1 if $ENV{PERL5OPT};
-#            capture (
-#                sub { $rv = $opttest->run_build_tests(); },
-#                \$stdout
-#            );
-#            ok( $rv, "Build tests are runnable" );
-#        }
+    SKIP: {
+            skip $reason, 1 if $ENV{PERL5OPT};
+            capture (
+                sub { $rv = $opttest->run_build_tests(); },
+                \$stdout
+            );
+            ok( $rv, "Build tests are runnable" );
+        }
     }
-#    unlink $test or croak "Unable to delete $test";
+    unlink $test or croak "Unable to delete $test";
     @Parrot::Configure::Options::Test::preconfiguration_tests = ();
     @Parrot::Configure::Options::Test::postconfiguration_tests = ();
 
