@@ -121,6 +121,8 @@ sub new {
     for my $k (grep { ! $excluded_options{$_} } keys %{$argsref}) {
         $self->set($k, $argsref->{$k});
     }
+    # Find the 'prove' command associated with *this* version of perl.
+    $self->{this_prove} = File::Spec->catfile( $Config{'scriptdir'}, 'prove' );
     return $self;
 }
 
@@ -171,10 +173,8 @@ sub run_configure_tests {
     if ( $self->get_run('run_configure_tests') ) {
         print "As you requested, we'll start with some tests of the configuration tools.\n\n";
 
-        # Find the 'prove' command associated with *this* version of perl.
-        my $prove = File::Spec->catfile( $Config{'scriptdir'}, 'prove' );
         my $optstr = $self->get_all_options(); 
-        system(qq{$prove @preconfiguration_tests :: $optstr})
+        system( qq{$self->{this_prove} @preconfiguration_tests :: $optstr} )
              and die
  "Pre-configuration tests did not complete successfully; Configure.pl will not continue.";
         print <<"TEST";
@@ -192,7 +192,7 @@ sub run_build_tests {
     if ( $self->get_run('run_build_tests') ) {
         print "\n\n";
         print "As you requested, I will now run some tests of the build tools.\n\n";
-        TAP::Harness::runtests(@postconfiguration_tests) or die
+        system( qq{$self->{this_prove} @postconfiguration_tests } ) and die
             "Post-configuration and build tools tests did not complete successfully; running 'make' might be dubious.";
     }
     return 1;
