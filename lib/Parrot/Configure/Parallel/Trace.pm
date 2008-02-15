@@ -1,6 +1,39 @@
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
 package Parrot::Configure::Parallel::Trace;
+
+=head1 NAME
+
+Parrot::Configure::Parallel::Trace - Manipulate a Parrot::Configure::Parallel object during testing of configuration step classes.
+
+=head1 SYNOPSIS
+
+    $trace =
+        Parrot::Configure::Parallel::Trace->new('current_test_script');
+
+    $step_name = $trace->get_step_name();
+
+    $step_position = $trace->get_step_position();
+
+    $stepsref = $trace->get_all_step_positions()
+
+    $state = $self->retrieve_state();
+
+    $self->dump_state();
+
+    $self->get_previous_state($step_name);
+
+    $self->update_state( {
+        state       => $state,
+        conf        => $conf,
+    } );
+
+    $self->store_this_step_pure($step_name);
+
+Used only in configuration step tests found in F<t/steps/>.
+
+=cut
+
 use strict;
 use warnings;
 use Carp;
@@ -14,6 +47,53 @@ use Parrot::Configure::Parallel;
 use Parrot::Configure::Options qw( process_options );
 
 our $sto = q{.configure_parallel.sto};
+
+=head1 PUBLIC METHODS
+
+=head2 C<new()>
+
+B<Purpose:>  Constructor.
+
+B<Arguments:>  Single argument, which is a string representing a
+filename.  In actual use, the filename is that of the calling test
+script, I<i.e.>, Perl's C<$0>. 
+
+    $trace = Parrot::Configure::Parallel::Trace->new($0);
+
+B<Return Value:>  Hash reference blessed into class
+Parrot::Configure::Parallel::Trace.  Hash starts off with these
+elements:
+
+=over 4
+
+=item * C<sto>
+
+The name of the Storable file on disk holding the results of parallel
+configuration.  Value is a string.
+
+=item * C<position>
+
+Table mapping the sequence positions of the configuration steps to their
+names.  Value is a hash reference with elements such as:
+
+    init_manifest   => 1,
+
+=item * C<step>
+
+The short name of the configuration step class being tested by the test
+file constructing this object.  Value is a string.
+
+Example:  test file F<t/steps/init_manifest-01.t> will have a value of
+C<init::manifest> in this element.
+
+=back
+
+B<Comment:>
+
+Will C<croak> if a configuration step class cannot be parsed from the
+argument.
+
+=cut 
 
 sub new {
     my $class = shift;
@@ -42,15 +122,83 @@ sub new {
     return bless \%args, $class;
 }
 
+=head2 C<get_step_name()>
+
+B<Purpose:>  Accesses short name of configuration step class derived
+from argument to constructor.  
+
+B<Arguments:>  
+
+    $step_name = $trace->get_step_name();
+
+B<Return Value:>  String holding short name of configuration step.
+Example:
+
+    init::manifest
+
+B<Comment:>
+
+=cut 
+
 sub get_step_name {
     my $self = shift;
     return $self->{step};
 }
 
+=head2 C<get_step_position()>
+
+B<Purpose:>  Accesses the sequence number of the configuration step
+class calculated from the argument to the constructor.
+
+B<Arguments:>  None.
+
+    $step_position = $trace->get_step_position();
+
+B<Return Value:>  Non-negative integer.  Example, if class is
+C<init::defaults>, C<$step_position> is C<2>.
+
+B<Comment:>
+
+=cut 
+
 sub get_step_position {
     my $self = shift;
     return $self->{position}->{$self->{step}};
 }
+
+=head2 C<get_all_step_positions()>
+
+B<Purpose:>  Provides a look-up table for the sequence numbers of all
+configuration step classes.
+
+B<Arguments:>  None.
+
+    $stepsref = $trace->get_all_step_positions()
+
+B<Return Value:> Hash reference, where each element's key is a
+configuration step class (I<e.g.>, C<init::manifest>) and each element's
+value is the corresponding sequence number (C<1>).
+
+B<Comment:>
+
+=cut 
+
+sub get_all_step_positions {
+    my $self = shift;
+    return $self->{position};
+}
+
+=head2 C<retrieve_state()>
+
+B<Purpose:>  
+
+B<Arguments:>  
+
+B<Return Value:>
+
+B<Comment:>
+
+=cut 
 
 sub retrieve_state {
     my $self = shift;
@@ -60,11 +208,35 @@ sub retrieve_state {
     return $state;
 }
 
+=head2 C<dump_state()>
+
+B<Purpose:>  
+
+B<Arguments:>  
+
+B<Return Value:>
+
+B<Comment:>
+
+=cut 
+
 sub dump_state {
     my $self = shift;
     my $state = $self->retrieve_state();
     print Dumper $state;
 }
+
+=head2 C<get_previous_state()>
+
+B<Purpose:>  
+
+B<Arguments:>  
+
+B<Return Value:>
+
+B<Comment:>
+
+=cut 
 
 sub get_previous_state {
     my $self = shift;
@@ -80,6 +252,18 @@ sub get_previous_state {
      }
 }
 
+=head2 C<update_state()>
+
+B<Purpose:>  
+
+B<Arguments:>  
+
+B<Return Value:>
+
+B<Comment:>
+
+=cut 
+
 sub update_state {
     my $self = shift;
     my $argsref = shift;
@@ -90,6 +274,18 @@ sub update_state {
     }
     return 1;
 }
+
+=head2 C<store_this_step_pure()>
+
+B<Purpose:>  
+
+B<Arguments:>  
+
+B<Return Value:>
+
+B<Comment:>
+
+=cut 
 
 sub store_this_step_pure {
     my $self = shift;
@@ -107,7 +303,7 @@ sub store_this_step_pure {
     $conf->refresh($self->get_previous_state($pkg,$state));
     $conf->add_steps($pkg);
     $conf->options->set( %{$args} );
-    
+
     my $task        = $conf->steps->[-1];
     my $step_name   = $task->step;
     my $step = $step_name->new();
@@ -130,33 +326,35 @@ sub store_this_step_pure {
 
 #################### DOCUMENTATION ####################
 
-=head1 NAME
+=head1 PREREQUISITES
 
-Parrot::Configure::Parallel::Trace - Manipulate a Parrot::Configure::Parallel object during testing of configuration step classes.
+=head2 Perl 5 Core Modules
 
-=head1 SYNOPSIS
+=over 4
 
-    $trace =
-        Parrot::Configure::Parallel::Trace->new('current_test_script');
+=item * Carp
 
-    $step_name = $trace->get_step_name();
+=item * Data::Dumper
 
-    $step_position = $trace->get_step_position($step_name);
+C<$Data::Dumper::Indent> is set to C<1>.
 
-    $state = $self->retrieve_state();
-    
-    $self->dump_state();
-    
-    $self->get_previous_state($step_name);
-    
-    $self->update_state( {
-        state       => $state,
-        conf        => $conf,
-    } );
+=item * File::Basename
 
-    $self->store_this_step_pure($step_name);
+=item * Storable C<qw( nstore retrieve )>
 
-Used only in configuration step tests found in F<t/steps/>.
+=back
+
+=head2 Perl 5 Modules in Parrot Distribution
+
+=over 4
+
+=item * Parrot::Configure::Step::List C<qw( get_steps_list )>
+
+=item * Parrot::Configure::Parallel
+
+=item * Parrot::Configure::Options C<qw( process_options )>
+
+=back
 
 =head1 AUTHOR
 
