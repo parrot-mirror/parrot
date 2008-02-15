@@ -17,18 +17,18 @@ Parrot::Configure::Parallel::Trace - Manipulate a Parrot::Configure::Parallel ob
 
     $stepsref = $trace->get_all_step_positions()
 
-    $state = $self->retrieve_state();
+    $state = $trace->retrieve_state();
 
-    $self->dump_state();
+    $trace->dump_state();
 
-    $self->get_previous_state($step_name);
+    $trace->get_previous_state($step_name);
 
-    $self->update_state( {
+    $trace->update_state( {
         state       => $state,
         conf        => $conf,
     } );
 
-    $self->store_this_step_pure($step_name);
+    $trace->store_this_step_pure($step_name);
 
 Used only in configuration step tests found in F<t/steps/>.
 
@@ -190,13 +190,22 @@ sub get_all_step_positions {
 
 =head2 C<retrieve_state()>
 
-B<Purpose:>  
+B<Purpose:>  Retrieves from the Storable file on disk a list of the
+states of configuration at the conclusion of all steps executed so far.
 
-B<Arguments:>  
+B<Arguments:>  None.
+
+    $state = $trace->retrieve_state();
 
 B<Return Value:>
 
+Array reference.  Each element in the array represents the state of the
+Parrot::Configure::Parallel object at the conclusion of a given
+configuration step.
+
 B<Comment:>
+
+If no Storable file is found, will return an empty array reference.
 
 =cut 
 
@@ -210,13 +219,17 @@ sub retrieve_state {
 
 =head2 C<dump_state()>
 
-B<Purpose:>  
+B<Purpose:>  Dumps the list of configuration states retrieved by
+C<retrieve_state().
 
-B<Arguments:>  
+B<Arguments:>  None.
 
-B<Return Value:>
+    $trace->dump_state();
 
-B<Comment:>
+B<Return Value:>  Implicitly returns a true value upon success.
+
+B<Comment:>  Uses F<Data::Dumper> with C<$Data::Dumper::Indent> set to
+C<1> to reduce unnecessary whitespace and disk storage requirements.
 
 =cut 
 
@@ -228,11 +241,17 @@ sub dump_state {
 
 =head2 C<get_previous_state()>
 
-B<Purpose:>  
+B<Purpose:>  Determine what was the state of configuration at the
+conclusion of the last step successfully completed.
 
-B<Arguments:>  
+B<Arguments:>  In normal use, no arguments are needed, as this method
+will internally call C<retrieve_state()>.  For testing purposes you may
+provide an array reference to preempt use of the array reference
+returned by C<retrieve_state()>.
 
-B<Return Value:>
+B<Return Value:>  Hash reference representing the internal state of the
+Parrot::Configure::Parallel object.  Returns C<undef> if this is not
+successful.
 
 B<Comment:>
 
@@ -254,11 +273,17 @@ sub get_previous_state {
 
 =head2 C<update_state()>
 
-B<Purpose:>  
+B<Purpose:>  Updates the Storable object on disk with the results of
+running the current configuration step.
 
-B<Arguments:>  
+B<Arguments:>  Hash reference with two keys:  C<state> and C<conf>.
 
-B<Return Value:>
+    $trace->update_state( {
+        state       => $state,
+        conf        => $conf,
+    } );
+
+B<Return Value:>  Returns true value upon success.
 
 B<Comment:>
 
@@ -277,11 +302,24 @@ sub update_state {
 
 =head2 C<store_this_step_pure()>
 
-B<Purpose:>  
+B<Purpose:>  As needed:  Retrieves the configuration state from the
+Storable file on disk.  Constructs a Parrot::Configure::Parallel object,
+then replaces the content of that object with the configuration state so
+retrieved.  Executes the particular configuration step's C<runstep()>
+method and stores the updated state on disk.
 
-B<Arguments:>  
+B<Arguments:>  None.
 
-B<Return Value:>
+B<Return Value:>  If the current configuration step is being encountered
+for the first time (I<e.g.>, F<t/steps/init_defaults-01.t>), then method
+executes completely and returns C<1> upon success.
+
+If, however, the current configuration step has been previously
+encountered (I<e.g.>, F<t/steps/init_defaults-02.t>), then the method
+short-circuits and returns C<2> upon success.
+
+So, you get a true value on success either way, but the indicator of
+success may vary.
 
 B<Comment:>
 
@@ -300,7 +338,7 @@ sub store_this_step_pure {
     } );
 
     my $conf = Parrot::Configure::Parallel->new;
-    $conf->refresh($self->get_previous_state($pkg,$state));
+    $conf->refresh($self->get_previous_state($state));
     $conf->add_steps($pkg);
     $conf->options->set( %{$args} );
 
