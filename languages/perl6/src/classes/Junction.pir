@@ -47,8 +47,9 @@ Private method to sets the values in the junction.
 =cut
 
 .sub '!values' :method
-    .param pmc list
-    setattribute self, "@values", list
+    .param pmc l
+    l = 'list'(l :flat)
+    setattribute self, "@values", l
 .end
 
 
@@ -67,29 +68,6 @@ Private method to set the type of the junction.
 ret_type:
     type = getattribute self, "$type"
     .return(type)
-.end
-
-
-=item pick()
-
-Gets a random value from the junction.
-
-=cut
-
-.sub 'pick' :method
-    # Need to know the number of elements.
-    .local pmc values
-    values = getattribute self, "@values"
-    .local int elems
-    elems = elements values
-
-    # Get random index.
-    .local int idx
-    idx = 'prefix:rand'(elems)
-
-    # Return that value.
-    $P0 = values[idx]
-    .return($P0)
 .end
 
 
