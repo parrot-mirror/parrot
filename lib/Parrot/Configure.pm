@@ -6,21 +6,12 @@ package Parrot::Configure;
 use strict;
 use warnings;
 
-use lib qw(config);
+use lib qw(lib config);
 use Carp qw(carp);
 use Storable qw(nstore retrieve);
 use Parrot::Configure::Data;
 use base qw( Parrot::Configure::Base );
 use base qw(Parrot::Configure::Compiler);
-
-use Class::Struct;
-
-struct(
-    'Parrot::Configure::Task' => {
-        step   => '$',
-        object => 'Parrot::Configure::Step',
-    },
-);
 
 my $singleton;
 
