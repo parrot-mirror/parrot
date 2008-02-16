@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 6;
+use Test::More tests =>  8;
 use Carp;
 use Cwd;
 use Data::Dumper;
@@ -16,6 +16,12 @@ use_ok('config::init::manifest');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use IO::CaptureOutput qw | capture |;
+use Parrot::Configure::Parallel::Trace;
+
+my $trace = Parrot::Configure::Parallel::Trace->new($0);
+ok(defined $trace, "Parallel::Trace constructor succeeded");
+is($trace->store_this_step(), 2,
+    "Step stored; has previously been tested");
 
 my $pkg  = q{init::manifest};
 my $args = process_options(
@@ -26,10 +32,11 @@ my $args = process_options(
 );
 
 my $conf = Parrot::Configure->new;
+$conf->refresh($trace->get_previous_state());
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
-my $task        = $conf->steps->[0];
+my $task        = $conf->steps->[-1];
 my $step_name   = $task->step;
 
 my $step = $step_name->new();
