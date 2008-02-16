@@ -52,7 +52,7 @@ use Parrot::Configure::Options qw( process_options );
 
 our $sto = q{.configure_parallel.sto};
 
-=head1 PUBLIC METHODS
+=head1 METHODS
 
 =head2 C<new()>
 
@@ -318,13 +318,10 @@ B<Comment:>
 sub update_state {
     my $self = shift;
     my $argsref = shift;
-#    if (! defined $argsref->{state}) {
-#        $argsref->{state} = [ q{} ];
-#    }
     if (! defined $argsref->{state}->[0]) {
         $argsref->{state}->[0] = [];
     }
-    push @{ $argsref->{state}->[0] }, $argsref->{step_name};
+    push @{ $argsref->{state}->[0] }, $self->get_step_name();
 
     push @{ $argsref->{state} }, $argsref->{conf};
     {
@@ -385,7 +382,6 @@ sub store_this_step_pure {
             {
                 state       => $state,
                 conf        => $conf,
-                step_name   => $step_name,
             }
         );
     } else {
