@@ -10,15 +10,7 @@ use Carp qw(carp);
 use Storable qw(nstore retrieve);
 use Parrot::Configure::Data;
 use base qw( Parrot::Configure::Base );
-
-use Class::Struct;
-
-struct(
-    'Parrot::Configure::Task::Parallel' => {
-        step   => '$',
-        object => 'Parrot::Configure::Step',
-    },
-);
+use base qw(Parrot::Configure::Compiler);
 
 my $singleton;
 

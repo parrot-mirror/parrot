@@ -4,6 +4,14 @@ package Parrot::Configure::Base;
 use strict;
 use Carp;
 use Storable qw(nstore retrieve);
+use Class::Struct;
+
+struct(
+    'Parrot::Configure::Task' => {
+        step   => '$',
+        object => 'Parrot::Configure::Step',
+    },
+);
 
 =head1 NAME
 
