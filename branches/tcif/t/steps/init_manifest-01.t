@@ -13,11 +13,6 @@ use_ok('config::init::manifest');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 
-=for hints_for_testing See if you can get the program to 'ack' when it
-thinks there are files missing from those listed in the MANIFEST.
-
-=cut
-
 my $pkg  = q{init::manifest};
 my $args = process_options(
     {
