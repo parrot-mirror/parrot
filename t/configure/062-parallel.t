@@ -31,8 +31,8 @@ my $cwd = cwd();
             't/steps/init_defaults-01.t'
     );
     ok(defined $trace, "Constructor returned defined value");
-    is($trace->store_this_step_pure(), 1,
-        "Got expected return value from store_this_step_pure()");
+    is($trace->store_this_step(), 1,
+        "Got expected return value from store_this_step()");
 
     my $sto = $trace->get_storable_file();
     ok( -e $sto,
@@ -41,8 +41,8 @@ my $cwd = cwd();
             't/steps/init_defaults-02.t'
     );
     ok(defined $trace, "Constructor returned defined value");
-    is($trace->store_this_step_pure(), 2,
-        "Got expected return value from store_this_step_pure()");
+    is($trace->store_this_step(), 2,
+        "Got expected return value from store_this_step()");
 
     ok( (chdir $cwd), "Able to change back to starting directory");
 }
