@@ -16,14 +16,21 @@ use Parrot::Configure::Parallel::Trace;
 #use Data::Dumper;
 
 my $trace;
+
 eval { $trace = Parrot::Configure::Parallel::Trace->new(); };
 like($@, qr/^Need to provide name of test script/,
     "Constructor correctly failed due to lack of argument");
 
+my $base = q{fake_alpha-01.t};
+eval { $trace =
+    Parrot::Configure::Parallel::Trace->new(qq{t/pseudo/$base}); };
+like($@, qr/^Cannot parse test file name $base/,
+    "Constructor correctly failed due to argument not related to config step class");
+
 @Parrot::Configure::Step::List::steps = qw(
     init::alpha
-    init::beta
-    init::gamma
+    auto::beta
+    inter::gamma
 );
 $trace =
     Parrot::Configure::Parallel::Trace->new('t/pseudo/init_alpha-01.t');
@@ -38,14 +45,14 @@ is($trace->get_step_position(), 1,
 my $stepsref = $trace->get_all_step_positions();
 is($stepsref->{'init::alpha'}, 1,
     "Got expected step class position");
-is($stepsref->{'init::beta'}, 2,
+is($stepsref->{'auto::beta'}, 2,
     "Got expected step class position");
-is($stepsref->{'init::gamma'}, 3,
+is($stepsref->{'inter::gamma'}, 3,
     "Got expected step class position");
 
 $Parrot::Configure::Parallel::Trace::sto = q{.nonexistent.sto};
 $trace =
-    Parrot::Configure::Parallel::Trace->new('t/pseudo/init_beta-01.t');
+    Parrot::Configure::Parallel::Trace->new('t/pseudo/auto_beta-01.t');
 ok(defined $trace, "New constructor returned defined value");
 my $stateref = $trace->retrieve_state();
 is(ref($stateref), 'ARRAY',

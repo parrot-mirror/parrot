@@ -43,7 +43,7 @@ use Data::Dumper;
 local $Data::Dumper::Indent = 1;
 use File::Basename;
 use Storable qw( nstore retrieve );
-use lib qw( lib );
+use lib qw( lib config );
 use Parrot::Configure::Step::List ();
 use Parrot::Configure::Parallel;
 use Parrot::Configure::Options qw( process_options );
@@ -339,7 +339,7 @@ sub store_this_step_pure {
         mode => q{configure},
     } );
 
-    my $conf = Parrot::Configure::Parallel->new;
+    my $conf = Parrot::Configure::Parallel->new();
     $conf->refresh($self->get_previous_state($state));
     $conf->add_steps($pkg);
     $conf->options->set( %{$args} );
