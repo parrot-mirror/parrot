@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2008, The Perl Foundation.
 # $Id$
-# 062-parallel.t
+# 063-parallel.t
 
 use strict;
 use warnings;
@@ -14,6 +14,7 @@ use lib qw( lib );
 use IO::CaptureOutput qw | capture |;
 use Parrot::Configure::Parallel::Trace;
 use config::init::defaults;
+use config::init::install;
 
 my $trace;
 
@@ -38,10 +39,10 @@ my $cwd = cwd();
     ok( -e $sto,
         "Parallel configuration file stored on disk");
     $trace = Parrot::Configure::Parallel::Trace->new(
-            't/steps/init_defaults-02.t'
+            't/steps/init_install-01.t'
     );
     ok(defined $trace, "Constructor returned defined value");
-    is($trace->store_this_step_pure(), 2,
+    is($trace->store_this_step_pure(), 1,
         "Got expected return value from store_this_step_pure()");
 
     ok( (chdir $cwd), "Able to change back to starting directory");
@@ -53,11 +54,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-062-parallel.t - Tests for Parrot::Configure::Parallel::Trace
+063-parallel.t - Tests for Parrot::Configure::Parallel::Trace
 
 =head1 SYNOPSIS
 
-    % prove t/configure/062-parallel.t
+    % prove t/configure/063-parallel.t
 
 =head1 DESCRIPTION
 
