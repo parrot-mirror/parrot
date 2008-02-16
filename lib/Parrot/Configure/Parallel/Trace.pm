@@ -8,6 +8,8 @@ Parrot::Configure::Parallel::Trace - Manipulate a Parrot::Configure::Parallel ob
 
 =head1 SYNOPSIS
 
+    use Parrot::Configure::Parallel::Trace;
+
     $trace =
         Parrot::Configure::Parallel::Trace->new('current_test_script');
 
@@ -15,20 +17,20 @@ Parrot::Configure::Parallel::Trace - Manipulate a Parrot::Configure::Parallel ob
 
     $step_position = $trace->get_step_position();
 
-    $stepsref = $trace->get_all_step_positions()
+    $stepsref = $trace->get_all_step_positions();
 
     $state = $trace->retrieve_state();
 
     $trace->dump_state();
 
-    $trace->get_previous_state($step_name);
+    $trace->get_previous_state();
 
     $trace->update_state( {
         state       => $state,
         conf        => $conf,
     } );
 
-    $trace->store_this_step_pure($step_name);
+    $trace->store_this_step_pure();
 
 Used only in configuration step tests found in F<t/steps/>.
 
@@ -42,7 +44,7 @@ local $Data::Dumper::Indent = 1;
 use File::Basename;
 use Storable qw( nstore retrieve );
 use lib qw( lib );
-use Parrot::Configure::Step::List qw( get_steps_list );
+use Parrot::Configure::Step::List ();
 use Parrot::Configure::Parallel;
 use Parrot::Configure::Options qw( process_options );
 
@@ -103,7 +105,7 @@ sub new {
     my %args;
     $args{sto} = $sto;
 
-    my @steps_list = get_steps_list();
+    my @steps_list = Parrot::Configure::Step::List::get_steps_list();
     my %steps_position;
     for (my $i=0; $i<=$#steps_list; $i++) {
         $steps_position{$steps_list[$i]} = $i+1;

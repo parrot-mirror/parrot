@@ -1,60 +1,76 @@
 #! perl
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2008, The Perl Foundation.
 # $Id$
-# 060-silent.t
+# 061-parallel.t
 
 use strict;
 use warnings;
 
-use Test::More tests => 11;
+use Test::More qw(no_plan); # tests => 11;
 use Carp;
-use lib qw( lib t/configure/testlib );
-use Parrot::Configure;
-use Parrot::Configure::Options qw( process_options );
+use lib qw( lib );
+#use Parrot::Configure;
+#use Parrot::Configure::Options qw( process_options );
 use IO::CaptureOutput qw | capture |;
+use Parrot::Configure::Parallel::Trace;
+#use Data::Dumper;
 
-$| = 1;
-is( $|, 1, "output autoflush is set" );
+my $trace;
+eval { $trace = Parrot::Configure::Parallel::Trace->new(); };
+like($@, qr/^Need to provide name of test script/,
+    "Constructor correctly failed due to lack of argument");
 
-my $args = process_options(
-    {
-        argv => [ q{--silent} ],
-        mode => q{configure},
-    }
+@Parrot::Configure::Step::List::steps = qw(
+    init::alpha
+    init::beta
+    init::gamma
 );
-ok( defined $args, "process_options returned successfully" );
-my %args = %$args;
+$trace =
+    Parrot::Configure::Parallel::Trace->new('t/pseudo/init_alpha-01.t');
+ok(defined $trace, "Constructor returned defined value");
 
-my $conf = Parrot::Configure->new;
-ok( defined $conf, "Parrot::Configure->new() returned okay" );
+is($trace->get_step_name(), 'init::alpha',
+    "Got expected step class name");
 
-my $step        = q{init::lambda};
-my $description = 'Determining if your computer does lambda';
+is($trace->get_step_position(), 1,
+    "Got expected step class position");
 
-$conf->add_steps($step);
-my @confsteps = @{ $conf->steps };
-isnt( scalar @confsteps, 0,
-    "Parrot::Configure object 'steps' key holds non-empty array reference" );
-is( scalar @confsteps, 1, "Parrot::Configure object 'steps' key holds ref to 1-element array" );
-my $nontaskcount = 0;
-foreach my $k (@confsteps) {
-    $nontaskcount++ unless $k->isa("Parrot::Configure::Task");
-}
-is( $nontaskcount, 0, "Each step is a Parrot::Configure::Task object" );
-is( $confsteps[0]->step, $step, "'step' element of Parrot::Configure::Task struct identified" );
-ok( !ref( $confsteps[0]->object ),
-    "'object' element of Parrot::Configure::Task struct is not yet a ref" );
+my $stepsref = $trace->get_all_step_positions();
+is($stepsref->{'init::alpha'}, 1,
+    "Got expected step class position");
+is($stepsref->{'init::beta'}, 2,
+    "Got expected step class position");
+is($stepsref->{'init::gamma'}, 3,
+    "Got expected step class position");
 
-$conf->options->set(%args);
-is( $conf->options->{c}->{debugging},
-    1, "command-line option '--debugging' has been stored in object" );
+$Parrot::Configure::Parallel::Trace::sto = q{.nonexistent.sto};
+$trace =
+    Parrot::Configure::Parallel::Trace->new('t/pseudo/init_beta-01.t');
+ok(defined $trace, "New constructor returned defined value");
+my $stateref = $trace->retrieve_state();
+is(ref($stateref), 'ARRAY',
+    "retrieve_state() returned array ref");
+is(scalar( @{$stateref} ), 0,
+    "No Storable object means retrieve_state() returns ref to empty array");
 
-{
-    my $rv;
-    my ($stdout);
-    capture ( sub { eval { $rv = $conf->runsteps; } }, \$stdout);
-    ok(! $stdout, "silent option worked");
-}
+#use Data::Dumper;$Data::Dumper::Indent=1;
+#print STDERR Dumper $stateref;
+
+my ($stdout, $stderr);
+capture(
+    sub { $trace->dump_state(); },
+    \$stdout,
+);
+like($stdout, qr/^\$VAR1.*\[\]/, "Got expected Dumper output");
+
+#$trace->get_previous_state($step_name);
+#
+#$trace->update_state( {
+#    state       => $state,
+#    conf        => $conf,
+#} );
+#
+#$trace->store_this_step_pure($step_name);
 
 pass("Completed all tests in $0");
 
@@ -62,18 +78,18 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-060-silent.t - test what happens when the C<--silent> option is set
+061-parallel.t - Tests for Parrot::Configure::Parallel::Trace
 
 =head1 SYNOPSIS
 
-    % prove t/configure/060-silent.t
+    % prove t/configure/061-parallel.t
 
 =head1 DESCRIPTION
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file examine what happens when your configuration step
-succeeds but the C<--silent> option has been set.
+The tests in this file examine what happens when you run
+Parrot::Configure::Parallel::Trace.
 
 =head1 AUTHOR
 
@@ -81,7 +97,8 @@ James E Keenan
 
 =head1 SEE ALSO
 
-Parrot::Configure, F<Configure.pl>.
+Parrot::Configure::Parallel, Parrot::Configure::Parallel::Trace,
+F<Configure.pl>.
 
 =cut
 
