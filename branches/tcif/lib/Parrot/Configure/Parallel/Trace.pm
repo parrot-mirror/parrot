@@ -19,6 +19,8 @@ Parrot::Configure::Parallel::Trace - Manipulate a Parrot::Configure::Parallel ob
 
     $stepsref = $trace->get_all_step_positions();
 
+    $sto = $trace->get_storable_file();
+
     $state = $trace->retrieve_state();
 
     $trace->dump_state();
@@ -190,6 +192,28 @@ sub get_all_step_positions {
     return $self->{position};
 }
 
+=head2 C<get_storable_file()>
+
+B<Purpose:>  Provide the name of the Storable file on disk used to
+record the results of parallel configuration.
+
+B<Arguments:>  None.
+
+    $sto = $trace->get_storable_file();
+
+B<Return Value:> String, which is a filename.
+
+B<Comment:>  The Storable file is not guaranteed to actually exist.  For
+instance, it should not exist prior to beginning configuration.  All
+that this method does is return the name designated for this file.
+
+=cut 
+
+sub get_storable_file {
+    my $self = shift;
+    return $self->{sto};
+}
+
 =head2 C<retrieve_state()>
 
 B<Purpose:>  Retrieves from the Storable file on disk a list of the
@@ -294,6 +318,14 @@ B<Comment:>
 sub update_state {
     my $self = shift;
     my $argsref = shift;
+#    if (! defined $argsref->{state}) {
+#        $argsref->{state} = [ q{} ];
+#    }
+    if (! defined $argsref->{state}->[0]) {
+        $argsref->{state}->[0] = [];
+    }
+    push @{ $argsref->{state}->[0] }, $argsref->{step_name};
+
     push @{ $argsref->{state} }, $argsref->{conf};
     {
         local $Storable::Deparse = 1;
@@ -353,6 +385,7 @@ sub store_this_step_pure {
             {
                 state       => $state,
                 conf        => $conf,
+                step_name   => $step_name,
             }
         );
     } else {

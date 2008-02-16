@@ -11,13 +11,10 @@ use Carp;
 use Cwd;
 use File::Temp qw| tempdir |;
 use lib qw( lib );
-#use Parrot::Configure;
-#use Parrot::Configure::Options qw( process_options );
 use IO::CaptureOutput qw | capture |;
 use Parrot::Configure::Parallel::Trace;
 use config::init::defaults;
 use config::init::install;
-#use Data::Dumper;
 
 my $trace;
 
@@ -36,6 +33,16 @@ my $cwd = cwd();
     );
     ok(defined $trace, "Constructor returned defined value");
     is($trace->store_this_step_pure(), 1,
+        "Got expected return value from store_this_step_pure()");
+
+    my $sto = $trace->get_storable_file();
+    ok( -e $sto,
+        "Parallel configuration file stored on disk");
+    $trace = Parrot::Configure::Parallel::Trace->new(
+            't/steps/init_defaults-02.t'
+    );
+    ok(defined $trace, "Constructor returned defined value");
+    is($trace->store_this_step_pure(), 2,
         "Got expected return value from store_this_step_pure()");
 
     ok( (chdir $cwd), "Able to change back to starting directory");

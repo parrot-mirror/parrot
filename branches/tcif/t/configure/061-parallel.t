@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 13;
+use Test::More tests => 14;
 use Carp;
 use lib qw( lib );
 use IO::CaptureOutput qw | capture |;
@@ -47,10 +47,13 @@ is($stepsref->{'auto::beta'}, 2,
 is($stepsref->{'inter::gamma'}, 3,
     "Got expected step class position");
 
-$Parrot::Configure::Parallel::Trace::sto = q{.nonexistent.sto};
+my $sto = q{.nonexistent.sto};
+$Parrot::Configure::Parallel::Trace::sto = $sto;
 $trace =
     Parrot::Configure::Parallel::Trace->new('t/pseudo/auto_beta-01.t');
 ok(defined $trace, "New constructor returned defined value");
+is($trace->get_storable_file(), $sto,
+    "Got expected name for storable file");
 my $stateref = $trace->retrieve_state();
 is(ref($stateref), 'ARRAY',
     "retrieve_state() returned array ref");
