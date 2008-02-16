@@ -6,14 +6,11 @@
 use strict;
 use warnings;
 
-use Test::More qw(no_plan); # tests => 11;
+use Test::More tests => 13;
 use Carp;
 use lib qw( lib );
-#use Parrot::Configure;
-#use Parrot::Configure::Options qw( process_options );
 use IO::CaptureOutput qw | capture |;
 use Parrot::Configure::Parallel::Trace;
-#use Data::Dumper;
 
 my $trace;
 
@@ -60,24 +57,12 @@ is(ref($stateref), 'ARRAY',
 is(scalar( @{$stateref} ), 0,
     "No Storable object means retrieve_state() returns ref to empty array");
 
-#use Data::Dumper;$Data::Dumper::Indent=1;
-#print STDERR Dumper $stateref;
-
 my ($stdout, $stderr);
 capture(
     sub { $trace->dump_state(); },
     \$stdout,
 );
 like($stdout, qr/^\$VAR1.*\[\]/, "Got expected Dumper output");
-
-#$trace->get_previous_state($step_name);
-#
-#$trace->update_state( {
-#    state       => $state,
-#    conf        => $conf,
-#} );
-#
-#$trace->store_this_step_pure($step_name);
 
 pass("Completed all tests in $0");
 
