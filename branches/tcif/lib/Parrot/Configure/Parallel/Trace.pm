@@ -32,7 +32,7 @@ Parrot::Configure::Parallel::Trace - Manipulate a Parrot::Configure::Parallel ob
         conf        => $conf,
     } );
 
-    $trace->store_this_step_pure();
+    $trace->store_this_step();
 
 Used only in configuration step tests found in F<t/steps/>.
 
@@ -331,7 +331,7 @@ sub update_state {
     return 1;
 }
 
-=head2 C<store_this_step_pure()>
+=head2 C<store_this_step()>
 
 B<Purpose:>  As needed:  Retrieves the configuration state from the
 Storable file on disk.  Constructs a Parrot::Configure::Parallel object,
@@ -356,7 +356,7 @@ B<Comment:>
 
 =cut 
 
-sub store_this_step_pure {
+sub store_this_step {
     my $self = shift;
     my $pkg = $self->{step};
     my $step_position = $self->get_step_position($pkg);
