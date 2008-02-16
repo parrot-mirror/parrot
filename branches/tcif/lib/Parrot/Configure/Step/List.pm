@@ -7,7 +7,7 @@ use base qw( Exporter );
 our @EXPORT_OK = qw( get_steps_list );
 
 # EDIT HERE TO ADD NEW TESTS
-my @steps = (
+our @steps = (
     'init::manifest',
     'init::defaults',
     'init::install',
