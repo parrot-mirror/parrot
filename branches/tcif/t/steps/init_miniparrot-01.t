@@ -5,15 +5,20 @@
 
 use strict;
 use warnings;
-use Test::More tests => 22;
+use Test::More tests => 20;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::init::miniparrot');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Parallel::Trace;
 
+my $trace = Parrot::Configure::Parallel::Trace->new($0);
+ok(defined $trace, "Parallel::Trace constructor succeeded");
+is($trace->store_this_step(), 1, "Step stored");
+
+my $pkg  = q{init::miniparrot};
 my $args = process_options(
     {
         argv => [q{--miniparrot}],
@@ -22,8 +27,7 @@ my $args = process_options(
 );
 
 my $conf = Parrot::Configure->new;
-
-test_step_thru_runstep( $conf, q{init::defaults}, $args );
+$conf->refresh($trace->get_previous_state());
 
 is( $conf->data->get('miniparrot'),  undef, "miniparrot is not yet enabled" );
 is( $conf->data->get('jitarchname'), undef, "jitarchname undef as expected" );
@@ -31,7 +35,18 @@ is( $conf->data->get('jitcpuarch'),  undef, "jitcpuarch undef as expected" );
 is( $conf->data->get('jitcpu'),      undef, "jitcpu undef as expected" );
 is( $conf->data->get('jitosname'),   undef, "jitosname undef as expected" );
 
-test_step_thru_runstep( $conf, q{init::miniparrot}, $args );
+$conf->add_steps($pkg);
+$conf->options->set( %{$args} );
+
+my $task        = $conf->steps->[-1];
+my $step_name   = $task->step;
+
+my $step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+ok( $step->description(), "$step_name has description" );
+my $ret = $step->runstep($conf);
+ok( defined $ret, "$step_name runstep() returned defined value" );
 
 ok( $conf->data->get('miniparrot'), "miniparrot is enabled" );
 is( $conf->data->get('jitarchname'), 'nojit', "jitarchname as expected" );
