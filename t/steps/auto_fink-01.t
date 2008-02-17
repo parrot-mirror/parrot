@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 12;
+use Test::More tests =>  8;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::auto::fink');
@@ -18,7 +18,7 @@ ok(defined $trace, "Parallel::Trace constructor succeeded");
 is($trace->store_this_step(), 1, "Step stored");
 
 SKIP: {
-    skip 'Fink is Darwin only', 8 unless $^O =~ /darwin/;
+    skip 'Fink is Darwin only', 4 unless $^O =~ /darwin/;
     my $args = process_options( {
         argv            => [],
         mode            => q{configure},
