@@ -12,7 +12,6 @@ BEGIN {
 }
 use Carp;
 use Config;
-use Storable qw( nstore retrieve );
 use lib qw(lib);
 use Parrot::Configure::Parallel;
 use Parrot::Configure::Step::List qw( get_steps_list );
@@ -81,16 +80,6 @@ sub new {
     if (-e $sto) {
         unlink $sto or die "Unable to unlink $sto: $!";
     }
-    # Next, we construct a Parrot::Configure::Parallel object.
-    my $conf = Parrot::Configure::Parallel->new;
-    $conf->options->set( %{$argsref} );
-    my @state;
-    push @state, $conf;
-    {
-        local $Storable::Deparse = 1;
-        nstore( \@state, $sto );
-    }
-
 
     my ( $run_configure_tests, $run_build_tests );
     if ( defined $argsref->{test} ) {
