@@ -7,16 +7,20 @@ use strict;
 use warnings;
 use Test::More;
 plan( skip_all => 'Fink is Darwin only' ) unless $^O =~ /darwin/;
-plan( tests => 12 );
-# plan( 'no_plan' );
+#plan( tests => 12 );
+plan( 'no_plan' );
 use Carp;
 use File::Temp;
 use lib qw( lib t/configure/testlib );
-use_ok('config::init::defaults');
 use_ok('config::auto::fink');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Parallel::Trace;
+
+my $trace = Parrot::Configure::Parallel::Trace->new($0);
+ok(defined $trace, "Parallel::Trace constructor succeeded");
+is($trace->store_this_step(), 2,
+    "Step stored; has previously been tested");
 
 my $args = process_options( {
     argv            => [],
@@ -24,8 +28,7 @@ my $args = process_options( {
 } );
 
 my $conf = Parrot::Configure->new();
-
-test_step_thru_runstep($conf, q{init::defaults}, $args);
+$conf->refresh($trace->get_previous_state());
 
 my ($task, $step_name, $step, $ret);
 my $pkg = q{auto::fink};
