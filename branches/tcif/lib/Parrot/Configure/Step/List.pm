@@ -61,14 +61,14 @@ our @steps = (
     'auto::m4',
     'auto::ctags',
     'auto::revision',
-#    'gen::icu',
-#    'gen::config_h',
-#    'gen::core_pmcs',
-#    'gen::parrot_include',
-#    'gen::languages',
-#    'gen::makefiles',
-#    'gen::platform',
-#    'gen::config_pm',
+    'gen::icu',
+    'gen::config_h',
+    'gen::core_pmcs',
+    'gen::parrot_include',
+    'gen::languages',
+    'gen::makefiles',
+    'gen::platform',
+    'gen::config_pm',
 );
 
 sub get_steps_list { return @steps; }
