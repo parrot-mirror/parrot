@@ -50,6 +50,14 @@ method statement_block($/, $key) {
         unless $?BLOCK.symbol('$/') {
             $init.push( PAST::Var.new( :name('$/'), :isdecl(1) ) );
             $?BLOCK.symbol( '$/', :scope('lexical') );
+            $init.push( PAST::Op.new(
+                :inline("    %r = getinterp\n" ~
+                        "    %r = %r['lexpad';1]\n" ~
+                        "    if null %r goto no_match_to_copy\n" ~
+                        "    %r = %r['$/']\n" ~
+                        "    store_lex '$/', %r\n" ~
+                        "  no_match_to_copy:\n")
+            ));
         }
         unless $?BLOCK.symbol('$!') {
             $init.push( PAST::Var.new( :name('$!'), :isdecl(1) ) );
@@ -453,27 +461,46 @@ method methodop($/, $key) {
 }
 
 method postcircumfix($/, $key) {
-    my $semilist := $( $<semilist> );
     my $past;
-    if ($key eq '[ ]') {
+    if $key eq '[ ]' {
+        my $semilist := $( $<semilist> );
         $past := PAST::Var.new( $semilist[0],
                                 :scope('keyed'),
                                 :vivibase('List'),
                                 :viviself('Undef'),
                                 :node( $/ )
                               );
-    } elsif ($key eq '( )') {
+    }
+    elsif $key eq '( )' {
+        my $semilist := $( $<semilist> );
         $past := PAST::Op.new( :node($/), :pasttype('call') );
         for @($semilist) {
             $past.push( $_ );
         }
-    } else {
+    }
+    elsif $key eq '{ }' {
+        my $semilist := $( $<semilist> );
         $past := PAST::Var.new( $semilist[0],
                                 :scope('keyed'),
                                 :vivibase('Hash'),
                                 :viviself('Undef'),
                                 :node( $/ )
                               );
+    }
+    elsif $key eq '< >' {
+        # XXX Need to split this for the list case rather than the
+        # key case.
+        $past := PAST::Var.new(
+            PAST::Val.new( :value(~$<anglewords>) ),
+            :scope('keyed'),
+            :vivibase('Hash'),
+            :viviself('Undef'),
+            :node( $/ )
+        );
+    }
+    else
+    {
+        $/.panic("postcircumfix " ~ $key ~ " not yet implemented");
     }
     make $past;
 }
@@ -483,6 +510,17 @@ method noun($/, $key) {
     my $past;
     if $key eq 'self' {
         $past := PAST::Stmts.new( PAST::Op.new( :inline('%r = self'), :node( $/ ) ) );
+    }
+    elsif $key eq 'undef' {
+        $past := PAST::Op.new(
+            :pasttype('callmethod'),
+            :name('new'),
+            :node($/),
+            PAST::Var.new(
+                :name('Failure'),
+                :scope('package')
+            )
+        );
     }
     else {
         $past := $( $/{$key} );
@@ -555,7 +593,7 @@ method package_declarator($/, $key) {
                         PAST::Val.new( :value(~$<name>) )
                     )
                 ));
-                
+
                 # Put current role, if any, on @?ROLE list so we can handle
                 # nested roles.
                 @?ROLE.unshift( $?ROLE );
@@ -619,7 +657,7 @@ method package_declarator($/, $key) {
         # "on load".
         $past.namespace($<name><ident>);
         $past.blocktype('declaration');
-        $past.pirflags(':init :load');    
+        $past.pirflags(':init :load');
 
         if $<sym> eq 'class' {
             # Make proto-object.
@@ -669,7 +707,7 @@ method package_declarator($/, $key) {
 
         # Restore outer package.
         $?PACKAGE := @?PACKAGE.shift();
-        
+
         make $past;
     }
 }
@@ -802,12 +840,35 @@ method variable($/, $key) {
     if $key eq 'special_variable' {
         $past := $( $<special_variable> );
     }
+    elsif $key eq '$0' {
+        $past := PAST::Var.new(
+            :scope('keyed'),
+            :node($/),
+            :viviself('Undef'),
+            PAST::Var.new(
+                :scope('lexical'),
+                :name('$/')
+            ),
+            PAST::Val.new(
+                :value(~$<matchidx>),
+                :returns('Integer')
+            )
+        );
+    }
+    elsif $key eq '$<>' {
+        $past := $( $<postcircumfix> );
+        $past.unshift(PAST::Var.new(
+            :scope('lexical'),
+            :name('$/'),
+            :viviself('Undef')
+        ));
+    }
     else {
         # Set how it vivifies.
         my $viviself := 'Undef';
         if $<sigil> eq '@' { $viviself := 'List'; }
         if $<sigil> eq '%' { $viviself := 'Hash'; }
-        
+
         # Handle naming.
         my @ident := $<name><ident>;
         my $name;
@@ -839,7 +900,7 @@ method variable($/, $key) {
                 }
             }
         }
-        
+
         $past := PAST::Var.new( :name( $sigil ~ $name ),
                                 :viviself($viviself),
                                 :node($/)

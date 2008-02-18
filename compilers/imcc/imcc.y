@@ -684,9 +684,7 @@ hll_def: HLL STRINGC COMMA STRINGC
 constdef:
      CONST { is_def = 1; } type IDENTIFIER '=' const
                 {
-                    SymReg *ignored;
-                    ignored = mk_const_ident(interp, $4, $3, $6, 1);
-                    UNUSED(ignored);
+                    mk_const_ident(interp, $4, $3, $6, 1);
                     mem_sys_free($4);
                     is_def = 0;
                 }
@@ -1186,9 +1184,9 @@ id_list :
 id_list_id :
      IDENTIFIER opt_unique_reg
      {
-         IdList* l = (IdList*)malloc(sizeof (IdList));
-         l->id         = $1;
-         l->unique_reg = $2;
+         IdList* const l = mem_allocate_n_zeroed_typed(1, IdList);
+         l->id           = $1;
+         l->unique_reg   = $2;
          $$ = l;
      }
    ;
@@ -1209,12 +1207,10 @@ labeled_inst:
          IdList *l = $4;
          while (l) {
              IdList *l1;
-             SymReg *ignored;
              if (l->unique_reg)
-                 ignored = mk_ident_ur(interp, l->id, $3);
+                 mk_ident_ur(interp, l->id, $3);
              else
-                 ignored = mk_ident(interp, l->id, $3);
-             UNUSED(ignored);
+                 mk_ident(interp, l->id, $3);
              l1 = l;
              l  = l->next;
              mem_sys_free(l1->id);
@@ -1228,9 +1224,7 @@ labeled_inst:
                     }
    | CONST { is_def=1; } type IDENTIFIER '=' const
                     {
-                        SymReg *ignored;
-                        ignored = mk_const_ident(interp, $4, $3, $6, 0);
-                        UNUSED(ignored);
+                        mk_const_ident(interp, $4, $3, $6, 0);
                         is_def=0;
                         mem_sys_free($4);
                     }
@@ -1238,9 +1232,7 @@ labeled_inst:
    | pmc_const
    | GLOBAL_CONST { is_def=1; } type IDENTIFIER '=' const
                     {
-                        SymReg *ignored;
-                        ignored = mk_const_ident(interp, $4, $3, $6, 1);
-                        UNUSED(ignored);
+                        mk_const_ident(interp, $4, $3, $6, 1);
                         is_def=0;
                         mem_sys_free($4);
                     }
@@ -1677,7 +1669,7 @@ int yyerror(void *yyscanner, PARROT_INTERP, const char *s)
      * token was already read), yyget_text will return a pointer
      * outside the bison buffer, and thus, not "accessible" by
      * us. This means it may segfault. */
-    char *chr = yyget_text((yyscan_t)yyscanner);
+    const char * const chr = yyget_text((yyscan_t)yyscanner);
 
     /* IMCC_fataly(interp, E_SyntaxError, s); */
     /* --- This was called before, not sure if I should call some
