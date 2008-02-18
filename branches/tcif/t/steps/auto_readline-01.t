@@ -5,17 +5,20 @@
 
 use strict;
 use warnings;
-use Test::More tests => 46;
+use Test::More tests => 43;
 use Carp;
 use Cwd;
 use File::Spec;
 use File::Temp qw( tempdir );
 use lib qw( lib );
-use_ok('config::init::defaults');
 use_ok('config::auto::readline');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Parallel::Trace;
+
+my $trace = Parrot::Configure::Parallel::Trace->new($0);
+ok(defined $trace, "Parallel::Trace constructor succeeded");
+is($trace->store_this_step(), 1, "Step stored");
 
 my $args = process_options(
     {
@@ -25,11 +28,9 @@ my $args = process_options(
 );
 
 my $conf = Parrot::Configure->new;
-
-test_step_thru_runstep( $conf, q{init::defaults}, $args );
+$conf->refresh($trace->get_previous_state());
 
 my $pkg = q{auto::readline};
-
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 
