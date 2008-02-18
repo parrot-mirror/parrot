@@ -416,12 +416,19 @@ token postcircumfix {
     | '(' <semilist> ')' {*}                     #= ( )
     | '[' <semilist> ']' {*}                     #= [ ]
     | '{' <semilist> '}' {*}                     #= { }
+    | '<' <anglewords> '>' {*}                   #= < >
 }
 
 
-# XXX Note that 'self' in here should be a term, and that a term can be a noun
-# too in STD.pm. However, at the moment that seems to lead us to infinite
-# recursion.
+# This needs to take a parameter eventually, but we can't do that yet.
+token anglewords {
+    <.ws> [ <!before '>'> .]*
+}
+
+
+# XXX Note that 'self' and 'undef' in here should be a term, and that a term
+# can be a noun too in STD.pm. However, at the moment that seems to lead us
+# to infinite recursion.
 token noun {
     | <package_declarator> {*}                   #= package_declarator
     | <scope_declarator> {*}                     #= scope_declarator
@@ -434,6 +441,7 @@ token noun {
     | <statement_prefix> {*}                     #= statement_prefix
     | <regex_declarator> {*}                     #= regex_declarator
     | 'self' {*}                                 #= self
+    | 'undef' {*}                                #= undef
 }
 
 
@@ -487,6 +495,8 @@ token circumfix {
 token variable {
     | <special_variable> {*}                     #= special_variable
     | <sigil> <twigil>? <name> {*}               #= $var
+    | <sigil> $<matchidx>=[\d+] {*}              #= $0
+    | <sigil> <?before '<' > <postcircumfix> {*} #= $<>
 }
 
 token sigil { '$' | '@' | '%' | '&' }
@@ -582,7 +592,7 @@ token name {
 }
 
 token subcall {
-    <ident> '(' <semilist> ')'
+    <ident> '.'? '(' <semilist> ')'
     {*}
 }
 

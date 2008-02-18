@@ -121,10 +121,15 @@ to the Perl 6 compiler.
 
 =back
 
+=head2 See Also
+
+L<http://perlcabal.org/syn/S26.html>,
+L<http://search.cpan.org/~dconway/Perl6-Perldoc-v0.0.5/>
+
 =cut
 
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:
