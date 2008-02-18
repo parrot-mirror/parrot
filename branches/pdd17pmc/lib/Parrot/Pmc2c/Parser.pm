@@ -76,7 +76,7 @@ sub parse_pmc {
     my $lineno = count_newlines($preamble) + $chewed_lines + 1;
     my $class_init;
 
-    $lineno                = find_attrs(  $pmc, $pmcbody, $lineno, $filename);
+    ($lineno, $pmcbody)    = find_attrs(  $pmc, $pmcbody, $lineno, $filename);
     ($lineno, $class_init) = find_methods($pmc, $pmcbody, $lineno, $filename);
 
     $pmc->postamble( Parrot::Pmc2c::Emitter->text( $post, $filename, $lineno ) );
@@ -123,14 +123,13 @@ sub find_attrs {
 	(/\*.*?\*/)?
     }sx;
 
-    while ( $pmcbody =~ /ATTR\s+\w+.*;/ ) {
+    while ($pmcbody =~ s/($attr_re)//) {
         my ($type, $name, @modifiers, $comment);
-        if ($pmcbody =~ s/($attr_re)//) {
-            $type = $2;
-            $name = $3;
-            @modifiers = split /\s/, $4;
-            $comment = $5;
-        }
+        $type = $2;
+        $name = $3;
+        @modifiers = split /\s/, $4;
+        $comment = $5;
+
         $lineno++;
 
         $pmc->add_attribute(Parrot::Pmc2c::Attribute->new(
@@ -142,7 +141,7 @@ sub find_attrs {
         ));
     }
 
-    return $lineno;
+    return ($lineno, $pmcbody);
 }
 
 sub find_methods {
@@ -159,11 +158,10 @@ sub find_methods {
 
         ((?:PARROT_\w+\s+)+)? # decorators
 
-        # attribute|vtable|method marker
-        (?:(ATTR|VTABLE|(PCC)?METHOD)\s+)?
+        # vtable|method marker
+        (?:(VTABLE|METHOD)\s+)?
 
-        # return type (no return type for PCCMETHOD)
-        ((?:\w+\s*?\**\s*)?\w+) # method name
+        ((?:\w+\s*?\**\s*)?\w+) # method name (includes return type)
         \s*
         \( ([^\(]*) \)          # parameters
         \s*
@@ -172,14 +170,15 @@ sub find_methods {
     }sx;
 
     while ( $pmcbody =~ s/($signature_re)// ) {
-        my ( $decorators, $marker, $pcc, $methodname, $parameters, $attrs ) =
-            ( $2, $3, $4, $5, $6, parse_method_attrs($7) );
+        my ( $decorators, $marker, $methodname, $parameters, $rawattrs ) =
+            ( $2, $3, $4, $5, $6 );
+        my $attrs = parse_method_attrs($rawattrs) if defined $rawattrs;
         $lineno += count_newlines($1);
 
-        my $return_type = '';
+        my $returntype = '';
 
         if ($methodname =~ /(.*\s+\*?)(\w+)/) {
-            ($return_type, $methodname) = ($1, $2);
+            ($returntype, $methodname) = ($1, $2);
         }
 
         ( my $methodblock, $pmcbody ) = extract_balanced($pmcbody);
@@ -196,14 +195,14 @@ sub find_methods {
         $decorators   =~ s/^\s*(.*?)\s*$/$1/s;
         $decorators   = [ split /\s+/ => $decorators ];
 
-        $return_type = 'void' if defined $pcc;
+        $returntype = 'void' if (defined $marker && $marker eq 'METHOD');
 
         my $method = Parrot::Pmc2c::Method->new(
             {
                 name        => $methodname,
                 parent_name => $pmc->name,
                 body        => Parrot::Pmc2c::Emitter->text( $methodblock, $filename, $lineno ),
-                return_type => $return_type,
+                return_type => $returntype,
                 parameters  => $parameters,
                 type        => Parrot::Pmc2c::Method::VTABLE,
                 attrs       => $attrs,
@@ -211,7 +210,7 @@ sub find_methods {
             }
         );
 
-        # PCCMETHOD needs FixedIntegerArray header
+        # METHOD needs FixedIntegerArray header
         if ( $marker and $marker =~ /METHOD/ ) {
             Parrot::Pmc2c::PCCMETHOD::rewrite_pccmethod( $method, $pmc );
             $pmc->set_flag('need_fia_header');
@@ -227,7 +226,7 @@ sub find_methods {
         else {
 
             # Name-mangle NCI methods to avoid conflict with vtable methods.
-            if ( $marker and $marker !~ /ATTR|VTABLE/ ) {
+            if ( $marker and $marker !~ /VTABLE/ ) {
                 $method->type(Parrot::Pmc2c::Method::NON_VTABLE);
                 $method->name("nci_$methodname");
                 $method->symbol($methodname);
