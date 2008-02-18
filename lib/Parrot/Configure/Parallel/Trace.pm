@@ -246,7 +246,7 @@ sub retrieve_state {
 =head2 C<dump_state()>
 
 B<Purpose:>  Dumps the list of configuration states retrieved by
-C<retrieve_state().
+C<retrieve_state()>.
 
 B<Arguments:>  None.
 
