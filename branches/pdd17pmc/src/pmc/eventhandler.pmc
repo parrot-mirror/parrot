@@ -23,6 +23,11 @@ Event.
 
 pmclass EventHandler extends Sub need_ext {
 
+    ATTR STRING *type;          /* the type of the event to handle */
+    ATTR PMC    *code;          /* the code object to execute */
+    ATTR PMC    *interp;        /* the registered interpreter */
+    ATTR INTVAL  priority;      /* the minimum priority threshhold of events */
+
 /*
 
 =item C<void init()>
