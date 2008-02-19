@@ -447,6 +447,21 @@ initialize_parents_pmc(PARROT_INTERP, PMC *object, PMC *all_parents, PMC *init)
 pmclass Class
     need_ext {
 
+    ATTR INTVAL id;                /* The type number of the PMC. [deprecated: See RT #48024] */
+    ATTR STRING *name;          /* The name of the class. */
+    ATTR PMC *_namespace;       /* The namespace it's linked to, if any. */
+    ATTR INTVAL instantiated;      /* Any instantiations since last modification? */
+    ATTR PMC *parents;          /* Immediate parent classes. */
+    ATTR PMC *all_parents;      /* Cached list of ourself and all parents, in MRO order. */
+    ATTR PMC *roles;            /* An array of roles. */
+    ATTR PMC *methods;          /* Hash of method names to methods in this class. */
+    ATTR PMC *vtable_overrides; /* Hash of Parrot v-table methods we override. */
+    ATTR PMC *attrib_metadata;  /* Hash of attributes in this class to hashes of metadata. */
+    ATTR PMC *attrib_index;     /* Lookup table for attributes in this and parents. */
+    ATTR PMC *attrib_cache;     /* Cache of visible attrib names to indexes. */
+    ATTR PMC *vtable_cache;     /* Cache of the vtable used for objects (only STM). */
+    ATTR PMC *resolve_method;   /* List of method names the class provides to resolve
+                                 * conflicts with methods from roles. */
 
 /*
 
