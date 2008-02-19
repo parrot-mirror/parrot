@@ -1,7 +1,0 @@
-use sys;
-
-var pmc foo, bar;
-bar = new PerlUndef;
-foo = "Hello, world!\n";
-sys::print(foo);
-

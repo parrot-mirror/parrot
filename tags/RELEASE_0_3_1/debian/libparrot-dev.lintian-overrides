@@ -1,1 +1,0 @@
-libparrot%SOVERSION%-dev: unusual-interpreter ./usr/bin/parrot-config.imc #!/usr/bin/parrot

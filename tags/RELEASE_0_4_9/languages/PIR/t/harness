@@ -1,3 +1,0 @@
-#! perl
-
-use Parrot::Test::Harness language => 'PIR_PGE';
