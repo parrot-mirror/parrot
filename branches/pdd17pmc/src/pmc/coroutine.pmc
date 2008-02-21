@@ -122,7 +122,7 @@ Swaps the "context".
     VTABLE opcode_t *invoke(void *next) {
         parrot_context_t   *caller_ctx;
         PackFile_ByteCode  *wanted_seg;
-        struct Stack_Chunk *state;
+        Stack_Chunk_t      *state;
         parrot_context_t   *ctx;
         PMC                *ccont;
         Parrot_coro        *co   = PMC_coro(SELF);
