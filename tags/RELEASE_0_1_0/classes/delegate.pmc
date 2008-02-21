@@ -1,0 +1,206 @@
+/*
+Copyright: 2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/delegate.pmc - Delegate PMC
+
+=head1 DESCRIPTION
+
+Delegate each and every function to parrot bytecode.
+
+Almost all methods are auto-generated in lib/Parrot/Pmc2c.pm
+
+=head2 Register Save/Restore Functions
+
+The following bit is a fast register save/restore pair. They currently
+count on the registers in the interpreter structure being in the same
+order as in the C<regsave struct>, and that the registers are at the
+beginning of the interpreter structure.
+
+Yes, it's damned evil, but it's what we need, since we have to preserve
+the registers -- vtable methods can't change them.
+
+Also note that if the vtable method clobbers a register that contains a
+string or PMC not otherwise rooted it could be collected too early.
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
+
+#include "parrot/parrot.h"
+
+static struct regsave {
+    struct IReg int_reg;
+    struct NReg num_reg;
+    struct SReg string_reg;
+    struct PReg pmc_reg;
+} regsave;
+
+/*
+
+=item C<PARROT_INLINE static struct regsave *
+save_regs(Parrot_Interp interp)>
+
+Saves the registers to the C<regsave struct>.
+
+=cut
+
+*/
+
+PARROT_INLINE static struct regsave *
+save_regs(Parrot_Interp interp) {
+    struct regsave *save;
+    save = mem_sys_allocate(sizeof(struct regsave));
+    if (!save) {
+        internal_exception(ALLOCATION_ERROR, "No memory for save struct");
+    }
+    mem_sys_memcopy(save, interp, sizeof(struct regsave));
+    return save;
+}
+
+/*
+
+=item C<PARROT_INLINE static void
+restore_regs(Parrot_Interp interp, struct regsave *data)>
+
+Restores the registers from C<*data>.
+
+=cut
+
+*/
+
+PARROT_INLINE static void
+restore_regs(Parrot_Interp interp, struct regsave *data) {
+    mem_sys_memcopy(interp, data, sizeof(struct regsave));
+    mem_sys_free(data);
+}
+
+/*
+
+=item C<PARROT_INLINE static PMC *
+find_meth(Parrot_Interp interpreter, PMC *pmc, const char *name)>
+
+Finds and returns the delegated method with C string C<name>.
+
+=cut
+
+*/
+
+PARROT_INLINE static PMC *
+find_meth(Parrot_Interp interpreter, PMC *pmc, const char *name) {
+    STRING *meth = string_from_cstring(interpreter, name, 0);
+    REG_STR(2) = meth;
+
+    return Parrot_find_method_with_cache(interpreter, pmc, meth);
+}
+
+/*
+
+=item C<PARROT_INLINE static PMC *
+find_or_die(Parrot_Interp interpreter, PMC *pmc, const char *name)>
+
+Returns the result of calling C<find_meth()> with the arguments, raising 
+an exception if no method is found.
+
+=cut
+
+*/
+
+PARROT_INLINE static PMC *
+find_or_die(Parrot_Interp interpreter, PMC *pmc, const char *name) {
+    PMC *returnPMC = find_meth(interpreter, pmc, name);
+    if (PMC_IS_NULL(returnPMC)) {
+        internal_exception(METH_NOT_FOUND,
+            "Can't find method '%s' for object", name);
+    }
+    REG_PMC(2) = pmc;
+    return returnPMC;
+}
+
+/*
+
+=back
+
+All these functions to run code can leak a full parrot register file, as
+well as potentially permanently unroot some PMCs or strings, if the
+vtable method throws an exception. It really ought be caught rather than
+let flow through.
+
+=over 4
+
+=item C<PARROT_INLINE static void
+noarg_noreturn(Parrot_Interp interpreter, PMC *obj, const char *meth, int die)>
+
+Calls the delegated method with no arguments or return value. If C<die>
+is true then an exception will be raised if the method is not found.
+
+=cut
+
+*/
+
+PARROT_INLINE static void
+noarg_noreturn(Parrot_Interp interpreter, PMC *obj, const char *meth, int die) {
+    struct regsave *data = save_regs(interpreter);
+    PMC *method = die ? find_or_die(interpreter, obj, meth) :
+                    find_meth  (interpreter, obj, meth);
+    if (PMC_IS_NULL(method))
+    return;
+    REG_PMC(2) = obj;
+    REG_INT(0) = 1; /* prototyped */
+    REG_INT(1) = 0;
+    REG_INT(2) = 0;
+    REG_INT(3) = 0;
+    REG_INT(4) = 0;
+    Parrot_runops_fromc(interpreter, method);
+    restore_regs(interpreter, data);
+}
+
+pmclass delegate {
+
+/*
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=item C<void init()>
+
+Calls the delegated C<init()> method.
+
+=cut
+
+*/
+
+    void init () {
+        noarg_noreturn(INTERP, SELF, PARROT_VTABLE_INIT_METHNAME, 0);
+    }
+
+
+}
+
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

@@ -1,0 +1,28 @@
+#
+# Curses.jako
+#
+# A Jako module for interfacing with the curses library.
+#
+# Copyright (C) 2003 Gregor N. Purdy. All rights reserved.
+# This program is free software. Its use is subject to the same
+# license as Parrot.
+#
+# $Id$
+#
+
+module Curses
+  :fnlib = "libcurses"
+{
+  sub int initscr  :fn ();
+  sub int endwin   :fn ();
+  sub int curs_set :fn (int x);
+
+  sub int addstr   :fn (str s);
+  sub int refresh  :fn ();
+  sub int move     :fn (int x, int y);
+
+  sub int getch    :fn ();
+  sub int box      :fn (int screen, int v, int h);
+  sub int hline    :fn (int ch, int n);
+}
+

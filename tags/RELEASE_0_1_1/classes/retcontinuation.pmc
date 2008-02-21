@@ -1,0 +1,72 @@
+/*
+Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/retcontinuation.pmc - Return Continuation
+
+=head1 DESCRIPTION
+
+C<RetContinuation> extends C<Continuation>.
+
+A return continuation is like a Continuation, only its context isn't marked,
+because that's just some previous state of the interpreter.
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+#include "parrot/method_util.h"
+
+pmclass RetContinuation extends Continuation {
+
+/*
+
+=item C<void init()>
+
+Initializes the continuation.
+
+=cut
+
+*/
+
+    void init () {
+        /*
+         * Use Continuation init. This implies that RetContinuations
+         * now mark their context too. This is needed in the presence of
+         * Coroutines and other Continuations, because the RetContinuation
+         * can be the only visible part of the root-set that marks the
+         * context i.e. the register backing stacks.
+         */
+        SUPER();
+    }
+
+}
+
+/*
+
+=back
+
+=head1 HISTORY
+
+Initial revision by sean 2002/08/04.
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

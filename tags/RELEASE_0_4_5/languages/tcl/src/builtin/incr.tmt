@@ -1,0 +1,4 @@
+[incr varName:var ?increment:int=1?]
+
+$varName += $increment
+$R = clone $varName

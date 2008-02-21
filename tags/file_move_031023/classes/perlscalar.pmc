@@ -1,0 +1,59 @@
+/* perlscalar.pmc
+ *  Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+ *  CVS Info:
+ *     $Id$
+ *  Overview:
+ *     Abstract base class for perl scalars
+ *  Data Structure and Algorithms:
+ *  History:
+ *  Notes:
+ *     This class implements common perl scalar functionality:
+ *     e.g morphing to another scalar type.
+ *     The morph method replaces the CHANGE_TYPE macro.
+ *  References:
+ */
+
+#include "parrot/parrot.h"
+
+
+pmclass perlscalar abstract noinit extends scalar {
+
+    void morph (INTVAL type) {
+	if (SELF->vtable->base_type == enum_class_PerlString) {
+	    if (type == enum_class_PerlString)
+		return;
+	    PObj_custom_mark_CLEAR(SELF);
+	    SELF->vtable = Parrot_base_vtables[type];
+	    return;
+	}
+	if (type == enum_class_PerlString) {
+	    SELF->vtable = Parrot_base_vtables[type];
+	    DYNSELF.init();
+	    return;
+	}
+	PObj_custom_mark_CLEAR(SELF);
+	SELF->vtable = Parrot_base_vtables[type];
+
+    }
+
+    void set_pmc (PMC* value) {
+	DYNSELF.morph(value->vtable->base_type);
+	switch (value->vtable->base_type) {
+	    case enum_class_Boolean:
+	    case enum_class_PerlInt:
+		DYNSELF.set_integer_same(value);
+		break;
+	    case enum_class_PerlNum:
+		DYNSELF.set_number_same(value);
+		break;
+	    case enum_class_PerlString:
+		DYNSELF.set_string_same(value);
+		break;
+	    case enum_class_PerlUndef:
+		(void) VTABLE_get_pmc(interpreter, value);
+		break;
+	}
+    }
+
+}
+

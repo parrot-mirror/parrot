@@ -1,0 +1,151 @@
+/*
+Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/parrotclass.pmc - Parrot Class
+
+=head1 DESCRIPTION
+
+The structure of a parrot class is reasonably straightforward. The PMC's
+cached integer value is the number of attribute slots that an object of
+this type requires. The data pointer holds a pointer to an array of
+PMCs. That array has:
+
+=over 4
+
+=item 0, PCD_PARENTS
+
+An array of immediate parents.
+
+=item 1, PCD_CLASS_NAME
+
+The class name PMC.
+
+=item 2, PCD_ALL_PARENTS
+
+A pruned array of all parents, in search order.
+
+=item 3, PCD_ATTRIB_OFFS
+
+A hash, keys are the class names, values are the offsets to their attributes.
+
+=item 4, PCD_ATTRIBUTES
+
+A hash, the keys are the classname/attrib name pair (separated by a
+C<NULL>), while the value is the offset to the attribute.
+
+=item 5, PCD_CLASS_ATTRIBUTES
+
+Array of attribute of this class.
+
+=item 6, PCD_OBJECT_VTABLE
+
+Vtable PMC that holds the vtable for objects of this class.
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+pmclass ParrotClass extends delegate need_ext {
+
+/*
+
+=item C<void init()>
+
+Initializes the class.
+
+=cut
+
+*/
+
+    void init () {
+        /* No attributes to start with */
+        PMC_int_val(SELF) = ATTRIB_COUNT(SELF) = 0;
+        /* But we are a class, really */
+        PObj_is_class_SET(SELF);
+        PObj_data_is_PMC_array_SET(SELF);
+        /* s. Parrot_new_class() for more initialization */
+    }
+
+/*
+
+=item C<INTVAL isa(STRING *classname)>
+
+Returns whether the class is or inherits from C<*classname>.
+
+=cut
+
+*/
+
+    INTVAL isa(STRING* classname) {
+        PMC *class;
+        if (SUPER(classname))
+            return 1;
+        class = Parrot_class_lookup(interpreter, classname);
+        return Parrot_object_isa(INTERP, SELF, class);
+    }
+
+/*
+
+=item C<PMC *find_method(STRING *name)>
+
+Figure out which method PMC we need. By default we just defer to the
+system method lookup code.
+
+=cut
+
+*/
+
+    PMC* find_method(STRING* name) {
+        return Parrot_find_method_with_cache(INTERP, SELF, name);
+    }
+
+/*
+
+=item C<INTVAL can(STRING *method)>
+
+Returns whether the class can perform C<*method>.
+
+=item C<PMC *get_class()>
+
+Return SELF.
+
+=cut
+
+*/
+
+    INTVAL can(STRING* method) {
+        return VTABLE_find_method(interpreter, SELF, method) != NULL;
+    }
+
+    PMC* get_class() {
+        return SELF;
+    }
+}
+
+/*
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

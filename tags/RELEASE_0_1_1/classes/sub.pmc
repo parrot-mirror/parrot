@@ -1,0 +1,417 @@
+/*
+Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/sub.pmc - Subroutine
+
+=head1 DESCRIPTION
+
+These are the vtable functions for the Sub (subroutine) base class
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+#include "parrot/method_util.h"
+
+/*
+
+=item C<>
+
+Print name and location of subroutine, This should finally use the label
+name of the frozen C<Sub> PMC image for now locate the C<Sub> name in
+the globals.
+
+=cut
+
+*/
+
+static STRING*
+sub_name(Parrot_Interp interpreter, PMC* sub)
+{
+    opcode_t i, ci;
+    struct PackFile *pf;
+    struct PackFile_FixupTable *ft;
+    struct PackFile_ConstTable *ct;
+    struct Parrot_sub * s = PMC_sub(sub);
+
+    if (s->name) {
+        /* sub was located via globals */
+        return s->name;
+    }
+    else {
+        /* sub was created via new_sub and offset, probably */
+        pf = interpreter->code;
+        ft = pf->cur_cs->fixups;
+        ct = pf->cur_cs->consts;
+        for (i = 0; i < ft->fixup_count; i++) {
+            switch (ft->fixups[i]->type) {
+                case enum_fixup_sub:
+                    ci = ft->fixups[i]->offset;
+                    if (sub == ct->constants[ci]->u.key) {
+                        return string_from_cstring(interpreter,
+                                ft->fixups[i]->name, 0);
+                    }
+            }
+        }
+    }
+    return NULL;
+}
+
+static void
+print_sub_name(Parrot_Interp interpreter, PMC* sub)
+{
+
+        /* sub was located via globals */
+    PIO_eprintf(interpreter, "# Calling sub '%Ss'\n#",
+        sub_name(interpreter, sub));
+    print_pbc_location(interpreter);
+}
+
+pmclass Sub {
+
+/*
+
+=item C<void init()>
+
+Initializes the subroutine.
+
+=cut
+
+*/
+
+    /*
+     * Sub PMC's flags usage:
+     * - private0 ... Coroutine flip/flop - C exception handler
+     * - private1 ... Fixup is done
+     * - private2 ... unused
+     * - private3 ... pythonic coroutine generator flag
+     * - private4 ... @MAIN
+     * - private5 ... @LOAD
+     * - private6 ... @IMMEDIATE
+     * - private7 ... @POSTCOMP
+     *
+     * Data used:
+     *   PMC_struct_val ... unused
+     *   PMC_pmc_val    ... Parrot_Sub structure
+     */
+    void init () {
+        PMC_sub(SELF) = new_sub(INTERP);
+        PMC_struct_val(SELF) = NULL;
+        PObj_active_destroy_SET(SELF);
+#if 0
+        if (Interp_flags_TEST(interpreter, PARROT_DEBUG_FLAG))
+            printf("Address of base segment is %p\n",
+                ((struct Parrot_Sub *)PMC_sub(SELF))->seg->base.pf->byte_code);
+#endif
+    }
+
+/*
+
+=item C<void destroy()>
+
+Destroys the subroutine.
+
+=cut
+
+*/
+
+    void destroy () {
+        struct Parrot_sub * sub = PMC_sub(SELF);
+        mem_sys_free(sub);
+    }
+
+/*
+
+=item C<STRING *get_string()>
+
+Returns the name of the subroutine.
+
+=cut
+
+*/
+
+    STRING* get_string () {
+        return sub_name(INTERP, SELF);
+    }
+
+/*
+
+=item C<void set_pointer(void *value)>
+
+Sets the pointer to the actual subroutine.
+
+=cut
+
+*/
+
+    void set_pointer (void* value) {
+        struct Parrot_sub * sub = PMC_sub(SELF);
+        PObj_get_FLAGS(SELF) |= PObj_private1_FLAG;
+        sub->address = value;
+    }
+
+/*
+
+=item C<void *get_pointer()>
+
+Returns the pointer to the actual subroutine.
+
+=cut
+
+*/
+
+    void* get_pointer () {
+        struct Parrot_sub * sub = PMC_sub(SELF);
+        return sub->address;
+    }
+
+/*
+
+=item C<INTVAL get_integer_keyed(PMC *key)>
+
+I<This just unconditionally returns the start of bytecode. It's wrong,
+wrong, wrong, *WRONG*. And there's no other good way, so it's here for
+now.> -DRS
+
+=cut
+
+*/
+
+    INTVAL get_integer_keyed (PMC* key) {
+        return (INTVAL)
+            ((PMC_sub(SELF))->seg->base.pf->byte_code);
+    }
+
+/*
+
+=item C<INTVAL defined()>
+
+Returns whether the subroutine is defined.
+
+=cut
+
+*/
+
+    INTVAL defined () {
+        struct Parrot_sub * sub = PMC_sub(SELF);
+        return sub->address != NULL;
+    }
+
+/*
+
+=item C<void *invoke(void *next)>
+
+Invokes the subroutine.
+
+=cut
+
+*/
+
+    void* invoke (void* next) {
+        struct Parrot_sub * sub = PMC_sub(SELF);
+        if (++interpreter->ctx.recursion_depth >
+                interpreter->recursion_limit) {
+            real_exception(interpreter, next, E_RuntimeError,
+                    "maximum recursion depth exceeded");
+        }
+        if (Interp_flags_TEST(interpreter, PARROT_TRACE_FLAG)) {
+            print_sub_name(interpreter, SELF);
+        }
+        if (interpreter->code->cur_cs != sub->seg) {
+            Parrot_switch_to_cs(interpreter, sub->seg, 1);
+        }
+        /*
+         * if that's really according to pdd03, we now should have
+         * P0 ... sub
+         * P1 ... continuation
+         * P2 ... object, if it's a method call
+         *
+         * update the context
+         */
+        interpreter->ctx.current_sub = REG_PMC(0);
+        interpreter->ctx.current_cont = REG_PMC(1);
+        interpreter->ctx.current_object = REG_PMC(2);
+        return sub->address;
+    }
+
+/*
+
+=item C<PMC *clone()>
+
+Creates and returns a clone of the subroutine.
+
+=cut
+
+*/
+
+    PMC* clone () {
+        struct Parrot_sub * sub;
+        PMC* ret = pmc_new_noinit(INTERP, SELF->vtable->base_type);
+        PObj_active_destroy_SET(ret);
+        sub = PMC_sub(ret) = mem_sys_allocate(sizeof(struct Parrot_sub));
+        memcpy(sub, PMC_sub(SELF), sizeof(struct Parrot_sub));
+        sub->name = string_copy(interpreter, sub->name);
+        PMC_struct_val(ret) = NULL;
+        return ret;
+    }
+
+/*
+
+=item C<void set_same(PMC *value)>
+
+Sets the subroutine to C<*value>.
+
+=cut
+
+*/
+
+    void set_same (PMC* value) {
+        internal_exception(UNIMPLEMENTED, "set_same");
+    }
+
+/*
+
+=item C<INTVAL is_equal(PMC *value)>
+
+Returns whether the two subroutines are equal.
+
+=cut
+
+*/
+
+    INTVAL is_equal (PMC* value) {
+        return SELF->vtable == value->vtable &&
+            (PMC_sub(SELF))->address == (PMC_sub(value))->address;
+    }
+
+/*
+
+=item C<void freeze(visit_info *info)>
+
+Archives the subroutine.
+
+=cut
+
+*/
+
+    void freeze(visit_info *info) {
+        IMAGE_IO *io = info->image_io;
+        struct Parrot_sub * sub = PMC_sub(SELF);
+        size_t start_offs, end_offs;
+
+        SUPER(info);
+        /*
+         * we currently need to write these items:
+         * - name of the sub's label
+         * - start offset in byte-code segment
+         * - end   offset in byte-code segment
+         * - segment TODO
+         * - flags  (i.e. @LOAD pragma and such)
+         * - namespace constant #
+         */
+
+        /*
+         * if sub addresses are absolute, the flag is set
+         */
+        if (PObj_get_FLAGS(SELF) & PObj_private1_FLAG) {
+            ptrdiff_t code = (ptrdiff_t) sub->seg->base.data;
+
+            start_offs = ((ptrdiff_t)sub->address - code) / sizeof(opcode_t*);
+            end_offs = ((ptrdiff_t)sub->end - code) / sizeof(opcode_t*);
+        }
+        else {
+            start_offs = (size_t)sub->address;
+            end_offs =   (size_t)sub->end;
+        }
+        io->vtable->push_integer(INTERP, io, (INTVAL) start_offs);
+        io->vtable->push_integer(INTERP, io, (INTVAL) end_offs);
+    }
+
+/*
+
+=item C<void thaw(visit_info *info)>
+
+Unarchives the subroutine.
+
+=cut
+
+*/
+
+    void thaw(visit_info *info) {
+        IMAGE_IO *io = info->image_io;
+        SUPER(info);
+
+        if (info->extra_flags == EXTRA_IS_NULL) {
+            struct Parrot_sub * sub = PMC_sub(SELF);
+            size_t start_offs, end_offs;
+            /*
+             * we get relative offsets
+             */
+            PObj_get_FLAGS(SELF) &= ~PObj_private1_FLAG;
+            start_offs = (size_t) io->vtable->shift_integer(INTERP, io);
+            end_offs   = (size_t) io->vtable->shift_integer(INTERP, io);
+            sub->address = (opcode_t*) start_offs;
+            sub->end = (opcode_t*) end_offs;
+        }
+    }
+
+/*
+
+=item C<void thawfinish(visit_info *info)>
+
+Called after the subroutine as been unarchived.
+
+=cut
+
+*/
+
+    void thawfinish(visit_info *info) {
+        /*
+         * for now do fixup here until packfile issues are sorted out
+         */
+        opcode_t *code;
+        struct Parrot_sub * sub = PMC_sub(SELF);
+        opcode_t *start_offs, *end_offs;
+
+        /* its absolute */
+        if (PObj_get_FLAGS(SELF) & PObj_private1_FLAG)
+            return;
+        code = sub->seg->base.data;
+        start_offs = code + (size_t) sub->address;
+        end_offs =   code + (size_t) sub->end;
+        sub->address = start_offs;
+        sub->end = end_offs;
+        PObj_get_FLAGS(SELF) |= PObj_private1_FLAG;
+    }
+
+}
+
+/*
+
+=back
+
+=head1 HISTORY
+
+Initial version by Melvin on 2002/06/6.
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

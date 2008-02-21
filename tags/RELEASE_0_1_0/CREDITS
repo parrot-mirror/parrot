@@ -1,0 +1,232 @@
+	Following in the steps of other open source projects that
+	eventually take over the world, here is the partial list
+	of people who have contributed to Parrot and its supporting
+	works.  It is sorted by name and formatted to allow easy
+	grepping and beautification by scripts.
+	The fields are: name (N), email (E), web-address
+        (W), PGP key ID and fingerprint (P), description (D), and
+        snail-mail address (S).
+
+        Thanks,
+
+		The Parrot Team
+		PS: Yes, this looks remarkably like the Linux CREDITS format
+
+----------
+
+N: Adam Thomason
+D: Building on various platforms.
+
+N: Aldo Calpini
+
+N: Alex Gough
+
+N: Andy Dougherty
+D: Config and building.
+
+N: Angel Faus
+D: CFG and live analysis.
+
+N: Arthur Bergman
+D: Trying to ride a Ponie - build and compat fixes.
+
+N: Arvindh Rajesh Tamilmani
+D: Buffered IO fix
+
+N: Ask Bjoern Hansen
+
+N: Benjamin Goldberg
+D: Numerous improvements and proposals.
+
+N: Bernhard Schmalhofer
+D: Bugfixes, Getopt_Long.imc
+
+N: Brent Dax
+D: Configure, Parrot_sprintf, embedding, early regex engine.
+D: Youngest Parrot hacker to hold a pumpkin (Configure).
+E: brent@brentdax.com
+W: http://www.brentdax.com/
+
+N: Brian Wheeler
+
+N: Bruce Gray
+
+N: Bryan C. Warnock
+
+N: Chip Salzenberg
+
+N: chromatic
+D: SDL library and examples
+
+N: Clinton A. Pierce
+D: Many PIR tests and fixes
+
+N: Dan Sugalski
+D: The big cheese
+E: dan@sidhe.org
+W: http://www.sidhe.org/~dan/blog/
+
+N: Daniel Grunblatt
+D: JIT and EXEC subsystems
+
+N: David M. Loyd
+
+N: Goplat
+D: Win98 and other fixes.
+
+N: Gregor N. Purdy
+D: Early Parrot core, including packfile and op processing code,
+D: first predereferencing core, first Parrot-targetted compiler
+D: with subroutines: Jako.
+D: The human version of indent.
+E: gregor@focusresearch.com
+S: Seattle, WA
+
+N: H.Merijn Brand
+D: HP-UX fixes and smoke tests
+
+N: Jarkko Hietaniemi
+D: packfile and Tru64 fixes; lot of general hints to improve portability
+
+N: Jason Gloudon
+
+N: Jeff Clites
+D: PPC JIT patches
+
+N: Jeff Goff
+D: Release pumpking for 0.0.5-0.0.8
+
+N: Jeffrey Dik
+D: Test system fixes
+
+N: Jens Rieks
+D: dumper and sort library
+
+N: Jerome Quelin
+D: befunge interpreter, ook compiler.
+E: jquelin@cpan.org
+S: Lyon, France
+
+N: Jonathan Sillito
+D: Lexical pads, CPS.
+
+N: Jonathan Stowe
+
+N: Jonathan Worthington
+D: Win32 building
+
+N: Jos Visser
+D: fortytwo opcode
+
+N: Joseph Ryan
+D: PIR tests and fixes
+
+N: Josh Wilmes
+
+N: Juergen Boemmels
+D: Parrot I/O; macro stuff in assembler.
+
+N: Kenneth A Graves
+D: yield and other PIR improvements
+
+N: Kevin Falcone
+
+N: Lars Balker Rasmussen
+D: FreeBSD and other build fixes
+
+N: Leon Brocard
+
+N: Leopold Toetsch
+D: Patchmonster & pumpking
+E: lt@toetsch.at
+S: Herrnbaumgarten, Austria
+
+N: Luke Palmer
+D: Many fixes
+
+N: Marcus Thiesen
+D: URM language, bugfixes
+
+N: Mattia Barbon
+D: Win32 fixes
+
+N: Melvin Smith
+D: Parrot core, various ops, IO, subs, continuations, COW stacks
+D: IMCC, Cola
+E: melvin.smith@mindspring.com
+E: melvins@us.ibm.com
+S: Atlanta, GA
+
+N: Michael G. Schwern
+
+N: Michael Scott
+D: Getting Started Guide for Parrot, many doc fixes
+D: Mac OS X build fixes
+D: HTML documentaion for Parrot
+E: michael_scott@mac.com
+W: http://xrl.us/sml
+
+N: Michal J Wallace
+D: Pie-thon hammering PIR
+
+N: Mike Lambert
+
+N: Nicholas Clark
+D: Building and platform compat and more.
+
+N: Nick Kostirya
+D: Win32, FreeBSD build fixes
+
+N: Nigelsandever
+D: Win32 patches
+
+N: Peter Gibbs
+D: String subsystem
+
+N: Piers Cawley
+D: The Second Perl 6 Summarizer after Bryan C. Warnock
+E: pdcawley@bofh.org.uk
+W: http://www.bofh.org.uk:8080/
+
+N: Ritz Daniel
+
+N: Robert Spier
+D: Keeps us running
+
+N: Sean O'Rourke
+D: Original Perl6 compiler
+
+N: Simon Cozens
+D: Release pumpking for 0.0.1-0.0.4
+
+N: Simon Glover
+D: Tests, docs and misc. bugfixes
+E: scog@amnh.org
+S: New York, NY
+
+N: Stéphane Payrard
+D: Various code fixes and improvement
+
+N: Stéphane Peiry
+D: Lot of JIT/sun patches
+
+N: Steve Clark
+D: Bugfixes
+
+N: Steve Fink
+D: Release pumpking for 0.0.9-0.0.11
+E: steve@fink.com
+S: San Carlos, CA, USA
+
+N: Tom Hughes
+
+N: Will Coleda
+D: Tcl language and misc fixes
+
+N: Uri Guttman
+D: Lot of general Parrot design hints
+
+N: Vladimir Lipsky
+D: Win32, IO fixes
+
+N: Zach Lipton

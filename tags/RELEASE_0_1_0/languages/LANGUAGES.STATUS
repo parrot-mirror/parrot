@@ -1,0 +1,139 @@
+If you submit a language compiler please write a one-liner below
+indicating roughly the state of your language. Does it have
+samples, do they work? Is there a README and an easy way
+to build it? The fields are: (N) Language name, (A) authors/maintainers, (D)
+description, (S) status, (M) maintained, (V) minimum Parrot version required.
+
+
+N: BASIC
+A: Clint Pierce
+D: BASIC Interpreter written in pure Parrot
+S: Functional, includes samples such as Eliza and Hunt the Wumpus
+M: Yes
+V: 0.0.11
+
+N: befunge
+A: Jerome Quelin
+D: Functioning -93 interpreter (input routines may be funky).
+S: Samples working, README explain how to build/use.
+S: (waiting for Parrot objects for a befunge-98 version).
+M: Yes
+V: 0.0.11
+
+N: bf
+A: Leon Brocard
+
+N: Cola
+A: Melvin Smith
+D: Java like language with some hybrid Perl features like regex
+D: operators planned.
+S: Functioning, all samples working, lacks IO routines
+M: Yes
+V: 0.0.11
+
+N: forth
+A: Dan Sugalski
+M: yes
+V: 0.0.13
+
+N: IMCC
+A: Melvin Smith
+A: Angel Faus
+A: Leopold Toetsch
+D: The PIR and PASM compiler for Parrot
+S: Functioning, all samples working
+M: Yes (integral to Parrot)
+V: 0.0.13
+
+N: Jako
+A: Gregor Purdy
+D: C/Perl like language, first compiler for Parrot
+S: Functioning, although not all examples work. Calling conventions and NCI
+S: have changed since the Jako subroutine and NCI code
+S: generation was written, causing some breakage.
+M: Yes
+V: 0.0.11
+
+N: m4
+A: Bernhard Schmalhofer
+D: Port of GNU m4 to PIR
+S: Functioning for handcrafted test cases.
+S: Far from complete.
+S: Revision 0.0.2
+W: http://www.schmalhofer.info/schmalhofer/bernhard/projects/m4/
+M: Yes
+V: 0.0.13
+
+N: miniperl
+
+N: Ook
+A: Jerome Quelin
+D: Functioning compiler targeting pasm.
+S: Samples working, README explain how to build/use.
+M: Yes
+V: 0.0.11
+
+N: OpenComal
+D: Compiler emiting parrot being added to interpreter
+S: Under development; nowhere near anything yet
+W: http://www.josvisser.nl/opencomal
+V: 0.0.11
+
+N: parrot_compiler
+
+N: Perl6
+A: Sean O'Rourke
+D: Perl6 compiler written in Perl5
+S: Largely functional, but changing rapidly
+M: Yes
+V: 0.0.11
+
+N: plot
+A: Piers Cawley
+S: An attempt to get a Scheme like REP Loop up during OSCON.
+S: A failed attempt.
+M: No
+V: 0.0.11
+
+N: Python
+A: Michal J Wallace
+S: Mostly working except for classes/exec/import. For licensing
+S: reasons, not in parrot's cvs tree.
+M: Yes
+W: http://pirate.tangentcode.com/
+V: 0.0.11
+
+N: regex
+
+N: Ruby
+
+N: Scheme
+A: Jeffrey Goff
+A: Juergen Boemmels
+S: Functioning, as far as implemented. Lists and functions are working
+S: but many functions are missing implementation.
+M: Yes
+V: 0.0.11
+
+N: tcl
+A: Will Coleda
+S: passes all tests, but all examples do not currently work.
+S: heavily under construction
+M: Yes
+V: 0.0.11
+
+N: URM
+A: Marcus Thiesen
+S: Functioning, all examples working
+S: Language standard is stable and not expected to change soon.
+M: Yes
+V: 0.0.11
+
+N: YAL
+A: Leopold Toetsch
+S: YAL is Yet Another Language
+S: Its mainly intended to test an AST interface and for checking, if and how
+S: code generation plays nicely together with Parrot opcodes.
+W: http://toetsch.at/yal/
+M: Yes
+V: 0.0.13

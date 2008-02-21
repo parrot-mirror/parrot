@@ -1,0 +1,68 @@
+=head1 NAME
+
+IMCC - documentation
+
+=head1 VERSION
+
+=over 4
+
+=item 0.1 initial
+
+=back
+
+=head1 OVERVIEW
+
+IMCC is the Intermediate Code Compiler for Parrot.  It's integrated into the
+C<parrot> executable.
+
+IMCC compiles a language called Parrot Intermediate Representation (PIR).  PIR
+is the primary target of language implementations. PIR code files usually have
+the extension C<.imc>.
+
+This document describes available IMCC documentation, located in
+parrot/imcc/docs unless otherwise described. 
+
+See also the documentation in parrot/docs.
+
+=head1 DESCRIPTION
+
+=head2 calling_conventions.pod
+
+Describes the standard way of passing arguments and receiving results from
+subroutines.
+
+=head2 imcfaq.pod
+
+A must read for potential language implementors.
+
+=head2 macros.pod
+
+The macro layer of parrot.
+
+=head2 operation.pod
+
+Describes how IMCC operates internally. 
+
+=head2 parsing.pod
+
+Basic parsing functionality.
+
+=head2 running.pod
+
+parrot's command line options.
+
+=head2 syntax.pod
+
+The syntax of C<.imc> files.
+
+=head2 parrot/imcc/README
+
+Summary of IMCC features and syntax.
+
+=head2 *.[chly]
+
+Most documentation files end in B<.c>.
+
+=head1 AUTHOR
+
+Leopold Toetsch <lt@toetsch.at>

@@ -1,0 +1,756 @@
+/*
+Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/fixedpmcarray.pmc - fixed size array for PMCs only
+
+=head1 DESCRIPTION
+
+This class, FixedPMCArray, implements an array of fixed size, which stores PMCs,
+it puts things into Integer, Float, or String PMCs as appropriate
+TODO currently this uses Perl types.
+
+=head2 Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+/*
+ * need this as long this hack is using qsort
+ */
+static Interp* the_interp;
+static PMC* sort_cmp_pmc;
+
+static int
+sort_compare(void *a, void *b)
+{
+    PMC *pa = *(PMC**)a;
+    PMC *pb = *(PMC**)b;
+    return mmd_dispatch_i_pp(the_interp, pa, pb, MMD_CMP);
+}
+
+static void
+runops_fast_cmp(Interp *interpreter, PMC *sub, PMC *left, PMC *right)
+{
+    opcode_t offset, *dest;
+
+    dest = VTABLE_invoke(interpreter, sub, NULL);
+    REG_PMC(5) = left;
+    REG_PMC(6) = right;
+    offset = dest - interpreter->code->byte_code;
+    runops_int(interpreter, offset);
+}
+
+#define RUN_FAST_CMP
+static int
+sort_ext_compare(void *a, void *b)
+{
+    PMC *pa = *(PMC**)a;
+    PMC *pb = *(PMC**)b;
+#ifdef RUN_FAST_CMP
+    runops_fast_cmp(the_interp, sort_cmp_pmc, pa, pb);
+#else
+    Parrot_runops_fromc_args(the_interp, sort_cmp_pmc, "IPP", pa, pb);
+#endif
+    return the_interp->int_reg.registers[5];
+}
+
+static void array_sort(Interp *interpreter, PMC *self, PMC *cmp_func)
+{
+    int (*func)(void*, void*);
+    PMC *first;
+    INTVAL type;
+    PMC *s;
+
+    if (REG_INT(3) == 0) {
+        first = ((PMC**)PMC_data(self))[0];
+        /* XXX simulate MMD inheritance: Int isa TT */
+        type = first->vtable->base_type - 1;
+        s = mmd_vtfind(interpreter, MMD_CMP, type, 0);
+        /* cmp was overriden ? */
+        if (s->vtable->base_type == enum_class_Sub) {
+            cmp_func = s;
+            goto use_sub;
+        }
+default_sort:
+        func = sort_compare;
+use_func:
+        the_interp = interpreter;
+        qsort(PMC_data(self), PMC_int_val(self), sizeof(PMC *),
+                (int (*)(const void*, const void*))func);
+    }
+    else {
+        void *regs;
+        int run_core;
+        /*
+         * cmp_func is a PASM PMC
+         * TODO check, if it's NCI
+         */
+use_sub:
+        run_core = interpreter->run_core;
+        if (PMC_IS_NULL(cmp_func) ||
+                cmp_func == Parrot_base_vtables[enum_class_None]->data) {
+            /* a NULL or None PMC was passed
+            */
+            goto default_sort;
+        }
+        else {
+            if (cmp_func->vtable->base_type == enum_class_NCI) {
+                /* the C function inside is at struct_val
+                 * hopefully this function does compare
+                 */
+                func = (int (*)(void*, void*)) PMC_struct_val(cmp_func);
+                /*
+                 * XXX not yet -cmp doesn't take an interpreter arg
+                 */
+                /* goto use_func; */
+                goto default_sort;
+            }
+        }
+        /*
+         * save registers once, as the compare function will be called
+         * repeatedly
+         */
+        regs = Parrot_save_register_frames(interpreter, cmp_func);
+        func = sort_ext_compare;
+        sort_cmp_pmc = cmp_func;
+#ifdef RUN_FAST_CMP
+        REG_PMC(1) = new_ret_continuation_pmc(interpreter, NULL);
+        /* don't recycle it */
+        PObj_get_FLAGS(REG_PMC(1)) &= ~PObj_private2_FLAG;
+        /* and don't mark it, its just a ret continuation */
+        PObj_flag_CLEAR(custom_mark, REG_PMC(1));
+        /* TODO create one exception frame */
+#endif
+        /*
+         * TODO fix SEGV with JIT
+         */
+        if (run_core == PARROT_JIT_CORE) {
+#ifdef HAVE_COMPUTED_GOTO
+            interpreter->run_core = PARROT_CGP_CORE;
+#else
+            interpreter->run_core = PARROT_SWITCH_CORE;
+#endif
+        }
+        qsort(PMC_data(self), PMC_int_val(self), sizeof(PMC *),
+                (int (*)(const void*, const void*))func);
+        Parrot_restore_register_frames(interpreter, regs);
+        interpreter->run_core = run_core;
+    }
+}
+
+pmclass FixedPMCArray need_ext does array {
+
+    void class_init () {
+        if (pass) {
+            enter_nci_method(INTERP, enum_class_FixedPMCArray,
+                    F2DPTR(array_sort),
+                    "sort", "vIOP");
+        }
+    }
+/*
+
+=item C<void* invoke(void* next)>
+
+Pythonic object constructor. SELF is a FixedPMCArray Class object. Return a new
+C<tuple> object according to 2.1. Built-in Functions.
+
+=cut
+
+*/
+    void* invoke(void* next) {
+        int argcP = REG_INT(3);
+        PMC *res = pmc_new(interpreter, enum_class_FixedPMCArray);
+        PMC *arg;
+        if (argcP) {
+            if (argcP > 1) {
+                real_exception(interpreter, NULL, E_TypeError,
+                        "TypeError: tuple expected at most 1 arguments, got %d",
+                        (int)argcP);
+            }
+            arg = REG_PMC(5);
+            if (arg->vtable->base_type == enum_class_FixedPMCArray)
+                res = arg; /* if a tuple is passed, return it */
+            else
+                Parrot_py_fill(interpreter, res, arg);
+        }
+        REG_PMC(5) = res;
+        return next;
+    }
+/*
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=item C<void init()>
+
+Initializes the array.
+
+=cut
+
+*/
+
+    void init () {
+        PMC_int_val(SELF) = 0;
+    }
+
+/*
+
+=item C<void morph(INTVAL type)>
+
+Const classes must have a C<morph()>.
+
+=cut
+
+*/
+
+    void morph(INTVAL type) {
+        SUPER(type);
+    }
+
+
+/*
+
+=item C<void destroy()>
+
+Destroys the array.
+
+=cut
+
+*/
+
+    void destroy () {
+        if (PMC_data(SELF))
+            mem_sys_free(PMC_data(SELF));
+        PMC_data(SELF) = NULL;
+        PMC_int_val(SELF) = 0;
+    }
+
+/*
+
+=item C<PMC *clone()>
+
+Creates and returns a copy of the array.
+
+=cut
+
+*/
+
+    PMC* clone () {
+        INTVAL size;
+        PMC * dest = pmc_new(INTERP, SELF->vtable->base_type);
+
+        if (!PMC_data(SELF))
+            return dest;
+        size = PMC_int_val(SELF);
+        PMC_int_val(dest) = size;
+
+        PMC_data(dest) = mem_sys_allocate(size * sizeof(PMC*));
+        mem_sys_memcopy(PMC_data(dest), PMC_data(SELF), size*sizeof(PMC*));
+        PObj_data_is_PMC_array_SET(dest);
+        return dest;
+    }
+
+/*
+
+=item C<INTVAL get_bool()>
+
+Returns whether the array has any elements (meaning been initialized, for a
+fixed sized array).
+
+=cut
+
+*/
+    INTVAL get_bool () {
+        INTVAL size = DYNSELF.elements();
+        return (INTVAL)(size != 0);
+    }
+
+/*
+
+=item C<INTVAL elements()>
+
+=cut
+
+*/
+
+    INTVAL elements () {
+        return PMC_int_val(SELF);
+    }
+
+/*
+
+=item C<INTVAL get_integer()>
+
+Returns the number of elements in the array.
+
+=cut
+
+*/
+
+    INTVAL get_integer () {
+        return DYNSELF.elements();
+    }
+
+/*
+
+=item C<STRING *get_string()>
+
+Returns the number of elements in the array as a Parrot string. (??? -leo)
+
+For Python returns its repr.
+TODO implement freeze/thaw and use that instead.
+
+=cut
+
+*/
+
+    STRING* get_string () {
+        if (Interp_flags_TEST(interpreter, PARROT_PYTHON_MODE)) {
+            STRING *res, *s;
+            INTVAL j, n;
+            PMC *val;
+
+            res = string_from_cstring(INTERP, "(", 0);
+            n = VTABLE_elements(INTERP, SELF);
+            for (j = 0; j < n; ++j) {
+                val = SELF.get_pmc_keyed_int(j);
+                res = string_append(INTERP, res,
+                        VTABLE_get_repr(INTERP, val), 0);
+                if (n == 1)
+                    res = string_append(INTERP, res,
+                            const_string(INTERP, ","), 0);
+                else if (j < n - 1)
+                    res = string_append(INTERP, res,
+                            const_string(INTERP, ", "), 0);
+            }
+            res = string_append(INTERP, res,
+                        const_string(INTERP, ")"), 0);
+            return res;
+        }
+
+        return string_from_int(INTERP, DYNSELF.elements());
+    }
+
+/*
+
+=item C<INTVAL get_integer_keyed_int(INTVAL key)>
+
+Returns the integer value of the element at index C<key>.
+
+=cut
+
+*/
+
+    INTVAL get_integer_keyed_int (INTVAL key) {
+        PMC *tempPMC = DYNSELF.get_pmc_keyed_int(key);
+        return VTABLE_get_integer(INTERP, tempPMC);
+    }
+
+/*
+
+=item C<INTVAL get_integer_keyed(PMC *key)>
+
+Returns the integer value of the element at index C<*key>.
+
+=cut
+
+*/
+
+    INTVAL get_integer_keyed (PMC* key) {
+        /* simple int keys only */
+        INTVAL k = key_integer(INTERP, key);
+        return DYNSELF.get_integer_keyed_int(k);
+    }
+
+
+/*
+
+=item C<FLOATVAL get_number_keyed_int(INTVAL key)>
+
+Returns the floating-point value of the element at index C<key>.
+
+=cut
+
+*/
+
+    FLOATVAL get_number_keyed_int (INTVAL key) {
+        PMC *tempPMC = DYNSELF.get_pmc_keyed_int(key);
+        return VTABLE_get_number(INTERP, tempPMC);
+    }
+
+/*
+
+=item C<FLOATVAL get_number_keyed (PMC* key)>
+
+Returns the floating-point value of the element at index C<*key>.
+
+=cut
+
+*/
+
+    FLOATVAL get_number_keyed (PMC* key) {
+        INTVAL k = key_integer(INTERP, key);
+        return DYNSELF.get_number_keyed_int(k);
+    }
+
+/*
+
+=item C<STRING *get_string_keyed_int(INTVAL key)>
+
+Returns the Parrot string value of the element at index C<key>.
+
+=cut
+
+*/
+
+    STRING* get_string_keyed_int (INTVAL key) {
+        PMC *tempPMC = DYNSELF.get_pmc_keyed_int(key);
+        return VTABLE_get_string(INTERP, tempPMC);
+    }
+
+/*
+
+=item C<STRING *get_string_keyed(PMC *key)>
+
+Returns the Parrot string value of the element at index C<*key>.
+
+=cut
+
+*/
+
+    STRING* get_string_keyed(PMC* key) {
+        INTVAL k = key_integer(INTERP, key);
+        return DYNSELF.get_string_keyed_int(k);
+    }
+
+
+/*
+
+=item C<PMC *get_pmc_keyed_int(INTVAL key)>
+
+Returns the PMC value of the element at index C<key>.
+
+=cut
+
+*/
+
+    PMC* get_pmc_keyed_int (INTVAL key) {
+        PMC **data;
+        if (key < 0 || key >= PMC_int_val(SELF))
+            internal_exception(OUT_OF_BOUNDS,
+                "FixedPMCArray: index out of bounds!\n");
+
+        data = (PMC **)PMC_data(SELF);
+        return data[key];
+    }
+
+/*
+
+=item C<PMC *get_pmc_keyed(PMC *key)>
+
+Returns the PMC value of the element at index C<*key>.
+
+=cut
+
+*/
+
+    PMC* get_pmc_keyed(PMC* key) {
+        INTVAL k = key_integer(INTERP, key);
+        return DYNSELF.get_pmc_keyed_int(k);
+    }
+
+/*
+
+=item C<void set_integer_native(INTVAL size)>
+
+Resizes the array to C<size> elements.
+
+=cut
+
+*/
+
+    void set_integer_native (INTVAL size) {
+        int i;
+        PMC **data;
+
+        if (PMC_int_val(SELF) && size)
+            internal_exception(OUT_OF_BOUNDS, "FixedPMCArray: Can't resize!\n");
+        if (!size)
+            return;
+        PMC_int_val(SELF) = size;
+        data = (PMC**)mem_sys_allocate(size * sizeof(PMC*));
+        for(i = 0; i < size; i++)
+            data[i] = PMCNULL;
+        PMC_data(SELF) = data;
+        PObj_data_is_PMC_array_SET(SELF);
+    }
+
+    void set_pmc(PMC *value) {
+        INTVAL size;
+
+        if (value->vtable->base_type != enum_class_FixedPMCArray &&
+                value->vtable->base_type != enum_class_ResizablePMCArray)
+            internal_exception(1, "Can't set self from this type");
+        if (SELF != value) {
+            if (PMC_data(SELF))
+                mem_sys_free(PMC_data(SELF));
+        }
+        size = PMC_int_val(SELF) = PMC_int_val(value);
+        PMC_data(SELF) = mem_sys_allocate(size * sizeof(PMC*));
+        mem_sys_memcopy(PMC_data(SELF), PMC_data(value), size*sizeof(PMC*));
+        PMC_int_val2(SELF) = size;
+        PObj_data_is_PMC_array_SET(SELF);
+    }
+/*
+
+=item C<void set_integer_keyed_int(INTVAL key, INTVAL value)>
+
+Sets the integer value of the element at index C<key> to C<value>.
+
+=cut
+
+*/
+
+    void set_integer_keyed_int (INTVAL key, INTVAL value) {
+        PMC *val;
+
+        val = pmc_new(INTERP, enum_class_PerlInt);
+        VTABLE_set_integer_native(INTERP, val, value);
+        DYNSELF.set_pmc_keyed_int(key, val);
+    }
+
+/*
+
+=item C<void set_integer_keyed(PMC *key, INTVAL value)>
+
+Sets the integer value of the element at index C<key> to C<value>.
+
+=cut
+
+*/
+
+    void set_integer_keyed (PMC *key, INTVAL value) {
+        INTVAL k;
+        k = key_integer(INTERP, key);
+        DYNSELF.set_integer_keyed_int(k, value);
+    }
+
+/*
+
+=item C<void set_number_keyed_int(INTVAL key, FLOATVAL value)>
+
+Sets the floating-point value of the element at index C<key> to
+C<value>.
+
+=cut
+
+*/
+
+    void set_number_keyed_int (INTVAL key, FLOATVAL value) {
+        PMC *val;
+
+        val = pmc_new(INTERP, enum_class_PerlNum);
+        VTABLE_set_number_native(INTERP, val, value);
+        DYNSELF.set_pmc_keyed_int(key, val);
+    }
+
+/*
+
+=item C<void set_number_keyed(PMC *key, FLOATVAL value)>
+
+Sets the floating-point value of the element at index C<key> to
+C<value>.
+
+=cut
+
+*/
+
+    void set_number_keyed(PMC *key, FLOATVAL value) {
+        INTVAL k;
+        k = key_integer(INTERP, key);
+        DYNSELF.set_number_keyed_int(k, value);
+    }
+
+/*
+
+=item C<void set_string_keyed_int(INTVAL key, STRING *value)>
+
+Sets the Parrot string value of the element at index C<key> to C<value>.
+
+=cut
+
+*/
+
+    void set_string_keyed_int (INTVAL key, STRING* value) {
+        PMC *val;
+
+        val = pmc_new(INTERP, enum_class_PerlString);
+        VTABLE_set_string_native(INTERP, val, value);
+        DYNSELF.set_pmc_keyed_int(key, val);
+    }
+
+/*
+
+=item C<void set_string_keyed(PMC *key, STRING* value)>
+
+Sets the string value of the element at index C<key> to
+C<value>.
+
+=cut
+
+*/
+
+    void set_string_keyed(PMC *key, STRING* value) {
+        INTVAL k;
+        k = key_integer(INTERP, key);
+        DYNSELF.set_string_keyed_int(k, value);
+    }
+
+/*
+
+=item C<void set_pmc_keyed_int(INTVAL key, PMC *src)>
+
+Sets the PMC value of the element at index C<key> to C<*src>.
+
+=cut
+
+*/
+
+    void set_pmc_keyed_int (INTVAL key, PMC* src) {
+        PMC **data;
+        if (key < 0 || key >= PMC_int_val(SELF))
+            internal_exception(OUT_OF_BOUNDS,
+                "FixedPMCArray: index out of bounds!\n");
+
+        data = (PMC**)PMC_data(SELF);
+        DOD_WRITE_BARRIER(INTERP, SELF, data[key], src);
+        data[key] = src;
+    }
+
+/*
+
+=item C<void set_pmc_keyed(PMC *key, PMC* value)>
+
+Sets the string value of the element at index C<key> to
+C<value>.
+
+=cut
+
+*/
+
+    void set_pmc_keyed(PMC *key, PMC* value) {
+        INTVAL k;
+        k = key_integer(INTERP, key);
+        DYNSELF.set_pmc_keyed_int(k, value);
+    }
+
+/*
+
+=item C<INTVAL is_equal (PMC* value)>
+
+The C<==> operation. Compares two array to hold equal elements.
+
+=cut
+
+*/
+
+    INTVAL is_equal (PMC* value) {
+        INTVAL j, n;
+
+        if (value->vtable->base_type != enum_class_FixedPMCArray)
+            return 0;
+        n = SELF.elements();
+        if (VTABLE_elements(INTERP, value) != n)
+            return 0;
+        for (j = 0; j < n; ++j) {
+            PMC *item1, *item2;
+            item1 = SELF.get_pmc_keyed_int(j);
+            item2 = VTABLE_get_pmc_keyed_int(INTERP, value, j);
+            if (item1 == item2)
+                continue;
+            if (!mmd_dispatch_i_pp(INTERP, item1, item2, MMD_EQ))
+                return 0;
+        }
+        return 1;
+    }
+
+/*
+
+=item C<PMC* slice (PMC *key, INTVAL f)>
+
+Return a new iterator for the slice PMC C<key> if f == 0.
+
+Return a new pythonic array slice if f == 1.
+
+=item C<PMC* get_iter ()>
+
+Return a new iterator for SELF.
+
+=cut
+
+*/
+
+    PMC* slice (PMC* key, INTVAL f) {
+        switch (f) {
+            case 0:
+                {
+                    PMC *iter = pmc_new_init(interpreter,
+                            enum_class_Iterator, SELF);
+                    PMC_struct_val(iter) = key;
+                    return iter;
+                }
+            case 1:
+                return Parrot_py_get_slice(INTERP, SELF, key);
+        }
+        internal_exception(1, "Array: Unknown slice type");
+        return NULL;
+    }
+
+    PMC* get_iter () {
+	PMC *iter = pmc_new_init(interpreter, enum_class_Iterator, SELF);
+        PMC *key =  pmc_new(interpreter, enum_class_Key);
+        PMC_struct_val(iter) = key;
+        PObj_get_FLAGS(key) |= KEY_integer_FLAG;
+        PMC_int_val(key) = 0;
+        if (PMC_int_val(SELF) == 0)
+            PMC_int_val(key) = -1;
+        return iter;
+    }
+}
+
+/*
+
+=back
+
+=head1 SEE ALSO
+
+F<docs/pdds/pdd03_calling_conventions.pod>.
+
+=head1 HISTORY
+
+Initial version 2004.06.11 by Matt Fowles
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

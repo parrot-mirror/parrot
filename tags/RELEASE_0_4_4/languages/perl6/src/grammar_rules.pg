@@ -1,0 +1,224 @@
+## $Id$
+
+## TITLE
+##     The Perl 6 grammar
+##
+## DESCRIPTION
+##
+## These are the regexes used to compile Perl 6 programs.
+## This is just a first draft of a grammar for parsing
+## Perl 6 programs, undoubtedly more regexes will be added
+## soon.  Much of the work is hidden in the <opparse>
+## regex, which is defined in L<Perl6/parse.pir>
+## and handles most expressions using a bottom-up
+## parsing algorithm.
+
+grammar Perl6::Grammar ;
+
+
+## These regexes handle whitespace between comments and tokens
+
+##
+regex ws {
+    [ \# \N+
+    | \s+
+    | <?dot_comment>
+    | ^^ <?pod_comment>
+    ]* :::
+}
+
+regex dot_comment { \. [ \s <-[.]>*: | \# <?PGE::Text::bracketed: <({[> ] }
+
+regex pod_comment {
+    ^^ = [ [ cut \h*: | end [\h\N*]? ]
+         | for [ \h\N+: ] \n [ \N+\n ]*:
+         | \w\N*: \n .*? \n = [ cut \h*: | end [\h\N*:]? ]
+         ]
+         [\n|$]
+}
+
+
+token program { 
+    ^ <statement_list> <?ws> [ $ | <?syntax_error> ] 
+}
+
+
+token statement_list { 
+    <statement> [ <?statement_end> <statement> ]* <?statement_end>? 
+}
+
+
+token statement_end {
+      [ <?ws> ; ]+ 
+    | <after \}> :: \h* [ \#\N* ]? \n 
+}
+
+
+## XXX: <statement_control> will likely become <%statement_control>.
+## Since PGE doesn't support hashes in regexes yet, we're just using
+## an alternation for now.  
+##
+## The subrule C<< <expression:  ;> >> calls the C<expression> sub 
+## in L<src/parse.pir>, which passes control to the operator
+## precedence parser.  The space+semicolon parameter tells
+## the operator precedence parser to stop parsing the expression
+## at any top-level semicolon (with optional leading <?ws>).
+## (This may yet change as we refine things further.)
+
+token statement {
+    <statement_control>
+    | <block>
+    | <expression:  ;> <statement_modifier>?  
+}
+
+
+## Here, the <expression> subrule doesn't parse any top-level
+## bare closures (controlled by the space+brace argument).
+token statement_control {
+    <?ws>:
+    $<KEY>:=[if|unless] <expression:  {> <block>
+        [ <?ws>: elsif <expression:  {> <block> ]*
+        [ <?ws>: else <block> ]?
+}
+
+
+token statement_modifier {
+    <?ws> $<KEY>:=[if|unless] <expression:  ;>
+}
+
+
+token block {
+    <?ws>:
+    \{
+        <?ws>: <statement_list> <?ws>:
+    [ \} | <?syntax_error> ]
+}
+
+
+## XXX: This isn't the real <pointy_sub> regex -- it doesn't know
+## how to parse arguments yet.  It's just here as a placeholder
+## for now.
+
+token pointy_sub { --\> <simple_block> }
+
+
+## We handle Perl 6 expressions using PGE's operator
+## precedence parser.  The tokens and sub for this are
+## defined in L<Perl6/parser.pir>.  If written as a p6regex,
+## it would look something like:
+##     regex expression($stop) { { $opparse.parse($/, $stop) } }
+
+## However, we do need a special "whitespace" regex for capturing
+## whitespace in expressions, because dot_comments are special.
+
+token expression_ws { [ \s | \# \N*:\n ] <?ws> }
+
+
+## The <term> regex gets called from the operator precedence
+## parser whenever it needs a term.
+
+token term {
+    <scoped_variables>
+    | <variable>
+    | <subroutine>
+    | <block>
+    | <regex_term>
+    | <number>
+    | <integer>
+    | <string_literal>
+    | <version>
+}
+
+
+## XXX: This is a temporary rule that allows parsing of /regex/
+## in term position.  It is likely to change.
+
+token regex_term { / <regex: /> / }
+
+rule scoped_variables {
+    <scope_declarator> <variable>
+}
+token scope_declarator { [ my | our ] }
+
+
+## The <listop> regex gets called from the operator precedence
+## parser whenever it's looking for a term.  At the moment
+## it primarily grabs bareword terms.
+## XXX: <reserved_word> may become @reserved_word.
+
+token listop { <reserved_word> ::: <fail> | <ident> }
+
+token reserved_word { [ if | unless | while | until | for | loop ] \b }
+
+
+## XXX: These are just placeholder regexes for demonstration,
+## they certainly need to be expanded to be more complete.
+
+token variable { \$/ | \$_ | <sigil> <name> }
+token sigil { <[$@%^&]> }
+
+token integer {
+      0 [ b <[01]>+           [ _ <[01]>+ ]*
+        | o <[0..7]>+         [ _ <[0..7]>+ ]*
+        | x <[0..9a..fA..F]>+ [ _ <[0..9a..fA..F]>+ ]*
+        | d \d+               [ _ \d+]* 
+        ]
+    | \d+[_\d+]*
+}
+
+token number {
+    \d+[_\d+]* [ \. \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]? ]
+}
+
+##  XXX: arguments to quoted_literal are a cheat for the time being.
+token string_literal {
+      " <quoted_literal: "> "
+    | ' <quoted_literal: '> '
+}
+
+token version { v\d+ }
+
+
+## Subroutine parsing.  This is still under development.
+
+rule subroutine {
+    [<scope_declarator> <type>?]?
+        <subintro>
+        <ident>?
+        <trait>*
+        [\( <signature> \)]?
+        <block>}
+
+rule subintro { <routine_modifier> <routine_type>? | <routine_type> }
+
+token routine_modifier { multi | proto }
+
+token routine_type { sub | method | submethod | macro }
+
+token type { <routine_type> ::: <fail> | <ident> }
+
+rule trait {
+      $<KEY>:=[is] <ident>[\( <expression> \)]?
+    | $<KEY>:=[will] <ident> <block>
+    | $<KEY>:=[of] <type>
+    | $<KEY>:=[returns] <type>
+}
+
+rule signature { 
+    $<invocants>:=(<parameter> [, <parameter>]*)
+    $<paramlist>:=(\: <parameter>? [, <parameter>]*)?
+}
+
+##  XXX: <parameter> needs expansion for the various
+##  parameter options available.
+
+token parameter { <sigil> <ident> }
+
+
+## The <syntax_error> token generates a simple syntax
+## error message, and displays the line number and context
+## of the error.
+
+token syntax_error { <?PGE::Util::die: Syntax error> }
+
+## vim: expandtab sw=4

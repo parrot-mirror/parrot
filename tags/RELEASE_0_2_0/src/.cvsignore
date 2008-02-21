@@ -1,0 +1,9 @@
+core_pmcs.c
+exec_cpu.c
+fingerprint.c
+jit_cpu.c
+nci.c
+platform.c
+platform_asm.s
+parrot_config.h
+*.str

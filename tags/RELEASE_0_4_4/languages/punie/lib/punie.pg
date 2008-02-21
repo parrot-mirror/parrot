@@ -1,0 +1,53 @@
+grammar PunieGrammar;
+
+token prog    { ^<PunieGrammar::lineseq>$ }
+
+rule block { \s* \{ <PunieGrammar::lineseq> \} \s* }
+
+rule lineseq { <PunieGrammar::line>* }
+
+token line    { 
+    <PunieGrammar::label>
+    [ <PunieGrammar::cond> 
+    | <PunieGrammar::expr>;
+    ] \s* 
+}
+
+rule label { [<PunieGrammar::word>\:]? }
+
+token word { \w[\w|\d]* }
+
+rule else {
+    (else) <PunieGrammar::block>
+    | (elsif) \( <PunieGrammar::expr> \)
+              <PunieGrammar::block>
+              <PunieGrammar::else>?
+}
+
+rule cond {
+    (if|unless) \( <PunieGrammar::expr> \)
+              <PunieGrammar::block>
+              <PunieGrammar::else>?
+} 
+
+rule expr    { <PunieGrammar::gprint> | <PunieGrammar::cexpr> }
+
+rule gprint  { (print) <PunieGrammar::expr> }
+
+rule cexpr {
+    <PunieGrammar::oexpr> \s* [, \s* <PunieGrammar::oexpr>]*
+}
+
+regex term {
+    <PunieGrammar::number>
+    | <PunieGrammar::integer>
+    | <PunieGrammar::stringdouble>
+    | <PunieGrammar::stringsingle>
+    | do <PunieGrammar::block>
+}
+token integer { \d+ }
+token number { \d+\.\d+ }
+regex stringdouble { <PGE::Text::bracketed: "> }
+regex stringsingle { <PGE::Text::bracketed: '> }
+
+

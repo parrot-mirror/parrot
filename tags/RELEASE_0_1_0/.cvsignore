@@ -1,0 +1,14 @@
+blib
+libparrot.def
+Makefile
+myconfig
+*.patch
+*.tmp
+test
+CFLAGS
+disassemble
+pbc_info
+pdb
+pdump
+parrot
+vtable.dump

@@ -1,0 +1,58 @@
+grammar APL::Grammar;
+
+token statement_list { ^<statement> [ \n <statement> ]* }
+
+token statement { <expression> [ \s*? $$ | <syntax_error> ] }
+
+token expression { 
+      <target> ← <expression>
+    | <monadic_identifier> <expression>
+    | <subexpression> [ <dyadic_identifier> <expression> ]?
+}
+
+token subexpression {
+    <simple_expression> [ \[ <list> \] ]?
+}
+
+token simple_expression {
+    <array_identifier> | \( <expression> \)
+}
+
+token target { <variable_identifier> [ \[ <list> \] ]? }
+
+token list { $0:=(<expression>?) $0:=( ; <expression>? )* }
+
+token dyadic_identifier  { <[|⍟*⌈⌊○!+−×÷~∧∨⍲⍱<≤=≥>≠⍳⊖↑↓⍕]> }
+
+token monadic_identifier { <[|⍟*⌈⌊○!+−×÷~⍳⌽↑⍴⍕]> }
+
+token array_identifier {
+      <constant>
+    | <variable_identifier>
+}
+
+token constant {
+      <character_constant>
+    | <numeric_constant>
+}
+
+
+token numeric_constant { 
+    <decimal_representation> [ \s+ <decimal_representation> ]*
+}
+
+
+token decimal_representation {
+    [ ⁻? \d+ \.? \d* | ⁻? \. \d+ ] [ E ⁻? \d+ ]?
+}
+
+
+token character_constant {
+      (') ( [ '' | <-[']> ]* ) '
+    | (") ( [ "" | <-["]> ]* ) "
+   
+}
+
+token variable_identifier { <[A..Za..z]> \w* }
+
+token syntax_error { <?PGE::Util::die: Syntax error> }

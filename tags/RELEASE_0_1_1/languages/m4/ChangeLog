@@ -1,0 +1,101 @@
+# $Id$
+
+2004-09-20     Bernhard Schmalhofer
+        * Play again with 'm4_eval_compiler'
+
+2004-08-09     Bernhard Schmalhofer
+        * Fix failing test basic/012_eval.t
+
+2004-07-06     Bernhard Schmalhofer
+        * Make tests work again
+        * add some tests for 'eval'
+        * yank it up to revision 0.0.7
+
+2004-06-27     Andy Dougherty
+        * Build patches for Solaris, RT#30320
+
+2004-06-21    Bernhard Schmalhofer
+        * Don't write test files into '/tmp'
+
+2004-06-10    Bernhard Schmalhofer
+        * The symbolic link 'blib' isn't needed any more
+
+2004-07-06     Bernhard Schmalhofer
+        * Make tests work again
+        * add some tests for 'eval'
+        * yank it up to revision 0.0.7
+
+2004-06-27     Andy Dougherty
+        * Build patches for Solaris, RT#30320
+
+2004-06-21    Bernhard Schmalhofer
+        * Don't write test files into '/tmp'
+
+2004-06-10    Bernhard Schmalhofer
+        * The symbolic link 'blib' isn't needed any more
+
+2004-06-02    Bernhard Schmalhofer
+        * Start to use t/harness and Parrot::Test
+        * yank it up to revision 0.0.6
+
+2004-05-29    Jens Rieks
+        * Use library Getopt/Long.imc in new location
+
+2004-05-21    Bernhard Schmalhofer
+        * BUGFIX: NCI signature letter '3' indicates PerlInt, not int
+        * yank it up to revision 0.0.5
+
+2004-04-19    Bernhard Schmalhofer
+        * added compiler for macro 'eval'
+        * yank it up to revision 0.0.4
+
+2004-04-04    Bernhard Schmalhofer
+        * added simple usage of macro 'ifelse'
+
+2004-04-04    Bernhard Schmalhofer
+        * added builtin macro 'ifdef'
+
+2004-03-30    Bernhard Schmalhofer
+        * added builtin macro 'undefine'
+
+2004-03-28    Bernhard Schmalhofer
+        * added some tests
+        * added command line option '--prefix-builtins'
+
+2004-03-01    Bernhard Schmalhofer
+        * test with Parrot 0.1.0
+        * require Perl 5.005 instaed of Perl 5.8.0, untested
+        * yank it up to revision 0.0.3
+
+2004-02-12    Bernhard Schmalhofer
+        * added builtin macros 'format', 'decr', 'incr'
+
+2004-02-12    Bernhard Schmalhofer
+        * added builtin macro 'substr'
+        * next_token now returns single characters as TOKEN_SIMPLE
+
+2004-02-11    Bernhard Schmalhofer
+        * added builtin macro 'len'
+
+2004-02-09    Bernhard Schmalhofer
+        * Understand special case of array of macro args
+        * added builtin macro 'index'
+
+2004-01-25    Bernhard Schmalhofer
+        * Revision 0.0.2
+        * Fixed output of '../../parrot m4.pbc --version'
+        * Removed special case for the builtin function 'define'
+        * 'define' is now retrieved from state['symtab']
+        * The data structures are now more like in GNU m4
+        * The subs are now more like in GNU m4
+
+2004-01-17    Bernhard Schmalhofer
+        * Added some Id macros for CVS
+        * Added Makefile targets 'help', 'distclean' and 'realclean'
+        * Replaced declarations '.sym' with '.local'
+        * The entries in symtab are now hashes
+
+2004-01-06    Bernhard Schmalhofer
+        * Released 0.0.1
+        * Minimal test scripts are working
+        * See long list of TODOs in TODO.pod

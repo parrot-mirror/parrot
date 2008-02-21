@@ -1,0 +1,222 @@
+/*
+Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+$Id$
+
+=head1 NAME
+
+classes/boolean.pmc - Boolean PMC
+
+=head1 DESCRIPTION
+
+This class implements a boolean value variable.
+
+Albeit C<Boolean> is derived from C<PerlInt>, it doesn't morph to other
+types, its value is changed only.
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+#include "parrot/perltypes.h"
+
+pmclass Boolean extends PerlInt {
+
+/*
+
+=item C<class_init ()>
+
+Define 3 pythonic globals C<True>, C<False>, and C<__debug__>.
+
+XXX are these generally useful or should they be moved to src/py_func.c?
+
+=cut
+
+*/
+
+    void class_init() {
+        if (pass) {
+            PMC *t;
+            t = pmc_new(interp, enum_class_Boolean);
+            PMC_int_val(t)  = 1;
+            Parrot_store_global(interp, NULL,
+                    const_string(interp, "True"), t);
+            t = pmc_new(interp, enum_class_Boolean);
+            Parrot_store_global(interp, NULL,
+                    const_string(interp, "False"), t);
+            t = pmc_new(interp, enum_class_Boolean);
+            PMC_int_val(t)  = 1;
+            Parrot_store_global(interp, NULL,
+                    const_string(interp, "__debug__"), t);
+        }
+    }
+
+/*
+
+=item C<void* invoke(void* next)>
+
+Pythonic object constructor. SELF is a Boolean Class object. Return a new
+C<bool> object according to 2.1. Built-in Functions.
+
+=cut
+
+*/
+    void* invoke(void* next) {
+        int argcP = REG_INT(3);
+        PMC *res = pmc_new(interpreter, enum_class_Boolean);
+        if (argcP)
+            VTABLE_set_integer_native(interpreter, res,
+                    VTABLE_get_bool(interpreter, REG_PMC(5)));
+        REG_PMC(5) = res;
+        return next;
+    }
+/*
+
+=item C<STRING* get_string ()>
+
+Return "True" or "False" if python_mode is true.
+
+=cut
+
+*/
+    STRING* get_string () {
+        if (Interp_flags_TEST(INTERP, PARROT_PYTHON_MODE))
+            return PMC_int_val(SELF) ?
+                const_string(INTERP, "True") :
+                const_string(INTERP, "False");
+        else
+            return SUPER();
+    }
+
+
+/*
+
+=item C<void set_integer_native (INTVAL value)>
+
+=cut
+
+*/
+
+    void set_integer_native (INTVAL value) {
+        PMC_int_val(SELF) = (value != 0);
+    }
+
+/*
+
+=item C<void set_number_native (FLOATVAL value)>
+
+Sets the value to C<value> evaluated in a boolean context.
+
+=cut
+
+*/
+
+    void set_number_native (FLOATVAL value) {
+        PMC_int_val(SELF) = (value!=0);
+    }
+
+/*
+
+=item C<void set_string_native (STRING* value)>
+
+Sets the value to C<*value> evaluated in a boolean context.
+
+=cut
+
+*/
+
+    void set_string_native (STRING* value) {
+        PMC_int_val(SELF) = string_bool(INTERP, value);
+    }
+
+/*
+
+=item C<void neg(PMC* dest)>
+
+Set C<dest> to the negated value of C<SELF>.
+
+=cut
+
+*/
+
+    void neg (PMC* dest) {
+        if (dest == SELF)
+            PMC_int_val(SELF) = -PMC_int_val(SELF);
+        else
+            VTABLE_set_integer_native(INTERP, dest, -PMC_int_val(SELF));
+    }
+
+/*
+
+=item C<void logical_or(PMC* value, PMC* dest)>
+
+Sets the logical C<OR> of the boolean and C<*value> as the value of
+C<*dest>.
+
+=cut
+
+*/
+
+    void logical_or (PMC* value, PMC* dest) {
+        VTABLE_set_integer_native(INTERP, dest,
+            PMC_int_val(SELF) ||
+            VTABLE_get_bool(INTERP, value));
+    }
+
+/*
+
+=item C<>
+
+Sets the logical C<AND> of the boolean and C<*value> as the value of
+C<*dest>.
+
+=cut
+
+*/
+
+    void logical_and (PMC* value, PMC* dest) {
+        VTABLE_set_integer_native(INTERP, dest,
+            PMC_int_val(SELF) &&
+            VTABLE_get_bool(INTERP, value));
+    }
+
+/*
+
+=item C<void logical_xor(PMC* value, PMC* dest)>
+
+Sets the logical C<XOR> of the boolean and C<*value> as the value of
+C<*dest>.
+
+=cut
+
+*/
+
+    void logical_xor (PMC* value, PMC* dest) {
+        VTABLE_set_integer_native(INTERP, dest,
+            ( PMC_int_val(SELF) ? 1 : 0 ) ^
+            VTABLE_get_bool(INTERP, value));
+    }
+
+}
+
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * vim: expandtab shiftwidth=4:
+*/

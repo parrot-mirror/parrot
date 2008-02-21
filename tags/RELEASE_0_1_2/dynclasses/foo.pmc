@@ -1,0 +1,13 @@
+/*
+ * Sample Foo class
+ */
+
+#include "parrot/parrot.h"
+
+pmclass Foo dynpmc {
+
+    INTVAL get_integer() {
+	return 42;
+    }
+}
+

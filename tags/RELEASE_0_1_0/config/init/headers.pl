@@ -1,0 +1,44 @@
+#! perl -w
+# Copyright: 2001-2003 The Perl Foundation.  All Rights Reserved.
+# $Id$
+
+=head1 NAME
+
+config/init/headers.pl - Nongenerated Headers
+
+=head1 DESCRIPTION
+
+Uses C<ExtUtils::Manifest> to determine which headers are nongenerated.
+
+=cut
+
+package Configure::Step;
+
+use strict;
+use vars qw($description @args);
+use Parrot::Configure::Step;
+use ExtUtils::Manifest qw(maniread);
+
+$description="Determining nongenerated header files...";
+
+@args=();
+
+sub runstep {
+    my $inc = 'include/parrot';
+
+    my @headers=(
+	sort
+	map  { m{^$inc/(.*\.h)\z} }
+	keys %{maniread()}
+    );
+
+    $_ = "\$(INC)/$_" for @headers;
+    my $nongen_headers = join("\\\n	", @headers);
+
+    Configure::Data->set(
+	inc            => $inc,
+	nongen_headers => $nongen_headers,
+    );
+}
+
+1;

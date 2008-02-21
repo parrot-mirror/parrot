@@ -1,0 +1,39 @@
+RM_F    = ${rm_f}
+PERL    = ${perl}
+PARROT  = ..${slash}..${slash}parrot${exe}
+PBC_MERGE = ..${slash}..${slash}pbc_merge${exe}
+
+LIBPATH  = lib
+BUILD   = $(PERL) ${build_dir}${slash}build_tools${slash}build_dynclasses.pl
+DESTDIR = ${build_dir}${slash}runtime${slash}parrot${slash}dynext
+O       = ${o}
+CLASSDIR = classes
+LOAD_EXT = ${load_ext}
+
+PMCS = \
+ luaboolean \
+ luanil \
+ luanumber \
+ luastring \
+ luatable
+
+all: pmcs
+
+pmcs:
+	@cd $(CLASSDIR) && $(BUILD) generate $(PMCS)
+	@cd $(CLASSDIR) && $(BUILD) compile $(PMCS)
+	@cd $(CLASSDIR) && $(BUILD) linklibs $(PMCS)
+	@cd $(CLASSDIR) && $(BUILD) copy "--destination=$(DESTDIR)" $(PMCS)
+
+test:
+	cd .. && $(PERL) -I../lib lua/t/harness
+
+clean:
+	$(RM_F) $(CLASSDIR)/*$(O) $(CLASSDIR)/*$(LOAD_EXT) \
+	$(CLASSDIR)/*.def $(CLASSDIR)/*.dump \
+	$(CLASSDIR)/*.h $(CLASSDIR)/*.c
+	$(RM_F) t/pmc/*.pir
+
+distclean: clean
+	$(RM_F) Makefile
+

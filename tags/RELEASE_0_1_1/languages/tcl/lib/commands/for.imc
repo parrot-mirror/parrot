@@ -1,0 +1,83 @@
+###
+# [for]
+
+.namespace [ "Tcl" ]
+
+.sub _for
+  .param pmc start_p
+  .param pmc test_p
+  .param pmc next_p
+  .param pmc body_p
+
+  if I3 != 4 goto bad_args
+
+  .local string start
+  .local string next
+  .local string body
+  .local pmc start_parsed
+  .local pmc next_parsed
+  .local pmc body_parsed
+  .local pmc retval
+  retval = new String
+  .local int return_type
+
+  .local pmc joe # just a placeholder, not saved.
+
+  .local pmc parse
+  .local pmc interpret
+  .local pmc expression
+  .local pmc expr_boolean
+  parse = find_global "_Tcl", "__parse"
+  interpret = find_global "_Tcl", "__interpret"
+  expression = find_global "_Tcl", "__expression"
+  expr_boolean = find_global "_Tcl", "__expr_boolean"
+
+  start = start_p
+  next  = next_p
+  body  = body_p
+
+  # Parse the bits that are code.
+  start_parsed = parse(start,0,0)
+  next_parsed  = parse(next,0,0)
+  body_parsed  = parse(body,0,0)
+
+  # first, execute start.
+  (return_type,joe) = interpret(start_parsed)
+  if return_type != TCL_OK goto done
+
+for_loop:
+  # then execute body
+  (return_type,joe) = interpret(body_parsed)
+  if return_type == TCL_CONTINUE goto continue
+  if return_type != TCL_OK goto done
+
+continue:
+  # then execute next
+  (return_type,joe) = interpret(next_parsed)
+  if return_type != TCL_OK goto done
+  
+  # then check condition
+  $P0 = expression(test_p)
+  $S0 = $P0[1]
+  $I0 = expr_boolean($S0)
+  if $I0 == 1 goto for_loop
+  goto done
+
+bad_args:
+  retval = "wrong # args: should be \"for start test next command\"\n"
+  return_type = TCL_ERROR
+  goto done_cleansed
+
+done:
+  retval = ""
+  # Propogate an error out, but not a break or continue.
+  if return_type == TCL_RETURN goto done_cleansed
+  if return_type == TCL_ERROR goto done_cleansed
+  return_type = TCL_OK
+
+done_cleansed:
+  .pcc_begin_return
+    .return return_type
+    .return retval
+  .pcc_end_return
+.end

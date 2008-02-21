@@ -1,0 +1,34 @@
+# This file shows the history of incompatible changes to
+# Parrot that invalidated existing PBC (Parrot Byte Code) files.
+#
+# The text in this file is also the base of the
+# fingerprint inside PBCs and Parrot which is used
+# for validation.
+#
+# Its pobably not complete or out of date - but a start
+# to get less restrictive fingerprint tests.
+#
+# Currently known actions that should be entered here
+#   (and invalidate PBC are):
+#
+# - bumping Parrot version
+# - deleting/changing/inserting existing ops in ops.num
+# - changing operands of existing ops
+# - adding/deleting/renaming a PMC to classes
+# - changes in the packfile format itself
+# - other core changes that invalidate byte code :)
+#
+# After changing PBC_COMPAT either disable t/native_pbc tests or
+# better, if you have an i386 box at hand, regenerate the PBCs
+# with tools/dev/mk_native_pbc and commit the changes
+
+# please insert tab separated entries at the top of the list
+
+2004.02.29	leo	0.1.0 release
+2003.11.21	leo	remove unused size fields in front of PF constants
+2003.10.31	leo	0.0.13 release
+2003.10.24	dan	add bogus opcode
+2003.10.24	leo	start using this file for fingerprinting
+2003.10.22	dan	add delegates.pmc
+2003.10.21	dan	delete instantiate op
+2003.10.21	leo	start this file

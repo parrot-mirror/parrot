@@ -1,0 +1,61 @@
+# Copyright: 2005 The Perl Foundation.  All Rights Reserved.
+# $Id$
+
+# Setup of some commands
+PERL           = ${perl}
+RM_RF          = ${rm_rf}
+
+# The runtime files are also in SVN, need to be generated only by maintainer
+PYTHON_RUNTIME_FILES = \
+    python/lib/bc/BcLexer.py \
+    python/lib/bc/BcParser.py \
+    python/lib/bc/BcTreeWalker.py
+
+# the default target
+all: build 
+
+# This is a listing of all targets, that are meant to be called by users
+help:
+	@echo ""
+	@echo "Following targets are available for the user:"
+	@echo ""
+	@echo "  all:               BcLexer.py and BcParser.py"
+	@echo "                     This is the default."
+	@echo ""
+	@echo "  maintain:          Generate Python runtime files"
+	@echo "                     Needs ANTLR and Python"
+	@echo ""
+	@echo "Testing:"
+	@echo "  test:              Run the test suite."
+	@echo ""
+	@echo "Cleaning:"
+	@echo "  clean:             Basic cleaning up."
+	@echo "  distclean:         Remove everything not in MANIFEST."
+	@echo ""
+	@echo "Misc:"
+	@echo "  help:              Print this help message."
+	@echo ""
+
+test: build
+	cd .. && $(PERL) -I../lib -I bc/lib bc/t/harness --use-gnu-bc
+
+build:
+# Nothing to do
+
+maintain: $(PYTHON_RUNTIME_FILES)
+
+# BcLexer.py will be created too
+$(PYTHON_RUNTIME_FILES): grammar/bc_python.g
+	antlr -o python/lib/bc grammar/bc_python.g
+
+clean:
+	$(RM_RF) \
+    python/lib/bc/*.pyc \
+    python/lib/antlr/*.pyc \
+    t/*.bc t/*.pir t/*.posix_out t/*.parrot_out
+
+realclean: clean
+	$(RM_RF) \
+    Makefile
+
+distclean: realclean

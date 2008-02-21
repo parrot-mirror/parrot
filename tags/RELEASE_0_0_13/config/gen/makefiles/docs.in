@@ -1,0 +1,22 @@
+PERL = ${perl}
+RM_F = ${rm_f}
+
+# Make directory; do not die if dir exists.
+MKDIR = $(PERL) -e ${PQ}-d or mkdir $$_,0777 or die foreach @ARGV${PQ}
+
+POD = ${pod}
+
+all: doc-prep packfile-c.pod packfile-perl.pod $(POD)
+
+doc-prep:
+	$(MKDIR) ops
+
+packfile-c.pod: ../src/packfile.c
+	perldoc -u ../src/packfile.c > packfile-c.pod
+
+packfile-perl.pod: ../lib/Parrot/PackFile.pm
+	perldoc -u ../lib/Parrot/PackFile.pm > packfile-perl.pod
+
+clean:
+	$(RM_F) packfile-c.pod packfile-perl.pod $(POD)
+

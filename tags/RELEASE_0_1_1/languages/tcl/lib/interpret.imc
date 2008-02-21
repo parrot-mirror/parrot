@@ -1,0 +1,112 @@
+=head1
+
+Given a pre-parsed chunk of Tcl, interpret it.
+
+=cut
+
+.namespace [ "_Tcl" ]
+
+.sub __interpret
+  .param pmc commands
+  
+  #load_bytecode "library/Data/Dumper.imc"
+  #$P1= find_global "Data::Dumper", "dumper"
+  #$P1(commands)
+
+  # our running return value, type
+  .local int return_type
+  return_type = TCL_OK
+  .local pmc retval
+
+  .local pmc escaper
+   escaper = find_global "Data::Escape", "String"
+
+  # Which command are we processing?
+  .local int command_num
+  command_num = -1
+  .local int num_commands
+  num_commands = commands
+  .local pmc command
+  .local string proc
+  .local pmc args
+  .local pmc my_cmd
+  .local pmc parsed_body
+  .local pmc argument_list
+
+end_scope:
+  #print "end_scope:\n"
+  inc command_num
+  if command_num == num_commands goto done
+  if return_type != TCL_OK goto done
+  #print "not done\n"
+  command = commands[command_num] 
+
+  # this should stringify the tclword object, which performs
+  # all necessary substitutions. 
+  $P0 = command[0]
+  (return_type,retval) = $P0.__get_pmc()
+  
+  if return_type != TCL_OK goto done
+  proc = retval 
+
+  .local int num_args 
+  num_args = command
+  .local int arg_num
+  arg_num = 1
+  
+  # The subs we're calling expect flattened args. There's no opcode to
+  # flatten args, so instead we use the PIR directive C<.flatten_arg> 
+
+  .local string caller_sub_text
+  .local Exception_Handler ignore
+  newsub ignore, .Exception_Handler, __default_handler
+  .local string fixup_proc
+  fixup_proc  = "_"
+  fixup_proc .= proc
+
+  null my_cmd
+  set_eh ignore
+    my_cmd = find_global "Tcl", fixup_proc
+  clear_eh 
+  isnull my_cmd, no_command
+
+  .local pmc folded_args
+  folded_args = new PerlArray
+  .local pmc current_word
+
+loop:
+  if arg_num == num_args goto loop_done
+
+  current_word = command[arg_num]
+  (return_type,retval) = current_word.__get_pmc()
+  if return_type != TCL_OK goto done
+  push folded_args, retval
+  inc arg_num
+  if arg_num == num_args goto loop_done
+  goto loop
+
+loop_done: 
+  # Have to use the old style syntax to take advantage of C<.flatten_arg>
+  .pcc_begin prototyped
+    .flatten_arg folded_args
+    .pcc_call my_cmd
+requiredlabelusedbyIMCC:
+    .result return_type
+    .result retval
+  .pcc_end
+
+  goto end_scope
+
+no_command:
+  return_type = TCL_ERROR
+  $S0 = "invalid command name \""
+  $S0 .= proc
+  $S0 .= "\"\n"
+  retval = $S0
+
+done:
+  .pcc_begin_return
+    .return return_type
+    .return retval
+  .pcc_end_return
+.end
