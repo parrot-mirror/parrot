@@ -78,19 +78,19 @@ sub add_method {
 
 sub has_method {
     my ( $self, $methodname ) = @_;
-    return exists $self->{has_method}->{$methodname};
+    return exists $self->{has_method}{$methodname};
 }
 
 sub method_index {
     my ( $self, $methodname ) = @_;
-    return $self->{has_method}->{$methodname};
+    return $self->{has_method}{$methodname};
 }
 
 sub get_method {
     my ( $self, $methodname ) = @_;
     my $method_index = $self->method_index($methodname);
     return unless defined $method_index;
-    return $self->{methods}->[$method_index];
+    return $self->{methods}[$method_index];
 }
 
 sub inherits_method {
@@ -100,7 +100,7 @@ sub inherits_method {
 
 sub parent_has_method {
     my ( $self, $parent_name, $vt_meth ) = @_;
-    return exists $self->{'has_parent'}{$parent_name}{$vt_meth};
+    return exists $self->{has_parent}{$parent_name}{$vt_meth};
 }
 
 # parents
@@ -229,8 +229,8 @@ sub get_flags {
 # should only be called once by the pmc parser
 sub set_parents {
     my ( $self, $value ) = @_;
-    $value = [] unless $value;
-    $self->{parents} = $value;
+    $value             ||= [];
+    $self->{parents}     = $value;
     return 1;
 }
 
@@ -330,15 +330,18 @@ sub super_method {
         if ( ref($super_pmc) ) {
             my $super_method = $super_pmc->get_method($vt_meth);
             $super_pmc_name = $super_method->parent_name;
-            $self->add_mixin($super_pmc_name) unless $self->is_parent($super_pmc_name);
+
+            $self->add_mixin($super_pmc_name)
+                unless $self->is_parent($super_pmc_name);
 
             $self->super_attrs( $vt_meth, $super_method->attrs );
 
             $self->inherit_attrs($vt_meth) if $self->get_method($vt_meth);
 
             my $super_mmd_rights = $super_method->mmd_rights;
-            if ( $super_mmd_rights && scalar @{$super_mmd_rights} ) {
-                $self->{super_mmd_rights}{$vt_meth}->{$super_pmc_name} = $super_mmd_rights;
+            if ( $super_mmd_rights && @{$super_mmd_rights} ) {
+                $self->{super_mmd_rights}{$vt_meth}{$super_pmc_name} =
+                    $super_mmd_rights;
             }
         }
         else {
@@ -376,8 +379,9 @@ B<Comments:> Called within C<gen_super_meths()>.
 
 sub inherit_attrs {
     my ( $self, $vt_meth ) = @_;
-    my $attrs       = $self->get_method($vt_meth)->attrs;
-    my $super_attrs = $self->super_attrs($vt_meth);
+    my $attrs              = $self->get_method($vt_meth)->attrs;
+    my $super_attrs        = $self->super_attrs($vt_meth);
+
     if ( ( $super_attrs->{read} or $super_attrs->{write} )
         and not( $attrs->{read} or $attrs->{write} ) )
     {
@@ -408,8 +412,9 @@ B<Comments:>  Called within C<dump_pmc()>.
 sub dump_is_current {
     my ($self)   = @_;
     my $dumpfile = $self->filename('.dump');
-    my $pmcfile  = $self->filename('.pmc');
     return 0 unless -e $dumpfile;
+
+    my $pmcfile  = $self->filename('.pmc');
     return ( stat $dumpfile )[9] > ( stat $pmcfile )[9];
 }
 
@@ -421,4 +426,3 @@ sub dump_is_current {
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
-
