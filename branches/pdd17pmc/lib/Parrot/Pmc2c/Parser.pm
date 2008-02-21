@@ -372,7 +372,7 @@ sub parse_top_level {
             pmclass       # pmclass keyword
             \s+           # whitespace
             ([\w]*)       # pmc name
-            ([\s+\w+]*)   # pmc attributes
+            ((?:\s+\w+)*)   # pmc attributes
             \s*           # whitespace
         )
         \{                # pmc body beginning marker
@@ -390,7 +390,7 @@ sub parse_top_level {
     return ( $preamble, $pmcname, $flags, $parents, $body, $postamble, $chewed_lines );
 }
 
-our %has_value  = map { $_ => 1 } qw(group hll);
+our %has_value  = map { $_ => 1 } qw(does group hll);
 our %has_values = map { $_ => 1 } qw(provides extends maps lib);
 
 =head2 C<parse_flags()>

@@ -575,11 +575,13 @@ EOC
 EOC
     $cout .= <<"EOC";
         /* create vtable - clone it - we have to set a few items */
-        VTABLE * const vt_clone = Parrot_clone_vtable(interp, &temp_base_vtable);
+        VTABLE * const vt_clone        = Parrot_clone_vtable(interp,
+                                             &temp_base_vtable);
 EOC
     for my $k ( keys %extra_vt ) {
         $cout .= <<"EOC";
-        VTABLE * const vt_${k}_clone = Parrot_clone_vtable(interp, &temp_${k}_vtable);
+        VTABLE * const vt_${k}_clone     = Parrot_clone_vtable(interp,
+                                             &temp_${k}_vtable);
 EOC
     }
 
