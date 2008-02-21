@@ -79,14 +79,6 @@ A Null PMC is allocated during initialization.
 */
 
 #include "parrot/parrot.h"
-#define PARROT_EXPORTER(e) ((Parrot_Exporter *) PMC_data(e))
-
-typedef struct Parrot_Exporter {
-    PMC *ns_src;
-    PMC *ns_dest;
-    PMC *globals;
-} Parrot_Exporter;
-
 
 /*
 
@@ -100,9 +92,11 @@ typedef struct Parrot_Exporter {
 
 */
 
-pmclass Exporter
-    need_ext {
+pmclass Exporter need_ext {
 
+    ATTR PMC *ns_src;
+    ATTR PMC *ns_dest;
+    ATTR PMC *globals;
 
 /*
 
