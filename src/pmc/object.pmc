@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -91,6 +91,8 @@ get_attrib_index_keyed(PARROT_INTERP, PMC *self, PMC *key, STRING *name)
 }
 
 pmclass Object need_ext {
+    ATTR PMC *_class;       /* The class this is an instance of. */
+    ATTR PMC *attrib_store; /* The attributes store - a resizable PMC array. */
 
 /*
 
