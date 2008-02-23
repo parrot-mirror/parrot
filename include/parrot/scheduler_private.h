@@ -35,16 +35,6 @@ typedef struct Parrot_Scheduler {
 /* Macro to access underlying structure of a Scheduler PMC. */
 #define PARROT_SCHEDULER(s) ((Parrot_Scheduler *) PMC_data(s))
 
-/* SchedulerMessage PMC's underlying struct. */
-typedef struct Parrot_SchedulerMessage {
-    INTVAL        id;        /* The message's ID. */
-    STRING       *type;      /* The message's type. */
-    PMC          *data;      /* Additional data for the message. */
-} Parrot_SchedulerMessage;
-
-/* Macro to access underlying structure of a Scheduler PMC. */
-#define PARROT_SCHEDULERMESSAGE(s) ((Parrot_SchedulerMessage *) PMC_data(s))
-
 /* Task PMC's underlying struct. */
 typedef struct Parrot_Task {
     INTVAL        id;        /* The task ID. */
