@@ -50,18 +50,6 @@ An empty Hash PMC is allocated during initialization.
 
 #include "parrot/parrot.h"
 #include "pmc_namespace.h"
-#define PARROT_ROLE(o) ((Parrot_Role *) PMC_data(o))
-
-/* This is the underlying structure of this PMC. */
-typedef struct Parrot_Role {
-    STRING *name;            /* The name of the role. */
-    PMC    *_namespace;      /* The namespace it's linked to, if any. */
-    PMC    *roles;           /* Any roles that this role is composed from. */
-    PMC    *methods;         /* Hash of method names to methods in this role. */
-    PMC    *attrib_metadata; /* Hash of attributes in this role to hashes of
-                              * metadata. */
-} Parrot_Role;
-
 
 /* Takes a hash and initializes the role based on it. */
 static void init_role_from_hash(PARROT_INTERP, PMC *self, PMC *info)
@@ -205,8 +193,12 @@ static void init_role_from_hash(PARROT_INTERP, PMC *self, PMC *info)
 
 */
 
-pmclass Role
-    need_ext {
+pmclass Role need_ext {
+    ATTR STRING *name;            /* The name of the role. */
+    ATTR PMC    *_namespace;      /* The namespace it's linked to, if any. */
+    ATTR PMC    *roles;           /* Roles from which this role is composed. */
+    ATTR PMC    *methods;         /* Hash of method names to methods. */
+    ATTR PMC    *attrib_metadata; /* Hash of attributes to hashes metadata. */
 
 /*
 
@@ -258,7 +250,7 @@ Free the memory associated with the object's underlying struct.
 */
 
     VTABLE void destroy() {
-            mem_sys_free(PMC_data(SELF));
+        mem_sys_free(PMC_data(SELF));
     }
 
 /*
