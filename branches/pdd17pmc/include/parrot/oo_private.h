@@ -1,5 +1,5 @@
 /* oo_private.h
- *  Copyright (C) 2007, The Perl Foundation.
+ *  Copyright (C) 2007-2008, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -15,15 +15,6 @@
 #define PARROT_OO_PRIVATE_H_GUARD
 
 #include "parrot/parrot.h"
-
-/* Object PMC's underlying struct. */
-typedef struct Parrot_Object {
-    PMC *_class;          /* The class this is an instance of. */
-    PMC *attrib_store;   /* The attributes store - a resizable PMC array. */
-} Parrot_Object;
-
-/* Macro to access underlying structure of an Object PMC. */
-#define PARROT_OBJECT(o) ((Parrot_Object *) PMC_data(o))
 
 /*
  * Class private flags
