@@ -413,8 +413,7 @@ Transform PAST C<source> into POST.
     .param pmc adverbs         :slurpy :named
 
     $P0 = compreg 'POST'
-    $P1 = $P0.'to_pir'(source, adverbs :flat :named)
-    .return ($P1)
+    .return $P0.'to_pir'(source, adverbs :flat :named)
 .end
 
 
@@ -423,8 +422,7 @@ Transform PAST C<source> into POST.
     .param pmc adverbs         :slurpy :named
 
     $P0 = compreg 'PIR'
-    $P1 = $P0(source)
-    .return ($P1)
+    .return $P0(source)
 .end
 
 
@@ -608,7 +606,7 @@ Performs option processing of command-line args
 
     .local string arg0
     arg0 = shift args
-    .local pmc getopts, opts
+    .local pmc getopts
     getopts = new 'Getopt::Obj'
     getopts.'notOptStop'(1)
     $P0 = getattribute self, '@cmdoptions'
@@ -620,9 +618,7 @@ Performs option processing of command-line args
     push getopts, $S0
     goto getopts_loop
   getopts_end:
-    opts = getopts.'get_options'(args)
-
-    .return (opts)
+    .return getopts.'get_options'(args)
 .end
 
 
@@ -681,6 +677,9 @@ Generic method for compilers invoked from a shell command line.
     goto save_output
   interactive:
     self.'interactive'(args :flat, adverbs :flat :named)
+    goto save_output
+  eval_line:
+    result = self.'eval'($S0, adverbs :flat :named)
 
   save_output:
     if null result goto end
@@ -711,8 +710,6 @@ Generic method for compilers invoked from a shell command line.
   version:
     self.'version'()
     goto end
-  eval_line:
-    self.'eval'($S0, adverbs :flat :named)
 .end
 
 

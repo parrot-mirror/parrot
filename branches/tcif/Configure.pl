@@ -41,7 +41,8 @@ my $opttest = Parrot::Configure::Options::Test->new($args);
 
 # configuration tests will only be run if you requested them
 # as command-line option
-$opttest->run_configure_tests();
+my $rv = $opttest->run_configure_tests();
+print STDERR "Got this: $rv\n";
 
 my $parrot_version = $Parrot::Configure::Options::Conf::parrot_version;
 

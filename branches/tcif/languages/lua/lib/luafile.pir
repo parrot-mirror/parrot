@@ -19,7 +19,9 @@ See F<languages/lua/lib/luaio.pir>.
 .namespace [ 'Lua::io::file' ]
 
 .sub 'createmeta'
-    .param pmc env
+    .local pmc _lua__GLOBAL
+    _lua__GLOBAL = get_hll_global '_G'
+
     .local pmc _file
     _file = lua_newmetatable('ParrotIO')
 
@@ -28,47 +30,47 @@ See F<languages/lua/lib/luaio.pir>.
     _file[$P1] = _file
 
     .const .Sub _file_close = 'close'
-    _file_close.'setfenv'(env)
+    _file_close.'setfenv'(_lua__GLOBAL)
     set $P1, 'close'
     _file[$P1] = _file_close
 
     .const .Sub _file_flush = 'flush'
-    _file_flush.'setfenv'(env)
+    _file_flush.'setfenv'(_lua__GLOBAL)
     set $P1, 'flush'
     _file[$P1] = _file_flush
 
     .const .Sub _file_lines = 'lines'
-    _file_lines.'setfenv'(env)
+    _file_lines.'setfenv'(_lua__GLOBAL)
     set $P1, 'lines'
     _file[$P1] = _file_lines
 
     .const .Sub _file_read = 'read'
-    _file_read.'setfenv'(env)
+    _file_read.'setfenv'(_lua__GLOBAL)
     set $P1, 'read'
     _file[$P1] = _file_read
 
     .const .Sub _file_seek = 'seek'
-    _file_seek.'setfenv'(env)
+    _file_seek.'setfenv'(_lua__GLOBAL)
     set $P1, 'seek'
     _file[$P1] = _file_seek
 
     .const .Sub _file_setvbuf = 'setvbuf'
-    _file_setvbuf.'setfenv'(env)
+    _file_setvbuf.'setfenv'(_lua__GLOBAL)
     set $P1, 'setvbuf'
     _file[$P1] = _file_setvbuf
 
     .const .Sub _file_write = 'write'
-    _file_write.'setfenv'(env)
+    _file_write.'setfenv'(_lua__GLOBAL)
     set $P1, 'write'
     _file[$P1] = _file_write
 
     .const .Sub _file__gc = '__gc'
-    _file__gc.'setfenv'(env)
+    _file__gc.'setfenv'(_lua__GLOBAL)
     set $P1, '__gc'
     _file[$P1] = _file__gc
 
     .const .Sub _file__tostring = '__tostring'
-    _file__tostring.'setfenv'(env)
+    _file__tostring.'setfenv'(_lua__GLOBAL)
     set $P1, '__tostring'
     _file[$P1] = _file__tostring
 
@@ -89,8 +91,8 @@ are garbage collected, but that takes an unpredictable amount of time to happen.
     $P0 = get_hll_global ['Lua::io'], 'tofile'
     $P0(self)
     $P0 = get_hll_global ['Lua::io'], 'aux_close'
-    res = $P0(self)
-    .return (res)
+    (res :slurpy) = $P0(self)
+    .return (res :flat)
 .end
 
 
@@ -397,18 +399,8 @@ or C<string.format> before write.
     .local pmc f
     $P0 = get_hll_global ['Lua::io'], 'tofilep'
     f = $P0(self)
-    # ignore closed files and standard files
+    # ignore closed files
     if null f goto L1
-    $P0 = getstdin
-    $I0 = issame $P0, f
-    if $I0 goto L1
-    $P0 = getstdout
-    $I0 = issame $P0, f
-    if $I0 goto L1
-    $P0 = getstderr
-    $I0 = issame $P0, f
-    if $I0 goto L1
-    printerr "closing file for you.\n"
     $P0 = get_hll_global ['Lua::io'], 'aux_close'
     $P0(self)
   L1:

@@ -321,6 +321,17 @@ Defines the .true method on all objects via C<prefix:?>.
  .return 'prefix:?'(self)
 .end
 
+=item say()
+
+Print the object
+
+=cut
+
+.sub 'say' :method
+    $P0 = get_hll_global 'say'
+    .return $P0(self)
+.end
+
 =back
 
 =head2 Protoobject methods
@@ -376,6 +387,17 @@ is just itself.
 
 .sub 'WHAT' :method
     .return (self)
+.end
+
+=item ACCEPTS(topic)
+
+=cut
+
+.sub 'ACCEPTS' :method
+    .param pmc topic
+    $P0 = self.'HOW'()
+    $I0 = isa topic, $P0
+    .return 'prefix:?'($I0)
 .end
 
 =back

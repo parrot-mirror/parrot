@@ -359,26 +359,18 @@ Add a register or constant to the function arg list
 void
 add_pcc_arg(ARGMOD(SymReg *r), ARGMOD(SymReg *arg))
 {
-    const int         n   =    r->pcc_sub->nargs;
     pcc_sub_t * const sub = r->pcc_sub;
+    const int         n   = sub->nargs;
 
-    if (sub->args)
-        sub->args = (SymReg **)mem_sys_realloc(sub->args,
-            (n+1) * sizeof (SymReg *));
-    else
-        sub->args = mem_allocate_n_zeroed_typed(n+1, SymReg *);
-    sub->args[n]   = arg;
+    mem_realloc_n_typed(sub->args,      n+1, SymReg *);
+    mem_realloc_n_typed(sub->arg_flags, n+1, int);
 
-    if (sub->arg_flags)
-        sub->arg_flags = (int *)mem_sys_realloc(sub->arg_flags,
-            (n+1) * sizeof (int));
-    else
-        sub->arg_flags = mem_allocate_n_zeroed_typed(n+1, int);
+    sub->args[n]      = arg;
     sub->arg_flags[n] = arg->type;
 
     arg->type &= ~(VT_FLAT|VT_OPTIONAL|VT_OPT_FLAG|VT_NAMED);
 
-    r->pcc_sub->nargs++;
+    sub->nargs++;
 }
 
 /* XXX Why do we have both add_pcc_arg and add_pcc_param? */
@@ -411,25 +403,16 @@ RT#48260: Not yet documented!!!
 void
 add_pcc_result(ARGMOD(SymReg *r), ARGMOD(SymReg *arg))
 {
-    const int         n   = r->pcc_sub->nret;
     pcc_sub_t * const sub = r->pcc_sub;
+    const int         n   = sub->nret;
 
-    if (sub->ret)
-        sub->ret = (SymReg **)mem_sys_realloc(sub->ret,
-            (n + 1) * sizeof (SymReg *));
-    else
-        sub->ret = mem_allocate_n_zeroed_typed(n+1, SymReg*);
-
-    sub->ret[n] = arg;
+    mem_realloc_n_typed(sub->ret,       n+1, SymReg *);
+    mem_realloc_n_typed(sub->ret_flags, n+1, int);
 
     /* we can't keep the flags in the SymReg as the SymReg
      * maybe used with different flags for different calls */
-    if (sub->ret_flags)
-        sub->ret_flags = (int *)mem_sys_realloc(sub->ret_flags,
-                (n + 1) * sizeof (int));
-    else
-        sub->ret_flags = mem_allocate_n_zeroed_typed(n+1, int);
 
+    sub->ret[n]       = arg;
     sub->ret_flags[n] = arg->type;
 
     arg->type &= ~(VT_FLAT|VT_OPTIONAL|VT_OPT_FLAG|VT_NAMED);
@@ -450,15 +433,10 @@ RT#48260: Not yet documented!!!
 void
 add_pcc_multi(ARGMOD(SymReg *r), ARGIN_NULLOK(SymReg *arg))
 {
-    const int n           = r->pcc_sub->nmulti;
     pcc_sub_t * const sub = r->pcc_sub;
+    const int n           = sub->nmulti;
 
-    if (sub->multi)
-        sub->multi = (SymReg **)mem_sys_realloc(sub->multi,
-            (n + 1) * sizeof (SymReg *));
-    else
-        sub->multi = mem_allocate_n_zeroed_typed(n+1, SymReg *);
-
+    mem_realloc_n_typed(sub->multi, n+1, SymReg *);
     sub->multi[n] = arg;
     sub->nmulti++;
 }
@@ -884,32 +862,6 @@ _mk_address(PARROT_INTERP, ARGMOD(SymHash *hsh), ARGIN(const char *name), int un
         r->lhs_use_count++;
 
     return r;
-}
-
-/*
-
-=item C<SymReg * mk_address>
-
-Eventually make mk_address static
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-SymReg *
-mk_address(PARROT_INTERP, ARGIN(const char *name), int uniq)
-{
-    const int begins_with_underscore = (*name == '_');
-    SymHash * const h = begins_with_underscore
-        ? &IMCC_INFO(interp)->ghash : &IMCC_INFO(interp)->cur_unit->hash;
-    SymReg  * const s = _mk_address(interp, h, name, uniq);
-
-    if (begins_with_underscore)
-       s->usage |= U_FIXUP;
-
-    return s;
 }
 
 /*

@@ -16,7 +16,10 @@ scalar context it returns a reference to that list.
 =cut
 
 package Parrot::Harness::DefaultTests;
+
 use strict;
+use warnings;
+
 use base qw( Exporter );
 our @EXPORT = qw( get_default_tests );
 
@@ -68,6 +71,7 @@ our @developing_tests = (
         c_operator.t
         c_returns.t
         c_struct.t
+        check_isxxx.t
         check_toxxx.t
         copyright.t
         filenames.t
@@ -83,7 +87,7 @@ our @developing_tests = (
 
 sub get_default_tests {
     my ($core_tests_only, $runcore_tests_only) = @_;
-    
+
     # add metadata.t and coding standards tests only if we're DEVELOPING
     if ( -e "DEVELOPING" ) {
         push @standard_tests, @developing_tests;
@@ -110,4 +114,3 @@ sub get_default_tests {
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
-

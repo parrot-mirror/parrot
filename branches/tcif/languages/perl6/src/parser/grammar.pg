@@ -87,8 +87,7 @@ token unsp {
 token unv {
     || \h+
     || ^^ <.pod_comment>
-    ##  if '#' is followed by '?perl6:', then it's a compiler_directive
-    || '#' <!before '?perl6:'> \N*
+    || '#' \N*
 }
 
 ##  The <afterws> rule returns true if we're immediate after
@@ -403,7 +402,13 @@ token postfix {
 
 
 token methodop {
-    '.' <ident>
+    '.'
+    [
+    | <ident>
+    | <?before '$' | '@' > <variable>
+    | <?before <[ ' " ]>> <quote>
+#        { $<quote> ~~ /\W/ or .panic("Useless use of quotes") }
+    ]
     [
     | <.unsp>? '(' <semilist> ')' {*}            #= semilist
     | ':' <?before \s> <arglist> {*}             #= arglist
@@ -413,16 +418,10 @@ token methodop {
 
 
 token postcircumfix {
-    | '(' <semilist> ')' {*}                     #= ( )
-    | '[' <semilist> ']' {*}                     #= [ ]
-    | '{' <semilist> '}' {*}                     #= { }
-    | '<' <anglewords> '>' {*}                   #= < >
-}
-
-
-# This needs to take a parameter eventually, but we can't do that yet.
-token anglewords {
-    <.ws> [ <!before '>'> .]*
+    | '(' <semilist> ')' {*}                          #= ( )
+    | '[' <semilist> ']' {*}                          #= [ ]
+    | '{' <semilist> '}' {*}                          #= { }
+    | <?before '<' > <quote_expression: :w :q> {*}    #= < >
 }
 
 
@@ -437,6 +436,7 @@ token noun {
     | <circumfix> {*}                            #= circumfix
     | <variable> {*}                             #= variable
     | <subcall> {*}                              #= subcall
+    | <methodop> {*}                             #= methodop
     | <value> {*}                                #= value
     | <statement_prefix> {*}                     #= statement_prefix
     | <regex_declarator> {*}                     #= regex_declarator
@@ -489,7 +489,7 @@ rule scope_declarator {
 token circumfix {
     | '(' <statementlist> ')' {*}                #= ( )
     | '[' <statementlist> ']' {*}                #= [ ]
-    | <block> {*}                                #= { }
+    | <?before '{' | <lambda> > <pblock> {*}     #= { }
 }
 
 token variable {
@@ -613,13 +613,13 @@ rule regex_declarator_regex {
 rule regex_declarator_token {
     $<sym>='token'
     <ident>?
-    <before '{'> <quote_expression: :token> {*}
+    <before '{'> <quote_expression: :regex :ratchet> {*}
 }
 
 rule regex_declarator_rule {
     $<sym>='rule'
     <ident>?
-    <before '{'> <quote_expression: :rule> {*}
+    <before '{'> <quote_expression: :regex :ratchet :sigspace> {*}
 }
 
 ##  S05 shows semilist as being a list of statements, in order
