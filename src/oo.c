@@ -55,10 +55,6 @@ static void do_initcall(PARROT_INTERP,
     ARGIN_NULLOK(PMC *init))
         __attribute__nonnull__(1);
 
-static void fail_if_exist(PARROT_INTERP, ARGIN(PMC *name))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
 static void fail_if_type_exists(PARROT_INTERP, ARGIN(PMC *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -541,47 +537,6 @@ readable_name(PARROT_INTERP, ARGIN(PMC *name))
 
 /*
 
-=item C<static void fail_if_exist>
-
-Throws an exception if a PMC or class with the same name already exists.
-
-RT#45969 uses global class registry
-
-RT#50644: this function seems to be the same as fail_if_type_exists in this file.
-
-=cut
-
-*/
-
-static void
-fail_if_exist(PARROT_INTERP, ARGIN(PMC *name))
-{
-    INTVAL      type;
-
-    PMC * const classname_hash = interp->class_hash;
-    PMC * const type_pmc       = (PMC *)VTABLE_get_pointer_keyed(interp,
-                                        classname_hash, name);
-    if (PMC_IS_NULL(type_pmc) ||
-            type_pmc->vtable->base_type == enum_class_NameSpace)
-        type = 0;
-    else
-        type = VTABLE_get_integer(interp, type_pmc);
-
-    if (type > enum_type_undef) {
-        /* RT#45971 get printable name */
-        real_exception(interp, NULL, INVALID_OPERATION,
-                "Class %Ss already registered!\n",
-                VTABLE_get_string(interp, name));
-    }
-
-    if (type < enum_type_undef)
-        real_exception(interp, NULL, INVALID_OPERATION,
-                "native type with name '%s' already exists - "
-                "can't register Class", data_types[type].name);
-}
-
-/*
-
 =item C<static void rebuild_attrib_stuff>
 
 Take the class and completely rebuild the attribute stuff for
@@ -806,7 +761,7 @@ Parrot_single_subclass(PARROT_INTERP, ARGIN(PMC *base_class), ARGIN_NULLOK(PMC *
 
     /* Set the classname, if we have one */
     if (!PMC_IS_NULL(name)) {
-        fail_if_exist(interp, name);
+        fail_if_type_exists(interp, name);
     }
     else {
         /* RT#45975 not really threadsafe but good enough for now */
@@ -1322,7 +1277,8 @@ Parrot_instantiate_object_init(PARROT_INTERP, ARGIN(PMC *object), ARGIN(PMC *ini
 
 =item C<void Parrot_instantiate_object>
 
-RT#48260: Not yet documented!!!
+Wrapper for instantiate_object, passing NULL as initialization.
+Returns a new Parrot object.
 
 =cut
 
@@ -1412,25 +1368,45 @@ Parrot_remove_parent(PARROT_INTERP, ARGIN(PMC *removed_class),
 
 =item C<void mark_object_cache>
 
-RT#48260: Not yet documented!!!
-
-RT#50648: Not implemented.
+Marks all PMCs in the object method cache as live.  This shouldn't strictly be
+necessary, as they're likely all reachable from namespaces and classes, but
+it's unlikely to hurt anything except mark phase performance.
 
 =cut
 
 */
 
+#define TBL_SIZE_MASK 0x1ff   /* x bits 2..10 */
+#define TBL_SIZE (1 + TBL_SIZE_MASK)
+
 void
 mark_object_cache(PARROT_INTERP)
 {
-    UNUSED(interp);
+    Caches * const mc = interp->caches;
+    UINTVAL type, entry;
+
+    if (!mc)
+        return;
+
+    for (type = 0; type < mc->mc_size; type++) {
+        if (!mc->idx[type])
+            continue;
+
+        for (entry = 0; entry < TBL_SIZE; ++entry) {
+            Meth_cache_entry *e = mc->idx[type][entry];
+            while (e) {
+                pobject_lives(interp, (PObj *)e->pmc);
+                e = e->next;
+            }
+        }
+    }
 }
 
 /*
 
 =item C<void init_object_cache>
 
-RT#48260: Not yet documented!!!
+Allocate memory for object cache.
 
 =cut
 
@@ -1468,9 +1444,6 @@ destroy_object_cache(PARROT_INTERP)
     mem_sys_free(mc->idx);
     mem_sys_free(mc);
 }
-
-#define TBL_SIZE_MASK 0x1ff   /* x bits 2..10 */
-#define TBL_SIZE (1 + TBL_SIZE_MASK)
 
 /*
 

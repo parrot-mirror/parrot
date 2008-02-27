@@ -235,9 +235,12 @@ method pblock($/) {
         $?BLOCK_SIGNATURED :=
             PAST::Block.new(
                 PAST::Stmts.new(
-                    PAST::Var.new( :name('$_'), :scope('parameter') )
+                    PAST::Var.new(
+                        :name('$_'),
+                        :scope('parameter'),
+                        :viviself('Undef')
+                    )
                 ),
-                :blocktype('declaration'),
                 :node( $/ )
             );
         $?BLOCK_SIGNATURED.symbol( '$_', :scope('lexical') );
@@ -428,17 +431,33 @@ method term($/, $key) {
     my $past := $( $/{$key} );
     if $<postfix> {
         for $<postfix> {
-            # Check if it's a call; if so, need special handling.
             my $term := $past;
             $past := $($_);
-            $past.unshift($term);
+
+            # Check if it's an indirect call.
+            if $_<methodop><variable> {
+                # What to call supplied; need to put the invocant second.
+                my $meth := $past[0];
+                $past[0] := $term;
+                $past.unshift($meth);
+            }
+            elsif $_<methodop><quote> {
+                # First child is something that we evaluate to get the
+                # name. Replace it with PIR to call find_method on it.
+                my $meth_name := $past[0];
+                $past[0] := $term;
+                $past.unshift( PAST::Op.new(
+                    :inline("$S1000 = %1\n%r = find_method %0, $S1000\n"),
+                    $term,
+                    $meth_name
+                ));
+            }
+            else {
+                $past.unshift($term);
+            }
         }
     }
     make $past;
-}
-
-method compiler_directive($/) {
-    make $( $<term> );
 }
 
 
@@ -448,15 +467,26 @@ method postfix($/, $key) {
 
 method methodop($/, $key) {
     my $past;
+    
     if ($key eq 'null') {
         $past := PAST::Op.new();
     }
     else {
         $past := $( $/{$key} );
     }
-    $past.name(~$<ident>);
     $past.pasttype('callmethod');
     $past.node($/);
+
+    if $<ident> {
+        $past.name(~$<ident>);
+    }
+    elsif $<variable> {
+        $past.unshift( $( $<variable> ) );
+    }
+    else {
+        $past.unshift( $( $<quote> ) );
+    }
+    
     make $past;
 }
 
@@ -488,15 +518,12 @@ method postcircumfix($/, $key) {
                               );
     }
     elsif $key eq '< >' {
-        # XXX Need to split this for the list case rather than the
-        # key case.
-        $past := PAST::Var.new(
-            PAST::Val.new( :value(~$<anglewords>) ),
-            :scope('keyed'),
-            :vivibase('Hash'),
-            :viviself('Undef'),
-            :node( $/ )
-        );
+        $past := PAST::Var.new( $( $<quote_expression> ),
+                                :scope('keyed'),
+                                :vivibase('Hash'),
+                                :viviself('Undef'),
+                                :node( $/ )
+                              );
     }
     else
     {
@@ -521,6 +548,15 @@ method noun($/, $key) {
                 :scope('package')
             )
         );
+    }
+    elsif $key eq 'methodop' {
+        # Call on $_.
+        $past := $( $/{$key} );
+        $past.unshift(PAST::Var.new(
+            :name('$_'),
+            :scope('lexical'),
+            :node($/)
+        ));
     }
     else {
         $past := $( $/{$key} );
@@ -755,13 +791,14 @@ method scope_declarator($/) {
     my $name := $past.name();
     our $?BLOCK;
     unless $?BLOCK.symbol($name) {
-        $past.isdecl(1);
         my $scope := 'lexical';
         my $declarator := $<declarator>;
         if $declarator eq 'my' {
+            $past.isdecl(1);
         }
         elsif $declarator eq 'our' {
             $scope := 'package';
+            $past.isdecl(1);
         }
         elsif $declarator eq 'has' {
             # Set that it's attribute scope.
@@ -864,11 +901,6 @@ method variable($/, $key) {
         ));
     }
     else {
-        # Set how it vivifies.
-        my $viviself := 'Undef';
-        if $<sigil> eq '@' { $viviself := 'List'; }
-        if $<sigil> eq '%' { $viviself := 'Hash'; }
-
         # Handle naming.
         my @ident := $<name><ident>;
         my $name;
@@ -878,36 +910,54 @@ method variable($/, $key) {
         PIR q<  $P1 = pop $P0            >;
         PIR q<  store_lex '$name', $P1   >;
 
-        # ! twigil should be kept in the name.
-        if $<twigil>[0] eq '!' { $name := '!' ~ ~$name; }
-
-        # All but subs should keep their sigils.
-        my $sigil := '';
-        if $<sigil> ne '&' {
-            $sigil := ~$<sigil>;
+        # If it's $.x, it's a method call, not a variable.
+        if $<twigil>[0] eq '.' {
+            $past := PAST::Op.new(
+                :node($/),
+                :pasttype('callmethod'),
+                :name($name),
+                PAST::Op.new(
+                    :inline('%r = self')
+                )
+            );
         }
+        else {
+            # Variable. Set how it vivifies.
+            my $viviself := 'Undef';
+            if $<sigil> eq '@' { $viviself := 'List'; }
+            if $<sigil> eq '%' { $viviself := 'Hash'; }
 
-        # If we have no twigil, but we see the name noted as an attribute in
-        # an enclosing scope, add the ! twigil anyway; it's an alias.
-        if $<twigil>[0] eq '' {
-            our @?BLOCK;
-            for @?BLOCK {
-                if defined( $_ ) {
-                    my $sym_table := $_.symbol($sigil ~ $name);
-                    if defined( $sym_table ) && $sym_table<scope> eq 'attribute' {
-                        $name := '!' ~ $name;
+            # ! twigil should be kept in the name.
+            if $<twigil>[0] eq '!' { $name := '!' ~ ~$name; }
+
+            # All but subs should keep their sigils.
+            my $sigil := '';
+            if $<sigil> ne '&' {
+                $sigil := ~$<sigil>;
+            }
+
+            # If we have no twigil, but we see the name noted as an attribute in
+            # an enclosing scope, add the ! twigil anyway; it's an alias.
+            if $<twigil>[0] eq '' {
+                our @?BLOCK;
+                for @?BLOCK {
+                    if defined( $_ ) {
+                        my $sym_table := $_.symbol($sigil ~ $name);
+                        if defined( $sym_table ) && $sym_table<scope> eq 'attribute' {
+                            $name := '!' ~ $name;
+                        }
                     }
                 }
             }
-        }
-
-        $past := PAST::Var.new( :name( $sigil ~ $name ),
-                                :viviself($viviself),
-                                :node($/)
-                              );
-        if @ident || $<twigil>[0] eq '*' {
-            $past.namespace(@ident);
-            $past.scope('package');
+        
+            $past := PAST::Var.new( :name( $sigil ~ $name ),
+                                    :viviself($viviself),
+                                    :node($/)
+                                  );
+            if @ident || $<twigil>[0] eq '*' {
+                $past.namespace(@ident);
+                $past.scope('package');
+            }
         }
     }
     make $past;
@@ -923,7 +973,7 @@ method circumfix($/, $key) {
         $past := $( $<statementlist> );
     }
     elsif ($key eq '{ }') {
-        $past := $( $<block> );
+        $past := $( $<pblock> );
     }
     make $past;
 }

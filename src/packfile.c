@@ -345,13 +345,15 @@ PackFile_destroy(PARROT_INTERP, ARGMOD_NULLOK(PackFile *pf))
         return;
     }
 #ifdef PARROT_HAS_HEADER_SYSMMAN
-    if (pf->is_mmap_ped)
-        munmap((void*)pf->src, pf->size);
+    if (pf->is_mmap_ped) {
+        DECL_CONST_CAST;
+        munmap(const_cast(pf->src), pf->size);
+    }
 #endif
     mem_sys_free(pf->header);
     pf->header = NULL;
     mem_sys_free(pf->dirp);
-    pf->dirp = NULL;
+    pf->dirp   = NULL;
     PackFile_Segment_destroy(interp, &pf->directory.base);
     return;
 }
@@ -851,18 +853,18 @@ PackFile_unpack(PARROT_INTERP, ARGMOD(PackFile *self),
 #endif
 
     self->directory.base.file_offset = (INTVAL)cursor - (INTVAL)self->src;
-    /*
-     * now unpack dir, which unpacks its contents ...
-     */
+
+    /* now unpack dir, which unpacks its contents ... */
     Parrot_block_DOD(interp);
     cursor = PackFile_Segment_unpack(interp,
                                      &self->directory.base, cursor);
     Parrot_unblock_DOD(interp);
 
 #ifdef PARROT_HAS_HEADER_SYSMMAN
-    if (self->is_mmap_ped && (
-                self->need_endianize || self->need_wordsize)) {
-        munmap((void *)self->src, self->size);
+    if (self->is_mmap_ped
+    && (self->need_endianize || self->need_wordsize)) {
+        DECL_CONST_CAST;
+        munmap(const_cast(self->src), self->size);
         self->is_mmap_ped = 0;
     }
 #endif
@@ -1182,23 +1184,27 @@ PARROT_CAN_RETURN_NULL
 static const opcode_t *
 default_unpack(ARGMOD(PackFile_Segment *self), ARGIN(const opcode_t *cursor))
 {
+    DECL_CONST_CAST_OF(opcode_t);
+
     self->op_count = PF_fetch_opcode(self->pf, &cursor);
-    self->itype = PF_fetch_opcode(self->pf, &cursor);
-    self->id = PF_fetch_opcode(self->pf, &cursor);
-    self->size = PF_fetch_opcode(self->pf, &cursor);
+    self->itype    = PF_fetch_opcode(self->pf, &cursor);
+    self->id       = PF_fetch_opcode(self->pf, &cursor);
+    self->size     = PF_fetch_opcode(self->pf, &cursor);
+
     if (self->size == 0)
         return cursor;
+
     /* if the packfile is mmap()ed just point to it if we don't
-     * need any fetch transforms
-     */
-    if (self->pf->is_mmap_ped &&
-            !self->pf->need_endianize && !self->pf->need_wordsize) {
-        self->data = cursor;
-        cursor += self->size;
+     * need any fetch transforms */
+    if (self->pf->is_mmap_ped
+    && !self->pf->need_endianize && !self->pf->need_wordsize) {
+        self->data  = const_cast(cursor);
+        cursor     += self->size;
         return cursor;
     }
+
     /* else allocate mem */
-    self->data = (opcode_t *)mem_sys_allocate(self->size * sizeof (opcode_t));
+    self->data = mem_allocate_n_typed(self->size, opcode_t);
 
     if (!self->data) {
         PIO_eprintf(NULL,
@@ -2396,23 +2402,18 @@ Parrot_new_debug_seg(PARROT_INTERP, ARGMOD(PackFile_ByteCode *cs), size_t size)
         mem_realloc_n_typed(debug->base.data, size, opcode_t);
     }
     else {              /* create one */
-        const size_t len = strlen(cs->base.name) + 4;
+        const size_t len  = strlen(cs->base.name) + 4;
         char * const name = (char *)mem_sys_allocate(len);
+        const int add     = (interp->code && interp->code->base.dir);
+        PackFile_Directory * const dir =
+            add
+                ? interp->code->base.dir
+                : cs->base.dir
+                    ? cs->base.dir
+                    : &interp->initial_pf->directory;
 
         snprintf(name, len, "%s_DB", cs->base.name);
-        if (interp->code && interp->code->base.dir) {
-            debug = (PackFile_Debug *)
-                PackFile_Segment_new_seg(interp,
-                interp->code->base.dir, PF_DEBUG_SEG, name, 1);
-        }
-        else {
-            /* used by eval - don't register the segment */
-            debug = (PackFile_Debug *)
-                PackFile_Segment_new_seg(interp,
-                cs->base.dir ?  cs->base.dir :
-                    &interp->initial_pf->directory,
-                PF_DEBUG_SEG, name, 0);
-        }
+        debug = (PackFile_Debug *)PackFile_Segment_new_seg(interp, dir, PF_DEBUG_SEG, name, add);
         mem_sys_free(name);
 
         debug->base.data = mem_allocate_n_zeroed_typed(size, opcode_t);
@@ -3029,16 +3030,14 @@ PackFile_FixupTable_new_entry(PARROT_INTERP,
         interp->code->fixups = self;
         self->code = interp->code;
     }
-    i = self->fixup_count;
-    self->fixup_count++;
+    i = self->fixup_count++;
     mem_realloc_n_typed(self->fixups, self->fixup_count, PackFile_FixupEntry *);
 
-    self->fixups[i]       = mem_allocate_typed(PackFile_FixupEntry);
-    self->fixups[i]->type = type;
-    self->fixups[i]->name = (char *)mem_sys_allocate(strlen(label) + 1);
-    strcpy(self->fixups[i]->name, label);
+    self->fixups[i]         = mem_allocate_typed(PackFile_FixupEntry);
+    self->fixups[i]->type   = type;
+    self->fixups[i]->name   = str_dup(label);
     self->fixups[i]->offset = offs;
-    self->fixups[i]->seg = self->code;
+    self->fixups[i]->seg    = self->code;
 }
 
 /*

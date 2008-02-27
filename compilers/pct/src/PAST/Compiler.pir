@@ -452,16 +452,30 @@ with a 'pasttype' attribute of either 'call' or 'callmethod'.
     .param pmc node
     .param pmc options         :slurpy :named
 
+    .local string pasttype
+    pasttype = node.'pasttype'()
+    if pasttype goto have_pasttype
+    pasttype = 'call'
+  have_pasttype:
+
+    .local string signature
+    signature = ':'
+    unless pasttype == 'callmethod' goto have_signature
+    signature = 'P:'
+  have_signature:
+
     .local pmc ops, posargs, namedargs
     .local string name
     name = node.'name'()
     unless name goto call_first_arg
-    (ops, posargs, namedargs) = self.'post_children'(node, 'signature'=>'v:')
+    signature = concat 'v', signature
+    (ops, posargs, namedargs) = self.'post_children'(node, 'signature'=>signature)
     name = ops.'escape'(name)
     unshift posargs, name
     goto children_done
   call_first_arg:
-    (ops, posargs, namedargs) = self.'post_children'(node, 'signature'=>'vP:')
+    signature = concat 'vP', signature
+    (ops, posargs, namedargs) = self.'post_children'(node, 'signature'=>signature)
   children_done:
 
     .local string result, rtype
@@ -472,11 +486,6 @@ with a 'pasttype' attribute of either 'call' or 'callmethod'.
     ops.'result'(result)
   result_done:
 
-    .local string pasttype
-    pasttype = node.'pasttype'()
-    if pasttype goto have_pasttype
-    pasttype = 'call'
-  have_pasttype:
     ops.'push_pirop'(pasttype, posargs :flat, namedargs :flat, 'result'=>result)
     .return (ops)
 .end
@@ -1323,8 +1332,7 @@ blocks to determine the scope.
     .return self.'vivify'(node, ops, fetchop, storeop)
 
   attribute_decl:
-    ops = $P0.'new'('node'=>node)
-    .return (ops)
+    .return $P0.'new'('node'=>node)
 
   attribute_bind:
     $P0 = get_hll_global ['POST'], 'Op'

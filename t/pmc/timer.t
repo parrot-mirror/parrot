@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2005, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -21,6 +21,8 @@ t/pmc/timer.t - Timer PMCs
 Tests the Timer PMC.
 
 =cut
+
+$ENV{TEST_PROG_ARGS} ||= '';
 
 my %platforms = map { $_ => 1 } qw/
     aix
@@ -98,7 +100,7 @@ ok 3
 OUT
 
 SKIP: {
-    skip( "No thread config yet", 5 ) unless ( $platforms{$^O} );
+    skip( "No thread config yet", 3 ) unless ( $platforms{$^O} );
 
     pasm_output_like( <<'CODE', <<'OUT', "Timer setup - initializer/start" );
 .include "timer.pasm"
@@ -151,7 +153,9 @@ ok 1
 ok 2
 OUT
 
-    pasm_output_is( <<'CODE', <<'OUT', "Timer setup - initializer/start/repeat" );
+    my @todo = $ENV{TEST_PROG_ARGS} =~ /-j/ ?
+       ( todo => 'RT #49718, add scheduler features to JIT' ) : ();
+    pasm_output_is( <<'CODE', <<'OUT', "Timer setup - initializer/start/repeat" , @todo );
 .include "timer.pasm"
     new P1, 'SArray'
     set P1, 8

@@ -14,6 +14,9 @@ Parrot.  If you're reading this yourself, use F<Configure.pl>
 
 =cut
 
+use strict;
+use warnings;
+
 my %translations =
 (
     INSTALL_BASE => 'prefix',
@@ -31,3 +34,10 @@ for my $arg (@ARGV)
 }
 
 system( $^X, 'Configure.pl', @commands );
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:

@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -21,7 +21,10 @@ Currently, only one such subroutine is supported:
 =cut
 
 package Parrot::Harness::Smoke;
+
 use strict;
+use warnings;
+
 use lib qw( . lib ../lib ../../lib );
 use Parrot::Config qw/%PConfig/;
 use base qw( Exporter );
@@ -88,9 +91,9 @@ sub generate_html_smoke_report {
 
       $v->has_inline_css(1); # no separate css file
 
-      open HTML, '>', $html_fn;
-      print HTML $v->html();
-      close HTML;
+      open my $HTML, '>', $html_fn;
+      print {$HTML} $v->html();
+      close $HTML;
 
       print "$html_fn has been generated.\n";
     }
@@ -104,4 +107,3 @@ sub generate_html_smoke_report {
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
-

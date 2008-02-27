@@ -119,9 +119,9 @@ static Instruction * MK_I(PARROT_INTERP,
 PARROT_WARN_UNUSED_RESULT
 static Instruction* mk_pmc_const(PARROT_INTERP,
     IMC_Unit *unit,
-    NOTNULL(const char *type),
-    NOTNULL(SymReg *left),
-    NOTNULL(char *constant))
+    ARGIN(const char *type),
+    ARGMOD(SymReg *left),
+    ARGIN(const char *constant))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
@@ -201,8 +201,8 @@ MK_I(PARROT_INTERP, IMC_Unit *unit, NOTNULL(const char *fmt), int n, ...)
 
 PARROT_WARN_UNUSED_RESULT
 static Instruction*
-mk_pmc_const(PARROT_INTERP, IMC_Unit *unit, NOTNULL(const char *type),
-             NOTNULL(SymReg *left), NOTNULL(char *constant))
+mk_pmc_const(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *type),
+        ARGMOD(SymReg *left), ARGIN(const char *constant))
 {
     const   int type_enum = atoi(type);
     SymReg *rhs;
@@ -652,13 +652,18 @@ pragma_1:  N_OPERATORS INTC
 hll_def: HLL STRINGC COMMA STRINGC
          {
             STRING * const hll_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
-            STRING * const hll_lib  = string_unescape_cstring(interp, $4 + 1, '"', NULL);
-            PMC    *ignored;
-            CONTEXT(((Interp*)interp)->ctx)->current_HLL =
+            CONTEXT(interp->ctx)->current_HLL =
                 Parrot_register_HLL(interp, hll_name);
-            ignored = Parrot_load_lib(interp, hll_lib, NULL);
-            UNUSED(ignored);
-            Parrot_register_HLL_lib(interp, hll_lib);
+
+            /* don't bother loading the library for an empty string */
+            if (strlen($4) > 2) {
+                STRING * const hll_lib =
+                    string_unescape_cstring(interp, $4 + 1, '"', NULL);
+                PMC    *ignored        = Parrot_load_lib(interp, hll_lib, NULL);
+                UNUSED(ignored);
+                Parrot_register_HLL_lib(interp, hll_lib);
+            }
+
             IMCC_INFO(interp)->cur_namespace = NULL;
             $$ = 0;
          }

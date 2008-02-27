@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -11,7 +11,10 @@ Parrot::Harness::Options - Handle options and argument processing in F<t/harness
 =cut
 
 package Parrot::Harness::Options;
+
 use strict;
+use warnings;
+
 use base qw( Exporter );
 our @EXPORT_OK = qw(
     handle_long_options
@@ -24,25 +27,25 @@ sub handle_long_options {
     my %longopts;
     $longopts{running_make_test} = grep { $_ eq '--running-make-test' } @argv;
     @argv = grep { $_ ne '--running-make-test' } @argv;
-    
+
     $longopts{gc_debug} = grep { $_ eq '--gc-debug' } @argv;
     @argv = grep { $_ ne '--gc-debug' } @argv;
-    
+
     $longopts{core_tests_only} = grep { $_ eq '--core-tests' } @argv;
     @argv = grep { $_ ne '--core-tests' } @argv;
-    
+
     $longopts{runcore_tests_only} = grep { $_ eq '--runcore-tests' } @argv;
     @argv = grep { $_ ne '--runcore-tests' } @argv;
-    
+
     $longopts{html} = grep { $_ eq '--html' } @argv;
     @argv = grep { $_ ne '--html' } @argv;
-    
+
     $longopts{run_exec} = grep { $_ eq '--run-exec' } @argv;
     @argv = grep { $_ ne '--run-exec' } @argv;
-    
+
     $longopts{help} = grep { $_ eq '--help' } @argv;
     @argv = grep { $_ ne '--help' } @argv;
-    
+
     return (\%longopts, @argv);
 }
 
@@ -90,4 +93,3 @@ EOF
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
-
