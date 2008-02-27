@@ -18,7 +18,7 @@ use Parrot::Configure::Parallel::Trace;
 
 my $trace = Parrot::Configure::Parallel::Trace->new($0);
 ok(defined $trace, "Parallel::Trace constructor succeeded");
-is($trace->store_this_step(), 1, "Step stored");
+ok($trace->store_this_step(), "Step stored");
 
 =for hints_for_testing Testing and refactoring of inter::progs should
 entail understanding of issues discussed in the following RT tickets:
