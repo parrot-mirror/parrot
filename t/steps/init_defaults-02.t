@@ -20,7 +20,7 @@ use Parrot::Configure::Parallel::Trace;
 
 my $trace = Parrot::Configure::Parallel::Trace->new($0);
 ok(defined $trace, "Parallel::Trace constructor succeeded");
-is($trace->store_this_step(), 2,
+ok($trace->store_this_step(),
     "Step stored; has previously been tested");
 
 # DEVELOPING non-existence is faked by working in a tempdir which lacks it
