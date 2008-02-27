@@ -10,7 +10,7 @@ use warnings;
         exit;
     }
 }
-use App::Prove;
+# use App::Prove;
 use Carp;
 use Config;
 use lib qw(lib);
@@ -112,6 +112,9 @@ sub new {
     for my $k (grep { ! $excluded_options{$_} } keys %{$argsref}) {
         $self->set($k, $argsref->{$k});
     }
+    # Find the 'prove' command associated with *this* version of perl.
+    $self->{this_prove} = File::Spec->catfile( $Config{'scriptdir'}, 'prove' );
+
     return $self;
 }
 
@@ -163,19 +166,21 @@ sub run_configure_tests {
         print "As you requested, we'll start with some tests of the configuration tools.\n\n";
 
         my $optstr = $self->get_all_options(); 
-        my $app = App::Prove->new();
-        $app->process_args(@preconfiguration_tests, '::', $optstr);
-        my $rv = $app->run() or die
+        system( qq{$self->{this_prove} @preconfiguration_tests :: $optstr} )
+             and die
+#        my $app = App::Prove->new();
+#        $app->process_args(@preconfiguration_tests, '::', $optstr);
+#        my $rv = $app->run() or die
  "Pre-configuration tests did not complete successfully; Configure.pl will not continue.";
- print "Got this rv: $rv" . 'XXX' . "\n";
-        if (! defined $rv) {
+# print "Got this rv: $rv" . 'XXX' . "\n";
+#        if (! defined $rv) {
             print <<"TEST";
 
 I just ran some tests to demonstrate that
 Parrot's configuration tools will work as intended.
 
 TEST
-        }
+#        }
     }
     return 1;
 }
@@ -185,9 +190,10 @@ sub run_build_tests {
     if ( $self->get_run('run_build_tests') ) {
         print "\n\n";
         print "As you requested, I will now run some tests of the build tools.\n\n";
-        my $app = App::Prove->new();
-        $app->process_args(@preconfiguration_tests);
-        $app->run() or die
+        system( qq{$self->{this_prove} @postconfiguration_tests } ) and die
+#        my $app = App::Prove->new();
+#        $app->process_args(@preconfiguration_tests);
+#        $app->run() or die
  "Pre-configuration tests did not complete successfully; Configure.pl will not continue.";
         print <<"TEST";
 
