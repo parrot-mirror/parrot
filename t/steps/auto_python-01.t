@@ -13,7 +13,7 @@ use Parrot::Configure::Parallel::Trace;
 
 my $trace = Parrot::Configure::Parallel::Trace->new($0);
 ok(defined $trace, "Parallel::Trace constructor succeeded");
-is($trace->store_this_step(), 1, "Step stored");
+ok($trace->store_this_step(), "Step stored");
 
 =for hints_for_testing Try to test all branches and conditions; consult
 a recent code coverage report for guidance.

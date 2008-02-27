@@ -15,7 +15,7 @@ use Parrot::Configure::Parallel::Trace;
 
 my $trace = Parrot::Configure::Parallel::Trace->new($0);
 ok(defined $trace, "Parallel::Trace constructor succeeded");
-is($trace->store_this_step(), 1, "Step stored");
+ok($trace->store_this_step(), "Step stored");
 
 =for hints_for_testing The documentation for this package is skimpy;
 please try to improve it, e.g., by providing a short description of what
