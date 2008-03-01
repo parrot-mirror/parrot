@@ -1,6 +1,6 @@
 /*
  * $Id$
- * Copyright (C) 2004-2006, The Perl Foundation.
+ * Copyright (C) 2004-2008, The Perl Foundation.
  */
 
 /*
@@ -35,7 +35,9 @@ whichever is more convenient.
 
 =item C<void Parrot_setenv(const char *name, const char *value)>
 
-RT#48260: Not yet documented!!!
+Sets the environment variable C<name> to the value C<value>. Creates the
+environment variable if it does not exist, and silently overwrite a variable if
+it does exist.
 
 =cut
 
@@ -85,7 +87,11 @@ Parrot_setenv(const char *name, const char *value)
 =item C<char *
 Parrot_getenv(ARGIN(const char *name), NOTNULL(int *free_it))>
 
-RT#48260: Not yet documented!!!
+Gets the environment variable C<name>, if it exists. Returns status in
+C<free_it>. C<free_it> must be a non-null pointer to an integer to receive the
+status. Status code is 1 on success, 0 on failure. Returns the contents of the
+environment variable in a C<malloc>'d memory location that needs to be freed
+later.
 
 =cut
 
@@ -114,7 +120,7 @@ Parrot_getenv(ARGIN(const char *name), NOTNULL(int *free_it))
 
 =item C<void Parrot_unsetenv(const char *name)>
 
-RT#48260: Not yet documented!!!
+Deletes an environment variable by assigning an empty string to the specified variable.
 
 =cut
 
