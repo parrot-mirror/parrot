@@ -138,7 +138,7 @@ sub get_all_options {
     my $self = shift;
     my $optstr = q{};
     while ( my ($k, $v) = each %{ $self->{options} } ) {
-        $optstr .= qq{ $k $v};
+        $optstr .= qq{ --$k=$v};
     }
     return $optstr;
 }
