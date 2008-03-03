@@ -364,7 +364,7 @@ sub store_this_step {
     return 2 if $state->[ $step_position ];
 
     my $args = process_options( {
-        argv => [q{--silent}],
+        argv => [q{--silent}, @ARGV],
         mode => q{configure},
     } );
 
