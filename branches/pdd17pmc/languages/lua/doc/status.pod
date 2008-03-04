@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 # $Id$
 
 =head1 TITLE
@@ -227,6 +227,8 @@ These libraries are loaded dynamically with the Lua function C<require>.
 
 =item * alarm library F<languages/lua/lib/alarm.pir>
 
+=item * bitwise operation library F<languages/lua/lib/bitlib.pir>
+
 =item * Lua File System library F<languages/lua/lib/lfs.pir>
 
 =back
@@ -265,3 +267,8 @@ See L<http://kjs.home.fmf.nl/>.
 Francois Perrad.
 
 =cut
+
+# Local Variables:
+#   fill-column:78
+# End:
+# vim: expandtab shiftwidth=4:

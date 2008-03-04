@@ -66,6 +66,7 @@ sub runstep {
     } unless defined $languages;
 
     foreach my $language ( split ' ', $languages ) {        # split ' ' splits on all whitespace
+        my $langdir = "languages/$language";
         if ( $language eq 'dotnet' ) {
             # RT#47792
             # languages/dotnet/Configure.pl works only after the root 'perl Configure.pl'.
@@ -74,14 +75,18 @@ sub runstep {
         elsif ( $language eq 'tcl' ) {
             # tcl has more than one Makefile
             # currently this is handled as a special case
-            $conf->genfile("languages/$language/config/makefiles/examples.in" => "languages/$language/examples/Makefile"
+            $conf->genfile("$langdir/config/makefiles/examples.in" => "$langdir/examples/Makefile"
             );
-            $conf->genfile("languages/$language/config/makefiles/root.in"     => "languages/$language/Makefile",
+            $conf->genfile("$langdir/config/makefiles/root.in"     => "$langdir/Makefile",
                 expand_gmake_syntax                                => 1,
             );
         }
+        elsif ( $language eq 'perl6' ) {
+            $conf->genfile("$langdir/config/makefiles/root.in"     => "$langdir/Makefile");
+            $conf->genfile("$langdir/config/makefiles/utils.in"    => "$langdir/src/utils/Makefile");
+        }
         else {
-            $conf->genfile("languages/$language/config/makefiles/root.in"     => "languages/$language/Makefile"
+            $conf->genfile("$langdir/config/makefiles/root.in"     => "$langdir/Makefile"
             );
         }
     }

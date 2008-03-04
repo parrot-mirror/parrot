@@ -41,13 +41,13 @@ typedef enum {
 #define PARROT_we_test(we, interp, flag)  \
     (CONTEXT((interp)->ctx)->we & (flag))
 
-#define PARROT_WARNINGS_on(interp, flag) PARROT_we_on(warns, interp, flag)
-#define PARROT_WARNINGS_off(interp, flag) PARROT_we_off(warns, interp, flag)
-#define PARROT_WARNINGS_test(interp, flag) PARROT_we_test(warns, interp, flag)
+#define PARROT_WARNINGS_on(interp, flag)   PARROT_we_on(warns, (interp), (flag))
+#define PARROT_WARNINGS_off(interp, flag)  PARROT_we_off(warns, (interp), (flag))
+#define PARROT_WARNINGS_test(interp, flag) PARROT_we_test(warns, (interp), (flag))
 
-#define PARROT_ERRORS_on(interp, flag) PARROT_we_on(errors, interp, flag)
-#define PARROT_ERRORS_off(interp, flag) PARROT_we_off(errors, interp, flag)
-#define PARROT_ERRORS_test(interp, flag) PARROT_we_test(errors, interp, flag)
+#define PARROT_ERRORS_on(interp, flag)     PARROT_we_on(errors, (interp), (flag))
+#define PARROT_ERRORS_off(interp, flag)    PARROT_we_off(errors, (interp), (flag))
+#define PARROT_ERRORS_test(interp, flag)   PARROT_we_test(errors, (interp), (flag))
 
 #if defined(PARROT_IN_CORE)
 
@@ -71,6 +71,7 @@ INTVAL Parrot_warn_s(
     ...)
         __attribute__nonnull__(3);
 
+PARROT_API
 void print_pbc_location(PARROT_INTERP)
         __attribute__nonnull__(1);
 

@@ -21,6 +21,18 @@ object.
 
 =cut
 
+
+.namespace
+
+.sub 'onload' :anon :load :init
+    $P0 = subclass 'ResizablePMCArray', 'List'
+.end
+
+.namespace [ 'List' ]
+
+
+
+
 .namespace [ 'cardinal::Compiler' ]
 
 .loadlib 'cardinal_group'
@@ -33,6 +45,13 @@ object.
     $P1.'language'('cardinal')
     $P1.'parsegrammar'('cardinal::Grammar')
     $P1.'parseactions'('cardinal::Grammar::Actions')
+
+    $P1.'commandline_banner'("Cardinal - Ruby for the Parrot VM\n\n")
+    $P1.'commandline_prompt'('irb(main):001:0>')
+
+     ##  create a list of END blocks to be run
+    $P0 = new 'List'
+    set_hll_global ['cardinal'], '@?END_BLOCKS', $P0
 .end
 
 =item main(args :slurpy)  :main
@@ -47,12 +66,26 @@ to the cardinal compiler.
 
     $P0 = compreg 'cardinal'
     $P1 = $P0.'command_line'(args)
+
+    .include 'iterator.pasm'
+    .local pmc iter
+    $P0 = get_hll_global ['cardinal'], '@?END_BLOCKS'
+    iter = new 'Iterator', $P0
+    iter = .ITERATE_FROM_END
+  iter_loop:
+    unless iter goto iter_end
+    $P0 = pop iter
+    $P0()
+    goto iter_loop
+  iter_end:
 .end
 
 
 .include 'src/gen_builtins.pir'
 .include 'src/gen_grammar.pir'
 .include 'src/gen_actions.pir'
+
+
 
 =back
 
@@ -62,5 +95,5 @@ to the cardinal compiler.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:
 

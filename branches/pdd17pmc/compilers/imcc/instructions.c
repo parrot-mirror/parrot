@@ -96,23 +96,16 @@ Instruction *
 _mk_instruction(ARGIN(const char *op), ARGIN(const char *fmt), int n,
         ARGIN(SymReg * const *r), int flags)
 {
-    int i, reg_space;
-    Instruction * ins;
+    const size_t reg_space = (n>1) ? (sizeof (SymReg *) * (n - 1)) : 0;
+    Instruction * const ins =
+        (Instruction*)mem_sys_allocate_zeroed(sizeof (Instruction) + reg_space);
+    int i;
 
-    reg_space = 0;
-    if (n > 1)
-        reg_space = sizeof (SymReg *) * (n - 1);
-    ins = (Instruction*)calloc(sizeof (Instruction) + reg_space, 1);
-    if (ins == NULL) {
-        fprintf(stderr, "Memory error at mk_instruction\n");
-        abort();
-    }
-
-    ins->op = str_dup(op);
-    ins->fmt = str_dup(fmt);
-    ins->n_r = n;
+    ins->opname     = str_dup(op);
+    ins->format       = str_dup(fmt);
+    ins->symreg_count = n;
     for (i = 0; i < n; i++)
-        ins->r[i] = r[i];
+        ins->symregs[i] = r[i];
     ins->flags = flags;
     ins->opnum = -1;
 
@@ -243,8 +236,8 @@ instruction_reads(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
     if (ins->opnum == PARROT_OP_set_args_pc ||
             ins->opnum == PARROT_OP_set_returns_pc) {
         int i;
-        for (i = 0; i < ins->n_r; i++)
-            if (r ==ins->r[i])
+        for (i = 0; i < ins->symreg_count; i++)
+            if (r == ins->symregs[i])
                 return 1;
         return 0;
     }
@@ -253,9 +246,9 @@ instruction_reads(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
         return 0;
     }
     f = ins->flags;
-    for (i = 0; i < ins->n_r; i++) {
+    for (i = 0; i < ins->symreg_count; i++) {
         if (f & (1<<i)) {
-            const SymReg * const ri = ins->r[i];
+            const SymReg * const ri = ins->symregs[i];
             if (ri == r)
                 return 1;
             /* this additional test for _kc ops seems to slow
@@ -277,8 +270,8 @@ instruction_reads(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
             ins = ins->prev;
         if (!ins)
             return 0;
-        for (i = 0; i < ins->n_r; i++) {
-            if (ins->r[i] == r)
+        for (i = 0; i < ins->symreg_count; i++) {
+            if (ins->symregs[i] == r)
                 return 1;
         }
     }
@@ -314,8 +307,8 @@ instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
          */
         if (ins->next && (ins->next->type & ITPCCSUB))
             return 0;
-        for (i = 0; i < ins->n_r; i++) {
-            if (ins->r[i] == r)
+        for (i = 0; i < ins->symreg_count; i++) {
+            if (ins->symregs[i] == r)
                 return 1;
         }
         return 0;
@@ -332,8 +325,8 @@ instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
             ins = ins->prev;
         if (!ins)
             return 0;
-        for (i = 0; i < ins->n_r; i++) {
-            if (ins->r[i] == r)
+        for (i = 0; i < ins->symreg_count; i++) {
+            if (ins->symregs[i] == r)
                 return 1;
         }
         return 0;
@@ -341,8 +334,8 @@ instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
 
     if (ins->opnum == PARROT_OP_get_params_pc) {
         int i;
-        for (i = 0; i < ins->n_r; i++) {
-            if (ins->r[i] == r)
+        for (i = 0; i < ins->symreg_count; i++) {
+            if (ins->symregs[i] == r)
                 return 1;
         }
         return 0;
@@ -351,9 +344,9 @@ instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
             ins->opnum == PARROT_OP_set_returns_pc) {
         return 0;
     }
-    for (i = 0; i < ins->n_r; i++)
+    for (i = 0; i < ins->symreg_count; i++)
         if (f & (1<<(16+i)))
-            if (ins->r[i] == r)
+            if (ins->symregs[i] == r)
                 return 1;
 
     return 0;
@@ -373,7 +366,7 @@ int
 get_branch_regno(ARGIN(const Instruction *ins))
 {
     int j;
-    for (j = ins->opsize - 2;  j >= 0 && ins->r[j] ; --j)
+    for (j = ins->opsize - 2;  j >= 0 && ins->symregs[j] ; --j)
         if (ins->type & (1<<j))
             return j;
     return -1;
@@ -396,7 +389,7 @@ get_branch_reg(ARGIN(const Instruction *ins))
 {
     const int r = get_branch_regno(ins);
     if (r >= 0)
-        return ins->r[r];
+        return ins->symregs[r];
     return NULL;
 }
 
@@ -404,18 +397,21 @@ get_branch_reg(ARGIN(const Instruction *ins))
 
 /*
 
-=item C<Instruction * delete_ins>
+=item C<Instruction * _delete_ins>
 
-Delete instruction ins. Also free it if needs_freeing is true.
+Delete instruction ins. It's up to the caller to actually free the memory
+of ins, if appropriate.
+
 The instruction following ins is returned.
 
 =cut
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 Instruction *
-delete_ins(ARGMOD(struct _IMC_Unit *unit), ARGMOD(Instruction *ins), int needs_freeing)
+_delete_ins(ARGMOD(struct _IMC_Unit *unit), ARGIN(Instruction *ins))
 {
     Instruction * const next = ins->next;
     Instruction * const prev = ins->prev;
@@ -428,8 +424,31 @@ delete_ins(ARGMOD(struct _IMC_Unit *unit), ARGMOD(Instruction *ins), int needs_f
         next->prev = prev;
     else
         unit->last_ins = prev;
-    if (needs_freeing)
-        free_ins(ins);
+
+    return next;
+}
+
+/*
+
+=item C<Instruction * delete_ins>
+
+Delete instruction ins, and then free it.
+
+The instruction following ins is returned.
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+Instruction *
+delete_ins(ARGMOD(struct _IMC_Unit *unit), ARGMOD(Instruction *ins))
+{
+    Instruction * next = _delete_ins(unit, ins);
+
+    free_ins(ins);
+
     return next;
 }
 
@@ -558,7 +577,7 @@ PARROT_CAN_RETURN_NULL
 Instruction *
 move_ins(ARGMOD(struct _IMC_Unit *unit), ARGMOD(Instruction *ins), ARGMOD(Instruction *to))
 {
-    Instruction * const next = delete_ins(unit, ins, 0);
+    Instruction * const next = _delete_ins(unit, ins);
     insert_ins(unit, to, ins);
     return next;
 }
@@ -605,8 +624,8 @@ Free the Instruction structure ins.
 void
 free_ins(ARGMOD(Instruction *ins))
 {
-    free(ins->fmt);
-    free(ins->op);
+    free(ins->format);
+    free(ins->opname);
     free(ins);
 }
 
@@ -620,10 +639,11 @@ Print details of instruction ins in file fd.
 
 */
 
+#define REGB_SIZE 256
 int
 ins_print(PARROT_INTERP, ARGMOD(FILE *fd), ARGIN(const Instruction *ins))
 {
-    char regb[IMCC_MAX_FIX_REGS][256];      /* XXX */
+    char regb[IMCC_MAX_FIX_REGS][REGB_SIZE];
     /* only long key constants can overflow */
     char *regstr[IMCC_MAX_FIX_REGS];
     int i;
@@ -633,50 +653,53 @@ ins_print(PARROT_INTERP, ARGMOD(FILE *fd), ARGIN(const Instruction *ins))
     PIO_eprintf(NULL, "ins_print\n");
 #endif
 
-    if (!ins->r[0] || !strchr(ins->fmt, '%')) { /* comments, labels and such */
-        return fprintf(fd, "%s", ins->fmt);
-    }
-    for (i = 0; i < ins->n_r; i++) {
-        const SymReg *p = ins->r[i];
+    /* comments, labels and such */
+    if (!ins->symregs[0] || !strchr(ins->format, '%'))
+        return fprintf(fd, "%s", ins->format);
+
+    for (i = 0; i < ins->symreg_count; i++) {
+        const SymReg *p = ins->symregs[i];
         if (!p)
             continue;
         if (p->type & VT_CONSTP)
             p = p->reg;
         if (p->color >= 0 && REG_NEEDS_ALLOC(p)) {
-            sprintf(regb[i], "%c%d", p->set, (int)p->color);
+            snprintf(regb[i], REGB_SIZE, "%c%d", p->set, (int)p->color);
             regstr[i] = regb[i];
         }
         else if (IMCC_INFO(interp)->allocated &&
                 (IMCC_INFO(interp)->optimizer_level & OPT_J) &&
                 p->set != 'K' &&
                 p->color < 0 && REG_NEEDS_ALLOC(p)) {
-                    sprintf(regb[i], "r%c%d", tolower((unsigned char)p->set), -1 - (int)p->color);
+                    snprintf(regb[i], REGB_SIZE,
+                        "r%c%d", tolower((unsigned char)p->set), -1 - (int)p->color);
                     regstr[i] = regb[i];
         }
         else if (p->type & VTREGKEY) {
-            const SymReg *k = p->nextkey;
+            const SymReg *k = p;
 
-            for (*regb[i] = '\0'; k; k = k->nextkey) {
+            *regb[i] = '\0';
+            while ((k = k->nextkey) != NULL) {
+                const size_t used = strlen(regb[i]);
                 if (k->reg && k->reg->color >= 0)
-                    sprintf(regb[i]+strlen(regb[i]), "%c%d",
-                            k->reg->set, (int)k->reg->color);    /* XXX */
+                    snprintf(regb[i]+used, REGB_SIZE - used, "%c%d",
+                            k->reg->set, (int)k->reg->color);
                 else if (IMCC_INFO(interp)->allocated &&
                         (IMCC_INFO(interp)->optimizer_level & OPT_J) &&
                         k->reg &&
                         k->reg->color < 0)
-                    sprintf(regb[i]+strlen(regb[i]), "r%c%d",
+                    snprintf(regb[i]+used, REGB_SIZE - used, "r%c%d",
                             tolower((unsigned char)k->reg->set), -1 - (int)k->reg->color);
                 else
-                    strcat(regb[i], k->name);   /* XXX */
-                if (k->nextkey)
+                    strncat(regb[i], k->name, REGB_SIZE - used - 1);
+                if (k->nextkey && regb[i]+1 < REGB_SIZE)
                     strcat(regb[i], ";");
             }
             regstr[i] = regb[i];
         }
-        else if (p->type == VTCONST && p->set == 'S' &&
-                *p->name != '"' && *p->name != '\'') {
+        else if (p->type == VTCONST && p->set == 'S' && *p->name != '"' && *p->name != '\'') {
             /* unquoted string const */
-            sprintf(regb[i], "\"%s\"", p->name);      /* XXX */
+            snprintf(regb[i], REGB_SIZE, "\"%s\"", p->name);
             regstr[i] = regb[i];
         }
         else
@@ -686,29 +709,29 @@ ins_print(PARROT_INTERP, ARGMOD(FILE *fd), ARGIN(const Instruction *ins))
     switch (ins->opsize-1) {
         case -1:        /* labels */
         case 1:
-            len = fprintf(fd, ins->fmt, regstr[0]);
+            len = fprintf(fd, ins->format, regstr[0]);
             break;
         case 2:
-            len = fprintf(fd, ins->fmt, regstr[0], regstr[1]);
+            len = fprintf(fd, ins->format, regstr[0], regstr[1]);
             break;
         case 3:
-            len = fprintf(fd, ins->fmt, regstr[0], regstr[1], regstr[2]);
+            len = fprintf(fd, ins->format, regstr[0], regstr[1], regstr[2]);
             break;
         case 4:
-            len = fprintf(fd, ins->fmt, regstr[0], regstr[1], regstr[2],
+            len = fprintf(fd, ins->format, regstr[0], regstr[1], regstr[2],
                     regstr[3]);
             break;
         case 5:
-            len = fprintf(fd, ins->fmt, regstr[0], regstr[1], regstr[2],
+            len = fprintf(fd, ins->format, regstr[0], regstr[1], regstr[2],
                     regstr[3], regstr[4]);
             break;
         case 6:
-            len = fprintf(fd, ins->fmt, regstr[0], regstr[1], regstr[2],
+            len = fprintf(fd, ins->format, regstr[0], regstr[1], regstr[2],
                     regstr[3], regstr[4], regstr[5]);
             break;
         default:
             fprintf(stderr, "unhandled: opsize (%d), op %s, fmt %s\n",
-                    ins->opsize, ins->op, ins->fmt);
+                    ins->opsize, ins->opname, ins->format);
             exit(EXIT_FAILURE);
             break;
     }
@@ -779,7 +802,7 @@ e_file_emit(PARROT_INTERP,
 #if IMC_TRACE
     PIO_eprintf(NULL, "e_file_emit\n");
 #endif
-    if ((ins->type & ITLABEL) || ! *ins->op)
+    if ((ins->type & ITLABEL) || ! *ins->opname)
         ins_print(interp, stdout, ins);
     else {
         imcc_fprintf(interp, stdout, "\t%I ", ins);

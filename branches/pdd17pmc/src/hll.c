@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2007, The Perl Foundation.
+Copyright (C) 2005-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -31,6 +31,7 @@ feature.
 
 #include "parrot/parrot.h"
 #include "parrot/dynext.h"
+#include "hll.str"
 
 /* HEADERIZER HFILE: include/parrot/hll.h */
 
@@ -57,14 +58,15 @@ static PMC* new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
     } while (0)
 #define END_WRITE_HLL_INFO(interp, hll_info)
 
-#define ASSERT_CONST_STRING(src) PARROT_ASSERT(PObj_constant_TEST(src))
-
 
 /*
 
 =item C<static PMC* new_hll_entry>
 
-RT#48260: Not yet documented!!!
+Create a new HLL information table entry.
+Takes an interpreter name and (optional) entry name.
+Returns a pointer to the new entry.
+Used by Parrot_register_HLL and Parrot_register_HLL_lib.
 
 =cut
 
@@ -87,8 +89,12 @@ new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
      */
     PMC * const entry = constant_pmc_new(interp, enum_class_FixedPMCArray);
 
-    if (entry_name && !STRING_IS_EMPTY(entry_name))
-        VTABLE_set_pmc_keyed_str(interp, hll_info, entry_name, entry);
+    if (entry_name && !STRING_IS_EMPTY(entry_name)) {
+        STRING *const_name = const_string(interp,
+            string_to_cstring(interp, entry_name));
+
+        VTABLE_set_pmc_keyed_str(interp, hll_info, const_name, entry);
+    }
     else
         VTABLE_push_pmc(interp, hll_info, entry);
 
@@ -101,11 +107,13 @@ new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
     return entry;
 }
 
+
 /*
 
 =item C<void Parrot_init_HLL>
 
-RT#48260: Not yet documented!!!
+Initialises the HLL_info and HLL_namespace fields.  Takes an interpreter and
+calls C<Parrot_register_HLL> to register name within Parrot core.
 
 =cut
 
@@ -119,7 +127,7 @@ Parrot_init_HLL(PARROT_INTERP)
     interp->HLL_namespace =
         constant_pmc_new(interp, enum_class_ResizablePMCArray);
 
-    Parrot_register_HLL(interp, const_string(interp, "parrot"));
+    Parrot_register_HLL(interp, CONST_STRING(interp, "parrot"));
 }
 
 /*
@@ -141,7 +149,7 @@ PARROT_API
 INTVAL
 Parrot_register_HLL(PARROT_INTERP, ARGIN(STRING *hll_name))
 {
-    PMC *entry, *name, *type_hash, *ns_hash, *hll_info;
+    PMC   *entry, *name, *type_hash, *ns_hash, *hll_info;
     INTVAL idx;
 
     /* TODO LOCK or disallow in threads */
@@ -160,28 +168,23 @@ Parrot_register_HLL(PARROT_INTERP, ARGIN(STRING *hll_name))
 
     /* register HLL name */
     name     = constant_pmc_new_noinit(interp, enum_class_String);
-    ASSERT_CONST_STRING(hll_name);
 
     VTABLE_set_string_native(interp, name, hll_name);
     VTABLE_set_pmc_keyed_int(interp, entry, e_HLL_name, name);
 
-    /* create HLL namespace */
-    hll_name = string_downcase(interp, hll_name);
+    /* create HLL namespace using the *constant* name */
+    hll_name = string_downcase(interp, VTABLE_get_string(interp, name));
 
     /* HLL type mappings aren't yet created, we can't create
      * a namespace in HLL's flavor yet - maybe promote the
      * ns_hash to another type, if mappings provide one
      * XXX - FIXME
      */
-    ns_hash = Parrot_make_namespace_keyed_str(interp,
-                                              interp->root_namespace,
+    ns_hash = Parrot_make_namespace_keyed_str(interp, interp->root_namespace,
                                               hll_name);
 
     /* cache HLL's toplevel namespace */
     VTABLE_set_pmc_keyed_int(interp, interp->HLL_namespace, idx, ns_hash);
-
-    /* register HLL lib */
-    name = constant_pmc_new_noinit(interp, enum_class_String);
 
     /* create HLL typemap hash */
     type_hash = Parrot_new_INTVAL_hash(interp, PObj_constant_FLAG);
@@ -197,7 +200,10 @@ Parrot_register_HLL(PARROT_INTERP, ARGIN(STRING *hll_name))
 
 =item C<INTVAL Parrot_register_HLL_lib>
 
-RT#48260: Not yet documented!!!
+Register an HLL library.
+Takes an interpreter name and a pointer to a library name.
+If the name matches one already registered, return the list position.
+Otherwise, add the entry to the list and return 0.
 
 =cut
 
@@ -235,7 +241,6 @@ Parrot_register_HLL_lib(PARROT_INTERP, ARGIN(STRING *hll_lib))
 
     /* register dynlib */
     name    = constant_pmc_new_noinit(interp, enum_class_String);
-    ASSERT_CONST_STRING(hll_lib);
 
     VTABLE_set_string_native(interp, name, hll_lib);
     VTABLE_set_pmc_keyed_int(interp, entry, e_HLL_lib, name);
@@ -282,7 +287,10 @@ Parrot_get_HLL_id(PARROT_INTERP, ARGIN_NULLOK(STRING *hll_name))
 
 =item C<STRING * Parrot_get_HLL_name>
 
-RT#48260: Not yet documented!!!
+Returns the corresponding PMC's name.
+Takes an interpreter name and an id.
+If the id is out of range, or the PMC name is NULL,
+returns NULL.
 
 =cut
 

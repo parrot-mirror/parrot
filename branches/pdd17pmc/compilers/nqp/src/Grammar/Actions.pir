@@ -1,4 +1,4 @@
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 .sub '__onload' :init :load
@@ -55,6 +55,13 @@
         $S0 = %0
         $S1 = %1
         $I0 = isne $S0, $S1
+        %r = new 'Integer'
+        %r = $I0
+        END
+
+    optable['infix:=:='; 'inline'] = <<"        END"
+        ##  inline infix:=:=
+        $I0 = issame %0, %1
         %r = new 'Integer'
         %r = $I0
         END
@@ -1048,4 +1055,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

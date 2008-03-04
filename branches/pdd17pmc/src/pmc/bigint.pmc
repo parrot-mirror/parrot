@@ -488,7 +488,7 @@ Return GMP version string "x.y.z".
 #ifdef PARROT_HAS_GMP
         version = string_from_cstring(INTERP, gmp_version, 0);
 #else
-        version = const_string(INTERP, "0.0.0");
+        version = CONST_STRING(INTERP, "0.0.0");
 #endif
         PCCRETURN(STRING *version);
     }
@@ -703,7 +703,7 @@ appended.
 
     VTABLE STRING *get_repr() {
         STRING *s = SELF.get_string();
-        return string_append(INTERP, s, const_string(INTERP, "L"));
+        return string_append(INTERP, s, CONST_STRING(INTERP, "L"));
     }
 /*
 

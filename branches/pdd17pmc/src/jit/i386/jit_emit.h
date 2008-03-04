@@ -59,7 +59,7 @@ static void call_func(Parrot_jit_info_t *jit_info, void *addr);
  */
 #undef EXEC_SHARED
 
-extern PARROT_API UINTVAL ld(UINTVAL);
+extern UINTVAL ld(UINTVAL);
 
 #define NEG_MINUS_ZERO
 /* #define NEG_ZERO_SUB */
@@ -842,7 +842,7 @@ opt_shift_rr(PARROT_INTERP, Parrot_jit_info_t *jit_info, int dest, int count, in
     }
     else {
         int saved = 0;
-        assert(count != emit_EAX);
+        PARROT_ASSERT(count != emit_EAX);
         if (dest == emit_EAX) {
             if (intreg_is_used(jit_info, emit_ECX)) {
                 emitm_pushl_r(pc, emit_ECX);
@@ -1886,7 +1886,7 @@ opt_div_rr(PARROT_INTERP, Parrot_jit_info_t *jit_info, int dest, int src, int is
     char *L1, *L2, *L3;
     static const char div_by_zero[] = "Divide by zero";
 
-    assert(src != emit_EAX);
+    PARROT_ASSERT(src != emit_EAX);
 
     if (dest != emit_EAX) {
         jit_emit_mov_rr_i(pc, emit_EAX, dest);
@@ -2758,7 +2758,7 @@ Parrot_jit_vtable_newp_ic_op(Parrot_jit_info_t *jit_info,
     op_info_t *op_info = &interp->op_info_table[*jit_info->cur_op];
     size_t offset = offsetof(VTABLE, init);
 
-    assert(op_info->types[0] == PARROT_ARG_P);
+    PARROT_ASSERT(op_info->types[0] == PARROT_ARG_P);
     p1 = *(jit_info->cur_op + 1);
     i2 = *(jit_info->cur_op + 2);
     if (i2 <= 0 || i2 >= interp->n_vtable_max) {
@@ -3088,7 +3088,7 @@ jit_set_args_pc(Parrot_jit_info_t *jit_info, PARROT_INTERP,
      * return value
      */
     result = CUR_OPCODE + 2 + n + 3; /* set_args, set_p_pc */
-    assert(*result == PARROT_OP_get_results_pc);
+    PARROT_ASSERT(*result == PARROT_OP_get_results_pc);
     sig_result = constants[result[1]]->u.key;
     ASSERT_SIG_PMC(sig_result);
 
@@ -3509,7 +3509,7 @@ Parrot_jit_normal_op(Parrot_jit_info_t *jit_info,
     int last_is_branch = 0;
     void ** offset;
 
-    assert(op_jit[*jit_info->cur_op].extcall == 1);
+    PARROT_ASSERT(op_jit[*jit_info->cur_op].extcall == 1);
     if (cur_section->done == 1)
         return;
     else if (cur_section->done == -1 && --cur_section->ins_count > 0)
@@ -3577,27 +3577,60 @@ Parrot_jit_normal_op(Parrot_jit_info_t *jit_info,
     if (cur_op >= jit_op_count()) {
         cur_op = CORE_OPS_wrapper__;
     }
-    /*
-     * op functions have the signature (cur_op, interp)
-     * we use the interpreter already on stack and only push the
-     * cur_op
-     */
 
     if ((++check & 0x7) == 0) {
         /*
          * every 8 ??? normal ops, we emit a check for event processing
          */
+
+/*
+ * There is an optimization to reuse arguments on the stack.  Compilers may
+ * decide to reuse the argument space though.  If you are *absolutely sure*
+ * this does not happen define PARROT_JIT_STACK_REUSE_INTERP.
+ */
+#    ifdef PARROT_JIT_STACK_REUSE_INTERP
+        /*
+        * op functions have the signature (cur_op, interp)
+        * we use the interpreter already on stack and only push the
+        * cur_op
+        */
+#    else
+        /* push interpreter */
+        Parrot_jit_emit_get_INTERP(interp, jit_info->native_ptr, emit_ECX);
+        emitm_pushl_r(jit_info->native_ptr, emit_ECX);
+#    endif
+
         emitm_pushl_i(jit_info->native_ptr, CORE_OPS_check_events);
 
         call_func(jit_info,
             (void (*)(void))interp->op_func_table[CORE_OPS_check_events]);
+#    ifdef PARROT_JIT_STACK_REUSE_INTERP
         emitm_addb_i_r(jit_info->native_ptr, 4, emit_ESP);
+#    else
+        emitm_addb_i_r(jit_info->native_ptr, 8, emit_ESP);
+#    endif
     }
+
+#    ifdef PARROT_JIT_STACK_REUSE_INTERP
+    /*
+    * op functions have the signature (cur_op, interp)
+    * we use the interpreter already on stack and only push the
+    * cur_op
+    */
+#    else
+    Parrot_jit_emit_get_INTERP(interp, jit_info->native_ptr, emit_ECX);
+    emitm_pushl_r(jit_info->native_ptr, emit_ECX);
+#    endif
+
     emitm_pushl_i(jit_info->native_ptr, jit_info->cur_op);
 
     call_func(jit_info,
             (void (*)(void))interp->op_func_table[cur_op]);
+#    ifdef PARROT_JIT_STACK_REUSE_INTERP
     emitm_addb_i_r(jit_info->native_ptr, 4, emit_ESP);
+#    else
+    emitm_addb_i_r(jit_info->native_ptr, 8, emit_ESP);
+#    endif
 }
 
 #  endif /* JIT_CGP */
@@ -3977,7 +4010,7 @@ preg:
     emitm_popl_r(pc, emit_EBX);
     jit_emit_stack_frame_leave(pc);
     emitm_ret(pc);
-    assert(pc - jit_info.arena.start <= size);
+    PARROT_ASSERT(pc - jit_info.arena.start <= size);
     /* could shrink arena.start here to used size */
     PObj_active_destroy_SET(pmc_nci);
     return (jit_f)D2FPTR(jit_info.arena.start);

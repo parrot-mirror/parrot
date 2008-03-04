@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2007, The Perl Foundation.
+Copyright (C) 2005-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -119,7 +119,7 @@ static void pbc_merge_debugs(PARROT_INTERP,
         FUNC_MODIFIES(*bc);
 
 static void pbc_merge_fixups(PARROT_INTERP,
-    ARGMOD(pbc_merge_input **inputs),
+    ARGIN(pbc_merge_input **inputs),
     int num_inputs,
     ARGMOD(PackFile *pf),
     ARGMOD(PackFile_ByteCode *bc))
@@ -127,7 +127,6 @@ static void pbc_merge_fixups(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(4)
         __attribute__nonnull__(5)
-        FUNC_MODIFIES(*inputs)
         FUNC_MODIFIES(*pf)
         FUNC_MODIFIES(*bc);
 
@@ -159,11 +158,6 @@ static void pbc_merge_write(PARROT_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*pf);
 
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-static char * str_dup(ARGIN(const char *old))
-        __attribute__nonnull__(1);
-
 /* HEADERIZER END: static */
 
 /*
@@ -183,30 +177,6 @@ help(PARROT_INTERP)
     printf("Usage:\n");
     printf("   pbc_merge -o out.pbc file1.pbc file2.pbc ...\n\n");
     Parrot_exit(interp, 0);
-}
-
-/*
-
-=item C<static char * str_dup>
-
-Duplicate a C string
-
-=cut
-
-*/
-
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-static char *
-str_dup(ARGIN(const char *old))
-{
-    const size_t bytes = strlen(old) + 1;
-    char * const copy = (char *)mem_sys_allocate(bytes);
-    memcpy(copy, old, bytes);
-#ifdef MEMDEBUG
-    debug(interp, 1, "line %d str_dup %s [%x]\n", line, old, copy);
-#endif
-    return copy;
 }
 
 /*
@@ -342,8 +312,7 @@ pbc_merge_bytecode(PARROT_INTERP, ARGMOD(pbc_merge_input **inputs),
         }
 
         /* Re-allocate the current buffer. */
-        bc = (opcode_t *)mem_sys_realloc(bc,
-            (cursor + in_seg->base.size) * sizeof (opcode_t));
+        mem_realloc_n_typed(bc, cursor + in_seg->base.size, opcode_t);
         if (bc == NULL) {
             PIO_eprintf(interp, "PBC Merge: Cannot reallocate memory\n");
             Parrot_exit(interp, 1);
@@ -475,7 +444,7 @@ This function merges the fixups tables from the input PBC files.
 */
 
 static void
-pbc_merge_fixups(PARROT_INTERP, ARGMOD(pbc_merge_input **inputs),
+pbc_merge_fixups(PARROT_INTERP, ARGIN(pbc_merge_input **inputs),
                  int num_inputs, ARGMOD(PackFile *pf), ARGMOD(PackFile_ByteCode *bc))
 {
     PackFile_FixupTable *fixup_seg;
@@ -620,9 +589,9 @@ pbc_merge_debugs(PARROT_INTERP, ARGMOD(pbc_merge_input **inputs),
        with merged ones we have created. */
     debug_seg = Parrot_new_debug_seg(interp, bc, num_lines);
     PackFile_add_segment(interp, &pf->directory, (PackFile_Segment*)debug_seg);
-    free(debug_seg->base.data);
+    mem_sys_free(debug_seg->base.data);
     debug_seg->base.data    = lines;
-    free(debug_seg->mappings);
+    mem_sys_free(debug_seg->mappings);
 
     debug_seg->mappings     = mappings;
     debug_seg->num_mappings = num_mappings;

@@ -29,9 +29,7 @@ structure of the frozen bytecode.
 #include "parrot/packfile.h"
 #include "jit.h"
 #include "../compilers/imcc/imc.h"
-
-/* XXX Declare this elsewhere */
-void * IMCC_compile_file(PARROT_INTERP, const char *s);
+#include "packfile.str"
 
 /* HEADERIZER HFILE: include/parrot/packfile.h */
 
@@ -344,14 +342,18 @@ PackFile_destroy(PARROT_INTERP, ARGMOD_NULLOK(PackFile *pf))
         PIO_eprintf(NULL, "PackFile_destroy: pf == NULL!\n");
         return;
     }
+
 #ifdef PARROT_HAS_HEADER_SYSMMAN
-    if (pf->is_mmap_ped)
-        munmap((void*)pf->src, pf->size);
+    if (pf->is_mmap_ped) {
+        DECL_CONST_CAST;
+        munmap(const_cast(pf->src), pf->size);
+    }
 #endif
+
     mem_sys_free(pf->header);
     pf->header = NULL;
     mem_sys_free(pf->dirp);
-    pf->dirp = NULL;
+    pf->dirp   = NULL;
     PackFile_Segment_destroy(interp, &pf->directory.base);
     return;
 }
@@ -376,27 +378,27 @@ make_code_pointers(ARGMOD(PackFile_Segment *seg))
 
     switch (seg->type) {
         case PF_BYTEC_SEG:
-            if (!pf->cur_cs) {
+            if (!pf->cur_cs)
                 pf->cur_cs = (PackFile_ByteCode *)seg;
-            }
             break;
         case PF_FIXUP_SEG:
             if (!pf->cur_cs->fixups) {
-                pf->cur_cs->fixups = (PackFile_FixupTable *)seg;
+                pf->cur_cs->fixups       = (PackFile_FixupTable *)seg;
                 pf->cur_cs->fixups->code = pf->cur_cs;
             }
             break;
         case PF_CONST_SEG:
             if (!pf->cur_cs->const_table) {
-                pf->cur_cs->const_table = (PackFile_ConstTable *)seg;
+                pf->cur_cs->const_table       = (PackFile_ConstTable *)seg;
                 pf->cur_cs->const_table->code = pf->cur_cs;
             }
+            break;
         case PF_UNKNOWN_SEG:
             if (memcmp(seg->name, "PIC_idx", 7) == 0)
                 pf->cur_cs->pic_index = seg;
             break;
         case PF_DEBUG_SEG:
-            pf->cur_cs->debugs = (PackFile_Debug *)seg;
+            pf->cur_cs->debugs       = (PackFile_Debug *)seg;
             pf->cur_cs->debugs->code = pf->cur_cs;
             break;
         default:
@@ -418,24 +420,24 @@ Handle :load, :main ... pragmas for B<sub_pmc>
 static int
 sub_pragma(PARROT_INTERP, int action, ARGIN(const PMC *sub_pmc))
 {
-    int pragmas = PObj_get_FLAGS(sub_pmc) & SUB_FLAG_PF_MASK;
     int todo    = 0;
+    int pragmas = PObj_get_FLAGS(sub_pmc) &  SUB_FLAG_PF_MASK
+                                          & ~SUB_FLAG_IS_OUTER;
 
-    pragmas &= ~SUB_FLAG_IS_OUTER;
     if (!pragmas && !Sub_comp_INIT_TEST(sub_pmc))
         return 0;
+
     switch (action) {
         case PBC_PBC:
         case PBC_MAIN:
-            if (interp->resume_flag & RESUME_INITIAL) {
-                /*
-                 * denote MAIN entry in first loaded PASM
-                 */
+            /* denote MAIN entry in first loaded PASM */
+            if (interp->resume_flag & RESUME_INITIAL)
                 todo = 1;
-            }
+
             /* :init functions need to be called at MAIN time, so return 1 */
             if (Sub_comp_INIT_TEST(sub_pmc)) /* symreg.h:P_INIT */
                 todo = 1;
+
             break;
         case PBC_LOADED:
             if (pragmas & SUB_FLAG_PF_LOAD) /* symreg.h:P_LOAD */
@@ -451,11 +453,12 @@ sub_pragma(PARROT_INTERP, int action, ARGIN(const PMC *sub_pmc))
     return todo;
 }
 
+
 /*
 
 =item C<static PMC* run_sub>
 
-Run the B<sub_pmc> due its B<:load>, B<:immediate>, ... pragma
+Run the B<sub_pmc> due to its B<:load>, B<:immediate>, ... pragma
 
 =cut
 
@@ -473,9 +476,9 @@ run_sub(PARROT_INTERP, ARGIN(PMC *sub_pmc))
      * turn off JIT and prederef - both would act on the whole
      * PackFile which isn't worth the effort - probably
      */
-    if (interp->run_core != PARROT_CGOTO_CORE  &&
-        interp->run_core != PARROT_SLOW_CORE  &&
-        interp->run_core != PARROT_FAST_CORE)
+    if (interp->run_core != PARROT_CGOTO_CORE
+    &&  interp->run_core != PARROT_SLOW_CORE
+    &&  interp->run_core != PARROT_FAST_CORE)
             interp->run_core = PARROT_FAST_CORE;
 
     CONTEXT(interp->ctx)->constants = interp->code->const_table->constants;
@@ -485,6 +488,7 @@ run_sub(PARROT_INTERP, ARGIN(PMC *sub_pmc))
 
     return retval;
 }
+
 
 /*
 
@@ -501,39 +505,34 @@ PARROT_CAN_RETURN_NULL
 static PMC*
 do_1_sub_pragma(PARROT_INTERP, ARGMOD(PMC *sub_pmc), int action)
 {
-    Parrot_sub const * sub = PMC_sub(sub_pmc);
+    Parrot_sub const *sub = PMC_sub(sub_pmc);
 
     switch (action) {
         case PBC_IMMEDIATE:
-            /*
-             * run IMMEDIATE sub
-             */
+            /* run IMMEDIATE sub */
             if (PObj_get_FLAGS(sub_pmc) & SUB_FLAG_PF_IMMEDIATE) {
-                void *lo_var_ptr;
-                PMC *result;
+                void *lo_var_ptr = interp->lo_var_ptr;
+                PMC  *result;
 
                 PObj_get_FLAGS(sub_pmc) &= ~SUB_FLAG_PF_IMMEDIATE;
-                lo_var_ptr = interp->lo_var_ptr;
-                result = run_sub(interp, sub_pmc);
+                result     = run_sub(interp, sub_pmc);
+
                 /*
                  * reset initial flag so MAIN detection works
                  * and reset lo_var_ptr to prev
                  */
                 interp->resume_flag = RESUME_INITIAL;
-                interp->lo_var_ptr = lo_var_ptr;
+                interp->lo_var_ptr  = lo_var_ptr;
                 return result;
             }
             break;
         case PBC_POSTCOMP:
-            /*
-             * run POSTCOMP sub
-             */
+            /* run POSTCOMP sub */
             if (PObj_get_FLAGS(sub_pmc) & SUB_FLAG_PF_POSTCOMP) {
                 PObj_get_FLAGS(sub_pmc) &= ~SUB_FLAG_PF_POSTCOMP;
                 run_sub(interp, sub_pmc);
-                /*
-                 * reset initial flag so MAIN detection works
-                 */
+
+                /* reset initial flag so MAIN detection works */
                 interp->resume_flag = RESUME_INITIAL;
                 return NULL;
             }
@@ -542,21 +541,23 @@ do_1_sub_pragma(PARROT_INTERP, ARGMOD(PMC *sub_pmc), int action)
         case PBC_LOADED:
             if (PObj_get_FLAGS(sub_pmc) & SUB_FLAG_PF_LOAD) {
                 PObj_get_FLAGS(sub_pmc) &= ~SUB_FLAG_PF_LOAD;
-                Sub_comp_INIT_CLEAR(sub_pmc); /* if loaded no need for init */
+
+                /* if loaded no need for init */
+                Sub_comp_INIT_CLEAR(sub_pmc);
                 run_sub(interp, sub_pmc);
             }
             break;
         default:
             if (PObj_get_FLAGS(sub_pmc) & SUB_FLAG_PF_MAIN) {
-                if ((interp->resume_flag & RESUME_INITIAL) &&
-                        interp->resume_offset == 0) {
+                if ((interp->resume_flag & RESUME_INITIAL)
+                &&   interp->resume_offset == 0) {
                     const ptrdiff_t code = (ptrdiff_t) sub->seg->base.data;
                     void           *ptr  = VTABLE_get_pointer(interp, sub_pmc);
 
-                    const size_t start_offs = ((ptrdiff_t)ptr - code) /
-                        sizeof (opcode_t*);
-                    interp->resume_offset = start_offs;
-                    PObj_get_FLAGS(sub_pmc) &= ~SUB_FLAG_PF_MAIN;
+                    interp->resume_offset = ((ptrdiff_t)ptr - code)
+                                          / sizeof (opcode_t *);
+
+                    PObj_get_FLAGS(sub_pmc)          &= ~SUB_FLAG_PF_MAIN;
                     CONTEXT(interp->ctx)->current_sub = sub_pmc;
                 }
                 else {
@@ -567,9 +568,13 @@ do_1_sub_pragma(PARROT_INTERP, ARGMOD(PMC *sub_pmc), int action)
             }
 
             /* run :init tagged functions */
-            if (action == PBC_MAIN && (Sub_comp_INIT_TEST(sub_pmc))) {
-                Sub_comp_INIT_CLEAR(sub_pmc); /* if loaded no need for init */
-                PObj_get_FLAGS(sub_pmc) &= ~SUB_FLAG_PF_LOAD; /* if inited no need for load */
+            if (action == PBC_MAIN && Sub_comp_INIT_TEST(sub_pmc)) {
+                /* if loaded no need for init */
+                Sub_comp_INIT_CLEAR(sub_pmc);
+
+                /* if inited no need for load */
+                PObj_get_FLAGS(sub_pmc) &= ~SUB_FLAG_PF_LOAD;
+
                 run_sub(interp, sub_pmc);
                 interp->resume_flag = RESUME_INITIAL;
             }
@@ -578,14 +583,13 @@ do_1_sub_pragma(PARROT_INTERP, ARGMOD(PMC *sub_pmc), int action)
     return NULL;
 }
 
-/*
- */
+
 /*
 
 =item C<static void mark_1_seg>
 
-while the PMCs should be constant, there possible contents like
-a property isn't constructed const so we have to mark them
+While the PMCs should be constant, their possible contents such as
+properties aren't constructed const, so we have to mark them.
 
 =cut
 
@@ -606,6 +610,7 @@ mark_1_seg(PARROT_INTERP, ARGMOD(PackFile_ConstTable *ct))
     }
 }
 
+
 /*
 
 =item C<static INTVAL find_const_iter>
@@ -617,17 +622,18 @@ RT#48260: Not yet documented!!!
 */
 
 static INTVAL
-find_const_iter(PARROT_INTERP, ARGIN(PackFile_Segment *seg), ARGIN_NULLOK(void *user_data))
+find_const_iter(PARROT_INTERP, ARGIN(PackFile_Segment *seg),
+                               ARGIN_NULLOK(void *user_data))
 {
-    if (seg->type == PF_DIR_SEG) {
+    if (seg->type == PF_DIR_SEG)
         PackFile_map_segments(interp, (const PackFile_Directory *)seg,
                 find_const_iter, user_data);
-    }
-    else if (seg->type == PF_CONST_SEG) {
+    else if (seg->type == PF_CONST_SEG)
         mark_1_seg(interp, (PackFile_ConstTable *)seg);
-    }
+
     return 0;
 }
+
 
 /*
 
@@ -645,25 +651,25 @@ mark_const_subs(PARROT_INTERP)
     PackFile_Directory *dir;
 
     PackFile * const self = interp->initial_pf;
+
     if (!self)
         return;
-    /*
-     * locate top level dir
-     */
+
+    /* locate top level dir */
     dir = &self->directory;
-    /*
-     * iterate over all dir/segs
-     */
+
+    /* iterate over all dir/segs */
     PackFile_map_segments(interp, dir, find_const_iter, NULL);
 }
+
 
 /*
 
 =item C<void do_sub_pragmas>
 
-B<action> is one of B<PBC_PBC>, B<PBC_LOADED>, B<PBC_INIT>, or
-B<PBC_MAIN>. Also store the C<eval_pmc> in the sub structure, so that
-the eval PMC is kept alive be living subs.
+C<action> is one of C<PBC_PBC>, C<PBC_LOADED>, C<PBC_INIT>, or C<PBC_MAIN>.
+Also store the C<eval_pmc> in the sub structure, so that the eval PMC is kept
+alive by living subs.
 
 =cut
 
@@ -685,10 +691,9 @@ do_sub_pragmas(PARROT_INTERP, ARGIN(PackFile_ByteCode *self),
     for (i = 0; i < ft->fixup_count; i++) {
         switch (ft->fixups[i]->type) {
             case enum_fixup_sub:
-                {
+            {
                 /*
-                 * offset is an index into the const_table holding
-                 * the Sub PMC
+                 * offset is an index into the const_table holding the Sub PMC
                  */
                 const opcode_t ci = ft->fixups[i]->offset;
                 PMC *sub_pmc;
@@ -701,22 +706,19 @@ do_sub_pragmas(PARROT_INTERP, ARGIN(PackFile_ByteCode *self),
                 PMC_sub(sub_pmc)->eval_pmc = eval_pmc;
 
                 if (((PObj_get_FLAGS(sub_pmc) & SUB_FLAG_PF_MASK)
-                        || (Sub_comp_get_FLAGS(sub_pmc) & SUB_COMP_FLAG_MASK))
-                        && sub_pragma(interp, action, sub_pmc)) {
+                ||   (Sub_comp_get_FLAGS(sub_pmc) & SUB_COMP_FLAG_MASK))
+                &&    sub_pragma(interp, action, sub_pmc)) {
                     PMC * const result = do_1_sub_pragma(interp,
                             sub_pmc, action);
-                    /*
-                     * replace the Sub PMC with the result of the
-                     * computation
-                     */
-                    if (action == PBC_IMMEDIATE &&
-                            !PMC_IS_NULL(result)) {
-                        ft->fixups[i]->type = enum_fixup_none;
+
+                    /* replace Sub PMC with computation results */
+                    if (action == PBC_IMMEDIATE && !PMC_IS_NULL(result)) {
+                        ft->fixups[i]->type      = enum_fixup_none;
                         ct->constants[ci]->u.key = result;
                     }
                 }
-                }
                 break;
+            }
             case enum_fixup_label:
                 /* fill in current bytecode seg */
                 ft->fixups[i]->seg = self;
@@ -726,6 +728,7 @@ do_sub_pragmas(PARROT_INTERP, ARGIN(PackFile_ByteCode *self),
         }
     }
 }
+
 
 /*
 
@@ -748,9 +751,9 @@ PackFile_unpack(PARROT_INTERP, ARGMOD(PackFile *self),
     ARGIN(const opcode_t *packed), size_t packed_size)
 {
     PackFile_Header * const header = self->header;
-    const opcode_t *cursor;
-    int header_read_length;
-    opcode_t padding;
+    const opcode_t         *cursor;
+    int                     header_read_length;
+    opcode_t                padding;
 
     self->src  = packed;
     self->size = packed_size;
@@ -760,13 +763,15 @@ PackFile_unpack(PARROT_INTERP, ARGMOD(PackFile *self),
 
     /* Ensure the magic is correct. */
     if (memcmp(header->magic, "\376PBC\r\n\032\n", 8) != 0) {
-        PIO_eprintf(NULL, "PackFile_unpack: This is not a valid Parrot bytecode file\n");
+        PIO_eprintf(NULL, "PackFile_unpack: "
+            "This is not a valid Parrot bytecode file\n");
         return 0;
     }
 
     /* Ensure the bytecode version is one we can read. Currently, we only
      * support bytecode versions matching the current one. */
-    if (header->bc_major != PARROT_PBC_MAJOR && header->bc_minor != PARROT_PBC_MINOR) {
+    if (header->bc_major != PARROT_PBC_MAJOR
+    &&  header->bc_minor != PARROT_PBC_MINOR) {
         PIO_eprintf(NULL, "PackFile_unpack: This Parrot cannot read bytecode "
             "files with version %d.%d.\n", header->bc_major, header->bc_minor);
         return 0;
@@ -778,11 +783,13 @@ PackFile_unpack(PARROT_INTERP, ARGMOD(PackFile *self),
                     header->wordsize);
         return 0;
     }
+
     if (header->byteorder != 0 && header->byteorder != 1) {
         PIO_eprintf(NULL, "PackFile_unpack: Invalid byte ordering %d\n",
                     header->byteorder);
         return 0;
     }
+
     if (header->floattype != 0 && header->floattype != 1) {
         PIO_eprintf(NULL, "PackFile_unpack: Invalid floattype %d\n",
                     header->floattype);
@@ -808,10 +815,14 @@ PackFile_unpack(PARROT_INTERP, ARGMOD(PackFile *self),
     else if (header->uuid_type == 1) {
         /* Read in the UUID. We'll put it in a NULL-terminated string, just in
          * case pepole use it that way. */
-        header->uuid_data = (unsigned char *)mem_sys_allocate(header->uuid_size + 1);
+        header->uuid_data = (unsigned char *)
+            mem_sys_allocate(header->uuid_size + 1);
+
         memcpy(header->uuid_data, packed + PACKFILE_HEADER_BYTES,
             header->uuid_size);
-        header->uuid_data[header->uuid_size] = 0; /* NULL terminate */
+
+        /* NULL terminate */
+        header->uuid_data[header->uuid_size] = 0;
     }
     else {
         /* Don't know this UUID type. */
@@ -821,20 +832,19 @@ PackFile_unpack(PARROT_INTERP, ARGMOD(PackFile *self),
 
     /* Set cursor to position after what we've read, allowing for padding to a
      * 16 byte boundary. */
-    header_read_length = PACKFILE_HEADER_BYTES + header->uuid_size;
+    header_read_length  = PACKFILE_HEADER_BYTES + header->uuid_size;
     header_read_length += header_read_length % 16 ?
         16 - header_read_length % 16 : 0;
-    cursor = packed + (header_read_length / sizeof (opcode_t));
+    cursor              = packed + (header_read_length / sizeof (opcode_t));
 
-    /* Set what transforms we need to do when reading the rest of
-     * the file. */
+    /* Set what transforms we need to do when reading the rest of the file. */
     PackFile_assign_transforms(self);
 
     /* Directory format. */
     header->dir_format = PF_fetch_opcode(self, &cursor);
+
     if (header->dir_format != PF_DIR_FORMAT) {
-        PIO_eprintf(NULL,
-                "PackFile_unpack: Dir format was %d not %d\n",
+        PIO_eprintf(NULL, "PackFile_unpack: Dir format was %d not %d\n",
                     header->dir_format, PF_DIR_FORMAT);
         return 0;
     }
@@ -851,18 +861,18 @@ PackFile_unpack(PARROT_INTERP, ARGMOD(PackFile *self),
 #endif
 
     self->directory.base.file_offset = (INTVAL)cursor - (INTVAL)self->src;
-    /*
-     * now unpack dir, which unpacks its contents ...
-     */
+
+    /* now unpack dir, which unpacks its contents ... */
     Parrot_block_DOD(interp);
     cursor = PackFile_Segment_unpack(interp,
                                      &self->directory.base, cursor);
     Parrot_unblock_DOD(interp);
 
 #ifdef PARROT_HAS_HEADER_SYSMMAN
-    if (self->is_mmap_ped && (
-                self->need_endianize || self->need_wordsize)) {
-        munmap((void *)self->src, self->size);
+    if (self->is_mmap_ped
+    && (self->need_endianize || self->need_wordsize)) {
+        DECL_CONST_CAST;
+        munmap(const_cast(self->src), self->size);
         self->is_mmap_ped = 0;
     }
 #endif
@@ -874,12 +884,13 @@ PackFile_unpack(PARROT_INTERP, ARGMOD(PackFile *self),
     return cursor - packed;
 }
 
+
 /*
 
 =item C<INTVAL PackFile_map_segments>
 
-For each segment in the directory C<dir> the callback function
-C<callback> is called. The pointer C<user_data> is append to each call.
+For each segment in the directory C<dir> the callback function C<callback> is
+called. The pointer C<user_data> is included in each call.
 
 If a callback returns non-zero the processing of segments is stopped,
 and this value is returned.
@@ -905,13 +916,13 @@ PackFile_map_segments(PARROT_INTERP, ARGIN(const PackFile_Directory *dir),
     return 0;
 }
 
+
 /*
 
 =item C<INTVAL PackFile_add_segment>
 
-Adds the Segment C<seg> to the directory C<dir> The PackFile becomes the
-owner of the segment; that means it's getting destroyed, when the
-packfile gets destroyed.
+Adds the Segment C<seg> to the directory C<dir>.  The PackFile becomes the
+owner of the segment; it gets destroyed when the packfile does.
 
 =cut
 
@@ -922,16 +933,7 @@ INTVAL
 PackFile_add_segment(SHIM_INTERP, ARGMOD(PackFile_Directory *dir),
         ARGIN(PackFile_Segment *seg))
 {
-    if (dir->segments) {
-        dir->segments =
-            (PackFile_Segment **)mem_sys_realloc(dir->segments,
-                    sizeof (PackFile_Segment *) *
-                    (dir->num_segments+1));
-    }
-    else {
-        dir->segments = (PackFile_Segment **)mem_sys_allocate(
-                sizeof (PackFile_Segment *) * (dir->num_segments+1));
-    }
+    mem_realloc_n_typed(dir->segments, dir->num_segments+1, PackFile_Segment *);
     dir->segments[dir->num_segments] = seg;
     dir->num_segments++;
     seg->dir = dir;
@@ -939,12 +941,13 @@ PackFile_add_segment(SHIM_INTERP, ARGMOD(PackFile_Directory *dir),
     return 0;
 }
 
+
 /*
 
 =item C<PackFile_Segment * PackFile_find_segment>
 
 Finds the segment with the name C<name> in the C<PackFile_Directory> if
-C<sub_dir> is true, directories are searched recursively The segment is
+C<sub_dir> is true, directories are searched recursively.  The segment is
 returned, but its still owned by the C<PackFile>.
 
 =cut
@@ -961,13 +964,17 @@ PackFile_find_segment(PARROT_INTERP, ARGIN_NULLOK(PackFile_Directory *dir),
     if (dir) {
         size_t i;
 
-        for (i=0; i < dir->num_segments; i++) {
+        for (i = 0; i < dir->num_segments; i++) {
             PackFile_Segment *seg = dir->segments[i];
+
             if (seg) {
                 if (STREQ(seg->name, name))
                     return seg;
+
                 if (sub_dir && seg->type == PF_DIR_SEG) {
-                    seg = PackFile_find_segment(interp, (PackFile_Directory *)seg, name, sub_dir);
+                    seg = PackFile_find_segment(interp,
+                            (PackFile_Directory *)seg, name, sub_dir);
+
                     if (seg)
                         return seg;
                 }
@@ -978,13 +985,13 @@ PackFile_find_segment(PARROT_INTERP, ARGIN_NULLOK(PackFile_Directory *dir),
     return NULL;
 }
 
+
 /*
 
 =item C<PackFile_Segment * PackFile_remove_segment_by_name>
 
-Finds and removes the segment with name C<name> in the
-C<PackFile_Directory>. The segment is returned and must be destroyed by
-the user.
+Finds and removes the segment with name C<name> in the C<PackFile_Directory>.
+The segment is returned and must be destroyed by the user.
 
 =cut
 
@@ -999,22 +1006,24 @@ PackFile_remove_segment_by_name(SHIM_INTERP, ARGMOD(PackFile_Directory *dir),
 {
     size_t i;
 
-    for (i=0; i < dir->num_segments; i++) {
+    for (i = 0; i < dir->num_segments; i++) {
         PackFile_Segment * const seg = dir->segments[i];
         if (STREQ(seg->name, name)) {
             dir->num_segments--;
+
             if (i != dir->num_segments) {
                 /* We're not the last segment, so we need to move things */
                 memmove(&dir->segments[i], &dir->segments[i+1],
-                       (dir->num_segments - i) *
-                       sizeof (PackFile_Segment *));
+                       (dir->num_segments - i) * sizeof (PackFile_Segment *));
             }
+
             return seg;
         }
     }
 
     return NULL;
 }
+
 
 /*
 
@@ -1043,11 +1052,13 @@ PackFile_set_header(ARGOUT(PackFile_Header *header))
     header->patch       = PARROT_PATCH_VERSION;
     header->bc_major    = PARROT_PBC_MAJOR;
     header->bc_minor    = PARROT_PBC_MINOR;
-    if (NUMVAL_SIZE == 8)
-        header->floattype = 0;
-    else /* if XXX */
-        header->floattype = 1;
+#if NUMVAL_SIZE == 8
+    header->floattype = 0;
+#else /* if XXX */
+    header->floattype = 1;
+#endif
 }
+
 
 /*
 
@@ -1104,23 +1115,22 @@ PackFile *
 PackFile_new(PARROT_INTERP, INTVAL is_mapped)
 {
     PackFile * const pf = mem_allocate_zeroed_typed(PackFile);
+    pf->header          = mem_allocate_zeroed_typed(PackFile_Header);
+    pf->is_mmap_ped     = is_mapped;
 
-    pf->is_mmap_ped = is_mapped;
-    pf->header = mem_allocate_zeroed_typed(PackFile_Header);
-    /*
-     * fill header with system specific data
-     */
+    /* fill header with system specific data */
     PackFile_set_header(pf->header);
 
     /* Other fields empty for now */
     pf->cur_cs = NULL;
     pf_register_standard_funcs(interp, pf);
+
     /* create the master directory, all subirs go there */
     pf->directory.base.pf = pf;
-    pf->dirp = (PackFile_Directory *)
+    pf->dirp              = (PackFile_Directory *)
         PackFile_Segment_new_seg(interp, &pf->directory,
             PF_DIR_SEG, DIRECTORY_SEGMENT_NAME, 0);
-    pf->directory = *pf->dirp;
+    pf->directory         = *pf->dirp;
 
     pf->fetch_op = (packfile_fetch_op_t)NULL;
     pf->fetch_iv = (packfile_fetch_iv_t)NULL;
@@ -1129,12 +1139,13 @@ PackFile_new(PARROT_INTERP, INTVAL is_mapped)
     return pf;
 }
 
+
 /*
 
 =item C<PackFile * PackFile_new_dummy>
 
-Create a new (initial) dummy PackFile. This is needed, if the interpreter
-doesn't load any bytecode, but is using Parrot_compile_string.
+Create a new (initial) dummy PackFile. This is necessary if the interpreter
+doesn't load any bytecode but instead uses C<Parrot_compile_string>.
 
 =cut
 
@@ -1150,10 +1161,11 @@ PackFile_new_dummy(PARROT_INTERP, ARGIN(const char *name))
     /* XXX PackFile_new needs to die on NULL, or else we have to check here */
 
     interp->initial_pf = pf;
-    interp->code =
-        pf->cur_cs = PF_create_default_segs(interp, name, 1);
+    interp->code       = pf->cur_cs = PF_create_default_segs(interp, name, 1);
+
     return pf;
 }
+
 
 /*
 
@@ -1175,6 +1187,7 @@ PackFile_funcs_register(SHIM_INTERP, ARGOUT(PackFile *pf), UINTVAL type,
     return 1;
 }
 
+
 /*
 
 =item C<static const opcode_t * default_unpack>
@@ -1190,27 +1203,31 @@ PARROT_CAN_RETURN_NULL
 static const opcode_t *
 default_unpack(ARGMOD(PackFile_Segment *self), ARGIN(const opcode_t *cursor))
 {
+    DECL_CONST_CAST_OF(opcode_t);
+
     self->op_count = PF_fetch_opcode(self->pf, &cursor);
-    self->itype = PF_fetch_opcode(self->pf, &cursor);
-    self->id = PF_fetch_opcode(self->pf, &cursor);
-    self->size = PF_fetch_opcode(self->pf, &cursor);
+    self->itype    = PF_fetch_opcode(self->pf, &cursor);
+    self->id       = PF_fetch_opcode(self->pf, &cursor);
+    self->size     = PF_fetch_opcode(self->pf, &cursor);
+
     if (self->size == 0)
         return cursor;
+
     /* if the packfile is mmap()ed just point to it if we don't
-     * need any fetch transforms
-     */
-    if (self->pf->is_mmap_ped &&
-            !self->pf->need_endianize && !self->pf->need_wordsize) {
-        self->data = cursor;
-        cursor += self->size;
+     * need any fetch transforms */
+    if (self->pf->is_mmap_ped
+    && !self->pf->need_endianize
+    && !self->pf->need_wordsize) {
+        self->data  = const_cast(cursor);
+        cursor     += self->size;
         return cursor;
     }
+
     /* else allocate mem */
-    self->data = (opcode_t *)mem_sys_allocate(self->size * sizeof (opcode_t));
+    self->data = mem_allocate_n_typed(self->size, opcode_t);
 
     if (!self->data) {
-        PIO_eprintf(NULL,
-                "PackFile_unpack: Unable to allocate data memory!\n");
+        PIO_eprintf(NULL, "PackFile_unpack: Unable to allocate data memory!\n");
         self->size = 0;
         return NULL;
     }
@@ -1221,7 +1238,7 @@ default_unpack(ARGMOD(PackFile_Segment *self), ARGIN(const opcode_t *cursor))
     }
     else {
         int i;
-        for (i = 0; i < (int)self->size ; i++) {
+        for (i = 0; i < (int)self->size; i++) {
             self->data[i] = PF_fetch_opcode(self->pf, &cursor);
 #if TRACE_PACKFILE
             PIO_eprintf(NULL, "op[#%d] %u\n", i, self->data[i]);
@@ -1231,6 +1248,7 @@ default_unpack(ARGMOD(PackFile_Segment *self), ARGIN(const opcode_t *cursor))
 
     return cursor;
 }
+
 
 /*
 
@@ -1252,6 +1270,7 @@ default_dump_header(PARROT_INTERP, ARGIN(const PackFile_Segment *self))
             (int)self->id, (int)self->size);
 }
 
+
 /*
 
 =item C<static void default_dump>
@@ -1265,23 +1284,26 @@ The default dump function.
 static void
 default_dump(PARROT_INTERP, ARGIN(const PackFile_Segment *self))
 {
-    size_t i;
+    size_t i = self->data ? 0: self->file_offset + 4;
 
     default_dump_header(interp, self);
-    i = self->data ? 0: self->file_offset + 4;
+
     if (i % 8)
         PIO_printf(interp, "\n %04x:  ", (int) i);
 
     for (; i < (self->data ? self->size :
             self->file_offset + self->op_count); i++) {
-        if (i % 8 == 0) {
+
+        if (i % 8 == 0)
             PIO_printf(interp, "\n %04x:  ", (int) i);
-        }
+
         PIO_printf(interp, "%08lx ", (unsigned long)
                 self->data ? self->data[i] : self->pf->src[i]);
     }
+
     PIO_printf(interp, "\n]\n");
 }
+
 
 /*
 
@@ -1304,14 +1326,16 @@ pf_register_standard_funcs(PARROT_INTERP, ARGMOD(PackFile *pf))
         directory_unpack,
         directory_dump
     };
+
     PackFile_funcs defaultf = {
         PackFile_Segment_new,
-        (PackFile_Segment_destroy_func_t) NULLfunc,
+        (PackFile_Segment_destroy_func_t)     NULLfunc,
         (PackFile_Segment_packed_size_func_t) NULLfunc,
-        (PackFile_Segment_pack_func_t) NULLfunc,
-        (PackFile_Segment_unpack_func_t) NULLfunc,
+        (PackFile_Segment_pack_func_t)        NULLfunc,
+        (PackFile_Segment_unpack_func_t)      NULLfunc,
         default_dump
     };
+
     PackFile_funcs fixupf = {
         fixup_new,
         fixup_destroy,
@@ -1320,6 +1344,7 @@ pf_register_standard_funcs(PARROT_INTERP, ARGMOD(PackFile *pf))
         fixup_unpack,
         default_dump
     };
+
     PackFile_funcs constf = {
         const_new,
         const_destroy,
@@ -1328,14 +1353,16 @@ pf_register_standard_funcs(PARROT_INTERP, ARGMOD(PackFile *pf))
         PackFile_ConstTable_unpack,
         default_dump
     };
+
     PackFile_funcs bytef = {
         byte_code_new,
         byte_code_destroy,
         (PackFile_Segment_packed_size_func_t) NULLfunc,
-        (PackFile_Segment_pack_func_t) NULLfunc,
-        (PackFile_Segment_unpack_func_t) NULLfunc,
+        (PackFile_Segment_pack_func_t)        NULLfunc,
+        (PackFile_Segment_unpack_func_t)      NULLfunc,
         default_dump
     };
+
     PackFile_funcs debugf = {
         pf_debug_new,
         pf_debug_destroy,
@@ -1344,15 +1371,16 @@ pf_register_standard_funcs(PARROT_INTERP, ARGMOD(PackFile *pf))
         pf_debug_unpack,
         pf_debug_dump
     };
-    PackFile_funcs_register(interp, pf, PF_DIR_SEG, dirf);
+    PackFile_funcs_register(interp, pf, PF_DIR_SEG,     dirf);
     PackFile_funcs_register(interp, pf, PF_UNKNOWN_SEG, defaultf);
-    PackFile_funcs_register(interp, pf, PF_FIXUP_SEG, fixupf);
-    PackFile_funcs_register(interp, pf, PF_CONST_SEG, constf);
-    PackFile_funcs_register(interp, pf, PF_BYTEC_SEG, bytef);
-    PackFile_funcs_register(interp, pf, PF_DEBUG_SEG, debugf);
+    PackFile_funcs_register(interp, pf, PF_FIXUP_SEG,   fixupf);
+    PackFile_funcs_register(interp, pf, PF_CONST_SEG,   constf);
+    PackFile_funcs_register(interp, pf, PF_BYTEC_SEG,   bytef);
+    PackFile_funcs_register(interp, pf, PF_DEBUG_SEG,   debugf);
 
     return;
 }
+
 
 /*
 
@@ -1371,16 +1399,19 @@ PackFile_Segment *
 PackFile_Segment_new_seg(PARROT_INTERP, ARGMOD(PackFile_Directory *dir),
         UINTVAL type, ARGIN(const char *name), int add)
 {
-    PackFile * const pf = dir->base.pf;
-    const PackFile_Segment_new_func_t f = pf->PackFuncs[type].new_seg;
-    PackFile_Segment * const seg = (f)(interp, pf, name, add);
+    PackFile * const                  pf  = dir->base.pf;
+    const PackFile_Segment_new_func_t f   = pf->PackFuncs[type].new_seg;
+    PackFile_Segment * const          seg = (f)(interp, pf, name, add);
 
     segment_init(seg, pf, name);
     seg->type = type;
+
     if (add)
         PackFile_add_segment(interp, dir, seg);
+
     return seg;
 }
+
 
 /*
 
@@ -1403,19 +1434,20 @@ create_seg(PARROT_INTERP, ARGMOD(PackFile_Directory *dir), pack_file_types t,
     const size_t len = strlen(name) + strlen(file_name) + 2;
     char * const buf = (char *)mem_sys_allocate(len);
 
-    sprintf(buf, "%s_%s", name, file_name);
+    snprintf(buf, len, "%s_%s", name, file_name);
     seg = PackFile_Segment_new_seg(interp, dir, t, buf, add);
     mem_sys_free(buf);
     return seg;
 }
 
+
 /*
 
 =item C<PackFile_ByteCode * PF_create_default_segs>
 
-Create bytecode, constant, and fixup segment for C<file_nam>. If C<add>
-is true, the current packfile becomes the owner of these segments by
-adding the segments to the directory.
+Create bytecode, constant, and fixup segment for C<file_nam>. If C<add> is
+true, the current packfile becomes the owner of these segments by adding the
+segments to the directory.
 
 =cut
 
@@ -1428,27 +1460,28 @@ PackFile_ByteCode *
 PF_create_default_segs(PARROT_INTERP, ARGIN(const char *file_name), int add)
 {
     PackFile * const pf   = interp->initial_pf;
-    PackFile_Segment *seg =
-        create_seg(interp, &pf->directory,
+    PackFile_ByteCode * const cur_cs =
+        (PackFile_ByteCode *)create_seg(interp, &pf->directory,
             PF_BYTEC_SEG, BYTE_CODE_SEGMENT_NAME, file_name, add);
-    PackFile_ByteCode * const cur_cs = (PackFile_ByteCode *)seg;
 
-    seg = create_seg(interp, &pf->directory,
+    cur_cs->fixups       =
+        (PackFile_FixupTable *)create_seg(interp, &pf->directory,
             PF_FIXUP_SEG, FIXUP_TABLE_SEGMENT_NAME, file_name, add);
-    cur_cs->fixups = (PackFile_FixupTable *)seg;
+
     cur_cs->fixups->code = cur_cs;
 
-    seg = create_seg(interp, &pf->directory,
+    cur_cs->const_table =
+        (PackFile_ConstTable *)create_seg(interp, &pf->directory,
             PF_CONST_SEG, CONSTANT_SEGMENT_NAME, file_name, add);
-    cur_cs->const_table = (PackFile_ConstTable *) seg;
+
     cur_cs->const_table->code = cur_cs;
 
-    seg = create_seg(interp, &pf->directory,
+    cur_cs->pic_index = create_seg(interp, &pf->directory,
             PF_UNKNOWN_SEG, "PIC_idx", file_name, add);
-    cur_cs->pic_index = seg;
 
     return cur_cs;
 }
+
 
 /*
 
@@ -1466,10 +1499,14 @@ PackFile_Segment_destroy(PARROT_INTERP, ARGMOD(PackFile_Segment *self))
 {
     const PackFile_Segment_destroy_func_t f =
         self->pf->PackFuncs[self->type].destroy;
+
     if (f)
         (f)(interp, self);
-    default_destroy(self);    /* destroy self after specific */
+
+    /* destroy self after specific */
+    default_destroy(self);
 }
+
 
 /*
 
@@ -1485,16 +1522,21 @@ PARROT_API
 size_t
 PackFile_Segment_packed_size(PARROT_INTERP, ARGIN(PackFile_Segment *self))
 {
-    size_t size = default_packed_size(self);
+    size_t size                           = default_packed_size(self);
+    const size_t align                    = 16 / sizeof (opcode_t);
     PackFile_Segment_packed_size_func_t f =
         self->pf->PackFuncs[self->type].packed_size;
-    const size_t align = 16/sizeof (opcode_t);
+
     if (f)
         size += (f)(interp, self);
+
+    /* pad/align it */
     if (align && size % align)
-        size += (align - size % align);   /* pad/align it */
+        size += (align - size % align);
+
     return size;
 }
+
 
 /*
 
@@ -1513,17 +1555,21 @@ opcode_t *
 PackFile_Segment_pack(PARROT_INTERP, ARGIN(PackFile_Segment *self),
         ARGIN(opcode_t *cursor))
 {
+    const size_t align             = 16 / sizeof (opcode_t);
     PackFile_Segment_pack_func_t f =
         self->pf->PackFuncs[self->type].pack;
-    const size_t align = 16/sizeof (opcode_t);
 
     cursor = default_pack(self, cursor);
+
     if (f)
         cursor = (f)(interp, self, cursor);
+
     if (align && (cursor - self->pf->src) % align)
         cursor += align - (cursor - self->pf->src) % align;
+
     return cursor;
 }
+
 
 /*
 
@@ -1544,20 +1590,23 @@ const opcode_t *
 PackFile_Segment_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *self),
         ARGIN(const opcode_t *cursor))
 {
-    PackFile_Segment_unpack_func_t f =
-        self->pf->PackFuncs[self->type].unpack;
+    PackFile_Segment_unpack_func_t f = self->pf->PackFuncs[self->type].unpack;
 
     cursor = default_unpack(self, cursor);
+
     if (!cursor)
         return NULL;
+
     if (f) {
         cursor = (f)(interp, self, cursor);
         if (!cursor)
             return NULL;
     }
+
     ALIGN_16(self->pf->src, cursor);
     return cursor;
 }
+
 
 /*
 
@@ -1575,6 +1624,7 @@ PackFile_Segment_dump(PARROT_INTERP, ARGIN(PackFile_Segment *self))
 {
     self->pf->PackFuncs[self->type].dump(interp, self);
 }
+
 
 /*
 
@@ -1597,10 +1647,10 @@ PARROT_CANNOT_RETURN_NULL
 static PackFile_Segment *
 directory_new(SHIM_INTERP, SHIM(PackFile *pf), SHIM(const char *name), SHIM(int add))
 {
-    PackFile_Directory * const dir = mem_allocate_zeroed_typed(PackFile_Directory);
 
-    return (PackFile_Segment *)dir;
+    return (PackFile_Segment *)mem_allocate_zeroed_typed(PackFile_Directory);
 }
+
 
 /*
 
@@ -1619,11 +1669,14 @@ directory_dump(PARROT_INTERP, ARGIN(const PackFile_Segment *self))
     size_t i;
 
     default_dump_header(interp, self);
+
     PIO_printf(interp, "\n\t# %d segments\n", dir->num_segments);
-    for (i=0; i < dir->num_segments; i++) {
+
+    for (i = 0; i < dir->num_segments; i++) {
         const PackFile_Segment * const seg = dir->segments[i];
 
         PIO_printf(interp,
+
                 "\ttype %d\t%s\t", (int)seg->type, seg->name);
         PIO_printf(interp,
                 " offs 0x%x(0x%x)\top_count %d\n",
@@ -1631,12 +1684,13 @@ directory_dump(PARROT_INTERP, ARGIN(const PackFile_Segment *self))
                 (int)seg->file_offset * sizeof (opcode_t),
                 (int)seg->op_count);
     }
+
     PIO_printf(interp, "]\n");
-    for (i=0; i < dir->num_segments; i++) {
-        PackFile_Segment * const seg = dir->segments[i];
-        PackFile_Segment_dump(interp, seg);
-    }
+
+    for (i = 0; i < dir->num_segments; i++)
+        PackFile_Segment_dump(interp, dir->segments[i]);
 }
+
 
 /*
 
@@ -1653,36 +1707,31 @@ PARROT_CANNOT_RETURN_NULL
 static const opcode_t *
 directory_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *segp), ARGIN(const opcode_t *cursor))
 {
-    size_t i;
     PackFile_Directory * const dir = (PackFile_Directory *) segp;
-    PackFile * const pf = dir->base.pf;
-    const opcode_t *pos;
+    PackFile           * const pf  = dir->base.pf;
+    const opcode_t            *pos;
+    size_t                     i;
 
     dir->num_segments = PF_fetch_opcode(pf, &cursor);
-    if (dir->segments) {
-        dir->segments = (PackFile_Segment **)mem_sys_realloc(dir->segments,
-                             sizeof (PackFile_Segment *) * dir->num_segments);
-    }
-    else {
-        dir->segments = (PackFile_Segment **)mem_sys_allocate(
-                sizeof (PackFile_Segment *) * dir->num_segments);
-    }
+    mem_realloc_n_typed(dir->segments, dir->num_segments, PackFile_Segment *);
 
-    for (i=0; i < dir->num_segments; i++) {
+    for (i = 0; i < dir->num_segments; i++) {
         PackFile_Segment *seg;
-        size_t tmp;
-        UINTVAL type;
-        char *name;
+        char             *name;
+        size_t            opcode;
 
         /* get type */
-        type = PF_fetch_opcode(pf, &cursor);
+        UINTVAL type = PF_fetch_opcode(pf, &cursor);
+
         if (type >= PF_MAX_SEG)
             type = PF_UNKNOWN_SEG;
+
 #if TRACE_PACKFILE
         PIO_eprintf(NULL, "Segment type %d.\n", type);
 #endif
         /* get name */
         name = PF_fetch_cstring(pf, &cursor);
+
 #if TRACE_PACKFILE
         PIO_eprintf(NULL, "Segment name \"%s\".\n", name);
 #endif
@@ -1692,7 +1741,7 @@ directory_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *segp), ARGIN(const opco
         mem_sys_free(name);
 
         seg->file_offset = PF_fetch_opcode(pf, &cursor);
-        seg->op_count = PF_fetch_opcode(pf, &cursor);
+        seg->op_count    = PF_fetch_opcode(pf, &cursor);
 
         if (pf->need_wordsize) {
 #if OPCODE_T_SIZE == 8
@@ -1705,13 +1754,16 @@ directory_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *segp), ARGIN(const opco
         }
         else
             pos = pf->src + seg->file_offset;
-        tmp = PF_fetch_opcode(pf, &pos);
-        if (seg->op_count != tmp) {
+
+        opcode = PF_fetch_opcode(pf, &pos);
+
+        if (seg->op_count != opcode) {
             fprintf(stderr,
                      "%s: Size in directory %d doesn't match size %d "
                      "at offset 0x%x\n", seg->name, (int)seg->op_count,
-                     (int)tmp, (int)seg->file_offset);
+                     (int)opcode, (int)seg->file_offset);
         }
+
         if (i) {
             PackFile_Segment *last = dir->segments[i-1];
             if (last->file_offset + last->op_count != seg->file_offset) {
@@ -1719,28 +1771,35 @@ directory_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *segp), ARGIN(const opco
                         "section");
             }
         }
+
         make_code_pointers(seg);
 
         /* store the segment */
         dir->segments[i] = seg;
-        seg->dir = dir;
+        seg->dir         = dir;
     }
 
     ALIGN_16(pf->src, cursor);
+
     /* and now unpack contents of dir */
     for (i = 0; cursor && i < dir->num_segments; i++) {
         const opcode_t * const csave = cursor;
-        size_t tmp = PF_fetch_opcode(pf, &cursor); /* check len again */
-        size_t delta = 0;       /* keep gcc -O silent */
+
+        /* check len again */
+        size_t tmp   = PF_fetch_opcode(pf, &cursor);
+
+        /* keep gcc -O silent */
+        size_t delta = 0;
 
         cursor = csave;
-        pos = PackFile_Segment_unpack(interp, dir->segments[i],
-                                       cursor);
+        pos    = PackFile_Segment_unpack(interp, dir->segments[i], cursor);
+
         if (!pos) {
             fprintf(stderr, "PackFile_unpack segment '%s' failed\n",
                     dir->segments[i]->name);
             return 0;
         }
+
         if (pf->need_wordsize) {
 #if OPCODE_T_SIZE == 8
             if (pf->header->wordsize == 4)
@@ -1752,6 +1811,7 @@ directory_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *segp), ARGIN(const opco
         }
         else
             delta = pos - cursor;
+
         if ((size_t)delta != tmp || dir->segments[i]->op_count != tmp)
             fprintf(stderr, "PackFile_unpack segment '%s' directory length %d "
                     "length in file %d needed %d for unpack\n",
@@ -1760,8 +1820,10 @@ directory_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *segp), ARGIN(const opco
                     (int)delta);
         cursor = pos;
     }
+
     return cursor;
 }
+
 
 /*
 
@@ -1788,6 +1850,7 @@ directory_destroy(PARROT_INTERP, ARGMOD(PackFile_Segment *self))
     }
 }
 
+
 /*
 
 =item C<static void sort_segs>
@@ -1801,11 +1864,12 @@ Sorts the segments in C<dir>.
 static void
 sort_segs(ARGMOD(PackFile_Directory *dir))
 {
-    const size_t num_segs = dir->num_segments;
+    const size_t      num_segs = dir->num_segments;
+    PackFile_Segment *seg      = dir->segments[0];
 
-    PackFile_Segment *seg = dir->segments[0];
     if (seg->type != PF_BYTEC_SEG) {
         size_t i;
+
         for (i = 1; i < num_segs; i++) {
             PackFile_Segment * const s2 = dir->segments[i];
             if (s2->type == PF_BYTEC_SEG) {
@@ -1815,9 +1879,12 @@ sort_segs(ARGMOD(PackFile_Directory *dir))
             }
         }
     }
+
     seg = dir->segments[1];
+
     if (seg->type != PF_FIXUP_SEG) {
         size_t i;
+
         for (i = 2; i < num_segs; i++) {
             PackFile_Segment * const s2 = dir->segments[i];
             if (s2->type == PF_FIXUP_SEG) {
@@ -1828,6 +1895,7 @@ sort_segs(ARGMOD(PackFile_Directory *dir))
         }
     }
 }
+
 
 /*
 
@@ -1843,32 +1911,42 @@ C<default_packed_size()>.
 static size_t
 directory_packed_size(PARROT_INTERP, ARGMOD(PackFile_Segment *self))
 {
-    PackFile_Directory * const dir = (PackFile_Directory *)self;
-    const size_t align = 16/sizeof (opcode_t);
+    PackFile_Directory * const dir   = (PackFile_Directory *)self;
+    const size_t               align = 16 / sizeof (opcode_t);
     size_t size, i;
 
     /* need bytecode, fixup, other segs ... */
     sort_segs(dir);
+
     /* number of segments + default, we need it for the offsets */
     size = 1 + default_packed_size(self);
+
     for (i = 0; i < dir->num_segments; i++) {
-        size += 3;        /* type, offset, size */
+        /* type, offset, size */
+        size += 3;
         size += PF_size_cstring(dir->segments[i]->name);
     }
+
+    /* pad/align it */
     if (align && size % align)
-        size += (align - size % align);   /* pad/align it */
-    for (i=0; i < dir->num_segments; i++) {
+        size += (align - size % align);
+
+    for (i = 0; i < dir->num_segments; i++) {
         size_t seg_size;
 
         dir->segments[i]->file_offset = size + self->file_offset;
-        seg_size = PackFile_Segment_packed_size(interp, dir->segments[i]);
-        dir->segments[i]->op_count = seg_size;
+        seg_size                      =
+            PackFile_Segment_packed_size(interp, dir->segments[i]);
+        dir->segments[i]->op_count    = seg_size;
         size += seg_size;
     }
+
     self->op_count = size;
+
     /* subtract default, it is added in PackFile_Segment_packed_size */
     return size - default_packed_size(self);
 }
+
 
 /*
 
@@ -2305,7 +2383,7 @@ pf_debug_unpack(PARROT_INTERP, ARGOUT(PackFile_Segment *self), ARGIN(const opcod
      * find seg e.g. CODE_DB => CODE
      * and attach it
      */
-    code_name = strdup(debug->base.name);
+    code_name = str_dup(debug->base.name);
     str_len = strlen(code_name);
     code_name[str_len - 3] = 0;
     code = (PackFile_ByteCode *)PackFile_find_segment(interp,
@@ -2316,7 +2394,7 @@ pf_debug_unpack(PARROT_INTERP, ARGOUT(PackFile_Segment *self), ARGIN(const opcod
     }
     code->debugs = debug;
     debug->code = code;
-    free(code_name);
+    mem_sys_free(code_name);
     return cursor;
 }
 
@@ -2408,31 +2486,24 @@ Parrot_new_debug_seg(PARROT_INTERP, ARGMOD(PackFile_ByteCode *cs), size_t size)
 
     if (cs->debugs) {    /* it exists already, resize it */
         debug = cs->debugs;
-        debug->base.data = (opcode_t *)mem_sys_realloc(debug->base.data, size *
-                sizeof (opcode_t));
+        mem_realloc_n_typed(debug->base.data, size, opcode_t);
     }
     else {              /* create one */
-        const size_t len = strlen(cs->base.name) + 4;
+        const size_t len  = strlen(cs->base.name) + 4;
         char * const name = (char *)mem_sys_allocate(len);
+        const int add     = (interp->code && interp->code->base.dir);
+        PackFile_Directory * const dir =
+            add
+                ? interp->code->base.dir
+                : cs->base.dir
+                    ? cs->base.dir
+                    : &interp->initial_pf->directory;
 
-        sprintf(name, "%s_DB", cs->base.name);
-        if (interp->code && interp->code->base.dir) {
-            debug = (PackFile_Debug *)
-                PackFile_Segment_new_seg(interp,
-                interp->code->base.dir, PF_DEBUG_SEG, name, 1);
-        }
-        else {
-            /* used by eval - don't register the segment */
-            debug = (PackFile_Debug *)
-                PackFile_Segment_new_seg(interp,
-                cs->base.dir ?  cs->base.dir :
-                    &interp->initial_pf->directory,
-                PF_DEBUG_SEG, name, 0);
-        }
+        snprintf(name, len, "%s_DB", cs->base.name);
+        debug = (PackFile_Debug *)PackFile_Segment_new_seg(interp, dir, PF_DEBUG_SEG, name, add);
         mem_sys_free(name);
 
-        debug->base.data    = (opcode_t *)mem_sys_allocate(size *
-            sizeof (opcode_t));
+        debug->base.data = mem_allocate_n_zeroed_typed(size, opcode_t);
         debug->code = cs;
         cs->debugs = debug;
     }
@@ -2465,8 +2536,7 @@ Parrot_debug_add_mapping(PARROT_INTERP, ARGMOD(PackFile_Debug *debug),
     int insert_pos = 0;
 
     /* Allocate space for the extra entry. */
-    debug->mappings = (PackFile_DebugMapping **)mem_sys_realloc(debug->mappings,
-        sizeof (PackFile_DebugMapping *) * (debug->num_mappings + 1));
+    mem_realloc_n_typed(debug->mappings, debug->num_mappings+1, PackFile_DebugMapping *);
 
     /* Can it just go on the end? */
     if (debug->num_mappings == 0 ||
@@ -2499,13 +2569,7 @@ Parrot_debug_add_mapping(PARROT_INTERP, ARGMOD(PackFile_Debug *debug),
 
             /* Need to put filename in constants table. */
             ct->const_count = ct->const_count + 1;
-            if (ct->constants)
-                ct->constants = (PackFile_Constant **)mem_sys_realloc(
-                    ct->constants, ct->const_count *
-                        sizeof (PackFile_Constant *));
-            else
-                ct->constants = (PackFile_Constant **)mem_sys_allocate(
-                    ct->const_count * sizeof (PackFile_Constant *));
+            mem_realloc_n_typed(ct->constants, ct->const_count, PackFile_Constant *);
             fnconst = PackFile_Constant_new(interp);
             fnconst->type = PFC_STRING;
             fnconst->u.string = string_make_direct(interp, filename,
@@ -3053,21 +3117,14 @@ PackFile_FixupTable_new_entry(PARROT_INTERP,
         interp->code->fixups = self;
         self->code = interp->code;
     }
-    i = self->fixup_count;
-    self->fixup_count++;
-    if (self->fixups) {
-        self->fixups = (PackFile_FixupEntry **)mem_sys_realloc(
-            self->fixups, self->fixup_count * sizeof (PackFile_FixupEntry *));
-    }
-    else
-        self->fixups = mem_allocate_typed(PackFile_FixupEntry *);
+    i = self->fixup_count++;
+    mem_realloc_n_typed(self->fixups, self->fixup_count, PackFile_FixupEntry *);
 
-    self->fixups[i]       = mem_allocate_typed(PackFile_FixupEntry);
-    self->fixups[i]->type = type;
-    self->fixups[i]->name = (char *)mem_sys_allocate(strlen(label) + 1);
-    strcpy(self->fixups[i]->name, label);
+    self->fixups[i]         = mem_allocate_typed(PackFile_FixupEntry);
+    self->fixups[i]->type   = type;
+    self->fixups[i]->name   = str_dup(label);
     self->fixups[i]->offset = offs;
-    self->fixups[i]->seg = self->code;
+    self->fixups[i]->seg    = self->code;
 }
 
 /*
@@ -3513,13 +3570,12 @@ PackFile_Constant_unpack_pmc(PARROT_INTERP, ARGIN(PackFile_ConstTable *constt),
      * for a constant PMC *all* contents have to be in the constant pools
      */
     pmc = Parrot_thaw(interp, image);
-    /*
-     * place item in const_table
-     */
-    self->type = PFC_PMC;
+
+    /* place item in const_table */
+    self->type  = PFC_PMC;
     self->u.key = pmc;
 
-    _sub = const_string(interp, "Sub");    /* CONST_STRING */
+    _sub = CONST_STRING(interp, "Sub");    /* CONST_STRING */
     if (VTABLE_isa(interp, pmc, _sub)) {
         /*
          * finally place the sub into some namespace stash
@@ -3683,7 +3739,7 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN(STRING *file_str))
         interp->iglobals, IGLOBALS_PBC_LIBS);
     if (VTABLE_exists_keyed_str(interp, is_loaded_hash, wo_ext))
         return;
-    pbc = const_string(interp, "pbc");
+    pbc = CONST_STRING(interp, "pbc");
     if (string_equal(interp, ext, pbc) == 0)
         file_type = PARROT_RUNTIME_FT_PBC;
     else

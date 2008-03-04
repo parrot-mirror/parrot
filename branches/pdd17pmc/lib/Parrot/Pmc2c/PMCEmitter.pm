@@ -622,7 +622,7 @@ EOC
     }
 
     $cout .= <<"EOC";
-        interp->vtables[entry] = vt_clone;
+        interp->vtables[entry]         = vt_clone;
 EOC
     $cout .= <<"EOC";
     }

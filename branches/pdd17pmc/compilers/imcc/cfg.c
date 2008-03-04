@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2002-2008, The Perl Foundation.
  * $Id$
- * Copyright (C) 2002-2007, The Perl Foundation.
  */
 
 /*
@@ -115,12 +115,11 @@ static void init_basic_blocks(ARGMOD(IMC_Unit *unit))
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-static Basic_block* make_basic_block(PARROT_INTERP,
+static Basic_block* make_basic_block(
     ARGMOD(IMC_Unit *unit),
     ARGMOD(Instruction* ins))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
         FUNC_MODIFIES(*unit)
         FUNC_MODIFIES(* ins);
 
@@ -176,7 +175,7 @@ check_invoke_type(PARROT_INTERP, ARGIN(const IMC_Unit * unit), ARGIN(const Instr
      * inside another pcc_sub
      * 2) invoke = loop to begin
      */
-    if (unit->instructions->r[0] && unit->instructions->r[0]->pcc_sub)
+    if (unit->instructions->symregs[0] && unit->instructions->symregs[0]->pcc_sub)
         return INVOKE_SUB_LOOP;
     /* 3) invoke P1 returns */
     if (ins->opsize == 2)
@@ -221,14 +220,14 @@ find_basic_blocks(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit), int first)
 
     /* RT#48280: Now the way to check for a sub is unit->type */
     ins = unit->instructions;
-    if (first && ins->type == ITLABEL && (ins->r[0]->type & VT_PCC_SUB)) {
+    if (first && ins->type == ITLABEL && (ins->symregs[0]->type & VT_PCC_SUB)) {
         IMCC_debug(interp, DEBUG_CFG, "pcc_sub %s nparams %d\n",
-                ins->r[0]->name, ins->r[0]->pcc_sub->nargs);
+                ins->symregs[0]->name, ins->symregs[0]->pcc_sub->nargs);
         expand_pcc_sub(interp, unit, ins);
     }
     ins->index = i = 0;
 
-    bb = make_basic_block(interp, unit, ins);
+    bb = make_basic_block(unit, ins);
     if (ins->type & ITBRANCH) {
         SymReg * const addr = get_branch_reg(bb->end);
         if (addr)
@@ -256,7 +255,7 @@ find_basic_blocks(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit), int first)
         }
         else if (ins->type & ITLABEL) {
             /* set the labels address (ins) */
-            ins->r[0]->first_ins = ins;
+            ins->symregs[0]->first_ins = ins;
         }
 
         /* a LABEL starts a new basic block, but not, if we already have
@@ -266,7 +265,7 @@ find_basic_blocks(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit), int first)
             nu = 0;
         else if ((ins->type & ITLABEL)) {
             bb->end = ins->prev;
-            bb = make_basic_block(interp, unit, ins);
+            bb = make_basic_block(unit, ins);
         }
         /* a branch is the end of a basic block
          * so start a new one with the next instruction */
@@ -278,10 +277,10 @@ find_basic_blocks(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit), int first)
             /*
              * ignore set_addr - no new basic block
              */
-            if (STREQ(ins->op, "set_addr"))
+            if (STREQ(ins->opname, "set_addr"))
                 continue;
             if (ins->next)
-                bb = make_basic_block(interp, unit, ins->next);
+                bb = make_basic_block(unit, ins->next);
             nu = 1;
         }
     }
@@ -310,9 +309,9 @@ bb_check_set_addr(PARROT_INTERP, ARGMOD(IMC_Unit *unit),
 
     for (ins = unit->instructions; ins; ins = ins->next) {
         if ((ins->opnum == PARROT_OP_set_addr_p_ic) &&
-                STREQ(label->name, ins->r[1]->name)) {
+                STREQ(label->name, ins->symregs[1]->name)) {
             IMCC_debug(interp, DEBUG_CFG, "set_addr %s\n",
-                    ins->r[1]->name);
+                    ins->symregs[1]->name);
 
             /*
              * connect this block with first and last block
@@ -354,18 +353,19 @@ build_cfg(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit))
             bb_add_edge(unit, last, bb);
         /* check first ins, if label try to find a set_addr op */
         if (bb->start->type & ITLABEL) {
-            bb_check_set_addr(interp, unit, bb, bb->start->r[0]);
+            bb_check_set_addr(interp, unit, bb, bb->start->symregs[0]);
         }
         /* look if last instruction is a branch */
         addr = get_branch_reg(bb->end);
         if (addr)
             bb_findadd_edge(interp, unit, bb, addr);
-        else if (STREQ(bb->start->op, "invoke") || STREQ(bb->start->op, "invokecc")) {
+        else if (STREQ(bb->start->opname, "invoke")
+              || STREQ(bb->start->opname, "invokecc")) {
             if (check_invoke_type(interp, unit, bb->start) ==
                     INVOKE_SUB_LOOP)
                 bb_add_edge(unit, bb, unit->bb_list[0]);
         }
-        if (STREQ(bb->end->op, "ret")) {
+        if (STREQ(bb->end->opname, "ret")) {
             Instruction * sub;
             IMCC_debug(interp, DEBUG_CFG, "found ret in bb %d\n", i);
             /* now go back, find labels and connect these with
@@ -382,7 +382,7 @@ build_cfg(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit))
                 for (j = i; j < unit->n_basic_blocks; j++) {
                     Basic_block * const b_bsr = unit->bb_list[j];
 
-                    if (STREQ(b_bsr->end->op, "bsr")) {
+                    if (STREQ(b_bsr->end->opname, "bsr")) {
                         addr = get_branch_reg(b_bsr->end);
                         if (addr)
                             bb_findadd_edge(interp, unit, b_bsr, addr);
@@ -393,13 +393,13 @@ build_cfg(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit))
 
             for (pred = bb->pred_list; pred; pred = pred->next) {
                 int found = 0;
-                if (STREQ(pred->from->end->op, "bsr")) {
-                    SymReg * const r = pred->from->end->r[0];
+                if (STREQ(pred->from->end->opname, "bsr")) {
+                    SymReg * const r = pred->from->end->symregs[0];
                     int j;
 
                     sub = pred->to->start;
                     if ((sub->type & ITLABEL) &&
-                            STREQ(sub->r[0]->name, r->name))
+                            STREQ(sub->symregs[0]->name, r->name))
                         found = 1;
 invok:
                     j = pred->from->index;
@@ -409,11 +409,11 @@ invok:
                                 "\tcalled from bb %d '%I'\n",
                                 j, pred->from->end);
                         for (; sub && sub != bb->end; sub = sub->next) {
-                            if (STREQ(sub->op, "saveall"))
+                            if (STREQ(sub->opname, "saveall"))
                                 if (!(sub->type & ITSAVES))
                                     break;
                             unit->bb_list[sub->bbindex]->flag |= BB_IS_SUB;
-                            if (STREQ(sub->op, "restoreall")) {
+                            if (STREQ(sub->opname, "restoreall")) {
                                 sub->type |= ITSAVES;
                                 saves = 1;
                             }
@@ -426,7 +426,7 @@ invok:
                                    saves ? "yes" : "no");
                     }
                 }
-                else if (STREQ(pred->from->end->op, "invoke")) {
+                else if (STREQ(pred->from->end->opname, "invoke")) {
                     found = 1;
                     sub = pred->to->start;
                     goto invok;
@@ -490,11 +490,11 @@ bb_findadd_edge(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Basic_block *from),
          *     set_addr ins
          */
         for (ins = from->end; ins; ins = ins->prev) {
-            if ((ins->type & ITBRANCH) && STREQ(ins->op, "set_addr") &&
-                    ins->r[1]->first_ins) {
+            if ((ins->type & ITBRANCH) && STREQ(ins->opname, "set_addr") &&
+                    ins->symregs[1]->first_ins) {
                 bb_add_edge(unit, from, unit->
-                                bb_list[ins->r[1]->first_ins->bbindex]);
-                IMCC_debug(interp, DEBUG_CFG, "(%s) ", ins->r[1]->name);
+                                bb_list[ins->symregs[1]->first_ins->bbindex]);
+                IMCC_debug(interp, DEBUG_CFG, "(%s) ", ins->symregs[1]->name);
                 break;
             }
         }
@@ -611,14 +611,14 @@ bb_remove_edge(ARGMOD(IMC_Unit *unit), ARGMOD(Edge *edge))
 
     if (unit->edge_list == edge) {
         unit->edge_list = edge->next;
-        free(edge);
+        mem_sys_free(edge);
     }
     else {
         Edge *prev;
         for (prev = unit->edge_list; prev; prev = prev->next) {
             if (prev->next == edge) {
                 prev->next = edge->next;
-                free(edge);
+                mem_sys_free(edge);
                 break;
             }
         }
@@ -629,7 +629,7 @@ bb_remove_edge(ARGMOD(IMC_Unit *unit), ARGMOD(Edge *edge))
 
 =item C<static void free_edge>
 
-RT#48260: Not yet documented!!!
+Free the memory of an IMC_Unit's edge list.
 
 =cut
 
@@ -642,7 +642,7 @@ free_edge(ARGMOD(IMC_Unit *unit))
 
     for (e = unit->edge_list; e;) {
         Edge * const next = e->next;
-        free(e);
+        mem_sys_free(e);
         e = next;
     }
     unit->edge_list = NULL;
@@ -652,7 +652,7 @@ free_edge(ARGMOD(IMC_Unit *unit))
 
 =item C<int edge_count>
 
-RT#48260: Not yet documented!!!
+Count the number of edges in the specified IMC_Unit.
 
 =cut
 
@@ -667,7 +667,7 @@ edge_count(ARGIN(const struct _IMC_Unit *unit))
 
     while (e) {
         i++;
-        e = e->next++;
+        e = e->next;
     }
     return i;
 }
@@ -676,7 +676,8 @@ edge_count(ARGIN(const struct _IMC_Unit *unit))
 
 =item C<void life_analysis>
 
-RT#48260: Not yet documented!!!
+Driver routine to call analyse_life_symbol for each
+reglist in the specified IMC_Unit.
 
 =cut
 
@@ -714,8 +715,7 @@ analyse_life_symbol(ARGIN(const struct _IMC_Unit *unit), ARGMOD(SymReg* r))
 
     if (r->life_info)
         free_life_info(unit, r);
-    r->life_info = (Life_range **)mem_sys_allocate_zeroed(unit->n_basic_blocks *
-            sizeof (Life_range *));
+    r->life_info = mem_allocate_n_zeroed_typed(unit->n_basic_blocks, Life_range *);
 
     /* First we make a pass to each block to gather the information
      * that can be obtained locally */
@@ -762,7 +762,7 @@ analyse_life_symbol(ARGIN(const struct _IMC_Unit *unit), ARGMOD(SymReg* r))
 
 =item C<void free_life_info>
 
-RT#48260: Not yet documented!!!
+Free memory of the life analysis info structures.
 
 =cut
 
@@ -771,16 +771,15 @@ RT#48260: Not yet documented!!!
 void
 free_life_info(ARGIN(const struct _IMC_Unit *unit), ARGMOD(SymReg *r))
 {
-    int i;
 #if IMC_TRACE_HIGH
     fprintf(stderr, "free_life_into(%s)\n", r->name);
 #endif
     if (r->life_info) {
+        int i;
         for (i=0; i < unit->n_basic_blocks; i++) {
-            if (r->life_info[i])
-                free(r->life_info[i]);
+            mem_sys_free(r->life_info[i]);
         }
-        free(r->life_info);
+        mem_sys_free(r->life_info);
         r->life_info = NULL;
     }
 }
@@ -827,7 +826,7 @@ analyse_life_block(ARGIN(const Basic_block* bb), ARGMOD(SymReg *r))
          *
          * TODO live range coalescing
          */
-        is_alias = (ins->type & ITALIAS) && ins->r[0] == r;
+        is_alias = (ins->type & ITALIAS) && ins->symregs[0] == r;
 
         if (instruction_reads(ins, r) || is_alias) {
             /* if instruction gets read after a special, consider
@@ -968,8 +967,9 @@ compute_dominators(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit))
     const int n = unit->n_basic_blocks;
     IMCC_info(interp, 2, "compute_dominators\n");
 
-    dominators  = unit->dominators = (Set **)malloc(sizeof (Set*) * n);
-    unit->idoms = (int *)malloc(sizeof (int) * n);
+    unit->idoms      = mem_allocate_n_zeroed_typed(n, int);
+    dominators       = mem_allocate_n_zeroed_typed(n, Set*);
+    unit->dominators = dominators;
 
     dominators[0] = set_make(n);
     set_add(dominators[0], 0);
@@ -1013,7 +1013,7 @@ compute_dominators(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit))
 
         /* TODO: This 'for' should be a breadth-first search for speed */
         for (i = 1; i < n; i++) {
-            Set  *s = set_copy(dominators[i]);
+            Set  * const s = set_copy(dominators[i]);
             Edge *edge;
 
             for (edge = unit->bb_list[i]->pred_list;
@@ -1067,7 +1067,7 @@ compute_dominators(PARROT_INTERP, ARGMOD(struct _IMC_Unit *unit))
     if (IMCC_INFO(interp)->debug & DEBUG_CFG)
         dump_dominators(unit);
 #if USE_BFS
-    free(q);
+    mem_sys_free(q);
     set_free(visited);
 #endif
 }
@@ -1145,9 +1145,9 @@ free_dominators(ARGMOD(IMC_Unit *unit))
         for (i=0; i < unit->n_basic_blocks; i++) {
             set_free(unit->dominators[i]);
         }
-        free(unit->dominators);
-        unit->dominators = 0;
-        free(unit->idoms);
+        mem_sys_free(unit->dominators);
+        unit->dominators = NULL;
+        mem_sys_free(unit->idoms);
     }
 }
 
@@ -1170,7 +1170,7 @@ free_dominance_frontiers(ARGMOD(IMC_Unit *unit))
         for (i=0; i < unit->n_basic_blocks; i++) {
             set_free(unit->dominance_frontiers[i]);
         }
-        free(unit->dominance_frontiers);
+        mem_sys_free(unit->dominance_frontiers);
         unit->dominance_frontiers = NULL;
     }
 }
@@ -1389,14 +1389,8 @@ mark_loop(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const Edge *e))
 
     /* now 'loop' contains the set of nodes inside the loop.  */
     n_loops  = unit->n_loops;
-    loop_info = unit->loop_info;
 
-    if (!loop_info)
-        loop_info = unit->loop_info = (Loop_info **)mem_sys_allocate(
-                (n_loops + 1) * sizeof (Loop_info *));
-    else
-        loop_info = unit->loop_info = (Loop_info **)mem_sys_realloc(loop_info,
-                (n_loops + 1) * sizeof (Loop_info *));
+    loop_info = mem_realloc_n_typed(unit->loop_info, n_loops+1, Loop_info *);
 
     loop_info[n_loops]            = mem_allocate_typed(Loop_info);
     loop_info[n_loops]->loop      = loop;
@@ -1426,10 +1420,9 @@ free_loops(ARGMOD(IMC_Unit *unit))
     for (i = 0; i < unit->n_loops; i++) {
         set_free(unit->loop_info[i]->loop);
         set_free(unit->loop_info[i]->exits);
-        free(unit->loop_info[i]);
+        mem_sys_free(unit->loop_info[i]);
     }
-    if (unit->loop_info)
-        free(unit->loop_info);
+    mem_sys_free(unit->loop_info);
     unit->n_loops = 0;
     unit->loop_info = 0;
 }
@@ -1479,8 +1472,8 @@ init_basic_blocks(ARGMOD(IMC_Unit *unit))
     if (unit->bb_list != NULL)
         clear_basic_blocks(unit);
 
-    unit->bb_list = (Basic_block **)calloc(unit->bb_list_size = 256,
-            sizeof (Basic_block *));
+    unit->bb_list_size = 256;
+    unit->bb_list = mem_allocate_n_zeroed_typed(unit->bb_list_size, Basic_block *);
 
     unit->n_basic_blocks = 0;
     unit->edge_list      = NULL;
@@ -1503,8 +1496,8 @@ clear_basic_blocks(ARGMOD(struct _IMC_Unit *unit))
         int i;
 
         for (i=0; i < unit->n_basic_blocks; i++)
-            free(unit->bb_list[i]);
-        free(unit->bb_list);
+            mem_sys_free(unit->bb_list[i]);
+        mem_sys_free(unit->bb_list);
         unit->bb_list = NULL;
     }
     free_edge(unit);
@@ -1526,14 +1519,11 @@ RT#48260: Not yet documented!!!
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static Basic_block*
-make_basic_block(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(Instruction* ins))
+make_basic_block(ARGMOD(IMC_Unit *unit), ARGMOD(Instruction* ins))
 {
     int n;
     Basic_block * const bb = mem_allocate_typed(Basic_block);
-
-    if (ins == NULL) {
-        PANIC(interp, "make_basic_block: called with NULL argument\n");
-    }
+    PARROT_ASSERT(ins);
 
     bb->start      = ins;
     bb->end        = ins;
@@ -1548,8 +1538,7 @@ make_basic_block(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(Instruction* ins)
 
     if (n == unit->bb_list_size) {
         unit->bb_list_size *= 2;
-        unit->bb_list = (Basic_block **)mem_sys_realloc(unit->bb_list,
-                unit->bb_list_size * sizeof (Basic_block *));
+        mem_realloc_n_typed(unit->bb_list, unit->bb_list_size, Basic_block *);
     }
 
     unit->bb_list[n] = bb;

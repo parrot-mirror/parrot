@@ -2,13 +2,13 @@
 
 =head1
 
-say.pir -- simple implementation of a say function
+builtin functions for Ruby.
 
 =cut
 
 .namespace
 
-.sub 'say'
+.sub 'print'
     .param pmc args            :slurpy
     .local pmc iter
     iter = new 'Iterator', args
@@ -22,10 +22,25 @@ say.pir -- simple implementation of a say function
     .return ()
 .end
 
+.namespace ["Array"]
+
+.sub 'new' :method
+    .param pmc values :slurpy
+    .return (values)
+.end
+
+
+.namespace ["Hash"]
+
+.sub 'new' :method
+    .param pmc values :slurpy :named
+    .return (values)
+.end
+
 
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:
 

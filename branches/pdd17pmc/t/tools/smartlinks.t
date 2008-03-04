@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -30,10 +30,16 @@ use File::Temp qw( tempdir tempfile );
 use Parrot::Test;
 use Test::More;
 
-eval { require Moose };
-$@ ? plan skip_all => 'Moose not installed' : plan tests => 65;
+BEGIN {
+    eval { require Moose };
+    plan $@
+        ? (skip_all => 'Moose not installed')
+        : (tests => 66);
+}
 
-BEGIN { use_ok 'SmartLink' or die }
+BEGIN {
+    use_ok 'SmartLink' or die;
+}
 
 sub vdiag(@) { &diag if $ENV{TEST_VERBOSE} }
 
@@ -71,7 +77,7 @@ sub vdiag(@) { &diag if $ENV{TEST_VERBOSE} }
     eval { my $l = SmartLink->new( link => $link ); };
     like(
         $@,
-        '/^Attribute \(link\) does not pass the type constraint \(PodLink\)/',
+        '/^Attribute \(link\) does not pass the type constraint(?: because: Validation failed for)? [(\']PodLink[\')]/',
         '->new fails with malformed smartlink'
     );
 
