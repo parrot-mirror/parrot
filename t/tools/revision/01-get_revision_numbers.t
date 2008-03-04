@@ -19,7 +19,7 @@ use Parrot::Revision::Utils qw(
 my $cwd = cwd();
 {
     my @testvals = (7399, 7390);
-    my $tdir1 = tempdir();
+    my $tdir1 = tempdir( CLEANUP => 1 );
     ok( (chdir $tdir1), "Changed to temporary directory");
     my $libdir = qq{$tdir1/lib};
     ok( (File::Path::mkpath( $libdir )), "Able to make libdir");
@@ -63,11 +63,19 @@ EOF
     is($current, $testvals[0], "Got expected value for current");
     is($config, $testvals[1], "Got expected value for config");
 
+    foreach my $f (
+        q{DEVELOPING},
+        qq{$libdir/Parrot/Revision.pm},
+        qq{$libdir/Parrot/Config.pm},
+    ) {
+        unlink $f
+            or croak "Unable to unlink $f from tempdir after testing";
+    }
     ok( (chdir $cwd), "Able to change back to starting directory");
 }
 
 {
-    my $tdir2 = tempdir();
+    my $tdir2 = tempdir( CLEANUP => 1 );
     ok( (chdir $tdir2), "Changed to temporary directory");
 
     my ($current, $config) = get_revision_numbers();

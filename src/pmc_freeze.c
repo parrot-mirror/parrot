@@ -385,8 +385,8 @@ Pushes an ASCII version of the integer C<v> onto the end of the C<*io>
 static void
 push_ascii_integer(PARROT_INTERP, ARGIN(IMAGE_IO *io), INTVAL v)
 {
-    char buffer[128];
-    const size_t len = sprintf(buffer, "%d ", (int) v);
+    char buffer[20];
+    const size_t len = snprintf(buffer, sizeof (buffer), "%d ", (int) v);
     str_append(interp, io->image, buffer, len);
 }
 
@@ -404,8 +404,8 @@ Pushes an ASCII version of the number C<v> onto the end of the C<*io>
 static void
 push_ascii_number(PARROT_INTERP, ARGIN(const IMAGE_IO *io), FLOATVAL v)
 {
-    char buffer[128];
-    const size_t len = sprintf(buffer, "%g ", (double) v);
+    char buffer[40];
+    const size_t len = snprintf(buffer, sizeof (buffer), "%g ", (double) v);
     str_append(interp, io->image, buffer, len);
 }
 
@@ -428,7 +428,7 @@ static void
 push_ascii_string(PARROT_INTERP, ARGIN(IMAGE_IO *io), ARGIN(const STRING *s))
 {
     const UINTVAL length = string_length(interp, s);
-    char * const buffer = (char *)malloc(4*length);
+    char * const buffer = (char *)malloc(4*length); /* XXX Why 4?  What does that mean? */
     char *cursor = buffer;
     UINTVAL idx = 0;
 
@@ -440,7 +440,7 @@ push_ascii_string(PARROT_INTERP, ARGIN(IMAGE_IO *io), ARGIN(const STRING *s))
     str_append(interp, io->image, buffer, cursor - buffer);
     str_append(interp, io->image, " ", 1);
 
-    free(buffer);
+    mem_sys_free(buffer);
 }
 
 /*
@@ -457,8 +457,8 @@ Pushes an ASCII version of the PMC C<*v> onto the end of the C<*io>
 static void
 push_ascii_pmc(PARROT_INTERP, ARGIN(IMAGE_IO *io), ARGIN(const PMC* v))
 {
-    char buffer[128];
-    const size_t len = sprintf(buffer, "%p ", (const void *)v);
+    char buffer[20];
+    const size_t len = snprintf(buffer, sizeof (buffer), "%p ", (const void *)v);
     str_append(interp, io->image, buffer, len);
 }
 
@@ -988,7 +988,8 @@ todo_list_init(PARROT_INTERP, ARGOUT(visit_info *info))
 
 =item C<static void freeze_pmc>
 
-RT#48260: Not yet documented!!!
+Freeze PMC, setting type, seen, and "same-as-last" indicators as
+appropriate.
 
 =cut
 
@@ -1249,7 +1250,10 @@ do_thaw(PARROT_INTERP, ARGIN(PMC* pmc), ARGIN(visit_info *info))
 
 =item C<static UINTVAL id_from_pmc>
 
-RT#48260: Not yet documented!!!
+Find a PMC in an arena, and return an id (left-shifted 2 bits),
+based on its position.
+
+If not found, throw an exception.
 
 =cut
 
@@ -1261,12 +1265,11 @@ id_from_pmc(PARROT_INTERP, ARGIN(PMC* pmc))
     UINTVAL id = 1;     /* first PMC in first arena */
     Small_Object_Arena *arena;
     Small_Object_Pool *pool;
-    ptrdiff_t ptr_diff;
 
     pmc = (PMC*)PObj_to_ARENA(pmc);
     pool = interp->arena_base->pmc_pool;
     for (arena = pool->last_Arena; arena; arena = arena->prev) {
-        ptr_diff = (ptrdiff_t)pmc - (ptrdiff_t)arena->start_objects;
+        const ptrdiff_t ptr_diff = (ptrdiff_t)pmc - (ptrdiff_t)arena->start_objects;
         if (ptr_diff >= 0 && ptr_diff <
                 (ptrdiff_t)(arena->used * pool->object_size)) {
             PARROT_ASSERT(ptr_diff % pool->object_size == 0);
@@ -1278,7 +1281,7 @@ id_from_pmc(PARROT_INTERP, ARGIN(PMC* pmc))
 
     pool = interp->arena_base->constant_pmc_pool;
     for (arena = pool->last_Arena; arena; arena = arena->prev) {
-        ptr_diff = (ptrdiff_t)pmc - (ptrdiff_t)arena->start_objects;
+        const ptrdiff_t ptr_diff = (ptrdiff_t)pmc - (ptrdiff_t)arena->start_objects;
         if (ptr_diff >= 0 && ptr_diff <
                 (ptrdiff_t)(arena->used * pool->object_size)) {
             PARROT_ASSERT(ptr_diff % pool->object_size == 0);
@@ -1289,7 +1292,6 @@ id_from_pmc(PARROT_INTERP, ARGIN(PMC* pmc))
     }
 
     real_exception(interp, NULL, 1, "Couldn't find PMC in arenas");
-    return -1;
 }
 
 /*
@@ -1527,10 +1529,9 @@ visit_loop_todo_list(PARROT_INTERP, ARGIN_NULLOK(PMC *current),
         ARGIN(visit_info *info))
 {
     List * const todo = (List *)PMC_data(info->todo);
-    PMC *finish_list_pmc;
     PMC **list_item;
-    int i, n;
-    List *finish_list = NULL;   /* gcc -O3 warning */
+    int i;
+    List *finish_list;
     int finished_first = 0;
 
     const int thawing =
@@ -1541,9 +1542,11 @@ visit_loop_todo_list(PARROT_INTERP, ARGIN_NULLOK(PMC *current),
         /*
          * create a list that contains PMCs that need thawfinish
          */
-        finish_list_pmc = pmc_new(interp, enum_class_Array);
+        PMC * const finish_list_pmc = pmc_new(interp, enum_class_Array);
         finish_list = (List *)PMC_data(finish_list_pmc);
     }
+    else
+        finish_list = NULL;
 
     (info->visit_pmc_now)(interp, current, info);
     /*
@@ -1568,6 +1571,7 @@ again:
     }
 
     if (thawing) {
+        INTVAL n;
         /*
          * if image isn't consumed, there are some extra data to thaw
          */
@@ -1583,13 +1587,11 @@ again:
              * the first create PMC might not be in the list,
              * if it has no pmc_ext
              */
-            list_unshift(interp, finish_list,
-                    info->thaw_result, enum_type_PMC);
+            list_unshift(interp, finish_list, info->thaw_result, enum_type_PMC);
         }
-        n = (int)list_length(interp, finish_list);
+        n = list_length(interp, finish_list);
         for (i = 0; i < n ; ++i) {
-            current = *(PMC**)list_get(interp, finish_list, i,
-                    enum_type_PMC);
+            current = *(PMC**)list_get(interp, finish_list, i, enum_type_PMC);
             if (!PMC_IS_NULL(current))
                 VTABLE_thawfinish(interp, current, info);
         }

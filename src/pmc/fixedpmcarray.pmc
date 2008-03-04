@@ -39,7 +39,7 @@ Sort this array, optionally using the provided cmp_func
 */
 
     METHOD sort(PMC *cmp_func :optional) {
-        UINTVAL n = (UINTVAL) PMC_int_val(SELF);
+        const UINTVAL n = (UINTVAL) PMC_int_val(SELF);
 
         if (n > 1)
            Parrot_quicksort(interp, PMC_data_typed(SELF, void **), n, cmp_func);
@@ -111,13 +111,13 @@ Creates and returns a copy of the array.
 */
 
     VTABLE PMC *clone() {
-        PMC *dest   = pmc_new(INTERP, SELF->vtable->base_type);
-        INTVAL size = PMC_int_val(SELF);
+        PMC * const dest  = pmc_new(INTERP, SELF->vtable->base_type);
+        const INTVAL size = PMC_int_val(SELF);
 
         if (size) {
             PMC_int_val(dest) = size;
-            PMC_data(dest)    = mem_sys_allocate(size * sizeof (PMC*));
-            mem_sys_memcopy(PMC_data(dest), PMC_data(SELF), size*sizeof (PMC*));
+            PMC_data(dest)    = mem_allocate_n_typed(size, PMC *);
+            mem_copy_n_typed(PMC_data(dest), PMC_data(SELF), size, PMC *);
             PObj_data_is_PMC_array_SET(dest);
         }
 
@@ -135,7 +135,7 @@ fixed sized array).
 
 */
     VTABLE INTVAL get_bool() {
-        INTVAL size = SELF.elements();
+        const INTVAL size = SELF.elements();
         return (INTVAL)(size != 0);
     }
 
@@ -176,7 +176,7 @@ Returns the number of elements in the array.
 */
 
     VTABLE FLOATVAL get_number() {
-        INTVAL e = SELF.elements();
+        const INTVAL e = SELF.elements();
         return (FLOATVAL)e;
     }
 
@@ -200,21 +200,21 @@ RT#46673 implement freeze/thaw and use that instead.
     }
 
     VTABLE STRING *get_repr() {
-        STRING *res = CONST_STRING(INTERP, "(");
-        INTVAL  n   = VTABLE_elements(INTERP, SELF);
+        STRING *res    = CONST_STRING(INTERP, "(");
+        const INTVAL n = VTABLE_elements(INTERP, SELF);
         INTVAL  i;
 
         for (i = 0; i < n; ++i) {
-            PMC *val = SELF.get_pmc_keyed_int(i);
-            res      = string_append(INTERP, res, VTABLE_get_repr(INTERP, val));
+            PMC * const val = SELF.get_pmc_keyed_int(i);
 
+            res = string_append(INTERP, res, VTABLE_get_repr(INTERP, val));
             if (n == 1)
-                res = string_append(INTERP, res, const_string(INTERP, ","));
+                res = string_append(INTERP, res, CONST_STRING(INTERP, ","));
             else if (i < n - 1)
-                res = string_append(INTERP, res, const_string(INTERP, ", "));
+                res = string_append(INTERP, res, CONST_STRING(INTERP, ", "));
         }
 
-        res = string_append(INTERP, res, const_string(INTERP, ")"));
+        res = string_append(INTERP, res, CONST_STRING(INTERP, ")"));
 
         return res;
     }
@@ -232,7 +232,7 @@ Returns the integer value of the element at index C<key>.
     VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
         PMC * const tempPMC = SELF.get_pmc_keyed_int(key);
         if (PMC_IS_NULL(tempPMC))
-                return 0;
+            return 0;
         return VTABLE_get_integer(INTERP, tempPMC);
     }
 
@@ -384,7 +384,7 @@ array.
             return;
 
         PMC_int_val(SELF) = size;
-        data              = (PMC **)mem_sys_allocate(size * sizeof (PMC *));
+        data              = mem_allocate_n_zeroed_typed(size, PMC *);
 
         for (i = 0; i < size; i++)
             data[i] = PMCNULL;
@@ -406,7 +406,7 @@ array.
             mem_sys_free(PMC_data(SELF));
 
         size           = PMC_int_val(SELF) = PMC_int_val(value);
-        PMC_data(SELF) = mem_sys_allocate(size * sizeof (PMC *));
+        PMC_data(SELF) = mem_allocate_n_zeroed_typed(size, PMC *);
 
         mem_sys_memcopy(PMC_data(SELF), PMC_data(value), size * sizeof (PMC *));
         PMC_int_val2(SELF) = size;
@@ -509,7 +509,7 @@ Sets the Parrot string value of the element at index C<key> to C<value>.
 */
 
     VTABLE void set_string_keyed_int(INTVAL key, STRING *value) {
-        PMC *val = pmc_new(INTERP, Parrot_get_ctx_HLL_type(INTERP,
+        PMC * const val = pmc_new(INTERP, Parrot_get_ctx_HLL_type(INTERP,
                     enum_class_String));
 
         VTABLE_set_string_native(INTERP, val, value);
@@ -570,7 +570,7 @@ Sets the PMC at index C<key> to C<value>.
 */
 
     VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
-        INTVAL k       = key_integer(INTERP, key);
+        const INTVAL k = key_integer(INTERP, key);
         PMC   *nextkey = key_next(INTERP, key);
 
         if (!nextkey) {
@@ -646,7 +646,6 @@ Return a new iterator for SELF.
         }
 
         real_exception(INTERP, NULL, E_IndexError, "Array: Unknown slice type");
-        return NULL;
     }
 
     VTABLE PMC *get_iter() {
@@ -684,7 +683,7 @@ Returns TRUE is the element at C<key> exists; otherwise returns false.
     }
 
     VTABLE INTVAL exists_keyed(PMC *key) {
-        INTVAL ix = key_integer(INTERP, key);
+        const INTVAL ix = key_integer(INTERP, key);
         return SELF.exists_keyed_int(ix);
     }
 
@@ -762,10 +761,6 @@ Returns TRUE is the element at C<key> is defined; otherwise returns false.
 =head1 SEE ALSO
 
 F<docs/pdds/pdd17_basic_types.pod>.
-
-=head1 HISTORY
-
-Initial version 2004.06.11 by Matt Fowles
 
 =cut
 

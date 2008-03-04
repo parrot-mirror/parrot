@@ -41,7 +41,7 @@ void
 register_nci_method(PARROT_INTERP, const int type, ARGIN(void *func),
                     ARGIN(const char *name), ARGIN(const char *proto))
 {
-    PMC * const method = pmc_new(interp, enum_class_NCI);
+    PMC    * const method      = pmc_new(interp, enum_class_NCI);
     STRING * const method_name = string_make(interp, name, strlen(name),
         NULL, PObj_constant_FLAG|PObj_external_FLAG);
 
@@ -60,7 +60,8 @@ register_nci_method(PARROT_INTERP, const int type, ARGIN(void *func),
 
 =item C<void register_raw_nci_method_in_ns>
 
-RT#48260: Not yet documented!!!
+Create an entry in the C<nci_method_table> for the given raw NCI method
+of PMC class C<type>.
 
 =cut
 
@@ -71,7 +72,7 @@ void
 register_raw_nci_method_in_ns(PARROT_INTERP, const int type, ARGIN(void *func),
         ARGIN(const char *name))
 {
-    PMC * const method = pmc_new(interp, enum_class_NCI);
+    PMC    * const method      = pmc_new(interp, enum_class_NCI);
     STRING * const method_name = string_make(interp, name, strlen(name),
         NULL, PObj_constant_FLAG|PObj_external_FLAG);
 
@@ -98,12 +99,11 @@ void
 Parrot_mark_method_writes(PARROT_INTERP, int type, ARGIN(const char *name))
 {
     STRING *const str_name = const_string(interp, name);
-    PMC *const pmc_true = pmc_new(interp, enum_class_Integer);
-    PMC *const method = VTABLE_get_pmc_keyed_str(
+    PMC    *const pmc_true = pmc_new(interp, enum_class_Integer);
+    PMC    *const method   = VTABLE_get_pmc_keyed_str(
         interp, interp->vtables[type]->_namespace, str_name);
     VTABLE_set_integer_native(interp, pmc_true, 1);
-    VTABLE_setprop(interp, method, const_string(interp, "write"),
-                   pmc_true);
+    VTABLE_setprop(interp, method, CONST_STRING(interp, "write"), pmc_true);
 }
 
 /*
@@ -122,21 +122,21 @@ Parrot_compreg(PARROT_INTERP, ARGIN(STRING *type),
                     NOTNULL(Parrot_compiler_func_t func))
 {
     PMC* const iglobals = interp->iglobals;
-    PMC *hash, *nci;
-    STRING *sc;
+    PMC        *nci     = pmc_new(interp, enum_class_NCI);
+    STRING     *sc      = CONST_STRING(interp, "PJt");
+    PMC        *hash    = VTABLE_get_pmc_keyed_int(interp, interp->iglobals,
+                              IGLOBALS_COMPREG_HASH);
 
-    hash = VTABLE_get_pmc_keyed_int(interp, interp->iglobals,
-            IGLOBALS_COMPREG_HASH);
     if (!hash) {
         hash = pmc_new_noinit(interp, enum_class_Hash);
         VTABLE_init(interp, hash);
         VTABLE_set_pmc_keyed_int(interp, iglobals,
                 (INTVAL)IGLOBALS_COMPREG_HASH, hash);
     }
-    nci = pmc_new(interp, enum_class_Compiler);
+
     VTABLE_set_pmc_keyed_str(interp, hash, type, nci);
+
     /* build native call interface for the C sub in "func" */
-    sc = CONST_STRING(interp, "PJt");
     VTABLE_set_pointer_keyed_str(interp, nci, sc, (void*)func);
 }
 
@@ -157,13 +157,13 @@ PMC *
 Parrot_compile_string(PARROT_INTERP, ARGIN(STRING *type),
         ARGIN(const char *code), ARGOUT(STRING **error))
 {
-    if (string_compare(interp, const_string(interp, "PIR"), type) == 0)
+    if (string_compare(interp, CONST_STRING(interp, "PIR"), type) == 0)
         return IMCC_compile_pir_s(interp, code, error);
 
-    if (string_compare(interp, const_string(interp, "PASM"), type) == 0)
+    if (string_compare(interp, CONST_STRING(interp, "PASM"), type) == 0)
         return IMCC_compile_pasm_s(interp, code, error);
 
-    *error=const_string(interp, "Invalid interpreter type");
+    *error = CONST_STRING(interp, "Invalid interpreter type");
     return NULL;
 }
 
@@ -334,7 +334,12 @@ interpinfo_p(PARROT_INTERP, INTVAL what)
 
 =item C<STRING* interpinfo_s>
 
-RT#48260: Not yet documented!!!
+Takes an interpreter name and an information type as arguments.
+Returns corresponding information strings about the interpreter:
+the full pathname, executable name, or the file stem,
+(or throws an error exception, if the type is not recognised).
+Valid types are EXECUTABLE_FULLNAME, EXECUTABLE_BASENAME,
+and RUNTIME_PREFIX.
 
 =cut
 
@@ -346,16 +351,18 @@ PARROT_CANNOT_RETURN_NULL
 STRING*
 interpinfo_s(PARROT_INTERP, INTVAL what)
 {
-    STRING *fullname, *basename;
-    char *fullname_c;
-    int pos;
-
     switch (what) {
         case EXECUTABLE_FULLNAME:
             return VTABLE_get_string(interp,
                 VTABLE_get_pmc_keyed_int(interp, interp->iglobals,
                     IGLOBALS_EXECUTABLE));
         case EXECUTABLE_BASENAME:
+            {
+            char   *fullname_c;
+            STRING *fullname;
+            STRING *basename;
+            int     pos;
+
             /* Need to strip back to what follows the final / or \. */
             fullname = VTABLE_get_string(interp,
                 VTABLE_get_pmc_keyed_int(interp, interp->iglobals,
@@ -369,17 +376,21 @@ interpinfo_s(PARROT_INTERP, INTVAL what)
             basename = string_from_cstring(interp, fullname_c + pos, 0);
             mem_sys_free(fullname_c);
             return basename;
+            }
 
         case RUNTIME_PREFIX:
-            fullname_c = Parrot_get_runtime_prefix(interp, NULL);
-            fullname = string_from_cstring(interp, fullname_c, 0);
+            {
+            char   * const fullname_c = Parrot_get_runtime_prefix(interp);
+            STRING * const fullname   = string_from_cstring(interp, fullname_c, 0);
+
             mem_sys_free(fullname_c);
             return fullname;
+            }
 
         default:
             real_exception(interp, NULL, UNIMPLEMENTED,
                 "illegal argument in interpinfo");
-    }
+    } /* switch */
 }
 
 /*
@@ -405,14 +416,14 @@ INTVAL
 sysinfo_i(SHIM_INTERP, INTVAL info_wanted)
 {
     switch (info_wanted) {
-    case PARROT_INTSIZE:
-        return sizeof (INTVAL);
-    case PARROT_FLOATSIZE:
-        return sizeof (FLOATVAL);
-    case PARROT_POINTERSIZE:
-        return sizeof (void *);
-    default:
-        return -1;
+        case PARROT_INTSIZE:
+            return sizeof (INTVAL);
+        case PARROT_FLOATSIZE:
+            return sizeof (FLOATVAL);
+        case PARROT_POINTERSIZE:
+            return sizeof (void *);
+        default:
+            return -1;
     }
 }
 
@@ -442,15 +453,15 @@ STRING *
 sysinfo_s(PARROT_INTERP, INTVAL info_wanted)
 {
     switch (info_wanted) {
-    case PARROT_OS:
-        /*  XXX Can't use CONST_STRING here yet, as it needs literal strings*/
-        return string_from_literal(interp, BUILD_OS_NAME);
-    case PARROT_OS_VERSION:
-    case PARROT_OS_VERSION_NUMBER:
-    case CPU_ARCH:
-    case CPU_TYPE:
-    default:
-        return CONST_STRING(interp, "");
+        case PARROT_OS:
+            /*  XXX Can't use CONST_STRING here yet, as it needs literal strings*/
+            return string_from_literal(interp, BUILD_OS_NAME);
+        case PARROT_OS_VERSION:
+        case PARROT_OS_VERSION_NUMBER:
+        case CPU_ARCH:
+        case CPU_TYPE:
+        default:
+            return CONST_STRING(interp, "");
     }
 }
 

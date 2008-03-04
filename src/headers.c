@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -302,9 +302,9 @@ new_pmc_header(PARROT_INTERP, UINTVAL flags)
     if (flags & PObj_is_PMC_EXT_FLAG) {
         flags |= PObj_is_special_PMC_FLAG;
         pmc->pmc_ext = new_pmc_ext(interp);
-        if (flags & PObj_is_PMC_shared_FLAG) {
+
+        if (flags & PObj_is_PMC_shared_FLAG)
             add_pmc_sync(interp, pmc);
-        }
     }
     else
         pmc->pmc_ext = NULL;
@@ -683,13 +683,12 @@ If the function returns a non-zero value iteration will stop.
 
 */
 
-PARROT_WARN_UNUSED_RESULT
+PARROT_IGNORABLE_RESULT
 int
 Parrot_forall_header_pools(PARROT_INTERP, int flag, ARGIN_NULLOK(void *arg),
         NOTNULL(pool_iter_fn func))
 {
     Arenas * const arena_base = interp->arena_base;
-    int i;
 
     if ((flag & (POOL_PMC | POOL_CONST)) == (POOL_PMC | POOL_CONST)) {
         const int ret_val = (func)(interp, arena_base->constant_pmc_pool,
@@ -708,14 +707,16 @@ Parrot_forall_header_pools(PARROT_INTERP, int flag, ARGIN_NULLOK(void *arg),
         if (ret_val)
             return ret_val;
     }
-    if (!(flag & POOL_BUFFER))
-        return 0;
-    for (i = 0; i < (INTVAL)interp->arena_base->num_sized; i++) {
-        Small_Object_Pool * const pool = arena_base->sized_header_pools[i];
-        if (pool) {
-            const int ret_val = (func)(interp, pool, POOL_BUFFER, arg);
-            if (ret_val)
-                return ret_val;
+
+    if (flag & POOL_BUFFER) {
+        int i;
+        for (i = 0; i < (INTVAL)interp->arena_base->num_sized; i++) {
+            Small_Object_Pool * const pool = arena_base->sized_header_pools[i];
+            if (pool) {
+                const int ret_val = (func)(interp, pool, POOL_BUFFER, arg);
+                if (ret_val)
+                    return ret_val;
+            }
         }
     }
     return 0;
@@ -725,7 +726,7 @@ Parrot_forall_header_pools(PARROT_INTERP, int flag, ARGIN_NULLOK(void *arg),
 
 =item C<static void free_pool>
 
-RT#48260: Not yet documented!!!
+Loops backwards through the provided pool, freeing all of its arenas.
 
 =cut
 
@@ -749,7 +750,7 @@ free_pool(ARGMOD(Small_Object_Pool *pool))
 
 =item C<static int sweep_cb_buf>
 
-RT#48260: Not yet documented!!!
+Sweeps and frees the provided pool.  Returns 0.
 
 =cut
 
@@ -780,7 +781,7 @@ sweep_cb_buf(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), SHIM(int flag),
 
 =item C<static int sweep_cb_pmc>
 
-RT#48260: Not yet documented!!!
+Sweeps and frees a memory pool.  Returns 0.
 
 =cut
 
@@ -808,7 +809,7 @@ Destroys the header pools.
 void
 Parrot_destroy_header_pools(PARROT_INTERP)
 {
-    INTVAL pass, start, ignored;
+    INTVAL pass;
 
     /* const/non const COW strings life in different pools
      * so in first pass
@@ -816,28 +817,31 @@ Parrot_destroy_header_pools(PARROT_INTERP)
      * in 3rd freeing
      */
 #ifdef GC_IS_MALLOC
-    start = 0;
+    const INTVAL start = 0;
 #else
-    start = 2;
+    const INTVAL start = 2;
 #endif
-    ignored = Parrot_forall_header_pools(interp, POOL_PMC | POOL_CONST, NULL,
+    Parrot_forall_header_pools(interp, POOL_PMC | POOL_CONST, NULL,
             sweep_cb_pmc);
-    UNUSED(ignored);
 
     for (pass = start; pass <= 2; pass++) {
-        ignored = Parrot_forall_header_pools(interp, POOL_BUFFER | POOL_CONST,
+        Parrot_forall_header_pools(interp, POOL_BUFFER | POOL_CONST,
                 (void *)pass, sweep_cb_buf);
     }
 
     free_pool(interp->arena_base->pmc_ext_pool);
+    interp->arena_base->pmc_ext_pool = NULL;
+
     mem_internal_free(interp->arena_base->sized_header_pools);
+    interp->arena_base->sized_header_pools = NULL;
 }
 
 /*
 
 =item C<static void fix_pmc_syncs>
 
-RT#48260: Not yet documented!!!
+Walks through the given arena, looking for all live and shared PMCs,
+transferring their sync values to the destionation interpreter.
 
 =cut
 

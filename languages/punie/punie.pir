@@ -42,9 +42,9 @@ tree transformations using the Parrot compiler toolkit.
     .return $P0.'command_line'(args)
 .end
 
-.include 'lib/builtins.pir'
-.include 'lib/gen_punie.pir'
-.include 'lib/gen_punie-actions.pir'
+.include 'src/builtins/builtins.pir'
+.include 'src/gen_punie.pir'
+.include 'src/gen_punie-actions.pir'
 
 =head1 LICENSE
 
@@ -59,4 +59,4 @@ it under the same terms as Parrot.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

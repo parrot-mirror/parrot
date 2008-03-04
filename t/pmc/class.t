@@ -1,5 +1,5 @@
-#!parrot
-# Copyright (C) 2007, The Perl Foundation.
+#! parrot
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -18,7 +18,6 @@ Tests the Class PMC.
 
 
 .const int TESTS = 49
-.include 'pmcinfo.pasm'
 
 
 .sub 'main' :main
@@ -62,12 +61,13 @@ Tests the Class PMC.
 
 # L<PDD15/Class PMC API/'Class PMCs also have the "I am a class" flag set on them.'>
 .sub 'class flag'
-    .local pmc class
+    .local pmc class, class_flags_pmc
     .local int class_flags, class_flag_set
     .const int POBJ_IS_CLASS_FLAG = 536870912  # 1 << 29
 
     new class, 'Class'
-    class_flags = pmcinfo class, .PMCINFO_FLAGS    # XXX op currently experimental
+    class_flags_pmc = inspect class, 'flags'
+    class_flags = class_flags_pmc
     class_flag_set = class_flags & POBJ_IS_CLASS_FLAG
     ok(class_flag_set, 'Class PMC has "I am a class" flag set')
 .end
@@ -583,8 +583,7 @@ Tests the Class PMC.
 
 
 # Local Variables:
-#   mode: cperl
-#   cperl-indent-level: 4
+#   mode: pir
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4 ft=pir:

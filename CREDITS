@@ -139,6 +139,7 @@ E: cdolan@cpan.org
 N: Christoph Otto
 D: Patch for key flags in pdd08
 D: Range check in Env PMC
+D: PHPArray implementation
 E: christoph@mksig.org
 
 N: chromatic
@@ -438,6 +439,9 @@ D: Mac OS X build fixes
 D: HTML documentation for Parrot
 E: michael_scott@mac.com
 W: http://xrl.us/sml
+
+N: Michael Stevens
+D: Remove an unused variable in C-land
 
 N: Michal J Wallace
 D: Pie-thon hammering PIR

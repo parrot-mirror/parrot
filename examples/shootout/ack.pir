@@ -15,7 +15,7 @@
     argc = elements argv
     .local int x, y, r
     x = 3
-    y = 9
+    y = 7
     if argc == 1 goto go
     $S0 = argv[1]
     if argc == 2 goto xdefault
@@ -60,4 +60,4 @@ a2:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

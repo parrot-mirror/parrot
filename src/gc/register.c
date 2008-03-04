@@ -348,7 +348,7 @@ Parrot_dup_context(PARROT_INTERP, ARGIN(const struct Parrot_Context *old))
     CONTEXT(interp->ctx) = ctx;
 
     ctx->regs_mem_size          = reg_alloc;
-    ctx->n_regs_used            = mem_allocate_n_zeroed_typed(4,INTVAL);
+    ctx->n_regs_used            = mem_allocate_n_zeroed_typed(4, INTVAL);
     ctx->n_regs_used[REGNO_INT] = old->n_regs_used[REGNO_INT];
     ctx->n_regs_used[REGNO_NUM] = old->n_regs_used[REGNO_NUM];
     ctx->n_regs_used[REGNO_STR] = old->n_regs_used[REGNO_STR];
@@ -451,7 +451,7 @@ Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
     const int    slot          = CALCULATE_SLOT_NUM(reg_alloc);
 
     /* this gets attached to the context, which should free it */
-    INTVAL * const n_regs_used = mem_allocate_n_zeroed_typed(4,INTVAL);
+    INTVAL * const n_regs_used = mem_allocate_n_zeroed_typed(4, INTVAL);
     n_regs_used[REGNO_INT] = number_regs_used[REGNO_INT];
     n_regs_used[REGNO_NUM] = number_regs_used[REGNO_NUM];
     n_regs_used[REGNO_STR] = number_regs_used[REGNO_STR];
@@ -465,9 +465,7 @@ Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
         const int extend_size = slot + 1;
         int i;
 
-        interp->ctx_mem.free_list = (void **)mem_sys_realloc(
-                interp->ctx_mem.free_list, extend_size * sizeof (void*));
-
+        mem_realloc_n_typed(interp->ctx_mem.free_list, extend_size, void*);
         for (i = interp->ctx_mem.n_free_slots; i < extend_size; ++i)
             interp->ctx_mem.free_list[i] = NULL;
         interp->ctx_mem.n_free_slots = extend_size;
@@ -540,7 +538,7 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(struct Parrot_Context *ctxp), int re_u
 {
     /*
      * The context structure has a reference count, initially 0.  This field is
-     * incrementented when a continuation that points to it is created -- either
+     * incremented when a continuation that points to it is created -- either
      * directly, or when a continuation is cloned, or when a retcontinuation is
      * converted to a full continuation in invalidate_retc.  To check for leaks,
      * (a) disable NDEBUG, (b) enable CTX_LEAK_DEBUG in interpreter.h, and (c)

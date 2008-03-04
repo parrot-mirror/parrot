@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -20,6 +20,7 @@ Subroutines, continuations, co-routines and other fun stuff...
 
 #include "parrot/parrot.h"
 #include "parrot/oplib/ops.h"
+#include "sub.str"
 
 /* HEADERIZER HFILE: include/parrot/sub.h */
 
@@ -152,17 +153,17 @@ new_continuation(PARROT_INTERP, ARGIN_NULLOK(const Parrot_cont *to))
     Parrot_cont    * const cc     = mem_allocate_typed(Parrot_cont);
     Parrot_Context * const to_ctx = to ? to->to_ctx : CONTEXT(interp->ctx);
 
-    cc->to_ctx = to_ctx;
-    cc->from_ctx = CONTEXT(interp->ctx);
+    cc->to_ctx        = to_ctx;
+    cc->from_ctx      = CONTEXT(interp->ctx);
     cc->dynamic_state = NULL;
-    cc->runloop_id = 0;
+    cc->runloop_id    = 0;
     CONTEXT(interp->ctx)->ref_count++;
     if (to) {
         cc->seg = to->seg;
         cc->address = to->address;
     }
     else {
-        cc->seg = interp->code;
+        cc->seg     = interp->code;
         cc->address = NULL;
     }
     cc->current_results = to_ctx->current_results;
@@ -186,13 +187,13 @@ new_ret_continuation(PARROT_INTERP)
 {
     Parrot_cont * const cc = mem_allocate_typed(Parrot_cont);
 
-    cc->to_ctx = CONTEXT(interp->ctx);
-    cc->from_ctx = NULL;    /* filled in during a call */
-    cc->dynamic_state = NULL;
-    cc->runloop_id = 0;
+    cc->to_ctx          = CONTEXT(interp->ctx);
+    cc->from_ctx        = NULL;    /* filled in during a call */
+    cc->dynamic_state   = NULL;
+    cc->runloop_id      = 0;
     cc->seg = interp->code;
     cc->current_results = NULL;
-    cc->address = NULL;
+    cc->address         = NULL;
     return cc;
 }
 
@@ -270,7 +271,7 @@ invalidate_retc_context(PARROT_INTERP, ARGMOD(PMC *cont))
         cont->vtable = interp->vtables[enum_class_Continuation];
         ctx->ref_count++;
         cont = ctx->current_cont;
-        ctx = PMC_cont(cont)->from_ctx;
+        ctx  = PMC_cont(cont)->from_ctx;
     }
 
 }
@@ -298,15 +299,14 @@ Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
             return s->name;
         }
         else {
-            PMC *ns_array;
-            STRING *j;
+            PMC    *ns_array;
+            STRING *j = CONST_STRING(interp, ";");
             STRING *res;
 
             Parrot_block_DOD(interp);
             ns_array = Parrot_ns_get_name(interp, s->namespace_stash);
             if (s->name)
                 VTABLE_push_string(interp, ns_array, s->name);
-            j = const_string(interp, ";");
 
             res = string_join(interp, j, ns_array);
             Parrot_unblock_DOD(interp);
@@ -320,7 +320,9 @@ Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
 
 =item C<int Parrot_Context_get_info>
 
-RT#48260: Not yet documented!!!
+Takes pointers to a context and its information table.
+Populates the table and returns 0 or 1. XXX needs explanation
+Used by Parrot_Context_infostr.
 
 =cut
 
@@ -352,8 +354,7 @@ Parrot_Context_get_info(PARROT_INTERP, ARGIN(const parrot_context_t *ctx),
     }
 
     /* fetch Parrot_sub of the current sub in the given context */
-    if (!VTABLE_isa(interp, ctx->current_sub,
-                    const_string(interp, "Sub")))
+    if (!VTABLE_isa(interp, ctx->current_sub, CONST_STRING(interp, "Sub")))
         return 1;
 
     sub = PMC_sub(ctx->current_sub);
@@ -366,7 +367,7 @@ Parrot_Context_get_info(PARROT_INTERP, ARGIN(const parrot_context_t *ctx),
         info->fullname = info->subname;
     }
     else {
-        info->nsname = VTABLE_get_string(interp, sub->namespace_name);
+        info->nsname   = VTABLE_get_string(interp, sub->namespace_name);
         info->fullname = Parrot_full_sub_name(interp, ctx->current_sub);
     }
 
@@ -400,7 +401,7 @@ Parrot_Context_get_info(PARROT_INTERP, ARGIN(const parrot_context_t *ctx),
                 break;
             }
             ADD_OP_VAR_PART(interp, sub->seg, pc, var_args);
-            n += op_info->op_count + var_args;
+            n  += op_info->op_count + var_args;
             pc += op_info->op_count + var_args;
         }
     }
@@ -411,7 +412,8 @@ Parrot_Context_get_info(PARROT_INTERP, ARGIN(const parrot_context_t *ctx),
 
 =item C<STRING* Parrot_Context_infostr>
 
-RT#48260: Not yet documented!!!
+Formats context information for display.  Takes a context pointer and
+returns a pointer to the text.  Used in debug.c and warnings.c
 
 =cut
 
@@ -497,7 +499,12 @@ Parrot_find_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(const parrot_conte
 
 =item C<PMC* parrot_new_closure>
 
-RT#48260: Not yet documented!!!
+Used where? XXX
+
+Creates a new closure, saving the context information.  Takes a pointer
+to a subroutine.
+
+Returns a pointer to the closure, (or throws exceptions if invalid).
 
 =cut
 

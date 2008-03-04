@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -43,14 +43,7 @@ Call Interface.  The function is defined as:-
 
     # Invoke MessageBoxA.
     .local int retVal
-    .begin_call
-        .arg phWnd
-        .arg message
-        .arg caption
-        .arg style
-        .nci_call MessageBoxA
-        .result retVal
-    .end_call
+    retVal = MessageBoxA(phWnd, message, caption, style)
 
     # That's all, folks.
     end
@@ -66,4 +59,4 @@ F<docs/pdds/pdd03_calling_conventions.pod>.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

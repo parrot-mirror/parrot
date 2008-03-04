@@ -13,7 +13,6 @@
 
 grammar Pynie::Grammar is PCT::Grammar;
 
-## C<TOP> defines the top level rule to the HLLCompiler.
 token TOP {
     <.indent_zero>
     <file_input>
@@ -31,11 +30,19 @@ token file_input {
 }
 
 token suite {
-    | <stmt_list> <.newline> {*}                 #= stmt_list
-    | <.newline> <.indent> <statement>
-        [ <.indent_same> <statement> ]*
-        [ <.dedent> | <.panic: IndentationError: unindent does not match any outer indentation level> ]
-      {*}                                        #= indent
+    | <suite1> {*}               #= suite1
+    | <suite2> {*}               #= suite2
+}
+
+token suite1 {
+    <stmt_list> <.newline> {*}
+}
+
+token suite2 {
+    <.newline> <.indent> <statement>
+    [ <.indent_same> <statement> ]*
+    [ <.dedent> | <.panic: IndentationError: unindent does not match any outer indentation level> ]
+    {*}
 }
 
 token statement {
@@ -54,8 +61,8 @@ token compound_stmt {
     | <for_stmt>
     | <try_stmt>
     | <with_stmt>
-    | <funcdef>
-    | <classdef>
+    | <funcdef> {*}                              #= funcdef
+    | <classdef> {*}                             #= classdef
 }
 
 rule if_stmt {
@@ -99,8 +106,8 @@ rule with_stmt {
 rule funcdef {
     <decorators>? 'def' <funcname> '(' <parameter_list>? ')'
     ':' <suite>
+    {*}
 }
-
 
 rule decorators {
     <decorator>+
@@ -111,27 +118,45 @@ rule decorator {
 }
 
 rule argument_list {
-    | <positional_arguments> [ ',' <keyword_arguments> ]?
-        [ ',' '*' <expression> ]?
-        [ ',' '**' <expression> ]?
+    [
+      [ <keyword_arguments>
+      | <positional_arguments> ',' <keyword_arguments>
+      | <positional_arguments>
+      ]
+        [ ',' <excess_positional_argument> ]?
+        [ ',' <excess_keyword_argument> ]?
     | <keyword_arguments>
-        [ ',' '*' <expression> ]?
-        [ ',' '**' <expression> ]?
-    | '*' <expression>
-        [ ',' '**' <expression> ]?
-    | '**' <expression>
+        [ ',' <excess_positional_argument> ]?
+        [ ',' <excess_keyword_argument> ]?
+    | <excess_positional_argument>
+        [ ',' <excess_keyword_argument> ]?
+    | <excess_keyword_argument>
+    ]
+    {*}
+}
+
+
+rule excess_keyword_argument {
+    '**' <expression>
+}
+
+rule excess_positional_argument {
+    '*' <expression>
 }
 
 rule positional_arguments {
     <expression> [ ',' <expression> ]*
+    {*}
 }
 
 rule keyword_arguments {
     <keyword_item> [ ',' <keyword_item> ]*
+    {*}
 }
 
 rule keyword_item {
     <identifier> '=' <expression>
+    {*}
 }
 
 rule dotted_name {
@@ -139,19 +164,33 @@ rule dotted_name {
 }
 
 rule funcname {
-    <identifier>
+    <identifier> {*}
 }
 
 rule parameter_list {
     [ <defparameter> ',' ]*
-    [ '*' <identifier> [ ',' '**' <identifier> ]?
-    | '**' <identifier>
+    [ <excess_positional_parameter> ',' <excess_keyword_parameter>
+    | <excess_positional_parameter>
+    | <excess_keyword_parameter>
     | <defparameter> ','?
     ]
+    {*}
+}
+
+rule excess_positional_parameter {
+    '*' <identifier>
+    {*}
+}
+
+rule excess_keyword_parameter {
+    '**' <identifier>
+    {*}
 }
 
 rule defparameter {
     <parameter> [ '=' <expression> ]?
+    {*}
+
 }
 
 rule sublist {
@@ -159,16 +198,18 @@ rule sublist {
 }
 
 rule parameter {
-    <identifier> | '(' <sublist> ')'
+    | <identifier> {*}             #= identifier
+    | '(' <sublist> ')'            #= sublist
 }
 
 
 rule classdef {
     'class' <classname> <inheritance>? ':' <suite>
+    {*}
 }
 
 rule classname {
-    <identifier>
+    <identifier> {*}
 }
 
 rule inheritance {
@@ -178,19 +219,20 @@ rule inheritance {
 
 rule lambda_form {
     'lambda' <parameter_list>? ':' <expression>
+    {*}
 }
 
 token simple_stmt {
     | <assert_stmt>
     | <assignment_stmt> {*}                      #= assignment_stmt
     | <augmented_assignment_stmt>
-    | <expression_list> {*}                      #= expression_list
-    | <pass_stmt>
+    | <expression_stmt> {*}                      #= expression_stmt
+    | <pass_stmt> {*}                            #= pass_stmt
     | <del_stmt>
     | <print_stmt> {*}                           #= print_stmt
     | <return_stmt>
     | <yield_stmt>
-    | <raise_stmt>
+    | <raise_stmt> {*}                           #= raise_stmt
     | <break_stmt>
     | <continue_stmt>
     | <import_stmt>
@@ -198,9 +240,9 @@ token simple_stmt {
     | <exec_stmt>
 }
 
-#rule expression_stmt {
-#    <expression_list>
-#}
+rule expression_stmt {
+    <expression_list> {*}
+}
 
 rule assert_stmt {
     'assert' <expression> [ ',' <expression> ]?
@@ -228,8 +270,9 @@ rule target {
 }
 
 rule call {
-    | '(' [ <argument_list>? ','? ]? ')'
-    | '(' [ <argument_list> ','? | <test> <genexpr_for> ] ')'
+    '(' <argument_list>? ')' {*}                                  #= argument_list
+    #| '(' [ <argument_list>? ','? ]? ')' {*}
+    #| '(' [ <argument_list> ','? | <test> <genexpr_for> ] ')'
 }
 
 rule attributeref {
@@ -265,7 +308,7 @@ rule proper_slice {
 }
 
 rule short_slice {
-    <expression>? ':' <expression>?
+    [$<start>=<expression>]? ':' [$<end>=<expression>]?
 }
 
 rule long_slice {
@@ -282,7 +325,7 @@ rule print_stmt {
 }
 
 rule pass_stmt {
-    'pass'
+    'pass' {*}
 }
 
 rule del_stmt {
@@ -306,8 +349,12 @@ rule continue_stmt {
 }
 
 rule raise_stmt {
-    'raise' [ <expression> [ ',' <expression>
-    [ ',' <expression> ]? ]? ]?
+    'raise' [ <expression>
+              [ ',' <expression>
+                [ ',' <expression> ]?
+              ]?
+            ]?
+    {*}
 }
 
 rule global_stmt {
@@ -344,7 +391,7 @@ rule module {
 token literal {
     | <stringliteral> {*}                        #= stringliteral
     | <imagnumber>
-    | <floatnumber>
+    | <floatnumber> {*}                          #= floatnumber
     | <longinteger>
     | <integer> {*}                              #= integer
 }
@@ -365,9 +412,11 @@ token longinteger { <integer> <[lL]> }
 token imagnumber { [ <floatnumber> | <intpart> ] <[jJ]> }
 
 token floatnumber {
-    | \d* '.' \d+ [ <[eE]> <[+\-]>? \d+ ]?
+    [ \d* '.' \d+ [ <[eE]> <[+\-]>? \d+ ]?
     | \d+ '.' [ <[eE]> <[+\-]>? \d+ ]?
     | \d+ <[eE]> <[+\-]>? \d+
+    ]
+    {*}
 }
 
 token stringliteral {
@@ -392,7 +441,7 @@ regex longstring {
 
 
 token stringprefix {
-    'r' | 'u' | 'ur' | 'R' | 'U' | 'UR' | 'Ur' | 'uR'
+    $<prefix>=['r'|'u'|'ur'|'R'|'U'|'UR'|'Ur'|'uR']
 }
 
 rule expression_list {
@@ -410,7 +459,8 @@ rule listmaker {
 }
 
 rule list_iter {
-    <list_for> | <list_if>
+    | <list_for> {*}           #= list_for
+    | <list_if> {*}            #= list_if
 }
 
 rule list_for {
@@ -418,21 +468,22 @@ rule list_for {
     <list_iter>?
 }
 
+rule list_if {
+    'if' <test>
+    <list_iter>?
+}
+
 rule test {
-    <or_test> | <lambda_form>
+    | <or_test> {*}             #= or_test
+    | <lambda_form> {*}         #= lambda_form
 }
 
 rule testlist {
     <test> [ ',' <test> ]* ','?
 }
 
-rule list_if {
-    'if' <test> <list_iter>?
-}
-
 token augop {
-    | '+='  | '-='  | '*=' | '/=' | '\%=' | '**='
-    | '>>=' | '<<=' | '&=' | '^=' | '|='
+    $<op>=['+='|'-='|'*='|'/='|'\%='|'**='|'>>='|'<<='|'&='|'^='|'|=']
 }
 
 rule primary {
@@ -441,10 +492,10 @@ rule primary {
 }
 
 rule postop {
-    | <attributeref>
-    | <subscription>
-    | <slicing>
-    | <call>
+    #| <attributeref>
+    #| <subscription>
+    #| <slicing>
+    | <call> {*}               #= call
 }
 
 
@@ -473,7 +524,8 @@ rule genexpr_for {
 }
 
 rule genexpr_iter {
-    <genexpr_for> | <genexpr_if>
+    | <genexpr_for>
+    | <genexpr_if>
 }
 
 rule genexpr_if {
@@ -516,17 +568,16 @@ rule and_test {
 }
 
 rule not_test {
-    | 'not' <not_test> {*}                       #= not_test
-    | <in_test> {*}                              #= in_test
+    [$<nots>='not']* <in_test> {*}
 }
 
 rule in_test {
-    <is_test> [ ('not')? 'in' <is_test> ]*
+    <is_test> [ ['not']? 'in' <is_test> ]*
     {*}
 }
 
 rule is_test {
-    <comparison> [ 'is' ('not')? <comparison> ]*
+    <comparison> [ 'is' ['not']? <comparison> ]*
     {*}
 }
 
@@ -569,7 +620,7 @@ token keyword {
     | 'del'   | 'elif'   | 'else'   | 'except' | 'exec'     | 'finally'
     | 'for'   | 'from'   | 'global' | 'if'     | 'import'   | 'in'
     | 'is'    | 'lambda' | 'not'    | 'or'     | 'pass'     | 'print'
-    | 'raise' | 'return' | 'try'    | 'while'  | 'with'     | 'yield' ] \b
+    | 'raise' | 'return' | 'try'    | 'while'  | 'with'     | 'yield' ] >>
 }
 
 ## vim: expandtab sw=4

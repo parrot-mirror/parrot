@@ -32,9 +32,8 @@ There's also a verbose mode for garbage collection.
 
 /* HEADERIZER BEGIN: static */
 
-static void clear_live_bits(ARGMOD(Small_Object_Pool *pool))
-        __attribute__nonnull__(1)
-        FUNC_MODIFIES(*pool);
+static void clear_live_bits(ARGIN(const Small_Object_Pool *pool))
+        __attribute__nonnull__(1);
 
 PARROT_CONST_FUNCTION
 static size_t find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
@@ -47,11 +46,12 @@ static void mark_special(PARROT_INTERP, ARGIN(PMC *obj))
 static int sweep_cb(PARROT_INTERP,
     ARGMOD(Small_Object_Pool *pool),
     int flag,
-    ARGIN(void *arg))
+    ARGMOD(void *arg))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(4)
-        FUNC_MODIFIES(*pool);
+        FUNC_MODIFIES(*pool)
+        FUNC_MODIFIES(*arg);
 
 static int trace_active_PMCs(PARROT_INTERP, int trace_stack)
         __attribute__nonnull__(1);
@@ -135,7 +135,7 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
          *     use a second pointer chain, which is, when not empty,
          *     processed first.
          */
-        if (tptr || hi_prio) {
+        if (tptr && hi_prio) {
             if (PMC_next_for_GC(tptr) == tptr) {
                 PMC_next_for_GC(obj) = obj;
             }
@@ -167,6 +167,8 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
 
 RT#48260: Not yet documented!!!
 
+Marks the object to live.
+
 =cut
 
 */
@@ -175,6 +177,7 @@ PARROT_API
 void
 pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
 {
+    PARROT_ASSERT(obj);
 #if PARROT_GC_GMS
     do {
         if (!PObj_live_TEST(obj) && \
@@ -182,6 +185,7 @@ pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
             parrot_gc_gms_pobject_lives(interp, obj); \
     } while (0);
 #else /* not PARROT_GC_GMS */
+
     /* if object is live or on free list return */
     if (PObj_is_live_or_free_TESTALL(obj))
         return;
@@ -189,8 +193,7 @@ pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
 #  if ! DISABLE_GC_DEBUG
 #    if GC_VERBOSE
     if (CONSERVATIVE_POINTER_CHASING) {
-        fprintf(stderr, "GC Warning! Unanchored %s %p "
-                " found in system areas \n",
+        fprintf(stderr, "GC Warning! Unanchored %s %p found in system areas \n",
                 PObj_is_PMC_TEST(obj) ? "PMC" : "Buffer", obj);
     }
 #    endif
@@ -386,7 +389,6 @@ Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
     Arenas * const arena_base = interp->arena_base;
     const int      lazy_dod   = arena_base->lazy_dod;
     PMC           *current    = arena_base->dod_mark_start;
-    PMC           *next       = PMCNULL;
 
     const UINTVAL mask = PObj_data_is_PMC_array_FLAG | PObj_custom_mark_FLAG;
 
@@ -404,8 +406,9 @@ Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
 
     pt_DOD_mark_root_finished(interp);
 
-    for (; ; current = next) {
+    do {
         const UINTVAL bits = PObj_get_FLAGS(current) & mask;
+        PMC *next;
 
         if (lazy_dod && arena_base->num_early_PMCs_seen >=
                 arena_base->num_early_DOD_PMCs) {
@@ -443,11 +446,8 @@ Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
         if (!PMC_IS_NULL(next) && next == current)
             break;
 
-        if (--how_many == 0) {
-            current = next;
-            break;
-        }
-    }
+        current = next;
+    } while (--how_many > 0);
 
     arena_base->dod_mark_start = current;
     arena_base->dod_trace_ptr  = NULL;
@@ -647,7 +647,7 @@ Parrot_dod_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
                     }
                 }
 
-                assert(dod_object);
+                PARROT_ASSERT(dod_object);
                 dod_object(interp, pool, b);
 
                 pool->add_free_object(interp, pool, b);
@@ -774,11 +774,11 @@ Parrot_dod_free_buffer_malloc(SHIM_INTERP, SHIM(Small_Object_Pool *pool),
         INTVAL * const refcount = PObj_bufrefcountptr(b);
 
         if (--(*refcount) == 0) {
-            free(refcount); /* the actual bufstart */
+            mem_sys_free(refcount); /* the actual bufstart */
         }
     }
     else
-        free(PObj_bufrefcountptr(b));
+        mem_sys_free(PObj_bufrefcountptr(b));
 }
 
 /*
@@ -927,7 +927,7 @@ Run through all PMC arenas and clear live bits.
 */
 
 static void
-clear_live_bits(ARGMOD(Small_Object_Pool *pool))
+clear_live_bits(ARGIN(const Small_Object_Pool *pool))
 {
     Small_Object_Arena *arena;
     const UINTVAL object_size = pool->object_size;
@@ -1045,7 +1045,7 @@ RT#48260: Not yet documented!!!
 
 static int
 sweep_cb(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int flag,
-    ARGIN(void *arg))
+    ARGMOD(void *arg))
 {
     int * const total_free = (int *) arg;
 
@@ -1121,6 +1121,9 @@ Parrot_dod_ms_run(PARROT_INTERP, int flags)
     /* tell the threading system that we're doing DOD mark */
     pt_DOD_start_mark(interp);
     Parrot_dod_ms_run_init(interp);
+
+    /* compact STRING pools to collect free headers and allocated buffers */
+    Parrot_go_collect(interp);
 
     /* Now go trace the PMCs */
     if (trace_active_PMCs(interp, flags & DOD_trace_stack_FLAG)) {

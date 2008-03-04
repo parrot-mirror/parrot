@@ -162,6 +162,13 @@ const char* Parrot_MMD_method_name(SHIM_INTERP, INTVAL idx);
 PARROT_API
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
+PMC * Parrot_oo_get_class(PARROT_INTERP, ARGIN(PMC *key))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_oo_get_class_str(PARROT_INTERP, ARGIN(STRING *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -208,9 +215,11 @@ PMC * Parrot_class_lookup_p(PARROT_INTERP, ARGIN(PMC *class_name))
         __attribute__nonnull__(2);
 
 void Parrot_oo_extract_methods_from_namespace(PARROT_INTERP,
-    ARGIN(PMC *self))
+    ARGIN(PMC *self),
+    ARGIN(PMC *ns))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
@@ -232,18 +241,17 @@ PMC * Parrot_oo_find_vtable_override_for_class(PARROT_INTERP,
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-PMC * Parrot_oo_get_class(PARROT_INTERP, ARGIN(PMC *key))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_oo_get_namespace(SHIM_INTERP, ARGIN(const PMC *classobj))
         __attribute__nonnull__(2);
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_oo_newclass_from_str(PARROT_INTERP, ARGIN(STRING *name))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
+INTVAL Parrot_oo_register_type(PARROT_INTERP, ARGIN(PMC *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

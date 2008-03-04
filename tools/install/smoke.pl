@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 25;
+use Test::More tests => 27;
 
 =head1 NAME
 
@@ -109,7 +109,7 @@ ok($out =~ /^usage/, "check bfc");
 $out = `$parrot languages/bf/bfco.pbc`;
 ok($out =~ /^usage/, "check bfco");
 
-$out = `$parrot --no-gc languages/cardinal/cardinal.pbc -e "say 'hello world';"`;
+$out = `$parrot --no-gc languages/cardinal/cardinal.pbc -e "print 'hello world';"`;
 ok($out eq "hello world\n", "check cardinal");
 
 $out = `$parrot languages/dotnet/net2pbc.pbc`;
@@ -118,7 +118,7 @@ ok($out =~ /^Usage/, "check dotnet");
 $filename = 'test.js';
 open $FH, '>', $filename
         or die "Can't open $filename ($!).\n";
-print $FH "print(\"Hello World from JS\\n\")";
+print $FH "print(\"Hello World from JS\\n\");";
 close $FH;
 $out = `$parrot languages/ecmascript/js.pbc $filename`;
 ok($out eq "Hello World from JS\n", "check ecmascript");
@@ -178,6 +178,24 @@ unlink($filename);
 
 $out = `$parrot languages/plumhead/plumhead.pbc`;
 ok($out =~ /^usage/, "check plumhead");
+
+$filename = 'test.p1';
+open $FH, '>', $filename
+        or die "Can't open $filename ($!).\n";
+print $FH "print \"Hello, World!\\n\";\n";
+close $FH;
+$out = `$parrot languages/punie/punie.pbc $filename`;
+ok($out eq "Hello, World!\n", "check punie");
+unlink($filename);
+
+$filename = 'test.py';
+open $FH, '>', $filename
+        or die "Can't open $filename ($!).\n";
+print $FH "print 'Hello, World!'\n";
+close $FH;
+$out = `$parrot languages/pynie/pynie.pbc $filename`;
+ok($out eq "Hello, World!\n", "check pynie");
+unlink($filename);
 
 TODO: {
     local $TODO = 'missing file ?';

@@ -34,7 +34,7 @@ Dump a state file.
   .local pmc symtab
   symtab = state['symtab']
 
-  .local Hash  symbol
+  .local pmc       symbol
   .local int       len
   .local string    name
   .local string    text
@@ -245,4 +245,4 @@ CHECK_PARSING_FINISHED:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

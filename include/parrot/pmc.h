@@ -49,7 +49,7 @@ void Parrot_create_mro(PARROT_INTERP, INTVAL type)
 
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
-PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
 PMC * pmc_new(PARROT_INTERP, INTVAL base_type)
         __attribute__nonnull__(1);
 
@@ -95,14 +95,6 @@ void dod_unregister_pmc(PARROT_INTERP, ARGIN(PMC* pmc))
         __attribute__nonnull__(2);
 
 /* HEADERIZER END: src/pmc.c */
-
-/* pmcinfo parameters */
-
-/* &gen_from_def(pmcinfo.pasm) */
-
-#define PMCINFO_FLAGS    4      /* see also STRINGINFO_FLAGS */
-
-/* &end_gen */
 
 #endif /* PARROT_PMC_H_GUARD */
 

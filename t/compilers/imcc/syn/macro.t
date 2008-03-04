@@ -1,5 +1,5 @@
 #!perl
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -8,7 +8,7 @@ use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
 use Parrot::Config;
-use Parrot::Test tests => 33;
+use Parrot::Test tests => 34;
 
 # macro tests
 
@@ -204,7 +204,7 @@ unlink('macro.tempfile');
 pir_output_is( <<'CODE', <<'OUTPUT', '.newid' );
 .sub test :main
 .macro newid(ID, CLASS)
-    .local .CLASS .ID
+    .local pmc .ID
     .ID = new .CLASS
 .endm
     .newid(var, Undef)
@@ -220,7 +220,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', '.newlex' );
 .sub test :main
 .macro newlex(ID, CLASS)
-    .local .CLASS .ID
+    .local pmc .ID
     .ID = new .CLASS
     # store_lex -1, .ID , .ID    # how to stringify .ID
 .endm
@@ -433,6 +433,19 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'test that macros labels names can have the
 .endm
 .end
 CODE
+OUTPUT
+
+pir_error_output_like( <<'CODE', <<'OUTPUT', 'invalid label syntax (RT#47978, RT#51104)' );
+.sub test :main
+    .macro m()
+        .local $iter_loop:
+        print "ok\n"
+    .endm
+
+    .m()
+.end
+CODE
+/syntax error, unexpected LABEL/
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', 'call a sub in a macro' );

@@ -57,7 +57,7 @@ method to perform any other necessary initialization.
 
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
-PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
 PMC *
 pmc_new(PARROT_INTERP, INTVAL base_type)
 {
@@ -383,24 +383,18 @@ PARROT_API
 INTVAL
 pmc_register(PARROT_INTERP, ARGIN(STRING *name))
 {
-    INTVAL type;
     PMC *classname_hash;
+
     /* If they're looking to register an existing class, return that
        class' type number */
-    type = pmc_type(interp, name);
+    INTVAL type = pmc_type(interp, name);
 
     if (type > enum_type_undef)
         return type;
 
-    if (type < enum_type_undef) {
-        if (type < 0)
-            real_exception(interp, NULL, 1,
-                "undefined type already exists - can't register PMC");
-
+    if (type < enum_type_undef)
         real_exception(interp, NULL, 1,
-            "native type with name '%s' already exists - can't register PMC",
-            data_types[type].name);
-    }
+            "undefined type already exists - can't register PMC");
 
     classname_hash = interp->class_hash;
     type           = interp->n_vtable_max++;
@@ -472,7 +466,8 @@ pmc_type_p(PARROT_INTERP, ARGIN(PMC *name))
 
 =item C<static PMC* create_class_pmc>
 
-RT#48260: Not yet documented!!!
+Create a class object for this interpreter.  Takes an interpreter
+name and type as arguments.  Returns a pointer to the class object.
 
 =cut
 
@@ -499,20 +494,20 @@ create_class_pmc(PARROT_INTERP, INTVAL type)
     if ((interp->vtables[type]->flags & VTABLE_PMC_IS_SINGLETON)
         && (_class == _class->vtable->pmc_class)) {
         interp->vtables[type]->pmc_class = _class;
-        return _class;
     }
+    else {
+        if (PObj_is_PMC_EXT_TEST(_class))
+            Parrot_free_pmc_ext(interp, _class);
 
-    if (PObj_is_PMC_EXT_TEST(_class))
-        Parrot_free_pmc_ext(interp, _class);
+        DOD_flag_CLEAR(is_special_PMC, _class);
 
-    DOD_flag_CLEAR(is_special_PMC, _class);
+        PMC_pmc_val(_class)    = (PMC  *)0xdeadbeef;
+        PMC_struct_val(_class) = (void *)0xdeadbeef;
 
-    PMC_pmc_val(_class)    = (PMC  *)0xdeadbeef;
-    PMC_struct_val(_class) = (void *)0xdeadbeef;
+        PObj_is_PMC_shared_CLEAR(_class);
 
-    PObj_is_PMC_shared_CLEAR(_class);
-
-    interp->vtables[type]->pmc_class = _class;
+        interp->vtables[type]->pmc_class = _class;
+    }
 
     return _class;
 }

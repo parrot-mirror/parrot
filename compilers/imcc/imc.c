@@ -11,7 +11,7 @@ compilers/imcc/imc.c
 
 =head1 DESCRIPTION
 
-Main entry point and top level of IMCC compiler.
+Routines for handling imc_units, which represent subs.
 
 Moved all register allocation and spill code to reg_alloc.c
 
@@ -37,6 +37,7 @@ static void imc_free_unit(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
         FUNC_MODIFIES(*unit);
 
 PARROT_CANNOT_RETURN_NULL
+PARROT_MALLOC
 static IMC_Unit * imc_new_unit(IMC_Unit_Type t);
 
 /* HEADERIZER END: static */
@@ -51,7 +52,8 @@ extern FILE* yyin;
 
 =item C<void imc_compile_all_units>
 
-RT#48260: Not yet documented!!!
+Compile all imc_units, and free all memory of instructions
+and structures afterwards.
 
 =cut
 
@@ -61,6 +63,7 @@ PARROT_API
 void
 imc_compile_all_units(PARROT_INTERP)
 {
+    /* compile all units created during the parse */
     IMC_Unit *unit;
 #if ! COMPILE_IMMEDIATE
     for (unit = IMCC_INFO(interp)->imc_units; unit;) {
@@ -70,8 +73,10 @@ imc_compile_all_units(PARROT_INTERP)
     }
 #endif
     emit_close(interp, NULL);
-    /* All done with compilation, now free instructions and other structures */
 
+    /* All done with compilation, now free all memory allocated
+     * for instructions and other structures.
+     */
     for (unit = IMCC_INFO(interp)->imc_units; unit;) {
         IMC_Unit * const unit_next = unit->next;
         Instruction *ins;
@@ -143,10 +148,11 @@ Create a new IMC_Unit.
 */
 
 PARROT_CANNOT_RETURN_NULL
+PARROT_MALLOC
 static IMC_Unit *
 imc_new_unit(IMC_Unit_Type t)
 {
-    IMC_Unit * const unit = (IMC_Unit *)calloc(1, sizeof (IMC_Unit));
+    IMC_Unit * const unit = mem_allocate_zeroed_typed(IMC_Unit);
     create_symhash(&unit->hash);
     unit->type = t;
     return unit;
@@ -213,7 +219,7 @@ imc_close_unit(PARROT_INTERP, ARGIN_NULLOK(IMC_Unit *unit))
 
 =item C<static void imc_free_unit>
 
-RT#48260: Not yet documented!!!
+Free all memory allocated of an IMC_Unit structure.
 
 =cut
 

@@ -1,6 +1,6 @@
 #! perl
 
-# Copyright (c) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -13,6 +13,9 @@ This file exists only to allow users of a CPAN shell to configure and build
 Parrot.  If you're reading this yourself, use F<Configure.pl>
 
 =cut
+
+use strict;
+use warnings;
 
 my %translations =
 (
@@ -31,3 +34,10 @@ for my $arg (@ARGV)
 }
 
 system( $^X, 'Configure.pl', @commands );
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:

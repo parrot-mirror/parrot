@@ -24,9 +24,10 @@
 
 #define FLOAT_IS_ZERO(f) ((f) == 0.0)
 
-/*
- * utils.c
- */
+#ifndef PARROT_HAS_C99_SNPRINTF
+#  define snprintf Parrot_secret_snprintf
+#endif
+
 typedef int (*reg_move_func)(PARROT_INTERP, unsigned char d, unsigned char s, void *);
 
 /* HEADERIZER BEGIN: src/utils.c */
@@ -49,34 +50,10 @@ INTVAL Parrot_byte_rindex(SHIM_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_API
-void Parrot_destroy_cpa(ARGMOD(char **array))
-        __attribute__nonnull__(1)
-        FUNC_MODIFIES(*array);
-
-PARROT_API
-void Parrot_destroy_la(ARGMOD(long *array))
-        __attribute__nonnull__(1)
-        FUNC_MODIFIES(*array);
-
-PARROT_API
 FLOATVAL Parrot_float_rand(INTVAL how_random);
 
 PARROT_API
 INTVAL Parrot_int_rand(INTVAL how_random);
-
-PARROT_API
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-void * Parrot_make_cpa(PARROT_INTERP, ARGIN(PMC *array))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-void * Parrot_make_la(PARROT_INTERP, ARGIN(PMC *array))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
 
 PARROT_API
 INTVAL Parrot_range_rand(INTVAL from, INTVAL to, INTVAL how_random);
@@ -102,12 +79,6 @@ void Parrot_srand(INTVAL seed);
 PARROT_API
 INTVAL Parrot_uint_rand(INTVAL how_random);
 
-PARROT_API
-PARROT_CANNOT_RETURN_NULL
-PMC* tm_to_array(PARROT_INTERP, ARGIN(const struct tm *tm))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
 PARROT_CONST_FUNCTION
 FLOATVAL floatval_mod(FLOATVAL n2, FLOATVAL n3);
 
@@ -116,6 +87,12 @@ INTVAL intval_mod(INTVAL i2, INTVAL i3);
 
 void Parrot_quicksort(PARROT_INTERP, void **data, UINTVAL n, PMC *cmp)
         __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC* tm_to_array(PARROT_INTERP, ARGIN(const struct tm *tm))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 /* HEADERIZER END: src/utils.c */
 
@@ -132,6 +109,16 @@ STRING * Parrot_psprintf(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*ary);
+
+PARROT_API
+int Parrot_secret_snprintf(
+    ARGOUT(char *buffer),
+    const size_t len,
+    ARGIN(const char *format),
+    ...)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*buffer);
 
 PARROT_API
 void Parrot_snprintf(PARROT_INTERP,
@@ -199,8 +186,8 @@ STRING * Parrot_vsprintf_s(PARROT_INTERP, ARGIN(STRING *pat), va_list args)
      */
 #  define PARROT_SPRINTF_MAX_PREC 3 * PARROT_SPRINTF_BUFFER_SIZE / 4
 
-#  define cstr2pstr(cstr) string_make(interp, cstr, strlen(cstr), "ascii", 0)
-#  define char2pstr(ch)   string_make(interp, &ch , 1, "ascii", 0)
+#  define cstr2pstr(cstr) string_make(interp, (cstr), strlen(cstr), "ascii", 0)
+#  define char2pstr(ch)   string_make(interp, &(ch), 1, "ascii", 0)
 
     /* SPRINTF DATA STRUCTURE AND FLAGS */
 

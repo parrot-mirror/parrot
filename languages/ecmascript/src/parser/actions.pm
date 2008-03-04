@@ -7,12 +7,13 @@ method TOP($/, $key) {
     our @?BLOCK;
 
     if $key eq 'open' {
-        # create a 'global' block and stuff it into a 'stack' of blocks.
-        $?BLOCK := PAST::Block.new( :node($/) );
+        ## create a 'global' current block and stuff it into the scope stack.
+        $?BLOCK := PAST::Block.new( :blocktype('declaration'), :node($/) );
         @?BLOCK.unshift($?BLOCK);
     }
     elsif $key eq 'close' {
-        my $past := PAST::Block.new( :node($/), :blocktype('declaration') );
+        # retrieve the current block from the scope stack
+        my $past := @?BLOCK.shift();
         for $<source_element> {
             $past.push( $( $_ ) );
         }
@@ -34,8 +35,11 @@ method function_common($/) {
     ## this is just a Stmts node, the function body.
     $past.push( $( $<block> ) );
 
+    ## remove the current block from the scope stack; restore
+    ## the current block to the "previous" block, at the top of
+    ## the stack (position 0).
     @?BLOCK.shift();
-    $?BLOCK  := @?BLOCK[0];
+    $?BLOCK := @?BLOCK[0];
 
     make $past;
 }
@@ -57,6 +61,7 @@ method formal_parameter_list($/) {
     for $<identifier> {
         my $parameter := $( $_ );
         $parameter.scope('parameter');
+        ## register the parameter as a local variable.
         $?BLOCK.symbol( $parameter.name(), :scope('lexical') );
         $past.push($parameter);
     }
@@ -189,9 +194,25 @@ method for4_statement($/) {
     $past := $body;
     make $past;
 }
+
 method labelled_statement($/) {
-    ## XXX handle the label in $<identifier>
-    make $( $<statement> );
+    # XXX labels dont work properly.
+    my $label   := $( $<identifier> ).name() ~ ':' ;
+    my $labelop := PAST::Op.new( :inline($label), :node($/) );
+    my $stat    := $( $<statement> );
+    make PAST::Stmts.new( $labelop, $stat, :node($/) );
+}
+
+method continue_statement($/) {
+    # XXX todo
+    my $jumpop := '    goto LXXX';
+    make PAST::Op.new( :inline($jumpop), :node($/) );
+}
+
+method break_statement($/) {
+    # XXX todo
+    my $jumpop := '    goto LXXX';
+    make PAST::Op.new( :inline($jumpop), :node($/) );
 }
 
 method try_statement($/) {
@@ -204,8 +225,7 @@ method try_statement($/) {
         $past.push($catchblock);
     }
     if $<finally> {
-        # the finally block, if present, is always executed.
-        # XXX what about scope?
+        ## the finally block, if present, is always executed.
         my $finallyblock := $( $<finally> );
         $past := PAST::Stmts.new( $past, $finallyblock, :node($/) );
     }
@@ -232,6 +252,7 @@ method throw_statement($/) {
 }
 
 method return_statement($/) {
+    # XXX returns don't work propertly yet
     if $<expression> {
         my $expr := $( $<expression>[0] );
         make PAST::Op.new( $expr, :inline('    .return (%0)'), :node($/) );
@@ -252,10 +273,19 @@ method variable_statement($/) {
 }
 
 method variable_declaration($/) {
-    my $var  := $( $<identifier> );
+    our $?BLOCK;
 
+    my $var  := $( $<identifier> );
+    my $name := $var.name();
     $var.isdecl(1);
     $var.scope('lexical');
+
+    if $?BLOCK.symbol( $name ) {
+        ## XXX warning of duplicate declaration?
+    }
+    else { ## enter it if it's not there yet
+        $?BLOCK.symbol( $name, :scope('lexical') );
+    }
 
     ## handle initialization value
     if $<assignment_expression> {
@@ -271,7 +301,7 @@ method variable_declaration($/) {
 
 method empty_statement($/) {
     ## to prevent special cases for the empty statement, just create a comment.
-    make PAST::Op.new( :node($/), :inline('    # no-op') );
+    make PAST::Op.new( :node($/), :inline('    # empty statement') );
 }
 
 method expression_statement($/) {
@@ -366,6 +396,10 @@ method primary_expression($/, $key) {
 }
 
 method this($/) {
+    ## XXX wait for PAST support for 'self'
+    ## load 'self' into a register; when this PAST node is used as a child somewhere
+    ## this register will be used. This step is superfluous, but PAST does not support
+    ## PIR's 'self' special variable.
     make PAST::Op.new( :inline('    %r = self'), :node($/) );
 }
 
@@ -413,7 +447,16 @@ method assignment_expression($/) {
         my $lhs := $( $<lhs_expression>[$lhsexpr] );
 
         ## invoke this operator-sub, with $lhs and the $past so far as left/right operands.
-        $past   := PAST::Op.new( $lhs, $past, :name($op), :pasttype('call'), :node($/) );
+
+        if $op eq 'infix:=' {          # XXX += and friends won't work this way; solve that
+            $past   := PAST::Op.new( $lhs, $past, :pasttype('bind'), :node($/) );
+        }
+        else {
+            $past   := PAST::Op.new( $lhs, $past, :name($op), :pasttype('call'), :node($/) );
+        }
+
+        ## maybe a lookup table, mapping "+=" to "add" etc.
+
     }
     make $past;
 }
@@ -421,7 +464,7 @@ method assignment_expression($/) {
 method conditional_expression($/) {
     my $past  := $( $<logical_or_expression> );
 
-    ## handle the ? : ternary operator if present
+    ## handle the "? :" ternary operator if present
     if $<then> {
         $past := PAST::Op.new(  $past,
                                 $( $<then>[0] ),
@@ -521,15 +564,7 @@ method member_expression($/) {
 }
 
 method member($/) {
-    my $past;
-
-    ## get the first part of the member rule, 2 options:
-    if $<primary_expression> {
-        $past := $( $<primary_expression> );
-    }
-    elsif $<function_expression> {
-        $past := $( $<function_expression> );
-    }
+    my $past := $( $<member_prefix> );
 
     ## for each index, $past acts as the invocant or main object on
     ## which some operation is executed; therefore $past must be the
@@ -542,6 +577,10 @@ method member($/) {
     }
 
     make $past;
+}
+
+method member_prefix($/, $key) {
+    make $( $/{$key} );
 }
 
 method index($/, $key) {
@@ -583,6 +622,8 @@ method identifier($/) {
     our $?BLOCK;
     my $name := ~$/;
     my $scope;
+    ## try to find the current identifier in the current block's symbol table;
+    ## if present, the scope is lexical, otherwise it's 'package'.
     if $?BLOCK.symbol( $name ) {
         $scope := 'lexical';
     }

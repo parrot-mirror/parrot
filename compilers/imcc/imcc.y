@@ -38,29 +38,48 @@
 /* HEADERIZER BEGIN: static */
 
 static void add_pcc_named_arg(PARROT_INTERP,
-    NOTNULL(SymReg *cur_call),
-    const char     *name,
-    SymReg         *value)
+    ARGMOD(SymReg *cur_call),
+    ARGIN(const char *name),
+    ARGIN(SymReg *value))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*cur_call);
 
 static void add_pcc_named_param(PARROT_INTERP,
-    SymReg     *cur_call,
-    const char *name,
-    SymReg     *value)
-        __attribute__nonnull__(1);
+    ARGMOD(SymReg *cur_call),
+    ARGIN(const char *name),
+    ARGIN(SymReg *value))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*cur_call);
 
 static void add_pcc_named_result(PARROT_INTERP,
-    SymReg     *cur_call,
-    const char *name,
-    SymReg     *value)
-        __attribute__nonnull__(1);
+    ARGMOD(SymReg *cur_call),
+    ARGIN(const char *name),
+    ARGIN(SymReg *value))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*cur_call);
 
 static void add_pcc_named_return(PARROT_INTERP,
-    SymReg     *cur_call,
-    const char *name,
-    SymReg     *value)
-        __attribute__nonnull__(1);
+    ARGMOD(SymReg *cur_call),
+    ARGIN(const char *name),
+    ARGIN(SymReg *value))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*cur_call);
+
+static void adv_named_set(PARROT_INTERP, ARGIN(char *name))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 static void begin_return_or_yield(PARROT_INTERP, int yield)
         __attribute__nonnull__(1);
@@ -68,74 +87,119 @@ static void begin_return_or_yield(PARROT_INTERP, int yield)
 static void clear_state(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static void do_loadlib(PARROT_INTERP, NOTNULL(const char *lib))
+static void do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
-static Instruction* func_ins(
-    PARROT_INTERP,
-    IMC_Unit   *unit,
-    SymReg     *lhs,
-    const char *op,
-    NOTNULL(SymReg **r),
+PARROT_CAN_RETURN_NULL
+static Instruction* func_ins(PARROT_INTERP,
+    ARGMOD(IMC_Unit *unit),
+    ARGIN(SymReg *lhs),
+    ARGIN(const char *op),
+    ARGMOD(SymReg **r),
     int n,
     int keyv,
     int emit)
-        __attribute__nonnull__(5);
-
-static Instruction * iINDEXFETCH(PARROT_INTERP,
-    IMC_Unit *unit,
-    SymReg *r0,
-    SymReg *r1,
-    SymReg *r2)
-        __attribute__nonnull__(1);
-
-static Instruction * iINDEXSET(PARROT_INTERP,
-    IMC_Unit *unit,
-    SymReg *r0,
-    SymReg *r1,
-    SymReg *r2)
-        __attribute__nonnull__(1);
-
-static Instruction * iLABEL(PARROT_INTERP, IMC_Unit *unit, SymReg *r0)
-        __attribute__nonnull__(1);
-
-static const char * inv_op(const char *op);
-static Instruction * iSUBROUTINE(PARROT_INTERP,
-    IMC_Unit *unit,
-    NOTNULL(SymReg *r))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*unit)
+        FUNC_MODIFIES(*r);
 
+PARROT_CAN_RETURN_NULL
+static Instruction * iINDEXFETCH(PARROT_INTERP,
+    ARGMOD(IMC_Unit *unit),
+    ARGIN(SymReg *r0),
+    ARGIN(SymReg *r1),
+    ARGIN(SymReg *r2))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*unit);
+
+PARROT_CAN_RETURN_NULL
+static Instruction * iINDEXSET(PARROT_INTERP,
+    ARGMOD(IMC_Unit *unit),
+    ARGIN(SymReg *r0),
+    ARGIN(SymReg *r1),
+    ARGIN(SymReg *r2))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*unit);
+
+PARROT_CANNOT_RETURN_NULL
+static Instruction * iLABEL(PARROT_INTERP,
+    ARGMOD_NULLOK(IMC_Unit *unit),
+    ARGMOD(SymReg *r0))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*r0);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static const char * inv_op(ARGIN(const char *op))
+        __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
+static Instruction * iSUBROUTINE(PARROT_INTERP,
+    ARGMOD_NULLOK(IMC_Unit *unit),
+    ARGMOD(SymReg *r))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*r);
+
+PARROT_IGNORABLE_RESULT
+PARROT_CAN_RETURN_NULL
 static Instruction * MK_I(PARROT_INTERP,
-    IMC_Unit *unit,
-    NOTNULL(const char *fmt),
+    ARGMOD(IMC_Unit *unit),
+    ARGIN(const char *fmt),
     int n,
     ...)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*unit);
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static Instruction* mk_pmc_const(PARROT_INTERP,
-    IMC_Unit *unit,
-    NOTNULL(const char *type),
-    NOTNULL(SymReg *left),
-    NOTNULL(char *constant))
+    ARGMOD(IMC_Unit *unit),
+    ARGIN(const char *type),
+    ARGMOD(SymReg *left),
+    ARGIN(const char *constant))
         __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
-        __attribute__nonnull__(5);
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*unit)
+        FUNC_MODIFIES(*left);
 
-static SymReg * mk_sub_address_fromc(PARROT_INTERP, char *name)
-        __attribute__nonnull__(1);
-
-static SymReg * mk_sub_address_u(PARROT_INTERP, char *name)
-        __attribute__nonnull__(1);
-
-static void set_lexical(PARROT_INTERP, NOTNULL(SymReg *r), char *name)
+PARROT_CANNOT_RETURN_NULL
+static SymReg * mk_sub_address_fromc(PARROT_INTERP, ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+PARROT_CANNOT_RETURN_NULL
+static SymReg * mk_sub_address_u(PARROT_INTERP, ARGIN(const char *name))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void set_lexical(PARROT_INTERP,
+    ARGMOD(SymReg *r),
+    ARGIN(const char *name))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*r);
 
 /* HEADERIZER END: static */
 
@@ -169,8 +233,11 @@ static void set_lexical(PARROT_INTERP, NOTNULL(SymReg *r), char *name)
  *        exceptions. Thus, we can't easily factorize that piece of
  *        code.
  */
+
+PARROT_IGNORABLE_RESULT
+PARROT_CAN_RETURN_NULL
 static Instruction *
-MK_I(PARROT_INTERP, IMC_Unit *unit, NOTNULL(const char *fmt), int n, ...)
+MK_I(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *fmt), int n, ...)
 {
     char opname[64];
     char *p;
@@ -200,15 +267,16 @@ MK_I(PARROT_INTERP, IMC_Unit *unit, NOTNULL(const char *fmt), int n, ...)
 }
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static Instruction*
-mk_pmc_const(PARROT_INTERP, IMC_Unit *unit, NOTNULL(const char *type),
-             NOTNULL(SymReg *left), NOTNULL(char *constant))
+mk_pmc_const(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *type),
+        ARGMOD(SymReg *left), ARGIN(const char *constant))
 {
-    const   int type_enum = atoi(type);
+    const int type_enum = atoi(type);
+    const int ascii = (*constant == '\'' || *constant == '"');
     SymReg *rhs;
     SymReg *r[2];
     char   *name;
-    int     ascii;
 
     if (left->type == VTADDRESS) {      /* IDENTIFIER */
         if (IMCC_INFO(interp)->state->pasm_file) {
@@ -220,18 +288,13 @@ mk_pmc_const(PARROT_INTERP, IMC_Unit *unit, NOTNULL(const char *type),
         left->set = 'P';
     }
     r[0] = left;
-    ascii = (*constant == '\'' || *constant == '"');
     if (ascii) {
         /* strip delimiters */
-        const size_t len  = strlen(constant);
-        name              = (char *)mem_sys_allocate(len);
-        constant[len - 1] = '\0';
-
-        strcpy(name, constant + 1);
-        free(constant);
+        name                   = str_dup(constant + 1);
+        name[strlen(name) - 1] = '\0';
     }
     else {
-        name = constant;
+        name = str_dup(constant);
     }
 
     switch (type_enum) {
@@ -252,13 +315,16 @@ mk_pmc_const(PARROT_INTERP, IMC_Unit *unit, NOTNULL(const char *type),
     r[1]          = rhs;
     rhs->pmc_type = type_enum;
 
+    mem_sys_free(name);
+
     return INS(interp, unit, "set_p_pc", "", r, 2, 0, 1);
 }
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static Instruction*
-func_ins(PARROT_INTERP, IMC_Unit *unit, SymReg *lhs, const char *op,
-         SymReg ** r, int n, int keyv, int emit)
+func_ins(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(SymReg *lhs), ARGIN(const char *op),
+         ARGMOD(SymReg **r), int n, int keyv, int emit)
 {
     int i;
     /* shift regs up by 1 */
@@ -282,8 +348,9 @@ clear_state(PARROT_INTERP)
     IMCC_INFO(interp) -> keyvec = 0;
 }
 
+PARROT_CANNOT_RETURN_NULL
 Instruction *
-INS_LABEL(PARROT_INTERP, IMC_Unit *unit, SymReg *r0, int emit)
+INS_LABEL(PARROT_INTERP, ARGMOD_NULLOK(IMC_Unit *unit), ARGMOD(SymReg *r0), int emit)
 {
 
     Instruction * const ins = _mk_instruction("", "%s:", 1, &r0, 0);
@@ -296,7 +363,10 @@ INS_LABEL(PARROT_INTERP, IMC_Unit *unit, SymReg *r0, int emit)
     return ins;
 }
 
-static Instruction * iLABEL(PARROT_INTERP, IMC_Unit *unit, SymReg *r0) {
+PARROT_CANNOT_RETURN_NULL
+static Instruction *
+iLABEL(PARROT_INTERP, ARGMOD_NULLOK(IMC_Unit *unit), ARGMOD(SymReg *r0))
+{
     Instruction * const i = INS_LABEL(interp, unit, r0, 1);
     i->line               = IMCC_INFO(interp)->line;
 
@@ -304,12 +374,14 @@ static Instruction * iLABEL(PARROT_INTERP, IMC_Unit *unit, SymReg *r0) {
     return i;
 }
 
+PARROT_CANNOT_RETURN_NULL
 static Instruction *
-iSUBROUTINE(PARROT_INTERP, IMC_Unit *unit, NOTNULL(SymReg *r)) {
-    Instruction * const i =iLABEL(interp, unit, r);
+iSUBROUTINE(PARROT_INTERP, ARGMOD_NULLOK(IMC_Unit *unit), ARGMOD(SymReg *r))
+{
+    Instruction * const i = iLABEL(interp, unit, r);
 
     r->type    = (r->type & VT_ENCODED) ? VT_PCC_SUB|VT_ENCODED : VT_PCC_SUB;
-    r->pcc_sub = (pcc_sub_t*)calloc(1, sizeof (struct pcc_sub_t));
+    r->pcc_sub = mem_allocate_zeroed_typed(pcc_sub_t);
 
     IMCC_INFO(interp)->cur_call = r;
     i->line                     = IMCC_INFO(interp)->line;
@@ -321,11 +393,13 @@ iSUBROUTINE(PARROT_INTERP, IMC_Unit *unit, NOTNULL(SymReg *r)) {
 /*
  * substr or X = P[key]
  */
+PARROT_CAN_RETURN_NULL
 static Instruction *
-iINDEXFETCH(PARROT_INTERP, IMC_Unit *unit, SymReg *r0, SymReg *r1, SymReg *r2)
+iINDEXFETCH(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(SymReg *r0), ARGIN(SymReg *r1),
+        ARGIN(SymReg *r2))
 {
     if (r0->set == 'S' && r1->set == 'S' && r2->set == 'I') {
-        SymReg * const r3 = mk_const(interp, str_dup("1"), 'I');
+        SymReg * const r3 = mk_const(interp, "1", 'I');
         return MK_I(interp, unit, "substr %s, %s, %s, 1", 4, r0, r1, r2, r3);
     }
 
@@ -337,61 +411,73 @@ iINDEXFETCH(PARROT_INTERP, IMC_Unit *unit, SymReg *r0, SymReg *r1, SymReg *r2)
  * substr or P[key] = X
  */
 
+PARROT_CAN_RETURN_NULL
 static Instruction *
-iINDEXSET(PARROT_INTERP, IMC_Unit * unit,
-          SymReg * r0, SymReg * r1, SymReg * r2)
+iINDEXSET(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(SymReg *r0), ARGIN(SymReg *r1),
+        ARGIN(SymReg *r2))
 {
     if (r0->set == 'S' && r1->set == 'I' && r2->set == 'S') {
-        SymReg * r3 = mk_const(interp, str_dup("1"), 'I');
+        SymReg * const r3 = mk_const(interp, "1", 'I');
         MK_I(interp, unit, "substr %s, %s, %s, %s", 4, r0, r1, r3, r2);
     }
     else if (r0->set == 'P') {
-        IMCC_INFO(interp) -> keyvec |= KEY_BIT(1);
+        IMCC_INFO(interp)->keyvec |= KEY_BIT(1);
         MK_I(interp, unit, "set %s[%s], %s", 3, r0, r1, r2);
     }
     else {
         IMCC_fataly(interp, E_SyntaxError,
             "unsupported indexed set op\n");
     }
-    return 0;
+    return NULL;
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static const char *
-inv_op(const char *op) {
+inv_op(ARGIN(const char *op))
+{
     int n;
     return get_neg_op(op, &n);
 }
 
+PARROT_CANNOT_RETURN_NULL
 Instruction *
 IMCC_create_itcall_label(PARROT_INTERP)
 {
-    char name[128];
-    SymReg * r;
+    char         name[128];
+    SymReg      *r;
     Instruction *i;
 
-    sprintf(name, "%cpcc_sub_call_%d", IMCC_INTERNAL_CHAR, IMCC_INFO(interp)->cnr++);
-    r = mk_pcc_sub(interp, str_dup(name), 0);
-    i = iLABEL(interp, IMCC_INFO(interp)->cur_unit, r);
-    IMCC_INFO(interp)->cur_call = r;
+    sprintf(name, "%cpcc_sub_call_%d", IMCC_INTERNAL_CHAR,
+        IMCC_INFO(interp)->cnr++);
+
+    r       = mk_pcc_sub(interp, name, 0);
+    i       = iLABEL(interp, IMCC_INFO(interp)->cur_unit, r);
     i->type = ITCALL | ITPCCSUB;
+
+    IMCC_INFO(interp)->cur_call = r;
+
     return i;
 }
 
-
+PARROT_CANNOT_RETURN_NULL
 static SymReg *
-mk_sub_address_fromc(PARROT_INTERP, char * name)
+mk_sub_address_fromc(PARROT_INTERP, ARGIN(const char *name))
 {
     /* name is a quoted sub name */
     SymReg *r;
+    char *name_copy                  = str_dup(name + 1);
+    name_copy[strlen(name_copy) - 1] = '\0';
 
-    name[strlen(name) - 1] = '\0';
-    r = mk_sub_address(interp, str_dup(name + 1));
-    mem_sys_free(name);
+    r = mk_sub_address(interp, name_copy);
+    mem_sys_free(name_copy);
+
     return r;
 }
 
+PARROT_CANNOT_RETURN_NULL
 static SymReg *
-mk_sub_address_u(PARROT_INTERP, char * name)
+mk_sub_address_u(PARROT_INTERP, ARGIN(const char *name))
 {
     SymReg * const r = mk_sub_address(interp, name);
     r->type         |= VT_ENCODED;
@@ -400,7 +486,7 @@ mk_sub_address_u(PARROT_INTERP, char * name)
 }
 
 void
-IMCC_itcall_sub(PARROT_INTERP, SymReg *sub)
+IMCC_itcall_sub(PARROT_INTERP, ARGIN(SymReg *sub))
 {
     IMCC_INFO(interp)->cur_call->pcc_sub->sub = sub;
     if (IMCC_INFO(interp)->cur_obj) {
@@ -412,7 +498,7 @@ IMCC_itcall_sub(PARROT_INTERP, SymReg *sub)
     if (IMCC_INFO(interp)->cur_call->pcc_sub->sub->pmc_type == enum_class_NCI)
         IMCC_INFO(interp)->cur_call->pcc_sub->flags |= isNCI;
     if (IMCC_INFO(interp)->cur_unit->type == IMC_PCCSUB)
-        IMCC_INFO(interp)->cur_unit->instructions->r[0]->pcc_sub->calls_a_sub |= 1;
+        IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->pcc_sub->calls_a_sub |= 1;
 }
 
 static void
@@ -422,23 +508,23 @@ begin_return_or_yield(PARROT_INTERP, int yield)
     Instruction * const ins = IMCC_INFO(interp)->cur_unit->instructions;
     char                name[128];
 
-    if (!ins || !ins->r[0] || !(ins->r[0]->type & VT_PCC_SUB))
+    if (!ins || !ins->symregs[0] || !(ins->symregs[0]->type & VT_PCC_SUB))
         IMCC_fataly(interp, E_SyntaxError,
                     "yield or return directive outside pcc subroutine\n");
     if (yield)
-       ins->r[0]->pcc_sub->calls_a_sub = 1 | ITPCCYIELD;
+       ins->symregs[0]->pcc_sub->calls_a_sub = 1 | ITPCCYIELD;
     sprintf(name, yield ? "%cpcc_sub_yield_%d" : "%cpcc_sub_ret_%d",
             IMCC_INTERNAL_CHAR, IMCC_INFO(interp)->cnr++);
-    interp->imc_info->sr_return = mk_pcc_sub(interp, str_dup(name), 0);
+    interp->imc_info->sr_return = mk_pcc_sub(interp, name, 0);
     i = iLABEL(interp, IMCC_INFO(interp)->cur_unit, interp->imc_info->sr_return);
     i->type = yield ? ITPCCSUB | ITLABEL | ITPCCYIELD : ITPCCSUB | ITLABEL ;
     interp->imc_info->asm_state = yield ? AsmInYield : AsmInReturn;
 }
 
 static void
-set_lexical(PARROT_INTERP, NOTNULL(SymReg *r), char *name)
+set_lexical(PARROT_INTERP, ARGMOD(SymReg *r), ARGIN(const char *name))
 {
-    SymReg *n = mk_const(interp, name, 'S');
+    SymReg * const n = mk_const(interp, name, 'S');
 
     r->usage |= U_LEXICAL;
 
@@ -452,10 +538,11 @@ set_lexical(PARROT_INTERP, NOTNULL(SymReg *r), char *name)
 }
 
 static void
-add_pcc_named_arg(PARROT_INTERP, NOTNULL(SymReg *cur_call), const char *name,
-                  SymReg *value)
+add_pcc_named_arg(PARROT_INTERP, ARGMOD(SymReg *cur_call), ARGIN(const char *name),
+        ARGIN(SymReg *value))
 {
-    SymReg *r = mk_const(interp, name, 'S');
+    SymReg * const r = mk_const(interp, name, 'S');
+
     r->type  |= VT_NAMED;
 
     add_pcc_arg(cur_call, r);
@@ -463,8 +550,8 @@ add_pcc_named_arg(PARROT_INTERP, NOTNULL(SymReg *cur_call), const char *name,
 }
 
 static void
-add_pcc_named_result(PARROT_INTERP, SymReg *cur_call, const char *name,
-                     SymReg *value)
+add_pcc_named_result(PARROT_INTERP, ARGMOD(SymReg *cur_call), ARGIN(const char *name),
+        ARGIN(SymReg *value))
 {
     SymReg * const r = mk_const(interp, name, 'S');
     r->type         |= VT_NAMED;
@@ -474,8 +561,8 @@ add_pcc_named_result(PARROT_INTERP, SymReg *cur_call, const char *name,
 }
 
 static void
-add_pcc_named_param(PARROT_INTERP, SymReg *cur_call, const char *name,
-                    SymReg *value)
+add_pcc_named_param(PARROT_INTERP, ARGMOD(SymReg *cur_call), ARGIN(const char *name),
+        ARGIN(SymReg *value))
 {
     SymReg * const r = mk_const(interp, name, 'S');
     r->type         |= VT_NAMED;
@@ -485,8 +572,8 @@ add_pcc_named_param(PARROT_INTERP, SymReg *cur_call, const char *name,
 }
 
 static void
-add_pcc_named_return(PARROT_INTERP, SymReg *cur_call, const char *name,
-                     SymReg *value)
+add_pcc_named_return(PARROT_INTERP, ARGMOD(SymReg *cur_call), ARGIN(const char *name),
+        ARGIN(SymReg *value))
 {
     SymReg * const r = mk_const(interp, name, 'S');
     r->type         |= VT_NAMED;
@@ -495,8 +582,10 @@ add_pcc_named_return(PARROT_INTERP, SymReg *cur_call, const char *name,
     add_pcc_return(cur_call, value);
 }
 
+/* XXX Can name be consted? */
 static void
-adv_named_set(PARROT_INTERP, char *name) {
+adv_named_set(PARROT_INTERP, ARGIN(char *name))
+{
     if (IMCC_INFO(interp)->adv_named_id) {
         IMCC_fataly(interp, E_SyntaxError,
                     "Named parameter with more than one name.\n");
@@ -505,11 +594,10 @@ adv_named_set(PARROT_INTERP, char *name) {
 }
 
 static void
-do_loadlib(PARROT_INTERP, NOTNULL(const char *lib))
+do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 {
-    PMC *ignored;
     STRING * const s = string_unescape_cstring(interp, lib + 1, '"', NULL);
-    ignored = Parrot_load_lib(interp, s, NULL);
+    PMC    *ignored  = Parrot_load_lib(interp, s, NULL);
     UNUSED(ignored);
     Parrot_register_HLL_lib(interp, s);
 }
@@ -634,7 +722,7 @@ compilation_unit:
 
 pragma: PRAGMA pragma_1 '\n'   { $$ = 0; }
    | hll_def            '\n'   { $$ = 0; }
-   | LOADLIB STRINGC    '\n'   { $$ = 0; do_loadlib(interp, $2); }
+   | LOADLIB STRINGC    '\n'   { $$ = 0; do_loadlib(interp, $2); mem_sys_free($2); }
    ;
 
 pragma_1:  N_OPERATORS INTC
@@ -647,14 +735,19 @@ pragma_1:  N_OPERATORS INTC
 
 hll_def: HLL STRINGC COMMA STRINGC
          {
-            STRING *hll_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
-            STRING *hll_lib  = string_unescape_cstring(interp, $4 + 1, '"', NULL);
-            PMC    *ignored;
-            CONTEXT(((Interp*)interp)->ctx)->current_HLL =
+            STRING * const hll_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
+            CONTEXT(interp->ctx)->current_HLL =
                 Parrot_register_HLL(interp, hll_name);
-            ignored = Parrot_load_lib(interp, hll_lib, NULL);
-            UNUSED(ignored);
-            Parrot_register_HLL_lib(interp, hll_lib);
+
+            /* don't bother loading the library for an empty string */
+            if (strlen($4) > 2) {
+                STRING * const hll_lib =
+                    string_unescape_cstring(interp, $4 + 1, '"', NULL);
+                PMC    *ignored        = Parrot_load_lib(interp, hll_lib, NULL);
+                UNUSED(ignored);
+                Parrot_register_HLL_lib(interp, hll_lib);
+            }
+
             IMCC_INFO(interp)->cur_namespace = NULL;
             $$ = 0;
          }
@@ -663,8 +756,8 @@ hll_def: HLL STRINGC COMMA STRINGC
             int built_in_type = 0;
             int language_type = 0;
 
-            STRING *built_in_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
-            STRING *language_name = string_unescape_cstring(interp, $4 + 1, '"', NULL);
+            STRING * const built_in_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
+            STRING * const language_name = string_unescape_cstring(interp, $4 + 1, '"', NULL);
             built_in_type = pmc_type(interp, built_in_name);
             language_type = pmc_type(interp, language_name);
 
@@ -678,12 +771,11 @@ hll_def: HLL STRINGC COMMA STRINGC
    ;
 
 constdef:
-     CONST { is_def=1; } type IDENTIFIER '=' const
+     CONST { is_def = 1; } type IDENTIFIER '=' const
                 {
-                    SymReg *ignored;
-                    ignored = mk_const_ident(interp, $4, $3, $6, 1);
-                    UNUSED(ignored);
-                    is_def=0;
+                    mk_const_ident(interp, $4, $3, $6, 1);
+                    mem_sys_free($4);
+                    is_def = 0;
                 }
    ;
 
@@ -713,10 +805,12 @@ pasmline:
 
 pasm_inst:         { clear_state(interp); }
      PARROT_OP pasm_args
-                   { $$ = INS(interp, IMCC_INFO(interp)->cur_unit,
+                   {
+                       $$ = INS(interp, IMCC_INFO(interp)->cur_unit,
                               $2, 0, IMCC_INFO(interp)->regs,
                               IMCC_INFO(interp)->nargs, IMCC_INFO(interp) -> keyvec, 1);
-                     free($2); }
+                       /* XXX: can't seem to mem_sys_free($1) here */
+                      }
    | PCC_SUB
                    {
                     imc_close_unit(interp, IMCC_INFO(interp)->cur_unit);
@@ -734,6 +828,7 @@ pasm_inst:         { clear_state(interp); }
                    {
                        SymReg *r = mk_pasm_reg(interp, $4);
                        set_lexical(interp, r, $2); $$ = 0;
+                       mem_sys_free($2);
                    }
    | /* none */    { $$ = 0;}
    ;
@@ -814,14 +909,18 @@ sub_param_type_def:
                                              $$ = mk_ident_ur(interp, $2, $1);
                                          else
                                              $$ = mk_ident(interp, $2, $1);
-                                         $$->type |= $3; }
+                                         $$->type |= $3;
+                                         mem_sys_free($2); }
+
+   /* don't free $2 here; adv_named_set uses the pointer directly */
    | type STRINGC ADV_ARROW IDENTIFIER paramtype_list {
                                          if ($5 & VT_UNIQUE_REG)
                                              $$ = mk_ident_ur(interp, $4, $1);
                                          else
                                              $$ = mk_ident(interp, $4, $1);
                                          $$->type |= $5;
-                                         adv_named_set(interp, $2);}
+                                         adv_named_set(interp, $2);
+                                         mem_sys_free($4); }
    ;
 
 
@@ -831,10 +930,13 @@ multi: MULTI '(' multi_types ')'  { $$ = 0; }
 
 outer: OUTER '(' STRINGC ')'
                      { $$ = 0; IMCC_INFO(interp)->cur_unit->outer =
-                     mk_sub_address_fromc(interp, $3); }
+                     mk_sub_address_fromc(interp, $3);
+                     mem_sys_free($3);
+                     }
     | OUTER '(' IDENTIFIER ')'
                      { $$ = 0; IMCC_INFO(interp)->cur_unit->outer =
-                     mk_const(interp, $3, 'S'); }
+                     mk_const(interp, $3, 'S');
+                     mem_sys_free($3); }
    ;
 
 vtable: VTABLE_METHOD
@@ -843,7 +945,7 @@ vtable: VTABLE_METHOD
                        IMCC_INFO(interp)->cur_unit->is_vtable_method = 1; }
     |   VTABLE_METHOD '(' STRINGC ')'
                      { $$ = 0;
-                       IMCC_INFO(interp)->cur_unit->vtable_name = strdup($3);
+                       IMCC_INFO(interp)->cur_unit->vtable_name = $3;
                        IMCC_INFO(interp)->cur_unit->is_vtable_method = 1; }
     ;
 
@@ -854,29 +956,29 @@ multi_types:
    ;
 
 multi_type:
-     INTV             { $$ = mk_const(interp, str_dup("INTVAL"), 'S'); }
-   | FLOATV           { $$ = mk_const(interp, str_dup("FLOATVAL"), 'S'); }
-   | PMCV             { $$ = mk_const(interp, str_dup("PMC"), 'S'); }
-   | STRINGV          { $$ = mk_const(interp, str_dup("STRING"), 'S'); }
+     INTV             { $$ = mk_const(interp, "INTVAL",   'S'); }
+   | FLOATV           { $$ = mk_const(interp, "FLOATVAL", 'S'); }
+   | PMCV             { $$ = mk_const(interp, "PMC",      'S'); }
+   | STRINGV          { $$ = mk_const(interp, "STRING",   'S'); }
    | IDENTIFIER       {
                           SymReg *r;
-                          if (strcmp($1, "_"))
+                          if (strcmp($1, "_") != 0)
                               r = mk_const(interp, $1, 'S');
-                          else {
-                              free($1),
-                              r = mk_const(interp, str_dup("PMC"), 'S');
+                           else {
+                              r = mk_const(interp, "PMC", 'S');
                            }
+                           mem_sys_free($1);
                            $$ = r;
                       }
    | STRINGC          {
                           SymReg *r;
-                          if (strcmp($1, "_"))
+                          if (strcmp($1, "_") != 0)
                               r = mk_const(interp, $1, 'S');
                           else {
-                              free($1),
-                              r = mk_const(interp, str_dup("PMC"), 'S');
-                           }
-                           $$ = r;
+                              r = mk_const(interp, "PMC", 'S');
+                          }
+                          mem_sys_free($1);
+                          $$ = r;
                       }
    | '[' keylist ']'  { $$ = $2; }
    ;
@@ -895,7 +997,7 @@ pcc_sub_call:
 
             sprintf(name, "%cpcc_sub_call_%d",
                     IMCC_INTERNAL_CHAR, IMCC_INFO(interp)->cnr++);
-            $<sr>$ = r = mk_pcc_sub(interp, str_dup(name), 0);
+            $<sr>$ = r = mk_pcc_sub(interp, name, 0);
             /* this mid rule action has the semantic value of the
              * sub SymReg.
              * This is used below to append args & results
@@ -907,7 +1009,7 @@ pcc_sub_call:
              * if we are inside a pcc_sub mark the sub as doing a
              * sub call; the sub is in r[0] of the first ins
              */
-            r1 = IMCC_INFO(interp)->cur_unit->instructions->r[0];
+            r1 = IMCC_INFO(interp)->cur_unit->instructions->symregs[0];
             if (r1 && r1->pcc_sub)
                 r1->pcc_sub->calls_a_sub |= 1;
          }
@@ -1001,7 +1103,7 @@ pcc_result:
      RESULT target paramtype_list      {  $$ = $2; $$->type |= $3; }
    | LOCAL { is_def=1; } type id_list_id
      {
-         IdList* l = $4;
+         IdList *l = $4;
          SymReg *ignored;
          if (l->unique_reg)
                  ignored = mk_ident_ur(interp, l->id, $3);
@@ -1171,9 +1273,9 @@ id_list :
 id_list_id :
      IDENTIFIER opt_unique_reg
      {
-         IdList* l = (IdList*)malloc(sizeof (IdList));
-         l->id = $1;
-         l->unique_reg = $2;
+         IdList* const l = mem_allocate_n_zeroed_typed(1, IdList);
+         l->id           = $1;
+         l->unique_reg   = $2;
          $$ = l;
      }
    ;
@@ -1187,22 +1289,21 @@ opt_unique_reg:
 labeled_inst:
      assignment
    | conditional_statement
-   | NAMESPACE IDENTIFIER            { push_namespace($2); }
-   | ENDNAMESPACE IDENTIFIER         { pop_namespace($2); }
+   | NAMESPACE IDENTIFIER            { push_namespace($2); mem_sys_free($2); }
+   | ENDNAMESPACE IDENTIFIER         { pop_namespace($2); mem_sys_free($2); }
    | LOCAL           { is_def=1; } type id_list
      {
-         IdList* l = $4;
+         IdList *l = $4;
          while (l) {
-             IdList* l1;
-             SymReg *ignored;
+             IdList *l1;
              if (l->unique_reg)
-                 ignored = mk_ident_ur(interp, l->id, $3);
+                 mk_ident_ur(interp, l->id, $3);
              else
-                 ignored = mk_ident(interp, l->id, $3);
-             UNUSED(ignored);
+                 mk_ident(interp, l->id, $3);
              l1 = l;
-             l = l->next;
-             free(l1);
+             l  = l->next;
+             mem_sys_free(l1->id);
+             mem_sys_free(l1);
          }
          is_def=0; $$=0;
      }
@@ -1212,19 +1313,17 @@ labeled_inst:
                     }
    | CONST { is_def=1; } type IDENTIFIER '=' const
                     {
-                        SymReg *ignored;
-                        ignored = mk_const_ident(interp, $4, $3, $6, 0);
-                        UNUSED(ignored);
+                        mk_const_ident(interp, $4, $3, $6, 0);
                         is_def=0;
+                        mem_sys_free($4);
                     }
 
    | pmc_const
    | GLOBAL_CONST { is_def=1; } type IDENTIFIER '=' const
                     {
-                        SymReg *ignored;
-                        ignored = mk_const_ident(interp, $4, $3, $6, 1);
-                        UNUSED(ignored);
+                        mk_const_ident(interp, $4, $3, $6, 1);
                         is_def=0;
+                        mem_sys_free($4);
                     }
    | RETURN  sub_call   { $$ = NULL;
                            IMCC_INFO(interp)->cur_call->pcc_sub->flags |= isTAIL_CALL;
@@ -1236,7 +1335,7 @@ labeled_inst:
                               IMCC_INFO(interp) -> regs,
                               IMCC_INFO(interp) -> nargs,
                               IMCC_INFO(interp) -> keyvec, 1);
-                       free($1); }
+                    mem_sys_free($1); }
    | PNULL var
                    {  $$ =MK_I(interp, IMCC_INFO(interp)->cur_unit, "null", 1, $2); }
    | sub_call      {  $$ = 0; IMCC_INFO(interp)->cur_call = NULL; }
@@ -1251,12 +1350,13 @@ type:
    | FLOATV { $$ = 'N'; }
    | STRINGV { $$ = 'S'; }
    | PMCV { $$ = 'P'; }
-   | classname { $$ = 'P'; free($1); }
    ;
 
 classname:
    IDENTIFIER
          {
+             /* there'd normally be a str_dup() here, but the lexer already
+              * copied the string, so it's safe to use directly */
              if ((IMCC_INFO(interp)->cur_pmc_type = pmc_type(interp,
                   string_from_cstring(interp, $1, 0))) <= 0) {
                 IMCC_fataly(interp, E_SyntaxError,
@@ -1292,7 +1392,7 @@ assignment:
             { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "new", 3, $1, $4, $6); }
    | target '=' ADDR IDENTIFIER
             { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "set_addr",
-                        2, $1, mk_label_address(interp, $4)); }
+                        2, $1, mk_label_address(interp, $4)); mem_sys_free($4); }
    | target '=' GLOBALOP string
             { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "find_global", 2, $1, $4);}
    | GLOBALOP string '=' var
@@ -1308,7 +1408,7 @@ assignment:
      /* Subroutine call the short way */
    | target  '=' sub_call
          {
-            add_pcc_result($3->r[0], $1);
+            add_pcc_result($3->symregs[0], $1);
             IMCC_INFO(interp)->cur_call = NULL;
             $$ = 0;
          }
@@ -1396,20 +1496,20 @@ func_assign:
                                    IMCC_INFO(interp) -> regs,
                                    IMCC_INFO(interp) -> nargs,
                                    IMCC_INFO(interp) -> keyvec, 1);
-                     free($3);
+                     mem_sys_free($3);
                    }
    ;
 
-the_sub: IDENTIFIER  { $$ = mk_sub_address(interp, $1); }
-       | STRINGC  { $$ = mk_sub_address_fromc(interp, $1); }
-       | USTRINGC  { $$ = mk_sub_address_u(interp, $1); }
+the_sub: IDENTIFIER  { $$ = mk_sub_address(interp, $1);  mem_sys_free($1); }
+       | STRINGC     { $$ = mk_sub_address_fromc(interp, $1); mem_sys_free($1); }
+       | USTRINGC    { $$ = mk_sub_address_u(interp, $1); mem_sys_free($1); }
        | target   { $$ = $1;
                        if ($1->set != 'P')
                             IMCC_fataly(interp, E_SyntaxError,
                                   "Sub isn't a PMC");
                      }
        | target DOT sub_label_op  { IMCC_INFO(interp)->cur_obj = $1; $$ = $3; }
-       | target DOT STRINGC    { IMCC_INFO(interp)->cur_obj = $1; $$ = mk_const(interp, $3, 'S'); }
+       | target DOT STRINGC    { IMCC_INFO(interp)->cur_obj = $1; $$ = mk_const(interp, $3, 'S'); mem_sys_free($3); }
        | target DOT target     { IMCC_INFO(interp)->cur_obj = $1; $$ = $3; }
    ;
 
@@ -1441,8 +1541,8 @@ arglist:
        else add_pcc_arg(IMCC_INFO(interp)->cur_call, $1);
    }
    | arglist COMMA STRINGC ADV_ARROW var { $$ = 0;
-                                     add_pcc_named_arg(interp, IMCC_INFO(interp)->cur_call, $3, $5);}
-   | STRINGC ADV_ARROW var { $$ = 0; add_pcc_named_arg(interp, IMCC_INFO(interp)->cur_call, $1, $3);}
+                                     add_pcc_named_arg(interp, IMCC_INFO(interp)->cur_call, $3, $5); mem_sys_free($3); }
+   | STRINGC ADV_ARROW var { $$ = 0; add_pcc_named_arg(interp, IMCC_INFO(interp)->cur_call, $1, $3); mem_sys_free($1); }
    ;
 
 arg:
@@ -1457,6 +1557,8 @@ argtype_list:
 argtype:
      ADV_FLAT                  { $$ = VT_FLAT; }
    | ADV_NAMED                 { $$ = VT_NAMED; }
+
+   /* don't free $3 here; adv_named_set uses the pointer directly */
    | ADV_NAMED '(' STRINGC ')' { adv_named_set(interp, $3); $$ = 0; }
    ;
 
@@ -1472,7 +1574,7 @@ targetlist:
          }
          else add_pcc_result(IMCC_INFO(interp)->cur_call, $3); }
    | targetlist COMMA STRINGC ADV_ARROW target {
-        add_pcc_named_result(interp, IMCC_INFO(interp)->cur_call, $3, $5); }
+        add_pcc_named_result(interp, IMCC_INFO(interp)->cur_call, $3, $5); mem_sys_free($3); }
    | result                  {
        $$ = 0;
        if (IMCC_INFO(interp)->adv_named_id) {
@@ -1480,7 +1582,7 @@ targetlist:
            IMCC_INFO(interp)->adv_named_id = NULL;
        }
        else add_pcc_result(IMCC_INFO(interp)->cur_call, $1); }
-   | STRINGC ADV_ARROW target { add_pcc_named_result(interp, IMCC_INFO(interp)->cur_call, $1, $3); }
+   | STRINGC ADV_ARROW target { add_pcc_named_result(interp, IMCC_INFO(interp)->cur_call, $1, $3); mem_sys_free($1); }
    | /* empty */             {  $$ = 0; }
    ;
 
@@ -1553,18 +1655,18 @@ _var_or_i:
    ;
 sub_label_op_c:
      sub_label_op
-   | STRINGC       { $$ = mk_sub_address_fromc(interp, $1); }
-   | USTRINGC      { $$ = mk_sub_address_u(interp, $1); }
+   | STRINGC       { $$ = mk_sub_address_fromc(interp, $1); mem_sys_free($1); }
+   | USTRINGC      { $$ = mk_sub_address_u(interp, $1);  mem_sys_free($1); }
    ;
 
 sub_label_op:
-     IDENTIFIER    { $$ = mk_sub_address(interp, $1); }
-   | PARROT_OP     { $$ = mk_sub_address(interp, $1); }
+     IDENTIFIER    { $$ = mk_sub_address(interp, $1); mem_sys_free($1); }
+   | PARROT_OP     { $$ = mk_sub_address(interp, $1); mem_sys_free($1); }
    ;
 
 label_op:
-     IDENTIFIER    { $$ = mk_label_address(interp, $1); }
-   | PARROT_OP     { $$ = mk_label_address(interp, $1); }
+     IDENTIFIER    { $$ = mk_label_address(interp, $1); mem_sys_free($1); }
+   | PARROT_OP     { $$ = mk_label_address(interp, $1); mem_sys_free($1); }
    ;
 
 var_or_i:
@@ -1625,15 +1727,15 @@ reg:
    ;
 
 const:
-     INTC          {  $$ = mk_const(interp, $1, 'I'); }
-   | FLOATC        {  $$ = mk_const(interp, $1, 'N'); }
-   | STRINGC       {  $$ = mk_const(interp, $1, 'S'); }
-   | USTRINGC      {  $$ = mk_const(interp, $1, 'U'); }
+     INTC          {  $$ = mk_const(interp, $1, 'I'); mem_sys_free($1); }
+   | FLOATC        {  $$ = mk_const(interp, $1, 'N'); mem_sys_free($1); }
+   | STRINGC       {  $$ = mk_const(interp, $1, 'S'); mem_sys_free($1); }
+   | USTRINGC      {  $$ = mk_const(interp, $1, 'U'); mem_sys_free($1); }
    ;
 
 string:
-     SREG          {  $$ = mk_symreg(interp, $1, 'S'); }
-   | STRINGC       {  $$ = mk_const(interp, $1, 'S');  }
+     SREG          {  $$ = mk_symreg(interp, $1, 'S'); mem_sys_free($1); }
+   | STRINGC       {  $$ = mk_const(interp, $1, 'S');  mem_sys_free($1); }
    ;
 
 
@@ -1649,13 +1751,13 @@ char *yyget_text(yyscan_t yyscanner);
  */
 /* int yyholds_char(yyscan_t yyscanner ); */
 
-int yyerror(void *yyscanner, PARROT_INTERP, char * s)
+int yyerror(void *yyscanner, PARROT_INTERP, const char *s)
 {
     /* If the error occurr in the end of the buffer (I mean, the last
      * token was already read), yyget_text will return a pointer
      * outside the bison buffer, and thus, not "accessible" by
      * us. This means it may segfault. */
-    char *chr = yyget_text((yyscan_t)yyscanner);
+    const char * const chr = yyget_text((yyscan_t)yyscanner);
 
     /* IMCC_fataly(interp, E_SyntaxError, s); */
     /* --- This was called before, not sure if I should call some

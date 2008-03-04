@@ -1,5 +1,15 @@
-# This just checks that the basic parsing and call to builtin say() works.
-say '1..2';
-say 'ok 1';
-say 'ok ', 2;
+print "1..6" if 1
+
+print "ok 1\n"
+
+print "ok \
+       2\n"
+
+print "ok 3\n" ; print "ok 4\n"
+
+print "ok "; print 1 + 4; print "\n"
+
+print "ok "; print 2 * 3
+
+
 

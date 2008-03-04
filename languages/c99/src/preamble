@@ -15,15 +15,15 @@
     .local pmc ns
     ns = get_root_namespace [ 'parrot'; 'Cardinal::Grammar' ]
     .local pmc iter
-    iter = new Iterator, ns
+    iter = new 'Iterator', ns
     set iter, 0
-    .local $iter_loop:
+    .label $iter_loop:
     unless iter, .$iter_end
     shift it, iter
     print it
     print "\n"
     goto .$iter_loop
-    .local $iter_end:
+    .label $iter_end:
 .endm
 
 .macro dump_hll
@@ -31,15 +31,15 @@
     .local pmc ns
     ns = get_hll_namespace
     .local pmc iter
-    iter = new Iterator, ns
+    iter = new 'Iterator', ns
     set iter, 0
-    .local $iter_loop:
+    .label $iter_loop:
     unless iter, .$iter_end
     shift it, iter
     print it
     print "\n"
     goto .$iter_loop
-    .local $iter_end:
+    .label $iter_end:
 .endm
 
 .macro dump_hll2
@@ -47,15 +47,15 @@
     .local pmc ns
     ns = get_hll_namespace
     .local pmc iter
-    iter = new Iterator, ns
+    iter = new 'Iterator', ns
     set iter, 0
-    .local $iter_loop:
+    .label $iter_loop:
     unless iter, .$iter_end
     shift it, iter
     print it
     print "\n"
     goto .$iter_loop
-    .local $iter_end:
+    .label $iter_end:
 .endm
 
 .macro dump_current
@@ -63,15 +63,15 @@
     .local pmc ns
     ns = get_namespace
     .local pmc iter
-    iter = new Iterator, ns
+    iter = new 'Iterator', ns
     set iter, 0
-    .local $iter_loop:
+    .label $iter_loop:
     unless iter, .$iter_end
     shift it, iter
     print it
     print "\n"
     goto .$iter_loop
-    .local $iter_end:
+    .label $iter_end:
 .endm
 
 .macro gen_accessor(x)
@@ -94,4 +94,3 @@
     .return (.x)
 .end
 .endm
-

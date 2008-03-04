@@ -55,7 +55,7 @@ static void do_initcall(PARROT_INTERP,
     ARGIN_NULLOK(PMC *init))
         __attribute__nonnull__(1);
 
-static void fail_if_exist(PARROT_INTERP, ARGIN(PMC *name))
+static void fail_if_type_exists(PARROT_INTERP, ARGIN(PMC *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -115,11 +115,6 @@ static void rebuild_attrib_stuff(PARROT_INTERP, ARGIN(PMC *_class))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_WARN_UNUSED_RESULT
-static INTVAL register_type(PARROT_INTERP, ARGIN(PMC *name))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
 /* HEADERIZER END: static */
 
 /*
@@ -134,11 +129,8 @@ into the class.
 */
 
 void
-Parrot_oo_extract_methods_from_namespace(PARROT_INTERP, ARGIN(PMC *self))
+Parrot_oo_extract_methods_from_namespace(PARROT_INTERP, ARGIN(PMC *self), ARGIN(PMC *ns))
 {
-    Parrot_Class * const _class = PARROT_CLASS(self);
-    PMC * const ns = _class->_namespace;
-
     /* Pull in methods from the namespace, if any. */
     if (!PMC_IS_NULL(ns)) {
         PMC *methods, *vtable_overrides;
@@ -217,7 +209,7 @@ Lookup a class object from a namespace, string, or key PMC.
 =cut
 
 */
-
+PARROT_API
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
@@ -351,7 +343,7 @@ Parrot_oo_find_vtable_override_for_class(PARROT_INTERP,
         ARGIN(PMC *classobj), ARGIN(STRING *name))
 {
     Parrot_Class *class_info;
-    assert(PObj_is_class_TEST(classobj));
+    PARROT_ASSERT(PObj_is_class_TEST(classobj));
 
     class_info = PARROT_CLASS(classobj);
     return VTABLE_get_pmc_keyed_str(interp, class_info->vtable_overrides, name);
@@ -470,7 +462,7 @@ PMC*
 Parrot_find_vtable_meth(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(STRING *meth))
 {
     INTVAL i, n;
-    PMC   *ns, *mro;
+    PMC   *mro;
     PMC   *_class       = pmc;
 
     /* Get index in Parrot_vtable_slot_names[]. */
@@ -489,6 +481,8 @@ Parrot_find_vtable_meth(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(STRING *meth))
     n   = VTABLE_elements(interp, mro);
 
     for (i = 0; i < n; ++i) {
+        PMC *ns;
+
         _class = VTABLE_get_pmc_keyed_int(interp, mro, i);
         ns     = VTABLE_pmc_namespace(interp, _class);
 
@@ -539,45 +533,6 @@ readable_name(PARROT_INTERP, ARGIN(PMC *name))
     }
 
     return string_join(interp, join_on, array);
-}
-
-/*
-
-=item C<static void fail_if_exist>
-
-Throws an exception if a PMC or class with the same name already exists.
-
-RT#45969 uses global class registry
-
-=cut
-
-*/
-
-static void
-fail_if_exist(PARROT_INTERP, ARGIN(PMC *name))
-{
-    INTVAL      type;
-
-    PMC * const classname_hash = interp->class_hash;
-    PMC * const type_pmc       = (PMC *)VTABLE_get_pointer_keyed(interp,
-                                        classname_hash, name);
-    if (PMC_IS_NULL(type_pmc) ||
-            type_pmc->vtable->base_type == enum_class_NameSpace)
-        type = 0;
-    else
-        type = VTABLE_get_integer(interp, type_pmc);
-
-    if (type > enum_type_undef) {
-        /* RT#45971 get printable name */
-        real_exception(interp, NULL, INVALID_OPERATION,
-                "Class %Ss already registered!\n",
-                VTABLE_get_string(interp, name));
-    }
-
-    if (type < enum_type_undef)
-        real_exception(interp, NULL, INVALID_OPERATION,
-                "native type with name '%s' already exists - "
-                "can't register Class", data_types[type].name);
 }
 
 /*
@@ -806,7 +761,7 @@ Parrot_single_subclass(PARROT_INTERP, ARGIN(PMC *base_class), ARGIN_NULLOK(PMC *
 
     /* Set the classname, if we have one */
     if (!PMC_IS_NULL(name)) {
-        fail_if_exist(interp, name);
+        fail_if_type_exists(interp, name);
     }
     else {
         /* RT#45975 not really threadsafe but good enough for now */
@@ -949,20 +904,62 @@ Parrot_class_lookup_p(PARROT_INTERP, ARGIN(PMC *class_name))
 
 /*
 
-=item C<static INTVAL register_type>
+=item C<static void fail_if_type_exists>
 
-RT#48260: Not yet documented!!!
+This function throws an exception if a PMC or class with the same name *
+already exists in the global type registry. The global type registry
+will go away eventually, but this allows the new object metamodel to
+interact with the old one until it does.
+
+=cut
+
+*/
+
+static void
+fail_if_type_exists(PARROT_INTERP, ARGIN(PMC *name))
+{
+    INTVAL      type;
+
+    PMC * const classname_hash = interp->class_hash;
+    PMC * const type_pmc       = (PMC *)VTABLE_get_pointer_keyed(interp,
+                                        classname_hash, name);
+    if (PMC_IS_NULL(type_pmc) ||
+            type_pmc->vtable->base_type == enum_class_NameSpace)
+        type = 0;
+    else
+        type = VTABLE_get_integer(interp, type_pmc);
+
+    if (type > enum_type_undef) {
+        /* RT#46091 get printable name */
+        real_exception(interp, NULL, INVALID_OPERATION,
+                "Class %Ss already registered!\n",
+                VTABLE_get_string(interp, name));
+    }
+
+    if (type < enum_type_undef)
+        real_exception(interp, NULL, INVALID_OPERATION,
+                "native type with name '%s' already exists - "
+                "can't register Class", data_types[type].name);
+}
+
+/*
+
+=item C<INTVAL Parrot_oo_register_type>
+
+RT #48260: Not yet documented!!!
 
 =cut
 
 */
 
 PARROT_WARN_UNUSED_RESULT
-static INTVAL
-register_type(PARROT_INTERP, ARGIN(PMC *name))
+INTVAL
+Parrot_oo_register_type(PARROT_INTERP, ARGIN(PMC *name))
 {
     INTVAL type;
     PMC   *classname_hash, *item;
+
+    fail_if_type_exists(interp, name);
 
     /* so pt_shared_fixup() can safely do a type lookup */
     LOCK_INTERPRETER(interp);
@@ -1004,16 +1001,16 @@ parrot_class_register(PARROT_INTERP, ARGIN(PMC *name),
 {
     VTABLE *new_vtable, *parent_vtable;
     PMC    *vtable_pmc, *ns, *top;
-    const INTVAL new_type = register_type(interp, name);
+    const INTVAL new_type = Parrot_oo_register_type(interp, name);
 
     /* Build a new vtable for this class
      * The child class PMC gets the vtable of its parent class or
      * a ParrotClass vtable
      */
-    if (parent && PObj_is_class_TEST(parent))
-        parent_vtable = parent->vtable;
-    else
-        parent_vtable = new_class->vtable;
+    parent_vtable =
+        (parent && PObj_is_class_TEST(parent))
+            ? parent->vtable
+            : new_class->vtable;
 
     new_vtable = Parrot_clone_vtable(interp, parent_vtable);
 
@@ -1084,7 +1081,7 @@ parrot_class_register(PARROT_INTERP, ARGIN(PMC *name),
 
     new_vtable->base_type = new_type;
     new_vtable->mro       = mro;
-    new_vtable->pmc_class =  new_class;
+    new_vtable->pmc_class = new_class;
 
     set_attrib_num(new_class, (SLOTTYPE*)PMC_data(new_class), PCD_OBJECT_VTABLE,
             vtable_pmc = constant_pmc_new(interp, enum_class_VtableCache));
@@ -1125,8 +1122,7 @@ get_init_meth(PARROT_INTERP, ARGIN(PMC *_class),
 
     *meth_str = NULL;
 #if 0
-    PMC *prop;
-    prop = VTABLE_getprop(interp, _class, prop_str);
+    PMC * const prop = VTABLE_getprop(interp, _class, prop_str);
     if (!VTABLE_defined(interp, prop))
         return PMCNULL;
     meth = VTABLE_get_string(interp, prop);
@@ -1281,7 +1277,8 @@ Parrot_instantiate_object_init(PARROT_INTERP, ARGIN(PMC *object), ARGIN(PMC *ini
 
 =item C<void Parrot_instantiate_object>
 
-RT#48260: Not yet documented!!!
+Wrapper for instantiate_object, passing NULL as initialization.
+Returns a new Parrot object.
 
 =cut
 
@@ -1347,6 +1344,7 @@ instantiate_object(PARROT_INTERP, ARGMOD(PMC *object), ARGIN_NULLOK(PMC *init))
 =item C<PMC * Parrot_remove_parent>
 
 This currently does nothing but return C<PMCNULL>.
+RT#50646
 
 =cut
 
@@ -1370,23 +1368,45 @@ Parrot_remove_parent(PARROT_INTERP, ARGIN(PMC *removed_class),
 
 =item C<void mark_object_cache>
 
-RT#48260: Not yet documented!!!
+Marks all PMCs in the object method cache as live.  This shouldn't strictly be
+necessary, as they're likely all reachable from namespaces and classes, but
+it's unlikely to hurt anything except mark phase performance.
 
 =cut
 
 */
 
+#define TBL_SIZE_MASK 0x1ff   /* x bits 2..10 */
+#define TBL_SIZE (1 + TBL_SIZE_MASK)
+
 void
 mark_object_cache(PARROT_INTERP)
 {
-    UNUSED(interp);
+    Caches * const mc = interp->caches;
+    UINTVAL type, entry;
+
+    if (!mc)
+        return;
+
+    for (type = 0; type < mc->mc_size; type++) {
+        if (!mc->idx[type])
+            continue;
+
+        for (entry = 0; entry < TBL_SIZE; ++entry) {
+            Meth_cache_entry *e = mc->idx[type][entry];
+            while (e) {
+                pobject_lives(interp, (PObj *)e->pmc);
+                e = e->next;
+            }
+        }
+    }
 }
 
 /*
 
 =item C<void init_object_cache>
 
-RT#48260: Not yet documented!!!
+Allocate memory for object cache.
 
 =cut
 
@@ -1424,9 +1444,6 @@ destroy_object_cache(PARROT_INTERP)
     mem_sys_free(mc->idx);
     mem_sys_free(mc);
 }
-
-#define TBL_SIZE_MASK 0x1ff   /* x bits 2..10 */
-#define TBL_SIZE (1 + TBL_SIZE_MASK)
 
 /*
 
@@ -1752,8 +1769,7 @@ Parrot_add_attribute(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(STRING *attr))
     SLOTTYPE * const class_array = (SLOTTYPE *)PMC_data(_class);
     STRING   * const class_name  = VTABLE_get_string(interp,
             get_attrib_num(class_array, PCD_CLASS_NAME));
-    PMC      * const attr_array  = get_attrib_num(class_array,
-            PCD_CLASS_ATTRIBUTES);
+    PMC      * const attr_array  = get_attrib_num(class_array, PCD_CLASS_ATTRIBUTES);
     PMC      * const attr_hash   = get_attrib_num(class_array, PCD_ATTRIBUTES);
     INTVAL           idx         = VTABLE_elements(interp, attr_array);
 
