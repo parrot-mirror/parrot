@@ -26,7 +26,7 @@ pmclass TclList
     dynpmc
     need_ext
     extends ResizablePMCArray
-    does    array
+    provides    array
     group   tcl_group
     hll     Tcl
     maps    Array
@@ -211,7 +211,7 @@ Copy the contents of other to self.
         else
         {
             real_exception(INTERP, NULL, E_TypeError,
-                           "unable to assign self to this type");
+                           "unable to assign self to TclList");
         }
     }
 
