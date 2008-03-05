@@ -1156,11 +1156,12 @@ Returns whether the class is or inherits from C<*classname>.
             return 1;
 
         /* Iterate over all the parents and check if they respond true
-         * for 'isa' on the original comparison.
-         */
+         * for 'isa' on the original comparison. */
         num_classes = VTABLE_elements(interp, _class->parents);
         for (i = 0; i < num_classes; i++) {
-            PMC * const cur_class = VTABLE_get_pmc_keyed_int(interp, _class->parents, i);
+            PMC * const cur_class = VTABLE_get_pmc_keyed_int(interp,
+                    _class->parents, i);
+
             if (VTABLE_isa_pmc(interp, cur_class, lookup))
                 return 1;
         }
@@ -1187,7 +1188,7 @@ Returns whether the class is or inherits from C<*classname>.
 
 /*
 
-=item C<INTVAL does(STRING *rolename)>
+=item C<INTVAL does(STRING *role_name)>
 
 Returns whether the class does the role with the given C<*rolename>.
 
@@ -1195,27 +1196,35 @@ Returns whether the class does the role with the given C<*rolename>.
 
 */
     INTVAL does(STRING *role_name) {
-        INTVAL i, role_count, isa;
-        PMC * const role_list = (PMC_data_typed(SELF, Parrot_Class *))->roles;
+        INTVAL i, count;
+        Parrot_Class * const _class    = PARROT_CLASS(SELF);
+        PMC          * const role_list = _class->roles;
 
         if (!role_list)
             return 0;
 
-        role_count = VTABLE_elements(interp, role_list);
+        count = VTABLE_elements(interp, role_list);
 
-        for (i = 0; i < role_count; i++) {
-            INTVAL  role_does;
-            PMC    * const role = VTABLE_get_pmc_keyed_int(interp, role_list, i);
+        for (i = 0; i < count; i++) {
+            PMC * const role = VTABLE_get_pmc_keyed_int(interp, role_list, i);
 
-            role_does = VTABLE_does(interp, role, role_name);
-
-            if (role_does)
+            if (VTABLE_does(interp, role, role_name))
                 return 1;
         }
 
-        isa = VTABLE_isa(interp, SELF, role_name);
+        /* Iterate over all the parents and check if they respond true
+         * for 'does' on the original comparison. */
+        count = VTABLE_elements(interp, _class->parents);
 
-        return isa;
+        for (i = 0; i < count; i++) {
+            PMC * const cur_class = VTABLE_get_pmc_keyed_int(interp,
+                    _class->parents, i);
+
+            if (VTABLE_does(interp, cur_class, role_name))
+                return 1;
+        }
+
+        return VTABLE_isa(interp, SELF, role_name);
     }
 
 /*
