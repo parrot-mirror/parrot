@@ -345,6 +345,10 @@ sub gen_attributes {
         }
 
         Parrot::Pmc2c::Attribute::generate_end( $attributes->[0], $self );
+
+        foreach my $attribute ( @$attributes ) {
+            $attribute->generate_accessor($self);
+        }
     }
 
 }
