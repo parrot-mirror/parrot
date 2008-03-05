@@ -105,7 +105,7 @@ sub find_attrs {
 
         # type
         \s+
-        (INTVAL|FLOATVAL|STRING\s+\*|PMC\s+\*)
+        (INTVAL|FLOATVAL|STRING\s+\*|PMC\s+\*|\w+\s+\*)
 
         # name
         \s*
@@ -118,9 +118,9 @@ sub find_attrs {
         # declaration terminator
         ;
 
-	# optional comment
-	\s*
-	(/\*.*?\*/)?
+    # optional comment
+    \s*
+    (/\*.*?\*/)?
     }sx;
 
     while ($pmcbody =~ s/($attr_re)//) {
