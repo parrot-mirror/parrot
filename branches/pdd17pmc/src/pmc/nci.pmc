@@ -22,7 +22,7 @@ The vtable functions for the native C call functions.
 
 pmclass NCI need_ext {
     ATTR STRING    *signature;    /* The signature. */
-    ATTR PMC       *func;         /* Function pointer to what we'll call. */
+    ATTR void      *func;         /* Function pointer to what we'll call. */
     ATTR INTVAL     arity;        /* Cached arity of the NCI. */
 
 /*
@@ -85,7 +85,7 @@ Sets the specified function pointer and signature (C<*key>).
 */
 
     VTABLE void set_pointer(void *ptr) {
-        PMC_struct_val(SELF) = (void *)ptr;
+        PMC_struct_val(SELF) = ptr;
         PObj_flag_SET(private2, SELF);
     }
 
