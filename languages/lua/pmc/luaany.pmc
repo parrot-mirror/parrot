@@ -572,7 +572,8 @@ Throws an exception.
 
 */
     METHOD PMC* get_metatable() {
-        return pmc_new(INTERP, dynpmc_LuaNil);
+        PMC *nil = pmc_new(INTERP, dynpmc_LuaNil);
+        PCCRETURN(PMC *nil);
     }
 
 /*
@@ -594,9 +595,9 @@ Throws an exception.
         retval = Parrot_runops_fromc_args(INTERP, meth, "PP", SELF);
 
         if (PMC_IS_NULL(retval))
-            return pmc_new(INTERP, dynpmc_LuaNil);
+            retval = pmc_new(INTERP, dynpmc_LuaNil);
 
-        return retval;
+        PCCRETURN(PMC *retval);
     }
 
 /*
@@ -609,7 +610,8 @@ Returns C<nil>.
 
 */
     METHOD PMC* tonumber() {
-        return pmc_new(INTERP, dynpmc_LuaNil);
+        PMC *nil = pmc_new(INTERP, dynpmc_LuaNil);
+        PCCRETURN(PMC *nil);
     }
 
 /*
@@ -631,14 +633,14 @@ Common implementation (use C<__tostring> or C<get_string>).
             retval = Parrot_runops_fromc_args(INTERP, meth, "PP", SELF);
 
             if (PMC_IS_NULL(retval))
-                return pmc_new(INTERP, dynpmc_LuaNil);
+                retval = pmc_new(INTERP, dynpmc_LuaNil);
         }
         else {
             retval = pmc_new(INTERP, dynpmc_LuaString);
             VTABLE_set_string_native(INTERP, retval, SELF.get_string());
         }
 
-        return retval;
+        PCCRETURN(PMC *retval);
     }
 }
 
