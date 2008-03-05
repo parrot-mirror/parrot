@@ -15,23 +15,6 @@
 
 #include "parrot/parrot.h"
 
-/* Task PMC's underlying struct. */
-typedef struct Parrot_Task {
-    INTVAL        id;        /* The task ID. */
-    INTVAL        priority;  /* The priority of the task. */
-    FLOATVAL      birthtime; /* A time stamp marking the creation of the task. */
-    STRING       *type;      /* The type of the task. */
-    STRING       *subtype;   /* The subtype of the task. */
-    STRING       *status;    /* The status of the task. */
-    Parrot_Interp interp;    /* The interpreter that created the task. */
-    PMC          *codeblock; /* An (optional) codeblock for the task. */
-    PMC          *data;      /* Additional data for the task. */
-    char         *cb_data;   /* Additional data for a callback event. */
-} Parrot_Task;
-
-/* Macro to access underlying structure of a Task PMC. */
-#define PARROT_TASK(t) ((Parrot_Task *) PMC_data(t))
-
 /* Timer PMC's underlying struct. The first part of the PMC struct is identical
  * to a core Task PMC (and will be constructed automatically by inheritance in
  * the new PMC implementation). */
