@@ -15,26 +15,6 @@
 
 #include "parrot/parrot.h"
 
-/* Scheduler PMC's underlying struct. */
-typedef struct Parrot_Scheduler {
-    INTVAL        id;             /* The scheduler's ID. */
-    INTVAL        max_tid;        /* The highest assigned task ID. */
-    INTVAL        pending;        /* A count of pending tasks (cached for fast
-                                     lookup). */
-    PMC          *task_list;      /* The current list of tasks. */
-    PMC          *task_index;     /* An index into the current list of tasks,
-                                     ordered by priority. */
-    PMC          *wait_index;     /* An unordered index of inactive tasks. */
-    PMC          *handlers;       /* The list of currently active handlers. */
-    PMC          *messages;       /* A message queue used for communication
-                                     between schedulers. */
-    Parrot_mutex  msg_lock;       /* Lock to synchronize use of the message queue. */
-    Parrot_Interp interp;         /* A link back to the scheduler's interpreter. */
-} Parrot_Scheduler;
-
-/* Macro to access underlying structure of a Scheduler PMC. */
-#define PARROT_SCHEDULER(s) ((Parrot_Scheduler *) PMC_data(s))
-
 /* Task PMC's underlying struct. */
 typedef struct Parrot_Task {
     INTVAL        id;        /* The task ID. */
