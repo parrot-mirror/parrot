@@ -22,6 +22,16 @@ Implements the basic task behavior for the concurrency scheduler.
 #include "parrot/scheduler_private.h"
 
 pmclass Task need_ext {
+    ATTR INTVAL        id;        /* The task ID. */
+    ATTR INTVAL        priority;  /* The priority of the task. */
+    ATTR FLOATVAL      birthtime; /* The creation time stamp of the task. */
+    ATTR STRING       *type;      /* The type of the task. */
+    ATTR STRING       *subtype;   /* The subtype of the task. */
+    ATTR STRING       *status;    /* The status of the task. */
+    ATTR Parrot_Interp interp;    /* The interpreter that created the task. */
+    ATTR PMC          *codeblock; /* An (optional) codeblock for the task. */
+    ATTR PMC          *data;      /* Additional data for the task. */
+    ATTR char         *cb_data;   /* Additional data for a callback event. */
 
 /*
 
