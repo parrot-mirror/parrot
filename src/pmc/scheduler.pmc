@@ -22,6 +22,19 @@ Implements the core concurrency scheduler.
 #include "parrot/scheduler_private.h"
 
 pmclass Scheduler need_ext {
+    ATTR INTVAL        id;         /* The scheduler's ID. */
+    ATTR INTVAL        max_tid;    /* The highest assigned task ID. */
+    ATTR INTVAL        pending;    /* A count of pending tasks (cached for fast
+                                     lookup). */
+    ATTR PMC          *task_list;  /* The current list of tasks. */
+    ATTR PMC          *task_index; /* An index into the current list of tasks,
+                                     ordered by priority. */
+    ATTR PMC          *wait_index; /* An unordered index of inactive tasks. */
+    ATTR PMC          *handlers;   /* The list of currently active handlers. */
+    ATTR PMC          *messages;   /* A message queue used for communication
+                                     between schedulers. */
+    ATTR Parrot_mutex  msg_lock;   /* Lock to synchronize the message queue. */
+    ATTR Parrot_Interp interp;     /* A link to the scheduler's interpreter. */
 
 /*
 
@@ -34,7 +47,8 @@ Initialize a concurrency scheduler object.
 */
 
     VTABLE void init() {
-        Parrot_Scheduler * const core_struct = mem_allocate_zeroed_typed(Parrot_Scheduler);
+        Parrot_Scheduler * const core_struct =
+            mem_allocate_zeroed_typed(Parrot_Scheduler);
 
         /* Set flags for custom DOD mark and destroy. */
         PObj_custom_mark_SET(SELF);
