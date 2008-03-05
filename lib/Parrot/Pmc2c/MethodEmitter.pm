@@ -233,6 +233,10 @@ sub rewrite_nci_method {
     # Rewrite SELF -> pmc, INTERP -> interp
     $body->subst( qr{\bSELF\b},   sub { 'pmc' } );
     $body->subst( qr{\bINTERP\b}, sub { 'interp' } );
+
+    # Rewrite GET_ATTR, SET_ATTR with typename
+    $body->subst( qr{\bGET_ATTR}, sub { 'GETATTR_' . $pmcname } );
+    $body->subst( qr{\bSET_ATTR}, sub { 'SETATTR_' . $pmcname } );
 }
 
 =item C<rewrite_vtable_method($self, $pmc, $super, $super_table)>
@@ -382,6 +386,10 @@ sub rewrite_vtable_method {
     # Rewrite SELF -> pmc, INTERP -> interp
     $body->subst( qr{\bSELF\b},   sub { 'pmc' } );
     $body->subst( qr{\bINTERP\b}, sub { 'interp' } );
+
+    # Rewrite GET_ATTR, SET_ATTR with typename
+    $body->subst( qr{\bGET_ATTR}, sub { 'GETATTR_' . $pmcname } );
+    $body->subst( qr{\bSET_ATTR}, sub { 'SETATTR_' . $pmcname } );
 
     # now use macros for all rewritten stuff
     $body->subst( qr{\b(?:\w+)->vtable->(\w+)\(}, sub { "VTABLE_$1(" } );
