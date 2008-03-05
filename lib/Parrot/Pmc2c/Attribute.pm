@@ -17,14 +17,13 @@ sub new {
         )
     };
 
-    # this is usually wrong, but *something* calls new on an object somewhere
     bless $self, $class;
 }
 
 # getters/setters
 sub name {
     my ( $self, $value ) = @_;
-    $self->{name} = $value if $value;
+    $self->{name}        = $value if $value;
     return $self->{name};
 }
 
@@ -36,8 +35,9 @@ Generate and emit the C code for an attribute declaration.
 
 sub generate_declaration {
     my ( $self, $pmc ) = @_;
-    my $h = $pmc->{emitter};
-    my $decl = '    ' . $self->{type} . ' ' . $self->{name} . ";\n";
+    my $h              = $pmc->{emitter};
+    my $decl           = '    ' . $self->{type} . ' ' . $self->{name} . ";\n";
+
     $h->emit($decl);
 
     return 1;
@@ -51,8 +51,9 @@ Generate and emit the C code for the start of an attribute struct.
 
 sub generate_start {
     my ( $self, $pmc ) = @_;
-    my $h = $pmc->{emitter};
-    my $name = $pmc->{name};
+    my $h              = $pmc->{emitter};
+    my $name           = $pmc->{name};
+
     $h->emit(<<"EOH");
 
 /* $name PMC's underlying struct. */
@@ -70,9 +71,10 @@ Generate and emit the C code for the end of an attribute struct.
 
 sub generate_end {
     my ( $self, $pmc ) = @_;
-    my $h    = $pmc->{emitter};
-    my $name = $pmc->{name};
-    my $ucname = uc($name);
+    my $h              = $pmc->{emitter};
+    my $name           = $pmc->{name};
+    my $ucname         = uc($name);
+
     $h->emit(<<"EOH");
 } Parrot_${name};
 
@@ -92,4 +94,3 @@ EOH
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
-
