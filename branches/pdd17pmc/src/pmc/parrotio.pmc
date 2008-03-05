@@ -202,7 +202,7 @@ SYNOPSIS
         UINTVAL   len;
 
         if (!io)
-            PCCRETURN(STRING *PMCNULL);
+            PCCRETURN(PMC *PMCNULL);
 
 #ifdef PARROT_HAS_READLINE
         if (io->flags & PIO_F_READLINE) {
