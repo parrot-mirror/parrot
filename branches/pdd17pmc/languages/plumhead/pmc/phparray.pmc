@@ -998,7 +998,7 @@ Return the integer value of the elements a C<key>.
             box = SELF.get_pmc_keyed_int(index_i);
             if (box == NULL) {
                 dprintf("autovivifying box at int index %d\n", (int)index_i);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_int(index_i, box);
             }
         }
@@ -1008,7 +1008,7 @@ Return the integer value of the elements a C<key>.
             box = SELF.get_pmc_keyed_str(index_s);
             if (box == NULL) {
                 dprintf("autovivifying box at string index %s\n", cstr);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_str(index_s, box);
             }
             string_cstring_free(cstr);
@@ -1124,7 +1124,7 @@ Return the float value of the element at C<key>.
             box = SELF.get_pmc_keyed_int(index_i);
             if (box == NULL) {
                 dprintf("autovivifying box at int index %d\n", (int)index_i);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_int(index_i, box);
             }
         }
@@ -1134,7 +1134,7 @@ Return the float value of the element at C<key>.
             box = SELF.get_pmc_keyed_str(index_s);
             if (box == NULL) {
                 dprintf("autovivifying box at string index %s\n", cstr);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_str(index_s, box);
             }
             string_cstring_free(cstr);
@@ -1284,7 +1284,7 @@ Return the string value of the element at C<key>.
             box = SELF.get_pmc_keyed_int(index_i);
             if (box == NULL) {
                 dprintf("autovivifying box at int index %d\n", (int)index_i);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_int(index_i, box);
             }
         }
@@ -1294,7 +1294,7 @@ Return the string value of the element at C<key>.
             box = SELF.get_pmc_keyed_str(index_s);
             if (box == NULL) {
                 dprintf("autovivifying box at string index %s\n", cstr);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_str(index_s, box);
             }
             string_cstring_free(cstr);
@@ -1404,7 +1404,7 @@ Return the string value of the element at C<key>.
             box = SELF.get_pmc_keyed_int(index_i);
             if (box == NULL) {
                 dprintf("autovivifying box at int index %d\n", (int)index_i);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_int(index_i, box);
             }
         }
@@ -1414,7 +1414,7 @@ Return the string value of the element at C<key>.
             box = SELF.get_pmc_keyed_str(index_s);
             if (box == NULL) {
                 dprintf("autovivifying box at string index %s\n", cstr);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_str(index_s, box);
             }
             string_cstring_free(cstr);
@@ -1485,7 +1485,7 @@ Initialize this PHPArray's internal structures
 
     void init_pmc(PMC *initializer) {
         if (initializer == PMCNULL)
-            DYNSELF.init();
+            SELF.init();
     }
 
     /* not sure if I care about these
@@ -1785,7 +1785,7 @@ Associate C<key> with C<value>.
             box = SELF.get_pmc_keyed_int(index_i);
             if (box == PMCNULL) {
                 dprintf("autovivifying box at int index %d\n", (int)index_i);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_int(index_i, box);
             }
         }
@@ -1795,7 +1795,7 @@ Associate C<key> with C<value>.
             box = SELF.get_pmc_keyed_str(index_s);
             if (box == PMCNULL) {
                 dprintf("autovivifying box at string index %s\n", cstr);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_str(index_s, box);
             }
             string_cstring_free(cstr);
@@ -1892,7 +1892,7 @@ Associate C<key> with C<value>.
             box = SELF.get_pmc_keyed_int(index_i);
             if (box == PMCNULL) {
                 dprintf("autovivifying box at int index %d\n", (int)index_i);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_int(index_i, box);
             }
         }
@@ -1902,7 +1902,7 @@ Associate C<key> with C<value>.
             box = SELF.get_pmc_keyed_str(index_s);
             if (box == PMCNULL) {
                 dprintf("autovivifying box at string index %s\n", cstr);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_str(index_s, box);
             }
             string_cstring_free(cstr);
@@ -1995,7 +1995,7 @@ Associate C<key> with C<value>.
             box = SELF.get_pmc_keyed_int(index_i);
             if (box == PMCNULL) {
                 dprintf("autovivifying box at int index %d\n", (int)index_i);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_int(index_i, box);
             }
         }
@@ -2005,7 +2005,7 @@ Associate C<key> with C<value>.
             box = SELF.get_pmc_keyed_str(index_s);
             if (box == PMCNULL) {
                 dprintf("autovivifying box at string index %s\n", cstr);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_str(index_s, box);
             }
             string_cstring_free(cstr);
@@ -2108,7 +2108,7 @@ Associate C<key> with C<value>.
             box = SELF.get_pmc_keyed_int(index_i);
             if (box == PMCNULL) {
                 dprintf("autovivifying box at int index %d\n", (int)index_i);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_int(index_i, box);
             }
         }
@@ -2118,7 +2118,7 @@ Associate C<key> with C<value>.
             box = SELF.get_pmc_keyed_str(index_s);
             if (box == PMCNULL) {
                 dprintf("autovivifying box at string index %s\n", cstr);
-                box = pmc_new(INTERP, DYNSELF.type());
+                box = pmc_new(INTERP, SELF.type());
                 SELF.set_pmc_keyed_str(index_s, box);
             }
             string_cstring_free(cstr);
