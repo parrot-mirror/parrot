@@ -15,31 +15,7 @@
 
 #include "parrot/parrot.h"
 
-/* Timer PMC's underlying struct. The first part of the PMC struct is identical
- * to a core Task PMC (and will be constructed automatically by inheritance in
- * the new PMC implementation). */
-typedef struct Parrot_Timer {
-    INTVAL        id;        /* The task ID. */
-    INTVAL        priority;  /* The priority of the task. */
-    FLOATVAL      birthtime; /* A time stamp marking the creation of the task. */
-    STRING       *type;      /* The type of the task. */
-    STRING       *subtype;   /* The subtype of the task. */
-    STRING       *status;    /* The status of the task. */
-    Parrot_Interp interp;    /* The interpreter that created the task. */
-    PMC          *codeblock; /* An (optional) codeblock for the task. */
-    PMC          *data;      /* Additional data for the task. */
-    char         *cb_data;   /* Additional data for a callback event. */
-    FLOATVAL      duration;  /* The duration of the timer pause */
-    FLOATVAL      interval;  /* How often to repeat */
-    INTVAL        repeat;    /* Whether to repeat: 0 = run once (no repeat), -1 = forever */
-} Parrot_Timer;
-
-/* Macro to access underlying structure of a Timer PMC. */
-#define PARROT_TIMER(t) ((Parrot_Timer *) PMC_data(t))
-
-/*
- * Scheduler private flags
- */
+/* Scheduler private flags */
 typedef enum {
     SCHEDULER_cache_valid_FLAG         = PObj_private0_FLAG,
     SCHEDULER_wake_requested_FLAG      = PObj_private1_FLAG,
