@@ -140,9 +140,9 @@ EOA
 
     else {
         $decl .= <<"EOA";
-            real_exception(interp, NULL, INVALID_OPERATION,
-                            "Attributes of type '$attrtype' cannot be "
-                            "subclassed from a high-level PMC.");
+            real_exception(interp, NULL, INVALID_OPERATION, \\
+                            "Attributes of type '$attrtype' cannot be " \\
+                            "subclassed from a high-level PMC."); \\
 EOA
     }
 
