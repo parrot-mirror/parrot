@@ -121,7 +121,7 @@ information see F<src/pmc.c>.
         /* backtrace: follow the continuation chain */
         while (1) {
             PMC *cont;
-            if (PMC_metadata(ctx->current_sub) != NULL) {
+            if (ctx->current_sub && PMC_metadata(ctx->current_sub)) {
                 Parrot_Context_info info;
                 Parrot_block_DOD(INTERP);
 
@@ -408,8 +408,9 @@ information see F<src/pmc.c>.
         while (1) {
             PMC *cont;
             PMC *sub = ctx->current_sub;
-            if (PMC_metadata(sub)
-            && VTABLE_isa(INTERP, sub, const_string(INTERP, "LuaClosure"))) {
+            if (sub
+            &&  PMC_metadata(sub)
+            &&  VTABLE_isa(INTERP, sub, const_string(INTERP, "LuaClosure"))) {
                 Parrot_Context_info info;
                 Parrot_block_DOD(INTERP);
 
