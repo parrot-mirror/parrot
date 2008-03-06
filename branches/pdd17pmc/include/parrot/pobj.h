@@ -47,20 +47,19 @@ typedef struct pobj_t {
 
 /* plain Buffer is the smallest Parrot Obj */
 typedef struct Buffer {
-    UnionVal    cache;
-    Parrot_UInt flags;
+    pobj_t obj;
 } Buffer;
 
 typedef Buffer PObj;
 
-#define PObj_bufstart(pmc)    (pmc)->cache._b._bufstart
-#define PObj_buflen(pmc)      (pmc)->cache._b._buflen
-#define PMC_struct_val(pmc)   (pmc)->cache._ptrs._struct_val
-#define PMC_pmc_val(pmc)      (pmc)->cache._ptrs._pmc_val
-#define PMC_int_val(pmc)      (pmc)->cache._i._int_val
-#define PMC_int_val2(pmc)     (pmc)->cache._i._int_val2
-#define PMC_num_val(pmc)      (pmc)->cache._num_val
-#define PMC_str_val(pmc)      (pmc)->cache._string_val
+#define PObj_bufstart(pmc)    (pmc)->obj.u._b._bufstart
+#define PObj_buflen(pmc)      (pmc)->obj.u._b._buflen
+#define PMC_struct_val(pmc)   (pmc)->obj.u._ptrs._struct_val
+#define PMC_pmc_val(pmc)      (pmc)->obj.u._ptrs._pmc_val
+#define PMC_int_val(pmc)      (pmc)->obj.u._i._int_val
+#define PMC_int_val2(pmc)     (pmc)->obj.u._i._int_val2
+#define PMC_num_val(pmc)      (pmc)->obj.u._num_val
+#define PMC_str_val(pmc)      (pmc)->obj.u._string_val
 
 /* See src/gc/resources.c. the basic idea is that buffer memory is
    set up as follows:
@@ -118,8 +117,7 @@ typedef enum {
 } parrot_string_representation_t;
 
 struct parrot_string_t {
-    UnionVal    cache;
-    Parrot_UInt flags;
+    pobj_t obj;
     UINTVAL     bufused;
     char       *strstart;
     UINTVAL     strlen;
@@ -135,8 +133,7 @@ struct parrot_string_t {
 
 /* note that cache and flags are isomorphic with Buffer and PObj */
 struct PMC {
-    UnionVal        cache;
-    Parrot_UInt     flags;
+    pobj_t obj;
     VTABLE         *vtable;
     DPOINTER       *data;
     struct PMC_EXT *pmc_ext;
@@ -195,7 +192,7 @@ typedef struct PMC_EXT {
 #define PMC_metadata(pmc)     PMC_ext_checked(pmc)->_metadata
 #define PMC_next_for_GC(pmc)  PMC_ext_checked(pmc)->_next_for_GC
 #define PMC_sync(pmc)         PMC_ext_checked(pmc)->_synchronize
-#define PMC_union(pmc)        (pmc)->cache
+#define PMC_union(pmc)        (pmc)->obj.u
 
 #define POBJ_FLAG(n) ((UINTVAL)1 << (n))
 /* PObj flags */
@@ -295,7 +292,7 @@ typedef enum PObj_enum {
 #  define DOD_flag_SET(flag, o)       PObj_flag_SET(flag, o)
 #  define DOD_flag_CLEAR(flag, o)     PObj_flag_CLEAR(flag, o)
 
-#define PObj_get_FLAGS(o) ((o)->flags)
+#define PObj_get_FLAGS(o) ((o)->obj.flags)
 
 #define PObj_flag_TEST(flag, o) (PObj_get_FLAGS(o) & PObj_ ## flag ## _FLAG)
 #define PObj_flag_SET(flag, o) (PObj_get_FLAGS(o) |= PObj_ ## flag ## _FLAG)

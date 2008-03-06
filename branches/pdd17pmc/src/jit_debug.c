@@ -158,9 +158,9 @@ write_types(FILE *stabs, PARROT_INTERP)
                 "strstart:(0,15),%d,%d;"        /* fake a char* */
                 ";\""
                 "," N_LSYM ",0,0,0\n", i++, BYTE_SIZE(STRING),
-                BIT_OFFSET(STRING, cache._b._bufstart), BIT_SIZE(void*),
-                BIT_OFFSET(STRING, cache._b._buflen), BIT_SIZE(size_t),
-                BIT_OFFSET(STRING, flags), BIT_SIZE(UINTVAL),
+                BIT_OFFSET(STRING, obj.u._b._bufstart), BIT_SIZE(void*),
+                BIT_OFFSET(STRING, obj.u._b._buflen), BIT_SIZE(size_t),
+                BIT_OFFSET(STRING, obj.flags), BIT_SIZE(UINTVAL),
                 BIT_OFFSET(STRING, bufused), BIT_SIZE(UINTVAL),
                 BIT_OFFSET(STRING, strstart), BIT_SIZE(void*));
 
@@ -176,10 +176,8 @@ write_types(FILE *stabs, PARROT_INTERP)
 
     /* PMC type */
     fprintf(stabs, ".stabs \"PMC:T(0,%d)=s%d", i, BYTE_SIZE(PMC));
-    fprintf(stabs, "cache:(0,%d),%d,%d;",
-            i + 1, BIT_OFFSET(PMC, cache), BIT_SIZE(UnionVal));
-    fprintf(stabs, "flags:(0,%d),%d,%d;",
-            i + 1, BIT_OFFSET(PMC, flags), BIT_SIZE(Parrot_UInt));
+    fprintf(stabs, "obj:(0,%d),%d,%d;",
+            i + 1, BIT_OFFSET(PMC, obj), BIT_SIZE(pobj_t));
     fprintf(stabs, "vtable:*(0,%d),%d,%d;",
             i + 3, BIT_OFFSET(PMC, vtable), BIT_SIZE(void*));
     fprintf(stabs, "data:(0,14),%d,%d;",
