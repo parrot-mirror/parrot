@@ -23,7 +23,7 @@ this is as simple as returning the list.
     $P0 = $P0.'get_list'($S0)
   pop_eh 
 
-    copy value, $P0
+  copy value, $P0
 
   .return(value)
 
