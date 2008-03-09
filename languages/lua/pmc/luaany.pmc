@@ -573,7 +573,7 @@ Throws an exception.
 */
     METHOD PMC* get_metatable() {
         PMC *nil = pmc_new(INTERP, dynpmc_LuaNil);
-        PCCRETURN(PMC *nil);
+        RETURN(PMC *nil);
     }
 
 /*
@@ -597,7 +597,7 @@ Throws an exception.
         if (PMC_IS_NULL(retval))
             retval = pmc_new(INTERP, dynpmc_LuaNil);
 
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*
@@ -611,7 +611,7 @@ Returns C<nil>.
 */
     METHOD PMC* tonumber() {
         PMC *nil = pmc_new(INTERP, dynpmc_LuaNil);
-        PCCRETURN(PMC *nil);
+        RETURN(PMC *nil);
     }
 
 /*
@@ -640,7 +640,7 @@ Common implementation (use C<__tostring> or C<get_string>).
             VTABLE_set_string_native(INTERP, retval, SELF.get_string());
         }
 
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 }
 

@@ -75,9 +75,9 @@ Returns a true value (1) if the supplied file or directory exists.
         string_cstring_free(cpath);
 
         if (error)
-            PCCRETURN(INTVAL 0);
+            RETURN(INTVAL 0);
 
-        PCCRETURN(INTVAL 1);
+        RETURN(INTVAL 1);
     }
 
 /*
@@ -106,9 +106,9 @@ Returns a true value (1) if the supplied path is a directory.
         }
 
         if (S_ISDIR(info.st_mode))
-            PCCRETURN(INTVAL 1);
+            RETURN(INTVAL 1);
         else
-            PCCRETURN(INTVAL 0);
+            RETURN(INTVAL 0);
     }
 
 /*
@@ -137,9 +137,9 @@ Returns a true value (1) if the supplied path is a plain file.
         }
 
         if (S_ISREG(info.st_mode))
-            PCCRETURN(INTVAL 1);
+            RETURN(INTVAL 1);
         else
-            PCCRETURN(INTVAL 0);
+            RETURN(INTVAL 0);
     }
 
 /*
@@ -155,7 +155,7 @@ Returns a true value (1) if the supplied path is a link.
     METHOD is_link(STRING *path) {
 #ifdef WIN32
         /* I love win32 implementations */
-        PCCRETURN(INTVAL 0);
+        RETURN(INTVAL 0);
 #else
         struct stat info;
 
@@ -170,9 +170,9 @@ Returns a true value (1) if the supplied path is a link.
         }
 
         if (S_ISLNK(info.st_mode))
-            PCCRETURN(INTVAL 1);
+            RETURN(INTVAL 1);
         else
-            PCCRETURN(INTVAL 0);
+            RETURN(INTVAL 0);
 #endif
     }
 

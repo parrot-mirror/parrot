@@ -490,7 +490,7 @@ Return GMP version string "x.y.z".
 #else
         version = CONST_STRING(INTERP, "0.0.0");
 #endif
-        PCCRETURN(STRING *version);
+        RETURN(STRING *version);
     }
 
 /*

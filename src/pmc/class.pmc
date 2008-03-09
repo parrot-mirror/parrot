@@ -1462,7 +1462,7 @@ Sets the name of the class, and updates the namespace accoringly.
         }
 
         ret_name = _class->name;
-        PCCRETURN(STRING *ret_name);
+        RETURN(STRING *ret_name);
     }
 
 /*
@@ -1479,7 +1479,7 @@ Gets the namespace that this class is attached to.
         PMC          * const ret_namespace = _class->_namespace;
         UNUSED(_namespace);
         UNUSED(has_name);
-        PCCRETURN(PMC *ret_namespace);
+        RETURN(PMC *ret_namespace);
     }
 
 /*
@@ -1502,7 +1502,7 @@ methods from roles. When called with no parameter, returns the list.
             _class->resolve_method = resolve_list;
 
         ret_list = _class->resolve_method;
-        PCCRETURN(PMC *ret_list);
+        RETURN(PMC *ret_list);
     }
 
 /*
@@ -1523,7 +1523,7 @@ parameter list.
                 ? VTABLE_instantiate(interp, SELF, args)
                 : VTABLE_instantiate(interp, SELF, PMCNULL);
 
-        PCCRETURN(PMC *obj);
+        RETURN(PMC *obj);
      }
 
 /*
@@ -1540,7 +1540,7 @@ providing a set of key/value pairs describing the attribute.
         STRING * const attr_str            = CONST_STRING(interp, "attributes");
         PMC    * const ret_attrib_metadata = SELF.inspect_str(attr_str);
 
-        PCCRETURN(PMC *ret_attrib_metadata);
+        RETURN(PMC *ret_attrib_metadata);
     }
 
 /*
@@ -1570,7 +1570,7 @@ Return a hash where the keys are method names and the values are methods.
     METHOD methods() {
         PMC * const ret_methods = SELF.inspect_str(CONST_STRING(interp, "methods"));
 
-        PCCRETURN(PMC *ret_methods);
+        RETURN(PMC *ret_methods);
     }
 
 /*
@@ -1625,11 +1625,11 @@ Walks the MRO of the class and finds the method with the given name.
             /* Found it! */
             if (VTABLE_exists_keyed_str(interp, class_info->methods, name)) {
                 PMC * const ret = VTABLE_get_pmc_keyed_str(interp, class_info->methods, name);
-                PCCRETURN(PMC *ret);
+                RETURN(PMC *ret);
             }
         }
 
-        PCCRETURN(PMC *PMCNULL);
+        RETURN(PMC *PMCNULL);
     }
 
 /*
@@ -1644,7 +1644,7 @@ Return the parents array PMC.
     METHOD parents() {
         PMC * const ret_parents = SELF.inspect_str(CONST_STRING(interp, "parents"));
 
-        PCCRETURN(PMC *ret_parents);
+        RETURN(PMC *ret_parents);
     }
 
 /*
@@ -1672,7 +1672,7 @@ Return the roles array PMC.
     METHOD roles() {
         PMC * const ret_roles = SELF.inspect_str(CONST_STRING(interp, "roles"));
 
-        PCCRETURN(PMC *ret_roles);
+        RETURN(PMC *ret_roles);
     }
 
 /*
@@ -1738,7 +1738,7 @@ parameter is supplied, a particular item of introspection data.
         else
             found = SELF.inspect();
 
-        PCCRETURN(PMC *found);
+        RETURN(PMC *found);
     }
 
 /*
@@ -1754,7 +1754,7 @@ C<class_name>, false otherwise.
     METHOD isa(STRING *class_name) {
         const INTVAL isa = SELF.isa(class_name);
 
-        PCCRETURN(INTVAL isa);
+        RETURN(INTVAL isa);
     }
 
 /*
@@ -1769,7 +1769,7 @@ false otherwise.
 */
     METHOD does(STRING *role_name) {
         INTVAL does = VTABLE_does(interp, SELF, role_name);
-        PCCRETURN(INTVAL does);
+        RETURN(INTVAL does);
     }
 
 } /* END pmclass */

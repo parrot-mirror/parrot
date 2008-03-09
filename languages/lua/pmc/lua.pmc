@@ -133,7 +133,7 @@ information see F<src/pmc.c>.
                         string_cstring_free(info.file);
 
                     Parrot_unblock_DOD(INTERP);
-                    PCCRETURN(STRING *retval);
+                    RETURN(STRING *retval);
                 }
                 Parrot_unblock_DOD(INTERP);
                 break;
@@ -151,7 +151,7 @@ information see F<src/pmc.c>.
         }
 
         retval = const_string(INTERP, "?");
-        PCCRETURN(STRING *retval);
+        RETURN(STRING *retval);
     }
 
 /*
@@ -165,7 +165,7 @@ information see F<src/pmc.c>.
         PMC     *retval = pmc_new(INTERP, dynpmc_LuaNumber);
         FLOATVAL f      = ((FLOATVAL)clock())/(FLOATVAL)CLOCKS_PER_SEC;
         VTABLE_set_number_native(INTERP, retval, f);
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*
@@ -188,7 +188,7 @@ information see F<src/pmc.c>.
         VTABLE_set_pmc_keyed_int(INTERP, retval, 0, y);
         VTABLE_set_pmc_keyed_int(INTERP, retval, 1, expn);
 
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*
@@ -204,7 +204,7 @@ information see F<src/pmc.c>.
         VTABLE_set_number_native(INTERP, retval,
                                  ldexp(VTABLE_get_number(INTERP, x),
                                        VTABLE_get_integer(INTERP, expn)));
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*
@@ -236,7 +236,7 @@ information see F<src/pmc.c>.
             VTABLE_set_integer_native(INTERP, retval, t);
         }
 
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*
@@ -259,7 +259,7 @@ information see F<src/pmc.c>.
         VTABLE_set_pmc_keyed_int(INTERP, retval, 0, d);
         VTABLE_set_pmc_keyed_int(INTERP, retval, 1, y);
 
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*
@@ -286,7 +286,7 @@ information see F<src/pmc.c>.
         else
             retval = pmc_new(INTERP, dynpmc_LuaNil);
 
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*
@@ -318,7 +318,7 @@ information see F<src/pmc.c>.
         string_cstring_free(s);
 
         retval = string_from_cstring(INTERP, b, reslen);
-        PCCRETURN(STRING *retval);
+        RETURN(STRING *retval);
     }
 
 /*
@@ -348,7 +348,7 @@ information see F<src/pmc.c>.
                            "unable to generate a unique filename");
 
         retval = string_from_cstring(INTERP, buff, 0);
-        PCCRETURN(STRING *retval);
+        RETURN(STRING *retval);
     }
 
 /*
@@ -390,7 +390,7 @@ information see F<src/pmc.c>.
             bt = string_append(INTERP, bt, str);
         }
 
-        PCCRETURN(STRING *bt);
+        RETURN(STRING *bt);
     }
 
 /*
@@ -423,7 +423,7 @@ information see F<src/pmc.c>.
                         string_cstring_free(info.file);
 
                     Parrot_unblock_DOD(INTERP);
-                    PCCRETURN(STRING *res);
+                    RETURN(STRING *res);
                 }
                 Parrot_unblock_DOD(INTERP);
                 break;
@@ -441,7 +441,7 @@ information see F<src/pmc.c>.
         }
 
         retval = const_string(INTERP, "_._:0:");
-        PCCRETURN(STRING *retval);
+        RETURN(STRING *retval);
     }
 }
 

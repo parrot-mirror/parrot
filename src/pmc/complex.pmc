@@ -1185,7 +1185,7 @@ ln(+-i) = +- (pi i)/2
         else
             IM(d) = atan2(im, re);
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
 /*
@@ -1214,7 +1214,7 @@ exp(a + bi) = exp(a) * (cos(b) + i * sin(b))
         else
             IM(d) = f * sin(im);
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
 /*
@@ -1258,13 +1258,13 @@ Returns C<FUNC>(SELF).
         if (FLOAT_IS_ZERO(im)) {
             RE(d) = sin(re);
             IM(d) = 0.0;
-            PCCRETURN(PMC *d);
+            RETURN(PMC *d);
         }
 
         if (FLOAT_IS_ZERO(re)) {
             RE(d) = 0.0;
             IM(d) = sinh(im);
-            PCCRETURN(PMC *d);
+            RETURN(PMC *d);
         }
 
         RE(d) = sin(re) * cosh(im);
@@ -1274,7 +1274,7 @@ Returns C<FUNC>(SELF).
         else
             IM(d) = cos(re) * sinh(im);
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD cos() {
@@ -1285,19 +1285,19 @@ Returns C<FUNC>(SELF).
         if (FLOAT_IS_ZERO(re)) {
             RE(d) = cosh(im);
             IM(d) = 0.0;
-            PCCRETURN(PMC *d);
+            RETURN(PMC *d);
         }
 
         if (FLOAT_IS_ZERO(im)) {
             RE(d) = cos(re);
             IM(d) = 0.0;
-            PCCRETURN(PMC *d);
+            RETURN(PMC *d);
         }
 
         RE(d) = cos(re) * cosh(im);
         IM(d) = -1.0 * sin(re) * sinh(im);
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD tan() {
@@ -1309,7 +1309,7 @@ Returns C<FUNC>(SELF).
 
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD cot() {
@@ -1320,7 +1320,7 @@ Returns C<FUNC>(SELF).
 
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD sec() {
@@ -1332,7 +1332,7 @@ Returns C<FUNC>(SELF).
 
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD csc() {
@@ -1344,7 +1344,7 @@ Returns C<FUNC>(SELF).
 
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
 /*
@@ -1396,7 +1396,7 @@ Returns the inverse function of SELF.
         RE(e)  = IM(d);
         IM(e)  = RE(d) ? -RE(d) : 0.0;
 
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
     METHOD acos() {
@@ -1415,7 +1415,7 @@ Returns the inverse function of SELF.
         RE(d)  = IM(e) + 2.0 * atan(1);
         IM(d)  = RE(e) ? -RE(e) : 0.0;
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD atan() {
@@ -1435,7 +1435,7 @@ Returns the inverse function of SELF.
         RE(e)       = (IM(d) ? IM(d) : -0.0) / -2.0;
         IM(e)       = RE(d) / 2.0;
 
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
     METHOD acot() {
@@ -1448,7 +1448,7 @@ Returns the inverse function of SELF.
         IM(d)      = -b / (a * a + b * b);
 
         (PMC *e) = PCCINVOKE(INTERP, d, "atan");
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
     METHOD acsc() {
@@ -1461,7 +1461,7 @@ Returns the inverse function of SELF.
         IM(d)      = -b / (a * a + b * b);
 
         (PMC *e) = PCCINVOKE(INTERP, d, "asin");
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
     METHOD asec() {
@@ -1474,7 +1474,7 @@ Returns the inverse function of SELF.
         IM(d)      = -b / (a * a + b * b);
 
         (PMC *e) = PCCINVOKE(INTERP, d, "acos");
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
 /*
@@ -1505,7 +1505,7 @@ tanh(z) = sinh(z) / cosh(z)
         RE(d) = sinh(a) * cos(b);
         IM(d) = b ? cosh(a) * sin(b) : 0.0;
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD cosh() {
@@ -1519,7 +1519,7 @@ tanh(z) = sinh(z) / cosh(z)
         else
             IM(d)  = sinh(a) * sin(b);
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD tanh() {
@@ -1531,7 +1531,7 @@ tanh(z) = sinh(z) / cosh(z)
 
         Parrot_Complex_i_divide_Complex(INTERP, d, e);
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD coth() {
@@ -1545,7 +1545,7 @@ tanh(z) = sinh(z) / cosh(z)
         RE(d)  = a ?  a / (a * a + b * b) : 0.0;
         IM(d)  = b ? -b / (a * a + b * b) : 0.0;
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD csch() {
@@ -1559,7 +1559,7 @@ tanh(z) = sinh(z) / cosh(z)
         RE(d)  = a ?  a / (a * a + b * b) : 0.0;
         IM(d)  = b ? -b / (a * a + b * b) : 0.0;
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD sech() {
@@ -1573,7 +1573,7 @@ tanh(z) = sinh(z) / cosh(z)
         RE(d)  = a ?  a / (a * a + b * b) : 0.0;
         IM(d)  = b ? -b / (a * a + b * b) : 0.0;
 
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
 /*
@@ -1615,7 +1615,7 @@ atanh = i atan(-ix)
         RE(e)  = -IM(d);
         IM(e)  = RE(d);
 
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
     METHOD acosh() {
@@ -1626,7 +1626,7 @@ atanh = i atan(-ix)
         RE(e)  = -IM(d);
         IM(e)  = RE(d);
 
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
     METHOD atanh() {
@@ -1640,7 +1640,7 @@ atanh = i atan(-ix)
         RE(e)  = -IM(d);
         IM(e)  = RE(d);
 
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
     METHOD acoth() {
@@ -1653,7 +1653,7 @@ atanh = i atan(-ix)
         IM(d)      = -b / (a * a + b * b);
 
         (PMC *e) = PCCINVOKE(INTERP, d, "atanh");
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
     METHOD acsch() {
@@ -1666,7 +1666,7 @@ atanh = i atan(-ix)
         IM(d)      = -b / (a * a + b * b);
 
         (PMC *e) = PCCINVOKE(INTERP, d, "asinh");
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
     METHOD asech() {
@@ -1679,7 +1679,7 @@ atanh = i atan(-ix)
         IM(d)      = -b / (a * a + b * b);
 
         (PMC *e) = PCCINVOKE(INTERP, d, "acosh");
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
 /*
@@ -1752,7 +1752,7 @@ MMD_DEFAULT: {
         IM(d) *= 0.5;
 
         (PMC *e) = PCCINVOKE(INTERP, d, "exp");
-        PCCRETURN(PMC *e);
+        RETURN(PMC *e);
     }
 
 }

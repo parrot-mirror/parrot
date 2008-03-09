@@ -458,7 +458,7 @@ Delete the element corresponding to C<key> in the hash component.
         CAPTURE_array_CREATE(INTERP, capt);
         capt_array = PARROT_CAPTURE(capt)->array;
 
-        PCCRETURN(PMC *capt_array);
+        RETURN(PMC *capt_array);
     }
 
     METHOD get_hash() {
@@ -474,7 +474,7 @@ Delete the element corresponding to C<key> in the hash component.
         }
         CAPTURE_hash_CREATE(INTERP, capt);
         capt_hash = PARROT_CAPTURE(capt)->hash;
-        PCCRETURN(PMC *capt_hash);
+        RETURN(PMC *capt_hash);
     }
 
 }

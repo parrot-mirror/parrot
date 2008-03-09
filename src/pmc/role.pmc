@@ -576,7 +576,7 @@ Sets the name of the role, and updates the namespace accoringly.
         }
 
         ret_name = role->name;
-        PCCRETURN(STRING *ret_name);
+        RETURN(STRING *ret_name);
     }
 
 
@@ -594,7 +594,7 @@ Gets the namespace associated with this role, if any.
     METHOD pmc_namespace() {
         Parrot_Role *role          = PARROT_ROLE(SELF);
         PMC         *ret_namespace = role->_namespace;
-        PCCRETURN(PMC *ret_namespace);
+        RETURN(PMC *ret_namespace);
     }
 
 
@@ -612,7 +612,7 @@ providing a set of key/value pairs describing the attribute.
     METHOD attributes() {
         PMC *ret_attrib_metadata =
             VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "attributes"));
-        PCCRETURN(PMC *ret_attrib_metadata);
+        RETURN(PMC *ret_attrib_metadata);
     }
 
 
@@ -645,7 +645,7 @@ Return a hash where the keys are method names and the values are methods.
 */
     METHOD methods() {
         PMC *ret_methods = VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "methods"));
-        PCCRETURN(PMC *ret_methods);
+        RETURN(PMC *ret_methods);
     }
 
 
@@ -675,7 +675,7 @@ Return the roles array PMC.
 */
     METHOD roles() {
         PMC *ret_roles = VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "roles"));
-        PCCRETURN(PMC *ret_roles);
+        RETURN(PMC *ret_roles);
     }
 
 
@@ -730,7 +730,7 @@ parameter is supplied, a particular item of introspection data.
         else
             found = VTABLE_inspect(interp, SELF);
 
-        PCCRETURN(PMC *found);
+        RETURN(PMC *found);
     }
 
 /*
@@ -746,7 +746,7 @@ named role.  This will recurse through all roles as far back as it can.
 
     METHOD does(STRING *name) {
         INTVAL does = VTABLE_does(INTERP, SELF, name);
-        PCCRETURN(INTVAL does);
+        RETURN(INTVAL does);
     }
 
 } /* end pmclass Role */

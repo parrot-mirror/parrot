@@ -347,7 +347,7 @@ Gets the name of the PMC.
     METHOD name() {
         Parrot_Class * const _pmc     = PARROT_CLASS(SELF);
         STRING       * const ret_name = _pmc->name;
-        PCCRETURN(STRING *ret_name);
+        RETURN(STRING *ret_name);
     }
 
 /*
@@ -362,7 +362,7 @@ Gets the namespace that this class is attached to.
     METHOD pmc_namespace() {
         Parrot_Class * const _pmc          = PARROT_CLASS(SELF);
         PMC          * const ret_namespace = _pmc->_namespace;
-        PCCRETURN(PMC *ret_namespace);
+        RETURN(PMC *ret_namespace);
     }
 
 /*
@@ -377,7 +377,7 @@ Creates an instance of the PMC.
     METHOD new(PMC *args :optional, int got_args :opt_flag) {
         PMC * const obj = VTABLE_instantiate(interp, SELF, args);
         UNUSED(got_args);
-        PCCRETURN(PMC *obj);
+        RETURN(PMC *obj);
     }
 
 /*
@@ -391,7 +391,7 @@ Return a hash where the keys are method names and the values are methods.
 */
     METHOD methods() {
         PMC * const ret_methods = VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "methods"));
-        PCCRETURN(PMC *ret_methods);
+        RETURN(PMC *ret_methods);
     }
 
 /*
@@ -405,7 +405,7 @@ Return the parents array PMC.
 */
     METHOD parents() {
         PMC * const ret_parents = VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "parents"));
-        PCCRETURN(PMC *ret_parents);
+        RETURN(PMC *ret_parents);
     }
 
 /*
@@ -425,7 +425,7 @@ parameter is supplied, a particular item of introspection data.
                 ? VTABLE_inspect_str(interp, SELF, what)
                 : VTABLE_inspect(interp, SELF);
 
-        PCCRETURN(PMC *found);
+        RETURN(PMC *found);
     }
 
 /*

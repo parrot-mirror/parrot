@@ -188,13 +188,13 @@ sub gen_arg_accessor {
     }
 }
 
-=head3 C<rewrite_PCCRETURNs($method, $pmc)>
+=head3 C<rewrite_RETURNs($method, $pmc)>
 
-Rewrites the method body performing the various macro substitutions for PCCRETURNs.
+Rewrites the method body performing the various macro substitutions for RETURNs.
 
 =cut
 
-sub rewrite_PCCRETURNs {
+sub rewrite_RETURNs {
     my ( $self, $pmc ) = @_;
     my $method_name    = $self->name;
     my $body           = $self->body;
@@ -202,13 +202,13 @@ sub rewrite_PCCRETURNs {
     my $qty_returns    = 0;
 
     my $signature_re   = qr{
-      (PCCRETURN       #method name
+      (RETURN       #method name
       \s*              #optional whitespace
       \( ([^\(]*) \)   #returns ( stuff ... )
       ;?)              #optional semicolon
     }sx;
 
-    croak "return not allowed in pccmethods, use PCCRETURN instead $body"
+    croak "return not allowed in pccmethods, use RETURN instead $body"
         if $body and $body =~ m/\breturn\b.*?;\z/s;
 
     while ($body) {
@@ -227,9 +227,9 @@ sub rewrite_PCCRETURNs {
 
         if ($returns eq 'void') {
             $e->emit( <<"END", __FILE__, __LINE__ + 1 );
-    /*BEGIN PCCRETURN $returns */
+    /*BEGIN RETURN $returns */
     goto no_return;
-    /*END PCCRETURN $returns */
+    /*END RETURN $returns */
 END
             $matched->replace( $match, $e );
             next;
@@ -244,7 +244,7 @@ END
 
         $e->emit( <<"END", __FILE__, __LINE__ + 1 );
     {
-    /*BEGIN PCCRETURN $returns */
+    /*BEGIN RETURN $returns */
     /*BEGIN GENERATED ACCESSORS */
 END
         $e->emit(<<"END");
@@ -263,7 +263,7 @@ END
     _return_sig = pmc_new(interp, enum_class_FixedIntegerArray);
 $returns_sig
     $goto_string
-    /*END PCCRETURN $returns */
+    /*END RETURN $returns */
     }
 END
         $matched->replace( $match, $e );
@@ -383,7 +383,7 @@ sub rewrite_pccmethod {
     my ( $params_n_regs_used, $params_indexes, $params_flags, $params_accessors, $named_names ) =
         process_pccmethod_args( $linear_args, 'arg' );
 
-    my ( $n_regs, $qty_returns ) = rewrite_PCCRETURNs( $self, $pmc );
+    my ( $n_regs, $qty_returns ) = rewrite_RETURNs( $self, $pmc );
     rewrite_pccinvoke( $self, $pmc );
     unshift @$n_regs, $params_n_regs_used;
     my $n_regs_used = find_max_regs($n_regs);

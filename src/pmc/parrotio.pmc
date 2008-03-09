@@ -46,7 +46,7 @@ class method.
             PIO_STDOUT(INTERP) : SELF;
         const INTVAL r = PIO_putps(INTERP, out, s) +
                          PIO_puts(INTERP, out, "\n");
-        PCCRETURN(INTVAL r);
+        RETURN(INTVAL r);
     }
 /*
 
@@ -71,7 +71,7 @@ Opens the file with the given mode, using the given IO layer.
         if (!pio || !PMC_struct_val(pio)) {
             PMC *retval = pmc_new(INTERP, enum_class_Undef);
             string_cstring_free(c_layer);
-            PCCRETURN(PMC *retval);
+            RETURN(PMC *retval);
         }
 
         if (l) {
@@ -102,7 +102,7 @@ Opens the file with the given mode, using the given IO layer.
         /* RT#46083 leaks as in ops/io.ops: open */
         string_cstring_free(c_layer);
 
-        PCCRETURN(PMC *pio);
+        RETURN(PMC *pio);
     }
 
 /*
@@ -115,7 +115,7 @@ Opens the file with the given mode, using the given IO layer.
     METHOD isatty() {
         const ParrotIO * const io  = (ParrotIO *)PMC_data(SELF);
         INTVAL isatty = (io->flags & PIO_F_CONSOLE) == PIO_F_CONSOLE;
-        PCCRETURN(INTVAL isatty);
+        RETURN(INTVAL isatty);
     }
 
 /*
@@ -175,13 +175,13 @@ SYNOPSIS
         INTVAL flag;
 #endif
         if (!io)
-            PCCRETURN(INTVAL -2);
+            RETURN(INTVAL -2);
 
         if (!(io->flags & PIO_F_READ))
-            PCCRETURN(INTVAL -2);
+            RETURN(INTVAL -2);
 #ifdef PARROT_HAS_READLINE
         if (on && !(io->flags & PIO_F_CONSOLE))
-            PCCRETURN(INTVAL -2);
+            RETURN(INTVAL -2);
         flag = !!(io->flags & PIO_F_READLINE);
 
         if (on)
@@ -189,9 +189,9 @@ SYNOPSIS
         else
             io->flags &= ~PIO_F_READLINE;
 
-        PCCRETURN(INTVAL flag);
+        RETURN(INTVAL flag);
 #else
-        PCCRETURN(INTVAL -1);
+        RETURN(INTVAL -1);
 #endif
     }
 
@@ -202,7 +202,7 @@ SYNOPSIS
         UINTVAL   len;
 
         if (!io)
-            PCCRETURN(PMC *PMCNULL);
+            RETURN(PMC *PMCNULL);
 
 #ifdef PARROT_HAS_READLINE
         if (io->flags & PIO_F_READLINE) {
@@ -216,10 +216,10 @@ SYNOPSIS
                 free(r);
                 pmc_res              = pmc_new(INTERP, enum_class_String);
                 PMC_str_val(pmc_res) = res;
-                PCCRETURN(PMC *pmc_res);
+                RETURN(PMC *pmc_res);
             }
 
-            PCCRETURN(PMC *PMCNULL);
+            RETURN(PMC *PMCNULL);
         }
         else
 #endif
@@ -230,7 +230,7 @@ SYNOPSIS
             res = PIO_reads(interp, SELF, 0);
 
             if (!res)
-                PCCRETURN(PMC *PMCNULL);
+                RETURN(PMC *PMCNULL);
 
             /* readline should better return the string w/o NL */
             len = string_length(INTERP, res);
@@ -243,7 +243,7 @@ SYNOPSIS
 
             pmc_res              = pmc_new(INTERP, enum_class_String);
             PMC_str_val(pmc_res) = res;
-            PCCRETURN(PMC *pmc_res);
+            RETURN(PMC *pmc_res);
         }
     }
 
@@ -288,7 +288,7 @@ This does B<not> close the file.
             /* RT#46085 handle stdin */
             result = PIO_reads(INTERP, pio, size);
             PIO_close(INTERP, pio);
-            PCCRETURN(STRING *result);
+            RETURN(STRING *result);
         }
 
         /* slurp open file */
@@ -306,7 +306,7 @@ This does B<not> close the file.
             result = string_append(INTERP, result, part);
         } while (1);
 
-        PCCRETURN(STRING *result);
+        RETURN(STRING *result);
     }
 
 /*

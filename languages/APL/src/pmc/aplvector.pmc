@@ -135,7 +135,7 @@ Returns a vector-like PMC containing the shape of this PMC.
                 VTABLE_get_integer(INTERP, SELF));
             VTABLE_setprop(INTERP, SELF, property_name, shape);
         }
-        PCCRETURN(PMC* shape);
+        RETURN(PMC* shape);
     }
 
 /*

@@ -124,7 +124,7 @@ A newline is automatically added to the end of the fmt.
         VTABLE_set_string_native(INTERP, SELF, S1);
     }
 
-    PCCRETURN(PMC *SELF);
+    RETURN(PMC *SELF);
 }
 
 
@@ -151,12 +151,12 @@ counting at 10 (so that the values 0..9 can be considered "safe").
     counter++;
 
     if (!has_fmt) {
-        PCCRETURN(STRING *counter_as_string);
+        RETURN(STRING *counter_as_string);
     }
     else {
         STRING *result = string_copy(INTERP, format);
         result         = string_concat(INTERP, result, counter_as_string, 1);
-        PCCRETURN(STRING *result);
+        RETURN(STRING *result);
     }
   }
 
@@ -200,7 +200,7 @@ prefixed with 'unicode:'.
         escaped_str     = string_concat(INTERP, unicode, escaped_str, 1);
     }
 
-    PCCRETURN(STRING *escaped_str);
+    RETURN(STRING *escaped_str);
   }
 
 /*
@@ -249,7 +249,7 @@ For example, C<key('Foo', 'Bar')> returns C<["Foo";"Bar"]>.
 
     out = string_append(INTERP, out, close_bracket);
 
-    PCCRETURN(STRING *out);
+    RETURN(STRING *out);
 }
 
 /*

@@ -37,7 +37,7 @@ Return the MMD signature PMC, if any or a Null PMC.
 
     METHOD get_multisig() {
         PMC *sig = PMC_pmc_val(SELF) ? PMC_pmc_val(SELF) : PMCNULL;
-        PCCRETURN(PMC *sig);
+        RETURN(PMC *sig);
     }
 
 /*
@@ -263,13 +263,13 @@ Return the arity of the NCI (the number of arugments).
 
         if (nci_info && nci_info->func) {
             INTVAL arity = nci_info->arity;
-            PCCRETURN(INTVAL arity);
+            RETURN(INTVAL arity);
         }
         else
             real_exception(INTERP, NULL, INVALID_OPERATION,
                     "You cannot get the arity of an undefined NCI.");
 
-        PCCRETURN(INTVAL 0);
+        RETURN(INTVAL 0);
     }
 }
 

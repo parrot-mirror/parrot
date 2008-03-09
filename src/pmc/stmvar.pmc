@@ -90,12 +90,12 @@ Mark data associated with this transactional variable.
 
     METHOD get_read() {
         PMC *read = Parrot_STM_read(INTERP, PMC_STM_handle(SELF));
-        PCCRETURN(PMC *read);
+        RETURN(PMC *read);
     }
 
     METHOD get_update() {
         PMC *update = Parrot_STM_begin_update(INTERP, PMC_STM_handle(SELF));
-        PCCRETURN(PMC *update);
+        RETURN(PMC *update);
     }
 
     METHOD set(PMC *new_value) {
