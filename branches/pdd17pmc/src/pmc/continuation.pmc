@@ -418,7 +418,7 @@ Experimental: return caller PMC or PMCNULL if none.
         if (!caller || !PMC_sub(caller)->seg)
             caller = PMCNULL;
 
-        PCCRETURN(PMC *caller);
+        RETURN(PMC *caller);
 
     }
 /*
@@ -436,9 +436,9 @@ Experimental: return continuation PMC of this Continuation or PMCNULL if none.
         PMC         *cont = cc->to_ctx->current_cont;
 
         if (cont)
-            PCCRETURN(PMC *cont);
+            RETURN(PMC *cont);
 
-        PCCRETURN(PMC *PMCNULL);
+        RETURN(PMC *PMCNULL);
     }
 }
 

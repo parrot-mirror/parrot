@@ -259,7 +259,7 @@ MMD_DEFAULT: {
         if (!retval)
             retval = pmc_new(INTERP, dynpmc_LuaNil);
 
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*
@@ -275,7 +275,7 @@ MMD_DEFAULT: {
         if (!retval)
             retval = pmc_new(INTERP, dynpmc_LuaNil);
 
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*
@@ -295,7 +295,7 @@ MMD_DEFAULT: {
         else
             VTABLE_set_integer_native(INTERP, retval, 0);
 
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*

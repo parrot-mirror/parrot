@@ -143,7 +143,7 @@ Return the LexInfo PMC, if any or a Null PMC.
 
     METHOD get_lexinfo() {
         PMC *lexinfo = PMC_pmc_val(SELF);
-        PCCRETURN(PMC *lexinfo);
+        RETURN(PMC *lexinfo);
     }
 }
 

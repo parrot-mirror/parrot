@@ -89,7 +89,7 @@ Returns the current working directory.
         if (cwd) {
             STRING * const scwd = string_from_cstring(interp, cwd, strlen(cwd));
             mem_sys_free(cwd);
-            PCCRETURN(STRING *scwd);
+            RETURN(STRING *scwd);
         }
         else {
             const char * const errmsg = strerror(errno);
@@ -246,7 +246,7 @@ Stats a file, and returns a 13 position array as in Perl:
             VTABLE_set_integer_keyed_int(interp, array, 11, info.st_blksize);
             VTABLE_set_integer_keyed_int(interp, array, 12, info.st_blocks);
 #endif
-            PCCRETURN(PMC *array);
+            RETURN(PMC *array);
         }
     }
 
@@ -310,7 +310,7 @@ Stats a file, and returns a 13 position array as in Perl:
             VTABLE_set_integer_keyed_int(interp, array, 11, info.st_blksize);
             VTABLE_set_integer_keyed_int(interp, array, 12, info.st_blocks);
 #endif
-            PCCRETURN(PMC *array);
+            RETURN(PMC *array);
         }
     }
 
@@ -386,7 +386,7 @@ previous one).
     METHOD umask(INTVAL mask) {
 #ifndef _MSC_VER
         const INTVAL old = umask(mask);
-        PCCRETURN(INTVAL old);
+        RETURN(INTVAL old);
 #else
         real_exception(interp, NULL, E_NotImplementedError,
                 "Win32 is not POSIX. Need win32 developer!");
@@ -458,7 +458,7 @@ reads entries from a directory.
 
         closedir(dir);
 
-        PCCRETURN(PMC *array);
+        RETURN(PMC *array);
 #else
         real_exception(interp, NULL, E_NotImplementedError,
                 "Win32 is not POSIX. Need Win32 developer!");

@@ -624,7 +624,7 @@ Append the other array to this array.
         INTVAL m = VTABLE_elements(INTERP, other);
 
         if (!m)
-            PCCRETURN(void);
+            RETURN(void);
 
         /* pre-size it */
         VTABLE_set_integer_native(INTERP, SELF, n + m);

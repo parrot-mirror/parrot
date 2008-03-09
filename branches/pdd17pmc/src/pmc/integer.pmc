@@ -1293,7 +1293,7 @@ C<base> must be between 2 and 36, inclusive.
 
         result = int_to_str(interp, buf,
                 (HUGEINTVAL)VTABLE_get_integer(INTERP, SELF), (char)base);
-        PCCRETURN(STRING *result);
+        RETURN(STRING *result);
     }
 
 /*

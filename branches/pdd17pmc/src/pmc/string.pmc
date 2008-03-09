@@ -733,7 +733,7 @@ TODO Currently overflow to BigInt is B<not> handled nor detected.
                     "invalid conversion to int - bad char %c", *start);
 
         VTABLE_set_integer_native(INTERP, result, i);
-        PCCRETURN(PMC *result);
+        RETURN(PMC *result);
     }
 /*
 
@@ -850,7 +850,7 @@ Downcase this string
 
         PObj_custom_mark_SET(ret);
 
-        PCCRETURN(PMC *ret);
+        RETURN(PMC *ret);
     }
 
 /*
@@ -871,7 +871,7 @@ Translate ascii string C<src> with entries from C<trans_table>.
         const INTVAL len = string_length(interp, src);
 
         if (!len)
-            PCCRETURN(void);
+            RETURN(void);
 
         if (src->charset != Parrot_ascii_charset_ptr)
             real_exception(interp, NULL, INVALID_ENCODING,
@@ -905,7 +905,7 @@ Reverse the ascii STRING C<src> in place.
         INTVAL         len = string_length(interp, src);
 
         if (!len)
-            PCCRETURN(void);
+            RETURN(void);
 
         if (src->charset != Parrot_ascii_charset_ptr)
             real_exception(interp, NULL, INVALID_ENCODING,
@@ -937,7 +937,7 @@ Checks if the ascii STRING C<str> is just an integer.
         const INTVAL   len = string_length(interp, src);
 
         if (!len)
-            PCCRETURN(INTVAL 0);
+            RETURN(INTVAL 0);
 
         if (src->charset != Parrot_ascii_charset_ptr)
             real_exception(interp, NULL, INVALID_ENCODING,
@@ -950,12 +950,12 @@ Checks if the ascii STRING C<str> is just an integer.
             (p[i] >= '0' && p[i] <= '9')) {
             for (i = 1; i < len; ++i)
                 if (p[i] < '0' || p[i] > '9')
-                    PCCRETURN(INTVAL 0);
+                    RETURN(INTVAL 0);
 
-            PCCRETURN(INTVAL 1);
+            RETURN(INTVAL 1);
         }
         else
-            PCCRETURN(INTVAL 0);
+            RETURN(INTVAL 0);
     }
 
     VTABLE PMC *share_ro() {

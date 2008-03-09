@@ -696,7 +696,7 @@ MMD_DEFAULT: {
         if (!retval)
             retval = pmc_new(INTERP, dynpmc_LuaNil);
 
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*
@@ -722,7 +722,7 @@ MMD_DEFAULT: {
         }
 
         VTABLE_set_integer_native(INTERP, key, idx - 1);
-        PCCRETURN(PMC *key);
+        RETURN(PMC *key);
     }
 
 /*
@@ -740,11 +740,11 @@ MMD_DEFAULT: {
             VTABLE_set_integer_native(INTERP, retval, 2);
             VTABLE_set_pmc_keyed_int(INTERP, retval, 0, n->key);
             VTABLE_set_pmc_keyed_int(INTERP, retval, 1, n->val);
-            PCCRETURN(PMC *retval);
+            RETURN(PMC *retval);
         }
         else {
             PMC *retval = pmc_new(INTERP, dynpmc_LuaNil);
-            PCCRETURN(PMC *retval);
+            RETURN(PMC *retval);
         }
 
     }
@@ -759,7 +759,7 @@ MMD_DEFAULT: {
     METHOD PMC* rawequal(PMC *value) {
         PMC *retval = pmc_new(INTERP, dynpmc_LuaBoolean);
         VTABLE_set_integer_native(INTERP, retval, (SELF == value) ? 1 : 0);
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*
@@ -778,7 +778,7 @@ MMD_DEFAULT: {
         else
             retval = *pvalue;
 
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 
 /*

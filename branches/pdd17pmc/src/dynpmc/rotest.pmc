@@ -16,12 +16,12 @@ pmclass ROTest dynpmc provides scalar extends Integer {
     }
 
     METHOD reader() {
-        PCCRETURN(INTVAL 43);
+        RETURN(INTVAL 43);
     }
 
     METHOD writer(INTVAL ignored) :write {
         UNUSED(ignored);
-        PCCRETURN(INTVAL 44);
+        RETURN(INTVAL 44);
     }
 }
 

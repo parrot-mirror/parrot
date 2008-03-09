@@ -408,12 +408,12 @@ PMCNULL.
             if (!PMC_IS_NULL(handler)) {
                 (INTVAL valid_handler) = PCCINVOKE(interp, handler, "can_handle", PMC *task);
                 if (valid_handler) {
-                    PCCRETURN(PMC *handler);
+                    RETURN(PMC *handler);
                 }
             }
         }
 
-        PCCRETURN(PMC *PMCNULL);
+        RETURN(PMC *PMCNULL);
     }
 
 

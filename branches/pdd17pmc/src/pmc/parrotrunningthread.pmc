@@ -102,7 +102,7 @@ Join the thread, returning whatever its main method returns.
         /* invalidate self */
         PMC_int_val(SELF) = -1;
 
-        PCCRETURN(PMC *ret);
+        RETURN(PMC *ret);
     }
 
 /*

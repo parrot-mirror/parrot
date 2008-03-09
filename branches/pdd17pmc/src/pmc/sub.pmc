@@ -744,7 +744,7 @@ slurpy arguments).
     METHOD get_namespace() {
         Parrot_sub * const sub = PMC_sub(SELF);
         PMC *namespace = sub->namespace_stash;
-        PCCRETURN(PMC *namespace);
+        RETURN(PMC *namespace);
     }
 
     METHOD __get_regs_used(STRING *reg) {
@@ -770,19 +770,19 @@ slurpy arguments).
                 "illegal register kind '%s'", kind);
 
         regs_used = sub->n_regs_used[p - types];
-        PCCRETURN(INTVAL regs_used);
+        RETURN(INTVAL regs_used);
     }
 
     METHOD get_lexinfo() {
         const Parrot_sub * const sub = PMC_sub(SELF);
         PMC *lexinfo = sub->lex_info ? sub->lex_info : PMCNULL;
-        PCCRETURN(PMC *lexinfo);
+        RETURN(PMC *lexinfo);
     }
 
     METHOD get_outer() {
         const Parrot_sub * const sub = PMC_sub(SELF);
         PMC *outersub = sub->outer_sub ? sub->outer_sub : PMCNULL;
-        PCCRETURN(PMC *outersub);
+        RETURN(PMC *outersub);
     }
 
     METHOD set_outer(PMC *outer) {
@@ -808,7 +808,7 @@ slurpy arguments).
     METHOD get_multisig() {
         const Parrot_sub * const sub = PMC_sub(SELF);
         PMC *multisig = sub->multi_signature ? sub->multi_signature : PMCNULL;
-        PCCRETURN(PMC *multisig);
+        RETURN(PMC *multisig);
     }
 
     METHOD arity() {
@@ -819,7 +819,7 @@ slurpy arguments).
         INTVAL arity = VTABLE_get_integer(INTERP, pos_required) +
             VTABLE_get_integer(INTERP, named_required);
 
-        PCCRETURN(INTVAL arity);
+        RETURN(INTVAL arity);
     }
 }
 

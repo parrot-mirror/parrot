@@ -191,7 +191,7 @@ Throws an exception if a non-NameSpace PMC is passed.
         else {
             PMC *tmp_ns_src;
             GET_ATTR_ns_src(interp, SELF, tmp_ns_src);
-            PCCRETURN(PMC *tmp_ns_src);
+            RETURN(PMC *tmp_ns_src);
         }
     }
 
@@ -220,7 +220,7 @@ Throws an exception if a non-NameSpace PMC is passed.
         else {
             PMC *tmp_ns_dest;
             GET_ATTR_ns_dest(interp, SELF, tmp_ns_dest);
-            PCCRETURN(PMC *tmp_ns_dest);
+            RETURN(PMC *tmp_ns_dest);
         }
     }
 
@@ -293,10 +293,10 @@ Throws an exception if an unknown PMC type is passed.
             PMC *tmp_globals;
             GET_ATTR_globals(interp, SELF, tmp_globals);
             if (PMC_IS_NULL(tmp_globals)) {
-                PCCRETURN(PMC *PMCNULL);
+                RETURN(PMC *PMCNULL);
             }
             else
-                PCCRETURN(PMC *tmp_globals);
+                RETURN(PMC *tmp_globals);
         }
     }
 

@@ -317,7 +317,7 @@ Return the key of the pair.
             key = (PMC *)PMC_struct_val(SELF);
         }
 
-        PCCRETURN(PMC *key);
+        RETURN(PMC *key);
     }
 
 /*
@@ -332,7 +332,7 @@ Return the value of the pair.
 
     METHOD value() {
         PMC *value = PMC_pmc_val(SELF);
-        PCCRETURN(PMC *value);
+        RETURN(PMC *value);
     }
 
 /*
@@ -358,7 +358,7 @@ Return a tuple of (key, value) for the pair.
             VTABLE_set_pmc_keyed_int(INTERP, t, 0, (PMC *)PMC_struct_val(SELF));
 
         VTABLE_set_pmc_keyed_int(INTERP, t, 1, PMC_pmc_val(SELF));
-        PCCRETURN(PMC *t);
+        RETURN(PMC *t);
     }
 }
 

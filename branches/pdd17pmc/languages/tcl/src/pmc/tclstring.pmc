@@ -28,7 +28,7 @@ pmclass TclString
         STRING* S0;
 
         if (! str) {
-             PCCRETURN(PMC *SELF);
+             RETURN(PMC *SELF);
         }
         /*
          * RT#48166 This prevents a segfault; retval gets claimed before it
@@ -168,7 +168,7 @@ pmclass TclString
 
       done:
         Parrot_unregister_pmc(INTERP, retval);
-        PCCRETURN(PMC *retval);
+        RETURN(PMC *retval);
     }
 }
 

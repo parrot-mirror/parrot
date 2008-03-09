@@ -45,7 +45,7 @@ pmclass PCCMETHOD_Test need_ext provides hash {
             VTABLE_name(interp, slurpy_pos),
             VTABLE_get_repr(interp, slurpy_pos));
 
-        PCCRETURN(int 1000, STRING *kevin);
+        RETURN(int 1000, STRING *kevin);
     }
 
     METHOD test_method3(PMC *a1 :named["a1name"], PMC *a2  :named["a2name"])

@@ -308,12 +308,12 @@ Report whether the event handler can handle a particular type of event.
                 STRING *subtype_str = VTABLE_get_string(interp, subtype);
 
                 if (string_equal(interp, subtype_str, handler_struct->type) == 0) {
-                    PCCRETURN(INTVAL 1);
+                    RETURN(INTVAL 1);
                 }
             }
         }
 
-        PCCRETURN(INTVAL 0);
+        RETURN(INTVAL 0);
     }
 
 }

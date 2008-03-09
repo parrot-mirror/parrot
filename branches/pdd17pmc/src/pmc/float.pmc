@@ -448,110 +448,110 @@ Return a new PMC of the type of C<SELF> with I<FUNC>(value) of SELF.
     METHOD acos() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = acos(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD cos() {
         PMC * const d  = pmc_new(INTERP,
                 Parrot_get_ctx_HLL_type(INTERP, enum_class_Float));
         PMC_num_val(d) = cos(VTABLE_get_number(interp, SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD asec() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = acos(1.0 / PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD asin() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = asin(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD atan() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = atan(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD atan2(PMC *val) {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = atan2(PMC_num_val(SELF), PMC_num_val(val));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD cosh() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = cosh(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD exp() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = exp(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD ln() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = log(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD log10() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = log10(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD log2() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = log(PMC_num_val(SELF)) / log(2.0);
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD sec() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = 1.0 / cos(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD sech() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = 1.0 / cosh(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD sin() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = sin(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD sinh() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = sinh(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD tan() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = tan(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD tanh() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = tanh(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 
     METHOD sqrt() {
         PMC * const d  = pmc_new(INTERP, SELF->vtable->base_type);
         PMC_num_val(d) = sqrt(PMC_num_val(SELF));
-        PCCRETURN(PMC *d);
+        RETURN(PMC *d);
     }
 }
 
