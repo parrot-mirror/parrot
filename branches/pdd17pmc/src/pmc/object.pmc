@@ -704,6 +704,20 @@ Used to mark a PMC as read-only shared.
 
         return ret;
     }
+
+/*
+
+=item C<void morph(INTVAL type)>
+
+Changes the PMC to a PMC of a new type
+
+=cut
+
+*/
+
+    VTABLE void morph(INTVAL type) {
+        SUPER(type);
+    }
 }
 
 /*
