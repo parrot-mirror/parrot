@@ -44,25 +44,24 @@ Returns the list as a string
 */
 
     VTABLE STRING* get_string() {
-        STRING* retval = string_from_literal(INTERP, "");
-        INTVAL elems = VTABLE_get_integer(INTERP, SELF);
-        INTVAL i;
-        STRING* str;
+        STRING *retval  = string_from_literal(INTERP, "");
+        STRING *replace = string_from_literal(INTERP, "replace");
+        INTVAL  elems   = VTABLE_get_integer(INTERP, SELF);
+        INTVAL  i;
         STRING *orig, *repl;
-        PMC* P0;
-        INTVAL count;
-        INTVAL str_len;
-        INTVAL pos;
+        PMC    *P0;
+        INTVAL  count, pos;
 
-        for (i=0; i < elems; i++) {
-            str = VTABLE_get_string_keyed_int(INTERP, SELF, i);
+        for (i = 0; i < elems; i++) {
+            STRING *str    = VTABLE_get_string_keyed_int(INTERP, SELF, i);
+            INTVAL str_len = string_length(INTERP, str);
 
-            str_len = string_length(INTERP, str);
             if (str_len == 0) {
                 /* empty element */
                 str = string_from_literal(INTERP, "{}");
                 goto append_elem;
             }
+
             count = pos = 0;
             while (pos < str_len) {
                 switch (string_ord(INTERP, str, pos)) {
@@ -72,6 +71,7 @@ Returns the list as a string
                     case '}':
                         if (--count < 0) goto escape;
                         break;
+
                 }
                 pos++;
             }
@@ -82,7 +82,7 @@ Returns the list as a string
                  goto quote;
 
             /* only check hashes on first elem.*/
-            if (i==0 && -1 != string_str_index(INTERP, str, string_from_literal(INTERP, "#"), 0))
+            if (i == 0 && -1 != string_str_index(INTERP, str, string_from_literal(INTERP, "#"), 0))
                 goto quote;
 
             if (-1 != string_str_index(INTERP, str, string_from_literal(INTERP, "$"), 0))
@@ -110,59 +110,59 @@ Returns the list as a string
 
             orig = string_from_literal(INTERP, "\\");
             repl = string_from_literal(INTERP, "\\\\");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, "\t");
             repl = string_from_literal(INTERP, "\\t");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, "\f");
             repl = string_from_literal(INTERP, "\\f");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, "\n");
             repl = string_from_literal(INTERP, "\\n");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, "\r");
             repl = string_from_literal(INTERP, "\\r");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, "\v");
             repl = string_from_literal(INTERP, "\\v");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, ";");
             repl = string_from_literal(INTERP, "\\;");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, "$");
             repl = string_from_literal(INTERP, "\\$");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, "}");
             repl = string_from_literal(INTERP, "\\}");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, "{");
             repl = string_from_literal(INTERP, "\\{");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, " ");
             repl = string_from_literal(INTERP, "\\ ");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, "[");
             repl = string_from_literal(INTERP, "\\[");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, "]");
             repl = string_from_literal(INTERP, "\\]");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             orig = string_from_literal(INTERP, "\"");
             repl = string_from_literal(INTERP, "\\\"");
-            Parrot_PCCINVOKE(INTERP, P0, string_from_literal(INTERP, "replace"), "SS->", orig, repl);
+            Parrot_PCCINVOKE(INTERP, P0, replace, "SS->", orig, repl);
 
             str = VTABLE_get_string(INTERP, P0);
             goto append_elem;
