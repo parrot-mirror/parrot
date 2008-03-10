@@ -301,9 +301,6 @@ declaration with C<METHOD>.
 
   METHOD inspect(STRING *what :optional, int got_what :opt_flag) {...}
 
-[NOTE: There is an older C<METHOD> keyword, which is deprecated. The
-current C<PCCMETHOD> will be renamed to C<METHOD>. See: RT#48565]
-
 =head2 PMCs and Namespaces
 
 Like high-level classes, low-level PMCs are tied to a corresponding
