@@ -200,20 +200,6 @@ Sets the value of the number to the value in C<*value>.
     VTABLE void set_pmc(PMC *value) {
         PMC_num_val(SELF) = VTABLE_get_number(INTERP, value);
     }
-/*
-
-=item C<void morph(INTVAL type)>
-
-Morphs the scalar to the specified type.
-
-=cut
-
-*/
-
-    VTABLE void morph(INTVAL type) {
-        pmc_reuse(INTERP, SELF, type, 0);
-    }
-
 
 
 /*

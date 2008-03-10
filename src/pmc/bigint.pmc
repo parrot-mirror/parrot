@@ -526,10 +526,6 @@ BigInt object.
 #endif
     }
 
-    VTABLE void morph(INTVAL new_type) {
-        pmc_reuse(INTERP, SELF, new_type, 0);
-    }
-
     VTABLE void init() {
         bigint_init(INTERP, SELF);
         PObj_active_destroy_SET(SELF);
