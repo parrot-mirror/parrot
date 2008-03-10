@@ -2317,7 +2317,7 @@ jit_set_i_p_ki(Parrot_jit_info_t *jit_info, PARROT_INTERP, size_t offset)
     L2 = NATIVECODE;
     emitm_jxs(NATIVECODE, emitm_js, 0);
     emitm_movl_m_r(interp, NATIVECODE, emit_EAX, emit_EDI, 0, 1,
-            offsetof(struct pobj_t, u._i._int_val));
+            offsetof(struct PMC, cache._i._int_val));
     jit_emit_cmp_rr_i(NATIVECODE, emit_ECX, emit_EAX);
     L3 = NATIVECODE;
     emitm_jxs(NATIVECODE, emitm_jnl, 0);
@@ -2379,7 +2379,7 @@ jit_set_p_ki_i(Parrot_jit_info_t *jit_info, PARROT_INTERP, size_t offset)
     L2 = NATIVECODE;
     emitm_jxs(NATIVECODE, emitm_js, 0);
     emitm_movl_m_r(interp, NATIVECODE, emit_EAX, emit_EDI, 0, 1,
-            offsetof(struct pobj_t, u._i._int_val));
+            offsetof(struct PMC, cache._i._int_val));
     jit_emit_cmp_rr_i(NATIVECODE, emit_ECX, emit_EAX);
     L3 = NATIVECODE;
     emitm_jxs(NATIVECODE, emitm_jnl, 0);
@@ -3973,7 +3973,7 @@ preg:
             /* *eax = buffer_header */
             /* set external flag */
             emitm_orl_i_m(pc, PObj_external_FLAG, emit_EAX, 0, 1,
-                    offsetof(pobj_t, flags));
+                    offsetof(PMC, flags));
             emitm_popl_r(pc, emit_EDX);
             /* mov %edx, (bufstart) %eax */
             emitm_movl_r_m(interp, pc, emit_EDX, emit_EAX, 0, 1,

@@ -25,7 +25,8 @@ typedef struct Stack_Entry {
 } Stack_Entry_t;
 
 typedef struct Stack_Chunk {
-    pobj_t obj;
+    UnionVal            cache;
+    Parrot_UInt         flags;
     int                 size;
     const char         *name;
     struct Stack_Chunk *prev;
