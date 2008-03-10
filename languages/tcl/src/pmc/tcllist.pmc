@@ -43,7 +43,7 @@ Returns the list as a string
 
 */
 
-    STRING* get_string() {
+    VTABLE STRING* get_string() {
         STRING* retval = string_from_literal(INTERP, "");
         INTVAL elems = VTABLE_get_integer(INTERP, SELF);
         INTVAL i;
