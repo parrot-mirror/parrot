@@ -510,6 +510,7 @@ sub rewrite_pccinvoke {
       =                # results equals PCCINVOKE invocation
       \s*              # optional whitespace
       )?               # results are optional
+      \b               # exclude Parrot_PCCINVOKE when lacking optional capture
       PCCINVOKE        # method name
       \s*              # optional whitespace
       \( ([^\(]*) \)   # parameters
@@ -518,7 +519,8 @@ sub rewrite_pccinvoke {
     }sx;
 
     while ($body) {
-        my $matched = undef;
+        my $matched;
+
         if ($body) {
             $matched = $body->find($signature_re);
             last unless $matched;
