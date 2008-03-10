@@ -57,8 +57,8 @@ static inline INTVAL int_cmp(INTVAL v1, INTVAL v2)
 
 pmclass WmlsInteger
     extends Integer
-    does scalar
-    does integer
+    provides scalar
+    provides integer
     dynpmc
     group wmls_group
     hll Lua maps Integer {
@@ -252,7 +252,10 @@ MMD_WmlsFloat: {
             return dest;
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               - VTABLE_get_integer(INTERP, trans);
@@ -285,7 +288,10 @@ MMD_WmlsFloat: {
             SELF.set_number_native(result);
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               - VTABLE_get_integer(INTERP, trans);
@@ -332,7 +338,10 @@ MMD_WmlsFloat: {
             return dest;
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               * VTABLE_get_integer(INTERP, trans);
@@ -365,7 +374,10 @@ MMD_WmlsFloat: {
             SELF.set_number_native(result);
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               * VTABLE_get_integer(INTERP, trans);
@@ -421,7 +433,10 @@ MMD_WmlsBoolean: {
             return pmc_new(INTERP, dynpmc_WmlsInvalid);
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 FLOATVAL d = VTABLE_get_number(INTERP, trans);
                 if (d != 0.0) {
@@ -473,7 +488,10 @@ MMD_WmlsBoolean: {
             }
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 FLOATVAL d = VTABLE_get_integer(INTERP, trans);
                 if (d != 0.0) {
@@ -525,7 +543,10 @@ MMD_WmlsBoolean: {
             return pmc_new(INTERP, dynpmc_WmlsInvalid);
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL d = VTABLE_get_integer(INTERP, trans);
                 if (d != 0) {
@@ -564,7 +585,10 @@ MMD_WmlsBoolean: {
             }
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL d = VTABLE_get_integer(INTERP, trans);
                 if (d != 0) {
@@ -615,7 +639,10 @@ MMD_WmlsBoolean: {
             return pmc_new(INTERP, dynpmc_WmlsInvalid);
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL d = VTABLE_get_integer(INTERP, trans);
                 if (d != 0) {
@@ -654,7 +681,10 @@ MMD_WmlsBoolean: {
             }
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL d = VTABLE_get_integer(INTERP, trans);
                 if (d != 0) {
@@ -699,7 +729,10 @@ MMD_WmlsBoolean: {
             return dest;
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               | VTABLE_get_integer(INTERP, trans);
@@ -726,7 +759,10 @@ MMD_WmlsBoolean: {
             SELF.set_integer_native(result);
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               | VTABLE_get_integer(INTERP, trans);
@@ -766,7 +802,10 @@ MMD_WmlsBoolean: {
             return dest;
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               & VTABLE_get_integer(INTERP, trans);
@@ -793,7 +832,10 @@ MMD_WmlsBoolean: {
             SELF.set_integer_native(result);
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               & VTABLE_get_integer(INTERP, trans);
@@ -833,7 +875,10 @@ MMD_WmlsBoolean: {
             return dest;
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               ^ VTABLE_get_integer(INTERP, trans);
@@ -860,7 +905,10 @@ MMD_WmlsBoolean: {
             SELF.set_integer_native(result);
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               ^ VTABLE_get_integer(INTERP, trans);
@@ -900,7 +948,10 @@ MMD_WmlsBoolean: {
             return dest;
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               >> VTABLE_get_integer(INTERP, trans);
@@ -927,7 +978,10 @@ MMD_WmlsBoolean: {
             SELF.set_integer_native(result);
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               >> VTABLE_get_integer(INTERP, trans);
@@ -967,7 +1021,10 @@ MMD_WmlsBoolean: {
             return dest;
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               >> VTABLE_get_integer(INTERP, trans);
@@ -994,7 +1051,10 @@ MMD_WmlsBoolean: {
             SELF.set_integer_native(result);
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               >> VTABLE_get_integer(INTERP, trans);
@@ -1034,7 +1094,10 @@ MMD_WmlsBoolean: {
             return dest;
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               << VTABLE_get_integer(INTERP, trans);
@@ -1061,7 +1124,10 @@ MMD_WmlsBoolean: {
             SELF.set_integer_native(result);
         }
 MMD_WmlsString: {
-            PMC * trans = WmlsString.value.parseInt();
+            PMC *trans;
+            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+                "->P", &trans);
+
             if (trans->vtable->base_type == dynpmc_WmlsInteger) {
                 INTVAL result = SELF.get_integer()
                               << VTABLE_get_integer(INTERP, trans);
