@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2004 - 2007, The Perl Foundation.
+Copyright (C) 2004 - 2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -64,19 +64,6 @@ appropriate type.
             VTABLE_set_pmc(INTERP, SELF, other);
     }
 
-/*
-
-=item C<void morph(INTVAL new_type)>
-
-Changes the current PMC's type to C<new_type>.
-
-=cut
-
-*/
-
-     VTABLE void morph(INTVAL new_type) {
-        pmc_reuse(INTERP, SELF, new_type, 0);
-    }
 
 /*
 

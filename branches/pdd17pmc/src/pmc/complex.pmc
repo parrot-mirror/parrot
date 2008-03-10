@@ -384,12 +384,6 @@ Creates an identical copy of the complex number.
         PMC_struct_val(SELF) = NULL;
     }
 
-    VTABLE void morph(INTVAL type) {
-        if (SELF->vtable->base_type == type)
-            return;
-        SUPER(type);
-    }
-
     VTABLE PMC *clone() {
         PMC           *dest  = pmc_new_noinit(INTERP, SELF->vtable->base_type);
         FLOATVAL      *data  =

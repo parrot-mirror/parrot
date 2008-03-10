@@ -66,19 +66,6 @@ Destroys the library, closing the shared library.
             Parrot_dlclose(PMC_data(SELF));
     }
 
-/*
-
-=item C<void morph(INTVAL type)>
-
-Morphs to C<type>.
-
-=cut
-
-*/
-
-    VTABLE void morph(INTVAL type) {
-        SUPER(type);
-    }
 
 /*
 

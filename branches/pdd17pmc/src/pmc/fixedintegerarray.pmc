@@ -132,21 +132,6 @@ in the constant PMC pool.
 
 /*
 
-=item C<void morph(INTVAL type)>
-
-Const PMCs must have a C<morph()>.
-
-=cut
-
-*/
-
-    VTABLE void morph(INTVAL type) {
-        SUPER(type);
-    }
-
-
-/*
-
 =item C<void destroy()>
 
 Destroys the array.
