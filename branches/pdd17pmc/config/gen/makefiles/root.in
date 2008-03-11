@@ -1820,6 +1820,9 @@ SPLINT = splint
 SPLINT_TMP = $(TMP)/splint
 
 # Splint flags: http://splint.org/manual/html/appB.html
+# The dashes in the names don't make any difference to Splint, but I've
+# made them match how they are in the manual.  Otherwise, you might be
+# looking for "declundef", except that it's "decl-undef" in the docs.
 SPLINTFLAGS  = \
     +standard \
     -hints \
@@ -1832,15 +1835,22 @@ SPLINTFLAGS  = \
     -showfunc \
     -tmpdir $(SPLINT_TMP) \
     \
-    +posixstrictlib \
-    -skipposixheaders \
+    +posix-strict-lib \
+    -skip-posix-headers \
     \
     -show-summary \
     +show-scan \
     +time-dist \
     \
+    +memchecks \
+    \
+    -ansi-reserved \
+    +ansi-reserved-internal \
     +bool-compare \
     +bufferoverflow \
+    +char-index \
+    +cpp-names \
+    +decl-undef \
     +duplicate-case \
     +enum-members \
     +eval-order \
@@ -1858,9 +1868,18 @@ SPLINTFLAGS  = \
     +macro-stmt \
     +macro-unrecog \
     +match-fields \
+    +null \
     +nullptrarith \
+    +nullret \
+    -pred-bool-int \
+    -pred-bool-ptr \
+    -pred-bool-others \
     +ptr-compare \
     +ptr-negate \
+    +strict-destroy \
+    \
+    +use-released \
+    +strict-use-released \
 
 # I'd like the +ignore-signs to go away, but we have too many
 # cross-signedness comparisons.
@@ -1872,12 +1891,8 @@ SPLINTFLAGS  = \
 # stricter settings.  The SPLINTFLAGS_OVERLY_NOISY list below represents
 # his noisy-based work at the time he reverted to weak mode.
 SPLINTFLAGS_OVERLY_NOISY = \
-    +checks \
-    \
     -abstract \
     +aliasunique \
-    -ansireserved \
-    +ansireservedinternal \
     +assignexpose \
     -boolops \
     -casebreak \
@@ -1885,10 +1900,6 @@ SPLINTFLAGS_OVERLY_NOISY = \
     -charint \
     +continuecomment \
     +controlnestdepth 15 \
-    +cppnames \
-    +declundef \
-    -distinctinternalnames \
-    +evalorder \
     -exportlocal \
     -fcnuse \
     +fielduse \
@@ -1901,15 +1912,7 @@ SPLINTFLAGS_OVERLY_NOISY = \
     +matchanyintegral \
     +nestedextern \
     -noeffect \
-    +nullassign \
-    +nullderef \
-    +nullret \
-    +nullpass \
-    +nullstate \
     -paramuse \
-    -predboolint \
-    -predboolothers \
-    -predboolptr \
     +ptrnegate \
     +readonlystrings \
     -realcompare \
@@ -1933,7 +1936,6 @@ SPLINTFLAGS_OVERLY_NOISY = \
     -nullstate \
     -redecl \
     -retalias \
-    -usereleased \
     \
     -immediatetrans \
     -kepttrans \
@@ -1981,74 +1983,6 @@ splint-andy :
     compilers/imcc/reg_alloc.c \
     compilers/imcc/sets.c \
     compilers/imcc/symreg.c \
-    src/builtin.c \
-    src/byteorder.c \
-    src/charset.c \
-    src/core_pmcs.c \
-    src/cpu_dep.c \
-    src/datatypes.c \
-    src/debug.c \
-    src/dynext.c \
-    src/encoding.c \
-    src/events.c \
-    src/exceptions.c \
-    src/exit.c \
-    src/extend.c \
-    src/extend_vtable.c \
-    src/fingerprint.c \
-    src/global.c \
-    src/global_setup.c \
-    src/hash.c \
-    src/headers.c \
-    src/hll.c \
-    src/inter_call.c \
-    src/inter_cb.c \
-    src/inter_create.c \
-    src/inter_misc.c \
-    src/interpreter.c \
-    src/inter_run.c \
-    src/intlist.c \
-    src/key.c \
-    src/library.c \
-    src/list.c \
-    src/longopt.c \
-    src/main.c \
-    src/malloc.c \
-    src/misc.c \
-    src/mmd.c \
-    src/nci.c \
-    src/null_config.c \
-    src/oo.c \
-    src/packdump.c \
-    src/packfile.c \
-    src/packout.c \
-    src/parrot.c \
-    src/parrot_config.c \
-    src/pbc_info.c \
-    src/pbc_merge.c \
-    src/pdb.c \
-    src/pdump.c \
-    src/pic.c \
-    src/pic_jit.c \
-    src/platform.c \
-    src/pmc.c \
-    src/pmc_freeze.c \
-    src/revision.c \
-    src/runops_cores.c \
-    src/scheduler.c \
-    src/spf_render.c \
-    src/spf_vtable.c \
-    src/stack_common.c \
-    src/stacks.c \
-    src/string.c \
-    src/string_primitives.c \
-    src/sub.c \
-    src/thread.c \
-    src/trace.c \
-    src/tsq.c \
-    src/utils.c \
-    src/vtables.c \
-    src/warnings.c \
     | grep -v 'Source code error generation point'
 
 COVER_FLAGS = -fprofile-arcs -ftest-coverage
