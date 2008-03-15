@@ -75,7 +75,7 @@ sub new {
     bless $self, $class;
 
     # We're testing by building an object which parallels the later
-    # Parrot::Configure object. 
+    # Parrot::Configure object.
     # First, we have to clearn out any stored object in our top directory.
     my $sto = '.configure_parallel.sto';
     if (-e $sto) {
@@ -165,7 +165,7 @@ sub run_configure_tests {
     if ( $self->get_run('run_configure_tests') ) {
         print "As you requested, we'll start with some tests of the configuration tools.\n\n";
 
-        my $optstr = $self->get_all_options(); 
+        my $optstr = $self->get_all_options();
         system( qq{$self->{this_prove} @preconfiguration_tests :: $optstr} )
              and die
 #        my $app = App::Prove->new();

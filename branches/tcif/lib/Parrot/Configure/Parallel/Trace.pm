@@ -60,7 +60,7 @@ B<Purpose:>  Constructor.
 
 B<Arguments:>  Single argument, which is a string representing a
 filename.  In actual use, the filename is that of the calling test
-script, I<i.e.>, Perl's C<$0>. 
+script, I<i.e.>, Perl's C<$0>.
 
     $trace = Parrot::Configure::Parallel::Trace->new($0);
 
@@ -97,7 +97,7 @@ B<Comment:>
 Will C<croak> if a configuration step class cannot be parsed from the
 argument.
 
-=cut 
+=cut
 
 sub new {
     my $class = shift;
@@ -129,9 +129,9 @@ sub new {
 =head2 C<get_step_name()>
 
 B<Purpose:>  Accesses short name of configuration step class derived
-from argument to constructor.  
+from argument to constructor.
 
-B<Arguments:>  
+B<Arguments:>
 
     $step_name = $trace->get_step_name();
 
@@ -142,7 +142,7 @@ Example:
 
 B<Comment:>
 
-=cut 
+=cut
 
 sub get_step_name {
     my $self = shift;
@@ -163,7 +163,7 @@ C<init::defaults>, C<$step_position> is C<2>.
 
 B<Comment:>
 
-=cut 
+=cut
 
 sub get_step_position {
     my $self = shift;
@@ -185,7 +185,7 @@ value is the corresponding sequence number (C<1>).
 
 B<Comment:>
 
-=cut 
+=cut
 
 sub get_all_step_positions {
     my $self = shift;
@@ -207,7 +207,7 @@ B<Comment:>  The Storable file is not guaranteed to actually exist.  For
 instance, it should not exist prior to beginning configuration.  All
 that this method does is return the name designated for this file.
 
-=cut 
+=cut
 
 sub get_storable_file {
     my $self = shift;
@@ -233,7 +233,7 @@ B<Comment:>
 
 If no Storable file is found, will return an empty array reference.
 
-=cut 
+=cut
 
 sub retrieve_state {
     my $self = shift;
@@ -257,7 +257,7 @@ B<Return Value:>  Implicitly returns a true value upon success.
 B<Comment:>  Uses F<Data::Dumper> with C<$Data::Dumper::Indent> set to
 C<1> to reduce unnecessary whitespace and disk storage requirements.
 
-=cut 
+=cut
 
 sub dump_state {
     my $self = shift;
@@ -281,7 +281,7 @@ successful.
 
 B<Comment:>
 
-=cut 
+=cut
 
 sub get_previous_state {
     my $self = shift;
@@ -313,7 +313,7 @@ B<Return Value:>  Returns true value upon success.
 
 B<Comment:>
 
-=cut 
+=cut
 
 sub update_state {
     my $self = shift;
@@ -354,7 +354,7 @@ success may vary.
 
 B<Comment:>
 
-=cut 
+=cut
 
 sub store_this_step {
     my $self = shift;
