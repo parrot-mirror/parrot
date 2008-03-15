@@ -135,7 +135,7 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
          *     use a second pointer chain, which is, when not empty,
          *     processed first.
          */
-        if (tptr && hi_prio) {
+        if (hi_prio && tptr) {
             if (PMC_next_for_GC(tptr) == tptr) {
                 PMC_next_for_GC(obj) = obj;
             }
@@ -186,9 +186,6 @@ pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
     } while (0);
 #else /* not PARROT_GC_GMS */
 
-    if (PObj_constant_TEST(obj) && PObj_custom_mark_TEST(obj))
-        VTABLE_mark(interp, (PMC *)obj);
-
     /* if object is live or on free list return */
     if (PObj_is_live_or_free_TESTALL(obj))
         return;
@@ -216,7 +213,7 @@ pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
     /* if object is a PMC and contains buffers or PMCs, then attach
      * the PMC to the chained mark list.
      */
-    if (PObj_is_special_PMC_TEST(obj) && !PObj_constant_TEST(obj)) {
+    if (PObj_is_special_PMC_TEST(obj)) {
         mark_special(interp, (PMC*) obj);
     }
 #  ifndef NDEBUG
@@ -589,7 +586,6 @@ are immune from collection (i.e. constant).
 void
 Parrot_dod_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
 {
-    UINTVAL i;
     UINTVAL total_used        = 0;
     const UINTVAL object_size = pool->object_size;
 
@@ -611,11 +607,13 @@ Parrot_dod_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
 #endif
 
     /* Run through all the buffer header pools and mark */
-    for (cur_arena = pool->last_Arena;
-            NULL != cur_arena; cur_arena = cur_arena->prev) {
+    for (cur_arena = pool->last_Arena; cur_arena; cur_arena = cur_arena->prev) {
         Buffer *b = (Buffer *)cur_arena->start_objects;
+        UINTVAL i;
 
-        for (i = 0; i < cur_arena->total_objects; i++) {
+        /* loop only while there are objects in the arena */
+        for (i = cur_arena->total_objects; i; i--) {
+
             if (PObj_on_free_list_TEST(b))
                 ; /* if it's on free list, do nothing */
             else if (PObj_live_TEST(b)) {
@@ -650,7 +648,6 @@ Parrot_dod_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
                     }
                 }
 
-                PARROT_ASSERT(dod_object);
                 dod_object(interp, pool, b);
 
                 pool->add_free_object(interp, pool, b);

@@ -197,7 +197,12 @@ key_hash_pointer(SHIM_INTERP, ARGIN(const void *value), size_t seed)
 
 =item C<static size_t key_hash_cstring>
 
-RT#48260: Not yet documented!!!
+Create a hash value from a string.
+
+Takes an interpreter, a pointer to a string, and a seed value.
+Returns the hash value.
+
+Used by Parrot_new_cstring_hash.
 
 =cut
 
@@ -306,30 +311,37 @@ parrot_mark_hash(PARROT_INTERP, ARGIN(Hash *hash))
     UINTVAL found  = 0;
     int mark_key   = 0;
     int mark_value = 0;
-    size_t i;
 
-    if (hash->entry_type == enum_hash_string || hash->entry_type == enum_hash_pmc)
+    INTVAL i, entries;
+
+    if (hash->entry_type == enum_hash_string
+    ||  hash->entry_type == enum_hash_pmc)
         mark_value = 1;
-    if (hash->key_type == Hash_key_type_STRING || hash->key_type == Hash_key_type_PMC)
+
+    if (hash->key_type == Hash_key_type_STRING
+    ||  hash->key_type == Hash_key_type_PMC)
         mark_key = 1;
+
     if (!mark_key && !mark_value)
         return;
 
-    for (i = 0; i <= hash->mask; i++) {
+    entries = hash->entries;
+
+    for (i = hash->mask; i >= 0; --i) {
         HashBucket *bucket = hash->bi[i];
 
         while (bucket) {
-            if (++found > hash->entries)
+            if (++found > entries)
                 real_exception(interp, NULL, 1,
                         "Detected hash corruption at hash %p entries %d",
-                        hash, (int)hash->entries);
+                        hash, (int)entries);
 
-            /* don't mark the key if it's not true */
-            if (mark_key && bucket->key)
+            if (mark_key)
                 pobject_lives(interp, (PObj *)bucket->key);
 
             if (mark_value)
                 pobject_lives(interp, (PObj *)bucket->value);
+
             bucket = bucket->next;
         }
     }
@@ -401,7 +413,12 @@ hash_thaw(PARROT_INTERP, ARGMOD(Hash *hash), ARGMOD(visit_info* info))
 
 =item C<static void hash_freeze>
 
-RT#48260: Not yet documented!!!
+Freeze hash into a string.
+
+Takes an interpreter, a pointer to the hash, and a pointer to the structure
+containing the string start location.
+
+Use by parrot_hash_visit.
 
 =cut
 
@@ -448,7 +465,9 @@ hash_freeze(PARROT_INTERP, ARGIN(const Hash * const hash), ARGMOD(visit_info* in
 
 =item C<void parrot_hash_visit>
 
-RT#48260: Not yet documented!!!
+Freeze or thaw hash as specified.
+Takes an interpreter, a pointer to the hash, and a pointer to the
+structure identifying what to do and the location of the string.
 
 =cut
 
@@ -739,7 +758,8 @@ create_hash(PARROT_DATA_TYPE val_type, Hash_key_type hkey_type,
 
 =item C<void parrot_hash_destroy>
 
-RT#48260: Not yet documented!!!
+Free the memory allocated to the specified hash and its bucket store.
+Used by Parrot_chash_destroy.
 
 =cut
 
@@ -757,7 +777,8 @@ parrot_hash_destroy(SHIM_INTERP, ARGMOD(Hash *hash))
 
 =item C<void parrot_chash_destroy>
 
-RT#48260: Not yet documented!!!
+Delete the specified hash by freeing the memory allocated to all
+the key-value pairs, and finally the hash itself.
 
 =cut
 
@@ -804,8 +825,8 @@ void
 parrot_new_hash_x(ARGOUT(Hash **hptr),
         PARROT_DATA_TYPE val_type,
         Hash_key_type hkey_type,
-        ARGIN(hash_comp_fn compare),
-        ARGIN(hash_hash_key_fn keyhash))
+        NOTNULL(hash_comp_fn compare),
+        NOTNULL(hash_hash_key_fn keyhash))
 {
     *hptr = create_hash(val_type, hkey_type, compare, keyhash);
 }
@@ -826,8 +847,8 @@ void
 parrot_new_pmc_hash_x(ARGMOD(PMC *container),
         PARROT_DATA_TYPE val_type,
         Hash_key_type hkey_type,
-        ARGIN(hash_comp_fn compare),
-        ARGIN(hash_hash_key_fn keyhash))
+        NOTNULL(hash_comp_fn compare),
+        NOTNULL(hash_hash_key_fn keyhash))
 {
     Hash * const hash = create_hash(val_type, hkey_type, compare, keyhash);
     PMC_struct_val(container) = hash;

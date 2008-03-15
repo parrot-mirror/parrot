@@ -23,10 +23,12 @@ use Test::More;
 BEGIN {
     eval "use Test::Builder::Tester;";
     if ($@) {
-        print "1..0 # Skip Test::Builder::Tester not installed\n";
+        plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
+    plan( tests => 66 );
 }
+
 use lib qw( . lib ../lib ../../lib );
 
 BEGIN {
@@ -100,11 +102,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pasm_output_is: failure';
-$line = line_num(+12);
 test_out("not ok 1 - $desc");
+test_fail(+9);
 $err = <<"ERR";
-#   Failed test '$desc'
-#   at $0 line $line.
 #          got: 'ok
 # '
 #     expected: 'not ok
@@ -131,11 +131,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pasm_output_isnt: failure';
-$line = line_num(+13);
 test_out("not ok 1 - $desc");
+test_fail(+10);
 $err = <<"ERR";
-#   Failed test '$desc'
-#   at $0 line $line.
 #     'ok
 # '
 #         ne
@@ -163,11 +161,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pasm_output_like: failure';
-$line = line_num(+12);
 test_out("not ok 1 - $desc");
+test_fail(+9);
 $err = <<"ERR";
-#   Failed test '$desc'
-#   at $0 line $line.
 #                   'ok
 # '
 #     doesn't match '/not ok/
@@ -196,11 +192,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pir_output_is: failure';
-$line = line_num(+12);
 test_out("not ok 1 - $desc");
+test_fail(+9);
 $err = <<"ERR";
-#   Failed test '$desc'
-#   at $0 line $line.
 #          got: 'ok
 # '
 #     expected: 'not ok
@@ -229,11 +223,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pir_output_isnt: failure';
-$line = line_num(+13);
 test_out("not ok 1 - $desc");
+test_fail(+10);
 $err = <<"ERR";
-#   Failed test '$desc'
-#   at $0 line $line.
 #     'ok
 # '
 #         ne
@@ -263,11 +255,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pir_output_like: failure';
-$line = line_num(+12);
 test_out("not ok 1 - $desc");
+test_fail(+9);
 $err = <<"ERR";
-#   Failed test '$desc'
-#   at $0 line $line.
 #                   'ok
 # '
 #     doesn't match '/not ok/
@@ -285,11 +275,17 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pir_error_output_like: todo';
-$line = line_num(+15);
+$line = line_num(+21);
+my $location;
+if ($Test::Builder::VERSION <= eval '0.33') {
+    $location = "in $0 at line $line";
+} else {
+    $location = "at $0 line $line";
+}
 test_out("not ok 1 - $desc # TODO foo");
 $err = <<"ERR";
 #   Failed (TODO) test '$desc'
-#   at $0 line $line.
+#   $location.
 # Expected error but exited cleanly
 # Received:
 # ok
@@ -308,9 +304,6 @@ CODE
 /not ok/
 OUTPUT
 test_test($desc);
-
-# remember to change the number of tests
-BEGIN { plan tests => 64; }
 
 # Local Variables:
 #   mode: cperl

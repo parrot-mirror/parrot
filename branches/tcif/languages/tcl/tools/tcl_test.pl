@@ -92,12 +92,14 @@ sub convert_tests {
 sub checkout_tests {
     print "Checking out tests from CVS\n";
 
+    my $tag = "core-8-5-1"; # For the version we're targeting.
+
     my $command =
           "cvs -z3 -d :pserver:anonymous:\@tcl.cvs.sourceforge.net:"
-        . "/cvsroot/tcl co -d $DIR tcl/tests";
+        . "/cvsroot/tcl co -d $DIR -r $tag tcl/tests";
     my $rc = system $command;
 
-    return ( $rc == 0 );    # just care if it failed, not howm
+    return ( $rc == 0 );    # just care if it failed, not how
 }
 
 ##
@@ -163,7 +165,7 @@ return
 END_TCL
         <<'END_TCL',
 ::tcltest::cleanupTests
-return 
+return
 END_TCL
         <<'END_TCL',
 ::tcltest::cleanupTests

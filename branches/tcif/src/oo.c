@@ -22,6 +22,7 @@ Handles class and object manipulation.
 #define PARROT_IN_OBJECTS_C /* To get the vtable.h imports we want. */
 #include "parrot/parrot.h"
 #include "parrot/oo_private.h"
+#include "pmc/pmc_class.h"
 
 #include "oo.str"
 
@@ -946,7 +947,9 @@ fail_if_type_exists(PARROT_INTERP, ARGIN(PMC *name))
 
 =item C<INTVAL Parrot_oo_register_type>
 
-RT #48260: Not yet documented!!!
+This function registers a type in the global registry, first checking if it
+already exists. The global type registry will go away eventually, but this
+allows the new object metamodel to interact with the old one until it does.
 
 =cut
 
@@ -961,7 +964,8 @@ Parrot_oo_register_type(PARROT_INTERP, ARGIN(PMC *name))
 
     fail_if_type_exists(interp, name);
 
-    /* so pt_shared_fixup() can safely do a type lookup */
+    /* Type doesn't exist, so go ahead and register it. Lock interpreter so
+     * pt_shared_fixup() can safely do a type lookup. */
     LOCK_INTERPRETER(interp);
     classname_hash = interp->class_hash;
 

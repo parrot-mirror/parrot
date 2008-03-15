@@ -245,15 +245,6 @@ TCL
 
 OUT
 
-language_output_is('tcl', <<'TCL', <<'OUT', '{expand}');
-  set var {a   b c}
-  puts [join [list {expand}$var] ,]
-  puts [join [list {expand}{a {b c} d}] ,]
-TCL
-a,b,c
-a,b c,d
-OUT
-
 language_output_is('tcl', <<'TCL', <<'OUT', '{*}');
   set var {a   b c}
   puts [join [list {*}$var] ,]
@@ -261,6 +252,12 @@ language_output_is('tcl', <<'TCL', <<'OUT', '{*}');
 TCL
 a,b,c
 a,b c,d
+OUT
+
+language_output_is('tcl', <<'TCL', <<'OUT', '{*}');
+  {*}{puts hi}
+TCL
+hi
 OUT
 
 # Local Variables:

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2006-2007, The Perl Foundation.
+Copyright (C) 2006-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -27,10 +27,10 @@ static INTVAL dynpmc_WmlsInvalid;
 
 pmclass WmlsInvalid
     extends Undef
-    does scalar
+    provides scalar
     dynpmc
     group wmls_group
-    hll Lua maps Undef {
+    hll WMLScript maps Undef {
 
 /* Class initialization. Caches constant strings that will be used later.
 */
@@ -54,6 +54,21 @@ pmclass WmlsInvalid
 */
     PMC* clone() {
         return pmc_new(INTERP, dynpmc_WmlsInvalid);
+    }
+
+/*
+
+=item C<PMC* get_class()>
+
+Return the integer 4.
+
+=cut
+
+*/
+    PMC* get_class() {
+        PMC* retval = pmc_new(interp, dynpmc_WmlsInteger);
+        PMC_int_val(retval) = 4;
+        return retval;
     }
 
 /*

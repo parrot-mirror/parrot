@@ -27,6 +27,7 @@ debugger, and the C<debug> ops.
 #include "trace.h"
 #include "parrot/debug.h"
 #include "parrot/oplib/ops.h"
+#include "debug.str"
 
 
 /* Not sure how we want to handle this sort of cross-project header */
@@ -1589,7 +1590,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
 
         PARROT_ASSERT(size + 2 < space);
 
-        switch (info->types[j-1]) {
+        switch (info->types[j - 1]) {
         case PARROT_ARG_I:
             dest[size++] = 'I';
             goto INTEGER;
@@ -1634,7 +1635,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
 
             /* If this is a constant dispatch arg to an "infix" op, then show
                the corresponding symbolic op name. */
-            if (j == 1 && info->types[j-1] == PARROT_ARG_IC
+            if (j == 1 && info->types[j - 1] == PARROT_ARG_IC
                 && (STREQ(info->name, "infix") || STREQ(info->name, "n_infix"))) {
                 PARROT_ASSERT(size + 20 < space);
 
@@ -1675,7 +1676,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
             size += strlen(buf);
             break;
         case PARROT_ARG_K:
-            dest[size-1] = '[';
+            dest[size - 1] = '[';
             Parrot_snprintf(interp, buf, sizeof (buf), "P" INTVAL_FMT, op[j]);
             strcpy(&dest[size], buf);
             size += strlen(buf);
@@ -1684,7 +1685,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
         case PARROT_ARG_KC:
             {
             PMC * k      = interp->code->const_table->constants[op[j]]->u.key;
-            dest[size-1] = '[';
+            dest[size - 1] = '[';
             while (k) {
                 switch (PObj_get_FLAGS(k)) {
                 case 0:
@@ -2299,7 +2300,7 @@ PDB_compile(PARROT_INTERP, ARGIN(const char *command))
 {
     STRING     *buf;
     const char *end      = "\nend\n";
-    STRING     *key      = const_string(interp, "PASM");
+    STRING     *key      = CONST_STRING(interp, "PASM");
     PMC *compreg_hash    = VTABLE_get_pmc_keyed_int(interp,
             interp->iglobals, IGLOBALS_COMPREG_HASH);
     PMC        *compiler = VTABLE_get_pmc_keyed_str(interp, compreg_hash, key);
