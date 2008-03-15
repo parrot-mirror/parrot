@@ -100,7 +100,7 @@ int Parrot_init_arg_indexes_and_sig_pmc(SHIM_INTERP,
         FUNC_MODIFIES(*sti);
 
 PARROT_API
-int Parrot_init_arg_nci(PARROT_INTERP,
+void Parrot_init_arg_nci(PARROT_INTERP,
     ARGOUT(call_state *st),
     ARGIN(const char *sig))
         __attribute__nonnull__(1)
@@ -129,7 +129,7 @@ int Parrot_init_arg_sig(SHIM_INTERP,
         FUNC_MODIFIES(*sti);
 
 PARROT_API
-int Parrot_init_ret_nci(PARROT_INTERP,
+void Parrot_init_ret_nci(PARROT_INTERP,
     ARGOUT(call_state *st),
     ARGIN(const char *sig))
         __attribute__nonnull__(1)
@@ -192,7 +192,7 @@ int Parrot_store_arg(SHIM_INTERP, ARGIN(const call_state *st))
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-void* set_retval(PARROT_INTERP, int sig_ret, ARGIN(parrot_context_t *ctx))
+void * set_retval(PARROT_INTERP, int sig_ret, ARGIN(parrot_context_t *ctx))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 

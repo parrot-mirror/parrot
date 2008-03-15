@@ -23,8 +23,7 @@ this is as simple as returning the list.
     $P0 = $P0.'get_list'($S0)
   pop_eh 
 
-  morph value, .Undef
-  assign value, $P0
+  copy value, $P0
 
   .return(value)
 
@@ -50,8 +49,7 @@ Given a PMC, get a TclDict from it, converting as needed.
   .param pmc list
 
   $P0 = __listToDict(list)
-  morph list, .Undef
-  assign list, $P0
+  copy list, $P0
 
   .return(list)
 .end
@@ -60,8 +58,7 @@ Given a PMC, get a TclDict from it, converting as needed.
   .param pmc value
 
   $P0 = __stringToDict(value)
-  morph value, .Undef
-  assign value, $P0
+  copy value, $P0
 
   .return(value)
 .end
@@ -113,11 +110,22 @@ Given a PMC, get a number from it.
 
   .local string className
   .local pmc    value
+  
   className = ast['class']
   value     = ast['value']
 
-  number = new className
-  assign number, value
+  # XXX We probably shouldn't have to invoke the PIR compiler here.
+
+  $P0 = new 'CodeString'
+  $P0.emit(".sub 'anon' :anon")
+  $P0.emit('$P0 = new "%0"', className)
+  $P0.emit("$P0 = %0", value)
+  $P0.emit(".return($P0)")
+  $P0.emit(".end")
+
+  $P1 = compreg 'PIR'
+  $P2 = $P1($P0)
+  number = $P2()
 
   .return(number)
 
@@ -156,11 +164,10 @@ normal:
   push_eh not_integer_eh
     integer = __number(value)
   pop_eh
-  $I0 = typeof integer
-  if $I0 != .TclInt goto not_integer
+  $S0 = typeof integer
+  if $S0 != 'TclInt' goto not_integer
 
-  morph value, .Undef
-  assign value, integer
+  copy value, integer
 
   .return(value)
 

@@ -27,7 +27,7 @@ pir_output_is( <<'CODE', <<'OUT', "This made Parrot m4 fail" );
   load_bytecode "PGE.pbc"
 
   .local pmc p6rule
-  p6rule = compreg "PGE::P6Regex"
+  p6rule = compreg "PGE::Perl6Regex"
 
   .local pmc rulesub_a, rulesub_b
   rulesub_a  = p6rule( "a" )
@@ -59,7 +59,7 @@ pir_output_is( <<'CODE', <<'OUT', "parse FASTA" );
 
 .sub "example" :main
     load_bytecode 'PGE.pbc'
-    load_bytecode 'PGE/P6Grammar.pbc'
+    load_bytecode 'PGE/Perl6Grammar.pbc'
 
     .local string fasta_grammar
     fasta_grammar = <<'END_FASTA_GRAMMAR'
@@ -88,7 +88,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 END_FASTA
 
     .local pmc p6grammar
-    p6grammar = compreg "PGE::P6Grammar"
+    p6grammar = compreg "PGE::Perl6Grammar"
     .local pmc code
     ( code ) = p6grammar.'compile'(fasta_grammar, 'target'=>'PIR')
     $P0 = compreg 'PIR'

@@ -1016,6 +1016,7 @@ RT#48260: Not yet documented!!!
 
 */
 
+PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 SymReg *
 link_keys(PARROT_INTERP, int nargs, ARGMOD(SymReg **keys), int force)
@@ -1052,7 +1053,7 @@ link_keys(PARROT_INTERP, int nargs, ARGMOD(SymReg **keys), int force)
         keys[0]->type |= (VT_START_SLICE|VT_END_SLICE);
 
     key_str  = (char*)mem_sys_allocate(len);
-    *key_str = 0;
+    *key_str = '\0';
 
     /* first look, if we already have this exact key chain */
     for (i = 0; i < nargs; i++) {
@@ -1275,7 +1276,7 @@ SymReg *
 _get_sym(ARGIN(const SymHash *hsh), ARGIN(const char *name))
 {
     SymReg   *p;
-    const int i = hash_str(name) % hsh->size;
+    const unsigned int i = hash_str(name) % hsh->size;
 
     for (p = hsh->data[i]; p; p = p->next) {
 #if IMC_TRACE_HIGH
