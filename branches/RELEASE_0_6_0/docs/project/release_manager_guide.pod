@@ -1,4 +1,4 @@
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 =head1 Release Instructions
@@ -72,6 +72,10 @@ Open the link to the previous value of this field.  Copy the resulting full
 URL, then change the ticket number in the C<DependedOnBy> parameter to the
 ticket for the next release.  Take the entire resulting URL to
 L<http://xrl.us/> and get a short URL.  Add that to this field.
+
+=item C<wiki.bugday>
+
+Update the date part of the link to the wiki page for the next bugday.
 
 =back
 
@@ -240,7 +244,7 @@ F<README>, F<RESPONSIBLE_PARTIES>.
 
 =head1 Appendix 1
 
-parrot repository layout as of end of Apr 2005
+The Parrot repository layout as of end of Apr 2005:
 
  $ svn ls $SVNPARROT
  branches/
@@ -320,8 +324,8 @@ determined each month, and will depend on the features that will be in
 that release.
 
  - Jan 15th (0.5.2) Bob Rogers
- - Feb 19th (?)     Patrick Michaud
- - Mar 18th (?)     Bernhard Schmalhofer
+ - Feb 19th (0.5.3) Patrick Michaud
+ - Mar 18th (0.6.0) Bernhard Schmalhofer
  - Apr 15th (?)     Jerry Gay
  - May 20th (?)     chromatic
  - Jun 17th (?)     Nuno Carvalho
