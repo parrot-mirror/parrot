@@ -7,7 +7,7 @@
   .local int argc
   argc = elements argv
   if argc == 0 goto bad_args
-  
+
   $I0 = argv[0]
   $N0 = $I0 / 1000
   sleep $N0
@@ -23,4 +23,4 @@ bad_args:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

@@ -12,7 +12,7 @@
   if argc == 0 goto error
   if argc  > 3 goto error
 
-  fileName = argv[0] 
+  fileName = argv[0]
   access   = argv[1]
   pir_access = '<'
   if access == '' goto done_access
@@ -24,8 +24,8 @@ done_access:
   .local pmc channel
   channel = open fileName, pir_access
 
-  $I0 = typeof channel
-  if $I0 == .Undef goto file_error
+  $I0 = defined channel
+  unless $I0 goto file_error
 
   .local pmc channels, next_channel_id
   channels        = get_root_global ['_tcl'], 'channels'
@@ -40,10 +40,10 @@ done_access:
   channels[channel_id] = channel
 
   .return(channel_id)
- 
+
 file_error:
   tcl_error 'unable to open specified file'
- 
+
 error:
   tcl_error 'wrong # args: should be "open fileName ?access? ?permissions?"'
 .end
@@ -52,4 +52,4 @@ error:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

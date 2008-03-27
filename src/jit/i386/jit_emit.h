@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002-2007, The Perl Foundation.
+ * Copyright (C) 2002-2008, The Perl Foundation.
  */
 
 /*
@@ -59,7 +59,7 @@ static void call_func(Parrot_jit_info_t *jit_info, void *addr);
  */
 #undef EXEC_SHARED
 
-extern PARROT_API UINTVAL ld(UINTVAL);
+extern UINTVAL ld(UINTVAL);
 
 #define NEG_MINUS_ZERO
 /* #define NEG_ZERO_SUB */
@@ -842,7 +842,7 @@ opt_shift_rr(PARROT_INTERP, Parrot_jit_info_t *jit_info, int dest, int count, in
     }
     else {
         int saved = 0;
-        assert(count != emit_EAX);
+        PARROT_ASSERT(count != emit_EAX);
         if (dest == emit_EAX) {
             if (intreg_is_used(jit_info, emit_ECX)) {
                 emitm_pushl_r(pc, emit_ECX);
@@ -1886,7 +1886,7 @@ opt_div_rr(PARROT_INTERP, Parrot_jit_info_t *jit_info, int dest, int src, int is
     char *L1, *L2, *L3;
     static const char div_by_zero[] = "Divide by zero";
 
-    assert(src != emit_EAX);
+    PARROT_ASSERT(src != emit_EAX);
 
     if (dest != emit_EAX) {
         jit_emit_mov_rr_i(pc, emit_EAX, dest);
@@ -2317,25 +2317,18 @@ jit_set_i_p_ki(Parrot_jit_info_t *jit_info, PARROT_INTERP, size_t offset)
     L2 = NATIVECODE;
     emitm_jxs(NATIVECODE, emitm_js, 0);
     emitm_movl_m_r(interp, NATIVECODE, emit_EAX, emit_EDI, 0, 1,
-            offsetof(struct pobj_t, u._i._int_val));
+            offsetof(struct PMC, cache._i._int_val));
     jit_emit_cmp_rr_i(NATIVECODE, emit_ECX, emit_EAX);
     L3 = NATIVECODE;
     emitm_jxs(NATIVECODE, emitm_jnl, 0);
 
     /*
-     * mov (pmc_ext)%edi, %eax
-     * mov (data)%eax, %eax
+     * mov (data)%edi, %eax
      * mov (%eax, %ecx, 4), %eax
      * jmp L4
      */
-#  if ! PMC_DATA_IN_EXT
-#    error "todo"
-#  else
     emitm_movl_m_r(interp, NATIVECODE, emit_EAX, emit_EDI, 0, 1,
-            offsetof(struct PMC, pmc_ext));
-    emitm_movl_m_r(interp, NATIVECODE, emit_EAX, emit_EAX, 0, 1,
-            offsetof(struct PMC_EXT, data));
-#  endif
+            offsetof(struct PMC, data));
     emitm_movl_m_r(interp, NATIVECODE, emit_EAX, emit_EAX, emit_ECX, 4, 0);
 
     L4 = NATIVECODE;
@@ -2386,26 +2379,19 @@ jit_set_p_ki_i(Parrot_jit_info_t *jit_info, PARROT_INTERP, size_t offset)
     L2 = NATIVECODE;
     emitm_jxs(NATIVECODE, emitm_js, 0);
     emitm_movl_m_r(interp, NATIVECODE, emit_EAX, emit_EDI, 0, 1,
-            offsetof(struct pobj_t, u._i._int_val));
+            offsetof(struct PMC, cache._i._int_val));
     jit_emit_cmp_rr_i(NATIVECODE, emit_ECX, emit_EAX);
     L3 = NATIVECODE;
     emitm_jxs(NATIVECODE, emitm_jnl, 0);
 
     /*
-     * mov (pmc_ext)%edi, %eax
      * mov (data)%eax, %eax
      * mov $3, %edx
      * mov $edx, (%eax, %ecx, 4)
      * jmp L4
      */
-#  if ! PMC_DATA_IN_EXT
-#    error "todo"
-#  else
     emitm_movl_m_r(interp, NATIVECODE, emit_EAX, emit_EDI, 0, 1,
-            offsetof(struct PMC, pmc_ext));
-    emitm_movl_m_r(interp, NATIVECODE, emit_EAX, emit_EAX, 0, 1,
-            offsetof(struct PMC_EXT, data));
-#  endif
+            offsetof(struct PMC, data));
     if (MAP(3)) {
         jit_emit_mov_rr_i(NATIVECODE, emit_EDX, MAP(3));
     }
@@ -2772,7 +2758,7 @@ Parrot_jit_vtable_newp_ic_op(Parrot_jit_info_t *jit_info,
     op_info_t *op_info = &interp->op_info_table[*jit_info->cur_op];
     size_t offset = offsetof(VTABLE, init);
 
-    assert(op_info->types[0] == PARROT_ARG_P);
+    PARROT_ASSERT(op_info->types[0] == PARROT_ARG_P);
     p1 = *(jit_info->cur_op + 1);
     i2 = *(jit_info->cur_op + 2);
     if (i2 <= 0 || i2 >= interp->n_vtable_max) {
@@ -2878,7 +2864,7 @@ jit_get_params_pc(Parrot_jit_info_t *jit_info, PARROT_INTERP)
     PMC *sig_pmc;
     INTVAL *sig_bits, i, n;
 
-    sig_pmc = CONTEXT(interp->ctx)->constants[CUR_OPCODE[1]]->u.key;
+    sig_pmc = CONTEXT(interp)->constants[CUR_OPCODE[1]]->u.key;
     sig_bits = SIG_ARRAY(sig_pmc);
     n = SIG_ELEMS(sig_pmc);
     jit_info->n_args = n;
@@ -2914,7 +2900,7 @@ jit_save_regs(Parrot_jit_info_t *jit_info, PARROT_INTERP)
     int i, used_i, save_i;
     const jit_arch_regs *reg_info;
 
-    used_i = CONTEXT(interp->ctx)->n_regs_used[REGNO_INT];
+    used_i = CONTEXT(interp)->n_regs_used[REGNO_INT];
     reg_info = &jit_info->arch_info->regs[jit_info->code_type];
     save_i = reg_info->n_preserved_I;
     for (i = save_i; i < used_i; ++i) {
@@ -2930,7 +2916,7 @@ jit_restore_regs(Parrot_jit_info_t *jit_info, PARROT_INTERP)
     int i, used_i, save_i;
     const jit_arch_regs *reg_info;
 
-    used_i = CONTEXT(interp->ctx)->n_regs_used[REGNO_INT];
+    used_i = CONTEXT(interp)->n_regs_used[REGNO_INT];
     reg_info = &jit_info->arch_info->regs[jit_info->code_type];
     save_i = reg_info->n_preserved_I;
     /* note - reversed order of jit_save_regs  */
@@ -2954,8 +2940,8 @@ jit_save_regs_call(Parrot_jit_info_t *jit_info, PARROT_INTERP, int skip)
     int i, used_i, used_n;
     const jit_arch_regs *reg_info;
 
-    used_i = CONTEXT(interp->ctx)->n_regs_used[REGNO_INT];
-    used_n = CONTEXT(interp->ctx)->n_regs_used[REGNO_NUM];
+    used_i = CONTEXT(interp)->n_regs_used[REGNO_INT];
+    used_n = CONTEXT(interp)->n_regs_used[REGNO_NUM];
     jit_emit_sub_ri_i(interp, jit_info->native_ptr, emit_ESP,
             (used_i * sizeof (INTVAL) + used_n * sizeof (FLOATVAL)));
     reg_info = &jit_info->arch_info->regs[jit_info->code_type];
@@ -2985,8 +2971,8 @@ jit_restore_regs_call(Parrot_jit_info_t *jit_info, PARROT_INTERP,
     int i, used_i, used_n;
     const jit_arch_regs *reg_info;
 
-    used_i = CONTEXT(interp->ctx)->n_regs_used[REGNO_INT];
-    used_n = CONTEXT(interp->ctx)->n_regs_used[REGNO_NUM];
+    used_i = CONTEXT(interp)->n_regs_used[REGNO_INT];
+    used_n = CONTEXT(interp)->n_regs_used[REGNO_NUM];
     reg_info = &jit_info->arch_info->regs[jit_info->code_type];
 
     for (i = 0; i < used_i; ++i) {
@@ -3015,7 +3001,7 @@ jit_set_returns_pc(Parrot_jit_info_t *jit_info, PARROT_INTERP,
     PMC *sig_pmc;
     INTVAL *sig_bits, sig;
 
-    sig_pmc = CONTEXT(interp->ctx)->constants[CUR_OPCODE[1]]->u.key;
+    sig_pmc = CONTEXT(interp)->constants[CUR_OPCODE[1]]->u.key;
     if (!SIG_ELEMS(sig_pmc))
         return;
     sig_bits = SIG_ARRAY(sig_pmc);
@@ -3088,7 +3074,7 @@ jit_set_args_pc(Parrot_jit_info_t *jit_info, PARROT_INTERP,
         real_exception(interp, NULL, 1, "set_args_jit - can't do that yet ");
     }
 
-    constants = CONTEXT(interp->ctx)->constants;
+    constants = CONTEXT(interp)->constants;
     sig_args = constants[CUR_OPCODE[1]]->u.key;
     if (!SIG_ELEMS(sig_args))
         return;
@@ -3102,7 +3088,7 @@ jit_set_args_pc(Parrot_jit_info_t *jit_info, PARROT_INTERP,
      * return value
      */
     result = CUR_OPCODE + 2 + n + 3; /* set_args, set_p_pc */
-    assert(*result == PARROT_OP_get_results_pc);
+    PARROT_ASSERT(*result == PARROT_OP_get_results_pc);
     sig_result = constants[result[1]]->u.key;
     ASSERT_SIG_PMC(sig_result);
 
@@ -3423,8 +3409,8 @@ Parrot_jit_begin_sub_regs(Parrot_jit_info_t *jit_info,
         L1 = NATIVECODE;
         emitm_calll(NATIVECODE, 0);
         /* check type of return value */
-        constants = CONTEXT(interp->ctx)->constants;
-        result = CONTEXT(interp->ctx)->current_results;
+        constants = CONTEXT(interp)->constants;
+        result = CONTEXT(interp)->current_results;
         sig_result = constants[result[1]]->u.key;
         if (!SIG_ELEMS(sig_result))
             goto no_result;
@@ -3523,7 +3509,7 @@ Parrot_jit_normal_op(Parrot_jit_info_t *jit_info,
     int last_is_branch = 0;
     void ** offset;
 
-    assert(op_jit[*jit_info->cur_op].extcall == 1);
+    PARROT_ASSERT(op_jit[*jit_info->cur_op].extcall == 1);
     if (cur_section->done == 1)
         return;
     else if (cur_section->done == -1 && --cur_section->ins_count > 0)
@@ -3591,27 +3577,60 @@ Parrot_jit_normal_op(Parrot_jit_info_t *jit_info,
     if (cur_op >= jit_op_count()) {
         cur_op = CORE_OPS_wrapper__;
     }
-    /*
-     * op functions have the signature (cur_op, interp)
-     * we use the interpreter already on stack and only push the
-     * cur_op
-     */
 
     if ((++check & 0x7) == 0) {
         /*
          * every 8 ??? normal ops, we emit a check for event processing
          */
+
+/*
+ * There is an optimization to reuse arguments on the stack.  Compilers may
+ * decide to reuse the argument space though.  If you are *absolutely sure*
+ * this does not happen define PARROT_JIT_STACK_REUSE_INTERP.
+ */
+#    ifdef PARROT_JIT_STACK_REUSE_INTERP
+        /*
+        * op functions have the signature (cur_op, interp)
+        * we use the interpreter already on stack and only push the
+        * cur_op
+        */
+#    else
+        /* push interpreter */
+        Parrot_jit_emit_get_INTERP(interp, jit_info->native_ptr, emit_ECX);
+        emitm_pushl_r(jit_info->native_ptr, emit_ECX);
+#    endif
+
         emitm_pushl_i(jit_info->native_ptr, CORE_OPS_check_events);
 
         call_func(jit_info,
             (void (*)(void))interp->op_func_table[CORE_OPS_check_events]);
+#    ifdef PARROT_JIT_STACK_REUSE_INTERP
         emitm_addb_i_r(jit_info->native_ptr, 4, emit_ESP);
+#    else
+        emitm_addb_i_r(jit_info->native_ptr, 8, emit_ESP);
+#    endif
     }
+
+#    ifdef PARROT_JIT_STACK_REUSE_INTERP
+    /*
+    * op functions have the signature (cur_op, interp)
+    * we use the interpreter already on stack and only push the
+    * cur_op
+    */
+#    else
+    Parrot_jit_emit_get_INTERP(interp, jit_info->native_ptr, emit_ECX);
+    emitm_pushl_r(jit_info->native_ptr, emit_ECX);
+#    endif
+
     emitm_pushl_i(jit_info->native_ptr, jit_info->cur_op);
 
     call_func(jit_info,
             (void (*)(void))interp->op_func_table[cur_op]);
+#    ifdef PARROT_JIT_STACK_REUSE_INTERP
     emitm_addb_i_r(jit_info->native_ptr, 4, emit_ESP);
+#    else
+    emitm_addb_i_r(jit_info->native_ptr, 8, emit_ESP);
+#    endif
 }
 
 #  endif /* JIT_CGP */
@@ -3783,13 +3802,13 @@ Parrot_jit_build_call_func(PARROT_INTERP, PMC *pmc_nci,
                 emitm_pushl_r(pc, emit_EAX);
                 break;
             case 'p':   /* push pmc->data */
+                jit_emit_mov_RM_i(interp, pc, emit_EDX,
+                        REG_OFFS_PMC(count_regs(interp, sig, signature->strstart)));
 #  if ! PMC_DATA_IN_EXT
                 /* mov pmc, %edx
                  * mov 8(%edx), %eax
                  * push %eax
                  */
-                jit_emit_mov_RM_i(interp, pc, emit_EDX,
-                        REG_OFFS_PMC(count_regs(interp, sig, signature->strstart)));
                 emitm_movl_m_r(interp, pc, emit_EAX, emit_EDX, 0, 1,
                         offsetof(struct PMC, data));
 #  else
@@ -3799,8 +3818,6 @@ Parrot_jit_build_call_func(PARROT_INTERP, PMC *pmc_nci,
                  * mov data(%eax), %eax
                  * push %eax
                  */
-                jit_emit_mov_RM_i(interp, pc, emit_EDX,
-                        REG_OFFS_PMC(count_regs(interp, sig, signature->strstart)));
                 emitm_movl_m_r(interp, pc, emit_EAX, emit_EDX, 0, 1,
                         offsetof(struct PMC, pmc_ext));
                 emitm_movl_m_r(interp, pc, emit_EAX, emit_EAX, 0, 1,
@@ -3956,7 +3973,7 @@ preg:
             /* *eax = buffer_header */
             /* set external flag */
             emitm_orl_i_m(pc, PObj_external_FLAG, emit_EAX, 0, 1,
-                    offsetof(pobj_t, flags));
+                    offsetof(PMC, flags));
             emitm_popl_r(pc, emit_EDX);
             /* mov %edx, (bufstart) %eax */
             emitm_movl_r_m(interp, pc, emit_EDX, emit_EAX, 0, 1,
@@ -3993,7 +4010,7 @@ preg:
     emitm_popl_r(pc, emit_EBX);
     jit_emit_stack_frame_leave(pc);
     emitm_ret(pc);
-    assert(pc - jit_info.arena.start <= size);
+    PARROT_ASSERT(pc - jit_info.arena.start <= size);
     /* could shrink arena.start here to used size */
     PObj_active_destroy_SET(pmc_nci);
     return (jit_f)D2FPTR(jit_info.arena.start);

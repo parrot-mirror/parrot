@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -39,16 +39,18 @@ L<http://www.lua.org/manual/5.1/manual.html#5.7>.
 .sub 'luaopen_io'
 #    print "init Lua I/O\n"
 
+    .local pmc _file
+    $P0 = get_hll_global ['Lua::io::file'], 'createmeta'
+    _file = $P0()
+
+    # create (private) environment (with fields IO_INPUT, IO_OUTPUT, __close)
+    .local pmc _io_env
+    .const .Sub _io_fclose = 'fclose'
+    _io_env = newfenv(_io_fclose)
+
     .local pmc _lua__GLOBAL
     _lua__GLOBAL = get_hll_global '_G'
     new $P1, 'LuaString'
-
-    .local pmc _io_env
-    new _io_env, 'LuaTable'
-
-    .local pmc _file
-    $P0 = get_hll_global ['Lua::io::file'], 'createmeta'
-    _file = $P0(_io_env)
 
     .local pmc _io
     new _io, 'LuaTable'
@@ -115,16 +117,19 @@ L<http://www.lua.org/manual/5.1/manual.html#5.7>.
     .const .Sub _readline = 'readline'
     _readline.'setfenv'(_io_env)
 
-
-    # set default close function
-    .const .Sub _io_fclose = 'fclose'
-    _io_fclose.'setfenv'(_io_env)
-    set $P1, '__close'
-    _io_env[$P1] = _io_fclose
-
     # create (and set) default files
     createstdfiles(_file, _io, _io_env)
 
+.end
+
+
+.sub 'newfenv' :anon
+    .param pmc fct
+    .local pmc env
+    new env, 'LuaTable'
+    .const .LuaString key = '__close'
+    env[key] = fct
+    .return (env)
 .end
 
 
@@ -135,33 +140,33 @@ L<http://www.lua.org/manual/5.1/manual.html#5.7>.
 .sub 'createstdfiles' :anon
     .param pmc mt
     .param pmc io
-    .param pmc env
+    .param pmc io_env
+    .local pmc env
+    .const .Sub _io_noclose = 'noclose'
+    env = newfenv(_io_noclose) # close function for default files
     new $P1, 'LuaString'
     new $P3, 'LuaNumber'
 
     set $P1, 'stdin'
     $P2 = getstdin
-    new $P0, 'LuaUserdata'
-    setattribute $P0, 'data', $P2
-    $P0.'set_metatable'(mt)
+    $P0 = lua_newuserdata($P2, mt)
+    $P0.'setfenv'(env)
     io[$P1] = $P0
     set $P3, IO_INPUT
-    env[$P3] = $P0
+    io_env[$P3] = $P0
 
     set $P1, 'stdout'
     $P2 = getstdout
-    new $P0, 'LuaUserdata'
-    setattribute $P0, 'data', $P2
-    $P0.'set_metatable'(mt)
+    $P0 = lua_newuserdata($P2, mt)
+    $P0.'setfenv'(env)
     io[$P1] = $P0
     set $P3, IO_OUTPUT
-    env[$P3] = $P0
+    io_env[$P3] = $P0
 
     set $P1, 'stderr'
     $P2 = getstderr
-    new $P0, 'LuaUserdata'
-    setattribute $P0, 'data', $P2
-    $P0.'set_metatable'(mt)
+    $P0 = lua_newuserdata($P2, mt)
+    $P0.'setfenv'(env)
     io[$P1] = $P0
 .end
 
@@ -232,14 +237,10 @@ L<http://www.lua.org/manual/5.1/manual.html#5.7>.
 
 
 .sub 'newfile' :anon
+    .param pmc f
     .local pmc file
-    .local pmc _lua__REGISTRY
-    .local pmc mt
-    _lua__REGISTRY = get_hll_global '_REGISTRY'
-    .const .LuaString key = 'ParrotIO'
-    mt = _lua__REGISTRY[key]
-    new file, 'LuaUserdata'
-    file.'set_metatable'(mt)
+    $P0 = lua_getmetatable('ParrotIO')
+    file = lua_newuserdata(f, $P0)
     .return (file)
 .end
 
@@ -333,7 +334,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.7>.
 .end
 
 
-.sub 'topfile'
+.sub 'tofilep'
     .param pmc file
     .local pmc mt
     .local pmc mt_file
@@ -356,7 +357,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.7>.
 .sub 'tofile'
     .param pmc file
     .local pmc f
-    f = topfile(file)
+    f = tofilep(file)
     if null f goto L1
     .return (f)
   L1:
@@ -366,12 +367,9 @@ L<http://www.lua.org/manual/5.1/manual.html#5.7>.
 .sub 'aux_close'
     .param pmc file
     .local pmc env
-    $P0 = getinterp
-    $P1 = $P0['sub'; 1]
-    env = lua_getfenv($P1)
-    new $P1, 'LuaString'
-    set $P1, '__close'
-    $P0 = env[$P1]
+    env = file.'getfenv'()
+    .const .LuaString key = '__close'
+    $P0 = env[key]
     .return $P0(file)
 .end
 
@@ -418,8 +416,8 @@ file.
     file = getiofile(IO_OUTPUT)
   L1:
     tofile(file)
-    res = aux_close(file)
-    .return (res)
+    (res :slurpy) = aux_close(file)
+    .return (res :flat)
 .end
 
 
@@ -465,8 +463,7 @@ error code.
     unless null f goto L3
     lua_argerror(1, file)
   L3:
-    $P0 = newfile()
-    setattribute $P0, 'data', f
+    $P0 = newfile(f)
     setiofile(IO_INPUT, $P0)
     goto L1
   L2:
@@ -513,8 +510,7 @@ input file. In this case it does not close the file when the loop ends.
     unless null f goto L2
     lua_argerror(1, $S1)
   L2:
-    file = newfile()
-    setattribute file, 'data', f
+    file = newfile(f)
     .return aux_lines(file, 1)
 .end
 
@@ -573,8 +569,7 @@ in the standard C function C<fopen>.
     if $S0 == '' goto L1
     f = open $S1, $S0
     unless f goto L1
-    res = newfile()
-    setattribute res, 'data', f
+    res = newfile(f)
     .return (res)
   L1:
     new res, 'LuaNil'
@@ -608,8 +603,7 @@ Similar to C<io.input>, but operates over the default output file.
     unless null f goto L3
     lua_argerror(1, file)
   L3:
-    $P0 = newfile()
-    setattribute $P0, 'data', f
+    $P0 = newfile(f)
     setiofile(IO_OUTPUT, $P0)
     goto L1
   L2:
@@ -643,8 +637,7 @@ This function is system dependent and is not available on all platforms.
     if $S0 == '' goto L1
     f = open $S1, $S0
     unless f goto L1
-    res = newfile()
-    setattribute res, 'data', f
+    res = newfile(f)
     .return (res)
   L1:
     new res, 'LuaNil'
@@ -689,8 +682,7 @@ it is automatically removed when the program ends.
     $S0 = $P0.'tmpname'()
     f = open $S0, '+>'
     unless f goto L1
-    res = newfile()
-    setattribute res, 'data', f
+    res = newfile(f)
     new $P0, 'OS'
     $P0.'rm'($S0)
     .return (res)
@@ -759,11 +751,24 @@ Equivalent to C<io.output():write>.
 .end
 
 
+# function to (not) close the standard files stdin, stdout, and stderr
+.sub 'noclose' :anon
+    .param pmc file
+    .local pmc f
+    .local pmc res
+    new $P1, 'LuaNil'
+    new $P2, 'LuaString'
+    set $P2, "cannot close standard file"
+    .return ($P1, $P2)
+.end
+
+
+# function to close regular files
 .sub 'fclose' :anon
     .param pmc file
     .local pmc f
     .local pmc res
-    f = topfile(file)
+    f = tofilep(file)
     close f
     null f
     setattribute file, 'data', f
@@ -785,4 +790,4 @@ Francois Perrad.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

@@ -1,5 +1,5 @@
 #!perl
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -76,7 +76,7 @@ ok_1:
     print "\n"
     print "ok 2 - got name\n"
 
-    $P1 = $P0.'pmc_namespace'()
+    $P1 = $P0.'get_namespace'()
     $S1 = $P1
     print $S1
     print "\n"
@@ -257,7 +257,7 @@ ok 8 - overridden add_role v-table method called
 OUT
 
 pir_output_is(
-    <<'CODE', <<'OUT', 'DYNSELF in a PMC will call methods overridden in high level classes' );
+    <<'CODE', <<'OUT', 'SELF in a PMC will call methods overridden in high level classes' );
 .sub 'test' :main
     $P0 = new 'Class'
     print "ok 1 - created a PDD15 class\n"

@@ -5,7 +5,7 @@
 	name_str = name
 
 	.local pmc greeting
-	greeting  = new .String
+	greeting  = new 'String'
 	greeting  = 'Hello, '
 	greeting .= name_str
 	greeting .= '!'
@@ -23,4 +23,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

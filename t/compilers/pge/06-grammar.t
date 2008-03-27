@@ -1,5 +1,5 @@
 #!./parrot
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 
 =head1 NAME
 
@@ -18,7 +18,7 @@ Test some simple grammars.
 .sub main :main
     load_bytecode 'Test/Builder.pir'
     load_bytecode 'PGE.pbc'
-    load_bytecode 'PGE/P6Grammar.pbc'
+    load_bytecode 'PGE/Perl6Grammar.pbc'
     .include "iglobals.pasm"
 
     .local pmc test, todo_tests, todo_desc, grammar, expr, description, test_num
@@ -79,7 +79,7 @@ EOF_SIMPLE_GRAMMAR
     push targets, ' 11     12  13   14'     # n9
     'test_grammar_against_targets'( <<'EOF_SIMPLE_GRAMMAR', targets, 'simple token/rule match with repetition using *' )
 grammar Simple::Test3;
-rule main { [<number> <?ws>]* }
+rule main { [<number> <.ws>]* }
 token number { \d+ }
 EOF_SIMPLE_GRAMMAR
 
@@ -98,7 +98,7 @@ EOF_SIMPLE_GRAMMAR
     push targets, ' 11     12  13   14'     # n13
     'test_grammar_against_targets'( <<'EOF_SIMPLE_GRAMMAR', targets, 'simple token/rule match with repetition using +' )
 grammar Simple::Test5;
-rule main { [<number> <?ws>]+ }
+rule main { [<number> <.ws>]+ }
 token number { \d+ }
 EOF_SIMPLE_GRAMMAR
 
@@ -158,7 +158,7 @@ EOF_SIMPLE_GRAMMAR
 
     .local pmc p6grammar, code, pir_compiler, parser
 
-    p6grammar    = compreg 'PGE::P6Grammar'
+    p6grammar    = compreg 'PGE::Perl6Grammar'
     code         = p6grammar.'compile'(grammar, 'target'=>'PIR')
     pir_compiler = compreg 'PIR'
     parser       = pir_compiler(code)
@@ -195,4 +195,8 @@ Nuno 'smash' Carvalho <mestre.smash@gmail.com>
 
 =cut
 
-# vi: ft=pir
+# Local Variables:
+#   mode: pir
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4 ft=pir:

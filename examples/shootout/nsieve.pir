@@ -38,7 +38,7 @@ not_p:
 	flags = new 'FixedBooleanArray'
 	N = 2
 	argc = argv
-	if argc == 1 goto default 
+	if argc == 1 goto default
     $S0 = argv[1]
 	N = $S0
 default:
@@ -68,4 +68,4 @@ loop:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

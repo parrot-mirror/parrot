@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -32,6 +32,7 @@ Define the internal interpreter exceptions.
 
 #include "parrot/parrot.h"
 #include "parrot/exceptions.h"
+#include "exceptions.str"
 
 #ifdef PARROT_HAS_GLIBC_BACKTRACE
 #  include <execinfo.h>
@@ -153,7 +154,6 @@ describe them as well.\n\n");
     fprintf(stderr, "\nDumping Core...\n");
 
     dumpcore();
-    exit(EXIT_FAILURE);
 }
 
 /*
@@ -180,7 +180,8 @@ push_exception(PARROT_INTERP, ARGIN(PMC *handler))
 
 =item C<static void run_cleanup_action>
 
-RT#48260: Not yet documented!!!
+Runs the sub PMC from the Stack_Entry_t pointer with an INTVAL arg of 0.  Used
+in C<Parrot_push_action>.
 
 =cut
 
@@ -201,7 +202,7 @@ run_cleanup_action(PARROT_INTERP, ARGIN(Stack_Entry_t *e))
 
 =item C<void Parrot_push_action>
 
-Push an action handler onto the dynamic environment.
+Pushes an action handler onto the dynamic environment.
 
 =cut
 
@@ -211,10 +212,9 @@ PARROT_API
 void
 Parrot_push_action(PARROT_INTERP, ARGIN(PMC *sub))
 {
-    if (!VTABLE_isa(interp, sub,
-                const_string(interp, "Sub"))) {
+    if (!VTABLE_isa(interp, sub, CONST_STRING(interp, "Sub")))
         real_exception(interp, NULL, 1, "Tried to push a non Sub PMC action");
-    }
+
     stack_push(interp, &interp->dynamic_env, sub,
                STACK_ENTRY_ACTION, run_cleanup_action);
 }
@@ -351,6 +351,7 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
          */
         return NULL;
     }
+
     /*
      * only main should run the destroy functions - exit handler chain
      * is freed during Parrot_exit
@@ -490,7 +491,7 @@ pop_exception(PARROT_INTERP)
                 "No exception to pop.");
     }
     cc = PMC_cont(handler);
-    if (cc->to_ctx != CONTEXT(interp->ctx)) {
+    if (cc->to_ctx != CONTEXT(interp)) {
         real_exception(interp, NULL, E_RuntimeError,
                 "No exception to pop.");
     }
@@ -702,7 +703,7 @@ handle_exception(PARROT_INTERP)
     const opcode_t * const dest = create_exception(interp);
 
     if (!dest)
-        PANIC(interp,"Unable to create exception");
+        PANIC(interp, "Unable to create exception");
 
     /* return the *offset* of the handler */
     return dest - interp->code->base.data;
@@ -761,7 +762,8 @@ free_internal_exception(PARROT_INTERP)
 
 =item C<void destroy_exception_list>
 
-RT#48260: Not yet documented!!!
+Destroys (and frees the memory of) the exception buffers list and the
+associated exceptions free list for the specified interpreter.
 
 =cut
 
@@ -778,7 +780,9 @@ destroy_exception_list(PARROT_INTERP)
 
 =item C<void really_destroy_exception_list>
 
-RT#48260: Not yet documented!!!
+Takes a pointer to an exception (which had better be the last one in the list).
+Walks back through the list, freeing the memory of each one, until it encounters NULL.
+Used by C<destroy_exception_list>.
 
 =cut
 
@@ -957,9 +961,29 @@ Parrot_init_exceptions(PARROT_INTERP)
 
 /*
 
+=item C<void Parrot_assert>
+
+A better version of assert() that gives a backtrace.
+
+=cut
+
+*/
+
+PARROT_API
+PARROT_DOES_NOT_RETURN_WHEN_FALSE
+void
+Parrot_assert(INTVAL condition, ARGIN(const char *condition_string),
+        ARGIN(const char *file), unsigned int line)
+{
+    if (!condition)
+        Parrot_confess(condition_string, file, line);
+}
+
+/*
+
 =item C<void Parrot_confess>
 
-A better version of assert() that gives a backtrace if possible.
+Prints a backtrace and message for a failed assertion.
 
 =cut
 
@@ -979,7 +1003,8 @@ Parrot_confess(ARGIN(const char *cond), ARGIN(const char *file), unsigned int li
 
 =item C<void Parrot_print_backtrace>
 
-RT#48260: Not yet documented!!!
+Displays the primrose path to disaster, (the stack frames leading up to the
+abort).  Used by C<Parrot_confess>.
 
 =cut
 
@@ -994,12 +1019,6 @@ Parrot_print_backtrace(void)
     /* stolen from http://www.delorie.com/gnu/docs/glibc/libc_665.html */
     void *array[BACKTRACE_DEPTH];
     size_t i;
-#  ifndef BACKTRACE_VERBOSE
-    int ident;
-    char *caller;
-    size_t callerLength;
-    size_t j;
-#  endif
 
     const size_t size = backtrace(array, BACKTRACE_DEPTH);
     char ** const strings = backtrace_symbols(array, size);
@@ -1009,15 +1028,17 @@ Parrot_print_backtrace(void)
             size, BACKTRACE_DEPTH);
 #  ifndef BACKTRACE_VERBOSE
     for (i = 0; i < size; i++) {
-        /* always ident */
-        ident = 2;  /* initial indent */
-        ident += 2 * i; /* nesting depth */
-        fprintf(stderr, "%*s", ident, "");
+        /* always indent */
+        const int indent = 2 + (2*i);
+        const char *caller = strchr(strings[i], '(');
+
+        fprintf(stderr, "%*s", indent, "");
 
         /* if the caller was an anon function then strchr won't
         find a '(' in the string and will return NULL */
-        caller = strchr(strings[i], '(');
         if (caller) {
+            size_t callerLength;
+            size_t j;
             /* skip over the '(' */
             caller++;
             /* find the end of the symbol name */
@@ -1037,7 +1058,7 @@ Parrot_print_backtrace(void)
         fprintf(stderr, "%s\n", strings[i]);
 #  endif
 
-    free(strings);
+    mem_sys_free(strings);
 
 #  undef BACKTRACE_DEPTH
 #endif /* ifdef PARROT_HAS_GLIBC_BACKTRACE */

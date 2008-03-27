@@ -1,17 +1,17 @@
-.sub cgi_main 
+.sub cgi_main
     .param pmc    conn
     .param string query
     .param pmc    query_hash
     ##trace 1
 
     .local string file, res, slides
-    file = query_hash['f'] 
+    file = query_hash['f']
     res = 'file nof found'
     res .= file
     slides = _read_file(conn, file)
     unless slides goto err
     .local int p
-    p = query_hash['p'] 
+    p = query_hash['p']
     res = _find_slides(conn, slides, p)
 err:
     trace 0
@@ -116,7 +116,7 @@ eof:
 .sub test :main
     .param pmc argv
     null $P0
-    $P1 = new .Hash
+    $P1 = new 'Hash'
     $P1['f'] = '1.html'
     $S0 = argv[1]
     $I0 = $S0
@@ -129,4 +129,4 @@ eof:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

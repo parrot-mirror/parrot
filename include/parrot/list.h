@@ -1,7 +1,7 @@
 /*
  * list.h
- *  Copyright (C) 2002, The Perl Foundation.
- *  License:  Artistic 2.0, see README and LICENSES for details
+ *  Copyright (C) 2002-2008, The Perl Foundation.
+ *  License:  Artistic 2.0, see README and LICENSE for details
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -95,7 +95,7 @@ void list_assign(PARROT_INTERP,
         FUNC_MODIFIES(*list);
 
 PARROT_API
-PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 List * list_clone(PARROT_INTERP, ARGIN(const List *other))
         __attribute__nonnull__(1)
@@ -140,7 +140,7 @@ void list_mark(PARROT_INTERP, ARGMOD(List *list))
         FUNC_MODIFIES(*list);
 
 PARROT_API
-PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 List * list_new(PARROT_INTERP, PARROT_DATA_TYPE type)
         __attribute__nonnull__(1);

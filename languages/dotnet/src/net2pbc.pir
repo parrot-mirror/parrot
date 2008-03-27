@@ -56,7 +56,7 @@ ERRORARG:
 	print "Usage: parrot net2pbc.pbc [-p] [-o output.pbc] input.exe\n"
 	end
 GOTARGS:
-	
+
 	# Hand over to the translator.
 	(gen_pir, summary) = dotnet_to_pir(filename, force, standalone, trace)
 
@@ -82,11 +82,11 @@ COMPILE:
 	print fh, pbc_out
 	close fh
 	end
-.end 
+.end
 
 
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

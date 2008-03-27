@@ -1,4 +1,4 @@
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -8,6 +8,8 @@ lib/alarm.pir - Lua Alarm Library
 =head1 DESCRIPTION
 
 The library exports a single function: alarm(s,[f]).
+
+See original on L<http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/#lalarm/>
 
 =head2 Function
 
@@ -93,4 +95,4 @@ Francois Perrad
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

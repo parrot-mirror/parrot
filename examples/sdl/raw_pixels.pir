@@ -69,7 +69,7 @@ loop_x:
 
 loop_y:
 	main_screen.'draw_pixel'( x, y, converted_blue )
-	
+
 	inc y
 	if y < 480 goto loop_y
 	inc x
@@ -96,7 +96,7 @@ chromatic, E<lt>chromatic at wgz dot orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004 - 2006, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 
 =cut
 
@@ -104,4 +104,4 @@ Copyright (c) 2004 - 2006, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

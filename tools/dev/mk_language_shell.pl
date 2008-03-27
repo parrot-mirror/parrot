@@ -120,7 +120,7 @@ sub start_new_file {
 ###  placed in the file (performing substitutions on @lang@, @lclang@,
 ###  @UCLANG@, and @Id@ as appropriate).
 
-__END__
+__DATA__
 __config/makefiles/root.in__
 ## @Id@
 
@@ -310,7 +310,7 @@ to the @lang@ compiler.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:
 
 __src/parser/grammar.pg__
 # @Id@
@@ -443,7 +443,7 @@ say.pir -- simple implementation of a say function
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:
 
 __t/harness__
 #! perl

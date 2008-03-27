@@ -1,11 +1,10 @@
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 # $Id$
 
 package Parrot::Test::Lua;
 
 use strict;
 
-use Data::Dumper;
 use File::Basename;
 
 require Parrot::Test;
@@ -16,7 +15,7 @@ Test/Lua.pm - Testing routines specific to 'lua'.
 
 =head1 DESCRIPTION
 
-Call 'Parrot lua' and 'original lua'.
+Call 'Lua on Parrot' and 'original lua'.
 
 =head1 METHODS
 
@@ -82,7 +81,7 @@ foreach my $func ( keys %language_test_map ) {
         }
         elsif ( $lua_test eq 'lua.pbc' ) {
             @test_prog = (
-                "$self->{parrot} --no-gc languages/lua/lua.pbc $test_prog_args $src $params",
+                "$self->{parrot} languages/lua/lua.pbc $test_prog_args $src $params",
             );
         }
         else {
@@ -102,6 +101,12 @@ foreach my $func ( keys %language_test_map ) {
         );
 
         my $builder_func = $language_test_map{$func};
+
+        # set a todo-item for Test::Builder to find
+        my $call_pkg = $self->{builder}->exported_to() || '';
+
+        local *{ $call_pkg . '::TODO' } = ## no critic Variables::ProhibitConditionalDeclarations
+                        \$options{todo} if defined $options{todo};
 
         # That's the reason for:   no strict 'refs';
         my $pass =

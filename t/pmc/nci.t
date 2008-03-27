@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2005, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -29,6 +29,8 @@ Most tests are skipped when the F<libnci_test.so> shared library is not found.
   F<src/nci_test.c>
 
 =cut
+
+$ENV{TEST_PROG_ARGS} ||= '';
 
 SKIP: {
     unless ( -e "runtime/parrot/dynext/libnci_test$PConfig{load_ext}" ) {
@@ -1369,9 +1371,11 @@ ok
 got null
 OUTPUT
 
-    # Tests with callback functions
+  # Tests with callback functions
+  my @todo = $ENV{TEST_PROG_ARGS} =~ /-j/ ?
+    ( todo => 'RT #49718, add scheduler tasks to JIT' ) : ();
 
-    pasm_output_is( <<'CODE', <<'OUTPUT', "nci_cb_C1 - PASM" );
+  pasm_output_is( <<'CODE', <<'OUTPUT', "nci_cb_C1 - PASM", @todo );
 
   # we need a flag if the call_back is already done
   new P10, 'Integer'
@@ -1430,7 +1434,7 @@ external data: succeeded
 done.
 OUTPUT
 
-    pir_output_is( <<'CODE', <<'OUTPUT', "nci_cb_C1 - PIR" );
+    pir_output_is( <<'CODE', <<'OUTPUT', "nci_cb_C1 - PIR", @todo );
 
 .sub test :main
 
@@ -1504,7 +1508,7 @@ external data: succeeded
 the callback has run
 OUTPUT
 
-    pasm_output_is( <<'CODE', <<'OUTPUT', "nci_cb_C2 - PASM" );
+    pasm_output_is( <<'CODE', <<'OUTPUT', "nci_cb_C2 - PASM", @todo );
   # we need a flag if the call_back is already done
   new P10, 'Integer'
   set_global "cb_done", P10
@@ -1563,7 +1567,7 @@ external data: 77
 done.
 OUTPUT
 
-    pir_output_is( <<'CODE', <<'OUTPUT', "nci_cb_C3 - PIR" );
+    pir_output_is( <<'CODE', <<'OUTPUT', "nci_cb_C3 - PIR", @todo );
 
 
 .include "datatypes.pasm"
@@ -1650,7 +1654,7 @@ external data: 99
 the callback has run
 OUTPUT
 
-    pasm_output_is( <<'CODE', <<'OUTPUT', "nci_cb_D1 - PASM" );
+    pasm_output_is( <<'CODE', <<'OUTPUT', "nci_cb_D1 - PASM", @todo );
 
   # we need a flag if the call_back is already done
   new P10, 'Integer'
@@ -1709,7 +1713,7 @@ external data: succeeded
 done.
 OUTPUT
 
-    pasm_output_is( <<'CODE', <<'OUTPUT', "nci_cb_D2 - PASM" );
+    pasm_output_is( <<'CODE', <<'OUTPUT', "nci_cb_D2 - PASM", @todo );
   # we need a flag if the call_back is already done
   new P10, 'Integer'
   set_global "cb_done", P10
@@ -1768,7 +1772,7 @@ external data: 88
 done.
 OUTPUT
 
-    pir_output_is( <<'CODE', <<'OUTPUT', "nci_cb_D2 - PIR" );
+    pir_output_is( <<'CODE', <<'OUTPUT', "nci_cb_D2 - PIR", @todo );
 
 .sub test :main
 
@@ -1842,7 +1846,7 @@ external data: 88
 the callback has run
 OUTPUT
 
-    pir_output_is( <<'CODE', <<'OUTPUT', "nci_cb_D3 - PIR" );
+    pir_output_is( <<'CODE', <<'OUTPUT', "nci_cb_D3 - PIR", @todo );
 
 
 .include "datatypes.pasm"

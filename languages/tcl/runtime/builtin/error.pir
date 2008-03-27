@@ -12,7 +12,7 @@
 .sub '&error'
   .param pmc argv :slurpy
 
-  .local int argc 
+  .local int argc
   argc = argv
 
   if argc < 1 goto badargs
@@ -21,7 +21,7 @@
   .local pmc errorInfo, errorCode
   if argc == 3 goto arg_3
   if argc == 2 goto arg_2
- 
+
   errorInfo = new 'TclString'
   errorInfo = ''
   errorCode = new 'TclString'
@@ -54,4 +54,4 @@ badargs:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

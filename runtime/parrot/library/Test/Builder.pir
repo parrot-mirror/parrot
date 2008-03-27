@@ -351,7 +351,7 @@ declared a plan or if you pass an invalid argument.
     throw plan_exception
 
   FINISH_PLAN:
-    unless vivify_global_testplan goto WRITE_HEADER 
+    unless vivify_global_testplan goto WRITE_HEADER
     store_global 'Test::Builder::_singleton', 'testplan', testplan
 
   WRITE_HEADER:
@@ -586,7 +586,7 @@ also calls C<exit>.
 
     .local pmc number
     number = new 'Integer'
-    
+
     .local int count
     count  = results
     number = count
@@ -620,7 +620,7 @@ to the Perl 6 internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2005-2007, The Perl Foundation.
+Copyright (C) 2005-2008, The Perl Foundation.
 
 =cut
 
@@ -628,4 +628,4 @@ Copyright (C) 2005-2007, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

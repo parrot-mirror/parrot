@@ -115,7 +115,7 @@ EH_LOOP_NEXT:
     inc i
     goto EH_LOOP
 EH_LOOP_END:
-    
+
     # If we didn't find the current finally block, we're shafted.
     if found >= 0 goto NOT_SHAFTED
     ex = new .Exception
@@ -174,7 +174,7 @@ REF:
 NO_NS:
     tmp = pclass
     pclass_ns = concat tmp
-    
+
     # Return class and its namespace.
 DONE:
     .return (pclass, pclass_ns)
@@ -184,4 +184,4 @@ DONE:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

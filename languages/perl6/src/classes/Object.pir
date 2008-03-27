@@ -85,7 +85,7 @@ Parrot class via the C<get_class> opcode.
     ##  directly as subs into the class' namespace.
     ##  get the class' namespace object
     .local pmc ns
-    ns = class.'pmc_namespace'()
+    ns = class.'get_namespace'()
     ##  iterate over Perl6Object's methods, adding them to the namespace
     .local pmc methods, iter
     $P0 = get_class 'Perl6Object'
@@ -132,6 +132,88 @@ Parrot class via the C<get_class> opcode.
     .return (protoobject)
 .end
 
+=item !keyword_class(name)
+
+Internal helper method to create a class.
+
+=cut
+
+.sub '!keyword_class' :method
+    .param string name
+    .local pmc class, resolve_list, methods, iter
+
+    # Create class.
+    class = newclass name
+
+    # Set resolve list to include all methods of the class.
+    methods = inspect class, 'methods'
+    iter = new 'Iterator', methods
+    resolve_list = new 'ResizableStringArray'
+resolve_loop:
+    unless iter goto resolve_loop_end
+    $P0 = shift iter
+    push resolve_list, $P0
+    goto resolve_loop
+resolve_loop_end:
+    class.resolve_method(resolve_list)
+
+    .return(class)
+.end
+
+=item !keyword_role(name)
+
+Internal helper method to create a role.
+
+=cut
+
+.sub '!keyword_role' :method
+    .param string name
+    .local pmc info, role
+
+    # Need to make sure it ends up attached to the right
+    # namespace.
+    info = new 'Hash'
+    info['name'] = name
+    $P0 = new 'ResizablePMCArray'
+    $P0[0] = name
+    info['namespace'] = $P0
+
+    # Create role.
+    role = new 'Role', info
+
+    # Stash in namespace.
+    $P0 = new 'ResizableStringArray'
+    set_hll_global $P0, name, role
+
+    .return(role)
+.end
+
+=item !keyword_does(class, role_name)
+
+Internal helper method to implement the functionality of the does keyword.
+
+=cut
+
+.sub '!keyword_does' :method
+    .param pmc class
+    .param string role_name
+    .local pmc role
+    role = get_hll_global role_name
+    addrole class, role
+.end
+
+=item !keyword_has(class, attr_name)
+
+Adds an attribute with the given name to the class.
+
+=cut
+
+.sub '!keyword_has' :method
+    .param pmc class
+    .param string attr_name
+    addattribute class, attr_name
+.end
+
 =back
 
 =head2 Object methods
@@ -145,8 +227,33 @@ Create a new object having the same class as the invocant.
 =cut
 
 .sub 'new' :method
+    .param pmc init_attribs :named :slurpy
+
+    # Instantiate.
     $P0 = self.'HOW'()
     $P1 = new $P0
+
+    # Initialize each attribute with an Undef or the supplied value.
+    .local pmc attribs, iter
+    attribs = inspect $P0, "attributes"
+    iter = new 'Iterator', attribs
+  iter_loop:
+    unless iter goto iter_end
+    $S0 = shift iter
+    $S1 = substr $S0, 2
+    $I0 = exists init_attribs[$S1]
+    if $I0 goto have_init_value
+    $P2 = new 'Undef'
+    goto init_done
+  have_init_value:
+    $P2 = init_attribs[$S1]
+  init_done:
+    push_eh set_attrib_eh
+    setattribute $P1, $S0, $P2
+set_attrib_eh:
+    goto iter_loop
+  iter_end:
+
     .return ($P1)
 .end
 
@@ -215,6 +322,17 @@ Defines the .true method on all objects via C<prefix:?>.
  .return 'prefix:?'(self)
 .end
 
+=item say()
+
+Print the object
+
+=cut
+
+.sub 'say' :method
+    $P0 = get_hll_global 'say'
+    .return $P0(self)
+.end
+
 =back
 
 =head2 Protoobject methods
@@ -272,6 +390,17 @@ is just itself.
     .return (self)
 .end
 
+=item ACCEPTS(topic)
+
+=cut
+
+.sub 'ACCEPTS' :method
+    .param pmc topic
+    $P0 = self.'HOW'()
+    $I0 = does topic, $P0
+    .return 'prefix:?'($I0)
+.end
+
 =back
 
 =cut
@@ -280,4 +409,4 @@ is just itself.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

@@ -6,7 +6,10 @@
 use strict;
 use warnings;
 
-use Test::More tests => 12;
+use Test::More;
+plan( skip_all => "\nRelevant only when working in checkout from repository" )
+    unless (-e 'DEVELOPING');
+plan( tests => 12 );
 use Carp;
 use Cwd;
 use File::Copy;
@@ -40,6 +43,7 @@ ok( $manifest_lines_ref, "prepare_manifest_skip() returned" );
     ok( !$need_for_file, "No need to regenerate $f" );
     chdir $cwd
         or croak "Unable to change back from temporary directory after testing";
+    unlink qq{$tdir/$f} or croak "Unable to delete file from tempdir";
 }
 
 # 2:  Copy the real MANIFEST to the tempdir but mangle it there.
@@ -69,6 +73,7 @@ ok( $manifest_lines_ref, "prepare_manifest_skip() returned" );
     ok( $need_for_file,                             "Need to regenerate $f" );
     ok( $mani->print_manifest($manifest_lines_ref), "print_manifest() returned true" );
     ok( -f $f,                                      "$f has been created in tempdir" );
+    unlink qq{$tdir/$f} or croak "Unable to delete file from tempdir";
     chdir $cwd
         or croak "Unable to change back from temporary directory after testing";
 }

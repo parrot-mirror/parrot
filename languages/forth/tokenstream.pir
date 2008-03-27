@@ -87,7 +87,7 @@ numeric:
     $I0 = str
     token = new 'Integer'
     token = $I0
-    
+
 return:
     .return(token)
 .end
@@ -118,4 +118,4 @@ return:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -49,9 +49,9 @@ Francois Perrad.
     end
   _handler:
     .local pmc e
-    .local string s
-    .get_results (e, s)
-    print s
+    .local string msg
+    .get_results (e, msg)
+    print msg
     print "\n"
   L1:
     end
@@ -65,4 +65,4 @@ Francois Perrad.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

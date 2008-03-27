@@ -26,7 +26,7 @@ src/builtins/inplace.pir - Inplace assignments
     .local pmc isbol
     isbol = get_global '$isbol'
     .local pmc iter
-    iter = new .Iterator, args
+    iter = new 'Iterator', args
   iter_loop:
     unless iter goto iter_end
     $S0 = shift iter
@@ -66,4 +66,4 @@ maintainer.  Patches and suggestions can be sent to
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

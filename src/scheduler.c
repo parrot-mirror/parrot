@@ -19,6 +19,10 @@ exceptions, async I/O, and concurrent tasks (threads).
 #include "parrot/parrot.h"
 #include "parrot/scheduler_private.h"
 
+#include "pmc/pmc_scheduler.h"
+#include "pmc/pmc_task.h"
+#include "pmc/pmc_timer.h"
+
 #include "scheduler.str"
 
 #define CX_DEBUG 0
@@ -463,7 +467,7 @@ PARROT_API
 void
 Parrot_cx_send_message(PARROT_INTERP, ARGIN(STRING *messagetype), ARGIN_NULLOK(PMC *payload))
 {
-    if(interp->scheduler) {
+    if (interp->scheduler) {
         Parrot_Scheduler * sched_struct = PARROT_SCHEDULER(interp->scheduler);
         PMC *message = pmc_new(interp, enum_class_SchedulerMessage);
         VTABLE_set_string_native(interp, message, messagetype);
@@ -725,7 +729,6 @@ static void
 scheduler_process_messages(PARROT_INTERP, ARGMOD(PMC *scheduler))
 {
     Parrot_Scheduler * sched_struct = PARROT_SCHEDULER(scheduler);
-    INTVAL num_messages, index;
     PMC *message;
 
 #if CX_DEBUG

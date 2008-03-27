@@ -257,8 +257,7 @@ Sets the x position of the LCD.
     .param int val
 
     $I0 = classoffset self, "SDL::LCD"
-    add $I0, 2
-    $P0 = getattribute self, $I0
+    $P0 = getattribute self, 'xpos'
     $P0 = val
 .end
 
@@ -271,9 +270,7 @@ Sets the y position of the LCD.
 .sub ypos :method
     .param int val
 
-    $I0 = classoffset self, "SDL::LCD"
-    add $I0, 3
-    $P0 = getattribute self, $I0
+    $P0 = getattribute self, 'ypos'
     $P0 = val
 .end
 
@@ -287,7 +284,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2007, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 
 =cut
 
@@ -295,4 +292,4 @@ Copyright (C) 2004-2007, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

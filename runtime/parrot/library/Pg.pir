@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -72,16 +72,24 @@ A class method that returns a new connection object.
 .sub connectdb :method
     .param string args
     .local pmc con, connectdb, o_con
-    connectdb = get_global 'PQconnectdb' 
+    connectdb = get_global 'PQconnectdb'
     con = connectdb(args)
     $P0 = get_class ['Pg';'Conn']
-    o_con = new $P0, con
+
+    .local pmc init_data
+    init_data        = new 'Hash'
+    init_data['con'] = con
+    o_con            = new $P0, init_data
+
     # verify success
     .local int ok
     ok = o_con.'status'()
     if ok == CONNECTION_OK goto is_ok
-    con = new 'Undef'
-    o_con = new $I0, con
+
+    con              = new 'Undef'
+    init_data['con'] = con
+
+    o_con = new $P0, init_data
 is_ok:
     .return (o_con)
 .end
@@ -99,15 +107,20 @@ Object initializer. Takes a C<PGconn> structure.
 =cut
 
 .sub init_pmc :vtable :method
-    .param pmc con
+    .param pmc init
+
+    .local pmc con
+    con = init['con']
     setattribute self, 'con', con
 .end
 
 .sub get_bool :vtable :method
     .local pmc con
     con = getattribute self, 'con'
-    $I0 = typeof con
-    $I1 = isne $I0, .Undef
+
+    $I0 = isa con, 'Undef'
+    $I1 = not $I0
+
     .return ($I1)
 .end
 
@@ -167,7 +180,8 @@ Execute the SQL command and return a Pg;Result object.
     .param pmc res
     .local pmc o_res
     $P0 = get_class ['Pg';'Result']
-    o_res = new $P0, res
+    o_res = new $P0
+    setattribute o_res, 'res', res
     .return (o_res)
 .end
 
@@ -270,7 +284,7 @@ Install a notice receiver callback. The callback will be called as
   .sub 'notice'
     .param pmc arg
     .param pmc res
-    
+
 
 =cut
 
@@ -294,18 +308,6 @@ Install a notice receiver callback. The callback will be called as
 =head2 Result Methods
 
 =over
-
-=item __init(res)
-
-Object initializer. Takes a C<PGresult> structure.
-
-=cut
-
-.sub init_pmc :vtable :method
-    .param pmc res
-    setattribute self, 'res', res
-    need_finalize self
-.end
 
 =item __finalize()
 
@@ -453,4 +455,4 @@ Return true if the result value at (r,c) is NULL.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

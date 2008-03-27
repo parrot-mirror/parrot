@@ -47,8 +47,9 @@ Private method to sets the values in the junction.
 =cut
 
 .sub '!values' :method
-    .param pmc list
-    setattribute self, "@values", list
+    .param pmc l
+    l = 'list'(l :flat)
+    setattribute self, "@values", l
 .end
 
 
@@ -67,29 +68,6 @@ Private method to set the type of the junction.
 ret_type:
     type = getattribute self, "$type"
     .return(type)
-.end
-
-
-=item pick()
-
-Gets a random value from the junction.
-
-=cut
-
-.sub 'pick' :method
-    # Need to know the number of elements.
-    .local pmc values
-    values = getattribute self, "@values"
-    .local int elems
-    elems = elements values
-
-    # Get random index.
-    .local int idx
-    idx = 'prefix:rand'(elems)
-
-    # Return that value.
-    $P0 = values[idx]
-    .return($P0)
 .end
 
 
@@ -137,7 +115,7 @@ Builds an 'all' junction from its arguments.
 
     junc."!values"(args)
     junc."!type"(JUNCTION_TYPE_ALL)
-    
+
     .return (junc)
 .end
 
@@ -197,7 +175,7 @@ Builds a 'one' junction from its arguments.
 
     junc."!values"(args)
     junc."!type"(JUNCTION_TYPE_ONE)
-    
+
     .return (junc)
 .end
 
@@ -1341,17 +1319,17 @@ nsa:
     inc i
     goto loop
 loop_end:
-    
+
     # Build junction of results.
     .local pmc new_junc
     .local pmc new_values
     .local pmc iterator
     .local pmc type
-    
+
     new_junc = new 'Junction'
     type = j.'!type'()
     new_junc.'!type'(type)
-    
+
     new_values = new 'List'
     iterator = iter ResultHash
 nv_loop:
@@ -1361,7 +1339,7 @@ nv_loop:
     goto nv_loop
 nv_loop_end:
     new_junc.'!values'(new_values)
-    
+
     .return(new_junc)
 .end
 
@@ -1371,7 +1349,7 @@ nv_loop_end:
     .param pmc j
     .param pmc x
     .param int second_arg
-    
+
     # We need to find how many values are equal.
     .local pmc values
     .local int num_equal
@@ -1394,7 +1372,7 @@ not_sa:
     inc i
     goto loop
 end_loop:
-    
+
     # Now go by juction type.
     .local int type
     type = j.'!type'()
@@ -1453,17 +1431,17 @@ loop:
     inc i
     goto loop
 loop_end:
-    
+
     # Build junction of results.
     .local pmc new_junc
     .local pmc new_values
     .local pmc iterator
     .local pmc type
-    
+
     new_junc = new 'Junction'
     type = j.'!type'()
     new_junc.'!type'(type)
-    
+
     new_values = new 'List'
     iterator = iter ResultHash
 nv_loop:
@@ -1473,7 +1451,7 @@ nv_loop:
     goto nv_loop
 nv_loop_end:
     new_junc.'!values'(new_values)
-    
+
     .return(new_junc)
 .end
 
@@ -1486,4 +1464,4 @@ nv_loop_end:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

@@ -32,10 +32,10 @@ Array with commandline parameters.
     .local pmc app
 
     load_bytecode "examples/sdl/tetris/app.pir"
-    
+
     # create the tetris app
     app = new "Tetris::App"
-    
+
     app."flag"( "show blocksize", 1 )
     # run the tetris app
     app."run"()
@@ -56,7 +56,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 
 =cut
 
@@ -64,4 +64,4 @@ Copyright (C) 2004, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

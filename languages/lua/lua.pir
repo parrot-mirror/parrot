@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -346,9 +346,9 @@ show version information.
 
 
 .sub 'dostring' :anon
-    .param string s
+    .param string buf
     .param string name
-    ($P0, $S0) = lua_loadbuffer(s, name)
+    ($P0, $S0) = lua_loadbuffer(buf, name)
     if null $P0 goto L1
     ($P0 :slurpy) = docall($P0)
     .return report($P0 :flat)
@@ -365,12 +365,8 @@ show version information.
     $P0 = env.'rawget'(k_require)
     new $P1, 'LuaString'
     set $P1, name
-    push_eh _handler
-    $P0($P1)
-    .return (0)
-  _handler:
-    .get_results ($P0, $S0)
-    .return report(1, $S0)
+    ($P0 :slurpy) = docall($P0, $P1)
+    .return report($P0 :flat)
 .end
 
 
@@ -478,7 +474,7 @@ show version information.
 
 
 .sub 'print_version' :anon
-    l_message('', "Lua 5.1 on Parrot  Copyright (C) 2005-2007, The Perl Foundation.")
+    l_message('', "Lua 5.1 on Parrot  Copyright (C) 2005-2008, The Perl Foundation.")
 .end
 
 
@@ -536,4 +532,4 @@ Francois Perrad
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

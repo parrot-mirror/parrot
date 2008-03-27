@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -20,6 +20,7 @@ Subroutines, continuations, co-routines and other fun stuff...
 
 #include "parrot/parrot.h"
 #include "parrot/oplib/ops.h"
+#include "sub.str"
 
 /* HEADERIZER HFILE: include/parrot/sub.h */
 
@@ -150,19 +151,19 @@ Parrot_cont *
 new_continuation(PARROT_INTERP, ARGIN_NULLOK(const Parrot_cont *to))
 {
     Parrot_cont    * const cc     = mem_allocate_typed(Parrot_cont);
-    Parrot_Context * const to_ctx = to ? to->to_ctx : CONTEXT(interp->ctx);
+    Parrot_Context * const to_ctx = to ? to->to_ctx : CONTEXT(interp);
 
-    cc->to_ctx = to_ctx;
-    cc->from_ctx = CONTEXT(interp->ctx);
+    cc->to_ctx        = to_ctx;
+    cc->from_ctx      = CONTEXT(interp);
     cc->dynamic_state = NULL;
-    cc->runloop_id = 0;
-    CONTEXT(interp->ctx)->ref_count++;
+    cc->runloop_id    = 0;
+    CONTEXT(interp)->ref_count++;
     if (to) {
         cc->seg = to->seg;
         cc->address = to->address;
     }
     else {
-        cc->seg = interp->code;
+        cc->seg     = interp->code;
         cc->address = NULL;
     }
     cc->current_results = to_ctx->current_results;
@@ -186,13 +187,13 @@ new_ret_continuation(PARROT_INTERP)
 {
     Parrot_cont * const cc = mem_allocate_typed(Parrot_cont);
 
-    cc->to_ctx = CONTEXT(interp->ctx);
-    cc->from_ctx = NULL;    /* filled in during a call */
-    cc->dynamic_state = NULL;
-    cc->runloop_id = 0;
+    cc->to_ctx          = CONTEXT(interp);
+    cc->from_ctx        = NULL;    /* filled in during a call */
+    cc->dynamic_state   = NULL;
+    cc->runloop_id      = 0;
     cc->seg = interp->code;
     cc->current_results = NULL;
-    cc->address = NULL;
+    cc->address         = NULL;
     return cc;
 }
 
@@ -270,15 +271,10 @@ invalidate_retc_context(PARROT_INTERP, ARGMOD(PMC *cont))
         cont->vtable = interp->vtables[enum_class_Continuation];
         ctx->ref_count++;
         cont = ctx->current_cont;
-        ctx = PMC_cont(cont)->from_ctx;
+        ctx  = PMC_cont(cont)->from_ctx;
     }
 
 }
-
-/* XXX use method lookup - create interface
- *                         see also pbc.c
- */
-extern PMC* Parrot_NameSpace_nci_get_name(PARROT_INTERP, PMC* pmc);
 
 /*
 
@@ -303,15 +299,14 @@ Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
             return s->name;
         }
         else {
-            PMC *ns_array;
-            STRING *j;
+            PMC    *ns_array;
+            STRING *j = CONST_STRING(interp, ";");
             STRING *res;
 
             Parrot_block_DOD(interp);
-            ns_array = Parrot_NameSpace_nci_get_name(interp, s->namespace_stash);
+            ns_array = Parrot_ns_get_name(interp, s->namespace_stash);
             if (s->name)
                 VTABLE_push_string(interp, ns_array, s->name);
-            j = const_string(interp, ";");
 
             res = string_join(interp, j, ns_array);
             Parrot_unblock_DOD(interp);
@@ -325,7 +320,9 @@ Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
 
 =item C<int Parrot_Context_get_info>
 
-RT#48260: Not yet documented!!!
+Takes pointers to a context and its information table.
+Populates the table and returns 0 or 1. XXX needs explanation
+Used by Parrot_Context_infostr.
 
 =cut
 
@@ -340,7 +337,7 @@ Parrot_Context_get_info(PARROT_INTERP, ARGIN(const parrot_context_t *ctx),
     DECL_CONST_CAST;
 
     /* set file/line/pc defaults */
-    info->file     = (char *) const_cast("(unknown file)");
+    info->file     = CONST_STRING(interp, "(unknown file)");
     info->line     = -1;
     info->pc       = -1;
     info->nsname   = NULL;
@@ -357,8 +354,7 @@ Parrot_Context_get_info(PARROT_INTERP, ARGIN(const parrot_context_t *ctx),
     }
 
     /* fetch Parrot_sub of the current sub in the given context */
-    if (!VTABLE_isa(interp, ctx->current_sub,
-                    const_string(interp, "Sub")))
+    if (!VTABLE_isa(interp, ctx->current_sub, CONST_STRING(interp, "Sub")))
         return 1;
 
     sub = PMC_sub(ctx->current_sub);
@@ -371,7 +367,7 @@ Parrot_Context_get_info(PARROT_INTERP, ARGIN(const parrot_context_t *ctx),
         info->fullname = info->subname;
     }
     else {
-        info->nsname = VTABLE_get_string(interp, sub->namespace_name);
+        info->nsname   = VTABLE_get_string(interp, sub->namespace_name);
         info->fullname = Parrot_full_sub_name(interp, ctx->current_sub);
     }
 
@@ -400,12 +396,11 @@ Parrot_Context_get_info(PARROT_INTERP, ARGIN(const parrot_context_t *ctx),
             if (n >= offs) {
                 /* set source line and file */
                 info->line = debug->base.data[i];
-                info->file = string_to_cstring(interp,
-                Parrot_debug_pc_to_filename(interp, debug, i));
+                info->file = Parrot_debug_pc_to_filename(interp, debug, i);
                 break;
             }
             ADD_OP_VAR_PART(interp, sub->seg, pc, var_args);
-            n += op_info->op_count + var_args;
+            n  += op_info->op_count + var_args;
             pc += op_info->op_count + var_args;
         }
     }
@@ -416,7 +411,8 @@ Parrot_Context_get_info(PARROT_INTERP, ARGIN(const parrot_context_t *ctx),
 
 =item C<STRING* Parrot_Context_infostr>
 
-RT#48260: Not yet documented!!!
+Formats context information for display.  Takes a context pointer and
+returns a pointer to the text.  Used in debug.c and warnings.c
 
 =cut
 
@@ -429,28 +425,19 @@ STRING*
 Parrot_Context_infostr(PARROT_INTERP, ARGIN(const parrot_context_t *ctx))
 {
     Parrot_Context_info info;
-    const char* const msg = (CONTEXT(interp->ctx) == ctx)
+    STRING             *res = NULL;
+    const char * const  msg = (CONTEXT(interp) == ctx)
         ? "current instr.:"
         : "called from Sub";
-    STRING *res;
 
     Parrot_block_DOD(interp);
     if (Parrot_Context_get_info(interp, ctx, &info)) {
         static const char unknown_file[] = "(unknown file)";
         DECL_CONST_CAST;
-        const char *file = info.file;
 
         res = Parrot_sprintf_c(interp,
-            "%s '%Ss' pc %d (%s:%d)", msg,
-            info.fullname, info.pc, file, info.line);
-
-        /* free the non-constant string, but not the constant one */
-        if (strncmp(unknown_file, file, sizeof (unknown_file) - 1) < 0)
-            string_cstring_free((char *)const_cast(info.file));
-        /* XXX This is probably a source of mis-freeing. */
-    }
-    else {
-        res = NULL;
+            "%s '%Ss' pc %d (%Ss:%d)", msg,
+            info.fullname, info.pc, info.file, info.line);
     }
 
     Parrot_unblock_DOD(interp);
@@ -502,7 +489,12 @@ Parrot_find_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(const parrot_conte
 
 =item C<PMC* parrot_new_closure>
 
-RT#48260: Not yet documented!!!
+Used where? XXX
+
+Creates a new closure, saving the context information.  Takes a pointer
+to a subroutine.
+
+Returns a pointer to the closure, (or throws exceptions if invalid).
 
 =cut
 
@@ -523,7 +515,7 @@ parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
      * the given sub_pmc has to have an :outer(sub) that is
      * this subroutine
      */
-    parrot_context_t * const ctx = CONTEXT(interp->ctx);
+    parrot_context_t * const ctx = CONTEXT(interp);
     if (PMC_IS_NULL(sub->outer_sub)) {
         real_exception(interp, NULL, INVALID_OPERATION,
                 "'%Ss' isn't a closure (no :outer)", sub->name);

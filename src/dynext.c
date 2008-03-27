@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -18,6 +18,7 @@ src/dynext.c - Dynamic extensions to Parrot
 
 #include "parrot/parrot.h"
 #include "parrot/dynext.h"
+#include "dynext.str"
 
 /* HEADERIZER HFILE: include/parrot/dynext.h */
 
@@ -40,12 +41,11 @@ static STRING * get_path(PARROT_INTERP,
     ARGMOD(STRING *lib),
     ARGOUT(void **handle),
     ARGIN(STRING *wo_ext),
-    ARGIN(STRING *ext))
+    ARGIN_NULLOK(STRING *ext))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
-        __attribute__nonnull__(5)
         FUNC_MODIFIES(*lib)
         FUNC_MODIFIES(*handle);
 
@@ -112,11 +112,10 @@ static void
 set_cstring_prop(PARROT_INTERP, ARGMOD(PMC *lib_pmc), ARGIN(const char *what),
         ARGIN(STRING *name))
 {
-    STRING *key;
+    STRING * const key  = const_string(interp, what);
+    PMC    * const prop = constant_pmc_new(interp, enum_class_String);
 
-    PMC * const prop = pmc_new(interp, enum_class_String);
     VTABLE_set_string_native(interp, prop, name);
-    key = const_string(interp, what);
     VTABLE_setprop(interp, lib_pmc, key, prop);
 }
 
@@ -138,12 +137,11 @@ store_lib_pmc(PARROT_INTERP, ARGIN(PMC *lib_pmc), ARGIN(STRING *path),
     PMC * const dyn_libs = VTABLE_get_pmc_keyed_int(interp, iglobals,
             IGLOBALS_DYN_LIBS);
 
-    /*
-     * remember path/file in props
-     */
+    /* remember path/file in props */
     set_cstring_prop(interp, lib_pmc, "_filename", path);  /* XXX */
     set_cstring_prop(interp, lib_pmc, "_type", type);
     set_cstring_prop(interp, lib_pmc, "_lib_name", lib_name);
+
     VTABLE_set_pmc_keyed_str(interp, dyn_libs, path, lib_pmc);
 }
 
@@ -186,7 +184,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static STRING *
 get_path(PARROT_INTERP, ARGMOD(STRING *lib), ARGOUT(void **handle),
-        ARGIN(STRING *wo_ext), ARGIN(STRING *ext))
+        ARGIN(STRING *wo_ext), ARGIN_NULLOK(STRING *ext))
 {
     STRING *path, *full_name;
     const char *err = NULL;    /* buffer returned from Parrot_dlerror */
@@ -270,6 +268,22 @@ get_path(PARROT_INTERP, ARGMOD(STRING *lib), ARGOUT(void **handle),
         }
     }
 #endif
+
+    /* And on cygwin replace a leading "lib" by "cyg". */
+#ifdef __CYGWIN__
+    if (!STRING_IS_EMPTY(lib) && memcmp(lib->strstart, "lib", 3) == 0) {
+        strcpy(path->strstart, lib->strstart);
+
+        path->strstart[0] = 'c';
+        path->strstart[1] = 'y';
+        path->strstart[2] = 'g';
+
+        *handle           = Parrot_dlopen(path->strstart);
+
+        if (*handle)
+            return path;
+    }
+#endif
     err = Parrot_dlerror();
     Parrot_warn(interp, PARROT_WARNINGS_DYNEXT_FLAG,
                 "Couldn't load '%Ss': %s\n",
@@ -299,19 +313,11 @@ Parrot_init_lib(PARROT_INTERP,
     if (load_func)
         lib_pmc = (*load_func)(interp);
 
-    if (!load_func || !lib_pmc) {
-        /* seems to be a native/NCI lib */
-        /*
-         * this PMC should better be constant, but then all the contents
-         * and the metadata have to be constant too
-         * s. also tools/build/ops2c.pl and lib/Parrot/Pmc2c.pm
-         */
-        lib_pmc = pmc_new(interp, enum_class_ParrotLibrary);
-    }
+    /* seems to be a native/NCI lib */
+    if (!load_func || !lib_pmc)
+        lib_pmc = constant_pmc_new(interp, enum_class_ParrotLibrary);
 
-    /*
-     *  Call init, if it exists
-     */
+    /*  Call init, if it exists */
     if (init_func)
         (init_func)(interp, lib_pmc);
 
@@ -344,8 +350,9 @@ run_init_lib(PARROT_INTERP, ARGIN(void *handle),
      * something during library loading doesn't stand a DOD run
      */
     Parrot_block_DOD(interp);
+
     /* get load_func */
-    if (lib_name != NULL) {
+    if (lib_name) {
         STRING * const load_func_name = Parrot_sprintf_c(interp,
                                         "Parrot_lib_%Ss_load", lib_name);
         char * const cload_func_name = string_to_cstring(interp, load_func_name);
@@ -373,7 +380,7 @@ run_init_lib(PARROT_INTERP, ARGIN(void *handle),
     VTABLE_set_pointer(interp, lib_pmc, handle);
 
     if (!load_func)
-        type = const_string(interp, "NCI");
+        type = CONST_STRING(interp, "NCI");
     else {
         /* we could set a private flag in the PMC header too
          * but currently only ops files have struct_val set
@@ -383,6 +390,7 @@ run_init_lib(PARROT_INTERP, ARGIN(void *handle),
 
     /* remember lib_pmc in iglobals */
     store_lib_pmc(interp, lib_pmc, wo_ext, type, lib_name);
+
     /* UNLOCK */
     Parrot_unblock_DOD(interp);
 
@@ -451,15 +459,15 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_clone_lib_into(ARGMOD(Interp *d), ARGMOD(Interp *s), ARGIN(PMC *lib_pmc))
 {
-    STRING * const wo_ext = clone_string_into(d, s, VTABLE_getprop(s, lib_pmc,
-        const_string(s, "_filename")));
-    STRING * const lib_name = clone_string_into(d, s, VTABLE_getprop(s, lib_pmc,
-        const_string(s, "_lib_name")));
+    STRING * const wo_ext = clone_string_into(d, s,
+        VTABLE_getprop(s, lib_pmc, CONST_STRING(s, "_filename")));
+    STRING * const lib_name = clone_string_into(d, s,
+        VTABLE_getprop(s, lib_pmc, CONST_STRING(s, "_lib_name")));
     void * const handle = PMC_data(lib_pmc);
-    STRING * const type = VTABLE_get_string(s,
-        VTABLE_getprop(s, lib_pmc, const_string(s, "_type")));
+    STRING * const type =
+        VTABLE_get_string(s, VTABLE_getprop(s, lib_pmc, CONST_STRING(s, "_type")));
 
-    if (!string_equal(s, type, const_string(s, "Ops"))) {
+    if (!string_equal(s, type, CONST_STRING(s, "Ops"))) {
         /* we can't clone oplibs in the normal way, since they're actually
          * shared between interpreters dynop_register modifies the (statically
          * allocated) op_lib_t structure from core_ops.c, for example.

@@ -30,6 +30,47 @@ Return the elements of the list joined by spaces.
     .return ($S0)
 .end
 
+=item ACCEPTS(topic)
+
+=cut
+
+.sub 'ACCEPTS' :method
+    .param pmc topic
+    .local int i
+
+    .local string what
+    what = topic.'WHAT'()
+    if what == "List" goto acc_list
+    goto no_match
+
+acc_list:
+    # Smartmatch against another list. Smartmatch each
+    # element.
+    .local int count_1, count_2
+    count_1 = elements self
+    count_2 = elements topic
+    if count_1 != count_2 goto no_match
+    i = 0
+list_cmp_loop:
+    if i >= count_1 goto list_cmp_loop_end
+    .local pmc elem_1, elem_2
+    elem_1 = self[i]
+    elem_2 = topic[i]
+    ($I0) = elem_1.ACCEPTS(elem_2)
+    unless $I0 goto no_match
+    inc i
+    goto list_cmp_loop
+list_cmp_loop_end:
+    goto match
+
+no_match:
+    $P0 = get_hll_global ['Bool'], 'False'
+    .return($P0)
+match:
+    $P0 = get_hll_global ['Bool'], 'True'
+    .return($P0)
+.end
+
 
 =item elems()
 
@@ -63,7 +104,7 @@ Prepends ELEMENTS to the front of the list.
     unshift self, tmp
     inc i
     goto loop
-  done:	
+  done:
 .end
 
 =item keys()
@@ -77,22 +118,22 @@ Returns a List containing the keys of the List.
     .local pmc res
     .local int len
     .local int i
-	
+
     res = new 'List'
     len = elements self
     i = 0
-	
+
   loop:
     if i == len goto done
 
-    elem = new Integer
+    elem = new 'Integer'
     elem = i
     res.'push'(elem)
 
     inc i
     goto loop
-	
-  done:	
+
+  done:
     .return(res)
 .end
 
@@ -107,22 +148,22 @@ Returns a List containing the values of the List.
     .local pmc res
     .local int len
     .local int i
-	
+
     res = new 'List'
     len = elements self
     i = 0
-	
+
   loop:
     if i == len goto done
 
-    elem = new Integer
+    elem = new 'Integer'
     elem = self[i]
     res.'push'(elem)
 
     inc i
     goto loop
-	
-  done:	
+
+  done:
     .return(res)
 .end
 
@@ -153,12 +194,12 @@ Treats the list as a stack, popping the last item off the list and returning it.
     if len == 0 goto empty
     pop x, self
     goto done
-    
+
   empty:
     x = undef()
     goto done
 
-  done:	
+  done:
     .return (x)
 .end
 
@@ -200,7 +241,7 @@ Returns a string comprised of all of the list, separated by the string SEPARATOR
     .local string tmp
     .local int len
     .local int i
-	
+
     res = ""
 
     len = elements self
@@ -215,16 +256,16 @@ Returns a string comprised of all of the list, separated by the string SEPARATOR
     tmp = self[i]
     concat res, tmp
     concat res, sep
-    
+
     inc i
     goto loop
 
   last:
     tmp = self[i]
     concat res, tmp
-  
+
   done:
-    .return(res)	
+    .return(res)
 .end
 
 =item reverse()
@@ -237,7 +278,7 @@ Returns a list of the elements in revese order.
     .local pmc res
     .local int len
     .local int i
-    
+
     res = new 'List'
 
     len = elements self
@@ -252,10 +293,10 @@ loop:
     elem = self[len]
     res[i] = elem
     inc i
-    
+
     goto loop
 
-done:	
+done:
     .return(res)
 .end
 
@@ -293,24 +334,24 @@ Deletes the given elements from the List, replacing them with Undef.  Returns a 
     if ind == -1 goto endofarray
     if ind == last goto endofarray
     goto restofarray
-    
+
   endofarray:
     # If we're at the end of the array, remove the element entirely
     elem = pop self
     res.push(elem)
     goto next
-    
-  restofarray:	
+
+  restofarray:
     # Replace the element with undef.
     elem = self[ind]
     res.push(elem)
 
     self[ind] = newelem
-    
-  next:	
+
+  next:
     inc i
     goto loop
-  done:	
+  done:
     .return(res)
 .end
 
@@ -331,19 +372,19 @@ Checks to see if the specified index or indices have been assigned to.  Returns 
     test = 1
     len = elements indices
     i = 0
-      
+
   loop:
     if i == len goto done
 
-    ind = indices[i]   
+    ind = indices[i]
 
     test = exists self[ind]
     if test == 0 goto done
-    
+
     inc i
     goto loop
-        
-  done:	
+
+  done:
     .return 'prefix:?'(test)
 .end
 
@@ -356,25 +397,25 @@ Checks to see if the specified index or indices have been assigned to.  Returns 
     .local pmc res
     .local int len
     .local int i
-    
+
     res = new 'List'
     len = elements self
     i = 0
-    
+
   loop:
     if i == len goto done
 
-    elem = new Integer
+    elem = new 'Integer'
     elem = i
     res.'push'(elem)
 
     elem = self[i]
     res.'push'(elem)
-    
+
     inc i
     goto loop
-    
-  done:	
+
+  done:
     .return(res)
 .end
 
@@ -389,11 +430,11 @@ Checks to see if the specified index or indices have been assigned to.  Returns 
     .local pmc res
     .local int len
     .local int i
-    
+
     res = new 'List'
     len = elements self
     i = 0
-    
+
   loop:
     if i == len goto done
 
@@ -406,12 +447,91 @@ Checks to see if the specified index or indices have been assigned to.  Returns 
     pair[key] = val
 
     res.'push'(pair)
-    
+
     inc i
     goto loop
-    
-  done:	
+
+  done:
     .return(res)
+.end
+
+=item grep(...)
+
+=cut
+
+.sub grep :method
+    .param pmc test
+    .local pmc retv
+    .local pmc block
+    .local pmc block_res
+    .local pmc block_arg
+    .local int narg
+    .local int i
+
+    retv = new 'List'
+    narg = elements self
+    i = 0
+
+  loop:
+    if i == narg goto done
+    block_arg = self[i]
+
+    newclosure block, test
+    block_res = block(block_arg)
+
+    if block_res goto grepped
+    goto next
+
+  grepped:
+    retv.'push'(block_arg)
+    goto next
+
+  next:
+    inc i
+    goto loop
+
+  done:
+    .return(retv)
+.end
+
+=item first(...)
+
+=cut
+
+.sub first :method
+    .param pmc test
+    .local pmc retv
+    .local pmc block
+    .local pmc block_res
+    .local pmc block_arg
+    .local int narg
+    .local int i
+
+    narg = elements self
+    i = 0
+
+  loop:
+    if i == narg goto nomatch
+    block_arg = self[i]
+
+    newclosure block, test
+    block_res = block(block_arg)
+
+    if block_res goto matched
+
+    inc i
+    goto loop
+
+  matched:
+    retv = block_arg
+    goto done
+
+  nomatch:
+    retv = new 'Undef'
+    goto done
+
+  done:
+    .return(retv)
 .end
 
 =back
@@ -496,7 +616,7 @@ not_min:
     inc i
     goto min_elems_loop
 min_elems_loop_end:
-    
+
     # Now build result list of lists.
     .local pmc res
     res = new 'List'
@@ -534,7 +654,7 @@ The non-hyper cross operator.
     .param pmc args            :slurpy
     .local pmc res
     res = new 'List'
-    
+
     # Algorithm: we'll maintain a list of counters for each list, incrementing
     # the counter for the right-most list and, when it we reach its final
     # element, roll over the counter to the next list to the left as we go.
@@ -564,7 +684,7 @@ elem_get_loop_end:
     .local int res_count
     res_count = 0
 produce_next:
-    
+
     # Start out by building list at current counters.
     .local pmc new_list
     new_list = new 'List'
@@ -580,7 +700,7 @@ cur_perm_loop:
 cur_perm_loop_end:
     res[res_count] = new_list
     inc res_count
-    
+
     # Now increment counters.
     i = num_args - 1
 inc_counter_loop:
@@ -591,7 +711,7 @@ inc_counter_loop:
 
     # In simple case, we just increment this and we're done.
     if $I0 < $I1 goto inc_counter_loop_end
-    
+
     # Otherwise we have to carry.
     counters[i] = 0
 
@@ -641,7 +761,7 @@ not_min:
     inc i
     goto find_min_loop
 find_min_loop_end:
-    
+
     .return(cur_min)
 .end
 
@@ -678,7 +798,7 @@ not_max:
     inc i
     goto find_max_loop
 find_max_loop_end:
-    
+
     .return(cur_max)
 .end
 
@@ -697,7 +817,7 @@ Returns the elements of LIST in the opposite order.
     .local int i
 
     len = elements list
-  
+
     if len > 1 goto islist
 
     # If we're not a list, check if we're a string.
@@ -709,30 +829,30 @@ Returns the elements of LIST in the opposite order.
     eq type, 'String', parrotstring
     eq type, 'Perl6Str', perl6string
     goto islist
-    
-  parrotstring:	
+
+  parrotstring:
     .local string tmps
     tmps = elem
     elem = new 'Perl6Str'
     elem = tmps
 
-  perl6string:	
+  perl6string:
     retv = elem.'reverse'()
     goto done
 
-  islist:	
+  islist:
     retv = new 'List'
     i = 0
-    
+
   loop:
     if i == len goto done
     elem = list[i]
     retv.'unshift'(elem)
     inc i
     goto loop
-    
+
   done:
-    .return(retv)	
+    .return(retv)
 .end
 
 .sub keys :multi('List')
@@ -773,7 +893,21 @@ Returns the elements of LIST in the opposite order.
     .return list.'pairs'()
 .end
 
-## TODO: grep join map reduce sort zip
+.sub grep :multi(_,'List')
+    .param pmc test
+    .param pmc list :slurpy
+
+    .return list.'grep'(test)
+.end
+
+.sub first :multi(_,'List')
+    .param pmc test
+    .param pmc list :slurpy
+
+    .return list.'first'(test)
+.end
+
+## TODO: join map reduce sort zip
 
 =back
 
@@ -783,4 +917,4 @@ Returns the elements of LIST in the opposite order.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

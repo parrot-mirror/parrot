@@ -8,7 +8,7 @@
 	.param pmc argv
 	.local int argc, n
 	argc = argv
-	n = 3 
+	n = 3
 	unless argc == 2 goto argsok
 	$S0 = argv[1]
 	n = $S0
@@ -141,4 +141,4 @@ endif:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

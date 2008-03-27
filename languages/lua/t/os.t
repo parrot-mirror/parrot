@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -194,13 +194,16 @@ print(os.time({
     year = 2000,
     isdst = 0,
 }))
+
+-- os.time returns nil when C mktime returns -1
+-- this test needs a out of range value on any platform
 print(os.time({
     sec = 0,
     min = 0,
     hour = 0,
     day = 1,
     month = 1,
-    year = 2100,
+    year = 1000,
     isdst = 0,
 }))
 CODE

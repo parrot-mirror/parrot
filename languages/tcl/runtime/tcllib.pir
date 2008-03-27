@@ -59,7 +59,7 @@ providing a compreg-compatible method.
   # Load any dependant libraries.
   load_bytecode 'Getopt/Obj.pbc'
   load_bytecode 'PGE.pbc'
-  load_bytecode 'PGE/Text.pbc'                                                                                                                                  
+  load_bytecode 'PGE/Text.pbc'
   load_bytecode 'PGE/Util.pbc'
   load_bytecode 'TGE.pbc'
 
@@ -69,7 +69,7 @@ providing a compreg-compatible method.
   .local pmc env,tcl_env,iterator
   env = new 'Env'
   tcl_env = new 'TclArray'
-  
+
   iterator = new 'Iterator', env
   iterator = 0
 
@@ -89,7 +89,7 @@ env_loop_done:
   push_eh non_interactive
     $P1 = get_root_global ['tcl'], '$tcl_interactive'
   pop_eh
-  goto set_tcl_library 
+  goto set_tcl_library
  non_interactive:
   $P1 = new 'TclInt'
   $P1 = 0
@@ -106,11 +106,11 @@ env_loop_done:
   $S0 = config['build_dir']
   slash = config['slash']
   $S0 .= slash
-  $S0 .= 'languages' 
+  $S0 .= 'languages'
   $S0 .= slash
-  $S0 .= 'tcl' 
+  $S0 .= 'tcl'
   $S0 .= slash
-  $S0 .= 'library' 
+  $S0 .= 'library'
   .local pmc tcl_library
   tcl_library = new 'TclString'
   tcl_library = $S0
@@ -131,7 +131,7 @@ env_loop_done:
  big_endian:
   $P1['byteOrder'] = 'bigEndian'
 
- done_endian: 
+ done_endian:
   $I1 = config['intsize']
   $P1['wordSize'] = $I1
 
@@ -140,7 +140,7 @@ env_loop_done:
 
   $S1 = config['cpuarch'] # XXX first approximation
   $P1['machine'] = $S1
- 
+
   # Set default precision.
   $P1 = new 'TclInt'
   $P1 = 0
@@ -200,7 +200,7 @@ env_loop_done:
   $P0 = new 'String'
   $P0 = '0.1'
   set_root_global ['tcl'], '$tcl_version', $P0
-   
+
   #error information
   $P0 = new 'TclString'
   $P0 = 'NONE'
@@ -218,7 +218,7 @@ env_loop_done:
   $P2 = getstderr
   $P1['stderr'] = $P2
   store_global 'channels', $P1
-  
+
   # Setup the id # for channels..
   $P1 = new 'Integer'
   $P1 = 1
@@ -238,14 +238,14 @@ env_loop_done:
 
   # the regex used for namespaces
   .local pmc p6rule, colons
-  p6rule = compreg 'PGE::P6Regex'
+  p6rule = compreg 'PGE::Perl6Regex'
   colons = p6rule('\:\:+')
   set_hll_global 'colons', colons
 
   # register the TCL compiler.
   $P1 = get_root_global ['_tcl'], '__script'
   compreg 'TCL', $P1
-  
+
   # Setup a global to keep a unique id for compiled subs.
   $P1 = new 'Integer'
   $P1 = 0
@@ -273,26 +273,10 @@ env_loop_done:
   slash = $P1['slash']
   $P2 = $P1['slash']
   set_root_global ['_tcl'], 'slash', $P2
-
-  .local pmc tcl_library
-  tcl_library = get_global '$tcl_library'
-
-  $S0 = tcl_library
-  $S0 .= slash
-  $S0 .= 'parray.tcl'
-
-  .local pmc script
-  $P99 = open $S0, '<'
-  $S0 = $P99.'slurp'('')
-
-  script = get_root_global ['_tcl'], '__script'
-  
-  $P1 = script($S0)
-  $P1()
 .end
 
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

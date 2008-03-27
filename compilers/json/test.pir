@@ -1,16 +1,16 @@
-#!../../parrot 
+#!../../parrot
 .sub main :main
   .param pmc argv
 
   .local int argc
   argc = elements argv
- 
+
   if argc != 2 goto bad_args
 
   load_bytecode 'PGE.pbc'
   load_bytecode 'PGE/Util.pbc'
   load_bytecode 'compilers/json/JSON.pbc'
-  
+
   .local pmc JSON
   JSON = compreg "JSON"
   $S0 = argv[1]
@@ -29,4 +29,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

@@ -1,4 +1,4 @@
-# RT#40703: Stub 
+# RT#40703: Stub
 # help tcltest compile
 
 .HLL '_Tcl', 'tcl_group'
@@ -17,4 +17,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

@@ -40,7 +40,7 @@ for compiling programs in Parrot.
 =head2 POST::Node
 
 C<POST::Node> is the base class for all POST nodes.  It's derived from class
-C<PAST::Node> (see F<compilers/pct/src/PAST/Node.pir>).
+C<PCT::Node> (see F<compilers/pct/src/PCT/Node.pir>).
 
 =over 4
 
@@ -94,7 +94,7 @@ Returns the result of the current node as a string.
 
 =item push_pirop(pirop [,arglist :slurpy] [,adverbs :slurpy :named])
 
-Shortcut for creating and adding a new POST::Op node with opcode 
+Shortcut for creating and adding a new POST::Op node with opcode
 C<pirop> and any supplied arguments or options.  Returns the
 newly created node.
 
@@ -265,7 +265,7 @@ Perl 6 compilers mailing lists.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2006-2007, The Perl Foundation.
+Copyright (C) 2006-2008, The Perl Foundation.
 
 =cut
 
@@ -273,4 +273,4 @@ Copyright (C) 2006-2007, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

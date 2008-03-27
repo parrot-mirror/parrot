@@ -291,7 +291,7 @@ string_unescape_one(PARROT_INTERP, ARGMOD(UINTVAL *offset),
 
 =over 4
 
-=item C<UINTVAL Parrot_char_digit_value>
+=item C<INTVAL Parrot_char_digit_value>
 
 Returns the decimal digit value of the specified character if it is a decimal
 digit character. If not, then -1 is returned.
@@ -306,7 +306,7 @@ C<Parrot_char_is_digit()> returns false.
 
 PARROT_API
 PARROT_CONST_FUNCTION
-UINTVAL
+INTVAL
 Parrot_char_digit_value(SHIM_INTERP, UINTVAL character)
 {
 #if PARROT_HAS_ICU
@@ -316,6 +316,32 @@ Parrot_char_digit_value(SHIM_INTERP, UINTVAL character)
         return character - 0x30;
     return -1;
 #endif
+}
+
+/*
+
+=item C<char * str_dup>
+
+Duplicate a C string.  Just like strdup(), except it dies if it runs
+out of memory.
+
+=cut
+
+*/
+
+PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+char *
+str_dup(ARGIN(const char *old))
+{
+    const size_t bytes = strlen(old) + 1;
+    char * const copy = (char *)mem_sys_allocate(bytes);
+    memcpy(copy, old, bytes);
+#ifdef MEMDEBUG
+    debug(interp, 1, "line %d str_dup %s [%x]\n", line, old, copy);
+#endif
+    return copy;
 }
 
 /*

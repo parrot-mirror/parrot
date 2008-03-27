@@ -9,7 +9,7 @@
 
 .sub '&expr'
   .param pmc argv :slurpy
- 
+
   .local string expr
   .local int argc
   .local int looper
@@ -19,7 +19,7 @@
 
   expr = ''
   looper = 0
-  argc = argv 
+  argc = argv
   unless argc goto no_args
 
   expr = join ' ', argv
@@ -41,4 +41,4 @@ no_args:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

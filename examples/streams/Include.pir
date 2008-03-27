@@ -16,16 +16,16 @@ Creates a counter stream and dumps it.
     .local pmc stream
 
     load_bytecode "library/Stream/Sub.pir"
-    
+
     stream = new "Stream::Sub"
 
     # set the stream's source sub
     .const .Sub temp = "_counter"
     assign stream, temp
-    
+
     # dump the stream
     stream."dump"()
-    
+
 .end
 
 =item _counter
@@ -42,7 +42,7 @@ and then includes it in its own stream.
 .sub _counter :method
     .local string str
     .local int i
-    
+
     i = 0
 
 LOOP:
@@ -53,12 +53,12 @@ LOOP:
     # include another stream after '4'
     if i != 4 goto SKIP
     .local pmc temp
-    
+
     temp = new "Stream::Sub"
 
     .const .Sub func = "_included"
     assign temp, func
-    
+
     # include it
     self."include"( temp )
 SKIP:
@@ -79,14 +79,14 @@ writes "world".
 .sub _included :method
     .local pmc temp
     .local pmc func
-    
+
     self."write"( "hello" )
 
     # create another stream
     temp = new "Stream::Sub"
     .const .Sub func = "_counter2"
     assign temp, func
-    
+
     # include it
     self."include"( temp )
 
@@ -111,7 +111,7 @@ LOOP:
     ord $I0, str
     inc $I0
     chr str, $I0
-    
+
     if str != "G" goto LOOP
 .end
 
@@ -125,7 +125,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 
 =cut
 
@@ -133,4 +133,4 @@ Copyright (C) 2004, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

@@ -1,5 +1,5 @@
 /* sub.h
- *  Copyright (C) 2001-2007, The Perl Foundation.
+ *  Copyright (C) 2001-2008, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -45,13 +45,13 @@ typedef enum {
 #define SUB_FLAG_flag_CLEAR(flag, o) (SUB_FLAG_get_FLAGS(o) &= ~(UINTVAL)(SUB_FLAG_ ## flag))
 
 #define SUB_FLAG_flags_SETTO(o, f) SUB_FLAG_get_FLAGS(o) = (f)
-#define SUB_FLAG_flags_CLEARALL(o) SUB_FLAG_flags_SETTO(o, 0)
+#define SUB_FLAG_flags_CLEARALL(o) SUB_FLAG_flags_SETTO((o), 0)
 
-#define SUB_FLAG_TAILCALL_TEST(o) SUB_FLAG_flag_TEST(TAILCALL, o)
-#define SUB_FLAG_TAILCALL_ISSET(o) SUB_FLAG_flag_TEST(TAILCALL, o)
-#define SUB_FLAG_TAILCALL_NOTSET(o) (!SUB_FLAG_flag_TEST(TAILCALL, o))
-#define SUB_FLAG_TAILCALL_SET(o) SUB_FLAG_flag_SET(TAILCALL, o)
-#define SUB_FLAG_TAILCALL_CLEAR(o) SUB_FLAG_flag_CLEAR(TAILCALL, o)
+#define SUB_FLAG_TAILCALL_TEST(o)   SUB_FLAG_flag_TEST(TAILCALL, (o))
+#define SUB_FLAG_TAILCALL_ISSET(o)  SUB_FLAG_flag_TEST(TAILCALL, (o))
+#define SUB_FLAG_TAILCALL_NOTSET(o) (!SUB_FLAG_flag_TEST(TAILCALL, (o)))
+#define SUB_FLAG_TAILCALL_SET(o)    SUB_FLAG_flag_SET(TAILCALL, (o))
+#define SUB_FLAG_TAILCALL_CLEAR(o)  SUB_FLAG_flag_CLEAR(TAILCALL, (o))
 
 #define SUB_FLAG(n) ((UINTVAL)1 << (n))
 typedef enum {
@@ -116,6 +116,20 @@ typedef enum {
 
 #define RECURSION_LIMIT 1000
 
+
+/*
+ * Counts and flags describing the arguments.
+ */
+typedef struct Parrot_sub_arginfo {
+    Parrot_UInt2 pos_required;
+    Parrot_UInt2 pos_optional;
+    Parrot_UInt2 named_required;
+    Parrot_UInt2 named_optional;
+    Parrot_UInt1 pos_slurpy;
+    Parrot_UInt1 named_slurpy;
+} Parrot_sub_arginfo;
+
+
 /*
  * Sub and Closure share a Parrot_sub structure.
  * Closures have additionally an 'outer_ctx'
@@ -141,6 +155,7 @@ typedef struct Parrot_sub {
     PMC      *eval_pmc;          /* eval container / NULL */
     parrot_context_t *ctx;       /* the context this sub is in */
     UINTVAL  comp_flags;         /* compile time and additional flags */
+    Parrot_sub_arginfo *arg_info;/* Argument counts and flags. */
 
     /* - end common */
     struct Parrot_Context *outer_ctx;   /* outer context, if a closure */
@@ -172,6 +187,7 @@ typedef struct Parrot_coro {
     PMC      *eval_pmc;          /* eval container / NULL */
     struct Parrot_Context  *ctx; /* coroutine context */
     UINTVAL  comp_flags;         /* compile time and additional flags */
+    Parrot_sub_arginfo arg_info; /* Argument counts and flags. */
 
     /* - end common */
 
@@ -198,13 +214,13 @@ typedef struct Parrot_cont {
 #define PMC_cont(pmc) ((Parrot_cont *)PMC_struct_val(pmc))
 
 typedef struct Parrot_Context_info {
-    STRING* subname;
-    STRING* nsname;
-    STRING* fullname;
-    int pc;
-    const char *file;
-    int line;
+    STRING   *subname;
+    STRING   *nsname;
+    STRING   *fullname;
+    STRING   *file;
     opcode_t *address;
+    int       pc;
+    int       line;
 } Parrot_Context_info;
 
 /* HEADERIZER BEGIN: src/sub.c */

@@ -23,22 +23,20 @@ END:
 .sub BUILD :method
     .param pmc app
 
-    classoffset $I0, self, "Tetris::EventHandler"
-    setattribute self, $I0, app
+    setattribute self, 'app', app
 .end
 
 .sub app :method
     .local pmc app
-    
-    classoffset $I0, self, "Tetris::EventHandler"
-    getattribute app, self, $I0
+
+    getattribute app, self, 'app'
     .return (app)
 .end
 
 .sub dispatch_event :method
     .local pmc app
     .local int ret
-    
+
     app = self."app"()
     app."setTimer"( 0 )
     save app
@@ -62,7 +60,7 @@ END:
     print " is "
     print blockID
     print "\n"
-    
+
     app = self."app"()
     board = app."board"( boardID )
 
@@ -157,7 +155,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 
 =cut
 
@@ -165,4 +163,4 @@ Copyright (C) 2004, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

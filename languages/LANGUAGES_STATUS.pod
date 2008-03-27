@@ -63,7 +63,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -113,7 +113,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -139,7 +139,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -162,7 +162,7 @@ Passes all tests. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -181,12 +181,12 @@ PGE grammar for C99.
 
 =item Status
 
-Parser is pretty complete.
-Needs optok help.
+Parser is complete.
+More work on backend(s) is needed.
 
 =item Last verified with parrot version
 
-0.4.6
+0.5.3
 
 =item Location
 
@@ -210,7 +210,7 @@ Generates PIR for basic Ruby programs
 
 =item Last verified with parrot version
 
-0.4.9
+0.5.3
 
 =item Location
 
@@ -257,11 +257,13 @@ See also L<http://en.wikipedia.org/wiki/Cola_programming_language>.
 
 =item Status
 
-Functioning, all samples working, lacks IO routines
+Somewhat functioning, some samples working, lacks IO routines.
+Not longer actively developed.
+Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.0.11
+0.6.0
 
 =item Location
 
@@ -286,7 +288,7 @@ has been commented out.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -334,7 +336,7 @@ Planned.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -342,6 +344,28 @@ C<languages/eclectus>
 
 =back
 
+=head2 ECMAScript
+
+=over 4
+
+=item Description
+
+Implementation of ECMAScript 3 (a JavaScript standard)
+
+=item Status
+
+Parser is complete. Simple arithmetic and function calls work.
+Much work needed on parse actions and data types (PMCs or classes.
+
+=item Last verified with parrot version
+
+0.5.3
+
+=item Location
+
+C<languages/ecmascript>
+
+=back
 
 =head2 forth
 
@@ -380,7 +404,7 @@ Works and is mostly complete.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -473,7 +497,7 @@ Working, but not complete. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -525,7 +549,7 @@ L<http://www.parrotcode.org/talks/LuaOnParrot.pdf>.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -587,7 +611,7 @@ Development is stalled. Takers are welcome.  Some tests fail.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -634,7 +658,7 @@ In progress.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -658,7 +682,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.5.1
+0.6.0
 
 =item Location
 
@@ -690,33 +714,15 @@ C<languages/parrot_compiler>
 =back
 
 
-=head2 Perl 5
+
+=head2 Rakudo
 
 =over 4
 
 =item Description
 
-Primarily a repository for some perl5-specific functionality that was
-heavily used in early parrot development. This code is not slated for use
-with the Perl 6 implementation, and core parrot PMCs exist that provide
-much of the functionality here.
-
-This directory may be removed in a future release.
-
-=back
-
-
-=head2 Perl 6 parser/compiler
-
-=over 4
-
-=item Description
-
-This is a Perl 6 parser/compiler, an early version (no version numbers
-yet).  It's still very early, only simple expressions and functions are
-available.  If you're in a hurry to write "real Perl 6" programs,
-you might try looking at Pugs -- L<http://www.pugscode.org>.  Or, you
-can send patches and contributions to the one being built here!
+This is a PCT based implementation of Perl 6.
+Actively developed,
 
 =item Status
 
@@ -724,11 +730,12 @@ Part of languages smoke testing.
 
 =item Last verified with Parrot version
 
-0.5.2
+0.5.3
 
 =item Location
 
 C<languages/perl6>
+L<http://rakudo.org>
 
 =back
 
@@ -829,7 +836,7 @@ Started.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -871,18 +878,18 @@ L<http://pugscode.org/>
 
 =item Description
 
-Perl1 implemented in PIR with the help of
-TGE, Tree Grammar Engine, and PGE, Parrot Grammar Engine.
+Perl1 implemented in PIR with the PCT
 
 =item Status
 
 So far, Punie handles constants (strings, integers, floats), variables, print
 statements, conditionals, do blocks, comma lists, and some basic math
 and logic ops.
+Parser is 90% complete; waiting for more PAST support.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -897,7 +904,7 @@ C<languages/punie>
 
 =item Description
 
-A Python compiler for Parrot, based on PGE and TGE.
+A Python compiler for Parrot implemented with PCT
 
 =item Status
 
@@ -905,7 +912,7 @@ Functions and simple expressions are working.
 
 =item Last verified with parrot version
 
-0.4.9
+0.5.3
 
 =item Location
 
@@ -978,7 +985,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.5.0
+0.6.0
 
 =item Location
 
@@ -1003,7 +1010,7 @@ use tcltest.tcl)
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -1076,7 +1083,7 @@ expected to change soon.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -1104,7 +1111,7 @@ See details in F<languages/WMLScript/doc/status.pod>.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.0
 
 =item Location
 
@@ -1161,6 +1168,11 @@ C<languages/BASIC/interpreter> prior to 0.5.1.
 
 The version at L<http://rubyforge.org/projects/cardinal/> has been superseded
 by the one in the repository. (See above)
+
+=head2 Perl 5
+
+From r16836 up to r25231 F<languages/perl5> served as a repository
+for some Perl 5 - specific functionality that was heavily used in early parrot development.
 
 =head2 Pint
 

@@ -5,7 +5,7 @@
 .HLL 'Tcl', ''
 .namespace
 
-# RT#40707: Stub 
+# RT#40707: Stub
 # help tcltest compile
 
 .sub '&package'
@@ -18,4 +18,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

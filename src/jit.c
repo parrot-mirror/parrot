@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -26,7 +26,6 @@ used and not per subroutine or even opcode, it works per bytecode segment.
 /* HEADERIZER STOP */
 
 #include <parrot/parrot.h>
-#include <assert.h>
 #if PARROT_EXEC_CAPABLE
 #  include "parrot/exec.h"
 #endif
@@ -287,7 +286,7 @@ set_register_usage(PARROT_INTERP,
         int arg_type;
         PMC *sig;
         if (argn >= args) {
-            sig = CONTEXT(interp->ctx)->constants[cur_op[1]]->u.key;
+            sig = CONTEXT(interp)->constants[cur_op[1]]->u.key;
             arg_type = VTABLE_get_integer_keyed_int(interp,
                     sig, argn - args);
             arg_type &= (PARROT_ARG_TYPE_MASK | PARROT_ARG_CONSTANT);
@@ -398,9 +397,9 @@ init_regusage(PARROT_INTERP, Parrot_jit_optimizer_section_ptr cur_section)
     int typ, j;
 
     cur_section->ru[0].registers_used =
-        CONTEXT(interp->ctx)->n_regs_used[REGNO_INT];
+        CONTEXT(interp)->n_regs_used[REGNO_INT];
     cur_section->ru[3].registers_used =
-        CONTEXT(interp->ctx)->n_regs_used[REGNO_NUM];
+        CONTEXT(interp)->n_regs_used[REGNO_NUM];
     cur_section->ru[1].registers_used =
         cur_section->ru[2].registers_used = 0;
     for (typ = 0; typ < 4; typ++)
@@ -1024,8 +1023,8 @@ optimize_imcc_jit(PARROT_INTERP,
         (char *)mem_sys_allocate_zeroed((size_t)(code_end - code_start));
     ptr = jit_seg->data;
     size = jit_seg->size;
-    assert(jit_seg->itype == 0);
-    assert((size % 6) == 0);
+    PARROT_ASSERT(jit_seg->itype == 0);
+    PARROT_ASSERT((size % 6) == 0);
     cur_op = code_start;
     for (prev = NULL, i = 0; i < size/6; i++, prev = section) {
         section = (Parrot_jit_optimizer_section_t *)
@@ -1259,22 +1258,22 @@ Parrot_destroy_jit(void *ptr)
     cur_section = optimizer->sections;
     while (cur_section) {
         next = cur_section->next;
-        free(cur_section);
+        mem_sys_free(cur_section);
         cur_section = next;
     }
     /* arena stuff */
-    free(jit_info->arena.op_map);
+    mem_sys_free(jit_info->arena.op_map);
     mem_free_executable(jit_info->arena.start);
     fixup = jit_info->arena.fixups;
     while (fixup) {
         next_f = fixup->next;
-        free(fixup);
+        mem_sys_free(fixup);
         fixup = next_f;
     }
     /* optimizer stuff */
-    free(optimizer->map_branch);
-    free(optimizer->branch_list);
-    free(optimizer);
+    mem_sys_free(optimizer->map_branch);
+    mem_sys_free(optimizer->branch_list);
+    mem_sys_free(optimizer);
 
     free(jit_info);
 }
@@ -1308,7 +1307,7 @@ set_reg_usage(PARROT_INTERP, opcode_t *pc)
             size_t      offs    = pc - sub->seg->base.data;
 
             if (offs >= sub->start_offs && offs < sub->end_offs) {
-                CONTEXT(interp->ctx)->n_regs_used = sub->n_regs_used;
+                CONTEXT(interp)->n_regs_used = sub->n_regs_used;
                 return;
             }
         }
@@ -1428,7 +1427,7 @@ parrot_build_asm(PARROT_INTERP, ARGIN(opcode_t *code_start), ARGIN(opcode_t *cod
     /*
      * remember register usage
      */
-    n_regs_used = CONTEXT(interp->ctx)->n_regs_used;
+    n_regs_used = CONTEXT(interp)->n_regs_used;
     set_reg_usage(interp, code_start);
 
     if (jit_seg)
@@ -1610,7 +1609,7 @@ parrot_build_asm(PARROT_INTERP, ARGIN(opcode_t *code_start), ARGIN(opcode_t *cod
 
             if (*jit_info->prev_op == PARROT_OP_set_args_pc &&
                     jit_type == JIT_CODE_SUB_REGS_ONLY) {
-                assert(*cur_op == PARROT_OP_set_p_pc);
+                PARROT_ASSERT(*cur_op == PARROT_OP_set_p_pc);
 
                 /* skip it */
                 cur_op           += 3;
@@ -1620,7 +1619,7 @@ parrot_build_asm(PARROT_INTERP, ARGIN(opcode_t *code_start), ARGIN(opcode_t *cod
                 jit_info->arena.op_map[jit_info->op_i].offset =
                     jit_info->native_ptr - jit_info->arena.start;
 
-                assert(*cur_op == PARROT_OP_get_results_pc);
+                PARROT_ASSERT(*cur_op == PARROT_OP_get_results_pc);
 
                 /* now emit the call - use special op for this */
                 (op_func[PARROT_OP_pic_callr___pc].fn)(jit_info, interp);
@@ -1642,7 +1641,7 @@ parrot_build_asm(PARROT_INTERP, ARGIN(opcode_t *code_start), ARGIN(opcode_t *cod
                     jit_info->native_ptr - jit_info->arena.start;
 
                 /* now at invoke */
-                assert(*cur_op == PARROT_OP_invokecc_p);
+                PARROT_ASSERT(*cur_op == PARROT_OP_invokecc_p);
 
                 cur_op            += 2;    /* skip it */
                 jit_info->op_i    += 2;
@@ -1681,7 +1680,7 @@ parrot_build_asm(PARROT_INTERP, ARGIN(opcode_t *code_start), ARGIN(opcode_t *cod
     /*
      * restore register usage
      */
-    CONTEXT(interp->ctx)->n_regs_used = n_regs_used;
+    CONTEXT(interp)->n_regs_used = n_regs_used;
 
     /* Do fixups before converting offsets */
     (arch_info->jit_dofixup)(jit_info, interp);

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2003-2007, The Perl Foundation.
+Copyright (C) 2003-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -88,6 +88,7 @@ static Builtins builtins[] = {
 /* HEADERIZER BEGIN: static */
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
 static int check_builtin_sig(
     size_t i,
     ARGIN(const char *sig),
@@ -99,6 +100,7 @@ static int find_builtin(ARGIN(const char *func))
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
 static int find_builtin_s(PARROT_INTERP, ARGIN(const STRING *func))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -130,7 +132,9 @@ Parrot_init_builtins(PARROT_INTERP)
 
 =item C<static int find_builtin>
 
-RT#48260: Not yet documented!!!
+Locate the first entry corresponding to the supplied function name,
+using a modified binary search.
+Returns the index if a match is found, -1 if not.
 
 =cut
 
@@ -168,13 +172,15 @@ find_builtin(ARGIN(const char *func))
 
 =item C<static int find_builtin_s>
 
-RT#48260: Not yet documented!!!
+Locate the first entry corresponding to the supplied method name.
+Returns the indes if a match is found, -1 if not.
 
 =cut
 
 */
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
 static int
 find_builtin_s(PARROT_INTERP, ARGIN(const STRING *func))
 {
@@ -200,13 +206,18 @@ find_builtin_s(PARROT_INTERP, ARGIN(const STRING *func))
 
 =item C<static int check_builtin_sig>
 
-RT#48260: Not yet documented!!!
+Takes the builtin's index, a signature string, and a flag indicating
+if conversion to PMCs is allowed.
+Compares the builtin's signature to the supplied string.
+Returns 1 if they match where it matters, (voids are ignored),
+returns 0 if they don't.
 
 =cut
 
 */
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
 static int
 check_builtin_sig(size_t i, ARGIN(const char *sig), int convert_pmcs)
 {
@@ -265,6 +276,7 @@ Return the index of the builtin or -1 on failure.
 */
 
 PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
 int
 Parrot_is_builtin(ARGIN(const char *func), ARGIN_NULLOK(const char *sig))
 {
@@ -290,7 +302,7 @@ again:
             /* try next with same name */
             ++i;
             /* if the name of the next builtin matches, check its signature */
-            if (strcmp(func, builtins[i].c_name) == 0)
+            if (STREQ(func, builtins[i].c_name))
                 goto again;
         }
     }
@@ -330,7 +342,8 @@ Parrot_find_builtin(PARROT_INTERP, ARGIN(STRING *func))
 
 =item C<const char * Parrot_builtin_get_c_namespace>
 
-RT#48260: Not yet documented!!!
+Takes a builtin's index and returns a pointer to the corresponding
+C namespace string.
 
 =cut
 
@@ -350,7 +363,7 @@ Parrot_builtin_get_c_namespace(int bi)
 
 =item C<int Parrot_builtin_is_class_method>
 
-RT#48260: Not yet documented!!!
+Tells us if the builtin is a class method, based on the signature.
 
 =cut
 
@@ -369,7 +382,7 @@ Parrot_builtin_is_class_method(int bi)
 
 =item C<int Parrot_builtin_is_void>
 
-RT#48260: Not yet documented!!!
+Tells us if the builtin is void, based on the signature.
 
 =cut
 

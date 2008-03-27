@@ -36,7 +36,7 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $cmd = $conf->data->get_p5('scriptdir') . q{/perldoc};
+    my $cmd = $conf->data->get_p5('scriptdirexp') . q{/perldoc};
     my $tmpfile = q{c99da7c4.tmp};
     my $content = capture_output("$cmd -ud $tmpfile perldoc") || undef;
 
@@ -59,7 +59,8 @@ sub _initial_content_check {
         );
         $self->set_result('no');
         return;
-    } else {
+    }
+    else {
         return 1;
     }
 }
@@ -72,7 +73,8 @@ sub _analyze_perldoc {
         $content = capture_output("$cmd perldoc") || '';
         if ($content =~ m/perldoc/) {
             $version = $self->_handle_old_perldoc();
-        } else {
+        }
+        else {
             $version = $self->_handle_no_perldoc();
         }
     }

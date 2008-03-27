@@ -16,7 +16,7 @@
   loop:
     chunk = read stdin, 65536
     unless chunk goto end
-    source .= chunk 
+    source .= chunk
     goto loop
   end:
     match = program(source, 'grammar'=>'Benchmark')
@@ -24,10 +24,10 @@
 
 
 .include 'ambs1_gen.pir'
-   
+
 
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

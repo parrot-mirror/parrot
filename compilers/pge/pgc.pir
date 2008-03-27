@@ -11,7 +11,7 @@ pgc.pir - The parser grammar compiler
 This program takes a set of parser rules (i.e., a parser grammar)
 specified in the input C<FILE>s, and compiles it into the PIR code
 needed to execute the grammar.  This PIR code is then suitable for
-inclusion or compilation into other larger programs. 
+inclusion or compilation into other larger programs.
 
 =head2 Options
 
@@ -54,4 +54,4 @@ the output to the correct output file.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

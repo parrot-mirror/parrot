@@ -43,13 +43,13 @@ Reveals a field or sets a flag.
 .sub mouse_button_down :method
     .param pmc event
     .param pmc field
-    
+
     event = event.'event'( 'MouseButton' )
 
     .local int state
     .local int x
     .local int y
-    
+
     state = event["state"]
 
     # SDL_BUTTON_LEFT
@@ -72,13 +72,13 @@ Reveals a field or sets a flag.
 .sub mouse_motion :method
     .param pmc event
     .param pmc field
-    
+
     event = event.'event'( 'MouseMotion' )
 
     .local int state
     .local int x
     .local int y
-    
+
     state = event["state"]
 
     # SDL_BUTTON_LEFT
@@ -103,24 +103,24 @@ Reveals a field or sets a flag.
 .sub mouse_button_up :method
     .param pmc event
     .param pmc field
-    
+
     event = event.'event'( 'MouseButton' )
 
     .local int state
     .local int x
     .local int y
     .local int ret
-    
+
     state = event["state"]
     x = event["x"]
     y = event["y"]
-    
+
     # SDL_BUTTON_LEFT
     if state == 1 goto REVEAL
     # SDL_BUTTON_RIGHT
     if state == 3 goto SETFLAG
     branch DONE
-    
+
 REVEAL:
     ret = field."reveal"( x, y )
     branch DONE
@@ -145,7 +145,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 
 =cut
 
@@ -153,4 +153,4 @@ Copyright (C) 2004, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

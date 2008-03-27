@@ -4,9 +4,6 @@ A .Sub with attributes
 
 =cut
 
-.include 'languages/tcl/src/returncodes.pir'
-.include 'languages/tcl/src/macros.pir'
-
 .HLL 'parrot', ''
 .namespace [ 'TclProc' ]
 
@@ -36,4 +33,4 @@ Define the attributes required for the class.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

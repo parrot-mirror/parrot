@@ -22,7 +22,7 @@
     load_bytecode "PGE/Glob.pir"
     load_bytecode "PGE/Text.pir"
     load_bytecode "PGE/Util.pir"
-    p6rule_compile = compreg "PGE::P6Regex"
+    p6rule_compile = compreg "PGE::Perl6Regex"
     glob_compile = compreg "PGE::Glob"
     p5regexp_compile = compreg "PGE::P5Regex"
     istrace = 0
@@ -33,7 +33,7 @@
     print "target string, \"pir\", \"exp\", \"trace\", \"next\"\n"
     getstdin stdin
     readline x, stdin
-    length $I0, x 
+    length $I0, x
     if $I0 < 1 goto end_demo
     $I0 = index x, " "
     if $I0 > 0 goto get_cmd
@@ -92,8 +92,8 @@
     print x
     print "\n"
     goto read_loop
-    
-  
+
+
   print_pir:
     if_null rulesub, match_nopattern
     print pir
@@ -122,4 +122,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

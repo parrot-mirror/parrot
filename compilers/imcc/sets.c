@@ -1,6 +1,6 @@
 /*
  * $Id$
- * Copyright (C) 2002-2007, The Perl Foundation.
+ * Copyright (C) 2002-2008, The Perl Foundation.
  */
 
 /*
@@ -40,7 +40,7 @@ RT#48264
 
 =item C<Set* set_make>
 
-RT#48260: Not yet documented!!!
+Create a new Set object.
 
 =cut
 
@@ -51,9 +51,9 @@ PARROT_CANNOT_RETURN_NULL
 Set*
 set_make(int length)
 {
-    Set * const s = mem_allocate_typed(Set);
+    Set * const s = mem_allocate_zeroed_typed(Set);
     s->length     = length;
-    s->bmp        = (unsigned char *)mem_sys_allocate_zeroed(NUM_BYTES(length));
+    s->bmp        = mem_allocate_n_zeroed_typed(NUM_BYTES(length), unsigned char);
     return s;
 }
 
@@ -61,7 +61,7 @@ set_make(int length)
 
 =item C<Set* set_make_full>
 
-RT#48260: Not yet documented!!!
+Create a new Set object and clear all bits.
 
 =cut
 
@@ -72,8 +72,8 @@ PARROT_CANNOT_RETURN_NULL
 Set*
 set_make_full(int length)
 {
-    Set * const s   = set_make(length);
-    const int bytes = NUM_BYTES(length);
+    Set * const s      = set_make(length);
+    const size_t bytes = NUM_BYTES(length);
 
     if (bytes)
         memset(s->bmp, 0xff, bytes);
@@ -85,7 +85,7 @@ set_make_full(int length)
 
 =item C<void set_free>
 
-RT#48260: Not yet documented!!!
+Free memory allocated for the Set argument.
 
 =cut
 
@@ -103,7 +103,7 @@ set_free(ARGMOD(Set *s))
 
 =item C<void set_clear>
 
-RT#48260: Not yet documented!!!
+Clear all bits in the Set argument.
 
 =cut
 
@@ -214,7 +214,7 @@ set_first_zero(ARGIN(const Set *s))
     int i, j;
 
     for (i = 0; i < NUM_BYTES(s->length); ++i) {
-        int set_byte = s->bmp[i];
+        const int set_byte = s->bmp[i];
         if (set_byte == 0xFF)
             continue;
 
@@ -232,7 +232,8 @@ set_first_zero(ARGIN(const Set *s))
 
 =item C<int set_contains>
 
-RT#48260: Not yet documented!!!
+Check whether the specified element is present in the
+specified Set argument. Returns 1 if it is, 0 otherwise.
 
 =cut
 
@@ -243,21 +244,27 @@ PARROT_PURE_FUNCTION
 int
 set_contains(ARGIN(const Set *s), int element)
 {
-    /* workaround for another lcc bug.. */
-    const int byte_in_set = element >> 3;
-    const int pos_in_byte = BIT_IN_BYTE(element);
-
     if (element > s->length)
         return 0;
+    else {
+        /* workaround for another lcc bug.. */
+        const int byte_in_set = element >> 3;
+        const int pos_in_byte = BIT_IN_BYTE(element);
 
-    return s->bmp[byte_in_set] & pos_in_byte;
+
+        return s->bmp[byte_in_set] & pos_in_byte;
+    }
 }
 
 /*
 
 =item C<Set * set_union>
 
-RT#48260: Not yet documented!!!
+Compute the union of the two Set arguments. A new
+resulting Set object is returned.
+
+If the two Set arguments have different lengths, a
+fatal error is raised.
 
 =cut
 
@@ -286,7 +293,12 @@ set_union(ARGIN(const Set *s1), ARGIN(const Set *s2))
 
 =item C<Set * set_intersec>
 
-RT#48260: Not yet documented!!!
+Create a new Set object that is the intersection of the
+Set arguments. Intersection is defined through the binary
+and operator.
+
+If the argument Sets don't have the same length, a fatal
+error is raised.
 
 =cut
 
@@ -315,7 +327,9 @@ set_intersec(ARGIN(const Set *s1), ARGIN(const Set *s2))
 
 =item C<void set_intersec_inplace>
 
-RT#48260: Not yet documented!!!
+See set_intersec, except that the first argument Set
+is changed inplace; in other words, the first Set argument
+becomes the result.
 
 =cut
 

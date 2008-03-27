@@ -55,10 +55,9 @@ This method returns the old data representation.
     .local int v
     .local pmc olddata
 
-    classoffset $I0, self, "Tetris::BlockData"
-    getattribute olddata, self, $I0
+    getattribute olddata, self, 'data'
     olddata = clone olddata
-    
+
     size = self."size"()
     set y, size
     set i, size
@@ -85,7 +84,7 @@ WAY2:
     dec v
     add j, v
 DONE:
-    
+
     v = olddata[i]
     self[j] = v
 
@@ -112,7 +111,7 @@ Returns the number of free rows.
     .local int i
     .local int temp
     .local int size2
-    
+
     i = 0
     size = self."size"()
     if size == 0 goto END
@@ -151,7 +150,7 @@ Returns the number of free columns.
     .local int offset
     .local int free
     .local int temp
-    
+
     size = self."size"()
     free = 0
 HFREE_LOOPfree:
@@ -162,12 +161,12 @@ HFREE_LOOPfree:
 HFREE_LOOPcheck:
     temp = self[offset]
     if temp goto HFREE_ERROR
-    
+
     inc i
     add offset, size
     if i < size goto HFREE_LOOPcheck
     if free < size goto HFREE_LOOPfree
-    
+
 HFREE_ERROR:
     dec free
     if free goto HFREE_END
@@ -186,11 +185,11 @@ HFREE_LOOPcheck2:
     set offset, i
     mul offset, size
     add offset, temp
-    
+
     temp = self[offset]
 
     if temp goto HFREE_ERROR2
-    
+
     inc i
     if i < size goto HFREE_LOOPcheck2
     if free < size goto HFREE_LOOPfree2
@@ -209,8 +208,7 @@ items in the blockdata array.
 =cut
 
 .sub size :method
-    classoffset $I0, self, "Tetris::BlockData"
-    getattribute $P0, self, $I0
+    getattribute $P0, self, 'data'
     $I0 = 0
     if_null $P0, END
     $I0 = $P0
@@ -223,19 +221,17 @@ END:
 
 .sub __set_pmc :method
     .param pmc data
-    
-    classoffset $I0, self, "Tetris::BlockData"
-    setattribute self, $I0, data
+
+    setattribute self, 'data', data
 .end
 
 .sub __get_integer_keyed :method
     .param pmc key
     .local int index
-    
+
     index = key
 
-    classoffset $I0, self, "Tetris::BlockData"
-    getattribute $P0, self, $I0
+    getattribute $P0, self, 'data'
     if_null $P0, ERR
     $I0 = $P0
     if index >= $I0 goto ERR
@@ -257,11 +253,10 @@ ERR:
     .param pmc key
     .param int val
     .local int index
-    
+
     index = key
 
-    classoffset $I0, self, "Tetris::BlockData"
-    getattribute $P0, self, $I0
+    getattribute $P0, self, 'data'
     if_null $P0, ERR
     $I0 = $P0
     if index >= $I0 goto ERR
@@ -289,7 +284,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 
 =cut
 
@@ -297,4 +292,4 @@ Copyright (C) 2004, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

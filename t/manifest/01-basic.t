@@ -6,7 +6,10 @@
 use strict;
 use warnings;
 
-use Test::More tests => 13;
+use Test::More;
+plan( skip_all => "\nRelevant only when working in checkout from repository" )
+    unless (-e 'DEVELOPING');
+plan( tests => 13 );
 use Carp;
 use Cwd;
 use File::Temp qw( tempdir );

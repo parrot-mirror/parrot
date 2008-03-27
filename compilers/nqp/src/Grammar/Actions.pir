@@ -1,4 +1,4 @@
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 .sub '__onload' :init :load
@@ -59,6 +59,13 @@
         %r = $I0
         END
 
+    optable['infix:=:='; 'inline'] = <<"        END"
+        ##  inline infix:=:=
+        $I0 = issame %0, %1
+        %r = new 'Integer'
+        %r = $I0
+        END
+
     optable['prefix:!'; 'inline'] = <<"        END"
         ##  inline prefix:!
         $I0 = isfalse %0
@@ -102,10 +109,10 @@
 ##            $?BLOCK := PAST::Block.new( PAST::Stmts.new(),
 ##                                        :blocktype('immediate'),
 ##                                        :node($/) );
-##            unshift @?BLOCK, $?BLOCK;
+##            @?BLOCK.unshift($?BLOCK);
 ##        }
 ##        else {
-##            my $past := shift @?BLOCK;
+##            my $past := @?BLOCK.shift();
 ##            $?BLOCK := @?BLOCK[0];
 ##            $past.push($($<statement_list>));
 ##            make $past;
@@ -138,7 +145,7 @@
 
 
 ##    method statement_list($/) {
-##        my $past := PAST::Stmts.new(node=>$/)
+##        my $past := PAST::Stmts.new(:node($/))
 ##        for $<statement> {
 ##            $past.push($($_));
 ##        }
@@ -306,14 +313,14 @@
 
 ##    method for_statement($/) {
 ##        my $block := $<block>;
-##        $block.blocktype('sub');
-##        $block.symbol('$_', scope => 'lexical');
-##        my $topic_var := PAST::Var.new(name => '$_', scope => 'parameter');
+##        $block.blocktype('immediate');
+##        $block.symbol('$_', :scope('lexical'));
+##        my $topic_var := PAST::Var.new( :name('$_'), :scope('parameter') );
 ##        push @($block[0]), $topic_var;
 ##        my $past := PAST::Op.new($($<EXPR>),
 ##                                 $($<block>),
-##                                 pasttype => $<sym>,
-##                                 node => $/);
+##                                 :pasttype(~$<sym>),
+##                                 :node($/) );
 ##        make $past;
 .sub 'for_statement' :method
     .param pmc match
@@ -386,7 +393,7 @@
 .end
 
 
-##    method block($/, $key) {
+##    method block($/) {
 ##        make $($<statement_block>);
 ##    }
 .sub 'block' :method
@@ -838,7 +845,7 @@
 ##        my $name := $past.name();
 ##        our $?BLOCK;
 ##        unless $?BLOCK.symbol($name) {
-##            $past.'isdecl'(1);
+##            $past.isdecl(1);
 ##            my $scope := ($<declarator> eq 'my') ? 'lexical' : 'package';
 ##            $?BLOCK.symbol($name, :scope($scope));
 ##        }
@@ -870,13 +877,13 @@
 ##    method variable($/, $key) {
 ##        if ($key eq '$< >') {
 ##            make PAST::Var.new(
-##                     PAST::Var.new(scope=>'lexical', name=>'$/'),
-##                     PAST::Val.new(value=>~$[0]),
+##                     PAST::Var.new(:scope('lexical'), :name('$/') ),
+##                     PAST::Val.new(:value(~$/[0])),
 ##                     :scope('keyed'),
 ##                     :viviself('Undef') );
 ##        }
 ##        else {
-##            make PAST::Var.new(node=>$/, name=>~$/)
+##            make PAST::Var.new( :node($/), :name(~$/) )
 ##        }
 ##    }
 .sub 'variable' :method
@@ -923,7 +930,7 @@
 
 
 ##    method quote($/, $key) {
-##        make PAST::Val.new(node=>$/, value=>~($<string_literal>))
+##        make PAST::Val.new( :node($/), :value(~($<string_literal>)) );
 ##    }
 .sub 'quote' :method
     .param pmc match
@@ -940,10 +947,10 @@
 ##    method typename($/, $key) {
 ##        my $ns := $<name><ident>.clone();
 ##        my $name := $ns.pop();
-##        make PAST::Var.new( :node($/), 
+##        make PAST::Var.new( :node($/),
 ##                            :scope('package'),
-##                            :name($name), 
-##                            :namespace($ns) 
+##                            :name($name),
+##                            :namespace($ns)
 ##                          );
 ##    }
 .sub 'typename' :method
@@ -961,7 +968,7 @@
 
 
 ##    method number($/, $key?) {
-##        make PAST::Val.new(node=>$/, name=>~$/, vtype=>"Integer");
+##        make PAST::Val.new( :node($/), :name(~$/), :returns("Integer") );
 ##    }
 .sub 'number' :method
     .param pmc match
@@ -998,7 +1005,7 @@
 #### Expressions and operators ####
 
 ##    method EXPR($/, $key) {
-##        if ($key eq 'end') { make $($<expr>); return; }
+##        if ($key eq 'end') { make $($<expr>); }
 ##        my $past := PAST::Op.new( :node($/),
 ##                                  :name($<type>),
 ##                                  :pasttype($<top><pasttype>),
@@ -1048,4 +1055,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

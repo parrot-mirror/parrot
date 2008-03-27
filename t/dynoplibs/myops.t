@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -23,8 +23,10 @@ Tests the sample dynamic op library "myops".
 
 =cut
 
+$ENV{TEST_PROG_ARGS} ||= '';
+
 my $is_ms_win32 = $^O =~ m!MSWin32!;
-my $is_mingw = $is_ms_win32 && grep { $PConfig{cc} eq $_ } qw(gcc gcc.exe);
+my $is_mingw    = $is_ms_win32 && grep { $PConfig{cc} eq $_ } qw(gcc gcc.exe);
 
 pir_output_is( <<'CODE', <<'OUTPUT', 'fortytwo' );
 .loadlib "myops_ops"
@@ -74,7 +76,10 @@ END_PASM
     pasm_output_is( $quine, $quine, 'a short cheating quine', @todo );
 }
 
-pir_output_is( << 'CODE', << 'OUTPUT', "one alarm" );
+    my @todo = $ENV{TEST_PROG_ARGS} =~ /-j/ ?
+       ( todo => 'RT #49718, add scheduler features to JIT' ) : ();
+
+pir_output_is( << 'CODE', << 'OUTPUT', "one alarm", @todo );
 .loadlib "myops_ops"
 
 .sub main :main
@@ -106,8 +111,12 @@ OUTPUT
 
 SKIP: {
     skip "three alarms, infinite loop under mingw32", 2 if $is_mingw;
+    skip "dynops weird in CGP with events", 2 if $ENV{TEST_PROG_ARGS} =~ /-g/;
 
-    pir_output_like( << 'CODE', << 'OUTPUT', "three alarm" );
+    my @todo = $ENV{TEST_PROG_ARGS} =~ /-j/ ?
+       ( todo => 'RT #49718, add scheduler features to JIT' ) : ();
+
+    pir_output_like( << 'CODE', << 'OUTPUT', "three alarm", @todo );
 
 .loadlib "myops_ops"
 .sub main :main
@@ -145,7 +154,7 @@ alarm2
 alarm3/
 OUTPUT
 
-    pir_output_like( << 'CODE', << 'OUTPUT', "repeating alarm" );
+    pir_output_like( << 'CODE', << 'OUTPUT', "repeating alarm", @todo );
 
 .loadlib "myops_ops"
 .sub main :main

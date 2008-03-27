@@ -3,6 +3,8 @@
 
 loadlib $P1, 'libpq'
 if $P1 goto has_lib
+loadlib $P1, 'pq'
+if $P1 goto has_lib
 $P2 = new 'Exception'
 $P2[0] = 'error loading libpg - loadlib failed'
 throw $P2
@@ -201,4 +203,4 @@ store_global 'PQsetNoticeReceiver', $P2
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

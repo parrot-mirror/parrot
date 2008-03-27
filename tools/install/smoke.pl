@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 25;
+use Test::More tests => 27;
 
 =head1 NAME
 
@@ -109,16 +109,20 @@ ok($out =~ /^usage/, "check bfc");
 $out = `$parrot languages/bf/bfco.pbc`;
 ok($out =~ /^usage/, "check bfco");
 
-$out = `$parrot --no-gc languages/cardinal/cardinal.pbc -e "say 'hello world';"`;
+$out = `$parrot languages/cardinal/cardinal.pbc -e "print 'hello world';"`;
 ok($out eq "hello world\n", "check cardinal");
+
+TODO: {
+    local $TODO = 'broken since ppd17pmc merge';
 
 $out = `$parrot languages/dotnet/net2pbc.pbc`;
 ok($out =~ /^Usage/, "check dotnet");
+}
 
 $filename = 'test.js';
 open $FH, '>', $filename
         or die "Can't open $filename ($!).\n";
-print $FH "print(\"Hello World from JS\\n\")";
+print $FH "print(\"Hello World from JS\\n\");";
 close $FH;
 $out = `$parrot languages/ecmascript/js.pbc $filename`;
 ok($out eq "Hello World from JS\n", "check ecmascript");
@@ -155,7 +159,7 @@ $out = `$parrot languages/lolcode/lolcode.pbc $filename`;
 ok($out eq "HAI WORLD!\n", "check lolcode");
 unlink($filename);
 
-$out = `$parrot --no-gc languages/lua/lua.pbc -e "print(nil)"`;
+$out = `$parrot languages/lua/lua.pbc -e "print(nil)"`;
 ok($out eq "nil\n", "check lua");
 
 $out = `$parrot languages/m4/m4.pbc`;
@@ -164,7 +168,7 @@ ok($out =~ /^Usage/, "check m4");
 $out = `$parrot languages/ook/ook.pbc`;
 ok($out eq q{}, "check ook");
 
-$out = `$parrot --no-gc languages/perl6/perl6.pbc -e "say 'hello world'"`;
+$out = `$parrot languages/perl6/perl6.pbc -e "say 'hello world'"`;
 ok($out eq "hello world\n", "check rakudo");
 
 $filename = 'test.l';
@@ -179,13 +183,31 @@ unlink($filename);
 $out = `$parrot languages/plumhead/plumhead.pbc`;
 ok($out =~ /^usage/, "check plumhead");
 
+$filename = 'test.p1';
+open $FH, '>', $filename
+        or die "Can't open $filename ($!).\n";
+print $FH "print \"Hello, World!\\n\";\n";
+close $FH;
+$out = `$parrot languages/punie/punie.pbc $filename`;
+ok($out eq "Hello, World!\n", "check punie");
+unlink($filename);
+
+$filename = 'test.py';
+open $FH, '>', $filename
+        or die "Can't open $filename ($!).\n";
+print $FH "print 'Hello, World!'\n";
+close $FH;
+$out = `$parrot languages/pynie/pynie.pbc $filename`;
+ok($out eq "Hello, World!\n", "check pynie");
+unlink($filename);
+
 TODO: {
     local $TODO = 'missing file ?';
 
 $filename = 'test.tcl';
 open $FH, '>', $filename
         or die "Can't open $filename ($!).\n";
-print $FH "puts 'hello world!'\n";
+print $FH "puts {hello world!}\n";
 close $FH;
 $out = `$parrot languages/tcl/tcl.pbc $filename`;
 ok($out eq "hello world!\n", "check tcl");

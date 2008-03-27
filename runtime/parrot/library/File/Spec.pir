@@ -147,7 +147,7 @@ found_module:
 .sub '__isa' :method
     .local pmc sub
     .local string name
-    
+
     typeof name, self
 
     .local string osname
@@ -176,4 +176,4 @@ found_module:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

@@ -4,7 +4,7 @@
 
 .sub 'yarn_literal' :method
     .param pmc adverbs         :slurpy :named
-    
+
     .local string delim
     delim = '"'
 
@@ -94,4 +94,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

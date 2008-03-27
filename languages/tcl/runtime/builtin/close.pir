@@ -11,7 +11,7 @@
     argc = elements argv
 
     if argc != 1 goto bad_args
-    
+
     .local string channel_id
     channel_id = argv[0]
 
@@ -45,4 +45,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

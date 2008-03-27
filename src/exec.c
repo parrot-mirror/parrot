@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -34,7 +34,7 @@ src/exec.c - Generate an object file
 
 static void add_data_member(
     ARGMOD(Parrot_exec_objfile_t *obj),
-    ARGIN_NULLOK(void *src),
+    ARGIN_NULLOK(const void *src),
     size_t len)
         __attribute__nonnull__(1)
         FUNC_MODIFIES(*obj);
@@ -89,7 +89,7 @@ Parrot_exec(PARROT_INTERP, ARGIN(opcode_t *pc),
     Parrot_exec_objfile_t * const obj =
         mem_allocate_zeroed_typed(Parrot_exec_objfile_t);
     exec_init(obj);
-    Parrot_exec_rel_addr = (char **)mem_sys_allocate_zeroed(4 * sizeof (char *));
+    Parrot_exec_rel_addr = mem_allocate_n_zeroed_typed(4, char *);
     obj->bytecode_header_size =
         (interp->code->base.file_offset + 4) * sizeof (opcode_t);
     jit_info = parrot_build_asm(interp, code_start, code_end,
@@ -146,7 +146,8 @@ C<< obj->data_size[N] >>.
 */
 
 static void
-add_data_member(ARGMOD(Parrot_exec_objfile_t *obj), ARGIN_NULLOK(void *src), size_t len)
+add_data_member(ARGMOD(Parrot_exec_objfile_t *obj),
+        ARGIN_NULLOK(const void *src), size_t len)
 {
     char *cp;
 
@@ -234,10 +235,10 @@ Parrot_exec_add_symbol(ARGMOD(Parrot_exec_objfile_t *obj),
             (size_t)(obj->symbol_count + 1) * sizeof (Parrot_exec_symbol_t));
         obj->symbol_table = new_symbol;
 
-        new_symbol = &obj->symbol_table[obj->symbol_count++];
+        new_symbol              = &obj->symbol_table[obj->symbol_count++];
         new_symbol->offset_list = obj->symbol_list_size;
-        new_symbol->symbol = symbol;
-        obj->symbol_list_size += strlen(symbol);
+        new_symbol->symbol      = symbol;
+        obj->symbol_list_size  += strlen(symbol);
 #if defined(EXEC_A_OUT) || defined(EXEC_COFF)
         /* for the trailing "_" */
         obj->symbol_list_size++;
@@ -260,7 +261,10 @@ Parrot_exec_add_symbol(ARGMOD(Parrot_exec_objfile_t *obj),
 
 =item C<int * Parrot_exec_add_text_rellocation_reg>
 
-RT#48260: Not yet documented!!!
+Adds a register's text rellocation to the object file.  Wrapper
+around C<Parrot_exec_add_text_rellocation>.
+
+Returns pointer to offset.
 
 =cut
 
@@ -280,7 +284,8 @@ Parrot_exec_add_text_rellocation_reg(ARGIN(Parrot_exec_objfile_t *obj),
 
 =item C<void Parrot_exec_add_text_rellocation_func>
 
-RT#48260: Not yet documented!!!
+Adds a function's text rellocation to the object file.  Wrapper
+around C<Parrot_exec_add_text_rellocation>.
 
 =cut
 
@@ -339,9 +344,9 @@ Parrot_exec_add_text_rellocation(ARGIN(Parrot_exec_objfile_t *obj), ARGIN(char *
         addr = Parrot_exec_rel_addr[--Parrot_exec_rel_count];
     else
         addr = nptr + disp;
-    new_relloc->offset = (int)(addr - obj->text.code);
+    new_relloc->offset        = (int)(addr - obj->text.code);
     new_relloc->symbol_number = symbol_number;
-    new_relloc->type = type;
+    new_relloc->type          = type;
 }
 
 /*

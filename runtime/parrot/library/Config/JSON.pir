@@ -8,7 +8,7 @@ Provides a simple wrapper to read and write JSON config files.
 
 =head2 ReadConfig(filename)
 
-Given a filename, parse the file containing valid JSON and return a 
+Given a filename, parse the file containing valid JSON and return a
 PMC containing the data.
 
 If the data is not valid, an exception will be thrown.
@@ -83,4 +83,4 @@ the rendered JSON will not be formatted. The default is false.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

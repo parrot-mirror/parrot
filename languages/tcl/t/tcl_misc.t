@@ -245,16 +245,7 @@ TCL
 
 OUT
 
-language_output_is('tcl', <<'TCL', <<'OUT', '{expand}');
-  set var {a   b c}
-  puts [join [list {expand}$var] ,]
-  puts [join [list {expand}{a {b c} d}] ,]
-TCL
-a,b,c
-a,b c,d
-OUT
-
-language_output_is('tcl', <<'TCL', <<'OUT', '{*}');
+language_output_is('tcl', <<'TCL', <<'OUT');
   set var {a   b c}
   puts [join [list {*}$var] ,]
   puts [join [list {*}{a {b c} d}] ,]
@@ -262,6 +253,28 @@ TCL
 a,b,c
 a,b c,d
 OUT
+
+TODO: {
+    local $TODO;
+    $TODO = 'new (to partcl) syntax, need to update expand rule.';
+
+language_output_is('tcl', <<'TCL', <<'OUT', '{*} on command');
+  {*}{puts hi}
+  {*}{puts "hello world"}
+  {*}"puts {hello world}"
+  {*}[concat puts {{hello world}}]
+  {*}[concat puts] {hello world}
+  set a puts
+  {*}"$a {hello world}"
+TCL
+hi
+hello world
+hello world
+hello world
+hello world
+hello world
+OUT
+}
 
 # Local Variables:
 #   mode: cperl

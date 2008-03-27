@@ -68,7 +68,7 @@ is_env_var_set(ARGIN(const char* var))
     else if (*value == '\0')
         retval = 0;
     else
-        retval = ! (strcmp(value, "0") == 0);
+        retval = !STREQ(value, "0");
     if (free_it)
         mem_sys_free(value);
     return retval;
@@ -118,14 +118,12 @@ make_interpreter(ARGIN_NULLOK(Interp *parent), INTVAL flags)
 #endif
         interp = mem_allocate_zeroed_typed(Interp);
 
-    /*
-     * the last interpreter (w/o) parent has to cleanup globals
-     * so remember parent if any
-     */
     interp->lo_var_ptr = NULL;
-    if (parent) {
+
+    /* the last interpreter (w/o) parent has to cleanup globals
+     * so remember parent if any */
+    if (parent)
         interp->parent_interpreter = parent;
-    }
     else {
         interp->parent_interpreter = NULL;
         PMCNULL                    = NULL;
@@ -139,7 +137,7 @@ make_interpreter(ARGIN_NULLOK(Interp *parent), INTVAL flags)
     interp->resume_flag = RESUME_INITIAL;
 
     /* main is called as a Sub too - this will get depth 0 then */
-    CONTEXT(interp->ctx)->recursion_depth = (UINTVAL)-1;
+    CONTEXT(interp)->recursion_depth = (UINTVAL)-1;
     interp->recursion_limit = RECURSION_LIMIT;
 
     /* Must initialize flags here so the GC_DEBUG stuff is available before
@@ -208,15 +206,15 @@ make_interpreter(ARGIN_NULLOK(Interp *parent), INTVAL flags)
     setup_register_stacks(interp);
 
     /* Need a user stack */
-    CONTEXT(interp->ctx)->user_stack = new_stack(interp, "User");
+    CONTEXT(interp)->user_stack = new_stack(interp, "User");
 
     /* And a dynamic environment stack */
     interp->dynamic_env = new_stack(interp, "DynamicEnv");
 
     /* clear context introspection vars */
-    CONTEXT(interp->ctx)->current_sub    = NULL;
-    CONTEXT(interp->ctx)->current_cont   = NULL;
-    CONTEXT(interp->ctx)->current_object = NULL;
+    CONTEXT(interp)->current_sub    = NULL;
+    CONTEXT(interp)->current_cont   = NULL;
+    CONTEXT(interp)->current_object = NULL;
 
     /* Load the core op func and info tables */
     interp->op_lib          = PARROT_CORE_OPLIB_INIT(1);
@@ -446,7 +444,7 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
     /* deinit op_lib */
     (void) PARROT_CORE_OPLIB_INIT(0);
 
-    stack_destroy(CONTEXT(interp->ctx)->user_stack);
+    stack_destroy(CONTEXT(interp)->user_stack);
     stack_destroy(interp->dynamic_env);
 
     destroy_context(interp);

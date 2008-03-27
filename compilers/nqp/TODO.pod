@@ -36,7 +36,7 @@ longer as much of a priority as it was.
 
 =over 4
 
-=item * Method ops
+=item * More tests for method ops
 
 We should be able to load an external module (Pm suggests Test.pbc)
 and exercise methods using that.
@@ -54,3 +54,29 @@ and exercise methods using that.
 =item * More tests for named arguments and parameters
 
 =back
+
+=head2 Bootstrap
+
+The directory C<bootstrap> contains the necessary files to implement NPQ
+in NQP. While this is not a major goal, it is interesting to compare the
+speed of NQP implemented in PIR and in NQP. For this to work, some things
+must be fixed.
+
+=over 4
+
+=item * it seems that the action for the C<for-statement> is broken.
+
+=item * NQP should not have a runtime containing support routines. The
+original NQP (in PIR) implements all operators as PIR instructions. This
+should also be the case for the bootstrapped NQP. Currently, the optable
+action does not handle the "inline" specifications.
+
+=item * Some actions are not complete. For instance, the action method
+C<package_declarator>, where classes can be defined.
+
+=item * the NQP compiler driver should accept a commandline option indicating
+which Actions object should be used: the PIR or NQP version. HLLCompiler
+has support for adding commandline options, this could be used.
+
+=back
+

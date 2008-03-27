@@ -8,7 +8,7 @@ z3.pir - z3 bytecode compiler
 
 Compile z3 to PIR and run it.
 
-=head1 TODO 
+=head1 TODO
 
 =over 4
 
@@ -54,4 +54,4 @@ Compile z3 to PIR and run it.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

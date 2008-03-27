@@ -6,8 +6,8 @@
 
 .sub '&source'
   .param pmc argv :slurpy
-  
-  .local int argc 
+
+  .local int argc
   argc = elements argv
   if argc != 1 goto bad_args
 
@@ -44,4 +44,4 @@ bad_args:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

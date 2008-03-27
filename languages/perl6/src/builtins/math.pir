@@ -150,6 +150,11 @@ for a rounded version.
     .return (a)
 .end
 
+.sub 'int'
+    .param num a
+    .return 'truncate'(a)
+.end
+
 
 =item exp
 
@@ -357,7 +362,7 @@ sin, cos, tan, asin, acos, atan, sec, cosec, cotan, asec, acosec,
 acotan, sinh, cosh, tanh, asinh, acosh, atanh, sech, cosech, cotanh,
 asech, acosech, acotanh.
 
-Performs the various trigonmetric functions. 
+Performs the various trigonmetric functions.
 
 Option C<:$base> is used to declare how you measure your angles.
 Given the value of an arc representing a single full revolution.
@@ -367,7 +372,7 @@ Given the value of an arc representing a single full revolution.
  /:i ^r/	Radians  (2*pi)
  /:i ^d/	Degrees  (360)
  /:i ^g/	Gradians (400)
- Num    	Units of 1 revolution. 
+ Num    	Units of 1 revolution.
 
 Note that module currying can be used within a lexical scope to specify
 a consistent base so you don't have to supply it with every call:
@@ -676,4 +681,4 @@ The other alternative would be to remove the default. --law]
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

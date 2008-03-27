@@ -1,6 +1,6 @@
 /*
  * $Id$
- * Copyright (C) 2002-2007, The Perl Foundation.
+ * Copyright (C) 2002-2008, The Perl Foundation.
  */
 
 /* $Id$ */
@@ -56,11 +56,11 @@
 #include "unit.h"
 #include "debug.h"
 
-#define IMCC_TRY(a, e)     do{ e=0; switch (setjmp(a)){ case 0:
-#define IMCC_CATCH(x)     break; case x:
+#define IMCC_TRY(a, e)     do{ (e)=0; switch (setjmp(a)){ case 0:
+#define IMCC_CATCH(x)     break; case (x):
 #define IMCC_END_TRY      default: break; } }while (0)
 
-#define IMCC_THROW(a, x)  longjmp(a, x)
+#define IMCC_THROW(a, x)  longjmp((a), (x))
 
 #define IMCC_FATAL_EXCEPTION      1
 #define IMCC_FATALY_EXCEPTION     2
@@ -108,7 +108,7 @@ void graph_coloring_reg_alloc(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*unit);
 
-int ig_test(int i, int j, int N, ARGIN(const unsigned int *graph))
+unsigned int ig_test(int i, int j, int N, ARGIN(unsigned int *graph))
         __attribute__nonnull__(4);
 
 void imc_reg_alloc(PARROT_INTERP, ARGIN_NULLOK(IMC_Unit *unit))
@@ -325,12 +325,6 @@ void op_fullname(
 void register_compilers(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-PARROT_MALLOC
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-char * str_dup(ARGIN(const char *old))
-        __attribute__nonnull__(1);
-
 PARROT_WARN_UNUSED_RESULT
 int try_find_op(PARROT_INTERP,
     ARGMOD(IMC_Unit *unit),
@@ -365,11 +359,12 @@ void expand_pcc_sub(PARROT_INTERP,
 
 void expand_pcc_sub_call(PARROT_INTERP,
     ARGMOD(IMC_Unit *unit),
-    ARGIN(Instruction *ins))
+    ARGMOD(Instruction *ins))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        FUNC_MODIFIES(*unit);
+        FUNC_MODIFIES(*unit)
+        FUNC_MODIFIES(*ins);
 
 void expand_pcc_sub_ret(PARROT_INTERP,
     ARGMOD(IMC_Unit *unit),
@@ -483,15 +478,7 @@ typedef struct _imc_info_t {
     int expect_pasm;
     struct macro_frame_t *frames;
 
-    /* this is just a sign that we suck.  that's all. */
-    char temp_buffer[4096];
-    /* I really do not like this temporary buffer. It makes the
-     * structure big. -- ambs */
-
-    /*
-     * XXX: The use of a cstring hash is good, pretty much.  But we're never
-     * clearing the hash, ever, which is bad, pretty much.
-     */
+    char *macro_buffer;
     Hash *macros;
 
     /*

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -48,8 +48,8 @@ static long _lrand48(void);
 static long _mrand48(void);
 static long _nrand48(_rand_buf buf);
 static void _srand48(long seed);
-static void move_reg(int from, int dest, ARGIN(const parrot_prm_context* c))
-        __attribute__nonnull__(3);
+static INTVAL COMPARE(PARROT_INTERP, void *a, void *b, PMC *cmp)
+        __attribute__nonnull__(1);
 
 static void next_rand(_rand_buf X);
 static void process_cycle_without_exit(
@@ -62,7 +62,11 @@ static void rec_climb_back_and_mark(
     ARGIN(parrot_prm_context* c))
         __attribute__nonnull__(2);
 
+static void swap(void **x, void **y);
 /* HEADERIZER END: static */
+
+#define move_reg(from, dest, c) (c)->mov((c)->interp, (unsigned char)(dest), \
+                                         (unsigned char)(from), (c)->info)
 
 /*
 
@@ -453,6 +457,7 @@ Parrot_range_rand(INTVAL from, INTVAL to, INTVAL how_random)
 /*
 
 =item C<void Parrot_srand>
+
 Seeds the random number generator with C<seed>.
 
 =cut
@@ -466,135 +471,6 @@ Parrot_srand(INTVAL seed)
     _srand48(seed);
 }
 
-/*
-
-=back
-
-=head2 Array Functions
-
-=over 4
-
-=item C<void * Parrot_make_la>
-
-Creates a C array of C<long>s with one more element than the number of
-elements in C<*array>. The elements are then copied from C<*array> to
-the new array, and the last (extra) element is set to 0.
-
-Used in C<src/nci.c>.
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-void *
-Parrot_make_la(PARROT_INTERP, ARGIN(PMC *array))
-{
-    const INTVAL arraylen = VTABLE_elements(interp, array);
-    INTVAL cur;
-
-    /* Allocate the array and set the last element to 0. Since we
-       always allocate one element more than we use we're guaranteed
-       to actually have an array, even if the inbound array is
-       completely empty
-    */
-    long * const out_array = (long *)mem_sys_allocate((sizeof (long)) * (arraylen + 1));
-    out_array[arraylen] = 0;
-    /*    printf("Long array has %i elements\n", arraylen);*/
-    for (cur = 0; cur < arraylen; cur++) {
-        out_array[cur] = VTABLE_get_integer_keyed_int(interp, array, cur);
-    }
-
-    return out_array;
-}
-
-/*
-
-=item C<void Parrot_destroy_la>
-
-Use this to destroy an array created with C<Parrot_make_la()>.
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_destroy_la(ARGMOD(long *array))
-{
-    mem_sys_free(array);
-}
-
-/*
-
-=item C<void * Parrot_make_cpa>
-
-Creates a C array of C<char *>s with one more element than the number of
-elements in C<*array>. The elements are then copied from C<*array> to
-the new array, and the last (extra) element is set to 0.
-
-Currently unused.
-
-Note that you need to free this array with C<Parrot_destroy_cpa()>.
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-void *
-Parrot_make_cpa(PARROT_INTERP, ARGIN(PMC *array))
-{
-    const INTVAL arraylen = VTABLE_elements(interp, array);
-    INTVAL cur;
-
-    /* Allocate the array and set the last element to 0. Since we
-       always allocate one element more than we use we're guaranteed
-       to actually have an array, even if the inbound array is
-       completely empty
-    */
-    char ** const out_array = (char **)mem_sys_allocate((sizeof (char *))
-                                               * (arraylen + 1));
-    out_array[arraylen] = 0;
-
-    /*    printf("String array has %i elements\n", arraylen);*/
-    for (cur = 0; cur < arraylen; cur++) {
-        out_array[cur] =
-            string_to_cstring(interp,
-                              VTABLE_get_string_keyed_int(interp,
-                                                          array, cur));
-        /*        printf("Offset %i is %s\n", cur, out_array[cur]);*/
-    }
-
-    return out_array;
-}
-
-/*
-
-=item C<void Parrot_destroy_cpa>
-
-Use this to destroy an array created with C<Parrot_make_cpa()>.
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_destroy_cpa(ARGMOD(char **array))
-{
-    UINTVAL offset = 0;
-    /* Free each piece */
-    while (array[offset] != NULL) {
-        string_cstring_free(array[offset++]);
-    }
-    /* And then the holding array */
-    mem_sys_free(array);
-}
 
 /* &gen_from_enum(tm.pasm) */
 typedef enum {
@@ -620,7 +496,7 @@ Helper to convert a B<struct tm *> to an Array
 
 */
 
-PARROT_API
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
 tm_to_array(PARROT_INTERP, ARGIN(const struct tm *tm))
@@ -647,7 +523,11 @@ tm_to_array(PARROT_INTERP, ARGIN(const struct tm *tm))
 
 =item C<INTVAL Parrot_byte_index>
 
-RT#48260: Not yet documented!!!
+Looks for the location of a substring within a longer string.  Takes
+pointers to the strings and the offset within the string at which
+to start searching as arguments.
+
+Returns an offset value if it is found, or -1 if no match.
 
 =cut
 
@@ -664,11 +544,11 @@ Parrot_byte_index(SHIM_INTERP, ARGIN(const STRING *base),
     const INTVAL       search_len = search->strlen;
     const char        *str_pos    = str_start + start_offset;
     INTVAL             len_remain = str_len   - start_offset;
-    char              *search_pos;
+    const char        *search_pos;
 
     /* find the next position of the first character in the search string
      * Parrot strings can have NULLs, so strchr() won't work here */
-    while ((search_pos = (char *)memchr(str_pos, *search_str, len_remain))) {
+    while ((search_pos = (const char *)memchr(str_pos, *search_str, len_remain))) {
         const INTVAL offset = search_pos - str_start;
 
         /* now look for the entire string */
@@ -690,7 +570,10 @@ Parrot_byte_index(SHIM_INTERP, ARGIN(const STRING *base),
 
 =item C<INTVAL Parrot_byte_rindex>
 
-RT#48260: Not yet documented!!!
+Substring search (like Parrot_byte_index), but works backwards,
+from the rightmost end of the string.
+
+Returns offset value or -1 (if no match).
 
 =cut
 
@@ -702,9 +585,9 @@ INTVAL
 Parrot_byte_rindex(SHIM_INTERP, ARGIN(const STRING *base),
         ARGIN(const STRING *search), UINTVAL start_offset)
 {
-    const INTVAL searchlen = search->strlen;
+    const INTVAL searchlen          = search->strlen;
     const char * const search_start = search->strstart;
-    UINTVAL max_possible_offset = (base->strlen - search->strlen);
+    UINTVAL max_possible_offset     = (base->strlen - search->strlen);
     INTVAL current_offset;
 
     if (start_offset && start_offset < max_possible_offset)
@@ -810,24 +693,6 @@ process_cycle_without_exit(int node_index, ARGIN(parrot_prm_context* c))
 
 /*
 
-=item C<static void move_reg>
-
-should be self-speaking
-
-=cut
-
- */
-
-static void
-move_reg(int from, int dest, ARGIN(const parrot_prm_context* c))
-{
-   /* fprintf(stderr, "move %i ==> %i\n", from, dest);*/
-    c->mov(c->interp, dest, from, c->info);
-}
-
-
-/*
-
 =item C<void Parrot_register_move>
 
 Move C<n_regs> from the given register list C<src_regs> to C<dest_regs>.
@@ -926,9 +791,9 @@ Parrot_register_move(PARROT_INTERP,
 
     /* allocate space for data structures */
     /* NOTA: data structures could be kept allocated somewhere waiting to get reused...*/
-    c.nb_succ = nb_succ = (int*)mem_sys_allocate_zeroed(sizeof (int) * n_regs);
-    c.backup = backup = (int*)mem_sys_allocate(sizeof (int) * n_regs);
-    c.reg_to_index = reg_to_index = (int*)mem_sys_allocate(sizeof (int) * max_reg);
+    c.nb_succ      = nb_succ      = mem_allocate_n_zeroed_typed(n_regs, int);
+    c.backup       = backup       = mem_allocate_n_zeroed_typed(n_regs, int);
+    c.reg_to_index = reg_to_index = mem_allocate_n_zeroed_typed(max_reg, int);
 
     /* init backup array */
     for (i = 0; i < n_regs; i++)
@@ -969,6 +834,71 @@ Parrot_register_move(PARROT_INTERP,
     mem_sys_free(backup);
 }
 
+/* TODO: Macroize swap and COMPARE */
+static void
+swap(void **x, void **y)
+{
+    void *t = *x;
+    *x      = *y;
+    *y      =  t;
+}
+
+typedef INTVAL (*sort_func_t)(PARROT_INTERP, void*, void*);
+
+static INTVAL
+COMPARE(PARROT_INTERP, void *a, void *b, PMC *cmp)
+{
+    if (PMC_IS_NULL(cmp))
+        return mmd_dispatch_i_pp(interp, (PMC *)a, (PMC *)b, MMD_CMP);
+
+    if (cmp->vtable->base_type == enum_class_NCI) {
+        const sort_func_t f = (sort_func_t)D2FPTR(PMC_struct_val(cmp));
+        return f(interp, a, b);
+    }
+
+    return Parrot_runops_fromc_args_reti(interp, cmp, "IPP", a, b);
+}
+
+
+void
+Parrot_quicksort(PARROT_INTERP, void **data, UINTVAL n, PMC *cmp)
+{
+    while (n > 1) {
+        UINTVAL i, j, ln, rn;
+
+        swap(&data[0], &data[n/2]);
+
+        for (i = 0, j = n; ;) {
+            do
+                --j;
+            while (COMPARE(interp, data[j], data[0], cmp) > 0);
+
+            do
+                ++i;
+            while (i < j && COMPARE(interp, data[i], data[0], cmp) < 0);
+
+            if (i >= j)
+                break;
+
+            swap(&data[i], &data[j]);
+        }
+
+        swap(&data[j], &data[0]);
+
+        ln = j;
+        rn = n - ++j;
+
+        if (ln < rn) {
+            Parrot_quicksort(interp, data, ln, cmp);
+            data += j;
+            n = rn;
+        }
+        else {
+            Parrot_quicksort(interp, data + j, rn, cmp);
+            n = ln;
+        }
+    }
+}
 
 /*
 

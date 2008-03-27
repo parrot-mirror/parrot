@@ -82,7 +82,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "PIR compiler sub" );
 
 .sub test :main
-    .local NCI compiler
+    .local pmc compiler
     get_global compiler, "xcompile"
     compreg "XPASM", compiler
     .local pmc my_compiler
@@ -105,7 +105,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PIR compiler sub" );
     $S0 .= sub_name
     $S0 .= ":\n"
     $S0 .= code
-    .local NCI pasm_compiler
+    .local pmc pasm_compiler
     pasm_compiler = compreg "PASM"
     # print $S0
     $P0 = pasm_compiler($S0)
@@ -311,13 +311,15 @@ pir_output_is( <<'CODE', <<'OUTPUT', "eval.get_string - same file" );
 .sub main :main
 
   .local pmc f1, f2
-  .local pmc io
+  .local pmc io, os
   f1 = compi("foo_1", "hello from foo_1")
   $S0 = f1
   io = open "temp.pbc", ">"
   print io, $S0
   close io
   load_bytecode "temp.pbc"
+  os = new 'OS'
+  os.rm("temp.pbc")
   f2 = compi("foo_2", "hello from foo_2")
   io = open "temp.pbc", ">"
   print io, f2

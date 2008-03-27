@@ -18,7 +18,7 @@ Creates a stream and pipes it through a Stream::Lines stream.
 
     load_bytecode "library/Stream/Sub.pir"
     load_bytecode "library/Stream/Lines.pir"
-    
+
     # create a text stream
     stream = new "Stream::Sub"
     # set the source
@@ -29,10 +29,10 @@ Creates a stream and pipes it through a Stream::Lines stream.
     lines = new "Stream::Lines"
     # set the source
     assign lines, stream
-    
+
     # dump the stream
     lines."dump"()
-    
+
     end
 .end
 
@@ -61,7 +61,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 
 =cut
 
@@ -69,4 +69,4 @@ Copyright (C) 2004, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

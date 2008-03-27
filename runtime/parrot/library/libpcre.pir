@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2006, The Perl Foundation.
+# Copyright (C) 2004-2008, The Perl Foundation.
 # $Id$
 
 =head1 TITLE
@@ -76,7 +76,7 @@ RETURN:
     ovector_length= osize * num_result_pairs
 
     .local pmc ovector
-    ovector= new ManagedStruct
+    ovector= new 'ManagedStruct'
     ovector= ovector_length
 
     ## on 32 bit systems
@@ -105,7 +105,7 @@ RETURN:
     .local int ovece
 
     .local pmc struct
-    struct= new SArray
+    struct= new 'SArray'
     struct= 3
 
     .include "datatypes.pasm"
@@ -181,4 +181,4 @@ E<lt>jerry dot gay at gmail dot com<gt>
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

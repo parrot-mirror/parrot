@@ -1,6 +1,8 @@
-# Copyright (C) 2001-2006, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
+
 package Parrot::Configure::Options::Conf;
+
 use strict;
 use warnings;
 use base qw( Exporter );
@@ -12,7 +14,7 @@ our @EXPORT_OK = qw(
     $svnid
 );
 use lib qw( lib );
-use Parrot::BuildUtil;
+use Parrot::BuildUtil ();
 
 our @valid_options = qw{
     ask
@@ -76,6 +78,8 @@ our @valid_options = qw{
     verbose-step
     version
     without-gdbm
+    without-crypto
+    without-gettext
     without-gmp
     without-icu
     yacc
@@ -186,6 +190,7 @@ External Library Options:
 
    --without-gmp        Build parrot without GMP support
    --without-gdbm       Build parrot without GDBM support
+   --without-crypto     Build parrot without crypto support (libssl)
 
 ICU Options:
 

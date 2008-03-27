@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2006, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 package Parrot::Configure::Step::List;
 use strict;
@@ -55,13 +55,15 @@ my @steps = qw(
     auto::gmp
     auto::readline
     auto::gdbm
+    auto::crypto
+    auto::gettext
     auto::snprintf
     auto::perldoc
     auto::python
     auto::m4
     auto::ctags
     auto::revision
-    gen::icu
+    auto::icu
     gen::config_h
     gen::core_pmcs
     gen::parrot_include

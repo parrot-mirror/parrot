@@ -15,7 +15,7 @@ copy.
 
     firstname = new 'String'
     firstname = "Ford"
-    say firstname 
+    say firstname
 
     $P1 = firstname
     $P1 = "Zaphod"
@@ -32,5 +32,5 @@ copy.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:
 

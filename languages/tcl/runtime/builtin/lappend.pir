@@ -23,7 +23,7 @@
   push_eh new_variable
     value = read(listname)
   pop_eh
-  
+
   .local pmc __list
 
   __list = get_root_global ['_tcl'], '__list'
@@ -54,4 +54,4 @@ error:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

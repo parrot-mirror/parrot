@@ -1,5 +1,5 @@
 #! ./parrot
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 =head1 TITLE
@@ -35,7 +35,7 @@ module, L<runtime/parrot/library/Crow.pir>.
     opts = get_args(args)
 
     unless null opts goto got_opts
-    opts = new .Hash
+    opts = new 'Hash'
   got_opts:
 
     .local pmc templates
@@ -111,7 +111,7 @@ module, L<runtime/parrot/library/Crow.pir>.
     .return ()
 
   agg_undefined:
-    $P0 = new .Exception
+    $P0 = new 'Exception'
     $P0['_message'] = "cannot assign to Null PMC!"
     throw $P0
 .end
@@ -121,4 +121,4 @@ module, L<runtime/parrot/library/Crow.pir>.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

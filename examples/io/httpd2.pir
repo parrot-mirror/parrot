@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -69,10 +69,10 @@ has_host:
     .param pmc arg0
     print "Usage: ./parrot "
     print arg0
-    print <<"EOP" 
+    print <<"EOP"
  options ...
 
-Valid options are: 
+Valid options are:
 
     [ --port|p=<port> ]     default 1234
     [ --host|h=<host> ]     default 'localhost'
@@ -86,4 +86,4 @@ EOP
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

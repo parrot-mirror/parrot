@@ -1,4 +1,4 @@
-This is Parrot, version 0.5.2
+This is Parrot, version 0.6.0
 ------------------------------
 
 Parrot is Copyright (C) 2001-2008, The Perl Foundation.
@@ -46,14 +46,15 @@ use.  For example, to compile C files with 'cc', C++ files with
 
     perl Configure.pl --cc=cc --cxx=CC --link=CC --ld=CC
 
-See "perl Configure.pl --help" for more options.
+See "perl Configure.pl --help" for more options and docs/configuration.pod
+for more details.
 
 For systems like HPUX that don't have inet_pton please run
 
     perl Configure.pl --define=inet_aton
 
 Running Configure.pl will generate a config.h header, a Parrot::Config
-module, platform files and some Makefiles.
+module, platform files and many Makefiles.
 
 The file "myconfig" has an overview of configure settings.
 
@@ -102,8 +103,8 @@ But please note that dynamic libs will not be found for non-standard
 locations unless you set LD_LIBRARY_PATH or similar.
 
 Look at docs/parrot.pod and docs/intro.pod for where to go from here.  If you
-have any problems, see the section "How To Submit A Bug Report" in 
-docs/submissions.pod These documents are in POD format. You can view these 
+have any problems, see the section "How To Submit A Bug Report" in
+docs/submissions.pod.  These documents are in POD format. You can view these
 files with the command:
 
     perldoc -F docs/intro.pod
@@ -144,6 +145,7 @@ WEB SITES
 
 The following web sites have all the Parrot information you need:
     http://www.parrotcode.org/
+    http://www.perlfoundation.org/parrot/
     http://dev.perl.org/perl6/
     http://bugs6.perl.org/perl6/
     http://pugscode.org/

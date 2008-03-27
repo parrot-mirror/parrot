@@ -32,7 +32,7 @@ This example shows the usage of C<Stream::read_bytes>.
 
     stream = clone stream
     $P0 = clone stream
-    
+
     $S0 = stream."read_bytes"( 4 )
     print "'lowo': ["
     print $S0
@@ -42,7 +42,7 @@ This example shows the usage of C<Stream::read_bytes>.
     print "["
     print $S0
     print "]\n"
-    
+
     $S0 = stream."read"()
     print "'rld!': ["
     print $S0
@@ -81,7 +81,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 
 =cut
 
@@ -89,4 +89,4 @@ Copyright (C) 2004, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

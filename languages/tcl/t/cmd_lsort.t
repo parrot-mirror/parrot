@@ -1,6 +1,6 @@
 #!perl
 
-# Copyright (C) 2005-2006, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 # $Id$
 
 # the following lines re-execute this as a tcl script
@@ -73,7 +73,7 @@ is [lsort -decreasing -integer -unique {10 2 30 5 0 -5 2}] \
   {decreasing integer unique}
 
 eval_is {lsort -dictionary {a10 B1 abc ab b1 a1 ab a2}} \
-  {a1 a2 a10 ab ab abc b1 B1} \
+  {a1 a2 a10 ab ab abc B1 b1} \
   {-dictionary}
 
 eval_is {

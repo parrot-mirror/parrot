@@ -68,7 +68,7 @@ loop:
     unless ch == '`' goto not_bq
 	op = parse(io)
 	arg = parse(io)
-	pair = new FixedPMCArray
+	pair = new 'FixedPMCArray'
 	pair = 2
 	pair[0] = op
 	pair[1] = arg
@@ -430,4 +430,4 @@ void:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

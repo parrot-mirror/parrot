@@ -8,6 +8,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Parrot::Distribution;
 use Test::More tests => 1;
+use Parrot::Test::Util::Runloop;
 
 =head1 NAME
 
@@ -35,31 +36,19 @@ L<docs/pdds/pdd07_codingstd.pod>
 my $DIST = Parrot::Distribution->new;
 
 my $skip_files = $DIST->generated_files();
-my @files = @ARGV ? @ARGV : $DIST->get_c_language_files();
-my @failed_files;
+my @files = @ARGV ? @ARGV : (
+    $DIST->get_c_language_files(),
+    $DIST->get_perl_language_files(),
+    $DIST->get_pir_language_files(),
+);
 
-foreach my $file (@files) {
-
-    # if we have command line arguments, the file is the full path
-    # otherwise, use the relevant Parrot:: path method
-    my $path = @ARGV ? $file : $file->path;
-
-    next if exists $skip_files->{$path};
-
-    my $buf = $DIST->slurp($path);
-
-    if ( $buf =~ m{.?[ \t]+$}m ) {
-        push @failed_files, $path;
-    }
-}
-
-# check the file
-ok( !scalar(@failed_files), 'No trailing spaces or tabs' )
-    or diag(
-    join
-        $/ => "Trailing space or tab char found in " . scalar @failed_files . " files:",
-    @failed_files
-    );
+Parrot::Test::Util::Runloop->testloop(
+    name     => 'no trailing whitespace',
+    files    => [@files],
+    skips    => $skip_files,
+    per_line => sub { shift !~ m{.?[ \t]+$}m },
+    diag_prefix => 'Trailing space or tab char found'
+);
 
 # Local Variables:
 #   mode: cperl

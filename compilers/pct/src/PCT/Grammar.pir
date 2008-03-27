@@ -1,4 +1,4 @@
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -158,8 +158,8 @@ to enforce whitespace between lexical words.
     goto add_litchar
 
   literal_xdo:
-    ##  handle \x, \d, and \o escapes.  start by converting 
-    ##  the 'o', 'd', or 'x' into 8, 10, or 16 (yes, it's hack 
+    ##  handle \x, \d, and \o escapes.  start by converting
+    ##  the 'o', 'd', or 'x' into 8, 10, or 16 (yes, it's hack
     ##  but it works).  Then loop through the characters that
     ##  follow to compute the integer value of the codepoint,
     ##  and add that codepoint to our literal.
@@ -216,4 +216,4 @@ to enforce whitespace between lexical words.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

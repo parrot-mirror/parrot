@@ -21,10 +21,9 @@ this is as simple as returning the list.
 
   push_eh convert_to_tcl_error
     $P0 = $P0.'get_list'($S0)
-  pop_eh 
+  pop_eh
 
-  morph value, .Undef
-  assign value, $P0
+  copy value, $P0
 
   .return(value)
 
@@ -50,8 +49,7 @@ Given a PMC, get a TclDict from it, converting as needed.
   .param pmc list
 
   $P0 = __listToDict(list)
-  morph list, .Undef
-  assign list, $P0
+  copy list, $P0
 
   .return(list)
 .end
@@ -60,8 +58,7 @@ Given a PMC, get a TclDict from it, converting as needed.
   .param pmc value
 
   $P0 = __stringToDict(value)
-  morph value, .Undef
-  assign value, $P0
+  copy value, $P0
 
   .return(value)
 .end
@@ -113,11 +110,22 @@ Given a PMC, get a number from it.
 
   .local string className
   .local pmc    value
+
   className = ast['class']
   value     = ast['value']
 
-  number = new className
-  assign number, value
+  # XXX We probably shouldn't have to invoke the PIR compiler here.
+
+  $P0 = new 'CodeString'
+  $P0.emit(".sub 'anon' :anon")
+  $P0.emit('$P0 = new "%0"', className)
+  $P0.emit("$P0 = %0", value)
+  $P0.emit(".return($P0)")
+  $P0.emit(".end")
+
+  $P1 = compreg 'PIR'
+  $P2 = $P1($P0)
+  number = $P2()
 
   .return(number)
 
@@ -142,7 +150,7 @@ Given a PMC, get an integer from it.
 
 .sub __integer :multi(_)
   .param pmc value
-  .param pmc rawhex :named ('rawhex') :optional 
+  .param pmc rawhex :named ('rawhex') :optional
   .param int has_rawhex               :opt_flag
 
   unless has_rawhex goto normal
@@ -150,17 +158,16 @@ Given a PMC, get an integer from it.
   $S0 =  '0x' . $S0
   value = $S0
 
-normal: 
+normal:
   .local pmc integer
 
   push_eh not_integer_eh
     integer = __number(value)
   pop_eh
-  $I0 = typeof integer
-  if $I0 != .TclInt goto not_integer
+  $S0 = typeof integer
+  if $S0 != 'TclInt' goto not_integer
 
-  morph value, .Undef
-  assign value, integer
+  copy value, integer
 
   .return(value)
 
@@ -255,10 +262,9 @@ Given a string, return the appropriate channel.
   io_obj = channels[channelID]
   if null io_obj goto bad_channel
 
-  $I0 = typeof io_obj
-  if $I0 == .ParrotIO goto done
-  $I1 = find_type 'TCPStream'
-  if $I0 == $I1 goto done
+  $S0 = typeof io_obj
+  if $S0 == 'ParrotIO' goto done
+  if $S0 == 'TCPStream' goto done
 
   # should never happen
   goto bad_channel
@@ -288,6 +294,8 @@ Given an expression, return a subroutine, or optionally, the raw PIR
 
     .local pmc parse
     .local pmc match
+
+    if expression == '' goto empty
 
     parse = get_root_global ['parrot'; 'TclExpr::Grammar'], 'expression'
     match = parse(expression, 'pos'=>0, 'grammar'=>'TclExpr::Grammar')
@@ -356,6 +364,9 @@ Given an expression, return a subroutine, or optionally, the raw PIR
     $S0 = 'syntax error in expression "' . $S0
     $S0 = $S0 . '": extra tokens at end of expression'
     tcl_error $S0
+
+  empty:
+    tcl_error "empty expression\nin expression \"\""
 .end
 
 =head2 _Tcl::__script
@@ -479,14 +490,14 @@ depth_set:
   .local pmc colons, split
   colons = get_root_global ['_tcl'], 'colons'
   split  = get_root_global ['parrot'; 'PGE::Util'], 'split'
-  
+
   .local pmc ns_name
   ns_name = split(colons, name)
   $I0 = elements ns_name
   if $I0 == 0 goto relative
   $S0 = ns_name[0]
   if $S0 != '' goto relative
-  
+
 absolute:
   $P1 = shift ns_name
   goto return
@@ -501,7 +512,7 @@ relative_loop:
   $P0 = $P0.'get_name'()
   $S0 = $P0[0]
   if $S0 == '_tcl' goto relative_loop
-  
+
   $I0 = elements $P0
 combine_loop:
   dec $I0
@@ -524,10 +535,10 @@ throw an exception.
 .sub __boolean
     .param pmc value
 
-    .local string lc 
+    .local string lc
     $S0 = value
     lc = downcase $S0
- 
+
     if lc == '1' goto true
     if lc == '0' goto false
     if lc == 'true'  goto true
@@ -593,7 +604,7 @@ was this a valid tcl-style level, or did we get this value as a default?
   __number   = get_root_global ['_tcl'], '__number'
   orig_level = new 'Integer'
   orig_level = call_level
- 
+
   .local int num_length
 
 get_absolute:
@@ -605,7 +616,7 @@ get_absolute:
     parrot_level = __number($S0)
   pop_eh
   goto bounds_check
- 
+
 get_integer:
   push_eh default
     parrot_level = __number(tcl_level)
@@ -614,7 +625,7 @@ get_integer:
   if parrot_level < 0 goto default
   parrot_level = orig_level - parrot_level
   goto bounds_check
- 
+
 default:
   defaulted = 1
   parrot_level = new 'Integer'
@@ -626,7 +637,7 @@ bounds_check:
   if parrot_level < 0          goto bad_level
   if parrot_level > orig_level goto bad_level
 
-  $I1 = defaulted 
+  $I1 = defaulted
   .return(parrot_level,$I1)
 
 bad_level:
@@ -647,7 +658,7 @@ Given a string of tcl code, perform the backslash/newline subsitution.
 
   .local int len
   len = length contents
- 
+
   # perform the backslash-newline substitution
   $I0 = -1
 backslash_loop:
@@ -679,8 +690,37 @@ done:
   .return (contents)
 .end
 
+# Given a list, reverse the elements in the list.
+# Might make sense to make this a method on one of the parrot types we
+# inherit from.
+.sub 'reverse'
+  .param pmc value
+
+  .local int high
+  .local int low
+  .local pmc swap_one
+  .local pmc swap_two
+
+  high = value
+  dec high # need index, not count
+  low = 0
+
+ loop:
+  if high <= low goto loop_end
+  swap_one    = value[low]
+  swap_two    = value[high]
+  value[low]  = swap_two
+  value[high] = swap_one
+  inc low
+  dec high
+  goto loop
+ loop_end:
+
+ .return()
+.end
+
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

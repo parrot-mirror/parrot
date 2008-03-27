@@ -1,13 +1,9 @@
 #
 # Analog to perl's Test::More
 #
-# At the moment, this is *much* weaker testing harness than the one that
-# comes with tcl. However, it's very good for partcl in the short term.
-
-# RT#40713: put this in a namespace to avoid global pollution
-
-# get listing of all the tests we can't run.
-source lib/skipped_tests.tcl
+# We can't currently run tcltest.tcl, but this gives us a mock version that
+# lets us at least run tcl test files; it also gives us TAP output for our
+# parrot-focused tests.
 
 proc skip_all {} {
     puts 1..0
@@ -44,7 +40,7 @@ proc is {value expected {description ""} {special {}}}  {
                 set special ""
             }
         }
-        set special_reason [concat {expand}[lindex $special 1]]
+        set special_reason [concat {*}[lindex $special 1]]
         set description " - $description # $type $special_reason"
     } else {
         if  {$description ne ""} {
@@ -67,7 +63,6 @@ proc is {value expected {description ""} {special {}}}  {
     }
 }
 
-# RT#40714: Need to handle the case where we expect an exception.
 proc eval_is {code expected {description ""} {special {}}}  {
     global very_bad_global_variable_test_num
     # The one case where skip actually means "don't do that"
@@ -124,12 +119,13 @@ proc diag {diagnostic} {
   puts stderr "# $diagnostic"
 }
 
-# RT#40720: hacks to help avoid translating the actual tcl tests, until 
-# we actually support tcltest.
-
 # A placeholder that simulates the real tcltest's exported test proc.
 proc test {num description args} {
     global skipped_tests
+    if {![info exists skipped_tests]} {
+        # get listing of all the tests we can't run.
+        source lib/skipped_tests.tcl
+    }
     global abort_after
     set full_desc "$num $description"
 
@@ -158,7 +154,8 @@ proc test {num description args} {
     }
 }
 
-# RT#40717: hacks to allow compilation of tests.
+# Hacks to allow compilation of tests - used as a crutch until we
+# support tcltest.
 
 # Constraints are like skip conditions that
 # can be specified by a particular invocation to test. Since we're ingoring
@@ -182,7 +179,7 @@ proc makeDirectory      {args} {return 0}
 proc removeDirectory    {args} {return 0}
 proc testobj            {args} {return 0}
 proc testsetplatform    {args} {return 0}
-proc testevalex         {cmd}  { uplevel {expand}$cmd }
+proc testevalex         {cmd}  { uplevel {*}$cmd }
 
 namespace eval tcltest  {
     set verbose 0

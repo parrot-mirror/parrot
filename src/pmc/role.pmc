@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -50,29 +50,18 @@ An empty Hash PMC is allocated during initialization.
 
 #include "parrot/parrot.h"
 #include "pmc_namespace.h"
-#define PARROT_ROLE(o) ((Parrot_Role *) PMC_data(o))
-
-/* This is the underlying structure of this PMC. */
-typedef struct Parrot_Role {
-    STRING *name;            /* The name of the role. */
-    PMC    *_namespace;      /* The namespace it's linked to, if any. */
-    PMC    *roles;           /* Any roles that this role is composed from. */
-    PMC    *methods;         /* Hash of method names to methods in this role. */
-    PMC    *attrib_metadata; /* Hash of attributes in this role to hashes of
-                              * metadata. */
-} Parrot_Role;
-
 
 /* Takes a hash and initializes the role based on it. */
 static void init_role_from_hash(PARROT_INTERP, PMC *self, PMC *info)
 {
-    Parrot_Role * const role = PARROT_ROLE(self);
-    STRING        *ns_string = CONST_STRING(interp, "NameSpace");
+    Parrot_Role * const role     = PARROT_ROLE(self);
+    STRING * const ns_string     = CONST_STRING(interp, "NameSpace");
+    STRING * const name_str      = CONST_STRING(interp, "name");
+    STRING * const namespace_str = CONST_STRING(interp, "namespace");
+
     int have_name, have_ns;
     PMC *old_ns;
     int i;
-    STRING *name_str = CONST_STRING(interp, "name");
-    STRING *namespace_str = CONST_STRING(interp, "namespace");
 
     /* Ensure we actually have some initialization info. */
     if (PMC_IS_NULL(info))
@@ -113,7 +102,7 @@ static void init_role_from_hash(PARROT_INTERP, PMC *self, PMC *info)
         /* Namespace is nested in the current namespace and with the name of
          * the role. */
         role->_namespace = Parrot_make_namespace_keyed_str(interp,
-            CONTEXT(interp->ctx)->current_namespace, role->name);
+            CONTEXT(interp)->current_namespace, role->name);
     }
 
     /* Otherwise, we may just have a namespace. */
@@ -125,11 +114,10 @@ static void init_role_from_hash(PARROT_INTERP, PMC *self, PMC *info)
             _namespace = Parrot_make_namespace_autobase(interp, _namespace);
 
         /* If we get something null back it's an error; otherwise, store it. */
-        if (!PMC_IS_NULL(_namespace))
-            role->_namespace = _namespace;
-        else
+        if (PMC_IS_NULL(_namespace))
             real_exception(interp, NULL, E_NameError, "Namespace not found");
 
+        role->_namespace = _namespace;
         /* Name is that of the most nested part of the namespace. */
         role->name = VTABLE_get_string(interp, _namespace);
     }
@@ -137,24 +125,25 @@ static void init_role_from_hash(PARROT_INTERP, PMC *self, PMC *info)
     /* If we were attached to a namespce and are now attached to a new one,
      * need to unset ourselves in the old namespace. */
     if (!PMC_IS_NULL(old_ns) && role->_namespace != old_ns) {
-        STRING *set_class_str = CONST_STRING(interp, "set_class");
+        STRING * const set_class_str = CONST_STRING(interp, "set_class");
         Parrot_PCCINVOKE(interp, old_ns, set_class_str, "P->", PMCNULL);
     }
 
     /* Link namespace to this role, if there is one. */
     if (!PMC_IS_NULL(role->_namespace)) {
-        STRING *set_class_str = CONST_STRING(interp, "set_class");
+        STRING * const set_class_str = CONST_STRING(interp, "set_class");
         Parrot_PCCINVOKE(interp, role->_namespace, set_class_str, "P->", self);
     }
 
     /* Initialize roles, if we have any. */
     if (VTABLE_exists_keyed_str(interp, info, CONST_STRING(interp, "roles"))) {
         /* Loop over roles array and compose them. */
-        STRING *roles_str = CONST_STRING(interp, "roles");
-        PMC *role_list = VTABLE_get_pmc_keyed_str(interp, info, roles_str);
-        int role_count = VTABLE_elements(interp, role_list);
+        STRING * const roles_str = CONST_STRING(interp, "roles");
+        PMC    * const role_list = VTABLE_get_pmc_keyed_str(interp, info, roles_str);
+        const int role_count     = VTABLE_elements(interp, role_list);
+
         for (i = 0; i < role_count; i++) {
-            PMC *cur_role = VTABLE_get_pmc_keyed_int(interp, role_list, i);
+            PMC * const cur_role = VTABLE_get_pmc_keyed_int(interp, role_list, i);
             VTABLE_add_role(interp, self, cur_role);
         }
     }
@@ -162,13 +151,13 @@ static void init_role_from_hash(PARROT_INTERP, PMC *self, PMC *info)
     /* Initialize attributes, if we have any. */
     if (VTABLE_exists_keyed_str(interp, info, CONST_STRING(interp, "attributes"))) {
         /* Loop over attributes array and add them. */
-        STRING *attributes_str = CONST_STRING(interp, "attributes");
-        PMC *attrib_name_list = VTABLE_get_pmc_keyed_str(interp, info, attributes_str);
+        STRING * const attributes_str   = CONST_STRING(interp, "attributes");
+        PMC    * const attrib_name_list = VTABLE_get_pmc_keyed_str(interp, info, attributes_str);
 
-        int attrib_count = VTABLE_elements(interp, attrib_name_list);
+        const int attrib_count = VTABLE_elements(interp, attrib_name_list);
 
         for (i = 0; i < attrib_count; i++) {
-            STRING *attrib_name = VTABLE_get_string_keyed_int(interp,
+            STRING * const attrib_name = VTABLE_get_string_keyed_int(interp,
                 attrib_name_list, i);
             VTABLE_add_attribute(interp, self, attrib_name, PMCNULL);
         }
@@ -177,20 +166,23 @@ static void init_role_from_hash(PARROT_INTERP, PMC *self, PMC *info)
     /* Initialize methods, if we have any. */
     if (VTABLE_exists_keyed_str(interp, info, CONST_STRING(interp, "methods"))) {
         /* Get the methods hash. */
-        STRING *methods_str = CONST_STRING(interp, "methods");
-        PMC *methods = VTABLE_get_pmc_keyed_str(interp, info, methods_str);
+        STRING * const methods_str = CONST_STRING(interp, "methods");
+        PMC    * const methods     = VTABLE_get_pmc_keyed_str(interp, info, methods_str);
 
         /* Iterate over the list of methods. */
-        PMC *iter = VTABLE_get_iter(interp, methods);
+        PMC    * const iter        = VTABLE_get_iter(interp, methods);
 
         while (VTABLE_get_bool(interp, iter)) {
             /* Add the method. */
-            STRING *method_name = VTABLE_shift_string(interp, iter);
-            PMC    *method_pmc  =
+            STRING * const method_name = VTABLE_shift_string(interp, iter);
+            PMC    * const method_pmc  =
                 VTABLE_get_pmc_keyed_str(interp, methods, method_name);
             VTABLE_add_method(interp, self, method_name, method_pmc);
         }
     }
+
+    /* Extract any methods from the namespace */
+    Parrot_oo_extract_methods_from_namespace(interp, self, role->_namespace);
 }
 
 /*
@@ -205,8 +197,12 @@ static void init_role_from_hash(PARROT_INTERP, PMC *self, PMC *info)
 
 */
 
-pmclass Role
-    need_ext {
+pmclass Role need_ext {
+    ATTR STRING *name;            /* The name of the role. */
+    ATTR PMC    *_namespace;      /* The namespace it's linked to, if any. */
+    ATTR PMC    *roles;           /* Roles from which this role is composed. */
+    ATTR PMC    *methods;         /* Hash of method names to methods. */
+    ATTR PMC    *attrib_metadata; /* Hash of attributes to hashes metadata. */
 
 /*
 
@@ -223,8 +219,8 @@ C<init_data>.
 
 */
 
-    void init() {
-        Parrot_Role *role     = mem_allocate_zeroed_typed(Parrot_Role);
+    VTABLE void init() {
+        Parrot_Role * const role = mem_allocate_zeroed_typed(Parrot_Role);
         PMC_data(SELF)        = role;
 
         /* Set flags for custom DOD mark and destroy. */
@@ -239,7 +235,7 @@ C<init_data>.
         role->attrib_metadata = pmc_new(interp, enum_class_Hash);
     }
 
-    void init_pmc(PMC *init_data) {
+    VTABLE void init_pmc(PMC *init_data) {
         /* Create the role. */
         SELF.init();
 
@@ -257,8 +253,8 @@ Free the memory associated with the object's underlying struct.
 
 */
 
-    void destroy() {
-            mem_sys_free(PMC_data(SELF));
+    VTABLE void destroy() {
+        mem_sys_free(PMC_data(SELF));
     }
 
 /*
@@ -271,8 +267,8 @@ Mark referenced strings and PMCs in the structure as live.
 
 */
 
-    void mark() {
-        Parrot_Role *role = PARROT_ROLE(SELF);
+    VTABLE void mark() {
+        Parrot_Role * const role = PARROT_ROLE(SELF);
 
         if (role->name)
             pobject_lives(interp, (PObj *)role->name);
@@ -297,9 +293,9 @@ Enters the attribute in the C<attributes> array.
 
 */
 
-    void add_attribute(STRING *name, PMC *type) {
-        Parrot_Role *role          = PARROT_ROLE(SELF);
-        PMC         *new_attribute = pmc_new(interp, enum_class_Hash);
+    VTABLE void add_attribute(STRING *name, PMC *type) {
+        Parrot_Role * const role          = PARROT_ROLE(SELF);
+        PMC         * const new_attribute = pmc_new(interp, enum_class_Hash);
 
         /* Set name and type. */
         VTABLE_set_string_keyed_str(interp, new_attribute, CONST_STRING(interp, "name"), name);
@@ -322,8 +318,8 @@ Adds the given sub PMC as a method with the given name.
 
 */
 
-    void add_method(STRING *name, PMC *sub) {
-        Parrot_Role *role = PARROT_ROLE(SELF);
+    VTABLE void add_method(STRING *name, PMC *sub) {
+        Parrot_Role * const role = PARROT_ROLE(SELF);
 
         /* If we have already added a method with this name... */
         if (VTABLE_exists_keyed_str(interp, role->methods, name)) {
@@ -350,8 +346,8 @@ conflicts.
 
 */
 
-    void add_role(PMC *role) {
-        Parrot_Role *this_role = PARROT_ROLE(SELF);
+    VTABLE void add_role(PMC *role) {
+        Parrot_Role * const this_role = PARROT_ROLE(SELF);
 
         /* Do the composition. */
         Parrot_ComposeRole(interp, role, PMCNULL, 0, PMCNULL, 0,
@@ -386,11 +382,11 @@ composed into this role.
 
 */
 
-    PMC *inspect_str(STRING *what) {
-        Parrot_Role *role  = PARROT_ROLE(SELF);
+    VTABLE PMC *inspect_str(STRING *what) {
+        Parrot_Role * const role  = PARROT_ROLE(SELF);
 
         /* What should we return? */
-        PMC         *found = PMCNULL;
+        PMC         *found;
 
         if (string_equal(interp, what, CONST_STRING(interp, "name")) == 0) {
             found = pmc_new(interp, enum_class_String);
@@ -430,20 +426,31 @@ inspect_str.
 
 */
 
-    PMC *inspect() {
+    VTABLE PMC *inspect() {
         /* Create a hash, then use inspect_str to get all of the data to
          * fill it up with. */
-        PMC *metadata = pmc_new(interp, enum_class_Hash);
-        VTABLE_set_pmc_keyed_str(interp, metadata, CONST_STRING(interp, "name"),
-            VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "name")));
-        VTABLE_set_pmc_keyed_str(interp, metadata, CONST_STRING(interp, "namespace"),
-            VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "namespace")));
-        VTABLE_set_pmc_keyed_str(interp, metadata, CONST_STRING(interp, "attributes"),
-            VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "attributes")));
-        VTABLE_set_pmc_keyed_str(interp, metadata, CONST_STRING(interp, "methods"),
-            VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "methods")));
-        VTABLE_set_pmc_keyed_str(interp, metadata, CONST_STRING(interp, "roles"),
-            VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "roles")));
+        PMC * const metadata = pmc_new(interp, enum_class_Hash);
+
+        STRING * const name       = CONST_STRING(interp, "name");
+        STRING * const namespace  = CONST_STRING(interp, "namespace");
+        STRING * const attributes = CONST_STRING(interp, "attributes");
+        STRING * const methods    = CONST_STRING(interp, "methods");
+        STRING * const roles      = CONST_STRING(interp, "roles");
+
+        VTABLE_set_pmc_keyed_str(interp, metadata, name,
+            VTABLE_inspect_str(interp, SELF, name));
+
+        VTABLE_set_pmc_keyed_str(interp, metadata, namespace,
+            VTABLE_inspect_str(interp, SELF, namespace));
+
+        VTABLE_set_pmc_keyed_str(interp, metadata, attributes,
+            VTABLE_inspect_str(interp, SELF, attributes));
+
+        VTABLE_set_pmc_keyed_str(interp, metadata, methods,
+            VTABLE_inspect_str(interp, SELF, methods));
+
+        VTABLE_set_pmc_keyed_str(interp, metadata, roles,
+            VTABLE_inspect_str(interp, SELF, roles));
         return metadata;
     }
 
@@ -457,7 +464,7 @@ Return the name of the role (without the HLL namespace).
 
 */
 
-    STRING *get_string() {
+    VTABLE STRING *get_string() {
         Parrot_Role * const role  = PARROT_ROLE(SELF);
         PMC         * const _namespace = role->_namespace;
 
@@ -466,7 +473,7 @@ Return the name of the role (without the HLL namespace).
              * to retrieve a fully qualified list of names, then join the list
              * with a semicolon.
              */
-            PMC * const names = Parrot_NameSpace_nci_get_name(interp, _namespace);
+            PMC * const names = Parrot_ns_get_name(interp, _namespace);
 
             if (!PMC_IS_NULL(names))
                 /* remove the HLL namespace name */
@@ -476,6 +483,60 @@ Return the name of the role (without the HLL namespace).
 
         /* Otherwise, copy the stored string name of the class. */
         return string_copy(interp, role->name);
+    }
+
+/*
+
+=item C<INTVAL does(STRING *rolename)>
+
+Returns whether the class does the role with the given C<*rolename>.
+
+=cut
+
+*/
+    INTVAL does(STRING *role_name)
+    {
+        Parrot_Role * const role  = PARROT_ROLE(SELF);
+        INTVAL      i, count;
+
+        if (string_equal(interp, role->name, role_name) == 0)
+            return 1;
+
+        count = VTABLE_elements(interp, role->roles);
+        for (i = 0; i < count; i++) {
+            PMC *cur_role = VTABLE_get_pmc_keyed_int(interp, role->roles, i);
+            if (VTABLE_does(interp, cur_role, role_name))
+                return 1;
+        }
+
+        return 0;
+    }
+
+/*
+
+=item C<INTVAL does_pmc(PMC *role)>
+
+Returns whether the class does the givne C<*role>.
+
+=cut
+
+*/
+    INTVAL does_pmc(PMC *role)
+    {
+        Parrot_Role * const this_role  = PARROT_ROLE(SELF);
+        INTVAL      i, count;
+
+        if (role == SELF)
+            return 1;
+
+        count = VTABLE_elements(interp, this_role->roles);
+        for (i = 0; i < count; i++) {
+            PMC *cur_role = VTABLE_get_pmc_keyed_int(interp, this_role->roles, i);
+            if (VTABLE_does_pmc(interp, cur_role, role))
+                return 1;
+        }
+
+        return 0;
     }
 
     /*
@@ -493,7 +554,7 @@ Return the name of the role (without the HLL namespace).
 
 =over 4
 
-=item C<PCCMETHOD
+=item C<METHOD
     name(STRING *name :optional, int got_name :opt_flag)>
 
 Sets the name of the role, and updates the namespace accoringly.
@@ -502,7 +563,7 @@ Sets the name of the role, and updates the namespace accoringly.
 
 */
 
-    PCCMETHOD name(STRING *name :optional, int got_name :opt_flag) {
+    METHOD name(STRING *name :optional, int got_name :opt_flag) {
         Parrot_Role *role     = PARROT_ROLE(SELF);
         STRING      *ret_name = NULL;
 
@@ -515,14 +576,14 @@ Sets the name of the role, and updates the namespace accoringly.
         }
 
         ret_name = role->name;
-        PCCRETURN(STRING *ret_name);
+        RETURN(STRING *ret_name);
     }
 
 
 /*
 
-=item C<PCCMETHOD
-    pmc_namespace()>
+=item C<METHOD
+    get_namespace()>
 
 Gets the namespace associated with this role, if any.
 
@@ -530,16 +591,16 @@ Gets the namespace associated with this role, if any.
 
 */
 
-    PCCMETHOD pmc_namespace() {
+    METHOD get_namespace() {
         Parrot_Role *role          = PARROT_ROLE(SELF);
         PMC         *ret_namespace = role->_namespace;
-        PCCRETURN(PMC *ret_namespace);
+        RETURN(PMC *ret_namespace);
     }
 
 
 /*
 
-=item C<PCCMETHOD
+=item C<METHOD
     attributes()>
 
 Return a hash where the keys are attribute names and the values are hashes
@@ -548,16 +609,16 @@ providing a set of key/value pairs describing the attribute.
 =cut
 
 */
-    PCCMETHOD attributes() {
+    METHOD attributes() {
         PMC *ret_attrib_metadata =
             VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "attributes"));
-        PCCRETURN(PMC *ret_attrib_metadata);
+        RETURN(PMC *ret_attrib_metadata);
     }
 
 
 /*
 
-=item C<PCCMETHOD
+=item C<METHOD
     add_attribute(STRING *attribute_name,
             PMC *attribute_type :optional, int got_type :opt_flag)>
 
@@ -566,7 +627,7 @@ Add an attribute to the role. Requires a name and, optionally, a type.
 =cut
 
 */
-    PCCMETHOD add_attribute(STRING *attribute_name,
+    METHOD add_attribute(STRING *attribute_name,
             PMC *attribute_type :optional, int got_type :opt_flag) {
         VTABLE_add_attribute(interp, SELF, attribute_name,
             got_type ? attribute_type : PMCNULL);
@@ -575,70 +636,67 @@ Add an attribute to the role. Requires a name and, optionally, a type.
 
 /*
 
-=item C<PCCMETHOD
-    methods()>
+=item C<METHOD methods()>
 
 Return a hash where the keys are method names and the values are methods.
 
 =cut
 
 */
-    PCCMETHOD methods() {
+    METHOD methods() {
         PMC *ret_methods = VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "methods"));
-        PCCRETURN(PMC *ret_methods);
+        RETURN(PMC *ret_methods);
     }
 
 
 /*
 
-=item C<PCCMETHOD
-    add_method(STRING *name, PMC *sub)>
+=item C<METHOD add_method(STRING *name, PMC *sub)>
 
 Adds the given sub PMC as a method with the given name.
 
 =cut
 
 */
-    PCCMETHOD add_method(STRING *name, PMC *sub) {
+    METHOD add_method(STRING *name, PMC *sub) {
         VTABLE_add_method(interp, SELF, name, sub);
     }
 
 
 /*
 
-=item C<PCCMETHOD
-    roles()>
+=item C<METHOD roles()>
 
 Return the roles array PMC.
 
 =cut
 
 */
-    PCCMETHOD roles() {
+    METHOD roles() {
         PMC *ret_roles = VTABLE_inspect_str(interp, SELF, CONST_STRING(interp, "roles"));
-        PCCRETURN(PMC *ret_roles);
+        RETURN(PMC *ret_roles);
     }
 
 
 /*
 
-=item C<PCCMETHOD
+=item C<METHOD
     add_role(PMC *role,
-            PMC *exclude_method :optional :named["exclude_method"],
-            int got_exclude_method :opt_flag,
-            PMC *alias_method :optional :named["alias_method"],
-            int got_alias_method :opt_flag)>
+            PMC *exclude_method     :optional :named("exclude_method"),
+            int  got_exclude_method :opt_flag,
+            PMC *alias_method       :optional :named("alias_method"),
+            int  got_alias_method   :opt_flag)>
 
 Compose the given role into this one, using the given exclusions and aliases.
 
 =cut
 
 */
-    PCCMETHOD add_role(PMC *role,
-            PMC *exclude_method :optional :named["exclude_method"],
-            int got_exclude_method :opt_flag,
-            PMC *alias_method :optional :named["alias_method"],
-            int got_alias_method :opt_flag) {
+    METHOD add_role(PMC *role,
+            PMC *exclude_method     :optional :named("exclude_method"),
+            int  got_exclude_method :opt_flag,
+            PMC *alias_method       :optional :named("alias_method"),
+            int  got_alias_method   :opt_flag) {
         Parrot_Role *role_info = PARROT_ROLE(SELF);
         STRING *s_name, *r_name;
 
@@ -662,7 +720,7 @@ parameter is supplied, a particular item of introspection data.
 =cut
 
 */
-    PCCMETHOD inspect(STRING *what :optional, int got_what :opt_flag) {
+    METHOD inspect(STRING *what :optional, int got_what :opt_flag) {
         PMC *found;
 
         /* Just delegate to the appropriate vtable method. */
@@ -671,7 +729,7 @@ parameter is supplied, a particular item of introspection data.
         else
             found = VTABLE_inspect(interp, SELF);
 
-        PCCRETURN(PMC *found);
+        RETURN(PMC *found);
     }
 
 /*
@@ -685,29 +743,9 @@ named role.  This will recurse through all roles as far back as it can.
 
 */
 
-    PCCMETHOD does(STRING *name) {
-        INTVAL  i, count;
-        STRING *r_name;
-        PMC    *roles, *role;
-
-        (STRING *r_name) = PCCINVOKE(interp, SELF, "name");
-
-        if (string_equal(interp, r_name, name) == 0)
-            PCCRETURN(INTVAL 1);
-
-        (PMC *roles)     = PCCINVOKE(interp, SELF, "roles");
-        count            = VTABLE_elements(interp, roles);
-
-        for (i = 0; i < count; i++) {
-            INTVAL does;
-            role          = VTABLE_get_pmc_keyed_int(interp, roles, i);
-            (INTVAL does) = PCCINVOKE(interp, role, "does", STRING *name);
-
-            if (does)
-                PCCRETURN(INTVAL 1);
-        }
-
-        PCCRETURN(INTVAL 0);
+    METHOD does(STRING *name) {
+        INTVAL does = VTABLE_does(INTERP, SELF, name);
+        RETURN(INTVAL does);
     }
 
 } /* end pmclass Role */

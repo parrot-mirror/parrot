@@ -148,7 +148,7 @@ destroy_context(PARROT_INTERP)
     Parrot_Context *context;
 
     /* clear active contexts all the way back to the initial context */
-    context = CONTEXT(interp->ctx);
+    context = CONTEXT(interp);
     while (context) {
         Parrot_Context * const prev = context->caller_ctx;
         if (context->n_regs_used) {
@@ -345,10 +345,10 @@ Parrot_dup_context(PARROT_INTERP, ARGIN(const struct Parrot_Context *old))
         ptr = (void *)mem_sys_allocate(reg_alloc + ALIGNED_CTX_SIZE);
 
     ctx = (Parrot_Context *)ptr;
-    CONTEXT(interp->ctx) = ctx;
+    CONTEXT(interp) = ctx;
 
     ctx->regs_mem_size          = reg_alloc;
-    ctx->n_regs_used            = mem_allocate_n_zeroed_typed(4,INTVAL);
+    ctx->n_regs_used            = mem_allocate_n_zeroed_typed(4, INTVAL);
     ctx->n_regs_used[REGNO_INT] = old->n_regs_used[REGNO_INT];
     ctx->n_regs_used[REGNO_NUM] = old->n_regs_used[REGNO_NUM];
     ctx->n_regs_used[REGNO_STR] = old->n_regs_used[REGNO_STR];
@@ -378,7 +378,7 @@ PARROT_CANNOT_RETURN_NULL
 struct Parrot_Context *
 Parrot_push_context(PARROT_INTERP, ARGMOD(INTVAL *n_regs_used))
 {
-    Parrot_Context * const old = CONTEXT(interp->ctx);
+    Parrot_Context * const old = CONTEXT(interp);
     Parrot_Context * const ctx = Parrot_alloc_context(interp, n_regs_used);
 
     ctx->caller_ctx  = old;
@@ -405,13 +405,13 @@ PARROT_API
 void
 Parrot_pop_context(PARROT_INTERP)
 {
-    Parrot_Context * const ctx = CONTEXT(interp->ctx);
+    Parrot_Context * const ctx = CONTEXT(interp);
     Parrot_Context * const old = ctx->caller_ctx;
 
     Parrot_free_context(interp, ctx, 1);
 
     /* restore old, set cached interpreter base pointers */
-    CONTEXT(interp->ctx) = old;
+    CONTEXT(interp) = old;
     interp->ctx.bp       = old->bp;
     interp->ctx.bp_ps    = old->bp_ps;
 }
@@ -451,7 +451,7 @@ Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
     const int    slot          = CALCULATE_SLOT_NUM(reg_alloc);
 
     /* this gets attached to the context, which should free it */
-    INTVAL * const n_regs_used = mem_allocate_n_zeroed_typed(4,INTVAL);
+    INTVAL * const n_regs_used = mem_allocate_n_zeroed_typed(4, INTVAL);
     n_regs_used[REGNO_INT] = number_regs_used[REGNO_INT];
     n_regs_used[REGNO_NUM] = number_regs_used[REGNO_NUM];
     n_regs_used[REGNO_STR] = number_regs_used[REGNO_STR];
@@ -465,9 +465,7 @@ Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
         const int extend_size = slot + 1;
         int i;
 
-        interp->ctx_mem.free_list = (void **)mem_sys_realloc(
-                interp->ctx_mem.free_list, extend_size * sizeof (void*));
-
+        mem_realloc_n_typed(interp->ctx_mem.free_list, extend_size, void*);
         for (i = interp->ctx_mem.n_free_slots; i < extend_size; ++i)
             interp->ctx_mem.free_list[i] = NULL;
         interp->ctx_mem.n_free_slots = extend_size;
@@ -479,7 +477,7 @@ Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
      * If no contexts of the desired size are available, allocate a new one.
      */
     ptr = interp->ctx_mem.free_list[slot];
-    old = CONTEXT(interp->ctx);
+    old = CONTEXT(interp);
 
     if (ptr) {
         /*
@@ -505,7 +503,7 @@ Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
     }
 #endif
 
-    CONTEXT(interp->ctx) = ctx = (Parrot_Context *)ptr;
+    CONTEXT(interp) = ctx = (Parrot_Context *)ptr;
 
     ctx->regs_mem_size   = reg_alloc;
     ctx->n_regs_used     = n_regs_used;
@@ -540,7 +538,7 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(struct Parrot_Context *ctxp), int re_u
 {
     /*
      * The context structure has a reference count, initially 0.  This field is
-     * incrementented when a continuation that points to it is created -- either
+     * incremented when a continuation that points to it is created -- either
      * directly, or when a continuation is cloned, or when a retcontinuation is
      * converted to a full continuation in invalidate_retc.  To check for leaks,
      * (a) disable NDEBUG, (b) enable CTX_LEAK_DEBUG in interpreter.h, and (c)
@@ -634,7 +632,7 @@ Set up the register stacks.
 void
 setup_register_stacks(PARROT_INTERP)
 {
-    CONTEXT(interp->ctx)->reg_stack =
+    CONTEXT(interp)->reg_stack =
         register_new_stack(interp,
             "Regs_", sizeof (save_regs_t));
 
@@ -658,7 +656,7 @@ Parrot_push_regs(PARROT_INTERP)
     size_t size_nip, size_nips;
     void *ptr;
 
-    parrot_context_t * const ctx     = CONTEXT(interp->ctx);
+    parrot_context_t * const ctx     = CONTEXT(interp);
     Stack_Chunk_t **   const chunk_p = &ctx->reg_stack;
     save_regs_t *      const save_r  =
         (save_regs_t *)stack_prepare_push(interp, chunk_p);
@@ -696,7 +694,7 @@ PARROT_API
 void
 Parrot_pop_regs(PARROT_INTERP)
 {
-    parrot_context_t * const ctx     = CONTEXT(interp->ctx);
+    parrot_context_t * const ctx     = CONTEXT(interp);
     Stack_Chunk_t **   const chunk_p = &ctx->reg_stack;
     Stack_Chunk_t *    const chunk   = *chunk_p;
     save_regs_t *      const save_r  =
@@ -767,7 +765,7 @@ void
 Parrot_clear_i(PARROT_INTERP)
 {
     int i;
-    for (i = 0; i < CONTEXT(interp->ctx)->n_regs_used[REGNO_INT]; ++i)
+    for (i = 0; i < CONTEXT(interp)->n_regs_used[REGNO_INT]; ++i)
         REG_INT(interp, i) = 0;
 }
 
@@ -786,7 +784,7 @@ void
 Parrot_clear_s(PARROT_INTERP)
 {
     int i;
-    for (i = 0; i < CONTEXT(interp->ctx)->n_regs_used[REGNO_STR]; ++i)
+    for (i = 0; i < CONTEXT(interp)->n_regs_used[REGNO_STR]; ++i)
         REG_STR(interp, i) = NULL;
 }
 
@@ -805,7 +803,7 @@ void
 Parrot_clear_p(PARROT_INTERP)
 {
     int i;
-    for (i = 0; i < CONTEXT(interp->ctx)->n_regs_used[REGNO_PMC]; ++i)
+    for (i = 0; i < CONTEXT(interp)->n_regs_used[REGNO_PMC]; ++i)
         REG_PMC(interp, i) = PMCNULL;
 }
 
@@ -824,7 +822,7 @@ void
 Parrot_clear_n(PARROT_INTERP)
 {
     int i;
-    for (i = 0; i < CONTEXT(interp->ctx)->n_regs_used[REGNO_NUM]; ++i)
+    for (i = 0; i < CONTEXT(interp)->n_regs_used[REGNO_NUM]; ++i)
         REG_NUM(interp, i) = 0.0;
 }
 

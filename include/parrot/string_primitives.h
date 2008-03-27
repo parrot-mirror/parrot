@@ -19,7 +19,13 @@
 
 PARROT_API
 PARROT_CONST_FUNCTION
-UINTVAL Parrot_char_digit_value(SHIM_INTERP, UINTVAL character);
+INTVAL Parrot_char_digit_value(SHIM_INTERP, UINTVAL character);
+
+PARROT_API
+PARROT_MALLOC
+PARROT_CANNOT_RETURN_NULL
+char * str_dup(ARGIN(const char *old))
+        __attribute__nonnull__(1);
 
 PARROT_API
 void string_set_data_directory(PARROT_INTERP, ARGIN(const char *dir))

@@ -35,7 +35,10 @@ table, which should be created by your sysadmin.
 
     # TODO: fix when exception handling works again
     loadlib $P0, 'libpq'
+    if $P0 goto have_lib
+    loadlib $P0, 'pq'
     unless $P0 goto no_pg
+ have_lib:
     load_bytecode 'postgres.pir'
     pop_eh
     test.'ok'(1, 'load_bytecode')
@@ -43,7 +46,7 @@ table, which should be created by your sysadmin.
     test.'ok'(1, 'load_bytecode Pg')
 
     .local pmc cl, con, res
-    cl = get_class 'Pg'
+    cl = new 'Pg'
     test.'ok'(1, 'Pg class exists')
     con = cl.'connectdb'('')           # assume table = user is present
     $I0 = isa con, ['Pg'; 'Conn']
@@ -244,10 +247,8 @@ no_pg:
     .local pmc st
     st = get_root_global ['parrot';'Pg'], 'PQresultStatus'
     $I0 = st(res)
-# XXX for some strange reason it is PGRES_EMPTY_QUERY sometimes
-# actually it seems to depend on the timing, when the cb is called
     $I1 = iseq $I0, PGRES_COMMAND_OK
-    test.'todo'($I1, 'notice result is still ok')
+    test.'ok'($I1, 'notice result is still ok')
 .end
 
 # Local Variables:

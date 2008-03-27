@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -18,7 +18,7 @@ You should check where the file is going to be before you run this.
 =cut
 
 .sub 'example' :main
-    .local string test_fn 
+    .local string test_fn
     test_fn = "tmp_example_io.tmp"
     P0 = open test_fn, ">"
     seek P0, 300, 0
@@ -33,7 +33,7 @@ You should check where the file is going to be before you run this.
     close P0
 
     P0 = open test_fn, "<"
-    S0 = read P0, 1024 
+    S0 = read P0, 1024
     print S0
 
     # now clean up after ourselves.
@@ -52,4 +52,4 @@ F<examples/io>.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

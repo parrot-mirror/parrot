@@ -44,9 +44,9 @@ disappears, it's block is "orphaned" and will remain there.
 
 =over 4
 
-=item C<--verbose>
+=item C<--macro=X>
 
-Verbose status along the way.
+Print a list of all functions that have macro X.  For example, --macro=PARROT_API.
 
 =back
 
@@ -79,6 +79,7 @@ my %valid_macros = map { ( $_, 1 ) } qw(
     PARROT_PURE_FUNCTION
     PARROT_CONST_FUNCTION
     PARROT_DOES_NOT_RETURN
+    PARROT_DOES_NOT_RETURN_WHEN_FALSE
     PARROT_MALLOC
 );
 
@@ -94,6 +95,9 @@ Rips apart a C file to get the function declarations.
 
 sub extract_function_declarations {
     my $text = shift;
+
+    # Only check the YACC C code if we find what looks like YACC file
+    $text =~ s[%\{(.*)%\}.*][$1]sm;
 
     # Drop all text after HEADERIZER STOP
     $text =~ s[/\*\s*HEADERIZER STOP.+][]s;
@@ -160,7 +164,6 @@ sub extract_function_declarations_and_update_source {
     close $fhin;
 
     my @func_declarations = extract_function_declarations( $text );
-
     for my $decl ( @func_declarations ) {
         my $specs = function_components_from_declaration( $cfile_name, $decl );
         my $name = $specs->{name};
@@ -281,8 +284,8 @@ sub attrs_from_args {
         if ( $arg =~ m{(ARGIN|ARGOUT|ARGMOD|NOTNULL)\(} || $arg eq 'PARROT_INTERP' ) {
             push( @attrs, "__attribute__nonnull__($n)" );
         }
-        if ( ( $arg =~ m{\*} ) && ( $arg !~ /\b(SHIM|((ARGIN|ARGOUT|ARGMOD)(_NULLOK)?))\b/ ) ) {
-            squawk( $file, $name, qq{"$arg" isn't protected with an ARGIN, ARGOUT or ARGMOD (or a _NULLOK variant)} );
+        if ( ( $arg =~ m{\*} ) && ( $arg !~ /\b(SHIM|((ARGIN|ARGOUT|ARGMOD)(_NULLOK)?)|ARGFREE)\b/ ) ) {
+            squawk( $file, $name, qq{"$arg" isn't protected with an ARGIN, ARGOUT or ARGMOD (or a _NULLOK variant), or ARGFREE} );
         }
         if ( ($arg =~ /\bconst\b/) && ($arg =~ /\*/) && ($arg !~ /\*\*/) && ($arg =~ /\b(ARG(MOD|OUT))\b/) ) {
             squawk( $file, $name, qq{"$arg" is const, but that $1 conflicts with const} );
@@ -405,8 +408,12 @@ sub api_first_then_alpha {
 }
 
 sub main {
-    GetOptions( 'verbose' => \$opt{verbose}, ) or exit(1);
+    my $macro_match;
+    GetOptions(
+        'macro=s' => \$macro_match,
+    ) or exit(1);
 
+    die "No files specified.\n" unless @ARGV;
     my %ofiles;
     ++$ofiles{$_} for @ARGV;
     my @ofiles = sort keys %ofiles;
@@ -415,6 +422,7 @@ sub main {
     }
     my %cfiles;
     my %cfiles_with_statics;
+    my %api;
 
     # Walk the object files and find corresponding source (either .c or .pmc)
     for my $ofile (@ofiles) {
@@ -422,22 +430,32 @@ sub main {
 
         $ofile =~ s/\\/\//g;
 
+        my $is_yacc = ($ofile =~ /\.y$/);
+        if ( !$is_yacc ) {
+            my $sfile = $ofile;
+            $sfile    =~ s/\Q$PConfig{o}\E$/.s/;
+            next if -f $sfile;
+        }
+
         my $cfile = $ofile;
-        $cfile =~ s/\Q$PConfig{o}\E$/.c/ or die "$cfile doesn't look like an object file";
+        $cfile =~ s/\Q$PConfig{o}\E$/.c/ or $is_yacc
+            or die "$cfile doesn't look like an object file";
 
         my $pmcfile = $ofile;
         $pmcfile =~ s/\Q$PConfig{o}\E$/.pmc/;
 
         my $csource = read_file($cfile);
         die "can't find HEADERIZER HFILE directive in '$cfile'"
-            unless $csource =~ m{ /\* \s+ HEADERIZER\ HFILE: \s+ ([^*]+?) \s+ \*/ }sx;
+            unless $csource =~
+                m{ /\* \s+ HEADERIZER\ HFILE: \s+ ([^*]+?) \s+ \*/ }sx;
+
         my $hfile = $1;
         if ( ( $hfile ne 'none' ) && ( not -f $hfile ) ) {
             die "'$hfile' not found (referenced from '$cfile')";
         }
 
         my @decls;
-        if ( -f $pmcfile ) {
+        if ( $macro_match || (-f $pmcfile && !$is_yacc) ) {
             @decls = extract_function_declarations( $csource );
         }
         else {
@@ -448,36 +466,57 @@ sub main {
             my $components = function_components_from_declaration( $cfile, $decl );
             push( @{ $cfiles{$hfile}->{$cfile} }, $components ) unless $hfile eq 'none';
             push( @{ $cfiles_with_statics{$cfile} }, $components ) if $components->{is_static};
+            if ( $macro_match ) {
+                if ( grep { $_ eq $macro_match } @{$components->{macros}} ) {
+                    push( @{ $api{$cfile} }, $components );
+                }
+            }
         }
     }    # for @cfiles
 
-    # Update all the .h files
-    for my $hfile ( sort keys %cfiles ) {
-        my $cfiles = $cfiles{$hfile};
+    if ( $macro_match ) {
+        my $nfuncs = 0;
+        for my $cfile ( sort keys %api ) {
+            my @funcs = sort { $a->{name} cmp $b->{name} } @{$api{$cfile}};
+            print "$cfile\n";
+            for my $func ( @funcs ) {
+                print "    $func->{name}\n";
+                ++$nfuncs;
+            }
+        }
+        my $s = $nfuncs == 1 ? '' : 's';
+        print "$nfuncs $macro_match function$s\n";
+    }
+    else { # Normal headerization and updating
+        # Update all the .h files
+        for my $hfile ( sort keys %cfiles ) {
+            my $cfiles = $cfiles{$hfile};
 
-        my $header = read_file($hfile);
+            my $header = read_file($hfile);
 
-        for my $cfile ( sort keys %{$cfiles} ) {
-            my @funcs = @{ $cfiles->{$cfile} };
-            @funcs = grep { not $_->{is_static} } @funcs;    # skip statics
-            $header = replace_headerized_declarations( $header, $cfile, $hfile, @funcs );
+            for my $cfile ( sort keys %{$cfiles} ) {
+                my @funcs = @{ $cfiles->{$cfile} };
+                @funcs = grep { not $_->{is_static} } @funcs;    # skip statics
+                $header = replace_headerized_declarations( $header, $cfile, $hfile, @funcs )
+                    unless $cfile =~ /\.y$/;
+            }
+
+            write_file( $hfile, $header );
         }
 
-        write_file( $hfile, $header );
+        # Update all the .c files in place
+        for my $cfile ( sort keys %cfiles_with_statics ) {
+            my @funcs = @{ $cfiles_with_statics{$cfile} };
+            @funcs = grep { $_->{is_static} } @funcs;
+
+            my $source = read_file($cfile);
+            $source = replace_headerized_declarations( $source, 'static', $cfile, @funcs );
+
+            write_file( $cfile, $source );
+        }
+        print "Headerization complete.\n";
     }
 
-    # Update all the .c files in place
-    for my $cfile ( sort keys %cfiles_with_statics ) {
-        my @funcs = @{ $cfiles_with_statics{$cfile} };
-        @funcs = grep { $_->{is_static} } @funcs;
-
-        my $source = read_file($cfile);
-        $source = replace_headerized_declarations( $source, 'static', $cfile, @funcs );
-
-        write_file( $cfile, $source );
-    }
-
-    print "Headerization complete.\n";
     if ( keys %warnings ) {
         my $nwarnings     = 0;
         my $nwarningfuncs = 0;

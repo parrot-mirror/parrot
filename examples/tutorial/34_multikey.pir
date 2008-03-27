@@ -17,7 +17,7 @@ created.
     myhash["answer"] = innerarray
 
     $I0 = myhash["answer";$I0]        # $i = $hash{"answer"}[2]
-    print $I0 
+    print $I0
     print "\n"
 
 .end
@@ -26,5 +26,5 @@ created.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:
 

@@ -1,6 +1,6 @@
 /*
  * $Id$
- * Copyright (C) 2003-2007, The Perl Foundation.
+ * Copyright (C) 2003-2008, The Perl Foundation.
  *
  * pcc.c
  *
@@ -160,7 +160,7 @@ get_pasm_reg(PARROT_INTERP, ARGIN(const char *name))
     if (r)
         return r;
 
-    return mk_pasm_reg(interp, str_dup(name));
+    return mk_pasm_reg(interp, name);
 }
 
 /*
@@ -183,7 +183,7 @@ get_const(PARROT_INTERP, ARGIN(const char *name), int type)
     if (r && r->set == type)
         return r;
 
-    return mk_const(interp, str_dup(name), type);
+    return mk_const(interp, name, type);
 }
 
 /*
@@ -207,11 +207,11 @@ pcc_get_args(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins),
 {
     int i, flags;
     char buf[1024], s[16];
-    SymReg ** const regs  = (SymReg **)mem_sys_allocate((n + 1) * sizeof (SymReg *));
+    SymReg ** const regs  = mem_allocate_n_zeroed_typed(n+1, SymReg *);
 
     strcpy(buf, "\"(");
     for (i = 0; i < n; i++) {
-        const SymReg *arg = args[i];
+        SymReg *arg = args[i];
 
         if (arg->type & VT_CONSTP)
             arg = arg->reg;
@@ -241,7 +241,7 @@ pcc_get_args(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins),
             case 'P': flags |= PARROT_ARG_PMC;      break;
             default :                               break;
         }
-        sprintf(s, "0x%x", flags);
+        snprintf(s, sizeof (s), "0x%x", flags);
         if (i < n - 1)
             strcat(s, ",");
         strcat(buf, s);         /* XXX check avail len */
@@ -249,7 +249,7 @@ pcc_get_args(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins),
 
     strcat(buf, ")\"");
 
-    regs[0] = mk_const(interp, str_dup(buf), 'S');
+    regs[0] = mk_const(interp, buf, 'S');
     ins     = insINS(interp, unit, ins, op_name, regs, n + 1);
 
     mem_sys_free(regs);
@@ -273,8 +273,8 @@ unshift_self(ARGIN(SymReg *sub), ARGIN(SymReg *obj))
     const int n = pcc_sub->nargs;
     int i;
 
-    pcc_sub->args      = (SymReg **)realloc(pcc_sub->args, (n + 1) * sizeof (SymReg *));
-    pcc_sub->arg_flags = (int *)realloc(pcc_sub->arg_flags, (n + 1) * sizeof (int));
+    mem_realloc_n_typed(pcc_sub->args,      n+1, SymReg *);
+    mem_realloc_n_typed(pcc_sub->arg_flags, n+1, int);
 
     for (i = n; i; --i) {
         pcc_sub->args[i]      = pcc_sub->args[i - 1];
@@ -302,7 +302,7 @@ void
 expand_pcc_sub(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
 {
     int          nargs;
-    SymReg      *sub = ins->r[0];
+    SymReg      *sub = ins->symregs[0];
     SymReg      *regs[2];
 
     /*
@@ -311,7 +311,7 @@ expand_pcc_sub(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
     if (sub->pcc_sub->pragma & P_METHOD) {
         SymReg *self = get_sym(interp, "self");
         if (!self) {
-            self       = mk_symreg(interp, str_dup("self"), 'P');
+            self       = mk_symreg(interp, "self", 'P');
             self->type = VTIDENTIFIER;
         }
         unshift_self(sub, self);
@@ -331,20 +331,20 @@ expand_pcc_sub(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
      * check if there is a return
      */
     if (unit->last_ins->type & (ITPCCSUB) &&
-            unit->last_ins->n_r == 1 &&
-            (sub = unit->last_ins->r[0]) &&
+            unit->last_ins->symreg_count == 1 &&
+            (sub = unit->last_ins->symregs[0]) &&
             sub->pcc_sub &&
             !sub->pcc_sub->object && /* s. src/inter_call.c:119 */
             (sub->pcc_sub->flags & isTAIL_CALL))
         return;
 
     if (unit->last_ins->type != (ITPCCSUB|ITLABEL) &&
-            strcmp(unit->last_ins->op, "ret") &&
-            strcmp(unit->last_ins->op, "exit") &&
-            strcmp(unit->last_ins->op, "end") &&
-            strcmp(unit->last_ins->op, "branch") &&
+            strcmp(unit->last_ins->opname, "ret") &&
+            strcmp(unit->last_ins->opname, "exit") &&
+            strcmp(unit->last_ins->opname, "end") &&
+            strcmp(unit->last_ins->opname, "branch") &&
             /* was adding rets multiple times... */
-            strcmp(unit->last_ins->op, "returncc")) {
+            strcmp(unit->last_ins->opname, "returncc")) {
         Instruction *tmp;
 
         /* check to make sure the sub is ok before we try to use it */
@@ -384,7 +384,7 @@ void
 expand_pcc_sub_ret(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
 {
     const int is_yield = ins->type & ITPCCYIELD;
-    SymReg * const sub = ins->r[0];
+    SymReg * const sub = ins->symregs[0];
     const int n        = sub->pcc_sub->nret;
 
     /* TODO implement return conventions */
@@ -466,11 +466,9 @@ pcc_reg_mov(PARROT_INTERP, unsigned char d, unsigned char s, ARGMOD(void *vinfo)
 
         for (t = 0; t < 4; ++t) {
             if (types[t] == dest->set) {
-                if (temps[t])
-                    src = temps[t];
-                else {
-                    src = temps[t] = mk_temp_reg(interp, dest->set);
-                }
+                if (!temps[t])
+                    temps[t] = mk_temp_reg(interp, dest->set);
+                src = temps[t];
                 break;
             }
         }
@@ -565,7 +563,7 @@ recursive_tail_call(PARROT_INTERP, ARGIN(IMC_Unit *unit),
     if (!(unit->instructions->type & ITLABEL))
         return 0;
 
-    this_sub = unit->instructions->r[0];
+    this_sub = unit->instructions->symregs[0];
 
     if (!this_sub)
         return 0;
@@ -589,8 +587,8 @@ recursive_tail_call(PARROT_INTERP, ARGIN(IMC_Unit *unit),
     buf = (char *)malloc(strlen(this_sub->name) + 3);
     sprintf(buf, "%s@0", this_sub->name);
 
-    if ((label = find_sym(interp, buf)) == NULL) {
-        label = mk_local_label(interp, str_dup(buf));
+    if (!(label = find_sym(interp, buf))) {
+        label = mk_local_label(interp, buf);
         tmp_ins = INS_LABEL(interp, unit, label, 0);
         insert_ins(unit, get_params, tmp_ins);
     }
@@ -650,7 +648,7 @@ This is the nuts and bolts of pdd03 routine call style
 */
 
 void
-expand_pcc_sub_call(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
+expand_pcc_sub_call(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(Instruction *ins))
 {
     SymReg *arg, *reg, *regs[3];
     int          n;
@@ -659,7 +657,7 @@ expand_pcc_sub_call(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *in
     SymReg      *meth      = NULL;
     Instruction *get_name;
 
-    SymReg * const sub = ins->r[0];
+    SymReg * const sub = ins->symregs[0];
 
     if (ins->type & ITRESULT) {
         const int n = sub->pcc_sub->nret;
@@ -747,7 +745,7 @@ expand_pcc_sub_call(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *in
             if (!(arg->type == VTIDENTIFIER ||
                         arg->type == VTPASM ||
                         arg->type == VTREG))
-                meth = mk_const(interp, str_dup(arg->name), 'S');
+                meth = mk_const(interp, arg->name, 'S');
         }
     }
 

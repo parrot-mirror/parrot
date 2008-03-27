@@ -1,6 +1,6 @@
 /*
-Copyright (C) 2002-2007, The Perl Foundation.
-License:  Artistic 2.0, see README and LICENSES for details
+Copyright (C) 2002-2008, The Perl Foundation.
+License:  Artistic 2.0, see README and LICENSE for details
 $Id$
 
 =head1 NAME
@@ -208,8 +208,8 @@ static List_chunk * alloc_next_size(PARROT_INTERP,
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*list);
 
-PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static List_chunk * allocate_chunk(PARROT_INTERP,
     ARGIN(List *list),
     UINTVAL items,
@@ -311,8 +311,8 @@ Make a new chunk, size bytes big, holding items items.
 
 */
 
-PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static List_chunk *
 allocate_chunk(PARROT_INTERP, ARGIN(List *list), UINTVAL items, UINTVAL size)
 {
@@ -1234,7 +1234,7 @@ Returns a new list of type C<type>.
 */
 
 PARROT_API
-PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 List *
 list_new(PARROT_INTERP, PARROT_DATA_TYPE type)
@@ -1422,7 +1422,7 @@ TODO - Barely tested. Optimize new array structure, fixed if big.
 */
 
 PARROT_API
-PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 List *
 list_clone(PARROT_INTERP, ARGIN(const List *other))
@@ -1876,7 +1876,7 @@ list_shift(PARROT_INTERP, ARGMOD(List *list), int type)
 {
     void *ret;
     UINTVAL idx;
-    List_chunk * const chunk = list->first;
+    List_chunk *chunk = list->first;
 
     if (list->length == 0)
         return NULL;
@@ -1889,6 +1889,7 @@ list_shift(PARROT_INTERP, ARGMOD(List *list), int type)
     ret = list_item(interp, list, type, idx);
     if (list->start >= chunk->items) {
         list->cap -= chunk->items;
+        chunk = list->first = chunk->next ? chunk->next : list->last;
         list->start = 0;
         rebuild_chunk_list(interp, list);
         if (list->n_chunks == 1)
@@ -1981,15 +1982,17 @@ list_splice(PARROT_INTERP, ARGMOD(List *list), ARGIN_NULLOK(List *value_list),
     }
 
     /* start from end */
-    if (offset < 0)
+    if (offset < 0) {
         offset += length;
-    if (offset < 0)
-        real_exception(interp, NULL, OUT_OF_BOUNDS, "illegal splice offset\n");
+        if (offset < 0)
+            real_exception(interp, NULL, OUT_OF_BOUNDS, "illegal splice offset\n");
+    }
     /* "leave that many elements off the end of the array" */
-    if (count < 0)
+    if (count < 0) {
         count += length - offset + 1;
-    if (count < 0)
-        count = 0;
+        if (count < 0)
+            count = 0;
+    }
 
     /* replace count items at offset with values */
     for (i = j = 0; i < count && j < value_length; i++, j++) {

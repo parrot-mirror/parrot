@@ -32,7 +32,7 @@ running compilers from a command line.
     $P0 = split ' ', 'e=s help|h target=s trace|t=s encoding=s output|o=s combine each version|v'
     setattribute self, '@cmdoptions', $P0
 
-    $P1 = new String
+    $P1 = new 'String'
     $P1 = <<'    USAGE'
   This compiler is based on PCT::HLLCompiler.
 
@@ -40,7 +40,7 @@ running compilers from a command line.
     USAGE
 
     .local pmc iter
-    iter = new Iterator, $P0
+    iter = new 'Iterator', $P0
   options_loop:
     unless iter goto options_end
     $P3  = shift iter
@@ -413,8 +413,7 @@ Transform PAST C<source> into POST.
     .param pmc adverbs         :slurpy :named
 
     $P0 = compreg 'POST'
-    $P1 = $P0.'to_pir'(source, adverbs :flat :named)
-    .return ($P1)
+    .return $P0.'to_pir'(source, adverbs :flat :named)
 .end
 
 
@@ -522,6 +521,7 @@ specifies the encoding to use for the input (e.g., "utf8").
     goto interactive_loop
   interactive_trap:
     get_results '0,0', $P0, $S0
+    if $S0 == '' goto have_newline
     $S1 = substr $S0, -1, 1
     $I0 = is_cclass .CCLASS_NEWLINE, $S1, 0
     if $I0 goto have_newline
@@ -607,7 +607,7 @@ Performs option processing of command-line args
 
     .local string arg0
     arg0 = shift args
-    .local pmc getopts, opts
+    .local pmc getopts
     getopts = new 'Getopt::Obj'
     getopts.'notOptStop'(1)
     $P0 = getattribute self, '@cmdoptions'
@@ -619,9 +619,7 @@ Performs option processing of command-line args
     push getopts, $S0
     goto getopts_loop
   getopts_end:
-    opts = getopts.'get_options'(args)
-
-    .return (opts)
+    .return getopts.'get_options'(args)
 .end
 
 
@@ -680,6 +678,9 @@ Generic method for compilers invoked from a shell command line.
     goto save_output
   interactive:
     self.'interactive'(args :flat, adverbs :flat :named)
+    goto save_output
+  eval_line:
+    result = self.'eval'($S0, adverbs :flat :named)
 
   save_output:
     if null result goto end
@@ -710,8 +711,6 @@ Generic method for compilers invoked from a shell command line.
   version:
     self.'version'()
     goto end
-  eval_line:
-    self.'eval'($S0, adverbs :flat :named)
 .end
 
 
@@ -775,4 +774,4 @@ Patrick R. Michaud <pmichaud@pobox.com>
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

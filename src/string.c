@@ -44,8 +44,8 @@ strings.
 
 #define nonnull_encoding_name(s) (s) ? (s)->encoding->name : "null string"
 #define saneify_string(s) \
-    PARROT_ASSERT(s->encoding); \
-    PARROT_ASSERT(s->charset); \
+    PARROT_ASSERT((s)->encoding); \
+    PARROT_ASSERT((s)->charset); \
     PARROT_ASSERT(!PObj_on_free_list_TEST(s))
 
 /* HEADERIZER HFILE: include/parrot/string_funcs.h */
@@ -257,7 +257,8 @@ void
 string_init(PARROT_INTERP)
 {
     size_t i;
-    const size_t n_parrot_cstrings = sizeof(parrot_cstrings) / sizeof(parrot_cstrings[0]);
+    const size_t n_parrot_cstrings =
+        sizeof (parrot_cstrings) / sizeof (parrot_cstrings[0]);
 
     /*
      * when string_init is called, the config hash isn't created
@@ -432,6 +433,59 @@ string_rep_compatible(SHIM_INTERP,
         return b->charset;
     return NULL;
 }
+
+/*
+
+=item C<STRING * string_concat>
+
+Concatenates two Parrot strings. If necessary, converts the second
+string's encoding and/or type to match those of the first string. If
+either string is C<NULL>, then a copy of the non-C<NULL> string is
+returned. If both strings are C<NULL>, then a new zero-length string is
+created and returned.
+
+=cut
+
+*/
+
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+STRING *
+string_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
+            ARGIN_NULLOK(STRING *b), UINTVAL Uflags)
+{
+    if (a != NULL && a->strlen != 0) {
+        if (b != NULL && b->strlen != 0) {
+            const CHARSET *cs;
+            const ENCODING *enc;
+            STRING *result;
+
+            cs = string_rep_compatible(interp, a, b, &enc);
+            if (!cs) {
+                cs = a->charset;
+                enc = a->encoding;
+            }
+            result =
+                string_make_direct(interp, NULL,
+                        a->bufused + b->bufused,
+                        enc, cs, 0);
+
+            result = string_append(interp, result, a);
+            result = string_append(interp, result, b);
+
+            return result;
+        }
+        else {
+            return string_copy(interp, a);
+        }
+    }
+    else {
+        return b
+            ? string_copy(interp, b)
+            : string_make(interp, NULL, 0, NULL, Uflags);
+    }
+}
+
 
 /*
 
@@ -956,58 +1010,6 @@ string_max_bytes(SHIM_INTERP, ARGIN(const STRING *s), INTVAL nchars)
 
 /*
 
-=item C<STRING * string_concat>
-
-Concatenates two Parrot strings. If necessary, converts the second
-string's encoding and/or type to match those of the first string. If
-either string is C<NULL>, then a copy of the non-C<NULL> string is
-returned. If both strings are C<NULL>, then a new zero-length string is
-created and returned.
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_CANNOT_RETURN_NULL
-STRING *
-string_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
-            ARGIN_NULLOK(STRING *b), UINTVAL Uflags)
-{
-    if (a != NULL && a->strlen != 0) {
-        if (b != NULL && b->strlen != 0) {
-            const CHARSET *cs;
-            const ENCODING *enc;
-            STRING *result;
-
-            cs = string_rep_compatible(interp, a, b, &enc);
-            if (!cs) {
-                cs = a->charset;
-                enc = a->encoding;
-            }
-            result =
-                string_make_direct(interp, NULL,
-                        a->bufused + b->bufused,
-                        enc, cs, 0);
-
-            result = string_append(interp, result, a);
-            result = string_append(interp, result, b);
-
-            return result;
-        }
-        else {
-            return string_copy(interp, a);
-        }
-    }
-    else {
-        return b
-            ? string_copy(interp, b)
-            : string_make(interp, NULL, 0, NULL, Uflags);
-    }
-}
-
-/*
-
 =item C<STRING * string_repeat>
 
 Repeats the specified Parrot string I<num> times and stores the result
@@ -1365,11 +1367,8 @@ PARROT_WARN_UNUSED_RESULT
 INTVAL
 string_compare(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1), ARGIN_NULLOK(const STRING *s2))
 {
-    if (!s1 && !s2)
-        return 0;
-
     if (!s2)
-        return s1->strlen != 0;
+        return s1 && (s1->strlen != 0);
 
     if (!s1)
         return -(s2->strlen != 0);
@@ -1824,50 +1823,6 @@ string_bool(PARROT_INTERP, ARGIN(const STRING *s))
 
     /* it must be true */
     return 1;
-}
-
-/*
-
-=item C<STRING * string_nprintf>
-
-This is like C<Parrot_snprintf()> except that it writes to and returns a
-Parrot string.
-
-Note that C<bytelen> does I<not> include space for a (non-existent)
-trailing C<'\0'>. C<dest> may be a C<NULL> pointer, in which case a new
-native string will be created. If C<bytelen> is 0, the behaviour becomes
-more C<sprintf>-ish than C<snprintf>-like. C<bytelen> is measured in the
-encoding of C<*dest>.
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_CANNOT_RETURN_NULL
-STRING *
-string_nprintf(PARROT_INTERP,
-    ARGOUT(STRING *dest), INTVAL bytelen, ARGIN(const char *format), ...)
-{
-    STRING  *output;
-    va_list  args;
-
-    va_start(args, format);
-    output = Parrot_vsprintf_c(interp, format, args);
-    va_end(args);
-
-    /*
-     * XXX -leo: bytelen with strlen compare
-     */
-    if (bytelen > 0 && bytelen < (INTVAL)string_length(interp, output))
-        output = string_substr(interp, output, 0, bytelen, &output, 1);
-
-    if (dest == NULL)
-        return output;
-    else {
-        string_set(interp, dest, output);
-        return dest;
-    }
 }
 
 /*
@@ -2990,12 +2945,10 @@ If C<minus> is true then C<-> is prepended to the string representation.
 
 */
 
-PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING*
-uint_to_str(PARROT_INTERP,
-            ARGOUT(char *tc), UHUGEINTVAL num, char base, int minus)
+uint_to_str(PARROT_INTERP, ARGOUT(char *tc), UHUGEINTVAL num, char base, int minus)
 {
     /* the buffer must be at least as long as this */
     char *p = tc + sizeof (UHUGEINTVAL)*8 + 1;
@@ -3032,7 +2985,6 @@ If C<< num < 0 >> then C<-> is prepended to the string representation.
 
 */
 
-PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *

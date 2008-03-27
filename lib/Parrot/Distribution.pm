@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2007, The Perl Foundation.
+# Copyright (C) 2004-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -35,8 +35,7 @@ use warnings;
 use ExtUtils::Manifest;
 use File::Spec;
 
-use Parrot::Docs::Directory;
-use base qw(Parrot::Docs::Directory);
+use base 'Parrot::Docs::Directory';
 
 =item C<new()>
 
@@ -131,6 +130,10 @@ BEGIN {
 
 =over 4
 
+=item C<is_svn_co()>
+
+=item C<is_git_co()>
+
 =item C<c_source_file_directories()>
 
 =item C<c_header_file_directories()>
@@ -181,7 +184,7 @@ BEGIN {
         source => {
             c   => { file_exts => ['c'] },
             pmc => { file_exts => ['pmc'] },
-            pir => { file_exts => ['pir'] },
+            pir => { file_exts => ['pir', 't'] },
             ops => { file_exts => ['ops'] },
             lex => {
                 file_exts   => ['l'],
@@ -277,6 +280,26 @@ BEGIN {
     }
 }
 
+=item C<is_svn_co()>
+
+Returns true if this is a subversion checkout of Parrot.
+
+=cut
+
+sub is_svn_co {
+    return shift->directory_exists_with_name('.svn');
+}
+
+=item C<is_git_co()>
+
+Returns true if this is a git checkout of Parrot.
+
+=cut
+
+sub is_git_co {
+    return shift->directory_exists_with_name('.git');
+}
+
 =item C<get_c_language_files()>
 
 Returns the C language source files within Parrot.  Namely:
@@ -323,7 +346,8 @@ sub get_c_language_files {
 
     return @c_language_files;
 
-    # RT#43691: lex_source_files() collects lisp files as well...  how to fix ???
+    # RT #43691: lex_source_files() collects lisp files as well.
+    # RT #50046: pir_source_files() fails to collect PIR .t files.
 }
 
 =item C<is_c_exemption()>
@@ -451,15 +475,12 @@ sub get_perl_exemption_regexp {
     my @paths = map { File::Spec->catdir( $parrot_dir, File::Spec->canonpath($_) ) } qw{
         languages/lua/Lua/parser.pm
         languages/regex/lib/Regex/Grammar.pm
-        lib/Class/
         lib/Digest/Perl/
         lib/File/
         lib/IO/
-        lib/Parse/
         lib/Pod/
         lib/SmartLink.pm
-        lib/Test/
-        lib/Text/
+        examples/sdl/
     };
 
     my $regex = join '|', map { quotemeta $_ } @paths;
@@ -479,20 +500,14 @@ sub is_perl {
     my $self     = shift;
     my $filename = shift;
 
-    if ( !-f $filename ) {
-        return 0;
-    }
+    return 0 unless -f $filename;
 
     # modules and perl scripts should always be tested..
-    if ( $filename =~ /\.(?:pm|pl)$/ ) {
-        return 1;
-    }
+    return 1 if $filename =~ /\.(?:pm|pl)$/;
 
     # test files (.t) and configure (.in) files might need testing.
     # ignore everything else.
-    if ( $filename !~ /\.(?:t|in)$/ ) {
-        return 0;
-    }
+    return 0 unless $filename !~ /\.(?:t|in)$/;
 
     # Now let's check to see if there's a perl shebang.
 
@@ -501,9 +516,7 @@ sub is_perl {
     my $line = <$file_handle>;
     close $file_handle;
 
-    if ( $line && $line =~ /^#!.*perl/ ) {
-        return 1;
-    }
+    return 1 if $line && $line =~ /^#!.*perl/;
 
     return 0;
 }
@@ -519,9 +532,50 @@ returns a Parrot::Docs::File object
 sub get_pir_language_files {
     my $self = shift;
 
-    my @pir_files = ( $self->pir_source_files, );
+    # make sure we're picking up pir files (i.e. look for the shebang line)
+    my @pir_files;
+    for my $file ( $self->pir_source_files ) {
+        push @pir_files, $file
+            if $self->is_pir( $file->path );
+    }
 
     return @pir_files;
+}
+
+=item C<is_pir()>
+
+Determines if the given filename is PIR source
+
+=cut
+
+# Since .t files might be written in any language, we can't *just* check the
+# filename to see if something should be treated as PIR.
+sub is_pir {
+    my $self     = shift;
+    my $filename = shift;
+
+    return 0 unless -f $filename;
+
+    # .pir files should always be tested
+    return 1 if $filename =~ /\.pir$/;
+
+    # test files (.t) files might need testing.
+    # ignore everything else.
+    return 0 unless $filename !~ /\.t$/;
+
+    # Now let's check to see if there's a plain parrot shebang.
+    open my $file_handle, '<', $filename
+        or $self->_croak("Could not open $filename for reading");
+    my $line = <$file_handle>;
+    close $file_handle;
+
+    if ( $line && $line =~ /^#!.*parrot/ ) {
+        # something that specifies a pir or pbc is probably a HLL, skip it
+        return 0 if $line =~ /\.(?:pir|pbc)/;
+        return 1;
+    }
+
+    return 0;
 }
 
 =item C<file_for_perl_module($module)>

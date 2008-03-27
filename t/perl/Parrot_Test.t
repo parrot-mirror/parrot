@@ -18,17 +18,18 @@ These tests cover the basic functionality of C<Parrot::Test>.
 
 use strict;
 use warnings;
-use lib qw( . lib ../lib ../../lib );
+use Test::More;
 
 BEGIN {
     eval "use Test::Builder::Tester;";
     if ($@) {
-        print "1..0 # Skip Test::Builder::Tester not installed\n";
+        plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
+    plan( tests => 66 );
 }
 
-use Test::More;
+use lib qw( . lib ../lib ../../lib );
 
 BEGIN {
     my $pre_env = exists $ENV{PARROT_TEST} ? $ENV{PARROT_TEST} : undef;
@@ -89,7 +90,7 @@ is( Parrot::Test::per_test( undef, undef ), undef, 'per_test() two invalid args'
 # RT#46893: test the untested test functions
 my ( $desc, $err, $line );
 
-## PASM
+# PASM
 $desc = 'pasm_output_is: success';
 test_out("ok 1 - $desc");
 pasm_output_is( <<'CODE', <<'OUTPUT', $desc );
@@ -101,10 +102,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pasm_output_is: failure';
-$line = line_num(+11);
 test_out("not ok 1 - $desc");
+test_fail(+9);
 $err = <<"ERR";
-#     Failed test ($0 at line $line)
 #          got: 'ok
 # '
 #     expected: 'not ok
@@ -131,10 +131,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pasm_output_isnt: failure';
-$line = line_num(+12);
 test_out("not ok 1 - $desc");
+test_fail(+10);
 $err = <<"ERR";
-#     Failed test ($0 at line $line)
 #     'ok
 # '
 #         ne
@@ -162,10 +161,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pasm_output_like: failure';
-$line = line_num(+11);
 test_out("not ok 1 - $desc");
+test_fail(+9);
 $err = <<"ERR";
-#     Failed test ($0 at line $line)
 #                   'ok
 # '
 #     doesn't match '/not ok/
@@ -181,7 +179,7 @@ CODE
 OUTPUT
 test_test($desc);
 
-## PIR
+# PIR
 $desc = 'pir_output_is: success';
 test_out("ok 1 - $desc");
 pir_output_is( <<'CODE', <<'OUTPUT', $desc );
@@ -194,10 +192,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pir_output_is: failure';
-$line = line_num(+11);
 test_out("not ok 1 - $desc");
+test_fail(+9);
 $err = <<"ERR";
-#     Failed test ($0 at line $line)
 #          got: 'ok
 # '
 #     expected: 'not ok
@@ -226,10 +223,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pir_output_isnt: failure';
-$line = line_num(+12);
 test_out("not ok 1 - $desc");
+test_fail(+10);
 $err = <<"ERR";
-#     Failed test ($0 at line $line)
 #     'ok
 # '
 #         ne
@@ -259,10 +255,9 @@ OUTPUT
 test_test($desc);
 
 $desc = 'pir_output_like: failure';
-$line = line_num(+11);
 test_out("not ok 1 - $desc");
+test_fail(+9);
 $err = <<"ERR";
-#     Failed test ($0 at line $line)
 #                   'ok
 # '
 #     doesn't match '/not ok/
@@ -279,8 +274,36 @@ CODE
 OUTPUT
 test_test($desc);
 
-# remember to change the number of tests
-BEGIN { plan tests => 63; }
+$desc = 'pir_error_output_like: todo';
+$line = line_num(+21);
+my $location;
+if ($Test::Builder::VERSION <= eval '0.33') {
+    $location = "in $0 at line $line";
+} else {
+    $location = "at $0 line $line";
+}
+test_out("not ok 1 - $desc # TODO foo");
+$err = <<"ERR";
+#   Failed (TODO) test '$desc'
+#   $location.
+# Expected error but exited cleanly
+# Received:
+# ok
+# 
+# Expected:
+# /not ok/
+# 
+ERR
+chomp $err;
+test_err($err);
+pir_error_output_like( <<'CODE', <<"OUTPUT", $desc, todo => 'foo' );
+.sub 'test' :main
+    print "ok\n"
+.end
+CODE
+/not ok/
+OUTPUT
+test_test($desc);
 
 # Local Variables:
 #   mode: cperl

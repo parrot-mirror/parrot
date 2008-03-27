@@ -57,7 +57,7 @@ method to perform any other necessary initialization.
 
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
-PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
 PMC *
 pmc_new(PARROT_INTERP, INTVAL base_type)
 {
@@ -66,7 +66,7 @@ pmc_new(PARROT_INTERP, INTVAL base_type)
     if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
         return VTABLE_instantiate(interp, classobj, PMCNULL);
     else {
-        PMC *pmc = get_new_pmc_header(interp, base_type, 0);
+        PMC * const pmc = get_new_pmc_header(interp, base_type, 0);
         VTABLE_init(interp, pmc);
         return pmc;
     }
@@ -174,8 +174,9 @@ PARROT_CANNOT_RETURN_NULL
 static PMC*
 get_new_pmc_header(PARROT_INTERP, INTVAL base_type, UINTVAL flags)
 {
-    PMC *pmc;
+    PMC    *pmc;
     VTABLE *vtable = interp->vtables[base_type];
+    UINTVAL vtable_flags;
 
     /* This is usually because you either didn't call init_world early enough,
      * you added a new PMC class without adding Parrot_(classname)_class_init
@@ -184,8 +185,10 @@ get_new_pmc_header(PARROT_INTERP, INTVAL base_type, UINTVAL flags)
     if (!vtable)
         PANIC(interp, "Null vtable used; did you add a new PMC?");
 
+    vtable_flags = vtable->flags;
+
     /* we only have one global Env object, living in the interp */
-    if (vtable->flags & VTABLE_PMC_IS_SINGLETON) {
+    if (vtable_flags & VTABLE_PMC_IS_SINGLETON) {
         /*
          * singletons (monadic objects) exist only once, the interface
          * with the class is:
@@ -209,10 +212,10 @@ get_new_pmc_header(PARROT_INTERP, INTVAL base_type, UINTVAL flags)
         return pmc;
     }
 
-    if (vtable->flags & VTABLE_IS_CONST_PMC_FLAG) {
+    if (vtable_flags & VTABLE_IS_CONST_PMC_FLAG) {
         flags |= PObj_constant_FLAG;
     }
-    else if (vtable->flags & VTABLE_IS_CONST_FLAG) {
+    else if (vtable_flags & VTABLE_IS_CONST_FLAG) {
         /* put the normal vtable in, so that the pmc can be initialized first
          * parrot or user code has to set the _ro property then,
          * to morph the PMC to the const variant
@@ -232,18 +235,13 @@ get_new_pmc_header(PARROT_INTERP, INTVAL base_type, UINTVAL flags)
         vtable = interp->vtables[base_type];
     }
 
-    if (vtable->flags & VTABLE_PMC_NEEDS_EXT) {
+    if (vtable_flags & VTABLE_PMC_NEEDS_EXT) {
         flags |= PObj_is_PMC_EXT_FLAG;
-        if (vtable->flags & VTABLE_IS_SHARED_FLAG)
+        if (vtable_flags & VTABLE_IS_SHARED_FLAG)
             flags |= PObj_is_PMC_shared_FLAG;
     }
 
-    pmc = new_pmc_header(interp, flags);
-
-    if (!pmc)
-        real_exception(interp, NULL, ALLOCATION_ERROR,
-                "Parrot VM: PMC allocation failed!\n");
-
+    pmc            = new_pmc_header(interp, flags);
     pmc->vtable    = vtable;
     pmc->real_self = pmc;
 
@@ -343,7 +341,7 @@ pmc_new_init(PARROT_INTERP, INTVAL base_type, ARGOUT(PMC *init))
     if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
         return VTABLE_instantiate(interp, classobj, init);
     else {
-        PMC *pmc = get_new_pmc_header(interp, base_type, 0);
+        PMC * const pmc = get_new_pmc_header(interp, base_type, 0);
         VTABLE_init_pmc(interp, pmc, init);
         return pmc;
     }
@@ -383,24 +381,18 @@ PARROT_API
 INTVAL
 pmc_register(PARROT_INTERP, ARGIN(STRING *name))
 {
-    INTVAL type;
     PMC *classname_hash;
+
     /* If they're looking to register an existing class, return that
        class' type number */
-    type = pmc_type(interp, name);
+    INTVAL type = pmc_type(interp, name);
 
     if (type > enum_type_undef)
         return type;
 
-    if (type < enum_type_undef) {
-        if (type < 0)
-            real_exception(interp, NULL, 1,
-                "undefined type already exists - can't register PMC");
-
+    if (type < enum_type_undef)
         real_exception(interp, NULL, 1,
-            "native type with name '%s' already exists - can't register PMC",
-            data_types[type].name);
-    }
+            "undefined type already exists - can't register PMC");
 
     classname_hash = interp->class_hash;
     type           = interp->n_vtable_max++;
@@ -472,7 +464,8 @@ pmc_type_p(PARROT_INTERP, ARGIN(PMC *name))
 
 =item C<static PMC* create_class_pmc>
 
-RT#48260: Not yet documented!!!
+Create a class object for this interpreter.  Takes an interpreter
+name and type as arguments.  Returns a pointer to the class object.
 
 =cut
 
@@ -499,20 +492,20 @@ create_class_pmc(PARROT_INTERP, INTVAL type)
     if ((interp->vtables[type]->flags & VTABLE_PMC_IS_SINGLETON)
         && (_class == _class->vtable->pmc_class)) {
         interp->vtables[type]->pmc_class = _class;
-        return _class;
     }
+    else {
+        if (PObj_is_PMC_EXT_TEST(_class))
+            Parrot_free_pmc_ext(interp, _class);
 
-    if (PObj_is_PMC_EXT_TEST(_class))
-        Parrot_free_pmc_ext(interp, _class);
+        DOD_flag_CLEAR(is_special_PMC, _class);
 
-    DOD_flag_CLEAR(is_special_PMC, _class);
+        PMC_pmc_val(_class)    = (PMC  *)0xdeadbeef;
+        PMC_struct_val(_class) = (void *)0xdeadbeef;
 
-    PMC_pmc_val(_class)    = (PMC  *)0xdeadbeef;
-    PMC_struct_val(_class) = (void *)0xdeadbeef;
+        PObj_is_PMC_shared_CLEAR(_class);
 
-    PObj_is_PMC_shared_CLEAR(_class);
-
-    interp->vtables[type]->pmc_class = _class;
+        interp->vtables[type]->pmc_class = _class;
+    }
 
     return _class;
 }
@@ -570,7 +563,7 @@ Parrot_create_mro(PARROT_INTERP, INTVAL type)
 
             /* anchor at parent, aka current_namespace, that is 'parrot' */
             VTABLE_set_pmc_keyed_str(interp,
-                    CONTEXT(interp->ctx)->current_namespace, class_name, ns);
+                    CONTEXT(interp)->current_namespace, class_name, ns);
         }
 
         _class = vtable->pmc_class;

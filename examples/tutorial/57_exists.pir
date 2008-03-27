@@ -38,7 +38,7 @@ on how that PMC implements vtable functions.
     not_exists_0:
         say "my_array[1] does not exist"
     end_check_exists_0:
-       
+
 
     # looking at the second element
     $I3 = defined my_array[1]
@@ -56,7 +56,7 @@ on how that PMC implements vtable functions.
     not_exists_1:
         say "my_array[1] does not exist"
     end_check_exists_1:
-       
+
 
     # looking at the third element
     $I5 = defined my_array[2]
@@ -74,12 +74,12 @@ on how that PMC implements vtable functions.
     not_exists_2:
         say "my_array[2] does not exist"
     end_check_exists_2:
-       
+
 .end
 
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:
 

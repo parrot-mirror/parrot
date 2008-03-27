@@ -27,21 +27,6 @@
     .return (fields)
 .end
 
-# start of methods Put and CanPut.
-# lots of work to do in JS' object model.
-#.sub 'Put' :method
-#    .param pmc P
-#    .param pmc V
-#    $I0 = self.'CanPut'(P)
-#    unless $I0 goto stop
-#
-#  stop:
-#    .return()
-#.end
-#
-#.sub 'CanPut' :method
-#
-#.end
 
 .sub 'Array'
     .param pmc args :slurpy
@@ -49,6 +34,36 @@
     .return ($P0)
 .end
 
+.sub __load :init :anon
+    newclass $P0, ['ECMAScript';'Object']
+    newclass $P1, ['ECMAScript';'Array']
+.end
+
+.namespace ['ECMAScript';'Object']
+
+
+
+.namespace ['ECMAScript';'Array']
+
+.sub 'Put' :method
+   .param pmc propname
+   .param pmc value
+   $I0 = self.'CanPut'(propname)
+   unless $I0 goto stop
+
+ stop:
+   .return()
+.end
+
+.sub 'CanPut' :method
+    .param pmc propname
+.end
+
+.sub 'Get' :method
+    .param pmc propname
+.end
+
+.namespace
 
 ## built-in functions
 ##
@@ -92,9 +107,246 @@
     .return (lhs)
 .end
 
+.sub 'infix:+='
+    .param pmc lhs
+    .param pmc rhs
+    add lhs, rhs
+    .return (lhs)
+.end
+
+.sub 'infix:-='
+    .param pmc lhs
+    .param pmc rhs
+    sub lhs, rhs
+    .return (lhs)
+.end
+
+.sub 'infix:*='
+    .param pmc lhs
+    .param pmc rhs
+    mul lhs, rhs
+    .return (lhs)
+.end
+
+.sub 'infix:/='
+    .param pmc lhs
+    .param pmc rhs
+    div lhs, rhs
+    .return (lhs)
+.end
+
+.sub 'infix:%='
+    .param pmc lhs
+    .param pmc rhs
+    mod lhs, rhs
+    .return (lhs)
+.end
+
+
+
+
+
+
+
+
+
+## postfix operators
+##
+.sub 'postfix:++'
+    .param pmc a
+    $P0 = clone a
+    inc a
+    .return ($P0)
+.end
+
+.sub 'postfix:--'
+    .param pmc a
+    $P0 = clone a
+    dec a
+    .return ($P0)
+.end
+
+## infix operators
+##
+
+#.sub 'infix:||'
+#    .param pmc left
+#    .param pmc right
+#.end
+#
+#
+#.sub 'infix:&&'
+#    .param pmc left
+#    .param pmc right
+#.end
+
+
+.sub 'infix:|'
+    .param pmc left
+    .param pmc right
+    $I1 = left
+    $I2 = right
+    bor $I0, $I1, $I2
+    .return ($I0)
+.end
+
+
+.sub 'infix:^'
+    .param pmc left
+    .param pmc right
+    $I1 = left
+    $I2 = right
+    bxor $I0, $I1, $I2
+    .return ($I0)
+.end
+
+
+.sub 'infix:&'
+    .param pmc left
+    .param pmc right
+    $I1 = left
+    $I2 = right
+    band $I0, $I1, $I2
+    .return ($I0)
+.end
+
+
+.sub 'infix:=='
+    .param pmc left
+    .param pmc right
+    iseq $I0, left, right
+    .return ($I0)
+.end
+
+
+.sub 'infix:!='
+    .param pmc left
+    .param pmc right
+    isne $I0, left, right
+    .return ($I0)
+.end
+
+
+.sub 'infix:==='
+    .param pmc left
+    .param pmc right
+.end
+
+
+.sub 'infix:!=='
+    .param pmc left
+    .param pmc right
+.end
+
+
+.sub 'infix:<'
+    .param pmc left
+    .param pmc right
+.end
+
+
+.sub 'infix:>'
+    .param pmc left
+    .param pmc right
+.end
+
+.sub 'infix:<='
+    .param pmc left
+    .param pmc right
+.end
+
+
+.sub 'infix:>='
+    .param pmc left
+    .param pmc right
+.end
+
+
+.sub 'infix:instanceof'
+    .param pmc left
+    .param pmc right
+.end
+
+
+.sub 'infix:in'
+    .param pmc left
+    .param pmc right
+.end
+
+
+.sub 'infix:<<'
+    .param pmc left
+    .param pmc right
+.end
+
+
+.sub 'infix:>>'
+    .param pmc left
+    .param pmc right
+.end
+
+
+.sub 'infix:>>>'
+    .param pmc left
+    .param pmc right
+.end
+
+
+## prefix operators
+##
+.sub 'prefix:delete'
+    .param pmc op
+.end
+
+
+.sub 'prefix:void'
+    .param pmc op
+.end
+
+.sub 'prefix:typeof'
+    .param pmc op
+.end
+
+.sub 'prefix:+'
+    .param pmc op
+    $N0 = op
+    .return ($N0)
+.end
+
+.sub 'prefix:-'
+    .param pmc op
+    $N0 = op
+    neg $N0
+    .return ($N0)
+.end
+
+.sub 'prefix:++'
+    .param pmc op
+    inc op
+    .return (op)
+.end
+
+.sub 'prefix:--'
+    .param pmc op
+    dec op
+    .return (op)
+.end
+
+.sub 'prefix:~'
+    .param pmc op
+    bnot $P0, op
+    .return ($P0)
+.end
+
+.sub 'prefix:!'
+    .param pmc op
+    istrue $I0, op
+    not $I0
+    .return ($I0)
+.end
 
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

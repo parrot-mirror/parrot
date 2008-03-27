@@ -13,7 +13,7 @@ A parser for shell-stype glob notation.
 =item C<compile_glob(PMC source, PMC adverbs :slurpy :named)>
 
 Return the result of compiling the glob expression given by
-C<source>.   Normally this function is obtained using 
+C<source>.   Normally this function is obtained using
 C<compreg 'PGE::Glob'> instead of calling it directly.
 
 Returns the compiled regular expression.  If a C<target>
@@ -116,11 +116,11 @@ or the resulting PIR code (target='PIR').
 =item C<glob(PMC mob, PMC adverbs :slurpy :named)>
 
 Parses a glob expression, returning the corresponding
-parse C<PGE::Match> object.   
+parse C<PGE::Match> object.
 
 =cut
 
-.const int GLOB_INF = 2147483647 
+.const int GLOB_INF = 2147483647
 
 .sub 'glob'
     .param pmc mob
@@ -349,4 +349,4 @@ It has been updated for later versions of PGE by Patrick R. Michaud
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

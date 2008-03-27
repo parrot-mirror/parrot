@@ -4,7 +4,7 @@
 # RQ (Karl)
 # Seems to be an old benchmark, now deprecated by the shootout
 #
-# ackermann - ack(3, 9) is default 
+# ackermann - ack(3, 9) is default
 # shootout runs ack(3, 11)
 # time for ack(3,11):  0.8s (AMD X2@2000)
 # by Leopold Toetsch
@@ -15,7 +15,7 @@
     argc = elements argv
     .local int x, y, r
     x = 3
-    y = 9
+    y = 7
     if argc == 1 goto go
     $S0 = argv[1]
     if argc == 2 goto xdefault
@@ -23,7 +23,7 @@
     $S0 = argv[2]
     y = $S0
     goto go
-xdefault:    
+xdefault:
     y = $S0
 go:
     $P0 = getinterp
@@ -60,4 +60,4 @@ a2:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

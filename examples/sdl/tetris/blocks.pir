@@ -41,7 +41,7 @@ blocks.pir - tetris block classes
     .local pmc blocks
     .local pmc block
 
-    blocks = new IntList
+    blocks = new 'ResizablePMCArray'
 
     $P0 = get_class "Tetris::Block::0"
     push blocks, $P0
@@ -69,7 +69,7 @@ END:
 .sub __init :method
     .local pmc block
 
-    block = new IntList
+    block = new 'ResizablePMCArray'
     push block, 1
     push block, 1
     push block, 1
@@ -89,7 +89,7 @@ END:
 .sub __init :method
     .local pmc block
 
-    block = new IntList
+    block = new 'ResizablePMCArray'
     push block, 1
     push block, 1
     push block, 1
@@ -114,7 +114,7 @@ END:
 .sub __init :method
     .local pmc block
 
-    block = new IntList
+    block = new 'ResizablePMCArray'
     push block, 1
     push block, 1
     push block, 1
@@ -139,7 +139,7 @@ END:
 .sub __init :method
     .local pmc block
 
-    block = new IntList
+    block = new 'ResizablePMCArray'
     push block, 1
     push block, 1
     push block, 0
@@ -164,7 +164,7 @@ END:
 .sub __init :method
     .local pmc block
 
-    block = new IntList
+    block = new 'ResizablePMCArray'
     push block, 0
     push block, 1
     push block, 1
@@ -189,7 +189,7 @@ END:
 .sub __init :method
     .local pmc block
 
-    block = new IntList
+    block = new 'ResizablePMCArray'
     push block, 1
     push block, 1
     push block, 1
@@ -215,7 +215,7 @@ END:
 .sub __init :method
     .local pmc block
 
-    block = new IntList
+    block = new 'ResizablePMCArray'
     push block, 1
     push block, 1
     push block, 1
@@ -247,7 +247,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 
 =cut
 
@@ -255,4 +255,4 @@ Copyright (C) 2004, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

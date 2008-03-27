@@ -34,11 +34,11 @@ than $x.
 
 .sub 'prefix:rand'
     .param num limit
-    
+
     $P0 = new 'Random'
     $N0 = $P0
     $N0 *= limit
-    
+
     .return ($N0)
 .end
 
@@ -50,4 +50,4 @@ than $x.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

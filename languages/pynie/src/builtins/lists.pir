@@ -13,7 +13,7 @@ src/builtins/lists.pir - List operations
 .sub 'listmaker'
     .param pmc args            :slurpy
     unless null args goto have_args
-    args = new .ResizablePMCArray
+    args = new 'ResizablePMCArray'
   have_args:
     .return (args)
 .end
@@ -32,4 +32,4 @@ maintainer.  Patches and suggestions can be sent to
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

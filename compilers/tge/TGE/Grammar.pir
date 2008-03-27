@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 
 =head1 NAME
 
@@ -68,7 +68,7 @@ Add a rule to the current attribute grammar.
 =head2 apply
 
 Use a precompiled grammar on a data structure. This returns an
-object on which you can call methods to fetch attributes on the 
+object on which you can call methods to fetch attributes on the
 I<top node> of the data structure.
 
 =cut
@@ -80,7 +80,7 @@ I<top node> of the data structure.
     newtree = new 'TGE::Tree'
     setattribute newtree, 'data', tree
     setattribute newtree, 'grammar', self
-    visit = getattribute newtree, 'visit' 
+    visit = getattribute newtree, 'visit'
     # Build up the visit hash
     .local pmc rules
     .local int index
@@ -138,7 +138,7 @@ Return an iterator for the symbol lookup table.
 
 .sub 'symbol_iter' :method
     $P1 = getattribute self, 'symbols'
-    $P2 = new Iterator, $P1
+    $P2 = new 'Iterator', $P1
 
     .return($P2)
 .end
@@ -176,4 +176,4 @@ Allison Randal <allison@perl.org>
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

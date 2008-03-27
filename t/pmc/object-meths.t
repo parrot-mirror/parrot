@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 40;
+use Parrot::Test tests => 41;
 
 =head1 NAME
 
@@ -1221,7 +1221,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "overloading attribute accessor vtable" );
     .local pmc cl, o
     cl = newclass 'MyClass'
     o = new 'MyClass'
-    $P2 = new String
+    $P2 = new 'String'
     $P2 = "blue"
     setattribute o, "blue", $P2
     $P1 = getattribute o, "blue"
@@ -1259,6 +1259,22 @@ pir_output_is( <<'CODE', <<'OUTPUT', "overloading get_class vtable" );
 
 CODE
 get_class was called
+OUTPUT
+
+pir_error_output_like( <<'CODE', <<'OUTPUT', "method called on non-object (RT #50440)" );
+.namespace [ 'Foo' ]
+
+.sub 'blah' :method
+.end
+
+.namespace
+
+.sub main :main
+    $P1 = get_hll_global 'Foo'
+    $P0 = $P1.'new'()
+.end
+CODE
+/Method 'new' not found for non-object/
 OUTPUT
 
 # Local Variables:

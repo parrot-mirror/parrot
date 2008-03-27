@@ -191,6 +191,7 @@ close $FOO;
 
 # compile it
 
+unlink 'temp.pbc';
 system_or_die( $PARROT, qw( -o temp.pbc temp.pir ) );
 
 pir_output_is( <<'CODE', <<'OUT', 'call sub in external pbc, return' );
@@ -230,6 +231,7 @@ close $FOO;
 
 # compile it
 
+unlink 'temp.pbc';
 system("$PARROT -o temp.pbc temp.pir");
 
 pir_output_is( <<'CODE', <<'OUT', 'call sub in external pbc with 2 subs' );
@@ -333,6 +335,7 @@ close $FOO;
 
 # compile it
 
+unlink 'temp.pbc';
 system_or_die( $PARROT, qw( -o temp.pbc temp.pir ) );
 
 use Test::More;
@@ -438,7 +441,7 @@ my @temp_files;
 SKIP:
 {
     my $temp_dir = File::Spec->tmpdir();
-    my $td2 = File::Spec->catfile( $temp_dir, '.' );
+    my $td2 = File::Spec->catfile( $temp_dir, 'X' );
     substr( $td2, -1, 1, '' );
 
     for my $file (qw( with_slash without_slash )) {

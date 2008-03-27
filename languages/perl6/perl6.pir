@@ -16,7 +16,7 @@ and registers the compiler under the name 'Perl6'.
 
 =item onload()
 
-Creates the Perl6 compiler by subclassing a C<PCT::HLLCompiler> object.
+Creates the Perl 6 compiler by subclassing a C<PCT::HLLCompiler> object.
 
 =cut
 
@@ -71,7 +71,9 @@ USAGE
     $P0  = new 'String'
     $P0  = 'This is Rakudo Perl 6'
     push_eh _handler
-    cfg  = _config()    # currently works in the build tree, but not in the install tree
+
+    # currently works in the build tree, but not in the install tree
+    cfg  = _config()
     $P0 .= ', revision '
     $S0  = cfg['revision']
     $P0 .= $S0
@@ -91,6 +93,19 @@ USAGE
     ##  create a list for holding the stack of nested blocks
     $P0 = new 'List'
     set_hll_global ['Perl6';'Grammar';'Actions'], '@?BLOCK', $P0
+
+    ## create a list for holding the stack of nested packages
+    ## (that may be roles, modules, classes or grammars).
+    $P0 = new 'List'
+    set_hll_global ['Perl6';'Grammar';'Actions'], '@?PACKAGE', $P0
+
+    ## create a list for holding the stack of nested classes
+    $P0 = new 'List'
+    set_hll_global ['Perl6';'Grammar';'Actions'], '@?CLASS', $P0
+
+    ## create a list for holding the stack of nested roles
+    $P0 = new 'List'
+    set_hll_global ['Perl6';'Grammar';'Actions'], '@?ROLE', $P0
 
     ##  create a list of END blocks to be run
     $P0 = new 'List'
@@ -129,7 +144,7 @@ to ensure C<BEGIN> and C<CHECK> blocks have been executed.
 =item main(args :slurpy)  :main
 
 Start compilation by passing any command line C<args>
-to the Perl6 compiler.
+to the Perl 6 compiler.
 
 =cut
 
@@ -181,4 +196,4 @@ to the Perl6 compiler.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

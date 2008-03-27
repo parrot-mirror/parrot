@@ -7,7 +7,7 @@
 .sub '&global'
   .param pmc argv :slurpy
 
-  .local int argc 
+  .local int argc
   argc = argv
 
   if argc == 0 goto badargs
@@ -40,7 +40,7 @@ create_global:
   $P1 = new 'Undef'
   set_hll_global sigil_varname, $P1
   goto has_global
-  
+
 done:
   .return('')
 
@@ -52,4 +52,4 @@ badargs:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

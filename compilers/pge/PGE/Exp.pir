@@ -170,6 +170,9 @@ tree as a PIR code object that can be compiled.
           (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(mob, adverbs :flat :named)
           $P0 = interpinfo %2
           setattribute mob, '&!corou', $P0
+          .local int lastpos
+          lastpos = length target
+          if cpos > lastpos goto fail_rule
         CODE
     goto code_body
 
@@ -185,6 +188,9 @@ tree as a PIR code object that can be compiled.
           .local int cpos, iscont :unique_reg
           $P0 = get_hll_global ['PGE'], 'Match'
           (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(self, adverbs :flat :named)
+          .local int lastpos
+          lastpos = length target
+          if cpos > lastpos goto fail_rule
         CODE
 
   code_body:
@@ -210,8 +216,7 @@ tree as a PIR code object that can be compiled.
   code_body_3:
 
     code.emit(<<"        CODE", PGE_CUT_RULE, returnop)
-          .local int pos, lastpos, rep, cutmark :unique_reg
-          lastpos = length target
+          .local int pos, rep, cutmark :unique_reg
         try_match:
           if cpos > lastpos goto fail_rule
           mfrom = cpos
@@ -249,7 +254,7 @@ tree as a PIR code object that can be compiled.
     code.emit("      .end")
     .return (code)
 .end
-   
+
 
 .sub 'getargs' :method
     .param pmc label
@@ -482,7 +487,7 @@ tree as a PIR code object that can be compiled.
     if $I0 == 0 goto outer_quant
     .return ()
 
-  outer_quant:    
+  outer_quant:
     .local pmc args
     args = self.'getargs'(label, next, 'quant' => self)
 
@@ -703,7 +708,7 @@ tree as a PIR code object that can be compiled.
   isscope_end:
 
     code.emit(<<"        CODE", captgen, captsave, captback, 'E'=>explabel, args :flat :named)
-        %L: # capture 
+        %L: # capture
           %0
           captob = captscope.'new'(captscope, 'pos'=>pos)
           push gpad, captscope
@@ -854,7 +859,7 @@ tree as a PIR code object that can be compiled.
           goto fail\n
         CODE
     goto end
-    .return()          
+    .return()
 
   subrule_negated:
     ##   This handles negative subrule matches; if a subrule fails, then
@@ -872,7 +877,7 @@ tree as a PIR code object that can be compiled.
   end:
     .return()
 .end
-      
+
 
 .namespace [ 'PGE::Exp::Alt' ]
 
@@ -919,7 +924,7 @@ tree as a PIR code object that can be compiled.
     .param pmc next
     .return (self)
 .end
-   
+
 .sub 'pir' :method
     .param pmc code
     .param pmc label
@@ -1057,7 +1062,7 @@ tree as a PIR code object that can be compiled.
     goto end
   newline:
     self['cclass'] = .CCLASS_NEWLINE
-  end:    
+  end:
     .return (self)
 .end
 
@@ -1106,9 +1111,9 @@ tree as a PIR code object that can be compiled.
     if negate == 0 goto emit_pir
     negstr = ''
 
-  emit_pir:    
+  emit_pir:
     code.emit(<<"        CODE", token, negstr, cclass, args :flat :named)
-        %L: # cclass %0 %Q 
+        %L: # cclass %0 %Q
           $I0 = find%1_cclass %2, target, pos, lastpos
           rep = $I0 - pos
           %Mif rep < %m goto fail
@@ -1119,7 +1124,7 @@ tree as a PIR code object that can be compiled.
 
     if backtrack == PGE_BACKTRACK_NONE goto bt_none
     if backtrack == PGE_BACKTRACK_EAGER goto bt_eager
-  
+
   bt_greedy:
     code.emit(<<"        CODE", args :flat :named)
           pos += rep
@@ -1135,7 +1140,7 @@ tree as a PIR code object that can be compiled.
           dec rep
           goto %L_2
         CODE
-    .return (1)          
+    .return (1)
 
   bt_none:
     code.emit("          pos += rep\n          goto %0\n", next)
@@ -1157,7 +1162,7 @@ tree as a PIR code object that can be compiled.
           dec rep
           goto %L_2
         CODE
-          
+
 .end
 
 .namespace [ 'PGE::Exp::Cut' ]
@@ -1227,7 +1232,7 @@ tree as a PIR code object that can be compiled.
     .local string cname
     cname = self['cname']
     code.emit(<<"        CODE", label, next, cname)
-        %0: # scalar %2 
+        %0: # scalar %2
           $P0 = mob[%2]
           $I0 = does $P0, 'array'
           if $I0 == 0 goto %0_1
@@ -1287,7 +1292,7 @@ tree as a PIR code object that can be compiled.
     .return ()
 .end
 
-   
+
 .namespace [ 'PGE::Exp::Newline' ]
 
 .sub 'reduce' :method
@@ -1413,7 +1418,7 @@ tree as a PIR code object that can be compiled.
         CODE
     .return ()
 .end
- 
+
 .namespace [ "PGE::Exp::Action" ]
 
 .sub 'reduce' :method
@@ -1453,4 +1458,4 @@ tree as a PIR code object that can be compiled.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

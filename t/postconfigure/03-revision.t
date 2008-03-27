@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 017-revision_from_cache.t
+# 03-revision.t
 
 use strict;
 use warnings;
@@ -49,6 +49,8 @@ my $cwd = cwd();
     is($mtime_before, $mtime_after,
         "Revision number cache file correctly untouched");
 
+    unlink qq{$libdir/Parrot/Revision.pm}
+        or croak "Unable to delete file after testing";
     ok( chdir $cwd, "Able to change back to starting directory");
 }
 
@@ -58,11 +60,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-017-revision_from_cache.t - test Parrot::Revision
+03-revision.t - test Parrot::Revision
 
 =head1 SYNOPSIS
 
-    % prove t/configure/017-revision_from_cache.t
+    % prove t/configure/03-revision.t
 
 =head1 DESCRIPTION
 

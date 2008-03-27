@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -20,6 +20,7 @@ To see what a minimal PMC looks like, create a PMC template and compile
 it to C.
 
     % perl tools/dev/gen_class.pl Foo > src/pmc/foo.pmc
+    % perl tools/build/pmc2c.pl --dump src/pmc/foo.pmc
     % perl tools/build/pmc2c.pl -c src/pmc/foo.pmc
 
 =head1 SEE ALSO
@@ -39,10 +40,12 @@ my $vtbl = parse_vtable("$FindBin::Bin/../../src/vtable.tbl");
 my $classname = shift
     or die "No classname given!\n";
 
+my $year = (localtime())[5] + 1900; # get current year.
+
 ## emit file header
 print <<"EOF";
 /* ${classname}.pmc
- *  Copyright (C) 2007, The Perl Foundation.
+ *  Copyright (C) $year, The Perl Foundation.
  *  SVN Info
  *     \$Id\$
  *  Overview:
@@ -60,16 +63,17 @@ pmclass $classname {
 
 EOF
 
+my %skip_bodies = map { $_ => 1 } qw( type name get_namespace );
+
 ## emit method bodies
 for (@$vtbl) {
     my ( $retval, $methname, $args ) = @$_;
-    if ( $methname eq 'type' || $methname eq 'name' || $methname =~ /prop/ ) {
 
-        # default.pmc handles these
-        next;
-    }
+    # default.pmc handles these
+    next if exists $skip_bodies{$methname};
+    next if $methname =~ /prop/;
 
-    print "    $retval $methname ($args) {\n";
+    print "    $retval $methname($args) {\n";
 
     if ( $retval ne 'void' ) {
         print $retval eq 'PMC*'
@@ -80,7 +84,14 @@ for (@$vtbl) {
 }
 
 ## emit file footer
-print "}\n";
+print qq|}
+
+/*
+ * Local Variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */|;
 
 # Local Variables:
 #   mode: cperl

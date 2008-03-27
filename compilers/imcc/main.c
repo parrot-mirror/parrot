@@ -4,6 +4,7 @@
  * Intermediate Code Compiler for Parrot.
  *
  * Copyright (C) 2002 Melvin Smith <melvin.smith@mindspring.com>
+ * Copyright (C) 2003-2008, The Perl Foundation.
  */
 
 /*
@@ -14,7 +15,7 @@ compilers/imcc/main.c
 
 =head1 DESCRIPTION
 
-main program
+IMCC main function and helpers.
 
 =head2 Functions
 
@@ -235,17 +236,17 @@ when working from repository -- not from release versions).
 static void
 Parrot_version(PARROT_INTERP)
 {
-    int rev = PARROT_REVISION;
+    int rev;
     printf("This is parrot version " PARROT_VERSION);
-    if (rev != 0)
-        printf(" (r%d)", rev);
-    printf(" built for " PARROT_ARCHNAME ".\n");
     rev = Parrot_revision();
-    if (PARROT_REVISION != rev) {
+    if (rev != 0)
+        printf(" (r%d)", PARROT_REVISION);
+    printf(" built for " PARROT_ARCHNAME ".\n");
+    if (rev != 0 && PARROT_REVISION != rev) {
         printf("Warning: runtime has revision %d!\n", rev);
     }
     rev = Parrot_config_revision();
-    if (PARROT_REVISION != rev) {
+    if (rev != 0 && PARROT_REVISION != rev) {
         printf("Warning: used Configure.pl revision %d!\n", rev);
     }
     printf("Copyright (C) 2001-2008, The Perl Foundation.\n\
@@ -329,7 +330,7 @@ is_all_hex_digits(ARGIN(const char *s))
 /* most stolen from test_main.c */
 /*
 
-=item C<char * parseflags>
+=item C<const char * parseflags>
 
 Parse Parrot's command line for options and set appropriate flags.
 
@@ -339,8 +340,8 @@ Parse Parrot's command line for options and set appropriate flags.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-char *
-parseflags(PARROT_INTERP, int *argc, char **argv[])
+const char *
+parseflags(PARROT_INTERP, int *argc, const char **argv[])
 {
     struct longopt_opt_info opt = LONGOPT_OPT_INFO_INIT;
     int   status;
@@ -455,7 +456,7 @@ parseflags(PARROT_INTERP, int *argc, char **argv[])
                 break;
             case OPT_RUNTIME_PREFIX:
                 {
-                char *prefix = Parrot_get_runtime_prefix(interp, NULL);
+                char *prefix = Parrot_get_runtime_prefix(interp);
                 printf("%s\n", prefix);
                 free(prefix);
                 exit(EXIT_SUCCESS);
@@ -847,15 +848,18 @@ determine_input_file_type(PARROT_INTERP, ARGIN(const char * const sourcefile))
 {
     yyscan_t yyscanner = IMCC_INFO(interp)->yyscanner;
 
-    /* Read in the source and determine whether it's Parrot bytecode
-       or PASM. If it either of these, then we assume that it is PIR. */
+    /* Read in the source and check the file extension for the input type;
+       a file extension .pbc means it's parrot bytecode;
+       a file extension .pasm means it's parrot assembly (PASM);
+       otherwise, it's assumed to be PIR.
+     */
     if (STREQ(sourcefile, "-")) {
         imc_yyin_set(stdin, yyscanner);
     }
     else {
         const char * const ext = strrchr(sourcefile, '.');
 
-        if (ext && (STREQ(ext, ".pbc"))) {
+        if (ext && (STREQ(ext, ".pbc"))) { /* a PBC file */
             load_pbc  = 1;
             write_pbc = 0;
         }
@@ -988,8 +992,9 @@ compile_to_bytecode(PARROT_INTERP,
 
 =item C<int imcc_run>
 
+Entry point of IMCC, as invoked by Parrot's main function.
 Compile source code (if required), write bytecode file (if required)
-and run.
+and run. This function always returns 0.
 
 =cut
 
@@ -999,10 +1004,12 @@ int
 imcc_run(PARROT_INTERP, ARGIN(const char *sourcefile), int argc,
         ARGIN(const char **argv))
 {
-    int              obj_file;
-    yyscan_t        yyscanner   = IMCC_INFO(interp)->yyscanner;
+    int                obj_file;
+    yyscan_t           yyscanner   = IMCC_INFO(interp)->yyscanner;
     const char * const output_file = interp->output_file;
 
+    /* set the top of the stack so GC can trace it for GC-able pointers
+     * see trace_system_areas() in src/cpu_dep.c */
     if (!interp->lo_var_ptr)
         interp->lo_var_ptr = (void *)&obj_file;
 

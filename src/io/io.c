@@ -162,6 +162,47 @@ PIO_new(PARROT_INTERP, SHIM(INTVAL iotype), INTVAL flags, INTVAL mode)
 
 /*
 
+=item C<PMC * PIO_dup>
+
+Duplicates an IO stream.
+
+=cut
+
+*/
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC *
+PIO_dup(PARROT_INTERP, ARGIN(PMC *pmc))
+{
+    ParrotIO * const io   = PMC_data_typed(pmc, ParrotIO *);
+    const PIOHANDLE newfd = Parrot_dup(io->fd);
+    ParrotIOLayer * layer = (ParrotIOLayer *)PMC_struct_val(pmc);
+
+    ParrotIO * newio;
+
+    if (!layer) {
+        layer = interp->piodata->default_stack;
+    }
+
+    if (newfd == (PIOHANDLE)-1) {
+        real_exception(interp, NULL, 1, "could not dup an fd");
+    }
+
+    newio = PIO_fdopen_down(interp, layer, newfd, io->flags);
+    /* io could be null here but we still have
+     * to create a PMC for the caller, no PMCNULL here
+     * as that would cause an exception upon access.
+     */
+    if (newio)
+        newio->stack = layer;
+
+    return new_io_pmc(interp, newio);
+}
+
+/*
+
 =item C<void PIO_destroy>
 
 Destroys the IO stream.  At the moment, this only frees the memory and removes
@@ -173,7 +214,7 @@ the pointers from the PMC.
 
 PARROT_API
 void
-PIO_destroy(SHIM_INTERP, ARGMOD(PMC *pmc))
+PIO_destroy(SHIM_INTERP, ARGMOD(PMC * pmc))
 {
     ParrotIO * const io = (ParrotIO *)PMC_data0(pmc);
 
@@ -1081,6 +1122,7 @@ Writes a C string format with varargs to C<stderr>.
 */
 
 PARROT_API
+PARROT_IGNORABLE_RESULT
 INTVAL
 PIO_eprintf(NULLOK(PARROT_INTERP), ARGIN(const char *s), ...)
 {
@@ -1243,6 +1285,7 @@ Returns C<offset>.
 
 */
 
+PARROT_API
 PIOOFF_T
 PIO_make_offset(INTVAL offset)
 {

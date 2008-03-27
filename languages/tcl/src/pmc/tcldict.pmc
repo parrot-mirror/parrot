@@ -31,7 +31,7 @@ pmclass TclDict
     need_ext
     dynpmc
     extends Hash
-    does    hash
+    provides    hash
     group   tcl_group
     hll     Tcl
     maps    Hash
@@ -74,7 +74,7 @@ Copy the contents of other to self.
         else
         {
             real_exception(INTERP, NULL, E_TypeError,
-                           "unable to assign self to this type");
+                           "unable to assign self to this TclDict");
         }
     }
 
@@ -99,7 +99,7 @@ Returns the dict as a string
         namespace = VTABLE_get_pmc_keyed_str(INTERP, namespace, _tcl_namespace);
         dictToString = VTABLE_get_pmc_keyed_str(INTERP, namespace, sub);
 
-        CONTEXT(INTERP->ctx)->constants =
+        CONTEXT(interp)->constants =
           PMC_sub(dictToString)->seg->const_table->constants;
         return (STRING *)Parrot_runops_fromc_args(INTERP, dictToString, "SP", SELF);
 

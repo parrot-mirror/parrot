@@ -8,8 +8,8 @@
 
 .macro X(a,b)
 	.local $x: doit()
-	
-	
+
+
 	loop: doit()
 	.a = .b
 	.sym int i
@@ -25,8 +25,8 @@
 
 .macro X(a,b)
 	.local $x: doit()
-	
-	
+
+
 	loop: doit()
 	.a = .b
 	.sym int i
@@ -34,8 +34,8 @@
 
 .macro X(a,b)
 	.local $x: doit()
-	
-	
+
+
 	loop: doit()
 	.a = .b
 	.sym int i
@@ -52,4 +52,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

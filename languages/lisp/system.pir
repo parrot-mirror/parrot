@@ -51,7 +51,7 @@ Used in bootstrapping.
 
     # XXX - THESE SHOULD BE REMOVED AND CONVERTED TO PROPER LISP FUNCTIONS
     .DEFUN(symbol, package, "ERROR", "_raise_error")
-    
+
     .DEFUN(symbol, package, "LOAD", "_load")
 
     .return(1)
@@ -693,4 +693,4 @@ DONE:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

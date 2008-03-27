@@ -152,7 +152,7 @@ those functions directly.
 =item color_for_surface( surface )
 
 Returns an integer representing the current color appropriate for the given
-SDL::Surface C<surface>, 
+SDL::Surface C<surface>,
 
 As far as I understand things right now, you don't need to call this directly
 unless you're manipulating raw pixels and need the boost of speed from
@@ -219,7 +219,7 @@ the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2007, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 
 =cut
 
@@ -227,4 +227,4 @@ Copyright (C) 2004-2007, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

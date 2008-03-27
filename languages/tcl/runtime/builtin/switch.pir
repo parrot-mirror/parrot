@@ -107,7 +107,7 @@ glob_loop:
   pattern = shift body
   code = shift body
   unless nocase goto glob_do
-  pattern = downcase pattern 
+  pattern = downcase pattern
   code    = downcase code
 
  glob_do:
@@ -124,7 +124,7 @@ regex_loop:
   pattern = shift body
   code = shift body
   unless nocase goto re_do
-  pattern = downcase pattern 
+  pattern = downcase pattern
   code    = downcase code
  re_do:
   rule  = tclARE(pattern)
@@ -167,4 +167,4 @@ bad_flag:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

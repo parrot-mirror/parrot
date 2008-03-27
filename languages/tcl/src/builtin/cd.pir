@@ -14,7 +14,7 @@
 
   if argc >= 2 goto bad_args
   if argc == 0 goto noargs
-  
+
   dir = argv[0]
   goto cd_it
 
@@ -42,4 +42,4 @@ bad_args:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

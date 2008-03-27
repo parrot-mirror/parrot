@@ -24,21 +24,23 @@ enum INSTYPE {    /*instruction type can be   */
 
 
 typedef struct _Instruction {
-    char * op;          /* opstring w/o params */
-    char * fmt;         /* printf style format string for params   */
-    unsigned int flags; /* how the instruction affects each of the values */
-    unsigned int type;  /* 16 bit register branches, + ITxxx */
-    int keys;           /* bitmask of keys used in this instruction */
-    int index;          /* index on instructions[] */
-    int bbindex;        /* number of basic block containing instruction */
-    struct _Instruction * prev;
-    struct _Instruction * next;
-    int opnum;          /* parrot op number */
-    int opsize;         /* parrot op size   */
-    int line;           /* source code line number */
-    int n_r;            /* count of regs in **r */
-    SymReg * r[1];      /* instruction is allocated variabled sized
-                           to hold more SymRegs */
+    char        *opname;   /* opstring w/o params */
+    char        *format;   /* printf style format string for params   */
+    unsigned int flags;    /* how the instruction affects each of the values */
+    unsigned int type;     /* 16 bit register branches, + ITxxx */
+    int          keys;     /* bitmask of keys used in this instruction */
+    int          index;    /* index on instructions[] */
+    int          bbindex;  /* number of basic block containing instruction */
+
+    struct _Instruction *prev;
+    struct _Instruction *next;
+
+    int     opnum;         /* parrot op number */
+    int     opsize;        /* parrot op size   */
+    int     line;          /* source code line number */
+    int     symreg_count;  /* count of regs in **symregs */
+    SymReg *symregs[1];    /* instruction is allocated variable sized
+                              to hold more SymRegs */
 } Instruction;
 
 
@@ -108,6 +110,15 @@ PARROT_API
 int emit_open(PARROT_INTERP, int type, ARGIN_NULLOK(void *param))
         __attribute__nonnull__(1);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+Instruction * _delete_ins(
+    ARGMOD(struct _IMC_Unit *unit),
+    ARGIN(Instruction *ins))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*unit);
+
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 Instruction * _mk_instruction(
@@ -120,11 +131,11 @@ Instruction * _mk_instruction(
         __attribute__nonnull__(2)
         __attribute__nonnull__(4);
 
+PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 Instruction * delete_ins(
     ARGMOD(struct _IMC_Unit *unit),
-    ARGMOD(Instruction *ins),
-    int needs_freeing)
+    ARGMOD(Instruction *ins))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*unit)

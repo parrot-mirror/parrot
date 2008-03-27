@@ -16,7 +16,7 @@
     switches = select_switches(options, argv)
 
     .local int argc
-    argc = elements argv 
+    argc = elements argv
     if argc == 0 goto badargs
     if argc > 1  goto badswitch
 
@@ -131,4 +131,4 @@ badswitch:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

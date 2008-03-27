@@ -14,8 +14,8 @@ sub runstep {
     my $ccflags   = $conf->option_or_data('ccflags');
     my $cc        = $conf->option_or_data('cc');
 
-    # Later in the Parrot::Configure::RunSteps->runsteps process,
-    # inter/progs.pl will merge the command-line overrides with the defaults.
+    # Later in the Parrot::Configure::runsteps() process,
+    # inter::progs will merge the command-line overrides with the defaults.
     # We do one bit of its work early here, because we need the result now.
     $cc = $conf->options->get('cc') if defined $conf->options->get('cc');
 
@@ -50,8 +50,7 @@ sub runstep {
 
         # override perl's warnings level
         $ccflags =~ s/-W\d/-W4/;
-        $ccflags .= " -Wp64 " if $cc_output =~ m/Version (\d+)/ && $1 >= 13;
-        
+
         # if we want pbc_to_exe to work, need to let some versions of the
         # compiler use more memory than they normally would
         $ccflags .= " -Zm400 " if $cc_output =~ m/Version (\d+)/ && $1 == 12;
@@ -194,7 +193,7 @@ sub runstep {
         my $make = $conf->data->get(qw(make));
         if ( $make =~ /nmake/i ) {
 
-            # ActiveState Perl or PXPerl
+            # ActiveState Perl
             $conf->data->set(
                 a       => '.a',
                 ar      => 'ar',
@@ -209,16 +208,23 @@ sub runstep {
                 o         => '.o',
                 blib_dir  => 'blib\\lib',
             );
-            if ( $conf->data->get(qw(optimize)) eq "1" ) {
-                $conf->data->set( optimize => '-O2' );
-            }
         }
         elsif ( $make =~ /dmake/i ) {
 
-            # mingw Perl
+            # strawberry Perl
+            $conf->data->set(
+                ccflags   => '-DWIN32 ',
+                ldflags   => '',
+                linkflags => '',
+                optimize  => '',
+            );
         }
         else {
             warn "unknown configuration";
+        }
+
+        if ( $conf->data->get(qw(optimize)) eq "1" ) {
+            $conf->data->set( optimize => '-O2' );
         }
 
         $conf->data->set(

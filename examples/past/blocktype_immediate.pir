@@ -1,4 +1,4 @@
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -49,7 +49,7 @@ F<docs/pdds/pdd26_ast.pod>
     .local pmc var_block
     var_block = new 'PAST::Block'
     var_block.init( val_x, 'blocktype' => 'immediate' )
- 
+
     # set up compiler
     .local pmc astcompiler
     astcompiler = new [ 'PCT::HLLCompiler' ]
@@ -67,4 +67,4 @@ F<docs/pdds/pdd26_ast.pod>
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

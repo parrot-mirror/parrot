@@ -102,6 +102,37 @@ children and attributes.  Returns the newly created node.
 .end
 
 
+=item clone
+
+Create and returns a clone of a PAST node.
+
+=cut
+
+.sub 'clone' :vtable :method
+    .local pmc res
+    $S0 = typeof self
+    res = new $S0
+    .local pmc iter
+    iter = self.'iterator'()
+  iter_child_loop:
+    unless iter goto iter_child_end
+    $P0 = shift iter
+    $P1 = clone $P0
+    res.'push'($P1)
+    goto iter_child_loop
+  iter_child_end:
+    iter = new 'Iterator', self
+  iter_attr_loop:
+    unless iter goto iter_attr_end
+    $S0 = shift iter
+    $P0 = iter[$S0]
+    res[$S0] = $P0
+    goto iter_attr_loop
+  iter_attr_end:
+    .return (res)
+.end
+
+
 =item unshift(child)
 
 Add C<child> to the beginning of the invocant's list of children.
@@ -287,7 +318,7 @@ Perl 6 compilers mailing lists.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2006-2007, The Perl Foundation.
+Copyright (C) 2006-2008, The Perl Foundation.
 
 =cut
 
@@ -295,4 +326,4 @@ Copyright (C) 2006-2007, The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

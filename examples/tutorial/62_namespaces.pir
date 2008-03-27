@@ -8,7 +8,7 @@ retrieving it from the namespace. Also demonstrates the .namespace directive.
 .sub main :main
 
    $P0 = get_global ["Different"; "Namespace"], "foo"
-   
+
    $S0 = $P0("Zaphod")
    say $S0
 
@@ -29,5 +29,5 @@ retrieving it from the namespace. Also demonstrates the .namespace directive.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:
 

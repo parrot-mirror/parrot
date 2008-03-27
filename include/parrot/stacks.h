@@ -25,9 +25,10 @@ typedef struct Stack_Entry {
 } Stack_Entry_t;
 
 typedef struct Stack_Chunk {
-    pobj_t obj;
-    int size;
-    const char * name;
+    UnionVal            cache;
+    Parrot_UInt         flags;
+    int                 size;
+    const char         *name;
     struct Stack_Chunk *prev;
     union { /* force appropriate alignment of 'data'.  If alignment
                is necessary, assume double is good enough.  27-04-2007. */
@@ -47,13 +48,6 @@ typedef void (*Stack_cleanup_method)(Interp*, Stack_Entry_t *);
 #define STACK_CLEANUP_NULL ((Stack_cleanup_method)NULLfunc)
 
 /* HEADERIZER BEGIN: src/stacks.c */
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_PURE_FUNCTION
-Stack_entry_type get_entry_type(SHIM_INTERP,
-    ARGIN(const Stack_Entry_t *entry))
-        __attribute__nonnull__(2);
 
 PARROT_API
 void mark_stack(PARROT_INTERP, ARGMOD(Stack_Chunk_t *chunk))
@@ -134,6 +128,11 @@ void stack_push(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*stack_p);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_PURE_FUNCTION
+Stack_entry_type get_entry_type(ARGIN(const Stack_Entry_t *entry))
+        __attribute__nonnull__(1);
 
 /* HEADERIZER END: src/stacks.c */
 /* HEADERIZER BEGIN: src/stack_common.c */

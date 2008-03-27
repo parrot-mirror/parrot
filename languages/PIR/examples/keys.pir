@@ -8,12 +8,12 @@
 
 	x = x [ 'x']
 	x = x[1]
-	
+
 	x = x [ 1.1 ]
-	
+
 	x = x [ X ]
-	
-	
+
+
 
 .end
 
@@ -21,4 +21,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

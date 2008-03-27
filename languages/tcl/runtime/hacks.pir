@@ -67,7 +67,7 @@
 
 no_precompiled:
   # now read it in...
-  $P99 = open filename, '<' 
+  $P99 = open filename, '<'
   file_contents = $P99.'slurp'( '' )
 
   # and compile it..
@@ -89,4 +89,4 @@ bad_file: # not even the original exists..
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

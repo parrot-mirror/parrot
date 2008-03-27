@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 
 =head1 NAME
 
@@ -172,7 +172,7 @@ run_thunk_action:
     $P1 = cell['node']
     $S0 = cell['action']
     # the action is a method on the grammar object
-    value = grammar.$S0(self, $P1) 
+    value = grammar.$S0(self, $P1)
     cell['value'] = value
     cell['thunk'] = 0
 
@@ -292,4 +292,4 @@ Allison Randal <allison@perl.org>
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

@@ -283,7 +283,7 @@ done:
 .end
 
 ##########
-# Jump if a > b (using a signed 16-bit comparison). 
+# Jump if a > b (using a signed 16-bit comparison).
 .sub zop_jg :method
   .param pmc im
   .param int pc
@@ -309,7 +309,7 @@ done:
 
 
 ##########
-# Jump if a < b (using a signed 16-bit comparison). 
+# Jump if a < b (using a signed 16-bit comparison).
 .sub zop_jl :method
   .param pmc im
   .param int pc
@@ -384,7 +384,7 @@ done:
   .local int word, cur_a, next_a, i, z, sh, fin, double_count, double_sum
   .local string s, A0, A1, A2, c, a
   .local pmc alphabets
-  alphabets = new FixedStringArray
+  alphabets = new 'FixedStringArray'
   alphabets = 3
   A0 = "abcdefghijklmnopqrstuvwxyz"
   A1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -853,4 +853,4 @@ done:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

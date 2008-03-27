@@ -123,6 +123,12 @@ struct _ParrotIOLayer {
 #define PIO_DOWNLAYER(x)   (x)->down
 #define PIO_UPLAYER(x)     (x)->up
 
+#ifdef _MSC_VER
+/* Win32/MSVC has a deprecation warning about dup() in favor of _dup(). */
+#  define Parrot_dup(x) (PIOHANDLE)_dup((int)(x))
+#else /* !_MSC_VER */
+#  define Parrot_dup(x) (PIOHANDLE)dup((int)(x))
+#endif /* _MSC_VER */
 
 /* Others to come */
 #ifdef PIO_OS_UNIX
@@ -190,9 +196,16 @@ INTVAL PIO_connect(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD(STRING *address))
         FUNC_MODIFIES(*address);
 
 PARROT_API
-void PIO_destroy(SHIM_INTERP, ARGMOD(PMC *pmc))
+void PIO_destroy(SHIM_INTERP, ARGMOD(PMC * pmc))
         __attribute__nonnull__(2)
-        FUNC_MODIFIES(*pmc);
+        FUNC_MODIFIES(* pmc);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * PIO_dup(PARROT_INTERP, ARGIN(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
@@ -201,6 +214,7 @@ INTVAL PIO_eof(SHIM_INTERP, ARGMOD(PMC *pmc))
         FUNC_MODIFIES(*pmc);
 
 PARROT_API
+PARROT_IGNORABLE_RESULT
 INTVAL PIO_eprintf(NULLOK(PARROT_INTERP), ARGIN(const char *s), ...)
         __attribute__nonnull__(2);
 
@@ -263,6 +277,9 @@ INTVAL PIO_listen(PARROT_INTERP, ARGMOD(PMC *pmc), INTVAL backlog)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pmc);
+
+PARROT_API
+PIOOFF_T PIO_make_offset(INTVAL offset);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
@@ -437,7 +454,6 @@ STRING * PIO_make_io_string(PARROT_INTERP, ARGMOD(STRING **buf), size_t len)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*buf);
 
-PIOOFF_T PIO_make_offset(INTVAL offset);
 PIOOFF_T PIO_make_offset32(INTVAL hi, INTVAL lo);
 PIOOFF_T PIO_make_offset_pmc(PARROT_INTERP, ARGMOD(PMC *pmc))
         __attribute__nonnull__(1)

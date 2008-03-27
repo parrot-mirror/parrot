@@ -28,8 +28,8 @@
   read_loop:
     $S0 = <<"PROMPT"
 
-Enter \"rule <pattern>\" target string, \"next\", 
-\"pir\", \"exp\", or \"trace\" 
+Enter \"rule <pattern>\" target string, \"next\",
+\"pir\", \"exp\", or \"trace\"
 PROMPT
     print $S0
     stdin = getstdin
@@ -98,4 +98,4 @@ PROMPT
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

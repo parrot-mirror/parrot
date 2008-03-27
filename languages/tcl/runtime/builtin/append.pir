@@ -10,7 +10,7 @@
 .sub '&append'
   .param pmc argv :slurpy
 
-  .local int argc 
+  .local int argc
   argc = argv
 
   .local pmc read
@@ -24,7 +24,7 @@
 
   .local string name
   name = argv[0]
-  
+
   if argc == 1 goto getter
 
 setter:
@@ -62,4 +62,4 @@ badargs:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

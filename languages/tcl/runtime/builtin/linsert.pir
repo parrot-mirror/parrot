@@ -14,11 +14,11 @@
 
   .local pmc __list
   __list = get_root_global ['_tcl'], '__list'
-  
+
   .local pmc the_list
   the_list = shift argv
   the_list = __list(the_list)
- 
+
   .local string position
   position = shift argv
 
@@ -31,7 +31,7 @@
   $S0 = substr position, 0, 3
   if $S0 != 'end' goto next
   inc the_index
-  
+
 next:
   $I0 = elements the_list
   if the_index <= $I0 goto splice_it
@@ -53,4 +53,4 @@ wrong_args:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

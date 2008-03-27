@@ -19,7 +19,7 @@
   # pull off the format string.
   shift format, argv
 
-  $S0 = sprintf format, argv 
+  $S0 = sprintf format, argv
 
   .return($S0)
 
@@ -31,4 +31,4 @@ noargs:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

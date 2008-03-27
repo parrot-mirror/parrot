@@ -196,10 +196,9 @@ Parrot::Configure object.
 sub add_steps {
     my ( $conf, @new_steps ) = @_;
 
-    $conf->{list_of_steps} = [@new_steps];
-
     for ( my $i = 0 ; $i <= $#new_steps ; $i++ ) {
         $conf->add_step( $new_steps[$i] );
+        push @{ $conf->{list_of_steps} }, $new_steps[$i];
         $conf->{hash_of_steps}->{ $new_steps[$i] } = $i + 1;
     }
 
@@ -270,7 +269,8 @@ sub runsteps {
         if ( ! defined $rv ) {
             if ( $red_flag ) {
                 return;
-            } else {
+            }
+            else {
                 $conf->{log}->[$n] = {
                     step    => $step_name,
                 };
@@ -299,14 +299,17 @@ sub _handle_fatal_step_option {
                 my $step_name = $conf->{list_of_steps}->[$s - 1];
                 if ($step_name =~ /$named_step_pattern/) {
                     $steps_to_die_for{$step_name}++;
-                } else {
+                }
+                else {
                     die "Configuration step corresponding to $s is invalid";
                 }
-            } else {
+            }
+            else {
                 $steps_to_die_for{$s}++;
             }
         }
-    } else {
+    }
+    else {
         die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps or configuration step sequence numbers";
     }
     return %steps_to_die_for;
@@ -428,7 +431,8 @@ sub _run_this_step {
                 );
             }
             return 1;
-        } else {
+        }
+        else {
             _failure_message( $step, $step_name );
             return;
         }

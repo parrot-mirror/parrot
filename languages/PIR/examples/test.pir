@@ -5,14 +5,14 @@
     #load_bytecode 'Test/More.pir'
 
     .local pmc import_sub
-    
+
     .IMPORT ( 'Test::More', 'pln' )
-    
+
    #.local string res, exp, desc
-    
-    
+
+
     'plan'(TESTS)
-    
+
     'issame'()
     'isntsame'()
     'istrue'()
@@ -32,4 +32,4 @@
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

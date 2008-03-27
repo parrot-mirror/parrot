@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -36,7 +36,7 @@ F<examples/benchmarks/arriter_o1.pir>.
     $P24 = new 'Undef'
     .lex "$s", $P24
 
-# same as @k = qw( A B C D E F G H I J ); 
+# same as @k = qw( A B C D E F G H I J );
     find_lex $P29 , "$i"
     $P29 = 0
 for_1_start:
@@ -146,4 +146,4 @@ iter_2_end:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

@@ -28,13 +28,13 @@ LANGUAGES = \
     eclectus \
     forth \
     jako \
+    lazy-k \
     lisp \
     lolcode \
     lua \
     m4 \
     ook \
     parrot_compiler \
-    perl5 \
     perl6 \
     pheme \
     plumhead \
@@ -115,7 +115,6 @@ clean: \
     m4.clean \
     ook.clean \
     parrot_compiler.clean \
-    perl5.clean \
     perl6.clean \
     pheme.clean \
     plumhead.clean \
@@ -283,6 +282,14 @@ jako.clean:
 jako.realclean:
 	- $(MAKE) jako realclean
 
+lazy-k: lazy-k.dummy
+lazy-k.dummy:
+	- $(MAKE) lazy-k
+lazy-k.test:
+	- $(MAKE) lazy-k test
+lazy-k.clean:
+	- $(MAKE) lazy-k clean
+
 lisp: lisp.dummy
 lisp.dummy:
 	- $(MAKE) lisp
@@ -331,14 +338,6 @@ parrot_compiler.test:
 parrot_compiler.clean:
 	- $(MAKE) parrot_compiler clean
 
-perl5 : perl5.dummy
-perl5.dummy:
-	- $(MAKE) perl5
-perl5.test:
-	- $(MAKE) perl5 test
-perl5.clean:
-	- $(MAKE) perl5 clean
-
 perl6 : perl6.dummy
 perl6.dummy:
 	- $(MAKE) perl6
@@ -346,6 +345,8 @@ perl6.test:
 	- $(MAKE) perl6 test
 perl6.clean:
 	- $(MAKE) perl6 clean
+perl6.realclean:
+	- $(MAKE) perl6 realclean
 
 pheme : pheme.dummy
 pheme.dummy:

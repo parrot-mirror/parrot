@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -16,7 +16,7 @@ Hand crafted PIR code version of F<examples/benchmarks/arriter.pl>.
 The PIR code is the same as in arriter.pir, with following optimizations:
 
 =over 4
- 
+
 =item pull somecode out of the inner loop, s. opt below
 
 =back
@@ -47,7 +47,7 @@ F<examples/benchmarks/arriter.pir>.
     $P24 = new 'Undef'
     .lex "$s", $P24
 
-# same as @k = qw( A B C D E F G H I J ); 
+# same as @k = qw( A B C D E F G H I J );
     find_lex $P29 , "$i"
     $P29 = 0
 for_1_start:
@@ -161,4 +161,4 @@ iter_2_end:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

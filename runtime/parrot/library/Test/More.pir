@@ -699,7 +699,7 @@ optional test description in C<description>.
     load_bytecode "PGE/Dumper.pbc"
     load_bytecode "PGE/Text.pbc"
     load_bytecode "PGE/Util.pbc"
-    p6rule_compile = compreg "PGE::P6Regex"
+    p6rule_compile = compreg "PGE::Perl6Regex"
 
     .local string diagnostic
     .local int pass
@@ -858,7 +858,7 @@ to the Perl 6 internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2005 - 2006 The Perl Foundation.
+Copyright (C) 2005-2008, The Perl Foundation.
 
 =cut
 
@@ -866,4 +866,4 @@ Copyright (C) 2005 - 2006 The Perl Foundation.
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:

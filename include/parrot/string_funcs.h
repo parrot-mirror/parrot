@@ -32,17 +32,6 @@ STRING * const_string(PARROT_INTERP, ARGIN(const char *buffer))
         __attribute__nonnull__(2);
 
 PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-STRING * int_to_str(PARROT_INTERP,
-    ARGOUT(char *tc),
-    HUGEINTVAL num,
-    char base)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*tc);
-
-PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING * Parrot_make_COW_reference(PARROT_INTERP, ARGMOD(STRING *s))
@@ -361,18 +350,6 @@ INTVAL string_max_bytes(SHIM_INTERP, ARGIN(const STRING *s), INTVAL nchars)
         __attribute__nonnull__(2);
 
 PARROT_API
-PARROT_CANNOT_RETURN_NULL
-STRING * string_nprintf(PARROT_INTERP,
-    ARGOUT(STRING *dest),
-    INTVAL bytelen,
-    ARGIN(const char *format),
-    ...)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*dest);
-
-PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL string_ord(PARROT_INTERP, ARGIN(const STRING *s), INTVAL idx)
         __attribute__nonnull__(1)
@@ -526,7 +503,16 @@ void string_upcase_inplace(PARROT_INTERP, ARGMOD(STRING *s))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*s);
 
-PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+STRING * int_to_str(PARROT_INTERP,
+    ARGOUT(char *tc),
+    HUGEINTVAL num,
+    char base)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*tc);
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING* uint_to_str(PARROT_INTERP,

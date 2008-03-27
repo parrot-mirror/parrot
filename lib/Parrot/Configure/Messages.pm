@@ -1,6 +1,8 @@
-# Copyright (C) 2001-2006, The Perl Foundation.
+# Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
+
 package Parrot::Configure::Messages;
+
 use strict;
 use warnings;
 use base qw( Exporter );
@@ -49,7 +51,8 @@ sub print_conclusion {
         }
         print "You should diagnose and fix these errors before calling '$make'\n";
         return;
-    } else {
+    }
+    else {
         print <<"END";
 
 Okay, we're done!

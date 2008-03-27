@@ -13,7 +13,7 @@
 
   .local int argc
   argc = argv
-  
+
   if argc != 2 goto bad_args
 
   .local string language,code
@@ -57,4 +57,4 @@ fail:
 #   mode: pir
 #   fill-column: 100
 # End:
-# vim: expandtab shiftwidth=4:
+# vim: expandtab shiftwidth=4 ft=pir:
