@@ -313,7 +313,7 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "new_p_i_s" );
-    new P0, .FixedIntegerArray, "(1, 17,42,0,77,0b111,    0Xff)"
+    new P0, 'FixedIntegerArray', "(1, 17,42,0,77,0b111,    0Xff)"
     set I0, P0
     print I0
     print "\n"
@@ -340,7 +340,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "get_repr, with array created with type id" );
 .sub main
-    new $P0, .FixedIntegerArray, "(1, 17,42,0,77,0b111,    0Xff)"
+    new $P0, 'FixedIntegerArray', "(1, 17,42,0,77,0b111,    0Xff)"
     set $I0, $P0
     print $I0
     print "\n"

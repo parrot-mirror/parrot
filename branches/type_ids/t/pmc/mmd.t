@@ -1041,16 +1041,18 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "use a core func for an object" );
 .sub main :main
-    .local pmc d, l, r, cl
+    .local pmc d, l, r, cl, f
     cl = newclass "AInt"
     addattribute cl, ".i"
     d = new "AInt"
     l = new "AInt"
     r = new "AInt"
+    f = new "Float"
     .local pmc func
     .local int typ
+    typ = typeof f
     .include "mmd.pasm"
-    func = mmdvtfind .MMD_ADD, .Float, .Float
+    func = mmdvtfind .MMD_ADD, typ, typ
     typ = typeof l
     mmdvtregister .MMD_ADD, typ, typ, func
     l = 4
