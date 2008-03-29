@@ -409,7 +409,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', 'get_outer via interp' );
 .sub "main"
-    .const .Sub foo = "foo"
+    .const 'Sub' foo = "foo"
     .local pmc foo_cl
     .lex "a", $P0
     foo_cl = newclosure foo
@@ -417,7 +417,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'get_outer via interp' );
     print $P0
 .end
 .sub foo  :outer('main')
-    .const .Sub bar = "bar"
+    .const 'Sub' bar = "bar"
     .local pmc bar_cl
     bar_cl = newclosure bar
     bar_cl()
@@ -467,7 +467,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'closure 3' );
     .local pmc n
     .lex '$n', n
     n = arg
-    .const .Sub anon = "anon"
+    .const 'Sub' anon = "anon"
     $P0 = newclosure anon
     .return ($P0)
 .end
@@ -551,8 +551,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'closure 4' );
      .lex 'x', x
      .lex 'y', y
      .lex 'choose', choose
-     .const .Sub choose_sub = "_choose"
-     .const .Sub fail_sub = "_fail"
+     .const 'Sub' choose_sub = "_choose"
+     .const 'Sub' fail_sub = "_fail"
      fail = newclosure fail_sub
      arr1 = new 'ResizablePMCArray'
      arr1[0] = 1
@@ -603,7 +603,7 @@ the_end:
      .include "interpinfo.pasm"
      $P1 = interpinfo .INTERPINFO_CURRENT_CONT
      store_lex  "cc", $P1
-     .const .Sub tr_sub = "_try"
+     .const 'Sub' tr_sub = "_try"
      newclosure our_try, tr_sub
      store_lex "try", our_try
      $P2 = our_try(choices)
@@ -621,7 +621,7 @@ the_end:
      store_lex "fail", $P1
      $P1()
 have_choices:
-     .const .Sub f = "new_fail"
+     .const 'Sub' f = "new_fail"
      newclosure $P2, f
      store_lex "fail", $P2
      $P3 = find_lex "choices"
@@ -676,7 +676,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'closure 5' );
     $P0 = new 'Integer'
     $P0 = 0
 
-    .const .Sub bar_sub = "bar"
+    .const 'Sub' bar_sub = "bar"
     $P1 = newclosure bar_sub
     .return ($P1)
 .end
@@ -731,7 +731,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'closure 6' );
     print "foo: "
     print $P0
     print "\n"
-    .const .Sub closure = 'bar'
+    .const 'Sub' closure = 'bar'
     $P2 = newclosure closure
     .return($P2)
 .end
@@ -1200,7 +1200,7 @@ sub test_closures
     $P1 = 1
 
     find_lex $P2, '@closures'
-    .const .Sub $P3 = 'anonymous'
+    .const 'Sub' $P3 = 'anonymous'
     newclosure $P4, $P3
     push $P2, $P4
 

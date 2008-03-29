@@ -30,7 +30,7 @@ error, you probably want to put it in one of those files instead.
 pasm_output_is( <<'CODE', <<'OUTPUT', "pushaction" );
     pushmark 10
     print "ok 1\n"
-    .const .Sub P10 = "action"
+    .const 'Sub' P10 = "action"
     pushaction P10
     print "ok 2\n"
     popmark 10
@@ -57,7 +57,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "pushaction, sub exit" );
 .end
 
 .sub foo
-   .const .Sub ac = "action"
+   .const 'Sub' ac = "action"
     pushaction ac
     print "foo\n"
 .end
@@ -83,7 +83,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "pushaction, sub exit - capture CC" );
 .end
 
 .sub foo
-   .const .Sub ac = "action"
+   .const 'Sub' ac = "action"
     pushaction ac
     .include "interpinfo.pasm"
     .local pmc cc
@@ -109,7 +109,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "pushaction, sub exit - capture CC, ret" );
 .end
 
 .sub foo
-   .const .Sub ac = "action"
+   .const 'Sub' ac = "action"
     pushaction ac
     .include "interpinfo.pasm"
     .local pmc cc
@@ -131,7 +131,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "pushaction - return from main" );
 .sub main :main
     print "main\n"
-    .const .Sub at_exit = "exit_handler"
+    .const 'Sub' at_exit = "exit_handler"
     pushaction at_exit
     .return()
 .end
@@ -149,7 +149,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "pushaction - end in main" );
 .sub main :main
     print "main\n"
-    .const .Sub at_exit = "exit_handler"
+    .const 'Sub' at_exit = "exit_handler"
     pushaction at_exit
     # IMCC inserts end here, because it is :main
 .end
@@ -170,7 +170,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "pushaction as closure" );
     a = new 'Integer'
     a = 42
     print "main\n"
-    .const .Sub at_exit = "exit_handler"
+    .const 'Sub' at_exit = "exit_handler"
     pushaction at_exit
     .return()
 .end

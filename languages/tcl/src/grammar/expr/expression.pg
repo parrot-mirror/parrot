@@ -15,10 +15,8 @@ token program {
 token command {
     | \# \N*
     | [ $<word>:=( <expand>?
-          [ <quoted_word> [ <before [<[;\n\r\t\ ]>|$]>
-                          | <error: extra characters after close-quote> ]
-          | <braced_word> [ <before [<[;\n\r\t\ ]>|$]>
-                          | <error: extra characters after close-brace> ]
+          [ <quoted_word>
+          | <braced_word>
           | $<chunk>:=( <substitution> | \$ | <-[[$\\;\n\r\t\ ]>+ )+
           ]
         ) \h*

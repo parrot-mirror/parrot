@@ -1206,7 +1206,7 @@ loop:
     .local string s, t
     .local int el
     s = "atugcsATUGCS"
-    .const .Sub tr_00 = 'tr_00_init'
+    .const 'Sub' tr_00 = 'tr_00_init'
     el = elements tr_00
     print el
     print "\n"
@@ -1279,7 +1279,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<OUTPUT, "new_from_string" );
 .sub main :main
-    .const .String ok = "ok\n"
+    .const 'String' ok = "ok\n"
     print ok
 .end
 CODE
