@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 19;
+use Parrot::Test tests => 16;
 use Parrot::PMC qw(%pmc_types);
 
 =head1 NAME
@@ -23,8 +23,6 @@ t/pmc/pmc.t - PMCs
 Contains a lot of PMC related tests.
 
 =cut
-
-my $max_pmc = scalar( keys(%pmc_types) ) + 1;
 
 my $fp_equality_macro = <<'ENDOFMACRO';
 .macro fp_eq (  J, K, L )
@@ -79,20 +77,6 @@ starting
 ending
 OUTPUT
 
-pasm_error_output_like( <<'CODE', <<'OUTPUT', "illegal min newpmc" );
-    new P0, 0
-    end
-CODE
-/Illegal PMC enum \(0\) in new/
-OUTPUT
-
-pasm_error_output_like( <<"CODE", <<'OUTPUT', "illegal max newpmc" );
-    new P0, $max_pmc
-    end
-CODE
-/Illegal PMC enum \(\d+\) in new/
-OUTPUT
-
 pasm_output_is( <<'CODE', <<'OUTPUT', 'typeof' );
     new P0, 'Integer'
     typeof S0,P0
@@ -109,59 +93,6 @@ OK_2:
 CODE
 ok 1
 ok 2
-OUTPUT
-
-my $checkTypes;
-my %types_we_cant_test
-    = map { $_ => 1; } (    # These require initializers.
-    qw(Null Iterator Enumerate Ref STMRef SharedRef
-        ParrotObject ParrotThread
-        deleg_pmc BigInt LexInfo LexPad Slice Object),
-
-    # Instances of these appear to have other types.
-    qw(PMCProxy Class) );
-while ( my ( $type, $id ) = each %pmc_types ) {
-    next
-        if $types_we_cant_test{$type};
-    my $set_ro = ( $type =~ /^Const\w+/ ) ? <<EOPASM : '';
-    new P10, 'Integer'
-    set P10, 1
-    setprop P0, "_ro", P10
-EOPASM
-    $checkTypes .= <<"CHECK";
-    new P0, .$type
-    $set_ro
-    set S1, "$type"
-    typeof S0, P0
-    ne S0, S1, L_BadName
-    set I1, $id
-    typeof I0, P0
-    ne I0, I1, L_BadId
-CHECK
-}
-
-pasm_output_like( <<"CODE", <<OUTPUT, "PMC type check" );
-    new P10, 'Hash'
-    new P11, 'Hash'
-$checkTypes
-    print "All names and ids ok.\\n"
-    end
-L_BadName:
-    print S1
-    print " PMCs have incorrect name \\""
-    print S0
-    print "\\"\\n"
-    end
-L_BadId:
-    print S1
-    print " PMCs should be type "
-    print I1
-    print " but have incorrect type "
-    print I0
-    print "\\n"
-    end
-CODE
-/All names and ids ok/
 OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', 'find_method' );
