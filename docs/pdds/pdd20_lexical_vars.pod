@@ -18,7 +18,7 @@ lexically scoped variables.
 
     .sub foo
         .lex "$a", P0
-        P1 = new Integer
+        P1 = new 'Integer'
         P1 = 13013
         store_lex "$a", P1
         print P0            # prints 13013
@@ -45,7 +45,7 @@ lexically scoped variables.
     .sub grault :lex        # without ":lex", Tcl subs have no lexicals
         P0 = find_lex "x"   # FAILS
 
-        P0 = new Integer    # really TclInteger
+        P0 = new 'Integer'  # really TclInteger
         P0 = 42
         store_lex "x", P0   # creates lexical "x"
 
@@ -268,7 +268,7 @@ compiler calls this method in response to a C<.lex STRING, PREG> directive.
 For example, given this preamble:
 
     .lex "$a", $P0
-    $P1 = new Integer
+    $P1 = new 'Integer'
 
 These two opcodes have an identical effect:
 
