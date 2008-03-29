@@ -1,12 +1,12 @@
 #! perl
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 15;
+use Parrot::Test tests => 14;
 
 =head1 NAME
 
@@ -313,7 +313,15 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "new_p_i_s" );
-    new P0, 'FixedIntegerArray', "(1, 17,42,0,77,0b111,    0Xff)"
+    new P0, 'FixedIntegerArray'
+    set P0, 7
+    set P0[0], 1
+    set P0[1], 17
+    set P0[2], 42
+    set P0[3], 0
+    set P0[4], 77
+    set P0[5], 0b111
+    set P0[6], 0xff
     set I0, P0
     print I0
     print "\n"
@@ -336,21 +344,6 @@ CODE
 7
 255
 ok
-OUTPUT
-
-pir_output_is( <<'CODE', <<'OUTPUT', "get_repr, with array created with type id" );
-.sub main
-    new $P0, 'FixedIntegerArray', "(1, 17,42,0,77,0b111,    0Xff)"
-    set $I0, $P0
-    print $I0
-    print "\n"
-    get_repr $S0, $P0
-    print $S0
-    print "\n"
-.end
-CODE
-7
-[ 1, 17, 42, 0, 77, 7, 255 ]
 OUTPUT
 
 TODO: {

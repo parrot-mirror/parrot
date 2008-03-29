@@ -1,5 +1,5 @@
 #!perl
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -142,8 +142,8 @@ continued:
 .sub _test_2
     .param pmc n
     .param pmc cont
-    typeof $I40, n
-    if $I40 != .Integer goto L3
+    $I40 = isa n, 'Integer'
+    ne $I40, 1, L3
     $P44 = n_mul n, 3
     .return ($P44)
 L3:
