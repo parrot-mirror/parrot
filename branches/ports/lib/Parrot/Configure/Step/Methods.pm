@@ -83,6 +83,22 @@ sub _handle_darwin_for_fink {
     return 1;
 }
 
+sub _handle_darwin_for_macports {
+    my $self = shift;
+    my ($conf, $osname, $file) = @_;
+    if ( $osname =~ /darwin/ ) {
+        my $ports_root = $self->{ports_root};
+        my $ports_lib_dir = qq{$ports_root/lib};
+        my $ports_include_dir = qq{$ports_root/include};
+        if ( -f qq{$ports_include_dir/$file} ) {
+            $conf->data->add( ' ', linkflags => "-L$ports_lib_dir" );
+            $conf->data->add( ' ', ldflags   => "-L$ports_lib_dir" );
+            $conf->data->add( ' ', ccflags   => "-I$ports_include_dir" );
+        }
+    }
+    return 1;
+}
+
 =back
 
 =head1 SEE ALSO
