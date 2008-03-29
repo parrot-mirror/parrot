@@ -34,7 +34,6 @@ sub _init {
     my %data;
     $data{description} = q{Determining if your platform supports GMP};
     $data{result}      = q{};
-    $data{macports_root} = File::Spec->catdir( '/', 'opt', 'local' );
     $data{cc_run_expected} =
 "6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151 0\n";
 
@@ -88,23 +87,6 @@ sub runstep {
 
     return 1;
 }
-
-sub _handle_darwin_for_macports {
-    my $self = shift;
-    my ($conf, $osname, $file) = @_;
-    if ( $osname =~ /darwin/ ) {
-        my $macports_root = $self->{macports_root};
-        my $macports_lib_dir = qq{$macports_root/lib};
-        my $macports_include_dir = qq{$macports_root/include};
-        if ( -f qq{$macports_include_dir/$file} ) {
-            $conf->data->add( ' ', linkflags => "-L$macports_lib_dir" );
-            $conf->data->add( ' ', ldflags   => "-L$macports_lib_dir" );
-            $conf->data->add( ' ', ccflags   => "-I$macports_include_dir" );
-        }
-    }
-    return 1;
-}
-
 
 sub _handle_mswin32 {
     my ($conf, $osname, $cc) = @_;

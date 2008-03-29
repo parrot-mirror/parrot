@@ -21,6 +21,7 @@ my @steps = qw(
     auto::gcc
     auto::backtrace
     auto::fink
+    auto::ports
     auto::msvc
     auto::attributes
     auto::warnings
