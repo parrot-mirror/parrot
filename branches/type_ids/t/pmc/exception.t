@@ -434,7 +434,7 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "pushaction, throw" );
     push_eh handler
     print "ok 1\n"
-    .const .Sub P10 = "action"
+    .const 'Sub' P10 = "action"
     pushaction P10
     print "ok 2\n"
     new P10, 'Exception'
@@ -477,7 +477,7 @@ endcont:
     test1_binding = new 'String'
     test1_binding = "Inner value\n"
     old_value = get_global ['Foo'; 'Bar'], "test"
-    .const .Sub test1_cleanup_sub = "test1_cleanup"
+    .const 'Sub' test1_cleanup_sub = "test1_cleanup"
     cleanup = newclosure test1_cleanup_sub
     pushaction cleanup
     set_global ['Foo'; 'Bar'], "test", test1_binding
@@ -538,7 +538,7 @@ last:
     test1_binding = new 'String'
     test1_binding = "Inner value\n"
     old_value = get_global ['Foo'; 'Bar'], "test"
-    .const .Sub test1_cleanup_sub = "test1_cleanup"
+    .const 'Sub' test1_cleanup_sub = "test1_cleanup"
     cleanup = newclosure test1_cleanup_sub
     pushaction cleanup
     set_global ['Foo'; 'Bar'], "test", test1_binding
@@ -653,7 +653,7 @@ OUTPUT
 pir_error_output_like( <<'CODE', <<'OUTPUT', "pushaction - throw in main" );
 .sub main :main
     print "main\n"
-    .const .Sub at_exit = "exit_handler"
+    .const 'Sub' at_exit = "exit_handler"
     pushaction at_exit
     $P0 = new 'Exception'
     throw $P0
@@ -677,7 +677,7 @@ pir_output_like(
 .sub main :main
     push_eh h
     print "main\n"
-    .const .Sub at_exit = "exit_handler"
+    .const 'Sub' at_exit = "exit_handler"
     pushaction at_exit
     $P1 = new 'Exception'
     throw $P1

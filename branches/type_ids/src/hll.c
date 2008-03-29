@@ -91,7 +91,7 @@ new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
 
     if (entry_name && !STRING_IS_EMPTY(entry_name)) {
         STRING *const_name = const_string(interp,
-            string_to_cstring(interp, entry_name));
+            Parrot_string_cstring(interp, entry_name));
 
         VTABLE_set_pmc_keyed_str(interp, hll_info, const_name, entry);
     }

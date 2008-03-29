@@ -121,7 +121,7 @@ continued:
     .param pmc arg1
     .param pmc cont
     print "_test_1\n"
-    .const .Sub $P43 = "___internal_test_1_0_"
+    .const 'Sub' $P43 = "___internal_test_1_0_"
     pushaction $P43
     $P50 = _test_2(arg1, cont)
     print "got "
@@ -176,7 +176,7 @@ continued:
     .param pmc arg1
     .param pmc cont
     print "_test_1\n"
-    .const .Sub $P43 = "___internal_test_1_0_"
+    .const 'Sub' $P43 = "___internal_test_1_0_"
     pushaction $P43
     $P50 = _test_2(arg1, cont)
     print "got "
@@ -222,7 +222,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'partial unwinding' );
 ## test3 RetContinuation, which must unwind the stack to pop (only!) the error
 ## handler.  In that case, "unwinding" will appear before "leaving test2".
 .sub _test_1 :main
-    .const .Sub $P42 = "test_1_action"
+    .const 'Sub' $P42 = "test_1_action"
     newclosure $P43, $P42
     pushmark 43
     pushaction $P43
