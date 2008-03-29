@@ -781,20 +781,6 @@ parrot_PIC_prederef(PARROT_INTERP, opcode_t op, ARGOUT(void **pc_pred), int core
     }
 
     switch (op) {
-        case PARROT_OP_new_p_sc:
-            {
-                INTVAL type;
-                STRING * const _class = (STRING *)cur_opcode[2];
-                type = pmc_type(interp, _class);
-                if (!type)
-                    type = pmc_type(interp, _class);
-                if (type <= 0)
-                    real_exception(interp, NULL, NO_CLASS,
-                            "Class '%Ss' not found", _class);
-                pc_pred[2] = (void*)type;
-                op = PARROT_OP_new_p_ic;
-            }
-            break;
         case PARROT_OP_infix_ic_p_p:
             mic->m.func_nr = (INTVAL) cur_opcode[1];
             pc_pred[1] = (void*) mic;
