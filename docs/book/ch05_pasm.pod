@@ -187,7 +187,7 @@ result:
   print P1                # prints "Zaphod"
   end
 
-The C<new> opcode creates an instance of the C<.String> class. The
+The C<new> opcode creates an instance of the C<String> class. The
 class's vtable methods define how the PMC in C<P0> operates.  The
 first C<set> statement calls C<P0>'s vtable method
 C<set_string_native>, which assigns the string "Ford" to the PMC. When

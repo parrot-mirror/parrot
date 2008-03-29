@@ -224,7 +224,7 @@ number, or string register or variable, but you have to instantiate a
 new PMC object before you use it. The C<new> instruction creates a new
 PMC. Unlike PASM, PIR doesn't use a dot in front of the class name.
 
-  P0 = new PerlString        # same as new P0, .PerlString
+  P0 = new 'PerlString'        # same as new P0, 'PerlString'
   P0 = "Hello, Polly.\n"
   print P0
 
@@ -232,16 +232,14 @@ This example creates a C<PerlString> object, stores it in the PMC
 register C<P0>, assigns the value "Hello, Polly.\n" to it, and prints
 it. The syntax is exactly the same for temporary register variables:
 
-  $P4711 = new PerlString
+  $P4711 = new 'PerlString'
   $P4711 = "Hello, Polly.\n"
   print $P4711
 
-With named variables the type passed to the C<.local> directive is
-either the generic C<pmc> or a type compatible with the type passed to
-C<new>:
+With named variables the type passed to the C<.local> directive is C<pmc>:
 
-  .local PerlString hello    # or .local pmc hello
-  hello = new PerlString
+  .local pmc hello
+  hello = new 'PerlString'
   hello = "Hello, Polly.\n"
   print hello
 
