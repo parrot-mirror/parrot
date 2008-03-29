@@ -21,8 +21,9 @@ Tests the information finding operations.
 
     plan(1)
 
+    P0 = new 'ResizablePMCArray'
+    I0 = typeof P0
 
-    set I0, .ResizablePMCArray
     find_type I1, "ResizablePMCArray"
     is (I0, I1, 'find_type matches dot syntax')
 .end
