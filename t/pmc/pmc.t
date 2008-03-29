@@ -1,5 +1,5 @@
 #!perl
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -84,8 +84,8 @@ pasm_output_is( <<'CODE', <<'OUTPUT', 'typeof' );
     print  "not "
 OK_1:
     print  "ok 1\n"
-    typeof I0,P0
-    eq     I0, .Integer, OK_2
+    isa I0, P0, 'Integer'
+    eq     I0, 1, OK_2
     print  "not "
 OK_2:
     print  "ok 2\n"
