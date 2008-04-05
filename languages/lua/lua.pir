@@ -90,7 +90,7 @@ show version information.
 .end
 
 .include 'languages/lua/src/lua51.pir'
-.include 'languages/lua/lib/luaregex.pir'
+.include 'languages/lua/src/lib/luaregex.pir'
 
 
 .HLL 'Lua', 'lua_group'
@@ -274,7 +274,7 @@ show version information.
     (narg, $P0) = getargs(args, n)  # collect arguments
     .local pmc env
     env = get_hll_global '_G'
-    .const .LuaString k_arg = 'arg'
+    .const 'LuaString' k_arg = 'arg'
     env.'rawset'(k_arg, $P0)
     .local string fname
     fname = args[n]
@@ -361,7 +361,7 @@ show version information.
     .param string name
     .local pmc env
     env = get_hll_global '_G'
-    .const .LuaString k_require = 'require'
+    .const 'LuaString' k_require = 'require'
     $P0 = env.'rawget'(k_require)
     new $P1, 'LuaString'
     set $P1, name
@@ -373,7 +373,7 @@ show version information.
 .sub 'dotty' :anon
     .local pmc env
     env = get_hll_global '_G'
-    .const .LuaString k_print = 'print'
+    .const 'LuaString' k_print = 'print'
     .local int has_readline
     .local pmc stdin
     stdin = getstdin
@@ -504,17 +504,17 @@ USAGE
 .end
 
 
-.include 'languages/lua/lib/luaaux.pir'
-.include 'languages/lua/lib/luastring.pir'
-.include 'languages/lua/lib/luabasic.pir'
-.include 'languages/lua/lib/luacoroutine.pir'
-.include 'languages/lua/lib/luapackage.pir'
-.include 'languages/lua/lib/luatable.pir'
-.include 'languages/lua/lib/luamath.pir'
-.include 'languages/lua/lib/luaio.pir'
-.include 'languages/lua/lib/luafile.pir'
-.include 'languages/lua/lib/luaos.pir'
-.include 'languages/lua/lib/luadebug.pir'
+.include 'languages/lua/src/lib/luaaux.pir'
+.include 'languages/lua/src/lib/luastring.pir'
+.include 'languages/lua/src/lib/luabasic.pir'
+.include 'languages/lua/src/lib/luacoroutine.pir'
+.include 'languages/lua/src/lib/luapackage.pir'
+.include 'languages/lua/src/lib/luatable.pir'
+.include 'languages/lua/src/lib/luamath.pir'
+.include 'languages/lua/src/lib/luaio.pir'
+.include 'languages/lua/src/lib/luafile.pir'
+.include 'languages/lua/src/lib/luaos.pir'
+.include 'languages/lua/src/lib/luadebug.pir'
 
 
 =head1 SEE ALSO

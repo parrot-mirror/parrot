@@ -1,4 +1,6 @@
 #!./parrot
+# Copyright (C) 2005-2008, The Perl Foundation.
+# $Id$
 
 .sub _main :main
 	load_bytecode 'library/Test/Builder/Tester.pir'
@@ -7,7 +9,7 @@
 	tb_args = new 'Hash'
 
 	.local pmc test
-	test = new 'Test::Builder', tb_args
+	test = new [ 'Test'; 'Builder' ], tb_args
 
 	.local pmc plan
 	.local pmc test_pass
@@ -15,12 +17,12 @@
 	.local pmc test_out
 	.local pmc test_diag
 	.local pmc test_test
-	plan      = get_global ['Test::Builder::Tester'], 'plan'
-	test_pass = get_global ['Test::Builder::Tester'], 'test_pass'
-	test_fail = get_global ['Test::Builder::Tester'], 'test_fail'
-	test_out  = get_global ['Test::Builder::Tester'], 'test_out'
-	test_diag = get_global ['Test::Builder::Tester'], 'test_diag'
-	test_test = get_global ['Test::Builder::Tester'], 'test_test'
+	plan      = get_global [ 'Test'; 'Builder'; 'Tester' ], 'plan'
+	test_pass = get_global [ 'Test'; 'Builder'; 'Tester' ], 'test_pass'
+	test_fail = get_global [ 'Test'; 'Builder'; 'Tester' ], 'test_fail'
+	test_out  = get_global [ 'Test'; 'Builder'; 'Tester' ], 'test_out'
+	test_diag = get_global [ 'Test'; 'Builder'; 'Tester' ], 'test_diag'
+	test_test = get_global [ 'Test'; 'Builder'; 'Tester' ], 'test_test'
 
 	plan( 12 )
 

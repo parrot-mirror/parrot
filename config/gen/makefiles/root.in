@@ -162,7 +162,6 @@ GEN_MAKEFILES = \
     languages/cola/Makefile \
     languages/ecmascript/Makefile \
     languages/forth/Makefile \
-    languages/HQ9plus/Makefile \
     languages/jako/Makefile \
     languages/lazy-k/Makefile \
     languages/lisp/Makefile \
@@ -180,7 +179,6 @@ GEN_MAKEFILES = \
     languages/pynie/Makefile \
     languages/regex/Makefile \
     languages/scheme/Makefile \
-    languages/tap/Makefile \
     languages/tcl/Makefile \
     languages/tcl/examples/Makefile \
     languages/urm/Makefile \
@@ -196,6 +194,7 @@ GEN_CONFIGS = \
     $(INC_DIR)/has_header.h \
     $(INC_DIR)/feature.h \
     $(INC_DIR)/core_pmcs.h \
+    $(SRC_DIR)/exec_dep.c \
     $(SRC_DIR)/exec_dep.h \
     lib/Parrot/Config/Generated.pm \
     lib/Parrot/PMC.pm \
@@ -225,7 +224,8 @@ STICKY_FILES = \
     $(GEN_MAKEFILES) \
     ext/Parrot-Embed/Makefile.PL \
     myconfig  \
-    $(GEN_PASM_INCLUDES)
+    $(GEN_PASM_INCLUDES) \
+    MANIFEST.configure.generated
 
 
 ###############################################################################
@@ -287,7 +287,6 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/Parrot/HLLCompiler.pbc \
     $(LIBRARY_DIR)/PGE/Dumper.pbc \
     $(LIBRARY_DIR)/PGE/Glob.pbc \
-    $(LIBRARY_DIR)/PGE/P6Grammar.pbc \
     $(LIBRARY_DIR)/PGE/Perl6Grammar.pbc \
     $(LIBRARY_DIR)/PGE/Text.pbc \
     $(LIBRARY_DIR)/PGE/Util.pbc \
@@ -804,7 +803,7 @@ $(PBC_TO_EXE) : pbc_to_exe.pir
 
 
 # HLL Executable targets
-perl6 : $(PERL6)
+#CONDITIONED_LINE(win32):perl6 : $(PERL6)
 
 $(PERL6) : compilers $(PBC_TO_EXE)
 	$(MAKE) languages/perl6 perl6$(EXE)
@@ -851,7 +850,15 @@ $(SRC_DIR)/parrot_config$(O) : $(SRC_DIR)/parrot_config.c
 
 $(SRC_DIR)/install_config$(O) : $(SRC_DIR)/install_config.c
 
-$(SRC_DIR)/null_config.$(O) : $(SRC_DIR)/null_config.c
+$(SRC_DIR)/null_config$(O) : $(SRC_DIR)/null_config.c
+
+$(SRC_DIR)/oo$(O) : $(SRC_DIR)/pmc/class.c $(INC_DIR)/pbcversion.h
+
+$(SRC_DIR)/scheduler$(O) : $(SRC_DIR)/scheduler.str   \
+                           $(SRC_DIR)/pmc/scheduler.c \
+                           $(SRC_DIR)/pmc/task.c      \
+                           $(SRC_DIR)/pmc/timer.c     \
+                           $(INC_DIR)/pbcversion.h
 
 lib_deps_object : $(O_FILES)
 	$(PERL) tools/dev/lib_deps.pl object $(O_FILES)
@@ -1036,6 +1043,8 @@ $(SRC_DIR)/jit_debug_xcoff$(O) : $(GENERAL_H_FILES)
 $(SRC_DIR)/jit_cpu$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/jit_emit.h
 
 $(SRC_DIR)/exec$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
+
+$(SRC_DIR)/exec_dep$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
 
 $(SRC_DIR)/exec_cpu$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
 
@@ -1227,6 +1236,8 @@ $(SRC_DIR)/jit_emit.h : $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h
 	$(CP) $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h $(SRC_DIR)/jit_emit.h
 $(SRC_DIR)/exec_dep.h : $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.h
 	$(CP) $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.h $(SRC_DIR)/exec_dep.h
+$(SRC_DIR)/exec_dep.c : $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.c
+	$(CP) $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.c $(SRC_DIR)/exec_dep.c
 $(SRC_DIR)/jit_cpu.c : lib/Parrot/OpLib/core.pm $(SRC_DIR)/jit_emit.h \
     $(SRC_DIR)/jit/@jitcpuarch@/core.jit $(JIT_BUILD_TOOL)
 	$(PERL) $(JIT_BUILD_TOOL) @jitcpuarch@ $(SRC_DIR)/jit_cpu.c
@@ -1325,9 +1336,9 @@ dynoplibs-clean :
 #
 ###############################################################################
 
-compilers : $(GEN_LIBRARY) compilers.dummy
+compilers : compilers.dummy
 
-compilers.dummy : $(PARROT)
+compilers.dummy : $(PARROT) $(GEN_LIBRARY)
 	$(MAKE) compilers/pge
 	$(MAKE) compilers/tge
 	$(MAKE) compilers/past-pm

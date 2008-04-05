@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -13,7 +13,7 @@ t/pmc/string.t - LuaString
 =head1 DESCRIPTION
 
 Tests C<LuaString> PMC
-(implemented in F<languages/lua/pmc/luastring.pmc>).
+(implemented in F<languages/lua/src/pmc/luastring.pmc>).
 
 =cut
 
@@ -180,7 +180,7 @@ OUTPUT
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
 .HLL 'Lua', 'lua_group'
 .sub _main
-    .const .LuaString cst1 = "simple string"
+    .const 'LuaString' cst1 = "simple string"
     print cst1
     print "\n"
     .local int bool1
@@ -196,7 +196,7 @@ OUTPUT
     pir_output_is( << 'CODE', << 'OUTPUT', '.const & empty string' );
 .HLL 'Lua', 'lua_group'
 .sub _main
-    .const .LuaString cst1 = ''
+    .const 'LuaString' cst1 = ''
     print cst1
     print "\n"
     .local int bool1

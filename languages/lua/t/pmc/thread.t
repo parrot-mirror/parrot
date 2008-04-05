@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -13,7 +13,7 @@ t/pmc/thread.t - Lua thread
 =head1 DESCRIPTION
 
 Tests Lua C<thread> type
-(implemented in F<languages/lua/pmc/luathread.pmc>).
+(implemented in F<languages/lua/src/pmc/luathread.pmc>).
 
 =cut
 
@@ -30,7 +30,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     .local int bool1
@@ -62,7 +62,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     .local string str1
@@ -86,7 +86,7 @@ pir_output_like( << 'CODE', << 'OUTPUT', 'check get_string' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     print pmc1
@@ -108,7 +108,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check get_bool' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     .local int bool1
@@ -134,7 +134,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check logical_not' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     .local pmc pmc2
@@ -164,7 +164,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
     _main()
 .end
 .sub _main
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     .local int bool1
@@ -188,7 +188,7 @@ pir_output_like( << 'CODE', << 'OUTPUT', 'check tostring' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     print pmc1
@@ -220,7 +220,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     $P0 = pmc1.'tonumber'()
@@ -247,8 +247,8 @@ pir_error_output_like( << 'CODE', << 'OUTPUT', 'check __add' );
     _main()
 .end
 .sub '_main'
-    .const .LuaNumber cst1 = '3.14'
-    .const .Sub F1 = 'f1'
+    .const 'LuaNumber' cst1 = '3.14'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     $P0 = add pmc1, cst1
