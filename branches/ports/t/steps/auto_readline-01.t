@@ -134,7 +134,7 @@ $cwd = cwd();
 {
     my $tdir3 = File::Spec->canonpath( tempdir( CLEANUP => 1 ) );
     ok(chdir $tdir3, "Able to change to temporary directory");
-    $step->{macports_root} = $tdir3;
+    $step->{ports_root} = $tdir3;
     ok( (mkdir 'lib'), "Able to make lib directory");
     ok( (mkdir 'include'), "Able to make include directory");
     ok( (mkdir 'include/readline'), "Able to make include/readline directory");
@@ -159,7 +159,7 @@ $cwd = cwd();
 {
     my $tdir3 = File::Spec->canonpath( tempdir( CLEANUP => 1 ) );
     ok(chdir $tdir3, "Able to change to temporary directory");
-    $step->{macports_root} = $tdir3;
+    $step->{ports_root} = $tdir3;
     ok( (mkdir 'lib'), "Able to make lib directory");
     ok( (mkdir 'include'), "Able to make include directory");
     ok( (mkdir 'include/readline'), "Able to make include/readline directory");
