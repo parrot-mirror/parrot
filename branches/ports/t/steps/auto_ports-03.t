@@ -5,7 +5,9 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests => 25;
+use Test::More;
+plan( skip_all => 'Macports is Darwin only' ) unless $^O =~ /darwin/;
+plan( tests => 19 );
 use Carp;
 use Cwd;
 use File::Temp qw( tempdir );
