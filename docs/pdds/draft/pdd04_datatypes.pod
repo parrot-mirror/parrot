@@ -244,8 +244,6 @@ Clone a PMC.
 
 =item type_keyed_int
 
-=item type_keyed_str
-
 =item subtype
 
 =item name
