@@ -196,6 +196,7 @@ rule statement {
     | <statement_control> {*}                    #= statement_control
     | $<expr>=<EXPR>
         [
+        || <statement_mod_loop> {*}              #= statement_mod_loop
         || <statement_mod_cond> {*}              #= statement_mod_cond
         || {*}                                   #= expr
         ]
@@ -209,6 +210,7 @@ rule statement_control {
     | <given_statement> {*}                      #= given_statement
     | <when_statement> {*}                       #= when_statement
     | <default_statement> {*}                    #= default_statement
+    | <loop_statement> {*}                       #= loop_statement
     | <for_statement> {*}                        #= for_statement
     | <use_statement> {*}                        #= use_statement
     | <begin_statement> {*}                      #= begin_statement
@@ -261,6 +263,19 @@ rule default_statement {
     {*}
 }
 
+rule loop_statement {
+    $<sym>=[loop]
+    $<eee>=[
+        '('
+            $<e1>=<EXPR> ';'
+            $<e2>=<EXPR> ';'
+            $<e3>=<EXPR>
+        ')'
+    ]?
+    <block>
+    {*}
+}
+
 rule for_statement {
     $<sym>=[for]
     <EXPR> <pblock>
@@ -286,8 +301,12 @@ rule end_statement {
     {*}
 }
 
+rule statement_mod_loop {
+    $<sym>=[while|until] <EXPR> {*}
+}
+
 rule statement_mod_cond {
-    $<sym>=[if|unless] <EXPR> {*}
+    $<sym>=[if|unless|when] <EXPR> {*}
 }
 
 rule statement_prefix {

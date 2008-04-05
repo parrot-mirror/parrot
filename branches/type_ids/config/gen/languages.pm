@@ -52,14 +52,15 @@ sub runstep {
         cardinal c99 cola
         eclectus ecmascript
         forth
-        HQ9plus jako
+        hq9plus
+        jako
         lisp lolcode lua
         m4
         ook
         parrot_compiler perl6 pheme PIR plumhead pugs punie pynie
         regex
         scheme
-        tap tcl
+        tcl
         unlambda urm
         WMLScript
         Zcode

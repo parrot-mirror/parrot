@@ -1,4 +1,6 @@
 #!./parrot
+# Copyright (C) 2005-2008, The Perl Foundation.
+# $Id$
 
 .sub _main :main
 	load_bytecode 'library/Test/Builder/Tester.pir'
@@ -8,7 +10,7 @@
 	tb_args = new 'Hash'
 
 	.local pmc test
-	test = new 'Test::Builder', tb_args
+	test = new [ 'Test'; 'Builder' ], tb_args
 
 	.local pmc exports, curr_namespace, test_namespace
 	curr_namespace = get_namespace
@@ -16,7 +18,7 @@
 	exports = split " ", "ok is diag like skip todo is_deeply isa_ok"
 	test_namespace.export_to(curr_namespace, exports)
 
-	test_namespace = get_namespace [ "Test::Builder::Tester" ]
+	test_namespace = get_namespace [ 'Test'; 'Builder'; 'Tester' ]
 	exports = split " ", "plan test_out test_diag test_fail test_pass test_test"
 	test_namespace.export_to(curr_namespace, exports)
 
@@ -326,7 +328,7 @@
 .sub test_skip
 
     .local pmc test
-    test = new 'Test::Builder'
+    test = new [ 'Test'; 'Builder' ]
 
 	test_out( 'ok 1 #skip skipping' )
 	test_out( 'ok 2 #skip skipping' )
@@ -354,7 +356,7 @@
 .sub test_todo
 
     .local pmc test
-    test = new 'Test::Builder'
+    test = new [ 'Test'; 'Builder' ]
 
     test_out( 'ok 8 # TODO passing test' )
     test.'todo'( 1, 'passing test', 'todo reason' )

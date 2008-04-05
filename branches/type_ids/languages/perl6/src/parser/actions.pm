@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 
 class Perl6::Grammar::Actions ;
 
@@ -98,6 +98,10 @@ method statement($/, $key) {
         }
         if $key eq 'statement_mod_cond' {
             $past := $( $<statement_mod_cond> );
+            $past.push( $expr );
+        }
+        elsif $key eq 'statement_mod_loop' {
+            $past := $( $<statement_mod_loop> );
             $past.push( $expr );
         }
         else {
@@ -219,6 +223,29 @@ method default_statement($/) {
     make $past;
 }
 
+method loop_statement($/) {
+    if $<eee> {
+        my $init := $( $<e1>[0] );
+        my $cond := $( $<e2>[0] );
+        my $tail := $( $<e3>[0] );
+        my $block := $( $<block> );
+        $block.blocktype('immediate');
+
+        my $loop := PAST::Stmts.new(
+            $init,
+            PAST::Op.new( $cond , PAST::Stmts.new($block, $tail), :pasttype('while'), :node($/) ),
+            :node($/)
+        );
+        make $loop;
+    }
+    else {
+        my $cond  := PAST::Val.new( :value( 1 ) );
+        my $block := $( $<block> );
+        $block.blocktype('immediate');
+        make PAST::Op.new( $cond, $block, :pasttype('while'), :node($/) );
+    }
+}
+
 method for_statement($/) {
     my $block := $( $<pblock> );
     $block.blocktype('declaration');
@@ -283,11 +310,34 @@ method end_statement($/) {
     make $past;
 }
 
-method statement_mod_cond($/) {
+method statement_mod_loop($/) {
     make PAST::Op.new( $( $<EXPR> ),
                        :pasttype( ~$<sym> ),
-                       :node( $/ )
-                     );
+                       :node( $/ ) );
+}
+
+method statement_mod_cond($/) {
+    if ~$<sym> eq 'when' {
+        my $expr := $( $<EXPR> );
+        my $match_past := PAST::Op.new( :name('infix:~~'),
+                                    :pasttype('call'),
+                                    :node($/)
+                                  );
+        $match_past.push( PAST::Var.new( :node($/), :name('$_'), :scope('lexical') ) );
+        $match_past.push( $expr );
+
+        my $past := PAST::Op.new( $match_past,
+                              :pasttype('if'),
+                              :node( $/ )
+                            );
+        make $past;
+    }
+    else {
+        make PAST::Op.new( $( $<EXPR> ),
+                           :pasttype( ~$<sym> ),
+                           :node( $/ )
+                         );
+    }
 }
 
 

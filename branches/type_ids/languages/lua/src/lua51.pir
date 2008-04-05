@@ -32,8 +32,9 @@ Used by F<languages/lua/lua.pir>.
     load_bytecode 'PCT.pbc'
     load_bytecode 'PGE/Text.pbc'
 
-    $P0 = subclass 'PCT::HLLCompiler', 'Lua::Compiler'
-    addattribute $P0, '$ostgrammar'
+    new $P0, 'Protomaker'
+    $P0.'new_subclass'('PCT::HLLCompiler', 'Lua::Compiler', '$ostgrammar')
+
     new $P0, 'Lua::Compiler'
     $P0.'language'('Lua')
     $P0.'parsegrammar'('Lua::Grammar')
@@ -90,15 +91,6 @@ resulting ost.
 .end
 
 
-.sub 'pir' :method
-    .param pmc source
-    .param pmc adverbs         :slurpy :named
-    $P0 = compreg 'POST'
-    $P1 = $P0.'compile'(source, adverbs :flat :named)
-    .return ($P1)
-.end
-
-
 .namespace [ 'Lua::PAST::Grammar' ]
 
 =head2 Functions
@@ -134,6 +126,89 @@ used in F<languages/lua/src/POSTGrammar.tg>
     $S0 .= "\n"
     printerr $S0
     exit 1
+.end
+
+
+.namespace [ 'POST::Node' ]
+
+.sub 'has_call_in_last_op' :method
+    $I0 = isa self, 'POST::Ops'
+    unless $I0 goto L1
+    $P0 = self.'get_array'()
+    $I0 = elements $P0
+    unless $I0 goto L1
+    $P1 = $P0[-1]
+    $I0 = isa $P1, 'POST::Op'
+    unless $I0 goto L1
+    $S0 = $P1.'pirop'()
+    unless $S0 == 'call' goto L1
+    .return (1, $P1)
+  L1:
+    .return (0)
+.end
+
+
+.namespace [ 'Lua::POST::Sub' ]
+
+.sub '__onload' :anon :load :init
+    new $P0, 'Protomaker'
+    $P0.'new_subclass'('POST::Sub' , 'Lua::POST::Sub')
+.end
+
+.sub 'ops_const' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('ops_const', value, has_value)
+.end
+
+.sub 'ops_subr' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('ops_subr', value, has_value)
+.end
+
+.sub 'storage_const' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('storage_const', value, has_value)
+.end
+
+.sub 'storage_lex' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('storage_lex', value, has_value)
+.end
+
+
+.namespace [ 'Lua::POST::Chunk' ]
+
+.sub '__onload' :anon :load :init
+    new $P0, 'Protomaker'
+    $P0.'new_subclass'('Lua::POST::Sub' , 'Lua::POST::Chunk')
+.end
+
+.sub 'prologue' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .return self.'attr'('prologue', value, has_value)
+.end
+
+
+.namespace [ 'POST::Compiler' ]
+
+.sub 'pir' :method :multi(_, ['Lua::POST::Chunk'])
+    .param pmc node
+    .local pmc code
+    code = self.'pir_children'(node)
+    $S0 = node.'prologue'()
+    if $S0 == '' goto L1
+    new code, 'CodeString'
+    code.'emit'($S0)
+    $P0 = self.'code'()
+    code .= $P0
+    self.'code'(code)
+  L1:
+    .return (code)
 .end
 
 
@@ -191,7 +266,6 @@ used in F<languages/lua/src/POSTGrammar.tg>
 .include 'languages/lua/src/lua51_gen.pir'
 .include 'languages/lua/src/PASTGrammar_gen.pir'
 .include 'languages/lua/src/POSTGrammar_gen.pir'
-.include 'languages/lua/src/POST.pir'
 
 =back
 

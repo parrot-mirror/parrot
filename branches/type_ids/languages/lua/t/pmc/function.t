@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -13,7 +13,7 @@ t/pmc/function.t - LuaFunction
 =head1 DESCRIPTION
 
 Tests C<LuaFunction> PMC
-(implemented in F<languages/lua/pmc/luafunction.pmc>).
+(implemented in F<languages/lua/src/pmc/luafunction.pmc>).
 
 =cut
 
@@ -114,7 +114,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check get_bool' );
     bool1 = istrue pmc1
     print bool1
     print "\n"
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     pmc1 = F1
     bool1 = istrue pmc1
     print bool1
@@ -154,8 +154,8 @@ OUTPUT
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
 .HLL 'Lua', 'lua_group'
 .sub _main
-#    .const .LuaFunction F1 = 'f1'
-    .const .Sub pmc1 = 'f1'
+#    .const 'LuaFunction' F1 = 'f1'
+    .const 'Sub' pmc1 = 'f1'
     .local int bool1
     bool1 = isa pmc1, 'LuaFunction'
     print bool1
@@ -183,7 +183,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL (autoboxing)' );
     print "\n"
 .end
 .sub test
-    .const .Sub T = 'test'
+    .const 'Sub' T = 'test'
     .return (T)
 .end
 CODE
@@ -232,8 +232,8 @@ OUTPUT
 pir_output_like( << 'CODE', << 'OUTPUT', 'load from pbc' );
 .HLL 'Lua', 'lua_group'
 .sub __start :main
-    load_bytecode 'languages/lua/lib/luaaux.pbc'
-    load_bytecode 'languages/lua/lib/luabasic.pbc'
+    load_bytecode 'languages/lua/src/lib/luaaux.pbc'
+    load_bytecode 'languages/lua/src/lib/luabasic.pbc'
     $P0 = get_hll_global ['Lua::basic'], 'luaopen_basic'
     $P0()
     _main()
@@ -241,7 +241,7 @@ pir_output_like( << 'CODE', << 'OUTPUT', 'load from pbc' );
 .sub _main :anon
     .local pmc tmp_0
     tmp_0 = get_hll_global '_G'
-    .const .LuaString cst_1 = 'print'
+    .const 'LuaString' cst_1 = 'print'
     .local pmc tmp_1
     tmp_1 = tmp_0[cst_1]
     tmp_1(tmp_1)

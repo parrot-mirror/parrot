@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -13,7 +13,7 @@ t/pmc/nil.t - LuaNil
 =head1 DESCRIPTION
 
 Tests C<LuaNil> PMC
-(implemented in F<languages/lua/pmc/luanil.pmc>).
+(implemented in F<languages/lua/src/pmc/luanil.pmc>).
 
 =cut
 
@@ -146,7 +146,7 @@ OUTPUT
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
 .HLL 'Lua', 'lua_group'
 .sub _main
-    .const .LuaNil cst1 = 'dummy'
+    .const 'LuaNil' cst1 = 'dummy'
     print cst1
     print "\n"
     .local int bool1
