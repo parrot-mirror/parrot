@@ -161,7 +161,6 @@ $cwd = cwd();
 {
     my $tdir3 = File::Spec->canonpath( tempdir( CLEANUP => 1 ) );
     ok(chdir $tdir3, "Able to change to temporary directory");
-    $step->{ports_root} = $tdir3;
     ok( (mkdir 'lib'), "Able to make lib directory");
     ok( (mkdir 'include'), "Able to make include directory");
     my $libdir = File::Spec->catdir( $tdir3, 'lib' );
