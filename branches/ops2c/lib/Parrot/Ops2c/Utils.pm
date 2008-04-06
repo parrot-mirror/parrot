@@ -433,6 +433,9 @@ sub print_c_source_file {
     my $source = IO::File->new('>' . $self->{source})
         or die "ops2c.pl: Cannot open source file '$self->{source}' for writing: $!!\n";
     $self->print_c_source_top($source);
+
+    $self->_reset_line_number($source);
+
     $self->print_c_source_bottom($source);
 }
 
@@ -500,8 +503,6 @@ sub print_c_source_top {
     $self->_print_goto_opcode($SOURCE);
 
     $self->_print_op_function_definitions($SOURCE);
-
-    return $SOURCE;
 }
 
 sub _print_preamble_source {
@@ -680,7 +681,6 @@ END_C
     if ( $self->{trans}->can("run_core_finish") ) {
         print $fh $self->{trans}->run_core_finish( $self->{base} );
     }
-    close($fh) || die "Unable to close after writing: $!";
     return 1;
 }
 
@@ -711,8 +711,6 @@ testing.
 sub print_c_source_bottom {
     my ( $self, $SOURCE ) = @_;
 
-    $SOURCE = $self->_reset_line_number($SOURCE);
-
     $self->_op_lookup($SOURCE);
 
     $self->_generate_init_func($SOURCE);
@@ -732,18 +730,16 @@ sub _reset_line_number {
 
     my $source = $self->{source};
     my $line   = 0;
-    open( $fh, '<', $source ) || die "Error re-reading $source: $!\n";
-    while (<$fh>) { $line++; }
+    my $input = IO::File->new('<' . $source)
+        or die "Error re-reading $source: $!\n";
+    while (<$input>) { $line++; }
     $line += 2;
-    close($fh) || die "Error closing $source:  $!";
-    open( $fh, '>>', $source ) || die "Error appending to $source: $!\n";
     unless ( $self->{flag}->{nolines} ) {
         my $source_escaped = $source;
         $source_escaped =~ s|\.temp||;
         $source_escaped =~ s|(\\)|$1$1|g;    # escape backslashes
         print $fh qq{#line $line "$source_escaped"\n};
     }
-    return $fh;                              # filehandle remains open
 }
 
 sub _op_func_table {
