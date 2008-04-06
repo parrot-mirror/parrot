@@ -7,6 +7,7 @@ use lib ("lib/");
 use Parrot::OpLib::core;
 use Parrot::OpsFile;
 use File::Spec;
+use IO::File;
 
 =head1 NAME
 
@@ -407,7 +408,7 @@ END_C
 }
 
 
-=head2 C<print_c_source()>
+=head2 C<print_c_source_file()>
 
 =over 4
 
@@ -426,12 +427,13 @@ None.  (It's pretty anti social.)
 
 =cut
 
-sub print_c_source {
+sub print_c_source_file {
     my $self = shift;
 
-    my $SOURCE = $self->print_c_source_top();
-    
-    $self->print_c_source_bottom($SOURCE);
+    my $source = IO::File->new('>', $self->{source})
+        or die "ops2c.pl: Cannot open source file '$self->{source}' for writing: $!!\n";
+    $self->print_c_source_top($source);
+    $self->print_c_source_bottom($source);
 }
 
 
@@ -479,10 +481,7 @@ B<A:>  It is re-used as an argument to the next method.
 
 sub print_c_source_top {
     my $self = shift;
-
-    ##### BEGIN printing to $SOURCE #####
-    open my $SOURCE, '>', $self->{source}
-        or die "ops2c.pl: Cannot open source file '$self->{source}' for writing: $!!\n";
+    my $SOURCE = shift;
 
     $self->_print_preamble_source($SOURCE);
 
