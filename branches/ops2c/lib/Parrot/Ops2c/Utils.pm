@@ -406,6 +406,35 @@ END_C
     return 1;
 }
 
+
+=head2 C<print_c_source()>
+
+=over 4
+
+=item * Purpose
+
+Writes out a C source file.  Calls print_c_source_top and print_c_source_bottom
+to do the dirty work.
+
+=item * Arguments
+
+None.  (All data needed is already in the object.)
+
+=item * Return Value
+
+None.  (It's pretty anti social.)
+
+=cut
+
+sub print_c_source {
+    my $self = shift;
+
+    my $SOURCE = $self->print_c_source_top();
+    
+    $self->print_c_source_bottom($SOURCE);
+}
+
+
 =head2 C<print_c_source_top()>
 
 =over 4
