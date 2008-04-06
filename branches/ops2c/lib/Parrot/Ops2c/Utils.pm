@@ -423,6 +423,8 @@ None.  (All data needed is already in the object.)
 
 None.  (It's pretty anti social.)
 
+=back
+
 =cut
 
 sub print_c_source_file {
