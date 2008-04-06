@@ -118,8 +118,8 @@ sub new {
     my $include = "parrot/oplib/$base_ops_h";
     my $header  = "include/$include";
 
-    # SOURCE is closed and reread, which confuses make -j
-    # create a temp file and rename it
+    # A partially written file will confuse make -j and make error recovery
+    # problematic.  create a temp file and rename it afterward.
     my $source = "src/ops/$base_ops_stub.c.temp";
 
     if ( $flagref->{dynamic} ) {
@@ -438,7 +438,8 @@ sub print_c_source_file {
 
     $self->print_c_source_bottom($source);
 
-    return $self->{source};
+    my $c_source_final = $self->_rename_source();
+    return $c_source_final;
 }
 
 
@@ -723,8 +724,6 @@ sub print_c_source_bottom {
 
     close $SOURCE or die "Unable to close handle to $self->{source}: $!";
 
-    my $c_source_final = $self->_rename_source();
-    return $c_source_final;
 }
 
 sub _reset_line_number {
