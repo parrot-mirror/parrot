@@ -438,6 +438,8 @@ sub print_c_source_file {
 
     $self->print_c_source_bottom($source);
 
+    $source->close() or die "Unable to close handle to $self->{source}: $!";
+
     my $c_source_final = $self->_rename_source();
     return $c_source_final;
 }
@@ -721,8 +723,6 @@ sub print_c_source_bottom {
     $self->_print_dynamic_lib_load($SOURCE);
 
     _print_coda($SOURCE);
-
-    close $SOURCE or die "Unable to close handle to $self->{source}: $!";
 
 }
 
