@@ -430,7 +430,7 @@ None.  (It's pretty anti social.)
 sub print_c_source_file {
     my $self = shift;
 
-    my $source = IO::File->new('>', $self->{source})
+    my $source = IO::File->new('>' . $self->{source})
         or die "ops2c.pl: Cannot open source file '$self->{source}' for writing: $!!\n";
     $self->print_c_source_top($source);
     $self->print_c_source_bottom($source);
