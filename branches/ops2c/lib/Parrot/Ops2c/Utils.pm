@@ -21,11 +21,9 @@ Parrot::Ops2c::Utils - Methods holding functionality for F<tools/build/ops2c.pl>
         script  => $0,
     } );
 
-    $c_header = $self->print_c_header_file();
+    $c_header_filename = $self->print_c_header_file();
 
-    $SOURCE = $self->print_c_source_top();
-
-    $c_source = $self->print_c_source_bottom($SOURCE);
+    $c_source_filename = $self->print_c_source_file();
 
 =head1 DESCRIPTION
 
@@ -437,6 +435,8 @@ sub print_c_source_file {
     $self->_reset_line_number($source);
 
     $self->print_c_source_bottom($source);
+
+    return $self->{source};
 }
 
 
