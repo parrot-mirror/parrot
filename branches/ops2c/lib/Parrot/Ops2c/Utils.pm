@@ -203,6 +203,24 @@ sub new {
     $argsref->{flag} = $flagref;
     my $self = bless $argsref, $class;
     $self->_iterate_over_ops();
+
+    my ( $op_info, $op_func, $getop );
+    $op_info = $op_func = 'NULL';
+    $getop = '( int (*)(const char *, int) )NULL';
+
+    if ($self->{suffix} eq '') {
+        $op_func = $self->{bs} . "op_func_table";
+        $op_info = $self->{bs} . "op_info_table";
+        if (!$self->{flag}->{dynamic}) {
+            $getop = 'get_op';
+        }
+    }
+    $self->{getop}   = $getop;
+    $self->{op_info} = $op_info;
+    $self->{op_func} = $op_func;
+
+    $self->{names} = {};
+
     return $self;
 }
 
@@ -439,6 +457,12 @@ sub print_c_source_top {
 
     $self->_print_preamble_source($SOURCE);
 
+    $self->_op_info_table($SOURCE);
+
+    $self->_op_func_table($SOURCE);
+
+    $self->_print_op_lib_descriptor($SOURCE);
+
     $self->_print_ops_addr_decl($SOURCE);
 
     $self->_print_run_core_func_decl_source($SOURCE);
@@ -460,7 +484,8 @@ sub _print_preamble_source {
 #include "$self->{include}"
 
 $self->{defines}
-static op_lib_t $self->{bs}op_lib;
+
+static int get_op(const char * name, int full);
 
 END_C
 
@@ -657,20 +682,10 @@ testing.
 
 sub print_c_source_bottom {
     my ( $self, $SOURCE ) = @_;
-    my @op_func_table = @{ $self->{op_func_table} };
-    my $bs            = $self->{bs};
-    my $index         = $self->{index};
 
     $SOURCE = $self->_reset_line_number($SOURCE);
 
-    $self->_op_func_table($SOURCE);
-
-    $self->{names} = {};
-    $self->_op_info_table($SOURCE);
-
     $self->_op_lookup($SOURCE);
-
-    $self->_print_op_lib_descriptor($SOURCE);
 
     $self->_generate_init_func($SOURCE);
 
@@ -706,12 +721,7 @@ sub _reset_line_number {
 sub _op_func_table {
     my ( $self, $fh ) = @_;
 
-    my ( $op_info, $op_func, $getop );
-    $op_info = $op_func = 'NULL';
-    $getop = '( int (*)(const char *, int) )NULL';
-
     if ( $self->{suffix} eq '' ) {
-        $op_func = $self->{bs} . q{op_func_table};
         print $fh <<END_C;
 
 INTVAL $self->{bs}numops$self->{suffix} = $self->{num_ops};
@@ -720,7 +730,7 @@ INTVAL $self->{bs}numops$self->{suffix} = $self->{num_ops};
 ** Op Function Table:
 */
 
-static op_func$self->{suffix}_t ${op_func}\[$self->{num_entries}] = {
+static op_func$self->{suffix}_t $self->{op_func}\[$self->{num_entries}] = {
 END_C
 
         print $fh @{ $self->{op_func_table} };
@@ -732,9 +742,6 @@ END_C
 
 END_C
     }
-    $self->{op_info} = $op_info;
-    $self->{op_func} = $op_func;
-    $self->{getop}   = $getop;
 }
 
 sub _op_info_table {
@@ -749,7 +756,6 @@ sub _op_info_table {
     );
 
     if ( $self->{suffix} eq '' ) {
-        $self->{op_info} = "$self->{bs}op_info_table";
 
         #
         # Op Info Table:
@@ -826,7 +832,6 @@ sub _op_lookup {
     my ( $self, $fh ) = @_;
 
     if ( $self->{suffix} eq '' && !$self->{flag}->{dynamic} ) {
-        $self->{getop} = 'get_op';
         my $hash_size = 3041;
         my $tot       = $self->{index} + scalar keys( %{ $self->{names} } );
         if ( $hash_size < $tot * 1.2 ) {
@@ -877,8 +882,6 @@ static void hop_deinit(void);
  *
  * returns >= 0 (found idx into info_table), -1 if not
  */
-
-static int get_op(const char * name, int full);
 
 static size_t hash_str(const char * str) {
     size_t key = 0;
