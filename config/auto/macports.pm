@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-config/auto/ports.pm - Determine Macports location on Darwin
+config/auto/macports.pm - Determine Macports location on Darwin
 
 =head1 DESCRIPTION
 
@@ -21,7 +21,7 @@ configuration step classes, that modification has not yet been made.
 
 =cut
 
-package auto::ports;
+package auto::macports;
 
 use strict;
 use warnings;
