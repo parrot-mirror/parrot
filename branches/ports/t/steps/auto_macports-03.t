@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# auto_ports-03.t
+# auto_macports-03.t
 
 use strict;
 use warnings;
@@ -13,7 +13,7 @@ use Cwd;
 use File::Temp qw( tempdir );
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
-use_ok('config::auto::ports');
+use_ok('config::auto::macports');
 
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
@@ -29,7 +29,7 @@ my $conf = Parrot::Configure->new();
 test_step_thru_runstep($conf, q{init::defaults}, $args);
 
 my ($task, $step_name, $step, $ret);
-my $pkg = q{auto::ports};
+my $pkg = q{auto::macports};
 
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
@@ -68,17 +68,17 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_ports-03.t - test config::auto::ports
+auto_macports-03.t - test config::auto::macports
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_ports-03.t
+    % prove t/steps/auto_macports-03.t
 
 =head1 DESCRIPTION
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test config::auto::ports by mocking the case where
+The tests in this file test config::auto::macports by mocking the case where
 the expected default directories for Macports are found.
 
 =head1 AUTHOR
@@ -87,7 +87,7 @@ James E Keenan
 
 =head1 SEE ALSO
 
-config::auto::ports, F<Configure.pl>.
+config::auto::macports, F<Configure.pl>.
 
 =cut
 
