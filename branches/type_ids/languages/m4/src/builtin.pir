@@ -35,13 +35,13 @@ Initialise all builtin and predefined macros.
   # Generate a table of Sub
   builtin_tab = state['builtin_tab']
 
-  .const .Sub func_m4_not_implemented = "m4_not_implemented"
+  .const 'Sub' func_m4_not_implemented = "m4_not_implemented"
 
   #     name                    GNUext  macros  blind   function */
   #   { "__file__",                TRUE,        FALSE,        FALSE,        m4___file__ },
   builtin = new .Hash
   builtin['name'] = '__file__'
-  .const .Sub func_m4___file__ = "m4___file__"
+  .const 'Sub' func_m4___file__ = "m4___file__"
   builtin['func'] = func_m4___file__
   builtin['blind_no_args'] = 0
   builtin_tab['__file__'] = builtin
@@ -98,7 +98,7 @@ Initialise all builtin and predefined macros.
   #   { "decr",                FALSE,        FALSE,        TRUE,        m4_decr },
   builtin = new .Hash
   builtin['name'] = 'decr'
-  .const .Sub func_m4_decr = "m4_decr"
+  .const 'Sub' func_m4_decr = "m4_decr"
   builtin['func'] = func_m4_decr
   builtin['blind_no_args'] = 1
   builtin_tab['decr'] = builtin
@@ -106,7 +106,7 @@ Initialise all builtin and predefined macros.
   #   { "define",                FALSE,        TRUE,        TRUE,        m4_define },
   builtin = new .Hash
   builtin['name'] = 'define'
-  .const .Sub func_m4_define = "m4_define"
+  .const 'Sub' func_m4_define = "m4_define"
   builtin['func'] = func_m4_define
   builtin['blind_no_args'] = 1
   builtin_tab['define'] = builtin
@@ -149,7 +149,7 @@ Initialise all builtin and predefined macros.
   #   { "errprint",                FALSE,        FALSE,        FALSE,        m4_errprint },
   builtin = new .Hash
   builtin['name'] = 'errprint'
-  .const .Sub func_m4_errprint = "m4_errprint"
+  .const 'Sub' func_m4_errprint = "m4_errprint"
   builtin['func'] = func_m4_errprint
   builtin['blind_no_args'] = 0
   builtin_tab['errprint'] = builtin
@@ -164,7 +164,7 @@ Initialise all builtin and predefined macros.
   #   { "eval",		FALSE,	FALSE,	TRUE,	m4_eval },
   builtin = new .Hash
   builtin['name'] = 'eval'
-  .const .Sub func_m4_eval = "m4_eval"
+  .const 'Sub' func_m4_eval = "m4_eval"
   builtin['func'] = func_m4_eval
   builtin['blind_no_args'] = 1
   builtin_tab['eval'] = builtin
@@ -172,7 +172,7 @@ Initialise all builtin and predefined macros.
   #   { "format",		TRUE,	FALSE,	FALSE,	m4_format },
   builtin = new .Hash
   builtin['name'] = 'format'
-  .const .Sub func_m4_format = "m4_format"
+  .const 'Sub' func_m4_format = "m4_format"
   builtin['func'] = func_m4_format
   builtin['blind_no_args'] = 0
   builtin_tab['format'] = builtin
@@ -180,7 +180,7 @@ Initialise all builtin and predefined macros.
   #   { "ifdef",		FALSE,	FALSE,	TRUE,	m4_ifdef },
   builtin = new .Hash
   builtin['name'] = 'ifdef'
-  .const .Sub func_m4_ifdef = "m4_ifdef"
+  .const 'Sub' func_m4_ifdef = "m4_ifdef"
   builtin['func'] = func_m4_ifdef
   builtin['blind_no_args'] = 1
   builtin_tab['ifdef'] = builtin
@@ -188,7 +188,7 @@ Initialise all builtin and predefined macros.
   #   { "ifelse",		FALSE,	FALSE,	TRUE,	m4_ifelse },
   builtin = new .Hash
   builtin['name'] = 'ifelse'
-  .const .Sub func_m4_ifelse = "m4_ifelse"
+  .const 'Sub' func_m4_ifelse = "m4_ifelse"
   builtin['func'] = func_m4_ifelse
   builtin['blind_no_args'] = 1
   builtin_tab['ifelse'] = builtin
@@ -203,7 +203,7 @@ Initialise all builtin and predefined macros.
   #   { "incr",	        	FALSE,	FALSE,	TRUE,	m4_incr },
   builtin = new .Hash
   builtin['name'] = 'incr'
-  .const .Sub func_m4_incr = "m4_incr"
+  .const 'Sub' func_m4_incr = "m4_incr"
   builtin['func'] = func_m4_incr
   builtin['blind_no_args'] = 1
   builtin_tab['incr'] = builtin
@@ -211,7 +211,7 @@ Initialise all builtin and predefined macros.
   #   { "index",		FALSE,	FALSE,	TRUE,	m4_index },
   builtin = new .Hash
   builtin['name'] = 'index'
-  .const .Sub func_m4_index = "m4_index"
+  .const 'Sub' func_m4_index = "m4_index"
   builtin['func'] = func_m4_index
   builtin['blind_no_args'] = 1
   builtin_tab['index'] = builtin
@@ -226,7 +226,7 @@ Initialise all builtin and predefined macros.
   #   { "len",	        	FALSE,	FALSE,	TRUE,	m4_len },
   builtin = new .Hash
   builtin['name'] = 'len'
-  .const .Sub func_m4_len = "m4_len"
+  .const 'Sub' func_m4_len = "m4_len"
   builtin['func'] = func_m4_len
   builtin['blind_no_args'] = 1
   builtin_tab['len'] = builtin
@@ -297,7 +297,7 @@ Initialise all builtin and predefined macros.
   #   { "substr",		FALSE,	FALSE,	TRUE,	m4_substr },
   builtin = new .Hash
   builtin['name'] = 'substr'
-  .const .Sub func_m4_substr = "m4_substr"
+  .const 'Sub' func_m4_substr = "m4_substr"
   builtin['func'] = func_m4_substr
   builtin['blind_no_args'] = 1
   builtin_tab['substr'] = builtin
@@ -305,7 +305,7 @@ Initialise all builtin and predefined macros.
   #   { "syscmd",		FALSE,	FALSE,	TRUE,	m4_syscmd },
   builtin = new .Hash
   builtin['name'] = 'syscmd'
-  .const .Sub func_m4_syscmd = "m4_syscmd"
+  .const 'Sub' func_m4_syscmd = "m4_syscmd"
   builtin['func'] = func_m4_syscmd
   builtin['blind_no_args'] = 1
   builtin_tab['syscmd'] = builtin
@@ -313,7 +313,7 @@ Initialise all builtin and predefined macros.
   #   { "sysval",		FALSE,	FALSE,	FALSE,	m4_sysval },
   builtin = new .Hash
   builtin['name'] = 'sysval'
-  .const .Sub func_m4_sysval = "m4_sysval"
+  .const 'Sub' func_m4_sysval = "m4_sysval"
   builtin['func'] = func_m4_sysval
   builtin['blind_no_args'] = 0
   builtin_tab['sysval'] = builtin
@@ -342,7 +342,7 @@ Initialise all builtin and predefined macros.
   #   { "undefine",		FALSE,	FALSE,	TRUE,	m4_undefine },
   builtin = new .Hash
   builtin['name'] = 'undefine'
-  .const .Sub func_m4_undefine = "m4_undefine"
+  .const 'Sub' func_m4_undefine = "m4_undefine"
   builtin['func'] = func_m4_undefine
   builtin['blind_no_args'] = 1
   builtin_tab['undefine'] = builtin

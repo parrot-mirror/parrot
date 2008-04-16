@@ -15,7 +15,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', "a sub ought to be PugsCode" );
     $S0 = typeof $P0
     print $S0
     print "\n"
-    .const .Sub f = "foo"
+    .const 'Sub' f = "foo"
     $S0 = typeof f
     print $S0
     print "\n"
