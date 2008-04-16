@@ -1089,7 +1089,7 @@ C<.macro_local> instead of C<.local> to take advantage of the name munging.
 
 =head2 Subroutine Call
 
-  .const .Sub $P0 = "_sub_label"
+  .const 'Sub' $P0 = "_sub_label"
   $P1 = new 'Continuation'
   set_addr $P1, ret_addr
   ...

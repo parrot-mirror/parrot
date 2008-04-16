@@ -68,7 +68,7 @@ done:
 
 	reverse line
 
-	.const .Sub tr_00 = 'tr_00_init'
+	.const 'Sub' tr_00 = 'tr_00_init'
 	trans line, tr_00
 
 	i = 0

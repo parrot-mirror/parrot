@@ -70,11 +70,11 @@ the subroutine.
 
 If the sub is in the same compilation unit use a Sub constant:
 
-  .const .Sub foo = 'foo'
+  .const 'Sub' foo = 'foo'
 
 The subroutine object is available in PASM too with a similar syntax:
 
-  .const .Sub P2 = 'foo'      # any P register will do
+  .const 'Sub' P2 = 'foo'      # any P register will do
   ...
   .pcc_sub foo:               # denote a Sub constant
 
