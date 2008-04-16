@@ -70,10 +70,6 @@ PF_DIR          = src/packfile
 # source directory
 SRC_DIR         = src
 
-# revision control
-#CONDITIONED_LINE(SVN_ENTRIES):SVN_ENTRIES=@SVN_ENTRIES@
-#INVERSE_CONDITIONED_LINE(SVN_ENTRIES):SVN_ENTRIES=
-
 ###############################################################################
 #
 # BUILD TOOL CONFIGURATIONS:
@@ -143,7 +139,6 @@ GEN_MAKEFILES = \
     Makefile \
 #CONDITIONED_LINE(has_perldoc):    docs/Makefile \
     compilers/nqp/Makefile \
-    compilers/past-pm/Makefile \
     compilers/pct/Makefile \
     compilers/pge/Makefile \
     compilers/tge/Makefile \
@@ -157,7 +152,6 @@ GEN_MAKEFILES = \
     languages/APL/Makefile \
     languages/befunge/Makefile \
     languages/bf/Makefile \
-    languages/c99/Makefile \
     languages/cardinal/Makefile \
     languages/cola/Makefile \
     languages/ecmascript/Makefile \
@@ -200,7 +194,6 @@ GEN_CONFIGS = \
     lib/Parrot/PMC.pm \
     runtime/parrot/include/config.fpmc \
     $(SRC_DIR)/platform.c \
-    $(SRC_DIR)/revision.c \
 #CONDITIONED_LINE(platform_asm):    $(SRC_DIR)/platform_asm.s \
     $(SRC_DIR)/core_pmcs.c \
     CFLAGS \
@@ -277,6 +270,7 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/yaml_dumper.pbc \
     $(LIBRARY_DIR)/Getopt/Obj.pbc \
     $(LIBRARY_DIR)/JSON.pbc \
+    $(LIBRARY_DIR)/Math/Random/mt19937ar.pbc \
     $(LIBRARY_DIR)/MIME/Base64.pbc \
     $(LIBRARY_DIR)/ncurses.pbc \
     $(LIBRARY_DIR)/parrotlib.pbc \
@@ -284,7 +278,6 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/Parrot/Capture_PIR.pbc \
     $(LIBRARY_DIR)/Parrot/Coroutine.pbc \
     $(LIBRARY_DIR)/Parrot/Exception.pbc \
-    $(LIBRARY_DIR)/Parrot/HLLCompiler.pbc \
     $(LIBRARY_DIR)/PGE/Dumper.pbc \
     $(LIBRARY_DIR)/PGE/Glob.pbc \
     $(LIBRARY_DIR)/PGE/Perl6Grammar.pbc \
@@ -306,8 +299,10 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/Test/Builder/Tester.pbc \
     $(LIBRARY_DIR)/Test/Builder/TestPlan.pbc \
     $(LIBRARY_DIR)/Test/Builder.pbc \
+    $(LIBRARY_DIR)/Test/Class.pbc \
     $(LIBRARY_DIR)/Test/More.pbc \
     $(LIBRARY_DIR)/Tcl/Glob.pbc \
+    $(LIBRARY_DIR)/uuid.pbc \
     $(LIBRARY_DIR)/YAML/Parser/Syck.pbc \
     $(LIBRARY_DIR)/STM.pbc \
     $(LIBRARY_DIR)/libpcre.pbc \
@@ -445,7 +440,6 @@ INTERP_O_FILES = \
     $(SRC_DIR)/platform$(O) \
     $(SRC_DIR)/pmc_freeze$(O) \
     $(SRC_DIR)/pmc$(O) \
-    $(SRC_DIR)/revision$(O) \
     $(SRC_DIR)/runops_cores$(O) \
     $(SRC_DIR)/scheduler$(O) \
     $(SRC_DIR)/spf_render$(O) \
@@ -825,6 +819,10 @@ $(INSTALLABLEPARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
     $(SRC_DIR)/main$(O) \
     $(ALL_PARROT_LIBS) $(LINKFLAGS) $(SRC_DIR)/install_config$(O)
 
+$(INC_DIR)/parrot.h : $(INC_DIR)/pbcversion.h $(INC_DIR)/vtable.h
+
+$(INC_DIR)/extend.h : $(INC_DIR)/extend_vtable.h
+
 $(INC_DIR)/pbcversion.h :
 	$(PERL) $(BUILD_TOOLS_DIR)/pbcversion_h.pl > $(INC_DIR)/pbcversion.h
 
@@ -979,9 +977,6 @@ $(IMCC_DIR)/main$(O) : $(IMCC_DIR)/main.c $(GENERAL_H_FILES) $(IMCC_H_FILES)
 $(INC_DIR)/oplib/ops.h lib/Parrot/OpLib/core.pm : $(OPS_FILES) $(BUILD_TOOLS_DIR)/ops2pm.pl \
     lib/Parrot/OpsFile.pm lib/Parrot/Op.pm $(OPS_DIR)/ops.num $(OPS_DIR)/ops.skip
 	$(PERL) $(BUILD_TOOLS_DIR)/ops2pm.pl $(OPS_FILES)
-
-$(SRC_DIR)/revision.c : $(SVN_ENTRIES) $(BUILD_TOOLS_DIR)/revision_c.pl
-	$(PERL) -Ilib $(BUILD_TOOLS_DIR)/revision_c.pl > $(SRC_DIR)/revision.c
 
 ###############################################################################
 #
@@ -1339,10 +1334,9 @@ dynoplibs-clean :
 compilers : compilers.dummy
 
 compilers.dummy : $(PARROT) $(GEN_LIBRARY)
+	$(MAKE) compilers/pct
 	$(MAKE) compilers/pge
 	$(MAKE) compilers/tge
-	$(MAKE) compilers/past-pm
-	$(MAKE) compilers/pct
 	$(MAKE) compilers/nqp
 	$(MAKE) compilers/json
 
@@ -1370,7 +1364,6 @@ languages-realclean :
 ###############################################################################
 
 compilers-clean :
-	$(MAKE) compilers/past-pm clean
 	$(MAKE) compilers/pct clean
 	$(MAKE) compilers/pge clean
 	$(MAKE) compilers/tge clean

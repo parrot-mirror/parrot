@@ -19,22 +19,19 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 14;
+use Test::More tests => 10;
 use Carp;
 use Cwd;
 use File::Copy;
 use File::Temp (qw| tempdir |);
 use_ok('Parrot::Ops2pm::Utils');
 use lib ("$main::topdir/t/tools/ops2cutils/testlib");
-use_ok( "GenerateCore", qw| generate_core | );
-
-my @srcopsfiles = qw( src/ops/core.ops src/ops/bit.ops src/ops/cmp.ops
-    src/ops/debug.ops src/ops/experimental.ops src/ops/io.ops src/ops/math.ops
-    src/ops/object.ops src/ops/pic.ops src/ops/pmc.ops src/ops/set.ops
-    src/ops/stack.ops src/ops/stm.ops src/ops/string.ops src/ops/sys.ops
-    src/ops/var.ops );
-my $num  = "src/ops/ops.num";
-my $skip = "src/ops/ops.skip";
+use GenerateCore qw|
+    generate_core
+    @srcopsfiles
+    $num
+    $skip
+|;
 
 ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
 my $cwd = cwd();
@@ -63,16 +60,11 @@ my $cwd = cwd();
         ok( -e $c_header_file, "$c_header_file created" );
         ok( -s $c_header_file, "$c_header_file has non-zero size" );
 
-        my $SOURCE = $self->print_c_source_top();
-        is( ref($SOURCE), q{GLOB}, "Argument type is filehandle (typeglob)" );
-
-        my $c_source_final;
-        ok(
-            $c_source_final = $self->print_c_source_bottom($SOURCE),
-            "print_c_source_bottom() returned successfully"
-        );
-        ok( -e $c_source_final, "$c_source_final created" );
-        ok( -s $c_source_final, "$c_source_final has non-zero size" );
+        my $source = IO::File->new('>' . $$self{source});
+        $self->print_c_source_top($source);
+        $self->print_c_source_bottom($source);
+        $source->close();
+        ok( -s $$self{source}, "file was written" );
     }
 
     ok( chdir($cwd), "returned to starting directory" );

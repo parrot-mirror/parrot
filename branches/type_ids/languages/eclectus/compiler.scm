@@ -10,6 +10,20 @@
   (set! counter (+ 1 counter))
   counter)
 
+(define (make-past-conser type)
+  (let ((type-symbol (string->symbol type)))
+    (lambda args
+      (cons type-symbol args))))
+
+(define past::op (make-past-conser "PAST::Op"))
+(define past::val (make-past-conser "PAST::Val"))
+(define past::var (make-past-conser "PAST::Var"))
+(define past::block (make-past-conser "PAST::Block"))
+(define past::stmts
+  (let ((type-symbol (string->symbol "PAST::Stmts")))
+    (lambda (stmts)
+      (cons type-symbol stmts))))
+
 ; Emit PIR that loads libs
 (define emit-init
   (lambda ()
@@ -46,10 +60,14 @@
               # compile and evaluate
               .local pmc past_compiler
               past_compiler = new [ 'PCT::HLLCompiler' ]
-              $P0 = split ' ', 'post pir evalpmc'
+              $P0 = split ' ', 'post pir'
               past_compiler.'stages'( $P0 )
               past_compiler.'eval'(stmts)
-          
+              $P1 = past_compiler.'eval'(stmts)
+              #_dumper ($P1)
+              $P0 = split ' ', 'evalpmc'
+              past_compiler.'stages'( $P0 )
+              past_compiler.'eval'( $P1 )
           .end
           ")))
 
@@ -57,6 +75,16 @@
 (define emit-builtins
   (lambda ()
     (emit "
+          .sub '__initconst' :init
+              $P0 = new 'EclectusBoolean'
+              $P0 = 1
+              set_root_global ['_eclectus'], '#t', $P0
+              $P0 = new 'EclectusBoolean'
+              set_root_global ['_eclectus'], '#f', $P0
+              $P0 = new 'EclectusEmptyList'
+              set_root_global ['_eclectus'], '()', $P0
+          .end
+
           .sub 'say'
               .param pmc args :slurpy
               if null args goto end
@@ -113,6 +141,29 @@
               .return ($I0)
           .end
 
+          .sub 'eq?'
+              .param pmc a
+              .param pmc b
+              $I0 = issame a, b
+
+              .return ($I0)
+          .end
+
+          .sub 'eqv?'
+              .param pmc a
+              .param pmc b
+              $I0 = iseq a, b
+
+              .return ($I0)
+          .end
+
+          .sub 'equal?'
+              .param pmc a
+              .param pmc b
+              $I0 = iseq a, b
+
+              .return ($I0)
+          .end
           ")))
 
 ; recognition of forms
@@ -122,14 +173,11 @@
       (and (pair? form)
            (eq? name (car form))))))
 
-(define if?
-  (make-combination-predicate 'if))
-
-(define let?
-  (make-combination-predicate 'let))
-
-(define lambda?
-  (make-combination-predicate 'lambda))
+(define if?     (make-combination-predicate 'if))
+(define let?    (make-combination-predicate 'let))
+(define lambda? (make-combination-predicate 'lambda))
+(define begin?  (make-combination-predicate 'begin))
+(define quote?  (make-combination-predicate 'quote))
 
 (define if-test
   (lambda (form)
@@ -143,141 +191,117 @@
   (lambda (form)
     (car (cdr (cdr (cdr form))))))
 
+(define (self-evaluating? x)
+  (or (string? x)
+      (number? x)
+      (char? x)
+      (boolean? x)))
+
 ; Support for primitive functions
 
-; is x a primitive?
-(define primitive?
-  (lambda (x)
-    (and (symbol? x)
-         (getprop x '*is-prim*))))
+(define-record-type primitive
+  (make-primitive arg-count emitter)
+  primitive?
+  (arg-count primitive-arg-count)
+  (emitter primitive-emitter))
+
+(define *primitives* (make-eq-hashtable))
+
+(define (lookup-primitive sym)
+  (hashtable-ref *primitives* sym #f))
 
 ; is x a call to a primitive? 
 (define primcall?
   (lambda (x)
-    (and (pair? x)
-         (primitive? (car x)))))
+    (and (pair? x) (lookup-primitive (car x)))))
 
-; a primitive function is a symbol with the properties
-; *is-prim*, *arg-count* and *emitter*
 ; implementatus of primitive functions are added
 ; with 'define-primitive'
 (define-syntax define-primitive
   (syntax-rules ()
-    [(_ (prim-name arg* ...) b b* ...)
-     (begin
-        (putprop 'prim-name '*is-prim*
-          #t)
-        (putprop 'prim-name '*arg-count*
-          (length '(arg* ...)))
-        (putprop 'prim-name '*emitter*
-          (lambda (arg* ...) b b* ...)))]))
+    ((_ (prim-name arg* ...) b b* ...)
+     (hashtable-set! *primitives*
+                     'prim-name
+                     (make-primitive (length '(arg* ...))
+                                     (lambda (arg* ...) b b* ...))))))
 
 ; implementation of fxadd1
 (define-primitive (fxadd1 arg)
-  (list
-    (string->symbol "PAST::Op")
-    '(@ (pirop "n_add"))
-    (emit-expr arg)
-    (emit-expr 1)))
+  (past::op '(@ (pirop "n_add"))
+            (emit-expr arg)
+            (emit-expr 1)))
 
 ; implementation of fx+
 (define-primitive (fx+ arg1 arg2)
-  (list
-    (string->symbol "PAST::Op")
-    '(@ (pirop "n_add"))
-    (emit-expr arg1)
-    (emit-expr arg2)))
+  (past::op '(@ (pirop "n_add"))
+            (emit-expr arg1)
+            (emit-expr arg2)))
 
 ; implementation of fxsub1
 (define-primitive (fxsub1 arg)
-  (list
-    (string->symbol "PAST::Op")
-    '(@ (pirop "n_sub"))
-    (emit-expr arg)
-    (emit-expr 1)))
+  (past::op
+        '(@ (pirop "n_sub"))
+        (emit-expr arg)
+        (emit-expr 1)))
 
 ; implementation of fx-
 (define-primitive (fx- arg1 arg2)
-  (list
-    (string->symbol "PAST::Op")
-    '(@ (pirop "n_sub"))
-    (emit-expr arg1)
-    (emit-expr arg2)))
+  (past::op '(@ (pirop "n_sub"))
+            (emit-expr arg1)
+            (emit-expr arg2)))
 
 ; implementation of fxlogand
 (define-primitive (fxlogand arg1 arg2)
-  (list
-    (string->symbol "PAST::Op")
-    '(@ (pirop "n_band"))
-    (emit-expr arg1)
-    (emit-expr arg2)))
+  (past::op '(@ (pirop "n_band"))
+            (emit-expr arg1)
+            (emit-expr arg2)))
 
 ; implementation of fxlogor
 (define-primitive (fxlogor arg1 arg2)
-  (list
-    (string->symbol "PAST::Op")
-    '(@ (pirop "n_bor"))
-    (emit-expr arg1)
-    (emit-expr arg2)))
+  (past::op '(@ (pirop "n_bor"))
+            (emit-expr arg1)
+            (emit-expr arg2)))
 
 ; implementation of char->fixnum
 (define-primitive (char->fixnum arg)
-  (list
-    (string->symbol "PAST::Op")
-    '(@ (pasttype "inline")
-                   (inline "new %r, 'EclectusFixnum'\\nassign %r, %0\\n"))
-    (emit-expr arg)))
+  (past::op '(@ (pasttype "inline")
+                (inline "new %r, 'EclectusFixnum'\\nassign %r, %0\\n"))
+            (emit-expr arg)))
 
 ; implementation of fixnum->char
 (define-primitive (fixnum->char arg)
-  (list
-    (string->symbol "PAST::Op")
-    '(@ (pasttype "inline")
-                   (inline "new %r, 'EclectusCharacter'\\nassign %r, %0\\n"))
-    (emit-expr arg)))
+  (past::op '(@ (pasttype "inline")
+                (inline "new %r, 'EclectusCharacter'\\nassign %r, %0\\n"))
+            (emit-expr arg)))
 
 ; implementation of cons
 (define-primitive (cons arg1 arg2)
-  (list
-    (string->symbol "PAST::Var")
-    '(@ (viviself "EclectusPair")
-        (name "%dummy")
-        (isdecl 1)
-        (scope "lexical"))
-    (list
-      (string->symbol "PAST::Op")
-      '(@ (name "infix:,"))
-      (emit-expr arg1)
-      (emit-expr arg2))))
+  (past::op '(@ (pasttype "inline")
+                (inline "new %r, 'EclectusPair'\\nset %r[%0], %1\\n"))
+            (emit-expr arg1)
+            (emit-expr arg2)))
 
 ; implementation of car
 (define-primitive (car arg)
-  (list
-    (string->symbol "PAST::Op")
-    '(@ (pasttype "inline")
-        (inline "%r = %0.'key'()\\n"))
-    (emit-expr arg)))
+  (past::op '(@ (pasttype "inline")
+                (inline "%r = %0.'key'()\\n"))
+            (emit-expr arg)))
 
 ; implementation of cdr
 (define-primitive (cdr arg)
-  (list
-    (string->symbol "PAST::Val")
-    '(@ (value 31)
-        (returns "EclectusFixnum"))))
+  (past::op '(@ (pasttype "inline")
+                (inline "%r = %0.'value'()\\n"))
+            (emit-expr arg)))
 
 (define emit-comparison
   (lambda (builtin arg1 arg2)
-    (list
-      (string->symbol "PAST::Op")
-      '(@ (pasttype "if"))
-      (list
-        (string->symbol "PAST::Op")
-        (quasiquote (@ (pasttype "chain")
-                       (name (unquote builtin))))
-        (emit-expr arg1)
-        (emit-expr arg2))
-      (emit-expr #t)
-      (emit-expr #f))))
+    (past::op '(@ (pasttype "if"))
+              (past::op (quasiquote (@ (pasttype "chain")
+                                       (name (unquote builtin))))
+                        (emit-expr arg1)
+                        (emit-expr arg2))
+              (emit-expr #t)
+              (emit-expr #f))))
 
 ; implementation of char<
 (define-primitive (char< arg1 arg2)
@@ -323,21 +347,26 @@
 (define-primitive (fx> arg1 arg2)
   (emit-comparison "infix:>" arg1 arg2))
 
+(define-primitive (eq? arg1 arg2)
+  (emit-comparison "eq?" arg1 arg2))
 
+(define-primitive (eqv? arg1 arg2)
+  (emit-comparison "eqv?" arg1 arg2))
+
+(define-primitive (equal? arg1 arg2)
+  (emit-comparison "equal?" arg1 arg2))
 
 ; asking for the type of an object
 (define emit-typequery
   (lambda (typename arg)
-    (list
-      (string->symbol "PAST::Op")
-      '(@ (pasttype "if"))
-      (list
-        (string->symbol "PAST::Op")
-        (quasiquote (@ (pasttype "inline")
-                       (inline (unquote (format "new %r, 'EclectusBoolean'\\nisa $I1, %0, '~a'\\n %r = $I1" typename)))))
-        (emit-expr arg))
-      (emit-expr #t)
-      (emit-expr #f))))
+    (past::op
+     '(@ (pasttype "if"))
+     (past::op
+      (quasiquote (@ (pasttype "inline")
+                     (inline (unquote (format #f "new %r, 'EclectusBoolean'\\nisa $I1, %0, '~a'\\n %r = $I1" typename)))))
+      (emit-expr arg))
+     (emit-expr #t)
+     (emit-expr #f))))
    
 (define-primitive (boolean? arg)
   (emit-typequery "EclectusBoolean" arg))
@@ -356,11 +385,6 @@
 
 
 
-; a getter of '*emitter*'
-(define primitive-emitter
-  (lambda (x)
-    (getprop x '*emitter*)))
-
 (define emit-function-header
   (lambda (function-name)
     (emit (string-append ".sub " function-name))))
@@ -374,50 +398,47 @@
 
 (define emit-primcall
   (lambda (x)
-    (let ([prim (car x)] [args (cdr x)])
+    (let ((prim (lookup-primitive (car x))) (args (cdr x)))
       (apply (primitive-emitter prim) args))))
 
 (define emit-functional-application
   (lambda (x)
     (append
-      (list  
-        (string->symbol "PAST::Op")
-        '(@ (pasttype "call"))
-        (emit-expr (car x)))
+      (past::op '(@ (pasttype "call"))
+                (emit-expr (car x)))
       (map
-        (lambda (arg)
-          (emit-expr arg))
-        (cdr x)))))
+       (lambda (arg)
+         (emit-expr arg))
+       (cdr x)))))
+
+(define (emit-variable x)
+  (past::var `(@ (name ,x)
+                 (scope "lexical")
+                 (viviself "Undef"))))
+
+(define (emit-constant x)
+  (cond
+   ((fixnum? x)
+    (past::val `(@ (value ,x)
+                   (returns "EclectusFixnum"))))
+   ((char? x)
+    (past::val `(@ (value ,(char->integer x))
+                   (returns "EclectusCharacter"))))
+   ((null? x)
+    (emit-global-ref "()"))
+   ((boolean? x)
+    (emit-global-ref (if x "#t" "#f")))
+   ((string? x)
+    (past::val `(@ (value (unquote (format #f "'~a'" x)))
+                   (returns "EclectusString"))))
+   ((vector? x)
+    (past::val '(@ (value "'#0()'")
+                   (returns "EclectusString"))))))
 
 
-; emit PIR for a scalar
-(define emit-atom
-  (lambda (x)
-    (list
-      (string->symbol (if (symbol? x) "PAST::Var" "PAST::Val"))
-      (cond
-        [(fixnum? x)
-         (quasiquote (@ (value (unquote x))
-                        (returns "EclectusFixnum")))]
-        [(char? x)
-         (quasiquote (@ (value (unquote (char->integer x)))
-                        (returns "EclectusCharacter")))]
-        [(null? x)
-         '(@ (value 0)
-             (returns "EclectusEmptyList"))]
-        [(boolean? x)
-         (quasiquote (@ (value (unquote (if x 1 0)))
-                        (returns "EclectusBoolean")))]
-        [(symbol? x)
-         (quasiquote (@ (name (unquote x))
-                        (scope "lexical")
-                        (viviself "Undef")))]
-        [(string? x)
-         (quasiquote (@ (value (unquote (format "'~a'" x)))
-                        (returns "EclectusString")))]
-        [(vector? x)
-         (quasiquote (@ (value "'#0()'")
-                        (returns "EclectusString")))]))))
+(define (emit-global-ref name)
+  (past::op `(@ (pasttype "inline")
+                (inline ,(format #f "%r = get_root_global ['_eclectus'], '~a'" name)))))
 
 (define bindings
   (lambda (x)
@@ -429,11 +450,9 @@
 
 (define emit-variable
   (lambda (x)
-    (list
-      (string->symbol "PAST::Var")
-      (quasiquote (@ (name (unquote x))
-                     (scope "lexical")
-                     (viviself "Undef"))))))
+    (past::var (quasiquote (@ (name (unquote x))
+                              (scope "lexical")
+                              (viviself "Undef"))))))
 
 (define emit-let
   (lambda (binds body)
@@ -441,68 +460,65 @@
       (emit-expr body)
       (begin
         (append
-          (cons
-            (string->symbol "PAST::Stmts")
-            (map 
-              (lambda (decl)
-                (list
-                  (string->symbol "PAST::Op")
-                  '(@ (pasttype "copy")
-                      (lvalue "1"))
-                  (list
-                    (string->symbol "PAST::Var")
-                    (quasiquote (@ (name (unquote (car decl)))
-                                   (scope "lexical")
-                                   (viviself "Undef")
-                                   (isdecl 1))))
-                  (emit-expr (cadr decl))))
-              binds))
+          (past::stmts
+           (map 
+            (lambda (decl)
+              (past::op
+               '(@ (pasttype "copy")
+                   (lvalue "1"))
+               (past::var
+                (quasiquote (@ (name (unquote (car decl)))
+                               (scope "lexical")
+                               (viviself "Undef")
+                               (isdecl 1))))
+               (emit-expr (cadr decl))))
+            binds))
           (list
-            (emit-expr body)))))))
+           (emit-expr body)))))))
 
 (define emit-if
   (lambda (x)
-    (list
-      (string->symbol "PAST::Op")
-      '(@ (pasttype "if"))
-      (emit-expr (if-test x))
-      (emit-expr (if-conseq x))
-      (emit-expr (if-altern x)))))
+    (past::op
+     '(@ (pasttype "if"))
+     (emit-expr (if-test x))
+     (emit-expr (if-conseq x))
+     (emit-expr (if-altern x)))))
 
 (define emit-lambda
   (lambda (x)  
     ; (write (list "all" x "decl" (cadr x) "stmts" (cddr x) ))(newline)
-    (list
-      (string->symbol "PAST::Block")
-      (quasiquote (@ (blocktype "declaration")
-                     (arity (unquote (length (cadr x))))))
-      (cons
-        (string->symbol "PAST::Stmts")
-        (map
-          (lambda (decl)
-            (list
-              (string->symbol "PAST::Var")
-              (quasiquote (@ (name (unquote decl))
-                             (scope "parameter")))))
-          (cadr x)))
-      (cons
-        (string->symbol "PAST::Stmts")
-        (map
-          (lambda (stmt)
-            (emit-expr stmt))
-          (cddr x))))))
+    (past::block
+     (quasiquote (@ (blocktype "declaration")
+                    (arity (unquote (length (cadr x))))))
+     (past::stmts (map
+                   (lambda (decl)
+                     (past::var
+                      (quasiquote (@ (name (unquote decl))
+                                     (scope "parameter")))))
+                   (cadr x)))
+     (past::stmts (map
+                   (lambda (stmt)
+                     (emit-expr stmt))
+                   (cddr x))))))
+
+(define emit-begin
+  (lambda (x)
+    (past::stmts (map emit-expr (cdr x)))))
 
 ; emir PIR for an expression
 (define emit-expr
   (lambda (x)
     ;(diag (format "emit-expr: ~s" x))
     (cond
-      [(atom? x)      (emit-atom x)]
-      [(let? x)       (emit-let (bindings x) (body x))]
-      [(if? x)        (emit-if x)]
-      [(lambda? x)    (emit-lambda x)]
-      [(primcall? x)  (emit-primcall x)]
-      [else           (emit-functional-application x)]))) 
+      ((symbol? x)          (emit-variable x))
+      ((quote? x)           (emit-constant (cadr x)))
+      ((self-evaluating? x) (emit-constant x))
+      ((let? x)             (emit-let (bindings x) (body x)))
+      ((if? x)              (emit-if x))
+      ((begin? x)           (emit-begin x))
+      ((lambda? x)          (emit-lambda x))
+      ((primcall? x)        (emit-primcall x))
+      (else                 (emit-functional-application x)))))
 
 ; transverse the program and rewrite
 ; "and" can be supported by transformation before compiling
@@ -512,30 +528,30 @@
 ; as I don't know how to manipulate S-expressions while traversing it
 (define preprocess
   (lambda (tree)
-    (cond [(atom? tree)
-           tree]
-          [(eqv? (car tree) 'and) 
+    (cond ((atom? tree)
+           tree)
+          ((eqv? (car tree) 'and) 
            (preprocess
-             (cond [(null? (cdr tree)) #t]
-                   [(= (length (cdr tree)) 1) (cadr tree)]
-                   [else (list
+             (cond ((null? (cdr tree)) #t)
+                   ((= (length (cdr tree)) 1) (cadr tree))
+                   (else (list
                            'if
                            (cadr tree)
                            (cons 'and (cddr tree))
-                            #f)]))]
-          [(eqv? (car tree) 'or) 
+                            #f)))))
+          ((eqv? (car tree) 'or) 
            (preprocess
-             (cond [(null? (cdr tree)) #f]
-                   [(= (length (cdr tree)) 1) (cadr tree)]
-                   [else (list
+             (cond ((null? (cdr tree)) #f)
+                   ((= (length (cdr tree)) 1) (cadr tree))
+                   (else (list
                            'if
                            (cadr tree)
                            (cadr tree)
-                           (cons 'or (cddr tree)))]))]
-          [(eqv? (car tree) 'not) 
+                           (cons 'or (cddr tree)))))))
+          ((eqv? (car tree) 'not) 
            (preprocess
-             (list 'if (cadr tree) #f #t))]
-          [(eqv? (car tree) 'let*) 
+             (list 'if (cadr tree) #f #t)))
+          ((eqv? (car tree) 'let*) 
            (preprocess
              (if (null? (cadr tree))
                  (cons 'let (cdr tree))
@@ -544,21 +560,21 @@
                    (list (caadr tree))
                    (append
                      (list 'let* (cdadr tree))
-                     (cddr tree)))))]
-          [else
-           (map preprocess tree)]))) 
+                     (cddr tree))))))
+          (else
+           (map preprocess tree))))) 
 
 ; eventually this will become a PIR generator
 ; for PAST as SXML
 ; currently it only handles the pushes
 (define past-sxml->past-pir
   (lambda (past)
-    (let ([uid (gen-unique-id)])
+    (let ((uid (gen-unique-id)))
       ;(diag (format "to_pir: ~a" past))
       (emit "
             .local pmc reg_~a
             reg_~a = new '~a'
-            " uid uid (car past))
+            " uid uid (symbol->string (car past)))
       (for-each
         (lambda (daughter)
           (if (eq? '@ (car daughter))
@@ -577,11 +593,10 @@
 ; print the result of the evaluation
 (define wrap-say
   (lambda (past)
-    (list
-      (string->symbol "PAST::Op")
-      '(@ (pasttype "call")
-          (name "say"))
-      past)))
+    (past::op
+     '(@ (pasttype "call")
+         (name "say"))
+     past)))
 
 ; the actual compiler
 (define compile-program

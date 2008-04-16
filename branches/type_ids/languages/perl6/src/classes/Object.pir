@@ -30,6 +30,11 @@ Perform initializations and create the base classes.
     .local pmc objectclass
     objectclass = newclass 'Perl6Object'
 
+    ##  need a place to store variable type, if we have one; this is
+    ##  needed per value because we have no container that exists
+    ##  between assignments
+    addattribute objectclass, 'vartype'
+
     ##  create a Perl6Protoobject class.  We don't call it 'Protoobject'
     ##  to avoid conflicts with the Protoobject class used by PCT and PGE.
     .local pmc protoclass
@@ -131,6 +136,7 @@ Parrot class via the C<get_class> opcode.
 
     .return (protoobject)
 .end
+
 
 =item !keyword_class(name)
 
@@ -331,6 +337,19 @@ Print the object
 .sub 'say' :method
     $P0 = get_hll_global 'say'
     .return $P0(self)
+.end
+
+=item clone (vtable method)
+
+Actually just returns the object itself. This is used to get us working with
+the copy opcode, which clones things on assignment. However, objects by
+default have reference semantics, not value semantics. Those with value
+semantics override this.
+
+=cut
+
+.sub 'clone' :method :vtable
+    .return(self)
 .end
 
 =back

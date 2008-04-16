@@ -55,6 +55,12 @@ N: Anders Nor Berle
 D: Some cleanups and FreeBSD related fixes.
 E: debolaz@gmail.com
 
+N: Andreas Rottmann
+D: Improvements of Eclectus
+
+N: Andrew Parker
+D: Port PAST-pm test to PCT.
+
 N: Andrew Rodland
 D: vim syntax files and editor doc
 
@@ -71,6 +77,9 @@ E: andy@petdance.com
 
 N: Angel Faus
 D: CFG and live analysis.
+
+N: Arcady Goldmints-Orlov
+D: Lists and tuples for Pynie.
 
 N: Arthur Bergman
 D: Trying to ride a Ponie - build and compat fixes.
@@ -227,6 +236,7 @@ D: Debian packaging
 S: Chemnitz, Germany
 
 N: François Perrad
+E: francois.perrad@gadz.org
 W: http://fperrad.googlepages.com/home
 D: build fixes for MinGW
 D: a patch to remove slash_exec from config

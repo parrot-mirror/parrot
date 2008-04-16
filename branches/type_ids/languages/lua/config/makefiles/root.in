@@ -87,7 +87,7 @@ GEN_PBC = \
  lua.pbc
 
 all: \
- src/pmc/lua_group$(LOAD_EXT) \
+ $(PMCDIR)/lua_group$(LOAD_EXT) \
  $(LIB_PBCS) \
  $(LIBPATH)/luaperl.pbc \
  $(LIBPATH)/alarm.pbc \
@@ -97,6 +97,7 @@ all: \
  $(LIBPATH)/md5.pbc \
  $(LIBPATH)/random.pbc \
  $(LIBPATH)/sha1.pbc \
+ $(LIBPATH)/uuid.pbc \
  $(GEN_PIR) \
  $(GEN_PBC) \
  src/yapp/Lua/parser.pm
@@ -126,7 +127,7 @@ lua@exe@: lua.pbc
 $(LIBPATH)/lualibs.pbc: $(LIB_PBCS)
 	$(PBC_MERGE) -o $(LIBPATH)/lualibs.pbc $(LIB_PBCS)
 
-src/pmc/lua_group$(LOAD_EXT) : $(PMC_FILES)
+$(PMCDIR)/lua_group$(LOAD_EXT) : $(PMC_FILES)
 	@cd $(PMCDIR) && $(PMCBUILD) generate $(PMCS)
 	@cd $(PMCDIR) && $(PMCBUILD) compile $(PMCS)
 	@cd $(PMCDIR) && $(PMCBUILD) linklibs $(PMCS)
@@ -192,6 +193,9 @@ $(LIBPATH)/random.pbc: $(LIBPATH)/random.pir
 $(LIBPATH)/sha1.pbc: $(LIBPATH)/md5.pir
 	$(PERL) -pe "s|md5|sha1|g; s|MD5|SHA1|g" $(LIBPATH)/md5.pir > $(LIBPATH)/sha1.pir
 	$(PARROT) --output=$(LIBPATH)/sha1.pbc $(LIBPATH)/sha1.pir
+
+$(LIBPATH)/uuid.pbc: $(LIBPATH)/uuid.pir
+	$(PARROT) --output=$(LIBPATH)/uuid.pbc $(LIBPATH)/uuid.pir
 
 src/yapp/Lua/parser.pm: src/yapp/Lua/lua51.yp
 	yapp -v -m Lua::parser -o src/yapp/Lua/parser.pm src/yapp/Lua/lua51.yp

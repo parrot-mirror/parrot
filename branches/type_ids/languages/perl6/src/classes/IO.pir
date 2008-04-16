@@ -17,7 +17,7 @@ This file implements the IO file handle class.
 .namespace ['IO']
 
 .sub 'onload' :anon :init :load
-    $P0 = newclass 'IO'
+    $P0 = subclass 'Any', 'IO'
     addattribute $P0, "$!PIO" # for Parrot IO object
     $P1 = get_hll_global ['Perl6Object'], 'make_proto'
     $P1($P0, 'IO')
@@ -60,6 +60,20 @@ Writes the given list of items to the file, then a newline character.
     self.'print'(list)
     print PIO, "\n"
     .return (1)
+.end
+
+
+=item readline
+
+Reads a line from the file handle.
+
+=cut
+
+.sub 'readline' :method
+    .local pmc PIO
+    PIO = getattribute self, "$!PIO"
+    $P0 = PIO.readline('')
+    .return ($P0)
 .end
 
 

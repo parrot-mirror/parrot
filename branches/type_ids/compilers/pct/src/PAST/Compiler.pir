@@ -14,7 +14,7 @@ By default PAST::Compiler transforms a PAST tree into POST.
 .sub 'onload' :anon :load :init
     load_bytecode 'PCT/HLLCompiler.pbc'
     $P0 = get_hll_global 'Protomaker'
-    $P1 = $P0.'new_subclass'('PCT::HLLCompiler', 'PAST::Compiler')
+    $P1 = $P0.'new_subclass'('PCT::HLLCompiler', 'PAST::Compiler', '%!symtable')
 
     $P0 = get_hll_global ['PAST'], 'Compiler'
     $P0.'language'('PAST')
@@ -66,12 +66,18 @@ Compile the abstract syntax tree given by C<past> into POST.
     .param pmc past
     .param pmc options         :slurpy :named
 
+    .local pmc symtable
+    symtable = new 'Hash'
+    setattribute self, '%!symtable', symtable
+
     .local pmc blockpast
     blockpast = get_global '@?BLOCK'
     unless null blockpast goto have_blockpast
     blockpast = new 'ResizablePMCArray'
     set_global '@?BLOCK', blockpast
   have_blockpast:
+    null $P0
+    set_global '$?SUB', $P0                                # see RT#49758
     .return self.'as_post'(past, 'rtype'=>'v')
 .end
 
@@ -137,6 +143,8 @@ third and subsequent children can be any value they wish.
     cpast = shift iter
     cpost = self.'as_post'(cpast, 'rtype'=>rtype)
     ops.'push'(cpost)
+    .local pmc is_flat
+    is_flat = cpast.'flat'()
     if null posargs goto iter_rtype
     if rtype != ':' goto iter_pos
     .local pmc npast, npost
@@ -144,16 +152,27 @@ third and subsequent children can be any value they wish.
     unless npast goto iter_pos
   iter_named:
     npost = self.'as_post'(npast, 'rtype'=>'~')
-    ops.'push'(npost)
     $S0 = cpost
+    if is_flat goto flat_named
     $S1 = npost
+    ops.'push'(npost)
     concat $S0, ' :named('
     concat $S0, $S1
     concat $S0, ')'
+    goto named_done
+  flat_named:
+    concat $S0, ' :named :flat'
+  named_done:
     push namedargs, $S0
     goto iter_rtype
   iter_pos:
+    if is_flat goto flat_pos
     push posargs, cpost
+    goto iter_rtype
+  flat_pos:
+    $S0 = cpost
+    concat $S0, ' :flat'
+    push posargs, $S0
   iter_rtype:
     unless sigidx < sigmax goto iter_loop
     inc sigidx
@@ -174,7 +193,7 @@ POST equivalents.
 
 =over 4
 
-=item post(node)
+=item as_post(node)
 
 Return a POST representation of C<node>.  Note that C<post> is
 a multimethod based on the type of its first argument, this is
@@ -225,13 +244,14 @@ instead of an entire PAST structure.
     .return (ops)
 .end
 
+
 =back
 
 =head3 C<PAST::Block>
 
 =over 4
 
-=item post(PAST::Block node)
+=item as_post(PAST::Block node)
 
 Return the POST representation of a C<PAST::Block>.
 
@@ -275,6 +295,33 @@ Return the POST representation of a C<PAST::Block>.
     set_global '$?SUB', bpost
   outer_done:
 
+    ##  merge the node's symtable with the master
+    .local pmc outersym, symtable
+    outersym = getattribute self, '%!symtable'
+    symtable = outersym
+    ##  if the Block doesn't have a symtable, re-use the existing one
+    $P0 = node.'symtable'()
+    unless $P0 goto have_symtable
+    ##  if the Block has a default ('') entry, use the Block's symtable as-is
+    symtable = $P0
+    $I0 = defined symtable['']
+    if $I0 goto have_symtable
+    ##  merge the Block's symtable with outersym
+    symtable = clone symtable
+  symtable_merge:
+    .local pmc iter
+    iter = new 'Iterator', outersym
+  symtable_merge_loop:
+    unless iter goto have_symtable
+    $S0 = shift iter
+    $I0 = exists symtable[$S0]
+    if $I0 goto symtable_merge_loop
+    $P0 = iter[$S0]
+    symtable[$S0] = $P0
+    goto symtable_merge_loop
+  have_symtable:
+    setattribute self, '%!symtable', symtable
+
     .local pmc compiler
     compiler = node.'compiler'()
     if compiler goto children_compiler
@@ -302,8 +349,9 @@ Return the POST representation of a C<PAST::Block>.
     bpost.'push'($P0)
 
   children_done:
-    ##  restore previous outer scope
+    ##  restore previous outer scope and symtable
     set_global '$?SUB', outerpost
+    setattribute self, '%!symtable', outersym
 
     ##  get a result register if we need it
     .local string rtype, result
@@ -351,13 +399,14 @@ Return the POST representation of a C<PAST::Block>.
     .return (bpost)
 .end
 
+
 =back
 
 =head3 C<PAST::Op>
 
 =over 4
 
-=item post(PAST::Op node)
+=item as_post(PAST::Op node)
 
 Return the POST representation of a C<PAST::Op> node.  Normally
 this is handled by redispatching to a method corresponding to
@@ -962,18 +1011,15 @@ node with a 'pasttype' of bind.
     rpost = self.'as_post'(rpast, 'rtype'=>'P')
     ops.'push'(rpost)
 
-    .local string scope
     lpast.lvalue(1)
-    scope = self.'scope'(lpast)
-    $P0 = find_method self, scope
-    lpost = self.$P0(lpast, rpost)
+    lpost = self.'as_post'(lpast, 'bindpost'=>rpost)
     ops.'push'(lpost)
     ops.'result'(lpost)
     .return (ops)
 .end
 
 
-=item assign(PAST::Op node)
+=item copy(PAST::Op node)
 
 Implement a 'copy' assignment (at least until we get the 'copy'
 opcode -- see RT#47828).
@@ -1039,42 +1085,58 @@ node with a 'pasttype' of inline.
     .return (ops)
 .end
 
+
 =back
 
 =head3 C<PAST::Var>
 
 =over 4
 
-=item scope(PAST::Var node)
+=item as_post(PAST::Block node)
 
-Helper function to return the scope of a variable given by C<node>.
-The scope is determined by the node's C<scope> attribute if set,
-otherwise search outward through the symbol tables of any lexical
-blocks to determine the scope.
+Return the POST representation of a C<PAST::Var>.  Generally we
+redispatch to an appropriate handler based on the node's 'scope'
+attribute.
 
 =cut
 
-.sub 'scope' :method :multi(_, ['PAST::Var'])
+.sub 'as_post' :method :multi(_, ['PAST::Var'])
     .param pmc node
-    .local pmc scope
-    scope = node.'scope'()
-    if scope goto end
+    .param pmc options         :slurpy :named
 
+    ##  set 'bindpost'
+    .local pmc bindpost
+    bindpost = options['bindpost']
+    unless null bindpost goto have_bindpost
+    bindpost = new 'Undef'
+  have_bindpost:
+
+    ## determine the node's scope.  First, check the node itself
+    .local string scope
+    scope = node.'scope'()
+    if scope goto have_scope
+    ## otherwise, check the current symbol table under the variable's name
     .local string name
     name = node.'name'()
-    .local pmc iter, bpast
-    $P0 = get_global '@?BLOCK'
-    iter = new 'Iterator', $P0
-  iter_loop:
-    unless iter goto end
-    .local pmc bpast, symbol
-    bpast = shift iter
-    symbol = bpast.'symbol'(name)
-    unless symbol goto iter_loop
-    scope = symbol['scope']
-    unless scope goto iter_loop
-  end:
-    .return (scope)
+    .local pmc symtable
+    symtable = getattribute self, '%!symtable'
+    $P0 = symtable[name]
+    if null $P0 goto default_scope
+    scope = $P0['scope']
+    if scope goto have_scope
+  default_scope:
+    ##  see if an outer block has set a default scope
+    $P0 = symtable['']
+    if null $P0 goto scope_error
+    scope = $P0['scope']
+    unless scope goto scope_error
+  have_scope:
+    push_eh scope_error
+    $P0 = find_method self, scope
+    pop_eh
+    .return self.$P0(node, bindpost)
+  scope_error:
+    .return self.'panic'("Scope ", scope, " not found for PAST::Var '", name, "'")
 .end
 
 
@@ -1104,24 +1166,9 @@ blocks to determine the scope.
 .end
 
 
-.sub 'as_post' :method :multi(_, ['PAST::Var'])
-    .param pmc node
-    .param pmc options         :slurpy :named
-
-    .local string scope
-    scope = self.'scope'(node)
-    push_eh scope_error
-    $P0 = find_method self, scope
-    pop_eh
-    .return self.$P0(node)
-  scope_error:
-    $S0 = node.'name'()
-    .return self.'panic'("No scope found for PAST::Var '", $S0, "'")
-.end
-
-
 .sub 'parameter' :method :multi(_, ['PAST::Var'])
     .param pmc node
+    .param pmc bindpost
 
     ##  get the current sub
     .local pmc subpost
@@ -1167,8 +1214,7 @@ blocks to determine the scope.
 
 .sub 'package' :method :multi(_, ['PAST::Var'])
     .param pmc node
-    .param pmc bindpost        :optional
-    .param int has_bindpost    :opt_flag
+    .param pmc bindpost
 
     .local pmc ops, fetchop, storeop
     $P0 = get_hll_global ['POST'], 'Ops'
@@ -1183,7 +1229,7 @@ blocks to determine the scope.
     ns = node.'namespace'()
     $I0 = defined ns
     if $I0 goto package_hll
-    if has_bindpost goto package_bind
+    if bindpost goto package_bind
     fetchop = $P0.'new'(ops, name, 'pirop'=>'get_global')
     storeop = $P0.'new'(name, ops, 'pirop'=>'set_global')
     .return self.'vivify'(node, ops, fetchop, storeop)
@@ -1192,7 +1238,7 @@ blocks to determine the scope.
 
   package_hll:
     if ns goto package_ns
-    if has_bindpost goto package_hll_bind
+    if bindpost goto package_hll_bind
     fetchop = $P0.'new'(ops, name, 'pirop'=>'get_hll_global')
     storeop = $P0.'new'(name, ops, 'pirop'=>'set_hll_global')
     .return self.'vivify'(node, ops, fetchop, storeop)
@@ -1202,7 +1248,7 @@ blocks to determine the scope.
   package_ns:
     $P1 = new 'CodeString'
     ns = $P1.'key'(ns)
-    if has_bindpost goto package_ns_bind
+    if bindpost goto package_ns_bind
     fetchop = $P0.'new'(ops, ns, name, 'pirop'=>'get_hll_global')
     storeop = $P0.'new'(ns, name, ops, 'pirop'=>'set_hll_global')
     .return self.'vivify'(node, ops, fetchop, storeop)
@@ -1213,8 +1259,7 @@ blocks to determine the scope.
 
 .sub 'lexical' :method :multi(_, ['PAST::Var'])
     .param pmc node
-    .param pmc bindpost        :optional
-    .param int has_bindpost    :opt_flag
+    .param pmc bindpost
 
     .local string name
     $P0 = get_hll_global ['POST'], 'Ops'
@@ -1224,7 +1269,7 @@ blocks to determine the scope.
     .local int isdecl
     isdecl = node.'isdecl'()
 
-    if has_bindpost goto lexical_bind
+    if bindpost goto lexical_bind
 
   lexical_post:
     if isdecl goto lexical_decl
@@ -1256,8 +1301,7 @@ blocks to determine the scope.
 
 .sub 'keyed' :method :multi(_, ['PAST::Var'])
     .param pmc node
-    .param pmc bindpost        :optional
-    .param int has_bindpost    :opt_flag
+    .param pmc bindpost
 
     .local pmc ops
     $P0 = get_hll_global ['POST'], 'Ops'
@@ -1296,7 +1340,7 @@ blocks to determine the scope.
     concat name, ']'
     .local pmc fetchop, storeop
     $P0 = get_hll_global ['POST'], 'Op'
-    if has_bindpost goto keyed_bind
+    if bindpost goto keyed_bind
     fetchop = $P0.'new'(ops, name, 'pirop'=>'set')
     storeop = $P0.'new'(name, ops, 'pirop'=>'set')
     .return self.'vivify'(node, ops, fetchop, storeop)
@@ -1309,8 +1353,7 @@ blocks to determine the scope.
 
 .sub 'attribute' :method :multi(_, ['PAST::Var'])
     .param pmc node
-    .param pmc bindpost        :optional
-    .param int has_bindpost    :opt_flag
+    .param pmc bindpost
 
     .local string name
     $P0 = get_hll_global ['POST'], 'Ops'
@@ -1320,7 +1363,7 @@ blocks to determine the scope.
     .local int isdecl
     isdecl = node.'isdecl'()
 
-    if has_bindpost goto attribute_bind
+    if bindpost goto attribute_bind
 
   attribute_post:
     if isdecl goto attribute_decl
@@ -1349,7 +1392,7 @@ blocks to determine the scope.
 
 =over 4
 
-=item post(PAST::Val node [, 'rtype'=>rtype])
+=item as_post(PAST::Val node [, 'rtype'=>rtype])
 
 Return the POST representation of the constant value given
 by C<node>.  The C<rtype> parameter advises the method whether

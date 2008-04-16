@@ -188,10 +188,15 @@ END
         $parent_headers .= "src/pmc/pmc_$_.h "
             for $self->pmc_parents($pmc);
 
-        # make each pmc depend upon PCCMETHOD.pm if it uses METHOD
+        # add dependencies that result from METHOD usage.
         my $pmc_fname = catfile('src', 'pmc', "$pmc.pmc");
-        my $pccmethod_depend =
-            contains_pccmethod($pmc_fname) ? 'lib/Parrot/Pmc2c/PCCMETHOD.pm' : '';
+        my $pccmethod_depend = '';
+        if (contains_pccmethod($pmc_fname)) {
+            $pccmethod_depend = 'lib/Parrot/Pmc2c/PCCMETHOD.pm';
+            if ($pmc ne 'fixedintegerarray') {
+                $pccmethod_depend .= ' src/pmc/pmc_fixedintegerarray.h';
+            }
+        }
         my $include_headers = get_includes($pmc_fname);
 
         $TEMP_pmc_build .= <<END
