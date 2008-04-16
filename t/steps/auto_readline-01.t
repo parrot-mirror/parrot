@@ -48,7 +48,7 @@ $osname = 'mswin32';
 $cc = 'gcc';
 ok(auto::readline::_handle_mswin32($conf, $osname, $cc),
     "_handle_mswin32() returned true value");
-like($conf->data->get( 'libs' ), qr/-lreadline -lgw32c/,
+like($conf->data->get( 'libs' ), qr/-lreadline/,
     "'libs' modified as expected");
 
 $osname = 'mswin32';
@@ -134,12 +134,14 @@ $cwd = cwd();
 {
     my $tdir3 = File::Spec->canonpath( tempdir( CLEANUP => 1 ) );
     ok(chdir $tdir3, "Able to change to temporary directory");
-    $step->{macports_root} = $tdir3;
     ok( (mkdir 'lib'), "Able to make lib directory");
     ok( (mkdir 'include'), "Able to make include directory");
-    ok( (mkdir 'include/readline'), "Able to make include/readline directory");
     my $libdir = File::Spec->catdir( $tdir3, 'lib' );
     my $includedir = File::Spec->catdir( $tdir3, 'include' );
+    $conf->data->set( ports_base_dir => $tdir3 );
+    $conf->data->set( ports_lib_dir => $libdir );
+    $conf->data->set( ports_include_dir => $includedir );
+    ok( (mkdir 'include/readline'), "Able to make include/readline directory");
     my $file = qq{$includedir/readline/readline.h};
     open my $FH, ">", $file or croak "Unable to open $file for writing";
     print $FH qq{Hello Darwin\n};
@@ -159,12 +161,14 @@ $cwd = cwd();
 {
     my $tdir3 = File::Spec->canonpath( tempdir( CLEANUP => 1 ) );
     ok(chdir $tdir3, "Able to change to temporary directory");
-    $step->{macports_root} = $tdir3;
     ok( (mkdir 'lib'), "Able to make lib directory");
     ok( (mkdir 'include'), "Able to make include directory");
-    ok( (mkdir 'include/readline'), "Able to make include/readline directory");
     my $libdir = File::Spec->catdir( $tdir3, 'lib' );
     my $includedir = File::Spec->catdir( $tdir3, 'include' );
+    $conf->data->set( ports_base_dir => $tdir3 );
+    $conf->data->set( ports_lib_dir => $libdir );
+    $conf->data->set( ports_include_dir => $includedir );
+    ok( (mkdir 'include/readline'), "Able to make include/readline directory");
     my $file = qq{$includedir/readline/readline.h};
     $osname = 'darwin';
     $flagsbefore = $conf->data->get( 'linkflags' );
