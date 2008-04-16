@@ -34,15 +34,16 @@ lp:
     print $P1
     print "\n"
 no_sym:
-    $I0 = typeof $P0
-    if $I0 != .NCI goto no_nci
+    .local string type
+    type = typeof $P0
+    if type != 'NCI' goto no_nci
     $P0 = new 'String'
     $P0 = "NCI"
 no_nci:
     print spac
     print $S0
     print " => "
-    if $I0 != .MultiSub goto no_multi
+    if type != 'MultiSub' goto no_multi
     $I1 = lev + 1
     print " Multi [\n"
     dump_multi($P0, $I1)
@@ -52,7 +53,7 @@ no_nci:
 no_multi:
     print $P0
     print "\n"
-    if $I0 != .NameSpace goto no_ns
+    if type != 'NameSpace' goto no_ns
     $I1 = lev + 1
     dump($P0, $I1)
 no_ns:
