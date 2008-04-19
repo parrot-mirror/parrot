@@ -1,0 +1,163 @@
+/*
+Copyright (C) 2001-2008, The Perl Foundation.
+$Id$
+
+=head1 NAME
+
+src/pmc/packfile.pmc - Packfile PMC
+
+=head1 DESCRIPTION
+
+This class implements a Packfile object, as specified in PDD13.  This object is
+the top level parser and serializer for *.pbc files.
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+pmclass Packfile {
+
+/*
+
+=item C<STRING *get_string()>
+
+Return raw serialized PBC file data.
+
+=cut
+
+*/
+    VTABLE STRING *get_string() {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+/*
+
+=item C<void set_string_native(STRING *value)>
+
+Parse raw serialized PBC file data into the Packfile data structure.
+
+=cut
+
+*/
+    VTABLE void set_string_native(STRING *value) {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+
+/*
+
+=item C<INTVAL get_integer_keyed_str(STRING *key)>
+
+Fetch an integer keyed value from the packfile object.  Valid keys are:
+
+=over 4
+
+=item wordsize
+
+=item byteorder
+
+=item fptype
+
+=item version_major
+
+=item version_minor
+
+=item version_patch
+
+=item bytecode_major
+
+=item bytecode_minor
+
+=item uuid_type
+
+=item uuid_length
+
+=back
+
+=cut
+
+*/
+    VTABLE INTVAL get_integer_keyed_str(STRING *key) {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+/*
+
+=item C<STRING *get_string_keyed_str(STRING *key)>
+
+Fetch a string keyed value from the packfile object.  Valid keys are:
+
+=over 4
+
+=item uuid
+
+=back
+
+=cut
+
+*/
+    VTABLE STRING *get_string_keyed_str(STRING *key) {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+/*
+
+=item C<void set_integer_keyed_str(STRING *key, INTVAL value)>
+
+Set an integer keyed value to the specified value.  Valid keys are:
+
+=over 4
+
+=item version_major
+
+=item version_minor
+
+=item version_patch
+
+=item uuid_type
+
+=back
+
+=cut
+
+*/
+    VTABLE void set_integer_keyed_str(STRING *key, INTVAL value) {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+/*
+
+=item C<PMC *get_directory()>
+
+Fetch the PackfileDirectory PMC that represents the directory segment at the
+start of the packfile.
+
+=cut
+
+*/
+    PMC *get_directory() {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+
+}
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
