@@ -1,0 +1,146 @@
+/*
+Copyright (C) 2001-2008, The Perl Foundation.
+$Id$
+
+=head1 NAME
+
+src/pmc/packfiledirectory.pmc - PackfileDirectory PMC
+
+=head1 DESCRIPTION
+
+This class implements a PackfileDirectory object, a segment of the .pbc data
+file used for listing the rest of the file's contents.  Essentially this
+segment is a container for all other segments within a Packfile.
+
+See packfile.pmc for the toplevel Packfile interface, see packfilesegment.pmc
+for the list of methods every packfile segment pmc must implement; see PDD13
+for the design spec.
+
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+pmclass PackfileDirectory extends PackfileSegment {
+
+
+/*
+
+=item C<STRING *pack()>
+
+Serialize the segment.
+
+=cut
+
+*/
+    STRING *pack() {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+
+/*
+
+=item C<void unpack(STRING *data)>
+
+Unpack a serialized segment string.
+
+=cut
+
+*/
+    void unpack(STRING *data) {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+
+/*
+
+=item C<INTVAL elements()>
+
+Get the number of elements in the array.
+
+=cut
+
+*/
+    VTABLE INTVAL elements() {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+
+/*
+
+=item C<PMC *get_pmc_keyed_int(INTVAL index)>
+
+Fetch a segment PMC from the array.
+
+=cut
+
+*/
+    VTABLE PMC *get_pmc_keyed_int(INTVAL index)  {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+
+/*
+
+=item C<STRING *get_string_keyed_int(INTVAL index)>
+
+Fetch a string containing the name of the specified segment PMC.
+
+=cut
+
+*/
+    VTABLE STRING *get_string_keyed_int(INTVAL index)  {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+
+/*
+
+=item C<PMC *get_pmc_keyed_str(STRING *name)>
+
+Search the array for a segment with the given name, and return it if it exists.
+
+=cut
+
+*/
+    VTABLE PMC *get_pmc_keyed_str(STRING *name)  {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+
+/*
+
+=item C<void set_pmc_keyed_str(STRING *name, PMC *segment)>
+
+Add a segment with the given name to the directory.  If a segment with this
+name already existed, it will be replaced with the new segment.
+
+=cut
+
+*/
+    VTABLE void set_pmc_keyed_str(STRING *name, PMC *segment)  {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+
+}
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
