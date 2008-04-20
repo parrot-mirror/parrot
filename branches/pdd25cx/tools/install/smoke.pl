@@ -58,7 +58,7 @@ open $FH, '>', $filename
         or die "Can't open $filename ($!).\n";
 print $FH "token TOP { \\s* }\n";
 close $FH;
-$out = `$parrot lib/parrot/library/PGE/P6Grammar.pir $filename`;
+$out = `$parrot lib/parrot/library/PGE/Perl6Grammar.pir $filename`;
 ok($out =~ /^\n## <::TOP>/, "check PGE");
 unlink($filename);
 
@@ -112,12 +112,8 @@ ok($out =~ /^usage/, "check bfco");
 $out = `$parrot languages/cardinal/cardinal.pbc -e "print 'hello world';"`;
 ok($out eq "hello world\n", "check cardinal");
 
-TODO: {
-    local $TODO = 'broken since ppd17pmc merge';
-
 $out = `$parrot languages/dotnet/net2pbc.pbc`;
 ok($out =~ /^Usage/, "check dotnet");
-}
 
 $filename = 'test.js';
 open $FH, '>', $filename

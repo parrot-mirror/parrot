@@ -13,7 +13,7 @@ t/sha1.t - sha1 library
 =head1 DESCRIPTION
 
 Tests sha1
-(implemented as md5 in F<languages/lua/lib/md5.pir>).
+(implemented as md5 in F<languages/lua/src/lib/md5.pir>).
 
 =cut
 
@@ -58,7 +58,7 @@ require 'sha1'
 d = sha1.new()
 print(d)
 CODE
-/^sha1 context [0-9A-Fa-f]{8}$/
+/^sha1 context [0-9A-Fa-f]{8,16}$/
 OUTPUT
 
 # Local Variables:

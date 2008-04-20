@@ -39,10 +39,12 @@ SOURCES = perl6.pir \
 
 BUILTINS_PIR = \
   src/classes/Object.pir \
+  src/classes/Any.pir \
   src/classes/Bool.pir \
   src/classes/Str.pir \
   src/classes/Num.pir \
   src/classes/Int.pir \
+  src/classes/IO.pir \
   src/classes/List.pir \
   src/classes/Hash.pir \
   src/classes/Code.pir \
@@ -52,9 +54,12 @@ BUILTINS_PIR = \
   src/classes/Role.pir \
   src/classes/Pair.pir \
   src/classes/Whatever.pir \
+  src/classes/Capture.pir \
+  src/classes/Subset.pir \
   src/builtins/assign.pir \
   src/builtins/cmp.pir \
   src/builtins/control.pir \
+  src/builtins/guts.pir \
   src/builtins/io.pir \
   src/builtins/match.pir \
   src/builtins/math.pir \
@@ -85,7 +90,7 @@ src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg src/parser/grammar-op
 
 src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 	$(PARROT) $(PARROT_ARGS) $(NQP) --output=src/gen_actions.pir \
-	    --target=pir src/parser/actions.pm
+	    --encoding=fixed_8 --target=pir src/parser/actions.pm
 
 src/gen_builtins.pir: $(BUILTINS_PIR)
 	$(CAT) $(BUILTINS_PIR) >src/gen_builtins.pir

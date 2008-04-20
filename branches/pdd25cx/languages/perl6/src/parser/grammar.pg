@@ -196,7 +196,12 @@ rule statement {
     | <statement_control> {*}                    #= statement_control
     | $<expr>=<EXPR>
         [
-        || <statement_mod_cond> {*}              #= statement_mod_cond
+        || <statement_mod_loop> {*}              #= statement_mod_loop
+        || <statement_mod_cond>
+            [
+                $<sml>=<statement_mod_loop>
+            ]?
+            {*}                                  #= statement_mod_cond
         || {*}                                   #= expr
         ]
 }
@@ -209,6 +214,7 @@ rule statement_control {
     | <given_statement> {*}                      #= given_statement
     | <when_statement> {*}                       #= when_statement
     | <default_statement> {*}                    #= default_statement
+    | <loop_statement> {*}                       #= loop_statement
     | <for_statement> {*}                        #= for_statement
     | <use_statement> {*}                        #= use_statement
     | <begin_statement> {*}                      #= begin_statement
@@ -261,6 +267,19 @@ rule default_statement {
     {*}
 }
 
+rule loop_statement {
+    $<sym>=[loop]
+    $<eee>=[
+        '('
+            $<e1>=<EXPR> ';'
+            $<e2>=<EXPR> ';'
+            $<e3>=<EXPR>
+        ')'
+    ]?
+    <block>
+    {*}
+}
+
 rule for_statement {
     $<sym>=[for]
     <EXPR> <pblock>
@@ -286,8 +305,12 @@ rule end_statement {
     {*}
 }
 
+rule statement_mod_loop {
+    $<sym>=[while|until|for|given] <EXPR> {*}
+}
+
 rule statement_mod_cond {
-    $<sym>=[if|unless] <EXPR> {*}
+    $<sym>=[if|unless|when] <EXPR> {*}
 }
 
 rule statement_prefix {
@@ -337,6 +360,16 @@ rule trait_verb {
     | $<sym>=[handles] <EXPR>
 }
 
+token capterm {
+    '\\(' <capture> ')'
+    {*}
+}
+
+rule capture {
+    <EXPR>
+    {*}
+}
+
 rule multisig {
     '(' <signature> ')'
 }
@@ -346,9 +379,20 @@ rule signature {
     {*}
 }
 
+rule type_declarator {
+    'subset'
+    <name>
+    [ of <typename> ]? # XXX should be <fulltypename>
+    where <EXPR>
+    {*}
+}
+
+# XXX STD.pm uses <value> instead of <typename>, which seems odd, especially
+# as at the time of implementing parameter types <value>'s type parts were
+# commented out.
 rule type_constraint {
     [
-    | <value>
+    | <typename>
     | where <EXPR> # XXX <EXPR(%chaining)>
     ]
 }
@@ -384,6 +428,7 @@ token term {
     | <noun> <postfix>* {*}                      #= noun
     | <listop> {*}                               #= listop
     | <compiler_directive> {*}                   #= compiler_directive
+    | '*' {*}                                    #= *
 }
 
 
@@ -438,11 +483,12 @@ token noun {
     | <subcall> {*}                              #= subcall
     | <methodop> {*}                             #= methodop
     | <value> {*}                                #= value
+    | <capterm> {*}                              #= capterm
     | <statement_prefix> {*}                     #= statement_prefix
     | <regex_declarator> {*}                     #= regex_declarator
+    | <type_declarator> {*}                      #= type_declarator
     | <colonpair> {*}                            #= colonpair
     | <fatarrow> {*}                             #= fatarrow
-    | <whatever> {*}                             #= whatever
     | 'self' {*}                                 #= self
     | 'undef' {*}                                #= undef
 }
@@ -480,7 +526,7 @@ token variable_decl {
 
 
 rule scoped {
-    <variable_decl> {*}
+    <typename>* <variable_decl> {*}
 }
 
 rule scope_declarator {
@@ -552,7 +598,11 @@ token integer {
 }
 
 token dec_number {
-    \d+[_\d+]* [ '.' \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]? ]
+    \d+[_\d+]* 
+        [ 
+        | '.' \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]? 
+        |                  <[Ee]> <[+\-]>? \d+
+        ] # careful to distinguish from both integer and 42.method
     {*}
 }
 
@@ -672,8 +722,6 @@ token desigilname {
     ]
     {*}
 }
-
-token whatever { '*' {*} }
 
 #### expressions and operators ####
 

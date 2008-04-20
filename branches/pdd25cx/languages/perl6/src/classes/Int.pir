@@ -6,17 +6,31 @@ Int - Perl 6 integers
 
 =cut
 
-.namespace [ 'Integer' ]
+.namespace [ 'Int' ]
 
 .sub 'onload' :anon :init :load
-    $P0 = get_hll_global ['Perl6Object'], 'make_proto'
-    $P0('Integer', 'Int')
+    $P0 = subclass 'Integer', 'Int'
+    $P1 = get_hll_global 'Any'
+    $P1 = $P1.HOW()
+    addparent $P0, $P1
+    $P1 = get_hll_global ['Perl6Object'], 'make_proto'
+    $P1($P0, 'Int')
+    $P1('Integer', 'Int')
 .end
 
 
 .sub 'ACCEPTS' :method
     .param num topic
     .return 'infix:=='(topic, self)
+.end
+
+
+.sub 'clone' :method :vtable
+    .local pmc clone_type
+    clone_type = self.HOW()
+    $P0 = clone_type.'new'()
+    $P0 = self
+    .return($P0)
 .end
 
 

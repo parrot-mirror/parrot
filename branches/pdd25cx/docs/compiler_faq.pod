@@ -18,16 +18,9 @@ F<README> files in the root directory for more information about building
 Parrot.
 
 =head2 How can I implement a compiler to use as a compiler object from within
-Parrot? (For example, with the C<compile> op.)
+Parrot?
 
-Define a sub that takes as input a string, and returns something
-invokable. The easiest way to create something invokable at the moment
-is to use another compiler object (for example, the C<PIR> compiler), which
-you can get with:
-
- .local pmc pir_compiler
- pir_compiler = compreg 'PIR'
-
+See L<http://www.parrotblog.org/2008/03/targeting-parrot-vm.html>.
 
 =head2 How do I embed source locations in my code for debugging?
 
@@ -102,12 +95,12 @@ the current namespace, in the global, and in the builtin namespace in
 that order. This opcode is generated, if I<foo()> is used, but the
 compiler can't figure out, where the function is.
 
-If the subroutine is in a different namespace, use the C<find_global>
-opcode:
+If the subroutine is in a different namespace, use the
+C<get_hll_global> or C<get_root_global> opcodes:
 
-  foo = find_global 'Foo', 'foo'
+  foo = get_root_global ['Foo'], 'foo'
 
-This searches the sub C<foo> in the C<Foo> namespace.
+This fetches the sub C<foo> in the C<Foo> namespace.
 
 =head2 How do I create a Closure or Coroutine?
 
@@ -204,27 +197,38 @@ There are two possible ways.  Either use the special PIR syntax:
 
     $P0 = global 'name_of_the_global'
 
-or the C<find_global> op:
+or the C<get_root_global> or C<get_hll_global> op:
 
-    find_global $P0, 'name_of_the_global'
+    get_hll_global $P0, ['name'; 'space'], 'name_of_the_global'
+    get_hll_global $P1, 'name_of_the_global'
 
 =head2 How can I delete a global?
 
 You can retrieve the namespace hash and use the C<delete> opcode.
 
-  .sub main :main
-    $P0 = new 'Integer'
-    store_hll_global 'foo', $P0
-    store_hll_global ['Bar'], 'baz', $P0
-    # ...
-    .local pmc ns, Bar_ns
-    ns = get_hll_namespace
-    delete ns['foo']              # delete from top level
-    Bar_ns = ns['Bar']            # get Bar namespace
-    delete Bar_ns['baz']
-    $P0 = get_hll_global ['Bar'], 'baz'
-    print "never\n"
-  .end
+    .sub main :main
+	$P0 = new 'Integer'
+	$P0 = 42
+	set_hll_global 'foo', $P0
+	set_hll_global ['Bar'], 'baz', $P0
+	show_baz()
+	.local pmc ns, Bar_ns
+	ns = get_hll_namespace
+	delete ns['foo']              # delete from top level
+	Bar_ns = ns['Bar']            # get Bar namespace
+	delete Bar_ns['baz']
+	show_baz()
+    .end
+    .sub show_baz
+	$P0 = get_hll_global ['Bar'], 'baz'
+	print "'baz' is "
+	if null $P0 goto is_null
+	print $P0
+	print ".\n"
+	.return ()
+    is_null: 
+	print "null.\n"
+    .end
 
 
 =head2 How do I use lexical pads to have both a function scope and a
@@ -325,19 +329,10 @@ You can access attributes by a short name:
   $P0 = getattribute self, 'legs'
   assign $P0, 4                   # set attribute's value
 
-a fully qualified name:
+or by a fully qualified name:
 
   $P0 = getattribute self, "Animal\0legs"
   assign $P0, 4                   # set attribute's value
-
-or by an index:
-
-  .local int offs
-  offs = classoffset 'Animal'
-  $I0 = offs + 0                  # 1st attribute
-  $P0 = getattribute self, $I0
-  $I0 = offs + 1                  # 2nd attribute
-  $P0 = getattribute self, $I0
 
 =head2 When should I use properties vs. attributes?
 

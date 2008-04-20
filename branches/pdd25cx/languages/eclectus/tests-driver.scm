@@ -4,43 +4,43 @@
 
 (define all-tests '())
 
-(define run-with-petite #f)
-;(define run-with-petite #t)
+;(define implementation "gauche" )
+(define implementation "gen_past_in_pir" )
 
 (define-syntax add-tests-with-string-output
   (syntax-rules (=>)
-    [(_ test-name [expr => output-string] ...)
+    ((_ test-name (expr => output-string) ...)
      (set! all-tests
         (cons 
-           '(test-name [expr string  output-string] ...)
-            all-tests))]))
+           '(test-name (expr string  output-string) ...)
+            all-tests)))))
 
 (define (test-one test-id test test-name)
-  (let ([expr (car test)]
-        [type (cadr test)]
-        [out  (caddr test)])
+  (let ((expr (car test))
+        (type (cadr test))
+        (out  (caddr test)))
     (flush-output-port)
     (case type
-     [(string) (test-with-string-output test-id expr out test-name)]
-     [else (error 'test "invalid test type ~s" type)])))
+     ((string) (test-with-string-output test-id expr out test-name))
+     (else (error 'test "invalid test type ~s" type)))))
  
 (define (test-all)
   (plan (length (cdar all-tests)))
 
   ;; run the tests
-  (let f ([i 0] [ls (reverse all-tests)])
+  (let f ((i 0) (ls (reverse all-tests)))
     (if (null? ls)
         (printf "")   ; XXX remove this
-        (let ([x (car ls)] [ls (cdr ls)])
-          (let* ([test-name (car x)] 
-                 [tests (cdr x)]
-                 [n (length tests)])
-            (let g ([i i] [tests tests])
+        (let ((x (car ls)) (ls (cdr ls)))
+          (let* ((test-name (car x)) 
+                 (tests (cdr x))
+                 (n (length tests)))
+            (let g ((i i) (tests tests))
               (cond
-                [(null? tests) (f i ls)]
-                [else
+                ((null? tests) (f i ls))
+                (else
                  (test-one i (car tests) test-name)
-                 (g (add1 i) (cdr tests))])))))))
+                 (g (+ i 1) (cdr tests))))))))))
 
 (define compile-port
   (make-parameter
@@ -51,25 +51,29 @@
        p)))
 
 (define (run-compile expr)
-  (if run-with-petite
-    (with-output-to-file "stst.scm" (lambda () (write expr)))
-    (let ([p (open-output-file "stst.pir" 'replace)])
-      (parameterize ([compile-port p])
-         (compile-program expr))
-      (close-output-port p))))
+  (case implementation
+    ( ("gauche")
+      (with-output-to-file "stst.scm" (lambda () (write expr))))
+    (else
+      (let ((p (open-output-file "stst.pir" 'replace)))
+        (parameterize ((compile-port p))
+           (compile-program expr))
+        (close-output-port p)))))
 
-; TODO: can I use (directory-separator) in petite?
+; TODO: can I use (directory-separator) in gauche?
 (define *path-to-parrot*
-  (if (fxzero? (system "perl -e \"exit($^O eq q{MSWin32} ? 1 : 0)\""))
+  (if (zero? (system "perl -e 'exit($^O eq q{MSWin32} ? 1 : 0)'"))
     "../../parrot"
     "..\\..\\parrot"))
 
 (define (execute)
-  (if run-with-petite
-    (unless (fxzero? (system "petite --script stst.scm > stst.out"))
-      (error 'execute "produced program exited abnormally"))
-    (unless (fxzero? (system (string-append *path-to-parrot* " stst.pir > stst.out")))
-      (error 'execute "produced program exited abnormally"))))
+  (case implementation
+    ( ("gauche")
+      (unless (zero? (system "gosh -fcase-fold -I .  -l gauche/prelude.scm stst.scm > stst.out"))
+        (error 'execute "produced program exited abnormally")))
+    (else
+      (unless (zero? (system (string-append *path-to-parrot* " stst.pir > stst.out")))
+        (error 'execute "produced program exited abnormally")))))
 
 (define (get-string)
   (with-output-to-string
@@ -77,17 +81,20 @@
       (with-input-from-file "stst.out"
         (lambda ()
           (let f ()
-            (let ([c (read-char)])
+            (let ((c (read-char)))
               (cond
-               [(eof-object? c) (void)]
-               [else (display c) (f)]))))))))
+               ((not (eof-object? c))
+                (display c)
+                (f))))))))))
 
 (define (test-with-string-output test-id expr expected-output test-name)
    (run-compile expr)
    (execute)
-   (if (string=? expected-output (get-string))
-     (pass ( + test-id 1 ) (format "~a: ~a" test-name expr))
-     (fail ( + test-id 1 ) (format "~a: expected ~s, got ~a" test-name expr (get-string) ))))
+   (let ((actual-output (get-string)))
+     (if (string=? expected-output actual-output)
+         (pass ( + test-id 1 ) (format #f "~a: ~a" test-name expr))
+         (fail ( + test-id 1 ) (format #f "~a: expected ~s, got ~s"
+                                       test-name expected-output actual-output)))))
 
 (define (emit . args)
   (apply fprintf (compile-port) args)

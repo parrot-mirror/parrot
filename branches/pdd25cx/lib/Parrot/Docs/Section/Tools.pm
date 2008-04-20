@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -81,7 +81,6 @@ sub new {
             $self->new_item( '', 'tools/build/ops2pm.pl' ),
             $self->new_item( '', 'tools/build/parrot_config_c.pl' ),
             $self->new_item( '', 'tools/build/pmc2c.pl' ),
-            $self->new_item( '', 'tools/build/revision_c.pl' ),
             $self->new_item( '', 'tools/dev/install_files.pl' ),
             $self->new_item( '', 'tools/dev/mk_manifest_and_skip.pl' ),
             $self->new_item( '', 'tools/dev/rebuild_miniparrot.pl' ),
@@ -96,7 +95,7 @@ sub new {
         $self->new_group(
             'Utilities',
             '',
-            $self->new_item( '', 'tools/build/list_unjitted.pl' ),
+            $self->new_item( '', 'tools/dev/list_unjitted.pl' ),
             $self->new_item( '', 'tools/dev/gen_class.pl' ),
             $self->new_item( '', 'tools/dev/nm.pl' ),
             $self->new_item( '', 'tools/util/ncidef2pasm.pl' ),

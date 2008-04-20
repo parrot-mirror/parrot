@@ -642,7 +642,7 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
         op = try_find_op(interp, unit, name, r, n, keyvec, emit);
 
     if (op < 0) {
-        int ok;
+        int ok = 0;
 
         /* check mixed constants */
         ins = IMCC_subst_constants_umix(interp, unit, name, r, n + 1);
@@ -746,6 +746,10 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
         PARROT_WARNINGS_on(interp, PARROT_WARNINGS_ALL_FLAG);
     }
     else if (STREQ(name, "yield")) {
+        if (!IMCC_INFO(interp)->cur_unit->instructions->symregs[0])
+            IMCC_fataly(interp, E_SyntaxError,
+                "Cannot yield from non-continuation\n");
+
         IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->pcc_sub->calls_a_sub
             |= 1 | ITPCCYIELD;
     }

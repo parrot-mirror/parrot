@@ -29,7 +29,7 @@ Test some simple grammars.
     set_global 'test_num', test_num
 
     # the test builder
-    test = new 'Test::Builder'
+    test = new [ 'Test'; 'Builder' ]
 
     # PMCs to store TODO tests and reasons/descriptions
     todo_tests = new 'Hash'
@@ -122,7 +122,7 @@ EOF_SIMPLE_GRAMMAR
 
     load_bytecode 'Test/Builder.pir'
     .local pmc    test
-                  test = new 'Test::Builder'
+                  test = new [ 'Test'; 'Builder' ]
 
     .local int    ok
                   ok = 0
@@ -177,7 +177,7 @@ EOF_SIMPLE_GRAMMAR
 
   do_match:
     load_bytecode 'PGE.pbc'
-    load_bytecode 'compilers/pge/pgc.pir'
+    load_bytecode 'PGE/Perl6Grammar.pbc'
 
     match     = parser(expr)
     result    = match

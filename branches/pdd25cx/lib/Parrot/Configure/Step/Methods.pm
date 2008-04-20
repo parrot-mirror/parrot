@@ -32,8 +32,8 @@ begin with an underscore 'C<_>'.
 
     $self->_recheck_settings($conf, $libs, $ccflags, $linkflags, $verbose);
 
-Currently used in configuration step classes auto::gmp, auto::readline and
-auto::gdbm.
+Currently used in configuration step classes auto::gmp, auto::readline,
+auto::gdbm, and auto::opengl.
 
 =cut
 
@@ -78,6 +78,21 @@ sub _handle_darwin_for_fink {
                         unless $seen{$intended{$flag}};
                 }
             }
+        }
+    }
+    return 1;
+}
+
+sub _handle_darwin_for_macports {
+    my ($self, $conf, $osname, $file) = @_;
+    if ( $osname =~ /darwin/ ) {
+        my $ports_root = $conf->data->get( 'ports_base_dir' );
+        my $ports_lib_dir = $conf->data->get( 'ports_lib_dir' );
+        my $ports_include_dir = $conf->data->get( 'ports_include_dir' );
+        if ( -f qq{$ports_include_dir/$file} ) {
+            $conf->data->add( ' ', linkflags => "-L$ports_lib_dir" );
+            $conf->data->add( ' ', ldflags   => "-L$ports_lib_dir" );
+            $conf->data->add( ' ', ccflags   => "-I$ports_include_dir" );
         }
     }
     return 1;

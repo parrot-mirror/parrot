@@ -376,7 +376,7 @@ Get the class PMC representing the class that this object is an instance of.
 =cut
 
 */
-    VTABLE PMC *get_class() {
+    VTABLE PMC *get_class() :const {
         PMC    * const classobj = PARROT_OBJECT(SELF)->_class;
         STRING *get_class       = CONST_STRING(interp, "get_class");
         /* If there's a vtable override for 'get_class' run that instead. */
@@ -437,7 +437,7 @@ Returns whether the class is or inherits from C<*classname>.
 
 */
 
-    VTABLE INTVAL isa(STRING *classname) {
+    VTABLE INTVAL isa(STRING *classname) :const {
         PMC   *_class;
 
         if (SUPER(classname))
@@ -458,12 +458,10 @@ Returns whether the object's class does the role with name C<*role_name>.
 */
 
     VTABLE INTVAL does(STRING *role_name) {
-        Parrot_Object * const obj    = PARROT_OBJECT(SELF);
-
         if (!role_name)
             return 0;
 
-        /* Dispatch role to the object's class to check HLL roles first */
+        /* Dispatch to the object's class */
         return VTABLE_does(interp, VTABLE_get_class(interp, SELF), role_name);
     }
 
@@ -484,7 +482,7 @@ Returns whether the object's class does C<*role>.
         if (SUPER(role))
             return 1;
 
-        /* Dispatch role to the object's class */
+        /* Dispatch to the object's class */
         return VTABLE_does_pmc(interp, VTABLE_get_class(interp, SELF), role);
     }
 
@@ -543,8 +541,8 @@ Returns the integer type of the object's class.
 */
 
     VTABLE INTVAL type() {
-        PMC *class = VTABLE_get_class(interp, SELF);
-        return VTABLE_type(interp, class);
+        PMC *_class = VTABLE_get_class(interp, SELF);
+        return VTABLE_type(interp, _class);
     }
 
 /*

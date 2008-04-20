@@ -70,10 +70,6 @@ PF_DIR          = src/packfile
 # source directory
 SRC_DIR         = src
 
-# revision control
-#CONDITIONED_LINE(SVN_ENTRIES):SVN_ENTRIES=@SVN_ENTRIES@
-#INVERSE_CONDITIONED_LINE(SVN_ENTRIES):SVN_ENTRIES=
-
 ###############################################################################
 #
 # BUILD TOOL CONFIGURATIONS:
@@ -143,7 +139,6 @@ GEN_MAKEFILES = \
     Makefile \
 #CONDITIONED_LINE(has_perldoc):    docs/Makefile \
     compilers/nqp/Makefile \
-    compilers/past-pm/Makefile \
     compilers/pct/Makefile \
     compilers/pge/Makefile \
     compilers/tge/Makefile \
@@ -153,16 +148,13 @@ GEN_MAKEFILES = \
     ext/Makefile \
     languages/Makefile \
     languages/abc/Makefile \
-    languages/amber/Makefile \
     languages/APL/Makefile \
     languages/befunge/Makefile \
     languages/bf/Makefile \
-    languages/c99/Makefile \
     languages/cardinal/Makefile \
     languages/cola/Makefile \
     languages/ecmascript/Makefile \
     languages/forth/Makefile \
-    languages/HQ9plus/Makefile \
     languages/jako/Makefile \
     languages/lazy-k/Makefile \
     languages/lisp/Makefile \
@@ -180,7 +172,6 @@ GEN_MAKEFILES = \
     languages/pynie/Makefile \
     languages/regex/Makefile \
     languages/scheme/Makefile \
-    languages/tap/Makefile \
     languages/tcl/Makefile \
     languages/tcl/examples/Makefile \
     languages/urm/Makefile \
@@ -196,13 +187,14 @@ GEN_CONFIGS = \
     $(INC_DIR)/has_header.h \
     $(INC_DIR)/feature.h \
     $(INC_DIR)/core_pmcs.h \
+    $(SRC_DIR)/exec_dep.c \
     $(SRC_DIR)/exec_dep.h \
     lib/Parrot/Config/Generated.pm \
     lib/Parrot/PMC.pm \
     runtime/parrot/include/config.fpmc \
     $(SRC_DIR)/platform.c \
-    $(SRC_DIR)/revision.c \
 #CONDITIONED_LINE(platform_asm):    $(SRC_DIR)/platform_asm.s \
+#CONDITIONED_LINE(has_glut):    $(SRC_DIR)/glut_callbacks.c \
     $(SRC_DIR)/core_pmcs.c \
     CFLAGS \
     $(IMCC_DIR)/CFLAGS \
@@ -218,6 +210,7 @@ GEN_CONFIGS = \
 
 GEN_PASM_INCLUDES = \
     runtime/parrot/include/signal.pasm \
+#CONDITIONED_LINE(has_opengl):    runtime/parrot/include/opengl_defines.pasm \
     @TEMP_gen_pasm_includes@
 
 STICKY_FILES = \
@@ -225,7 +218,8 @@ STICKY_FILES = \
     $(GEN_MAKEFILES) \
     ext/Parrot-Embed/Makefile.PL \
     myconfig  \
-    $(GEN_PASM_INCLUDES)
+    $(GEN_PASM_INCLUDES) \
+    MANIFEST.configure.generated
 
 
 ###############################################################################
@@ -277,17 +271,18 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/yaml_dumper.pbc \
     $(LIBRARY_DIR)/Getopt/Obj.pbc \
     $(LIBRARY_DIR)/JSON.pbc \
+    $(LIBRARY_DIR)/Math/Random/mt19937ar.pbc \
     $(LIBRARY_DIR)/MIME/Base64.pbc \
+    $(LIBRARY_DIR)/NCI/call_toolkit_init.pbc \
     $(LIBRARY_DIR)/ncurses.pbc \
+#CONDITIONED_LINE(has_opengl):    $(LIBRARY_DIR)/OpenGL.pbc \
     $(LIBRARY_DIR)/parrotlib.pbc \
     $(LIBRARY_DIR)/pcre.pbc \
     $(LIBRARY_DIR)/Parrot/Capture_PIR.pbc \
     $(LIBRARY_DIR)/Parrot/Coroutine.pbc \
     $(LIBRARY_DIR)/Parrot/Exception.pbc \
-    $(LIBRARY_DIR)/Parrot/HLLCompiler.pbc \
     $(LIBRARY_DIR)/PGE/Dumper.pbc \
     $(LIBRARY_DIR)/PGE/Glob.pbc \
-    $(LIBRARY_DIR)/PGE/P6Grammar.pbc \
     $(LIBRARY_DIR)/PGE/Perl6Grammar.pbc \
     $(LIBRARY_DIR)/PGE/Text.pbc \
     $(LIBRARY_DIR)/PGE/Util.pbc \
@@ -307,8 +302,10 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/Test/Builder/Tester.pbc \
     $(LIBRARY_DIR)/Test/Builder/TestPlan.pbc \
     $(LIBRARY_DIR)/Test/Builder.pbc \
+    $(LIBRARY_DIR)/Test/Class.pbc \
     $(LIBRARY_DIR)/Test/More.pbc \
     $(LIBRARY_DIR)/Tcl/Glob.pbc \
+    $(LIBRARY_DIR)/uuid.pbc \
     $(LIBRARY_DIR)/YAML/Parser/Syck.pbc \
     $(LIBRARY_DIR)/STM.pbc \
     $(LIBRARY_DIR)/libpcre.pbc \
@@ -446,7 +443,6 @@ INTERP_O_FILES = \
     $(SRC_DIR)/platform$(O) \
     $(SRC_DIR)/pmc_freeze$(O) \
     $(SRC_DIR)/pmc$(O) \
-    $(SRC_DIR)/revision$(O) \
     $(SRC_DIR)/runops_cores$(O) \
     $(SRC_DIR)/scheduler$(O) \
     $(SRC_DIR)/spf_render$(O) \
@@ -526,6 +522,7 @@ ALL_PARROT_LIBS     = @libparrot_ldflags@ $(ICU_SHARED) $(C_LIBS)
 # dynamic extensions
 DYNEXT_DIR          = runtime/parrot/dynext
 LIBNCI_TEST_SO      = $(DYNEXT_DIR)/libnci_test$(LOAD_EXT)
+LIBGLUTCB_SO        = $(DYNEXT_DIR)/libglutcb$(LOAD_EXT)
 
 ###############################################################################
 #
@@ -582,6 +579,7 @@ all : \
     runtime/parrot/include/config.fpmc \
     docs \
     $(LIBNCI_TEST_SO) \
+#CONDITIONED_LINE(has_glut):    $(LIBGLUTCB_SO) \
     $(GEN_LIBRARY) \
     dynpmc \
     dynoplibs \
@@ -804,7 +802,7 @@ $(PBC_TO_EXE) : pbc_to_exe.pir
 
 
 # HLL Executable targets
-perl6 : $(PERL6)
+#CONDITIONED_LINE(win32):perl6 : $(PERL6)
 
 $(PERL6) : compilers $(PBC_TO_EXE)
 	$(MAKE) languages/perl6 perl6$(EXE)
@@ -825,6 +823,10 @@ $(INSTALLABLEPARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
 	$(LINK) @ld_out@$@ \
     $(SRC_DIR)/main$(O) \
     $(ALL_PARROT_LIBS) $(LINKFLAGS) $(SRC_DIR)/install_config$(O)
+
+$(INC_DIR)/parrot.h : $(INC_DIR)/pbcversion.h $(INC_DIR)/vtable.h
+
+$(INC_DIR)/extend.h : $(INC_DIR)/extend_vtable.h
 
 $(INC_DIR)/pbcversion.h :
 	$(PERL) $(BUILD_TOOLS_DIR)/pbcversion_h.pl > $(INC_DIR)/pbcversion.h
@@ -851,7 +853,15 @@ $(SRC_DIR)/parrot_config$(O) : $(SRC_DIR)/parrot_config.c
 
 $(SRC_DIR)/install_config$(O) : $(SRC_DIR)/install_config.c
 
-$(SRC_DIR)/null_config.$(O) : $(SRC_DIR)/null_config.c
+$(SRC_DIR)/null_config$(O) : $(SRC_DIR)/null_config.c
+
+$(SRC_DIR)/oo$(O) : $(SRC_DIR)/pmc/class.c $(INC_DIR)/pbcversion.h
+
+$(SRC_DIR)/scheduler$(O) : $(SRC_DIR)/scheduler.str   \
+                           $(SRC_DIR)/pmc/scheduler.c \
+                           $(SRC_DIR)/pmc/task.c      \
+                           $(SRC_DIR)/pmc/timer.c     \
+                           $(INC_DIR)/pbcversion.h
 
 lib_deps_object : $(O_FILES)
 	$(PERL) tools/dev/lib_deps.pl object $(O_FILES)
@@ -973,9 +983,6 @@ $(INC_DIR)/oplib/ops.h lib/Parrot/OpLib/core.pm : $(OPS_FILES) $(BUILD_TOOLS_DIR
     lib/Parrot/OpsFile.pm lib/Parrot/Op.pm $(OPS_DIR)/ops.num $(OPS_DIR)/ops.skip
 	$(PERL) $(BUILD_TOOLS_DIR)/ops2pm.pl $(OPS_FILES)
 
-$(SRC_DIR)/revision.c : $(SVN_ENTRIES) $(BUILD_TOOLS_DIR)/revision_c.pl
-	$(PERL) -Ilib $(BUILD_TOOLS_DIR)/revision_c.pl > $(SRC_DIR)/revision.c
-
 ###############################################################################
 #
 # Examples (Assembly):
@@ -1036,6 +1043,8 @@ $(SRC_DIR)/jit_debug_xcoff$(O) : $(GENERAL_H_FILES)
 $(SRC_DIR)/jit_cpu$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/jit_emit.h
 
 $(SRC_DIR)/exec$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
+
+$(SRC_DIR)/exec_dep$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
 
 $(SRC_DIR)/exec_cpu$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@ $(SRC_DIR)/jit_emit.h
 
@@ -1227,6 +1236,8 @@ $(SRC_DIR)/jit_emit.h : $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h
 	$(CP) $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h $(SRC_DIR)/jit_emit.h
 $(SRC_DIR)/exec_dep.h : $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.h
 	$(CP) $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.h $(SRC_DIR)/exec_dep.h
+$(SRC_DIR)/exec_dep.c : $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.c
+	$(CP) $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.c $(SRC_DIR)/exec_dep.c
 $(SRC_DIR)/jit_cpu.c : lib/Parrot/OpLib/core.pm $(SRC_DIR)/jit_emit.h \
     $(SRC_DIR)/jit/@jitcpuarch@/core.jit $(JIT_BUILD_TOOL)
 	$(PERL) $(JIT_BUILD_TOOL) @jitcpuarch@ $(SRC_DIR)/jit_cpu.c
@@ -1325,13 +1336,12 @@ dynoplibs-clean :
 #
 ###############################################################################
 
-compilers : $(GEN_LIBRARY) compilers.dummy
+compilers : compilers.dummy
 
-compilers.dummy : $(PARROT)
+compilers.dummy : $(PARROT) $(GEN_LIBRARY)
+	$(MAKE) compilers/pct
 	$(MAKE) compilers/pge
 	$(MAKE) compilers/tge
-	$(MAKE) compilers/past-pm
-	$(MAKE) compilers/pct
 	$(MAKE) compilers/nqp
 	$(MAKE) compilers/json
 
@@ -1359,7 +1369,6 @@ languages-realclean :
 ###############################################################################
 
 compilers-clean :
-	$(MAKE) compilers/past-pm clean
 	$(MAKE) compilers/pct clean
 	$(MAKE) compilers/pge clean
 	$(MAKE) compilers/tge clean
@@ -1605,6 +1614,8 @@ prog-clean :
     $(SRC_DIR)/exec_start$(O) \
     $(SRC_DIR)/nci_test$(O) \
     $(LIBNCI_TEST_SO) \
+    $(SRC_DIR)/glut_callbacks$(O) \
+    $(LIBGLUTCB_SO) \
     install_config.fpmc
 	$(PERL) $(BUILD_TOOLS_DIR)/c2str.pl --init
 	$(RM_F) \
@@ -1643,6 +1654,8 @@ archclean: dynoplibs-clean dynpmc-clean dynext-clean
     install_config.fpmc \
     $(SRC_DIR)/nci_test$(O) \
     $(LIBNCI_TEST_SO) \
+    $(SRC_DIR)/glut_callbacks$(O) \
+    $(LIBGLUTCB_SO) \
     $(LIBPARROT_STATIC) \
     $(LIBPARROT_SHARED)
 
@@ -2163,6 +2176,11 @@ exec : $(SRC_DIR)/exec_start$(O) $(SRC_DIR)/parrot_config$(O) $(LIBPARROT)
 $(LIBNCI_TEST_SO): $(SRC_DIR)/nci_test$(O)
 	$(LD) $(LD_LOAD_FLAGS) @ncilib_link_extra@ $(LDFLAGS) \
     @ld_out@$@ $(SRC_DIR)/nci_test$(O) $(C_LIBS)
+
+# for use by runtime/parrot/library/OpenGL.pir
+$(LIBGLUTCB_SO): $(SRC_DIR)/glut_callbacks$(O)
+	$(LD) $(LD_LOAD_FLAGS) @ncilib_link_extra@ $(LDFLAGS) \
+    @ld_out@$@ $(SRC_DIR)/glut_callbacks$(O) $(C_LIBS)
 
 # emacs etags
 # this needs exuberant-ctags

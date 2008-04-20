@@ -4,9 +4,9 @@
 # See http://module-build.sourceforge.net/META-spec-current.html for details.
 ---
 name: parrot
-version: 0.6.0
-author: ~
-abstract: ~
+version: 0.6.1
+author: parrot-porters@perl.org
+abstract: a virtual machine designed for dynamic languages
 license: artistic2
 no_index:
     directory:

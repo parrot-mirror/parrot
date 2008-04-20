@@ -19,34 +19,6 @@ will have their test results listed under the smokes marked
 
 =head1 List of languages
 
-=head2 Amber for parrot
-
-=over 4
-
-=item Description
-
-Scripting language inspired by Eiffel and Ruby.
-
-=item Status
-
-Incomplete - but all examples and test cases are working.
-Estimated progress towards release 1.0: language constructs 47%,
-libraries 6%, documentation 4%, robustness 6%.
-See also L<http://xamber.org/history.html>
-
-=item Last verified with parrot version
-
-0.4.2
-
-=item Location
-
-L<http://xamber.org/>
-
-The Amber PMCs are in C<languages/amber>.
-
-=back
-
-
 =head2 APL
 
 =over 4
@@ -63,7 +35,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -113,7 +85,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -139,7 +111,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -162,7 +134,7 @@ Passes all tests. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -210,7 +182,7 @@ Generates PIR for basic Ruby programs
 
 =item Last verified with parrot version
 
-0.5.3
+0.6.1
 
 =item Location
 
@@ -263,7 +235,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -288,7 +260,7 @@ has been commented out.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -336,7 +308,7 @@ Planned.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -359,7 +331,7 @@ Much work needed on parse actions and data types (PMCs or classes.
 
 =item Last verified with parrot version
 
-0.5.3
+0.6.1
 
 =item Location
 
@@ -390,7 +362,7 @@ C<languages/forth>
 =back
 
 
-=head2 HQ9plus
+=head2 HQ9+
 
 =over 4
 
@@ -401,14 +373,15 @@ A joke language. See L<http://www.cliff.biffle.org/esoterica/hq9plus.html>
 =item Status
 
 Works and is mostly complete.
+Based on PCT.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
-C<languages/HQ9plus>
+C<languages/hq9plus>
 
 =back
 
@@ -442,7 +415,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.1
 
 =item Location
 
@@ -497,7 +470,7 @@ Working, but not complete. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -521,7 +494,7 @@ VISIBLE and BTW "work"
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.1
 
 =item Location
 
@@ -536,7 +509,7 @@ C<languages/lolcode>
 
 =item Description
 
-Lua 5.1 interpreter implemented with PGE/TGE/Partridge and friends.
+Lua 5.1 interpreter implemented with PCT and TGE.
 
 Lua 5.1 Standard Libraries (a large subset) implemented in PIR.
 
@@ -549,7 +522,7 @@ L<http://www.parrotcode.org/talks/LuaOnParrot.pdf>.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -611,7 +584,7 @@ Development is stalled. Takers are welcome.  Some tests fail.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -658,7 +631,7 @@ In progress.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -682,7 +655,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -705,7 +678,7 @@ Working. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.1
 
 =item Location
 
@@ -730,7 +703,7 @@ Part of languages smoke testing.
 
 =item Last verified with Parrot version
 
-0.5.3
+0.6.1
 
 =item Location
 
@@ -758,7 +731,7 @@ builtins.
 
 =item Last verified with Parrot version
 
-0.5.2
+0.6.1
 
 =item Location
 
@@ -836,7 +809,7 @@ Started.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -889,7 +862,7 @@ Parser is 90% complete; waiting for more PAST support.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -912,7 +885,7 @@ Functions and simple expressions are working.
 
 =item Last verified with parrot version
 
-0.5.3
+0.6.1
 
 =item Location
 
@@ -960,7 +933,7 @@ Part of languages smoke testing. Almost all tests are succeeding.
 
 =item Last verified with parrot version
 
-0.5.1
+0.6.1
 
 =item Location
 
@@ -985,7 +958,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -1010,34 +983,11 @@ use tcltest.tcl)
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
 C<languages/tcl>
-
-=back
-
-
-=head2 TAP (Test Anything Protocol)
-
-=over 4
-
-=item Description
-
-A parser for the Test Anything Protocol
-
-=item Status
-
-See Parrot RT for details. Search for [TAP]
-
-=item Last verified with parrot version
-
-0.4.6
-
-=item Location
-
-C<languages/tap>
 
 =back
 
@@ -1059,7 +1009,7 @@ Working. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.5.2
+0.6.1
 
 =item Location
 
@@ -1083,7 +1033,7 @@ expected to change soon.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -1111,7 +1061,7 @@ See details in F<languages/WMLScript/doc/status.pod>.
 
 =item Last verified with parrot version
 
-0.6.0
+0.6.1
 
 =item Location
 
@@ -1147,6 +1097,12 @@ C<languges/Zcode>
 
 This section will eventually be removed, for now serves as a pointer to
 some older implementations.
+
+=head2 Amber
+
+Scripting language inspired by Eiffel and Ruby. Original version
+targeted parrot, current version is self-contained. The PMCs for amber
+were in the repository until 0.6.1. L<http://xamber.org/>
 
 =head2 Parakeet
 
@@ -1197,4 +1153,10 @@ programmers. It features an object system modeled on the Smalltalk object
 system and a language syntax designed to be easy to learn for developers of
 C-like languages. Last verified against parrot 0.1.11.
 L<http://homepage.mac.com/matt.kennedy/Span>
+
+=head2 TAP (Test Anything Protocol)
+
+A parser for the Test Anything Protocol
+Was located in C<languages/tap>, removed in r26661.
+
 

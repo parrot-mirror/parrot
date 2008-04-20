@@ -1,0 +1,20 @@
+/* Copyright (C) 2008, The Perl Foundation. */
+/* $Id$ */
+
+#include <stdio.h>
+#include <stdlib.h>
+
+/* XXXX: This location is platform dependent.  What's the preferred
+         way to find headers that move? */
+#include <GL/glut.h>
+
+
+int main(int argc, char *argv[])
+{
+    if(glutInit == NULL) {
+        printf("glutInit is NULL\n");
+        return EXIT_FAILURE;
+    }
+    printf("%d\n", GLUT_API_VERSION);
+    return EXIT_SUCCESS;
+}

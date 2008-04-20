@@ -200,14 +200,14 @@ inline op does(out INT, invar PMC, in STR) :object_base {
   goto NEXT();
 }
 
-=item B<does>(out INT, invar PMC, invar PMC)
+=item B<does>(out INT, invar PMC, in PMC)
 
 Sets result $1 to the result of the "does" vtable function for PMC $2,
 given the role $3.
 
 =cut
 
-inline op does(out INT, invar PMC, invar PMC) :object_base {
+inline op does(out INT, invar PMC, in PMC) :object_base {
   $1 = $3 ? $2->vtable->does_pmc(interp, $2, $3) : 0;
   goto NEXT();
 }
@@ -512,8 +512,6 @@ op removeattribute(invar PMC, in INT) {
     real_exception(interp, NULL, UNIMPLEMENTED, "removeattribute is not implemented");
 }
 
-=item B<getattribute>(out PMC, invar PMC, in INT)
-
 =item B<getattribute>(out PMC, invar PMC, in STR)
 
 Get the attribute $3 from object $2 and put the result in $1.
@@ -527,12 +525,6 @@ class name, namespace, or key PMC.
 
 =cut
 
-inline op getattribute(out PMC, invar PMC, in INT) :object_classes {
-    real_exception(interp, NULL, UNIMPLEMENTED,
-            "Integer access to attributes has been deprecated, "
-            "use named attribute access instead. See RT #48729");
-}
-
 inline op getattribute(out PMC, invar PMC, in STR) :object_classes {
     $1 = VTABLE_get_attr_str(interp, $2, $3);
     goto NEXT();
@@ -542,8 +534,6 @@ inline op getattribute(out PMC, invar PMC, in PMC, in STR) :object_classes {
     $1 = VTABLE_get_attr_keyed(interp, $2, $3, $4);
     goto NEXT();
 }
-
-=item B<setattribute>(invar PMC, in INT, invar PMC)
 
 =item B<setattribute>(invar PMC, in STR, invar PMC)
 
@@ -557,12 +547,6 @@ child class.) The parent $2 is a class name, namespace, or key PMC.
 
 =cut
 
-inline op setattribute(invar PMC, in INT, invar PMC) :object_classes {
-    real_exception(interp, NULL, UNIMPLEMENTED,
-            "Integer access to attributes has been deprecated, "
-            "use named attribute access instead. See RT #48729");
-}
-
 inline op setattribute(invar PMC, in STR, invar PMC) :object_classes {
     VTABLE_set_attr_str(interp, $1, $2, $3);
     goto NEXT();
@@ -572,20 +556,6 @@ inline op setattribute(invar PMC, in PMC, in STR, invar PMC) :object_classes {
     VTABLE_set_attr_keyed(interp, $1, $2, $3, $4);
     goto NEXT();
 }
-
-=item B<classoffset>(out INT, invar PMC, in STR)
-
-Returns the offset of the first attribute for class $3 in object $2.
-Throws an exception if $3 isn't in $2's hierarchy.
-
-=cut
-
-op classoffset(out INT, invar PMC, in STR) :object_classes {
-    real_exception(interp, NULL, UNIMPLEMENTED,
-            "The 'classoffset' opcode has been deprecated, "
-            "use named attribute access instead. See RT #48727");
-}
-
 
 ###############################################################################
 

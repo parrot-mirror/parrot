@@ -1,17 +1,21 @@
-# Copyright (C) 2001-2006, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
 
 docs/pdds/pdd_template.pod - PDD Template
 
+=head1 VERSION
+
+$Revision$
+
 =head1 ABSTRACT
 
 Summary of the contents of the PDD.
 
-=head1 VERSION
+=head1 SYNOPSIS I<(optional)>:
 
-$Revision$
+Code snippets showing the semantics of the PDD (if applicable).
 
 =head1 DESCRIPTION
 
