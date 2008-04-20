@@ -453,7 +453,7 @@ can be either a string or an array of strings.
 .end
 
 
-=item symbol(name, [attr1 => val, attr2 => val2, ...])
+=item symbol(name, [attr1 => val1, attr2 => val2, ...])
 
 If called with named arguments, sets the symbol hash corresponding
 to C<name> in the current block.  The HLL is free to select
@@ -478,11 +478,30 @@ attribute hash for symbol C<name>.
     if attr goto set_symbol
   get_symbol:
     $P0 = symtable[name]
-    if null $P0 goto set_symbol
+    if null $P0 goto end
     .return ($P0)
   set_symbol:
     symtable[name] = attr
+  end:
     .return (attr)
+.end
+
+
+=item symbol_defaults([attr1 => val1, attr2 => val2, ... ])
+
+Set default attributes for non-existent symbols in the
+symbol hash (see C<symbol> above).  If no named arguments
+are given, returns the default attribute hash itself.
+
+Currently we just use the '' entry of the symbol hash to
+store the default attributes, but it's probably not safe
+to rely on this behavior in the future.
+
+=cut
+
+.sub 'symbol_defaults' :method
+    .param pmc attr            :slurpy :named
+    .return self.'symbol'('', attr :flat :named)
 .end
 
 

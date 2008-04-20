@@ -55,6 +55,12 @@ N: Anders Nor Berle
 D: Some cleanups and FreeBSD related fixes.
 E: debolaz@gmail.com
 
+N: Andreas Rottmann
+D: Improvements of Eclectus
+
+N: Andrew Parker
+D: Port PAST-pm test to PCT.
+
 N: Andrew Rodland
 D: vim syntax files and editor doc
 
@@ -71,6 +77,9 @@ E: andy@petdance.com
 
 N: Angel Faus
 D: CFG and live analysis.
+
+N: Arcady Goldmints-Orlov
+D: Lists and tuples for Pynie.
 
 N: Arthur Bergman
 D: Trying to ride a Ponie - build and compat fixes.
@@ -227,6 +236,7 @@ D: Debian packaging
 S: Chemnitz, Germany
 
 N: François Perrad
+E: francois.perrad@gadz.org
 W: http://fperrad.googlepages.com/home
 D: build fixes for MinGW
 D: a patch to remove slash_exec from config
@@ -237,6 +247,7 @@ N: Garrett Rooney
 D: Fix typo in PARROT_BIGENDIAN case
 
 N: Geoff Broadwell
+D: OpenGL binding
 D: examples fixes
 
 N: Gerard Goossen
@@ -373,9 +384,10 @@ D: Cardinal(Ruby on Parrot), ECMAScript PGE grammar,
 D: Python PGE grammar, C99 PGE Grammar
 D: Various Config Fixes, Compiler Warnings, etc
 
-N: Klaas-Jan Stol
+N: Klaas-Jan Stol a.k.a. kj[s]?
 D: clean-ups of compilers/imcc and its documentation.
 D: compilers/pirc and languages/PIR.
+D: various updates to PCT-based languages (C99,Punie,Cardinal,Ecmascript)
 E: parrotcode@gmail.com
 
 N: Lars Balker Rasmussen
@@ -398,7 +410,7 @@ D: Many fixes
 N: Marcus Thiesen
 D: URM language, bugfixes
 
-N: Mark Glines
+N: Mark Glines a.k.a. Infinoid
 D: Cage cleaning, random bugfixes, report bugs
 E: mark@glines.org
 S: South Lake Tahoe, CA, USA
@@ -513,6 +525,10 @@ N: Piers Cawley
 D: The Second Perl 6 Summarizer after Bryan C. Warnock
 E: pdcawley@bofh.org.uk
 W: http://www.bofh.org.uk:8080/
+
+N: Reini Urban
+E: rurban@cpan.org
+D: cygwin fixes
 
 N: Richard Tibbetts
 D: Divide by zero exceptions in some PMCs
@@ -645,7 +661,7 @@ D: Fixed object vtable method overrides in PIR
 N: Jeff Horwitz
 E: jeff@smashing.org
 D: Various bug fixes and tests
- 
+
 N: Mark Grimes
 E: mgrimes@cpan.org
 D: Clean up some tests

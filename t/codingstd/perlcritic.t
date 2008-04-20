@@ -16,7 +16,7 @@ use Parrot::Distribution;
 use Getopt::Long;
 
 BEGIN {
-    eval { require Perl::Critic };
+    eval { require Perl::Critic; };
     if ($@) {
         plan skip_all => 'Perl::Critic not installed';
     }
@@ -106,6 +106,10 @@ if ( keys %policies ) {
     # if the policy is passed in on the command line, and it's one of the
     # ones where we require certain config arguments, then set them to the
     # ones we want here.
+
+    # XXX this information is being duplicated, we should only specify the
+    # perltidyrc once, e.g.
+
     if ( grep /CodeLayout::RequireTidyCode/, @input_policies ) {
         $policies{'CodeLayout::RequireTidyCode'} = { perltidyrc => $perl_tidy_conf };
     }
@@ -114,8 +118,8 @@ if ( keys %policies ) {
     }
 }
 else {
-
     # otherwise, just run perlcritic.t normally
+
     my %default_policies = (
         'BuiltinFunctions::ProhibitStringySplit'          => 1,
         'CodeLayout::ProhibitDuplicateCoda'               => 1,
@@ -125,6 +129,7 @@ else {
         'InputOutput::ProhibitBarewordFileHandles'        => 1,
         'InputOutput::ProhibitTwoArgOpen'                 => 1,
         'Subroutines::ProhibitExplicitReturnUndef'        => 1,
+        'Subroutines::ProhibitSubroutinePrototypes'       => 1,
         'TestingAndDebugging::MisplacedShebang'           => 1,
         'TestingAndDebugging::ProhibitShebangWarningsArg' => 1,
         'TestingAndDebugging::RequirePortableShebang'     => 1,
@@ -133,13 +138,18 @@ else {
         'Variables::ProhibitConditionalDeclarations'      => 1,
     );
 
-    # add other policies which aren't yet passing consistently see RT#42427
+    # Allow some names normally proscribed by PBP.
+    my @ambiguousNames = grep {$_ ne 'abstract'}
+        Perl::Critic::Policy::NamingConventions::ProhibitAmbiguousNames::default_forbidden_words();
+
+    # These policies are not yet passing consistently.
     my %extra_policies = (
-        'CodeLayout::RequireTidyCode'                     => { perltidyrc => $perl_tidy_conf },
-        'NamingConventions::ProhibitAmbiguousNames'       => 1,
-        'Subroutines::ProhibitBuiltinHomonyms'            => 1,
-        'Subroutines::ProhibitSubroutinePrototypes'       => 1,
-        'Subroutines::RequireFinalReturn'                 => 1,
+        'CodeLayout::RequireTidyCode' =>
+            { perltidyrc => $perl_tidy_conf },
+        'NamingConventions::ProhibitAmbiguousNames' =>
+            { forbid => join(" ", @ambiguousNames)},
+        'Subroutines::ProhibitBuiltinHomonyms'      => 1,
+        'Subroutines::RequireFinalReturn'           => 1,
     );
 
     # Add Perl::Critic::Bangs if it exists
@@ -149,12 +159,6 @@ else {
     }
     else {
         $default_policies{'Bangs::ProhibitFlagComments'} = 1;
-    }
-
-    # Give a diag to let users know if this is doing anything, how to repeat.
-    eval { require Perl::Tidy; };
-    if ( !$@ ) {
-        diag "Using $perl_tidy_conf for Perl::Tidy settings";
     }
 
     # decide which policy group to use
@@ -169,6 +173,14 @@ else {
     }
     else {
         warn "Unknown policy group, using 'default' policy group";
+    }
+
+    # Give a diag to let users know if this is doing anything, how to repeat.
+    if (exists $policies{'CodeLayout::RequireTidyCode'}) {
+        eval { require Perl::Tidy; };
+        if ( !$@ ) {
+            diag "Using $perl_tidy_conf for Perl::Tidy settings";
+        }
     }
 }
 

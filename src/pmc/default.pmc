@@ -551,22 +551,6 @@ C<get_string_keyed()> with it.
 
 /*
 
-=item C<INTVAL get_bool_keyed_int(INTVAL key)>
-
-Converts C<key> to a PMC key and returns the result of calling
-C<get_bool_keyed()> with it.
-
-=cut
-
-*/
-
-    INTVAL get_bool_keyed_int(INTVAL key) {
-        PMC *const r_key = INT2KEY(INTERP, key);
-        return SELF.get_bool_keyed(r_key);
-    }
-
-/*
-
 =item C<INTVAL elements_keyed_int(INTVAL key)>
 
 Converts C<key> to a PMC key and returns the result of calling
@@ -947,7 +931,7 @@ true (1) is returned; otherwise, false (0) is returned.
 
 */
 
-    VTABLE INTVAL isa(STRING *_class) {
+    VTABLE INTVAL isa(STRING *_class) :const {
         /* RT#46665 - walk mro */
         return does_isa(INTERP, _class, SELF->vtable->isa_str);
     }
@@ -1023,7 +1007,7 @@ Look for NCI methods and properties.
 =cut
 
 */
-    VTABLE PMC *get_class() {
+    VTABLE PMC *get_class() :const {
         /* Create a proxy */
         INTVAL type = VTABLE_type(interp, SELF);
         PMC *type_num = pmc_new(interp, enum_class_Integer);
@@ -1135,6 +1119,20 @@ Used by DOD to mark the PMC.
             /* place and the prop hash */
             (info->visit_pmc_now)(INTERP, PMC_metadata(SELF), info);
         }
+    }
+
+/*
+
+=item C<PMC* clone()>
+
+Clones this PMC.  By default, this just does a freeze and thaw.
+
+=cut
+
+*/
+
+    VTABLE PMC* clone() {
+        return Parrot_thaw(interp, Parrot_freeze(interp, SELF));
     }
 
 /*

@@ -128,7 +128,7 @@ PGE is authored and maintained by Patrick Michaud L<pmichaud@pobox.com>
 	.local string rule
 	.local pmc p6rule_compile, matchsub
 	rule = shift argv
-	p6rule_compile = compreg "PGE::P6Regex"
+	p6rule_compile = compreg "PGE::Perl6Regex"
 	matchsub = p6rule_compile(rule)
 	.If(null matchsub, {
 		printerr "Null matchsub, probably a syntax error\n"
@@ -138,13 +138,13 @@ PGE is authored and maintained by Patrick Michaud L<pmichaud@pobox.com>
 	.local int i, filecount
 	.local string filename
 	.local pmc File, OS, files, handle
-	files = new .ResizableStringArray
+	files = new 'ResizableStringArray'
 	files = argv
 	filecount = files
 	# define with-filename if there's more than one file
 	.If(filecount >= 2, { opts["with-filename"] = 1 })
-	File = new .File
-	OS = new .OS
+	File = new 'File'
+	OS = new 'OS'
 	# This must be here, or else it'll get filled with junk data we use stdin...
 	i = 0
 	.Unless(filecount, {
@@ -180,7 +180,7 @@ PGE is authored and maintained by Patrick Michaud L<pmichaud@pobox.com>
 				.If($S0 != '..', {
 					$S1 = filename . '/'
 					$S0 = $S1 . $S0
-					$P1 = new .ResizableStringArray
+					$P1 = new 'ResizableStringArray'
 					$P1[0] = $S0
 					$I0 = i + 1
 					splice files, $P1, $I0, 0
@@ -221,7 +221,7 @@ handler:
 
 	.local pmc cntrlchar
 	$S0 = '<cntrl-[\t\r\n]>'
-	$P0 = compreg "PGE::P6Regex"
+	$P0 = compreg "PGE::Perl6Regex"
 	cntrlchar = $P0($S0)
 
 	.For(, linelen, { line = readline handle .NL() linelen = length line .NL() inc lineno }, {

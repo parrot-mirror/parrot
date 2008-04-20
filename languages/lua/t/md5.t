@@ -13,7 +13,7 @@ t/md5.t - md5 library
 =head1 DESCRIPTION
 
 Tests md5
-(implemented in F<languages/lua/lib/md5.pir>).
+(implemented in F<languages/lua/src/lib/md5.pir>).
 
 =cut
 
@@ -58,7 +58,7 @@ require 'md5'
 d = md5.new()
 print(d)
 CODE
-/^md5 context [0-9A-Fa-f]{8}$/
+/^md5 context [0-9A-Fa-f]{8,16}$/
 OUTPUT
 
 language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'md5:tostring()' );
@@ -68,7 +68,7 @@ s = d:tostring()
 assert(type(s) == 'string', "got string")
 print(s)
 CODE
-/^md5 context [0-9A-Fa-f]{8}$/
+/^md5 context [0-9A-Fa-f]{8,16}$/
 OUTPUT
 
 language_output_is( 'lua', << 'CODE', << 'OUTPUT', 'md5.digest(s [, raw])' );

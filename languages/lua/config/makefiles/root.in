@@ -18,8 +18,8 @@ RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 PMCBUILD = $(PERL) @build_dir@/tools/build/dynpmc.pl
 
 ## places to look for things
-LIBPATH  = lib
-PMCDIR   = pmc
+LIBPATH  = src/lib
+PMCDIR   = src/pmc
 PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
 
 PMCS = \
@@ -87,18 +87,21 @@ GEN_PBC = \
  lua.pbc
 
 all: \
- pmc/lua_group$(LOAD_EXT) \
+ $(PMCDIR)/lua_group$(LOAD_EXT) \
  $(LIB_PBCS) \
  $(LIBPATH)/luaperl.pbc \
  $(LIBPATH)/alarm.pbc \
  $(LIBPATH)/base64.pbc \
+ $(LIBPATH)/bc.pbc \
  $(LIBPATH)/bitlib.pbc \
  $(LIBPATH)/lfs.pbc \
  $(LIBPATH)/md5.pbc \
+ $(LIBPATH)/random.pbc \
  $(LIBPATH)/sha1.pbc \
+ $(LIBPATH)/uuid.pbc \
  $(GEN_PIR) \
  $(GEN_PBC) \
- Lua/parser.pm
+ src/yapp/Lua/parser.pm
 
 
 src/lua51_testlex_gen.pir: src/lua51_testlex.pg
@@ -116,7 +119,7 @@ src/PASTGrammar_gen.pir: src/PASTGrammar.tg
 src/POSTGrammar_gen.pir: src/POSTGrammar.tg
 	$(TGE) --output=src/POSTGrammar_gen.pir src/POSTGrammar.tg
 
-lua.pbc: lua.pir src/lua51.pir src/lua51_gen.pir src/PASTGrammar_gen.pir src/POSTGrammar_gen.pir $(LIB_SRCS)
+lua.pbc: lua.pir src/lua51.pir src/grammar51.pir src/lua51_gen.pir src/PASTGrammar_gen.pir src/POSTGrammar_gen.pir $(LIB_SRCS)
 	$(PARROT) -o lua.pbc --output-pbc lua.pir
 
 lua@exe@: lua.pbc
@@ -125,7 +128,7 @@ lua@exe@: lua.pbc
 $(LIBPATH)/lualibs.pbc: $(LIB_PBCS)
 	$(PBC_MERGE) -o $(LIBPATH)/lualibs.pbc $(LIB_PBCS)
 
-pmc/lua_group$(LOAD_EXT) : $(PMC_FILES)
+$(PMCDIR)/lua_group$(LOAD_EXT) : $(PMC_FILES)
 	@cd $(PMCDIR) && $(PMCBUILD) generate $(PMCS)
 	@cd $(PMCDIR) && $(PMCBUILD) compile $(PMCS)
 	@cd $(PMCDIR) && $(PMCBUILD) linklibs $(PMCS)
@@ -176,6 +179,9 @@ $(LIBPATH)/alarm.pbc: $(LIBPATH)/alarm.pir
 $(LIBPATH)/base64.pbc: $(LIBPATH)/base64.pir
 	$(PARROT) --output=$(LIBPATH)/base64.pbc $(LIBPATH)/base64.pir
 
+$(LIBPATH)/bc.pbc: $(LIBPATH)/bc.pir
+	$(PARROT) --output=$(LIBPATH)/bc.pbc $(LIBPATH)/bc.pir
+
 $(LIBPATH)/bitlib.pbc: $(LIBPATH)/bitlib.pir
 	$(PARROT) --output=$(LIBPATH)/bitlib.pbc $(LIBPATH)/bitlib.pir
 
@@ -185,12 +191,18 @@ $(LIBPATH)/lfs.pbc: $(LIBPATH)/lfs.pir
 $(LIBPATH)/md5.pbc: $(LIBPATH)/md5.pir
 	$(PARROT) --output=$(LIBPATH)/md5.pbc $(LIBPATH)/md5.pir
 
+$(LIBPATH)/random.pbc: $(LIBPATH)/random.pir
+	$(PARROT) --output=$(LIBPATH)/random.pbc $(LIBPATH)/random.pir
+
 $(LIBPATH)/sha1.pbc: $(LIBPATH)/md5.pir
 	$(PERL) -pe "s|md5|sha1|g; s|MD5|SHA1|g" $(LIBPATH)/md5.pir > $(LIBPATH)/sha1.pir
 	$(PARROT) --output=$(LIBPATH)/sha1.pbc $(LIBPATH)/sha1.pir
 
-Lua/parser.pm: Lua/lua51.yp
-	yapp -v -m Lua::parser -o Lua/parser.pm Lua/lua51.yp
+$(LIBPATH)/uuid.pbc: $(LIBPATH)/uuid.pir
+	$(PARROT) --output=$(LIBPATH)/uuid.pbc $(LIBPATH)/uuid.pir
+
+src/yapp/Lua/parser.pm: src/yapp/Lua/lua51.yp
+	yapp -v -m Lua::parser -o src/yapp/Lua/parser.pm src/yapp/Lua/lua51.yp
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
@@ -250,4 +262,3 @@ realclean: clean
 	$(RM_F) Makefile
 
 distclean: realclean
-

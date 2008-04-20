@@ -19,8 +19,10 @@ my @steps = qw(
     inter::lex
     inter::yacc
     auto::gcc
+    auto::glibc
     auto::backtrace
     auto::fink
+    auto::macports
     auto::msvc
     auto::attributes
     auto::warnings
@@ -55,6 +57,7 @@ my @steps = qw(
     auto::gmp
     auto::readline
     auto::gdbm
+    auto::opengl
     auto::crypto
     auto::gettext
     auto::snprintf
@@ -67,6 +70,7 @@ my @steps = qw(
     gen::config_h
     gen::core_pmcs
     gen::parrot_include
+    gen::opengl
     gen::languages
     gen::makefiles
     gen::platform

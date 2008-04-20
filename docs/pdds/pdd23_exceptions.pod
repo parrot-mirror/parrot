@@ -64,7 +64,8 @@ replacing the stack with that execution context of the invocable pmc.
 
 =item B<pop_eh>
 
-Pop the most recently pushed exception handler off the exception handler stack.
+Pop the most recently pushed exception handler off the exception handler
+stack.
 
 =item B<throw I<EXCEPTION>>
 
@@ -135,7 +136,8 @@ exception handler's way of telling Parrot that it has handled the exception.
 
 =head2 Exception Introspection Opcodes
 
-These are the opcodes relevant to introspection of the exception handler stack:
+These are the opcodes relevant to introspection of the exception handler
+stack:
 
 =over
 
@@ -314,11 +316,6 @@ The C<ord> opcode throws C<exception;domain> when it's passed an empty
 argument or a string index that's outside the length of the string.  Payload
 is an array, first element being the string 'ord'.
 
-The C<classoffset> opcode throws C<exception;domain> when it's asked to
-retrieve the attribute offset for a class that isn't in the object's
-inheritance hierarchy.  Payload is an array: [0] string 'classoffset',
-[1] object in question, [2] ID of class not found.
-
 The C<find_charset> opcode throws C<exception;domain> if the charset name it's
 looking up doesn't exist.  Payload is an array: [0] string 'find_charset', [1]
 charset name that was not found.
@@ -355,7 +352,8 @@ runtime is OK in Tcl.)
 general categories of opcodes that should throw exceptions. }}
 
 Other opcodes respond to an C<errorson> setting to decide whether to
-throw an exception or return an error value. C<find_global> throws an
+throw an exception or return an error value. C<get_hll_global> and
+C<get_root_global> throw an
 exception (or returns a Null PMC) if the global name requested doesn't
 exist. C<find_name> throws an exception (or returns a Null PMC) if the
 name requested doesn't exist in a lexical, current, global, or built-in
@@ -404,7 +402,7 @@ error in with normal return values. }}
 =head2 Resuming after Exceptions
 
 Exceptions thrown by standard Parrot opcodes (like the one thrown by
-C<find_global> above or by the C<throw> opcode) are always resumable,
+C<get_hll_global> above or by the C<throw> opcode) are always resumable,
 so when the exception handler function returns normally it continues
 execution at the opcode immediately after the one that threw the
 exception. Other exceptions at the run-loop level are also generally

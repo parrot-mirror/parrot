@@ -47,19 +47,20 @@ sub runstep {
 
     my $languages = $conf->options->get('languages');
     $languages = qq{
-        APL amber abc
+        APL abc
         befunge bf
         cardinal c99 cola
         eclectus ecmascript
         forth
-        HQ9plus jako
+        hq9plus
+        jako
         lisp lolcode lua
         m4
         ook
         parrot_compiler perl6 pheme PIR plumhead pugs punie pynie
         regex
         scheme
-        tap tcl
+        tcl
         unlambda urm
         WMLScript
         Zcode
@@ -71,6 +72,10 @@ sub runstep {
             # RT#47792
             # languages/dotnet/Configure.pl works only after the root 'perl Configure.pl'.
             # system( 'cd languages/dotnet; perl Configure.pl' );
+        }
+        elsif ( $language eq 'c99' ) {
+            $conf->genfile("$langdir/config/makefiles/root.in"     => "$langdir/Makefile");
+            $conf->genfile("$langdir/config/makefiles/cpp.in"      => "$langdir/src/cpp//Makefile");
         }
         elsif ( $language eq 'tcl' ) {
             # tcl has more than one Makefile

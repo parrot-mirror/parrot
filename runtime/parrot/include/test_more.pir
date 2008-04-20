@@ -11,12 +11,12 @@ simple test file written in parrot.
 
 =cut
 
-    load_bytecode 'library/Test/More.pbc'
+    load_bytecode 'runtime/parrot/library/Test/More.pbc'
 
     # get the testing functions
     .local pmc exports, curr_namespace, test_namespace
     curr_namespace = get_namespace
-    test_namespace = get_namespace [ 'Test'; 'More' ]
+    test_namespace = get_root_namespace [ 'parrot'; 'Test'; 'More' ]
     exports = split " ", "plan diag ok is is_deeply like isa_ok skip"
 
     test_namespace."export_to"(curr_namespace, exports)
@@ -29,4 +29,3 @@ simple test file written in parrot.
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4 ft=pir:
-

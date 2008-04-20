@@ -316,7 +316,7 @@ Returns the PMC value of the element at index C<key>.
 
         if (key < 0 || key >= PMC_int_val(SELF))
             real_exception(INTERP, NULL, E_IndexError,
-                "FixedPMCArray: index out of bounds!");
+                _("FixedPMCArray: index out of bounds!"));
 
         data = (PMC **)PMC_data(SELF);
         return data[key];
@@ -365,7 +365,7 @@ array.
 
         if (PMC_int_val(SELF) && size)
             real_exception(INTERP, NULL, E_IndexError,
-                    "FixedPMCArray: Can't resize!");
+                    _("FixedPMCArray: Can't resize!"));
         if (!size)
             return;
 
@@ -380,21 +380,37 @@ array.
 
     VTABLE void set_pmc(PMC *value) {
         INTVAL size;
+        INTVAL is_set_same;
 
         if (SELF == value)
             return;
 
         if (!VTABLE_does(interp, value, CONST_STRING(interp, "array")))
             real_exception(INTERP, NULL, E_TypeError,
-                    "Can't set self from this type");
+                    _("Can't set self from this type"));
 
         if (PMC_data(SELF))
             mem_sys_free(PMC_data(SELF));
 
-        size           = PMC_int_val(SELF) = PMC_int_val(value);
+        /* If the value is a FixedPMCArray or a ResizablePMCArray itself, we
+         * can just copy the data directly. Otherwise, must use interface. */
+        is_set_same    = value->vtable->base_type == enum_class_FixedPMCArray ||
+                         value->vtable->base_type == enum_class_ResizablePMCArray;
+
+        size           = PMC_int_val(SELF) = is_set_same ?
+                                                PMC_int_val(value) :
+                                                VTABLE_elements(INTERP, value);
         PMC_data(SELF) = mem_allocate_n_zeroed_typed(size, PMC *);
 
-        mem_sys_memcopy(PMC_data(SELF), PMC_data(value), size * sizeof (PMC *));
+        if (is_set_same) {
+            mem_sys_memcopy(PMC_data(SELF), PMC_data(value), size * sizeof (PMC *));
+        }
+        else {
+            INTVAL i;
+            for (i = 0; i < size; i++)
+                ((PMC**)PMC_data(SELF))[i] = VTABLE_get_pmc_keyed_int(INTERP, value, i);
+        }
+
         PMC_int_val2(SELF) = size;
         PObj_data_is_PMC_array_SET(SELF);
     }
@@ -538,7 +554,7 @@ Sets the PMC value of the element at index C<key> to C<*src>.
 
         if (key < 0 || key >= PMC_int_val(SELF))
             real_exception(INTERP, NULL, E_IndexError,
-                "FixedPMCArray: index out of bounds!");
+                _("FixedPMCArray: index out of bounds!"));
 
         data      = (PMC**)PMC_data(SELF);
         DOD_WRITE_BARRIER(INTERP, SELF, data[key], src);
@@ -631,7 +647,7 @@ Return a new iterator for SELF.
             return iter;
         }
 
-        real_exception(INTERP, NULL, E_IndexError, "Array: Unknown slice type");
+        real_exception(INTERP, NULL, E_IndexError, _("Array: Unknown slice type"));
     }
 
     VTABLE PMC *get_iter() {
@@ -662,7 +678,7 @@ Returns TRUE is the element at C<key> exists; otherwise returns false.
         PMC **data;
         if (key < 0 || key >= PMC_int_val(SELF))
             real_exception(INTERP, NULL, E_IndexError,
-                "FixedPMCArray: index out of bounds!");
+                _("FixedPMCArray: index out of bounds!"));
 
         data = (PMC**)PMC_data(SELF);
         return !PMC_IS_NULL(data[key]);

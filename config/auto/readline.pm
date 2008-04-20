@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -30,7 +30,6 @@ sub _init {
     my %data;
     $data{description} = q{Determining if your platform supports readline};
     $data{result}      = q{};
-    $data{macports_root} = File::Spec->catdir( '/', 'opt', 'local' );
     return \%data;
 }
 
@@ -51,12 +50,6 @@ sub runstep {
     # On OS X check the presence of the readline header in the standard
     # Fink/macports locations.
     $self->_handle_darwin_for_fink($conf, $osname, 'readline/readline.h');
-
-    # Since this config step class is the only one that checks for a
-    # macports-installed program, we have not yet had need to create an
-    # 'auto::macports' config step and do not yet have enough basis to extract
-    # this code into a Parrot::Configure::Step::Methods method analogous to
-    # _handle_darwin_for_fink().
     $self->_handle_darwin_for_macports($conf, $osname, q{readline/readline.h});
 
     $conf->cc_gen('config/auto/readline/readline.in');
@@ -67,6 +60,16 @@ sub runstep {
             $has_readline = $self->_evaluate_cc_run($verbose);
         }
         _handle_readline($conf, $has_readline);
+    }
+    else {
+        _handle_ncurses_need($conf, $osname, $cc);
+        eval { $conf->cc_build() };
+        if ( !$@ ) {
+            if ( $conf->cc_run() ) {
+                $has_readline = $self->_evaluate_cc_run($verbose);
+            }
+            _handle_readline($conf, $has_readline);
+        }
     }
     unless ($has_readline) {
         # The Parrot::Configure settings might have changed while class ran
@@ -80,8 +83,7 @@ sub _handle_mswin32 {
     my ($conf, $osname, $cc) = @_;
     if ( $osname =~ /mswin32/i ) {
         if ( $cc =~ /^gcc/i ) {
-            $conf->data->add( ' ',
-                libs => '-lreadline -lgw32c -lole32 -luuid -lwsock32 -lmsvcp60' );
+            $conf->data->add( ' ', libs => '-lreadline' );
         }
         else {
             $conf->data->add( ' ', libs => 'readline.lib' );
@@ -93,18 +95,18 @@ sub _handle_mswin32 {
     return 1;
 }
 
-sub _handle_darwin_for_macports {
-    my $self = shift;
-    my ($conf, $osname, $file) = @_;
-    if ( $osname =~ /darwin/ ) {
-        my $macports_root = $self->{macports_root};
-        my $macports_lib_dir = qq{$macports_root/lib};
-        my $macports_include_dir = qq{$macports_root/include};
-        if ( -f qq{$macports_include_dir/$file} ) {
-            $conf->data->add( ' ', linkflags => "-L$macports_lib_dir" );
-            $conf->data->add( ' ', ldflags   => "-L$macports_lib_dir" );
-            $conf->data->add( ' ', ccflags   => "-I$macports_include_dir" );
+sub _handle_ncurses_need {
+    my ($conf, $osname, $cc) = @_;
+    if ( $osname =~ /mswin32/i ) {
+        if ( $cc =~ /^gcc/i ) {
+            $conf->data->add( ' ', libs => '-lncuses' );
         }
+        else {
+            $conf->data->add( ' ', libs => 'ncurses.lib' );
+        }
+    }
+    else {
+        $conf->data->add( ' ', libs => '-lncurses' );
     }
     return 1;
 }

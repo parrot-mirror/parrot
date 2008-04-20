@@ -32,6 +32,7 @@ our @runcore_tests = qw(
     t/native_pbc/*.t
     t/dynpmc/*.t
     t/dynoplibs/*.t
+    t/compilers/pct/*.t
     t/compilers/pge/*.t
     t/compilers/pge/p5regex/*.t
     t/compilers/pge/perl6regex/*.t
@@ -79,6 +80,7 @@ our @developing_tests = (
         gmt_utc.t
         linelength.t
         pccmethod_deps.t
+        perlcritic.t
         pir_code_coda.t
         svn_id.t
         tabs.t

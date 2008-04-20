@@ -40,8 +40,8 @@ method statement ($/, $key) {
 
 
 method declare($/) {
-    $($<variable>).isdecl(1);
     if ($<expression>) {
+        $($<variable>).isdecl(1);
         # XXX Someone clever needs to refactor this into C<assign>
         my $past := PAST::Op.new( :pasttype('bind'), :node( $/ ) );
         $past.push( $( $<variable> ) );
@@ -64,7 +64,8 @@ method function($/) {
     my $block := $( $<block> );
     $block.blocktype('declaration');
 
-    my $arglist := PAST::Stmts.new( :node($<arglist>) );
+    my $arglist;
+    $arglist := PAST::Stmts.new();
     # if there are any parameters, get the PAST for each of them and
     # adjust the scope to parameter.
     $block.arity(0);
@@ -84,7 +85,7 @@ method function($/) {
     $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'));
     $block[0].push($it);
 
-    $block.unshift($arglist);
+    if $<parameters> { $block.unshift($arglist); }
 
     $block.name(~$<variable><identifier>);
     make $block;

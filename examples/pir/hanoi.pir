@@ -7,9 +7,11 @@ examples/pir/hanoi.pir - Towers of hanoi
 
 =head1 SYNOPSIS
 
-You have to pass in the height of the tower:
+You may pass in the height of the tower:
 
     % ./parrot examples/pir/hanoi.pir 5
+
+The default is 3.
 
 =head1 DESCRIPTION
 
@@ -19,73 +21,64 @@ integers.
 
 =head1 Data Structure
 
-C<P0> is a C<FixedPMCArray> PMC with three entries.  Each entry is a
+C<towers> is a C<FixedPMCArray> PMC with three elements.  Each element is a
 C<ResizableIntegerArray> PMC which represents a tower (column) of Hanoi.
+Each integer element of the array represents a single disk, where the
+integer value is the size of the disk.  The top of the tower is at the
+highest index; since a larger disk cannot be placed on top of a smaller
+one, it follows that the tower array must always be sorted in descending
+order.  This lends itself naturally to use of the C<push> and C<pop>
+operations for moving disks.
 
-The towers are arrays of integers. 0 indicates no disk is present. A
-positive integer indicates the diameter of the disk occupying the
-indicated slot.
+So this situation (after the first move)
 
-So this setup
-
-      ||    ||   ||
-     ====   ||   ||
-    ======  ||   ==
+           |        |
+     ====  |        |
+    ====== |        |   ==
 
 is represented as
 
-    [[0, 2, 3], [0, 0, 0], [0, 0, 1]]
+    [[3, 2], [], [1]]
 
 In pseudocode:
 
-    main() {
-        size = argv[0]
-        int arr[] = [[], [], []]
-        arr[0] = [1..size]
-        arr[1] = [(0) x size]
-        arr[2] = [(0) x size]
-        move_stack(arr, size, size, 0, 2, 1)
+    sub main() {
+        size = argv[0] || 3
+        int towers[] = [[size..1], [], []]
+        move_stack(size, 0, 2, 1)
+
+        sub move_stack(n_to_move, start, target, storage) {
+            if (n_to_move == 1) {
+                move_one(start, target)
+            }
+            else {
+                # Move all but the largest disk to storage.
+                move_stack(n_to_move-1, start, storage, target)
+                # Move the largest disk to the target.
+                move_one(start, target)
+                # Move all but the largest disk from storage to target.
+                move_stack(n_to_move-1, storage, target, start)
+            }
+        }
+
+        sub move_one(start_col, dest_col) {
+            # Do the move
+            push(towers[dest_col], pop(towers[start_col]));
+
+            # Print the results
+            print(towers);
+        }
     }
-
-    move_stack(array, size, num, start, target, storage) {
-        if(num == 1) {
-         move(array, size, start, target)
-    } else {
-        # move all but the largest disk to storage
-        move_stack(array, size, num-1, start, storage, target)
-        # move the largest disk to target
-        move(array, size, start, target)
-        # move all but the largest disk from storage to target
-        move_stack(array, size, num-1, storage, target, start)
-    }
-
-    move(array, size, start, target) {
-        /* okay, so it's not pseudocode... */
-        # find the first non-empty slot on the start column (smallest disk)
-        for(i=0; i<size; i++) if(array[start_col][i]) break;
-        start_row = i;
-
-        # find the last empty slot on the target column
-        for(i=1; i<size; i++) if(array[dest_col][i]) break;
-        dest_row  = i - 1;
-
-        # do the move
-        array[dest_col][dest_row] = array[start_col][start_row];
-        array[start_col][start_row] = 0;
-
-        #print the results
-        print(array, size);
-    }
-
 
 =head1 TODO
 
-Convert this to proper PIR, with subroutines and such.
+Replace I6 etc. with mnemonic register names.
 
 =head1 HISTORY
 
-First version Tony Payne              2002-15-05
-Converted to PIR Bernhard Schmalhofer 2005-10-20
+ First version               Tony Payne            2002-15-05
+ Converted to PIR            Bernhard Schmalhofer  2005-10-20
+ Use PCC instead of bsr/ret  Bob Rogers            2008-04-06
 
 =cut
 
@@ -94,155 +87,151 @@ Converted to PIR Bernhard Schmalhofer 2005-10-20
         .param pmc argv
         .local int size
 
-        # check number of command line arguments
+        ## Create some lexical bindings.
+        .local pmc size_pmc, print_towers
+        .lex "size", size_pmc
+        ## Note that we don't need to do find_lex on the closures; functions are
+        ## sought using find_name, which looks at outer lexical scopes.
+        .lex "print_towers", print_towers
+        print_towers = get_hll_global 'print_towers'
+        print_towers = newclosure print_towers
+        .local pmc move_one, move_stack
+        .lex "move_one", move_one
+        move_one = get_hll_global 'MOVE'
+        move_one = newclosure move_one
+        .lex "move_stack", move_stack
+        move_stack = get_hll_global 'MOVE_STACK'
+        move_stack = newclosure move_stack
+
+        # Check number of command line arguments
         $I0 = argv
         if $I0 < 2 goto USE_DEFAULT_SIZE
         S5 = argv[1]
         size = S5
+        if size < 1 goto INVALID_SIZE
         print "Building a tower of size "
         print size
         print ".\n"
         goto SIZE_IS_NOW_KNOWN
+INVALID_SIZE:
+        print "Given tower size is invalid.\n"
+        goto USE_DEFAULT_SIZE
 USE_DEFAULT_SIZE:
         print "Using default size 3 for tower.\n"
         size = 3
 SIZE_IS_NOW_KNOWN:
+        size_pmc = new 'Integer'
+        size_pmc = size
         print "\n"
 
-        new P0, 'FixedPMCArray'
-        set P0, 3
+        .local pmc towers
+        .lex "towers", towers
+        new towers, 'FixedPMCArray'
+        set towers, 3
         new P1, 'ResizableIntegerArray'
         new P2, 'ResizableIntegerArray'
         new P3, 'ResizableIntegerArray'
-        set P0[0], P1                         #P0 = [[],[],[]]
-        set P0[1], P2
-        set P0[2], P3
+        set towers[0], P1
+        set towers[1], P2
+        set towers[2], P3
+        ## towers = [[],[],[]]
 
-        set I0, 0
+        .local int i
+        i = size
 loop_populate:
-        add I1, I0, 1
-        set P1[I0], I1                        #P0=[[1,2,3,...],[0,0,0...],[0,0,0...]]
-        set P2[I0], 0
-        set P3[I0], 0
-        inc I0
-        lt  I0, size, loop_populate
-        set I1, size                            # size
-        set I2, 0                             # start_col
-        set I3, 2                             # target_col
-        set I4, 1                             # storage_col
-        bsr MOVE_STACK
-END:    end
+        push P1, i
+        dec i
+        if i > 0 goto loop_populate
+        ## towers = [[...,3,2,1],[],[]]
 
-#Params
-#  P0 = array (const)
-#  I0 = size  (const)
-PRINT:  # vars used: I1, I2, I3, I4, size, I6, P1
-        set I1, 0                             #I1 = i
-        set I2, 0                             #I2 = j
-        set I3, 0                             #I3 = k
+        # uncomment to print initial layout
+        # print_towers(towers)
+
+        ## Now solve it.
+        move_stack(size, 0, 2, 1)
+        .return ()
+.end
+
+## Print the current state of the towers array.
+.sub print_towers :outer(hanoi)
+        .param pmc towers       # an array
+
+        ## Only PMCs can be stored as lexical variables, but we need an int.
+        .local pmc tower_size_pmc
+        tower_size_pmc = find_lex "size"
+        .local int tower_size
+        tower_size = tower_size_pmc
+
+        .local pmc stack
+        .local int i, j, stack_size, tos
+        i = tower_size
+        dec i
 loop_rows:
-        set I2, 0
+        j = 0
 loop_cols:
-        set P1,P0[I2]                         #P1 = P0[j]
-        set I4,P1[I1]                         #I4 = cursize; cursize=array[j][i]
+        .local int disk_size, n_spaces
+        stack = towers[j]
+        stack_size = stack
+        disk_size = 0
+        if stack_size <= i goto print_it
+        disk_size = stack[i]                 # disk_size = towers[j][i]
+print_it:
+        n_spaces = tower_size - disk_size
+        repeat S0, " ", n_spaces
+        print S0
+        I6 = mul disk_size, 2                # I6 = disk_size * 2
+        repeat S1, "=", I6
+        print S1
+        print S0
 
-        size = I0 - I4                          #size = size-cursize
-        repeat S0, " ", size
-        print S0
-        mul I6, I4, 2                         #I6 = cursize * 2
-        repeat S0, "=", I6
-        print S0
-        repeat S0, " ", size
-        print S0
-
-        inc I2                                # j++
-        eq I2, 3, done_loop
+        inc j
+        if j == 3 goto done_loop
         print " | "
-        if 1, loop_cols                       # j < 3
+        goto loop_cols
 done_loop:
         print "\n"
-        inc I1                                # i++
-        lt I1, I0, loop_rows                  # i < size
+        dec i
+        if i >= 0 goto loop_rows
         print "\n"
-        ret
+.end
 
-# params
-# P0 = array
-# I0 = size
-# I2 = start_col
-# I3 = dest_col
-MOVE:        #vars used: I4, size, I6, I7, I8, P1, P2
-        set I4, 0                             #I4 = i
-        set P1, P0[I2]                        #P1 = array[start_col]
-loop_find_start_row:
-        set I7, P1[I4]                        #I7 = array[start_col][i]
-        ne I7, 0, found_start_row
-        inc I4                                #  i++
-        lt I4, I0, loop_find_start_row        #  i < size
-found_start_row:
-        set size, I4                            #size = start_row = i
-        set P2, P0[I3]                        #P2 = array[dest_col]
-        set I4, 0                             #  for( i = 0
-loop_find_dest_row:
-        set I8, P2[I4]                        #I8 = array[dest_col][i]
-        ne I8, 0, found_dest_row              #  if(array[dest_col][i])
-        inc I4                                #  i++
-        lt I4, I0, loop_find_dest_row         #  i < size
-found_dest_row:
-        sub I6, I4, 1                         #I6 = dest_row = i - 1
-        set P2[I6], I7                        # array[dc][dr]=array[sc][sr]
-        set P1[size], 0                         # array[sc][sr]=0
-        bsr PRINT
-        ret
+## Take the topmost disk off the start_col stack, and put it on the dest_col
+## stack.  The way we've defined the data structures makes this trivial.
+.sub MOVE :outer(hanoi)
+        .param int start_col
+        .param int dest_col
 
-# P0 = array
-# I0 = size
-# I1 = num
-# I2 = start_col
-# I3 = target_col
-# I4 = storage_col
-MOVE_STACK:
-        gt I1, 1, move_multiple               # if num == 1
-        bsr MOVE                              # return move(...)
-        ret
+        .local pmc towers
+        towers = find_lex "towers"
+
+        .local pmc start_stack, dest_stack
+        .local int disk
+        start_stack = towers[start_col]
+        disk = pop start_stack
+        dest_stack = towers[dest_col]
+        push dest_stack, disk
+        print_towers(towers)
+.end
+
+## Move n_to_move disks from start_col to target_col, using storage_col
+## for temporary storage if needed.
+.sub MOVE_STACK :outer(hanoi)
+        .param int n_to_move
+        .param int start_col
+        .param int target_col
+        .param int storage_col
+
+        if n_to_move > 1 goto move_multiple
+        move_one(start_col, target_col)
+        .return ()
 move_multiple:
-        save I1
-        dec I1
-        save I4
-        save I3
-        save I2
-        set size, I3
-        set I3, I4
-        set I4, size
-        bsr MOVE_STACK                        #move_stack(...)
-        restore I2
-        restore I3
-        restore I4
-        restore I1
-        save I1
-        save I4
-        save I3
-        save I2
-        bsr MOVE                              #move(...)
-        restore I2
-        restore I3
-        restore I4
-        restore I1
-        save I1
-        save I4
-        save I3
-        save I2
-        dec I1
-        set size, I2
-        set I2, I4
-        set I4, size
-        bsr MOVE_STACK                        #move_stack(...)
-        restore I2
-        restore I3
-        restore I4
-        restore I1
-        ret
-
+        dec n_to_move
+        ## Move all but the largest disk to storage.
+        move_stack(n_to_move, start_col, storage_col, target_col)
+        ## Move the largest disk to the target.
+        move_one(start_col, target_col)
+        ## Move all but the largest disk from storage to target.
+        move_stack(n_to_move, storage_col, target_col, start_col)
 .end
 
 # Local Variables:

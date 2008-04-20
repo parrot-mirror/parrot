@@ -64,14 +64,16 @@ sub runstep {
     $conf->cc_gen('config/auto/gettext/gettext.in');
     if ( $osname =~ /mswin32/i ) {
         if ( $cc =~ /^gcc/i ) {
-            eval { $conf->cc_build( '', '-llibintl' ); };
+            eval { $conf->cc_build( '', '-lintl' ); };
         }
         else {
             eval { $conf->cc_build( '', 'intl.lib' ); };
         }
     }
     else {
-        eval { $conf->cc_build( '', '-lintl' ); };
+        # don't need to link with libintl if we have GNU libc
+        my $linklibs = defined $conf->data->get('glibc') ? '' : '-lintl';
+        eval { $conf->cc_build( '', $linklibs ); };
     }
     my $has_gettext;
     if ( !$@ ) {
@@ -85,7 +87,7 @@ sub runstep {
         # The Parrot::Configure settings might have changed while class ran
         $self->_recheck_settings($conf, $libs, $ccflags, $linkflags, $verbose);
     }
-    $conf->data->set( has_gettext => $has_gettext );
+    $conf->data->set( HAS_GETTEXT => $has_gettext );
 
     return 1;
 }

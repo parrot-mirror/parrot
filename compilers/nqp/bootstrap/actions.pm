@@ -1,15 +1,11 @@
 # Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
-## Actions for the NQP compiler, written in NQP.
-## Some minor changes were made to the grammar, such as
-## removal of superfluous keys. This actions file must be
-## aligned to NQP's current grammar file, and some parts
-## should be finished, such as some built-in operators,
-## the for-statement seems broken, etc.
-##
+
+
 
 class NQP::Grammar::Actions;
+
 
 method TOP($/) {
     my $past := $($<statement_block>);
@@ -241,9 +237,8 @@ method while_statement($/) {
 
 method for_statement($/) {
     my $block := $( $<block> );
-    #$block.blocktype('sub');
-    $block.blocktype('immediate');
-    $block.symbol(:name('$_'), :scope('lexical'));
+    $block.blocktype('declaration');
+    $block.symbol( '$_', :scope('lexical'));
     my $topic_var := PAST::Var.new(:name('$_'), :scope('parameter'));
     $block[0].push($topic_var);
     my $past := PAST::Op.new($($<EXPR>),
@@ -459,7 +454,7 @@ method param_var($/) {
 
 #### Terms and expressions ####
 
-method term($/) {
+method term($/, $key) {
     my $past := $($<noun>);
     for $<postfix> {
         my $term := $past;
@@ -752,6 +747,10 @@ method package_declarator($/, $key) {
     #if ($<sym> eq 'class') { ...code to make class... }
 
     make $past;
+ #    PIR q< $P0 = get_hll_global ['NQP::Grammar::Actions'], 'package_declarator_helper' >;
+ #    PIR q< $P1 = find_lex '$/'                          >;
+ #    PIR q< $P2 = find_lex '$key'                        >;
+ #    PIR q< $P0($P1, $P2)                                >;
 }
 #
 ##.sub 'package_declarator' :method
@@ -902,8 +901,8 @@ method quote($/) {
 
 
 
-## stolen from NQP
-method typename($/) {
+
+method typename($/, $key) {
     my $ns := $<name><ident>;
     my $shortname;
     PIR q<    $P0 = find_lex '$ns'         >;
@@ -933,7 +932,7 @@ method typename($/) {
 ##.end
 
 
-method number($/, $key?) {
+method number($/    ) {
     make PAST::Val.new(:node($/), :value(~$/), :returns('Integer'));
 }
 ##.sub 'number' :method
@@ -947,7 +946,7 @@ method number($/, $key?) {
 ##.end
 
 
-method subcall($/, $key?) {
+method subcall($/) {
     my $past := $($<arglist>);
     $past.name(~$<ident>);
     $past.pasttype('call');
@@ -977,6 +976,7 @@ method EXPR($/, $key) {
         my $past := PAST::Op.new( :name($<type>),
                                   :pasttype($<top><pasttype>),
                                   :pirop($<top><pirop>),
+                                  :inline($<top><inline>),
                                   :lvalue($<top><lvalue>),
                                   :node($/)
                                 );
@@ -988,22 +988,6 @@ method EXPR($/, $key) {
 }
 
 
-#method EXPR($/, $key) {
-#    if ($key eq 'end') {
-#        make $($<expr>);
-#    }
-#    my $past := PAST::Op.new( :node($/),
-#                              :name($<type>),
-#                              :pasttype($<top><pasttype>),
-#                               :inline($<top><inline>),
-#                              :pirop($<top><pirop>),
-#                              :lvalue($<top><lvalue>)
-#                            );
-#    for @($/) {
-#        $past.push($($_));
-#    }
-#    make $past;
-#}
 ##.sub 'EXPR' :method
 ##    .param pmc match
 ##    .param pmc key

@@ -10,11 +10,15 @@ src/classes/Hash.pir - Perl 6 Hash class, and related functions
 
 =cut
 
-.namespace ['Hash']
+.namespace ['Perl6Hash']
 
 .sub 'onload' :anon :load :init
+    $P0 = subclass 'Hash', 'Perl6Hash'
+    $P1 = get_hll_global 'Any'
+    $P1 = $P1.HOW()
+    addparent $P0, $P1
     $P1 = get_hll_global ['Perl6Object'], 'make_proto'
-    $P1('Hash', 'Hash')
+    $P1($P0, 'Hash')
 .end
 
 
@@ -33,6 +37,37 @@ src/classes/Hash.pir - Perl 6 Hash class, and related functions
     goto loop
   end:
     .return ($S0)
+.end
+
+
+.sub 'keys' :method
+    .local pmc iter
+    .local pmc rv
+    iter = new 'Iterator', self
+    rv   = new 'List'
+  loop:
+    unless iter goto end
+    $S1 = shift iter
+    push rv, $S1
+    goto loop
+  end:
+    .return (rv)
+.end
+
+
+.sub 'values' :method
+    .local pmc iter
+    .local pmc rv
+    iter = new 'Iterator', self
+    rv   = new 'List'
+  loop:
+    unless iter goto end
+    $S1 = shift iter
+    $S1 = iter[$S1]
+    push rv, $S1
+    goto loop
+  end:
+    .return (rv)
 .end
 
 

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2007, The Perl Foundation
+Copyright (C) 2007-2008, The Perl Foundation
 $Id$
 
 =head1 NAME
@@ -41,6 +41,11 @@ main(int argc, const char * argv[])
     const char *sourcefile;
     Interp  *interp;
     int      status;
+
+    /* internationalization setup */
+    /* setlocale(LC_ALL, ""); */
+    bindtextdomain(PACKAGE, LOCALEDIR);
+    textdomain(PACKAGE);
 
     Parrot_set_config_hash();
 

@@ -13,11 +13,20 @@ src/builtins/lists.pir - List operations
 .sub 'listmaker'
     .param pmc args            :slurpy
     unless null args goto have_args
-    args = new .ResizablePMCArray
+    args = new 'ResizablePMCArray'
   have_args:
     .return (args)
 .end
 
+.sub 'tuplemaker'
+    .param pmc args            :slurpy
+    .local pmc ret
+    ret = new .FixedPMCArray
+    if null args goto no_args
+    set ret, args
+  no_args:
+    .return (ret)
+.end
 =back
 
 =head1 AUTHOR

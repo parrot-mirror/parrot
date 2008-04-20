@@ -15,7 +15,7 @@ test_lex -- A dumper for Lua 5.1 lexicography
 
 =head1 DESCRIPTION
 
-This compiler extends C<Lua::Compiler> (and C<PCT::HLLCompiler>,
+This compiler is a C<PCT::HLLCompiler>,
 see F<compilers/pct/src/PCT/HLLCompiler.pir>)
 
 This compiler defines the following stages:
@@ -36,12 +36,12 @@ and imports many definitions from the full Lua compiler
 .sub '__onload' :anon :load :init
     load_bytecode 'languages/lua/lua.pbc'
 
-    new $P0, 'Lua::Compiler'
+    new $P0, 'PCT::HLLCompiler'
     $P0.'language'('LuaTestLex')
     $P0.'parsegrammar'('Lua::TestLex')
     $P0.'astgrammar'('Lua::DumpLex')
 
-    $S0 = "Lexico of Lua 5.1 on Parrot  Copyright (C) 2005-2007, The Perl Foundation.\n"
+    $S0 = "Lexico of Lua 5.1 on Parrot  Copyright (C) 2005-2008, The Perl Foundation.\n"
     $P0.'commandline_banner'($S0)
     $P0.'commandline_prompt'('> ')
 
