@@ -13,8 +13,8 @@ file used for listing the rest of the file's contents.  Essentially this
 segment is a container for all other segments within a Packfile.
 
 See packfile.pmc for the toplevel Packfile interface, see packfilesegment.pmc
-for the list of methods every packfile segment pmc must implement; see PDD13
-for the design spec.
+for the list of common methods every packfile segment pmc must implement; see
+PDD13 for the design spec.
 
 
 =head2 Methods
