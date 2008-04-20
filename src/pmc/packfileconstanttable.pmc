@@ -117,7 +117,7 @@ Fetch a PMC constant.  An exception is thrown if the given constant isn't a PMC.
 
 /*
 
-=item C<INTVAL set_number_keyed_int(INTVAL index, INTVAL value)>
+=item C<void set_number_keyed_int(INTVAL index, INTVAL value)>
 
 Set the constant to the given number.
 
@@ -131,7 +131,7 @@ Set the constant to the given number.
 
 /*
 
-=item C<STRING *set_string_keyed_int(INTVAL index, STRING *value)>
+=item C<void set_string_keyed_int(INTVAL index, STRING *value)>
 
 Set the constant to the given string.
 
@@ -145,7 +145,7 @@ Set the constant to the given string.
 
 /*
 
-=item C<PMC *set_pmc_keyed_int(INTVAL index, PMC *value)>
+=item C<void set_pmc_keyed_int(INTVAL index, PMC *value)>
 
 Set the constant to the given PMC (or key).
 
