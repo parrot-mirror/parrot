@@ -4,12 +4,13 @@ $Id$
 
 =head1 NAME
 
-src/pmc/packfilefixuptable.pmc - PackfileFixupTable PMC
+src/pmc/packfileannotations.pmc - PackfileAnnotations PMC
 
 =head1 DESCRIPTION
 
-This class implements a PackfileFixupTable object, a segment of the .pbc
-data file storing an array of PackfileFixupEntry PMCs.
+This class implements a PackfileAnnotations object, a segment of the .pbc data
+file used for listing annotations.  It is a container for PackfileAnnotation
+objects.
 
 See packfile.pmc for the toplevel Packfile interface, see packfilesegment.pmc
 for the list of common methods every packfile segment pmc must implement; see
@@ -26,7 +27,7 @@ PDD13 for the design spec.
 
 #include "parrot/parrot.h"
 
-pmclass PackfileFixupTable extends PackfileSegment {
+pmclass PackfileAnnotations extends PackfileSegment {
 
 
 /*
@@ -59,6 +60,21 @@ Unpack a serialized segment string.
 
 /*
 
+=item C<PMC *get_key_list()>
+
+Get the PackfileAnnotationKeys PMC, listing the keys and types of annotations
+contained within this object.
+
+=cut
+
+*/
+    PMC *get_key_list() {
+        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    }
+
+
+/*
+
 =item C<INTVAL elements()>
 
 Get the number of elements in the array.
@@ -75,7 +91,7 @@ Get the number of elements in the array.
 
 =item C<PMC *get_pmc_keyed_int(INTVAL index)>
 
-Fetch the given PackfileFixupEntry PMC.
+Fetch an annotation PMC from the array.
 
 =cut
 
@@ -87,14 +103,29 @@ Fetch the given PackfileFixupEntry PMC.
 
 /*
 
-=item C<void set_pmc_keyed_int(INTVAL index, PMC *value)>
+=item C<void set_pmc_keyed_int(INTVAL index, PMC *annotation)>
 
-Store a PackfileFixupEntry PMC to the given slot.
+Add an annotation to the array at the given offset.  An exception will be
+thrown unless all of the following criteria are met:
+
+=over 4
+
+=item - The type of the PMC passed is PackfileAnnotation
+
+=item - The entry at the previous index is defined
+
+=item - The offset of the previous entry is less than this entry
+
+=item - The offset of the next entry, if it exists, is greater than this entry
+
+=item - The key ID references a valid annotation key
+
+=back
 
 =cut
 
 */
-    VTABLE void set_pmc_keyed_int(INTVAL index, PMC *value)  {
+    VTABLE void set_pmc_keyed_int(INTVAL index, PMC *annotation)  {
         real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
     }
 
