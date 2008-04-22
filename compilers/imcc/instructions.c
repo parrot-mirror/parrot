@@ -139,10 +139,8 @@ void
 imcc_init_tables(PARROT_INTERP)
 {
     const char *reads[] = {
-        "saveall"
     };
     const char *writes[] = {
-        "restoreall",
         "cleari", "clearn", "clearp", "clears",
     };
     /* init opnums */
