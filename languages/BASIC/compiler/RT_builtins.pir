@@ -365,8 +365,9 @@ FINISHED:
 	.local string target
 	set $I1, 0
 	set target, ""
-	entrytype $I0, 0
-	eq $I0, FLOAT, FLOATB
+# entrytype opcode deprecated, see RT#52842.
+#	entrytype $I0, 0
+#	eq $I0, FLOAT, FLOATB
 	.local string thing
 	set repeater, thing
 	branch REP
