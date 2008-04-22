@@ -46,7 +46,7 @@ ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
         src/ops/bit.ops src/ops/cmp.ops src/ops/debug.ops
         src/ops/experimental.ops src/ops/io.ops src/ops/math.ops
         src/ops/object.ops src/ops/pic.ops src/ops/pmc.ops
-        src/ops/set.ops src/ops/stack.ops src/ops/stm.ops
+        src/ops/set.ops src/ops/stm.ops
         src/ops/string.ops src/ops/sys.ops src/ops/var.ops
     );
     my $self = Parrot::Ops2pm::Utils->new(
