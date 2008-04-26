@@ -117,12 +117,10 @@ _mk_instruction(ARGIN(const char *op), ARGIN(const char *fmt), int n,
 
 /*
  * Some instructions don't have a hint in op_info that they work
- * on all registers (e.g. saveall, restoreall) or on all registers
- * of a given type  (e.g. pushi, popi, cleari). These instructions
- * need special handling at various points in the code.
+ * on all registers or all registers of a given type (e.g., cleari)
+ * These instructions need special handling at various points in the code.
  */
 
-static int r_special[5];
 static int w_special[1+4*3];
 
 /*
@@ -138,59 +136,18 @@ RT#48260: Not yet documented!!!
 void
 imcc_init_tables(PARROT_INTERP)
 {
-    const char *reads[] = {
-        "saveall"
-    };
     const char *writes[] = {
-        "restoreall",
         "cleari", "clearn", "clearp", "clears",
     };
     /* init opnums */
-    if (!r_special[0]) {
+    if (!w_special[0]) {
         size_t i;
-        for (i = 0; i < N_ELEMENTS(reads); i++) {
-            const int n = interp->op_lib->op_code(reads[i], 1);
-            PARROT_ASSERT(n);
-            r_special[i] = n;
-        }
         for (i = 0; i < N_ELEMENTS(writes); i++) {
             const int n = interp->op_lib->op_code(writes[i], 1);
             PARROT_ASSERT(n);
             w_special[i] = n;
         }
     }
-}
-
-/*
-
-=item C<int ins_reads2>
-
-Returns TRUE if instruction ins reads from a register of type t
-
-=cut
-
-*/
-
-int
-ins_reads2(ARGIN(const Instruction *ins), int t)
-{
-    const char *p;
-
-    if (ins->opnum == r_special[0])
-        return 1;
-
-    p = strchr(types, t);
-
-    if (p) {
-        const size_t idx = p - types;
-        size_t i;
-
-        for (i = 1; i < N_ELEMENTS(r_special); i += 4)
-            if (ins->opnum == r_special[i + idx])
-                return 1;
-    }
-
-    return 0;
 }
 
 /*

@@ -4,7 +4,7 @@ $Id$
 
 =head1 NAME
 
-src/dynpmc/mdx.pmc - MDx wrapper of libcrypto (libssl)
+src/dynpmc/@md_file@.pmc - @md_name@ wrapper of libcrypto (libssl)
 
 =head1 DESCRIPTION
 
@@ -18,9 +18,9 @@ See L<www.openssl.org>
 
 */
 
-#include <openssl/mdx.h>
+#include <openssl/@md_inc@.h>
 
-pmclass MDx
+pmclass @md_name@
     dynpmc
     need_ext
     group digest_group {
@@ -33,12 +33,12 @@ pmclass MDx
 
 */
     void init() {
-#ifndef OPENSSL_NO_MDx
-        MDx_CTX *c     = mem_allocate_zeroed_typed(MDx_CTX);
+@md_guard@
+        @md_ctx@ *c     = mem_allocate_zeroed_typed(@md_ctx@);
         PMC_data(SELF) = c;
         PObj_active_destroy_SET(SELF);
 #else
-        real_exception(interp, NULL, ILL_INHERIT, "MDx is disabled");
+        real_exception(interp, NULL, ILL_INHERIT, "@md_name@ is disabled");
 #endif
     }
 
@@ -50,8 +50,8 @@ pmclass MDx
 
 */
     void destroy() {
-#ifndef OPENSSL_NO_MDx
-        MDx_CTX *c = PMC_data_typed(SELF, MDx_CTX *);
+@md_guard@
+        @md_ctx@ *c = PMC_data_typed(SELF, @md_ctx@ *);
         if (c) {
             mem_sys_free(c);
             PMC_data(SELF) = NULL;
@@ -67,11 +67,11 @@ pmclass MDx
 
 */
     PMC* clone() {
-#ifndef OPENSSL_NO_MDx
+@md_guard@
         PMC     *retval  = pmc_new_noinit(INTERP, SELF->vtable->base_type);
-        MDx_CTX *c       = mem_allocate_zeroed_typed(MDx_CTX);
+        @md_ctx@ *c       = mem_allocate_zeroed_typed(@md_ctx@);
 
-        memcpy(c, PMC_data(SELF), sizeof (MDx_CTX));
+        memcpy(c, PMC_data(SELF), sizeof (@md_ctx@));
         PMC_data(retval) = c;
 
         PObj_active_destroy_SET(retval);
@@ -96,9 +96,9 @@ pmclass MDx
 
 */
     METHOD void Init() {
-#ifndef OPENSSL_NO_MDx
-        MDx_CTX *c = PMC_data_typed(SELF, MDx_CTX *);
-        (void)MDx_Init(c);
+@md_guard@
+        @md_ctx@ *c = PMC_data_typed(SELF, @md_ctx@ *);
+        (void)@md_name@_Init(c);
 #endif
     }
 
@@ -110,9 +110,9 @@ pmclass MDx
 
 */
     METHOD void Update(STRING *buf) {
-#ifndef OPENSSL_NO_MDx
-        MDx_CTX *c = PMC_data_typed(SELF, MDx_CTX *);
-        (void)MDx_Update(c, (unsigned char *)buf->strstart, buf->bufused);
+@md_guard@
+        @md_ctx@ *c = PMC_data_typed(SELF, @md_ctx@ *);
+        (void)@md_name@_Update(c, (unsigned char *)buf->strstart, buf->bufused);
 #endif
     }
 
@@ -124,13 +124,13 @@ pmclass MDx
 
 */
     METHOD STRING* Final() {
-#ifndef OPENSSL_NO_MDx
-        unsigned char digest[MDx_DIGEST_LENGTH];
-        MDx_CTX      *c = PMC_data_typed(SELF, MDx_CTX *);
+@md_guard@
+        unsigned char digest[@md_digest@_LENGTH];
+        @md_ctx@      *c = PMC_data_typed(SELF, @md_ctx@ *);
         STRING       *retval;
 
-        (void)MDx_Final(digest, c);
-        retval = string_from_cstring(INTERP, (char *)digest, MDx_DIGEST_LENGTH);
+        (void)@md_name@_Final(digest, c);
+        retval = string_from_cstring(INTERP, (char *)digest, @md_digest@_LENGTH);
 
         RETURN(STRING *retval);
 #else
