@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 15;
+use Test::More tests =>  14;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -34,7 +34,7 @@ $step_name   = $task->step;
 $step = $step_name->new();
 ok(defined $step, "$step_name constructor returned defined value");
 isa_ok($step, $step_name);
-ok($step->description(), "$step_name has description");
+
 
 my $error = q{mock_error};
 ok($step->_evaluate_backtrace($conf, $error),
@@ -45,8 +45,8 @@ $error = q{};
 ok($step->_evaluate_backtrace($conf, $error),
     "_evaluate_backtrace returned true value");
 is($step->result, 'yes', "Got expected result");
-ok($conf->data->get('glibc_backtrace'),
-    "glibc_backtrace set as expected");
+ok($conf->data->get('backtrace'),
+    "backtrace set as expected");
 
 pass("Completed all tests in $0");
 

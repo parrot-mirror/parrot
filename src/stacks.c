@@ -60,24 +60,19 @@ void
 mark_stack(PARROT_INTERP, ARGMOD(Stack_Chunk_t *chunk))
 {
     for (; ; chunk = chunk->prev) {
-        Stack_Entry_t *entry;
+        void          **entry_data;
+        Stack_Entry_t  *entry;
 
-        pobject_lives(interp, (PObj*)chunk);
+        pobject_lives(interp, (PObj *)chunk);
+
         if (chunk == chunk->prev)
             break;
-        entry = (Stack_Entry_t *)STACK_DATAP(chunk);
-        switch (entry->entry_type) {
-            case STACK_ENTRY_PMC:
-                if (UVal_pmc(entry->entry))
-                    pobject_lives(interp, (PObj *)UVal_pmc(entry->entry));
-                break;
-            case STACK_ENTRY_STRING:
-                if (UVal_str(entry->entry))
-                    pobject_lives(interp, (PObj *)UVal_str(entry->entry));
-                break;
-            default:
-                break;
-        }
+
+        entry_data = STACK_DATAP(chunk);
+        entry      = (Stack_Entry_t *)entry_data;
+
+        if (entry->entry_type == STACK_ENTRY_PMC && UVal_pmc(entry->entry))
+            pobject_lives(interp, (PObj *)UVal_pmc(entry->entry));
     }
 }
 
@@ -145,28 +140,28 @@ Stack_Entry_t *
 stack_entry(PARROT_INTERP, ARGIN(Stack_Chunk_t *stack), INTVAL depth)
 {
     Stack_Chunk_t *chunk;
-    Stack_Entry_t *entry;
-    size_t offset = (size_t)depth;
+    void         **entry;
+    size_t         offset = (size_t)depth;
 
-    /* For negative depths, look from the bottom of the stack up. */
-    if (depth < 0) {
-        depth = stack_height(interp,
-                             CONTEXT(interp)->user_stack) + depth;
-        if (depth < 0)
-            return NULL;
-        offset = (size_t)depth;
-    }
-    chunk = stack;          /* Start at top */
+    if (depth < 0)
+        return NULL;
+
+    /* Start at top */
+    chunk = stack;
+
     while (offset) {
         if (chunk == chunk->prev)
             break;
         --offset;
         chunk = chunk->prev;
     }
+
     if (chunk == chunk->prev)
         return NULL;
-    entry = (Stack_Entry_t *)STACK_DATAP(chunk);
-    return entry;
+
+    /* this looks bad, but it avoids a type-punning warning */
+    entry = STACK_DATAP(chunk);
+    return (Stack_Entry_t *)entry;
 }
 
 /*
@@ -254,27 +249,21 @@ stack_push(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p),
 
     /* Remember the type */
     entry->entry_type = type;
+
     /* Remember the cleanup function */
     entry->cleanup = cleanup;
+
     /* Store our thing */
     switch (type) {
-        case STACK_ENTRY_INT:
         case STACK_ENTRY_MARK:
             UVal_int(entry->entry) = *(INTVAL *)thing;
             break;
-        case STACK_ENTRY_FLOAT:
-            UVal_num(entry->entry) = *(FLOATVAL *)thing;
+        case STACK_ENTRY_DESTINATION:
+            UVal_ptr(entry->entry) = thing;
             break;
         case STACK_ENTRY_ACTION:
         case STACK_ENTRY_PMC:
             UVal_pmc(entry->entry) = (PMC *)thing;
-            break;
-        case STACK_ENTRY_STRING:
-            UVal_str(entry->entry) = (STRING *)thing;
-            break;
-        case STACK_ENTRY_POINTER:
-        case STACK_ENTRY_DESTINATION:
-            UVal_ptr(entry->entry) = thing;
             break;
         default:
             real_exception(interp, NULL, ERROR_BAD_STACK_TYPE,
@@ -296,7 +285,9 @@ void *
 stack_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p),
           ARGOUT_NULLOK(void *where), Stack_entry_type type)
 {
-    Stack_Entry_t * const entry = (Stack_Entry_t *)stack_prepare_pop(interp, stack_p);
+    Stack_Chunk_t     *cur_chunk   = *stack_p;
+    Stack_Entry_t * const entry    =
+        (Stack_Entry_t *)stack_prepare_pop(interp, stack_p);
 
     /* Types of 0 mean we don't care */
     if (type && entry->entry_type != type) {
@@ -308,33 +299,33 @@ stack_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p),
     if (entry->cleanup != STACK_CLEANUP_NULL)
         (*entry->cleanup) (interp, entry);
 
-    /* Sometimes the caller doesn't care what the value was */
-    if (where == NULL)
-        return NULL;
+    /* Sometimes the caller cares what the value was */
+    if (where) {
+        /* Snag the value */
+        switch (type) {
+        case STACK_ENTRY_MARK:
+            *(INTVAL *)where   = UVal_int(entry->entry);
+            break;
+        case STACK_ENTRY_DESTINATION:
+            *(void **)where    = UVal_ptr(entry->entry);
+            break;
+        case STACK_ENTRY_ACTION:
+        case STACK_ENTRY_PMC:
+            *(PMC **)where     = UVal_pmc(entry->entry);
+            break;
+        default:
+            real_exception(interp, NULL, ERROR_BAD_STACK_TYPE,
+                               "Wrong type on top of stack!\n");
+        }
+    }
 
-    /* Snag the value */
-    switch (type) {
-    case STACK_ENTRY_MARK:
-    case STACK_ENTRY_INT:
-        *(INTVAL *)where   = UVal_int(entry->entry);
-        break;
-    case STACK_ENTRY_FLOAT:
-        *(FLOATVAL *)where = UVal_num(entry->entry);
-        break;
-    case STACK_ENTRY_ACTION:
-    case STACK_ENTRY_PMC:
-        *(PMC **)where     = UVal_pmc(entry->entry);
-        break;
-    case STACK_ENTRY_STRING:
-        *(STRING **)where  = UVal_str(entry->entry);
-        break;
-    case STACK_ENTRY_POINTER:
-    case STACK_ENTRY_DESTINATION:
-        *(void **)where    = UVal_ptr(entry->entry);
-        break;
-    default:
-        real_exception(interp, NULL, ERROR_BAD_STACK_TYPE,
-                           "Wrong type on top of stack!\n");
+    /* recycle this chunk to the free list if it's otherwise unreferenced */
+    if (cur_chunk->refcount == 0) {
+        Small_Object_Pool * const pool =
+            get_bufferlike_pool(interp, cur_chunk->size);
+
+        pool->dod_object(interp, pool, (PObj *)cur_chunk);
+        pool->add_free_object(interp, pool, (PObj *)cur_chunk);
     }
 
     return where;
@@ -388,13 +379,10 @@ stack_peek(PARROT_INTERP, ARGIN(Stack_Chunk_t *stack_base),
     if (type != NULL)
         *type = entry->entry_type;
 
-    switch (entry->entry_type) {
-        case STACK_ENTRY_POINTER:
-        case STACK_ENTRY_DESTINATION:
-            return UVal_ptr(entry->entry);
-        default:
-            return (void *) UVal_pmc(entry->entry);
-    }
+    if (entry->entry_type == STACK_ENTRY_DESTINATION)
+        return UVal_ptr(entry->entry);
+
+    return (void *) UVal_pmc(entry->entry);
 }
 
 /*
