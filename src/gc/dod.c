@@ -303,10 +303,6 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
      */
     mark_vtables(interp);
 
-    /* mark exception list */
-    for (i = 0; i <= E_LAST_PYTHON_E; ++i)
-        pobject_lives(interp, (PObj*)interp->exception_list[i]);
-
     /* mark the root_namespace */
     pobject_lives(interp, (PObj *)interp->root_namespace);
 

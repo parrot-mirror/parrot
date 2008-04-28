@@ -652,37 +652,23 @@ PARROT_WARN_UNUSED_RESULT
 static opcode_t *
 create_exception(PARROT_INTERP)
 {
-    PMC *exception;     /* exception object */
-    opcode_t *dest;     /* absolute address of handler */
     Parrot_exception * const the_exception = interp->exceptions;
+    PMC                     *exception     =
+                                pmc_new(interp, enum_class_Exception);
 
-    /*
-     * if the exception number is in the range of our known exceptions
-     * use the precreated exception
-     */
-    if (the_exception->error <= E_LAST_PYTHON_E &&
-            the_exception->error >= 0) {
-        exception = interp->exception_list[the_exception->error];
-    }
-    else {
-        /* create an exception object */
-        exception = pmc_new(interp, enum_class_Exception);
-        /* exception type */
-        VTABLE_set_integer_keyed_int(interp, exception, 1,
-                the_exception->error);
-    }
+    VTABLE_set_integer_keyed_int(interp, exception, 1, the_exception->error);
+
     /* exception severity */
     VTABLE_set_integer_keyed_int(interp, exception, 2,
             (INTVAL)the_exception->severity);
-    if (the_exception->msg) {
+
+    if (the_exception->msg)
         VTABLE_set_string_keyed_int(interp, exception, 0,
                 the_exception->msg);
-    }
+
     /* now fill rest of exception, locate handler and get
-     * destination of handler
-     */
-    dest = throw_exception(interp, exception, the_exception->resume);
-    return dest;
+     * destination of handler */
+    return throw_exception(interp, exception, the_exception->resume);
 }
 
 /*
@@ -932,31 +918,6 @@ real_exception(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
      */
     longjmp(the_exception->destination, 1);
 }
-
-/*
-
-=item C<void Parrot_init_exceptions>
-
-Create exception objects.
-
-=cut
-
-*/
-
-void
-Parrot_init_exceptions(PARROT_INTERP)
-{
-    int i;
-
-    interp->exception_list = (PMC **)mem_sys_allocate(
-            sizeof (PMC*) * (E_LAST_PYTHON_E + 1));
-    for (i = 0; i <= E_LAST_PYTHON_E; ++i) {
-        PMC * const ex = pmc_new(interp, enum_class_Exception);
-        interp->exception_list[i] = ex;
-        VTABLE_set_integer_keyed_int(interp, ex, 1, i);
-    }
-}
-
 
 
 /*

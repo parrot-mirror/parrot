@@ -286,9 +286,6 @@ PARROT_CAN_RETURN_NULL
 PMC * get_exception_handler(PARROT_INTERP, INTVAL target_depth)
         __attribute__nonnull__(1);
 
-void Parrot_init_exceptions(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
 void Parrot_print_backtrace(void);
 void really_destroy_exception_list(ARGIN(Parrot_exception *e))
         __attribute__nonnull__(1);

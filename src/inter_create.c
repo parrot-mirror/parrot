@@ -233,7 +233,6 @@ make_interpreter(ARGIN_NULLOK(Interp *parent), INTVAL flags)
     /* create exceptions list */
     interp->current_runloop_id    = 0;
     interp->current_runloop_level = 0;
-    Parrot_init_exceptions(interp);
 
     /* register assembler/compilers */
     setup_default_compreg(interp);
@@ -448,16 +447,16 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
     stack_destroy(interp->dynamic_env);
 
     destroy_context(interp);
-
-    /* predefined exceptions */
-    mem_sys_free(interp->exception_list);
     destroy_exception_list(interp);
+
     if (interp->evc_func_table) {
         mem_sys_free(interp->evc_func_table);
         interp->evc_func_table = NULL;
     }
+
     /* strings, charsets, encodings - only once */
     string_deinit(interp);
+
     if (!interp->parent_interpreter) {
         if (interp->thread_data)
             mem_sys_free(interp->thread_data);
