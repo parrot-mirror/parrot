@@ -550,9 +550,9 @@ push_new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_exception *jb))
 
 /*
 
-=item C<opcode_t * throw_exception>
+=item C<opcode_t * run_handler>
 
-Throw the exception.
+Runs the exception handler.
 
 =cut
 
@@ -561,7 +561,7 @@ Throw the exception.
 PARROT_API
 PARROT_CAN_RETURN_NULL
 opcode_t *
-throw_exception(PARROT_INTERP, ARGIN(PMC *exception), SHIM(void *dest))
+run_handler(PARROT_INTERP, ARGIN(PMC *exception), SHIM(void *dest))
 {
     opcode_t *address;
     PMC * const handler = find_exception_handler(interp, exception);
@@ -671,7 +671,7 @@ create_exception(PARROT_INTERP)
 
     /* now fill rest of exception, locate handler and get
      * destination of handler */
-    return throw_exception(interp, exception, the_exception->resume);
+    return run_handler(interp, exception, the_exception->resume);
 }
 
 /*
@@ -854,7 +854,7 @@ handler decides that is appropriate, or zero to make the error non-resumable.
 C<exitcode> is a C<exception_type_enum> value.
 
 See also C<internal_exception()>, which signals fatal errors, and
-C<throw_exception>, which calls the handler.
+C<run_handler>, which calls the handler.
 
 =cut
 
