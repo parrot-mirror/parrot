@@ -1,5 +1,5 @@
 #!perl
-# Copyright (C) 2001-2005, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -46,7 +46,7 @@ _handler:
     print "error "
     print I0
     print "\n"
-    set I0, P5["_severity"]
+    set I0, P5
     print "severity "
     print I0
     print "\n"
