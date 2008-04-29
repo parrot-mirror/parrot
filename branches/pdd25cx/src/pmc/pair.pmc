@@ -65,10 +65,10 @@ Class method to construct an Integer according to passed arguments.
         }
         else if (argcP == 2) {
             PMC_struct_val(SELF) = REG_PMC(interp, 5);
-            PMC_pmc_val(SELF) = REG_PMC(interp, 6);
+            PMC_pmc_val(SELF)    = REG_PMC(interp, 6);
         }
         else
-            real_exception(INTERP, NULL, E_ValueError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                     "wrong argument count for Pair creation");
         return SELF;
 #endif
@@ -129,7 +129,7 @@ Set the value of the Pair.
 
     VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         if (PMC_struct_val(SELF))
-            real_exception(INTERP, NULL, E_IndexError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                     "attempt to set existing Pair key");
         PMC_struct_val(SELF) = key;
         PMC_pmc_val(SELF)    = value;
@@ -138,7 +138,7 @@ Set the value of the Pair.
 
     VTABLE void set_pmc_keyed_str(STRING *key, PMC *value) {
         if (PMC_struct_val(SELF))
-            real_exception(INTERP, NULL, E_IndexError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                     "attempt to set existing Pair key");
         PObj_key_is_string_SET(SELF);
         PMC_struct_val(SELF) = key;

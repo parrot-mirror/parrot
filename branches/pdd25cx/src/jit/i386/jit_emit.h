@@ -1717,7 +1717,7 @@ div_rr_n(PARROT_INTERP, Parrot_jit_info_t *jit_info, int r1)
     L1 = pc;
     emitm_jxs(pc, emitm_jnz, 0);
     emitm_pushl_i(pc, div_by_zero);
-    emitm_pushl_i(pc, E_ZeroDivisionError);
+    emitm_pushl_i(pc, DIV_BY_ZERO);
     emitm_pushl_i(pc, 0);    /* NULL */
     Parrot_jit_emit_get_INTERP(interp, pc, emit_ECX);
     emitm_pushl_r(pc, emit_ECX);
@@ -1756,7 +1756,7 @@ mod_rr_n(PARROT_INTERP, Parrot_jit_info_t *jit_info, int r)
     L1 = pc;
     emitm_jxs(pc, emitm_jnz, 0);
     emitm_pushl_i(pc, div_by_zero);
-    emitm_pushl_i(pc, E_ZeroDivisionError);
+    emitm_pushl_i(pc, DIV_BY_ZERO);
     emitm_pushl_i(pc, 0);    /* NULL */
     Parrot_jit_emit_get_INTERP(interp, pc, emit_ECX);
     emitm_pushl_r(pc, emit_ECX);
@@ -1950,7 +1950,7 @@ opt_div_rr(PARROT_INTERP, Parrot_jit_info_t *jit_info, int dest, int src, int is
     }
     /* TODO real_exception */
     emitm_pushl_i(pc, div_by_zero);
-    emitm_pushl_i(pc, E_ZeroDivisionError);
+    emitm_pushl_i(pc, DIV_BY_ZERO);
     emitm_pushl_i(pc, 0);    /* NULL */
     Parrot_jit_emit_get_INTERP(interp, pc, emit_ECX);
     emitm_pushl_r(pc, emit_ECX);

@@ -382,7 +382,7 @@ Multiplies the number by C<value> and returns the result in C<*dest>.
 
     VTABLE PMC *multiply(PMC *value, PMC *dest) {
 MMD_Complex: {
-            real_exception(INTERP, NULL, E_NotImplementedError,
+            real_exception(INTERP, NULL, INTERNAL_NOT_IMPLEMENTED,
                     "TODO mul<Float, Complex>");
         }
 MMD_DEFAULT: {
@@ -415,7 +415,7 @@ MMD_DEFAULT: {
 
     VTABLE void i_multiply(PMC *value) {
 MMD_Complex: {
-            real_exception(INTERP, NULL, E_NotImplementedError,
+            real_exception(INTERP, NULL, INTERNAL_NOT_IMPLEMENTED,
                     "TODO i_mul<Float, Complex>");
         }
 MMD_DEFAULT: {
@@ -459,8 +459,7 @@ Divides C<SELF> by C<value> inplace.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -471,8 +470,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE PMC *divide_int(INTVAL value, PMC *dest) {
         if (value == 0)
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -483,8 +481,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE PMC *divide_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -497,24 +494,21 @@ Divides C<SELF> by C<value> inplace.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF, SELF.get_number() / d);
     }
 
     VTABLE void i_divide_int(INTVAL value) {
         if (value == 0)
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF, SELF.get_number() / value);
     }
 
     VTABLE void i_divide_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF, SELF.get_number() / value);
     }
@@ -545,8 +539,7 @@ Divides C<SELF> by C<value> inplace.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -558,8 +551,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE PMC *floor_divide_int(INTVAL value, PMC *dest) {
         if (value == 0)
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -571,8 +563,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE PMC *floor_divide_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -586,8 +577,7 @@ Divides C<SELF> by C<value> inplace.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
                 floor(SELF.get_number() / d));
@@ -595,8 +585,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE void i_floor_divide_int(INTVAL value) {
         if (value == 0)
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
                 floor(SELF.get_number() / value));
@@ -604,8 +593,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE void i_floor_divide_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float division by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
                 floor(SELF.get_number() / value));
@@ -639,8 +627,7 @@ the result in C<dest>.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float cmodulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float cmodulus by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -652,8 +639,7 @@ the result in C<dest>.
 
     VTABLE PMC *cmodulus_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float cmodulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float cmodulus by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -665,8 +651,7 @@ the result in C<dest>.
 
     VTABLE PMC *cmodulus_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float cmodulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float cmodulus by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -680,8 +665,7 @@ the result in C<dest>.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float cmodulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float cmodulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
                 fmod(SELF.get_number() , d));
@@ -689,8 +673,7 @@ the result in C<dest>.
 
     VTABLE void i_cmodulus_int(INTVAL value) {
         if (value == 0)
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float cmodulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float cmodulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
                 fmod(SELF.get_number() , value));
@@ -698,8 +681,7 @@ the result in C<dest>.
 
     VTABLE void i_cmodulus_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float cmodulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float cmodulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
                 fmod(SELF.get_number() , value));
@@ -732,8 +714,7 @@ Calculates modulus inplace
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float modulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float modulus by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -745,8 +726,7 @@ Calculates modulus inplace
 
     VTABLE PMC *modulus_int(INTVAL value, PMC *dest) {
         if (value == 0)
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float modulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float modulus by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -758,8 +738,7 @@ Calculates modulus inplace
 
     VTABLE PMC *modulus_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float modulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float modulus by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
@@ -773,8 +752,7 @@ Calculates modulus inplace
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float modulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float modulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
                 floatval_mod(SELF.get_number() , d));
@@ -782,8 +760,7 @@ Calculates modulus inplace
 
     VTABLE void i_modulus_int(INTVAL value) {
         if (value == 0)
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float modulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float modulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
                 floatval_mod(SELF.get_number() , value));
@@ -791,11 +768,10 @@ Calculates modulus inplace
 
     VTABLE void i_modulus_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
-            real_exception(INTERP, NULL, E_ZeroDivisionError,
-                    "float modulus by zero");
+            real_exception(INTERP, NULL, DIV_BY_ZERO, "float modulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
-                floatval_mod(SELF.get_number() , value));
+                floatval_mod(SELF.get_number(), value));
     }
 
 /*

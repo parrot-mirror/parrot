@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -945,7 +945,7 @@ ft_init(PARROT_INTERP, ARGIN(visit_info *info))
     }
     else {
         if (string_length(interp, s) < header_length) {
-            real_exception(interp, NULL, E_IOError,
+            real_exception(interp, NULL, INVALID_STRING_REPRESENTATION,
                     "bad string to thaw");
         }
         mem_sys_memcopy(pf->header, s->strstart, PACKFILE_HEADER_BYTES);

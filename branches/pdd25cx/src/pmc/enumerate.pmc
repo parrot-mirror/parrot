@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -53,11 +53,11 @@ the next one.
     VTABLE PMC *shift_pmc() {
         PMC *item, *tupl, *val;
         PMC *key  = (PMC *)PMC_struct_val(SELF);
-        PMC *iter = (PMC *)PMC_pmc_val(SELF);
+        PMC *iter = PMC_pmc_val(SELF);
         INTVAL i  = PMC_int_val(key);
 
         if (i == -1)
-            real_exception(INTERP, NULL, E_StopIteration, "StopIteration");
+            real_exception(INTERP, NULL, OUT_OF_BOUNDS, "StopIteration");
 
         item = VTABLE_shift_pmc(INTERP, iter);
         tupl = pmc_new(INTERP, enum_class_FixedPMCArray);

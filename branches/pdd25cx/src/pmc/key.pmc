@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -410,7 +410,7 @@ Called after the Key has been thawed: convert last PMC_NULL key to NULL.
                 VTABLE_push_string(INTERP, io, key_string(INTERP, SELF));
                 break;
             default:
-                real_exception(INTERP, NULL, E_KeyError,
+                real_exception(INTERP, NULL, KEY_NOT_FOUND,
                         "Unsupported key type in Key.freeze");
                 break;
         }
@@ -436,7 +436,7 @@ Called after the Key has been thawed: convert last PMC_NULL key to NULL.
                 PMC_str_val(SELF) = VTABLE_shift_string(INTERP, io);
                 break;
             default:
-                real_exception(INTERP, NULL, E_KeyError,
+                real_exception(INTERP, NULL, KEY_NOT_FOUND,
                         "Unsupported key type in Key.thaw");
                 break;
         }

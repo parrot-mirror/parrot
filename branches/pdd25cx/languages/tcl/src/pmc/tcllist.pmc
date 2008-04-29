@@ -238,7 +238,7 @@ Copy the contents of other to self.
         }
         else
         {
-            real_exception(INTERP, NULL, E_TypeError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                            "unable to assign self to TclList");
         }
     }

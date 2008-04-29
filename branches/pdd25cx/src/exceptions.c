@@ -491,16 +491,15 @@ pop_exception(PARROT_INTERP)
         = (PMC *)stack_peek(interp, interp->dynamic_env, &type);
 
     if (! handler
-            || type != STACK_ENTRY_PMC
-            || handler->vtable->base_type != enum_class_Exception_Handler) {
-        real_exception(interp, NULL, E_RuntimeError,
-                "No exception to pop.");
-    }
+    ||  type != STACK_ENTRY_PMC
+    ||  handler->vtable->base_type != enum_class_Exception_Handler)
+        real_exception(interp, NULL, CONTROL_ERROR, "No exception to pop.");
+
     cc = PMC_cont(handler);
-    if (cc->to_ctx != CONTEXT(interp)) {
-        real_exception(interp, NULL, E_RuntimeError,
-                "No exception to pop.");
-    }
+
+    if (cc->to_ctx != CONTEXT(interp))
+        real_exception(interp, NULL, CONTROL_ERROR, "No exception to pop.");
+
     (void)stack_pop(interp, &interp->dynamic_env, NULL, STACK_ENTRY_PMC);
 }
 
@@ -808,7 +807,7 @@ do_str_exception(PARROT_INTERP, ARGIN(STRING *msg))
 {
     Parrot_exception * const the_exception = interp->exceptions;
 
-    the_exception->error                   = E_RuntimeError;
+    the_exception->error                   = CONTROL_ERROR;
     the_exception->severity                = EXCEPT_error;
     the_exception->msg                     = msg;
     the_exception->resume                  = NULL;
@@ -822,7 +821,7 @@ do_pmc_exception(PARROT_INTERP, ARGIN(PMC *msg))
 {
     Parrot_exception * const the_exception = interp->exceptions;
 
-    the_exception->error                   = E_RuntimeError;
+    the_exception->error                   = CONTROL_ERROR;
     the_exception->severity                = EXCEPT_error;
     the_exception->msg                     = VTABLE_get_string(interp, msg);;
     the_exception->resume                  = NULL;

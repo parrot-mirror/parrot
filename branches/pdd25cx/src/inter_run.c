@@ -220,12 +220,11 @@ runops_args(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *obj),
      * main is now started with runops_args_fromc too
      * PASM subs usually don't have get_params
      * XXX we could check, if we are running main
-     else {
-     real_exception(interp, NULL, E_ValueError, "no get_params in sub");
-     }
+     else
+        real_exception(interp, NULL, INVALID_OPERATION, "no get_params in sub");
      */
 
-    ctx = CONTEXT(interp);
+    ctx    = CONTEXT(interp);
     offset = dest - interp->code->base.data;
     runops(interp, offset);
     return ctx;

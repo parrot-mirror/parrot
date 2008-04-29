@@ -606,7 +606,7 @@ preserve key/value order.
                 }
                 break;
             default:
-                real_exception(interp, NULL, E_Exception,
+                real_exception(interp, NULL, INVALID_OPERATION,
                         "unhandled visit action (%d)", info->what);
         }
     }

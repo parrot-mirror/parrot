@@ -142,7 +142,7 @@ Swaps the "context".
                                                        (opcode_t *)next);
 
             if (PObj_get_FLAGS(ccont) & SUB_FLAG_TAILCALL)
-                real_exception(INTERP, NULL, E_Exception,
+                real_exception(INTERP, NULL, CONTROL_ERROR,
                         "tail call to coro not allowed");
 
             /* first time set current sub, cont, object */
@@ -219,14 +219,14 @@ Swaps the "context".
                    problem is that the defunct coroutine yields up one more
                    result before we get here.  -- rgr, 7-Oct-06.
                 */
-                real_exception(INTERP, NULL, E_Exception,
+                real_exception(INTERP, NULL, CONTROL_ERROR,
                                "Cannot resume dead coroutine.");
             }
 
             state                = interp->dynamic_env;
             interp->dynamic_env  = co->dynamic_state;
             co->dynamic_state    = state;
-            CONTEXT(interp) = ctx;
+            CONTEXT(interp)      = ctx;
             INTERP->ctx.bp       = ctx->bp;
             INTERP->ctx.bp_ps    = ctx->bp_ps;
         }

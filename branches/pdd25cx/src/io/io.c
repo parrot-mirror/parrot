@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -1351,13 +1351,12 @@ INTVAL
 PIO_poll(PARROT_INTERP, ARGMOD(PMC *pmc), INTVAL which, INTVAL sec, INTVAL usec)
 {
     ParrotIOLayer *l;
-    ParrotIO *io;
+    ParrotIO      *io;
 
-    if (PMC_IS_NULL(pmc)) {
-        real_exception(interp, NULL, E_ValueError, "Can't poll NULL pmc");
-    }
+    if (PMC_IS_NULL(pmc))
+        real_exception(interp, NULL, INVALID_OPERATION, "Can't poll NULL pmc");
 
-    l = (ParrotIOLayer *)PMC_struct_val(pmc);
+    l  = (ParrotIOLayer *)PMC_struct_val(pmc);
     io = (ParrotIO *)PMC_data0(pmc);
     return PIO_poll_down(interp, l, io, which, sec, usec);
 }

@@ -175,7 +175,7 @@ main(int argc, char *argv[])
         IMCC_INFO(interp)->state->file = filename;
 
         if (!(imc_yyin_set(fopen(filename, "r"), yyscanner)))    {
-            IMCC_fatal_standalone(interp, E_IOError,
+            IMCC_fatal_standalone(interp, EXTERNAL_ERROR,
                     "Error reading source file %s.\n",
                     filename);
         }

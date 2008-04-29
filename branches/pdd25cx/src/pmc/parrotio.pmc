@@ -439,7 +439,7 @@ Set SELF to the data in other.
 
         }
         else {
-            real_exception(INTERP, NULL, E_TypeError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                            "Can't assign a non-IO type to an IO");
         }
     }

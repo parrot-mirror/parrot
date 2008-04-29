@@ -1,6 +1,6 @@
 /*
  * $Id$
- * Copyright (C) 2007, The Perl Foundation.
+ * Copyright (C) 2007-2008, The Perl Foundation.
  */
 
 /*
@@ -77,7 +77,7 @@ stat_common(PARROT_INTERP, struct stat *statbuf, INTVAL thing, int status)
 
     if (status == -1) {
         const char *err = strerror(errno);
-        real_exception(interp, NULL, E_IOError, "stat failed: %s", err);
+        real_exception(interp, NULL, EXTERNAL_ERROR, "stat failed: %s", err);
     }
 
     switch (thing) {

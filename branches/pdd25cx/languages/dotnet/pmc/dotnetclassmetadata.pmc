@@ -28,7 +28,7 @@ pmclass DotNetClassMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (c == NULL || c->str_name == NULL)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Invalid DotNetClassMetadata PMC");
 
         return c->str_name;
@@ -81,7 +81,7 @@ pmclass DotNetClassMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!c)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Invalid DotNetClassMetadata PMC");
         result = c->str_namespace;
         RETURN(STRING *result);
@@ -96,7 +96,7 @@ pmclass DotNetClassMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!c)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Invalid DotNetClassMetadata PMC");
 
         result = c->str_fullname;
@@ -112,7 +112,7 @@ pmclass DotNetClassMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!c)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Invalid DotNetClassMetadata PMC");
 
         result = (INTVAL)c->flags;
@@ -127,7 +127,7 @@ pmclass DotNetClassMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC or no fields. */
         if (!c)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Invalid DotNetClassMetadata PMC");
 
         if (c->fields)
@@ -147,7 +147,7 @@ pmclass DotNetClassMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC or no methods. */
         if (!c)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Invalid DotNetClassMetadata PMC");
 
         if (c->methods)
@@ -167,7 +167,7 @@ pmclass DotNetClassMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!c)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Invalid DotNetClassMetadata PMC");
 
         result = (INTVAL)c->parent_id;
@@ -184,7 +184,7 @@ pmclass DotNetClassMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!c)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Invalid DotNetClassMetadata PMC");
 
         result = (INTVAL)c->parent_type;
@@ -201,7 +201,7 @@ pmclass DotNetClassMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!c || !c->interface_ids)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Invalid DotNetClassMetadata PMC");
 
         result =  c->interface_ids;
@@ -217,7 +217,7 @@ pmclass DotNetClassMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (c == NULL || c->interface_types == NULL)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Invalid DotNetClassMetadata PMC");
 
         result = c->interface_types;
