@@ -342,7 +342,7 @@ Description of the test.
 
   bad_line:
       $P1 = new 'Exception'
-      $P1[0] = 'invalid data format'
+      $P1 = 'invalid data format'
       throw $P1
 .end
 
@@ -428,7 +428,7 @@ not_capital:
 
 bad_digit:
   $P1 = new 'Exception'
-  $P1[0] = 'invalid hex digit'
+  $P1 = 'invalid hex digit'
   throw $P1
 .end
 

@@ -111,7 +111,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "get_results - be sure registers are ok" )
     new P0, 'Integer'
     push_eh handler
     new P1, 'Exception'
-    set P1[0], "just pining"
+    set P1, "just pining"
     throw P1
     print "not reached\n"
     end
