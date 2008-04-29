@@ -289,7 +289,9 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
     char          *m              = string_to_cstring(interp, message);
 
     /* for now, we don't check the exception class and we don't
-     * look for matching handlers.  [this is being redesigned anyway.] */
+     * look for matching handlers.  [this is being redesigned anyway.]
+     * [ANR - This comment is inaccurate, btw]
+     */
 
     /* [RT #45909: replace quadratic search with something linear, hopefully
      * without trashing abstraction layers.  -- rgr, 17-Sep-06.] */
@@ -326,16 +328,13 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
 
         /* new block for const assignment */
         {
-            const PMC   *severity_pmc = pmc_new(interp, enum_class_String);
-            INTVAL       severity;
-            VTABLE_set_string_native(interp, severity_pmc, CONST_STRING(interp, "_severity"));
-
-            severity = VTABLE_get_integer_keyed(interp, exception, severity_pmc);
+            const INTVAL severity = VTABLE_get_integer(interp, exception);
             if (severity == EXCEPT_exit) {
                 print_location = 0;
-
                 /* TODO: get exit status based on type */
-                exit_status = 0;
+                exit_status =
+                    (int)VTABLE_get_integer_keyed_str(interp, exception,
+				    CONST_STRING(interp, "exit_code"));
             }
             else
                 fprintf(stderr, "No exception handler and no message\n");
@@ -634,14 +633,12 @@ rethrow_c_exception(PARROT_INTERP)
 
     /* RT #45911 we should only peek for the next handler */
     push_exception(interp, handler);
-
     /* if there was no user handler, interpreter is already shutdown */
     the_exception->resume   = VTABLE_get_pointer(interp, handler);
     the_exception->severity = VTABLE_get_integer(interp, exception);
     the_exception->msg      = VTABLE_get_string(interp, exception);
-    the_exception->error    = VTABLE_get_integer(interp,
-        VTABLE_get_attr_str(interp, exception, CONST_STRING(interp, "exit_code")));
-
+    the_exception->error    = VTABLE_get_integer_keyed_str(interp,
+            exception, CONST_STRING(interp, "exit_code"));
     longjmp(the_exception->destination, 1);
 }
 
@@ -661,15 +658,12 @@ static opcode_t *
 create_exception(PARROT_INTERP)
 {
     Parrot_exception * const the_exception = interp->exceptions;
-    PMC                     *exit_code     = pmc_new(interp, enum_class_Integer);
-    PMC                     *exception     =
-                                pmc_new(interp, enum_class_Exception);
+    PMC *exception = pmc_new(interp, enum_class_Exception);
 
-    /* exception severity */
+    /* exception severity, type, and message */
     VTABLE_set_integer_native(interp, exception, the_exception->severity);
-    VTABLE_set_integer_native(interp, exit_code, the_exception->error);
-
-    VTABLE_set_attr_str(interp, exception, CONST_STRING(interp, "exit_code"), exit_code);
+    VTABLE_set_integer_keyed_str(interp, exception,
+            CONST_STRING(interp, "type"), the_exception->error);
 
     if (the_exception->msg)
         VTABLE_set_string_native(interp, exception, the_exception->msg);
