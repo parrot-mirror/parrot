@@ -83,7 +83,8 @@ Returns a Parrot string for C<*key>.
 static STRING *make_hash_key(PARROT_INTERP, NOTNULL(PMC *key))
 {
     if (!key)
-        real_exception(interp, NULL, E_KeyError, "Hash: Cannot use NULL key");
+        real_exception(interp, NULL, UNEXPECTED_NULL,
+            "Hash: Cannot use NULL key");
 
     return key_string(interp, key);
 }
@@ -1021,7 +1022,7 @@ Return a new iterator for the slice PMC C<key>
             return iter;
         }
 
-        real_exception(INTERP, NULL, E_IndexError, "Hash: Unknown slice type");
+        real_exception(INTERP, NULL, OUT_OF_BOUNDS, "Hash: Unknown slice type");
     }
 
 

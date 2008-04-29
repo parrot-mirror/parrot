@@ -3747,7 +3747,7 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN(STRING *file_str))
 
     path = Parrot_locate_runtime_file_str(interp, file_str, file_type);
     if (!path)
-        real_exception(interp, NULL, E_LibraryNotLoadedError,
+        real_exception(interp, NULL, LIBRARY_ERROR,
                 "\"load_bytecode\" couldn't find file '%Ss'", file_str);
     /* remember wo_ext => full_path mapping */
     VTABLE_set_string_keyed_str(interp, is_loaded_hash,
@@ -3770,7 +3770,7 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN(STRING *file_str))
             do_sub_pragmas(interp, cs, PBC_LOADED, NULL);
         }
         else
-            real_exception(interp, NULL, E_LibraryNotLoadedError,
+            real_exception(interp, NULL, LIBRARY_ERROR,
                 "compiler returned NULL ByteCode '%Ss' - %Ss", file_str, err);
     }
     string_cstring_free(filename);

@@ -484,7 +484,7 @@ arguments.  The class is attatched to the current HLL namespace.
                     arg = init_data;
                 }
                 else {
-                    real_exception(INTERP, NULL, E_NameError,
+                    real_exception(INTERP, NULL, INVALID_OPERATION,
                             "Invalid class name key in init_pmc for Class");
                 }
                 break;
@@ -734,14 +734,12 @@ Adds the supplied PMC to the list of parents for the class.
         }
 
         /* Ensure it really is a class. */
-        if (!PObj_is_class_TEST(parent)) {
-            real_exception(interp, NULL, E_TypeError, "Parent isn't a Class.");
-            return;
-        }
+        if (!PObj_is_class_TEST(parent))
+            real_exception(interp, NULL, INVALID_OPERATION,
+                    "Parent isn't a Class.");
 
         /* iterate over all direct parents, check whether this class already has
-         * the parent being added.
-         */
+         * the parent being added. */
         for (index = 0; index < parent_count; index++) {
             /* get the next parent */
             PMC * const current_parent = VTABLE_get_pmc_keyed_int(interp,

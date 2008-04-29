@@ -265,7 +265,7 @@ static int load_pe_file(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     fread(temp, 1, 60, in);
     if (memcmp(temp, expected_header, 60) != 0)
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
                 "Invalid MS DOS stub in PE header");
         return 0;
     }
@@ -278,7 +278,7 @@ static int load_pe_file(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     fread(temp, 1, 4, in);
     if (temp[0] != 'P' || temp[1] != 'E' || temp[2] != 0 || temp[3] != 0)
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
                 "Invalid PE signature");
         return 0;
     }
@@ -288,7 +288,7 @@ static int load_pe_file(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     machine = read_short_u(in);
     if (machine != 0x14c)
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
                 "Invalid machine type in PE header");
         return 0;
     }
@@ -330,7 +330,7 @@ static int load_pe_file(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     }
     else {
         /* Couldn't locate the CLI header. */
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "Cannot locate CLI header in PE file");
         return 0;
     }
@@ -354,7 +354,7 @@ static int load_cli_header(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     minor_version = read_short_u(in);
     if (!(major_version < 2 || (major_version == 2 && minor_version == 0)))
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "Can only support CLI files up to version 2.0");
         return 0;
     }
@@ -374,7 +374,7 @@ static int load_cli_header(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     }
     else {
         /* Couldn't locate the metadata root. */
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "Cannot locate CLI metadata root");
         return 0;
     }
@@ -393,7 +393,7 @@ static int load_cli_streams(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     magic_word = read_word_u(in);
     if (magic_word != 0x424A5342)
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "Invalid magic signature in CLI metadata root");
         return 0;
     }
@@ -448,7 +448,7 @@ static int load_cli_streams(Interp *INTERP, FILE *in, dotnet_assembly *ass)
         else
         {
             /* Unknown stream. */
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                 "Unknown stream in CLI metadata root");
             return 0;
         }
@@ -702,7 +702,7 @@ static PMC* make_bytecode_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
     if (bc_filepos == 0)
     {
         /* Couldn't locate the bytecode. */
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "Cannot locate bytecode for method with RVA %d", rva);
         return NULL;
     }
@@ -868,7 +868,7 @@ static PMC* make_bytecode_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
                 else
                 {
                     /* Not exception data, not spec'd, not good. */
-                    real_exception(INTERP, NULL, E_StandardError,
+                    real_exception(INTERP, NULL, INVALID_OPERATION,
                         "Unknown method data section (kind: %d)", (int) kind);
                     return NULL;
                 }
@@ -901,7 +901,7 @@ static PMC* make_param_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
     /* Sanity check. */
     if (row > ass->rows[Table_Param])
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "Param row out of range.");
         return NULL;
     }
@@ -949,7 +949,7 @@ static PMC* make_field_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
     /* Sanity check. */
     if (row > ass->rows[Table_Field])
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "Field row out of range.");
         return NULL;
     }
@@ -1012,7 +1012,7 @@ static PMC* make_method_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
     /* Sanity check. */
     if (row > ass->rows[Table_MethodDef])
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "MethodDef row out of range.");
         return NULL;
     }
@@ -1193,7 +1193,7 @@ static PMC* make_class_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
     /* Sanity check. */
     if (row > ass->rows[Table_TypeDef])
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "TypeDef row out of range.");
         return NULL;
     }
@@ -1358,7 +1358,7 @@ static PMC* make_typeref_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
     /* Sanity check. */
     if (row > ass->rows[Table_TypeRef])
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "TypeRef row out of range.");
         return NULL;
     }
@@ -1426,7 +1426,7 @@ static PMC* make_memberref_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
     /* Sanity check. */
     if (row > ass->rows[Table_MemberRef])
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "MemberRef row out of range.");
         return NULL;
     }
@@ -1498,7 +1498,7 @@ static PMC* make_assemblyref_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass
     /* Sanity check. */
     if (row > ass->rows[Table_AssemblyRef])
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "AssemblyRef row out of range.");
         return NULL;
     }
@@ -1644,7 +1644,7 @@ static void sort_classes(Interp *INTERP, dotnet_assembly *ass)
        Throw our toys out of the pram. Oh, and an exception. Also do this if
        we did not order all classes. */
     if (iters == num_classes + 1 || done != num_classes)
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "Unable to order inheritance/interfaces.");
 
 
@@ -1665,7 +1665,7 @@ static int metadata_to_pmcs(Interp *INTERP, PMC *self, FILE *in,
     /* Ensure we have a typedef table. */
     if (ass->rows[Table_TypeDef] == 0)
     {
-        real_exception(INTERP, NULL, E_StandardError,
+        real_exception(INTERP, NULL, INVALID_OPERATION,
             "Type definitions table is empty.");
         return 0;
     }
@@ -1883,7 +1883,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
         /* If we don't have an assembly, throw an esception and leave. */
         if (ass == NULL)
         {
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                 "No filename string set");
             return;
         }
@@ -1963,7 +1963,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
             RETURN(INTVAL result);
         }
         else
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                 "No .NET CLI file loaded");
     }
 
@@ -1976,12 +1976,12 @@ pmclass DotNetAssembly dynpmc group dotnet {
 
         /* If we don't have an assembly, throw an exception and leave. */
         if (!ass)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
 
         /* Otherwise, check string is within range. */
         if ((Parrot_UInt4)i >= ass->strings_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "String position out of range");
 
         /* Create and return a new string (pass 0 as length; end found
@@ -2003,12 +2003,12 @@ pmclass DotNetAssembly dynpmc group dotnet {
 
         /* If we don't have an assembly, throw an esception and leave. */
         if (!ass)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
 
         /* Otherwise, check string is within range. */
         if ((Parrot_UInt4)i >= ass->user_strings_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "User string position out of range");
 
         /* Get size of string (Partition II Clause 23.2.4). */
@@ -2032,12 +2032,12 @@ pmclass DotNetAssembly dynpmc group dotnet {
             start  = i + 4;
         }
         else
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Unable to decode user string length");
 
         /* Sanity check. */
         if (start + length > ass->user_strings_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Blob position and length out of range");
 
         /* Return string. */
@@ -2056,12 +2056,12 @@ pmclass DotNetAssembly dynpmc group dotnet {
 
         /* If we don't have an assembly, throw an esception and leave. */
         if (!ass)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
 
         /* Otherwise, check blob is within range. */
         if ((Parrot_UInt4)i >= ass->blobs_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Blob position out of range");
 
         /* Get size of blob (Partition II Clause 23.2.4). */
@@ -2082,18 +2082,18 @@ pmclass DotNetAssembly dynpmc group dotnet {
             start  = i + 4;
         }
         else
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Unable to decode blob length");
 
         /* Sanity check. */
         if (start + length > ass->blobs_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Blob position and length out of range");
 
         /* Return string containing blob. */
         out = string_from_cstring(INTERP, ass->blobs + start, length);
         if (!out)
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "Unable to create blob string");
 
         RETURN(STRING *out);
@@ -2108,7 +2108,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
            exception and leave. Otherwise, return classes PMC array. */
         if (ass == NULL || ass->loaded == 0)
         {
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
         }
         else {
@@ -2126,7 +2126,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
            exception and leave. Otherwise, return classes PMC array. */
         if (ass == NULL || ass->loaded == 0)
         {
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
         }
         else {
@@ -2144,7 +2144,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
            exception and leave. Otherwise, return class order PMC array. */
         if (ass == NULL || ass->loaded == 0)
         {
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
         }
         else {
@@ -2162,7 +2162,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
            exception and leave. */
         if (ass == NULL || ass->loaded == 0)
         {
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
         }
         else {
@@ -2180,7 +2180,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
            exception and leave. */
         if (ass == NULL || ass->loaded == 0)
         {
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
         }
         else {
@@ -2198,7 +2198,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
            exception and leave. */
         if (ass == NULL || ass->loaded == 0)
         {
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
         }
         else {
@@ -2217,7 +2217,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
            fields PMC array. */
         if (ass == NULL || ass->loaded == 0)
         {
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
         }
         else {
@@ -2236,7 +2236,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
            methods PMC array. */
         if (ass == NULL || ass->loaded == 0)
         {
-            real_exception(INTERP, NULL, E_StandardError,
+            real_exception(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
             RETURN(PMC *PMCNULL);
         }
@@ -2255,7 +2255,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
            exception and leave. */
         if (ass == NULL || ass->loaded == 0)
         {
-            real_exception(INTERP, NULL, E_StandardError,
+            INVALID_OPERATION(INTERP, NULL, INVALID_OPERATION,
                "No .NET CLI file loaded");
             RETURN(PMC *PMCNULL);
         }

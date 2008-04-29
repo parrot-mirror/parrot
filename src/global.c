@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2004-2007, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -619,7 +619,7 @@ Parrot_find_global_op(PARROT_INTERP, ARGIN(PMC *ns),
     PMC *res;
 
     if (!globalname)
-        real_exception(interp, next, E_NameError,
+        real_exception(interp, next, GLOBAL_NOT_FOUND,
                        "Tried to get null global");
 
     res = Parrot_find_global_n(interp, ns, globalname);

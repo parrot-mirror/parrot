@@ -808,11 +808,11 @@ imcc_write_pbc(PARROT_INTERP, ARGIN(const char *output_file))
     if (STREQ(output_file, "-"))
         fp = stdout;
     else if ((fp = fopen(output_file, "wb")) == 0)
-        IMCC_fatal_standalone(interp, E_IOError,
+        IMCC_fatal_standalone(interp, EXTERNAL_ERROR,
             "Couldn't open %s\n", output_file);
 
     if ((1 != fwrite(packed, size, 1, fp)))
-        IMCC_fatal_standalone(interp, E_IOError,
+        IMCC_fatal_standalone(interp, EXTERNAL_ERROR,
             "Couldn't write %s\n", output_file);
     fclose(fp);
     IMCC_info(interp, 1, "%s written.\n", output_file);
@@ -851,7 +851,7 @@ determine_input_file_type(PARROT_INTERP, ARGIN(const char * const sourcefile))
         }
         else if (!load_pbc) {
             if (!(imc_yyin_set(fopen(sourcefile, "r"), yyscanner)))    {
-                IMCC_fatal_standalone(interp, E_IOError,
+                IMCC_fatal_standalone(interp, EXTERNAL_ERROR,
                                       "Error reading source file %s.\n",
                                       sourcefile);
             }

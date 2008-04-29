@@ -47,13 +47,13 @@ char_offset_int(PARROT_INTERP, PMC *pmc, INTVAL ix, int *type)
     ix *= 3;
 
     if (!PMC_pmc_val(pmc))
-        real_exception(interp, NULL, E_ValueError,
+        real_exception(interp, NULL, UNEXPECTED_NULL,
                 "Missing struct initializer");
 
     n = (size_t)VTABLE_elements(interp, PMC_pmc_val(pmc));
 
     if ((size_t)ix >= n)
-        real_exception(interp, NULL, E_ValueError,
+        real_exception(interp, NULL, UNEXPECTED_NULL,
                 "Non existent elements in struct "
                 "ix = %d n=%d", (int)ix, (int)n);
 
@@ -85,7 +85,7 @@ key_2_idx(PARROT_INTERP, PMC *pmc, PMC *key)
     int ix = 0;
 
     if (!PMC_pmc_val(pmc))
-        real_exception(interp, NULL, E_ValueError,
+        real_exception(interp, NULL, UNEXPECTED_NULL,
                 "Missing struct initializer");
 
     if (PObj_get_FLAGS(key) & KEY_string_FLAG) {
@@ -97,12 +97,12 @@ key_2_idx(PARROT_INTERP, PMC *pmc, PMC *key)
                 key_string(interp, key));
 
             if (!b)
-                real_exception(interp, NULL, E_KeyError, "key doesn't exist");
+                real_exception(interp, NULL, KEY_NOT_FOUND, "key doesn't exist");
 
             ix = b - hash->bs;
         }
         else
-            real_exception(interp, NULL, E_TypeError,
+            real_exception(interp, NULL, INVALID_OPERATION,
                     "unhandled type aggregate");
 
         ix /= 3;
@@ -208,7 +208,7 @@ char_offset_key(PARROT_INTERP, PMC *pmc, PMC *key, int *type)
     }
 
     if (count >= max)
-        real_exception(interp, NULL, E_LookupError,
+        real_exception(interp, NULL, OUT_OF_BOUNDS,
                 "Non existent array element in struct: "
                 "count = %d max=%d", (int)count, (int)max);
     size = data_types[*type - enum_first_type].size;
@@ -341,7 +341,7 @@ ret_string(PARROT_INTERP, char *p, int type)
         return string_make(interp, cstr, len, "iso-8859-1", PObj_external_FLAG);
     }
 
-    real_exception(interp, NULL, E_TypeError,
+    real_exception(interp, NULL, INVALID_OPERATION,
         "returning unhandled string type in struct");
 }
 
@@ -392,7 +392,7 @@ ret_pmc(PARROT_INTERP, PMC *pmc, char *p, int type, INTVAL idx)
                 ret = VTABLE_getprop(interp, ptr, CONST_STRING(interp, "_struct"));
             }
             else {
-                real_exception(interp, NULL, E_TypeError,
+                real_exception(interp, NULL, INVALID_OPERATION,
                         "no initializer available for nested struct");
             }
 
@@ -401,7 +401,7 @@ ret_pmc(PARROT_INTERP, PMC *pmc, char *p, int type, INTVAL idx)
 
             return ret;
         default:
-            real_exception(interp, NULL, E_TypeError,
+            real_exception(interp, NULL, INVALID_OPERATION,
                     "returning unhandled pmc type (%d) in struct", type);
     }
 }
@@ -539,7 +539,7 @@ calc_align(PARROT_INTERP, PMC *pmc, PMC *type_pmc,
         int    new_offs;
 
         if (n % 3)
-            real_exception(interp, NULL, E_TypeError,
+            real_exception(interp, NULL, INVALID_OPERATION,
                     "Illegal initializer for struct");
 
         for (i = 0; i < n; i += 3) {
@@ -587,7 +587,7 @@ calc_offsets(PARROT_INTERP, PMC *pmc, PMC *value, size_t toff)
     int size;
 
     if (n % 3)
-        real_exception(interp, NULL, E_TypeError,
+        real_exception(interp, NULL, INVALID_OPERATION,
                 "Illegal initializer for struct");
 
     for (i = 0; i < n; i += 3) {
@@ -597,7 +597,7 @@ calc_offsets(PARROT_INTERP, PMC *pmc, PMC *value, size_t toff)
         int  offs     = (int)VTABLE_get_integer_keyed_int(interp, value, i + 2);
 
         if (type < enum_first_type || type >= enum_last_type)
-            real_exception(interp, NULL, E_TypeError,
+            real_exception(interp, NULL, INVALID_OPERATION,
                     "Illegal type in initializer for struct");
 
         if (count <= 0) {
