@@ -17,7 +17,7 @@ columns (separated by one *or more* tabs):
 
 =item pattern
 
-The Perl6 regex to test.
+The Perl 6 regex to test.
 
 =item target
 
@@ -378,7 +378,7 @@ Description of the test.
 
     unless_null rule, match_it
     $P1 = new 'Exception'
-    $P1[0] = 'rule error'
+    $P1 = 'rule error'
     throw $P1
   match_it:
     match = rule(target)

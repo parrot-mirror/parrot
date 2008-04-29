@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -83,7 +83,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "get_results" );
     print "main\n"
     push_eh handler
     new P1, 'Exception'
-    set P1[0], "just pining"
+    set P1, "just pining"
     throw P1
     print "not reached\n"
     end
@@ -131,7 +131,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', ".get_results() - PIR" );
     print "main\n"
     push_eh _handler
     new P1, 'Exception'
-    set P1[0], "just pining"
+    set P1, "just pining"
     throw P1
     print "not reached\n"
     end
@@ -286,18 +286,13 @@ pasm_output_is( <<'CODE', <<OUT, "die, error, severity" );
 _handler:
     get_results "0,0", P5, S0
     print "caught it\n"
-    set I0, P5["_type"]
-    print "error "
-    print I0
-    print "\n"
-    set I0, P5["_severity"]
+    set I0, P5
     print "severity "
     print I0
     print "\n"
     end
 CODE
 caught it
-error 100
 severity 3
 OUT
 

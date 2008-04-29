@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -103,8 +103,7 @@ Initializes the exception handler.
         next                        = SUPER(next);
 
         if (results) {
-            STRING *message = VTABLE_get_string_keyed_int(INTERP,
-                    exception, 0);
+            STRING *message = VTABLE_get_string(INTERP, exception);
             PARROT_ASSERT(next == results);
             next            = pass_exception_args(interp, "PS", next,
                                                   ex_ctx, exception, message);
