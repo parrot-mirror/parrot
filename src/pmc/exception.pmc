@@ -173,7 +173,7 @@ Returns the integer value for C<*key>.
         if (string_equal(INTERP, s, CONST_STRING(INTERP, "_type")) == 0) {
             GET_ATTR_type(interp, SELF, result);
         }
-        else if (string_equal(INTERP, s, CONST_STRING(INTERP, "_severity")) == 0) {
+        else if (string_equal(INTERP, s, CONST_STRING(INTERP, "severity")) == 0) {
             GET_ATTR_severity(interp, SELF, result);
         }
         else if (string_equal(INTERP, s, CONST_STRING(INTERP, "exit_code")) == 0) {
@@ -288,7 +288,7 @@ Sets the integer value for C<*key>.
         if (string_equal(INTERP, s, CONST_STRING(INTERP, "_type")) == 0) {
             SET_ATTR_type(interp, SELF, value);
         }
-        else if (string_equal(INTERP, s, CONST_STRING(INTERP, "_severity")) == 0) {
+        else if (string_equal(INTERP, s, CONST_STRING(INTERP, "severity")) == 0) {
             SET_ATTR_severity(interp, SELF, value);
         }
         else if (string_equal(INTERP, s, CONST_STRING(INTERP, "exit_code")) == 0) {
