@@ -327,7 +327,7 @@ initialize_parents(PARROT_INTERP, PMC *object, PMC *all_parents)
 
         /* PMCProxy parents store an instance to delegate to */
         if (parent->vtable->base_type == enum_class_PMCProxy) {
-            PMC * proxy = VTABLE_instantiate(interp, parent, PMCNULL);
+            PMC    *proxy     = VTABLE_instantiate(interp, parent, PMCNULL);
             STRING *proxy_str = CONST_STRING(interp, "proxy");
             VTABLE_set_attr_keyed(interp, object, parent, proxy_str, proxy);
         }
