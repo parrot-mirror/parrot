@@ -350,7 +350,7 @@ sub load_op_map_files {
         next unless $_;
         ($name) = split( /\s+/, $_ );
         if ( exists $self->{optable}->{$name} ) {
-            die "skipped opcode is also in $num_file";
+            die "skipped opcode '$name' is also in $num_file";
         }
         $self->{skiptable}->{$name} = 1;
     }
