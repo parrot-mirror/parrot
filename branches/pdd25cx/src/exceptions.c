@@ -330,11 +330,12 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
         {
             const INTVAL severity = VTABLE_get_integer(interp, exception);
             if (severity == EXCEPT_exit) {
-                print_location = 0;
+                STRING *exit_code = CONST_STRING(interp, "exit_code");
+                print_location    = 0;
+
                 /* TODO: get exit status based on type */
-                exit_status =
-                    (int)VTABLE_get_integer_keyed_str(interp, exception,
-				    CONST_STRING(interp, "exit_code"));
+                exit_status       = (int)VTABLE_get_integer_keyed_str(interp,
+                                        exception, exit_code);
             }
             else
                 fprintf(stderr, "No exception handler and no message\n");
