@@ -170,7 +170,7 @@ Returns the integer value for C<*key>.
         STRING *s = key_string(INTERP, key);
         INTVAL result = 0;
 
-        if (string_equal(INTERP, s, CONST_STRING(INTERP, "_type")) == 0) {
+        if (string_equal(INTERP, s, CONST_STRING(INTERP, "type")) == 0) {
             GET_ATTR_type(interp, SELF, result);
         }
         else if (string_equal(INTERP, s, CONST_STRING(INTERP, "severity")) == 0) {
@@ -285,7 +285,7 @@ Sets the integer value for C<*key>.
     VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         STRING *s = key_string(INTERP, key);
 
-        if (string_equal(INTERP, s, CONST_STRING(INTERP, "_type")) == 0) {
+        if (string_equal(INTERP, s, CONST_STRING(INTERP, "type")) == 0) {
             SET_ATTR_type(interp, SELF, value);
         }
         else if (string_equal(INTERP, s, CONST_STRING(INTERP, "severity")) == 0) {

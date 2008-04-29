@@ -42,7 +42,7 @@ SKIP: {
     end
 _handler:
     print "catched it\n"
-    set I0, P5["_type"]
+    set I0, P5["type"]
     print "error "
     print I0
     print "\n"
@@ -66,7 +66,7 @@ OUT
 _handler:
 .include "signal.pasm"
     print "catched it\n"
-    set I0, P5["_type"]
+    set I0, P5["type"]
     neg I0, I0
     ne I0, .SIGFPE, nok
     print "ok\n"
