@@ -2925,7 +2925,7 @@ decides if it's interested in this signal and, if so, how to respond to it.
   _handler:
     .include "signal.pasm"      # get signal definitions
     print "caught "
-    set I0, P5["_type"]         # if _type is negative, the ...
+    set I0, P5["type"]         # if _type is negative, the ...
     neg I0, I0                  # ... negated type is the signal
     ne I0, .SIGINT, nok
     print "SIGINT\n"
