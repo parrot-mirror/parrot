@@ -89,7 +89,7 @@ internal_exception(int exitcode, ARGIN(const char *format), ...)
     fflush(stderr);
     va_end(arglist);
 /*
- * RT#45907 get rid of all the internal_exceptions or call them
+ * RT #45907 get rid of all the internal_exceptions or call them
  *          with an interpreter arg
     Parrot_exit(interp, exitcode);
  */
@@ -281,39 +281,38 @@ PARROT_CAN_RETURN_NULL
 static PMC *
 find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
 {
-    char *m;
-    int exit_status, print_location;
-    int depth = 0;
     Stack_Entry_t *e;
+    int            depth          = 0;
+    int            exit_status    = 1;
+    int            print_location = 1;
+    STRING * const message        =  VTABLE_get_string(interp, exception);
+    char          *m              = string_to_cstring(interp, message);
 
     /* for now, we don't check the exception class and we don't
-     * look for matching handlers.  [this is being redesigned anyway.]
-     */
-    STRING * const message = VTABLE_get_string_keyed_int(interp, exception, 0);
+     * look for matching handlers.  [this is being redesigned anyway.] */
 
-    /* [RT#45909: replace quadratic search with something linear, hopefully
+    /* [RT #45909: replace quadratic search with something linear, hopefully
      * without trashing abstraction layers.  -- rgr, 17-Sep-06.] */
     while ((e = stack_entry(interp, interp->dynamic_env, depth)) != NULL) {
         if (e->entry_type == STACK_ENTRY_PMC) {
             PMC * const handler = UVal_pmc(e->entry);
             if (handler && handler->vtable->base_type ==
-                    enum_class_Exception_Handler) {
+                    enum_class_Exception_Handler)
                 return handler;
-            }
         }
+
         depth++;
     }
 
     /* flush interpreter output to get things printed in order */
     PIO_flush(interp, PIO_STDOUT(interp));
     PIO_flush(interp, PIO_STDERR(interp));
+
     if (interp->debugger) {
         PIO_flush(interp->debugger, PIO_STDOUT(interp->debugger));
         PIO_flush(interp->debugger, PIO_STDERR(interp->debugger));
     }
 
-    m = string_to_cstring(interp, message);
-    exit_status = print_location = 1;
     if (m && *m) {
         fputs(m, stderr);
         if (m[strlen(m)-1] != '\n')
@@ -321,34 +320,41 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
         string_cstring_free(m);
     }
     else {
+        /* coverity fix, m was allocated but was "\0" */
         if (m)
-            string_cstring_free(m); /* coverity fix, m was allocated but was "\0" */
+            string_cstring_free(m);
+
         /* new block for const assignment */
         {
-            const INTVAL severity = VTABLE_get_integer_keyed_int(interp, exception, 2);
+            const PMC   *severity_pmc = pmc_new(interp, enum_class_String);
+            INTVAL       severity;
+            VTABLE_set_string_native(interp, severity_pmc, CONST_STRING(interp, "_severity"));
+
+            severity = VTABLE_get_integer_keyed(interp, exception, severity_pmc);
             if (severity == EXCEPT_exit) {
                 print_location = 0;
-                exit_status =
-                    (int)VTABLE_get_integer_keyed_int(interp, exception, 1);
+
+                /* TODO: get exit status based on type */
+                exit_status = 0;
             }
             else
                 fprintf(stderr, "No exception handler and no message\n");
         }
     }
+
     /* caution against output swap (with PDB_backtrace) */
     fflush(stderr);
     if (print_location)
         PDB_backtrace(interp);
+
     /*
      * returning NULL from here returns resume address NULL to the
      * runloop, which will terminate the thread function finally
      *
-     * RT#45917 this check should better be in Parrot_exit
+     * RT #45917 this check should better be in Parrot_exit
      */
     if (interp->thread_data && interp->thread_data->tid) {
-        /*
-         * we should probably detach the thread here
-         */
+        /* we should probably detach the thread here */
         return NULL;
     }
 
@@ -562,14 +568,17 @@ throw_exception(PARROT_INTERP, ARGIN(PMC *exception), SHIM(void *dest))
 
     if (!handler)
         return NULL;
+
     /* put the handler aka continuation ctx in the interpreter */
-    address = VTABLE_invoke(interp, handler, exception);
+    address    = VTABLE_invoke(interp, handler, exception);
+
     /* address = VTABLE_get_pointer(interp, handler); */
     if (PObj_get_FLAGS(handler) & SUB_FLAG_C_HANDLER) {
         /* its a C exception handler */
         Parrot_exception * const jb = (Parrot_exception *) address;
         longjmp(jb->destination, 1);
     }
+
     /* return the address of the handler */
     return address;
 }
@@ -607,7 +616,7 @@ rethrow_exception(PARROT_INTERP, ARGIN(PMC *exception))
 
 =item C<void rethrow_c_exception>
 
-Return back to runloop, assumes exception is still in todo (see RT#45915) and
+Return back to runloop, assumes exception is still in todo (see RT #45915) and
 that this is called from within a handler setup with C<new_c_exception>.
 
 =cut
@@ -620,20 +629,19 @@ rethrow_c_exception(PARROT_INTERP)
 {
     Parrot_exception * const the_exception = interp->exceptions;
 
-    PMC * const exception = PMCNULL;   /* RT#45915 */
+    PMC * const exception = PMCNULL;   /* RT #45915 */
     PMC * const handler   = find_exception_handler(interp, exception);
 
-    /* RT#45911 we should only peek for the next handler */
+    /* RT #45911 we should only peek for the next handler */
     push_exception(interp, handler);
-    /*
-     * if there was no user handler, interpreter is already shutdown
-     */
-    the_exception->resume = VTABLE_get_pointer(interp, handler);
-    the_exception->error = VTABLE_get_integer_keyed_int(interp,
-            exception, 1);
-    the_exception->severity = VTABLE_get_integer_keyed_int(interp,
-            exception, 2);
-    the_exception->msg = VTABLE_get_string_keyed_int(interp, exception, 0);
+
+    /* if there was no user handler, interpreter is already shutdown */
+    the_exception->resume   = VTABLE_get_pointer(interp, handler);
+    the_exception->severity = VTABLE_get_integer(interp, exception);
+    the_exception->msg      = VTABLE_get_string(interp, exception);
+    the_exception->error    = VTABLE_get_integer(interp,
+        VTABLE_get_attr_str(interp, exception, CONST_STRING(interp, "exit_code")));
+
     longjmp(the_exception->destination, 1);
 }
 
@@ -653,18 +661,18 @@ static opcode_t *
 create_exception(PARROT_INTERP)
 {
     Parrot_exception * const the_exception = interp->exceptions;
+    PMC                     *exit_code     = pmc_new(interp, enum_class_Integer);
     PMC                     *exception     =
                                 pmc_new(interp, enum_class_Exception);
 
-    VTABLE_set_integer_keyed_int(interp, exception, 1, the_exception->error);
-
     /* exception severity */
-    VTABLE_set_integer_keyed_int(interp, exception, 2,
-            (INTVAL)the_exception->severity);
+    VTABLE_set_integer_native(interp, exception, the_exception->severity);
+    VTABLE_set_integer_native(interp, exit_code, the_exception->error);
+
+    VTABLE_set_attr_str(interp, exception, CONST_STRING(interp, "exit_code"), exit_code);
 
     if (the_exception->msg)
-        VTABLE_set_string_keyed_int(interp, exception, 0,
-                the_exception->msg);
+        VTABLE_set_string_native(interp, exception, the_exception->msg);
 
     /* now fill rest of exception, locate handler and get
      * destination of handler */
@@ -805,10 +813,10 @@ do_str_exception(PARROT_INTERP, ARGIN(STRING *msg))
 {
     Parrot_exception * const the_exception = interp->exceptions;
 
-    the_exception->error = E_RuntimeError;
-    the_exception->severity = EXCEPT_error;
-    the_exception->msg = msg;
-    the_exception->resume = NULL;
+    the_exception->error                   = E_RuntimeError;
+    the_exception->severity                = EXCEPT_error;
+    the_exception->msg                     = msg;
+    the_exception->resume                  = NULL;
     longjmp(the_exception->destination, 1);
 }
 
@@ -819,10 +827,10 @@ do_pmc_exception(PARROT_INTERP, ARGIN(PMC *msg))
 {
     Parrot_exception * const the_exception = interp->exceptions;
 
-    the_exception->error = E_RuntimeError;
-    the_exception->severity = EXCEPT_error;
-    the_exception->msg = VTABLE_get_string(interp, msg);;
-    the_exception->resume = NULL;
+    the_exception->error                   = E_RuntimeError;
+    the_exception->severity                = EXCEPT_error;
+    the_exception->msg                     = VTABLE_get_string(interp, msg);;
+    the_exception->resume                  = NULL;
     longjmp(the_exception->destination, 1);
 }
 
@@ -833,10 +841,11 @@ do_exception(PARROT_INTERP, INTVAL severity, long error)
 {
     Parrot_exception * const the_exception = interp->exceptions;
 
-    the_exception->error = error;
-    the_exception->severity = severity;
-    the_exception->msg = NULL;
-    the_exception->resume = NULL;
+    the_exception->error                   = error;
+    the_exception->severity                = severity;
+    the_exception->msg                     = NULL;
+    the_exception->resume                  = NULL;
+
     longjmp(the_exception->destination, 1);
 }
 
@@ -904,10 +913,12 @@ real_exception(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
         /* [what if exitcode is a multiple of 256?] */
         exit(exitcode);
     }
+
     the_exception->severity = EXCEPT_error;
-    the_exception->error = exitcode;
-    the_exception->msg = msg;
-    the_exception->resume = ret_addr;
+    the_exception->error    = exitcode;
+    the_exception->msg      = msg;
+    the_exception->resume   = ret_addr;
+
     if (Interp_debug_TEST(interp, PARROT_BACKTRACE_DEBUG_FLAG)) {
         PIO_eprintf(interp, "real_exception (severity:%d error:%d): %Ss\n",
             EXCEPT_error, exitcode, msg);
