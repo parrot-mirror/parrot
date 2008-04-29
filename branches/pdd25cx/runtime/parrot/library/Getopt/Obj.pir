@@ -248,7 +248,7 @@ error_1:
     MissingRequired(name)
 error_2:
     $P0 = new 'Exception'
-    $P0["_message"] = "Not using only boolean arguments in a bundled argument"
+    $P0 = "Not using only boolean arguments in a bundled argument"
     throw $P0
 
     ################  STORE  ###########################
@@ -409,7 +409,7 @@ check:
     $S0 = "Unknown specs option '"
     $S0 .= type
     $S0 .= "'"
-    $P0["_message"] = $S0
+    $P0 = $S0
     throw $P0
 
 str:
@@ -503,7 +503,7 @@ endfor:
     $S0 = "Option '"
     $S0 .= key
     $S0 .= "' not in specs"
-    $P0["_message"] = $S0
+    $P0 = $S0
     throw $P0
 finish:
     null $S0
@@ -551,7 +551,7 @@ When a required argument is missing, throws an exception with the message
     $S0 = "Missing a required argument for option '"
     $S0 .= arg
     $S0 .= "'"
-    $P0["_message"] = $S0
+    $P0 = $S0
     throw $P0
 .end
 

@@ -159,7 +159,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "push_eh - throw - message" );
     push_eh _handler
 
     new P30, 'Exception'
-    set P30["_message"], "something happend"
+    set P30, "something happend"
     throw P30
     print "not reached\n"
     end
@@ -177,7 +177,7 @@ OUTPUT
 
 pasm_error_output_like( <<'CODE', <<'OUTPUT', "throw - no handler" );
     new P0, 'Exception'
-    set P0["_message"], "something happend"
+    set P0, "something happend"
     throw P0
     print "not reached\n"
     end
@@ -213,7 +213,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers" );
     push_eh _handler2
 
     new P30, 'Exception'
-    set P30["_message"], "something happend"
+    set P30, "something happend"
     throw P30
     print "not reached\n"
     end
@@ -241,7 +241,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next" );
     push_eh _handler2
 
     new P30, 'Exception'
-    set P30["_message"], "something happend"
+    set P30, "something happend"
     throw P30
     print "not reached\n"
     end
@@ -494,7 +494,7 @@ last:
     set_global ['Foo'; 'Bar'], "test", test2_binding
     show_value()
     exit = new 'Exception'
-    exit["_message"] = "something happened"
+    exit = "something happened"
     throw exit
 .end
 .sub show_value
@@ -679,7 +679,7 @@ handler:
 
 .sub broken
     $P0 = new 'Exception'
-    $P0["_message"] = "something broke"
+    $P0 = "something broke"
     throw $P0
 .end
 CODE

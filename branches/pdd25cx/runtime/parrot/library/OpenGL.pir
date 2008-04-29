@@ -115,7 +115,7 @@ match can be found on the system.
 
     .local pmc    exception
     exception = new 'Exception'
-    exception['_message'] = message
+    exception = message
     throw exception
 .end
 
