@@ -262,7 +262,7 @@ opcode_t * rethrow_exception(PARROT_INTERP, ARGIN(PMC *exception))
 
 PARROT_API
 PARROT_CAN_RETURN_NULL
-opcode_t * throw_exception(PARROT_INTERP,
+opcode_t * run_handler(PARROT_INTERP,
     ARGIN(PMC *exception),
     SHIM(void *dest))
         __attribute__nonnull__(1)

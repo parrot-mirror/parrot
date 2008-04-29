@@ -808,18 +808,18 @@ inline op pop_eh() {
 
 inline op throw(invar PMC) {
     opcode_t * const ret = expr NEXT();
-    opcode_t * const dest = (opcode_t *)throw_exception(interp, $1, ret);
+    opcode_t * const dest = (opcode_t *)run_handler(interp, $1, ret);
     goto ADDRESS(dest);
 }
 
 inline op throwcc(invar PMC) {
     opcode_t * const ret = expr NEXT();
-    opcode_t * const dest = (opcode_t *)throw_exception(interp, $1, ret);
+    opcode_t * const dest = (opcode_t *)run_handler(interp, $1, ret);
     goto ADDRESS(dest);
 }
 
 inline op throwcc(invar PMC, invar PMC) {
-    opcode_t * const dest = (opcode_t *)throw_exception(interp, $1, $2);
+    opcode_t * const dest = (opcode_t *)run_handler(interp, $1, $2);
     goto ADDRESS(dest);
 }
 
