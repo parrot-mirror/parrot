@@ -36,7 +36,7 @@ RT#40687: return the stacktrace for the current exception
 =cut
 
 .macro get_stacktrace (output)
-  .output = exception[VALUE_SLOT]
+  .output = exception
   .output .= "\n"
 .endm
 
@@ -47,7 +47,7 @@ Get the simple string message for the current exception.
 =cut
 
 .macro get_message (output)
-  .output = exception[VALUE_SLOT]
+  .output = exception
 .endm
 
 =head2 get_severity (OUT int level)
@@ -57,7 +57,7 @@ Get the severity level of the current exception.
 =cut
 
 .macro get_severity (output)
-  .output = exception[SEVERITY_SLOT]
+  .output = exception
 .endm
 
 =head2 get_return_code

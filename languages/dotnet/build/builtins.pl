@@ -51,7 +51,7 @@ $output .= <<'PIR_OUT';
 UNIMPLEMENTED:
     body = <<"PIR"
 $P0 = new .Exception
-$P0["_message"] = "System.NotImplementedException"
+$P0 = "System.NotImplementedException"
 $P1 = new "System.NotImplementedException"
 $P0["obj"] = $P1
 throw $P0
@@ -182,7 +182,7 @@ sub generate_lookup {
     $pir .= <<'PIR'
 FAIL:
     $P0 = new .Exception
-    $P0["_message"] = "No body supplied for built-in method"
+    $P0 = "No body supplied for built-in method"
     throw $P0
 PIR
 }

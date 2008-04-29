@@ -448,7 +448,7 @@ Not too hard, is it?
 =head2 How do I throw an exception with an error message in PIR?
 
     $P0 = new 'Exception'
-    $P0['_message'] = 'something happened'
+    $P0 = 'something happened'
     throw $P0
 
 =head2 How do I catch an exception in PIR?
@@ -489,7 +489,7 @@ Rethrow the exception if it has a severity of C<EXCEPT_EXIT>.
 
     push_eh handler
     $P0 = new 'Exception'
-    $P0['_message'] = 'something happened'
+    $P0 = 'something happened'
     throw $P0
     pop_eh
     exit 0

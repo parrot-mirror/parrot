@@ -2867,9 +2867,9 @@ execution at the opcode immediately after the one that threw the
 exception. Other exceptions at the run-loop level are also generally
 resumable.
 
-  new P10, Exception            # create new Exception object
-  set P10["_message"], "I die"  # set message attribute
-  throw P10                     # throw it
+  new P10, 'Exception'    # create new Exception object
+  set P10, 'I die'        # set message attribute
+  throw P10               # throw it
 
 Exceptions are designed to work with the Parrot calling conventions.
 Since the return addresses of C<bsr> subroutine calls and exception

@@ -38,7 +38,7 @@ src/builtins/control.pir - Perl 6 Control functions
     message = "Died\n"
   have_message:
     $P0 = new 'Exception'
-    $P0['_message'] = message
+    $P0 = message
     set_global '$!', $P0
     throw $P0
     .return ()

@@ -191,7 +191,7 @@ continued:
     .local pmc arg1
     print "unwinding\n"
     $P0 = new 'Exception'
-    $P0["_message"] = "something happened"
+    $P0 = "something happened"
     throw $P0
 .end
 
