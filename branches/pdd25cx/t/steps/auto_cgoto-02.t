@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 18;
+use Test::More tests =>  16;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -37,7 +37,7 @@ $step_name   = $task->step;
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+
 
 my $ret = $step->runstep($conf);
 ok( $ret, "$step_name runstep() returned true value" );
@@ -48,7 +48,7 @@ ok(defined($conf->data->get('TEMP_cg_o')), "An attribute has been defined");
 ok(defined($conf->data->get('TEMP_cg_r')), "An attribute has been defined");
 ok(defined($conf->data->get('cg_flag')), "An attribute has been defined");
 
-pass("Keep Devel::Cover happy");
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
