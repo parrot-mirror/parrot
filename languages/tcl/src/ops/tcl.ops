@@ -25,8 +25,7 @@ tcl.ops
 A dynamic opcode library for tcl on parrot that provides a few opcodes
 that simplify PIR generation for tclPIR generation for tcl
 
-BUGS: pull out the TCL_ constants, as well as the code slot(#9) and the
-message slot(#0)
+BUGS: pull out the TCL_ constants, as well as the code slot(#9)
 
 =cut
 
@@ -86,8 +85,9 @@ inline op tcl_error(in PMC) {
   opcode_t *dest;
   PMC      *exception = pmc_new(interp, enum_class_Exception);
   INTVAL    TCL_ERROR = 1;
+  STRING   *message = VTABLE_get_string(interp, $1);
 
-  VTABLE_set_pmc_keyed_int(interp, exception, (INTVAL)0, $1);
+  VTABLE_set_string_native(interp, exception, message);
   VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_ERROR);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
@@ -100,7 +100,7 @@ inline op tcl_error(in STR) {
   PMC      *exception = pmc_new(interp, enum_class_Exception);
   INTVAL    TCL_ERROR = 1;
 
-  VTABLE_set_string_keyed_int(interp, exception, 0, $1);
+  VTABLE_set_string_native(interp, exception, $1);
   VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_ERROR);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
@@ -122,7 +122,7 @@ inline op tcl_error(in STR, in PMC) {
   errorCode = Parrot_find_global_n(interp, ns, string_from_literal(interp, "$errorCode"));
   VTABLE_assign_pmc(interp, errorCode, $2);
 
-  VTABLE_set_string_keyed_int(interp, exception, 0, $1);
+  VTABLE_set_string_native(interp, exception, $1);
   VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_ERROR);
 
   ret  = expr NEXT();
@@ -134,8 +134,9 @@ inline op tcl_error(in INT, in PMC) {
   opcode_t *ret;
   opcode_t *dest;
   PMC      *exception = pmc_new(interp, enum_class_Exception);
+  STRING   *message = VTABLE_get_string(interp, $2);
 
-  VTABLE_set_pmc_keyed_int(interp, exception, 0, $2);
+  VTABLE_set_string_native(interp, exception, message);
   VTABLE_set_integer_keyed_int(interp, exception, 9, $1);
 
   ret  = expr NEXT();
@@ -156,8 +157,9 @@ inline op tcl_return(in PMC) {
   opcode_t *dest;
   PMC      *exception  = pmc_new(interp, enum_class_Exception);
   INTVAL    TCL_RETURN = 2;
+  STRING   *message = VTABLE_get_string(interp, $1);
 
-  VTABLE_set_pmc_keyed_int(interp, exception, 0, $1);
+  VTABLE_set_string_native(interp, exception, message);
   VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_RETURN);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
@@ -170,7 +172,7 @@ inline op tcl_return(in STR) {
   PMC      *exception  = pmc_new(interp, enum_class_Exception);
   INTVAL    TCL_RETURN = 2;
 
-  VTABLE_set_string_keyed_int(interp, exception, 0, $1);
+  VTABLE_set_string_native(interp, exception, $1);
   VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_RETURN);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
@@ -190,7 +192,7 @@ inline op tcl_break() {
   STRING   *empty     = string_make_empty(interp, enum_stringrep_one, 0);
   INTVAL    TCL_BREAK = 3;
 
-  VTABLE_set_string_keyed_int(interp, exception, 0, empty);
+  VTABLE_set_string_native(interp, exception, empty);
   VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_BREAK);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
@@ -210,7 +212,7 @@ inline op tcl_continue() {
   STRING   *empty        = string_make_empty(interp, enum_stringrep_one, 0);
   INTVAL    TCL_CONTINUE = 4;
 
-  VTABLE_set_string_keyed_int(interp, exception, 0, empty);
+  VTABLE_set_string_native(interp, exception, empty);
   VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_CONTINUE);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
