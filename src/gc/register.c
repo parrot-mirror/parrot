@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -12,12 +12,6 @@ Parrot has 4 register sets, one for each of its basic types. The
 number of registers in each set varies depending on the use counts of
 the subroutine and is determined by the PASM/PIR compiler in the
 register allocation pass (F<imcc/reg_alloc.c>).
-
-There is one register stack to support the C<saveall> and
-C<restoreall> opcodes. The former copies all registers to newly
-allocated storage and points the register base pointers to this
-storage. In C<Parrot_pop_regs> the register base pointers are restored
-to the previous values and the allocated register memory is discarded.
 
 =cut
 
@@ -301,8 +295,6 @@ init_context(PARROT_INTERP, ARGMOD(parrot_context_t *ctx),
     if (old) {
         /* some items should better be COW copied */
         ctx->constants = old->constants;
-        ctx->reg_stack = old->reg_stack;     /* RT#46183 move into interpreter? */
-        ctx->user_stack = old->user_stack;   /* RT#46183 move into interpreter? */
         ctx->warns = old->warns;
         ctx->errors = old->errors;
         ctx->trace_flags = old->trace_flags;
@@ -318,7 +310,7 @@ init_context(PARROT_INTERP, ARGMOD(parrot_context_t *ctx),
 
 /*
 
-=item C<struct Parrot_Context * Parrot_dup_context>
+=item C<Parrot_Context * Parrot_dup_context>
 
 Duplicate the passed context
 
@@ -328,8 +320,8 @@ Duplicate the passed context
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-struct Parrot_Context *
-Parrot_dup_context(PARROT_INTERP, ARGIN(const struct Parrot_Context *old))
+Parrot_Context *
+Parrot_dup_context(PARROT_INTERP, ARGIN(const Parrot_Context *old))
 {
     size_t          diff;
     Parrot_Context *ctx;
@@ -363,7 +355,7 @@ Parrot_dup_context(PARROT_INTERP, ARGIN(const struct Parrot_Context *old))
 
 /*
 
-=item C<struct Parrot_Context * Parrot_push_context>
+=item C<Parrot_Context * Parrot_push_context>
 
 Remember old context in C<caller_ctx>, suitable to use with
 C<Parrot_pop_context>.
@@ -375,7 +367,7 @@ C<Parrot_pop_context>.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-struct Parrot_Context *
+Parrot_Context *
 Parrot_push_context(PARROT_INTERP, ARGMOD(INTVAL *n_regs_used))
 {
     Parrot_Context * const old = CONTEXT(interp);
@@ -419,7 +411,7 @@ Parrot_pop_context(PARROT_INTERP)
 
 /*
 
-=item C<struct Parrot_Context * Parrot_alloc_context>
+=item C<Parrot_Context * Parrot_alloc_context>
 
 Allocate a new context and set the context pointer. Please note that the
 register usage C<n_regs_used> is copied.  The function returns the new context.
@@ -430,7 +422,7 @@ register usage C<n_regs_used> is copied.  The function returns the new context.
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-struct Parrot_Context *
+Parrot_Context *
 Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
 {
     Parrot_Context *old, *ctx;
@@ -534,7 +526,7 @@ return continuation invoke, else from the destructor of a continuation.
 
 PARROT_API
 void
-Parrot_free_context(PARROT_INTERP, ARGMOD(struct Parrot_Context *ctxp), int re_use)
+Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int re_use)
 {
     /*
      * The context structure has a reference count, initially 0.  This field is
@@ -573,11 +565,17 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(struct Parrot_Context *ctxp), int re_u
             ctxp->n_regs_used = NULL;
         }
 
-        ptr  = ctxp;
-        slot = CALCULATE_SLOT_NUM(ctxp->regs_mem_size);
+        /* don't put the same context on the free list multiple times; we don't
+         * have the re-use versus multiple ref count semantics right yet */
+        if (ctxp->ref_count < 0)
+            return;
+
+        ctxp->ref_count = 0;
+        ptr             = ctxp;
+        slot            = CALCULATE_SLOT_NUM(ctxp->regs_mem_size);
 
         PARROT_ASSERT(slot < interp->ctx_mem.n_free_slots);
-        *(void **)ptr = interp->ctx_mem.free_list[slot];
+        *(void **)ptr                   = interp->ctx_mem.free_list[slot];
         interp->ctx_mem.free_list[slot] = ptr;
     }
 }
@@ -594,7 +592,7 @@ Mark the context as possible threshold.
 
 PARROT_API
 void
-Parrot_set_context_threshold(SHIM_INTERP, SHIM(struct Parrot_Context *ctxp))
+Parrot_set_context_threshold(SHIM_INTERP, SHIM(Parrot_Context *ctxp))
 {
     /* nothing to do */
 }
@@ -608,149 +606,6 @@ Parrot_set_context_threshold(SHIM_INTERP, SHIM(struct Parrot_Context *ctxp))
 =over 4
 
 =cut
-
-*/
-
-typedef struct save_regs_t {
-    Regs_ni  old_bp_ni;   /* restoreall just resets ptrs */
-    Regs_ps  old_bp_ps;
-    Regs_ps  bp_ps;       /* pushed regs need DOD marking */
-    INTVAL   n_regs_pmc;
-    INTVAL   n_regs_str;
-} save_regs_t;
-
-/*
-
-=item C<void setup_register_stacks>
-
-Set up the register stacks.
-
-=cut
-
-*/
-
-void
-setup_register_stacks(PARROT_INTERP)
-{
-    CONTEXT(interp)->reg_stack =
-        register_new_stack(interp,
-            "Regs_", sizeof (save_regs_t));
-
-}
-
-/*
-
-=item C<void Parrot_push_regs>
-
-Save all registers onto the register stack.
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_push_regs(PARROT_INTERP)
-{
-    Stack_Chunk_t *chunk;
-    size_t size_nip, size_nips;
-    void *ptr;
-
-    parrot_context_t * const ctx     = CONTEXT(interp);
-    Stack_Chunk_t **   const chunk_p = &ctx->reg_stack;
-    save_regs_t *      const save_r  =
-        (save_regs_t *)stack_prepare_push(interp, chunk_p);
-
-    save_r->old_bp_ni.regs_i = ctx->bp.regs_i;
-    save_r->old_bp_ps.regs_s = ctx->bp_ps.regs_s;
-    save_r->n_regs_str       = ctx->n_regs_used[REGNO_STR];
-    save_r->n_regs_pmc       = ctx->n_regs_used[REGNO_PMC];
-
-    size_nip  = _SIZEOF_NUMS + _SIZEOF_INTS + _SIZEOF_PMCS;
-    size_nips = size_nip + _SIZEOF_STRS;
-    ptr       = mem_sys_allocate(size_nips);
-    memcpy(ptr, (char*)ctx->bp.regs_i - _SIZEOF_NUMS, size_nips);
-    interp->ctx.bp_ps.regs_s = ctx->bp_ps.regs_s =
-        save_r->bp_ps.regs_s = (STRING **) ((char*) ptr + size_nip);
-    interp->ctx.bp.regs_i = ctx->bp.regs_i =
-        (INTVAL *) ((char*) ptr + _SIZEOF_NUMS);
-    chunk = *chunk_p;
-    PObj_bufstart(chunk) = ptr;
-    PObj_buflen(chunk) = size_nips;
-    PObj_sysmem_SET(chunk);
-}
-
-/*
-
-=item C<void Parrot_pop_regs>
-
-Restore all registers from register stack.
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_pop_regs(PARROT_INTERP)
-{
-    parrot_context_t * const ctx     = CONTEXT(interp);
-    Stack_Chunk_t **   const chunk_p = &ctx->reg_stack;
-    Stack_Chunk_t *    const chunk   = *chunk_p;
-    save_regs_t *      const save_r  =
-        (save_regs_t *)stack_prepare_pop(interp, chunk_p);
-
-    /* restore register base pointers */
-    interp->ctx.bp.regs_i    = ctx->bp.regs_i    =
-        save_r->old_bp_ni.regs_i;
-    interp->ctx.bp_ps.regs_s = ctx->bp_ps.regs_s =
-        save_r->old_bp_ps.regs_s;
-    /* deal with allocated memory, GC handles the chunk itself */
-    mem_sys_free(PObj_bufstart(chunk));
-    PObj_bufstart(chunk) = NULL;
-    PObj_buflen(chunk) = 0;
-    PObj_sysmem_CLEAR(chunk);
-}
-
-/*
-
-=item C<void mark_register_stack>
-
-Marks the register stack and its registers as live.
-
-=cut
-
-*/
-
-void
-mark_register_stack(PARROT_INTERP, ARGMOD(Stack_Chunk_t* chunk))
-{
-    for (; ; chunk = chunk->prev) {
-        int i;
-        save_regs_t   *save_r;
-        Interp_Context ctx;
-
-        pobject_lives(interp, (PObj*)chunk);
-        if (chunk == chunk->prev)
-            break;
-        save_r = (save_regs_t *)STACK_DATAP(chunk);
-        ctx.bp.regs_i    = NULL;
-        ctx.bp_ps.regs_p = save_r->old_bp_ps.regs_p;
-        for (i = 0; i < save_r->n_regs_pmc; ++i) {
-            PObj * const obj = (PObj *)CTX_REG_PMC(&ctx, i);
-            if (obj)
-                pobject_lives(interp, obj);
-        }
-        for (i = 0; i < save_r->n_regs_str; ++i) {
-            PObj * const obj = (PObj *)CTX_REG_STR(&ctx, i);
-            if (obj)
-                pobject_lives(interp, obj);
-        }
-    }
-}
-
-
-/*
 
 =item C<void Parrot_clear_i>
 

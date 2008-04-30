@@ -667,9 +667,8 @@ constant_propagation(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
             IMCC_debug(interp, DEBUG_OPT2,
                     "propagating constant %I => \n", ins);
             for (ins2 = ins->next; ins2; ins2 = ins2->next) {
-                if (ins2->type & ITSAVES ||
+                if (ins2->bbindex != ins->bbindex)
                     /* restrict to within a basic block */
-                    ins2->bbindex != ins->bbindex)
                     goto next_constant;
                 /* was opsize - 2, changed to n_r - 1
                  */
@@ -873,7 +872,7 @@ IMCC_subst_constants(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *na
         "band", "bor", "bxor",
         "bands", "bors", "bxors",
         "and", "or", "xor",
-        "iseq", "isne", "islt", "isle", "isgt", "isge", "cmp"
+        "iseq", "isne", "islt", "isle", "isgt", "isge", "cmp", "concat"
     };
     const char * const ops2[] = {
         "abs", "neg", "not", "fact", "sqrt", "ceil", "floor"
@@ -1009,14 +1008,20 @@ IMCC_subst_constants(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *na
         switch (r[0]->set) {
             case 'I':
                 snprintf(b, sizeof (b), INTVAL_FMT, REG_INT(interp, 0));
+                r[1] = mk_const(interp, b, r[0]->set);
                 break;
             case 'N':
                 snprintf(b, sizeof (b), fmt, REG_NUM(interp, 0));
+                r[1] = mk_const(interp, b, r[0]->set);
+                break;
+            case 'S':
+                r[1] = mk_const(interp, string_to_cstring(interp,
+                        REG_STR(interp, 0)), r[0]->set);
+                snprintf(b, sizeof (b), "%p", REG_STR(interp, 0));
                 break;
             default:
                 break;
         }
-        r[1] = mk_const(interp, b, r[0]->set);
         tmp = INS(interp, unit, "set", "", r, 2, 0, 0);
     }
     if (tmp) {

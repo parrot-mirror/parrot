@@ -91,10 +91,9 @@ PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static STRING * to_charset(PARROT_INTERP,
     ARGIN(STRING *src),
-    ARGMOD(STRING *dest))
+    ARGIN_NULLOK(STRING *dest))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
         FUNC_MODIFIES(*dest);
 
 PARROT_CANNOT_RETURN_NULL
@@ -239,7 +238,7 @@ RT#48260: Not yet documented!!!
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static STRING *
-to_charset(PARROT_INTERP, ARGIN(STRING *src), ARGMOD(STRING *dest))
+to_charset(PARROT_INTERP, ARGIN(STRING *src), ARGIN_NULLOK(STRING *dest))
 {
     const charset_converter_t conversion_func =
         Parrot_find_charset_converter(interp, src->charset, Parrot_iso_8859_1_charset_ptr);
@@ -629,7 +628,7 @@ Parrot_charset_iso_8859_1_init(PARROT_INTERP)
         NULL
     };
 
-    STRUCT_COPY(return_set, &base_set);
+    STRUCT_COPY_FROM_STRUCT(return_set, base_set);
     return_set->preferred_encoding = Parrot_fixed_8_encoding_ptr;
     Parrot_register_charset(interp, "iso-8859-1", return_set);
     return return_set;

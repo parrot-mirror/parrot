@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2005, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -87,7 +87,8 @@ descriptors. Element I<x> is the direction of argument C<< $args->[I<x>]
 C<$labels> is a reference to an array of boolean values indicating
 whether each argument direction was prefixed by 'C<label>'.
 
-C<$flags> is one or more (comma-separated) I<hints>.
+C<$flags> is a hash reference containing zero or more I<hints> or
+I<directives>.
 
 =cut
 
@@ -236,7 +237,8 @@ sub labels {
 
 =item C<flags()>
 
-Sets/gets the op's flags.
+Sets/gets the op's flags.  This returns a hash reference, whose keys are any
+flags (passed as ":flag") specified for the op.
 
 =cut
 
@@ -323,7 +325,7 @@ sub _substitute {
     local $_ = shift;
     my $trans = shift;
 
-    s/{{([a-z]+)\@([^{]*?)}}/ $trans->access_arg($1, $2, $self); /me;    # RT#43717 ???
+    s/{{([a-z]+)\@([^{]*?)}}/ $trans->access_arg($1, $2, $self); /me;
     s/{{\@([^{]*?)}}/   $trans->access_arg($self->arg_type($1 - 1), $1, $self); /me;
 
     s/{{=0,=([^{]*?)}}/   $trans->restart_address($1) . "; {{=0}}"; /me;
@@ -388,10 +390,12 @@ C<$trans> (a subclass of C<Parrot::OpTrans>).
 sub source {
     my ( $self, $trans ) = @_;
 
-    if ( $self->flags =~ /:pic/
+    my $flags = $self->flags;
+
+    if (exists($$flags{pic})
         && !( ref($trans) eq 'Parrot::OpTrans::CGP' || ref($trans) eq 'Parrot::OpTrans::CSwitch' ) )
     {
-        return qq{PANIC(interp, "How did you do that");return 0;\n};
+        return qq{PANIC(interp, "How did you do that");\n};
     }
 
     return $self->rewrite_body( $self->full_body, $trans );
@@ -447,7 +451,7 @@ license as Parrot itself.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001-2005, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 
 =end TODO
 

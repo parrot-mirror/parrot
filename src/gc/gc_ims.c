@@ -351,7 +351,7 @@ static int collect_cb(PARROT_INTERP,
 
 static void gc_ims_add_free_object(PARROT_INTERP,
     ARGMOD(Small_Object_Pool *pool),
-    ARGOUT(PObj *to_add))
+    ARGOUT(void *to_add))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -366,7 +366,7 @@ static void gc_ims_alloc_objects(PARROT_INTERP,
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-static PObj * gc_ims_get_free_object(PARROT_INTERP,
+static void * gc_ims_get_free_object(PARROT_INTERP,
     ARGMOD(Small_Object_Pool *pool))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -486,7 +486,7 @@ C<pool->num_free_objects> has to be updated by the caller.
 */
 
 static void
-gc_ims_add_free_object(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), ARGOUT(PObj *to_add))
+gc_ims_add_free_object(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), ARGOUT(void *to_add))
 {
     *(void **)to_add = pool->free_list;
     pool->free_list  = to_add;
@@ -514,7 +514,7 @@ Get a new object off the free_list in the given pool.
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-static PObj *
+static void *
 gc_ims_get_free_object(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
 {
     PObj *ptr;
@@ -537,7 +537,7 @@ gc_ims_get_free_object(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
      */
     PObj_flags_SETTO(ptr, pool == arena_base->pmc_pool ? 0 : PObj_live_FLAG);
     --pool->num_free_objects;
-    return ptr;
+    return (void *)ptr;
 }
 
 /*

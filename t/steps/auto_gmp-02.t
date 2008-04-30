@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 31;
+use Test::More tests =>  30;
 use Carp;
 use Cwd;
 use File::Spec;
@@ -40,30 +40,55 @@ $step_name   = $task->step;
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+
 
 # Mock values for OS and C-compiler
-my ($osname, $cc);
+my ($osname, $cc, $initial_value);
 $osname = 'mswin32';
 $cc = 'gcc';
-ok(auto::gmp::_handle_mswin32($conf, $osname, $cc),
-    "_handle_mswin32() returned true value");
+$initial_value = $conf->data->get( 'libs' );
+ok($step->_add_to_libs( {
+    conf            => $conf,
+    osname          => $osname,
+    cc              => $cc,
+    win32_nongcc    => 'gmp.lib',
+    default         => '-lgmp',
+} ),
+    "_add_to_libs() returned true value");
 like($conf->data->get( 'libs' ), qr/-lgmp/,
     "'libs' modified as expected");
+# Restore value for next test.
+$conf->data->set( 'libs' => $initial_value );
 
 $osname = 'mswin32';
 $cc = 'cc';
-ok(auto::gmp::_handle_mswin32($conf, $osname, $cc),
-    "_handle_mswin32() returned true value");
+ok($step->_add_to_libs( {
+    conf            => $conf,
+    osname          => $osname,
+    cc              => $cc,
+    win32_nongcc    => 'gmp.lib',
+    default         => '-lgmp',
+} ),
+    "_add_to_libs() returned true value");
 like($conf->data->get( 'libs' ), qr/gmp\.lib/,
     "'libs' modified as expected");
+# Restore value for next test.
+$conf->data->set( 'libs' => $initial_value );
 
 $osname = 'foobar';
 $cc = undef;
-ok(auto::gmp::_handle_mswin32($conf, $osname, $cc),
+ok($step->_add_to_libs( {
+    conf            => $conf,
+    osname          => $osname,
+    cc              => $cc,
+    win32_nongcc    => 'gmp.lib',
+    default         => '-lgmp',
+} ),
     "_handle_mswin32() returned true value");
 like($conf->data->get( 'libs' ), qr/-lgmp/,
     "'libs' modified as expected");
+# Restore value for next test.
+$conf->data->set( 'libs' => $initial_value );
 
 my ($flagsbefore, $flagsafter);
 $osname = 'foobar';

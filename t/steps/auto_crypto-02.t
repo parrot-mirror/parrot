@@ -4,7 +4,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 19;
+use Test::More tests => 24;
 use Carp;
 use Cwd;
 use lib qw( lib t/configure/testlib );
@@ -17,7 +17,7 @@ use IO::CaptureOutput qw| capture |;
 
 my $args = process_options(
     {
-        argv => [ q{--without-crypto} ],
+        argv => [ ],
         mode => q{configure},
     }
 );
@@ -38,7 +38,57 @@ $step_name   = $task->step;
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+
+# Mock different OS/compiler combinations.
+my ($osname, $cc, $initial_libs);
+$initial_libs = $conf->data->get('libs');
+$osname = 'mswin32';
+$cc = 'gcc';
+ok($step->_add_to_libs( {
+    conf            => $conf,
+    osname          => $osname,
+    cc              => $cc,
+    win32_nongcc    => 'libcrypto.lib',
+    default         => '-lcrypto',
+} ),
+   "_add_to_libs() returned true value");
+like($conf->data->get('libs'),
+    qr/-lcrypto/,
+    "'libs' attribute modified as expected");
+# Restore setting for next test
+$conf->data->set( libs => $initial_libs );
+
+$osname = 'mswin32';
+$cc = 'cc';
+ok($step->_add_to_libs( {
+    conf            => $conf,
+    osname          => $osname,
+    cc              => $cc,
+    win32_nongcc    => 'libcrypto.lib',
+    default         => '-lcrypto',
+} ),
+   "_add_to_libs() returned true value");
+like($conf->data->get('libs'),
+    qr/libcrypto.lib/,
+    "'libs' attribute modified as expected");
+# Restore setting for next test
+$conf->data->set( libs => $initial_libs );
+
+$osname = 'foobar';
+$cc = 'cc';
+ok($step->_add_to_libs( {
+    conf            => $conf,
+    osname          => $osname,
+    cc              => $cc,
+    win32_nongcc    => 'libcrypto.lib',
+    default         => '-lcrypto',
+} ),
+   "_add_to_libs() returned true value");
+like($conf->data->get('libs'),
+    qr/-lcrypto/,
+    "'libs' attribute modified as expected");
+# Restore setting for next test
+$conf->data->set( libs => $initial_libs );
 
 my ($libs, $ccflags, $linkflags, $verbose);
 
@@ -82,11 +132,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_crypto-04.t - test config::auto::crypto
+auto_crypto-02.t - test config::auto::crypto
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_crypto-04.t
+    % prove t/steps/auto_crypto-02.t
 
 =head1 DESCRIPTION
 

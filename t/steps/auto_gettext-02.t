@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 18;
+use Test::More tests =>  24;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -39,7 +39,73 @@ $step_name   = $task->step;
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+
+# Mock values for OS and C-compiler
+my ($osname, $cc, $initial_value);
+$osname = 'mswin32';
+$cc = 'gcc';
+$initial_value = $conf->data->get( 'libs' );
+ok($step->_add_to_libs( {
+    conf            => $conf,
+    osname          => $osname,
+    cc              => $cc,
+    win32_gcc       => '-lintl',
+    win32_nongcc    => 'intl.lib',
+    default         => defined $conf->data->get('glibc') ? '' : '-lintl',
+} ),
+    "_add_to_libs() returned true value");
+like($conf->data->get( 'libs' ), qr/-lintl/,
+    "'libs' modified as expected");
+# Restore value for next test.
+$conf->data->set( 'libs' => $initial_value );
+
+$osname = 'mswin32';
+$cc = 'cc';
+ok($step->_add_to_libs( {
+    conf            => $conf,
+    osname          => $osname,
+    cc              => $cc,
+    win32_gcc       => '-lintl',
+    win32_nongcc    => 'intl.lib',
+    default         => defined $conf->data->get('glibc') ? '' : '-lintl',
+} ),
+    "_add_to_libs() returned true value");
+like($conf->data->get( 'libs' ), qr/intl.lib/,
+    "'libs' modified as expected");
+# Restore value for next test.
+$conf->data->set( 'libs' => $initial_value );
+
+$osname = 'foobar';
+$cc = 'cc';
+$conf->data->set( glibc => 1 );
+ok($step->_add_to_libs( {
+    conf            => $conf,
+    osname          => $osname,
+    cc              => $cc,
+    win32_gcc       => '-lintl',
+    win32_nongcc    => 'intl.lib',
+    default         => defined $conf->data->get('glibc') ? '' : '-lintl',
+} ),
+    "_add_to_libs() returned true value");
+unlike($conf->data->get( 'libs' ), qr/-lintl/,
+    "'libs' modified as expected");
+# Restore value for next test.
+$conf->data->set( 'libs' => $initial_value );
+
+$osname = 'foobar';
+$cc = 'cc';
+$conf->data->set( glibc => undef );
+ok($step->_add_to_libs( {
+    conf            => $conf,
+    osname          => $osname,
+    cc              => $cc,
+    win32_gcc       => '-lintl',
+    win32_nongcc    => 'intl.lib',
+    default         => defined $conf->data->get('glibc') ? '' : '-lintl',
+} ),
+    "_add_to_libs() returned true value");
+like($conf->data->get( 'libs' ), qr/-lintl/,
+    "'libs' modified as expected");
 
 my ($test, $verbose);
 my $has_gettext;
@@ -75,7 +141,7 @@ $has_gettext = $step->_evaluate_cc_run($test, $verbose);
 is($has_gettext, 0, "Got expected value for has_gettext");
 ok(! defined $step->result(), "As expected, result is not yet defined");
 
-pass("Keep Devel::Cover happy");
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

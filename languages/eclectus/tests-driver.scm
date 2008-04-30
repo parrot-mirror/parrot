@@ -1,11 +1,17 @@
 ; $Id$
 
+; This file in included by the scheme test scripts in t/*.t. It provides support
+; for actually running the test cases set up in the *.t files.
+
 (load "tap_helpers.scm")
 
 (define all-tests '())
 
+; Choose which scheme implementation should be tested.
+; Choosing 'gauche' is meant for checking the test suite.
 ;(define implementation "gauche" )
-(define implementation "gen_past_in_pir" )
+(define implementation "gen_past_in_pir" )          ; current default implementation
+;(define implementation "gen_past_in_nqp" )         ; future default implementation
 
 (define-syntax add-tests-with-string-output
   (syntax-rules (=>)
@@ -21,8 +27,8 @@
         (out  (caddr test)))
     (flush-output-port)
     (case type
-     ((string) (test-with-string-output test-id expr out test-name))
-     (else (error 'test "invalid test type ~s" type)))))
+      ((string) (test-with-string-output test-id expr out test-name))
+      (else     (error 'test "invalid test type ~s" type)))))
  
 (define (test-all)
   (plan (length (cdar all-tests)))
@@ -37,10 +43,11 @@
                  (n (length tests)))
             (let g ((i i) (tests tests))
               (cond
-                ((null? tests) (f i ls))
+                ((null? tests)
+                   (f i ls))
                 (else
-                 (test-one i (car tests) test-name)
-                 (g (+ i 1) (cdr tests))))))))))
+                  (test-one i (car tests) test-name)
+                  (g (+ i 1) (cdr tests))))))))))
 
 (define compile-port
   (make-parameter
@@ -51,13 +58,20 @@
        p)))
 
 (define (run-compile expr)
-  (case implementation
-    ( ("gauche")
+  (cond 
+    ( (string=? implementation "gauche")
       (with-output-to-file "stst.scm" (lambda () (write expr))))
+    ( (string=? implementation "gen_past_in_nqp")
+      (let ((p (open-output-file "gen_past.nqp" 'replace)))
+        (parameterize ((compile-port p))
+           (compile-program expr))
+        (close-output-port p))
+      (unless (zero? (system (string-append *path-to-parrot* " ../../compilers/nqp/nqp.pbc --output=gen_past.pir --target=pir gen_past.nqp")))
+        (error 'execute "produced program exited abnormally")))
     (else
       (let ((p (open-output-file "stst.pir" 'replace)))
         (parameterize ((compile-port p))
-           (compile-program expr))
+           (compile-program-old expr))
         (close-output-port p)))))
 
 ; TODO: can I use (directory-separator) in gauche?
@@ -67,9 +81,12 @@
     "..\\..\\parrot"))
 
 (define (execute)
-  (case implementation
-    ( ("gauche")
+  (cond
+    ( (string=? implementation "gauche")
       (unless (zero? (system "gosh -fcase-fold -I .  -l gauche/prelude.scm stst.scm > stst.out"))
+        (error 'execute "produced program exited abnormally")))
+    ( (string=? implementation "gen_past_in_nqp")
+      (unless (zero? (system (string-append *path-to-parrot* " driver_nqp.pir > stst.out")))
         (error 'execute "produced program exited abnormally")))
     (else
       (unless (zero? (system (string-append *path-to-parrot* " stst.pir > stst.out")))

@@ -41,7 +41,7 @@ the next one.
 
     VTABLE INTVAL get_bool() {
         PMC   *key  = (PMC *)PMC_struct_val(SELF);
-        PMC   *iter = (PMC *)PMC_pmc_val(SELF);
+        PMC   *iter = PMC_pmc_val(SELF);
         INTVAL ok   = PMC_int_val(key) >= 0 && VTABLE_get_bool(INTERP, iter);
 
         if (!ok)
