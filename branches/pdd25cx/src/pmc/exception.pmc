@@ -46,7 +46,7 @@ These arguments can be retrieved with the C<get_results> opcode.
 
 #include "parrot/parrot.h"
 
-pmclass Exception extends ResizablePMCArray need_ext {
+pmclass Exception {
 
     ATTR STRING *message;    /* The exception message. */
     ATTR PMC    *payload;    /* The payload for the exception. */
@@ -102,6 +102,23 @@ Mark any active exception data as live.
             pobject_lives(interp, (PObj *)core_struct->payload);
         if (core_struct->stacktrace)
             pobject_lives(interp, (PObj *)core_struct->stacktrace);
+    }
+
+/*
+
+=item C<void destroy()>
+
+Destroys the exception.
+
+=cut
+
+*/
+
+    VTABLE void destroy() {
+        Parrot_Exception * const core_struct = PARROT_EXCEPTION(SELF);
+
+        if (core_struct)
+            mem_sys_free(core_struct);
     }
 
 /*
