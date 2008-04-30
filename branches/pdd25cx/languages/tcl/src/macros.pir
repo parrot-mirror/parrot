@@ -71,7 +71,7 @@ normal parrot C<.return>
 .macro get_return_code (output)
    .output = -1
    push_eh .$bad_handler
-    .output = exception[CODE_SLOT]
+    .output = exception["type"]
    pop_eh
 
 .label $bad_handler:

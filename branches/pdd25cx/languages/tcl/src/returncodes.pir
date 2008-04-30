@@ -10,9 +10,6 @@ A convenience: we need these return codes in many different bytecode files.
  .const int TCL_BREAK    = 3
  .const int TCL_CONTINUE = 4
 
- # values for accessing exception information
- .const int CODE_SLOT     = 9 # tcl return code.
-
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
