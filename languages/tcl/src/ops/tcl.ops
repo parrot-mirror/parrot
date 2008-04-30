@@ -88,7 +88,8 @@ inline op tcl_error(in PMC) {
   STRING   *message = VTABLE_get_string(interp, $1);
 
   VTABLE_set_string_native(interp, exception, message);
-  VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_ERROR);
+  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
+    TCL_ERROR);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
   goto ADDRESS(dest);
@@ -101,7 +102,8 @@ inline op tcl_error(in STR) {
   INTVAL    TCL_ERROR = 1;
 
   VTABLE_set_string_native(interp, exception, $1);
-  VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_ERROR);
+  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
+    TCL_ERROR);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
   goto ADDRESS(dest);
@@ -123,7 +125,8 @@ inline op tcl_error(in STR, in PMC) {
   VTABLE_assign_pmc(interp, errorCode, $2);
 
   VTABLE_set_string_native(interp, exception, $1);
-  VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_ERROR);
+  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
+    TCL_ERROR);
 
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
@@ -134,10 +137,11 @@ inline op tcl_error(in INT, in PMC) {
   opcode_t *ret;
   opcode_t *dest;
   PMC      *exception = pmc_new(interp, enum_class_Exception);
-  STRING   *message = VTABLE_get_string(interp, $2);
+  STRING   *message   = VTABLE_get_string(interp, $2);
 
   VTABLE_set_string_native(interp, exception, message);
-  VTABLE_set_integer_keyed_int(interp, exception, 9, $1);
+  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
+    $1);
 
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
@@ -157,10 +161,11 @@ inline op tcl_return(in PMC) {
   opcode_t *dest;
   PMC      *exception  = pmc_new(interp, enum_class_Exception);
   INTVAL    TCL_RETURN = 2;
-  STRING   *message = VTABLE_get_string(interp, $1);
+  STRING   *message    = VTABLE_get_string(interp, $1);
 
   VTABLE_set_string_native(interp, exception, message);
-  VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_RETURN);
+  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
+    TCL_RETURN);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
   goto ADDRESS(dest);
@@ -173,7 +178,8 @@ inline op tcl_return(in STR) {
   INTVAL    TCL_RETURN = 2;
 
   VTABLE_set_string_native(interp, exception, $1);
-  VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_RETURN);
+  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
+    TCL_RETURN);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
   goto ADDRESS(dest);
@@ -193,7 +199,8 @@ inline op tcl_break() {
   INTVAL    TCL_BREAK = 3;
 
   VTABLE_set_string_native(interp, exception, empty);
-  VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_BREAK);
+  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
+    TCL_BREAK);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
   goto ADDRESS(dest);
@@ -213,7 +220,8 @@ inline op tcl_continue() {
   INTVAL    TCL_CONTINUE = 4;
 
   VTABLE_set_string_native(interp, exception, empty);
-  VTABLE_set_integer_keyed_int(interp, exception, 9, TCL_CONTINUE);
+  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
+    TCL_CONTINUE);
   ret  = expr NEXT();
   dest = run_handler(interp, exception, ret);
   goto ADDRESS(dest);
