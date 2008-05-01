@@ -70,7 +70,7 @@ Set the bound object live.
             PMC *sig       = CONTEXT(interp)->constants[sig_const]->u.key;
 
             if (PMC_IS_NULL(sig))
-                real_exception(interp, NULL, INVALID_OPERATION,
+                real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                         "Bound NCI call made, but no current signature found.");
 
             ASSERT_SIG_PMC(sig);
@@ -85,7 +85,7 @@ Set the bound object live.
                 REG_PMC(interp, invocant_reg)  = p2;
             }
             else {
-                real_exception(interp, NULL, INVALID_OPERATION,
+                real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                     "Bound NCI call made, but the current call has no invocant.");
             }
         }

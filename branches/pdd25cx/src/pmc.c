@@ -107,22 +107,22 @@ pmc_reuse(PARROT_INTERP, ARGIN(PMC *pmc), INTVAL new_type,
     {
         /* First, is the destination a singleton? No joy for us there */
         if (new_vtable->flags & VTABLE_PMC_IS_SINGLETON)
-            real_exception(interp, NULL, ALLOCATION_ERROR,
+            real_exception(interp, NULL, EXCEPTION_ALLOCATION_ERROR,
                                "Parrot VM: Can't turn to a singleton type!\n");
 
         /* First, is the destination a constant? No joy for us there */
         if (new_vtable->flags & VTABLE_IS_CONST_FLAG)
-            real_exception(interp, NULL, ALLOCATION_ERROR,
+            real_exception(interp, NULL, EXCEPTION_ALLOCATION_ERROR,
                                "Parrot VM: Can't turn to a constant type!\n");
 
         /* Is the source a singleton? */
         if (pmc->vtable->flags & VTABLE_PMC_IS_SINGLETON)
-            real_exception(interp, NULL, ALLOCATION_ERROR,
+            real_exception(interp, NULL, EXCEPTION_ALLOCATION_ERROR,
                                "Parrot VM: Can't modify a singleton\n");
 
         /* Is the source constant? */
         if (pmc->vtable->flags & VTABLE_IS_CONST_FLAG)
-            real_exception(interp, NULL, ALLOCATION_ERROR,
+            real_exception(interp, NULL, EXCEPTION_ALLOCATION_ERROR,
                                "Parrot VM: Can't modify a constant\n");
     }
 

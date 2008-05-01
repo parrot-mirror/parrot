@@ -136,7 +136,7 @@ Parrot_cx_handle_tasks(PARROT_INTERP, ARGMOD(PMC *scheduler))
             }
         }
         else {
-            real_exception(interp, NULL, INVALID_OPERATION,
+            real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                     "Unknown task type '%s'.\n", string_to_cstring(interp, type));
         }
         Parrot_cx_delete_task(interp, task);
@@ -230,7 +230,7 @@ Parrot_cx_schedule_task(PARROT_INTERP, ARGIN(PMC *task))
     if (interp->scheduler)
         VTABLE_push_pmc(interp, interp->scheduler, task);
     else
-        real_exception(interp, NULL, INVALID_OPERATION,
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Scheduler was not initialized for this interpreter.\n");
 }
 
@@ -363,7 +363,7 @@ Parrot_cx_delete_task(PARROT_INTERP, ARGIN(PMC *task))
         VTABLE_delete_keyed_int(interp, interp->scheduler, tid);
     }
     else
-        real_exception(interp, NULL, INVALID_OPERATION,
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Scheduler was not initialized for this interpreter.\n");
 }
 
@@ -415,7 +415,7 @@ Parrot_cx_delete_suspend_for_gc(PARROT_INTERP)
 
     }
     else
-        real_exception(interp, NULL, INVALID_OPERATION,
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Scheduler was not initialized for this interpreter.\n");
 
     return PMCNULL;
@@ -439,7 +439,7 @@ Parrot_cx_add_handler(PARROT_INTERP, ARGIN(PMC *handler))
         Parrot_PCCINVOKE(interp, interp->scheduler,
                 CONST_STRING(interp, "add_handler"), "P->", handler);
     else
-        real_exception(interp, NULL, INVALID_OPERATION,
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Scheduler was not initialized for this interpreter.\n");
     return;
 }
@@ -552,7 +552,7 @@ Parrot_cx_find_handler_for_task(PARROT_INTERP, ARGIN(PMC *task))
         Parrot_PCCINVOKE(interp, interp->scheduler,
                 CONST_STRING(interp, "find_handler"), "P->P", task, &handler);
     else
-        real_exception(interp, NULL, INVALID_OPERATION,
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Scheduler was not initialized for this interpreter.\n");
 
 #if CX_DEBUG

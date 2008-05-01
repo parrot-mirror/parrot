@@ -398,7 +398,7 @@ The REX prefix, only emitted if using an extended register.
     sav_ptr = (char *)(pc - 1); \
     emit_mov_r_r(pc, RDI, INTERP); \
     emit_mov_r_i(pc, RSI, 0); \
-    emit_mov_r_i(pc, RDX, DIV_BY_ZERO); \
+    emit_mov_r_i(pc, RDX, EXCEPTION_DIV_BY_ZERO); \
     emit_mov_r_i(pc, RCX, div_by_zero); \
     /* We must explicitly zero out RAX, since RAX is used in calling
      * conventions for va_arg functions, and real_exception is a va_arg
@@ -1098,7 +1098,7 @@ Parrot_jit_dofixup(Parrot_jit_info_t *jit_info,
                     (int)(long)fixup_ptr - 4;
                 break;
             default:
-                real_exception(interp, NULL, JIT_ERROR,
+                real_exception(interp, NULL, EXCEPTION_JIT_ERROR,
                         "Unknown fixup type: %d\n", fixup->type);
         }
         next = fixup->next;

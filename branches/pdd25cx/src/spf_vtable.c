@@ -286,7 +286,7 @@ getfloat_va(PARROT_INTERP, INTVAL size, ARGIN(SPRINTF_OBJ *obj))
             return (HUGEFLOATVAL)(VTABLE_get_number(interp, pmc));
         }
     default:
-        real_exception(interp, NULL, INVALID_CHARACTER,
+        real_exception(interp, NULL, EXCEPTION_INVALID_CHARACTER,
                 "Internal sprintf doesn't recognize size %d for a float", size);
     }
 }
@@ -336,7 +336,7 @@ getstring_va(PARROT_INTERP, INTVAL size, ARGIN(SPRINTF_OBJ *obj))
         }
 
     default:
-        real_exception(interp, NULL, INVALID_CHARACTER,
+        real_exception(interp, NULL, EXCEPTION_INVALID_CHARACTER,
                 "Internal sprintf doesn't recognize size %d for a string",
                 size);
     }

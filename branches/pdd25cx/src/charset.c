@@ -166,7 +166,7 @@ Parrot_load_charset(PARROT_INTERP, ARGIN(const char *charsetname))
 {
     UNUSED(charsetname);
 
-    real_exception(interp, NULL, UNIMPLEMENTED, "Can't load charsets yet");
+    real_exception(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Can't load charsets yet");
 }
 
 /*

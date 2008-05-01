@@ -1603,7 +1603,7 @@ pt_DOD_start_mark(PARROT_INTERP)
 
 =item C<void pt_DOD_mark_root_finished>
 
-Records that DOD has finished for the root set.  UNIMPLEMENTED
+Records that DOD has finished for the root set.  EXCEPTION_UNIMPLEMENTED
 
 =cut
 

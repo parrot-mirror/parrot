@@ -311,7 +311,7 @@ new_pmc_header(PARROT_INTERP, UINTVAL flags)
     PMC * const pmc = (PMC *)pool->get_free_object(interp, pool);
 
     if (!pmc)
-        real_exception(interp, NULL, ALLOCATION_ERROR,
+        real_exception(interp, NULL, EXCEPTION_ALLOCATION_ERROR,
             "Parrot VM: PMC allocation failed!\n");
 
     /* clear flags, set is_PMC_FLAG */

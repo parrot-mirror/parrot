@@ -65,7 +65,7 @@ pmclass OrderedHash extends Hash need_ext provides array provides hash {
             idx += n;
 
         if (idx < 0 || idx >= n)
-            real_exception(INTERP, NULL, KEY_NOT_FOUND,
+            real_exception(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
                     "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
@@ -73,7 +73,7 @@ pmclass OrderedHash extends Hash need_ext provides array provides hash {
         if (b->key)
             return (PMC *)b->value;
 
-        real_exception(INTERP, NULL, KEY_NOT_FOUND,
+        real_exception(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
                 "OrderedHash: No such key");
     }
 
@@ -113,7 +113,7 @@ pmclass OrderedHash extends Hash need_ext provides array provides hash {
             idx += n;
 
         if (idx < 0 || idx >= n)
-            real_exception(INTERP, NULL, KEY_NOT_FOUND,
+            real_exception(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
                     "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
@@ -121,7 +121,7 @@ pmclass OrderedHash extends Hash need_ext provides array provides hash {
         if (b->key)
             return VTABLE_get_string(INTERP, (PMC *)b->value);
 
-        real_exception(INTERP, NULL, KEY_NOT_FOUND,
+        real_exception(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
                 "OrderedHash: No such key");
     }
 
@@ -161,7 +161,7 @@ Returns the integer value associated with C<key>.
             idx += n;
 
         if (idx < 0 || idx >= n)
-            real_exception(INTERP, NULL, OUT_OF_BOUNDS,
+            real_exception(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                     "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
@@ -169,7 +169,7 @@ Returns the integer value associated with C<key>.
         if (b->key)
             return VTABLE_get_integer(INTERP, (PMC *)b->value);
 
-        real_exception(INTERP, NULL, KEY_NOT_FOUND,
+        real_exception(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
                 "OrderedHash: No such key");
     }
 
@@ -211,7 +211,7 @@ Returns the floating-point value for the element at C<key>.
             idx += n;
 
         if (idx < 0 || idx >= n)
-            real_exception(INTERP, NULL, OUT_OF_BOUNDS,
+            real_exception(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                     "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
@@ -219,7 +219,7 @@ Returns the floating-point value for the element at C<key>.
         if (b->key)
             return VTABLE_get_number(INTERP, (PMC *)b->value);
 
-        real_exception(INTERP, NULL, KEY_NOT_FOUND,
+        real_exception(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
                 "OrderedHash: No such key");
     }
 
@@ -606,7 +606,7 @@ preserve key/value order.
                 }
                 break;
             default:
-                real_exception(interp, NULL, INVALID_OPERATION,
+                real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                         "unhandled visit action (%d)", info->what);
         }
     }

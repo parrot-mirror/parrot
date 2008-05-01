@@ -716,7 +716,7 @@ div_rrr(Parrot_jit_info_t *jit_info, char D, char A, char B)
     _emit_bc(pc, BNE, 0, 0, 0);
     jit_emit_mov_rr(pc, r3, r16); /* interp */
     jit_emit_mov_ri_i(pc, r4, 0);          /* NULL */
-    jit_emit_mov_ri_i(pc, r5, DIV_BY_ZERO);          /* type */
+    jit_emit_mov_ri_i(pc, r5, EXCEPTION_DIV_BY_ZERO);          /* type */
     jit_emit_mov_ri_i(pc, r6, div_by_zero);
     jit_info->native_ptr = pc;
     jit_emit_call_func(pc, (void*) real_exception);
@@ -749,7 +749,7 @@ fdiv_rrr(Parrot_jit_info_t *jit_info, char D, char A, char B)
     _emit_bc(pc, BNE, 0, 0, 0);
     jit_emit_mov_rr(pc, r3, r16); /* interp */
     jit_emit_mov_ri_i(pc, r4, 0);          /* NULL */
-    jit_emit_mov_ri_i(pc, r5, DIV_BY_ZERO);          /* type */
+    jit_emit_mov_ri_i(pc, r5, EXCEPTION_DIV_BY_ZERO);          /* type */
     jit_emit_mov_ri_i(pc, r6, div_by_zero);
     jit_info->native_ptr = pc;
     jit_emit_call_func(pc, (void*) real_exception);
@@ -1201,7 +1201,7 @@ Parrot_jit_dofixup(Parrot_jit_info_t *jit_info,
                 break;
 
             default:
-                internal_exception(JIT_ERROR, "Unknown fixup type:%d\n",
+                internal_exception(EXCEPTION_JIT_ERROR, "Unknown fixup type:%d\n",
                                    fixup->type);
                 break;
         }

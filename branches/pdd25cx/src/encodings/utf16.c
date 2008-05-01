@@ -165,7 +165,7 @@ static void utf16_set_position(PARROT_INTERP,
 #  include <unicode/ustring.h>
 #endif
 
-#define UNIMPL real_exception(interp, NULL, UNIMPLEMENTED, "unimpl utf16")
+#define UNIMPL real_exception(interp, NULL, EXCEPTION_UNIMPLEMENTED, "unimpl utf16")
 
 
 /*
@@ -271,7 +271,7 @@ to_encoding(PARROT_INTERP, ARGIN(STRING *src), ARGIN_NULLOK(STRING *dest))
         result->encoding = Parrot_ucs2_encoding_ptr;
     return result;
 #else
-    real_exception(interp, NULL, LIBRARY_ERROR, "no ICU lib loaded");
+    real_exception(interp, NULL, EXCEPTION_LIBRARY_ERROR, "no ICU lib loaded");
 #endif
 }
 
@@ -300,7 +300,7 @@ get_codepoint(PARROT_INTERP, ARGIN(const STRING *src), UINTVAL offset)
     UNUSED(src);
     UNUSED(offset);
 
-    real_exception(interp, NULL, LIBRARY_ERROR, "no ICU lib loaded");
+    real_exception(interp, NULL, EXCEPTION_LIBRARY_ERROR, "no ICU lib loaded");
 #endif
 }
 
@@ -667,7 +667,7 @@ iter_init(PARROT_INTERP, ARGIN(const STRING *src), ARGOUT(String_iter *iter))
     iter->set_and_advance = utf16_encode_and_advance;
     iter->set_position =    utf16_set_position;
 #else
-    real_exception(interp, NULL, LIBRARY_ERROR, "no ICU lib loaded");
+    real_exception(interp, NULL, EXCEPTION_LIBRARY_ERROR, "no ICU lib loaded");
 #endif
 }
 

@@ -380,7 +380,7 @@ key_number(PARROT_INTERP, ARGIN(PMC *key))
         return VTABLE_get_number(interp, reg);
         }
     default:
-        real_exception(interp, NULL, INVALID_OPERATION, "Key not a number!\n");
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION, "Key not a number!\n");
     }
 }
 

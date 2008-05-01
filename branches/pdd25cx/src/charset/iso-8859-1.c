@@ -177,7 +177,7 @@ to_latin1(PARROT_INTERP, ARGIN(STRING *src), ARGMOD_NULLOK(STRING *dest))
     for (offs = 0; offs < src_len; ++offs) {
         const UINTVAL c = iter.get_and_advance(interp, &iter);
         if (c >= 0x100)
-            real_exception(interp, NULL, LOSSY_CONVERSION, "lossy conversion to ascii");
+            real_exception(interp, NULL, EXCEPTION_LOSSY_CONVERSION, "lossy conversion to ascii");
         ENCODING_SET_BYTE(interp, dest, offs, c);
     }
     return dest;
@@ -221,7 +221,7 @@ to_unicode(PARROT_INTERP, ARGIN(STRING *src), ARGMOD_NULLOK(STRING *dest))
         dest->strlen  = iter.charpos;
         return dest;
     }
-    real_exception(interp, NULL, UNIMPLEMENTED,
+    real_exception(interp, NULL, EXCEPTION_UNIMPLEMENTED,
             "to_unicode inplace for iso-8859-1 not implemented");
 }
 
@@ -283,7 +283,7 @@ PARROT_CANNOT_RETURN_NULL
 static STRING*
 decompose(PARROT_INTERP, SHIM(STRING *src))
 {
-    real_exception(interp, NULL, UNIMPLEMENTED,
+    real_exception(interp, NULL, EXCEPTION_UNIMPLEMENTED,
             "decompose for iso-8859-1 not implemented");
 }
 
@@ -659,7 +659,7 @@ charset_cvt_iso_8859_1_to_ascii(PARROT_INTERP, ARGIN(STRING *src),
     for (offs = 0; offs < src->strlen; ++offs) {
         UINTVAL c = ENCODING_GET_BYTE(interp, src, offs);
         if (c >= 0x80)
-            real_exception(interp, NULL, LOSSY_CONVERSION, "lossy conversion to ascii");
+            real_exception(interp, NULL, EXCEPTION_LOSSY_CONVERSION, "lossy conversion to ascii");
         if (dest)
             ENCODING_SET_BYTE(interp, dest, offs, c);
     }

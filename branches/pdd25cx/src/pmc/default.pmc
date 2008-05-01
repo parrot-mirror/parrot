@@ -60,7 +60,7 @@ all unimplemented messages.
 static void
 cant_do_method(PARROT_INTERP, PMC *pmc /*NULLOK*/, const char *methname)
 {
-    real_exception(interp, NULL, ILL_INHERIT,
+    real_exception(interp, NULL, EXCEPTION_ILL_INHERIT,
                        "%s() not implemented in class '%s'", methname,
                        caller(interp, pmc));
 }
@@ -295,7 +295,7 @@ With a null C<initializer>, calls C<init()>, else throws an exception.
         if (PMC_IS_NULL(initializer))
             SELF.init();
         else
-            real_exception(interp, NULL, ILL_INHERIT,
+            real_exception(interp, NULL, EXCEPTION_ILL_INHERIT,
                        "init_pmc() not implemented in class '%s'",
                        caller(interp, pmc));
     }
@@ -953,7 +953,7 @@ Provides introspection of a specific piece of information about the PMC.
             VTABLE_set_integer_native(interp, found, PObj_get_FLAGS(SELF));
         }
         else {
-            real_exception(interp, NULL, INVALID_OPERATION,
+            real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Unknown introspection value '%S'", name);
         }
         return found;

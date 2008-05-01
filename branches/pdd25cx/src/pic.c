@@ -794,7 +794,7 @@ parrot_PIC_prederef(PARROT_INTERP, opcode_t op, ARGOUT(void **pc_pred), int core
                 if (!type)
                     type = pmc_type(interp, _class);
                 if (type <= 0)
-                    real_exception(interp, NULL, NO_CLASS,
+                    real_exception(interp, NULL, EXCEPTION_NO_CLASS,
                             "Class '%Ss' not found", _class);
                 pc_pred[2] = (void*)type;
                 op = PARROT_OP_new_p_ic;

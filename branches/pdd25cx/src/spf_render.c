@@ -822,7 +822,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                                  * no?  */
                             }
                             else {
-                                real_exception(interp, NULL, INVALID_CHARACTER,
+                                real_exception(interp, NULL, EXCEPTION_INVALID_CHARACTER,
                                                    "'%c' is not a valid "
                                                    "sprintf format", ch);
                             }

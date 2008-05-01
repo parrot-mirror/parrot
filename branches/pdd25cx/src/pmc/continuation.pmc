@@ -263,10 +263,10 @@ destination to continue execution.
         }
 #endif
         if (! to_ctx)
-            real_exception(interp, NULL, INVALID_OPERATION,
+            real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                            "Continuation invoked after deactivation.");
         if (! stack_target)
-            real_exception(interp, NULL, INVALID_OPERATION,
+            real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                            "Continuation invoked without initialization.");
 
         /*

@@ -60,7 +60,7 @@ Returns a Parrot string for C<*key>.
 static STRING* make_hash_key(Interp* interp, PMC * key)
 {
     if (key == NULL) {
-        real_exception(interp, NULL, OUT_OF_BOUNDS,
+        real_exception(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
         "Cannot use NULL key for PerlHash!\n");
         return NULL;
     }
@@ -99,7 +99,7 @@ static PMC* retval(Interp *interp, void *ret)
 {
     PMC *value;
     if (ret == 0) {
-        real_exception(interp, NULL, OUT_OF_BOUNDS, "Array index out of bounds!\n");
+        real_exception(interp, NULL, EXCEPTION_OUT_OF_BOUNDS, "Array index out of bounds!\n");
     }
     /* RT#48172 getting non existent value, exception or undef?
      * current is for perlarray */
@@ -151,7 +151,7 @@ Parrot_Array_set_pmc_ptr(Interp *interp, List *list, INTVAL key)
     PMC *value;
 
     /*   if (ret == 0) {
-        real_exception(interp, NULL, OUT_OF_BOUNDS, "Array index out of bounds!\n");
+        real_exception(interp, NULL, EXCEPTION_OUT_OF_BOUNDS, "Array index out of bounds!\n");
         }
     */
     /* assign into a sparse or not yet set value */

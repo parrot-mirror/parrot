@@ -167,7 +167,7 @@ iNEW(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(SymReg *r0),
     pmc = mk_const(interp, fmt, 'I');
 
     if (pmc_num <= 0)
-        IMCC_fataly(interp, SYNTAX_ERROR, "Unknown PMC type '%s'\n", type);
+        IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "Unknown PMC type '%s'\n", type);
 
     snprintf(fmt, sizeof (fmt), "%%s, %d\t # .%s", pmc_num, type);
 
@@ -668,7 +668,7 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
     }
 
     if (op < 0) {
-        IMCC_fataly(interp, SYNTAX_ERROR,
+        IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                     "The opcode '%s' (%s<%d>) was not found. "
                     "Check the type and number of the arguments",
                     fullname, name, n);
@@ -682,7 +682,7 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
      * build instruction format
      * set LV_in / out flags */
     if (n != op_info->op_count-1)
-        IMCC_fataly(interp, SYNTAX_ERROR,
+        IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                 "arg count mismatch: op #%d '%s' needs %d given %d",
                 op, fullname, op_info->op_count-1, n);
 
@@ -746,7 +746,7 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
     }
     else if (STREQ(name, "yield")) {
         if (!IMCC_INFO(interp)->cur_unit->instructions->symregs[0])
-            IMCC_fataly(interp, SYNTAX_ERROR,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                 "Cannot yield from non-continuation\n");
 
         IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->pcc_sub->calls_a_sub
@@ -766,7 +766,7 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
             ins->type |= ITBRANCH | (1 << i);
         else {
             if (r[i]->type == VTADDRESS)
-                IMCC_fataly(interp, SYNTAX_ERROR,
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                         "undefined identifier '%s'\n", r[i]->name);
         }
     }
@@ -1061,7 +1061,7 @@ imcc_compile_pasm_ex(PARROT_INTERP, ARGIN(const char *s))
     if (sub)
         return sub;
 
-    real_exception(interp, NULL, SYNTAX_ERROR, "%Ss", error_message);
+    real_exception(interp, NULL, EXCEPTION_SYNTAX_ERROR, "%Ss", error_message);
 }
 
 /*
@@ -1085,7 +1085,7 @@ imcc_compile_pir_ex(PARROT_INTERP, ARGIN(const char *s))
     if (sub)
         return sub;
 
-    real_exception(interp, NULL, SYNTAX_ERROR, "%Ss", error_message);
+    real_exception(interp, NULL, EXCEPTION_SYNTAX_ERROR, "%Ss", error_message);
 }
 
 /*
@@ -1126,12 +1126,12 @@ imcc_compile_file(PARROT_INTERP, ARGIN(const char *fullname),
     fs = string_make(interp, fullname, strlen(fullname), NULL, 0);
 
     if (Parrot_stat_info_intval(interp, fs, STAT_ISDIR))
-        real_exception(interp, NULL, EXTERNAL_ERROR,
+        real_exception(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
                 "imcc_compile_file: '%s' is a directory\n", fullname);
 
     fp = fopen(fullname, "r");
     if (!fp)
-        IMCC_fatal(interp, EXTERNAL_ERROR,
+        IMCC_fatal(interp, EXCEPTION_EXTERNAL_ERROR,
                 "imcc_compile_file: couldn't open '%s'\n", fullname);
 
 #if IMC_TRACE
@@ -1496,7 +1496,7 @@ multi_keyed(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
         char buf[16];
 
         if (kv & 1)
-            IMCC_fataly(interp, SYNTAX_ERROR, "illegal key operand\n");
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "illegal key operand\n");
 
         /* make a new P symbol */
         do {
@@ -1509,7 +1509,7 @@ multi_keyed(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
         if (kv & 1) {
             /* we have a keyed operand */
             if (r[i]->set != 'P')
-                IMCC_fataly(interp, SYNTAX_ERROR, "not an aggregate\n");
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "not an aggregate\n");
 
             /* don't emit LHS yet */
             if (i == 0) {

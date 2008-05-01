@@ -41,7 +41,7 @@ pmclass TclInt
         INTVAL d = PMC_int_val(value);
 
         if (d == 0)
-            real_exception(INTERP, NULL, DIV_BY_ZERO, "divide by zero");
+            real_exception(INTERP, NULL, EXCEPTION_DIV_BY_ZERO, "divide by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);
@@ -53,7 +53,7 @@ pmclass TclInt
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (d == 0.0)
-            real_exception(INTERP, NULL, DIV_BY_ZERO, "float division by zero");
+            real_exception(INTERP, NULL, EXCEPTION_DIV_BY_ZERO, "float division by zero");
 
         if (!dest)
             dest = pmc_new(INTERP, SELF->vtable->base_type);

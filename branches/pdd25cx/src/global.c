@@ -619,7 +619,7 @@ Parrot_find_global_op(PARROT_INTERP, ARGIN(PMC *ns),
     PMC *res;
 
     if (!globalname)
-        real_exception(interp, next, GLOBAL_NOT_FOUND,
+        real_exception(interp, next, EXCEPTION_GLOBAL_NOT_FOUND,
                        "Tried to get null global");
 
     res = Parrot_find_global_n(interp, ns, globalname);

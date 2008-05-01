@@ -951,7 +951,7 @@ ft_init(PARROT_INTERP, ARGIN(visit_info *info))
     }
     else {
         if (string_length(interp, s) < header_length) {
-            real_exception(interp, NULL, INVALID_STRING_REPRESENTATION,
+            real_exception(interp, NULL, EXCEPTION_INVALID_STRING_REPRESENTATION,
                     "bad string to thaw");
         }
         mem_sys_memcopy(pf->header, s->strstart, PACKFILE_HEADER_BYTES);

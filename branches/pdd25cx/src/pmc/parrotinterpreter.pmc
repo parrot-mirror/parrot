@@ -400,7 +400,7 @@ Introspection interface. C<key> can be:
             level = 1;
 
         if (level < 0)
-            real_exception(interp, NULL, CONTROL_ERROR, "No such caller depth");
+            real_exception(interp, NULL, EXCEPTION_CONTROL_ERROR, "No such caller depth");
 
         ctx = CONTEXT(interp);
 
@@ -408,7 +408,7 @@ Introspection interface. C<key> can be:
             for (; level; --level) {
                 ctx = ctx->outer_ctx;
                 if (!ctx)
-                    real_exception(interp, NULL, CONTROL_ERROR,
+                    real_exception(interp, NULL, EXCEPTION_CONTROL_ERROR,
                             "No such outer depth");
             }
         }
@@ -417,13 +417,13 @@ Introspection interface. C<key> can be:
                 cont = ctx->current_cont;
 
                 if (PMC_IS_NULL(cont) || !PMC_cont(cont)->seg)
-                    real_exception(interp, NULL, CONTROL_ERROR,
+                    real_exception(interp, NULL, EXCEPTION_CONTROL_ERROR,
                             "No such caller depth");
 
                 ctx = PMC_cont(cont)->to_ctx;
 
                 if (!ctx->current_sub)
-                    real_exception(interp, NULL, CONTROL_ERROR,
+                    real_exception(interp, NULL, EXCEPTION_CONTROL_ERROR,
                             "No such caller depth");
             }
         }
@@ -451,7 +451,7 @@ Introspection interface. C<key> can be:
         if (string_equal(interp, item, s) == 0)
             return VTABLE_clone(interp, ctx->current_cont);
 
-        real_exception(interp, NULL, ATTRIB_NOT_FOUND,
+        real_exception(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
                 "No such item %Ss", item);
     }
 

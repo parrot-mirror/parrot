@@ -88,7 +88,7 @@ An C<Integer> representing the unique identifier for this scheduler.
         Parrot_Scheduler *core_struct;
 
         if (! VTABLE_isa(INTERP, data, CONST_STRING(INTERP, "Hash")))
-            real_exception(INTERP, NULL, INVALID_OPERATION,
+            real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Scheduler initializer must be a Hash");
 
         SELF.init();

@@ -221,7 +221,7 @@ runops_args(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *obj),
      * PASM subs usually don't have get_params
      * XXX we could check, if we are running main
      else
-        real_exception(interp, NULL, INVALID_OPERATION, "no get_params in sub");
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION, "no get_params in sub");
      */
 
     ctx    = CONTEXT(interp);
