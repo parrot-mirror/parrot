@@ -66,7 +66,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     result = VTABLE_get_integer_keyed_int(INTERP, mp->pmc,
                         mp->index);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -77,7 +77,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     result     = VTABLE_get_integer(INTERP, field);
                 }
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -89,11 +89,11 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     if (mp->r.reg_type == PTR_REGTYPE_I)
                         result = CTX_REG_INT(mp->ctx, mp->r.number);
                     else
-                        real_exception(INTERP, NULL, INVALID_OPERATION,
+                        real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                             "Register reference type conflict");
                 }
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of unititialized reference!");
                 break;
 
@@ -101,13 +101,13 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                 if (mp->pmc)
                     result = VTABLE_get_integer(INTERP, mp->pmc);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
             }
         }
         else
-            real_exception(INTERP, NULL, INVALID_OPERATION,
+            real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Use of unititialized reference!");
 
         /* Return result. */
@@ -127,7 +127,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     VTABLE_set_integer_keyed_int(INTERP, mp->pmc,
                         mp->index, value);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -139,7 +139,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     VTABLE_set_attr_str(INTERP, mp->pmc, mp->name, box);
                 }
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -151,11 +151,11 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     if (mp->r.reg_type == PTR_REGTYPE_I)
                         CTX_REG_INT(mp->ctx, mp->r.number) = value;
                     else
-                        real_exception(INTERP, NULL, INVALID_OPERATION,
+                        real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                             "Register reference type conflict");
                 }
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of unititialized reference!");
                 break;
 
@@ -163,13 +163,13 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                 if (mp->pmc)
                     VTABLE_set_integer_native(INTERP, mp->pmc, value);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
             }
         }
         else
-            real_exception(INTERP, NULL, INVALID_OPERATION,
+            real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Use of unititialized reference!");
     }
 
@@ -188,7 +188,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     result = VTABLE_get_number_keyed_int(INTERP, mp->pmc,
                         mp->index);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -199,7 +199,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     result     = VTABLE_get_number(INTERP, field);
                 }
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -211,11 +211,11 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     if (mp->r.reg_type == PTR_REGTYPE_N)
                         result = CTX_REG_NUM(mp->ctx, mp->r.number);
                     else
-                        real_exception(INTERP, NULL, INVALID_OPERATION,
+                        real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                             "Register reference type conflict");
                 }
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of unititialized reference!");
                 break;
 
@@ -223,13 +223,13 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                 if (mp->pmc)
                     result = VTABLE_get_number(INTERP, mp->pmc);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
             }
         }
         else
-            real_exception(INTERP, NULL, INVALID_OPERATION,
+            real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Use of unititialized reference!");
 
         /* Return result. */
@@ -249,7 +249,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     VTABLE_set_number_keyed_int(INTERP, mp->pmc,
                         mp->index, value);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -261,7 +261,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     VTABLE_set_attr_str(INTERP, mp->pmc, mp->name, box);
                 }
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -273,11 +273,11 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     if (mp->r.reg_type == PTR_REGTYPE_N)
                         CTX_REG_NUM(mp->ctx, mp->r.number) = value;
                     else
-                        real_exception(INTERP, NULL, INVALID_OPERATION,
+                        real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                             "Register reference type conflict");
                 }
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of unititialized reference!");
                 break;
 
@@ -285,13 +285,13 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                 if (mp->pmc)
                     VTABLE_set_number_native(INTERP, mp->pmc, value);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
             }
         }
         else
-            real_exception(INTERP, NULL, INVALID_OPERATION,
+            real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Use of unititialized reference!");
     }
 
@@ -310,7 +310,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     result = VTABLE_get_pmc_keyed_int(INTERP, mp->pmc,
                         mp->index);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -318,7 +318,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                 if (mp->pmc)
                     result = VTABLE_get_attr_str(INTERP, mp->pmc, mp->name);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -330,11 +330,11 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     if (mp->r.reg_type == PTR_REGTYPE_P)
                         result = CTX_REG_PMC(mp->ctx, mp->r.number);
                     else
-                        real_exception(INTERP, NULL, INVALID_OPERATION,
+                        real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                             "Register reference type conflict");
                 }
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of unititialized reference!");
                 break;
 
@@ -342,13 +342,13 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                 if (mp->pmc)
                     result = mp->pmc;
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
             }
         }
         else
-            real_exception(INTERP, NULL, INVALID_OPERATION,
+            real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Use of unititialized reference!");
 
         /* Return result. */
@@ -367,7 +367,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                 if (mp->pmc)
                     VTABLE_set_pmc_keyed_int(INTERP, mp->pmc, mp->index, value);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -375,7 +375,7 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                 if (mp->pmc)
                     VTABLE_set_attr_str(INTERP, mp->pmc, mp->name, value);
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
 
@@ -387,11 +387,11 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                     if (mp->r.reg_type == PTR_REGTYPE_P)
                         CTX_REG_PMC(mp->ctx, mp->r.number) = value;
                     else
-                        real_exception(INTERP, NULL, INVALID_OPERATION,
+                        real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                             "Register reference type conflict");
                 }
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of unititialized reference!");
                 break;
 
@@ -399,13 +399,13 @@ pmclass ManagedPointer dynpmc group dotnet_runtime {
                 if (mp->pmc)
                     mp->pmc = value;
                 else
-                    real_exception(INTERP, NULL, INVALID_OPERATION,
+                    real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                         "Use of uninitialized reference!");
                 break;
             }
         }
         else
-            real_exception(INTERP, NULL, INVALID_OPERATION,
+            real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Use of unititialized reference!");
     }
 

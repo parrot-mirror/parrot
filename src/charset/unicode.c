@@ -161,7 +161,7 @@ static UINTVAL validate(PARROT_INTERP, ARGIN(STRING *src))
 #define EXCEPTION(err, str) \
     real_exception(interp, NULL, err, str)
 
-#define UNIMPL EXCEPTION(UNIMPLEMENTED, "unimplemented unicode")
+#define UNIMPL EXCEPTION(EXCEPTION_UNIMPLEMENTED, "unimplemented unicode")
 
 /*
 
@@ -293,7 +293,7 @@ compose(PARROT_INTERP, ARGIN(STRING *src))
     return dest;
 #else
     UNUSED(src);
-    real_exception(interp, NULL, LIBRARY_ERROR, "no ICU lib loaded");
+    real_exception(interp, NULL, EXCEPTION_LIBRARY_ERROR, "no ICU lib loaded");
 #endif
 }
 
@@ -392,7 +392,7 @@ upcase(PARROT_INTERP, ARGIN(STRING *src))
     }
 #else
     UNUSED(src);
-    real_exception(interp, NULL, LIBRARY_ERROR, "no ICU lib loaded");
+    real_exception(interp, NULL, EXCEPTION_LIBRARY_ERROR, "no ICU lib loaded");
 #endif
 }
 
@@ -449,7 +449,7 @@ u_strToLower(UChar *dest, int32_t destCapacity,
         src->encoding = Parrot_ucs2_encoding_ptr;
 #else
     UNUSED(src);
-    real_exception(interp, NULL, LIBRARY_ERROR, "no ICU lib loaded");
+    real_exception(interp, NULL, EXCEPTION_LIBRARY_ERROR, "no ICU lib loaded");
 #endif
 }
 
@@ -507,7 +507,7 @@ u_strToTitle(UChar *dest, int32_t destCapacity,
         src->encoding = Parrot_ucs2_encoding_ptr;
 #else
     UNUSED(src);
-    real_exception(interp, NULL, LIBRARY_ERROR, "no ICU lib loaded");
+    real_exception(interp, NULL, EXCEPTION_LIBRARY_ERROR, "no ICU lib loaded");
 #endif
 }
 
@@ -715,7 +715,7 @@ u_iscclass(PARROT_INTERP, UINTVAL codepoint, INTVAL flags)
         if (codepoint >= 0xff10 && codepoint <= 0xff19) return 1;
     }
     if (flags & ~(enum_cclass_whitespace | enum_cclass_numeric))
-        real_exception(interp, NULL, LIBRARY_ERROR, "no ICU lib loaded");
+        real_exception(interp, NULL, EXCEPTION_LIBRARY_ERROR, "no ICU lib loaded");
     return 0;
 #endif
 }

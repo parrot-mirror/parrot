@@ -185,8 +185,8 @@ Returns the integer value for C<*key>.
 */
 
     VTABLE INTVAL get_integer_keyed(PMC *key) {
-        STRING *s = key_string(INTERP, key);
-        INTVAL result = 0;
+        STRING *s      = key_string(INTERP, key);
+        INTVAL  result = 0;
 
         if (string_equal(INTERP, s, CONST_STRING(INTERP, "type")) == 0) {
             GET_ATTR_type(interp, SELF, result);
@@ -412,7 +412,7 @@ Retrieve an attribute value for the exception object.
         }
         else {
             /* If unknown attribute name, throw an exception. */
-            real_exception(interp, NULL, ATTRIB_NOT_FOUND,
+            real_exception(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
                 "No such attribute '%S'", name);
         }
 
@@ -431,30 +431,30 @@ Set an attribute value for the exception object.
     VTABLE void set_attr_str(STRING *name, PMC *value) {
 
         if (string_equal(INTERP, name, CONST_STRING(INTERP, "type")) == 0) {
-                INTVAL type = VTABLE_get_integer(interp, value);
-                SET_ATTR_type(interp, SELF, type);
+            INTVAL type = VTABLE_get_integer(interp, value);
+            SET_ATTR_type(interp, SELF, type);
         }
         else if (string_equal(INTERP, name, CONST_STRING(INTERP, "severity")) == 0) {
-                INTVAL severity = VTABLE_get_integer(interp, value);
-                SET_ATTR_severity(interp, SELF, severity);
+            INTVAL severity = VTABLE_get_integer(interp, value);
+            SET_ATTR_severity(interp, SELF, severity);
         }
         else if (string_equal(INTERP, name, CONST_STRING(INTERP, "exit_code")) == 0) {
-                INTVAL exit_code = VTABLE_get_integer(interp, value);
-                SET_ATTR_exit_code(interp, SELF, exit_code);
+            INTVAL exit_code = VTABLE_get_integer(interp, value);
+            SET_ATTR_exit_code(interp, SELF, exit_code);
         }
         else if (string_equal(INTERP, name, CONST_STRING(INTERP, "message")) == 0) {
-                STRING *message = VTABLE_get_string(interp, value);
-                SET_ATTR_message(interp, SELF, message);
+            STRING *message = VTABLE_get_string(interp, value);
+            SET_ATTR_message(interp, SELF, message);
         }
         else if (string_equal(INTERP, name, CONST_STRING(INTERP, "payload")) == 0) {
-                SET_ATTR_payload(interp, SELF, value);
+            SET_ATTR_payload(interp, SELF, value);
         }
         else if (string_equal(INTERP, name, CONST_STRING(INTERP, "stacktrace")) == 0) {
-                SET_ATTR_stacktrace(interp, SELF, value);
+            SET_ATTR_stacktrace(interp, SELF, value);
         }
         else {
             /* If unknown attribute name, throw an exception. */
-            real_exception(interp, NULL, ATTRIB_NOT_FOUND,
+            real_exception(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
                 "No such attribute '%S'", name);
         }
 

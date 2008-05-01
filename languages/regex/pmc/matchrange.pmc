@@ -62,7 +62,7 @@ matchrange_locate_keyed_int(Interp* interp, PMC* self, STRING *key)
     end = string_from_cstring(interp, "end", 3);
     if (0 == string_equal(interp, key, end))
         return &RANGE_END(self);
-    real_exception(interp, NULL, KEY_NOT_FOUND,
+    real_exception(interp, NULL, EXCEPTION_KEY_NOT_FOUND,
         "MatchRange: key is neither 'start' nor 'end'");
     return NULL;
 }

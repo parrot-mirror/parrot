@@ -220,7 +220,7 @@ op classname(out PMC, invar PMC) :object_base {
                                     VTABLE_get_namespace(interp, $2));
     if (PMC_IS_NULL(ns) || VTABLE_elements(interp, ns) < 2)
     {
-        real_exception(interp, NULL, NO_CLASS,
+        real_exception(interp, NULL, EXCEPTION_NO_CLASS,
             "Attempt to get class name of a non-class.");
     }
     else
@@ -314,7 +314,7 @@ OR IF YOU NEED THIS (OR INSTANTIATE), TELL CHIP
 op new(out PMC, in INT, in STR) {
   PMC *_class;
   if ($2 <= 0 || $2 >= interp->n_vtable_max) {
-    real_exception(interp, 0, NO_CLASS,
+    real_exception(interp, 0, EXCEPTION_NO_CLASS,
                    "Illegal PMC enum (%d) in new", (int)$2);
   }
   _class = interp->vtables[$2]->pmc_class;

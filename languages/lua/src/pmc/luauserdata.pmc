@@ -283,11 +283,11 @@ MMD_LuaUserdata: {
                 }
             }
 #endif
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            real_exception(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                     "attempt to compare two userdata values");
         }
 MMD_DEFAULT: {
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            real_exception(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                     "attempt to compare userdata with %Ss",
                     VTABLE_name(INTERP, value));
         }

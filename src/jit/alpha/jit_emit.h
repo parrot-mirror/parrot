@@ -412,7 +412,7 @@ Parrot_jit_dofixup(Parrot_jit_info_t *jit_info,
                 *(fixup_ptr++) |= *(disp + 2) & 0x1f;
                 break;
             default:
-                internal_exception(JIT_ERROR, "Unknown fixup type:%d\n",
+                internal_exception(EXCEPTION_JIT_ERROR, "Unknown fixup type:%d\n",
                                    fixup->type);
                 break;
         }

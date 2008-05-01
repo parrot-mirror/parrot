@@ -512,7 +512,7 @@ mk_pasm_reg(PARROT_INTERP, ARGIN(const char *name))
         r->color = atoi(name + 1);
 
         if (r->color < 0)
-            IMCC_fataly(interp, SYNTAX_ERROR,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                 "register number out of range '%s'\n", name);
     }
 
@@ -632,7 +632,7 @@ mk_pmc_const_2(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(SymReg *left),
     int     len;
 
     if (IMCC_INFO(interp)->state->pasm_file) {
-        IMCC_fataly(interp, SYNTAX_ERROR,
+        IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                 "Ident as PMC constant",
                 " %s\n", left->name);
     }
@@ -691,7 +691,7 @@ mk_const_ident(PARROT_INTERP, ARGIN(const char *name), int t,
      */
     if (t == 'N' || t == 'I') {
         if (val->set == 'S')
-            IMCC_fataly(interp, SYNTAX_ERROR, "bad const initialisation");
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "bad const initialisation");
 
         /* Cast value to const type */
         val->set = t;
@@ -699,7 +699,7 @@ mk_const_ident(PARROT_INTERP, ARGIN(const char *name), int t,
 
     if (global) {
         if (t == 'P') {
-            IMCC_fataly(interp, SYNTAX_ERROR,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                     "global PMC constant not allowed");
         }
         r = _mk_symreg(&IMCC_INFO(interp)->ghash, name, t);
@@ -846,11 +846,11 @@ _mk_address(PARROT_INTERP, ARGMOD(SymHash *hsh), ARGIN(const char *name), int un
         if (uniq && r && r->type == VTADDRESS &&
                 r->lhs_use_count) {      /* we use this for labels/subs */
             if (uniq == U_add_uniq_label) {
-                IMCC_fataly(interp, SYNTAX_ERROR,
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                     "Label '%s' already defined\n", name);
             }
             else if (uniq == U_add_uniq_sub)
-                IMCC_fataly(interp, SYNTAX_ERROR,
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                         "Subroutine '%s' already defined\n", name);
         }
 
@@ -1033,7 +1033,7 @@ link_keys(PARROT_INTERP, int nargs, ARGMOD(SymReg **keys), int force)
             : &IMCC_INFO(interp)->ghash;
 
     if (nargs == 0)
-        IMCC_fataly(interp, SYNTAX_ERROR, "link_keys: huh? no keys\n");
+        IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "link_keys: huh? no keys\n");
 
     /* short-circuit simple key unless we've been told not to */
     if (nargs == 1 && !force && !(keys[0]->type & VT_SLICE_BITS))

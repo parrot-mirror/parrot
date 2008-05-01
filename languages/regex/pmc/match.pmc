@@ -30,7 +30,7 @@ extern int MatchRange_type_id;
 static STRING* make_hash_key(Interp* interp, PMC * key)
 {
     if (key == NULL) {
-        real_exception(interp, NULL, OUT_OF_BOUNDS,
+        real_exception(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
         "Cannot use NULL key for Match!");
         return NULL;
     }

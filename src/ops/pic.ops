@@ -102,7 +102,7 @@ inline op pic_inline_sub__(inconst INT, invar PMC, invar PMC) :pic {
         }
         else {
             if (PARROT_ERRORS_test(interp, PARROT_ERRORS_OVERFLOW_FLAG)) {
-                real_exception(interp, NULL, ERR_OVERFLOW,
+                real_exception(interp, NULL, EXCEPTION_ERR_OVERFLOW,
                         "Integer overflow");
             }
             /* #RT42354 preserve type system */

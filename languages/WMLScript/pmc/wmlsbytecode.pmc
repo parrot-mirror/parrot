@@ -151,7 +151,7 @@ static int _load_header(Interp *interp)
 
     VersionNumber = _get_uint8();
     if (VersionNumber != 0x01) {
-        real_exception(interp, NULL, ILL_INHERIT,
+        real_exception(interp, NULL, EXCEPTION_ILL_INHERIT,
             "incorrect version");
         return -1;
     }
@@ -160,7 +160,7 @@ static int _load_header(Interp *interp)
 
     CodeSize = _get_mb32();
     if (CodeSize != _info_get()) {
-        real_exception(interp, NULL, ILL_INHERIT,
+        real_exception(interp, NULL, EXCEPTION_ILL_INHERIT,
             "incorrect code size");
         return -1;
     }
@@ -257,7 +257,7 @@ static int _load_constant_pool(Interp *interp)
             break;
         }
         default:
-            real_exception(interp, NULL, ILL_INHERIT,
+            real_exception(interp, NULL, EXCEPTION_ILL_INHERIT,
                 "invalid ConstantType (%u).", ConstantType);
             return -1;
         }
@@ -330,7 +330,7 @@ static int _load_pragma_pool(Interp *interp)
             break;
         }
         default:
-            real_exception(interp, NULL, ILL_INHERIT,
+            real_exception(interp, NULL, EXCEPTION_ILL_INHERIT,
                 "invalid PragmaType (%u).", PragmaType);
             return -1;
         }
@@ -403,7 +403,7 @@ static int _load_function_pool(Interp *interp)
     }
 
     if (_info_get() != 0) {
-        real_exception(interp, NULL, ILL_INHERIT,
+        real_exception(interp, NULL, EXCEPTION_ILL_INHERIT,
             "incorrect size");
         return -1;
     }

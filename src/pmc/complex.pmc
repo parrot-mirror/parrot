@@ -143,7 +143,7 @@ complex_parse_string(PARROT_INTERP, FLOATVAL *re, FLOATVAL *im, STRING *value) {
             /* verify that the string ends properly */
             if ((*t != 'i' && *t != 'j') || (*(t+1) != 0)) {
                 /* imaginary part does not end in 'i' or 'j' */
-                real_exception(interp, NULL, INVALID_STRING_REPRESENTATION,
+                real_exception(interp, NULL, EXCEPTION_INVALID_STRING_REPRESENTATION,
                     "Complex: malformed string");
             }
 
@@ -155,7 +155,7 @@ complex_parse_string(PARROT_INTERP, FLOATVAL *re, FLOATVAL *im, STRING *value) {
         }
         else {
             /* "+" or "-" not found: error */
-            real_exception(interp, NULL, INVALID_STRING_REPRESENTATION,
+            real_exception(interp, NULL, EXCEPTION_INVALID_STRING_REPRESENTATION,
                 "Complex: malformed string");
         }
     }
@@ -220,27 +220,27 @@ complex_locate_keyed_num(PARROT_INTERP, PMC *self, STRING *key) {
     if (0 == string_equal(interp, key, real))
         return &RE(self);
 
-    real_exception(interp, NULL, INVALID_OPERATION,
+    real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
         "Complex: key is neither 'real' or 'imag'");
 }
 
 static void
 int_check_divide_zero(PARROT_INTERP, INTVAL value) {
     if (value == 0)
-        real_exception(interp, NULL, DIV_BY_ZERO, "Divide by zero");
+        real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
 }
 
 static void
 float_check_divide_zero(PARROT_INTERP, FLOATVAL value) {
     if (FLOAT_IS_ZERO(value))
-        real_exception(interp, NULL, DIV_BY_ZERO, "Divide by zero");
+        real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
 }
 
 static void
 complex_check_divide_zero(PARROT_INTERP, PMC *value) {
     /* Throw an exception if we are dividing by zero. */
     if (FLOAT_IS_ZERO(RE(value)) && FLOAT_IS_ZERO(IM(value)))
-        real_exception(interp, NULL, DIV_BY_ZERO, "Divide by zero");
+        real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
 }
 
 
@@ -531,7 +531,7 @@ Set real or imag depending on key
             case 1:
                 return IM(SELF);
             default:
-                real_exception(interp, NULL, INVALID_OPERATION,
+                real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                         "Complex: key must be 0 or 1");
         }
     }
@@ -545,7 +545,7 @@ Set real or imag depending on key
                 IM(SELF) = v;
                 break;
             default:
-                real_exception(interp, NULL, INVALID_OPERATION,
+                real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                         "Complex: key must be 0 or 1");
         }
     }

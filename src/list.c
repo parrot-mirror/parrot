@@ -934,7 +934,7 @@ get_chunk(PARROT_INTERP, ARGMOD(List *list), ARGMOD(UINTVAL *idx))
             return chunk;
         *idx -= chunk->items;
     }
-    real_exception(interp, NULL, INTERNAL_PANIC, "list structure chaos!\n");
+    real_exception(interp, NULL, EXCEPTION_INTERNAL_PANIC, "list structure chaos!\n");
 #endif
 
 
@@ -1001,9 +1001,9 @@ get_chunk(PARROT_INTERP, ARGMOD(List *list), ARGMOD(UINTVAL *idx))
             chunk = chunk->next;
             continue;
         }
-        real_exception(interp, NULL, INTERNAL_PANIC, "list structure chaos #1!\n");
+        real_exception(interp, NULL, EXCEPTION_INTERNAL_PANIC, "list structure chaos #1!\n");
     }
-    real_exception(interp, NULL, INTERNAL_PANIC, "list structure chaos #2!\n");
+    real_exception(interp, NULL, EXCEPTION_INTERNAL_PANIC, "list structure chaos #2!\n");
 }
 
 /*
@@ -1985,7 +1985,7 @@ list_splice(PARROT_INTERP, ARGMOD(List *list), ARGIN_NULLOK(List *value_list),
     if (offset < 0) {
         offset += length;
         if (offset < 0)
-            real_exception(interp, NULL, OUT_OF_BOUNDS, "illegal splice offset\n");
+            real_exception(interp, NULL, EXCEPTION_OUT_OF_BOUNDS, "illegal splice offset\n");
     }
     /* "leave that many elements off the end of the array" */
     if (count < 0) {

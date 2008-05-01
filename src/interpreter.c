@@ -176,14 +176,14 @@ prederef_args(ARGMOD(void **pc_prederef), PARROT_INTERP,
         case PARROT_ARG_KI:
         case PARROT_ARG_I:
             if (arg < 0 || arg >= regs_i)
-                real_exception(interp, NULL, INTERP_ERROR,
+                real_exception(interp, NULL, EXCEPTION_INTERP_ERROR,
                     "Illegal register number");
             pc_prederef[i] = (void *)REG_OFFS_INT(arg);
             break;
 
         case PARROT_ARG_N:
             if (arg < 0 || arg >= regs_n)
-                real_exception(interp, NULL, INTERP_ERROR,
+                real_exception(interp, NULL, EXCEPTION_INTERP_ERROR,
                     "Illegal register number");
             pc_prederef[i] = (void *)REG_OFFS_NUM(arg);
             break;
@@ -191,14 +191,14 @@ prederef_args(ARGMOD(void **pc_prederef), PARROT_INTERP,
         case PARROT_ARG_K:
         case PARROT_ARG_P:
             if (arg < 0 || arg >= regs_p)
-                real_exception(interp, NULL, INTERP_ERROR,
+                real_exception(interp, NULL, EXCEPTION_INTERP_ERROR,
                     "Illegal register number");
             pc_prederef[i] = (void *)REG_OFFS_PMC(arg);
             break;
 
         case PARROT_ARG_S:
             if (arg < 0 || arg >= regs_s)
-                real_exception(interp, NULL, INTERP_ERROR,
+                real_exception(interp, NULL, EXCEPTION_INTERP_ERROR,
                     "Illegal register number");
             pc_prederef[i] = (void *)REG_OFFS_STR(arg);
             break;
@@ -210,14 +210,14 @@ prederef_args(ARGMOD(void **pc_prederef), PARROT_INTERP,
 
         case PARROT_ARG_NC:
             if (arg < 0 || arg >= const_table->const_count)
-                real_exception(interp, NULL, INTERP_ERROR,
+                real_exception(interp, NULL, EXCEPTION_INTERP_ERROR,
                     "Illegal constant number");
             pc_prederef[i] = (void *)&const_table->constants[arg]->u.number;
             break;
 
         case PARROT_ARG_SC:
             if (arg < 0 || arg >= const_table->const_count)
-                real_exception(interp, NULL, INTERP_ERROR,
+                real_exception(interp, NULL, EXCEPTION_INTERP_ERROR,
                     "Illegal constant number");
             pc_prederef[i] = (void *)const_table->constants[arg]->u.string;
             break;
@@ -225,12 +225,12 @@ prederef_args(ARGMOD(void **pc_prederef), PARROT_INTERP,
         case PARROT_ARG_PC:
         case PARROT_ARG_KC:
             if (arg < 0 || arg >= const_table->const_count)
-                real_exception(interp, NULL, INTERP_ERROR,
+                real_exception(interp, NULL, EXCEPTION_INTERP_ERROR,
                     "Illegal constant number");
             pc_prederef[i] = (void *)const_table->constants[arg]->u.key;
             break;
         default:
-            real_exception(interp, NULL, ARG_OP_NOT_HANDLED,
+            real_exception(interp, NULL, EXCEPTION_ARG_OP_NOT_HANDLED,
                                "Unhandled argtype 0x%x\n", type);
             break;
         }
@@ -260,7 +260,7 @@ do_prederef(void **pc_prederef, PARROT_INTERP, int type)
     size_t           n;
 
     if (*pc < 0 || *pc >= (opcode_t)interp->op_count)
-        real_exception(interp, NULL, INTERP_ERROR, "Illegal opcode");
+        real_exception(interp, NULL, EXCEPTION_INTERP_ERROR, "Illegal opcode");
 
     opinfo = &interp->op_info_table[*pc];
 
@@ -443,7 +443,7 @@ load_prederef(PARROT_INTERP, int which)
     interp->op_lib->op_code = get_op;
 
     if (interp->op_lib->op_count != interp->op_count)
-        real_exception(interp, NULL, PREDEREF_LOAD_ERROR,
+        real_exception(interp, NULL, EXCEPTION_PREDEREF_LOAD_ERROR,
                 "Illegal op count (%d) in prederef oplib\n",
                 (int)interp->op_lib->op_count);
 }
@@ -886,7 +886,7 @@ runops_int(PARROT_INTERP, size_t offset)
                 break;
             case PARROT_JIT_CORE:
 #if !JIT_CAPABLE
-                real_exception(interp, NULL, JIT_UNAVAILABLE,
+                real_exception(interp, NULL, EXCEPTION_JIT_UNAVAILABLE,
                         "Error: PARROT_JIT_FLAG is set, "
                         "but interpreter is not JIT_CAPABLE!\n");
 #else
@@ -895,7 +895,7 @@ runops_int(PARROT_INTERP, size_t offset)
                 break;
             case PARROT_EXEC_CORE:
 #if !EXEC_CAPABLE
-                real_exception(interp, NULL, EXEC_UNAVAILABLE,
+                real_exception(interp, NULL, EXCEPTION_EXEC_UNAVAILABLE,
                         "Error: PARROT_EXEC_FLAG is set, "
                         "but interpreter is not EXEC_CAPABLE!\n");
 #else
@@ -906,7 +906,7 @@ runops_int(PARROT_INTERP, size_t offset)
                 core = runops_gc_debug_core;
                 break;
             default:
-                real_exception(interp, NULL, UNIMPLEMENTED,
+                real_exception(interp, NULL, EXCEPTION_UNIMPLEMENTED,
                         "ambigious runcore switch used");
                 break;
         }

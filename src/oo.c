@@ -963,12 +963,12 @@ fail_if_type_exists(PARROT_INTERP, ARGIN(PMC *name))
 
     if (type > enum_type_undef)
         /* RT#46091 get printable name */
-        real_exception(interp, NULL, INVALID_OPERATION,
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Class %Ss already registered!\n",
                 VTABLE_get_string(interp, name));
 
     if (type < enum_type_undef)
-        real_exception(interp, NULL, INVALID_OPERATION,
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "native type with name '%s' already exists - "
                 "can't register Class", data_types[type].name);
 }
@@ -1288,7 +1288,7 @@ do_initcall(PARROT_INTERP, ARGIN_NULLOK(PMC* _class), ARGIN_NULLOK(PMC *object),
         }
         else if (meth_str != NULL &&
                 string_length(interp, meth_str) != 0 && !default_meth) {
-            real_exception(interp, NULL, METH_NOT_FOUND,
+            real_exception(interp, NULL, EXCEPTION_METH_NOT_FOUND,
                     "Class BUILD method ('%Ss') not found", meth_str);
         }
     }
@@ -1924,7 +1924,7 @@ C3_merge(PARROT_INTERP, ARGIN(PMC *merge_list))
 
     /* If we didn't find anything to accept, error. */
     if (PMC_IS_NULL(accepted))
-        real_exception(interp, NULL, ILL_INHERIT,
+        real_exception(interp, NULL, EXCEPTION_ILL_INHERIT,
             "Could not build C3 linearization: ambiguous hierarchy");
 
     /* Otherwise, remove what was accepted from the merge lists. */
@@ -1977,7 +1977,7 @@ Parrot_ComputeMRO_C3(PARROT_INTERP, ARGIN(PMC *_class))
         "->P", &immediate_parents);
 
     if (!immediate_parents)
-        real_exception(interp, NULL, METH_NOT_FOUND,
+        real_exception(interp, NULL, EXCEPTION_METH_NOT_FOUND,
             "Failed to get parents list from class!");
 
     parent_count = VTABLE_elements(interp, immediate_parents);
@@ -2099,7 +2099,7 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
 
             if (VTABLE_exists_keyed_str(interp, methods_hash, method_name))
                 /* Conflicts with something already in the class. */
-                real_exception(interp, NULL, ROLE_COMPOSITION_METH_CONFLICT,
+                real_exception(interp, NULL, EXCEPTION_ROLE_COMPOSITION_METH_CONFLICT,
                     "A conflict occurred during role composition "
                     "due to method '%S'.", method_name);
 
@@ -2107,7 +2107,7 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
             if (VTABLE_exists_keyed_str(interp, proposed_add_methods,
                 method_name))
                 /* Something very weird is going on. */
-                real_exception(interp, NULL, ROLE_COMPOSITION_METH_CONFLICT,
+                real_exception(interp, NULL, EXCEPTION_ROLE_COMPOSITION_METH_CONFLICT,
                     "A conflict occurred during role composition;"
                     " the method '%S' from the role managed to conflict "
                     "with itself somehow.", method_name);
@@ -2128,7 +2128,7 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
              * RT#45999: multi-method handling. */
             if (VTABLE_exists_keyed_str(interp, methods_hash, alias_name))
                 /* Conflicts with something already in the class. */
-                real_exception(interp, NULL, ROLE_COMPOSITION_METH_CONFLICT,
+                real_exception(interp, NULL, EXCEPTION_ROLE_COMPOSITION_METH_CONFLICT,
                     "A conflict occurred during role composition"
                     " due to the aliasing of '%S' to '%S'.",
                     method_name, alias_name);
@@ -2136,7 +2136,7 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
             /* What about a conflict with ourslef? */
             if (VTABLE_exists_keyed_str(interp, proposed_add_methods,
                     alias_name))
-                real_exception(interp, NULL, ROLE_COMPOSITION_METH_CONFLICT,
+                real_exception(interp, NULL, EXCEPTION_ROLE_COMPOSITION_METH_CONFLICT,
                     "A conflict occurred during role composition"
                     " due to the aliasing of '%S' to '%S' (role already has"
                     " a method '%S').",

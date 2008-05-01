@@ -174,7 +174,7 @@ static const void * utf8_skip_forward(ARGIN(const void *ptr), UINTVAL n)
 
 /* HEADERIZER END: static */
 
-#define UNIMPL real_exception(interp, NULL, UNIMPLEMENTED, "unimpl utf8")
+#define UNIMPL real_exception(interp, NULL, EXCEPTION_UNIMPLEMENTED, "unimpl utf8")
 
 const char Parrot_utf8skip[256] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,     /* ascii */
@@ -222,7 +222,7 @@ utf8_characters(PARROT_INTERP, ARGIN(const utf8_t *ptr), UINTVAL byte_len)
     }
 
     if (u8ptr > u8end) {
-        real_exception(interp, NULL, MALFORMED_UTF8, "Unaligned end in UTF-8 string\n");
+        real_exception(interp, NULL, EXCEPTION_MALFORMED_UTF8, "Unaligned end in UTF-8 string\n");
     }
 
     return characters;
@@ -252,17 +252,17 @@ utf8_decode(PARROT_INTERP, ARGIN(const utf8_t *ptr))
         for (count = 1; count < len; count++) {
             u8ptr++;
             if (!UTF8_IS_CONTINUATION(*u8ptr)) {
-                real_exception(interp, NULL, MALFORMED_UTF8, "Malformed UTF-8 string\n");
+                real_exception(interp, NULL, EXCEPTION_MALFORMED_UTF8, "Malformed UTF-8 string\n");
             }
             c = UTF8_ACCUMULATE(c, *u8ptr);
         }
 
         if (UNICODE_IS_SURROGATE(c)) {
-            real_exception(interp, NULL, MALFORMED_UTF8, "Surrogate in UTF-8 string\n");
+            real_exception(interp, NULL, EXCEPTION_MALFORMED_UTF8, "Surrogate in UTF-8 string\n");
         }
     }
     else if (!UNICODE_IS_INVARIANT(c)) {
-        real_exception(interp, NULL, MALFORMED_UTF8, "Malformed UTF-8 string\n");
+        real_exception(interp, NULL, EXCEPTION_MALFORMED_UTF8, "Malformed UTF-8 string\n");
     }
 
     return c;
@@ -290,7 +290,7 @@ utf8_encode(PARROT_INTERP, ARGIN(void *ptr), UINTVAL c)
     utf8_t              *u8end = (utf8_t *)ptr + len - 1;
 
     if (c > 0x10FFFF || UNICODE_IS_SURROGATE(c)) {
-        real_exception(interp, NULL, INVALID_CHARACTER,
+        real_exception(interp, NULL, EXCEPTION_INVALID_CHARACTER,
                            "Invalid character for UTF-8 encoding\n");
     }
 
@@ -388,17 +388,17 @@ utf8_decode_and_advance(PARROT_INTERP, ARGMOD(String_iter *i))
         for (len--; len; len--) {
             u8ptr++;
             if (!UTF8_IS_CONTINUATION(*u8ptr)) {
-                real_exception(interp, NULL, MALFORMED_UTF8, "Malformed UTF-8 string\n");
+                real_exception(interp, NULL, EXCEPTION_MALFORMED_UTF8, "Malformed UTF-8 string\n");
             }
             c = UTF8_ACCUMULATE(c, *u8ptr);
         }
 
         if (UNICODE_IS_SURROGATE(c)) {
-            real_exception(interp, NULL, MALFORMED_UTF8, "Surrogate in UTF-8 string\n");
+            real_exception(interp, NULL, EXCEPTION_MALFORMED_UTF8, "Surrogate in UTF-8 string\n");
         }
     }
     else if (!UNICODE_IS_INVARIANT(c)) {
-        real_exception(interp, NULL, MALFORMED_UTF8, "Malformed UTF-8 string\n");
+        real_exception(interp, NULL, EXCEPTION_MALFORMED_UTF8, "Malformed UTF-8 string\n");
     }
     else {
         i->bytepos++;

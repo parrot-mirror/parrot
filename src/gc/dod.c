@@ -830,7 +830,7 @@ find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
         return 0;
     }
 
-    real_exception(interp, NULL, INTERP_ERROR,
+    real_exception(interp, NULL, EXCEPTION_INTERP_ERROR,
             "Unexpected condition in find_common_mask()!\n");
 }
 

@@ -157,7 +157,7 @@ static STRING * to_encoding(PARROT_INTERP,
 
 /* HEADERIZER END: static */
 
-#define UNIMPL real_exception(interp, NULL, UNIMPLEMENTED, "unimpl fixed_8")
+#define UNIMPL real_exception(interp, NULL, EXCEPTION_UNIMPLEMENTED, "unimpl fixed_8")
 
 /*
 

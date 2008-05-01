@@ -70,7 +70,7 @@ RT#48260: Not yet documented!!!
 void
 Parrot_Exec_OS_Comman(Parrot_Interp interp, STRING *command)
 {
-  real_exception(interp, NULL, NOSPAWN, "Exec not implemented");
+  real_exception(interp, NULL, EXCEPTION_NOSPAWN, "Exec not implemented");
 }
 
 /*
