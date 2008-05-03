@@ -1,4 +1,4 @@
-## $Id:$
+## $Id$
 
 =head1 TITLE
 
@@ -16,7 +16,6 @@ may not turn out to be the right thing to do.
 .sub 'onload' :anon :init :load
     $P0 = subclass 'Any', 'Subset'
     addattribute $P0, '$!condition'
-    addattribute $P0, 'vartype'
     $P1 = get_hll_global ['Perl6Object'], 'make_proto'
     $P1($P0, 'Subset')
 .end

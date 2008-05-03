@@ -760,9 +760,18 @@ method methodop($/, $key) {
 method postcircumfix($/, $key) {
     my $past;
     if $key eq '[ ]' {
+        # If we got a comma separated list, we'll pass that along as a List,
+        # so we can do slices.
         my $semilist := $( $<semilist> );
+        if $( $<semilist><EXPR>[0] ).name() eq 'infix:,' {
+            $semilist.pasttype('call');
+            $semilist.name('list');
+        }
+        else {
+            $semilist := $semilist[0];
+        }
         $past := PAST::Var.new(
-            $semilist[0],
+            $semilist,
             :scope('keyed'),
             :vivibase('List'),
             :viviself('Undef'),
@@ -775,9 +784,18 @@ method postcircumfix($/, $key) {
         process_arguments($past, $semilist);
     }
     elsif $key eq '{ }' {
+        # If we got a comma separated list, we'll pass that along as a List,
+        # so we can do slices.
         my $semilist := $( $<semilist> );
+        if $( $<semilist><EXPR>[0] ).name() eq 'infix:,' {
+            $semilist.pasttype('call');
+            $semilist.name('list');
+        }
+        else {
+            $semilist := $semilist[0];
+        }
         $past := PAST::Var.new(
-            $semilist[0],
+            $semilist,
             :scope('keyed'),
             :vivibase('Perl6Hash'),
             :viviself('Undef'),
@@ -840,11 +858,17 @@ method package_declarator($/, $key) {
     our @?ROLE;
     our $?PACKAGE;
     our @?PACKAGE;
+    our $?GRAMMAR;
+    our @?GRAMMAR;
+    our $?NS;
 
     if $key eq 'open' {
+        # Store the current namespace.
+        $?NS := $<name><ident>;
+
         # Start of the block; if it's a class or role, need to make $?CLASS or
         # $?ROLE available for storing current definition in.
-        if $<sym> eq 'class' || $<sym> eq 'role' {
+        if $<sym> eq 'class' || $<sym> eq 'role' || $<sym> eq 'grammar' {
             my $decl_past := PAST::Stmts.new();
 
             # If it's a class...
@@ -909,6 +933,39 @@ method package_declarator($/, $key) {
                 # Set it as the current package.
                 @?PACKAGE.unshift( $?PACKAGE );
                 $?PACKAGE := $?ROLE;
+            }
+
+            # If it's a grammar...
+            elsif $<sym> eq 'grammar' {
+                # Create class for the grammar - a subclass of PGE::Grammar by
+                # default.
+                $decl_past.push(
+                    PAST::Op.new(
+                        :pasttype('bind'),
+                        PAST::Var.new(
+                            :name('$def'),
+                            :scope('lexical')
+                        ),
+                        PAST::Op.new(
+                            :pasttype('callmethod'),
+                            :name('!keyword_grammar'),
+                            PAST::Var.new(
+                                :name('Perl6Object'),
+                                :scope('package')
+                            ),
+                            PAST::Val.new( :value(~$<name>) )
+                        )
+                    )
+                );
+
+                # Put current grammar, if any, on @?GRAMMAR list so we can
+                # handle nested grammars.
+                @?GRAMMAR.unshift( $?GRAMMAR );
+                $?GRAMMAR := $decl_past;
+
+                # Set it as the current package.
+                @?PACKAGE.unshift( $?PACKAGE );
+                $?PACKAGE := $?GRAMMAR;
             }
 
             # Apply any traits and do any roles.
@@ -1017,6 +1074,16 @@ method package_declarator($/, $key) {
             # Restore outer role.
             $?ROLE := @?ROLE.shift();
         }
+        elsif $<sym> eq 'grammar' {
+            # Attatch grammar declaration to the init code.
+            unless defined( $?INIT ) {
+                $?INIT := PAST::Block.new();
+            }
+            $?INIT.push( $?GRAMMAR );
+
+            # Restore outer grammar.
+            $?GRAMMAR := @?GRAMMAR.shift();
+        }
 
         # Restore outer package.
         $?PACKAGE := @?PACKAGE.shift();
@@ -1097,7 +1164,9 @@ method scoped($/) {
         # Now store these type constraints.
         $past := PAST::Op.new(
             :inline(
-                  "    setattribute %0, 'vartype', %1\n"
+                  "    $P0 = new 'Hash'\n"
+                ~ "    $P0['vartype'] = %1\n"
+                ~ "    setattribute %0, '%!properties', $P0\n"
                 ~ "    %r = %0\n"
             ),
             $past,
@@ -1424,10 +1493,12 @@ method quote($/) {
 method quote_expression($/, $key) {
     my $past;
     if $key eq 'quote_regex' {
+        our $?NS;
         $past := PAST::Block.new(
             $<quote_regex>,
             :compiler('PGE::Perl6Regex'),
             :blocktype('declaration'),
+            :namespace($?NS),
             :node( $/ )
         )
     }
@@ -1447,7 +1518,7 @@ method quote_expression($/, $key) {
         }
     }
     make $past;
-    }
+}
 
 
 method quote_concat($/) {
@@ -1657,6 +1728,7 @@ method regex_declarator_regex($/) {
 
 method regex_declarator_token($/) {
     my $past := $( $<quote_expression> );
+    $past.compiler_args( :ratchet(1) );
     $past.name( ~$<ident>[0] );
     make $past;
 }
@@ -1664,6 +1736,7 @@ method regex_declarator_token($/) {
 
 method regex_declarator_rule($/) {
     my $past := $( $<quote_expression> );
+    $past.compiler_args( :s(1), :ratchet(1) );
     $past.name( ~$<ident>[0] );
     make $past;
 }
@@ -1745,21 +1818,18 @@ method type_declarator($/) {
 
 
 method fatarrow($/) {
-    my $key := PAST::Val.new( :value(~$<key>) );
+    my $key := PAST::Val.new( :value(~$<key>),
+                               :named( PAST::Val.new( :value('key') ) ) );
     my $val := $( $<val> );
+    $val.named( PAST::Val.new( :value('value') ) );
     my $past := PAST::Op.new(
         :node($/),
-        :inline(
-              "   %0[%1] = %2\n"
-            ~ "   %r = %0\n"),
+        :pasttype('callmethod'),
+        :name('new'),
         :returns('Pair'),
-        PAST::Op.new(
-            :pasttype('callmethod'),
-            :name('new'),
-            PAST::Var.new(
-                :name('Pair'),
-                :scope('package')
-            )
+        PAST::Var.new(
+            :name('Pair'),
+            :scope('package')
         ),
         $key,
         $val
@@ -1811,19 +1881,16 @@ method colonpair($/, $key) {
         $/.panic($key ~ " pairs not yet implemented.");
     }
 
+    $pair_key.named( PAST::Val.new( :value('key') ) );
+    $pair_val.named( PAST::Val.new( :value('value') ) );
     my $past := PAST::Op.new(
         :node($/),
-        :inline(
-              "   %0[%1] = %2\n"
-            ~ "   %r = %0\n"),
+        :pasttype('callmethod'),
+        :name('new'),
         :returns('Pair'),
-        PAST::Op.new(
-            :pasttype('callmethod'),
-            :name('new'),
-            PAST::Var.new(
-                :name('Pair'),
-                :scope('package')
-            )
+        PAST::Var.new(
+            :name('Pair'),
+            :scope('package')
         ),
         $pair_key,
         $pair_val
