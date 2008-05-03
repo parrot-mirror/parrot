@@ -30,9 +30,9 @@ rule stmts {
     <.term>?[ <stmt> <.term>+]* {*}
 }
 
-rule term { \n | ';' }
+token term { \n | ';' }
 
-rule basic_stmt {
+token basic_stmt {
     | <alias> {*}           #= alias
     | <expr> {*}            #= expr
     | <begin> {*}           #= begin
@@ -61,11 +61,11 @@ rule expr {
 }
 
 
-rule basic_expr {
+token basic_expr {
     | <assignment> {*}      #= assignment
-    | <command> {*}         #= command
+    #| <command> {*}         #= command
     | <arg> {*}             #= arg
-    | <not_command> {*}     #= not_command
+    #| <not_command> {*}     #= not_command
     | <not_expr> {*}        #= not_expr
 }
 
@@ -90,16 +90,11 @@ rule assignment {
 }
 
 rule mlhs {
-    <mlhs_item>
-    {*}
-}
-
-rule mlhs_item {
     | <lhs> {*}               #= lhs
     | '(' <mlhs> ')' {*}      #= mlhs
 }
 
-rule lhs {
+token lhs {
     | <variable> {*}            #= variable
     | <indexed_variable> {*}    #= indexed_variable
     | <member_variable> {*}     #= member_variable
@@ -121,7 +116,7 @@ token command {
 }
 
 rule call {
-    [ <primary> $<dot>=['.'|'::'] ]?
+    # [ <primary> $<dot>=['.'|'::'] ]?
     <operation> <call_args>
     {*}
 }
@@ -145,13 +140,13 @@ token call_args {
     | '(' <.ws> <args> <.ws> ')' {*}
 }
 
-rule variable {
+token variable {
     | <varname> {*}      #= varname
     | 'nil'              #= nil
     | 'self'             #= self
 }
 
-rule varname {
+token varname {
     <!reserved_word>
     [ <global> {*}             #= global
     | <instance_variable> {*}  #= instance_variable
@@ -159,7 +154,7 @@ rule varname {
     ]
 }
 
-rule mrhs {
+token mrhs {
     <args> {*}
 }
 
@@ -174,8 +169,10 @@ proto 'infix:=' is precedence('1') is pasttype('copy') is lvalue(1)     { ... }
 
 
 
-rule basic_primary {
+token basic_primary {
     | <literal> {*}                         #= literal
+    | <command> {*}                         #= command
+    | <not_command> {*}                         #= command
     | <variable> {*}                        #= variable
     | <array> {*}                           #= array
     | <hash> {*}                            #= hash
@@ -220,7 +217,7 @@ rule if_stmt {
     {*}
 }
 
-rule then { ':' | 'then' | <term> ['then']? }
+token then { ':' | 'then' | <term> ['then']? }
 
 rule while_stmt {
     $<sym>=['while'|'until'] <expr> <.do>
@@ -405,37 +402,37 @@ proto 'infix:=' is precedence('1') is pasttype('copy') is lvalue(1)     { ... }
 
 proto 'prefix:defined?' is looser('infix:=') { ... }
 
-proto 'infix:+=' is equal('infix:=')
+proto 'infix:+=' is equiv('infix:=')
                  is pirop('add')        { ... }
 
-proto 'infix:-=' is equal('infix:=')
+proto 'infix:-=' is equiv('infix:=')
                  is pirop('sub')        { ... }
 
-proto 'infix:/=' is equal('infix:=')
+proto 'infix:/=' is equiv('infix:=')
                  is pirop('div')        { ... }
 
-proto 'infix:*=' is equal('infix:=')
+proto 'infix:*=' is equiv('infix:=')
                  is pirop('mul')        { ... }
 
-proto 'infix:%=' is equal('infix:=')
+proto 'infix:%=' is equiv('infix:=')
                  is pirop('mul')        { ... }
 
-proto 'infix:|=' is equal('infix:=')    { ... }
+proto 'infix:|=' is equiv('infix:=')    { ... }
 
-proto 'infix:&=' is equal('infix:=')    { ... }
+proto 'infix:&=' is equiv('infix:=')    { ... }
 
-proto 'infix:~=' is equal('infix:=')    { ... }
+proto 'infix:~=' is equiv('infix:=')    { ... }
 
-proto infix:«>>=» is equal('infix:=')
+proto infix:«>>=» is equiv('infix:=')
                   is pirop('rsh')       { ... }
 
-proto infix:«<<=» is equal('infix:=')
+proto infix:«<<=» is equiv('infix:=')
                   is pirop('lsh')       { ... }
 
-proto 'infix:&&=' is equal('infix:=')
+proto 'infix:&&=' is equiv('infix:=')
                   is pirop('and')       { ... }
 
-proto 'infix:**=' is equal('infix:=')
+proto 'infix:**=' is equiv('infix:=')
                   is pirop('pow')       { ... }
 
 proto 'ternary:? :' is tighter('infix:=')
@@ -444,7 +441,7 @@ proto 'ternary:? :' is tighter('infix:=')
 proto 'infix:..' is tighter('ternary:? :')
                  is pirop('n_add')      { ... }
 
-proto 'infix:...' is equal('infix:...') { ... }
+proto 'infix:...' is equiv('infix:...') { ... }
 
 proto 'infix:||' is tighter('infix:..')
                  is past('unless')      { ... }
@@ -461,10 +458,10 @@ proto 'infix:==='     is equiv('infix:==') { ... }
 proto infix:«<=>» is equiv('infix:==') { ... }
 
 
-proto 'infix:«<=»' is tighter('infix:=') { ... }
-proto infix:«=>» is equiv(infix:«<=») { ... }
-proto infix:«>»  is equiv(infix:«<=») { ... }
-proto infix:«<»  is equiv(infix:«<=») { ... }
+proto 'infix:«<=»' is tighter('infix:===') { ... }
+proto infix:«=>» is tighter('infix:===') { ... }
+proto infix:«>»  is tighter('infix:===') { ... }
+proto infix:«<»  is tighter('infix:===') { ... }
 
 proto 'infix:|' is tighter('infix:«<=»')  { ... }
 proto 'infix:^' is equiv('infix:|')  { ... }
@@ -477,22 +474,22 @@ proto infix:«>>»  is equiv(infix:«<<») { ... }
 proto 'infix:+' is tighter(infix:«<<»)
                 is pirop('n_add')       { ... }
 
-proto 'infix:-' is equal('infix:+')
+proto 'infix:-' is equiv('infix:+')
                 is pirop('n_sub')       { ... }
 
 proto 'infix:*' is tighter('infix:+')
                 is pirop('n_mul')       { ... }
 
-proto 'infix:/' is equal('infix:*')
+proto 'infix:/' is equiv('infix:*')
                 is pirop('n_div')       { ... }
 
-proto 'infix:%' is equal('infix:*')
+proto 'infix:%' is equiv('infix:*')
                 is pirop('n_mod')       { ... }
 
-proto 'prefix:+' is tighter('infix:*')  { ... }
-proto 'prefix:-' is equal('prefix:+')  { ... }
-proto 'prefix:!' is equal('prefix:+')  { ... }
-proto 'prefix:~' is equal('prefix:+')  { ... }
+#proto 'prefix:+' is tighter('infix:*')  { ... }
+#proto 'prefix:-' is equiv('prefix:+')  { ... }
+#proto 'prefix:!' is equiv('prefix:+')  { ... }
+#proto 'prefix:~' is equiv('prefix:+')  { ... }
 
-proto 'term:'   is tighter('prefix:+')
+proto 'term:'   is tighter('infix:*')
                 is parsed(&primary)     { ... }
