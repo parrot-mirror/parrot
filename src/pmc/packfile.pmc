@@ -25,6 +25,34 @@ pmclass Packfile {
 
 /*
 
+=item C<void init()>
+
+Initialize the structure.  (Create a blank PackFile object.)
+
+=cut
+
+*/
+    VTABLE void init() {
+        PMC_struct_val(SELF) = PackFile_new(interp, 0);
+    }
+
+
+/*
+
+=item C<void destroy()>
+
+Destroys the PackFile object.
+
+=cut
+
+*/
+
+    VTABLE void destroy() {
+        PackFile_destroy(interp, (PackFile*)PMC_struct_val(SELF));
+    }
+
+/*
+
 =item C<STRING *get_string()>
 
 Return raw serialized PBC file data.
@@ -38,15 +66,23 @@ Return raw serialized PBC file data.
 
 /*
 
-=item C<void set_string_native(STRING *value)>
+=item C<void set_string_native(STRING *str)>
 
 Parse raw serialized PBC file data into the Packfile data structure.
 
 =cut
 
+Implementation note: taken from the bottom end of Parrot_readbc().
 */
-    VTABLE void set_string_native(STRING *value) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    VTABLE void set_string_native(STRING *str) {
+        PackFile *pf = (PackFile*)PMC_struct_val(SELF);
+        const opcode_t *ptr = (const opcode_t*)Parrot_string_cstring(interp, str);
+        int length = string_length(interp, str);
+        if (!PackFile_unpack(interp, pf, ptr, length))
+            real_exception(interp, NULL, E_MalformedPackFileError, "Can't unpack packfile.");
+
+        /* Set :main routine */
+        do_sub_pragmas(interp, pf->cur_cs, PBC_PBC, NULL);
     }
 
 
@@ -84,7 +120,31 @@ Fetch an integer keyed value from the packfile object.  Valid keys are:
 
 */
     VTABLE INTVAL get_integer_keyed_str(STRING *key) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        PackFile *pf = (PackFile*)PMC_struct_val(SELF);
+        if (!string_compare(interp, key, CONST_STRING(interp, "wordsize")))
+            return pf->header->wordsize;
+        if (!string_compare(interp, key, CONST_STRING(interp, "byteorder")))
+            return pf->header->byteorder;
+        if (!string_compare(interp, key, CONST_STRING(interp, "fptype")))
+            return pf->header->floattype;
+        if (!string_compare(interp, key, CONST_STRING(interp, "version_major")))
+            return pf->header->major;
+        if (!string_compare(interp, key, CONST_STRING(interp, "version_minor")))
+            return pf->header->minor;
+        if (!string_compare(interp, key, CONST_STRING(interp, "version_patch")))
+            return pf->header->patch;
+        if (!string_compare(interp, key, CONST_STRING(interp, "bytecode_major")))
+            return pf->header->bc_major;
+        if (!string_compare(interp, key, CONST_STRING(interp, "bytecode_minor")))
+            return pf->header->bc_minor;
+        if (!string_compare(interp, key, CONST_STRING(interp, "uuid_type")))
+            return pf->header->uuid_type;
+        if (!string_compare(interp, key, CONST_STRING(interp, "uuid_length")))
+            return pf->header->uuid_size;
+
+        real_exception(interp, NULL, E_KeyError,
+                       "PackFile: No such integer key \"%s\"",
+                       Parrot_string_cstring(interp, key));
     }
 
 /*
@@ -103,7 +163,45 @@ Fetch a string keyed value from the packfile object.  Valid keys are:
 
 */
     VTABLE STRING *get_string_keyed_str(STRING *key) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        PackFile *pf = (PackFile*)PMC_struct_val(SELF);
+        if (!string_compare(interp, key, CONST_STRING(interp, "uuid")))
+            return string_from_cstring(interp, (char*)pf->header->uuid_data, pf->header->uuid_size);
+
+        real_exception(interp, NULL, E_KeyError,
+                       "PackFile: No such string key \"%s\"",
+                       Parrot_string_cstring(interp, key));
+    }
+
+
+/*
+
+=item C<INTVAL get_integer_keyed(STRING *key)>
+
+Fetch a keyed integer value from the packfile object.  Dispatches to
+get_integer_keyed_str.
+
+=cut
+
+*/
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
+        STRING * const s = VTABLE_get_string(INTERP, key);
+        return SELF.get_integer_keyed_str(s);
+    }
+
+
+/*
+
+=item C<STRING *get_string_keyed(STRING *key)>
+
+Fetch a keyed string value from the packfile object.  Dispatches to
+get_string_keyed_str.
+
+=cut
+
+*/
+    VTABLE STRING *get_string_keyed(PMC *key) {
+        STRING * const s = VTABLE_get_string(INTERP, key);
+        return SELF.get_string_keyed_str(s);
     }
 
 /*
