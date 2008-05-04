@@ -33,6 +33,7 @@ Initialize the structure.  (Create a blank PackFile object.)
 
 */
     VTABLE void init() {
+        PObj_active_destroy_SET(SELF);
         PMC_data(SELF) = PackFile_new(interp, 0);
     }
 
