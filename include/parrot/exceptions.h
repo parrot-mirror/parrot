@@ -62,7 +62,6 @@ typedef enum {
         E_ReferenceError,
         E_SystemError,
         E_MemoryError,
-        E_MalformedPackFileError,
         E_LAST_PYTHON_E = E_MemoryError,
 
         BAD_BUFFER_SIZE,
@@ -116,7 +115,8 @@ typedef enum {
         INTERNAL_NOT_IMPLEMENTED,
         ERR_OVERFLOW,
         LOSSY_CONVERSION,
-        ROLE_COMPOSITION_METH_CONFLICT
+        ROLE_COMPOSITION_METH_CONFLICT,
+        EXCEPTION_MALFORMED_PACKFILE
 } exception_type_enum;
 
 /* &end_gen */
