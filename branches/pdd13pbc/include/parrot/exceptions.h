@@ -62,6 +62,7 @@ typedef enum {
         E_ReferenceError,
         E_SystemError,
         E_MemoryError,
+        E_MalformedPackFileError,
         E_LAST_PYTHON_E = E_MemoryError,
 
         BAD_BUFFER_SIZE,
