@@ -30,6 +30,18 @@ void Parrot_cx_broadcast_message(PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_API
+INTVAL Parrot_cx_count_handlers_typed(PARROT_INTERP,
+    ARGIN(STRING *handler_type))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+void Parrot_cx_delete_handler_typed(PARROT_INTERP,
+    ARGIN(STRING *handler_type))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_cx_delete_suspend_for_gc(PARROT_INTERP)
         __attribute__nonnull__(1);

@@ -446,6 +446,58 @@ Parrot_cx_add_handler(PARROT_INTERP, ARGIN(PMC *handler))
 
 /*
 
+=item C<void Parrot_cx_delete_handler_typed>
+
+Remove the top task handler of a particular type from the scheduler's list of
+handlers.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_cx_delete_handler_typed(PARROT_INTERP, ARGIN(STRING *handler_type))
+{
+    if (interp->scheduler) {
+        Parrot_PCCINVOKE(interp, interp->scheduler,
+                CONST_STRING(interp, "delete_handler"), "S->", handler_type);
+    }
+    else
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
+                "Scheduler was not initialized for this interpreter.\n");
+    return;
+}
+
+/*
+
+=item C<INTVAL Parrot_cx_count_handlers_typed>
+
+Count the number of active handlers of a particular type (event, exception) in
+the concurrency scheduler.
+
+=cut
+
+*/
+
+PARROT_API
+INTVAL
+Parrot_cx_count_handlers_typed(PARROT_INTERP, ARGIN(STRING *handler_type))
+{
+    INTVAL count = 0;
+
+    if (interp->scheduler)
+        Parrot_PCCINVOKE(interp, interp->scheduler,
+                CONST_STRING(interp, "count_handlers"), "S->I", handler_type, count);
+    else
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
+                "Scheduler was not initialized for this interpreter.\n");
+
+    return count;
+}
+
+/*
+
 =back
 
 =head2 Scheduler Message Interface Functions

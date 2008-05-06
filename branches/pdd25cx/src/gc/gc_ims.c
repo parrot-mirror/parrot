@@ -504,7 +504,7 @@ gc_ims_add_free_object(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), ARGOUT(vo
 
 /*
 
-=item C<static PObj * gc_ims_get_free_object>
+=item C<static void * gc_ims_get_free_object>
 
 Get a new object off the free_list in the given pool.
 

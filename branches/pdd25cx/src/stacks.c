@@ -21,8 +21,17 @@ where each chunk has room for one entry.
 
 #include "parrot/parrot.h"
 #include "parrot/stacks.h"
+#include "stacks.str"
 
 /* HEADERIZER HFILE: include/parrot/stacks.h */
+
+/* HEADERIZER BEGIN: static */
+
+static void run_cleanup_action(PARROT_INTERP, ARGIN(Stack_Entry_t *e))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+/* HEADERIZER END: static */
 
 /*
 
@@ -448,6 +457,98 @@ Parrot_dump_dynamic_environment(PARROT_INTERP, ARGIN(Stack_Chunk_t *dynamic_env)
     PIO_eprintf(interp, "[%4d:  chunk %p %s base]\n",
                 height, dynamic_env, dynamic_env->name);
 }
+
+
+/*
+
+=item C<static void run_cleanup_action>
+
+Runs the sub PMC from the Stack_Entry_t pointer with an INTVAL arg of 0.  Used
+in C<Parrot_push_action>.
+
+=cut
+
+*/
+
+static void
+run_cleanup_action(PARROT_INTERP, ARGIN(Stack_Entry_t *e))
+{
+    /*
+     * this is called during normal stack_pop of the control
+     * stack - run the action subroutine with an INTVAL arg of 0
+     */
+    PMC * const sub = UVal_pmc(e->entry);
+    Parrot_runops_fromc_args(interp, sub, "vI", 0);
+}
+
+/*
+
+=item C<void Parrot_push_action>
+
+Pushes an action handler onto the dynamic environment.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_push_action(PARROT_INTERP, ARGIN(PMC *sub))
+{
+    if (!VTABLE_isa(interp, sub, CONST_STRING(interp, "Sub")))
+        real_exception(interp, NULL, 1, "Tried to push a non Sub PMC action");
+
+    stack_push(interp, &interp->dynamic_env, sub,
+               STACK_ENTRY_ACTION, run_cleanup_action);
+}
+
+/*
+
+=item C<void Parrot_push_mark>
+
+Push a cleanup mark onto the dynamic environment.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_push_mark(PARROT_INTERP, INTVAL mark)
+{
+    stack_push(interp, &interp->dynamic_env, &mark,
+               STACK_ENTRY_MARK, STACK_CLEANUP_NULL);
+}
+
+/*
+
+=item C<void Parrot_pop_mark>
+
+Pop items off the dynamic environment up to the mark.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_pop_mark(PARROT_INTERP, INTVAL mark)
+{
+    do {
+        const Stack_Entry_t * const e
+            = stack_entry(interp, interp->dynamic_env, 0);
+        if (!e)
+            real_exception(interp, NULL, 1,
+                           "Mark %ld not found.", (long)mark);
+        (void)stack_pop(interp, &interp->dynamic_env,
+                        NULL, e->entry_type);
+        if (e->entry_type == STACK_ENTRY_MARK) {
+            if (UVal_int(e->entry) == mark)
+                return;
+        }
+    } while (1);
+}
+
 
 /*
 
