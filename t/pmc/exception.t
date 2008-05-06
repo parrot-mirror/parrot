@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 35;
+use Parrot::Test tests => 30;
 
 =head1 NAME
 
@@ -307,7 +307,7 @@ caught it in 2
 something happened
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next", todo => "deprecate rethrow" );
     print "main\n"
     push_eh _handler1
     push_eh _handler2
@@ -330,7 +330,7 @@ _handler2:
     print "caught it in 2\n"
     print S0
     print "\n"
-    throw P5	# XXX rethrow?
+    #throw P5	# XXX rethrow?
     end
 CODE
 main
@@ -587,44 +587,45 @@ Error: something happened
 Outer value
 OUTPUT
 
-pir_error_output_like( <<'CODE', <<'OUTPUT', 'pop_eh out of context (1)' );
-.sub main :main
-    pushmark 1
-    pop_eh
-    print "no exceptions.\n"
-.end
-CODE
-/No exception to pop./
-OUTPUT
-
-pir_output_is( <<'CODE', <<'OUTPUT', 'pop_eh out of context (2)' );
-.sub main :main
-    .local pmc outer, cont
-    push_eh handler
-    test1()
-    print "skipped.\n"
-    goto done
-handler:
-    .local pmc exception
-    .get_results (exception, $S0)
-    print "Error: "
-    print $S0
-    print "\n"
-done:
-    print "done.\n"
-.end
-.sub test1
-    .local pmc exit
-    print "[in test1]\n"
-    ## pop_eh is illegal here, and signals an exception.
-    pop_eh
-    print "[cleared]\n"
-.end
-CODE
-[in test1]
-Error: No exception to pop.
-done.
-OUTPUT
+# These tests aren't relevant anymore
+#pir_error_output_like( <<'CODE', <<'OUTPUT', 'pop_eh out of context (1)' );
+#.sub main :main
+#    pushmark 1
+#    pop_eh
+#    print "no exceptions.\n"
+#.end
+#CODE
+#/No exception to pop./
+#OUTPUT
+#
+#pir_output_is( <<'CODE', <<'OUTPUT', 'pop_eh out of context (2)' );
+#.sub main :main
+#    .local pmc outer, cont
+#    push_eh handler
+#    test1()
+#    print "skipped.\n"
+#    goto done
+#handler:
+#    .local pmc exception
+#    .get_results (exception, $S0)
+#    print "Error: "
+#    print $S0
+#    print "\n"
+#done:
+#    print "done.\n"
+#.end
+#.sub test1
+#    .local pmc exit
+#    print "[in test1]\n"
+#    ## pop_eh is illegal here, and signals an exception.
+#    pop_eh
+#    print "[cleared]\n"
+#.end
+#CODE
+#[in test1]
+#Error: No exception to pop.
+#done.
+#OUTPUT
 
 # stringification is handled by a vtable method, which runs in a second
 # runloop. when an error in the method tries to go to a Error_Handler defined
@@ -737,7 +738,7 @@ OUTPUT
 
 ## Regression test for r14697.  This probably won't be needed when PDD23 is
 ## fully implemented.
-pir_error_output_like( <<'CODE', <<'OUTPUT', "invoke handler in calling sub" );
+pir_error_output_like( <<'CODE', <<'OUTPUT', "invoke handler in calling sub", todo => "deprecate rethrow" );
 ## This tests that error handlers are out of scope when invoked (necessary for
 ## rethrow) when the error is signalled in another sub.
 .sub main :main
@@ -750,7 +751,7 @@ handler:
     print "in handler.\n"
     print $S0
     print "\n"
-    rethrow exception
+    #rethrow exception
 .end
 
 .sub broken
@@ -765,84 +766,6 @@ CODE
 something broke
 something broke
 current inst/
-OUTPUT
-
-pir_output_is( <<'CODE', <<'OUTPUT', "get_all_eh" );
-.sub main :main
-    push_eh _handler1
-    push_eh _handler2
-    print "ok 1\n"
-    $P0 = get_all_eh
-    $I0 = elements $P0
-    unless $I0 == 2 goto wrong_number
-    print "ok 2\n"
-    wrong_number:
-    pop_eh
-    pop_eh
-    print "ok 3\n"
-    end
-_handler1:
-    print "never printed\n"
-    end
-_handler2:
-    print "never printed\n"
-    end
-.end
-CODE
-ok 1
-ok 2
-ok 3
-OUTPUT
-
-pir_output_is( <<'CODE', <<'OUTPUT', "get_eh" );
-.sub main :main
-    push_eh _handler1
-    push_eh _handler2
-    print "ok 1\n"
-    $P0 = get_eh 0
-    pop_eh
-    pop_eh
-    print "ok 2\n"
-    $P0()
-    end
-_handler1:
-    print "not ok 3\n"
-    end
-_handler2:
-    print "ok 3\n"
-    end
-.end
-CODE
-ok 1
-ok 2
-ok 3
-OUTPUT
-
-pir_output_is( <<'CODE', <<'OUTPUT', "get_eh" );
-.sub main :main
-    push_eh _handler1
-    push_eh _handler2
-    print "ok 1\n"
-    $I0 = count_eh
-    if $I0 == 2 goto right_number
-        print "not "
-    right_number:
-    print "ok 2\n"
-    pop_eh
-    pop_eh
-    print "ok 3\n"
-    end
-_handler1:
-    print "first handler\n"
-    end
-_handler2:
-    print "second handler\n"
-    end
-.end
-CODE
-ok 1
-ok 2
-ok 3
 OUTPUT
 
 # Local Variables:

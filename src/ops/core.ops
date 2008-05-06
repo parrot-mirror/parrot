@@ -720,15 +720,6 @@ Only valid inside an exception handler. Rethrow the exception $1.
 
 Get a count of currently active exception handlers on the stack.
 
-=item B<get_eh>(out PMC, in INT)
-
-Return the exception handler at I<index>. The index is an offset from the top
-of the stack, with '0' being the top.
-
-=item B<get_all_eh>(out PMC)
-
-Return an array of all current exception handlers.
-
 =item B<die>(in STR)
 =item B<die>(in PMC)
 
@@ -765,15 +756,16 @@ return; C<1> means an exception has been raised.
 inline op push_eh(labelconst INT) {
     PMC * const eh = pmc_new(interp, enum_class_Exception_Handler);
     VTABLE_set_pointer(interp, eh, CUR_OPCODE + $1);
-    push_exception(interp, eh);
+    Parrot_cx_add_handler(interp, eh);
 }
 
 inline op push_eh(invar PMC) {
-    push_exception(interp, $1);
+    Parrot_cx_add_handler(interp, $1);
 }
 
 inline op pop_eh() {
-    pop_exception(interp);
+    Parrot_cx_delete_handler_typed(interp,
+            string_from_cstring(interp, "exception", 9));
 }
 
 inline op throw(invar PMC) :flow {
@@ -799,17 +791,9 @@ inline op rethrow(invar PMC) :flow {
 }
 
 inline op count_eh(out INT) {
-    $1 = count_exception_handlers(interp);
+    $1 = Parrot_cx_count_handlers_typed(interp,
+            string_from_cstring(interp, "exception", 9));
 }
-
-inline op get_eh(out PMC, in INT) {
-    $1 = get_exception_handler(interp, $2);
-}
-
-inline op get_all_eh(out PMC) {
-    $1 = get_all_exception_handlers(interp);
-}
-
 
 inline op die(in STR) :flow {
     do_str_exception(interp, $1);
