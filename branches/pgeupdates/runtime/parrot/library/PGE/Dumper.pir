@@ -123,7 +123,7 @@ An alternate dump output for a Match object and all of its subcaptures.
     $S0 = $I0
     out .= $S0
     out .= "\n"
-    capt = getattribute self, '@!capt'
+    capt = self.'list'()
     if_null capt, subrules
     spi = 0
     spc = elements capt

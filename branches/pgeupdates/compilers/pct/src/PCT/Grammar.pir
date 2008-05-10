@@ -56,7 +56,7 @@ throw an exception if a result object hasn't been set.
 
 .sub 'item' :method
     .local pmc obj
-    obj = getattribute self, '$!result'
+    obj = getattribute self, '$!item'
     unless null obj goto end
     die "No result object"
   end:
