@@ -57,12 +57,12 @@ my @steps = qw(
     auto::gmp
     auto::readline
     auto::gdbm
+    auto::pcre
     auto::opengl
     auto::crypto
     auto::gettext
     auto::snprintf
     auto::perldoc
-    auto::python
     auto::m4
     auto::ctags
     auto::revision
@@ -72,6 +72,7 @@ my @steps = qw(
     gen::crypto
     gen::parrot_include
     gen::opengl
+    gen::call_list
     gen::languages
     gen::makefiles
     gen::platform

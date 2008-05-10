@@ -1,17 +1,16 @@
 #! perl
-# Copyright (C) 2007, The Perl Foundation.
-# $Id$
-# auto_python-01.t
+# Copyright (C) 2007-2008, The Perl Foundation.
+# $Id: $
+# gen_call_list-01.t
 
 use strict;
 use warnings;
 use Test::More tests =>  2;
 use Carp;
 use lib qw( lib );
-use_ok('config::auto::python');
+use_ok('config::gen::call_list');
 
-=for hints_for_testing Try to test all branches and conditions; consult
-a recent code coverage report for guidance.
+=for hints_for_testing This is just a stub so that Configure.pl will run.
 
 =cut
 
@@ -21,25 +20,25 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_python-01.t - test config::auto::python
+  gen_call_list-01.t - test config::gen::call_list
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_python-01.t
+    % prove t/steps/gen_call_list-01.t
 
 =head1 DESCRIPTION
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::python.
+The tests in this file test subroutines exported by config::gen::call_list.
 
 =head1 AUTHOR
 
-James E Keenan
+Geoffrey Broadwell; modified from a similar file by James E Keenan
 
 =head1 SEE ALSO
 
-config::auto::python, F<Configure.pl>.
+config::gen::call_list, F<Configure.pl>.
 
 =cut
 
