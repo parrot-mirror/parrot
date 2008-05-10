@@ -615,6 +615,7 @@ STR_FILES = \
     $(SRC_DIR)/spf_render.str \
     $(SRC_DIR)/spf_vtable.str \
     $(SRC_DIR)/sub.str \
+    $(SRC_DIR)/stacks.str \
     \
     $(CLASS_STR_FILES)
 
