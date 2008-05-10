@@ -48,14 +48,17 @@ static PMC * find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
 
 /*
 
-=item C<void internal_exception>
+=item C<void exit_fatal>
 
-Signal a fatal exception.  This involves printing an error message to stderr,
-and calling C<Parrot_exit> to invoke exit handlers and exit the process with the
-given exitcode.  No error handlers are used, so it is not possible for Parrot
-bytecode to intercept a fatal error (cf. C<real_exception>).  Furthermore, no
-stack unwinding is done, so the exit handlers run in the current dynamic
-environment.
+Signal a fatal error condition.  This should only be used with dire errors that
+cannot throw an exception (because no interpreter is available, or the nature
+of the error would interfere with the exception system).
+
+This involves printing an error message to stderr, and calling C<exit> to exit
+the process with the given exitcode. It is not possible for Parrot bytecode to
+intercept a fatal error (for that, use C<real_exception>). C<exit_fatal> does
+not call C<Parrot_exit> to invoke exit handlers (that would require an
+interpreter).
 
 =cut
 
@@ -64,7 +67,7 @@ environment.
 PARROT_API
 PARROT_DOES_NOT_RETURN
 void
-internal_exception(int exitcode, ARGIN(const char *format), ...)
+exit_fatal(int exitcode, ARGIN(const char *format), ...)
 {
     va_list arglist;
     va_start(arglist, format);
@@ -73,11 +76,6 @@ internal_exception(int exitcode, ARGIN(const char *format), ...)
     /* caution against output swap (with PDB_backtrace) */
     fflush(stderr);
     va_end(arglist);
-/*
- * RT #45907 get rid of all the internal_exceptions or call them
- *          with an interpreter arg
-    Parrot_exit(interp, exitcode);
- */
     exit(exitcode);
 }
 
@@ -565,7 +563,7 @@ string and arguments.  C<ret_addr> is the address from which to resume, if some
 handler decides that is appropriate, or zero to make the error non-resumable.
 C<exitcode> is a C<exception_type_enum> value.
 
-See also C<internal_exception()>, which signals fatal errors, and
+See also C<exit_fatal()>, which signals fatal errors, and
 C<run_handler>, which calls the handler.
 
 =cut

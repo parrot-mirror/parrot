@@ -359,7 +359,7 @@ emit_ldrstr_offset(char *pc,
 {
     ldr_str_dir_t direction = dir_Up;
     if (offset > 4095 || offset < -4095) {
-        internal_exception(EXCEPTION_JIT_ERROR,
+        exit_fatal(EXCEPTION_JIT_ERROR,
                            "Unable to generate offset %d, larger than 4095\n",
                            offset);
     }
@@ -1083,7 +1083,7 @@ arm_sync_d_i_cache(void *start, void *end)
         : "r0", "r1", "r2");
 
     if (result < 0) {
-        internal_exception(EXCEPTION_JIT_ERROR,
+        exit_fatal(EXCEPTION_JIT_ERROR,
                            "Synchronising I and D caches failed with errno=%d\n",
                            -result);
     }
