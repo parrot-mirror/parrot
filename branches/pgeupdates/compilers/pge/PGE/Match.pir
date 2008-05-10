@@ -208,7 +208,7 @@ Returns the portion of the target string matched by this object.
 .end
 
 
-=item C<get_scalar()>
+=item C<item()>
 
 Returns the scalar value of this match -- the "result object"
 if there is one, otherwise the substring matched by this match
@@ -216,7 +216,7 @@ object.
 
 =cut
 
-.sub 'get_scalar' :method
+.sub 'item' :method
     .return self.'result_object'()
 .end
 
@@ -263,7 +263,7 @@ then simply return the first key found.
     unless $I0 goto loop
     .return ($S0)
   first_key:
-    $P0 = self.'get_hash'()
+    $P0 = self.'hash'()
     $P1 = new 'Iterator', $P0
     unless $P1 goto not_found
     $S0 = shift $P1
@@ -428,23 +428,23 @@ objects depending on the rule.
 .end
 
 
-=item C<get_hash()>
+=item C<hash()>
 
 Returns the hash component of the match object.
 
 =cut
 
-.sub 'get_hash' :method
+.sub 'hash' :method
     .return (self)
 .end
 
-=item C<get_array()>
+=item C<list()>
 
 Returns the array component of the match object.
 
 =cut
 
-.sub 'get_array' :method
+.sub 'list' :method
     .local pmc array
     array = getattribute self, '@!capt'
     .return (array)

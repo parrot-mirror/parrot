@@ -21,7 +21,7 @@ version until the Capture PMC is working properly.
 .end
 
 
-.sub 'get_array' :method
+.sub 'list' :method
     $P0 = getattribute self, '@!array'
     unless null $P0 goto end
     $P0 = new 'ResizablePMCArray'
@@ -31,21 +31,21 @@ version until the Capture PMC is working properly.
 .end
 
 
-.sub 'get_hash' :method
+.sub 'hash' :method
     .return (self)
 .end
 
 
 .sub 'unshift_pmc' :vtable :method
     .param pmc val
-    $P0 = self.'get_array'()
+    $P0 = self.'list'()
     unshift $P0, val
     .return ()
 .end
 
 
 .sub 'shift_pmc' :vtable :method
-    $P0 = self.'get_array'()
+    $P0 = self.'list'()
     $P0 = shift $P0
     .return ($P0)
 .end
@@ -53,14 +53,14 @@ version until the Capture PMC is working properly.
 
 .sub 'push_pmc' :vtable :method
     .param pmc val
-    $P0 = self.'get_array'()
+    $P0 = self.'list'()
     push $P0, val
     .return ()
 .end
 
 
 .sub 'pop_pmc' :vtable :method
-    $P0 = self.'get_array'()
+    $P0 = self.'list'()
     $P0 = pop $P0
     .return ($P0)
 .end
@@ -90,7 +90,7 @@ version until the Capture PMC is working properly.
 .sub 'set_pmc_keyed_int' :vtable :method
     .param int key
     .param pmc val
-    $P0 = self.'get_array'()
+    $P0 = self.'list'()
     $P0[key] = val
     .return ()
 .end
@@ -106,7 +106,7 @@ version until the Capture PMC is working properly.
     (subindent, indent) = dumper.'newIndent'()
 
     .local pmc hash, iter
-    hash = self.'get_hash'()
+    hash = self.'hash'()
     iter = new 'Iterator', hash
   dump_hash_loop:
     unless iter goto dump_hash_end
@@ -128,7 +128,7 @@ version until the Capture PMC is working properly.
   dump_hash_end:
 
     .local pmc array
-    array = self.'get_array'()
+    array = self.'list'()
     if null array goto dump_array_end
     $I1 = elements array
     $I0 = 0
