@@ -425,7 +425,7 @@ Delete a handler from the scheduler.
             }
         }
 
-	real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
                         "No handler to delete.");
     }
 
