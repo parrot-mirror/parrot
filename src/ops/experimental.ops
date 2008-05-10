@@ -418,7 +418,7 @@ inline op find_sub_not_null(out PMC, in STR) :base_core {
     PMC *sub = Parrot_find_name_op(interp, $2, expr NEXT());
 
     if (PMC_IS_NULL(sub))
-        real_exception(interp, NULL, GLOBAL_NOT_FOUND,
+        real_exception(interp, NULL, EXCEPTION_GLOBAL_NOT_FOUND,
             "Could not invoke non-existent sub %Ss", $2);
 
     $1 = sub;
