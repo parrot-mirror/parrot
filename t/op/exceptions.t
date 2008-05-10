@@ -235,7 +235,7 @@ caught it in 2
 something happend
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next", todo => "deprecate rethrow" );
     print "main\n"
     push_eh _handler1
     push_eh _handler2
@@ -256,7 +256,7 @@ _handler2:
     print "caught it in 2\n"
     print S0
     print "\n"
-    throw P5	# XXX rethrow?
+    # throw P5	# XXX rethrow?
     end
 CODE
 main
@@ -518,10 +518,10 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', 'pop_eh out of context (1)' );
     print "no exceptions.\n"
 .end
 CODE
-/No exception to pop./
+/No handler to delete./
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', 'pop_eh out of context (2)' );
+pir_output_is( <<'CODE', <<'OUTPUT', 'pop_eh out of context (2)', todo => 'handler dynamic scope' );
 .sub main :main
     .local pmc outer, cont
     push_eh handler
@@ -546,7 +546,7 @@ done:
 .end
 CODE
 [in test1]
-Error: No exception to pop.
+Error: No handler to delete.
 done.
 OUTPUT
 
@@ -661,7 +661,7 @@ OUTPUT
 
 ## Regression test for r14697.  This probably won't be needed when PDD23 is
 ## fully implemented.
-pir_error_output_like( <<'CODE', <<'OUTPUT', "invoke handler in calling sub" );
+pir_error_output_like( <<'CODE', <<'OUTPUT', "invoke handler in calling sub", todo => 'deprecate rethrow' );
 ## This tests that error handlers are out of scope when invoked (necessary for
 ## rethrow) when the error is signalled in another sub.
 .sub main :main
@@ -674,7 +674,7 @@ handler:
     print "in handler.\n"
     print $S0
     print "\n"
-    rethrow exception
+    # rethrow exception
 .end
 
 .sub broken
