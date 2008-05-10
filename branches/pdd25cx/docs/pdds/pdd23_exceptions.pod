@@ -85,14 +85,14 @@ of cross-language calls -- and in a Parrot environment, cross-language
 operations are kind of the point -- then you should be prepared to catch
 exception classes you would never have thrown yourself.
 
-That said, it is I<VERY STRONGLY RECOMMENDED> that any thrown PMC that can
-possibly escape your private sandbox should meet the minimal interface
-requirements of the C<parrot;exception> class, described below.
+That said, it is recommended that any thrown PMC that can possibly escape your
+private sandbox should meet the minimal interface requirements of the
+C<parrot;exception> class, described below.
 
-Exception handlers can resume execution immediately after the C<throwcc>
+Exception handlers can resume execution immediately after the C<throw>
 opcode by executing the C<handled> opcode, and then invoking the given
 continuation which they receive as a parameter.  That continuation must be
-invoked with no parameters; in other words, C<throwcc> never returns a
+invoked with no parameters; in other words, C<throw> never returns a
 value.
 
 =item B<die [ I<MESSAGE> ]>
@@ -152,8 +152,7 @@ Return a resizable pmc array of all current exception handlers.
 
 =head2 Order of Operations in Exception Handling
 
-When B<throw> or B<throwcc> is called, for all active exception
-handlers, in LIFO order:
+When B<throw> is called, for all active exception handlers, in LIFO order:
 
 =over
 
@@ -162,7 +161,7 @@ Find the topmost exception handler.
 
 =item 2
 Push an exception record somewhere, presumably on the exception handler
-stack.  The exception record contains a pointer to an exception handler
+stack. The exception record contains a pointer to an exception handler
 block, an exception PMC, and (optionally) a continuation.
 
 =item 3
@@ -188,7 +187,7 @@ If the handler is found, invoke it.
 =item 4
 If no handler is found, and the exception is non-fatal (such as a
 warning), and there is a continuation in the exception record (because
-the throwing opcode was C<throwcc>), invoke the continuation (resume
+the throwing opcode was C<throw>), invoke the continuation (resume
 execution). Whether to resume or die when an exception isn't handled is
 determined by the severity of the exception.
 
