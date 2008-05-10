@@ -17,15 +17,16 @@ version until the Capture PMC is working properly.
 
 .sub '__onload' :load :init
     $P0 = subclass 'Hash', 'Capture_PIR'
-    addattribute $P0, '@!array'
+    addattribute $P0, '$!item'
+    addattribute $P0, '@!list'
 .end
 
 
 .sub 'list' :method
-    $P0 = getattribute self, '@!array'
+    $P0 = getattribute self, '@!list'
     unless null $P0 goto end
     $P0 = new 'ResizablePMCArray'
-    setattribute self, '@!array', $P0
+    setattribute self, '@!list', $P0
   end:
     .return ($P0)
 .end
@@ -65,11 +66,18 @@ version until the Capture PMC is working properly.
     .return ($P0)
 .end
 
+=item C<get_string_keyed_int(int key)>
+
+Returns the portion of the target string matched by C<key>,
+in string context. If the Match object contains an array of
+matches, a space seperated list of matches is returned.
+
+=cut
 
 .sub 'get_string_keyed_int' :vtable :method
     .param int key
     $S0 = ''
-    $P0 = getattribute self, '@!array'
+    $P0 = getattribute self, '@!list'
     if null $P0 goto end
     $S0 = $P0[key]
   end:
@@ -77,9 +85,17 @@ version until the Capture PMC is working properly.
 .end
 
 
+=item C<get_pmc_keyed_int(int key)>
+
+Returns the subpattern capture associated with C<key>.  This
+returns either a single Match object or an array of match
+objects depending on the rule.
+
+=cut
+
 .sub 'get_pmc_keyed_int' :vtable :method
     .param int key
-    $P0 = getattribute self, '@!array'
+    $P0 = getattribute self, '@!list'
     if null $P0 goto end
     $P0 = $P0[key]
   end:
@@ -93,6 +109,26 @@ version until the Capture PMC is working properly.
     $P0 = self.'list'()
     $P0[key] = val
     .return ()
+.end
+
+
+.sub 'delete_keyed_int' :vtable :method
+    .param int key
+    .local pmc list
+    list = getattribute self, '@!list'
+    delete list[key]
+.end
+
+
+.sub 'defined_keyed_int' :vtable :method
+    .param int key
+    .local pmc list
+    $I0 = 0
+    list = getattribute self, '@!list'
+    if null list goto end
+    $I0 = defined list[key]
+  end:
+    .return ($I0)
 .end
 
 
