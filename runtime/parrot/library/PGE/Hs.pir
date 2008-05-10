@@ -203,7 +203,7 @@ END:
 
   subrules:
     out .= "] ["
-    capt = self."get_hash"()
+    capt = self.'hash'()
     if_null capt, end
     iter = new 'Iterator', capt
     iter = 0
