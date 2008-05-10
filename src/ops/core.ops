@@ -560,7 +560,7 @@ op set_returns(inconst PMC) :flow {
         if (! caller_ctx) {
             /* there is no point calling real_exception here, because
                PDB_backtrace can't deal with a missing to_ctx either. */
-            internal_exception(1, "No caller_ctx for continuation %p.", ccont);
+            exit_fatal(1, "No caller_ctx for continuation %p.", ccont);
         }
 
         src_indexes = interp->current_returns;

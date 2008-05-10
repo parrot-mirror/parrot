@@ -952,7 +952,7 @@ jit_set_returns_pc(Parrot_jit_info_t *jit_info, PARROT_INTERP,
             }
             break;
         default:
-            internal_exception(1, "set_returns_jit - unknown type");
+            exit_fatal(1, "set_returns_jit - unknown type");
             break;
     }
 }
@@ -973,7 +973,7 @@ jit_set_args_pc(Parrot_jit_info_t *jit_info, PARROT_INTERP,
 
     if (!recursive) {
         /* create args array */
-        internal_exception(1, "set_args_jit - can't do that yet ");
+        exit_fatal(1, "set_args_jit - can't do that yet ");
     }
 
     constants = CONTEXT(interp)->constants;
@@ -1012,7 +1012,7 @@ jit_set_args_pc(Parrot_jit_info_t *jit_info, PARROT_INTERP,
                 jit_emit_mov_ri_i(NATIVECODE, params_map, CUR_OPCODE[2 + i]);
                 break;
             default:
-                internal_exception(1, "set_args_jit - unknown type");
+                exit_fatal(1, "set_args_jit - unknown type");
                 break;
         }
     }
@@ -1201,7 +1201,7 @@ Parrot_jit_dofixup(Parrot_jit_info_t *jit_info,
                 break;
 
             default:
-                internal_exception(EXCEPTION_JIT_ERROR, "Unknown fixup type:%d\n",
+                exit_fatal(EXCEPTION_JIT_ERROR, "Unknown fixup type:%d\n",
                                    fixup->type);
                 break;
         }

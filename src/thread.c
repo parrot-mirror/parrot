@@ -817,15 +817,15 @@ pt_check_tid(UINTVAL tid, ARGIN(const char *from))
 {
     if (tid >= n_interpreters) {
         UNLOCK(interpreter_array_mutex);
-        internal_exception(1, "%s: illegal thread tid %d", from, tid);
+        exit_fatal(1, "%s: illegal thread tid %d", from, tid);
     }
     if (tid == 0) {
         UNLOCK(interpreter_array_mutex);
-        internal_exception(1, "%s: illegal thread tid %d (main)", from, tid);
+        exit_fatal(1, "%s: illegal thread tid %d (main)", from, tid);
     }
     if (!interpreter_array[tid]) {
         UNLOCK(interpreter_array_mutex);
-        internal_exception(1, "%s: illegal thread tid %d - empty", from, tid);
+        exit_fatal(1, "%s: illegal thread tid %d - empty", from, tid);
     }
     return interpreter_array[tid];
 }

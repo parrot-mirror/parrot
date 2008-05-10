@@ -137,6 +137,11 @@ void do_str_exception(PARROT_INTERP, ARGIN(STRING *msg))
         __attribute__nonnull__(2);
 
 PARROT_API
+PARROT_DOES_NOT_RETURN
+void exit_fatal(int exitcode, ARGIN(const char *format), ...)
+        __attribute__nonnull__(2);
+
+PARROT_API
 void free_internal_exception(PARROT_INTERP)
         __attribute__nonnull__(1);
 

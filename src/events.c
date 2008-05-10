@@ -739,7 +739,7 @@ Parrot_schedule_broadcast_qentry(ARGIN(struct QUEUE_ENTRY *entry))
         default:
             mem_sys_free(entry);
             mem_sys_free(event);
-            internal_exception(1, "Unknown event to broadcast");
+            exit_fatal(1, "Unknown event to broadcast");
             break;
     }
 }
@@ -897,7 +897,7 @@ io_thread(SHIM(void *data))
                              */
                             edebug((stderr, "msg arrived\n"));
                             if (read(PIPE_READ_FD, &buf, sizeof (buf)) != sizeof (buf))
-                                internal_exception(1,
+                                exit_fatal(1,
                                         "read error from msg pipe");
                             switch (buf.command) {
                                 case IO_THR_MSG_TERMINATE:
@@ -919,7 +919,7 @@ io_thread(SHIM(void *data))
                                     break;
                                     /* TODO */
                                 default:
-                                    internal_exception(1,
+                                    exit_fatal(1,
                                             "unhandled msg in pipe");
                                     break;
                             }
@@ -969,7 +969,7 @@ stop_io_thread(void)
     memset(&buf, 0, sizeof (buf));
     buf.command = IO_THR_MSG_TERMINATE;
     if (write(PIPE_WRITE_FD, &buf, sizeof (buf)) != sizeof (buf))
-        internal_exception(1, "msg pipe write failed");
+        exit_fatal(1, "msg pipe write failed");
 #endif
 }
 
@@ -1121,7 +1121,7 @@ process_events(ARGMOD(QUEUE *event_q))
                 }
                 break;
             default:
-                internal_exception(1, "Unknown queue entry");
+                exit_fatal(1, "Unknown queue entry");
         }
         PARROT_ASSERT(event);
         if (event->type == EVENT_TYPE_NONE) {
@@ -1194,7 +1194,7 @@ event_thread(ARGMOD(void *data))
         else {
             /* we shouldn't get here probably
              */
-            internal_exception(1, "Spurious event");
+            exit_fatal(1, "Spurious event");
 
         }
         /*
