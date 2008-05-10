@@ -33,7 +33,7 @@ typedef struct Stack_Chunk {
     Parrot_UInt         refcount;
     union { /* force appropriate alignment of 'data'.  If alignment
                is necessary, assume double is good enough.  27-04-2007. */
-        void *data;
+        Stack_Entry_t data;
 #if PARROT_PTR_ALIGNMENT > 1
         double d_dummy;
 #endif
@@ -171,7 +171,7 @@ Stack_Chunk_t * register_new_stack(PARROT_INTERP,
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-void* stack_prepare_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
+Stack_Entry_t* stack_prepare_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*stack_p);
@@ -179,7 +179,7 @@ void* stack_prepare_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-void* stack_prepare_push(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
+Stack_Entry_t* stack_prepare_push(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*stack_p);

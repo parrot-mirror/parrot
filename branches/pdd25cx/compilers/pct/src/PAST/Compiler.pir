@@ -342,9 +342,11 @@ Return the POST representation of a C<PAST::Block>.
     goto children_done
 
   children_compiler:
-    ##  set the compiler to use for the POST::Sub node, and
-    ##  add this block's child to it.
+    ##  set the compiler to use for the POST::Sub node, pass on
+    ##  and compiler arguments and add this block's child to it.
     bpost.'compiler'(compiler)
+    $P0 = node.'compiler_args'()
+    bpost.'compiler_args'($P0)
     $P0 = node[0]
     bpost.'push'($P0)
 
@@ -490,17 +492,14 @@ a 'pasttype' of 'pirop'.
 
 =item call(PAST::Op node)
 
-=item callmethod(PAST::Op node)
-
 Return the POST representation of a C<PAST::Op> node
-with a 'pasttype' attribute of either 'call' or 'callmethod'.
+for calling a sub.
 
 =cut
 
 .sub 'call' :method :multi(_, ['PAST::Op'])
     .param pmc node
     .param pmc options         :slurpy :named
-
     .local string pasttype
     pasttype = node.'pasttype'()
     if pasttype goto have_pasttype
@@ -508,25 +507,27 @@ with a 'pasttype' attribute of either 'call' or 'callmethod'.
   have_pasttype:
 
     .local string signature
-    signature = ':'
-    unless pasttype == 'callmethod' goto have_signature
-    signature = 'P:'
+    signature = 'v:'
+    ## for callmethod, the invocant (child) must be a PMC
+    if pasttype != 'callmethod' goto have_signature
+    signature = 'vP:'
   have_signature:
 
     .local pmc ops, posargs, namedargs
     .local string name
     name = node.'name'()
-    unless name goto call_first_arg
-    signature = concat 'v', signature
+    if name goto call_by_name
+    ##  our first child is the thing to be invoked, so make sure it's a PMC
+    substr signature, 1, 0, 'P'
     (ops, posargs, namedargs) = self.'post_children'(node, 'signature'=>signature)
-    name = ops.'escape'(name)
-    unshift posargs, name
     goto children_done
-  call_first_arg:
-    signature = concat 'vP', signature
+  call_by_name:
     (ops, posargs, namedargs) = self.'post_children'(node, 'signature'=>signature)
+    $S0 = ops.'escape'(name)
+    unshift posargs, $S0
   children_done:
 
+    ##  generate the call itself
     .local string result, rtype
     result = ''
     rtype = options['rtype']
@@ -538,6 +539,14 @@ with a 'pasttype' attribute of either 'call' or 'callmethod'.
     ops.'push_pirop'(pasttype, posargs :flat, namedargs :flat, 'result'=>result)
     .return (ops)
 .end
+
+
+=item callmethod(PAST::Op node)
+
+Return the POST representation of a C<PAST::Op> node
+to invoke a method on a PMC.
+
+=cut
 
 .sub 'callmethod' :method :multi(_, ['PAST::Op'])
     .param pmc node

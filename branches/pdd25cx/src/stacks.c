@@ -69,7 +69,6 @@ void
 mark_stack(PARROT_INTERP, ARGMOD(Stack_Chunk_t *chunk))
 {
     for (; ; chunk = chunk->prev) {
-        void          **entry_data;
         Stack_Entry_t  *entry;
 
         pobject_lives(interp, (PObj *)chunk);
@@ -77,8 +76,7 @@ mark_stack(PARROT_INTERP, ARGMOD(Stack_Chunk_t *chunk))
         if (chunk == chunk->prev)
             break;
 
-        entry_data = STACK_DATAP(chunk);
-        entry      = (Stack_Entry_t *)entry_data;
+        entry = STACK_DATAP(chunk);
 
         if (entry->entry_type == STACK_ENTRY_PMC && UVal_pmc(entry->entry))
             pobject_lives(interp, (PObj *)UVal_pmc(entry->entry));
@@ -149,7 +147,6 @@ Stack_Entry_t *
 stack_entry(PARROT_INTERP, ARGIN(Stack_Chunk_t *stack), INTVAL depth)
 {
     Stack_Chunk_t *chunk;
-    void         **entry;
     size_t         offset = (size_t)depth;
 
     if (depth < 0)
@@ -168,9 +165,7 @@ stack_entry(PARROT_INTERP, ARGIN(Stack_Chunk_t *stack), INTVAL depth)
     if (chunk == chunk->prev)
         return NULL;
 
-    /* this looks bad, but it avoids a type-punning warning */
-    entry = STACK_DATAP(chunk);
-    return (Stack_Entry_t *)entry;
+    return STACK_DATAP(chunk);
 }
 
 /*

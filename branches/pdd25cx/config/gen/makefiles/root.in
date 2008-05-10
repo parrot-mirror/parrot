@@ -604,6 +604,7 @@ STR_FILES = \
     $(SRC_DIR)/inter_cb.str \
     $(SRC_DIR)/inter_create.str \
     $(SRC_DIR)/inter_misc.str \
+    $(SRC_DIR)/io/io.str \
     $(SRC_DIR)/key.str \
     $(SRC_DIR)/library.str \
     $(SRC_DIR)/mmd.str \
@@ -1120,7 +1121,7 @@ $(SRC_DIR)/inter_create$(O) : $(SRC_DIR)/inter_create.c $(GENERAL_H_FILES)
 
 $(SRC_DIR)/inter_run$(O) : $(SRC_DIR)/inter_run.c $(GENERAL_H_FILES)
 
-$(IO_DIR)/io$(O) : $(GENERAL_H_FILES) $(IO_DIR)/io_private.h
+$(IO_DIR)/io$(O) : $(GENERAL_H_FILES) $(IO_DIR)/io_private.h $(IO_DIR)/io.str
 
 $(IO_DIR)/io_buf$(O) : $(GENERAL_H_FILES) $(IO_DIR)/io_private.h
 
@@ -1623,7 +1624,7 @@ prog-clean :
 	$(PERL) $(BUILD_TOOLS_DIR)/c2str.pl --init
 	$(RM_F) \
     $(SRC_DIR)/string_private_cstring.h \
-    "$(SRC_DIR)/*.str" "src/pmc/*.str" \
+    $(STR_FILES) \
     "src/pmc/*.c" "src/pmc/pmc_*.h" "src/pmc/*.dump" \
     vtable.dump "*.def" "*.lib" "*.exp"
 
