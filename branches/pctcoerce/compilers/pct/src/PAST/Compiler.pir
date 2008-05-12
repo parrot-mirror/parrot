@@ -52,6 +52,10 @@ By default PAST::Compiler transforms a PAST tree into POST.
     $P0 = new 'CodeString'
     set_global '%!codestring', $P0
 
+    $P0 = new 'Integer'
+    $P0 = 10
+    set_global '$!serno', $P0
+
     .return ()
 .end
 
@@ -82,6 +86,62 @@ Compile the abstract syntax tree given by C<past> into POST.
     null $P0
     set_global '$?SUB', $P0                                # see RT#49758
     .return self.'as_post'(past, 'rtype'=>'v')
+.end
+
+=item escape(str)
+
+Return C<str> as a PIR constant string.
+
+=cut
+
+.sub 'escape' :method
+    .param string str
+    $P0 = new 'CodeString'
+    str = $P0.'escape'(str)
+    .return (str)
+.end
+
+=item unique([STR fmt])
+
+Generate a unique number that can be used as an identifier.
+If C<fmt> is provided, then it will be used as a prefix to the
+unique number.
+
+=cut
+
+.sub 'unique' :method
+    .param string fmt          :optional
+    .param int has_fmt         :opt_flag
+
+    if has_fmt goto unique_1
+    fmt = ''
+  unique_1:
+    $P0 = get_global '$!serno'
+    $S0 = $P0
+    $S0 = concat fmt, $S0
+    inc $P0
+    .return ($S0)
+.end
+
+=item uniquereg(rtype)
+
+Generate a unique register name based on C<rtype>.
+
+=cut
+
+.sub 'uniquereg' :method
+    .param string rtype
+    if rtype == 'v' goto reg_void
+    .local string reg
+    reg = 'P'
+    $I0 = index 'Ss~Nn+Ii', rtype
+    if $I0 < 0 goto reg_psin
+    reg = substr 'SSSNNNII', $I0, 1
+  reg_psin:
+    reg = concat '$', reg
+    .return self.'unique'(reg)
+  reg_void:
+    .return ('')
 .end
 
 =item post_children(node [, 'signature'=>signature] )
@@ -185,28 +245,6 @@ third and subsequent children can be any value they wish.
     .return (ops, posargs, namedargs)
 .end
 
-=item uniquereg(rtype)
-
-Generate a unique register name based on C<rtype>.
-
-=cut
-
-.sub 'uniquereg' :method
-    .param string rtype
-    if rtype == 'v' goto reg_void
-    .local string reg
-    reg = 'P'
-    $I0 = index 'Ss~Nn+Ii', rtype
-    if $I0 < 0 goto reg_psin
-    reg = substr 'SSSNNNII', $I0, 1
-  reg_psin:
-    reg = concat '$', reg
-    $P0 = get_global '%!codestring'
-    .return $P0.'unique'(reg)
-  reg_void:
-    .return ('')
-.end
-
 =back
 
 =head2 Methods on C<PAST::Node> arguments
@@ -249,13 +287,13 @@ instead of an entire PAST structure.
   from_string:
     .local string result
     $P0 = get_hll_global ['POST'], 'Op'
-    result = $P0.'unique'('$P')
-    $S0 = $P0.'escape'(node)
+    result = self.'unique'('$P')
+    $S0 = self.'escape'(node)
     .return $P0.'new'(result, $S0, 'pirop'=>'new', 'result'=>result)
 
   from_nothing:
     $P0 = get_hll_global ['POST'], 'Ops'
-    result = $P0.'unique'('$P')
+    result = self.'unique'('$P')
     .return $P0.'new'('result'=>result)
 
   from_past:
@@ -294,7 +332,7 @@ Return the POST representation of a C<PAST::Block>.
     .local string name
     name = node.'name'()
     if name goto have_name
-    name = node.'unique'('_block')
+    name = self.'unique'('_block')
   have_name:
 
     ##  create a POST::Sub node for this block
@@ -385,10 +423,10 @@ Return the POST representation of a C<PAST::Block>.
     result = ''
     rtype = options['rtype']
     if rtype == 'v' goto have_result
-    result = bpost.'unique'('$P')
+    result = self.'unique'('$P')
   have_result:
 
-    name = bpost.'escape'(name)
+    name = self.'escape'(name)
     $I0 = defined ns
     unless $I0 goto have_ns_key
     $P0 = new 'CodeString'
@@ -410,13 +448,13 @@ Return the POST representation of a C<PAST::Block>.
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_immediate_ns
-    $S0 = bpost.'unique'('$P')
+    $S0 = self.'unique'('$P')
     bpost.'push_pirop'('get_global', $S0, name)
     bpost.'push_pirop'('newclosure', $S0, $S0)
     bpost.'push_pirop'('call', $S0, 'result'=>result)
     goto block_done
   block_immediate_ns:
-    $S0 = bpost.'unique'('$P')
+    $S0 = self.'unique'('$P')
     bpost.'push_pirop'('get_hll_global', $S0, ns, name, 'result'=>$S0)
     bpost.'push_pirop'('call', $S0, 'result'=>result)
 
@@ -505,7 +543,7 @@ a 'pasttype' of 'pirop'.
     if $S0 == 'v' goto pirop_void
   pirop_reg:
     .local string result
-    result = ops.'unique'('$P')
+    result = self.'unique'('$P')
     ops.'result'(result)
     ops.'push_pirop'(pirop, result, arglist :flat)
     .return (ops)
@@ -548,7 +586,7 @@ for calling a sub.
     goto children_done
   call_by_name:
     (ops, posargs, namedargs) = self.'post_children'(node, 'signature'=>signature)
-    $S0 = ops.'escape'(name)
+    $S0 = self.'escape'(name)
     unshift posargs, $S0
   children_done:
 
@@ -557,7 +595,7 @@ for calling a sub.
     result = ''
     rtype = options['rtype']
     if rtype == 'v' goto result_done
-    result = ops.'unique'('$P')
+    result = self.'unique'('$P')
     ops.'result'(result)
   result_done:
 
@@ -612,7 +650,7 @@ a 'pasttype' of if/unless.
     .local pmc thenlabel, endlabel
     $P0 = get_hll_global ['POST'], 'Label'
     $S0 = concat pasttype, '_'
-    $S0 = ops.'unique'($S0)
+    $S0 = self.'unique'($S0)
     thenlabel = $P0.'new'('result'=>$S0)
     $S0 = concat $S0, '_end'
     endlabel = $P0.'new'('result'=>$S0)
@@ -675,7 +713,7 @@ Return the POST representation of a C<while> or C<until> loop.
     .local pmc looplabel, endlabel
     $P0 = get_hll_global ['POST'], 'Label'
     $S0 = concat pasttype, '_'
-    $S0 = ops.'unique'($S0)
+    $S0 = self.'unique'($S0)
     looplabel = $P0.'new'('result'=>$S0)
     $S0 = concat $S0, '_end'
     endlabel = $P0.'new'('result'=>$S0)
@@ -777,7 +815,7 @@ by C<node>.
 
     .local pmc looplabel, endlabel
     $P0 = get_hll_global ['POST'], 'Label'
-    $S0 = ops.'unique'('for_')
+    $S0 = self.'unique'('for_')
     looplabel = $P0.'new'('result'=>$S0)
     $S0 = concat $S0, '_end'
     endlabel = $P0.'new'('result'=>$S0)
@@ -788,9 +826,9 @@ by C<node>.
     ops.'push'(collpost)
 
     .local string iter
-    iter = ops.'unique'('$P')
+    iter = self.'unique'('$P')
     ops.'result'(iter)
-    $S0 = ops.'unique'('$I')
+    $S0 = self.'unique'('$I')
     ops.'push_pirop'('defined', $S0, collpost)
     ops.'push_pirop'('unless', $S0, endlabel)
     ops.'push_pirop'('iter', iter, collpost)
@@ -798,7 +836,7 @@ by C<node>.
     ops.'push_pirop'('unless', iter, endlabel)
 
     .local string nextval
-    nextval = ops.'unique'('$P')
+    nextval = self.'unique'('$P')
     ops.'push_pirop'('shift', nextval, iter)
 
     .local pmc subpast, subpost
@@ -833,7 +871,7 @@ handler.
 
     .local pmc catchlabel, endlabel
     $P0 = get_hll_global ['POST'], 'Label'
-    $S0 = ops.'unique'('catch_')
+    $S0 = self.'unique'('catch_')
     catchlabel = $P0.'new'('result'=>$S0)
     $S0 = concat $S0, '_end'
     endlabel = $P0.'new'('result'=>$S0)
@@ -891,7 +929,7 @@ $x < $y and $y < $z, but $y only gets evaluated once.
     .local pmc ops, endlabel
     $P0 = get_hll_global ['POST'], 'Ops'
     ops = $P0.'new'('node'=>node)
-    $S0 = ops.'unique'('$P')
+    $S0 = self.'unique'('$P')
     ops.'result'($S0)
     $P0 = get_hll_global ['POST'], 'Label'
     endlabel = $P0.'new'('name'=>'chain_end_')
@@ -909,7 +947,7 @@ $x < $y and $y < $z, but $y only gets evaluated once.
     ops.'push'(bpost)
     .local string name
     name = cpast.'name'()
-    name = ops.'escape'(name)
+    name = self.'escape'(name)
     ops.'push_pirop'('call', name, apost, bpost, 'result'=>ops)
     unless clist goto clist_end
     ops.'push_pirop'('unless', ops, endlabel)
@@ -937,7 +975,7 @@ being refactored out using thunks of some sort.)
 
     .local pmc ops
     $P0 = get_hll_global ['POST'], 'Ops'
-    $S0 = $P0.'unique'('$P')
+    $S0 = self.'unique'('$P')
     ops = $P0.'new'('node'=>node, 'result'=>$S0)
 
     .local pmc lpast, lpost
@@ -948,10 +986,10 @@ being refactored out using thunks of some sort.)
 
     .local pmc endlabel
     $P0 = get_hll_global ['POST'], 'Label'
-    $S0 = ops.'unique'('default_')
+    $S0 = self.'unique'('default_')
     endlabel = $P0.'new'('result'=>$S0)
 
-    $S0 = ops.'unique'('$I')
+    $S0 = self.'unique'('$I')
     ops.'push_pirop'('defined', $S0, ops)
     ops.'push_pirop'('if', $S0, endlabel)
     .local pmc rpast, rpost
@@ -980,7 +1018,7 @@ a second child is found that evaluates as true.
     .local pmc ops
     $P0 = get_hll_global ['POST'], 'Ops'
     ops = $P0.'new'('node'=>node)
-    $S0 = ops.'unique'('$P')
+    $S0 = self.'unique'('$P')
     ops.'result'($S0)
 
     .local pmc labelproto, endlabel, falselabel
@@ -989,9 +1027,9 @@ a second child is found that evaluates as true.
     endlabel = labelproto.'new'('name'=>'xor_end')
 
     .local pmc iter, apast, apost, i, t, u
-    i = ops.'unique'('$I')
-    t = ops.'unique'('$I')
-    u = ops.'unique'('$I')
+    i = self.'unique'('$I')
+    t = self.'unique'('$I')
+    u = self.'unique'('$I')
     iter = node.'iterator'()
     apast = shift iter
     apost = self.'as_post'(apast, 'rtype'=>'P')
@@ -1099,11 +1137,11 @@ node with a 'pasttype' of inline.
     if $I0 >= 0 goto result_new
     $I0 = index inline, '%r'
     unless $I0 >= 0 goto have_result
-    result = ops.'unique'('$P')
+    result = self.'unique'('$P')
     ops.'result'(result)
     goto have_result
   result_new:
-    result = ops.'unique'('$P')
+    result = self.'unique'('$P')
     ops.'push_pirop'('new', result, "'Undef'")
     ops.'result'(result)
   have_result:
@@ -1207,7 +1245,7 @@ attribute.
     .local string name, named, pname, has_pname
     name = node.'name'()
     named = node.'named'()
-    pname = subpost.'unique'('param_')
+    pname = self.'unique'('param_')
     has_pname = concat 'has_', pname
 
     ##  returned post node
@@ -1235,7 +1273,7 @@ attribute.
     subpost.'add_param'(pname, 'named'=>named, 'slurpy'=>slurpy)
 
   param_done:
-    name = ops.'escape'(name)
+    name = self.'escape'(name)
     ops.'push_pirop'('.lex', name, ops)
     .return (ops)
 .end
@@ -1251,7 +1289,7 @@ attribute.
 
     .local string name
     name = node.'name'()
-    name = ops.'escape'(name)
+    name = self.'escape'(name)
 
     $P0 = get_hll_global ['POST'], 'Op'
     .local pmc ns
@@ -1293,7 +1331,7 @@ attribute.
     .local string name
     $P0 = get_hll_global ['POST'], 'Ops'
     name = node.'name'()
-    name = $P0.'escape'(name)
+    name = self.'escape'(name)
 
     .local int isdecl
     isdecl = node.'isdecl'()
@@ -1387,7 +1425,7 @@ attribute.
     .local string name
     $P0 = get_hll_global ['POST'], 'Ops'
     name = node.'name'()
-    name = $P0.'escape'(name)
+    name = self.'escape'(name)
 
     .local int isdecl
     isdecl = node.'isdecl'()
@@ -1452,7 +1490,7 @@ to have a PMC generated containing the constant value.
 
     $I0 = index valflags, 'e'
     if $I0 < 0 goto escape_done
-    value = ops.'escape'(value)
+    value = self.'escape'(value)
   escape_done:
 
     .local string rtype
@@ -1464,8 +1502,8 @@ to have a PMC generated containing the constant value.
 
   result_pmc:
     .local string result
-    result = ops.'unique'('$P')
-    returns = ops.'escape'(returns)
+    result = self.'unique'('$P')
+    returns = self.'escape'(returns)
     ops.'push_pirop'('new', result, returns)
     ops.'push_pirop'('assign', result, value)
     ops.'result'(result)
