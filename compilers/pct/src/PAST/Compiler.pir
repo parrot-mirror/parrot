@@ -49,6 +49,9 @@ By default PAST::Compiler transforms a PAST tree into POST.
     valflags['Float']    = '+*:'
     set_global '%valflags', valflags
 
+    $P0 = new 'CodeString'
+    set_global '%!codestring', $P0
+
     .return ()
 .end
 
@@ -180,6 +183,28 @@ third and subsequent children can be any value they wish.
     goto iter_loop
   iter_end:
     .return (ops, posargs, namedargs)
+.end
+
+=item uniquereg(rtype)
+
+Generate a unique register name based on C<rtype>.
+
+=cut
+
+.sub 'uniquereg' :method
+    .param string rtype
+    if rtype == 'v' goto reg_void
+    .local string reg
+    reg = 'P'
+    $I0 = index 'Ss~Nn+Ii', rtype
+    if $I0 < 0 goto reg_psin
+    reg = substr 'SSSNNNII', $I0, 1
+  reg_psin:
+    reg = concat '$', reg
+    $P0 = get_global '%!codestring'
+    .return $P0.'unique'(reg)
+  reg_void:
+    .return ('')
 .end
 
 =back
