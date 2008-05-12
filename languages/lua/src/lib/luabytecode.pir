@@ -181,12 +181,27 @@ PIRCODE
     $P0 = getattribute self, 'locvars'
     $S0 = $P0.'translate'()
     pir .= $S0
+    i = $P0
+    .local int maxstacksize
+    $P0 = getattribute self, 'maxstacksize'
+    maxstacksize = $P0
+  L5:
+    unless i < maxstacksize goto L6
+    pir .= "    .local pmc loc_"
+    $S0 = i
+    pir .= $S0
+    pir .= "\n"
+    inc i
+    goto L5
+  L6:
     $P0 = getattribute self, 'upvalues'
     $S0 = $P0.'translate'()
     pir .= $S0
     $P0 = getattribute self, 'k'
     $S0= $P0.'translate'()
     pir .= $S0
+    pir .= "    .local pmc subr, glob\n"
+    pir .= "    subr = interpinfo .INTERPINFO_CURRENT_SUB\n"
     $P0 = getattribute self, 'code'
     $S0 = $P0.'translate'(self)
     pir .= $S0
@@ -242,7 +257,12 @@ PIRCODE
 
 .sub 'translate' :method
     .param int i
-    .return (";   const nil\n")
+    .local string pir
+    pir = "    .const .LuaNil k_"
+    $S0 = i
+    pir .= $S0
+    pir .= " = '0'\n"
+    .return (pir)
 .end
 
 
@@ -259,7 +279,15 @@ PIRCODE
 
 .sub 'translate' :method
     .param int i
-    .return (";   const bool\n")
+    .local string pir
+    pir = "    .const .LuaBoolean k_"
+    $S0 = i
+    pir .= $S0
+    pir .= " = '"
+    $S0 = self
+    pir .= $S0
+    pir .= "'\n"
+    .return (pir)
 .end
 
 
@@ -276,7 +304,15 @@ PIRCODE
 
 .sub 'translate' :method
     .param int i
-    .return (";   const number\n")
+    .local string pir
+    pir = "    .const .LuaNumber k_"
+    $S0 = i
+    pir .= $S0
+    pir .= " = '"
+    $S0 = self
+    pir .= $S0
+    pir .= "'\n"
+    .return (pir)
 .end
 
 
@@ -295,7 +331,16 @@ PIRCODE
 
 .sub 'translate' :method
     .param int i
-    .return (";    const string\n")
+    .local string pir
+    pir = "    .const .LuaString k_"
+    $S0 = i
+    pir .= $S0
+    pir .= " = \""
+    $S0 = self
+    $S1 = escape $S0
+    pir .= $S1
+    pir .= "\"\n"
+    .return (pir)
 .end
 
 
@@ -388,7 +433,7 @@ PIRCODE
     pir = "    .local pmc loc_"
     $S0 = i
     pir .= $S0
-    pir .= " ; "
+    pir .= " # "
     $S0 = self
     pir .= $S0
     pir .= "\n"
@@ -446,8 +491,12 @@ PIRCODE
     pir = "    .local pmc upv_"
     $S0 = i
     pir .= $S0
-    pir .= " ; "
+    pir .= "\n"
+    pir .= "    .lex '"
     $S0 = self
+    pir .= $S0
+    pir .= "', upv_"
+    $S0 = i
     pir .= $S0
     pir .= "\n"
     .return (pir)

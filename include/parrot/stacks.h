@@ -49,6 +49,7 @@ typedef void (*Stack_cleanup_method)(Interp*, Stack_Entry_t *);
 #define STACK_CLEANUP_NULL ((Stack_cleanup_method)NULLfunc)
 
 /* HEADERIZER BEGIN: src/stacks.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_API
 void mark_stack(PARROT_INTERP, ARGMOD(Stack_Chunk_t *chunk))
@@ -148,8 +149,10 @@ PARROT_PURE_FUNCTION
 Stack_entry_type get_entry_type(ARGIN(const Stack_Entry_t *entry))
         __attribute__nonnull__(1);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/stacks.c */
 /* HEADERIZER BEGIN: src/stack_common.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
@@ -171,7 +174,8 @@ Stack_Chunk_t * register_new_stack(PARROT_INTERP,
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-Stack_Entry_t* stack_prepare_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
+Stack_Entry_t* stack_prepare_pop(PARROT_INTERP,
+    ARGMOD(Stack_Chunk_t **stack_p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*stack_p);
@@ -179,7 +183,8 @@ Stack_Entry_t* stack_prepare_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-Stack_Entry_t* stack_prepare_push(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
+Stack_Entry_t* stack_prepare_push(PARROT_INTERP,
+    ARGMOD(Stack_Chunk_t **stack_p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*stack_p);
@@ -187,6 +192,7 @@ Stack_Entry_t* stack_prepare_push(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p)
 PARROT_API
 void stack_system_init(SHIM_INTERP);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/stack_common.c */
 
 
