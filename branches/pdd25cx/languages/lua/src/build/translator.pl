@@ -239,6 +239,13 @@ sub generate_initial_code {
     $mv->{INS}    = 'gen_pir';
     $mv->{PC}     = 'pc';
     $mv->{NEXTPC} = 'next_pc';
+    $mv->{SUBR}   = 'subr';
+    $mv->{GLOB}   = 'glob';
+    $mv->{REG}    = 'loc_';
+    $mv->{K}      = 'k_';
+    $mv->{A}      = 'arg_a';
+    $mv->{B}      = 'arg_b';
+    $mv->{C}      = 'arg_c';
 
     # Emit the dumper.
     my $pir = <<'PIRCODE';
@@ -410,6 +417,11 @@ sub binary_dispatch_table {
 # #############################################
 sub generate_rule_code {
     my ( $srm, $rule, $mv ) = @_;
+    my @localmv = ();
+
+    # Make current instruction code meta-variable.
+    $mv->{LABEL} = 'L_' . $rule->{code};
+    push @localmv, 'LABEL';
 
     # Emit dispatch label.
     my $pir = <<"PIRCODE";
@@ -446,6 +458,11 @@ PIRCODE
     # Finally, emit code to go to translate next instruction.
     $pir .= "    goto LOOP\n\n";
 
+    # Clean up meta-variables hash.
+    foreach (@localmv) {
+        delete $mv->{$_};
+    }
+
     # Return generated code.
     return $pir;
 }
@@ -460,7 +477,7 @@ sub translation_code {
         $pir .= sub_meta( $rule->{pir}, $mv, "pir for rule $rule->{name}" );
     }
     else {
-        $pir .= "# TODO\n";
+        $pir .= "    gen_pir = concat \"  not_translated()\\n\"\n";
     }
     $pir .= "### end translation\n";
 

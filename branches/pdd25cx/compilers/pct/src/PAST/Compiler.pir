@@ -234,7 +234,7 @@ instead of an entire PAST structure.
     .return $P0.'new'('result'=>result)
 
   from_past:
-    $P0 = node.'get_array'()
+    $P0 = node.'list'()
     $I0 = elements $P0
     $S0 = repeat 'v', $I0
     concat $S0, 'P'
@@ -328,7 +328,7 @@ Return the POST representation of a C<PAST::Block>.
 
   children_past:
     ##  all children but last can return anything, last returns PMC
-    $P0 = node.'get_array'()
+    $P0 = node.'list'()
     $I0 = elements $P0
     $S0 = repeat 'v', $I0
     concat $S0, 'P'
@@ -474,7 +474,7 @@ a 'pasttype' of 'pirop'.
     ops = self.'post_children'(node, 'signature'=>signature)
 
     .local pmc arglist
-    arglist = ops.'get_array'()
+    arglist = ops.'list'()
 
     $S0 = substr signature, 0, 1
     if $S0 == 'v' goto pirop_void
@@ -1046,12 +1046,7 @@ opcode -- see RT#47828).
     .local pmc ops, alabel
     $P0 = get_hll_global ['POST'], 'Ops'
     ops = $P0.'new'(rpost, lpost, 'node'=>node, 'result'=>lpost)
-    $P0 = get_hll_global ['POST'], 'Label'
-    alabel = $P0.'new'('name'=>'copy_')
-    ops.'push_pirop'('eq_addr', lpost, rpost, alabel)
-    ops.'push_pirop'('morph', lpost, '"Undef"')
-    ops.'push_pirop'('assign', lpost, rpost)
-    ops.'push'(alabel)
+    ops.'push_pirop'('copy', lpost, rpost)
     .return (ops)
 .end
 
@@ -1089,7 +1084,7 @@ node with a 'pasttype' of inline.
   have_result:
 
     .local pmc arglist
-    arglist = ops.'get_array'()
+    arglist = ops.'list'()
     ops.'push_pirop'('inline', arglist :flat, 'inline'=>inline, 'result'=>result)
     .return (ops)
 .end

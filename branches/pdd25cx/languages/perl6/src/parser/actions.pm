@@ -39,6 +39,7 @@ method statement_block($/, $key) {
         if $?BLOCK_SIGNATURED {
             $?BLOCK := $?BLOCK_SIGNATURED;
             $?BLOCK_SIGNATURED := 0;
+            $?BLOCK.symbol('___HAVE_A_SIGNATURE', :scope('lexical'));
         }
         else {
             $?BLOCK := PAST::Block.new( PAST::Stmts.new(), :node($/));
@@ -634,10 +635,10 @@ method signature($/) {
 }
 
 
-method parameter($/, $key) {
+method parameter($/) {
     my $past := $( $<param_var> );
     my $sigil := $<param_var><sigil>;
-    if $key eq 'slurp' {              # slurpy
+    if $<quant> eq '*' {
         $past.slurpy( $sigil eq '@' || $sigil eq '%' );
         $past.named( $sigil eq '%' );
     }
@@ -653,6 +654,15 @@ method parameter($/, $key) {
                 $past.viviself('Undef');
             }
         }
+    }
+    if $<default_value> {
+        if $<quant> eq '!' {
+            $/.panic("Can't put a default on a required parameter");
+        }
+        if $<quant> eq '*' {
+            $/.panic("Can't put a default on a slurpy parameter");
+        }
+        $past.viviself( $( $<default_value>[0]<EXPR> ) );
     }
     make $past;
 }
@@ -1434,17 +1444,75 @@ method variable($/, $key) {
         PIR q<  $P1 = pop $P0            >;
         PIR q<  store_lex '$name', $P1   >;
 
-        if $<twigil>[0] eq '^' { our $?BLOCK;
-            $?BLOCK.symbol( ~$<sigil> ~ ~$name, :scope('lexical') );
-            $?BLOCK[0].push( PAST::Var.new( :name(~$<sigil> ~ ~$name), :scope('parameter') ) );
+        my $twigil := ~$<twigil>[0];
+        my $sigil := ~$<sigil>;
+        my $fullname := $sigil ~ $twigil ~ ~$name;
+
+        if $fullname eq '@_' || $fullname eq '%_' {
+            our $?BLOCK;
+            unless $?BLOCK.symbol($fullname) {
+                $?BLOCK.symbol( $fullname, :scope('lexical') );
+                my $var;
+                if $sigil eq '@' {
+                    $var := PAST::Var.new( :name($fullname), :scope('parameter'), :slurpy(1) );
+                }
+                else {
+                    $var := PAST::Var.new( :name($fullname), :scope('parameter'), :slurpy(1), :named(1) );
+                }
+                $?BLOCK[0].unshift($var);
+            }
         }
-        elsif $<twigil>[0] eq ':' { our $?BLOCK;
-            $?BLOCK.symbol( ~$<sigil> ~ ~$name, :scope('lexical') );
-            $?BLOCK[0].push( PAST::Var.new( :name(~$<sigil> ~ ~$name), :scope('parameter'), :named(~$name) ) );
+
+        if $twigil eq '^' || $twigil eq ':' { our $?BLOCK;
+            if $?BLOCK.symbol('___HAVE_A_SIGNATURE') {
+                $/.panic('A signature must not be defined on a sub that uses placeholder vars.');
+            }
+            unless $?BLOCK.symbol($fullname) {
+                $?BLOCK.symbol( $fullname, :scope('lexical') );
+                my $var;
+                if $twigil eq ':' {
+                    $var := PAST::Var.new( :name($fullname), :scope('parameter'), :named( ~$name ) );
+                }
+                else {
+                    $var := PAST::Var.new( :name($fullname), :scope('parameter') );
+                }
+                my $block := $?BLOCK[0];
+                my $i := +@($block);
+                my $done := 0;
+                while $i >= 0 && !$done{
+                    my $minusblock;
+                    PIR q<  $P0 = find_lex '$i'  >;
+                    PIR q<  $P1 = find_lex '$block'  >;
+                    PIR q<  $I0 = $P0  >;
+                    PIR q<  $I0 = $I0 - 1  >;
+                    PIR q<  set $P2, $P1[$I0]  >;
+                    PIR q<  store_lex '$minusblock', $P2  >;
+                    # if $var<name> gt $block[$i-1]<name> ...
+                    if $var<name> gt $minusblock<name> || $i == 0 {
+                        # $block[$i] := $var;
+                        PIR q<  $P0 = find_lex '$block'   >;
+                        PIR q<  $P1 = find_lex '$i'   >;
+                        PIR q<  $P2 = find_lex '$var'   >;
+                        PIR q<  $I0 = $P1 >;
+                        PIR q<  set $P0[$I0], $P2 >;
+                        $done := 1;
+                    }
+                    else {
+                        #$block[$i] := $block[$i-1];
+                        PIR q<  $P0 = find_lex '$block'   >;
+                        PIR q<  $P1 = find_lex '$i'   >;
+                        PIR q<  $I0 = $P1 >;
+                        PIR q<  $I1 = $I0 - 1 >;
+                        PIR q<  set $P2, $P0[$I1] >;
+                        PIR q<  set $P0[$I0], $P2 >;
+                    }
+                    $i--;
+                }
+            }
         }
 
         # If it's $.x, it's a method call, not a variable.
-        if $<twigil>[0] eq '.' {
+        if $twigil eq '.' {
             $past := PAST::Op.new(
                 :node($/),
                 :pasttype('callmethod'),
@@ -1460,8 +1528,8 @@ method variable($/, $key) {
             if $<sigil> eq '@' { $viviself := 'List'; }
             if $<sigil> eq '%' { $viviself := 'Perl6Hash'; }
 
-            # ! twigil should be kept in the name.
-            if $<twigil>[0] eq '!' { $name := '!' ~ ~$name; }
+            # [!:^] twigil should be kept in the name.
+            if $twigil eq '!' || $twigil eq ':' || $twigil eq '^' { $name := $twigil ~ ~$name; }
 
             # All but subs should keep their sigils.
             my $sigil := '';
@@ -1489,7 +1557,7 @@ method variable($/, $key) {
                 :viviself($viviself),
                 :node($/)
             );
-            if @ident || $<twigil>[0] eq '*' {
+            if @ident || $twigil eq '*' {
                 $past.namespace(@ident);
                 $past.scope('package');
             }

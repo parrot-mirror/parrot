@@ -242,6 +242,7 @@ GEN_HEADERS = \
     $(INC_DIR)/pbcversion.h
 
 GEN_SOURCES = \
+    $(SRC_DIR)/call_list.txt \
     $(SRC_DIR)/core_ops.c \
     $(SRC_DIR)/nci.c \
     $(SRC_DIR)/core_ops_switch.c \
@@ -324,7 +325,7 @@ FLUID_FILES_2 = \
     $(GEN_LIBRARY) \
     runtime/parrot/include/parrotlib.pbc \
     .configure_trace.sto \
-	.parrot_current_rev
+    .parrot_current_rev
 
 
 ###############################################################################
@@ -1672,7 +1673,7 @@ dynext-clean :
 # win32 exported functions and data items (.exp)
 # win32 export definition files (.def)
 	$(RM_F) \
-   "$(DYNEXT_DIR)/*$(LOAD_EXT)" \
+    "$(DYNEXT_DIR)/*$(LOAD_EXT)" \
     "$(DYNEXT_DIR)/*$(SHARE_EXT)" \
     "$(DYNEXT_DIR)/*.lib" \
     "*.pdb" "$(DYNEXT_DIR)/*.pdb" \
@@ -2139,14 +2140,14 @@ release : MANIFEST MANIFEST.generated
 	mv MANIFEST MANIFEST.real
 	grep -v DEVELOPING MANIFEST.real > MANIFEST
 	perl -lane 'print"parrot-$(VERSION)/$$F[0]"unless!length||/#/' MANIFEST | \
-      tar -zcv -T - -f parrot-$(VERSION).tar.gz
+    tar -zcv -T - -f parrot-$(VERSION).tar.gz
 	mv MANIFEST.real MANIFEST
 	rm parrot-$(VERSION)
 
 rpms : release
 	sudo cp parrot-$(VERSION).tar.gz /usr/src/*/SOURCES
 	sudo cp parrot.spec /usr/src/*/SPECS
-	cd /usr/src/*/SPECS @make_and@ sudo rpm -ba parrot.spec
+	cd /usr/src/*/SPECS @make_and@ sudo rpmbuild -ba parrot.spec
 
 win32-inno-installer : world installable
 	$(PERL) tools/dev/mk_inno.pl
@@ -2186,7 +2187,7 @@ $(LIBNCI_TEST_SO): $(SRC_DIR)/nci_test$(O)
     @ld_out@$@ $(SRC_DIR)/nci_test$(O) $(C_LIBS)
 
 # for use by runtime/parrot/library/OpenGL.pir
-$(LIBGLUTCB_SO): $(SRC_DIR)/glut_callbacks$(O)
+$(LIBGLUTCB_SO): $(LIBPARROT) $(SRC_DIR)/glut_callbacks$(O)
 	$(LD) $(LD_LOAD_FLAGS) @ncilib_link_extra@ $(LDFLAGS) \
     @ld_out@$@ $(SRC_DIR)/glut_callbacks$(O) $(C_LIBS)
 
@@ -2211,12 +2212,12 @@ TAGS.dummy:
 tags: tags.dummy
 	$(RM_F) tags
 	@ctags@ \
-        --links=no --totals \
-        -R --exclude=blib --exclude=.svn  \
-        --exclude=res_lea.c \
-        --languages=c,perl --langmap=c:+.h,c:+.pmc,c:+.ops \
-        -I NOTNULL,NULLOK,ARGIN,ARGMOD,ARGOUT,ARGINOUT,ARGIN_NULLOK,ARGOUT_NULLOK,ARGMOD_NULLOK \
-        $(CUR_DIR)
+    --links=no --totals \
+    -R --exclude=blib --exclude=.svn  \
+    --exclude=res_lea.c \
+    --languages=c,perl --langmap=c:+.h,c:+.pmc,c:+.ops \
+    -I NOTNULL,NULLOK,ARGIN,ARGMOD,ARGOUT,ARGINOUT,ARGIN_NULLOK,ARGOUT_NULLOK,ARGMOD_NULLOK \
+    $(CUR_DIR)
 	$(PERL) $(BUILD_TOOLS_DIR)/addopstags.pl $(OPS_FILES)
 
 tags.dummy:
