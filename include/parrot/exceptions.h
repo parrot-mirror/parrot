@@ -128,18 +128,6 @@ void do_exception(PARROT_INTERP, INTVAL severity, long error)
 
 PARROT_API
 PARROT_DOES_NOT_RETURN
-void do_pmc_exception(PARROT_INTERP, ARGIN(PMC *msg))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
-PARROT_DOES_NOT_RETURN
-void do_str_exception(PARROT_INTERP, ARGIN(STRING *msg))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
-PARROT_DOES_NOT_RETURN
 void exit_fatal(int exitcode, ARGIN(const char *format), ...)
         __attribute__nonnull__(2);
 

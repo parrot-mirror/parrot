@@ -533,39 +533,7 @@ Called from interrupt code. Does a C<longjmp> in front of the runloop,
 which calls C<handle_exception()>, returning the handler address where
 execution then resumes.
 
-=item C<void do_str_exception>
-
-=item C<void do_pmc_exception>
-
 */
-
-PARROT_API
-PARROT_DOES_NOT_RETURN
-void
-do_str_exception(PARROT_INTERP, ARGIN(STRING *msg))
-{
-    Parrot_exception * const the_exception = interp->exceptions;
-
-    the_exception->error                   = EXCEPTION_CONTROL_ERROR;
-    the_exception->severity                = EXCEPT_error;
-    the_exception->msg                     = msg;
-    the_exception->resume                  = NULL;
-    longjmp(the_exception->destination, 1);
-}
-
-PARROT_API
-PARROT_DOES_NOT_RETURN
-void
-do_pmc_exception(PARROT_INTERP, ARGIN(PMC *msg))
-{
-    Parrot_exception * const the_exception = interp->exceptions;
-
-    the_exception->error                   = EXCEPTION_CONTROL_ERROR;
-    the_exception->severity                = EXCEPT_error;
-    the_exception->msg                     = VTABLE_get_string(interp, msg);;
-    the_exception->resume                  = NULL;
-    longjmp(the_exception->destination, 1);
-}
 
 PARROT_API
 PARROT_DOES_NOT_RETURN
