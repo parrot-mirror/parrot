@@ -797,21 +797,48 @@ inline op count_eh(out INT) {
 }
 
 inline op die(in STR) :flow {
-    do_str_exception(interp, $1);
+    PMC *exception = Parrot_ex_build_exception(interp, EXCEPT_error,
+            EXCEPTION_CONTROL_ERROR, $1);
+    opcode_t * const ret  = expr NEXT();
+    opcode_t * const dest = (opcode_t *)run_handler(interp, exception, ret);
+    goto ADDRESS(dest);
 }
 
 inline op die(in PMC) :flow {
-    do_pmc_exception(interp, $1);
+    opcode_t * const ret  = expr NEXT();
+    opcode_t * dest;
+    PMC *exception;
+    STRING *msg;
+
+    if (PMC_IS_NULL($1))
+        msg = NULL;
+    else
+        msg = VTABLE_get_string(interp, $1);
+
+    exception = Parrot_ex_build_exception(interp, EXCEPT_error,
+            EXCEPTION_CONTROL_ERROR, msg);
+
+    dest = (opcode_t *)run_handler(interp, exception, ret);
+    goto ADDRESS(dest);
 }
 
 inline op die(in INT, in INT) :flow {
     if ($1 == EXCEPT_doomed)
         _exit($2);
-    do_exception(interp, $1, $2);
+    else {
+        PMC *exception = Parrot_ex_build_exception(interp, $1, $2, NULL);
+        opcode_t * const ret  = expr NEXT();
+        opcode_t * const dest = (opcode_t *)run_handler(interp, exception, ret);
+        goto ADDRESS(dest);
+    }
 }
 
 inline op exit(in INT) :flow {
-    do_exception(interp, EXCEPT_exit, $1);
+    PMC *exception = Parrot_ex_build_exception(interp,
+            EXCEPT_exit, $1, NULL);
+    opcode_t * const ret  = expr NEXT();
+    opcode_t * const dest = (opcode_t *)run_handler(interp, exception, ret);
+    goto ADDRESS(dest);
 }
 
 inline op pushmark(in INT) {
