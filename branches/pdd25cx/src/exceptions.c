@@ -501,6 +501,31 @@ really_destroy_exception_list(ARGIN(Parrot_exception *e))
 
 /*
 
+=item C<PMC * Parrot_ex_build_exception>
+
+Constructs a new exception object from the passed in arguments.
+
+=cut
+
+*/
+PARROT_API
+PARROT_CAN_RETURN_NULL
+PMC *
+Parrot_ex_build_exception(PARROT_INTERP, INTVAL severity, long error, ARGIN(STRING *msg))
+{
+    PMC *exception = pmc_new(interp, enum_class_Exception);
+
+    VTABLE_set_integer_native(interp, exception, severity);
+    VTABLE_set_integer_keyed_str(interp, exception,
+            CONST_STRING(interp, "type"), error);
+    if (msg)
+        VTABLE_set_string_native(interp, exception, msg);
+
+    return exception;
+}
+
+/*
+
 =item C<void do_exception>
 
 Called from interrupt code. Does a C<longjmp> in front of the runloop,
@@ -568,6 +593,32 @@ C<exitcode> is a C<exception_type_enum> value.
 See also C<exit_fatal()>, which signals fatal errors, and
 C<run_handler>, which calls the handler.
 
+The 'invoke' vtable function doesn't actually execute a sub/continuation/handler,
+it only sets up the environment for invocation and returns the address of the
+start of the sub's code. That address then becomes the next op in the runloop.
+
+When the handler is a sub, it can be invoked in its own runloop with
+C<Parrot_runops_fromc_args>.
+
+But when the handler is a continuation taken in the current runloop, the
+control flow needs to reroute to a point in the runloop where a new op can be
+cleanly executed.  Since exceptions thrown from C code may be buried within an
+arbitrary number of C subroutine calls, the most direct way to do this (and to
+ensure that no further code runs before the exception is handled) is to use a
+C<setjmp> at the relevant location in the runloop, and a C<longjmp> to jump
+back to that location. This is not ideal, as C<setjmp>/C<longjmp> are known to
+be problematic when compiling under C++. One possible refinement might be to
+use C++'s exception mechanism for this transfer of control instead of
+C<setjmp>/C<longjmp> when compiling with C++ (using ifdefs).
+
+Exceptions thrown from C and caught by a continuation-based handler are not
+resumable at the level of a C instruction, as control is irrevocably
+transferred back to the runloop. These exceptions can resume at the Parrot op
+level, if they are given an C<opcode_t> pointer for the op to resume at.
+
+Ultimately, we will likely want to deprecate continuation-based exception
+handlers.
+
 =cut
 
 */
@@ -580,6 +631,39 @@ real_exception(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
 {
     STRING *msg;
     Parrot_exception * const the_exception = interp->exceptions;
+    PMC *exception = pmc_new(interp, enum_class_Exception);
+    opcode_t *handler_address;
+
+    if (PMC_IS_NULL(exception)) {
+        PIO_eprintf(interp,
+                "real_exception (severity:%d error:%d): %Ss\n",
+                EXCEPT_error, exitcode, msg);
+        /* [what if exitcode is a multiple of 256?] */
+        exit(exitcode);
+    }
+
+    /* exception severity and type */
+    VTABLE_set_integer_native(interp, exception, EXCEPT_error);
+    VTABLE_set_integer_keyed_str(interp, exception,
+            CONST_STRING(interp, "type"), exitcode);
+
+    /* make exception message */
+    if (strchr(format, '%')) {
+        va_list arglist;
+        va_start(arglist, format);
+        msg = Parrot_vsprintf_c(interp, format, arglist);
+        va_end(arglist);
+    }
+    else
+        msg = string_make(interp, format, strlen(format),
+                NULL, PObj_external_FLAG);
+
+    if (msg)
+        VTABLE_set_string_native(interp, exception, msg);
+
+    /* now fill rest of exception, locate handler and get
+     * destination of handler */
+    handler_address = run_handler(interp, exception, ret_addr);
 
     /*
      * if profiling remember end time of lastop and
@@ -595,35 +679,6 @@ real_exception(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
         profile->data[PARROT_PROF_EXCEPTION].numcalls++;
     }
 
-    /* make exception message */
-    if (strchr(format, '%')) {
-        va_list arglist;
-        va_start(arglist, format);
-        msg = Parrot_vsprintf_c(interp, format, arglist);
-        va_end(arglist);
-    }
-    else
-        msg = string_make(interp, format, strlen(format),
-                NULL, PObj_external_FLAG);
-
-    /* string_from_cstring(interp, format, strlen(format)); */
-    /*
-     * FIXME classify errors
-     */
-    if (!the_exception) {
-        PIO_eprintf(interp,
-                "real_exception (severity:%d error:%d): %Ss\n"
-                "likely reason: argument count mismatch in main "
-                "(more than 1 param)\n",
-                EXCEPT_error, exitcode, msg);
-        /* [what if exitcode is a multiple of 256?] */
-        exit(exitcode);
-    }
-
-    the_exception->severity = EXCEPT_error;
-    the_exception->error    = exitcode;
-    the_exception->msg      = msg;
-    the_exception->resume   = ret_addr;
 
     if (Interp_debug_TEST(interp, PARROT_BACKTRACE_DEBUG_FLAG)) {
         PIO_eprintf(interp, "real_exception (severity:%d error:%d): %Ss\n",
@@ -631,7 +686,7 @@ real_exception(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
         PDB_backtrace(interp);
     }
 
-    /* reenter runloop */
+
     longjmp(the_exception->destination, 1);
 }
 
