@@ -308,10 +308,12 @@ instead of an entire PAST structure.
     .param pmc options         :slurpy :named
 
     .local pmc ops
+    .local string rtype
+    rtype = options['rtype']
     $P0 = node.'list'()
     $I0 = elements $P0
     $S0 = repeat 'v', $I0
-    concat $S0, 'P'
+    concat $S0, rtype
     ops = self.'post_children'(node, 'signature'=>$S0)
     $P0 = ops[-1]
     ops.'result'($P0)
@@ -400,11 +402,11 @@ Return the POST representation of a C<PAST::Block>.
     if compiler goto children_compiler
 
   children_past:
-    ##  all children but last can return anything, last returns PMC
+    ##  all children but last are void context, last returns anything
     $P0 = node.'list'()
     $I0 = elements $P0
     $S0 = repeat 'v', $I0
-    concat $S0, 'P'
+    concat $S0, '*'
     ##  convert children to post
     .local pmc ops
     ops = self.'post_children'(node, 'signature'=>$S0)
@@ -445,10 +447,10 @@ Return the POST representation of a C<PAST::Block>.
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_decl_ns
-    bpost.'push_pirop'('get_global', result, name, 'result'=>result)
+    bpost.'push_pirop'('get_global', result, name)
     goto block_done
   block_decl_ns:
-    bpost.'push_pirop'('get_hll_global', result, ns, name, 'result'=>result)
+    bpost.'push_pirop'('get_hll_global', result, ns, name)
     goto block_done
 
   block_immediate:
@@ -597,14 +599,10 @@ for calling a sub.
 
     ##  generate the call itself
     .local string result, rtype
-    result = ''
     rtype = options['rtype']
-    if rtype == 'v' goto result_done
-    result = self.'unique'('$P')
-    ops.'result'(result)
-  result_done:
-
+    result = self.'uniquereg'(rtype)
     ops.'push_pirop'(pasttype, posargs :flat, namedargs :flat, 'result'=>result)
+    ops.'result'(result)
     .return (ops)
 .end
 
