@@ -25,6 +25,9 @@ By default PAST::Compiler transforms a PAST tree into POST.
 
     .local pmc piropsig
     piropsig = new 'Hash'
+    piropsig['isfalse']  = 'IP'
+    piropsig['issame']   = 'IPP'
+    piropsig['istrue']   = 'IP'
     piropsig['n_abs']    = 'PP'
     piropsig['n_add']    = 'PP+'
     piropsig['n_band']   = 'PPP'
