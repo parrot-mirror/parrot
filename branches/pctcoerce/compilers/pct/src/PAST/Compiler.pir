@@ -53,7 +53,7 @@ By default PAST::Compiler transforms a PAST tree into POST.
     set_global '%!codestring', $P0
 
     $P0 = new 'Integer'
-    $P0 = 10
+    $P0 = 11
     set_global '$!serno', $P0
 
     .return ()
@@ -96,7 +96,7 @@ Return C<str> as a PIR constant string.
 
 .sub 'escape' :method
     .param string str
-    $P0 = new 'CodeString'
+    $P0 = get_global '%!codestring'
     str = $P0.'escape'(str)
     .return (str)
 .end
@@ -420,16 +420,13 @@ Return the POST representation of a C<PAST::Block>.
 
     ##  get a result register if we need it
     .local string rtype, result
-    result = ''
     rtype = options['rtype']
-    if rtype == 'v' goto have_result
-    result = self.'unique'('$P')
-  have_result:
+    result = self.'uniquereg'(rtype)
 
     name = self.'escape'(name)
     $I0 = defined ns
     unless $I0 goto have_ns_key
-    $P0 = new 'CodeString'
+    $P0 = get_global '%!codestring'
     ns = $P0.'key'(ns)
   have_ns_key:
 
@@ -448,13 +445,13 @@ Return the POST representation of a C<PAST::Block>.
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_immediate_ns
-    $S0 = self.'unique'('$P')
+    $S0 = '$P10'
     bpost.'push_pirop'('get_global', $S0, name)
     bpost.'push_pirop'('newclosure', $S0, $S0)
     bpost.'push_pirop'('call', $S0, 'result'=>result)
     goto block_done
   block_immediate_ns:
-    $S0 = self.'unique'('$P')
+    $S0 = '$P10'
     bpost.'push_pirop'('get_hll_global', $S0, ns, name, 'result'=>$S0)
     bpost.'push_pirop'('call', $S0, 'result'=>result)
 
