@@ -186,9 +186,8 @@ PARROT_CAN_RETURN_NULL
 PMC * Parrot_ex_build_exception(PARROT_INTERP,
     INTVAL severity,
     long error,
-    ARGIN(STRING *msg))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(4);
+    ARGIN_NULLOK(STRING *msg))
+        __attribute__nonnull__(1);
 
 PARROT_API
 void push_new_c_exception_handler(PARROT_INTERP,
