@@ -418,11 +418,7 @@ Return the POST representation of a C<PAST::Block>.
     set_global '$?SUB', outerpost
     setattribute self, '%!symtable', outersym
 
-    ##  get a result register if we need it
-    .local string rtype, result
-    rtype = options['rtype']
-    result = self.'uniquereg'(rtype)
-
+    ##  determine name and namespace
     name = self.'escape'(name)
     $I0 = defined ns
     unless $I0 goto have_ns_key
@@ -430,8 +426,12 @@ Return the POST representation of a C<PAST::Block>.
     ns = $P0.'key'(ns)
   have_ns_key:
 
+    .local string rtype, result
+    rtype = options['rtype']
+
     if blocktype == 'immediate' goto block_immediate
     if rtype == 'v' goto block_done
+    result = self.'uniquereg'('P')
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_decl_ns
@@ -442,13 +442,11 @@ Return the POST representation of a C<PAST::Block>.
     goto block_done
 
   block_immediate:
+    result = self.'uniquereg'(rtype)
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_immediate_ns
-    $S0 = '$P10'
-    bpost.'push_pirop'('get_global', $S0, name)
-    bpost.'push_pirop'('newclosure', $S0, $S0)
-    bpost.'push_pirop'('call', $S0, 'result'=>result)
+    bpost.'push_pirop'('call', name, 'result'=>result)
     goto block_done
   block_immediate_ns:
     $S0 = '$P10'
