@@ -151,11 +151,6 @@ size_t handle_exception(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_API
-PARROT_DOES_NOT_RETURN
-void internal_exception(int exitcode, ARGIN(const char *format), ...)
-        __attribute__nonnull__(2);
-
-PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC* new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_exception *jb))
@@ -184,6 +179,15 @@ void Parrot_confess(
     unsigned int line)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_CAN_RETURN_NULL
+PMC * Parrot_ex_build_exception(PARROT_INTERP,
+    INTVAL severity,
+    long error,
+    ARGIN(STRING *msg))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(4);
 
 PARROT_API
 void push_new_c_exception_handler(PARROT_INTERP,
