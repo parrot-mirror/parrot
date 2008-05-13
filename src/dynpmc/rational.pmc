@@ -40,7 +40,7 @@ Currently C<rational.pmc> only has some C<static> functions for code sharing.
 #  define RT(x)
 #endif
 
-#define RAISE_EXCEPTION   real_exception(interp, NULL, E_LibraryNotLoadedError, \
+#define RAISE_EXCEPTION   real_exception(interp, NULL, EXCEPTION_LIBRARY_NOT_LOADED, \
                                    "GNU Multiple Precision library not found.");
 
 /*
