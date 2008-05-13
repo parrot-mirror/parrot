@@ -511,7 +511,8 @@ Constructs a new exception object from the passed in arguments.
 PARROT_API
 PARROT_CAN_RETURN_NULL
 PMC *
-Parrot_ex_build_exception(PARROT_INTERP, INTVAL severity, long error, ARGIN(STRING *msg))
+Parrot_ex_build_exception(PARROT_INTERP, INTVAL severity,
+        long error, ARGIN_NULLOK(STRING *msg))
 {
     PMC *exception = pmc_new(interp, enum_class_Exception);
 
@@ -633,6 +634,7 @@ real_exception(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
     Parrot_exception * const the_exception = interp->exceptions;
     PMC *exception = pmc_new(interp, enum_class_Exception);
     opcode_t *handler_address;
+    RunProfile * const profile = interp->profile;
 
     if (PMC_IS_NULL(exception)) {
         PIO_eprintf(interp,
@@ -669,7 +671,6 @@ real_exception(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
      * if profiling remember end time of lastop and
      * generate entry for exception
      */
-    RunProfile * const profile = interp->profile;
     if (profile && Interp_flags_TEST(interp, PARROT_PROFILE_FLAG)) {
         const FLOATVAL now = Parrot_floatval_time();
 
