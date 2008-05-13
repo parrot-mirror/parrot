@@ -279,24 +279,35 @@ instead of an entire PAST structure.
 .sub 'as_post' :method :multi(_, _)
     .param pmc node
     .param pmc options         :slurpy :named
+    $S0 = typeof node
+    self.panic("PAST::Compiler can't compile node of type ", $S0)
+.end
 
-    .local pmc ops
-    $I0 = isa node, 'PAST::Node'
-    if $I0 goto from_past
-    unless node goto from_nothing
-  from_string:
+.sub 'as_post' :method :multi(_, Undef)
+    .param pmc node
+    .param pmc options         :slurpy :named
+    .local string result
+    $P0 = get_hll_global ['POST'], 'Ops'
+    result = self.'uniquereg'('P')
+    .return $P0.'new'('result'=>result)
+.end
+
+.sub 'as_post' :method :multi(_, String)
+    .param pmc node
+    .param pmc options         :slurpy :named
+
     .local string result
     $P0 = get_hll_global ['POST'], 'Op'
-    result = self.'unique'('$P')
+    result = self.'uniquereg'('P')
     $S0 = self.'escape'(node)
     .return $P0.'new'(result, $S0, 'pirop'=>'new', 'result'=>result)
+.end
 
-  from_nothing:
-    $P0 = get_hll_global ['POST'], 'Ops'
-    result = self.'unique'('$P')
-    .return $P0.'new'('result'=>result)
+.sub 'as_post' :method :multi(_, PAST::Node)
+    .param pmc node
+    .param pmc options         :slurpy :named
 
-  from_past:
+    .local pmc ops
     $P0 = node.'list'()
     $I0 = elements $P0
     $S0 = repeat 'v', $I0
@@ -306,7 +317,6 @@ instead of an entire PAST structure.
     ops.'result'($P0)
     .return (ops)
 .end
-
 
 =back
 
