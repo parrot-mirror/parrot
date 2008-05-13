@@ -9,6 +9,8 @@ By default PAST::Compiler transforms a PAST tree into POST.
 
 =cut
 
+.include "cclass.pasm"
+
 .namespace [ 'PAST::Compiler' ]
 
 .sub 'onload' :anon :load :init
@@ -44,9 +46,9 @@ By default PAST::Compiler transforms a PAST tree into POST.
 
     .local pmc valflags
     valflags = new 'Hash'
-    valflags['String']   = '~*:e'
-    valflags['Integer']  = '+*:'
-    valflags['Float']    = '+*:'
+    valflags['String']   = 's~*:e'
+    valflags['Integer']  = 'i+*:'
+    valflags['Float']    = 'n+*:'
     set_global '%valflags', valflags
 
     $P0 = new 'CodeString'
@@ -143,6 +145,105 @@ Generate a unique register name based on C<rtype>.
   reg_void:
     .return ('')
 .end
+
+=item coerce(post, rtype)
+
+Return a POST tree that coerces C<post> to have a return value
+compatible with C<rtype>.
+
+=cut
+
+.sub 'coerce' :method
+    .param pmc post
+    .param string rtype
+    .local string pmctype
+    null pmctype
+
+    ##  these rtypes allow any return value, so no coercion needed.
+    $I0 = index 'v*:', rtype
+    if $I0 >= 0 goto end
+
+    ##  figure out what type of result we already have
+    .local string source
+    source = post.'result'()
+    $S0 = substr source, 0, 1
+    if $S0 == '$' goto source_reg
+    if $S0 == '"' goto source_str
+    if $S0 == '.' goto source_num
+    if $S0 == '-' goto source_int_or_num
+    $I0 = is_cclass .CCLASS_NUMERIC, source, 0
+    if $I0 goto source_int_or_num
+    $S0 = substr source, 0, 8
+    if $S0 == 'unicode:' goto source_str
+    ##  assume that whatever is left acts like a PMC
+    goto source_pmc
+
+  source_reg:
+    ##  source is some sort of register
+    ##  if a register is all we need, we're done
+    if rtype == 'r' goto end
+    $S0 = substr source, 1, 1
+    ##  if we have the correct register type already, we're done
+    if $S0 == rtype goto end
+    ##  figure it out based on the register type
+    if $S0 == 'P' goto source_pmc
+    if $S0 == 'I' goto source_int
+    if $S0 == 'N' goto source_num
+
+  source_str:
+    ##  source is some type of string
+    $I0 = index 's~', rtype
+    if $I0 >= 0 goto end
+    if rtype != 'P' goto coerce_reg
+    pmctype = "'String'"
+    goto coerce_reg
+
+  source_int_or_num:
+    ##  existent of an 'e' or '.' implies num
+    $I0 = index source, '.'
+    if $I0 >= 0 goto source_num
+    $I0 = index source, 'E'
+    if $I0 >= 0 goto source_num
+
+  source_int:
+    ##  an integer type
+    $I0 = index 'i+', rtype
+    if $I0 >= 0 goto end
+    if rtype != 'P' goto coerce_reg
+    pmctype = "'Integer'"
+    goto coerce_reg
+
+  source_num:
+    ##  source is some type of number
+    $I0 = index 'n+', rtype
+    if $I0 >= 0 goto end
+    if rtype != 'P' goto coerce_reg
+    pmctype = "'Float'"
+    goto coerce_reg
+
+  source_pmc:
+    $I0 = index 'SINsin', rtype
+    if $I0 < 0 goto end
+
+  coerce_reg:
+    ##  get a unique register for our result
+    .local string result
+    result = self.'uniquereg'(rtype)
+    ##  create a new ops node
+    $P0 = get_hll_global ['POST'], 'Ops'
+    post = $P0.'new'(post)
+    ##  set the new result
+    post.'result'(result)
+    ##  create a new PMC if we need one
+    unless pmctype goto have_result
+    post.'push_pirop'('new', result, pmctype)
+  have_result:
+    post.'push_pirop'('set', result, source)
+
+  end:
+    .return (post)
+.end
+
 
 =item post_children(node [, 'signature'=>signature] )
 
@@ -534,6 +635,14 @@ a 'pasttype' of 'pirop'.
 
     .local string pirop, signature
     pirop = node.'pirop'()
+    ##  see if pirop is of form "pirop signature"
+    $I0 = index pirop, ' '
+    if $I0 < 0 goto pirop_1
+    $I1 = $I0 + 1
+    signature = substr pirop, $I1
+    pirop = substr pirop, 0, $I0
+    goto have_signature
+  pirop_1:
     $P0 = get_global '%piropsig'
     signature = $P0[pirop]
     if signature goto have_signature
@@ -550,10 +659,11 @@ a 'pasttype' of 'pirop'.
     if $S0 == 'v' goto pirop_void
   pirop_reg:
     .local string result
-    result = self.'unique'('$P')
+    result = self.'uniquereg'($S0)
     ops.'result'(result)
     ops.'push_pirop'(pirop, result, arglist :flat)
-    .return (ops)
+    $S0 = options['rtype']
+    .return self.'coerce'(ops, $S0)
   pirop_void:
     ops.'push_pirop'(pirop, arglist :flat)
     .return (ops)
@@ -1152,7 +1262,8 @@ node with a 'pasttype' of inline.
     .local pmc arglist
     arglist = ops.'list'()
     ops.'push_pirop'('inline', arglist :flat, 'inline'=>inline, 'result'=>result)
-    .return (ops)
+    $S0 = options['rtype']
+    .return self.'coerce'(ops, $S0)
 .end
 
 
@@ -1204,7 +1315,11 @@ attribute.
     push_eh scope_error
     $P0 = find_method self, scope
     pop_eh
-    .return self.$P0(node, bindpost)
+
+    .local pmc post
+    post = self.$P0(node, bindpost)
+    $S0 = options['rtype']
+    .return self.'coerce'(post, $S0)
   scope_error:
     .return self.'panic'("Scope ", scope, " not found for PAST::Var '", name, "'")
 .end
@@ -1498,10 +1613,9 @@ to have a PMC generated containing the constant value.
 
     .local string rtype
     rtype = options['rtype']
-    $I0 = index valflags, rtype
-    if $I0 < 0 goto result_pmc
+    if rtype == 'P' goto result_pmc
     ops.'result'(value)
-    .return (ops)
+    .return self.'coerce'(ops, rtype)
 
   result_pmc:
     .local string result
