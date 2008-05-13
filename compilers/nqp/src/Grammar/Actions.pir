@@ -11,19 +11,6 @@
     ##  initialize optable with inline PIR
     .local pmc optable
     optable = get_hll_global [ 'NQP::Grammar' ], '$optable'
-    optable['prefix:~'; 'inline'] = <<"        END"
-        ##  inline prefix:~
-        $S0 = %0
-        %r = new 'String'
-        %r = $S0
-        END
-
-    optable['prefix:+'; 'inline'] = <<"        END"
-        ##  inline prefix:+
-        $N0 = %0
-        %r = new 'Float'
-        %r = $N0
-        END
 
     optable['postfix:++'; 'inline'] = <<"        END"
         ##  inline postfix:++
@@ -35,27 +22,6 @@
         ##  inline postfix:--
         clone %r, %0
         dec %0
-        END
-
-    optable['infix:=:='; 'inline'] = <<"        END"
-        ##  inline infix:=:=
-        $I0 = issame %0, %1
-        %r = new 'Integer'
-        %r = $I0
-        END
-
-    optable['prefix:!'; 'inline'] = <<"        END"
-        ##  inline prefix:!
-        $I0 = isfalse %0
-        %r = new 'Integer'
-        %r = $I0
-        END
-
-    optable['prefix:?'; 'inline'] = <<"        END"
-        ##  inline prefix:?
-        $I0 = istrue %0
-        %r = new 'Integer'
-        %r = $I0
         END
 
     .return ()
