@@ -320,6 +320,7 @@ third and subsequent children can be any value they wish.
     .local pmc cpast, cpost
     cpast = shift iter
     cpost = self.'as_post'(cpast, 'rtype'=>rtype)
+    cpost = self.'coerce'(cpost, rtype)
     ops.'push'(cpost)
     .local pmc is_flat
     is_flat = cpast.'flat'()
@@ -679,8 +680,7 @@ a 'pasttype' of 'pirop'.
     result = self.'uniquereg'($S0)
     ops.'result'(result)
     ops.'push_pirop'(pirop, result, arglist :flat)
-    $S0 = options['rtype']
-    .return self.'coerce'(ops, $S0)
+    .return (ops)
   pirop_void:
     ops.'push_pirop'(pirop, arglist :flat)
     .return (ops)
@@ -899,7 +899,7 @@ Return the POST representation of a C<while> or C<until> loop.
     ops.'push_pirop'('goto', looplabel)
     ops.'push'(endlabel)
     ops.'result'(exprpost)
-    .return self.'coerce'(ops, rtype)
+    .return (ops)
 .end
 
 .sub 'until' :method :multi(_, ['PAST::Op'])
@@ -959,7 +959,7 @@ Return the POST representation of a C<repeat_while> or C<repeat_until> loop.
     ops.'push'(exprpost)
     ops.'push_pirop'(iftype, exprpost, looplabel)
     ops.'result'(exprpost)
-    .return self.'coerce'(ops, rtype)
+    .return (ops)
 .end
 
 .sub 'repeat_until' :method :multi(_, ['PAST::Op'])
@@ -1321,7 +1321,7 @@ node with a 'pasttype' of inline.
     arglist = ops.'list'()
     ops.'push_pirop'('inline', arglist :flat, 'inline'=>inline, 'result'=>result)
     $S0 = options['rtype']
-    .return self.'coerce'(ops, $S0)
+    .return (ops)
 .end
 
 
@@ -1373,11 +1373,7 @@ attribute.
     push_eh scope_error
     $P0 = find_method self, scope
     pop_eh
-
-    .local pmc post
-    post = self.$P0(node, bindpost)
-    $S0 = options['rtype']
-    .return self.'coerce'(post, $S0)
+    .return self.$P0(node, bindpost)
   scope_error:
     .return self.'panic'("Scope ", scope, " not found for PAST::Var '", name, "'")
 .end
