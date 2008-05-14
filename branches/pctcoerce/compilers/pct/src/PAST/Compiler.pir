@@ -159,8 +159,15 @@ compatible with C<rtype>.
 .sub 'coerce' :method
     .param pmc post
     .param string rtype
-    .local string pmctype
+
+    .local string pmctype, result, rrtype
     null pmctype
+    null result
+    $S0 = substr rtype, 0, 1
+    unless $S0 == '$' goto have_rtype
+    result = rtype
+    rtype = substr result, 1, 1
+  have_rtype:
 
     ##  these rtypes allow any return value, so no coercion needed.
     $I0 = index 'v*:', rtype
@@ -172,7 +179,7 @@ compatible with C<rtype>.
     $S0 = substr source, 0, 1
     if $S0 == '$' goto source_reg
     if $S0 == '"' goto source_str
-    if $S0 == '.' goto source_num
+    if $S0 == '.' goto source_int_or_num
     if $S0 == '-' goto source_int_or_num
     $I0 = is_cclass .CCLASS_NUMERIC, source, 0
     if $I0 goto source_int_or_num
@@ -187,57 +194,61 @@ compatible with C<rtype>.
     if rtype == 'r' goto end
     $S0 = substr source, 1, 1
     ##  if we have the correct register type already, we're done
+    if $S0 != rtype goto source_reg_1
+    unless result goto end
+    goto coerce_reg
+  source_reg_1:
+    $S0 = downcase $S0
     if $S0 == rtype goto end
     ##  figure it out based on the register type
-    if $S0 == 'P' goto source_pmc
-    if $S0 == 'I' goto source_int
-    if $S0 == 'N' goto source_num
+    if $S0 == 's' goto source_str
+    if rtype == '+' goto end
+    if $S0 == 'i' goto source_int
+    if $S0 == 'n' goto source_num
+  source_pmc:
+    $I0 = index 'SINsin', rtype
+    if $I0 < 0 goto end
+    goto coerce_reg
 
   source_str:
-    ##  source is some type of string
-    $I0 = index 's~', rtype
-    if $I0 >= 0 goto end
-    if rtype != 'P' goto coerce_reg
+    if rtype == '~' goto end
+    if rtype == 's' goto end
+    rrtype = 'S'
     pmctype = "'String'"
     goto coerce_reg
 
   source_int_or_num:
-    ##  existent of an 'e' or '.' implies num
+    if rtype == '+' goto end
+    ##  existence of an 'e' or '.' implies num
     $I0 = index source, '.'
     if $I0 >= 0 goto source_num
     $I0 = index source, 'E'
     if $I0 >= 0 goto source_num
 
   source_int:
-    ##  an integer type
-    $I0 = index 'i+', rtype
-    if $I0 >= 0 goto end
-    if rtype != 'P' goto coerce_reg
+    if rtype == 'i' goto end
+    rrtype = 'I'
     pmctype = "'Integer'"
     goto coerce_reg
 
   source_num:
-    ##  source is some type of number
-    $I0 = index 'n+', rtype
-    if $I0 >= 0 goto end
-    if rtype != 'P' goto coerce_reg
+    if rtype == 'n' goto end
+    rrtype = 'N'
     pmctype = "'Float'"
-    goto coerce_reg
-
-  source_pmc:
-    $I0 = index 'SINsin', rtype
-    if $I0 < 0 goto end
 
   coerce_reg:
-    ##  get a unique register for our result
-    .local string result
+    if rtype != 'r' goto coerce_reg_1
+    result = self.'uniquereg'(rrtype)
+  coerce_reg_1:
+    if result goto coerce_reg_2
+    ##  get a new unique register for our result
     result = self.'uniquereg'(rtype)
+  coerce_reg_2:
     ##  create a new ops node
     $P0 = get_hll_global ['POST'], 'Ops'
-    post = $P0.'new'(post)
-    ##  set the new result
-    post.'result'(result)
+    post = $P0.'new'(post, 'result'=>result)
     ##  create a new PMC if we need one
+    if rtype != 'P' goto have_result
     unless pmctype goto have_result
     post.'push_pirop'('new', result, pmctype)
   have_result:
@@ -747,18 +758,21 @@ a 'pasttype' of if/unless.
     .param pmc node
     .param pmc options         :slurpy :named
 
-    .local string rtype
+    .local pmc opsclass, ops
+    opsclass = get_hll_global ['POST'], 'Ops'
+    ops = opsclass.'new'('node'=>node)
+
+    .local string rtype, result
     rtype = options['rtype']
+    result = self.'uniquereg'(rtype)
+    ops.'result'(result)
+
 
     .local string pasttype
     pasttype = node.'pasttype'()
 
-    .local pmc ops
-    $P0 = get_hll_global ['POST'], 'Ops'
-    ops = $P0.'new'('node'=>node)
-
-    .local pmc exprpast, thenpast, elsepast
-    .local pmc exprpost, thenpost, elsepost
+    .local pmc exprpast, thenpast, elsepast, childpast
+    .local pmc exprpost, thenpost, elsepost, childpost
     exprpast = node[0]
     thenpast = node[1]
     elsepast = node[2]
@@ -771,28 +785,52 @@ a 'pasttype' of if/unless.
     $S0 = concat $S0, '_end'
     endlabel = $P0.'new'('result'=>$S0)
 
-    exprpost = self.'as_post'(exprpast, 'rtype'=>'P')
+    .local string exprrtype, childrtype
+    exprrtype = 'r'
+    if rtype != 'v' goto have_exprrtype
+    exprrtype = '*'
+  have_exprrtype:
+    childrtype = rtype
+    $I0 = index '*:', rtype
+    if $I0 < 0 goto have_childrtype
+    childrtype = 'P'
+  have_childrtype:
+
+    exprpost = self.'as_post'(exprpast, 'rtype'=>exprrtype)
+
+    childpast = thenpast
+    bsr make_childpost
+    thenpost = childpost
+    childpast = elsepast
+    bsr make_childpost
+    elsepost = childpost
+
     ops.'push'(exprpost)
-    ops.'result'(exprpost)
     ops.'push_pirop'(pasttype, exprpost, thenlabel)
-    $I0 = defined elsepast
-    unless $I0 goto else_done
-    elsepost = self.'as_post'(elsepast, 'rtype'=>'P')
+    if null elsepost goto else_done
     ops.'push'(elsepost)
-    if rtype == 'v' goto else_done
-    ops.'push_pirop'('set', ops, elsepost)
   else_done:
     ops.'push_pirop'('goto', endlabel)
     ops.'push'(thenlabel)
-    $I0 = defined thenpast
-    unless $I0 goto then_done
-    thenpost = self.'as_post'(thenpast, 'rtype'=>'P')
+    if null thenpost goto then_done
     ops.'push'(thenpost)
-    if rtype == 'v' goto then_done
-    ops.'push_pirop'('set', ops, thenpost)
   then_done:
     ops.'push'(endlabel)
     .return (ops)
+
+  make_childpost:
+    null childpost
+    $I0 = defined childpast
+    unless $I0 goto no_childpast
+    childpost = self.'as_post'(childpast, 'rtype'=>childrtype)
+    goto childpost_coerce
+  no_childpast:
+    if rtype == 'v' goto ret_childpost
+    childpost = opsclass.'new'('result'=>exprpost)
+  childpost_coerce:
+    childpost = self.'coerce'(childpost, result)
+  ret_childpost:
+    ret
 .end
 
 .sub 'unless' :method :multi(_, ['PAST::Op'])
@@ -842,8 +880,15 @@ Return the POST representation of a C<while> or C<until> loop.
     iftype = 'unless'
   have_iftype:
 
+    .local string rtype, exprrtype
+    rtype = options['rtype']
+    exprrtype = 'r'
+    if rtype != 'v' goto have_exprrtype
+    exprrtype = '*'
+  have_exprrtype:
+
     ops.'push'(looplabel)
-    exprpost = self.'as_post'(exprpast, 'rtype'=>'r')
+    exprpost = self.'as_post'(exprpast, 'rtype'=>exprrtype)
     ops.'push'(exprpost)
     ops.'push_pirop'(iftype, exprpost, endlabel)
     bodypost = self.'as_post'(bodypast, 'rtype'=>'v')
@@ -851,8 +896,7 @@ Return the POST representation of a C<while> or C<until> loop.
     ops.'push_pirop'('goto', looplabel)
     ops.'push'(endlabel)
     ops.'result'(exprpost)
-    $S0 = options['rtype']
-    .return self.'coerce'(ops, $S0)
+    .return self.'coerce'(ops, rtype)
 .end
 
 .sub 'until' :method :multi(_, ['PAST::Op'])
@@ -898,15 +942,21 @@ Return the POST representation of a C<repeat_while> or C<repeat_until> loop.
     iftype = 'unless'
   have_iftype:
 
+    .local string rtype, exprrtype
+    rtype = options['rtype']
+    exprrtype = 'r'
+    if rtype != 'v' goto have_exprrtype
+    exprrtype = '*'
+  have_exprrtype:
+
     ops.'push'(looplabel)
     bodypost = self.'as_post'(bodypast, 'rtype'=>'v')
     ops.'push'(bodypost)
-    exprpost = self.'as_post'(exprpast, 'rtype'=>'r')
+    exprpost = self.'as_post'(exprpast, 'rtype'=>exprrtype)
     ops.'push'(exprpost)
     ops.'push_pirop'(iftype, exprpost, looplabel)
     ops.'result'(exprpost)
-    $S0 = options['rtype']
-    .return self.'coerce'(ops, $S0)
+    .return self.'coerce'(ops, rtype)
 .end
 
 .sub 'repeat_until' :method :multi(_, ['PAST::Op'])
