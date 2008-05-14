@@ -7,6 +7,33 @@ PAST::Compiler - PAST Compiler
 PAST::Compiler implements a basic compiler for PAST nodes.
 By default PAST::Compiler transforms a PAST tree into POST.
 
+=head2 Signature Flags
+
+Throughout the compiler PAST uses a number of 1-character
+"flags" to indicate allowable register types and conversions.
+This helps the compiler generate more efficient code and know
+what sorts of conversions are allowed (or desired).  The
+basic flags are:
+
+    P,S,I,N   PMC, string, int, or num register
+    s         string register or constant
+    i         int register or constant
+    n         num register or constant
+    r         any register result
+    v         void (no result)
+    *         any result type except void
+    +         PMC, int register, num register, or numeric constant
+    ~         PMC, string register, or string constant
+    :         argument (same as '*'), possibly with :named or :flat
+
+These flags are used to describe signatures and desired return
+types for various operations.  For example, if an opcode is
+specified with a signature of C<I~P*>, then the opcode places
+its result in an int register, its first child is coerced into
+some sort of string value, its second child is coerced into a
+PMC register, and the third and subsequent children can return
+any value type.
+
 =cut
 
 .include "cclass.pasm"
@@ -23,6 +50,7 @@ By default PAST::Compiler transforms a PAST tree into POST.
     $P1 = split ' ', 'post pir evalpmc'
     $P0.'stages'($P1)
 
+    ##  %piropsig is a table of common opcode signatures
     .local pmc piropsig
     piropsig = new 'Hash'
     piropsig['isfalse']  = 'IP'
@@ -47,6 +75,9 @@ By default PAST::Compiler transforms a PAST tree into POST.
     piropsig['set']      = 'PP'
     set_global '%piropsig', piropsig
 
+    ##  %valflags specifies when PAST::Val nodes are allowed to
+    ##  be used as a constant.  The 'e' flag indicates that the
+    ##  value must be quoted+escaped in PIR code.
     .local pmc valflags
     valflags = new 'Hash'
     valflags['String']   = 's~*:e'
@@ -130,12 +161,14 @@ unique number.
 
 =item uniquereg(rtype)
 
-Generate a unique register name based on C<rtype>.
+Generate a unique register based on C<rtype>, where C<rtype>
+is one of the signature flags described above.
 
 =cut
 
 .sub 'uniquereg' :method
     .param string rtype
+    unless rtype goto err_nortype
     if rtype == 'v' goto reg_void
     .local string reg
     reg = 'P'
@@ -147,12 +180,16 @@ Generate a unique register name based on C<rtype>.
     .return self.'unique'(reg)
   reg_void:
     .return ('')
+  err_nortype:
+    self.panic('rtype not set')
 .end
 
 =item coerce(post, rtype)
 
-Return a POST tree that coerces C<post> to have a return value
-compatible with C<rtype>.
+Return a POST tree that coerces the result of C<post> to have a
+return value compatible with C<rtype>.  C<rtype> can also be
+a specific register, in which case the result of C<post> is
+forced into that register (with conversions as needed).
 
 =cut
 
@@ -160,9 +197,14 @@ compatible with C<rtype>.
     .param pmc post
     .param string rtype
 
+    unless rtype goto err_nortype
+
     .local string pmctype, result, rrtype
     null pmctype
     null result
+
+    ##  if rtype is a register, then set result and use the register
+    ##  type as rtype
     $S0 = substr rtype, 0, 1
     unless $S0 == '$' goto have_rtype
     result = rtype
@@ -237,25 +279,33 @@ compatible with C<rtype>.
     pmctype = "'Float'"
 
   coerce_reg:
+    ##  okay, we know we have to do a coercion.
+    ##  If we just need the value in a register (rtype == 'r'),
+    ##  then create result based on the preferred register type (rrtype).
     if rtype != 'r' goto coerce_reg_1
     result = self.'uniquereg'(rrtype)
   coerce_reg_1:
+    ##  if we haven't set the result target yet, then generate one
+    ##  based on rtype.  (The case of rtype == 'r' was handled above.)
     if result goto coerce_reg_2
-    ##  get a new unique register for our result
     result = self.'uniquereg'(rtype)
   coerce_reg_2:
-    ##  create a new ops node
+    ##  create a new ops node to hold the coercion, put C<post> in it.
     $P0 = get_hll_global ['POST'], 'Ops'
     post = $P0.'new'(post, 'result'=>result)
-    ##  create a new PMC if we need one
+    ##  if we need a new pmc (rtype == 'P' && pmctype defined), create it
     if rtype != 'P' goto have_result
     unless pmctype goto have_result
     post.'push_pirop'('new', result, pmctype)
   have_result:
+    ##  store the value into the target register
     post.'push_pirop'('set', result, source)
 
   end:
     .return (post)
+
+  err_nortype:
+    self.panic('rtype not set')
 .end
 
 
@@ -263,18 +313,10 @@ compatible with C<rtype>.
 
 Return the POST representation of evaluating all of C<node>'s
 children in sequence.  The C<signature> option is a string of
-characters that allow the caller to suggest the type of
-result that should be returned by each child:
-
-    *     Anything
-    P     PMC register
-    +     PMC, numeric register, or numeric constant
-    ~     PMC, string register, or string constant
-    :     Argument (same as '*'), possibly with :named or :flat
-    v     void result (result value not used)
-
-The first character of C<signature> is ignored (return type),
-thus C<v~P*> says that the first child needs to be something
+flags as described in "Signature Flags" above.  Since we're
+just evaluating children nodes, the first character of
+C<signature> (return value type) is ignored.  Thus a C<signature>
+of C<v~P*> says that the first child needs to be something
 in string context, the second child should be a PMC, and the
 third and subsequent children can be any value they wish.
 
@@ -372,23 +414,17 @@ POST equivalents.
 
 =over 4
 
-=item as_post(node)
+=item as_post(node) (General)
 
 Return a POST representation of C<node>.  Note that C<post> is
 a multimethod based on the type of its first argument, this is
 the method that is called when no other methods match.
 
-If C<node> is an instance of C<PAST::Node>  (meaning that none
-of the other C<post> multimethods were invoked), then return
-the POST representation of C<node>'s children, with the result
-of the node being the result of the last child.
+=item as_post(Any)
 
-If C<node> revaluates to false, return an empty POST node.
-
-Otherwise, C<node> is treated as a string, and a POST node
-is returned to create a new object of the type given by C<node>.
-This is useful for vivifying values with a simple type name
-instead of an entire PAST structure.
+This is the "fallback" method for any unrecognized node types.
+We use this to throw a more useful exception in case any non-PAST
+nodes make it into the tree.
 
 =cut
 
@@ -399,6 +435,12 @@ instead of an entire PAST structure.
     self.panic("PAST::Compiler can't compile node of type ", $S0)
 .end
 
+=item as_post(Undef)
+
+Return an empty POST node that can be used to hold a (PMC) result.
+
+=cut
+
 .sub 'as_post' :method :multi(_, Undef)
     .param pmc node
     .param pmc options         :slurpy :named
@@ -407,6 +449,14 @@ instead of an entire PAST structure.
     result = self.'uniquereg'('P')
     .return $P0.'new'('result'=>result)
 .end
+
+=item as_post(String class)
+
+Generate POST to create a new object of type C<class>.  This
+is typically invoked by the various vivification methods below
+(e.g., in a PAST::Var node to default a variable to a given type).
+
+=cut
 
 .sub 'as_post' :method :multi(_, String)
     .param pmc node
@@ -418,6 +468,17 @@ instead of an entire PAST structure.
     $S0 = self.'escape'(node)
     .return $P0.'new'(result, $S0, 'pirop'=>'new', 'result'=>result)
 .end
+
+=item as_post(PAST::Node node)
+
+Return the POST representation of executing C<node>'s children in
+sequence.  The result of the final child is used as the result
+of this node.
+
+N.B.:  This method is also the one that is invoked for converting
+nodes of type C<PAST::Stmts>.
+
+=cut
 
 .sub 'as_post' :method :multi(_, PAST::Node)
     .param pmc node
@@ -770,7 +831,6 @@ a 'pasttype' of if/unless.
     result = self.'uniquereg'(rtype)
     ops.'result'(result)
 
-
     .local string pasttype
     pasttype = node.'pasttype'()
 
@@ -812,6 +872,7 @@ a 'pasttype' of if/unless.
 
     ops.'push'(exprpost)
     ops.'push_pirop'(pasttype, exprpost, thenlabel)
+    if null elsepost goto else_done
     ops.'push'(elsepost)
   else_done:
     ops.'push_pirop'('goto', endlabel)
@@ -845,6 +906,7 @@ a 'pasttype' of if/unless.
     if rtype == 'v' goto ret_childpost
     childpost = opsclass.'new'('result'=>exprpost)
   childpost_coerce:
+    unless result goto ret_childpost
     childpost = self.'coerce'(childpost, result)
   ret_childpost:
     ret
@@ -1266,6 +1328,7 @@ node with a 'pasttype' of bind.
     $P0 = get_hll_global ['POST'], 'Ops'
     ops = $P0.'new'('node'=>node)
     rpost = self.'as_post'(rpast, 'rtype'=>'P')
+    rpost = self.'coerce'(rpost, 'P')
     ops.'push'(rpost)
 
     lpast.lvalue(1)
@@ -1401,7 +1464,7 @@ attribute.
 
     .local pmc viviself, vivipost, vivilabel
     viviself = node.'viviself'()
-    vivipost = self.'as_post'(viviself)
+    vivipost = self.'as_post'(viviself, 'rtype'=>'P')
     ops.'result'(vivipost)
     ops.'push'(fetchop)
     unless viviself goto vivipost_done
@@ -1443,7 +1506,7 @@ attribute.
     .local pmc viviself, vivipost, vivilabel
     viviself = node.'viviself'()
     unless viviself goto param_required
-    vivipost = self.'as_post'(viviself)
+    vivipost = self.'as_post'(viviself, 'rtype'=>'P')
     $P0 = get_hll_global ['POST'], 'Label'
     vivilabel = $P0.'new'('name'=>'optparam_')
     subpost.'add_param'(pname, 'named'=>named, 'optional'=>1)
@@ -1681,9 +1744,10 @@ to have a PMC generated containing the constant value.
 
     .local string rtype
     rtype = options['rtype']
-    if rtype == 'P' goto result_pmc
+    $I0 = index valflags, rtype
+    if $I0 < 0 goto result_pmc
     ops.'result'(value)
-    .return self.'coerce'(ops, rtype)
+    .return (ops)
 
   result_pmc:
     .local string result
