@@ -843,7 +843,7 @@ Return the POST representation of a C<while> or C<until> loop.
   have_iftype:
 
     ops.'push'(looplabel)
-    exprpost = self.'as_post'(exprpast, 'rtype'=>'P')
+    exprpost = self.'as_post'(exprpast, 'rtype'=>'r')
     ops.'push'(exprpost)
     ops.'push_pirop'(iftype, exprpost, endlabel)
     bodypost = self.'as_post'(bodypast, 'rtype'=>'v')
@@ -851,7 +851,8 @@ Return the POST representation of a C<while> or C<until> loop.
     ops.'push_pirop'('goto', looplabel)
     ops.'push'(endlabel)
     ops.'result'(exprpost)
-    .return (ops)
+    $S0 = options['rtype']
+    .return self.'coerce'(ops, $S0)
 .end
 
 .sub 'until' :method :multi(_, ['PAST::Op'])
@@ -900,11 +901,12 @@ Return the POST representation of a C<repeat_while> or C<repeat_until> loop.
     ops.'push'(looplabel)
     bodypost = self.'as_post'(bodypast, 'rtype'=>'v')
     ops.'push'(bodypost)
-    exprpost = self.'as_post'(exprpast, 'rtype'=>'P')
+    exprpost = self.'as_post'(exprpast, 'rtype'=>'r')
     ops.'push'(exprpost)
     ops.'push_pirop'(iftype, exprpost, looplabel)
     ops.'result'(exprpost)
-    .return (ops)
+    $S0 = options['rtype']
+    .return self.'coerce'(ops, $S0)
 .end
 
 .sub 'repeat_until' :method :multi(_, ['PAST::Op'])
