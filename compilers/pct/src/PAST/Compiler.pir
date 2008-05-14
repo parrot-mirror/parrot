@@ -573,7 +573,10 @@ Return the POST representation of a C<PAST::Block>.
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_immediate_ns
-    bpost.'push_pirop'('call', name, 'result'=>result)
+    $S0 = '$P10'
+    bpost.'push_pirop'('get_global', $S0, name)
+    bpost.'push_pirop'('newclosure', $S0, $S0)
+    bpost.'push_pirop'('call', $S0, 'result'=>result)
     goto block_done
   block_immediate_ns:
     $S0 = '$P10'
