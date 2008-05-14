@@ -808,9 +808,10 @@ a 'pasttype' of if/unless.
     bsr make_childpost
     elsepost = childpost
 
+    if null elsepost goto no_elsepost
+
     ops.'push'(exprpost)
     ops.'push_pirop'(pasttype, exprpost, thenlabel)
-    if null elsepost goto else_done
     ops.'push'(elsepost)
   else_done:
     ops.'push_pirop'('goto', endlabel)
@@ -818,6 +819,19 @@ a 'pasttype' of if/unless.
     if null thenpost goto then_done
     ops.'push'(thenpost)
   then_done:
+    ops.'push'(endlabel)
+    .return (ops)
+
+  no_elsepost:
+    $S0 = 'if'
+    unless pasttype == $S0 goto no_elsepost_1
+    $S0 = 'unless'
+  no_elsepost_1:
+    ops.'push'(exprpost)
+    ops.'push_pirop'($S0, exprpost, endlabel)
+    if null thenpost goto no_elsepost_2
+    ops.'push'(thenpost)
+  no_elsepost_2:
     ops.'push'(endlabel)
     .return (ops)
 
