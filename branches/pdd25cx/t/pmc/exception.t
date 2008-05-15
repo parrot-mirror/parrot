@@ -360,7 +360,7 @@ pasm_output_is( <<'CODE', <<OUT, "die, error, severity" );
 _handler:
     get_results "0,0", P5, S0
     print "caught it\n"
-    set I0, P5
+    set I0, P5['severity']
     print "severity "
     print I0
     print "\n"

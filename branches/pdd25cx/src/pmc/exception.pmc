@@ -48,12 +48,14 @@ These arguments can be retrieved with the C<get_results> opcode.
 
 pmclass Exception {
 
-    ATTR STRING *message;    /* The exception message. */
-    ATTR PMC    *payload;    /* The payload for the exception. */
-    ATTR INTVAL  severity;   /* The severity of the exception. */
-    ATTR INTVAL  type;       /* The type of the exception. */
-    ATTR INTVAL  exit_code;  /* The exit code of the exception. */
-    ATTR PMC    *stacktrace; /* The stacktrace of an exception. */
+    ATTR INTVAL    id;         /* The task ID in the scheduler. */
+    ATTR FLOATVAL  birthtime;  /* The creation time stamp of the exception. */
+    ATTR STRING   *message;    /* The exception message. */
+    ATTR PMC      *payload;    /* The payload for the exception. */
+    ATTR INTVAL    severity;   /* The severity of the exception. */
+    ATTR INTVAL    type;       /* The type of the exception. */
+    ATTR INTVAL    exit_code;  /* The exit code of the exception. */
+    ATTR PMC      *stacktrace; /* The stacktrace of an exception. */
 
 /*
 
@@ -141,7 +143,7 @@ Return the exception message.
 
 =item C<INTVAL get_integer()>
 
-Returns the severity of the exception.
+Returns the id of the exception.
 
 =cut
 
@@ -149,7 +151,7 @@ Returns the severity of the exception.
 
     VTABLE INTVAL get_integer() {
         Parrot_Exception * const exception = PARROT_EXCEPTION(SELF);
-        return exception->severity;
+        return exception->id;
     }
 
 /*
@@ -262,14 +264,28 @@ Sets the C<message> of the Exception.
 
 =item C<void set_integer_native(INTVAL *value)>
 
-Sets the C<severity> of the Exception.
+Sets the C<id> of the Exception.
 
 =cut
 
 */
 
     VTABLE void set_integer_native(INTVAL value) {
-        SET_ATTR_severity(interp, SELF, value);
+        SET_ATTR_id(interp, SELF, value);
+    }
+
+/*
+
+=item C<void set_number_native(FLOATVAL value)>
+
+Sets the birthtime of the exception.
+
+=cut
+
+*/
+
+    VTABLE void set_number_native(FLOATVAL value) {
+        SET_ATTR_birthtime(interp, SELF, value);
     }
 
 
@@ -458,6 +474,35 @@ Set an attribute value for the exception object.
                 "No such attribute '%S'", name);
         }
 
+    }
+
+/*
+
+=item C<PMC *share_ro()>
+
+Set this PMC as shared.
+
+=cut
+
+*/
+
+    VTABLE PMC *share_ro() {
+        PMC *shared_self;
+        Parrot_Exception *shared_struct;
+
+        if (PObj_is_PMC_shared_TEST(SELF))
+            return SELF;
+
+        shared_self = pt_shared_fixup(INTERP, SELF);
+        shared_struct = PARROT_EXCEPTION(shared_self);
+
+        if (!PMC_IS_NULL(shared_struct->payload))
+            shared_struct->payload = pt_shared_fixup(INTERP, shared_struct->payload);
+
+        if (!PMC_IS_NULL(shared_struct->stacktrace))
+            shared_struct->stacktrace = pt_shared_fixup(INTERP, shared_struct->stacktrace);
+
+        return shared_self;
     }
 
 /*

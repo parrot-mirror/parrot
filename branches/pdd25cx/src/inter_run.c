@@ -90,7 +90,7 @@ runops(PARROT_INTERP, size_t offs)
             fprintf(stderr, "[exception; back to loop %d, level %d]\n",
                     our_runloop_id, our_runloop_level);
 #endif
-            offset = handle_exception(interp);
+            offset = Parrot_ex_calc_handler_offset(interp);
             /* update profile for exception execution time */
             if (interp->profile &&
                     Interp_flags_TEST(interp, PARROT_PROFILE_FLAG)) {
@@ -118,13 +118,6 @@ runops(PARROT_INTERP, size_t offs)
 #endif
     interp->current_runloop_level = our_runloop_level - 1;
     interp->current_runloop_id = old_runloop_id;
-    /*
-     * not yet - this needs classifying of exceptions and handlers
-     * so that only an exit handler does catch this exception
-     */
-#if 0
-    do_exception(interp, EXCEPT_exit, 0);
-#endif
 }
 
 /*
