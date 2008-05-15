@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -832,7 +832,7 @@ find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
         return 0;
     }
 
-    real_exception(interp, NULL, EXCEPTION_INTERP_ERROR,
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INTERP_ERROR,
             "Unexpected condition in find_common_mask()!\n");
 }
 

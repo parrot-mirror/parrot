@@ -1063,7 +1063,8 @@ imcc_compile_pasm_ex(PARROT_INTERP, ARGIN(const char *s))
     if (sub)
         return sub;
 
-    real_exception(interp, NULL, EXCEPTION_SYNTAX_ERROR, "%Ss", error_message);
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_SYNTAX_ERROR, "%Ss",
+        error_message);
 }
 
 /*
@@ -1087,7 +1088,8 @@ imcc_compile_pir_ex(PARROT_INTERP, ARGIN(const char *s))
     if (sub)
         return sub;
 
-    real_exception(interp, NULL, EXCEPTION_SYNTAX_ERROR, "%Ss", error_message);
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_SYNTAX_ERROR, "%Ss",
+        error_message);
 }
 
 /*
@@ -1128,8 +1130,8 @@ imcc_compile_file(PARROT_INTERP, ARGIN(const char *fullname),
     fs = string_make(interp, fullname, strlen(fullname), NULL, 0);
 
     if (Parrot_stat_info_intval(interp, fs, STAT_ISDIR))
-        real_exception(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
-                "imcc_compile_file: '%s' is a directory\n", fullname);
+        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+            "imcc_compile_file: '%s' is a directory\n", fullname);
 
     fp = fopen(fullname, "r");
     if (!fp)

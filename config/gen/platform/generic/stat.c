@@ -77,7 +77,8 @@ stat_common(PARROT_INTERP, struct stat *statbuf, INTVAL thing, int status)
 
     if (status == -1) {
         const char *err = strerror(errno);
-        real_exception(interp, NULL, EXCEPTION_EXTERNAL_ERROR, "stat failed: %s", err);
+        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+            "stat failed: %s", err);
     }
 
     switch (thing) {

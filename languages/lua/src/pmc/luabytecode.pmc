@@ -160,10 +160,10 @@ static void _load_header(Interp *interp)
     char header[LUAC_HEADERSIZE];
 
     _get_block(header, sizeof header);
-    if (memcmp(header, header_ref, sizeof header) != 0) {
-        real_exception(interp, NULL, ILL_INHERIT,
-            "bad header");
-    }
+
+    if (memcmp(header, header_ref, sizeof header) != 0)
+        Parrot_ex_throw_from_c(interp, NULL, ILL_INHERIT, "bad header");
+
 #if 1
     fp -= 8;
     VTABLE_set_attr_str(interp, script,
@@ -232,8 +232,7 @@ static PMC* _load_constant_list(Interp *interp)
             VTABLE_set_string_native(interp, k, _get_string(interp));
             break;
         default:
-            real_exception(interp, NULL, ILL_INHERIT,
-                "bad constant");
+            Parrot_ex_throw_from_c(interp, NULL, ILL_INHERIT, "bad constant");
         }
         VTABLE_set_pmc_keyed_int(interp, ret, i, k);
     }

@@ -58,9 +58,9 @@ of the error would interfere with the exception system).
 
 This involves printing an error message to stderr, and calling C<exit> to exit
 the process with the given exitcode. It is not possible for Parrot bytecode to
-intercept a fatal error (for that, use C<real_exception>). C<exit_fatal> does
-not call C<Parrot_exit> to invoke exit handlers (that would require an
-interpreter).
+intercept a fatal error (for that, use C<Parrot_ex_throw_from_c>).
+C<exit_fatal> does not call C<Parrot_exit> to invoke exit handlers (that would
+require an interpreter).
 
 =cut
 
@@ -552,7 +552,7 @@ do_exception(PARROT_INTERP, INTVAL severity, long error)
 
 /*
 
-=item C<void real_exception>
+=item C<void Parrot_ex_throw_from_c>
 
 Throws a real exception, with an error message constructed from the format
 string and arguments.  C<ret_addr> is the address from which to resume, if some
@@ -562,9 +562,10 @@ C<exitcode> is a C<exception_type_enum> value.
 See also C<exit_fatal()>, which signals fatal errors, and
 C<run_handler>, which calls the handler.
 
-The 'invoke' vtable function doesn't actually execute a sub/continuation/handler,
-it only sets up the environment for invocation and returns the address of the
-start of the sub's code. That address then becomes the next op in the runloop.
+The 'invoke' vtable function doesn't actually execute a
+sub/continuation/handler, it only sets up the environment for invocation and
+returns the address of the start of the sub's code. That address then becomes
+the next op in the runloop.
 
 When the handler is a sub, it can be invoked in its own runloop with
 C<Parrot_runops_fromc_args>.
@@ -595,7 +596,7 @@ handlers.
 PARROT_API
 PARROT_DOES_NOT_RETURN
 void
-real_exception(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
+Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
         int exitcode, ARGIN(const char *format), ...)
 {
     STRING *msg;
@@ -606,8 +607,9 @@ real_exception(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
 
     if (PMC_IS_NULL(exception)) {
         PIO_eprintf(interp,
-                "real_exception (severity:%d error:%d): %Ss\n",
-                EXCEPT_error, exitcode, msg);
+            "Parrot_ex_throw_from_c (severity:%d error:%d): %Ss\n",
+            EXCEPT_error, exitcode, msg);
+
         /* [what if exitcode is a multiple of 256?] */
         exit(exitcode);
     }
@@ -650,11 +652,11 @@ real_exception(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
 
 
     if (Interp_debug_TEST(interp, PARROT_BACKTRACE_DEBUG_FLAG)) {
-        PIO_eprintf(interp, "real_exception (severity:%d error:%d): %Ss\n",
+        PIO_eprintf(interp,
+            "Parrot_ex_throw_from_c (severity:%d error:%d): %Ss\n",
             EXCEPT_error, exitcode, msg);
         PDB_backtrace(interp);
     }
-
 
     longjmp(the_exception->destination, 1);
 }

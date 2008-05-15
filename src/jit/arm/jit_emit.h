@@ -679,9 +679,9 @@ Parrot_jit_int_load(Parrot_jit_info_t *jit_info,
             offset = ((char *)&interp->int_reg.registers[val])
                 - (char *)interp;
             if (offset > 4095) {
-                real_exception(interp, NULL, EXCEPTION_JIT_ERROR,
-                                   "integer load register %d generates offset %d, larger than 4095\n",
-                           val, offset);
+                Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_JIT_ERROR,
+                    "integer load register %d generates offset %d, "
+                    "larger than 4095\n", val, offset);
             }
             jit_info->native_ptr = emit_ldrstr_offset(jit_info->native_ptr,
                                                        cond,
@@ -700,9 +700,8 @@ Parrot_jit_int_load(Parrot_jit_info_t *jit_info,
                                                        hwreg);
             break;
         default:
-            real_exception(interp, NULL, EXCEPTION_JIT_ERROR,
-                               "Unsupported op parameter type %d in jit_int_load\n",
-                               op_type);
+            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_JIT_ERROR,
+                "Unsupported op parameter type %d in jit_int_load\n", op_type);
     }
 }
 
@@ -723,9 +722,9 @@ Parrot_jit_int_store(Parrot_jit_info_t *jit_info,
             offset = ((char *)&interp->int_reg.registers[val])
                 - (char *)interp;
             if (offset > 4095) {
-                real_exception(interp, NULL, EXCEPTION_JIT_ERROR,
-                                   "integer store register %d generates offset %d, larger than 4095\n",
-                           val, offset);
+                Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_JIT_ERROR,
+                    "integer store register %d generates offset %d, "
+                    "larger than 4095\n", val, offset);
             }
             jit_info->native_ptr = emit_ldrstr_offset(jit_info->native_ptr,
                                                        cond,
@@ -739,9 +738,8 @@ Parrot_jit_int_store(Parrot_jit_info_t *jit_info,
 
         case PARROT_ARG_N:
         default:
-            real_exception(interp, NULL, EXCEPTION_JIT_ERROR,
-                            "Unsupported op parameter type %d in jit_int_store\n",
-                               op_type);
+            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_JIT_ERROR,
+                "Unsupported op parameter type %d in jit_int_store\n", op_type);
     }
 }
 
@@ -881,8 +879,8 @@ void Parrot_jit_dofixup(Parrot_jit_info_t *jit_info,
                 break;
             }
             default:
-                real_exception(interp, NULL, EXCEPTION_JIT_ERROR, "Unknown fixup type:%d\n",
-                                   fixup->type);
+                Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_JIT_ERROR,
+                    "Unknown fixup type:%d\n", fixup->type);
                 break;
         }
         fixup = fixup->next;

@@ -160,8 +160,10 @@ Parrot_runops_fromc(PARROT_INTERP, ARGIN(PMC *sub))
      */
     dest = VTABLE_invoke(interp, sub, (void*) 1);
     if (!dest)
-        real_exception(interp, NULL, 1, "Subroutine returned a NULL address");
-    ctx = CONTEXT(interp);
+        Parrot_ex_throw_from_c(interp, NULL, 1,
+            "Subroutine returned a NULL address");
+
+    ctx    = CONTEXT(interp);
     offset = dest - interp->code->base.data;
     runops(interp, offset);
     return ctx;
@@ -194,9 +196,10 @@ runops_args(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *obj),
     interp->current_cont  = new_ret_continuation_pmc(interp, NULL);
     interp->current_object = obj;
     dest = VTABLE_invoke(interp, sub, NULL);
-    if (!dest) {
-        real_exception(interp, NULL, 1, "Subroutine returned a NULL address");
-    }
+    if (!dest)
+        Parrot_ex_throw_from_c(interp, NULL, 1,
+            "Subroutine returned a NULL address");
+
     if (PMC_IS_NULL(obj)) {
         /* skip over the return type */
         sig_p = sig + 1;
@@ -207,9 +210,10 @@ runops_args(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *obj),
     }
     else  {
         const size_t len = strlen(sig);
-        if (len > 8) {
-            real_exception(interp, NULL, 1, "too many arguments in runops_args");
-        }
+        if (len > 8)
+            Parrot_ex_throw_from_c(interp, NULL, 1,
+                "too many arguments in runops_args");
+
         new_sig[0] = 'O';
         strcpy(new_sig + 1, sig + 1);
         sig_p = new_sig;
@@ -223,7 +227,8 @@ runops_args(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *obj),
      * PASM subs usually don't have get_params
      * XXX we could check, if we are running main
      else
-        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION, "no get_params in sub");
+        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "no get_params in sub");
      */
 
     ctx    = CONTEXT(interp);
@@ -256,12 +261,15 @@ Parrot_run_meth_fromc(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *obj), SH
     parrot_context_t *ctx;
     opcode_t offset, *dest;
 
-    interp->current_cont = new_ret_continuation_pmc(interp, NULL);
+    interp->current_cont   = new_ret_continuation_pmc(interp, NULL);
     interp->current_object = obj;
-    dest = VTABLE_invoke(interp, sub, (void*)1);
+    dest = VTABLE_invoke(interp, sub, (void *)1);
+
     if (!dest)
-        real_exception(interp, NULL, 1, "Subroutine returned a NULL address");
-    ctx = CONTEXT(interp);
+        Parrot_ex_throw_from_c(interp, NULL, 1,
+            "Subroutine returned a NULL address");
+
+    ctx    = CONTEXT(interp);
     offset = dest - interp->code->base.data;
     runops(interp, offset);
     return set_retval(interp, 0, ctx);
