@@ -32,11 +32,6 @@ Define the the core subsystem for exceptions.
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static opcode_t * create_exception(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC * find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
@@ -359,41 +354,11 @@ rethrow_c_exception(PARROT_INTERP)
 
 /*
 
-=item C<static opcode_t * create_exception>
+=item C<size_t Parrot_ex_calc_handler_offset>
 
-Create an exception.
-
-=cut
-
-*/
-
-PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static opcode_t *
-create_exception(PARROT_INTERP)
-{
-    Parrot_exception * const the_exception = interp->exceptions;
-    PMC *exception = pmc_new(interp, enum_class_Exception);
-
-    /* exception severity, type, and message */
-    VTABLE_set_integer_keyed_str(interp, exception,
-            CONST_STRING(interp, "severity"), the_exception->severity);
-    VTABLE_set_integer_keyed_str(interp, exception,
-            CONST_STRING(interp, "type"), the_exception->error);
-
-    if (the_exception->msg)
-        VTABLE_set_string_native(interp, exception, the_exception->msg);
-
-    /* now fill rest of exception, locate handler and get
-     * destination of handler */
-    return run_handler(interp, exception, the_exception->resume);
-}
-
-/*
-
-=item C<size_t handle_exception>
-
-Handle an exception.
+Retrieve an exception from the concurrency scheduler, prepare a call to the
+handler, and return the offset to the handler so it can become the next op in
+the runloop.
 
 =cut
 
@@ -414,20 +379,6 @@ Parrot_ex_calc_handler_offset(PARROT_INTERP)
 
     /* return the *offset* of the handler */
     return handler_address - interp->code->base.data;
-}
-
-PARROT_API
-size_t
-handle_exception(PARROT_INTERP)
-{
-    /* absolute address of handler */
-    const opcode_t * const dest = create_exception(interp);
-
-    if (!dest)
-        PANIC(interp, "Unable to create exception");
-
-    /* return the *offset* of the handler */
-    return dest - interp->code->base.data;
 }
 
 /*
@@ -550,8 +501,8 @@ Parrot_ex_build_exception(PARROT_INTERP, INTVAL severity,
 
 =item C<void do_exception>
 
-Called from interrupt code. Does a C<longjmp> in front of the runloop,
-which calls C<handle_exception()>, returning the handler address where
+Called from interrupt code. Does a C<longjmp> in front of the runloop, which
+calls C<Parrot_ex_calc_handler_offset()>, returning the handler address where
 execution then resumes.
 
 */

@@ -136,10 +136,6 @@ void free_internal_exception(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_API
-size_t handle_exception(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
-PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC* new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_exception *jb))
