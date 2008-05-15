@@ -400,7 +400,7 @@ Introspection interface. C<key> can be:
             level = 1;
 
         if (level < 0)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_CONTROL_ERROR,
+            Parrot_ex_throw_from_c(interp, NULL, CONTROL_ERROR,
                 "No such caller depth");
 
         ctx = CONTEXT(interp);
@@ -410,7 +410,7 @@ Introspection interface. C<key> can be:
                 ctx = ctx->outer_ctx;
                 if (!ctx)
                     Parrot_ex_throw_from_c(interp, NULL,
-                        EXCEPTION_CONTROL_ERROR, "No such outer depth");
+                        CONTROL_ERROR, "No such outer depth");
             }
         }
         else {
@@ -419,13 +419,13 @@ Introspection interface. C<key> can be:
 
                 if (PMC_IS_NULL(cont) || !PMC_cont(cont)->seg)
                     Parrot_ex_throw_from_c(interp, NULL,
-                        EXCEPTION_CONTROL_ERROR, "No such caller depth");
+                        CONTROL_ERROR, "No such caller depth");
 
                 ctx = PMC_cont(cont)->to_ctx;
 
                 if (!ctx->current_sub)
                     Parrot_ex_throw_from_c(interp, NULL,
-                        EXCEPTION_CONTROL_ERROR, "No such caller depth");
+                        CONTROL_ERROR, "No such caller depth");
             }
         }
 

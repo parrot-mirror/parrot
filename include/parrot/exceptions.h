@@ -82,11 +82,11 @@ typedef enum {
         EXCEPTION_LIBRARY_NOT_LOADED,
         EXCEPTION_SYNTAX_ERROR,
 
-        EXCEPTION_CONTROL_RETURN,
-        EXCEPTION_CONTROL_OK,
-        EXCEPTION_CONTROL_BREAK,
-        EXCEPTION_CONTROL_CONTINUE,
-        EXCEPTION_CONTROL_ERROR
+        CONTROL_RETURN,
+        CONTROL_OK,
+        CONTROL_BREAK,
+        CONTROL_CONTINUE,
+        CONTROL_ERROR
 } exception_type_enum;
 
 /* &end_gen */
