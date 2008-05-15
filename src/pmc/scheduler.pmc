@@ -136,7 +136,9 @@ current maximum, and a birthtime of the current time.
 
 
         SCHEDULER_cache_valid_CLEAR(SELF);
-        Parrot_cx_runloop_wake(core_struct->interp, SELF);
+
+        if (task->vtable->base_type != enum_class_Exception)
+            Parrot_cx_runloop_wake(core_struct->interp, SELF);
     }
 
 /*

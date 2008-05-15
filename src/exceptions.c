@@ -168,7 +168,8 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
     else {
         STRING * const message = VTABLE_get_string(interp, exception);
         INTVAL exit_status = 1;
-        const INTVAL severity = VTABLE_get_integer(interp, exception);
+        const INTVAL severity = VTABLE_get_integer_keyed_str(interp,
+                exception, CONST_STRING(interp, "severity"));
 
         /* flush interpreter output to get things printed in order */
         PIO_flush(interp, PIO_STDOUT(interp));
@@ -348,8 +349,9 @@ rethrow_c_exception(PARROT_INTERP)
     Parrot_cx_add_handler(interp, handler);
     /* if there was no user handler, interpreter is already shutdown */
     the_exception->resume   = VTABLE_get_pointer(interp, handler);
-    the_exception->severity = VTABLE_get_integer(interp, exception);
     the_exception->msg      = VTABLE_get_string(interp, exception);
+    the_exception->severity = VTABLE_get_integer_keyed_str(interp,
+            exception, CONST_STRING(interp, "severity"));
     the_exception->error    = VTABLE_get_integer_keyed_str(interp,
             exception, CONST_STRING(interp, "exit_code"));
     longjmp(the_exception->destination, 1);
@@ -374,7 +376,8 @@ create_exception(PARROT_INTERP)
     PMC *exception = pmc_new(interp, enum_class_Exception);
 
     /* exception severity, type, and message */
-    VTABLE_set_integer_native(interp, exception, the_exception->severity);
+    VTABLE_set_integer_keyed_str(interp, exception,
+            CONST_STRING(interp, "severity"), the_exception->severity);
     VTABLE_set_integer_keyed_str(interp, exception,
             CONST_STRING(interp, "type"), the_exception->error);
 
@@ -395,6 +398,23 @@ Handle an exception.
 =cut
 
 */
+PARROT_API
+size_t
+Parrot_ex_calc_handler_offset(PARROT_INTERP)
+{
+    opcode_t *handler_address;
+    PMC *exception = VTABLE_pop_pmc(interp, interp->scheduler);
+
+    /* now fill rest of exception, locate handler and get
+     * destination of handler */
+    handler_address = run_handler(interp, exception, NULL);
+
+    if (!handler_address)
+        PANIC(interp, "Unable to calculate opcode address for exception handler");
+
+    /* return the *offset* of the handler */
+    return handler_address - interp->code->base.data;
+}
 
 PARROT_API
 size_t
@@ -516,7 +536,8 @@ Parrot_ex_build_exception(PARROT_INTERP, INTVAL severity,
 {
     PMC *exception = pmc_new(interp, enum_class_Exception);
 
-    VTABLE_set_integer_native(interp, exception, severity);
+    VTABLE_set_integer_keyed_str(interp, exception,
+            CONST_STRING(interp, "severity"), severity);
     VTABLE_set_integer_keyed_str(interp, exception,
             CONST_STRING(interp, "type"), error);
     if (msg)
@@ -602,7 +623,6 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
     STRING *msg;
     Parrot_exception * const the_exception = interp->exceptions;
     PMC *exception = pmc_new(interp, enum_class_Exception);
-    opcode_t *handler_address;
     RunProfile * const profile = interp->profile;
 
     if (PMC_IS_NULL(exception)) {
@@ -614,12 +634,13 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
         exit(exitcode);
     }
 
-    /* exception severity and type */
-    VTABLE_set_integer_native(interp, exception, EXCEPT_error);
+    /* Set exception severity and type. */
+    VTABLE_set_integer_keyed_str(interp, exception,
+            CONST_STRING(interp, "severity"), EXCEPT_error);
     VTABLE_set_integer_keyed_str(interp, exception,
             CONST_STRING(interp, "type"), exitcode);
 
-    /* make exception message */
+    /* Make and set exception message. */
     if (strchr(format, '%')) {
         va_list arglist;
         va_start(arglist, format);
@@ -633,14 +654,12 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
     if (msg)
         VTABLE_set_string_native(interp, exception, msg);
 
-    /* now fill rest of exception, locate handler and get
-     * destination of handler */
-    handler_address = run_handler(interp, exception, ret_addr);
+    /* The exception will be retrieved from the scheduler after jumping back to
+     * a point in the runloop where the exception handler can be run. */
+    Parrot_cx_schedule_task(interp, exception);
 
-    /*
-     * if profiling remember end time of lastop and
-     * generate entry for exception
-     */
+    /* If profiling remember end time of lastop and generate entry for
+     * exception. */
     if (profile && Interp_flags_TEST(interp, PARROT_PROFILE_FLAG)) {
         const FLOATVAL now = Parrot_floatval_time();
 
@@ -658,6 +677,7 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
         PDB_backtrace(interp);
     }
 
+    /* Jump to a point in the runloop where the handler can be run. */
     longjmp(the_exception->destination, 1);
 }
 
