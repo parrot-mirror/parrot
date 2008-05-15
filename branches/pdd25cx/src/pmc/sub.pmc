@@ -258,7 +258,7 @@ Invokes the subroutine.
 
         /* check recursion/call depth */
         if (++context->recursion_depth > INTERP->recursion_limit)
-            Parrot_ex_throw_from_c(INTERP, next, EXCEPTION_CONTROL_ERROR,
+            Parrot_ex_throw_from_c(INTERP, next, CONTROL_ERROR,
                     "maximum recursion depth exceeded");
 
         /* and copy set context variables */

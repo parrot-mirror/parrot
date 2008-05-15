@@ -798,7 +798,7 @@ inline op count_eh(out INT) {
 
 inline op die(in STR) :flow {
     PMC *exception = Parrot_ex_build_exception(interp, EXCEPT_error,
-            EXCEPTION_CONTROL_ERROR, $1);
+            CONTROL_ERROR, $1);
     opcode_t * const ret  = expr NEXT();
     opcode_t * const dest = (opcode_t *)run_handler(interp, exception, ret);
     goto ADDRESS(dest);
@@ -816,7 +816,7 @@ inline op die(in PMC) :flow {
         msg = VTABLE_get_string(interp, $1);
 
     exception = Parrot_ex_build_exception(interp, EXCEPT_error,
-            EXCEPTION_CONTROL_ERROR, msg);
+            CONTROL_ERROR, msg);
 
     dest = (opcode_t *)run_handler(interp, exception, ret);
     goto ADDRESS(dest);
