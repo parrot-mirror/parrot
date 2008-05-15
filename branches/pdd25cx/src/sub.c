@@ -473,9 +473,8 @@ Parrot_find_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(const parrot_conte
              * debug, though we'd rather not pay the cost of detection in a
              * production release.
              */
-            real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                           "Bug:  Context %p :outer points back to itself.",
-                           ctx);
+            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+                "Bug:  Context %p :outer points back to itself.", ctx);
         }
 #endif
         ctx = outer;
@@ -513,26 +512,30 @@ parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
      * this subroutine
      */
     parrot_context_t * const ctx = CONTEXT(interp);
-    if (PMC_IS_NULL(sub->outer_sub)) {
-        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                "'%Ss' isn't a closure (no :outer)", sub->name);
-    }
+
+    if (PMC_IS_NULL(sub->outer_sub))
+        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "'%Ss' isn't a closure (no :outer)", sub->name);
+
     /* if (sub->outer_sub != ctx->current_sub) - fails if outer
      * is a closure too e.g. test 'closure 4'
      */
     if (0 == string_equal(interp,
                 (PMC_sub(ctx->current_sub))->name,
                 sub->name)) {
-        real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                "'%Ss' isn't the :outer of '%Ss')",
-                (PMC_sub(ctx->current_sub))->name,
-                sub->name);
+        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "'%Ss' isn't the :outer of '%Ss')",
+            (PMC_sub(ctx->current_sub))->name, sub->name);
     }
+
     cont = ctx->current_cont;
+
     /* preserve this frame by converting the continuation */
     cont->vtable = interp->vtables[enum_class_Continuation];
+
     /* remember this (the :outer) ctx in the closure */
     clos->outer_ctx = ctx;
+
     /* the closure refs now this context too */
     ctx->ref_count++;
 #if CTX_LEAK_DEBUG

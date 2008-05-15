@@ -122,7 +122,8 @@ Catch dereferencing. This would unshare the referred PMC.
     }
 
     VTABLE PMC *get_pmc() {
-        real_exception(INTERP, NULL, EXCEPTION_INVALID_OPERATION, "deref not allowed");
+        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            "deref not allowed");
     }
 
 /*

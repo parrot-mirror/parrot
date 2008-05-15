@@ -185,7 +185,7 @@ void push_new_c_exception_handler(PARROT_INTERP,
 
 PARROT_API
 PARROT_DOES_NOT_RETURN
-void real_exception(PARROT_INTERP,
+void Parrot_ex_throw_from_c(PARROT_INTERP,
     ARGIN_NULLOK(void *ret_addr),
     int exitcode,
     ARGIN(const char *format),

@@ -252,7 +252,8 @@ If the denominator is zero, a 'Divide by zero' exception is thrown.
 inline op cmod(out INT, in INT, in INT) :base_core {
   INTVAL den = $3;
   if ($3 == 0)
-    real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        "Divide by zero");
   $1 = $2 % den;
 }
 
@@ -290,7 +291,8 @@ If the denominator is zero, a 'Divide by zero' exception is thrown.
 inline op cmod(out NUM, in NUM, in NUM) :base_core {
   FLOATVAL den = $3;
   if (FLOAT_IS_ZERO($3))
-    real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        "Divide by zero");
   $1 = fmod($2, den);
 }
 
@@ -339,28 +341,32 @@ If the denominator is zero, a 'Divide by zero' exception is thrown.
 inline op div(inout INT, in INT) :base_core {
   INTVAL den = $2;
   if ($2 == 0)
-    real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        "Divide by zero");
   $1 /= den;
 }
 
 inline op div(inout NUM, in NUM) :base_core {
   FLOATVAL den = $2;
   if (FLOAT_IS_ZERO($2))
-    real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        "Divide by zero");
   $1 /= den;
 }
 
 inline op div(out INT, in INT, in INT) :base_core {
   INTVAL den = $3;
   if ($3 == 0)
-    real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        "Divide by zero");
   $1 = $2 / den;
 }
 
 inline op div(out NUM, in NUM, in NUM) :base_core {
   FLOATVAL den = $3;
   if (FLOAT_IS_ZERO($3))
-    real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        "Divide by zero");
   $1 = $2 / den;
 }
 
@@ -385,7 +391,8 @@ inline op fdiv(inout INT, in INT) :base_core {
   FLOATVAL f;
 
   if ($2 == 0)
-    real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        "Divide by zero");
 
   f  = floor($1 / den);
   $1 = (INTVAL)f;
@@ -394,7 +401,8 @@ inline op fdiv(inout INT, in INT) :base_core {
 inline op fdiv(inout NUM, in NUM) :base_core {
   FLOATVAL den = $2;
   if (FLOAT_IS_ZERO($2))
-    real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        "Divide by zero");
   $1 = floor($1 / den);
 }
 
@@ -403,7 +411,8 @@ inline op fdiv(out INT, in INT, in INT) :base_core {
   FLOATVAL f;
 
   if ($3 == 0)
-    real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        "Divide by zero");
 
   f  = floor($2 / den);
   $1 = (INTVAL)f;
@@ -412,7 +421,8 @@ inline op fdiv(out INT, in INT, in INT) :base_core {
 inline op fdiv(out NUM, in NUM, in NUM) :base_core {
   FLOATVAL den = $3;
   if (FLOAT_IS_ZERO($3))
-    real_exception(interp, NULL, EXCEPTION_DIV_BY_ZERO, "Divide by zero");
+    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        "Divide by zero");
   $1 = floor($2 / den);
 }
 

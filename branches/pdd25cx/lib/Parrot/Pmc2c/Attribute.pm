@@ -140,9 +140,9 @@ EOA
 
     else {
         $decl .= <<"EOA";
-            real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION, \\
-                            "Attributes of type '$attrtype' cannot be " \\
-                            "subclassed from a high-level PMC."); \\
+            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION, \\
+                "Attributes of type '$attrtype' cannot be " \\
+                "subclassed from a high-level PMC."); \\
 EOA
     }
 
@@ -190,9 +190,9 @@ EOA
 
     else {
         $decl .= <<"EOA";
-            real_exception(interp, NULL, EXCEPTION_INVALID_OPERATION, \\
-                            "Attributes of type '$attrtype' cannot be " \\
-                            "subclassed from a high-level PMC."); \\
+            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION, \\
+                "Attributes of type '$attrtype' cannot be " \\
+                "subclassed from a high-level PMC."); \\
 EOA
     }
 

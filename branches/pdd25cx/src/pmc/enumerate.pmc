@@ -57,7 +57,8 @@ the next one.
         INTVAL i  = PMC_int_val(key);
 
         if (i == -1)
-            real_exception(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS, "StopIteration");
+            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
+                "StopIteration");
 
         item = VTABLE_shift_pmc(INTERP, iter);
         tupl = pmc_new(INTERP, enum_class_FixedPMCArray);
