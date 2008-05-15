@@ -168,7 +168,7 @@ EOA
     elsif ($attrtype eq "FLOATVAL") {
         $decl .= <<"EOA";
             PMC *attr_value = pmc_new(interp, enum_class_Float); \\
-            VTABLE_set_number(interp, attr_value, value); \\
+            VTABLE_set_number_native(interp, attr_value, value); \\
             VTABLE_set_attr_str(interp, pmc, \\
                               const_string(interp, "$attrname"), attr_value); \\
 EOA
