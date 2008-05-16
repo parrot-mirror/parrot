@@ -434,6 +434,7 @@ information see F<src/pmc.c>.
         retval = const_string(INTERP, "_._:0:");
         RETURN(STRING *retval);
     }
+
 }
 
 /*

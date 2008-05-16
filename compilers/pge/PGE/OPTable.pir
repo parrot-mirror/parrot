@@ -279,6 +279,12 @@ Adds (or replaces) a syntactic category's defaults.
   with_tighter:
 
     ws = getattribute self, '&!ws'
+    unless null ws goto have_ws
+    $I0 = can mob, 'ws'
+    unless $I0 goto have_ws
+    ws = find_method mob, 'ws'
+  have_ws:
+
     tokenstack = new 'ResizablePMCArray'
     operstack = new 'ResizablePMCArray'
     termstack = new 'ResizablePMCArray'
@@ -492,7 +498,7 @@ Adds (or replaces) a syntactic category's defaults.
     $S1 = $P1['type']
     $S2 = $P2['type']
     if $S1 != $S2 goto reduce_saveterm
-    $P0 = $P2.get_array()
+    $P0 = $P2.'list'()
     $P1 = $P1[1]
     push $P0, $P1
     $P1 = $P2

@@ -162,6 +162,7 @@ typedef struct _Sync {
 } Sync;
 
 /* HEADERIZER BEGIN: src/thread.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_API
 void Parrot_shared_DOD_block(PARROT_INTERP)
@@ -215,33 +216,36 @@ int pt_thread_run(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        FUNC_MODIFIES(* dest_interp);
+        FUNC_MODIFIES(*dest_interp);
 
 int pt_thread_run_1(PARROT_INTERP,
-    ARGOUT(PMC *dest_interp),
-    ARGIN(PMC *sub),
-    ARGIN_NULLOK(PMC *arg))
+    ARGOUT(PMC* dest_interp),
+    ARGIN(PMC* sub),
+    ARGIN(PMC *arg))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
         FUNC_MODIFIES(* dest_interp);
 
 int pt_thread_run_2(PARROT_INTERP,
-    ARGOUT(PMC *dest_interp),
-    ARGIN(PMC *sub),
-    ARGIN_NULLOK(PMC *arg))
+    ARGOUT(PMC* dest_interp),
+    ARGIN(PMC* sub),
+    ARGIN(PMC *arg))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
         FUNC_MODIFIES(* dest_interp);
 
 int pt_thread_run_3(PARROT_INTERP,
-    ARGOUT(PMC *dest_interp),
-    ARGIN(PMC *sub),
-    ARGIN_NULLOK(PMC *arg))
+    ARGOUT(PMC* dest_interp),
+    ARGIN(PMC* sub),
+    ARGIN(PMC *arg))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
         FUNC_MODIFIES(* dest_interp);
 
 void pt_thread_wait_with(PARROT_INTERP, ARGMOD(Parrot_mutex *mutex))
@@ -260,6 +264,7 @@ PMC * pt_transfer_sub(
         __attribute__nonnull__(3)
         FUNC_MODIFIES(d);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/thread.c */
 
 #endif /* PARROT_THREAD_H_GUARD */

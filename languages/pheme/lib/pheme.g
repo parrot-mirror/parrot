@@ -1,8 +1,8 @@
 grammar Pheme::Grammar;
 
-rule TOP { <list>+ }
+rule TOP { <pheme_list>+ }
 
-rule list { '(' [ <special_form> | <application> | <cons> ] ')' }
+rule pheme_list { '(' [ <special_form> | <application> | <cons> ] ')' }
 
 rule special_form { <special> <list_item>+ }
 
@@ -11,13 +11,13 @@ rule application { <atom> <list_item>+ }
 rule cons { <list_item>+ }
 
 # quoted_string has to come first
-rule list_item { <quoted_string> | <atom> | <list> | <empty_list> }
+rule list_item { <quoted_string> | <atom> | <pheme_list> | <empty_list> }
 
 token empty_list { <quote>? '()' }
 
 token atom { [ <symbol_tag> | <quote> ]? <-[\ \n\r\(\)]>+ }
 
-token quoted_string { <PGE::Text::bracketed: "> }
+token quoted_string { <PGE::Text::bracketed: '"'> }
 
 token quote { \' }
 

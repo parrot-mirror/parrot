@@ -33,6 +33,7 @@ typedef void (*compact_f) (Interp *, Memory_Pool *);
 /* HEADERIZER HFILE: include/parrot/resources.h */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
@@ -96,6 +97,7 @@ static Memory_Pool * new_memory_pool(
     size_t min_block,
     NULLOK(compact_f compact));
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 
@@ -208,10 +210,12 @@ mem_allocate(PARROT_INTERP, size_t size, ARGMOD(Memory_Pool *pool))
         /*
          * force a DOD run to get live flags set
          * for incremental M&S collection is run from there
+         * but only if there may be something worth collecting!
          * TODO pass required allocation size to the DOD system,
          *      so that collection can be skipped if needed
          */
-        if (!interp->arena_base->DOD_block_level) {
+        if (!interp->arena_base->DOD_block_level
+        &&   interp->arena_base->mem_allocs_since_last_collect) {
             Parrot_do_dod_run(interp, DOD_trace_stack_FLAG);
 #if !PARROT_GC_IMS
             /* Compact the pool if allowed and worthwhile */

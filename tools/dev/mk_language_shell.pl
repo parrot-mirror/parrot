@@ -86,10 +86,12 @@ while (<DATA>) {
 ##  close the last file
 close($fh) if $fh;
 
-##  build the initial makefile
-my $reconfigure = "$PConfig{perl} $PConfig{build_dir}/tools/dev/reconfigure.pl";
-$reconfigure =~ s!/!$PConfig{slash}!g;
-system("$reconfigure --step=gen::languages --languages=$lclang");
+##  build the initial makefile if no path was specified on command line
+unless ($ARGV[1]) {
+  my $reconfigure = "$PConfig{perl} $PConfig{build_dir}/tools/dev/reconfigure.pl";
+  $reconfigure =~ s!/!$PConfig{slash}!g;
+  system("$reconfigure --step=gen::languages --languages=$lclang");
+}
 
 ##  we're done
 1;
@@ -325,7 +327,7 @@ grammar @lang@::Grammar is PCT::Grammar;
 
 rule TOP {
     <statement>*
-    [ $ || <panic: Syntax error> ]
+    [ $ || <panic: 'Syntax error'> ]
     {*}
 }
 
@@ -349,7 +351,7 @@ rule value {
 rule integer { \d+ {*} }
 
 rule quote {
-    [ \' <string_literal: '> \' | \" <string_literal: "> \" ]
+    [ \' <string_literal: '\'' > \' | \" <string_literal: '"' > \" ]
     {*}
 }
 

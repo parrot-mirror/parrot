@@ -20,6 +20,7 @@ proto prefix:<+^> is equiv(prefix:<+>)
     is pirop('n_bnot')
     { ... }
 proto prefix:<=> is equiv(prefix:<+>) { ... }
+proto prefix:<^> is equiv(prefix:<+>) { ... }
 
 ## multiplicative operators
 proto infix:<*> is precedence('u=') { ... }
@@ -61,7 +62,7 @@ proto infix:<&> is precedence('q=')
 proto infix:<|> is precedence('p=')
     is assoc('list')
     { ... }
-proto infix:<^> is precedence('p=')
+proto infix:<^> is equiv(infix:<|>)
     is assoc('list')
     { ... }
 
@@ -119,8 +120,8 @@ proto infix:<max> is equiv(infix:<||>)
     { ... }
 
 ## item assignment
-proto infix:<=> is precedence('j=')
-    is pirop('copy')
+proto infix:<=> is precedence('i=')
+    is pasttype('copy')
     is assoc('right')
     is lvalue(1)
     { ... }
@@ -156,9 +157,14 @@ proto infix:<|=> is equiv(infix:<=>) { ... }
 proto infix:<&=> is equiv(infix:<=>) { ... }
 proto infix:<^=> is equiv(infix:<=>) { ... }
 
+## loose unary
+proto prefix:<true> is precedence('h=') { ... }
+proto prefix:<not> is equiv(prefix:<true>) { ... }
+
 ## comma
 proto infix:<,> is precedence('g=')
     is assoc('list')
+    is nullterm
     { ... }
 
 ## list infix

@@ -8,7 +8,7 @@ method TOP($/) {
     my $past := $( $<statement_block> );
     $past.blocktype('declaration');
 
-    # Attatch any initialization code.
+    # Attach any initialization code.
     our $?INIT;
     if defined( $?INIT ) {
         $?INIT.unshift(
@@ -39,6 +39,7 @@ method statement_block($/, $key) {
         if $?BLOCK_SIGNATURED {
             $?BLOCK := $?BLOCK_SIGNATURED;
             $?BLOCK_SIGNATURED := 0;
+            $?BLOCK.symbol('___HAVE_A_SIGNATURE', :scope('lexical'));
         }
         else {
             $?BLOCK := PAST::Block.new( PAST::Stmts.new(), :node($/));
@@ -72,6 +73,12 @@ method statement_block($/, $key) {
     if $key eq 'close' {
         my $past := @?BLOCK.shift();
         $?BLOCK := @?BLOCK[0];
+        if $past.symbol('___MAYBE_NEED_TOPIC_FIXUP') && !$past.symbol('___HAVE_A_SIGNATURE') {
+            if $past[0][0].name() ne '$_' { $/.panic('$_ handling is very poor right now.') };
+            $past.symbol('$_', :scope('lexical'));
+            $past[0][0].scope('parameter');
+            $past[0][0].isdecl(0);
+        }
         $past.push($($<statementlist>));
         make $past;
     }
@@ -302,22 +309,8 @@ method for_statement($/) {
 }
 
 method pblock($/) {
-    our $?BLOCK_SIGNATURED;
-    unless $<signature> {
-        $?BLOCK_SIGNATURED :=
-            PAST::Block.new(
-                PAST::Stmts.new(
-                    PAST::Var.new(
-                        :name('$_'),
-                        :scope('parameter'),
-                        :viviself('Undef')
-                    )
-                ),
-                :node( $/ )
-            );
-        $?BLOCK_SIGNATURED.symbol( '$_', :scope('lexical') );
-    }
-    make $?BLOCK_SIGNATURED;
+    my $block := $( $<block> );
+    make $block;
 }
 
 method use_statement($/) {
@@ -490,7 +483,7 @@ method plurality_declarator($/) {
                 );
             }
 
-            # Comma spearator if needed.
+            # Comma separator if needed.
             $count := $count + 1;
             if $count != $arity {
                 $pirflags := $pirflags ~ ', ';
@@ -545,8 +538,33 @@ method signature($/) {
     for $/[0] {
         # Add parameter declaration.
         my $parameter := $($_<parameter>);
+        my $separator := $_[0];
         $past.symbol($parameter.name(), :scope('lexical'));
         $params.push($parameter);
+
+        # If it is invocant, modify it to be just a lexical and bind self to it.
+        if substr($separator, 0, 1) eq ':' {
+            # Make sure it's first parameter.
+            if +@($params) != 1 {
+                $/.panic("There can only be one invocant and it must be the first parameter");
+            }
+
+            # Modify.
+            $parameter.scope('lexical');
+            $parameter.isdecl(1);
+
+            # Bind self to it.
+            $past.push(PAST::Op.new(
+                :pasttype('bind'),
+                PAST::Var.new(
+                    :name($parameter.name()),
+                    :scope('lexical')
+                ),
+                PAST::Op.new(
+                    :inline('%r = self')
+                )
+            ));
+        }
 
         # Add any type check that is needed. The scheme for this: $type_check
         # is a statement block. We create a block for each parameter, which
@@ -634,10 +652,10 @@ method signature($/) {
 }
 
 
-method parameter($/, $key) {
+method parameter($/) {
     my $past := $( $<param_var> );
     my $sigil := $<param_var><sigil>;
-    if $key eq 'slurp' {              # slurpy
+    if $<quant> eq '*' {
         $past.slurpy( $sigil eq '@' || $sigil eq '%' );
         $past.named( $sigil eq '%' );
     }
@@ -653,6 +671,15 @@ method parameter($/, $key) {
                 $past.viviself('Undef');
             }
         }
+    }
+    if $<default_value> {
+        if $<quant> eq '!' {
+            $/.panic("Can't put a default on a required parameter");
+        }
+        if $<quant> eq '*' {
+            $/.panic("Can't put a default on a slurpy parameter");
+        }
+        $past.viviself( $( $<default_value>[0]<EXPR> ) );
     }
     make $past;
 }
@@ -698,13 +725,13 @@ method term($/, $key) {
             $past := $($_);
 
             # Check if it's an indirect call.
-            if $_<methodop><variable> {
+            if $_<dotty><methodop><variable> {
                 # What to call supplied; need to put the invocant second.
                 my $meth := $past[0];
                 $past[0] := $term;
                 $past.unshift($meth);
             }
-            elsif $_<methodop><quote> {
+            elsif $_<dotty><methodop><quote> && $past.pasttype() eq 'callmethod' {
                 # First child is something that we evaluate to get the
                 # name. Replace it with PIR to call find_method on it.
                 my $meth_name := $past[0];
@@ -730,6 +757,55 @@ method postfix($/, $key) {
     make $( $/{$key} );
 }
 
+
+method dotty($/, $key) {
+    my $past := $( $<methodop> );
+
+    if $key eq '.' {
+        # Just a normal method call; nothing to do.
+    }
+    elsif $key eq '!' {
+        # Private method call. Need to put ! on the start of the name
+        # (unless it was call to a code object, in which case we don't do
+        # anything more).
+        if $<methodop><name> {
+            $past.name('!' ~ $past.name());
+        }
+        elsif $<methodop><quote> {
+            $past[0] := PAST::Op.new(
+                :pasttype('call'),
+                :name('infix:~'),
+                PAST::Val.new( :value('!') ),
+                $past[0]
+            );
+        }
+    }
+    elsif $key eq '.*' {
+        if $/[0] eq '.?' || $/[0] eq '.+' || $/[0] eq '.*' {
+            unless $<methodop><name> || $<methodop><quote>  {
+                $/.panic("Cannot use " ~ $/[0] ~ " when method is a code ref");
+            }
+            my $args := $past;
+            $past := PAST::Op.new(
+                :pasttype('call'),
+                :name('infix:' ~ $/[0])
+            );
+            if $<methodop><name> {
+                $past.push(PAST::Val.new( :value(~$args.name()) ));
+            }
+            for @($args) {
+                $past.push($_);
+            }
+        }
+        else {
+            $/.panic($/[0] ~ ' method calls not yet implemented');
+        }
+    }
+
+    make $past;
+}
+
+
 method methodop($/, $key) {
     my $past;
 
@@ -744,8 +820,8 @@ method methodop($/, $key) {
     $past.pasttype('callmethod');
     $past.node($/);
 
-    if $<ident> {
-        $past.name(~$<ident>);
+    if $<name> {
+        $past.name(~$<name><ident>[0]);
     }
     elsif $<variable> {
         $past.unshift( $( $<variable> ) );
@@ -834,7 +910,7 @@ method noun($/, $key) {
             )
         );
     }
-    elsif $key eq 'methodop' {
+    elsif $key eq 'dotty' {
         # Call on $_.
         $past := $( $/{$key} );
         $past.unshift(PAST::Var.new(
@@ -1075,6 +1151,23 @@ method package_declarator($/, $key) {
             $?ROLE := @?ROLE.shift();
         }
         elsif $<sym> eq 'grammar' {
+            # Make proto-object.
+            $?GRAMMAR.push(
+                PAST::Op.new(
+                    :pasttype('call'),
+                    PAST::Var.new(
+                        :scope('package'),
+                        :namespace('Perl6Object'),
+                        :name('make_grammar_proto')
+                    ),
+                    PAST::Var.new(
+                        :scope('lexical'),
+                        :name('$def')
+                    ),
+                    PAST::Val.new( :value(~$<name>) )
+                )
+            );
+
             # Attatch grammar declaration to the init code.
             unless defined( $?INIT ) {
                 $?INIT := PAST::Block.new();
@@ -1128,187 +1221,239 @@ method variable_decl($/) {
 
 
 method scoped($/) {
-    my $past := $( $<variable_decl> );
+    my $past;
 
-    # Do we have any type names?
-    if $<typename> {
-        # Build the type constraints list for the variable.
-        my $num_types := 0;
-        my $type_cons := PAST::Op.new();
-        for $<typename> {
-            $type_cons.push( $( $_ ) );
-            $num_types := $num_types + 1;
-        }
+    # Variable declaration?
+    if $<variable_decl> {
+        $past := $( $<variable_decl> );
 
-        # If just the one, we try to look it up and assign it.
-        if $num_types == 1 {
+        # Do we have any type names?
+        if $<typename> {
+            # Build the type constraints list for the variable.
+            my $num_types := 0;
+            my $type_cons := PAST::Op.new();
+            for $<typename> {
+                $type_cons.push( $( $_ ) );
+                $num_types := $num_types + 1;
+            }
+
+            # If just the one, we try to look it up and assign it.
+            if $num_types == 1 {
+                $past := PAST::Op.new(
+                    :pasttype('copy'),
+                    :lvalue(1),
+                    $past,
+                    $( $<typename>[0] )
+                );
+            }
+
+            # Now need to apply the type constraints. How many are there?
+            if $num_types == 1 {
+                # Just the first one.
+                $type_cons := $type_cons[0];
+            }
+            else {
+                # Many; make an and junction of types.
+                $type_cons.pasttype('call');
+                $type_cons.name('all');
+            }
+
+            # Now store these type constraints.
             $past := PAST::Op.new(
-                :pasttype('copy'),
-                :lvalue(1),
+                :inline(
+                      "    $P0 = new 'Hash'\n"
+                    ~ "    $P0['vartype'] = %1\n"
+                    ~ "    setattribute %0, '%!properties', $P0\n"
+                    ~ "    %r = %0\n"
+                ),
                 $past,
-                $( $<typename>[0] )
+                $type_cons
             );
         }
+    }
 
-        # Now need to apply the type constraints. How many are there?
-        if $num_types == 1 {
-            # Just the first one.
-            $type_cons := $type_cons[0];
-        }
-        else {
-            # Many; make an and junction of types.
-            $type_cons.pasttype('call');
-            $type_cons.name('all');
-        }
+    # Routine declaration?
+    else {
+        $past := $( $<routine_declarator> );
 
-        # Now store these type constraints.
-        $past := PAST::Op.new(
-            :inline(
-                  "    $P0 = new 'Hash'\n"
-                ~ "    $P0['vartype'] = %1\n"
-                ~ "    setattribute %0, '%!properties', $P0\n"
-                ~ "    %r = %0\n"
-            ),
-            $past,
-            $type_cons
-        );
+        # Don't support setting return type yet.
+        if $<typename> {
+            $/.panic("Setting return type of a routine not yet implemented.");
+        }
     }
 
     make $past;
 }
 
+sub declare_attribute($/) {
+    # Get the
+    # class or role we're in.
+    our $?CLASS;
+    our $?ROLE;
+    our $?PACKAGE;
+    our $?BLOCK;
+    my $class_def;
+    if $?ROLE =:= $?PACKAGE {
+        $class_def := $?ROLE;
+    }
+    else {
+        $class_def := $?CLASS;
+    }
+    unless defined( $class_def ) {
+        $/.panic(
+                "attempt to define attribute '"
+            ~ $name ~ "' outside of class"
+        );
+    }
+
+    # Add attribute to class (always name it with ! twigil).
+    my $variable := $<scoped><variable_decl><variable>;
+    my $name := ~$variable<sigil> ~ '!' ~ ~$variable<name>;
+    $class_def.push(
+        PAST::Op.new(
+            :pasttype('callmethod'),
+            :name('!keyword_has'),
+            PAST::Var.new(
+                :name('Perl6Object'),
+                :scope('package')
+            ),
+            PAST::Var.new(
+                :name('$def'),
+                :scope('lexical')
+            ),
+            PAST::Val.new( :value($name) )
+        )
+    );
+
+    # If we have no twigil, make $name as an alias to $!name.
+    if $variable<twigil>[0] eq '' {
+        $?BLOCK.symbol(
+            ~$variable<sigil> ~ ~$variable<name>, :scope('attribute')
+        );
+    }
+
+    # If we have a . twigil, we need to generate an accessor.
+    elsif $variable<twigil>[0] eq '.' {
+        my $accessor := PAST::Block.new(
+            PAST::Stmts.new(
+                PAST::Var.new( :name($name), :scope('attribute') )
+            ),
+            :name(~$variable<name>),
+            :blocktype('declaration'),
+            :pirflags(':method'),
+            :node( $/ )
+        );
+        $?CLASS.unshift($accessor);
+    }
+
+    # If it's a ! twigil, we're done; otherwise, error.
+    elsif $variable<twigil>[0] ne '!' {
+        $/.panic(
+                "invalid twigil "
+            ~ $variable<twigil>[0] ~ " in attribute declaration"
+        );
+    }
+
+    # Is there any "handles" trait verb?
+    if $<scoped><variable_decl><trait> {
+        for $<scoped><variable_decl><trait> {
+            if $_<trait_verb><sym> eq 'handles' {
+                # Get the methods for the handles and add them to
+                # the class
+                my $meths := process_handles(
+                    $/,
+                    $( $_<trait_verb><EXPR> ),
+                    $name
+                );
+                for @($meths) {
+                    $class_def.push($_);
+                }
+            }
+        }
+    }
+
+    # Register the attribute in the scope.
+    $?BLOCK.symbol($name, :scope('attribute'));
+
+}
 
 method scope_declarator($/) {
     my $past;
     our $?BLOCK;
     my $declarator := $<declarator>;
 
-    # Has declarations are attributes and need special handling.
-    if $declarator eq 'has' {
-        # Get the class or role we're in.
-        our $?CLASS;
-        our $?ROLE;
-        our $?PACKAGE;
-        my $class_def;
-        if $?ROLE =:= $?PACKAGE {
-            $class_def := $?ROLE;
+    # What sort of thing are we scoping?
+    if $<scoped><variable_decl> {
+        # Variable. Now go by declarator.
+        if $declarator eq 'has' {
+            # Has declarations are attributes and need special handling.
+            declare_attribute($/);
+
+            # We don't want to generate any PAST at the point of the declaration.
+            $past := PAST::Stmts.new();
         }
         else {
-            $class_def := $?CLASS;
-        }
-        unless defined( $class_def ) {
-            $/.panic(
-                  "attempt to define attribute '"
-                ~ $name ~ "' outside of class"
-            );
-        }
-
-        # Add attribute to class (always name it with ! twigil).
-        my $variable := $<scoped><variable_decl><variable>;
-        my $name := ~$variable<sigil> ~ '!' ~ ~$variable<name>;
-        $class_def.push(
-            PAST::Op.new(
-                :pasttype('callmethod'),
-                :name('!keyword_has'),
-                PAST::Var.new(
-                    :name('Perl6Object'),
-                    :scope('package')
-                ),
-                PAST::Var.new(
-                    :name('$def'),
-                    :scope('lexical')
-                ),
-                PAST::Val.new( :value($name) )
-            )
-        );
-
-        # If we have no twigil, make $name as an alias to $!name.
-        if $variable<twigil>[0] eq '' {
-            $?BLOCK.symbol(
-                ~$variable<sigil> ~ ~$variable<name>, :scope('attribute')
-            );
-        }
-
-        # If we have a . twigil, we need to generate an accessor.
-        elsif $variable<twigil>[0] eq '.' {
-            my $accessor := PAST::Block.new(
-                PAST::Stmts.new(
-                    PAST::Var.new( :name($name), :scope('attribute') )
-                ),
-                :name(~$variable<name>),
-                :blocktype('declaration'),
-                :pirflags(':method'),
-                :node( $/ )
-            );
-            $?CLASS.unshift($accessor);
-        }
-
-        # If it's a ! twigil, we're done; otherwise, error.
-        elsif $variable<twigil>[0] ne '!' {
-            $/.panic(
-                  "invalid twigil "
-                ~ $variable<twigil>[0] ~ " in attribute declaration"
-            );
-        }
-
-        # Is there any "handles" trait verb?
-        if $<scoped><variable_decl><trait> {
-            for $<scoped><variable_decl><trait> {
-                if $_<trait_verb><sym> eq 'handles' {
-                    # Get the methods for the handles and add them to
-                    # the class
-                    my $meths := process_handles(
-                        $/,
-                        $( $_<trait_verb><EXPR> ),
-                        $name
-                    );
-                    for @($meths) {
-                        $class_def.push($_);
-                    }
-                }
-            }
-        }
-
-        # Register the attribute in the scope.
-        $?BLOCK.symbol($name, :scope('attribute'));
-
-        # We don't want to generate any PAST at the point of the declaration.
-        $past := PAST::Stmts.new();
-    }
-    else {
-        # We need to find the actual variable PAST node; we may have something
-        # more complex at this stage that applies types.
-        $past := $( $<scoped> );
-        my $var;
-        if $past.WHAT() eq 'Var' {
-            $var := $past;
-        }
-        else {
-            # It had an initial type assignment.
-            $var := $past[0][0];
-        }
-
-        # Has this already been declared?
-        my $name := $var.name();
-        unless $?BLOCK.symbol($name) {
-            my $scope := 'lexical';
-            if $declarator eq 'my' {
-                $var.isdecl(1);
-            }
-            elsif $declarator eq 'our' {
-                $name := $var.name();
-                $scope := 'package';
-                $var.isdecl(1);
+            # We need to find the actual variable PAST node; we may have something
+            # more complex at this stage that applies types.
+            $past := $( $<scoped> );
+            my $var;
+            if $past.WHAT() eq 'Var' {
+                $var := $past;
             }
             else {
-                $/.panic(
-                      "scope declarator '"
-                    ~ $declarator ~ "' not implemented"
-                );
+                # It had an initial type assignment.
+                $var := $past[0][0];
             }
-            my $untyped := $var =:= $past;
-            $?BLOCK.symbol($name, :scope($scope), :untyped($untyped));
+
+            # Has this already been declared?
+            my $name := $var.name();
+            unless $?BLOCK.symbol($name) {
+                my $scope := 'lexical';
+                if $declarator eq 'my' {
+                    $var.isdecl(1);
+                }
+                elsif $declarator eq 'our' {
+                    $name := $var.name();
+                    $scope := 'package';
+                    $var.isdecl(1);
+                }
+                else {
+                    $/.panic(
+                          "scope declarator '"
+                        ~ $declarator ~ "' not implemented"
+                    );
+                }
+                my $untyped := $var =:= $past;
+                $?BLOCK.symbol($name, :scope($scope), :untyped($untyped));
+            }
         }
+    }
+
+    # Routine?
+    elsif $<scoped><routine_declarator> {
+        $past := $( $<scoped> );
+
+        # What declarator?
+        if $declarator eq 'our' {
+            # Default, nothing to do.
+        }
+        elsif $declarator eq 'my' {
+            if $<scoped><routine_declarator><sym> eq 'method' {
+                # Add ! to start of name.
+                $past.name('!' ~ $past.name());
+            }
+            else {
+                $/.panic("Lexically scoped subs not yet implemented.");
+            }
+        }
+        else {
+            $/.panic("Cannot apply declarator '" ~ $declarator ~ "' to a routine.");
+        }
+    }
+
+    # Something else we've not implemetned yet?
+    else {
+        $/.painc("Don't know how to apply a scope declarator here.");
     }
 
     make $past;
@@ -1344,6 +1489,7 @@ method variable($/, $key) {
         ));
     }
     else {
+        our $?BLOCK;
         # Handle naming.
         my @ident := $<name><ident>;
         my $name;
@@ -1353,8 +1499,80 @@ method variable($/, $key) {
         PIR q<  $P1 = pop $P0            >;
         PIR q<  store_lex '$name', $P1   >;
 
+        my $twigil := ~$<twigil>[0];
+        my $sigil := ~$<sigil>;
+        my $fullname := $sigil ~ $twigil ~ ~$name;
+
+        if $fullname eq '@_' || $fullname eq '%_' {
+            unless $?BLOCK.symbol($fullname) {
+                $?BLOCK.symbol( $fullname, :scope('lexical') );
+                my $var;
+                if $sigil eq '@' {
+                    $var := PAST::Var.new( :name($fullname), :scope('parameter'), :slurpy(1) );
+                }
+                else {
+                    $var := PAST::Var.new( :name($fullname), :scope('parameter'), :slurpy(1), :named(1) );
+                }
+                $?BLOCK[0].unshift($var);
+            }
+        }
+
+        if $twigil eq '^' || $twigil eq ':' {
+            if $?BLOCK.symbol('___HAVE_A_SIGNATURE') {
+                $/.panic('A signature must not be defined on a sub that uses placeholder vars.');
+            }
+            $?BLOCK.symbol('___HAS_PLACEHOLDERS', :scope('lexical'));
+            unless $?BLOCK.symbol($fullname) {
+                $?BLOCK.symbol( $fullname, :scope('lexical') );
+                $?BLOCK.arity( +$?BLOCK.arity() + 1 );
+                my $var;
+                if $twigil eq ':' {
+                    $var := PAST::Var.new( :name($fullname), :scope('parameter'), :named( ~$name ) );
+                }
+                else {
+                    $var := PAST::Var.new( :name($fullname), :scope('parameter') );
+                }
+                my $block := $?BLOCK[0];
+                my $i := +@($block);
+                my $done := 0;
+                while $i >= 0 && !$done{
+                    my $minusblock;
+                    PIR q<  $P0 = find_lex '$i'  >;
+                    PIR q<  $P1 = find_lex '$block'  >;
+                    PIR q<  $I0 = $P0  >;
+                    PIR q<  $I0 = $I0 - 1  >;
+                    PIR q<  set $P2, $P1[$I0]  >;
+                    PIR q<  store_lex '$minusblock', $P2  >;
+                    # if $var<name> gt $block[$i-1]<name> ...
+                    if $var<name> gt $minusblock<name> || $i == 0 {
+                        # $block[$i] := $var;
+                        PIR q<  $P0 = find_lex '$block'   >;
+                        PIR q<  $P1 = find_lex '$i'   >;
+                        PIR q<  $P2 = find_lex '$var'   >;
+                        PIR q<  $I0 = $P1 >;
+                        PIR q<  set $P0[$I0], $P2 >;
+                        $done := 1;
+                    }
+                    else {
+                        #$block[$i] := $block[$i-1];
+                        PIR q<  $P0 = find_lex '$block'   >;
+                        PIR q<  $P1 = find_lex '$i'   >;
+                        PIR q<  $I0 = $P1 >;
+                        PIR q<  $I1 = $I0 - 1 >;
+                        PIR q<  set $P2, $P0[$I1] >;
+                        PIR q<  set $P0[$I0], $P2 >;
+                    }
+                    $i--;
+                }
+            }
+        }
+
+        if $fullname eq '$_' && !$?BLOCK.symbol('___HAVE_A_SIGNATURE') {
+            $?BLOCK.symbol('___MAYBE_NEED_TOPIC_FIXUP', :scope('lexical'));
+        }
+
         # If it's $.x, it's a method call, not a variable.
-        if $<twigil>[0] eq '.' {
+        if $twigil eq '.' {
             $past := PAST::Op.new(
                 :node($/),
                 :pasttype('callmethod'),
@@ -1370,8 +1588,8 @@ method variable($/, $key) {
             if $<sigil> eq '@' { $viviself := 'List'; }
             if $<sigil> eq '%' { $viviself := 'Perl6Hash'; }
 
-            # ! twigil should be kept in the name.
-            if $<twigil>[0] eq '!' { $name := '!' ~ ~$name; }
+            # [!:^] twigil should be kept in the name.
+            if $twigil eq '!' || $twigil eq ':' || $twigil eq '^' { $name := $twigil ~ ~$name; }
 
             # All but subs should keep their sigils.
             my $sigil := '';
@@ -1399,7 +1617,7 @@ method variable($/, $key) {
                 :viviself($viviself),
                 :node($/)
             );
-            if @ident || $<twigil>[0] eq '*' {
+            if @ident || $twigil eq '*' {
                 $past.namespace(@ident);
                 $past.scope('package');
             }
@@ -1419,6 +1637,41 @@ method circumfix($/, $key) {
     }
     elsif $key eq '{ }' {
         $past := $( $<pblock> );
+    }
+    elsif $key eq '$( )' {
+        # Context - is just calling .item, .list etc on whatever we got made by the
+        # expression in the brackets.
+        my $expr := $( $<semilist> );
+        if $expr.WHAT() eq 'Op' && $expr.pasttype() eq '' {
+            # We've got an op node that does nothing. Eliminate it for scalars, or
+            # call 'list' for comma-separated.
+            if +@($expr) == 1 {
+                $expr := $expr[0];
+            }
+            else {
+                $expr.pasttype('call');
+                $expr.name('list');
+            }
+        }
+        my $method;
+        if $<sigil> eq '$' {
+            $method := 'item';
+        }
+        elsif $<sigil> eq '@' {
+            $method := 'list';
+        }
+        elsif $<sigil> eq '%' {
+            $method := 'hash';
+        }
+        else {
+            $/.panic("Use of " ~ $<sigil> ~ " as contextualizer not yet implemented.");
+        }
+        $past := PAST::Op.new(
+            :pasttype('callmethod'),
+            :name($method),
+            :node($/),
+            $expr
+        );
     }
     make $past;
 }
@@ -1497,10 +1750,10 @@ method quote_expression($/, $key) {
         $past := PAST::Block.new(
             $<quote_regex>,
             :compiler('PGE::Perl6Regex'),
-            :blocktype('declaration'),
             :namespace($?NS),
+            :blocktype('declaration'),
             :node( $/ )
-        )
+        );
     }
     elsif $key eq 'quote_concat' {
         if +$<quote_concat> == 1 {
@@ -1689,7 +1942,7 @@ method EXPR($/, $key) {
             :node($/)
         );
         for @($/) {
-            $past.push( $($_) );
+            unless +$_.from() == +$_.to() { $past.push( $($_) ) };
         }
 
         # If it's an assignment or binding, we may need to emit a type-check.
