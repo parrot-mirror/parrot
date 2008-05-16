@@ -258,7 +258,7 @@ push_new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_exception *jb))
 
 /*
 
-=item C<opcode_t * run_handler>
+=item C<opcode_t * Parrot_ex_throw_from_op>
 
 Runs the exception handler.
 
@@ -269,7 +269,7 @@ Runs the exception handler.
 PARROT_API
 PARROT_CAN_RETURN_NULL
 opcode_t *
-run_handler(PARROT_INTERP, ARGIN(PMC *exception), SHIM(void *dest))
+Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), SHIM(void *dest))
 {
     opcode_t *address;
     PMC * const handler = find_exception_handler(interp, exception);
@@ -367,12 +367,11 @@ PARROT_API
 size_t
 Parrot_ex_calc_handler_offset(PARROT_INTERP)
 {
-    opcode_t *handler_address;
     PMC *exception = VTABLE_pop_pmc(interp, interp->scheduler);
 
     /* now fill rest of exception, locate handler and get
      * destination of handler */
-    handler_address = run_handler(interp, exception, NULL);
+    opcode_t *handler_address = Parrot_ex_throw_from_op(interp, exception, NULL);
 
     if (!handler_address)
         PANIC(interp, "Unable to calculate opcode address for exception handler");
@@ -532,7 +531,7 @@ handler decides that is appropriate, or zero to make the error non-resumable.
 C<exitcode> is a C<exception_type_enum> value.
 
 See also C<exit_fatal()>, which signals fatal errors, and
-C<run_handler>, which calls the handler.
+C<Parrot_ex_throw_from_op>, which calls the handler.
 
 The 'invoke' vtable function doesn't actually execute a
 sub/continuation/handler, it only sets up the environment for invocation and
