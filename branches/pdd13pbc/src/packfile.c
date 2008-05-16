@@ -34,6 +34,7 @@ structure of the frozen bytecode.
 /* HEADERIZER HFILE: include/parrot/packfile.h */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 static void byte_code_destroy(SHIM_INTERP, ARGMOD(PackFile_Segment *self))
         __attribute__nonnull__(2)
@@ -153,7 +154,7 @@ static const opcode_t * directory_unpack(PARROT_INTERP,
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static PMC* do_1_sub_pragma(PARROT_INTERP, ARGMOD(PMC *sub_pmc), int action)
+static PMC* do_1_sub_pragma(PARROT_INTERP, ARGMOD(PMC *sub_pmc), pbc_action_enum_t action)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*sub_pmc);
@@ -308,10 +309,11 @@ static void sort_segs(ARGMOD(PackFile_Directory *dir))
         __attribute__nonnull__(1)
         FUNC_MODIFIES(*dir);
 
-static int sub_pragma(PARROT_INTERP, int action, ARGIN(const PMC *sub_pmc))
+static int sub_pragma(PARROT_INTERP, pbc_action_enum_t action, ARGIN(const PMC *sub_pmc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 #if EXEC_CAPABLE
@@ -411,14 +413,15 @@ make_code_pointers(ARGMOD(PackFile_Segment *seg))
 
 =item C<static int sub_pragma>
 
-Handle :load, :main ... pragmas for B<sub_pmc>
+Check B<sub_pmc>'s pragmas (e.g. flags like C<:load>, C<:main>, etc.) returning
+1 if the sub should be run for C<action>, a C<pbc_action_enum_t>.
 
 =cut
 
 */
 
 static int
-sub_pragma(PARROT_INTERP, int action, ARGIN(const PMC *sub_pmc))
+sub_pragma(PARROT_INTERP, pbc_action_enum_t action, ARGIN(const PMC *sub_pmc))
 {
     int todo    = 0;
     int pragmas = PObj_get_FLAGS(sub_pmc) &  SUB_FLAG_PF_MASK
@@ -503,7 +506,7 @@ Run autoloaded or immediate bytecode, mark MAIN subroutine entry
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC*
-do_1_sub_pragma(PARROT_INTERP, ARGMOD(PMC *sub_pmc), int action)
+do_1_sub_pragma(PARROT_INTERP, ARGMOD(PMC *sub_pmc), pbc_action_enum_t action)
 {
     Parrot_sub const *sub = PMC_sub(sub_pmc);
 
@@ -678,7 +681,7 @@ alive by living subs.
 PARROT_API
 void
 do_sub_pragmas(PARROT_INTERP, ARGIN(PackFile_ByteCode *self),
-        int action, ARGIN_NULLOK(PMC *eval_pmc))
+               pbc_action_enum_t action, ARGIN_NULLOK(PMC *eval_pmc))
 {
     opcode_t i;
     PackFile_FixupTable * const ft = self->fixups;
@@ -2353,8 +2356,7 @@ pf_debug_unpack(PARROT_INTERP, ARGOUT(PackFile_Segment *self), ARGIN(const opcod
     debug->num_mappings = PF_fetch_opcode(self->pf, &cursor);
 
     /* Allocate space for mappings vector. */
-    debug->mappings = (PackFile_DebugMapping **)mem_sys_allocate(
-        sizeof (PackFile_DebugMapping *) * (debug->num_mappings + 1));
+    mem_realloc_n_typed(debug->mappings, debug->num_mappings+1, PackFile_DebugMapping *);
 
     /* Read in each mapping. */
     for (i = 0; i < debug->num_mappings; i++) {
@@ -3754,26 +3756,26 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN(STRING *file_str))
             wo_ext, path);
     filename = string_to_cstring(interp, path);
     if (file_type == PARROT_RUNTIME_FT_PBC) {
-        PackFile *pf;
-        pf = PackFile_append_pbc(interp, filename);
-        if (!pf) {
+        PackFile *pf = PackFile_append_pbc(interp, filename);
+        string_cstring_free(filename);
+
+        if (!pf)
             real_exception(interp, NULL, 1,
                     "Unable to append PBC to the current directory");
-        }
     }
     else {
         STRING *err;
         PackFile_ByteCode * const cs =
             (PackFile_ByteCode *)IMCC_compile_file_s(interp,
                 filename, &err);
-        if (cs) {
+        string_cstring_free(filename);
+
+        if (cs)
             do_sub_pragmas(interp, cs, PBC_LOADED, NULL);
-        }
         else
             real_exception(interp, NULL, E_LibraryNotLoadedError,
                 "compiler returned NULL ByteCode '%Ss' - %Ss", file_str, err);
     }
-    string_cstring_free(filename);
 }
 
 /*

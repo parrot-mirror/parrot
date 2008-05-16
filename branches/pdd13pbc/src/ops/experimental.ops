@@ -142,7 +142,7 @@ be reused, they have to be B<clone>d.
 =cut
 
 inline op splice(invar PMC, invar PMC, in INT, in INT) {
-    $1->vtable->splice(interp, $1, $2, $3, $4);
+    VTABLE_splice(interp, $1, $2, $3, $4);
 }
 
 
@@ -164,15 +164,15 @@ Return a new Iterator PMC $1 for aggregate $2.
 =cut
 
 inline op slice(out PMC, invar PMC, in KEY) :base_core {
-    $1 = $2->vtable->slice(interp, $2, $3, 0);
+    $1 = VTABLE_slice(interp, $2, $3, 0);
 }
 
 inline op slice(out PMC, invar PMC, in KEY, inconst INT) :python {
-    $1 = $2->vtable->slice(interp, $2, $3, $4);
+    $1 = VTABLE_slice(interp, $2, $3, $4);
 }
 
 inline op iter(out PMC, invar PMC) :base_core {
-    $1 = $2->vtable->get_iter(interp, $2);
+    $1 = VTABLE_get_iter(interp, $2);
 }
 
 ########################################
@@ -412,6 +412,17 @@ inline op substr_r(out STR, in STR, in INT, in INT) :base_core {
   $1 = string_substr(interp, $2, $3, $4, &dest, 1);
 }
 
+=item C<find_sub_not_null>(out PMC, in STR)
+
+inline op find_sub_not_null(out PMC, in STR) :base_core {
+    PMC *sub = Parrot_find_name_op(interp, $2, expr NEXT());
+
+    if (PMC_IS_NULL(sub))
+        real_exception(interp, NULL, GLOBAL_NOT_FOUND,
+            "Could not invoke non-existent sub %Ss", $2);
+
+    $1 = sub;
+}
 
 =back
 

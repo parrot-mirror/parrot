@@ -30,6 +30,7 @@ exceptions, async I/O, and concurrent tasks (threads).
 /* HEADERIZER HFILE: include/parrot/scheduler.h */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 static void scheduler_process_messages(PARROT_INTERP,
     ARGMOD(PMC *scheduler))
@@ -43,6 +44,7 @@ static void scheduler_process_wait_list(PARROT_INTERP,
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*scheduler);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 /*
@@ -137,8 +139,9 @@ Parrot_cx_handle_tasks(PARROT_INTERP, ARGMOD(PMC *scheduler))
         }
         else {
             real_exception(interp, NULL, INVALID_OPERATION,
-                    "Unknown task type '%s'.\n", string_to_cstring(interp, type));
+                "Unknown task type '%Ss'.\n", type);
         }
+
         Parrot_cx_delete_task(interp, task);
         }
 
@@ -148,7 +151,6 @@ Parrot_cx_handle_tasks(PARROT_INTERP, ARGMOD(PMC *scheduler))
             Parrot_cx_refresh_task_list(interp, scheduler);
 
     } /* end of pending tasks */
-
 }
 
 /*

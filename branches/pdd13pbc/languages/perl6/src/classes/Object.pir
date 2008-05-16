@@ -138,6 +138,33 @@ Parrot class via the C<get_class> opcode.
 .end
 
 
+=item make_grammar_proto(grammar [, 'name'=>name] )
+
+Create protoobjects and mappings for C<grammar>, using C<name>
+as the Perl 6 name for the grammar.  The C<grammar> argument must
+be a Parrot Class object.
+
+=cut
+
+.sub 'make_grammar_proto'
+    .param pmc class
+    .param string name         :optional :named('name')
+    .param int has_name        :opt_flag
+
+    # We check that it has Grammar as a parent, and if not we add it.
+    $I0 = isa class, 'Grammar'
+    if $I0 goto already_grammar
+    $P0 = new 'ResizablePMCArray'
+    $P0 = get_hll_global $P0, 'Grammar'
+    $P0 = $P0.HOW()
+    addparent class, $P0
+  already_grammar:
+
+    # Now let Object's make_proto do the rest of the work.
+    'make_proto'(class, name)
+.end
+
+
 =item !keyword_class(name)
 
 Internal helper method to create a class.
@@ -212,12 +239,8 @@ Internal helper method to create a grammar.
     $P0[0] = name
     info['namespace'] = $P0
 
-    # Create grammar.
+    # Create grammar class..
     grammar = new 'Class', info
-
-    # Stash in namespace.
-    $P0 = new 'ResizableStringArray'
-    set_hll_global $P0, name, grammar
 
     .return(grammar)
 .end
@@ -446,11 +469,18 @@ Defines the .true method on all objects via C<prefix:?>.
  .return 'prefix:?'(self)
 .end
 
+=item print()
+
 =item say()
 
 Print the object
 
 =cut
+
+.sub 'print' :method
+    $P0 = get_hll_global 'print'
+    .return $P0(self)
+.end
 
 .sub 'say' :method
     $P0 = get_hll_global 'say'
@@ -505,6 +535,23 @@ Returns false (prototype objects evaluate as undef).
     .return (0)
 .end
 
+=item clone()   (vtable method)
+
+Returns a copy of the proto-object.
+
+=cut
+
+.sub 'clone' :vtable :method
+    .local pmc protoclass, res, props, tmp
+    protoclass = class self
+    res = new protoclass
+    tmp = getattribute self, 'HOW'
+    setattribute res, 'HOW', tmp
+    tmp = getattribute self, 'shortname'
+    setattribute res, 'shortname', tmp
+    .return (res)
+.end
+
 =item HOW()
 
 Returns the metaclass (Parrot class) of the protoobject.
@@ -551,8 +598,35 @@ Returns the invocant's autovivification closure.
 
 .sub 'ACCEPTS' :method
     .param pmc topic
-    $P0 = self.'HOW'()
-    $I0 = does topic, $P0
+    .local pmc HOW
+
+    # Do a does check against the topic.
+    HOW = self.'HOW'()
+    $I0 = does topic, HOW
+    if $I0 goto do_return
+
+    # If that didn't work, try invoking the ACCEPTS of the class itself.
+    # XXX Once we get callsame-like stuff implemented, this logic should go away.
+  try_class_accepts:
+    .local pmc parents, found
+    .local int i, count
+    parents = inspect HOW, 'all_parents'
+    count = elements parents
+    i = 1 # skip protoclass
+  find_next_loop:
+    if i >= count goto find_next_loop_end
+    $P0 = parents[i]
+    $P0 = inspect $P0, 'methods'
+    found = $P0['ACCEPTS']
+    unless null found goto find_next_loop_end
+    inc i
+    goto find_next_loop
+  find_next_loop_end:
+
+    $I0 = 0
+    if null found goto do_return
+    $I0 = found(self, topic)
+  do_return:
     .return 'prefix:?'($I0)
 .end
 

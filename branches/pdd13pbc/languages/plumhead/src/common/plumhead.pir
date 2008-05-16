@@ -141,11 +141,17 @@ VARIANT_PHC:
     ret = spawnw cmd
     if ret goto ERROR
 
-    err_msg = 'Creating PIR with xsltproc failed'
-    cmd = 'xsltproc languages/plumhead/src/phc/past_xml_to_past_pir.xsl  plumhead_past.xml  > plumhead_past.pir'
+    err_msg = 'Creating NQP with xsltproc failed'
+    cmd = 'xsltproc languages/plumhead/src/phc/past_xml_to_past_nqp.xsl  plumhead_past.xml  > plumhead_past.nqp'
     ret = spawnw cmd
     if ret goto ERROR
-    goto EXECUTE_PAST_PIR
+    err_msg = 'Executing plumhead_past.pir with parrot failed'
+    cmd = './parrot languages/plumhead/driver_nqp.pbc plumhead_past.nqp'
+    ret = spawnw cmd
+    if ret goto ERROR
+
+    exit 0
+
 
 VARIANT_ANTLR3:
     err_msg = 'Generating PAST from annotated PHP source failed'
@@ -154,20 +160,10 @@ VARIANT_ANTLR3:
     concat cmd, ' plumhead_past.pir'
     ret = spawnw cmd
     if ret goto ERROR
-    goto EXECUTE_PAST_PIR
-
-EXECUTE_PAST_PIR:
     err_msg = 'Executing plumhead_past.pir with parrot failed'
     cmd = './parrot plumhead_past.pir'
     ret = spawnw cmd
     if ret goto ERROR
-
-    # Clean up temporary files
-    #.local pmc os
-    #os = new .OS
-    #os."rm"('plumhead_phc_ast.xml')
-    #os."rm"('plumhead_past.xml')
-    #os."rm"('plumhead_past.pir')
 
     exit 0
 

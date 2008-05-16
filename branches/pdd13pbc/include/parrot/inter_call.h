@@ -69,6 +69,7 @@ typedef enum arg_pass_t {
 } arg_pass_t;
 
 /* HEADERIZER BEGIN: src/inter_call.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_API
 void Parrot_convert_arg(PARROT_INTERP, ARGMOD(call_state *st))
@@ -91,11 +92,10 @@ int Parrot_fetch_arg_nci(PARROT_INTERP, ARGMOD(call_state *st))
 PARROT_API
 int Parrot_init_arg_indexes_and_sig_pmc(SHIM_INTERP,
     ARGIN(parrot_context_t *ctx),
-    ARGIN(opcode_t *indexes),
+    ARGIN_NULLOK(opcode_t *indexes),
     ARGIN_NULLOK(PMC* sig_pmc),
     ARGMOD(call_state_item *sti))
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
         __attribute__nonnull__(5)
         FUNC_MODIFIES(*sti);
 
@@ -222,6 +222,7 @@ STRING* set_retval_s(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/inter_call.c */
 
 #define ASSERT_SIG_PMC(sig) \

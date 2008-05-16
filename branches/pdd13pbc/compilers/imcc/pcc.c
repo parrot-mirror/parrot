@@ -36,6 +36,7 @@ PCC Implementation by Leopold Toetsch
 /* HEADERIZER HFILE: compilers/imcc/imc.h */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 static void insert_tail_call(PARROT_INTERP,
     ARGIN(IMC_Unit *unit),
@@ -115,6 +116,7 @@ static void unshift_self(ARGIN(SymReg *sub), ARGIN(SymReg *obj))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 /*
@@ -339,12 +341,12 @@ expand_pcc_sub(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
         return;
 
     if (unit->last_ins->type != (ITPCCSUB|ITLABEL) &&
-            strcmp(unit->last_ins->opname, "ret") &&
-            strcmp(unit->last_ins->opname, "exit") &&
-            strcmp(unit->last_ins->opname, "end") &&
-            strcmp(unit->last_ins->opname, "branch") &&
+            STRNEQ(unit->last_ins->opname, "ret") &&
+            STRNEQ(unit->last_ins->opname, "exit") &&
+            STRNEQ(unit->last_ins->opname, "end") &&
+            STRNEQ(unit->last_ins->opname, "branch") &&
             /* was adding rets multiple times... */
-            strcmp(unit->last_ins->opname, "returncc")) {
+            STRNEQ(unit->last_ins->opname, "returncc")) {
         Instruction *tmp;
 
         /* check to make sure the sub is ok before we try to use it */
@@ -570,7 +572,7 @@ recursive_tail_call(PARROT_INTERP, ARGIN(IMC_Unit *unit),
 
     called_sub = sub->pcc_sub->sub;
 
-    if (strcmp(this_sub->name, called_sub->name))
+    if (STRNEQ(this_sub->name, called_sub->name))
         return 0;
 
     if (sub->pcc_sub->nargs != this_sub->pcc_sub->nargs)

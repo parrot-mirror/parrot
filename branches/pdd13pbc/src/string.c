@@ -51,6 +51,7 @@ strings.
 /* HEADERIZER HFILE: include/parrot/string_funcs.h */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 static void make_writable(PARROT_INTERP,
     ARGMOD(STRING **s),
@@ -60,6 +61,7 @@ static void make_writable(PARROT_INTERP,
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*s);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 
@@ -1387,7 +1389,7 @@ string_compare(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1), ARGIN_NULLOK(const
 Compares two Parrot strings, performing type and encoding conversions if
 necessary.
 
-Note that this function returns 0 if the strings are equal and 1
+Note that this function returns 0 if the strings are equal, and non-zero
 otherwise.
 
 =cut
@@ -1804,9 +1806,9 @@ if it is equal to anything other than C<0>, C<""> or C<"0">.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-string_bool(PARROT_INTERP, ARGIN(const STRING *s))
+string_bool(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
 {
-    const INTVAL len = string_length(interp, s);
+    const INTVAL len = s ? string_length(interp, s) : 0;
 
     if (len == 0)
         return 0;

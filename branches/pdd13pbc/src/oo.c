@@ -29,16 +29,11 @@ Handles class and object manipulation.
 /* HEADERIZER HFILE: include/parrot/oo.h */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC* C3_merge(PARROT_INTERP, ARGIN(PMC *merge_list))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-static void create_deleg_pmc_vtable(PARROT_INTERP,
-    ARGIN(PMC *_class),
-    int full)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -116,6 +111,7 @@ static void rebuild_attrib_stuff(PARROT_INTERP, ARGIN(PMC *_class))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 /*
@@ -473,58 +469,6 @@ find_vtable_meth_ns(PARROT_INTERP, ARGIN(PMC *ns), INTVAL vtable_index)
 
 /*
 
-=item C<PMC* Parrot_find_vtable_meth>
-
-Given pmc, run through its mro looking for the meth vtable method.
-Return the vtable method PMC if found.
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_CAN_RETURN_NULL
-PMC*
-Parrot_find_vtable_meth(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(STRING *meth))
-{
-    INTVAL i, n;
-    PMC   *mro;
-    PMC   *_class = pmc;
-
-    /* Get index in Parrot_vtable_slot_names[]. */
-    const INTVAL vtable_index = Parrot_get_vtable_index(interp, meth);
-
-    if (vtable_index == -1)
-        return PMCNULL;
-
-    /* Get class. */
-    if (PObj_is_object_TEST(pmc))
-        _class = GET_CLASS(pmc);
-
-    /* Get MRO and iterate over it to find method with a matching
-       vtable index or double-underscored name. */
-    mro = _class->vtable->mro;
-    n   = VTABLE_elements(interp, mro);
-
-    for (i = 0; i < n; ++i) {
-        PMC *ns     = VTABLE_get_namespace(interp, _class);
-        PMC *_class = VTABLE_get_pmc_keyed_int(interp, mro, i);
-
-        if (!PMC_IS_NULL(ns)) {
-            PMC * const res = find_vtable_meth_ns(interp, ns, vtable_index);
-
-            if (!PMC_IS_NULL(res))
-                return res;
-        }
-    }
-
-    /* If we get here, method is not overridden in the class. */
-    return PMCNULL;
-}
-
-
-/*
-
 =item C<STRING* readable_name>
 
 Given a String or Key PMC return the STRING* representation
@@ -645,76 +589,6 @@ rebuild_attrib_stuff(PARROT_INTERP, ARGIN(PMC *_class))
 
 /*
 
-=item C<static void create_deleg_pmc_vtable>
-
-Create a vtable that dispatches either to the contained PMC in the first
-attribute (deleg_pmc) or to an overridden method (delegate), depending
-on the existence of the method for this class.
-
-=cut
-
-*/
-
-static void
-create_deleg_pmc_vtable(PARROT_INTERP, ARGIN(PMC *_class), int full)
-{
-    int         i;
-    const char *meth;
-    STRING      meth_str;
-    DECL_CONST_CAST;
-
-    PMC * const vtable_pmc          = get_attrib_num(PMC_data_typed(_class,
-                                       SLOTTYPE *), PCD_OBJECT_VTABLE);
-    VTABLE * const vtable           = (VTABLE *)PMC_struct_val(vtable_pmc);
-    VTABLE * const ro_vtable        = vtable->ro_variant_vtable;
-    VTABLE * const deleg_pmc_vtable = interp->vtables[enum_class_deleg_pmc];
-    VTABLE * const object_vtable    = interp->vtables[enum_class_Object];
-    VTABLE * const ro_object_vtable = object_vtable->ro_variant_vtable;
-    VTABLE * const delegate_vtable  = interp->vtables[enum_class_delegate];
-
-    memset(&meth_str, 0, sizeof (meth_str));
-
-    meth_str.encoding = Parrot_fixed_8_encoding_ptr;
-    meth_str.charset  = Parrot_default_charset_ptr;
-
-    for (i = 0; (meth = Parrot_vtable_slot_names[i]) != NULL; ++i) {
-        if (!*meth)
-            continue;
-
-        /* strip underscores from method name */
-        meth_str.strstart = (char *)const_cast(meth + 2);
-        meth_str.strlen   = meth_str.bufused = strlen(meth) - 2;
-        meth_str.hashval  = 0;
-
-        if (!PMC_IS_NULL(Parrot_find_vtable_meth(interp, _class, &meth_str))) {
-            /* the method exists; keep the ParrotObject delegate vtable slot */
-            ((void **)vtable)[i] = ((void**)object_vtable)[i];
-            if (ro_vtable)
-                ((void **)ro_vtable)[i] = ((void**)ro_object_vtable)[i];
-        }
-        else if (full) {
-            /*
-             * the method doesn't exist; put in the deleg_pmc vtable,
-             * but only if ParrotObject hasn't overridden the method
-             */
-            if (((void **)delegate_vtable)[i] == ((void**)object_vtable)[i]) {
-                if (ro_vtable)
-                    ((void **)ro_vtable)[i] = ((void**)deleg_pmc_vtable)[i];
-                ((void **)vtable)[i] = ((void**)deleg_pmc_vtable)[i];
-            }
-            else {
-                ((void **)vtable)[i] = ((void**)object_vtable)[i];
-                if (ro_vtable)
-                    ((void **)ro_vtable)[i] = ((void**)ro_object_vtable)[i];
-
-            }
-        }
-    }
-}
-
-
-/*
-
 =item C<const char* Parrot_MMD_method_name>
 
 Return the method name for the given MMD enum.
@@ -763,116 +637,6 @@ Parrot_MMD_method_idx(SHIM_INTERP, ARGIN(const char *name))
     }
 
     return -1;
-}
-
-
-/*
-
-=item C<PMC * Parrot_single_subclass>
-
-Subclass a class. Single parent class, nice and straightforward. If
-C<child_class> is C<NULL>, this is an anonymous subclass we're creating,
-function.
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC *
-Parrot_single_subclass(PARROT_INTERP, ARGIN(PMC *base_class), ARGIN_NULLOK(PMC *name))
-{
-    PMC      *child_class, *parents, *temp_pmc, *mro;
-    SLOTTYPE *child_class_array;
-    int       parent_is_class;
-
-    /* Set the classname, if we have one */
-    if (!PMC_IS_NULL(name)) {
-        fail_if_type_exists(interp, name);
-    }
-    else {
-        /* RT#45975 not really threadsafe but good enough for now */
-        static int anon_count;
-        STRING * const child_class_name =
-            Parrot_sprintf_c(interp, "%c%canon_%d", 0, 0, ++anon_count);
-        name             = pmc_new(interp, enum_class_String);
-        VTABLE_set_string_native(interp, name, child_class_name);
-    }
-
-    /* ParrotClass is the baseclass anyway, so build just a new class */
-    if (base_class == interp->vtables[enum_class_Class]->pmc_class)
-        return pmc_new_init(interp, enum_class_Class, name);
-
-    parent_is_class = PObj_is_class_TEST(base_class);
-    child_class     = pmc_new(interp, enum_class_Class);
-
-    /* Hang an array off the data pointer */
-    set_attrib_array_size(child_class, PCD_MAX);
-    child_class_array = PMC_data_typed(child_class, SLOTTYPE *);
-    set_attrib_flags(child_class);
-
-    /* We will have five entries in this array */
-
-    /* We have the same number of attributes as our parent */
-    CLASS_ATTRIB_COUNT(child_class) = parent_is_class ?
-                                        CLASS_ATTRIB_COUNT(base_class) : 0;
-
-    /* Our parent class array has a single member in it */
-    parents = pmc_new(interp, enum_class_ResizablePMCArray);
-
-    VTABLE_set_integer_native(interp, parents, 1);
-    VTABLE_set_pmc_keyed_int(interp, parents, 0, base_class);
-
-    set_attrib_num(child_class, child_class_array, PCD_PARENTS, parents);
-    set_attrib_num(child_class, child_class_array, PCD_CLASS_NAME, name);
-
-    /* Our mro list is a clone of our parent's mro list,
-     * with our self unshifted onto the beginning */
-    mro = VTABLE_clone(interp, base_class->vtable->mro);
-    VTABLE_unshift_pmc(interp, mro, child_class);
-
-    /* But we have no attributes of our own. Yet */
-    temp_pmc = pmc_new(interp, enum_class_ResizablePMCArray);
-    set_attrib_num(child_class, child_class_array, PCD_CLASS_ATTRIBUTES,
-        temp_pmc);
-
-    parrot_class_register(interp, name, child_class, base_class, mro);
-    rebuild_attrib_stuff(interp, child_class);
-
-    if (!parent_is_class) {
-        /* we append one attribute to hold the PMC */
-        Parrot_add_attribute(interp, child_class,
-                CONST_STRING(interp, "__value"));
-        /*
-         * then create a vtable derived from ParrotObject and
-         * deleg_pmc - the ParrotObject vtable is already built
-         */
-        create_deleg_pmc_vtable(interp, child_class, 1);
-    }
-    else {
-        /*
-         * if any parent isa PMC, then still individual vtables might
-         * be overridden in this subclass
-         */
-        int i;
-        int       any_pmc_parent = 0;
-        const int n              = VTABLE_elements(interp, mro);
-
-        /* 0 = this, 1 = parent (handled above), 2 = grandpa */
-        for (i = 2; i < n; ++i) {
-            const PMC * const parent = VTABLE_get_pmc_keyed_int(interp, mro, i);
-            if (!PObj_is_class_TEST(parent)) {
-                any_pmc_parent = 1;
-                break;
-            }
-        }
-        if (any_pmc_parent)
-            create_deleg_pmc_vtable(interp, child_class, 0);
-    }
-
-    return child_class;
 }
 
 
@@ -962,10 +726,9 @@ fail_if_type_exists(PARROT_INTERP, ARGIN(PMC *name))
         type = VTABLE_get_integer(interp, type_pmc);
 
     if (type > enum_type_undef)
-        /* RT#46091 get printable name */
         real_exception(interp, NULL, INVALID_OPERATION,
-                "Class %Ss already registered!\n",
-                VTABLE_get_string(interp, name));
+                "Class '%Ss' already registered!\n",
+                string_escape_string(interp, VTABLE_get_string(interp, name)));
 
     if (type < enum_type_undef)
         real_exception(interp, NULL, INVALID_OPERATION,
@@ -1795,59 +1558,6 @@ find_method_direct_1(PARROT_INTERP, ARGIN(PMC *_class),
 
     TRACE_FM(interp, _class, method_name, NULL);
     return PMCNULL;
-}
-
-
-/*
-
-=item C<INTVAL Parrot_add_attribute>
-
-Adds the attribute C<attr> to the class.
-
-   Life is ever so much easier if a class keeps its attributes at the
-   end of the attribute array, since we don't have to insert and
-   reorder attributes. Inserting's no big deal, especially since we're
-   going to break horribly if you insert into a class that's been
-   subclassed, but it'll do for now.
-
-=cut
-
-*/
-
-PARROT_API
-INTVAL
-Parrot_add_attribute(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(STRING *attr))
-{
-    STRING *full_attr_name;
-    SLOTTYPE * const class_array = (SLOTTYPE *)PMC_data(_class);
-    STRING   * const class_name  = VTABLE_get_string(interp,
-            get_attrib_num(class_array, PCD_CLASS_NAME));
-    PMC      * const attr_array  = get_attrib_num(class_array, PCD_CLASS_ATTRIBUTES);
-    PMC      * const attr_hash   = get_attrib_num(class_array, PCD_ATTRIBUTES);
-    INTVAL           idx         = VTABLE_elements(interp, attr_array);
-
-    VTABLE_set_integer_native(interp, attr_array, idx + 1);
-    VTABLE_set_string_keyed_int(interp, attr_array, idx, attr);
-
-    full_attr_name = string_concat(interp, class_name,
-            string_from_cstring(interp, "\0", 1), 0);
-
-    full_attr_name = string_concat(interp, full_attr_name, attr, 0);
-
-    /* RT#45989 escape NUL char */
-    if (VTABLE_exists_keyed_str(interp, attr_hash, full_attr_name))
-        real_exception(interp, NULL, 1,
-                "Attribute '%Ss' already exists", full_attr_name);
-
-    /*
-     * RT#45993 check if someone is trying to add attributes to a parent class
-     * while there are already child class attrs
-     */
-    idx = CLASS_ATTRIB_COUNT(_class)++;
-    VTABLE_set_integer_keyed_str(interp, attr_hash, attr, idx);
-    VTABLE_set_integer_keyed_str(interp, attr_hash, full_attr_name, idx);
-
-    return idx;
 }
 
 

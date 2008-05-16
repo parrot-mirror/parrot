@@ -1,7 +1,23 @@
 # $Id$
 
+# a helper for the PHC variant
+.sub 'decode_base64'
+   .param string base64
+
+   .local pmc dec_sub
+    dec_sub = get_global [ "MIME"; "Base64" ], 'decode_base64'
+
+    .local string result_decode
+    result_decode = dec_sub( base64 )
+
+    .return ( result_decode )
+.end
+
+.sub 'print_newline'
+    say ''
+.end
+
 # steal builtins from Perl6
-# TODO: put that into php_builtins.pir
 .sub 'print'
     .param pmc list            :slurpy
     .local pmc iter
@@ -177,9 +193,11 @@
     .param pmc a
     .param pmc b
 
-    $P0 = concat a, b
+    .local pmc c
+    c = new 'String'
+    c = concat a, b
 
-    .return ($P0)
+    .return (c)
 .end
 
 .sub 'infix:.' :multi( PMC, String )
@@ -187,7 +205,7 @@
     .param string b
 
     .local pmc c
-    c = new .String
+    c = new 'String'
     c = concat a, b
     #c = 'multi PMC, String'
 
@@ -204,10 +222,13 @@
     .param string a
     .param pmc b
 
-    # $P0 = concat a, b
-    $P0 = 'multi String, PMC'
+    .local pmc c, d
+    c = new 'String'
+    c = a
+    d = new 'String'
+    d = concat c, b
 
-    .return ($P0)
+    .return (d)
 .end
 
 .sub 'infix:|'
