@@ -228,14 +228,14 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
-new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_exception *jb))
+new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
 {
     PMC * const handler = pmc_new(interp, enum_class_Exception_Handler);
     /*
      * this flag denotes a C exception handler
      */
     PObj_get_FLAGS(handler) |= SUB_FLAG_C_HANDLER;
-    VTABLE_set_pointer(interp, handler, jb);
+    VTABLE_set_pointer(interp, handler, jp);
     return handler;
 }
 
@@ -251,9 +251,9 @@ Pushes an new C exception handler onto the stack.
 
 PARROT_API
 void
-push_new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_exception *jb))
+push_new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
 {
-    Parrot_cx_add_handler(interp, new_c_exception_handler(interp, jb));
+    Parrot_cx_add_handler(interp, new_c_exception_handler(interp, jp));
 }
 
 /*
@@ -283,8 +283,8 @@ Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), SHIM(void *dest))
     /* address = VTABLE_get_pointer(interp, handler); */
     if (PObj_get_FLAGS(handler) & SUB_FLAG_C_HANDLER) {
         /* its a C exception handler */
-        Parrot_exception * const jb = (Parrot_exception *) address;
-        longjmp(jb->destination, 1);
+        Parrot_runloop * const jump_point = (Parrot_runloop *) address;
+        longjmp(jump_point->resume, 1);
     }
 
     /* return the address of the handler */
@@ -335,21 +335,10 @@ PARROT_DOES_NOT_RETURN
 void
 rethrow_c_exception(PARROT_INTERP)
 {
-    Parrot_exception * const the_exception = interp->exceptions;
+    PMC *exception = VTABLE_pop_pmc(interp, interp->scheduler);
+    /* RT # 45911 Mark that the current exception was not handled */
 
-    PMC * const exception = PMCNULL;   /* RT #45915 */
-    PMC * const handler   = find_exception_handler(interp, exception);
-
-    /* RT #45911 we should only peek for the next handler */
-    Parrot_cx_add_handler(interp, handler);
-    /* if there was no user handler, interpreter is already shutdown */
-    the_exception->resume   = VTABLE_get_pointer(interp, handler);
-    the_exception->msg      = VTABLE_get_string(interp, exception);
-    the_exception->severity = VTABLE_get_integer_keyed_str(interp,
-            exception, CONST_STRING(interp, "severity"));
-    the_exception->error    = VTABLE_get_integer_keyed_str(interp,
-            exception, CONST_STRING(interp, "exit_code"));
-    longjmp(the_exception->destination, 1);
+    longjmp(interp->current_runloop->resume, 1);
 }
 
 /*
@@ -382,9 +371,9 @@ Parrot_ex_calc_handler_offset(PARROT_INTERP)
 
 /*
 
-=item C<void new_internal_exception>
+=item C<void new_runloop_jump_point>
 
-Create a new internal exception buffer, either by allocating it or by
+Create a new runloop jump point, either by allocating it or by
 getting one from the free list.
 
 =cut
@@ -393,27 +382,26 @@ getting one from the free list.
 
 PARROT_API
 void
-new_internal_exception(PARROT_INTERP)
+new_runloop_jump_point(PARROT_INTERP)
 {
-    Parrot_exception *the_exception;
+    Parrot_runloop *jump_point;
 
-    if (interp->exc_free_list) {
-        the_exception = interp->exc_free_list;
-        interp->exc_free_list = the_exception->prev;
+    if (interp->runloop_jmp_free_list) {
+        jump_point = interp->runloop_jmp_free_list;
+        interp->runloop_jmp_free_list = jump_point->prev;
     }
     else
-        the_exception = mem_allocate_typed(Parrot_exception);
-    the_exception->prev = interp->exceptions;
-    the_exception->resume = NULL;
-    the_exception->msg = NULL;
-    interp->exceptions = the_exception;
+        jump_point = mem_allocate_typed(Parrot_runloop);
+
+    jump_point->prev = interp->current_runloop;
+    interp->current_runloop = jump_point;
 }
 
 /*
 
-=item C<void free_internal_exception>
+=item C<void free_runloop_jump_point>
 
-Place internal exception buffer back on the free list.
+Place runloop jump point back on the free list.
 
 =cut
 
@@ -421,51 +409,51 @@ Place internal exception buffer back on the free list.
 
 PARROT_API
 void
-free_internal_exception(PARROT_INTERP)
+free_runloop_jump_point(PARROT_INTERP)
 {
-    Parrot_exception * const e = interp->exceptions;
-    interp->exceptions = e->prev;
-    e->prev = interp->exc_free_list;
-    interp->exc_free_list = e;
+    Parrot_runloop * const jump_point = interp->current_runloop;
+    interp->current_runloop = jump_point->prev;
+    jump_point->prev = interp->runloop_jmp_free_list;
+    interp->runloop_jmp_free_list = jump_point;
 }
 
 /*
 
-=item C<void destroy_exception_list>
+=item C<void destroy_runloop_jump_points>
 
-Destroys (and frees the memory of) the exception buffers list and the
-associated exceptions free list for the specified interpreter.
+Destroys (and frees the memory of) the runloop jump point list and the
+associated free list for the specified interpreter.
 
 =cut
 
 */
 
 void
-destroy_exception_list(PARROT_INTERP)
+destroy_runloop_jump_points(PARROT_INTERP)
 {
-    really_destroy_exception_list(interp->exceptions);
-    really_destroy_exception_list(interp->exc_free_list);
+    really_destroy_runloop_jump_points(interp->current_runloop);
+    really_destroy_runloop_jump_points(interp->runloop_jmp_free_list);
 }
 
 /*
 
-=item C<void really_destroy_exception_list>
+=item C<void really_destroy_runloop_jump_points>
 
-Takes a pointer to an exception (which had better be the last one in the list).
-Walks back through the list, freeing the memory of each one, until it encounters NULL.
-Used by C<destroy_exception_list>.
+Takes a pointer to a runloop jump point (which had better be the last one in
+the list). Walks back through the list, freeing the memory of each one, until
+it encounters NULL. Used by C<destroy_runloop_jump_points>.
 
 =cut
 
 */
 
 void
-really_destroy_exception_list(ARGIN(Parrot_exception *e))
+really_destroy_runloop_jump_points(ARGIN(Parrot_runloop *jump_point))
 {
-    while (e != NULL) {
-        Parrot_exception * const prev = e->prev;
-        mem_sys_free(e);
-        e    = prev;
+    while (jump_point != NULL) {
+        Parrot_runloop * const prev = jump_point->prev;
+        mem_sys_free(jump_point);
+        jump_point = prev;
     }
 }
 
@@ -511,14 +499,11 @@ PARROT_DOES_NOT_RETURN
 void
 do_exception(PARROT_INTERP, INTVAL severity, long error)
 {
-    Parrot_exception * const the_exception = interp->exceptions;
+    PMC *exception = Parrot_ex_build_exception(interp,
+            severity, error, NULL);
+    Parrot_cx_schedule_task(interp, exception);
 
-    the_exception->error                   = error;
-    the_exception->severity                = severity;
-    the_exception->msg                     = NULL;
-    the_exception->resume                  = NULL;
-
-    longjmp(the_exception->destination, 1);
+    longjmp(interp->current_runloop->resume, 1);
 }
 
 /*
@@ -570,25 +555,9 @@ void
 Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
         int exitcode, ARGIN(const char *format), ...)
 {
-    STRING *msg;
-    Parrot_exception * const the_exception = interp->exceptions;
-    PMC *exception = pmc_new(interp, enum_class_Exception);
     RunProfile * const profile = interp->profile;
-
-    if (PMC_IS_NULL(exception)) {
-        PIO_eprintf(interp,
-            "Parrot_ex_throw_from_c (severity:%d error:%d): %Ss\n",
-            EXCEPT_error, exitcode, msg);
-
-        /* [what if exitcode is a multiple of 256?] */
-        exit(exitcode);
-    }
-
-    /* Set exception severity and type. */
-    VTABLE_set_integer_keyed_str(interp, exception,
-            CONST_STRING(interp, "severity"), EXCEPT_error);
-    VTABLE_set_integer_keyed_str(interp, exception,
-            CONST_STRING(interp, "type"), exitcode);
+    STRING *msg = NULL;
+    PMC *exception;
 
     /* Make and set exception message. */
     if (strchr(format, '%')) {
@@ -601,8 +570,17 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
         msg = string_make(interp, format, strlen(format),
                 NULL, PObj_external_FLAG);
 
-    if (msg)
-        VTABLE_set_string_native(interp, exception, msg);
+    exception = Parrot_ex_build_exception(interp,
+            EXCEPT_error, exitcode, msg);
+
+    if (PMC_IS_NULL(exception)) {
+        PIO_eprintf(interp,
+            "Parrot_ex_throw_from_c (severity:%d error:%d): %Ss\n",
+            EXCEPT_error, exitcode, msg);
+
+        /* [what if exitcode is a multiple of 256?] */
+        exit(exitcode);
+    }
 
     /* The exception will be retrieved from the scheduler after jumping back to
      * a point in the runloop where the exception handler can be run. */
@@ -619,7 +597,6 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
         profile->data[PARROT_PROF_EXCEPTION].numcalls++;
     }
 
-
     if (Interp_debug_TEST(interp, PARROT_BACKTRACE_DEBUG_FLAG)) {
         PIO_eprintf(interp,
             "Parrot_ex_throw_from_c (severity:%d error:%d): %Ss\n",
@@ -628,7 +605,7 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
     }
 
     /* Jump to a point in the runloop where the handler can be run. */
-    longjmp(the_exception->destination, 1);
+    longjmp(interp->current_runloop->resume, 1);
 }
 
 

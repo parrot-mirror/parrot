@@ -105,19 +105,6 @@ typedef enum {
 
 /* &end_gen */
 
-/* Right now there's nothing special for the jump buffer, but there might be
- * one later, so we wrap it in a struct so that we can expand it later */
-typedef struct parrot_exception_t {
-    Parrot_jump_buff destination;       /* jmp_buf */
-    INTVAL severity;                    /* s. above */
-    long error;                         /* exception_type_enum */
-    STRING *msg;                        /* may be NULL */
-    void *resume;                       /* opcode_t* for resume or NULL */
-    struct parrot_exception_t *prev;    /* interpreters handler stack */
-    long language;                      /* what is this? */
-    long system;                        /* what is this? */
-} Parrot_exception;
-
 /* HEADERIZER BEGIN: src/exceptions.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
@@ -132,18 +119,18 @@ void exit_fatal(int exitcode, ARGIN(const char *format), ...)
         __attribute__nonnull__(2);
 
 PARROT_API
-void free_internal_exception(PARROT_INTERP)
+void free_runloop_jump_point(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-PMC* new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_exception *jb))
+PMC* new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_API
-void new_internal_exception(PARROT_INTERP)
+void new_runloop_jump_point(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_API
@@ -174,10 +161,8 @@ PMC * Parrot_ex_build_exception(PARROT_INTERP,
         __attribute__nonnull__(1);
 
 PARROT_API
-void push_new_c_exception_handler(PARROT_INTERP,
-    ARGIN(Parrot_exception *jb))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+size_t Parrot_ex_calc_handler_offset(PARROT_INTERP)
+        __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_DOES_NOT_RETURN
@@ -188,6 +173,11 @@ void Parrot_ex_throw_from_c(PARROT_INTERP,
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(4);
+
+PARROT_API
+void push_new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
@@ -204,7 +194,7 @@ opcode_t * Parrot_ex_throw_from_op(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void destroy_exception_list(PARROT_INTERP)
+void destroy_runloop_jump_points(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_DOES_NOT_RETURN
@@ -215,7 +205,7 @@ void do_panic(
     unsigned int line);
 
 void Parrot_print_backtrace(void);
-void really_destroy_exception_list(ARGIN(Parrot_exception *e))
+void really_destroy_runloop_jump_points(ARGIN(Parrot_runloop *jump_point))
         __attribute__nonnull__(1);
 
 PARROT_DOES_NOT_RETURN

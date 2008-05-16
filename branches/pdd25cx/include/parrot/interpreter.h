@@ -293,7 +293,20 @@ typedef struct _context_mem {
 
 } context_mem;
 
+/* Wrap the jump buffer in a struct, to make it a linked list. Jump buffers are
+ * used to resume execution at a point in the runloop where an exception
+ * handler can be run. Ultimately this information should be part of
+ * Parrot_Context, but at this point a new context isn't created for every
+ * runloop ID, so it still needs to be a separate stack for a while longer.*/
+
+typedef struct parrot_runloop_t {
+    Parrot_jump_buff resume;     /* jmp_buf */
+    struct parrot_jump_point_t *prev; /* interpreter's runloop jump buffer stack */
+} Parrot_runloop;
+
+
 struct _handler_node_t; /* forward def - exit.h */
+
 /*
  * The actual interpreter structure
  */
@@ -389,9 +402,8 @@ struct parrot_interp_t {
     struct _handler_node_t *exit_handler_list;   /* exit.c */
     int sleeping;                             /* used during sleep in events */
 
-    struct parrot_exception_t *exceptions;    /* internal exception stack */
-    struct parrot_exception_t *exc_free_list; /* and free list */
-    PMC ** exception_list;                    /* precreated exception objects */
+    struct parrot_runloop_t *current_runloop;   /* internal runloop jump point stack */
+    struct parrot_runloop_t *runloop_jmp_free_list; /* and free list */
 
     int current_runloop_level;                /* for reentering run loop */
     int current_runloop_id;

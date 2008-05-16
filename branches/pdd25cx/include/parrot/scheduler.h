@@ -65,6 +65,10 @@ void Parrot_cx_handle_tasks(PARROT_INTERP, ARGMOD(PMC *scheduler))
         FUNC_MODIFIES(*scheduler);
 
 PARROT_API
+PMC * Parrot_cx_peek_task(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_API
 void Parrot_cx_request_suspend_for_gc(PARROT_INTERP)
         __attribute__nonnull__(1);
 

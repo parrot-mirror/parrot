@@ -239,6 +239,28 @@ Parrot_cx_schedule_task(PARROT_INTERP, ARGIN(PMC *task))
 
 /*
 
+=item C<PMC * Parrot_cx_peek_task>
+
+Retrieve the the top task on the scheduler's task list, but don't remove it
+from the list.
+
+=cut
+
+*/
+
+PARROT_API
+PMC *
+Parrot_cx_peek_task(PARROT_INTERP)
+{
+    if (!interp->scheduler)
+        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "Scheduler was not initialized for this interpreter.\n");
+
+    return VTABLE_pop_pmc(interp, interp->scheduler);
+}
+
+/*
+
 =item C<void Parrot_cx_schedule_timer>
 
 Create a new timer event due at C<diff> from now, repeated at C<interval>

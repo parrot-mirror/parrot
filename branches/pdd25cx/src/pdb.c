@@ -216,15 +216,16 @@ Adds a default exception handler to PDB.
 static void
 PDB_run_code(Parrot_Interp interp, int argc, const char *argv[])
 {
-    Parrot_exception exp;
+    Parrot_runloop jump_point;
 
-    if (setjmp(exp.destination)) {
+    if (setjmp(jump_point.resume)) {
+        PMC *exception = Parrot_cx_peek_task(interp);
         fprintf(stderr, "Caught exception: %s\n",
-            string_to_cstring(interp, interp->exceptions->msg));
+            string_to_cstring(interp, VTABLE_get_string(exception)));
         return;
     }
 
-    push_new_c_exception_handler(interp, &exp);
+    push_new_c_exception_handler(interp, &jump_point);
 
     Parrot_runcode(interp, argc - 1, argv + 1);
 }
