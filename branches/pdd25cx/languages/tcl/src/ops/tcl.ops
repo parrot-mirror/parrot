@@ -91,7 +91,7 @@ inline op tcl_error(in PMC) {
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
     TCL_ERROR);
   ret  = expr NEXT();
-  dest = run_handler(interp, exception, ret);
+  dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
 }
 
@@ -105,7 +105,7 @@ inline op tcl_error(in STR) {
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
     TCL_ERROR);
   ret  = expr NEXT();
-  dest = run_handler(interp, exception, ret);
+  dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
 }
 
@@ -129,7 +129,7 @@ inline op tcl_error(in STR, in PMC) {
     TCL_ERROR);
 
   ret  = expr NEXT();
-  dest = run_handler(interp, exception, ret);
+  dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
 }
 
@@ -144,7 +144,7 @@ inline op tcl_error(in INT, in PMC) {
     $1);
 
   ret  = expr NEXT();
-  dest = run_handler(interp, exception, ret);
+  dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
 }
 
@@ -167,7 +167,7 @@ inline op tcl_return(in PMC) {
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
     TCL_RETURN);
   ret  = expr NEXT();
-  dest = run_handler(interp, exception, ret);
+  dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
 }
 
@@ -181,7 +181,7 @@ inline op tcl_return(in STR) {
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
     TCL_RETURN);
   ret  = expr NEXT();
-  dest = run_handler(interp, exception, ret);
+  dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
 }
 
@@ -202,7 +202,7 @@ inline op tcl_break() {
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
     TCL_BREAK);
   ret  = expr NEXT();
-  dest = run_handler(interp, exception, ret);
+  dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
 }
 
@@ -223,7 +223,7 @@ inline op tcl_continue() {
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
     TCL_CONTINUE);
   ret  = expr NEXT();
-  dest = run_handler(interp, exception, ret);
+  dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
 }
 

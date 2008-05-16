@@ -770,19 +770,19 @@ inline op pop_eh() {
 }
 
 inline op throw(invar PMC) :flow {
-    opcode_t * const ret = expr NEXT();
-    opcode_t * const dest = (opcode_t *)run_handler(interp, $1, ret);
+    opcode_t * const ret  = expr NEXT();
+    opcode_t * const dest = Parrot_ex_throw_from_op(interp, $1, ret);
     goto ADDRESS(dest);
 }
 
 inline op throwcc(invar PMC) :flow {
-    opcode_t * const ret = expr NEXT();
-    opcode_t * const dest = (opcode_t *)run_handler(interp, $1, ret);
+    opcode_t * const ret  = expr NEXT();
+    opcode_t * const dest = Parrot_ex_throw_from_op(interp, $1, ret);
     goto ADDRESS(dest);
 }
 
 inline op throwcc(invar PMC, invar PMC) :flow {
-    opcode_t * const dest = (opcode_t *)run_handler(interp, $1, $2);
+    opcode_t * const dest = Parrot_ex_throw_from_op(interp, $1, $2);
     goto ADDRESS(dest);
 }
 
@@ -800,25 +800,17 @@ inline op die(in STR) :flow {
     PMC *exception = Parrot_ex_build_exception(interp, EXCEPT_error,
             CONTROL_ERROR, $1);
     opcode_t * const ret  = expr NEXT();
-    opcode_t * const dest = (opcode_t *)run_handler(interp, exception, ret);
+    opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, ret);
     goto ADDRESS(dest);
 }
 
 inline op die(in PMC) :flow {
-    opcode_t * const ret  = expr NEXT();
-    opcode_t * dest;
-    PMC *exception;
-    STRING *msg;
-
-    if (PMC_IS_NULL($1))
-        msg = NULL;
-    else
-        msg = VTABLE_get_string(interp, $1);
-
-    exception = Parrot_ex_build_exception(interp, EXCEPT_error,
-            CONTROL_ERROR, msg);
-
-    dest = (opcode_t *)run_handler(interp, exception, ret);
+    opcode_t * const ret = expr NEXT();
+    STRING          *msg = PMC_IS_NULL($1)
+                         ? NULL : VTABLE_get_string(interp, $1);
+    PMC            *exception =
+        Parrot_ex_build_exception(interp, EXCEPT_error, CONTROL_ERROR, msg);
+    opcode_t       *dest = Parrot_ex_throw_from_op(interp, exception, ret);
     goto ADDRESS(dest);
 }
 
@@ -826,18 +818,18 @@ inline op die(in INT, in INT) :flow {
     if ($1 == EXCEPT_doomed)
         _exit($2);
     else {
-        PMC *exception = Parrot_ex_build_exception(interp, $1, $2, NULL);
+        PMC *exception        = Parrot_ex_build_exception(interp, $1, $2, NULL);
         opcode_t * const ret  = expr NEXT();
-        opcode_t * const dest = (opcode_t *)run_handler(interp, exception, ret);
+        opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, ret);
         goto ADDRESS(dest);
     }
 }
 
 inline op exit(in INT) :flow {
-    PMC *exception = Parrot_ex_build_exception(interp,
-            EXCEPT_exit, $1, NULL);
+    PMC      *exception   =
+        Parrot_ex_build_exception(interp, EXCEPT_exit, $1, NULL);
     opcode_t * const ret  = expr NEXT();
-    opcode_t * const dest = (opcode_t *)run_handler(interp, exception, ret);
+    opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, ret);
     goto ADDRESS(dest);
 }
 
