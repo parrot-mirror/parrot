@@ -78,11 +78,11 @@ runops(PARROT_INTERP, size_t offs)
      * run loops, e.g. if a delegate methods throws an exception
      */
 #if ! STACKED_EXCEPTIONS
-    if (!interp->exceptions)
+    if (!interp->current_runloop)
 #endif
     {
-        new_internal_exception(interp);
-        if (setjmp(interp->exceptions->destination)) {
+        new_runloop_jump_point(interp);
+        if (setjmp(interp->current_runloop->resume)) {
             /* an exception was thrown */
             interp->current_runloop_level = our_runloop_level;
             interp->current_runloop_id = our_runloop_id;
@@ -110,7 +110,7 @@ runops(PARROT_INTERP, size_t offs)
      * s. above
      */
     if (STACKED_EXCEPTIONS) {
-        free_internal_exception(interp);
+        free_runloop_jump_point(interp);
     }
 #ifdef RUNLOOP_TRACE
     fprintf(stderr, "[exiting loop %d, level %d]\n",

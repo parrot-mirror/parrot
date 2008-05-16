@@ -442,7 +442,7 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
     stack_destroy(interp->dynamic_env);
 
     destroy_context(interp);
-    destroy_exception_list(interp);
+    destroy_runloop_jump_points(interp);
 
     if (interp->evc_func_table) {
         mem_sys_free(interp->evc_func_table);

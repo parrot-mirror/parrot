@@ -437,7 +437,7 @@ PARROT_CAN_RETURN_NULL
 static void*
 thread_func(ARGIN_NULLOK(void *arg))
 {
-    Parrot_exception exp;
+    Parrot_runloop   jump_point;
     int              lo_var_ptr;
     UINTVAL          tid;
     PMC             *sub;
@@ -454,22 +454,23 @@ thread_func(ARGIN_NULLOK(void *arg))
     sub                = (PMC *)PMC_struct_val(self);
     sub_arg            = PMC_pmc_val(self);
 
-    if (setjmp(exp.destination)) {
-        const Parrot_exception * const except = interp->exceptions;
+    if (setjmp(jump_point.resume)) {
+        PMC *exception = Parrot_cx_peek_task(interp);
         /* caught exception */
         /* XXX what should we really do here */
         PIO_eprintf(interp,
                     "Unhandled exception in thread with tid %d "
                     "(message=%Ss, number=%d)\n",
                     interp->thread_data->tid,
-                    except->msg,
-                    except->error);
+                    VTABLE_get_string(interp, exception),
+                    VTABLE_get_integer_keyed_str(interp, exception,
+                        const_string(interp, "type")));
 
         ret_val = PMCNULL;
     }
     else {
         /* run normally */
-        push_new_c_exception_handler(interp, &exp);
+        push_new_c_exception_handler(interp, &jump_point);
         Parrot_unblock_DOD(interp);
         Parrot_unblock_GC(interp);
         ret_val = Parrot_runops_fromc_args(interp, sub, "PF", sub_arg);
