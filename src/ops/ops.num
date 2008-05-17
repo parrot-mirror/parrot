@@ -1218,3 +1218,4 @@ stm_commit_ic                  1187
 stm_wait_ic                    1188
 stm_abort                      1189
 stm_depth_i                    1190
+throw_p_p                      1191
