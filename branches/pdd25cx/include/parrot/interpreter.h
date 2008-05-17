@@ -518,6 +518,14 @@ void Parrot_really_destroy(PARROT_INTERP,
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_API
+void free_runloop_jump_point(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_API
+void new_runloop_jump_point(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_API
 PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 void * Parrot_run_meth_fromc(PARROT_INTERP,
@@ -687,6 +695,12 @@ INTVAL Parrot_runops_fromc_args_reti(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
+
+void destroy_runloop_jump_points(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+void really_destroy_runloop_jump_points(ARGIN(Parrot_runloop *jump_point))
+        __attribute__nonnull__(1);
 
 void runops(PARROT_INTERP, size_t offs)
         __attribute__nonnull__(1);

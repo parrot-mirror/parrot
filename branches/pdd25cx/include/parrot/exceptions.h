@@ -119,19 +119,11 @@ void exit_fatal(int exitcode, ARGIN(const char *format), ...)
         __attribute__nonnull__(2);
 
 PARROT_API
-void free_runloop_jump_point(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
-PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC* new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
-
-PARROT_API
-void new_runloop_jump_point(PARROT_INTERP)
-        __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_DOES_NOT_RETURN_WHEN_FALSE
@@ -175,6 +167,14 @@ void Parrot_ex_throw_from_c(PARROT_INTERP,
         __attribute__nonnull__(4);
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
+opcode_t * Parrot_ex_throw_from_op(PARROT_INTERP,
+    ARGIN(PMC *exception),
+    SHIM(void *dest))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
 void push_new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -186,17 +186,6 @@ opcode_t * rethrow_exception(PARROT_INTERP, ARGIN(PMC *exception))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API
-PARROT_CAN_RETURN_NULL
-opcode_t * Parrot_ex_throw_from_op(PARROT_INTERP,
-    ARGIN(PMC *exception),
-    SHIM(void *dest))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-void destroy_runloop_jump_points(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
 PARROT_DOES_NOT_RETURN
 void do_panic(
     NULLOK_INTERP,
@@ -205,9 +194,6 @@ void do_panic(
     unsigned int line);
 
 void Parrot_print_backtrace(void);
-void really_destroy_runloop_jump_points(ARGIN(Parrot_runloop *jump_point))
-        __attribute__nonnull__(1);
-
 PARROT_DOES_NOT_RETURN
 void rethrow_c_exception(PARROT_INTERP)
         __attribute__nonnull__(1);
