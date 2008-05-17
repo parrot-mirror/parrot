@@ -41,7 +41,7 @@ pmclass TclInt
         INTVAL d = PMC_int_val(value);
 
         if (d == 0)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "divide by zero");
 
         if (!dest)
@@ -54,7 +54,7 @@ pmclass TclInt
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (d == 0.0)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         if (!dest)

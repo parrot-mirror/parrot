@@ -953,7 +953,7 @@ ft_init(PARROT_INTERP, ARGIN(visit_info *info))
     }
     else {
         if (string_length(interp, s) < header_length) {
-            Parrot_ex_throw_from_c(interp, NULL,
+            Parrot_ex_throw_from_c_args(interp, NULL,
                 EXCEPTION_INVALID_STRING_REPRESENTATION,
                 "bad string to thaw");
         }
@@ -1087,7 +1087,7 @@ thaw_pmc(PARROT_INTERP, ARGMOD(visit_info *info),
         *type = VTABLE_shift_integer(interp, io);
         info->last_type = *type;
         if (*type <= 0)
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "Unknown PMC type to thaw %d", (int) *type);
 
         if (*type >= interp->n_vtable_max ||
@@ -1126,7 +1126,7 @@ do_action(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc), ARGIN(visit_info *info),
                 info->visit_action = pmc->vtable->freeze;
             break;
         default:
-            Parrot_ex_throw_from_c(interp, NULL, 1, "Illegal action %ld",
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "Illegal action %ld",
                 (long)info->what);
     }
 }
@@ -1156,7 +1156,7 @@ thaw_create_pmc(PARROT_INTERP, ARGIN(const visit_info *info),
             pmc = constant_pmc_new_noinit(interp, type);
             break;
         default:
-            Parrot_ex_throw_from_c(interp, NULL, 1, "Illegal visit_next type");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "Illegal visit_next type");
     }
     return pmc;
 }
@@ -1303,7 +1303,7 @@ id_from_pmc(PARROT_INTERP, ARGIN(PMC* pmc))
         id += arena->total_objects;
     }
 
-    Parrot_ex_throw_from_c(interp, NULL, 1, "Couldn't find PMC in arenas");
+    Parrot_ex_throw_from_c_args(interp, NULL, 1, "Couldn't find PMC in arenas");
 }
 
 /*
@@ -1440,7 +1440,7 @@ visit_next_for_GC(PARROT_INTERP, ARGIN(PMC* pmc), ARGIN(visit_info* info))
     const int seen = next_for_GC_seen(interp, pmc, info, &id);
     UNUSED(seen);
 
-    Parrot_ex_throw_from_c(interp, NULL, 1, "todo convert to depth first");
+    Parrot_ex_throw_from_c_args(interp, NULL, 1, "todo convert to depth first");
     /* do_action(interp, pmc, info, seen, id); UNCOMMENT WHEN TODO IS DONE*/
     /*
      * TODO probe for class methods that override the default.
@@ -1568,7 +1568,7 @@ again:
     while ((list_item = (PMC**)list_shift(interp, todo, enum_type_PMC))) {
         current = *list_item;
         if (!current)
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "NULL current PMC in visit_loop_todo_list");
 
         VTABLE_visit(interp, current, info);

@@ -53,7 +53,7 @@ pmclass LuaClosure
             memcpy(PMC_sub(SELF), PMC_sub(sub), sizeof (Parrot_sub));
         }
         else
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "not a Closure (%Ss)", SELF->vtable->whoami);
     }
 

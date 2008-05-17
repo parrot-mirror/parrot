@@ -227,7 +227,7 @@ Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), SHIM(void *dest))
 
 /*
 
-=item C<void Parrot_ex_throw_from_c>
+=item C<void Parrot_ex_throw_from_c_args>
 
 Throws a real exception, with an error message constructed from the format
 string and arguments.  C<ret_addr> is the address from which to resume, if some
@@ -271,7 +271,7 @@ handlers.
 PARROT_API
 PARROT_DOES_NOT_RETURN
 void
-Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
+Parrot_ex_throw_from_c_args(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
         int exitcode, ARGIN(const char *format), ...)
 {
     RunProfile * const profile = interp->profile;
@@ -294,7 +294,7 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
 
     if (PMC_IS_NULL(exception)) {
         PIO_eprintf(interp,
-            "Parrot_ex_throw_from_c (severity:%d error:%d): %Ss\n",
+            "Parrot_ex_throw_from_c_args (severity:%d error:%d): %Ss\n",
             EXCEPT_error, exitcode, msg);
 
         /* [what if exitcode is a multiple of 256?] */
@@ -318,7 +318,7 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
 
     if (Interp_debug_TEST(interp, PARROT_BACKTRACE_DEBUG_FLAG)) {
         PIO_eprintf(interp,
-            "Parrot_ex_throw_from_c (severity:%d error:%d): %Ss\n",
+            "Parrot_ex_throw_from_c_args (severity:%d error:%d): %Ss\n",
             EXCEPT_error, exitcode, msg);
         PDB_backtrace(interp);
     }
@@ -543,7 +543,7 @@ of the error would interfere with the exception system).
 
 This involves printing an error message to stderr, and calling C<exit> to exit
 the process with the given exitcode. It is not possible for Parrot bytecode to
-intercept a fatal error (for that, use C<Parrot_ex_throw_from_c>).
+intercept a fatal error (for that, use C<Parrot_ex_throw_from_c_args>).
 C<exit_fatal> does not call C<Parrot_exit> to invoke exit handlers (that would
 require an interpreter).
 

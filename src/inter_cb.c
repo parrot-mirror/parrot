@@ -86,7 +86,7 @@ Parrot_make_cb(PARROT_INTERP, ARGMOD(PMC* sub), ARGIN(PMC* user_data),
     sig_str = cb_signature->strstart;
 
     if (strlen(sig_str) != 3)
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "unhandled signature '%s' in make_cb", cb_signature->strstart);
 
     ++sig_str;     /* Skip callback return type */
@@ -100,7 +100,7 @@ Parrot_make_cb(PARROT_INTERP, ARGMOD(PMC* sub), ARGIN(PMC* user_data),
             type = 'C';
         }
         else {
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "unhandled signature '%s' in make_cb", cb_signature->strstart);
         }
     }
@@ -348,7 +348,7 @@ case_I:
             param = string_from_cstring(interp, external_data, 0);
             break;
         default:
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "unhandled signature char '%c' in run_cb", *p);
     }
     pasm_sig[3] = '\0';

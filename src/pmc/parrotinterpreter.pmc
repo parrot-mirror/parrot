@@ -400,7 +400,7 @@ Introspection interface. C<key> can be:
             level = 1;
 
         if (level < 0)
-            Parrot_ex_throw_from_c(interp, NULL, CONTROL_ERROR,
+            Parrot_ex_throw_from_c_args(interp, NULL, CONTROL_ERROR,
                 "No such caller depth");
 
         ctx = CONTEXT(interp);
@@ -409,7 +409,7 @@ Introspection interface. C<key> can be:
             for (; level; --level) {
                 ctx = ctx->outer_ctx;
                 if (!ctx)
-                    Parrot_ex_throw_from_c(interp, NULL,
+                    Parrot_ex_throw_from_c_args(interp, NULL,
                         CONTROL_ERROR, "No such outer depth");
             }
         }
@@ -418,13 +418,13 @@ Introspection interface. C<key> can be:
                 cont = ctx->current_cont;
 
                 if (PMC_IS_NULL(cont) || !PMC_cont(cont)->seg)
-                    Parrot_ex_throw_from_c(interp, NULL,
+                    Parrot_ex_throw_from_c_args(interp, NULL,
                         CONTROL_ERROR, "No such caller depth");
 
                 ctx = PMC_cont(cont)->to_ctx;
 
                 if (!ctx->current_sub)
-                    Parrot_ex_throw_from_c(interp, NULL,
+                    Parrot_ex_throw_from_c_args(interp, NULL,
                         CONTROL_ERROR, "No such caller depth");
             }
         }
@@ -452,7 +452,7 @@ Introspection interface. C<key> can be:
         if (string_equal(interp, item, s) == 0)
             return VTABLE_clone(interp, ctx->current_cont);
 
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
                 "No such item %Ss", item);
     }
 

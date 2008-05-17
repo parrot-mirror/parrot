@@ -167,7 +167,7 @@ static void utf16_set_position(PARROT_INTERP,
 #  include <unicode/ustring.h>
 #endif
 
-#define UNIMPL Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED, \
+#define UNIMPL Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, \
     "unimpl utf16")
 
 
@@ -274,7 +274,7 @@ to_encoding(PARROT_INTERP, ARGIN(STRING *src), ARGIN_NULLOK(STRING *dest))
         result->encoding = Parrot_ucs2_encoding_ptr;
     return result;
 #else
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no ICU lib loaded");
 #endif
 }
@@ -304,7 +304,7 @@ get_codepoint(PARROT_INTERP, ARGIN(const STRING *src), UINTVAL offset)
     UNUSED(src);
     UNUSED(offset);
 
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no ICU lib loaded");
 #endif
 }
@@ -344,7 +344,7 @@ get_byte(SHIM_INTERP, ARGIN(const STRING *src), UINTVAL offset)
 {
     const unsigned char * const contents = (unsigned char *)src->strstart;
     if (offset >= src->bufused) {
-/*        Parrot_ex_throw_from_c(interp, NULL, 0,
+/*        Parrot_ex_throw_from_c_args(interp, NULL, 0,
                 "get_byte past the end of the buffer (%i of %i)",
                 offset, src->bufused); */
         return 0;
@@ -368,7 +368,7 @@ set_byte(PARROT_INTERP, ARGIN(const STRING *src), UINTVAL offset, UINTVAL byte)
     unsigned char *contents;
 
     if (offset >= src->bufused)
-        Parrot_ex_throw_from_c(interp, NULL, 0,
+        Parrot_ex_throw_from_c_args(interp, NULL, 0,
             "set_byte past the end of the buffer");
 
     contents = (unsigned char *)src->strstart;
@@ -674,7 +674,7 @@ iter_init(PARROT_INTERP, ARGIN(const STRING *src), ARGOUT(String_iter *iter))
     iter->set_and_advance = utf16_encode_and_advance;
     iter->set_position =    utf16_set_position;
 #else
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no ICU lib loaded");
 #endif
 }

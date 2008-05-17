@@ -312,7 +312,7 @@ static INTVAL
 get_nci_I(PARROT_INTERP, ARGMOD(call_state *st), int n)
 {
     if (n >= st->src.n)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "too few arguments passed to NCI function");
 
     Parrot_fetch_arg_nci(interp, st);
@@ -324,7 +324,7 @@ static FLOATVAL
 get_nci_N(PARROT_INTERP, ARGMOD(call_state *st), int n)
 {
     if (n >= st->src.n)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "too few arguments passed to NCI function");
 
     Parrot_fetch_arg_nci(interp, st);
@@ -339,7 +339,7 @@ get_nci_S(PARROT_INTERP, ARGMOD(call_state *st), int n)
 {
     /* TODO or act like below? */
     if (n >= st->src.n)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "too few arguments passed to NCI function");
 
     Parrot_fetch_arg_nci(interp, st);

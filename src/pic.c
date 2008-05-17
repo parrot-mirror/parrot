@@ -544,7 +544,7 @@ pass_mixed(PARROT_INTERP, ARGIN(const PMC *sig), ARGIN(const char *src_base),
                 }
                 break;
             default:
-                Parrot_ex_throw_from_c(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "bogus signature 0x%x", bits);
                 break;
         }
@@ -798,7 +798,7 @@ parrot_PIC_prederef(PARROT_INTERP, opcode_t op, ARGOUT(void **pc_pred), int core
                     type = pmc_type(interp, _class);
 
                 if (type <= 0)
-                    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_NO_CLASS,
+                    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_NO_CLASS,
                             "Class '%Ss' not found", _class);
 
                 pc_pred[2] = (void*)type;

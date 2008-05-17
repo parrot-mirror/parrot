@@ -31,7 +31,7 @@ These are the vtable functions for the lexpad PMC.
 pmclass LexPad provides hash no_ro {
 
     VTABLE void init() {
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "Cannot create a LexPad PMC without an initializer");
     }
 
@@ -129,7 +129,7 @@ Return the LexInfo PMC, if any or a Null PMC.
         INTVAL            regno;
 
         if (!b)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LEX_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LEX_NOT_FOUND,
                 "Lexical '%Ss' not found", name);
 
         regno                   = (INTVAL) b->value;

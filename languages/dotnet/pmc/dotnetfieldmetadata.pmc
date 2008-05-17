@@ -28,7 +28,7 @@ pmclass DotNetFieldMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!f || !f->str_name)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetFieldMetadata PMC");
 
         return f->str_name;
@@ -69,7 +69,7 @@ pmclass DotNetFieldMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!f)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetFieldMetadata PMC");
 
         result = (INTVAL)f->flags;
@@ -85,7 +85,7 @@ pmclass DotNetFieldMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!f)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetFieldMetadata PMC");
 
         result = (INTVAL)f->signature;
@@ -101,7 +101,7 @@ pmclass DotNetFieldMetadata dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!f || !f->parent)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetFieldMetadata PMC");
 
         result = f->parent;

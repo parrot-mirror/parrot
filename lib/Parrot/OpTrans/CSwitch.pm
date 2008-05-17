@@ -192,7 +192,7 @@ sub run_core_finish {
                 *(opcode_t*)cur_opcode = CORE_OPS_wrapper__;
                 continue;
             }
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "illegal opcode in switch core\\n");
             break;
         } /* switch */

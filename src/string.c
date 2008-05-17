@@ -361,7 +361,7 @@ string_make_empty(PARROT_INTERP,
         s->encoding = CHARSET_GET_PREFERRED_ENCODING(interp, s);
     }
     else {
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_CHARTYPE,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_CHARTYPE,
             "Unsupported representation");
     }
 
@@ -617,7 +617,7 @@ string_primary_encoding_for_representation(PARROT_INTERP,
     if (representation == enum_stringrep_one)
         return "ascii";
 
-    Parrot_ex_throw_from_c(interp, NULL,
+    Parrot_ex_throw_from_c_args(interp, NULL,
         EXCEPTION_INVALID_STRING_REPRESENTATION,
         "string_primary_encoding_for_representation: "
         "invalid string representation");
@@ -690,7 +690,7 @@ string_make(PARROT_INTERP, ARGIN_NULLOK(const char *buffer),
     charset = Parrot_find_charset(interp, charset_name);
 
     if (!charset)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
             "Can't make '%s' charset strings", charset_name);
 
     encoding = charset->preferred_encoding;
@@ -891,7 +891,7 @@ string_ord(PARROT_INTERP, ARGIN_NULLOK(const STRING *s), INTVAL idx)
     const UINTVAL len = s ? string_length(interp, s) : 0;
 
     if (len == 0) {
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ORD_OUT_OF_STRING,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ORD_OUT_OF_STRING,
             "Cannot get character of empty string");
     }
     else {
@@ -899,7 +899,7 @@ string_ord(PARROT_INTERP, ARGIN_NULLOK(const STRING *s), INTVAL idx)
 
         if (idx < 0) {
             if ((INTVAL)(idx + len) < 0)
-                Parrot_ex_throw_from_c(interp, NULL,
+                Parrot_ex_throw_from_c_args(interp, NULL,
                     EXCEPTION_ORD_OUT_OF_STRING,
                     "Cannot get character before beginning of string");
 
@@ -907,7 +907,7 @@ string_ord(PARROT_INTERP, ARGIN_NULLOK(const STRING *s), INTVAL idx)
         }
 
         if (true_index > (len - 1))
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ORD_OUT_OF_STRING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ORD_OUT_OF_STRING,
                 "Cannot get character past end of string");
 
         return string_index(interp, s, true_index);
@@ -1088,7 +1088,7 @@ string_substr(PARROT_INTERP, ARGIN(STRING *src), INTVAL offset, INTVAL length,
 
     /* 0 based... */
     if (src->strlen == 0 || true_offset > src->strlen - 1)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_SUBSTR_OUT_OF_STRING,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_SUBSTR_OUT_OF_STRING,
             "Cannot take substr outside string");
 
     true_length = (UINTVAL)length;
@@ -1186,7 +1186,7 @@ string_replace(PARROT_INTERP, ARGIN(STRING *src),
      * Only give exception if caller trys to replace end of string + 2
      */
     if (true_offset > src->strlen)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_SUBSTR_OUT_OF_STRING,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_SUBSTR_OUT_OF_STRING,
             "Can only replace inside string or index after end of string");
 
     if (true_length > (src->strlen - true_offset))
@@ -1222,7 +1222,7 @@ string_replace(PARROT_INTERP, ARGIN(STRING *src),
 
     /* not possible.... */
     if (end_byte < start_byte)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_SUBSTR_OUT_OF_STRING,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_SUBSTR_OUT_OF_STRING,
             "replace: subend somehow is less than substart");
 
     /* Now do the replacement */
@@ -1479,12 +1479,12 @@ string_bitwise_and(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
 
     /* we could also trans_charset to iso-8859-1 */
     if (s1 && s1->encoding != Parrot_fixed_8_encoding_ptr)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_ENCODING,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
             "string bitwise_and (%s/%s) unsupported",
             s1->encoding->name, nonnull_encoding_name(s2));
 
     if (s2 && s2->encoding != Parrot_fixed_8_encoding_ptr)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_ENCODING,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
             "string bitwise_and (%s/%s) unsupported",
             nonnull_encoding_name(s1), s2->encoding->name);
 
@@ -1593,7 +1593,7 @@ string_bitwise_or(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
 
     if (s1) {
         if (s1->encoding != Parrot_fixed_8_encoding_ptr)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
                 "string bitwise_or (%s/%s) unsupported",
                 s1->encoding->name, nonnull_encoding_name(s2));
 
@@ -1602,7 +1602,7 @@ string_bitwise_or(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
 
     if (s2) {
         if (s2->encoding != Parrot_fixed_8_encoding_ptr)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
                 "string bitwise_or (%s/%s) unsupported",
                 nonnull_encoding_name(s1), s2->encoding->name);
 
@@ -1666,7 +1666,7 @@ string_bitwise_xor(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
 
     if (s1) {
         if (s1->encoding != Parrot_fixed_8_encoding_ptr)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
                 "string bitwise_xor (%s/%s) unsupported",
                 s1->encoding->name, nonnull_encoding_name(s2));
 
@@ -1675,7 +1675,7 @@ string_bitwise_xor(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
 
     if (s2) {
         if (s2->encoding != Parrot_fixed_8_encoding_ptr)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
                 "string bitwise_xor (%s/%s) unsupported",
                 nonnull_encoding_name(s1), s2->encoding->name);
 
@@ -1749,7 +1749,7 @@ string_bitwise_not(PARROT_INTERP, ARGIN_NULLOK(const STRING *s), ARGOUT_NULLOK(S
 
     if (s) {
         if (s->encoding != Parrot_fixed_8_encoding_ptr)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
                 "string bitwise_not (%s/%s) unsupported",
                 s->encoding->name, s->encoding->name);
 
@@ -2371,12 +2371,12 @@ string_unescape_cstring(PARROT_INTERP,
         *p = '\0';
         encoding = Parrot_find_encoding(interp, enc_char);
         if (!encoding)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
                 "Can't make '%s' encoding strings", enc_char);
 
         charset = Parrot_find_charset(interp, p + 1);
         if (!charset)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
                 "Can't make '%s' charset strings", p + 1);
 
         result   = string_make_direct(interp, cstring, clength,
@@ -2423,7 +2423,7 @@ string_unescape_cstring(PARROT_INTERP,
         string_compute_strlen(interp, result);
 
     if (!CHARSET_VALIDATE(interp, result, 0))
-        Parrot_ex_throw_from_c(interp, NULL,
+        Parrot_ex_throw_from_c_args(interp, NULL,
             EXCEPTION_INVALID_STRING_REPRESENTATION, "Malformed string");
 
     if (result->encoding == Parrot_utf8_encoding_ptr) {
@@ -2589,7 +2589,7 @@ string_increment(PARROT_INTERP, ARGIN(const STRING *s))
     PARROT_ASSERT(s);
 
     if (string_length(interp, s) != 1)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
             "increment only for length = 1 done");
 
     o = string_ord(interp, s, 0);
@@ -2601,7 +2601,7 @@ string_increment(PARROT_INTERP, ARGIN(const STRING *s))
         return string_chr(interp, o);
     }
 
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
         "increment out of range - unimplemented");
 }
 
@@ -2721,7 +2721,7 @@ Parrot_string_trans_charset(PARROT_INTERP, ARGMOD_NULLOK(STRING *src),
     new_charset = Parrot_get_charset(interp, charset_nr);
 
     if (!new_charset)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_CHARTYPE,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_CHARTYPE,
                 "charset #%d not found", (int) charset_nr);
 
     /*
@@ -2777,7 +2777,7 @@ Parrot_string_trans_encoding(PARROT_INTERP, ARGIN_NULLOK(STRING *src),
     new_encoding = Parrot_get_encoding(interp, encoding_nr);
 
     if (!new_encoding)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_CHARTYPE,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_CHARTYPE,
             "encoding #%d not found", (int) encoding_nr);
 
     /*

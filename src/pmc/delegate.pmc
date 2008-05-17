@@ -44,7 +44,7 @@ vtable_meth_not_found(PARROT_INTERP, PMC *pmc, const char *meth)
         _class = pmc->vtable->whoami;
 
     /* TODO: this shouldn't be "method", but I'm fixing other things now */
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_METH_NOT_FOUND,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
         "Can't find vtable method '%s' in class '%Ss'", meth, _class);
 }
 

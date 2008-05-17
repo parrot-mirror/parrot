@@ -56,13 +56,13 @@ string_set_data_directory(PARROT_INTERP, ARGIN(const char *dir))
        EBCDIC.) */
 
     if (!u_isdigit(57) || (u_charDigitValue(57) != 9))
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ICU_ERROR,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ICU_ERROR,
             "string_set_data_directory: ICU data files not found"
             "(apparently) for directory [%s]", dir);
 #else
     UNUSED(dir);
 
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ICU_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ICU_ERROR,
         "string_set_data_directory: parrot compiled without ICU support");
 #endif
 }
@@ -122,18 +122,18 @@ string_unescape_one(PARROT_INTERP, ARGMOD(UINTVAL *offset),
                         workchar += codepoint - 'A' + 10;
                     }
                     else {
-                        Parrot_ex_throw_from_c(interp, NULL,
+                        Parrot_ex_throw_from_c_args(interp, NULL,
                             EXCEPTION_UNIMPLEMENTED,
                             "Illegal escape sequence inside {}");
                     }
                 }
                 if (*offset == len)
-                    Parrot_ex_throw_from_c(interp, NULL,
+                    Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_UNIMPLEMENTED,
                         "Illegal escape sequence no '}'");
             }
             else {
-                Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
                     "Illegal escape sequence in");
             }
 
@@ -165,7 +165,7 @@ string_unescape_one(PARROT_INTERP, ARGMOD(UINTVAL *offset),
                 workchar = codepoint - 'A' + 1;
             }
             else {
-                Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
                     "Illegal escape sequence");
             }
 
@@ -187,13 +187,13 @@ string_unescape_one(PARROT_INTERP, ARGMOD(UINTVAL *offset),
                         workchar += codepoint - 'A' + 10;
                     }
                     else {
-                        Parrot_ex_throw_from_c(interp, NULL,
+                        Parrot_ex_throw_from_c_args(interp, NULL,
                             EXCEPTION_UNIMPLEMENTED,
                             "Illegal escape sequence in uxxx escape");
                     }
                 }
                 else {
-                    Parrot_ex_throw_from_c(interp, NULL,
+                    Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_UNIMPLEMENTED,
                         "Illegal escape sequence in uxxx escape - too short");
                 }
@@ -217,13 +217,13 @@ string_unescape_one(PARROT_INTERP, ARGMOD(UINTVAL *offset),
                         workchar += codepoint - 'A' + 10;
                     }
                     else {
-                        Parrot_ex_throw_from_c(interp, NULL,
+                        Parrot_ex_throw_from_c_args(interp, NULL,
                             EXCEPTION_UNIMPLEMENTED,
                             "Illegal escape sequence in Uxxx escape");
                     }
                 }
                 else {
-                    Parrot_ex_throw_from_c(interp, NULL,
+                    Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_UNIMPLEMENTED,
                         "Illegal escape sequence in uxxx escape - too short");
                 }

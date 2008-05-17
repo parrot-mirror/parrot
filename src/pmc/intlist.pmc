@@ -215,7 +215,7 @@ Removes and returns the first element in the list.
 
     void splice(PMC *value, INTVAL offset, INTVAL count) {
         if (SELF->vtable->base_type != value->vtable->base_type)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Type mismatch in splice");
 
         list_splice(INTERP, (List *)PMC_struct_val(SELF),
@@ -224,7 +224,7 @@ Removes and returns the first element in the list.
 
     VTABLE PMC *slice(PMC *key, INTVAL f) {
         if (f)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "IntList: Unknown slice type");
         else {
             PMC * const iter = pmc_new_init(INTERP, enum_class_Iterator, SELF);

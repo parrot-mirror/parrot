@@ -701,7 +701,7 @@ do_sub_pragmas(PARROT_INTERP, ARGIN(PackFile_ByteCode *self),
                 PMC *sub_pmc;
 
                 if (ci < 0 || ci >= ct->const_count)
-                    Parrot_ex_throw_from_c(interp, NULL, 1,
+                    Parrot_ex_throw_from_c_args(interp, NULL, 1,
                         "Illegal fixup offset (%d) in enum_fixup_sub");
 
                 sub_pmc                    = ct->constants[ci]->u.key;
@@ -2390,7 +2390,7 @@ pf_debug_unpack(PARROT_INTERP, ARGOUT(PackFile_Segment *self), ARGIN(const opcod
     code = (PackFile_ByteCode *)PackFile_find_segment(interp,
             self->dir, code_name, 0);
     if (!code || code->base.type != PF_BYTEC_SEG) {
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "Code '%s' not found for debug segment '%s'\n",
             code_name, self->name);
     }
@@ -2673,7 +2673,7 @@ Parrot_switch_to_cs_by_nr(PARROT_INTERP, opcode_t seg)
         }
     }
 
-    Parrot_ex_throw_from_c(interp, NULL, 1, "Segment number %d not found\n",
+    Parrot_ex_throw_from_c_args(interp, NULL, 1, "Segment number %d not found\n",
         (int) seg);
 }
 
@@ -2696,7 +2696,7 @@ Parrot_switch_to_cs(PARROT_INTERP, ARGIN(PackFile_ByteCode *new_cs), int really)
     PackFile_ByteCode * const cur_cs = interp->code;
 
     if (!new_cs)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_NO_PREV_CS,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_NO_PREV_CS,
             "No code segment to switch to\n");
 
     /* compiling source code uses this function too,
@@ -2964,7 +2964,7 @@ fixup_packed_size(PARROT_INTERP, ARGMOD(PackFile_Segment *self))
             case enum_fixup_none:
                 break;
             default:
-                Parrot_ex_throw_from_c(interp, NULL, 1, "Unknown fixup type\n");
+                Parrot_ex_throw_from_c_args(interp, NULL, 1, "Unknown fixup type\n");
         }
     }
     return size;
@@ -3002,7 +3002,7 @@ fixup_pack(PARROT_INTERP, ARGIN(PackFile_Segment *self), ARGOUT(opcode_t *cursor
             case enum_fixup_none:
                 break;
             default:
-                Parrot_ex_throw_from_c(interp, NULL, 1, "Unknown fixup type\n");
+                Parrot_ex_throw_from_c_args(interp, NULL, 1, "Unknown fixup type\n");
         }
     }
     return cursor;
@@ -3754,7 +3754,7 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN(STRING *file_str))
 
     path = Parrot_locate_runtime_file_str(interp, file_str, file_type);
     if (!path)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
             "\"load_bytecode\" couldn't find file '%Ss'", file_str);
 
     /* remember wo_ext => full_path mapping */
@@ -3765,7 +3765,7 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN(STRING *file_str))
         PackFile *pf = PackFile_append_pbc(interp, filename);
 
         if (!pf)
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "Unable to append PBC to the current directory");
     }
     else {
@@ -3777,7 +3777,7 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN(STRING *file_str))
             do_sub_pragmas(interp, cs, PBC_LOADED, NULL);
         }
         else
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
                 "compiler returned NULL ByteCode '%Ss' - %Ss", file_str, err);
     }
     string_cstring_free(filename);

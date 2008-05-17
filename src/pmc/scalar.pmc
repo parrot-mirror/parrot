@@ -64,7 +64,7 @@ bitwise_left_shift_internal(PARROT_INTERP, PMC *self,
         VTABLE_set_integer_native(interp, dest, result);
     }
     else if (PARROT_ERRORS_test(interp, PARROT_ERRORS_OVERFLOW_FLAG)) {
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ERR_OVERFLOW,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ERR_OVERFLOW,
             "Integer overflow");
     }
     else {
@@ -383,7 +383,7 @@ Multiplies the number by C<value> and returns the result in C<*dest>.
 
     VTABLE PMC *multiply(PMC *value, PMC *dest) {
 MMD_Complex: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "TODO mul<Float, Complex>");
         }
 MMD_DEFAULT: {
@@ -416,7 +416,7 @@ MMD_DEFAULT: {
 
     VTABLE void i_multiply(PMC *value) {
 MMD_Complex: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
                 "TODO i_mul<Float, Complex>");
         }
@@ -461,7 +461,7 @@ Divides C<SELF> by C<value> inplace.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         if (!dest)
@@ -473,7 +473,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE PMC *divide_int(INTVAL value, PMC *dest) {
         if (value == 0)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         if (!dest)
@@ -485,7 +485,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE PMC *divide_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         if (!dest)
@@ -499,7 +499,7 @@ Divides C<SELF> by C<value> inplace.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF, SELF.get_number() / d);
@@ -507,7 +507,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE void i_divide_int(INTVAL value) {
         if (value == 0)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF, SELF.get_number() / value);
@@ -515,7 +515,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE void i_divide_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF, SELF.get_number() / value);
@@ -547,7 +547,7 @@ Divides C<SELF> by C<value> inplace.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         if (!dest)
@@ -560,7 +560,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE PMC *floor_divide_int(INTVAL value, PMC *dest) {
         if (value == 0)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         if (!dest)
@@ -573,7 +573,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE PMC *floor_divide_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         if (!dest)
@@ -588,7 +588,7 @@ Divides C<SELF> by C<value> inplace.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
@@ -597,7 +597,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE void i_floor_divide_int(INTVAL value) {
         if (value == 0)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
@@ -606,7 +606,7 @@ Divides C<SELF> by C<value> inplace.
 
     VTABLE void i_floor_divide_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
@@ -641,7 +641,7 @@ the result in C<dest>.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float cmodulus by zero");
 
         if (!dest)
@@ -654,7 +654,7 @@ the result in C<dest>.
 
     VTABLE PMC *cmodulus_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float cmodulus by zero");
 
         if (!dest)
@@ -667,7 +667,7 @@ the result in C<dest>.
 
     VTABLE PMC *cmodulus_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float cmodulus by zero");
 
         if (!dest)
@@ -682,7 +682,7 @@ the result in C<dest>.
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float cmodulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
@@ -691,7 +691,7 @@ the result in C<dest>.
 
     VTABLE void i_cmodulus_int(INTVAL value) {
         if (value == 0)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float cmodulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
@@ -700,7 +700,7 @@ the result in C<dest>.
 
     VTABLE void i_cmodulus_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float cmodulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
@@ -734,7 +734,7 @@ Calculates modulus inplace
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float modulus by zero");
 
         if (!dest)
@@ -747,7 +747,7 @@ Calculates modulus inplace
 
     VTABLE PMC *modulus_int(INTVAL value, PMC *dest) {
         if (value == 0)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float modulus by zero");
 
         if (!dest)
@@ -760,7 +760,7 @@ Calculates modulus inplace
 
     VTABLE PMC *modulus_float(FLOATVAL value, PMC *dest) {
         if (FLOAT_IS_ZERO(value))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float modulus by zero");
 
         if (!dest)
@@ -775,7 +775,7 @@ Calculates modulus inplace
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float modulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
@@ -784,7 +784,7 @@ Calculates modulus inplace
 
     VTABLE void i_modulus_int(INTVAL value) {
         if (value == 0)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float modulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,
@@ -793,7 +793,7 @@ Calculates modulus inplace
 
     VTABLE void i_modulus_float(FLOATVAL value) {
         if (FLOAT_IS_ZERO(value))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float modulus by zero");
 
         VTABLE_set_number_native(INTERP, SELF,

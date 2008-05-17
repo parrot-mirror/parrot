@@ -336,7 +336,7 @@ information see F<src/pmc.c>.
         e = (e == -1);
 #endif
         if (e)
-            Parrot_ex_throw_from_c(INTERP, NULL, 1,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, 1,
                 "unable to generate a unique filename");
 
         retval = string_from_cstring(INTERP, buff, 0);

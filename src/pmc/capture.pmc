@@ -449,7 +449,7 @@ Set this capture to hold the value of another.
             PARROT_CAPTURE(SELF)->hash  = PARROT_CAPTURE(capture)->hash;
         }
         else
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Can only set a capture to another capture.");
     }
 

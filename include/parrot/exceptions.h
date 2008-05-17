@@ -158,7 +158,7 @@ size_t Parrot_ex_calc_handler_offset(PARROT_INTERP)
 
 PARROT_API
 PARROT_DOES_NOT_RETURN
-void Parrot_ex_throw_from_c(PARROT_INTERP,
+void Parrot_ex_throw_from_c_args(PARROT_INTERP,
     ARGIN_NULLOK(void *ret_addr),
     int exitcode,
     ARGIN(const char *format),

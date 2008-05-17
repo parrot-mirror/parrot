@@ -936,7 +936,7 @@ get_chunk(PARROT_INTERP, ARGMOD(List *list), ARGMOD(UINTVAL *idx))
             return chunk;
         *idx -= chunk->items;
     }
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INTERNAL_PANIC,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERNAL_PANIC,
         "list structure chaos!\n");
 #endif
 
@@ -1005,11 +1005,11 @@ get_chunk(PARROT_INTERP, ARGMOD(List *list), ARGMOD(UINTVAL *idx))
             continue;
         }
 
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INTERNAL_PANIC,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERNAL_PANIC,
             "list structure chaos #1!\n");
     }
 
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INTERNAL_PANIC,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERNAL_PANIC,
         "list structure chaos #2!\n");
 }
 
@@ -1146,7 +1146,7 @@ list_set(PARROT_INTERP, ARGMOD(List *list), ARGIN(void *item), INTVAL type, INTV
         ((STRING **) PObj_bufstart(&chunk->data))[idx] = (STRING *)item;
         break;
     default:
-        Parrot_ex_throw_from_c(interp, NULL, 1, "Unknown list entry type\n");
+        Parrot_ex_throw_from_c_args(interp, NULL, 1, "Unknown list entry type\n");
         break;
     }
 }
@@ -1198,7 +1198,7 @@ list_item(PARROT_INTERP, ARGMOD(List *list), int type, INTVAL idx)
         case enum_type_STRING:
             return (void *)&((STRING **) PObj_bufstart(&chunk->data))[idx];
         default:
-            Parrot_ex_throw_from_c(interp, NULL, 1, "Unknown list entry type\n");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "Unknown list entry type\n");
     }
 }
 
@@ -1273,7 +1273,7 @@ list_new(PARROT_INTERP, PARROT_DATA_TYPE type)
         list->item_size = sizeof (STRING *);
         break;
     default:
-        Parrot_ex_throw_from_c(interp, NULL, 1, "Unknown list type\n");
+        Parrot_ex_throw_from_c_args(interp, NULL, 1, "Unknown list type\n");
         break;
     }
     return list;
@@ -1333,13 +1333,13 @@ list_new_init(PARROT_INTERP, PARROT_DATA_TYPE type, ARGIN(PMC *init))
     INTVAL i, len;
 
     if (!init->vtable)
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "Illegal initializer for init\n");
 
     len = VTABLE_elements(interp, init);
 
     if (len & 1)
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "Illegal initializer for init: odd elements\n");
 
     for (i = 0; i < len; i += 2) {
@@ -1367,7 +1367,7 @@ list_new_init(PARROT_INTERP, PARROT_DATA_TYPE type, ARGIN(PMC *init))
                         interp, init, val);
                 break;
             default:
-                Parrot_ex_throw_from_c(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "Invalid initializer for list\n");
         }
     }
@@ -1375,7 +1375,7 @@ list_new_init(PARROT_INTERP, PARROT_DATA_TYPE type, ARGIN(PMC *init))
     if (list->item_type == enum_type_sized) { /* override item_size */
 
         if (!item_size)
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "No item_size for type_sized list\n");
 
         list->item_size       = item_size;
@@ -1988,14 +1988,14 @@ list_splice(PARROT_INTERP, ARGMOD(List *list), ARGIN_NULLOK(List *value_list),
     INTVAL i, j;
 
     if (value_list && type != value_list->item_type)
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "Item type mismatch in splice\n");
 
     /* start from end */
     if (offset < 0) {
         offset += length;
         if (offset < 0)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 "illegal splice offset\n");
     }
 

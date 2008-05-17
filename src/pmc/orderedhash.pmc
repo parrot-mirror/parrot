@@ -98,7 +98,7 @@ Marks the OrderedHash as live.
             idx += n;
 
         if (idx < 0 || idx >= n)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
                 "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
@@ -106,7 +106,7 @@ Marks the OrderedHash as live.
         if (b->key)
             return (PMC *)b->value;
 
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
             "OrderedHash: No such key");
     }
 
@@ -146,7 +146,7 @@ Marks the OrderedHash as live.
             idx += n;
 
         if (idx < 0 || idx >= n)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
                 "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
@@ -154,7 +154,7 @@ Marks the OrderedHash as live.
         if (b->key)
             return VTABLE_get_string(INTERP, (PMC *)b->value);
 
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
             "OrderedHash: No such key");
     }
 
@@ -194,7 +194,7 @@ Returns the integer value associated with C<key>.
             idx += n;
 
         if (idx < 0 || idx >= n)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
@@ -202,7 +202,7 @@ Returns the integer value associated with C<key>.
         if (b->key)
             return VTABLE_get_integer(INTERP, (PMC *)b->value);
 
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
             "OrderedHash: No such key");
     }
 
@@ -244,7 +244,7 @@ Returns the floating-point value for the element at C<key>.
             idx += n;
 
         if (idx < 0 || idx >= n)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
@@ -252,7 +252,7 @@ Returns the floating-point value for the element at C<key>.
         if (b->key)
             return VTABLE_get_number(INTERP, (PMC *)b->value);
 
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
             "OrderedHash: No such key");
     }
 
@@ -645,7 +645,7 @@ preserve key/value order.
                 }
                 break;
             default:
-                Parrot_ex_throw_from_c(interp, NULL,
+                Parrot_ex_throw_from_c_args(interp, NULL,
                     EXCEPTION_INVALID_OPERATION,
                     "unhandled visit action (%d)", info->what);
         }

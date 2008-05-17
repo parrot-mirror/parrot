@@ -68,7 +68,7 @@ Class method to construct an Integer according to passed arguments.
             PMC_pmc_val(SELF)    = REG_PMC(interp, 6);
         }
         else
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "wrong argument count for Pair creation");
 
         return SELF;
@@ -130,7 +130,7 @@ Set the value of the Pair.
 
     VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         if (PMC_struct_val(SELF))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "attempt to set existing Pair key");
 
         PMC_struct_val(SELF) = key;
@@ -140,7 +140,7 @@ Set the value of the Pair.
 
     VTABLE void set_pmc_keyed_str(STRING *key, PMC *value) {
         if (PMC_struct_val(SELF))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "attempt to set existing Pair key");
 
         PObj_key_is_string_SET(SELF);
@@ -170,7 +170,7 @@ Sets this pair to hold the value of another.
                 PObj_key_is_string_SET(SELF);
         }
         else {
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Can only set a pair to another pair.");
         }
     }

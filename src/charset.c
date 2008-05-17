@@ -168,7 +168,7 @@ Parrot_load_charset(PARROT_INTERP, ARGIN(const char *charsetname))
 {
     UNUSED(charsetname);
 
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
         "Can't load charsets yet");
 }
 

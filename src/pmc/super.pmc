@@ -92,7 +92,7 @@ Find the method for C<*name> in the parent class of the bound object.
             return;
 
         if (VTABLE_elements(INTERP, mro) <= 1)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "object has no parent");
 
         PObj_custom_mark_SET(SELF);
@@ -117,7 +117,7 @@ Find the method for C<*name> in the parent class of the bound object.
         PMC * const obj = PMC_pmc_val(SELF);
 
         if (PMC_IS_NULL(obj))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "no object bound to super");
 
         classobj = VTABLE_get_class(interp, obj);

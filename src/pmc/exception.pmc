@@ -428,7 +428,7 @@ Retrieve an attribute value for the exception object.
         }
         else {
             /* If unknown attribute name, throw an exception. */
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
                 "No such attribute '%S'", name);
         }
 
@@ -470,7 +470,7 @@ Set an attribute value for the exception object.
         }
         else {
             /* If unknown attribute name, throw an exception. */
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
                 "No such attribute '%S'", name);
         }
 

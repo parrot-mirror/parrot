@@ -176,7 +176,7 @@ static const void * utf8_skip_forward(ARGIN(const void *ptr), UINTVAL n)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
-#define UNIMPL Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED, \
+#define UNIMPL Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, \
     "unimpl utf8")
 
 const char Parrot_utf8skip[256] = {
@@ -225,7 +225,7 @@ utf8_characters(PARROT_INTERP, ARGIN(const utf8_t *ptr), UINTVAL byte_len)
     }
 
     if (u8ptr > u8end)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_MALFORMED_UTF8,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_UTF8,
             "Unaligned end in UTF-8 string\n");
 
     return characters;
@@ -256,18 +256,18 @@ utf8_decode(PARROT_INTERP, ARGIN(const utf8_t *ptr))
             u8ptr++;
 
             if (!UTF8_IS_CONTINUATION(*u8ptr))
-                Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_MALFORMED_UTF8,
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_UTF8,
                     "Malformed UTF-8 string\n");
 
             c = UTF8_ACCUMULATE(c, *u8ptr);
         }
 
         if (UNICODE_IS_SURROGATE(c))
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_MALFORMED_UTF8,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_UTF8,
                 "Surrogate in UTF-8 string\n");
     }
     else if (!UNICODE_IS_INVARIANT(c)) {
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_MALFORMED_UTF8,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_UTF8,
             "Malformed UTF-8 string\n");
     }
 
@@ -296,7 +296,7 @@ utf8_encode(PARROT_INTERP, ARGIN(void *ptr), UINTVAL c)
     utf8_t              *u8end = (utf8_t *)ptr + len - 1;
 
     if (c > 0x10FFFF || UNICODE_IS_SURROGATE(c)) {
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_CHARACTER,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_CHARACTER,
                            "Invalid character for UTF-8 encoding\n");
     }
 
@@ -395,18 +395,18 @@ utf8_decode_and_advance(PARROT_INTERP, ARGMOD(String_iter *i))
             u8ptr++;
 
             if (!UTF8_IS_CONTINUATION(*u8ptr))
-                Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_MALFORMED_UTF8,
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_UTF8,
                     "Malformed UTF-8 string\n");
 
             c = UTF8_ACCUMULATE(c, *u8ptr);
         }
 
         if (UNICODE_IS_SURROGATE(c))
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_MALFORMED_UTF8,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_UTF8,
                 "Surrogate in UTF-8 string\n");
     }
     else if (!UNICODE_IS_INVARIANT(c)) {
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_MALFORMED_UTF8,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_UTF8,
             "Malformed UTF-8 string\n");
     }
     else {
@@ -614,7 +614,7 @@ get_byte(SHIM_INTERP, ARGIN(const STRING *src), UINTVAL offset)
 {
     unsigned char *contents = (unsigned char *)src->strstart;
     if (offset >= src->bufused) {
-/*        Parrot_ex_throw_from_c(interp, NULL, 0,
+/*        Parrot_ex_throw_from_c_args(interp, NULL, 0,
                 "get_byte past the end of the buffer (%i of %i)",
                 offset, src->bufused); */
         return 0;
@@ -639,7 +639,7 @@ set_byte(PARROT_INTERP, ARGIN(const STRING *src),
     unsigned char *contents;
 
     if (offset >= src->bufused)
-        Parrot_ex_throw_from_c(interp, NULL, 0,
+        Parrot_ex_throw_from_c_args(interp, NULL, 0,
             "set_byte past the end of the buffer");
 
     contents = (unsigned char *)src->strstart;

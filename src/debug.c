@@ -978,7 +978,7 @@ PDB_set_break(PARROT_INTERP, ARGIN_NULLOK(const char *command))
         skip_command(command);
     }
     else {
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "NULL command passed to PDB_set_break");
     }
     condition = NULL;
@@ -1765,7 +1765,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
             dest[size++] = ']';
             break;
         default:
-            Parrot_ex_throw_from_c(interp, NULL, 1, "Unknown opcode type");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "Unknown opcode type");
         }
 
         if (j != info->op_count - 1)

@@ -240,7 +240,7 @@ static char* load_to_memory(FILE *in, int file_pos, int size)
 
 
 /* This loads the PE parts of the file. If there are any problems then
-   throws a Parrot_ex_throw_from_c and returns zero. */
+   throws a Parrot_ex_throw_from_c_args and returns zero. */
 static int load_pe_file(Interp *INTERP, FILE *in, dotnet_assembly *ass)
 {
     char temp[64];
@@ -264,7 +264,7 @@ static int load_pe_file(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     /* Check start of MS DOS stub is as expected, just for sanity. */
     fread(temp, 1, 60, in);
     if (memcmp(temp, expected_header, 60) != 0)
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Invalid MS DOS stub in PE header");
 
     /* Get offset to PE signature and seek to it. */
@@ -274,14 +274,14 @@ static int load_pe_file(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     /* Check PE signature is OK. */
     fread(temp, 1, 4, in);
     if (temp[0] != 'P' || temp[1] != 'E' || temp[2] != 0 || temp[3] != 0)
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Invalid PE signature");
 
     /* Now read in the PE header. Care about number of sections for later on,
        plus we find out whether this is a DLL or not. */
     machine = read_short_u(in);
     if (machine != 0x14c)
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Invalid machine type in PE header");
 
     ass->pe_sections = read_short_u(in);
@@ -322,14 +322,14 @@ static int load_pe_file(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     }
     else {
         /* Couldn't locate the CLI header. */
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "Cannot locate CLI header in PE file");
     }
 }
 
 
 /* This loads the CLI header, assuming that the file position is at the start
-   of it. If any problem occurs, the function calls Parrot_ex_throw_from_c */
+   of it. If any problem occurs, the function calls Parrot_ex_throw_from_c_args */
 
 static int load_cli_header(Interp *INTERP, FILE *in, dotnet_assembly *ass)
 {
@@ -344,7 +344,7 @@ static int load_cli_header(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     major_version = read_short_u(in);
     minor_version = read_short_u(in);
     if (!(major_version < 2 || (major_version == 2 && minor_version == 0)))
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "Can only support CLI files up to version 2.0");
 
     /* Get metadata RVA and entry point token pointer. */
@@ -362,7 +362,7 @@ static int load_cli_header(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     }
     else {
         /* Couldn't locate the metadata root. */
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "Cannot locate CLI metadata root");
     }
 }
@@ -379,7 +379,7 @@ static int load_cli_streams(Interp *INTERP, FILE *in, dotnet_assembly *ass)
     /* Check magic signature. */
     magic_word = read_word_u(in);
     if (magic_word != 0x424A5342)
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "Invalid magic signature in CLI metadata root");
 
     /* Skip over version data, version string and (unused) flags. */
@@ -430,7 +430,7 @@ static int load_cli_streams(Interp *INTERP, FILE *in, dotnet_assembly *ass)
         }
         else {
             /* Unknown stream. */
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Unknown stream in CLI metadata root");
         }
         free(name);
@@ -682,7 +682,7 @@ static PMC* make_bytecode_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
     bc_filepos = rva_to_filepos(in, ass, rva);
     if (bc_filepos == 0)
         /* Couldn't locate the bytecode. */
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "Cannot locate bytecode for method with RVA %d", rva);
 
     /* Set parent. */
@@ -845,7 +845,7 @@ static PMC* make_bytecode_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
                 }
                 else {
                     /* Not exception data, not spec'd, not good. */
-                    Parrot_ex_throw_from_c(INTERP, NULL,
+                    Parrot_ex_throw_from_c_args(INTERP, NULL,
                         EXCEPTION_INVALID_OPERATION,
                         "Unknown method data section (kind: %d)", (int) kind);
                 }
@@ -877,7 +877,7 @@ static PMC* make_param_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
 
     /* Sanity check. */
     if (row > ass->rows[Table_Param])
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "Param row out of range.");
 
     /* Set parent. */
@@ -922,7 +922,7 @@ static PMC* make_field_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
 
     /* Sanity check. */
     if (row > ass->rows[Table_Field])
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "Field row out of range.");
 
     /* Set parent. */
@@ -982,7 +982,7 @@ static PMC* make_method_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
 
     /* Sanity check. */
     if (row > ass->rows[Table_MethodDef])
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "MethodDef row out of range.");
 
     /* Set parent. */
@@ -1160,7 +1160,7 @@ static PMC* make_class_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
 
     /* Sanity check. */
     if (row > ass->rows[Table_TypeDef])
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "TypeDef row out of range.");
 
     /* Set parent. */
@@ -1322,7 +1322,7 @@ static PMC* make_typeref_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
 
     /* Sanity check. */
     if (row > ass->rows[Table_TypeRef])
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "TypeRef row out of range.");
 
     /* Calculate table row address. */
@@ -1387,7 +1387,7 @@ static PMC* make_memberref_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
 
     /* Sanity check. */
     if (row > ass->rows[Table_MemberRef])
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "MemberRef row out of range.");
 
     /* Calculate table row address. */
@@ -1456,7 +1456,7 @@ static PMC* make_assemblyref_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass
 
     /* Sanity check. */
     if (row > ass->rows[Table_AssemblyRef])
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "AssemblyRef row out of range.");
 
     /* Calculate table row address. */
@@ -1600,7 +1600,7 @@ static void sort_classes(Interp *INTERP, dotnet_assembly *ass)
        Throw our toys out of the pram. Oh, and an exception. Also do this if
        we did not order all classes. */
     if (iters == num_classes + 1 || done != num_classes)
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "Unable to order inheritance/interfaces.");
 
 
@@ -1620,7 +1620,7 @@ static int metadata_to_pmcs(Interp *INTERP, PMC *self, FILE *in,
 
     /* Ensure we have a typedef table. */
     if (ass->rows[Table_TypeDef] == 0)
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
             "Type definitions table is empty.");
 
     /* First entry is global stuff. */
@@ -1835,7 +1835,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
 
         /* If we don't have an assembly, throw an esception and leave. */
         if (!ass)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "No filename string set");
 
         /* If we've already loaded, we needn't do it again. */
@@ -1848,7 +1848,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
         free(filename);
 
         if (!in)
-            Parrot_ex_throw_from_c(INTERP, NULL, E_IOError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, E_IOError,
                 "Unable to open file %s", filename);
 
         /* Attempt to load the PE parts of the file; this locates the CLI
@@ -1911,7 +1911,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
             RETURN(INTVAL result);
         }
         else
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "No .NET CLI file loaded");
     }
 
@@ -1924,12 +1924,12 @@ pmclass DotNetAssembly dynpmc group dotnet {
 
         /* If we don't have an assembly, throw an exception and leave. */
         if (!ass)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "No .NET CLI file loaded");
 
         /* Otherwise, check string is within range. */
         if ((Parrot_UInt4)i >= ass->strings_size)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "String position out of range");
 
         /* Create and return a new string (pass 0 as length; end found
@@ -1951,12 +1951,12 @@ pmclass DotNetAssembly dynpmc group dotnet {
 
         /* If we don't have an assembly, throw an esception and leave. */
         if (!ass)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "No .NET CLI file loaded");
 
         /* Otherwise, check string is within range. */
         if ((Parrot_UInt4)i >= ass->user_strings_size)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "User string position out of range");
 
         /* Get size of string (Partition II Clause 23.2.4). */
@@ -1980,12 +1980,12 @@ pmclass DotNetAssembly dynpmc group dotnet {
             start  = i + 4;
         }
         else
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Unable to decode user string length");
 
         /* Sanity check. */
         if (start + length > ass->user_strings_size)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Blob position and length out of range");
 
         /* Return string. */
@@ -2004,12 +2004,12 @@ pmclass DotNetAssembly dynpmc group dotnet {
 
         /* If we don't have an assembly, throw an esception and leave. */
         if (!ass)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "No .NET CLI file loaded");
 
         /* Otherwise, check blob is within range. */
         if ((Parrot_UInt4)i >= ass->blobs_size)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Blob position out of range");
 
         /* Get size of blob (Partition II Clause 23.2.4). */
@@ -2030,18 +2030,18 @@ pmclass DotNetAssembly dynpmc group dotnet {
             start  = i + 4;
         }
         else
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Unable to decode blob length");
 
         /* Sanity check. */
         if (start + length > ass->blobs_size)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Blob position and length out of range");
 
         /* Return string containing blob. */
         out = string_from_cstring(INTERP, ass->blobs + start, length);
         if (!out)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Unable to create blob string");
 
         RETURN(STRING *out);
@@ -2055,7 +2055,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
         /* If we don't have an assembly or nothing is loaded, throw an
            exception and leave. Otherwise, return classes PMC array. */
         if (!ass || !ass->loaded)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "No .NET CLI file loaded");
         else {
             PMC *result = ass->globals;
@@ -2071,7 +2071,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
         /* If we don't have an assembly or nothing is loaded, throw an
            exception and leave. Otherwise, return classes PMC array. */
         if (!ass || !ass->loaded)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "No .NET CLI file loaded");
         else {
             PMC *result = ass->classes;
@@ -2087,7 +2087,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
         /* If we don't have an assembly or nothing is loaded, throw an
            exception and leave. Otherwise, return class order PMC array. */
         if (!ass || !ass->loaded)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "No .NET CLI file loaded");
         else {
             PMC *result = ass->class_order;
@@ -2103,7 +2103,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
         /* If we don't have an assembly or nothing is loaded, throw an
            exception and leave. */
         if (!ass || !ass->loaded)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "No .NET CLI file loaded");
         else {
             PMC *result = ass->typerefs;
@@ -2119,7 +2119,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
         /* If we don't have an assembly or nothing is loaded, throw an
            exception and leave. */
         if (!ass || !ass->loaded)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "No .NET CLI file loaded");
         else {
             PMC *result = ass->memberrefs;
@@ -2135,7 +2135,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
         /* If we don't have an assembly or nothing is loaded, throw an
            exception and leave. */
         if (!ass || !ass->loaded)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "No .NET CLI file loaded");
         else {
             PMC *result = ass->assemblyrefs;
@@ -2152,7 +2152,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
            exception and leave. Otherwise, return appropriate element of
            fields PMC array. */
         if (!ass || !ass->loaded)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "No .NET CLI file loaded");
         else {
             PMC *result = VTABLE_get_pmc_keyed_int(INTERP, ass->fields, i - 1);
@@ -2169,7 +2169,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
            exception and leave. Otherwise, return appropriate element of
            methods PMC array. */
         if (!ass || !ass->loaded)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "No .NET CLI file loaded");
         else {
             PMC *result = VTABLE_get_pmc_keyed_int(INTERP, ass->methods, i - 1);
