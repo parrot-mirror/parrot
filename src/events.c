@@ -1355,10 +1355,14 @@ event_to_exception(PARROT_INTERP, ARGIN(const parrot_event* event))
              * SIGINT is silent, if no exception handler is
              * installed: set severity to EXCEPT_exit
              */
-            do_exception(interp, EXCEPT_exit, exit_code);
+            {
+                PMC *exception = Parrot_ex_build_exception(interp,
+                        EXCEPT_exit, exit_code, "Caught signal.");
+                Parrot_ex_throw_from_c(interp, exception);
+            }
             break;
         default:
-            do_exception(interp, EXCEPT_error, exit_code);
+            Parrot_ex_throw_from_c_args(interp, NULL, exit_code, "Caught signal.");
             break;
     }
 }
