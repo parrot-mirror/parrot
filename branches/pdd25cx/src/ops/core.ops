@@ -702,14 +702,9 @@ Pop the most recently placed exception off the handler stack.
 
 =item B<throw>(invar PMC)
 
-Throw the exception in $1.
+Throw the exception in $1 with current continuation.
 
-=item B<throwcc>(invar PMC)
-
-Throw the exception in $1 with current continuation. Identical to
-B<throw> in its one-argument form.
-
-=item B<throwcc>(invar PMC, invar PMC)
+=item B<throw>(invar PMC, invar PMC)
 
 Throw the exception in $1 with continuation from $2.
 
@@ -775,13 +770,7 @@ inline op throw(invar PMC) :flow {
     goto ADDRESS(dest);
 }
 
-inline op throwcc(invar PMC) :flow {
-    opcode_t * const ret  = expr NEXT();
-    opcode_t * const dest = Parrot_ex_throw_from_op(interp, $1, ret);
-    goto ADDRESS(dest);
-}
-
-inline op throwcc(invar PMC, invar PMC) :flow {
+inline op throw(invar PMC, invar PMC) :flow {
     opcode_t * const dest = Parrot_ex_throw_from_op(interp, $1, $2);
     goto ADDRESS(dest);
 }
