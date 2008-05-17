@@ -156,7 +156,7 @@ stack_prepare_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
 
     /* the first entry (initial top) refers to itself */
     if (chunk == chunk->prev)
-        Parrot_ex_throw_from_c(interp, NULL, ERROR_STACK_EMPTY,
+        Parrot_ex_throw_from_c_args(interp, NULL, ERROR_STACK_EMPTY,
             "No entries on %sStack!", chunk->name);
 
     *stack_p = chunk->prev;

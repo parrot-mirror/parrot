@@ -607,7 +607,7 @@ ret_string:
         size_t got;
         /* exception if we're unbuffered */
         if (io->b.size == 0)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_PIO_ERROR,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                 "Can't peek at unbuffered PIO");
 
         got = PIO_buf_fill_readbuf(interp, l, io, b);

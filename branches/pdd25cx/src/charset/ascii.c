@@ -220,7 +220,7 @@ to_ascii(PARROT_INTERP, ARGIN(STRING *src), ARGMOD_NULLOK(STRING *dest))
     for (offs = 0; offs < len; ++offs) {
         const UINTVAL c = iter.get_and_advance(interp, &iter);
         if (c >= 128)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LOSSY_CONVERSION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LOSSY_CONVERSION,
                     "can't convert unicode string to ascii");
         *p++ = (unsigned char)c;
     }
@@ -583,7 +583,7 @@ ascii_cs_rindex(PARROT_INTERP, ARGIN(STRING *source_string),
     INTVAL retval;
 
     if (source_string->charset != search_string->charset)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
             "Cross-charset index not supported");
 
     PARROT_ASSERT(source_string->encoding == Parrot_fixed_8_encoding_ptr);

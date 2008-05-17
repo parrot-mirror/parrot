@@ -70,7 +70,7 @@ RT#48260: Not yet documented!!!
 void
 Parrot_Exec_OS_Comman(Parrot_Interp interp, STRING *command)
 {
-  Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_NOSPAWN,
+  Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_NOSPAWN,
          "Exec not implemented");
 }
 

@@ -96,7 +96,7 @@ internal_ns_keyed(PARROT_INTERP, ARGIN(PMC *base_ns), ARGIN_NULLOK(PMC *pmc_key)
             part = str_key;
         else if (n == max_intval) {
             if (!pmc_key)
-                Parrot_ex_throw_from_c(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "Passing a NULL pmc_key into key_string()");
 
             part    = key_string(interp, pmc_key);
@@ -107,7 +107,7 @@ internal_ns_keyed(PARROT_INTERP, ARGIN(PMC *base_ns), ARGIN_NULLOK(PMC *pmc_key)
         }
         else {
             if (!pmc_key)
-                Parrot_ex_throw_from_c(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "Passed a NULL pmc_key into VTABLE_get_string_keyed_int");
 
             part = VTABLE_get_string_keyed_int(interp, pmc_key, i);
@@ -622,7 +622,7 @@ Parrot_find_global_op(PARROT_INTERP, ARGIN(PMC *ns),
     PMC *res;
 
     if (!globalname)
-        Parrot_ex_throw_from_c(interp, next, EXCEPTION_GLOBAL_NOT_FOUND,
+        Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_GLOBAL_NOT_FOUND,
             "Tried to get null global");
 
     res = Parrot_find_global_n(interp, ns, globalname);

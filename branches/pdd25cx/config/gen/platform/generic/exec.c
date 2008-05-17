@@ -43,7 +43,7 @@ Parrot_Run_OS_Command(Parrot_Interp interp, STRING *command)
     child = fork();
     /* Did we fail? */
     if (-1 == child)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_NOSPAWN,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_NOSPAWN,
             "Can't spawn child process");
 
     /* Are we the parent or child? */
@@ -87,13 +87,13 @@ Parrot_Run_OS_Command_Argv(Parrot_Interp interp, PMC *cmdargs)
     int len = VTABLE_elements(interp, cmdargs);
 
     if (len == 0)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_NOSPAWN,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_NOSPAWN,
             "Empty argument array for execvp");
 
     child = fork();
     /* Did we fail? */
     if (-1 == child)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_NOSPAWN,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_NOSPAWN,
             "Can't spawn child process");
 
     /* Are we the parent or child? */
@@ -152,7 +152,7 @@ Parrot_Exec_OS_Command(Parrot_Interp interp, STRING *command)
 
     /* if we get here, something's horribly wrong... */
     if (status)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_NOSPAWN,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_NOSPAWN,
             "Exec failed, code %i", status);
 }
 

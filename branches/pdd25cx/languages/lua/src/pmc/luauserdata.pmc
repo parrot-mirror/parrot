@@ -283,11 +283,11 @@ MMD_LuaUserdata: {
                 }
             }
 #endif
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to compare two userdata values");
         }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to compare userdata with %Ss",
                     VTABLE_name(INTERP, value));
         }

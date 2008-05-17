@@ -159,7 +159,7 @@ static STRING * to_encoding(PARROT_INTERP,
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
-#define UNIMPL Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED, \
+#define UNIMPL Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, \
     "unimpl fixed_8")
 
 /*
@@ -233,7 +233,7 @@ get_byte(PARROT_INTERP, ARGIN(const STRING *source_string), UINTVAL offset)
     unsigned char *contents = (unsigned char *)source_string->strstart;
 
     if (offset >= source_string->bufused) {
-/*        Parrot_ex_throw_from_c(interp, NULL, 0,
+/*        Parrot_ex_throw_from_c_args(interp, NULL, 0,
                 "get_byte past the end of the buffer (%i of %i)",
                 offset, source_string->bufused); */
         return 0;
@@ -259,7 +259,7 @@ set_byte(PARROT_INTERP, ARGIN(const STRING *source_string),
     unsigned char *contents;
 
     if (offset >= source_string->bufused)
-        Parrot_ex_throw_from_c(interp, NULL, 0,
+        Parrot_ex_throw_from_c_args(interp, NULL, 0,
             "set_byte past the end of the buffer");
 
     contents = (unsigned char *)source_string->strstart;

@@ -152,7 +152,7 @@ static int _load_header(Interp *interp)
     VersionNumber = _get_uint8();
 
     if (VersionNumber != 0x01)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ILL_INHERIT,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT,
             "incorrect version");
 
     VTABLE_set_integer_keyed_str(interp, script,
@@ -161,7 +161,7 @@ static int _load_header(Interp *interp)
     CodeSize = _get_mb32();
 
     if (CodeSize != _info_get())
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ILL_INHERIT,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT,
             "incorrect code size");
 
     VTABLE_set_integer_keyed_str(interp, script,
@@ -257,7 +257,7 @@ static int _load_constant_pool(Interp *interp)
             break;
         }
         default:
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT,
                 "invalid ConstantType (%u).", ConstantType);
         }
         VTABLE_set_pmc_keyed_int(interp, Constants, idx, Constant);
@@ -329,7 +329,7 @@ static int _load_pragma_pool(Interp *interp)
             break;
         }
         default:
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT,
                 "invalid PragmaType (%u).", PragmaType);
         }
         VTABLE_set_pmc_keyed_int(interp, Pragmas, idx, Pragma);
@@ -401,7 +401,7 @@ static int _load_function_pool(Interp *interp)
     }
 
     if (_info_get() != 0)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ILL_INHERIT,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT,
             "incorrect size");
 
     return 0;

@@ -351,10 +351,10 @@ expand_pcc_sub(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
 
         /* check to make sure the sub is ok before we try to use it */
         if (!sub)
-            Parrot_ex_throw_from_c(interp, NULL, 1, "NULL sub detected");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "NULL sub detected");
 
         if (!sub->pcc_sub)
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "NULL sub->pcc_sub detected");
 
         if (sub->pcc_sub->pragma & P_MAIN) {

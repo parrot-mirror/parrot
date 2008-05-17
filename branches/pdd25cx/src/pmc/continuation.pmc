@@ -263,10 +263,10 @@ destination to continue execution.
         }
 #endif
         if (! to_ctx)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                            "Continuation invoked after deactivation.");
         if (! stack_target)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                            "Continuation invoked without initialization.");
 
         /*
@@ -296,13 +296,13 @@ destination to continue execution.
             Stack_Entry_t *e;
 
             if (! interp->dynamic_env)
-                Parrot_ex_throw_from_c(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "Control stack damaged");
 
             e = stack_entry(interp, interp->dynamic_env, 0);
 
             if (!e)
-                Parrot_ex_throw_from_c(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "Control stack damaged");
 
             if (e->entry_type == STACK_ENTRY_ACTION) {

@@ -1118,7 +1118,7 @@ branch_branch(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
                             r->first_ins->symregs[0]->name, next);
                     unit->ostat.branch_branch++;
                     if (regno < 0)
-                        Parrot_ex_throw_from_c(interp, NULL, 1,
+                        Parrot_ex_throw_from_c_args(interp, NULL, 1,
                             "Register number determination failed in branch_branch()");
 
                     ins->symregs[regno] = next->symregs[0];
@@ -1271,7 +1271,7 @@ branch_cond_loop_swap(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(Instruction 
 
             reg_index = get_branch_regno(cond);
             if (reg_index < 0)
-                Parrot_ex_throw_from_c(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "Negative branch register address detected");
 
             regs[reg_index] = mk_label_address(interp, label);

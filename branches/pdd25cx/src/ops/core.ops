@@ -191,7 +191,7 @@ inline op branch_cs(in STR) :base_loop :check_event :flow {
 
     if (!fe) {
         string_cstring_free(label);
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "branch_cs: fixup for '%Ss' not found", $1);
     }
     else {
@@ -558,7 +558,7 @@ op set_returns(inconst PMC) :flow {
         /* else it's from runops_fromc */
         parrot_context_t * const caller_ctx = PMC_cont(ccont)->to_ctx;
         if (! caller_ctx) {
-            /* there is no point calling Parrot_ex_throw_from_c here, because
+            /* there is no point calling Parrot_ex_throw_from_c_args here, because
                PDB_backtrace can't deal with a missing to_ctx either. */
             exit_fatal(1, "No caller_ctx for continuation %p.", ccont);
         }

@@ -57,7 +57,7 @@ the next one.
         INTVAL i  = PMC_int_val(key);
 
         if (i == -1)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 "StopIteration");
 
         item = VTABLE_shift_pmc(INTERP, iter);

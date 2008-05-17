@@ -194,7 +194,7 @@ init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
         }
 
         if (PMC_IS_NULL(new_namespace))
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Failed to set namespace for class.");
 
         /* Set the name of the class to the name of the innermost namespace
@@ -203,7 +203,7 @@ init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
         new_name = VTABLE_get_string(interp, new_namespace);
 
         if (STRING_IS_NULL(new_name) || STRING_IS_EMPTY(new_name))
-              Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+              Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Failed to set name for class.");
 
         _class->_namespace = new_namespace;
@@ -486,7 +486,7 @@ arguments.  The class is attatched to the current HLL namespace.
                     arg = init_data;
                 }
                 else {
-                    Parrot_ex_throw_from_c(INTERP, NULL,
+                    Parrot_ex_throw_from_c_args(INTERP, NULL,
                         EXCEPTION_INVALID_OPERATION,
                             "Invalid class name key in init_pmc for Class");
                 }
@@ -639,13 +639,13 @@ Returns an error if an attribute of C<name> already exists.
 
         /* If we've been instantiated already, not allowed. */
         if (_class->instantiated) {
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Modifications to classes are not allowed after instantiation.");
         }
 
         /* If we already have an attribute of this name, it's an error. */
         if (VTABLE_exists_keyed_str(interp, _class->attrib_metadata, name))
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Attribute '%Ss' already exists in '%Ss'.", name,
                 VTABLE_get_string(INTERP, SELF));
 
@@ -675,7 +675,7 @@ Adds the given sub PMC as a method with the given name.
         /* If we have already added a method with this name... */
         if (VTABLE_exists_keyed_str(interp, _class->methods, name)) {
             /* RT46095 Need to handle multi methods here. */
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "A method named '%S' already exists in class '%S'. "
                 "It may have been supplied by a role.",
                 name, VTABLE_get_string(interp, SELF));
@@ -699,14 +699,14 @@ Adds the given sub PMC as a vtable override with the given name.
 
         /* If we have already added a vtable override with this name... */
         if (VTABLE_exists_keyed_str(interp, _class->vtable_overrides, name))
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "A vtable override named '%S' already exists in class '%S'. "
                 "It may have been supplied by a role.",
                 name, VTABLE_get_string(interp, SELF));
 
         /* Check that the name is actually valid as a vtable override */
         if (Parrot_get_vtable_index(interp, name) == -1)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_METH_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
                 "'%S' is not a valid vtable function name.", name);
 
         /* Add it to vtable methods list. */
@@ -735,13 +735,13 @@ Adds the supplied PMC to the list of parents for the class.
 
         /* If we've been instantiated already, not allowed. */
         if (_class->instantiated) {
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Modifications to classes are not allowed after instantiation.");
         }
 
         /* Ensure it really is a class. */
         if (!PObj_is_class_TEST(parent))
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                     "Parent isn't a Class.");
 
         /* iterate over all direct parents, check whether this class already has
@@ -756,7 +756,7 @@ Adds the supplied PMC to the list of parents for the class.
 
             /* throw an exception if we already have this parent */
             if (string_equal(interp, current_name, parent_name) == 0) {
-                Parrot_ex_throw_from_c(interp, NULL,
+                Parrot_ex_throw_from_c_args(interp, NULL,
                     EXCEPTION_INVALID_OPERATION,
                     "The class '%S' already has a parent class '%S'. "
                     "It may have been supplied by a role.",
@@ -881,7 +881,7 @@ Array of Class PMCs representing the direct parents of this class.
             VTABLE_set_integer_native(interp, found, PObj_get_FLAGS(SELF));
         }
         else {
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Unknown introspection value '%S'", what);
         }
 
@@ -1027,7 +1027,7 @@ Creates a new PMC object of the type of the class and calls init().
                 STRING * const check_meth =
                     VTABLE_get_string_keyed_int(interp, _class->resolve_method, i);
                 if (!VTABLE_exists_keyed_str(interp, _class->methods, check_meth)) {
-                    Parrot_ex_throw_from_c(interp, NULL,
+                    Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_METH_NOT_FOUND, "The method '%S' was named "
                         "in the resolve list, but not supplied", check_meth);
                 }

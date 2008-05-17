@@ -162,7 +162,7 @@ const ENCODING *
 Parrot_load_encoding(PARROT_INTERP, ARGIN(const char *encodingname))
 {
     UNUSED(encodingname);
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
         "Can't load encodings yet");
 }
 

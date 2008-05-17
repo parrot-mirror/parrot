@@ -89,7 +89,7 @@ An C<Integer> representing the unique identifier for this scheduler.
         Parrot_Scheduler *core_struct;
 
         if (! VTABLE_isa(INTERP, data, CONST_STRING(INTERP, "Hash")))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "Scheduler initializer must be a Hash");
 
         SELF.init();
@@ -427,7 +427,7 @@ Delete a handler from the scheduler.
             }
         }
 
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "No handler to delete.");
     }
 

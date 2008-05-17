@@ -557,7 +557,7 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(struct Parrot_Context *ctxp), int re_u
                         : (char*)doomed->name->strstart));
             }
             else {
-                Parrot_ex_throw_from_c(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
                         "NULL doomed sub detected in Parrot_free_context");
             }
         }

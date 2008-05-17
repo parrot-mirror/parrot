@@ -22,7 +22,7 @@ lexicals at runtime.
 pmclass DynLexPad dynpmc provides lexpad need_ext {
 
     VTABLE void init() {
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "don't create me like this");
     }
 

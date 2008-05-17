@@ -82,7 +82,7 @@ static long
 bigint_get_long(PARROT_INTERP, PMC *self) {
     if (mpz_fits_slong_p(BN(self)))
         return mpz_get_si(BN(self));
-    Parrot_ex_throw_from_c(interp, NULL, 1, "bigint_get_long: number too big");
+    Parrot_ex_throw_from_c_args(interp, NULL, 1, "bigint_get_long: number too big");
     return 0;
 }
 
@@ -149,7 +149,7 @@ bigint_pow_bigint_int(PARROT_INTERP, PMC *self, INTVAL value, PMC *dest) {
 static void
 int_check_divide_zero(PARROT_INTERP, INTVAL value) {
     if (value == 0)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_DIV_BY_ZERO,
             "Divide by zero");
 }
 
@@ -157,7 +157,7 @@ static void
 bigint_check_divide_zero(PARROT_INTERP, PMC *value) {
     /* Throw an exception if we are dividing by zero. */
     if (mpz_cmp_si(BN(value), 0) == 0)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_DIV_BY_ZERO,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_DIV_BY_ZERO,
             "Divide by zero");
 }
 
@@ -266,201 +266,201 @@ bigint_bitwise_shr_bigint_int(PARROT_INTERP, PMC *self,
 
 static void
 bigint_init(PARROT_INTERP, PMC *self) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_clear(PARROT_INTERP, PMC *self) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_set_long(PARROT_INTERP, PMC *self, long value) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_set(PARROT_INTERP, PMC *dest, PMC *src) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_set_double(PARROT_INTERP, PMC *self, double value) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_set_str(PARROT_INTERP, PMC *self, char *value, int base) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_set_self(PARROT_INTERP, PMC *self, BIGNUM *value) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static BIGNUM*
 bigint_get_self(PARROT_INTERP, PMC *self) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static char *
 bigint_get_string(PARROT_INTERP, PMC *self, int base) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static long
 bigint_get_long(PARROT_INTERP, PMC *self) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static long
 bigint_get_bool(PARROT_INTERP, PMC *self) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static double
 bigint_get_double(PARROT_INTERP, PMC *self) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_add_bigint(PARROT_INTERP, PMC *self, PMC *value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_add_bigint_int(PARROT_INTERP, PMC *self, INTVAL value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_sub_bigint(PARROT_INTERP, PMC *self, PMC *value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_sub_bigint_int(PARROT_INTERP, PMC *self, INTVAL value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_mul_bigint(PARROT_INTERP, PMC *self, PMC *value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_mul_bigint_int(PARROT_INTERP, PMC *self, INTVAL value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_pow_bigint_int(PARROT_INTERP, PMC *self, INTVAL value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_div_bigint(PARROT_INTERP, PMC *self, PMC *value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_div_bigint_int(PARROT_INTERP, PMC *self, INTVAL value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_fdiv_bigint(PARROT_INTERP, PMC *self, PMC *value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_fdiv_bigint_int(PARROT_INTERP, PMC *self, INTVAL value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_mod_bigint(PARROT_INTERP, PMC *self, PMC *value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_mod_bigint_int(PARROT_INTERP, PMC *self, INTVAL value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static INTVAL
 bigint_cmp(PARROT_INTERP, PMC *self, PMC *value) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static INTVAL
 bigint_cmp_int(PARROT_INTERP, PMC *self, INTVAL value) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_abs(PARROT_INTERP, PMC *self, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_neg(PARROT_INTERP, PMC *self, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_bitwise_shl_bigint(PARROT_INTERP, PMC *self, PMC *value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_bitwise_shl_bigint_int(PARROT_INTERP, PMC *self, INTVAL value, PMC *dest)
 {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_bitwise_shr_bigint(PARROT_INTERP, PMC *self, PMC *value, PMC *dest) {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
 static void
 bigint_bitwise_shr_bigint_int(PARROT_INTERP, PMC *self, INTVAL value, PMC *dest)
 {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
         "no bigint lib loaded");
 }
 
@@ -750,7 +750,7 @@ MMD_Integer: {
                 return dest;
             }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp add");
         }
     }
@@ -773,7 +773,7 @@ MMD_Integer: {
                 bigint_add_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
              }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp add");
         }
     }
@@ -783,7 +783,7 @@ MMD_DEFAULT: {
     }
 
     VTABLE void i_add_float(FLOATVAL value) {
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
             "unimp add");
     }
 
@@ -808,7 +808,7 @@ MMD_Integer: {
                 return dest;
             }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp sub");
         }
     }
@@ -831,7 +831,7 @@ MMD_Integer: {
                 bigint_sub_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
              }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp sub");
         }
     }
@@ -841,7 +841,7 @@ MMD_DEFAULT: {
     }
 
     VTABLE void i_subtract_float(FLOATVAL value) {
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
             "unimp sub");
     }
 
@@ -866,7 +866,7 @@ MMD_Integer: {
             return dest;
          }
 MMD_DEFAULT: {
-             Parrot_ex_throw_from_c(INTERP, NULL,
+             Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp mul");
          }
     }
@@ -889,7 +889,7 @@ MMD_Integer: {
                 bigint_mul_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
              }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp mul");
         }
     }
@@ -899,7 +899,7 @@ MMD_DEFAULT: {
     }
 
     VTABLE void i_multiply_float(FLOATVAL value) {
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
             "unimp mul");
     }
 
@@ -947,7 +947,7 @@ MMD_Integer: {
             return dest;
         }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp div");
          }
     }
@@ -970,7 +970,7 @@ MMD_Integer: {
             bigint_div_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
         }
 MMD_DEFAULT: {
-             Parrot_ex_throw_from_c(INTERP, NULL,
+             Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp fdiv");
         }
     }
@@ -998,7 +998,7 @@ MMD_Integer: {
             return dest;
         }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp fdiv");
         }
     }
@@ -1021,7 +1021,7 @@ MMD_Integer: {
             bigint_fdiv_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
         }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp fdiv");
         }
     }
@@ -1050,7 +1050,7 @@ MMD_Integer: {
             return dest;
          }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp mod");
         }
     }
@@ -1075,7 +1075,7 @@ MMD_Integer: {
                 bigint_mod_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
              }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp mod");
         }
     }
@@ -1088,7 +1088,7 @@ MMD_Integer: {
                 bigint_mod_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
              }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp cmod");
         }
     }
@@ -1102,7 +1102,7 @@ MMD_Integer: {
         return bigint_cmp_int(INTERP, SELF, PMC_int_val(value));
             }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp cmp");
         }
     }
@@ -1115,7 +1115,7 @@ MMD_Integer: {
         return bigint_cmp_int(INTERP, SELF, PMC_int_val(value)) == 0;
             }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp eq");
         }
     }
@@ -1210,7 +1210,7 @@ MMD_Integer: {
             return dest;
          }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp shl");
          }
     }
@@ -1237,7 +1237,7 @@ MMD_Integer: {
                                           SELF);
              }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp shl");
         }
     }
@@ -1287,7 +1287,7 @@ MMD_Integer: {
             return dest;
          }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp shr");
          }
     }
@@ -1314,7 +1314,7 @@ MMD_Integer: {
                                           SELF);
         }
 MMD_DEFAULT: {
-            Parrot_ex_throw_from_c(INTERP, NULL,
+            Parrot_ex_throw_from_c_args(INTERP, NULL,
                 EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp shr");
         }
     }

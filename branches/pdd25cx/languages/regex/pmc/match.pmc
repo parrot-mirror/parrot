@@ -30,7 +30,7 @@ extern int MatchRange_type_id;
 static STRING* make_hash_key(Interp* interp, PMC * key)
 {
     if (!key)
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
         "Cannot use NULL key for Match!");
 
     return key_string(interp, key);
@@ -46,7 +46,7 @@ static STRING* match_range(Interp* interp, PMC* self, PMC* range)
 
     b = parrot_hash_get_bucket(interp, hash, input_key);
     if (!b)
-        Parrot_ex_throw_from_c(interp, NULL, 1, "Match: input string not set");
+        Parrot_ex_throw_from_c_args(interp, NULL, 1, "Match: input string not set");
 
     input = VTABLE_get_string(interp, (PMC*) b->value);
     /* These could both be converted to grab UVal_int directly, but
@@ -216,7 +216,7 @@ has not completed yet.
 
         b = parrot_hash_get_bucket(interp, hash, input_key);
         if (!b)
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                                "Match: cannot get status of incomplete match");
 
         return VTABLE_get_integer(interp, (PMC*) b->value);

@@ -153,7 +153,7 @@ Parrot_runops_fromc(PARROT_INTERP, ARGIN(PMC *sub))
      */
     dest = VTABLE_invoke(interp, sub, (void*) 1);
     if (!dest)
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "Subroutine returned a NULL address");
 
     ctx    = CONTEXT(interp);
@@ -190,7 +190,7 @@ runops_args(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *obj),
     interp->current_object = obj;
     dest = VTABLE_invoke(interp, sub, NULL);
     if (!dest)
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "Subroutine returned a NULL address");
 
     if (PMC_IS_NULL(obj)) {
@@ -204,7 +204,7 @@ runops_args(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *obj),
     else  {
         const size_t len = strlen(sig);
         if (len > 8)
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "too many arguments in runops_args");
 
         new_sig[0] = 'O';
@@ -220,7 +220,7 @@ runops_args(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *obj),
      * PASM subs usually don't have get_params
      * XXX we could check, if we are running main
      else
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "no get_params in sub");
      */
 
@@ -259,7 +259,7 @@ Parrot_run_meth_fromc(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *obj), SH
     dest = VTABLE_invoke(interp, sub, (void *)1);
 
     if (!dest)
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "Subroutine returned a NULL address");
 
     ctx    = CONTEXT(interp);

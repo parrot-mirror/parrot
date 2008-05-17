@@ -290,7 +290,7 @@ trace_op_dump(PARROT_INTERP,
         sig = interp->code->const_table->constants[pc[1]]->u.key;
 
         if (!sig)
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "NULL sig PMC detected in trace_op_dump");
 
         var_args = VTABLE_elements(interp, sig);
@@ -308,7 +308,7 @@ trace_op_dump(PARROT_INTERP,
             }
             else {
                 if (!sig)
-                    Parrot_ex_throw_from_c(interp, NULL, 1,
+                    Parrot_ex_throw_from_c_args(interp, NULL, 1,
                         "NULL sig PMC detected in trace_op_dump");
 
                 type = SIG_ITEM(sig, i - 2) &
@@ -377,7 +377,7 @@ trace_op_dump(PARROT_INTERP,
                     more = 1;
                     break;
                 default:
-                    Parrot_ex_throw_from_c(interp, NULL, 1,
+                    Parrot_ex_throw_from_c_args(interp, NULL, 1,
                         "unhandled type in trace");
                     break;
             }

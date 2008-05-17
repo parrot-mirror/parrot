@@ -114,7 +114,7 @@ static UINTVAL validate(SHIM_INTERP, SHIM(STRING *source_string));
 #endif
 
 #define EXCEPTION(err, str) \
-    Parrot_ex_throw_from_c(interp, NULL, err, str)
+    Parrot_ex_throw_from_c_args(interp, NULL, err, str)
 
 /*
 
@@ -154,7 +154,7 @@ to_charset(PARROT_INTERP, ARGIN(STRING *src), ARGIN_NULLOK(STRING *dest))
     if (conversion_func)
          return conversion_func(interp, src, dest);
 
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
         "to_charset for binary not implemented");
 }
 

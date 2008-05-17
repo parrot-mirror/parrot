@@ -473,7 +473,7 @@ Parrot_find_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(const parrot_conte
              * debug, though we'd rather not pay the cost of detection in a
              * production release.
              */
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Bug:  Context %p :outer points back to itself.", ctx);
         }
 #endif
@@ -514,7 +514,7 @@ parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
     parrot_context_t * const ctx = CONTEXT(interp);
 
     if (PMC_IS_NULL(sub->outer_sub))
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "'%Ss' isn't a closure (no :outer)", sub->name);
 
     /* if (sub->outer_sub != ctx->current_sub) - fails if outer
@@ -523,7 +523,7 @@ parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
     if (0 == string_equal(interp,
                 (PMC_sub(ctx->current_sub))->name,
                 sub->name)) {
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "'%Ss' isn't the :outer of '%Ss')",
             (PMC_sub(ctx->current_sub))->name, sub->name);
     }

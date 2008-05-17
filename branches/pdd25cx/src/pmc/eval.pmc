@@ -329,7 +329,7 @@ Unarchives the code.
 
         if (!PackFile_unpack(INTERP, pf, (opcode_t *)packed->strstart,
                 packed->strlen))
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_EXTERNAL_ERROR,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_EXTERNAL_ERROR,
                 "couldn't unpack packfile");
 
         do_sub_pragmas(INTERP, pf->cur_cs, PBC_PBC, SELF);

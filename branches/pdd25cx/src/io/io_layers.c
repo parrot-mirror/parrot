@@ -206,7 +206,7 @@ PIO_push_layer_str(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN_NULLOK(const STRING *ls
 
     string_cstring_free(cls);
     if (!l)
-        Parrot_ex_throw_from_c(interp, NULL, 1, "Layer not found");
+        Parrot_ex_throw_from_c_args(interp, NULL, 1, "Layer not found");
 
     /* make private copy */
     newlayer         = PIO_base_new_layer(l);

@@ -73,7 +73,7 @@ in the constant PMC pool.
             return SELF;
 
         if (rep->encoding != Parrot_fixed_8_encoding_ptr)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_ENCODING,
                     "unhandled string encoding in constructor");
 
         /* "()" - no args */
@@ -239,7 +239,7 @@ Returns the integer value of the element at index C<key>.
         INTVAL *data;
 
         if (key < 0 || key >= PMC_int_val(SELF))
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 "FixedIntegerArray: index out of bounds!");
 
         data = (INTVAL *)PMC_data(SELF);
@@ -396,7 +396,7 @@ Resizes the array to C<size> elements.
 
     VTABLE void set_integer_native(INTVAL size) {
         if (PMC_int_val(SELF) || size < 1)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 "FixedIntegerArray: Can't resize!");
 
         PMC_int_val(SELF) = size;
@@ -418,7 +418,7 @@ Sets the integer value of the element at index C<key> to C<value>.
         INTVAL *data;
 
         if (key < 0 || key >= PMC_int_val(SELF))
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 "FixedIntegerArray: index out of bounds!");
 
         data      = (INTVAL *)PMC_data(SELF);

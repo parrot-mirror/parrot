@@ -200,7 +200,7 @@ rotate_entries(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p), INTVAL num_entrie
         depth = num_entries - 1;
 
         if (stack_height(interp, stack) < (size_t)num_entries)
-            Parrot_ex_throw_from_c(interp, NULL, ERROR_STACK_SHALLOW,
+            Parrot_ex_throw_from_c_args(interp, NULL, ERROR_STACK_SHALLOW,
                 "Stack too shallow!");
 
         /* XXX Dereferencing stack_entry here is a cavalcade of danger */
@@ -218,7 +218,7 @@ rotate_entries(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p), INTVAL num_entrie
         INTVAL depth = num_entries - 1;
 
         if (stack_height(interp, stack) < (size_t)num_entries)
-            Parrot_ex_throw_from_c(interp, NULL, ERROR_STACK_SHALLOW,
+            Parrot_ex_throw_from_c_args(interp, NULL, ERROR_STACK_SHALLOW,
                 "Stack too shallow!");
 
         /* XXX Dereferencing stack_entry here is a cavalcade of danger */
@@ -274,7 +274,7 @@ stack_push(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p),
             UVal_pmc(entry->entry) = (PMC *)thing;
             break;
         default:
-            Parrot_ex_throw_from_c(interp, NULL, ERROR_BAD_STACK_TYPE,
+            Parrot_ex_throw_from_c_args(interp, NULL, ERROR_BAD_STACK_TYPE,
                 "Invalid Stack_Entry_type!");
     }
 }
@@ -299,7 +299,7 @@ stack_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p),
 
     /* Types of 0 mean we don't care */
     if (type && entry->entry_type != type)
-        Parrot_ex_throw_from_c(interp, NULL, ERROR_BAD_STACK_TYPE,
+        Parrot_ex_throw_from_c_args(interp, NULL, ERROR_BAD_STACK_TYPE,
             "Wrong type on top of stack!\n");
 
     /* Cleanup routine? */
@@ -321,7 +321,7 @@ stack_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p),
             *(PMC **)where     = UVal_pmc(entry->entry);
             break;
         default:
-            Parrot_ex_throw_from_c(interp, NULL, ERROR_BAD_STACK_TYPE,
+            Parrot_ex_throw_from_c_args(interp, NULL, ERROR_BAD_STACK_TYPE,
                 "Wrong type on top of stack!\n");
         }
     }
@@ -431,7 +431,7 @@ Parrot_dump_dynamic_environment(PARROT_INTERP, ARGIN(Stack_Chunk_t *dynamic_env)
         const Stack_Entry_t * const e = stack_entry(interp, dynamic_env, 0);
 
         if (! e)
-            Parrot_ex_throw_from_c(interp, NULL, 1, "Control stack damaged");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "Control stack damaged");
 
         PIO_eprintf(interp, "[%4d:  chunk %p entry %p "
                                  "type %d cleanup %p]\n",
@@ -494,7 +494,7 @@ void
 Parrot_push_action(PARROT_INTERP, ARGIN(PMC *sub))
 {
     if (!VTABLE_isa(interp, sub, CONST_STRING(interp, "Sub")))
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "Tried to push a non Sub PMC action");
 
     stack_push(interp, &interp->dynamic_env, sub,
@@ -537,7 +537,7 @@ Parrot_pop_mark(PARROT_INTERP, INTVAL mark)
         const Stack_Entry_t * const e
             = stack_entry(interp, interp->dynamic_env, 0);
         if (!e)
-            Parrot_ex_throw_from_c(interp, NULL, 1, "Mark %ld not found.",
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "Mark %ld not found.",
                 (long)mark);
 
         (void)stack_pop(interp, &interp->dynamic_env,

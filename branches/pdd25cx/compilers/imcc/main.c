@@ -373,7 +373,7 @@ parseflags(PARROT_INTERP, int *argc, const char **argv[])
                 else if (STREQ(opt.opt_arg, "gcdebug"))
                     SET_CORE(PARROT_GC_DEBUG_CORE);
                 else
-                    Parrot_ex_throw_from_c(interp, NULL, 1,
+                    Parrot_ex_throw_from_c_args(interp, NULL, 1,
                         "main: Unrecognized runcore '%s' specified."
                         "\n\nhelp: parrot -h\n", opt.opt_arg);
                 break;
@@ -524,7 +524,7 @@ parseflags(PARROT_INTERP, int *argc, const char **argv[])
                 SET_FLAG(PARROT_DESTROY_FLAG);
                 break;
             default:
-                Parrot_ex_throw_from_c(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "main: Invalid flag '%s' used.\n\nhelp: parrot -h\n",
                     (*argv)[0]);
         }

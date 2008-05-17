@@ -65,10 +65,10 @@ op callmethodcc(invar PMC, in STR) :object_base :flow {
     PMC * const _class = VTABLE_get_class(interp, object);
 
     if (PMC_IS_NULL(_class))
-        Parrot_ex_throw_from_c(interp, next, EXCEPTION_METH_NOT_FOUND,
+        Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_METH_NOT_FOUND,
             "Method '%Ss' not found for non-object", meth);
     else
-        Parrot_ex_throw_from_c(interp, next, EXCEPTION_METH_NOT_FOUND,
+        Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_METH_NOT_FOUND,
             "Method '%Ss' not found for invocant of class '%Ss'", meth,
             VTABLE_get_string(interp, _class));
   }
@@ -106,7 +106,7 @@ op callmethod(invar PMC, in STR, invar PMC) :object_base :flow {
 
 
   if (PMC_IS_NULL(method_pmc)) {
-    Parrot_ex_throw_from_c(interp, next, EXCEPTION_METH_NOT_FOUND,
+    Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_METH_NOT_FOUND,
         "Method '%Ss' not found for invocant of class '%Ss'", meth,
         VTABLE_get_string(interp, VTABLE_get_class(interp, object)));
   }
@@ -138,7 +138,7 @@ op tailcallmethod(invar PMC, in STR) :object_base :flow {
   opcode_t *dest;
 
   if (PMC_IS_NULL(method_pmc)) {
-    Parrot_ex_throw_from_c(interp, next, EXCEPTION_METH_NOT_FOUND,
+    Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_METH_NOT_FOUND,
         "Method '%Ss' not found for invocant of class '%Ss'", meth,
         VTABLE_get_string(interp, VTABLE_get_class(interp, object)));
   }
@@ -266,7 +266,7 @@ inline op subclass(out PMC, in PMC) :object_classes :flow {
     opcode_t * const next         = expr NEXT();
 
     if (PMC_IS_NULL(parent_class)) {
-      Parrot_ex_throw_from_c(interp, next, EXCEPTION_NO_CLASS,
+      Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_NO_CLASS,
             "Class '%Ss' doesn't exist", VTABLE_get_string(interp, $2));
     }
     $1 = pmc_new(interp, enum_class_Class);
@@ -279,7 +279,7 @@ inline op subclass(out PMC, in PMC, in STR) :object_classes :flow {
     opcode_t * const next         = expr NEXT();
 
     if (PMC_IS_NULL(parent_class)) {
-      Parrot_ex_throw_from_c(interp, next, EXCEPTION_NO_CLASS,
+      Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_NO_CLASS,
             "Class '%Ss' doesn't exist", VTABLE_get_string(interp, $2));
     }
     $1 = Parrot_oo_newclass_from_str(interp, $3);
@@ -292,7 +292,7 @@ inline op subclass(out PMC, in PMC, in PMC) :object_classes :flow {
     opcode_t * const next         = expr NEXT();
 
     if (PMC_IS_NULL(parent_class)) {
-      Parrot_ex_throw_from_c(interp, next, EXCEPTION_NO_CLASS,
+      Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_NO_CLASS,
             "Class '%Ss' doesn't exist", VTABLE_get_string(interp, $2));
     }
     $1 = pmc_new_init(interp, enum_class_Class, $3);
@@ -318,7 +318,7 @@ op subclass(out PMC, in STR) :object_classes :flow {
     opcode_t * const next         = expr NEXT();
 
     if (PMC_IS_NULL(parent_class)) {
-      Parrot_ex_throw_from_c(interp, next, EXCEPTION_NO_CLASS,
+      Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_NO_CLASS,
             "Class '%Ss' doesn't exist", $2);
     }
 
@@ -332,7 +332,7 @@ op subclass(out PMC, in STR, in STR) :object_classes :flow {
     opcode_t * const next         = expr NEXT();
 
     if (PMC_IS_NULL(parent_class)) {
-      Parrot_ex_throw_from_c(interp, next, EXCEPTION_NO_CLASS,
+      Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_NO_CLASS,
             "Class '%Ss' doesn't exist", $2);
     }
 
@@ -346,7 +346,7 @@ op subclass(out PMC, in STR, in PMC) :object_classes :flow {
     opcode_t * const next         = expr NEXT();
 
     if (PMC_IS_NULL(parent_class)) {
-      Parrot_ex_throw_from_c(interp, next, EXCEPTION_NO_CLASS,
+      Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_NO_CLASS,
             "Class '%Ss' doesn't exist", $2);
     }
 
@@ -372,7 +372,7 @@ inline op getclass(out PMC, in STR) :object_classes :flow {
 
     if (PMC_IS_NULL(_class)) {
         const char * const class_name = string_to_cstring(interp, $2);
-        Parrot_ex_throw_from_c(interp, next, EXCEPTION_NO_CLASS,
+        Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_NO_CLASS,
             "Class '%s' doesn't exist", class_name);
     }
     else
@@ -387,7 +387,7 @@ inline op getclass(out PMC, in PMC) :object_classes :flow {
 
   if (PMC_IS_NULL(_class)) {
     STRING * const name = readable_name(interp, $2);
-    Parrot_ex_throw_from_c(interp, next, EXCEPTION_NO_CLASS,
+    Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_NO_CLASS,
         "Class '%Ss' doesn't exist", name);
   }
   else
@@ -470,7 +470,7 @@ inline op addattribute(invar PMC, in STR) :object_classes {
     if (VTABLE_isa(interp, $1, class_name))
         VTABLE_add_attribute(interp, $1, $2, PMCNULL);
     else
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "Cannot add attribute to non-class");
 }
 
@@ -483,12 +483,12 @@ Remove attribute $2 from class $1, specified either by name or offset.
 =cut
 
 op removeattribute(invar PMC, in STR) :flow {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
         "removeattribute is not implemented");
 }
 
 op removeattribute(invar PMC, in INT) :flow {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
         "removeattribute is not implemented");
 }
 

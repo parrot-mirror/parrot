@@ -140,7 +140,7 @@ EOA
 
     else {
         $decl .= <<"EOA";
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION, \\
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION, \\
                 "Attributes of type '$attrtype' cannot be " \\
                 "subclassed from a high-level PMC."); \\
 EOA
@@ -190,7 +190,7 @@ EOA
 
     else {
         $decl .= <<"EOA";
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION, \\
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION, \\
                 "Attributes of type '$attrtype' cannot be " \\
                 "subclassed from a high-level PMC."); \\
 EOA

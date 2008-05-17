@@ -105,7 +105,7 @@ Raises an exception; you can only instantiate objects from a class.
 */
 
     VTABLE void init() {
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "Object must be created by a class.");
     }
 
@@ -121,7 +121,7 @@ Raises an exception; you can only instantiate objects from a class.
 */
 
     VTABLE void init_pmc(PMC *worreva) {
-        Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Object must be created by a class.");
     }
 
@@ -203,7 +203,7 @@ of the given name walking up the inheritance tree.
 
         /* If lookup failed, exception. */
         if (index == -1)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
                 "No such attribute '%S'", name);
 
         return VTABLE_get_pmc_keyed_int(interp, obj->attrib_store, index);
@@ -227,7 +227,7 @@ defined in the parent identified by the given key.
 
         /* If lookup failed, exception. */
         if (index == -1)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
                 "No such attribute '%S' in class '%S'", name,
                 VTABLE_get_string(interp, key));
 
@@ -263,7 +263,7 @@ of the given name walking up the inheritance tree.
 
         /* If lookup failed, exception. */
         if (index == -1)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
                 "No such attribute '%S'", name);
 
         VTABLE_set_pmc_keyed_int(interp, obj->attrib_store, index, value);
@@ -285,7 +285,7 @@ defined in the parent identified by the given key.
 
         /* If lookup failed, exception. */
         if (index == -1)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ATTRIB_NOT_FOUND,
                 "No such attribute '%S' in class '%S'", name,
                 VTABLE_get_string(interp, key));
 

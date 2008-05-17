@@ -72,12 +72,12 @@ pmclass DotNetSignature dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!sig || !sig->data)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetSignature PMC");
 
         /* Ensure we won't read past the end. */
         if (sig->cur_pos >= sig->data_size)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of signature");
 
         /* Otherwise read the value. */
@@ -96,12 +96,12 @@ pmclass DotNetSignature dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!sig || !sig->data)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetSignature PMC");
 
         /* Check first byte read is OK. */
         if (sig->cur_pos >= sig->data_size)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of signature");
 
         /* Read first byte and decide if it's a single encoded byte (top bit
@@ -119,7 +119,7 @@ pmclass DotNetSignature dynpmc group dotnet {
         {
             /* Check we can read 2 bytes. */
             if (sig->cur_pos + 1 >= sig->data_size)
-                Parrot_ex_throw_from_c(INTERP, NULL,
+                Parrot_ex_throw_from_c_args(INTERP, NULL,
                     EXCEPTION_INVALID_OPERATION, "Read past end of signature");
 
             /* Read second byte and make value. */
@@ -132,7 +132,7 @@ pmclass DotNetSignature dynpmc group dotnet {
         else if ((b1 & 0x80) != 0 && (b1 & 0x40) != 0 && (b1 & 0x20) == 0) {
             /* Check we can read 4 bytes. */
             if (sig->cur_pos + 3 >= sig->data_size)
-                Parrot_ex_throw_from_c(INTERP, NULL,
+                Parrot_ex_throw_from_c_args(INTERP, NULL,
                     EXCEPTION_INVALID_OPERATION, "Read past end of signature");
 
             /* Read remaining bytes and make value. */

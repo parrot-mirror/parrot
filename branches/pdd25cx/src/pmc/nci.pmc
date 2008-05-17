@@ -197,7 +197,7 @@ shifted down.
         PMC *cont;
 
         if (!func)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "attempt to call NULL function");
 
         func(INTERP, SELF);
@@ -266,7 +266,7 @@ Return the arity of the NCI (the number of arugments).
             RETURN(INTVAL arity);
         }
         else
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "You cannot get the arity of an undefined NCI.");
 
         RETURN(INTVAL 0);

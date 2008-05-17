@@ -705,7 +705,7 @@ TODO Currently overflow to BigInt is B<not> handled nor detected.
         UINTVAL              i   = 0;
 
         if (base < 2 || base > 36)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                     "invalid conversion to int - bad base %d", base);
 
         while (start < end) {
@@ -729,7 +729,7 @@ TODO Currently overflow to BigInt is B<not> handled nor detected.
         }
 
         if (start < end)
-            Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                     "invalid conversion to int - bad char %c", *start);
 
         VTABLE_set_integer_native(INTERP, result, i);
@@ -773,7 +773,7 @@ Return length of the string.
             return iter;
         }
 
-        Parrot_ex_throw_from_c(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 "String: Unknown slice type");
     }
 
@@ -874,7 +874,7 @@ Translate ascii string C<src> with entries from C<trans_table>.
             RETURN(void);
 
         if (src->charset != Parrot_ascii_charset_ptr)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
                 "Can't translate non-ascii");
 
         p = (unsigned char *)src->strstart;
@@ -908,7 +908,7 @@ Reverse the ascii STRING C<src> in place.
             RETURN(void);
 
         if (src->charset != Parrot_ascii_charset_ptr)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
                 "Can't reverse non-ascii");
 
         p = (unsigned char *)src->strstart;
@@ -940,7 +940,7 @@ Checks if the ascii STRING C<str> is just an integer.
             RETURN(INTVAL 0);
 
         if (src->charset != Parrot_ascii_charset_ptr)
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
                 "Can't is_integer non-ascii");
 
         i = 0;

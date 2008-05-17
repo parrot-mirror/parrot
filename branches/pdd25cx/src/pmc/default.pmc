@@ -60,7 +60,7 @@ all unimplemented messages.
 static void
 cant_do_method(PARROT_INTERP, PMC *pmc /*NULLOK*/, const char *methname)
 {
-    Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ILL_INHERIT,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT,
             "%s() not implemented in class '%s'", methname,
             caller(interp, pmc));
 }
@@ -295,7 +295,7 @@ With a null C<initializer>, calls C<init()>, else throws an exception.
         if (PMC_IS_NULL(initializer))
             SELF.init();
         else
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT,
                 "init_pmc() not implemented in class '%s'",
                 caller(interp, pmc));
     }
@@ -317,7 +317,7 @@ calls init().
         /* Ensure no looping, as pmc_new calls the instantiate vtable entry for
          * classes. */
         if (PObj_is_class_TEST(SELF))
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "All high-level classes should override instantiate");
 
         if (!PMC_IS_NULL(init))
@@ -953,7 +953,7 @@ Provides introspection of a specific piece of information about the PMC.
             return found;
         }
         else
-            Parrot_ex_throw_from_c(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Unknown introspection value '%S'", name);
     }
 
@@ -1074,10 +1074,10 @@ Add class C<parent> to the list of our parents.
 
     VTABLE void add_parent(PMC *parent) {
         if (!PObj_is_class_TEST(SELF))
-            Parrot_ex_throw_from_c(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "Only classes can be subclassed");
 
-        Parrot_ex_throw_from_c(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "All classes should override add_parent");
     }
 
