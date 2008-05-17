@@ -224,7 +224,7 @@ and verifies that parrotclass has P6object methods defined.
 .end
 
 
-=item new_class(name [, 'parent'=>parentclass])
+=item new_class(name [, 'parent'=>parentclass] [, 'attr'=>attrlist])
 
 =cut
 .sub 'new_class' :method
@@ -240,8 +240,25 @@ and verifies that parrotclass has P6object methods defined.
     parentclass = get_class 'P6object'
   have_parentclass:
 
-    .local pmc parrotclass
+    .local pmc parrotclass, attrlist
     parrotclass = subclass parentclass, name
+    attrlist = options['attr']
+    if null attrlist goto attr_done
+    $I0 = does attrlist, 'array'
+    if $I0 goto have_attrlist
+    $S0 = attrlist
+    attrlist = split ' ', $S0
+  have_attrlist:
+    .local pmc iter
+    iter = new 'Iterator', attrlist
+  iter_loop:
+    unless iter goto iter_end
+    $S0 = shift iter
+    unless $S0 goto iter_loop
+    addattribute parrotclass, $S0
+    goto iter_loop
+  iter_end:
+  attr_done:
     .return self.'register'(parrotclass)
 .end
 

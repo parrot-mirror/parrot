@@ -26,7 +26,7 @@ t/library/p6object.t -- P6object tests
 
     ##  set our plan
     .local int plan_tests
-    plan(70)
+    plan(72)
 
     ##  make sure we can load the P6object library
     push_eh load_failed
@@ -217,6 +217,19 @@ t/library/p6object.t -- P6object tests
     $P1 = myintproto.'HOW'()
     $I0 = issame $P0, $P1
     ok($I0, 'integer.HOW() =:= MyInt.HOW()')
+
+    ##  create a class with attributes
+    .local pmc jklproto, jkl
+    jklproto = metaproto.'new_class'('JKL', 'attr'=>'$a $b')
+    jkl = jklproto.'new'()
+    $P0 = new 'Integer'
+    setattribute jkl, '$a', $P0
+    setattribute jkl, '$b', $P0
+    $P0 = 1
+    $P1 = getattribute jkl, '$a'
+    ok($P1, 'attribute $a creation')
+    $P1 = getattribute jkl, '$b'
+    ok($P1, 'attribute $b creation')
 
     .return ()
   load_failed:
