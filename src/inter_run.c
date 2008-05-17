@@ -606,6 +606,101 @@ Parrot_run_meth_fromc_arglist_retf(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(
 
 =back
 
+=head2 Helper Functions
+
+=over 4
+
+=item C<void new_runloop_jump_point>
+
+Create a new runloop jump point, either by allocating it or by
+getting one from the free list.
+
+=cut
+
+*/
+
+PARROT_API
+void
+new_runloop_jump_point(PARROT_INTERP)
+{
+    Parrot_runloop *jump_point;
+
+    if (interp->runloop_jmp_free_list) {
+        jump_point = interp->runloop_jmp_free_list;
+        interp->runloop_jmp_free_list = jump_point->prev;
+    }
+    else
+        jump_point = mem_allocate_typed(Parrot_runloop);
+
+    jump_point->prev = interp->current_runloop;
+    interp->current_runloop = jump_point;
+}
+
+/*
+
+=item C<void free_runloop_jump_point>
+
+Place runloop jump point back on the free list.
+
+=cut
+
+*/
+
+PARROT_API
+void
+free_runloop_jump_point(PARROT_INTERP)
+{
+    Parrot_runloop * const jump_point = interp->current_runloop;
+    interp->current_runloop = jump_point->prev;
+    jump_point->prev = interp->runloop_jmp_free_list;
+    interp->runloop_jmp_free_list = jump_point;
+}
+
+/*
+
+=item C<void destroy_runloop_jump_points>
+
+Destroys (and frees the memory of) the runloop jump point list and the
+associated free list for the specified interpreter.
+
+=cut
+
+*/
+
+void
+destroy_runloop_jump_points(PARROT_INTERP)
+{
+    really_destroy_runloop_jump_points(interp->current_runloop);
+    really_destroy_runloop_jump_points(interp->runloop_jmp_free_list);
+}
+
+/*
+
+=item C<void really_destroy_runloop_jump_points>
+
+Takes a pointer to a runloop jump point (which had better be the last one in
+the list). Walks back through the list, freeing the memory of each one, until
+it encounters NULL. Used by C<destroy_runloop_jump_points>.
+
+=cut
+
+*/
+
+void
+really_destroy_runloop_jump_points(ARGIN(Parrot_runloop *jump_point))
+{
+    while (jump_point != NULL) {
+        Parrot_runloop * const prev = jump_point->prev;
+        mem_sys_free(jump_point);
+        jump_point = prev;
+    }
+}
+
+
+/*
+
+=back
+
 =head1 SEE ALSO
 
 F<include/parrot/interpreter.h>, F<src/interpreter.c>.
