@@ -211,6 +211,28 @@ and verifies that parrotclass has P6object methods defined.
 .end
 
 
+=item new_class(name [, 'parent'=>parentclass])
+
+=cut
+.sub 'new_class' :method
+    .param string name
+    .param pmc options         :slurpy :named
+
+    .local pmc parentclass
+    parentclass = options['parent']
+    if null parentclass goto parent_p6object
+    parentclass = self.'get_parrotclass'(parentclass)
+    goto have_parentclass
+  parent_p6object:
+    parentclass = get_class 'P6object'
+  have_parentclass:
+
+    .local pmc parrotclass
+    parrotclass = subclass parentclass, name
+    .return self.'register'(parrotclass)
+.end
+
+
 =item get_parrotclass(x)
 
 Multimethod helper to return the parrotclass for C<x>.
