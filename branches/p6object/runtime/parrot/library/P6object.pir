@@ -139,23 +139,34 @@ and verifies that parrotclass has P6object methods defined.
     goto p6object_done
   p6object_proxy:
     ##  iterate over P6object's methods, adding them to parrotclass' namespace
-    .local pmc methods, iter, ns
+    .local pmc methods, iter, parrotclassns
     $P0 = get_class 'P6object'
     methods = $P0.'methods'()
     iter = new 'Iterator', methods
-    ns = parrotclass.'get_namespace'()
+    parrotclassns = parrotclass.'get_namespace'()
   iter_loop:
     unless iter goto iter_end
     $S0 = shift iter
-    $P0 = ns.'find_sub'($S0)
+    $P0 = parrotclassns.'find_sub'($S0)
     unless null $P0 goto iter_loop
     $P0 = methods[$S0]
-    ns.'add_sub'($S0, $P0)
+    parrotclassns.'add_sub'($S0, $P0)
     goto iter_loop
   iter_end:
   p6object_done:
 
-    ##  get the metaclass (how), or create one
+    ##  determine parrotclass' canonical p6-name
+    .local pmc ns
+    $S0 = parrotclass
+    ##  Parrot joins namespaces with ';'
+    ns = split ';', $S0
+    $I0 = elements ns
+    if $I0 > 1 goto have_ns
+    ##  but perhaps it's a (legacy) ::-delimited name instead
+    ns = split '::', $S0
+  have_ns:
+
+    ##  get the metaclass (how) from :protoobject, or create one
     .local pmc how
     $P0 = options['protoobject']
     if null $P0 goto make_how
@@ -166,39 +177,41 @@ and verifies that parrotclass has P6object methods defined.
     how = new 'P6metaclass'
     setattribute how, 'parrotclass', parrotclass
 
-    ##  create an anonymous class for the protoobject...
+    ##  create an anonymous class for the protoobject
     .local pmc protoclass, protoobject
     protoclass = new 'Class'
     $P0 = get_class 'P6protoobject'
+    ##  P6protoobject methods override parrotclass methods...
     protoclass.'add_parent'($P0)
     protoclass.'add_parent'(parrotclass)
+    ##  ...except for 'new'
+    $P0 = parrotclass.'methods'()
+    $P1 = $P0['new']
+    if null $P1 goto have_protoclass
+    protoclass.'add_method'('new', $P1)
+  have_protoclass:
+    ##  register the protoclass in %!metaobject
     $I0 = get_addr protoclass
     mhash[$I0] = how
-    ##  ...and create the protoobject
+    ##  create the protoobject for parrotclass
     protoobject = new protoclass
     setattribute how, 'protoobject', protoobject
 
-    ##  determine the long and short name
-    $S0 = parrotclass
-    ##  Parrot joins namespaces with ';'
-    ns = split ';', $S0
-    $I0 = elements ns
-    if $I0 > 1 goto have_ns
-    ##  but perhaps it's a (legacy) ::-delimited name instead
-    ns = split '::', $S0
-  have_ns:
+    ##  store the long and short names in the protoobject
     .local pmc longname, shortname
     $S0 = join '::', ns
     longname = new 'String'
     longname = $S0
-    shortname = pop ns
+    shortname = ns[-1]
     setattribute how, 'longname', longname
     setattribute how, 'shortname', shortname
 
-    ##  store the protoobject in the namespace
-    $S0 = shortname
-    set_hll_global ns, $S0, protoobject
   have_how:
+
+    ##  store the protoobject in appropriate namespace
+    protoobject = how.'WHAT'()
+    $S0 = pop ns
+    set_hll_global ns, $S0, protoobject
 
     ##  map parrotclass to the metaobject
     $I0 = get_addr parrotclass
@@ -207,7 +220,7 @@ and verifies that parrotclass has P6object methods defined.
     mhash[$S0] = how
 
     ##  return the protoobject
-    .return how.'WHAT'()
+    .return (protoobject)
 .end
 
 

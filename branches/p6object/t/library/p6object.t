@@ -26,7 +26,7 @@ t/library/p6object.t -- P6object tests
 
     ##  set our plan
     .local int plan_tests
-    plan(54)
+    plan(70)
 
     ##  make sure we can load the P6object library
     push_eh load_failed
@@ -169,6 +169,55 @@ t/library/p6object.t -- P6object tests
     $I0 = can def, 'new'
     nok($I0, 'def .new method undefined')
 
+    ##  check that 'new' method in class overrides P6protoobject::new
+    .local pmc ghiproto
+    ghiproto = metaproto.'new_class'('GHI')
+    $P0 = ghiproto.'new'()
+    is($P0, 'GHI::new', 'GHI::new overrides P6protoobject::new')
+
+    ##  create MyInt subclass from Integer PMC class
+    .local pmc myintproto
+    $P0 = metaproto.'new_class'('MyInt', 'parent'=>'Integer')
+    myintproto = get_hll_global 'MyInt'
+    $I0 = issame myintproto, $P0
+    ok($I0, 'MyInt proto =:= return value from .new_class()')
+    isa_ok(myintproto, 'MyInt', 'MyInt proto')
+    isa_ok(myintproto, 'Integer', 'MyInt proto')
+    isa_ok(myintproto, 'P6object', 'MyInt proto')
+    isa_ok(myintproto, 'P6protoobject', 'MyInt proto')
+
+    ##  test MyInt objects
+    .local pmc myint
+    myint = myintproto.'new'()
+    isa_ok(myint, 'MyInt', 'return from MyInt.new()')
+    isa_ok(myint, 'Integer', 'return from MyInt.new()')
+    isa_ok(myint, 'P6object', 'return from MyInt.new()')
+    $I0 = isa myint, 'P6protoobject'
+    nok($I0, 'myint object not isa P6protoobject')
+    $P0 = myint.'WHAT'()
+    $I0 = issame myintproto, $P0
+    ok($I0, 'myint object .WHAT =:= MyInt proto')
+
+    ##  map Integer objects to MyInt
+    .local pmc integerproto
+    metaproto.'register'('Integer', 'protoobject'=>myintproto)
+    integerproto = get_hll_global 'Integer'
+    $I0 = issame integerproto, myintproto
+    ok($I0, 'Integer proto =:= MyInt proto')
+    .local pmc integer
+    integer = new 'Integer'
+    $S0 = typeof integer
+    is($S0, 'Integer', 'Integer object creation')
+    $P0 = integer.'WHAT'()
+    $I0 = issame $P0, myintproto
+    ok($I0, 'integer object .WHAT =:= MyInt proto')
+    $S0 = integer.'WHAT'()
+    is($S0, 'MyInt', 'integer.WHAT() eq "MyInt"')
+    $P0 = integer.'HOW'()
+    $P1 = myintproto.'HOW'()
+    $I0 = issame $P0, $P1
+    ok($I0, 'integer.HOW() =:= MyInt.HOW()')
+
     .return ()
   load_failed:
     ok(0, "load_bytecode 'P6object.pir' failed -- skipping tests")
@@ -176,3 +225,7 @@ t/library/p6object.t -- P6object tests
 .end
 
 
+.namespace ['GHI']
+.sub 'new' :method
+    .return ('GHI::new')
+.end
