@@ -110,11 +110,6 @@ typedef enum {
 
 PARROT_API
 PARROT_DOES_NOT_RETURN
-void do_exception(PARROT_INTERP, INTVAL severity, long error)
-        __attribute__nonnull__(1);
-
-PARROT_API
-PARROT_DOES_NOT_RETURN
 void exit_fatal(int exitcode, ARGIN(const char *format), ...)
         __attribute__nonnull__(2);
 
@@ -155,6 +150,12 @@ PMC * Parrot_ex_build_exception(PARROT_INTERP,
 PARROT_API
 size_t Parrot_ex_calc_handler_offset(PARROT_INTERP)
         __attribute__nonnull__(1);
+
+PARROT_API
+PARROT_DOES_NOT_RETURN
+void Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 PARROT_DOES_NOT_RETURN

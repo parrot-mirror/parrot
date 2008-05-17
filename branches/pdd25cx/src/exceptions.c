@@ -227,15 +227,12 @@ Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), SHIM(void *dest))
 
 /*
 
-=item C<void Parrot_ex_throw_from_c_args>
+=item C<void Parrot_ex_throw_from_c>
 
-Throws a real exception, with an error message constructed from the format
-string and arguments.  C<ret_addr> is the address from which to resume, if some
-handler decides that is appropriate, or zero to make the error non-resumable.
-C<exitcode> is a C<exception_type_enum> value.
+Throws an exception object.
 
 See also C<exit_fatal()>, which signals fatal errors, and
-C<Parrot_ex_throw_from_op>, which calls the handler.
+C<Parrot_ex_throw_from_op>.
 
 The 'invoke' vtable function doesn't actually execute a
 sub/continuation/handler, it only sets up the environment for invocation and
@@ -261,9 +258,6 @@ resumable at the level of a C instruction, as control is irrevocably
 transferred back to the runloop. These exceptions can resume at the Parrot op
 level, if they are given an C<opcode_t> pointer for the op to resume at.
 
-Ultimately, we will likely want to deprecate continuation-based exception
-handlers.
-
 =cut
 
 */
@@ -271,35 +265,9 @@ handlers.
 PARROT_API
 PARROT_DOES_NOT_RETURN
 void
-Parrot_ex_throw_from_c_args(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
-        int exitcode, ARGIN(const char *format), ...)
+Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
 {
     RunProfile * const profile = interp->profile;
-    STRING *msg = NULL;
-    PMC *exception;
-
-    /* Make and set exception message. */
-    if (strchr(format, '%')) {
-        va_list arglist;
-        va_start(arglist, format);
-        msg = Parrot_vsprintf_c(interp, format, arglist);
-        va_end(arglist);
-    }
-    else
-        msg = string_make(interp, format, strlen(format),
-                NULL, PObj_external_FLAG);
-
-    exception = Parrot_ex_build_exception(interp,
-            EXCEPT_error, exitcode, msg);
-
-    if (PMC_IS_NULL(exception)) {
-        PIO_eprintf(interp,
-            "Parrot_ex_throw_from_c_args (severity:%d error:%d): %Ss\n",
-            EXCEPT_error, exitcode, msg);
-
-        /* [what if exitcode is a multiple of 256?] */
-        exit(exitcode);
-    }
 
     /* The exception will be retrieved from the scheduler after jumping back to
      * a point in the runloop where the exception handler can be run. */
@@ -317,6 +285,9 @@ Parrot_ex_throw_from_c_args(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
     }
 
     if (Interp_debug_TEST(interp, PARROT_BACKTRACE_DEBUG_FLAG)) {
+        int exitcode = VTABLE_get_integer_keyed_str(interp, exception,
+                CONST_STRING(interp, "exit_code"));
+        STRING * msg = VTABLE_get_string(interp, exception);
         PIO_eprintf(interp,
             "Parrot_ex_throw_from_c_args (severity:%d error:%d): %Ss\n",
             EXCEPT_error, exitcode, msg);
@@ -329,11 +300,15 @@ Parrot_ex_throw_from_c_args(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
 
 /*
 
-=item C<void do_exception>
+=item C<void Parrot_ex_throw_from_c_args>
 
-Called from interrupt code. Does a C<longjmp> in front of the runloop, which
-calls C<Parrot_ex_calc_handler_offset()>, returning the handler address where
-execution then resumes.
+Throws an exception, with an error message constructed from a format string and
+arguments. C<ret_addr> is the address from which to resume, if some handler
+decides that is appropriate, or zero to make the error non-resumable.
+C<exitcode> is a C<exception_type_enum> value.
+
+See also C<Parrot_ex_throw_from_c>, C<Parrot_ex_throw_from_op>, and
+C<exit_fatal()>.
 
 =cut
 
@@ -342,15 +317,28 @@ execution then resumes.
 PARROT_API
 PARROT_DOES_NOT_RETURN
 void
-do_exception(PARROT_INTERP, INTVAL severity, long error)
+Parrot_ex_throw_from_c_args(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
+        int exitcode, ARGIN(const char *format), ...)
 {
-    PMC *exception = Parrot_ex_build_exception(interp,
-            severity, error, NULL);
-    Parrot_cx_schedule_task(interp, exception);
+    STRING *msg = NULL;
+    PMC *exception;
 
-    longjmp(interp->current_runloop->resume, 1);
+    /* Make and set exception message. */
+    if (strchr(format, '%')) {
+        va_list arglist;
+        va_start(arglist, format);
+        msg = Parrot_vsprintf_c(interp, format, arglist);
+        va_end(arglist);
+    }
+    else
+        msg = string_make(interp, format, strlen(format),
+                NULL, PObj_external_FLAG);
+
+    exception = Parrot_ex_build_exception(interp,
+            EXCEPT_error, exitcode, msg);
+
+    Parrot_ex_throw_from_c(interp, exception);
 }
-
 
 /*
 
