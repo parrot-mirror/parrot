@@ -153,6 +153,19 @@ size_t Parrot_ex_calc_handler_offset(PARROT_INTERP)
 
 PARROT_API
 PARROT_DOES_NOT_RETURN
+void Parrot_ex_rethrow_from_c(PARROT_INTERP, ARGIN(PMC *exception))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+opcode_t * Parrot_ex_rethrow_from_op(PARROT_INTERP, ARGIN(PMC *exception))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_DOES_NOT_RETURN
 void Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -180,13 +193,6 @@ void push_new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-opcode_t * rethrow_exception(PARROT_INTERP, ARGIN(PMC *exception))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
 PARROT_DOES_NOT_RETURN
 void do_panic(
     NULLOK_INTERP,
@@ -195,10 +201,6 @@ void do_panic(
     unsigned int line);
 
 void Parrot_print_backtrace(void);
-PARROT_DOES_NOT_RETURN
-void rethrow_c_exception(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/exceptions.c */
 

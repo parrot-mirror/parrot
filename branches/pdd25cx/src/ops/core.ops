@@ -776,7 +776,7 @@ inline op throw(invar PMC, invar PMC) :flow {
 }
 
 inline op rethrow(invar PMC) :flow {
-    opcode_t * const dest = (opcode_t *)rethrow_exception(interp, $1);
+    opcode_t * const dest = Parrot_ex_rethrow_from_op(interp, $1);
     goto ADDRESS(dest);
 }
 
