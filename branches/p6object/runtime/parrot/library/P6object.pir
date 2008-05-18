@@ -1,22 +1,70 @@
+=head1 NAME
+
+P6object - Perl 6-like methods and metaclasses for Parrot
+
+=head1 SYNOPSIS
+
+    .sub 'main'
+        # load this library
+        load_bytecode 'P6object.pbc'
+
+        ##  grab the P6metaclass protoobject
+        .local pmc p6meta
+        p6meta = get_hll_global 'P6metaclass'
+
+        ##  create a new class ABC::Def with three attributes
+        p6meta.'new_class'('ABC::Def', 'attr'=>'$a @b %c')
+
+        ##  get the protoobject for ABC::Def
+        .local pmc defproto
+        defproto = get_hll_global ['ABC'], 'Def'
+
+        ##  use the protoobject to create a new ABC::Def object
+        .local pmc obj
+        obj = defproto.'new'()
+
+        ##  get the class protoobject from any object
+        $P0 = obj.'WHAT'()
+
+        ##  get the metaclass for any object
+        $P0 = obj.'HOW'()
+
+        ##  create a new class MyHash as a subclass of Parrot's 'Hash'
+        p6meta.'new_class'('MyHash', 'parent'=>'Hash')
+
+        ##  tell Parrot classes to use a specific protoobject
+        $P0 = get_hll_global 'MyHash'
+        p6meta.'register'('Hash', 'protoobject'=>$P0)
+        $P1 = new 'Hash'               # create a Hash
+        $P2 = $P1.'WHAT'()             # get its protoobject
+        $S3 = $P2                      # stringify
+        say $S3                        # "MyHash\n"
+
+=head1 DESCRIPTION
+
+C<P6object> is intended to add Perl 6-like behaviors to objects
+in Parrot.  It creates and maintains protoobjects, and supplies
+C<.WHAT> and C<.HOW> methods to objects and protoobjects in Parrot.
+Protoobjects also have a default C<.new> method for creating
+new instances of a class (classes are able to override this, however).
+
+=head1 CLASSES
+
 =head2 P6object
 
-    P6metaobject.'register'('Integer')
-
-    $P0 = P6metaobject.'new_class'('MyHash', 'parent'=>'Hash')
-    P6metaobject.map('Hash', $P0)
+C<P6object> is the base class for objects that make use of the
+P6metamodel.  It supplies the C<.WHAT> and C<.HOW> methods.
 
 =over 4
 
-=item onload()
+=item onload() :anon :init :load
 
-P6metaclass initialization.
+Initializes the P6object system.  Builds protoobjects for
+C<P6object> and C<P6metaclass>.
 
 =cut
 
 .namespace ['P6object']
-
-.sub 'main' :main
-.end
 
 .sub 'onload' :anon :init :load
     ##  create the %!metaclass hash for parrotclass => metaclass mapping
@@ -42,7 +90,7 @@ P6metaclass initialization.
 
 =item HOW()
 
-Return the metaclass for the invocant.
+Return the C<P6metaclass> of the invocant.
 
 =cut
 
@@ -62,7 +110,7 @@ Return the metaclass for the invocant.
 
 =item WHAT()
 
-Return the protoobject for the invocant.
+Return the C<P6protoobject> for the invocant.
 
 =cut
 
@@ -111,7 +159,10 @@ Return a true value if the invocant 'isa' C<x>.
 =item register(parrotclass [, 'name'=>name] [, 'protoobject'=>proto])
 
 Sets objects of type C<parrotclass> to use C<protoobject>,
-and verifies that parrotclass has P6object methods defined.
+and verifies that C<parrotclass> has P6object methods defined
+on it.  This happens either by setting C<P6object> as a parent
+of C<parrotclass>, or by individually composing C<P6object>'s methods
+into C<parrotclass>.
 
 =cut
 
@@ -207,7 +258,6 @@ and verifies that parrotclass has P6object methods defined.
     setattribute how, 'shortname', shortname
 
   have_how:
-
     ##  store the protoobject in appropriate namespace
     protoobject = how.'WHAT'()
     $S0 = pop ns
@@ -224,9 +274,16 @@ and verifies that parrotclass has P6object methods defined.
 .end
 
 
-=item new_class(name [, 'parent'=>parentclass] [, 'attr'=>attrlist])
+=item new_class(name [, 'parent'=>parentclass] [, 'attr'=>attr])
+
+Create a new class called C<name> as a subclass of C<parentclass>.
+If C<parentclass> isn't supplied, defaults to using C<P6object>
+as the parent.  The C<attr> parameter is a list of attribute names
+to be added to the class, specified as either an array or a string
+of names separated by spaces.
 
 =cut
+
 .sub 'new_class' :method
     .param string name
     .param pmc options         :slurpy :named
@@ -302,6 +359,12 @@ Multimethod helper to return the parrotclass for C<x>.
 
 =head2 P6protoobject
 
+=over 4
+
+=item get_string()  (vtable method)
+
+Returns the "shortname" of the protoobject's class.
+
 =cut
 
 .namespace ['P6protoobject']
@@ -312,9 +375,28 @@ Multimethod helper to return the parrotclass for C<x>.
     .return ($P1)
 .end
 
+=item defined()  (vtable method)
+
+Protoobjects are always treated as being undefined.
+
+=cut
+
 .sub 'defined' :vtable :method
     .return (0)
 .end
+
+=item new()
+
+Provides a default constructor for creating objects in
+the class.
+
+Note that unlike Perl 6, the C<new> method here exists only
+in the protoobject and not in the individual instances of
+the class.  (If you want all objects in a class to have a
+C<new> method, then define one in the class and it
+will be used in lieu of this one.)
+
+=cut
 
 .sub 'new' :method
     .local pmc parrotclass
@@ -324,3 +406,28 @@ Multimethod helper to return the parrotclass for C<x>.
     $P1 = new parrotclass
     .return ($P1)
 .end
+
+=back
+
+=head1 AUTHOR
+
+Written and maintained by Patrick R. Michaud, C<< pmichaud at pobox.com >>.
+Please send patches, feedback, and suggestions to the parrot-porters
+mailing list or to C< parrotbug@perl.org >.
+
+=head1 COPYRIGHT
+
+Copyright (C) 2008, The Perl Foundation.
+
+=cut
+
+# $Id$
+
+=cut
+
+# Local Variables:
+#   mode: pir
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4 ft=pir:
+
