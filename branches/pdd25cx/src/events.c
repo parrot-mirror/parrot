@@ -23,6 +23,7 @@ dispatches these to one or all interpreters.
 
 #include "parrot/parrot.h"
 #include "parrot/events.h"
+#include "events.str"
 
 typedef struct pending_io_events {
     parrot_event **events;
@@ -1357,12 +1358,14 @@ event_to_exception(PARROT_INTERP, ARGIN(const parrot_event* event))
              */
             {
                 PMC *exception = Parrot_ex_build_exception(interp,
-                        EXCEPT_exit, exit_code, "Caught signal.");
+                        EXCEPT_exit, exit_code,
+                        CONST_STRING(interp, "Caught signal."));
                 Parrot_ex_throw_from_c(interp, exception);
             }
             break;
         default:
-            Parrot_ex_throw_from_c_args(interp, NULL, exit_code, "Caught signal.");
+            Parrot_ex_throw_from_c_args(interp, NULL, exit_code,
+                    CONST_STRING(interp, "Caught signal."));
             break;
     }
 }
