@@ -26,7 +26,7 @@ t/library/p6object.t -- P6object tests
 
     ##  set our plan
     .local int plan_tests
-    plan(72)
+    plan(80)
 
     ##  make sure we can load the P6object library
     push_eh load_failed
@@ -230,6 +230,21 @@ t/library/p6object.t -- P6object tests
     ok($P1, 'attribute $a creation')
     $P1 = getattribute jkl, '$b'
     ok($P1, 'attribute $b creation')
+
+    ##  create a class with multiple parent classes
+    .local pmc mnoproto, mno
+    metaproto.'new_class'('MNO', 'parent'=>'Float ABC')
+    mnoproto = get_hll_global 'MNO'
+    isa_ok(mnoproto, 'Float', 'MNO proto')
+    isa_ok(mnoproto, 'ABC', 'MNO proto')
+    isa_ok(mnoproto, 'P6object', 'MNO proto')
+    isa_ok(mnoproto, 'P6protoobject', 'MNO proto')
+    mno = mnoproto.'new'()
+    isa_ok(mno, 'Float', 'MNO object')
+    isa_ok(mno, 'ABC', 'MNO object')
+    isa_ok(mno, 'P6object', 'MNO object')
+    $I0 = isa mno, 'P6protoobject'
+    nok($I0, 'MNO object not isa P6protoobject')
 
     .return ()
   load_failed:
