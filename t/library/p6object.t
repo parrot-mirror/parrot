@@ -30,7 +30,7 @@ t/library/p6object.t -- P6object tests
 
     ##  make sure we can load the P6object library
     push_eh load_failed
-    load_bytecode 'P6object.pir'
+    load_bytecode 'P6object.pbc'
     pop_eh
     ok(1, 'load_bytecode')
 
