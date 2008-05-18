@@ -164,6 +164,11 @@ on it.  This happens either by setting C<P6object> as a parent
 of C<parrotclass>, or by individually composing C<P6object>'s methods
 into C<parrotclass>.
 
+The C<name> parameter causes objects to be registered using a name
+that differs from the parrotclass name.  This is useful when needing
+to map to a class name that already exists in Parrot (e.g., 'Hash'
+or 'Object').
+
 =cut
 
 .sub 'register' :method
@@ -207,14 +212,19 @@ into C<parrotclass>.
   p6object_done:
 
     ##  determine parrotclass' canonical p6-name
+    .local string name
     .local pmc ns
-    $S0 = parrotclass
+    name = options['name']
+    if name goto have_name
+    ##  use the name of parrotclass if :name not supplied
+    name = parrotclass
+  have_name:
     ##  Parrot joins namespaces with ';'
-    ns = split ';', $S0
+    ns = split ';', name
     $I0 = elements ns
     if $I0 > 1 goto have_ns
     ##  but perhaps it's a (legacy) ::-delimited name instead
-    ns = split '::', $S0
+    ns = split '::', name
   have_ns:
 
     ##  get the metaclass (how) from :protoobject, or create one
@@ -288,7 +298,6 @@ of names separated by spaces.
     .param string name
     .param pmc options         :slurpy :named
 
-    trace 1
     .local pmc parentclass, parrotclass
     parentclass = options['parent']
     if null parentclass goto parent_p6object
@@ -317,7 +326,6 @@ of names separated by spaces.
   parent_p6object:
     parrotclass = subclass 'P6object', name
   have_parrotclass:
-    trace 0
 
     .local pmc attrlist
     attrlist = options['attr']
@@ -336,7 +344,7 @@ of names separated by spaces.
     goto iter_loop
   iter_end:
   attr_done:
-    .return self.'register'(parrotclass)
+    .return self.'register'(parrotclass, options :named :flat)
 .end
 
 
