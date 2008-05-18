@@ -385,7 +385,7 @@ Add a handler to the scheduler.
 
     METHOD add_handler(PMC *handler) {
         Parrot_Scheduler * core_struct = PARROT_SCHEDULER(SELF);
-        VTABLE_push_pmc(INTERP, core_struct->handlers, handler);
+        VTABLE_unshift_pmc(INTERP, core_struct->handlers, handler);
     }
 
 /*
@@ -407,10 +407,10 @@ Delete a handler from the scheduler.
         elements = VTABLE_elements(INTERP, handlers);
 
         if (!got_type)
-            VTABLE_pop_pmc(INTERP, handlers);
+            VTABLE_shift_pmc(INTERP, handlers);
 
         /* Loop from newest handler to oldest handler. */
-        for (index = elements - 1; index >= 0; --index) {
+        for (index = 0; index < elements; ++index) {
             PMC *handler = VTABLE_get_pmc_keyed_int(INTERP, handlers, index);
             if (!PMC_IS_NULL(handler)) {
                 if (string_equal(INTERP, type, CONST_STRING(INTERP, "exception")) == 0
@@ -421,7 +421,6 @@ Delete a handler from the scheduler.
                 else if (string_equal(INTERP, type, CONST_STRING(INTERP, "event")) == 0
                             && handler->vtable->base_type == enum_class_EventHandler) {
                     VTABLE_set_pmc_keyed_int(INTERP, handlers, index, PMCNULL);
-                    fprintf(stderr, "trying to delete event handler\n");
                     RETURN(void);
                }
             }
@@ -443,14 +442,30 @@ PMCNULL.
 */
 
     METHOD find_handler(PMC *task) {
-        Parrot_Scheduler * core_struct = PARROT_SCHEDULER(SELF);
-        INTVAL elements = VTABLE_elements(INTERP, core_struct->handlers);
-        INTVAL index;
+        PMC *iter;
+
+        /* Exceptions store the handler iterator for rethrow, other kinds of
+         * tasks don't (though they could). */
+        if (task->vtable->base_type == enum_class_Exception &&
+                VTABLE_get_integer_keyed_str(interp, task,
+                    CONST_STRING(interp, "handled")) == -1) {
+            iter = VTABLE_get_attr_str(interp, task,
+                    CONST_STRING(interp, "handler_iter"));
+        }
+        else {
+            PMC *handlers;
+            GET_ATTR_handlers(interp, SELF, handlers);
+            iter = VTABLE_get_iter(interp, handlers);
+
+            if (task->vtable->base_type == enum_class_Exception)
+                VTABLE_set_attr_str(interp, task,
+                        CONST_STRING(interp, "handler_iter"), iter);
+        }
 
         /* Loop from newest handler to oldest handler. */
-        for (index = elements - 1; index >= 0; --index) {
-            PMC *handler = VTABLE_get_pmc_keyed_int(INTERP,
-                    core_struct->handlers, index);
+        while (VTABLE_get_bool(interp, iter)) {
+            PMC *handler = VTABLE_shift_pmc(INTERP, iter);
+
             INTVAL valid_handler = 0;
             if (!PMC_IS_NULL(handler)) {
                 (INTVAL valid_handler) = PCCINVOKE(INTERP, handler, "can_handle", PMC *task);
@@ -458,6 +473,7 @@ PMCNULL.
                     RETURN(PMC *handler);
                 }
             }
+
         }
 
         RETURN(PMC *PMCNULL);

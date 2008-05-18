@@ -116,9 +116,9 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
         }
         else if (severity == EXCEPT_exit) {
             /* TODO: get exit status based on type */
-            exit_status       = VTABLE_get_integer_keyed_str(interp,
-                                exception, CONST_STRING(interp, "exit_code"));
-            }
+            exit_status = VTABLE_get_integer_keyed_str(interp,
+                    exception, CONST_STRING(interp, "exit_code"));
+        }
         else {
                 fprintf(stderr, "No exception handler and no message\n");
                 fflush(stderr); /* caution against output swap (with PDB_backtrace) */
@@ -361,7 +361,10 @@ Parrot_ex_rethrow_from_op(PARROT_INTERP, ARGIN(PMC *exception))
 
     if (exception->vtable->base_type != enum_class_Exception)
         PANIC(interp, "Illegal rethrow");
+
+    Parrot_ex_mark_unhandled(interp, exception);
     handler = find_exception_handler(interp, exception);
+
     if (!handler)
         PANIC(interp, "No exception handler found");
     address = VTABLE_invoke(interp, handler, exception);
@@ -385,9 +388,28 @@ PARROT_DOES_NOT_RETURN
 void
 Parrot_ex_rethrow_from_c(PARROT_INTERP, ARGIN(PMC *exception))
 {
-    /* RT # 45911 Mark that the current exception was not handled */
+    Parrot_ex_mark_unhandled(interp, exception);
 
     longjmp(interp->current_runloop->resume, 1);
+}
+
+/*
+
+=item C<void Parrot_ex_mark_unhandled>
+
+Mark an exception as unhandled, as part of rethrowing it.
+
+=cut
+
+*/
+
+PARROT_API
+PARROT_DOES_NOT_RETURN
+void
+Parrot_ex_mark_unhandled(PARROT_INTERP, ARGIN(PMC *exception))
+{
+    VTABLE_set_integer_keyed_str(interp, exception,
+            CONST_STRING(interp, "handled"), -1);
 }
 
 /*

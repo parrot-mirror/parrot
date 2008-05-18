@@ -30,6 +30,11 @@ The type of the exception.
 
 The exit code of the exception. (Added temporarily, to be removed.)
 
+=item C<handled>
+
+Whether the exception has been handled. Defaults to 0, 1 for handled, -1 for a
+rethrown exception.
+
 =item C<payload>
 
 Additional data for the exception.
@@ -48,14 +53,16 @@ These arguments can be retrieved with the C<get_results> opcode.
 
 pmclass Exception {
 
-    ATTR INTVAL    id;         /* The task ID in the scheduler. */
-    ATTR FLOATVAL  birthtime;  /* The creation time stamp of the exception. */
-    ATTR STRING   *message;    /* The exception message. */
-    ATTR PMC      *payload;    /* The payload for the exception. */
-    ATTR INTVAL    severity;   /* The severity of the exception. */
-    ATTR INTVAL    type;       /* The type of the exception. */
-    ATTR INTVAL    exit_code;  /* The exit code of the exception. */
-    ATTR PMC      *stacktrace; /* The stacktrace of an exception. */
+    ATTR INTVAL    id;           /* The task ID in the scheduler. */
+    ATTR FLOATVAL  birthtime;    /* The creation time stamp of the exception. */
+    ATTR STRING   *message;      /* The exception message. */
+    ATTR PMC      *payload;      /* The payload for the exception. */
+    ATTR INTVAL    severity;     /* The severity of the exception. */
+    ATTR INTVAL    type;         /* The type of the exception. */
+    ATTR INTVAL    exit_code;    /* The exit code of the exception. */
+    ATTR PMC      *stacktrace;   /* The stacktrace of an exception. */
+    ATTR INTVAL    handled;      /* Whether the exception has been handled. */
+    ATTR PMC      *handler_iter; /* An iterator of handlers (for rethrow). */
 
 /*
 
@@ -81,9 +88,12 @@ Initializes the exception with default values.
 
         /* Set up the core struct and default values for the exception object. */
         PMC_data(SELF)          = core_struct;
+        core_struct->severity   = 0;
+        core_struct->handled    = 0;
         core_struct->message    = CONST_STRING(interp, "");
         core_struct->payload    = PMCNULL;
         core_struct->stacktrace = PMCNULL;
+        core_struct->handler_iter = PMCNULL;
     }
 
 /*
@@ -104,6 +114,8 @@ Mark any active exception data as live.
             pobject_lives(interp, (PObj *)core_struct->payload);
         if (core_struct->stacktrace)
             pobject_lives(interp, (PObj *)core_struct->stacktrace);
+        if (core_struct->handler_iter)
+            pobject_lives(interp, (PObj *)core_struct->handler_iter);
     }
 
 /*
@@ -199,6 +211,9 @@ Returns the integer value for C<*key>.
         else if (string_equal(INTERP, s, CONST_STRING(INTERP, "exit_code")) == 0) {
             GET_ATTR_exit_code(interp, SELF, result);
         }
+        else if (string_equal(INTERP, s, CONST_STRING(INTERP, "handled")) == 0) {
+            GET_ATTR_handled(interp, SELF, result);
+        }
 
         return result;
     }
@@ -224,6 +239,9 @@ Returns the integer value for C<*key>.
         }
         else if (string_equal(INTERP, key, CONST_STRING(INTERP, "exit_code")) == 0) {
             GET_ATTR_exit_code(interp, SELF, result);
+        }
+        else if (string_equal(INTERP, key, CONST_STRING(INTERP, "handled")) == 0) {
+            GET_ATTR_handled(interp, SELF, result);
         }
 
         return result;
@@ -328,6 +346,9 @@ Sets the integer value for C<*key>.
         else if (string_equal(INTERP, s, CONST_STRING(INTERP, "exit_code")) == 0) {
             SET_ATTR_exit_code(interp, SELF, value);
         }
+        else if (string_equal(INTERP, s, CONST_STRING(INTERP, "handled")) == 0) {
+            SET_ATTR_handled(interp, SELF, value);
+        }
     }
 
 /*
@@ -349,6 +370,9 @@ Sets the integer value for C<*key>.
         }
         else if (string_equal(INTERP, key, CONST_STRING(INTERP, "exit_code")) == 0) {
             SET_ATTR_exit_code(interp, SELF, value);
+        }
+        else if (string_equal(INTERP, key, CONST_STRING(INTERP, "handled")) == 0) {
+            SET_ATTR_handled(interp, SELF, value);
         }
     }
 
@@ -414,6 +438,12 @@ Retrieve an attribute value for the exception object.
                 value = pmc_new(interp, enum_class_Integer);
                 VTABLE_set_integer_native(interp, value, exit_code);
         }
+        else if (string_equal(INTERP, name, CONST_STRING(INTERP, "handled")) == 0) {
+                INTVAL handled;
+                GET_ATTR_handled(interp, SELF, handled);
+                value = pmc_new(interp, enum_class_Integer);
+                VTABLE_set_integer_native(interp, value, handled);
+        }
         else if (string_equal(INTERP, name, CONST_STRING(INTERP, "message")) == 0) {
                 STRING *message;
                 GET_ATTR_message(interp, SELF, message);
@@ -425,6 +455,9 @@ Retrieve an attribute value for the exception object.
         }
         else if (string_equal(INTERP, name, CONST_STRING(INTERP, "stacktrace")) == 0) {
                 GET_ATTR_stacktrace(interp, SELF, value);
+        }
+        else if (string_equal(INTERP, name, CONST_STRING(INTERP, "handler_iter")) == 0) {
+                GET_ATTR_handler_iter(interp, SELF, value);
         }
         else {
             /* If unknown attribute name, throw an exception. */
@@ -458,6 +491,10 @@ Set an attribute value for the exception object.
             INTVAL exit_code = VTABLE_get_integer(interp, value);
             SET_ATTR_exit_code(interp, SELF, exit_code);
         }
+        else if (string_equal(INTERP, name, CONST_STRING(INTERP, "handled")) == 0) {
+            INTVAL handled = VTABLE_get_integer(interp, value);
+            SET_ATTR_handled(interp, SELF, handled);
+        }
         else if (string_equal(INTERP, name, CONST_STRING(INTERP, "message")) == 0) {
             STRING *message = VTABLE_get_string(interp, value);
             SET_ATTR_message(interp, SELF, message);
@@ -467,6 +504,9 @@ Set an attribute value for the exception object.
         }
         else if (string_equal(INTERP, name, CONST_STRING(INTERP, "stacktrace")) == 0) {
             SET_ATTR_stacktrace(interp, SELF, value);
+        }
+        else if (string_equal(INTERP, name, CONST_STRING(INTERP, "handler_iter")) == 0) {
+            SET_ATTR_handler_iter(interp, SELF, value);
         }
         else {
             /* If unknown attribute name, throw an exception. */
@@ -501,6 +541,9 @@ Set this PMC as shared.
 
         if (!PMC_IS_NULL(shared_struct->stacktrace))
             shared_struct->stacktrace = pt_shared_fixup(INTERP, shared_struct->stacktrace);
+
+        if (!PMC_IS_NULL(shared_struct->handler_iter))
+            shared_struct->handler_iter = pt_shared_fixup(INTERP, shared_struct->handler_iter);
 
         return shared_self;
     }
