@@ -235,7 +235,7 @@ caught it in 2
 something happend
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next", todo => "deprecate rethrow" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next" );
     print "main\n"
     push_eh _handler1
     push_eh _handler2
@@ -256,7 +256,7 @@ _handler2:
     print "caught it in 2\n"
     print S0
     print "\n"
-    # throw P5	# XXX rethrow?
+    rethrow P5
     end
 CODE
 main
@@ -661,7 +661,7 @@ OUTPUT
 
 ## Regression test for r14697.  This probably won't be needed when PDD23 is
 ## fully implemented.
-pir_error_output_like( <<'CODE', <<'OUTPUT', "invoke handler in calling sub", todo => 'deprecate rethrow' );
+pir_error_output_like( <<'CODE', <<'OUTPUT', "invoke handler in calling sub" );
 ## This tests that error handlers are out of scope when invoked (necessary for
 ## rethrow) when the error is signalled in another sub.
 .sub main :main
@@ -674,7 +674,7 @@ handler:
     print "in handler.\n"
     print $S0
     print "\n"
-    # rethrow exception
+    rethrow exception
 .end
 
 .sub broken

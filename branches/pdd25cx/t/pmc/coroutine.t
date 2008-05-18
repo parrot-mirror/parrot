@@ -220,7 +220,7 @@ back 1
 catch main
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "Coroutine - exception in coro rethrow", todo => 'deprecate rethrow' );
+pasm_output_is( <<'CODE', <<'OUTPUT', "Coroutine - exception in coro rethrow" );
 .include "interpinfo.pasm"
 _main:
     .const .Sub P0 = "_coro"
@@ -253,7 +253,7 @@ corolp:
 _catchc:
     get_results '0, 0' , P5, S0
     print "catch coro\n"
-    #rethrow P5
+    rethrow P5
     end
 CODE
 back 1

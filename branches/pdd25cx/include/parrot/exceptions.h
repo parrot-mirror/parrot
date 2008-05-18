@@ -153,6 +153,12 @@ size_t Parrot_ex_calc_handler_offset(PARROT_INTERP)
 
 PARROT_API
 PARROT_DOES_NOT_RETURN
+void Parrot_ex_mark_unhandled(PARROT_INTERP, ARGIN(PMC *exception))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_DOES_NOT_RETURN
 void Parrot_ex_rethrow_from_c(PARROT_INTERP, ARGIN(PMC *exception))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);

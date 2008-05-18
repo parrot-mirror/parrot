@@ -307,7 +307,7 @@ caught it in 2
 something happened
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next", todo => "deprecate rethrow" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next" );
     print "main\n"
     push_eh _handler1
     push_eh _handler2
@@ -330,7 +330,7 @@ _handler2:
     print "caught it in 2\n"
     print S0
     print "\n"
-    #throw P5	# XXX rethrow?
+    rethrow P5
     end
 CODE
 main
