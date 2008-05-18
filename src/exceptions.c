@@ -342,7 +342,7 @@ Parrot_ex_throw_from_c_args(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
 
 /*
 
-=item C<opcode_t * rethrow_exception>
+=item C<opcode_t * Parrot_ex_rethrow_from_op>
 
 Rethrow the exception.
 
@@ -354,7 +354,7 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *
-rethrow_exception(PARROT_INTERP, ARGIN(PMC *exception))
+Parrot_ex_rethrow_from_op(PARROT_INTERP, ARGIN(PMC *exception))
 {
     PMC *handler;
     opcode_t *address;
@@ -371,7 +371,7 @@ rethrow_exception(PARROT_INTERP, ARGIN(PMC *exception))
 
 /*
 
-=item C<void rethrow_c_exception>
+=item C<void Parrot_ex_rethrow_from_c>
 
 Return back to runloop, assumes exception is still in todo (see RT #45915) and
 that this is called from within a handler setup with C<new_c_exception>.
@@ -380,11 +380,11 @@ that this is called from within a handler setup with C<new_c_exception>.
 
 */
 
+PARROT_API
 PARROT_DOES_NOT_RETURN
 void
-rethrow_c_exception(PARROT_INTERP)
+Parrot_ex_rethrow_from_c(PARROT_INTERP, ARGIN(PMC *exception))
 {
-    PMC *exception = VTABLE_pop_pmc(interp, interp->scheduler);
     /* RT # 45911 Mark that the current exception was not handled */
 
     longjmp(interp->current_runloop->resume, 1);
