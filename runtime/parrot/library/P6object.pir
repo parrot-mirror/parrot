@@ -288,17 +288,38 @@ of names separated by spaces.
     .param string name
     .param pmc options         :slurpy :named
 
-    .local pmc parentclass
+    trace 1
+    .local pmc parentclass, parrotclass
     parentclass = options['parent']
     if null parentclass goto parent_p6object
+    $I0 = does parentclass, 'array'
+    if $I0 goto parent_array
+    $S0 = typeof parentclass
+    if $S0 == 'String' goto parent_string
     parentclass = self.'get_parrotclass'(parentclass)
-    goto have_parentclass
-  parent_p6object:
-    parentclass = get_class 'P6object'
-  have_parentclass:
-
-    .local pmc parrotclass, attrlist
     parrotclass = subclass parentclass, name
+    goto have_parrotclass
+  parent_string:
+    $S0 = parentclass
+    parentclass = split ' ', $S0
+  parent_array:
+    .local pmc iter
+    parrotclass = new 'Class'
+    parrotclass.'name'(name)
+    iter = new 'Iterator', parentclass
+  parent_loop:
+    unless iter goto have_parrotclass
+    $P0 = shift iter
+    unless $P0 goto parent_loop
+    $P0 = self.'get_parrotclass'($P0)
+    parrotclass.'add_parent'($P0)
+    goto parent_loop
+  parent_p6object:
+    parrotclass = subclass 'P6object', name
+  have_parrotclass:
+    trace 0
+
+    .local pmc attrlist
     attrlist = options['attr']
     if null attrlist goto attr_done
     $I0 = does attrlist, 'array'
@@ -306,7 +327,6 @@ of names separated by spaces.
     $S0 = attrlist
     attrlist = split ' ', $S0
   have_attrlist:
-    .local pmc iter
     iter = new 'Iterator', attrlist
   iter_loop:
     unless iter goto iter_end
