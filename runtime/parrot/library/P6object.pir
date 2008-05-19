@@ -1,3 +1,5 @@
+# $Id$
+
 =head1 NAME
 
 P6object - Perl 6-like methods and metaclasses for Parrot
@@ -420,7 +422,10 @@ Protoobjects are always treated as being undefined.
 .end
 
 
-=item name()
+=item name()  (vtable method)
+
+Have protoobjects return their longname in response to a
+C<typeof_s_p> opcode.
 
 =cut
 
@@ -464,10 +469,6 @@ mailing list or to C< parrotbug@perl.org >.
 =head1 COPYRIGHT
 
 Copyright (C) 2008, The Perl Foundation.
-
-=cut
-
-# $Id$
 
 =cut
 
