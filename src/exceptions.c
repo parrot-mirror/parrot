@@ -164,7 +164,7 @@ PARROT_CANNOT_RETURN_NULL
 PMC*
 new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
 {
-    PMC * const handler = pmc_new(interp, enum_class_Exception_Handler);
+    PMC * const handler = pmc_new(interp, enum_class_ExceptionHandler);
     /*
      * this flag denotes a C exception handler
      */

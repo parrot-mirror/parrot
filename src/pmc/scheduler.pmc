@@ -414,7 +414,7 @@ Delete a handler from the scheduler.
             PMC *handler = VTABLE_get_pmc_keyed_int(INTERP, handlers, index);
             if (!PMC_IS_NULL(handler)) {
                 if (string_equal(INTERP, type, CONST_STRING(INTERP, "exception")) == 0
-                            && handler->vtable->base_type == enum_class_Exception_Handler) {
+                            && handler->vtable->base_type == enum_class_ExceptionHandler) {
                     VTABLE_set_pmc_keyed_int(INTERP, handlers, index, PMCNULL);
                     RETURN(void);
                 }
@@ -506,7 +506,7 @@ If no type argument is passed, count all handlers.
             PMC *handler = VTABLE_get_pmc_keyed_int(INTERP, handlers, index);
             if (!PMC_IS_NULL(handler)) {
                     if (string_equal(INTERP, type, CONST_STRING(INTERP, "exception")) == 0
-                                    && handler->vtable->base_type == enum_class_Exception_Handler)
+                                    && handler->vtable->base_type == enum_class_ExceptionHandler)
                         count++;
                     else if (string_equal(INTERP, type, CONST_STRING(INTERP, "event")) == 0
                                     && handler->vtable->base_type == enum_class_EventHandler)

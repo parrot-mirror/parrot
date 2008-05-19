@@ -18,7 +18,7 @@ t/pmc/exception.t - Exception Handling
 
 =head1 DESCRIPTION
 
-Tests C<Exception> and C<Exception_Handler> PMCs.
+Tests C<Exception> and C<ExceptionHandler> PMCs.
 
 =cut
 
@@ -37,7 +37,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "push_eh - pop_eh, PMC exception handler" );
 .sub main :main
-    $P0 = new "Exception_Handler"
+    $P0 = new "ExceptionHandler"
     set_addr $P0, _handler
     push_eh $P0
     print "ok 1\n"
@@ -70,7 +70,7 @@ OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "push_eh - throw, PMC exception handler" );
     print "main\n"
-    new P20, "Exception_Handler"
+    new P20, "ExceptionHandler"
     set_addr P20, _handler
     push_eh P20
     new P30, 'Exception'
