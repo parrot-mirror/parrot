@@ -369,6 +369,13 @@ Multimethod helper to return the parrotclass for C<x>.
     .return ($P0)
 .end
 
+.sub 'get_parrotclass' :method :multi(_,P6oobject)
+    .param pmc x
+    $P0 = x.'HOW'()
+    $P0 = getattribute $P0, 'parrotclass'
+    .return ($P0)
+.end
+
 .sub 'get_parrotclass' :method :multi(_,String)
     .param pmc x
     $P0 = get_class x
@@ -396,7 +403,7 @@ Returns the "shortname" of the protoobject's class.
 
 .namespace ['P6protoobject']
 
-.sub 'VTABLE_get_string' :vtable('get_string') :method
+.sub 'VTABLE_get_string' :method :vtable('get_string')
     $P0 = self.'HOW'()
     $P1 = getattribute $P0, 'shortname'
     .return ($P1)
@@ -408,7 +415,7 @@ Protoobjects are always treated as being undefined.
 
 =cut
 
-.sub 'VTABLE_defined' :vtable('defined') :method
+.sub 'VTABLE_defined' :method :vtable('defined')
     .return (0)
 .end
 
@@ -417,7 +424,7 @@ Protoobjects are always treated as being undefined.
 
 =cut
 
-.sub 'VTABLE_name' :vtable('name') :method
+.sub 'VTABLE_name' :method :vtable('name')
     $P0 = self.'HOW'()
     $P1 = getattribute $P0, 'longname'
     .return ($P1)

@@ -26,7 +26,7 @@ t/library/p6object.t -- P6object tests
 
     ##  set our plan
     .local int plan_tests
-    plan(92)
+    plan(95)
 
     ##  make sure we can load the P6object library
     push_eh load_failed
@@ -256,6 +256,14 @@ t/library/p6object.t -- P6object tests
     $I0 = isa mno, 'P6protoobject'
     nok($I0, 'MNO object not isa P6protoobject')
 
+    ##  create a subclass from a protoobject reference
+    .local pmc pqrproto, pqr
+    metaproto.'new_class'('PQR', 'parent'=>mnoproto)
+    pqrproto = get_hll_global 'PQR'
+    isa_ok(pqrproto, 'PQR', 'PQR proto')
+    isa_ok(pqrproto, 'MNO', 'PQR proto')
+    isa_ok(pqrproto, 'Float', 'PQR proto')
+
     ##  use the :name option to set a class name
     .local pmc p6objproto, p6obj
     metaproto.'new_class'('Perl6Object', 'name'=>'Object')
@@ -273,6 +281,7 @@ t/library/p6object.t -- P6object tests
     $P0 = p6obj.'WHAT'()
     $I0 = issame $P0, p6objproto
     ok($I0, 'obj.WHAT =:= Object.WHAT')
+
 
     .return ()
   load_failed:
