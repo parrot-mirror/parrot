@@ -249,6 +249,7 @@ from the list.
 */
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_cx_peek_task(PARROT_INTERP)
 {
