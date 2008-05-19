@@ -4,7 +4,7 @@ $Id$
 
 =head1 NAME
 
-src/pmc/exception_handler.pmc - Exception Handler PMC
+src/pmc/exceptionhandler.pmc - Exception Handler PMC
 
 =head1 DESCRIPTION
 
@@ -37,7 +37,7 @@ pass_exception_args(PARROT_INTERP, const char *sig,
     return next;
 }
 
-pmclass Exception_Handler extends Continuation need_ext {
+pmclass ExceptionHandler extends Continuation need_ext {
 
 /*
 
@@ -64,7 +64,7 @@ Initializes the exception handler.
      * can't reuse Continuation's destroy yet -
      * RT#46703 fix ref_count handling for exception_handlers first
      *
-     * An Exception_Handler is kind of a limited Continuation
+     * An ExceptionHandler is kind of a limited Continuation
      * (can only call 'up the stack').  Therefore we probably don't
      * have to convert all RetContinuations to real Continuations
      */

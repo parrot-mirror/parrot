@@ -750,7 +750,7 @@ return; C<1> means an exception has been raised.
 =cut
 
 inline op push_eh(labelconst INT) {
-    PMC * const eh = pmc_new(interp, enum_class_Exception_Handler);
+    PMC * const eh = pmc_new(interp, enum_class_ExceptionHandler);
     VTABLE_set_pointer(interp, eh, CUR_OPCODE + $1);
     Parrot_cx_add_handler(interp, eh);
 }

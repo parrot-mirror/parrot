@@ -1864,7 +1864,7 @@ called.
 An extension of C<Sub> that provides dynamic code evaluation and
 execution.
 
-=item Exception_Handler
+=item ExceptionHandler
 
 A code object for handling exceptions.
 

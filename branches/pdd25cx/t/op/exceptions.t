@@ -18,7 +18,7 @@ t/pmc/exception.t - Exception Handling
 
 =head1 DESCRIPTION
 
-Tests C<Exception> and C<Exception_Handler> PMCs.
+Tests C<Exception> and C<ExceptionHandler> PMCs.
 
 =cut
 
@@ -36,7 +36,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "push_eh eh - pop_eh" );
-    new P29, 'Exception_Handler'
+    new P29, 'ExceptionHandler'
     push_eh P29
     print "ok 1\n"
     pop_eh
@@ -64,7 +64,7 @@ OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "push_eh eh - throw" );
     print "main\n"
-    new P29, 'Exception_Handler'
+    new P29, 'ExceptionHandler'
     set_addr P29, _handler
     push_eh P29
     new P30, 'Exception'
