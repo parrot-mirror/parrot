@@ -158,8 +158,10 @@ needed for compiling regexes.
 .sub '__onload' :load
     .local pmc optable
 
-    $P0 = subclass 'PGE::Exp::Subrule', 'PGE::Exp::WS'
-    $P0 = subclass 'PGE::Exp', 'PGE::Exp::Alias'
+    .local pmc p6meta
+    p6meta = get_hll_global 'P6metaclass'
+    p6meta.'new_class'('PGE::Exp::WS', 'parent'=>'PGE::Exp::Subrule')
+    p6meta.'new_class'('PGE::Exp::Alias', 'parent'=>'PGE::Exp')
 
     optable = new 'PGE::OPTable'
     set_global '$optable', optable
