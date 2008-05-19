@@ -313,8 +313,7 @@ of names separated by spaces.
     parentclass = split ' ', $S0
   parent_array:
     .local pmc iter
-    parrotclass = new 'Class'
-    parrotclass.'name'(name)
+    parrotclass = newclass name
     iter = new 'Iterator', parentclass
   parent_loop:
     unless iter goto have_parrotclass
@@ -397,7 +396,7 @@ Returns the "shortname" of the protoobject's class.
 
 .namespace ['P6protoobject']
 
-.sub 'get_string' :vtable :method
+.sub 'VTABLE_get_string' :vtable('get_string') :method
     $P0 = self.'HOW'()
     $P1 = getattribute $P0, 'shortname'
     .return ($P1)
@@ -409,9 +408,21 @@ Protoobjects are always treated as being undefined.
 
 =cut
 
-.sub 'defined' :vtable :method
+.sub 'VTABLE_defined' :vtable('defined') :method
     .return (0)
 .end
+
+
+=item name()
+
+=cut
+
+.sub 'VTABLE_name' :vtable('name') :method
+    $P0 = self.'HOW'()
+    $P1 = getattribute $P0, 'longname'
+    .return ($P1)
+.end
+
 
 =item new()
 

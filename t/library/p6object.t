@@ -26,7 +26,7 @@ t/library/p6object.t -- P6object tests
 
     ##  set our plan
     .local int plan_tests
-    plan(87)
+    plan(92)
 
     ##  make sure we can load the P6object library
     push_eh load_failed
@@ -42,8 +42,10 @@ t/library/p6object.t -- P6object tests
     $P0 = metaproto.'WHAT'()
     $I0 = issame metaproto, $P0
     ok($I0, 'P6metaclass.WHAT identity')
-    $S0 = $P0
+    $S0 = metaproto
     is($S0, 'P6metaclass', 'P6metaclass.WHAT eq "P6metaclass"')
+    $S0 = typeof metaproto
+    is($S0, 'P6metaclass', 'typeof P6metaclass proto eq "P6metaclass"')
     $P0 = metaproto.'HOW'()
     isa_ok($P0, 'P6metaclass', 'P6metaclass.HOW()')
     $I0 = defined metaproto
@@ -62,6 +64,8 @@ t/library/p6object.t -- P6object tests
     ok($I0, 'Hash proto .WHAT identity')
     $S0 = hashproto
     is($S0, 'Hash', 'Hash.WHAT eq "Hash"')
+    $S0 = typeof hashproto
+    is($S0, 'Hash', 'typeof Hash proto eq "Hash"')
     $P0 = hashproto.'HOW'()
     isa_ok($P0, 'P6metaclass', 'Hash proto .HOW')
     $I0 = defined metaproto
@@ -79,6 +83,8 @@ t/library/p6object.t -- P6object tests
     $P0 = typeof hash
     $S0 = typeof $P0
     is($S0, 'PMCProxy', 'hash object class is PMCProxy')
+    $S0 = typeof hash
+    is($S0, 'Hash', 'typeof hash object eq "Hash"')
     $P0 = hash.'WHAT'()
     $I0 = issame hashproto, $P0
     ok($I0, 'hash object .WHAT =:= Hash proto')
@@ -105,6 +111,8 @@ t/library/p6object.t -- P6object tests
     ok($I0, 'ABC proto .WHAT identity')
     $S0 = abcproto
     is($S0, 'ABC', 'ABC.WHAT eq "ABC"')
+    $S0 = typeof abcproto
+    is($S0, 'ABC', 'typeof ABC proto eq "ABC"')
     $P0 = hashproto.'HOW'()
     isa_ok($P0, 'P6metaclass', 'ABC proto .HOW')
     $I0 = defined metaproto
@@ -120,6 +128,8 @@ t/library/p6object.t -- P6object tests
     $P0 = abc.'WHAT'()
     $I0 = issame abcproto, $P0
     ok($I0, 'abc object .WHAT =:= ABC proto')
+    $S0 = typeof $P0
+    is($S0, 'ABC', 'typeof ABC object eq "ABC"')
     $P0 = abc.'HOW'()
     $P1 = abcproto.'HOW'()
     $I0 = issame $P0, $P1
