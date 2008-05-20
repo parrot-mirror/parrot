@@ -154,8 +154,19 @@ method member_variable($/) {
 }
 
 method indexed_variable($/) {
-    make $( $<primary> );
-    # XXX fix index
+    my $var := $( $<primary> );
+    my $args;
+    if $<args> {
+        $args := $( $<args>[0] );
+    }
+
+    my $past := PAST::Var.new( :scope('keyed'), :node($/) );
+    $past.push($var);
+    while $args[0] {
+        $past.push( $args.shift() );
+    }
+
+    make $past;
 }
 
 method variable($/, $key) {
@@ -328,15 +339,31 @@ method command($/, $key) {
 
 method call($/) {
     my $op := $<operation>;
-    my $past := $( $<call_args> );
+    my $past;
+    if $<call_args> {
+        $past := $( $<call_args> );
+    }
+    else {
+        $past := PAST::Op.new();
+    }
 
     if $<primary> {
         my $invocant := $( $<primary>[0] );
         # XXX what's the diff. between "." and "::", in $<op>[0] ?
         $past.unshift($invocant);
+        $past.pasttype('callmethod');
+    }
+
+    if $<do_block> {
+        $past.push( $( $<do_block>[0] ) );
     }
 
     $past.name(~$op);
+    make $past;
+}
+
+method do_block($/) {
+    my $past := $( $<comp_stmt> );
     make $past;
 }
 
@@ -355,7 +382,26 @@ method operation($/) {
 }
 
 method call_args($/) {
-    make $( $<args> );
+    if ~$/ ne '()' {
+        make $( $<args> );
+    }
+    else {
+        make PAST::Op.new( :pasttype('call'), :node($/) );
+    }
+}
+
+method do_args($/) {
+    my $params := PAST::Stmts.new( :node($/) );
+    my $past := PAST::Block.new($params, :blocktype('declaration'));
+    for $<identifier> {
+        my $parameter := $( $_ );
+        $past.symbol($parameter.name(), :scope('lexical'));
+        $parameter.scope('parameter');
+        $params.push($parameter);
+    }
+    $params.arity( +$<identifier> );
+    our $?BLOCK_SIGNATURED := $past;
+    make $past;
 }
 
 method args($/) {
@@ -392,7 +438,8 @@ method scope_identifier($/) {
 }
 
 method literal($/, $key) {
-    make $( $/{$key} );
+    my $past := $( $/{$key} );
+    make $past;
 }
 
 method pcomp_stmt($/) {
@@ -403,7 +450,7 @@ method array($/) {
     my $past;
     ## XXX the "new" method should be invoked on the "Array" class (use get_class)
     ## but that doesn't work yet.
-    my $getclass := PAST::Op.new( :inline('    %r = new "Array"'), :node($/) );
+    my $getclass := PAST::Op.new( :inline('    %r = new "CardinalArray"'), :node($/) );
     if $<args> {
         $past := $( $<args>[0] );
         $past.unshift( $getclass );
@@ -440,11 +487,11 @@ method float($/) {
 }
 
 method integer($/) {
-    make PAST::Val.new( :value( ~$/ ), :returns('Integer'), :node($/) );
+    make PAST::Val.new( :value( ~$/ ), :returns('CardinalInteger'), :node($/) );
 }
 
 method string($/) {
-    make PAST::Val.new( :value( $($<string_literal>) ), :node($/) );
+    make PAST::Val.new( :value( ~$<string_literal> ), :returns('CardinalString'), :node($/) );
 }
 
 

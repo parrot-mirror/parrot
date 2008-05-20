@@ -212,7 +212,7 @@ Treats the list as a stack, popping the last item off the list and returning it.
     goto done
 
   empty:
-    x = undef()
+    x = new 'Undef'
     goto done
 
   done:
@@ -332,7 +332,7 @@ Deletes the given elements from the List, replacing them with Undef.  Returns a 
     .local int len
     .local int i
 
-    newelem = undef()
+    newelem = new 'Undef'
     res = new 'List'
 
     # Index of the last element in the array
@@ -510,6 +510,41 @@ Checks to see if the specified index or indices have been assigned to.  Returns 
     .return(retv)
 .end
 
+=item reduce(...)
+
+=cut
+
+.sub reduce :method
+    .param pmc test
+    .local pmc retv
+    .local pmc block
+    .local pmc block_arg
+    .local int narg
+    .local int i
+
+    narg = elements self
+    if narg == 0 goto empty
+    retv = self[0]
+    i = 1
+
+  loop:
+    if i >= narg goto done
+
+    newclosure block, test
+    block_arg = self[i]
+    retv = block(retv, block_arg)
+
+    inc i
+    goto loop
+
+  empty:
+    retv = new 'Undef'
+    goto done
+
+  done:
+    .return(retv)
+.end
+
 =item first(...)
 
 =cut
@@ -548,6 +583,52 @@ Checks to see if the specified index or indices have been assigned to.  Returns 
 
   done:
     .return(retv)
+.end
+
+=item uniq(...)
+
+=cut
+
+.sub uniq :method
+    .local pmc ulist
+    .local pmc key
+    .local pmc val
+    .local pmc uval
+    .local int len
+    .local int i
+    .local int ulen
+    .local int ui
+
+    ulist = new 'List'
+    len = elements self
+    i = 0
+
+  loop:
+    if i == len goto done
+
+    val = self[i]
+
+    ui = 0
+    ulen = elements ulist
+    inner_loop:
+        if ui == ulen goto inner_loop_done
+
+        uval = ulist[ui]
+        if uval == val goto found
+
+        inc ui
+        goto inner_loop
+    inner_loop_done:
+
+    ulist.'push'(val)
+
+    found:
+
+    inc i
+    goto loop
+
+  done:
+    .return(ulist)
 .end
 
 =back
@@ -758,7 +839,7 @@ The min operator.
     .local int elems
     elems = elements args
     if elems > 0 goto have_args
-    $P0 = undef()
+    $P0 = new 'Undef'
     .return($P0)
 have_args:
 
@@ -795,7 +876,7 @@ The max operator.
     .local int elems
     elems = elements args
     if elems > 0 goto have_args
-    $P0 = undef()
+    $P0 = new 'Undef'
     .return($P0)
 have_args:
 
@@ -916,11 +997,25 @@ Returns the elements of LIST in the opposite order.
     .return list.'grep'(test)
 .end
 
+.sub reduce :multi(_,'List')
+    .param pmc test
+    .param pmc list
+
+    .return list.'reduce'(test)
+.end
+
+
 .sub first :multi(_,'List')
     .param pmc test
     .param pmc list :slurpy
 
     .return list.'first'(test)
+.end
+
+.sub uniq :multi('List')
+    .param pmc list
+
+    .return list.'uniq'()
 .end
 
 ## TODO: join map reduce sort zip

@@ -1,11 +1,47 @@
 # $Id$
 
+- Specification
+  + updated and launched pdd28_strings.pod
+  + updated pdd19_pir.pod
 - Implementation
+  + added implementation of Rational PMC.
+  + simplified ops control flow syntax
+  + enabled backtrace on non-glibc platforms too
+  + improved some PIR error reporting
   + removed user stack opcodes
     (save, restore, lookback, entrytype, depth, rotate_up)
     (NOTE: This was scheduled to occur after 0.7.0, moved up to this release)
-  + removed register stack, saveall & restoreall opcodes
-  + Add implementation of Rational PMC.
+  + removed register stack, saveall, and restoreall opcodes
+  + removed various deprecated features and unused code
+- Languages
+  + Amber: retired
+  + C99: grammar updated
+  + Cardinal: resurrected, method calls and do blocks work now
+  + Eclectus: use NQP as PAST generating code
+  + Lua:
+    - added big number library
+    - updated to match PGE changes
+    - added a bytecode disassembler & a Lua 5.1 VM bytecode translator
+  + Pheme: updated to match PGE/PCT changes
+  + Plumhead:
+    - use NQP as PAST generating code
+    - use riaxpander for macro expansion
+  + Rakudo: roadmap updated
+  + Squaak: added to repository
+  + TAP: retired
+- Compilers
+  + PGE: updated to match Synopsis 5, deprecated features removed
+  + PCT: updated
+- Configuration
+  + added step auto::opengl
+  + added step gen::opengl
+  + added step gen::call_list
+- Miscellaneous
+  + still more optimizations and performance improvements, especially in GC
+  + new libraries: OpenGL/GLU/GLUT bindings (small subset working)
+  + new dump_pbc.pl utility: PBC disassembly/source code weaver
+  + improved C++ compiler support
+  + optimized builds work again
 
 
 New in 0.6.1
