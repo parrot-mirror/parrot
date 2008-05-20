@@ -576,10 +576,11 @@ exit_fatal(int exitcode, ARGIN(const char *format), ...)
     exit(exitcode);
 }
 
-/* Panic handler */
+/* The DUMPCORE macro is defined for most platforms, but defined here if not
+ * found elsewhere, so we're sure it's safe to call. */
 
-#ifndef dumpcore
-#  define dumpcore() \
+#ifndef DUMPCORE
+#  define DUMPCORE() \
      fprintf(stderr, "Sorry, coredump is not yet implemented " \
              "for this platform.\n\n"); \
              exit(EXIT_FAILURE);
