@@ -634,7 +634,7 @@ describe them as well.\n\n");
     fprintf(stderr, "Exceptions  : %s\n", "(missing from core)");
     fprintf(stderr, "\nDumping Core...\n");
 
-    dumpcore();
+    DUMPCORE();
 }
 
 
