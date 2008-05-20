@@ -413,7 +413,7 @@ exit_code.
                 if (self_compare == value_compare) {
                     GET_ATTR_exit_code(interp, SELF, self_compare);
                     GET_ATTR_exit_code(interp, value, value_compare);
-                    if (self_compare == value_compare) 
+                    if (self_compare == value_compare)
                         return 1;
                 }
             }
