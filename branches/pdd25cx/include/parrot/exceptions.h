@@ -115,13 +115,6 @@ void exit_fatal(int exitcode, ARGIN(const char *format), ...)
         __attribute__nonnull__(2);
 
 PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC* new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
 PARROT_DOES_NOT_RETURN_WHEN_FALSE
 void Parrot_assert(
     INTVAL condition,
@@ -137,6 +130,11 @@ void Parrot_confess(
     ARGIN(const char *cond),
     ARGIN(const char *file),
     unsigned int line)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+void Parrot_ex_add_c_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -192,11 +190,6 @@ PARROT_CAN_RETURN_NULL
 opcode_t * Parrot_ex_throw_from_op(PARROT_INTERP,
     ARGIN(PMC *exception),
     SHIM(void *dest))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
-void push_new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

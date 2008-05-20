@@ -470,7 +470,7 @@ thread_func(ARGIN_NULLOK(void *arg))
     }
     else {
         /* run normally */
-        push_new_c_exception_handler(interp, &jump_point);
+        Parrot_ex_add_c_handler(interp, &jump_point);
         Parrot_unblock_DOD(interp);
         Parrot_unblock_GC(interp);
         ret_val = Parrot_runops_fromc_args(interp, sub, "PF", sub_arg);

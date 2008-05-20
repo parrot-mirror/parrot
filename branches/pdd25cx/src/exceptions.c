@@ -148,36 +148,11 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
 
 /*
 
-=item C<PMC* new_c_exception_handler>
+=item C<void Parrot_ex_add_c_handler>
 
-Generate an exception handler, that catches PASM level exceptions inside
-a C function. This could be a separate class too, for now just a private
-flag bit is set.
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC*
-new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
-{
-    PMC * const handler = pmc_new(interp, enum_class_ExceptionHandler);
-    /*
-     * this flag denotes a C exception handler
-     */
-    PObj_get_FLAGS(handler) |= SUB_FLAG_C_HANDLER;
-    VTABLE_set_pointer(interp, handler, jp);
-    return handler;
-}
-
-/*
-
-=item C<void push_new_c_exception_handler>
-
-Pushes an new C exception handler onto the stack.
+Adds a new exception handler (defined in C) to the concurrency scheduler. Since
+the exception handler is C code, it stores a runloop jump point to the start of
+the handler code.
 
 =cut
 
@@ -185,9 +160,13 @@ Pushes an new C exception handler onto the stack.
 
 PARROT_API
 void
-push_new_c_exception_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
+Parrot_ex_add_c_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
 {
-    Parrot_cx_add_handler(interp, new_c_exception_handler(interp, jp));
+    PMC * const handler = pmc_new(interp, enum_class_ExceptionHandler);
+    /* Flag to mark a C exception handler */
+    PObj_get_FLAGS(handler) |= SUB_FLAG_C_HANDLER;
+    VTABLE_set_pointer(interp, handler, jp);
+    Parrot_cx_add_handler(interp, handler);
 }
 
 /*

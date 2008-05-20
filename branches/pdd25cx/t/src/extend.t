@@ -524,7 +524,7 @@ the_test(Parrot_Interp interp, opcode_t *cur_op, opcode_t *start)
         /* pretend the EH was pushed by the sub call. */
         interp->current_runloop_id++;
 
-        push_new_c_exception_handler(interp, &jump_point);
+        Parrot_ex_add_c_handler(interp, &jump_point);
         Parrot_call_sub(interp, sub, "v");
     }
 
