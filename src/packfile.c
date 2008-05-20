@@ -154,7 +154,9 @@ static const opcode_t * directory_unpack(PARROT_INTERP,
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static PMC* do_1_sub_pragma(PARROT_INTERP, ARGMOD(PMC *sub_pmc), pbc_action_enum_t action)
+static PMC* do_1_sub_pragma(PARROT_INTERP,
+    ARGMOD(PMC *sub_pmc),
+    pbc_action_enum_t action)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*sub_pmc);
@@ -309,7 +311,9 @@ static void sort_segs(ARGMOD(PackFile_Directory *dir))
         __attribute__nonnull__(1)
         FUNC_MODIFIES(*dir);
 
-static int sub_pragma(PARROT_INTERP, pbc_action_enum_t action, ARGIN(const PMC *sub_pmc))
+static int sub_pragma(PARROT_INTERP,
+    pbc_action_enum_t action,
+    ARGIN(const PMC *sub_pmc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 

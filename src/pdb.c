@@ -227,7 +227,7 @@ PDB_run_code(Parrot_Interp interp, int argc, const char *argv[])
         return;
     }
 
-    push_new_c_exception_handler(interp, &jump_point);
+    Parrot_ex_add_c_handler(interp, &jump_point);
 
     Parrot_runcode(interp, argc - 1, argv + 1);
 }
