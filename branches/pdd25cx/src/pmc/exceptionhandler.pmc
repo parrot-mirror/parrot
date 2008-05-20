@@ -135,7 +135,8 @@ Report whether the exception handler can handle a particular type of exception.
 */
 
     METHOD can_handle(PMC *exception) {
-        if (exception->vtable->base_type == enum_class_Exception) {
+        if (exception->vtable->base_type == enum_class_Exception
+                || VTABLE_isa(INTERP, exception, CONST_STRING(INTERP, "Exception"))) {
                 RETURN(INTVAL 1);
         }
 
