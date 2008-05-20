@@ -67,6 +67,15 @@
     .return ($I0)
 .end
 
+.sub 'prefix:-' :multi(PMC)
+    .param pmc a
+
+    $N0 = a
+    $N0 = neg $N0
+
+    .return ($N0)
+.end
+
 
 .sub 'infix:+&'
     .param int a
@@ -193,9 +202,11 @@
     .param pmc a
     .param pmc b
 
-    $P0 = concat a, b
+    .local pmc c
+    c = new 'String'
+    c = concat a, b
 
-    .return ($P0)
+    .return (c)
 .end
 
 .sub 'infix:.' :multi( PMC, String )
@@ -203,7 +214,7 @@
     .param string b
 
     .local pmc c
-    c = new .String
+    c = new 'String'
     c = concat a, b
     #c = 'multi PMC, String'
 
@@ -220,10 +231,13 @@
     .param string a
     .param pmc b
 
-    # $P0 = concat a, b
-    $P0 = 'multi String, PMC'
+    .local pmc c, d
+    c = new 'String'
+    c = a
+    d = new 'String'
+    d = concat c, b
 
-    .return ($P0)
+    .return (d)
 .end
 
 .sub 'infix:|'

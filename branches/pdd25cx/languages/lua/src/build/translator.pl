@@ -192,7 +192,7 @@ sub validate_rule {
                 die "Invalid value for $key in rule $name\n";
             }
         }
-        elsif ( $key eq 'instruction' ) {
+        elsif ( $key eq 'synopsis' ) {
 
             # always fine
         }
@@ -240,25 +240,46 @@ sub generate_initial_code {
     $mv->{PC}     = 'pc';
     $mv->{NEXTPC} = 'next_pc';
     $mv->{SUBR}   = 'subr';
-    $mv->{GLOB}   = 'glob';
+    $mv->{GLOB}   = 'env';
     $mv->{REG}    = 'loc_';
     $mv->{K}      = 'k_';
     $mv->{A}      = 'arg_a';
     $mv->{B}      = 'arg_b';
     $mv->{C}      = 'arg_c';
+    $mv->{BITRK}  = '0x00000100';
+    $mv->{MASKRK} = '0x000000ff';
+    $mv->{FPF}    = '50';
+    $mv->{STACK}  = 'stack';
+    $mv->{FCT}    = 'func';
+    $mv->{FNAME}  = 'funcname';
+    $mv->{PROTO}  = 'f_';
+    $mv->{UPVAL}  = 'upval';
+    $mv->{NUPS}   = 'nups';
+    $mv->{CLOSURE}= 'closure';
+    $mv->{LEX}    = 'lex';
 
     # Emit the dumper.
     my $pir = <<'PIRCODE';
 .sub 'translate' :method
     .param pmc func
+    .param string funcname
     .local string gen_pir
     .local int pc, next_pc, bc_length, cur_ic, cur_op
     .local int arg_a
     .local int arg_b
     .local int arg_c
+    .local int stack
+    .local int nups
+    .local int upval
+    .local pmc closure
+    .local pmc lex
 
     bc_length = self
     next_pc = 0
+    stack = 0
+    nups = 0
+    upval = 0
+    new lex, 'Hash'
 
 PIRCODE
 
@@ -428,12 +449,13 @@ sub generate_rule_code {
   BDISPATCH_$rule->{name}:
     # Translation code for $rule->{name} ($rule->{code})
     gen_pir = concat "  # $rule->{name}\\n"
+### arguments (format $rule->{format})
 PIRCODE
 
     # Emit code to read arguments for the op.
     if ($rule->{format} =~ /^A/) {
         $pir .= "    arg_a = cur_ic >> 6\n";
-        $pir .= "    arg_a &= 0x00ff\n";
+        $pir .= "    arg_a &= 0x000000ff\n";
     }
 
     if ($rule->{format} =~ /sBx$/) {
@@ -445,12 +467,12 @@ PIRCODE
     }
     elsif ($rule->{format} =~ /B/) {
         $pir .= "    arg_b = cur_ic >> 23\n";
-        $pir .= "    arg_b &= 0x01ff\n";
+        $pir .= "    arg_b &= 0x000001ff\n";
     }
 
     if ($rule->{format} =~ /C$/) {
         $pir .= "    arg_c = cur_ic >> 14\n";
-        $pir .= "    arg_c &= 0x01ff\n";
+        $pir .= "    arg_c &= 0x000001ff\n";
     }
 
     $pir .= translation_code( $rule, $mv );
@@ -473,6 +495,9 @@ sub translation_code {
     # If we have PIR for the instruction, just take that. If not, we need
     # to generate it from the "to generate" instruction directive.
     my $pir = "### translation\n";
+    if ($rule->{synopsis}) {
+        $pir .= "    # $rule->{synopsis}\n";
+    }
     if ( $rule->{pir} ) {
         $pir .= sub_meta( $rule->{pir}, $mv, "pir for rule $rule->{name}" );
     }
@@ -502,7 +527,7 @@ PIRCODE
 
     if ($rule->{format} =~ /^A/) {
         $pir .= "    arg_a = cur_ic >> 6\n";
-        $pir .= "    arg_a &= 0x00ff\n";
+        $pir .= "    arg_a &= 0x000000ff\n";
         $pir .= "    push args, arg_a\n";
     }
 
@@ -517,13 +542,13 @@ PIRCODE
     }
     elsif ($rule->{format} =~ /B/) {
         $pir .= "    arg_b = cur_ic >> 23\n";
-        $pir .= "    arg_b &= 0x01ff\n";
+        $pir .= "    arg_b &= 0x000001ff\n";
         $pir .= "    push args, arg_b\n";
     }
 
     if ($rule->{format} =~ /C$/) {
         $pir .= "    arg_c = cur_ic >> 14\n";
-        $pir .= "    arg_c &= 0x01ff\n";
+        $pir .= "    arg_c &= 0x000001ff\n";
         $pir .= "    push args, arg_c\n";
     }
 

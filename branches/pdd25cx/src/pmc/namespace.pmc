@@ -842,8 +842,7 @@ NOTE: exporting 'default' set of items is not yet implemented.
 
                 if (PMC_IS_NULL(object))
                     Parrot_ex_throw_from_c_args(interp, NULL, 0,
-                        "object '%s' not found in current namespace",
-                        string_to_cstring(interp, src_name));
+                        "object '%Ss' not found in current namespace", src_name);
 
                 VTABLE_set_pmc_keyed_str(interp, dest, dest_name, object);
             }
@@ -864,8 +863,7 @@ NOTE: exporting 'default' set of items is not yet implemented.
 
                 if (PMC_IS_NULL(object))
                     Parrot_ex_throw_from_c_args(interp, NULL, 0,
-                        "object '%s' not found in current namespace",
-                        string_to_cstring(interp, name));
+                        "object '%Ss' not found in current namespace", name);
 
                 VTABLE_set_pmc_keyed_str(interp, dest, name, object);
             }

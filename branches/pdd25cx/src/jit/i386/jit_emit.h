@@ -228,7 +228,7 @@ emit_r_X(PARROT_INTERP, char *pc, int reg_opcode, int base, int i, int scale, lo
     }
 
     /* modrm disp32 */
-    if (!base && !(i && scale) && (!emit_is8bit(disp) || 1)) {
+    if (!base && !(i && scale)) {
         *(pc++) = (char)(emit_Mod_b00 | reg_opcode | emit_rm_b101);
         *(long *)pc = disp;
 #if EXEC_CAPABLE
@@ -3866,7 +3866,9 @@ preg:
                         REG_OFFS_STR(count_regs(interp, sig, signature->strstart)));
                 emitm_pushl_r(pc, emit_EAX);
                 emitm_pushl_r(pc, emit_EBX);
-                emitm_calll(pc, (char*)string_to_cstring - pc - 4);
+
+                /* this leaks horribly */
+                emitm_calll(pc, (char *)string_to_cstring - pc - 4);
                 emitm_addb_i_r(pc, 8, emit_ESP);
                 emitm_pushl_r(pc, emit_EAX);
                 break;

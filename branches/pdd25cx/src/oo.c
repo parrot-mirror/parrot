@@ -97,20 +97,6 @@ static void invalidate_all_caches(PARROT_INTERP)
 static void invalidate_type_caches(PARROT_INTERP, UINTVAL type)
         __attribute__nonnull__(1);
 
-static void parrot_class_register(PARROT_INTERP,
-    ARGIN(PMC *name),
-    ARGIN(PMC *new_class),
-    ARGIN_NULLOK(PMC *parent),
-    ARGIN(PMC *mro))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(5);
-
-static void rebuild_attrib_stuff(PARROT_INTERP, ARGIN(PMC *_class))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -506,89 +492,6 @@ readable_name(PARROT_INTERP, ARGIN(PMC *name))
 
 /*
 
-=item C<static void rebuild_attrib_stuff>
-
-Take the class and completely rebuild the attribute stuff for
-it. Horribly destructive, and definitely not a good thing to do if
-there are instantiated objects for the class
-
-=cut
-
-*/
-
-static void
-rebuild_attrib_stuff(PARROT_INTERP, ARGIN(PMC *_class))
-{
-    INTVAL    attr_count, cur_offset, n_class, n_mro, offset;
-    PMC      *attr_offset_hash, *mro, *attribs;
-    SLOTTYPE *class_slots;
-
-#ifndef NDEBUG
-    PMC * const orig_class = _class;
-#endif
-
-    /* attrib count isn't set yet, a GC caused by concat could
-     * corrupt data under construction */
-    Parrot_block_DOD(interp);
-
-    class_slots      = PMC_data_typed(_class, SLOTTYPE *);
-    attr_offset_hash = pmc_new(interp, enum_class_Hash);
-    set_attrib_num(_class, class_slots, PCD_ATTRIBUTES, attr_offset_hash);
-
-    mro   = _class->vtable->mro;
-    n_mro = VTABLE_elements(interp, mro);
-
-    /* walk from oldest parent down to n_class == 0 which is this class */
-    cur_offset = 0;
-
-    for (n_class = n_mro - 1; n_class >= 0; --n_class) {
-        STRING *classname;
-
-        _class = VTABLE_get_pmc_keyed_int(interp, mro, n_class);
-
-        /* this Class isa PMC - no attributes there */
-        if (!PObj_is_class_TEST(_class))
-            continue;
-
-        class_slots = PMC_data_typed(_class, SLOTTYPE *);
-        classname   = VTABLE_get_string(interp,
-                        get_attrib_num(class_slots, PCD_CLASS_NAME));
-        attribs     = get_attrib_num(class_slots, PCD_CLASS_ATTRIBUTES);
-        attr_count  = VTABLE_elements(interp, attribs);
-
-        if (attr_count) {
-            STRING * const partial_name = string_concat(interp, classname,
-                    CONST_STRING(interp, "\0"), 0);
-
-            for (offset = 0; offset < attr_count; offset++) {
-               STRING * const attr_name =
-                    VTABLE_get_string_keyed_int(interp, attribs, offset);
-               STRING * const full_name =
-                    string_concat(interp, partial_name, attr_name, 0);
-
-                /* store this attribute with short and full name */
-
-                VTABLE_set_integer_keyed_str(interp, attr_offset_hash,
-                        attr_name, cur_offset);
-                VTABLE_set_integer_keyed_str(interp, attr_offset_hash,
-                        full_name, cur_offset);
-                cur_offset++;
-            }
-        }
-    }
-
-#ifndef NDEBUG
-    PARROT_ASSERT(_class == orig_class);
-#endif
-
-    /* And note the totals */
-    CLASS_ATTRIB_COUNT(_class) = cur_offset;
-    Parrot_unblock_DOD(interp);
-}
-
-
-/*
-
 =item C<const char* Parrot_MMD_method_name>
 
 Return the method name for the given MMD enum.
@@ -726,9 +629,9 @@ fail_if_type_exists(PARROT_INTERP, ARGIN(PMC *name))
         type = VTABLE_get_integer(interp, type_pmc);
 
     if (type > enum_type_undef)
-        /* RT #46091 get printable name */
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-            "Class %Ss already registered!\n", VTABLE_get_string(interp, name));
+            "Class %Ss already registered!\n",
+            string_escape_string(interp, VTABLE_get_string(interp, name)));
 
     if (type < enum_type_undef)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
@@ -777,125 +680,6 @@ Parrot_oo_register_type(PARROT_INTERP, ARGIN(PMC *name))
     UNLOCK_INTERPRETER(interp);
 
     return type;
-}
-
-
-/*
-
-=item C<static void parrot_class_register>
-
-This is the way to register a new Parrot class as an instantiable
-type. Doing this involves putting it in the class hash, setting its
-vtable so that the C<init> method initializes objects of the class rather than
-the class itself, and adding it to the interpreter's base type table so
-you can create a new C<foo> in PASM like this: C<new Px, foo>.
-
-=cut
-
-*/
-
-static void
-parrot_class_register(PARROT_INTERP, ARGIN(PMC *name),
-        ARGIN(PMC *new_class), ARGIN_NULLOK(PMC *parent), ARGIN(PMC *mro))
-{
-    PMC    *vtable_pmc;
-    const INTVAL new_type = Parrot_oo_register_type(interp, name);
-
-    /* check if we already have a NameSpace */
-    PMC *top = CONTEXT(interp)->current_namespace;
-    PMC *ns  = VTABLE_get_pmc_keyed(interp, top, name);
-
-    /* Build a new vtable for this class
-     * The child class PMC gets the vtable of its parent class or
-     * a ParrotClass vtable
-     */
-    VTABLE *parent_vtable =
-        (parent && PObj_is_class_TEST(parent))
-            ? parent->vtable
-            : new_class->vtable;
-
-    VTABLE *new_vtable = Parrot_clone_vtable(interp, parent_vtable);
-
-    /* Set the vtable's type to the newly allocated type */
-    new_vtable->base_type = new_type;
-
-    /* And cache our class PMC in the vtable so we can find it later */
-    new_vtable->pmc_class = new_class;
-    new_vtable->mro       = mro;
-
-    if (parent_vtable->ro_variant_vtable)
-        new_vtable->ro_variant_vtable =
-            Parrot_clone_vtable(interp, parent_vtable->ro_variant_vtable);
-
-    /* Reset the init method to our instantiation method */
-    new_vtable->init          = Parrot_instantiate_object;
-    new_vtable->init_pmc      = Parrot_instantiate_object_init;
-    new_class->vtable         = new_vtable;
-
-    /* Put our new vtable in the global table */
-    interp->vtables[new_type] = new_vtable;
-
-    /* RT#45979 nested, use current as base ? */
-    if (PMC_IS_NULL(ns)) {
-        /* RT#45983 try HLL namespace too */
-        top = Parrot_get_ctx_HLL_namespace(interp);
-        ns  = VTABLE_get_pmc_keyed(interp, top, name);
-    }
-
-    if (PMC_IS_NULL(ns)) {
-        ns = pmc_new(interp, enum_class_NameSpace);
-        VTABLE_set_pmc_keyed(interp, top, name, ns);
-    }
-
-    /* attach namespace to vtable */
-    new_vtable->_namespace = ns;
-
-    if (new_vtable->ro_variant_vtable) {
-        VTABLE * const ro_vt = new_vtable->ro_variant_vtable;
-
-        ro_vt->base_type  = new_vtable->base_type;
-        ro_vt->pmc_class  = new_vtable->pmc_class;
-        ro_vt->mro        = new_vtable->mro;
-        ro_vt->_namespace = new_vtable->_namespace;
-    }
-
-    /*
-     * prepare object vtable - again that of the parent or
-     * a ParrotObject vtable
-     */
-    if (parent && PObj_is_class_TEST(parent)) {
-        vtable_pmc    =
-            get_attrib_num((SLOTTYPE *)PMC_data(parent), PCD_OBJECT_VTABLE);
-        parent_vtable = (VTABLE *)PMC_struct_val(vtable_pmc);
-    }
-    else
-        parent_vtable = interp->vtables[enum_class_Object];
-
-    new_vtable = Parrot_clone_vtable(interp, parent_vtable);
-
-    if (parent_vtable->ro_variant_vtable)
-        new_vtable->ro_variant_vtable =
-            Parrot_clone_vtable(interp, parent_vtable->ro_variant_vtable);
-
-    new_vtable->base_type = new_type;
-    new_vtable->mro       = mro;
-    new_vtable->pmc_class = new_class;
-
-    set_attrib_num(new_class, (SLOTTYPE*)PMC_data(new_class), PCD_OBJECT_VTABLE,
-            vtable_pmc = constant_pmc_new(interp, enum_class_VtableCache));
-    PMC_struct_val(vtable_pmc) = new_vtable;
-
-    /* attach namespace to object vtable too */
-    new_vtable->_namespace = ns;
-
-    if (new_vtable->ro_variant_vtable) {
-        VTABLE * const ro_vt = new_vtable->ro_variant_vtable;
-
-        ro_vt->base_type  = new_vtable->base_type;
-        ro_vt->pmc_class  = new_vtable->pmc_class;
-        ro_vt->mro        = new_vtable->mro;
-        ro_vt->_namespace = new_vtable->_namespace;
-    }
 }
 
 

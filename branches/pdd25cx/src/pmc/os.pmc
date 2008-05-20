@@ -142,6 +142,7 @@ C<path>.
 
         if (error) {
             const char * const errmsg = strerror(errno);
+            string_cstring_free(cpath);
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
                 errmsg);
         }
