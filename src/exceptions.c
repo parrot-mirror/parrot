@@ -383,7 +383,6 @@ Mark an exception as unhandled, as part of rethrowing it.
 */
 
 PARROT_API
-PARROT_DOES_NOT_RETURN
 void
 Parrot_ex_mark_unhandled(PARROT_INTERP, ARGIN(PMC *exception))
 {
