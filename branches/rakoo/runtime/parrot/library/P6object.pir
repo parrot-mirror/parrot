@@ -553,10 +553,6 @@ Returns a proto-object with an autovivification closure attached to it.
     .local pmc protoclass, res, props, tmp
     protoclass = class self
     res = new protoclass
-    tmp = getattribute self, 'HOW'
-    setattribute res, 'HOW', tmp
-    tmp = getattribute self, 'shortname'
-    setattribute res, 'shortname', tmp
 
     # Attach the WHENCE property.
     props = getattribute self, '%!properties'
