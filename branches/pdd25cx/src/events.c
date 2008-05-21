@@ -1365,7 +1365,7 @@ event_to_exception(PARROT_INTERP, ARGIN(const parrot_event* event))
             break;
         default:
             Parrot_ex_throw_from_c_args(interp, NULL, exit_code,
-                    CONST_STRING(interp, "Caught signal."));
+                    "Caught signal.");
             break;
     }
 }
