@@ -597,6 +597,22 @@ Creates a clone of the object.
         cloned_guts->attrib_store = VTABLE_clone(INTERP, obj->attrib_store);
         PMC_data(cloned)          = cloned_guts;
 
+        /* Some of the attributes may have been the PMCs providing storage for any
+         * PMCs we inherited from; also need to clone those. */
+        if (CLASS_has_alien_parents_TEST(obj->_class)) {
+            /* Locate any PMC parents. */
+            for (i = 0; i < num_classes; i++) {
+                PMC * const cur_class = VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
+                if (cur_class->vtable->base_type == enum_class_PMCProxy) {
+                    /* Clone this PMC too. */
+                    STRING *proxy         = CONST_STRING(interp, "proxy");
+                    VTABLE_set_attr_keyed(interp, cloned, cur_class, proxy,
+                        VTABLE_clone(interp, 
+                            VTABLE_get_attr_keyed(interp, pmc, cur_class, proxy)));
+                }
+            }
+        }
+
         /* And we have ourselves a clone. */
         return cloned;
     }
