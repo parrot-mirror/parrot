@@ -150,12 +150,16 @@ Adds an attribute with the given name to the class.
 
 Create a new object having the same class as the invocant.
 
+=cut
+
 .sub 'new' :method
     .param pmc init_parents :slurpy
     .param pmc init_this    :named :slurpy
 
     # Instantiate.
-    $P0 = self.'HOW'()
+    .local pmc p6meta
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    $P0 = p6meta.get_parrotclass(self)
     $P1 = new $P0
 
     # If this proto object has a WHENCE auto-vivification, we should use
@@ -267,8 +271,9 @@ Return the invocant's auto-vivification closure.
 =cut
 
 .sub 'WHENCE' :method
-    $P0 = self.'WHAT'()
-    $P1 = $P0.'WHENCE'()
+    #$P0 = self.'WHAT'()
+    #$P1 = $P0.'WHENCE'()
+    $P1 = new 'Undef'               # XXX disabling WHENCE for now
     .return ($P1)
 .end
 
