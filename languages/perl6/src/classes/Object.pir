@@ -204,7 +204,7 @@ Create a new object having the same class as the invocant.
     cur_ip = shift ip_iter
 
     # We will check if their HOW matches.
-    $P2 = cur_ip.'HOW'()
+    $P2 = p6meta.'get_parrotclass'(cur_ip)
     eq_addr cur_class, $P2, found_parent_init
 
     goto found_init_attribs
@@ -263,7 +263,6 @@ set_attrib_eh:
     .return ($P1)
 .end
 
-
 =item WHENCE()
 
 Return the invocant's auto-vivification closure.
@@ -271,9 +270,8 @@ Return the invocant's auto-vivification closure.
 =cut
 
 .sub 'WHENCE' :method
-    #$P0 = self.'WHAT'()
-    #$P1 = $P0.'WHENCE'()
-    $P1 = new 'Undef'               # XXX disabling WHENCE for now
+    $P0 = self.'WHAT'()
+    $P1 = $P0.'WHENCE'()
     .return ($P1)
 .end
 
