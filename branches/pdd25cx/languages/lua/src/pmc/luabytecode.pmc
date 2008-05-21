@@ -162,7 +162,7 @@ static void _load_header(Interp *interp)
     _get_block(header, sizeof header);
 
     if (memcmp(header, header_ref, sizeof header) != 0)
-        Parrot_ex_throw_from_c_args(interp, NULL, ILL_INHERIT, "bad header");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT, "bad header");
 
 #if 1
     fp -= 8;
@@ -232,7 +232,7 @@ static PMC* _load_constant_list(Interp *interp)
             VTABLE_set_string_native(interp, k, _get_string(interp));
             break;
         default:
-            Parrot_ex_throw_from_c_args(interp, NULL, ILL_INHERIT, "bad constant");
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT, "bad constant");
         }
         VTABLE_set_pmc_keyed_int(interp, ret, i, k);
     }
