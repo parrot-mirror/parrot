@@ -301,8 +301,10 @@ typedef struct _context_mem {
 
 typedef struct parrot_runloop_t {
     Parrot_jump_buff resume;     /* jmp_buf */
-    struct parrot_jump_point_t *prev; /* interpreter's runloop jump buffer stack */
-} Parrot_runloop;
+    struct parrot_runloop_t *prev; /* interpreter's runloop jump buffer stack */
+} parrot_runloop_t;
+
+typedef parrot_runloop_t Parrot_runloop;
 
 
 struct _handler_node_t; /* forward def - exit.h */
