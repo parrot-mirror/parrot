@@ -877,7 +877,7 @@ method postcircumfix($/, $key) {
         $past := PAST::Var.new(
             $semilist,
             :scope('keyed'),
-            :vivibase('Perl6Hash'),
+            :vivibase('Mapping'),
             :viviself('Undef'),
             :node( $/ )
         );
@@ -886,7 +886,7 @@ method postcircumfix($/, $key) {
         $past := PAST::Var.new(
             $( $<quote_expression> ),
             :scope('keyed'),
-            :vivibase('Perl6Hash'),
+            :vivibase('Mapping'),
             :viviself('Undef'),
             :node( $/ )
         );
@@ -1598,7 +1598,7 @@ method variable($/, $key) {
             # Variable. Set how it vivifies.
             my $viviself := 'Undef';
             if $<sigil> eq '@' { $viviself := 'List'; }
-            if $<sigil> eq '%' { $viviself := 'Perl6Hash'; }
+            if $<sigil> eq '%' { $viviself := 'Mapping'; }
 
             # [!:^] twigil should be kept in the name.
             if $twigil eq '!' || $twigil eq ':' || $twigil eq '^' { $name := $twigil ~ ~$name; }
