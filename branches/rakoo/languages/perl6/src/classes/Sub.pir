@@ -13,8 +13,9 @@ src/classes/Sub.pir - methods for the Sub class
 .namespace ['Sub']
 
 .sub 'onload' :anon :load :init
-    $P1 = get_hll_global ['Perl6Object'], 'make_proto'
-    $P1('Sub', 'Sub')
+    .local pmc p6meta
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    p6meta.'register'('Sub', 'parent'=>'Any')
 .end
 
 =item ACCEPTS(topic)
