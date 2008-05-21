@@ -50,6 +50,7 @@ symbols for C<Bool::True> and C<Bool::False>.
     self = 0
 .end
 
+
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
