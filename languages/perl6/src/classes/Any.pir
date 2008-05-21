@@ -19,7 +19,7 @@ This file implements the Any class.
 .end
 
 .sub 'isa' :method
-    .local pmc x
+    .param pmc x
     $P0 = self.'HOW'()
     .return $P0.'isa'(x)
 .end
