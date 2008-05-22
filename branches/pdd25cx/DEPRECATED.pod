@@ -93,10 +93,6 @@ use the following syntax, which works for both PMCs and objects.
 
 See RT #48014. This will be removed once all core PMCs have been updated.
 
-=item * Super PMC [post 0.6.2]
-
-See RT #53968.
-
 =back
 
 =head1 Exceptions
@@ -200,20 +196,6 @@ Will have to be:
 =head2 Parser Grammar Engine (PGE)
 
 =over 4
-
-=item Non-capturing C<< <?foo> >> is now C<< <.foo> >>
-
-(See RT#53834)
-
-Synopsis 5 changes the syntax for non-capturing subrules from
-C<< <?foo> >> to C<< <.foo> >>.  According to S05, the
-C<< <?foo> >> syntax is now used to indicate a zero-width
-assertion.  So, grammars that have been using C<< <?foo> >>
-for non-capturing subrules need to convert to the new syntax.
-
-PGE will continue to support the non-capture interpretation
-of C<< <?foo> >> until the May 2008 release, after which it
-will be removed.
 
 =item Change argument handling of C<< <foo: text> >>
 

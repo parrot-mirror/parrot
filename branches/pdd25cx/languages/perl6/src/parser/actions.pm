@@ -57,7 +57,9 @@ method statement_block($/, $key) {
                 PAST::Op.new(
                     :inline(
                           "    %r = getinterp\n"
+                        ~ "    push_eh no_match_to_copy\n"
                         ~ "    %r = %r['lexpad';1]\n"
+                        ~ "    pop_eh\n"
                         ~ "    if null %r goto no_match_to_copy\n"
                         ~ "    %r = %r['$/']\n"
                         ~ "    store_lex '$/', %r\n"
@@ -875,7 +877,7 @@ method postcircumfix($/, $key) {
         $past := PAST::Var.new(
             $semilist,
             :scope('keyed'),
-            :vivibase('Perl6Hash'),
+            :vivibase('Mapping'),
             :viviself('Undef'),
             :node( $/ )
         );
@@ -884,7 +886,7 @@ method postcircumfix($/, $key) {
         $past := PAST::Var.new(
             $( $<quote_expression> ),
             :scope('keyed'),
-            :vivibase('Perl6Hash'),
+            :vivibase('Mapping'),
             :viviself('Undef'),
             :node( $/ )
         );
@@ -1109,17 +1111,21 @@ method package_declarator($/, $key) {
             # Make proto-object.
             $?CLASS.push(
                 PAST::Op.new(
-                    :pasttype('call'),
+                    :pasttype('callmethod'),
+                    :name('register'),
                     PAST::Var.new(
                         :scope('package'),
-                        :namespace('Perl6Object'),
-                        :name('make_proto')
+                        :name('$!P6META'),
+                        :namespace('Perl6Object')
                     ),
                     PAST::Var.new(
                         :scope('lexical'),
                         :name('$def')
                     ),
-                    PAST::Val.new( :value(~$<name>) )
+                    PAST::Val.new(
+                        :value('Any'),
+                        :named( PAST::Val.new( :value('parent') ) )
+                    )
                 )
             );
 
@@ -1156,17 +1162,21 @@ method package_declarator($/, $key) {
             # Make proto-object.
             $?GRAMMAR.push(
                 PAST::Op.new(
-                    :pasttype('call'),
+                    :pasttype('callmethod'),
+                    :name('register'),
                     PAST::Var.new(
                         :scope('package'),
-                        :namespace('Perl6Object'),
-                        :name('make_grammar_proto')
+                        :name('$!P6META'),
+                        :namespace('Perl6Object')
                     ),
                     PAST::Var.new(
                         :scope('lexical'),
                         :name('$def')
                     ),
-                    PAST::Val.new( :value(~$<name>) )
+                    PAST::Val.new(
+                        :value('Grammar'),
+                        :named( PAST::Val.new( :value('parent') ) )
+                    )
                 )
             );
 
@@ -1588,7 +1598,7 @@ method variable($/, $key) {
             # Variable. Set how it vivifies.
             my $viviself := 'Undef';
             if $<sigil> eq '@' { $viviself := 'List'; }
-            if $<sigil> eq '%' { $viviself := 'Perl6Hash'; }
+            if $<sigil> eq '%' { $viviself := 'Mapping'; }
 
             # [!:^] twigil should be kept in the name.
             if $twigil eq '!' || $twigil eq ':' || $twigil eq '^' { $name := $twigil ~ ~$name; }
@@ -1964,6 +1974,24 @@ method EXPR($/, $key) {
             }
         }
 
+        # If it's infix:=> then we want to build a pair.
+        if $past.name() eq 'infix:=>' {
+            $past[0].named( PAST::Val.new( :value('key') ) );
+            $past[1].named( PAST::Val.new( :value('value') ) );
+            $past := PAST::Op.new(
+                :node($/),
+                :pasttype('callmethod'),
+                :name('new'),
+                :returns('Pair'),
+                PAST::Var.new(
+                    :name('Pair'),
+                    :scope('package')
+                ),
+                $past[0],
+                $past[1]
+            );
+        }
+
         make $past;
     }
 }
@@ -2194,6 +2222,15 @@ method capture($/) {
 sub process_arguments($call_past, $args) {
     for @($args) {
         if $_.returns() eq 'Pair' {
+            # It's a pair. If the name is not just a simple value (e.g if it
+            # will create a PMC type), we must make it just a string or give
+            # an error.
+            if $_[1].WHAT() eq 'Val' && $_[1].returns() eq 'Perl6Str' {
+                $_[1].returns(undef);
+            }
+            elsif $_[1].WHAT() ne 'Val' || $_[1].returns() ne '' {
+                $call_past.panic("Cannot use complex pair key in a call.");
+            }
             $_[2].named($_[1]);
             $call_past.push($_[2]);
         }

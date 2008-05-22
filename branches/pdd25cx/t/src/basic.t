@@ -26,6 +26,7 @@ Tests C<printf> and C<exit_fatal> functions.
 
 c_output_is( <<'CODE', <<'OUTPUT', "hello world" );
     #include <stdio.h>
+    #include <stdlib.h>
 
     int
     main(int argc, char* argv[])
