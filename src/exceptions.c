@@ -487,7 +487,7 @@ Parrot_print_backtrace(void)
     size_t i;
 
     const size_t size = backtrace(array, BACKTRACE_DEPTH);
-    char ** const strings;
+    char ** strings;
 
     fprintf(stderr,
             "Backtrace - Obtained %zd stack frames (max trace depth is %d).\n",

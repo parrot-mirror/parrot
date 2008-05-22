@@ -76,6 +76,7 @@ C<P6object> and C<P6metaclass>.
     $P0 = newclass 'P6protoobject'
 
     $P0 = newclass 'P6object'
+    addattribute $P0, '%!properties'
 
     $P1 = subclass $P0, 'P6metaclass'
     addattribute $P1, 'parrotclass'
@@ -158,7 +159,59 @@ Return a true value if the invocant 'isa' C<x>.
     .return ($I0)
 .end
 
-=item register(parrotclass [, 'name'=>name] [, 'protoobject'=>proto])
+=item add_parent(parentclass [, 'to'=>parrotclass])
+
+=cut
+
+.sub 'add_parent' :method
+    .param pmc parentclass
+    .param pmc options         :slurpy :named
+
+    parentclass = self.'get_parrotclass'(parentclass)
+    $P0 = options['to']
+    unless null $P0 goto have_to
+    $P0 = self
+  have_to:
+    .local pmc parrotclass
+    parrotclass = self.'get_parrotclass'($P0)
+    if null parrotclass goto end
+
+    ##  if parrotclass isa parentclass, we're done
+    $I0 = isa parrotclass, parentclass
+    if $I0 goto end
+    ##  if parrotclass isa PMCProxy, we do method mixins
+    $S0 = typeof parrotclass
+    if $S0 == 'PMCProxy' goto parent_proxy
+    ##  add parent directly to parrotclass, we're done
+    parrotclass.'add_parent'(parentclass)
+    goto end
+
+  parent_proxy:
+    ##  iterate over parent's mro and methods, adding them to parrotclass' namespace
+    .local pmc parrotclassns, mroiter, methods, methoditer
+    parrotclassns = parrotclass.'get_namespace'()
+    $P0 = parentclass.'inspect'('all_parents')
+    mroiter = new 'Iterator', $P0
+  mro_loop:
+    unless mroiter goto mro_end
+    $P0 = shift mroiter
+    methods = $P0.'methods'()
+    methoditer = new 'Iterator', methods
+  method_loop:
+    unless methoditer goto mro_loop
+    $S0 = shift methoditer
+    $P0 = parrotclassns.'find_sub'($S0)
+    unless null $P0 goto method_loop
+    $P0 = methods[$S0]
+    parrotclassns.'add_sub'($S0, $P0)
+    goto method_loop
+  mro_end:
+
+  end:
+.end
+
+
+=item register(parrotclass [, 'name'=>name] [, 'protoobject'=>proto] [, 'parent'=>parentclass])
 
 Sets objects of type C<parrotclass> to use C<protoobject>,
 and verifies that C<parrotclass> has P6object methods defined
@@ -187,31 +240,30 @@ or 'Object').
     .local pmc mhash
     mhash = get_hll_global ['P6metaclass'], '%!metaclass'
 
-    ##  make sure parrotclass isa P6object or has P6object methods
-    $I0 = isa parrotclass, 'P6object'
-    if $I0 goto p6object_done
-    $S0 = typeof parrotclass
-    if $S0 == 'PMCProxy' goto p6object_proxy
-    $P0 = get_class 'P6object'
-    parrotclass.'add_parent'($P0)
-    goto p6object_done
-  p6object_proxy:
-    ##  iterate over P6object's methods, adding them to parrotclass' namespace
-    .local pmc methods, iter, parrotclassns
-    $P0 = get_class 'P6object'
-    methods = $P0.'methods'()
-    iter = new 'Iterator', methods
-    parrotclassns = parrotclass.'get_namespace'()
-  iter_loop:
-    unless iter goto iter_end
-    $S0 = shift iter
-    $P0 = parrotclassns.'find_sub'($S0)
-    unless null $P0 goto iter_loop
-    $P0 = methods[$S0]
-    parrotclassns.'add_sub'($S0, $P0)
-    goto iter_loop
-  iter_end:
-  p6object_done:
+    ##  add any needed parent classes
+    .local pmc parentclass
+    parentclass = options['parent']
+    if null parentclass goto parent_done
+    $I0 = does parentclass, 'array'
+    if $I0 goto parent_array
+    $S0 = typeof parentclass
+    if $S0 == 'String' goto parent_string
+    self.'add_parent'(parentclass, 'to'=>parrotclass)
+    goto parent_done
+  parent_string:
+    $S0 = parentclass
+    parentclass = split ' ', $S0
+  parent_array:
+    .local pmc iter
+    iter = new 'Iterator', parentclass
+  parent_loop:
+    unless iter goto parent_done
+    $P0 = shift iter
+    unless $P0 goto parent_loop
+    self.'add_parent'($P0, 'to'=>parrotclass)
+    goto parent_loop
+  parent_done:
+    self.'add_parent'('P6object', 'to'=>parrotclass)
 
     ##  determine parrotclass' canonical p6-name
     .local string name
@@ -241,17 +293,22 @@ or 'Object').
     setattribute how, 'parrotclass', parrotclass
 
     ##  create an anonymous class for the protoobject
-    .local pmc protoclass, protoobject
+    .local pmc protoclass, protoobject, iter
     protoclass = new 'Class'
     $P0 = get_class 'P6protoobject'
     ##  P6protoobject methods override parrotclass methods...
     protoclass.'add_parent'($P0)
     protoclass.'add_parent'(parrotclass)
-    ##  ...except for 'new'
-    $P0 = parrotclass.'methods'()
-    $P1 = $P0['new']
-    if null $P1 goto have_protoclass
-    protoclass.'add_method'('new', $P1)
+    $P0 = parrotclass.'inspect'('all_parents')
+    iter = new 'Iterator', $P0
+  newmethod_loop:
+    unless iter goto newmethod_end
+    $P0 = shift iter
+    $P0 = $P0.'methods'()
+    $P0 = $P0['new']
+    if null $P0 goto newmethod_loop
+    protoclass.'add_method'('new', $P0)
+  newmethod_end:
   have_protoclass:
     ##  register the protoclass in %!metaobject
     $I0 = get_addr protoclass
@@ -297,38 +354,13 @@ of names separated by spaces.
 =cut
 
 .sub 'new_class' :method
-    .param string name
+    .param pmc name
     .param pmc options         :slurpy :named
 
-    .local pmc parentclass, parrotclass
-    parentclass = options['parent']
-    if null parentclass goto parent_p6object
-    $I0 = does parentclass, 'array'
-    if $I0 goto parent_array
-    $S0 = typeof parentclass
-    if $S0 == 'String' goto parent_string
-    parentclass = self.'get_parrotclass'(parentclass)
-    parrotclass = subclass parentclass, name
-    goto have_parrotclass
-  parent_string:
-    $S0 = parentclass
-    parentclass = split ' ', $S0
-  parent_array:
-    .local pmc iter
+    .local pmc parrotclass
     parrotclass = newclass name
-    iter = new 'Iterator', parentclass
-  parent_loop:
-    unless iter goto have_parrotclass
-    $P0 = shift iter
-    unless $P0 goto parent_loop
-    $P0 = self.'get_parrotclass'($P0)
-    parrotclass.'add_parent'($P0)
-    goto parent_loop
-  parent_p6object:
-    parrotclass = subclass 'P6object', name
-  have_parrotclass:
 
-    .local pmc attrlist
+    .local pmc attrlist, iter
     attrlist = options['attr']
     if null attrlist goto attr_done
     $I0 = does attrlist, 'array'
@@ -457,6 +489,122 @@ will be used in lieu of this one.)
     $P1 = new parrotclass
     .return ($P1)
 .end
+
+
+=item WHENCE()
+
+Returns the protoobject's autovivification closure.
+
+=cut
+
+.sub 'WHENCE' :method
+    .local pmc props, whence
+    props = getattribute self, '%!properties'
+    if null props goto ret_undef
+    whence = props['WHENCE']
+    if null whence goto ret_undef
+    .return (whence)
+  ret_undef:
+    whence = new 'Undef'
+    .return (whence)
+.end
+
+
+=item get_pmc_keyed(key)    (vtable method)
+
+Returns a proto-object with an autovivification closure attached to it.
+
+=cut
+
+.sub get_pmc_keyed :vtable :method
+    .param pmc what
+
+    # We'll build auto-vivification hash of values.
+    .local pmc WHENCE, key, val
+    WHENCE = new 'Hash'
+
+    # What is it?
+    $S0 = what.'WHAT'()
+    if $S0 == 'Pair' goto from_pair
+    if $S0 == 'List' goto from_list
+    'die'("Auto-vivification closure did not contain a Pair")
+
+  from_pair:
+    # Just a pair.
+    key = what.'key'()
+    val = what.'value'()
+    WHENCE[key] = val
+    goto done_whence
+
+  from_list:
+    # List.
+    .local pmc list_iter, cur_pair
+    list_iter = new 'Iterator', what
+  list_iter_loop:
+    unless list_iter goto done_whence
+    cur_pair = shift list_iter
+    key = cur_pair.'key'()
+    val = cur_pair.'value'()
+    WHENCE[key] = val
+    goto list_iter_loop
+  done_whence:
+
+    # Now create a clone of the protoobject.
+    .local pmc protoclass, res, props, tmp
+    protoclass = class self
+    res = new protoclass
+
+    # Attach the WHENCE property.
+    props = getattribute self, '%!properties'
+    unless null props goto have_props
+    props = new 'Hash'
+  have_props:
+    props['WHENCE'] = WHENCE
+    setattribute res, '%!properties', props
+
+    .return (res)
+.end
+
+
+=item ACCEPTS(topic)
+
+=cut
+
+.sub 'ACCEPTS' :method
+    .param pmc topic
+    .local pmc HOW, p6meta
+
+    # Do a does check against the topic.
+    p6meta = get_hll_global 'P6metaclass'
+    HOW = p6meta.'get_parrotclass'(self)
+    $I0 = does topic, HOW
+    if $I0 goto do_return
+
+    # If that didn't work, try invoking the ACCEPTS of the class itself.
+    # XXX Once we get callsame-like stuff implemented, this logic should go away.
+  try_class_accepts:
+    .local pmc parents, found
+    .local int i, count
+    parents = inspect HOW, 'all_parents'
+    count = elements parents
+    i = 1 # skip protoclass
+  find_next_loop:
+    if i >= count goto find_next_loop_end
+    $P0 = parents[i]
+    $P0 = inspect $P0, 'methods'
+    found = $P0['ACCEPTS']
+    unless null found goto find_next_loop_end
+    inc i
+    goto find_next_loop
+  find_next_loop_end:
+
+    $I0 = 0
+    if null found goto do_return
+    $I0 = found(self, topic)
+  do_return:
+    .return 'prefix:?'($I0)
+.end
+
 
 =back
 
