@@ -412,7 +412,6 @@ MMD_Complex: {
         VTABLE_morph(INTERP, SELF, value->vtable->base_type);
         VTABLE_set_number_native(INTERP, SELF,
             SELF.get_integer() + VTABLE_get_number(INTERP, value));
-        }
     }
 MMD_DEFAULT: {
     VTABLE_set_number_native(INTERP, SELF,
