@@ -121,7 +121,7 @@ proto infix:<max> is equiv(infix:<||>)
 
 ## item assignment
 proto infix:<=> is precedence('i=')
-    is pasttype('copy')
+    is pirop('assign')
     is assoc('right')
     is lvalue(1)
     { ... }

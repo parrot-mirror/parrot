@@ -128,7 +128,7 @@ method statement($/, $key) {
                         PAST::Var.new(
                             :name('$_'),
                             :scope('parameter'),
-                            :viviself('Undef')
+                            :viviself('Perl6Scalar')
                         ),
                         $expr
                     ),
@@ -667,12 +667,12 @@ method parameter($/) {
         if $<named> eq ':' {          # named
             $past.named(~$<param_var><ident>);
             if $<quant> ne '!' {      #  required (optional is default)
-                $past.viviself('Undef');
+                $past.viviself('Perl6Scalar');
             }
         }
         else {                        # positional
             if $<quant> eq '?' {      #  optional (required is default)
-                $past.viviself('Undef');
+                $past.viviself('Perl6Scalar');
             }
         }
     }
@@ -842,8 +842,8 @@ method postcircumfix($/, $key) {
         $past := PAST::Var.new(
             $( $<semilist> ),
             :scope('keyed'),
-            :vivibase('List'),
-            :viviself('Undef'),
+            :vivibase('Perl6Array'),
+            :viviself('Perl6Scalar'),
             :node( $/ )
         );
     }
@@ -855,8 +855,8 @@ method postcircumfix($/, $key) {
         $past := PAST::Var.new(
             $( $<semilist> ),
             :scope('keyed'),
-            :vivibase('Mapping'),
-            :viviself('Undef'),
+            :vivibase('Perl6Hash'),
+            :viviself('Perl6Scalar'),
             :node( $/ )
         );
     }
@@ -864,8 +864,8 @@ method postcircumfix($/, $key) {
         $past := PAST::Var.new(
             $( $<quote_expression> ),
             :scope('keyed'),
-            :vivibase('Mapping'),
-            :viviself('Undef'),
+            :vivibase('Perl6Hash'),
+            :viviself('Perl6Scalar'),
             :node( $/ )
         );
     }
@@ -1459,7 +1459,7 @@ method variable($/, $key) {
         $past := PAST::Var.new(
             :scope('keyed'),
             :node($/),
-            :viviself('Undef'),
+            :viviself('Perl6Scalar'),
             PAST::Var.new(
                 :scope('lexical'),
                 :name('$/')
@@ -1475,7 +1475,7 @@ method variable($/, $key) {
         $past.unshift(PAST::Var.new(
             :scope('lexical'),
             :name('$/'),
-            :viviself('Undef')
+            :viviself('Perl6Scalar')
         ));
     }
     else {
@@ -1574,9 +1574,9 @@ method variable($/, $key) {
         }
         else {
             # Variable. Set how it vivifies.
-            my $viviself := 'Undef';
-            if $<sigil> eq '@' { $viviself := 'List'; }
-            if $<sigil> eq '%' { $viviself := 'Mapping'; }
+            my $viviself := 'Perl6Scalar';
+            if $<sigil> eq '@' { $viviself := 'Perl6Array'; }
+            if $<sigil> eq '%' { $viviself := 'Perl6Hash'; }
 
             # [!:^] twigil should be kept in the name.
             if $twigil eq '!' || $twigil eq ':' || $twigil eq '^' { $name := $twigil ~ ~$name; }
