@@ -125,7 +125,7 @@ NONGEN_HEADERS   = @TEMP_nongen_headers@
 
 ###############################################################################
 #
-# "STICKY" GENERATED FILES:
+# CONFIGURE_GENERATED_FILES:
 #
 # These files are created when Configure.pl runs.
 #
@@ -147,36 +147,6 @@ GEN_MAKEFILES = \
     editor/Makefile \
     ext/Makefile \
     languages/Makefile \
-    languages/abc/Makefile \
-    languages/APL/Makefile \
-    languages/befunge/Makefile \
-    languages/bf/Makefile \
-    languages/cardinal/Makefile \
-    languages/cola/Makefile \
-    languages/ecmascript/Makefile \
-    languages/forth/Makefile \
-    languages/jako/Makefile \
-    languages/lazy-k/Makefile \
-    languages/lisp/Makefile \
-    languages/lolcode/Makefile \
-    languages/lua/Makefile \
-    languages/m4/Makefile \
-    languages/nqp/Makefile \
-    languages/ook/Makefile \
-    languages/parrot_compiler/Makefile \
-    languages/pheme/Makefile \
-    languages/PIR/Makefile \
-    languages/plumhead/Makefile \
-    languages/pugs/Makefile \
-    languages/punie/Makefile \
-    languages/pynie/Makefile \
-    languages/regex/Makefile \
-    languages/scheme/Makefile \
-    languages/tcl/Makefile \
-    languages/tcl/examples/Makefile \
-    languages/urm/Makefile \
-    languages/WMLScript/Makefile \
-    languages/Zcode/Makefile \
     src/dynoplibs/Makefile
 
 GEN_CONFIGS = \
@@ -212,7 +182,7 @@ GEN_PASM_INCLUDES = \
 #CONDITIONED_LINE(has_opengl):    runtime/parrot/include/opengl_defines.pasm \
     @TEMP_gen_pasm_includes@
 
-STICKY_FILES = \
+CONFIGURE_GENERATED_FILES = \
     $(GEN_CONFIGS) \
     $(GEN_MAKEFILES) \
     ext/Parrot-Embed/Makefile.PL \
@@ -742,6 +712,8 @@ help :
 	@echo "  compilers:         Proxy for default target of pge and tge compilers"
 	@echo "  languages:         Proxy for default target of languages/Makefile"
 	@echo "  languages-test:    Proxy for target 'test' of languages/Makefile"
+	@echo "  languages-test-unified:  Proxy for target 'test-unified' of languages/Makefile"
+	@echo "  languages-test-separate: Proxy for target 'test-separate' of languages/Makefile"
 	@echo "  languages-smoke:   Proxy for target 'smoke' of languages/Makefile"
 	@echo "  languages-clean:   Proxy for target 'clean' of languages/Makefile"
 	@echo ""
@@ -1235,7 +1207,7 @@ $(OPS_DIR)/core_ops_switch.c : $(OPS_FILES) $(BUILD_TOOLS_DIR)/ops2c.pl lib/Parr
 
 @TEMP_encoding_build@
 
-# $(STICKY_FILES) : Configure.pl
+# $(CONFIGURE_GENERATED_FILES) : Configure.pl
 #	$(PERL) Configure.pl
 
 $(INC_DIR)/vtable.h : src/vtable.tbl $(BUILD_TOOLS_DIR)/vtable_h.pl lib/Parrot/Vtable.pm
@@ -1361,6 +1333,12 @@ languages.dummy :
 
 languages-test :
 	$(MAKE) languages test
+
+languages-test-unified :
+	$(MAKE) languages test-unified
+
+languages-test-separate :
+	$(MAKE) languages test-separate
 
 languages-smoke :
 	$(MAKE) languages smoke
@@ -1743,7 +1721,7 @@ realclean : clean
 	-$(MAKE) compilers/pirc  realclean
 	-$(MAKE) src/dynpmc      realclean
 	$(RM_RF) \
-    $(STICKY_FILES) \
+    $(CONFIGURE_GENERATED_FILES) \
     blib \
     cover_db
 
