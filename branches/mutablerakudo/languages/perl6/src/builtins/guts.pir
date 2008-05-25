@@ -41,12 +41,8 @@ assignment.
     goto do_assign
 
   do_assign:
-    eq_addr assignee, value, no_copy
-    copy assignee, value
-    push_eh no_copy
+    assign assignee, value
     setattribute assignee, '%!properties', props
-    pop_eh
-no_copy:
     .return(assignee)
 .end
 
