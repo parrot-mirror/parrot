@@ -63,14 +63,14 @@ sub print_name {
         my $j = $i+1;
         if ($parasref->[$i] =~ /^=head1\s+NAME/o and $parasref->[$j]) {
             my $str = qq{\n};
-            $str .= q{-} x $wrap_width, qq{\n};
-            $str .= $parasref->[$j],
-                q<  (>,
-                $count,
-                q< >,
-                ($count > 1 ?  q<matches> : q<match>),
+            $str .= q{-} x $wrap_width . qq{\n};
+            $str .= $parasref->[$j] .
+                q<  (> .
+                $count .
+                q< > .
+                ($count > 1 ?  q<matches> : q<match>) .
                 qq<)\n>;
-            $str .= q{-} x $wrap_width,  qq{\n};
+            $str .= q{-} x $wrap_width .  qq{\n};
             $str .= qq{\n};
             print $str;
             last NAME;
