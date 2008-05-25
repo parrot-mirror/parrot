@@ -51,7 +51,7 @@ BUILTINS_PIR = \
   src/classes/Range.pir \
   src/classes/Code.pir \
   src/classes/Junction.pir \
-  src/classes/Undef.pir \
+  src/classes/Failure.pir \
   src/classes/Role.pir \
   src/classes/Pair.pir \
   src/classes/Whatever.pir \
@@ -72,8 +72,14 @@ BUILTINS_PIR = \
   src/builtins/range.pir \
   src/builtins/traits.pir \
 
-PMCS        = perl6str perl6bool
-PMC_SOURCES = $(PMC_DIR)/perl6str.pmc $(PMC_DIR)/perl6bool.pmc
+$(PMC_DIR)/mutable.pmc : $(PMC_DIR)/mutable_pmc.template build/gen_mutable_pmc.pl
+	$(PERL) build/gen_mutable_pmc.pl $(PMC_DIR)/mutable_pmc.template \
+		$(PMC_DIR)/mutable.pmc
+
+PMCS        = perl6str perl6bool mutable perl6scalar perl6array perl6hash
+PMC_SOURCES = $(PMC_DIR)/perl6str.pmc $(PMC_DIR)/perl6bool.pmc \
+		$(PMC_DIR)/mutable.pmc $(PMC_DIR)/perl6scalar.pmc \
+		$(PMC_DIR)/perl6array.pmc $(PMC_DIR)/perl6hash.pmc
 PERL6_GROUP = $(PMC_DIR)/perl6_group$(LOAD_EXT)
 
 # targets for building a standalone perl6.
@@ -145,23 +151,12 @@ testtest: all test
 #       as the goal is that all tests must pass without fudge
 spectest: all t/spec
 	cd t/spec && svn up
-	$(PERL) t/harness --fudge --keep-exit-code \
-            t/spec/S02-literals \
-            t/spec/S03-operators \
-            t/spec/S04-statements \
-            t/spec/S12-class \
-            t/spec/S12-role \
-            t/spec/S12-methods \
-            t/spec/S12-attributes \
-            t/spec/S29-array \
-            t/spec/S29-hash \
-            t/spec/S29-list \
-            t/spec/S29-num \
-            t/spec/S29-str \
+	$(PERL) t/harness --fudge --keep-exit-code t/spec
 
 spectest_regression: all t/spec
 	cd t/spec && svn up
-	$(PERL) t/harness --fudge --regression-only --keep-exit-code \
+	$(PERL) t/harness --fudge --tests-from-file=t/passing_spec \
+            --keep-exit-code \
             t/spec/ \
 
 fulltest: all testtest spectest
@@ -187,6 +182,7 @@ CLEANUPS = \
   $(PMC_DIR)/*.manifest \
   $(PMC_DIR)/*.pdb \
   $(PMC_DIR)/*.lib \
+  $(PMC_DIR)/mutable.pmc \
 
 
 clean:
