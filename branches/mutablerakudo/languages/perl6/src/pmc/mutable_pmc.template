@@ -19,29 +19,48 @@ Forwards all but some methods to the held PMC.
 #include "parrot/parrot.h"
 
 pmclass Mutable need_ext dynpmc group perl6_group {
+    ATTR PMC *value;
+    ATTR PMC *properties;
+    
     VTABLE void init() {
-        /* Initialize with an undef PMC. */
-        PMC_data(SELF) = pmc_new(INTERP, enum_class_Undef);
+        /* Initialize with an empty properties hash. */
+        STATICSELF.init_pmc(pmc_new(INTERP, enum_class_Hash));
     }
 
-    VTABLE void init_pmc() {
-        STATICSELF.init();
+    VTABLE void init_pmc(PMC *properties) {
+        PMC *value;
+
+        /* Create underlying structure. */
+        PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_Mutable);
+
+        /* Initialize with an undef PMC and the provided properties hash. */
+        value = pmc_new(INTERP, enum_class_Undef);
+        SET_ATTR_value(INTERP, SELF, value);
+        SET_ATTR_properties(INTERP, SELF, properties);
     }
 
     VTABLE void mark() {
-        if (PMC_data(SELF))
-            pobject_lives(INTERP, PMC_data(SELF));
+        PMC *value;
+        PMC *properties;
+        GET_ATTR_value(INTERP, SELF, value);
+        if (value)
+            pobject_lives(INTERP, value);
+        GET_ATTR_properties(INTERP, SELF, properties);
+        if (properties)
+            pobject_lives(INTERP, properties);
     }
 
     VTABLE void destroy() {
-        /* Just don't pass this on. */
+        mem_sys_free(PMC_data(SELF));
     }
 
     VTABLE void assign_pmc(PMC *value) {
-        PMC_data(SELF) = value;
+        SET_ATTR_value(INTERP, SELF, value);
     }
 
     VTABLE PMC * get_pmc() {
-        return PMC_data(SELF);
+        PMC * value;
+        GET_ATTR_value(INTERP, SELF, value);
+        return value;
     }
 }
