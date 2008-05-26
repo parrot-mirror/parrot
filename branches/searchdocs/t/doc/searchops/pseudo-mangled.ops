@@ -1,0 +1,56 @@
+/*
+ * $Id$
+** string.ops
+*/
+
+=head1 DESCRIPTION
+
+Operations that work on strings, whether constructing, modifying
+or examining them.
+
+=over 4
+
+=item B<chopn>(inout STR, in INT)
+
+Remove n characters specified by integer $2 from the tail of string $1.
+If $2 is negative, cut the string after -$2 characters.
+
+=item B<chopn>(out STR, in STR, in INT)
+
+Remove n characters specified by integer $3 from the tail of string $2,
+and returns the characters not chopped in string $1.
+If $3 is negative, cut the string after -$3 characters.
+
+=cut
+
+inline op chopn(inout STR, in INT) :base_core {
+    string_chopn_inplace(interp, $1, $2);
+}
+
+inline op chopn(out STR, in STR, in INT) :base_core {
+    $1 = string_chopn(interp, $2, $3);
+}
+
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2008, The Perl Foundation.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interpreter itself.
+
+=cut
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
+
+=head1 NAME
+
