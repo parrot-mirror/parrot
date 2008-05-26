@@ -1,6 +1,6 @@
 /*
- * $Id: string.ops 27458 2008-05-12 07:29:47Z chromatic $
-** string.ops
+ * $Id: pseudo-string.ops 27458 2008-05-12 07:29:47Z chromatic $
+** pseudo-string.ops
 */
 
 VERSION = PARROT_VERSION;
