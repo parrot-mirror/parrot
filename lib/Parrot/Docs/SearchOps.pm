@@ -1,5 +1,5 @@
 package Parrot::Docs::SearchOps;
-# Copyright (C) 2004, The Perl Foundation.
+# Copyright (C) 2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -94,7 +94,6 @@ sub _handle_indices {
     my $k = $j;
     print qq{$identified_ref->{$idx}{op}($identified_ref->{$idx}{args})\n};
     delete $remaining_ref->{$idx};
-#    if (defined %{$identified_ref->{$j}} ) {
     if (defined $identified_ref->{$j}{op} ) {
         $k = _handle_indices(
             $identified_ref,
@@ -153,9 +152,64 @@ Parrot::Docs::SearchOps - functions used in tools/docs/search-ops.pl
         Usage
     );
 
+    $total_identified = search_all_ops_files(
+        $pattern, $wrap_width, $opsdir
+    );
+
+    Usage();
+
 =head1 DESCRIPTION
+
+This package provides functionality for the Perl 5 program
+F<tools/docs/search-ops.pl>, designed to replace the Python program
+F<tools/docs/search-ops.py>.  It exports two subroutines on demand.
+
+=head2 C<search_all_ops_files()>
+
+B<Purpose:>  Searches all F<.ops> files in F<src/ops/> for ops codes and their
+descriptions.  Those that match the specified pattern are printed to STDOUT.
+
+B<Arguments:>  Three scalars.
+
+=over 4
+
+=item * C<$pattern>
+
+Perl 5 regular expression.  So C<concat> will be matched by both C<concat> and
+C<n_concat>.
+
+=item * $wrap_width
+
+In F<tools/docs/search-ops.pl>, this is set to C<70> characters. Can be varied
+during testing or development.
+
+=item * $opsdir
+
+In F<tools/docs/search-ops.pl>, this is set to F<src/ops/>.  Can be varied
+during testing or development.
+
+=back
+
+B<Return Value:>  Number of times the pattern was matched by ops codes in all
+files.
+
+=head2 C<Usage()>
+
+B<Purpose:>  Display usage statement for F<tools/docs/search-ops.pl>.
+
+B<Arguments:>  None.
+
+C<Return Value:>  Implicitly returns true upon success.
+
+=head1 AUTHOR
+
+James E Keenan, adapting Python program written by Bernhard Schmalhofer.
 
 =cut
 
-
-
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:

@@ -15,7 +15,7 @@ my $wrap_width = 70;
 my $opsdir = q{t/doc/searchops};
 
 {
-    my $pattern = q{concat};
+    my $pattern = q{chopn};
     my $total_identified;
     my ($stdout, $stderr);
     capture(
@@ -24,32 +24,22 @@ my $opsdir = q{t/doc/searchops};
         \$stdout,
         \$stderr,
     );
-    unlike($stdout, qr/n_concat\(foobar/,
+    unlike($stdout, qr/NAME/,
         "Badly formtted entry excluded from display, as expected");
-    is($total_identified, 8, "Got expected total number of ops for $pattern");
+    is($total_identified, 2, "Got expected total number of ops for $pattern");
 }
 
 =head1 NAME
 
-t/doc/searchops-02.t - test subroutines used in tools/docs/search-ops.pl
+t/doc/searchops-03.t - test subroutines used in tools/docs/search-ops.pl
 
 =head1 SYNOPSIS
 
-    % prove t/doc/searchops-02.t
+    % prove t/doc/searchops-03.t
 
 =head1 DESCRIPTION
 
-This test demonstrates that a pattern such as C<concat> will pick up both
-C<concat> and C<n_concat> functions.  It also demonstrates that an .ops file
-with a function header not followed by a description will not print the
-header.
+This test demonstrates that an .ops file with a C<=head1 NAME> paragraph not
+followed by another paragraph will not print the 'NAME' paragraph.
 
 =cut
-
-
-# Local Variables:
-#   mode: cperl
-#   cperl-indent-level: 4
-#   fill-column: 100
-# End:
-# vim: expandtab shiftwidth=4:
