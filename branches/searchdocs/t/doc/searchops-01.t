@@ -59,10 +59,10 @@ t/doc/searchops-01.t - test subroutines used in tools/docs/search-ops.pl
 
 =head1 DESCRIPTION
 
-TK
+This file tests the basic operation of Parrot::Docs::SearchOps and
+demonstrates that it will match patterns in more than one file.
 
 =cut
-
 
 # Local Variables:
 #   mode: cperl
@@ -70,3 +70,4 @@ TK
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
+
