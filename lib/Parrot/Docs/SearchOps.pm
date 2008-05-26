@@ -94,7 +94,8 @@ sub _handle_indices {
     my $k = $j;
     print qq{$identified_ref->{$idx}{op}($identified_ref->{$idx}{args})\n};
     delete $remaining_ref->{$idx};
-    if (defined %{$identified_ref->{$j}} ) {
+#    if (defined %{$identified_ref->{$j}} ) {
+    if (defined $identified_ref->{$j}{op} ) {
         $k = _handle_indices(
             $identified_ref,
             $j,

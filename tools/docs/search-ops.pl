@@ -33,6 +33,7 @@ my $total_identified = search_all_ops_files(
     $pattern, $wrap_width, $opsdir
 );
 
+#print $total_identified, "\n";
 print "No matches were found\n" unless $total_identified;
 exit 0;
 
