@@ -212,7 +212,9 @@ runops_args(PARROT_INTERP, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *obj),
         sig_p = new_sig;
     }
 
-    if (*sig_p && dest[0] == PARROT_OP_get_params_pc) {
+    if (*sig_p && (dest[0] == PARROT_OP_get_params_pc
+                || (sub->vtable->base_type == enum_class_ExceptionHandler
+                    && PMC_cont(sub)->current_results))) {
         dest = parrot_pass_args_fromc(interp, sig_p, dest, old_ctx, ap);
     }
     /*
