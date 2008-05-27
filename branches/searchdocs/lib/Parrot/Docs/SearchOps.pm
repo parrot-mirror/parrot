@@ -37,7 +37,7 @@ sub _search_one_ops_file {
     for (my $i=0; $i<=$#paras; $i++) {
         my $j = $i+1;
         if (
-            $paras[$i] =~ /^=item\sB<(\w*$pattern\w*)>\(([^)]+)\)/o
+            $paras[$i] =~ /^=item\sB<(\w*$pattern\w*)>\(([^)]*)\)/o
                 and
             $paras[$j]
         ) {
