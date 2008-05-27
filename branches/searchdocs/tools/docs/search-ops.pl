@@ -8,24 +8,27 @@ use Getopt::Long ();
 use lib qw( ./lib );
 use Parrot::Docs::SearchOps qw(
     search_all_ops_files
-    Usage
+    usage
+    help
 );
 
 my ($help, $all);
 Getopt::Long::GetOptions(
-    "help|usage"    => \$help,
-    "all"           => \$all,
+    "help"    => \$help,
+    "all"     => \$all,
 ) or exit 1;
 
 if ($help) {
-    Usage();
+    help();
     exit 0;
 }
 
 croak "You may search for only 1 ops code at a time: $!"
     if @ARGV > 1;
-croak "You must supply 1 ops code as a command-line argument.  Type '--help' for usage: $!"
-    unless $all or $ARGV[0];
+unless ($all or $ARGV[0]) {
+    usage();
+    exit 0;
+}
 
 my $pattern = $all ? q{} : $ARGV[0];
 my $wrap_width = 70;
@@ -46,15 +49,15 @@ tools/docs/search-ops.pl - Get descriptions of ops codes
 
 From the top-level Parrot directory,
 
-    perl tools/docs/search-ops.pl some_ops_code
+    perl tools/docs/search-ops.pl ops_pattern
 
 For help,
 
     perl tools/docs/search-ops.pl --help
 
-... or
+To display all ops codes,
 
-    perl tools/docs/search-ops.pl --usage
+    perl tools/docs/search-ops.pl --all
 
 =head1 AUTHOR
 
