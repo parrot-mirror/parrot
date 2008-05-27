@@ -4,24 +4,28 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  4;
+use Test::More tests =>  5;
 use lib qw( ./lib );
 use IO::CaptureOutput qw( capture );
 use Parrot::Docs::SearchOps qw(
     search_all_ops_files
-    Usage
+    help
 );
 
 {
     my ($stdout, $stderr);
     capture(
-        \&Usage,
+        \&help,
         \$stdout,
         \$stderr,
     );
     like($stdout,
-        qr/^\s*tools\/docs\/search-ops\.pl\ssome_ops_pattern/,
-        "Got expected start to usage message",
+        qr/^\s*perl\stools\/docs\/search-ops\.pl.*?ops_pattern/s,
+        "Got expected start to help message",
+    );
+    like($stdout,
+        qr/Given a valid Perl 5 regex as an argument/s,
+        "Got expected line from body of help message",
     );
 }
 

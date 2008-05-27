@@ -12,7 +12,8 @@ use Parrot::Configure::Utils qw( _slurp );
 our @ISA = qw( Exporter );
 our @EXPORT_OK = qw(
     search_all_ops_files
-    Usage
+    help
+    usage
 );
 
 sub search_all_ops_files {
@@ -104,20 +105,23 @@ sub _handle_indices {
     return $k;
 }
 
-sub Usage {
+sub usage {
     print <<USAGE;
-    tools/docs/search-ops.pl some_ops_pattern
+    perl tools/docs/search-ops.pl [--help] [--all] ops_pattern
+USAGE
+}
 
-Given a valid Perl 5 regex as an argument, the script will search inside
-any *.ops file located in 'path' for an opcode name that matches, dumping both
-its arguments and its description.
+sub help {
+    usage();
+    print <<HELP;
 
-The program must be called from the top-level Parrot directory.
-
+Given a valid Perl 5 regex as an argument, the script will search inside any
+*.ops file for an opcode name that matches, dumping both its arguments and its
+description.  The program must be called from the top-level Parrot directory.
 To dump every op, call '--all' on the command line.
 
 Example:
-> tools/docs/search-ops.pl load
+> perl tools/docs/search-ops.pl load
 
 ----------------------------------------------------------------------
 File: core.ops - Parrot Core Ops (2 matches)
@@ -136,7 +140,7 @@ File: debug.ops (1 match)
 
 debug_load(inconst STR)
 Load a Parrot source file for the current program.
-USAGE
+HELP
 }
 
 1;
@@ -149,14 +153,17 @@ Parrot::Docs::SearchOps - functions used in tools/docs/search-ops.pl
 
     use Parrot::Docs::SearchOps qw(
         search_all_ops_files
-        Usage
+        usage
+        help
     );
 
     $total_identified = search_all_ops_files(
         $pattern, $wrap_width, $opsdir
     );
 
-    Usage();
+    usage();
+
+    help();
 
 =head1 DESCRIPTION
 
@@ -193,9 +200,17 @@ during testing or development.
 B<Return Value:>  Number of times the pattern was matched by ops codes in all
 files.
 
-=head2 C<Usage()>
+=head2 C<usage()>
 
 B<Purpose:>  Display usage statement for F<tools/docs/search-ops.pl>.
+
+B<Arguments:>  None.
+
+C<Return Value:>  Implicitly returns true upon success.
+
+=head2 C<help()>
+
+B<Purpose:>  Display usage statement and more complete help message for F<tools/docs/search-ops.pl>.
 
 B<Arguments:>  None.
 
