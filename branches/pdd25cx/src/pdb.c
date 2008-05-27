@@ -220,9 +220,8 @@ PDB_run_code(Parrot_Interp interp, int argc, const char *argv[])
 
     if (setjmp(jump_point.resume)) {
         PMC *exception = Parrot_cx_peek_task(interp);
-        char *msg = string_to_cstring(interp, VTABLE_get_string(exception));
-        fprintf(stderr, "Caught exception: %s\n",
-            string_to_cstring(interp, msg));
+        char *msg = string_to_cstring(interp, VTABLE_get_string(interp, exception));
+        fprintf(stderr, "Caught exception: %s\n", msg);
         string_cstring_free(msg);
         return;
     }
