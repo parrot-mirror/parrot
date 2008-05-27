@@ -38,6 +38,17 @@ static PMC * find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CAN_RETURN_NULL
+static opcode_t * pass_exception_args(PARROT_INTERP,
+    ARGIN(const char *sig),
+    ARGIN(opcode_t *dest),
+    ARGIN(parrot_context_t * old_ctx),
+    ...)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -88,11 +99,6 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
     PMC * const handler = Parrot_cx_find_handler_for_task(interp, exception);
     if (!PMC_IS_NULL(handler)) {
         return handler;
-/*        PMC * handler_sub =
-            VTABLE_get_attr_str(interp, handler, CONST_STRING(interp, "code"));
-        Parrot_runops_fromc_args_event(interp, handler_sub,
-            "vPP", handler, exception);
-*/
     }
     else {
         STRING * const message = VTABLE_get_string(interp, exception);
@@ -182,18 +188,31 @@ Runs the exception handler.
 PARROT_API
 PARROT_CAN_RETURN_NULL
 opcode_t *
-Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), SHIM(void *dest))
+Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), ARGIN_NULLOK(void *dest))
 {
     opcode_t *address;
+    opcode_t *want_args;
     PMC * const handler = find_exception_handler(interp, exception);
 
     if (!handler)
         return NULL;
+    /* VTABLE_invoke does the argument handling for 'throw_from_c', but need to
+     * disable its argument handling from 'throw_from_op' so we can pass
+     * arguments directly. We do that by setting 'current_results' struct
+     * element to a null value. Poking directly into the guts of the PMC is a
+     * bad idea, but gets it working for now. */
+    want_args = PMC_cont(handler)->current_results;
+    PMC_cont(handler)->to_ctx->current_results = NULL;
+    PMC_cont(handler)->current_results = NULL;
 
-    /* put the handler aka continuation ctx in the interpreter */
-    address    = VTABLE_invoke(interp, handler, exception);
+    /* Set up the continuation context of the handler in the interpreter. */
+    address    = VTABLE_invoke(interp, handler, dest);
 
-    /* address = VTABLE_get_pointer(interp, handler); */
+    if (want_args)
+        address = pass_exception_args(interp, "PS", address,
+                CONTEXT(interp), exception,
+                VTABLE_get_string(interp, exception));
+
     if (PObj_get_FLAGS(handler) & SUB_FLAG_C_HANDLER) {
         /* its a C exception handler */
         Parrot_runloop * const jump_point = (Parrot_runloop *) address;
@@ -202,6 +221,21 @@ Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), SHIM(void *dest))
 
     /* return the address of the handler */
     return address;
+}
+
+PARROT_CAN_RETURN_NULL
+static opcode_t *
+pass_exception_args(PARROT_INTERP, ARGIN(const char *sig),
+        ARGIN(opcode_t *dest), ARGIN(parrot_context_t * old_ctx), ...)
+{
+    va_list   ap;
+    opcode_t *next;
+
+    va_start(ap, old_ctx);
+    next = parrot_pass_args_fromc(interp, sig, dest, old_ctx, ap);
+    va_end(ap);
+
+    return next;
 }
 
 /*
@@ -218,24 +252,10 @@ sub/continuation/handler, it only sets up the environment for invocation and
 returns the address of the start of the sub's code. That address then becomes
 the next op in the runloop.
 
-When the handler is a sub, it can be invoked in its own runloop with
-C<Parrot_runops_fromc_args>.
-
-But when the handler is a continuation taken in the current runloop, the
-control flow needs to reroute to a point in the runloop where a new op can be
-cleanly executed.  Since exceptions thrown from C code may be buried within an
-arbitrary number of C subroutine calls, the most direct way to do this (and to
-ensure that no further code runs before the exception is handled) is to use a
-C<setjmp> at the relevant location in the runloop, and a C<longjmp> to jump
-back to that location. This is not ideal, as C<setjmp>/C<longjmp> are known to
-be problematic when compiling under C++. One possible refinement might be to
-use C++'s exception mechanism for this transfer of control instead of
-C<setjmp>/C<longjmp> when compiling with C++ (using ifdefs).
-
-Exceptions thrown from C and caught by a continuation-based handler are not
-resumable at the level of a C instruction, as control is irrevocably
-transferred back to the runloop. These exceptions can resume at the Parrot op
-level, if they are given an C<opcode_t> pointer for the op to resume at.
+Exceptions thrown from C and caught by a continuation-based handler are
+resumable at the level of a C instruction. When handled, they return the
+exception object. Any values returned from the handler to the C code that threw
+the exception can be stored in the exception's payload.
 
 =cut
 
@@ -246,11 +266,9 @@ PARROT_DOES_NOT_RETURN
 void
 Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
 {
+    PMC * const handler = find_exception_handler(interp, exception);
+    STRING *msg = VTABLE_get_string(interp, exception);
     RunProfile * const profile = interp->profile;
-
-    /* The exception will be retrieved from the scheduler after jumping back to
-     * a point in the runloop where the exception handler can be run. */
-    Parrot_cx_schedule_task(interp, exception);
 
     /* If profiling remember end time of lastop and generate entry for
      * exception. */
@@ -266,15 +284,20 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
     if (Interp_debug_TEST(interp, PARROT_BACKTRACE_DEBUG_FLAG)) {
         int exitcode = VTABLE_get_integer_keyed_str(interp, exception,
                 CONST_STRING(interp, "exit_code"));
-        STRING * msg = VTABLE_get_string(interp, exception);
         PIO_eprintf(interp,
-            "Parrot_ex_throw_from_c_args (severity:%d error:%d): %Ss\n",
+            "Parrot_ex_throw_from_c (severity:%d error:%d): %Ss\n",
             EXCEPT_error, exitcode, msg);
         PDB_backtrace(interp);
     }
 
-    /* Jump to a point in the runloop where the handler can be run. */
-    longjmp(interp->current_runloop->resume, 1);
+    /* Run the handler. */
+    Parrot_runops_fromc_args(interp, handler, "vPS", exception, msg);
+
+/*    fprintf(stderr, "exception was handled, terminating inferior runloop and exiting\n"); */
+
+    /* Exceptions thrown from C are not resumable, so exit cleanly after
+     * running the handler. */
+    Parrot_exit(interp, 0);
 }
 
 /*
@@ -335,20 +358,12 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 Parrot_ex_rethrow_from_op(PARROT_INTERP, ARGIN(PMC *exception))
 {
-    PMC *handler;
-    opcode_t *address;
-
     if (exception->vtable->base_type != enum_class_Exception)
         PANIC(interp, "Illegal rethrow");
 
     Parrot_ex_mark_unhandled(interp, exception);
-    handler = find_exception_handler(interp, exception);
 
-    if (!handler)
-        PANIC(interp, "No exception handler found");
-    address = VTABLE_invoke(interp, handler, exception);
-    /* return the address of the handler */
-    return address;
+    return Parrot_ex_throw_from_op(interp, exception, NULL);
 }
 
 /*
@@ -369,7 +384,7 @@ Parrot_ex_rethrow_from_c(PARROT_INTERP, ARGIN(PMC *exception))
 {
     Parrot_ex_mark_unhandled(interp, exception);
 
-    longjmp(interp->current_runloop->resume, 1);
+    Parrot_ex_throw_from_c(interp, exception);
 }
 
 /*
