@@ -39,7 +39,7 @@ t/doc/searchops-03.t - test subroutines used in tools/docs/search-ops.pl
 
 =head1 DESCRIPTION
 
-This test demonstrates that an .ops file with a C<=head1 NAME> paragraph not
+This test demonstrates that an F<.ops> file with a C<=head1 NAME> paragraph not
 followed by another paragraph will not print the 'NAME' paragraph.
 
 =cut
