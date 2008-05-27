@@ -4,26 +4,31 @@
 
 use strict;
 use warnings;
-use File::Basename;
-use File::Copy;
 use File::Temp qw( tempdir );
-use Test::More tests =>  4;
-use lib qw( ./lib );
+use Test::More tests =>  1;
+use lib qw( ./lib ./t/doc/searchops );
 use IO::CaptureOutput qw( capture );
 use Parrot::Docs::SearchOps qw(
     search_all_ops_files
 );
+use samples qw( $core $debug $mangled $string );
 
 my $wrap_width = 70;
 my $opsdir = q{t/doc/searchops};
 
+my %samples = (
+    core    => { text => $core,      file => q|core.ops|      },
+    debug   => { text => $debug,     file => q|debug.ops|     },
+    string  => { text => $string,    file => q|string.ops|    },
+);
+
 {
     my $tdir = tempdir();
-    my @opsfiles = grep { ! /mangled/ } glob("$opsdir/*.ops");
-    foreach my $f (@opsfiles) {
-        my $base = basename($f);
-        ok( (copy $f, qq{$tdir/$base}),
-            "Copied file correctly in preparation for testing");
+    foreach my $g (keys %samples) {
+        open my $IN, '>', qq{$tdir/$samples{$g}{file}}
+            or die "Unable to open $samples{$g}{file} for writing";
+        print $IN $samples{$g}{text};
+        close $IN or die "Unable to close $samples{$g}{file} after writing";
     }
     my $pattern = q{};
     my $total_identified;
