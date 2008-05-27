@@ -1,6 +1,6 @@
 # perl
 # Copyright (C) 2008, The Perl Foundation.
-# $Id: SearchOps.pm 27813 2008-05-26 13:41:47Z jkeenan $
+# $Id$
 use strict;
 use warnings;
 use Carp;
