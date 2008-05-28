@@ -84,7 +84,7 @@ foreach my $file (@files) {
     next if $file =~ m/ops_summary\.pl/;
 
     # skip file which includes malformed POD for other testing purposes
-    next if $file =~ m{t/doc/searchops/samples\.pm};
+    next if $file =~ m{t/tools/dev/searchops/samples\.pm};
 
     # skip files with valid POD
     next if file_pod_ok($file);

@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 use Getopt::Long ();
 use lib qw( ./lib );
-use Parrot::Docs::SearchOps qw(
+use Parrot::SearchOps qw(
     search_all_ops_files
     usage
     help
@@ -43,21 +43,21 @@ exit 0;
 
 =head1 NAME
 
-tools/docs/search-ops.pl - Get descriptions of ops codes
+tools/dev/search-ops.pl - Get descriptions of ops codes
 
 =head1 USAGE
 
 From the top-level Parrot directory,
 
-    perl tools/docs/search-ops.pl ops_pattern
+    perl tools/dev/search-ops.pl ops_pattern
 
 For help,
 
-    perl tools/docs/search-ops.pl --help
+    perl tools/dev/search-ops.pl --help
 
 To display all ops codes,
 
-    perl tools/docs/search-ops.pl --all
+    perl tools/dev/search-ops.pl --all
 
 =head1 AUTHOR
 

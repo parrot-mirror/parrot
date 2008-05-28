@@ -5,22 +5,23 @@
 use strict;
 use warnings;
 use File::Temp qw( tempdir );
-use Test::More tests =>  1;
-use lib qw( ./lib ./t/doc/searchops );
+use Test::More tests =>  2;
+use lib qw( ./lib ./t/tools/dev/searchops );
 use IO::CaptureOutput qw( capture );
-use Parrot::Docs::SearchOps qw(
+use Parrot::SearchOps qw(
     search_all_ops_files
 );
 use samples qw( $core $debug $mangled $string );
 
-my $wrap_width = 70;
-my $opsdir = q{t/doc/searchops};
-
 my %samples = (
     core    => { text => $core,      file => q|core.ops|      },
     debug   => { text => $debug,     file => q|debug.ops|     },
+    mangled => { text => $mangled,   file => q|mangled.ops|   },
     string  => { text => $string,    file => q|string.ops|    },
 );
+
+my $wrap_width = 70;
+my $opsdir = q{t/tools/dev/searchops};
 
 {
     my $tdir = tempdir();
@@ -30,7 +31,7 @@ my %samples = (
         print $IN $samples{$g}{text};
         close $IN or die "Unable to close $samples{$g}{file} after writing";
     }
-    my $pattern = q{};
+    my $pattern = q{chopn};
     my $total_identified;
     my ($stdout, $stderr);
     capture(
@@ -39,20 +40,22 @@ my %samples = (
         \$stdout,
         \$stderr,
     );
-    is($total_identified, 12, "Got expected total number of ops for --all");
+    unlike($stdout, qr/NAME/,
+        "Badly formtted entry excluded from display, as expected");
+    is($total_identified, 2, "Got expected total number of ops for $pattern");
 }
 
 =head1 NAME
 
-t/doc/searchops-04.t - test subroutines used in tools/docs/search-ops.pl
+t/tools/dev/searchops-03.t - test subroutines used in tools/dev/search-ops.pl
 
 =head1 SYNOPSIS
 
-    % prove t/doc/searchops-04.t
+    % prove t/tools/dev/searchops-03.t
 
 =head1 DESCRIPTION
 
-This test demonstrates what happens when the C<--all> option is provided to
-F<tools/docs/search-ops.pl>.
+This test demonstrates that an F<.ops> file with a C<=head1 NAME> paragraph not
+followed by another paragraph will not print the 'NAME' paragraph.
 
 =cut
