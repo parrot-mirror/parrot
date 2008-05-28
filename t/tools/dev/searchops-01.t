@@ -6,9 +6,9 @@ use strict;
 use warnings;
 use File::Temp qw( tempdir );
 use Test::More tests =>  5;
-use lib qw( ./lib ./t/doc/searchops );
+use lib qw( ./lib ./t/tools/dev/searchops );
 use IO::CaptureOutput qw( capture );
-use Parrot::Docs::SearchOps qw(
+use Parrot::SearchOps qw(
     search_all_ops_files
     help
 );
@@ -29,7 +29,7 @@ my %samples = (
         \$stderr,
     );
     like($stdout,
-        qr/^\s*perl\stools\/docs\/search-ops\.pl.*?ops_pattern/s,
+        qr/^\s*perl\stools\/dev\/search-ops\.pl.*?ops_pattern/s,
         "Got expected start to help message",
     );
     like($stdout,
@@ -39,7 +39,7 @@ my %samples = (
 }
 
 my $wrap_width = 70;
-my $opsdir = q{t/doc/searchops};
+my $opsdir = q{t/tools/dev/searchops};
 
 {
     my $tdir = tempdir();
@@ -71,15 +71,15 @@ my $opsdir = q{t/doc/searchops};
 
 =head1 NAME
 
-t/doc/searchops-01.t - test subroutines used in tools/docs/search-ops.pl
+t/tools/dev/searchops-01.t - test subroutines used in tools/dev/search-ops.pl
 
 =head1 SYNOPSIS
 
-    % prove t/doc/searchops-01.t
+    % prove t/tools/dev/searchops-01.t
 
 =head1 DESCRIPTION
 
-This file tests the basic operation of Parrot::Docs::SearchOps and
+This file tests the basic operation of Parrot::SearchOps and
 demonstrates that it will match patterns in more than one file.
 
 =cut

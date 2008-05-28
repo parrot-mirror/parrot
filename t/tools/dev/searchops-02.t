@@ -6,9 +6,9 @@ use strict;
 use warnings;
 use File::Temp qw( tempdir );
 use Test::More tests =>  2;
-use lib qw( ./lib ./t/doc/searchops );
+use lib qw( ./lib ./t/tools/dev/searchops );
 use IO::CaptureOutput qw( capture );
-use Parrot::Docs::SearchOps qw(
+use Parrot::SearchOps qw(
     search_all_ops_files
 );
 use samples qw( $core $debug $mangled $string );
@@ -21,7 +21,7 @@ my %samples = (
 );
 
 my $wrap_width = 70;
-my $opsdir = q{t/doc/searchops};
+my $opsdir = q{t/tools/dev/searchops};
 
 {
     my $tdir = tempdir();
@@ -47,11 +47,11 @@ my $opsdir = q{t/doc/searchops};
 
 =head1 NAME
 
-t/doc/searchops-02.t - test subroutines used in tools/docs/search-ops.pl
+t/tools/dev/searchops-02.t - test subroutines used in tools/dev/search-ops.pl
 
 =head1 SYNOPSIS
 
-    % prove t/doc/searchops-02.t
+    % prove t/tools/dev/searchops-02.t
 
 =head1 DESCRIPTION
 
