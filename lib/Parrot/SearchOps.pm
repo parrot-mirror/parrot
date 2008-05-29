@@ -32,12 +32,14 @@ sub search_all_ops_files {
 
 sub _search_one_ops_file {
     my ($pattern, $wrap_width, $total_identified, $f) = @_;
+    my $fullpattern = qr/^=item\sB<(\w*$pattern\w*)>\(([^)]*)\)/;
     my @paras = split /\n{2,}/, _slurp($f);
     my %iden_paras = ();
     for (my $i=0; $i<=$#paras; $i++) {
         my $j = $i+1;
         if (
-            $paras[$i] =~ /^=item\sB<(\w*$pattern\w*)>\(([^)]*)\)/o
+#            $paras[$i] =~ /^=item\sB<(\w*$pattern\w*)>\(([^)]*)\)/o
+            $paras[$i] =~ /$fullpattern/
                 and
             $paras[$j]
         ) {
@@ -72,7 +74,7 @@ sub _print_name {
     my $count = shift;
     NAME: for (my $i=0; $i<=$#$parasref; $i++) {
         my $j = $i+1;
-        if ($parasref->[$i] =~ /^=head1\s+NAME/o and $parasref->[$j]) {
+        if ($parasref->[$i] =~ /^=head1\s+NAME/ and $parasref->[$j]) {
             my $str = qq{\n};
             $str .= q{-} x $wrap_width . qq{\n};
             $str .= $parasref->[$j] .
