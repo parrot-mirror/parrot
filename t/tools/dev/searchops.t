@@ -144,11 +144,11 @@ my $opsdir = q{t/tools/dev/searchops};
 
 =head1 NAME
 
-t/tools/dev/searchops-01.t - test subroutines used in tools/dev/search-ops.pl
+t/tools/dev/searchops.t - test subroutines used in tools/dev/search-ops.pl
 
 =head1 SYNOPSIS
 
-    % prove t/tools/dev/searchops-01.t
+    % prove t/tools/dev/searchops.t
 
 =head1 DESCRIPTION
 
