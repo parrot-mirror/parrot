@@ -1,0 +1,19 @@
+#!perl
+# Copyright (C) 2001-2008, The Perl Foundation.
+# $Id$
+use strict;
+use warnings;
+use lib qw( lib );
+
+use Test::Harness ();
+use Parrot::Harness::DefaultTests ();
+
+Test::Harness::runtests(@Parrot::Harness::DefaultTests::developing_tests);
+
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:
