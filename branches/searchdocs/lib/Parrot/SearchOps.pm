@@ -37,12 +37,7 @@ sub _search_one_ops_file {
     my %iden_paras = ();
     for (my $i=0; $i<=$#paras; $i++) {
         my $j = $i+1;
-        if (
-#            $paras[$i] =~ /^=item\sB<(\w*$pattern\w*)>\(([^)]*)\)/o
-            $paras[$i] =~ /$fullpattern/
-                and
-            $paras[$j]
-        ) {
+        if ( $paras[$i] =~ /$fullpattern/ and $paras[$j]) {
             $iden_paras{$i}{op} = $1;
             $iden_paras{$i}{args} = $2;
         }

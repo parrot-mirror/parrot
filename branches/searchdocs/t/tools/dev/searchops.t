@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use File::Temp qw( tempdir );
-use Test::More qw(no_plan); # tests =>  5;
+use Test::More tests => 10;
 use lib qw( ./lib ./t/tools/dev/searchops );
 use IO::CaptureOutput qw( capture );
 use Parrot::SearchOps qw(
