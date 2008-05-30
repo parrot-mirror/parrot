@@ -1355,7 +1355,7 @@ method scope_declarator($/) {
                 elsif substr($name, 0, 1) eq '%' {
                     $container_type := 'Perl6Hash';
                 }
-                my $new_cont_pir := "    %r = new '" ~ $container_type ~ "' ##";
+                my $new_cont_pir := "    %r = new '" ~ $container_type ~ "'";
                 if $type_info {
                     # Need to build a properties hash first.
                     $new_cont_pir := "$P0 = new 'Hash'\n" ~
