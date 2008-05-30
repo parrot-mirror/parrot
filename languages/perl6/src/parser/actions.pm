@@ -128,7 +128,7 @@ method statement($/, $key) {
                         PAST::Var.new(
                             :name('$_'),
                             :scope('parameter'),
-                            :viviself('Undef')
+                            :viviself('Failure')
                         ),
                         $expr
                     ),
@@ -420,7 +420,7 @@ method statement_prefix($/) {
     if $sym eq 'do' {
         # fall through, just use the statement itself
     }
-    ## after the code in the try block is executed, bind $! to Undef,
+    ## after the code in the try block is executed, bind $! to Failure,
     ## and set up the code to catch an exception, in case one is thrown
     elsif $sym eq 'try' {
         $past := PAST::Op.new( $past, :pasttype('try') );
@@ -665,12 +665,12 @@ method parameter($/) {
         if $<named> eq ':' {          # named
             $past.named(~$<param_var><ident>);
             if $<quant> ne '!' {      #  required (optional is default)
-                $past.viviself('Undef');
+                $past.viviself('Failure');
             }
         }
         else {                        # positional
             if $<quant> eq '?' {      #  optional (required is default)
-                $past.viviself('Undef');
+                $past.viviself('Failure');
             }
         }
     }
@@ -841,7 +841,7 @@ method postcircumfix($/, $key) {
             $( $<semilist> ),
             :scope('keyed_int'),
             :vivibase('Perl6Array'),
-            :viviself('Undef'),
+            :viviself('Failure'),
             :node( $/ )
         );
     }
@@ -854,7 +854,7 @@ method postcircumfix($/, $key) {
             $( $<semilist> ),
             :scope('keyed'),
             :vivibase('Perl6Hash'),
-            :viviself('Undef'),
+            :viviself('Failure'),
             :node( $/ )
         );
     }
@@ -863,7 +863,7 @@ method postcircumfix($/, $key) {
             $( $<quote_expression> ),
             :scope('keyed'),
             :vivibase('Perl6Hash'),
-            :viviself('Undef'),
+            :viviself('Failure'),
             :node( $/ )
         );
     }
@@ -1422,7 +1422,7 @@ method variable($/, $key) {
         $past := PAST::Var.new(
             :scope('keyed_int'),
             :node($/),
-            :viviself('Undef'),
+            :viviself('Failure'),
             PAST::Var.new(
                 :scope('lexical'),
                 :name('$/')
@@ -1438,7 +1438,7 @@ method variable($/, $key) {
         $past.unshift(PAST::Var.new(
             :scope('lexical'),
             :name('$/'),
-            :viviself('Undef')
+            :viviself('Failure')
         ));
     }
     else {
