@@ -8,42 +8,14 @@ src/builtins/guts.pir - subs that are part of the internals, not for users
 
 =over 4
 
-=item !TYPECHECKEDASSIGN
-
-Checks that the value and the assignee are type-compatible and does the
-assignment.
-
 =cut
 
-.sub '!TYPECHECKEDASSIGN'
-    .param pmc assignee
+.sub '!DOTYEPCHECK'
+    .param pmc type
     .param pmc value
-
-    # Any type information?
-    .local pmc props, type_info
-    push_eh do_assign
-    props = getattribute assignee, '%!properties'
-    type_info = props['vartype']
-    pop_eh
-    if null type_info goto do_assign
-    $I0 = type_info.ACCEPTS(value)
-    if $I0 goto do_assign
-    $I0 = value.'isa'('Failure')
-    if $I0 goto do_assign_failure
-    'die'("Type check failed")
-
-  do_assign_failure:
-    # If it's a class type, we want to assign it's proto-object.
-    push_eh do_assign
-    $I0 = isa type_info, 'Perl6Protoobject'
-    unless $I0 goto do_assign
-    value = type_info
-    goto do_assign
-
-  do_assign:
-    assign assignee, value
-    setattribute assignee, '%!properties', props
-    .return(assignee)
+    .param pmc result
+    $I0 = type.'ACCEPTS'(value)
+    result = $I0
 .end
 
 
