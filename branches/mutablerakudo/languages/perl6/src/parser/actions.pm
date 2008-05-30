@@ -1588,11 +1588,12 @@ method variable($/, $key) {
             if @ident || $twigil eq '*' {
                 $past.namespace(@ident);
                 $past.scope('package');
-                my $container_type := 'Perl6Scalar';
-                if $sigil eq '@' { $container_type := 'Perl6Array' }
-                elsif $sigil eq '%' { $container_type := 'Perl6Hash' }
-                $past.viviself($container_type);
             }
+
+            my $container_type := 'Perl6Scalar';
+            if $sigil eq '@' { $container_type := 'Perl6Array' }
+            elsif $sigil eq '%' { $container_type := 'Perl6Hash' }
+            $past.viviself($container_type);
         }
     }
     make $past;
