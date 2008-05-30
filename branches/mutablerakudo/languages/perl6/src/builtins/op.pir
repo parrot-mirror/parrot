@@ -111,7 +111,7 @@ src/builtins/op.pir - Perl6 builtin operators
 .end
 
 
-.sub 'prefix:^' :multi('Perl6ProtoObject')
+.sub 'prefix:^' :multi('P6protoobject')
     .param pmc proto
     .return proto.'HOW'()
 .end

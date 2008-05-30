@@ -30,6 +30,7 @@ pmclass Mutable need_ext dynpmc group perl6_group {
 
     VTABLE void init_pmc(PMC *properties) {
         PMC *value;
+        PMC *type_obj = PMCNULL;
         STRING *type = string_from_literal(INTERP, "!type");
         /* XXX Why doesn't CONST_STRING work on above line? */
 
@@ -37,15 +38,21 @@ pmclass Mutable need_ext dynpmc group perl6_group {
         PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_Mutable);
 
         /* Initialize with an undef PMC and the provided properties hash. */
-        value = pmc_new(INTERP, enum_class_Undef);
-        SET_ATTR_value(INTERP, SELF, value);
         SET_ATTR_properties(INTERP, SELF, properties);
 
         /* If the properties hash contains a type then cache it. */
         if (!PMC_IS_NULL(properties) && VTABLE_exists_keyed_str(INTERP, properties, type)) {
-            PMC *type_obj = VTABLE_get_pmc_keyed_str(INTERP, properties, type);
+            type_obj = VTABLE_get_pmc_keyed_str(INTERP, properties, type);
             SET_ATTR_cached_type(INTERP, SELF, type_obj);
         }
+
+        /* Initial value should be proto-object if it's a class type, or
+         * an undef otherwise. */
+        if (!PMC_IS_NULL(type_obj) && VTABLE_isa(INTERP, type_obj, string_from_literal(INTERP, "P6protoobject")))
+            value = type_obj;
+        else
+            value = pmc_new(INTERP, enum_class_Undef);
+        SET_ATTR_value(INTERP, SELF, value);
     }
 
     VTABLE void mark() {
