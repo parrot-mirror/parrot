@@ -1198,52 +1198,7 @@ method scoped($/) {
     # Variable declaration?
     if $<variable_decl> {
         $past := $( $<variable_decl> );
-
-        # Do we have any type names?
-        if $<typename> {
-            # Build the type constraints list for the variable.
-            my $num_types := 0;
-            my $type_cons := PAST::Op.new();
-            for $<typename> {
-                $type_cons.push( $( $_ ) );
-                $num_types := $num_types + 1;
-            }
-
-            # If just the one, we try to look it up and assign it.
-            if $num_types == 1 {
-                $past := PAST::Op.new(
-                    :pasttype('copy'),
-                    :lvalue(1),
-                    $past,
-                    $( $<typename>[0] )
-                );
-            }
-
-            # Now need to apply the type constraints. How many are there?
-            if $num_types == 1 {
-                # Just the first one.
-                $type_cons := $type_cons[0];
-            }
-            else {
-                # Many; make an and junction of types.
-                $type_cons.pasttype('call');
-                $type_cons.name('all');
-            }
-
-            # Now store these type constraints.
-            $past := PAST::Op.new(
-                :inline(
-                      "    $P0 = new 'Hash'\n"
-                    ~ "    $P0['vartype'] = %1\n"
-                    ~ "    setattribute %0, '%!properties', $P0\n"
-                    ~ "    %r = %0\n"
-                ),
-                $past,
-                $type_cons
-            );
-        }
     }
-
     # Routine declaration?
     else {
         $past := $( $<routine_declarator> );
@@ -1258,8 +1213,7 @@ method scoped($/) {
 }
 
 sub declare_attribute($/) {
-    # Get the
-    # class or role we're in.
+    # Get the class or role we're in.
     our $?CLASS;
     our $?ROLE;
     our $?PACKAGE;
@@ -1357,31 +1311,24 @@ method scope_declarator($/) {
             # Has declarations are attributes and need special handling.
             declare_attribute($/);
 
-            # We don't want to generate any PAST at the point of the declaration.
+            # We don't have any PAST at the point of the declaration.
             $past := PAST::Stmts.new();
         }
         else {
-            # We need to find the actual variable PAST node; we may have something
-            # more complex at this stage that applies types.
-            $past := $( $<scoped> );
-            my $var;
-            if $past.WHAT() eq 'Var' {
-                $var := $past;
+            # Has this already been declared?
+            my $var := $( $<scoped> );
+            my $name := $var.name();
+            if $?BLOCK.symbol($name) {
+                # Already declared, the PAST is just the Var node.
+                $past := $var;
             }
             else {
-                # It had an initial type assignment.
-                $var := $past[0][0];
-            }
-
-            # Has this already been declared?
-            my $name := $var.name();
-            unless $?BLOCK.symbol($name) {
+                # Set it as a declaration and work out its scope
                 my $scope := 'lexical';
                 if $declarator eq 'my' {
                     $var.isdecl(1);
                 }
                 elsif $declarator eq 'our' {
-                    $name := $var.name();
                     $scope := 'package';
                     $var.isdecl(1);
                 }
@@ -1391,8 +1338,46 @@ method scope_declarator($/) {
                         ~ $declarator ~ "' not implemented"
                     );
                 }
-                my $untyped := $var =:= $past;
-                $?BLOCK.symbol($name, :scope($scope), :untyped($untyped));
+
+                # were there any types?
+                my $type_info;
+                if $<scoped><typename> {
+                    # Build types.
+                    $type_info := build_type($<scoped><typename>);
+                }
+
+                # Build a new container
+                my $container_type := 'Perl6Scalar';
+                my $new_container := PAST::Op.new(:node($/));
+                if substr($name, 0, 1) eq '@' {
+                    $container_type := 'Perl6Array';
+                }
+                elsif substr($name, 0, 1) eq '%' {
+                    $container_type := 'Perl6Hash';
+                }
+                my $new_cont_pir := "    %r = new '" ~ $container_type ~ "' ##";
+                if $type_info {
+                    # Need to build a properties hash first.
+                    $new_cont_pir := "$P0 = new 'Hash'\n" ~
+                                     "$P0['!type'] = %0\n" ~
+                                     $new_cont_pir ~ ", $P0\n";
+                    $new_container.inline($new_cont_pir);
+                    $new_container.push($type_info);
+                }
+                else {
+                    $new_container.inline($new_cont_pir ~ "\n");
+                }
+
+                # Set the container as the var's auto-vivify.
+                $past := $var;
+                $past.viviself($new_container);
+
+                # Add block entry.
+                $?BLOCK.symbol($name,
+                    :scope($scope),
+                    :untyped(defined($type_info))
+                );
+
             }
         }
     }
@@ -1551,12 +1536,7 @@ method variable($/, $key) {
             );
         }
         else {
-            # Variable. Set how it vivifies.
-            my $viviself := 'Undef';
-            if $<sigil> eq '@' { $viviself := 'Perl6Array'; }
-            if $<sigil> eq '%' { $viviself := 'Perl6Hash'; }
-
-            # [!:^] twigil should be kept in the name.
+            # Variable. [!:^] twigil should be kept in the name.
             if $twigil eq '!' || $twigil eq ':' || $twigil eq '^' { $name := $twigil ~ ~$name; }
 
             # All but subs should keep their sigils.
@@ -1582,13 +1562,17 @@ method variable($/, $key) {
 
             $past := PAST::Var.new(
                 :name( $sigil ~ $name ),
-                :viviself($viviself),
                 :node($/)
             );
             if @ident || $twigil eq '*' {
                 $past.namespace(@ident);
                 $past.scope('package');
             }
+
+            my $container_type := 'Perl6Scalar';
+            if $sigil eq '@' { $container_type := 'Perl6Array' }
+            elsif $sigil eq '%' { $container_type := 'Perl6Hash' }
+            $past.viviself($container_type);
         }
     }
     make $past;
@@ -1852,7 +1836,7 @@ method EXPR($/, $key) {
             $var
         );
         my $past := PAST::Op.new(
-            :inline("    %r = '!TYPECHECKEDASSIGN'(%1, %0)\n"),
+            :name('infix:='),
             :node($/),
             $meth_call,
             $res
@@ -1876,23 +1860,6 @@ method EXPR($/, $key) {
         for @($/) {
             unless +$_.from() == +$_.to() { $past.push( $($_) ) };
         }
-
-        # If it's an assignment or binding, we may need to emit a type-check.
-#        if $past.name() eq 'infix:=' {
-#            # We can skip it if we statically know the variable had no type
-#            # associated with it, though.
-#            our $?BLOCK;
-#            my $sym_info := $?BLOCK.symbol($past[0].name());
-#            unless $sym_info<untyped> {
-#                $past := PAST::Op.new(
-#                    :lvalue(1),
-#                    :node($/),
-#                    :inline("    %r = '!TYPECHECKEDASSIGN'(%0, %1)\n"),
-#                    $past[0],
-#                    $past[1]
-#                );
-#            }
-#        }
 
         make $past;
     }
@@ -2215,6 +2182,32 @@ sub make_handles_method_from_pair($/, $pair, $attr_name) {
     }
 
     $meth
+}
+
+
+# This takes an array of match objects of type constraints and builds a type
+# representation out of them.
+sub build_type($cons_pt) {
+    # Build the type constraints list for the variable.
+    my $num_types := 0;
+    my $type_cons := PAST::Op.new();
+    for $cons_pt {
+        $type_cons.push( $( $_ ) );
+        $num_types := $num_types + 1;
+    }
+
+    # Now need to apply the type constraints. How many are there?
+    if $num_types == 1 {
+        # Just the first one.
+        $type_cons := $type_cons[0];
+    }
+    else {
+        # Many; make an and junction of types.
+        $type_cons.pasttype('call');
+        $type_cons.name('all');
+    }
+
+    $type_cons
 }
 
 
