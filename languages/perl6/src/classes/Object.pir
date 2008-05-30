@@ -43,7 +43,9 @@ and Mappings to be converted into Array(ref) and Hash(ref).
     .param pmc target
     .param pmc source
     $P0 = source.'item'()
-    .return '!TYPECHECKEDASSIGN'(target, $P0)
+    eq_addr target, $P0, end
+    copy target, $P0
+  end:
 .end
 
 

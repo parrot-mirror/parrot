@@ -22,7 +22,7 @@ pmclass Mutable need_ext dynpmc group perl6_group {
     ATTR PMC *value;
     ATTR PMC *properties;
     ATTR PMC *cached_type;
-    
+
     VTABLE void init() {
         /* Initialize with a null PMC for properties. */
         STATICSELF.init_pmc(PMCNULL);
@@ -72,10 +72,15 @@ pmclass Mutable need_ext dynpmc group perl6_group {
 
     VTABLE void assign_pmc(PMC *value) {
         /* Do we need to do any type-check? */
+        STRING *s_mutable = string_from_literal(INTERP, "Mutable");
         PMC *type_obj;
+
+        while (VTABLE_isa(INTERP, value, s_mutable))
+            GET_ATTR_value(INTERP, value, value);
+
         GET_ATTR_cached_type(INTERP, SELF, type_obj);
         if (!PMC_IS_NULL(type_obj)) {
-            STRING *checker_name = string_from_literal(INTERP, "!DOTYEPCHECK");
+            STRING *checker_name = string_from_literal(INTERP, "!DOTYPECHECK");
             PMC *checker = Parrot_find_global_n(interp,
                 Parrot_get_ctx_HLL_namespace(interp), checker_name);
             PMC *result = pmc_new(INTERP, enum_class_Integer);
@@ -92,5 +97,19 @@ pmclass Mutable need_ext dynpmc group perl6_group {
         PMC * value;
         GET_ATTR_value(INTERP, SELF, value);
         return value;
+    }
+
+    VTABLE INTVAL isa_pmc(PMC *lookup) {
+        PMC * value;
+        if (SUPER(lookup)) return 1;
+        GET_ATTR_value(INTERP, SELF, value);
+        return VTABLE_isa_pmc(INTERP, value, lookup);
+    }
+
+    VTABLE INTVAL isa(STRING *classname) {
+        PMC * value;
+        if (SUPER(classname)) return 1;
+        GET_ATTR_value(INTERP, SELF, value);
+        return VTABLE_isa(INTERP, value, classname);
     }
 }
