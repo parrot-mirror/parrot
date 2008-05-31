@@ -102,6 +102,8 @@ pmclass Mutable need_ext dynpmc group perl6_group {
     VTABLE INTVAL isa_pmc(PMC *lookup) {
         PMC * value;
         if (SUPER(lookup)) return 1;
+        /* PMCProxy_does sends us a proxied Mutable with no value */
+        if (!PMC_data(SELF)) return 0;
         GET_ATTR_value(INTERP, SELF, value);
         return VTABLE_isa_pmc(INTERP, value, lookup);
     }
@@ -109,7 +111,26 @@ pmclass Mutable need_ext dynpmc group perl6_group {
     VTABLE INTVAL isa(STRING *classname) {
         PMC * value;
         if (SUPER(classname)) return 1;
+        /* PMCProxy_does sends us a proxied Mutable with no value */
+        if (!PMC_data(SELF)) return 0;
         GET_ATTR_value(INTERP, SELF, value);
         return VTABLE_isa(INTERP, value, classname);
     }
+
+    VTABLE INTVAL does_pmc(PMC *role) {
+        PMC * value;
+        /* PMCProxy_does sends us a proxied Mutable with no value */
+        if (!PMC_data(SELF)) return 0;
+        GET_ATTR_value(INTERP, SELF, value);
+        return VTABLE_does_pmc(INTERP, value, role);
+    }
+
+    VTABLE INTVAL does(STRING *role) {
+        PMC * value;
+        /* PMCProxy_does sends us a proxied Mutable with no value */
+        if (!PMC_data(SELF)) return 0;
+        GET_ATTR_value(INTERP, SELF, value);
+        return VTABLE_does(INTERP, value, role);
+    }
+
 }
