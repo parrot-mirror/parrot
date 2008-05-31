@@ -20,7 +20,6 @@ Forwards all but some methods to the held PMC.
 
 pmclass Mutable need_ext dynpmc group perl6_group {
     ATTR PMC *value;
-    ATTR PMC *properties;
     ATTR PMC *cached_type;
 
     VTABLE void init() {
@@ -28,42 +27,24 @@ pmclass Mutable need_ext dynpmc group perl6_group {
         STATICSELF.init_pmc(PMCNULL);
     }
 
-    VTABLE void init_pmc(PMC *properties) {
-        PMC *value;
+    VTABLE void init_pmc(PMC *value) {
         PMC *type_obj = PMCNULL;
-        STRING *type = string_from_literal(INTERP, "!type");
-        /* XXX Why doesn't CONST_STRING work on above line? */
 
         /* Create underlying structure. */
         PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_Mutable);
-
         /* Initialize with an undef PMC and the provided properties hash. */
-        SET_ATTR_properties(INTERP, SELF, properties);
+        SET_ATTR_cached_type(INTERP, SELF, type_obj);
 
-        /* If the properties hash contains a type then cache it. */
-        if (!PMC_IS_NULL(properties) && VTABLE_exists_keyed_str(INTERP, properties, type)) {
-            type_obj = VTABLE_get_pmc_keyed_str(INTERP, properties, type);
-            SET_ATTR_cached_type(INTERP, SELF, type_obj);
-        }
-
-        /* Initial value should be proto-object if it's a class type, or
-         * an undef otherwise. */
-        if (!PMC_IS_NULL(type_obj) && VTABLE_isa(INTERP, type_obj, string_from_literal(INTERP, "P6protoobject")))
-            value = type_obj;
-        else
+        if (PMC_IS_NULL(value))
             value = pmc_new(INTERP, enum_class_Undef);
         SET_ATTR_value(INTERP, SELF, value);
     }
 
     VTABLE void mark() {
         PMC *value;
-        PMC *properties;
         GET_ATTR_value(INTERP, SELF, value);
         if (value)
             pobject_lives(INTERP, (PObj*)value);
-        GET_ATTR_properties(INTERP, SELF, properties);
-        if (properties)
-            pobject_lives(INTERP, (PObj*)properties);
     }
 
     VTABLE void destroy() {
@@ -79,6 +60,13 @@ pmclass Mutable need_ext dynpmc group perl6_group {
             GET_ATTR_value(INTERP, value, value);
 
         GET_ATTR_cached_type(INTERP, SELF, type_obj);
+        if (PMC_IS_NULL(type_obj)) {
+            STRING *s_type = string_from_literal(INTERP, "type");
+            type_obj = VTABLE_getprop(INTERP, SELF, s_type);
+            if (!PMC_IS_NULL(type_obj))
+                SET_ATTR_cached_type(INTERP, SELF, type_obj);
+        }
+
         if (!PMC_IS_NULL(type_obj)) {
             STRING *checker_name = string_from_literal(INTERP, "!DOTYPECHECK");
             PMC *checker = Parrot_find_global_n(interp,
