@@ -83,32 +83,24 @@ runops(PARROT_INTERP, size_t offs)
     {
         new_runloop_jump_point(interp);
         if (setjmp(interp->current_runloop->resume)) {
-            /* an exception was thrown */
-            interp->current_runloop_level = our_runloop_level;
-            interp->current_runloop_id = our_runloop_id;
-#ifdef RUNLOOP_TRACE
-            fprintf(stderr, "[exception; back to loop %d, level %d]\n",
-                    our_runloop_id, our_runloop_level);
-#endif
-            offset = Parrot_ex_calc_handler_offset(interp);
-            /* update profile for exception execution time */
-            if (interp->profile &&
-                    Interp_flags_TEST(interp, PARROT_PROFILE_FLAG)) {
-                RunProfile * const profile = interp->profile;
-                if (profile->cur_op == PARROT_PROF_EXCEPTION) {
-                    profile->data[PARROT_PROF_EXCEPTION].time +=
-                        Parrot_floatval_time() - profile->starttime;
-                }
+            /* an exception was handled */
+            if (STACKED_EXCEPTIONS) {
+                free_runloop_jump_point(interp);
             }
+            interp->current_runloop_level = our_runloop_level - 1;
+            interp->current_runloop_id = old_runloop_id;
+
+#ifdef RUNLOOP_TRACE
+            fprintf(stderr, "[handled exception; back to loop %d, level %d]\n",
+                    interp->current_runloop_id, interp->current_runloop_level);
+#endif
+            return;
         }
     }
 
     runops_int(interp, offset);
 
-    /*
-     * pop off exception and put it onto the free list
-     * s. above
-     */
+    /* Remove the current runloop marker (put it on the free list). */
     if (STACKED_EXCEPTIONS) {
         free_runloop_jump_point(interp);
     }
