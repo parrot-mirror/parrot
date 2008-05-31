@@ -269,6 +269,7 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
     PMC * const handler = find_exception_handler(interp, exception);
     STRING *msg = VTABLE_get_string(interp, exception);
     RunProfile * const profile = interp->profile;
+    Parrot_runloop *return_point = interp->current_runloop;
 
     /* If profiling remember end time of lastop and generate entry for
      * exception. */
@@ -293,11 +294,14 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
     /* Run the handler. */
     Parrot_runops_fromc_args(interp, handler, "vPS", exception, msg);
 
-/*    fprintf(stderr, "exception was handled, terminating inferior runloop and exiting\n"); */
+    /*fprintf(stderr, "exception was handled, terminating inferior runloop and resuming outer runloop.\n");  */
 
-    /* Exceptions thrown from C are not resumable, so exit cleanly after
-     * running the handler. */
-    Parrot_exit(interp, 0);
+    /* After handling a C exception, you don't want to resume at the point
+     * where the C exception was thrown, you want to resume the next outer
+     * runloop.
+     */
+
+    longjmp(return_point->resume, 1);
 }
 
 /*
