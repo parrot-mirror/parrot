@@ -589,37 +589,16 @@ Returns a proto-object with an autovivification closure attached to it.
 
 .sub 'ACCEPTS' :method
     .param pmc topic
-    .local pmc HOW, p6meta
+    .local pmc topichow, topicwhat, parrotclass
 
-    # Do a does check against the topic.
-    p6meta = get_hll_global 'P6metaclass'
-    HOW = p6meta.'get_parrotclass'(self)
-    $I0 = does topic, HOW
-    if $I0 goto do_return
-
-    # If that didn't work, try invoking the ACCEPTS of the class itself.
-    # XXX Once we get callsame-like stuff implemented, this logic should go away.
-  try_class_accepts:
-    .local pmc parents, found
-    .local int i, count
-    parents = inspect HOW, 'all_parents'
-    count = elements parents
-    i = 1 # skip protoclass
-  find_next_loop:
-    if i >= count goto find_next_loop_end
-    $P0 = parents[i]
-    $P0 = inspect $P0, 'methods'
-    found = $P0['ACCEPTS']
-    unless null found goto find_next_loop_end
-    inc i
-    goto find_next_loop
-  find_next_loop_end:
-
-    $I0 = 0
-    if null found goto do_return
-    $I0 = found(self, topic)
-  do_return:
-    .return 'prefix:?'($I0)
+    topichow = topic.'HOW'()
+    topicwhat = topic.'WHAT'()
+    parrotclass = topichow.'get_parrotclass'(self)
+    $I0 = isa topicwhat, parrotclass
+    if $I0 goto end
+    $I0 = does topic, parrotclass
+  end:
+    .return ($I0)
 .end
 
 
