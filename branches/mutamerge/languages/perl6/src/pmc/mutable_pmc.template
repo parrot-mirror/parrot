@@ -133,4 +133,11 @@ pmclass Mutable need_ext dynpmc group perl6_group {
         return VTABLE_does(INTERP, value, role);
     }
 
+    /* We don't want any of these to be touched */
+    /* VTABLE PMC * getprop() */
+    /* VTABLE PMC * setprop() */
+    /* VTABLE PMC * delprop() */
+    /* VTABLE PMC * getprops() */
+
+
 }
