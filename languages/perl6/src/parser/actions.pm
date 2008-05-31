@@ -1194,10 +1194,19 @@ method variable_decl($/) {
 
 method scoped($/) {
     my $past;
-
     # Variable declaration?
     if $<variable_decl> {
         $past := $( $<variable_decl> );
+        if $<typename> {
+            my $type_pir := "    setprop %0, 'type', %1\n    %r = %0\n";
+            $past.viviself(
+                PAST::Op.new(
+                    :inline($type_pir),
+                    $past.viviself(),
+                    $( $<typename>[0] )
+                )
+            );
+        }
     }
     # Routine declaration?
     else {
@@ -1208,9 +1217,9 @@ method scoped($/) {
             $/.panic("Setting return type of a routine not yet implemented.");
         }
     }
-
     make $past;
 }
+
 
 sub declare_attribute($/) {
     # Get the class or role we're in.
@@ -1300,9 +1309,9 @@ sub declare_attribute($/) {
 }
 
 method scope_declarator($/) {
-    my $past;
     our $?BLOCK;
-    my $declarator := $<declarator>;
+    my $declarator := $<sym>;
+    my $past := $( $<scoped> );
 
     # What sort of thing are we scoping?
     if $<scoped><variable_decl> {
@@ -1316,76 +1325,29 @@ method scope_declarator($/) {
         }
         else {
             # Has this already been declared?
-            my $var := $( $<scoped> );
-            my $name := $var.name();
-            if $?BLOCK.symbol($name) {
-                # Already declared, the PAST is just the Var node.
-                $past := $var;
-            }
-            else {
-                # Set it as a declaration and work out its scope
+            my $name := $past.name();
+            unless $?BLOCK.symbol($name) {
+                #  First declaration
                 my $scope := 'lexical';
-                if $declarator eq 'my' {
-                    $var.isdecl(1);
-                }
-                elsif $declarator eq 'our' {
+                $past.isdecl(1);
+                if $declarator eq 'our' {
                     $scope := 'package';
-                    $var.isdecl(1);
                 }
-                else {
+                elsif $declarator ne 'my' {
                     $/.panic(
                           "scope declarator '"
                         ~ $declarator ~ "' not implemented"
                     );
                 }
 
-                # were there any types?
-                my $type_info;
-                if $<scoped><typename> {
-                    # Build types.
-                    $type_info := build_type($<scoped><typename>);
-                }
-
-                # Build a new container
-                my $container_type := 'Perl6Scalar';
-                my $new_container := PAST::Op.new(:node($/));
-                if substr($name, 0, 1) eq '@' {
-                    $container_type := 'Perl6Array';
-                }
-                elsif substr($name, 0, 1) eq '%' {
-                    $container_type := 'Perl6Hash';
-                }
-                my $new_cont_pir := "    %r = new '" ~ $container_type ~ "'";
-                if $type_info {
-                    # Need to build a properties hash first.
-                    $new_cont_pir := "$P0 = new 'Hash'\n" ~
-                                     "$P0['!type'] = %0\n" ~
-                                     $new_cont_pir ~ ", $P0\n";
-                    $new_container.inline($new_cont_pir);
-                    $new_container.push($type_info);
-                }
-                else {
-                    $new_container.inline($new_cont_pir ~ "\n");
-                }
-
-                # Set the container as the var's auto-vivify.
-                $past := $var;
-                $past.viviself($new_container);
-
                 # Add block entry.
-                $?BLOCK.symbol($name,
-                    :scope($scope),
-                    :untyped(defined($type_info))
-                );
-
+                $?BLOCK.symbol($name, :scope($scope));
             }
         }
     }
 
     # Routine?
     elsif $<scoped><routine_declarator> {
-        $past := $( $<scoped> );
-
         # What declarator?
         if $declarator eq 'our' {
             # Default, nothing to do.
@@ -1569,9 +1531,10 @@ method variable($/, $key) {
                 $past.scope('package');
             }
 
-            my $container_type := 'Perl6Scalar';
-            if $sigil eq '@' { $container_type := 'Perl6Array' }
-            elsif $sigil eq '%' { $container_type := 'Perl6Hash' }
+            my $container_type;
+            if    $sigil eq '@' { $container_type := 'Perl6Array'  }
+            elsif $sigil eq '%' { $container_type := 'Perl6Hash'   }
+            else                { $container_type := 'Perl6Scalar' }
             $past.viviself($container_type);
         }
     }

@@ -55,6 +55,7 @@ any value type.
     piropsig['isfalse']  = 'IP'
     piropsig['issame']   = 'IPP'
     piropsig['istrue']   = 'IP'
+    piropsig['new']      = 'PP'
     piropsig['n_abs']    = 'PP'
     piropsig['n_add']    = 'PP+'
     piropsig['n_band']   = 'PPP'
@@ -362,7 +363,10 @@ third and subsequent children can be any value they wish.
     cpost = self.'as_post'(cpast, 'rtype'=>rtype)
     cpost = self.'coerce'(cpost, rtype)
     ops.'push'(cpost)
-    .local pmc is_flat
+    .local int is_flat
+    is_flat = 0
+    $I0 = isa cpast, 'String'
+    if $I0 goto iter_pos
     is_flat = cpast.'flat'()
     if rtype != ':' goto iter_pos
     .local pmc npast, npost
