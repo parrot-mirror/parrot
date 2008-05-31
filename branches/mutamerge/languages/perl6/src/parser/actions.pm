@@ -1198,11 +1198,11 @@ method scoped($/) {
     if $<variable_decl> {
         $past := $( $<variable_decl> );
         if $<typename> {
-            my $type_pir := "    setprop %0, 'type', %1\n    %r = %0\n";
+            my $type_pir := "    %r = new %0, %1\n    setprop %r, 'type', %1\n";
             $past.viviself(
                 PAST::Op.new(
                     :inline($type_pir),
-                    $past.viviself(),
+                    PAST::Val.new( :value(~$past.viviself()) ),
                     $( $<typename>[0] )
                 )
             );
