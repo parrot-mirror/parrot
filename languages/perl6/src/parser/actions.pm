@@ -4,6 +4,9 @@
 
 class Perl6::Grammar::Actions ;
 
+##  Change this to be 'Perl6Scalar' to try the Mutable PMC version.
+our $?PERL6SCALAR := 'Failure';
+
 method TOP($/) {
     my $past := $( $<statement_block> );
     $past.blocktype('declaration');
@@ -1198,7 +1201,7 @@ method scoped($/) {
     if $<variable_decl> {
         $past := $( $<variable_decl> );
         if $<typename> {
-            my $type_pir := "    %r = new %0, %1\n    setprop %r, 'type', %1\n";
+            my $type_pir := "    %r = new %0\n    %r.'infix:='(%1)\n    setprop %r, 'type', %1\n";
             $past.viviself(
                 PAST::Op.new(
                     :inline($type_pir),
@@ -1534,7 +1537,7 @@ method variable($/, $key) {
             my $container_type;
             if    $sigil eq '@' { $container_type := 'Perl6Array'  }
             elsif $sigil eq '%' { $container_type := 'Perl6Hash'   }
-            else                { $container_type := 'Perl6Scalar' }
+            else                { $container_type := $?PERL6SCALAR }
             $past.viviself($container_type);
         }
     }
@@ -1770,45 +1773,32 @@ method EXPR($/, $key) {
         make $($<expr>);
     }
     elsif ~$<type> eq 'infix:.=' {
-        my $var := $( $/[0] );
-        my $res := $var;
-        my $call := $( $/[1] );
+        my $invocant  := $( $/[0] );
+        my $call      := $( $/[1] );
 
         # Check that we have a sub call.
         if $call.WHAT() ne 'Op' || $call.pasttype() ne 'call' {
             $/.panic('.= must have a call on the right hand side');
         }
 
-        # If it was a scoped declarator with types, need to just get the
-        # PAST::Var node for the result.
-        if $/[0]<noun><scope_declarator><scoped><variable_decl> {
-            # Note we create a new Var node, since we don't want both of them
-            # to be declarations.
-            my $info := $( $/[0]<noun><scope_declarator><scoped><variable_decl><variable> );
-            $res := PAST::Var.new(
-                :name($info.name()),
-                :scope($info.scope())
-            );
-        }
-
-        # Create call and assign result nodes.
-        my $meth_call := PAST::Op.new(
-            :pasttype('callmethod'),
-            :name($call.name()),
-            :node($/),
-            $var
+        # Make a duplicate of the target node to receive result
+        my $target := PAST::Var.new(
+            :name($invocant.name()),
+            :scope($invocant.scope()),
+            :lvalue(1)
         );
+
+        # Change call node to a callmethod and add the invocant
+        $call.pasttype('callmethod');
+        $call.unshift($invocant);
+
+        # and assign result to target
         my $past := PAST::Op.new(
-            :name('infix:='),
+            :inline("    %r = %1.'infix:='(%0)"),
             :node($/),
-            $meth_call,
-            $res
+            $call,
+            $target
         );
-
-        # Copy arguments.
-        for @($call) {
-            $meth_call.push($_);
-        }
 
         make $past;
     }
