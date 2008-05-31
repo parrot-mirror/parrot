@@ -15,12 +15,12 @@ src/classes/Scalar.pir - Perl 6 Array class and related functions
 #    $P0 = subclass 'Mutable', 'Perl6Scalar'
 #.end
 
-.sub 'infix:=' :multi(Perl6Scalar, _)
-    .param pmc target
+.namespace ['Perl6Scalar']
+.sub 'infix:=' :method
     .param pmc source
     $P0 = source.'item'()
-    assign target, $P0
-    .return (target)
+    assign self, $P0
+    .return (self)
 .end
 
 
