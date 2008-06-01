@@ -293,6 +293,7 @@ init_context(PARROT_INTERP, ARGMOD(parrot_context_t *ctx),
     ctx->current_cont = NULL;
     ctx->current_object = NULL; /* RT#46181 who clears it?  */
     ctx->current_HLL = 0;
+    ctx->handlers = PMCNULL;
 
     if (old) {
         /* some items should better be COW copied */

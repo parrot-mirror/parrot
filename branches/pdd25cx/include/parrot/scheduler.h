@@ -24,6 +24,11 @@ void Parrot_cx_add_handler(PARROT_INTERP, ARGIN(PMC *handler))
         __attribute__nonnull__(2);
 
 PARROT_API
+void Parrot_cx_add_handler_local(PARROT_INTERP, ARGIN(PMC *handler))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
 void Parrot_cx_broadcast_message(PARROT_INTERP,
     ARGIN(STRING *messagetype),
     ARGIN_NULLOK(PMC *data))
@@ -55,6 +60,12 @@ void Parrot_cx_delete_task(PARROT_INTERP, ARGIN(PMC *task))
 PARROT_API
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_cx_find_handler_for_task(PARROT_INTERP, ARGIN(PMC *task))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_CAN_RETURN_NULL
+PMC * Parrot_cx_find_handler_local(PARROT_INTERP, ARGIN(PMC *task))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

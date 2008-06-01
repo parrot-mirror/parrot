@@ -72,6 +72,11 @@ mark_context(PARROT_INTERP, ARGMOD(parrot_context_t* ctx))
     if (obj)
         pobject_lives(interp, obj);
 
+    obj = (PObj *)ctx->handlers;
+    if (obj)
+        pobject_lives(interp, obj);
+
+
     if (!ctx->n_regs_used)
         return;
 

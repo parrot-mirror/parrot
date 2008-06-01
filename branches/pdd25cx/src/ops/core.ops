@@ -247,6 +247,47 @@ inline op jsr(label INT) :base_core :check_event :flow {
     goto ADDRESS(loc);
 }
 
+########################################
+
+=item B<branchcc>(label INT)
+
+Branch to the location specified by $1. Capture a continuation for the next op
+and push it into the context's list of handlers, for later returning.
+
+=cut
+
+inline op branchcc(label INT) :base_core :check_event :flow {
+    /* Create a return continuation for the next op. */
+    PMC *return_cont = pmc_new(interp, enum_class_Continuation);
+    VTABLE_set_pointer(interp, return_cont, expr NEXT());
+
+    /* Store the continuation in the context handler list. */
+    Parrot_cx_add_handler_local(interp, return_cont);
+
+    /* Ordinary branch to a label. */
+    goto OFFSET($1);
+}
+
+=item B<return_branchcc>()
+
+Take the top continuation off the context's list of handlers and invoke it.
+
+=cut
+
+inline op return_branchcc() :flow {
+    /* Retrieve the continuation from the context handler list. */
+    PMC * return_cont = Parrot_cx_find_handler_local(interp, PMCNULL);
+    opcode_t *dest = expr NEXT();
+
+    if (PMC_IS_NULL(return_cont))
+        Parrot_ex_throw_from_c_args(interp, dest, EXCEPTION_INVALID_OPERATION,
+            "No handler found while attempting to return from branchcc");
+
+    dest = (opcode_t *)p->vtable->invoke(interp, return_cont, dest);
+
+    goto ADDRESS(dest);
+}
+
 
 ########################################
 
