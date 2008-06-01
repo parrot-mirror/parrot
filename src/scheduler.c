@@ -448,6 +448,27 @@ Parrot_cx_delete_suspend_for_gc(PARROT_INTERP)
 
 /*
 
+=item C<void Parrot_cx_add_handler_local>
+
+Add a handler to the current context's list of handlers.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_cx_add_handler_local(PARROT_INTERP, ARGIN(PMC *handler))
+{
+    if (PMC_IS_NULL(CONTEXT(interp)->handlers))
+        CONTEXT(interp)->handlers = pmc_new(interp, enum_class_ResizablePMCArray);
+
+    VTABLE_push_pmc(interp, CONTEXT(interp)->handlers, handler);
+
+}
+
+/*
+
 =item C<void Parrot_cx_add_handler>
 
 Add a task handler to scheduler's list of handlers.
@@ -634,6 +655,49 @@ Parrot_cx_find_handler_for_task(PARROT_INTERP, ARGIN(PMC *task))
 #endif
 
     return handler;
+}
+
+/*
+
+=item C<PMC * Parrot_cx_find_handler_local>
+
+Retrieve a handler appropriate to a given task from the local context. If the
+context has no appropriate handler, returns PMCNULL.
+
+=cut
+
+*/
+
+PARROT_API
+PARROT_CAN_RETURN_NULL
+PMC *
+Parrot_cx_find_handler_local(PARROT_INTERP, ARGIN(PMC *task))
+{
+    PMC *handlers = CONTEXT(interp)->handlers;
+    INTVAL elements, index;
+
+    if (PMC_IS_NULL(handlers))
+        return PMCNULL;
+
+    elements = VTABLE_elements(interp, handlers);
+
+    /* Loop from newest handler to oldest handler. */
+    for (index = 0; index < elements; ++index) {
+        PMC *handler = VTABLE_get_pmc_keyed_int(interp, handlers, index);
+        if (!PMC_IS_NULL(handler)) {
+            if (PMC_IS_NULL(task) 
+                        && handler->vtable->base_type == enum_class_Continuation) {
+                VTABLE_set_pmc_keyed_int(interp, handlers, index, PMCNULL);
+                return handler;
+            }
+            else if (task->vtable->base_type == enum_class_Exception
+                        && handler->vtable->base_type == enum_class_ExceptionHandler) {
+                return handler;
+            }
+        }
+    }
+
+    return PMCNULL;
 }
 
 /*
