@@ -145,7 +145,7 @@ Invoke parrot with '--gc-debug'.
 
 Emit a C<smoke.html> file instead of displaying results.
 
-=item C<--code>
+=item C<--code-tests>
 
 Run only the file metadata and basic coding standards tests.
 

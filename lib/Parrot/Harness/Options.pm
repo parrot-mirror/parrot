@@ -41,8 +41,8 @@ sub handle_long_options {
     $longopts{html} = grep { $_ eq '--html' } @argv;
     @argv = grep { $_ ne '--html' } @argv;
 
-    $longopts{code} = grep { $_ eq '--code' } @argv;
-    @argv = grep { $_ ne '--code' } @argv;
+    $longopts{code} = grep { $_ eq '--code-tests' } @argv;
+    @argv = grep { $_ ne '--code-tests' } @argv;
 
     $longopts{run_exec} = grep { $_ eq '--run-exec' } @argv;
     @argv = grep { $_ ne '--run-exec' } @argv;
@@ -90,7 +90,7 @@ perl t/harness [options] [testfiles]
     --core-tests
     --runcore-tests
     --html
-    --code
+    --code-tests
 EOF
 
     return;
