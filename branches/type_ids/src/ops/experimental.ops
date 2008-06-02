@@ -142,7 +142,7 @@ be reused, they have to be B<clone>d.
 =cut
 
 inline op splice(invar PMC, invar PMC, in INT, in INT) {
-    $1->vtable->splice(interp, $1, $2, $3, $4);
+    VTABLE_splice(interp, $1, $2, $3, $4);
 }
 
 
@@ -164,15 +164,15 @@ Return a new Iterator PMC $1 for aggregate $2.
 =cut
 
 inline op slice(out PMC, invar PMC, in KEY) :base_core {
-    $1 = $2->vtable->slice(interp, $2, $3, 0);
+    $1 = VTABLE_slice(interp, $2, $3, 0);
 }
 
 inline op slice(out PMC, invar PMC, in KEY, inconst INT) :python {
-    $1 = $2->vtable->slice(interp, $2, $3, $4);
+    $1 = VTABLE_slice(interp, $2, $3, $4);
 }
 
 inline op iter(out PMC, invar PMC) :base_core {
-    $1 = $2->vtable->get_iter(interp, $2);
+    $1 = VTABLE_get_iter(interp, $2);
 }
 
 ########################################
@@ -393,7 +393,7 @@ op runinterp(invar PMC, in PMC) {
 =item B<substr_r>(out STR, in STR, in INT, in INT)
 
 Make $1 refer to the given part of $2, basically like above, but it
-is reusing the given destination string and doesn't care if the
+is reusing the given destination string and does not care if the
 source string is changed later. This I<is changed> includes
 also GC runs, which will move the referenced string. This also
 means that $1 has to be reset before any GC may happen.
@@ -401,7 +401,7 @@ means that $1 has to be reset before any GC may happen.
 This opcode should really be just used to quickly refer to a substring of
 another part, e.g. for printing and is a temporary hack.
 
-B<Handle with care>
+B<Handle with care.>
 
 =cut
 
@@ -412,6 +412,17 @@ inline op substr_r(out STR, in STR, in INT, in INT) :base_core {
   $1 = string_substr(interp, $2, $3, $4, &dest, 1);
 }
 
+=item C<find_sub_not_null>(out PMC, in STR)
+
+inline op find_sub_not_null(out PMC, in STR) :base_core {
+    PMC *sub = Parrot_find_name_op(interp, $2, expr NEXT());
+
+    if (PMC_IS_NULL(sub))
+        real_exception(interp, NULL, GLOBAL_NOT_FOUND,
+                       "Could not find non-existent sub %Ss", $2);
+
+    $1 = sub;
+}
 
 =back
 

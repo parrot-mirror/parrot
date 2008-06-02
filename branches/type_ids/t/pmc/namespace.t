@@ -284,7 +284,7 @@ calling Foo::foo
   Foo::bar
   fie
 calling baz
-Null PMC access in invoke\(\)/
+Could not find non-existent sub baz/
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', 'get namespace of :anon .sub' );
@@ -369,7 +369,7 @@ pir_output_is( <<'CODE', <<'OUT', "latin1 namespace, global" );
     print "latin1 namespaces are fun\n"
 .end
 
-.namespace
+.namespace []
 
 .sub 'main' :main
     $P0 = get_global [iso-8859-1:"François"], 'test'
@@ -386,7 +386,7 @@ pir_output_is( <<'CODE', <<'OUT', "unicode namespace, global" );
     print "unicode namespaces are fun\n"
 .end
 
-.namespace
+.namespace []
 
 .sub 'main' :main
     $P0 = get_global [unicode:"Fran\xe7ois"], 'test'
@@ -650,7 +650,7 @@ SKIP:
 
     pir_output_is( <<'CODE', <<'OUTPUT', "get_global in current" );
 .HLL 'bork', ''
-.namespace
+.namespace []
 
 .sub a :immediate
   $P1 = new 'String'
@@ -842,7 +842,7 @@ pir_error_output_like( <<"CODE", <<'OUTPUT', "export_to -- success with hash (an
 CODE
 /^a_foo
 b_foo
-Null PMC access in invoke\(\)/
+Could not find non-existent sub b_foo/
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "get_parent" );
@@ -901,7 +901,7 @@ ok
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "get_global with empty array" );
-.namespace
+.namespace []
 
 .sub print_ok
   print "ok\n"

@@ -22,6 +22,7 @@ src/pmc.c - The base vtable calling functions
 /* HEADERIZER HFILE: include/parrot/pmc.h */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -35,11 +36,12 @@ static PMC* get_new_pmc_header(PARROT_INTERP,
     UINTVAL flags)
         __attribute__nonnull__(1);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 
 #if PARROT_CATCH_NULL
-PARROT_API PMC * PMCNULL;
+PMC * PMCNULL;
 #endif
 
 /*

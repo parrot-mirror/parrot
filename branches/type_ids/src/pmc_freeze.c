@@ -34,15 +34,17 @@ C<STRING> with a vtable.
 #include "parrot/parrot.h"
 
 /* default.pmc thawing of properties */
-void Parrot_default_thaw(Interp* , PMC* pmc, visit_info *info);
+PARROT_API void
+Parrot_default_thaw(Interp* , PMC* pmc, visit_info *info);
 
 /* XXX This should be in a header file. */
-extern void
+PARROT_API void
 Parrot_default_thawfinish(PARROT_INTERP, PMC* pmc, visit_info *info);
 
 
 /* HEADERIZER HFILE: include/parrot/pmc_freeze.h */
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 static void add_pmc_next_for_GC(SHIM_INTERP,
     ARGIN(PMC *pmc),
@@ -302,6 +304,7 @@ static void visit_todo_list_thaw(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 /*
@@ -1560,7 +1563,6 @@ visit_loop_todo_list(PARROT_INTERP, ARGIN_NULLOK(PMC *current),
      */
 again:
     while ((list_item = (PMC**)list_shift(interp, todo, enum_type_PMC))) {
-        /* XXX list_shift can return NULL and we're dereferencing it without checking */
         current = *list_item;
         if (!current) {
             real_exception(interp, NULL, 1,

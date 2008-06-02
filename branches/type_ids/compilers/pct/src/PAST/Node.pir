@@ -13,16 +13,16 @@ for compiling programs in Parrot.
 
 .sub 'onload' :anon :load :init
     ##   create the PAST::Node base class
-    .local pmc protomaker, base
-    protomaker = get_hll_global 'Protomaker'
-    base = protomaker.'new_subclass'('PCT::Node', 'PAST::Node')
+    .local pmc p6meta, base
+    p6meta = new 'P6metaclass'
+    base = p6meta.'new_class'('PAST::Node', 'parent'=>'PCT::Node')
 
-    $P0 = protomaker.'new_subclass'(base, 'PAST::Op')
-    $P0 = protomaker.'new_subclass'(base, 'PAST::Stmts')
-    $P0 = protomaker.'new_subclass'(base, 'PAST::Val')
-    $P0 = protomaker.'new_subclass'(base, 'PAST::Var')
-    $P0 = protomaker.'new_subclass'(base, 'PAST::Block')
-    $P0 = protomaker.'new_subclass'(base, 'PAST::VarList')
+    p6meta.'new_class'('PAST::Op', 'parent'=>base)
+    p6meta.'new_class'('PAST::Stmts', 'parent'=>base)
+    p6meta.'new_class'('PAST::Val', 'parent'=>base)
+    p6meta.'new_class'('PAST::Var', 'parent'=>base)
+    p6meta.'new_class'('PAST::Block', 'parent'=>base)
+    p6meta.'new_class'('PAST::VarList', 'parent'=>base)
 
     .return ()
 .end
@@ -116,10 +116,6 @@ node.
 
 Get/set the constant value for this node.
 
-=item returns([typename])
-
-Get/set the type of PMC to be generated from this node.
-
 =cut
 
 .namespace [ 'PAST::Val' ]
@@ -128,12 +124,6 @@ Get/set the type of PMC to be generated from this node.
     .param pmc value           :optional
     .param int has_value       :opt_flag
     .return self.'attr'('value', value, has_value)
-.end
-
-.sub 'returns' :method
-    .param pmc value           :optional
-    .param int has_value       :opt_flag
-    .return self.'attr'('returns', value, has_value)
 .end
 
 =back
@@ -400,6 +390,33 @@ given by "%r", "%t", or "%u" in the C<code> string:
     .return self.'attr'('inline', value, has_value)
 .end
 
+
+=item opattr(hash)
+
+Set a variety of C<PAST::Op> attributes based on entries
+in C<hash>.  Typically C<hash> is an entry in the operator
+precedence table, and the attributes being set correspond
+to traits in the grammar.
+
+=cut
+
+.sub 'opattr' :method
+    .param pmc hash
+
+    $P0 = split ' ', "pasttype pirop inline lvalue"
+    $P1 = new 'Iterator', $P0
+  iter_loop:
+    unless $P1 goto iter_end
+    $S0 = shift $P1
+    $P2 = hash[$S0]
+    if null $P2 goto iter_loop
+    $P3 = find_method self, $S0
+    self.$P3($P2)
+    goto iter_loop
+  iter_end:
+.end
+
+
 =back
 
 =head2 PAST::Stmts
@@ -549,6 +566,20 @@ PAST compiler.
     .return self.'attr'('compiler', value, has_value)
 .end
 
+=item compiler_args()
+
+Specify named arguments to be passed to the compiler set
+through the compiler attribute. Not used if compiler is
+not set.
+
+=cut
+
+.sub 'compiler_args' :method
+    .param pmc value           :named :slurpy
+    .local int have_value
+    have_value = elements value
+    .return self.'attr'('compiler_args', value, have_value)
+.end
 
 =item pirflags([pirflags])
 

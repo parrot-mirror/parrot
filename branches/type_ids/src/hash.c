@@ -38,6 +38,7 @@ don't apply.
 /* HEADERIZER HFILE: include/parrot/hash.h */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
@@ -73,12 +74,12 @@ static void hash_freeze(PARROT_INTERP,
 
 static void hash_thaw(PARROT_INTERP,
     ARGMOD(Hash *hash),
-    ARGMOD(visit_info* info))
+    ARGMOD(visit_info *info))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*hash)
-        FUNC_MODIFIES(* info);
+        FUNC_MODIFIES(*info);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
@@ -114,6 +115,7 @@ static int STRING_compare(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 
@@ -299,6 +301,7 @@ parrot_dump_hash(SHIM_INTERP, ARGIN(const Hash *hash))
 =item C<void parrot_mark_hash>
 
 Marks the hash and its contents as live.
+Assumes that key and value are non null in all buckets.
 
 =cut
 
@@ -315,8 +318,8 @@ parrot_mark_hash(PARROT_INTERP, ARGIN(Hash *hash))
     INTVAL i;
     UINTVAL entries;
 
-    if (hash->entry_type == enum_hash_string
-    ||  hash->entry_type == enum_hash_pmc)
+    if (hash->entry_type == (PARROT_DATA_TYPE) enum_hash_string
+    ||  hash->entry_type == (PARROT_DATA_TYPE) enum_hash_pmc)
         mark_value = 1;
 
     if (hash->key_type == Hash_key_type_STRING
@@ -337,11 +340,15 @@ parrot_mark_hash(PARROT_INTERP, ARGIN(Hash *hash))
                         "Detected hash corruption at hash %p entries %d",
                         hash, (int)entries);
 
-            if (mark_key)
+            if (mark_key) {
+                PARROT_ASSERT(bucket->key);
                 pobject_lives(interp, (PObj *)bucket->key);
+            }
 
-            if (mark_value)
+            if (mark_value) {
+                PARROT_ASSERT(bucket->value);
                 pobject_lives(interp, (PObj *)bucket->value);
+            }
 
             bucket = bucket->next;
         }

@@ -74,8 +74,6 @@ register_new_stack(PARROT_INTERP, ARGIN(const char *name), size_t item_size)
     chunk->name = name;
     chunk->size = item_size;    /* TODO store the pool instead the size */
 
-    /* that's one more reference to this chunk */
-    chunk->refcount++;
     return chunk;
 }
 
@@ -110,7 +108,7 @@ cst_new_stack_chunk(PARROT_INTERP, ARGIN(const Stack_Chunk_t *chunk))
 
 /*
 
-=item C<void* stack_prepare_push>
+=item C<Stack_Entry_t* stack_prepare_push>
 
 Return a pointer, where new entries go for push.
 
@@ -121,7 +119,7 @@ Return a pointer, where new entries go for push.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-void*
+Stack_Entry_t*
 stack_prepare_push(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
 {
     Stack_Chunk_t * const chunk     = *stack_p;
@@ -130,15 +128,13 @@ stack_prepare_push(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
     new_chunk->prev = chunk;
     *stack_p        = new_chunk;
 
-    chunk->refcount++;
-
     return STACK_DATAP(new_chunk);
 }
 
 
 /*
 
-=item C<void* stack_prepare_pop>
+=item C<Stack_Entry_t* stack_prepare_pop>
 
 Return a pointer, where new entries are popped off.
 
@@ -149,7 +145,7 @@ Return a pointer, where new entries are popped off.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-void*
+Stack_Entry_t*
 stack_prepare_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
 {
     Stack_Chunk_t * const chunk = *stack_p;
@@ -157,12 +153,9 @@ stack_prepare_pop(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p))
     /* the first entry (initial top) refers to itself */
     if (chunk == chunk->prev)
         real_exception(interp, NULL, ERROR_STACK_EMPTY,
-            "No entries on %sStack!", chunk->name);
+            "No entries on %s Stack!", chunk->name);
 
     *stack_p = chunk->prev;
-
-    /* that's one fewer reference to this chunk */
-    chunk->refcount--;
 
     return STACK_DATAP(chunk);
 }

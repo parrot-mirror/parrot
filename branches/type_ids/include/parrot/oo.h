@@ -55,14 +55,7 @@ typedef enum {
 #define GET_CLASS(obj)          (obj)->vtable->pmc_class
 
 /* HEADERIZER BEGIN: src/oo.c */
-
-PARROT_API
-INTVAL Parrot_add_attribute(PARROT_INTERP,
-    ARGIN(PMC *_class),
-    ARGIN(STRING *attr))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_API
 PARROT_CAN_RETURN_NULL
@@ -110,15 +103,6 @@ PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_find_method_with_cache(PARROT_INTERP,
     ARGIN(PMC *_class),
     ARGIN(STRING *method_name))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-PARROT_API
-PARROT_CAN_RETURN_NULL
-PMC* Parrot_find_vtable_meth(PARROT_INTERP,
-    ARGIN(PMC *pmc),
-    ARGIN(STRING *meth))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -186,15 +170,6 @@ PMC * Parrot_remove_parent(PARROT_INTERP,
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-PMC * Parrot_single_subclass(PARROT_INTERP,
-    ARGIN(PMC *base_class),
-    ARGIN_NULLOK(PMC *name))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
 STRING* readable_name(PARROT_INTERP, ARGIN(PMC *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -255,6 +230,7 @@ INTVAL Parrot_oo_register_type(PARROT_INTERP, ARGIN(PMC *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/oo.c */
 
 #endif /* PARROT_OO_H_GUARD */

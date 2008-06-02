@@ -64,6 +64,11 @@ D: Port PAST-pm test to PCT.
 N: Andrew Rodland
 D: vim syntax files and editor doc
 
+N: Andrew Whitworth
+D: PDD09 Garbage Collector
+D: Documentation
+E: wknight8111@gmail.com
+
 N: Andrew Sweger
 D: typo squisher
 E: yDNA@cpan.org
@@ -250,12 +255,16 @@ D: language WMLScript (PIR translator)
 N: Garrett Rooney
 D: Fix typo in PARROT_BIGENDIAN case
 
-N: Geoff Broadwell
+N: Geoff Broadwell (japhb)
 D: OpenGL binding
-D: examples fixes
+D: Disassembly/source weaver
+D: Miscellaneous fixes
 
 N: Gerard Goossen
 D: Documentation patch for Parrot_PMC_get_pointer_intkey()
+
+N: Gerd Pokorra
+E: pokorra@uni-siegen.de
 
 N: Goplat
 D: Win98 and other fixes.
@@ -340,9 +349,9 @@ N: Jonathan Stowe
 
 N: Jonathan Worthington
 D: Bits of Win32 support, PBC utilities, debug segment work, .Net
-D: to PIR translator and various patches
-E: jonathan@jwcs.net
-W: http://www.jwcs.net/~jonathan/
+D: to PIR translator, some Rakudo stuff and various other patches
+E: jnthn@jnthn.net
+W: http://www.jnthn.net/
 
 N: Jos Visser
 D: fortytwo opcode
@@ -422,6 +431,9 @@ S: South Lake Tahoe, CA, USA
 N: Markus Amsler
 D: httpd.imc, bugfixes
 
+N: Markus Mays
+D: Implementation of the Rational PMC
+
 N: Matt Diephouse
 D: Turn off buffering layer in forth.pasm
 D: Various patches for pmc2c.pl
@@ -489,6 +501,10 @@ D: Win32 build fix
 
 N: Nigelsandever
 D: Win32 patches
+
+N: Notfound
+D: Bugfixing and cage cleaning.
+E: julian.notfound@gmail.com
 
 N: Nuno 'smash' Carvalho
 D: PGE/perl6/abc debugging and testing
@@ -641,6 +657,10 @@ D: Nicer command line handling in ops2c.pl
 N: Uri Guttman
 D: Lot of general Parrot design hints
 
+N: Vasily Chekalkin
+E: bacek@bacek.com
+D: Core and Rakudo patches
+
 N: Vladimir Lipsky
 D: Win32, IO fixes
 
@@ -649,6 +669,10 @@ E: will@coleda.com
 D: Tcl language (partcl), APL, website, various languages/ upkeep, misc.
 
 N: Zach Lipton
+
+N: Zach Morgan
+E: zpmorgan@gmail.com
+D: Rakudo patch
 
 N: Norman Nunley
 D: Shaving a Ponie

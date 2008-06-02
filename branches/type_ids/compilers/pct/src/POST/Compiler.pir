@@ -16,13 +16,12 @@ PIR or an Eval PMC (bytecode).
 .namespace [ 'POST::Compiler' ]
 
 .sub '__onload' :load :init
-    $P0 = get_hll_global 'Protomaker'
-    $P1 = $P0.'new_subclass'('PCT::HLLCompiler', 'POST::Compiler', '$!code')
-
-    $P0 = get_hll_global ['POST'], 'Compiler'
-    $P0.'language'('POST')
+    .local pmc p6meta, cproto
+    p6meta = new 'P6metaclass'
+    cproto = p6meta.'new_class'('POST::Compiler', 'parent'=>'PCT::HLLCompiler', 'attr'=>'$!code')
+    cproto.'language'('POST')
     $P1 = split ' ', 'pir evalpmc'
-    $P0.'stages'($P1)
+    cproto.'stages'($P1)
 
     $P0 = new 'String'
     set_global '$?NAMESPACE', $P0
@@ -134,7 +133,7 @@ Return pir for an operation node.
 
     ##  get list of arguments to operation
     .local pmc arglist
-    arglist = node.'get_array'()
+    arglist = node.'list'()
 
     ##  get format and arguments based on pirop
     .local string fmt, name, invocant
@@ -266,7 +265,11 @@ the sub.
     $P0 = node.'compiler'()
     unless $P0 goto subpir_post
   subpir_compiler:
-    $P0 = self.'hll_pir'(node, 'name'=>name, 'namespace'=>ns, 'pirflags'=>pirflags)
+    $P0 = node.'compiler_args'()
+    if $P0 goto have_compiler_args
+    $P0 = new 'Hash'
+  have_compiler_args:
+    $P0 = self.'hll_pir'(node, 'name'=>name, 'namespace'=>ns, 'pirflags'=>pirflags, $P0 :named :flat)
     code .= $P0
     goto subpir_done
 

@@ -43,6 +43,7 @@ ParserUtil - Parser support functions.
 /* HEADERIZER HFILE: compilers/imcc/imc.h */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_WARN_UNUSED_RESULT
 static int change_op(PARROT_INTERP,
@@ -117,6 +118,7 @@ static Instruction * var_arg_ins(PARROT_INTERP,
         FUNC_MODIFIES(*unit)
         FUNC_MODIFIES(*r);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 /*
@@ -630,8 +632,7 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
     if (op < 0) {
         const char * const n_name = try_rev_cmp(name, r);
         if (n_name) {
-            DECL_CONST_CAST;
-            name = (char *)const_cast(n_name);
+            name = n_name;
             op_fullname(fullname, name, r, n, keyvec);
             op   = interp->op_lib->op_code(fullname, 1);
         }
@@ -854,7 +855,6 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
     void                  *yyscanner;
     Parrot_Context        *ignored;
     INTVAL regs_used[4] = {3, 3, 3, 3};
-    DECL_CONST_CAST;
 
     do_yylex_init(interp, &yyscanner);
 
@@ -897,7 +897,7 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
     ignored = Parrot_push_context(interp, regs_used);
     UNUSED(ignored);
 
-    compile_string(interp, (char *)const_cast(s), yyscanner);
+    compile_string(interp, s, yyscanner);
 
     Parrot_pop_context(interp);
 

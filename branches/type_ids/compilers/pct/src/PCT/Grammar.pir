@@ -40,23 +40,26 @@ also included.
 .sub 'onload' :anon :init :load
     load_bytecode 'PGE.pbc'
     load_bytecode 'PGE/Util.pbc'
-    $P0 = subclass 'PGE::Grammar', 'PCT::Grammar'
+    .local pmc p6meta
+    p6meta = new 'P6metaclass'
+    p6meta.'new_class'('PCT::Grammar', 'parent'=>'PGE::Grammar')
+    $P0 = get_class 'PCT::Grammar'
     $P1 = get_hll_global ['PGE::Util'], 'die'
     $P0.'add_method'('panic', $P1)
     .return ()
 .end
 
 
-=item get_scalar()
+=item item()
 
-Here we overload the get_scalar() method from PGE::Match to
+Here we overload the item() method from PGE::Match to
 throw an exception if a result object hasn't been set.
 
 =cut
 
-.sub 'get_scalar' :method
+.sub 'item' :method
     .local pmc obj
-    obj = getattribute self, '$!result'
+    obj = getattribute self, '$!item'
     unless null obj goto end
     die "No result object"
   end:

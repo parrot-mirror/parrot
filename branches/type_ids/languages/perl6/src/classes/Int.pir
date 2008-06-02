@@ -4,20 +4,27 @@
 
 Int - Perl 6 integers
 
+=head1 SUBROUTINES
+
+=over 4
+
+=item onload
+
 =cut
 
 .namespace [ 'Int' ]
 
 .sub 'onload' :anon :init :load
-    $P0 = subclass 'Integer', 'Int'
-    $P1 = get_hll_global 'Any'
-    $P1 = $P1.HOW()
-    addparent $P0, $P1
-    $P1 = get_hll_global ['Perl6Object'], 'make_proto'
-    $P1($P0, 'Int')
-    $P1('Integer', 'Int')
+    .local pmc p6meta, intproto
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    intproto = p6meta.'new_class'('Int', 'parent'=>'Integer Any')
+    p6meta.'register'('Integer', 'parent'=>intproto, 'protoobject'=>intproto)
 .end
 
+
+=item ACCEPTS()
+
+=cut
 
 .sub 'ACCEPTS' :method
     .param num topic
@@ -25,14 +32,21 @@ Int - Perl 6 integers
 .end
 
 
-.sub 'clone' :method :vtable
-    .local pmc clone_type
-    clone_type = self.HOW()
-    $P0 = clone_type.'new'()
-    $P0 = self
-    .return($P0)
+=item perl()
+
+Returns a Perl representation of the Int.
+
+=cut
+
+.sub 'perl' :method
+    $S0 = self
+    .return($S0)
 .end
 
+
+=back
+
+=cut
 
 # Local Variables:
 #   mode: pir
