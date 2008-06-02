@@ -283,7 +283,7 @@ inline op return_branchcc() :flow {
         Parrot_ex_throw_from_c_args(interp, dest, EXCEPTION_INVALID_OPERATION,
             "No handler found while attempting to return from branchcc");
 
-    dest = (opcode_t *)p->vtable->invoke(interp, return_cont, dest);
+    dest = (opcode_t *)VTABLE_invoke(interp, return_cont, dest);
 
     goto ADDRESS(dest);
 }
