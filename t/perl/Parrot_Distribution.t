@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
-use Test::More tests => 37;
+use Test::More tests => 36;
 use File::Spec;
 
 =head1 NAME
@@ -52,7 +52,7 @@ my %pmc_source_file_directories = map { $_->path => 1 } $d->pmc_source_file_dire
 
 my @old_directory_list = (
     'compilers/bcg/src/pmc',   'languages/APL/src/pmc',
-    'languages/WMLScript/pmc', 'languages/amber/lib/kernel/pmc',
+    'languages/WMLScript/pmc',
     'languages/dotnet/pmc',    'languages/lua/src/pmc',
     'languages/perl6/src/pmc', 'languages/pugs/pmc',
     'languages/tcl/src/pmc',

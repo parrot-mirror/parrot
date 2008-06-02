@@ -1,5 +1,5 @@
 /* string_funcs.h
- *  Copyright (C) 2001-2007, The Perl Foundation.
+ *  Copyright (C) 2001-2008, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -21,6 +21,8 @@
 
 #define CSTRING_WITH_LEN(s) (s ""), (sizeof (s)-1)
 #define string_from_literal(i, s) string_from_cstring((i), CSTRING_WITH_LEN(s))
+#define Parrot_unCOW_string(i, s) PObj_COW_TEST((s)) ? \
+    Parrot_unmake_COW((i), (s)), (s) : (s)
 
 /* HEADERIZER BEGIN: src/string.c */
 
@@ -351,9 +353,8 @@ INTVAL string_max_bytes(SHIM_INTERP, ARGIN(const STRING *s), INTVAL nchars)
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
-INTVAL string_ord(PARROT_INTERP, ARGIN(const STRING *s), INTVAL idx)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+INTVAL string_ord(PARROT_INTERP, ARGIN_NULLOK(const STRING *s), INTVAL idx)
+        __attribute__nonnull__(1);
 
 PARROT_API
 void string_pin(PARROT_INTERP, ARGMOD(STRING *s))

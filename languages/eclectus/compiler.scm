@@ -62,7 +62,6 @@
               past_compiler = new [ 'PCT::HLLCompiler' ]
               $P0 = split ' ', 'post pir'
               past_compiler.'stages'( $P0 )
-              past_compiler.'eval'(stmts)
               $P1 = past_compiler.'eval'(stmts)
               #_dumper ($P1)
               $P0 = split ' ', 'evalpmc'
@@ -296,8 +295,8 @@
 (define emit-comparison
   (lambda (builtin arg1 arg2)
     (past::op '(@ (pasttype "if"))
-              (past::op (quasiquote (@ (pasttype "chain")
-                                       (name (unquote builtin))))
+              (past::op `(@ (pasttype "chain")
+                            (name ,builtin))
                         (emit-expr arg1)
                         (emit-expr arg2))
               (emit-expr #t)
@@ -356,14 +355,17 @@
 (define-primitive (equal? arg1 arg2)
   (emit-comparison "equal?" arg1 arg2))
 
+(define-primitive (not arg)
+  (emit-comparison "eq?" arg #f))
+
 ; asking for the type of an object
 (define emit-typequery
   (lambda (typename arg)
     (past::op
      '(@ (pasttype "if"))
      (past::op
-      (quasiquote (@ (pasttype "inline")
-                     (inline (unquote (format #f "new %r, 'EclectusBoolean'\\nisa $I1, %0, '~a'\\n %r = $I1" typename)))))
+      `(@ (pasttype "inline")
+          (inline ,(format #f "new %r, 'EclectusBoolean'\\nisa $I1, %0, '~a'\\n %r = $I1" typename)))
       (emit-expr arg))
      (emit-expr #t)
      (emit-expr #f))))
@@ -454,28 +456,6 @@
                               (scope "lexical")
                               (viviself "Undef"))))))
 
-(define emit-let
-  (lambda (binds body)
-    (if (null? binds)
-      (emit-expr body)
-      (begin
-        (append
-          (past::stmts
-           (map 
-            (lambda (decl)
-              (past::op
-               '(@ (pasttype "copy")
-                   (lvalue "1"))
-               (past::var
-                (quasiquote (@ (name (unquote (car decl)))
-                               (scope "lexical")
-                               (viviself "Undef")
-                               (isdecl 1))))
-               (emit-expr (cadr decl))))
-            binds))
-          (list
-           (emit-expr body)))))))
-
 (define emit-if
   (lambda (x)
     (past::op
@@ -513,56 +493,11 @@
       ((symbol? x)          (emit-variable x))
       ((quote? x)           (emit-constant (cadr x)))
       ((self-evaluating? x) (emit-constant x))
-      ((let? x)             (emit-let (bindings x) (body x)))
       ((if? x)              (emit-if x))
       ((begin? x)           (emit-begin x))
       ((lambda? x)          (emit-lambda x))
       ((primcall? x)        (emit-primcall x))
       (else                 (emit-functional-application x)))))
-
-; transverse the program and rewrite
-; "and" can be supported by transformation before compiling
-; So "and" is implemented if terms of "if"
-;
-; Currently a new S-expression is generated,
-; as I don't know how to manipulate S-expressions while traversing it
-(define preprocess
-  (lambda (tree)
-    (cond ((atom? tree)
-           tree)
-          ((eqv? (car tree) 'and) 
-           (preprocess
-             (cond ((null? (cdr tree)) #t)
-                   ((= (length (cdr tree)) 1) (cadr tree))
-                   (else (list
-                           'if
-                           (cadr tree)
-                           (cons 'and (cddr tree))
-                            #f)))))
-          ((eqv? (car tree) 'or) 
-           (preprocess
-             (cond ((null? (cdr tree)) #f)
-                   ((= (length (cdr tree)) 1) (cadr tree))
-                   (else (list
-                           'if
-                           (cadr tree)
-                           (cadr tree)
-                           (cons 'or (cddr tree)))))))
-          ((eqv? (car tree) 'not) 
-           (preprocess
-             (list 'if (cadr tree) #f #t)))
-          ((eqv? (car tree) 'let*) 
-           (preprocess
-             (if (null? (cadr tree))
-                 (cons 'let (cdr tree))
-                 (list
-                   'let
-                   (list (caadr tree))
-                   (append
-                     (list 'let* (cdadr tree))
-                     (cddr tree))))))
-          (else
-           (map preprocess tree))))) 
 
 ; eventually this will become a PIR generator
 ; for PAST as SXML
@@ -590,6 +525,28 @@
         (cdr past))
       uid)))
 
+; eventually this will become a NQP generator
+; for PAST as SXML
+; currently it only handles the pushes
+(define past-sxml->past-nqp
+  (lambda (past)
+    (if (symbol? (car past))
+        (emit "
+                ~a.new( 
+              " (symbol->string (car past))))
+    (for-each
+       (lambda (daughter)
+         (if (eq? '@ (car daughter))
+           (for-each
+             (lambda (key_val)
+               (emit "
+                     :~a(\"~a\"),
+                     " (car key_val) (cadr key_val)))
+             (cdr daughter))
+           (past-sxml->past-nqp daughter)))
+       (cdr past))
+    (emit ")")))
+
 ; print the result of the evaluation
 (define wrap-say
   (lambda (past)
@@ -598,8 +555,12 @@
          (name "say"))
      past)))
 
-; the actual compiler
-(define compile-program
+;; Macro-expansion and alpha-conversion
+(define (normalize-syntax program)
+  (sexp/expand program (make-sexp-environment)))
+
+; the current compiler, emitting PAST set up in PIR
+(define compile-program-old
   (lambda (program)
     (emit-init)
     (emit-driver)
@@ -608,5 +569,13 @@
     (emit-function-footer
       (past-sxml->past-pir
         (wrap-say
-          (emit-expr
-            (preprocess program)))))))
+          (emit-expr (normalize-syntax program)))))))
+
+; the future compiler, emitting PAST set up in PIR
+(define compile-program
+  (lambda (program)
+    (emit "sub scheme_entry () { " ) 
+    (past-sxml->past-nqp
+      (wrap-say
+        (emit-expr (normalize-syntax program))))
+    (emit "; }" ))) 

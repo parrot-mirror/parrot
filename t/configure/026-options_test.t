@@ -8,7 +8,7 @@ use warnings;
 use Carp;
 use Cwd;
 use Data::Dumper;
-use Test::More tests => 13;
+use Test::More tests => 23;
 use lib qw( lib );
 use IO::CaptureOutput qw| capture |;
 use_ok(
@@ -17,16 +17,23 @@ use_ok(
         |
 );
 use_ok("Parrot::Configure::Options::Test");
+use_ok('Parrot::Configure::Options::Test::Prepare', qw|
+    get_preconfiguration_tests
+    get_postconfiguration_tests
+    |
+);
 
 my ( $args, $opttest );
 
+##### 1 #####
 $args = process_options(
     {
         argv => [],
         mode => q{configure},
     }
 );
-ok( defined $args, "process_options() returned successfully when no options were specified" );
+ok( defined $args,
+    "process_options() returned successfully when no options were specified" );
 
 $opttest = Parrot::Configure::Options::Test->new($args);
 ok( defined $opttest, "Constructor returned successfully" );
@@ -34,7 +41,7 @@ ok( defined $opttest, "Constructor returned successfully" );
 {
     my $stdout;
     capture(
-        sub { $opttest->run_configure_tests(); },
+        sub { $opttest->run_configure_tests( get_preconfiguration_tests() ); },
         \$stdout,
     );
     ok( ! $stdout,
@@ -44,13 +51,14 @@ ok( defined $opttest, "Constructor returned successfully" );
 {
     my $stdout;
     capture(
-        sub { $opttest->run_build_tests(); },
+        sub { $opttest->run_build_tests( get_postconfiguration_tests() ); },
         \$stdout,
     );
     ok( ! $stdout,
         "Nothing captured because no pre-build tests were run." );
 }
 
+##### 2 #####
 $args = process_options(
     {
         argv => [q{--test=configure}],
@@ -63,17 +71,20 @@ ok( defined $args,
 $opttest = Parrot::Configure::Options::Test->new($args);
 ok( defined $opttest, "Constructor returned successfully" );
 
+##### 3 #####
 $args = process_options(
     {
         argv => [q{--test=build}],
         mode => q{configure},
     }
 );
-ok( defined $args, "process_options() returned successfully when '--test=build' was specified" );
+ok( defined $args,
+    "process_options() returned successfully when '--test=build' was specified" );
 
 $opttest = Parrot::Configure::Options::Test->new($args);
 ok( defined $opttest, "Constructor returned successfully" );
 
+##### 4 #####
 my $badoption = q{foobar};
 $args = process_options(
     {
@@ -85,7 +96,49 @@ ok( defined $args,
     "process_options() returned successfully when '--test=$badoption' was specified" );
 
 eval { $opttest = Parrot::Configure::Options::Test->new($args); };
-like( $@, qr/'$badoption' is a bad value/, "Bad option to '--test' correctly detected" );
+like(
+    $@,
+    qr/'$badoption' is a bad value/,
+    "Bad option to '--test' correctly detected"
+);
+
+##### 5 #####
+$args = process_options(
+    {
+        argv => [],
+        mode => q{configure},
+    }
+);
+ok( defined $args,
+    "process_options() returned successfully when no options were specified" );
+
+$opttest = Parrot::Configure::Options::Test->new($args);
+ok( defined $opttest, "Constructor returned successfully" );
+
+eval { $opttest->set( 'foobar' ); };
+like($@, qr/Need 2 arguments to Parrot::Configure::Options::Test::set/,
+    "Correctly detected lack of argument to set()");
+
+$opttest->set( foo => 'bar' );
+is($opttest->get( 'foo' ), 'bar', "set() set value correctly");
+
+eval { $opttest->get( foo => 'bar' ); };
+like($@, qr/Need 1 argument to Parrot::Configure::Options::Test::get/,
+    "Correctly detected wrong number of arguments to get()");
+
+ok(! defined $opttest->get( 'baz' ),
+    "Correctly detected value which never was set");
+
+eval { $opttest->set_run( 'foobar' ); };
+like($@, qr/Need 2 arguments to Parrot::Configure::Options::Test::set_run/,
+    "Correctly detected lack of argument to set_run()");
+
+$opttest->set_run( foo => 'bar' );
+is($opttest->get_run( 'foo' ), 'bar', "set_run() set value correctly");
+
+eval { $opttest->get_run( foo => 'bar' ); };
+like($@, qr/Need 1 argument to Parrot::Configure::Options::Test::get_run/,
+    "Correctly detected wrong number of arguments to get_run()");
 
 pass("Completed all tests in $0");
 

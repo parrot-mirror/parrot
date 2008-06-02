@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 13;
+use Test::More tests =>  11;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -37,7 +37,7 @@ $step_name   = $task->step;
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+
 
 my $pseudo_ctags = q{alpha};
 $step->_evaluate_ctags($conf, $pseudo_ctags, 1);
@@ -45,7 +45,7 @@ is($conf->data->get('ctags'), $pseudo_ctags,
     "'ctags' attribute was set as expected");
 is($step->result(), q{yes}, "Got expected result");
 
-pass("Keep Devel::Cover happy");
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
