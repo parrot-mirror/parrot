@@ -10,14 +10,13 @@
 ; Choose which scheme implementation should be tested.
 ; Choosing 'gauche' is meant for checking the test suite.
 ;(define implementation "gauche" )
-(define implementation "gen_past_in_pir" )          ; current default implementation
-;(define implementation "gen_past_in_nqp" )         ; future default implementation
+(define implementation "gen_past_in_nqp" )         ; future default implementation
 
 (define-syntax add-tests-with-string-output
   (syntax-rules (=>)
     ((_ test-name (expr => output-string) ...)
      (set! all-tests
-        (cons 
+        (cons
            '(test-name (expr string  output-string) ...)
             all-tests)))))
 
@@ -57,22 +56,16 @@
          (error 'compile-port "not an output port ~s" p))
        p)))
 
-(define (run-compile expr)
+(define (run-compile expr nqp-fn)
   (cond 
     ( (string=? implementation "gauche")
       (with-output-to-file "stst.scm" (lambda () (write expr))))
-    ( (string=? implementation "gen_past_in_nqp")
-      (let ((p (open-output-file "gen_past.nqp" 'replace)))
-        (parameterize ((compile-port p))
-           (compile-program expr))
-        (close-output-port p))
-      (unless (zero? (system (string-append *path-to-parrot* " ../../compilers/nqp/nqp.pbc --output=gen_past.pir --target=pir gen_past.nqp")))
-        (error 'execute "produced program exited abnormally")))
     (else
-      (let ((p (open-output-file "stst.pir" 'replace)))
-        (parameterize ((compile-port p))
-           (compile-program-old expr))
-        (close-output-port p)))))
+      ; compile to NQP
+      (let ((nqp-port (open-output-file nqp-fn 'replace)))
+        (parameterize ((compile-port nqp-port))
+          (compile-program expr))
+        (close-output-port nqp-port)))))
 
 ; TODO: can I use (directory-separator) in gauche?
 (define *path-to-parrot*
@@ -80,16 +73,14 @@
     "../../parrot"
     "..\\..\\parrot"))
 
-(define (execute)
+(define (execute nqp-fn)
   (cond
     ( (string=? implementation "gauche")
       (unless (zero? (system "gosh -fcase-fold -I .  -l gauche/prelude.scm stst.scm > stst.out"))
         (error 'execute "produced program exited abnormally")))
-    ( (string=? implementation "gen_past_in_nqp")
-      (unless (zero? (system (string-append *path-to-parrot* " driver_nqp.pir > stst.out")))
-        (error 'execute "produced program exited abnormally")))
     (else
-      (unless (zero? (system (string-append *path-to-parrot* " stst.pir > stst.out")))
+      ; run NQP with driver_nqp.pbc
+      (unless (zero? (system (string-append *path-to-parrot* " driver_nqp.pbc " nqp-fn " > stst.out")))
         (error 'execute "produced program exited abnormally")))))
 
 (define (get-string)
@@ -105,13 +96,14 @@
                 (f))))))))))
 
 (define (test-with-string-output test-id expr expected-output test-name)
-   (run-compile expr)
-   (execute)
-   (let ((actual-output (get-string)))
-     (if (string=? expected-output actual-output)
-         (pass ( + test-id 1 ) (format #f "~a: ~a" test-name expr))
-         (fail ( + test-id 1 ) (format #f "~a: expected ~s, got ~s"
-                                       test-name expected-output actual-output)))))
+  (let ((nqp-fn (string-append "t/" test-name "_" (number->string test-id) ".nqp" )))
+    (run-compile expr nqp-fn)
+    (execute nqp-fn))
+  (let ((actual-output (get-string)))
+    (if (string=? expected-output actual-output)
+      (pass ( + test-id 1 ) (format #f "~a: ~a" test-name expr))
+      (fail ( + test-id 1 ) (format #f "~a: expected ~s, got ~s"
+                                     test-name expected-output actual-output)))))
 
 (define (emit . args)
   (apply fprintf (compile-port) args)

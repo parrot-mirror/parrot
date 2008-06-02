@@ -21,28 +21,26 @@ PGE::Exp - base class for expressions
     .local pmc optable
     .local pmc term
 
-    .local pmc protomaker, matchclass, expclass
-
-    protomaker = new 'Protomaker'
-    matchclass = get_class 'PGE::Match'
-    expclass = protomaker.new_subclass(matchclass, 'PGE::Exp')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Literal')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Scalar')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::CCShortcut')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Newline')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::EnumCharList')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Anchor')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Concat')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Alt')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Conj')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Group')
-    $P1      = protomaker.new_subclass($P1     , 'PGE::Exp::CGroup')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Subrule')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Cut')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Quant')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Modifier')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Closure')
-    $P1      = protomaker.new_subclass(expclass, 'PGE::Exp::Action')
+    .local pmc p6meta, expproto
+    p6meta = new 'P6metaclass'
+    expproto = p6meta.'new_class'('PGE::Exp', 'parent'=>'PGE::Match')
+    p6meta.'new_class'('PGE::Exp::Literal',      'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Scalar',       'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::CCShortcut',   'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Newline',      'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::EnumCharList', 'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Anchor',       'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Concat',       'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Alt',          'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Conj',         'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Group',        'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::CGroup',       'parent'=>'PGE::Exp::Group')
+    p6meta.'new_class'('PGE::Exp::Subrule',      'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Cut',          'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Quant',        'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Modifier',     'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Closure',      'parent'=>expproto)
+    p6meta.'new_class'('PGE::Exp::Action',       'parent'=>expproto)
 .end
 
 
@@ -94,7 +92,8 @@ C<target> adverbs.
     $P1 = $P0(code)
   make_grammar:
     push_eh end
-    $P0 = subclass 'PGE::Grammar', grammar
+    $P0 = new 'P6metaclass'
+    $P0.'new_class'(grammar, 'parent'=>'PGE::Grammar')
     pop_eh
   end:
     .return ($P1)
@@ -375,7 +374,7 @@ tree as a PIR code object that can be compiled.
 
     .local pmc children, exp
     .local int n
-    children = self.'get_array'()
+    children = self.'list'()
     n = elements children
   reduce_loop:
     if n <= 0 goto reduce_end
@@ -431,7 +430,7 @@ tree as a PIR code object that can be compiled.
 
     .local pmc iter, exp
     code.emit('        %0: # concat', label)
-    $P0 = self.get_array()
+    $P0 = self.'list'()
     iter = new 'Iterator', $P0
     exp = shift iter
     $S0 = code.unique('R')
@@ -817,8 +816,8 @@ tree as a PIR code object that can be compiled.
         CODE
 
   subrule_match:
-    $I0 = self['isnegated']
-    if $I0 goto subrule_negated
+    $I0 = self['iszerowidth']
+    if $I0 goto subrule_zerowidth
     $S0 = concat label, '_3'
     $I0 = self['backtrack']
     if $I0 != PGE_BACKTRACK_NONE goto subrule_match_1
@@ -861,18 +860,24 @@ tree as a PIR code object that can be compiled.
     goto end
     .return()
 
-  subrule_negated:
-    ##   This handles negative subrule matches; if a subrule fails, then
-    ##   record a zero-width match and continue to the next node.
-    code.emit(<<"        CODE", PGE_CUT_MATCH, next, subarg)
-          captob = $P0(captob%2)
+  subrule_zerowidth:
+    ##  this handles zero-width subrule matches, either positive
+    ##  or negative.
+    .local string test
+    test = 'if'
+    $I0 = self['isnegated']
+    unless $I0 goto have_test
+    test = 'unless'
+  have_test:
+    code.emit(<<"        CODE", PGE_CUT_MATCH, test, next, subarg)
+          captob = $P0(captob%3)
           $P1 = getattribute captob, '$.pos'
           if $P1 <= %0 goto fail_match
-          if $P1 >= 0 goto fail
+          %1 $P1 < 0 goto fail
           $P1 = pos
           $P1 = getattribute captob, '$.from'
           $P1 = pos
-          goto %1
+          goto %2
         CODE
   end:
     .return()

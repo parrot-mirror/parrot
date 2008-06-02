@@ -33,6 +33,7 @@ Win32 System Programming, 2nd Edition.
 
 /* HEADERIZER HFILE: none */
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 static INTVAL flags_to_win32(
     INTVAL flags,
@@ -169,6 +170,7 @@ static size_t PIO_win32_write(SHIM_INTERP,
         __attribute__nonnull__(4)
         FUNC_MODIFIES(*io);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 #  include <tchar.h>
@@ -630,15 +632,14 @@ PIO_sockaddr_in(PARROT_INTERP, unsigned short port, ARGMOD(STRING *addr))
      * it may have been toggled off.
      */
     he = gethostbyname(s);
+    string_cstring_free(s);
+
     /* XXX FIXME - Handle error condition better */
     if (!he) {
-        string_cstring_free(s);
         fprintf(stderr, "gethostbyname failure [%s]\n", s);
         return NULL;
     }
     memcpy((char*)&sa.sin_addr, he->h_addr, sizeof (sa.sin_addr));
-
-    string_cstring_free(s);
 
     sa.sin_port = htons(port);
 

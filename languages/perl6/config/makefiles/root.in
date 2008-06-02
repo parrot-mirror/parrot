@@ -34,28 +34,33 @@ SOURCES = perl6.pir \
   src/gen_grammar.pir \
   src/gen_actions.pir \
   src/gen_builtins.pir \
+  src/parser/expression.pir \
   src/parser/quote_expression.pir \
   $(PERL6_GROUP)
 
 BUILTINS_PIR = \
   src/classes/Object.pir \
   src/classes/Any.pir \
+  src/classes/Scalar.pir \
   src/classes/Bool.pir \
   src/classes/Str.pir \
   src/classes/Num.pir \
   src/classes/Int.pir \
   src/classes/IO.pir \
   src/classes/List.pir \
+  src/classes/Array.pir \
+  src/classes/Mapping.pir \
   src/classes/Hash.pir \
+  src/classes/Range.pir \
   src/classes/Code.pir \
-  src/classes/Sub.pir \
   src/classes/Junction.pir \
-  src/classes/Undef.pir \
+  src/classes/Failure.pir \
   src/classes/Role.pir \
   src/classes/Pair.pir \
   src/classes/Whatever.pir \
   src/classes/Capture.pir \
   src/classes/Subset.pir \
+  src/classes/Grammar.pir \
   src/builtins/assign.pir \
   src/builtins/cmp.pir \
   src/builtins/control.pir \
@@ -70,8 +75,12 @@ BUILTINS_PIR = \
   src/builtins/range.pir \
   src/builtins/traits.pir \
 
-PMCS        = perl6str perl6bool
-PMC_SOURCES = $(PMC_DIR)/perl6str.pmc $(PMC_DIR)/perl6bool.pmc
+$(PMC_DIR)/mutable.pmc : $(PMC_DIR)/mutable_pmc.template build/gen_mutable_pmc.pl
+	$(PERL) build/gen_mutable_pmc.pl $(PMC_DIR)/mutable_pmc.template \
+		$(PMC_DIR)/mutable.pmc
+
+PMCS        = perl6str mutable perl6scalar
+PMC_SOURCES = $(PMC_DIR)/perl6str.pmc $(PMC_DIR)/mutable.pmc $(PMC_DIR)/perl6scalar.pmc
 PERL6_GROUP = $(PMC_DIR)/perl6_group$(LOAD_EXT)
 
 # targets for building a standalone perl6.
@@ -119,6 +128,7 @@ help:
 	@echo "  test:              Run the test suite."
 	@echo "  testclean:         Clean up test results."
 	@echo "  spectest:          Run the official Perl 6 tests."
+	@echo "  spectest_regression:  Run the tests of the official test suite that are known to pass."
 	@echo ""
 	@echo "Cleaning:"
 	@echo "  clean:             Basic cleaning up."
@@ -138,22 +148,31 @@ testclean:
 testtest: all test
 	$(PERL) t/harness t/02-test-pm
 
-# NOTE: eventually, we should remove --keep-exit-code
+# NOTE: eventually, we should remove --keep-exit-code and --fudge
 #       as the goal is that all tests must pass without fudge
 spectest: all t/spec
 	cd t/spec && svn up
-	$(PERL) t/harness --fudge --keep-exit-code \
-            t/spec/S02-literals \
-            t/spec/S03-operators \
-            t/spec/S04-statements \
-            t/spec/S12-class \
-            t/spec/S29-array \
-            t/spec/S29-hash \
-            t/spec/S29-list \
-            t/spec/S29-num \
-            t/spec/S29-str \
+	$(PERL) t/harness --fudge --keep-exit-code t/spec
+
+spectest_regression: all t/spec t/spectest_regression.data
+	cd t/spec && svn up
+	$(PERL) t/harness \
+        --configfudge \
+        --tests-from-file=t/spectest_regression.data \
+        --keep-exit-code \
+        t/spec/ \
 
 fulltest: all testtest spectest
+
+localtest: all t/spec t/localtest.data
+	$(PERL) t/harness \
+        --configfudge \
+        --tests-from-file=t/localtest.data \
+        --keep-exit-code \
+        t/spec/ \
+
+t/localtest.data:
+	$(PERL) -MExtUtils::Command -e test_f $@
 
 t/spec:
 	svn co http:////svn.pugscode.org//pugs//t//spec t/spec
@@ -176,6 +195,7 @@ CLEANUPS = \
   $(PMC_DIR)/*.manifest \
   $(PMC_DIR)/*.pdb \
   $(PMC_DIR)/*.lib \
+  $(PMC_DIR)/mutable.pmc \
 
 
 clean:

@@ -23,6 +23,7 @@ src/dynext.c - Dynamic extensions to Parrot
 /* HEADERIZER HFILE: include/parrot/dynext.h */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -92,6 +93,7 @@ static void store_lib_pmc(PARROT_INTERP,
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 /* _PARROTLIB is now the default */
@@ -140,7 +142,9 @@ store_lib_pmc(PARROT_INTERP, ARGIN(PMC *lib_pmc), ARGIN(STRING *path),
     /* remember path/file in props */
     set_cstring_prop(interp, lib_pmc, "_filename", path);  /* XXX */
     set_cstring_prop(interp, lib_pmc, "_type", type);
-    set_cstring_prop(interp, lib_pmc, "_lib_name", lib_name);
+
+    if (lib_name)
+        set_cstring_prop(interp, lib_pmc, "_lib_name", lib_name);
 
     VTABLE_set_pmc_keyed_str(interp, dyn_libs, path, lib_pmc);
 }

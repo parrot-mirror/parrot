@@ -46,6 +46,7 @@ BUILTINS_PIR = \
 # the default target
 c99.pbc: $(PARROT) $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o c99.pbc c99.pir
+	cd src/cpp; $(MAKE)
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
@@ -110,6 +111,10 @@ CLEANUPS = \
   $(PMC_DIR)/*.manifest \
   $(PMC_DIR)/*.pdb \
   $(PMC_DIR)/*.lib \
+  src/cpp/cpp.pbc \
+  src/cpp/src/gen_actions.pir \
+  src/cpp/src/gen_grammar.pir \
+  src/cpp/src/gen_builtins.pir
 
 
 clean:

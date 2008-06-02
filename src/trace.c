@@ -28,12 +28,14 @@ src/test_main.c
 /* HEADERIZER HFILE: src/trace.h */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING* trace_class_name(ARGIN(const PMC* pmc))
         __attribute__nonnull__(1);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 
@@ -142,7 +144,7 @@ trace_pmc_dump(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc))
     }
     else if (PObj_is_object_TEST(pmc)) {
         PIO_eprintf(debugger, "Object(%Ss)=PMC(%#p)",
-                VTABLE_name(interp, pmc), pmc);
+                VTABLE_get_string(interp, VTABLE_get_class(interp, pmc)), pmc);
     }
     else if (pmc->vtable->base_type == enum_class_delegate) {
         PIO_eprintf(debugger, "delegate=PMC(%#p)", pmc);

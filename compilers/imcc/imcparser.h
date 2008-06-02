@@ -291,7 +291,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 680 "compilers/imcc/imcc.y"
+#line 682 "compilers/imcc/imcc.y"
 {
     IdList * idlist;
     int t;

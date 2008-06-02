@@ -39,6 +39,13 @@ multi sub ok($cond, $desc) {
 multi sub ok($cond) { ok($cond, ''); }
 
 
+multi sub nok($cond, $desc) {
+    proclaim(!$cond, $desc);
+}
+
+multi sub nok($cond) { nok(!$cond, ''); }
+
+
 multi sub is($got, $expected, $desc) {
     my $test = $got eq $expected;
     proclaim($test, $desc);
@@ -63,19 +70,19 @@ multi sub is_approx($got, $expected) { is_approx($got, $expected, ''); }
 
 multi sub todo($reason, $count) {
     $todo_upto_test_num = $num_of_tests_run + $count;
-    $todo_reason = 'TODO ' ~ $reason;
+    $todo_reason = '# TODO ' ~ $reason;
 }
 
 multi sub todo($reason) {
     $todo_upto_test_num = $num_of_tests_run + 1;
-    $todo_reason = 'TODO ' ~ $reason;
+    $todo_reason = '# TODO ' ~ $reason;
 }
 
-multi sub skip()                { proclaim(1, "skip "); }
-multi sub skip($reason)         { proclaim(1, "skip $reason"); }
+multi sub skip()                { proclaim(1, "# SKIP"); }
+multi sub skip($reason)         { proclaim(1, "# SKIP " ~ $reason); }
 multi sub skip($count, $reason) {
     for 1..$count {
-        proclaim(1, "skip $reason");
+        proclaim(1, "# SKIP " ~ $reason);
     }
 }
 
@@ -89,24 +96,49 @@ multi sub skip_rest($reason) {
 
 sub diag($message) { say '# '~$message; }
 
+
+multi sub flunk($reason) { proclaim(0, "flunk $reason")}
+
+
+sub isa_ok($var,$type) { ok($var.isa($type), "The object is-a '$type'"); }
+
+multi sub dies_ok($closure, $reason) {
+    try {
+        $closure();
+    }
+    proclaim((defined $!), $reason);
+}
+multi sub dies_ok($closure) {
+    dies_ok($closure, '');
+}
+
+multi sub lives_ok($closure, $reason) {
+    try {
+        $closure();
+    }
+    proclaim((not defined $!), $reason);
+}
+multi sub lives_ok($closure) {
+    lives_ok($closure, '');
+}
+
+
 ## 'private' subs
 
 sub proclaim($cond, $desc) {
     $testing_started  = 1;
-    $desc = $todo_reason
-        if $todo_reason and $num_of_tests_run < $todo_upto_test_num;
     $num_of_tests_run = $num_of_tests_run + 1;
 
-    if ( $cond ) {
-        print "ok " ~ $num_of_tests_run ~ " - ";
-    }
-    else {
-        print "not ok " ~ $num_of_tests_run ~ " - ";
-        ++$num_of_tests_failed
+    unless $cond {
+        print "not ";
+        $num_of_tests_failed = $num_of_tests_failed + 1
             unless  $num_of_tests_run <= $todo_upto_test_num;
     }
-    say $desc;
-
+    print "ok ", $num_of_tests_run, " - ", $desc;
+    if $todo_reason and $num_of_tests_run <= $todo_upto_test_num {
+        print $todo_reason;
+    }
+    print "\n";
 }
 
 END {

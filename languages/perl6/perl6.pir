@@ -28,11 +28,10 @@ Creates the Perl 6 compiler by subclassing a C<PCT::HLLCompiler> object.
 
 .sub 'onload' :load :init :anon
     load_bytecode 'PCT.pbc'
-    load_bytecode 'Protoobject.pbc'
 
-    $P0 = get_hll_global 'Protomaker'
-    $P1 = get_class ['PCT::HLLCompiler']
-    $P0.'new_subclass'($P1, 'Perl6::Compiler')
+    .local pmc p6meta
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    p6meta.'new_class'('Perl6::Compiler', 'parent'=>'PCT::HLLCompiler')
 .end
 
 
@@ -48,7 +47,7 @@ Creates the Perl 6 compiler by subclassing a C<PCT::HLLCompiler> object.
     setattribute self, '@stages', $P0
 
     ##  set the command line options
-    $P0 = split ' ', 'c e=s help|h target=s trace|t=s encoding=s output|o=s combine each version|v'
+    $P0 = split ' ', 'c e=s help|h target=s trace|t=s encoding=s output|o=s version|v'
     setattribute self, '@cmdoptions', $P0
 
     ##  set the $usage attribute
@@ -106,6 +105,10 @@ USAGE
     ## create a list for holding the stack of nested roles
     $P0 = new 'List'
     set_hll_global ['Perl6';'Grammar';'Actions'], '@?ROLE', $P0
+
+    ## create a list for holding the stack of nested grammars
+    $P0 = new 'List'
+    set_hll_global ['Perl6';'Grammar';'Actions'], '@?GRAMMAR', $P0
 
     ##  create a list of END blocks to be run
     $P0 = new 'List'
@@ -197,6 +200,7 @@ to the Perl 6 compiler.
 
 
 .include 'src/gen_grammar.pir'
+.include 'src/parser/expression.pir'
 .include 'src/parser/quote_expression.pir'
 .include 'src/gen_actions.pir'
 

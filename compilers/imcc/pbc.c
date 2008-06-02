@@ -80,6 +80,7 @@ static struct globals {
 
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 static void add_1_const(PARROT_INTERP, ARGMOD(SymReg *r))
         __attribute__nonnull__(1)
@@ -183,11 +184,6 @@ static PMC* mk_multi_sig(PARROT_INTERP, ARGIN(const SymReg *r))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-#ifdef HAS_JIT
-PARROT_WARN_UNUSED_RESULT
-static int old_blocks(void);
-#endif /* HAS_JIT */
-
 PARROT_CONST_FUNCTION
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -211,7 +207,15 @@ static void verify_signature(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
+
+#ifdef HAS_JIT
+
+PARROT_WARN_UNUSED_RESULT
+static int old_blocks(void);
+
+#endif /* HAS_JIT */
 
 /*
 
@@ -655,7 +659,7 @@ fixup_globals(PARROT_INTERP)
                     SymReg * const nam = mk_const(interp, fixup->name,
                             fixup->type & VT_ENCODED ? 'U' : 'S');
 
-                    op = interp->op_lib->op_code("find_name_p_sc", 1);
+                    op = interp->op_lib->op_code("find_sub_not_null_p_sc", 1);
                     PARROT_ASSERT(op);
 
                     interp->code->base.data[addr] = op;
@@ -1107,7 +1111,7 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), int offs, int end)
     unit->sub_pmc = sub_pmc;
 
     IMCC_debug(interp, DEBUG_PBC_CONST,
-            "add_const_pmc_sub '%s' flags %d color %d (%s) "
+            "add_const_pmc_sub '%s' flags %x color %d (%s) "
             "lex_info %s :outer(%s)\n",
             r->name, r->pcc_sub->pragma, k,
             (char *) sub_pmc->vtable->whoami->strstart,

@@ -32,12 +32,11 @@ PGE::OPTable - PGE operator precedence table and parser
 .include "cclass.pasm"
 
 .sub '__onload' :load
-    .local pmc base
+    .local pmc p6meta
+    p6meta = new 'P6metaclass'
+    p6meta.'new_class'('PGE::OPTable', 'parent'=>'Hash', 'attr'=>'%!key %!klen &!ws')
+
     .local pmc sctable
-    base = subclass 'Hash', 'PGE::OPTable'
-    addattribute base, '%!key'
-    addattribute base, '%!klen'
-    addattribute base, '&!ws'
     sctable = new 'Hash'
     set_global '%!sctable', sctable
 
@@ -279,6 +278,12 @@ Adds (or replaces) a syntactic category's defaults.
   with_tighter:
 
     ws = getattribute self, '&!ws'
+    unless null ws goto have_ws
+    $I0 = can mob, 'ws'
+    unless $I0 goto have_ws
+    ws = find_method mob, 'ws'
+  have_ws:
+
     tokenstack = new 'ResizablePMCArray'
     operstack = new 'ResizablePMCArray'
     termstack = new 'ResizablePMCArray'
@@ -492,7 +497,7 @@ Adds (or replaces) a syntactic category's defaults.
     $S1 = $P1['type']
     $S2 = $P2['type']
     if $S1 != $S2 goto reduce_saveterm
-    $P0 = $P2.get_array()
+    $P0 = $P2.'list'()
     $P1 = $P1[1]
     push $P0, $P1
     $P1 = $P2

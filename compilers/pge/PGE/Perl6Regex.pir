@@ -156,11 +156,12 @@ needed for compiling regexes.
 .namespace [ 'PGE::Perl6Regex' ]
 
 .sub '__onload' :load
+    .local pmc p6meta
+    p6meta = new 'P6metaclass'
+    p6meta.'new_class'('PGE::Exp::WS', 'parent'=>'PGE::Exp::Subrule')
+    p6meta.'new_class'('PGE::Exp::Alias', 'parent'=>'PGE::Exp')
+
     .local pmc optable
-
-    $P0 = subclass 'PGE::Exp::Subrule', 'PGE::Exp::WS'
-    $P0 = subclass 'PGE::Exp', 'PGE::Exp::Alias'
-
     optable = new 'PGE::OPTable'
     set_global '$optable', optable
 
@@ -729,27 +730,36 @@ Parses a subrule token.
     (mob, pos, target) = mob.'new'(mob, 'grammar'=>'PGE::Exp::Subrule')
     lastpos = length target
 
-    .local string subname
-    (subname, pos) = 'parse_subname'(target, pos)
-    mob['subname'] = subname
-    $S0 = substr target, pos, 1
+    ##  default to non-capturing rule
+    .local int iscapture
 
-    ##   see what type of subrule this is
-    mob['iscapture'] = 1
-    if key == '<?' goto nocapture
-    if key == '<.' goto nocapture
+    ##  see what type of subrule this is
+    if key == '<.' goto scan_subname
+    if key == '<?' goto zerowidth
     if key == '<!' goto negated
 
-    ##   if the next character is +/-, this is really an enumcharclass
-    $I0 = index '+-', $S0
-    if $I0 == -1 goto subrule_arg
-    .return 'parse_enumcharclass'(mobsave)
+    ##  capturing subrule, get its name/alias
+    iscapture = 1
+    .local string subname, cname
+    (subname, pos) = 'parse_subname'(target, pos)
+    cname = subname
+    $S0 = substr target, pos, 1
+    unless $S0 == '=' goto subrule_arg
+    ##  aliased subrule, skip the '=' and get the real name
+    inc pos
+    goto scan_subname
 
   negated:
     mob['isnegated'] = 1
-  nocapture:
-    mob['iscapture'] = 0
+  zerowidth:
+    mob['iszerowidth'] = 1
+
+  scan_subname:
+    (subname, pos) = 'parse_subname'(target, pos)
+
   subrule_arg:
+    mob['subname'] = subname
+    $S0 = substr target, pos, 1
     if $S0 == ':' goto subrule_text_arg
     if $S0 != ' ' goto subrule_end
   subrule_pattern_arg:
@@ -765,17 +775,28 @@ Parses a subrule token.
     mob.'to'(-1)
     goto subrule_end
   subrule_text_arg:
-    pos += 2
-    .local string textarg
+    $I0 = pos + 1
+    pos = find_not_cclass .CCLASS_WHITESPACE, target, $I0, lastpos
+    if pos == $I0 goto end
+    if pos >= lastpos goto end
+    .local string textarg, closedelim
     textarg = ''
-  subrule_text_loop:
+    closedelim = '>'
     $S0 = substr target, pos, 1
-    if $S0 == '>' goto subrule_text_end
+    if $S0 == '"' goto subrule_text_quote
+    if $S0 != "'" goto subrule_text_loop
+  subrule_text_quote:
+    closedelim = $S0
+    inc pos
+  subrule_text_loop:
+    if pos >= lastpos goto end
+    $S0 = substr target, pos, 1
+    if $S0 == closedelim goto subrule_text_end
     if $S0 != "\\" goto subrule_text_add
     inc pos
     $S0 = substr target, pos, 1
-    $I0 = index "\\>", $S0
-    if $I0 >= 0 goto subrule_text_add
+    if $S0 == closedelim goto subrule_text_add
+    if $S0 == "\\" goto subrule_text_add
     textarg .= "\\"
   subrule_text_add:
     textarg .= $S0
@@ -783,14 +804,17 @@ Parses a subrule token.
     goto subrule_text_loop
   subrule_text_end:
     mob['arg'] = textarg
+    if closedelim == '>' goto subrule_end
+    inc pos
+    pos = find_not_cclass .CCLASS_WHITESPACE, target, pos, lastpos
   subrule_end:
     $S0 = substr target, pos, 1
     if $S0 != '>' goto end
     inc pos
     mob.'to'(pos)
-    $I0 = mob['iscapture']
-    if $I0 == 0 goto end
-    $S0 = escape subname
+    mob['iscapture'] = iscapture
+    unless iscapture goto end
+    $S0 = escape cname
     $S0 = concat '"', $S0
     $S0 = concat $S0, '"'
     mob['cname'] = $S0
@@ -1146,7 +1170,7 @@ Parse a modifier.
 
     .local pmc array, exp
     .local int i, j, n
-    array = self.get_array()
+    array = self.'list'()
     n = elements array
     i = 0
     j = 0

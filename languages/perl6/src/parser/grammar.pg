@@ -84,6 +84,8 @@ token unsp {
     [ \v | <.unv> ]*
 }
 
+token unspacey { <.unsp>? }
+
 token unv {
     || \h+
     || ^^ <.pod_comment>
@@ -110,8 +112,10 @@ token afterws {
 token pod_comment {
     ^^ '=' <.unsp>?
     [
-    | begin <.ws> <ident> .*? \n
-      '=' <.unsp>? 'end' <.ws> $<ident> \N*         {*}         #= block
+    | begin \h+ <ident> .*? \n
+      '=' <.unsp>? 'end' \h+ $<ident> >> \N*        {*}         #= tagged
+    | begin \h* \n .*? \n
+      '=' <.unsp>? 'end' >> \N*                     {*}         #= anon
     | \N*                                           {*}         #= misc
     ]
     {*}
@@ -131,7 +135,7 @@ rule statement_block {
 
 token lambda { '->' | '<->' }
 
-token pblock { [ <lambda> <signature> ]? {*} <block> }
+token pblock { [ <lambda> <.ws> <signature> ]? <.ws> <block> {*} }
 
 
 ##  Blocks can also have an implied statement end if the
@@ -194,12 +198,12 @@ token MARK_STATEMENT_END {
 ##  the calling rule.
 rule statement {
     | <statement_control> {*}                    #= statement_control
-    | $<expr>=<EXPR>
+    | <expr=EXPR>
         [
         || <statement_mod_loop> {*}              #= statement_mod_loop
         || <statement_mod_cond>
             [
-                $<sml>=<statement_mod_loop>
+                <sml=statement_mod_loop>
             ]?
             {*}                                  #= statement_mod_cond
         || {*}                                   #= expr
@@ -225,7 +229,7 @@ rule if_statement {
     $<sym>=[if]
     <EXPR> <block>
     [ 'elsif' <EXPR> <block> ]*
-    [ 'else' $<else>=<block> ]?
+    [ 'else' <else=block> ]?
     {*}
 }
 
@@ -271,9 +275,9 @@ rule loop_statement {
     $<sym>=[loop]
     $<eee>=[
         '('
-            $<e1>=<EXPR> ';'
-            $<e2>=<EXPR> ';'
-            $<e3>=<EXPR>
+            <e1=EXPR> ';'
+            <e2=EXPR> ';'
+            <e3=EXPR>
         ')'
     ]?
     <block>
@@ -374,8 +378,8 @@ rule multisig {
     '(' <signature> ')'
 }
 
-rule signature {
-    ( <parameter> ( ',' | <?before ')' | '{'> ) )*
+token signature {
+    ( <parameter> <.ws> ( ',' <.ws> | ':' <.ws> | <?before ')' | '{'> ) )* <.ws>
     {*}
 }
 
@@ -400,14 +404,18 @@ rule type_constraint {
 token parameter {
     <type_constraint>*
     [
-    | [
-        $<named>=[':'?]
+    |   $<quant>=['*'] <param_var>
+    |   $<named>=[':'?]
         <param_var>
         $<quant>=[ <[ ? ! ]>? ]
-      ] {*}                                      #= non-slurp
-    | $<quant>=['*'?] <param_var> {*}            #= slurp
     ]
     <trait>*
+    <default_value>?
+    {*}
+}
+
+rule default_value {
+    '=' <EXPR: 'i='>
 }
 
 token param_var {
@@ -440,24 +448,33 @@ rule compiler_directive {
 token postfix {
     <!afterws>
     [
-    | <methodop> {*}                             #= methodop
+    | <dotty> {*}                                #= dotty
     | <postcircumfix> {*}                        #= postcircumfix
     ]
 }
 
 
-token methodop {
-    '.'
+token dotty {
     [
-    | <ident>
-    | <?before '$' | '@' > <variable>
-    | <?before <[ ' " ]>> <quote>
-#        { $<quote> ~~ /\W/ or .panic("Useless use of quotes") }
+    | '.' <methodop> {*}                              #= .
+    | ('.' <[+*?=^:]>) <?unspacey> <methodop> {*}     #= .*
+    | '!' <methodop> {*}                              #= !
     ]
+}
+
+
+token methodop {
     [
-    | <.unsp>? '(' <semilist> ')' {*}            #= semilist
-    | ':' <?before \s> <arglist> {*}             #= arglist
-    | {*}                                        #= null
+    | <name>
+    | <?before '$' | '@' > <variable>
+    | <?before <[ ' " ]> > <quote>
+#       { $<quote> ~~ /\W/ or .panic("Useless use of quotes") }
+    ] <.unsp>?
+
+    [
+    | '.'? <.unsp>? '(' <semilist> ')' {*}            #= semilist
+    | ':' <?before \s> <arglist> {*}                  #= arglist
+    | {*}                                             #= null
     ]
 }
 
@@ -481,7 +498,7 @@ token noun {
     | <circumfix> {*}                            #= circumfix
     | <variable> {*}                             #= variable
     | <subcall> {*}                              #= subcall
-    | <methodop> {*}                             #= methodop
+    | <dotty>                                    #= dotty
     | <value> {*}                                #= value
     | <capterm> {*}                              #= capterm
     | <statement_prefix> {*}                     #= statement_prefix
@@ -489,8 +506,8 @@ token noun {
     | <type_declarator> {*}                      #= type_declarator
     | <colonpair> {*}                            #= colonpair
     | <fatarrow> {*}                             #= fatarrow
-    | 'self' {*}                                 #= self
-    | 'undef' {*}                                #= undef
+    | 'self' >> {*}                              #= self
+    | 'undef' >> {*}                             #= undef
 }
 
 
@@ -526,11 +543,16 @@ token variable_decl {
 
 
 rule scoped {
-    <typename>* <variable_decl> {*}
+    <typename>*
+    [
+    | <variable_decl>
+    | <routine_declarator>
+    ]
+    {*}
 }
 
 rule scope_declarator {
-    $<declarator>=[my|our|state|constant|has]
+    $<sym>=[my|our|state|constant|has]
     <scoped>
     {*}
 }
@@ -539,6 +561,7 @@ token circumfix {
     | '(' <statementlist> ')' {*}                #= ( )
     | '[' <statementlist> ']' {*}                #= [ ]
     | <?before '{' | <lambda> > <pblock> {*}     #= { }
+    | <sigil> '(' <semilist> ')' {*}             #= $( )
 }
 
 token variable {
@@ -550,7 +573,7 @@ token variable {
 
 token sigil { '$' | '@' | '%' | '&' }
 
-token twigil { <[.!^*+?=]> }
+token twigil { <[.!^:*+?=]> }
 
 token name {
     | <ident> [ '::' <ident> ]*
@@ -598,9 +621,9 @@ token integer {
 }
 
 token dec_number {
-    \d+[_\d+]* 
-        [ 
-        | '.' \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]? 
+    \d+[_\d+]*
+        [
+        | '.' \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]?
         |                  <[Ee]> <[+\-]>? \d+
         ] # careful to distinguish from both integer and 42.method
     {*}
@@ -613,7 +636,7 @@ token radint {
       ':' $<radix>=[\d+] <.unsp>+
       ::  '<'
           $<intpart>=[<[0..9 a..z A..Z _]>]+
-          [ '*' $<base>=<radint> '**' $<exp>=<radint> ]?
+          [ '*' <base=radint> '**' <exp=radint> ]?
           '>'
       {*}                                        #= rad_number
     ]
@@ -626,7 +649,7 @@ token rad_number {
     ||  '<'
         $<intpart>=[<[0..9 a..z A..Z _]>]+
         $<fracpart>=[ '.' <[0..9 a..z A..Z _]>+ ]?
-        [ '*' $<base>=<radint> '**' $<exp>=<radint> ]?
+        [ '*' <base=radint> '**' <exp=radint> ]?
         '>'
     || <?before '['> <postcircumfix>
     || <?before '('> <postcircumfix>
@@ -688,7 +711,7 @@ rule semilist {
 ##  is left without an argument to parse.  So, for now we treat
 ##  listop as the last (lowest priority) of the terms to be parsed.
 token listop {
-    $<sym>=<ident>
+    <sym=ident>
     [
     || \s <arglist> {*}                          #= arglist
     || {*}                                       #= noarg
@@ -701,7 +724,7 @@ token arglist {
 }
 
 token fatarrow {
-    $<key>=<ident> \h* '=>' $<val>=<EXPR> # XXX should be EXPR(%item_assignment)
+    <key=ident> \h* '=>' <val=EXPR: 'i='>        # EXPR(%item_assignment)
     {*}
 }
 
@@ -733,7 +756,7 @@ token desigilname {
 ##  parser needs a term, it gets it by calling the 'term'
 ##  token above.
 
-rule EXPR is optable { ... }
+## rule EXPR is optable { ... }
 
 proto 'term:' is precedence('z=')
     is parsed(&term)

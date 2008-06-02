@@ -44,7 +44,7 @@ token name { \w+ }
 token ws {
     [ \s+
     | \# \N*
-    | <?pod_comment>
+    | <.pod_comment>
     ]*
 }
 
@@ -57,4 +57,4 @@ regex pod_comment {
            [\n|$]
 }
 
-token syntax_error { <?die: Syntax error> }
+token syntax_error { <?die: 'Syntax error'> }

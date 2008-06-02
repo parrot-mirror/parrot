@@ -10,15 +10,12 @@ This file sets up the Perl 6 C<Capture> class.
 
 =cut
 
-.namespace ['Capture']
+.namespace ['Perl6Capture']
 
 .sub 'onload' :anon :init :load
-    $P0 = subclass 'Capture', 'Perl6Capture'
-    $P1 = get_hll_global 'Any'
-    $P1 = $P1.HOW()
-    addparent $P0, $P1
-    $P1 = get_hll_global ['Perl6Object'], 'make_proto'
-    $P1($P0, 'Capture')
+    .local pmc p6meta
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    p6meta.'new_class'('Perl6Capture', 'parent'=>'Any', 'attr'=>'$!scalar @!array %!hash', 'name'=>'Capture')
 .end
 
 
@@ -37,49 +34,94 @@ Creates a capture.
     .param pmc array :slurpy
     .param pmc hash :named :slurpy
 
-    # Create capture.
+    # Create capture and set parts of it.
     .local pmc capt
     capt = self.'new'()
-
-    # Set array part.
-    .local pmc it
-    it = iter array
-  array_loop:
-    unless it goto array_loop_end
-    $P0 = shift it
-    push capt, $P0
-    goto array_loop
-  array_loop_end:
-
-    # Set hash part.
-    it = iter hash
-  hash_loop:
-    unless it goto hash_loop_end
-    $P0 = shift it
-    $P1 = hash[$P0]
-    capt[$P0] = $P1
-    goto hash_loop
-  hash_loop_end:
+    setattribute capt, '$!scalar', invocant
+    setattribute capt, '@!array', array
+    setattribute capt, '%!hash', hash
 
     # Done.
     .return(capt)
 .end
 
 
-=item clone (vtable method)
+=item get_pmc_keyed (vtable method)
 
-Captures are immutable, so just return ourself.
+Gets the given item from the capture.
+
+XXX Contains workaround until we get keyed_int in place in PCT.
 
 =cut
 
-.sub 'clone' :method :vtable
-    .return (self)
+.sub 'get_pmc_keyed' :vtable :method
+    .param pmc key
+    $I0 = isa key, 'Integer'
+    if $I0 goto int_key
+
+  hash_key:
+    $P0 = getattribute self, '%!hash'
+    $P0 = $P0[key]
+    .return ($P0)
+
+  int_key:
+    $P0 = getattribute self, '@!array'
+    $P0 = $P0[key]
+    .return ($P0)
+.end
+
+
+=item item (method)
+
+Gets the invocant part of the capture.
+
+=cut
+
+.sub 'item' :method
+    $P0 = getattribute self, '$!scalar'
+    .return ($P0)
+.end
+
+
+=item list (method)
+
+Gets the positional part of the capture.
+
+=cut
+
+.sub 'list' :method
+    $P0 = getattribute self, '@!array'
+    .return ($P0)
+.end
+
+
+=item hash (method)
+
+Gets the named part of the capture.
+
+=cut
+
+.sub 'hash' :method
+    $P0 = getattribute self, '%!hash'
+    .return ($P0)
 .end
 
 
 =back
 
 =cut
+
+
+.namespace
+
+.sub "infix:\\( )"
+    .param pmc inv
+    .param pmc array           :slurpy
+    .param pmc hash            :slurpy :named
+    $P0 = get_hll_global 'Capture'
+    .return $P0."!create"(inv, array :flat, hash :flat :named)
+.end
+
 
 
 # Local Variables:
