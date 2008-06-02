@@ -221,7 +221,7 @@ tree as a PIR code object that can be compiled.
           mfrom = cpos
           pos = cpos
           cutmark = 0
-          bsr R
+          branchcc R
           if cutmark <= %0 goto fail_cut
           inc cpos
           if iscont goto try_match
@@ -235,7 +235,7 @@ tree as a PIR code object that can be compiled.
           mpos = pos
           %1 (mob)
         fail:
-          ret
+          return_branchcc
         CODE
 
     ##   add the "fail_match" target if we need it
@@ -315,7 +315,7 @@ tree as a PIR code object that can be compiled.
           if $I0 goto %1_cgen
           $P0 = new 'ResizablePMCArray'
           captscope[%0] = $P0
-          bsr %1_cgen
+          branchcc %1_cgen
           delete captscope[%0]
           goto fail
         %1_cgen:
@@ -511,7 +511,7 @@ tree as a PIR code object that can be compiled.
         %L:  # quant 0..Inf greedy
         %0:
           push ustack, pos
-          bsr %1
+          branchcc %1
           pos = pop ustack
           if cutmark != 0 goto fail
           goto %S
@@ -529,16 +529,16 @@ tree as a PIR code object that can be compiled.
     if $I0 != PGE_INF goto bt_greedy_none
     code.emit(<<"        CODE", replabel, explabel, args :flat :named)
         %L:  # quant 0..Inf none
-          bsr %0
+          branchcc %0
           if cutmark != %c goto fail
           cutmark = 0
           goto fail
         %0:
           push ustack, pos
-          bsr %1
+          branchcc %1
           pos = pop ustack
           if cutmark != 0 goto fail
-          bsr %S
+          branchcc %S
           if cutmark != 0 goto fail
           cutmark = %c
           goto fail
@@ -550,7 +550,7 @@ tree as a PIR code object that can be compiled.
     code.emit(<<"        CODE", replabel, explabel, args :flat :named)
         %L:  # quant %Q greedy/none
           push gpad, 0
-          bsr %0
+          branchcc %0
           $I0 = pop gpad
           %Cif cutmark != %c goto fail
           %Ccutmark = 0
@@ -562,7 +562,7 @@ tree as a PIR code object that can be compiled.
           gpad[-1] = rep
           push ustack, pos
           push ustack, rep
-          bsr %1
+          branchcc %1
           rep = pop ustack
           pos = pop ustack
           if cutmark != 0 goto fail
@@ -571,7 +571,7 @@ tree as a PIR code object that can be compiled.
           %Mif rep < %m goto fail
           $I0 = pop gpad
           push ustack, rep
-          bsr %S
+          branchcc %S
           rep = pop ustack
           push gpad, rep
           if cutmark != 0 goto fail
@@ -585,7 +585,7 @@ tree as a PIR code object that can be compiled.
     code.emit(<<"        CODE", replabel, explabel, args :flat :named)
         %L:  # quant %Q eager
           push gpad, 0
-          bsr %0
+          branchcc %0
           $I0 = pop gpad
           goto fail
         %0:
@@ -594,7 +594,7 @@ tree as a PIR code object that can be compiled.
           $I0 = pop gpad
           push ustack, pos
           push ustack, rep
-          bsr %S
+          branchcc %S
           rep = pop ustack
           pos = pop ustack
           push gpad, rep
@@ -665,7 +665,7 @@ tree as a PIR code object that can be compiled.
     exp0label = code.unique('R')
     code.emit(<<"        CODE", label, exp0label, cutmark)
         %0:  # group %2
-          bsr %1
+          branchcc %1
           if cutmark != %2 goto fail
           cutmark = 0
           goto fail\n
@@ -713,7 +713,7 @@ tree as a PIR code object that can be compiled.
           push gpad, captscope
           push gpad, captob
           %Xcaptscope = captob
-          bsr %E
+          branchcc %E
           captob = pop gpad
           captscope = pop gpad
           %Cif cutmark != %c goto fail
@@ -727,7 +727,7 @@ tree as a PIR code object that can be compiled.
           $P1 = pos
           %1
           push ustack, captob
-          bsr %S
+          branchcc %S
           captob = pop ustack
           %2
           push gpad, captscope
@@ -836,7 +836,7 @@ tree as a PIR code object that can be compiled.
           %2
           %3
           pos = $P1
-          bsr %1
+          branchcc %1
           %4
           goto fail
         CODE
@@ -848,7 +848,7 @@ tree as a PIR code object that can be compiled.
           $P1 = getattribute captob, '&!corou'
           if null $P1 goto %2
           push ustack, captob
-          bsr %2
+          branchcc %2
           captob = pop ustack
           if cutmark != 0 goto fail
           captob.next()
@@ -910,7 +910,7 @@ tree as a PIR code object that can be compiled.
     code.emit(<<"        CODE", label, exp0label, exp1label)
         %0:  # alt %1, %2
           push ustack, pos
-          bsr %1
+          branchcc %1
           pos = pop ustack
           if cutmark != 0 goto fail
           goto %2\n
@@ -1137,7 +1137,7 @@ tree as a PIR code object that can be compiled.
           if rep <= %m goto %S
           push ustack, pos
           push ustack, rep
-          bsr %S
+          branchcc %S
           rep = pop ustack
           pos = pop ustack
           if cutmark != 0 goto fail
@@ -1159,7 +1159,7 @@ tree as a PIR code object that can be compiled.
           if rep == 0 goto %S
           push ustack, pos
           push ustack, rep
-          bsr %S
+          branchcc %S
           rep = pop ustack
           pos = pop ustack
           if cutmark != 0 goto fail
@@ -1205,7 +1205,7 @@ tree as a PIR code object that can be compiled.
     if cutmark > 0 goto group_cutmark
     code.emit(<<"        CODE", label, next, cutmark)
         %0: # cut rule or match
-          bsr %1
+          branchcc %1
           cutmark = %2
           goto fail_cut\n
         CODE
@@ -1214,7 +1214,7 @@ tree as a PIR code object that can be compiled.
   group_cutmark:
     code.emit(<<"        CODE", label, next, cutmark)
         %0: # cut %2
-          bsr %1
+          branchcc %1
           cutmark = %2
           goto fail\n
         CODE
@@ -1351,7 +1351,7 @@ tree as a PIR code object that can be compiled.
         %0: # conj %2, %4
           push gpad, pos
           push gpad, pos
-          bsr %2
+          branchcc %2
           $I0 = pop gpad
           $I0 = pop gpad
           goto fail
@@ -1366,7 +1366,7 @@ tree as a PIR code object that can be compiled.
           $I1 = pop gpad
           push ustack, $I1
           push ustack, $I0
-          bsr %1
+          branchcc %1
           $I0 = pop ustack
           $I1 = pop ustack
           push gpad, $I1
@@ -1418,7 +1418,7 @@ tree as a PIR code object that can be compiled.
           if $I0 == 0 goto %1
           mob.'result_object'($P0)
           push ustack, pos
-          bsr succeed
+          branchcc succeed
           pos = pop ustack
           null $P0
           mob.'result_object'($P0)
