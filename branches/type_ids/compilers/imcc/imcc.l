@@ -616,21 +616,33 @@ SP              [ ]
 
 <emit,INITIAL>\$I[0-9]+ {
         if (valp) (valp)->s = yytext;
+        if (IMCC_INFO(interp)->state->pasm_file)
+                IMCC_fataly(interp, E_SyntaxError,
+                    "'%s' is not a valid register name in pasm mode", yytext);
         return IREG;
     }
 
 <emit,INITIAL>\$N[0-9]+ {
         if (valp) (valp)->s = yytext;
+        if (IMCC_INFO(interp)->state->pasm_file)
+                IMCC_fataly(interp, E_SyntaxError,
+                    "'%s' is not a valid register name in pasm mode", yytext);
         return NREG;
     }
 
 <emit,INITIAL>\$S[0-9]+ {
         if (valp) (valp)->s = yytext;
+        if (IMCC_INFO(interp)->state->pasm_file)
+                IMCC_fataly(interp, E_SyntaxError,
+                    "'%s' is not a valid register name in pasm mode", yytext);
         return SREG;
     }
 
 <emit,INITIAL>\$P[0-9]+ {
         if (valp) (valp)->s = yytext;
+        if (IMCC_INFO(interp)->state->pasm_file)
+                IMCC_fataly(interp, E_SyntaxError,
+                    "'%s' is not a valid register name in pasm mode", yytext);
         return PREG;
     }
 
@@ -1105,7 +1117,11 @@ expand_macro(PARROT_INTERP, ARGIN(const char *name), void *yyscanner)
 
         /* whitespace can be safely ignored */
         do {
+#ifdef __cplusplus
+            c = yyinput(yyscanner);
+#else
             c = input(yyscanner);
+#endif
         } while (c == ' ' || c == '\t');
 
         if (c != '(') {

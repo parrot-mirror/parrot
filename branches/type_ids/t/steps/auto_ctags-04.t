@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 15;
+use Test::More tests =>  13;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -38,7 +38,7 @@ $step_name   = $task->step;
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+
 
 ok(auto::ctags::_probe_for_ctags_output('Exuberant Ctags', 0),
     "Probe returned true when output matched");
@@ -64,7 +64,7 @@ ok(! auto::ctags::_probe_for_ctags_output('alpha', 0),
     ok(! $rv, "Probe returned false when output matched");
 }
 
-pass("Keep Devel::Cover happy");
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

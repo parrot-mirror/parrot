@@ -148,7 +148,6 @@ GEN_MAKEFILES = \
     ext/Makefile \
     languages/Makefile \
     languages/abc/Makefile \
-    languages/amber/Makefile \
     languages/APL/Makefile \
     languages/befunge/Makefile \
     languages/bf/Makefile \
@@ -178,7 +177,6 @@ GEN_MAKEFILES = \
     languages/urm/Makefile \
     languages/WMLScript/Makefile \
     languages/Zcode/Makefile \
-    src/dynpmc/Makefile \
     src/dynoplibs/Makefile
 
 GEN_CONFIGS = \
@@ -195,6 +193,7 @@ GEN_CONFIGS = \
     runtime/parrot/include/config.fpmc \
     $(SRC_DIR)/platform.c \
 #CONDITIONED_LINE(platform_asm):    $(SRC_DIR)/platform_asm.s \
+#CONDITIONED_LINE(has_glut):    $(SRC_DIR)/glut_callbacks.c \
     $(SRC_DIR)/core_pmcs.c \
     CFLAGS \
     $(IMCC_DIR)/CFLAGS \
@@ -210,6 +209,7 @@ GEN_CONFIGS = \
 
 GEN_PASM_INCLUDES = \
     runtime/parrot/include/signal.pasm \
+#CONDITIONED_LINE(has_opengl):    runtime/parrot/include/opengl_defines.pasm \
     @TEMP_gen_pasm_includes@
 
 STICKY_FILES = \
@@ -272,7 +272,9 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/JSON.pbc \
     $(LIBRARY_DIR)/Math/Random/mt19937ar.pbc \
     $(LIBRARY_DIR)/MIME/Base64.pbc \
+    $(LIBRARY_DIR)/NCI/call_toolkit_init.pbc \
     $(LIBRARY_DIR)/ncurses.pbc \
+#CONDITIONED_LINE(has_opengl):    $(LIBRARY_DIR)/OpenGL.pbc \
     $(LIBRARY_DIR)/parrotlib.pbc \
     $(LIBRARY_DIR)/pcre.pbc \
     $(LIBRARY_DIR)/Parrot/Capture_PIR.pbc \
@@ -519,6 +521,7 @@ ALL_PARROT_LIBS     = @libparrot_ldflags@ $(ICU_SHARED) $(C_LIBS)
 # dynamic extensions
 DYNEXT_DIR          = runtime/parrot/dynext
 LIBNCI_TEST_SO      = $(DYNEXT_DIR)/libnci_test$(LOAD_EXT)
+LIBGLUTCB_SO        = $(DYNEXT_DIR)/libglutcb$(LOAD_EXT)
 
 ###############################################################################
 #
@@ -575,6 +578,7 @@ all : \
     runtime/parrot/include/config.fpmc \
     docs \
     $(LIBNCI_TEST_SO) \
+#CONDITIONED_LINE(has_glut):    $(LIBGLUTCB_SO) \
     $(GEN_LIBRARY) \
     dynpmc \
     dynoplibs \
@@ -931,6 +935,8 @@ $(PDUMP) : $(SRC_DIR)/pdump$(O) $(SRC_DIR)/packdump$(O) $(LIBPARROT)
     $(SRC_DIR)/pdump$(O) \
     $(SRC_DIR)/packdump$(O) @rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS)
 
+$(SRC_DIR)/pdump$(O) : $(GEN_HEADERS)
+
 $(INSTALLABLEPDUMP) : $(SRC_DIR)/pdump$(O) $(SRC_DIR)/packdump$(O) $(LIBPARROT)
 	$(LINK) @ld_out@$@ \
     $(SRC_DIR)/pdump$(O) \
@@ -942,6 +948,8 @@ $(PINFO) : $(SRC_DIR)/pbc_info$(O) $(LIBPARROT)
 	$(LINK) @ld_out@$@ \
     $(SRC_DIR)/pbc_info$(O) \
     @rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS)
+
+$(SRC_DIR)/pbc_info$(O) : $(GEN_HEADERS)
 
 $(INSTALLABLEPINFO) : $(SRC_DIR)/pbc_info$(O) $(LIBPARROT)
 	$(LINK) @ld_out@$@ \
@@ -1609,6 +1617,8 @@ prog-clean :
     $(SRC_DIR)/exec_start$(O) \
     $(SRC_DIR)/nci_test$(O) \
     $(LIBNCI_TEST_SO) \
+    $(SRC_DIR)/glut_callbacks$(O) \
+    $(LIBGLUTCB_SO) \
     install_config.fpmc
 	$(PERL) $(BUILD_TOOLS_DIR)/c2str.pl --init
 	$(RM_F) \
@@ -1647,6 +1657,8 @@ archclean: dynoplibs-clean dynpmc-clean dynext-clean
     install_config.fpmc \
     $(SRC_DIR)/nci_test$(O) \
     $(LIBNCI_TEST_SO) \
+    $(SRC_DIR)/glut_callbacks$(O) \
+    $(LIBGLUTCB_SO) \
     $(LIBPARROT_STATIC) \
     $(LIBPARROT_SHARED)
 
@@ -1719,8 +1731,11 @@ imcc-clean:
     "$(IMCC_DIR)/*$(O)" \
     $(IMCC_DIR)/imcparser.output
 
-realclean : clean languages-realclean
-	$(MAKE) compilers/pirc realclean
+# a failing step of cleaning, usually doesn't concern the following steps
+realclean : clean
+	-$(MAKE) languages       realclean
+	-$(MAKE) compilers/pirc  realclean
+	-$(MAKE) src/dynpmc      realclean
 	$(RM_RF) \
     $(STICKY_FILES) \
     blib \
@@ -2132,7 +2147,7 @@ rpms : release
 	cd /usr/src/*/SPECS @make_and@ sudo rpm -ba parrot.spec
 
 win32-inno-installer : world installable
-	$(PERL) tools/dev/mk_inno.pl --version=$(VERSION) --prefix=$(PREFIX) --icudir=@icu_dir@
+	$(PERL) tools/dev/mk_inno.pl
 	$(INNO_SETUP) parrot.iss
 
 ###############################################################################
@@ -2167,6 +2182,11 @@ exec : $(SRC_DIR)/exec_start$(O) $(SRC_DIR)/parrot_config$(O) $(LIBPARROT)
 $(LIBNCI_TEST_SO): $(SRC_DIR)/nci_test$(O)
 	$(LD) $(LD_LOAD_FLAGS) @ncilib_link_extra@ $(LDFLAGS) \
     @ld_out@$@ $(SRC_DIR)/nci_test$(O) $(C_LIBS)
+
+# for use by runtime/parrot/library/OpenGL.pir
+$(LIBGLUTCB_SO): $(SRC_DIR)/glut_callbacks$(O)
+	$(LD) $(LD_LOAD_FLAGS) @ncilib_link_extra@ $(LDFLAGS) \
+    @ld_out@$@ $(SRC_DIR)/glut_callbacks$(O) $(C_LIBS)
 
 # emacs etags
 # this needs exuberant-ctags

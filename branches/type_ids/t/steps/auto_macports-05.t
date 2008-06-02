@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use Test::More;
 plan( skip_all => 'Macports is Darwin only' ) unless $^O =~ /darwin/;
-plan( tests => 13 );
+plan( tests => 12 );
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -38,18 +38,17 @@ $step_name   = $task->step;
 $step = $step_name->new();
 ok(defined $step, "$step_name constructor returned defined value");
 isa_ok($step, $step_name);
-ok($step->description(), "$step_name has description");
 
 # mock no Macports-default directories
 $step->{ports_root} = File::Spec->catdir( qw( / my ridiculous foobar ) );
 {
     my ($stdout, $stderr);
     my $ret = capture sub { $step->runstep($conf) }, \$stdout, \$stderr;
-    ok(! defined $ret, "runstep() returned undefined value");
-    is($step->result(), 'failed', "Got expected result");
+    ok($ret, "runstep() returned true value");
+    is($step->result(), 'no', "Got expected result");
     like(
         $stdout,
-        qr/^Could not locate ports directories/,
+        qr/^Could not locate Macports directories/,
         "Got expected verbose output"
     );
 }

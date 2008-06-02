@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 pmc.ops
@@ -65,7 +65,6 @@ op new(out PMC, in STR) {
                 "Class '%Ss' not found", classname);
         $1 = pmc_new(interp, type);
     }
-    goto NEXT();
 }
 
 op new(out PMC, in STR, in PMC) {
@@ -81,7 +80,6 @@ op new(out PMC, in STR, in PMC) {
                 "Class '%Ss' not found", classname);
         $1 = pmc_new_init(interp, type, $3);
     }
-    goto NEXT();
 }
 
 inline op new(out PMC, in PMC) :object_classes {
@@ -97,7 +95,6 @@ inline op new(out PMC, in PMC) :object_classes {
                 "Class '%Ss' not found", readable_name(interp, classname_key));
         $1 = pmc_new(interp, type);
     }
-    goto NEXT();
 }
 
 op new(out PMC, in PMC, in PMC) {
@@ -113,7 +110,6 @@ op new(out PMC, in PMC, in PMC) {
                 "Class '%Ss' not found", readable_name(interp, classname_key));
         $1 = pmc_new_init(interp, type, $3);
     }
-    goto NEXT();
 }
 
 ########################################
@@ -136,27 +132,22 @@ Return the type of the entry in aggregate PMC in $2 at key $3.
 
 inline op typeof(out STR, invar PMC) {
   $1 = VTABLE_name(interp, $2);
-  goto NEXT();
 }
 
 inline op typeof(out PMC, invar PMC) {
   $1 = VTABLE_get_class(interp, $2);
-  goto NEXT();
 }
 
 inline op typeof(out INT, invar PMC) {
-      $1 = $2->vtable->type(interp, $2);
-  goto NEXT();
+  $1 = $2->vtable->type(interp, $2);
 }
 
 inline op typeof(out INT, invar PMC, in KEY) {
   $1 = $2->vtable->type_keyed(interp, $2, $3);
-  goto NEXT();
 }
 
 inline op typeof(out INT, invar PMC, in INTKEY) {
   $1 = $2->vtable->type_keyed_int(interp, $2, $3);
-  goto NEXT();
 }
 ########################################
 
@@ -171,7 +162,6 @@ inline op typeof(out STR, in INT) {
                 $1 = interp->vtables[$2]->whoami;
     else
                 $1 = Parrot_get_datatype_name(interp, $2);
-    goto NEXT();
 }
 
 ########################################
@@ -186,12 +176,9 @@ Find the PMC type or Parrot datatype by name.
 
 op find_type(out INT, in STR) {
     $1 = pmc_type(interp, $2);
-    goto NEXT();
 }
 
 op find_type(out INT, in PMC) {
-
-    /* RT#42350 KLUDGE ALERT: THIS LOGIC SHOULD BE IN pmc_type_p() */
 
     INTVAL n;
 
@@ -212,7 +199,6 @@ op find_type(out INT, in PMC) {
         }
         $1 = PMC_IS_NULL(_class) ? 0 : PMC_int_val(_class);
     }
-    goto NEXT();
 }
 
 ########################################
@@ -230,7 +216,6 @@ op valid_type(out INT, in INT) {
         $1 = 1;
     else
         $1 = 0;
-    goto NEXT();
 }
 
 
@@ -242,7 +227,6 @@ Set $1 to a string representation of $2
 
 op get_repr(out STR, invar PMC) {
     $1 = $2->vtable->get_repr(interp, $2);
-    goto NEXT();
 }
 
 =back
@@ -268,7 +252,7 @@ PMC in $1.
 
 =cut
 
-op find_method(out PMC, invar PMC, in STR) {
+op find_method(out PMC, invar PMC, in STR) :flow {
     opcode_t * const resume = expr NEXT();
     $1 = $2->vtable->find_method(interp, $2, $3);
     if (PMC_IS_NULL($1) || !VTABLE_defined(interp, $1)) {
@@ -300,27 +284,22 @@ Places the answer in INT.
 
 inline op defined(out INT, invar PMC) {
   $1 = PMC_IS_NULL($2) ? 0 : $2->vtable->defined(interp, $2);
-  goto NEXT();
 }
 
 inline op defined(out INT, invar PMC, in INTKEY) {
   $1 = PMC_IS_NULL($2) ? 0 : $2->vtable->defined_keyed_int(interp, $2, $3);
-  goto NEXT();
 }
 
 inline op defined(out INT, invar PMC, in KEY) {
   $1 = PMC_IS_NULL($2) ? 0 : $2->vtable->defined_keyed(interp, $2, $3);
-  goto NEXT();
 }
 
 inline op exists(out INT, invar PMC, in INTKEY) {
   $1 = PMC_IS_NULL($2) ? 0 : $2->vtable->exists_keyed_int(interp, $2, $3);
-  goto NEXT();
 }
 
 inline op exists(out INT, invar PMC, in KEY) {
   $1 = PMC_IS_NULL($2) ? 0: $2->vtable->exists_keyed(interp, $2, $3);
-  goto NEXT();
 }
 
 ########################################
@@ -335,12 +314,10 @@ Delete the specified entry $2 from aggregate $1.
 
 inline op delete(invar PMC, in KEY) {
   $1->vtable->delete_keyed(interp, $1, $2);
-  goto NEXT();
 }
 
 inline op delete(invar PMC, in INTKEY) {
   $1->vtable->delete_keyed_int(interp, $1, $2);
-  goto NEXT();
 }
 
 ########################################
@@ -353,7 +330,6 @@ Returns the number of items in aggregate $2
 
 inline op elements(out INT, invar PMC) {
   $1 = VTABLE_elements(interp, $2);
-  goto NEXT();
 }
 
 =back
@@ -386,22 +362,18 @@ Push $2 onto the end of the aggregate PMC $1, if that operation is defined.
 
 inline op push(invar PMC, in INT) {
     $1->vtable->push_integer(interp, $1, $2);
-    goto NEXT();
 }
 
 inline op push(invar PMC, in NUM) {
     $1->vtable->push_float(interp, $1, $2);
-    goto NEXT();
 }
 
 inline op push(invar PMC, in STR) {
     $1->vtable->push_string(interp, $1, $2);
-    goto NEXT();
 }
 
 inline op push(invar PMC, invar PMC) {
     $1->vtable->push_pmc(interp, $1, $2);
-    goto NEXT();
 }
 
 ########################################
@@ -420,22 +392,18 @@ Pop off last entry in the aggregate $2, placing the result in $1.
 
 inline op pop(out INT, invar PMC) {
     $1 = $2->vtable->pop_integer(interp, $2);
-    goto NEXT();
 }
 
 inline op pop(out NUM, invar PMC) {
     $1 = $2->vtable->pop_float(interp, $2);
-    goto NEXT();
 }
 
 inline op pop(out STR, invar PMC) {
     $1 = $2->vtable->pop_string(interp, $2);
-    goto NEXT();
 }
 
 inline op pop(out PMC, invar PMC) {
     $1 = $2->vtable->pop_pmc(interp, $2);
-    goto NEXT();
 }
 
 ########################################
@@ -454,22 +422,18 @@ Unshift $2 onto the front of the aggregate PMC $1.
 
 inline op unshift(invar PMC, in INT) {
     $1->vtable->unshift_integer(interp, $1, $2);
-    goto NEXT();
 }
 
 inline op unshift(invar PMC, in NUM) {
     $1->vtable->unshift_float(interp, $1, $2);
-    goto NEXT();
 }
 
 inline op unshift(invar PMC, in STR) {
     $1->vtable->unshift_string(interp, $1, $2);
-    goto NEXT();
 }
 
 inline op unshift(invar PMC, invar PMC) {
     $1->vtable->unshift_pmc(interp, $1, $2);
-    goto NEXT();
 }
 
 ########################################
@@ -488,22 +452,18 @@ Shift off the first entry in the aggregate $2 and places it in $1.
 
 inline op shift(out INT, invar PMC) {
     $1 = $2->vtable->shift_integer(interp, $2);
-    goto NEXT();
 }
 
 inline op shift(out NUM, invar PMC) {
     $1 = $2->vtable->shift_float(interp, $2);
-    goto NEXT();
 }
 
 inline op shift(out STR, invar PMC) {
     $1 = $2->vtable->shift_string(interp, $2);
-    goto NEXT();
 }
 
 inline op shift(out PMC, invar PMC) {
     $1 = $2->vtable->shift_pmc(interp, $2);
-    goto NEXT();
 }
 
 
@@ -531,7 +491,6 @@ Set property $2 to value $3 for PMC $1.
 
 op setprop(invar PMC, in STR, invar PMC) {
       $1->vtable->setprop(interp, $1, $2, $3);
-      goto NEXT();
 }
 
 ########################################
@@ -544,7 +503,6 @@ Get property $2 of PMC $3 and put it in $1.
 
 op getprop(out PMC, in STR, invar PMC) {
    $1 = $3->vtable->getprop(interp, $3, $2);
-   goto NEXT();
 }
 
 ########################################
@@ -557,7 +515,6 @@ Delete property $2 from PMC $1.
 
 op delprop(invar PMC, in STR) {
    $1->vtable->delprop(interp, $1, $2);
-   goto NEXT();
 }
 
 ########################################
@@ -571,7 +528,6 @@ hash doesn't exist, the C<Null> PMC is returned.
 
 op prophash(out PMC, invar PMC) {
    $1 = $2->vtable->getprops(interp, $2);
-   goto NEXT();
 }
 
 =back
@@ -602,12 +558,10 @@ Set $1 to a newly created PMC from the image $2.
 
 op freeze(out STR, invar PMC) {
    $1 = Parrot_freeze(interp, $2);
-   goto NEXT();
 }
 
 op thaw(out PMC, in STR) {
    $1 = Parrot_thaw(interp, $2);
-   goto NEXT();
 }
 
 =back
@@ -640,7 +594,6 @@ $2 and $3.
 
 inline op mmdvtregister(in INT, in INT, in INT, invar PMC) {
   mmd_register_sub(interp, $1, $2, $3, $4);
-  goto NEXT();
 }
 
 =item B<mmdvtfind>(out PMC, in INT, in INT, in INT)
@@ -651,7 +604,6 @@ Find the sub that would be called for vtable entry $2 for types $3 and $4.
 
 inline op mmdvtfind(out PMC, in INT, in INT, in INT) {
   $1 = mmd_vtfind(interp, $2, $3, $4);
-  goto NEXT();
 }
 
 =back
@@ -685,12 +637,10 @@ Remove one reference of $1.
 
 op register(invar PMC) {
   dod_register_pmc(interp, $1);
-  goto NEXT();
 }
 
 op unregister(invar PMC) {
   dod_unregister_pmc(interp, $1);
-  goto NEXT();
 }
 
 =item B<get_mro>(out PMC, invar PMC)
@@ -702,14 +652,13 @@ direct reference so messing with it can do harm to the method lookup.
 
 op get_mro(out PMC, invar PMC) {
   $1 = $2->vtable->mro;
-  goto NEXT();
 }
 
 =back
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 
 =head1 LICENSE
 

@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 13;
+use Test::More tests =>  11;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -37,13 +37,13 @@ $step_name   = $task->step;
 $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+
 
 my $ret = $step->runstep($conf);
 ok( $ret, "$step_name runstep() returned true value" );
 is($step->result(), q{}, "Result is empty string as expected");
 
-pass("Keep Devel::Cover happy");
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

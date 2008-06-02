@@ -216,9 +216,9 @@ C<isdigit()> respectively.
 */
 
     VTABLE void increment() {
-        STRING     *str        = PMC_str_val(SELF);
-        const char *start      = str->strstart;
-        const char * const end = start + string_length(INTERP, str);
+        STRING            *str   = Parrot_unCOW_string(interp, PMC_str_val(SELF));
+        char              *start = str->strstart;
+        const char * const end   = start + string_length(INTERP, str);
 
         /* pointer to the substring we're going to increment */
         char       *substr;
@@ -229,13 +229,13 @@ C<isdigit()> respectively.
         INTVAL i, carry;
 
         /* start of the current incrementable substring */
-        const char *s = start;
+        char *s = start;
 
         /* end of the current incrementable substring */
-        const char *e = start;
+        char *e = start;
 
         /* start of the previous incrementable substring */
-        const char *ps = 0;
+        char *ps = 0;
 
         /* end of the previous incrementable substring */
         const char *pe = 0;
@@ -260,11 +260,11 @@ C<isdigit()> respectively.
 
         if (ps == 0 || *pe != '.') {
             len    = e - s;
-            substr = (char *)s;
+            substr = s;
         }
         else {
             len    = pe - ps;
-            substr = (char*)ps;
+            substr = ps;
         }
 
         /* Actual increment */
@@ -311,9 +311,9 @@ C<isdigit()> respectively.
 
 
     VTABLE void decrement() {
-        STRING     *str        = PMC_str_val(SELF);
-        const char *start      = str->strstart;
-        const char * const end = start + string_length(INTERP, str);
+        STRING      *str   = Parrot_unCOW_string(interp, PMC_str_val(SELF));
+        char        *start = str->strstart;
+        char * const end   = start + string_length(INTERP, str);
 
         /* pointer to the substring we're going to decrement */
         char *substr;
@@ -324,13 +324,13 @@ C<isdigit()> respectively.
         INTVAL i, steal;
 
         /* start of the current decrementable substring */
-        const char *s = start;
+        char *s = start;
 
         /* end of the current decrementable substring */
-        const char *e = start;
+        char *e = start;
 
         /* start of the previous decrementable substring */
-        const char *ps = 0;
+        char *ps = 0;
 
         /* end of the previous decrementable substring */
         const char *pe = 0;
@@ -355,11 +355,11 @@ C<isdigit()> respectively.
 
         if (ps == 0 || *pe != '.') {
             len    = e - s;
-            substr = (char *)s;
+            substr = s;
         }
         else {
             len    = pe - ps;
-            substr = (char *)ps;
+            substr = ps;
         }
 
         /* Check if we've bottomed out on decrementing */
