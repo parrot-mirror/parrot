@@ -161,13 +161,14 @@ new_continuation(PARROT_INTERP, ARGIN_NULLOK(const Parrot_cont *to))
     cc->runloop_id    = 0;
     CONTEXT(interp)->ref_count++;
     if (to) {
-        cc->seg = to->seg;
-        cc->address = to->address;
+        cc->seg       = to->seg;
+        cc->address   = to->address;
     }
     else {
-        cc->seg     = interp->code;
-        cc->address = NULL;
+        cc->seg       = interp->code;
+        cc->address   = NULL;
     }
+
     cc->current_results = to_ctx->current_results;
     return cc;
 }
