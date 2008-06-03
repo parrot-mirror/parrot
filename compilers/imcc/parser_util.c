@@ -868,6 +868,9 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
         IMCC_INFO(interp) = imc_info;
     }
 
+    ignored = Parrot_push_context(interp, regs_used);
+    UNUSED(ignored);
+
     snprintf(name, sizeof (name), "EVAL_" INTVAL_FMT, ++eval_nr);
     new_cs = PF_create_default_segs(interp, name, 0);
     old_cs = Parrot_switch_to_cs(interp, new_cs, 0);
@@ -892,9 +895,6 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
     IMCC_INFO(interp)->state->pasm_file = pasm_file;
     IMCC_INFO(interp)->state->file      = name;
     IMCC_INFO(interp)->expect_pasm      = 0;
-
-    ignored = Parrot_push_context(interp, regs_used);
-    UNUSED(ignored);
 
     compile_string(interp, s, yyscanner);
 
