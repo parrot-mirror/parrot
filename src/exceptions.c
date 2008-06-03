@@ -196,25 +196,26 @@ Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), ARGIN_NULLOK(void 
 
     if (!handler)
         return NULL;
+
     /* VTABLE_invoke does the argument handling for 'throw_from_c', but need to
      * disable its argument handling from 'throw_from_op' so we can pass
      * arguments directly. We do that by setting 'current_results' struct
      * element to a null value. Poking directly into the guts of the PMC is a
      * bad idea, but gets it working for now. */
-    want_args = PMC_cont(handler)->current_results;
+    want_args                                  = PMC_cont(handler)->current_results;
     PMC_cont(handler)->to_ctx->current_results = NULL;
-    PMC_cont(handler)->current_results = NULL;
+    PMC_cont(handler)->current_results         = NULL;
 
-    /* Set up the continuation context of the handler in the interpreter. */
     address    = VTABLE_invoke(interp, handler, dest);
 
+    /* Set up the continuation context of the handler in the interpreter. */
     if (want_args)
         address = pass_exception_args(interp, "PS", address,
                 CONTEXT(interp), exception,
                 VTABLE_get_string(interp, exception));
 
     if (PObj_get_FLAGS(handler) & SUB_FLAG_C_HANDLER) {
-        /* its a C exception handler */
+        /* it's a C exception handler */
         Parrot_runloop * const jump_point = (Parrot_runloop *) address;
         longjmp(jump_point->resume, 1);
     }
@@ -294,13 +295,9 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
     /* Run the handler. */
     Parrot_runops_fromc_args(interp, handler, "vPS", exception, msg);
 
-    /*fprintf(stderr, "exception was handled, terminating inferior runloop and resuming outer runloop.\n");  */
-
     /* After handling a C exception, you don't want to resume at the point
      * where the C exception was thrown, you want to resume the next outer
-     * runloop.
-     */
-
+     * runloop.  */
     longjmp(return_point->resume, 1);
 }
 
