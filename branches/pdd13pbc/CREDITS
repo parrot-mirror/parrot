@@ -255,13 +255,16 @@ D: language WMLScript (PIR translator)
 N: Garrett Rooney
 D: Fix typo in PARROT_BIGENDIAN case
 
-N: Geoff Broadwell
+N: Geoff Broadwell (japhb)
 D: OpenGL binding
 D: Disassembly/source weaver
 D: Miscellaneous fixes
 
 N: Gerard Goossen
 D: Documentation patch for Parrot_PMC_get_pointer_intkey()
+
+N: Gerd Pokorra
+E: pokorra@uni-siegen.de
 
 N: Goplat
 D: Win98 and other fixes.
@@ -653,6 +656,10 @@ D: Nicer command line handling in ops2c.pl
 
 N: Uri Guttman
 D: Lot of general Parrot design hints
+
+N: Vasily Chekalkin
+E: bacek@bacek.com
+D: Core and Rakudo patches
 
 N: Vladimir Lipsky
 D: Win32, IO fixes

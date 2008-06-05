@@ -553,7 +553,7 @@
 ##                                :node( $/ ) );
 ##        }
 ##        else {
-##            my $vivibase := ($key eq '{ }') ? 'Hash' : 'ResizablePMCArray';
+##            my $vivibase := ($key eq '{ }') ?? 'Hash' !! 'ResizablePMCArray';
 ##            make PAST::Var.new( $($<EXPR>),
 ##                                :scope('keyed'),
 ##                                :vivibase($vivibase),
@@ -568,15 +568,17 @@
     if key == '( )' goto subcall
     if key == '< >' goto keyed_const
   keyed_var:
-    .local string vivibase
-    vivibase = 'ResizablePMCArray'
-    if key != '{ }' goto keyed_array
+    .local string vivibase, scope
     vivibase = 'Hash'
-  keyed_array:
+    scope = 'keyed'
+    if key != '[ ]' goto keyed_hash
+    vivibase = 'ResizablePMCArray'
+    scope = 'keyed_int'
+  keyed_hash:
     $P0 = get_hll_global ['PAST'], 'Var'
     $P1 = match['EXPR']
     $P2 = $P1.'item'()
-    $P3 = $P0.'new'( $P2, 'scope'=>'keyed', 'vivibase'=>vivibase, 'viviself'=>'Undef', 'node'=>match )
+    $P3 = $P0.'new'( $P2, 'scope'=>scope, 'vivibase'=>vivibase, 'viviself'=>'Undef', 'node'=>match )
     match.'result_object'($P3)
     .return ()
   subcall:
@@ -765,10 +767,10 @@
     if $S0 != 'class' goto class_done
     .local string inline
     inline = <<'        INLINE'
-        $P0 = get_hll_global 'Protomaker'
+        $P0 = get_hll_global 'P6metaclass'
         $P1 = split '::', '%s'
         push_eh subclass_done
-        $P2 = $P0.'new_subclass'('Protoobject', $P1)
+        $P2 = $P0.'new_class'($P1)
         pop_eh
       subclass_done:
         INLINE

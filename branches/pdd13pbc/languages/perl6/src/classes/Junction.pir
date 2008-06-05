@@ -19,11 +19,69 @@ src/classes/Junction.pir - Perl 6 Junction and related functions
 .const int JUNCTION_TYPE_NONE = 4
 
 .sub 'onload' :anon :load :init
-    $P0 = subclass 'Perl6Object', 'Junction'
-    addattribute $P0, "@values"
-    addattribute $P0, "$type"
-    $P1 = get_hll_global ['Perl6Object'], 'make_proto'
-    $P1($P0, 'Junction')
+    .local pmc p6meta
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    p6meta.'new_class'('Junction', 'parent'=>'Perl6Object', 'attr'=>'@values $type')
+.end
+
+
+=item ACCEPTS
+
+Implements smart-match for junctions.
+
+=cut
+
+.sub 'ACCEPTS' :method
+    .param pmc topic
+    .local pmc type, values, it, cur_val
+    type = getattribute self, "$type"
+    values = getattribute self, "@values"
+    it = iter values
+    if type == JUNCTION_TYPE_ALL goto all
+    if type == JUNCTION_TYPE_ANY goto any
+    if type == JUNCTION_TYPE_ONE goto one
+    if type == JUNCTION_TYPE_NONE goto none
+
+  all:
+    unless it goto true
+    cur_val = shift it
+    $P0 = cur_val.'ACCEPTS'(topic)
+    unless $P0 goto false
+    goto all
+
+  any:
+    unless it goto false
+    cur_val = shift it
+    $P0 = cur_val.'ACCEPTS'(topic)
+    if $P0 goto true
+    goto any
+
+  none:
+    unless it goto true
+    cur_val = shift it
+    $P0 = cur_val.'ACCEPTS'(topic)
+    if $P0 goto false
+    goto none
+
+  one:
+    $I0 = 0
+    unless it goto done_one
+    cur_val = shift it
+    $P0 = cur_val.'ACCEPTS'(topic)
+    unless $P0 goto one
+    inc $I0
+    if $I0 > 1 goto true
+    goto one
+  done_one:
+    if $I0 == 1 goto true
+    goto false
+
+  true:
+    $P0 = get_hll_global [ 'Bool' ], 'True'
+    .return ($P0)
+  false:
+    $P0 = get_hll_global [ 'Bool' ], 'False'
+    .return ($P0)
 .end
 
 
@@ -35,6 +93,9 @@ Get the values in the junction.
 
 .sub 'values' :method
     $P0 = getattribute self, "@values"
+    unless null $P0 goto have_values
+    .return 'list'()
+  have_values:
     $P0 = clone $P0
     .return($P0)
 .end
@@ -78,8 +139,9 @@ Clone v-table method.
 =cut
 
 .sub 'clone' :method :vtable
-    .local pmc junc
-    junc = new 'Junction'
+    .local pmc junc_class, junc
+    junc_class = class self
+    junc = new junc_class
 
     # Copy values and set type.
     $P0 = self.'values'()
@@ -165,8 +227,9 @@ Builds an 'all' junction from its arguments.
 
 .sub 'all'
     .param pmc args            :slurpy
-    .local pmc junc
-    junc = new 'Junction'
+    .local pmc junc_proto, junc
+    junc_proto = get_hll_global 'Junction'
+    junc = junc_proto.'new'()
 
     junc."!values"(args)
     junc."!type"(JUNCTION_TYPE_ALL)
@@ -195,8 +258,9 @@ Builds an 'any' junction from its arguments.
 
 .sub 'any'
     .param pmc args            :slurpy
-    .local pmc junc
-    junc = new 'Junction'
+    .local pmc junc_proto, junc
+    junc_proto = get_hll_global 'Junction'
+    junc = junc_proto.'new'()
 
     junc."!values"(args)
     junc."!type"(JUNCTION_TYPE_ANY)
@@ -225,8 +289,9 @@ Builds a 'one' junction from its arguments.
 
 .sub 'one'
     .param pmc args            :slurpy
-    .local pmc junc
-    junc = new 'Junction'
+    .local pmc junc_proto, junc
+    junc_proto = get_hll_global 'Junction'
+    junc = junc_proto.'new'()
 
     junc."!values"(args)
     junc."!type"(JUNCTION_TYPE_ONE)
@@ -255,8 +320,9 @@ Builds a 'none' junction from its arguments.
 
 .sub 'none'
     .param pmc args            :slurpy
-    .local pmc junc
-    junc = new 'Junction'
+    .local pmc junc_proto, junc
+    junc_proto = get_hll_global 'Junction'
+    junc = junc_proto.'new'()
 
     junc."!values"(args)
     junc."!type"(JUNCTION_TYPE_NONE)

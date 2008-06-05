@@ -4,6 +4,9 @@
 
 class Perl6::Grammar::Actions ;
 
+##  Change this to be 'Perl6Scalar' to try the Mutable PMC version.
+our $?PERL6SCALAR := 'Perl6Scalar';
+
 method TOP($/) {
     my $past := $( $<statement_block> );
     $past.blocktype('declaration');
@@ -57,7 +60,9 @@ method statement_block($/, $key) {
                 PAST::Op.new(
                     :inline(
                           "    %r = getinterp\n"
+                        ~ "    push_eh no_match_to_copy\n"
                         ~ "    %r = %r['lexpad';1]\n"
+                        ~ "    pop_eh\n"
                         ~ "    if null %r goto no_match_to_copy\n"
                         ~ "    %r = %r['$/']\n"
                         ~ "    store_lex '$/', %r\n"
@@ -126,7 +131,7 @@ method statement($/, $key) {
                         PAST::Var.new(
                             :name('$_'),
                             :scope('parameter'),
-                            :viviself('Undef')
+                            :viviself('Failure')
                         ),
                         $expr
                     ),
@@ -269,7 +274,7 @@ method default_statement($/) {
 }
 
 method loop_statement($/) {
-    if $<eee> {
+    if $<eee> ne "" {
         my $init := $( $<e1>[0] );
         my $cond := $( $<e2>[0] );
         my $tail := $( $<e3>[0] );
@@ -418,22 +423,20 @@ method statement_prefix($/) {
     if $sym eq 'do' {
         # fall through, just use the statement itself
     }
-    ## after the code in the try block is executed, bind $! to Undef,
+    ## after the code in the try block is executed, bind $! to Failure,
     ## and set up the code to catch an exception, in case one is thrown
     elsif $sym eq 'try' {
-        ##  Set up code to execute <statement> as a try node, and
-        ##  set $! to Undef if successful.
-        my $exitpir  := "    new %r, 'Undef'\n    store_lex '$!', %r";
-        my $try := PAST::Stmts.new(
-            $past,
-            PAST::Op.new( :inline( $exitpir ) )
-        );
-        $past := PAST::Op.new( $try, :pasttype('try') );
+        $past := PAST::Op.new( $past, :pasttype('try') );
 
         ##  Add a catch node to the try op that captures the
         ##  exception object into $!.
         my $catchpir := "    .get_results (%r, $S0)\n    store_lex '$!', %r";
         $past.push( PAST::Op.new( :inline( $catchpir ) ) );
+
+        ##  Add an 'else' node to the try op that clears $! if
+        ##  no exception occurred.
+        my $elsepir  := "    new %r, 'Failure'\n    store_lex '$!', %r";
+        $past.push( PAST::Op.new( :inline( $elsepir ) ) );
     }
     else {
         $/.panic( $sym ~ ' not implemented');
@@ -566,6 +569,39 @@ method signature($/) {
             ));
         }
 
+        # See if we have any traits. For now, we just handle ro, rw and copy.
+        my $cont_trait := 'readonly';
+        my $cont_traits := 0;
+        for $_<parameter><trait> {
+            if $_<trait_auxiliary> {
+                # Get name of the trait and see if it's one of the special
+                # traits we handle in the compiler.
+                my $name := $_<trait_auxiliary><ident>;
+                if $name eq 'readonly' {
+                    $cont_traits := $cont_traits + 1;
+                }
+                elsif $name eq 'rw' {
+                    $cont_trait := 'rw';
+                    $cont_traits := $cont_traits + 1;
+                }
+                elsif $name eq 'copy' {
+                    $cont_trait := 'copy';
+                    $cont_traits := $cont_traits + 1;
+                }
+                else {
+                    $/.panic("Cannot apply traits to parameters yet.");
+                }
+            }
+            else {
+                $/.panic("Cannot apply traits to parameters yet.");
+            }
+        }
+
+        # If we had is copy is rw or some other impossible combination, die.
+        if $cont_traits > 1 {
+            $/.panic("Can only use one of ro, rw and copy on a parameter.");
+        }
+
         # Add any type check that is needed. The scheme for this: $type_check
         # is a statement block. We create a block for each parameter, which
         # will be empty if there are no constraints for that parameter. This
@@ -641,11 +677,54 @@ method signature($/) {
                 }
             }
         }
-
         $type_check.push($cur_param_types);
+
+        # Handle container type traits.
+        if $cont_trait eq 'rw' {
+            # We just leave it as it is.
+        }
+        elsif $cont_trait eq 'readonly' {
+            # Create a new container with ro set and bind the parameter to it.
+            $past.push(PAST::Op.new(
+                :pasttype('bind'),
+                PAST::Var.new(
+                    :name($parameter.name()),
+                    :scope('lexical')
+                ),
+                PAST::Op.new(
+                    :inline(" %r = new 'Perl6Scalar', %0\n" ~
+                            " $P0 = get_hll_global ['Bool'], 'True'\n" ~
+                            " setprop %r, 'readonly', $P0\n"),
+                    PAST::Var.new(
+                        :name($parameter.name()),
+                        :scope('lexical')
+                    )
+                )
+            ));
+        }
+        else {
+            # Create a new container and copy the value into it..
+            $past.push(PAST::Op.new(
+                :pasttype('bind'),
+                PAST::Var.new(
+                :name($parameter.name()),
+                :scope('lexical')
+                ),
+                PAST::Op.new(
+                    :inline(" %r = new 'Perl6Scalar'\n" ~
+                            " %r.'infix:='(%0)\n"),
+                    PAST::Var.new(
+                        :name($parameter.name()),
+                        :scope('lexical')
+                    )
+                )
+            ));
+        }
     }
     $past.arity( +$/[0] );
-    our $?BLOCK_SIGNATURED := $past;
+    if +$/[0] {
+        our $?BLOCK_SIGNATURED := $past;
+    }
     our $?PARAM_TYPE_CHECK := $type_check;
     $past.push($type_check);
     make $past;
@@ -663,12 +742,12 @@ method parameter($/) {
         if $<named> eq ':' {          # named
             $past.named(~$<param_var><ident>);
             if $<quant> ne '!' {      #  required (optional is default)
-                $past.viviself('Undef');
+                $past.viviself('Failure');
             }
         }
         else {                        # positional
             if $<quant> eq '?' {      #  optional (required is default)
-                $past.viviself('Undef');
+                $past.viviself('Failure');
             }
         }
     }
@@ -723,6 +802,7 @@ method term($/, $key) {
         for $<postfix> {
             my $term := $past;
             $past := $($_);
+            if $past.name() eq 'infix:,' { $past.name(''); }
 
             # Check if it's an indirect call.
             if $_<dotty><methodop><variable> {
@@ -813,9 +893,7 @@ method methodop($/, $key) {
         $past := PAST::Op.new();
     }
     else {
-        $past := PAST::Op.new();
-        my $args := $( $/{$key} );
-        process_arguments($past, $args);
+        $past := build_call( $( $/{$key} ) );
     }
     $past.pasttype('callmethod');
     $past.node($/);
@@ -836,45 +914,24 @@ method methodop($/, $key) {
 method postcircumfix($/, $key) {
     my $past;
     if $key eq '[ ]' {
-        # If we got a comma separated list, we'll pass that along as a List,
-        # so we can do slices.
-        my $semilist := $( $<semilist> );
-        if $( $<semilist><EXPR>[0] ).name() eq 'infix:,' {
-            $semilist.pasttype('call');
-            $semilist.name('list');
-        }
-        else {
-            $semilist := $semilist[0];
-        }
         $past := PAST::Var.new(
-            $semilist,
-            :scope('keyed'),
-            :vivibase('List'),
-            :viviself('Undef'),
+            $( $<semilist> ),
+            :scope('keyed_int'),
+            :vivibase('Perl6Array'),
+            :viviself('Failure'),
             :node( $/ )
         );
     }
     elsif $key eq '( )' {
-        my $semilist := $( $<semilist> );
-        $past := PAST::Op.new( :node($/), :pasttype('call') );
-        process_arguments($past, $semilist);
+        $past := build_call( $( $<semilist> ) );
+        $past.node($/);
     }
     elsif $key eq '{ }' {
-        # If we got a comma separated list, we'll pass that along as a List,
-        # so we can do slices.
-        my $semilist := $( $<semilist> );
-        if $( $<semilist><EXPR>[0] ).name() eq 'infix:,' {
-            $semilist.pasttype('call');
-            $semilist.name('list');
-        }
-        else {
-            $semilist := $semilist[0];
-        }
         $past := PAST::Var.new(
-            $semilist,
+            $( $<semilist> ),
             :scope('keyed'),
             :vivibase('Perl6Hash'),
-            :viviself('Undef'),
+            :viviself('Failure'),
             :node( $/ )
         );
     }
@@ -883,7 +940,7 @@ method postcircumfix($/, $key) {
             $( $<quote_expression> ),
             :scope('keyed'),
             :vivibase('Perl6Hash'),
-            :viviself('Undef'),
+            :viviself('Failure'),
             :node( $/ )
         );
     }
@@ -958,12 +1015,8 @@ method package_declarator($/, $key) {
                             :scope('lexical')
                         ),
                         PAST::Op.new(
-                            :pasttype('callmethod'),
+                            :pasttype('call'),
                             :name('!keyword_class'),
-                            PAST::Var.new(
-                                :name('Perl6Object'),
-                                :scope('package')
-                            ),
                             PAST::Val.new( :value(~$<name>) )
                         )
                     )
@@ -990,12 +1043,8 @@ method package_declarator($/, $key) {
                             :scope('lexical')
                         ),
                         PAST::Op.new(
-                            :pasttype('callmethod'),
+                            :pasttype('call'),
                             :name('!keyword_role'),
-                            PAST::Var.new(
-                                :name('Perl6Object'),
-                                :scope('package')
-                            ),
                             PAST::Val.new( :value(~$<name>) )
                         )
                     )
@@ -1023,12 +1072,8 @@ method package_declarator($/, $key) {
                             :scope('lexical')
                         ),
                         PAST::Op.new(
-                            :pasttype('callmethod'),
+                            :pasttype('call'),
                             :name('!keyword_grammar'),
-                            PAST::Var.new(
-                                :name('Perl6Object'),
-                                :scope('package')
-                            ),
                             PAST::Val.new( :value(~$<name>) )
                         )
                     )
@@ -1070,12 +1115,8 @@ method package_declarator($/, $key) {
                     # Role.
                     $?PACKAGE.push(
                         PAST::Op.new(
-                            :pasttype('callmethod'),
+                            :pasttype('call'),
                             :name('!keyword_does'),
-                            PAST::Var.new(
-                                :name('Perl6Object'),
-                                :scope('package')
-                            ),
                             PAST::Var.new(
                                 :name('$def'),
                                 :scope('lexical')
@@ -1107,17 +1148,21 @@ method package_declarator($/, $key) {
             # Make proto-object.
             $?CLASS.push(
                 PAST::Op.new(
-                    :pasttype('call'),
+                    :pasttype('callmethod'),
+                    :name('register'),
                     PAST::Var.new(
                         :scope('package'),
-                        :namespace('Perl6Object'),
-                        :name('make_proto')
+                        :name('$!P6META'),
+                        :namespace('Perl6Object')
                     ),
                     PAST::Var.new(
                         :scope('lexical'),
                         :name('$def')
                     ),
-                    PAST::Val.new( :value(~$<name>) )
+                    PAST::Val.new(
+                        :value('Any'),
+                        :named( PAST::Val.new( :value('parent') ) )
+                    )
                 )
             );
 
@@ -1154,17 +1199,21 @@ method package_declarator($/, $key) {
             # Make proto-object.
             $?GRAMMAR.push(
                 PAST::Op.new(
-                    :pasttype('call'),
+                    :pasttype('callmethod'),
+                    :name('register'),
                     PAST::Var.new(
                         :scope('package'),
-                        :namespace('Perl6Object'),
-                        :name('make_grammar_proto')
+                        :name('$!P6META'),
+                        :namespace('Perl6Object')
                     ),
                     PAST::Var.new(
                         :scope('lexical'),
                         :name('$def')
                     ),
-                    PAST::Val.new( :value(~$<name>) )
+                    PAST::Val.new(
+                        :value('Grammar'),
+                        :named( PAST::Val.new( :value('parent') ) )
+                    )
                 )
             );
 
@@ -1222,56 +1271,20 @@ method variable_decl($/) {
 
 method scoped($/) {
     my $past;
-
     # Variable declaration?
     if $<variable_decl> {
         $past := $( $<variable_decl> );
-
-        # Do we have any type names?
         if $<typename> {
-            # Build the type constraints list for the variable.
-            my $num_types := 0;
-            my $type_cons := PAST::Op.new();
-            for $<typename> {
-                $type_cons.push( $( $_ ) );
-                $num_types := $num_types + 1;
-            }
-
-            # If just the one, we try to look it up and assign it.
-            if $num_types == 1 {
-                $past := PAST::Op.new(
-                    :pasttype('copy'),
-                    :lvalue(1),
-                    $past,
+            my $type_pir := "    %r = new %0\n    %r.'infix:='(%1)\n    setprop %r, 'type', %1\n";
+            $past.viviself(
+                PAST::Op.new(
+                    :inline($type_pir),
+                    PAST::Val.new( :value(~$past.viviself()) ),
                     $( $<typename>[0] )
-                );
-            }
-
-            # Now need to apply the type constraints. How many are there?
-            if $num_types == 1 {
-                # Just the first one.
-                $type_cons := $type_cons[0];
-            }
-            else {
-                # Many; make an and junction of types.
-                $type_cons.pasttype('call');
-                $type_cons.name('all');
-            }
-
-            # Now store these type constraints.
-            $past := PAST::Op.new(
-                :inline(
-                      "    $P0 = new 'Hash'\n"
-                    ~ "    $P0['vartype'] = %1\n"
-                    ~ "    setattribute %0, '%!properties', $P0\n"
-                    ~ "    %r = %0\n"
-                ),
-                $past,
-                $type_cons
+                )
             );
         }
     }
-
     # Routine declaration?
     else {
         $past := $( $<routine_declarator> );
@@ -1281,13 +1294,12 @@ method scoped($/) {
             $/.panic("Setting return type of a routine not yet implemented.");
         }
     }
-
     make $past;
 }
 
+
 sub declare_attribute($/) {
-    # Get the
-    # class or role we're in.
+    # Get the class or role we're in.
     our $?CLASS;
     our $?ROLE;
     our $?PACKAGE;
@@ -1311,12 +1323,8 @@ sub declare_attribute($/) {
     my $name := ~$variable<sigil> ~ '!' ~ ~$variable<name>;
     $class_def.push(
         PAST::Op.new(
-            :pasttype('callmethod'),
+            :pasttype('call'),
             :name('!keyword_has'),
-            PAST::Var.new(
-                :name('Perl6Object'),
-                :scope('package')
-            ),
             PAST::Var.new(
                 :name('$def'),
                 :scope('lexical')
@@ -1378,9 +1386,9 @@ sub declare_attribute($/) {
 }
 
 method scope_declarator($/) {
-    my $past;
     our $?BLOCK;
-    my $declarator := $<declarator>;
+    my $declarator := $<sym>;
+    my $past := $( $<scoped> );
 
     # What sort of thing are we scoping?
     if $<scoped><variable_decl> {
@@ -1389,50 +1397,34 @@ method scope_declarator($/) {
             # Has declarations are attributes and need special handling.
             declare_attribute($/);
 
-            # We don't want to generate any PAST at the point of the declaration.
+            # We don't have any PAST at the point of the declaration.
             $past := PAST::Stmts.new();
         }
         else {
-            # We need to find the actual variable PAST node; we may have something
-            # more complex at this stage that applies types.
-            $past := $( $<scoped> );
-            my $var;
-            if $past.WHAT() eq 'Var' {
-                $var := $past;
-            }
-            else {
-                # It had an initial type assignment.
-                $var := $past[0][0];
-            }
-
             # Has this already been declared?
-            my $name := $var.name();
+            my $name := $past.name();
             unless $?BLOCK.symbol($name) {
+                #  First declaration
                 my $scope := 'lexical';
-                if $declarator eq 'my' {
-                    $var.isdecl(1);
-                }
-                elsif $declarator eq 'our' {
-                    $name := $var.name();
+                $past.isdecl(1);
+                if $declarator eq 'our' {
                     $scope := 'package';
-                    $var.isdecl(1);
                 }
-                else {
+                elsif $declarator ne 'my' {
                     $/.panic(
                           "scope declarator '"
                         ~ $declarator ~ "' not implemented"
                     );
                 }
-                my $untyped := $var =:= $past;
-                $?BLOCK.symbol($name, :scope($scope), :untyped($untyped));
+
+                # Add block entry.
+                $?BLOCK.symbol($name, :scope($scope));
             }
         }
     }
 
     # Routine?
     elsif $<scoped><routine_declarator> {
-        $past := $( $<scoped> );
-
         # What declarator?
         if $declarator eq 'our' {
             # Default, nothing to do.
@@ -1453,7 +1445,7 @@ method scope_declarator($/) {
 
     # Something else we've not implemetned yet?
     else {
-        $/.painc("Don't know how to apply a scope declarator here.");
+        $/.panic("Don't know how to apply a scope declarator here.");
     }
 
     make $past;
@@ -1467,9 +1459,9 @@ method variable($/, $key) {
     }
     elsif $key eq '$0' {
         $past := PAST::Var.new(
-            :scope('keyed'),
+            :scope('keyed_int'),
             :node($/),
-            :viviself('Undef'),
+            :viviself('Failure'),
             PAST::Var.new(
                 :scope('lexical'),
                 :name('$/')
@@ -1485,7 +1477,7 @@ method variable($/, $key) {
         $past.unshift(PAST::Var.new(
             :scope('lexical'),
             :name('$/'),
-            :viviself('Undef')
+            :viviself('Failure')
         ));
     }
     else {
@@ -1583,12 +1575,7 @@ method variable($/, $key) {
             );
         }
         else {
-            # Variable. Set how it vivifies.
-            my $viviself := 'Undef';
-            if $<sigil> eq '@' { $viviself := 'List'; }
-            if $<sigil> eq '%' { $viviself := 'Perl6Hash'; }
-
-            # [!:^] twigil should be kept in the name.
+            # Variable. [!:^] twigil should be kept in the name.
             if $twigil eq '!' || $twigil eq ':' || $twigil eq '^' { $name := $twigil ~ ~$name; }
 
             # All but subs should keep their sigils.
@@ -1614,13 +1601,18 @@ method variable($/, $key) {
 
             $past := PAST::Var.new(
                 :name( $sigil ~ $name ),
-                :viviself($viviself),
                 :node($/)
             );
             if @ident || $twigil eq '*' {
                 $past.namespace(@ident);
                 $past.scope('package');
             }
+
+            my $container_type;
+            if    $sigil eq '@' { $container_type := 'Perl6Array'  }
+            elsif $sigil eq '%' { $container_type := 'Perl6Hash'   }
+            else                { $container_type := $?PERL6SCALAR }
+            $past.viviself($container_type);
         }
     }
     make $past;
@@ -1630,29 +1622,21 @@ method variable($/, $key) {
 method circumfix($/, $key) {
     my $past;
     if $key eq '( )' {
-        $past := $( $<statementlist> );
+        $past := $<statementlist><statement>
+                     ?? $( $<statementlist> )
+                     !! PAST::Op.new(:name('list'));
     }
     if $key eq '[ ]' {
-        $past := $( $<statementlist> );
+        $past := PAST::Op.new(:name('!Arrayref'), :node($/) );
+        if $<statementlist><statement> { $past.push( $( $<statementlist> ) ); }
     }
     elsif $key eq '{ }' {
         $past := $( $<pblock> );
     }
     elsif $key eq '$( )' {
-        # Context - is just calling .item, .list etc on whatever we got made by the
-        # expression in the brackets.
+        ##  Context - is just calling .item, .list etc on whatever we
+        ##  got made by the expression in the brackets.
         my $expr := $( $<semilist> );
-        if $expr.WHAT() eq 'Op' && $expr.pasttype() eq '' {
-            # We've got an op node that does nothing. Eliminate it for scalars, or
-            # call 'list' for comma-separated.
-            if +@($expr) == 1 {
-                $expr := $expr[0];
-            }
-            else {
-                $expr.pasttype('call');
-                $expr.name('list');
-            }
-        }
         my $method;
         if $<sigil> eq '$' {
             $method := 'item';
@@ -1818,40 +1802,24 @@ method typename($/) {
         :name($shortname),
         :namespace($ns),
         :scope('package'),
-        :node($/)
+        :node($/),
+        :viviself('Failure')
     );
 }
 
 
 method subcall($/) {
-    # Build call node.
-    my $past := PAST::Op.new(
-        :name( ~$<ident> ),
-        :pasttype('call'),
-        :node($/)
-    );
-
-    # Process arguments.
-    my $args := $( $<semilist> );
-    process_arguments($past, $args);
-
+    my $past := build_call( $( $<semilist> ) );
+    $past.name( ~$<ident> );
+    $past.node( $/ );
     make $past;
 }
 
 
 method semilist($/) {
-    my $past := PAST::Op.new( :node($/) );
-    if $<EXPR> {
-        my $expr := $($<EXPR>[0]);
-        if $expr.name() eq 'infix:,' {
-            for @($expr) {
-                $past.push( $_ );
-            }
-        }
-        else {
-            $past.push( $expr );
-        }
-    }
+    my $past := $<EXPR>
+                    ?? $( $<EXPR>[0] )
+                    !! PAST::Op.new( :node($/), :name('infix:,') );
     make $past;
 }
 
@@ -1859,30 +1827,19 @@ method semilist($/) {
 method listop($/, $key) {
     my $past;
     if $key eq 'arglist' {
-        $past := $( $<arglist> );
+        $past := build_call( $( $<arglist> ) );
     }
     if $key eq 'noarg' {
-        $past := PAST::Op.new( );
+        $past := PAST::Op.new( :pasttype('call') );
     }
     $past.name( ~$<sym> );
-    $past.pasttype('call');
     $past.node($/);
     make $past;
 }
 
 
 method arglist($/) {
-    my $past := PAST::Op.new( :node($/) );
-    my $expr := $($<EXPR>);
-    if $expr.name() eq 'infix:,' {
-        for @($expr) {
-            $past.push( $_ );
-        }
-    }
-    else {
-        $past.push( $expr );
-    }
-    make $past;
+    make $($<EXPR>);
 }
 
 
@@ -1891,45 +1848,32 @@ method EXPR($/, $key) {
         make $($<expr>);
     }
     elsif ~$<type> eq 'infix:.=' {
-        my $var := $( $/[0] );
-        my $res := $var;
-        my $call := $( $/[1] );
+        my $invocant  := $( $/[0] );
+        my $call      := $( $/[1] );
 
         # Check that we have a sub call.
         if $call.WHAT() ne 'Op' || $call.pasttype() ne 'call' {
             $/.panic('.= must have a call on the right hand side');
         }
 
-        # If it was a scoped declarator with types, need to just get the
-        # PAST::Var node for the result.
-        if $/[0]<noun><scope_declarator><scoped><variable_decl> {
-            # Note we create a new Var node, since we don't want both of them
-            # to be declarations.
-            my $info := $( $/[0]<noun><scope_declarator><scoped><variable_decl><variable> );
-            $res := PAST::Var.new(
-                :name($info.name()),
-                :scope($info.scope())
-            );
-        }
-
-        # Create call and assign result nodes.
-        my $meth_call := PAST::Op.new(
-            :pasttype('callmethod'),
-            :name($call.name()),
-            :node($/),
-            $var
+        # Make a duplicate of the target node to receive result
+        my $target := PAST::Var.new(
+            :name($invocant.name()),
+            :scope($invocant.scope()),
+            :lvalue(1)
         );
+
+        # Change call node to a callmethod and add the invocant
+        $call.pasttype('callmethod');
+        $call.unshift($invocant);
+
+        # and assign result to target
         my $past := PAST::Op.new(
-            :inline("    %r = '!TYPECHECKEDASSIGN'(%1, %0)\n"),
+            :inline("    %r = %1.'infix:='(%0)"),
             :node($/),
-            $meth_call,
-            $res
+            $call,
+            $target
         );
-
-        # Copy arguments.
-        for @($call) {
-            $meth_call.push($_);
-        }
 
         make $past;
     }
@@ -1943,23 +1887,6 @@ method EXPR($/, $key) {
         );
         for @($/) {
             unless +$_.from() == +$_.to() { $past.push( $($_) ) };
-        }
-
-        # If it's an assignment or binding, we may need to emit a type-check.
-        if $past.name() eq 'infix:=' {
-            # We can skip it if we statically know the variable had no type
-            # associated with it, though.
-            our $?BLOCK;
-            my $sym_info := $?BLOCK.symbol($past[0].name());
-            unless $sym_info<untyped> {
-                $past := PAST::Op.new(
-                    :lvalue(1),
-                    :node($/),
-                    :inline("    %r = '!TYPECHECKEDASSIGN'(%0, %1)\n"),
-                    $past[0],
-                    $past[1]
-                );
-            }
         }
 
         make $past;
@@ -1999,10 +1926,25 @@ method type_declarator($/) {
     # We need a block containing the constraint condition.
     my $past := $( $<EXPR> );
     if $past.WHAT() ne 'Block' {
-        # Make block with the expression as its contents.
+        # Make block with a smart match of the the expression as its contents.
         $past := PAST::Block.new(
-            PAST::Stmts.new(),
-            PAST::Stmts.new( $past )
+            PAST::Stmts.new(
+                PAST::Var.new(
+                    :scope('parameter'),
+                    :name('$_')
+                )
+            ),
+            PAST::Stmts.new(
+                PAST::Op.new(
+                    :pasttype('callmethod'),
+                    :name('ACCEPTS'),
+                    $past,
+                    PAST::Var.new(
+                        :scope('lexical'),
+                        :name('$_')
+                    )
+                )
+            )
         );
     }
 
@@ -2071,21 +2013,13 @@ method type_declarator($/) {
 
 
 method fatarrow($/) {
-    my $key := PAST::Val.new( :value(~$<key>),
-                               :named( PAST::Val.new( :value('key') ) ) );
-    my $val := $( $<val> );
-    $val.named( PAST::Val.new( :value('value') ) );
     my $past := PAST::Op.new(
         :node($/),
-        :pasttype('callmethod'),
-        :name('new'),
+        :pasttype('call'),
+        :name('infix:=>'),
         :returns('Pair'),
-        PAST::Var.new(
-            :name('Pair'),
-            :scope('package')
-        ),
-        $key,
-        $val
+        PAST::Val.new( :value(~$<key>) ),
+        $( $<val> )
     );
     make $past;
 }
@@ -2102,17 +2036,9 @@ method colonpair($/, $key) {
     elsif $key eq 'value' {
         $pair_key := PAST::Val.new( :value(~$<ident>) );
         if $<postcircumfix> {
-            # What type of postcircumfix?
-            my $type := substr($<val>, 0, 1);
-            if $type eq '(' {
-                my $val := $( $<postcircumfix><semilist> );
-                $pair_val := $val[0];
-            }
-            elsif $type eq '<' {
-                $pair_val := $( $<postcircumfix><quote_expression> );
-            }
-            else {
-                $/.panic($type ~ ' postcircumfix colonpairs not yet implemented');
+            $pair_val := $( $<postcircumfix>[0] );
+            if $pair_val.name() ne 'infix:,' || +@($pair_val) == 1 {
+                $pair_val := $pair_val[0];
             }
         }
         else {
@@ -2134,17 +2060,11 @@ method colonpair($/, $key) {
         $/.panic($key ~ " pairs not yet implemented.");
     }
 
-    $pair_key.named( PAST::Val.new( :value('key') ) );
-    $pair_val.named( PAST::Val.new( :value('value') ) );
     my $past := PAST::Op.new(
         :node($/),
-        :pasttype('callmethod'),
-        :name('new'),
+        :pasttype('call'),
+        :name('infix:=>'),
         :returns('Pair'),
-        PAST::Var.new(
-            :name('Pair'),
-            :scope('package')
-        ),
         $pair_key,
         $pair_val
     );
@@ -2154,51 +2074,35 @@ method colonpair($/, $key) {
 
 method capterm($/) {
     # We will create the capture object, passing the things supplied.
-    my $past := PAST::Op.new(
-        :pasttype('callmethod'),
-        :name('!create'),
-        PAST::Var.new(
-            :name('Capture'),
-            :scope('package')
-        )
-    );
-
-    # First parameter is invocant. XXX null for now, we're not parsing it.
-    $past.push( PAST::Op.new( :inline('%r = null') ) );
-
-    # Process arguments.
-    process_arguments($past, $( $<capture> ));
-
+    my $past := build_call( $( $<capture> ) );
+    $past.name('infix:\\( )');
+    $past.unshift( PAST::Op.new( :inline('    null %r') ) );
     make $past;
 }
 
 
 method capture($/) {
-    my $expr := $( $<EXPR> );
-    my $past := PAST::Op.new();
-    if $expr.name() eq 'infix:,' {
-        for @($expr) {
-            $past.push( $_ );
-        }
-    }
-    else {
-        $past.push( $expr );
-    }
-    make $past;
+    make $( $<EXPR> );
 }
 
 
 # Used by all calling code to process arguments into the correct form.
-sub process_arguments($call_past, $args) {
-    for @($args) {
-        if $_.returns() eq 'Pair' {
-            $_[2].named($_[1]);
-            $call_past.push($_[2]);
-        }
-        else {
-            $call_past.push($_);
-        }
+sub build_call($args) {
+    if $args.WHAT() ne 'Op' || $args.name() ne 'infix:,' {
+        $args := PAST::Op.new( :node($args), :name('infix:,'), $args);
     }
+    my $i := 0;
+    my $elems := +@($args);
+    while $i < $elems {
+        my $x := $args[$i];
+        if $x.returns() eq 'Pair' {
+            $x[1].named($x[0]);
+            $args[$i] := $x[1];
+        }
+        $i++;
+    }
+    $args.pasttype('call');
+    $args;
 }
 
 
@@ -2321,6 +2225,32 @@ sub make_handles_method_from_pair($/, $pair, $attr_name) {
     }
 
     $meth
+}
+
+
+# This takes an array of match objects of type constraints and builds a type
+# representation out of them.
+sub build_type($cons_pt) {
+    # Build the type constraints list for the variable.
+    my $num_types := 0;
+    my $type_cons := PAST::Op.new();
+    for $cons_pt {
+        $type_cons.push( $( $_ ) );
+        $num_types := $num_types + 1;
+    }
+
+    # Now need to apply the type constraints. How many are there?
+    if $num_types == 1 {
+        # Just the first one.
+        $type_cons := $type_cons[0];
+    }
+    else {
+        # Many; make an and junction of types.
+        $type_cons.pasttype('call');
+        $type_cons.name('all');
+    }
+
+    $type_cons
 }
 
 

@@ -64,29 +64,34 @@ src/builtins/op.pir - Perl6 builtin operators
 
 
 .sub 'prefix:+' :multi(_)
-    .param pmc a
-    $I0 = does a, 'float'
-    if $I0 == 0 goto return_int
-    $N0 = a
-    .return ($N0)
-  return_int:
-    $I0 = a
-    .return ($I0)
+    .param num a
+    .return (a)
+.end
+
+
+.sub 'prefix:+' :multi('Integer')
+    .param int a
+    .return (a)
 .end
 
 
 .sub 'prefix:-' :multi(_)
-    .param pmc a
-    $N0 = a
-    $N0 = neg $N0
+    .param num a
+    $N0 = neg a
     .return ($N0)
 .end
 
 
+.sub 'prefix:-' :multi('Integer')
+    .param int a
+    $I0 = neg a
+    .return ($I0)
+.end
+
+
 .sub 'prefix:~' :multi(_)
-    .param pmc a
-    $S0 = a
-    .return ($S0)
+    .param string a
+    .return (a)
 .end
 
 
@@ -111,13 +116,13 @@ src/builtins/op.pir - Perl6 builtin operators
 .end
 
 
-.sub 'prefix:^' :multi('Perl6ProtoObject')
+.sub 'prefix:^' :multi('P6Protoobject')
     .param pmc proto
     .return proto.'HOW'()
 .end
 
 
-.sub 'prefix:^' :multi('Int')
+.sub 'prefix:^' :multi('Integer')
     .param int to
     dec to
     .return 'infix:..'(0, to)
@@ -154,18 +159,18 @@ src/builtins/op.pir - Perl6 builtin operators
 
 ## multiplicative
 .sub 'infix:*' :multi(_,_)
-    .param pmc a
-    .param pmc b
-    $P0 = n_mul a, b
-    .return ($P0)
+    .param num a
+    .param num b
+    $N0 = a * b
+    .return ($N0)
 .end
 
 
 .sub 'infix:/' :multi(_,_)
-    .param pmc a
-    .param pmc b
-    $P0 = n_div a, b
-    .return ($P0)
+    .param num a
+    .param num b
+    $N0 = a / b
+    .return ($N0)
 .end
 
 
@@ -186,15 +191,15 @@ src/builtins/op.pir - Perl6 builtin operators
 
 
 .sub 'infix:xx' :multi(_,_)
-    .param string a
-    .param int b
-    $P0 = new 'ResizablePMCArray'
-  lp:
-    unless b, ex
+    .param pmc a
+    .param int n
+    $P0 = 'list'()
+  loop:
+    unless n > 0 goto done
     push $P0, a
-    dec b
-    branch lp
-  ex:
+    dec n
+    goto loop
+  done:
     .return ($P0)
 .end
 
@@ -236,18 +241,18 @@ src/builtins/op.pir - Perl6 builtin operators
 
 ## additive
 .sub 'infix:+' :multi(_,_)
-    .param pmc a
-    .param pmc b
-    $P0 = n_add a, b
-    .return ($P0)
+    .param num a
+    .param num b
+    $N0 = a + b
+    .return ($N0)
 .end
 
 
 .sub 'infix:-' :multi(_,_)
-    .param pmc a
-    .param pmc b
-    $P0 = n_sub a, b
-    .return ($P0)
+    .param num a
+    .param num b
+    $N0 = a - b
+    .return ($N0)
 .end
 
 
@@ -373,9 +378,11 @@ src/builtins/op.pir - Perl6 builtin operators
     .param pmc named_args   :slurpy :named
 
     # We need to find all methods we could call with the right name.
-    .local pmc result_list, class, mro, it, cap_class, failure_class
+    .local pmc p6meta, result_list, class, mro, it, cap_class, failure_class
     result_list = 'list'()
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     class = invocant.'HOW'()
+    class = p6meta.get_parrotclass(class)
     mro = inspect class, 'all_parents'
     it = iter mro
     cap_class = get_hll_global 'Capture'

@@ -93,10 +93,6 @@ use the following syntax, which works for both PMCs and objects.
 
 See RT #48014. This will be removed once all core PMCs have been updated.
 
-=item * Super PMC [post 0.6.2]
-
-See RT #53968.
-
 =back
 
 =head1 Exceptions
@@ -149,6 +145,11 @@ Are deprecated.
 
 Is deprecated, replaced by C<Parrot_ex_calc_handler_offset>.
 
+=item * 'rethrow_exception', 'rethrow_c_exception' [post 0.6.2]
+
+Are deprecated, replaced by C<Parrot_ex_rethrow_from_op> and
+C<Parrot_ex_rethrow_from_c>.
+
 =back
 
 =head1 PIR syntax
@@ -166,6 +167,12 @@ See RT #48735.
 =item * C<.namespace [ "a" .. "b" ]> [post 0.5.0]
 
 See RT #46715.
+
+=item * C<.namespace> (without brackets) [post 0.6.2]
+
+All should C<.namespace> directives without brackets should take
+empty brackets to indicate the root namespace.
+See RT #48549.
 
 =item * vtable name .constants and __vtable overrides [post 0.5.2]
 
@@ -191,38 +198,6 @@ Will have to be:
 =back
 
 =head1 Parrot Compiler tools
-
-=head2 Parser Grammar Engine (PGE)
-
-=over 4
-
-=item Non-capturing C<< <?foo> >> is now C<< <.foo> >>
-
-(See RT#53834)
-
-Synopsis 5 changes the syntax for non-capturing subrules from
-C<< <?foo> >> to C<< <.foo> >>.  According to S05, the
-C<< <?foo> >> syntax is now used to indicate a zero-width
-assertion.  So, grammars that have been using C<< <?foo> >>
-for non-capturing subrules need to convert to the new syntax.
-
-PGE will continue to support the non-capture interpretation
-of C<< <?foo> >> until the May 2008 release, after which it
-will be removed.
-
-=item Change argument handling of C<< <foo: text> >>
-
-(See RT#53606.)
-
-Synopsis 5 changes the handling of arguments after a colon
-in subrule invocations so that  C<< <foo: text> >> must
-now be written as C<< <foo: 'text'> >>.
-
-For the foreseeable future PGE will support both syntaxes,
-but the obsolete C<< <foo: text> >> syntax may disappear
-at any time after the June 2008 release.
-
-=back
 
 =head2 Capture-based objects
 

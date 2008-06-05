@@ -42,13 +42,12 @@ any value type.
 
 .sub 'onload' :anon :load :init
     load_bytecode 'PCT/HLLCompiler.pbc'
-    $P0 = get_hll_global 'Protomaker'
-    $P1 = $P0.'new_subclass'('PCT::HLLCompiler', 'PAST::Compiler', '%!symtable')
-
-    $P0 = get_hll_global ['PAST'], 'Compiler'
-    $P0.'language'('PAST')
+    .local pmc p6meta, cproto
+    p6meta = new 'P6metaclass'
+    cproto = p6meta.'new_class'('PAST::Compiler', 'parent'=>'PCT::HLLCompiler', 'attr'=>'%!symtable')
+    cproto.'language'('PAST')
     $P1 = split ' ', 'post pir evalpmc'
-    $P0.'stages'($P1)
+    cproto.'stages'($P1)
 
     ##  %piropsig is a table of common opcode signatures
     .local pmc piropsig
@@ -343,11 +342,10 @@ third and subsequent children can be any value they wish.
     ##  if the signature contains a ':', then we're doing
     ##  flagged arguments (:flat, :named)
     .local pmc posargs, namedargs
-    null posargs
+    posargs = new 'ResizableStringArray'
     null namedargs
     $I0 = index signature, ':'
     if $I0 < 0 goto nocolon
-    posargs = new 'ResizableStringArray'
     namedargs = new 'ResizableStringArray'
   nocolon:
 
@@ -366,7 +364,6 @@ third and subsequent children can be any value they wish.
     ops.'push'(cpost)
     .local pmc is_flat
     is_flat = cpast.'flat'()
-    if null posargs goto iter_rtype
     if rtype != ':' goto iter_pos
     .local pmc npast, npost
     npast = cpast.'named'()
@@ -625,9 +622,18 @@ Return the POST representation of a C<PAST::Block>.
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_decl_ns
     bpost.'push_pirop'('get_global', result, name)
-    goto block_done
+    goto block_decl_closure
   block_decl_ns:
     bpost.'push_pirop'('get_hll_global', result, ns, name)
+  block_decl_closure:
+    .local pmc closurelabel
+    $P0 = get_hll_global ['POST'], 'Label'
+    closurelabel = $P0.'new'('name'=>'closure_')
+    $S0 = self.'uniquereg'('I')
+    bpost.'push_pirop'('isa', $S0, result, "'Closure'")
+    bpost.'push_pirop'('unless', $S0, closurelabel)
+    bpost.'push_pirop'('newclosure', result, result)
+    bpost.'push'(closurelabel)
     goto block_done
 
   block_immediate:
@@ -1124,6 +1130,43 @@ by C<node>.
 .end
 
 
+=item list(PAST::Op node)
+
+Build a list from the children.  The type of list constructed
+is determined by the C<returns> attribute, which defaults
+to C<ResizablePMCArray> if not set.
+
+=cut
+
+.sub 'list' :method :multi(_, ['PAST::Op'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+
+    .local pmc ops, posargs
+    (ops, posargs) = self.'post_children'(node, 'signature'=>'v*')
+
+    .local pmc returns
+    returns = node.'returns'()
+    if returns goto have_returns
+    returns = new 'String'
+    returns = 'ResizablePMCArray'
+  have_returns:
+
+    .local pmc listpost, iter
+    listpost = self.'as_post'(returns, 'rtype'=>'P')
+    ops.'result'(listpost)
+    ops.'push'(listpost)
+    iter = new 'Iterator', posargs
+  iter_loop:
+    unless iter goto iter_end
+    $S0 = shift iter
+    ops.'push_pirop'('push', listpost, $S0)
+    goto iter_loop
+  iter_end:
+    .return (ops)
+.end
+
+
 =item try(PAST::Op node)
 
 Return the POST representation of a C<PAST::Op>
@@ -1149,12 +1192,21 @@ handler.
     $S0 = concat $S0, '_end'
     endlabel = $P0.'new'('result'=>$S0)
 
+    .local string rtype
+    rtype = options['rtype']
+
     .local pmc trypast, trypost
     trypast = node[0]
-    trypost = self.'as_post'(trypast, 'rtype'=>'P')
+    trypost = self.'as_post'(trypast, 'rtype'=>rtype)
     ops.'push_pirop'('push_eh', catchlabel)
     ops.'push'(trypost)
     ops.'push_pirop'('pop_eh')
+    .local pmc elsepast, elsepost
+    elsepast = node[2]
+    if null elsepast goto else_done
+    elsepost = self.'as_post'(elsepast, 'rtype'=>'v')
+    ops.'push'(elsepost)
+  else_done:
     ops.'push_pirop'('goto', endlabel)
     ops.'push'(catchlabel)
     .local pmc catchpast, catchpost
@@ -1644,14 +1696,21 @@ attribute.
 .sub 'keyed' :method :multi(_, ['PAST::Var'])
     .param pmc node
     .param pmc bindpost
+    .param string keyrtype     :optional
+    .param int has_keyrtype    :opt_flag
 
     .local pmc ops
     $P0 = get_hll_global ['POST'], 'Ops'
     ops = $P0.'new'('node'=>node)
 
+    if has_keyrtype goto have_keyrtype
+    keyrtype = '*'
+  have_keyrtype:
+
     .local pmc keypast, keypost
     keypast = node[1]
-    keypost = self.'as_post'(keypast, 'rtype'=>'*')
+    keypost = self.'as_post'(keypast, 'rtype'=>keyrtype)
+    keypost = self.'coerce'(keypost, keyrtype)
     ops.'push'(keypost)
 
     .local pmc basepast, basepost
@@ -1659,6 +1718,8 @@ attribute.
 
     $P0 = node.'vivibase'()
     unless $P0 goto have_vivibase
+    $I0 = can basepast, 'viviself'
+    unless $I0 goto have_vivibase
     $P1 = basepast.'viviself'()
     unless $P1 goto vivibase_1
     if $P1 != 'Undef' goto have_vivibase
@@ -1690,6 +1751,13 @@ attribute.
     ops.'result'(bindpost)
     ops.'push_pirop'('set', name, ops)
     .return (ops)
+.end
+
+
+.sub 'keyed_int' :method :multi(_, ['PAST::Var'])
+    .param pmc node
+    .param pmc bindpost
+    .return self.'keyed'(node, bindpost, 'i')
 .end
 
 

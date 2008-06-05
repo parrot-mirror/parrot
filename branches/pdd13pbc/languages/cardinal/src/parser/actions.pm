@@ -160,7 +160,7 @@ method indexed_variable($/) {
         $args := $( $<args>[0] );
     }
 
-    my $past := PAST::Var.new( :scope('keyed'), :node($/) );
+    my $past := PAST::Var.new( :scope('keyed'), :viviself('Undef'), :node($/) );
     $past.push($var);
     while $args[0] {
         $past.push( $args.shift() );
@@ -205,6 +205,13 @@ method local_variable($/) {
         my $scope := 'lexical';
         $?BLOCK.symbol(~$<ident>, :scope($scope));
     }
+    make $past;
+}
+
+
+method constant_variable($/) {
+    my @a;
+    my $past := PAST::Var.new( :name(~$/), :scope('package'), :node($/), :viviself('Undef'), :namespace( @a ) );
     make $past;
 }
 
@@ -259,7 +266,19 @@ method ensure($/) {
 method while_stmt($/) {
     my $cond := $( $<expr> );
     my $body := $( $<comp_stmt> );
+    $body.blocktype('immediate');
     make PAST::Op.new( $cond, $body, :pasttype(~$<sym>), :node($/) );
+}
+
+method for_stmt($/) {
+    my $list := $( $<expr> );
+    my $body := $( $<comp_stmt> );
+    my $var := $( $<variable> );
+    $body.blocktype('declaration');
+    $var.scope('parameter');
+    $var.isdecl(0);
+    $body[0].push($var);
+    make PAST::Op.new( $list, $body, :pasttype('for'), :node($/) );
 }
 
 method module($/) {
@@ -341,14 +360,14 @@ method call($/) {
     my $op := $<operation>;
     my $past;
     if $<call_args> {
-        $past := $( $<call_args> );
+        $past := $( $<call_args>[0] );
     }
     else {
         $past := PAST::Op.new();
     }
 
     if $<primary> {
-        my $invocant := $( $<primary>[0] );
+        my $invocant := $( $<primary> );
         # XXX what's the diff. between "." and "::", in $<op>[0] ?
         $past.unshift($invocant);
         $past.pasttype('callmethod');
@@ -447,28 +466,29 @@ method pcomp_stmt($/) {
 }
 
 method array($/) {
-    my $past;
-    ## XXX the "new" method should be invoked on the "Array" class (use get_class)
-    ## but that doesn't work yet.
-    my $getclass := PAST::Op.new( :inline('    %r = new "CardinalArray"'), :node($/) );
+    my $list;
     if $<args> {
-        $past := $( $<args>[0] );
-        $past.unshift( $getclass );
-        $past.name('new');
-        $past.pasttype('callmethod');
+        $list := $( $<args>[0] );
+        $list.name('list');
     }
     else {
-        $past := PAST::Op.new( $getclass, :name('new'), :pasttype('callmethod'), :node($/) );
+        $list := PAST::Op.new( :name('list'), :node($/) );
     }
-    make $past;
+
+    make $list;
 }
 
 method ahash($/) {
-    # XXX handle class stuff
-    my $past;
-    my $getclass := PAST::Op.new( :inline('    %r = new "Hash"'), :node($/) );
-    $past := PAST::Op.new( $getclass, :name('new'), :pasttype('callmethod'), :node($/) );
-    make $past;
+    my $hash;
+    if $<args> {
+        $hash := $( $<args>[0] );
+        $hash.name('hash');
+    }
+    else {
+        $hash := PAST::Op.new( :name('hash'), :node($/) );
+    }
+
+    make $hash;
 }
 
 method assocs($/) {
