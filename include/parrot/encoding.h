@@ -60,11 +60,11 @@ struct _encoding {
 typedef struct _encoding ENCODING;
 
 #if !defined PARROT_NO_EXTERN_ENCODING_PTRS
-PARROT_API extern ENCODING *Parrot_fixed_8_encoding_ptr;
-PARROT_API extern ENCODING *Parrot_utf8_encoding_ptr;
-PARROT_API extern ENCODING *Parrot_utf16_encoding_ptr;
-PARROT_API extern ENCODING *Parrot_ucs2_encoding_ptr;
-PARROT_API extern ENCODING *Parrot_default_encoding_ptr;
+PARROT_DATA ENCODING *Parrot_fixed_8_encoding_ptr;
+PARROT_DATA ENCODING *Parrot_utf8_encoding_ptr;
+PARROT_DATA ENCODING *Parrot_utf16_encoding_ptr;
+PARROT_DATA ENCODING *Parrot_ucs2_encoding_ptr;
+PARROT_DATA ENCODING *Parrot_default_encoding_ptr;
 #endif
 
 #define PARROT_DEFAULT_ENCODING Parrot_fixed_8_encoding_ptr
@@ -76,9 +76,9 @@ typedef INTVAL (*encoding_converter_t)(PARROT_INTERP, ENCODING *lhs, ENCODING *r
 /* HEADERIZER BEGIN: src/encoding.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
+PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-PARROT_API
 const ENCODING * Parrot_default_encoding(SHIM_INTERP);
 
 PARROT_API

@@ -4,14 +4,66 @@ OpenGL - Parrot extension for OpenGL bindings
 
 =head1 SYNOPSIS
 
-TBD
+This covers only the basic OpenGL and GLUT initialization.
+For more, look in F<examples/opengl/>, starting with
+F<examples/opengl/triangle.pir>.
+
+ # Include OpenGL constants
+ .include 'opengl_defines.pasm'
+
+ .sub main :main
+    .param pmc argv
+
+    # Load OpenGL libary and a helper library for calling glutInit
+    load_bytecode 'library/OpenGL.pbc'
+    load_bytecode 'library/NCI/call_toolkit_init.pbc'
+
+    # Import all OpenGL/GLU/GLUT functions
+    .local pmc import_gl
+    import_gl = get_global ['OpenGL'], '_export_all_functions'
+    import_gl()
+
+    # Initialize GLUT
+    .local pmc call_toolkit_init
+    call_toolkit_init = get_global ['NCI'], 'call_toolkit_init'
+
+    .const .Sub glutInit = 'glutInit'
+    argv = call_toolkit_init(glutInit, argv)
+
+    # Set display mode, create GLUT window, save window handle
+    .local int mode
+    mode = .GLUT_DOUBLE | .GLUT_RGBA
+    glutInitDisplayMode(mode)
+
+    .local pmc window
+    window = new 'Integer'
+    window = glutCreateWindow('My Window Title')
+    set_global 'glut_window', window
+
+    # Set up GLUT callbacks
+    .const .Sub draw     = 'draw'
+    .const .Sub idle     = 'idle'
+    .const .Sub keyboard = 'keyboard'
+    glutDisplayFunc (draw)
+    glutIdleFunc    (idle)
+    glutKeyboardFunc(keyboard)
+
+    # Enter the GLUT main loop
+    glutMainLoop()
+ .end
 
 =head1 DESCRIPTION
 
 This library is a straightforward Parrot NCI wrapper for OpenGL, GLU, and
 GLUT.  It is still a work in progress; work will generally start with the
 oldest, most widely supported functions and progress to the most recently
-standardized calls.
+standardized calls.  Generally you will find programming GLUT in PIR to be
+similar to GLUT in C -- for heavy drawing code, it is sometimes difficult
+to tell the difference except for the leading period on PIR constant names
+and lack of trailing semicolons on each line.
+
+The following sections describe features of Parrot's OpenGL bindings that
+are not part of the core C binding, or where they differ non-trivially.
 
 =head2 Initialization
 
@@ -25,8 +77,7 @@ include:
 
 .namespace ['OpenGL']
 
-.include 'datatypes.pasm'
-.include 'iterator.pasm'
+.include 'library/OpenGL_funcs.pir'
 
 
 =item _opengl_init()
@@ -56,30 +107,33 @@ the known different filenames for each library in turn before giving up.
 
     libnames = new 'ResizableStringArray'
     push libnames, 'libGL'
+    push libnames, 'opengl32'
     push libnames, '/System/Library/Frameworks/OpenGL.framework/OpenGL'
-    libgl = load_lib_with_fallbacks('GL', libnames)
-    set_global 'libgl', libgl
+    libgl = _load_lib_with_fallbacks('GL', libnames)
+    set_global '_libgl', libgl
 
     libnames = new 'ResizableStringArray'
     push libnames, 'libGLU'
+    push libnames, 'glu32'
     push libnames, '/System/Library/Frameworks/OpenGL.framework/OpenGL'
-    libglu = load_lib_with_fallbacks('GLU', libnames)
-    set_global 'libglu', libglu
+    libglu = _load_lib_with_fallbacks('GLU', libnames)
+    set_global '_libglu', libglu
 
     libnames = new 'ResizableStringArray'
     push libnames, 'libglut'
+    push libnames, 'glut32'
     push libnames, '/System/Library/Frameworks/GLUT.framework/GLUT'
-    libglut = load_lib_with_fallbacks('GLUT', libnames)
-    set_global 'libglut', libglut
+    libglut = _load_lib_with_fallbacks('GLUT', libnames)
+    set_global '_libglut', libglut
 
     libnames = new 'ResizableStringArray'
     push libnames, 'libglutcb'
-    libglutcb = load_lib_with_fallbacks('GLUTCB', libnames)
-    set_global 'libglutcb', libglutcb
+    libglutcb = _load_lib_with_fallbacks('GLUTCB', libnames)
+    set_global '_libglutcb', libglutcb
 .end
 
 
-=item load_lib_with_fallbacks(string friendly_name, pmc fallback_list)
+=item _load_lib_with_fallbacks(string friendly_name, pmc fallback_list)
 
 This function is more generally useful than just for this module -- it
 implements the search for a particular libary that may appear under any
@@ -91,13 +145,12 @@ match can be found on the system.
 
 =cut
 
-.sub load_lib_with_fallbacks
+.sub _load_lib_with_fallbacks
     .param string friendly_name
     .param pmc    fallback_list
 
     .local pmc    list_iter
     list_iter = new 'Iterator', fallback_list
-    list_iter = .ITERATE_FROM_START
 
     .local string libname
     .local pmc    library
@@ -130,139 +183,25 @@ Create NCI wrappers for all GL, GLU, and GLUT functions
     namespace = get_namespace
 
     .local pmc libgl, libglu, libglut, libglutcb
-    libgl     = get_global 'libgl'
-    libglu    = get_global 'libglu'
-    libglut   = get_global 'libglut'
-    libglutcb = get_global 'libglutcb'
+    libgl     = get_global '_libgl'
+    libglu    = get_global '_libglu'
+    libglut   = get_global '_libglut'
+    libglutcb = get_global '_libglutcb'
 
     .local pmc gl_funcs, glu_funcs, glut_funcs, glutcb_funcs
-    gl_funcs     = gl_func_list()
-    glu_funcs    = glu_func_list()
-    glut_funcs   = glut_func_list()
-    glutcb_funcs = glutcb_func_list()
+    gl_funcs     = _gl_func_list()
+    glu_funcs    = _glu_func_list()
+    glut_funcs   = _glut_func_list()
+    glutcb_funcs = _glutcb_func_list()
 
-    wrap_nci_list(namespace, libgl,     gl_funcs)
-    wrap_nci_list(namespace, libglu,    glu_funcs)
-    wrap_nci_list(namespace, libglut,   glut_funcs)
-    wrap_nci_list(namespace, libglutcb, glutcb_funcs)
-.end
-
-.sub gl_func_list
-    .local pmc gl_funcs
-    gl_funcs = new 'ResizableStringArray'
-    push gl_funcs, 'glBegin'
-    push gl_funcs, 'vi'
-    push gl_funcs, 'glClear'
-    push gl_funcs, 'vi'
-    push gl_funcs, 'glColor3f'
-    push gl_funcs, 'vfff'
-    push gl_funcs, 'glEnd'
-    push gl_funcs, 'v'
-    push gl_funcs, 'glFlush'
-    push gl_funcs, 'v'
-    push gl_funcs, 'glVertex3f'
-    push gl_funcs, 'vfff'
-    push gl_funcs, 'glRotatef'
-    push gl_funcs, 'vffff'
-
-    .return (gl_funcs)
-.end
-
-.sub glu_func_list
-    .local pmc glu_funcs
-    glu_funcs = new 'ResizableStringArray'
-
-    .return (glu_funcs)
-.end
-
-.sub glut_func_list
-    .local pmc glut_funcs
-    glut_funcs = new 'ResizableStringArray'
-    push glut_funcs, 'glutInit'
-    push glut_funcs, 'v3p'
-    push glut_funcs, 'glutInitDisplayMode'
-    push glut_funcs, 'vi'
-    push glut_funcs, 'glutCreateWindow'
-    push glut_funcs, 'it'
-    push glut_funcs, 'glutDestroyWindow'
-    push glut_funcs, 'vi'
-    push glut_funcs, 'glutMainLoop'
-    push glut_funcs, 'v'
-    push glut_funcs, 'glutPostRedisplay'
-    push glut_funcs, 'v'
-    push glut_funcs, 'glutSwapBuffers'
-    push glut_funcs, 'v'
-
-    .return (glut_funcs)
-.end
-
-.sub glutcb_func_list
-    .local pmc glutcb_funcs
-    glutcb_funcs = new 'ResizableStringArray'
-    push glutcb_funcs, 'glutcbCloseFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbDisplayFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbIdleFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbMenuDestroyFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbOverlayDisplayFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbWMCloseFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbEntryFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbMenuStateFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbVisibilityFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbWindowStatusFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbButtonBoxFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbDialsFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbMotionFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbPassiveMotionFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbReshapeFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbSpaceballButtonFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbTabletMotionFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbKeyboardFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbKeyboardUpFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbMenuStatusFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbSpaceballMotionFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbSpaceballRotateFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbSpecialFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbSpecialUpFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbMouseFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbMouseWheelFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbTabletButtonFunc'
-    push glutcb_funcs, 'vJP'
-    push glutcb_funcs, 'glutcbTimerFunc'
-    push glutcb_funcs, 'vJPii'
-    push glutcb_funcs, 'glutcbJoystickFunc'
-    push glutcb_funcs, 'vJPi'
-
-    .return (glutcb_funcs)
+    _wrap_nci_list(namespace, libgl,     gl_funcs)
+    _wrap_nci_list(namespace, libglu,    glu_funcs)
+    _wrap_nci_list(namespace, libglut,   glut_funcs)
+    _wrap_nci_list(namespace, libglutcb, glutcb_funcs)
 .end
 
 
-=item wrap_nci_list(pmc namespace, pmc library, pmc nci_list)
+=item _wrap_nci_list(pmc namespace, pmc library, pmc nci_list)
 
 Create NCI wrappers for every C<library> entry point in C<nci_list>,
 and store the results in C<namespace> .  The list should consist of
@@ -270,7 +209,7 @@ alternating function names and Parrot NCI signatures.
 
 =cut
 
-.sub wrap_nci_list
+.sub _wrap_nci_list
     .param pmc namespace
     .param pmc library
     .param pmc nci_list
@@ -280,7 +219,6 @@ alternating function names and Parrot NCI signatures.
 
     .local pmc list_iter
     list_iter = new 'Iterator', nci_list
-    list_iter = .ITERATE_FROM_START
 
     .local string func_name, signature
     .local pmc    function
@@ -294,6 +232,82 @@ alternating function names and Parrot NCI signatures.
 
   done:
 .end
+
+
+=back
+
+=head2 Symbol Export
+
+These routines allow OpenGL symbols to exported to other namespaces to more
+directly replicate the normal OpenGL coding style.  Most calling programs
+will want to use at least one of these, probably immediately after loading
+this library.
+
+=over 4
+
+=item _export_all_functions(pmc to_namespace :optional)
+
+Export all OpenGL/GLU/GLUT functions to the target C<namespace>.  Unmangles
+callback names, so that the receiving namespace sees the standard names
+instead of the mangled versions.  If C<to_namespace> is missing, then the
+caller's namespace is assumed.
+
+=cut
+
+.sub _export_all_functions
+    .param pmc to_namespace :optional
+    .param int has_to_ns    :opt_flag
+
+    if has_to_ns goto get_gl_ns
+    .local pmc     interp
+    interp       = getinterp
+    to_namespace = interp['namespace'; 1]
+
+  get_gl_ns:
+    .local pmc     gl_namespace
+    gl_namespace = get_namespace
+
+    .local pmc     iterator, export_list, export_renames
+    .local string  symbol, tag
+    iterator       = iter gl_namespace
+    export_list    = new 'ResizableStringArray'
+    export_renames = new 'Hash'
+
+    # Prepare list of symbols and hash of renames for export
+  symbol_loop:
+    unless iterator goto symbol_loop_end
+    symbol = shift iterator
+
+    # For now, only handle symbols starting with 'gl'
+    tag = substr symbol, 0, 2
+    unless tag == 'gl' goto symbol_loop
+
+    # Special-case callbacks
+    tag = substr symbol, 0, 6
+    if tag == 'glutcb' goto rename_callbacks
+
+    # Add all other matching symbols to export list
+    push export_list, symbol
+    goto symbol_loop
+
+    # Rename all 'glutcb*' symbols to 'glut*'
+  rename_callbacks:
+    .local string renamed
+    renamed = clone symbol
+    substr renamed, 4, 2, ''
+    export_renames[symbol] = renamed
+    goto symbol_loop
+  symbol_loop_end:
+
+    # Export all symbols and renames to the requested namespace
+    gl_namespace.export_to(to_namespace, export_list)
+    gl_namespace.export_to(to_namespace, export_renames)
+.end
+
+
+=back
+
+=cut
 
 
 # Local Variables:

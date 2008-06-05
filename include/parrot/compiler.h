@@ -45,7 +45,10 @@
 #  define __attribute__malloc__             __attribute__((__malloc__))
 #endif
 #ifdef HASATTRIBUTE_NONNULL
+#ifndef __cplusplus
+/* g++ has some problem with this attribute */
 #  define __attribute__nonnull__(a)         __attribute__((__nonnull__(a)))
+#endif
 #endif
 #ifdef HASATTRIBUTE_NORETURN
 #  ifdef _MSC_VER
@@ -188,7 +191,7 @@
     /* an unshared object.  Since the parameter is declared using "only", */
     /* the caller may not use the referenced object after the call, and */
     /* may not pass in a reference to a shared object.  There is nothing */
-    /* special about malloc and free — their behavior can be described */
+    /* special about malloc and free --  their behavior can be described */
     /* entirely in terms of the provided annotations. */
 
 #endif /* PARROT_COMPILER_H_GUARD */

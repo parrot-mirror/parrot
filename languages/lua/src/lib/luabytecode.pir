@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-lib/luabytecode.pir - Lua bytecode Library
+lib/luabytecode.pir - Lua bytecode translation Library
 
 =head1 DESCRIPTION
 
@@ -68,7 +68,8 @@ lib/luabytecode.pir - Lua bytecode Library
 .include 'interpinfo.pasm'
 .HLL 'Lua', 'lua_group'
 
-.namespace
+.namespace []
+
 .sub '&start' :anon :main
     .param pmc args :optional
 #    print "start\n"
@@ -163,7 +164,7 @@ PIRCODE
   L1:
     unless i < numparams goto L2
     $S0 = i
-    pir .= "    .param pmc arg_"
+    pir .= "    .param pmc loc_"
     pir .= $S0
     pir .= " :optional\n"
     inc i
@@ -178,32 +179,47 @@ PIRCODE
   L3:
     pir .= "    .param pmc extra :slurpy\n"
   L4:
+    i = 0
+  L5:
+    unless i < numparams goto L6
+    $S0 = i
+    pir .= "    unless_null loc_"
+    pir .= $S0
+    pir .= ", vivify_"
+    pir .= $S0
+    pir .= "\n    new loc_"
+    pir .= $S0
+    pir .= ", 'LuaNil'\n  vivify_"
+    pir .= $S0
+    pir .= ":\n"
+    inc i
+    goto L5
+  L6:
     $P0 = getattribute self, 'locvars'
-    $S0 = $P0.'translate'()
+    $S0 = $P0.'translate'(numparams, is_vararg)
     pir .= $S0
     i = $P0
     .local int maxstacksize
     $P0 = getattribute self, 'maxstacksize'
     maxstacksize = $P0
-  L5:
-    unless i < maxstacksize goto L6
+  L7:
+    unless i < maxstacksize goto L8
     pir .= "    .local pmc loc_"
     $S0 = i
     pir .= $S0
-    pir .= "\n"
-    inc i
-    goto L5
-  L6:
-    $P0 = getattribute self, 'upvalues'
-    $S0 = $P0.'translate'()
+    pir .= "\n    new loc_"
     pir .= $S0
+    pir .= ", 'LuaNil'\n"
+    inc i
+    goto L7
+  L8:
     $P0 = getattribute self, 'k'
     $S0= $P0.'translate'()
     pir .= $S0
-    pir .= "    .local pmc subr, glob\n"
+    pir .= "    .local pmc subr, env\n"
     pir .= "    subr = interpinfo .INTERPINFO_CURRENT_SUB\n"
     $P0 = getattribute self, 'code'
-    $S0 = $P0.'translate'(self)
+    $S0 = $P0.'translate'(self, funcname)
     pir .= $S0
     pir .= ".end\n\n"
     $P0 = getattribute self, 'p'
@@ -258,10 +274,12 @@ PIRCODE
 .sub 'translate' :method
     .param int i
     .local string pir
-    pir = "    .const .LuaNil k_"
+    pir = "    .local pmc k_"
     $S0 = i
     pir .= $S0
-    pir .= " = '0'\n"
+    pir .= "\n    new k_"
+    pir .= $S0
+    pir .= ", 'LuaNil'\n"
     .return (pir)
 .end
 
@@ -280,13 +298,17 @@ PIRCODE
 .sub 'translate' :method
     .param int i
     .local string pir
-    pir = "    .const .LuaBoolean k_"
+    pir = "    .local pmc k_"
     $S0 = i
     pir .= $S0
-    pir .= " = '"
+    pir .= "\n    new k_"
+    pir .= $S0
+    pir .= ", 'LuaBoolean'\n    set k_"
+    pir .= $S0
+    pir .= ", "
     $S0 = self
     pir .= $S0
-    pir .= "'\n"
+    pir .= "\n"
     .return (pir)
 .end
 
@@ -305,13 +327,17 @@ PIRCODE
 .sub 'translate' :method
     .param int i
     .local string pir
-    pir = "    .const .LuaNumber k_"
+    pir = "    .local pmc k_"
     $S0 = i
     pir .= $S0
-    pir .= " = '"
+    pir .= "\n    new k_"
+    pir .= $S0
+    pir .= ", 'LuaNumber'\n    set k_"
+    pir .= $S0
+    pir .= ", "
     $S0 = self
     pir .= $S0
-    pir .= "'\n"
+    pir .= "\n"
     .return (pir)
 .end
 
@@ -332,10 +358,14 @@ PIRCODE
 .sub 'translate' :method
     .param int i
     .local string pir
-    pir = "    .const .LuaString k_"
+    pir = "    .local pmc k_"
     $S0 = i
     pir .= $S0
-    pir .= " = \""
+    pir .= "\n    new k_"
+    pir .= $S0
+    pir .= ", 'LuaString'\n    set k_"
+    pir .= $S0
+    pir .= ", \""
     $S0 = self
     $S1 = escape $S0
     pir .= $S1
@@ -399,11 +429,16 @@ PIRCODE
 .end
 
 .sub 'translate' :method
+    .param int numparams
+    .param int is_vararg
     .local string pir
     .local int i, n
     pir = ''
     n = self
-    i = 0
+    i = numparams
+    $I0 = is_vararg & 1
+    unless $I0 goto L1
+    inc i
   L1:
     unless i < n goto L2
     $P0 = self[i]
@@ -434,9 +469,11 @@ PIRCODE
     $S0 = i
     pir .= $S0
     pir .= " # "
-    $S0 = self
+    $S1 = self
+    pir .= $S1
+    pir .= "\n    new loc_"
     pir .= $S0
-    pir .= "\n"
+    pir .= ", 'LuaNil'\n"
     .return (pir)
 .end
 
@@ -456,23 +493,6 @@ PIRCODE
   L2:
 .end
 
-.sub 'translate' :method
-    .local string pir
-    .local int i, n
-    pir = ''
-    n = self
-    i = 0
-  L1:
-    unless i < n goto L2
-    $P0 = self[i]
-    $S0 = $P0.'translate'(i)
-    pir .= $S0
-    inc i
-    goto L1
-  L2:
-    .return (pir)
-.end
-
 
 .namespace ['Lua::Upvalue']
 
@@ -483,23 +503,6 @@ PIRCODE
     print "\"  ; "
     print i
     print "\n"
-.end
-
-.sub 'translate' :method
-    .param int i
-    .local string pir
-    pir = "    .local pmc upv_"
-    $S0 = i
-    pir .= $S0
-    pir .= "\n"
-    pir .= "    .lex '"
-    $S0 = self
-    pir .= $S0
-    pir .= "', upv_"
-    $S0 = i
-    pir .= $S0
-    pir .= "\n"
-    .return (pir)
 .end
 
 

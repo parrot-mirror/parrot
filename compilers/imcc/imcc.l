@@ -351,6 +351,7 @@ SP              [ ]
 <emit,INITIAL>":lex"       return NEED_LEX;
 <emit,INITIAL>":vtable"    return VTABLE_METHOD;
 ":unique_reg"              return UNIQUE_REG;
+":instanceof"              return SUB_INSTANCE_OF;
 
 ".result"                  return RESULT;
 ".get_results"             return GET_RESULTS;
@@ -1322,7 +1323,7 @@ compile_file(PARROT_INTERP, FILE *file, void *yyscanner)
 }
 
 void
-compile_string(PARROT_INTERP, char *s, void *yyscanner)
+compile_string(PARROT_INTERP, const char *s, void *yyscanner)
 {
     yyguts_t * const yyg = (yyguts_t *)yyscanner;
     YY_BUFFER_STATE  buffer;

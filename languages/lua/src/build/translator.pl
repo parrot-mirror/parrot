@@ -18,9 +18,6 @@ GetOptions(
 $rules_file = shift @ARGV;
 usage() if !$rules_file || @ARGV;
 
-# Attempt to laod stack to register mapping module.
-my $srm;
-
 # Parse rules file.
 my @rules = parse_rules($rules_file);
 
@@ -30,30 +27,30 @@ my $metavars = {};
 # Generate initial translator code and populate metafields.
 my $pir = generate_initial_pir();
 
-$pir .= generate_initial_dump( $srm, \@rules, $metavars );
+$pir .= generate_initial_dump( \@rules, $metavars );
 
 # Emit translation dispatch table.
-$pir .= generate_dispatch_table( $srm, \@rules, $metavars );
+$pir .= generate_dispatch_table( \@rules, $metavars );
 
 # Generate instruction translation code from rules.
 foreach (@rules) {
-    $pir .= generate_rule_dump( $srm, $_, $metavars );
+    $pir .= generate_rule_dump( $_, $metavars );
 }
 
-$pir .= generate_final_dump( $srm, $metavars );
+$pir .= generate_final_dump( $metavars );
 
-$pir .= generate_initial_code( $srm, \@rules, $metavars );
+$pir .= generate_initial_code( \@rules, $metavars );
 
 # Emit translation dispatch table.
-$pir .= generate_dispatch_table( $srm, \@rules, $metavars );
+$pir .= generate_dispatch_table( \@rules, $metavars );
 
 # Generate instruction translation code from rules.
 foreach (@rules) {
-    $pir .= generate_rule_code( $srm, $_, $metavars );
+    $pir .= generate_rule_code( $_, $metavars );
 }
 
 # Generate final translator code.
-$pir .= generate_final_code( $srm, $metavars );
+$pir .= generate_final_code( $metavars );
 
 # Finally, write generated PIR to output file.
 open my $fh, '>', $output_file
@@ -179,7 +176,6 @@ sub validate_rule {
     # Iterate over keys and do validation.
     while ( my ( $key, $value ) = each %{$rule} ) {
         if ( $key eq 'name' ) {
-
             # always fine
         }
         elsif ( $key eq 'code' ) {
@@ -192,12 +188,10 @@ sub validate_rule {
                 die "Invalid value for $key in rule $name\n";
             }
         }
-        elsif ( $key eq 'instruction' ) {
-
+        elsif ( $key eq 'synopsis' ) {
             # always fine
         }
         elsif ( $key eq 'pir' ) {
-
             # always fine
         }
         else {
@@ -233,35 +227,56 @@ PIRCODE
 # Generate the translator initialization code.
 # ############################################
 sub generate_initial_code {
-    my ( $srm, $rules, $mv ) = @_;
+    my ( $rules, $mv ) = @_;
 
     # Set up some more metavariables.
     $mv->{INS}    = 'gen_pir';
     $mv->{PC}     = 'pc';
     $mv->{NEXTPC} = 'next_pc';
     $mv->{SUBR}   = 'subr';
-    $mv->{GLOB}   = 'glob';
+    $mv->{GLOB}   = 'env';
     $mv->{REG}    = 'loc_';
     $mv->{K}      = 'k_';
     $mv->{A}      = 'arg_a';
     $mv->{B}      = 'arg_b';
     $mv->{C}      = 'arg_c';
+    $mv->{BITRK}  = '0x00000100';
+    $mv->{MASKRK} = '0x000000ff';
     $mv->{FPF}    = '50';
-    $mv->{STACK}    = 'stack';
+    $mv->{STACK}  = 'stack';
+    $mv->{FCT}    = 'func';
+    $mv->{FNAME}  = 'funcname';
+    $mv->{PROTO}  = 'f_';
+    $mv->{UPVAL}  = 'upval';
+    $mv->{NUPS}   = 'nups';
+    $mv->{CLOSURE}= 'closure';
+    $mv->{LEX}    = 'lex';
+    $mv->{ITEMP}  = '$I';
+    $mv->{NTEMP}  = '$N';
+    $mv->{PTEMP}  = '$P';
 
     # Emit the dumper.
     my $pir = <<'PIRCODE';
 .sub 'translate' :method
     .param pmc func
+    .param string funcname
     .local string gen_pir
     .local int pc, next_pc, bc_length, cur_ic, cur_op
     .local int arg_a
     .local int arg_b
     .local int arg_c
     .local int stack
+    .local int nups
+    .local int upval
+    .local pmc closure
+    .local pmc lex
 
     bc_length = self
     next_pc = 0
+    stack = 0
+    nups = 0
+    upval = 0
+    new lex, 'Hash'
 
 PIRCODE
 
@@ -282,7 +297,7 @@ PIRCODE
     $S0 = pc
     gen_pir = concat "PC"
     gen_pir = concat $S0
-    gen_pir = concat ": \n"
+    gen_pir = concat ":"
 
 PIRCODE
 
@@ -293,7 +308,7 @@ PIRCODE
 # Generate the dumper initialization code.
 # ########################################
 sub generate_initial_dump {
-    my ( $srm, $rules, $mv ) = @_;
+    my ( $rules, $mv ) = @_;
 
     # Emit the dumper.
     my $pir = <<'PIRCODE';
@@ -344,7 +359,7 @@ PIRCODE
 # Generate the dispatch table.
 # ############################
 sub generate_dispatch_table {
-    my ( $srm, $rules, $mv ) = @_;
+    my ( $rules, $mv ) = @_;
 
     my %hash;
     my @sorted_rules;
@@ -419,7 +434,7 @@ sub binary_dispatch_table {
 # Generate translation code relating to a rule.
 # #############################################
 sub generate_rule_code {
-    my ( $srm, $rule, $mv ) = @_;
+    my ( $rule, $mv ) = @_;
     my @localmv = ();
 
     # Make current instruction code meta-variable.
@@ -431,12 +446,13 @@ sub generate_rule_code {
   BDISPATCH_$rule->{name}:
     # Translation code for $rule->{name} ($rule->{code})
     gen_pir = concat "  # $rule->{name}\\n"
+### arguments (format $rule->{format})
 PIRCODE
 
     # Emit code to read arguments for the op.
     if ($rule->{format} =~ /^A/) {
         $pir .= "    arg_a = cur_ic >> 6\n";
-        $pir .= "    arg_a &= 0x00ff\n";
+        $pir .= "    arg_a &= 0x000000ff\n";
     }
 
     if ($rule->{format} =~ /sBx$/) {
@@ -448,12 +464,12 @@ PIRCODE
     }
     elsif ($rule->{format} =~ /B/) {
         $pir .= "    arg_b = cur_ic >> 23\n";
-        $pir .= "    arg_b &= 0x01ff\n";
+        $pir .= "    arg_b &= 0x000001ff\n";
     }
 
     if ($rule->{format} =~ /C$/) {
         $pir .= "    arg_c = cur_ic >> 14\n";
-        $pir .= "    arg_c &= 0x01ff\n";
+        $pir .= "    arg_c &= 0x000001ff\n";
     }
 
     $pir .= translation_code( $rule, $mv );
@@ -473,14 +489,16 @@ PIRCODE
 sub translation_code {
     my ( $rule, $mv ) = @_;
 
-    # If we have PIR for the instruction, just take that. If not, we need
-    # to generate it from the "to generate" instruction directive.
+    # If we have PIR for the instruction, just take that.
     my $pir = "### translation\n";
+    if ($rule->{synopsis}) {
+        $pir .= "    # $rule->{synopsis}\n";
+    }
     if ( $rule->{pir} ) {
         $pir .= sub_meta( $rule->{pir}, $mv, "pir for rule $rule->{name}" );
     }
     else {
-        $pir .= "    gen_pir = concat \"  not_translated()\\n\"\n";
+        $pir .= "    gen_pir = concat \"  $rule->{name}_not_translated()\\n\"\n";
     }
     $pir .= "### end translation\n";
 
@@ -490,7 +508,7 @@ sub translation_code {
 # Generate dump code relating to a rule.
 # #############################################
 sub generate_rule_dump {
-    my ( $srm, $rule, $mv ) = @_;
+    my ( $rule, $mv ) = @_;
 
     # Emit dispatch label.
     my $pir = <<"PIRCODE";
@@ -505,7 +523,7 @@ PIRCODE
 
     if ($rule->{format} =~ /^A/) {
         $pir .= "    arg_a = cur_ic >> 6\n";
-        $pir .= "    arg_a &= 0x00ff\n";
+        $pir .= "    arg_a &= 0x000000ff\n";
         $pir .= "    push args, arg_a\n";
     }
 
@@ -520,13 +538,13 @@ PIRCODE
     }
     elsif ($rule->{format} =~ /B/) {
         $pir .= "    arg_b = cur_ic >> 23\n";
-        $pir .= "    arg_b &= 0x01ff\n";
+        $pir .= "    arg_b &= 0x000001ff\n";
         $pir .= "    push args, arg_b\n";
     }
 
     if ($rule->{format} =~ /C$/) {
         $pir .= "    arg_c = cur_ic >> 14\n";
-        $pir .= "    arg_c &= 0x01ff\n";
+        $pir .= "    arg_c &= 0x000001ff\n";
         $pir .= "    push args, arg_c\n";
     }
 
@@ -571,7 +589,7 @@ PIRCODE
 # Generate the translator trailer code.
 # #####################################
 sub generate_final_code {
-    my ( $srm, $mv ) = @_;
+    my ( $mv ) = @_;
 
     # Emit complete label.
     # Emit label generation code.
@@ -583,7 +601,7 @@ sub generate_final_code {
     gen_pir = concat $S0
     gen_pir = concat ": \n"
 
-    gen_pir = concat "\n# END OF TRANSLATED BYTECODE\n\n"
+    gen_pir = concat "\n# END OF TRANSLATED BYTECODE\n"
 
 PIRCODE
 
@@ -607,19 +625,6 @@ sub sub_meta {
     # Substiture in known meta-variables.
     for ( keys %$mv ) {
         $pir =~ s/\${$_}/$mv->{$_}/g;
-    }
-
-    # We need to automagically instantiate [INSP]_ARG_\d+ and [INSP]TEMP\d+.
-    while ( $pir =~ /\$\{([INS])TEMP(\d+)\}/g ) {
-        my $key   = $1 . 'TEMP' . $2;
-        my $value = '$' . $1 . $2;
-        $pir =~ s/\$\{$key\}/$value/g;
-    }
-    while ( $pir =~ /\$\{PTEMP(\d+)\}/g ) {
-        my $key   = 'PTEMP' . $1;
-        my $value = 'P_temp_' . $1;
-        $mv->{$key} = $value;
-        $pir =~ s/\$\{$key\}/$value/g;
     }
 
     # If we have any unsubstituted variables, error.
