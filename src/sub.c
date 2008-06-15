@@ -557,34 +557,6 @@ parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
 
 /*
 
-=item C<void Parrot_continuation_runloop_check>
-
-Verifies that the Parrot_cont contained in the current PMC is not trying to
-jump runloops.  Don't call this for a RetContinuation; that's what it's
-supposed to do.
-
-*/
-
-void
-Parrot_continuation_runloop_check(PARROT_INTERP, ARGIN(PMC *pmc),
-    ARGIN(Parrot_cont *cc))
-{
-
-    /* it's ok to exit to "runloop 0"; there is no such
-       runloop, but the only continuation that thinks it came from runloop 0 is
-       for the return from the initial sub call. */
-
-    if (interp->current_runloop_id != cc->runloop_id
-    && cc->runloop_id              != 0)
-        fprintf(stderr, "[oops; continuation %p of type %d "
-                "is trying to jump from runloop %d to runloop %d]\n",
-                (void *)pmc, (int)pmc->vtable->base_type,
-                interp->current_runloop_id, cc->runloop_id);
-}
-
-
-/*
-
 =item C<void Parrot_continuation_check>
 
 Verifies that the provided continuation is sane.
