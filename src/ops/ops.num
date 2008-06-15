@@ -1221,3 +1221,6 @@ stm_depth_i                    1190
 throw_p_p                      1191
 branchcc_ic                    1192
 return_branchcc                1193
+pbj_p_i                        1194
+pbj_p_ic                       1195
+pbr_p                          1196

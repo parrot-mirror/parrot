@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 24;
+use Parrot::Test tests => 25;
 
 =head1 NAME
 
@@ -123,6 +123,24 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "branchcc_i" );
 
 LAB1:   print    "lab 1\n"
         return_branchcc
+CODE
+start
+lab 1
+done
+OUTPUT
+
+pasm_output_is( <<'CODE', <<'OUTPUT', "pbj_c_i" );
+        print    "start\n"
+
+        new P0, 'ResizableIntegerArray'
+
+        pbj P0, LAB1
+
+        print    "done\n"
+        end
+
+LAB1:   print    "lab 1\n"
+        pbr P0
 CODE
 start
 lab 1
