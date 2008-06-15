@@ -902,24 +902,17 @@ string_ord(PARROT_INTERP, ARGIN_NULLOK(const STRING *s), INTVAL idx)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ORD_OUT_OF_STRING,
             "Cannot get character of empty string");
 
-        if (idx < 0) {
-            if ((INTVAL)(idx + len) < 0)
-                Parrot_ex_throw_from_c_args(interp, NULL,
-                    EXCEPTION_ORD_OUT_OF_STRING,
-                    "Cannot get character before beginning of string");
-
-                true_index = (UINTVAL)(len + idx);
-        }
-
-        if (true_index > (len - 1))
-            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ORD_OUT_OF_STRING,
-                "Cannot get character past end of string");
+    if (idx < 0) {
+        if ((INTVAL)(idx + len) < 0)
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                EXCEPTION_ORD_OUT_OF_STRING,
+                "Cannot get character before beginning of string");
 
         true_index = (UINTVAL)(len + idx);
     }
 
     if (true_index > (len - 1))
-        real_exception(interp, NULL, ORD_OUT_OF_STRING,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ORD_OUT_OF_STRING,
             "Cannot get character past end of string");
 
     return string_index(interp, s, true_index);

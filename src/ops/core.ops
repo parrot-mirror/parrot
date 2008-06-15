@@ -249,14 +249,14 @@ inline op jsr(in LABEL) :base_core :check_event :flow {
 
 ########################################
 
-=item B<branchcc>(label INT)
+=item B<branchcc>(inconst LABEL)
 
 Branch to the location specified by $1. Capture a continuation for the next op
 and push it into the context's list of handlers, for later returning.
 
 =cut
 
-inline op branchcc(label INT) :base_core :check_event :flow {
+inline op branchcc(inconst LABEL) :base_core :check_event :flow {
     /* Create a return continuation for the next op. */
     PMC *return_cont = pmc_new(interp, enum_class_Continuation);
     VTABLE_set_pointer(interp, return_cont, expr NEXT());
