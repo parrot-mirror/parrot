@@ -720,7 +720,7 @@ u_iscclass(PARROT_INTERP, UINTVAL codepoint, INTVAL flags)
         if (codepoint >= 0xff10 && codepoint <= 0xff19) return 1;
     }
 
-    if (flags & ~(enum_cclass_whitespace | enum_cclass_numeric))
+    if (flags & ~(enum_cclass_whitespace | enum_cclass_numeric | enum_cclass_newline))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
             "no ICU lib loaded");
 

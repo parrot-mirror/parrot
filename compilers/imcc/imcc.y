@@ -637,7 +637,7 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %token <t> PCC_BEGIN PCC_END PCC_CALL PCC_SUB PCC_BEGIN_RETURN PCC_END_RETURN
 %token <t> PCC_BEGIN_YIELD PCC_END_YIELD NCI_CALL METH_CALL INVOCANT
 %token <t> MAIN LOAD INIT IMMEDIATE POSTCOMP METHOD ANON OUTER NEED_LEX
-%token <t> MULTI VTABLE_METHOD LOADLIB
+%token <t> MULTI VTABLE_METHOD LOADLIB SUB_INSTANCE_OF
 %token <t> UNIQUE_REG
 %token <s> LABEL
 %token <t> EMIT EOM
@@ -657,7 +657,7 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %type <t> argtype_list argtype paramtype_list paramtype
 %type <t> pcc_return_many
 %type <t> proto sub_proto sub_proto_list multi multi_types outer
-%type <t> vtable
+%type <t> vtable instanceof
 %type <i> instruction assignment conditional_statement labeled_inst opt_label op_assign
 %type <i> if_statement unless_statement
 %type <i> func_assign get_results
@@ -892,6 +892,7 @@ class_namespace:
 
 maybe_ns:
      '[' keylist ']'           { $$ = $2; }
+   | '[' ']'                   { $$ = NULL; }
    |                           { $$ = NULL; }
    ;
 
@@ -985,6 +986,14 @@ vtable:
            $$ = 0;
            IMCC_INFO(interp)->cur_unit->vtable_name = $3;
            IMCC_INFO(interp)->cur_unit->is_vtable_method = 1;
+         }
+   ;
+
+instanceof:
+     SUB_INSTANCE_OF '(' STRINGC ')'
+         {
+           $$ = 0;
+           IMCC_INFO(interp)->cur_unit->instance_of = $3;
          }
    ;
 
@@ -1105,6 +1114,7 @@ proto:
    | multi
    | outer
    | vtable
+   | instanceof
    ;
 
 pcc_call:
@@ -1525,36 +1535,37 @@ assignment:
          }
    ;
 
+/* C++ hates implicit casts from string constants to char *, so be explicit */
 un_op:
-     '!'                       { $$ = "not"; }
-   | '~'                       { $$ = "bnot"; }
-   | '-'                       { $$ = "neg"; }
+     '!'                       { $$ = (char *)"not"; }
+   | '~'                       { $$ = (char *)"bnot"; }
+   | '-'                       { $$ = (char *)"neg"; }
    ;
 
 bin_op:
-     '-'                       { $$ = "sub"; }
-   | '+'                       { $$ = "add"; }
-   | '*'                       { $$ = "mul"; }
-   | '/'                       { $$ = "div"; }
-   | '%'                       { $$ = "mod"; }
-   | FDIV                      { $$ = "fdiv"; }
-   | POW                       { $$ = "pow"; }
-   | CONCAT                    { $$ = "concat"; }
-   | RELOP_EQ                  { $$ = "iseq"; }
-   | RELOP_NE                  { $$ = "isne"; }
-   | RELOP_GT                  { $$ = "isgt"; }
-   | RELOP_GTE                 { $$ = "isge"; }
-   | RELOP_LT                  { $$ = "islt"; }
-   | RELOP_LTE                 { $$ = "isle"; }
-   | SHIFT_LEFT                { $$ = "shl"; }
-   | SHIFT_RIGHT               { $$ = "shr"; }
-   | SHIFT_RIGHT_U             { $$ = "lsr"; }
-   | LOG_AND                   { $$ = "and"; }
-   | LOG_OR                    { $$ = "or"; }
-   | LOG_XOR                   { $$ = "xor"; }
-   | '&'                       { $$ = "band"; }
-   | '|'                       { $$ = "bor"; }
-   | '~'                       { $$ = "bxor"; }
+     '-'                       { $$ = (char *)"sub"; }
+   | '+'                       { $$ = (char *)"add"; }
+   | '*'                       { $$ = (char *)"mul"; }
+   | '/'                       { $$ = (char *)"div"; }
+   | '%'                       { $$ = (char *)"mod"; }
+   | FDIV                      { $$ = (char *)"fdiv"; }
+   | POW                       { $$ = (char *)"pow"; }
+   | CONCAT                    { $$ = (char *)"concat"; }
+   | RELOP_EQ                  { $$ = (char *)"iseq"; }
+   | RELOP_NE                  { $$ = (char *)"isne"; }
+   | RELOP_GT                  { $$ = (char *)"isgt"; }
+   | RELOP_GTE                 { $$ = (char *)"isge"; }
+   | RELOP_LT                  { $$ = (char *)"islt"; }
+   | RELOP_LTE                 { $$ = (char *)"isle"; }
+   | SHIFT_LEFT                { $$ = (char *)"shl"; }
+   | SHIFT_RIGHT               { $$ = (char *)"shr"; }
+   | SHIFT_RIGHT_U             { $$ = (char *)"lsr"; }
+   | LOG_AND                   { $$ = (char *)"and"; }
+   | LOG_OR                    { $$ = (char *)"or"; }
+   | LOG_XOR                   { $$ = (char *)"xor"; }
+   | '&'                       { $$ = (char *)"band"; }
+   | '|'                       { $$ = (char *)"bor"; }
+   | '~'                       { $$ = (char *)"bxor"; }
    ;
 
 
@@ -1578,19 +1589,19 @@ op_assign:
    ;
 
 assign_op:
-     PLUS_ASSIGN               { $$ = "add"; }
-   | MINUS_ASSIGN              { $$ = "sub"; }
-   | MUL_ASSIGN                { $$ = "mul"; }
-   | DIV_ASSIGN                { $$ = "div"; }
-   | MOD_ASSIGN                { $$ = "mod"; }
-   | FDIV_ASSIGN               { $$ = "fdiv"; }
-   | CONCAT_ASSIGN             { $$ = "concat"; }
-   | BAND_ASSIGN               { $$ = "band"; }
-   | BOR_ASSIGN                { $$ = "bor"; }
-   | BXOR_ASSIGN               { $$ = "bxor"; }
-   | SHR_ASSIGN                { $$ = "shr"; }
-   | SHL_ASSIGN                { $$ = "shl"; }
-   | SHR_U_ASSIGN              { $$ = "lsr"; }
+     PLUS_ASSIGN               { $$ = (char *)"add"; }
+   | MINUS_ASSIGN              { $$ = (char *)"sub"; }
+   | MUL_ASSIGN                { $$ = (char *)"mul"; }
+   | DIV_ASSIGN                { $$ = (char *)"div"; }
+   | MOD_ASSIGN                { $$ = (char *)"mod"; }
+   | FDIV_ASSIGN               { $$ = (char *)"fdiv"; }
+   | CONCAT_ASSIGN             { $$ = (char *)"concat"; }
+   | BAND_ASSIGN               { $$ = (char *)"band"; }
+   | BOR_ASSIGN                { $$ = (char *)"bor"; }
+   | BXOR_ASSIGN               { $$ = (char *)"bxor"; }
+   | SHR_ASSIGN                { $$ = (char *)"shr"; }
+   | SHL_ASSIGN                { $$ = (char *)"shl"; }
+   | SHR_U_ASSIGN              { $$ = (char *)"lsr"; }
    ;
 
 
@@ -1766,12 +1777,12 @@ comma_or_goto:
    ;
 
 relop:
-     RELOP_EQ                  { $$ = "eq"; }
-   | RELOP_NE                  { $$ = "ne"; }
-   | RELOP_GT                  { $$ = "gt"; }
-   | RELOP_GTE                 { $$ = "ge"; }
-   | RELOP_LT                  { $$ = "lt"; }
-   | RELOP_LTE                 { $$ = "le"; }
+     RELOP_EQ                  { $$ = (char *)"eq"; }
+   | RELOP_NE                  { $$ = (char *)"ne"; }
+   | RELOP_GT                  { $$ = (char *)"gt"; }
+   | RELOP_GTE                 { $$ = (char *)"ge"; }
+   | RELOP_LT                  { $$ = (char *)"lt"; }
+   | RELOP_LTE                 { $$ = (char *)"le"; }
    ;
 
 target:

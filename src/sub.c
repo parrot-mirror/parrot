@@ -307,13 +307,13 @@ Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
             STRING *j = CONST_STRING(interp, ";");
             STRING *res;
 
-            Parrot_block_DOD(interp);
+            Parrot_block_GC_mark(interp);
             ns_array = Parrot_ns_get_name(interp, s->namespace_stash);
             if (s->name)
                 VTABLE_push_string(interp, ns_array, s->name);
 
             res = string_join(interp, j, ns_array);
-            Parrot_unblock_DOD(interp);
+            Parrot_unblock_GC_mark(interp);
             return res;
         }
     }
@@ -434,7 +434,7 @@ Parrot_Context_infostr(PARROT_INTERP, ARGIN(const parrot_context_t *ctx))
         ? "current instr.:"
         : "called from Sub";
 
-    Parrot_block_DOD(interp);
+    Parrot_block_GC_mark(interp);
     if (Parrot_Context_get_info(interp, ctx, &info)) {
         static const char unknown_file[] = "(unknown file)";
         DECL_CONST_CAST;
@@ -444,7 +444,7 @@ Parrot_Context_infostr(PARROT_INTERP, ARGIN(const parrot_context_t *ctx))
             info.fullname, info.pc, info.file, info.line);
     }
 
-    Parrot_unblock_DOD(interp);
+    Parrot_unblock_GC_mark(interp);
     return res;
 }
 
@@ -552,6 +552,91 @@ parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
     }
 #endif
     return clos_pmc;
+}
+
+
+/*
+
+=item C<void Parrot_continuation_runloop_check>
+
+Verifies that the Parrot_cont contained in the current PMC is not trying to
+jump runloops.  Don't call this for a RetContinuation; that's what it's
+supposed to do.
+
+*/
+
+void
+Parrot_continuation_runloop_check(PARROT_INTERP, ARGIN(PMC *pmc),
+    ARGIN(Parrot_cont *cc))
+{
+
+    /* it's ok to exit to "runloop 0"; there is no such
+       runloop, but the only continuation that thinks it came from runloop 0 is
+       for the return from the initial sub call. */
+
+    if (interp->current_runloop_id != cc->runloop_id
+    && cc->runloop_id              != 0)
+        fprintf(stderr, "[oops; continuation %p of type %d "
+                "is trying to jump from runloop %d to runloop %d]\n",
+                (void *)pmc, (int)pmc->vtable->base_type,
+                interp->current_runloop_id, cc->runloop_id);
+}
+
+
+/*
+
+=item C<void Parrot_continuation_check>
+
+Verifies that the provided continuation is sane.
+
+*/
+
+void
+Parrot_continuation_check(PARROT_INTERP, ARGIN(PMC *pmc),
+    ARGIN(Parrot_cont *cc))
+{
+    parrot_context_t *to_ctx       = cc->to_ctx;
+    parrot_context_t *from_ctx     = CONTEXT(interp);
+
+#if CTX_LEAK_DEBUG
+    if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG))
+        fprintf(stderr,
+                "[invoke cont    %p, to_ctx %p, from_ctx %p (refs %d)]\n",
+                (void *)pmc, (void *)to_ctx, (void *)from_ctx, (int)from_ctx->ref_count);
+#endif
+    if (!to_ctx)
+        real_exception(interp, NULL, INVALID_OPERATION,
+                       "Continuation invoked after deactivation.");
+}
+
+
+/*
+
+=item C<void Parrot_continuation_rewind_environment>
+
+Restores the appropriate context for the continuation.
+
+*/
+
+void
+Parrot_continuation_rewind_environment(PARROT_INTERP, ARGIN(PMC *pmc),
+        ARGIN(Parrot_cont *cc))
+{
+    parrot_context_t *to_ctx = cc->to_ctx;
+
+    /* debug print before context is switched */
+    if (Interp_trace_TEST(interp, PARROT_TRACE_SUB_CALL_FLAG)) {
+        PMC *sub = to_ctx->current_sub;
+
+        PIO_eprintf(interp, "# Back in sub '%Ss', env %p\n",
+                    Parrot_full_sub_name(interp, sub),
+                    interp->dynamic_env);
+    }
+
+    /* set context */
+    CONTEXT(interp)      = to_ctx;
+    interp->ctx.bp       = to_ctx->bp;
+    interp->ctx.bp_ps    = to_ctx->bp_ps;
 }
 
 /*
