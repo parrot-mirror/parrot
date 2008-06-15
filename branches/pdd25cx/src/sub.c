@@ -605,7 +605,7 @@ Parrot_continuation_check(PARROT_INTERP, ARGIN(PMC *pmc),
                 (void *)pmc, (void *)to_ctx, (void *)from_ctx, (int)from_ctx->ref_count);
 #endif
     if (!to_ctx)
-        real_exception(interp, NULL, INVALID_OPERATION,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                        "Continuation invoked after deactivation.");
 }
 

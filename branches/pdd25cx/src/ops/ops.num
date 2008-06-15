@@ -1219,6 +1219,5 @@ stm_wait_ic                    1188
 stm_abort                      1189
 stm_depth_i                    1190
 throw_p_p                      1191
-branchcc_i                     1192
-branchcc_ic                    1193
-return_branchcc                1194
+branchcc_ic                    1192
+return_branchcc                1193
