@@ -229,6 +229,51 @@ inline op ret() :flow {
     goto POP();
 }
 
+########################################
+
+=item B<pbj>(invar PMC, in LABEL)
+
+Go to the location specified by the label in $2. Push the current location onto
+the stack passed in $1 for later returning.
+
+=cut
+
+inline op pbj(invar PMC, in LABEL) :base_core :check_event :flow {
+    INTVAL return_addr;
+    opcode_t *dest = expr NEXT();
+
+    if (PMC_IS_NULL($1) || $1->vtable->base_type != enum_class_ResizableIntegerArray)
+        Parrot_ex_throw_from_c_args(interp, dest, EXCEPTION_INVALID_OPERATION,
+            "Must pass a valid integer array to 'pbj'");
+
+    return_addr = PTR2INTVAL(dest);
+    VTABLE_push_integer(interp, $1, return_addr);
+
+    goto OFFSET($2);
+}
+
+=item B<pbr>()
+
+Pop the location off the top of the call stack and go there.
+
+=cut
+
+inline op pbr(invar PMC) :flow {
+    INTVAL return_addr;
+    opcode_t *next;
+    opcode_t *dest = expr NEXT();
+
+    if (PMC_IS_NULL($1) || $1->vtable->base_type != enum_class_ResizableIntegerArray)
+        Parrot_ex_throw_from_c_args(interp, dest, EXCEPTION_INVALID_OPERATION,
+            "Must pass a valid integer array to 'pbr'");
+
+    return_addr = VTABLE_pop_integer(interp, $1);
+    next = INTVAL2PTR(opcode_t *, return_addr);
+    
+    goto ADDRESS(next);
+}
+
+
 
 ########################################
 
