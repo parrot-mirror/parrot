@@ -196,12 +196,12 @@ tree as a PIR code object that can be compiled.
     ##   generate the ustack only if we need it
     .local string expstr
     expstr = expcode
+    code.emit("          .local pmc cstack :unique_reg")
+    code.emit("          cstack = new 'ResizableIntegerArray'")
     $I0 = index expstr, 'ustack'
     if $I0 < 0 goto code_body_1
     code.emit("          .local pmc ustack :unique_reg")
     code.emit("          ustack = new 'ResizablePMCArray'")
-    code.emit("          .local pmc cstack :unique_reg")
-    code.emit("          cstack = new 'ResizableIntegerArray'")
   code_body_1:
     ##   generate the gpad only if we need it
     $I0 = index expstr, 'gpad'
