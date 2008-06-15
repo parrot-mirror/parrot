@@ -11,9 +11,28 @@ src/builtins/control.pir - Perl 6 Control functions
 =cut
 
 
-.namespace
+.namespace []
 ## TODO: get the next line to work
 ## .namespace [ 'Control::Basic' ]
+
+
+=item return
+
+Create a return exception.  (Only handles 1 return value for
+the moment -- we'll do more complex handling a bit later.)
+
+=cut
+
+.include 'except_types.pasm'
+
+.sub 'return'
+    .param pmc value
+    $P0 = new 'Exception'
+    $P0['_type'] = .CONTROL_RETURN
+    setattribute $P0, 'payload', value
+    throw $P0
+    .return (value)
+.end
 
 
 =item die
@@ -100,7 +119,8 @@ to coordinate with entire async model.  -law]
 Execute C<$code> as if it were code written in C<$lang>.  The default
 is the language in effect at the exact location of the eval call.
 
-Returns whatever C<$code> returns, or undef on error.
+Returns whatever C<$code> returns, or undef on error. Sets caller's C<$!>
+on error.
 
 =cut
 
@@ -114,9 +134,26 @@ Returns whatever C<$code> returns, or undef on error.
   no_lang:
 
     .local pmc compiler, invokable
+    .local pmc res, exception
     compiler = compreg 'Perl6'
     invokable = compiler.'compile'(code)
-    .return invokable()
+
+    push_eh catch
+    res = invokable()
+    pop_eh
+    exception = new 'Failure'
+    goto done
+
+  catch:
+    .get_results (exception, $S0)
+    goto done
+
+  done:
+    # Propagate exception to caller
+    $P0 = getinterp
+    $P0 = $P0['lexpad';1]
+    $P0['$!'] = exception
+    .return (res)
 .end
 
 

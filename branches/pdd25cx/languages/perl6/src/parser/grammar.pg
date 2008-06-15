@@ -112,8 +112,10 @@ token afterws {
 token pod_comment {
     ^^ '=' <.unsp>?
     [
-    | begin <.ws> <ident> .*? \n
-      '=' <.unsp>? 'end' <.ws> $<ident> \N*         {*}         #= block
+    | begin \h+ <ident> .*? \n
+      '=' <.unsp>? 'end' \h+ $<ident> >> \N*        {*}         #= tagged
+    | begin \h* \n .*? \n
+      '=' <.unsp>? 'end' >> \N*                     {*}         #= anon
     | \N*                                           {*}         #= misc
     ]
     {*}
@@ -148,19 +150,12 @@ token block {
 }
 
 
-##  Here we deviate from STD.pm a fair bit on the handling of
-##  statementlist and statement_end, if only because this
-##  version (first prototyped in NQP) seems a bit more
-##  straightforward.  We may discover that it won't work.
-
 rule statementlist {
-    [ <statement>
-        [  <.statement_end> || <panic: Statement not terminated properly> ]
-    ]*
+    [<statement><.eat_terminator> ]*
     {*}
 }
 
-##  The statement_end rule detects when we're at a valid
+##  The eat_terminator detects when we're at a valid
 ##  statement termination point.  A semicolon always acts as
 ##  a valid statement end, as does the presence of any expression
 ##  terminator.  The MARK_STATEMENT_END subrule is used by other
@@ -168,9 +163,9 @@ rule statementlist {
 ##  isn't present -- e.g., a closing '}' at the end of a line
 ##  for a <block>.
 
-token terminator { <[ } \] ) ]> | $ }
+token terminator { <[ ; ) \] } ]> || '!!' || '<==' || '==>' || '-->' }
 
-token statement_end {
+token eat_terminator {
     || ';'
     || <?before <terminator>>                    # FIXME: <?terminator>
     || {{ $P0 = get_global '$!endstmt'
@@ -180,6 +175,8 @@ token statement_end {
           .return (1)
           end:
        }} <fail>                                 # FIXME: <!>
+    || $
+    || <.panic: "Statement not terminated properly">
 }
 
 token MARK_STATEMENT_END {
@@ -433,13 +430,7 @@ token special_variable {
 token term {
     | <noun> <postfix>* {*}                      #= noun
     | <listop> {*}                               #= listop
-    | <compiler_directive> {*}                   #= compiler_directive
     | '*' {*}                                    #= *
-}
-
-
-rule compiler_directive {
-    $<sym>='#?perl6:' <term> {*}
 }
 
 
@@ -454,6 +445,7 @@ token postfix {
 
 token dotty {
     [
+    | '.VAR' {*}                                      #= VAR
     | '.' <methodop> {*}                              #= .
     | ('.' <[+*?=^:]>) <?unspacey> <methodop> {*}     #= .*
     | '!' <methodop> {*}                              #= !
@@ -467,7 +459,7 @@ token methodop {
     | <?before '$' | '@' > <variable>
     | <?before <[ ' " ]> > <quote>
 #       { $<quote> ~~ /\W/ or .panic("Useless use of quotes") }
-    ] <.unsp>? 
+    ] <.unsp>?
 
     [
     | '.'? <.unsp>? '(' <semilist> ')' {*}            #= semilist
@@ -541,7 +533,7 @@ token variable_decl {
 
 
 rule scoped {
-    <typename>* 
+    <fulltypename>*
     [
     | <variable_decl>
     | <routine_declarator>
@@ -550,7 +542,7 @@ rule scoped {
 }
 
 rule scope_declarator {
-    $<declarator>=[my|our|state|constant|has]
+    $<sym>=[my|our|state|constant|has]
     <scoped>
     {*}
 }
@@ -619,9 +611,9 @@ token integer {
 }
 
 token dec_number {
-    \d+[_\d+]* 
-        [ 
-        | '.' \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]? 
+    \d+[_\d+]*
+        [
+        | '.' \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]?
         |                  <[Ee]> <[+\-]>? \d+
         ] # careful to distinguish from both integer and 42.method
     {*}
@@ -655,6 +647,12 @@ token rad_number {
     {*}
 }
 
+rule fulltypename {
+    <typename>
+#   [ of <fulltypename> ]?
+    {*}
+}
+
 token typename {
     <?before <.upper> > <name>
     {*}
@@ -666,8 +664,8 @@ token name {
 }
 
 token subcall {
-    <ident> '.'? '(' <semilist> ')'
-    {*}
+    | 'VAR(' <variable> ')' {*}             #= VAR
+    | <ident> '.'? '(' <semilist> ')' {*}   #= subcall
 }
 
 # These regex rules are some way off STD.pm at the moment, but we'll work them

@@ -225,44 +225,12 @@ destination to continue execution.
 
     VTABLE opcode_t *invoke(void *next) {
         Parrot_cont      *cc           = PMC_cont(SELF);
-        int               stack_delta  = 0;
         parrot_context_t *from_ctx     = CONTEXT(interp);
         parrot_context_t *to_ctx       = cc->to_ctx;
         opcode_t         *pc           = cc->address;
 
-        int exception_continuation_p
-            = VTABLE_isa(INTERP, SELF, CONST_STRING(INTERP, "ExceptionHandler"));
-        int ret_continuation_p
-            = VTABLE_isa(INTERP, SELF, CONST_STRING(INTERP, "RetContinuation"));
-
-#if CTX_LEAK_DEBUG
-        if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
-            fprintf(stderr,
-                    "[invoke cont    %p, to_ctx %p, from_ctx %p (refs %d)]\n",
-                    (void *) SELF, (void *) to_ctx, (void *) from_ctx, (int) from_ctx->ref_count);
-        }
-#endif
-        if (! to_ctx)
-            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                           "Continuation invoked after deactivation.");
-
-        /* debug print before context is switched */
-        if (Interp_trace_TEST(INTERP, PARROT_TRACE_SUB_CALL_FLAG)) {
-            PMC *sub = to_ctx->current_sub;
-
-            PIO_eprintf(INTERP, "# Back in sub '%Ss', env %p\n",
-                        Parrot_full_sub_name(INTERP, sub),
-                        interp->dynamic_env);
-        }
-
-        /* set context */
-        CONTEXT(interp)      = to_ctx;
-        INTERP->ctx.bp       = to_ctx->bp;
-        INTERP->ctx.bp_ps    = to_ctx->bp_ps;
-
-        /* RetContinuation arg passing is handled elsewhere. */
-        if (ret_continuation_p)
-            return pc;
+        Parrot_continuation_check(interp, SELF, cc);
+        Parrot_continuation_rewind_environment(interp, SELF, cc);
 
         /* pass args to where caller wants result */
         if (cc->current_results)
@@ -280,10 +248,10 @@ destination to continue execution.
             opcode_t *dest_indexes = to_ctx->current_results;
             interp->current_args   = NULL;
 
-            Parrot_block_DOD(INTERP);
+            Parrot_block_GC_mark(INTERP);
             parrot_pass_args(INTERP, from_ctx, to_ctx,
                              src_indexes, dest_indexes, PARROT_PASS_PARAMS);
-            Parrot_unblock_DOD(INTERP);
+            Parrot_unblock_GC_mark(INTERP);
         }
 
         /* switch segment */

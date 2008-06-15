@@ -766,7 +766,7 @@ Parrot_store_sub_in_namespace(PARROT_INTERP, ARGIN(PMC *sub))
 
     PMC *ns;
     /* PF structures aren't fully constructed yet */
-    Parrot_block_DOD(interp);
+    Parrot_block_GC_mark(interp);
     /* store relative to HLL namespace */
     CONTEXT(interp)->current_HLL = PMC_sub(sub)->HLL_id;
 
@@ -794,7 +794,7 @@ Parrot_store_sub_in_namespace(PARROT_INTERP, ARGIN(PMC *sub))
 
     /* restore HLL_id */
     CONTEXT(interp)->current_HLL = cur_id;
-    Parrot_unblock_DOD(interp);
+    Parrot_unblock_GC_mark(interp);
 }
 
 /*

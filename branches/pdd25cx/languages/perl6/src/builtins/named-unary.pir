@@ -10,7 +10,27 @@ src/builtins/named-unary.pir - Perl6 named unary builtins
 
 =cut
 
-.namespace
+.namespace []
+
+=item HOW($x)
+
+=item WHAT($x)
+
+Return the metaclass or protoobject for C<$x>.
+
+=cut
+
+.sub 'HOW'
+    .param pmc x
+    .return x.'HOW'()
+.end
+
+
+.sub 'WHAT'
+    .param pmc x
+    .return x.'WHAT'()
+.end
+
 
 =item defined($x)
 
@@ -34,6 +54,11 @@ Sets $x to an undefined value
 .sub 'undefine'
     .param pmc x
     $P0 = new 'Undef'
+    $I0 = isa x, 'Mutable'
+    unless $I0 goto copy
+    assign x, $P0
+    .return ()
+  copy:
     copy x, $P0
 .end
 

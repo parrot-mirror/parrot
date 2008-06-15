@@ -38,12 +38,14 @@ SOURCES = cardinal.pir \
 #  $(CARDINAL_GROUP)
 
 BUILTINS_PIR = \
+  src/builtins/guts.pir \
   src/builtins/say.pir \
   src/builtins/cmp.pir \
   src/classes/Object.pir \
   src/classes/String.pir \
   src/classes/Integer.pir \
   src/classes/Array.pir \
+  src/classes/Hash.pir \
 
 # PMCS = cardinal
 # PMC_SOURCES = $(PMC_DIR)/cardinal.pmc

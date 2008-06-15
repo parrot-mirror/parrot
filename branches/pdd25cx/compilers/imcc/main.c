@@ -79,7 +79,7 @@ static void imcc_run_pbc(PARROT_INTERP,
     int obj_file,
     ARGIN(const char *output_file),
     int argc,
-    ARGIN(const char **argv))
+    ARGIN(char **argv))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         __attribute__nonnull__(5);
@@ -329,7 +329,7 @@ Parse Parrot's command line for options and set appropriate flags.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 const char *
-parseflags(PARROT_INTERP, int *argc, const char **argv[])
+parseflags(PARROT_INTERP, int *argc, char **argv[])
 {
     struct longopt_opt_info opt = LONGOPT_OPT_INFO_INIT;
     int   status;
@@ -729,8 +729,8 @@ imcc_initialize(PARROT_INTERP)
 
     do_yylex_init(interp, &yyscanner);
 
-    Parrot_block_DOD(interp);
-    Parrot_block_GC(interp);
+    Parrot_block_GC_mark(interp);
+    Parrot_block_GC_sweep(interp);
 
     IMCC_INFO(interp)->yyscanner = yyscanner;
     IMCC_INFO(interp)->allocator = IMCC_VANILLA_ALLOCATOR;
@@ -760,7 +760,7 @@ Write out or run Parrot bytecode.
 
 static void
 imcc_run_pbc(PARROT_INTERP, int obj_file, ARGIN(const char *output_file),
-        int argc, ARGIN(const char **argv))
+        int argc, ARGIN(char **argv))
 {
     if (IMCC_INFO(interp)->imcc_warn)
         PARROT_WARNINGS_on(interp, PARROT_WARNINGS_ALL_FLAG);
@@ -768,8 +768,8 @@ imcc_run_pbc(PARROT_INTERP, int obj_file, ARGIN(const char *output_file),
         PARROT_WARNINGS_off(interp, PARROT_WARNINGS_ALL_FLAG);
 
     if (!IMCC_INFO(interp)->gc_off) {
-        Parrot_unblock_DOD(interp);
-        Parrot_unblock_GC(interp);
+        Parrot_unblock_GC_mark(interp);
+        Parrot_unblock_GC_sweep(interp);
     }
 
     if (obj_file)
@@ -991,7 +991,7 @@ and run. This function always returns 0.
 
 int
 imcc_run(PARROT_INTERP, ARGIN(const char *sourcefile), int argc,
-        ARGIN(const char **argv))
+        ARGIN(char **argv))
 {
     int                obj_file;
     yyscan_t           yyscanner   = IMCC_INFO(interp)->yyscanner;

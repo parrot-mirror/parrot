@@ -111,7 +111,7 @@ and C<debug_break> ops in F<ops/debug.ops>.
 #include "parrot/embed.h"
 
 static void PDB_printwelcome(void);
-static void PDB_run_code(Parrot_Interp interp, int argc, const char *argv[]);
+static void PDB_run_code(Parrot_Interp interp, int argc, char *argv[]);
 
 /*
 
@@ -127,7 +127,7 @@ Parrot_debug().
 extern void imcc_init(Parrot_Interp interp);
 
 int
-main(int argc, const char *argv[])
+main(int argc, char *argv[])
 {
     Parrot_Interp     debugger = Parrot_new(NULL);
     Parrot_Interp     interp   = Parrot_new(debugger);
@@ -143,8 +143,8 @@ main(int argc, const char *argv[])
     interp->debugger = debugger;
     pdb->debugee     = interp;
 
-    Parrot_block_DOD(interp);
-    Parrot_block_GC(interp);
+    Parrot_block_GC_mark(interp);
+    Parrot_block_GC_sweep(interp);
     imcc_init(interp);
 
     do_yylex_init(interp, &yyscanner);
@@ -194,8 +194,8 @@ main(int argc, const char *argv[])
         PackFile_fixup_subs(interp, PBC_POSTCOMP, NULL);
     }
 
-    Parrot_unblock_DOD(interp);
-    Parrot_unblock_GC(interp);
+    Parrot_unblock_GC_mark(interp);
+    Parrot_unblock_GC_sweep(interp);
 
     PDB_printwelcome();
 
@@ -214,7 +214,7 @@ Adds a default exception handler to PDB.
 */
 
 static void
-PDB_run_code(Parrot_Interp interp, int argc, const char *argv[])
+PDB_run_code(Parrot_Interp interp, int argc, char *argv[])
 {
     Parrot_runloop jump_point;
 
