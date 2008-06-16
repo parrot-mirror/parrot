@@ -1,4 +1,4 @@
-.include "languages/tcl/src/returncodes.pir"
+.include 'languages/tcl/src/returncodes.pasm'
 
 =head1 exception handling macros
 
@@ -36,7 +36,7 @@ RT#40687: return the stacktrace for the current exception
 =cut
 
 .macro get_stacktrace (output)
-  .output = exception
+  .output = exception["stacktrace"]
   .output .= "\n"
 .endm
 
@@ -47,7 +47,7 @@ Get the simple string message for the current exception.
 =cut
 
 .macro get_message (output)
-  .output = exception
+  .output = exception["message"]
 .endm
 
 =head2 get_severity (OUT int level)
@@ -57,7 +57,7 @@ Get the severity level of the current exception.
 =cut
 
 .macro get_severity (output)
-  .output = exception
+  .output = exception["severity"]
 .endm
 
 =head2 get_return_code
