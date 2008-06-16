@@ -535,6 +535,7 @@ set_lexical(PARROT_INTERP, ARGMOD(SymReg *r), ARGIN(const char *name))
     /* chain all names in r->reg */
     n->reg = r->reg;
     r->reg = n;
+    r->use_count++;
 }
 
 static void
