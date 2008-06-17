@@ -1,10 +1,12 @@
 /*
  * $Id$
- * Copyright (C) 2002-2007, The Perl Foundation.
+ * Copyright (C) 2002-2008, The Perl Foundation.
  */
 
 #ifndef PARROT_IMCC_SYMREG_H_GUARD
 #define PARROT_IMCC_SYMREG_H_GUARD
+
+#include "sets.h"
 
 /* types */
 
@@ -90,6 +92,7 @@ typedef struct _SymHash {
     SymReg **data;
     int      size;
     int      entries;
+    Set    **sets;
 } SymHash;
 
 /* namespaces */
@@ -399,4 +402,3 @@ enum uniq_t {
  * End:
  * vim: expandtab shiftwidth=4:
  */
-

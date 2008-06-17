@@ -364,8 +364,8 @@ add_pcc_arg(ARGMOD(SymReg *r), ARGMOD(SymReg *arg))
     pcc_sub_t * const sub = r->pcc_sub;
     const int         n   = sub->nargs;
 
-    mem_realloc_n_typed(sub->args,      n+1, SymReg *);
-    mem_realloc_n_typed(sub->arg_flags, n+1, int);
+    mem_realloc_n_typed(sub->args,      n + 1, SymReg *);
+    mem_realloc_n_typed(sub->arg_flags, n + 1, int);
 
     sub->args[n]      = arg;
     sub->arg_flags[n] = arg->type;
@@ -408,8 +408,8 @@ add_pcc_result(ARGMOD(SymReg *r), ARGMOD(SymReg *arg))
     pcc_sub_t * const sub = r->pcc_sub;
     const int         n   = sub->nret;
 
-    mem_realloc_n_typed(sub->ret,       n+1, SymReg *);
-    mem_realloc_n_typed(sub->ret_flags, n+1, int);
+    mem_realloc_n_typed(sub->ret,       n + 1, SymReg *);
+    mem_realloc_n_typed(sub->ret_flags, n + 1, int);
 
     /* we can't keep the flags in the SymReg as the SymReg
      * maybe used with different flags for different calls */
@@ -438,7 +438,7 @@ add_pcc_multi(ARGMOD(SymReg *r), ARGIN_NULLOK(SymReg *arg))
     pcc_sub_t * const sub = r->pcc_sub;
     const int n           = sub->nmulti;
 
-    mem_realloc_n_typed(sub->multi, n+1, SymReg *);
+    mem_realloc_n_typed(sub->multi, n + 1, SymReg *);
     sub->multi[n] = arg;
     sub->nmulti++;
 }
@@ -1154,7 +1154,8 @@ Create a symbol hash table with space for 16 entries.
 void
 create_symhash(ARGOUT(SymHash *hash))
 {
-    hash->data    = (SymReg **)mem_sys_allocate_zeroed(16 * sizeof (SymReg *));
+    hash->data    = mem_allocate_n_zeroed_typed(16, SymReg *);
+    hash->sets    = mem_allocate_n_zeroed_typed( 4, Set    *);
     hash->size    = 16;
     hash->entries = 0;
 }
@@ -1381,8 +1382,7 @@ find_sym(PARROT_INTERP, ARGIN(const char *name))
 
 =item C<void clear_sym_hash>
 
-Free all memory of the symbols in the specified
-hash table.
+Free all memory of the symbols in the specified hash table.
 
 =cut
 
@@ -1396,7 +1396,7 @@ clear_sym_hash(ARGMOD(SymHash *hsh))
     if (!hsh->data)
         return;
 
-    for (i = 0; i < hsh->size; i++) {
+    for (i = 0; i < hsh->size; ++i) {
         SymReg *p;
         for (p = hsh->data[i]; p;) {
             SymReg * const next = p->next;
@@ -1406,9 +1406,18 @@ clear_sym_hash(ARGMOD(SymHash *hsh))
         hsh->data[i] = NULL;
     }
 
+    for (i = 0; i < 4; ++i) {
+        if (hsh->sets[i])
+            set_free(hsh->sets[i]);
+
+        hsh->sets[i] = NULL;
+    }
+
     mem_sys_free(hsh->data);
+    mem_sys_free(hsh->sets);
 
     hsh->data    = NULL;
+    hsh->sets    = NULL;
     hsh->entries = 0;
     hsh->size    = 0;
 }
