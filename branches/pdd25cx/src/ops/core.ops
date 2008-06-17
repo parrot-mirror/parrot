@@ -269,7 +269,7 @@ inline op pbr(invar PMC) :flow {
 
     return_addr = VTABLE_pop_integer(interp, $1);
     next = INTVAL2PTR(opcode_t *, return_addr);
-    
+
     goto ADDRESS(next);
 }
 
