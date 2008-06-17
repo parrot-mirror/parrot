@@ -685,7 +685,7 @@ Parrot_cx_find_handler_local(PARROT_INTERP, ARGIN(PMC *task))
     for (index = 0; index < elements; ++index) {
         PMC *handler = VTABLE_get_pmc_keyed_int(interp, handlers, index);
         if (!PMC_IS_NULL(handler)) {
-            if (PMC_IS_NULL(task) 
+            if (PMC_IS_NULL(task)
                         && handler->vtable->base_type == enum_class_Continuation) {
                 VTABLE_set_pmc_keyed_int(interp, handlers, index, PMCNULL);
                 return handler;
