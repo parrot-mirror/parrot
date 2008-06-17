@@ -384,7 +384,7 @@ Loads Lua 5.1 VM bytecode.
         INTVAL type = pmc_type(INTERP, const_string(INTERP, "Lua::Bytecode"));
 
         if (type <= 0)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT,
                 "Lua::Bytecode not loaded");
 
         script = pmc_new(INTERP, type);
