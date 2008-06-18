@@ -2,7 +2,7 @@
 
 =head1
 
-src/builtins/all.pir -- abc bulitin functions
+src/builtins/all.pir -- abc builtin functions
 
 =cut
 
@@ -144,7 +144,6 @@ src/builtins/all.pir -- abc bulitin functions
     print n
     print "\n"
 .end
-
 
 # Local Variables:
 #   mode: pir
