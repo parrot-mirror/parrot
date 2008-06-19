@@ -65,7 +65,6 @@ Bernhard Schmalhofer - L<Bernhard.Schmalhofer@gmx.de>
     load_bytecode 'languages/plumhead/src/common/plumheadlib.pbc'
 
     load_bytecode 'CGI/QueryHash.pbc'
-    load_bytecode 'MIME/Base64.pbc'
     load_bytecode 'dumper.pbc'
     load_bytecode 'Getopt/Obj.pbc'
 
