@@ -410,7 +410,17 @@ Get string length
 =cut
 
 .sub 'strlen'
-    not_implemented()
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $S0 = $P1
+    $I0 = length $S0
+    .RETURN_LONG($I0)
 .end
 
 =item C<int strncasecmp(string str1, string str2, int len)>
