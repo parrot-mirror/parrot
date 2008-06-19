@@ -360,6 +360,9 @@ not_a_integer:
     .return()
 .end
 
+
+.include 'languages/plumhead/src/common/php_standard.pir'
+
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
