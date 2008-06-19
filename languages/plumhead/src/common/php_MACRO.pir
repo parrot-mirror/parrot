@@ -19,7 +19,7 @@ php_MACRO.pir - PHP API macros
 =cut
 
 .macro RETURN_BOOL(val)
-    new $P0, 'Boolean'
+    new $P0, 'PhpBoolean'
     set $P0, .val
     .return ($P0)
 .endm
@@ -30,7 +30,7 @@ php_MACRO.pir - PHP API macros
 =cut
 
 .macro RETURN_DOUBLE(val)
-    new $P0, 'Float'
+    new $P0, 'PhpFloat'
     set $P0, .val
     .return ($P0)
 .endm
@@ -41,7 +41,7 @@ php_MACRO.pir - PHP API macros
 =cut
 
 .macro RETURN_EMPTY_STRING()
-    new $P0, 'String'
+    new $P0, 'PhpString'
     set $P0, ''
     .return ($P0)
 .endm
@@ -52,7 +52,7 @@ php_MACRO.pir - PHP API macros
 =cut
 
 .macro RETURN_FALSE()
-    new $P0, 'Boolean'
+    new $P0, 'PhpBoolean'
     set $P0, 0
     .return ($P0)
 .endm
@@ -63,7 +63,7 @@ php_MACRO.pir - PHP API macros
 =cut
 
 .macro RETURN_LONG(val)
-    new $P0, 'Integer'
+    new $P0, 'PhpInteger'
     set $P0, .val
     .return ($P0)
 .endm
@@ -74,7 +74,7 @@ php_MACRO.pir - PHP API macros
 =cut
 
 .macro RETURN_NULL()
-    new $P0, 'Undef'
+    new $P0, 'PhpUndef'
     .return ($P0)
 .endm
 
@@ -84,7 +84,7 @@ php_MACRO.pir - PHP API macros
 =cut
 
 .macro RETURN_STRING(val)
-    new $P0, 'String'
+    new $P0, 'PhpString'
     set $P0, .val
     .return ($P0)
 .endm
@@ -95,7 +95,7 @@ php_MACRO.pir - PHP API macros
 =cut
 
 .macro RETURN_TRUE()
-    new $P0, 'Boolean'
+    new $P0, 'PhpBoolean'
     set $P0, 1
     .return ($P0)
 .endm
