@@ -30,7 +30,18 @@ Returns the type of the variable
 =cut
 
 .sub 'gettype'
-    not_implemented()
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    printerr argc
+    printerr "\n"
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $S0 = typeof $P1
+    .RETURN_STRING($S0)
 .end
 
 =item C<int intval(mixed var [, int base])>
