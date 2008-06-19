@@ -69,9 +69,9 @@ Dumps a string representation of variable to output
 
 =cut
 
-.sub 'var_dump'
-    not_implemented()
-.end
+#.sub 'var_dump'
+#    not_implemented()
+#.end
 
 =item C<mixed var_export(mixed var [, bool return])>
 

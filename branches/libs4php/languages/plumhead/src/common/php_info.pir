@@ -69,9 +69,9 @@ Return the current SAPI module name
 
 =cut
 
-.sub 'php_sapi_name'
-    not_implemented()
-.end
+#.sub 'php_sapi_name'
+#    not_implemented()
+#.end
 
 =item C<string php_uname(void)>
 
