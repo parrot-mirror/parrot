@@ -67,6 +67,9 @@ PHP_SRC_STD_EXT= \
   src/common/php_var.pir \
   src/common/php_versioning.pir
 
+PHP_EXT= \
+  src/common/php_ctype.pbc
+
 # default
 all: build
 
@@ -124,7 +127,7 @@ build:           build-pct
 
 build-all:       build-pct build-phc build-antlr3
 
-build-common:    src/common/plumheadlib.pbc plumhead.pbc
+build-common:    src/common/plumheadlib.pbc plumhead.pbc $(PHP_EXT)
 
 build-pct:       build-common
 
@@ -136,6 +139,9 @@ build-antlr3:    build-common
 
 src/common/plumheadlib.pbc: src/common/builtins.pir src/common/php_standard.pir $(PHP_SRC_STD_EXT) src/common/php_API.pir src/common/php_MACRO.pir
 	$(PARROT) -o src/common/plumheadlib.pbc src/common/builtins.pir
+
+src/common/php_ctype.pbc: src/common/php_ctype.pir src/common/php_MACRO.pir
+	$(PARROT) -o src/common/php_ctype.pbc src/common/php_ctype.pir
 
 src/pct/Plumhead_gen.pir: $(LIBRARY_DIR)/PGE/Perl6Grammar.pir src/pct/Plumhead.pg
 	$(PARROT) $(LIBRARY_DIR)/PGE/Perl6Grammar.pir \
