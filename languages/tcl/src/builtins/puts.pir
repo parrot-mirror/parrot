@@ -2,13 +2,13 @@
 
 =head1
 
-say.pir -- simple implementation of a say function
+puts.pir -- simple implementation of [puts]
 
 =cut
 
 .namespace []
 
-.sub 'say'
+.sub 'puts'
     .param pmc args            :slurpy
     .local pmc iter
     iter = new 'Iterator', args

@@ -38,7 +38,7 @@ SOURCES = tcl.pir \
 #  $(TCL_GROUP)
 
 BUILTINS_PIR = \
-  src/builtins/say.pir \
+  src/builtins/puts.pir \
 
 # PMCS = tcl
 # PMC_SOURCES = $(PMC_DIR)/tcl.pmc
