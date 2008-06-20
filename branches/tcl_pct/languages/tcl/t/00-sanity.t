@@ -1,6 +1,6 @@
 # This just checks that the basic parsing and call to builtin say() works.
-say '1..3';
-say 'ok 1';
-say 'ok ', 2;
-say 'ok ', 2 + 1;
+puts '1..3';
+puts 'ok 1';
+puts 'ok ', 2;
+puts 'ok ', 2 + 1;
 
