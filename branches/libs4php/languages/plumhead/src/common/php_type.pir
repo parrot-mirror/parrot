@@ -13,6 +13,18 @@ php_type.pir - PHP type Standard Library
 
 =cut
 
+.macro IS_TYPE(type, args)
+    .local int argc
+    argc = .args
+    unless argc != 1 goto L1
+    error('Only one argument expected')
+    .RETURN_FALSE()
+  L1:
+    $P1 = shift .args
+    $I0 = isa $P1, .type
+    .RETURN_BOOL($I0)
+.endm
+
 =item C<float floatval(mixed var)>
 
 Get the float value of a variable
@@ -34,8 +46,6 @@ Returns the type of the variable
     .local int argc
     argc = args
     unless argc != 1 goto L1
-    printerr argc
-    printerr "\n"
     wrong_param_count()
     .RETURN_NULL()
   L1:
@@ -71,7 +81,8 @@ Returns true if variable is a boolean
 =cut
 
 .sub 'is_bool'
-    not_implemented()
+    .param pmc args :slurpy
+    .IS_TYPE('PhpBoolean', args)
 .end
 
 =item C<bool is_callable(mixed var [, bool syntax_only [, string callable_name]])>
@@ -91,7 +102,8 @@ Returns true if variable is float point
 =cut
 
 .sub 'is_float'
-    not_implemented()
+    .param pmc args :slurpy
+    .IS_TYPE('PhpFloat', args)
 .end
 
 =item C<bool is_long(mixed var)>
@@ -101,7 +113,8 @@ Returns true if variable is a long (integer)
 =cut
 
 .sub 'is_long'
-    not_implemented()
+    .param pmc args :slurpy
+    .IS_TYPE('PhpInteger', args)
 .end
 
 =item C<bool is_null(mixed var)>
@@ -111,7 +124,8 @@ Returns true if variable is null
 =cut
 
 .sub 'is_null'
-    not_implemented()
+    .param pmc args :slurpy
+    .IS_TYPE('PhpUndef', args)
 .end
 
 =item C<bool is_numeric(mixed value)>
@@ -161,7 +175,8 @@ Returns true if variable is a string
 =cut
 
 .sub 'is_string'
-    not_implemented()
+    .param pmc args :slurpy
+    .IS_TYPE('String', args)
 .end
 
 =item C<bool settype(mixed var, string type)>
@@ -181,7 +196,16 @@ Get the string value of a variable
 =cut
 
 .sub 'strval'
-    not_implemented()
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $S0 = $P1
+    .RETURN_STRING($S0)
 .end
 
 =back

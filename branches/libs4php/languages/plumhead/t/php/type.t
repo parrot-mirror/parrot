@@ -25,7 +25,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More     tests => 5;
+use Test::More     tests => 12;
 use Parrot::Test;
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype(TRUE)' );
@@ -73,6 +73,63 @@ string
 OUTPUT
 
 }
+
+language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_bool() no args' );
+<?php
+  echo is_bool(), "\n";
+?>
+CODE
+/Only one argument expected/
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_bool(TRUE)' );
+<?php
+  echo is_bool(TRUE), "\n";
+?>
+CODE
+1
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_float(3.14)' );
+<?php
+  echo is_float(3.14), "\n";
+?>
+CODE
+1
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_long(42)' );
+<?php
+  echo is_long(42), "\n";
+?>
+CODE
+1
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_null(NULL)' );
+<?php
+  echo is_null(NULL), "\n";
+?>
+CODE
+1
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_string("str")' );
+<?php
+  echo is_string('str'), "\n";
+?>
+CODE
+1
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'strval(TRUE)' );
+<?php
+  echo strval(TRUE), "\n";
+?>
+CODE
+1
+OUTPUT
+
 
 # Local Variables:
 #   mode: cperl
