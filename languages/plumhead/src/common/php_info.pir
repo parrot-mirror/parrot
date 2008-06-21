@@ -69,10 +69,17 @@ Return the current SAPI module name
 
 =cut
 
-# For now, only plain old CGI is supported
-# Lie about the 'fcgi', in order to keep in line with the reference implementation
 .sub 'php_sapi_name'
-  .return( 'cgi-fcgi' )
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    # For now, only plain old CGI is supported
+    # Lie about the 'fcgi', in order to keep in line with the reference implementation
+    .RETURN_STRING('cgi-fcgi')
 .end
 
 
