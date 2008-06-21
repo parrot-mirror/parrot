@@ -166,13 +166,13 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
 </xsl:template>
 
 <xsl:template match="phc:Token_int" >
-  <past:Val returns="Integer" >
+  <past:Val returns="PhpInteger" >
     <xsl:attribute name="value" ><xsl:value-of select="phc:value" /></xsl:attribute>
   </past:Val>
 </xsl:template>
 
 <xsl:template match="phc:Token_bool" >
-  <past:Val returns="Boolean" >
+  <past:Val returns="PhpBoolean" >
     <xsl:attribute name="value" ><xsl:choose>
       <xsl:when test="phc:value = 'True'" >1</xsl:when>
       <xsl:when test="phc:value = 'False'"   >0</xsl:when>
@@ -181,14 +181,14 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
 </xsl:template>
 
 <xsl:template match="phc:Token_null" >
-  <past:Val returns="Undef" >
+  <past:Val returns="PhpUndef" >
     <xsl:attribute name="value" >0</xsl:attribute>
   </past:Val>
 </xsl:template>
 
 <!-- looks like phc is running into a floating point issue -->
 <xsl:template match="phc:Token_real" >
-  <past:Val returns='Float' >
+  <past:Val returns='PhpFloat' >
     <xsl:attribute name="value" ><xsl:value-of select="phc:source_rep" /></xsl:attribute>
   </past:Val>
 </xsl:template>
