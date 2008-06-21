@@ -25,12 +25,8 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More     tests => 4;
+use Test::More     tests => 5;
 use Parrot::Test;
-
-TODO:
-{
-    local $TODO = 'update compiler';
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype(TRUE)' );
 <?php
@@ -38,6 +34,14 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype(TRUE)' );
 ?>
 CODE
 boolean
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype(NULL)' );
+<?php
+  echo gettype(NULL), "\n";
+?>
+CODE
+NULL
 OUTPUT
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype(42)' );
@@ -55,6 +59,10 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype(3.14)' );
 CODE
 double
 OUTPUT
+
+TODO:
+{
+    local $TODO = 'update compiler';
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype("str")' );
 <?php
