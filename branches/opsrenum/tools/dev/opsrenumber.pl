@@ -32,11 +32,11 @@ tools/dev/opsrenumber.pl - Renumber F<src/ops/ops.num>.
 
 =head1 SYNOPSIS
 
-    $ perl tools/dev/opsrenumber.pl
+    $ perl tools/dev/opsrenumber.pl input.ops [input2.ops ...]
 
 =head1 DESCRIPTION
 
-This program shoul when adding or removing opcodes.
+This program should be used when adding or removing opcodes.
 
 =head1 SEE ALSO
 
@@ -54,7 +54,8 @@ This program shoul when adding or removing opcodes.
 
 =head1 AUTHOR
 
-Over the years, the code now found in F<tools/dev/opsrenumber.pl> has been worked on by the following Parrot hackers:
+Over the years, the code now found in F<tools/dev/opsrenumber.pl> has been
+worked on by the following Parrot hackers:
 
   bernhard
   brentdax
