@@ -39,10 +39,9 @@ pass("Completed all tests in $0");
 =head1 DESCRIPTION
 
 The files in this directory test the publicly callable subroutines of
-F<lib/Parrot/Ops2pm.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.
-By doing so, they test the functionality of the F<ops2pm.pl> utility.
-That functionality has largely been extracted
-into the methods of F<Utils.pm>.
+F<lib/Parrot/Ops2pm.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.  By doing so,
+they test the functionality of the F<ops2pm.pl> utility.  That functionality
+has largely been extracted into the methods of F<Ops2pm.pm>.
 
 F<01-ops2pm.t> tests whether Parrot::Ops2pm is exporting the
 subroutines in its C<@EXPORT_OK>.:
