@@ -176,12 +176,28 @@ NOT IMPLEMENTED.
 
 Returns true if value is a scalar
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'is_scalar'
-    not_implemented()
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $I0 = isa $P1, 'PhpBoolean'
+    if $I0 goto L2
+    $I0 = isa $P1, 'PhpFloat'
+    if $I0 goto L2
+    $I0 = isa $P1, 'PhpInteger'
+    if $I0 goto L2
+    $I0 = isa $P1, 'String'
+    if $I0 goto L2
+    .RETURN_FALSE()
+  L2:
+    .RETURN_TRUE()
 .end
 
 =item C<bool is_string(mixed var)>
